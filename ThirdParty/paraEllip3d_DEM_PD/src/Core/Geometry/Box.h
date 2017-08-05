@@ -124,6 +124,8 @@ public:
 
   bool inside(const Vec& pt, REAL tolerance) const;
 
+  bool outside(const Vec& pt) const;
+
   friend std::ostream& operator<<(std::ostream& os, const Box& box);
 
 private:

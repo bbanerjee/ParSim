@@ -1,14 +1,14 @@
 #ifndef SMOOTHPARTICLE_HYDRODYNAMICS_H
 #define SMOOTHPARTICLE_HYDRODYNAMICS_H
 
-#include <SmoothParticleHydrodynamics/SPHBoundaryBond.h>
-#include <SmoothParticleHydrodynamics/SPHContainers.h>
-#include <SmoothParticleHydrodynamics/SPHParticle.h>
+#include <SmoothParticleHydro/SPHBoundaryBond.h>
+#include <SmoothParticleHydro/SPHContainers.h>
+#include <SmoothParticleHydro/SPHParticle.h>
 #include <DiscreteElements/Patch.h>
 #include <InputOutput/Output.h>
 
 #ifndef isProc0_macro
-  #define isProc0_macro ( sph::SmoothParticleHydrodynamics::getMPIRank() == 0 )
+  #define isProc0_macro ( sph::SmoothParticleHydro::getMPIRank() == 0 )
   #define proc0cout if( isProc0_macro ) std::cout
   #define proc0cerr if( isProc0_macro ) std::cerr
 #endif
@@ -18,12 +18,12 @@ namespace sph {
 using SPHPatch = dem::Patch<sph::SPHParticlePArray>;
 using Output = dem::Output;
 
-class SmoothParticleHydrodynamics
+class SmoothParticleHydro
 {
 public:
 
-  SmoothParticleHydrodynamics();
-  ~SmoothParticleHydrodynamics();
+  SmoothParticleHydro();
+  ~SmoothParticleHydro();
 
   // MPI methods
   inline int getMPIRank() const { return d_mpiRank; }

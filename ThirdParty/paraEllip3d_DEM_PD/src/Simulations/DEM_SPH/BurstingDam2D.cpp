@@ -2,7 +2,7 @@
 #include <Core/Util/Utility.h>
 
 void 
-BurstingDam2D::execute(DiscreteElements* dem, SmoothParticleHydrodynamics* sph) 
+BurstingDam2D::execute(DiscreteElements* dem, SmoothParticleHydro* sph) 
 {     
   if (dem->getMPIRank() == 0) {
     auto boundaryFile = InputParameters::get().datafile["boundaryFile"];

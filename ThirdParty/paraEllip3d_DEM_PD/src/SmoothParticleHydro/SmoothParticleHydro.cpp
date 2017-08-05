@@ -1,4 +1,4 @@
-#include <SmoothParticleHydrodynamics/SmoothParticleHydrodynamics.h>
+#include <SmoothParticleHydro/SmoothParticleHydro.h>
 
 #include <InputOutput/PeriParticleFileReader.h>
 #include <InputOutput/OutputTecplot.h>
@@ -19,11 +19,11 @@ using ParticlePArray = dem::ParticlePArray;
 using OutputVTK = dem::OutputVTK<SPHParticlePArray>;
 using OutputTecplot = dem::OutputTecplot<SPHParticlePArray>;
 
-SmoothParticleHydrodynamics::SmoothParticleHydrodynamics() 
+SmoothParticleHydro::SmoothParticleHydro() 
 {
 }
 
-SmoothParticleHydrodynamics::~SmoothParticleHydrodynamics()
+SmoothParticleHydro::~SmoothParticleHydro()
 {
   allSPHParticleVec.clear();
   SPHParticleVec.clear();
@@ -33,7 +33,8 @@ SmoothParticleHydrodynamics::~SmoothParticleHydrodynamics()
 // will all stored in the same vector
 // unlike the implementation in serial version.
 void 
-SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
+SmoothParticleHydro::generateSPHParticle2D(const dem::Box& allContainer,
+                                           dem::DEMParticlePArray& allDEMParticles)
 {
   if (getMPIRank() != 0) return;  // make only primary cpu generate particles
 
@@ -45,14 +46,17 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   auto numLayers   = util::getParam<int>("numLayers");
   auto gamma       = util::getParam<REAL>("gamma");
   auto P0          = util::getParam<REAL>("P0");
-  auto SPHInitialDensity = util::getParam<REAL>("SPHInitialDensity");
+  auto sphInitialDensity = util::getParam<REAL>("SPHInitialDensity");
 
-  REAL spaceInterval = waterLength/(numSPHPoint-1);
-  REAL L_over_N = waterLength/numSPHPoint;
-  REAL SPHmass = SPHInitialDensity*L_over_N*L_over_N;
-  REAL small_value = 0.01*spaceInterval;
-  REAL smoothLength = 1.5*spaceInterval;
-  REAL kernelSize = 3*smoothLength;
+  auto spaceInterval = waterLength/(numSPHPoint-1);
+  auto L_over_N = waterLength/numSPHPoint;
+  auto small_value = 0.01*spaceInterval;
+  auto smoothLength = 1.5*spaceInterval;
+  auto kernelSize = 3*smoothLength;
+
+  REAL SPHmass = -1.0e16;
+
+  SPHMass = SPHInitialDensity*L_over_N*L_over_N;
 
   // get the dimensions of the sph domain
   Vec vmin = allContainer.getMinCorner();
@@ -73,7 +77,11 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   REAL zminBuffered = zmin - bufferLength;
   REAL zmaxBuffered = zmax + bufferLength;
 
-  // Create an linearly spaced array of zcoords from zminBuffered to zmaxBuffered
+  // Create an linearly spaced array of x/zcoords from x/zminBuffered to x/zmaxBuffered
+  std::vector<REAL> xCoords = 
+    util::linspaceApprox<REAL>(xminBuffered, xmaxBuffered, spaceInterval);
+  std::vector<REAL> zCoords = 
+    util::linspaceApprox<REAL>(zminBuffered, zmaxBuffered, spaceInterval);
 
   // create and store SPHParticle objects into sphParticleVec
   int isGhost = 0;  // is Ghost particle
@@ -83,58 +91,90 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   dem::Vec local_x;  // local position of ghost point in dem particle
   dem::Vec tmp_xyz, tmp_local;
 
-  for(REAL tmp_z=zmin-spaceInterval*(numLayers); tmp_z<zmax+spaceInterval*numLayers; tmp_z=tmp_z+spaceInterval){
-    for(REAL tmp_x=xmin-spaceInterval*(numLayers); tmp_x<xmax+spaceInterval*numLayers; tmp_x=tmp_x+spaceInterval){
-    isGhost = 0;
-    tmp_xyz = dem::Vec(tmp_x, 0, tmp_z);
-      for(std::vector<Particle*>::iterator pt=allParticleVec.begin(); pt!=allParticleVec.end(); pt++){
-      radius_a = (*pt)->getA(); radius_b = (*pt)->getB(); radius_c = (*pt)->getC();
-      inner_a = radius_a-kernelSize; inner_b = radius_b-kernelSize; inner_c = radius_c-kernelSize;
-      pt_position = (*pt)->getCurrPos();
-      pt_position.setY(0);
-      tmp_local = (*pt)->globalToLocal(tmp_xyz-pt_position);
-      if( tmp_local.getX()*tmp_local.getX()/(radius_a*radius_a)+tmp_local.getY()*tmp_local.getY()/(radius_b*radius_b)+tmp_local.getZ()*tmp_local.getZ()/(radius_c*radius_c) <= 1 ){
-        isGhost = 1;  // is Ghost particle
-      if(tmp_local.getX()*tmp_local.getX()/(inner_a*inner_a)+tmp_local.getY()*tmp_local.getY()/(inner_b*inner_b)+tmp_local.getZ()*tmp_local.getZ()/(inner_c*inner_c) > 1 || inner_a<=0 || inner_b<=0 || inner_c<=0){
-        local_x = (*pt)->globalToLocal( dem::Vec(tmp_x, 0, tmp_z)-pt_position );
-        sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, 0, tmp_z, local_x, 2);  // 2 is ghost SPH particle
-        (*pt)->SPHGhostParticleVec.push_back(tmp_pt);   // at current, the scatterSPHParticle is not valide for ghost particles. July 15, 2015
-
-  //          break;  // if this sph point is ghost for dem particle 1, then it cannot be ghost for any others,
-        // should avoid the initial overlap of the different dem particles
+  ParticleID sphPartID = 0;
+  for (auto& zCoord : zCoords) {
+    for (auto& xCoord : xCoords) {
+      sphPartID++;
+      bool isGhost = false;
+      bool isBoundary = false;
+      dem:Vec sph_pos = dem::Vec(xCoord, 0, zCoord);
+      for (auto& dem_particle : allDEMParticles) {
+        REAL radius_a = dem_particle->getA(); 
+        REAL radius_b = dem_particle->getB(); 
+        REAL radius_c = dem_particle->getC();
+        REAL inner_a = radius_a - kernelSize; 
+        REAL inner_b = radius_b - kernelSize; 
+        REAL inner_c = radius_c - kernelSize;
+        dem::Vec dem_pos = dem_particle->getCurrPos();
+        dem_pos.setY(0);
+        dem::vec local_pos = dem_particle->globalToLocal(sph_pos - dem_pos);
+        REAL outer_x = local_pos.getX()/radius_a;
+        REAL outer_y = local_pos.getY()/radius_b;
+        REAL outer_z = local_pos.getZ()/radius_c;
+        REAL inner_x = local_pos.getX()/inner_a;
+        REAL inner_y = local_pos.getY()/inner_b;
+        REAL inner_z = local_pos.getZ()/inner_c;
+        REAL outer_rad_sq = outer_x*outer_x + outer_y*outer_y + outer_z*outer_z;
+        REAL inner_rad_sq = inner_x*inner_x + inner_y*inner_y + inner_z*inner_z;
+        if ((outer_rad_sq <= 1) &&
+            (inner_rad_sq > 1 || inner_a <= 0 || inner_b <= 0 || inner_c <= 0)) {
+          isGhost = true;
+          ghostSPHParticleVec.push_back(
+            std::make_shared<sph::SPHParticle>(sphPartID, isGhost, isBoundary,
+                                               sphMass, sphInitialDensity, 
+                                               sph_pos, local_pos, 
+                                               dem_particle));
+          break;
         }
-      }
-      } // end dem particle
+      } // end dem particles
 
-    if(isGhost==0){  // free/boundary particles
-      if(tmp_x<=xmin-spaceInterval+small_value || tmp_x>=xmax-small_value || tmp_z<=zmin-spaceInterval+small_value || tmp_z>=zmax-small_value){  // boundary sph particles
-      if(tmp_z>=L+spaceInterval){
-          sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, 0, tmp_z, 3);  // 3 is boundary SPH particle
-        allSPHParticleVec.push_back(tmp_pt);
-      }
-      else{
-          sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity*pow(1+SPHInitialDensity*gravAccel*gravScale*(L-tmp_z)/P0, 1.0/gamma), tmp_x, 0, tmp_z, 3);  // 3 is boundary SPH particle
-        allSPHParticleVec.push_back(tmp_pt);
-      }
-      } 
-      else if(tmp_x<=L && tmp_z<=L){  // free sph particles
-        sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity*pow(1+SPHInitialDensity*gravAccel*gravScale*(L-tmp_z)/P0, 1.0/gamma), tmp_x, 0, tmp_z, 1);  // 1 is free SPH particle
-  //      sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, 0, tmp_z, 1);  // 1 is free SPH particle
-          allSPHParticleVec.push_back(tmp_pt);
-      }
-    }
-    }
+      // free/boundary particles
+      if (!isGhost) {  
+        REAL xminBoundary = xmin - spaceInterval + small_value;
+        REAL xmaxBoundary = xmax - small_value;
+        REAL zminBoundary = zmin - spaceInterval + small_value;
+        REAL zmaxBoundary = zmax - small_value;
+        dem::Box domain(xminBoundary, 0, zminBoundary, xmaxBoundary, 0, zmaxBoundary)
+
+        REAL density = sphInitialdensity;
+        if (domain.outside(sph_pos)) { // boundary sph particles
+          isBoundary = true;
+          if (sph_pos.z() < waterLength+spaceInterval) {
+            REAL rhoGH = density*gravAccel*(waterLength - sph_pos.z());
+            density *= pow(1 + rhoGH*gravScale/P0, 1.0/gamma);
+          }
+          allSPHParticleVec.push_back(
+            std::make_shared<sph::SPHParticle>(sphPartID, isGhost, isBoundary,
+                                               sphMass, density, 
+                                               sph_pos, local_pos, 
+                                               null_ptr));
+        } else { // free sph particles
+
+          if (sph_pos.x() <= waterLength && sph_pos.z() <= waterLength) {
+            density *= pow(1 + rhoGH*gravScale/P0, 1.0/gamma);
+            allSPHParticleVec.push_back(
+              std::make_shared<sph::SPHParticle>(sphPartID, isGhost, isBoundary,
+                                                 sphMass, density, 
+                                                 sph_pos, local_pos, 
+                                                 null_ptr));
+          }
+        } // End domain if
+      } // End if not isGhost
+    } // end xCoords
+  } // end zCoords
+
+  for (auto& sph_particle : ghostSPHParticleVec) {
+    sph_particle->initial();
   }
-
-  for(std::vector<sph::SPHParticle*>::iterator pt=allSPHParticleVec.begin(); pt!=allSPHParticleVec.end(); pt++){
-    (*pt)->initial();
+  for (auto& sph_particle : allSPHParticleVec) {
+    sph_particle->initial();
   }
 
 } // generateSPHParticle2D
 
   // here the free particles, ghost particles and boundary particles will all stored in the same vector
   // unlike the implementation in serial version.
-  void SmoothParticleHydrodynamics::generateSPHParticle3D(){
+  void SmoothParticleHydro::generateSPHParticle3D(){
   
         if(mpiRank!=0) return;  // make only primary cpu generate particles
 
@@ -224,7 +264,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 
 
   // here the free particles and boundary particles will all stored in the same vector while sph ghost particles will be stored in dem particles
-  void SmoothParticleHydrodynamics::generateSPHParticleNoBottom3D(){  // this is for drainage problem
+  void SmoothParticleHydro::generateSPHParticleNoBottom3D(){  // this is for drainage problem
   
         if(mpiRank!=0) return;  // make only primary cpu generate particles
 
@@ -307,7 +347,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 
 
   // here the free particles and boundary particles will all stored in the same vector while sph ghost particles will be stored in dem particles
-  void SmoothParticleHydrodynamics::generateSPHParticleMiddleLayers3D(){  // this is for drainage middleLayers
+  void SmoothParticleHydro::generateSPHParticleMiddleLayers3D(){  // this is for drainage middleLayers
   
         if(mpiRank!=0) return;  // make only primary cpu generate particles
 
@@ -385,7 +425,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 
   } // generateSPHParticleNoBottom3D
 
-  void SmoothParticleHydrodynamics::findSPHParticleInRectangle(const Rectangle &container,
+  void SmoothParticleHydro::findSPHParticleInRectangle(const Rectangle &container,
         const std::vector<sph::SPHParticle*> &inputParticle,
         std::vector<sph::SPHParticle*> &foundParticle) {
     foundParticle.reserve(inputParticle.size());
@@ -408,7 +448,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     std::vector<sph::SPHParticle*>(foundParticle).swap(foundParticle);
   }
 
-  void SmoothParticleHydrodynamics::removeParticleOutRectangle() {
+  void SmoothParticleHydro::removeParticleOutRectangle() {
     Vec  v1 = container.getMinCorner();
     Vec  v2 = container.getMaxCorner();
     REAL x1 = v1.getX();
@@ -457,7 +497,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 
   }
 
-  void SmoothParticleHydrodynamics::removeSPHParticleOutRectangle() {
+  void SmoothParticleHydro::removeSPHParticleOutRectangle() {
     Vec  v1 = container.getMinCorner();
     Vec  v2 = container.getMaxCorner();
     REAL x1 = v1.getX();
@@ -512,7 +552,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   //    (3) this partition method here is not very suitable for the free surface flow problem, such as bursting dam problem
   //        since the total domain is divided, while there are lots of voids in the domain. (partition only free sph particles will be better)
   //        But our goal is to simulate the porous media in triaxial, insotropic or SHPB simulations, particles are filled in the container.
-  void SmoothParticleHydrodynamics::scatterDEMSPHParticle() {
+  void SmoothParticleHydro::scatterDEMSPHParticle() {
     // partition particles and send to each process
     if (mpiRank == 0) { // process 0
       int numLayers = util::getParam<>("numLayers"];
@@ -626,7 +666,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   } // scatterDEMSPHParticle
 
 
-  void SmoothParticleHydrodynamics::scatterDEMSPHParticleCopyDEM() {
+  void SmoothParticleHydro::scatterDEMSPHParticleCopyDEM() {
     // partition particles and send to each process
     if (mpiRank == 0) { // process 0
       int numLayers = util::getParam<>("numLayers"];
@@ -739,7 +779,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     broadcast(boostWorld, grid, 0);
   } // scatterDEMSPHParticleCopyDEM
 
-  void SmoothParticleHydrodynamics::commuParticle()   // the communication of sph ghost particles are implemented here, July 27, 2015
+  void SmoothParticleHydro::commuParticle()   // the communication of sph ghost particles are implemented here, July 27, 2015
   {
     // determine container of each process
     Vec v1 = grid.getMinCorner();
@@ -1224,7 +1264,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 
   // the communication of ghost sph particles are not implemented, the communication of ghost sph should be
   // corresponding to their dem particles. July 16, 2015
-  void SmoothParticleHydrodynamics::commuSPHParticle() 
+  void SmoothParticleHydro::commuSPHParticle() 
   {
     // determine container of each process
     Vec v1 = grid.getMinCorner();
@@ -1539,7 +1579,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   }
 
 
-  void SmoothParticleHydrodynamics::releaseRecvParticle() {
+  void SmoothParticleHydro::releaseRecvParticle() {
     // release memory of received particles
     for (std::vector<Particle*>::iterator it = recvParticleVec.begin(); it != recvParticleVec.end(); ++it){
       for(std::vector<sph::SPHParticle*>::iterator st=(*it)->SPHGhostParticleVec.begin(); st!=(*it)->SPHGhostParticleVec.end(); st++){
@@ -1581,7 +1621,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   }
 
 
-  void SmoothParticleHydrodynamics::releaseRecvSPHParticle() {
+  void SmoothParticleHydro::releaseRecvSPHParticle() {
     // release memory of received particles
     for (std::vector<sph::SPHParticle*>::iterator it = recvSPHParticleVec.begin(); it != recvSPHParticleVec.end(); ++it)
       delete (*it);
@@ -1617,7 +1657,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     rsphParticleX2Y2Z2.clear();
   }
 
-  void SmoothParticleHydrodynamics::migrateParticle() 
+  void SmoothParticleHydro::migrateParticle() 
   {
     Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
     REAL segX = vspan.getX() / mpiProcX;
@@ -2028,7 +2068,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   }
 
 
-  void SmoothParticleHydrodynamics::migrateSPHParticle() 
+  void SmoothParticleHydro::migrateSPHParticle() 
   {   
     Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
     REAL segX = vspan.getX() / mpiProcX;
@@ -2354,7 +2394,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     recvSPHParticleVec.clear();
   }
 
-  void SmoothParticleHydrodynamics::gatherParticle() {
+  void SmoothParticleHydro::gatherParticle() {
     // before send, SPHParticle.demParticle should be NULL
     for(std::vector<Particle*>::iterator it=particleVec.begin(); it!=particleVec.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();  // at this point, SPHGhostParticle.demParticle is not pointing to particleVec
@@ -2401,7 +2441,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   }
 
 
-  void SmoothParticleHydrodynamics::releaseGatheredParticle() {
+  void SmoothParticleHydro::releaseGatheredParticle() {
     // clear allParticleVec, avoid long time memory footprint.
     for (std::vector<Particle*>::iterator it = allParticleVec.begin(); it != allParticleVec.end(); ++it){
       for(std::vector<sph::SPHParticle*>::iterator st=(*it)->SPHGhostParticleVec.begin(); st!=(*it)->SPHGhostParticleVec.end(); ++st){
@@ -2416,7 +2456,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   }
 
 
-  void SmoothParticleHydrodynamics::gatherSPHParticle() {
+  void SmoothParticleHydro::gatherSPHParticle() {
     // update allSPHParticleVec: process 0 collects all updated particles from each other process  
     if (mpiRank != 0) {// each process except 0
       boostWorld.send(0, mpiTag, SPHParticleVec);
@@ -2448,7 +2488,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     }
   }
 
-  void SmoothParticleHydrodynamics::releaseGatheredSPHParticle() {
+  void SmoothParticleHydro::releaseGatheredSPHParticle() {
     // clear allParticleVec, avoid long time memory footprint.
     for (std::vector<sph::SPHParticle*>::iterator it = allSPHParticleVec.begin(); it != allSPHParticleVec.end(); ++it)
       delete (*it);
@@ -2456,7 +2496,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     std::vector<sph::SPHParticle*>().swap(allSPHParticleVec); // actual memory release
   }
 
-  void SmoothParticleHydrodynamics::gatherBdryContact() {
+  void SmoothParticleHydro::gatherBdryContact() {
     if (isBdryProcess()) {
       if (mpiRank != 0)
   boostWorld.send(0, mpiTag, boundaryVec);
@@ -2489,7 +2529,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   }
   
 
-  void  SmoothParticleHydrodynamics::openSPHTecplot(std::ofstream &ofs, const char *str) {
+  void  SmoothParticleHydro::openSPHTecplot(std::ofstream &ofs, const char *str) {
     ofs.open(str);
     if(!ofs) { debugInf << "stream error: openSPHTecplot" << std::endl; exit(-1); }
     ofs.setf(std::ios::scientific, std::ios::floatfield);
@@ -2500,7 +2540,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
   << std::endl;
   }
   
-  void SmoothParticleHydrodynamics::printSPHTecplot(std::ofstream &ofs, int iframe) {
+  void SmoothParticleHydro::printSPHTecplot(std::ofstream &ofs, int iframe) {
   ofs << "ZONE T =\" " << iframe << "-th Load Step\" "<< std::endl;
   // Output the coordinates and the array information
   for(std::vector<sph::SPHParticle*>::iterator pt = allSPHParticleVec.begin(); pt!= allSPHParticleVec.end(); pt++) {
@@ -2532,7 +2572,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 
   }
   }
-  void SmoothParticleHydrodynamics::printSPHParticle(const char *str) const{
+  void SmoothParticleHydro::printSPHParticle(const char *str) const{
       std::ofstream ofs(str);
       if(!ofs) { debugInf << "stream error: printSPHParticle" << std::endl; exit(-1); }
       ofs.setf(std::ios::scientific, std::ios::floatfield);
@@ -2575,7 +2615,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     ofs.close();
   }
 
-    void SmoothParticleHydrodynamics::initialSPHVelocity2D(){
+    void SmoothParticleHydro::initialSPHVelocity2D(){
   commuParticle();
   commuSPHParticle();  // this will update container and mergeSPHParticleVec, both are needed for divideSPHDomain
   calculateSPHDensityDotVelocityDotLinkedList2D();  // calculate velocityDot and densityDot
@@ -2601,7 +2641,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
         releaseRecvSPHParticle(); 
     } // initialSPHVelocity()
 
-    void SmoothParticleHydrodynamics::initialSPHVelocity3D(){
+    void SmoothParticleHydro::initialSPHVelocity3D(){
   commuParticle();
   commuSPHParticle();  // this will update container and mergeSPHParticleVec, both are needed for divideSPHDomain
   calculateSPHDensityDotVelocityDotLinkedList3D();  // calculate velocityDot and densityDot
@@ -2611,7 +2651,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
         releaseRecvSPHParticle();
     } // initialSPHVelocity()
 
-    void SmoothParticleHydrodynamics::initialSPHVelocityCopyDEM3D(){
+    void SmoothParticleHydro::initialSPHVelocityCopyDEM3D(){
   commuSPHParticle();  // this will update container and mergeSPHParticleVec, both are needed for divideSPHDomain
   calculateSPHDensityDotVelocityDotLinkedList3D();  // calculate velocityDot and densityDot
   initialSPHLeapFrogVelocity();  // initial velocity only for free SPH particles based on equation (4.3)
@@ -2620,13 +2660,13 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     } // initialSPHVelocity()
 
 
-    void SmoothParticleHydrodynamics::initialSPHLeapFrogVelocity(){  // initial particle velocity only for free SPH particles based on equation (4.3)
+    void SmoothParticleHydro::initialSPHLeapFrogVelocity(){  // initial particle velocity only for free SPH particles based on equation (4.3)
   for(std::vector<sph::SPHParticle*>::iterator pt=SPHParticleVec.begin(); pt!=SPHParticleVec.end(); pt++){
       if((*pt)->getType() == 1) (*pt)->initialParticleVelocityLeapFrog();
   }
     } // end initialSPHLeapFrogVelocity
 
-    void SmoothParticleHydrodynamics::updateSPHLeapFrogPositionDensity(){  // update particle position and density based on equation (4.1)
+    void SmoothParticleHydro::updateSPHLeapFrogPositionDensity(){  // update particle position and density based on equation (4.1)
   for(std::vector<sph::SPHParticle*>::iterator pt=SPHParticleVec.begin(); pt!=SPHParticleVec.end(); pt++){
       switch((*pt)->getType()){
         case 1: // free sph particle
@@ -2650,7 +2690,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     } // end updateSPHLeapFrogPositionDensity
 
 
-    void SmoothParticleHydrodynamics::updateSPHLeapFrogVelocity(){  // update particle velocity only for free SPH particles based on equation (4.2)
+    void SmoothParticleHydro::updateSPHLeapFrogVelocity(){  // update particle velocity only for free SPH particles based on equation (4.2)
   for(std::vector<sph::SPHParticle*>::iterator pt=SPHParticleVec.begin(); pt!=SPHParticleVec.end(); pt++){
       if((*pt)->getType()==1) (*pt)->updateParticleVelocityLeapFrog();
   }
@@ -2660,7 +2700,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 //  REAL factor = 1.0/(120.0*dem::PI*h*h*h);  // 3D quintic kernel factor
 //  REAL factor = 7.0/(478.0*dem::PI*h*h);    // 2D quintic kernel factor
     // kernel function, vec is the position of a b, h is smoothing length  
-    inline REAL SmoothParticleHydrodynamics::kernelFunction(const dem::Vec& a, const dem::Vec& b){
+    inline REAL SmoothParticleHydro::kernelFunction(const dem::Vec& a, const dem::Vec& b){
   REAL rab = dem::vfabs(a-b);
   REAL s = rab*one_devide_h;
   REAL item1_5 = (3-s)*(3-s)*(3-s)*(3-s)*(3-s);  // (3-s)^5
@@ -2682,7 +2722,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     } // end kernelFunction
 
     // kernel function, s is rab/h, h is smoothing length  
-    inline REAL SmoothParticleHydrodynamics::kernelFunction(REAL s){
+    inline REAL SmoothParticleHydro::kernelFunction(REAL s){
   REAL item1_5 = (3-s)*(3-s)*(3-s)*(3-s)*(3-s);  // (3-s)^5
   REAL item2_5 = (2-s)*(2-s)*(2-s)*(2-s)*(2-s);   // (2-s)^5
   REAL item3_5 = (1-s)*(1-s)*(1-s)*(1-s)*(1-s);   // (1-s)^5
@@ -2705,7 +2745,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 //  REAL factor = 1.0/(120.0*h*h);  // 1D quintic kernel factor
 //  REAL factor = 7.0/(478.0*dem::PI*h*h*h);  // 2D quintic kernel factor
     // to calculate delta_aWab, where a is the position of the first particle
-    inline dem::Vec SmoothParticleHydrodynamics::gradientKernelFunction(const dem::Vec& a, const dem::Vec& b){
+    inline dem::Vec SmoothParticleHydro::gradientKernelFunction(const dem::Vec& a, const dem::Vec& b){
   REAL rab = dem::vfabs(a-b);
   REAL s = rab*one_devide_h;
   REAL item1_4 = (3-s)*(3-s)*(3-s)*(3-s);  // (3-s)^4
@@ -2727,7 +2767,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
     } // end gradientKernelFunction
 
     // to calculate partial differential dWab_dra
-    inline REAL SmoothParticleHydrodynamics::partialKernelFunction(const dem::Vec& a, const dem::Vec& b){
+    inline REAL SmoothParticleHydro::partialKernelFunction(const dem::Vec& a, const dem::Vec& b){
   REAL rab = dem::vfabs(a-b);
   REAL s = rab*one_devide_h;
   REAL item1_4 = (3-s)*(3-s)*(3-s)*(3-s);  // (3-s)^4
@@ -2751,7 +2791,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 
     // divide SPH domain in each cpu into different cells in 2D in xz plane.
     // see the notes 5/20/2015 and 5/21/2015 or Simpson's paper "Numerical techniques for three-dimensional Smoothed Particle Hydrodynamics"
-    void SmoothParticleHydrodynamics::divideSPHDomain2D(){
+    void SmoothParticleHydro::divideSPHDomain2D(){
 
   // clear the std::vector< std::vector<sph::SPHParticle*> > SPHParticleCellVec
   for(int pvec=0; pvec<SPHParticleCellVec.size(); pvec++){
@@ -2817,7 +2857,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 
     //// the momentum equilibrium equation and state equation are implemented as in Monaghan's paper (1994), simulate free surface flow using sph
     //// here the neighboring list of SPH particles is searched by the cells, vector< vector<sph::SPHParticle*> > SPHParticleCellVec;
-    void SmoothParticleHydrodynamics::calculateSPHDensityDotVelocityDotLinkedList2D(){
+    void SmoothParticleHydro::calculateSPHDensityDotVelocityDotLinkedList2D(){
 
   // divide the SPH domain into different cells, each cell will contain SPH particles within it
   divideSPHDomain2D();
@@ -3593,7 +3633,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 
     // divide SPH domain in each cpu into different cells in 2D in xz plane.
     // see the notes 5/20/2015 and 5/21/2015 or Simpson's paper "Numerical techniques for three-dimensional Smoothed Particle Hydrodynamics"
-    void SmoothParticleHydrodynamics::divideSPHDomain3D(){
+    void SmoothParticleHydro::divideSPHDomain3D(){
 
   // clear the std::vector< std::vector<sph::SPHParticle*> > SPHParticleCellVec
   for(int pvec=0; pvec<SPHParticleCellVec.size(); pvec++){
@@ -3666,7 +3706,7 @@ SmoothParticleHydrodynamics::generateSPHParticle2D(const dem::Box& allContainer)
 
     //// the momentum equilibrium equation and state equation are implemented as in Monaghan's paper (1994), simulate free surface flow using sph
     //// here the neighboring list of SPH particles is searched by the cells, vector< vector<sph::SPHParticle*> > SPHParticleCellVec;
-    void SmoothParticleHydrodynamics::calculateSPHDensityDotVelocityDotLinkedList3D(){
+    void SmoothParticleHydro::calculateSPHDensityDotVelocityDotLinkedList3D(){
 
   // divide the SPH domain into different cells, each cell will contain SPH particles within it
   divideSPHDomain3D();

@@ -41,6 +41,17 @@ Box::inside(const Vec& pt, REAL tol) const
   return false;
 }
 
+bool
+Box::outside(const Vec& pt) const
+{
+  if ((pt.x() < v1.x() || pt.x() > v2.x()) ||
+      (pt.y() < v1.y() || pt.y() > v2.y()) ||
+      (pt.z() < v1.z() || pt.z() > v2.z())) {
+    return true;
+  }
+  return false;
+}
+
 std::ostream&
 operator<<(std::ostream& os, const Box& b)
 {

@@ -14,7 +14,7 @@ public:
     std::cout << "**ERROR** Execute with DEM only. "
               << "Should not be called in BurstingDam2D.\n";
   }
-  virtual void execute(DiscreteElements* dem, sph::SmoothParticleHydrodynamics* pd);
+  virtual void execute(DiscreteElements* dem, sph::SmoothParticleHydro* pd);
 };
 }
 
