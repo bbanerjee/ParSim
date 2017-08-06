@@ -1,7 +1,9 @@
-#include <DiscreteElements/Patch.h>
+#include <Core/Parallel/Patch.h>
 #include <DiscreteElements/DEMParticle.h>
 #include <Peridynamics/PeriContainers.h>
 #include <Peridynamics/PeriParticle.h>
+#include <SmoothParticleHydro/SPHContainers.h>
+#include <SmoothParticleHydro/SPHParticle.h>
 #include <Core/Types/integertypes.h>
 #include <set>
 
@@ -610,5 +612,15 @@ namespace dem {
     const ParticleIDHashMap& sent, pd::PeriParticlePArray& particles);
   template void 
   Patch<pd::PeriParticlePArray>::removeParticlesOutsidePatch<pd::PeriParticleP>(pd::PeriParticlePArray& particles);
+
+  template struct PatchNeighborComm<sph::SPHParticlePArray>;
+  template struct Patch<sph::SPHParticlePArray>;
+  template void 
+  Patch<sph::SPHParticlePArray>::removeDuplicates<sph::SPHParticleP>(sph::SPHParticlePArray& input);
+  template void 
+  Patch<sph::SPHParticlePArray>::deleteSentParticles<sph::SPHParticleP>(int iteration, 
+    const ParticleIDHashMap& sent, sph::SPHParticlePArray& particles);
+  template void 
+  Patch<sph::SPHParticlePArray>::removeParticlesOutsidePatch<sph::SPHParticleP>(sph::SPHParticlePArray& particles);
 }
 

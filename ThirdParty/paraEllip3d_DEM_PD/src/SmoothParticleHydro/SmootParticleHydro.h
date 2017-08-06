@@ -1,10 +1,9 @@
 #ifndef SMOOTHPARTICLE_HYDRODYNAMICS_H
 #define SMOOTHPARTICLE_HYDRODYNAMICS_H
 
-#include <SmoothParticleHydro/SPHBoundaryBond.h>
 #include <SmoothParticleHydro/SPHContainers.h>
 #include <SmoothParticleHydro/SPHParticle.h>
-#include <DiscreteElements/Patch.h>
+#include <Core/Parallel/Patch.h>
 #include <InputOutput/Output.h>
 
 #ifndef isProc0_macro

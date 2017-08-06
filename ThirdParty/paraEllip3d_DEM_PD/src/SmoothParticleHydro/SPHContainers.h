@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 
-namespace pd {
+namespace sph {
 
 class SPHParticle;
 

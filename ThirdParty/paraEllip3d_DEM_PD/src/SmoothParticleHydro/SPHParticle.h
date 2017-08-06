@@ -73,7 +73,7 @@ public:
 
   REAL getKineticEnergy() const {return 0.5*d_mass*dot(d_velocity,d_velocity);}
   dem::Vec getInitPosition() const {return d_initialPos;}
-  dem::Vec getCurrPosition() const {return d_currPos;}
+  dem::Vec currentPosition() const {return d_currPos;}
   dem::Vec getLocalPosition() const{return d_localCoords;}
   dem::Vec getTrialPosition() const;
   dem::Vec getDisplacement() const {return d_currPos-d_initialPos;}

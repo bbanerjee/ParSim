@@ -12,7 +12,7 @@
 #include <DiscreteElements/Gradation.h>
 #include <DiscreteElements/DEMParticle.h>
 #include <DiscreteElements/Spring.h>
-#include <DiscreteElements/Patch.h>
+#include <Core/Parallel/Patch.h>
 #include <FluidDynamics/Fluid.h>
 #include <InputOutput/InputParameter.h>
 #include <InputOutput/Output.h>

@@ -25,6 +25,7 @@
 add_subdirectory(Const)
 add_subdirectory(Geometry) 
 add_subdirectory(Math) 
+add_subdirectory(Parallel) 
 add_subdirectory(Types) 
 add_subdirectory(Util) 
 

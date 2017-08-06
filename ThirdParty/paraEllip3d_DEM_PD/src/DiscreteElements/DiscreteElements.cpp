@@ -28,7 +28,7 @@
 //
 
 #include <DiscreteElements/DiscreteElements.h>
-#include <DiscreteElements/Patch.h>
+#include <Core/Parallel/Patch.h>
 
 #include <Boundary/BoundaryReader.h>
 #include <Boundary/CylinderBoundary.h>

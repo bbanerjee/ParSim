@@ -7,7 +7,7 @@
 #include <Peridynamics/PeriElement.h>
 #include <Peridynamics/PeriParticle.h>
 #include <Peridynamics/globfuncs.h>
-#include <DiscreteElements/Patch.h>
+#include <Core/Parallel/Patch.h>
 #include <InputOutput/Output.h>
 
 #ifndef isProc0_macro
