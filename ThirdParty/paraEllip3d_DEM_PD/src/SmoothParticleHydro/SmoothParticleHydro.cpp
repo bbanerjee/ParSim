@@ -32,9 +32,10 @@ SmoothParticleHydro::~SmoothParticleHydro()
 // here the free particles, ghost particles and boundary particles 
 // will all stored in the same vector
 // unlike the implementation in serial version.
+template <int dim>
 void 
-SmoothParticleHydro::generateSPHParticle2D(const dem::Box& allContainer,
-                                           dem::DEMParticlePArray& allDEMParticles)
+SmoothParticleHydro::generateSPHParticle(const dem::Box& allContainer,
+                                         dem::DEMParticlePArray& allDEMParticles)
 {
   if (getMPIRank() != 0) return;  // make only primary cpu generate particles
 
@@ -49,14 +50,11 @@ SmoothParticleHydro::generateSPHParticle2D(const dem::Box& allContainer,
   auto sphInitialDensity = util::getParam<REAL>("SPHInitialDensity");
 
   auto spaceInterval = waterLength/(numSPHPoint-1);
-  auto L_over_N = waterLength/numSPHPoint;
   auto small_value = 0.01*spaceInterval;
   auto smoothLength = 1.5*spaceInterval;
   auto kernelSize = 3*smoothLength;
 
-  REAL SPHmass = -1.0e16;
-
-  SPHMass = SPHInitialDensity*L_over_N*L_over_N;
+  auto SPHMass = computeMass<dim>(SPHInitialDensity, waterLength, numSPHPoint);
 
   // get the dimensions of the sph domain
   Vec vmin = allContainer.getMinCorner();
@@ -74,10 +72,13 @@ SmoothParticleHydro::generateSPHParticle2D(const dem::Box& allContainer,
   // Modify the domain size using the buffer length
   REAL xminBuffered = xmin - bufferLength;
   REAL xmaxBuffered = xmax + bufferLength;
+  REAL yminBuffered = ymin - bufferLength;
+  REAL ymaxBuffered = ymax + bufferLength;
   REAL zminBuffered = zmin - bufferLength;
   REAL zmaxBuffered = zmax + bufferLength;
 
   // Create an linearly spaced array of x/zcoords from x/zminBuffered to x/zmaxBuffered
+  createCoords<dim>(vmin, vmax, spaceInterval, numLayers, xCoord, yCoord, zCoord);
   std::vector<REAL> xCoords = 
     util::linspaceApprox<REAL>(xminBuffered, xmaxBuffered, spaceInterval);
   std::vector<REAL> zCoords = 
@@ -172,6 +173,36 @@ SmoothParticleHydro::generateSPHParticle2D(const dem::Box& allContainer,
 
 } // generateSPHParticle2D
 
+template <>
+REAL 
+SmoothParticleHydro::computeMass<2>(const double& density, const double& length, 
+                                    const double& numPts)
+{
+  auto L_over_N = length/numPts;
+  return density*L_over_N*L_over_N;
+}
+
+template <>
+REAL 
+SmoothParticleHydro::computeMass<3>(const double& density, const double& length, 
+                                    const double& numPts)
+{
+  auto L_over_N = length/numPts;
+  return density*L_over_N*L_over_N*L_over_N;
+}
+
+template <>
+void 
+SmoothParticleHydro::createCoords<2>(const Vec& vmin, const Vec& vmax, 
+                                     const REAL& spaceInterval, 
+                                     const int& numLayers, 
+                                     std::vector<REAL>& xCoord, 
+                                     std::vector<REAL>& yCoord, 
+                                     std::vector<REAL>& zCoord)
+{
+
+}
+
   // here the free particles, ghost particles and boundary particles will all stored in the same vector
   // unlike the implementation in serial version.
   void SmoothParticleHydro::generateSPHParticle3D(){
@@ -193,12 +224,12 @@ SmoothParticleHydro::generateSPHParticle2D(const dem::Box& allContainer,
   // get the dimensions of the sph domain
       Vec vmin = allContainer.getMinCorner();
       Vec vmax = allContainer.getMaxCorner();
-      REAL xmin = vmin.getX();
-      REAL ymin = vmin.getY();
-      REAL zmin = vmin.getZ();
-      REAL xmax = vmax.getX();
-      REAL ymax = vmax.getY();
-      REAL zmax = vmax.getZ();
+      REAL xmin = vmin.x();
+      REAL ymin = vmin.y();
+      REAL zmin = vmin.z();
+      REAL xmax = vmax.x();
+      REAL ymax = vmax.y();
+      REAL zmax = vmax.z();
 
   // create and store PeriParticle objects into periParticleVec
   int isGhost = 0;  // is Ghost particle

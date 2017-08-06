@@ -142,6 +142,7 @@ add_subdirectory(Boundary)
 add_subdirectory(DiscreteElements)
 add_subdirectory(FluidDynamics)
 add_subdirectory(Peridynamics)
+add_subdirectory(SmoothParticleHydro)
 add_subdirectory(Simulations)
 
 add_library(ELLIP3D_LIB 

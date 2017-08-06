@@ -58,6 +58,22 @@ public:
 
   inline void setGrid(dem::Box cont) { d_sphGrid = cont; }
 
+  template <int dim>
+  void generateSPHParticle(const dem::Box& allContainer,
+                           dem::DEMParticlePArray& allDEMParticles);
+                          
+  template <int dim>
+  REAL computeMass(const double& density, const double& length, 
+                   const double& numPts);
+
+  template <int dim>
+  void createCoords(const Vec& vmin, const Vec& vmax, const REAL& spaceInterval, 
+                    const int& numLayers, 
+                    std::vector<REAL>& xCoord, 
+                    std::vector<REAL>& yCoord, 
+                    std::vector<REAL>& zCoord);
+
+  /*
   // Scatter the sphdynamics particles
   void scatterSPHParticle(const dem::Box& allContainer);
 
@@ -129,6 +145,7 @@ public:
   void printSPHDomain(const std::string&) const;
   void printRecvSPHDomain(const std::string&) const;
   void printSPHParticle(const std::string& str) const;
+  */
 
 private:
 

@@ -1,116 +1,137 @@
 // Function Definitions
-#include "SPHParticle.h"
-#include "Particle.h"
+#include <SmoothParticleHydro/SPHParticle.h>
+#include <DiscreteElements/DEMParticle.h>
+#include <Core/Util/Utility.h>
 
-namespace sph {
+using namespace sph;
 
-    SPHParticle::SPHParticle()
-	: mass(0), density(0), volume(0), pressure(0), mu(0), densityDot(0),
-	  initial_X(0), curr_x(0), velocity(0), velocityDot(0), local_X(0), type(0) {}
+SPHParticle::SPHParticle()
+  : d_id(0), d_mass(0), d_density(0), d_volume(0), d_pressure(0), d_mu(0), 
+    d_densityDot(0), d_initialPos(0), d_currPos(0), d_velocity(0), 
+    d_acceleration(0), d_velocityCorrection(0),
+    d_localCoords(0), d_type(SPHParticleType::NONE) 
+{
+  d_demParticle = nullptr;
+}
 
-    SPHParticle::SPHParticle(REAL m, REAL rho, REAL x, REAL y, REAL z, int t){
-	mass = m;
-    	density = rho;
-    	volume = mass/density;
-//    	pressure = dem::P0*(std::pow(density/dem::SPHInitialDensity, dem::gamma)-1);
-   	pressure = dem::Parameter::getSingleton().parameter["P0"]*(std::pow(density/dem::Parameter::getSingleton().parameter["SPHInitialDensity"], dem::Parameter::getSingleton().parameter["gamma"])-1);;
-    	mu = density*dem::Parameter::getSingleton().parameter["nu"];
-    	densityDot = 0;
+SPHParticle::SPHParticle(ParticleID id,
+                         REAL mass, REAL rho, REAL x, REAL y, REAL z, 
+                         const dem::Vec& local, SPHParticleType type)
+{
+  // Check whether the correct constructor has been called
+  if (type != SPHParticleType::FREE && type != SPHParticleType::GHOST && 
+      type != SPHParticleType::BOUNDARY) {
+    std::cout << "Type of current SPH particle is " << static_cast<int>(type) << "\n"
+              << "Type should be one of: 1: Free particle, "
+              << " 2: Ghost particle, 3: Boundary particle."
+              << " Error in creating SPH free/ghost/boundary particle!" << std::endl;
+    exit(-1);
+  }
 
-    	initial_X = dem::Vec(x,y,z);
-	curr_x = initial_X;
-    	velocity = 0;
-    	velocityDot = 0;
+  d_id = id;
+  d_mass = mass;
+  d_density = rho;
+  d_initialPos = dem::Vec(x, y, z);
 
-	local_X = 0;	// free SPH point
-	
-	if(t!=1 && t!=3){
-	    std::cout << "Error in creating SPH free/boundary particle!" << std::endl;
-	    exit(-1);
-	}
-	type = t;
-	demParticle = NULL;
-	
-    } // end SPHParticle()
+  initialize();
 
-    SPHParticle::SPHParticle(REAL m, REAL rho, REAL x, REAL y, REAL z, dem::Vec local, int t){
-	mass = m;
-    	density = rho;
-    	volume = mass/density;
-//    	pressure = dem::P0*(std::pow(density/dem::SPHInitialDensity, dem::gamma)-1);
-    	pressure = dem::Parameter::getSingleton().parameter["P0"]*(std::pow(density/dem::Parameter::getSingleton().parameter["SPHInitialDensity"], dem::Parameter::getSingleton().parameter["gamma"])-1);
-    	mu = density*dem::Parameter::getSingleton().parameter["nu"];
-    	densityDot = 0;
+  if (type == SPHParticleType::GHOST) {
+    d_localCoords = local; // Ghost SPH point
+  } else {
+    d_localCoords = 0;	// free or boundary SPH point
+  }
+  
+  d_type = type;
+  d_demParticle = nullptr;
+  
+} // end SPHParticle()
 
-    	initial_X = dem::Vec(x,y,z);
-	curr_x = initial_X;
-    	velocity = 0;
-    	velocityDot = 0;
+void 
+SPHParticle::initialize()
+{
+  d_volume = calculateVolume();
+  d_pressure = calculatePressure();
+  d_mu = calculateViscosity();
+  d_densityDot = 0;
 
-	local_X = local;	// ghost SPH point
+  d_currPos = d_initialPos;
+  d_velocity = 0;
+  d_acceleration = 0;
+  d_velocityCorrection = 0;
+} // end initial()
 
-	if(t!=2){
-	    std::cout << "Error in creating ghost SPH particle!" << std::endl;
-	    exit(-1);
-	}
-	type = 2;
-	demParticle = NULL;
-	
-    } // end SPHParticle()
-	
-    void SPHParticle::initial(){
+REAL
+SPHParticle::calculatePressure()
+{
+  // Material constants
+  REAL initialPressure = util::getParam<REAL>("P0");
+  REAL initialDensity = util::getParam<REAL>("SPHInitialDensity");
+  REAL gamma = util::getParam<REAL>("gamma");
+  return initialPressure*(std::pow(d_density/initialDensity, gamma)-1);
+}
 
-    	volume = mass/density;
-//    	pressure = dem::P0*(std::pow(density/dem::SPHInitialDensity, dem::gamma)-1);
-    	pressure = dem::Parameter::getSingleton().parameter["P0"]*(std::pow(density/dem::Parameter::getSingleton().parameter["SPHInitialDensity"], dem::Parameter::getSingleton().parameter["gamma"])-1);
-    	mu = density*dem::Parameter::getSingleton().parameter["nu"];
-    	densityDot = 0;
+REAL
+SPHParticle::calculateViscosity()
+{
+  // Material constants
+  REAL kinematicViscosity = util::getParam<REAL>("nu");
+  return d_density*kinematicViscosity;
+}
 
-	curr_x = initial_X;
-    	velocity = 0;
-    	velocityDot = 0;
+// return the trial position, used for the boundary handling model 
+// based on momentum conservation
+dem::Vec 
+SPHParticle::getTrialPosition() const 
+{
+  REAL timeStep = util::getParam<REAL>("timeStep");
+  return d_currPos + d_velocity*timeStep;	
+}
 
-    } // end initial()
+// here the forward Euler time integration is used
+void 
+SPHParticle::update()
+{	
+  REAL delT = util::getParam<REAL>("timeStep");
+  REAL dampingCoeff = util::getParam<REAL>("sphDamping");
+  updateDensity(delT);
+  updateVelocity(delT);
+  d_velocity -= d_velocity*dampingCoeff;
+  updatePosition(delT);
+} // end update()
 
-    void SPHParticle::updateParticle(){	// here the forward Euler time integration is used
+// here the forward Euler time integration is used
+void 
+SPHParticle::updateDensity(const REAL& delT)
+{	
+  d_density += d_densityDot*delT;
+} 
 
-//if(fabs(densityDot)>100){
-//    densityDot = 0.1*densityDot;
-//}
-	density = density+densityDot*(dem::Parameter::getSingleton().parameter["timeStep"]);
-	velocity = velocity+velocityDot*(dem::Parameter::getSingleton().parameter["timeStep"])-(dem::Parameter::getSingleton().parameter["sphDamping"])*velocity;
-	curr_x = curr_x+(velocity+velocityCorrection)*(dem::Parameter::getSingleton().parameter["timeStep"]);
-//	curr_x = curr_x+velocity*(dem::Parameter::getSingleton().parameter["timeStep"]);
+void 
+SPHParticle::updatePosition(const REAL& delT)
+{	
+  d_currPos += (d_velocity + d_velocityCorrection)*delT;
+} 
 
-    } // end updateParticle()
+// update position and d_density based on equation (4.1)
+void 
+SPHParticle::updatePositionDensityLeapFrog(const REAL& delT)
+{	
+  updatePosition(delT);
+  updateDensity(delT);
+}
 
-    void SPHParticle::updateParticleDensity(){	// here the forward Euler time integration is used
+// update d_velocity based on equation (4.2)
+void 
+SPHParticle::updateVelocity(const REAL& delT)
+{	
+  d_velocity += d_acceleration*delT;
+} 
 
-	density = density+densityDot*(dem::Parameter::getSingleton().parameter["timeStep"]);
+// update d_velocity based on equation (4.3)
+void 
+SPHParticle::initialVelocityLeapFrog(const REAL& delT)
+{	
+  updateVelocity(delT*0.5);
+} 
 
-    } // end updateParticle()
-
-
-    void SPHParticle::updateParticlePositionDensityLeapFrog(){	// update position and density based on equation (4.1)
-
-	curr_x = curr_x+(velocity+velocityCorrection)*(dem::Parameter::getSingleton().parameter["timeStep"]);
-	density = density+densityDot*(dem::Parameter::getSingleton().parameter["timeStep"]);
-
-    } // end updateParticlePositionDensityLeapFrog()
-
-    void SPHParticle::updateParticleVelocityLeapFrog(){	// update velocity based on equation (4.2)
-
-	velocity = velocity+velocityDot*(dem::Parameter::getSingleton().parameter["timeStep"]);
-
-    } // end updateParticleVelocityLeapFrog()
-
-    void SPHParticle::initialParticleVelocityLeapFrog(){	// update velocity based on equation (4.3)
-
-	velocity = velocity+velocityDot*(dem::Parameter::getSingleton().parameter["timeStep"])*0.5;
-
-    } // end initialParticleVelocityLeapFrog()
-
-
-
-} // end namespace sph
 
