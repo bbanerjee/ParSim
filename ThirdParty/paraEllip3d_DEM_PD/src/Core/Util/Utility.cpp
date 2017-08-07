@@ -100,7 +100,7 @@ getParam(const std::string str)
 template <typename T>
 std::vector<T> linspaceApprox(const T& low, const T& high, T spacing)
 {
-  int numSpaces = (spacing <= 0) ? 1 : static_cast<int>((high - low)/spacing);
+  int numSpaces = (spacing <= 0) ? 1 : round((high - low)/spacing);
   int numPoints = (numSpaces <= 1) ? 2 : numSpaces+1;
   std::vector<T> output(numPoints, static_cast<T>(0));
   if (numPoints == 2) {
@@ -110,9 +110,11 @@ std::vector<T> linspaceApprox(const T& low, const T& high, T spacing)
     for (int ii = 0; ii < numPoints; ii++) {
       output[ii] = low + static_cast<T>(ii*spacing);
     }
+    /*
     if (output[numPoints-1] < high) {
       output.push_back(high);
     }
+    */
   }
   return output;
 }

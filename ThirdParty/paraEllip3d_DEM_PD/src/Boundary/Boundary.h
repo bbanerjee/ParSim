@@ -40,7 +40,7 @@ protected:
   EdgeCount b_extraNum;
   EdgeArray b_extraEdge;
 
-  ParticlePArray possParticle;
+  DEMParticlePArray possParticle;
   BoundaryContactArray contactInfo;
   ContactCount contactNum;
   Vec normal;
@@ -82,7 +82,7 @@ public:
 
   BoundaryId getId() { return b_id; }
   BoundaryType getType() { return b_type; }
-  ParticlePArray& getPossParticle() { return possParticle; }
+  DEMParticlePArray& getPossParticle() { return possParticle; }
   BoundaryContactArray& getContactInfo() { return contactInfo; }
   ContactCount getContactNum() const { return contactNum; }
   Vec getNormalForce() const { return normal; }
@@ -91,7 +91,7 @@ public:
 
   virtual void print(std::ostream& os);
   virtual void printContactInfo(std::ostream& os);
-  virtual void findBdryContact(ParticlePArray& ptcls) = 0;
+  virtual void findBdryContact(DEMParticlePArray& ptcls) = 0;
   virtual void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) = 0;
   virtual void updateStatForce();
   void clearStatForce();

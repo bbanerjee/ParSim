@@ -13,7 +13,7 @@ using namespace dem;
 void
 DEMParticleFileReader::read(const std::string& fileName, const REAL& youngModulus,
                          const REAL& poissonRatio, bool doInitialize,
-                         ParticlePArray& particles, Gradation& gradation)
+                         DEMParticlePArray& particles, Gradation& gradation)
 {
   d_youngModulus = youngModulus;
   d_poissonRatio = poissonRatio;
@@ -36,7 +36,7 @@ DEMParticleFileReader::read(const std::string& fileName, const REAL& youngModulu
  */
 void
 DEMParticleFileReader::readParticlesText(const std::string& inputParticle,
-                                      ParticlePArray& allParticleVec,
+                                      DEMParticlePArray& allParticleVec,
                                       Gradation& gradation) const
 {
   std::ifstream ifs(inputParticle);
@@ -67,7 +67,7 @@ DEMParticleFileReader::readParticlesText(const std::string& inputParticle,
       dbx >> dby >> dbz >> dcx >> dcy >> dcz >> vx >> vy >> vz >> omx >> omy >>
       omz >> fx >> fy >> fz >> mx >> my >> mz;
 
-    ParticleP pt = std::make_shared<DEMParticle>(
+    DEMParticleP pt = std::make_shared<DEMParticle>(
       id, type, Vec(a, b, c), Vec(px, py, pz), Vec(dax, day, daz),
       Vec(dbx, dby, dbz), Vec(dcx, dcy, dcz), d_youngModulus, d_poissonRatio);
 
@@ -102,7 +102,7 @@ DEMParticleFileReader::readParticlesText(const std::string& inputParticle,
 
 bool
 DEMParticleFileReader::readParticlesXML(const std::string& inputFileName,
-                                     ParticlePArray& allParticleVec,
+                                     DEMParticlePArray& allParticleVec,
                                      Gradation& gradation) const
 {
   // Read the input file
@@ -189,7 +189,7 @@ DEMParticleFileReader::readParticlesXML(const std::string& inputFileName,
       // **TODO** Assign type num using particleType
       std::size_t particleTypeNum = 0;
       for (std::size_t ii = 0; ii < numParticles; ++ii) {
-        ParticleP pt = std::make_shared<DEMParticle>(
+        DEMParticleP pt = std::make_shared<DEMParticle>(
           particleIDs[ii], particleTypeNum, particleRadii[ii], particlePos[ii],
           particleAxleA[ii], particleAxleB[ii], particleAxleC[ii],
           d_youngModulus, d_poissonRatio);

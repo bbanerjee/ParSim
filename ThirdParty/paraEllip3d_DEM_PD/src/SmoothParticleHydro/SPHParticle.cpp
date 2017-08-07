@@ -20,10 +20,10 @@ SPHParticle::SPHParticle(ParticleID id,
 {
   // Check whether the correct constructor has been called
   if (type != SPHParticleType::FREE && type != SPHParticleType::GHOST && 
-      type != SPHParticleType::BOUNDARY) {
+      type != SPHParticleType::BOUNDARY && type != SPHParticleType::NONE) {
     std::cout << "Type of current SPH particle is " << static_cast<int>(type) << "\n"
               << "Type should be one of: 1: Free particle, "
-              << " 2: Ghost particle, 3: Boundary particle."
+              << " 2: Ghost particle, 3: Boundary particle, 4: None."
               << " Error in creating SPH free/ghost/boundary particle!" << std::endl;
     exit(-1);
   }
@@ -134,4 +134,68 @@ SPHParticle::initialVelocityLeapFrog(const REAL& delT)
   updateVelocity(delT*0.5);
 } 
 
+template <>
+bool 
+SPHParticle::isInsideDEMParticle<2>(const REAL& kernelSize,
+                                    const dem::DEMParticleP& dem_particle,
+                                    dem::Vec& localCoord,
+                                    bool& insideGhostLayer)
+{
+  dem::Vec sph_pos = d_initialPos;
+  sph_pos.setY(0);
+  dem::Vec dem_pos = dem_particle->currentPosition();
+  dem_pos.setY(0);
+  return  dem_particle->containsPoint(sph_pos, dem_pos, 
+                                      kernelSize, localCoord,
+                                      insideGhostLayer);
+}
 
+template <>
+bool 
+SPHParticle::isInsideDEMParticle<3>(const REAL& kernelSize,
+                                    const dem::DEMParticleP& dem_particle,
+                                    dem::Vec& localCoord,
+                                    bool& insideGhostLayer)
+{
+  dem::Vec sph_pos = d_initialPos;
+  dem::Vec dem_pos = dem_particle->currentPosition();
+  return dem_particle->containsPoint(sph_pos, dem_pos, 
+                                     kernelSize, localCoord,
+                                     insideGhostLayer);
+}
+
+template <>
+bool 
+SPHParticle::isOutsideDomain<2>(const REAL& bufferLength,
+                                const dem::Vec& minCorner,
+                                const dem::Vec& maxCorner)
+{
+  REAL xminBoundary = minCorner.x() - bufferLength;
+  REAL xmaxBoundary = maxCorner.x() + bufferLength;
+  REAL zminBoundary = minCorner.z() - bufferLength;
+  REAL zmaxBoundary = maxCorner.z() + bufferLength;
+  dem::Box domain(xminBoundary, 0, zminBoundary, 
+                  xmaxBoundary, 0, zmaxBoundary);
+
+  if (domain.outside(d_initialPos)) return true;
+  return false;
+}
+
+template <>
+bool 
+SPHParticle::isOutsideDomain<3>(const REAL& bufferLength,
+                                const dem::Vec& minCorner,
+                                const dem::Vec& maxCorner)
+{
+  REAL xminBoundary = minCorner.x() - bufferLength;
+  REAL xmaxBoundary = maxCorner.x() + bufferLength;
+  REAL yminBoundary = minCorner.y() - bufferLength;
+  REAL ymaxBoundary = maxCorner.y() + bufferLength;
+  REAL zminBoundary = minCorner.z() - bufferLength;
+  REAL zmaxBoundary = maxCorner.z() + bufferLength;
+  dem::Box domain(xminBoundary, yminBoundary, zminBoundary, 
+                  xmaxBoundary, ymaxBoundary, zmaxBoundary);
+
+  if (domain.outside(d_initialPos)) return true;
+  return false;
+}

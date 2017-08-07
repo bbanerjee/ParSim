@@ -28,11 +28,11 @@ set(TEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
 #--------------------------------------
-# SPHParticle
+# DEMParticle
 #--------------------------------------
-add_executable(testSPHParticle testSPHParticle.cpp)
+add_executable(testDEMParticle testDEMParticle.cpp)
 
-target_link_libraries(testSPHParticle
+target_link_libraries(testDEMParticle
   ${TEST_LIB}
   ELLIP3D_LIB
   ${MPI_LIBRARY}
@@ -41,28 +41,7 @@ target_link_libraries(testSPHParticle
   ${ZLIB_LIBRARIES}
 )
 
-set(UNIT_TEST testSPHParticle)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
-
-#--------------------------------------
-# SmoothParticleHydro
-#--------------------------------------
-add_executable(testSPH testSPH.cpp)
-
-target_link_libraries(testSPH
-  ${TEST_LIB}
-  ELLIP3D_LIB
-  ${MPI_LIBRARY}
-  ${Boost_LIBRARIES}
-  ${VTK_LIBRARIES}
-  ${ZLIB_LIBRARIES}
-)
-
-set(UNIT_TEST testSPH)
+set(UNIT_TEST testDEMParticle)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD

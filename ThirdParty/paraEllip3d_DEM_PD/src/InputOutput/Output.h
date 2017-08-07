@@ -53,12 +53,12 @@ public:
 
   virtual void setDomain(const Box* domain) {};
   virtual void setGrid(const Box* grid) {};
-  virtual void setParticles(const ParticlePArray* particles) {};
+  virtual void setParticles(const DEMParticlePArray* particles) {};
   virtual void setParticles(const pd::PeriParticlePArray* particles) {};
 
   virtual void writeDomain(const Box* domain) {};
   virtual void writeGrid(const Box* grid) {};
-  virtual void writeParticles(const ParticlePArray* particles, int frame) {};
+  virtual void writeParticles(const DEMParticlePArray* particles, int frame) {};
   virtual void writeParticles(const pd::PeriParticlePArray* particles, int frame) {};
   virtual void writeSieves(const Gradation* gradation) {};
 

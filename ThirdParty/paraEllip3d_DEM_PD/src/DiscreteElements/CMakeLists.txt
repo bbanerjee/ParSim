@@ -34,3 +34,5 @@ SET(ELLIP3D_SRCS
   ${DEM_SRCS}
   PARENT_SCOPE
 )
+
+add_subdirectory(UnitTests)

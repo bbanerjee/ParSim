@@ -1163,4 +1163,39 @@ DEMParticle::recordFluidGrid(std::size_t i, std::size_t j, std::size_t k,
   d_fluidGrid.push_back(vec);
 }
 
+bool 
+DEMParticle::containsPoint(const dem::Vec& point,
+                           const dem::Vec& dem_pos,
+                           const REAL& bufferLength,
+                           dem::Vec& localCoord,
+                           bool& insideGhostLayer) const
+{
+  REAL radius_a = d_a;
+  REAL radius_b = d_b;
+  REAL radius_c = d_c;
+  REAL inner_a = d_a - (bufferLength < 0 ? 0 : bufferLength); 
+  REAL inner_b = d_b - (bufferLength < 0 ? 0 : bufferLength); 
+  REAL inner_c = d_c - (bufferLength < 0 ? 0 : bufferLength);
+
+  localCoord = globalToLocal(point - dem_pos);
+  REAL outer_x = localCoord.x()/radius_a;
+  REAL outer_y = localCoord.y()/radius_b;
+  REAL outer_z = localCoord.z()/radius_c;
+  REAL inner_x = localCoord.x()/(inner_a + 1.0e-20);
+  REAL inner_y = localCoord.y()/(inner_b + 1.0e-20);
+  REAL inner_z = localCoord.z()/(inner_c + 1.0e-20);
+
+  REAL outer_rad_sq = outer_x*outer_x + outer_y*outer_y + outer_z*outer_z;
+  REAL inner_rad_sq = inner_x*inner_x + inner_y*inner_y + inner_z*inner_z;
+
+  insideGhostLayer = false;
+  if (outer_rad_sq <= 1) {
+    if (inner_rad_sq > 1 || inner_a <= 0 || inner_b <= 0 || inner_c <= 0) {
+      insideGhostLayer = true;
+    }
+    return true;
+  }
+  return false;
+}
+
 } // namespace dem ends

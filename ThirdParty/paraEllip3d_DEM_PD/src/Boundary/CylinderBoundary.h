@@ -76,7 +76,7 @@ public:
        << std::endl;
   }
 
-  void findBdryContact(ParticlePArray& ptcls) override;
+  void findBdryContact(DEMParticlePArray& ptcls) override;
   void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) override;
 };
 

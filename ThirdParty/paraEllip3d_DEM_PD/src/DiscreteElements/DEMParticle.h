@@ -201,6 +201,14 @@ public:
                        REAL volFrac);
   std::vector<std::vector<REAL>>& getFluidGrid() { return d_fluidGrid; }
 
+  // Check if the DEM particle contains a point + buffer
+  // and returns a local coordinate of the point
+  bool containsPoint(const dem::Vec& point,
+                     const dem::Vec& dem_point,
+                     const REAL& bufferLength,
+                     dem::Vec& localCoord,
+                     bool& insideGhostLayer) const;
+
 private:
   void init();
 

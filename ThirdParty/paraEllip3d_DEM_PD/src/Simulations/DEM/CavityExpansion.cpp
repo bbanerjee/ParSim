@@ -18,7 +18,7 @@ CavityExpansion::execute(DiscreteElements* dem)
     REAL y2 = util::getParam<REAL>("cavityMaxY");
     REAL z2 = util::getParam<REAL>("cavityMaxZ");
 
-    ParticlePArray cavityParticleVec;
+    DEMParticlePArray cavityParticleVec;
     Vec center;
 
     for (const auto& it : dem->getAllParticleVec()) {

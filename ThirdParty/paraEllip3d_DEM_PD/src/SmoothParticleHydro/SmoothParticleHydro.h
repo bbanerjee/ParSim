@@ -5,6 +5,7 @@
 #include <SmoothParticleHydro/SPHParticle.h>
 #include <Core/Parallel/Patch.h>
 #include <InputOutput/Output.h>
+#include <fstream>
 
 #ifndef isProc0_macro
   #define isProc0_macro ( sph::SmoothParticleHydro::getMPIRank() == 0 )
@@ -29,6 +30,10 @@ public:
   inline boost::mpi::communicator getMPIWorld() const { return d_boostWorld; }
 
   // Accessor methods
+  inline const SPHParticlePArray& getAllSPHParticleVec() const
+  {
+    return allSPHParticleVec;
+  }
   inline const SPHParticlePArray& getSPHParticleVec() const
   {
     return sphParticleVec;
@@ -63,14 +68,22 @@ public:
                           
   template <int dim>
   REAL computeMass(const double& density, const double& length, 
-                   const double& numPts);
+                   const std::size_t& numPts) const;
 
   template <int dim>
-  void createCoords(const Vec& vmin, const Vec& vmax, const REAL& spaceInterval, 
+  void createCoords(const dem::Vec& vmin, const dem::Vec& vmax, 
+                    const REAL& spaceInterval, 
                     const int& numLayers, 
-                    std::vector<REAL>& xCoord, 
-                    std::vector<REAL>& yCoord, 
-                    std::vector<REAL>& zCoord);
+                    std::vector<REAL>& xCoords, 
+                    std::vector<REAL>& yCoords, 
+                    std::vector<REAL>& zCoords) const;
+
+  template <int dim>
+  void createParticleArray(const REAL& mass,
+                           const REAL& density,
+                           const std::vector<REAL>& xCoords,
+                           const std::vector<REAL>& yCoords,
+                           const std::vector<REAL>& zCoords);
 
   /*
   // Scatter the sphdynamics particles
@@ -115,11 +128,11 @@ public:
   // delete those sph-points that are inside dem particles or vice versa
   // depending on the removeSPHParticles flag (if false DEM particles
   // are removed)
-  void removeOverlappingParticles(dem::ParticlePArray& particles,
+  void removeOverlappingParticles(dem::DEMParticlePArray& particles,
                                   bool removeSPHParticles = true);     
 
-  void removeInsideSPHParticles(const dem::ParticlePArray& particles);
-  void removeInsideDEMParticles(dem::ParticlePArray& particles) const;     
+  void removeInsideSPHParticles(const dem::DEMParticlePArray& particles);
+  void removeInsideDEMParticles(dem::DEMParticlePArray& particles) const;     
 
   //-------------------------------------------------------------
   // Output
@@ -181,6 +194,7 @@ private:
   // coordinates of all the particles in this cpu, local 
   // sph-points in current cpu
   SPHParticlePArray sphParticleVec; 
+  SPHParticlePArray ghostSPHParticleVec; 
 
   SPHParticlePArray recvSPHParticleVec;
   SPHParticlePArray mergeSPHParticleVec;

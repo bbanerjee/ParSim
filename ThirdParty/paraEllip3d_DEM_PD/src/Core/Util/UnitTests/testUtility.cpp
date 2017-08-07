@@ -209,7 +209,6 @@ TEST(LinspaceTest, REALLinspace6) {
   EXPECT_DOUBLE_EQ(vec[0], -1);
   EXPECT_DOUBLE_EQ(vec[1], 1.6);
   EXPECT_DOUBLE_EQ(vec[2], 4.2);
-  EXPECT_DOUBLE_EQ(vec[3], 5);
 
   int numSpaces = 3;
   vec = util::linspace<REAL>(low, high, numSpaces);
@@ -217,4 +216,12 @@ TEST(LinspaceTest, REALLinspace6) {
   EXPECT_DOUBLE_EQ(vec[1], 1);
   EXPECT_DOUBLE_EQ(vec[2], 3);
   EXPECT_DOUBLE_EQ(vec[3], 5);
+
+  low = 0;
+  high = 1.4;
+  rspacing = 0.2;
+  vec = util::linspaceApprox<REAL>(low, high, rspacing);
+  EXPECT_EQ(vec.size(), 8);
+  EXPECT_DOUBLE_EQ(vec[0], 0);
+  EXPECT_NEAR(vec[7], 1.4, 1.0e-6);
 }

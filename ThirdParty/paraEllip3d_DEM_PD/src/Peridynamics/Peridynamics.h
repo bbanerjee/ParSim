@@ -125,7 +125,7 @@ public:
   void findRecvPeriBonds(); 
 
   // find sand-peri bonds in each cpu, i.e. periParticleVec and ParticleVec
-  void findPeriDEMBonds(dem::ParticlePArray mergeParticles);  
+  void findPeriDEMBonds(dem::DEMParticlePArray mergeParticles);  
 
   void clearPeriDEMBonds();
   void eraseBrokenPeriDEMBonds();
@@ -194,11 +194,11 @@ public:
   // delete those peri-points that are inside dem particles or vice versa
   // depending on the removePeriParticles flag (if false DEM particles
   // are removed)
-  void removeOverlappingParticles(dem::ParticlePArray& particles,
+  void removeOverlappingParticles(dem::DEMParticlePArray& particles,
                                   bool removePeriParticles = true);     
 
-  void removeInsidePeriParticles(const dem::ParticlePArray& particles);
-  void removeInsideDEMParticles(dem::ParticlePArray& particles) const;     
+  void removeInsidePeriParticles(const dem::DEMParticlePArray& particles);
+  void removeInsideDEMParticles(dem::DEMParticlePArray& particles) const;     
 
   // construct boundary bonds, sand bonds, July 14, 2014
   void constructBoundarySandPeriBonds(); 

@@ -8,7 +8,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
   Box allContainer = dem->getAllContainer();
   Gradation gradation = dem->getGradation();
   Fluid fluid = dem->getFluid();
-  ParticlePArray particleVec = dem->getParticleVec();
+  DEMParticlePArray particleVec = dem->getParticleVec();
 
   std::ofstream progressInf;
   std::ofstream particleInf;

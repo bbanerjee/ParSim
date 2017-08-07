@@ -142,9 +142,9 @@ public:
   void inteStep2();
   void inteStep3();
 
-  void getParticleInfo(ParticlePArray& ptcls);
+  void getParticleInfo(DEMParticlePArray& ptcls);
   void runOneStep();
-  void calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs);
+  void calcParticleForce(DEMParticlePArray& ptcls, std::ofstream& ofs);
   void penalize();
   void plot(const std::string&) const;
 };

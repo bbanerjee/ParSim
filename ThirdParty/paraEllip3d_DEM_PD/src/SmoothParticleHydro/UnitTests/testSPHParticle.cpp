@@ -1,4 +1,5 @@
 #include <SmoothParticleHydro/SPHParticle.h>
+#include <DiscreteElements/DEMParticle.h>
 #include <Core/Util/Utility.h>
 #include <InputOutput/InputParameter.h>
 #include <gtest/gtest.h>
@@ -48,5 +49,99 @@ TEST(SPHParticleTest, construction1) {
   EXPECT_DOUBLE_EQ(particle.getVelocity().z(), 0);
   EXPECT_EQ(particle.getDEMParticle(), nullptr);
   EXPECT_EQ(particle.getType(), SPHParticleType::FREE);
+
+}
+
+TEST(SPHParticleTest, insideDEMParticle) {
+
+  SPHParticle particle;
+  particle.setInitialPos(dem::Vec(0,0,0));
+
+  
+  dem::DEMParticleP dem_particle = std::make_shared<dem::DEMParticle>();
+
+  REAL a = 1;
+  REAL b = 1;
+  REAL c = 1;
+  
+  dem::Vec adir(0, dem::Pi/2, dem::Pi/2);
+  dem::Vec bdir(dem::Pi/2, 0, dem::Pi/2);
+  dem::Vec cdir(dem::Pi/2, dem::Pi/2, 0);
+
+  dem::Vec pos(0,0,0);
+
+  dem_particle->setA(a);
+  dem_particle->setB(b);
+  dem_particle->setC(c);
+
+  dem_particle->setCurrPos(pos);
+
+  dem_particle->setCurrDirecA(adir);
+  dem_particle->setCurrDirecB(bdir);
+  dem_particle->setCurrDirecC(cdir);
+
+  REAL buffer = 0;
+  dem::Vec localCoord = 0;
+  bool inside = false;
+  bool insideGhostLayer = false;
+
+  buffer = -a;
+  particle.setInitialPos(dem::Vec(0.5*a, 0, 0));
+  inside = particle.isInsideDEMParticle<2>(buffer, dem_particle, localCoord, insideGhostLayer);
+  EXPECT_EQ(inside, true);
+  EXPECT_EQ(insideGhostLayer, false);
+
+  buffer = 0;
+  particle.setInitialPos(dem::Vec(0, a, 0));
+  inside = particle.isInsideDEMParticle<3>(buffer, dem_particle, localCoord, insideGhostLayer);
+  EXPECT_EQ(inside, true);
+  EXPECT_EQ(insideGhostLayer, false);
+
+  buffer = a;
+  particle.setInitialPos(dem::Vec(0, 0, 2.0*a));
+  inside = particle.isInsideDEMParticle<2>(buffer, dem_particle, localCoord, insideGhostLayer);
+  EXPECT_EQ(inside, false);
+  EXPECT_EQ(insideGhostLayer, false);
+
+  buffer = 2*a;
+  particle.setInitialPos(dem::Vec(0, 0, 2.0*a));
+  inside = particle.isInsideDEMParticle<3>(buffer, dem_particle, localCoord, insideGhostLayer);
+  EXPECT_EQ(inside, false);
+  EXPECT_EQ(insideGhostLayer, false);
+
+  buffer = 0.2*a;
+  particle.setInitialPos(dem::Vec(0.9*a, 0, 0));
+  inside = particle.isInsideDEMParticle<2>(buffer, dem_particle, localCoord, insideGhostLayer);
+  EXPECT_EQ(inside, true);
+  EXPECT_EQ(insideGhostLayer, true);
+
+  particle.setInitialPos(dem::Vec(0, 0.9*a, 0));
+  inside = particle.isInsideDEMParticle<3>(buffer, dem_particle, localCoord, insideGhostLayer);
+  EXPECT_EQ(inside, true);
+  EXPECT_EQ(insideGhostLayer, true);
+
+  particle.setInitialPos(dem::Vec(0, 0, 0.9*a));
+  inside = particle.isInsideDEMParticle<2>(buffer, dem_particle, localCoord, insideGhostLayer);
+  EXPECT_EQ(inside, true);
+  EXPECT_EQ(insideGhostLayer, true);
+
+  buffer = 0.3*a;
+  particle.setInitialPos(dem::Vec(0.81*a*cos(dem::Pi/3), 0.81*a*cos(dem::Pi/3), 0.9*a*cos(dem::Pi/3)));
+  inside = particle.isInsideDEMParticle<3>(buffer, dem_particle, localCoord, insideGhostLayer);
+  EXPECT_EQ(inside, true);
+  EXPECT_EQ(insideGhostLayer, true);
+
+  buffer = 0.3001;
+  particle.setInitialPos(dem::Vec(0.7, 0.7, 0.7));
+  inside = particle.isInsideDEMParticle<3>(buffer, dem_particle, localCoord, insideGhostLayer);
+  EXPECT_EQ(inside, false);
+  EXPECT_EQ(insideGhostLayer, false);
+
+  /*
+  std::cout << "Pt: " << point
+            << "Particle center: " << pos
+            << "LocalCoord = " << localCoord
+            << "inside = " << std::boolalpha << inside << std::endl;
+  */
 
 }

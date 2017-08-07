@@ -789,7 +789,7 @@ Fluid::WtoU()
 }
 
 void
-Fluid::getParticleInfo(ParticlePArray& ptcls)
+Fluid::getParticleInfo(DEMParticlePArray& ptcls)
 {
   for (const auto& ptcl : ptcls)
     ptcl->clearFluidGrid();
@@ -868,7 +868,7 @@ Fluid::getParticleInfo(ParticlePArray& ptcls)
 }
 
 void
-Fluid::calcParticleForce(ParticlePArray& ptcls, std::ofstream& ofs)
+Fluid::calcParticleForce(DEMParticlePArray& ptcls, std::ofstream& ofs)
 {
   // must clear forces each loop, otherwise Fluid::plot prints wrong values;
   // but Fluid::penalize works OK since it uses masks.

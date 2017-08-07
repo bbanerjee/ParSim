@@ -293,7 +293,7 @@ DiscreteElements::scatterParticle()
     //std::cout << "vspan = " << vspan << "\n";
 
     auto reqs = new boost::mpi::request[s_mpiSize - 1];
-    ParticlePArray tmpParticleVec;
+    DEMParticlePArray tmpParticleVec;
     for (int iRank = s_mpiSize - 1; iRank >= 0; --iRank) {
       tmpParticleVec.clear(); // do not release memory!
       int ndim = 3;
@@ -352,7 +352,7 @@ DiscreteElements::createPatch(int iteration, const REAL& ghostWidth)
   Vec vspan = (v2 - v1) / s_mpiProcs;
   Vec lower = v1 + vspan * s_mpiCoords;
   Vec upper = lower + vspan;
-  d_patchP = std::make_unique<Patch<ParticlePArray>>(s_cartComm, s_mpiRank, s_mpiCoords,
+  d_patchP = std::make_unique<Patch<DEMParticlePArray>>(s_cartComm, s_mpiRank, s_mpiCoords,
                                       lower, upper, ghostWidth, EPS);
   //std::ostringstream out;
   //out << "s_mpiRank = " << s_mpiRank 
@@ -666,14 +666,14 @@ DiscreteElements::commuParticle(const int& iteration)
   MPI_Cart_rank(s_cartComm, neighborCoords.data(), &rankX2Y2Z2);
 
   // if found, communicate with neighboring blocks
-  ParticlePArray particleX1, particleX2;
-  ParticlePArray particleY1, particleY2;
-  ParticlePArray particleZ1, particleZ2;
-  ParticlePArray particleX1Y1, particleX1Y2, particleX1Z1, particleX1Z2;
-  ParticlePArray particleX2Y1, particleX2Y2, particleX2Z1, particleX2Z2;
-  ParticlePArray particleY1Z1, particleY1Z2, particleY2Z1, particleY2Z2;
-  ParticlePArray particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1, particleX1Y2Z2;
-  ParticlePArray particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1, particleX2Y2Z2;
+  DEMParticlePArray particleX1, particleX2;
+  DEMParticlePArray particleY1, particleY2;
+  DEMParticlePArray particleZ1, particleZ2;
+  DEMParticlePArray particleX1Y1, particleX1Y2, particleX1Z1, particleX1Z2;
+  DEMParticlePArray particleX2Y1, particleX2Y2, particleX2Z1, particleX2Z2;
+  DEMParticlePArray particleY1Z1, particleY1Z2, particleY2Z1, particleY2Z2;
+  DEMParticlePArray particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1, particleX1Y2Z2;
+  DEMParticlePArray particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1, particleX2Y2Z2;
   boost::mpi::request reqX1[2], reqX2[2];
   boost::mpi::request reqY1[2], reqY2[2];
   boost::mpi::request reqZ1[2], reqZ2[2];
@@ -1044,7 +1044,7 @@ DiscreteElements::commuParticle(const int& iteration)
                           recvParticleVec.end());
   */
   /*
-    ParticlePArray testParticleVec;
+    DEMParticlePArray testParticleVec;
     testParticleVec.insert(testParticleVec.end(), rParticleX1.begin(),
     rParticleX1.end());
     testParticleVec.insert(testParticleVec.end(), rParticleX2.begin(),
@@ -1071,7 +1071,7 @@ DiscreteElements::commuParticle(const int& iteration)
     << " rNum="
     << std::setw(4) << recvParticleVec.size() << ": ";
 
-    for (ParticlePArray::const_iterator it = testParticleVec.begin(); it !=
+    for (DEMParticlePArray::const_iterator it = testParticleVec.begin(); it !=
     testParticleVec.end();++it)
     debugInf << (*it)->getId() << ' ';
     debugInf << std::endl;
@@ -1474,8 +1474,8 @@ DiscreteElements::updateGridMaxZ()
 
 void
 DiscreteElements::findParticleInBox(const Box& container,
-                            const ParticlePArray& allParticles,
-                            ParticlePArray& insideParticles)
+                            const DEMParticlePArray& allParticles,
+                            DEMParticlePArray& insideParticles)
 {
   insideParticles.clear();
   for (const auto& particle : allParticles) {
@@ -1489,8 +1489,8 @@ DiscreteElements::findParticleInBox(const Box& container,
 /*
 void
 DiscreteElements::findParticleInBox(const Box& container,
-                            const ParticlePArray& allParticles,
-                            ParticlePArray& insideParticles)
+                            const DEMParticlePArray& allParticles,
+                            DEMParticlePArray& insideParticles)
 {
   Vec  v1 = container.getMinCorner();
   Vec  v2 = container.getMaxCorner();
@@ -1584,7 +1584,7 @@ DiscreteElements::writeParticlesToFile(int frame) const
 }
 
 void
-DiscreteElements::writeParticlesToFile(ParticlePArray& particles, int frame) const
+DiscreteElements::writeParticlesToFile(DEMParticlePArray& particles, int frame) const
 {
   d_writer->writeParticles(&particles, frame);
 }
@@ -1592,17 +1592,17 @@ DiscreteElements::writeParticlesToFile(ParticlePArray& particles, int frame) con
 void
 DiscreteElements::printParticle(const std::string& fileName, int frame) const
 {
-  OutputTecplot<ParticlePArray> writer(".", 0);
+  OutputTecplot<DEMParticlePArray> writer(".", 0);
   writer.setParticleFileName(fileName);
   writer.writeParticles(&allParticleVec, frame);
 }
 
 void
 DiscreteElements::printParticle(const std::string& fileName, 
-                                ParticlePArray& particles,
+                                DEMParticlePArray& particles,
                                 int frame) const
 {
-  OutputTecplot<ParticlePArray> writer(".", 0);
+  OutputTecplot<DEMParticlePArray> writer(".", 0);
   writer.setParticleFileName(fileName);
   writer.writeParticles(&particles, frame);
 }
@@ -1829,14 +1829,14 @@ DiscreteElements::generateParticle(std::size_t particleLayers,
   REAL z0 = allContainer.getCenter().z();
 
   if (particleLayers == 0) { // just one free particle
-    ParticleP newptcl = std::make_shared<DEMParticle>(
+    DEMParticleP newptcl = std::make_shared<DEMParticle>(
       particleNum + 1, 0, Vec(x0, y0, z0), gradation, young, poisson);
     allParticleVec.push_back(newptcl);
     particleNum++;
   } else if (particleLayers == 1) { // a horizontal layer of free particles
     for (x = x1; x - x2 < EPS; x += diameter)
       for (y = y1; y - y2 < EPS; y += diameter) {
-        ParticleP newptcl = std::make_shared<DEMParticle>(
+        DEMParticleP newptcl = std::make_shared<DEMParticle>(
           particleNum + 1, 0, Vec(x, y, z0), gradation, young, poisson);
         allParticleVec.push_back(newptcl);
         particleNum++;
@@ -1845,7 +1845,7 @@ DiscreteElements::generateParticle(std::size_t particleLayers,
     for (z = z1; z - z2 < EPS; z += diameter) {
       for (x = x1 + offset; x - x2 < EPS; x += diameter)
         for (y = y1 + offset; y - y2 < EPS; y += diameter) {
-          ParticleP newptcl = std::make_shared<DEMParticle>(
+          DEMParticleP newptcl = std::make_shared<DEMParticle>(
             particleNum + 1, 0, Vec(x, y, z), gradation, young, poisson);
           allParticleVec.push_back(newptcl);
           particleNum++;
@@ -1881,7 +1881,7 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
   // members is not needed
   allParticleVec.erase(
     std::remove_if(allParticleVec.begin(), allParticleVec.end(),
-                   [&x1, &y1, &z1, &x2, &y2, &z2, &maxR](ParticleP particle) {
+                   [&x1, &y1, &z1, &x2, &y2, &z2, &maxR](DEMParticleP particle) {
                      Vec center = particle->currentPosition();
                      if (center.x() < x1 || center.x() > x2 ||
                          center.y() < y1 || center.y() > y2 ||
@@ -1893,7 +1893,7 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
     allParticleVec.end());
 
   /*
-  ParticlePArray::iterator itr;
+  DEMParticlePArray::iterator itr;
   Vec center;
   for (auto itr = allParticleVec.begin(); itr != allParticleVec.end(); ) {
     center=(*itr)->currentPosition();
@@ -1933,7 +1933,7 @@ DiscreteElements::removeParticleOutBox()
   particleVec.erase(
     std::remove_if(
       particleVec.begin(), particleVec.end(),
-      [&x1, &y1, &z1, &x2, &y2, &z2, &epsilon](ParticleP particle) {
+      [&x1, &y1, &z1, &x2, &y2, &z2, &epsilon](DEMParticleP particle) {
         Vec center = particle->currentPosition();
         if (!(center.x() - x1 >= -epsilon && center.x() - x2 < -epsilon &&
               center.y() - y1 >= -epsilon && center.y() - y2 < -epsilon &&
@@ -1954,7 +1954,7 @@ DiscreteElements::removeParticleOutBox()
     particleVec.end());
 
   /*
-  ParticlePArray::iterator itr;
+  DEMParticlePArray::iterator itr;
   Vec center;
   //std::size_t flag = 0;
 
@@ -1980,7 +1980,7 @@ DiscreteElements::removeParticleOutBox()
   /*
     if (flag == 1) {
     debugInf << " now " << particleVec.size() << ": ";
-    for (ParticlePArray::const_iterator it = particleVec.begin(); it !=
+    for (DEMParticlePArray::const_iterator it = particleVec.begin(); it !=
     particleVec.end(); ++it)
     debugInf << std::setw(3) << (*it)->getId();
     debugInf << std::endl;
@@ -1990,7 +1990,7 @@ DiscreteElements::removeParticleOutBox()
 
 
 REAL
-DiscreteElements::getPtclMaxX(const ParticlePArray& inputParticle) const
+DiscreteElements::getPtclMaxX(const DEMParticlePArray& inputParticle) const
 {
   if (inputParticle.size() == 0)
     return -1 / EPS;
@@ -2005,7 +2005,7 @@ DiscreteElements::getPtclMaxX(const ParticlePArray& inputParticle) const
 }
 
 REAL
-DiscreteElements::getPtclMinX(const ParticlePArray& inputParticle) const
+DiscreteElements::getPtclMinX(const DEMParticlePArray& inputParticle) const
 {
   if (inputParticle.size() == 0)
     return 1 / EPS;
@@ -2020,7 +2020,7 @@ DiscreteElements::getPtclMinX(const ParticlePArray& inputParticle) const
 }
 
 REAL
-DiscreteElements::getPtclMaxY(const ParticlePArray& inputParticle) const
+DiscreteElements::getPtclMaxY(const DEMParticlePArray& inputParticle) const
 {
   if (inputParticle.size() == 0)
     return -1 / EPS;
@@ -2035,7 +2035,7 @@ DiscreteElements::getPtclMaxY(const ParticlePArray& inputParticle) const
 }
 
 REAL
-DiscreteElements::getPtclMinY(const ParticlePArray& inputParticle) const
+DiscreteElements::getPtclMinY(const DEMParticlePArray& inputParticle) const
 {
   if (inputParticle.size() == 0)
     return 1 / EPS;
@@ -2050,7 +2050,7 @@ DiscreteElements::getPtclMinY(const ParticlePArray& inputParticle) const
 }
 
 REAL
-DiscreteElements::getPtclMaxZ(const ParticlePArray& inputParticle) const
+DiscreteElements::getPtclMaxZ(const DEMParticlePArray& inputParticle) const
 {
   if (inputParticle.size() == 0)
     return -1 / EPS;
@@ -2065,7 +2065,7 @@ DiscreteElements::getPtclMaxZ(const ParticlePArray& inputParticle) const
 }
 
 REAL
-DiscreteElements::getPtclMinZ(const ParticlePArray& inputParticle) const
+DiscreteElements::getPtclMinZ(const DEMParticlePArray& inputParticle) const
 {
   if (inputParticle.size() == 0)
     return 1 / EPS;
@@ -2128,7 +2128,7 @@ DiscreteElements::releaseRecvParticle()
 {
   // release memory of received particles
   /*
-  for (ParticlePArray::iterator it = recvParticleVec.begin(); it !=
+  for (DEMParticlePArray::iterator it = recvParticleVec.begin(); it !=
   recvParticleVec.end(); ++it)
     delete (*it);
   */
@@ -2182,7 +2182,7 @@ DiscreteElements::migrateParticle()
   d_patchP->waitToFinishX(iteration);
   d_patchP->combineSentParticlesX(iteration, sentParticleVec);
   d_patchP->combineReceivedParticlesX(iteration, recvParticleVec);
-  d_patchP->deleteSentParticles<ParticleP>(iteration, sentParticleVec, particleVec);
+  d_patchP->deleteSentParticles<DEMParticleP>(iteration, sentParticleVec, particleVec);
   d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
   //out << " sentX : " << sentParticleVec.size()
   //    << " recvX : " << recvParticleVec.size();
@@ -2194,7 +2194,7 @@ DiscreteElements::migrateParticle()
   d_patchP->waitToFinishY(iteration);
   d_patchP->combineSentParticlesY(iteration, sentParticleVec);
   d_patchP->combineReceivedParticlesY(iteration, recvParticleVec);
-  d_patchP->deleteSentParticles<ParticleP>(iteration, sentParticleVec, particleVec);
+  d_patchP->deleteSentParticles<DEMParticleP>(iteration, sentParticleVec, particleVec);
   d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
   //out << " sentY : " << sentParticleVec.size()
   //    << " recvY : " << recvParticleVec.size();
@@ -2206,16 +2206,16 @@ DiscreteElements::migrateParticle()
   d_patchP->waitToFinishZ(iteration);
   d_patchP->combineSentParticlesZ(iteration, sentParticleVec);
   d_patchP->combineReceivedParticlesZ(iteration, recvParticleVec);
-  d_patchP->deleteSentParticles<ParticleP>(iteration, sentParticleVec, particleVec);
+  d_patchP->deleteSentParticles<DEMParticleP>(iteration, sentParticleVec, particleVec);
   d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
   //out << " sentZ : " << sentParticleVec.size()
   //    << " recvZ : " << recvParticleVec.size();
 
   // delete outgoing particles
-  d_patchP->removeParticlesOutsidePatch<ParticleP>(particleVec);
+  d_patchP->removeParticlesOutsidePatch<DEMParticleP>(particleVec);
   //out << " outside: " << particleVec.size();
 
-  //d_patchP->removeDuplicates<ParticleP>(particleVec);
+  //d_patchP->removeDuplicates<DEMParticleP>(particleVec);
   //out <<  ": dup out: " << particleVec.size() << "\n";
   //std::cout << out.str();
 
@@ -2236,14 +2236,14 @@ DiscreteElements::migrateParticle()
   Vec v2 = container.getMaxCorner();
 
   // if a neighbor exists, transfer particles crossing the boundary in between.
-  ParticlePArray particleX1, particleX2;
-  ParticlePArray particleY1, particleY2;
-  ParticlePArray particleZ1, particleZ2;
-  ParticlePArray particleX1Y1, particleX1Y2, particleX1Z1, particleX1Z2;
-  ParticlePArray particleX2Y1, particleX2Y2, particleX2Z1, particleX2Z2;
-  ParticlePArray particleY1Z1, particleY1Z2, particleY2Z1, particleY2Z2;
-  ParticlePArray particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1, particleX1Y2Z2;
-  ParticlePArray particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1, particleX2Y2Z2;
+  DEMParticlePArray particleX1, particleX2;
+  DEMParticlePArray particleY1, particleY2;
+  DEMParticlePArray particleZ1, particleZ2;
+  DEMParticlePArray particleX1Y1, particleX1Y2, particleX1Z1, particleX1Z2;
+  DEMParticlePArray particleX2Y1, particleX2Y2, particleX2Z1, particleX2Z2;
+  DEMParticlePArray particleY1Z1, particleY1Z2, particleY2Z1, particleY2Z2;
+  DEMParticlePArray particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1, particleX1Y2Z2;
+  DEMParticlePArray particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1, particleX2Y2Z2;
   boost::mpi::request reqX1[2], reqX2[2];
   boost::mpi::request reqY1[2], reqY2[2];
   boost::mpi::request reqZ1[2], reqZ2[2];
@@ -2584,11 +2584,11 @@ DiscreteElements::migrateParticle()
     debugInf << "iter=" << std::setw(8) << iteration << " rank=" << std::setw(2)
     << s_mpiRank
     << "   added=";
-    for (ParticlePArray::const_iterator it = recvParticleVec.begin(); it !=
+    for (DEMParticlePArray::const_iterator it = recvParticleVec.begin(); it !=
     recvParticleVec.end(); ++it)
     debugInf << std::setw(3) << (*it)->getId();
     debugInf << " now " << particleVec.size() << ": ";
-    for (ParticlePArray::const_iterator it = particleVec.begin(); it !=
+    for (DEMParticlePArray::const_iterator it = particleVec.begin(); it !=
     particleVec.end(); ++it)
     debugInf << std::setw(3) << (*it)->getId();
     debugInf << std::endl;
@@ -2647,7 +2647,7 @@ DiscreteElements::gatherParticle()
     // duplicate particleVec so that it is not destroyed by allParticleVec in
     // next iteration,
     // otherwise it causes memory error.
-    ParticlePArray dupParticleVec(particleVec.size());
+    DEMParticlePArray dupParticleVec(particleVec.size());
     for (std::size_t i = 0; i < dupParticleVec.size(); ++i)
       dupParticleVec[i] = std::make_shared<DEMParticle>(*particleVec[i]);
 
@@ -2655,7 +2655,7 @@ DiscreteElements::gatherParticle()
     allParticleVec.insert(allParticleVec.end(), dupParticleVec.begin(),
                           dupParticleVec.end());
 
-    ParticlePArray tmpParticleVec;
+    DEMParticlePArray tmpParticleVec;
     long gatherRam = 0;
     for (int iRank = 1; iRank < s_mpiSize; ++iRank) {
       tmpParticleVec.clear(); // do not destroy particles!
@@ -2674,12 +2674,12 @@ DiscreteElements::releaseGatheredParticle()
 {
   // clear allParticleVec, avoid long time memory footprint.
   /*
-  for (ParticlePArray::iterator it = allParticleVec.begin(); it !=
+  for (DEMParticlePArray::iterator it = allParticleVec.begin(); it !=
   allParticleVec.end(); ++it)
     delete (*it);
   */
   allParticleVec.clear();
-  ParticlePArray().swap(allParticleVec); // actual memory release
+  DEMParticlePArray().swap(allParticleVec); // actual memory release
 }
 
 
@@ -3187,7 +3187,7 @@ void
 DiscreteElements::calcTransEnergy()
 {
   REAL pEngy = 0;
-  ParticlePArray::const_iterator it;
+  DEMParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it) {
     if ((*it)->getType() == 0)
       pEngy += (*it)->getTransEnergy();
@@ -3199,7 +3199,7 @@ void
 DiscreteElements::calcRotatEnergy()
 {
   REAL pEngy = 0;
-  ParticlePArray::const_iterator it;
+  DEMParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it) {
     if ((*it)->getType() == 0)
       pEngy += (*it)->getRotatEnergy();
@@ -3211,7 +3211,7 @@ void
 DiscreteElements::calcKinetEnergy()
 {
   REAL pEngy = 0;
-  ParticlePArray::const_iterator it;
+  DEMParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it) {
     if ((*it)->getType() == 0)
       pEngy += (*it)->getKinetEnergy();
@@ -3223,7 +3223,7 @@ void
 DiscreteElements::calcGraviEnergy(REAL ref)
 {
   REAL pEngy = 0;
-  ParticlePArray::const_iterator it;
+  DEMParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it) {
     if ((*it)->getType() == 0)
       pEngy += (*it)->getPotenEnergy(ref);
@@ -3261,7 +3261,7 @@ DiscreteElements::getAvgTransVelocity() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
-  ParticlePArray::const_iterator it;
+  DEMParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it)
     if ((*it)->getType() == 0) {
       avgv += vnormL2((*it)->currentVel());
@@ -3275,7 +3275,7 @@ DiscreteElements::getAvgRotatVelocity() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
-  ParticlePArray::const_iterator it;
+  DEMParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it)
     if ((*it)->getType() == 0) {
       avgv += vnormL2((*it)->currentOmega());
@@ -3289,7 +3289,7 @@ DiscreteElements::getAvgForce() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
-  ParticlePArray::const_iterator it;
+  DEMParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it)
     if ((*it)->getType() == 0) {
       avgv += vnormL2((*it)->getForce());
@@ -3303,7 +3303,7 @@ DiscreteElements::getAvgMoment() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
-  ParticlePArray::const_iterator it;
+  DEMParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it)
     if ((*it)->getType() == 0) {
       avgv += vnormL2((*it)->getMoment());

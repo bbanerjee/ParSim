@@ -72,12 +72,12 @@ public:
   static IntVec getMPIProcs() { return s_mpiProcs; }
   static IntVec getMPICoords() { return s_mpiCoords; }
 
-  const ParticlePArray& getAllParticleVec() const { return allParticleVec; }
-  ParticlePArray& getModifiableAllParticleVec() { return allParticleVec; }
+  const DEMParticlePArray& getAllParticleVec() const { return allParticleVec; }
+  DEMParticlePArray& getModifiableAllParticleVec() { return allParticleVec; }
 
-  const ParticlePArray& getParticleVec() const { return particleVec; }
-  ParticlePArray& getModifiableParticleVec() { return particleVec; }
-  ParticlePArray& getMergedParticleVec() { return mergeParticleVec; }
+  const DEMParticlePArray& getParticleVec() const { return particleVec; }
+  DEMParticlePArray& getModifiableParticleVec() { return particleVec; }
+  DEMParticlePArray& getMergedParticleVec() { return mergeParticleVec; }
 
   const Gradation& getGradation() const { return gradation; }
   const Box& getAllContainer() const { return allContainer; }
@@ -132,9 +132,9 @@ public:
   void createOutputWriter(const std::string& outputFolder, const int& iter) {
     bool writeVTK = true;
     if (writeVTK) {
-      d_writer = std::make_unique<OutputVTK<ParticlePArray>>(outputFolder, iter);
+      d_writer = std::make_unique<OutputVTK<DEMParticlePArray>>(outputFolder, iter);
     } else {
-      d_writer = std::make_unique<OutputTecplot<ParticlePArray>>(outputFolder, iter);
+      d_writer = std::make_unique<OutputTecplot<DEMParticlePArray>>(outputFolder, iter);
     }
   }
 
@@ -209,9 +209,9 @@ public:
 
   void setTrimHistoryNum(std::size_t n) { trimHistoryNum = n; }
   void writeParticlesToFile(int frame) const; // print all particles
-  void writeParticlesToFile(ParticlePArray& particleVec, int frame) const; // print particles info
+  void writeParticlesToFile(DEMParticlePArray& particleVec, int frame) const; // print particles info
   void printParticle(const std::string& fileName, int frame) const; // print all particles
-  void printParticle(const std::string& fileName, ParticlePArray& particleVec, int frame) const; // print particles info
+  void printParticle(const std::string& fileName, DEMParticlePArray& particleVec, int frame) const; // print particles info
   void printBdryContact() const; // print all boundary contact info
   void printMemParticle(
     const std::string& str) const; // print membrane particles
@@ -327,12 +327,12 @@ public:
                      const std::string& progressfile,
                      const std::string& debugfile);
 
-  REAL getPtclMinX(const ParticlePArray& particleVec) const;
-  REAL getPtclMaxX(const ParticlePArray& particleVec) const;
-  REAL getPtclMinY(const ParticlePArray& particleVec) const;
-  REAL getPtclMaxY(const ParticlePArray& particleVec) const;
-  REAL getPtclMinZ(const ParticlePArray& particleVec) const;
-  REAL getPtclMaxZ(const ParticlePArray& particleVec) const;
+  REAL getPtclMinX(const DEMParticlePArray& particleVec) const;
+  REAL getPtclMaxX(const DEMParticlePArray& particleVec) const;
+  REAL getPtclMinY(const DEMParticlePArray& particleVec) const;
+  REAL getPtclMaxY(const DEMParticlePArray& particleVec) const;
+  REAL getPtclMinZ(const DEMParticlePArray& particleVec) const;
+  REAL getPtclMaxZ(const DEMParticlePArray& particleVec) const;
 
   void collapse(std::size_t total_steps, std::size_t snapNum,
                 std::size_t interval, const std::string& iniptclfile,
@@ -472,8 +472,8 @@ public:
                                // October 10, 2014
 
   void findParticleInBox(const Box& container,
-                         const ParticlePArray& allParticle,
-                         ParticlePArray& foundParticle);
+                         const DEMParticlePArray& allParticle,
+                         DEMParticlePArray& foundParticle);
 
 private:
 
@@ -483,9 +483,9 @@ private:
   // particles property
   Gradation
     gradation; // particles gradation, broadcast among processes for once
-  ParticlePArray
+  DEMParticlePArray
     allParticleVec;           // all particles, only meaningful to root process
-  ParticlePArray particleVec; // particles per process
+  DEMParticlePArray particleVec; // particles per process
   std::size_t trimHistoryNum; // historical maximum numbering before trimming,
                               // only meaningful to root process
 
@@ -544,7 +544,7 @@ private:
   int mpiTag;
   std::vector<std::size_t> bdryProcess;
 
-  std::unique_ptr<Patch<ParticlePArray>> d_patchP;
+  std::unique_ptr<Patch<DEMParticlePArray>> d_patchP;
   void createPatch(int iteration, const REAL& ghostWidth);
   void updatePatch(int iteration, const REAL& ghostWidth);
 
@@ -554,19 +554,19 @@ private:
   int rankY1Z1, rankY1Z2, rankY2Z1, rankY2Z2;
   int rankX1Y1Z1, rankX1Y1Z2, rankX1Y2Z1, rankX1Y2Z2;
   int rankX2Y1Z1, rankX2Y1Z2, rankX2Y2Z1, rankX2Y2Z2;
-  ParticlePArray rParticleX1, rParticleX2; // r stands for received
-  ParticlePArray rParticleY1, rParticleY2;
-  ParticlePArray rParticleZ1, rParticleZ2;
-  ParticlePArray rParticleX1Y1, rParticleX1Y2, rParticleX1Z1, rParticleX1Z2;
-  ParticlePArray rParticleX2Y1, rParticleX2Y2, rParticleX2Z1, rParticleX2Z2;
-  ParticlePArray rParticleY1Z1, rParticleY1Z2, rParticleY2Z1, rParticleY2Z2;
-  ParticlePArray rParticleX1Y1Z1, rParticleX1Y1Z2, rParticleX1Y2Z1,
+  DEMParticlePArray rParticleX1, rParticleX2; // r stands for received
+  DEMParticlePArray rParticleY1, rParticleY2;
+  DEMParticlePArray rParticleZ1, rParticleZ2;
+  DEMParticlePArray rParticleX1Y1, rParticleX1Y2, rParticleX1Z1, rParticleX1Z2;
+  DEMParticlePArray rParticleX2Y1, rParticleX2Y2, rParticleX2Z1, rParticleX2Z2;
+  DEMParticlePArray rParticleY1Z1, rParticleY1Z2, rParticleY2Z1, rParticleY2Z2;
+  DEMParticlePArray rParticleX1Y1Z1, rParticleX1Y1Z2, rParticleX1Y2Z1,
     rParticleX1Y2Z2;
-  ParticlePArray rParticleX2Y1Z1, rParticleX2Y1Z2, rParticleX2Y2Z1,
+  DEMParticlePArray rParticleX2Y1Z1, rParticleX2Y1Z2, rParticleX2Y2Z1,
     rParticleX2Y2Z2;
   ParticleIDHashMap sentParticleVec;  // sent particles per process
-  ParticlePArray recvParticleVec;  // received particles per process
-  ParticlePArray mergeParticleVec; // merged particles per process
+  DEMParticlePArray recvParticleVec;  // received particles per process
+  DEMParticlePArray mergeParticleVec; // merged particles per process
 
   // stream
   std::ofstream progressInf;

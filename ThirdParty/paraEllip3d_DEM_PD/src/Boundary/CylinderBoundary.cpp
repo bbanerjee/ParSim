@@ -31,7 +31,7 @@ CylinderBoundary::CylinderBoundary(BoundaryId id, BoundaryType tp,
 }
 
 void
-CylinderBoundary::findBdryContact(ParticlePArray& ptcls)
+CylinderBoundary::findBdryContact(DEMParticlePArray& ptcls)
 {
   possParticle.clear();
   contactInfo.clear();

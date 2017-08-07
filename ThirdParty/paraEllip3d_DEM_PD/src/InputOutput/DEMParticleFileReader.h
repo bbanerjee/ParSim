@@ -18,7 +18,7 @@ public:
 
   void read(const std::string& fileName, const REAL& youngModulus,
             const REAL& poissonRatio, bool doInitialize,
-            ParticlePArray& particles, Gradation& gradation);
+            DEMParticlePArray& particles, Gradation& gradation);
 
 private:
   REAL d_youngModulus;
@@ -26,10 +26,10 @@ private:
   bool d_doInitialize;
 
   void readParticlesText(const std::string& inputParticle,
-                         ParticlePArray& particles, Gradation& gradation) const;
+                         DEMParticlePArray& particles, Gradation& gradation) const;
 
   bool readParticlesXML(const std::string& inputFileName,
-                        ParticlePArray& particles, Gradation& gradation) const;
+                        DEMParticlePArray& particles, Gradation& gradation) const;
 
   template <typename T>
   bool readParticleValues(zen::XmlIn& ps, const std::string& name,

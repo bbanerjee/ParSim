@@ -199,7 +199,7 @@ OutputVTK<TArray>::writeParticles(const TArray* particles, int frame)
 
 template <>
 void
-OutputVTK<ParticlePArray>::writeParticles(const ParticlePArray* particles, int frame) 
+OutputVTK<DEMParticlePArray>::writeParticles(const DEMParticlePArray* particles, int frame) 
 {
   // Create a writer
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
@@ -383,7 +383,7 @@ OutputVTK<TArray>::createVTKUnstructuredGrid(const TArray* particles,
 
 template <>
 void
-OutputVTK<ParticlePArray>::createVTKUnstructuredGrid(const ParticlePArray* particles,
+OutputVTK<DEMParticlePArray>::createVTKUnstructuredGrid(const DEMParticlePArray* particles,
                                                      vtkPointsP& pts,
                                                      vtkUnstructuredGridP& dataSet)
 {
@@ -673,6 +673,6 @@ OutputVTK<PeriParticlePArray>::createVTKUnstructuredGrid(const PeriParticlePArra
 }
 
 namespace dem {
-  template class OutputVTK<ParticlePArray>;
+  template class OutputVTK<DEMParticlePArray>;
   template class OutputVTK<pd::PeriParticlePArray>;
 }

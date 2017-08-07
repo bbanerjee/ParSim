@@ -168,7 +168,7 @@ PlaneBoundary::printContactInfo(std::ostream& os)
 }
 
 void
-PlaneBoundary::findBdryContact(ParticlePArray& ptcls)
+PlaneBoundary::findBdryContact(DEMParticlePArray& ptcls)
 {
   possParticle.clear();
   contactInfo.clear();

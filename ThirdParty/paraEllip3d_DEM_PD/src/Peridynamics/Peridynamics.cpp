@@ -16,7 +16,7 @@ using IntVec = dem::IntVec;
 using Vec = dem::Vec;
 using Matrix = dem::Matrix;
 using Box = dem::Box;
-using ParticlePArray = dem::ParticlePArray;
+using DEMParticlePArray = dem::DEMParticlePArray;
 using OutputVTK = dem::OutputVTK<PeriParticlePArray>;
 using OutputTecplot = dem::OutputTecplot<PeriParticlePArray>;
 
@@ -582,7 +582,7 @@ Peridynamics::applyTractionBoundary(int g_iteration)
 // larger than the sand particle, the delta = 0.5*maxDistBetweenParticles and
 // delta is the difference of principle lengths
 void
-Peridynamics::removeOverlappingParticles(ParticlePArray& allDEMParticleVec,
+Peridynamics::removeOverlappingParticles(DEMParticlePArray& allDEMParticleVec,
                                          bool removePeriParticles)
 {
   if (removePeriParticles) {
@@ -594,7 +594,7 @@ Peridynamics::removeOverlappingParticles(ParticlePArray& allDEMParticleVec,
 }
 
 void
-Peridynamics::removeInsidePeriParticles(const ParticlePArray& allDEMParticleVec)
+Peridynamics::removeInsidePeriParticles(const DEMParticlePArray& allDEMParticleVec)
 {
   bool is_inside;
   allPeriParticleVec.clear();
@@ -637,9 +637,9 @@ Peridynamics::removeInsidePeriParticles(const ParticlePArray& allDEMParticleVec)
 } // end removeInsidePeriParticles()
 
 void
-Peridynamics::removeInsideDEMParticles(ParticlePArray& allDEMParticleVec) const
+Peridynamics::removeInsideDEMParticles(DEMParticlePArray& allDEMParticleVec) const
 {
-  ParticlePArray reducedDEMParticleVec;
+  DEMParticlePArray reducedDEMParticleVec;
   bool is_inside;
 
   for (auto& dem_pt : allDEMParticleVec) {
@@ -1411,7 +1411,7 @@ Peridynamics::eraseBrokenPeriDEMBonds()
 // dem particle) entering the influence domain of a DEM particle,
 // then construct peri-DEM bond between this peri-point and this DEM particle
 void
-Peridynamics::findPeriDEMBonds(dem::ParticlePArray mergeParticleVec)
+Peridynamics::findPeriDEMBonds(dem::DEMParticlePArray mergeParticleVec)
 {
   eraseBrokenPeriDEMBonds();
   // construct sand peri-bonds
@@ -1620,7 +1620,7 @@ Peridynamics::constructBoundarySandPeriBonds()
   peri_pt!=interfacePeriParticleVec.end(); peri_pt++){
           Vec xyz_peri = (*peri_pt)->currentPosition();
 
-          for(ParticlePArray::iterator dem_pt=ParticleVec.begin();
+          for(DEMParticlePArray::iterator dem_pt=ParticleVec.begin();
   dem_pt!=ParticleVec.end(); dem_pt++){
           // check and construct the periDEMBondVec in this particle
           REAL ra = (*dem_pt)->getA();

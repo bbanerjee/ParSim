@@ -207,7 +207,7 @@ OutputTecplot<TArray>::writeParticles(const TArray* particles, int frame) {
 
 template <>
 void
-OutputTecplot<ParticlePArray>::writeParticles(const ParticlePArray* particles, 
+OutputTecplot<DEMParticlePArray>::writeParticles(const DEMParticlePArray* particles, 
                                               int frame)
 {
   // Get the filename
@@ -367,6 +367,6 @@ OutputTecplot<TArray>::writeSieves(const Gradation* gradation)
 }
 
 namespace dem {
-  template class OutputTecplot<ParticlePArray>;
+  template class OutputTecplot<DEMParticlePArray>;
   template class OutputTecplot<pd::PeriParticlePArray>;
 }

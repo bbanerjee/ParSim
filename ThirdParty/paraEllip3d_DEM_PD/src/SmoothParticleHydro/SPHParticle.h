@@ -6,6 +6,7 @@
 #include <Core/Types/realtypes.h>
 #include <Core/Types/integertypes.h>
 #include <InputOutput/InputParameter.h>
+#include <DiscreteElements/DEMContainers.h>
 
 #include <iostream>
 #include <vector>
@@ -42,23 +43,26 @@ public:
   REAL calculatePressure();
   REAL calculateViscosity();
 
+  void setDensity(REAL density) { d_density = density; }
   void setDensityDot(REAL a) { d_densityDot = a; }
   void setVelocityDot(const dem::Vec& a) { d_acceleration = a; }
   void setDensityDotVelocityDotZero() {
     d_densityDot = 0; d_acceleration = 0; d_velocityCorrection = 0;
   }
+  void setInitialPos(const dem::Vec& a) { d_initialPos = a; }
   void setCurrPosition(const dem::Vec& a) { d_currPos = a; }
   void setCurrPositionX(REAL a) { d_currPos.setX(a); }
   void setCurrPositionY(REAL a) { d_currPos.setY(a); }
   void setCurrPositionInitial() { d_currPos = d_initialPos; }
   void setCurrVelocity(const dem::Vec& a) { d_velocity = a; }
   void setType(SPHParticleType a) { d_type = a; }
-  void setDemParticle(dem::DEMParticle* p) { d_demParticle = p; }
-  void setNULLDemParticle() { d_demParticle = nullptr; }
+  void setDEMParticle(dem::DEMParticle* p) { d_demParticle = p; }
+  void setNULLDEMParticle() { d_demParticle = nullptr; }
   void addVelocityDot(const dem::Vec& a) { d_acceleration += a; }
   void addVelocityCorrection(const dem::Vec& a) { d_velocityCorrection += a; }
   void addDensityDot(REAL a) { d_densityDot += a; }
   void addCurrPositionX(REAL a) {d_currPos.setX(d_currPos.x()+a);}
+  void setLocalPosition(const dem::Vec& pos) { d_localCoords = pos; }
 
   ParticleID getId() const { return d_id; }
   REAL getMass() const {return d_mass;}
@@ -112,6 +116,16 @@ public:
   void updatePositionDensityLeapFrog(const REAL& delT);
   void initialVelocityLeapFrog(const REAL& delT);
 
+  template <int dim>
+  bool isInsideDEMParticle(const REAL& kernelSize,
+                           const dem::DEMParticleP& particle,
+                           dem::Vec& localCoord,
+                           bool& insideGhostLayer);
+
+  template <int dim>
+  bool isOutsideDomain(const REAL& bufferLength,
+                       const dem::Vec& minCorner,
+                       const dem::Vec& maxCorner);
 
   private:
 

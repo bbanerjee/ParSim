@@ -83,7 +83,7 @@ public:
                          REAL areaZ) override;
   void updateTrueTriaxial(REAL simga, REAL areaX, REAL areaY, REAL areaZ,
                           REAL sigmaX, REAL sigmaY) override;
-  void findBdryContact(ParticlePArray& ptcls) override;
+  void findBdryContact(DEMParticlePArray& ptcls) override;
   void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) override;
 };
 

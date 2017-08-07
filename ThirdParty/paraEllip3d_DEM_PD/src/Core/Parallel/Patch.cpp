@@ -593,15 +593,15 @@ Patch<TArray>::update(int iteration,
 
 // Instantiation
 namespace dem {
-  template struct PatchNeighborComm<ParticlePArray>;
-  template struct Patch<ParticlePArray>;
+  template struct PatchNeighborComm<DEMParticlePArray>;
+  template struct Patch<DEMParticlePArray>;
   template void 
-  Patch<ParticlePArray>::removeDuplicates<ParticleP>(ParticlePArray& input);
+  Patch<DEMParticlePArray>::removeDuplicates<DEMParticleP>(DEMParticlePArray& input);
   template void 
-  Patch<ParticlePArray>::deleteSentParticles<ParticleP>(int iteration, 
-    const ParticleIDHashMap& sent, ParticlePArray& particles);
+  Patch<DEMParticlePArray>::deleteSentParticles<DEMParticleP>(int iteration, 
+    const ParticleIDHashMap& sent, DEMParticlePArray& particles);
   template void 
-  Patch<ParticlePArray>::removeParticlesOutsidePatch<ParticleP>(ParticlePArray& particles);
+  Patch<DEMParticlePArray>::removeParticlesOutsidePatch<DEMParticleP>(DEMParticlePArray& particles);
 
   template struct PatchNeighborComm<pd::PeriParticlePArray>;
   template struct Patch<pd::PeriParticlePArray>;
