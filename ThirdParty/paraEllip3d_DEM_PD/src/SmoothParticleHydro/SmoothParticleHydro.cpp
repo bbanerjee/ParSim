@@ -1,13 +1,13 @@
-#include <SmoothParticleHydro/SmoothParticleHydro.h>
 #include <DiscreteElements/DEMParticle.h>
+#include <SmoothParticleHydro/SmoothParticleHydro.h>
 
-#include <InputOutput/PeriParticleFileReader.h>
-#include <InputOutput/OutputTecplot.h>
-#include <InputOutput/OutputVTK.h>
 #include <Core/Const/const.h>
 #include <Core/Math/IntVec.h>
 #include <Core/Math/Matrix.h>
 #include <Core/Util/Utility.h>
+#include <InputOutput/OutputTecplot.h>
+#include <InputOutput/OutputVTK.h>
+#include <InputOutput/PeriParticleFileReader.h>
 #include <chrono>
 
 using namespace sph;
@@ -22,7 +22,7 @@ using DEMParticlePArray = dem::DEMParticlePArray;
 using OutputVTK = dem::OutputVTK<SPHParticlePArray>;
 using OutputTecplot = dem::OutputTecplot<SPHParticlePArray>;
 
-SmoothParticleHydro::SmoothParticleHydro() 
+SmoothParticleHydro::SmoothParticleHydro()
 {
 }
 
@@ -30,33 +30,35 @@ SmoothParticleHydro::~SmoothParticleHydro()
 {
   d_allSPHParticleVec.clear();
   d_sphParticleVec.clear();
-} 
+}
 
-// here the free particles, ghost particles and boundary particles 
+// here the free particles, ghost particles and boundary particles
 // will all stored in the same vector
-// unlike the implementation in serial version.
 //  if (getMPIRank() != 0) return;  // make only primary cpu generate particles
 template <int dim>
-void 
-SmoothParticleHydro::generateSPHParticle(const dem::Box& allContainer,
-                                         dem::DEMParticlePArray& allDEMParticles)
+void
+SmoothParticleHydro::generateSPHParticle(
+  const dem::Box& allContainer, dem::DEMParticlePArray& allDEMParticles)
 {
-  // sph parameters
-  auto gravAccel   = util::getParam<REAL>("gravAccel");
-  auto gravScale   = util::getParam<REAL>("gravScale");
-  auto waterLength = util::getParam<REAL>("waterLength");
+  // Determine length parameter and SPH point spacing
+  auto sphLength = util::getParam<REAL>("waterLength");
   auto numSPHPoint = util::getParam<REAL>("nSPHPoint");
-  auto numLayers   = util::getParam<int>("numLayers");
-  auto gamma       = util::getParam<REAL>("gamma");
-  auto P0          = util::getParam<REAL>("P0");
+  auto spaceInterval = sphLength / (numSPHPoint - 1);
+  auto small_value = 0.01 * spaceInterval;
+  auto smoothLength = 1.5 * spaceInterval;
+  auto kernelSize = 3 * smoothLength;
+  //std::cout << "Space interval = " << spaceInterval << "\n";
+
+  // sph parameters
+  auto gravAccel = util::getParam<REAL>("gravAccel");
+  auto gravScale = util::getParam<REAL>("gravScale");
+  auto numLayers = util::getParam<int>("numLayers");
+  auto gamma = util::getParam<REAL>("gamma");
+  auto P0 = util::getParam<REAL>("P0");
   auto sphInitialDensity = util::getParam<REAL>("SPHInitialDensity");
 
-  auto spaceInterval = waterLength/(numSPHPoint-1);
-  auto small_value = 0.01*spaceInterval;
-  auto smoothLength = 1.5*spaceInterval;
-  auto kernelSize = 3*smoothLength;
-
-  auto sphMass = computeMass<dim>(sphInitialDensity, waterLength, numSPHPoint);
+  // Compute particle mass
+  auto sphMass = computeMass<dim>(sphInitialDensity, sphLength, numSPHPoint);
 
   // get the dimensions of the sph domain
   Vec vmin = allContainer.getMinCorner();
@@ -64,7 +66,8 @@ SmoothParticleHydro::generateSPHParticle(const dem::Box& allContainer,
 
   // Create an linearly spaced arrays of x/y/zcoords
   std::vector<REAL> xCoords, yCoords, zCoords;
-  createCoords<dim>(vmin, vmax, spaceInterval, numLayers, xCoords, yCoords, zCoords);
+  createCoords<dim>(vmin, vmax, spaceInterval, numLayers, xCoords, yCoords,
+                    zCoords);
 
   /*
   std::cout << "x:(" << xCoords.size() << ")";
@@ -79,7 +82,127 @@ SmoothParticleHydro::generateSPHParticle(const dem::Box& allContainer,
   */
 
   // Create the initial allSPHParticleArray
-  createParticleArray<dim>(sphMass, sphInitialDensity, xCoords, yCoords, zCoords);
+  createParticleArray<dim>(sphMass, sphInitialDensity, xCoords, yCoords,
+                           zCoords);
+  // std::cout << "Created particle array: " << d_allSPHParticleVec.size() <<
+  // "\n";
+
+  // Identify type of particle and change density based on position
+  for (auto& sph_particle : d_allSPHParticleVec) {
+    dem::Vec local_pos = 0;
+    dem::Vec sph_pos = sph_particle->getInitPosition();
+    bool isInside = false;
+    bool insideGhostLayer = false;
+
+    for (auto& dem_particle : allDEMParticles) {
+
+      if (sph_particle->isInsideDEMParticle<dim>(kernelSize, dem_particle,
+                                                 local_pos, insideGhostLayer)) {
+        isInside = true;
+        if (insideGhostLayer) {
+          sph_particle->setType(SPHParticleType::GHOST);
+          sph_particle->setLocalPosition(local_pos);
+          sph_particle->setDEMParticle(dem_particle.get());
+        } else {
+          // std::cout << sph_particle->getId() << " Inside but not in ghost
+          // layer\n";
+          sph_particle->setType(SPHParticleType::NONE);
+          sph_particle->setLocalPosition(local_pos);
+          sph_particle->setDEMParticle(dem_particle.get());
+        }
+        break;
+      }
+    } // end dem particles
+
+    // free/boundary particles
+    if (!isInside) {
+      REAL density = sphInitialDensity;
+      REAL bufferLength = spaceInterval - small_value;
+      if (sph_particle->isOutsideDomain<dim>(bufferLength, vmin, vmax)) {
+        if (sph_pos.z() < sphLength + spaceInterval) {
+          REAL rhoGH = density * gravAccel * (sphLength - sph_pos.z());
+          density *= pow(1 + rhoGH * gravScale / P0, 1.0 / gamma);
+        }
+        sph_particle->setType(SPHParticleType::BOUNDARY);
+        sph_particle->setDensity(density);
+        sph_particle->setLocalPosition(local_pos);
+      } else {
+        if (sph_pos.x() <= sphLength && sph_pos.z() <= sphLength) {
+          REAL rhoGH = density * gravAccel * (sphLength - sph_pos.z());
+          density *= pow(1 + rhoGH * gravScale / P0, 1.0 / gamma);
+        }
+        sph_particle->setType(SPHParticleType::FREE);
+        sph_particle->setDensity(density);
+        sph_particle->setLocalPosition(local_pos);
+      } // End domain if
+    }   // End if not isGhost
+  }     // end d_allSPHParticleVec
+
+  // Remove the SPH particle that are inside the DEM particles
+  // but not in the ghost layer of each particle
+  removeRedundantSPHParticles();
+
+  // Compute volume, pressure, viscosity of each particle
+  for (auto& sph_particle : d_allSPHParticleVec) {
+    sph_particle->initialize();
+  }
+
+} // generateSPHParticle2D
+
+// For drainage problem with open bottomed container
+// make only primary cpu generate particles
+// if (getMPIRank() != 0) return; 
+template <int dim>
+void
+SmoothParticleHydro::generateSPHParticleNoBottom(
+  const dem::Box& allContainer, dem::DEMParticlePArray& allDEMParticles)
+{
+  // Determine length parameter and SPH point spacing
+  REAL xMin = allContainer.getMinCorner().x();
+  REAL xMax = allContainer.getMaxCorner().x();
+  auto sphLength = xMin - xMax;
+  auto spaceInterval = util::getParam<REAL>("spaceInterval");
+  auto numSPHPoint = sphLength/spaceInterval + 1;
+
+  auto small_value = 0.01 * spaceInterval;
+  //auto smoothLength = 0.0;
+  auto kernelSize = 0.0;
+
+  // SPH parameters
+  auto gravAccel = util::getParam<REAL>("gravAccel");
+  auto gravScale = util::getParam<REAL>("gravScale");
+  auto numLayers = util::getParam<int>("numLayers");
+  auto gamma = util::getParam<REAL>("gamma");
+  auto P0 = util::getParam<REAL>("P0");
+  auto sphInitialDensity = util::getParam<REAL>("SPHInitialDensity");
+
+  auto sphMass = computeMass<dim>(sphInitialDensity, sphLength, numSPHPoint);
+
+  // get the dimensions of the sph domain
+  Vec vmin = allContainer.getMinCorner();
+  Vec vmax = allContainer.getMaxCorner();
+
+  // Create an linearly spaced arrays of x/y/zcoords
+  std::vector<REAL> xCoords, yCoords, zCoords;
+  createCoords<dim>(vmin, vmax, spaceInterval, numLayers, xCoords, yCoords,
+                  zCoords);
+
+  /*
+  std::cout << "x:(" << xCoords.size() << ")";
+  for (auto x: xCoords) { std::cout << x << " "; }
+  std::cout << std::endl;
+  std::cout << "y:(" << yCoords.size() << ")";
+  for (auto y: yCoords) { std::cout << y << " "; }
+  std::cout << std::endl;
+  std::cout << "z:(" << zCoords.size() << ")";
+  for (auto z: zCoords) { std::cout << z << " "; }
+  std::cout << std::endl;
+  */
+
+  // Create the initial allSPHParticleVec
+  createParticleArray<dim>(sphMass, sphInitialDensity, xCoords, yCoords,
+                         zCoords);
+
   //std::cout << "Created particle array: " << d_allSPHParticleVec.size() << "\n";
 
   // create and store SPHParticle objects into d_sphParticleVec
@@ -91,49 +214,41 @@ SmoothParticleHydro::generateSPHParticle(const dem::Box& allContainer,
 
     for (auto& dem_particle : allDEMParticles) {
 
-      if (sph_particle->isInsideDEMParticle<dim>(kernelSize, dem_particle, 
-                                                 local_pos, 
-                                                 insideGhostLayer)) {
+      if (sph_particle->isInsideDEMParticle<dim>(kernelSize, dem_particle,
+                                               local_pos, insideGhostLayer)) {
         isInside = true;
-        if (insideGhostLayer) {
-          sph_particle->setType(SPHParticleType::GHOST);
-          sph_particle->setLocalPosition(local_pos);
-          sph_particle->setDEMParticle(dem_particle.get());
-        } else {
-          //std::cout << sph_particle->getId() << " Inside but not in ghost layer\n";
-          sph_particle->setType(SPHParticleType::NONE);
-          sph_particle->setLocalPosition(local_pos);
-          sph_particle->setDEMParticle(dem_particle.get());
-        }
+        sph_particle->setType(SPHParticleType::GHOST);
+        sph_particle->setLocalPosition(local_pos);
+        sph_particle->setDEMParticle(dem_particle.get());
         break;
       }
     } // end dem particles
 
     // free/boundary particles
-    if (!isInside) {  
+    if (!isInside) {
       REAL density = sphInitialDensity;
       REAL bufferLength = spaceInterval - small_value;
-      if (sph_particle->isOutsideDomain<dim>(bufferLength, vmin, vmax)) {
-        if (sph_pos.z() < waterLength+spaceInterval) {
-          REAL rhoGH = density*gravAccel*(waterLength - sph_pos.z());
-          density *= pow(1 + rhoGH*gravScale/P0, 1.0/gamma);
+      if (sph_particle->isOutsideDomainWithoutZBottom<dim>(bufferLength, vmin, vmax)) {
+        if (sph_pos.z() < vmax.z() + bufferLength) {
+          REAL rhoGH = density * gravAccel * (vmax.z() - sph_pos.z());
+          density *= pow(1 + rhoGH * gravScale / P0, 1.0 / gamma);
         }
         sph_particle->setType(SPHParticleType::BOUNDARY);
         sph_particle->setDensity(density);
         sph_particle->setLocalPosition(local_pos);
       } else {
-        if (sph_pos.x() <= waterLength && sph_pos.z() <= waterLength) {
-          REAL rhoGH = density*gravAccel*(waterLength - sph_pos.z());
-          density *= pow(1 + rhoGH*gravScale/P0, 1.0/gamma);
+        if (sph_pos.z() >= vmin.z()) {
+          REAL rhoGH = density * gravAccel * (vmax.z() - sph_pos.z());
+          density *= pow(1 + rhoGH * gravScale / P0, 1.0 / gamma);
         }
         sph_particle->setType(SPHParticleType::FREE);
         sph_particle->setDensity(density);
         sph_particle->setLocalPosition(local_pos);
       } // End domain if
-    } // End if not isGhost
-  } // end d_allSPHParticleVec
+    }   // End if not isGhost
+  }
 
-  // Removed the SPH particle that are inside the DEM particles
+  // Remove the SPH particle that are inside the DEM particles
   // but not in the ghost layer of each particle
   removeRedundantSPHParticles();
 
@@ -142,33 +257,33 @@ SmoothParticleHydro::generateSPHParticle(const dem::Box& allContainer,
     sph_particle->initialize();
   }
 
-} // generateSPHParticle2D
+} // generateSPHParticleNoBottom3D
 
 template <>
-REAL 
-SmoothParticleHydro::computeMass<2>(const double& density, const double& length, 
+REAL
+SmoothParticleHydro::computeMass<2>(const double& density, const double& length,
                                     const std::size_t& numPts) const
 {
-  auto L_over_N = length/numPts;
-  return density*L_over_N*L_over_N;
+  auto L_over_N = length / numPts;
+  return density * L_over_N * L_over_N;
 }
 
 template <>
-REAL 
-SmoothParticleHydro::computeMass<3>(const double& density, const double& length, 
+REAL
+SmoothParticleHydro::computeMass<3>(const double& density, const double& length,
                                     const std::size_t& numPts) const
 {
-  auto L_over_N = length/numPts;
-  return density*L_over_N*L_over_N*L_over_N;
+  auto L_over_N = length / numPts;
+  return density * L_over_N * L_over_N * L_over_N;
 }
 
 template <>
-void 
-SmoothParticleHydro::createCoords<3>(const Vec& vmin, const Vec& vmax, 
-                                     const REAL& spaceInterval, 
-                                     const int& numLayers, 
-                                     std::vector<REAL>& xCoords, 
-                                     std::vector<REAL>& yCoords, 
+void
+SmoothParticleHydro::createCoords<3>(const Vec& vmin, const Vec& vmax,
+                                     const REAL& spaceInterval,
+                                     const int& numLayers,
+                                     std::vector<REAL>& xCoords,
+                                     std::vector<REAL>& yCoords,
                                      std::vector<REAL>& zCoords) const
 {
   REAL xmin = vmin.x();
@@ -179,7 +294,7 @@ SmoothParticleHydro::createCoords<3>(const Vec& vmin, const Vec& vmax,
   REAL zmax = vmax.z();
 
   // Create the domain buffer length
-  REAL bufferLength = spaceInterval*numLayers;
+  REAL bufferLength = spaceInterval * numLayers;
 
   // Modify the domain size using the buffer length
   REAL xminBuffered = xmin - bufferLength;
@@ -189,31 +304,36 @@ SmoothParticleHydro::createCoords<3>(const Vec& vmin, const Vec& vmax,
   REAL zminBuffered = zmin - bufferLength;
   REAL zmaxBuffered = zmax + bufferLength;
 
-  // Create an linearly spaced array of x/zcoords from x/zminBuffered to x/zmaxBuffered
-  xCoords = util::linspaceApprox<REAL>(xminBuffered, xmaxBuffered, spaceInterval);
-  yCoords = util::linspaceApprox<REAL>(yminBuffered, ymaxBuffered, spaceInterval);
-  zCoords = util::linspaceApprox<REAL>(zminBuffered, zmaxBuffered, spaceInterval);
+  // Create an linearly spaced array of x/zcoords from x/zminBuffered to
+  // x/zmaxBuffered
+  xCoords =
+    util::linspaceApprox<REAL>(xminBuffered, xmaxBuffered, spaceInterval);
+  yCoords =
+    util::linspaceApprox<REAL>(yminBuffered, ymaxBuffered, spaceInterval);
+  zCoords =
+    util::linspaceApprox<REAL>(zminBuffered, zmaxBuffered, spaceInterval);
 }
 
 template <>
-void 
-SmoothParticleHydro::createCoords<2>(const Vec& vmin, const Vec& vmax, 
-                                     const REAL& spaceInterval, 
-                                     const int& numLayers, 
-                                     std::vector<REAL>& xCoords, 
-                                     std::vector<REAL>& yCoords, 
+void
+SmoothParticleHydro::createCoords<2>(const Vec& vmin, const Vec& vmax,
+                                     const REAL& spaceInterval,
+                                     const int& numLayers,
+                                     std::vector<REAL>& xCoords,
+                                     std::vector<REAL>& yCoords,
                                      std::vector<REAL>& zCoords) const
 {
-  createCoords<3>(vmin, vmax, spaceInterval, numLayers, xCoords, yCoords, zCoords);
+  createCoords<3>(vmin, vmax, spaceInterval, numLayers, xCoords, yCoords,
+                  zCoords);
   yCoords.clear();
 }
 
 template <>
-void 
+void
 SmoothParticleHydro::createParticleArray<3>(const REAL& mass,
                                             const REAL& density,
-                                            const std::vector<REAL>& xCoords, 
-                                            const std::vector<REAL>& yCoords, 
+                                            const std::vector<REAL>& xCoords,
+                                            const std::vector<REAL>& yCoords,
                                             const std::vector<REAL>& zCoords)
 {
   d_allSPHParticleVec.clear();
@@ -223,25 +343,24 @@ SmoothParticleHydro::createParticleArray<3>(const REAL& mass,
   for (const auto& zCoord : zCoords) {
     for (const auto& yCoord : yCoords) {
       for (const auto& xCoord : xCoords) {
-        d_allSPHParticleVec.push_back(
-          std::make_shared<sph::SPHParticle>(partID, mass, density, 
-                                             xCoord, yCoord, zCoord, 
-                                             local_pos, 
-                                             SPHParticleType::NONE));
+        d_allSPHParticleVec.push_back(std::make_shared<sph::SPHParticle>(
+          partID, mass, density, xCoord, yCoord, zCoord, local_pos,
+          SPHParticleType::NONE));
         partID++;
       }
     }
   }
 
-  // std::cout << "Created " << d_allSPHParticleVec.size() << " 3D particles." << std::endl;
+  // std::cout << "Created " << d_allSPHParticleVec.size() << " 3D particles."
+  // << std::endl;
 }
 
 template <>
-void 
+void
 SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
                                             const REAL& density,
-                                            const std::vector<REAL>& xCoords, 
-                                            const std::vector<REAL>& yCoords, 
+                                            const std::vector<REAL>& xCoords,
+                                            const std::vector<REAL>& yCoords,
                                             const std::vector<REAL>& zCoords)
 {
   d_allSPHParticleVec.clear();
@@ -250,50 +369,51 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
   dem::Vec local_pos = 0;
   for (const auto& zCoord : zCoords) {
     for (const auto& xCoord : xCoords) {
-      d_allSPHParticleVec.push_back(
-        std::make_shared<sph::SPHParticle>(partID, mass, density, 
-                                           xCoord, 0.0, zCoord, 
-                                           local_pos, 
-                                           SPHParticleType::NONE));
+      d_allSPHParticleVec.push_back(std::make_shared<sph::SPHParticle>(
+        partID, mass, density, xCoord, 0.0, zCoord, local_pos,
+        SPHParticleType::NONE));
       partID++;
     }
   }
 
-  // std::cout << "Created " << d_allSPHParticleVec.size() << " 2D particles." << std::endl;
+  // std::cout << "Created " << d_allSPHParticleVec.size() << " 2D particles."
+  // << std::endl;
 }
 
-void 
+void
 SmoothParticleHydro::removeRedundantSPHParticles()
 {
   d_allSPHParticleVec.erase(
     std::remove_if(d_allSPHParticleVec.begin(), d_allSPHParticleVec.end(),
-      [](SPHParticleP particle) {
-        if (particle->getType() == SPHParticleType::NONE) {
-         return true;
-        }
-        return false;
-      }),
+                   [](SPHParticleP particle) {
+                     if (particle->getType() == SPHParticleType::NONE) {
+                       return true;
+                     }
+                     return false;
+                   }),
     d_allSPHParticleVec.end());
 }
 
+
 /*
-  // here the free particles, ghost particles and boundary particles will all stored in the same vector
-  // unlike the implementation in serial version.
-  void SmoothParticleHydro::generateSPHParticle3D(){
-  
+  // here the free particles and boundary particles will all stored in the same
+vector while sph ghost particles will be stored in dem particles
+  void SmoothParticleHydro::generateSPHParticleMiddleLayers3D(){  // this is for
+drainage middleLayers
+
         if(mpiRank!=0) return;  // make only primary cpu generate particles
 
-  int numLayers = util::getParam<>("numLayers"];
-   REAL L = util::getParam<>("waterLength"];
-  REAL nSPHPoint = util::getParam<>("nSPHPoint"];
-  REAL gamma = util::getParam<>("gamma"];
-  REAL P0 = util::getParam<>("P0"];
-  REAL gravAccel = util::getParam<>("gravAccel"];
-  REAL gravScale = util::getParam<>("gravScale"];
-  REAL SPHInitialDensity = util::getParam<>("SPHInitialDensity"];
+  int numLayers = util::getParam<int>("numLayers"];
+   REAL L = allContainer.getMaxCorner().x()-allContainer.getMinCorner().x();  //
+based on x direction
+  REAL gamma = util::getParam<REAL>("gamma"];
+  REAL P0 = util::getParam<REAL>("P0"];
+  REAL gravAccel = util::getParam<REAL>("gravAccel"];
+  REAL gravScale = util::getParam<REAL>("gravScale"];
+  REAL sphInitialDensity = util::getParam<REAL>("SPHInitialDensity"];
 
-    spaceInterval = L/(nSPHPoint-1);
-  REAL SPHmass = SPHInitialDensity*L*L*L/(nSPHPoint*nSPHPoint*nSPHPoint);
+    spaceInterval = util::getParam<REAL>("spaceInterval"];
+  REAL SPHmass = sphInitialDensity*spaceInterval*spaceInterval*spaceInterval;
 
   // get the dimensions of the sph domain
       Vec vmin = allContainer.getMinCorner();
@@ -305,94 +425,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
       REAL ymax = vmax.y();
       REAL zmax = vmax.z();
 
-  // create and store PeriParticle objects into periParticleVec
-  int isGhost = 0;  // is Ghost particle
-  REAL radius_a, radius_b, radius_c;
-  REAL inner_a,  inner_b,  inner_c;
-    dem::Vec pt_position;
-  dem::Vec localCoords;  // local position of ghost point in dem particle
-  dem::Vec tmp_xyz, tmp_local;
-  REAL small_value = 0.01*spaceInterval;
-      smoothLength = 1.5*spaceInterval;
-  kernelSize = 3*smoothLength;
-    for(REAL tmp_y=ymin-spaceInterval*numLayers; tmp_y<ymax+spaceInterval*numLayers; tmp_y=tmp_y+spaceInterval){
-  for(REAL tmp_x=xmin-spaceInterval*numLayers; tmp_x<xmax+spaceInterval*numLayers; tmp_x=tmp_x+spaceInterval){
-      for(REAL tmp_z=zmin-spaceInterval*numLayers; tmp_z<zmax+spaceInterval*numLayers; tmp_z=tmp_z+spaceInterval){
-    isGhost = 0;
-    tmp_xyz = dem::Vec(tmp_x, tmp_y, tmp_z);
-        for(std::vector<Particle*>::iterator pt=allParticleVec.begin(); pt!=allParticleVec.end(); pt++){
-        radius_a = (*pt)->getA(); radius_b = (*pt)->getB(); radius_c = (*pt)->getC();
-        inner_a = radius_a-kernelSize; inner_b = radius_b-kernelSize; inner_c = radius_c-kernelSize;
-        pt_position = (*pt)->currentPosition();
-        tmp_local = (*pt)->globalToLocal(tmp_xyz-pt_position);
-        if( tmp_local.x()*tmp_local.x()/(radius_a*radius_a)+tmp_local.y()*tmp_local.y()/(radius_b*radius_b)+tmp_local.z()*tmp_local.z()/(radius_c*radius_c) <= 1 ){
-          isGhost = 1;  // is Ghost particle
-      if(tmp_local.x()*tmp_local.x()/(inner_a*inner_a)+tmp_local.y()*tmp_local.y()/(inner_b*inner_b)+tmp_local.z()*tmp_local.z()/(inner_c*inner_c) > 1 || inner_a<=0 || inner_b<=0 || inner_c<=0){
-          localCoords = (*pt)->globalToLocal( dem::Vec(tmp_x, tmp_y, tmp_z)-pt_position );
-          sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, tmp_y, tmp_z, localCoords, 2);  // 2 is ghost SPH particle
-          (*pt)->SPHGhostParticleVec.push_back(tmp_pt);   // at current, the scatterSPHParticle is not valide for ghost particles. July 15, 2015
-
-//          break;  // if this sph point is ghost for dem particle 1, then it cannot be ghost for any others,
-        // should avoid the initial overlap of the different dem particles
-          }
-        }
-        } // end dem particle
-
-    if(isGhost==0){  // free/boundary particles
-        if(tmp_x<=xmin-spaceInterval+small_value || tmp_x>=xmax-small_value 
-        || tmp_y<=ymin-spaceInterval+small_value || tmp_y>=ymax+spaceInterval-small_value
-        || tmp_z<=zmin-spaceInterval+small_value || tmp_z>=zmax-small_value){  // boundary sph particles
-      if(tmp_z>=L+spaceInterval){
-              sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
-          d_allSPHParticleVec.push_back(tmp_pt);
-      }
-      else{
-              sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity*pow(1+SPHInitialDensity*gravAccel*gravScale*(L-tmp_z)/P0, 1.0/gamma), tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
-          d_allSPHParticleVec.push_back(tmp_pt);
-      }
-        } 
-        else if(tmp_x<=L && tmp_z<=L){  // free sph particles
-          sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity*pow(1+SPHInitialDensity*gravAccel*gravScale*(L-tmp_z)/P0, 1.0/gamma), tmp_x, tmp_y, tmp_z, 1);  // 1 is free SPH particle
-//      sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, 0, tmp_z, 1);  // 1 is free SPH particle
-              d_allSPHParticleVec.push_back(tmp_pt);
-        }
-    }
-      }
-  }
-    }
-
-  for(std::vector<sph::SPHParticle*>::iterator pt=d_allSPHParticleVec.begin(); pt!=d_allSPHParticleVec.end(); pt++){
-      (*pt)->initialize();
-  }
-
-  } // generateSPHParticle3D
-
-
-  // here the free particles and boundary particles will all stored in the same vector while sph ghost particles will be stored in dem particles
-  void SmoothParticleHydro::generateSPHParticleNoBottom3D(){  // this is for drainage problem
-  
-        if(mpiRank!=0) return;  // make only primary cpu generate particles
-
-  int numLayers = util::getParam<>("numLayers"];
-   REAL L = allContainer.getMaxCorner().x()-allContainer.getMinCorner().x();  // based on x direction
-  REAL gamma = util::getParam<>("gamma"];
-  REAL P0 = util::getParam<>("P0"];
-  REAL gravAccel = util::getParam<>("gravAccel"];
-  REAL gravScale = util::getParam<>("gravScale"];
-  REAL SPHInitialDensity = util::getParam<>("SPHInitialDensity"];
-
-    spaceInterval = util::getParam<>("spaceInterval"];
-  REAL SPHmass = SPHInitialDensity*spaceInterval*spaceInterval*spaceInterval;
-
-  // get the dimensions of the sph domain
-      Vec vmin = allContainer.getMinCorner();
-      Vec vmax = allContainer.getMaxCorner();
-      REAL xmin = vmin.x();
-      REAL ymin = vmin.y();
-      REAL zmin = vmin.z();
-      REAL xmax = vmax.x();
-      REAL ymax = vmax.y();
-      REAL zmax = vmax.z();
+  REAL waterZmin = util::getParam<REAL>("waterZmin"];
+  REAL waterZmax = util::getParam<REAL>("waterZmax"];
 
   // create and store PeriParticle objects into periParticleVec
   int isGhost = 0;  // is Ghost particle
@@ -401,125 +435,56 @@ SmoothParticleHydro::removeRedundantSPHParticles()
   dem::Vec localCoords;  // local position of ghost point in dem particle
   dem::Vec tmp_xyz, tmp_local;
   REAL small_value = 0.01*spaceInterval;
-    for(REAL tmp_y=ymin-spaceInterval*numLayers; tmp_y<ymax+spaceInterval*numLayers; tmp_y=tmp_y+spaceInterval){
-  for(REAL tmp_x=xmin-spaceInterval*numLayers; tmp_x<xmax+spaceInterval*numLayers; tmp_x=tmp_x+spaceInterval){
-      for(REAL tmp_z=zmin-spaceInterval*numLayers; tmp_z<zmax+spaceInterval*numLayers; tmp_z=tmp_z+spaceInterval){
+    for(REAL tmp_y=ymin-spaceInterval*numLayers;
+tmp_y<ymax+spaceInterval*numLayers; tmp_y=tmp_y+spaceInterval){
+  for(REAL tmp_x=xmin-spaceInterval*numLayers;
+tmp_x<xmax+spaceInterval*numLayers; tmp_x=tmp_x+spaceInterval){
+      for(REAL tmp_z=zmin-spaceInterval*numLayers;
+tmp_z<zmax+spaceInterval*numLayers; tmp_z=tmp_z+spaceInterval){
     isGhost = 0;
     tmp_xyz = dem::Vec(tmp_x, tmp_y, tmp_z);
-        for(std::vector<Particle*>::iterator pt=allParticleVec.begin(); pt!=allParticleVec.end(); pt++){
-        radius_a = (*pt)->getA(); radius_b = (*pt)->getB(); radius_c = (*pt)->getC();
+        for(std::vector<Particle*>::iterator pt=allParticleVec.begin();
+pt!=allParticleVec.end(); pt++){
+        radius_a = (*pt)->getA(); radius_b = (*pt)->getB(); radius_c =
+(*pt)->getC();
         pt_position = (*pt)->currentPosition();
         tmp_local = (*pt)->globalToLocal(tmp_xyz-pt_position);
-        if( tmp_local.x()*tmp_local.x()/(radius_a*radius_a)+tmp_local.y()*tmp_local.y()/(radius_b*radius_b)+tmp_local.z()*tmp_local.z()/(radius_c*radius_c) <= 1 ){
+        if(
+tmp_local.x()*tmp_local.x()/(radius_a*radius_a)+tmp_local.y()*tmp_local.y()/(radius_b*radius_b)+tmp_local.z()*tmp_local.z()/(radius_c*radius_c)
+<= 1 ){
           isGhost = 1;  // is Ghost particle
-          localCoords = (*pt)->globalToLocal( dem::Vec(tmp_x, tmp_y, tmp_z)-pt_position );
-          sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, tmp_y, tmp_z, localCoords, 2);  // 2 is ghost SPH particle
-          (*pt)->SPHGhostParticleVec.push_back(tmp_pt);   // at current, the scatterSPHParticle is not valide for ghost particles. July 15, 2015
+          localCoords = (*pt)->globalToLocal( dem::Vec(tmp_x, tmp_y,
+tmp_z)-pt_position );
+          sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass,
+sphInitialDensity, tmp_x, tmp_y, tmp_z, localCoords, 2);  // 2 is ghost SPH
+particle
+          (*pt)->SPHGhostParticleVec.push_back(tmp_pt);   // at current, the
+scatterSPHParticle is not valide for ghost particles. July 15, 2015
 
-          break;  // if this sph point is ghost for dem particle 1, then it cannot be ghost for any others,
+          break;  // if this sph point is ghost for dem particle 1, then it
+cannot be ghost for any others,
         // should avoid the initial overlap of the different dem particles
         }
         } // end dem particle
 
     if(isGhost==0){  // free/boundary particles
-        if(tmp_x<=xmin-spaceInterval+small_value || tmp_x>=xmax+spaceInterval-small_value 
-        || tmp_y<=ymin-spaceInterval+small_value || tmp_y>=ymax+spaceInterval-small_value
-        //|| tmp_z<=zmin-spaceInterval+small_value 
-        || tmp_z>=zmax+spaceInterval-small_value){  // boundary sph particles
-      if(tmp_z>=zmax+spaceInterval-small_value){
-              sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
-          d_allSPHParticleVec.push_back(tmp_pt);
-      }
-      else{
-              sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity*pow(1+SPHInitialDensity*gravAccel*gravScale*(zmax-tmp_z)/P0, 1.0/gamma), tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
-          d_allSPHParticleVec.push_back(tmp_pt);
-      }
-        } 
-        else if(tmp_z>=zmin){  // free sph particles
-          sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity*pow(1+SPHInitialDensity*gravAccel*gravScale*(zmax-tmp_z)/P0, 1.0/gamma), tmp_x, tmp_y, tmp_z, 1);  // 1 is free SPH particle
-//      sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, 0, tmp_z, 1);  // 1 is free SPH particle
-              d_allSPHParticleVec.push_back(tmp_pt);
-        }
-    }
-      }
-  }
-    }
-
-  for(std::vector<sph::SPHParticle*>::iterator pt=d_allSPHParticleVec.begin(); pt!=d_allSPHParticleVec.end(); pt++){
-      (*pt)->initialize();
-  }
-
-  } // generateSPHParticleNoBottom3D
-
-
-  // here the free particles and boundary particles will all stored in the same vector while sph ghost particles will be stored in dem particles
-  void SmoothParticleHydro::generateSPHParticleMiddleLayers3D(){  // this is for drainage middleLayers
-  
-        if(mpiRank!=0) return;  // make only primary cpu generate particles
-
-  int numLayers = util::getParam<>("numLayers"];
-   REAL L = allContainer.getMaxCorner().x()-allContainer.getMinCorner().x();  // based on x direction
-  REAL gamma = util::getParam<>("gamma"];
-  REAL P0 = util::getParam<>("P0"];
-  REAL gravAccel = util::getParam<>("gravAccel"];
-  REAL gravScale = util::getParam<>("gravScale"];
-  REAL SPHInitialDensity = util::getParam<>("SPHInitialDensity"];
-
-    spaceInterval = util::getParam<>("spaceInterval"];
-  REAL SPHmass = SPHInitialDensity*spaceInterval*spaceInterval*spaceInterval;
-
-  // get the dimensions of the sph domain
-      Vec vmin = allContainer.getMinCorner();
-      Vec vmax = allContainer.getMaxCorner();
-      REAL xmin = vmin.x();
-      REAL ymin = vmin.y();
-      REAL zmin = vmin.z();
-      REAL xmax = vmax.x();
-      REAL ymax = vmax.y();
-      REAL zmax = vmax.z();
-
-  REAL waterZmin = util::getParam<>("waterZmin"];
-  REAL waterZmax = util::getParam<>("waterZmax"];
-
-  // create and store PeriParticle objects into periParticleVec
-  int isGhost = 0;  // is Ghost particle
-  REAL radius_a, radius_b, radius_c;
-    dem::Vec pt_position;
-  dem::Vec localCoords;  // local position of ghost point in dem particle
-  dem::Vec tmp_xyz, tmp_local;
-  REAL small_value = 0.01*spaceInterval;
-    for(REAL tmp_y=ymin-spaceInterval*numLayers; tmp_y<ymax+spaceInterval*numLayers; tmp_y=tmp_y+spaceInterval){
-  for(REAL tmp_x=xmin-spaceInterval*numLayers; tmp_x<xmax+spaceInterval*numLayers; tmp_x=tmp_x+spaceInterval){
-      for(REAL tmp_z=zmin-spaceInterval*numLayers; tmp_z<zmax+spaceInterval*numLayers; tmp_z=tmp_z+spaceInterval){
-    isGhost = 0;
-    tmp_xyz = dem::Vec(tmp_x, tmp_y, tmp_z);
-        for(std::vector<Particle*>::iterator pt=allParticleVec.begin(); pt!=allParticleVec.end(); pt++){
-        radius_a = (*pt)->getA(); radius_b = (*pt)->getB(); radius_c = (*pt)->getC();
-        pt_position = (*pt)->currentPosition();
-        tmp_local = (*pt)->globalToLocal(tmp_xyz-pt_position);
-        if( tmp_local.x()*tmp_local.x()/(radius_a*radius_a)+tmp_local.y()*tmp_local.y()/(radius_b*radius_b)+tmp_local.z()*tmp_local.z()/(radius_c*radius_c) <= 1 ){
-          isGhost = 1;  // is Ghost particle
-          localCoords = (*pt)->globalToLocal( dem::Vec(tmp_x, tmp_y, tmp_z)-pt_position );
-          sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, tmp_y, tmp_z, localCoords, 2);  // 2 is ghost SPH particle
-          (*pt)->SPHGhostParticleVec.push_back(tmp_pt);   // at current, the scatterSPHParticle is not valide for ghost particles. July 15, 2015
-
-          break;  // if this sph point is ghost for dem particle 1, then it cannot be ghost for any others,
-        // should avoid the initial overlap of the different dem particles
-        }
-        } // end dem particle
-
-    if(isGhost==0){  // free/boundary particles
-        if(tmp_x<=xmin-spaceInterval+small_value || tmp_x>=xmax+spaceInterval-small_value 
-        || tmp_y<=ymin-spaceInterval+small_value || tmp_y>=ymax+spaceInterval-small_value
-        || tmp_z<=zmin-spaceInterval+small_value 
+        if(tmp_x<=xmin-spaceInterval+small_value ||
+tmp_x>=xmax+spaceInterval-small_value
+        || tmp_y<=ymin-spaceInterval+small_value ||
+tmp_y>=ymax+spaceInterval-small_value
+        || tmp_z<=zmin-spaceInterval+small_value
         //|| tmp_z>=zmax+spaceInterval-small_value
         ){  // boundary sph particles, no top boundary
-          sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
+          sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass,
+sphInitialDensity, tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
       d_allSPHParticleVec.push_back(tmp_pt);
-        } 
+        }
         else if(tmp_z>=waterZmin && tmp_z<=waterZmax){  // free sph particles
-          sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity*pow(1+SPHInitialDensity*gravAccel*gravScale*(waterZmax-tmp_z)/P0, 1.0/gamma), tmp_x, tmp_y, tmp_z, 1);  // 1 is free SPH particle
-//      sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, 0, tmp_z, 1);  // 1 is free SPH particle
+          sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass,
+sphInitialDensity*pow(1+sphInitialDensity*gravAccel*gravScale*(waterZmax-tmp_z)/P0,
+1.0/gamma), tmp_x, tmp_y, tmp_z, 1);  // 1 is free SPH particle
+//      sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass,
+sphInitialDensity, tmp_x, 0, tmp_z, 1);  // 1 is free SPH particle
               d_allSPHParticleVec.push_back(tmp_pt);
         }
     }
@@ -527,13 +492,15 @@ SmoothParticleHydro::removeRedundantSPHParticles()
   }
     }
 
-  for(std::vector<sph::SPHParticle*>::iterator pt=d_allSPHParticleVec.begin(); pt!=d_allSPHParticleVec.end(); pt++){
+  for(std::vector<sph::SPHParticle*>::iterator pt=d_allSPHParticleVec.begin();
+pt!=d_allSPHParticleVec.end(); pt++){
       (*pt)->initialize();
   }
 
   } // generateSPHParticleNoBottom3D
 
-  void SmoothParticleHydro::findSPHParticleInRectangle(const Rectangle &container,
+  void SmoothParticleHydro::findSPHParticleInRectangle(const Rectangle
+&container,
         const std::vector<sph::SPHParticle*> &inputParticle,
         std::vector<sph::SPHParticle*> &foundParticle) {
     foundParticle.reserve(inputParticle.size());
@@ -577,24 +544,28 @@ SmoothParticleHydro::removeRedundantSPHParticles()
        center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
        center.z() - z1 >= -EPS && center.z() - z2 < -EPS) )
   {
-    //debugInf << "iter=" << std::setw(8) << iteration << " rank=" << std::setw(2) << mpiRank
-    //<< " removed=" << std::setw(3) << (*itr)->getId();  
+    //debugInf << "iter=" << std::setw(8) << iteration << " rank=" <<
+std::setw(2) << mpiRank
+    //<< " removed=" << std::setw(3) << (*itr)->getId();
     //flag = 1;
     // this is important to free the memory of these sph ghost particles
-    for(std::vector<sph::SPHParticle*>::iterator st=(*itr)->SPHGhostParticleVec.begin(); st!=(*itr)->SPHGhostParticleVec.end(); st++){
-       delete (*st);  
+    for(std::vector<sph::SPHParticle*>::iterator
+st=(*itr)->SPHGhostParticleVec.begin(); st!=(*itr)->SPHGhostParticleVec.end();
+st++){
+       delete (*st);
     }
     (*itr)->SPHGhostParticleVec.clear();
 
     delete (*itr); // release memory
-    itr = particleVec.erase(itr); 
+    itr = particleVec.erase(itr);
   }
       else
   ++itr;
     }
     //  if (flag == 1) {
     //  debugInf << " now " << particleVec.size() << ": ";
-    //  for (std::vector<Particle*>::const_iterator it = particleVec.begin(); it != particleVec.end(); ++it)
+    //  for (std::vector<Particle*>::const_iterator it = particleVec.begin(); it
+!= particleVec.end(); ++it)
     //  debugInf << std::setw(3) << (*it)->getId();
     //  debugInf << std::endl;
     //  }
@@ -615,7 +586,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     Vec center;
     //std::size_t flag = 0;
 
-    // this for loop may be replaced by for_each, remove, erase and swap (shrink to fit)
+    // this for loop may be replaced by for_each, remove, erase and swap (shrink
+to fit)
     // see item 14 in "effective STL"
     for (itr = d_sphParticleVec.begin(); itr != d_sphParticleVec.end(); ) {
       center=(*itr)->getCurrPosition();
@@ -624,18 +596,20 @@ SmoothParticleHydro::removeRedundantSPHParticles()
        center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
        center.z() - z1 >= -EPS && center.z() - z2 < -EPS) )
   {
-    //  debugInf << "iter=" << std::setw(8) << iteration << " rank=" << std::setw(2) << mpiRank
-    //  << " removed=" << std::setw(3) << (*itr)->getId();  
+    //  debugInf << "iter=" << std::setw(8) << iteration << " rank=" <<
+std::setw(2) << mpiRank
+    //  << " removed=" << std::setw(3) << (*itr)->getId();
     //  flag = 1;
     delete (*itr); // release memory
-    itr = d_sphParticleVec.erase(itr); 
+    itr = d_sphParticleVec.erase(itr);
   }
       else
   ++itr;
     }
     //  if (flag == 1) {
     //  debugInf << " now " << particleVec.size() << ": ";
-    //  for (std::vector<Particle*>::const_iterator it = particleVec.begin(); it != particleVec.end(); ++it)
+    //  for (std::vector<Particle*>::const_iterator it = particleVec.begin(); it
+!= particleVec.end(); ++it)
     //  debugInf << std::setw(3) << (*it)->getId();
     //  debugInf << std::endl;
     //  }
@@ -643,26 +617,35 @@ SmoothParticleHydro::removeRedundantSPHParticles()
   }
 
   // this is to scatter the dem and sph particle
-  // two point: (1) the sph ghost particles will be partitioned with dem particles together. There is no explicite partition for sph ghost particles.
-  //        After the partition of the dem particles, the sph ghost particles will be paritioned as a class member of dem particle.
-  //        Before partition, SPHParticle.demParticle points to NULL; after receive, SPHParticle.demParticle can point to their dem particle. July 27, 2015
-  //            (2) block partitions for dem domain and sph domain have to be the same, 
-  //        otherwise some dem particles and their nearby sph particles will belong to different block
+  // two point: (1) the sph ghost particles will be partitioned with dem
+particles together. There is no explicite partition for sph ghost particles.
+  //        After the partition of the dem particles, the sph ghost particles
+will be paritioned as a class member of dem particle.
+  //        Before partition, SPHParticle.demParticle points to NULL; after
+receive, SPHParticle.demParticle can point to their dem particle. July 27, 2015
+  //            (2) block partitions for dem domain and sph domain have to be
+the same,
+  //        otherwise some dem particles and their nearby sph particles will
+belong to different block
   //        (grid is expanded to include the boundary sph particles)
-  //    (3) this partition method here is not very suitable for the free surface flow problem, such as bursting dam problem
-  //        since the total domain is divided, while there are lots of voids in the domain. (partition only free sph particles will be better)
-  //        But our goal is to simulate the porous media in triaxial, insotropic or SHPB simulations, particles are filled in the container.
+  //    (3) this partition method here is not very suitable for the free surface
+flow problem, such as bursting dam problem
+  //        since the total domain is divided, while there are lots of voids in
+the domain. (partition only free sph particles will be better)
+  //        But our goal is to simulate the porous media in triaxial, insotropic
+or SHPB simulations, particles are filled in the container.
   void SmoothParticleHydro::scatterDEMSPHParticle() {
     // partition particles and send to each process
     if (mpiRank == 0) { // process 0
-      int numLayers = util::getParam<>("numLayers"];
-      setGrid(Rectangle(allContainer.getMinCorner().x() - spaceInterval*numLayers,
+      int numLayers = util::getParam<int>("numLayers"];
+      setGrid(Rectangle(allContainer.getMinCorner().x() -
+spaceInterval*numLayers,
       allContainer.getMinCorner().y() - spaceInterval*numLayers,
       allContainer.getMinCorner().z() - spaceInterval*numLayers,
       allContainer.getMaxCorner().x() + spaceInterval*numLayers,
       allContainer.getMaxCorner().y() + spaceInterval*numLayers,
       allContainer.getMaxCorner().z() + spaceInterval*numLayers ));
-    
+
       Vec v1 = grid.getMinCorner();
       Vec v2 = grid.getMaxCorner();
       Vec vspan = v2 - v1;
@@ -682,17 +665,25 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
   findParticleInRectangle(container, allParticleVec, tmpParticleVec);
   if (iRank != 0)
-    reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, tmpParticleVec); // non-blocking send
-    // before send, the SPHParticle.demParticle == NULL, since NULL is assigned when SPHParticle is created
+    reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, tmpParticleVec); //
+non-blocking send
+    // before send, the SPHParticle.demParticle == NULL, since NULL is assigned
+when SPHParticle is created
   if (iRank == 0) {
     particleVec.resize(tmpParticleVec.size());
     for (int i = 0; i < particleVec.size(); ++i){
       // default synthesized copy constructor
-      particleVec[i] = new Particle(*tmpParticleVec[i]);  // at this point, particleVec and allParticleVec are pointing to the same SPHGhoastParticle
-      particleVec[i]->SPHGhostParticleVec.clear();  // at this point, particleVec is pointing to nothing
-      for(std::vector<sph::SPHParticle*>::iterator st=tmpParticleVec[i]->SPHGhostParticleVec.begin(); st!=tmpParticleVec[i]->SPHGhostParticleVec.end(); st++){
-      sph::SPHParticle* tmp_sph = new sph::SPHParticle(**st);  // create a new SPHGhost particle, which is the same as the one in allParticleVec
-      particleVec[i]->SPHGhostParticleVec.push_back(tmp_sph);  // now particleVec points to the new SPHGhostParticle
+      particleVec[i] = new Particle(*tmpParticleVec[i]);  // at this point,
+particleVec and allParticleVec are pointing to the same SPHGhoastParticle
+      particleVec[i]->SPHGhostParticleVec.clear();  // at this point,
+particleVec is pointing to nothing
+      for(std::vector<sph::SPHParticle*>::iterator
+st=tmpParticleVec[i]->SPHGhostParticleVec.begin();
+st!=tmpParticleVec[i]->SPHGhostParticleVec.end(); st++){
+      sph::SPHParticle* tmp_sph = new sph::SPHParticle(**st);  // create a new
+SPHGhost particle, which is the same as the one in allParticleVec
+      particleVec[i]->SPHGhostParticleVec.push_back(tmp_sph);  // now
+particleVec points to the new SPHGhostParticle
       }
     }
   } // now particleVec do not share memeory with allParticleVec
@@ -704,26 +695,29 @@ SmoothParticleHydro::removeRedundantSPHParticles()
       boostWorld.recv(0, mpiTag, particleVec);
     }
 
-    // this is important to pointer the demParticle in SPHParticle to the correct dem particle
-    for(std::vector<Particle*>::iterator it=particleVec.begin(); it!=particleVec.end(); it++){
+    // this is important to pointer the demParticle in SPHParticle to the
+correct dem particle
+    for(std::vector<Particle*>::iterator it=particleVec.begin();
+it!=particleVec.end(); it++){
   (*it)->setDemParticleInSPHParticle();  // set SPHParticle.demParticle to (*it)
     }
 
-    // content of allParticleVec may need to be printed, so do not clear it. 
+    // content of allParticleVec may need to be printed, so do not clear it.
     //if (mpiRank == 0) releaseGatheredParticle();
 
 
     ///////////////////////////////////////////////////////////////////////////////
     // partition SPH particles (free and boundary) and send to each process
     if (mpiRank == 0) { // process 0
-      int numLayers = util::getParam<>("numLayers"];
-      setGrid(Rectangle(allContainer.getMinCorner().x() - spaceInterval*numLayers,
+      int numLayers = util::getParam<int>("numLayers"];
+      setGrid(Rectangle(allContainer.getMinCorner().x() -
+spaceInterval*numLayers,
       allContainer.getMinCorner().y() - spaceInterval*numLayers,
       allContainer.getMinCorner().z() - spaceInterval*numLayers,
       allContainer.getMaxCorner().x() + spaceInterval*numLayers,
       allContainer.getMaxCorner().y() + spaceInterval*numLayers,
       allContainer.getMaxCorner().z() + spaceInterval*numLayers ));
-    
+
       Vec v1 = grid.getMinCorner();
       Vec v2 = grid.getMaxCorner();
       Vec vspan = v2 - v1;
@@ -743,11 +737,13 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
   findSPHParticleInRectangle(container, d_allSPHParticleVec, tmpSPHParticleVec);
   if (iRank != 0)
-    reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, tmpSPHParticleVec); // non-blocking send
+    reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, tmpSPHParticleVec); //
+non-blocking send
   if (iRank == 0) {
     d_sphParticleVec.resize(tmpSPHParticleVec.size());
     for (int i = 0; i < d_sphParticleVec.size(); ++i)
-      d_sphParticleVec[i] = new sph::SPHParticle(*tmpSPHParticleVec[i]); // default synthesized copy constructor
+      d_sphParticleVec[i] = new sph::SPHParticle(*tmpSPHParticleVec[i]); //
+default synthesized copy constructor
   } // now particleVec do not share memeory with allParticleVec
       }
       boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
@@ -769,14 +765,15 @@ SmoothParticleHydro::removeRedundantSPHParticles()
   void SmoothParticleHydro::scatterDEMSPHParticleCopyDEM() {
     // partition particles and send to each process
     if (mpiRank == 0) { // process 0
-      int numLayers = util::getParam<>("numLayers"];
-      setGrid(Rectangle(allContainer.getMinCorner().x() - spaceInterval*numLayers,
+      int numLayers = util::getParam<int>("numLayers"];
+      setGrid(Rectangle(allContainer.getMinCorner().x() -
+spaceInterval*numLayers,
       allContainer.getMinCorner().y() - spaceInterval*numLayers,
       allContainer.getMinCorner().z() - spaceInterval*numLayers,
       allContainer.getMaxCorner().x() + spaceInterval*numLayers,
       allContainer.getMaxCorner().y() + spaceInterval*numLayers,
       allContainer.getMaxCorner().z() + spaceInterval*numLayers ));
-    
+
       Vec v1 = grid.getMinCorner();
       Vec v2 = grid.getMaxCorner();
       Vec vspan = v2 - v1;
@@ -796,17 +793,25 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           v2.z() );
   findParticleInRectangle(container, allParticleVec, tmpParticleVec);
   if (iRank != 0)
-    reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, tmpParticleVec); // non-blocking send
-    // before send, the SPHParticle.demParticle == NULL, since NULL is assigned when SPHParticle is created
+    reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, tmpParticleVec); //
+non-blocking send
+    // before send, the SPHParticle.demParticle == NULL, since NULL is assigned
+when SPHParticle is created
   if (iRank == 0) {
     particleVec.resize(tmpParticleVec.size());
     for (int i = 0; i < particleVec.size(); ++i){
       // default synthesized copy constructor
-      particleVec[i] = new Particle(*tmpParticleVec[i]);  // at this point, particleVec and allParticleVec are pointing to the same SPHGhoastParticle
-      particleVec[i]->SPHGhostParticleVec.clear();  // at this point, particleVec is pointing to nothing
-      for(std::vector<sph::SPHParticle*>::iterator st=tmpParticleVec[i]->SPHGhostParticleVec.begin(); st!=tmpParticleVec[i]->SPHGhostParticleVec.end(); st++){
-      sph::SPHParticle* tmp_sph = new sph::SPHParticle(**st);  // create a new SPHGhost particle, which is the same as the one in allParticleVec
-      particleVec[i]->SPHGhostParticleVec.push_back(tmp_sph);  // now particleVec points to the new SPHGhostParticle
+      particleVec[i] = new Particle(*tmpParticleVec[i]);  // at this point,
+particleVec and allParticleVec are pointing to the same SPHGhoastParticle
+      particleVec[i]->SPHGhostParticleVec.clear();  // at this point,
+particleVec is pointing to nothing
+      for(std::vector<sph::SPHParticle*>::iterator
+st=tmpParticleVec[i]->SPHGhostParticleVec.begin();
+st!=tmpParticleVec[i]->SPHGhostParticleVec.end(); st++){
+      sph::SPHParticle* tmp_sph = new sph::SPHParticle(**st);  // create a new
+SPHGhost particle, which is the same as the one in allParticleVec
+      particleVec[i]->SPHGhostParticleVec.push_back(tmp_sph);  // now
+particleVec points to the new SPHGhostParticle
       }
     }
   } // now particleVec do not share memeory with allParticleVec
@@ -818,26 +823,29 @@ SmoothParticleHydro::removeRedundantSPHParticles()
       boostWorld.recv(0, mpiTag, particleVec);
     }
 
-    // this is important to pointer the demParticle in SPHParticle to the correct dem particle
-    for(std::vector<Particle*>::iterator it=particleVec.begin(); it!=particleVec.end(); it++){
+    // this is important to pointer the demParticle in SPHParticle to the
+correct dem particle
+    for(std::vector<Particle*>::iterator it=particleVec.begin();
+it!=particleVec.end(); it++){
   (*it)->setDemParticleInSPHParticle();  // set SPHParticle.demParticle to (*it)
     }
 
-    // content of allParticleVec may need to be printed, so do not clear it. 
+    // content of allParticleVec may need to be printed, so do not clear it.
     //if (mpiRank == 0) releaseGatheredParticle();
 
 
     ///////////////////////////////////////////////////////////////////////////////
     // partition SPH particles (free and boundary) and send to each process
     if (mpiRank == 0) { // process 0
-      int numLayers = util::getParam<>("numLayers"];
-      setGrid(Rectangle(allContainer.getMinCorner().x() - spaceInterval*numLayers,
+      int numLayers = util::getParam<int>("numLayers"];
+      setGrid(Rectangle(allContainer.getMinCorner().x() -
+spaceInterval*numLayers,
       allContainer.getMinCorner().y() - spaceInterval*numLayers,
       allContainer.getMinCorner().z() - spaceInterval*numLayers,
       allContainer.getMaxCorner().x() + spaceInterval*numLayers,
       allContainer.getMaxCorner().y() + spaceInterval*numLayers,
       allContainer.getMaxCorner().z() + spaceInterval*numLayers ));
-    
+
       Vec v1 = grid.getMinCorner();
       Vec v2 = grid.getMaxCorner();
       Vec vspan = v2 - v1;
@@ -857,11 +865,13 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
   findSPHParticleInRectangle(container, d_allSPHParticleVec, tmpSPHParticleVec);
   if (iRank != 0)
-    reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, tmpSPHParticleVec); // non-blocking send
+    reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, tmpSPHParticleVec); //
+non-blocking send
   if (iRank == 0) {
     d_sphParticleVec.resize(tmpSPHParticleVec.size());
     for (int i = 0; i < d_sphParticleVec.size(); ++i)
-      d_sphParticleVec[i] = new sph::SPHParticle(*tmpSPHParticleVec[i]); // default synthesized copy constructor
+      d_sphParticleVec[i] = new sph::SPHParticle(*tmpSPHParticleVec[i]); //
+default synthesized copy constructor
   } // now particleVec do not share memeory with allParticleVec
       }
       boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
@@ -879,7 +889,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     broadcast(boostWorld, grid, 0);
   } // scatterDEMSPHParticleCopyDEM
 
-  void SmoothParticleHydro::commuParticle()   // the communication of sph ghost particles are implemented here, July 27, 2015
+  void SmoothParticleHydro::commuParticle()   // the communication of sph ghost
+particles are implemented here, July 27, 2015
   {
     // determine container of each process
     Vec v1 = grid.getMinCorner();
@@ -896,11 +907,16 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     std::vector<Particle*> particleX1, particleX2;
     std::vector<Particle*> particleY1, particleY2;
     std::vector<Particle*> particleZ1, particleZ2;
-    std::vector<Particle*> particleX1Y1, particleX1Y2, particleX1Z1, particleX1Z2; 
-    std::vector<Particle*> particleX2Y1, particleX2Y2, particleX2Z1, particleX2Z2; 
-    std::vector<Particle*> particleY1Z1, particleY1Z2, particleY2Z1, particleY2Z2; 
-    std::vector<Particle*> particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1, particleX1Y2Z2; 
-    std::vector<Particle*> particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1, particleX2Y2Z2; 
+    std::vector<Particle*> particleX1Y1, particleX1Y2, particleX1Z1,
+particleX1Z2;
+    std::vector<Particle*> particleX2Y1, particleX2Y2, particleX2Z1,
+particleX2Z2;
+    std::vector<Particle*> particleY1Z1, particleY1Z2, particleY2Z1,
+particleY2Z2;
+    std::vector<Particle*> particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1,
+particleX1Y2Z2;
+    std::vector<Particle*> particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1,
+particleX2Y2Z2;
     boost::mpi::request reqX1[2], reqX2[2];
     boost::mpi::request reqY1[2], reqY2[2];
     boost::mpi::request reqZ1[2], reqZ2[2];
@@ -910,17 +926,20 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     boost::mpi::request reqX1Y1Z1[2], reqX1Y1Z2[2], reqX1Y2Z1[2], reqX1Y2Z2[2];
     boost::mpi::request reqX2Y1Z1[2], reqX2Y1Z2[2], reqX2Y2Z1[2], reqX2Y2Z2[2];
     v1 = container.getMinCorner(); // redefine v1, v2 in terms of process
-    v2 = container.getMaxCorner();   
-    //debugInf << "rank=" << mpiRank << ' ' << v1.x() << ' ' << v1.y() << ' ' << v1.z() << ' '  << v2.x() << ' ' << v2.y() << ' ' << v2.z() << std::endl;
+    v2 = container.getMaxCorner();
+    //debugInf << "rank=" << mpiRank << ' ' << v1.x() << ' ' << v1.y() << ' ' <<
+v1.z() << ' '  << v2.x() << ' ' << v2.y() << ' ' << v2.z() << std::endl;
     REAL cellSize = gradation.getPtclMaxRadius() * 2;
     // 6 surfaces
     if (rankX1 >= 0) { // surface x1
-      Rectangle containerX1(v1.x(), v1.y(), v1.z(), 
+      Rectangle containerX1(v1.x(), v1.y(), v1.z(),
           v1.x() + cellSize, v2.y(), v2.z());
       findParticleInRectangle(containerX1, particleVec, particleX1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1.begin(); it!=particleX1.end(); it++)
-  (*it)->setNULLDemParticleInSPHParticle();  // now the SPHGhostParticles in part of particleVec are pointing to NULL, needed to be back after send
+      for(std::vector<Particle*>::iterator it=particleX1.begin();
+it!=particleX1.end(); it++)
+  (*it)->setNULLDemParticleInSPHParticle();  // now the SPHGhostParticles in
+part of particleVec are pointing to NULL, needed to be back after send
       reqX1[0] = boostWorld.isend(rankX1, mpiTag,  particleX1);
       reqX1[1] = boostWorld.irecv(rankX1, mpiTag, rParticleX1);
     }
@@ -929,17 +948,19 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           v2.x(), v2.y(), v2.z());
       findParticleInRectangle(containerX2, particleVec, particleX2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2.begin(); it!=particleX2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2.begin();
+it!=particleX2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2[0] = boostWorld.isend(rankX2, mpiTag,  particleX2);
       reqX2[1] = boostWorld.irecv(rankX2, mpiTag, rParticleX2);
     }
     if (rankY1 >= 0) {  // surface y1
-      Rectangle containerY1(v1.x(), v1.y(), v1.z(), 
+      Rectangle containerY1(v1.x(), v1.y(), v1.z(),
           v2.x(), v1.y() + cellSize, v2.z());
       findParticleInRectangle(containerY1, particleVec, particleY1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleY1.begin(); it!=particleY1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY1.begin();
+it!=particleY1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqY1[0] = boostWorld.isend(rankY1, mpiTag,  particleY1);
       reqY1[1] = boostWorld.irecv(rankY1, mpiTag, rParticleY1);
@@ -949,7 +970,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           v2.x(), v2.y(), v2.z());
       findParticleInRectangle(containerY2, particleVec, particleY2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleY2.begin(); it!=particleY2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY2.begin();
+it!=particleY2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqY2[0] = boostWorld.isend(rankY2, mpiTag,  particleY2);
       reqY2[1] = boostWorld.irecv(rankY2, mpiTag, rParticleY2);
@@ -959,7 +981,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           v2.x(), v2.y(), v1.z() + cellSize);
       findParticleInRectangle(containerZ1, particleVec, particleZ1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleZ1.begin(); it!=particleZ1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleZ1.begin();
+it!=particleZ1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqZ1[0] = boostWorld.isend(rankZ1, mpiTag,  particleZ1);
       reqZ1[1] = boostWorld.irecv(rankZ1, mpiTag, rParticleZ1);
@@ -969,7 +992,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           v2.x(), v2.y(), v2.z());
       findParticleInRectangle(containerZ2, particleVec, particleZ2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleZ2.begin(); it!=particleZ2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleZ2.begin();
+it!=particleZ2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqZ2[0] = boostWorld.isend(rankZ2, mpiTag,  particleZ2);
       reqZ2[1] = boostWorld.irecv(rankZ2, mpiTag, rParticleZ2);
@@ -980,7 +1004,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v1.x() + cellSize, v1.y() + cellSize, v2.z());
       findParticleInRectangle(containerX1Y1, particleVec, particleX1Y1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Y1.begin(); it!=particleX1Y1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Y1.begin();
+it!=particleX1Y1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Y1[0] = boostWorld.isend(rankX1Y1, mpiTag,  particleX1Y1);
       reqX1Y1[1] = boostWorld.irecv(rankX1Y1, mpiTag, rParticleX1Y1);
@@ -990,7 +1015,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v1.x() + cellSize, v2.y(), v2.z());
       findParticleInRectangle(containerX1Y2, particleVec, particleX1Y2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Y2.begin(); it!=particleX1Y2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Y2.begin();
+it!=particleX1Y2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Y2[0] = boostWorld.isend(rankX1Y2, mpiTag,  particleX1Y2);
       reqX1Y2[1] = boostWorld.irecv(rankX1Y2, mpiTag, rParticleX1Y2);
@@ -1000,7 +1026,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v1.x() + cellSize, v2.y(), v1.z() + cellSize);
       findParticleInRectangle(containerX1Z1, particleVec, particleX1Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Z1.begin(); it!=particleX1Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Z1.begin();
+it!=particleX1Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Z1[0] = boostWorld.isend(rankX1Z1, mpiTag,  particleX1Z1);
       reqX1Z1[1] = boostWorld.irecv(rankX1Z1, mpiTag, rParticleX1Z1);
@@ -1010,7 +1037,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v1.x() + cellSize, v2.y(), v2.z());
       findParticleInRectangle(containerX1Z2, particleVec, particleX1Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Z2.begin(); it!=particleX1Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Z2.begin();
+it!=particleX1Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Z2[0] = boostWorld.isend(rankX1Z2, mpiTag,  particleX1Z2);
       reqX1Z2[1] = boostWorld.irecv(rankX1Z2, mpiTag, rParticleX1Z2);
@@ -1020,7 +1048,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x(), v1.y() + cellSize, v2.z());
       findParticleInRectangle(containerX2Y1, particleVec, particleX2Y1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Y1.begin(); it!=particleX2Y1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Y1.begin();
+it!=particleX2Y1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Y1[0] = boostWorld.isend(rankX2Y1, mpiTag,  particleX2Y1);
       reqX2Y1[1] = boostWorld.irecv(rankX2Y1, mpiTag, rParticleX2Y1);
@@ -1030,7 +1059,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x(), v2.y(), v2.z());
       findParticleInRectangle(containerX2Y2, particleVec, particleX2Y2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Y2.begin(); it!=particleX2Y2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Y2.begin();
+it!=particleX2Y2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Y2[0] = boostWorld.isend(rankX2Y2, mpiTag,  particleX2Y2);
       reqX2Y2[1] = boostWorld.irecv(rankX2Y2, mpiTag, rParticleX2Y2);
@@ -1040,7 +1070,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x(), v2.y(), v1.z() + cellSize);
       findParticleInRectangle(containerX2Z1, particleVec, particleX2Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Z1.begin(); it!=particleX2Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Z1.begin();
+it!=particleX2Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Z1[0] = boostWorld.isend(rankX2Z1, mpiTag,  particleX2Z1);
       reqX2Z1[1] = boostWorld.irecv(rankX2Z1, mpiTag, rParticleX2Z1);
@@ -1050,7 +1081,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x(), v2.y(), v2.z());
       findParticleInRectangle(containerX2Z2, particleVec, particleX2Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Z2.begin(); it!=particleX2Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Z2.begin();
+it!=particleX2Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Z2[0] = boostWorld.isend(rankX2Z2, mpiTag,  particleX2Z2);
       reqX2Z2[1] = boostWorld.irecv(rankX2Z2, mpiTag, rParticleX2Z2);
@@ -1060,7 +1092,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x(), v1.y() + cellSize, v1.z() + cellSize);
       findParticleInRectangle(containerY1Z1, particleVec, particleY1Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleY1Z1.begin(); it!=particleY1Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY1Z1.begin();
+it!=particleY1Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqY1Z1[0] = boostWorld.isend(rankY1Z1, mpiTag,  particleY1Z1);
       reqY1Z1[1] = boostWorld.irecv(rankY1Z1, mpiTag, rParticleY1Z1);
@@ -1070,7 +1103,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x(), v1.y() + cellSize, v2.z());
       findParticleInRectangle(containerY1Z2, particleVec, particleY1Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleY1Z2.begin(); it!=particleY1Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY1Z2.begin();
+it!=particleY1Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqY1Z2[0] = boostWorld.isend(rankY1Z2, mpiTag,  particleY1Z2);
       reqY1Z2[1] = boostWorld.irecv(rankY1Z2, mpiTag, rParticleY1Z2);
@@ -1080,7 +1114,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x(), v2.y(), v1.z() + cellSize);
       findParticleInRectangle(containerY2Z1, particleVec, particleY2Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleY2Z1.begin(); it!=particleY2Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY2Z1.begin();
+it!=particleY2Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqY2Z1[0] = boostWorld.isend(rankY2Z1, mpiTag,  particleY2Z1);
       reqY2Z1[1] = boostWorld.irecv(rankY2Z1, mpiTag, rParticleY2Z1);
@@ -1090,7 +1125,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x(), v2.y(), v2.z());
       findParticleInRectangle(containerY2Z2, particleVec, particleY2Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleY2Z2.begin(); it!=particleY2Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY2Z2.begin();
+it!=particleY2Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqY2Z2[0] = boostWorld.isend(rankY2Z2, mpiTag,  particleY2Z2);
       reqY2Z2[1] = boostWorld.irecv(rankY2Z2, mpiTag, rParticleY2Z2);
@@ -1101,7 +1137,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v1.x() + cellSize, v1.y() + cellSize, v1.z() + cellSize);
       findParticleInRectangle(containerX1Y1Z1, particleVec, particleX1Y1Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Y1Z1.begin(); it!=particleX1Y1Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Y1Z1.begin();
+it!=particleX1Y1Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Y1Z1[0] = boostWorld.isend(rankX1Y1Z1, mpiTag,  particleX1Y1Z1);
       reqX1Y1Z1[1] = boostWorld.irecv(rankX1Y1Z1, mpiTag, rParticleX1Y1Z1);
@@ -1111,7 +1148,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v1.x() + cellSize, v1.y() + cellSize, v2.z());
       findParticleInRectangle(containerX1Y1Z2, particleVec, particleX1Y1Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Y1Z2.begin(); it!=particleX1Y1Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Y1Z2.begin();
+it!=particleX1Y1Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Y1Z2[0] = boostWorld.isend(rankX1Y1Z2, mpiTag,  particleX1Y1Z2);
       reqX1Y1Z2[1] = boostWorld.irecv(rankX1Y1Z2, mpiTag, rParticleX1Y1Z2);
@@ -1121,7 +1159,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v1.x() + cellSize, v2.y(), v1.z() + cellSize);
       findParticleInRectangle(containerX1Y2Z1, particleVec, particleX1Y2Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Y2Z1.begin(); it!=particleX1Y2Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Y2Z1.begin();
+it!=particleX1Y2Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Y2Z1[0] = boostWorld.isend(rankX1Y2Z1, mpiTag,  particleX1Y2Z1);
       reqX1Y2Z1[1] = boostWorld.irecv(rankX1Y2Z1, mpiTag, rParticleX1Y2Z1);
@@ -1131,7 +1170,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v1.x() + cellSize, v2.y() + cellSize, v2.z());
       findParticleInRectangle(containerX1Y2Z2, particleVec, particleX1Y2Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Y2Z2.begin(); it!=particleX1Y2Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Y2Z2.begin();
+it!=particleX1Y2Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Y2Z2[0] = boostWorld.isend(rankX1Y2Z2, mpiTag,  particleX1Y2Z2);
       reqX1Y2Z2[1] = boostWorld.irecv(rankX1Y2Z2, mpiTag, rParticleX1Y2Z2);
@@ -1141,7 +1181,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v2.x(), v1.y() + cellSize, v1.z() + cellSize);
       findParticleInRectangle(containerX2Y1Z1, particleVec, particleX2Y1Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Y1Z1.begin(); it!=particleX2Y1Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Y1Z1.begin();
+it!=particleX2Y1Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Y1Z1[0] = boostWorld.isend(rankX2Y1Z1, mpiTag,  particleX2Y1Z1);
       reqX2Y1Z1[1] = boostWorld.irecv(rankX2Y1Z1, mpiTag, rParticleX2Y1Z1);
@@ -1151,7 +1192,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v2.x(), v1.y() + cellSize, v2.z());
       findParticleInRectangle(containerX2Y1Z2, particleVec, particleX2Y1Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Y1Z2.begin(); it!=particleX2Y1Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Y1Z2.begin();
+it!=particleX2Y1Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Y1Z2[0] = boostWorld.isend(rankX2Y1Z2, mpiTag,  particleX2Y1Z2);
       reqX2Y1Z2[1] = boostWorld.irecv(rankX2Y1Z2, mpiTag, rParticleX2Y1Z2);
@@ -1161,17 +1203,20 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v2.x(), v2.y(), v1.z() + cellSize);
       findParticleInRectangle(containerX2Y2Z1, particleVec, particleX2Y2Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Y2Z1.begin(); it!=particleX2Y2Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Y2Z1.begin();
+it!=particleX2Y2Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Y2Z1[0] = boostWorld.isend(rankX2Y2Z1, mpiTag,  particleX2Y2Z1);
       reqX2Y2Z1[1] = boostWorld.irecv(rankX2Y2Z1, mpiTag, rParticleX2Y2Z1);
     }
     if (rankX2Y2Z2 >= 0) { // edge x2y2z2
-      Rectangle containerX2Y2Z2(v2.x() - cellSize, v2.y() - cellSize, v2.z() - cellSize,
+      Rectangle containerX2Y2Z2(v2.x() - cellSize, v2.y() - cellSize, v2.z() -
+cellSize,
         v2.x(), v2.y(), v2.z());
       findParticleInRectangle(containerX2Y2Z2, particleVec, particleX2Y2Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Y2Z2.begin(); it!=particleX2Y2Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Y2Z2.begin();
+it!=particleX2Y2Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Y2Z2[0] = boostWorld.isend(rankX2Y2Z2, mpiTag,  particleX2Y2Z2);
       reqX2Y2Z2[1] = boostWorld.irecv(rankX2Y2Z2, mpiTag, rParticleX2Y2Z2);
@@ -1186,17 +1231,17 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (rankZ2 >= 0) boost::mpi::wait_all(reqZ2, reqZ2 + 2);
     // 12 edges
     if (rankX1Y1 >= 0) boost::mpi::wait_all(reqX1Y1, reqX1Y1 + 2);
-    if (rankX1Y2 >= 0) boost::mpi::wait_all(reqX1Y2, reqX1Y2 + 2);  
+    if (rankX1Y2 >= 0) boost::mpi::wait_all(reqX1Y2, reqX1Y2 + 2);
     if (rankX1Z1 >= 0) boost::mpi::wait_all(reqX1Z1, reqX1Z1 + 2);
     if (rankX1Z2 >= 0) boost::mpi::wait_all(reqX1Z2, reqX1Z2 + 2);
     if (rankX2Y1 >= 0) boost::mpi::wait_all(reqX2Y1, reqX2Y1 + 2);
-    if (rankX2Y2 >= 0) boost::mpi::wait_all(reqX2Y2, reqX2Y2 + 2);  
+    if (rankX2Y2 >= 0) boost::mpi::wait_all(reqX2Y2, reqX2Y2 + 2);
     if (rankX2Z1 >= 0) boost::mpi::wait_all(reqX2Z1, reqX2Z1 + 2);
-    if (rankX2Z2 >= 0) boost::mpi::wait_all(reqX2Z2, reqX2Z2 + 2); 
+    if (rankX2Z2 >= 0) boost::mpi::wait_all(reqX2Z2, reqX2Z2 + 2);
     if (rankY1Z1 >= 0) boost::mpi::wait_all(reqY1Z1, reqY1Z1 + 2);
     if (rankY1Z2 >= 0) boost::mpi::wait_all(reqY1Z2, reqY1Z2 + 2);
     if (rankY2Z1 >= 0) boost::mpi::wait_all(reqY2Z1, reqY2Z1 + 2);
-    if (rankY2Z2 >= 0) boost::mpi::wait_all(reqY2Z2, reqY2Z2 + 2); 
+    if (rankY2Z2 >= 0) boost::mpi::wait_all(reqY2Z2, reqY2Z2 + 2);
     // 8 vertices
     if (rankX1Y1Z1 >= 0) boost::mpi::wait_all(reqX1Y1Z1, reqX1Y1Z1 + 2);
     if (rankX1Y1Z2 >= 0) boost::mpi::wait_all(reqX1Y1Z2, reqX1Y1Z2 + 2);
@@ -1205,164 +1250,236 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (rankX2Y1Z1 >= 0) boost::mpi::wait_all(reqX2Y1Z1, reqX2Y1Z1 + 2);
     if (rankX2Y1Z2 >= 0) boost::mpi::wait_all(reqX2Y1Z2, reqX2Y1Z2 + 2);
     if (rankX2Y2Z1 >= 0) boost::mpi::wait_all(reqX2Y2Z1, reqX2Y2Z1 + 2);
-    if (rankX2Y2Z2 >= 0) boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);  
+    if (rankX2Y2Z2 >= 0) boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);
 
-    // merge: particles inside container (at front) + particles from neighoring blocks (at end)
+    // merge: particles inside container (at front) + particles from neighoring
+blocks (at end)
     recvParticleVec.clear();
     // 6 surfaces
-    if (rankX1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1.begin(), rParticleX1.end());
-    if (rankX2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2.begin(), rParticleX2.end());
-    if (rankY1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleY1.begin(), rParticleY1.end());
-    if (rankY2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleY2.begin(), rParticleY2.end());
-    if (rankZ1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleZ1.begin(), rParticleZ1.end());
-    if (rankZ2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleZ2.begin(), rParticleZ2.end());
+    if (rankX1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1.begin(), rParticleX1.end());
+    if (rankX2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2.begin(), rParticleX2.end());
+    if (rankY1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleY1.begin(), rParticleY1.end());
+    if (rankY2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleY2.begin(), rParticleY2.end());
+    if (rankZ1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleZ1.begin(), rParticleZ1.end());
+    if (rankZ2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleZ2.begin(), rParticleZ2.end());
     // 12 edges
-    if (rankX1Y1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1.begin(), rParticleX1Y1.end());
-    if (rankX1Y2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2.begin(), rParticleX1Y2.end());
-    if (rankX1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Z1.begin(), rParticleX1Z1.end());
-    if (rankX1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Z2.begin(), rParticleX1Z2.end());
-    if (rankX2Y1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1.begin(), rParticleX2Y1.end());
-    if (rankX2Y2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2.begin(), rParticleX2Y2.end());
-    if (rankX2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Z1.begin(), rParticleX2Z1.end());
-    if (rankX2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Z2.begin(), rParticleX2Z2.end());
-    if (rankY1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleY1Z1.begin(), rParticleY1Z1.end());
-    if (rankY1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleY1Z2.begin(), rParticleY1Z2.end());
-    if (rankY2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleY2Z1.begin(), rParticleY2Z1.end());
-    if (rankY2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleY2Z2.begin(), rParticleY2Z2.end());
+    if (rankX1Y1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Y1.begin(), rParticleX1Y1.end());
+    if (rankX1Y2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Y2.begin(), rParticleX1Y2.end());
+    if (rankX1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Z1.begin(), rParticleX1Z1.end());
+    if (rankX1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Z2.begin(), rParticleX1Z2.end());
+    if (rankX2Y1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Y1.begin(), rParticleX2Y1.end());
+    if (rankX2Y2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Y2.begin(), rParticleX2Y2.end());
+    if (rankX2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Z1.begin(), rParticleX2Z1.end());
+    if (rankX2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Z2.begin(), rParticleX2Z2.end());
+    if (rankY1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleY1Z1.begin(), rParticleY1Z1.end());
+    if (rankY1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleY1Z2.begin(), rParticleY1Z2.end());
+    if (rankY2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleY2Z1.begin(), rParticleY2Z1.end());
+    if (rankY2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleY2Z2.begin(), rParticleY2Z2.end());
     // 8 vertices
-    if (rankX1Y1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1Z1.begin(), rParticleX1Y1Z1.end());
-    if (rankX1Y1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1Z2.begin(), rParticleX1Y1Z2.end());
-    if (rankX1Y2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2Z1.begin(), rParticleX1Y2Z1.end());
-    if (rankX1Y2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2Z2.begin(), rParticleX1Y2Z2.end());
-    if (rankX2Y1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1Z1.begin(), rParticleX2Y1Z1.end());
-    if (rankX2Y1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1Z2.begin(), rParticleX2Y1Z2.end());
-    if (rankX2Y2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2Z1.begin(), rParticleX2Y2Z1.end());
-    if (rankX2Y2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2Z2.begin(), rParticleX2Y2Z2.end());
+    if (rankX1Y1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Y1Z1.begin(), rParticleX1Y1Z1.end());
+    if (rankX1Y1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Y1Z2.begin(), rParticleX1Y1Z2.end());
+    if (rankX1Y2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Y2Z1.begin(), rParticleX1Y2Z1.end());
+    if (rankX1Y2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Y2Z2.begin(), rParticleX1Y2Z2.end());
+    if (rankX2Y1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Y1Z1.begin(), rParticleX2Y1Z1.end());
+    if (rankX2Y1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Y1Z2.begin(), rParticleX2Y1Z2.end());
+    if (rankX2Y2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Y2Z1.begin(), rParticleX2Y2Z1.end());
+    if (rankX2Y2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Y2Z2.begin(), rParticleX2Y2Z2.end());
 
     // after receive, set SPHParticle.demParticle
-    for(std::vector<Particle*>::iterator it=recvParticleVec.begin(); it!=recvParticleVec.end(); it++){
+    for(std::vector<Particle*>::iterator it=recvParticleVec.begin();
+it!=recvParticleVec.end(); it++){
   (*it)->setDemParticleInSPHParticle();
     }
 
     mergeParticleVec.clear();
-    mergeParticleVec = particleVec; // duplicate pointers, pointing to the same memory
-    mergeParticleVec.insert(mergeParticleVec.end(), recvParticleVec.begin(), recvParticleVec.end());
+    mergeParticleVec = particleVec; // duplicate pointers, pointing to the same
+memory
+    mergeParticleVec.insert(mergeParticleVec.end(), recvParticleVec.begin(),
+recvParticleVec.end());
 
-    // at this point, the SPHGhostParticles in part of particleVec are pointing to NULL, needed to assign back
+    // at this point, the SPHGhostParticles in part of particleVec are pointing
+to NULL, needed to assign back
     // this must be done after the receive is complete
 
     // 6 surfaces
     if (rankX1 >= 0)
-      for(std::vector<Particle*>::iterator it=particleX1.begin(); it!=particleX1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1.begin();
+it!=particleX1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX2.begin(); it!=particleX2.end(); it++)
+    if (rankX2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX2.begin();
+it!=particleX2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankY1 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleY1.begin(); it!=particleY1.end(); it++)
+    if (rankY1 >= 0)
+      for(std::vector<Particle*>::iterator it=particleY1.begin();
+it!=particleY1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankY2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleY2.begin(); it!=particleY2.end(); it++)
+    if (rankY2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleY2.begin();
+it!=particleY2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankZ1 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleZ1.begin(); it!=particleZ1.end(); it++)
+    if (rankZ1 >= 0)
+      for(std::vector<Particle*>::iterator it=particleZ1.begin();
+it!=particleZ1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankZ2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleZ2.begin(); it!=particleZ2.end(); it++)
+    if (rankZ2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleZ2.begin();
+it!=particleZ2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
     // 12 edges
-    if (rankX1Y1 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX1Y1.begin(); it!=particleX1Y1.end(); it++)
+    if (rankX1Y1 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX1Y1.begin();
+it!=particleX1Y1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX1Y2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX1Y2.begin(); it!=particleX1Y2.end(); it++)
+    if (rankX1Y2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX1Y2.begin();
+it!=particleX1Y2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX1Z1 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX1Z1.begin(); it!=particleX1Z1.end(); it++)
+    if (rankX1Z1 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX1Z1.begin();
+it!=particleX1Z1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX1Z2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX1Z2.begin(); it!=particleX1Z2.end(); it++)
+    if (rankX1Z2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX1Z2.begin();
+it!=particleX1Z2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX2Y1 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX2Y1.begin(); it!=particleX2Y1.end(); it++)
+    if (rankX2Y1 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX2Y1.begin();
+it!=particleX2Y1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX2Y2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX2Y2.begin(); it!=particleX2Y2.end(); it++)
+    if (rankX2Y2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX2Y2.begin();
+it!=particleX2Y2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX2Z1 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX2Z1.begin(); it!=particleX2Z1.end(); it++)
+    if (rankX2Z1 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX2Z1.begin();
+it!=particleX2Z1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX2Z2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX2Z2.begin(); it!=particleX2Z2.end(); it++)
+    if (rankX2Z2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX2Z2.begin();
+it!=particleX2Z2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
     if (rankY1Z1 >= 0)
-      for(std::vector<Particle*>::iterator it=particleY1Z1.begin(); it!=particleY1Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY1Z1.begin();
+it!=particleY1Z1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankY1Z2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleY1Z2.begin(); it!=particleY1Z2.end(); it++)
+    if (rankY1Z2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleY1Z2.begin();
+it!=particleY1Z2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankY2Z1 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleY2Z1.begin(); it!=particleY2Z1.end(); it++)
+    if (rankY2Z1 >= 0)
+      for(std::vector<Particle*>::iterator it=particleY2Z1.begin();
+it!=particleY2Z1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankY2Z2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleY2Z2.begin(); it!=particleY2Z2.end(); it++)
+    if (rankY2Z2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleY2Z2.begin();
+it!=particleY2Z2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
     // 8 vertices
-    if (rankX1Y1Z1 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX1Y1Z1.begin(); it!=particleX1Y1Z1.end(); it++)
+    if (rankX1Y1Z1 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX1Y1Z1.begin();
+it!=particleX1Y1Z1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX1Y1Z2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX1Y1Z2.begin(); it!=particleX1Y1Z2.end(); it++)
+    if (rankX1Y1Z2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX1Y1Z2.begin();
+it!=particleX1Y1Z2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX1Y2Z1 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX1Y2Z1.begin(); it!=particleX1Y2Z1.end(); it++)
+    if (rankX1Y2Z1 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX1Y2Z1.begin();
+it!=particleX1Y2Z1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX1Y2Z2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX1Y2Z2.begin(); it!=particleX1Y2Z2.end(); it++)
+    if (rankX1Y2Z2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX1Y2Z2.begin();
+it!=particleX1Y2Z2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX2Y1Z1 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX2Y1Z1.begin(); it!=particleX2Y1Z1.end(); it++)
+    if (rankX2Y1Z1 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX2Y1Z1.begin();
+it!=particleX2Y1Z1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX2Y1Z2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX2Y1Z2.begin(); it!=particleX2Y1Z2.end(); it++)
+    if (rankX2Y1Z2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX2Y1Z2.begin();
+it!=particleX2Y1Z2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX2Y2Z1 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX2Y2Z1.begin(); it!=particleX2Y2Z1.end(); it++)
+    if (rankX2Y2Z1 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX2Y2Z1.begin();
+it!=particleX2Y2Z1.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    if (rankX2Y2Z2 >= 0) 
-      for(std::vector<Particle*>::iterator it=particleX2Y2Z2.begin(); it!=particleX2Y2Z2.end(); it++)
+    if (rankX2Y2Z2 >= 0)
+      for(std::vector<Particle*>::iterator it=particleX2Y2Z2.begin();
+it!=particleX2Y2Z2.end(); it++)
   (*it)->setDemParticleInSPHParticle();
-    
+
 
       // std::vector<Particle*> testParticleVec;
-      // testParticleVec.insert(testParticleVec.end(), rParticleX1.begin(), rParticleX1.end());
-      // testParticleVec.insert(testParticleVec.end(), rParticleX2.begin(), rParticleX2.end());
-      // testParticleVec.insert(testParticleVec.end(), rParticleY1.begin(), rParticleY1.end());
-      // testParticleVec.insert(testParticleVec.end(), rParticleY2.begin(), rParticleY2.end());
-      // testParticleVec.insert(testParticleVec.end(), rParticleZ1.begin(), rParticleZ1.end());
-      // testParticleVec.insert(testParticleVec.end(), rParticleZ2.begin(), rParticleZ2.end());
-      // debugInf << "iter=" << std::setw(4) << iteration << " rank=" << std::setw(4) << mpiRank 
-      // << " ptclNum=" << std::setw(4) << particleVec.size() 
+      // testParticleVec.insert(testParticleVec.end(), rParticleX1.begin(),
+rParticleX1.end());
+      // testParticleVec.insert(testParticleVec.end(), rParticleX2.begin(),
+rParticleX2.end());
+      // testParticleVec.insert(testParticleVec.end(), rParticleY1.begin(),
+rParticleY1.end());
+      // testParticleVec.insert(testParticleVec.end(), rParticleY2.begin(),
+rParticleY2.end());
+      // testParticleVec.insert(testParticleVec.end(), rParticleZ1.begin(),
+rParticleZ1.end());
+      // testParticleVec.insert(testParticleVec.end(), rParticleZ2.begin(),
+rParticleZ2.end());
+      // debugInf << "iter=" << std::setw(4) << iteration << " rank=" <<
+std::setw(4) << mpiRank
+      // << " ptclNum=" << std::setw(4) << particleVec.size()
       // << " surface="
-      // << std::setw(4) << particleX1.size()  << std::setw(4) << particleX2.size()
-      // << std::setw(4) << particleY1.size()  << std::setw(4) << particleY2.size()
-      // << std::setw(4) << particleZ1.size()  << std::setw(4) << particleZ2.size()  
+      // << std::setw(4) << particleX1.size()  << std::setw(4) <<
+particleX2.size()
+      // << std::setw(4) << particleY1.size()  << std::setw(4) <<
+particleY2.size()
+      // << std::setw(4) << particleZ1.size()  << std::setw(4) <<
+particleZ2.size()
       // << " recv="
-      // << std::setw(4) << rParticleX1.size() << std::setw(4) << rParticleX2.size()
-      // << std::setw(4) << rParticleY1.size() << std::setw(4) << rParticleY2.size()
-      // << std::setw(4) << rParticleZ1.size() << std::setw(4) << rParticleZ2.size() 
-      // << " rNum="    
-      // << std::setw(4) << recvParticleVec.size() << ": ";   
+      // << std::setw(4) << rParticleX1.size() << std::setw(4) <<
+rParticleX2.size()
+      // << std::setw(4) << rParticleY1.size() << std::setw(4) <<
+rParticleY2.size()
+      // << std::setw(4) << rParticleZ1.size() << std::setw(4) <<
+rParticleZ2.size()
+      // << " rNum="
+      // << std::setw(4) << recvParticleVec.size() << ": ";
 
-      // for (std::vector<Particle*>::const_iterator it = testParticleVec.begin(); it != testParticleVec.end();++it)
+      // for (std::vector<Particle*>::const_iterator it =
+testParticleVec.begin(); it != testParticleVec.end();++it)
       // debugInf << (*it)->getId() << ' ';
       // debugInf << std::endl;
       // testParticleVec.clear();
   }
 
-  // the communication of ghost sph particles are not implemented, the communication of ghost sph should be
+  // the communication of ghost sph particles are not implemented, the
+communication of ghost sph should be
   // corresponding to their dem particles. July 16, 2015
-  void SmoothParticleHydro::commuSPHParticle() 
+  void SmoothParticleHydro::commuSPHParticle()
   {
     // determine container of each process
     Vec v1 = grid.getMinCorner();
@@ -1379,11 +1496,16 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     std::vector<sph::SPHParticle*> sphParticleX1, sphParticleX2;
     std::vector<sph::SPHParticle*> sphParticleY1, sphParticleY2;
     std::vector<sph::SPHParticle*> sphParticleZ1, sphParticleZ2;
-    std::vector<sph::SPHParticle*> sphParticleX1Y1, sphParticleX1Y2, sphParticleX1Z1, sphParticleX1Z2; 
-    std::vector<sph::SPHParticle*> sphParticleX2Y1, sphParticleX2Y2, sphParticleX2Z1, sphParticleX2Z2; 
-    std::vector<sph::SPHParticle*> sphParticleY1Z1, sphParticleY1Z2, sphParticleY2Z1, sphParticleY2Z2; 
-    std::vector<sph::SPHParticle*> sphParticleX1Y1Z1, sphParticleX1Y1Z2, sphParticleX1Y2Z1, sphParticleX1Y2Z2; 
-    std::vector<sph::SPHParticle*> sphParticleX2Y1Z1, sphParticleX2Y1Z2, sphParticleX2Y2Z1, sphParticleX2Y2Z2; 
+    std::vector<sph::SPHParticle*> sphParticleX1Y1, sphParticleX1Y2,
+sphParticleX1Z1, sphParticleX1Z2;
+    std::vector<sph::SPHParticle*> sphParticleX2Y1, sphParticleX2Y2,
+sphParticleX2Z1, sphParticleX2Z2;
+    std::vector<sph::SPHParticle*> sphParticleY1Z1, sphParticleY1Z2,
+sphParticleY2Z1, sphParticleY2Z2;
+    std::vector<sph::SPHParticle*> sphParticleX1Y1Z1, sphParticleX1Y1Z2,
+sphParticleX1Y2Z1, sphParticleX1Y2Z2;
+    std::vector<sph::SPHParticle*> sphParticleX2Y1Z1, sphParticleX2Y1Z2,
+sphParticleX2Y2Z1, sphParticleX2Y2Z2;
     boost::mpi::request reqX1[2], reqX2[2];
     boost::mpi::request reqY1[2], reqY2[2];
     boost::mpi::request reqZ1[2], reqZ2[2];
@@ -1393,12 +1515,13 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     boost::mpi::request reqX1Y1Z1[2], reqX1Y1Z2[2], reqX1Y2Z1[2], reqX1Y2Z2[2];
     boost::mpi::request reqX2Y1Z1[2], reqX2Y1Z2[2], reqX2Y2Z1[2], reqX2Y2Z2[2];
     v1 = container.getMinCorner(); // redefine v1, v2 in terms of process
-    v2 = container.getMaxCorner();   
-    //debugInf << "rank=" << mpiRank << ' ' << v1.x() << ' ' << v1.y() << ' ' << v1.z() << ' '  << v2.x() << ' ' << v2.y() << ' ' << v2.z() << std::endl;
+    v2 = container.getMaxCorner();
+    //debugInf << "rank=" << mpiRank << ' ' << v1.x() << ' ' << v1.y() << ' ' <<
+v1.z() << ' '  << v2.x() << ' ' << v2.y() << ' ' << v2.z() << std::endl;
     REAL cellSize = sphCellSize;
     // 6 surfaces
     if (rankX1 >= 0) { // surface x1
-      Rectangle containerX1(v1.x(), v1.y(), v1.z(), 
+      Rectangle containerX1(v1.x(), v1.y(), v1.z(),
           v1.x() + cellSize, v2.y(), v2.z());
       findSPHParticleInRectangle(containerX1, d_sphParticleVec, sphParticleX1);
       reqX1[0] = boostWorld.isend(rankX1, mpiTag,  sphParticleX1);
@@ -1412,7 +1535,7 @@ SmoothParticleHydro::removeRedundantSPHParticles()
       reqX2[1] = boostWorld.irecv(rankX2, mpiTag, rsphParticleX2);
     }
     if (rankY1 >= 0) {  // surface y1
-      Rectangle containerY1(v1.x(), v1.y(), v1.z(), 
+      Rectangle containerY1(v1.x(), v1.y(), v1.z(),
           v2.x(), v1.y() + cellSize, v2.z());
       findSPHParticleInRectangle(containerY1, d_sphParticleVec, sphParticleY1);
       reqY1[0] = boostWorld.isend(rankY1, mpiTag,  sphParticleY1);
@@ -1443,84 +1566,96 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (rankX1Y1 >= 0) { // edge x1y1
       Rectangle containerX1Y1(v1.x(), v1.y(), v1.z(),
             v1.x() + cellSize, v1.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerX1Y1, d_sphParticleVec, sphParticleX1Y1);
+      findSPHParticleInRectangle(containerX1Y1, d_sphParticleVec,
+sphParticleX1Y1);
       reqX1Y1[0] = boostWorld.isend(rankX1Y1, mpiTag,  sphParticleX1Y1);
       reqX1Y1[1] = boostWorld.irecv(rankX1Y1, mpiTag, rsphParticleX1Y1);
     }
     if (rankX1Y2 >= 0) { // edge x1y2
       Rectangle containerX1Y2(v1.x(), v2.y() - cellSize, v1.z(),
             v1.x() + cellSize, v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX1Y2, d_sphParticleVec, sphParticleX1Y2);
+      findSPHParticleInRectangle(containerX1Y2, d_sphParticleVec,
+sphParticleX1Y2);
       reqX1Y2[0] = boostWorld.isend(rankX1Y2, mpiTag,  sphParticleX1Y2);
       reqX1Y2[1] = boostWorld.irecv(rankX1Y2, mpiTag, rsphParticleX1Y2);
     }
     if (rankX1Z1 >= 0) { // edge x1z1
       Rectangle containerX1Z1(v1.x(), v1.y(), v1.z(),
             v1.x() + cellSize, v2.y(), v1.z() + cellSize);
-      findSPHParticleInRectangle(containerX1Z1, d_sphParticleVec, sphParticleX1Z1);
+      findSPHParticleInRectangle(containerX1Z1, d_sphParticleVec,
+sphParticleX1Z1);
       reqX1Z1[0] = boostWorld.isend(rankX1Z1, mpiTag,  sphParticleX1Z1);
       reqX1Z1[1] = boostWorld.irecv(rankX1Z1, mpiTag, rsphParticleX1Z1);
     }
     if (rankX1Z2 >= 0) { // edge x1z2
       Rectangle containerX1Z2(v1.x(), v1.y(), v2.z() - cellSize,
             v1.x() + cellSize, v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX1Z2, d_sphParticleVec, sphParticleX1Z2);
+      findSPHParticleInRectangle(containerX1Z2, d_sphParticleVec,
+sphParticleX1Z2);
       reqX1Z2[0] = boostWorld.isend(rankX1Z2, mpiTag,  sphParticleX1Z2);
       reqX1Z2[1] = boostWorld.irecv(rankX1Z2, mpiTag, rsphParticleX1Z2);
     }
     if (rankX2Y1 >= 0) { // edge x2y1
       Rectangle containerX2Y1(v2.x() - cellSize, v1.y(), v1.z(),
             v2.x(), v1.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerX2Y1, d_sphParticleVec, sphParticleX2Y1);
+      findSPHParticleInRectangle(containerX2Y1, d_sphParticleVec,
+sphParticleX2Y1);
       reqX2Y1[0] = boostWorld.isend(rankX2Y1, mpiTag,  sphParticleX2Y1);
       reqX2Y1[1] = boostWorld.irecv(rankX2Y1, mpiTag, rsphParticleX2Y1);
     }
     if (rankX2Y2 >= 0) { // edge x2y2
       Rectangle containerX2Y2(v2.x() - cellSize, v2.y() - cellSize, v1.z(),
             v2.x(), v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX2Y2, d_sphParticleVec, sphParticleX2Y2);
+      findSPHParticleInRectangle(containerX2Y2, d_sphParticleVec,
+sphParticleX2Y2);
       reqX2Y2[0] = boostWorld.isend(rankX2Y2, mpiTag,  sphParticleX2Y2);
       reqX2Y2[1] = boostWorld.irecv(rankX2Y2, mpiTag, rsphParticleX2Y2);
     }
     if (rankX2Z1 >= 0) { // edge x2z1
       Rectangle containerX2Z1(v2.x() - cellSize, v1.y(), v1.z(),
             v2.x(), v2.y(), v1.z() + cellSize);
-      findSPHParticleInRectangle(containerX2Z1, d_sphParticleVec, sphParticleX2Z1);
+      findSPHParticleInRectangle(containerX2Z1, d_sphParticleVec,
+sphParticleX2Z1);
       reqX2Z1[0] = boostWorld.isend(rankX2Z1, mpiTag,  sphParticleX2Z1);
       reqX2Z1[1] = boostWorld.irecv(rankX2Z1, mpiTag, rsphParticleX2Z1);
     }
     if (rankX2Z2 >= 0) { // edge x2z2
       Rectangle containerX2Z2(v2.x() - cellSize, v1.y(), v2.z() - cellSize,
             v2.x(), v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX2Z2, d_sphParticleVec, sphParticleX2Z2);
+      findSPHParticleInRectangle(containerX2Z2, d_sphParticleVec,
+sphParticleX2Z2);
       reqX2Z2[0] = boostWorld.isend(rankX2Z2, mpiTag,  sphParticleX2Z2);
       reqX2Z2[1] = boostWorld.irecv(rankX2Z2, mpiTag, rsphParticleX2Z2);
     }
     if (rankY1Z1 >= 0) { // edge y1z1
       Rectangle containerY1Z1(v1.x(), v1.y(), v1.z(),
             v2.x(), v1.y() + cellSize, v1.z() + cellSize);
-      findSPHParticleInRectangle(containerY1Z1, d_sphParticleVec, sphParticleY1Z1);
+      findSPHParticleInRectangle(containerY1Z1, d_sphParticleVec,
+sphParticleY1Z1);
       reqY1Z1[0] = boostWorld.isend(rankY1Z1, mpiTag,  sphParticleY1Z1);
       reqY1Z1[1] = boostWorld.irecv(rankY1Z1, mpiTag, rsphParticleY1Z1);
     }
     if (rankY1Z2 >= 0) { // edge y1z2
       Rectangle containerY1Z2(v1.x(), v1.y(), v2.z() - cellSize,
             v2.x(), v1.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerY1Z2, d_sphParticleVec, sphParticleY1Z2);
+      findSPHParticleInRectangle(containerY1Z2, d_sphParticleVec,
+sphParticleY1Z2);
       reqY1Z2[0] = boostWorld.isend(rankY1Z2, mpiTag,  sphParticleY1Z2);
       reqY1Z2[1] = boostWorld.irecv(rankY1Z2, mpiTag, rsphParticleY1Z2);
     }
     if (rankY2Z1 >= 0) { // edge y2z1
       Rectangle containerY2Z1(v1.x(), v2.y() - cellSize, v1.z(),
             v2.x(), v2.y(), v1.z() + cellSize);
-      findSPHParticleInRectangle(containerY2Z1, d_sphParticleVec, sphParticleY2Z1);
+      findSPHParticleInRectangle(containerY2Z1, d_sphParticleVec,
+sphParticleY2Z1);
       reqY2Z1[0] = boostWorld.isend(rankY2Z1, mpiTag,  sphParticleY2Z1);
       reqY2Z1[1] = boostWorld.irecv(rankY2Z1, mpiTag, rsphParticleY2Z1);
     }
     if (rankY2Z2 >= 0) { // edge y2z2
       Rectangle containerY2Z2(v1.x(), v2.y() - cellSize, v2.z() - cellSize,
             v2.x(), v2.y(), v2.z());
-      findSPHParticleInRectangle(containerY2Z2, d_sphParticleVec, sphParticleY2Z2);
+      findSPHParticleInRectangle(containerY2Z2, d_sphParticleVec,
+sphParticleY2Z2);
       reqY2Z2[0] = boostWorld.isend(rankY2Z2, mpiTag,  sphParticleY2Z2);
       reqY2Z2[1] = boostWorld.irecv(rankY2Z2, mpiTag, rsphParticleY2Z2);
     }
@@ -1528,56 +1663,65 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (rankX1Y1Z1 >= 0) { // edge x1y1z1
       Rectangle containerX1Y1Z1(v1.x(), v1.y(), v1.z(),
         v1.x() + cellSize, v1.y() + cellSize, v1.z() + cellSize);
-      findSPHParticleInRectangle(containerX1Y1Z1, d_sphParticleVec, sphParticleX1Y1Z1);
+      findSPHParticleInRectangle(containerX1Y1Z1, d_sphParticleVec,
+sphParticleX1Y1Z1);
       reqX1Y1Z1[0] = boostWorld.isend(rankX1Y1Z1, mpiTag,  sphParticleX1Y1Z1);
       reqX1Y1Z1[1] = boostWorld.irecv(rankX1Y1Z1, mpiTag, rsphParticleX1Y1Z1);
     }
     if (rankX1Y1Z2 >= 0) { // edge x1y1z2
       Rectangle containerX1Y1Z2(v1.x(), v1.y(), v2.z() - cellSize,
         v1.x() + cellSize, v1.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerX1Y1Z2, d_sphParticleVec, sphParticleX1Y1Z2);
+      findSPHParticleInRectangle(containerX1Y1Z2, d_sphParticleVec,
+sphParticleX1Y1Z2);
       reqX1Y1Z2[0] = boostWorld.isend(rankX1Y1Z2, mpiTag,  sphParticleX1Y1Z2);
       reqX1Y1Z2[1] = boostWorld.irecv(rankX1Y1Z2, mpiTag, rsphParticleX1Y1Z2);
     }
     if (rankX1Y2Z1 >= 0) { // edge x1y2z1
       Rectangle containerX1Y2Z1(v1.x(), v2.y() - cellSize, v1.z(),
         v1.x() + cellSize, v2.y(), v1.z() + cellSize);
-      findSPHParticleInRectangle(containerX1Y2Z1, d_sphParticleVec, sphParticleX1Y2Z1);
+      findSPHParticleInRectangle(containerX1Y2Z1, d_sphParticleVec,
+sphParticleX1Y2Z1);
       reqX1Y2Z1[0] = boostWorld.isend(rankX1Y2Z1, mpiTag,  sphParticleX1Y2Z1);
       reqX1Y2Z1[1] = boostWorld.irecv(rankX1Y2Z1, mpiTag, rsphParticleX1Y2Z1);
     }
     if (rankX1Y2Z2 >= 0) { // edge x1y2z2
       Rectangle containerX1Y2Z2(v1.x(), v2.y() - cellSize, v2.z() - cellSize,
         v1.x() + cellSize, v2.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerX1Y2Z2, d_sphParticleVec, sphParticleX1Y2Z2);
+      findSPHParticleInRectangle(containerX1Y2Z2, d_sphParticleVec,
+sphParticleX1Y2Z2);
       reqX1Y2Z2[0] = boostWorld.isend(rankX1Y2Z2, mpiTag,  sphParticleX1Y2Z2);
       reqX1Y2Z2[1] = boostWorld.irecv(rankX1Y2Z2, mpiTag, rsphParticleX1Y2Z2);
     }
     if (rankX2Y1Z1 >= 0) { // edge x2y1z1
       Rectangle containerX2Y1Z1(v2.x() - cellSize, v1.y(), v1.z(),
         v2.x(), v1.y() + cellSize, v1.z() + cellSize);
-      findSPHParticleInRectangle(containerX2Y1Z1, d_sphParticleVec, sphParticleX2Y1Z1);
+      findSPHParticleInRectangle(containerX2Y1Z1, d_sphParticleVec,
+sphParticleX2Y1Z1);
       reqX2Y1Z1[0] = boostWorld.isend(rankX2Y1Z1, mpiTag,  sphParticleX2Y1Z1);
       reqX2Y1Z1[1] = boostWorld.irecv(rankX2Y1Z1, mpiTag, rsphParticleX2Y1Z1);
     }
     if (rankX2Y1Z2 >= 0) { // edge x2y1z2
       Rectangle containerX2Y1Z2(v2.x() - cellSize, v1.y(), v2.z() - cellSize,
         v2.x(), v1.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerX2Y1Z2, d_sphParticleVec, sphParticleX2Y1Z2);
+      findSPHParticleInRectangle(containerX2Y1Z2, d_sphParticleVec,
+sphParticleX2Y1Z2);
       reqX2Y1Z2[0] = boostWorld.isend(rankX2Y1Z2, mpiTag,  sphParticleX2Y1Z2);
       reqX2Y1Z2[1] = boostWorld.irecv(rankX2Y1Z2, mpiTag, rsphParticleX2Y1Z2);
     }
     if (rankX2Y2Z1 >= 0) { // edge x2y2z1
       Rectangle containerX2Y2Z1(v2.x() - cellSize, v2.y() - cellSize, v1.z(),
         v2.x(), v2.y(), v1.z() + cellSize);
-      findSPHParticleInRectangle(containerX2Y2Z1, d_sphParticleVec, sphParticleX2Y2Z1);
+      findSPHParticleInRectangle(containerX2Y2Z1, d_sphParticleVec,
+sphParticleX2Y2Z1);
       reqX2Y2Z1[0] = boostWorld.isend(rankX2Y2Z1, mpiTag,  sphParticleX2Y2Z1);
       reqX2Y2Z1[1] = boostWorld.irecv(rankX2Y2Z1, mpiTag, rsphParticleX2Y2Z1);
     }
     if (rankX2Y2Z2 >= 0) { // edge x2y2z2
-      Rectangle containerX2Y2Z2(v2.x() - cellSize, v2.y() - cellSize, v2.z() - cellSize,
+      Rectangle containerX2Y2Z2(v2.x() - cellSize, v2.y() - cellSize, v2.z() -
+cellSize,
         v2.x(), v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX2Y2Z2, d_sphParticleVec, sphParticleX2Y2Z2);
+      findSPHParticleInRectangle(containerX2Y2Z2, d_sphParticleVec,
+sphParticleX2Y2Z2);
       reqX2Y2Z2[0] = boostWorld.isend(rankX2Y2Z2, mpiTag,  sphParticleX2Y2Z2);
       reqX2Y2Z2[1] = boostWorld.irecv(rankX2Y2Z2, mpiTag, rsphParticleX2Y2Z2);
     }
@@ -1591,17 +1735,17 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (rankZ2 >= 0) boost::mpi::wait_all(reqZ2, reqZ2 + 2);
     // 12 edges
     if (rankX1Y1 >= 0) boost::mpi::wait_all(reqX1Y1, reqX1Y1 + 2);
-    if (rankX1Y2 >= 0) boost::mpi::wait_all(reqX1Y2, reqX1Y2 + 2);  
+    if (rankX1Y2 >= 0) boost::mpi::wait_all(reqX1Y2, reqX1Y2 + 2);
     if (rankX1Z1 >= 0) boost::mpi::wait_all(reqX1Z1, reqX1Z1 + 2);
     if (rankX1Z2 >= 0) boost::mpi::wait_all(reqX1Z2, reqX1Z2 + 2);
     if (rankX2Y1 >= 0) boost::mpi::wait_all(reqX2Y1, reqX2Y1 + 2);
-    if (rankX2Y2 >= 0) boost::mpi::wait_all(reqX2Y2, reqX2Y2 + 2);  
+    if (rankX2Y2 >= 0) boost::mpi::wait_all(reqX2Y2, reqX2Y2 + 2);
     if (rankX2Z1 >= 0) boost::mpi::wait_all(reqX2Z1, reqX2Z1 + 2);
-    if (rankX2Z2 >= 0) boost::mpi::wait_all(reqX2Z2, reqX2Z2 + 2); 
+    if (rankX2Z2 >= 0) boost::mpi::wait_all(reqX2Z2, reqX2Z2 + 2);
     if (rankY1Z1 >= 0) boost::mpi::wait_all(reqY1Z1, reqY1Z1 + 2);
     if (rankY1Z2 >= 0) boost::mpi::wait_all(reqY1Z2, reqY1Z2 + 2);
     if (rankY2Z1 >= 0) boost::mpi::wait_all(reqY2Z1, reqY2Z1 + 2);
-    if (rankY2Z2 >= 0) boost::mpi::wait_all(reqY2Z2, reqY2Z2 + 2); 
+    if (rankY2Z2 >= 0) boost::mpi::wait_all(reqY2Z2, reqY2Z2 + 2);
     // 8 vertices
     if (rankX1Y1Z1 >= 0) boost::mpi::wait_all(reqX1Y1Z1, reqX1Y1Z1 + 2);
     if (rankX1Y1Z2 >= 0) boost::mpi::wait_all(reqX1Y1Z2, reqX1Y1Z2 + 2);
@@ -1610,66 +1754,106 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (rankX2Y1Z1 >= 0) boost::mpi::wait_all(reqX2Y1Z1, reqX2Y1Z1 + 2);
     if (rankX2Y1Z2 >= 0) boost::mpi::wait_all(reqX2Y1Z2, reqX2Y1Z2 + 2);
     if (rankX2Y2Z1 >= 0) boost::mpi::wait_all(reqX2Y2Z1, reqX2Y2Z1 + 2);
-    if (rankX2Y2Z2 >= 0) boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);  
+    if (rankX2Y2Z2 >= 0) boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);
 
-    // merge: sphParticles inside container (at front) + sphParticles from neighoring blocks (at end)
+    // merge: sphParticles inside container (at front) + sphParticles from
+neighoring blocks (at end)
     d_recvSPHParticleVec.clear();
     // 6 surfaces
-    if (rankX1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1.begin(), rsphParticleX1.end());
-    if (rankX2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2.begin(), rsphParticleX2.end());
-    if (rankY1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY1.begin(), rsphParticleY1.end());
-    if (rankY2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY2.begin(), rsphParticleY2.end());
-    if (rankZ1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleZ1.begin(), rsphParticleZ1.end());
-    if (rankZ2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleZ2.begin(), rsphParticleZ2.end());
+    if (rankX1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1.begin(), rsphParticleX1.end());
+    if (rankX2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2.begin(), rsphParticleX2.end());
+    if (rankY1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleY1.begin(), rsphParticleY1.end());
+    if (rankY2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleY2.begin(), rsphParticleY2.end());
+    if (rankZ1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleZ1.begin(), rsphParticleZ1.end());
+    if (rankZ2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleZ2.begin(), rsphParticleZ2.end());
     // 12 edges
-    if (rankX1Y1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y1.begin(), rsphParticleX1Y1.end());
-    if (rankX1Y2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y2.begin(), rsphParticleX1Y2.end());
-    if (rankX1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Z1.begin(), rsphParticleX1Z1.end());
-    if (rankX1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Z2.begin(), rsphParticleX1Z2.end());
-    if (rankX2Y1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y1.begin(), rsphParticleX2Y1.end());
-    if (rankX2Y2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y2.begin(), rsphParticleX2Y2.end());
-    if (rankX2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Z1.begin(), rsphParticleX2Z1.end());
-    if (rankX2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Z2.begin(), rsphParticleX2Z2.end());
-    if (rankY1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY1Z1.begin(), rsphParticleY1Z1.end());
-    if (rankY1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY1Z2.begin(), rsphParticleY1Z2.end());
-    if (rankY2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY2Z1.begin(), rsphParticleY2Z1.end());
-    if (rankY2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY2Z2.begin(), rsphParticleY2Z2.end());
+    if (rankX1Y1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Y1.begin(), rsphParticleX1Y1.end());
+    if (rankX1Y2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Y2.begin(), rsphParticleX1Y2.end());
+    if (rankX1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Z1.begin(), rsphParticleX1Z1.end());
+    if (rankX1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Z2.begin(), rsphParticleX1Z2.end());
+    if (rankX2Y1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Y1.begin(), rsphParticleX2Y1.end());
+    if (rankX2Y2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Y2.begin(), rsphParticleX2Y2.end());
+    if (rankX2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Z1.begin(), rsphParticleX2Z1.end());
+    if (rankX2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Z2.begin(), rsphParticleX2Z2.end());
+    if (rankY1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleY1Z1.begin(), rsphParticleY1Z1.end());
+    if (rankY1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleY1Z2.begin(), rsphParticleY1Z2.end());
+    if (rankY2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleY2Z1.begin(), rsphParticleY2Z1.end());
+    if (rankY2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleY2Z2.begin(), rsphParticleY2Z2.end());
     // 8 vertices
-    if (rankX1Y1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y1Z1.begin(), rsphParticleX1Y1Z1.end());
-    if (rankX1Y1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y1Z2.begin(), rsphParticleX1Y1Z2.end());
-    if (rankX1Y2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y2Z1.begin(), rsphParticleX1Y2Z1.end());
-    if (rankX1Y2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y2Z2.begin(), rsphParticleX1Y2Z2.end());
-    if (rankX2Y1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y1Z1.begin(), rsphParticleX2Y1Z1.end());
-    if (rankX2Y1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y1Z2.begin(), rsphParticleX2Y1Z2.end());
-    if (rankX2Y2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y2Z1.begin(), rsphParticleX2Y2Z1.end());
-    if (rankX2Y2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y2Z2.begin(), rsphParticleX2Y2Z2.end());
+    if (rankX1Y1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Y1Z1.begin(), rsphParticleX1Y1Z1.end());
+    if (rankX1Y1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Y1Z2.begin(), rsphParticleX1Y1Z2.end());
+    if (rankX1Y2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Y2Z1.begin(), rsphParticleX1Y2Z1.end());
+    if (rankX1Y2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Y2Z2.begin(), rsphParticleX1Y2Z2.end());
+    if (rankX2Y1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Y1Z1.begin(), rsphParticleX2Y1Z1.end());
+    if (rankX2Y1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Y1Z2.begin(), rsphParticleX2Y1Z2.end());
+    if (rankX2Y2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Y2Z1.begin(), rsphParticleX2Y2Z1.end());
+    if (rankX2Y2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Y2Z2.begin(), rsphParticleX2Y2Z2.end());
 
     mergeSPHParticleVec.clear();
-    mergeSPHParticleVec = d_sphParticleVec; // duplicate pointers, pointing to the same memory
-    mergeSPHParticleVec.insert(mergeSPHParticleVec.end(), d_recvSPHParticleVec.begin(), d_recvSPHParticleVec.end());
+    mergeSPHParticleVec = d_sphParticleVec; // duplicate pointers, pointing to
+the same memory
+    mergeSPHParticleVec.insert(mergeSPHParticleVec.end(),
+d_recvSPHParticleVec.begin(), d_recvSPHParticleVec.end());
 
     #ifdef 0
       std::vector<Particle*> testParticleVec;
-      testParticleVec.insert(testParticleVec.end(), rParticleX1.begin(), rParticleX1.end());
-      testParticleVec.insert(testParticleVec.end(), rParticleX2.begin(), rParticleX2.end());
-      testParticleVec.insert(testParticleVec.end(), rParticleY1.begin(), rParticleY1.end());
-      testParticleVec.insert(testParticleVec.end(), rParticleY2.begin(), rParticleY2.end());
-      testParticleVec.insert(testParticleVec.end(), rParticleZ1.begin(), rParticleZ1.end());
-      testParticleVec.insert(testParticleVec.end(), rParticleZ2.begin(), rParticleZ2.end());
-      debugInf << "iter=" << std::setw(4) << iteration << " rank=" << std::setw(4) << mpiRank 
-      << " ptclNum=" << std::setw(4) << particleVec.size() 
+      testParticleVec.insert(testParticleVec.end(), rParticleX1.begin(),
+rParticleX1.end());
+      testParticleVec.insert(testParticleVec.end(), rParticleX2.begin(),
+rParticleX2.end());
+      testParticleVec.insert(testParticleVec.end(), rParticleY1.begin(),
+rParticleY1.end());
+      testParticleVec.insert(testParticleVec.end(), rParticleY2.begin(),
+rParticleY2.end());
+      testParticleVec.insert(testParticleVec.end(), rParticleZ1.begin(),
+rParticleZ1.end());
+      testParticleVec.insert(testParticleVec.end(), rParticleZ2.begin(),
+rParticleZ2.end());
+      debugInf << "iter=" << std::setw(4) << iteration << " rank=" <<
+std::setw(4) << mpiRank
+      << " ptclNum=" << std::setw(4) << particleVec.size()
       << " surface="
       << std::setw(4) << particleX1.size()  << std::setw(4) << particleX2.size()
       << std::setw(4) << particleY1.size()  << std::setw(4) << particleY2.size()
-      << std::setw(4) << particleZ1.size()  << std::setw(4) << particleZ2.size()  
+      << std::setw(4) << particleZ1.size()  << std::setw(4) << particleZ2.size()
       << " recv="
-      << std::setw(4) << rParticleX1.size() << std::setw(4) << rParticleX2.size()
-      << std::setw(4) << rParticleY1.size() << std::setw(4) << rParticleY2.size()
-      << std::setw(4) << rParticleZ1.size() << std::setw(4) << rParticleZ2.size() 
-      << " rNum="    
-      << std::setw(4) << recvParticleVec.size() << ": ";   
+      << std::setw(4) << rParticleX1.size() << std::setw(4) <<
+rParticleX2.size()
+      << std::setw(4) << rParticleY1.size() << std::setw(4) <<
+rParticleY2.size()
+      << std::setw(4) << rParticleZ1.size() << std::setw(4) <<
+rParticleZ2.size()
+      << " rNum="
+      << std::setw(4) << recvParticleVec.size() << ": ";
 
-      for (std::vector<Particle*>::const_iterator it = testParticleVec.begin(); it != testParticleVec.end();++it)
+      for (std::vector<Particle*>::const_iterator it = testParticleVec.begin();
+it != testParticleVec.end();++it)
       debugInf << (*it)->getId() << ' ';
       debugInf << std::endl;
       testParticleVec.clear();
@@ -1679,8 +1863,11 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
   void SmoothParticleHydro::releaseRecvParticle() {
     // release memory of received particles
-    for (std::vector<Particle*>::iterator it = recvParticleVec.begin(); it != recvParticleVec.end(); ++it){
-      for(std::vector<sph::SPHParticle*>::iterator st=(*it)->SPHGhostParticleVec.begin(); st!=(*it)->SPHGhostParticleVec.end(); st++){
+    for (std::vector<Particle*>::iterator it = recvParticleVec.begin(); it !=
+recvParticleVec.end(); ++it){
+      for(std::vector<sph::SPHParticle*>::iterator
+st=(*it)->SPHGhostParticleVec.begin(); st!=(*it)->SPHGhostParticleVec.end();
+st++){
   delete (*st);  // release memory of these sph ghost particles
       }
       (*it)->SPHGhostParticleVec.clear();
@@ -1721,7 +1908,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
   void SmoothParticleHydro::releaseRecvSPHParticle() {
     // release memory of received particles
-    for (std::vector<sph::SPHParticle*>::iterator it = d_recvSPHParticleVec.begin(); it != d_recvSPHParticleVec.end(); ++it)
+    for (std::vector<sph::SPHParticle*>::iterator it =
+d_recvSPHParticleVec.begin(); it != d_recvSPHParticleVec.end(); ++it)
       delete (*it);
     d_recvSPHParticleVec.clear();
     // 6 surfaces
@@ -1755,24 +1943,30 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     rsphParticleX2Y2Z2.clear();
   }
 
-  void SmoothParticleHydro::migrateParticle() 
+  void SmoothParticleHydro::migrateParticle()
   {
     Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
     REAL segX = vspan.x() / mpiProcX;
     REAL segY = vspan.y() / mpiProcY;
     REAL segZ = vspan.z() / mpiProcZ;
     Vec v1 = container.getMinCorner(); // v1, v2 in terms of process
-    Vec v2 = container.getMaxCorner();  
+    Vec v2 = container.getMaxCorner();
 
-    // if a neighbor exists, transfer particles crossing the boundary in between.
+    // if a neighbor exists, transfer particles crossing the boundary in
+between.
     std::vector<Particle*> particleX1, particleX2;
     std::vector<Particle*> particleY1, particleY2;
     std::vector<Particle*> particleZ1, particleZ2;
-    std::vector<Particle*> particleX1Y1, particleX1Y2, particleX1Z1, particleX1Z2; 
-    std::vector<Particle*> particleX2Y1, particleX2Y2, particleX2Z1, particleX2Z2; 
-    std::vector<Particle*> particleY1Z1, particleY1Z2, particleY2Z1, particleY2Z2; 
-    std::vector<Particle*> particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1, particleX1Y2Z2; 
-    std::vector<Particle*> particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1, particleX2Y2Z2; 
+    std::vector<Particle*> particleX1Y1, particleX1Y2, particleX1Z1,
+particleX1Z2;
+    std::vector<Particle*> particleX2Y1, particleX2Y2, particleX2Z1,
+particleX2Z2;
+    std::vector<Particle*> particleY1Z1, particleY1Z2, particleY2Z1,
+particleY2Z2;
+    std::vector<Particle*> particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1,
+particleX1Y2Z2;
+    std::vector<Particle*> particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1,
+particleX2Y2Z2;
     boost::mpi::request reqX1[2], reqX2[2];
     boost::mpi::request reqY1[2], reqY2[2];
     boost::mpi::request reqZ1[2], reqZ2[2];
@@ -1784,12 +1978,14 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
     // 6 surfaces
     if (rankX1 >= 0) { // surface x1
-      Rectangle containerX1(v1.x() - segX, v1.y(), v1.z(), 
+      Rectangle containerX1(v1.x() - segX, v1.y(), v1.z(),
           v1.x(), v2.y(), v2.z());
       findParticleInRectangle(containerX1, particleVec, particleX1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1.begin(); it!=particleX1.end(); it++)
-  (*it)->setNULLDemParticleInSPHParticle();  // now the SPHGhostParticles in part of particleVec are pointing to NULL, don't needed to be back in migrate
+      for(std::vector<Particle*>::iterator it=particleX1.begin();
+it!=particleX1.end(); it++)
+  (*it)->setNULLDemParticleInSPHParticle();  // now the SPHGhostParticles in
+part of particleVec are pointing to NULL, don't needed to be back in migrate
       reqX1[0] = boostWorld.isend(rankX1, mpiTag,  particleX1);
       reqX1[1] = boostWorld.irecv(rankX1, mpiTag, rParticleX1);
     }
@@ -1798,17 +1994,19 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           v2.x() + segX, v2.y(), v2.z());
       findParticleInRectangle(containerX2, particleVec, particleX2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2.begin(); it!=particleX2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2.begin();
+it!=particleX2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2[0] = boostWorld.isend(rankX2, mpiTag,  particleX2);
       reqX2[1] = boostWorld.irecv(rankX2, mpiTag, rParticleX2);
     }
     if (rankY1 >= 0) {  // surface y1
-      Rectangle containerY1(v1.x(), v1.y() - segY, v1.z(), 
+      Rectangle containerY1(v1.x(), v1.y() - segY, v1.z(),
           v2.x(), v1.y(), v2.z());
       findParticleInRectangle(containerY1, particleVec, particleY1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleY1.begin(); it!=particleY1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY1.begin();
+it!=particleY1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqY1[0] = boostWorld.isend(rankY1, mpiTag,  particleY1);
       reqY1[1] = boostWorld.irecv(rankY1, mpiTag, rParticleY1);
@@ -1818,7 +2016,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           v2.x(), v2.y() + segY, v2.z());
       findParticleInRectangle(containerY2, particleVec, particleY2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleY2.begin(); it!=particleY2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY2.begin();
+it!=particleY2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqY2[0] = boostWorld.isend(rankY2, mpiTag,  particleY2);
       reqY2[1] = boostWorld.irecv(rankY2, mpiTag, rParticleY2);
@@ -1828,7 +2027,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           v2.x(), v2.y(), v1.z());
       findParticleInRectangle(containerZ1, particleVec, particleZ1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleZ1.begin(); it!=particleZ1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleZ1.begin();
+it!=particleZ1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqZ1[0] = boostWorld.isend(rankZ1, mpiTag,  particleZ1);
       reqZ1[1] = boostWorld.irecv(rankZ1, mpiTag, rParticleZ1);
@@ -1838,7 +2038,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           v2.x(), v2.y(), v2.z() + segZ);
       findParticleInRectangle(containerZ2, particleVec, particleZ2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleZ2.begin(); it!=particleZ2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleZ2.begin();
+it!=particleZ2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqZ2[0] = boostWorld.isend(rankZ2, mpiTag,  particleZ2);
       reqZ2[1] = boostWorld.irecv(rankZ2, mpiTag, rParticleZ2);
@@ -1849,7 +2050,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v1.x(), v1.y(), v2.z());
       findParticleInRectangle(containerX1Y1, particleVec, particleX1Y1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Y1.begin(); it!=particleX1Y1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Y1.begin();
+it!=particleX1Y1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Y1[0] = boostWorld.isend(rankX1Y1, mpiTag,  particleX1Y1);
       reqX1Y1[1] = boostWorld.irecv(rankX1Y1, mpiTag, rParticleX1Y1);
@@ -1859,7 +2061,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v1.x(), v2.y() + segY, v2.z());
       findParticleInRectangle(containerX1Y2, particleVec, particleX1Y2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Y2.begin(); it!=particleX1Y2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Y2.begin();
+it!=particleX1Y2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Y2[0] = boostWorld.isend(rankX1Y2, mpiTag,  particleX1Y2);
       reqX1Y2[1] = boostWorld.irecv(rankX1Y2, mpiTag, rParticleX1Y2);
@@ -1869,7 +2072,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v1.x(), v2.y(), v1.z());
       findParticleInRectangle(containerX1Z1, particleVec, particleX1Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Z1.begin(); it!=particleX1Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Z1.begin();
+it!=particleX1Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Z1[0] = boostWorld.isend(rankX1Z1, mpiTag,  particleX1Z1);
       reqX1Z1[1] = boostWorld.irecv(rankX1Z1, mpiTag, rParticleX1Z1);
@@ -1879,7 +2083,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v1.x(), v2.y(), v2.z() + segZ);
       findParticleInRectangle(containerX1Z2, particleVec, particleX1Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Z2.begin(); it!=particleX1Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Z2.begin();
+it!=particleX1Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Z2[0] = boostWorld.isend(rankX1Z2, mpiTag,  particleX1Z2);
       reqX1Z2[1] = boostWorld.irecv(rankX1Z2, mpiTag, rParticleX1Z2);
@@ -1889,7 +2094,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x() + segX, v1.y(), v2.z());
       findParticleInRectangle(containerX2Y1, particleVec, particleX2Y1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Y1.begin(); it!=particleX2Y1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Y1.begin();
+it!=particleX2Y1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Y1[0] = boostWorld.isend(rankX2Y1, mpiTag,  particleX2Y1);
       reqX2Y1[1] = boostWorld.irecv(rankX2Y1, mpiTag, rParticleX2Y1);
@@ -1899,7 +2105,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x() + segX, v2.y() + segY, v2.z());
       findParticleInRectangle(containerX2Y2, particleVec, particleX2Y2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Y2.begin(); it!=particleX2Y2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Y2.begin();
+it!=particleX2Y2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Y2[0] = boostWorld.isend(rankX2Y2, mpiTag,  particleX2Y2);
       reqX2Y2[1] = boostWorld.irecv(rankX2Y2, mpiTag, rParticleX2Y2);
@@ -1909,7 +2116,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x() + segX, v2.y(), v1.z());
       findParticleInRectangle(containerX2Z1, particleVec, particleX2Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Z1.begin(); it!=particleX2Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Z1.begin();
+it!=particleX2Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Z1[0] = boostWorld.isend(rankX2Z1, mpiTag,  particleX2Z1);
       reqX2Z1[1] = boostWorld.irecv(rankX2Z1, mpiTag, rParticleX2Z1);
@@ -1919,7 +2127,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x() + segX, v2.y(), v2.z() + segZ);
       findParticleInRectangle(containerX2Z2, particleVec, particleX2Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Z2.begin(); it!=particleX2Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Z2.begin();
+it!=particleX2Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Z2[0] = boostWorld.isend(rankX2Z2, mpiTag,  particleX2Z2);
       reqX2Z2[1] = boostWorld.irecv(rankX2Z2, mpiTag, rParticleX2Z2);
@@ -1929,7 +2138,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x(), v1.y(), v1.z());
       findParticleInRectangle(containerY1Z1, particleVec, particleY1Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleY1Z1.begin(); it!=particleY1Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY1Z1.begin();
+it!=particleY1Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqY1Z1[0] = boostWorld.isend(rankY1Z1, mpiTag,  particleY1Z1);
       reqY1Z1[1] = boostWorld.irecv(rankY1Z1, mpiTag, rParticleY1Z1);
@@ -1939,7 +2149,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x(), v1.y(), v2.z() + segZ);
       findParticleInRectangle(containerY1Z2, particleVec, particleY1Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleY1Z2.begin(); it!=particleY1Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY1Z2.begin();
+it!=particleY1Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqY1Z2[0] = boostWorld.isend(rankY1Z2, mpiTag,  particleY1Z2);
       reqY1Z2[1] = boostWorld.irecv(rankY1Z2, mpiTag, rParticleY1Z2);
@@ -1949,7 +2160,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x(), v2.y() + segY, v1.z());
       findParticleInRectangle(containerY2Z1, particleVec, particleY2Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleY2Z1.begin(); it!=particleY2Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY2Z1.begin();
+it!=particleY2Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqY2Z1[0] = boostWorld.isend(rankY2Z1, mpiTag,  particleY2Z1);
       reqY2Z1[1] = boostWorld.irecv(rankY2Z1, mpiTag, rParticleY2Z1);
@@ -1959,7 +2171,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
             v2.x(), v2.y() + segY, v2.z() + segZ);
       findParticleInRectangle(containerY2Z2, particleVec, particleY2Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleY2Z2.begin(); it!=particleY2Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleY2Z2.begin();
+it!=particleY2Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqY2Z2[0] = boostWorld.isend(rankY2Z2, mpiTag,  particleY2Z2);
       reqY2Z2[1] = boostWorld.irecv(rankY2Z2, mpiTag, rParticleY2Z2);
@@ -1970,7 +2183,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v1.x(), v1.y(), v1.z());
       findParticleInRectangle(containerX1Y1Z1, particleVec, particleX1Y1Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Y1Z1.begin(); it!=particleX1Y1Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Y1Z1.begin();
+it!=particleX1Y1Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Y1Z1[0] = boostWorld.isend(rankX1Y1Z1, mpiTag,  particleX1Y1Z1);
       reqX1Y1Z1[1] = boostWorld.irecv(rankX1Y1Z1, mpiTag, rParticleX1Y1Z1);
@@ -1980,7 +2194,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v1.x(), v1.y(), v2.z() + segZ);
       findParticleInRectangle(containerX1Y1Z2, particleVec, particleX1Y1Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Y1Z2.begin(); it!=particleX1Y1Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Y1Z2.begin();
+it!=particleX1Y1Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Y1Z2[0] = boostWorld.isend(rankX1Y1Z2, mpiTag,  particleX1Y1Z2);
       reqX1Y1Z2[1] = boostWorld.irecv(rankX1Y1Z2, mpiTag, rParticleX1Y1Z2);
@@ -1990,7 +2205,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v1.x(), v2.y() + segY, v1.z());
       findParticleInRectangle(containerX1Y2Z1, particleVec, particleX1Y2Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Y2Z1.begin(); it!=particleX1Y2Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Y2Z1.begin();
+it!=particleX1Y2Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Y2Z1[0] = boostWorld.isend(rankX1Y2Z1, mpiTag,  particleX1Y2Z1);
       reqX1Y2Z1[1] = boostWorld.irecv(rankX1Y2Z1, mpiTag, rParticleX1Y2Z1);
@@ -2000,7 +2216,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v1.x(), v2.y() + segY, v2.z() + segZ);
       findParticleInRectangle(containerX1Y2Z2, particleVec, particleX1Y2Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX1Y2Z2.begin(); it!=particleX1Y2Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX1Y2Z2.begin();
+it!=particleX1Y2Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX1Y2Z2[0] = boostWorld.isend(rankX1Y2Z2, mpiTag,  particleX1Y2Z2);
       reqX1Y2Z2[1] = boostWorld.irecv(rankX1Y2Z2, mpiTag, rParticleX1Y2Z2);
@@ -2010,7 +2227,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v2.x() + segX, v1.y(), v1.z());
       findParticleInRectangle(containerX2Y1Z1, particleVec, particleX2Y1Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Y1Z1.begin(); it!=particleX2Y1Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Y1Z1.begin();
+it!=particleX2Y1Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Y1Z1[0] = boostWorld.isend(rankX2Y1Z1, mpiTag,  particleX2Y1Z1);
       reqX2Y1Z1[1] = boostWorld.irecv(rankX2Y1Z1, mpiTag, rParticleX2Y1Z1);
@@ -2020,7 +2238,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v2.x() + segX, v1.y(), v2.z() + segZ);
       findParticleInRectangle(containerX2Y1Z2, particleVec, particleX2Y1Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Y1Z2.begin(); it!=particleX2Y1Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Y1Z2.begin();
+it!=particleX2Y1Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Y1Z2[0] = boostWorld.isend(rankX2Y1Z2, mpiTag,  particleX2Y1Z2);
       reqX2Y1Z2[1] = boostWorld.irecv(rankX2Y1Z2, mpiTag, rParticleX2Y1Z2);
@@ -2030,7 +2249,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v2.x() + segX, v2.y() + segY, v1.z());
       findParticleInRectangle(containerX2Y2Z1, particleVec, particleX2Y2Z1);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Y2Z1.begin(); it!=particleX2Y2Z1.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Y2Z1.begin();
+it!=particleX2Y2Z1.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Y2Z1[0] = boostWorld.isend(rankX2Y2Z1, mpiTag,  particleX2Y2Z1);
       reqX2Y2Z1[1] = boostWorld.irecv(rankX2Y2Z1, mpiTag, rParticleX2Y2Z1);
@@ -2040,7 +2260,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         v2.x() + segX, v2.y() + segY, v2.z() + segZ);
       findParticleInRectangle(containerX2Y2Z2, particleVec, particleX2Y2Z2);
       // before send, SPHParticle.demParticle should be NULL
-      for(std::vector<Particle*>::iterator it=particleX2Y2Z2.begin(); it!=particleX2Y2Z2.end(); it++)
+      for(std::vector<Particle*>::iterator it=particleX2Y2Z2.begin();
+it!=particleX2Y2Z2.end(); it++)
   (*it)->setNULLDemParticleInSPHParticle();
       reqX2Y2Z2[0] = boostWorld.isend(rankX2Y2Z2, mpiTag,  particleX2Y2Z2);
       reqX2Y2Z2[1] = boostWorld.irecv(rankX2Y2Z2, mpiTag, rParticleX2Y2Z2);
@@ -2054,17 +2275,17 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (rankZ2 >= 0) boost::mpi::wait_all(reqZ2, reqZ2 + 2);
     // 12 edges
     if (rankX1Y1 >= 0) boost::mpi::wait_all(reqX1Y1, reqX1Y1 + 2);
-    if (rankX1Y2 >= 0) boost::mpi::wait_all(reqX1Y2, reqX1Y2 + 2);  
+    if (rankX1Y2 >= 0) boost::mpi::wait_all(reqX1Y2, reqX1Y2 + 2);
     if (rankX1Z1 >= 0) boost::mpi::wait_all(reqX1Z1, reqX1Z1 + 2);
     if (rankX1Z2 >= 0) boost::mpi::wait_all(reqX1Z2, reqX1Z2 + 2);
     if (rankX2Y1 >= 0) boost::mpi::wait_all(reqX2Y1, reqX2Y1 + 2);
-    if (rankX2Y2 >= 0) boost::mpi::wait_all(reqX2Y2, reqX2Y2 + 2);  
+    if (rankX2Y2 >= 0) boost::mpi::wait_all(reqX2Y2, reqX2Y2 + 2);
     if (rankX2Z1 >= 0) boost::mpi::wait_all(reqX2Z1, reqX2Z1 + 2);
-    if (rankX2Z2 >= 0) boost::mpi::wait_all(reqX2Z2, reqX2Z2 + 2); 
+    if (rankX2Z2 >= 0) boost::mpi::wait_all(reqX2Z2, reqX2Z2 + 2);
     if (rankY1Z1 >= 0) boost::mpi::wait_all(reqY1Z1, reqY1Z1 + 2);
     if (rankY1Z2 >= 0) boost::mpi::wait_all(reqY1Z2, reqY1Z2 + 2);
     if (rankY2Z1 >= 0) boost::mpi::wait_all(reqY2Z1, reqY2Z1 + 2);
-    if (rankY2Z2 >= 0) boost::mpi::wait_all(reqY2Z2, reqY2Z2 + 2); 
+    if (rankY2Z2 >= 0) boost::mpi::wait_all(reqY2Z2, reqY2Z2 + 2);
     // 8 vertices
     if (rankX1Y1Z1 >= 0) boost::mpi::wait_all(reqX1Y1Z1, reqX1Y1Z1 + 2);
     if (rankX1Y1Z2 >= 0) boost::mpi::wait_all(reqX1Y1Z2, reqX1Y1Z2 + 2);
@@ -2073,65 +2294,98 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (rankX2Y1Z1 >= 0) boost::mpi::wait_all(reqX2Y1Z1, reqX2Y1Z1 + 2);
     if (rankX2Y1Z2 >= 0) boost::mpi::wait_all(reqX2Y1Z2, reqX2Y1Z2 + 2);
     if (rankX2Y2Z1 >= 0) boost::mpi::wait_all(reqX2Y2Z1, reqX2Y2Z1 + 2);
-    if (rankX2Y2Z2 >= 0) boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);  
+    if (rankX2Y2Z2 >= 0) boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);
 
-    // do not need to assign SPHGhostParticle.demParticle back in particleX1..., since these particles will be removed
+    // do not need to assign SPHGhostParticle.demParticle back in particleX1...,
+since these particles will be removed
     // delete outgoing particles
     removeParticleOutRectangle();
 
     // add incoming particles
     recvParticleVec.clear(); // new use of recvParticleVec
     // 6 surfaces
-    if (rankX1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1.begin(), rParticleX1.end());
-    if (rankX2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2.begin(), rParticleX2.end());
-    if (rankY1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleY1.begin(), rParticleY1.end());
-    if (rankY2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleY2.begin(), rParticleY2.end());
-    if (rankZ1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleZ1.begin(), rParticleZ1.end());
-    if (rankZ2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleZ2.begin(), rParticleZ2.end());
+    if (rankX1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1.begin(), rParticleX1.end());
+    if (rankX2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2.begin(), rParticleX2.end());
+    if (rankY1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleY1.begin(), rParticleY1.end());
+    if (rankY2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleY2.begin(), rParticleY2.end());
+    if (rankZ1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleZ1.begin(), rParticleZ1.end());
+    if (rankZ2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleZ2.begin(), rParticleZ2.end());
     // 12 edges
-    if (rankX1Y1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1.begin(), rParticleX1Y1.end());
-    if (rankX1Y2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2.begin(), rParticleX1Y2.end());
-    if (rankX1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Z1.begin(), rParticleX1Z1.end());
-    if (rankX1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Z2.begin(), rParticleX1Z2.end());
-    if (rankX2Y1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1.begin(), rParticleX2Y1.end());
-    if (rankX2Y2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2.begin(), rParticleX2Y2.end());
-    if (rankX2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Z1.begin(), rParticleX2Z1.end());
-    if (rankX2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Z2.begin(), rParticleX2Z2.end());
-    if (rankY1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleY1Z1.begin(), rParticleY1Z1.end());
-    if (rankY1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleY1Z2.begin(), rParticleY1Z2.end());
-    if (rankY2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleY2Z1.begin(), rParticleY2Z1.end());
-    if (rankY2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleY2Z2.begin(), rParticleY2Z2.end());
+    if (rankX1Y1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Y1.begin(), rParticleX1Y1.end());
+    if (rankX1Y2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Y2.begin(), rParticleX1Y2.end());
+    if (rankX1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Z1.begin(), rParticleX1Z1.end());
+    if (rankX1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Z2.begin(), rParticleX1Z2.end());
+    if (rankX2Y1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Y1.begin(), rParticleX2Y1.end());
+    if (rankX2Y2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Y2.begin(), rParticleX2Y2.end());
+    if (rankX2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Z1.begin(), rParticleX2Z1.end());
+    if (rankX2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Z2.begin(), rParticleX2Z2.end());
+    if (rankY1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleY1Z1.begin(), rParticleY1Z1.end());
+    if (rankY1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleY1Z2.begin(), rParticleY1Z2.end());
+    if (rankY2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleY2Z1.begin(), rParticleY2Z1.end());
+    if (rankY2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleY2Z2.begin(), rParticleY2Z2.end());
     // 8 vertices
-    if (rankX1Y1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1Z1.begin(), rParticleX1Y1Z1.end());
-    if (rankX1Y1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1Z2.begin(), rParticleX1Y1Z2.end());
-    if (rankX1Y2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2Z1.begin(), rParticleX1Y2Z1.end());
-    if (rankX1Y2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2Z2.begin(), rParticleX1Y2Z2.end());
-    if (rankX2Y1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1Z1.begin(), rParticleX2Y1Z1.end());
-    if (rankX2Y1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1Z2.begin(), rParticleX2Y1Z2.end());
-    if (rankX2Y2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2Z1.begin(), rParticleX2Y2Z1.end());
-    if (rankX2Y2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2Z2.begin(), rParticleX2Y2Z2.end());
+    if (rankX1Y1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Y1Z1.begin(), rParticleX1Y1Z1.end());
+    if (rankX1Y1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Y1Z2.begin(), rParticleX1Y1Z2.end());
+    if (rankX1Y2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Y2Z1.begin(), rParticleX1Y2Z1.end());
+    if (rankX1Y2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX1Y2Z2.begin(), rParticleX1Y2Z2.end());
+    if (rankX2Y1Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Y1Z1.begin(), rParticleX2Y1Z1.end());
+    if (rankX2Y1Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Y1Z2.begin(), rParticleX2Y1Z2.end());
+    if (rankX2Y2Z1 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Y2Z1.begin(), rParticleX2Y2Z1.end());
+    if (rankX2Y2Z2 >= 0) recvParticleVec.insert(recvParticleVec.end(),
+rParticleX2Y2Z2.begin(), rParticleX2Y2Z2.end());
 
     // after receive, set SPHParticle.demParticle
-    for(std::vector<Particle*>::iterator it=recvParticleVec.begin(); it!=recvParticleVec.end(); it++){
+    for(std::vector<Particle*>::iterator it=recvParticleVec.begin();
+it!=recvParticleVec.end(); it++){
   (*it)->setDemParticleInSPHParticle();
     }
 
-    particleVec.insert(particleVec.end(), recvParticleVec.begin(), recvParticleVec.end());
+    particleVec.insert(particleVec.end(), recvParticleVec.begin(),
+recvParticleVec.end());
 
     #ifdef 0
-      if (recvParticleVec.size() > 0) {    
-      debugInf << "iter=" << std::setw(8) << iteration << " rank=" << std::setw(2) << mpiRank 
+      if (recvParticleVec.size() > 0) {
+      debugInf << "iter=" << std::setw(8) << iteration << " rank=" <<
+std::setw(2) << mpiRank
       << "   added=";
-      for (std::vector<Particle*>::const_iterator it = recvParticleVec.begin(); it != recvParticleVec.end(); ++it)
+      for (std::vector<Particle*>::const_iterator it = recvParticleVec.begin();
+it != recvParticleVec.end(); ++it)
       debugInf << std::setw(3) << (*it)->getId();
       debugInf << " now " << particleVec.size() << ": ";
-      for (std::vector<Particle*>::const_iterator it = particleVec.begin(); it != particleVec.end(); ++it)
+      for (std::vector<Particle*>::const_iterator it = particleVec.begin(); it
+!= particleVec.end(); ++it)
       debugInf << std::setw(3) << (*it)->getId();
       debugInf << std::endl;
       }
     #endif
 
-    // do not release memory of received particles because they are part of and managed by particleVec
+    // do not release memory of received particles because they are part of and
+managed by particleVec
     // 6 surfaces
     rParticleX1.clear();
     rParticleX2.clear();
@@ -2166,24 +2420,30 @@ SmoothParticleHydro::removeRedundantSPHParticles()
   }
 
 
-  void SmoothParticleHydro::migrateSPHParticle() 
-  {   
+  void SmoothParticleHydro::migrateSPHParticle()
+  {
     Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
     REAL segX = vspan.x() / mpiProcX;
     REAL segY = vspan.y() / mpiProcY;
     REAL segZ = vspan.z() / mpiProcZ;
     Vec v1 = container.getMinCorner(); // v1, v2 in terms of process
-    Vec v2 = container.getMaxCorner();  
+    Vec v2 = container.getMaxCorner();
 
-    // if a neighbor exists, transfer particles crossing the boundary in between.
+    // if a neighbor exists, transfer particles crossing the boundary in
+between.
     std::vector<sph::SPHParticle*> sphParticleX1, sphParticleX2;
     std::vector<sph::SPHParticle*> sphParticleY1, sphParticleY2;
     std::vector<sph::SPHParticle*> sphParticleZ1, sphParticleZ2;
-    std::vector<sph::SPHParticle*> sphParticleX1Y1, sphParticleX1Y2, sphParticleX1Z1, sphParticleX1Z2; 
-    std::vector<sph::SPHParticle*> sphParticleX2Y1, sphParticleX2Y2, sphParticleX2Z1, sphParticleX2Z2; 
-    std::vector<sph::SPHParticle*> sphParticleY1Z1, sphParticleY1Z2, sphParticleY2Z1, sphParticleY2Z2; 
-    std::vector<sph::SPHParticle*> sphParticleX1Y1Z1, sphParticleX1Y1Z2, sphParticleX1Y2Z1, sphParticleX1Y2Z2; 
-    std::vector<sph::SPHParticle*> sphParticleX2Y1Z1, sphParticleX2Y1Z2, sphParticleX2Y2Z1, sphParticleX2Y2Z2; 
+    std::vector<sph::SPHParticle*> sphParticleX1Y1, sphParticleX1Y2,
+sphParticleX1Z1, sphParticleX1Z2;
+    std::vector<sph::SPHParticle*> sphParticleX2Y1, sphParticleX2Y2,
+sphParticleX2Z1, sphParticleX2Z2;
+    std::vector<sph::SPHParticle*> sphParticleY1Z1, sphParticleY1Z2,
+sphParticleY2Z1, sphParticleY2Z2;
+    std::vector<sph::SPHParticle*> sphParticleX1Y1Z1, sphParticleX1Y1Z2,
+sphParticleX1Y2Z1, sphParticleX1Y2Z2;
+    std::vector<sph::SPHParticle*> sphParticleX2Y1Z1, sphParticleX2Y1Z2,
+sphParticleX2Y2Z1, sphParticleX2Y2Z2;
     boost::mpi::request reqX1[2], reqX2[2];
     boost::mpi::request reqY1[2], reqY2[2];
     boost::mpi::request reqZ1[2], reqZ2[2];
@@ -2195,7 +2455,7 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
     // 6 surfaces
     if (rankX1 >= 0) { // surface x1
-      Rectangle containerX1(v1.x() - segX, v1.y(), v1.z(), 
+      Rectangle containerX1(v1.x() - segX, v1.y(), v1.z(),
           v1.x(), v2.y(), v2.z());
       findSPHParticleInRectangle(containerX1, d_sphParticleVec, sphParticleX1);
       reqX1[0] = boostWorld.isend(rankX1, mpiTag,  sphParticleX1);
@@ -2209,7 +2469,7 @@ SmoothParticleHydro::removeRedundantSPHParticles()
       reqX2[1] = boostWorld.irecv(rankX2, mpiTag, rsphParticleX2);
     }
     if (rankY1 >= 0) {  // surface y1
-      Rectangle containerY1(v1.x(), v1.y() - segY, v1.z(), 
+      Rectangle containerY1(v1.x(), v1.y() - segY, v1.z(),
           v2.x(), v1.y(), v2.z());
       findSPHParticleInRectangle(containerY1, d_sphParticleVec, sphParticleY1);
       reqY1[0] = boostWorld.isend(rankY1, mpiTag,  sphParticleY1);
@@ -2240,84 +2500,96 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (rankX1Y1 >= 0) { // edge x1y1
       Rectangle containerX1Y1(v1.x() - segX, v1.y() - segY, v1.z(),
             v1.x(), v1.y(), v2.z());
-      findSPHParticleInRectangle(containerX1Y1, d_sphParticleVec, sphParticleX1Y1);
+      findSPHParticleInRectangle(containerX1Y1, d_sphParticleVec,
+sphParticleX1Y1);
       reqX1Y1[0] = boostWorld.isend(rankX1Y1, mpiTag,  sphParticleX1Y1);
       reqX1Y1[1] = boostWorld.irecv(rankX1Y1, mpiTag, rsphParticleX1Y1);
     }
     if (rankX1Y2 >= 0) { // edge x1y2
       Rectangle containerX1Y2(v1.x() - segX, v2.y(), v1.z(),
             v1.x(), v2.y() + segY, v2.z());
-      findSPHParticleInRectangle(containerX1Y2, d_sphParticleVec, sphParticleX1Y2);
+      findSPHParticleInRectangle(containerX1Y2, d_sphParticleVec,
+sphParticleX1Y2);
       reqX1Y2[0] = boostWorld.isend(rankX1Y2, mpiTag,  sphParticleX1Y2);
       reqX1Y2[1] = boostWorld.irecv(rankX1Y2, mpiTag, rsphParticleX1Y2);
     }
     if (rankX1Z1 >= 0) { // edge x1z1
       Rectangle containerX1Z1(v1.x() - segX, v1.y(), v1.z() -segZ,
             v1.x(), v2.y(), v1.z());
-      findSPHParticleInRectangle(containerX1Z1, d_sphParticleVec, sphParticleX1Z1);
+      findSPHParticleInRectangle(containerX1Z1, d_sphParticleVec,
+sphParticleX1Z1);
       reqX1Z1[0] = boostWorld.isend(rankX1Z1, mpiTag,  sphParticleX1Z1);
       reqX1Z1[1] = boostWorld.irecv(rankX1Z1, mpiTag, rsphParticleX1Z1);
     }
     if (rankX1Z2 >= 0) { // edge x1z2
       Rectangle containerX1Z2(v1.x() - segX, v1.y(), v2.z(),
             v1.x(), v2.y(), v2.z() + segZ);
-      findSPHParticleInRectangle(containerX1Z2, d_sphParticleVec, sphParticleX1Z2);
+      findSPHParticleInRectangle(containerX1Z2, d_sphParticleVec,
+sphParticleX1Z2);
       reqX1Z2[0] = boostWorld.isend(rankX1Z2, mpiTag,  sphParticleX1Z2);
       reqX1Z2[1] = boostWorld.irecv(rankX1Z2, mpiTag, rsphParticleX1Z2);
     }
     if (rankX2Y1 >= 0) { // edge x2y1
       Rectangle containerX2Y1(v2.x(), v1.y() - segY, v1.z(),
             v2.x() + segX, v1.y(), v2.z());
-      findSPHParticleInRectangle(containerX2Y1, d_sphParticleVec, sphParticleX2Y1);
+      findSPHParticleInRectangle(containerX2Y1, d_sphParticleVec,
+sphParticleX2Y1);
       reqX2Y1[0] = boostWorld.isend(rankX2Y1, mpiTag,  sphParticleX2Y1);
       reqX2Y1[1] = boostWorld.irecv(rankX2Y1, mpiTag, rsphParticleX2Y1);
     }
     if (rankX2Y2 >= 0) { // edge x2y2
       Rectangle containerX2Y2(v2.x(), v2.y(), v1.z(),
             v2.x() + segX, v2.y() + segY, v2.z());
-      findSPHParticleInRectangle(containerX2Y2, d_sphParticleVec, sphParticleX2Y2);
+      findSPHParticleInRectangle(containerX2Y2, d_sphParticleVec,
+sphParticleX2Y2);
       reqX2Y2[0] = boostWorld.isend(rankX2Y2, mpiTag,  sphParticleX2Y2);
       reqX2Y2[1] = boostWorld.irecv(rankX2Y2, mpiTag, rsphParticleX2Y2);
     }
     if (rankX2Z1 >= 0) { // edge x2z1
       Rectangle containerX2Z1(v2.x(), v1.y(), v1.z() - segZ,
             v2.x() + segX, v2.y(), v1.z());
-      findSPHParticleInRectangle(containerX2Z1, d_sphParticleVec, sphParticleX2Z1);
+      findSPHParticleInRectangle(containerX2Z1, d_sphParticleVec,
+sphParticleX2Z1);
       reqX2Z1[0] = boostWorld.isend(rankX2Z1, mpiTag,  sphParticleX2Z1);
       reqX2Z1[1] = boostWorld.irecv(rankX2Z1, mpiTag, rsphParticleX2Z1);
     }
     if (rankX2Z2 >= 0) { // edge x2z2
       Rectangle containerX2Z2(v2.x(), v1.y(), v2.z(),
             v2.x() + segX, v2.y(), v2.z() + segZ);
-      findSPHParticleInRectangle(containerX2Z2, d_sphParticleVec, sphParticleX2Z2);
+      findSPHParticleInRectangle(containerX2Z2, d_sphParticleVec,
+sphParticleX2Z2);
       reqX2Z2[0] = boostWorld.isend(rankX2Z2, mpiTag,  sphParticleX2Z2);
       reqX2Z2[1] = boostWorld.irecv(rankX2Z2, mpiTag, rsphParticleX2Z2);
     }
     if (rankY1Z1 >= 0) { // edge y1z1
       Rectangle containerY1Z1(v1.x(), v1.y() - segY, v1.z() - segZ,
             v2.x(), v1.y(), v1.z());
-      findSPHParticleInRectangle(containerY1Z1, d_sphParticleVec, sphParticleY1Z1);
+      findSPHParticleInRectangle(containerY1Z1, d_sphParticleVec,
+sphParticleY1Z1);
       reqY1Z1[0] = boostWorld.isend(rankY1Z1, mpiTag,  sphParticleY1Z1);
       reqY1Z1[1] = boostWorld.irecv(rankY1Z1, mpiTag, rsphParticleY1Z1);
     }
     if (rankY1Z2 >= 0) { // edge y1z2
       Rectangle containerY1Z2(v1.x(), v1.y() - segY, v2.z(),
             v2.x(), v1.y(), v2.z() + segZ);
-      findSPHParticleInRectangle(containerY1Z2, d_sphParticleVec, sphParticleY1Z2);
+      findSPHParticleInRectangle(containerY1Z2, d_sphParticleVec,
+sphParticleY1Z2);
       reqY1Z2[0] = boostWorld.isend(rankY1Z2, mpiTag,  sphParticleY1Z2);
       reqY1Z2[1] = boostWorld.irecv(rankY1Z2, mpiTag, rsphParticleY1Z2);
     }
     if (rankY2Z1 >= 0) { // edge y2z1
       Rectangle containerY2Z1(v1.x(), v2.y(), v1.z() - segZ,
             v2.x(), v2.y() + segY, v1.z());
-      findSPHParticleInRectangle(containerY2Z1, d_sphParticleVec, sphParticleY2Z1);
+      findSPHParticleInRectangle(containerY2Z1, d_sphParticleVec,
+sphParticleY2Z1);
       reqY2Z1[0] = boostWorld.isend(rankY2Z1, mpiTag,  sphParticleY2Z1);
       reqY2Z1[1] = boostWorld.irecv(rankY2Z1, mpiTag, rsphParticleY2Z1);
     }
     if (rankY2Z2 >= 0) { // edge y2z2
       Rectangle containerY2Z2(v1.x(), v2.y(), v2.z(),
             v2.x(), v2.y() + segY, v2.z() + segZ);
-      findSPHParticleInRectangle(containerY2Z2, d_sphParticleVec, sphParticleY2Z2);
+      findSPHParticleInRectangle(containerY2Z2, d_sphParticleVec,
+sphParticleY2Z2);
       reqY2Z2[0] = boostWorld.isend(rankY2Z2, mpiTag,  sphParticleY2Z2);
       reqY2Z2[1] = boostWorld.irecv(rankY2Z2, mpiTag, rsphParticleY2Z2);
     }
@@ -2325,56 +2597,64 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (rankX1Y1Z1 >= 0) { // edge x1y1z1
       Rectangle containerX1Y1Z1(v1.x() - segX, v1.y() - segY, v1.z() - segZ,
         v1.x(), v1.y(), v1.z());
-      findSPHParticleInRectangle(containerX1Y1Z1, d_sphParticleVec, sphParticleX1Y1Z1);
+      findSPHParticleInRectangle(containerX1Y1Z1, d_sphParticleVec,
+sphParticleX1Y1Z1);
       reqX1Y1Z1[0] = boostWorld.isend(rankX1Y1Z1, mpiTag,  sphParticleX1Y1Z1);
       reqX1Y1Z1[1] = boostWorld.irecv(rankX1Y1Z1, mpiTag, rsphParticleX1Y1Z1);
     }
     if (rankX1Y1Z2 >= 0) { // edge x1y1z2
       Rectangle containerX1Y1Z2(v1.x() - segX, v1.y() - segY, v2.z(),
         v1.x(), v1.y(), v2.z() + segZ);
-      findSPHParticleInRectangle(containerX1Y1Z2, d_sphParticleVec, sphParticleX1Y1Z2);
+      findSPHParticleInRectangle(containerX1Y1Z2, d_sphParticleVec,
+sphParticleX1Y1Z2);
       reqX1Y1Z2[0] = boostWorld.isend(rankX1Y1Z2, mpiTag,  sphParticleX1Y1Z2);
       reqX1Y1Z2[1] = boostWorld.irecv(rankX1Y1Z2, mpiTag, rsphParticleX1Y1Z2);
     }
     if (rankX1Y2Z1 >= 0) { // edge x1y2z1
       Rectangle containerX1Y2Z1(v1.x() - segX, v2.y(), v1.z() - segZ,
         v1.x(), v2.y() + segY, v1.z());
-      findSPHParticleInRectangle(containerX1Y2Z1, d_sphParticleVec, sphParticleX1Y2Z1);
+      findSPHParticleInRectangle(containerX1Y2Z1, d_sphParticleVec,
+sphParticleX1Y2Z1);
       reqX1Y2Z1[0] = boostWorld.isend(rankX1Y2Z1, mpiTag,  sphParticleX1Y2Z1);
       reqX1Y2Z1[1] = boostWorld.irecv(rankX1Y2Z1, mpiTag, rsphParticleX1Y2Z1);
     }
     if (rankX1Y2Z2 >= 0) { // edge x1y2z2
       Rectangle containerX1Y2Z2(v1.x() - segX, v2.y(), v2.z(),
         v1.x(), v2.y() + segY, v2.z() + segZ);
-      findSPHParticleInRectangle(containerX1Y2Z2, d_sphParticleVec, sphParticleX1Y2Z2);
+      findSPHParticleInRectangle(containerX1Y2Z2, d_sphParticleVec,
+sphParticleX1Y2Z2);
       reqX1Y2Z2[0] = boostWorld.isend(rankX1Y2Z2, mpiTag,  sphParticleX1Y2Z2);
       reqX1Y2Z2[1] = boostWorld.irecv(rankX1Y2Z2, mpiTag, rsphParticleX1Y2Z2);
     }
     if (rankX2Y1Z1 >= 0) { // edge x2y1z1
       Rectangle containerX2Y1Z1(v2.x(), v1.y() - segY, v1.z() - segZ,
         v2.x() + segX, v1.y(), v1.z());
-      findSPHParticleInRectangle(containerX2Y1Z1, d_sphParticleVec, sphParticleX2Y1Z1);
+      findSPHParticleInRectangle(containerX2Y1Z1, d_sphParticleVec,
+sphParticleX2Y1Z1);
       reqX2Y1Z1[0] = boostWorld.isend(rankX2Y1Z1, mpiTag,  sphParticleX2Y1Z1);
       reqX2Y1Z1[1] = boostWorld.irecv(rankX2Y1Z1, mpiTag, rsphParticleX2Y1Z1);
     }
     if (rankX2Y1Z2 >= 0) { // edge x2y1z2
       Rectangle containerX2Y1Z2(v2.x(), v1.y() - segY, v2.z(),
         v2.x() + segX, v1.y(), v2.z() + segZ);
-      findSPHParticleInRectangle(containerX2Y1Z2, d_sphParticleVec, sphParticleX2Y1Z2);
+      findSPHParticleInRectangle(containerX2Y1Z2, d_sphParticleVec,
+sphParticleX2Y1Z2);
       reqX2Y1Z2[0] = boostWorld.isend(rankX2Y1Z2, mpiTag,  sphParticleX2Y1Z2);
       reqX2Y1Z2[1] = boostWorld.irecv(rankX2Y1Z2, mpiTag, rsphParticleX2Y1Z2);
     }
     if (rankX2Y2Z1 >= 0) { // edge x2y2z1
       Rectangle containerX2Y2Z1(v2.x(), v2.y(), v1.z() - segZ,
         v2.x() + segX, v2.y() + segY, v1.z());
-      findSPHParticleInRectangle(containerX2Y2Z1, d_sphParticleVec, sphParticleX2Y2Z1);
+      findSPHParticleInRectangle(containerX2Y2Z1, d_sphParticleVec,
+sphParticleX2Y2Z1);
       reqX2Y2Z1[0] = boostWorld.isend(rankX2Y2Z1, mpiTag,  sphParticleX2Y2Z1);
       reqX2Y2Z1[1] = boostWorld.irecv(rankX2Y2Z1, mpiTag, rsphParticleX2Y2Z1);
     }
     if (rankX2Y2Z2 >= 0) { // edge x2y2z2
       Rectangle containerX2Y2Z2(v2.x(), v2.y(), v2.z(),
         v2.x() + segX, v2.y() + segY, v2.z() + segZ);
-      findSPHParticleInRectangle(containerX2Y2Z2, d_sphParticleVec, sphParticleX2Y2Z2);
+      findSPHParticleInRectangle(containerX2Y2Z2, d_sphParticleVec,
+sphParticleX2Y2Z2);
       reqX2Y2Z2[0] = boostWorld.isend(rankX2Y2Z2, mpiTag,  sphParticleX2Y2Z2);
       reqX2Y2Z2[1] = boostWorld.irecv(rankX2Y2Z2, mpiTag, rsphParticleX2Y2Z2);
     }
@@ -2387,17 +2667,17 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (rankZ2 >= 0) boost::mpi::wait_all(reqZ2, reqZ2 + 2);
     // 12 edges
     if (rankX1Y1 >= 0) boost::mpi::wait_all(reqX1Y1, reqX1Y1 + 2);
-    if (rankX1Y2 >= 0) boost::mpi::wait_all(reqX1Y2, reqX1Y2 + 2);  
+    if (rankX1Y2 >= 0) boost::mpi::wait_all(reqX1Y2, reqX1Y2 + 2);
     if (rankX1Z1 >= 0) boost::mpi::wait_all(reqX1Z1, reqX1Z1 + 2);
     if (rankX1Z2 >= 0) boost::mpi::wait_all(reqX1Z2, reqX1Z2 + 2);
     if (rankX2Y1 >= 0) boost::mpi::wait_all(reqX2Y1, reqX2Y1 + 2);
-    if (rankX2Y2 >= 0) boost::mpi::wait_all(reqX2Y2, reqX2Y2 + 2);  
+    if (rankX2Y2 >= 0) boost::mpi::wait_all(reqX2Y2, reqX2Y2 + 2);
     if (rankX2Z1 >= 0) boost::mpi::wait_all(reqX2Z1, reqX2Z1 + 2);
-    if (rankX2Z2 >= 0) boost::mpi::wait_all(reqX2Z2, reqX2Z2 + 2); 
+    if (rankX2Z2 >= 0) boost::mpi::wait_all(reqX2Z2, reqX2Z2 + 2);
     if (rankY1Z1 >= 0) boost::mpi::wait_all(reqY1Z1, reqY1Z1 + 2);
     if (rankY1Z2 >= 0) boost::mpi::wait_all(reqY1Z2, reqY1Z2 + 2);
     if (rankY2Z1 >= 0) boost::mpi::wait_all(reqY2Z1, reqY2Z1 + 2);
-    if (rankY2Z2 >= 0) boost::mpi::wait_all(reqY2Z2, reqY2Z2 + 2); 
+    if (rankY2Z2 >= 0) boost::mpi::wait_all(reqY2Z2, reqY2Z2 + 2);
     // 8 vertices
     if (rankX1Y1Z1 >= 0) boost::mpi::wait_all(reqX1Y1Z1, reqX1Y1Z1 + 2);
     if (rankX1Y1Z2 >= 0) boost::mpi::wait_all(reqX1Y1Z2, reqX1Y1Z2 + 2);
@@ -2406,7 +2686,7 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (rankX2Y1Z1 >= 0) boost::mpi::wait_all(reqX2Y1Z1, reqX2Y1Z1 + 2);
     if (rankX2Y1Z2 >= 0) boost::mpi::wait_all(reqX2Y1Z2, reqX2Y1Z2 + 2);
     if (rankX2Y2Z1 >= 0) boost::mpi::wait_all(reqX2Y2Z1, reqX2Y2Z1 + 2);
-    if (rankX2Y2Z2 >= 0) boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);  
+    if (rankX2Y2Z2 >= 0) boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);
 
     // delete outgoing particles
     removeSPHParticleOutRectangle();
@@ -2414,51 +2694,82 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     // add incoming particles
     d_recvSPHParticleVec.clear(); // new use of recvParticleVec
     // 6 surfaces
-    if (rankX1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1.begin(), rsphParticleX1.end());
-    if (rankX2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2.begin(), rsphParticleX2.end());
-    if (rankY1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY1.begin(), rsphParticleY1.end());
-    if (rankY2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY2.begin(), rsphParticleY2.end());
-    if (rankZ1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleZ1.begin(), rsphParticleZ1.end());
-    if (rankZ2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleZ2.begin(), rsphParticleZ2.end());
+    if (rankX1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1.begin(), rsphParticleX1.end());
+    if (rankX2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2.begin(), rsphParticleX2.end());
+    if (rankY1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleY1.begin(), rsphParticleY1.end());
+    if (rankY2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleY2.begin(), rsphParticleY2.end());
+    if (rankZ1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleZ1.begin(), rsphParticleZ1.end());
+    if (rankZ2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleZ2.begin(), rsphParticleZ2.end());
     // 12 edges
-    if (rankX1Y1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y1.begin(), rsphParticleX1Y1.end());
-    if (rankX1Y2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y2.begin(), rsphParticleX1Y2.end());
-    if (rankX1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Z1.begin(), rsphParticleX1Z1.end());
-    if (rankX1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Z2.begin(), rsphParticleX1Z2.end());
-    if (rankX2Y1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y1.begin(), rsphParticleX2Y1.end());
-    if (rankX2Y2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y2.begin(), rsphParticleX2Y2.end());
-    if (rankX2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Z1.begin(), rsphParticleX2Z1.end());
-    if (rankX2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Z2.begin(), rsphParticleX2Z2.end());
-    if (rankY1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY1Z1.begin(), rsphParticleY1Z1.end());
-    if (rankY1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY1Z2.begin(), rsphParticleY1Z2.end());
-    if (rankY2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY2Z1.begin(), rsphParticleY2Z1.end());
-    if (rankY2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY2Z2.begin(), rsphParticleY2Z2.end());
+    if (rankX1Y1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Y1.begin(), rsphParticleX1Y1.end());
+    if (rankX1Y2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Y2.begin(), rsphParticleX1Y2.end());
+    if (rankX1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Z1.begin(), rsphParticleX1Z1.end());
+    if (rankX1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Z2.begin(), rsphParticleX1Z2.end());
+    if (rankX2Y1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Y1.begin(), rsphParticleX2Y1.end());
+    if (rankX2Y2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Y2.begin(), rsphParticleX2Y2.end());
+    if (rankX2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Z1.begin(), rsphParticleX2Z1.end());
+    if (rankX2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Z2.begin(), rsphParticleX2Z2.end());
+    if (rankY1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleY1Z1.begin(), rsphParticleY1Z1.end());
+    if (rankY1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleY1Z2.begin(), rsphParticleY1Z2.end());
+    if (rankY2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleY2Z1.begin(), rsphParticleY2Z1.end());
+    if (rankY2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleY2Z2.begin(), rsphParticleY2Z2.end());
     // 8 vertices
-    if (rankX1Y1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y1Z1.begin(), rsphParticleX1Y1Z1.end());
-    if (rankX1Y1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y1Z2.begin(), rsphParticleX1Y1Z2.end());
-    if (rankX1Y2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y2Z1.begin(), rsphParticleX1Y2Z1.end());
-    if (rankX1Y2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y2Z2.begin(), rsphParticleX1Y2Z2.end());
-    if (rankX2Y1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y1Z1.begin(), rsphParticleX2Y1Z1.end());
-    if (rankX2Y1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y1Z2.begin(), rsphParticleX2Y1Z2.end());
-    if (rankX2Y2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y2Z1.begin(), rsphParticleX2Y2Z1.end());
-    if (rankX2Y2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y2Z2.begin(), rsphParticleX2Y2Z2.end());
+    if (rankX1Y1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Y1Z1.begin(), rsphParticleX1Y1Z1.end());
+    if (rankX1Y1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Y1Z2.begin(), rsphParticleX1Y1Z2.end());
+    if (rankX1Y2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Y2Z1.begin(), rsphParticleX1Y2Z1.end());
+    if (rankX1Y2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX1Y2Z2.begin(), rsphParticleX1Y2Z2.end());
+    if (rankX2Y1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Y1Z1.begin(), rsphParticleX2Y1Z1.end());
+    if (rankX2Y1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Y1Z2.begin(), rsphParticleX2Y1Z2.end());
+    if (rankX2Y2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Y2Z1.begin(), rsphParticleX2Y2Z1.end());
+    if (rankX2Y2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
+rsphParticleX2Y2Z2.begin(), rsphParticleX2Y2Z2.end());
 
-    d_sphParticleVec.insert(d_sphParticleVec.end(), d_recvSPHParticleVec.begin(), d_recvSPHParticleVec.end());
+    d_sphParticleVec.insert(d_sphParticleVec.end(),
+d_recvSPHParticleVec.begin(), d_recvSPHParticleVec.end());
 
     #ifdef 0
-      if (recvParticleVec.size() > 0) {    
-      debugInf << "iter=" << std::setw(8) << iteration << " rank=" << std::setw(2) << mpiRank 
+      if (recvParticleVec.size() > 0) {
+      debugInf << "iter=" << std::setw(8) << iteration << " rank=" <<
+std::setw(2) << mpiRank
       << "   added=";
-      for (std::vector<Particle*>::const_iterator it = recvParticleVec.begin(); it != recvParticleVec.end(); ++it)
+      for (std::vector<Particle*>::const_iterator it = recvParticleVec.begin();
+it != recvParticleVec.end(); ++it)
       debugInf << std::setw(3) << (*it)->getId();
       debugInf << " now " << particleVec.size() << ": ";
-      for (std::vector<Particle*>::const_iterator it = particleVec.begin(); it != particleVec.end(); ++it)
+      for (std::vector<Particle*>::const_iterator it = particleVec.begin(); it
+!= particleVec.end(); ++it)
       debugInf << std::setw(3) << (*it)->getId();
       debugInf << std::endl;
       }
     #endif
 
-    // do not release memory of received particles because they are part of and managed by particleVec
+    // do not release memory of received particles because they are part of and
+managed by particleVec
     // 6 surfaces
     rsphParticleX1.clear();
     rsphParticleX2.clear();
@@ -2494,31 +2805,42 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
   void SmoothParticleHydro::gatherParticle() {
     // before send, SPHParticle.demParticle should be NULL
-    for(std::vector<Particle*>::iterator it=particleVec.begin(); it!=particleVec.end(); it++)
-  (*it)->setNULLDemParticleInSPHParticle();  // at this point, SPHGhostParticle.demParticle is not pointing to particleVec
+    for(std::vector<Particle*>::iterator it=particleVec.begin();
+it!=particleVec.end(); it++)
+  (*it)->setNULLDemParticleInSPHParticle();  // at this point,
+SPHGhostParticle.demParticle is not pointing to particleVec
 
-    // update allParticleVec: process 0 collects all updated particles from each other process  
+    // update allParticleVec: process 0 collects all updated particles from each
+other process
     if (mpiRank != 0) {// each process except 0
       boostWorld.send(0, mpiTag, particleVec);
     }
     else { // process 0
       // allParticleVec is cleared before filling with new data
       releaseGatheredParticle();
-  
-      // duplicate particleVec so that it is not destroyed by allParticleVec in next iteration,
+
+      // duplicate particleVec so that it is not destroyed by allParticleVec in
+next iteration,
       // otherwise it causes memory error.
       std::vector<Particle*> dupParticleVec(particleVec.size());
       for (std::size_t i = 0; i < dupParticleVec.size(); ++i){
-  dupParticleVec[i] = new Particle(*particleVec[i]);  // at this point, dupParticleVec and particleVec are pointint to the same SPHGhoastParticle
-  dupParticleVec[i]->SPHGhostParticleVec.clear();    // at this point, dupParticleVec is pointing to nothing
-  for(std::vector<sph::SPHParticle*>::iterator st=particleVec[i]->SPHGhostParticleVec.begin(); st!=particleVec[i]->SPHGhostParticleVec.end(); st++){
-    sph::SPHParticle* tmp_sph = new sph::SPHParticle(**st);  // create a new SPHGhost particle, which is the same as the one in particleVec
-    dupParticleVec[i]->SPHGhostParticleVec.push_back(tmp_sph);  // now dupParticleVec points to the new SPHGhostParticle
+  dupParticleVec[i] = new Particle(*particleVec[i]);  // at this point,
+dupParticleVec and particleVec are pointint to the same SPHGhoastParticle
+  dupParticleVec[i]->SPHGhostParticleVec.clear();    // at this point,
+dupParticleVec is pointing to nothing
+  for(std::vector<sph::SPHParticle*>::iterator
+st=particleVec[i]->SPHGhostParticleVec.begin();
+st!=particleVec[i]->SPHGhostParticleVec.end(); st++){
+    sph::SPHParticle* tmp_sph = new sph::SPHParticle(**st);  // create a new
+SPHGhost particle, which is the same as the one in particleVec
+    dupParticleVec[i]->SPHGhostParticleVec.push_back(tmp_sph);  // now
+dupParticleVec points to the new SPHGhostParticle
   }
       }
 
       // fill allParticleVec with dupParticleVec and received particles
-      allParticleVec.insert(allParticleVec.end(), dupParticleVec.begin(), dupParticleVec.end());
+      allParticleVec.insert(allParticleVec.end(), dupParticleVec.begin(),
+dupParticleVec.end());
 
       std::vector<Particle*> tmpParticleVec;
       long gatherRam = 0;
@@ -2526,14 +2848,17 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
   tmpParticleVec.clear();// do not destroy particles!
   boostWorld.recv(iRank, mpiTag, tmpParticleVec);
-  allParticleVec.insert(allParticleVec.end(), tmpParticleVec.begin(), tmpParticleVec.end());
+  allParticleVec.insert(allParticleVec.end(), tmpParticleVec.begin(),
+tmpParticleVec.end());
   gatherRam += tmpParticleVec.size();
 
       }
-      //debugInf << "gather: particleNum = " << gatherRam <<  " particleRam = " << gatherRam * sizeof(Particle) << std::endl;
+      //debugInf << "gather: particleNum = " << gatherRam <<  " particleRam = "
+<< gatherRam * sizeof(Particle) << std::endl;
     }
     // after receive, set SPHParticle.demParticle
-    for(std::vector<Particle*>::iterator it=particleVec.begin(); it!=particleVec.end(); it++){
+    for(std::vector<Particle*>::iterator it=particleVec.begin();
+it!=particleVec.end(); it++){
   (*it)->setDemParticleInSPHParticle();
     }
   }
@@ -2541,12 +2866,17 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
   void SmoothParticleHydro::releaseGatheredParticle() {
     // clear allParticleVec, avoid long time memory footprint.
-    for (std::vector<Particle*>::iterator it = allParticleVec.begin(); it != allParticleVec.end(); ++it){
-      for(std::vector<sph::SPHParticle*>::iterator st=(*it)->SPHGhostParticleVec.begin(); st!=(*it)->SPHGhostParticleVec.end(); ++st){
-  delete (*st);  // this is important to free the memories of sph ghost particles
+    for (std::vector<Particle*>::iterator it = allParticleVec.begin(); it !=
+allParticleVec.end(); ++it){
+      for(std::vector<sph::SPHParticle*>::iterator
+st=(*it)->SPHGhostParticleVec.begin(); st!=(*it)->SPHGhostParticleVec.end();
+++st){
+  delete (*st);  // this is important to free the memories of sph ghost
+particles
       }
       (*it)->SPHGhostParticleVec.clear();
-      std::vector<sph::SPHParticle*>().swap((*it)->SPHGhostParticleVec); // actual memory release
+      std::vector<sph::SPHParticle*>().swap((*it)->SPHGhostParticleVec); //
+actual memory release
       delete (*it);
     }
     allParticleVec.clear();
@@ -2555,7 +2885,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
 
   void SmoothParticleHydro::gatherSPHParticle() {
-    // update d_allSPHParticleVec: process 0 collects all updated particles from each other process  
+    // update d_allSPHParticleVec: process 0 collects all updated particles from
+each other process
     if (mpiRank != 0) {// each process except 0
       boostWorld.send(0, mpiTag, d_sphParticleVec);
     }
@@ -2563,14 +2894,16 @@ SmoothParticleHydro::removeRedundantSPHParticles()
       // d_allSPHParticleVec is cleared before filling with new data
       releaseGatheredSPHParticle();
 
-      // duplicate d_sphParticleVec so that it is not destroyed by d_allSPHParticleVec in next iteration,
+      // duplicate d_sphParticleVec so that it is not destroyed by
+d_allSPHParticleVec in next iteration,
       // otherwise it causes memory error.
       std::vector<sph::SPHParticle*> dupSPHParticleVec(d_sphParticleVec.size());
       for (std::size_t i = 0; i < dupSPHParticleVec.size(); ++i)
   dupSPHParticleVec[i] = new sph::SPHParticle(*d_sphParticleVec[i]);
 
       // fill allParticleVec with dupParticleVec and received particles
-      d_allSPHParticleVec.insert(d_allSPHParticleVec.end(), dupSPHParticleVec.begin(), dupSPHParticleVec.end());
+      d_allSPHParticleVec.insert(d_allSPHParticleVec.end(),
+dupSPHParticleVec.begin(), dupSPHParticleVec.end());
 
       std::vector<sph::SPHParticle*> tmpSPHParticleVec;
       long gatherRam = 0;
@@ -2578,20 +2911,24 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
   tmpSPHParticleVec.clear();// do not destroy particles!
   boostWorld.recv(iRank, mpiTag, tmpSPHParticleVec);
-  d_allSPHParticleVec.insert(d_allSPHParticleVec.end(), tmpSPHParticleVec.begin(), tmpSPHParticleVec.end());
+  d_allSPHParticleVec.insert(d_allSPHParticleVec.end(),
+tmpSPHParticleVec.begin(), tmpSPHParticleVec.end());
   gatherRam += tmpSPHParticleVec.size();
 
       }
-      //debugInf << "gather: particleNum = " << gatherRam <<  " particleRam = " << gatherRam * sizeof(Particle) << std::endl;
+      //debugInf << "gather: particleNum = " << gatherRam <<  " particleRam = "
+<< gatherRam * sizeof(Particle) << std::endl;
     }
   }
 
   void SmoothParticleHydro::releaseGatheredSPHParticle() {
     // clear allParticleVec, avoid long time memory footprint.
-    for (std::vector<sph::SPHParticle*>::iterator it = d_allSPHParticleVec.begin(); it != d_allSPHParticleVec.end(); ++it)
+    for (std::vector<sph::SPHParticle*>::iterator it =
+d_allSPHParticleVec.begin(); it != d_allSPHParticleVec.end(); ++it)
       delete (*it);
     d_allSPHParticleVec.clear();
-    std::vector<sph::SPHParticle*>().swap(d_allSPHParticleVec); // actual memory release
+    std::vector<sph::SPHParticle*>().swap(d_allSPHParticleVec); // actual memory
+release
   }
 
   void SmoothParticleHydro::gatherBdryContact() {
@@ -2603,9 +2940,9 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     if (mpiRank == 0) {
       mergeBoundaryVec.clear();
       std::vector<Boundary*>().swap(mergeBoundaryVec); // actual memory release
-      mergeBoundaryVec = boundaryVec; 
+      mergeBoundaryVec = boundaryVec;
 
-      std::vector<Boundary*> tmpBoundaryVec;   
+      std::vector<Boundary*> tmpBoundaryVec;
       for (std::size_t it = 0; it < bdryProcess.size(); ++it) {
   if (bdryProcess[it] != 0) {// not root process
     tmpBoundaryVec.clear();  // do not destroy particles!
@@ -2617,31 +2954,36 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 mergeBoundaryVec[jt]->getContactInfo().end(), \
                 tmpBoundaryVec[jt]->getContactInfo().begin(), \
                 tmpBoundaryVec[jt]->getContactInfo().end() );
-  }    
+  }
       }
 
       // must update after collecting all boundary contact info
-      for(std::vector<Boundary*>::iterator it = mergeBoundaryVec.begin(); it != mergeBoundaryVec.end(); ++it)
+      for(std::vector<Boundary*>::iterator it = mergeBoundaryVec.begin(); it !=
+mergeBoundaryVec.end(); ++it)
   (*it)->updateStatForce();
     }
   }
-  
 
-  void  SmoothParticleHydro::openSPHTecplot(std::ofstream &ofs, const char *str) {
+
+  void  SmoothParticleHydro::openSPHTecplot(std::ofstream &ofs, const char *str)
+{
     ofs.open(str);
-    if(!ofs) { debugInf << "stream error: openSPHTecplot" << std::endl; exit(-1); }
+    if(!ofs) { debugInf << "stream error: openSPHTecplot" << std::endl;
+exit(-1); }
     ofs.setf(std::ios::scientific, std::ios::floatfield);
     ofs.precision(OPREC);
 
     ofs << "Title = \"SPH Particle Information\"" << std::endl;
-    ofs << "VARIABLES = \"x\", \"y\",\"z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" \"Vz\" \"Pressure\" \"a_x\" \"a_y\" \"a_z\" \"density_dot\" \"density\" "
+    ofs << "VARIABLES = \"x\", \"y\",\"z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\"
+\"Vz\" \"Pressure\" \"a_x\" \"a_y\" \"a_z\" \"density_dot\" \"density\" "
   << std::endl;
   }
-  
+
   void SmoothParticleHydro::printSPHTecplot(std::ofstream &ofs, int iframe) {
   ofs << "ZONE T =\" " << iframe << "-th Load Step\" "<< std::endl;
   // Output the coordinates and the array information
-  for(std::vector<sph::SPHParticle*>::iterator pt = d_allSPHParticleVec.begin(); pt!= d_allSPHParticleVec.end(); pt++) {
+  for(std::vector<sph::SPHParticle*>::iterator pt = d_allSPHParticleVec.begin();
+pt!= d_allSPHParticleVec.end(); pt++) {
 
 //// not print the most right layer of SPH free particles, 2015/05/19
 //if((*pt)->getInitPosition().getx()==25){
@@ -2653,35 +2995,38 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     << std::setw(20) << (*pt)->getCurrPosition().y()
     << std::setw(20) << (*pt)->getCurrPosition().z()
     << std::setw(20) << (*pt)->getDisplacement().x()
-    << std::setw(20) << (*pt)->getDisplacement().y() 
-    << std::setw(20) << (*pt)->getDisplacement().z() 
+    << std::setw(20) << (*pt)->getDisplacement().y()
+    << std::setw(20) << (*pt)->getDisplacement().z()
     << std::setw(20) << (*pt)->getVelocity().x()
-    << std::setw(20) << (*pt)->getVelocity().y() 
+    << std::setw(20) << (*pt)->getVelocity().y()
     << std::setw(20) << (*pt)->getVelocity().z();
 
       (*pt)->calculateParticlePressure();
        ofs << std::setw(20) <<(*pt)->getParticlePressure();
 
       ofs << std::setw(20) << (*pt)->getVelocityDot().x()
-    << std::setw(20) << (*pt)->getVelocityDot().y() 
+    << std::setw(20) << (*pt)->getVelocityDot().y()
     << std::setw(20) << (*pt)->getVelocityDot().z()
-    << std::setw(20) << (*pt)->getDensityDot() 
+    << std::setw(20) << (*pt)->getDensityDot()
     << std::setw(20) << (*pt)->getParticleDensity() << std::endl;
 
   }
   }
   void SmoothParticleHydro::printSPHParticle(const char *str) const{
       std::ofstream ofs(str);
-      if(!ofs) { debugInf << "stream error: printSPHParticle" << std::endl; exit(-1); }
+      if(!ofs) { debugInf << "stream error: printSPHParticle" << std::endl;
+exit(-1); }
       ofs.setf(std::ios::scientific, std::ios::floatfield);
       ofs.precision(OPREC);
 
         ofs << "Title = \"SPH Particle Information\"" << std::endl;
-        ofs << "VARIABLES = \"x\", \"y\",\"z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" \"Vz\" \"Pressure\" \"a_x\" \"a_y\" \"a_z\" \"density_dot\" \"density\" "
+        ofs << "VARIABLES = \"x\", \"y\",\"z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\"
+\"Vy\" \"Vz\" \"Pressure\" \"a_x\" \"a_y\" \"a_z\" \"density_dot\" \"density\" "
       << std::endl;
- 
+
   // Output the coordinates and the array information
-  for(std::vector<sph::SPHParticle*>::const_iterator pt = d_allSPHParticleVec.begin(); pt!= d_allSPHParticleVec.end(); pt++) {
+  for(std::vector<sph::SPHParticle*>::const_iterator pt =
+d_allSPHParticleVec.begin(); pt!= d_allSPHParticleVec.end(); pt++) {
 
 //// not print the most right layer of SPH free particles, 2015/05/19
 //if((*pt)->getInitPosition().getx()==25){
@@ -2693,32 +3038,35 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     << std::setw(20) << (*pt)->getCurrPosition().y()
     << std::setw(20) << (*pt)->getCurrPosition().z()
     << std::setw(20) << (*pt)->getDisplacement().x()
-    << std::setw(20) << (*pt)->getDisplacement().y() 
-    << std::setw(20) << (*pt)->getDisplacement().z() 
+    << std::setw(20) << (*pt)->getDisplacement().y()
+    << std::setw(20) << (*pt)->getDisplacement().z()
     << std::setw(20) << (*pt)->getVelocity().x()
-    << std::setw(20) << (*pt)->getVelocity().y() 
+    << std::setw(20) << (*pt)->getVelocity().y()
     << std::setw(20) << (*pt)->getVelocity().z();
 
       (*pt)->calculateParticlePressure();
        ofs << std::setw(20) <<(*pt)->getParticlePressure();
 
       ofs << std::setw(20) << (*pt)->getVelocityDot().x()
-    << std::setw(20) << (*pt)->getVelocityDot().y() 
+    << std::setw(20) << (*pt)->getVelocityDot().y()
     << std::setw(20) << (*pt)->getVelocityDot().z()
-    << std::setw(20) << (*pt)->getDensityDot() 
+    << std::setw(20) << (*pt)->getDensityDot()
     << std::setw(20) << (*pt)->getParticleDensity() << std::endl;
 
   }
-  
+
     ofs.close();
   }
 
     void SmoothParticleHydro::initialSPHVelocity2D(){
   commuParticle();
-  commuSPHParticle();  // this will update container and mergeSPHParticleVec, both are needed for divideSPHDomain
-  calculateSPHDensityDotVelocityDotLinkedList2D();  // calculate velocityDot and densityDot
+  commuSPHParticle();  // this will update container and mergeSPHParticleVec,
+both are needed for divideSPHDomain
+  calculateSPHDensityDotVelocityDotLinkedList2D();  // calculate velocityDot and
+densityDot
   // fix the y for all SPH points
-  for(std::vector<sph::SPHParticle*>::iterator pt=d_sphParticleVec.begin(); pt!=d_sphParticleVec.end(); pt++){
+  for(std::vector<sph::SPHParticle*>::iterator pt=d_sphParticleVec.begin();
+pt!=d_sphParticleVec.end(); pt++){
       switch((*pt)->getType()){
         case 1: // free sph particle
     (*pt)->fixY();
@@ -2733,39 +3081,50 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     exit(-1);
       } // switch
   }
-  initialSPHLeapFrogVelocity();  // initial velocity only for free SPH particles based on equation (4.3)
+  initialSPHLeapFrogVelocity();  // initial velocity only for free SPH particles
+based on equation (4.3)
 
-        releaseRecvParticle(); 
-        releaseRecvSPHParticle(); 
+        releaseRecvParticle();
+        releaseRecvSPHParticle();
     } // initialSPHVelocity()
 
     void SmoothParticleHydro::initialSPHVelocity3D(){
   commuParticle();
-  commuSPHParticle();  // this will update container and mergeSPHParticleVec, both are needed for divideSPHDomain
-  calculateSPHDensityDotVelocityDotLinkedList3D();  // calculate velocityDot and densityDot
-  initialSPHLeapFrogVelocity();  // initial velocity only for free SPH particles based on equation (4.3)
+  commuSPHParticle();  // this will update container and mergeSPHParticleVec,
+both are needed for divideSPHDomain
+  calculateSPHDensityDotVelocityDotLinkedList3D();  // calculate velocityDot and
+densityDot
+  initialSPHLeapFrogVelocity();  // initial velocity only for free SPH particles
+based on equation (4.3)
 
-        releaseRecvParticle(); 
+        releaseRecvParticle();
         releaseRecvSPHParticle();
     } // initialSPHVelocity()
 
     void SmoothParticleHydro::initialSPHVelocityCopyDEM3D(){
-  commuSPHParticle();  // this will update container and mergeSPHParticleVec, both are needed for divideSPHDomain
-  calculateSPHDensityDotVelocityDotLinkedList3D();  // calculate velocityDot and densityDot
-  initialSPHLeapFrogVelocity();  // initial velocity only for free SPH particles based on equation (4.3)
+  commuSPHParticle();  // this will update container and mergeSPHParticleVec,
+both are needed for divideSPHDomain
+  calculateSPHDensityDotVelocityDotLinkedList3D();  // calculate velocityDot and
+densityDot
+  initialSPHLeapFrogVelocity();  // initial velocity only for free SPH particles
+based on equation (4.3)
 
         releaseRecvSPHParticle();
     } // initialSPHVelocity()
 
 
-    void SmoothParticleHydro::initialSPHLeapFrogVelocity(){  // initial particle velocity only for free SPH particles based on equation (4.3)
-  for(std::vector<sph::SPHParticle*>::iterator pt=d_sphParticleVec.begin(); pt!=d_sphParticleVec.end(); pt++){
+    void SmoothParticleHydro::initialSPHLeapFrogVelocity(){  // initial particle
+velocity only for free SPH particles based on equation (4.3)
+  for(std::vector<sph::SPHParticle*>::iterator pt=d_sphParticleVec.begin();
+pt!=d_sphParticleVec.end(); pt++){
       if((*pt)->getType() == 1) (*pt)->initialParticleVelocityLeapFrog();
   }
     } // end initialSPHLeapFrogVelocity
 
-    void SmoothParticleHydro::updateSPHLeapFrogPositionDensity(){  // update particle position and density based on equation (4.1)
-  for(std::vector<sph::SPHParticle*>::iterator pt=d_sphParticleVec.begin(); pt!=d_sphParticleVec.end(); pt++){
+    void SmoothParticleHydro::updateSPHLeapFrogPositionDensity(){  // update
+particle position and density based on equation (4.1)
+  for(std::vector<sph::SPHParticle*>::iterator pt=d_sphParticleVec.begin();
+pt!=d_sphParticleVec.end(); pt++){
       switch((*pt)->getType()){
         case 1: // free sph particle
     (*pt)->updateParticlePositionDensityLeapFrog();
@@ -2782,14 +3141,18 @@ SmoothParticleHydro::removeRedundantSPHParticles()
   }
 
   std::vector<sph::SPHParticle*>::iterator gt;
-  for(std::vector<Particle*>::iterator demt=particleVec.begin(); demt!=particleVec.end(); demt++){
-      (*demt)->updateSPHGhostParticle();  // update position and density by dem particle and sph particle density, and velocity
+  for(std::vector<Particle*>::iterator demt=particleVec.begin();
+demt!=particleVec.end(); demt++){
+      (*demt)->updateSPHGhostParticle();  // update position and density by dem
+particle and sph particle density, and velocity
   }
     } // end updateSPHLeapFrogPositionDensity
 
 
-    void SmoothParticleHydro::updateSPHLeapFrogVelocity(){  // update particle velocity only for free SPH particles based on equation (4.2)
-  for(std::vector<sph::SPHParticle*>::iterator pt=d_sphParticleVec.begin(); pt!=d_sphParticleVec.end(); pt++){
+    void SmoothParticleHydro::updateSPHLeapFrogVelocity(){  // update particle
+velocity only for free SPH particles based on equation (4.2)
+  for(std::vector<sph::SPHParticle*>::iterator pt=d_sphParticleVec.begin();
+pt!=d_sphParticleVec.end(); pt++){
       if((*pt)->getType()==1) (*pt)->updateParticleVelocityLeapFrog();
   }
     } // end updateSPHLeapFrogVelocity
@@ -2797,8 +3160,9 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
 //  REAL factor = 1.0/(120.0*dem::PI*h*h*h);  // 3D quintic kernel factor
 //  REAL factor = 7.0/(478.0*dem::PI*h*h);    // 2D quintic kernel factor
-    // kernel function, Vec is the position of a b, h is smoothing length  
-    inline REAL SmoothParticleHydro::kernelFunction(const dem::Vec& a, const dem::Vec& b){
+    // kernel function, Vec is the position of a b, h is smoothing length
+    inline REAL SmoothParticleHydro::kernelFunction(const dem::Vec& a, const
+dem::Vec& b){
   REAL rab = dem::vfabs(a-b);
   REAL s = rab*one_devide_h;
   REAL item1_5 = (3-s)*(3-s)*(3-s)*(3-s)*(3-s);  // (3-s)^5
@@ -2819,7 +3183,7 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
     } // end kernelFunction
 
-    // kernel function, s is rab/h, h is smoothing length  
+    // kernel function, s is rab/h, h is smoothing length
     inline REAL SmoothParticleHydro::kernelFunction(REAL s){
   REAL item1_5 = (3-s)*(3-s)*(3-s)*(3-s)*(3-s);  // (3-s)^5
   REAL item2_5 = (2-s)*(2-s)*(2-s)*(2-s)*(2-s);   // (2-s)^5
@@ -2843,14 +3207,17 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 //  REAL factor = 1.0/(120.0*h*h);  // 1D quintic kernel factor
 //  REAL factor = 7.0/(478.0*dem::PI*h*h*h);  // 2D quintic kernel factor
     // to calculate delta_aWab, where a is the position of the first particle
-    inline dem::Vec SmoothParticleHydro::gradientKernelFunction(const dem::Vec& a, const dem::Vec& b){
+    inline dem::Vec SmoothParticleHydro::gradientKernelFunction(const dem::Vec&
+a, const dem::Vec& b){
   REAL rab = dem::vfabs(a-b);
   REAL s = rab*one_devide_h;
   REAL item1_4 = (3-s)*(3-s)*(3-s)*(3-s);  // (3-s)^4
   REAL item2_4 = (2-s)*(2-s)*(2-s)*(2-s); // (2-s)^4
   REAL item3_4 = (1-s)*(1-s)*(1-s)*(1-s); // (1-s)^4
   if(s<1){
-      return factor_kernel_gradient *(-5*item1_4+30*item2_4-75*item3_4)*(a-b)/rab;  // it is strange that s is devided here. compare to Liu's SPH code (National University of Singapore) 
+      return factor_kernel_gradient
+*(-5*item1_4+30*item2_4-75*item3_4)*(a-b)/rab;  // it is strange that s is
+devided here. compare to Liu's SPH code (National University of Singapore)
   }
   else if(s<2){
       return factor_kernel_gradient *(-5*item1_4+30*item2_4)*(a-b)/rab;
@@ -2865,7 +3232,8 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     } // end gradientKernelFunction
 
     // to calculate partial differential dWab_dra
-    inline REAL SmoothParticleHydro::partialKernelFunction(const dem::Vec& a, const dem::Vec& b){
+    inline REAL SmoothParticleHydro::partialKernelFunction(const dem::Vec& a,
+const dem::Vec& b){
   REAL rab = dem::vfabs(a-b);
   REAL s = rab*one_devide_h;
   REAL item1_4 = (3-s)*(3-s)*(3-s)*(3-s);  // (3-s)^4
@@ -2888,90 +3256,125 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
 
     // divide SPH domain in each cpu into different cells in 2D in xz plane.
-    // see the notes 5/20/2015 and 5/21/2015 or Simpson's paper "Numerical techniques for three-dimensional Smoothed Particle Hydrodynamics"
+    // see the notes 5/20/2015 and 5/21/2015 or Simpson's paper "Numerical
+techniques for three-dimensional Smoothed Particle Hydrodynamics"
     void SmoothParticleHydro::divideSPHDomain2D(){
 
   // clear the std::vector< std::vector<sph::SPHParticle*> > SPHParticleCellVec
   for(int pvec=0; pvec<SPHParticleCellVec.size(); pvec++){
-      SPHParticleCellVec[pvec].clear();      
+      SPHParticleCellVec[pvec].clear();
   }
   SPHParticleCellVec.clear();
 
       Vec  vmin = container.getMinCorner();
       Vec  vmax = container.getMaxCorner();
   REAL small_value = 0.01*spaceInterval;
-      REAL xmin = vmin.x()-sphCellSize-small_value; REAL zmin = vmin.z()-sphCellSize-small_value;  // expand the container by sphCellSize for cells domain is necessary
-      REAL xmax = vmax.x()+sphCellSize+small_value; REAL zmax = vmax.z()+sphCellSize+small_value; // since the sph domain that we divide is mergeSPHParticleVec
+      REAL xmin = vmin.x()-sphCellSize-small_value; REAL zmin =
+vmin.z()-sphCellSize-small_value;  // expand the container by sphCellSize for
+cells domain is necessary
+      REAL xmax = vmax.x()+sphCellSize+small_value; REAL zmax =
+vmax.z()+sphCellSize+small_value; // since the sph domain that we divide is
+mergeSPHParticleVec
   Nx = (xmax-xmin)/kernelSize+1;  // (xmax-xmin)/(3h)+1
   Nz = (zmax-zmin)/kernelSize+1;  // (zmax-zmin)/(3h)+1
   numCell = Nx*Nz;
-  SPHParticleCellVec.resize(numCell);  // at this point, the cellVec contains numCell vectors,
-            // each vector is empty but ready to store the pointer of SPH particles (this process will be in the calculation of SPH forces)
+  SPHParticleCellVec.resize(numCell);  // at this point, the cellVec contains
+numCell vectors,
+            // each vector is empty but ready to store the pointer of SPH
+particles (this process will be in the calculation of SPH forces)
 
   dem::Vec tmp_xyz;
   int num;
-  for(std::vector<sph::SPHParticle*>::iterator pt=mergeSPHParticleVec.begin(); pt!=mergeSPHParticleVec.end(); pt++){ // mergeSPHParticle contains also the sph particles from neighboring cpus
+  for(std::vector<sph::SPHParticle*>::iterator pt=mergeSPHParticleVec.begin();
+pt!=mergeSPHParticleVec.end(); pt++){ // mergeSPHParticle contains also the sph
+particles from neighboring cpus
       tmp_xyz = (*pt)->getCurrPosition();
-      num = int( (tmp_xyz.z()-zmin)/kernelSize )*Nx + int( (tmp_xyz.x()-xmin)/kernelSize );
+      num = int( (tmp_xyz.z()-zmin)/kernelSize )*Nx + int(
+(tmp_xyz.x()-xmin)/kernelSize );
       SPHParticleCellVec[num].push_back(*pt);
   }
 
   REAL maxRadius = gradation.getPtclMaxRadius();
   std::vector<sph::SPHParticle*>::iterator gt;
-  for(std::vector<Particle*>::iterator pdt=particleVec.begin(); pdt!=particleVec.end(); ++pdt){  // the sph ghost particles in the current cpu's dem particles
-                          // will be definitely inside the [xmin, ymin, zmin, xmax ...]
+  for(std::vector<Particle*>::iterator pdt=particleVec.begin();
+pdt!=particleVec.end(); ++pdt){  // the sph ghost particles in the current cpu's
+dem particles
+                          // will be definitely inside the [xmin, ymin, zmin,
+xmax ...]
       tmp_xyz = (*pdt)->currentPosition();
       if(tmp_xyz.x()>=xmax+maxRadius || tmp_xyz.z()>=zmax+maxRadius
-      || tmp_xyz.x()<=xmin-maxRadius || tmp_xyz.z()<=zmin-maxRadius )  // dem particle is outside of the 
-    continue;  
-      for(gt=(*pdt)->SPHGhostParticleVec.begin(); gt!=(*pdt)->SPHGhostParticleVec.end(); gt++){  // set all SPH ghost particles into their cells
+      || tmp_xyz.x()<=xmin-maxRadius || tmp_xyz.z()<=zmin-maxRadius )  // dem
+particle is outside of the
+    continue;
+      for(gt=(*pdt)->SPHGhostParticleVec.begin();
+gt!=(*pdt)->SPHGhostParticleVec.end(); gt++){  // set all SPH ghost particles
+into their cells
         tmp_xyz = (*gt)->getCurrPosition();
     if(tmp_xyz.x()>=xmax || tmp_xyz.z()>=zmax
     || tmp_xyz.x()<=xmin || tmp_xyz.z()<=zmin )
-       continue;  // this sph ghost particle is outside of the container, go to next sph ghost particle
-        num = int( (tmp_xyz.z()-zmin)/kernelSize )*Nx + int( (tmp_xyz.x()-xmin)/kernelSize );
+       continue;  // this sph ghost particle is outside of the container, go to
+next sph ghost particle
+        num = int( (tmp_xyz.z()-zmin)/kernelSize )*Nx + int(
+(tmp_xyz.x()-xmin)/kernelSize );
         SPHParticleCellVec[num].push_back(*gt);
       }
   }
 
-  for(std::vector<Particle*>::iterator pdt=recvParticleVec.begin(); pdt!=recvParticleVec.end(); pdt++){  // the this time, recvParticleVec are the dem particles that are communicated by the commuParticle
+  for(std::vector<Particle*>::iterator pdt=recvParticleVec.begin();
+pdt!=recvParticleVec.end(); pdt++){  // the this time, recvParticleVec are the
+dem particles that are communicated by the commuParticle
       tmp_xyz = (*pdt)->currentPosition();
       if(tmp_xyz.x()>=xmax+maxRadius || tmp_xyz.z()>=zmax+maxRadius
-      || tmp_xyz.x()<=xmin-maxRadius || tmp_xyz.z()<=zmin-maxRadius )  // dem particle is outside of the 
-    continue;                        // expanded domain 
+      || tmp_xyz.x()<=xmin-maxRadius || tmp_xyz.z()<=zmin-maxRadius )  // dem
+particle is outside of the
+    continue;                        // expanded domain
 
-      for(gt=(*pdt)->SPHGhostParticleVec.begin(); gt!=(*pdt)->SPHGhostParticleVec.end(); gt++){  // set part SPH ghost particles into their cells
+      for(gt=(*pdt)->SPHGhostParticleVec.begin();
+gt!=(*pdt)->SPHGhostParticleVec.end(); gt++){  // set part SPH ghost particles
+into their cells
         tmp_xyz = (*gt)->getCurrPosition();
-    // not all sph ghost particles in these received particles are inside the container
+    // not all sph ghost particles in these received particles are inside the
+container
     if(tmp_xyz.x()>=xmax || tmp_xyz.z()>=zmax
     || tmp_xyz.x()<=xmin || tmp_xyz.z()<=zmin )
-       continue;  // this sph ghost particle is outside of the container, go to next sph ghost particle
-        num = int( (tmp_xyz.z()-zmin)/kernelSize )*Nx + int( (tmp_xyz.x()-xmin)/kernelSize );
+       continue;  // this sph ghost particle is outside of the container, go to
+next sph ghost particle
+        num = int( (tmp_xyz.z()-zmin)/kernelSize )*Nx + int(
+(tmp_xyz.x()-xmin)/kernelSize );
         SPHParticleCellVec[num].push_back(*gt);
       }
   }
 
     } // divideSPHDomain2D
 
-    //// the momentum equilibrium equation and state equation are implemented as in Monaghan's paper (1994), simulate free surface flow using sph
-    //// here the neighboring list of SPH particles is searched by the cells, vector< vector<sph::SPHParticle*> > SPHParticleCellVec;
+    //// the momentum equilibrium equation and state equation are implemented as
+in Monaghan's paper (1994), simulate free surface flow using sph
+    //// here the neighboring list of SPH particles is searched by the cells,
+vector< vector<sph::SPHParticle*> > SPHParticleCellVec;
     void SmoothParticleHydro::calculateSPHDensityDotVelocityDotLinkedList2D(){
 
-  // divide the SPH domain into different cells, each cell will contain SPH particles within it
+  // divide the SPH domain into different cells, each cell will contain SPH
+particles within it
   divideSPHDomain2D();
 
 //  checkDivision();  // pass, May 22, 2015
 //  checkNeighborCells2D();  // pass, May 22, 2015
 
-  // initialize the densityDot and velocityDot of all the SPH particles 
-  dem::Vec tmp_vec = dem::Vec(0,0, -(util::getParam<>("gravAccel"])*(util::getParam<>("gravScale"]) );
+  // initialize the densityDot and velocityDot of all the SPH particles
+  dem::Vec tmp_vec = dem::Vec(0,0,
+-(util::getParam<REAL>("gravAccel"])*(util::getParam<REAL>("gravScale"]) );
   dem::Vec zero_vec = dem::Vec(0,0,0);
-  // in the calculation of forces between sph particles, we need to use the mergeSPHParticleVec, 
-  // since mergeVec contains the sph particles from neighboring cpus. While we can only update and migrate and communicate d_sphParticleVec
-  for(std::vector<sph::SPHParticle*>::iterator pt=mergeSPHParticleVec.begin(); pt!=mergeSPHParticleVec.end(); pt++){
+  // in the calculation of forces between sph particles, we need to use the
+mergeSPHParticleVec,
+  // since mergeVec contains the sph particles from neighboring cpus. While we
+can only update and migrate and communicate d_sphParticleVec
+  for(std::vector<sph::SPHParticle*>::iterator pt=mergeSPHParticleVec.begin();
+pt!=mergeSPHParticleVec.end(); pt++){
       (*pt)->setDensityDotVelocityDotZero();
-      (*pt)->calculateParticleViscosity();  // everytime when use getParticleViscolisity(), make sure that pressure has been calculated!!!!
-      (*pt)->calculateParticlePressure();    // everytime when use getParticlePressure(), make sure that pressure has been calculated!!!!
+      (*pt)->calculateParticleViscosity();  // everytime when use
+getParticleViscolisity(), make sure that pressure has been calculated!!!!
+      (*pt)->calculateParticlePressure();    // everytime when use
+getParticlePressure(), make sure that pressure has been calculated!!!!
       switch((*pt)->getType()){
         case 1: // free sph particle
     (*pt)->addVelocityDot(tmp_vec);
@@ -2988,11 +3391,15 @@ SmoothParticleHydro::removeRedundantSPHParticles()
   }
 
   std::vector<sph::SPHParticle*>::iterator gt;
-  for(std::vector<Particle*>::iterator pdt=mergeParticleVec.begin(); pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
-      for(gt=(*pdt)->SPHGhostParticleVec.begin(); gt!=(*pdt)->SPHGhostParticleVec.end(); gt++){
+  for(std::vector<Particle*>::iterator pdt=mergeParticleVec.begin();
+pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
+      for(gt=(*pdt)->SPHGhostParticleVec.begin();
+gt!=(*pdt)->SPHGhostParticleVec.end(); gt++){
         (*gt)->setDensityDotVelocityDotZero();
-        (*gt)->calculateParticleViscosity();  // everytime when use getParticleViscolisity(), make sure that pressure has been calculated!!!!
-        (*gt)->calculateParticlePressure();  // everytime when use getParticlePressure(), make sure that pressure has been calculated!!!!
+        (*gt)->calculateParticleViscosity();  // everytime when use
+getParticleViscolisity(), make sure that pressure has been calculated!!!!
+        (*gt)->calculateParticlePressure();  // everytime when use
+getParticlePressure(), make sure that pressure has been calculated!!!!
       }
   }
 
@@ -3015,50 +3422,61 @@ SmoothParticleHydro::removeRedundantSPHParticles()
   REAL Wab, Wba;
   REAL da, dB;
   REAL beta;
-  REAL xa, ya, xB, yB, k, sqrt_xaya;  // variables for Morris' method to calculate da/dB
+  REAL xa, ya, xB, yB, k, sqrt_xaya;  // variables for Morris' method to
+calculate da/dB
   std::vector<sph::SPHParticle*>::iterator ptb;
   REAL ra, rb, rc;  // the geometry of the dem particle
-  dem::Vec pta_local, ptb_local;  // local position of pta and ptb in the dem particle
+  dem::Vec pta_local, ptb_local;  // local position of pta and ptb in the dem
+particle
   dem::Vec demt_curr;
   REAL Gamma_ab, mu_ab, vr_dot;
-  REAL alpha = util::getParam<>("alpha"];
+  REAL alpha = util::getParam<REAL>("alpha"];
     REAL alpha_zero = 0;  // the viscous between free and ghost/boundary
-  REAL epsilon = util::getParam<>("epsilon"];  // parameter for velocity correction
+  REAL epsilon = util::getParam<REAL>("epsilon"];  // parameter for velocity
+correction
   REAL Wq, Ra, Rb, phi_4, coefficient_a, coefficient_b;
   dem::Particle* demt;
 
         int pnum;
-  std::vector<sph::SPHParticle*> tmp_particleVec;  // sph particles in neighboring cells
+  std::vector<sph::SPHParticle*> tmp_particleVec;  // sph particles in
+neighboring cells
   for(int pvec=0; pvec<SPHParticleCellVec.size(); ++pvec){
 
       // store all SPH particles in pvec's neighboring cells
-      tmp_particleVec.clear();  // it is the same for the particles in the same cell
+      tmp_particleVec.clear();  // it is the same for the particles in the same
+cell
       if(pvec+1<numCell){
     pnum = pvec+1;
-            for(std::vector<sph::SPHParticle*>::iterator pt = SPHParticleCellVec[pnum].begin(); pt!= SPHParticleCellVec[pnum].end(); pt++) {
+            for(std::vector<sph::SPHParticle*>::iterator pt =
+SPHParticleCellVec[pnum].begin(); pt!= SPHParticleCellVec[pnum].end(); pt++) {
         tmp_particleVec.push_back(*pt);
             }
       }
       if(pvec+Nx-1<numCell){
     pnum = pvec+Nx-1;
-            for(std::vector<sph::SPHParticle*>::iterator pt = SPHParticleCellVec[pnum].begin(); pt!= SPHParticleCellVec[pnum].end(); pt++) {
+            for(std::vector<sph::SPHParticle*>::iterator pt =
+SPHParticleCellVec[pnum].begin(); pt!= SPHParticleCellVec[pnum].end(); pt++) {
         tmp_particleVec.push_back(*pt);
             }
       }
       if(pvec+Nx<numCell){
     pnum = pvec+Nx;
-            for(std::vector<sph::SPHParticle*>::iterator pt = SPHParticleCellVec[pnum].begin(); pt!= SPHParticleCellVec[pnum].end(); pt++) {
+            for(std::vector<sph::SPHParticle*>::iterator pt =
+SPHParticleCellVec[pnum].begin(); pt!= SPHParticleCellVec[pnum].end(); pt++) {
         tmp_particleVec.push_back(*pt);
             }
       }
       if(pvec+Nx+1<numCell){
     pnum = pvec+Nx+1;
-            for(std::vector<sph::SPHParticle*>::iterator pt = SPHParticleCellVec[pnum].begin(); pt!= SPHParticleCellVec[pnum].end(); pt++) {
+            for(std::vector<sph::SPHParticle*>::iterator pt =
+SPHParticleCellVec[pnum].begin(); pt!= SPHParticleCellVec[pnum].end(); pt++) {
         tmp_particleVec.push_back(*pt);
             }
       }
 
-      for(std::vector<sph::SPHParticle*>::iterator pta=SPHParticleCellVec[pvec].begin(); pta!=SPHParticleCellVec[pvec].end(); ++pta){  // SPH particles in cell pvec
+      for(std::vector<sph::SPHParticle*>::iterator
+pta=SPHParticleCellVec[pvec].begin(); pta!=SPHParticleCellVec[pvec].end();
+++pta){  // SPH particles in cell pvec
     pa = (*pta)->getParticlePressure();
         if(pa>=0){
         Ra = 0.006;
@@ -3070,11 +3488,13 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         rhoa = (*pta)->getParticleDensity();
         pta_position = (*pta)->getCurrPosition();
 
-//    if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta is ghost or boundary particles
+//    if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta is
+ghost or boundary particles
 //        continue;  // do not consider pta, as we treat before
-//    }    
+//    }
 
-    for(ptb=pta+1; ptb!=SPHParticleCellVec[pvec].end(); ++ptb){  // sum over the SPH particles in the same cell pvec
+    for(ptb=pta+1; ptb!=SPHParticleCellVec[pvec].end(); ++ptb){  // sum over the
+SPH particles in the same cell pvec
         ptb_position = (*ptb)->getCurrPosition();
         rab = dem::vfabs(pta_position-ptb_position);
         if(rab<=kernelSize){  // ptb is in the smooth kernel
@@ -3093,9 +3513,12 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           coefficient_a = 1+Ra*phi_4;
           coefficient_b = 1+Rb*phi_4;
 
-      // we have three types of SPH particles: 1, free particle; 2, ghost particle; 3, boundary particle
-      // Then we have 3x3 = 9 different types of interactions with the three types of particles
-      // so we cannot judge the interaction type only by the type of particle ptb, we need to consider pta also
+      // we have three types of SPH particles: 1, free particle; 2, ghost
+particle; 3, boundary particle
+      // Then we have 3x3 = 9 different types of interactions with the three
+types of particles
+      // so we cannot judge the interaction type only by the type of particle
+ptb, we need to consider pta also
       // pta          ptb          need to consider or not
       // 1            1              V      free with free
       // 1            2              V      free with ghost
@@ -3111,12 +3534,15 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
 
       // add the density dot for pta and ptb
-          delta_aWab = gradientKernelFunction(pta_position, ptb_position);  // this is to add SPH pta 
+          delta_aWab = gradientKernelFunction(pta_position, ptb_position);  //
+this is to add SPH pta
           delta_bWba = - delta_aWab;
-          dWab_dra = partialKernelFunction(pta_position, ptb_position);  // this is to add SPH pta
+          dWab_dra = partialKernelFunction(pta_position, ptb_position);  // this
+is to add SPH pta
           dWba_drb = dWab_dra;
-          Wab = kernelFunction(pta_position, ptb_position);  // this is to add SPH pta
-          Wba = Wab; 
+          Wab = kernelFunction(pta_position, ptb_position);  // this is to add
+SPH pta
+          Wba = Wab;
 
       switch((*ptb)->getType()){
         case 1:  // ptb is free SPH particle
@@ -3125,45 +3551,60 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 vab = (*pta)->getVelocity()-(*ptb)->getVelocity();
                vba = -vab;
 
-                (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-                (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+                (*pta)->addDensityDot(
+(*ptb)->getParticleMass()*(vab*delta_aWab) );
+                (*ptb)->addDensityDot(
+(*pta)->getParticleMass()*(vba*delta_bWba) );
 
                 vr_dot = vab*(pta_position-ptb_position);
                 if(vr_dot<0){
-            mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                Gamma_ab = (-alpha*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                Gamma_ab =
+(-alpha*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
                 }
                 else{
              Gamma_ab = 0;
                 }
 
 
-                dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+                dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
                 (*pta)->addVelocityDot(dva_dt);
-                dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
+                dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
                 (*ptb)->addVelocityDot(dvb_dt);
 
-                delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+                delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
                 (*pta)->addVelocityCorrection(delta_a);
-                delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+                delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
                 (*ptb)->addVelocityCorrection(delta_b);
               break;
             case 2:  // ghost with free
         demt = (*pta)->getDemParticle();
         demt_curr = demt->currentPosition();
-            ptb_local = demt->globalToLocal(ptb_position-demt_curr);  // the local position of sph point ptb
+            ptb_local = demt->globalToLocal(ptb_position-demt_curr);  // the
+local position of sph point ptb
             ra = demt->getA(); rc = demt->getC();
-            k = 1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.z()*ptb_local.z()/(rc*rc) ) );
-            da = dem::vfabs(ptb_local-k*ptb_local);  // the distance is the same in rotated coordinates
+            k =
+1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.z()*ptb_local.z()/(rc*rc)
+) );
+            da = dem::vfabs(ptb_local-k*ptb_local);  // the distance is the same
+in rotated coordinates
 
                 // calculate Vab as the method shown in Morris's paper, 1996
 
-                // (1) here I wanna use the distance from the point a/b to the surface of the ellipsoid to simplify the problem
+                // (1) here I wanna use the distance from the point a/b to the
+surface of the ellipsoid to simplify the problem
             pta_local = (*pta)->getLocalPosition();
-            k = 1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.z()*pta_local.z()/(rc*rc) ) );
+            k =
+1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.z()*pta_local.z()/(rc*rc)
+) );
                 dB = dem::vfabs(pta_local-k*pta_local);
 
-//              // (2) here the Morris's method is used 
+//              // (2) here the Morris's method is used
 //              xa = pta_position.getx(); ya = pta_position.gety();
 //              xB = ptb_position.getx(); yB = ptb_position.gety();
 //              if(ya==0) {da = xa-radius; dB = radius-xB;}
@@ -3183,29 +3624,39 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 vba = beta*((*ptb)->getVelocity()-vdem);
                 vab = -vba;
 
-                (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-                (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+                (*pta)->addDensityDot(
+(*ptb)->getParticleMass()*(vab*delta_aWab) );
+                (*ptb)->addDensityDot(
+(*pta)->getParticleMass()*(vba*delta_bWba) );
 
                 vr_dot = vab*(pta_position-ptb_position);
                 if(vr_dot<0){
-                mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                    Gamma_ab = (-alpha*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+                mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                    Gamma_ab =
+(-alpha*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
                 }
                 else{
                  Gamma_ab = 0;
                 }
 
-                dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+                dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
             demt->addForce((*pta)->getParticleMass()*dva_dt);
-            demt->addMoment( (pta_position-demt_curr) % ((*pta)->getParticleMass()*dva_dt) );
+            demt->addMoment( (pta_position-demt_curr) %
+((*pta)->getParticleMass()*dva_dt) );
 //                (*pta)->addVelocityDot(dva_dt);
 
-                dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
-                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+                dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
+                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-//                  delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+//                  delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
 //                  (*pta)->addVelocityCorrection(delta_a);
-                  delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+                  delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
                   (*ptb)->addVelocityCorrection(delta_b);
 
         break;
@@ -3214,17 +3665,22 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
         // calculate Vab as the method shown in Morris's paper, 1996
                 // interact with boundary particles
-                da = ptb_position.z()-allContainer.getMinCorner().z();  // assume with the bottom boundary
-        dB = allContainer.getMinCorner().z()-pta_position.x();  // assume with the bottom boundary
-        if(pta_position.x()<allContainer.getMinCorner().x()){  // with left boundary
+                da = ptb_position.z()-allContainer.getMinCorner().z();  //
+assume with the bottom boundary
+        dB = allContainer.getMinCorner().z()-pta_position.x();  // assume with
+the bottom boundary
+        if(pta_position.x()<allContainer.getMinCorner().x()){  // with left
+boundary
             da = ptb_position.x()-allContainer.getMinCorner().x();
             dB = allContainer.getMinCorner().x()-pta_position.x();
         }
-        else if(pta_position.x()>allContainer.getMaxCorner().x()){ // with right boundary
+        else if(pta_position.x()>allContainer.getMaxCorner().x()){ // with right
+boundary
             da = allContainer.getMaxCorner().x()-ptb_position.x();
             dB = pta_position.x()-allContainer.getMaxCorner().x();
         }
-        else if(pta_position.z()>allContainer.getMaxCorner().z()){ // with top boundary
+        else if(pta_position.z()>allContainer.getMaxCorner().z()){ // with top
+boundary
             da = allContainer.getMaxCorner().z()-ptb_position.z();
             dB = pta_position.z()-allContainer.getMaxCorner().z();
         }
@@ -3235,61 +3691,81 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 vba = beta*(*ptb)->getVelocity();
                 vab = -vba;
 
-                (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-                (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+                (*pta)->addDensityDot(
+(*ptb)->getParticleMass()*(vab*delta_aWab) );
+                (*ptb)->addDensityDot(
+(*pta)->getParticleMass()*(vba*delta_bWba) );
 
                 vr_dot = vab*(pta_position-ptb_position);
                 if(vr_dot<0){
-            mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                Gamma_ab = (-alpha*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                Gamma_ab =
+(-alpha*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
                 }
                 else{
              Gamma_ab = 0;
                 }
 
-//                dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+//                dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
 //                (*pta)->addVelocityDot(dva_dt);
-                dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
-                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+                dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
+                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-//            delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+//            delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
 //                (*pta)->addVelocityCorrection(delta_a);
-                delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+                delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
                 (*ptb)->addVelocityCorrection(delta_b);
-      
-//            // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
+
+//            // apply the boundary forces by Lennard-Jones potential as in
+Monaghan's paper(1994)
 //                if(rab<=spaceInterval){ // ptb is in the smooth kernel
-//                dvb_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(ptb_position-pta_position)/(rab*rab);
+//                dvb_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
+p2))*(ptb_position-pta_position)/(rab*rab);
 //                (*ptb)->addVelocityDot(dvb_dt);
 //                } // end if
 
         break;
             default:
-            std::cout << "SPH particle type of pta should be 1, 2 or 3!" << std::endl;
+            std::cout << "SPH particle type of pta should be 1, 2 or 3!" <<
+std::endl;
             exit(-1);
             } // end switch pta
 
           break;
         case 2:  // ptb is ghost particle
 
-          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta is ghost or boundary particles
+          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta
+is ghost or boundary particles
             break;  // do not consider pta, as we treat before
           }
           demt = (*ptb)->getDemParticle();
           demt_curr = demt->currentPosition();
-          pta_local = demt->globalToLocal(pta_position-demt_curr);  // the local position of sph point pta
+          pta_local = demt->globalToLocal(pta_position-demt_curr);  // the local
+position of sph point pta
           ra = demt->getA(); rc = demt->getC();
-          k = 1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.z()*pta_local.z()/(rc*rc) ) );
-          da = dem::vfabs(pta_local-k*pta_local);  // the distance is the same in rotated coordinates
+          k =
+1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.z()*pta_local.z()/(rc*rc)
+) );
+          da = dem::vfabs(pta_local-k*pta_local);  // the distance is the same
+in rotated coordinates
 
               // calculate Vab as the method shown in Morris's paper, 1996
 
-              // (1) here I wanna use the distance from the point a/b to the surface of the ellipsoid to simplify the problem
+              // (1) here I wanna use the distance from the point a/b to the
+surface of the ellipsoid to simplify the problem
           ptb_local = (*ptb)->getLocalPosition();
-          k = 1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.z()*ptb_local.z()/(rc*rc) ) );
+          k =
+1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.z()*ptb_local.z()/(rc*rc)
+) );
               dB = dem::vfabs(ptb_local-k*ptb_local);
 
-//              // (2) here the Morris's method is used 
+//              // (2) here the Morris's method is used
 //              xa = pta_position.getx(); ya = pta_position.gety();
 //              xB = ptb_position.getx(); yB = ptb_position.gety();
 //              if(ya==0) {da = xa-radius; dB = radius-xB;}
@@ -3309,50 +3785,66 @@ SmoothParticleHydro::removeRedundantSPHParticles()
               vab = beta*((*pta)->getVelocity()-vdem);
               vba = -vab;
 
-              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab)
+);
+              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba)
+);
 
               vr_dot = vab*(pta_position-ptb_position);
               if(vr_dot<0){
-            mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                Gamma_ab = (-alpha*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                Gamma_ab =
+(-alpha*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
               }
               else{
              Gamma_ab = 0;
               }
 
-              dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+              dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
               (*pta)->addVelocityDot(dva_dt);
-              dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
+              dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
           demt->addForce((*ptb)->getParticleMass()*dvb_dt);
-          demt->addMoment( (ptb_position-demt_curr) % ((*ptb)->getParticleMass()*dvb_dt) );
-//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+          demt->addMoment( (ptb_position-demt_curr) %
+((*ptb)->getParticleMass()*dvb_dt) );
+//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-                delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+                delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
                 (*pta)->addVelocityCorrection(delta_a);
-//                delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+//                delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
 //                (*ptb)->addVelocityCorrection(delta_b);
 
           break;
         case 3:  // ptb is boundary particle
 
-          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta is ghost or boundary particles
+          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta
+is ghost or boundary particles
             break;  // do not consider pta, as we treat before
           }
 
           // calculate Vab as the method shown in Morris's paper, 1996
               // interact with boundary particles
-              da = pta_position.z()-allContainer.getMinCorner().z();  // assume with the bottom boundary
-          dB = allContainer.getMinCorner().z()-ptb_position.z();  // assume with the bottom boundary
-          if(ptb_position.x() < allContainer.getMinCorner().x()){  // with left boundary
+              da = pta_position.z()-allContainer.getMinCorner().z();  // assume
+with the bottom boundary
+          dB = allContainer.getMinCorner().z()-ptb_position.z();  // assume with
+the bottom boundary
+          if(ptb_position.x() < allContainer.getMinCorner().x()){  // with left
+boundary
         da = pta_position.x() - allContainer.getMinCorner().x();
         dB = allContainer.getMinCorner().x() - ptb_position.x();
           }
-          else if(ptb_position.x() > allContainer.getMaxCorner().x()){  // with right boundary
+          else if(ptb_position.x() > allContainer.getMaxCorner().x()){  // with
+right boundary
         da = allContainer.getMaxCorner().x() - pta_position.x();
         dB = ptb_position.x() - allContainer.getMaxCorner().x();
           }
-          else if(ptb_position.z() > allContainer.getMaxCorner().z()){  // with top boundary
+          else if(ptb_position.z() > allContainer.getMaxCorner().z()){  // with
+top boundary
         da = allContainer.getMaxCorner().z()-pta_position.z();
         dB = ptb_position.z()-allContainer.getMaxCorner().z();
           }
@@ -3363,43 +3855,54 @@ SmoothParticleHydro::removeRedundantSPHParticles()
               vab = beta*(*pta)->getVelocity();
               vba = -vab;
 
-              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab)
+);
+              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba)
+);
 
               vr_dot = vab*(pta_position-ptb_position);
               if(vr_dot<0){
         mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-            Gamma_ab = (-alpha*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            Gamma_ab =
+(-alpha*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
               }
               else{
          Gamma_ab = 0;
               }
 
-              dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+              dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
               (*pta)->addVelocityDot(dva_dt);
-//              dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
-//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+//              dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
+//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-              delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+              delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
               (*pta)->addVelocityCorrection(delta_a);
-//              delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+//              delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
 //              (*ptb)->addVelocityCorrection(delta_b);
-      
-//          // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
+
+//          // apply the boundary forces by Lennard-Jones potential as in
+Monaghan's paper(1994)
 //              if(rab<=spaceInterval){ // ptb is in the smooth kernel
-//            dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
+//            dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
+p2))*(pta_position-ptb_position)/(rab*rab);
 //            (*pta)->addVelocityDot(dva_dt);
 //              } // end if
           break;
         default:
           std::cout << "SPH particle type should be 1, 2 or 3!" << std::endl;
           exit(-1);
-    
+
       } //end swtich type
         } // end if 3h
     } // end for ptb in the same cell
 
-    for(ptb=tmp_particleVec.begin(); ptb!=tmp_particleVec.end(); ptb++){  // all particles in pvec's neighboring cells 
+    for(ptb=tmp_particleVec.begin(); ptb!=tmp_particleVec.end(); ptb++){  // all
+particles in pvec's neighboring cells
         ptb_position = (*ptb)->getCurrPosition();
         rab = dem::vfabs(pta_position-ptb_position);
         if(rab<=kernelSize){  // ptb is in the smooth kernel
@@ -3419,12 +3922,15 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           coefficient_b = 1+Rb*phi_4;
 
       // add the density dot for pta and ptb
-          delta_aWab = gradientKernelFunction(pta_position, ptb_position);  // this is to add SPH pta 
+          delta_aWab = gradientKernelFunction(pta_position, ptb_position);  //
+this is to add SPH pta
           delta_bWba = - delta_aWab;
-          dWab_dra = partialKernelFunction(pta_position, ptb_position);  // this is to add SPH pta
+          dWab_dra = partialKernelFunction(pta_position, ptb_position);  // this
+is to add SPH pta
           dWba_drb = dWab_dra;
-          Wab = kernelFunction(pta_position, ptb_position);  // this is to add SPH pta
-          Wba = Wab; 
+          Wab = kernelFunction(pta_position, ptb_position);  // this is to add
+SPH pta
+          Wba = Wab;
       switch((*ptb)->getType()){
         case 1:  // ptb is free SPH particle
           switch((*pta)->getType()){
@@ -3432,45 +3938,60 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 vab = (*pta)->getVelocity()-(*ptb)->getVelocity();
                vba = -vab;
 
-                (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-                (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+                (*pta)->addDensityDot(
+(*ptb)->getParticleMass()*(vab*delta_aWab) );
+                (*ptb)->addDensityDot(
+(*pta)->getParticleMass()*(vba*delta_bWba) );
 
                 vr_dot = vab*(pta_position-ptb_position);
                 if(vr_dot<0){
-            mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                Gamma_ab = (-alpha*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                Gamma_ab =
+(-alpha*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
                 }
                 else{
              Gamma_ab = 0;
                 }
 
 
-                dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+                dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
                 (*pta)->addVelocityDot(dva_dt);
-                dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
+                dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
                 (*ptb)->addVelocityDot(dvb_dt);
 
-                delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+                delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
                 (*pta)->addVelocityCorrection(delta_a);
-                delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+                delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
                 (*ptb)->addVelocityCorrection(delta_b);
               break;
             case 2:  // ghost with free
         demt = (*pta)->getDemParticle();
         demt_curr = demt->currentPosition();
-            ptb_local = demt->globalToLocal(ptb_position-demt_curr);  // the local position of sph point ptb
+            ptb_local = demt->globalToLocal(ptb_position-demt_curr);  // the
+local position of sph point ptb
             ra = demt->getA(); rc = demt->getC();
-            k = 1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.z()*ptb_local.z()/(rc*rc) ) );
-            da = dem::vfabs(ptb_local-k*ptb_local);  // the distance is the same in rotated coordinates
+            k =
+1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.z()*ptb_local.z()/(rc*rc)
+) );
+            da = dem::vfabs(ptb_local-k*ptb_local);  // the distance is the same
+in rotated coordinates
 
                 // calculate Vab as the method shown in Morris's paper, 1996
 
-                // (1) here I wanna use the distance from the point a/b to the surface of the ellipsoid to simplify the problem
+                // (1) here I wanna use the distance from the point a/b to the
+surface of the ellipsoid to simplify the problem
             pta_local = (*pta)->getLocalPosition();
-            k = 1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.z()*pta_local.z()/(rc*rc) ) );
+            k =
+1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.z()*pta_local.z()/(rc*rc)
+) );
                 dB = dem::vfabs(pta_local-k*pta_local);
 
-//              // (2) here the Morris's method is used 
+//              // (2) here the Morris's method is used
 //              xa = pta_position.getx(); ya = pta_position.gety();
 //              xB = ptb_position.getx(); yB = ptb_position.gety();
 //              if(ya==0) {da = xa-radius; dB = radius-xB;}
@@ -3490,29 +4011,39 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 vba = beta*((*ptb)->getVelocity()-vdem);
                 vab = -vba;
 
-                (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-                (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+                (*pta)->addDensityDot(
+(*ptb)->getParticleMass()*(vab*delta_aWab) );
+                (*ptb)->addDensityDot(
+(*pta)->getParticleMass()*(vba*delta_bWba) );
 
                 vr_dot = vab*(pta_position-ptb_position);
                 if(vr_dot<0){
-                mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                    Gamma_ab = (-alpha*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+                mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                    Gamma_ab =
+(-alpha*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
                 }
                 else{
                  Gamma_ab = 0;
                 }
 
-                dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+                dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
             demt->addForce((*pta)->getParticleMass()*dva_dt);
-            demt->addMoment( (pta_position-demt_curr) % ((*pta)->getParticleMass()*dva_dt) );
+            demt->addMoment( (pta_position-demt_curr) %
+((*pta)->getParticleMass()*dva_dt) );
 //                (*pta)->addVelocityDot(dva_dt);
 
-                dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
-                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+                dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
+                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-//                  delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+//                  delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
 //                  (*pta)->addVelocityCorrection(delta_a);
-                  delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+                  delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
                   (*ptb)->addVelocityCorrection(delta_b);
 
         break;
@@ -3521,17 +4052,22 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
         // calculate Vab as the method shown in Morris's paper, 1996
                 // interact with boundary particles
-                da = ptb_position.z()-allContainer.getMinCorner().z();  // assume with the bottom boundary
-        dB = allContainer.getMinCorner().z()-pta_position.x();  // assume with the bottom boundary
-        if(pta_position.x()<allContainer.getMinCorner().x()){  // with left boundary
+                da = ptb_position.z()-allContainer.getMinCorner().z();  //
+assume with the bottom boundary
+        dB = allContainer.getMinCorner().z()-pta_position.x();  // assume with
+the bottom boundary
+        if(pta_position.x()<allContainer.getMinCorner().x()){  // with left
+boundary
             da = ptb_position.x()-allContainer.getMinCorner().x();
             dB = allContainer.getMinCorner().x()-pta_position.x();
         }
-        else if(pta_position.x()>allContainer.getMaxCorner().x()){ // with right boundary
+        else if(pta_position.x()>allContainer.getMaxCorner().x()){ // with right
+boundary
             da = allContainer.getMaxCorner().x()-ptb_position.x();
             dB = pta_position.x()-allContainer.getMaxCorner().x();
         }
-        else if(pta_position.z()>allContainer.getMaxCorner().z()){ // with top boundary
+        else if(pta_position.z()>allContainer.getMaxCorner().z()){ // with top
+boundary
             da = allContainer.getMaxCorner().z()-ptb_position.z();
             dB = pta_position.z()-allContainer.getMaxCorner().z();
         }
@@ -3542,37 +4078,49 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 vba = beta*(*ptb)->getVelocity();
                 vab = -vba;
 
-                (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-                (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+                (*pta)->addDensityDot(
+(*ptb)->getParticleMass()*(vab*delta_aWab) );
+                (*ptb)->addDensityDot(
+(*pta)->getParticleMass()*(vba*delta_bWba) );
 
                 vr_dot = vab*(pta_position-ptb_position);
                 if(vr_dot<0){
-            mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                Gamma_ab = (-alpha*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                Gamma_ab =
+(-alpha*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
                 }
                 else{
              Gamma_ab = 0;
                 }
 
-//                dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+//                dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
 //                (*pta)->addVelocityDot(dva_dt);
-                dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
-                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+                dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
+                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-//            delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+//            delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
 //                (*pta)->addVelocityCorrection(delta_a);
-                delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+                delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
                 (*ptb)->addVelocityCorrection(delta_b);
-      
-            // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
+
+            // apply the boundary forces by Lennard-Jones potential as in
+Monaghan's paper(1994)
                 if(rab<=spaceInterval){ // ptb is in the smooth kernel
-                dvb_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(ptb_position-pta_position)/(rab*rab);
+                dvb_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
+p2))*(ptb_position-pta_position)/(rab*rab);
                 (*ptb)->addVelocityDot(dvb_dt);
                 } // end if
 
         break;
             default:
-            std::cout << "SPH particle type of pta should be 1, 2 or 3!" << std::endl;
+            std::cout << "SPH particle type of pta should be 1, 2 or 3!" <<
+std::endl;
             exit(-1);
             } // end switch pta
 
@@ -3580,24 +4128,32 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         case 2:  // ptb is ghost particle
 
 
-          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta is ghost or boundary particles
+          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta
+is ghost or boundary particles
             break;  // do not consider pta, as we treat before
           }
           demt = (*ptb)->getDemParticle();
           demt_curr = demt->currentPosition();
-          pta_local = demt->globalToLocal(pta_position-demt_curr);  // the local position of sph point pta
+          pta_local = demt->globalToLocal(pta_position-demt_curr);  // the local
+position of sph point pta
           ra = demt->getA(); rc = demt->getC();
-          k = 1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.z()*pta_local.z()/(rc*rc) ) );
-          da = dem::vfabs(pta_local-k*pta_local);  // the distance is the same in rotated coordinates
+          k =
+1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.z()*pta_local.z()/(rc*rc)
+) );
+          da = dem::vfabs(pta_local-k*pta_local);  // the distance is the same
+in rotated coordinates
 
               // calculate Vab as the method shown in Morris's paper, 1996
 
-              // (1) here I wanna use the distance from the point a/b to the surface of the ellipsoid to simplify the problem
+              // (1) here I wanna use the distance from the point a/b to the
+surface of the ellipsoid to simplify the problem
           ptb_local = (*ptb)->getLocalPosition();
-          k = 1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.z()*ptb_local.z()/(rc*rc) ) );
+          k =
+1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.z()*ptb_local.z()/(rc*rc)
+) );
               dB = dem::vfabs(ptb_local-k*ptb_local);
 
-//              // (2) here the Morris's method is used 
+//              // (2) here the Morris's method is used
 //              xa = pta_position.getx(); ya = pta_position.gety();
 //              xB = ptb_position.getx(); yB = ptb_position.gety();
 //              if(ya==0) {da = xa-radius; dB = radius-xB;}
@@ -3617,51 +4173,67 @@ SmoothParticleHydro::removeRedundantSPHParticles()
               vab = beta*((*pta)->getVelocity()-vdem);
               vba = -vab;
 
-              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab)
+);
+              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba)
+);
 
               vr_dot = vab*(pta_position-ptb_position);
               if(vr_dot<0){
-            mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                Gamma_ab = (-alpha*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                Gamma_ab =
+(-alpha*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
               }
               else{
              Gamma_ab = 0;
               }
 
-              dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+              dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
               (*pta)->addVelocityDot(dva_dt);
-              dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
+              dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
           demt->addForce((*ptb)->getParticleMass()*dvb_dt);
-          demt->addMoment( (ptb_position-demt_curr) % ((*ptb)->getParticleMass()*dvb_dt) );
-//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+          demt->addMoment( (ptb_position-demt_curr) %
+((*ptb)->getParticleMass()*dvb_dt) );
+//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-                delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+                delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
                 (*pta)->addVelocityCorrection(delta_a);
-//                delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+//                delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
 //                (*ptb)->addVelocityCorrection(delta_b);
 
           break;
 
         case 3:  // ptb is boundary particle
 
-          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta is ghost or boundary particles
+          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta
+is ghost or boundary particles
             break;  // do not consider pta, as we treat before
           }
 
           // calculate Vab as the method shown in Morris's paper, 1996
               // interact with boundary particles
-              da = pta_position.z()-allContainer.getMinCorner().z();  // assume with the bottom boundary
-          dB = allContainer.getMinCorner().z()-ptb_position.z();  // assume with the bottom boundary
-          if(ptb_position.x() < allContainer.getMinCorner().x()){  // with left boundary
+              da = pta_position.z()-allContainer.getMinCorner().z();  // assume
+with the bottom boundary
+          dB = allContainer.getMinCorner().z()-ptb_position.z();  // assume with
+the bottom boundary
+          if(ptb_position.x() < allContainer.getMinCorner().x()){  // with left
+boundary
         da = pta_position.x() - allContainer.getMinCorner().x();
         dB = allContainer.getMinCorner().x() - ptb_position.x();
           }
-          else if(ptb_position.x() > allContainer.getMaxCorner().x()){  // with right boundary
+          else if(ptb_position.x() > allContainer.getMaxCorner().x()){  // with
+right boundary
         da = allContainer.getMaxCorner().x() - pta_position.x();
         dB = ptb_position.x() - allContainer.getMaxCorner().x();
           }
-          else if(ptb_position.z() > allContainer.getMaxCorner().z()){  // with top boundary
+          else if(ptb_position.z() > allContainer.getMaxCorner().z()){  // with
+top boundary
         da = allContainer.getMaxCorner().z()-pta_position.z();
         dB = ptb_position.z()-allContainer.getMaxCorner().z();
           }
@@ -3672,55 +4244,69 @@ SmoothParticleHydro::removeRedundantSPHParticles()
               vab = beta*(*pta)->getVelocity();
               vba = -vab;
 
-              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab)
+);
+              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba)
+);
 
               vr_dot = vab*(pta_position-ptb_position);
               if(vr_dot<0){
         mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-            Gamma_ab = (-alpha*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            Gamma_ab =
+(-alpha*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
               }
               else{
          Gamma_ab = 0;
               }
 
-              dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+              dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
               (*pta)->addVelocityDot(dva_dt);
-//              dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
-//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+//              dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
+//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-              delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+              delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
               (*pta)->addVelocityCorrection(delta_a);
-//              delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+//              delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
 //              (*ptb)->addVelocityCorrection(delta_b);
 
-              // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
+              // apply the boundary forces by Lennard-Jones potential as in
+Monaghan's paper(1994)
               if(rab<=spaceInterval){ // ptb is in the smooth kernel
-            dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
+            dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
+p2))*(pta_position-ptb_position)/(rab*rab);
             (*pta)->addVelocityDot(dva_dt);
               } // end if
-      
+
           break;
         default:
           std::cout << "SPH particle type should be 1, 2 or 3!" << std::endl;
           exit(-1);
-    
+
       } //end swtich type
         } // end if 3h
     } // end for ptb in neighbor cells
       } // end for pta
 
-      tmp_particleVec.clear();  // clear elements in tmp-vector for particles neighboring cells, it is important
+      tmp_particleVec.clear();  // clear elements in tmp-vector for particles
+neighboring cells, it is important
 
   } // end for pvec, different cells
 
 
-//      // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
-//      for(ptb=SPHBoundaryParticleVec.begin(); ptb!=SPHBoundaryParticleVec.end(); ptb++){  
+//      // apply the boundary forces by Lennard-Jones potential as in Monaghan's
+paper(1994)
+//      for(ptb=SPHBoundaryParticleVec.begin();
+ptb!=SPHBoundaryParticleVec.end(); ptb++){
 //    ptb_position = (*ptb)->getCurrPosition();
 //    rab = dem::vfabs(pta_position-ptb_position);
 //    if(rab<=spaceInterval){ // ptb is in the smooth kernel
-//        dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
+//        dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
+p2))*(pta_position-ptb_position)/(rab*rab);
 //        (*pta)->addVelocityDot(dva_dt);
 //    } // end if
 //      } // end ptb
@@ -3730,97 +4316,137 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
 
     // divide SPH domain in each cpu into different cells in 2D in xz plane.
-    // see the notes 5/20/2015 and 5/21/2015 or Simpson's paper "Numerical techniques for three-dimensional Smoothed Particle Hydrodynamics"
+    // see the notes 5/20/2015 and 5/21/2015 or Simpson's paper "Numerical
+techniques for three-dimensional Smoothed Particle Hydrodynamics"
     void SmoothParticleHydro::divideSPHDomain3D(){
 
   // clear the std::vector< std::vector<sph::SPHParticle*> > SPHParticleCellVec
   for(int pvec=0; pvec<SPHParticleCellVec.size(); pvec++){
-      SPHParticleCellVec[pvec].clear();      
+      SPHParticleCellVec[pvec].clear();
   }
   SPHParticleCellVec.clear();
 
       Vec  vmin = container.getMinCorner();
       Vec  vmax = container.getMaxCorner();
   REAL small_value = 0.01*spaceInterval;
-      REAL xmin = vmin.x()-sphCellSize-small_value; REAL ymin = vmin.y()-sphCellSize-small_value; REAL zmin = vmin.z()-sphCellSize-small_value; // expand the container by sphCellSize for cells domain is necessary
-      REAL xmax = vmax.x()+sphCellSize+small_value; REAL ymax = vmax.y()+sphCellSize+small_value; REAL zmax = vmax.z()+sphCellSize+small_value; // since the sph domain that we divide is mergeSPHParticleVec
+      REAL xmin = vmin.x()-sphCellSize-small_value; REAL ymin =
+vmin.y()-sphCellSize-small_value; REAL zmin = vmin.z()-sphCellSize-small_value;
+// expand the container by sphCellSize for cells domain is necessary
+      REAL xmax = vmax.x()+sphCellSize+small_value; REAL ymax =
+vmax.y()+sphCellSize+small_value; REAL zmax = vmax.z()+sphCellSize+small_value;
+// since the sph domain that we divide is mergeSPHParticleVec
   Nx = (xmax-xmin)/kernelSize+1;  // (xmax-xmin)/(3h)+1
   Nz = (zmax-zmin)/kernelSize+1;  // (zmax-zmin)/(3h)+1
   Ny = (ymax-ymin)/kernelSize+1;  // (ymax-ymin)/(3h)+1
   numCell = Nx*Nz*Ny;
-  SPHParticleCellVec.resize(numCell);  // at this point, the cellVec contains numCell vectors,
-            // each vector is empty but ready to store the pointer of SPH particles (this process will be in the calculation of SPH forces)
+  SPHParticleCellVec.resize(numCell);  // at this point, the cellVec contains
+numCell vectors,
+            // each vector is empty but ready to store the pointer of SPH
+particles (this process will be in the calculation of SPH forces)
         pnum_vec.clear();
   pnum_vec.push_back(1); pnum_vec.push_back(Nx-1); pnum_vec.push_back(Nx);
-  pnum_vec.push_back(Nx+1); pnum_vec.push_back(Nx*Nz); pnum_vec.push_back(Nx*Nz-Nx);
-  pnum_vec.push_back(Nx*Nz+Nx); pnum_vec.push_back(Nx*Nz-1); pnum_vec.push_back(Nx*Nz-1-Nx);
-  pnum_vec.push_back(Nx*Nz-1+Nx); pnum_vec.push_back(Nx*Nz+1); pnum_vec.push_back(Nx*Nz+1-Nx);
+  pnum_vec.push_back(Nx+1); pnum_vec.push_back(Nx*Nz);
+pnum_vec.push_back(Nx*Nz-Nx);
+  pnum_vec.push_back(Nx*Nz+Nx); pnum_vec.push_back(Nx*Nz-1);
+pnum_vec.push_back(Nx*Nz-1-Nx);
+  pnum_vec.push_back(Nx*Nz-1+Nx); pnum_vec.push_back(Nx*Nz+1);
+pnum_vec.push_back(Nx*Nz+1-Nx);
   pnum_vec.push_back(Nx*Nz+1+Nx);
 
   dem::Vec tmp_xyz;
   int num;
-  for(std::vector<sph::SPHParticle*>::iterator pt=mergeSPHParticleVec.begin(); pt!=mergeSPHParticleVec.end(); pt++){ // mergeSPHParticle contains also the sph particles from neighboring cpus
+  for(std::vector<sph::SPHParticle*>::iterator pt=mergeSPHParticleVec.begin();
+pt!=mergeSPHParticleVec.end(); pt++){ // mergeSPHParticle contains also the sph
+particles from neighboring cpus
       tmp_xyz = (*pt)->getCurrPosition();
-      num = int( (tmp_xyz.y()-ymin)/kernelSize )*Nx*Nz + int( (tmp_xyz.z()-zmin)/kernelSize )*Nx + int( (tmp_xyz.x()-xmin)/kernelSize );
+      num = int( (tmp_xyz.y()-ymin)/kernelSize )*Nx*Nz + int(
+(tmp_xyz.z()-zmin)/kernelSize )*Nx + int( (tmp_xyz.x()-xmin)/kernelSize );
       SPHParticleCellVec[num].push_back(*pt);
   }
 
   REAL maxRadius = gradation.getPtclMaxRadius();
   std::vector<sph::SPHParticle*>::iterator gt;
-  for(std::vector<Particle*>::iterator pdt=particleVec.begin(); pdt!=particleVec.end(); pdt++){  // the sph ghost particles in the current cpu's dem particles
-                          // will be definitely inside the [xmin, ymin, zmin, xmax ...]
+  for(std::vector<Particle*>::iterator pdt=particleVec.begin();
+pdt!=particleVec.end(); pdt++){  // the sph ghost particles in the current cpu's
+dem particles
+                          // will be definitely inside the [xmin, ymin, zmin,
+xmax ...]
       tmp_xyz = (*pdt)->currentPosition();
-      if(tmp_xyz.x()>=xmax+maxRadius || tmp_xyz.y()>=ymax+maxRadius || tmp_xyz.z()>=zmax+maxRadius
-      || tmp_xyz.x()<=xmin-maxRadius || tmp_xyz.y()<=ymin-maxRadius || tmp_xyz.z()<=zmin-maxRadius )  // dem particle is outside of the 
-    continue;  
-      for(gt=(*pdt)->SPHGhostParticleVec.begin(); gt!=(*pdt)->SPHGhostParticleVec.end(); gt++){  // set all SPH ghost particles into their cells
+      if(tmp_xyz.x()>=xmax+maxRadius || tmp_xyz.y()>=ymax+maxRadius ||
+tmp_xyz.z()>=zmax+maxRadius
+      || tmp_xyz.x()<=xmin-maxRadius || tmp_xyz.y()<=ymin-maxRadius ||
+tmp_xyz.z()<=zmin-maxRadius )  // dem particle is outside of the
+    continue;
+      for(gt=(*pdt)->SPHGhostParticleVec.begin();
+gt!=(*pdt)->SPHGhostParticleVec.end(); gt++){  // set all SPH ghost particles
+into their cells
         tmp_xyz = (*gt)->getCurrPosition();
     if(tmp_xyz.x()>=xmax || tmp_xyz.y()>=ymax || tmp_xyz.z()>=zmax
     || tmp_xyz.x()<=xmin || tmp_xyz.y()<=ymin || tmp_xyz.z()<=zmin )
-       continue;  // this sph ghost particle is outside of the container, go to next sph ghost particle
-        num = int( (tmp_xyz.y()-ymin)/kernelSize )*Nx*Nz + int( (tmp_xyz.z()-zmin)/kernelSize )*Nx + int( (tmp_xyz.x()-xmin)/kernelSize );
+       continue;  // this sph ghost particle is outside of the container, go to
+next sph ghost particle
+        num = int( (tmp_xyz.y()-ymin)/kernelSize )*Nx*Nz + int(
+(tmp_xyz.z()-zmin)/kernelSize )*Nx + int( (tmp_xyz.x()-xmin)/kernelSize );
         SPHParticleCellVec[num].push_back(*gt);
       }
   }
 
-  for(std::vector<Particle*>::iterator pdt=recvParticleVec.begin(); pdt!=recvParticleVec.end(); pdt++){  // the this time, recvParticleVec are the dem particles that are communicated by the commuParticle
+  for(std::vector<Particle*>::iterator pdt=recvParticleVec.begin();
+pdt!=recvParticleVec.end(); pdt++){  // the this time, recvParticleVec are the
+dem particles that are communicated by the commuParticle
       tmp_xyz = (*pdt)->currentPosition();
-      if(tmp_xyz.x()>=xmax+maxRadius || tmp_xyz.y()>=ymax+maxRadius || tmp_xyz.z()>=zmax+maxRadius
-      || tmp_xyz.x()<=xmin-maxRadius || tmp_xyz.y()<=ymin-maxRadius || tmp_xyz.z()<=zmin-maxRadius )  // dem particle is outside of the 
-    continue;                        // expanded domain 
+      if(tmp_xyz.x()>=xmax+maxRadius || tmp_xyz.y()>=ymax+maxRadius ||
+tmp_xyz.z()>=zmax+maxRadius
+      || tmp_xyz.x()<=xmin-maxRadius || tmp_xyz.y()<=ymin-maxRadius ||
+tmp_xyz.z()<=zmin-maxRadius )  // dem particle is outside of the
+    continue;                        // expanded domain
 
-      for(gt=(*pdt)->SPHGhostParticleVec.begin(); gt!=(*pdt)->SPHGhostParticleVec.end(); gt++){  // set part SPH ghost particles into their cells
+      for(gt=(*pdt)->SPHGhostParticleVec.begin();
+gt!=(*pdt)->SPHGhostParticleVec.end(); gt++){  // set part SPH ghost particles
+into their cells
         tmp_xyz = (*gt)->getCurrPosition();
-    // not all sph ghost particles in these received particles are inside the container
+    // not all sph ghost particles in these received particles are inside the
+container
     if(tmp_xyz.x()>=xmax || tmp_xyz.y()>=ymax || tmp_xyz.z()>=zmax
     || tmp_xyz.x()<=xmin || tmp_xyz.y()<=ymin || tmp_xyz.z()<=zmin )
-       continue;  // this sph ghost particle is outside of the container, go to next sph ghost particle
-        num = int( (tmp_xyz.y()-ymin)/kernelSize )*Nx*Nz + int( (tmp_xyz.z()-zmin)/kernelSize )*Nx + int( (tmp_xyz.x()-xmin)/kernelSize );
+       continue;  // this sph ghost particle is outside of the container, go to
+next sph ghost particle
+        num = int( (tmp_xyz.y()-ymin)/kernelSize )*Nx*Nz + int(
+(tmp_xyz.z()-zmin)/kernelSize )*Nx + int( (tmp_xyz.x()-xmin)/kernelSize );
         SPHParticleCellVec[num].push_back(*gt);
       }
   }
 
     } // divideSPHDomain3D
 
-    //// the momentum equilibrium equation and state equation are implemented as in Monaghan's paper (1994), simulate free surface flow using sph
-    //// here the neighboring list of SPH particles is searched by the cells, vector< vector<sph::SPHParticle*> > SPHParticleCellVec;
+    //// the momentum equilibrium equation and state equation are implemented as
+in Monaghan's paper (1994), simulate free surface flow using sph
+    //// here the neighboring list of SPH particles is searched by the cells,
+vector< vector<sph::SPHParticle*> > SPHParticleCellVec;
     void SmoothParticleHydro::calculateSPHDensityDotVelocityDotLinkedList3D(){
 
-  // divide the SPH domain into different cells, each cell will contain SPH particles within it
+  // divide the SPH domain into different cells, each cell will contain SPH
+particles within it
   divideSPHDomain3D();
 
 //  checkDivision();  // pass, May 22, 2015
 //  checkNeighborCells3D();  // pass, May 22, 2015
 
-  // initialize the densityDot and velocityDot of all the SPH particles 
-  dem::Vec tmp_vec = dem::Vec(0,0, -(util::getParam<>("gravAccel"])*(util::getParam<>("gravScale"]) );
+  // initialize the densityDot and velocityDot of all the SPH particles
+  dem::Vec tmp_vec = dem::Vec(0,0,
+-(util::getParam<REAL>("gravAccel"])*(util::getParam<REAL>("gravScale"]) );
   dem::Vec zero_vec = dem::Vec(0,0,0);
-  // in the calculation of forces between sph particles, we need to use the mergeSPHParticleVec, 
-  // since mergeVec contains the sph particles from neighboring cpus. While we can only update and migrate and communicate d_sphParticleVec
-  for(std::vector<sph::SPHParticle*>::iterator pt=mergeSPHParticleVec.begin(); pt!=mergeSPHParticleVec.end(); pt++){
+  // in the calculation of forces between sph particles, we need to use the
+mergeSPHParticleVec,
+  // since mergeVec contains the sph particles from neighboring cpus. While we
+can only update and migrate and communicate d_sphParticleVec
+  for(std::vector<sph::SPHParticle*>::iterator pt=mergeSPHParticleVec.begin();
+pt!=mergeSPHParticleVec.end(); pt++){
       (*pt)->setDensityDotVelocityDotZero();
-      (*pt)->calculateParticleViscosity();  // everytime when use getParticleViscolisity(), make sure that pressure has been calculated!!!!
-      (*pt)->calculateParticlePressure();    // everytime when use getParticlePressure(), make sure that pressure has been calculated!!!!
+      (*pt)->calculateParticleViscosity();  // everytime when use
+getParticleViscolisity(), make sure that pressure has been calculated!!!!
+      (*pt)->calculateParticlePressure();    // everytime when use
+getParticlePressure(), make sure that pressure has been calculated!!!!
       switch((*pt)->getType()){
         case 1: // free sph particle
     (*pt)->addVelocityDot(tmp_vec);
@@ -3837,11 +4463,15 @@ SmoothParticleHydro::removeRedundantSPHParticles()
   }
 
   std::vector<sph::SPHParticle*>::iterator gt;
-  for(std::vector<Particle*>::iterator pdt=mergeParticleVec.begin(); pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
-      for(gt=(*pdt)->SPHGhostParticleVec.begin(); gt!=(*pdt)->SPHGhostParticleVec.end(); gt++){
+  for(std::vector<Particle*>::iterator pdt=mergeParticleVec.begin();
+pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
+      for(gt=(*pdt)->SPHGhostParticleVec.begin();
+gt!=(*pdt)->SPHGhostParticleVec.end(); gt++){
         (*gt)->setDensityDotVelocityDotZero();
-        (*gt)->calculateParticleViscosity();  // everytime when use getParticleViscolisity(), make sure that pressure has been calculated!!!!
-        (*gt)->calculateParticlePressure();  // everytime when use getParticlePressure(), make sure that pressure has been calculated!!!!
+        (*gt)->calculateParticleViscosity();  // everytime when use
+getParticleViscolisity(), make sure that pressure has been calculated!!!!
+        (*gt)->calculateParticlePressure();  // everytime when use
+getParticlePressure(), make sure that pressure has been calculated!!!!
       }
   }
 
@@ -3864,34 +4494,43 @@ SmoothParticleHydro::removeRedundantSPHParticles()
   REAL Wab, Wba;
   REAL da, dB;
   REAL beta;
-  REAL xa, ya, xB, yB, k, sqrt_xaya;  // variables for Morris' method to calculate da/dB
+  REAL xa, ya, xB, yB, k, sqrt_xaya;  // variables for Morris' method to
+calculate da/dB
   std::vector<sph::SPHParticle*>::iterator ptb;
   REAL ra, rb, rc;  // the geometry of the dem particle
-  dem::Vec pta_local, ptb_local;  // local position of pta and ptb in the dem particle
+  dem::Vec pta_local, ptb_local;  // local position of pta and ptb in the dem
+particle
   dem::Vec demt_curr;
   REAL Gamma_ab, mu_ab, vr_dot;
-  REAL alpha = util::getParam<>("alpha"];
+  REAL alpha = util::getParam<REAL>("alpha"];
      REAL alpha_zero = 0;  // the viscous between free and ghost/boundary
-  REAL epsilon = util::getParam<>("epsilon"];  // parameter for velocity correction
+  REAL epsilon = util::getParam<REAL>("epsilon"];  // parameter for velocity
+correction
   REAL Wq, Ra, Rb, phi_4, coefficient_a, coefficient_b;
   dem::Particle* demt;
-  
+
   int pnum;
-  std::vector<sph::SPHParticle*> tmp_particleVec;  // sph particles in neighboring cells
+  std::vector<sph::SPHParticle*> tmp_particleVec;  // sph particles in
+neighboring cells
   for(int pvec=0; pvec<SPHParticleCellVec.size(); pvec++){
 
       // store all SPH particles in pvec's neighboring cells
-      tmp_particleVec.clear();  // it is the same for the particles in the same cell
-      for(std::vector<int>::const_iterator pint=pnum_vec.begin(); pint!=pnum_vec.end(); pint++){
+      tmp_particleVec.clear();  // it is the same for the particles in the same
+cell
+      for(std::vector<int>::const_iterator pint=pnum_vec.begin();
+pint!=pnum_vec.end(); pint++){
     pnum = pvec+(*pint);
     if(pnum<numCell){
-        for(std::vector<sph::SPHParticle*>::iterator pt = SPHParticleCellVec[pnum].begin(); pt!= SPHParticleCellVec[pnum].end(); pt++) {
+        for(std::vector<sph::SPHParticle*>::iterator pt =
+SPHParticleCellVec[pnum].begin(); pt!= SPHParticleCellVec[pnum].end(); pt++) {
           tmp_particleVec.push_back(*pt);
                 }
     }
       }
 
-      for(std::vector<sph::SPHParticle*>::iterator pta=SPHParticleCellVec[pvec].begin(); pta!=SPHParticleCellVec[pvec].end(); pta++){  // SPH particles in cell pvec
+      for(std::vector<sph::SPHParticle*>::iterator
+pta=SPHParticleCellVec[pvec].begin(); pta!=SPHParticleCellVec[pvec].end();
+pta++){  // SPH particles in cell pvec
     pa = (*pta)->getParticlePressure();
         if(pa>=0){
         Ra = 0.006;
@@ -3903,11 +4542,13 @@ SmoothParticleHydro::removeRedundantSPHParticles()
         rhoa = (*pta)->getParticleDensity();
         pta_position = (*pta)->getCurrPosition();
 
-//    if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta is ghost or boundary particles
+//    if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta is
+ghost or boundary particles
 //        continue;  // do not consider pta, as we treat before
-//    }    
+//    }
 
-    for(ptb=pta+1; ptb!=SPHParticleCellVec[pvec].end(); ptb++){  // sum over the SPH particles in the same cell pvec
+    for(ptb=pta+1; ptb!=SPHParticleCellVec[pvec].end(); ptb++){  // sum over the
+SPH particles in the same cell pvec
         ptb_position = (*ptb)->getCurrPosition();
         rab = dem::vfabs(pta_position-ptb_position);
         if(rab<=kernelSize){  // ptb is in the smooth kernel
@@ -3926,9 +4567,12 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           coefficient_a = 1+Ra*phi_4;
           coefficient_b = 1+Rb*phi_4;
 
-      // we have three types of SPH particles: 1, free particle; 2, ghost particle; 3, boundary particle
-      // Then we have 3x3 = 9 different types of interactions with the three types of particles
-      // so we cannot judge the interaction type only by the type of particle ptb, we need to consider pta also
+      // we have three types of SPH particles: 1, free particle; 2, ghost
+particle; 3, boundary particle
+      // Then we have 3x3 = 9 different types of interactions with the three
+types of particles
+      // so we cannot judge the interaction type only by the type of particle
+ptb, we need to consider pta also
       // pta          ptb          need to consider or not
       // 1            1              V      free with free
       // 1            2              V      free with ghost
@@ -3944,12 +4588,15 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
 
       // add the density dot for pta and ptb
-          delta_aWab = gradientKernelFunction(pta_position, ptb_position);  // this is to add SPH pta 
+          delta_aWab = gradientKernelFunction(pta_position, ptb_position);  //
+this is to add SPH pta
           delta_bWba = - delta_aWab;
-          dWab_dra = partialKernelFunction(pta_position, ptb_position);  // this is to add SPH pta
+          dWab_dra = partialKernelFunction(pta_position, ptb_position);  // this
+is to add SPH pta
           dWba_drb = dWab_dra;
-          Wab = kernelFunction(pta_position, ptb_position);  // this is to add SPH pta
-          Wba = Wab; 
+          Wab = kernelFunction(pta_position, ptb_position);  // this is to add
+SPH pta
+          Wba = Wab;
 
       switch((*ptb)->getType()){
         case 1:  // ptb is free SPH particle
@@ -3958,45 +4605,60 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 vab = (*pta)->getVelocity()-(*ptb)->getVelocity();
                vba = -vab;
 
-                (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-                (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+                (*pta)->addDensityDot(
+(*ptb)->getParticleMass()*(vab*delta_aWab) );
+                (*ptb)->addDensityDot(
+(*pta)->getParticleMass()*(vba*delta_bWba) );
 
                 vr_dot = vab*(pta_position-ptb_position);
                 if(vr_dot<0){
-            mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                Gamma_ab = (-alpha*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                Gamma_ab =
+(-alpha*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
                 }
                 else{
              Gamma_ab = 0;
                 }
 
 
-                dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+                dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
                 (*pta)->addVelocityDot(dva_dt);
-                dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
+                dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
                 (*ptb)->addVelocityDot(dvb_dt);
 
-                delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+                delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
                 (*pta)->addVelocityCorrection(delta_a);
-                delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+                delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
                 (*ptb)->addVelocityCorrection(delta_b);
               break;
             case 2:  // ghost with free
         demt = (*pta)->getDemParticle();
         demt_curr = demt->currentPosition();
-            ptb_local = demt->globalToLocal(ptb_position-demt_curr);  // the local position of sph point ptb
+            ptb_local = demt->globalToLocal(ptb_position-demt_curr);  // the
+local position of sph point ptb
             ra = demt->getA(); rb = demt->getB(); rc = demt->getC();
-            k = 1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.y()*ptb_local.y()/(rb*rb)+ptb_local.z()*ptb_local.z()/(rc*rc) ) );
-            da = dem::vfabs(ptb_local-k*ptb_local);  // the distance is the same in rotated coordinates
+            k =
+1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.y()*ptb_local.y()/(rb*rb)+ptb_local.z()*ptb_local.z()/(rc*rc)
+) );
+            da = dem::vfabs(ptb_local-k*ptb_local);  // the distance is the same
+in rotated coordinates
 
                 // calculate Vab as the method shown in Morris's paper, 1996
 
-                // (1) here I wanna use the distance from the point a/b to the surface of the ellipsoid to simplify the problem
+                // (1) here I wanna use the distance from the point a/b to the
+surface of the ellipsoid to simplify the problem
             pta_local = (*pta)->getLocalPosition();
-            k = 1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.y()*pta_local.y()/(rb*rb)+pta_local.z()*pta_local.z()/(rc*rc) ) );
+            k =
+1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.y()*pta_local.y()/(rb*rb)+pta_local.z()*pta_local.z()/(rc*rc)
+) );
                 dB = dem::vfabs(pta_local-k*pta_local);
 
-//              // (2) here the Morris's method is used 
+//              // (2) here the Morris's method is used
 //              xa = pta_position.x(); ya = pta_position.y();
 //              xB = ptb_position.x(); yB = ptb_position.y();
 //              if(ya==0) {da = xa-radius; dB = radius-xB;}
@@ -4015,29 +4677,39 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 vba = beta*((*ptb)->getVelocity()-vdem);
                 vab = -vba;
 
-                (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-                (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+                (*pta)->addDensityDot(
+(*ptb)->getParticleMass()*(vab*delta_aWab) );
+                (*ptb)->addDensityDot(
+(*pta)->getParticleMass()*(vba*delta_bWba) );
 
                 vr_dot = vab*(pta_position-ptb_position);
                 if(vr_dot<0){
-                mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                    Gamma_ab = (-alpha_zero*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+                mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                    Gamma_ab =
+(-alpha_zero*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
                 }
                 else{
                  Gamma_ab = 0;
                 }
 
-                dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+                dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
             demt->addForce((*pta)->getParticleMass()*dva_dt);
-            demt->addMoment( (pta_position-demt_curr) % ((*pta)->getParticleMass()*dva_dt) );
+            demt->addMoment( (pta_position-demt_curr) %
+((*pta)->getParticleMass()*dva_dt) );
 //                (*pta)->addVelocityDot(dva_dt);
 
-                dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
-                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+                dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
+                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-//                  delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+//                  delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
 //                  (*pta)->addVelocityCorrection(delta_a);
-                  delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+                  delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
                   (*ptb)->addVelocityCorrection(delta_b);
         break;
 
@@ -4045,17 +4717,22 @@ SmoothParticleHydro::removeRedundantSPHParticles()
 
         // calculate Vab as the method shown in Morris's paper, 1996
                 // interact with boundary particles
-                da = ptb_position.z()-allContainer.getMinCorner().z();  // assume with the bottom boundary
-        dB = allContainer.getMinCorner().z()-pta_position.x();  // assume with the bottom boundary
-        if(pta_position.x()<allContainer.getMinCorner().x()){  // with left boundary
+                da = ptb_position.z()-allContainer.getMinCorner().z();  //
+assume with the bottom boundary
+        dB = allContainer.getMinCorner().z()-pta_position.x();  // assume with
+the bottom boundary
+        if(pta_position.x()<allContainer.getMinCorner().x()){  // with left
+boundary
             da = ptb_position.x()-allContainer.getMinCorner().x();
             dB = allContainer.getMinCorner().x()-pta_position.x();
         }
-        else if(pta_position.x()>allContainer.getMaxCorner().x()){ // with right boundary
+        else if(pta_position.x()>allContainer.getMaxCorner().x()){ // with right
+boundary
             da = allContainer.getMaxCorner().x()-ptb_position.x();
             dB = pta_position.x()-allContainer.getMaxCorner().x();
         }
-        else if(pta_position.z()>allContainer.getMaxCorner().z()){ // with top boundary
+        else if(pta_position.z()>allContainer.getMaxCorner().z()){ // with top
+boundary
             da = allContainer.getMaxCorner().z()-ptb_position.z();
             dB = pta_position.z()-allContainer.getMaxCorner().z();
         }
@@ -4066,61 +4743,81 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 vba = beta*(*ptb)->getVelocity();
                 vab = -vba;
 
-                (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-                (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+                (*pta)->addDensityDot(
+(*ptb)->getParticleMass()*(vab*delta_aWab) );
+                (*ptb)->addDensityDot(
+(*pta)->getParticleMass()*(vba*delta_bWba) );
 
                 vr_dot = vab*(pta_position-ptb_position);
                 if(vr_dot<0){
-            mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                Gamma_ab = (-alpha_zero*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                Gamma_ab =
+(-alpha_zero*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
                 }
                 else{
              Gamma_ab = 0;
                 }
 
-//                dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+//                dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
 //                (*pta)->addVelocityDot(dva_dt);
-                dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
-                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+                dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
+                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-//            delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+//            delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
 //                (*pta)->addVelocityCorrection(delta_a);
-                delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+                delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
                 (*ptb)->addVelocityCorrection(delta_b);
-      
-//            // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
+
+//            // apply the boundary forces by Lennard-Jones potential as in
+Monaghan's paper(1994)
 //                if(rab<=spaceInterval){ // ptb is in the smooth kernel
-//                dvb_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(ptb_position-pta_position)/(rab*rab);
+//                dvb_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
+p2))*(ptb_position-pta_position)/(rab*rab);
 //                (*ptb)->addVelocityDot(dvb_dt);
 //                } // end if
 
         break;
             default:
-            std::cout << "SPH particle type of pta should be 1, 2 or 3!" << std::endl;
+            std::cout << "SPH particle type of pta should be 1, 2 or 3!" <<
+std::endl;
             exit(-1);
             } // end switch pta
 
           break;
         case 2:  // ptb is ghost particle
 
-          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta is ghost or boundary particles
+          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta
+is ghost or boundary particles
             break;  // do not consider pta, as we treat before
           }
           demt = (*ptb)->getDemParticle();
           demt_curr = demt->currentPosition();
-          pta_local = demt->globalToLocal(pta_position-demt_curr);  // the local position of sph point pta
+          pta_local = demt->globalToLocal(pta_position-demt_curr);  // the local
+position of sph point pta
           ra = demt->getA(); rb = demt->getB(); rc = demt->getC();
-          k = 1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.y()*pta_local.y()/(rb*rb)+pta_local.z()*pta_local.z()/(rc*rc) ) );
-          da = dem::vfabs(pta_local-k*pta_local);  // the distance is the same in rotated coordinates
+          k =
+1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.y()*pta_local.y()/(rb*rb)+pta_local.z()*pta_local.z()/(rc*rc)
+) );
+          da = dem::vfabs(pta_local-k*pta_local);  // the distance is the same
+in rotated coordinates
 
               // calculate Vab as the method shown in Morris's paper, 1996
 
-              // (1) here I wanna use the distance from the point a/b to the surface of the ellipsoid to simplify the problem
+              // (1) here I wanna use the distance from the point a/b to the
+surface of the ellipsoid to simplify the problem
           ptb_local = (*ptb)->getLocalPosition();
-          k = 1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.y()*ptb_local.y()/(rb*rb)+ptb_local.z()*ptb_local.z()/(rc*rc) ) );
+          k =
+1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.y()*ptb_local.y()/(rb*rb)+ptb_local.z()*ptb_local.z()/(rc*rc)
+) );
               dB = dem::vfabs(ptb_local-k*ptb_local);
 
-//              // (2) here the Morris's method is used 
+//              // (2) here the Morris's method is used
 //              xa = pta_position.x(); ya = pta_position.gety();
 //              xB = ptb_position.x(); yB = ptb_position.gety();
 //              if(ya==0) {da = xa-radius; dB = radius-xB;}
@@ -4140,49 +4837,65 @@ SmoothParticleHydro::removeRedundantSPHParticles()
               vab = beta*((*pta)->getVelocity()-vdem);
               vba = -vab;
 
-              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab)
+);
+              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba)
+);
 
               vr_dot = vab*(pta_position-ptb_position);
               if(vr_dot<0){
-            mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                Gamma_ab = (-alpha_zero*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                Gamma_ab =
+(-alpha_zero*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
               }
               else{
              Gamma_ab = 0;
               }
 
-              dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+              dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
               (*pta)->addVelocityDot(dva_dt);
-              dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
+              dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
           demt->addForce((*ptb)->getParticleMass()*dvb_dt);
-          demt->addMoment( (ptb_position-demt_curr) % ((*ptb)->getParticleMass()*dvb_dt) );
-//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+          demt->addMoment( (ptb_position-demt_curr) %
+((*ptb)->getParticleMass()*dvb_dt) );
+//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-                delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+                delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
                 (*pta)->addVelocityCorrection(delta_a);
-//                delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+//                delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
 //                (*ptb)->addVelocityCorrection(delta_b);
           break;
         case 3:  // ptb is boundary particle
 
-          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta is ghost or boundary particles
+          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta
+is ghost or boundary particles
             break;  // do not consider pta, as we treat before
           }
 
           // calculate Vab as the method shown in Morris's paper, 1996
               // interact with boundary particles
-              da = pta_position.z()-allContainer.getMinCorner().z();  // assume with the bottom boundary
-          dB = allContainer.getMinCorner().z()-ptb_position.z();  // assume with the bottom boundary
-          if(ptb_position.x() < allContainer.getMinCorner().x()){  // with left boundary
+              da = pta_position.z()-allContainer.getMinCorner().z();  // assume
+with the bottom boundary
+          dB = allContainer.getMinCorner().z()-ptb_position.z();  // assume with
+the bottom boundary
+          if(ptb_position.x() < allContainer.getMinCorner().x()){  // with left
+boundary
         da = pta_position.x() - allContainer.getMinCorner().x();
         dB = allContainer.getMinCorner().x() - ptb_position.x();
           }
-          else if(ptb_position.x() > allContainer.getMaxCorner().x()){  // with right boundary
+          else if(ptb_position.x() > allContainer.getMaxCorner().x()){  // with
+right boundary
         da = allContainer.getMaxCorner().x() - pta_position.x();
         dB = ptb_position.x() - allContainer.getMaxCorner().x();
           }
-          else if(ptb_position.z() > allContainer.getMaxCorner().z()){  // with top boundary
+          else if(ptb_position.z() > allContainer.getMaxCorner().z()){  // with
+top boundary
         da = allContainer.getMaxCorner().z()-pta_position.z();
         dB = ptb_position.z()-allContainer.getMaxCorner().z();
           }
@@ -4193,43 +4906,54 @@ SmoothParticleHydro::removeRedundantSPHParticles()
               vab = beta*(*pta)->getVelocity();
               vba = -vab;
 
-              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab)
+);
+              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba)
+);
 
               vr_dot = vab*(pta_position-ptb_position);
               if(vr_dot<0){
         mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-            Gamma_ab = (-alpha_zero*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            Gamma_ab =
+(-alpha_zero*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
               }
               else{
          Gamma_ab = 0;
               }
 
-              dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+              dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
               (*pta)->addVelocityDot(dva_dt);
-//              dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
-//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+//              dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
+//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-              delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+              delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
               (*pta)->addVelocityCorrection(delta_a);
-//              delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+//              delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
 //              (*ptb)->addVelocityCorrection(delta_b);
-      
-//          // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
+
+//          // apply the boundary forces by Lennard-Jones potential as in
+Monaghan's paper(1994)
 //              if(rab<=spaceInterval){ // ptb is in the smooth kernel
-//            dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
+//            dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
+p2))*(pta_position-ptb_position)/(rab*rab);
 //            (*pta)->addVelocityDot(dva_dt);
 //              } // end if
           break;
         default:
           std::cout << "SPH particle type should be 1, 2 or 3!" << std::endl;
           exit(-1);
-    
+
       } //end swtich type
         } // end if 3h
     } // end for ptb in the same cell
 
-    for(ptb=tmp_particleVec.begin(); ptb!=tmp_particleVec.end(); ptb++){  // all particles in pvec's neighboring cells 
+    for(ptb=tmp_particleVec.begin(); ptb!=tmp_particleVec.end(); ptb++){  // all
+particles in pvec's neighboring cells
         ptb_position = (*ptb)->getCurrPosition();
         rab = dem::vfabs(pta_position-ptb_position);
         if(rab<=kernelSize){  // ptb is in the smooth kernel
@@ -4249,12 +4973,15 @@ SmoothParticleHydro::removeRedundantSPHParticles()
           coefficient_b = 1+Rb*phi_4;
 
       // add the density dot for pta and ptb
-          delta_aWab = gradientKernelFunction(pta_position, ptb_position);  // this is to add SPH pta 
+          delta_aWab = gradientKernelFunction(pta_position, ptb_position);  //
+this is to add SPH pta
           delta_bWba = - delta_aWab;
-          dWab_dra = partialKernelFunction(pta_position, ptb_position);  // this is to add SPH pta
+          dWab_dra = partialKernelFunction(pta_position, ptb_position);  // this
+is to add SPH pta
           dWba_drb = dWab_dra;
-          Wab = kernelFunction(pta_position, ptb_position);  // this is to add SPH pta
-          Wba = Wab; 
+          Wab = kernelFunction(pta_position, ptb_position);  // this is to add
+SPH pta
+          Wba = Wab;
       switch((*ptb)->getType()){
         case 1:  // ptb is free SPH particle
           switch((*pta)->getType()){
@@ -4262,46 +4989,61 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 vab = (*pta)->getVelocity()-(*ptb)->getVelocity();
                vba = -vab;
 
-                (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-                (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+                (*pta)->addDensityDot(
+(*ptb)->getParticleMass()*(vab*delta_aWab) );
+                (*ptb)->addDensityDot(
+(*pta)->getParticleMass()*(vba*delta_bWba) );
 
                 vr_dot = vab*(pta_position-ptb_position);
                 if(vr_dot<0){
-            mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                Gamma_ab = (-alpha*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                Gamma_ab =
+(-alpha*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
                 }
                 else{
              Gamma_ab = 0;
                 }
 
 
-                dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+                dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
                 (*pta)->addVelocityDot(dva_dt);
-                dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
+                dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
                 (*ptb)->addVelocityDot(dvb_dt);
 
-                delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+                delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
                 (*pta)->addVelocityCorrection(delta_a);
-                delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+                delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
                 (*ptb)->addVelocityCorrection(delta_b);
               break;
             case 2:  // ghost with free
 
         demt = (*pta)->getDemParticle();
         demt_curr = demt->currentPosition();
-            ptb_local = demt->globalToLocal(ptb_position-demt_curr);  // the local position of sph point ptb
+            ptb_local = demt->globalToLocal(ptb_position-demt_curr);  // the
+local position of sph point ptb
             ra = demt->getA(); rb = demt->getB(); rc = demt->getC();
-            k = 1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.y()*ptb_local.y()/(rb*rb)+ptb_local.z()*ptb_local.z()/(rc*rc) ) );
-            da = dem::vfabs(ptb_local-k*ptb_local);  // the distance is the same in rotated coordinates
+            k =
+1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.y()*ptb_local.y()/(rb*rb)+ptb_local.z()*ptb_local.z()/(rc*rc)
+) );
+            da = dem::vfabs(ptb_local-k*ptb_local);  // the distance is the same
+in rotated coordinates
 
                 // calculate Vab as the method shown in Morris's paper, 1996
 
-                // (1) here I wanna use the distance from the point a/b to the surface of the ellipsoid to simplify the problem
+                // (1) here I wanna use the distance from the point a/b to the
+surface of the ellipsoid to simplify the problem
             pta_local = (*pta)->getLocalPosition();
-            k = 1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.y()*pta_local.y()/(rb*rb)+pta_local.z()*pta_local.z()/(rc*rc) ) );
+            k =
+1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.y()*pta_local.y()/(rb*rb)+pta_local.z()*pta_local.z()/(rc*rc)
+) );
                 dB = dem::vfabs(pta_local-k*pta_local);
 
-//              // (2) here the Morris's method is used 
+//              // (2) here the Morris's method is used
 //              xa = pta_position.x(); ya = pta_position.y();
 //              xB = ptb_position.x(); yB = ptb_position.y();
 //              if(ya==0) {da = xa-radius; dB = radius-xB;}
@@ -4321,46 +5063,61 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 vba = beta*((*ptb)->getVelocity()-vdem);
                 vab = -vba;
 
-                (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-                (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+                (*pta)->addDensityDot(
+(*ptb)->getParticleMass()*(vab*delta_aWab) );
+                (*ptb)->addDensityDot(
+(*pta)->getParticleMass()*(vba*delta_bWba) );
 
                 vr_dot = vab*(pta_position-ptb_position);
                 if(vr_dot<0){
-                mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                    Gamma_ab = (-alpha_zero*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+                mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                    Gamma_ab =
+(-alpha_zero*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
                 }
                 else{
                  Gamma_ab = 0;
                 }
 
-                dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+                dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
             demt->addForce((*pta)->getParticleMass()*dva_dt);
-            demt->addMoment( (pta_position-demt_curr) % ((*pta)->getParticleMass()*dva_dt) );
+            demt->addMoment( (pta_position-demt_curr) %
+((*pta)->getParticleMass()*dva_dt) );
 //                (*pta)->addVelocityDot(dva_dt);
 
-                dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
-                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+                dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
+                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-//                  delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+//                  delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
 //                  (*pta)->addVelocityCorrection(delta_a);
-                  delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+                  delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
                   (*ptb)->addVelocityCorrection(delta_b);
         break;
             case 3:  // boundary with free
 
         // calculate Vab as the method shown in Morris's paper, 1996
                 // interact with boundary particles
-                da = ptb_position.z()-allContainer.getMinCorner().z();  // assume with the bottom boundary
-        dB = allContainer.getMinCorner().z()-pta_position.x();  // assume with the bottom boundary
-        if(pta_position.x()<allContainer.getMinCorner().x()){  // with left boundary
+                da = ptb_position.z()-allContainer.getMinCorner().z();  //
+assume with the bottom boundary
+        dB = allContainer.getMinCorner().z()-pta_position.x();  // assume with
+the bottom boundary
+        if(pta_position.x()<allContainer.getMinCorner().x()){  // with left
+boundary
             da = ptb_position.x()-allContainer.getMinCorner().x();
             dB = allContainer.getMinCorner().x()-pta_position.x();
         }
-        else if(pta_position.x()>allContainer.getMaxCorner().x()){ // with right boundary
+        else if(pta_position.x()>allContainer.getMaxCorner().x()){ // with right
+boundary
             da = allContainer.getMaxCorner().x()-ptb_position.x();
             dB = pta_position.x()-allContainer.getMaxCorner().x();
         }
-        else if(pta_position.z()>allContainer.getMaxCorner().z()){ // with top boundary
+        else if(pta_position.z()>allContainer.getMaxCorner().z()){ // with top
+boundary
             da = allContainer.getMaxCorner().z()-ptb_position.z();
             dB = pta_position.z()-allContainer.getMaxCorner().z();
         }
@@ -4371,62 +5128,82 @@ SmoothParticleHydro::removeRedundantSPHParticles()
                 vba = beta*(*ptb)->getVelocity();
                 vab = -vba;
 
-                (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-                (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+                (*pta)->addDensityDot(
+(*ptb)->getParticleMass()*(vab*delta_aWab) );
+                (*ptb)->addDensityDot(
+(*pta)->getParticleMass()*(vba*delta_bWba) );
 
                 vr_dot = vab*(pta_position-ptb_position);
                 if(vr_dot<0){
-            mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                Gamma_ab = (-alpha_zero*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                Gamma_ab =
+(-alpha_zero*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
                 }
                 else{
              Gamma_ab = 0;
                 }
 
-//                dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+//                dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
 //                (*pta)->addVelocityDot(dva_dt);
-                dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
-                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+                dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
+                (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-//            delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+//            delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
 //                (*pta)->addVelocityCorrection(delta_a);
-                delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+                delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
                 (*ptb)->addVelocityCorrection(delta_b);
-      
-            // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
+
+            // apply the boundary forces by Lennard-Jones potential as in
+Monaghan's paper(1994)
                 if(rab<=spaceInterval){ // ptb is in the smooth kernel
-                dvb_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(ptb_position-pta_position)/(rab*rab);
+                dvb_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
+p2))*(ptb_position-pta_position)/(rab*rab);
                 (*ptb)->addVelocityDot(dvb_dt);
                 } // end if
 
         break;
             default:
-            std::cout << "SPH particle type of pta should be 1, 2 or 3!" << std::endl;
+            std::cout << "SPH particle type of pta should be 1, 2 or 3!" <<
+std::endl;
             exit(-1);
             } // end switch pta
 
           break;
         case 2:  // ptb is ghost particle
 
-          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta is ghost or boundary particles
+          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta
+is ghost or boundary particles
             break;  // do not consider pta, as we treat before
           }
 
           demt = (*ptb)->getDemParticle();
           demt_curr = demt->currentPosition();
-          pta_local = demt->globalToLocal(pta_position-demt_curr);  // the local position of sph point pta
+          pta_local = demt->globalToLocal(pta_position-demt_curr);  // the local
+position of sph point pta
           ra = demt->getA(); rb = demt->getB(); rc = demt->getC();
-          k = 1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.y()*pta_local.y()/(rb*rb)+pta_local.z()*pta_local.z()/(rc*rc) ) );
-          da = dem::vfabs(pta_local-k*pta_local);  // the distance is the same in rotated coordinates
+          k =
+1.0/(sqrt(pta_local.x()*pta_local.x()/(ra*ra)+pta_local.y()*pta_local.y()/(rb*rb)+pta_local.z()*pta_local.z()/(rc*rc)
+) );
+          da = dem::vfabs(pta_local-k*pta_local);  // the distance is the same
+in rotated coordinates
 
               // calculate Vab as the method shown in Morris's paper, 1996
 
-              // (1) here I wanna use the distance from the point a/b to the surface of the ellipsoid to simplify the problem
+              // (1) here I wanna use the distance from the point a/b to the
+surface of the ellipsoid to simplify the problem
           ptb_local = (*ptb)->getLocalPosition();
-          k = 1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.y()*ptb_local.y()/(rb*rb)+ptb_local.z()*ptb_local.z()/(rc*rc) ) );
+          k =
+1.0/(sqrt(ptb_local.x()*ptb_local.x()/(ra*ra)+ptb_local.y()*ptb_local.y()/(rb*rb)+ptb_local.z()*ptb_local.z()/(rc*rc)
+) );
               dB = dem::vfabs(ptb_local-k*ptb_local);
 
-//              // (2) here the Morris's method is used 
+//              // (2) here the Morris's method is used
 //              xa = pta_position.x(); ya = pta_position.y();
 //              xB = ptb_position.x(); yB = ptb_position.y();
 //              if(ya==0) {da = xa-radius; dB = radius-xB;}
@@ -4446,49 +5223,65 @@ SmoothParticleHydro::removeRedundantSPHParticles()
               vab = beta*((*pta)->getVelocity()-vdem);
               vba = -vab;
 
-              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab)
+);
+              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba)
+);
 
               vr_dot = vab*(pta_position-ptb_position);
               if(vr_dot<0){
-            mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-                Gamma_ab = (-alpha_zero*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            mu_ab =
+smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
+                Gamma_ab =
+(-alpha_zero*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
               }
               else{
              Gamma_ab = 0;
               }
 
-              dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+              dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
               (*pta)->addVelocityDot(dva_dt);
-              dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
+              dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)*coefficient_b+pa/(rhoa*rhoa)*coefficient_a+Gamma_ab)*delta_bWba;
           demt->addForce((*ptb)->getParticleMass()*dvb_dt);
-          demt->addMoment( (ptb_position-demt_curr) % ((*ptb)->getParticleMass()*dvb_dt) );
-//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+          demt->addMoment( (ptb_position-demt_curr) %
+((*ptb)->getParticleMass()*dvb_dt) );
+//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-                delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+                delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
                 (*pta)->addVelocityCorrection(delta_a);
-//                delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+//                delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
 //                (*ptb)->addVelocityCorrection(delta_b);
           break;
         case 3:  // ptb is boundary particle
 
-          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta is ghost or boundary particles
+          if((*pta)->getType()!=1){  // pta is not free sph particles, i.e. pta
+is ghost or boundary particles
             break;  // do not consider pta, as we treat before
           }
 
           // calculate Vab as the method shown in Morris's paper, 1996
               // interact with boundary particles
-              da = pta_position.z()-allContainer.getMinCorner().z();  // assume with the bottom boundary
-          dB = allContainer.getMinCorner().z()-ptb_position.z();  // assume with the bottom boundary
-          if(ptb_position.x() < allContainer.getMinCorner().x()){  // with left boundary
+              da = pta_position.z()-allContainer.getMinCorner().z();  // assume
+with the bottom boundary
+          dB = allContainer.getMinCorner().z()-ptb_position.z();  // assume with
+the bottom boundary
+          if(ptb_position.x() < allContainer.getMinCorner().x()){  // with left
+boundary
         da = pta_position.x() - allContainer.getMinCorner().x();
         dB = allContainer.getMinCorner().x() - ptb_position.x();
           }
-          else if(ptb_position.x() > allContainer.getMaxCorner().x()){  // with right boundary
+          else if(ptb_position.x() > allContainer.getMaxCorner().x()){  // with
+right boundary
         da = allContainer.getMaxCorner().x() - pta_position.x();
         dB = ptb_position.x() - allContainer.getMaxCorner().x();
           }
-          else if(ptb_position.z() > allContainer.getMaxCorner().z()){  // with top boundary
+          else if(ptb_position.z() > allContainer.getMaxCorner().z()){  // with
+top boundary
         da = allContainer.getMaxCorner().z()-pta_position.z();
         dB = ptb_position.z()-allContainer.getMaxCorner().z();
           }
@@ -4499,55 +5292,69 @@ SmoothParticleHydro::removeRedundantSPHParticles()
               vab = beta*(*pta)->getVelocity();
               vba = -vab;
 
-              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab) );
-              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba) );
+              (*pta)->addDensityDot( (*ptb)->getParticleMass()*(vab*delta_aWab)
+);
+              (*ptb)->addDensityDot( (*pta)->getParticleMass()*(vba*delta_bWba)
+);
 
               vr_dot = vab*(pta_position-ptb_position);
               if(vr_dot<0){
         mu_ab = smoothLength*vr_dot/(rab*rab+0.01*smoothLength*smoothLength);
-            Gamma_ab = (-alpha_zero*(util::getParam<>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
+            Gamma_ab =
+(-alpha_zero*(util::getParam<REAL>("soundSpeed"])*mu_ab)/(rhoa+rhob)*2;
               }
               else{
          Gamma_ab = 0;
               }
 
-              dva_dt = -(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
+              dva_dt =
+-(*ptb)->getParticleMass()*(pa/(rhoa*rhoa)*coefficient_a+pb/(rhob*rhob)*coefficient_b+Gamma_ab)*delta_aWab;
               (*pta)->addVelocityDot(dva_dt);
-//              dvb_dt = -(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
-//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost particles will not envolve as the same way as others
+//              dvb_dt =
+-(*pta)->getParticleMass()*(pb/(rhob*rhob)+pa/(rhoa*rhoa)+Gamma_ab)*delta_bWba;
+//              (*ptb)->addVelocityDot(dvb_dt);  // the velocities of the ghost
+particles will not envolve as the same way as others
 
-              delta_a = epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
+              delta_a =
+epsilon*(*ptb)->getParticleMass()*(-vab)*Wab/(rhoa+rhob)*2;
               (*pta)->addVelocityCorrection(delta_a);
-//              delta_b = epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
+//              delta_b =
+epsilon*(*pta)->getParticleMass()*(vab)*Wba/(rhoa+rhob)*2;
 //              (*ptb)->addVelocityCorrection(delta_b);
 
-              // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
+              // apply the boundary forces by Lennard-Jones potential as in
+Monaghan's paper(1994)
               if(rab<=spaceInterval){ // ptb is in the smooth kernel
-            dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
+            dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
+p2))*(pta_position-ptb_position)/(rab*rab);
             (*pta)->addVelocityDot(dva_dt);
               } // end if
-      
+
           break;
         default:
           std::cout << "SPH particle type should be 1, 2 or 3!" << std::endl;
           exit(-1);
-    
+
       } //end swtich type
         } // end if 3h
     } // end for ptb in neighbor cells
       } // end for pta
 
-      tmp_particleVec.clear();  // clear elements in tmp-vector for particles neighboring cells, it is important
+      tmp_particleVec.clear();  // clear elements in tmp-vector for particles
+neighboring cells, it is important
 
   } // end for pvec, different cells
 
 
-//      // apply the boundary forces by Lennard-Jones potential as in Monaghan's paper(1994)
-//      for(ptb=SPHBoundaryParticleVec.begin(); ptb!=SPHBoundaryParticleVec.end(); ptb++){  
+//      // apply the boundary forces by Lennard-Jones potential as in Monaghan's
+paper(1994)
+//      for(ptb=SPHBoundaryParticleVec.begin();
+ptb!=SPHBoundaryParticleVec.end(); ptb++){
 //    ptb_position = (*ptb)->getCurrPosition();
 //    rab = dem::vfabs(pta_position-ptb_position);
 //    if(rab<=spaceInterval){ // ptb is in the smooth kernel
-//        dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab, p2))*(pta_position-ptb_position)/(rab*rab);
+//        dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
+p2))*(pta_position-ptb_position)/(rab*rab);
 //        (*pta)->addVelocityDot(dva_dt);
 //    } // end if
 //      } // end ptb
@@ -4556,13 +5363,13 @@ SmoothParticleHydro::removeRedundantSPHParticles()
     } // end calculateSPHDensityDotVelocityDotLinkedList3D()
     */
 
- namespace sph {
-  template 
-  void 
-  SmoothParticleHydro::generateSPHParticle<2>(const dem::Box& allContainer,
-                                              dem::DEMParticlePArray& allDEMParticles);
-  template 
-  void 
-  SmoothParticleHydro::generateSPHParticle<3>(const dem::Box& allContainer,
-                                              dem::DEMParticlePArray& allDEMParticles);
- } 
+namespace sph {
+template void SmoothParticleHydro::generateSPHParticle<2>(
+  const dem::Box& allContainer, dem::DEMParticlePArray& allDEMParticles);
+template void SmoothParticleHydro::generateSPHParticle<3>(
+  const dem::Box& allContainer, dem::DEMParticlePArray& allDEMParticles);
+template void SmoothParticleHydro::generateSPHParticleNoBottom<2>(
+  const dem::Box& allContainer, dem::DEMParticlePArray& allDEMParticles);
+template void SmoothParticleHydro::generateSPHParticleNoBottom<3>(
+  const dem::Box& allContainer, dem::DEMParticlePArray& allDEMParticles);
+}
