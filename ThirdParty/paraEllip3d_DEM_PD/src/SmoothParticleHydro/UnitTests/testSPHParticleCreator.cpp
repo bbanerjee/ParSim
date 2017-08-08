@@ -505,3 +505,190 @@ TEST(SPHParticleCreatorTest, generateSPHParticleNoBottom)
             << " Pos = " << testParticle->getInitPosition() << std::endl;
   */
 }
+
+TEST(SPHParticleCreatorTest, generateSPHParticleMiddleLayers)
+{
+
+  // Setup the parameters that are used
+  dem::InputParameter::get().addParameter("specificG", 1.1);
+  dem::InputParameter::get().addParameter("gravAccel", 10);
+  dem::InputParameter::get().addParameter("gravScale", 1);
+  dem::InputParameter::get().addParameter("spaceInterval", 0.0526316);
+  dem::InputParameter::get().addParameter("numLayers", 1);
+  dem::InputParameter::get().addParameter("gamma", 1.4);
+  dem::InputParameter::get().addParameter("P0", 1.0e5);
+  dem::InputParameter::get().addParameter("SPHInitialDensity", 1000);
+  dem::InputParameter::get().addParameter("waterZmin", 1.5);
+  dem::InputParameter::get().addParameter("waterZmax", 2.5);
+
+  // Create three DEM particles
+  std::vector<ParticleID> dem_id = { 0, 1, 2 };
+  std::vector<REAL> dem_radii = { 1.15, 0.5,  0.69, 1.15, 0.5,
+                                  0.69, 1.15, 0.5,  0.69 };
+  std::vector<REAL> dem_axle_a = { 2.250054,  1.570796, 0.6792575,
+                                   2.536687,  1.570796, 0.9658907,
+                                   0.8923825, 1.570796, 0.6784139 };
+  std::vector<REAL> dem_axle_b = { 1.570796, 4.61936e-07,  1.570796,
+                                   1.570797, 1.803533e-06, 1.570798,
+                                   1.570799, 2.865908e-06, 1.570795 };
+  std::vector<REAL> dem_axle_c = { 2.462335, 1.570796, 2.250054,
+                                   2.175704, 1.570796, 2.536685,
+                                   2.463179, 1.570796, 0.8923828 };
+  std::vector<REAL> dem_pos = { 49.73174, 0,        0.9936725, 50.90096, 0,
+                                5.320529, 30.81142, 0,         3.898033 };
+  std::vector<REAL> dem_vel = { 0.02008031, 0, 0.05505538,
+                                -0.3014865, 0, -0.1031938,
+                                -0.1538927, 0, 0.04640176 };
+  std::vector<REAL> dem_omega = { 0, 0.02781917, 0,          0, -0.07066198,
+                                  0, 0,          -0.2856931, 0 };
+  std::vector<REAL> dem_force = { -491684,   0,       -126938, -4413.702, 0,
+                                  -10805.48, 22966.5, 0,       6613.044 };
+  std::vector<REAL> dem_moment = { 0.1688596,  -118712,   -0.3092984,
+                                   -0.1174683, -36733.58, -0.05749536,
+                                   0.0414009,  -5030.464, -0.0190764 };
+
+  dem::DEMParticlePArray allDEMParticles;
+  for (auto id : dem_id) {
+    std::size_t startIndex = static_cast<std::size_t>(3 * id);
+    std::size_t endIndex = static_cast<std::size_t>(3 * id + 2);
+    dem::Vec radii(dem_radii.cbegin() + startIndex,
+                   dem_radii.cbegin() + endIndex);
+    dem::Vec axle_a(dem_axle_a.cbegin() + startIndex,
+                    dem_axle_a.cbegin() + endIndex);
+    dem::Vec axle_b(dem_axle_b.cbegin() + startIndex,
+                    dem_axle_b.cbegin() + endIndex);
+    dem::Vec axle_c(dem_axle_c.cbegin() + startIndex,
+                    dem_axle_c.cbegin() + endIndex);
+    dem::Vec pos(dem_pos.cbegin() + startIndex, dem_pos.cbegin() + endIndex);
+    dem::Vec vel(dem_vel.cbegin() + startIndex, dem_vel.cbegin() + endIndex);
+    dem::Vec omega(dem_omega.cbegin() + startIndex,
+                   dem_omega.cbegin() + endIndex);
+    dem::Vec force(dem_force.cbegin() + startIndex,
+                   dem_force.cbegin() + endIndex);
+    dem::Vec moment(dem_moment.cbegin() + startIndex,
+                    dem_moment.cbegin() + endIndex);
+    // std::cout << "id = " << id << " r = " << radii << " a = " << axle_a
+    //          << " b = " << axle_b << " c = " << axle_c << " pos = " << pos
+    //          << " vel = " << vel << " omega = " << omega 
+    //          << " force = " << force
+    //          << " moment = " << moment << std::endl;
+    dem::DEMParticleP pt = std::make_shared<dem::DEMParticle>(
+      id, 0, radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
+    pt->setPrevVeloc(vel);
+    pt->setCurrVeloc(vel);
+    pt->setPrevOmega(omega);
+    pt->setCurrOmega(omega);
+    pt->setForce(force);
+    pt->setMoment(moment);
+    allDEMParticles.push_back(pt);
+  }
+
+  SPHParticleCreator sph;
+  dem::Box container(dem::Vec(30.0, -2.0, 0.95), dem::Vec(52.0, 2.0, 5.5));
+  SPHParticlePArray sph_particles = 
+    sph.generateSPHParticleMiddleLayers<2>(container, allDEMParticles);
+
+  //std::cout << "Size:" << sph_particles.size() << "\n";
+  std::size_t noneP = 0;
+  std::size_t ghostP = 0;
+  std::size_t freeP = 0;
+  std::size_t boundaryP = 0;
+  for (auto pt : sph_particles) {
+    switch (pt->getType()) {
+      case SPHParticleType::GHOST:
+        ghostP++;
+        // std::cout << "pt " << pt->getId() << " has type GHOST" << std::endl;
+        break;
+      case SPHParticleType::FREE:
+        freeP++;
+        // std::cout << "pt " << pt->getId() << " has type FREE" << std::endl;
+        break;
+      case SPHParticleType::BOUNDARY:
+        boundaryP++;
+        // std::cout << "pt " << pt->getId() << " has type BOUNDARY" <<
+        // std::endl;
+        break;
+      default:
+        noneP++;
+        // std::cout << "pt " << pt->getId() << " has type NONE" << std::endl;
+        break;
+    }
+  }
+
+  std::size_t testIndex = round(sph_particles.size() / 2);
+  SPHParticleP testParticle = sph_particles[testIndex];
+  EXPECT_EQ(sph_particles.size(), 10369);
+  EXPECT_EQ(noneP, 0);
+  EXPECT_EQ(ghostP, 2022);
+  EXPECT_EQ(freeP, 7790);
+  EXPECT_EQ(boundaryP, 557);
+  EXPECT_EQ(testParticle->getId(), 9472);
+  EXPECT_EQ(testParticle->getType(), SPHParticleType::FREE);
+  EXPECT_NEAR(testParticle->getInitPosition().x(), 41.000004399, 1.0e-6);
+  EXPECT_NEAR(testParticle->getInitPosition().y(), 0, 1.0e-6);
+  EXPECT_NEAR(testParticle->getInitPosition().z(), 2.0552636, 1.0e-6);
+
+  /*
+  std::cout << "none = " << noneP << " ghost = " << ghostP
+            << " free = " << freeP << " boundary = " << boundaryP << std::endl;
+  std::cout << " Test: " << testIndex
+            << " Id = " << testParticle->getId()
+            << " Type = " << static_cast<int>(testParticle->getType())
+            << " Pos = " << testParticle->getInitPosition() << std::endl;
+  */
+
+  sph_particles.clear();
+  noneP = 0;
+  ghostP = 0;
+  freeP = 0;
+  boundaryP = 0;
+
+  dem::Box container3D(dem::Vec(30.0, -1.0, 1.0), dem::Vec(35.0, 2.0, 3.5));
+  sph_particles = 
+    sph.generateSPHParticleMiddleLayers<3>(container3D, allDEMParticles);
+  // std::cout << "Size:" << sph_particles.size() << "\n";
+  for (auto pt : sph_particles) {
+    switch (pt->getType()) {
+      case SPHParticleType::GHOST:
+        ghostP++;
+        // std::cout << "pt " << pt->getId() << " has type GHOST" << std::endl;
+        break;
+      case SPHParticleType::FREE:
+        freeP++;
+        // std::cout << "pt " << pt->getId() << " has type FREE" << std::endl;
+        break;
+      case SPHParticleType::BOUNDARY:
+        boundaryP++;
+        // std::cout << "pt " << pt->getId() << " has type BOUNDARY" <<
+        // std::endl;
+        break;
+      default:
+        noneP++;
+        // std::cout << "pt " << pt->getId() << " has type NONE" << std::endl;
+        break;
+    }
+  }
+
+  testIndex = round(sph_particles.size() / 2);
+  testParticle = sph_particles[testIndex];
+
+  EXPECT_EQ(sph_particles.size(), 129784);
+  EXPECT_EQ(noneP, 0);
+  EXPECT_EQ(ghostP, 2852);
+  EXPECT_EQ(freeP, 105792);
+  EXPECT_EQ(boundaryP, 21140);
+  EXPECT_EQ(testParticle->getId(), 120572);
+  EXPECT_EQ(testParticle->getType(), SPHParticleType::FREE);
+  EXPECT_NEAR(testParticle->getInitPosition().x(), 31.63157959, 1.0e-6);
+  EXPECT_NEAR(testParticle->getInitPosition().y(), 0.526316, 1.0e-6);
+  EXPECT_NEAR(testParticle->getInitPosition().z(), 2.0, 1.0e-6);
+
+  /*
+  std::cout << "none = " << noneP << " ghost = " << ghostP
+            << " free = " << freeP << " boundary = " << boundaryP << std::endl;
+  std::cout << " Test: " << testIndex
+            << " Id = " << testParticle->getId()
+            << " Type = " << static_cast<int>(testParticle->getType())
+            << " Pos = " << testParticle->getInitPosition() << std::endl;
+  */
+}

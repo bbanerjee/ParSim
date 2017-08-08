@@ -140,6 +140,10 @@ public:
   bool isOutsideDomainWithoutZBottom(const REAL& bufferLength, const dem::Vec& minCorner,
                        const dem::Vec& maxCorner);
 
+  template <int dim>
+  bool isOutsideDomainWithoutZTop(const REAL& bufferLength, const dem::Vec& minCorner,
+                       const dem::Vec& maxCorner);
+
 private:
   ParticleID d_id;
   REAL d_mass;

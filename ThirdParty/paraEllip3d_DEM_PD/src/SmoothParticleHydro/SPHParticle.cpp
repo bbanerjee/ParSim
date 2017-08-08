@@ -246,3 +246,40 @@ SPHParticle::isOutsideDomainWithoutZBottom<3>(const REAL& bufferLength,
     return true;
   return false;
 }
+
+template <>
+bool
+SPHParticle::isOutsideDomainWithoutZTop<2>(const REAL& bufferLength,
+                                              const dem::Vec& minCorner,
+                                              const dem::Vec& maxCorner)
+{
+  REAL xminBoundary = minCorner.x() - bufferLength;
+  REAL xmaxBoundary = maxCorner.x() + bufferLength;
+  REAL zminBoundary = minCorner.z() - bufferLength;
+  REAL zmaxBoundary = 1.0e20;
+  dem::Box domain(xminBoundary, 0, zminBoundary, xmaxBoundary, 0, zmaxBoundary);
+
+  if (domain.outside(d_initialPos))
+    return true;
+  return false;
+}
+
+template <>
+bool
+SPHParticle::isOutsideDomainWithoutZTop<3>(const REAL& bufferLength,
+                                const dem::Vec& minCorner,
+                                const dem::Vec& maxCorner)
+{
+  REAL xminBoundary = minCorner.x() - bufferLength;
+  REAL xmaxBoundary = maxCorner.x() + bufferLength;
+  REAL yminBoundary = minCorner.y() - bufferLength;
+  REAL ymaxBoundary = maxCorner.y() + bufferLength;
+  REAL zminBoundary = minCorner.z() - bufferLength;
+  REAL zmaxBoundary = 1.0e20;
+  dem::Box domain(xminBoundary, yminBoundary, zminBoundary, xmaxBoundary,
+                  ymaxBoundary, zmaxBoundary);
+
+  if (domain.outside(d_initialPos))
+    return true;
+  return false;
+}

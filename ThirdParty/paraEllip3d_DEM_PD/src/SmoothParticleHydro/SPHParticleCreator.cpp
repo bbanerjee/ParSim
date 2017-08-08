@@ -237,7 +237,123 @@ SPHParticleCreator::generateSPHParticleNoBottom(
 
   return allSPHParticles;
 
-} // generateSPHParticleNoBottom3D
+} // generateSPHParticleNoBottom
+
+// For drainage problem 
+// (middle layers only)
+template <int dim>
+SPHParticlePArray
+SPHParticleCreator::generateSPHParticleMiddleLayers(
+  const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles)
+{
+  // Determine length parameter and SPH point spacing
+  REAL xMin = allContainer.getMinCorner().x();
+  REAL xMax = allContainer.getMaxCorner().x();
+  auto sphLength = xMin - xMax;
+  auto spaceInterval = util::getParam<REAL>("spaceInterval");
+  auto numSPHPoint = sphLength/spaceInterval + 1;
+
+  auto small_value = 0.01 * spaceInterval;
+  //auto smoothLength = 0.0;
+  auto kernelSize = 0.0;
+
+  // The location of the water
+  auto zMinWater = util::getParam<REAL>("waterZmin");
+  auto zMaxWater = util::getParam<REAL>("waterZmax");
+
+  // SPH parameters
+  auto gravAccel = util::getParam<REAL>("gravAccel");
+  auto gravScale = util::getParam<REAL>("gravScale");
+  auto numLayers = util::getParam<int>("numLayers");
+  auto gamma = util::getParam<REAL>("gamma");
+  auto P0 = util::getParam<REAL>("P0");
+  auto sphInitialDensity = util::getParam<REAL>("SPHInitialDensity");
+
+  auto sphMass = computeMass<dim>(sphInitialDensity, sphLength, numSPHPoint);
+
+  // get the dimensions of the sph domain
+  Vec vmin = allContainer.getMinCorner();
+  Vec vmax = allContainer.getMaxCorner();
+
+  // Create an linearly spaced arrays of x/y/zcoords
+  std::vector<REAL> xCoords, yCoords, zCoords;
+  createCoords<dim>(vmin, vmax, spaceInterval, numLayers, xCoords, yCoords,
+                  zCoords);
+
+  /*
+  std::cout << "x:(" << xCoords.size() << ")";
+  for (auto x: xCoords) { std::cout << x << " "; }
+  std::cout << std::endl;
+  std::cout << "y:(" << yCoords.size() << ")";
+  for (auto y: yCoords) { std::cout << y << " "; }
+  std::cout << std::endl;
+  std::cout << "z:(" << zCoords.size() << ")";
+  for (auto z: zCoords) { std::cout << z << " "; }
+  std::cout << std::endl;
+  */
+
+  // Create the initial allSPHParticleVec
+  SPHParticlePArray allSPHParticles =
+    createParticleArray<dim>(sphMass, sphInitialDensity, xCoords, yCoords,
+                         zCoords);
+
+  //std::cout << "Created particle array: " << d_allSPHParticleVec.size() << "\n";
+
+  // create and store SPHParticle objects into d_sphParticleVec
+  for (auto& sph_particle : allSPHParticles) {
+    dem::Vec local_pos = 0;
+    dem::Vec sph_pos = sph_particle->getInitPosition();
+    bool isInside = false;
+    bool insideGhostLayer = false;
+
+    for (auto& dem_particle : allDEMParticles) {
+
+      if (sph_particle->isInsideDEMParticle<dim>(kernelSize, dem_particle,
+                                               local_pos, insideGhostLayer)) {
+        isInside = true;
+        sph_particle->setType(SPHParticleType::GHOST);
+        sph_particle->setLocalPosition(local_pos);
+        sph_particle->setDEMParticle(dem_particle.get());
+        break;
+      }
+    } // end dem particles
+
+    // free/boundary particles
+    if (!isInside) {
+      REAL density = sphInitialDensity;
+      REAL bufferLength = spaceInterval - small_value;
+      if (sph_particle->isOutsideDomainWithoutZTop<dim>(bufferLength, vmin, vmax)) {
+        sph_particle->setType(SPHParticleType::BOUNDARY);
+        sph_particle->setDensity(density);
+        sph_particle->setLocalPosition(local_pos);
+      } else {
+        if (sph_pos.z() >= zMinWater && sph_pos.z() <= zMaxWater) {
+          REAL rhoGH = density * gravAccel * (vmax.z() - sph_pos.z());
+          density *= pow(1 + rhoGH * gravScale / P0, 1.0 / gamma);
+          sph_particle->setType(SPHParticleType::FREE);
+          sph_particle->setDensity(density);
+          sph_particle->setLocalPosition(local_pos);
+        } else {
+          sph_particle->setType(SPHParticleType::NONE);
+          sph_particle->setDensity(density);
+          sph_particle->setLocalPosition(local_pos);
+        }
+      } // End domain if
+    }   // End if not isGhost
+  }
+
+  // Remove the SPH particle that are inside the DEM particles
+  // but not in the ghost layer of each particle
+  removeRedundantSPHParticles(allSPHParticles);
+
+  // Compute volume, pressure, viscosity of each particle
+  for (auto& sph_particle : allSPHParticles) {
+    sph_particle->initialize();
+  }
+
+  return allSPHParticles;
+
+} // generateSPHParticleMiddleLayers
 
 template <>
 REAL
@@ -389,5 +505,9 @@ template SPHParticlePArray SPHParticleCreator::generateSPHParticle<3>(
 template SPHParticlePArray SPHParticleCreator::generateSPHParticleNoBottom<2>(
   const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);
 template SPHParticlePArray SPHParticleCreator::generateSPHParticleNoBottom<3>(
+  const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);
+template SPHParticlePArray SPHParticleCreator::generateSPHParticleMiddleLayers<2>(
+  const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);
+template SPHParticlePArray SPHParticleCreator::generateSPHParticleMiddleLayers<3>(
   const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);
 }

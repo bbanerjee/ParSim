@@ -22,6 +22,10 @@ public:
                                    const dem::DEMParticlePArray& allDEMParticles);
 
   template <int dim>
+  SPHParticlePArray generateSPHParticleMiddleLayers(const dem::Box& allContainer,
+                                   const dem::DEMParticlePArray& allDEMParticles);
+
+  template <int dim>
   REAL computeMass(const double& density, const double& length,
                    const std::size_t& numPts) const;
 
