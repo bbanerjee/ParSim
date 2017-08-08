@@ -1,15 +1,16 @@
+#include <SmoothParticleHydro/SPHParticleCreator.h>
+
 #include <Core/Util/Utility.h>
 #include <DiscreteElements/DEMParticle.h>
 #include <InputOutput/InputParameter.h>
-#include <SmoothParticleHydro/SmoothParticleHydro.h>
 #include <gtest/gtest.h>
 
 using namespace sph;
 
-TEST(SPHTest, computeMass)
+TEST(SPHParticleCreatorTest, computeMass)
 {
 
-  SmoothParticleHydro sph;
+  SPHParticleCreator sph;
 
   REAL density = 1000;
   REAL length = 2.5;
@@ -22,10 +23,10 @@ TEST(SPHTest, computeMass)
   EXPECT_DOUBLE_EQ(mass, 1.0e-6);
 }
 
-TEST(SPHTest, createCoords)
+TEST(SPHParticleCreatorTest, createCoords)
 {
 
-  SmoothParticleHydro sph;
+  SPHParticleCreator sph;
 
   dem::Vec vmin(0.4, 0.4, 0.4);
   dem::Vec vmax(1, 2, 3);
@@ -75,7 +76,7 @@ TEST(SPHTest, createCoords)
   EXPECT_NEAR(zCoords[15], 3.39, 1.0e-6);
 }
 
-TEST(SPHTest, createParticleArray)
+TEST(SPHParticleCreatorTest, createParticleArray)
 {
 
   dem::InputParameter::get().addParameter("P0", 1600.0);
@@ -83,7 +84,7 @@ TEST(SPHTest, createParticleArray)
   dem::InputParameter::get().addParameter("gamma", 1.4);
   dem::InputParameter::get().addParameter("nu", 100.0);
 
-  SmoothParticleHydro sph;
+  SPHParticleCreator sph;
 
   dem::Vec vmin(0, 0, 0);
   dem::Vec vmax(1, 0, 1);
@@ -96,9 +97,9 @@ TEST(SPHTest, createParticleArray)
 
   REAL mass = 0.001;
   REAL density = 1000.0;
-  sph.createParticleArray<2>(mass, density, xCoords, yCoords, zCoords);
+  SPHParticlePArray particles = 
+    sph.createParticleArray<2>(mass, density, xCoords, yCoords, zCoords);
 
-  SPHParticlePArray particles = sph.getAllSPHParticleVec();
   EXPECT_EQ(particles.size(), 100);
   EXPECT_NEAR(particles[0]->getInitPosition().x(), -0.4, 1.0e-16);
   EXPECT_DOUBLE_EQ(particles[0]->getInitPosition().y(), 0);
@@ -124,8 +125,8 @@ TEST(SPHTest, createParticleArray)
   std::cout << std::endl;
   */
 
-  sph.createParticleArray<3>(mass, density, xCoords, yCoords, zCoords);
-  particles = sph.getAllSPHParticleVec();
+  particles = 
+    sph.createParticleArray<3>(mass, density, xCoords, yCoords, zCoords);
   EXPECT_EQ(particles.size(), 600);
   EXPECT_NEAR(particles[0]->getInitPosition().x(), -0.4, 1.0e-16);
   EXPECT_NEAR(particles[0]->getInitPosition().y(), -0.4, 1.0e-16);
@@ -135,7 +136,7 @@ TEST(SPHTest, createParticleArray)
   EXPECT_NEAR(particles[599]->getInitPosition().z(), 1.4, 1.0e-16);
 }
 
-TEST(SPHTest, generateSPHParticle)
+TEST(SPHParticleCreatorTest, generateSPHParticle)
 {
 
   // Setup the parameters that are used by the constructor
@@ -211,11 +212,11 @@ TEST(SPHTest, generateSPHParticle)
     allDEMParticles.push_back(pt);
   }
 
-  SmoothParticleHydro sph;
+  SPHParticleCreator sph;
   dem::Box container(dem::Vec(30.0, -2.0, 0.95), dem::Vec(52.0, 2.0, 5.5));
-  sph.generateSPHParticle<2>(container, allDEMParticles);
+  SPHParticlePArray sph_particles = 
+    sph.generateSPHParticle<2>(container, allDEMParticles);
 
-  SPHParticlePArray sph_particles = sph.getAllSPHParticleVec();
   // std::cout << "Size:" << sph_particles.size() << "\n";
   std::size_t noneP = 0;
   std::size_t ghostP = 0;
@@ -266,15 +267,14 @@ TEST(SPHTest, generateSPHParticle)
   */
 
   sph_particles.clear();
-  sph.clearAllSPHParticleVec();
   noneP = 0;
   ghostP = 0;
   freeP = 0;
   boundaryP = 0;
 
   dem::Box container3D(dem::Vec(30.0, -1.0, 3.5), dem::Vec(35.0, 1.0, 4.0));
-  sph.generateSPHParticle<3>(container3D, allDEMParticles);
-  sph_particles = sph.getAllSPHParticleVec();
+  sph_particles = 
+    sph.generateSPHParticle<3>(container3D, allDEMParticles);
   // std::cout << "Size:" << sph_particles.size() << "\n";
   for (auto pt : sph_particles) {
     switch (pt->getType()) {
@@ -321,7 +321,7 @@ TEST(SPHTest, generateSPHParticle)
   */
 }
 
-TEST(SPHTest, generateSPHParticleNoBottom)
+TEST(SPHParticleCreatorTest, generateSPHParticleNoBottom)
 {
 
   // Setup the parameters that are used by the constructor
@@ -396,11 +396,11 @@ TEST(SPHTest, generateSPHParticleNoBottom)
     allDEMParticles.push_back(pt);
   }
 
-  SmoothParticleHydro sph;
+  SPHParticleCreator sph;
   dem::Box container(dem::Vec(30.0, -2.0, 0.95), dem::Vec(52.0, 2.0, 5.5));
-  sph.generateSPHParticleNoBottom<2>(container, allDEMParticles);
+  SPHParticlePArray sph_particles = 
+    sph.generateSPHParticleNoBottom<2>(container, allDEMParticles);
 
-  SPHParticlePArray sph_particles = sph.getAllSPHParticleVec();
   //std::cout << "Size:" << sph_particles.size() << "\n";
   std::size_t noneP = 0;
   std::size_t ghostP = 0;
@@ -451,15 +451,14 @@ TEST(SPHTest, generateSPHParticleNoBottom)
   */
 
   sph_particles.clear();
-  sph.clearAllSPHParticleVec();
   noneP = 0;
   ghostP = 0;
   freeP = 0;
   boundaryP = 0;
 
   dem::Box container3D(dem::Vec(30.0, -1.0, 3.5), dem::Vec(35.0, 1.0, 4.0));
-  sph.generateSPHParticleNoBottom<3>(container3D, allDEMParticles);
-  sph_particles = sph.getAllSPHParticleVec();
+  sph_particles = 
+    sph.generateSPHParticleNoBottom<3>(container3D, allDEMParticles);
   // std::cout << "Size:" << sph_particles.size() << "\n";
   for (auto pt : sph_particles) {
     switch (pt->getType()) {

@@ -66,32 +66,6 @@ public:
 
   inline void setGrid(dem::Box cont) { d_sphGrid = cont; }
 
-  template <int dim>
-  void generateSPHParticle(const dem::Box& allContainer,
-                           dem::DEMParticlePArray& allDEMParticles);
-
-  template <int dim>
-  void generateSPHParticleNoBottom(const dem::Box& allContainer,
-                                      dem::DEMParticlePArray& allDEMParticles);
-
-  template <int dim>
-  REAL computeMass(const double& density, const double& length,
-                   const std::size_t& numPts) const;
-
-  template <int dim>
-  void createCoords(const dem::Vec& vmin, const dem::Vec& vmax,
-                    const REAL& spaceInterval, const int& numLayers,
-                    std::vector<REAL>& xCoords, std::vector<REAL>& yCoords,
-                    std::vector<REAL>& zCoords) const;
-
-  template <int dim>
-  void createParticleArray(const REAL& mass, const REAL& density,
-                           const std::vector<REAL>& xCoords,
-                           const std::vector<REAL>& yCoords,
-                           const std::vector<REAL>& zCoords);
-
-  void removeRedundantSPHParticles();
-
   /*
   // Scatter the sphdynamics particles
   void scatterSPHParticle(const dem::Box& allContainer);

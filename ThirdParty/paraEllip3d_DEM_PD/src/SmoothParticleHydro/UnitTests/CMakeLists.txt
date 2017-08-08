@@ -49,11 +49,11 @@ add_custom_command(
 )
 
 #--------------------------------------
-# SmoothParticleHydro
+# SPHParticleCreator
 #--------------------------------------
-add_executable(testSPH testSPH.cpp)
+add_executable(testSPHParticleCreator testSPHParticleCreator.cpp)
 
-target_link_libraries(testSPH
+target_link_libraries(testSPHParticleCreator
   ${TEST_LIB}
   ELLIP3D_LIB
   ${MPI_LIBRARY}
@@ -62,7 +62,7 @@ target_link_libraries(testSPH
   ${ZLIB_LIBRARIES}
 )
 
-set(UNIT_TEST testSPH)
+set(UNIT_TEST testSPHParticleCreator)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD
