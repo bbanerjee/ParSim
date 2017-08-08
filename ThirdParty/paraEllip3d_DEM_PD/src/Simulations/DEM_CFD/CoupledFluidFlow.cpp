@@ -8,7 +8,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
   Box allContainer = dem->getAllContainer();
   Gradation gradation = dem->getGradation();
   Fluid fluid = dem->getFluid();
-  DEMParticlePArray particleVec = dem->getParticleVec();
+  DEMParticlePArray particleVec = dem->getDEMParticleVec();
 
   std::ofstream progressInf;
   std::ofstream particleInf;
@@ -79,10 +79,10 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
 
     dem->clearContactForce();
 
-    /*4*/ fluid.getParticleInfo(particleVec); // not allParticleVec
+    /*4*/ fluid.getParticleInfo(particleVec); // not allDEMParticleVec
     /*5*/ fluid.runOneStep();
     /*6*/ fluid.calcParticleForce(particleVec,
-                                  particleInf); // not allParticleVec
+                                  particleInf); // not allDEMParticleVec
     /*7*/ fluid.penalize();
 
     dem->internalForce();

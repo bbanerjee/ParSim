@@ -109,7 +109,7 @@ namespace dem {
     std::vector<Particle *> recvParticleVec;  // received particles per process
     std::vector<Particle *> mergeParticleVec; // merged particles per process
     //  for sph
-    std::vector<sph::SPHParticle*> allSPHParticleVec;	// this contains all sph particles except ghost particles, i.e. free and boundary for all cpus
+    std::vector<sph::SPHParticle*> d_allSPHParticleVec;	// this contains all sph particles except ghost particles, i.e. free and boundary for all cpus
     std::vector<sph::SPHParticle*> SPHParticleVec;	// this contains all sph particles except ghost particles for each cpu 
     std::vector<sph::SPHParticle*> rsphParticleX1, rsphParticleX2; // r stands for received
     std::vector<sph::SPHParticle*> rsphParticleY1, rsphParticleY2; 
@@ -119,7 +119,7 @@ namespace dem {
     std::vector<sph::SPHParticle*> rsphParticleY1Z1, rsphParticleY1Z2, rsphParticleY2Z1, rsphParticleY2Z2; 
     std::vector<sph::SPHParticle*> rsphParticleX1Y1Z1, rsphParticleX1Y1Z2, rsphParticleX1Y2Z1, rsphParticleX1Y2Z2; 
     std::vector<sph::SPHParticle*> rsphParticleX2Y1Z1, rsphParticleX2Y1Z2, rsphParticleX2Y2Z1, rsphParticleX2Y2Z2; 
-    std::vector<sph::SPHParticle*> recvSPHParticleVec;	// received sph particles (free and boundary) per process     
+    std::vector<sph::SPHParticle*> d_recvSPHParticleVec;	// received sph particles (free and boundary) per process     
     std::vector<sph::SPHParticle*> mergeSPHParticleVec;	// merged sph particles (free and boundary) per process  
     std::vector< std::vector<sph::SPHParticle*> >  SPHParticleCellVec;	// a vector to store the cell of SPH partiles (free, ghost and boundary), each cell contains SPH particles within this cell
 
@@ -162,7 +162,7 @@ namespace dem {
       for(std::vector<Spring *>::iterator it = springVec.begin(); it != springVec.end(); ++it)
 	delete (*it); 
 
-      for(std::vector<sph::SPHParticle *>::iterator it = allSPHParticleVec.begin(); it != allSPHParticleVec.end(); ++it)
+      for(std::vector<sph::SPHParticle *>::iterator it = d_allSPHParticleVec.begin(); it != d_allSPHParticleVec.end(); ++it)
 	delete (*it); 
 
       for(std::vector<sph::SPHParticle *>::iterator it = SPHParticleVec.begin(); it != SPHParticleVec.end(); ++it)
@@ -174,7 +174,7 @@ namespace dem {
       boundaryVec.clear();
       cavityBoundaryVec.clear();
       springVec.clear();
-      allSPHParticleVec.clear();
+      d_allSPHParticleVec.clear();
       SPHParticleVec.clear();
 
     }

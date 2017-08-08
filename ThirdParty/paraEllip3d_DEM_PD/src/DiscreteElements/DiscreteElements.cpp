@@ -269,7 +269,7 @@ DiscreteElements::readParticles(const std::string& particleFile)
   bool doInitialize = (util::getParam<int>("toInitParticle") == 1);
 
   DEMParticleFileReader reader;
-  reader.read(particleFile, young, poisson, doInitialize, allParticleVec,
+  reader.read(particleFile, young, poisson, doInitialize, allDEMParticleVec,
               gradation);
 }
 
@@ -281,7 +281,7 @@ DiscreteElements::scatterParticle()
     setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
                 grid.getMinCorner().z(), grid.getMaxCorner().x(),
                 grid.getMaxCorner().y(),
-                getPtclMaxZ(allParticleVec) + gradation.getPtclMaxRadius()));
+                getPtclMaxZ(allDEMParticleVec) + gradation.getPtclMaxRadius()));
 
     Vec v1 = grid.getMinCorner();
     Vec v2 = grid.getMaxCorner();
@@ -309,7 +309,7 @@ DiscreteElements::scatterParticle()
       //std::cout << "lower = " << lower 
       //          << " upper = " << upper << "\n";
 
-      findParticleInBox(container, allParticleVec, tmpParticleVec);
+      findParticleInBox(container, allDEMParticleVec, tmpParticleVec);
 
       if (iRank != 0)
         reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag,
@@ -319,7 +319,7 @@ DiscreteElements::scatterParticle()
         for (auto i = 0u; i < particleVec.size(); ++i)
           particleVec[i] = std::make_shared<DEMParticle>(
             *tmpParticleVec[i]); // default synthesized copy constructor
-      } // now particleVec do not share memeory with allParticleVec
+      } // now particleVec do not share memeory with allDEMParticleVec
     }
     boost::mpi::wait_all(reqs, reqs + s_mpiSize - 1); // for non-blocking send
     delete[] reqs;
@@ -328,7 +328,7 @@ DiscreteElements::scatterParticle()
     boostWorld.recv(0, mpiTag, particleVec);
   }
 
-  // content of allParticleVec may need to be printed, so do not clear it.
+  // content of allDEMParticleVec may need to be printed, so do not clear it.
   // if (s_mpiRank == 0) releaseGatheredParticle();
   //proc0cout << "DEM::scatter:: num particles = " << particleVec.size() << "\n";
 
@@ -1579,7 +1579,7 @@ DiscreteElements::writeGridToFile() const
 void
 DiscreteElements::writeParticlesToFile(int frame) const
 {
-  d_writer->writeParticles(&allParticleVec, frame);
+  d_writer->writeParticles(&allDEMParticleVec, frame);
   d_writer->writeSieves(&gradation);
 }
 
@@ -1594,7 +1594,7 @@ DiscreteElements::printParticle(const std::string& fileName, int frame) const
 {
   OutputTecplot<DEMParticlePArray> writer(".", 0);
   writer.setParticleFileName(fileName);
-  writer.writeParticles(&allParticleVec, frame);
+  writer.writeParticles(&allDEMParticleVec, frame);
 }
 
 void
@@ -1831,14 +1831,14 @@ DiscreteElements::generateParticle(std::size_t particleLayers,
   if (particleLayers == 0) { // just one free particle
     DEMParticleP newptcl = std::make_shared<DEMParticle>(
       particleNum + 1, 0, Vec(x0, y0, z0), gradation, young, poisson);
-    allParticleVec.push_back(newptcl);
+    allDEMParticleVec.push_back(newptcl);
     particleNum++;
   } else if (particleLayers == 1) { // a horizontal layer of free particles
     for (x = x1; x - x2 < EPS; x += diameter)
       for (y = y1; y - y2 < EPS; y += diameter) {
         DEMParticleP newptcl = std::make_shared<DEMParticle>(
           particleNum + 1, 0, Vec(x, y, z0), gradation, young, poisson);
-        allParticleVec.push_back(newptcl);
+        allDEMParticleVec.push_back(newptcl);
         particleNum++;
       }
   } else if (particleLayers == 2) { // multiple layers of free particles
@@ -1847,7 +1847,7 @@ DiscreteElements::generateParticle(std::size_t particleLayers,
         for (y = y1 + offset; y - y2 < EPS; y += diameter) {
           DEMParticleP newptcl = std::make_shared<DEMParticle>(
             particleNum + 1, 0, Vec(x, y, z), gradation, young, poisson);
-          allParticleVec.push_back(newptcl);
+          allDEMParticleVec.push_back(newptcl);
           particleNum++;
         }
       offset *= -1;
@@ -1863,7 +1863,7 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
 {
   if (toRebuild)
     readParticles(inputParticle);
-  trimHistoryNum = allParticleVec.size();
+  trimHistoryNum = allDEMParticleVec.size();
 
   Vec v1 = allContainer.getMinCorner();
   Vec v2 = allContainer.getMaxCorner();
@@ -1879,8 +1879,8 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
   // Not an efficient operation
   // Better approach may be to use a list if random access of vector
   // members is not needed
-  allParticleVec.erase(
-    std::remove_if(allParticleVec.begin(), allParticleVec.end(),
+  allDEMParticleVec.erase(
+    std::remove_if(allDEMParticleVec.begin(), allDEMParticleVec.end(),
                    [&x1, &y1, &z1, &x2, &y2, &z2, &maxR](DEMParticleP particle) {
                      Vec center = particle->currentPosition();
                      if (center.x() < x1 || center.x() > x2 ||
@@ -1890,19 +1890,19 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
                      }
                      return false;
                    }),
-    allParticleVec.end());
+    allDEMParticleVec.end());
 
   /*
   DEMParticlePArray::iterator itr;
   Vec center;
-  for (auto itr = allParticleVec.begin(); itr != allParticleVec.end(); ) {
+  for (auto itr = allDEMParticleVec.begin(); itr != allDEMParticleVec.end(); ) {
     center=(*itr)->currentPosition();
     if(center.x() < x1 || center.x() > x2 ||
    center.y() < y1 || center.y() > y2 ||
    center.z() < z1 || center.z() + maxR > z2)
   {
     delete (*itr); // release memory
-    itr = allParticleVec.erase(itr);
+    itr = allDEMParticleVec.erase(itr);
   }
     else
   ++itr;
@@ -2636,23 +2636,23 @@ DiscreteElements::migrateParticle()
 void
 DiscreteElements::gatherParticle()
 {
-  // update allParticleVec: process 0 collects all updated particles from each
+  // update allDEMParticleVec: process 0 collects all updated particles from each
   // other process
   if (s_mpiRank != 0) { // each process except 0
     boostWorld.send(0, mpiTag, particleVec);
   } else { // process 0
-    // allParticleVec is cleared before filling with new data
+    // allDEMParticleVec is cleared before filling with new data
     releaseGatheredParticle();
 
-    // duplicate particleVec so that it is not destroyed by allParticleVec in
+    // duplicate particleVec so that it is not destroyed by allDEMParticleVec in
     // next iteration,
     // otherwise it causes memory error.
     DEMParticlePArray dupParticleVec(particleVec.size());
     for (std::size_t i = 0; i < dupParticleVec.size(); ++i)
       dupParticleVec[i] = std::make_shared<DEMParticle>(*particleVec[i]);
 
-    // fill allParticleVec with dupParticleVec and received particles
-    allParticleVec.insert(allParticleVec.end(), dupParticleVec.begin(),
+    // fill allDEMParticleVec with dupParticleVec and received particles
+    allDEMParticleVec.insert(allDEMParticleVec.end(), dupParticleVec.begin(),
                           dupParticleVec.end());
 
     DEMParticlePArray tmpParticleVec;
@@ -2660,7 +2660,7 @@ DiscreteElements::gatherParticle()
     for (int iRank = 1; iRank < s_mpiSize; ++iRank) {
       tmpParticleVec.clear(); // do not destroy particles!
       boostWorld.recv(iRank, mpiTag, tmpParticleVec);
-      allParticleVec.insert(allParticleVec.end(), tmpParticleVec.begin(),
+      allDEMParticleVec.insert(allDEMParticleVec.end(), tmpParticleVec.begin(),
                             tmpParticleVec.end());
       gatherRam += tmpParticleVec.size();
     }
@@ -2672,14 +2672,14 @@ DiscreteElements::gatherParticle()
 void
 DiscreteElements::releaseGatheredParticle()
 {
-  // clear allParticleVec, avoid long time memory footprint.
+  // clear allDEMParticleVec, avoid long time memory footprint.
   /*
-  for (DEMParticlePArray::iterator it = allParticleVec.begin(); it !=
-  allParticleVec.end(); ++it)
+  for (DEMParticlePArray::iterator it = allDEMParticleVec.begin(); it !=
+  allDEMParticleVec.end(); ++it)
     delete (*it);
   */
-  allParticleVec.clear();
-  DEMParticlePArray().swap(allParticleVec); // actual memory release
+  allDEMParticleVec.clear();
+  DEMParticlePArray().swap(allDEMParticleVec); // actual memory release
 }
 
 
@@ -3241,7 +3241,7 @@ REAL
 DiscreteElements::getMass() const
 {
   REAL var = 0;
-  for (const auto& it : allParticleVec)
+  for (const auto& it : allDEMParticleVec)
     var += it->getMass();
   return var;
 }
@@ -3250,7 +3250,7 @@ REAL
 DiscreteElements::getVolume() const
 {
   REAL var = 0;
-  for (const auto& it : allParticleVec)
+  for (const auto& it : allDEMParticleVec)
     if (it->getType() == 0)
       var += it->getVolume();
   return var;

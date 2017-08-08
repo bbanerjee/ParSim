@@ -747,7 +747,7 @@ Peridynamics::scatterPeriParticle(const Box& allContainer)
         std::cout << out.str();
         */
 
-      } // now particleVec do not share memeory with allParticleVec
+      } // now particleVec do not share memeory with allDEMParticleVec
     }
 
     boost::mpi::wait_all(reqs, reqs + d_mpiSize - 1); // for non-blocking send
@@ -1169,7 +1169,7 @@ Peridynamics::gatherPeriParticle()
       index++;
     }
 
-    // fill allParticleVec with dupParticleVec 
+    // fill allDEMParticleVec with dupParticleVec 
     allPeriParticleVec.insert(allPeriParticleVec.end(),
                               dupPatchParticles.begin(),
                               dupPatchParticles.end());

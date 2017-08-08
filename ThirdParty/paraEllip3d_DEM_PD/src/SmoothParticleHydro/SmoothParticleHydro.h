@@ -32,16 +32,18 @@ public:
   // Accessor methods
   inline const SPHParticlePArray& getAllSPHParticleVec() const
   {
-    return allSPHParticleVec;
+    return d_allSPHParticleVec;
   }
   inline const SPHParticlePArray& getSPHParticleVec() const
   {
-    return sphParticleVec;
+    return d_sphParticleVec;
   }
   inline const SPHParticlePArray& getRecvSPHParticleVec() const
   {
-    return recvSPHParticleVec;
+    return d_recvSPHParticleVec;
   }
+
+  void clearAllSPHParticleVec() { d_allSPHParticleVec.clear(); }
 
   void setCommunicator(const boost::mpi::communicator& boostWorldComm,
                        const MPI_Comm& mpiWorldComm, 
@@ -85,6 +87,8 @@ public:
                            const std::vector<REAL>& yCoords,
                            const std::vector<REAL>& zCoords);
 
+  void removeRedundantSPHParticles();
+
   /*
   // Scatter the sphdynamics particles
   void scatterSPHParticle(const dem::Box& allContainer);
@@ -97,7 +101,7 @@ public:
                          const double& maxDEMParticleRadius);
 
   void removeSPHParticleOutBox(const dem::Box& container,
-                                SPHParticlePArray& sphParticleVec);
+                                SPHParticlePArray& d_sphParticleVec);
 
   bool isBdryProcess();
 
@@ -120,7 +124,7 @@ public:
   } // getnSPHParticle - returns number of sph-particles
 
   // construct Matrix members in
-  // recvSPHParticleVec, construction here
+  // d_recvSPHParticleVec, construction here
   // since currently
   // the pointer array in Matrix cannot be transfered well between cpus
   void constructRecvSPHMatrix(); 
@@ -189,14 +193,14 @@ private:
   int ndim; 
 
   // only for master cpu
-  SPHParticlePArray allSPHParticleVec; 
+  SPHParticlePArray d_allSPHParticleVec; 
 
   // coordinates of all the particles in this cpu, local 
   // sph-points in current cpu
-  SPHParticlePArray sphParticleVec; 
+  SPHParticlePArray d_sphParticleVec; 
   SPHParticlePArray ghostSPHParticleVec; 
 
-  SPHParticlePArray recvSPHParticleVec;
+  SPHParticlePArray d_recvSPHParticleVec;
   SPHParticlePArray mergeSPHParticleVec;
 };
 

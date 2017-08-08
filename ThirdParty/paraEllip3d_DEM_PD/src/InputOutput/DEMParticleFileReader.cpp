@@ -36,7 +36,7 @@ DEMParticleFileReader::read(const std::string& fileName, const REAL& youngModulu
  */
 void
 DEMParticleFileReader::readParticlesText(const std::string& inputParticle,
-                                      DEMParticlePArray& allParticleVec,
+                                      DEMParticlePArray& allDEMParticleVec,
                                       Gradation& gradation) const
 {
   std::ifstream ifs(inputParticle);
@@ -55,7 +55,7 @@ DEMParticleFileReader::readParticlesText(const std::string& inputParticle,
     str >> str >> str >> str >> str >> str >> str >> str >> str >> str >> str >>
     str >> str >> str >> str >> str >> str >> str >> str;
 
-  allParticleVec.clear();
+  allDEMParticleVec.clear();
 
   std::size_t id, type;
   REAL a, b, c, px, py, pz, dax, day, daz, dbx, dby, dbz, dcx, dcy, dcz;
@@ -79,13 +79,13 @@ DEMParticleFileReader::readParticlesText(const std::string& inputParticle,
     if (d_doInitialize) {
       pt->setPrevVeloc(Vec(vx, vy, vz));
       pt->setCurrVeloc(Vec(vx, vy, vz));
-      pt->setPrevOmga(Vec(omx, omy, omz));
-      pt->setCurrOmga(Vec(omx, omy, omz));
+      pt->setPrevOmega(Vec(omx, omy, omz));
+      pt->setCurrOmega(Vec(omx, omy, omz));
       pt->setForce(Vec(fx, fy, fz));  // initial force
       pt->setMoment(Vec(mx, my, mz)); // initial moment
     }
 
-    allParticleVec.push_back(pt);
+    allDEMParticleVec.push_back(pt);
   }
 
   std::size_t sieveNum;
@@ -102,7 +102,7 @@ DEMParticleFileReader::readParticlesText(const std::string& inputParticle,
 
 bool
 DEMParticleFileReader::readParticlesXML(const std::string& inputFileName,
-                                     DEMParticlePArray& allParticleVec,
+                                     DEMParticlePArray& allDEMParticleVec,
                                      Gradation& gradation) const
 {
   // Read the input file
@@ -200,13 +200,13 @@ DEMParticleFileReader::readParticlesXML(const std::string& inputFileName,
         if (d_doInitialize) {
           pt->setPrevVeloc(particleVel[ii]);
           pt->setCurrVeloc(particleVel[ii]);
-          pt->setPrevOmga(particleRot[ii]);
-          pt->setCurrOmga(particleRot[ii]);
+          pt->setPrevOmega(particleRot[ii]);
+          pt->setCurrOmega(particleRot[ii]);
           pt->setForce(particleForce[ii]);   // initial force
           pt->setMoment(particleMoment[ii]); // initial moment
         }
 
-        allParticleVec.push_back(pt);
+        allDEMParticleVec.push_back(pt);
       }
     } else {
       std::cerr << "Logic for ASCII text files not implemented yet\n";

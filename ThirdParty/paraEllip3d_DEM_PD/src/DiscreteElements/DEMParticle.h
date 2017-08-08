@@ -137,8 +137,8 @@ public:
   void setPrevDirecC(Vec vv) { d_prevDirecC = vv; }
   void setCurrVeloc(Vec vv) { d_currVeloc = vv; }
   void setPrevVeloc(Vec vv) { d_prevVeloc = vv; }
-  void setCurrOmga(Vec vv) { d_currOmga = vv; }
-  void setPrevOmga(Vec vv) { d_prevOmga = vv; }
+  void setCurrOmega(Vec vv) { d_currOmga = vv; }
+  void setPrevOmega(Vec vv) { d_prevOmga = vv; }
   void setForce(Vec vv)
   {
     d_force = vv;

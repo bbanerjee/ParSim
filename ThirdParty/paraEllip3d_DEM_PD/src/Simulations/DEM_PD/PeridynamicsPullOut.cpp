@@ -47,7 +47,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     // that are within sand particles are deleted
     pd->calcHorizonSize();    
     // delete those peri-points that are inside sand particles
-    pd->removeInsidePeriParticles(dem->getParticleVec()); 
+    pd->removeInsidePeriParticles(dem->getDEMParticleVec()); 
   }
 
   dem->scatterParticle();

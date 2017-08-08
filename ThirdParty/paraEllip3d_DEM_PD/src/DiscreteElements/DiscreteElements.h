@@ -56,7 +56,7 @@ public:
   ~DiscreteElements()
   {
     // in case of consecutive simulations
-    allParticleVec.clear();
+    allDEMParticleVec.clear();
     particleVec.clear();
     boundaryVec.clear();
     cavityBoundaryVec.clear();
@@ -72,10 +72,10 @@ public:
   static IntVec getMPIProcs() { return s_mpiProcs; }
   static IntVec getMPICoords() { return s_mpiCoords; }
 
-  const DEMParticlePArray& getAllParticleVec() const { return allParticleVec; }
-  DEMParticlePArray& getModifiableAllParticleVec() { return allParticleVec; }
+  const DEMParticlePArray& getAllDEMParticleVec() const { return allDEMParticleVec; }
+  DEMParticlePArray& getModifiableAllParticleVec() { return allDEMParticleVec; }
 
-  const DEMParticlePArray& getParticleVec() const { return particleVec; }
+  const DEMParticlePArray& getDEMParticleVec() const { return particleVec; }
   DEMParticlePArray& getModifiableParticleVec() { return particleVec; }
   DEMParticlePArray& getMergedParticleVec() { return mergeParticleVec; }
 
@@ -484,7 +484,7 @@ private:
   Gradation
     gradation; // particles gradation, broadcast among processes for once
   DEMParticlePArray
-    allParticleVec;           // all particles, only meaningful to root process
+    allDEMParticleVec;           // all particles, only meaningful to root process
   DEMParticlePArray particleVec; // particles per process
   std::size_t trimHistoryNum; // historical maximum numbering before trimming,
                               // only meaningful to root process

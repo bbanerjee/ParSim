@@ -2259,8 +2259,8 @@ if(px<30) continue;
       if ( (static_cast<std::size_t> (dem::Parameter::getSingleton().parameter["toInitParticle"])) == 1 ) {
 	pt->setPrevVeloc(Vec(vx,vy,vz));
 	pt->setCurrVeloc(Vec(vx,vy,vz));
-	pt->setPrevOmga(Vec(omx,omy,omz));
-	pt->setCurrOmga(Vec(omx,omy,omz));
+	pt->setPrevOmega(Vec(omx,omy,omz));
+	pt->setCurrOmega(Vec(omx,omy,omz));
 	pt->setForce(Vec(fx,fy,fz));  // initial force
 	pt->setMoment(Vec(mx,my,mz)); // initial moment
       }
@@ -2279,8 +2279,8 @@ if(px<30) continue;
       if ( (static_cast<std::size_t> (dem::Parameter::getSingleton().parameter["toInitParticle"])) == 1 ) {
 	pt1->setPrevVeloc(Vec(vx,vy,vz));
 	pt1->setCurrVeloc(Vec(vx,vy,vz));
-	pt1->setPrevOmga(Vec(omx,omy,omz));
-	pt1->setCurrOmga(Vec(omx,omy,omz));
+	pt1->setPrevOmega(Vec(omx,omy,omz));
+	pt1->setCurrOmega(Vec(omx,omy,omz));
 	pt1->setForce(Vec(fx,fy,fz));  // initial force
 	pt1->setMoment(Vec(mx,my,mz)); // initial moment
       }
@@ -2299,8 +2299,8 @@ if(px<30) continue;
       if ( (static_cast<std::size_t> (dem::Parameter::getSingleton().parameter["toInitParticle"])) == 1 ) {
 	pt2->setPrevVeloc(Vec(vx,vy,vz));
 	pt2->setCurrVeloc(Vec(vx,vy,vz));
-	pt2->setPrevOmga(Vec(omx,omy,omz));
-	pt2->setCurrOmga(Vec(omx,omy,omz));
+	pt2->setPrevOmega(Vec(omx,omy,omz));
+	pt2->setCurrOmega(Vec(omx,omy,omz));
 	pt2->setForce(Vec(fx,fy,fz));  // initial force
 	pt2->setMoment(Vec(mx,my,mz)); // initial moment
       }
@@ -2319,8 +2319,8 @@ if(px<30) continue;
       if ( (static_cast<std::size_t> (dem::Parameter::getSingleton().parameter["toInitParticle"])) == 1 ) {
 	pt3->setPrevVeloc(Vec(vx,vy,vz));
 	pt3->setCurrVeloc(Vec(vx,vy,vz));
-	pt3->setPrevOmga(Vec(omx,omy,omz));
-	pt3->setCurrOmga(Vec(omx,omy,omz));
+	pt3->setPrevOmega(Vec(omx,omy,omz));
+	pt3->setCurrOmega(Vec(omx,omy,omz));
 	pt3->setForce(Vec(fx,fy,fz));  // initial force
 	pt3->setMoment(Vec(mx,my,mz)); // initial moment
       }
@@ -2339,8 +2339,8 @@ if(px<30) continue;
       if ( (static_cast<std::size_t> (dem::Parameter::getSingleton().parameter["toInitParticle"])) == 1 ) {
 	pt4->setPrevVeloc(Vec(vx,vy,vz));
 	pt4->setCurrVeloc(Vec(vx,vy,vz));
-	pt4->setPrevOmga(Vec(omx,omy,omz));
-	pt4->setCurrOmga(Vec(omx,omy,omz));
+	pt4->setPrevOmega(Vec(omx,omy,omz));
+	pt4->setCurrOmega(Vec(omx,omy,omz));
 	pt4->setForce(Vec(fx,fy,fz));  // initial force
 	pt4->setMoment(Vec(mx,my,mz)); // initial moment
       }
@@ -2359,8 +2359,8 @@ if(px<30) continue;
       if ( (static_cast<std::size_t> (dem::Parameter::getSingleton().parameter["toInitParticle"])) == 1 ) {
 	pt5->setPrevVeloc(Vec(vx,vy,vz));
 	pt5->setCurrVeloc(Vec(vx,vy,vz));
-	pt5->setPrevOmga(Vec(omx,omy,omz));
-	pt5->setCurrOmga(Vec(omx,omy,omz));
+	pt5->setPrevOmega(Vec(omx,omy,omz));
+	pt5->setCurrOmega(Vec(omx,omy,omz));
 	pt5->setForce(Vec(fx,fy,fz));  // initial force
 	pt5->setMoment(Vec(mx,my,mz)); // initial moment
       }
@@ -2419,8 +2419,8 @@ if(px<30) continue;
       	if ( (static_cast<std::size_t> (dem::Parameter::getSingleton().parameter["toInitParticle"])) == 1 ) {
 	    pt->setPrevVeloc(Vec(vx,vy,vz));
 	    pt->setCurrVeloc(Vec(vx,vy,vz));
-	    pt->setPrevOmga(Vec(omx,omy,omz));
-	    pt->setCurrOmga(Vec(omx,omy,omz));
+	    pt->setPrevOmega(Vec(omx,omy,omz));
+	    pt->setCurrOmega(Vec(omx,omy,omz));
 	    pt->setForce(Vec(fx,fy,fz));  // initial force
 	    pt->setMoment(Vec(mx,my,mz)); // initial moment
       	}

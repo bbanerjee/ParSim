@@ -29,6 +29,7 @@ TEST(SPHParticleTest, construction1) {
   dem::InputParameter::get().addParameter("SPHInitialDensity", 1100.0);
   dem::InputParameter::get().addParameter("gamma", 1.4);
   dem::InputParameter::get().addParameter("nu", 100.0);
+  
   ParticleID id = 100;
   REAL mass = 1.5;
   REAL density = 1200.0;

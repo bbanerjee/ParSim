@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <iostream>
 #include <array>
+#include <vector>
 
 namespace dem {
 
@@ -27,6 +28,20 @@ public:
     : d_data({{_x, _y, _z}})
   {
   }
+  Vec(std::vector<REAL>::const_iterator begin,
+      std::vector<REAL>::const_iterator end) 
+  {
+    if (!(end - begin < 2)) {
+      d_data[0] = *begin;
+      d_data[1] = *(begin+1);
+      d_data[2] = *(begin+2);
+    } else {
+      d_data[0] = 0.0;
+      d_data[1] = 0.0;
+      d_data[2] = 0.0;
+    }
+  }
+
   REAL x() const { return d_data[0]; }
   REAL y() const { return d_data[1]; }
   REAL z() const { return d_data[2]; }

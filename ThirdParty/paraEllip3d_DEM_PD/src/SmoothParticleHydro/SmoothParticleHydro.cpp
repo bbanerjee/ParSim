@@ -28,20 +28,19 @@ SmoothParticleHydro::SmoothParticleHydro()
 
 SmoothParticleHydro::~SmoothParticleHydro()
 {
-  allSPHParticleVec.clear();
-  sphParticleVec.clear();
+  d_allSPHParticleVec.clear();
+  d_sphParticleVec.clear();
 } 
 
 // here the free particles, ghost particles and boundary particles 
 // will all stored in the same vector
 // unlike the implementation in serial version.
+//  if (getMPIRank() != 0) return;  // make only primary cpu generate particles
 template <int dim>
 void 
 SmoothParticleHydro::generateSPHParticle(const dem::Box& allContainer,
                                          dem::DEMParticlePArray& allDEMParticles)
 {
-  if (getMPIRank() != 0) return;  // make only primary cpu generate particles
-
   // sph parameters
   auto gravAccel   = util::getParam<REAL>("gravAccel");
   auto gravScale   = util::getParam<REAL>("gravScale");
@@ -67,11 +66,24 @@ SmoothParticleHydro::generateSPHParticle(const dem::Box& allContainer,
   std::vector<REAL> xCoords, yCoords, zCoords;
   createCoords<dim>(vmin, vmax, spaceInterval, numLayers, xCoords, yCoords, zCoords);
 
+  /*
+  std::cout << "x:(" << xCoords.size() << ")";
+  for (auto x: xCoords) { std::cout << x << " "; }
+  std::cout << std::endl;
+  std::cout << "y:(" << yCoords.size() << ")";
+  for (auto y: yCoords) { std::cout << y << " "; }
+  std::cout << std::endl;
+  std::cout << "z:(" << zCoords.size() << ")";
+  for (auto z: zCoords) { std::cout << z << " "; }
+  std::cout << std::endl;
+  */
+
   // Create the initial allSPHParticleArray
   createParticleArray<dim>(sphMass, sphInitialDensity, xCoords, yCoords, zCoords);
+  //std::cout << "Created particle array: " << d_allSPHParticleVec.size() << "\n";
 
-  // create and store SPHParticle objects into sphParticleVec
-  for (auto& sph_particle : allSPHParticleVec) {
+  // create and store SPHParticle objects into d_sphParticleVec
+  for (auto& sph_particle : d_allSPHParticleVec) {
     dem::Vec local_pos = 0;
     dem::Vec sph_pos = sph_particle->getInitPosition();
     bool isInside = false;
@@ -88,6 +100,7 @@ SmoothParticleHydro::generateSPHParticle(const dem::Box& allContainer,
           sph_particle->setLocalPosition(local_pos);
           sph_particle->setDEMParticle(dem_particle.get());
         } else {
+          //std::cout << sph_particle->getId() << " Inside but not in ghost layer\n";
           sph_particle->setType(SPHParticleType::NONE);
           sph_particle->setLocalPosition(local_pos);
           sph_particle->setDEMParticle(dem_particle.get());
@@ -118,12 +131,14 @@ SmoothParticleHydro::generateSPHParticle(const dem::Box& allContainer,
         sph_particle->setLocalPosition(local_pos);
       } // End domain if
     } // End if not isGhost
-  } // end allSPHParticleVec
+  } // end d_allSPHParticleVec
 
-  for (auto& sph_particle : ghostSPHParticleVec) {
-    sph_particle->initialize();
-  }
-  for (auto& sph_particle : allSPHParticleVec) {
+  // Removed the SPH particle that are inside the DEM particles
+  // but not in the ghost layer of each particle
+  removeRedundantSPHParticles();
+
+  // Compute volume, pressure, viscosity of each particle
+  for (auto& sph_particle : d_allSPHParticleVec) {
     sph_particle->initialize();
   }
 
@@ -201,14 +216,14 @@ SmoothParticleHydro::createParticleArray<3>(const REAL& mass,
                                             const std::vector<REAL>& yCoords, 
                                             const std::vector<REAL>& zCoords)
 {
-  allSPHParticleVec.clear();
+  d_allSPHParticleVec.clear();
 
   ParticleID partID = 0;
   dem::Vec local_pos = 0;
   for (const auto& zCoord : zCoords) {
     for (const auto& yCoord : yCoords) {
       for (const auto& xCoord : xCoords) {
-        allSPHParticleVec.push_back(
+        d_allSPHParticleVec.push_back(
           std::make_shared<sph::SPHParticle>(partID, mass, density, 
                                              xCoord, yCoord, zCoord, 
                                              local_pos, 
@@ -218,7 +233,7 @@ SmoothParticleHydro::createParticleArray<3>(const REAL& mass,
     }
   }
 
-  // std::cout << "Created " << allSPHParticleVec.size() << " 3D particles." << std::endl;
+  // std::cout << "Created " << d_allSPHParticleVec.size() << " 3D particles." << std::endl;
 }
 
 template <>
@@ -229,13 +244,13 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
                                             const std::vector<REAL>& yCoords, 
                                             const std::vector<REAL>& zCoords)
 {
-  allSPHParticleVec.clear();
+  d_allSPHParticleVec.clear();
 
   ParticleID partID = 0;
   dem::Vec local_pos = 0;
   for (const auto& zCoord : zCoords) {
     for (const auto& xCoord : xCoords) {
-      allSPHParticleVec.push_back(
+      d_allSPHParticleVec.push_back(
         std::make_shared<sph::SPHParticle>(partID, mass, density, 
                                            xCoord, 0.0, zCoord, 
                                            local_pos, 
@@ -244,7 +259,21 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
     }
   }
 
-  // std::cout << "Created " << allSPHParticleVec.size() << " 2D particles." << std::endl;
+  // std::cout << "Created " << d_allSPHParticleVec.size() << " 2D particles." << std::endl;
+}
+
+void 
+SmoothParticleHydro::removeRedundantSPHParticles()
+{
+  d_allSPHParticleVec.erase(
+    std::remove_if(d_allSPHParticleVec.begin(), d_allSPHParticleVec.end(),
+      [](SPHParticleP particle) {
+        if (particle->getType() == SPHParticleType::NONE) {
+         return true;
+        }
+        return false;
+      }),
+    d_allSPHParticleVec.end());
 }
 
 /*
@@ -315,24 +344,24 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
         || tmp_z<=zmin-spaceInterval+small_value || tmp_z>=zmax-small_value){  // boundary sph particles
       if(tmp_z>=L+spaceInterval){
               sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
-          allSPHParticleVec.push_back(tmp_pt);
+          d_allSPHParticleVec.push_back(tmp_pt);
       }
       else{
               sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity*pow(1+SPHInitialDensity*gravAccel*gravScale*(L-tmp_z)/P0, 1.0/gamma), tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
-          allSPHParticleVec.push_back(tmp_pt);
+          d_allSPHParticleVec.push_back(tmp_pt);
       }
         } 
         else if(tmp_x<=L && tmp_z<=L){  // free sph particles
           sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity*pow(1+SPHInitialDensity*gravAccel*gravScale*(L-tmp_z)/P0, 1.0/gamma), tmp_x, tmp_y, tmp_z, 1);  // 1 is free SPH particle
 //      sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, 0, tmp_z, 1);  // 1 is free SPH particle
-              allSPHParticleVec.push_back(tmp_pt);
+              d_allSPHParticleVec.push_back(tmp_pt);
         }
     }
       }
   }
     }
 
-  for(std::vector<sph::SPHParticle*>::iterator pt=allSPHParticleVec.begin(); pt!=allSPHParticleVec.end(); pt++){
+  for(std::vector<sph::SPHParticle*>::iterator pt=d_allSPHParticleVec.begin(); pt!=d_allSPHParticleVec.end(); pt++){
       (*pt)->initialize();
   }
 
@@ -399,24 +428,24 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
         || tmp_z>=zmax+spaceInterval-small_value){  // boundary sph particles
       if(tmp_z>=zmax+spaceInterval-small_value){
               sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
-          allSPHParticleVec.push_back(tmp_pt);
+          d_allSPHParticleVec.push_back(tmp_pt);
       }
       else{
               sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity*pow(1+SPHInitialDensity*gravAccel*gravScale*(zmax-tmp_z)/P0, 1.0/gamma), tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
-          allSPHParticleVec.push_back(tmp_pt);
+          d_allSPHParticleVec.push_back(tmp_pt);
       }
         } 
         else if(tmp_z>=zmin){  // free sph particles
           sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity*pow(1+SPHInitialDensity*gravAccel*gravScale*(zmax-tmp_z)/P0, 1.0/gamma), tmp_x, tmp_y, tmp_z, 1);  // 1 is free SPH particle
 //      sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, 0, tmp_z, 1);  // 1 is free SPH particle
-              allSPHParticleVec.push_back(tmp_pt);
+              d_allSPHParticleVec.push_back(tmp_pt);
         }
     }
       }
   }
     }
 
-  for(std::vector<sph::SPHParticle*>::iterator pt=allSPHParticleVec.begin(); pt!=allSPHParticleVec.end(); pt++){
+  for(std::vector<sph::SPHParticle*>::iterator pt=d_allSPHParticleVec.begin(); pt!=d_allSPHParticleVec.end(); pt++){
       (*pt)->initialize();
   }
 
@@ -486,19 +515,19 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
         //|| tmp_z>=zmax+spaceInterval-small_value
         ){  // boundary sph particles, no top boundary
           sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, tmp_y, tmp_z, 3);  // 3 is boundary SPH particle
-      allSPHParticleVec.push_back(tmp_pt);
+      d_allSPHParticleVec.push_back(tmp_pt);
         } 
         else if(tmp_z>=waterZmin && tmp_z<=waterZmax){  // free sph particles
           sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity*pow(1+SPHInitialDensity*gravAccel*gravScale*(waterZmax-tmp_z)/P0, 1.0/gamma), tmp_x, tmp_y, tmp_z, 1);  // 1 is free SPH particle
 //      sph::SPHParticle* tmp_pt = new sph::SPHParticle(SPHmass, SPHInitialDensity, tmp_x, 0, tmp_z, 1);  // 1 is free SPH particle
-              allSPHParticleVec.push_back(tmp_pt);
+              d_allSPHParticleVec.push_back(tmp_pt);
         }
     }
       }
   }
     }
 
-  for(std::vector<sph::SPHParticle*>::iterator pt=allSPHParticleVec.begin(); pt!=allSPHParticleVec.end(); pt++){
+  for(std::vector<sph::SPHParticle*>::iterator pt=d_allSPHParticleVec.begin(); pt!=d_allSPHParticleVec.end(); pt++){
       (*pt)->initialize();
   }
 
@@ -588,7 +617,7 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
 
     // this for loop may be replaced by for_each, remove, erase and swap (shrink to fit)
     // see item 14 in "effective STL"
-    for (itr = sphParticleVec.begin(); itr != sphParticleVec.end(); ) {
+    for (itr = d_sphParticleVec.begin(); itr != d_sphParticleVec.end(); ) {
       center=(*itr)->getCurrPosition();
       // it is critical to use EPS
       if ( !(center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
@@ -599,7 +628,7 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
     //  << " removed=" << std::setw(3) << (*itr)->getId();  
     //  flag = 1;
     delete (*itr); // release memory
-    itr = sphParticleVec.erase(itr); 
+    itr = d_sphParticleVec.erase(itr); 
   }
       else
   ++itr;
@@ -712,20 +741,20 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
           v1.x() + vspan.x() / mpiProcX * (coords[0] + 1),
           v1.y() + vspan.y() / mpiProcY * (coords[1] + 1),
           v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
-  findSPHParticleInRectangle(container, allSPHParticleVec, tmpSPHParticleVec);
+  findSPHParticleInRectangle(container, d_allSPHParticleVec, tmpSPHParticleVec);
   if (iRank != 0)
     reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, tmpSPHParticleVec); // non-blocking send
   if (iRank == 0) {
-    sphParticleVec.resize(tmpSPHParticleVec.size());
-    for (int i = 0; i < sphParticleVec.size(); ++i)
-      sphParticleVec[i] = new sph::SPHParticle(*tmpSPHParticleVec[i]); // default synthesized copy constructor
+    d_sphParticleVec.resize(tmpSPHParticleVec.size());
+    for (int i = 0; i < d_sphParticleVec.size(); ++i)
+      d_sphParticleVec[i] = new sph::SPHParticle(*tmpSPHParticleVec[i]); // default synthesized copy constructor
   } // now particleVec do not share memeory with allParticleVec
       }
       boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
       delete [] reqs;
 
     } else { // other processes except 0
-      boostWorld.recv(0, mpiTag, sphParticleVec);
+      boostWorld.recv(0, mpiTag, d_sphParticleVec);
     }
 
 
@@ -826,20 +855,20 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
           v1.x() + vspan.x() / mpiProcX * (coords[0] + 1),
           v1.y() + vspan.y() / mpiProcY * (coords[1] + 1),
           v1.z() + vspan.z() / mpiProcZ * (coords[2] + 1));
-  findSPHParticleInRectangle(container, allSPHParticleVec, tmpSPHParticleVec);
+  findSPHParticleInRectangle(container, d_allSPHParticleVec, tmpSPHParticleVec);
   if (iRank != 0)
     reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, tmpSPHParticleVec); // non-blocking send
   if (iRank == 0) {
-    sphParticleVec.resize(tmpSPHParticleVec.size());
-    for (int i = 0; i < sphParticleVec.size(); ++i)
-      sphParticleVec[i] = new sph::SPHParticle(*tmpSPHParticleVec[i]); // default synthesized copy constructor
+    d_sphParticleVec.resize(tmpSPHParticleVec.size());
+    for (int i = 0; i < d_sphParticleVec.size(); ++i)
+      d_sphParticleVec[i] = new sph::SPHParticle(*tmpSPHParticleVec[i]); // default synthesized copy constructor
   } // now particleVec do not share memeory with allParticleVec
       }
       boost::mpi::wait_all(reqs, reqs + mpiSize - 1); // for non-blocking send
       delete [] reqs;
 
     } else { // other processes except 0
-      boostWorld.recv(0, mpiTag, sphParticleVec);
+      boostWorld.recv(0, mpiTag, d_sphParticleVec);
     }
 
 
@@ -1371,42 +1400,42 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
     if (rankX1 >= 0) { // surface x1
       Rectangle containerX1(v1.x(), v1.y(), v1.z(), 
           v1.x() + cellSize, v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX1, sphParticleVec, sphParticleX1);
+      findSPHParticleInRectangle(containerX1, d_sphParticleVec, sphParticleX1);
       reqX1[0] = boostWorld.isend(rankX1, mpiTag,  sphParticleX1);
       reqX1[1] = boostWorld.irecv(rankX1, mpiTag, rsphParticleX1);
     }
     if (rankX2 >= 0) { // surface x2
       Rectangle containerX2(v2.x() - cellSize, v1.y(), v1.z(),
           v2.x(), v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX2, sphParticleVec, sphParticleX2);
+      findSPHParticleInRectangle(containerX2, d_sphParticleVec, sphParticleX2);
       reqX2[0] = boostWorld.isend(rankX2, mpiTag,  sphParticleX2);
       reqX2[1] = boostWorld.irecv(rankX2, mpiTag, rsphParticleX2);
     }
     if (rankY1 >= 0) {  // surface y1
       Rectangle containerY1(v1.x(), v1.y(), v1.z(), 
           v2.x(), v1.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerY1, sphParticleVec, sphParticleY1);
+      findSPHParticleInRectangle(containerY1, d_sphParticleVec, sphParticleY1);
       reqY1[0] = boostWorld.isend(rankY1, mpiTag,  sphParticleY1);
       reqY1[1] = boostWorld.irecv(rankY1, mpiTag, rsphParticleY1);
     }
     if (rankY2 >= 0) {  // surface y2
       Rectangle containerY2(v1.x(), v2.y() - cellSize, v1.z(),
           v2.x(), v2.y(), v2.z());
-      findSPHParticleInRectangle(containerY2, sphParticleVec, sphParticleY2);
+      findSPHParticleInRectangle(containerY2, d_sphParticleVec, sphParticleY2);
       reqY2[0] = boostWorld.isend(rankY2, mpiTag,  sphParticleY2);
       reqY2[1] = boostWorld.irecv(rankY2, mpiTag, rsphParticleY2);
     }
     if (rankZ1 >= 0) {  // surface z1
       Rectangle containerZ1(v1.x(), v1.y(), v1.z(),
           v2.x(), v2.y(), v1.z() + cellSize);
-      findSPHParticleInRectangle(containerZ1, sphParticleVec, sphParticleZ1);
+      findSPHParticleInRectangle(containerZ1, d_sphParticleVec, sphParticleZ1);
       reqZ1[0] = boostWorld.isend(rankZ1, mpiTag,  sphParticleZ1);
       reqZ1[1] = boostWorld.irecv(rankZ1, mpiTag, rsphParticleZ1);
     }
     if (rankZ2 >= 0) {  // surface z2
       Rectangle containerZ2(v1.x(), v1.y(), v2.z() - cellSize,
           v2.x(), v2.y(), v2.z());
-      findSPHParticleInRectangle(containerZ2, sphParticleVec, sphParticleZ2);
+      findSPHParticleInRectangle(containerZ2, d_sphParticleVec, sphParticleZ2);
       reqZ2[0] = boostWorld.isend(rankZ2, mpiTag,  sphParticleZ2);
       reqZ2[1] = boostWorld.irecv(rankZ2, mpiTag, rsphParticleZ2);
     }
@@ -1414,84 +1443,84 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
     if (rankX1Y1 >= 0) { // edge x1y1
       Rectangle containerX1Y1(v1.x(), v1.y(), v1.z(),
             v1.x() + cellSize, v1.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerX1Y1, sphParticleVec, sphParticleX1Y1);
+      findSPHParticleInRectangle(containerX1Y1, d_sphParticleVec, sphParticleX1Y1);
       reqX1Y1[0] = boostWorld.isend(rankX1Y1, mpiTag,  sphParticleX1Y1);
       reqX1Y1[1] = boostWorld.irecv(rankX1Y1, mpiTag, rsphParticleX1Y1);
     }
     if (rankX1Y2 >= 0) { // edge x1y2
       Rectangle containerX1Y2(v1.x(), v2.y() - cellSize, v1.z(),
             v1.x() + cellSize, v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX1Y2, sphParticleVec, sphParticleX1Y2);
+      findSPHParticleInRectangle(containerX1Y2, d_sphParticleVec, sphParticleX1Y2);
       reqX1Y2[0] = boostWorld.isend(rankX1Y2, mpiTag,  sphParticleX1Y2);
       reqX1Y2[1] = boostWorld.irecv(rankX1Y2, mpiTag, rsphParticleX1Y2);
     }
     if (rankX1Z1 >= 0) { // edge x1z1
       Rectangle containerX1Z1(v1.x(), v1.y(), v1.z(),
             v1.x() + cellSize, v2.y(), v1.z() + cellSize);
-      findSPHParticleInRectangle(containerX1Z1, sphParticleVec, sphParticleX1Z1);
+      findSPHParticleInRectangle(containerX1Z1, d_sphParticleVec, sphParticleX1Z1);
       reqX1Z1[0] = boostWorld.isend(rankX1Z1, mpiTag,  sphParticleX1Z1);
       reqX1Z1[1] = boostWorld.irecv(rankX1Z1, mpiTag, rsphParticleX1Z1);
     }
     if (rankX1Z2 >= 0) { // edge x1z2
       Rectangle containerX1Z2(v1.x(), v1.y(), v2.z() - cellSize,
             v1.x() + cellSize, v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX1Z2, sphParticleVec, sphParticleX1Z2);
+      findSPHParticleInRectangle(containerX1Z2, d_sphParticleVec, sphParticleX1Z2);
       reqX1Z2[0] = boostWorld.isend(rankX1Z2, mpiTag,  sphParticleX1Z2);
       reqX1Z2[1] = boostWorld.irecv(rankX1Z2, mpiTag, rsphParticleX1Z2);
     }
     if (rankX2Y1 >= 0) { // edge x2y1
       Rectangle containerX2Y1(v2.x() - cellSize, v1.y(), v1.z(),
             v2.x(), v1.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerX2Y1, sphParticleVec, sphParticleX2Y1);
+      findSPHParticleInRectangle(containerX2Y1, d_sphParticleVec, sphParticleX2Y1);
       reqX2Y1[0] = boostWorld.isend(rankX2Y1, mpiTag,  sphParticleX2Y1);
       reqX2Y1[1] = boostWorld.irecv(rankX2Y1, mpiTag, rsphParticleX2Y1);
     }
     if (rankX2Y2 >= 0) { // edge x2y2
       Rectangle containerX2Y2(v2.x() - cellSize, v2.y() - cellSize, v1.z(),
             v2.x(), v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX2Y2, sphParticleVec, sphParticleX2Y2);
+      findSPHParticleInRectangle(containerX2Y2, d_sphParticleVec, sphParticleX2Y2);
       reqX2Y2[0] = boostWorld.isend(rankX2Y2, mpiTag,  sphParticleX2Y2);
       reqX2Y2[1] = boostWorld.irecv(rankX2Y2, mpiTag, rsphParticleX2Y2);
     }
     if (rankX2Z1 >= 0) { // edge x2z1
       Rectangle containerX2Z1(v2.x() - cellSize, v1.y(), v1.z(),
             v2.x(), v2.y(), v1.z() + cellSize);
-      findSPHParticleInRectangle(containerX2Z1, sphParticleVec, sphParticleX2Z1);
+      findSPHParticleInRectangle(containerX2Z1, d_sphParticleVec, sphParticleX2Z1);
       reqX2Z1[0] = boostWorld.isend(rankX2Z1, mpiTag,  sphParticleX2Z1);
       reqX2Z1[1] = boostWorld.irecv(rankX2Z1, mpiTag, rsphParticleX2Z1);
     }
     if (rankX2Z2 >= 0) { // edge x2z2
       Rectangle containerX2Z2(v2.x() - cellSize, v1.y(), v2.z() - cellSize,
             v2.x(), v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX2Z2, sphParticleVec, sphParticleX2Z2);
+      findSPHParticleInRectangle(containerX2Z2, d_sphParticleVec, sphParticleX2Z2);
       reqX2Z2[0] = boostWorld.isend(rankX2Z2, mpiTag,  sphParticleX2Z2);
       reqX2Z2[1] = boostWorld.irecv(rankX2Z2, mpiTag, rsphParticleX2Z2);
     }
     if (rankY1Z1 >= 0) { // edge y1z1
       Rectangle containerY1Z1(v1.x(), v1.y(), v1.z(),
             v2.x(), v1.y() + cellSize, v1.z() + cellSize);
-      findSPHParticleInRectangle(containerY1Z1, sphParticleVec, sphParticleY1Z1);
+      findSPHParticleInRectangle(containerY1Z1, d_sphParticleVec, sphParticleY1Z1);
       reqY1Z1[0] = boostWorld.isend(rankY1Z1, mpiTag,  sphParticleY1Z1);
       reqY1Z1[1] = boostWorld.irecv(rankY1Z1, mpiTag, rsphParticleY1Z1);
     }
     if (rankY1Z2 >= 0) { // edge y1z2
       Rectangle containerY1Z2(v1.x(), v1.y(), v2.z() - cellSize,
             v2.x(), v1.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerY1Z2, sphParticleVec, sphParticleY1Z2);
+      findSPHParticleInRectangle(containerY1Z2, d_sphParticleVec, sphParticleY1Z2);
       reqY1Z2[0] = boostWorld.isend(rankY1Z2, mpiTag,  sphParticleY1Z2);
       reqY1Z2[1] = boostWorld.irecv(rankY1Z2, mpiTag, rsphParticleY1Z2);
     }
     if (rankY2Z1 >= 0) { // edge y2z1
       Rectangle containerY2Z1(v1.x(), v2.y() - cellSize, v1.z(),
             v2.x(), v2.y(), v1.z() + cellSize);
-      findSPHParticleInRectangle(containerY2Z1, sphParticleVec, sphParticleY2Z1);
+      findSPHParticleInRectangle(containerY2Z1, d_sphParticleVec, sphParticleY2Z1);
       reqY2Z1[0] = boostWorld.isend(rankY2Z1, mpiTag,  sphParticleY2Z1);
       reqY2Z1[1] = boostWorld.irecv(rankY2Z1, mpiTag, rsphParticleY2Z1);
     }
     if (rankY2Z2 >= 0) { // edge y2z2
       Rectangle containerY2Z2(v1.x(), v2.y() - cellSize, v2.z() - cellSize,
             v2.x(), v2.y(), v2.z());
-      findSPHParticleInRectangle(containerY2Z2, sphParticleVec, sphParticleY2Z2);
+      findSPHParticleInRectangle(containerY2Z2, d_sphParticleVec, sphParticleY2Z2);
       reqY2Z2[0] = boostWorld.isend(rankY2Z2, mpiTag,  sphParticleY2Z2);
       reqY2Z2[1] = boostWorld.irecv(rankY2Z2, mpiTag, rsphParticleY2Z2);
     }
@@ -1499,56 +1528,56 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
     if (rankX1Y1Z1 >= 0) { // edge x1y1z1
       Rectangle containerX1Y1Z1(v1.x(), v1.y(), v1.z(),
         v1.x() + cellSize, v1.y() + cellSize, v1.z() + cellSize);
-      findSPHParticleInRectangle(containerX1Y1Z1, sphParticleVec, sphParticleX1Y1Z1);
+      findSPHParticleInRectangle(containerX1Y1Z1, d_sphParticleVec, sphParticleX1Y1Z1);
       reqX1Y1Z1[0] = boostWorld.isend(rankX1Y1Z1, mpiTag,  sphParticleX1Y1Z1);
       reqX1Y1Z1[1] = boostWorld.irecv(rankX1Y1Z1, mpiTag, rsphParticleX1Y1Z1);
     }
     if (rankX1Y1Z2 >= 0) { // edge x1y1z2
       Rectangle containerX1Y1Z2(v1.x(), v1.y(), v2.z() - cellSize,
         v1.x() + cellSize, v1.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerX1Y1Z2, sphParticleVec, sphParticleX1Y1Z2);
+      findSPHParticleInRectangle(containerX1Y1Z2, d_sphParticleVec, sphParticleX1Y1Z2);
       reqX1Y1Z2[0] = boostWorld.isend(rankX1Y1Z2, mpiTag,  sphParticleX1Y1Z2);
       reqX1Y1Z2[1] = boostWorld.irecv(rankX1Y1Z2, mpiTag, rsphParticleX1Y1Z2);
     }
     if (rankX1Y2Z1 >= 0) { // edge x1y2z1
       Rectangle containerX1Y2Z1(v1.x(), v2.y() - cellSize, v1.z(),
         v1.x() + cellSize, v2.y(), v1.z() + cellSize);
-      findSPHParticleInRectangle(containerX1Y2Z1, sphParticleVec, sphParticleX1Y2Z1);
+      findSPHParticleInRectangle(containerX1Y2Z1, d_sphParticleVec, sphParticleX1Y2Z1);
       reqX1Y2Z1[0] = boostWorld.isend(rankX1Y2Z1, mpiTag,  sphParticleX1Y2Z1);
       reqX1Y2Z1[1] = boostWorld.irecv(rankX1Y2Z1, mpiTag, rsphParticleX1Y2Z1);
     }
     if (rankX1Y2Z2 >= 0) { // edge x1y2z2
       Rectangle containerX1Y2Z2(v1.x(), v2.y() - cellSize, v2.z() - cellSize,
         v1.x() + cellSize, v2.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerX1Y2Z2, sphParticleVec, sphParticleX1Y2Z2);
+      findSPHParticleInRectangle(containerX1Y2Z2, d_sphParticleVec, sphParticleX1Y2Z2);
       reqX1Y2Z2[0] = boostWorld.isend(rankX1Y2Z2, mpiTag,  sphParticleX1Y2Z2);
       reqX1Y2Z2[1] = boostWorld.irecv(rankX1Y2Z2, mpiTag, rsphParticleX1Y2Z2);
     }
     if (rankX2Y1Z1 >= 0) { // edge x2y1z1
       Rectangle containerX2Y1Z1(v2.x() - cellSize, v1.y(), v1.z(),
         v2.x(), v1.y() + cellSize, v1.z() + cellSize);
-      findSPHParticleInRectangle(containerX2Y1Z1, sphParticleVec, sphParticleX2Y1Z1);
+      findSPHParticleInRectangle(containerX2Y1Z1, d_sphParticleVec, sphParticleX2Y1Z1);
       reqX2Y1Z1[0] = boostWorld.isend(rankX2Y1Z1, mpiTag,  sphParticleX2Y1Z1);
       reqX2Y1Z1[1] = boostWorld.irecv(rankX2Y1Z1, mpiTag, rsphParticleX2Y1Z1);
     }
     if (rankX2Y1Z2 >= 0) { // edge x2y1z2
       Rectangle containerX2Y1Z2(v2.x() - cellSize, v1.y(), v2.z() - cellSize,
         v2.x(), v1.y() + cellSize, v2.z());
-      findSPHParticleInRectangle(containerX2Y1Z2, sphParticleVec, sphParticleX2Y1Z2);
+      findSPHParticleInRectangle(containerX2Y1Z2, d_sphParticleVec, sphParticleX2Y1Z2);
       reqX2Y1Z2[0] = boostWorld.isend(rankX2Y1Z2, mpiTag,  sphParticleX2Y1Z2);
       reqX2Y1Z2[1] = boostWorld.irecv(rankX2Y1Z2, mpiTag, rsphParticleX2Y1Z2);
     }
     if (rankX2Y2Z1 >= 0) { // edge x2y2z1
       Rectangle containerX2Y2Z1(v2.x() - cellSize, v2.y() - cellSize, v1.z(),
         v2.x(), v2.y(), v1.z() + cellSize);
-      findSPHParticleInRectangle(containerX2Y2Z1, sphParticleVec, sphParticleX2Y2Z1);
+      findSPHParticleInRectangle(containerX2Y2Z1, d_sphParticleVec, sphParticleX2Y2Z1);
       reqX2Y2Z1[0] = boostWorld.isend(rankX2Y2Z1, mpiTag,  sphParticleX2Y2Z1);
       reqX2Y2Z1[1] = boostWorld.irecv(rankX2Y2Z1, mpiTag, rsphParticleX2Y2Z1);
     }
     if (rankX2Y2Z2 >= 0) { // edge x2y2z2
       Rectangle containerX2Y2Z2(v2.x() - cellSize, v2.y() - cellSize, v2.z() - cellSize,
         v2.x(), v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX2Y2Z2, sphParticleVec, sphParticleX2Y2Z2);
+      findSPHParticleInRectangle(containerX2Y2Z2, d_sphParticleVec, sphParticleX2Y2Z2);
       reqX2Y2Z2[0] = boostWorld.isend(rankX2Y2Z2, mpiTag,  sphParticleX2Y2Z2);
       reqX2Y2Z2[1] = boostWorld.irecv(rankX2Y2Z2, mpiTag, rsphParticleX2Y2Z2);
     }
@@ -1584,40 +1613,40 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
     if (rankX2Y2Z2 >= 0) boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);  
 
     // merge: sphParticles inside container (at front) + sphParticles from neighoring blocks (at end)
-    recvSPHParticleVec.clear();
+    d_recvSPHParticleVec.clear();
     // 6 surfaces
-    if (rankX1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1.begin(), rsphParticleX1.end());
-    if (rankX2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2.begin(), rsphParticleX2.end());
-    if (rankY1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleY1.begin(), rsphParticleY1.end());
-    if (rankY2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleY2.begin(), rsphParticleY2.end());
-    if (rankZ1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleZ1.begin(), rsphParticleZ1.end());
-    if (rankZ2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleZ2.begin(), rsphParticleZ2.end());
+    if (rankX1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1.begin(), rsphParticleX1.end());
+    if (rankX2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2.begin(), rsphParticleX2.end());
+    if (rankY1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY1.begin(), rsphParticleY1.end());
+    if (rankY2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY2.begin(), rsphParticleY2.end());
+    if (rankZ1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleZ1.begin(), rsphParticleZ1.end());
+    if (rankZ2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleZ2.begin(), rsphParticleZ2.end());
     // 12 edges
-    if (rankX1Y1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Y1.begin(), rsphParticleX1Y1.end());
-    if (rankX1Y2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Y2.begin(), rsphParticleX1Y2.end());
-    if (rankX1Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Z1.begin(), rsphParticleX1Z1.end());
-    if (rankX1Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Z2.begin(), rsphParticleX1Z2.end());
-    if (rankX2Y1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Y1.begin(), rsphParticleX2Y1.end());
-    if (rankX2Y2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Y2.begin(), rsphParticleX2Y2.end());
-    if (rankX2Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Z1.begin(), rsphParticleX2Z1.end());
-    if (rankX2Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Z2.begin(), rsphParticleX2Z2.end());
-    if (rankY1Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleY1Z1.begin(), rsphParticleY1Z1.end());
-    if (rankY1Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleY1Z2.begin(), rsphParticleY1Z2.end());
-    if (rankY2Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleY2Z1.begin(), rsphParticleY2Z1.end());
-    if (rankY2Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleY2Z2.begin(), rsphParticleY2Z2.end());
+    if (rankX1Y1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y1.begin(), rsphParticleX1Y1.end());
+    if (rankX1Y2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y2.begin(), rsphParticleX1Y2.end());
+    if (rankX1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Z1.begin(), rsphParticleX1Z1.end());
+    if (rankX1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Z2.begin(), rsphParticleX1Z2.end());
+    if (rankX2Y1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y1.begin(), rsphParticleX2Y1.end());
+    if (rankX2Y2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y2.begin(), rsphParticleX2Y2.end());
+    if (rankX2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Z1.begin(), rsphParticleX2Z1.end());
+    if (rankX2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Z2.begin(), rsphParticleX2Z2.end());
+    if (rankY1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY1Z1.begin(), rsphParticleY1Z1.end());
+    if (rankY1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY1Z2.begin(), rsphParticleY1Z2.end());
+    if (rankY2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY2Z1.begin(), rsphParticleY2Z1.end());
+    if (rankY2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY2Z2.begin(), rsphParticleY2Z2.end());
     // 8 vertices
-    if (rankX1Y1Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Y1Z1.begin(), rsphParticleX1Y1Z1.end());
-    if (rankX1Y1Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Y1Z2.begin(), rsphParticleX1Y1Z2.end());
-    if (rankX1Y2Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Y2Z1.begin(), rsphParticleX1Y2Z1.end());
-    if (rankX1Y2Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Y2Z2.begin(), rsphParticleX1Y2Z2.end());
-    if (rankX2Y1Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Y1Z1.begin(), rsphParticleX2Y1Z1.end());
-    if (rankX2Y1Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Y1Z2.begin(), rsphParticleX2Y1Z2.end());
-    if (rankX2Y2Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Y2Z1.begin(), rsphParticleX2Y2Z1.end());
-    if (rankX2Y2Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Y2Z2.begin(), rsphParticleX2Y2Z2.end());
+    if (rankX1Y1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y1Z1.begin(), rsphParticleX1Y1Z1.end());
+    if (rankX1Y1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y1Z2.begin(), rsphParticleX1Y1Z2.end());
+    if (rankX1Y2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y2Z1.begin(), rsphParticleX1Y2Z1.end());
+    if (rankX1Y2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y2Z2.begin(), rsphParticleX1Y2Z2.end());
+    if (rankX2Y1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y1Z1.begin(), rsphParticleX2Y1Z1.end());
+    if (rankX2Y1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y1Z2.begin(), rsphParticleX2Y1Z2.end());
+    if (rankX2Y2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y2Z1.begin(), rsphParticleX2Y2Z1.end());
+    if (rankX2Y2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y2Z2.begin(), rsphParticleX2Y2Z2.end());
 
     mergeSPHParticleVec.clear();
-    mergeSPHParticleVec = sphParticleVec; // duplicate pointers, pointing to the same memory
-    mergeSPHParticleVec.insert(mergeSPHParticleVec.end(), recvSPHParticleVec.begin(), recvSPHParticleVec.end());
+    mergeSPHParticleVec = d_sphParticleVec; // duplicate pointers, pointing to the same memory
+    mergeSPHParticleVec.insert(mergeSPHParticleVec.end(), d_recvSPHParticleVec.begin(), d_recvSPHParticleVec.end());
 
     #ifdef 0
       std::vector<Particle*> testParticleVec;
@@ -1692,9 +1721,9 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
 
   void SmoothParticleHydro::releaseRecvSPHParticle() {
     // release memory of received particles
-    for (std::vector<sph::SPHParticle*>::iterator it = recvSPHParticleVec.begin(); it != recvSPHParticleVec.end(); ++it)
+    for (std::vector<sph::SPHParticle*>::iterator it = d_recvSPHParticleVec.begin(); it != d_recvSPHParticleVec.end(); ++it)
       delete (*it);
-    recvSPHParticleVec.clear();
+    d_recvSPHParticleVec.clear();
     // 6 surfaces
     rsphParticleX1.clear();
     rsphParticleX2.clear();
@@ -2168,42 +2197,42 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
     if (rankX1 >= 0) { // surface x1
       Rectangle containerX1(v1.x() - segX, v1.y(), v1.z(), 
           v1.x(), v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX1, sphParticleVec, sphParticleX1);
+      findSPHParticleInRectangle(containerX1, d_sphParticleVec, sphParticleX1);
       reqX1[0] = boostWorld.isend(rankX1, mpiTag,  sphParticleX1);
       reqX1[1] = boostWorld.irecv(rankX1, mpiTag, rsphParticleX1);
     }
     if (rankX2 >= 0) { // surface x2
       Rectangle containerX2(v2.x(), v1.y(), v1.z(),
           v2.x() + segX, v2.y(), v2.z());
-      findSPHParticleInRectangle(containerX2, sphParticleVec, sphParticleX2);
+      findSPHParticleInRectangle(containerX2, d_sphParticleVec, sphParticleX2);
       reqX2[0] = boostWorld.isend(rankX2, mpiTag,  sphParticleX2);
       reqX2[1] = boostWorld.irecv(rankX2, mpiTag, rsphParticleX2);
     }
     if (rankY1 >= 0) {  // surface y1
       Rectangle containerY1(v1.x(), v1.y() - segY, v1.z(), 
           v2.x(), v1.y(), v2.z());
-      findSPHParticleInRectangle(containerY1, sphParticleVec, sphParticleY1);
+      findSPHParticleInRectangle(containerY1, d_sphParticleVec, sphParticleY1);
       reqY1[0] = boostWorld.isend(rankY1, mpiTag,  sphParticleY1);
       reqY1[1] = boostWorld.irecv(rankY1, mpiTag, rsphParticleY1);
     }
     if (rankY2 >= 0) {  // surface y2
       Rectangle containerY2(v1.x(), v2.y(), v1.z(),
           v2.x(), v2.y() + segY, v2.z());
-      findSPHParticleInRectangle(containerY2, sphParticleVec, sphParticleY2);
+      findSPHParticleInRectangle(containerY2, d_sphParticleVec, sphParticleY2);
       reqY2[0] = boostWorld.isend(rankY2, mpiTag,  sphParticleY2);
       reqY2[1] = boostWorld.irecv(rankY2, mpiTag, rsphParticleY2);
     }
     if (rankZ1 >= 0) {  // surface z1
       Rectangle containerZ1(v1.x(), v1.y(), v1.z() - segZ,
           v2.x(), v2.y(), v1.z());
-      findSPHParticleInRectangle(containerZ1, sphParticleVec, sphParticleZ1);
+      findSPHParticleInRectangle(containerZ1, d_sphParticleVec, sphParticleZ1);
       reqZ1[0] = boostWorld.isend(rankZ1, mpiTag,  sphParticleZ1);
       reqZ1[1] = boostWorld.irecv(rankZ1, mpiTag, rsphParticleZ1);
     }
     if (rankZ2 >= 0) {  // surface z2
       Rectangle containerZ2(v1.x(), v1.y(), v2.z(),
           v2.x(), v2.y(), v2.z() + segZ);
-      findSPHParticleInRectangle(containerZ2, sphParticleVec, sphParticleZ2);
+      findSPHParticleInRectangle(containerZ2, d_sphParticleVec, sphParticleZ2);
       reqZ2[0] = boostWorld.isend(rankZ2, mpiTag,  sphParticleZ2);
       reqZ2[1] = boostWorld.irecv(rankZ2, mpiTag, rsphParticleZ2);
     }
@@ -2211,84 +2240,84 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
     if (rankX1Y1 >= 0) { // edge x1y1
       Rectangle containerX1Y1(v1.x() - segX, v1.y() - segY, v1.z(),
             v1.x(), v1.y(), v2.z());
-      findSPHParticleInRectangle(containerX1Y1, sphParticleVec, sphParticleX1Y1);
+      findSPHParticleInRectangle(containerX1Y1, d_sphParticleVec, sphParticleX1Y1);
       reqX1Y1[0] = boostWorld.isend(rankX1Y1, mpiTag,  sphParticleX1Y1);
       reqX1Y1[1] = boostWorld.irecv(rankX1Y1, mpiTag, rsphParticleX1Y1);
     }
     if (rankX1Y2 >= 0) { // edge x1y2
       Rectangle containerX1Y2(v1.x() - segX, v2.y(), v1.z(),
             v1.x(), v2.y() + segY, v2.z());
-      findSPHParticleInRectangle(containerX1Y2, sphParticleVec, sphParticleX1Y2);
+      findSPHParticleInRectangle(containerX1Y2, d_sphParticleVec, sphParticleX1Y2);
       reqX1Y2[0] = boostWorld.isend(rankX1Y2, mpiTag,  sphParticleX1Y2);
       reqX1Y2[1] = boostWorld.irecv(rankX1Y2, mpiTag, rsphParticleX1Y2);
     }
     if (rankX1Z1 >= 0) { // edge x1z1
       Rectangle containerX1Z1(v1.x() - segX, v1.y(), v1.z() -segZ,
             v1.x(), v2.y(), v1.z());
-      findSPHParticleInRectangle(containerX1Z1, sphParticleVec, sphParticleX1Z1);
+      findSPHParticleInRectangle(containerX1Z1, d_sphParticleVec, sphParticleX1Z1);
       reqX1Z1[0] = boostWorld.isend(rankX1Z1, mpiTag,  sphParticleX1Z1);
       reqX1Z1[1] = boostWorld.irecv(rankX1Z1, mpiTag, rsphParticleX1Z1);
     }
     if (rankX1Z2 >= 0) { // edge x1z2
       Rectangle containerX1Z2(v1.x() - segX, v1.y(), v2.z(),
             v1.x(), v2.y(), v2.z() + segZ);
-      findSPHParticleInRectangle(containerX1Z2, sphParticleVec, sphParticleX1Z2);
+      findSPHParticleInRectangle(containerX1Z2, d_sphParticleVec, sphParticleX1Z2);
       reqX1Z2[0] = boostWorld.isend(rankX1Z2, mpiTag,  sphParticleX1Z2);
       reqX1Z2[1] = boostWorld.irecv(rankX1Z2, mpiTag, rsphParticleX1Z2);
     }
     if (rankX2Y1 >= 0) { // edge x2y1
       Rectangle containerX2Y1(v2.x(), v1.y() - segY, v1.z(),
             v2.x() + segX, v1.y(), v2.z());
-      findSPHParticleInRectangle(containerX2Y1, sphParticleVec, sphParticleX2Y1);
+      findSPHParticleInRectangle(containerX2Y1, d_sphParticleVec, sphParticleX2Y1);
       reqX2Y1[0] = boostWorld.isend(rankX2Y1, mpiTag,  sphParticleX2Y1);
       reqX2Y1[1] = boostWorld.irecv(rankX2Y1, mpiTag, rsphParticleX2Y1);
     }
     if (rankX2Y2 >= 0) { // edge x2y2
       Rectangle containerX2Y2(v2.x(), v2.y(), v1.z(),
             v2.x() + segX, v2.y() + segY, v2.z());
-      findSPHParticleInRectangle(containerX2Y2, sphParticleVec, sphParticleX2Y2);
+      findSPHParticleInRectangle(containerX2Y2, d_sphParticleVec, sphParticleX2Y2);
       reqX2Y2[0] = boostWorld.isend(rankX2Y2, mpiTag,  sphParticleX2Y2);
       reqX2Y2[1] = boostWorld.irecv(rankX2Y2, mpiTag, rsphParticleX2Y2);
     }
     if (rankX2Z1 >= 0) { // edge x2z1
       Rectangle containerX2Z1(v2.x(), v1.y(), v1.z() - segZ,
             v2.x() + segX, v2.y(), v1.z());
-      findSPHParticleInRectangle(containerX2Z1, sphParticleVec, sphParticleX2Z1);
+      findSPHParticleInRectangle(containerX2Z1, d_sphParticleVec, sphParticleX2Z1);
       reqX2Z1[0] = boostWorld.isend(rankX2Z1, mpiTag,  sphParticleX2Z1);
       reqX2Z1[1] = boostWorld.irecv(rankX2Z1, mpiTag, rsphParticleX2Z1);
     }
     if (rankX2Z2 >= 0) { // edge x2z2
       Rectangle containerX2Z2(v2.x(), v1.y(), v2.z(),
             v2.x() + segX, v2.y(), v2.z() + segZ);
-      findSPHParticleInRectangle(containerX2Z2, sphParticleVec, sphParticleX2Z2);
+      findSPHParticleInRectangle(containerX2Z2, d_sphParticleVec, sphParticleX2Z2);
       reqX2Z2[0] = boostWorld.isend(rankX2Z2, mpiTag,  sphParticleX2Z2);
       reqX2Z2[1] = boostWorld.irecv(rankX2Z2, mpiTag, rsphParticleX2Z2);
     }
     if (rankY1Z1 >= 0) { // edge y1z1
       Rectangle containerY1Z1(v1.x(), v1.y() - segY, v1.z() - segZ,
             v2.x(), v1.y(), v1.z());
-      findSPHParticleInRectangle(containerY1Z1, sphParticleVec, sphParticleY1Z1);
+      findSPHParticleInRectangle(containerY1Z1, d_sphParticleVec, sphParticleY1Z1);
       reqY1Z1[0] = boostWorld.isend(rankY1Z1, mpiTag,  sphParticleY1Z1);
       reqY1Z1[1] = boostWorld.irecv(rankY1Z1, mpiTag, rsphParticleY1Z1);
     }
     if (rankY1Z2 >= 0) { // edge y1z2
       Rectangle containerY1Z2(v1.x(), v1.y() - segY, v2.z(),
             v2.x(), v1.y(), v2.z() + segZ);
-      findSPHParticleInRectangle(containerY1Z2, sphParticleVec, sphParticleY1Z2);
+      findSPHParticleInRectangle(containerY1Z2, d_sphParticleVec, sphParticleY1Z2);
       reqY1Z2[0] = boostWorld.isend(rankY1Z2, mpiTag,  sphParticleY1Z2);
       reqY1Z2[1] = boostWorld.irecv(rankY1Z2, mpiTag, rsphParticleY1Z2);
     }
     if (rankY2Z1 >= 0) { // edge y2z1
       Rectangle containerY2Z1(v1.x(), v2.y(), v1.z() - segZ,
             v2.x(), v2.y() + segY, v1.z());
-      findSPHParticleInRectangle(containerY2Z1, sphParticleVec, sphParticleY2Z1);
+      findSPHParticleInRectangle(containerY2Z1, d_sphParticleVec, sphParticleY2Z1);
       reqY2Z1[0] = boostWorld.isend(rankY2Z1, mpiTag,  sphParticleY2Z1);
       reqY2Z1[1] = boostWorld.irecv(rankY2Z1, mpiTag, rsphParticleY2Z1);
     }
     if (rankY2Z2 >= 0) { // edge y2z2
       Rectangle containerY2Z2(v1.x(), v2.y(), v2.z(),
             v2.x(), v2.y() + segY, v2.z() + segZ);
-      findSPHParticleInRectangle(containerY2Z2, sphParticleVec, sphParticleY2Z2);
+      findSPHParticleInRectangle(containerY2Z2, d_sphParticleVec, sphParticleY2Z2);
       reqY2Z2[0] = boostWorld.isend(rankY2Z2, mpiTag,  sphParticleY2Z2);
       reqY2Z2[1] = boostWorld.irecv(rankY2Z2, mpiTag, rsphParticleY2Z2);
     }
@@ -2296,56 +2325,56 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
     if (rankX1Y1Z1 >= 0) { // edge x1y1z1
       Rectangle containerX1Y1Z1(v1.x() - segX, v1.y() - segY, v1.z() - segZ,
         v1.x(), v1.y(), v1.z());
-      findSPHParticleInRectangle(containerX1Y1Z1, sphParticleVec, sphParticleX1Y1Z1);
+      findSPHParticleInRectangle(containerX1Y1Z1, d_sphParticleVec, sphParticleX1Y1Z1);
       reqX1Y1Z1[0] = boostWorld.isend(rankX1Y1Z1, mpiTag,  sphParticleX1Y1Z1);
       reqX1Y1Z1[1] = boostWorld.irecv(rankX1Y1Z1, mpiTag, rsphParticleX1Y1Z1);
     }
     if (rankX1Y1Z2 >= 0) { // edge x1y1z2
       Rectangle containerX1Y1Z2(v1.x() - segX, v1.y() - segY, v2.z(),
         v1.x(), v1.y(), v2.z() + segZ);
-      findSPHParticleInRectangle(containerX1Y1Z2, sphParticleVec, sphParticleX1Y1Z2);
+      findSPHParticleInRectangle(containerX1Y1Z2, d_sphParticleVec, sphParticleX1Y1Z2);
       reqX1Y1Z2[0] = boostWorld.isend(rankX1Y1Z2, mpiTag,  sphParticleX1Y1Z2);
       reqX1Y1Z2[1] = boostWorld.irecv(rankX1Y1Z2, mpiTag, rsphParticleX1Y1Z2);
     }
     if (rankX1Y2Z1 >= 0) { // edge x1y2z1
       Rectangle containerX1Y2Z1(v1.x() - segX, v2.y(), v1.z() - segZ,
         v1.x(), v2.y() + segY, v1.z());
-      findSPHParticleInRectangle(containerX1Y2Z1, sphParticleVec, sphParticleX1Y2Z1);
+      findSPHParticleInRectangle(containerX1Y2Z1, d_sphParticleVec, sphParticleX1Y2Z1);
       reqX1Y2Z1[0] = boostWorld.isend(rankX1Y2Z1, mpiTag,  sphParticleX1Y2Z1);
       reqX1Y2Z1[1] = boostWorld.irecv(rankX1Y2Z1, mpiTag, rsphParticleX1Y2Z1);
     }
     if (rankX1Y2Z2 >= 0) { // edge x1y2z2
       Rectangle containerX1Y2Z2(v1.x() - segX, v2.y(), v2.z(),
         v1.x(), v2.y() + segY, v2.z() + segZ);
-      findSPHParticleInRectangle(containerX1Y2Z2, sphParticleVec, sphParticleX1Y2Z2);
+      findSPHParticleInRectangle(containerX1Y2Z2, d_sphParticleVec, sphParticleX1Y2Z2);
       reqX1Y2Z2[0] = boostWorld.isend(rankX1Y2Z2, mpiTag,  sphParticleX1Y2Z2);
       reqX1Y2Z2[1] = boostWorld.irecv(rankX1Y2Z2, mpiTag, rsphParticleX1Y2Z2);
     }
     if (rankX2Y1Z1 >= 0) { // edge x2y1z1
       Rectangle containerX2Y1Z1(v2.x(), v1.y() - segY, v1.z() - segZ,
         v2.x() + segX, v1.y(), v1.z());
-      findSPHParticleInRectangle(containerX2Y1Z1, sphParticleVec, sphParticleX2Y1Z1);
+      findSPHParticleInRectangle(containerX2Y1Z1, d_sphParticleVec, sphParticleX2Y1Z1);
       reqX2Y1Z1[0] = boostWorld.isend(rankX2Y1Z1, mpiTag,  sphParticleX2Y1Z1);
       reqX2Y1Z1[1] = boostWorld.irecv(rankX2Y1Z1, mpiTag, rsphParticleX2Y1Z1);
     }
     if (rankX2Y1Z2 >= 0) { // edge x2y1z2
       Rectangle containerX2Y1Z2(v2.x(), v1.y() - segY, v2.z(),
         v2.x() + segX, v1.y(), v2.z() + segZ);
-      findSPHParticleInRectangle(containerX2Y1Z2, sphParticleVec, sphParticleX2Y1Z2);
+      findSPHParticleInRectangle(containerX2Y1Z2, d_sphParticleVec, sphParticleX2Y1Z2);
       reqX2Y1Z2[0] = boostWorld.isend(rankX2Y1Z2, mpiTag,  sphParticleX2Y1Z2);
       reqX2Y1Z2[1] = boostWorld.irecv(rankX2Y1Z2, mpiTag, rsphParticleX2Y1Z2);
     }
     if (rankX2Y2Z1 >= 0) { // edge x2y2z1
       Rectangle containerX2Y2Z1(v2.x(), v2.y(), v1.z() - segZ,
         v2.x() + segX, v2.y() + segY, v1.z());
-      findSPHParticleInRectangle(containerX2Y2Z1, sphParticleVec, sphParticleX2Y2Z1);
+      findSPHParticleInRectangle(containerX2Y2Z1, d_sphParticleVec, sphParticleX2Y2Z1);
       reqX2Y2Z1[0] = boostWorld.isend(rankX2Y2Z1, mpiTag,  sphParticleX2Y2Z1);
       reqX2Y2Z1[1] = boostWorld.irecv(rankX2Y2Z1, mpiTag, rsphParticleX2Y2Z1);
     }
     if (rankX2Y2Z2 >= 0) { // edge x2y2z2
       Rectangle containerX2Y2Z2(v2.x(), v2.y(), v2.z(),
         v2.x() + segX, v2.y() + segY, v2.z() + segZ);
-      findSPHParticleInRectangle(containerX2Y2Z2, sphParticleVec, sphParticleX2Y2Z2);
+      findSPHParticleInRectangle(containerX2Y2Z2, d_sphParticleVec, sphParticleX2Y2Z2);
       reqX2Y2Z2[0] = boostWorld.isend(rankX2Y2Z2, mpiTag,  sphParticleX2Y2Z2);
       reqX2Y2Z2[1] = boostWorld.irecv(rankX2Y2Z2, mpiTag, rsphParticleX2Y2Z2);
     }
@@ -2383,38 +2412,38 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
     removeSPHParticleOutRectangle();
 
     // add incoming particles
-    recvSPHParticleVec.clear(); // new use of recvParticleVec
+    d_recvSPHParticleVec.clear(); // new use of recvParticleVec
     // 6 surfaces
-    if (rankX1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1.begin(), rsphParticleX1.end());
-    if (rankX2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2.begin(), rsphParticleX2.end());
-    if (rankY1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleY1.begin(), rsphParticleY1.end());
-    if (rankY2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleY2.begin(), rsphParticleY2.end());
-    if (rankZ1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleZ1.begin(), rsphParticleZ1.end());
-    if (rankZ2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleZ2.begin(), rsphParticleZ2.end());
+    if (rankX1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1.begin(), rsphParticleX1.end());
+    if (rankX2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2.begin(), rsphParticleX2.end());
+    if (rankY1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY1.begin(), rsphParticleY1.end());
+    if (rankY2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY2.begin(), rsphParticleY2.end());
+    if (rankZ1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleZ1.begin(), rsphParticleZ1.end());
+    if (rankZ2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleZ2.begin(), rsphParticleZ2.end());
     // 12 edges
-    if (rankX1Y1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Y1.begin(), rsphParticleX1Y1.end());
-    if (rankX1Y2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Y2.begin(), rsphParticleX1Y2.end());
-    if (rankX1Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Z1.begin(), rsphParticleX1Z1.end());
-    if (rankX1Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Z2.begin(), rsphParticleX1Z2.end());
-    if (rankX2Y1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Y1.begin(), rsphParticleX2Y1.end());
-    if (rankX2Y2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Y2.begin(), rsphParticleX2Y2.end());
-    if (rankX2Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Z1.begin(), rsphParticleX2Z1.end());
-    if (rankX2Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Z2.begin(), rsphParticleX2Z2.end());
-    if (rankY1Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleY1Z1.begin(), rsphParticleY1Z1.end());
-    if (rankY1Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleY1Z2.begin(), rsphParticleY1Z2.end());
-    if (rankY2Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleY2Z1.begin(), rsphParticleY2Z1.end());
-    if (rankY2Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleY2Z2.begin(), rsphParticleY2Z2.end());
+    if (rankX1Y1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y1.begin(), rsphParticleX1Y1.end());
+    if (rankX1Y2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y2.begin(), rsphParticleX1Y2.end());
+    if (rankX1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Z1.begin(), rsphParticleX1Z1.end());
+    if (rankX1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Z2.begin(), rsphParticleX1Z2.end());
+    if (rankX2Y1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y1.begin(), rsphParticleX2Y1.end());
+    if (rankX2Y2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y2.begin(), rsphParticleX2Y2.end());
+    if (rankX2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Z1.begin(), rsphParticleX2Z1.end());
+    if (rankX2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Z2.begin(), rsphParticleX2Z2.end());
+    if (rankY1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY1Z1.begin(), rsphParticleY1Z1.end());
+    if (rankY1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY1Z2.begin(), rsphParticleY1Z2.end());
+    if (rankY2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY2Z1.begin(), rsphParticleY2Z1.end());
+    if (rankY2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleY2Z2.begin(), rsphParticleY2Z2.end());
     // 8 vertices
-    if (rankX1Y1Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Y1Z1.begin(), rsphParticleX1Y1Z1.end());
-    if (rankX1Y1Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Y1Z2.begin(), rsphParticleX1Y1Z2.end());
-    if (rankX1Y2Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Y2Z1.begin(), rsphParticleX1Y2Z1.end());
-    if (rankX1Y2Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX1Y2Z2.begin(), rsphParticleX1Y2Z2.end());
-    if (rankX2Y1Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Y1Z1.begin(), rsphParticleX2Y1Z1.end());
-    if (rankX2Y1Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Y1Z2.begin(), rsphParticleX2Y1Z2.end());
-    if (rankX2Y2Z1 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Y2Z1.begin(), rsphParticleX2Y2Z1.end());
-    if (rankX2Y2Z2 >= 0) recvSPHParticleVec.insert(recvSPHParticleVec.end(), rsphParticleX2Y2Z2.begin(), rsphParticleX2Y2Z2.end());
+    if (rankX1Y1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y1Z1.begin(), rsphParticleX1Y1Z1.end());
+    if (rankX1Y1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y1Z2.begin(), rsphParticleX1Y1Z2.end());
+    if (rankX1Y2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y2Z1.begin(), rsphParticleX1Y2Z1.end());
+    if (rankX1Y2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX1Y2Z2.begin(), rsphParticleX1Y2Z2.end());
+    if (rankX2Y1Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y1Z1.begin(), rsphParticleX2Y1Z1.end());
+    if (rankX2Y1Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y1Z2.begin(), rsphParticleX2Y1Z2.end());
+    if (rankX2Y2Z1 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y2Z1.begin(), rsphParticleX2Y2Z1.end());
+    if (rankX2Y2Z2 >= 0) d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(), rsphParticleX2Y2Z2.begin(), rsphParticleX2Y2Z2.end());
 
-    sphParticleVec.insert(sphParticleVec.end(), recvSPHParticleVec.begin(), recvSPHParticleVec.end());
+    d_sphParticleVec.insert(d_sphParticleVec.end(), d_recvSPHParticleVec.begin(), d_recvSPHParticleVec.end());
 
     #ifdef 0
       if (recvParticleVec.size() > 0) {    
@@ -2460,7 +2489,7 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
     rsphParticleX2Y2Z1.clear();
     rsphParticleX2Y2Z2.clear();
 
-    recvSPHParticleVec.clear();
+    d_recvSPHParticleVec.clear();
   }
 
   void SmoothParticleHydro::gatherParticle() {
@@ -2526,22 +2555,22 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
 
 
   void SmoothParticleHydro::gatherSPHParticle() {
-    // update allSPHParticleVec: process 0 collects all updated particles from each other process  
+    // update d_allSPHParticleVec: process 0 collects all updated particles from each other process  
     if (mpiRank != 0) {// each process except 0
-      boostWorld.send(0, mpiTag, sphParticleVec);
+      boostWorld.send(0, mpiTag, d_sphParticleVec);
     }
     else { // process 0
-      // allSPHParticleVec is cleared before filling with new data
+      // d_allSPHParticleVec is cleared before filling with new data
       releaseGatheredSPHParticle();
 
-      // duplicate sphParticleVec so that it is not destroyed by allSPHParticleVec in next iteration,
+      // duplicate d_sphParticleVec so that it is not destroyed by d_allSPHParticleVec in next iteration,
       // otherwise it causes memory error.
-      std::vector<sph::SPHParticle*> dupSPHParticleVec(sphParticleVec.size());
+      std::vector<sph::SPHParticle*> dupSPHParticleVec(d_sphParticleVec.size());
       for (std::size_t i = 0; i < dupSPHParticleVec.size(); ++i)
-  dupSPHParticleVec[i] = new sph::SPHParticle(*sphParticleVec[i]);
+  dupSPHParticleVec[i] = new sph::SPHParticle(*d_sphParticleVec[i]);
 
       // fill allParticleVec with dupParticleVec and received particles
-      allSPHParticleVec.insert(allSPHParticleVec.end(), dupSPHParticleVec.begin(), dupSPHParticleVec.end());
+      d_allSPHParticleVec.insert(d_allSPHParticleVec.end(), dupSPHParticleVec.begin(), dupSPHParticleVec.end());
 
       std::vector<sph::SPHParticle*> tmpSPHParticleVec;
       long gatherRam = 0;
@@ -2549,7 +2578,7 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
 
   tmpSPHParticleVec.clear();// do not destroy particles!
   boostWorld.recv(iRank, mpiTag, tmpSPHParticleVec);
-  allSPHParticleVec.insert(allSPHParticleVec.end(), tmpSPHParticleVec.begin(), tmpSPHParticleVec.end());
+  d_allSPHParticleVec.insert(d_allSPHParticleVec.end(), tmpSPHParticleVec.begin(), tmpSPHParticleVec.end());
   gatherRam += tmpSPHParticleVec.size();
 
       }
@@ -2559,10 +2588,10 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
 
   void SmoothParticleHydro::releaseGatheredSPHParticle() {
     // clear allParticleVec, avoid long time memory footprint.
-    for (std::vector<sph::SPHParticle*>::iterator it = allSPHParticleVec.begin(); it != allSPHParticleVec.end(); ++it)
+    for (std::vector<sph::SPHParticle*>::iterator it = d_allSPHParticleVec.begin(); it != d_allSPHParticleVec.end(); ++it)
       delete (*it);
-    allSPHParticleVec.clear();
-    std::vector<sph::SPHParticle*>().swap(allSPHParticleVec); // actual memory release
+    d_allSPHParticleVec.clear();
+    std::vector<sph::SPHParticle*>().swap(d_allSPHParticleVec); // actual memory release
   }
 
   void SmoothParticleHydro::gatherBdryContact() {
@@ -2612,7 +2641,7 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
   void SmoothParticleHydro::printSPHTecplot(std::ofstream &ofs, int iframe) {
   ofs << "ZONE T =\" " << iframe << "-th Load Step\" "<< std::endl;
   // Output the coordinates and the array information
-  for(std::vector<sph::SPHParticle*>::iterator pt = allSPHParticleVec.begin(); pt!= allSPHParticleVec.end(); pt++) {
+  for(std::vector<sph::SPHParticle*>::iterator pt = d_allSPHParticleVec.begin(); pt!= d_allSPHParticleVec.end(); pt++) {
 
 //// not print the most right layer of SPH free particles, 2015/05/19
 //if((*pt)->getInitPosition().getx()==25){
@@ -2652,7 +2681,7 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
       << std::endl;
  
   // Output the coordinates and the array information
-  for(std::vector<sph::SPHParticle*>::const_iterator pt = allSPHParticleVec.begin(); pt!= allSPHParticleVec.end(); pt++) {
+  for(std::vector<sph::SPHParticle*>::const_iterator pt = d_allSPHParticleVec.begin(); pt!= d_allSPHParticleVec.end(); pt++) {
 
 //// not print the most right layer of SPH free particles, 2015/05/19
 //if((*pt)->getInitPosition().getx()==25){
@@ -2689,7 +2718,7 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
   commuSPHParticle();  // this will update container and mergeSPHParticleVec, both are needed for divideSPHDomain
   calculateSPHDensityDotVelocityDotLinkedList2D();  // calculate velocityDot and densityDot
   // fix the y for all SPH points
-  for(std::vector<sph::SPHParticle*>::iterator pt=sphParticleVec.begin(); pt!=sphParticleVec.end(); pt++){
+  for(std::vector<sph::SPHParticle*>::iterator pt=d_sphParticleVec.begin(); pt!=d_sphParticleVec.end(); pt++){
       switch((*pt)->getType()){
         case 1: // free sph particle
     (*pt)->fixY();
@@ -2730,13 +2759,13 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
 
 
     void SmoothParticleHydro::initialSPHLeapFrogVelocity(){  // initial particle velocity only for free SPH particles based on equation (4.3)
-  for(std::vector<sph::SPHParticle*>::iterator pt=sphParticleVec.begin(); pt!=sphParticleVec.end(); pt++){
+  for(std::vector<sph::SPHParticle*>::iterator pt=d_sphParticleVec.begin(); pt!=d_sphParticleVec.end(); pt++){
       if((*pt)->getType() == 1) (*pt)->initialParticleVelocityLeapFrog();
   }
     } // end initialSPHLeapFrogVelocity
 
     void SmoothParticleHydro::updateSPHLeapFrogPositionDensity(){  // update particle position and density based on equation (4.1)
-  for(std::vector<sph::SPHParticle*>::iterator pt=sphParticleVec.begin(); pt!=sphParticleVec.end(); pt++){
+  for(std::vector<sph::SPHParticle*>::iterator pt=d_sphParticleVec.begin(); pt!=d_sphParticleVec.end(); pt++){
       switch((*pt)->getType()){
         case 1: // free sph particle
     (*pt)->updateParticlePositionDensityLeapFrog();
@@ -2760,7 +2789,7 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
 
 
     void SmoothParticleHydro::updateSPHLeapFrogVelocity(){  // update particle velocity only for free SPH particles based on equation (4.2)
-  for(std::vector<sph::SPHParticle*>::iterator pt=sphParticleVec.begin(); pt!=sphParticleVec.end(); pt++){
+  for(std::vector<sph::SPHParticle*>::iterator pt=d_sphParticleVec.begin(); pt!=d_sphParticleVec.end(); pt++){
       if((*pt)->getType()==1) (*pt)->updateParticleVelocityLeapFrog();
   }
     } // end updateSPHLeapFrogVelocity
@@ -2938,7 +2967,7 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
   dem::Vec tmp_vec = dem::Vec(0,0, -(util::getParam<>("gravAccel"])*(util::getParam<>("gravScale"]) );
   dem::Vec zero_vec = dem::Vec(0,0,0);
   // in the calculation of forces between sph particles, we need to use the mergeSPHParticleVec, 
-  // since mergeVec contains the sph particles from neighboring cpus. While we can only update and migrate and communicate sphParticleVec
+  // since mergeVec contains the sph particles from neighboring cpus. While we can only update and migrate and communicate d_sphParticleVec
   for(std::vector<sph::SPHParticle*>::iterator pt=mergeSPHParticleVec.begin(); pt!=mergeSPHParticleVec.end(); pt++){
       (*pt)->setDensityDotVelocityDotZero();
       (*pt)->calculateParticleViscosity();  // everytime when use getParticleViscolisity(), make sure that pressure has been calculated!!!!
@@ -3787,7 +3816,7 @@ SmoothParticleHydro::createParticleArray<2>(const REAL& mass,
   dem::Vec tmp_vec = dem::Vec(0,0, -(util::getParam<>("gravAccel"])*(util::getParam<>("gravScale"]) );
   dem::Vec zero_vec = dem::Vec(0,0,0);
   // in the calculation of forces between sph particles, we need to use the mergeSPHParticleVec, 
-  // since mergeVec contains the sph particles from neighboring cpus. While we can only update and migrate and communicate sphParticleVec
+  // since mergeVec contains the sph particles from neighboring cpus. While we can only update and migrate and communicate d_sphParticleVec
   for(std::vector<sph::SPHParticle*>::iterator pt=mergeSPHParticleVec.begin(); pt!=mergeSPHParticleVec.end(); pt++){
       (*pt)->setDensityDotVelocityDotZero();
       (*pt)->calculateParticleViscosity();  // everytime when use getParticleViscolisity(), make sure that pressure has been calculated!!!!

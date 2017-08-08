@@ -121,8 +121,8 @@ namespace dem {
     void setPrevDirecC(Vec vv) {prevDirecC = vv;}
     void setCurrVeloc(Vec vv) {currVeloc = vv;}
     void setPrevVeloc(Vec vv) {prevVeloc = vv;}
-    void setCurrOmga(Vec vv) {currOmga = vv;}
-    void setPrevOmga(Vec vv) {prevOmga = vv;}
+    void setCurrOmega(Vec vv) {currOmga = vv;}
+    void setPrevOmega(Vec vv) {prevOmga = vv;}
     void setForce(Vec vv) {force = vv;}
     void setMoment(Vec vv) {moment = vv;}
     void setConstForce(Vec vv) {constForce = vv;}

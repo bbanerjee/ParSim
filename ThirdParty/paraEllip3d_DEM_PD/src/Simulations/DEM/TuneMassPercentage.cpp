@@ -47,7 +47,7 @@ TuneMassPercentage::execute(DiscreteElements* dem)
     for (double& i : massPercent)
       i = 0;
 
-    for (const auto& itr : dem->getAllParticleVec())
+    for (const auto& itr : dem->getAllDEMParticleVec())
       for (int i = massPercent.size() - 1; i >= 0;
            --i) { // do not use size_t for descending series
         if (itr->getA() <= massSize[i])

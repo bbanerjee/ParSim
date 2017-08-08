@@ -21,7 +21,7 @@ CavityExpansion::execute(DiscreteElements* dem)
     DEMParticlePArray cavityParticleVec;
     Vec center;
 
-    for (const auto& it : dem->getAllParticleVec()) {
+    for (const auto& it : dem->getAllDEMParticleVec()) {
       center = it->currentPosition();
       if (center.x() > x1 && center.x() < x2 && center.y() > y1 &&
           center.y() < y2 && center.z() > z1 && center.z() < z2) {
