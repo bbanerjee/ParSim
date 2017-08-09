@@ -18,6 +18,7 @@ SPHParticleCreator::generateSPHParticle(
   auto sphLength = util::getParam<REAL>("waterLength");
   auto numSPHPoint = util::getParam<REAL>("nSPHPoint");
   auto spaceInterval = sphLength / (numSPHPoint - 1);
+  dem::InputParameter::get().addParameter("spaceInterval", spaceInterval);
   auto small_value = 0.01 * spaceInterval;
   auto smoothLength = 1.5 * spaceInterval;
   auto kernelSize = 3 * smoothLength;

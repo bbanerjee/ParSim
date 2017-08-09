@@ -41,10 +41,6 @@ public:
   {
     return d_sphParticleVec;
   }
-  inline const SPHParticlePArray& getRecvSPHParticleVec() const
-  {
-    return d_recvSPHParticleVec;
-  }
 
   void clearAllSPHParticleVec() { d_allSPHParticleVec.clear(); }
 
@@ -66,16 +62,19 @@ public:
 
   inline void setGrid(dem::Box cont) { d_sphGrid = cont; }
 
-  /*
-  // Scatter the sphdynamics particles
-  void scatterSPHParticle(const dem::Box& allContainer);
+  // Scatter the sph particles
+  void scatterSPHParticle(const dem::Box& allContainer,
+                          const REAL& ghostWidth,
+                          REAL& bufferLength);
 
   void findSPHParticleInBox(const dem::Box& container,
-                             const SPHParticlePArray& allParticles,
-                             SPHParticlePArray& foundParticles);
+                            const SPHParticlePArray& allParticles,
+                            SPHParticlePArray& foundParticles);
 
   void commuSPHParticle(int iteration,
-                         const double& maxDEMParticleRadius);
+                         const double& ghostWidth);
+  /*
+
 
   void removeSPHParticleOutBox(const dem::Box& container,
                                 SPHParticlePArray& d_sphParticleVec);
@@ -162,22 +161,20 @@ private:
   std::ofstream sphProgInf;
   std::ofstream sphProgInfHalf;
 
-  // number of SPHParticles in the domain, only for master cpu
-  int nSPHParticle;
-
-  // dimension of the problem, only for master cpu
-  int ndim;
-
   // only for master cpu
   SPHParticlePArray d_allSPHParticleVec;
+
+  // Temporary
+  SPHParticlePArray d_patchSPHParticleVec;
 
   // coordinates of all the particles in this cpu, local
   // sph-points in current cpu
   SPHParticlePArray d_sphParticleVec;
-  SPHParticlePArray ghostSPHParticleVec;
 
-  SPHParticlePArray d_recvSPHParticleVec;
-  SPHParticlePArray mergeSPHParticleVec;
+  // Particles in patch + ghpst
+  SPHParticlePArray d_mergeSPHParticleVec;
+
+
 };
 
 } // namespace sph
