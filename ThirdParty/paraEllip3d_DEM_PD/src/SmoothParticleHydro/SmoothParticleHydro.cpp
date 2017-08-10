@@ -20,6 +20,7 @@ using Box = dem::Box;
 using DEMParticlePArray = dem::DEMParticlePArray;
 using OutputVTK = dem::OutputVTK<SPHParticlePArray>;
 using OutputTecplot = dem::OutputTecplot<SPHParticlePArray>;
+using communicator = boost::mpi::communicator;
 
 SmoothParticleHydro::SmoothParticleHydro()
 {
@@ -29,6 +30,49 @@ SmoothParticleHydro::~SmoothParticleHydro()
 {
   d_allSPHParticleVec.clear();
   d_sphParticleVec.clear();
+}
+
+void 
+SmoothParticleHydro::setCommunicator(const communicator& boostWorldComm)
+{
+  d_boostWorld = boostWorldComm;
+  d_mpiWorld = MPI_Comm(boostWorldComm);
+  int mpiProcX = util::getParam<int>("mpiProcX");
+  int mpiProcY = util::getParam<int>("mpiProcY");
+  int mpiProcZ = util::getParam<int>("mpiProcZ");
+  d_mpiProcs = {{ mpiProcX, mpiProcY, mpiProcZ }};
+
+  // create Cartesian virtual topology (unavailable in boost.mpi)
+  int ndim = 3;
+  int periods[3] = { 0, 0, 0 };
+  int reorder = 0; // d_mpiRank not reordered
+  int status = MPI_Cart_create(d_mpiWorld, ndim, d_mpiProcs.data(), 
+                               periods, reorder, &d_cartComm);
+  if (status != MPI_SUCCESS ) {
+    std::cout << "**ERROR** Could not create MPI Cartesian topology.\n";
+    exit(-1);
+  }
+                   
+  status = MPI_Comm_rank(d_cartComm, &d_mpiRank);
+  if (status != MPI_SUCCESS ) {
+    std::cout << "**ERROR** Could not get MPI Cartesian topology rank.\n";
+    exit(-1);
+  }
+
+  status = MPI_Comm_size(d_cartComm, &d_mpiSize);
+  if (status != MPI_SUCCESS ) {
+    std::cout << "**ERROR** Could not get MPI Cartesian topology size.\n";
+    exit(-1);
+  }
+
+  status = MPI_Cart_coords(d_cartComm, d_mpiRank, ndim, d_mpiCoords.data());
+  if (status != MPI_SUCCESS ) {
+    std::cout << "**ERROR** Could not get MPI Cartesian topology coords.\n";
+    exit(-1);
+  }
+
+  d_mpiTag = 0;
+  assert(d_mpiRank == d_boostWorld.rank());
 }
 
 // this is to scatter the dem and sph particle
@@ -56,13 +100,27 @@ SmoothParticleHydro::scatterSPHParticle(const Box& allContainer,
                                         REAL& bufferLength)
 {
   // Comute the buffer size for the computational domain
-  int numLayers = util::getParam<int>("numLayers");
-  REAL spaceInterval = util::getParam<REAL>("spaceInterval");
-  bufferLength = spaceInterval * numLayers;
+  // int numLayers = util::getParam<int>("numLayers");
+  // REAL spaceInterval = util::getParam<REAL>("spaceInterval");
+  // bufferLength = spaceInterval * numLayers;
+
+  // Set d_sphGrid on all procs
+  setGrid(Box(allContainer, bufferLength));
+
+  // Create patch for the current process
+  int iteration = 0;
+  createPatch(iteration, ghostWidth);
 
   // partition particles and send to each process
   if (d_mpiRank == 0) { // process 0
-    setGrid(Box(allContainer, bufferLength));
+
+    /*
+    for (auto part : d_allSPHParticleVec) {
+      std::cout << "Id:" << part->getId()
+                << " Pos:" << part->getInitPosition()
+                << " CurPos:" << part->currentPosition() << "\n";
+    }
+    */
 
     Vec v1 = d_sphGrid.getMinCorner();
     Vec v2 = d_sphGrid.getMaxCorner();
@@ -94,9 +152,11 @@ SmoothParticleHydro::scatterSPHParticle(const Box& allContainer,
 
         // Make a deep copy
         d_sphParticleVec.resize(d_patchSPHParticleVec.size());
-        for (auto i = 0u; i < d_sphParticleVec.size(); ++i)
+        for (auto i = 0u; i < d_sphParticleVec.size(); ++i) {
           d_sphParticleVec[i] =
             std::make_shared<SPHParticle>(*d_patchSPHParticleVec[i]);
+        }
+
       } 
     } // end iRank loop
 
@@ -107,11 +167,8 @@ SmoothParticleHydro::scatterSPHParticle(const Box& allContainer,
     d_boostWorld.recv(0, d_mpiTag, d_sphParticleVec);
   }
 
-  // broadcast necessary info
-  broadcast(d_boostWorld, d_sphGrid, 0);
-
-  // Create patch for the current process
-  createPatch(0, ghostWidth);
+  //std::cout << "d_mpirank = " << d_mpiRank << " Num particles "
+  //          << d_sphParticleVec.size() << "\n";
 
 } // scatterDEMSPHParticle
 

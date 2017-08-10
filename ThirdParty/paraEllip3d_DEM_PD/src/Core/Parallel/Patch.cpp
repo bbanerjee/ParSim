@@ -6,6 +6,7 @@
 #include <SmoothParticleHydro/SPHParticle.h>
 #include <Core/Types/integertypes.h>
 #include <set>
+#include <ostream>
 
 using namespace dem;
 
@@ -16,14 +17,22 @@ PatchNeighborComm<TArray>::setNeighbor(MPI_Comm& cartComm, int myRank,
                                       PatchBoundary boundaryFlag) 
 {
   int neighborRank = -1;
-  MPI_Cart_rank(cartComm, neighborCoords.data(), &neighborRank);
+  MPI_Errhandler_set(cartComm, MPI_ERRORS_RETURN);
+  int status = MPI_Cart_rank(cartComm, neighborCoords.data(), &neighborRank);
+  if (status != MPI_SUCCESS) {
+    //char error_string[1000];
+    //int length_of_error_string;
+    //MPI_Error_string(status, error_string, &length_of_error_string);
+    //std::ostringstream out;
+    //out << "rank = " << myRank << ":" << error_string;
+    //std::cout << out.str() << "\n";
+    d_boundary = boundaryFlag;
+  } else {
+    d_boundary = PatchBoundary::inside;
+  }
+  
   d_rank = neighborRank;
   d_coords = neighborCoords;
-  if (neighborRank > -1) {
-    d_boundary = PatchBoundary::inside;
-  } else {
-    d_boundary = boundaryFlag;
-  }
 
   //std::ostringstream out;
   //out << "myRank = " << myRank << " neighborCoords: " << neighborCoords 
@@ -143,6 +152,7 @@ Patch<TArray>::setXMinus(MPI_Comm& cartComm)
 {
   IntVec neighborCoords = d_patchMPICoords;
   --neighborCoords.x();
+  //std::cout << "x-:" << neighborCoords << "\n";
   d_xMinus.setNeighbor(cartComm, d_rank, neighborCoords, PatchBoundary::xminus);
 }
 
@@ -152,6 +162,7 @@ Patch<TArray>::setXPlus(MPI_Comm& cartComm)
 {
   IntVec neighborCoords = d_patchMPICoords;
   ++neighborCoords.x();
+  //std::cout << "x+:" << neighborCoords << "\n";
   d_xPlus.setNeighbor(cartComm, d_rank, neighborCoords, PatchBoundary::xplus);
 }
 
@@ -161,6 +172,7 @@ Patch<TArray>::setYMinus(MPI_Comm& cartComm)
 {
   IntVec neighborCoords = d_patchMPICoords;
   --neighborCoords.y();
+  //std::cout << "y-:" << neighborCoords << "\n";
   d_yMinus.setNeighbor(cartComm, d_rank, neighborCoords, PatchBoundary::yminus);
 }
 
@@ -170,6 +182,7 @@ Patch<TArray>::setYPlus(MPI_Comm& cartComm)
 {
   IntVec neighborCoords = d_patchMPICoords;
   ++neighborCoords.y();
+  //std::cout << "y+:" << neighborCoords << "\n";
   d_yPlus.setNeighbor(cartComm, d_rank, neighborCoords, PatchBoundary::yplus);
 }
 
@@ -179,6 +192,7 @@ Patch<TArray>::setZMinus(MPI_Comm& cartComm)
 {
   IntVec neighborCoords = d_patchMPICoords;
   --neighborCoords.z();
+  //std::cout << "z-:" << neighborCoords << "\n";
   d_zMinus.setNeighbor(cartComm, d_rank, neighborCoords, PatchBoundary::zminus);
 }
 
@@ -188,6 +202,7 @@ Patch<TArray>::setZPlus(MPI_Comm& cartComm)
 {
   IntVec neighborCoords = d_patchMPICoords;
   ++neighborCoords.z();
+  //std::cout << "z+:" << neighborCoords << "\n";
   d_zPlus.setNeighbor(cartComm, d_rank, neighborCoords, PatchBoundary::zplus);
 }
 

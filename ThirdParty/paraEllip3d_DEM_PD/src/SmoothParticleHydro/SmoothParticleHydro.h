@@ -32,23 +32,12 @@ public:
   inline int getMPIRank() const { return d_mpiRank; }
   inline boost::mpi::communicator getMPIWorld() const { return d_boostWorld; }
 
-  // Accessor methods
-  inline const SPHParticlePArray& getAllSPHParticleVec() const
-  {
-    return d_allSPHParticleVec;
-  }
-  inline const SPHParticlePArray& getSPHParticleVec() const
-  {
-    return d_sphParticleVec;
-  }
-
-  void clearAllSPHParticleVec() { d_allSPHParticleVec.clear(); }
-
-  void setCommunicator(const boost::mpi::communicator& boostWorldComm,
-                       const MPI_Comm& mpiWorldComm,
-                       const MPI_Comm& mpiCartComm, int mpiRank, int mpiSize,
-                       int mpiTag, const dem::IntVec& mpiProcs,
-                       const dem::IntVec& mpiCoords)
+  void setCommunicator(const boost::mpi::communicator& boostWorldComm);
+  void copyCommunicator(const boost::mpi::communicator& boostWorldComm,
+                        const MPI_Comm& mpiWorldComm,
+                        const MPI_Comm& mpiCartComm, int mpiRank, int mpiSize,
+                        int mpiTag, const dem::IntVec& mpiProcs,
+                        const dem::IntVec& mpiCoords)
   {
     d_boostWorld = boostWorldComm;
     d_mpiWorld = mpiWorldComm;
@@ -61,6 +50,23 @@ public:
   }
 
   inline void setGrid(dem::Box cont) { d_sphGrid = cont; }
+
+  // Accessor methods
+  inline const SPHParticlePArray& getAllSPHParticleVec() const
+  {
+    return d_allSPHParticleVec;
+  }
+  inline const SPHParticlePArray& getSPHParticleVec() const
+  {
+    return d_sphParticleVec;
+  }
+
+  inline void setAllSPHParticleVec(const SPHParticlePArray& particles) 
+  {
+    d_allSPHParticleVec = particles;
+  }
+
+  void clearAllSPHParticleVec() { d_allSPHParticleVec.clear(); }
 
   // Scatter the sph particles
   void scatterSPHParticle(const dem::Box& allContainer,
