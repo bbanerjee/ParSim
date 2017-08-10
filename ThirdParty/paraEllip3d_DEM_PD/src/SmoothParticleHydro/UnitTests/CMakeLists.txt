@@ -91,3 +91,25 @@ add_custom_command(
   COMMAND ${MPI_COMMAND}
 )
 
+#--------------------------------------
+# SPHParticleCommu
+#--------------------------------------
+add_executable(testSPHParticleCommu testSPHParticleCommu.cpp)
+
+target_link_libraries(testSPHParticleCommu
+  ${TEST_LIB}
+  ELLIP3D_LIB
+  ${MPI_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${VTK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+)
+
+set(UNIT_TEST testSPHParticleCommu)
+set(MPI_COMMAND mpirun -np 2 ${UNIT_TEST})
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${MPI_COMMAND}
+)
+

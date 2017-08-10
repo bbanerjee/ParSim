@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
   return RUN_ALL_TESTS();
 }
 
-TEST(SPHParticleScatterTest, scatter)
+TEST(SPHParticleCommuTest, communicate)
 {
   // Set up communicator
   boost::mpi::communicator boostWorld;
@@ -71,35 +71,25 @@ TEST(SPHParticleScatterTest, scatter)
   dem::Box allContainer(dem::Vec(-0.01, -0.01, -0.01), dem::Vec(0.11, 0.11, 0.11));
   REAL spaceInterval = util::getParam<REAL>("spaceInterval");
   int numLayers = util::getParam<int>("numLayers");
-  REAL ghostWidth = 3*spaceInterval;
+  REAL ghostWidth = spaceInterval;
   REAL bufferLength = spaceInterval*numLayers;
 
-  // First with an empty set of particles
+  // Scatter the set of particles
   SmoothParticleHydro sph;
   sph.setCommunicator(boostWorld);
-
   if (boostWorld.rank() == 0) {
-    EXPECT_EQ(sph.getAllSPHParticleVec().size(), 0);
+    sph.setAllSPHParticleVec(sph_particles);
+    EXPECT_EQ(sph.getAllSPHParticleVec().size(), 25);
   }
   sph.scatterSPHParticle(allContainer, ghostWidth, bufferLength);
-  if (boostWorld.rank() == 0) {
-    EXPECT_EQ(sph.getSPHParticleVec().size(), 0);
-  } else {
-    EXPECT_EQ(sph.getSPHParticleVec().size(), 0);
-  }
 
-  // Next with a created set of particles
-  SmoothParticleHydro sph1;
-  sph1.setCommunicator(boostWorld);
+  // Communicate ghost regions
+  int iteration = 0;
+  sph.commuSPHParticle(iteration, ghostWidth);
   if (boostWorld.rank() == 0) {
-    sph1.setAllSPHParticleVec(sph_particles);
-    EXPECT_EQ(sph1.getAllSPHParticleVec().size(), 25);
-  }
-  sph1.scatterSPHParticle(allContainer, ghostWidth, bufferLength);
-  if (boostWorld.rank() == 0) {
-    EXPECT_EQ(sph1.getSPHParticleVec().size(), 10);
+    EXPECT_EQ(sph.getMergedSPHParticleVec().size(), 15);
   } else {
-    EXPECT_EQ(sph1.getSPHParticleVec().size(), 15);
+    EXPECT_EQ(sph.getMergedSPHParticleVec().size(), 20);
   }
 
 }

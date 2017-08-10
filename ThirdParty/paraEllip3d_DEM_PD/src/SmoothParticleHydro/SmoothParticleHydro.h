@@ -61,6 +61,11 @@ public:
     return d_sphParticleVec;
   }
 
+  inline const SPHParticlePArray& getMergedSPHParticleVec() const
+  {
+    return d_mergeSPHParticleVec;
+  }
+
   inline void setAllSPHParticleVec(const SPHParticlePArray& particles) 
   {
     d_allSPHParticleVec = particles;
