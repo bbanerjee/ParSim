@@ -85,6 +85,11 @@ Output::createFileNames()
     << std::setfill('0') << std::setw(5) << d_outputIteration;
   d_periParticleFileName = periParticleOutputFile.str();
 
+  std::ostringstream sphParticleOutputFile;
+  sphParticleOutputFile << folderName << "/sph_particle_"
+    << std::setfill('0') << std::setw(5) << d_outputIteration;
+  d_sphParticleFileName = sphParticleOutputFile.str();
+
   std::ostringstream bdryContactOutputFile;
   bdryContactOutputFile << folderName << "/bdrycontact_"
     << std::setfill('0') << std::setw(5) << d_outputIteration;
@@ -104,6 +109,7 @@ Output::updateFileNames(const int& iteration, const std::string& extension) {
   d_gridFileName += extension;
   d_particleFileName += extension;
   d_periParticleFileName += extension;
+  d_sphParticleFileName += extension;
   d_bdryContactFileName += extension;
 }
 

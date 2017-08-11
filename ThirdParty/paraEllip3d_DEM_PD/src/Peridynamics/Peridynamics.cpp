@@ -1156,7 +1156,8 @@ Peridynamics::gatherPeriParticle()
   } else { 
 
     // allPeriParticleVec is cleared before filling with new data
-    releaseGatheredPeriParticle();
+    allPeriParticleVec.clear();
+    //releaseGatheredPeriParticle();
 
     // duplicate PeriParticleVec so that it is not destroyed by
     // allPeriParticleVec in next iteration,

@@ -24,6 +24,7 @@
 
 #include <DiscreteElements/DEMParticle.h>
 #include <Peridynamics/PeriParticle.h>
+#include <SmoothParticleHydro/SPHParticle.h>
 #include <InputOutput/OutputTecplot.h>
 
 #include <fstream>
@@ -37,6 +38,7 @@
 using namespace dem;
 
 using pd::PeriParticlePArray;
+using sph::SPHParticlePArray;
 
 template <typename TArray>
 OutputTecplot<TArray>::OutputTecplot(const std::string& folderName, int iterInterval)
@@ -295,7 +297,7 @@ OutputTecplot<PeriParticlePArray>::writeParticles(const PeriParticlePArray* part
   }
 
   ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(10);
+  ofs.precision(OPREC);
   if (frame == 0) {
     ofs << "Title = \"DEMParticle Information\"" << std::endl;
     ofs << "VARIABLES = \"X\", \"Y\",\"Z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" "
@@ -329,6 +331,59 @@ OutputTecplot<PeriParticlePArray>::writeParticles(const PeriParticlePArray* part
         << pt->getVelocity().z() << std::setw(20) << vnormL2(pt->getVelocity())
         << std::setw(20) << pressure << std::setw(20) << vonMisesStress
         << std::endl;
+    ofs.flush();
+  }
+
+  ofs.close();
+}
+
+template <>
+void
+OutputTecplot<SPHParticlePArray>::writeParticles(const SPHParticlePArray* particles, 
+                                                 int frame)
+{
+  // Get the filename
+  std::string fileName(d_sphParticleFileName);
+  fileName.append(".dat");
+
+  std::ofstream ofs(fileName);
+  if (!ofs) {
+    debugInf << "stream error: printParticle" << std::endl;
+    exit(-1);
+  }
+
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(OPREC);
+  if (frame == 0) {
+    ofs << "Title = \"SPH Particle Information\"" << std::endl;
+    ofs << "VARIABLES = \"x\", \"y\",\"z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\" ";
+    ofs << "\"Vz\" \"Pressure\" \"a_x\" \"a_y\" \"a_z\" \"density_dot\" ";
+    ofs << "\"density\" " << std::endl; 
+  }
+  ofs << "ZONE T =\" " << frame << "-th Load Step\" " << std::endl;
+
+  // Output the coordinates and the array information
+  for (const auto& pt : *particles) {
+
+    pt->calculatePressure();
+
+    ofs << std::setw(20) << pt->currentPosition().x() << std::setw(20)
+        << pt->currentPosition().y() << std::setw(20)
+        << pt->currentPosition().z() << std::setw(20)
+        << pt->getDisplacement().x() << std::setw(20)
+        << pt->getDisplacement().y() << std::setw(20)
+        << pt->getDisplacement().z() << std::setw(20)
+        << pt->getVelocity().x() << std::setw(20) << pt->getVelocity().y()
+        << std::setw(20) << pt->getVelocity().z();
+
+    ofs << std::setw(20) << pt->getPressure();
+
+    ofs << std::setw(20) << pt->getAcceleration().x() << std::setw(20)
+        << pt->getAcceleration().y() << std::setw(20)
+        << pt->getAcceleration().z() << std::setw(20)
+        << pt->getDensityDot() << std::setw(20)
+        << pt->getDensity() << std::endl;
+
     ofs.flush();
   }
 

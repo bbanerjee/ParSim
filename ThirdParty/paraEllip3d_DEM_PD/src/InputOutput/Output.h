@@ -28,6 +28,7 @@
 #include <Core/Geometry/Box.h>
 #include <DiscreteElements/DEMContainers.h>
 #include <Peridynamics/PeriContainers.h>
+#include <SmoothParticleHydro/SPHContainers.h>
 #include <DiscreteElements/Gradation.h>
 
 #include <mpi.h>
@@ -55,11 +56,13 @@ public:
   virtual void setGrid(const Box* grid) {};
   virtual void setParticles(const DEMParticlePArray* particles) {};
   virtual void setParticles(const pd::PeriParticlePArray* particles) {};
+  virtual void setParticles(const sph::SPHParticlePArray* particles) {};
 
   virtual void writeDomain(const Box* domain) {};
   virtual void writeGrid(const Box* grid) {};
   virtual void writeParticles(const DEMParticlePArray* particles, int frame) {};
   virtual void writeParticles(const pd::PeriParticlePArray* particles, int frame) {};
+  virtual void writeParticles(const sph::SPHParticlePArray* particles, int frame) {};
   virtual void writeSieves(const Gradation* gradation) {};
 
   void createFileNames();
@@ -70,9 +73,11 @@ public:
   std::string getGridFileName() const { return d_gridFileName; }
   std::string getParticleFileName() const { return d_particleFileName; }
   std::string getPeriParticleFileName() const { return d_periParticleFileName; }
+  std::string getSPHParticleFileName() const { return d_sphParticleFileName; }
   std::string getBdryContactFileName() const { return d_bdryContactFileName; }
   void setParticleFileName(const std::string& name) { d_particleFileName = d_outputFolderName + "/" + name; }
   void setPeriParticleFileName(const std::string& name) { d_periParticleFileName = d_outputFolderName + "/" + name; }
+  void setSPHParticleFileName(const std::string& name) { d_sphParticleFileName = d_outputFolderName + "/" + name; }
   inline std::string outputFolder() const { return d_outputFolderName; }
   inline int outputIteratonInterval() const { return d_outputIteration; }
 
@@ -103,6 +108,7 @@ protected:
   std::string d_gridFileName;
   std::string d_particleFileName;
   std::string d_periParticleFileName;
+  std::string d_sphParticleFileName;
   std::string d_bdryContactFileName;
 
 private:

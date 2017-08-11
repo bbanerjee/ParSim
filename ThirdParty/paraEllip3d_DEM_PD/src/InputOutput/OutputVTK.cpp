@@ -24,6 +24,7 @@
 
 #include <DiscreteElements/DEMParticle.h>
 #include <Peridynamics/PeriParticle.h>
+#include <SmoothParticleHydro/SPHParticle.h>
 #include <InputOutput/OutputVTK.h>
 
 #include <vtkDoubleArray.h>
@@ -47,6 +48,7 @@
 using namespace dem;
 
 using PeriParticlePArray = pd::PeriParticlePArray;
+using SPHParticlePArray = sph::SPHParticlePArray;
 
 using vtkHexahedronP = vtkSmartPointer<vtkHexahedron>;
 using vtkXMLUnstructuredGridWriterP =
@@ -225,7 +227,24 @@ OutputVTK<PeriParticlePArray>::writeParticles(const PeriParticlePArray* particle
   std::string fileName(d_periParticleFileName);
   fileName.append(".").append(writer->GetDefaultFileExtension());
   writer->SetFileName(fileName.c_str());
-  //std::cout << "writeParticles::Peri DEMParticle file = " << fileName << "\n";
+  //std::cout << "writeParticles::PeriParticle file = " << fileName << "\n";
+
+  actuallyWriteParticles(particles, frame, writer);
+}
+
+template <>
+void
+OutputVTK<SPHParticlePArray>::writeParticles(const SPHParticlePArray* particles, 
+                                             int frame) 
+{
+  // Create a writer
+  vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
+
+  // Get the filename
+  std::string fileName(d_sphParticleFileName);
+  fileName.append(".").append(writer->GetDefaultFileExtension());
+  writer->SetFileName(fileName.c_str());
+  //std::cout << "writeParticles::SPHParticle file = " << fileName << "\n";
 
   actuallyWriteParticles(particles, frame, writer);
 }
@@ -672,7 +691,135 @@ OutputVTK<PeriParticlePArray>::createVTKUnstructuredGrid(const PeriParticlePArra
   */
 }
 
+template <>
+void
+OutputVTK<SPHParticlePArray>::createVTKUnstructuredGrid(const SPHParticlePArray* particles,
+                                                        vtkPointsP& pts,
+                                                        vtkUnstructuredGridP& dataSet)
+{
+  // Set up pointers for material property data
+  vtkDoubleArrayP ID = vtkDoubleArrayP::New();
+  ID->SetNumberOfComponents(1);
+  ID->SetNumberOfTuples(pts->GetNumberOfPoints());
+  ID->SetName("ID");
+
+  vtkDoubleArrayP position = vtkDoubleArrayP::New();
+  position->SetNumberOfComponents(3);
+  position->SetNumberOfTuples(pts->GetNumberOfPoints());
+  position->SetName("Position");
+
+  vtkDoubleArrayP displacement = vtkDoubleArrayP::New();
+  displacement->SetNumberOfComponents(3);
+  displacement->SetNumberOfTuples(pts->GetNumberOfPoints());
+  displacement->SetName("Displacement");
+
+  vtkDoubleArrayP velocity = vtkDoubleArrayP::New();
+  velocity->SetNumberOfComponents(3);
+  velocity->SetNumberOfTuples(pts->GetNumberOfPoints());
+  velocity->SetName("Velocity");
+
+  vtkDoubleArrayP pressure = vtkDoubleArrayP::New();
+  pressure->SetNumberOfComponents(1);
+  pressure->SetNumberOfTuples(pts->GetNumberOfPoints());
+  pressure->SetName("Pressure");
+
+  vtkDoubleArrayP acceleration = vtkDoubleArrayP::New();
+  acceleration->SetNumberOfComponents(3);
+  acceleration->SetNumberOfTuples(pts->GetNumberOfPoints());
+  acceleration->SetName("Acceleration");
+
+  vtkDoubleArrayP densityRate = vtkDoubleArrayP::New();
+  densityRate->SetNumberOfComponents(1);
+  densityRate->SetNumberOfTuples(pts->GetNumberOfPoints());
+  densityRate->SetName("DensityRate");
+
+  vtkDoubleArrayP density = vtkDoubleArrayP::New();
+  density->SetNumberOfComponents(1);
+  density->SetNumberOfTuples(pts->GetNumberOfPoints());
+  density->SetName("Density");
+
+  // Loop through particles
+  int id = 0;
+  double vec[3];
+  for (const auto& particle : *particles) {
+
+    // Compute derived quantities (pressure)
+    particle->calculatePressure();
+
+    // Get the vector quantities
+    Vec pos  = particle->currentPosition();
+    Vec disp = particle->getDisplacement();
+    Vec vel = particle->getVelocity();
+    Vec acc = particle->getAcceleration();
+    REAL press = particle->getPressure();
+    REAL rhoDot = particle->getDensityDot();
+    REAL rho = particle->getDensity();
+
+    // Position
+    vec[0] = pos.x();
+    vec[1] = pos.y();
+    vec[2] = pos.z();
+    pts->SetPoint(id, vec);
+
+    // ID
+    ID->InsertValue(id, particle->getId());
+
+    // Displacement
+    vec[0] = disp.x();
+    vec[1] = disp.y();
+    vec[2] = disp.z();
+    displacement->InsertTuple(id, vec);
+
+    // Velocity
+    vec[0] = vel.x();
+    vec[1] = vel.y();
+    vec[2] = vel.z();
+    velocity->InsertTuple(id, vec);
+
+    // Pressure
+    pressure->InsertValue(id, press);
+
+    // Acceleration
+    vec[0] = acc.x();
+    vec[1] = acc.y();
+    vec[2] = acc.z();
+    acceleration->InsertTuple(id, vec);
+
+    // Density rate
+    densityRate->InsertValue(id, rhoDot);
+
+    // Density
+    density->InsertValue(id, rho);
+
+    ++id;
+  }
+
+  // Add points to data set
+  dataSet->GetPointData()->AddArray(ID);
+  dataSet->GetPointData()->AddArray(displacement);
+  dataSet->GetPointData()->AddArray(velocity);
+  dataSet->GetPointData()->AddArray(pressure);
+  dataSet->GetPointData()->AddArray(acceleration);
+  dataSet->GetPointData()->AddArray(densityRate);
+  dataSet->GetPointData()->AddArray(density);
+
+  // Check point data
+  /*
+  vtkPointData *pd = dataSet->GetPointData();
+  if (pd) {
+    //std::cout << " contains point data with " << pd->GetNumberOfArrays() << "
+  arrays." << std::endl;
+    for (int i = 0; i < pd->GetNumberOfArrays(); i++) {
+      //std::cout << "\tArray " << i << " is named "
+                << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
+                << std::endl;
+    }
+  }
+  */
+}
+
 namespace dem {
   template class OutputVTK<DEMParticlePArray>;
   template class OutputVTK<pd::PeriParticlePArray>;
+  template class OutputVTK<sph::SPHParticlePArray>;
 }

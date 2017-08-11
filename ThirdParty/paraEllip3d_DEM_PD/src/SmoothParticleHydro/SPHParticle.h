@@ -88,7 +88,7 @@ public:
   dem::Vec getTrialPosition() const;
   dem::Vec getDisplacement() const { return d_currPos - d_initialPos; }
   dem::Vec getVelocity() const { return d_velocity; }
-  dem::Vec getVelocityDot() const { return d_acceleration; }
+  dem::Vec getAcceleration() const { return d_acceleration; }
   SPHParticleType getType() const { return d_type; }
   dem::DEMParticle* getDEMParticle() { return d_demParticle; }
 

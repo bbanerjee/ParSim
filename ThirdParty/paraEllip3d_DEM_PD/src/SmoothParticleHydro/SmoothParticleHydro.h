@@ -84,8 +84,12 @@ public:
 
   void commuSPHParticle(int iteration,
                          const double& ghostWidth);
-  /*
 
+  void migrateSPHParticle(int iteration);
+
+  void gatherSPHParticle();
+
+  /*
 
   void removeSPHParticleOutBox(const dem::Box& container,
                                 SPHParticlePArray& d_sphParticleVec);
@@ -95,8 +99,6 @@ public:
   void releaseRecvSPHParticle();
   void releaseGatheredSPHParticle();
 
-  void migrateSPHParticle(int iteration);
-  void gatherSPHParticle();
 
   void updateSPHGrid(const SPHParticlePArray& particles);
 

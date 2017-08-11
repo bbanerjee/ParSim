@@ -32,7 +32,7 @@ SmoothParticleHydro::~SmoothParticleHydro()
   d_sphParticleVec.clear();
 }
 
-void 
+void
 SmoothParticleHydro::setCommunicator(const communicator& boostWorldComm)
 {
   d_boostWorld = boostWorldComm;
@@ -40,33 +40,33 @@ SmoothParticleHydro::setCommunicator(const communicator& boostWorldComm)
   int mpiProcX = util::getParam<int>("mpiProcX");
   int mpiProcY = util::getParam<int>("mpiProcY");
   int mpiProcZ = util::getParam<int>("mpiProcZ");
-  d_mpiProcs = {{ mpiProcX, mpiProcY, mpiProcZ }};
+  d_mpiProcs = { { mpiProcX, mpiProcY, mpiProcZ } };
 
   // create Cartesian virtual topology (unavailable in boost.mpi)
   int ndim = 3;
   int periods[3] = { 0, 0, 0 };
   int reorder = 0; // d_mpiRank not reordered
-  int status = MPI_Cart_create(d_mpiWorld, ndim, d_mpiProcs.data(), 
-                               periods, reorder, &d_cartComm);
-  if (status != MPI_SUCCESS ) {
+  int status = MPI_Cart_create(d_mpiWorld, ndim, d_mpiProcs.data(), periods,
+                               reorder, &d_cartComm);
+  if (status != MPI_SUCCESS) {
     std::cout << "**ERROR** Could not create MPI Cartesian topology.\n";
     exit(-1);
   }
-                   
+
   status = MPI_Comm_rank(d_cartComm, &d_mpiRank);
-  if (status != MPI_SUCCESS ) {
+  if (status != MPI_SUCCESS) {
     std::cout << "**ERROR** Could not get MPI Cartesian topology rank.\n";
     exit(-1);
   }
 
   status = MPI_Comm_size(d_cartComm, &d_mpiSize);
-  if (status != MPI_SUCCESS ) {
+  if (status != MPI_SUCCESS) {
     std::cout << "**ERROR** Could not get MPI Cartesian topology size.\n";
     exit(-1);
   }
 
   status = MPI_Cart_coords(d_cartComm, d_mpiRank, ndim, d_mpiCoords.data());
-  if (status != MPI_SUCCESS ) {
+  if (status != MPI_SUCCESS) {
     std::cout << "**ERROR** Could not get MPI Cartesian topology coords.\n";
     exit(-1);
   }
@@ -156,8 +156,7 @@ SmoothParticleHydro::scatterSPHParticle(const Box& allContainer,
           d_sphParticleVec[i] =
             std::make_shared<SPHParticle>(*d_patchSPHParticleVec[i]);
         }
-
-      } 
+      }
     } // end iRank loop
 
     boost::mpi::wait_all(reqs, reqs + d_mpiSize - 1);
@@ -167,7 +166,7 @@ SmoothParticleHydro::scatterSPHParticle(const Box& allContainer,
     d_boostWorld.recv(0, d_mpiTag, d_sphParticleVec);
   }
 
-  //std::cout << "d_mpirank = " << d_mpiRank << " Num particles "
+  // std::cout << "d_mpirank = " << d_mpiRank << " Num particles "
   //          << d_sphParticleVec.size() << "\n";
 
 } // scatterDEMSPHParticle
@@ -211,54 +210,8 @@ SmoothParticleHydro::updatePatch(int iteration, const REAL& ghostWidth)
   d_patchP->update(iteration, lower, upper, ghostWidth);
 }
 
-/*
 void
-SmoothParticleHydro::removeSPHParticleOutRectangle()
-{
-  Vec v1 = container.getMinCorner();
-  Vec v2 = container.getMaxCorner();
-  REAL x1 = v1.x();
-  REAL y1 = v1.y();
-  REAL z1 = v1.z();
-  REAL x2 = v2.x();
-  REAL y2 = v2.y();
-  REAL z2 = v2.z();
-
-  std::vector<sph::SPHParticle*>::iterator itr;
-  Vec center;
-  // std::size_t flag = 0;
-
-  // this for loop may be replaced by for_each, remove, erase and swap (shrink
-  // to fit)
-  // see item 14 in "effective STL"
-  for (itr = d_sphParticleVec.begin(); itr != d_sphParticleVec.end();) {
-    center = (*itr)->getCurrPosition();
-    // it is critical to use EPS
-    if (!(center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
-          center.y() - y1 >= -EPS && center.y() - y2 < -EPS &&
-          center.z() - z1 >= -EPS && center.z() - z2 < -EPS)) {
-      //  debugInf << "iter=" << std::setw(8) << iteration << " rank=" <<
-      // std::setw(2) << d_mpiRank
-      //  << " removed=" << std::setw(3) << (*itr)->getId();
-      //  flag = 1;
-      delete (*itr); // release memory
-      itr = d_sphParticleVec.erase(itr);
-    } else
-      ++itr;
-  }
-  //  if (flag == 1) {
-  //  debugInf << " now " << particleVec.size() << ": ";
-  //  for (std::vector<Particle*>::const_iterator it = particleVec.begin(); it
-  //!= particleVec.end(); ++it)
-  //  debugInf << std::setw(3) << (*it)->getId();
-  //  debugInf << std::endl;
-  //  }
-}
-*/
-
-void
-SmoothParticleHydro::commuSPHParticle(int iteration,
-                                      const REAL& ghostWidth)
+SmoothParticleHydro::commuSPHParticle(int iteration, const REAL& ghostWidth)
 {
   updatePatch(iteration, ghostWidth);
 
@@ -277,7 +230,7 @@ SmoothParticleHydro::commuSPHParticle(int iteration,
   d_patchP->combineReceivedParticlesX(iteration, recvParticles);
 
   /*
-  proc0cout << "iteration = " << iteration 
+  proc0cout << "iteration = " << iteration
             << " recv X = " << recvParticles.size()
             << " merge = " << d_mergeSPHParticleVec.size() << "\n";
   */
@@ -290,7 +243,7 @@ SmoothParticleHydro::commuSPHParticle(int iteration,
   d_patchP->combineReceivedParticlesY(iteration, recvParticles);
 
   /*
-  proc0cout << "iteration = " << iteration 
+  proc0cout << "iteration = " << iteration
             << " recv Y = " << recvParticles.size()
             << " merge = " << d_mergeSPHParticleVec.size() << "\n";
   */
@@ -303,1304 +256,140 @@ SmoothParticleHydro::commuSPHParticle(int iteration,
   d_patchP->combineReceivedParticlesZ(iteration, recvParticles);
 
   /*
-  proc0cout << "iteration = " << iteration 
+  proc0cout << "iteration = " << iteration
             << " recv Z = " << recvParticles.size()
             << " merge = " << d_mergeSPHParticleVec.size() << "\n";
   */
 }
 
-/*
 void
-SmoothParticleHydro::releaseRecvParticle()
+SmoothParticleHydro::migrateSPHParticle(int iteration)
 {
-  // release memory of received particles
-  for (std::vector<Particle*>::iterator it = recvParticleVec.begin();
-       it != recvParticleVec.end(); ++it) {
-    for (std::vector<sph::SPHParticle*>::iterator st =
-           (*it)->SPHGhostParticleVec.begin();
-         st != (*it)->SPHGhostParticleVec.end(); st++) {
-      delete (*st); // release memory of these sph ghost particles
-    }
-    (*it)->SPHGhostParticleVec.clear();
-    delete (*it);
-  }
-  recvParticleVec.clear();
-  // 6 surfaces
-  rParticleX1.clear();
-  rParticleX2.clear();
-  rParticleY1.clear();
-  rParticleY2.clear();
-  rParticleZ1.clear();
-  rParticleZ2.clear();
-  // 12 edges
-  rParticleX1Y1.clear();
-  rParticleX1Y2.clear();
-  rParticleX1Z1.clear();
-  rParticleX1Z2.clear();
-  rParticleX2Y1.clear();
-  rParticleX2Y2.clear();
-  rParticleX2Z1.clear();
-  rParticleX2Z2.clear();
-  rParticleY1Z1.clear();
-  rParticleY1Z2.clear();
-  rParticleY2Z1.clear();
-  rParticleY2Z2.clear();
-  // 8 vertices
-  rParticleX1Y1Z1.clear();
-  rParticleX1Y1Z2.clear();
-  rParticleX1Y2Z1.clear();
-  rParticleX1Y2Z2.clear();
-  rParticleX2Y1Z1.clear();
-  rParticleX2Y1Z2.clear();
-  rParticleX2Y2Z1.clear();
-  rParticleX2Y2Z2.clear();
-}
+  Vec domainWidth = d_sphGrid.getMaxCorner() - d_sphGrid.getMinCorner();
+  Vec patchWidth = domainWidth / d_mpiProcs;
 
-void
-SmoothParticleHydro::releaseRecvSPHParticle()
-{
-  // release memory of received particles
-  for (std::vector<sph::SPHParticle*>::iterator it =
-         d_recvSPHParticleVec.begin();
-       it != d_recvSPHParticleVec.end(); ++it)
-    delete (*it);
-  d_recvSPHParticleVec.clear();
-  // 6 surfaces
-  rsphParticleX1.clear();
-  rsphParticleX2.clear();
-  rsphParticleY1.clear();
-  rsphParticleY2.clear();
-  rsphParticleZ1.clear();
-  rsphParticleZ2.clear();
-  // 12 edges
-  rsphParticleX1Y1.clear();
-  rsphParticleX1Y2.clear();
-  rsphParticleX1Z1.clear();
-  rsphParticleX1Z2.clear();
-  rsphParticleX2Y1.clear();
-  rsphParticleX2Y2.clear();
-  rsphParticleX2Z1.clear();
-  rsphParticleX2Z2.clear();
-  rsphParticleY1Z1.clear();
-  rsphParticleY1Z2.clear();
-  rsphParticleY2Z1.clear();
-  rsphParticleY2Z2.clear();
-  // 8 vertices
-  rsphParticleX1Y1Z1.clear();
-  rsphParticleX1Y1Z2.clear();
-  rsphParticleX1Y2Z1.clear();
-  rsphParticleX1Y2Z2.clear();
-  rsphParticleX2Y1Z1.clear();
-  rsphParticleX2Y1Z2.clear();
-  rsphParticleX2Y2Z1.clear();
-  rsphParticleX2Y2Z2.clear();
-}
+  // Migrate particles in the x-direction
+  dem::ParticleIDHashMap sentParticles;
+  SPHParticlePArray recvParticles;
+  d_patchP->sendRecvMigrateXMinus(d_boostWorld, iteration, patchWidth,
+                                  d_sphParticleVec);
+  d_patchP->sendRecvMigrateXPlus(d_boostWorld, iteration, patchWidth,
+                                 d_sphParticleVec);
+  d_patchP->waitToFinishX(iteration);
+  d_patchP->combineSentParticlesX(iteration, sentParticles);
+  d_patchP->combineReceivedParticlesX(iteration, recvParticles);
+  d_patchP->deleteSentParticles<SPHParticleP>(iteration, sentParticles,
+                                              d_sphParticleVec);
+  d_patchP->addReceivedParticles(iteration, recvParticles, d_sphParticleVec);
 
-void
-SmoothParticleHydro::migrateParticle()
-{
-  Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
-  REAL segX = vspan.x() / mpiProcX;
-  REAL segY = vspan.y() / mpiProcY;
-  REAL segZ = vspan.z() / mpiProcZ;
-  Vec v1 = container.getMinCorner(); // v1, v2 in terms of process
-  Vec v2 = container.getMaxCorner();
+  /*
+  std::ostringstream out;
+  out << "Iter = " << iteration << " Rank = " << d_mpiRank
+      << " Recv X = " << recvParticles.size()
+      << " Sent X = " << sentParticles.size()
+      << " All = " << d_sphParticleVec.size() << "\n";
+  */
 
-  // if a neighbor exists, transfer particles crossing the boundary in
-  // between.
-  std::vector<Particle *> particleX1, particleX2;
-  std::vector<Particle *> particleY1, particleY2;
-  std::vector<Particle *> particleZ1, particleZ2;
-  std::vector<Particle *> particleX1Y1, particleX1Y2, particleX1Z1,
-    particleX1Z2;
-  std::vector<Particle *> particleX2Y1, particleX2Y2, particleX2Z1,
-    particleX2Z2;
-  std::vector<Particle *> particleY1Z1, particleY1Z2, particleY2Z1,
-    particleY2Z2;
-  std::vector<Particle *> particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1,
-    particleX1Y2Z2;
-  std::vector<Particle *> particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1,
-    particleX2Y2Z2;
-  boost::mpi::request reqX1[2], reqX2[2];
-  boost::mpi::request reqY1[2], reqY2[2];
-  boost::mpi::request reqZ1[2], reqZ2[2];
-  boost::mpi::request reqX1Y1[2], reqX1Y2[2], reqX1Z1[2], reqX1Z2[2];
-  boost::mpi::request reqX2Y1[2], reqX2Y2[2], reqX2Z1[2], reqX2Z2[2];
-  boost::mpi::request reqY1Z1[2], reqY1Z2[2], reqY2Z1[2], reqY2Z2[2];
-  boost::mpi::request reqX1Y1Z1[2], reqX1Y1Z2[2], reqX1Y2Z1[2], reqX1Y2Z2[2];
-  boost::mpi::request reqX2Y1Z1[2], reqX2Y1Z2[2], reqX2Y2Z1[2], reqX2Y2Z2[2];
+  // Migrate particles in the y-direction
+  sentParticles.clear();
+  recvParticles.clear();
+  d_patchP->sendRecvMigrateYMinus(d_boostWorld, iteration, patchWidth,
+                                  d_sphParticleVec);
+  d_patchP->sendRecvMigrateYPlus(d_boostWorld, iteration, patchWidth,
+                                 d_sphParticleVec);
+  d_patchP->waitToFinishY(iteration);
+  d_patchP->combineSentParticlesY(iteration, sentParticles);
+  d_patchP->combineReceivedParticlesY(iteration, recvParticles);
+  d_patchP->deleteSentParticles<SPHParticleP>(iteration, sentParticles,
+                                              d_sphParticleVec);
+  d_patchP->addReceivedParticles(iteration, recvParticles, d_sphParticleVec);
 
-  // 6 surfaces
-  if (rankX1 >= 0) { // surface x1
-    Rectangle containerX1(v1.x() - segX, v1.y(), v1.z(), v1.x(), v2.y(),
-                          v2.z());
-    findParticleInRectangle(containerX1, particleVec, particleX1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX1.begin();
-         it != particleX1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle(); // now the SPHGhostParticles in
-    // part of particleVec are pointing to NULL, don't needed to be back in
-    // migrate
-    reqX1[0] = boostWorld.isend(rankX1, mpiTag, particleX1);
-    reqX1[1] = boostWorld.irecv(rankX1, mpiTag, rParticleX1);
-  }
-  if (rankX2 >= 0) { // surface x2
-    Rectangle containerX2(v2.x(), v1.y(), v1.z(), v2.x() + segX, v2.y(),
-                          v2.z());
-    findParticleInRectangle(containerX2, particleVec, particleX2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX2.begin();
-         it != particleX2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX2[0] = boostWorld.isend(rankX2, mpiTag, particleX2);
-    reqX2[1] = boostWorld.irecv(rankX2, mpiTag, rParticleX2);
-  }
-  if (rankY1 >= 0) { // surface y1
-    Rectangle containerY1(v1.x(), v1.y() - segY, v1.z(), v2.x(), v1.y(),
-                          v2.z());
-    findParticleInRectangle(containerY1, particleVec, particleY1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleY1.begin();
-         it != particleY1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqY1[0] = boostWorld.isend(rankY1, mpiTag, particleY1);
-    reqY1[1] = boostWorld.irecv(rankY1, mpiTag, rParticleY1);
-  }
-  if (rankY2 >= 0) { // surface y2
-    Rectangle containerY2(v1.x(), v2.y(), v1.z(), v2.x(), v2.y() + segY,
-                          v2.z());
-    findParticleInRectangle(containerY2, particleVec, particleY2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleY2.begin();
-         it != particleY2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqY2[0] = boostWorld.isend(rankY2, mpiTag, particleY2);
-    reqY2[1] = boostWorld.irecv(rankY2, mpiTag, rParticleY2);
-  }
-  if (rankZ1 >= 0) { // surface z1
-    Rectangle containerZ1(v1.x(), v1.y(), v1.z() - segZ, v2.x(), v2.y(),
-                          v1.z());
-    findParticleInRectangle(containerZ1, particleVec, particleZ1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleZ1.begin();
-         it != particleZ1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqZ1[0] = boostWorld.isend(rankZ1, mpiTag, particleZ1);
-    reqZ1[1] = boostWorld.irecv(rankZ1, mpiTag, rParticleZ1);
-  }
-  if (rankZ2 >= 0) { // surface z2
-    Rectangle containerZ2(v1.x(), v1.y(), v2.z(), v2.x(), v2.y(),
-                          v2.z() + segZ);
-    findParticleInRectangle(containerZ2, particleVec, particleZ2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleZ2.begin();
-         it != particleZ2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqZ2[0] = boostWorld.isend(rankZ2, mpiTag, particleZ2);
-    reqZ2[1] = boostWorld.irecv(rankZ2, mpiTag, rParticleZ2);
-  }
-  // 12 edges
-  if (rankX1Y1 >= 0) { // edge x1y1
-    Rectangle containerX1Y1(v1.x() - segX, v1.y() - segY, v1.z(), v1.x(),
-                            v1.y(), v2.z());
-    findParticleInRectangle(containerX1Y1, particleVec, particleX1Y1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX1Y1.begin();
-         it != particleX1Y1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX1Y1[0] = boostWorld.isend(rankX1Y1, mpiTag, particleX1Y1);
-    reqX1Y1[1] = boostWorld.irecv(rankX1Y1, mpiTag, rParticleX1Y1);
-  }
-  if (rankX1Y2 >= 0) { // edge x1y2
-    Rectangle containerX1Y2(v1.x() - segX, v2.y(), v1.z(), v1.x(),
-                            v2.y() + segY, v2.z());
-    findParticleInRectangle(containerX1Y2, particleVec, particleX1Y2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX1Y2.begin();
-         it != particleX1Y2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX1Y2[0] = boostWorld.isend(rankX1Y2, mpiTag, particleX1Y2);
-    reqX1Y2[1] = boostWorld.irecv(rankX1Y2, mpiTag, rParticleX1Y2);
-  }
-  if (rankX1Z1 >= 0) { // edge x1z1
-    Rectangle containerX1Z1(v1.x() - segX, v1.y(), v1.z() - segZ, v1.x(),
-                            v2.y(), v1.z());
-    findParticleInRectangle(containerX1Z1, particleVec, particleX1Z1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX1Z1.begin();
-         it != particleX1Z1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX1Z1[0] = boostWorld.isend(rankX1Z1, mpiTag, particleX1Z1);
-    reqX1Z1[1] = boostWorld.irecv(rankX1Z1, mpiTag, rParticleX1Z1);
-  }
-  if (rankX1Z2 >= 0) { // edge x1z2
-    Rectangle containerX1Z2(v1.x() - segX, v1.y(), v2.z(), v1.x(), v2.y(),
-                            v2.z() + segZ);
-    findParticleInRectangle(containerX1Z2, particleVec, particleX1Z2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX1Z2.begin();
-         it != particleX1Z2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX1Z2[0] = boostWorld.isend(rankX1Z2, mpiTag, particleX1Z2);
-    reqX1Z2[1] = boostWorld.irecv(rankX1Z2, mpiTag, rParticleX1Z2);
-  }
-  if (rankX2Y1 >= 0) { // edge x2y1
-    Rectangle containerX2Y1(v2.x(), v1.y() - segY, v1.z(), v2.x() + segX,
-                            v1.y(), v2.z());
-    findParticleInRectangle(containerX2Y1, particleVec, particleX2Y1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX2Y1.begin();
-         it != particleX2Y1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX2Y1[0] = boostWorld.isend(rankX2Y1, mpiTag, particleX2Y1);
-    reqX2Y1[1] = boostWorld.irecv(rankX2Y1, mpiTag, rParticleX2Y1);
-  }
-  if (rankX2Y2 >= 0) { // edge x2y2
-    Rectangle containerX2Y2(v2.x(), v2.y(), v1.z(), v2.x() + segX,
-                            v2.y() + segY, v2.z());
-    findParticleInRectangle(containerX2Y2, particleVec, particleX2Y2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX2Y2.begin();
-         it != particleX2Y2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX2Y2[0] = boostWorld.isend(rankX2Y2, mpiTag, particleX2Y2);
-    reqX2Y2[1] = boostWorld.irecv(rankX2Y2, mpiTag, rParticleX2Y2);
-  }
-  if (rankX2Z1 >= 0) { // edge x2z1
-    Rectangle containerX2Z1(v2.x(), v1.y(), v1.z() - segZ, v2.x() + segX,
-                            v2.y(), v1.z());
-    findParticleInRectangle(containerX2Z1, particleVec, particleX2Z1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX2Z1.begin();
-         it != particleX2Z1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX2Z1[0] = boostWorld.isend(rankX2Z1, mpiTag, particleX2Z1);
-    reqX2Z1[1] = boostWorld.irecv(rankX2Z1, mpiTag, rParticleX2Z1);
-  }
-  if (rankX2Z2 >= 0) { // edge x2z2
-    Rectangle containerX2Z2(v2.x(), v1.y(), v2.z(), v2.x() + segX, v2.y(),
-                            v2.z() + segZ);
-    findParticleInRectangle(containerX2Z2, particleVec, particleX2Z2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX2Z2.begin();
-         it != particleX2Z2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX2Z2[0] = boostWorld.isend(rankX2Z2, mpiTag, particleX2Z2);
-    reqX2Z2[1] = boostWorld.irecv(rankX2Z2, mpiTag, rParticleX2Z2);
-  }
-  if (rankY1Z1 >= 0) { // edge y1z1
-    Rectangle containerY1Z1(v1.x(), v1.y() - segY, v1.z() - segZ, v2.x(),
-                            v1.y(), v1.z());
-    findParticleInRectangle(containerY1Z1, particleVec, particleY1Z1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleY1Z1.begin();
-         it != particleY1Z1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqY1Z1[0] = boostWorld.isend(rankY1Z1, mpiTag, particleY1Z1);
-    reqY1Z1[1] = boostWorld.irecv(rankY1Z1, mpiTag, rParticleY1Z1);
-  }
-  if (rankY1Z2 >= 0) { // edge y1z2
-    Rectangle containerY1Z2(v1.x(), v1.y() - segY, v2.z(), v2.x(), v1.y(),
-                            v2.z() + segZ);
-    findParticleInRectangle(containerY1Z2, particleVec, particleY1Z2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleY1Z2.begin();
-         it != particleY1Z2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqY1Z2[0] = boostWorld.isend(rankY1Z2, mpiTag, particleY1Z2);
-    reqY1Z2[1] = boostWorld.irecv(rankY1Z2, mpiTag, rParticleY1Z2);
-  }
-  if (rankY2Z1 >= 0) { // edge y2z1
-    Rectangle containerY2Z1(v1.x(), v2.y(), v1.z() - segZ, v2.x(),
-                            v2.y() + segY, v1.z());
-    findParticleInRectangle(containerY2Z1, particleVec, particleY2Z1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleY2Z1.begin();
-         it != particleY2Z1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqY2Z1[0] = boostWorld.isend(rankY2Z1, mpiTag, particleY2Z1);
-    reqY2Z1[1] = boostWorld.irecv(rankY2Z1, mpiTag, rParticleY2Z1);
-  }
-  if (rankY2Z2 >= 0) { // edge y2z2
-    Rectangle containerY2Z2(v1.x(), v2.y(), v2.z(), v2.x(), v2.y() + segY,
-                            v2.z() + segZ);
-    findParticleInRectangle(containerY2Z2, particleVec, particleY2Z2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleY2Z2.begin();
-         it != particleY2Z2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqY2Z2[0] = boostWorld.isend(rankY2Z2, mpiTag, particleY2Z2);
-    reqY2Z2[1] = boostWorld.irecv(rankY2Z2, mpiTag, rParticleY2Z2);
-  }
-  // 8 vertices
-  if (rankX1Y1Z1 >= 0) { // edge x1y1z1
-    Rectangle containerX1Y1Z1(v1.x() - segX, v1.y() - segY, v1.z() - segZ,
-                              v1.x(), v1.y(), v1.z());
-    findParticleInRectangle(containerX1Y1Z1, particleVec, particleX1Y1Z1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX1Y1Z1.begin();
-         it != particleX1Y1Z1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX1Y1Z1[0] = boostWorld.isend(rankX1Y1Z1, mpiTag, particleX1Y1Z1);
-    reqX1Y1Z1[1] = boostWorld.irecv(rankX1Y1Z1, mpiTag, rParticleX1Y1Z1);
-  }
-  if (rankX1Y1Z2 >= 0) { // edge x1y1z2
-    Rectangle containerX1Y1Z2(v1.x() - segX, v1.y() - segY, v2.z(), v1.x(),
-                              v1.y(), v2.z() + segZ);
-    findParticleInRectangle(containerX1Y1Z2, particleVec, particleX1Y1Z2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX1Y1Z2.begin();
-         it != particleX1Y1Z2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX1Y1Z2[0] = boostWorld.isend(rankX1Y1Z2, mpiTag, particleX1Y1Z2);
-    reqX1Y1Z2[1] = boostWorld.irecv(rankX1Y1Z2, mpiTag, rParticleX1Y1Z2);
-  }
-  if (rankX1Y2Z1 >= 0) { // edge x1y2z1
-    Rectangle containerX1Y2Z1(v1.x() - segX, v2.y(), v1.z() - segZ, v1.x(),
-                              v2.y() + segY, v1.z());
-    findParticleInRectangle(containerX1Y2Z1, particleVec, particleX1Y2Z1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX1Y2Z1.begin();
-         it != particleX1Y2Z1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX1Y2Z1[0] = boostWorld.isend(rankX1Y2Z1, mpiTag, particleX1Y2Z1);
-    reqX1Y2Z1[1] = boostWorld.irecv(rankX1Y2Z1, mpiTag, rParticleX1Y2Z1);
-  }
-  if (rankX1Y2Z2 >= 0) { // edge x1y2z2
-    Rectangle containerX1Y2Z2(v1.x() - segX, v2.y(), v2.z(), v1.x(),
-                              v2.y() + segY, v2.z() + segZ);
-    findParticleInRectangle(containerX1Y2Z2, particleVec, particleX1Y2Z2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX1Y2Z2.begin();
-         it != particleX1Y2Z2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX1Y2Z2[0] = boostWorld.isend(rankX1Y2Z2, mpiTag, particleX1Y2Z2);
-    reqX1Y2Z2[1] = boostWorld.irecv(rankX1Y2Z2, mpiTag, rParticleX1Y2Z2);
-  }
-  if (rankX2Y1Z1 >= 0) { // edge x2y1z1
-    Rectangle containerX2Y1Z1(v2.x(), v1.y() - segY, v1.z() - segZ,
-                              v2.x() + segX, v1.y(), v1.z());
-    findParticleInRectangle(containerX2Y1Z1, particleVec, particleX2Y1Z1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX2Y1Z1.begin();
-         it != particleX2Y1Z1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX2Y1Z1[0] = boostWorld.isend(rankX2Y1Z1, mpiTag, particleX2Y1Z1);
-    reqX2Y1Z1[1] = boostWorld.irecv(rankX2Y1Z1, mpiTag, rParticleX2Y1Z1);
-  }
-  if (rankX2Y1Z2 >= 0) { // edge x2y1z2
-    Rectangle containerX2Y1Z2(v2.x(), v1.y() - segY, v2.z(), v2.x() + segX,
-                              v1.y(), v2.z() + segZ);
-    findParticleInRectangle(containerX2Y1Z2, particleVec, particleX2Y1Z2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX2Y1Z2.begin();
-         it != particleX2Y1Z2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX2Y1Z2[0] = boostWorld.isend(rankX2Y1Z2, mpiTag, particleX2Y1Z2);
-    reqX2Y1Z2[1] = boostWorld.irecv(rankX2Y1Z2, mpiTag, rParticleX2Y1Z2);
-  }
-  if (rankX2Y2Z1 >= 0) { // edge x2y2z1
-    Rectangle containerX2Y2Z1(v2.x(), v2.y(), v1.z() - segZ, v2.x() + segX,
-                              v2.y() + segY, v1.z());
-    findParticleInRectangle(containerX2Y2Z1, particleVec, particleX2Y2Z1);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX2Y2Z1.begin();
-         it != particleX2Y2Z1.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX2Y2Z1[0] = boostWorld.isend(rankX2Y2Z1, mpiTag, particleX2Y2Z1);
-    reqX2Y2Z1[1] = boostWorld.irecv(rankX2Y2Z1, mpiTag, rParticleX2Y2Z1);
-  }
-  if (rankX2Y2Z2 >= 0) { // edge x2y2z2
-    Rectangle containerX2Y2Z2(v2.x(), v2.y(), v2.z(), v2.x() + segX,
-                              v2.y() + segY, v2.z() + segZ);
-    findParticleInRectangle(containerX2Y2Z2, particleVec, particleX2Y2Z2);
-    // before send, SPHParticle.demParticle should be NULL
-    for (std::vector<Particle*>::iterator it = particleX2Y2Z2.begin();
-         it != particleX2Y2Z2.end(); it++)
-      (*it)->setNULLDemParticleInSPHParticle();
-    reqX2Y2Z2[0] = boostWorld.isend(rankX2Y2Z2, mpiTag, particleX2Y2Z2);
-    reqX2Y2Z2[1] = boostWorld.irecv(rankX2Y2Z2, mpiTag, rParticleX2Y2Z2);
-  }
-  // 6 surfaces
-  if (rankX1 >= 0)
-    boost::mpi::wait_all(reqX1, reqX1 + 2);
-  if (rankX2 >= 0)
-    boost::mpi::wait_all(reqX2, reqX2 + 2);
-  if (rankY1 >= 0)
-    boost::mpi::wait_all(reqY1, reqY1 + 2);
-  if (rankY2 >= 0)
-    boost::mpi::wait_all(reqY2, reqY2 + 2);
-  if (rankZ1 >= 0)
-    boost::mpi::wait_all(reqZ1, reqZ1 + 2);
-  if (rankZ2 >= 0)
-    boost::mpi::wait_all(reqZ2, reqZ2 + 2);
-  // 12 edges
-  if (rankX1Y1 >= 0)
-    boost::mpi::wait_all(reqX1Y1, reqX1Y1 + 2);
-  if (rankX1Y2 >= 0)
-    boost::mpi::wait_all(reqX1Y2, reqX1Y2 + 2);
-  if (rankX1Z1 >= 0)
-    boost::mpi::wait_all(reqX1Z1, reqX1Z1 + 2);
-  if (rankX1Z2 >= 0)
-    boost::mpi::wait_all(reqX1Z2, reqX1Z2 + 2);
-  if (rankX2Y1 >= 0)
-    boost::mpi::wait_all(reqX2Y1, reqX2Y1 + 2);
-  if (rankX2Y2 >= 0)
-    boost::mpi::wait_all(reqX2Y2, reqX2Y2 + 2);
-  if (rankX2Z1 >= 0)
-    boost::mpi::wait_all(reqX2Z1, reqX2Z1 + 2);
-  if (rankX2Z2 >= 0)
-    boost::mpi::wait_all(reqX2Z2, reqX2Z2 + 2);
-  if (rankY1Z1 >= 0)
-    boost::mpi::wait_all(reqY1Z1, reqY1Z1 + 2);
-  if (rankY1Z2 >= 0)
-    boost::mpi::wait_all(reqY1Z2, reqY1Z2 + 2);
-  if (rankY2Z1 >= 0)
-    boost::mpi::wait_all(reqY2Z1, reqY2Z1 + 2);
-  if (rankY2Z2 >= 0)
-    boost::mpi::wait_all(reqY2Z2, reqY2Z2 + 2);
-  // 8 vertices
-  if (rankX1Y1Z1 >= 0)
-    boost::mpi::wait_all(reqX1Y1Z1, reqX1Y1Z1 + 2);
-  if (rankX1Y1Z2 >= 0)
-    boost::mpi::wait_all(reqX1Y1Z2, reqX1Y1Z2 + 2);
-  if (rankX1Y2Z1 >= 0)
-    boost::mpi::wait_all(reqX1Y2Z1, reqX1Y2Z1 + 2);
-  if (rankX1Y2Z2 >= 0)
-    boost::mpi::wait_all(reqX1Y2Z2, reqX1Y2Z2 + 2);
-  if (rankX2Y1Z1 >= 0)
-    boost::mpi::wait_all(reqX2Y1Z1, reqX2Y1Z1 + 2);
-  if (rankX2Y1Z2 >= 0)
-    boost::mpi::wait_all(reqX2Y1Z2, reqX2Y1Z2 + 2);
-  if (rankX2Y2Z1 >= 0)
-    boost::mpi::wait_all(reqX2Y2Z1, reqX2Y2Z1 + 2);
-  if (rankX2Y2Z2 >= 0)
-    boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);
+  /*
+  out << "Iter = " << iteration << " Rank = " << d_mpiRank
+      << " Recv Y = " << recvParticles.size()
+      << " Sent Y = " << sentParticles.size()
+      << " All = " << sphParticleVec.size() << "\n";
+  */
 
-  // do not need to assign SPHGhostParticle.demParticle back in particleX1...,
-  // since these particles will be removed
-  // delete outgoing particles
-  removeParticleOutRectangle();
+  // Migrate particles in the z-direction
+  sentParticles.clear();
+  recvParticles.clear();
+  d_patchP->sendRecvMigrateZMinus(d_boostWorld, iteration, patchWidth,
+                                  d_sphParticleVec);
+  d_patchP->sendRecvMigrateZPlus(d_boostWorld, iteration, patchWidth,
+                                 d_sphParticleVec);
+  d_patchP->waitToFinishZ(iteration);
+  d_patchP->combineSentParticlesZ(iteration, sentParticles);
+  d_patchP->combineReceivedParticlesZ(iteration, recvParticles);
+  d_patchP->deleteSentParticles<SPHParticleP>(iteration, sentParticles,
+                                              d_sphParticleVec);
+  d_patchP->addReceivedParticles(iteration, recvParticles, d_sphParticleVec);
 
-  // add incoming particles
-  recvParticleVec.clear(); // new use of recvParticleVec
-  // 6 surfaces
-  if (rankX1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1.begin(),
-                           rParticleX1.end());
-  if (rankX2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2.begin(),
-                           rParticleX2.end());
-  if (rankY1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY1.begin(),
-                           rParticleY1.end());
-  if (rankY2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY2.begin(),
-                           rParticleY2.end());
-  if (rankZ1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleZ1.begin(),
-                           rParticleZ1.end());
-  if (rankZ2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleZ2.begin(),
-                           rParticleZ2.end());
-  // 12 edges
-  if (rankX1Y1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1.begin(),
-                           rParticleX1Y1.end());
-  if (rankX1Y2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2.begin(),
-                           rParticleX1Y2.end());
-  if (rankX1Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Z1.begin(),
-                           rParticleX1Z1.end());
-  if (rankX1Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Z2.begin(),
-                           rParticleX1Z2.end());
-  if (rankX2Y1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1.begin(),
-                           rParticleX2Y1.end());
-  if (rankX2Y2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2.begin(),
-                           rParticleX2Y2.end());
-  if (rankX2Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Z1.begin(),
-                           rParticleX2Z1.end());
-  if (rankX2Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Z2.begin(),
-                           rParticleX2Z2.end());
-  if (rankY1Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY1Z1.begin(),
-                           rParticleY1Z1.end());
-  if (rankY1Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY1Z2.begin(),
-                           rParticleY1Z2.end());
-  if (rankY2Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY2Z1.begin(),
-                           rParticleY2Z1.end());
-  if (rankY2Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY2Z2.begin(),
-                           rParticleY2Z2.end());
-  // 8 vertices
-  if (rankX1Y1Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1Z1.begin(),
-                           rParticleX1Y1Z1.end());
-  if (rankX1Y1Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1Z2.begin(),
-                           rParticleX1Y1Z2.end());
-  if (rankX1Y2Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2Z1.begin(),
-                           rParticleX1Y2Z1.end());
-  if (rankX1Y2Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2Z2.begin(),
-                           rParticleX1Y2Z2.end());
-  if (rankX2Y1Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1Z1.begin(),
-                           rParticleX2Y1Z1.end());
-  if (rankX2Y1Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1Z2.begin(),
-                           rParticleX2Y1Z2.end());
-  if (rankX2Y2Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2Z1.begin(),
-                           rParticleX2Y2Z1.end());
-  if (rankX2Y2Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2Z2.begin(),
-                           rParticleX2Y2Z2.end());
-
-  // after receive, set SPHParticle.demParticle
-  for (std::vector<Particle*>::iterator it = recvParticleVec.begin();
-       it != recvParticleVec.end(); it++) {
-    (*it)->setDemParticleInSPHParticle();
-  }
-
-  particleVec.insert(particleVec.end(), recvParticleVec.begin(),
-                     recvParticleVec.end());
-
-#ifdef 0
-  if (recvParticleVec.size() > 0) {
-    debugInf << "iter=" << std::setw(8) << iteration << " rank=" << std::setw(2)
-             << d_mpiRank << "   added=";
-    for (std::vector<Particle*>::const_iterator it = recvParticleVec.begin();
-         it != recvParticleVec.end(); ++it)
-      debugInf << std::setw(3) << (*it)->getId();
-    debugInf << " now " << particleVec.size() << ": ";
-    for (std::vector<Particle*>::const_iterator it = particleVec.begin();
-         it != particleVec.end(); ++it)
-      debugInf << std::setw(3) << (*it)->getId();
-    debugInf << std::endl;
-  }
-#endif
-
-  // do not release memory of received particles because they are part of and
-  managed by particleVec
-    // 6 surfaces
-    rParticleX1.clear();
-  rParticleX2.clear();
-  rParticleY1.clear();
-  rParticleY2.clear();
-  rParticleZ1.clear();
-  rParticleZ2.clear();
-  // 12 edges
-  rParticleX1Y1.clear();
-  rParticleX1Y2.clear();
-  rParticleX1Z1.clear();
-  rParticleX1Z2.clear();
-  rParticleX2Y1.clear();
-  rParticleX2Y2.clear();
-  rParticleX2Z1.clear();
-  rParticleX2Z2.clear();
-  rParticleY1Z1.clear();
-  rParticleY1Z2.clear();
-  rParticleY2Z1.clear();
-  rParticleY2Z2.clear();
-  // 8 vertices
-  rParticleX1Y1Z1.clear();
-  rParticleX1Y1Z2.clear();
-  rParticleX1Y2Z1.clear();
-  rParticleX1Y2Z2.clear();
-  rParticleX2Y1Z1.clear();
-  rParticleX2Y1Z2.clear();
-  rParticleX2Y2Z1.clear();
-  rParticleX2Y2Z2.clear();
-
-  recvParticleVec.clear();
-}
-
-void
-SmoothParticleHydro::migrateSPHParticle()
-{
-  Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
-  REAL segX = vspan.x() / mpiProcX;
-  REAL segY = vspan.y() / mpiProcY;
-  REAL segZ = vspan.z() / mpiProcZ;
-  Vec v1 = container.getMinCorner(); // v1, v2 in terms of process
-  Vec v2 = container.getMaxCorner();
-
-  // if a neighbor exists, transfer particles crossing the boundary in
-  // between.
-  std::vector<sph::SPHParticle *> sphParticleX1, sphParticleX2;
-  std::vector<sph::SPHParticle *> sphParticleY1, sphParticleY2;
-  std::vector<sph::SPHParticle *> sphParticleZ1, sphParticleZ2;
-  std::vector<sph::SPHParticle *> sphParticleX1Y1, sphParticleX1Y2,
-    sphParticleX1Z1, sphParticleX1Z2;
-  std::vector<sph::SPHParticle *> sphParticleX2Y1, sphParticleX2Y2,
-    sphParticleX2Z1, sphParticleX2Z2;
-  std::vector<sph::SPHParticle *> sphParticleY1Z1, sphParticleY1Z2,
-    sphParticleY2Z1, sphParticleY2Z2;
-  std::vector<sph::SPHParticle *> sphParticleX1Y1Z1, sphParticleX1Y1Z2,
-    sphParticleX1Y2Z1, sphParticleX1Y2Z2;
-  std::vector<sph::SPHParticle *> sphParticleX2Y1Z1, sphParticleX2Y1Z2,
-    sphParticleX2Y2Z1, sphParticleX2Y2Z2;
-  boost::mpi::request reqX1[2], reqX2[2];
-  boost::mpi::request reqY1[2], reqY2[2];
-  boost::mpi::request reqZ1[2], reqZ2[2];
-  boost::mpi::request reqX1Y1[2], reqX1Y2[2], reqX1Z1[2], reqX1Z2[2];
-  boost::mpi::request reqX2Y1[2], reqX2Y2[2], reqX2Z1[2], reqX2Z2[2];
-  boost::mpi::request reqY1Z1[2], reqY1Z2[2], reqY2Z1[2], reqY2Z2[2];
-  boost::mpi::request reqX1Y1Z1[2], reqX1Y1Z2[2], reqX1Y2Z1[2], reqX1Y2Z2[2];
-  boost::mpi::request reqX2Y1Z1[2], reqX2Y1Z2[2], reqX2Y2Z1[2], reqX2Y2Z2[2];
-
-  // 6 surfaces
-  if (rankX1 >= 0) { // surface x1
-    Rectangle containerX1(v1.x() - segX, v1.y(), v1.z(), v1.x(), v2.y(),
-                          v2.z());
-    findSPHParticleInRectangle(containerX1, d_sphParticleVec, sphParticleX1);
-    reqX1[0] = boostWorld.isend(rankX1, mpiTag, sphParticleX1);
-    reqX1[1] = boostWorld.irecv(rankX1, mpiTag, rsphParticleX1);
-  }
-  if (rankX2 >= 0) { // surface x2
-    Rectangle containerX2(v2.x(), v1.y(), v1.z(), v2.x() + segX, v2.y(),
-                          v2.z());
-    findSPHParticleInRectangle(containerX2, d_sphParticleVec, sphParticleX2);
-    reqX2[0] = boostWorld.isend(rankX2, mpiTag, sphParticleX2);
-    reqX2[1] = boostWorld.irecv(rankX2, mpiTag, rsphParticleX2);
-  }
-  if (rankY1 >= 0) { // surface y1
-    Rectangle containerY1(v1.x(), v1.y() - segY, v1.z(), v2.x(), v1.y(),
-                          v2.z());
-    findSPHParticleInRectangle(containerY1, d_sphParticleVec, sphParticleY1);
-    reqY1[0] = boostWorld.isend(rankY1, mpiTag, sphParticleY1);
-    reqY1[1] = boostWorld.irecv(rankY1, mpiTag, rsphParticleY1);
-  }
-  if (rankY2 >= 0) { // surface y2
-    Rectangle containerY2(v1.x(), v2.y(), v1.z(), v2.x(), v2.y() + segY,
-                          v2.z());
-    findSPHParticleInRectangle(containerY2, d_sphParticleVec, sphParticleY2);
-    reqY2[0] = boostWorld.isend(rankY2, mpiTag, sphParticleY2);
-    reqY2[1] = boostWorld.irecv(rankY2, mpiTag, rsphParticleY2);
-  }
-  if (rankZ1 >= 0) { // surface z1
-    Rectangle containerZ1(v1.x(), v1.y(), v1.z() - segZ, v2.x(), v2.y(),
-                          v1.z());
-    findSPHParticleInRectangle(containerZ1, d_sphParticleVec, sphParticleZ1);
-    reqZ1[0] = boostWorld.isend(rankZ1, mpiTag, sphParticleZ1);
-    reqZ1[1] = boostWorld.irecv(rankZ1, mpiTag, rsphParticleZ1);
-  }
-  if (rankZ2 >= 0) { // surface z2
-    Rectangle containerZ2(v1.x(), v1.y(), v2.z(), v2.x(), v2.y(),
-                          v2.z() + segZ);
-    findSPHParticleInRectangle(containerZ2, d_sphParticleVec, sphParticleZ2);
-    reqZ2[0] = boostWorld.isend(rankZ2, mpiTag, sphParticleZ2);
-    reqZ2[1] = boostWorld.irecv(rankZ2, mpiTag, rsphParticleZ2);
-  }
-  // 12 edges
-  if (rankX1Y1 >= 0) { // edge x1y1
-    Rectangle containerX1Y1(v1.x() - segX, v1.y() - segY, v1.z(), v1.x(),
-                            v1.y(), v2.z());
-    findSPHParticleInRectangle(containerX1Y1, d_sphParticleVec,
-                               sphParticleX1Y1);
-    reqX1Y1[0] = boostWorld.isend(rankX1Y1, mpiTag, sphParticleX1Y1);
-    reqX1Y1[1] = boostWorld.irecv(rankX1Y1, mpiTag, rsphParticleX1Y1);
-  }
-  if (rankX1Y2 >= 0) { // edge x1y2
-    Rectangle containerX1Y2(v1.x() - segX, v2.y(), v1.z(), v1.x(),
-                            v2.y() + segY, v2.z());
-    findSPHParticleInRectangle(containerX1Y2, d_sphParticleVec,
-                               sphParticleX1Y2);
-    reqX1Y2[0] = boostWorld.isend(rankX1Y2, mpiTag, sphParticleX1Y2);
-    reqX1Y2[1] = boostWorld.irecv(rankX1Y2, mpiTag, rsphParticleX1Y2);
-  }
-  if (rankX1Z1 >= 0) { // edge x1z1
-    Rectangle containerX1Z1(v1.x() - segX, v1.y(), v1.z() - segZ, v1.x(),
-                            v2.y(), v1.z());
-    findSPHParticleInRectangle(containerX1Z1, d_sphParticleVec,
-                               sphParticleX1Z1);
-    reqX1Z1[0] = boostWorld.isend(rankX1Z1, mpiTag, sphParticleX1Z1);
-    reqX1Z1[1] = boostWorld.irecv(rankX1Z1, mpiTag, rsphParticleX1Z1);
-  }
-  if (rankX1Z2 >= 0) { // edge x1z2
-    Rectangle containerX1Z2(v1.x() - segX, v1.y(), v2.z(), v1.x(), v2.y(),
-                            v2.z() + segZ);
-    findSPHParticleInRectangle(containerX1Z2, d_sphParticleVec,
-                               sphParticleX1Z2);
-    reqX1Z2[0] = boostWorld.isend(rankX1Z2, mpiTag, sphParticleX1Z2);
-    reqX1Z2[1] = boostWorld.irecv(rankX1Z2, mpiTag, rsphParticleX1Z2);
-  }
-  if (rankX2Y1 >= 0) { // edge x2y1
-    Rectangle containerX2Y1(v2.x(), v1.y() - segY, v1.z(), v2.x() + segX,
-                            v1.y(), v2.z());
-    findSPHParticleInRectangle(containerX2Y1, d_sphParticleVec,
-                               sphParticleX2Y1);
-    reqX2Y1[0] = boostWorld.isend(rankX2Y1, mpiTag, sphParticleX2Y1);
-    reqX2Y1[1] = boostWorld.irecv(rankX2Y1, mpiTag, rsphParticleX2Y1);
-  }
-  if (rankX2Y2 >= 0) { // edge x2y2
-    Rectangle containerX2Y2(v2.x(), v2.y(), v1.z(), v2.x() + segX,
-                            v2.y() + segY, v2.z());
-    findSPHParticleInRectangle(containerX2Y2, d_sphParticleVec,
-                               sphParticleX2Y2);
-    reqX2Y2[0] = boostWorld.isend(rankX2Y2, mpiTag, sphParticleX2Y2);
-    reqX2Y2[1] = boostWorld.irecv(rankX2Y2, mpiTag, rsphParticleX2Y2);
-  }
-  if (rankX2Z1 >= 0) { // edge x2z1
-    Rectangle containerX2Z1(v2.x(), v1.y(), v1.z() - segZ, v2.x() + segX,
-                            v2.y(), v1.z());
-    findSPHParticleInRectangle(containerX2Z1, d_sphParticleVec,
-                               sphParticleX2Z1);
-    reqX2Z1[0] = boostWorld.isend(rankX2Z1, mpiTag, sphParticleX2Z1);
-    reqX2Z1[1] = boostWorld.irecv(rankX2Z1, mpiTag, rsphParticleX2Z1);
-  }
-  if (rankX2Z2 >= 0) { // edge x2z2
-    Rectangle containerX2Z2(v2.x(), v1.y(), v2.z(), v2.x() + segX, v2.y(),
-                            v2.z() + segZ);
-    findSPHParticleInRectangle(containerX2Z2, d_sphParticleVec,
-                               sphParticleX2Z2);
-    reqX2Z2[0] = boostWorld.isend(rankX2Z2, mpiTag, sphParticleX2Z2);
-    reqX2Z2[1] = boostWorld.irecv(rankX2Z2, mpiTag, rsphParticleX2Z2);
-  }
-  if (rankY1Z1 >= 0) { // edge y1z1
-    Rectangle containerY1Z1(v1.x(), v1.y() - segY, v1.z() - segZ, v2.x(),
-                            v1.y(), v1.z());
-    findSPHParticleInRectangle(containerY1Z1, d_sphParticleVec,
-                               sphParticleY1Z1);
-    reqY1Z1[0] = boostWorld.isend(rankY1Z1, mpiTag, sphParticleY1Z1);
-    reqY1Z1[1] = boostWorld.irecv(rankY1Z1, mpiTag, rsphParticleY1Z1);
-  }
-  if (rankY1Z2 >= 0) { // edge y1z2
-    Rectangle containerY1Z2(v1.x(), v1.y() - segY, v2.z(), v2.x(), v1.y(),
-                            v2.z() + segZ);
-    findSPHParticleInRectangle(containerY1Z2, d_sphParticleVec,
-                               sphParticleY1Z2);
-    reqY1Z2[0] = boostWorld.isend(rankY1Z2, mpiTag, sphParticleY1Z2);
-    reqY1Z2[1] = boostWorld.irecv(rankY1Z2, mpiTag, rsphParticleY1Z2);
-  }
-  if (rankY2Z1 >= 0) { // edge y2z1
-    Rectangle containerY2Z1(v1.x(), v2.y(), v1.z() - segZ, v2.x(),
-                            v2.y() + segY, v1.z());
-    findSPHParticleInRectangle(containerY2Z1, d_sphParticleVec,
-                               sphParticleY2Z1);
-    reqY2Z1[0] = boostWorld.isend(rankY2Z1, mpiTag, sphParticleY2Z1);
-    reqY2Z1[1] = boostWorld.irecv(rankY2Z1, mpiTag, rsphParticleY2Z1);
-  }
-  if (rankY2Z2 >= 0) { // edge y2z2
-    Rectangle containerY2Z2(v1.x(), v2.y(), v2.z(), v2.x(), v2.y() + segY,
-                            v2.z() + segZ);
-    findSPHParticleInRectangle(containerY2Z2, d_sphParticleVec,
-                               sphParticleY2Z2);
-    reqY2Z2[0] = boostWorld.isend(rankY2Z2, mpiTag, sphParticleY2Z2);
-    reqY2Z2[1] = boostWorld.irecv(rankY2Z2, mpiTag, rsphParticleY2Z2);
-  }
-  // 8 vertices
-  if (rankX1Y1Z1 >= 0) { // edge x1y1z1
-    Rectangle containerX1Y1Z1(v1.x() - segX, v1.y() - segY, v1.z() - segZ,
-                              v1.x(), v1.y(), v1.z());
-    findSPHParticleInRectangle(containerX1Y1Z1, d_sphParticleVec,
-                               sphParticleX1Y1Z1);
-    reqX1Y1Z1[0] = boostWorld.isend(rankX1Y1Z1, mpiTag, sphParticleX1Y1Z1);
-    reqX1Y1Z1[1] = boostWorld.irecv(rankX1Y1Z1, mpiTag, rsphParticleX1Y1Z1);
-  }
-  if (rankX1Y1Z2 >= 0) { // edge x1y1z2
-    Rectangle containerX1Y1Z2(v1.x() - segX, v1.y() - segY, v2.z(), v1.x(),
-                              v1.y(), v2.z() + segZ);
-    findSPHParticleInRectangle(containerX1Y1Z2, d_sphParticleVec,
-                               sphParticleX1Y1Z2);
-    reqX1Y1Z2[0] = boostWorld.isend(rankX1Y1Z2, mpiTag, sphParticleX1Y1Z2);
-    reqX1Y1Z2[1] = boostWorld.irecv(rankX1Y1Z2, mpiTag, rsphParticleX1Y1Z2);
-  }
-  if (rankX1Y2Z1 >= 0) { // edge x1y2z1
-    Rectangle containerX1Y2Z1(v1.x() - segX, v2.y(), v1.z() - segZ, v1.x(),
-                              v2.y() + segY, v1.z());
-    findSPHParticleInRectangle(containerX1Y2Z1, d_sphParticleVec,
-                               sphParticleX1Y2Z1);
-    reqX1Y2Z1[0] = boostWorld.isend(rankX1Y2Z1, mpiTag, sphParticleX1Y2Z1);
-    reqX1Y2Z1[1] = boostWorld.irecv(rankX1Y2Z1, mpiTag, rsphParticleX1Y2Z1);
-  }
-  if (rankX1Y2Z2 >= 0) { // edge x1y2z2
-    Rectangle containerX1Y2Z2(v1.x() - segX, v2.y(), v2.z(), v1.x(),
-                              v2.y() + segY, v2.z() + segZ);
-    findSPHParticleInRectangle(containerX1Y2Z2, d_sphParticleVec,
-                               sphParticleX1Y2Z2);
-    reqX1Y2Z2[0] = boostWorld.isend(rankX1Y2Z2, mpiTag, sphParticleX1Y2Z2);
-    reqX1Y2Z2[1] = boostWorld.irecv(rankX1Y2Z2, mpiTag, rsphParticleX1Y2Z2);
-  }
-  if (rankX2Y1Z1 >= 0) { // edge x2y1z1
-    Rectangle containerX2Y1Z1(v2.x(), v1.y() - segY, v1.z() - segZ,
-                              v2.x() + segX, v1.y(), v1.z());
-    findSPHParticleInRectangle(containerX2Y1Z1, d_sphParticleVec,
-                               sphParticleX2Y1Z1);
-    reqX2Y1Z1[0] = boostWorld.isend(rankX2Y1Z1, mpiTag, sphParticleX2Y1Z1);
-    reqX2Y1Z1[1] = boostWorld.irecv(rankX2Y1Z1, mpiTag, rsphParticleX2Y1Z1);
-  }
-  if (rankX2Y1Z2 >= 0) { // edge x2y1z2
-    Rectangle containerX2Y1Z2(v2.x(), v1.y() - segY, v2.z(), v2.x() + segX,
-                              v1.y(), v2.z() + segZ);
-    findSPHParticleInRectangle(containerX2Y1Z2, d_sphParticleVec,
-                               sphParticleX2Y1Z2);
-    reqX2Y1Z2[0] = boostWorld.isend(rankX2Y1Z2, mpiTag, sphParticleX2Y1Z2);
-    reqX2Y1Z2[1] = boostWorld.irecv(rankX2Y1Z2, mpiTag, rsphParticleX2Y1Z2);
-  }
-  if (rankX2Y2Z1 >= 0) { // edge x2y2z1
-    Rectangle containerX2Y2Z1(v2.x(), v2.y(), v1.z() - segZ, v2.x() + segX,
-                              v2.y() + segY, v1.z());
-    findSPHParticleInRectangle(containerX2Y2Z1, d_sphParticleVec,
-                               sphParticleX2Y2Z1);
-    reqX2Y2Z1[0] = boostWorld.isend(rankX2Y2Z1, mpiTag, sphParticleX2Y2Z1);
-    reqX2Y2Z1[1] = boostWorld.irecv(rankX2Y2Z1, mpiTag, rsphParticleX2Y2Z1);
-  }
-  if (rankX2Y2Z2 >= 0) { // edge x2y2z2
-    Rectangle containerX2Y2Z2(v2.x(), v2.y(), v2.z(), v2.x() + segX,
-                              v2.y() + segY, v2.z() + segZ);
-    findSPHParticleInRectangle(containerX2Y2Z2, d_sphParticleVec,
-                               sphParticleX2Y2Z2);
-    reqX2Y2Z2[0] = boostWorld.isend(rankX2Y2Z2, mpiTag, sphParticleX2Y2Z2);
-    reqX2Y2Z2[1] = boostWorld.irecv(rankX2Y2Z2, mpiTag, rsphParticleX2Y2Z2);
-  }
-  // 6 surfaces
-  if (rankX1 >= 0)
-    boost::mpi::wait_all(reqX1, reqX1 + 2);
-  if (rankX2 >= 0)
-    boost::mpi::wait_all(reqX2, reqX2 + 2);
-  if (rankY1 >= 0)
-    boost::mpi::wait_all(reqY1, reqY1 + 2);
-  if (rankY2 >= 0)
-    boost::mpi::wait_all(reqY2, reqY2 + 2);
-  if (rankZ1 >= 0)
-    boost::mpi::wait_all(reqZ1, reqZ1 + 2);
-  if (rankZ2 >= 0)
-    boost::mpi::wait_all(reqZ2, reqZ2 + 2);
-  // 12 edges
-  if (rankX1Y1 >= 0)
-    boost::mpi::wait_all(reqX1Y1, reqX1Y1 + 2);
-  if (rankX1Y2 >= 0)
-    boost::mpi::wait_all(reqX1Y2, reqX1Y2 + 2);
-  if (rankX1Z1 >= 0)
-    boost::mpi::wait_all(reqX1Z1, reqX1Z1 + 2);
-  if (rankX1Z2 >= 0)
-    boost::mpi::wait_all(reqX1Z2, reqX1Z2 + 2);
-  if (rankX2Y1 >= 0)
-    boost::mpi::wait_all(reqX2Y1, reqX2Y1 + 2);
-  if (rankX2Y2 >= 0)
-    boost::mpi::wait_all(reqX2Y2, reqX2Y2 + 2);
-  if (rankX2Z1 >= 0)
-    boost::mpi::wait_all(reqX2Z1, reqX2Z1 + 2);
-  if (rankX2Z2 >= 0)
-    boost::mpi::wait_all(reqX2Z2, reqX2Z2 + 2);
-  if (rankY1Z1 >= 0)
-    boost::mpi::wait_all(reqY1Z1, reqY1Z1 + 2);
-  if (rankY1Z2 >= 0)
-    boost::mpi::wait_all(reqY1Z2, reqY1Z2 + 2);
-  if (rankY2Z1 >= 0)
-    boost::mpi::wait_all(reqY2Z1, reqY2Z1 + 2);
-  if (rankY2Z2 >= 0)
-    boost::mpi::wait_all(reqY2Z2, reqY2Z2 + 2);
-  // 8 vertices
-  if (rankX1Y1Z1 >= 0)
-    boost::mpi::wait_all(reqX1Y1Z1, reqX1Y1Z1 + 2);
-  if (rankX1Y1Z2 >= 0)
-    boost::mpi::wait_all(reqX1Y1Z2, reqX1Y1Z2 + 2);
-  if (rankX1Y2Z1 >= 0)
-    boost::mpi::wait_all(reqX1Y2Z1, reqX1Y2Z1 + 2);
-  if (rankX1Y2Z2 >= 0)
-    boost::mpi::wait_all(reqX1Y2Z2, reqX1Y2Z2 + 2);
-  if (rankX2Y1Z1 >= 0)
-    boost::mpi::wait_all(reqX2Y1Z1, reqX2Y1Z1 + 2);
-  if (rankX2Y1Z2 >= 0)
-    boost::mpi::wait_all(reqX2Y1Z2, reqX2Y1Z2 + 2);
-  if (rankX2Y2Z1 >= 0)
-    boost::mpi::wait_all(reqX2Y2Z1, reqX2Y2Z1 + 2);
-  if (rankX2Y2Z2 >= 0)
-    boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);
+  /*
+  out << "Iter = " << iteration << " Rank = " << d_mpiRank
+      << " Recv Z = " << recvParticles.size()
+      << " Sent Z = " << sentParticles.size()
+      << " All = " << sphParticleVec.size() << "\n";
+  std::cout << out.str();
+  */
 
   // delete outgoing particles
-  removeSPHParticleOutRectangle();
+  // d_patchP->removeParticlesOutsidePatch<SPHParticleP>(d_sphParticleVec);
 
-  // add incoming particles
-  d_recvSPHParticleVec.clear(); // new use of recvParticleVec
-  // 6 surfaces
-  if (rankX1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX1.begin(), rsphParticleX1.end());
-  if (rankX2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX2.begin(), rsphParticleX2.end());
-  if (rankY1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleY1.begin(), rsphParticleY1.end());
-  if (rankY2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleY2.begin(), rsphParticleY2.end());
-  if (rankZ1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleZ1.begin(), rsphParticleZ1.end());
-  if (rankZ2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleZ2.begin(), rsphParticleZ2.end());
-  // 12 edges
-  if (rankX1Y1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX1Y1.begin(),
-                                rsphParticleX1Y1.end());
-  if (rankX1Y2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX1Y2.begin(),
-                                rsphParticleX1Y2.end());
-  if (rankX1Z1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX1Z1.begin(),
-                                rsphParticleX1Z1.end());
-  if (rankX1Z2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX1Z2.begin(),
-                                rsphParticleX1Z2.end());
-  if (rankX2Y1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX2Y1.begin(),
-                                rsphParticleX2Y1.end());
-  if (rankX2Y2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX2Y2.begin(),
-                                rsphParticleX2Y2.end());
-  if (rankX2Z1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX2Z1.begin(),
-                                rsphParticleX2Z1.end());
-  if (rankX2Z2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX2Z2.begin(),
-                                rsphParticleX2Z2.end());
-  if (rankY1Z1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleY1Z1.begin(),
-                                rsphParticleY1Z1.end());
-  if (rankY1Z2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleY1Z2.begin(),
-                                rsphParticleY1Z2.end());
-  if (rankY2Z1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleY2Z1.begin(),
-                                rsphParticleY2Z1.end());
-  if (rankY2Z2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleY2Z2.begin(),
-                                rsphParticleY2Z2.end());
-  // 8 vertices
-  if (rankX1Y1Z1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX1Y1Z1.begin(),
-                                rsphParticleX1Y1Z1.end());
-  if (rankX1Y1Z2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX1Y1Z2.begin(),
-                                rsphParticleX1Y1Z2.end());
-  if (rankX1Y2Z1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX1Y2Z1.begin(),
-                                rsphParticleX1Y2Z1.end());
-  if (rankX1Y2Z2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX1Y2Z2.begin(),
-                                rsphParticleX1Y2Z2.end());
-  if (rankX2Y1Z1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX2Y1Z1.begin(),
-                                rsphParticleX2Y1Z1.end());
-  if (rankX2Y1Z2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX2Y1Z2.begin(),
-                                rsphParticleX2Y1Z2.end());
-  if (rankX2Y2Z1 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX2Y2Z1.begin(),
-                                rsphParticleX2Y2Z1.end());
-  if (rankX2Y2Z2 >= 0)
-    d_recvSPHParticleVec.insert(d_recvSPHParticleVec.end(),
-                                rsphParticleX2Y2Z2.begin(),
-                                rsphParticleX2Y2Z2.end());
-
-  d_sphParticleVec.insert(d_sphParticleVec.end(), d_recvSPHParticleVec.begin(),
-                          d_recvSPHParticleVec.end());
-
-#ifdef 0
-  if (recvParticleVec.size() > 0) {
-    debugInf << "iter=" << std::setw(8) << iteration << " rank=" << std::setw(2)
-             << d_mpiRank << "   added=";
-    for (std::vector<Particle*>::const_iterator it = recvParticleVec.begin();
-         it != recvParticleVec.end(); ++it)
-      debugInf << std::setw(3) << (*it)->getId();
-    debugInf << " now " << particleVec.size() << ": ";
-    for (std::vector<Particle*>::const_iterator it = particleVec.begin();
-         it != particleVec.end(); ++it)
-      debugInf << std::setw(3) << (*it)->getId();
-    debugInf << std::endl;
-  }
-#endif
-
-  // do not release memory of received particles because they are part of and
-  // managed by particleVec
-  // 6 surfaces
-  rsphParticleX1.clear();
-  rsphParticleX2.clear();
-  rsphParticleY1.clear();
-  rsphParticleY2.clear();
-  rsphParticleZ1.clear();
-  rsphParticleZ2.clear();
-  // 12 edges
-  rsphParticleX1Y1.clear();
-  rsphParticleX1Y2.clear();
-  rsphParticleX1Z1.clear();
-  rsphParticleX1Z2.clear();
-  rsphParticleX2Y1.clear();
-  rsphParticleX2Y2.clear();
-  rsphParticleX2Z1.clear();
-  rsphParticleX2Z2.clear();
-  rsphParticleY1Z1.clear();
-  rsphParticleY1Z2.clear();
-  rsphParticleY2Z1.clear();
-  rsphParticleY2Z2.clear();
-  // 8 vertices
-  rsphParticleX1Y1Z1.clear();
-  rsphParticleX1Y1Z2.clear();
-  rsphParticleX1Y2Z1.clear();
-  rsphParticleX1Y2Z2.clear();
-  rsphParticleX2Y1Z1.clear();
-  rsphParticleX2Y1Z2.clear();
-  rsphParticleX2Y2Z1.clear();
-  rsphParticleX2Y2Z2.clear();
-
-  d_recvSPHParticleVec.clear();
+  // out << "After del: " << sphParticleVec.size() << "\n";
+  /*
+  std::cout << out.str();
+  */
 }
 
-void
-SmoothParticleHydro::gatherParticle()
-{
-  // before send, SPHParticle.demParticle should be NULL
-  for (std::vector<Particle*>::iterator it = particleVec.begin();
-       it != particleVec.end(); it++)
-    (*it)->setNULLDemParticleInSPHParticle(); // at this point,
-  // SPHGhostParticle.demParticle is not pointing to particleVec
-
-  // update allParticleVec: process 0 collects all updated particles from each
-  // other process
-  if (d_mpiRank != 0) { // each process except 0
-    boostWorld.send(0, mpiTag, particleVec);
-  } else { // process 0
-    // allParticleVec is cleared before filling with new data
-    releaseGatheredParticle();
-
-    // duplicate particleVec so that it is not destroyed by allParticleVec in
-    // next iteration,
-    // otherwise it causes memory error.
-    std::vector<Particle*> dupParticleVec(particleVec.size());
-    for (std::size_t i = 0; i < dupParticleVec.size(); ++i) {
-      dupParticleVec[i] = new Particle(*particleVec[i]); // at this point,
-      // dupParticleVec and particleVec are pointint to the same
-      // SPHGhoastParticle
-      dupParticleVec[i]->SPHGhostParticleVec.clear(); // at this point,
-      // dupParticleVec is pointing to nothing
-      for (std::vector<sph::SPHParticle*>::iterator st =
-             particleVec[i]->SPHGhostParticleVec.begin();
-           st != particleVec[i]->SPHGhostParticleVec.end(); st++) {
-        sph::SPHParticle* tmp_sph = new sph::SPHParticle(**st); // create a new
-        // SPHGhost particle, which is the same as the one in particleVec
-        dupParticleVec[i]->SPHGhostParticleVec.push_back(tmp_sph); // now
-        // dupParticleVec points to the new SPHGhostParticle
-      }
-    }
-
-    // fill allParticleVec with dupParticleVec and received particles
-    allParticleVec.insert(allParticleVec.end(), dupParticleVec.begin(),
-                          dupParticleVec.end());
-
-    std::vector<Particle*> tmpParticleVec;
-    long gatherRam = 0;
-    for (int iRank = 1; iRank < d_mpiSize; ++iRank) {
-
-      tmpParticleVec.clear(); // do not destroy particles!
-      boostWorld.recv(iRank, mpiTag, tmpParticleVec);
-      allParticleVec.insert(allParticleVec.end(), tmpParticleVec.begin(),
-                            tmpParticleVec.end());
-      gatherRam += tmpParticleVec.size();
-    }
-    // debugInf << "gather: particleNum = " << gatherRam <<  " particleRam = "
-    //<< gatherRam * sizeof(Particle) << std::endl;
-  }
-  // after receive, set SPHParticle.demParticle
-  for (std::vector<Particle*>::iterator it = particleVec.begin();
-       it != particleVec.end(); it++) {
-    (*it)->setDemParticleInSPHParticle();
-  }
-}
-
-void
-SmoothParticleHydro::releaseGatheredParticle()
-{
-  // clear allParticleVec, avoid long time memory footprint.
-  for (std::vector<Particle*>::iterator it = allParticleVec.begin();
-       it != allParticleVec.end(); ++it) {
-    for (std::vector<sph::SPHParticle*>::iterator st =
-           (*it)->SPHGhostParticleVec.begin();
-         st != (*it)->SPHGhostParticleVec.end(); ++st) {
-      delete (*st); // this is important to free the memories of sph ghost
-                    // particles
-    }
-    (*it)->SPHGhostParticleVec.clear();
-    std::vector<sph::SPHParticle*>().swap((*it)->SPHGhostParticleVec); //
-    // actual memory release
-    delete (*it);
-  }
-  allParticleVec.clear();
-  std::vector<Particle*>().swap(allParticleVec); // actual memory release
-}
-
+// update d_allSPHParticleVec: process 0 collects all updated particles from
+// each other process
 void
 SmoothParticleHydro::gatherSPHParticle()
 {
-  // update d_allSPHParticleVec: process 0 collects all updated particles from
-  // each other process
-  if (d_mpiRank != 0) { // each process except 0
-    boostWorld.send(0, mpiTag, d_sphParticleVec);
-  } else { // process 0
+  if (d_mpiRank != 0) {
+
+    d_boostWorld.send(0, d_mpiTag, d_sphParticleVec);
+
+  } else { 
+
+    d_allSPHParticleVec.clear();
+
     // d_allSPHParticleVec is cleared before filling with new data
-    releaseGatheredSPHParticle();
+    //releaseGatheredSPHParticle();
 
     // duplicate d_sphParticleVec so that it is not destroyed by
     // d_allSPHParticleVec in next iteration,
     // otherwise it causes memory error.
-    std::vector<sph::SPHParticle*> dupSPHParticleVec(d_sphParticleVec.size());
-    for (std::size_t i = 0; i < dupSPHParticleVec.size(); ++i)
-      dupSPHParticleVec[i] = new sph::SPHParticle(*d_sphParticleVec[i]);
+    SPHParticlePArray dupSPHParticleVec(d_sphParticleVec.size());
+    std::size_t index = 0;
+    for (const auto& particle :  d_sphParticleVec) {
+      dupSPHParticleVec[index] = std::make_shared<SPHParticle>(*particle);
+      index++;
+    }
 
-    // fill allParticleVec with dupParticleVec and received particles
+    // fill allParticleVec with dupParticleVec
     d_allSPHParticleVec.insert(d_allSPHParticleVec.end(),
                                dupSPHParticleVec.begin(),
                                dupSPHParticleVec.end());
 
-    std::vector<sph::SPHParticle*> tmpSPHParticleVec;
-    long gatherRam = 0;
+    // Add received particles
+    //long gatherRam = 0;
     for (int iRank = 1; iRank < d_mpiSize; ++iRank) {
 
-      tmpSPHParticleVec.clear(); // do not destroy particles!
-      boostWorld.recv(iRank, mpiTag, tmpSPHParticleVec);
+      SPHParticlePArray recvParticles;
+      d_boostWorld.recv(iRank, d_mpiTag, recvParticles);
       d_allSPHParticleVec.insert(d_allSPHParticleVec.end(),
-                                 tmpSPHParticleVec.begin(),
-                                 tmpSPHParticleVec.end());
-      gatherRam += tmpSPHParticleVec.size();
+                                 recvParticles.begin(),
+                                 recvParticles.end());
+      //gatherRam += recvParticles.size();
     }
     // debugInf << "gather: particleNum = " << gatherRam <<  " particleRam = "
-    //<< gatherRam * sizeof(Particle) << std::endl;
+    //<< gatherRam * sizeof(SPHParticle) << std::endl;
   }
 }
 
-void
-SmoothParticleHydro::releaseGatheredSPHParticle()
-{
-  // clear allParticleVec, avoid long time memory footprint.
-  for (std::vector<sph::SPHParticle*>::iterator it =
-         d_allSPHParticleVec.begin();
-       it != d_allSPHParticleVec.end(); ++it)
-    delete (*it);
-  d_allSPHParticleVec.clear();
-  std::vector<sph::SPHParticle*>().swap(d_allSPHParticleVec); // actual memory
-                                                              // release
-}
-
-void
-SmoothParticleHydro::gatherBdryContact()
-{
-  if (isBdryProcess()) {
-    if (d_mpiRank != 0)
-      boostWorld.send(0, mpiTag, boundaryVec);
-  }
-
-  if (d_mpiRank == 0) {
-    mergeBoundaryVec.clear();
-    std::vector<Boundary*>().swap(mergeBoundaryVec); // actual memory release
-    mergeBoundaryVec = boundaryVec;
-
-    std::vector<Boundary*> tmpBoundaryVec;
-    for (std::size_t it = 0; it < bdryProcess.size(); ++it) {
-      if (bdryProcess[it] != 0) { // not root process
-        tmpBoundaryVec.clear();   // do not destroy particles!
-        boostWorld.recv(bdryProcess[it], mpiTag, tmpBoundaryVec);
-        // merge tmpBoundaryVec into mergeBoundaryVec
-        assert(tmpBoundaryVec.size() == mergeBoundaryVec.size());
-        for (std::size_t jt = 0; jt < tmpBoundaryVec.size(); ++jt)
-          mergeBoundaryVec[jt]->getContactInfo().insert(
-            mergeBoundaryVec[jt]->getContactInfo().end(),
-            tmpBoundaryVec[jt]->getContactInfo().begin(),
-            tmpBoundaryVec[jt]->getContactInfo().end());
-      }
-    }
-
-    // must update after collecting all boundary contact info
-    for (std::vector<Boundary*>::iterator it = mergeBoundaryVec.begin();
-         it != mergeBoundaryVec.end(); ++it)
-      (*it)->updateStatForce();
-  }
-}
-
-void
-SmoothParticleHydro::openSPHTecplot(std::ofstream& ofs, const char* str)
-{
-  ofs.open(str);
-  if (!ofs) {
-    debugInf << "stream error: openSPHTecplot" << std::endl;
-    exit(-1);
-  }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
-
-  ofs << "Title = \"SPH Particle Information\"" << std::endl;
-  ofs << "VARIABLES = \"x\", \"y\",\"z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\" \"Vy\"
-\"Vz\" \"Pressure\" \"a_x\" \"a_y\" \"a_z\" \"density_dot\" \"density\" "
-      << std::endl;
-}
-
-void
-SmoothParticleHydro::printSPHTecplot(std::ofstream& ofs, int iframe)
-{
-  ofs << "ZONE T =\" " << iframe << "-th Load Step\" " << std::endl;
-  // Output the coordinates and the array information
-  for (std::vector<sph::SPHParticle*>::iterator pt =
-         d_allSPHParticleVec.begin();
-       pt != d_allSPHParticleVec.end(); pt++) {
-
-    //// not print the most right layer of SPH free particles, 2015/05/19
-    // if((*pt)->getInitPosition().getx()==25){
-    // continue;
-    //}
-    //      if((*pt)->getType()==3) continue;  // not print out boundary
-    //      particles
-
-    ofs << std::setw(20) << (*pt)->getCurrPosition().x() << std::setw(20)
-        << (*pt)->getCurrPosition().y() << std::setw(20)
-        << (*pt)->getCurrPosition().z() << std::setw(20)
-        << (*pt)->getDisplacement().x() << std::setw(20)
-        << (*pt)->getDisplacement().y() << std::setw(20)
-        << (*pt)->getDisplacement().z() << std::setw(20)
-        << (*pt)->getVelocity().x() << std::setw(20) << (*pt)->getVelocity().y()
-        << std::setw(20) << (*pt)->getVelocity().z();
-
-    (*pt)->calculateParticlePressure();
-    ofs << std::setw(20) << (*pt)->getParticlePressure();
-
-    ofs << std::setw(20) << (*pt)->getVelocityDot().x() << std::setw(20)
-        << (*pt)->getVelocityDot().y() << std::setw(20)
-        << (*pt)->getVelocityDot().z() << std::setw(20)
-        << (*pt)->getDensityDot() << std::setw(20)
-        << (*pt)->getParticleDensity() << std::endl;
-  }
-}
+/*
 void
 SmoothParticleHydro::printSPHParticle(const char* str) const
 {
@@ -1651,7 +440,9 @@ SmoothParticleHydro::printSPHParticle(const char* str) const
 
   ofs.close();
 }
+*/
 
+/*
 void
 SmoothParticleHydro::initialSPHVelocity2D()
 {
@@ -1764,7 +555,9 @@ SmoothParticleHydro::updateSPHLeapFrogVelocity()
       (*pt)->updateParticleVelocityLeapFrog();
   }
 } // end updateSPHLeapFrogVelocity
+*/
 
+/*
 //  REAL factor = 1.0/(120.0*dem::PI*h*h*h);  // 3D quintic kernel factor
 //  REAL factor = 7.0/(478.0*dem::PI*h*h);    // 2D quintic kernel factor
 // kernel function, Vec is the position of a b, h is smoothing length
@@ -1787,7 +580,9 @@ SmoothParticleHydro::kernelFunction(const dem::Vec& a, const dem::Vec& b)
   }
 
 } // end kernelFunction
+*/
 
+/*
 // kernel function, s is rab/h, h is smoothing length
 inline REAL
 SmoothParticleHydro::kernelFunction(REAL s)
@@ -1806,7 +601,9 @@ SmoothParticleHydro::kernelFunction(REAL s)
   }
 
 } // end kernelFunction
+*/
 
+/*
 //  REAL factor = 1.0/(120.0*dem::PI*h*h*h*h);  // 3D quintic kernel factor
 //  REAL factor = 1.0/(120.0*h*h);  // 1D quintic kernel factor
 //  REAL factor = 7.0/(478.0*dem::PI*h*h*h);  // 2D quintic kernel factor
@@ -1836,7 +633,9 @@ SmoothParticleHydro::gradientKernelFunction(const dem::Vec& a,
   }
 
 } // end gradientKernelFunction
+*/
 
+/*
 // to calculate partial differential dWab_dra
 inline REAL
 SmoothParticleHydro::partialKernelFunction(const dem::Vec& a, const dem::Vec& b)
@@ -1858,7 +657,9 @@ SmoothParticleHydro::partialKernelFunction(const dem::Vec& a, const dem::Vec& b)
   }
 
 } // end partialKernelFunction
+*/
 
+/*
 // divide SPH domain in each cpu into different cells in 2D in xz plane.
 // see the notes 5/20/2015 and 5/21/2015 or Simpson's paper "Numerical
 // techniques for three-dimensional Smoothed Particle Hydrodynamics"
@@ -1959,7 +760,9 @@ SmoothParticleHydro::divideSPHDomain2D()
   }
 
 } // divideSPHDomain2D
+*/
 
+/*
 //// the momentum equilibrium equation and state equation are implemented as
 // in Monaghan's paper (1994), simulate free surface flow using sph
 //// here the neighboring list of SPH particles is searched by the cells,
@@ -3013,7 +1816,9 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
   //      } // end ptb
 
 } // end calculateSPHDensityDotVelocityDotLinkedList2D()
+*/
 
+/*
 // divide SPH domain in each cpu into different cells in 2D in xz plane.
 // see the notes 5/20/2015 and 5/21/2015 or Simpson's paper "Numerical
 // techniques for three-dimensional Smoothed Particle Hydrodynamics"
@@ -3135,7 +1940,9 @@ SmoothParticleHydro::divideSPHDomain3D()
   }
 
 } // divideSPHDomain3D
+*/
 
+/*
 //// the momentum equilibrium equation and state equation are implemented as
 // in Monaghan's paper (1994), simulate free surface flow using sph
 //// here the neighboring list of SPH particles is searched by the cells,
