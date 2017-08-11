@@ -11,6 +11,8 @@ class SPHParticle;
 using SPHParticleUP = std::unique_ptr<SPHParticle>;
 using SPHParticleP = std::shared_ptr<SPHParticle>;
 using SPHParticlePArray = std::vector<SPHParticleP>;
+
+using SPHPatchGridParticleP = std::vector<std::vector<SPHParticleP>>; 
 }
 
 #endif

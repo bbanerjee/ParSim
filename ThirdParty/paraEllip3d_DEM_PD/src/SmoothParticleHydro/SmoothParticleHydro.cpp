@@ -104,7 +104,7 @@ SmoothParticleHydro::scatterSPHParticle(const Box& allContainer,
   // REAL spaceInterval = util::getParam<REAL>("spaceInterval");
   // bufferLength = spaceInterval * numLayers;
 
-  // Set d_sphGrid on all procs
+  // Set d_sphPatchBox on all procs
   setGrid(Box(allContainer, bufferLength));
 
   // Create patch for the current process
@@ -122,8 +122,8 @@ SmoothParticleHydro::scatterSPHParticle(const Box& allContainer,
     }
     */
 
-    Vec v1 = d_sphGrid.getMinCorner();
-    Vec v2 = d_sphGrid.getMaxCorner();
+    Vec v1 = d_sphPatchBox.getMinCorner();
+    Vec v2 = d_sphPatchBox.getMaxCorner();
     Vec vspan = (v2 - v1) / d_mpiProcs;
 
     boost::mpi::request reqs[d_mpiSize - 1];
@@ -188,8 +188,8 @@ void
 SmoothParticleHydro::createPatch(int iteration, const REAL& ghostWidth)
 {
   // determine container of each process
-  Vec v1 = d_sphGrid.getMinCorner();
-  Vec v2 = d_sphGrid.getMaxCorner();
+  Vec v1 = d_sphPatchBox.getMinCorner();
+  Vec v2 = d_sphPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / d_mpiProcs;
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
@@ -201,8 +201,8 @@ void
 SmoothParticleHydro::updatePatch(int iteration, const REAL& ghostWidth)
 {
   // determine container of each process
-  Vec v1 = d_sphGrid.getMinCorner();
-  Vec v2 = d_sphGrid.getMaxCorner();
+  Vec v1 = d_sphPatchBox.getMinCorner();
+  Vec v2 = d_sphPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / d_mpiProcs;
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
@@ -265,7 +265,7 @@ SmoothParticleHydro::commuSPHParticle(int iteration, const REAL& ghostWidth)
 void
 SmoothParticleHydro::migrateSPHParticle(int iteration)
 {
-  Vec domainWidth = d_sphGrid.getMaxCorner() - d_sphGrid.getMinCorner();
+  Vec domainWidth = d_sphPatchBox.getMaxCorner() - d_sphPatchBox.getMinCorner();
   Vec patchWidth = domainWidth / d_mpiProcs;
 
   // Migrate particles in the x-direction
@@ -389,378 +389,68 @@ SmoothParticleHydro::gatherSPHParticle()
   }
 }
 
-/*
-void
-SmoothParticleHydro::printSPHParticle(const char* str) const
-{
-  std::ofstream ofs(str);
-  if (!ofs) {
-    debugInf << "stream error: printSPHParticle" << std::endl;
-    exit(-1);
-  }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
-
-  ofs << "Title = \"SPH Particle Information\"" << std::endl;
-  ofs << "VARIABLES = \"x\", \"y\",\"z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\"
-\"Vy\" \"Vz\" \"Pressure\" \"a_x\" \"a_y\" \"a_z\" \"density_dot\" "
-  "\"density\" "
-      << std::endl;
-
-  // Output the coordinates and the array information
-  for (std::vector<sph::SPHParticle*>::const_iterator pt =
-         d_allSPHParticleVec.begin();
-       pt != d_allSPHParticleVec.end(); pt++) {
-
-    //// not print the most right layer of SPH free particles, 2015/05/19
-    // if((*pt)->getInitPosition().getx()==25){
-    // continue;
-    //}
-    if ((*pt)->getType() == 3)
-      continue; // not print out boundary particles
-
-    ofs << std::setw(20) << (*pt)->getCurrPosition().x() << std::setw(20)
-        << (*pt)->getCurrPosition().y() << std::setw(20)
-        << (*pt)->getCurrPosition().z() << std::setw(20)
-        << (*pt)->getDisplacement().x() << std::setw(20)
-        << (*pt)->getDisplacement().y() << std::setw(20)
-        << (*pt)->getDisplacement().z() << std::setw(20)
-        << (*pt)->getVelocity().x() << std::setw(20) << (*pt)->getVelocity().y()
-        << std::setw(20) << (*pt)->getVelocity().z();
-
-    (*pt)->calculateParticlePressure();
-    ofs << std::setw(20) << (*pt)->getParticlePressure();
-
-    ofs << std::setw(20) << (*pt)->getVelocityDot().x() << std::setw(20)
-        << (*pt)->getVelocityDot().y() << std::setw(20)
-        << (*pt)->getVelocityDot().z() << std::setw(20)
-        << (*pt)->getDensityDot() << std::setw(20)
-        << (*pt)->getParticleDensity() << std::endl;
-  }
-
-  ofs.close();
-}
-*/
-
-/*
-void
-SmoothParticleHydro::initialSPHVelocity2D()
-{
-  commuParticle();
-  commuSPHParticle(); // this will update container and mergeSPHParticleVec,
-                      // both are needed for divideSPHDomain
-  calculateSPHDensityDotVelocityDotLinkedList2D(); // calculate velocityDot and
-                                                   // densityDot
-  // fix the y for all SPH points
-  for (std::vector<sph::SPHParticle*>::iterator pt = d_sphParticleVec.begin();
-       pt != d_sphParticleVec.end(); pt++) {
-    switch ((*pt)->getType()) {
-      case 1: // free sph particle
-        (*pt)->fixY();
-        break;
-      case 2: // ghost sph particle
-        break;
-      case 3: // boundary sph particle
-        (*pt)->fixXYZ();
-        break;
-      default:
-        std::cout << "SPH particle type of pta should be 1, 2 or 3!"
-                  << std::endl;
-        exit(-1);
-    } // switch
-  }
-  initialSPHLeapFrogVelocity(); // initial velocity only for free SPH particles
-                                // based on equation (4.3)
-
-  releaseRecvParticle();
-  releaseRecvSPHParticle();
-} // initialSPHVelocity()
-
-void
-SmoothParticleHydro::initialSPHVelocity3D()
-{
-  commuParticle();
-  commuSPHParticle(); // this will update container and mergeSPHParticleVec,
-                      // both are needed for divideSPHDomain
-  calculateSPHDensityDotVelocityDotLinkedList3D(); // calculate velocityDot and
-                                                   // densityDot
-  initialSPHLeapFrogVelocity(); // initial velocity only for free SPH particles
-                                // based on equation (4.3)
-
-  releaseRecvParticle();
-  releaseRecvSPHParticle();
-} // initialSPHVelocity()
-
-void
-SmoothParticleHydro::initialSPHVelocityCopyDEM3D()
-{
-  commuSPHParticle(); // this will update container and mergeSPHParticleVec,
-                      // both are needed for divideSPHDomain
-  calculateSPHDensityDotVelocityDotLinkedList3D(); // calculate velocityDot and
-                                                   // densityDot
-  initialSPHLeapFrogVelocity(); // initial velocity only for free SPH particles
-                                // based on equation (4.3)
-
-  releaseRecvSPHParticle();
-} // initialSPHVelocity()
-
-void
-SmoothParticleHydro::initialSPHLeapFrogVelocity()
-{ // initial particle
-  // velocity only for free SPH particles based on equation (4.3)
-  for (std::vector<sph::SPHParticle*>::iterator pt = d_sphParticleVec.begin();
-       pt != d_sphParticleVec.end(); pt++) {
-    if ((*pt)->getType() == 1)
-      (*pt)->initialParticleVelocityLeapFrog();
-  }
-} // end initialSPHLeapFrogVelocity
-
-void
-SmoothParticleHydro::updateSPHLeapFrogPositionDensity()
-{ // update
-  // particle position and density based on equation (4.1)
-  for (std::vector<sph::SPHParticle*>::iterator pt = d_sphParticleVec.begin();
-       pt != d_sphParticleVec.end(); pt++) {
-    switch ((*pt)->getType()) {
-      case 1: // free sph particle
-        (*pt)->updateParticlePositionDensityLeapFrog();
-        break;
-      case 2: // ghost sph particle
-        break;
-      case 3: // boundary sph particle
-        (*pt)->updateParticleDensity();
-        break;
-      default:
-        std::cout << "SPH particle type of pta should be 1, 2 or 3!"
-                  << std::endl;
-        exit(-1);
-    } // switch
-  }
-
-  std::vector<sph::SPHParticle*>::iterator gt;
-  for (std::vector<Particle*>::iterator demt = particleVec.begin();
-       demt != particleVec.end(); demt++) {
-    (*demt)->updateSPHGhostParticle(); // update position and density by dem
-    // particle and sph particle density, and velocity
-  }
-} // end updateSPHLeapFrogPositionDensity
-
-void
-SmoothParticleHydro::updateSPHLeapFrogVelocity()
-{ // update particle
-  // velocity only for free SPH particles based on equation (4.2)
-  for (std::vector<sph::SPHParticle*>::iterator pt = d_sphParticleVec.begin();
-       pt != d_sphParticleVec.end(); pt++) {
-    if ((*pt)->getType() == 1)
-      (*pt)->updateParticleVelocityLeapFrog();
-  }
-} // end updateSPHLeapFrogVelocity
-*/
-
-/*
-//  REAL factor = 1.0/(120.0*dem::PI*h*h*h);  // 3D quintic kernel factor
-//  REAL factor = 7.0/(478.0*dem::PI*h*h);    // 2D quintic kernel factor
-// kernel function, Vec is the position of a b, h is smoothing length
-inline REAL
-SmoothParticleHydro::kernelFunction(const dem::Vec& a, const dem::Vec& b)
-{
-  REAL rab = dem::vfabs(a - b);
-  REAL s = rab * one_devide_h;
-  REAL item1_5 = (3 - s) * (3 - s) * (3 - s) * (3 - s) * (3 - s); // (3-s)^5
-  REAL item2_5 = (2 - s) * (2 - s) * (2 - s) * (2 - s) * (2 - s); // (2-s)^5
-  REAL item3_5 = (1 - s) * (1 - s) * (1 - s) * (1 - s) * (1 - s); // (1-s)^5
-  if (s < 1) {
-    return factor_kernel * (item1_5 - 6 * item2_5 + 15 * item3_5);
-  } else if (s < 2) {
-    return factor_kernel * (item1_5 - 6 * item2_5);
-  } else if (s < 3) {
-    return factor_kernel * item1_5;
-  } else {
-    return 0.0;
-  }
-
-} // end kernelFunction
-*/
-
-/*
-// kernel function, s is rab/h, h is smoothing length
-inline REAL
-SmoothParticleHydro::kernelFunction(REAL s)
-{
-  REAL item1_5 = (3 - s) * (3 - s) * (3 - s) * (3 - s) * (3 - s); // (3-s)^5
-  REAL item2_5 = (2 - s) * (2 - s) * (2 - s) * (2 - s) * (2 - s); // (2-s)^5
-  REAL item3_5 = (1 - s) * (1 - s) * (1 - s) * (1 - s) * (1 - s); // (1-s)^5
-  if (s < 1) {
-    return factor_kernel * (item1_5 - 6 * item2_5 + 15 * item3_5);
-  } else if (s < 2) {
-    return factor_kernel * (item1_5 - 6 * item2_5);
-  } else if (s < 3) {
-    return factor_kernel * item1_5;
-  } else {
-    return 0.0;
-  }
-
-} // end kernelFunction
-*/
-
-/*
-//  REAL factor = 1.0/(120.0*dem::PI*h*h*h*h);  // 3D quintic kernel factor
-//  REAL factor = 1.0/(120.0*h*h);  // 1D quintic kernel factor
-//  REAL factor = 7.0/(478.0*dem::PI*h*h*h);  // 2D quintic kernel factor
-// to calculate delta_aWab, where a is the position of the first particle
-inline dem::Vec
-SmoothParticleHydro::gradientKernelFunction(const dem::Vec& a,
-                                            const dem::Vec& b)
-{
-  REAL rab = dem::vfabs(a - b);
-  REAL s = rab * one_devide_h;
-  REAL item1_4 = (3 - s) * (3 - s) * (3 - s) * (3 - s); // (3-s)^4
-  REAL item2_4 = (2 - s) * (2 - s) * (2 - s) * (2 - s); // (2-s)^4
-  REAL item3_4 = (1 - s) * (1 - s) * (1 - s) * (1 - s); // (1-s)^4
-  if (s < 1) {
-    return factor_kernel_gradient *
-           (-5 * item1_4 + 30 * item2_4 - 75 * item3_4) * (a - b) /
-           rab; // it is strange that s is
-    // devided here. compare to Liu's SPH code (National University of
-    // Singapore)
-  } else if (s < 2) {
-    return factor_kernel_gradient * (-5 * item1_4 + 30 * item2_4) * (a - b) /
-           rab;
-  } else if (s < 3) {
-    return factor_kernel_gradient * (-5 * item1_4) * (a - b) / rab;
-  } else {
-    return dem::Vec(0.0);
-  }
-
-} // end gradientKernelFunction
-*/
-
-/*
-// to calculate partial differential dWab_dra
-inline REAL
-SmoothParticleHydro::partialKernelFunction(const dem::Vec& a, const dem::Vec& b)
-{
-  REAL rab = dem::vfabs(a - b);
-  REAL s = rab * one_devide_h;
-  REAL item1_4 = (3 - s) * (3 - s) * (3 - s) * (3 - s); // (3-s)^4
-  REAL item2_4 = (2 - s) * (2 - s) * (2 - s) * (2 - s); // (2-s)^4
-  REAL item3_4 = (1 - s) * (1 - s) * (1 - s) * (1 - s); // (1-s)^4
-  if (s < 1) {
-    return factor_kernel_gradient *
-           (-5 * item1_4 + 30 * item2_4 - 75 * item3_4);
-  } else if (s < 2) {
-    return factor_kernel_gradient * (-5 * item1_4 + 30 * item2_4);
-  } else if (s < 3) {
-    return factor_kernel_gradient * (-5 * item1_4);
-  } else {
-    return 0.0;
-  }
-
-} // end partialKernelFunction
-*/
-
-/*
 // divide SPH domain in each cpu into different cells in 2D in xz plane.
 // see the notes 5/20/2015 and 5/21/2015 or Simpson's paper "Numerical
 // techniques for three-dimensional Smoothed Particle Hydrodynamics"
+//
+// **NOTE** bufferWidth = spaceInterval;
+template <int dim>
 void
-SmoothParticleHydro::divideSPHDomain2D()
+SmoothParticleHydro::assignParticlesToPatchGrid(const Box& container,
+                                                const REAL& bufferWidth,
+                                                const REAL& ghostWidth,
+                                                const REAL& kernelSize)
 {
+  REAL small_value = 0.01 * bufferWidth;
+  REAL ghostBuffer = ghostWidth + small_value;
 
-  // clear the std::vector< std::vector<sph::SPHParticle*> > SPHParticleCellVec
-  for (int pvec = 0; pvec < SPHParticleCellVec.size(); pvec++) {
-    SPHParticleCellVec[pvec].clear();
-  }
-  SPHParticleCellVec.clear();
+  // expand the container by bufferWidth + small_value
+  Box expandedContainer(container, ghostBuffer);
 
-  Vec vmin = container.getMinCorner();
-  Vec vmax = container.getMaxCorner();
-  REAL small_value = 0.01 * spaceInterval;
-  REAL xmin = vmin.x() - sphCellSize - small_value;
-  REAL zmin = vmin.z() - sphCellSize -
-              small_value; // expand the container by sphCellSize for
-                           // cells domain is necessary
-  REAL xmax = vmax.x() + sphCellSize + small_value;
-  REAL zmax = vmax.z() + sphCellSize +
-              small_value;             // since the sph domain that we divide is
-                                       // mergeSPHParticleVec
-  Nx = (xmax - xmin) / kernelSize + 1; // (xmax-xmin)/(3h)+1
-  Nz = (zmax - zmin) / kernelSize + 1; // (zmax-zmin)/(3h)+1
-  numCell = Nx * Nz;
-  SPHParticleCellVec.resize(numCell); // at this point, the cellVec contains
-                                      // numCell vectors,
-  // each vector is empty but ready to store the pointer of SPH
-  // particles (this process will be in the calculation of SPH forces)
+  // Compute the number of cells in each dimension
+  int nx = std::round(expandedContainer.getDimx()/kernelSize) + 1;
+  int ny = std::round(expandedContainer.getDimy()/kernelSize) + 1;
+  int nz = std::round(expandedContainer.getDimz()/kernelSize) + 1;
+  IntVec numGridCells(nx, ny, nz);
 
-  dem::Vec tmp_xyz;
-  int num;
-  for (std::vector<sph::SPHParticle*>::iterator pt =
-         mergeSPHParticleVec.begin();
-       pt != mergeSPHParticleVec.end();
-       pt++) { // mergeSPHParticle contains also the sph
-               // particles from neighboring cpus
-    tmp_xyz = (*pt)->getCurrPosition();
-    num = int((tmp_xyz.z() - zmin) / kernelSize) * Nx +
-          int((tmp_xyz.x() - xmin) / kernelSize);
-    SPHParticleCellVec[num].push_back(*pt);
+  d_sphPatchGrid.resize(nx*ny*nz); 
+
+  for (const auto& particle : d_mergeSPHParticleVec) {
+    int cellIndex = getCellIndex<dim>(expandedContainer.getMinCorner(),
+                                      kernelSize, 
+                                      numGridCells,
+                                      particle->currentPosition());
+    d_sphPatchGrid[cellIndex].push_back(particle);
   }
 
-  REAL maxRadius = gradation.getPtclMaxRadius();
-  std::vector<sph::SPHParticle*>::iterator gt;
-  for (std::vector<Particle*>::iterator pdt = particleVec.begin();
-       pdt != particleVec.end();
-       ++pdt) { // the sph ghost particles in the current cpu's
-                // dem particles
-    // will be definitely inside the [xmin, ymin, zmin,
-    // xmax ...]
-    tmp_xyz = (*pdt)->currentPosition();
-    if (tmp_xyz.x() >= xmax + maxRadius || tmp_xyz.z() >= zmax + maxRadius ||
-        tmp_xyz.x() <= xmin - maxRadius ||
-        tmp_xyz.z() <= zmin - maxRadius) // dem
-      particle is outside of the continue;
-    for (gt = (*pdt)->SPHGhostParticleVec.begin();
-         gt != (*pdt)->SPHGhostParticleVec.end();
-         gt++) { // set all SPH ghost particles
-      into their cells tmp_xyz = (*gt)->getCurrPosition();
-      if (tmp_xyz.x() >= xmax || tmp_xyz.z() >= zmax || tmp_xyz.x() <= xmin ||
-          tmp_xyz.z() <= zmin)
-        continue; // this sph ghost particle is outside of the container, go to
-      next sph ghost particle num =
-        int((tmp_xyz.z() - zmin) / kernelSize) * Nx +
-        int((tmp_xyz.x() - xmin) / kernelSize);
-      SPHParticleCellVec[num].push_back(*gt);
-    }
-  }
+} // assignParticlesToPatchGrid2D
 
-  for (std::vector<Particle*>::iterator pdt = recvParticleVec.begin();
-       pdt != recvParticleVec.end();
-       pdt++) { // the this time, recvParticleVec are the
-    dem particles that are communicated by the commuParticle tmp_xyz =
-      (*pdt)->currentPosition();
-    if (tmp_xyz.x() >= xmax + maxRadius || tmp_xyz.z() >= zmax + maxRadius ||
-        tmp_xyz.x() <= xmin - maxRadius ||
-        tmp_xyz.z() <= zmin - maxRadius)   // dem
-      particle is outside of the continue; // expanded domain
+template <>
+int 
+SmoothParticleHydro::getCellIndex<2>(const dem::Vec& cellMinCorner,
+                                     const REAL& cellWidth,
+                                     const IntVec& numGridCells,
+                                     const Vec& pos)
+{
+  Vec relPos = (pos - cellMinCorner)/cellWidth;
+  int cellIndex = std::floor(relPos.z()) * numGridCells.x() +
+                  std::floor(relPos.x());
+  return cellIndex;  
+}
 
-    for (gt = (*pdt)->SPHGhostParticleVec.begin();
-         gt != (*pdt)->SPHGhostParticleVec.end();
-         gt++) { // set part SPH ghost particles
-      into their cells tmp_xyz = (*gt)->getCurrPosition();
-      // not all sph ghost particles in these received particles are inside the
-      container if (tmp_xyz.x() >= xmax || tmp_xyz.z() >= zmax ||
-                    tmp_xyz.x() <= xmin ||
-                    tmp_xyz.z() <= zmin) continue; // this sph ghost particle is
-                                                   // outside of the container,
-                                                   // go to
-      next sph ghost particle num =
-        int((tmp_xyz.z() - zmin) / kernelSize) * Nx +
-        int((tmp_xyz.x() - xmin) / kernelSize);
-      SPHParticleCellVec[num].push_back(*gt);
-    }
-  }
-
-} // divideSPHDomain2D
-*/
+template <>
+int 
+SmoothParticleHydro::getCellIndex<3>(const dem::Vec& cellMinCorner,
+                                     const REAL& cellWidth,
+                                     const IntVec& numGridCells,
+                                     const Vec& pos)
+{
+  Vec relPos = (pos - cellMinCorner)/cellWidth;
+  int cellIndex = std::floor(relPos.z()) * numGridCells.x() * numGridCells.y() +
+                  std::floor(relPos.y()) * numGridCells.x() + 
+                  std::floor(relPos.x());
+  return cellIndex;  
+}
 
 /*
 //// the momentum equilibrium equation and state equation are implemented as
@@ -773,7 +463,7 @@ SmoothParticleHydro::calculateSPHDensityDotVelocityDotLinkedList2D()
 
   // divide the SPH domain into different cells, each cell will contain SPH
   // particles within it
-  divideSPHDomain2D();
+  assignParticlesToPatchGrid2D();
 
   //  checkDivision();  // pass, May 22, 2015
   //  checkNeighborCells2D();  // pass, May 22, 2015
@@ -912,7 +602,7 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
       }
       //        mua = (*pta)->getParticleViscosity();
       rhoa = (*pta)->getParticleDensity();
-      pta_position = (*pta)->getCurrPosition();
+      pta_position = (*pta)->currentPosition();
 
       //    if((*pta)->getType()!=1){  // pta is not free sph particles, i.e.
       //    pta is
@@ -923,7 +613,7 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
       for (ptb = pta + 1; ptb != SPHParticleCellVec[pvec].end();
            ++ptb) { // sum over the
                     // SPH particles in the same cell pvec
-        ptb_position = (*ptb)->getCurrPosition();
+        ptb_position = (*ptb)->currentPosition();
         rab = dem::vfabs(pta_position - ptb_position);
         if (rab <= kernelSize) { // ptb is in the smooth kernel
           pb = (*ptb)->getParticlePressure();
@@ -1372,7 +1062,7 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
       for (ptb = tmp_particleVec.begin(); ptb != tmp_particleVec.end();
            ptb++) { // all
                     // particles in pvec's neighboring cells
-        ptb_position = (*ptb)->getCurrPosition();
+        ptb_position = (*ptb)->currentPosition();
         rab = dem::vfabs(pta_position - ptb_position);
         if (rab <= kernelSize) { // ptb is in the smooth kernel
           pb = (*ptb)->getParticlePressure();
@@ -1806,7 +1496,7 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
   // paper(1994)
   //      for(ptb=SPHBoundaryParticleVec.begin();
   // ptb!=SPHBoundaryParticleVec.end(); ptb++){
-  //    ptb_position = (*ptb)->getCurrPosition();
+  //    ptb_position = (*ptb)->currentPosition();
   //    rab = dem::vfabs(pta_position-ptb_position);
   //    if(rab<=spaceInterval){ // ptb is in the smooth kernel
   //        dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
@@ -1819,11 +1509,228 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
 */
 
 /*
+void
+SmoothParticleHydro::initialSPHVelocity2D()
+{
+  commuParticle();
+  commuSPHParticle(); // this will update container and mergeSPHParticleVec,
+                      // both are needed for assignParticlesToPatchGrid
+  calculateSPHDensityDotVelocityDotLinkedList2D(); // calculate velocityDot and
+                                                   // densityDot
+  // fix the y for all SPH points
+  for (std::vector<sph::SPHParticle*>::iterator pt = d_sphParticleVec.begin();
+       pt != d_sphParticleVec.end(); pt++) {
+    switch ((*pt)->getType()) {
+      case 1: // free sph particle
+        (*pt)->fixY();
+        break;
+      case 2: // ghost sph particle
+        break;
+      case 3: // boundary sph particle
+        (*pt)->fixXYZ();
+        break;
+      default:
+        std::cout << "SPH particle type of pta should be 1, 2 or 3!"
+                  << std::endl;
+        exit(-1);
+    } // switch
+  }
+  initialSPHLeapFrogVelocity(); // initial velocity only for free SPH particles
+                                // based on equation (4.3)
+
+  releaseRecvParticle();
+  releaseRecvSPHParticle();
+} // initialSPHVelocity()
+
+void
+SmoothParticleHydro::initialSPHVelocity3D()
+{
+  commuParticle();
+  commuSPHParticle(); // this will update container and mergeSPHParticleVec,
+                      // both are needed for assignParticlesToPatchGrid
+  calculateSPHDensityDotVelocityDotLinkedList3D(); // calculate velocityDot and
+                                                   // densityDot
+  initialSPHLeapFrogVelocity(); // initial velocity only for free SPH particles
+                                // based on equation (4.3)
+
+  releaseRecvParticle();
+  releaseRecvSPHParticle();
+} // initialSPHVelocity()
+
+void
+SmoothParticleHydro::initialSPHVelocityCopyDEM3D()
+{
+  commuSPHParticle(); // this will update container and mergeSPHParticleVec,
+                      // both are needed for assignParticlesToPatchGrid
+  calculateSPHDensityDotVelocityDotLinkedList3D(); // calculate velocityDot and
+                                                   // densityDot
+  initialSPHLeapFrogVelocity(); // initial velocity only for free SPH particles
+                                // based on equation (4.3)
+
+  releaseRecvSPHParticle();
+} // initialSPHVelocity()
+
+void
+SmoothParticleHydro::initialSPHLeapFrogVelocity()
+{ // initial particle
+  // velocity only for free SPH particles based on equation (4.3)
+  for (std::vector<sph::SPHParticle*>::iterator pt = d_sphParticleVec.begin();
+       pt != d_sphParticleVec.end(); pt++) {
+    if ((*pt)->getType() == 1)
+      (*pt)->initialParticleVelocityLeapFrog();
+  }
+} // end initialSPHLeapFrogVelocity
+
+void
+SmoothParticleHydro::updateSPHLeapFrogPositionDensity()
+{ // update
+  // particle position and density based on equation (4.1)
+  for (std::vector<sph::SPHParticle*>::iterator pt = d_sphParticleVec.begin();
+       pt != d_sphParticleVec.end(); pt++) {
+    switch ((*pt)->getType()) {
+      case 1: // free sph particle
+        (*pt)->updateParticlePositionDensityLeapFrog();
+        break;
+      case 2: // ghost sph particle
+        break;
+      case 3: // boundary sph particle
+        (*pt)->updateParticleDensity();
+        break;
+      default:
+        std::cout << "SPH particle type of pta should be 1, 2 or 3!"
+                  << std::endl;
+        exit(-1);
+    } // switch
+  }
+
+  std::vector<sph::SPHParticle*>::iterator gt;
+  for (std::vector<Particle*>::iterator demt = particleVec.begin();
+       demt != particleVec.end(); demt++) {
+    (*demt)->updateSPHGhostParticle(); // update position and density by dem
+    // particle and sph particle density, and velocity
+  }
+} // end updateSPHLeapFrogPositionDensity
+
+void
+SmoothParticleHydro::updateSPHLeapFrogVelocity()
+{ // update particle
+  // velocity only for free SPH particles based on equation (4.2)
+  for (std::vector<sph::SPHParticle*>::iterator pt = d_sphParticleVec.begin();
+       pt != d_sphParticleVec.end(); pt++) {
+    if ((*pt)->getType() == 1)
+      (*pt)->updateParticleVelocityLeapFrog();
+  }
+} // end updateSPHLeapFrogVelocity
+*/
+
+/*
+//  REAL factor = 1.0/(120.0*dem::PI*h*h*h);  // 3D quintic kernel factor
+//  REAL factor = 7.0/(478.0*dem::PI*h*h);    // 2D quintic kernel factor
+// kernel function, Vec is the position of a b, h is smoothing length
+inline REAL
+SmoothParticleHydro::kernelFunction(const dem::Vec& a, const dem::Vec& b)
+{
+  REAL rab = dem::vfabs(a - b);
+  REAL s = rab * one_devide_h;
+  REAL item1_5 = (3 - s) * (3 - s) * (3 - s) * (3 - s) * (3 - s); // (3-s)^5
+  REAL item2_5 = (2 - s) * (2 - s) * (2 - s) * (2 - s) * (2 - s); // (2-s)^5
+  REAL item3_5 = (1 - s) * (1 - s) * (1 - s) * (1 - s) * (1 - s); // (1-s)^5
+  if (s < 1) {
+    return factor_kernel * (item1_5 - 6 * item2_5 + 15 * item3_5);
+  } else if (s < 2) {
+    return factor_kernel * (item1_5 - 6 * item2_5);
+  } else if (s < 3) {
+    return factor_kernel * item1_5;
+  } else {
+    return 0.0;
+  }
+
+} // end kernelFunction
+*/
+
+/*
+// kernel function, s is rab/h, h is smoothing length
+inline REAL
+SmoothParticleHydro::kernelFunction(REAL s)
+{
+  REAL item1_5 = (3 - s) * (3 - s) * (3 - s) * (3 - s) * (3 - s); // (3-s)^5
+  REAL item2_5 = (2 - s) * (2 - s) * (2 - s) * (2 - s) * (2 - s); // (2-s)^5
+  REAL item3_5 = (1 - s) * (1 - s) * (1 - s) * (1 - s) * (1 - s); // (1-s)^5
+  if (s < 1) {
+    return factor_kernel * (item1_5 - 6 * item2_5 + 15 * item3_5);
+  } else if (s < 2) {
+    return factor_kernel * (item1_5 - 6 * item2_5);
+  } else if (s < 3) {
+    return factor_kernel * item1_5;
+  } else {
+    return 0.0;
+  }
+
+} // end kernelFunction
+*/
+
+/*
+//  REAL factor = 1.0/(120.0*dem::PI*h*h*h*h);  // 3D quintic kernel factor
+//  REAL factor = 1.0/(120.0*h*h);  // 1D quintic kernel factor
+//  REAL factor = 7.0/(478.0*dem::PI*h*h*h);  // 2D quintic kernel factor
+// to calculate delta_aWab, where a is the position of the first particle
+inline dem::Vec
+SmoothParticleHydro::gradientKernelFunction(const dem::Vec& a,
+                                            const dem::Vec& b)
+{
+  REAL rab = dem::vfabs(a - b);
+  REAL s = rab * one_devide_h;
+  REAL item1_4 = (3 - s) * (3 - s) * (3 - s) * (3 - s); // (3-s)^4
+  REAL item2_4 = (2 - s) * (2 - s) * (2 - s) * (2 - s); // (2-s)^4
+  REAL item3_4 = (1 - s) * (1 - s) * (1 - s) * (1 - s); // (1-s)^4
+  if (s < 1) {
+    return factor_kernel_gradient *
+           (-5 * item1_4 + 30 * item2_4 - 75 * item3_4) * (a - b) /
+           rab; // it is strange that s is
+    // devided here. compare to Liu's SPH code (National University of
+    // Singapore)
+  } else if (s < 2) {
+    return factor_kernel_gradient * (-5 * item1_4 + 30 * item2_4) * (a - b) /
+           rab;
+  } else if (s < 3) {
+    return factor_kernel_gradient * (-5 * item1_4) * (a - b) / rab;
+  } else {
+    return dem::Vec(0.0);
+  }
+
+} // end gradientKernelFunction
+*/
+
+/*
+// to calculate partial differential dWab_dra
+inline REAL
+SmoothParticleHydro::partialKernelFunction(const dem::Vec& a, const dem::Vec& b)
+{
+  REAL rab = dem::vfabs(a - b);
+  REAL s = rab * one_devide_h;
+  REAL item1_4 = (3 - s) * (3 - s) * (3 - s) * (3 - s); // (3-s)^4
+  REAL item2_4 = (2 - s) * (2 - s) * (2 - s) * (2 - s); // (2-s)^4
+  REAL item3_4 = (1 - s) * (1 - s) * (1 - s) * (1 - s); // (1-s)^4
+  if (s < 1) {
+    return factor_kernel_gradient *
+           (-5 * item1_4 + 30 * item2_4 - 75 * item3_4);
+  } else if (s < 2) {
+    return factor_kernel_gradient * (-5 * item1_4 + 30 * item2_4);
+  } else if (s < 3) {
+    return factor_kernel_gradient * (-5 * item1_4);
+  } else {
+    return 0.0;
+  }
+
+} // end partialKernelFunction
+*/
+
+/*
 // divide SPH domain in each cpu into different cells in 2D in xz plane.
 // see the notes 5/20/2015 and 5/21/2015 or Simpson's paper "Numerical
 // techniques for three-dimensional Smoothed Particle Hydrodynamics"
 void
-SmoothParticleHydro::divideSPHDomain3D()
+SmoothParticleHydro::assignParticlesToPatchGrid3D()
 {
 
   // clear the std::vector< std::vector<sph::SPHParticle*> > SPHParticleCellVec
@@ -1873,7 +1780,7 @@ SmoothParticleHydro::divideSPHDomain3D()
        pt != mergeSPHParticleVec.end();
        pt++) { // mergeSPHParticle contains also the sph
                // particles from neighboring cpus
-    tmp_xyz = (*pt)->getCurrPosition();
+    tmp_xyz = (*pt)->currentPosition();
     num = int((tmp_xyz.y() - ymin) / kernelSize) * Nx * Nz +
           int((tmp_xyz.z() - zmin) / kernelSize) * Nx +
           int((tmp_xyz.x() - xmin) / kernelSize);
@@ -1898,7 +1805,7 @@ SmoothParticleHydro::divideSPHDomain3D()
          gt != (*pdt)->SPHGhostParticleVec.end();
          gt++) { // set all SPH ghost particles
                  // into their cells
-      tmp_xyz = (*gt)->getCurrPosition();
+      tmp_xyz = (*gt)->currentPosition();
       if (tmp_xyz.x() >= xmax || tmp_xyz.y() >= ymax || tmp_xyz.z() >= zmax ||
           tmp_xyz.x() <= xmin || tmp_xyz.y() <= ymin || tmp_xyz.z() <= zmin)
         continue; // this sph ghost particle is outside of the container, go to
@@ -1925,7 +1832,7 @@ SmoothParticleHydro::divideSPHDomain3D()
          gt != (*pdt)->SPHGhostParticleVec.end();
          gt++) { // set part SPH ghost particles
                  // into their cells
-      tmp_xyz = (*gt)->getCurrPosition();
+      tmp_xyz = (*gt)->currentPosition();
       // not all sph ghost particles in these received particles are inside the
       // container
       if (tmp_xyz.x() >= xmax || tmp_xyz.y() >= ymax || tmp_xyz.z() >= zmax ||
@@ -1939,7 +1846,7 @@ SmoothParticleHydro::divideSPHDomain3D()
     }
   }
 
-} // divideSPHDomain3D
+} // assignParticlesToPatchGrid3D
 */
 
 /*
@@ -1953,7 +1860,7 @@ SmoothParticleHydro::calculateSPHDensityDotVelocityDotLinkedList3D()
 
   // divide the SPH domain into different cells, each cell will contain SPH
   // particles within it
-  divideSPHDomain3D();
+  assignParticlesToPatchGrid3D();
 
   //  checkDivision();  // pass, May 22, 2015
   //  checkNeighborCells3D();  // pass, May 22, 2015
@@ -2069,7 +1976,7 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
       }
       //        mua = (*pta)->getParticleViscosity();
       rhoa = (*pta)->getParticleDensity();
-      pta_position = (*pta)->getCurrPosition();
+      pta_position = (*pta)->currentPosition();
 
       //    if((*pta)->getType()!=1){  // pta is not free sph particles, i.e.
       //    pta is
@@ -2080,7 +1987,7 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
       for (ptb = pta + 1; ptb != SPHParticleCellVec[pvec].end();
            ptb++) { // sum over the
                     // SPH particles in the same cell pvec
-        ptb_position = (*ptb)->getCurrPosition();
+        ptb_position = (*ptb)->currentPosition();
         rab = dem::vfabs(pta_position - ptb_position);
         if (rab <= kernelSize) { // ptb is in the smooth kernel
           pb = (*ptb)->getParticlePressure();
@@ -2527,7 +2434,7 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
       for (ptb = tmp_particleVec.begin(); ptb != tmp_particleVec.end();
            ptb++) { // all
                     // particles in pvec's neighboring cells
-        ptb_position = (*ptb)->getCurrPosition();
+        ptb_position = (*ptb)->currentPosition();
         rab = dem::vfabs(pta_position - ptb_position);
         if (rab <= kernelSize) { // ptb is in the smooth kernel
           pb = (*ptb)->getParticlePressure();
@@ -2959,7 +2866,7 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
   // paper(1994)
   //      for(ptb=SPHBoundaryParticleVec.begin();
   // ptb!=SPHBoundaryParticleVec.end(); ptb++){
-  //    ptb_position = (*ptb)->getCurrPosition();
+  //    ptb_position = (*ptb)->currentPosition();
   //    rab = dem::vfabs(pta_position-ptb_position);
   //    if(rab<=spaceInterval){ // ptb is in the smooth kernel
   //        dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
@@ -2970,3 +2877,65 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
 
 } // end calculateSPHDensityDotVelocityDotLinkedList3D()
 */
+
+/*
+void
+SmoothParticleHydro::printSPHParticle(const char* str) const
+{
+  std::ofstream ofs(str);
+  if (!ofs) {
+    debugInf << "stream error: printSPHParticle" << std::endl;
+    exit(-1);
+  }
+  ofs.setf(std::ios::scientific, std::ios::floatfield);
+  ofs.precision(OPREC);
+
+  ofs << "Title = \"SPH Particle Information\"" << std::endl;
+  ofs << "VARIABLES = \"x\", \"y\",\"z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\"
+\"Vy\" \"Vz\" \"Pressure\" \"a_x\" \"a_y\" \"a_z\" \"density_dot\" "
+  "\"density\" "
+      << std::endl;
+
+  // Output the coordinates and the array information
+  for (std::vector<sph::SPHParticle*>::const_iterator pt =
+         d_allSPHParticleVec.begin();
+       pt != d_allSPHParticleVec.end(); pt++) {
+
+    //// not print the most right layer of SPH free particles, 2015/05/19
+    // if((*pt)->getInitPosition().getx()==25){
+    // continue;
+    //}
+    if ((*pt)->getType() == 3)
+      continue; // not print out boundary particles
+
+    ofs << std::setw(20) << (*pt)->currentPosition().x() << std::setw(20)
+        << (*pt)->currentPosition().y() << std::setw(20)
+        << (*pt)->currentPosition().z() << std::setw(20)
+        << (*pt)->getDisplacement().x() << std::setw(20)
+        << (*pt)->getDisplacement().y() << std::setw(20)
+        << (*pt)->getDisplacement().z() << std::setw(20)
+        << (*pt)->getVelocity().x() << std::setw(20) << (*pt)->getVelocity().y()
+        << std::setw(20) << (*pt)->getVelocity().z();
+
+    (*pt)->calculateParticlePressure();
+    ofs << std::setw(20) << (*pt)->getParticlePressure();
+
+    ofs << std::setw(20) << (*pt)->getVelocityDot().x() << std::setw(20)
+        << (*pt)->getVelocityDot().y() << std::setw(20)
+        << (*pt)->getVelocityDot().z() << std::setw(20)
+        << (*pt)->getDensityDot() << std::setw(20)
+        << (*pt)->getParticleDensity() << std::endl;
+  }
+
+  ofs.close();
+}
+*/
+
+namespace sph {
+template void
+SmoothParticleHydro::assignParticlesToPatchGrid<2>(const Box& container,
+  const REAL& bufferWidth, const REAL& ghostWidth, const REAL& kernelSize);
+template void
+SmoothParticleHydro::assignParticlesToPatchGrid<3>(const Box& container,
+  const REAL& bufferWidth, const REAL& ghostWidth, const REAL& kernelSize);
+}

@@ -49,7 +49,7 @@ public:
     d_mpiCoords = mpiCoords;
   }
 
-  inline void setGrid(dem::Box cont) { d_sphGrid = cont; }
+  inline void setGrid(dem::Box cont) { d_sphPatchBox = cont; }
 
   // Accessor methods
   inline const SPHParticlePArray& getAllSPHParticleVec() const
@@ -89,6 +89,17 @@ public:
 
   void gatherSPHParticle();
 
+  template <int dim>
+  void assignParticlesToPatchGrid(const dem::Box& container,
+                                  const REAL& bufferWidth,
+                                  const REAL& ghostWidth,
+                                  const REAL& kernelSize);
+
+  template <int dim>
+  int getCellIndex(const dem::Vec& cellMinCorner,
+                   const REAL& cellWidth,
+                   const dem::IntVec& numGridCells,
+                   const dem::Vec& pointPosition);
   /*
 
   void removeSPHParticleOutBox(const dem::Box& container,
@@ -168,7 +179,8 @@ private:
   void createPatch(int iteration, const REAL& ghostWidth);
   void updatePatch(int iteration, const REAL& ghostWidth);
 
-  dem::Box d_sphGrid;
+  dem::Box d_sphPatchBox;
+  SPHPatchGridParticleP d_sphPatchGrid;
 
   // stream
   std::ofstream sphProgInf;
