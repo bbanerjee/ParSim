@@ -44,11 +44,11 @@ public:
   REAL calculateViscosity();
 
   void setDensity(REAL density) { d_density = density; }
-  void setDensityDot(REAL a) { d_densityDot = a; }
-  void setVelocityDot(const dem::Vec& a) { d_acceleration = a; }
-  void setDensityDotVelocityDotZero()
+  void setDensityRate(REAL a) { d_densityRate = a; }
+  void setAcceleration(const dem::Vec& a) { d_acceleration = a; }
+  void setDensityRateAccelerationZero()
   {
-    d_densityDot = 0;
+    d_densityRate = 0;
     d_acceleration = 0;
     d_velocityCorrection = 0;
   }
@@ -61,16 +61,16 @@ public:
   void setType(SPHParticleType a) { d_type = a; }
   void setDEMParticle(dem::DEMParticle* p) { d_demParticle = p; }
   void setNULLDEMParticle() { d_demParticle = nullptr; }
-  void addVelocityDot(const dem::Vec& a) { d_acceleration += a; }
-  void addVelocityCorrection(const dem::Vec& a) { d_velocityCorrection += a; }
-  void addDensityDot(REAL a) { d_densityDot += a; }
-  void addCurrPositionX(REAL a) { d_currPos.setX(d_currPos.x() + a); }
+  void incAcceleration(const dem::Vec& a) { d_acceleration += a; }
+  void incVelocityCorrection(const dem::Vec& a) { d_velocityCorrection += a; }
+  void incDensityRate(REAL a) { d_densityRate += a; }
+  void incCurrPositionX(REAL a) { d_currPos.setX(d_currPos.x() + a); }
   void setLocalPosition(const dem::Vec& pos) { d_localCoords = pos; }
 
   ParticleID getId() const { return d_id; }
   REAL getMass() const { return d_mass; }
   REAL getDensity() const { return d_density; }
-  REAL getDensityDot() const { return d_densityDot; }
+  REAL getDensityRate() const { return d_densityRate; }
 
   // everytime when using getVolume(),
   // make sure that volume, pressure, viscosity  have been calculated!!!!
@@ -154,7 +154,7 @@ private:
   // dynamic viscosity, mu=density*dem::nu;
   // need to be calculated before being used!!!
   REAL d_mu;
-  REAL d_densityDot;
+  REAL d_densityRate;
 
   dem::Vec d_initialPos;
   dem::Vec d_currPos;
@@ -190,7 +190,7 @@ private:
     ar& d_volume;
     ar& d_pressure;
     ar& d_mu;
-    ar& d_densityDot;
+    ar& d_densityRate;
     ar& d_currPos;
     ar& d_initialPos;
     ar& d_velocity;

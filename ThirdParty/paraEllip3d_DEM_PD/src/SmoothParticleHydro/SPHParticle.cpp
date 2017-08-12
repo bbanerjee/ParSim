@@ -12,7 +12,7 @@ SPHParticle::SPHParticle()
   , d_volume(0)
   , d_pressure(0)
   , d_mu(0)
-  , d_densityDot(0)
+  , d_densityRate(0)
   , d_initialPos(0)
   , d_currPos(0)
   , d_velocity(0)
@@ -63,7 +63,7 @@ SPHParticle::initialize()
   d_volume = calculateVolume();
   d_pressure = calculatePressure();
   d_mu = calculateViscosity();
-  d_densityDot = 0;
+  d_densityRate = 0;
 
   d_currPos = d_initialPos;
   d_velocity = 0;
@@ -114,7 +114,7 @@ SPHParticle::update()
 void
 SPHParticle::updateDensity(const REAL& delT)
 {
-  d_density += d_densityDot * delT;
+  d_density += d_densityRate * delT;
 }
 
 void

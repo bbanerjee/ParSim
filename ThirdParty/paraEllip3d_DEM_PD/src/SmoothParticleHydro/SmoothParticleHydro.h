@@ -89,6 +89,8 @@ public:
 
   void gatherSPHParticle();
 
+  void initializeDensityRateAndAcceleration();
+
   template <int dim>
   void assignParticlesToPatchGrid(const dem::Box& container,
                                   const REAL& bufferWidth,

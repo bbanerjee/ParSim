@@ -381,7 +381,7 @@ OutputTecplot<SPHParticlePArray>::writeParticles(const SPHParticlePArray* partic
     ofs << std::setw(20) << pt->getAcceleration().x() << std::setw(20)
         << pt->getAcceleration().y() << std::setw(20)
         << pt->getAcceleration().z() << std::setw(20)
-        << pt->getDensityDot() << std::setw(20)
+        << pt->getDensityRate() << std::setw(20)
         << pt->getDensity() << std::endl;
 
     ofs.flush();

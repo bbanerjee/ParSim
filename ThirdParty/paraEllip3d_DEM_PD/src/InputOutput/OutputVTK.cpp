@@ -752,7 +752,7 @@ OutputVTK<SPHParticlePArray>::createVTKUnstructuredGrid(const SPHParticlePArray*
     Vec vel = particle->getVelocity();
     Vec acc = particle->getAcceleration();
     REAL press = particle->getPressure();
-    REAL rhoDot = particle->getDensityDot();
+    REAL rhoDot = particle->getDensityRate();
     REAL rho = particle->getDensity();
 
     // Position
