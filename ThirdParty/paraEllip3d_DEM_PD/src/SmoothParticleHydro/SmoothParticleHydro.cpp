@@ -508,43 +508,14 @@ SmoothParticleHydro::calculateSPHDensityRateAccelerationLinkedList2D(const REAL&
   // Set up kernel
   SPHKernels kernel;
 
-  // temporary variables used in the loop
-  dem::Vec pos_a;
-  dem::Vec pos_b;
-  dem::Vec gradWab_a;
-  dem::Vec gradWba_b;
-  dem::Vec vab;
-  dem::Vec vel_ba;
-  dem::Vec vdem;
-  dem::Vec dva_dt;
-  dem::Vec dvb_dt;
-  dem::Vec delta_a;
-  dem::Vec delta_b;
-  REAL press_a, press_b, rho_a, rho_b, mu_a, mu_b;
-  REAL rab;
-        REAL dWab_dra;
-  REAL dWba_drb;
-  REAL Wab, Wba;
-  REAL da, dB;
-  REAL beta;
-  REAL xa, ya, xB, yB, k, sqrt_xaya;  // variables for Morris' method to
-//calculate da/dB
-  std::vector<sph::SPHParticle*>::iterator sph_part_b;
-  REAL ra, rb, rc;  // the geometry of the dem particle
-  dem::Vec pta_local, ptb_local;  // local position of sph_part_a and sph_part_b in the dem
-//particle
-  dem::Vec demt_curr;
-  REAL Gamma_ab, mu_ab, vel_radial;
   REAL alpha_zero = 0;  // the viscous between free and ghost/boundary
-//correction
-  REAL Wq, Ra, Rb, phi_4, coeff_a, coeff_b;
-  dem::Particle* demt;
+                        //correction
 
-        int pnum;
+  int pnum;
   std::vector<sph::SPHParticle*> tmp_particleVec;  // sph particles in
-//neighboring cells
+                                                   //neighboring cells
 
-  for(int cellIndex=0; cellIndex<d_sphPatchGrid.size(); ++cellIndex){
+  for (int cellIndex=0; cellIndex<d_sphPatchGrid.size(); ++cellIndex) {
 
     // store all SPH particles in cellIndex's neighboring cells
     tmp_particleVec.clear(); // it is the same for the particles in the same
@@ -584,69 +555,22 @@ SmoothParticleHydro::calculateSPHDensityRateAccelerationLinkedList2D(const REAL&
 
     for (auto& sph_part_a : d_sphPatchGrid[cellIndex]) {
 
-      Vec pos_a = sph_part_a->currentPosition();
-      REAL rho_a = sph_part_a->getDensity();
-      REAL mu_a = sph_part_a->getViscosity();
-      REAL press_a = sph_part_a->getPressure();
-      REAL Ra = (press_a >= 0) ? 0.006 : 0.6;
-      REAL p_rhoSq_a = press_a/(rho_a*rho_a);
-
-      REAL mass_a = sph_part_a->getMass();
-      Vec vel_a = sph_part_a->getVelocity();
+      SPHInteractions interaction;
+      interaction.setDataParticleA(sph_part_a);
 
       for (auto& sph_part_b : d_sphPatchGrid[cellIndex]) {
 
         // Check if they are the same particle
         if (sph_part_a == sph_part_b) continue;
 
-        Vec pos_b = sph_part_b->currentPosition();
-        Vec pos_ab = pos_a - pos_b;
-        REAL dist_ab_sq = pos_ab.lengthSq();
-        REAL dist_ab = std::sqrt(dist_ab_sq);
+        interaction.setDataParticleB(sph_part_b);
+        interaction.initializeInteraction();
 
         // Go to next particle if the distance is too large
-        if (dist_ab > kernelSize) continue;
+        if (interaction.areFarApart(kernelSize)) continue;
 
-        REAL rho_b = sph_part_b->getDensity();
-        REAL mu_b = sph_part_b->getViscosity();
-        REAL press_b = sph_part_b->getPressure();
-        REAL Rb = (press_b >= 0) ? 0.006 : 0.6;
-        REAL p_rhoSq_b = press_b/(rho_b*rho_b);
-
-        REAL mass_b = sph_part_b->getMass();
-        Vec vel_b = sph_part_b->getVelocity();
-        Vec vel_ab = vel_a - vel_b;
-        Vec vel_ba = -vel_ab;
-
-        REAL Wqmin = kernel.minQuinticSplineKernel<2>(smoothLength);
-
-        REAL Wab = kernel.quinticSplineKernel<2>(dist_ab, smoothLength);
-        REAL Wba = Wab;
-
-        Vec gradWab_a = kernel.gradientQuinticSplineKernel<2>(pos_ab, dist_ab, 
-                                                              smoothLength); 
-        Vec gradWba_b = -gradWab_a;
-
-        REAL dWab_dra = gradWab_a.length();
-        REAL dWba_drb = dWab_dra;
-
-        REAL Wratio = Wab/Wqmin;
-        REAL phi_4 = Wratio*Wratio*Wratio*Wratio;
-        REAL coeff_a = 1 + Ra * phi_4;
-        REAL coeff_b = 1 + Rb * phi_4;
-
-        REAL vel_dot_gradW = dem::dot(vel_ab, gradWab_a);
-        REAL vel_radial = dem::dot(vel_ab, pos_ab);
-
-        REAL rho_av = (rho_a + rho_b)/2;
-        REAL  Gamma_ab = 0;
-        if (vel_radial < 0) {
-          REAL mu_ab = smoothLength * vel_radial /
-                            (dist_ab_sq + 0.01 * smoothLengthSq);
-          Gamma_ab = (-alpha*soundSpeed*mu_ab)/rho_av;
-        }
-        REAL p_rhoSq_av = p_rhoSq_a*coeff_a + p_rhoSq_b*coeff_b + Gamma_ab;
-
+        interaction.computeInteractionKernel(smoothLength);
+        interaction.updateParticleCoeffs();
 
         // we have three types of SPH particles: 1, free particle; 2, ghost
         // particle; 3, boundary particle.  Then we have 3x3 = 9 different 
@@ -666,186 +590,28 @@ SmoothParticleHydro::calculateSPHDensityRateAccelerationLinkedList2D(const REAL&
         if (sph_part_b->getType() == SPHParticleType::FREE &&
             sph_part_a->getType() == SPHParticleType::FREE) {
 
-          sph_part_a->incDensityRate(mass_a*vel_dot_gradW);
-          sph_part_b->incDensityRate(mass_b*vel_dot_gradW);
+          interaction.updateMomentumExchangeCoeffs(smoothLength, alpha, soundSpeed);
+          interaction.updateInteractionFreeFree(sph_part_a, sph_part_b, epsilon);
 
-          REAL dva_dt = -mass_b * p_prhoSq_av * gradWab_a;
-          REAL dvb_dt = -mass_a * p_prhoSq_av * gradWba_b;
-          sph_part_a->incAcceleration(dva_dt);
-          sph_part_b->incAcceleration(dvb_dt);
-
-          REAL delta_a = epsilon * mass_b * (-vel_ab) * Wab / rho_av;
-          REAL delta_b = epsilon * mass_a * (vel_ab)*Wba / rho_av;
-          sph_part_a->incVelocityCorrection(delta_a);
-          sph_part_b->incVelocityCorrection(delta_b);
         }
 
         if (sph_part_b->getType() == SPHParticleType::FREE &&
             sph_part_a->getType() == SPHParticleType::GHOST) {
-                  demt = sph_part_a->getDemParticle();
-                  demt_curr = demt->currentPosition();
-                  ptb_local =
-                    demt->globalToLocal(pos_b - demt_curr); // the
-                  // local position of sph point sph_part_b
-                  ra = demt->getA();
-                  rc = demt->getC();
-                  k = 1.0 / (sqrt(ptb_local.x() * ptb_local.x() / (ra * ra) +
-                                  ptb_local.z() * ptb_local.z() / (rc * rc)));
-                  da = dem::vfabs(ptb_local -
-                                  k * ptb_local); // the distance is the same
-                                                  // in rotated coordinates
 
-                  // calculate Vab as the method shown in Morris's paper, 1996
-
-                  // (1) here I wanna use the distance from the point a/b to the
-                  // surface of the ellipsoid to simplify the problem
-                  pta_local = sph_part_a->getLocalPosition();
-                  k = 1.0 / (sqrt(pta_local.x() * pta_local.x() / (ra * ra) +
-                                  pta_local.z() * pta_local.z() / (rc * rc)));
-                  dB = dem::vfabs(pta_local - k * pta_local);
-
-                  //              // (2) here the Morris's method is used
-                  //              xa = pos_a.getx(); ya =
-                  //              pos_a.gety();
-                  //              xB = pos_b.getx(); yB =
-                  //              pos_b.gety();
-                  //              if(ya==0) {da = xa-radius; dB = radius-xB;}
-                  //              else if(xa==0) {da = ya-radius; dB =
-                  //              radius-yB;}
-                  //              else {
-                  //          sqrt_xaya = sqrt(xa*xa+ya*ya);
-                  //          k = radius/sqrt_xaya;
-                  //          da = radius/k - radius;
-                  //          dB = fabs(xa*xB+ya*yB-k*radius*radius)/sqrt_xaya;
-                  //              }
-
-                  beta = 1 + dB / da;
-                  if (beta > 2.0 || beta < 0 || isnan(beta)) {
-                    beta = 2.0;
-                  }
-
-                  vdem = sph_part_a->getVelocity();
-                  vel_ba = beta * (sph_part_b->getVelocity() - vdem);
-                  vel_ab = -vel_ba;
-
-                  sph_part_a->incDensityRate(mass_b *
-                                        (vel_ab * gradWab_a));
-                  sph_part_b->incDensityRate(mass_a *
-                                        (vel_ba * gradWba_b));
-
-                  vel_radial = vel_ab * (pos_a - pos_b);
-                  if (vel_radial < 0) {
-                    mu_ab = smoothLength * vel_radial /
-                            (dist_ab * dist_ab + 0.01 * smoothLength * smoothLength);
-                    Gamma_ab =
-(-alpha*(util::getParam<REAL>("soundSpeed")*mu_ab)/(rho_a+rho_b)*2;
-                  } else {
-                    Gamma_ab = 0;
-                  }
-
-                  dva_dt = -mass_b *
-                           (p_rhoSq_a * coeff_a +
-                            p_rhoSq_b * coeff_b + Gamma_ab) *
-                           gradWab_a;
-                  demt->addForce(mass_a * dva_dt);
-                  demt->addMoment((pos_a - demt_curr) %
-                                  (mass_a * dva_dt));
-                  //                sph_part_a->incAcceleration(dva_dt);
-
-                  dvb_dt = -mass_a *
-                           (p_rhoSq_b * coeff_b +
-                            p_rhoSq_a * coeff_a + Gamma_ab) *
-                           gradWba_b;
-                  sph_part_b->incAcceleration(dvb_dt); // the velocities of the ghost
-                  // particles will not envolve as the same way as others
-
-                  //                  delta_a =
-                  epsilon*mass_b * (-vel_ab) * Wab /
-                    (rho_a + rho_b) * 2;
-                  //                  sph_part_a->incVelocityCorrection(delta_a);
-                  delta_b = epsilon * mass_a * (vel_ab)*Wba /
-                            (rho_a + rho_b) * 2;
-                  sph_part_b->incVelocityCorrection(delta_b);
+          interaction.doGhostBoundaryVelocityCorrection(sph_part_a);
+          interaction.updateMomentumExchangeCoeffs(smoothLength, alpha, soundSpeed);
+          interaction.updateInteractionGhostFree(sph_part_a, sph_part_b, epsilon);
 
         }
 
+        // calculate Vab as the method shown in Morris's paper, 1996
+        // interact with boundary particles
         if (sph_part_b->getType() == SPHParticleType::FREE &&
             sph_part_a->getType() == SPHParticleType::BOUNDARY) {
-                  // calculate Vab as the method shown in Morris's paper, 1996
-                  // interact with boundary particles
-                  da = pos_b.z() - allContainer.getMinCorner().z(); //
-                  // assume with the bottom boundary
-                  dB = allContainer.getMinCorner().z() -
-                       pos_a.x(); // assume with
-                                         // the bottom boundary
-                  if (pos_a.x() <
-                      allContainer.getMinCorner().x()) { // with left
-                                                         // boundary
-                    da = pos_b.x() - allContainer.getMinCorner().x();
-                    dB = allContainer.getMinCorner().x() - pos_a.x();
-                  } else if (pos_a.x() >
-                             allContainer.getMaxCorner().x()) { // with right
-                                                                // boundary
-                    da = allContainer.getMaxCorner().x() - pos_b.x();
-                    dB = pos_a.x() - allContainer.getMaxCorner().x();
-                  } else if (pos_a.z() >
-                             allContainer.getMaxCorner().z()) { // with top
-                                                                // boundary
-                    da = allContainer.getMaxCorner().z() - pos_b.z();
-                    dB = pos_a.z() - allContainer.getMaxCorner().z();
-                  }
 
-                  beta = 1 + dB / da;
-                  if (beta > 2 || beta < 0 || isnan(beta)) {
-                    beta = 2;
-                  }
-
-                  vel_ba = beta * sph_part_b->getVelocity();
-                  vel_ab = -vel_ba;
-
-                  sph_part_a->incDensityRate(mass_b *
-                                        (vel_ab * gradWab_a));
-                  sph_part_b->incDensityRate(mass_a *
-                                        (vel_ba * gradWba_b));
-
-                  vel_radial = vel_ab * (pos_a - pos_b);
-                  if (vel_radial < 0) {
-                    mu_ab = smoothLength * vel_radial /
-                            (dist_ab * dist_ab + 0.01 * smoothLength * smoothLength);
-                    Gamma_ab =
-                      (-alpha * (util::getParam<REAL>("soundSpeed") * mu_ab)) /
-                      (rho_a + rho_b) * 2;
-                  } else {
-                    Gamma_ab = 0;
-                  }
-
-                  //                dva_dt =
-                  //-mass_b*(press_a/(rho_a*rho_a)*coeff_a+press_b/(rho_b*rho_b)*coeff_b+Gamma_ab)*gradWab_a;
-                  //                sph_part_a->incAcceleration(dva_dt);
-                  dvb_dt =
-                    -mass_a *
-                    (p_rhoSq_b + p_rhoSq_a + Gamma_ab) *
-                    gradWba_b;
-                  sph_part_b->incAcceleration(dvb_dt); // the velocities of the ghost
-                  // particles will not envolve as the same way as others
-
-                  //            delta_a =
-                  // epsilon*mass_b*(-vel_ab)*Wab/(rho_a+rho_b)*2;
-                  //                sph_part_a->incVelocityCorrection(delta_a);
-                  delta_b = epsilon * mass_a * (vel_ab)*Wba /
-                            (rho_a + rho_b) * 2;
-                  sph_part_b->incVelocityCorrection(delta_b);
-
-                  //            // apply the boundary forces by Lennard-Jones
-                  //            potential as in
-                  // Monaghan's paper(1994)
-                  //                if(dist_ab<=spaceInterval){ // sph_part_b is in the
-                  //                smooth kernel
-                  //                dvb_dt = D*(pow(spaceInterval/dist_ab,
-                  //                p1)-pow(spaceInterval/dist_ab,
-                  // p2))*(pos_b-pos_a)/(dist_ab*dist_ab);
-                  //                sph_part_b->incAcceleration(dvb_dt);
-                  //                } // end if
+          interaction.doDomainBoundaryVelocityCorrection(allContainer);
+          interaction.updateMomentumExchangeCoeffs(smoothLength, alpha, soundSpeed);
+          interaction.updateInteractionBoundaryFree(sph_part_a, sph_part_b, epsilon);
 
         }
              
@@ -859,26 +625,26 @@ SmoothParticleHydro::calculateSPHDensityRateAccelerationLinkedList2D(const REAL&
                 break; // do not consider sph_part_a, as we treat before
               }
               demt = sph_part_b->getDemParticle();
-              demt_curr = demt->currentPosition();
-              pta_local =
-                demt->globalToLocal(pos_a - demt_curr); // the local
+              dem_pos = demt->currentPosition();
+              local_a =
+                demt->globalToLocal(pos_a - dem_pos); // the local
               // position of sph point sph_part_a
               ra = demt->getA();
               rc = demt->getC();
-              k = 1.0 / (sqrt(pta_local.x() * pta_local.x() / (ra * ra) +
-                              pta_local.z() * pta_local.z() / (rc * rc)));
-              da = dem::vfabs(pta_local -
-                              k * pta_local); // the distance is the same
+              k = 1.0 / (sqrt(local_a.x() * local_a.x() / (ra * ra) +
+                              local_a.z() * local_a.z() / (rc * rc)));
+              da = dem::vfabs(local_a -
+                              k * local_a); // the distance is the same
                                               // in rotated coordinates
 
               // calculate vel_ab as the method shown in Morris's paper, 1996
 
               // (1) here I wanna use the distance from the point a/b to the
               // surface of the ellipsoid to simplify the problem
-              ptb_local = sph_part_b->getLocalPosition();
-              k = 1.0 / (sqrt(ptb_local.x() * ptb_local.x() / (ra * ra) +
-                              ptb_local.z() * ptb_local.z() / (rc * rc)));
-              dB = dem::vfabs(ptb_local - k * ptb_local);
+              local_b = sph_part_b->getLocalPosition();
+              k = 1.0 / (sqrt(local_b.x() * local_b.x() / (ra * ra) +
+                              local_b.z() * local_b.z() / (rc * rc)));
+              dB = dem::vfabs(local_b - k * local_b);
 
               //              // (2) here the Morris's method is used
               //              xa = pos_a.getx(); ya =
@@ -928,7 +694,7 @@ SmoothParticleHydro::calculateSPHDensityRateAccelerationLinkedList2D(const REAL&
                         p_rhoSq_a * coeff_a + Gamma_ab) *
                        gradWba_b;
               demt->addForce(mass_b * dvb_dt);
-              demt->addMoment((pos_b - demt_curr) %
+              demt->addMoment((pos_b - dem_pos) %
                               (mass_b * dvb_dt));
               //              sph_part_b->incAcceleration(dvb_dt);  // the velocities
               //              of the ghost
@@ -1106,26 +872,26 @@ SmoothParticleHydro::calculateSPHDensityRateAccelerationLinkedList2D(const REAL&
                   break;
                 case 2: // ghost with free
                   demt = sph_part_a->getDemParticle();
-                  demt_curr = demt->currentPosition();
-                  ptb_local =
-                    demt->globalToLocal(pos_b - demt_curr); // the
+                  dem_pos = demt->currentPosition();
+                  local_b =
+                    demt->globalToLocal(pos_b - dem_pos); // the
                   // local position of sph point sph_part_b
                   ra = demt->getA();
                   rc = demt->getC();
-                  k = 1.0 / (sqrt(ptb_local.x() * ptb_local.x() / (ra * ra) +
-                                  ptb_local.z() * ptb_local.z() / (rc * rc)));
-                  da = dem::vfabs(ptb_local -
-                                  k * ptb_local); // the distance is the same
+                  k = 1.0 / (sqrt(local_b.x() * local_b.x() / (ra * ra) +
+                                  local_b.z() * local_b.z() / (rc * rc)));
+                  da = dem::vfabs(local_b -
+                                  k * local_b); // the distance is the same
                                                   // in rotated coordinates
 
                   // calculate vel_ab as the method shown in Morris's paper, 1996
 
                   // (1) here I wanna use the distance from the point a/b to the
                   // surface of the ellipsoid to simplify the problem
-                  pta_local = sph_part_a->getLocalPosition();
-                  k = 1.0 / (sqrt(pta_local.x() * pta_local.x() / (ra * ra) +
-                                  pta_local.z() * pta_local.z() / (rc * rc)));
-                  dB = dem::vfabs(pta_local - k * pta_local);
+                  local_a = sph_part_a->getLocalPosition();
+                  k = 1.0 / (sqrt(local_a.x() * local_a.x() / (ra * ra) +
+                                  local_a.z() * local_a.z() / (rc * rc)));
+                  dB = dem::vfabs(local_a - k * local_a);
 
                   //              // (2) here the Morris's method is used
                   //              xa = pos_a.getx(); ya =
@@ -1171,7 +937,7 @@ SmoothParticleHydro::calculateSPHDensityRateAccelerationLinkedList2D(const REAL&
                             p_rhoSq_b * coeff_b + Gamma_ab) *
                            gradWab_a;
                   demt->addForce(mass_a * dva_dt);
-                  demt->addMoment((pos_a - demt_curr) %
+                  demt->addMoment((pos_a - dem_pos) %
                                   (mass_a * dva_dt));
                   //                sph_part_a->incAcceleration(dva_dt);
 
@@ -1284,26 +1050,26 @@ SmoothParticleHydro::calculateSPHDensityRateAccelerationLinkedList2D(const REAL&
                 break; // do not consider sph_part_a, as we treat before
               }
               demt = sph_part_b->getDemParticle();
-              demt_curr = demt->currentPosition();
-              pta_local =
-                demt->globalToLocal(pos_a - demt_curr); // the local
+              dem_pos = demt->currentPosition();
+              local_a =
+                demt->globalToLocal(pos_a - dem_pos); // the local
               // position of sph point sph_part_a
               ra = demt->getA();
               rc = demt->getC();
-              k = 1.0 / (sqrt(pta_local.x() * pta_local.x() / (ra * ra) +
-                              pta_local.z() * pta_local.z() / (rc * rc)));
-              da = dem::vfabs(pta_local -
-                              k * pta_local); // the distance is the same
+              k = 1.0 / (sqrt(local_a.x() * local_a.x() / (ra * ra) +
+                              local_a.z() * local_a.z() / (rc * rc)));
+              da = dem::vfabs(local_a -
+                              k * local_a); // the distance is the same
                                               // in rotated coordinates
 
               // calculate vel_ab as the method shown in Morris's paper, 1996
 
               // (1) here I wanna use the distance from the point a/b to the
               // surface of the ellipsoid to simplify the problem
-              ptb_local = sph_part_b->getLocalPosition();
-              k = 1.0 / (sqrt(ptb_local.x() * ptb_local.x() / (ra * ra) +
-                              ptb_local.z() * ptb_local.z() / (rc * rc)));
-              dB = dem::vfabs(ptb_local - k * ptb_local);
+              local_b = sph_part_b->getLocalPosition();
+              k = 1.0 / (sqrt(local_b.x() * local_b.x() / (ra * ra) +
+                              local_b.z() * local_b.z() / (rc * rc)));
+              dB = dem::vfabs(local_b - k * local_b);
 
               //              // (2) here the Morris's method is used
               //              xa = pos_a.getx(); ya =
@@ -1353,7 +1119,7 @@ SmoothParticleHydro::calculateSPHDensityRateAccelerationLinkedList2D(const REAL&
                         p_rhoSq_a * coeff_a + Gamma_ab) *
                        gradWba_b;
               demt->addForce(mass_b * dvb_dt);
-              demt->addMoment((pos_b - demt_curr) %
+              demt->addMoment((pos_b - dem_pos) %
                               (mass_b * dvb_dt));
               //              sph_part_b->incAcceleration(dvb_dt);  // the velocities
               //              of the ghost
@@ -1806,9 +1572,9 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
 //calculate da/dB
   std::vector<sph::SPHParticle*>::iterator sph_part_b;
   REAL ra, rb, rc;  // the geometry of the dem particle
-  dem::Vec pta_local, ptb_local;  // local position of sph_part_a and sph_part_b in the dem
+  dem::Vec local_a, local_b;  // local position of sph_part_a and sph_part_b in the dem
 //particle
-  dem::Vec demt_curr;
+  dem::Vec dem_pos;
   REAL Gamma_ab, mu_ab, vel_radial;
   REAL alpha = util::getParam<REAL>("alpha");
      REAL alpha_zero = 0;  // the viscous between free and ghost/boundary
@@ -1950,29 +1716,29 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
                   break;
                 case 2: // ghost with free
                   demt = sph_part_a->getDemParticle();
-                  demt_curr = demt->currentPosition();
-                  ptb_local =
-                    demt->globalToLocal(pos_b - demt_curr); // the
+                  dem_pos = demt->currentPosition();
+                  local_b =
+                    demt->globalToLocal(pos_b - dem_pos); // the
                   // local position of sph point sph_part_b
                   ra = demt->getA();
                   rb = demt->getB();
                   rc = demt->getC();
-                  k = 1.0 / (sqrt(ptb_local.x() * ptb_local.x() / (ra * ra) +
-                                  ptb_local.y() * ptb_local.y() / (rb * rb) +
-                                  ptb_local.z() * ptb_local.z() / (rc * rc)));
-                  da = dem::vfabs(ptb_local -
-                                  k * ptb_local); // the distance is the same
+                  k = 1.0 / (sqrt(local_b.x() * local_b.x() / (ra * ra) +
+                                  local_b.y() * local_b.y() / (rb * rb) +
+                                  local_b.z() * local_b.z() / (rc * rc)));
+                  da = dem::vfabs(local_b -
+                                  k * local_b); // the distance is the same
                                                   // in rotated coordinates
 
                   // calculate Vab as the method shown in Morris's paper, 1996
 
                   // (1) here I wanna use the distance from the point a/b to the
                   // surface of the ellipsoid to simplify the problem
-                  pta_local = sph_part_a->getLocalPosition();
-                  k = 1.0 / (sqrt(pta_local.x() * pta_local.x() / (ra * ra) +
-                                  pta_local.y() * pta_local.y() / (rb * rb) +
-                                  pta_local.z() * pta_local.z() / (rc * rc)));
-                  dB = dem::vfabs(pta_local - k * pta_local);
+                  local_a = sph_part_a->getLocalPosition();
+                  k = 1.0 / (sqrt(local_a.x() * local_a.x() / (ra * ra) +
+                                  local_a.y() * local_a.y() / (rb * rb) +
+                                  local_a.z() * local_a.z() / (rc * rc)));
+                  dB = dem::vfabs(local_a - k * local_a);
 
                   //              // (2) here the Morris's method is used
                   //              xa = pos_a.x(); ya = pos_a.y();
@@ -2016,7 +1782,7 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
                             p_rhoSq_b * coeff_b + Gamma_ab) *
                            gradWab_a;
                   demt->addForce(mass_a * dva_dt);
-                  demt->addMoment((pos_a - demt_curr) %
+                  demt->addMoment((pos_a - dem_pos) %
                                   (mass_a * dva_dt));
                   //                sph_part_a->incAcceleration(dva_dt);
 
@@ -2128,29 +1894,29 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
                 break; // do not consider sph_part_a, as we treat before
               }
               demt = sph_part_b->getDemParticle();
-              demt_curr = demt->currentPosition();
-              pta_local =
-                demt->globalToLocal(pos_a - demt_curr); // the local
+              dem_pos = demt->currentPosition();
+              local_a =
+                demt->globalToLocal(pos_a - dem_pos); // the local
               // position of sph point sph_part_a
               ra = demt->getA();
               rb = demt->getB();
               rc = demt->getC();
-              k = 1.0 / (sqrt(pta_local.x() * pta_local.x() / (ra * ra) +
-                              pta_local.y() * pta_local.y() / (rb * rb) +
-                              pta_local.z() * pta_local.z() / (rc * rc)));
-              da = dem::vfabs(pta_local -
-                              k * pta_local); // the distance is the same
+              k = 1.0 / (sqrt(local_a.x() * local_a.x() / (ra * ra) +
+                              local_a.y() * local_a.y() / (rb * rb) +
+                              local_a.z() * local_a.z() / (rc * rc)));
+              da = dem::vfabs(local_a -
+                              k * local_a); // the distance is the same
                                               // in rotated coordinates
 
               // calculate Vab as the method shown in Morris's paper, 1996
 
               // (1) here I wanna use the distance from the point a/b to the
               // surface of the ellipsoid to simplify the problem
-              ptb_local = sph_part_b->getLocalPosition();
-              k = 1.0 / (sqrt(ptb_local.x() * ptb_local.x() / (ra * ra) +
-                              ptb_local.y() * ptb_local.y() / (rb * rb) +
-                              ptb_local.z() * ptb_local.z() / (rc * rc)));
-              dB = dem::vfabs(ptb_local - k * ptb_local);
+              local_b = sph_part_b->getLocalPosition();
+              k = 1.0 / (sqrt(local_b.x() * local_b.x() / (ra * ra) +
+                              local_b.y() * local_b.y() / (rb * rb) +
+                              local_b.z() * local_b.z() / (rc * rc)));
+              dB = dem::vfabs(local_b - k * local_b);
 
               //              // (2) here the Morris's method is used
               //              xa = pos_a.x(); ya = pos_a.gety();
@@ -2198,7 +1964,7 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
                         p_rhoSq_a * coeff_a + Gamma_ab) *
                        gradWba_b;
               demt->addForce(mass_b * dvb_dt);
-              demt->addMoment((pos_b - demt_curr) %
+              demt->addMoment((pos_b - dem_pos) %
                               (mass_b * dvb_dt));
               //              sph_part_b->incAcceleration(dvb_dt);  // the velocities
               //              of the ghost
@@ -2377,29 +2143,29 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
                 case 2: // ghost with free
 
                   demt = sph_part_a->getDemParticle();
-                  demt_curr = demt->currentPosition();
-                  ptb_local =
-                    demt->globalToLocal(pos_b - demt_curr); // the
+                  dem_pos = demt->currentPosition();
+                  local_b =
+                    demt->globalToLocal(pos_b - dem_pos); // the
                   // local position of sph point sph_part_b
                   ra = demt->getA();
                   rb = demt->getB();
                   rc = demt->getC();
-                  k = 1.0 / (sqrt(ptb_local.x() * ptb_local.x() / (ra * ra) +
-                                  ptb_local.y() * ptb_local.y() / (rb * rb) +
-                                  ptb_local.z() * ptb_local.z() / (rc * rc)));
-                  da = dem::vfabs(ptb_local -
-                                  k * ptb_local); // the distance is the same
+                  k = 1.0 / (sqrt(local_b.x() * local_b.x() / (ra * ra) +
+                                  local_b.y() * local_b.y() / (rb * rb) +
+                                  local_b.z() * local_b.z() / (rc * rc)));
+                  da = dem::vfabs(local_b -
+                                  k * local_b); // the distance is the same
                                                   // in rotated coordinates
 
                   // calculate Vab as the method shown in Morris's paper, 1996
 
                   // (1) here I wanna use the distance from the point a/b to the
                   // surface of the ellipsoid to simplify the problem
-                  pta_local = sph_part_a->getLocalPosition();
-                  k = 1.0 / (sqrt(pta_local.x() * pta_local.x() / (ra * ra) +
-                                  pta_local.y() * pta_local.y() / (rb * rb) +
-                                  pta_local.z() * pta_local.z() / (rc * rc)));
-                  dB = dem::vfabs(pta_local - k * pta_local);
+                  local_a = sph_part_a->getLocalPosition();
+                  k = 1.0 / (sqrt(local_a.x() * local_a.x() / (ra * ra) +
+                                  local_a.y() * local_a.y() / (rb * rb) +
+                                  local_a.z() * local_a.z() / (rc * rc)));
+                  dB = dem::vfabs(local_a - k * local_a);
 
                   //              // (2) here the Morris's method is used
                   //              xa = pos_a.x(); ya = pos_a.y();
@@ -2443,7 +2209,7 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
                             p_rhoSq_b * coeff_b + Gamma_ab) *
                            gradWab_a;
                   demt->addForce(mass_a * dva_dt);
-                  demt->addMoment((pos_a - demt_curr) %
+                  demt->addMoment((pos_a - dem_pos) %
                                   (mass_a * dva_dt));
                   //                sph_part_a->incAcceleration(dva_dt);
 
@@ -2553,29 +2319,29 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
               }
 
               demt = sph_part_b->getDemParticle();
-              demt_curr = demt->currentPosition();
-              pta_local =
-                demt->globalToLocal(pos_a - demt_curr); // the local
+              dem_pos = demt->currentPosition();
+              local_a =
+                demt->globalToLocal(pos_a - dem_pos); // the local
               // position of sph point sph_part_a
               ra = demt->getA();
               rb = demt->getB();
               rc = demt->getC();
-              k = 1.0 / (sqrt(pta_local.x() * pta_local.x() / (ra * ra) +
-                              pta_local.y() * pta_local.y() / (rb * rb) +
-                              pta_local.z() * pta_local.z() / (rc * rc)));
-              da = dem::vfabs(pta_local -
-                              k * pta_local); // the distance is the same
+              k = 1.0 / (sqrt(local_a.x() * local_a.x() / (ra * ra) +
+                              local_a.y() * local_a.y() / (rb * rb) +
+                              local_a.z() * local_a.z() / (rc * rc)));
+              da = dem::vfabs(local_a -
+                              k * local_a); // the distance is the same
                                               // in rotated coordinates
 
               // calculate Vab as the method shown in Morris's paper, 1996
 
               // (1) here I wanna use the distance from the point a/b to the
               // surface of the ellipsoid to simplify the problem
-              ptb_local = sph_part_b->getLocalPosition();
-              k = 1.0 / (sqrt(ptb_local.x() * ptb_local.x() / (ra * ra) +
-                              ptb_local.y() * ptb_local.y() / (rb * rb) +
-                              ptb_local.z() * ptb_local.z() / (rc * rc)));
-              dB = dem::vfabs(ptb_local - k * ptb_local);
+              local_b = sph_part_b->getLocalPosition();
+              k = 1.0 / (sqrt(local_b.x() * local_b.x() / (ra * ra) +
+                              local_b.y() * local_b.y() / (rb * rb) +
+                              local_b.z() * local_b.z() / (rc * rc)));
+              dB = dem::vfabs(local_b - k * local_b);
 
               //              // (2) here the Morris's method is used
               //              xa = pos_a.x(); ya = pos_a.y();
@@ -2623,7 +2389,7 @@ pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
                         p_rhoSq_a * coeff_a + Gamma_ab) *
                        gradWba_b;
               demt->addForce(mass_b * dvb_dt);
-              demt->addMoment((pos_b - demt_curr) %
+              demt->addMoment((pos_b - dem_pos) %
                               (mass_b * dvb_dt));
               //              sph_part_b->incAcceleration(dvb_dt);  // the velocities
               //              of the ghost

@@ -209,6 +209,8 @@ public:
                      dem::Vec& localCoord,
                      bool& insideGhostLayer) const;
 
+  REAL shortestDistToBoundary(const Vec& point) const;
+
 private:
   void init();
 

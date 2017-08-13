@@ -25,6 +25,7 @@
 SET(SPH_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/SPHParticle.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/SPHParticleCreator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/SPHInteractions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/SPHKernels.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/SmoothParticleHydro.cpp
 )

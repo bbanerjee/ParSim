@@ -131,6 +131,17 @@ Vec::operator*(const Vec& vec) const
   return Vec(x,y,z);
 }
 
+// Divides a vector by an vector (component-wise) 
+// **WARNING** Take care than you don't get division by zero
+Vec 
+Vec::operator/(const Vec& vec) const
+{
+  REAL x = d_data[0]/vec.x();
+  REAL y = d_data[1]/vec.y();
+  REAL z = d_data[2]/vec.z();
+  return Vec(x,y,z);
+}
+
 void
 Vec::print(std::ostream& ofs) const
 {

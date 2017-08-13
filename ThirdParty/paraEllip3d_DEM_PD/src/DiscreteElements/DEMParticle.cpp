@@ -1198,4 +1198,24 @@ DEMParticle::containsPoint(const dem::Vec& point,
   return false;
 }
 
+/**
+ *  Approximate shortest distance by projection of the point on to the ellipsoid
+ *  (see Zimmermann and Svoboda, "Approximation of Euclidean Distance of Point from Ellipse")
+ *
+ *  d = || (p - p/||T.p||) ||
+ *    where p is the point in the local coord system of the ellipsoid
+ *    and   T is the transformation matrix from the ellipsoid to the unit sphere
+ *          T = [[1/a 0 0],[0 1/b 0];[0 0 1/c]]
+ */
+REAL 
+DEMParticle::shortestDistToBoundary(const Vec& point) const
+{
+  Vec radii(d_a, d_b, d_c);
+  auto centroid = d_currPos;
+  auto pp = globalToLocal(point - centroid);
+  auto norm_T_dot_p = (pp/radii).length();
+  auto proj = pp - pp/norm_T_dot_p;
+  return proj.length();
+}
+
 } // namespace dem ends

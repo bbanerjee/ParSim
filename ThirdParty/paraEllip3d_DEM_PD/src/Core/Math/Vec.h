@@ -86,7 +86,10 @@ public:
   // Multiplies a vector by an int vector and produces a new vector
   Vec operator*(const IntVec& intVec) const;
 
-  // Multiplies a vector by an real vector component-wise and produces a new vector
+  // Divides a vector by a real vector component-wise and produces a new vector
+  Vec operator/(const Vec& intVec) const;
+
+  // Multiplies a vector by a real vector component-wise and produces a new vector
   Vec operator*(const Vec& vec) const;
 
 
