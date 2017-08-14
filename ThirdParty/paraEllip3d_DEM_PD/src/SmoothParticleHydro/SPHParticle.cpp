@@ -283,3 +283,13 @@ SPHParticle::isOutsideDomainWithoutZTop<3>(const REAL& bufferLength,
     return true;
   return false;
 }
+
+bool 
+SPHParticle::isOutsideInfluenceZone(const SPHParticle& particle,
+                                   const REAL& kernelSize)
+{
+  if ((d_currPos - particle.d_currPos).lengthSq() > kernelSize*kernelSize) {
+    return true;
+  }
+  return false;
+}

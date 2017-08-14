@@ -28,8 +28,8 @@ SPHParticleData::setData(const SPHParticleP& particle) {
 SPHInteractions::SPHInteractions()
 {
   d_part_a.isSet = false;
-  d_part_b.isSet = false;
-  d_interact.dist_ab = -1.0;
+  d_part_b_free.isSet = false;
+  d_interact.dist_a_b_free = -1.0;
 }
 
 void 
@@ -41,24 +41,41 @@ SPHInteractions::setDataParticleA(const SPHParticleP& particle)
 void 
 SPHInteractions::setDataParticleB(const SPHParticleP& particle)
 {
-  d_part_b.setData(particle);
+  d_part_b_free.setData(particle);
+}
+
+// If particle b is not free, we have to swap the two particles
+// for the logic to work (assuming particle a is now free)
+void 
+SPHInteractions::swapParticles()
+{
+  SPHParticleData tmp(d_part_a);
+  d_part_a = d_part_b_free;
+  d_part_b_free = tmp;
+
+  d_interact.pos_a_b_free = -d_interact.pos_a_b_free;
+  d_interact.vel_b_free_a = d_interact.vel_a_b_free;
+  d_interact.vel_a_b_free = -d_interact.vel_a_b_free;
+
+  d_kernel.gradWb_free_a_b = d_kernel.gradWa_b_free_a;
+  d_kernel.gradWa_b_free_a = -d_kernel.gradWa_b_free_a;
 }
 
 void
 SPHInteractions::initializeInteractionData() {
-  if (d_part_a.isSet && d_part_b.isSet) {
-    d_interact.pos_ab = d_part_a.pos - d_part_b.pos;
-    d_interact.dist_ab_sq = d_interact.pos_ab.lengthSq();
-    d_interact.dist_ab = std::sqrt(d_interact.dist_ab_sq);
-    d_interact.vel_ab = d_part_a.vel - d_part_a.vel;
-    d_interact.vel_ba = -d_interact.vel_ab;
+  if (d_part_a.isSet && d_part_b_free.isSet) {
+    d_interact.pos_a_b_free = d_part_a.pos - d_part_b_free.pos;
+    d_interact.dist_a_b_free_sq = d_interact.pos_a_b_free.lengthSq();
+    d_interact.dist_a_b_free = std::sqrt(d_interact.dist_a_b_free_sq);
+    d_interact.vel_a_b_free = d_part_a.vel - d_part_a.vel;
+    d_interact.vel_b_free_a = -d_interact.vel_a_b_free;
   }
 }
 
 bool
 SPHInteractions::areFarApart(const REAL& kernelSize) const
 {
-  if (d_interact.dist_ab > kernelSize) return true;
+  if (d_interact.dist_a_b_free > kernelSize) return true;
   return false;
 }
 
@@ -68,15 +85,15 @@ SPHInteractions::computeInteractionKernel(const REAL& smoothLength)
 {
   SPHKernels kernelFactory;
   d_kernel.Wqmin = kernelFactory.minQuinticSplineKernel<dim>(smoothLength);
-  d_kernel.Wab = kernelFactory.quinticSplineKernel<dim>(
-    d_interact.dist_ab, smoothLength);
-  d_kernel.Wba = d_kernel.Wab;
-  d_kernel.gradWab_a = kernelFactory.gradientQuinticSplineKernel<dim>(
-    d_interact.pos_ab, d_interact.dist_ab, smoothLength); 
-  d_kernel.gradWba_b = -d_kernel.gradWab_a;
-  d_kernel.dWab_da = d_kernel.gradWab_a.length();
-  d_kernel.dWba_db = d_kernel.dWab_da;
-  auto Wratio = d_kernel.Wab/d_kernel.Wqmin;
+  d_kernel.Wa_b_free = kernelFactory.quinticSplineKernel<dim>(
+    d_interact.dist_a_b_free, smoothLength);
+  d_kernel.Wb_free_a = d_kernel.Wa_b_free;
+  d_kernel.gradWa_b_free_a = kernelFactory.gradientQuinticSplineKernel<dim>(
+    d_interact.pos_a_b_free, d_interact.dist_a_b_free, smoothLength); 
+  d_kernel.gradWb_free_a_b = -d_kernel.gradWa_b_free_a;
+  d_kernel.dWa_b_free_da = d_kernel.gradWa_b_free_a.length();
+  d_kernel.dWb_free_a_db = d_kernel.dWa_b_free_da;
+  auto Wratio = d_kernel.Wa_b_free/d_kernel.Wqmin;
   d_kernel.phi = Wratio * Wratio * Wratio * Wratio;
 }
 
@@ -84,7 +101,7 @@ void
 SPHInteractions::updateParticleCoeffs() 
 {
   d_part_a.coeff = 1 + d_part_a.R * d_kernel.phi;
-  d_part_b.coeff = 1 + d_part_b.R * d_kernel.phi;
+  d_part_b_free.coeff = 1 + d_part_b_free.R * d_kernel.phi;
 }
 
 void 
@@ -92,18 +109,18 @@ SPHInteractions::updateMomentumExchangeCoeffs(const REAL& smoothLength,
                                               const REAL& alpha,
                                               const REAL& soundSpeed)
 {
-  d_interact.vel_dot_gradW = dot(d_interact.vel_ab, d_kernel.gradWab_a);
-  d_interact.vel_radial = dot(d_interact.vel_ab, d_interact.pos_ab);
+  d_interact.vel_dot_gradW = dot(d_interact.vel_a_b_free, d_kernel.gradWa_b_free_a);
+  d_interact.vel_radial = dot(d_interact.vel_a_b_free, d_interact.pos_a_b_free);
 
   d_interact.rho_av = (d_part_a.rho + d_part_a.rho)/2;
   REAL Gamma_ab = 0;
   if (d_interact.vel_radial < 0) {
     REAL mu_ab = smoothLength * d_interact.vel_radial /
-      (d_interact.dist_ab_sq + 0.01 * smoothLength * smoothLength);
+      (d_interact.dist_a_b_free_sq + 0.01 * smoothLength * smoothLength);
     Gamma_ab = (-alpha*soundSpeed*mu_ab)/d_interact.rho_av;
   }
   d_interact.p_rhoSq_av = d_part_a.p_over_rhoSq*d_part_a.coeff + 
-                          d_part_b.p_over_rhoSq*d_part_b.coeff + Gamma_ab;
+                          d_part_b_free.p_over_rhoSq*d_part_b_free.coeff + Gamma_ab;
 }
 
 
@@ -115,7 +132,7 @@ SPHInteractions::doGhostBoundaryVelocityCorrection(const SPHParticleP& particle)
   // from the ghost point to the tangent plane
   // used in Morris
   auto dem_part = particle->getDEMParticle();
-  auto da = dem_part->shortestDistToBoundary(d_part_b.pos);
+  auto da = dem_part->shortestDistToBoundary(d_part_b_free.pos);
   auto dB = dem_part->shortestDistToBoundary(d_part_a.pos);
   doBoundaryVelocityCorrection(da, dB);
 }
@@ -137,9 +154,9 @@ SPHInteractions::doDomainBoundaryVelocityCorrection(const Box& domain)
   auto x_a = d_part_a.pos.x();
   auto y_a = d_part_a.pos.y();
   auto z_a = d_part_a.pos.z();
-  auto x_b = d_part_b.pos.x();
-  auto y_b = d_part_b.pos.y();
-  auto z_b = d_part_b.pos.z();
+  auto x_b = d_part_b_free.pos.x();
+  auto y_b = d_part_b_free.pos.y();
+  auto z_b = d_part_b_free.pos.z();
 
   auto da = 0.0;
   auto dB = 0.0;
@@ -172,8 +189,8 @@ SPHInteractions::doBoundaryVelocityCorrection(const REAL& da, const REAL& dB)
   if (beta > 2.0 || beta < 0 || std::isnan(beta)) {
     beta = 2.0;
   }
-  d_interact.vel_ba = beta * (d_part_b.vel - d_part_a.vel);
-  d_interact.vel_ab = -d_interact.vel_ba;
+  d_interact.vel_b_free_a = beta * (d_part_b_free.vel - d_part_a.vel);
+  d_interact.vel_a_b_free = -d_interact.vel_b_free_a;
 }
 
 void 
@@ -181,18 +198,18 @@ SPHInteractions::updateInteractionFreeFree(SPHParticleP& free_part_a,
                                            SPHParticleP& free_part_b,
                                            const REAL& epsilon) const
 {
-  free_part_a->incDensityRate(d_part_b.mass*d_interact.vel_dot_gradW);
+  free_part_a->incDensityRate(d_part_b_free.mass*d_interact.vel_dot_gradW);
   free_part_b->incDensityRate(d_part_a.mass*d_interact.vel_dot_gradW);
 
-  auto dva_dt = -d_part_b.mass * d_interact.p_rhoSq_av * d_kernel.gradWab_a;
-  auto dvb_dt = -d_part_a.mass * d_interact.p_rhoSq_av * d_kernel.gradWba_b;
+  auto dva_dt = -d_part_b_free.mass * d_interact.p_rhoSq_av * d_kernel.gradWa_b_free_a;
+  auto dvb_dt = -d_part_a.mass * d_interact.p_rhoSq_av * d_kernel.gradWb_free_a_b;
   free_part_a->incAcceleration(dva_dt);
   free_part_b->incAcceleration(dvb_dt);
 
-  auto delta_a = epsilon * d_part_b.mass * 
-    (-d_interact.vel_ab) * d_kernel.Wab / d_interact.rho_av;
+  auto delta_a = epsilon * d_part_b_free.mass * 
+    (-d_interact.vel_a_b_free) * d_kernel.Wa_b_free / d_interact.rho_av;
   auto delta_b = epsilon * d_part_a.mass * 
-    (d_interact.vel_ab) * d_kernel.Wba / d_interact.rho_av;
+    (d_interact.vel_a_b_free) * d_kernel.Wb_free_a / d_interact.rho_av;
   free_part_a->incVelocityCorrection(delta_a);
   free_part_b->incVelocityCorrection(delta_b);
 }
@@ -204,8 +221,8 @@ SPHInteractions::updateInteractionGhostFree(SPHParticleP& ghost_part_a,
 {
   free_part_b->incDensityRate(d_part_a.mass*d_interact.vel_dot_gradW);
 
-  auto dva_dt = -d_part_b.mass * d_interact.p_rhoSq_av * d_kernel.gradWab_a;
-  auto dvb_dt = -d_part_a.mass * d_interact.p_rhoSq_av * d_kernel.gradWba_b;
+  auto dva_dt = -d_part_b_free.mass * d_interact.p_rhoSq_av * d_kernel.gradWa_b_free_a;
+  auto dvb_dt = -d_part_a.mass * d_interact.p_rhoSq_av * d_kernel.gradWb_free_a_b;
   free_part_b->incAcceleration(dvb_dt);
 
   auto dem_part = ghost_part_a->getDEMParticle();
@@ -214,7 +231,7 @@ SPHInteractions::updateInteractionGhostFree(SPHParticleP& ghost_part_a,
                             d_part_a.mass * dva_dt));
 
   auto delta_b = epsilon * d_part_a.mass * 
-    (d_interact.vel_ab) * d_kernel.Wba / d_interact.rho_av;
+    (d_interact.vel_a_b_free) * d_kernel.Wb_free_a / d_interact.rho_av;
   free_part_b->incVelocityCorrection(delta_b);
 }
 
@@ -223,13 +240,13 @@ SPHInteractions::updateInteractionBoundaryFree(SPHParticleP& boundary_part_a,
                                                SPHParticleP& free_part_b,
                                                const REAL& epsilon) const
 {
-  boundary_part_a->incDensityRate(d_part_b.mass*d_interact.vel_dot_gradW);
+  boundary_part_a->incDensityRate(d_part_b_free.mass*d_interact.vel_dot_gradW);
   free_part_b->incDensityRate(d_part_a.mass*d_interact.vel_dot_gradW);
 
-  auto dvb_dt = -d_part_a.mass * d_interact.p_rhoSq_av * d_kernel.gradWba_b;
+  auto dvb_dt = -d_part_a.mass * d_interact.p_rhoSq_av * d_kernel.gradWb_free_a_b;
   free_part_b->incAcceleration(dvb_dt); 
 
   auto delta_b = epsilon * d_part_a.mass * 
-    (d_interact.vel_ab) * d_kernel.Wba / d_interact.rho_av;
+    (d_interact.vel_a_b_free) * d_kernel.Wb_free_a / d_interact.rho_av;
   free_part_b->incVelocityCorrection(delta_b);
 }

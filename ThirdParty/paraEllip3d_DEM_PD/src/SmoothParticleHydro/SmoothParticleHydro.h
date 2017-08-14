@@ -78,10 +78,6 @@ public:
                           const REAL& ghostWidth,
                           REAL& bufferLength);
 
-  void findSPHParticleInBox(const dem::Box& container,
-                            const SPHParticlePArray& allParticles,
-                            SPHParticlePArray& foundParticles);
-
   void commuSPHParticle(int iteration,
                          const double& ghostWidth);
 
@@ -89,19 +85,11 @@ public:
 
   void gatherSPHParticle();
 
-  void initializeDensityRateAndAcceleration();
-
   template <int dim>
-  void assignParticlesToPatchGrid(const dem::Box& container,
-                                  const REAL& bufferWidth,
-                                  const REAL& ghostWidth,
-                                  const REAL& kernelSize);
+  void updateParticleInteractions(const REAL& kernelSize,
+                                  const REAL& smoothLength,
+                                  const dem::Box& allContainer);
 
-  template <int dim>
-  int getCellIndex(const dem::Vec& cellMinCorner,
-                   const REAL& cellWidth,
-                   const dem::IntVec& numGridCells,
-                   const dem::Vec& pointPosition);
   /*
 
   void removeSPHParticleOutBox(const dem::Box& container,
@@ -182,7 +170,9 @@ private:
   void updatePatch(int iteration, const REAL& ghostWidth);
 
   dem::Box d_sphPatchBox;
+  SPHPatchGridIndex     d_sphPatchGridIndex;
   SPHPatchGridParticleP d_sphPatchGrid;
+  dem::IntVec d_numGridCells;
 
   // stream
   std::ofstream sphProgInf;
@@ -201,6 +191,42 @@ private:
   // Particles in patch + ghpst
   SPHParticlePArray d_mergeSPHParticleVec;
 
+  void findSPHParticleInBox(const dem::Box& container,
+                            const SPHParticlePArray& allParticles,
+                            SPHParticlePArray& foundParticles);
+
+  void initializeDensityRateAndAcceleration();
+
+  template <int dim>
+  void assignParticlesToPatchGrid(const dem::Box& container,
+                                  const REAL& bufferWidth,
+                                  const REAL& ghostWidth,
+                                  const REAL& kernelSize);
+
+  template <int dim>
+  int getCellIndex(const dem::Vec& cellMinCorner,
+                   const REAL& cellWidth,
+                   const dem::IntVec& numGridCells,
+                   const dem::Vec& pointPosition);
+
+  template <int dim>
+  int getIndex(const dem::IntVec& cell, const int& nx,
+               const int& ny, const int& nz) const;
+
+  template <int dim>
+  std::vector<int> getAdjacentCellIndices(const dem::IntVec& cell,
+                                          const dem::IntVec& numGridCells);
+
+  template <int dim>
+  SPHParticlePArray getParticlesInAdjacentCells(const int& cellIndex,
+                                                const dem::IntVec& numGridCells) const;
+
+  template <int dim>
+  void computeParticleInteractions(SPHParticleP& sph_part_a,
+                                   SPHParticleP& sph_part_b,
+                                   const REAL& kernelSize,
+                                   const REAL& smoothLength,
+                                   const dem::Box& allContainer) const;
 
 };
 

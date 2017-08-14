@@ -144,6 +144,9 @@ public:
   bool isOutsideDomainWithoutZTop(const REAL& bufferLength, const dem::Vec& minCorner,
                        const dem::Vec& maxCorner);
 
+  bool isOutsideInfluenceZone(const SPHParticle& particle,
+                              const REAL& kernelSize);
+
 private:
   ParticleID d_id;
   REAL d_mass;
