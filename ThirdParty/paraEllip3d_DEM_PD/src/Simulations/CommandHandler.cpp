@@ -16,6 +16,9 @@
 #include <Simulations/DEM_PD/PeridynamicsPullOut.h>
 #include <Simulations/DEM_PD/PeridynamicsRigidInclusion.h>
 #include <Simulations/DEM_SPH/BurstingDam2D.h>
+#include <Simulations/DEM_SPH/BurstingDam3D.h>
+#include <Simulations/DEM_SPH/Drainage.h>
+#include <Simulations/DEM_SPH/DrainageMiddleLayers.h>
 
 using namespace dem;
 
@@ -88,6 +91,15 @@ CommandHandler::handleCommand(int simuType)
       break;
     case 1001: // Bursting dam 2D
       return std::make_unique<BurstingDam2D>();
+      break;
+    case 1002: // Bursting dam 2D
+      return std::make_unique<BurstingDam3D>();
+      break;
+    case 1003: // Drainage
+      return std::make_unique<Drainage>();
+      break;
+    case 1004: // Drainage middle layers
+      return std::make_unique<DrainageMiddleLayers>();
       break;
     case 3001: // rigid Inclusion problem
       return std::make_unique<PeridynamicsRigidInclusion>();

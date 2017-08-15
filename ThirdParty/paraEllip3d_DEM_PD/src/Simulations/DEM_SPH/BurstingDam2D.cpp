@@ -104,7 +104,7 @@ BurstingDam2D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
 
   dem->commuParticle();
 
-  sph->commuSPHParticle(iteration, dem->getGradation().getPtclMaxRadius());
+  sph->commuSPHParticle(iteration, ghostWidth);
 
   // initialization SPH velocity based on equation(4.3) in 
   // http://www.artcompsci.org/vol_1/v1_web/node34.html

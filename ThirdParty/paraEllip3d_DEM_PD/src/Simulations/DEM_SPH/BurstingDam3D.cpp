@@ -1,130 +1,201 @@
-  void Assembly::burstingDam3D() 
-  {     
-    if (mpiRank == 0) {
-      readBoundary(dem::Parameter::getSingleton().datafile["boundaryFile"].c_str());
-      readParticle(dem::Parameter::getSingleton().datafile["particleFile"].c_str());
-      generateSPHParticle3D();
-      openDepositProg(progressInf, "deposit_progress");
-      openSPHTecplot(sphTecplotInf, "sph_results.dat");
+#include <Simulations/DEM_SPH/BurstingDam3D.h>
+#include <SmoothParticleHydro/SPHParticleCreator.h>
+#include <Core/Util/Utility.h>
+
+using namespace dem;
+
+void 
+BurstingDam3D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph) 
+{     
+  std::ofstream demProgressInf;
+  std::ofstream sphProgressInf;
+
+  REAL ghostWidth = 0.0;
+  REAL bufferLength = 0.0;
+
+  if (dem->getMPIRank() == 0) {
+    auto boundaryFile = InputParameter::get().datafile["boundaryFile"];
+    dem->readBoundary(boundaryFile);
+
+    auto particleFile = InputParameter::get().datafile["particleFile"];
+    dem->readParticles(particleFile);
+
+    Box container = dem->getAllContainer();
+    DEMParticlePArray demParticles= dem->getAllDEMParticleVec();
+    sph::SPHParticleCreator creator;
+    sph::SPHParticlePArray sphParticles = 
+      creator.generateSPHParticleDam<3>(container, demParticles);
+    sph->setAllSPHParticleVec(sphParticles);
+
+    dem->openDepositProg(demProgressInf, "deposit_progress");
+    //sph->openSPHTecplot(sphTecplotInf, "sph_results.dat");
+
+    ghostWidth = dem->getGradation().getPtclMaxRadius() * 2;
+    bufferLength = dem->getPtclMaxZ(dem->getAllDEMParticleVec()) +
+                   dem->getGradation().getPtclMaxRadius();
+  }
+
+  // Have to broadcast the ghostWidth and bufferLength to all processes
+  // (**TODO** Think of a better way to do this)
+  broadcast(dem->getMPIWorld(), ghostWidth, 0);
+  broadcast(dem->getMPIWorld(), bufferLength, 0);
+
+  // scatter particles only once; also updates patchGrid for the first time
+  dem->scatterParticle(); 
+  sph->scatterSPHParticle(dem->getAllContainer(), ghostWidth, bufferLength); 
+
+  // sph parameters
+  auto waterLength = util::getParam<REAL>("waterLength");
+  auto nSPHPoint = util::getParam<std::size_t>("nSPHPoint");
+
+  REAL space_interval = waterLength/static_cast<REAL>(nSPHPoint-1);
+  REAL smoothLength = 1.5*space_interval;
+  REAL kernelSize = 3.0*smoothLength;
+
+  auto startStep = util::getParam<std::size_t>("startStep");
+  auto endStep = util::getParam<std::size_t>("endStep");
+  auto startSnap = util::getParam<std::size_t>("startSnap");
+  auto endSnap = util::getParam<std::size_t>("endSnap");
+  auto timeStep = util::getParam<REAL>("timeStep");
+  auto timeAccrued = util::getParam<REAL>("timeAccrued");
+
+  auto netStep = endStep - startStep + 1;
+  auto netSnap = endSnap - startSnap + 1;
+  REAL timeCount = 0;
+  REAL timeIncr  = timeStep * netStep;
+  REAL timeTotal = timeAccrued + timeStep * netStep;
+
+  auto iteration = startStep;
+  auto iterSnap = startSnap;
+  std::string outputFolder(".");
+
+  if (dem->getMPIRank() == 0) {
+
+    // Create the output writer in the master process
+    // <outputFolder> rigidInc.pe3d </outputFolder>
+    auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
+    outputFolder = util::createOutputFolder(folderName);
+    //std::cout << "Output folder = " << outputFolder << "\n";
+    dem->createOutputWriter(outputFolder, iterSnap-1);
+    sph->createOutputWriter(outputFolder, iterSnap-1);
+
+    dem->writeBoundaryToFile();
+    dem->writePatchGridToFile();
+    dem->writeParticlesToFile(iterSnap);
+    dem->printBdryContact();
+    sph->writeParticlesToFile(iterSnap);
+  }
+
+  // Broadcast the output folder to all processes
+  broadcast(dem->getMPIWorld(), outputFolder, 0);
+  std::cerr << "Proc = " << dem->getMPIRank() << " outputFolder = " << outputFolder << "\n";
+
+  dem->commuParticle();
+
+  sph->commuSPHParticle(iteration, ghostWidth);
+
+  // initialization SPH velocity based on equation(4.3) in 
+  // http://www.artcompsci.org/vol_1/v1_web/node34.html
+  sph->initializeSPHVelocity<3>(timeStep);	
+
+  while (timeAccrued < timeTotal) { 
+
+    bool toCheckTime = (iteration + 1) % (netStep / netSnap) == 0;
+
+    // update position and density of SPH particles based on equation (4.1)
+    sph->updateSPHLeapFrogPositionDensity(timeStep);
+
+    sph->migrateSPHParticle(iteration);
+
+    REAL commuT = 0, migraT = 0, gatherT = 0, totalT = 0;  
+    REAL time1 = 0, time2 = 0, time3 = 0;  
+    REAL time0 = MPI_Wtime();
+
+    dem->commuParticle();
+    sph->commuSPHParticle(iteration, ghostWidth);
+
+    if (toCheckTime) {
+      time1 = MPI_Wtime(); 
+      commuT = time1 - time0;
     }
-    scatterDEMSPHParticle(); // scatter particles only once; also updates patchGrid for the first time
-    calcNeighborRanks();
 
-    std::size_t startStep = static_cast<std::size_t> (dem::Parameter::getSingleton().parameter["startStep"]);
-    std::size_t endStep   = static_cast<std::size_t> (dem::Parameter::getSingleton().parameter["endStep"]);
-    std::size_t startSnap = static_cast<std::size_t> (dem::Parameter::getSingleton().parameter["startSnap"]);
-    std::size_t endSnap   = static_cast<std::size_t> (dem::Parameter::getSingleton().parameter["endSnap"]);
-    std::size_t netStep   = endStep - startStep + 1;
-    std::size_t netSnap   = endSnap - startSnap + 1;
-    timeStep = dem::Parameter::getSingleton().parameter["timeStep"];
+    // use values from last step, must call before findContact (which clears data)
+    dem->calcTimeStep(); 
+    dem->findContact();
+    if (dem->isBdryProcess()) dem->findBdryContact();
 
-    // sph parameters
-    D = 5*(dem::Parameter::getSingleton().parameter["gravAccel"])*(dem::Parameter::getSingleton().parameter["gravScale"])*dem::Parameter::getSingleton().parameter["waterLength"];
-    space_interval = dem::Parameter::getSingleton().parameter["waterLength"]/(dem::Parameter::getSingleton().parameter["nSPHPoint"]-1);
-    smoothLength = 1.5*space_interval;
-    kernelSize = 3*smoothLength;
-    sphCellSize = gradation.getPtclMaxRadius() + kernelSize;
-    one_devide_h = 1.0/smoothLength;
-    factor_kernel = 1.0/(120.0*Pi*smoothLength*smoothLength*smoothLength);
-    factor_kernel_gradient = 1.0/(120.0*Pi*smoothLength*smoothLength*smoothLength*smoothLength);
-    REAL qmin = 0.7593;	// this is fixed for quintic kernel function
-    Wqmin = kernelFunction(qmin);
-    p1 = 4;	// for the Lennard-Jones boundary forces 
-    p2 = 2;
+    dem->clearContactForce();
+    dem->internalForce();
+    if (dem->isBdryProcess()) dem->boundaryForce();
 
-    REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
-    iteration = startStep;
-    std::size_t iterSnap = startSnap;
-    char cstr0[50];
-    /**/REAL timeCount = 0;
-    /**/timeAccrued = static_cast<REAL> (dem::Parameter::getSingleton().parameter["timeAccrued"]);
-    /**/REAL timeIncr  = timeStep * netStep;
-    /**/REAL timeTotal = timeAccrued + timeStep * netStep;
-    if (mpiRank == 0) {
-      plotBoundary(strcat(combineString(cstr0, "bursting_bdryplot_", iterSnap - 1, 3), ".dat"));
-      plotGrid(strcat(combineString(cstr0, "bursting_patchGridplot_", iterSnap - 1, 3), ".dat"));
-      printParticle(combineString(cstr0, "bursting_particle_", iterSnap - 1, 3));
-      printBdryContact(combineString(cstr0, "bursting_bdrycntc_", iterSnap -1, 3));
-      printSPHTecplot(sphTecplotInf, iterSnap-1);
-    }
-    if (mpiRank == 0)
-      debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT" << std::setw(OWID) << "migraT"
-	       << std::setw(OWID) << "compuT" << std::setw(OWID) << "totalT" << std::setw(OWID) << "overhead%" << std::endl;
-	
-//printSPHParticle(strcat(combineString(cstr0, "SPH_particle_", mpiRank, 3), ".dat"));
+    dem->dragForce();
 
-      initialSPHVelocity3D();
-    /**/while (timeAccrued < timeTotal) { 
-      bool toCheckTime = (iteration + 1) % (netStep / netSnap) == 0;
+    sph->updateParticleInteractions<3>(dem->getAllContainer(),
+                                       bufferLength, ghostWidth,
+                                       kernelSize, smoothLength);
+                                       
 
-      // update position and density of SPH particles based on equation (4.1)
-      updateSPHLeapFrogPositionDensity();
-      migrateSPHParticle();
+    dem->updateParticle();   
 
-      commuT = migraT = gatherT = totalT = 0;  time0 = MPI_Wtime();
-      commuParticle();
-      commuSPHParticle();
+    // update velocity of SPH particles based on equation (4.2)
+    sph->updateSPHLeapFrogVelocity(timeStep);	
 
-      if (toCheckTime) time2 = MPI_Wtime(); commuT = time2 - time0;
+    timeCount += timeStep;
+    timeAccrued += timeStep;
+    if (timeCount >= timeIncr/netSnap) { 
 
-      /**/calcTimeStep(); // use values from last step, must call before findContact (which clears data)
-      findContact();
-      if (isBdryProcess()) findBdryContact();
-
-      clearContactForce();
-      internalForce();
-      if (isBdryProcess()) boundaryForce();
-
-      dragForce();
-
-      calculateSPHDensityDotVelocityDotLinkedList3D();
-
-      updateParticle();   
-      updateSPHLeapFrogVelocity();	// update velocity of SPH particles based on equation (4.2)
-
-//      updatePatchBoxMaxZ();	// do not update patchGrid in DEM-SPH coupling model
-      // updatePatchBoxMaxZ() is for deposition or explosion. If they go out of side walls, particles are discarded.
-      // updatePatchBox() updates all six directions, thus side walls may "disappear" if particles go far out of side walls 
-      // and cause some patchGrids to extrude out of side walls.
-
-      /**/timeCount += timeStep;
-      /**/timeAccrued += timeStep;
-      /**/if (timeCount >= timeIncr/netSnap) { 
-	if (toCheckTime) time1 = MPI_Wtime();
-	gatherParticle();
-	gatherSPHParticle();
-	gatherBdryContact();
-	gatherEnergy(); if (toCheckTime) time2 = MPI_Wtime(); gatherT = time2 - time1;
-
-	char cstr[50];
-	if (mpiRank == 0) {
-	  plotBoundary(strcat(combineString(cstr, "bursting_bdryplot_", iterSnap, 3), ".dat"));
-	  plotGrid(strcat(combineString(cstr, "bursting_patchGridplot_", iterSnap, 3), ".dat"));
-	  printParticle(combineString(cstr, "bursting_particle_", iterSnap, 3));
-	  printBdryContact(combineString(cstr, "bursting_bdrycntc_", iterSnap, 3));
-	  printDepositProg(progressInf);
-	  printSPHTecplot(sphTecplotInf, iterSnap);
-	}
-	printContact(combineString(cstr, "bursting_contact_", iterSnap, 3));
-      
-	/**/timeCount = 0;
-	++iterSnap;
+      if (toCheckTime) {
+        time2 = MPI_Wtime();
       }
 
-      releaseRecvParticle(); // late release because printContact refers to received particles
-      releaseRecvSPHParticle(); // late release since calculateSPHDensityDotVelocityDotLinkedList3D will use these communicated sph particles
+      dem->gatherParticle();
+      sph->gatherSPHParticle();
+      dem->gatherBdryContact();
+      dem->gatherEnergy(); 
+      
+      if (toCheckTime) {
+        time3 = MPI_Wtime(); 
+        gatherT = time3 - time2;
+      }
 
-      if (toCheckTime) time1 = MPI_Wtime();
-      migrateParticle();
+      if (dem->getMPIRank() == 0) {
+        dem->writeBoundaryToFile();
+        dem->writePatchGridToFile();
+        dem->writeParticlesToFile(iterSnap);
+        dem->printBdryContact();
+        sph->writeParticlesToFile(iterSnap);
+        dem->printDepositProg(demProgressInf);
+      }
+      dem->printContact(util::combine(outputFolder, "bursting_contact_", iterSnap, 3));
+    
+      timeCount = 0;
+      ++iterSnap;
+    }
 
-      if (toCheckTime) time2 = MPI_Wtime(); migraT = time2 - time1; totalT = time2 - time0;
-      if (mpiRank == 0 && toCheckTime) // ignore gather and print time at this step
-	debugInf << std::setw(OWID) << iteration << std::setw(OWID) << commuT << std::setw(OWID) << migraT
-		 << std::setw(OWID) << totalT - commuT - migraT << std::setw(OWID) << totalT 
-		 <<std::setw(OWID) << (commuT + migraT)/totalT*100 << std::endl;
-      ++iteration;
-    } 
-  
-    if (mpiRank == 0) closeProg(progressInf);
+    if (toCheckTime) {
+      time1 = MPI_Wtime();
+    }
+    dem->migrateParticle();
+
+    if (toCheckTime) {
+      time2 = MPI_Wtime(); 
+      migraT = time2 - time1; 
+      totalT = time2 - time0;
+    }
+
+    if (dem->getMPIRank() == 0 && toCheckTime) {
+      debugInf << std::setw(OWID) << iteration << std::setw(OWID) << commuT 
+               << std::setw(OWID) << migraT 
+               << std::setw(OWID) << totalT - commuT - migraT 
+               << std::setw(OWID) << totalT 
+               << std::setw(OWID) << (commuT + migraT)/totalT*100 << std::endl;
+    }
+
+    ++iteration;
+  } 
+
+  if (dem->getMPIRank() == 0) {
+    dem->closeProg(demProgressInf);
   }
+}
 
