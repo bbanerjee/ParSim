@@ -1,6 +1,6 @@
-[submodule "ThirdParty/paraEllip3d_DEM_PD/src/InputOutput/cppcodec"]
-	path = ThirdParty/paraEllip3d_DEM_PD/src/InputOutput/cppcodec
+[submodule "ThirdParty/paraEllip3d_DEM_PD_SPH/src/InputOutput/cppcodec"]
+	path = ThirdParty/paraEllip3d_DEM_PD_SPH/src/InputOutput/cppcodec
 	url = git://github.com/tplgy/cppcodec.git
-[submodule "ThirdParty/paraEllip3d_DEM_PD/src/googletest"]
-	path = ThirdParty/paraEllip3d_DEM_PD/src/googletest
+[submodule "ThirdParty/paraEllip3d_DEM_PD_SPH/src/googletest"]
+	path = ThirdParty/paraEllip3d_DEM_PD_SPH/src/googletest
 	url = git@github.com:google/googletest.git
