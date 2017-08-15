@@ -29,10 +29,10 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     REAL z1 = util::getParam<REAL>("Zmin");
     REAL z2 = util::getParam<REAL>("Zmax");
     dem->setContainer(Box(x1, y1, z1, x2, y2, z2));
-    // compute grid assumed to be the same as container,
+    // compute patchGrid assumed to be the same as container,
     // change in scatterParticle()  if necessary.
-    dem->setGrid(Box(x1, y1, z1, x2, y2, z2)); 
-    pd->setGrid(Box(x1, y1, z1, x2, y2, z2)); 
+    dem->setPatchBox(Box(x1, y1, z1, x2, y2, z2)); 
+    pd->setPatchBox(Box(x1, y1, z1, x2, y2, z2)); 
 
     dem->readParticles(InputParameter::get().datafile["particleFile"]);
     pd->readPeriDynamicsData(InputParameter::get().datafile["periFile"]);
@@ -90,7 +90,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);
 
-    dem->writeGridToFile();
+    dem->writePatchGridToFile();
     dem->writeParticlesToFile(iterSnap);
     pd->printPeriProgress(periProgInf, 0);
     pd->printPeriProgressHalf(periProgInfHalf, 0);
@@ -171,8 +171,8 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     dem->updateParticle();
     dem->gatherBdryContact(); // must call before updateBoundary
     //      updateBoundary(sigmaConf, "triaxial");
-    //      updateGrid();
-    //      updatePeriGrid();
+    //      updatePatchBox();
+    //      updatePeriPatchGrid();
 
     if (iteration % (netStep / netSnap) == 0) {
       // time1 = MPI_Wtime();
@@ -187,7 +187,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
         dem->writeBoundaryToFile();
-        dem->writeGridToFile();
+        dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
         dem->printBdryContact();
         dem->printBoundary();

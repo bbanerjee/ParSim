@@ -49,7 +49,7 @@ private:
   Rectangle allContainer; // whole container, broadcast among processes for once
   Rectangle container;    // container per process
   Rectangle cavity;       // cavity inside container
-  Rectangle grid; // adaptive compute grid, broadcast among processes for once,
+  Rectangle patchGrid; // adaptive compute patchBox, broadcast among processes for once,
                   // updated per process
 
   // boundaries property
@@ -250,7 +250,7 @@ public:
 
   void setCommunicator(boost::mpi::communicator& comm);
   void setContainer(Rectangle cont) { allContainer = cont; }
-  void setGrid(Rectangle cont) { grid = cont; }
+  void setPatchBox(Rectangle cont) { d_demPatchBox = cont; }
   void setGradation(Gradation grad) { gradation = grad; }
 
   void tuneMassPercent();
@@ -298,7 +298,7 @@ public:
   void readBoundary(const char* str);
   void scatterParticle();
   void scatterDEMSPHParticle(); // two points (1) not deal with ghost well; (2)
-                                // grid for dem and sph should be the same, July
+                                // patchGrid for dem and sph should be the same, July
                                 // 15, 2015
   void scatterDEMSPHParticleCopyDEM();
   void commuParticle();
@@ -344,13 +344,13 @@ public:
   void calculateSPHDensityDotVelocityDotLinkedList2D();
   void calculateSPHDensityDotVelocityDotLinkedList3D();
 
-  void updateGrid();
-  void updateGridMinX();
-  void updateGridMaxX();
-  void updateGridMinY();
-  void updateGridMaxY();
-  void updateGridMinZ();
-  void updateGridMaxZ();
+  void updatePatchBox();
+  void updatePatchBoxMinX();
+  void updatePatchBoxMaxX();
+  void updatePatchBoxMinY();
+  void updatePatchBoxMaxY();
+  void updatePatchBoxMinZ();
+  void updatePatchBoxMaxZ();
 
   void openDepositProg(std::ofstream& ofs, const char* str);
   void printDepositProg(std::ofstream& ofs);

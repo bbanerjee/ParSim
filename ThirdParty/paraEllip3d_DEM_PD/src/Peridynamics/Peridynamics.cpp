@@ -697,10 +697,10 @@ void
 Peridynamics::scatterPeriParticle(const Box& allContainer)
 {
   if (d_mpiRank == 0) { // process 0
-    setGrid(Box(allContainer, d_maxDistBetweenParticles*0.2));
+    setPatchBox(Box(allContainer, d_maxDistBetweenParticles*0.2));
 
-    Vec v1 = d_periGrid.getMinCorner();
-    Vec v2 = d_periGrid.getMaxCorner();
+    Vec v1 = d_periPatchBox.getMinCorner();
+    Vec v2 = d_periPatchBox.getMaxCorner();
     Vec vspan = (v2 - v1) / d_mpiProcs;
 
     boost::mpi::request reqs[d_mpiSize - 1];
@@ -804,8 +804,8 @@ Peridynamics::createPatch(int iteration,
                           const REAL& ghostWidth) 
 {
   // determine container of each process
-  Vec v1 = d_periGrid.getMinCorner();
-  Vec v2 = d_periGrid.getMaxCorner();
+  Vec v1 = d_periPatchBox.getMinCorner();
+  Vec v2 = d_periPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / d_mpiProcs;
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
@@ -818,8 +818,8 @@ Peridynamics::updatePatch(int iteration,
                           const REAL& ghostWidth)
 {
   // determine container of each process
-  Vec v1 = d_periGrid.getMinCorner();
-  Vec v2 = d_periGrid.getMaxCorner();
+  Vec v1 = d_periPatchBox.getMinCorner();
+  Vec v2 = d_periPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / d_mpiProcs;
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
@@ -1005,7 +1005,7 @@ Peridynamics::releasePeriBondVec()
 }
 
 void
-Peridynamics::updatePeriGrid(const PeriParticlePArray& particles)
+Peridynamics::updatePeriPatchGrid(const PeriParticlePArray& particles)
 {
   REAL minX = 0.0, minY = 0.0, minZ = 0.0;
   REAL maxX = 0.0, maxY = 0.0, maxZ = 0.0;
@@ -1046,8 +1046,8 @@ Peridynamics::updatePeriGrid(const PeriParticlePArray& particles)
     MPI_Allreduce(&minval, &minZ, 1, MPI_DOUBLE, MPI_MIN, d_mpiWorld);
   }
 
-  // no need to broadcast grid as it is updated in each process
-  setGrid(Box(minX - d_maxDistBetweenParticles * 0.2, 
+  // no need to broadcast patchGrid as it is updated in each process
+  setPatchBox(Box(minX - d_maxDistBetweenParticles * 0.2, 
               minY - d_maxDistBetweenParticles * 0.2,
               minZ - d_maxDistBetweenParticles * 0.2, 
               maxX + d_maxDistBetweenParticles * 0.2,
@@ -1059,7 +1059,7 @@ void
 Peridynamics::migratePeriParticle(int iteration)
 {
   // Compute the (x,y,z) patch dimensions
-  Vec domainWidth = d_periGrid.getMaxCorner() - d_periGrid.getMinCorner();
+  Vec domainWidth = d_periPatchBox.getMaxCorner() - d_periPatchBox.getMinCorner();
   Vec patchWidth = domainWidth / d_mpiProcs;
 
   // Migrate particles in the x-direction

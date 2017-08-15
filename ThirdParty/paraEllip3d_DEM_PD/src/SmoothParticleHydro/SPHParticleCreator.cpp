@@ -11,7 +11,7 @@ using namespace sph;
 //  if (getMPIRank() != 0) return;  // make only primary cpu generate particles
 template <int dim>
 SPHParticlePArray
-SPHParticleCreator::generateSPHParticle(
+SPHParticleCreator::generateSPHParticleDam(
   const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles)
 {
   // Determine length parameter and SPH point spacing
@@ -499,9 +499,9 @@ SPHParticleCreator::removeRedundantSPHParticles(SPHParticlePArray& allSPHParticl
 
 
 namespace sph {
-template SPHParticlePArray SPHParticleCreator::generateSPHParticle<2>(
+template SPHParticlePArray SPHParticleCreator::generateSPHParticleDam<2>(
   const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);
-template SPHParticlePArray SPHParticleCreator::generateSPHParticle<3>(
+template SPHParticlePArray SPHParticleCreator::generateSPHParticleDam<3>(
   const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);
 template SPHParticlePArray SPHParticleCreator::generateSPHParticleNoBottom<2>(
   const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);

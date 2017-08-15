@@ -85,7 +85,7 @@ public:
 
   void setCommunicator(boost::mpi::communicator& comm);
   void setContainer(Box cont) { allContainer = cont; }
-  void setGrid(Box cont) { grid = cont; }
+  void setPatchBox(Box cont) { d_demPatchBox = cont; }
   void setGradation(Gradation grad) { gradation = grad; }
 
   void generateParticle(std::size_t particleLayers,
@@ -120,14 +120,14 @@ public:
   void findBoundaryPeriParticles(); // for all cpus
   void applyTractionBoundary(int);
 
-  void updateGrid();
-  void updateGridMinX();
-  void updateGridMaxX();
-  void updateGridMinY();
-  void updateGridMaxY();
-  void updateGridMinZ();
-  void updateGridMaxZ();
-  void updatePeriGrid();
+  void updatePatchBox();
+  void updatePatchBoxMinX();
+  void updatePatchBoxMaxX();
+  void updatePatchBoxMinY();
+  void updatePatchBoxMaxY();
+  void updatePatchBoxMinZ();
+  void updatePatchBoxMaxZ();
+  void updatePeriPatchGrid();
 
   void createOutputWriter(const std::string& outputFolder, const int& iter) {
     bool writeVTK = true;
@@ -219,7 +219,7 @@ public:
     const std::string& str) const; // print springs in Tecplot format
   void writeBoundaryToFile() const;
   void printBoundary() const; // print rigid boundaries info
-  void writeGridToFile() const;
+  void writePatchGridToFile() const;
   void plotCavity(const std::string& str) const;
   void checkMembrane(std::vector<REAL>& vx) const;
   void printContact(const std::string& str) const; // print contacts information
@@ -475,6 +475,8 @@ public:
                          const DEMParticlePArray& allParticle,
                          DEMParticlePArray& foundParticle);
 
+  void dragForce();
+
 private:
 
   // The output writer pointer
@@ -502,8 +504,8 @@ private:
   Box allContainer; // whole container, broadcast among processes for once
   Box container;    // container per process
   Box cavity;       // cavity inside container
-  Box grid; // adaptive compute grid, broadcast among processes for once,
-            // updated per process
+  Box d_demPatchBox; // adaptive compute patchBox, broadcast among processes for once,
+                     // updated per process
 
   // boundaries property
   BoundaryPArray

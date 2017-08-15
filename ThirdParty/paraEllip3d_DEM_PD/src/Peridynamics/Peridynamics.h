@@ -59,7 +59,7 @@ public:
     d_mpiCoords = mpiCoords;
   }
 
-  void setGrid(dem::Box cont) { d_periGrid = cont; }
+  void setPatchBox(dem::Box cont) { d_periPatchBox = cont; }
 
   // Pure peridynamics only
   // initializes the velocity, displacement and acceleration
@@ -143,7 +143,7 @@ public:
   void findBoundaryPeriParticles(); // for all cpus
   void applyPeriBoundaryCondition();
 
-  void updatePeriGrid(const PeriParticlePArray& particles);
+  void updatePeriPatchGrid(const PeriParticlePArray& particles);
 
   void openPeriProgress(std::ofstream& ofs, const std::string& str);
   void printPeriProgress(std::ofstream& ofs, const int iframe) const;
@@ -275,7 +275,7 @@ private:
   // the maximum horizon size of all peri-points, for all cpus
   REAL d_maxHorizonSize; 
   REAL d_maxDistBetweenParticles;
-  dem::Box d_periGrid;
+  dem::Box d_periPatchBox;
 
   int rankX1, rankX2, rankY1, rankY2, rankZ1, rankZ2;
   int rankX1Y1, rankX1Y2, rankX1Z1, rankX1Z2;

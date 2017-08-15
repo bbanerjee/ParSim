@@ -125,7 +125,7 @@ DiscreteElements::deposit(const std::string& boundaryFile,
     createOutputWriter(outputFolder, iterSnap-1);
 
     writeBoundaryToFile();
-    writeGridToFile();
+    writePatchGridToFile();
     writeParticlesToFile(iterSnap);
     printBdryContact();
     debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
@@ -180,7 +180,7 @@ DiscreteElements::deposit(const std::string& boundaryFile,
 
     //proc0cout << "**NOTICE** Before updateParticle\n";
     updateParticle();
-    updateGrid(); // universal; updateGridMaxZ() for deposition only
+    updatePatchBox(); // universal; updatePatchBoxMaxZ() for deposition only
 
     /**/ timeCount += timeStep;
     /**/ timeAccrued += timeStep;
@@ -200,7 +200,7 @@ DiscreteElements::deposit(const std::string& boundaryFile,
       if (s_mpiRank == 0) {
         updateFileNames(iterSnap);
         writeBoundaryToFile();
-        writeGridToFile();
+        writePatchGridToFile();
         writeParticlesToFile(iterSnap);
         printBdryContact();
         printDepositProg(progressInf);
@@ -249,15 +249,15 @@ DiscreteElements::readBoundary(const std::string& fileName)
     // Read the file
     //std::cout << "Using the XML reader\n";
     BoundaryReader reader;
-    reader.readXML(fileName, allContainer, grid, boundaryVec);
+    reader.readXML(fileName, allContainer, d_demPatchBox, boundaryVec);
   } else if (firstChar == '{') { // JSON
     //std::cout << "Using the JSON reader\n";
     BoundaryReader reader;
-    reader.readJSON(fileName, allContainer, grid, boundaryVec);
+    reader.readJSON(fileName, allContainer, d_demPatchBox, boundaryVec);
   } else {
     //std::cout << "Using the default text reader\n";
     BoundaryReader reader;
-    reader.read(fileName, allContainer, grid, boundaryVec);
+    reader.read(fileName, allContainer, d_demPatchBox, boundaryVec);
   }
 }
 
@@ -278,13 +278,13 @@ DiscreteElements::scatterParticle()
 {
   // partition particles and send to each process
   if (s_mpiRank == 0) { // process 0
-    setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
-                grid.getMinCorner().z(), grid.getMaxCorner().x(),
-                grid.getMaxCorner().y(),
+    setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
+                d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
+                d_demPatchBox.getMaxCorner().y(),
                 getPtclMaxZ(allDEMParticleVec) + gradation.getPtclMaxRadius()));
 
-    Vec v1 = grid.getMinCorner();
-    Vec v2 = grid.getMaxCorner();
+    Vec v1 = d_demPatchBox.getMinCorner();
+    Vec v2 = d_demPatchBox.getMaxCorner();
     Vec vspan = (v2 - v1) / s_mpiProcs;
 
     //std::cout << "v1 = " << v1 << "\n";
@@ -336,7 +336,7 @@ DiscreteElements::scatterParticle()
   broadcast(boostWorld, gradation, 0);
   broadcast(boostWorld, boundaryVec, 0);
   broadcast(boostWorld, allContainer, 0);
-  broadcast(boostWorld, grid, 0);
+  broadcast(boostWorld, d_demPatchBox, 0);
 
   // Create patch for the current process
   REAL ghostWidth = gradation.getPtclMaxRadius() * 2;
@@ -347,8 +347,8 @@ void
 DiscreteElements::createPatch(int iteration, const REAL& ghostWidth) 
 {
   // determine container of each process
-  Vec v1 = grid.getMinCorner();
-  Vec v2 = grid.getMaxCorner();
+  Vec v1 = d_demPatchBox.getMinCorner();
+  Vec v2 = d_demPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / s_mpiProcs;
   Vec lower = v1 + vspan * s_mpiCoords;
   Vec upper = lower + vspan;
@@ -366,8 +366,8 @@ void
 DiscreteElements::updatePatch(int iteration, const REAL& ghostWidth)
 {
   // determine container of each process
-  Vec v1 = grid.getMinCorner();
-  Vec v2 = grid.getMaxCorner();
+  Vec v1 = d_demPatchBox.getMinCorner();
+  Vec v2 = d_demPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / s_mpiProcs;
   Vec lower = v1 + vspan * s_mpiCoords;
   Vec upper = lower + vspan;
@@ -464,8 +464,8 @@ DiscreteElements::commuParticle(const int& iteration)
   std::ostringstream out;
 
   // determine container of each process
-  Vec v1 = grid.getMinCorner();
-  Vec v2 = grid.getMaxCorner();
+  Vec v1 = d_demPatchBox.getMinCorner();
+  Vec v2 = d_demPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / s_mpiProcs;
   Vec lower = v1 + vspan * s_mpiCoords;
   Vec upper = lower + vspan;
@@ -1388,78 +1388,78 @@ DiscreteElements::updateParticle()
 }
 
 void
-DiscreteElements::updateGrid()
+DiscreteElements::updatePatchBox()
 {
-  updateGridMinX();
-  updateGridMaxX();
-  updateGridMinY();
-  updateGridMaxY();
-  updateGridMinZ();
-  updateGridMaxZ();
+  updatePatchBoxMinX();
+  updatePatchBoxMaxX();
+  updatePatchBoxMinY();
+  updatePatchBoxMaxY();
+  updatePatchBoxMinZ();
+  updatePatchBoxMaxZ();
 }
 
 void
-DiscreteElements::updateGridMinX()
+DiscreteElements::updatePatchBoxMinX()
 {
   REAL pMinX = getPtclMinX(particleVec);
   REAL minX = 0;
   MPI_Allreduce(&pMinX, &minX, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
-  setGrid(Box(minX - gradation.getPtclMaxRadius(), grid.getMinCorner().y(),
-              grid.getMinCorner().z(), grid.getMaxCorner().x(),
-              grid.getMaxCorner().y(), grid.getMaxCorner().z()));
+  setPatchBox(Box(minX - gradation.getPtclMaxRadius(), d_demPatchBox.getMinCorner().y(),
+              d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
+              d_demPatchBox.getMaxCorner().y(), d_demPatchBox.getMaxCorner().z()));
 }
 
 void
-DiscreteElements::updateGridMaxX()
+DiscreteElements::updatePatchBoxMaxX()
 {
   REAL pMaxX = getPtclMaxX(particleVec);
   REAL maxX = 0;
   MPI_Allreduce(&pMaxX, &maxX, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
-  setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
-              grid.getMinCorner().z(), maxX + gradation.getPtclMaxRadius(),
-              grid.getMaxCorner().y(), grid.getMaxCorner().z()));
+  setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
+              d_demPatchBox.getMinCorner().z(), maxX + gradation.getPtclMaxRadius(),
+              d_demPatchBox.getMaxCorner().y(), d_demPatchBox.getMaxCorner().z()));
 }
 
 void
-DiscreteElements::updateGridMinY()
+DiscreteElements::updatePatchBoxMinY()
 {
   REAL pMinY = getPtclMinY(particleVec);
   REAL minY = 0;
   MPI_Allreduce(&pMinY, &minY, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
-  setGrid(Box(grid.getMinCorner().x(), minY - gradation.getPtclMaxRadius(),
-              grid.getMinCorner().z(), grid.getMaxCorner().x(),
-              grid.getMaxCorner().y(), grid.getMaxCorner().z()));
+  setPatchBox(Box(d_demPatchBox.getMinCorner().x(), minY - gradation.getPtclMaxRadius(),
+              d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
+              d_demPatchBox.getMaxCorner().y(), d_demPatchBox.getMaxCorner().z()));
 }
 
 void
-DiscreteElements::updateGridMaxY()
+DiscreteElements::updatePatchBoxMaxY()
 {
   REAL pMaxY = getPtclMaxY(particleVec);
   REAL maxY = 0;
   MPI_Allreduce(&pMaxY, &maxY, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
-  setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
-              grid.getMinCorner().z(), grid.getMaxCorner().x(),
-              maxY + gradation.getPtclMaxRadius(), grid.getMaxCorner().z()));
+  setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
+              d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
+              maxY + gradation.getPtclMaxRadius(), d_demPatchBox.getMaxCorner().z()));
 }
 
 void
-DiscreteElements::updateGridMinZ()
+DiscreteElements::updatePatchBoxMinZ()
 {
   REAL pMinZ = getPtclMinZ(particleVec);
   REAL minZ = 0;
   MPI_Allreduce(&pMinZ, &minZ, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
-  setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
-              minZ - gradation.getPtclMaxRadius(), grid.getMaxCorner().x(),
-              grid.getMaxCorner().y(), grid.getMaxCorner().z()));
+  setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
+              minZ - gradation.getPtclMaxRadius(), d_demPatchBox.getMaxCorner().x(),
+              d_demPatchBox.getMaxCorner().y(), d_demPatchBox.getMaxCorner().z()));
 }
 
 void
-DiscreteElements::updateGridMaxZ()
+DiscreteElements::updatePatchBoxMaxZ()
 {
   // update compute grids adaptively due to particle motion
   REAL pMaxZ = getPtclMaxZ(particleVec);
@@ -1467,9 +1467,9 @@ DiscreteElements::updateGridMaxZ()
   MPI_Allreduce(&pMaxZ, &maxZ, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
   // no need to broadcast grid as it is updated in each process
-  setGrid(Box(grid.getMinCorner().x(), grid.getMinCorner().y(),
-              grid.getMinCorner().z(), grid.getMaxCorner().x(),
-              grid.getMaxCorner().y(), maxZ + gradation.getPtclMaxRadius()));
+  setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
+              d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
+              d_demPatchBox.getMaxCorner().y(), maxZ + gradation.getPtclMaxRadius()));
 }
 
 void
@@ -1569,11 +1569,11 @@ DiscreteElements::printBdryContact() const
 }
 
 void
-DiscreteElements::writeGridToFile() const
+DiscreteElements::writePatchGridToFile() const
 {
   d_writer->setMPIComm(s_cartComm);
   d_writer->setMPIProc(s_mpiProcs.x(), s_mpiProcs.y(), s_mpiProcs.z());
-  d_writer->writeGrid(&grid);
+  d_writer->writePatchGrid(&d_demPatchBox);
 }
 
 void
@@ -2172,7 +2172,7 @@ DiscreteElements::migrateParticle()
   //std::ostringstream out;
   //out << "Migrate: Rank: " << s_mpiRank << ": in: " << particleVec.size();
 
-  Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
+  Vec vspan = d_demPatchBox.getMaxCorner() - d_demPatchBox.getMinCorner();
   Vec width = vspan / s_mpiProcs;
 
   sentParticleVec.clear();
@@ -2227,7 +2227,7 @@ DiscreteElements::migrateParticle()
 {
 */
 /*
-  Vec vspan = grid.getMaxCorner() - grid.getMinCorner();
+  Vec vspan = d_demPatchBox.getMaxCorner() - d_demPatchBox.getMinCorner();
   Vec seg = vspan / s_mpiProcs;
   REAL segX = seg.x();
   REAL segY = seg.y();
@@ -3458,6 +3458,14 @@ DiscreteElements::buildBoundary(std::size_t boundaryNum,
   }
 
   ofs.close();
+}
+
+void
+DiscreteElements::dragForce() 
+{
+  for (auto& particle : particleVec) {
+    particle->dragForce();
+  }
 }
 
 } // namespace dem ends

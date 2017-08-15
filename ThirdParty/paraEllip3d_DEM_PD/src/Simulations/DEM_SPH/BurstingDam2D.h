@@ -6,7 +6,7 @@
 
 namespace dem {
 
-class BurstingDam2D: public Command
+class BurstingDam2D : public Command
 {
 public:
   virtual void execute(DiscreteElements* dem)
@@ -14,7 +14,12 @@ public:
     std::cout << "**ERROR** Execute with DEM only. "
               << "Should not be called in BurstingDam2D.\n";
   }
-  virtual void execute(DiscreteElements* dem, sph::SmoothParticleHydro* pd);
+  virtual void execute(DiscreteElements* dem, pd::Peridynamics* pd)
+  {
+    std::cout << "**ERROR** Execute with DEM-Peridynamics. "
+              << "Should not be called in BurstingDam2D.\n";
+  }
+  virtual void execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph);
 };
 }
 

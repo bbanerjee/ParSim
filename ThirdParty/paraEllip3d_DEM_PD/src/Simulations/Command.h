@@ -3,6 +3,7 @@
 
 #include <DiscreteElements/DiscreteElements.h>
 #include <Peridynamics/Peridynamics.h>
+#include <SmoothParticleHydro/SmoothParticleHydro.h>
 
 namespace dem {
 
@@ -12,6 +13,7 @@ public:
   virtual ~Command(){};
   virtual void execute(DiscreteElements* dem) = 0;
   virtual void execute(DiscreteElements* dem, pd::Peridynamics* pd) = 0;
+  virtual void execute(DiscreteElements* dem, sph::SmoothParticleHydro* pd) = 0;
 };
 }
 

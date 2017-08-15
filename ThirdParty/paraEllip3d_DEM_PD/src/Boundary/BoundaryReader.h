@@ -14,11 +14,11 @@ public:
   BoundaryReader() = default;
   ~BoundaryReader() = default;
 
-  void read(const std::string& inputFileName, Box& container, Box& grid,
+  void read(const std::string& inputFileName, Box& container, Box& patchBox,
             BoundaryPArray& boundaries) const;
-  bool readXML(const std::string& inputFileName, Box& container, Box& grid,
+  bool readXML(const std::string& inputFileName, Box& container, Box& patchBox,
                BoundaryPArray& boundaries) const;
-  bool readJSON(const std::string& inputFileName, Box& container, Box& grid,
+  bool readJSON(const std::string& inputFileName, Box& container, Box& patchBox,
                 BoundaryPArray& boundaries) const;
 
 private:

@@ -49,21 +49,21 @@ public:
   void write(int frame);
 
   void setDomain(const Box* domain) { d_domain = domain; }
-  void setGrid(const Box* grid) { d_grid = grid; }
+  void setPatchBox(const Box* patchBox) { d_patchBox = patchBox; }
   void setParticles(const TArray* particles)
   {
     d_particles = particles;
   }
 
   void writeDomain(const Box* domain);
-  void writeGrid(const Box* grid);
+  void writePatchGrid(const Box* patchBox);
   void writeParticles(const TArray* particles, int frame);
   void writeSieves(const Gradation* gradation);
 
 private:
 
   const Box* d_domain;
-  const Box* d_grid;
+  const Box* d_patchBox;
   const TArray* d_particles;
 
 }; // end class

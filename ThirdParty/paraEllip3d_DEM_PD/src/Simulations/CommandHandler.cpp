@@ -15,6 +15,7 @@
 #include <Simulations/DEM_CFD/CoupledFluidFlow.h>
 #include <Simulations/DEM_PD/PeridynamicsPullOut.h>
 #include <Simulations/DEM_PD/PeridynamicsRigidInclusion.h>
+#include <Simulations/DEM_SPH/BurstingDam2D.h>
 
 using namespace dem;
 
@@ -84,6 +85,9 @@ CommandHandler::handleCommand(int simuType)
       break;
     case 701: // couple with sonic fluid flow
       return std::make_unique<CoupledFluidFlow>();
+      break;
+    case 1001: // Bursting dam 2D
+      return std::make_unique<BurstingDam2D>();
       break;
     case 3001: // rigid Inclusion problem
       return std::make_unique<PeridynamicsRigidInclusion>();

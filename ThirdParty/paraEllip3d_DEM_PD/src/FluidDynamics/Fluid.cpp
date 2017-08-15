@@ -105,7 +105,7 @@ Fluid::initParameter(Box& container, Gradation& gradation)
   debugInf << std::setw(OWID) << "Cd" << std::setw(OWID) << Cd << std::endl;
   debugInf << std::setw(OWID) << "ptclGrid" << std::setw(OWID) << ptclGrid
            << std::endl;
-  debugInf << std::setw(OWID) << "gridSize" << std::setw(OWID) << dx
+  debugInf << std::setw(OWID) << "patchGridSize" << std::setw(OWID) << dx
            << std::endl;
   debugInf << std::setw(OWID) << "volFrac" << std::setw(OWID) << volFrac
            << std::endl;
@@ -859,7 +859,7 @@ Fluid::getParticleInfo(DEMParticlePArray& ptcls)
 
               ptcl->recordFluidGrid(
                 i, j, k, volFraction); // no for break, as multiple particles
-                                       // could intrude into the same grid
+                                       // could intrude into the same patchGrid
             }
           }
 
@@ -922,12 +922,12 @@ Fluid::calcParticleForce(DEMParticlePArray& ptcls, std::ofstream& ofs)
       localPenal.setY(arrayU[i][j][k][var_den] * localDelta.y() / etaBy);
       localPenal.setZ(arrayU[i][j][k][var_den] * localDelta.z() / etaBz);
       globalPenal = ptcl->localToGlobal(localPenal) * volFraction;
-      // one grid could have multiple particles intruded, +=, not =
+      // one patchGrid could have multiple particles intruded, +=, not =
       arrayPenalForce[i][j][k][0] += globalPenal.x();
       arrayPenalForce[i][j][k][1] += globalPenal.y();
       arrayPenalForce[i][j][k][2] += globalPenal.z();
 
-      // restrict pressure gradient grids
+      // restrict pressure gradient patchGrids
       if (i > 0 && i < nx - 1 && j > 0 && j < ny - 1 && k > 0 &&
           k < nz - 1) { // do not use (i-1) for std::size_t because (i-1) is
                         // postive when i=0

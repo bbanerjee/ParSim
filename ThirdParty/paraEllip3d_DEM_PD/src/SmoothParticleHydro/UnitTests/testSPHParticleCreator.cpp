@@ -136,7 +136,7 @@ TEST(SPHParticleCreatorTest, createParticleArray)
   EXPECT_NEAR(particles[599]->getInitPosition().z(), 1.4, 1.0e-16);
 }
 
-TEST(SPHParticleCreatorTest, generateSPHParticle)
+TEST(SPHParticleCreatorTest, generateSPHParticleDam)
 {
 
   // Setup the parameters that are used by the constructor
@@ -215,7 +215,7 @@ TEST(SPHParticleCreatorTest, generateSPHParticle)
   SPHParticleCreator sph;
   dem::Box container(dem::Vec(30.0, -2.0, 0.95), dem::Vec(52.0, 2.0, 5.5));
   SPHParticlePArray sph_particles = 
-    sph.generateSPHParticle<2>(container, allDEMParticles);
+    sph.generateSPHParticleDam<2>(container, allDEMParticles);
 
   // std::cout << "Size:" << sph_particles.size() << "\n";
   std::size_t noneP = 0;
@@ -274,7 +274,7 @@ TEST(SPHParticleCreatorTest, generateSPHParticle)
 
   dem::Box container3D(dem::Vec(30.0, -1.0, 3.5), dem::Vec(35.0, 1.0, 4.0));
   sph_particles = 
-    sph.generateSPHParticle<3>(container3D, allDEMParticles);
+    sph.generateSPHParticleDam<3>(container3D, allDEMParticles);
   // std::cout << "Size:" << sph_particles.size() << "\n";
   for (auto pt : sph_particles) {
     switch (pt->getType()) {

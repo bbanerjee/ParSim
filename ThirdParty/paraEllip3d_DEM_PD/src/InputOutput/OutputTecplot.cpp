@@ -45,7 +45,7 @@ OutputTecplot<TArray>::OutputTecplot(const std::string& folderName, int iterInte
   : Output(folderName, iterInterval)
 {
   d_domain = nullptr;
-  d_grid = nullptr;
+  d_patchBox = nullptr;
   d_particles = nullptr;
   d_cartComm = nullptr;
 
@@ -62,9 +62,9 @@ void
 OutputTecplot<TArray>::write(int frame)
 {
 
-  // The domain and the grid have to be set before a write is
+  // The domain and the patchGrid have to be set before a write is
   // completed.
-  if (!d_domain || !d_grid || !d_particles) {
+  if (!d_domain || !d_patchBox || !d_particles) {
     std::cerr << "**ERROR** Domain and/or Grid and/or Particles have not been "
                  "set.  Nothing "
                  "will be written\n";
@@ -74,8 +74,8 @@ OutputTecplot<TArray>::write(int frame)
   // Write files for the domain extents at each timestep
   writeDomain(d_domain);
 
-  // Write files for the grid representing each processor at each timestep
-  writeGrid(d_grid);
+  // Write files for the patchGrid representing each processor at each timestep
+  writePatchGrid(d_patchBox);
 
   // Write files for the particle list each timestep
   writeParticles(d_particles, frame);
@@ -129,15 +129,15 @@ OutputTecplot<TArray>::writeDomain(const Box* domain)
 
 template <typename TArray>
 void
-OutputTecplot<TArray>::writeGrid(const Box* grid)
+OutputTecplot<TArray>::writePatchGrid(const Box* patchBox)
 {
   // Get the filename
-  std::string fileName(d_gridFileName);
+  std::string fileName(d_patchFileName);
   fileName.append(".dat");
 
   std::ofstream ofs(fileName);
   if (!ofs) {
-    debugInf << "stream error: writeGridToFile" << std::endl;
+    debugInf << "stream error: writePatchGridToFile" << std::endl;
     exit(-1);
   }
   ofs.setf(std::ios::scientific, std::ios::floatfield);
@@ -147,8 +147,8 @@ OutputTecplot<TArray>::writeGrid(const Box* grid)
   int mpiSize = 0;
   MPI_Comm_size(d_cartComm, &mpiSize);
 
-  Vec v1 = grid->getMinCorner();
-  Vec v2 = grid->getMaxCorner();
+  Vec v1 = d_patchBox->getMinCorner();
+  Vec v2 = d_patchBox->getMaxCorner();
   Vec vspan = v2 - v1;
 
   ofs << "ZONE N=" << (d_mpiProcX + 1) * (d_mpiProcY + 1) * (d_mpiProcZ + 1)
@@ -424,4 +424,5 @@ OutputTecplot<TArray>::writeSieves(const Gradation* gradation)
 namespace dem {
   template class OutputTecplot<DEMParticlePArray>;
   template class OutputTecplot<pd::PeriParticlePArray>;
+  template class OutputTecplot<sph::SPHParticlePArray>;
 }

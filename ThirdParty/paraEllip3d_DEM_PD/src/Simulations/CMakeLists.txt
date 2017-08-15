@@ -39,6 +39,7 @@ SET(COMMAND_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM_CFD/CoupledFluidFlow.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM_PD/PeridynamicsPullOut.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM_PD/PeridynamicsRigidInclusion.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM_SPH/BurstingDam2D.cpp
 )
 
 SET(ELLIP3D_SRCS

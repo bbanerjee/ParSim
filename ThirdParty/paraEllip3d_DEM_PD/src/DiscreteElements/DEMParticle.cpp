@@ -1218,4 +1218,26 @@ DEMParticle::shortestDistToBoundary(const Vec& point) const
   return proj.length();
 }
 
+void
+DEMParticle::dragForce()
+{
+  REAL Cd = util::getParam<REAL>("Cd");
+  REAL rho = util::getParam<REAL>("fluidDensity");
+
+  REAL ux = d_currVeloc.x();
+  REAL uy = d_currVeloc.y();
+  REAL uz = d_currVeloc.z();
+  Vec globalDelta(fabs(ux) * ux, fabs(uy) * uy, fabs(uz) * uz);
+  Vec localDelta = globalToLocal(globalDelta);
+  Vec localForce(0);
+  // localDelta needs to project in local frame in order to calculate local drag
+  // forces
+  localForce.setX(-0.5 * rho * localDelta.x() * Cd * Pi * d_b * d_c);
+  localForce.setY(-0.5 * rho * localDelta.y() * Cd * Pi * d_c * d_a);
+  localForce.setZ(-0.5 * rho * localDelta.z() * Cd * Pi * d_a * d_b);
+  Vec globalForce = localToGlobal(localForce);
+  addForce(globalForce);
+}
+
+
 } // namespace dem ends

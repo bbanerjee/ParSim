@@ -14,6 +14,11 @@ public:
               << "Should not be called in PeridynamicsRigidInclusion.\n";
   }
   virtual void execute(DiscreteElements* dem, pd::Peridynamics* pd);
+  virtual void execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
+  {
+    std::cout << "**ERROR** Execute with DEM + SPH. "
+              << "Should not be called in PeridynamicsRigidInclusion.\n";
+  }
 };
 }
 

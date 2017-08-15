@@ -64,7 +64,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
 
     dem->writeBoundaryToFile();
     dem->printBoundary();
-    dem->writeGridToFile();
+    dem->writePatchGridToFile();
     dem->writeParticlesToFile(iterSnap);
     dem->printBdryContact();
     dem->getStartDimension(distX, distY, distZ);
@@ -98,7 +98,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
     dem->updateParticle();
     dem->gatherBdryContact(); // must call before updateBoundary
     dem->updateBoundary(sigmaVar, "isotropic");
-    dem->updateGrid();
+    dem->updatePatchBox();
 
     if (iteration % (netStep / netSnap) == 0) {
       time1 = MPI_Wtime();
@@ -111,7 +111,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
         dem->updateFileNames(iterSnap);
         dem->writeBoundaryToFile();
         dem->printBoundary();
-        dem->writeGridToFile();
+        dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
         dem->printBdryContact();
         dem->printCompressProg(progressInf, distX, distY, distZ);

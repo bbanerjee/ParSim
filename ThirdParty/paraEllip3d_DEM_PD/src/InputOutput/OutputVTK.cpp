@@ -60,7 +60,7 @@ OutputVTK<TArray>::OutputVTK(const std::string& folderName, int iterInterval)
   : Output(folderName, iterInterval)
 {
   d_domain = nullptr;
-  d_grid = nullptr;
+  d_patchBox = nullptr;
   d_particles = nullptr;
   d_cartComm = nullptr;
 
@@ -77,9 +77,9 @@ void
 OutputVTK<TArray>::write(int frame)
 {
 
-  // The domain and the grid have to be set before a write is
+  // The domain and the patchGrid have to be set before a write is
   // completed.
-  if (!d_domain || !d_grid || !d_particles) {
+  if (!d_domain || !d_patchBox || !d_particles) {
     std::cerr << "**ERROR** Domain and/or Grid and/or Particles have not been "
                  "set.  Nothing "
                  "will be written\n";
@@ -89,8 +89,8 @@ OutputVTK<TArray>::write(int frame)
   // Write files for the domain extents at each timestep
   writeDomain(d_domain);
 
-  // Write files for the grid representing each processor at each timestep
-  writeGrid(d_grid);
+  // Write files for the patchGrid representing each processor at each timestep
+  writePatchGrid(d_patchBox);
 
   // Write files for the particle list each timestep
   writeParticles(d_particles, frame);
@@ -137,14 +137,14 @@ OutputVTK<TArray>::writeDomain(const Box* domain)
 
 template <typename TArray>
 void
-OutputVTK<TArray>::writeGrid(const Box* grid)
+OutputVTK<TArray>::writePatchGrid(const Box* patchBox)
 {
 
   // Create a writer
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
 
   // Get the filename
-  std::string fileName(d_gridFileName);
+  std::string fileName(d_patchFileName);
   fileName.append(".").append(writer->GetDefaultFileExtension());
   writer->SetFileName(fileName.c_str());
 
@@ -163,8 +163,8 @@ OutputVTK<TArray>::writeGrid(const Box* grid)
   addTimeToVTKDataSet(time, dataSet);
 
   // Create the individual processor domain extents
-  Vec v1 = grid->getMinCorner();
-  Vec v2 = grid->getMaxCorner();
+  Vec v1 = d_patchBox->getMinCorner();
+  Vec v2 = d_patchBox->getMaxCorner();
   Vec vspan = v2 - v1;
   std::vector<Vec> coords((d_mpiProcX + 1) * (d_mpiProcY + 1) *
                           (d_mpiProcZ + 1));

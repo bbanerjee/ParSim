@@ -88,7 +88,7 @@ SmoothParticleHydro::setCommunicator(const communicator& boostWorldComm)
 // the same,
 //        otherwise some dem particles and their nearby sph particles will
 // belong to different block
-//        (grid is expanded to include the boundary sph particles)
+//        (patchGrid is expanded to include the boundary sph particles)
 //    (3) this partition method here is not very suitable for the free surface
 // flow problem, such as bursting dam problem
 //        since the total domain is divided, while there are lots of voids in
@@ -106,7 +106,7 @@ SmoothParticleHydro::scatterSPHParticle(const Box& allContainer,
   // bufferLength = spaceInterval * numLayers;
 
   // Set d_sphPatchBox on all procs
-  setGrid(Box(allContainer, bufferLength));
+  setPatchBox(Box(allContainer, bufferLength));
 
   // Create patch for the current process
   int iteration = 0;
@@ -395,16 +395,18 @@ SmoothParticleHydro::gatherSPHParticle()
 //// here the neighboring list of SPH particles is searched by the cells,
 template <int dim>
 void
-SmoothParticleHydro::updateParticleInteractions(const REAL& kernelSize,
-                                                const REAL& smoothLength,
-                                                const Box& allContainer)
+SmoothParticleHydro::updateParticleInteractions(const Box& allContainer,
+                                                const REAL& bufferWidth,
+                                                const REAL& ghostWidth,
+                                                const REAL& kernelSize,
+                                                const REAL& smoothLength)
 {
   // Initialize the rate quantities that are integrated
   initializeDensityRateAndAcceleration();
 
   // divide the SPH domain into different cells, each cell may contain SPH
   // particles within it
-  assignParticlesToPatchGrid<dim>();
+  assignParticlesToPatchGrid<dim>(allContainer, bufferWidth, ghostWidth, kernelSize);
 
   for (int cellIndex=0; cellIndex < d_sphPatchGrid.size(); ++cellIndex) {
 
@@ -591,7 +593,7 @@ SmoothParticleHydro::getIndex<3>(const IntVec& cell, const int& nx,
 template <>
 std::vector<int>
 SmoothParticleHydro::getAdjacentCellIndices<1>(const IntVec& cell,
-                                               const IntVec& numGridCells)
+                                               const IntVec& numGridCells) const
 {
   // The adjacent cell indices
   std::vector<int> neighbors = {-1, 1};
@@ -611,7 +613,7 @@ SmoothParticleHydro::getAdjacentCellIndices<1>(const IntVec& cell,
 template <>
 std::vector<int>
 SmoothParticleHydro::getAdjacentCellIndices<2>(const IntVec& cell,
-                                               const IntVec& numGridCells)
+                                               const IntVec& numGridCells) const
 {
   std::vector<int> neighbors = {-1, 1};
   int nx = numGridCells.x();
@@ -636,7 +638,7 @@ SmoothParticleHydro::getAdjacentCellIndices<2>(const IntVec& cell,
 template <>
 std::vector<int>
 SmoothParticleHydro::getAdjacentCellIndices<3>(const IntVec& cell,
-                                               const IntVec& numGridCells)
+                                               const IntVec& numGridCells) const
 {
   std::vector<int> neighbors = {-1, 1};
   int nx = numGridCells.x();
@@ -857,6 +859,28 @@ SmoothParticleHydro::updateSPHLeapFrogVelocity(const REAL& delT)
   }
 } // end updateSPHLeapFrogVelocity
 
+
+// Create the writer
+void 
+SmoothParticleHydro::createOutputWriter(const std::string& outputFolder, 
+                                 const int& iter) 
+{
+  bool writeVTK = true;
+  if (writeVTK) {
+    d_writer = 
+      std::make_unique<dem::OutputVTK<SPHParticlePArray> >(outputFolder, iter);
+  } else {
+    d_writer = 
+      std::make_unique<dem::OutputTecplot<SPHParticlePArray> >(outputFolder, iter);
+  }
+}
+
+void
+SmoothParticleHydro::writeParticlesToFile(int frame) const
+{
+  d_writer->writeParticles(&d_allSPHParticleVec, frame);
+}
+
 void
 SmoothParticleHydro::printSPHParticle(const char* str) const
 {
@@ -910,9 +934,21 @@ SmoothParticleHydro::printSPHParticle(const char* str) const
 }
 
 namespace sph {
+
+template void
+SmoothParticleHydro::updateParticleInteractions<2>(const Box& allContainer,
+  const REAL& bufferWidth, const REAL& ghostWidth, const REAL& kernelSize,
+  const REAL& smoothLength);
+
+template void
+SmoothParticleHydro::updateParticleInteractions<3>(const Box& allContainer,
+  const REAL& bufferWidth, const REAL& ghostWidth, const REAL& kernelSize,
+  const REAL& smoothLength);
+
 template void
 SmoothParticleHydro::assignParticlesToPatchGrid<2>(const Box& container,
   const REAL& bufferWidth, const REAL& ghostWidth, const REAL& kernelSize);
+
 template void
 SmoothParticleHydro::assignParticlesToPatchGrid<3>(const Box& container,
   const REAL& bufferWidth, const REAL& ghostWidth, const REAL& kernelSize);

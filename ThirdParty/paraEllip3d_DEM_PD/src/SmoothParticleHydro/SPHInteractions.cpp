@@ -250,3 +250,12 @@ SPHInteractions::updateInteractionBoundaryFree(SPHParticleP& boundary_part_a,
     (d_interact.vel_a_b_free) * d_kernel.Wb_free_a / d_interact.rho_av;
   free_part_b->incVelocityCorrection(delta_b);
 }
+
+namespace sph {
+  template void 
+  SPHInteractions::computeInteractionKernel<1>(const REAL& smoothLength);
+  template void 
+  SPHInteractions::computeInteractionKernel<2>(const REAL& smoothLength);
+  template void 
+  SPHInteractions::computeInteractionKernel<3>(const REAL& smoothLength);
+}

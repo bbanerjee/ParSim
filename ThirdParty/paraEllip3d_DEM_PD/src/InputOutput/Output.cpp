@@ -70,10 +70,10 @@ Output::createFileNames()
     << std::setfill('0') << std::setw(5) << d_outputIteration;
   d_boundaryFileName = boundaryOutputFile.str();
 
-  std::ostringstream gridOutputFile;
-  gridOutputFile << folderName << "/grid_"
+  std::ostringstream patchOutputFile;
+  patchOutputFile << folderName << "/patchGrid_"
     << std::setfill('0') << std::setw(5) << d_outputIteration;
-  d_gridFileName = gridOutputFile.str();
+  d_patchFileName = patchOutputFile.str();
 
   std::ostringstream particleOutputFile;
   particleOutputFile << folderName << "/particle_"
@@ -96,7 +96,7 @@ Output::createFileNames()
   d_bdryContactFileName = bdryContactOutputFile.str();
 
   //std::cout << "createFileNames: Domain file name = " << d_domainFileName << "\n";
-  //std::cout << "createFileNames: Grid file name = " << d_gridFileName << "\n";
+  //std::cout << "createFileNames: Grid file name = " << d_patchFileName << "\n";
   //std::cout << "createFileNames: DEMParticle file name = " << d_particleFileName << "\n";
 }
 
@@ -106,7 +106,7 @@ Output::updateFileNames(const int& iteration, const std::string& extension) {
   createFileNames();
   d_domainFileName += extension;
   d_boundaryFileName += extension;
-  d_gridFileName += extension;
+  d_patchFileName += extension;
   d_particleFileName += extension;
   d_periParticleFileName += extension;
   d_sphParticleFileName += extension;

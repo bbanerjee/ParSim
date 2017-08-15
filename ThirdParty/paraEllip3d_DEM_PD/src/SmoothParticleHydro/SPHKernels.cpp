@@ -135,3 +135,53 @@ SPHKernels::computeGradientQuinticSplineKernel(const REAL& qval,
   } 
   return gradient;
 }
+
+namespace sph {
+
+template REAL 
+SPHKernels::minQuinticSplineKernel<1>(const REAL& smoothLength) const;
+template REAL 
+SPHKernels::minQuinticSplineKernel<2>(const REAL& smoothLength) const;
+template REAL 
+SPHKernels::minQuinticSplineKernel<3>(const REAL& smoothLength) const;
+
+template REAL 
+SPHKernels::quinticSplineKernel<1>(const dem::Vec& pos_a,
+  const dem::Vec& pos_b, const REAL& smoothLength) const;
+template REAL 
+SPHKernels::quinticSplineKernel<2>(const dem::Vec& pos_a,
+  const dem::Vec& pos_b, const REAL& smoothLength) const;
+template REAL 
+SPHKernels::quinticSplineKernel<3>(const dem::Vec& pos_a,
+  const dem::Vec& pos_b, const REAL& smoothLength) const;
+
+template REAL 
+SPHKernels::quinticSplineKernel<1>(const REAL& dist_ab,
+  const REAL& smoothLength) const;
+template REAL 
+SPHKernels::quinticSplineKernel<2>(const REAL& dist_ab,
+  const REAL& smoothLength) const;
+template REAL 
+SPHKernels::quinticSplineKernel<3>(const REAL& dist_ab,
+  const REAL& smoothLength) const;
+
+template dem::Vec 
+SPHKernels::gradientQuinticSplineKernel<1>(const dem::Vec& pos_a,
+  const dem::Vec& pos_b, const REAL& smoothLength) const;
+template dem::Vec 
+SPHKernels::gradientQuinticSplineKernel<2>(const dem::Vec& pos_a,
+  const dem::Vec& pos_b, const REAL& smoothLength) const;
+template dem::Vec 
+SPHKernels::gradientQuinticSplineKernel<3>(const dem::Vec& pos_a,
+  const dem::Vec& pos_b, const REAL& smoothLength) const;
+
+template dem::Vec 
+SPHKernels::gradientQuinticSplineKernel<1>(const dem::Vec& vec_ab,
+  const REAL& dist_ab, const REAL& smoothLength) const;
+template dem::Vec 
+SPHKernels::gradientQuinticSplineKernel<2>(const dem::Vec& vec_ab,
+  const REAL& dist_ab, const REAL& smoothLength) const;
+template dem::Vec 
+SPHKernels::gradientQuinticSplineKernel<3>(const dem::Vec& vec_ab,
+  const REAL& dist_ab, const REAL& smoothLength) const;
+}

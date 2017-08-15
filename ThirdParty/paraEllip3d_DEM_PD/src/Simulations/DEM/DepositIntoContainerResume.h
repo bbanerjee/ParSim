@@ -14,6 +14,11 @@ public:
     std::cout << "**ERROR** Execute with DEM + PD. "
               << "Should not be called in DepositIntoContainerResume.\n";
   }
+  virtual void execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
+  {
+    std::cout << "**ERROR** Execute with DEM + SPH. "
+              << "Should not be called in DepositIntoContainerResume.\n";
+  }
 };
 }
 

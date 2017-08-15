@@ -41,7 +41,7 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
     dem->createOutputWriter(outputFolder, iterSnap-1);
 
     dem->writeBoundaryToFile();
-    dem->writeGridToFile();
+    dem->writePatchGridToFile();
     dem->writeParticlesToFile(iterSnap);
     dem->printBdryContact();
     dem->printBoundary();
@@ -77,7 +77,7 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
     dem->updateParticle();
     dem->gatherBdryContact(); // must call before updateBoundary
     dem->updateBoundary(sigmaConf, "plnstrn");
-    dem->updateGrid();
+    dem->updatePatchBox();
 
     if (iteration % (netStep / netSnap) == 0) {
       time1 = MPI_Wtime();
@@ -89,7 +89,7 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
         dem->writeBoundaryToFile();
-        dem->writeGridToFile();
+        dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
         dem->printBdryContact();
         dem->printBoundary();

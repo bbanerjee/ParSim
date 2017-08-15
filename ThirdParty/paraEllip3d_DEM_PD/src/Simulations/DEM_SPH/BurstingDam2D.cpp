@@ -1,42 +1,67 @@
 #include <Simulations/DEM_SPH/BurstingDam2D.h>
+#include <SmoothParticleHydro/SPHParticleCreator.h>
 #include <Core/Util/Utility.h>
 
+using namespace dem;
+
 void 
-BurstingDam2D::execute(DiscreteElements* dem, SmoothParticleHydro* sph) 
+BurstingDam2D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph) 
 {     
+  std::ofstream demProgressInf;
+  std::ofstream sphProgressInf;
+
+  REAL ghostWidth = 0.0;
+  REAL bufferLength = 0.0;
+
   if (dem->getMPIRank() == 0) {
-    auto boundaryFile = InputParameters::get().datafile["boundaryFile"];
-    auto particleFile = InputParameters::get().datafile["particleFile"];
+    auto boundaryFile = InputParameter::get().datafile["boundaryFile"];
     dem->readBoundary(boundaryFile);
-    dem->readParticle(particleFile);
-    sph->generateSPHParticle2D();
-    dem->openDepositProg(progressInf, "deposit_progress");
-    sph->openSPHTecplot(sphTecplotInf, "sph_results.dat");
+
+    auto particleFile = InputParameter::get().datafile["particleFile"];
+    dem->readParticles(particleFile);
+
+    Box container = dem->getAllContainer();
+    DEMParticlePArray demParticles= dem->getAllDEMParticleVec();
+    sph::SPHParticleCreator creator;
+    sph::SPHParticlePArray sphParticles = 
+      creator.generateSPHParticleDam<2>(container, demParticles);
+    sph->setAllSPHParticleVec(sphParticles);
+
+    dem->openDepositProg(demProgressInf, "deposit_progress");
+    //sph->openSPHTecplot(sphTecplotInf, "sph_results.dat");
+
+    ghostWidth = dem->getGradation().getPtclMaxRadius() * 2;
+    bufferLength = dem->getPtclMaxZ(dem->getAllDEMParticleVec()) +
+                   dem->getGradation().getPtclMaxRadius();
   }
 
-  // scatter particles only once; also updates grid for the first time
-  dem->scatterDEMSPHParticle(); 
-  pd->scatterSPHParticle(dem->getAllContainer()); 
-  dem->calcNeighborRanks();
+  // Have to broadcast the ghostWidth and bufferLength to all processes
+  // (**TODO** Think of a better way to do this)
+  broadcast(dem->getMPIWorld(), ghostWidth, 0);
+  broadcast(dem->getMPIWorld(), bufferLength, 0);
+
+  // scatter particles only once; also updates patchGrid for the first time
+  dem->scatterParticle(); 
+  sph->scatterSPHParticle(dem->getAllContainer(), ghostWidth, bufferLength); 
 
   // sph parameters
-  auto gravAccel = util::getParam<REAL>("gravAccel");
-  auto gravScale = util::getParam<REAL>("gravScale");
+  //auto gravAccel = util::getParam<REAL>("gravAccel");
+  //auto gravScale = util::getParam<REAL>("gravScale");
   auto waterLength = util::getParam<REAL>("waterLength");
   auto nSPHPoint = util::getParam<std::size_t>("nSPHPoint");
   
-  REAL D = 5.0*gravAccel*gravScale*waterLength;
+  //REAL D = 5.0*gravAccel*gravScale*waterLength;
   REAL space_interval = waterLength/static_cast<REAL>(nSPHPoint-1);
   REAL smoothLength = 1.5*space_interval;
   REAL kernelSize = 3.0*smoothLength;
-  REAL sphCellSize = dem->getGradation().getPtclMaxRadius() + kernelSize;
-  REAL one_devide_h = 1.0/smoothLength;
-  REAL factor_kernel = 7.0/(478.0*Pi*smoothLength*smoothLength);
-  REAL factor_kernel_gradient = factor_kernel/smoothLength;
-  REAL qmin = 0.7593;	// this is fixed for quintic kernel function
-  REAL Wqmin = sph->kernelFunction(qmin);
-  REAL p1 = 4;	// for the Lennard-Jones boundary forces 
-  REAL p2 = 2;
+  //REAL sphCellSize = dem->getGradation().getPtclMaxRadius() + kernelSize;
+  // REAL one_devide_h = 1.0/smoothLength;
+  // REAL factor_kernel = 7.0/(478.0*Pi*smoothLength*smoothLength);
+  // REAL factor_kernel_gradient = factor_kernel/smoothLength;
+  // REAL qmin = 0.7593;	// this is fixed for quintic kernel function
+  // REAL Wqmin = sph->kernelFunction(qmin);
+  // REAL p1 = 4;	// for the Lennard-Jones boundary forces 
+  // REAL p2 = 2;
 
   auto startStep = util::getParam<std::size_t>("startStep");
   auto endStep = util::getParam<std::size_t>("endStep");
@@ -51,47 +76,55 @@ BurstingDam2D::execute(DiscreteElements* dem, SmoothParticleHydro* sph)
   REAL timeIncr  = timeStep * netStep;
   REAL timeTotal = timeAccrued + timeStep * netStep;
 
-  REAL iteration = startStep;
-  std::size_t iterSnap = startSnap;
+  auto iteration = startStep;
+  auto iterSnap = startSnap;
   std::string outputFolder(".");
   if (dem->getMPIRank() == 0) {
 
-    / Create the output writer in the master process
+    // Create the output writer in the master process
     // <outputFolder> rigidInc.pe3d </outputFolder>
     auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);
+    sph->createOutputWriter(outputFolder, iterSnap-1);
 
     dem->writeBoundaryToFile();
-    dem->writeGridToFile();
+    dem->writePatchGridToFile();
     dem->writeParticlesToFile(iterSnap);
     dem->printBdryContact();
-    sph->printSPHTecplot(sphTecplotInf, iterSnap-1);
+    //sph->printSPHTecplot(sphTecplotInf, iterSnap-1);
+    sph->writeParticlesToFile(iterSnap);
+    //sph->printSPHProgress(sphProgressInf, 0);
   }
 
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
-  std::cerr << "Proc = " << s_mpiRank << " outputFolder = " << outputFolder << "\n";
+  std::cerr << "Proc = " << dem->getMPIRank() << " outputFolder = " << outputFolder << "\n";
+
+  dem->commuParticle();
+
+  sph->commuSPHParticle(iteration, dem->getGradation().getPtclMaxRadius());
 
   // initialization SPH velocity based on equation(4.3) in 
   // http://www.artcompsci.org/vol_1/v1_web/node34.html
-  sph->initialSPHVelocity2D();	
+  sph->initializeSPHVelocity<2>(timeStep);	
 
   while (timeAccrued < timeTotal) { 
 
     bool toCheckTime = (iteration + 1) % (netStep / netSnap) == 0;
 
     // update position and density of SPH particles based on equation (4.1)
-    sph->updateSPHLeapFrogPositionDensity();
-    sph->migrateSPHParticle();
+    sph->updateSPHLeapFrogPositionDensity(timeStep);
 
-    REAL commuT = migraT = gatherT = totalT = 0;  
-    REAL time1 = time2 = time3 = 0;  
+    sph->migrateSPHParticle(iteration);
+
+    REAL commuT = 0, migraT = 0, gatherT = 0, totalT = 0;  
+    REAL time1 = 0, time2 = 0, time3 = 0;  
     REAL time0 = MPI_Wtime();
 
     dem->commuParticle();
-    sph->commuSPHParticle();
+    sph->commuSPHParticle(iteration, ghostWidth);
 
     if (toCheckTime) {
       time1 = MPI_Wtime(); 
@@ -109,42 +142,20 @@ BurstingDam2D::execute(DiscreteElements* dem, SmoothParticleHydro* sph)
 
     dem->dragForce();
 
-    sph->calculateSPHDensityDotVelocityDotLinkedList2D();
-
-    // For the 2D simulation
-    // fix the y for all SPH points
-    for (auto& particle : sph->getSPHParticleVec()) {
-      switch (particle->getType()) {
-
-      // free sph particle
-      case 1: 
-        particle->fixY();
-        break;
-
-      // ghost sph particle
-      case 2: 
-        break;
-
-      // boundary sph particle
-      case 3: 
-        particle->fixXYZ();
-        break;
-
-      default:
-        std::cout << "SPH particle type of pta should be 1, 2 or 3!" << std::endl;
-        exit(-1);
-      } // switch
-    }
+    sph->updateParticleInteractions<2>(dem->getAllContainer(),
+                                       bufferLength, ghostWidth,
+                                       kernelSize, smoothLength);
+                                       
 
     dem->updateParticle();   
 
     // update velocity of SPH particles based on equation (4.2)
-    sph->updateSPHLeapFrogVelocity();	
+    sph->updateSPHLeapFrogVelocity(timeStep);	
 
-    // updateGridMaxZ();	// do not update grid in DEM-SPH coupling model
-    // updateGridMaxZ() is for deposition or explosion. If they go out of side walls, particles are discarded.
-    // updateGrid() updates all six directions, thus side walls may "disappear" if particles go far out of side walls 
-    // and cause some grids to extrude out of side walls.
+    // updatePatchBoxMaxZ();	// do not update patchGrid in DEM-SPH coupling model
+    // updatePatchBoxMaxZ() is for deposition or explosion. If they go out of side walls, particles are discarded.
+    // updatePatchBox() updates all six directions, thus side walls may "disappear" if particles go far out of side walls 
+    // and cause some patchGrids to extrude out of side walls.
 
     timeCount += timeStep;
     timeAccrued += timeStep;
@@ -166,23 +177,18 @@ BurstingDam2D::execute(DiscreteElements* dem, SmoothParticleHydro* sph)
 
       if (dem->getMPIRank() == 0) {
         dem->writeBoundaryToFile();
-        dem->writeGridToFile();
+        dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
         dem->printBdryContact();
-        sph->printSPHTecplot(sphTecplotInf, iterSnap);
-        printDepositProg(progressInf);
+        sph->writeParticlesToFile(iterSnap);
+        //sph->printSPHTecplot(sphTecplotInf, iterSnap);
+        dem->printDepositProg(demProgressInf);
       }
-      printContact(combine(outputFolder, "bursting_contact_", iterSnap, 3));
+      dem->printContact(util::combine(outputFolder, "bursting_contact_", iterSnap, 3));
     
       timeCount = 0;
       ++iterSnap;
     }
-
-    // late release because printContact refers to received particles
-    dem->releaseRecvParticle(); 
-    // late release since calculateSPHDensityDotVelocityDotLinkedList3D 
-    // will use these communicated sph particles
-    sph->releaseRecvSPHParticle(); 
 
     if (toCheckTime) {
       time1 = MPI_Wtime();
@@ -207,7 +213,7 @@ BurstingDam2D::execute(DiscreteElements* dem, SmoothParticleHydro* sph)
   } 
 
   if (dem->getMPIRank() == 0) {
-    dem->closeProg(progressInf);
+    dem->closeProg(demProgressInf);
   }
 }
 

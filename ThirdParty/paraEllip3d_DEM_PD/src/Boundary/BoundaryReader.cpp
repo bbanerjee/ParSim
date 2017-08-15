@@ -12,7 +12,7 @@ using json = nlohmann::json;
 
 void
 BoundaryReader::read(const std::string& inputFileName, Box& container,
-                     Box& grid, BoundaryPArray& boundaries) const
+                     Box& patchBox, BoundaryPArray& boundaries) const
 {
   std::ifstream ifs(inputFileName);
   if (!ifs) {
@@ -25,9 +25,9 @@ BoundaryReader::read(const std::string& inputFileName, Box& container,
   REAL x1, y1, z1, x2, y2, z2;
   ifs >> x1 >> y1 >> z1 >> x2 >> y2 >> z2;
   container.set(x1, y1, z1, x2, y2, z2);
-  // compute grid assumed to be the same as container, change in
+  // compute patchGrid assumed to be the same as container, change in
   // scatterParticle() if necessary.
-  grid.set(x1, y1, z1, x2, y2, z2);
+  patchBox.set(x1, y1, z1, x2, y2, z2);
 
   boundaries.clear();
   std::size_t boundaryNum;
@@ -45,7 +45,7 @@ BoundaryReader::read(const std::string& inputFileName, Box& container,
 
   /*
   //std::cout << "container = " << container << "\n";
-  //std::cout << "grid = " << grid << "\n";
+  //std::cout << "patchBox = " << patchBox << "\n";
   //std::cout << " Boundaries = \n";
   for (auto boundary : boundaries) {
     boundary->print(//std::cout);
@@ -56,7 +56,7 @@ BoundaryReader::read(const std::string& inputFileName, Box& container,
 
 bool
 BoundaryReader::readXML(const std::string& inputFileName, Box& container,
-                        Box& grid, BoundaryPArray& boundaries) const
+                        Box& patchBox, BoundaryPArray& boundaries) const
 {
   // Read the input file
   zen::XmlDoc doc;
@@ -122,9 +122,9 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
   container.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
                 boxMax.z());
 
-  // compute grid assumed to be the same as container, change in
+  // compute patchGrid assumed to be the same as container, change in
   // scatterParticle() if necessary.
-  grid.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
+  patchBox.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
            boxMax.z());
 
   BoundaryType type;
@@ -152,7 +152,7 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
 
   /*
   //std::cout << "container = " << container << "\n";
-  //std::cout << "grid = " << grid << "\n";
+  //std::cout << "patchBox = " << patchBox << "\n";
   //std::cout << " Boundaries = \n";
   for (auto boundary : boundaries) {
     boundary->print(//std::cout);
@@ -165,7 +165,7 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
 
 bool
 BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
-                         Box& grid, BoundaryPArray& boundaries) const
+                         Box& patchBox, BoundaryPArray& boundaries) const
 {
   // Create an input ifstream
   std::ifstream ifs(inputFileName);
@@ -249,9 +249,9 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
   container.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
                 boxMax.z());
 
-  // compute grid assumed to be the same as container, change in
+  // compute patchGrid assumed to be the same as container, change in
   // scatterParticle() if necessary.
-  grid.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
+  patchBox.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
            boxMax.z());
 
   BoundaryType type;

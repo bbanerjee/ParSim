@@ -7,7 +7,7 @@
       openDepositProg(progressInf, "deposit_progress");
       openSPHTecplot(sphTecplotInf, "sph_results.dat");
     }
-    scatterDEMSPHParticle(); // scatter particles only once; also updates grid for the first time
+    scatterDEMSPHParticle(); // scatter particles only once; also updates patchGrid for the first time
     calcNeighborRanks();
 
     std::size_t startStep = static_cast<std::size_t> (dem::Parameter::getSingleton().parameter["startStep"]);
@@ -42,7 +42,7 @@
     /**/REAL timeTotal = timeAccrued + timeStep * netStep;
     if (mpiRank == 0) {
       plotBoundary(strcat(combineString(cstr0, "bursting_bdryplot_", iterSnap - 1, 3), ".dat"));
-      plotGrid(strcat(combineString(cstr0, "bursting_gridplot_", iterSnap - 1, 3), ".dat"));
+      plotGrid(strcat(combineString(cstr0, "bursting_patchGridplot_", iterSnap - 1, 3), ".dat"));
       printParticle(combineString(cstr0, "bursting_particle_", iterSnap - 1, 3));
       printBdryContact(combineString(cstr0, "bursting_bdrycntc_", iterSnap -1, 3));
       printSPHTecplot(sphTecplotInf, iterSnap-1);
@@ -82,10 +82,10 @@
       updateParticle();   
       updateSPHLeapFrogVelocity();	// update velocity of SPH particles based on equation (4.2)
 
-//      updateGridMaxZ();	// do not update grid in DEM-SPH coupling model
-      // updateGridMaxZ() is for deposition or explosion. If they go out of side walls, particles are discarded.
-      // updateGrid() updates all six directions, thus side walls may "disappear" if particles go far out of side walls 
-      // and cause some grids to extrude out of side walls.
+//      updatePatchBoxMaxZ();	// do not update patchGrid in DEM-SPH coupling model
+      // updatePatchBoxMaxZ() is for deposition or explosion. If they go out of side walls, particles are discarded.
+      // updatePatchBox() updates all six directions, thus side walls may "disappear" if particles go far out of side walls 
+      // and cause some patchGrids to extrude out of side walls.
 
       /**/timeCount += timeStep;
       /**/timeAccrued += timeStep;
@@ -99,7 +99,7 @@
 	char cstr[50];
 	if (mpiRank == 0) {
 	  plotBoundary(strcat(combineString(cstr, "bursting_bdryplot_", iterSnap, 3), ".dat"));
-	  plotGrid(strcat(combineString(cstr, "bursting_gridplot_", iterSnap, 3), ".dat"));
+	  plotGrid(strcat(combineString(cstr, "bursting_patchGridplot_", iterSnap, 3), ".dat"));
 	  printParticle(combineString(cstr, "bursting_particle_", iterSnap, 3));
 	  printBdryContact(combineString(cstr, "bursting_bdrycntc_", iterSnap, 3));
 	  printDepositProg(progressInf);

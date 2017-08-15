@@ -14,7 +14,7 @@ public:
   ~SPHParticleCreator() = default;
 
   template <int dim>
-  SPHParticlePArray generateSPHParticle(const dem::Box& allContainer,
+  SPHParticlePArray generateSPHParticleDam(const dem::Box& allContainer,
                            const dem::DEMParticlePArray& allDEMParticles);
 
   template <int dim>

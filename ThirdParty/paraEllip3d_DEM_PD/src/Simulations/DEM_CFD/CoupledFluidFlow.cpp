@@ -49,7 +49,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);
     dem->writeBoundaryToFile();
-    dem->writeGridToFile();
+    dem->writePatchGridToFile();
     dem->writeParticlesToFile(iterSnap);
     dem->printBdryContact();
     /*3*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap - 1, 3) + ".dat");
@@ -90,7 +90,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
       dem->boundaryForce();
 
     dem->updateParticle();
-    dem->updateGridMaxZ();
+    dem->updatePatchBoxMaxZ();
 
     timeCount += timeStep;
     timeAccrued += timeStep;
@@ -105,7 +105,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
         dem->writeBoundaryToFile();
-        dem->writeGridToFile();
+        dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
         dem->printBdryContact();
         dem->printDepositProg(progressInf);

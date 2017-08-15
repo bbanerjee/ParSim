@@ -278,7 +278,7 @@ Assembly::deposit(const char* inputBoundary, const char* inputParticle)
     readParticle(inputParticle);
     openDepositProg(progressInf, "deposit_progress");
   }
-  scatterParticle(); // scatter particles only once; also updates grid for the
+  scatterParticle(); // scatter particles only once; also updates patchGrid for the
                      // first time
   calcNeighborRanks();
 
@@ -306,7 +306,7 @@ Assembly::deposit(const char* inputBoundary, const char* inputParticle)
   if (mpiRank == 0) {
     plotBoundary(strcat(
       combineString(cstr0, "deposit_bdryplot_", iterSnap - 1, 3), ".dat"));
-    plotGrid(strcat(combineString(cstr0, "deposit_gridplot_", iterSnap - 1, 3),
+    plotGrid(strcat(combineString(cstr0, "deposit_patchGridplot_", iterSnap - 1, 3),
                     ".dat"));
     printParticle(combineString(cstr0, "deposit_particle_", iterSnap - 1, 3));
     printBdryContact(
@@ -342,12 +342,12 @@ Assembly::deposit(const char* inputBoundary, const char* inputParticle)
     dragForce();
 
     updateParticle();
-    updateGridMaxZ();
-    // updateGridMaxZ() is for deposition or explosion. If they go out of side
+    updatePatchBoxMaxZ();
+    // updatePatchBoxMaxZ() is for deposition or explosion. If they go out of side
     // walls, particles are discarded.
-    // updateGrid() updates all six directions, thus side walls may "disappear"
+    // updatePatchBox() updates all six directions, thus side walls may "disappear"
     // if particles go far out of side walls
-    // and cause some grids to extrude out of side walls.
+    // and cause some patchGrids to extrude out of side walls.
 
     /**/ timeCount += timeStep;
     /**/ timeAccrued += timeStep;
@@ -366,7 +366,7 @@ Assembly::deposit(const char* inputBoundary, const char* inputParticle)
       if (mpiRank == 0) {
         plotBoundary(strcat(
           combineString(cstr, "deposit_bdryplot_", iterSnap, 3), ".dat"));
-        plotGrid(strcat(combineString(cstr, "deposit_gridplot_", iterSnap, 3),
+        plotGrid(strcat(combineString(cstr, "deposit_patchGridplot_", iterSnap, 3),
                         ".dat"));
         printParticle(combineString(cstr, "deposit_particle_", iterSnap, 3));
         printBdryContact(combineString(cstr, "deposit_bdrycntc_", iterSnap, 3));
@@ -502,7 +502,7 @@ Assembly::isotropic()
     plotBoundary(strcat(
       combineString(cstr0, "isotropic_bdryplot_", iterSnap - 1, 3), ".dat"));
     plotGrid(strcat(
-      combineString(cstr0, "isotropic_gridplot_", iterSnap - 1, 3), ".dat"));
+      combineString(cstr0, "isotropic_patchGridplot_", iterSnap - 1, 3), ".dat"));
     printParticle(combineString(cstr0, "isotropic_particle_", iterSnap - 1, 3));
     printBdryContact(
       combineString(cstr0, "isotropic_bdrycntc_", iterSnap - 1, 3));
@@ -533,7 +533,7 @@ Assembly::isotropic()
     updateParticle();
     gatherBdryContact(); // must call before updateBoundary
     updateBoundary(sigmaVar, "isotropic");
-    updateGrid();
+    updatePatchBox();
 
     if (iteration % (netStep / netSnap) == 0) {
       time1 = MPI_Wtime();
@@ -546,7 +546,7 @@ Assembly::isotropic()
       if (mpiRank == 0) {
         plotBoundary(strcat(
           combineString(cstr, "isotropic_bdryplot_", iterSnap, 3), ".dat"));
-        plotGrid(strcat(combineString(cstr, "isotropic_gridplot_", iterSnap, 3),
+        plotGrid(strcat(combineString(cstr, "isotropic_patchGridplot_", iterSnap, 3),
                         ".dat"));
         printParticle(combineString(cstr, "isotropic_particle_", iterSnap, 3));
         printBdryContact(
@@ -684,7 +684,7 @@ Assembly::odometer()
   if (mpiRank == 0) {
     plotBoundary(strcat(
       combineString(cstr0, "odometer_bdryplot_", iterSnap - 1, 3), ".dat"));
-    plotGrid(strcat(combineString(cstr0, "odometer_gridplot_", iterSnap - 1, 3),
+    plotGrid(strcat(combineString(cstr0, "odometer_patchGridplot_", iterSnap - 1, 3),
                     ".dat"));
     printParticle(combineString(cstr0, "odometer_particle_", iterSnap - 1, 3));
     printBdryContact(
@@ -716,7 +716,7 @@ Assembly::odometer()
     updateParticle();
     gatherBdryContact(); // must call before updateBoundary
     updateBoundary(sigmaVar, "odometer");
-    updateGrid();
+    updatePatchBox();
 
     if (iteration % (netStep / netSnap) == 0) {
       time1 = MPI_Wtime();
@@ -729,7 +729,7 @@ Assembly::odometer()
       if (mpiRank == 0) {
         plotBoundary(strcat(
           combineString(cstr, "odometer_bdryplot_", iterSnap, 3), ".dat"));
-        plotGrid(strcat(combineString(cstr, "odometer_gridplot_", iterSnap, 3),
+        plotGrid(strcat(combineString(cstr, "odometer_patchGridplot_", iterSnap, 3),
                         ".dat"));
         printParticle(combineString(cstr, "odometer_particle_", iterSnap, 3));
         printBdryContact(
@@ -835,7 +835,7 @@ Assembly::triaxial()
   if (mpiRank == 0) {
     plotBoundary(strcat(
       combineString(cstr0, "triaxial_bdryplot_", iterSnap - 1, 3), ".dat"));
-    plotGrid(strcat(combineString(cstr0, "triaxial_gridplot_", iterSnap - 1, 3),
+    plotGrid(strcat(combineString(cstr0, "triaxial_patchGridplot_", iterSnap - 1, 3),
                     ".dat"));
     printParticle(combineString(cstr0, "triaxial_particle_", iterSnap - 1, 3));
     printBdryContact(
@@ -870,7 +870,7 @@ Assembly::triaxial()
     updateParticle();
     gatherBdryContact(); // must call before updateBoundary
     updateBoundary(sigmaConf, "triaxial");
-    updateGrid();
+    updatePatchBox();
 
     if (iteration % (netStep / netSnap) == 0) {
       time1 = MPI_Wtime();
@@ -883,7 +883,7 @@ Assembly::triaxial()
       if (mpiRank == 0) {
         plotBoundary(strcat(
           combineString(cstr, "triaxial_bdryplot_", iterSnap, 3), ".dat"));
-        plotGrid(strcat(combineString(cstr, "triaxial_gridplot_", iterSnap, 3),
+        plotGrid(strcat(combineString(cstr, "triaxial_patchGridplot_", iterSnap, 3),
                         ".dat"));
         printParticle(combineString(cstr, "triaxial_particle_", iterSnap, 3));
         printBdryContact(
@@ -962,7 +962,7 @@ Assembly::planeStrain()
   if (mpiRank == 0) {
     plotBoundary(strcat(
       combineString(cstr0, "plnstrn_bdryplot_", iterSnap - 1, 3), ".dat"));
-    plotGrid(strcat(combineString(cstr0, "plnstrn_gridplot_", iterSnap - 1, 3),
+    plotGrid(strcat(combineString(cstr0, "plnstrn_patchGridplot_", iterSnap - 1, 3),
                     ".dat"));
     printParticle(combineString(cstr0, "plnstrn_particle_", iterSnap - 1, 3));
     printBdryContact(
@@ -997,7 +997,7 @@ Assembly::planeStrain()
     updateParticle();
     gatherBdryContact(); // must call before updateBoundary
     updateBoundary(sigmaConf, "plnstrn");
-    updateGrid();
+    updatePatchBox();
 
     if (iteration % (netStep / netSnap) == 0) {
       time1 = MPI_Wtime();
@@ -1010,7 +1010,7 @@ Assembly::planeStrain()
       if (mpiRank == 0) {
         plotBoundary(strcat(
           combineString(cstr, "plnstrn_bdryplot_", iterSnap, 3), ".dat"));
-        plotGrid(strcat(combineString(cstr, "plnstrn_gridplot_", iterSnap, 3),
+        plotGrid(strcat(combineString(cstr, "plnstrn_patchGridplot_", iterSnap, 3),
                         ".dat"));
         printParticle(combineString(cstr, "plnstrn_particle_", iterSnap, 3));
         printBdryContact(combineString(cstr, "plnstrn_bdrycntc_", iterSnap, 3));
@@ -1119,7 +1119,7 @@ Assembly::trueTriaxial()
     plotBoundary(strcat(
       combineString(cstr0, "trueTriaxial_bdryplot_", iterSnap - 1, 3), ".dat"));
     plotGrid(strcat(
-      combineString(cstr0, "trueTriaxial_gridplot_", iterSnap - 1, 3), ".dat"));
+      combineString(cstr0, "trueTriaxial_patchGridplot_", iterSnap - 1, 3), ".dat"));
     printParticle(
       combineString(cstr0, "trueTriaxial_particle_", iterSnap - 1, 3));
     printBdryContact(
@@ -1172,7 +1172,7 @@ Assembly::trueTriaxial()
       updateBoundary(sigmaZ, "trueTriaxial", sigmaX, sigmaY);
     }
 
-    updateGrid();
+    updatePatchBox();
 
     if (iteration % (netStep / netSnap) == 0) {
       time1 = MPI_Wtime();
@@ -1186,7 +1186,7 @@ Assembly::trueTriaxial()
         plotBoundary(strcat(
           combineString(cstr, "trueTriaxial_bdryplot_", iterSnap, 3), ".dat"));
         plotGrid(strcat(
-          combineString(cstr, "trueTriaxial_gridplot_", iterSnap, 3), ".dat"));
+          combineString(cstr, "trueTriaxial_patchGridplot_", iterSnap, 3), ".dat"));
         printParticle(
           combineString(cstr, "trueTriaxial_particle_", iterSnap, 3));
         printBdryContact(
@@ -1401,7 +1401,7 @@ Assembly::coupleWithGas()
   if (mpiRank == 0) {
     plotBoundary(strcat(
       combineString(cstr0, "couple_bdryplot_", iterSnap - 1, 3), ".dat"));
-    plotGrid(strcat(combineString(cstr0, "couple_gridplot_", iterSnap - 1, 3),
+    plotGrid(strcat(combineString(cstr0, "couple_patchGridplot_", iterSnap - 1, 3),
                     ".dat"));
     printParticle(combineString(cstr0, "couple_particle_", iterSnap - 1, 3));
     printBdryContact(combineString(cstr0, "couple_bdrycntc_", iterSnap - 1, 3));
@@ -1441,7 +1441,7 @@ Assembly::coupleWithGas()
       boundaryForce();
 
     updateParticle();
-    updateGridMaxZ();
+    updatePatchBoxMaxZ();
 
     timeCount += timeStep;
     // timeAccrued += timeStep; // note fluid.runOneStep() might change timeStep
@@ -1459,7 +1459,7 @@ Assembly::coupleWithGas()
         plotBoundary(
           strcat(combineString(cstr, "couple_bdryplot_", iterSnap, 3), ".dat"));
         plotGrid(
-          strcat(combineString(cstr, "couple_gridplot_", iterSnap, 3), ".dat"));
+          strcat(combineString(cstr, "couple_patchGridplot_", iterSnap, 3), ".dat"));
         printParticle(combineString(cstr, "couple_particle_", iterSnap, 3));
         printBdryContact(combineString(cstr, "couple_bdrycntc_", iterSnap, 3));
         printDepositProg(progressInf);
@@ -1796,14 +1796,14 @@ Assembly::scatterParticle()
 {
   // partition particles and send to each process
   if (mpiRank == 0) { // process 0
-    setGrid(
-      Rectangle(grid.getMinCorner().getX(), grid.getMinCorner().getY(),
-                grid.getMinCorner().getZ(), grid.getMaxCorner().getX(),
-                grid.getMaxCorner().getY(),
+    setPatchBox(
+      Rectangle(d_demPatchBox.getMinCorner().getX(), d_demPatchBox.getMinCorner().getY(),
+                d_demPatchBox.getMinCorner().getZ(), d_demPatchBox.getMaxCorner().getX(),
+                d_demPatchBox.getMaxCorner().getY(),
                 getPtclMaxZ(allParticleVec) + gradation.getPtclMaxRadius()));
 
-    Vec v1 = grid.getMinCorner();
-    Vec v2 = grid.getMaxCorner();
+    Vec v1 = d_demPatchBox.getMinCorner();
+    Vec v2 = d_demPatchBox.getMaxCorner();
     Vec vspan = v2 - v1;
 
     boost::mpi::request* reqs = new boost::mpi::request[mpiSize - 1];
@@ -1845,7 +1845,7 @@ Assembly::scatterParticle()
   broadcast(boostWorld, gradation, 0);
   broadcast(boostWorld, boundaryVec, 0);
   broadcast(boostWorld, allContainer, 0);
-  broadcast(boostWorld, grid, 0);
+  broadcast(boostWorld, patchBox, 0);
 }
 
 bool
@@ -2073,93 +2073,93 @@ Assembly::calcNeighborRanks()
 }
 
 void
-Assembly::updateGrid()
+Assembly::updatePatchBox()
 {
-  updateGridMinX();
-  updateGridMaxX();
-  updateGridMinY();
-  updateGridMaxY();
-  updateGridMinZ();
-  updateGridMaxZ();
+  updatePatchBoxMinX();
+  updatePatchBoxMaxX();
+  updatePatchBoxMinY();
+  updatePatchBoxMaxY();
+  updatePatchBoxMinZ();
+  updatePatchBoxMaxZ();
 }
 
 void
-Assembly::updateGridMinX()
+Assembly::updatePatchBoxMinX()
 {
   REAL pMinX = getPtclMinX(particleVec);
   REAL minX = 0;
   MPI_Allreduce(&pMinX, &minX, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
 
-  setGrid(Rectangle(minX - gradation.getPtclMaxRadius(),
-                    grid.getMinCorner().getY(), grid.getMinCorner().getZ(),
-                    grid.getMaxCorner().getX(), grid.getMaxCorner().getY(),
-                    grid.getMaxCorner().getZ()));
+  setPatchBox(Rectangle(minX - gradation.getPtclMaxRadius(),
+                    d_demPatchBox.getMinCorner().getY(), d_demPatchBox.getMinCorner().getZ(),
+                    d_demPatchBox.getMaxCorner().getX(), d_demPatchBox.getMaxCorner().getY(),
+                    d_demPatchBox.getMaxCorner().getZ()));
 }
 
 void
-Assembly::updateGridMaxX()
+Assembly::updatePatchBoxMaxX()
 {
   REAL pMaxX = getPtclMaxX(particleVec);
   REAL maxX = 0;
   MPI_Allreduce(&pMaxX, &maxX, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
 
-  setGrid(Rectangle(grid.getMinCorner().getX(), grid.getMinCorner().getY(),
-                    grid.getMinCorner().getZ(),
+  setPatchBox(Rectangle(d_demPatchBox.getMinCorner().getX(), d_demPatchBox.getMinCorner().getY(),
+                    d_demPatchBox.getMinCorner().getZ(),
                     maxX + gradation.getPtclMaxRadius(),
-                    grid.getMaxCorner().getY(), grid.getMaxCorner().getZ()));
+                    d_demPatchBox.getMaxCorner().getY(), d_demPatchBox.getMaxCorner().getZ()));
 }
 
 void
-Assembly::updateGridMinY()
+Assembly::updatePatchBoxMinY()
 {
   REAL pMinY = getPtclMinY(particleVec);
   REAL minY = 0;
   MPI_Allreduce(&pMinY, &minY, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
 
-  setGrid(Rectangle(grid.getMinCorner().getX(),
+  setPatchBox(Rectangle(d_demPatchBox.getMinCorner().getX(),
                     minY - gradation.getPtclMaxRadius(),
-                    grid.getMinCorner().getZ(), grid.getMaxCorner().getX(),
-                    grid.getMaxCorner().getY(), grid.getMaxCorner().getZ()));
+                    d_demPatchBox.getMinCorner().getZ(), d_demPatchBox.getMaxCorner().getX(),
+                    d_demPatchBox.getMaxCorner().getY(), d_demPatchBox.getMaxCorner().getZ()));
 }
 
 void
-Assembly::updateGridMaxY()
+Assembly::updatePatchBoxMaxY()
 {
   REAL pMaxY = getPtclMaxY(particleVec);
   REAL maxY = 0;
   MPI_Allreduce(&pMaxY, &maxY, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
 
-  setGrid(Rectangle(grid.getMinCorner().getX(), grid.getMinCorner().getY(),
-                    grid.getMinCorner().getZ(), grid.getMaxCorner().getX(),
+  setPatchBox(Rectangle(d_demPatchBox.getMinCorner().getX(), d_demPatchBox.getMinCorner().getY(),
+                    d_demPatchBox.getMinCorner().getZ(), d_demPatchBox.getMaxCorner().getX(),
                     maxY + gradation.getPtclMaxRadius(),
-                    grid.getMaxCorner().getZ()));
+                    d_demPatchBox.getMaxCorner().getZ()));
 }
 
 void
-Assembly::updateGridMinZ()
+Assembly::updatePatchBoxMinZ()
 {
   REAL pMinZ = getPtclMinZ(particleVec);
   REAL minZ = 0;
   MPI_Allreduce(&pMinZ, &minZ, 1, MPI_DOUBLE, MPI_MIN, mpiWorld);
 
-  setGrid(Rectangle(grid.getMinCorner().getX(), grid.getMinCorner().getY(),
+  setPatchBox(Rectangle(d_demPatchBox.getMinCorner().getX(), d_demPatchBox.getMinCorner().getY(),
                     minZ - gradation.getPtclMaxRadius(),
-                    grid.getMaxCorner().getX(), grid.getMaxCorner().getY(),
-                    grid.getMaxCorner().getZ()));
+                    d_demPatchBox.getMaxCorner().getX(), d_demPatchBox.getMaxCorner().getY(),
+                    d_demPatchBox.getMaxCorner().getZ()));
 }
 
 void
-Assembly::updateGridMaxZ()
+Assembly::updatePatchBoxMaxZ()
 {
-  // update compute grids adaptively due to particle motion
+  // update compute patchGrids adaptively due to particle motion
   REAL pMaxZ = getPtclMaxZ(particleVec);
   REAL maxZ = 0;
   MPI_Allreduce(&pMaxZ, &maxZ, 1, MPI_DOUBLE, MPI_MAX, mpiWorld);
 
-  // no need to broadcast grid as it is updated in each process
-  setGrid(Rectangle(grid.getMinCorner().getX(), grid.getMinCorner().getY(),
-                    grid.getMinCorner().getZ(), grid.getMaxCorner().getX(),
-                    grid.getMaxCorner().getY(),
+  // no need to broadcast patchGrid as it is updated in each process
+  setPatchBox(Rectangle(d_demPatchBox.getMinCorner().getX(), d_demPatchBox.getMinCorner().getY(),
+                    d_demPatchBox.getMinCorner().getZ(), d_demPatchBox.getMaxCorner().getX(),
+                    d_demPatchBox.getMaxCorner().getY(),
                     maxZ + gradation.getPtclMaxRadius()));
 }
 
@@ -2950,9 +2950,9 @@ Assembly::readBoundary(const char* str)
   REAL x1, y1, z1, x2, y2, z2;
   ifs >> x1 >> y1 >> z1 >> x2 >> y2 >> z2;
   setContainer(Rectangle(x1, y1, z1, x2, y2, z2));
-  // compute grid assumed to be the same as container, change in
+  // compute patchGrid assumed to be the same as container, change in
   // scatterParticle() if necessary.
-  setGrid(Rectangle(x1, y1, z1, x2, y2, z2));
+  setPatchBox(Rectangle(x1, y1, z1, x2, y2, z2));
 
   boundaryVec.clear();
   Boundary* bptr;
@@ -3056,8 +3056,8 @@ Assembly::plotGrid(const char* str) const
   ofs.setf(std::ios::scientific, std::ios::floatfield);
   ofs.precision(OPREC);
 
-  Vec v1 = grid.getMinCorner();
-  Vec v2 = grid.getMaxCorner();
+  Vec v1 = d_demPatchBox.getMinCorner();
+  Vec v2 = d_demPatchBox.getMaxCorner();
   Vec vspan = v2 - v1;
 
   ofs << "ZONE N=" << (mpiProcX + 1) * (mpiProcY + 1) * (mpiProcZ + 1)
@@ -3928,17 +3928,17 @@ Particle* newptcl;
 particleNum = 0;
 REAL wall=2.2; // wall - wall height; ht - free particle height
 REAL est =1.02;
-int grid=static_cast<int> (nearbyint(rsize*10)-1);
+int patchGrid=static_cast<int> (nearbyint(rsize*10)-1);
 
-// grid: dimension of free particle array.
+// patchGrid: dimension of free particle array.
 // 7 - small dimn container
 // 9 - medium dimn container
 // 11- large dimn container
 
 REAL dimn=grad.dimn;
 // particle boundary 1
-x=dimn/2*(grid+1)/10;
-for (y=-dimn/2*grid/10; y<dimn/2*grid/10*est; y+=dimn/2/5)
+x=dimn/2*(patchGrid+1)/10;
+for (y=-dimn/2*patchGrid/10; y<dimn/2*patchGrid/10*est; y+=dimn/2/5)
 for(z=-dimn/2; z<-dimn/2 + dimn*wall; z+=dimn/2/5) {
 newptcl = new Particle(particleNum+1, 1, Vec(x,y,z), grad.ptclsize[0]*0.99,
 young, poisson);
@@ -3947,8 +3947,8 @@ particleNum++;
 }
 
 // particle boundary 2
-y=dimn/2*(grid+1)/10;
-for (x=-dimn/2*grid/10; x<dimn/2*grid/10*est; x+=dimn/2/5)
+y=dimn/2*(patchGrid+1)/10;
+for (x=-dimn/2*patchGrid/10; x<dimn/2*patchGrid/10*est; x+=dimn/2/5)
 for(z=-dimn/2; z<-dimn/2 + dimn*wall; z+=dimn/2/5) {
 newptcl = new Particle(particleNum+1, 1, Vec(x,y,z), grad.ptclsize[0]*0.99,
 young, poisson);
@@ -3957,8 +3957,8 @@ particleNum++;
 }
 
 // particle boundary 3
-x=-dimn/2*(grid+1)/10;
-for (y=-dimn/2*grid/10; y<dimn/2*grid/10*est; y+=dimn/2/5)
+x=-dimn/2*(patchGrid+1)/10;
+for (y=-dimn/2*patchGrid/10; y<dimn/2*patchGrid/10*est; y+=dimn/2/5)
 for(z=-dimn/2; z<-dimn/2 + dimn*wall; z+=dimn/2/5) {
 newptcl = new Particle(particleNum+1, 1, Vec(x,y,z), grad.ptclsize[0]*0.99,
 young, poisson);
@@ -3967,8 +3967,8 @@ particleNum++;
 }
 
 // particle boundary 4
-y=-dimn/2*(grid+1)/10;
-for (x=-dimn/2*grid/10; x<dimn/2*grid/10*est; x+=dimn/2/5)
+y=-dimn/2*(patchGrid+1)/10;
+for (x=-dimn/2*patchGrid/10; x<dimn/2*patchGrid/10*est; x+=dimn/2/5)
 for(z=-dimn/2; z<-dimn/2 + dimn*wall; z+=dimn/2/5) {
 newptcl = new Particle(particleNum+1, 1, Vec(x,y,z), grad.ptclsize[0]*0.99,
 young, poisson);
@@ -3978,8 +3978,8 @@ particleNum++;
 
 // particle boundary 6
 z=-dimn/2;
-for (y=-dimn/2*grid/10; y<dimn/2*grid/10*est; y+=dimn/2/5)
-for( x=-dimn/2*grid/10; x<dimn/2*grid/10*est; x+=dimn/2/5) {
+for (y=-dimn/2*patchGrid/10; y<dimn/2*patchGrid/10*est; y+=dimn/2/5)
+for( x=-dimn/2*patchGrid/10; x<dimn/2*patchGrid/10*est; x+=dimn/2/5) {
 newptcl = new Particle(particleNum+1, 1, Vec(x,y,z), grad.ptclsize[0]*0.99,
 young, poisson);
 particleVec.push_back(newptcl);
@@ -3994,8 +3994,8 @@ particleNum++;
 }
 else if (particleLayers == 1) { // a horizontal layer of free particles
 z=dimn/2;
-for (x=-dimn/2*(grid-1)/10; x<dimn/2*(grid-1)/10*est; x+=dimn/2/5)
-for (y=-dimn/2*(grid-1)/10; y<dimn/2*(grid-1)/10*est; y+=dimn/2/5) {
+for (x=-dimn/2*(patchGrid-1)/10; x<dimn/2*(patchGrid-1)/10*est; x+=dimn/2/5)
+for (y=-dimn/2*(patchGrid-1)/10; y<dimn/2*(patchGrid-1)/10*est; y+=dimn/2/5) {
 newptcl = new Particle(particleNum+1, 0, Vec(x,y,z), grad, young, poisson);
 particleVec.push_back(newptcl);
 particleNum++;
@@ -4003,8 +4003,8 @@ particleNum++;
 }
 else if (particleLayers == 2) { // multiple layers of free particles
 for (z=dimn/2; z<dimn/2 + dimn*ht; z+=dimn/2/5)
-for (x=-dimn/2*(grid-1)/10; x<dimn/2*(grid-1)/10*est; x+=dimn/2/5)
-for (y=-dimn/2*(grid-1)/10; y<dimn/2*(grid-1)/10*est; y+=dimn/2/5) {
+for (x=-dimn/2*(patchGrid-1)/10; x<dimn/2*(patchGrid-1)/10*est; x+=dimn/2/5)
+for (y=-dimn/2*(patchGrid-1)/10; y<dimn/2*(patchGrid-1)/10*est; y+=dimn/2/5) {
 newptcl = new Particle(particleNum+1, 0, Vec(x,y,z), grad, young, poisson);
 particleVec.push_back(newptcl);
 particleNum++;

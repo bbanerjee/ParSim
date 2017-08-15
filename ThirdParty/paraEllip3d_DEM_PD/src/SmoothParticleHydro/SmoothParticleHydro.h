@@ -49,7 +49,7 @@ public:
     d_mpiCoords = mpiCoords;
   }
 
-  inline void setGrid(dem::Box cont) { d_sphPatchBox = cont; }
+  inline void setPatchBox(dem::Box cont) { d_sphPatchBox = cont; }
 
   // Accessor methods
   inline const SPHParticlePArray& getAllSPHParticleVec() const
@@ -86,9 +86,11 @@ public:
   void gatherSPHParticle();
 
   template <int dim>
-  void updateParticleInteractions(const REAL& kernelSize,
-                                  const REAL& smoothLength,
-                                  const dem::Box& allContainer);
+  void updateParticleInteractions(const dem::Box& allContainer,
+                                  const REAL& bufferWidth,
+                                  const REAL& ghostWidth,
+                                  const REAL& kernelSize,
+                                  const REAL& smoothLength);
 
   template <int dim>
   void initializeSPHVelocity(const REAL& delT);
@@ -97,50 +99,10 @@ public:
 
   void updateSPHLeapFrogVelocity(const REAL& delT);
 
-  void printSPHParticle(const char* str) const;
-
-  /*
-
-  void removeSPHParticleOutBox(const dem::Box& container,
-                                SPHParticlePArray& d_sphParticleVec);
-
-  bool isBdryProcess();
-
-  void releaseRecvSPHParticle();
-  void releaseGatheredSPHParticle();
-
-
-  void updateSPHGrid(const SPHParticlePArray& particles);
-
-  void openSPHProgress(std::ofstream& ofs, const std::string& str);
-  void printSPHProgress(std::ofstream& ofs, const int iframe) const;
-  void printSPHProgressHalf(std::ofstream& ofs, const int iframe) const;
-
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  inline int getNumSPHParticle() const
-  {
-    return nSPHParticle;
-  } // getnSPHParticle - returns number of sph-particles
-
-  // construct Matrix members in
-  // d_recvSPHParticleVec, construction here
-  // since currently
-  // the pointer array in Matrix cannot be transfered well between cpus
-  void constructRecvSPHMatrix();
-
-  // delete those sph-points that are inside dem particles or vice versa
-  // depending on the removeSPHParticles flag (if false DEM particles
-  // are removed)
-  void removeOverlappingParticles(dem::DEMParticlePArray& particles,
-                                  bool removeSPHParticles = true);
-
-  void removeInsideSPHParticles(const dem::DEMParticlePArray& particles);
-  void removeInsideDEMParticles(dem::DEMParticlePArray& particles) const;
-
   //-------------------------------------------------------------
   // Output
   //-------------------------------------------------------------
-  void createOutputWriter(const std::string& outputFolder, const int& iter);
+  void createOutputWriter(const std::string& outputFolder, const int& iter); 
 
   void updateFileNames(const int& iter, const std::string& extension) {
     d_writer->updateFileNames(iter, extension);
@@ -151,16 +113,8 @@ public:
   std::string getSPHParticleFileName() const {
     return d_writer->getSPHParticleFileName();
   }
-
-  // print all particles
-  void writeParticlesToFile(int frame) const;
-  // print a subset of particles
-  void writeParticlesToFile(SPHParticlePArray& particleVec, int frame) const;
-
-  void printSPHDomain(const std::string&) const;
-  void printRecvSPHDomain(const std::string&) const;
-  void printSPHParticle(const std::string& str) const;
-  */
+  void writeParticlesToFile(int frame) const; 
+  void printSPHParticle(const char* str) const;
 
 private:
   // The output writer pointer
@@ -224,7 +178,7 @@ private:
 
   template <int dim>
   std::vector<int> getAdjacentCellIndices(const dem::IntVec& cell,
-                                          const dem::IntVec& numGridCells);
+                                          const dem::IntVec& numGridCells) const;
 
   template <int dim>
   SPHParticlePArray getParticlesInAdjacentCells(const int& cellIndex,

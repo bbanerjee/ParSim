@@ -211,6 +211,8 @@ public:
 
   REAL shortestDistToBoundary(const Vec& point) const;
 
+  void dragForce();
+
 private:
   void init();
 

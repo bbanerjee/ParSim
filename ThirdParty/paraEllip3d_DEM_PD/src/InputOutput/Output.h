@@ -53,13 +53,13 @@ public:
   virtual void write(int frame);
 
   virtual void setDomain(const Box* domain) {};
-  virtual void setGrid(const Box* grid) {};
+  virtual void setPatchBox(const Box* patchBox) {};
   virtual void setParticles(const DEMParticlePArray* particles) {};
   virtual void setParticles(const pd::PeriParticlePArray* particles) {};
   virtual void setParticles(const sph::SPHParticlePArray* particles) {};
 
   virtual void writeDomain(const Box* domain) {};
-  virtual void writeGrid(const Box* grid) {};
+  virtual void writePatchGrid(const Box* patchBox) {};
   virtual void writeParticles(const DEMParticlePArray* particles, int frame) {};
   virtual void writeParticles(const pd::PeriParticlePArray* particles, int frame) {};
   virtual void writeParticles(const sph::SPHParticlePArray* particles, int frame) {};
@@ -70,7 +70,7 @@ public:
   void updateFileNames(const int& iteration);
   std::string getDomainFileName() const { return d_domainFileName; }
   std::string getBoundaryFileName() const { return d_boundaryFileName; }
-  std::string getGridFileName() const { return d_gridFileName; }
+  std::string getGridFileName() const { return d_patchFileName; }
   std::string getParticleFileName() const { return d_particleFileName; }
   std::string getPeriParticleFileName() const { return d_periParticleFileName; }
   std::string getSPHParticleFileName() const { return d_sphParticleFileName; }
@@ -105,7 +105,7 @@ protected:
 
   std::string d_domainFileName;
   std::string d_boundaryFileName;
-  std::string d_gridFileName;
+  std::string d_patchFileName;
   std::string d_particleFileName;
   std::string d_periParticleFileName;
   std::string d_sphParticleFileName;
