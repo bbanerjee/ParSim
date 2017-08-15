@@ -906,9 +906,9 @@ Fluid::calcParticleForce(DEMParticlePArray& ptcls, std::ofstream& ofs)
       // w X r = omga % dist, where % is overloaded as cross product
       Vec omgar = cross(ptcl->currentOmega(), dist); 
 
-      REAL ux = ptcl->currentVel().x() + omgar.x();
-      REAL uy = ptcl->currentVel().y() + omgar.y();
-      REAL uz = ptcl->currentVel().z() + omgar.z();
+      REAL ux = ptcl->currentVelocity().x() + omgar.x();
+      REAL uy = ptcl->currentVelocity().y() + omgar.y();
+      REAL uz = ptcl->currentVelocity().z() + omgar.z();
 
       // principal axis decomposition
       Vec globalDelta = Vec(fabs(uxFluid - ux) * (uxFluid - ux),
@@ -981,9 +981,9 @@ Fluid::calcParticleForce(DEMParticlePArray& ptcls, std::ofstream& ofs)
           << std::setw(OWID) << ptcl->getAccel().x() << std::setw(OWID)
           << ptcl->getAccel().y() << std::setw(OWID)
           << ptcl->getAccel().z() << std::setw(OWID)
-          << ptcl->currentVel().x() << std::setw(OWID)
-          << ptcl->currentVel().y() << std::setw(OWID)
-          << ptcl->currentVel().z() << std::endl;
+          << ptcl->currentVelocity().x() << std::setw(OWID)
+          << ptcl->currentVelocity().y() << std::setw(OWID)
+          << ptcl->currentVelocity().z() << std::endl;
     }
   } // end of particle loop
 }

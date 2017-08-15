@@ -279,9 +279,9 @@ DEMContact::contactForce()
   // obtain normal damping force
   Vec cp = (d_point1 + d_point2) / 2;
   Vec veloc1 =
-    d_p1->currentVel() + cross(d_p1->currentOmega(), (cp - d_p1->currentPosition()));
+    d_p1->currentVelocity() + cross(d_p1->currentOmega(), (cp - d_p1->currentPosition()));
   Vec veloc2 =
-    d_p2->currentVel() + cross(d_p2->currentOmega(), (cp - d_p2->currentPosition()));
+    d_p2->currentVelocity() + cross(d_p2->currentOmega(), (cp - d_p2->currentPosition()));
   REAL m1 = getP1()->getMass();
   REAL m2 = getP2()->getMass();
   REAL kn = pow(6 * vnormL2(d_normalForce) * d_R0 * pow(d_E0, 2), 1.0 / 3.0);
@@ -371,8 +371,8 @@ DEMContact::contactForce()
               << "\t cp = " << cp << "\n\t"
               << " d_point1 = " << d_point1 << " d_point2 = " << d_point2
               << "\n\t"
-              << " V1 = " << d_p1->currentVel()
-              << " V2 = " << d_p2->currentVel() << "\n\t"
+              << " V1 = " << d_p1->currentVelocity()
+              << " V2 = " << d_p2->currentVelocity() << "\n\t"
               << " W1 = " << d_p1->currentOmega()
               << " W2 = " << d_p2->currentOmega() << "\n\t"
               << " P1 = " << d_p1->currentPosition()

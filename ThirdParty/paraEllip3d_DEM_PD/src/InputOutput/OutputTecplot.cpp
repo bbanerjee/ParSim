@@ -262,7 +262,7 @@ OutputTecplot<DEMParticlePArray>::writeParticles(const DEMParticlePArray* partic
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->currentVel();
+    vObj = part->currentVelocity();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 

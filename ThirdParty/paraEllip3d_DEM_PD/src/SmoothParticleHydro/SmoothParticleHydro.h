@@ -90,6 +90,15 @@ public:
                                   const REAL& smoothLength,
                                   const dem::Box& allContainer);
 
+  template <int dim>
+  void initializeSPHVelocity(const REAL& delT);
+
+  void updateSPHLeapFrogPositionDensity(const REAL& delT);
+
+  void updateSPHLeapFrogVelocity(const REAL& delT);
+
+  void printSPHParticle(const char* str) const;
+
   /*
 
   void removeSPHParticleOutBox(const dem::Box& container,

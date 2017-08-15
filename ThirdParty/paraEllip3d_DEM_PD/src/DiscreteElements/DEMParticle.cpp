@@ -940,7 +940,7 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
   addMoment(cross((pt1 + pt2) / 2 - d_currPos, normalForce));
 
   // obtain normal damping force
-  Vec veloc2 = currentVel() + cross(currentOmega(), ((pt1 + pt2) / 2 - currentPosition()));
+  Vec veloc2 = currentVelocity() + cross(currentOmega(), ((pt1 + pt2) / 2 - currentPosition()));
   REAL kn = pow(6 * vnormL2(normalForce) * R0 * pow(E0, 2), 1.0 / 3.0);
   REAL dampCritical = 2 * sqrt(getMass() * kn); // critical damping
   Vec cntDampingForce = util::getParam<REAL>("contactDamp") * dampCritical *

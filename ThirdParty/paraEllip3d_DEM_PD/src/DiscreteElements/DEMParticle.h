@@ -95,7 +95,7 @@ public:
   Vec getPrevDirecA() const { return d_prevDirecA; }
   Vec getPrevDirecB() const { return d_prevDirecB; }
   Vec getPrevDirecC() const { return d_prevDirecC; }
-  Vec currentVel() const { return d_currVeloc; }
+  Vec currentVelocity() const { return d_currVeloc; }
   Vec getPrevVeloc() const { return d_prevVeloc; }
   Vec currentOmega() const { return d_currOmga; }
   Vec getPrevOmga() const { return d_prevOmga; }

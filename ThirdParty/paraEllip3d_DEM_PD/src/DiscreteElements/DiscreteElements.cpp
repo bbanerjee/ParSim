@@ -3264,7 +3264,7 @@ DiscreteElements::getAvgTransVelocity() const
   DEMParticlePArray::const_iterator it;
   for (it = particleVec.begin(); it != particleVec.end(); ++it)
     if ((*it)->getType() == 0) {
-      avgv += vnormL2((*it)->currentVel());
+      avgv += vnormL2((*it)->currentVelocity());
       ++count;
     }
   return avgv /= count;

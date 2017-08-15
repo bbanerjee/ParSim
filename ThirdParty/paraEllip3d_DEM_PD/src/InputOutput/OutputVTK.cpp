@@ -509,7 +509,7 @@ OutputVTK<DEMParticlePArray>::createVTKUnstructuredGrid(const DEMParticlePArray*
     axis_c->InsertTuple(id, vec);
 
     // Velocity
-    vObj = particle->currentVel();
+    vObj = particle->currentVelocity();
     vec[0] = vObj.x();
     vec[1] = vObj.y();
     vec[2] = vObj.z();

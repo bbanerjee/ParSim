@@ -390,6 +390,55 @@ SmoothParticleHydro::gatherSPHParticle()
   }
 }
 
+//// the momentum equilibrium equation and state equation are implemented as
+// in Monaghan's paper (1994), simulate free surface flow using sph
+//// here the neighboring list of SPH particles is searched by the cells,
+template <int dim>
+void
+SmoothParticleHydro::updateParticleInteractions(const REAL& kernelSize,
+                                                const REAL& smoothLength,
+                                                const Box& allContainer)
+{
+  // Initialize the rate quantities that are integrated
+  initializeDensityRateAndAcceleration();
+
+  // divide the SPH domain into different cells, each cell may contain SPH
+  // particles within it
+  assignParticlesToPatchGrid<dim>();
+
+  for (int cellIndex=0; cellIndex < d_sphPatchGrid.size(); ++cellIndex) {
+
+    SPHParticlePArray cellParticles = d_sphPatchGrid[cellIndex];
+    SPHParticlePArray neighborParticles = 
+      getParticlesInAdjacentCells<dim>(cellIndex, d_numGridCells);
+
+    for (auto iter_a = cellParticles.begin(); iter_a != cellParticles.end(); iter_a++) {
+      auto sph_part_a = *iter_a;
+
+      for (auto iter_b = iter_a+1; iter_b != cellParticles.end(); iter_b++) {
+        auto sph_part_b = *iter_b;
+
+        // Go to next particle if the distance is too large
+        if (sph_part_b->isOutsideInfluenceZone(*sph_part_a, kernelSize)) continue;
+
+        computeParticleInteractions<dim>(sph_part_a, sph_part_b,
+                                         kernelSize, smoothLength, allContainer);
+
+      } // end for sph_part_b in the same cell
+
+      for (auto& sph_part_b : neighborParticles) {
+
+        // Go to next particle if the distance is too large
+        if (sph_part_b->isOutsideInfluenceZone(*sph_part_a, kernelSize)) continue;
+
+        computeParticleInteractions<dim>(sph_part_a, sph_part_b,
+                                         kernelSize, smoothLength, allContainer);
+
+      } // end for sph_part_b in neighbor cells
+    } // end for sph_part_a
+  } // end for cellIndex, different cells
+} // end updateParticleInteractions()
+
 // initialize the densityRate and velocityDot of all the SPH particles
 void 
 SmoothParticleHydro::initializeDensityRateAndAcceleration()
@@ -721,1375 +770,144 @@ SmoothParticleHydro::computeParticleInteractions(SPHParticleP& sph_part_a,
   }
 }
 
-//// the momentum equilibrium equation and state equation are implemented as
-// in Monaghan's paper (1994), simulate free surface flow using sph
-//// here the neighboring list of SPH particles is searched by the cells,
-template <int dim>
+template <>
 void
-SmoothParticleHydro::updateParticleInteractions(const REAL& kernelSize,
-                                                const REAL& smoothLength,
-                                                const Box& allContainer)
+SmoothParticleHydro::initializeSPHVelocity<2>(const REAL& delT)
 {
-  // Initialize the rate quantities that are integrated
-  initializeDensityRateAndAcceleration();
-
-  // divide the SPH domain into different cells, each cell may contain SPH
-  // particles within it
-  assignParticlesToPatchGrid<dim>();
-
-  for (int cellIndex=0; cellIndex < d_sphPatchGrid.size(); ++cellIndex) {
-
-    SPHParticlePArray cellParticles = d_sphPatchGrid[cellIndex];
-    SPHParticlePArray neighborParticles = 
-      getParticlesInAdjacentCells<dim>(cellIndex, d_numGridCells);
-
-    for (auto iter_a = cellParticles.begin(); iter_a != cellParticles.end(); iter_a++) {
-      auto sph_part_a = *iter_a;
-
-      for (auto iter_b = iter_a+1; iter_b != cellParticles.end(); iter_b++) {
-        auto sph_part_b = *iter_b;
-
-        // Go to next particle if the distance is too large
-        if (sph_part_b->isOutsideInfluenceZone(*sph_part_a, kernelSize)) continue;
-
-        computeParticleInteractions<dim>(sph_part_a, sph_part_b,
-                                         kernelSize, smoothLength, allContainer);
-
-      } // end for sph_part_b in the same cell
-
-      for (auto& sph_part_b : neighborParticles) {
-
-        // Go to next particle if the distance is too large
-        if (sph_part_b->isOutsideInfluenceZone(*sph_part_a, kernelSize)) continue;
-
-        computeParticleInteractions<dim>(sph_part_a, sph_part_b,
-                                         kernelSize, smoothLength, allContainer);
-
-      } // end for sph_part_b in neighbor cells
-    } // end for sph_part_a
-  } // end for cellIndex, different cells
-} // end updateParticleInteractions()
-
-/*
-void
-SmoothParticleHydro::initialSPHVelocity2D()
-{
-  commuParticle();
-  commuSPHParticle(); // this will update container and mergeSPHParticleVec,
-                      // both are needed for assignParticlesToPatchGrid
-  calculateSPHDensityRateAccelerationLinkedList2D(); // calculate velocityDot and
-                                                   // densityRate
-  // fix the y for all SPH points
-  for (std::vector<sph::SPHParticle*>::iterator pt = d_sphParticleVec.begin();
-       pt != d_sphParticleVec.end(); pt++) {
-    switch ((*pt)->getType()) {
-      case 1: // free sph particle
-        (*pt)->fixY();
+  // initial velocity only for free SPH particles based on equation (4.3)
+  // and fix the y for all SPH points
+  for (auto& particle : d_sphParticleVec) {
+    switch (particle->getType()) {
+      case SPHParticleType::FREE: // free sph particle
+        particle->initialVelocityLeapFrog(delT);
+        particle->fixY();
         break;
-      case 2: // ghost sph particle
-        break;
-      case 3: // boundary sph particle
-        (*pt)->fixXYZ();
+      case SPHParticleType::BOUNDARY: // boundary sph particle
+        particle->fixXYZ();
         break;
       default:
-        std::cout << "SPH particle type of sph_part_a should be 1, 2 or 3!"
-                  << std::endl;
-        exit(-1);
-    } // switch
-  }
-  initialSPHLeapFrogVelocity(); // initial velocity only for free SPH particles
-                                // based on equation (4.3)
-
-  releaseRecvParticle();
-  releaseRecvSPHParticle();
-} // initialSPHVelocity()
-
-void
-SmoothParticleHydro::initialSPHVelocity3D()
-{
-  commuParticle();
-  commuSPHParticle(); // this will update container and mergeSPHParticleVec,
-                      // both are needed for assignParticlesToPatchGrid
-  calculateSPHDensityRateAccelerationLinkedList3D(); // calculate velocityDot and
-                                                   // densityRate
-  initialSPHLeapFrogVelocity(); // initial velocity only for free SPH particles
-                                // based on equation (4.3)
-
-  releaseRecvParticle();
-  releaseRecvSPHParticle();
-} // initialSPHVelocity()
-
-void
-SmoothParticleHydro::initialSPHVelocityCopyDEM3D()
-{
-  commuSPHParticle(); // this will update container and mergeSPHParticleVec,
-                      // both are needed for assignParticlesToPatchGrid
-  calculateSPHDensityRateAccelerationLinkedList3D(); // calculate velocityDot and
-                                                   // densityRate
-  initialSPHLeapFrogVelocity(); // initial velocity only for free SPH particles
-                                // based on equation (4.3)
-
-  releaseRecvSPHParticle();
-} // initialSPHVelocity()
-
-void
-SmoothParticleHydro::initialSPHLeapFrogVelocity()
-{ // initial particle
-  // velocity only for free SPH particles based on equation (4.3)
-  for (std::vector<sph::SPHParticle*>::iterator pt = d_sphParticleVec.begin();
-       pt != d_sphParticleVec.end(); pt++) {
-    if ((*pt)->getType() == 1)
-      (*pt)->initialParticleVelocityLeapFrog();
-  }
-} // end initialSPHLeapFrogVelocity
-
-void
-SmoothParticleHydro::updateSPHLeapFrogPositionDensity()
-{ // update
-  // particle position and density based on equation (4.1)
-  for (std::vector<sph::SPHParticle*>::iterator pt = d_sphParticleVec.begin();
-       pt != d_sphParticleVec.end(); pt++) {
-    switch ((*pt)->getType()) {
-      case 1: // free sph particle
-        (*pt)->updateParticlePositionDensityLeapFrog();
         break;
-      case 2: // ghost sph particle
-        break;
-      case 3: // boundary sph particle
-        (*pt)->updateParticleDensity();
-        break;
-      default:
-        std::cout << "SPH particle type of sph_part_a should be 1, 2 or 3!"
-                  << std::endl;
-        exit(-1);
     } // switch
   }
 
-  std::vector<sph::SPHParticle*>::iterator gt;
-  for (std::vector<Particle*>::iterator demt = particleVec.begin();
-       demt != particleVec.end(); demt++) {
-    (*demt)->updateSPHGhostParticle(); // update position and density by dem
-    // particle and sph particle density, and velocity
+} // initialSPHVelocity()
+
+template <>
+void
+SmoothParticleHydro::initializeSPHVelocity<3>(const REAL& delT)
+{
+  // initial velocity only for free SPH particles based on equation (4.3)
+  for (auto& particle : d_sphParticleVec) {
+    if (particle->getType() == SPHParticleType::FREE) {
+     particle->initialVelocityLeapFrog(delT);
+    }
   }
+
+} // initialSPHVelocity()
+
+// update particle position and density based on equation (4.1)
+void
+SmoothParticleHydro::updateSPHLeapFrogPositionDensity(const REAL& delT)
+{ 
+  for (auto& particle : d_sphParticleVec) {
+    switch (particle->getType()) {
+      case SPHParticleType::FREE:
+      {
+        particle->updatePositionDensityLeapFrog(delT);
+        break;
+      }
+      case SPHParticleType::GHOST:
+      {
+        // update position and density by dem
+        // particle and sph particle density, and velocity
+        dem::DEMParticle* dem_particle = particle->getDEMParticle();
+        Vec sph_pos_local = particle->getLocalPosition();
+        Vec dem_pos_curr = dem_particle->currentPosition();
+        Vec sph_pos_curr = dem_particle->localToGlobal(sph_pos_local) +
+                           dem_pos_curr;
+        Vec sph_dem_rel_pos = sph_pos_curr - dem_pos_curr;
+        Vec sph_vel_curr = dem_particle->currentVelocity() +
+                           cross(dem_particle->currentOmega(),
+                                 sph_dem_rel_pos);
+        particle->setCurrPosition(sph_pos_curr);
+        particle->setCurrVelocity(sph_vel_curr);
+        particle->updateDensity(delT);
+        break;
+      }
+      case SPHParticleType::BOUNDARY:
+      {
+        particle->updateDensity(delT);
+        break;
+      }
+      default:
+        break;
+    } // switch
+  }
+
 } // end updateSPHLeapFrogPositionDensity
 
+// update particle velocity only for free SPH particles based on equation (4.2)
 void
-SmoothParticleHydro::updateSPHLeapFrogVelocity()
-{ // update particle
-  // velocity only for free SPH particles based on equation (4.2)
-  for (std::vector<sph::SPHParticle*>::iterator pt = d_sphParticleVec.begin();
-       pt != d_sphParticleVec.end(); pt++) {
-    if ((*pt)->getType() == 1)
-      (*pt)->updateParticleVelocityLeapFrog();
+SmoothParticleHydro::updateSPHLeapFrogVelocity(const REAL& delT)
+{ 
+  for (auto& particle : d_sphParticleVec) {
+    if (particle->getType() == SPHParticleType::FREE) {
+      particle->updateVelocity(delT);
+    }
   }
 } // end updateSPHLeapFrogVelocity
-*/
 
-/*
-// divide SPH domain in each cpu into different cells in 2D in xz plane.
-// see the notes 5/20/2015 and 5/21/2015 or Simpson's paper "Numerical
-// techniques for three-dimensional Smoothed Particle Hydrodynamics"
-void
-SmoothParticleHydro::assignParticlesToPatchGrid3D()
-{
-
-  // clear the std::vector< std::vector<sph::SPHParticle*> > d_sphPatchGrid
-  for (int cellIndex = 0; cellIndex < d_sphPatchGrid.size(); cellIndex++) {
-    d_sphPatchGrid[cellIndex].clear();
-  }
-  d_sphPatchGrid.clear();
-
-  Vec vmin = container.getMinCorner();
-  Vec vmax = container.getMaxCorner();
-  REAL small_value = 0.01 * spaceInterval;
-  REAL xmin = vmin.x() - sphCellSize - small_value;
-  REAL ymin = vmin.y() - sphCellSize - small_value;
-  REAL zmin = vmin.z() - sphCellSize - small_value;
-  // expand the container by sphCellSize for cells domain is necessary
-  REAL xmax = vmax.x() + sphCellSize + small_value;
-  REAL ymax = vmax.y() + sphCellSize + small_value;
-  REAL zmax = vmax.z() + sphCellSize + small_value;
-  // since the sph domain that we divide is mergeSPHParticleVec
-  Nx = (xmax - xmin) / kernelSize + 1; // (xmax-xmin)/(3h)+1
-  Nz = (zmax - zmin) / kernelSize + 1; // (zmax-zmin)/(3h)+1
-  Ny = (ymax - ymin) / kernelSize + 1; // (ymax-ymin)/(3h)+1
-  numCell = Nx * Nz * Ny;
-  d_sphPatchGrid.resize(numCell); // at this point, the cellVec contains
-                                      // numCell vectors,
-  // each vector is empty but ready to store the pointer of SPH
-  // particles (this process will be in the calculation of SPH forces)
-  pnum_vec.clear();
-  pnum_vec.push_back(1);
-  pnum_vec.push_back(Nx - 1);
-  pnum_vec.push_back(Nx);
-  pnum_vec.push_back(Nx + 1);
-  pnum_vec.push_back(Nx * Nz);
-  pnum_vec.push_back(Nx * Nz - Nx);
-  pnum_vec.push_back(Nx * Nz + Nx);
-  pnum_vec.push_back(Nx * Nz - 1);
-  pnum_vec.push_back(Nx * Nz - 1 - Nx);
-  pnum_vec.push_back(Nx * Nz - 1 + Nx);
-  pnum_vec.push_back(Nx * Nz + 1);
-  pnum_vec.push_back(Nx * Nz + 1 - Nx);
-  pnum_vec.push_back(Nx * Nz + 1 + Nx);
-
-  dem::Vec tmp_xyz;
-  int num;
-  for (std::vector<sph::SPHParticle*>::iterator pt =
-         mergeSPHParticleVec.begin();
-       pt != mergeSPHParticleVec.end();
-       pt++) { // mergeSPHParticle contains also the sph
-               // particles from neighboring cpus
-    tmp_xyz = (*pt)->currentPosition();
-    num = int((tmp_xyz.y() - ymin) / kernelSize) * Nx * Nz +
-          int((tmp_xyz.z() - zmin) / kernelSize) * Nx +
-          int((tmp_xyz.x() - xmin) / kernelSize);
-    d_sphPatchGrid[num].push_back(*pt);
-  }
-
-  REAL maxRadius = gradation.getPtclMaxRadius();
-  std::vector<sph::SPHParticle*>::iterator gt;
-  for (std::vector<Particle*>::iterator pdt = particleVec.begin();
-       pdt != particleVec.end();
-       pdt++) { // the sph ghost particles in the current cpu's
-                // dem particles
-    // will be definitely inside the [xmin, ymin, zmin,
-    // xmax ...]
-    tmp_xyz = (*pdt)->currentPosition();
-    if (tmp_xyz.x() >= xmax + maxRadius || tmp_xyz.y() >= ymax + maxRadius ||
-        tmp_xyz.z() >= zmax + maxRadius || tmp_xyz.x() <= xmin - maxRadius ||
-        tmp_xyz.y() <= ymin - maxRadius ||
-        tmp_xyz.z() <= zmin - maxRadius) // dem particle is outside of the
-      continue;
-    for (gt = (*pdt)->SPHGhostParticleVec.begin();
-         gt != (*pdt)->SPHGhostParticleVec.end();
-         gt++) { // set all SPH ghost particles
-                 // into their cells
-      tmp_xyz = (*gt)->currentPosition();
-      if (tmp_xyz.x() >= xmax || tmp_xyz.y() >= ymax || tmp_xyz.z() >= zmax ||
-          tmp_xyz.x() <= xmin || tmp_xyz.y() <= ymin || tmp_xyz.z() <= zmin)
-        continue; // this sph ghost particle is outside of the container, go to
-                  // next sph ghost particle
-      num = int((tmp_xyz.y() - ymin) / kernelSize) * Nx * Nz +
-            int((tmp_xyz.z() - zmin) / kernelSize) * Nx +
-            int((tmp_xyz.x() - xmin) / kernelSize);
-      d_sphPatchGrid[num].push_back(*gt);
-    }
-  }
-
-  for (std::vector<Particle*>::iterator pdt = recvParticleVec.begin();
-       pdt != recvParticleVec.end();
-       pdt++) { // the this time, recvParticleVec are the
-                // dem particles that are communicated by the commuParticle
-    tmp_xyz = (*pdt)->currentPosition();
-    if (tmp_xyz.x() >= xmax + maxRadius || tmp_xyz.y() >= ymax + maxRadius ||
-        tmp_xyz.z() >= zmax + maxRadius || tmp_xyz.x() <= xmin - maxRadius ||
-        tmp_xyz.y() <= ymin - maxRadius ||
-        tmp_xyz.z() <= zmin - maxRadius) // dem particle is outside of the
-      continue;                          // expanded domain
-
-    for (gt = (*pdt)->SPHGhostParticleVec.begin();
-         gt != (*pdt)->SPHGhostParticleVec.end();
-         gt++) { // set part SPH ghost particles
-                 // into their cells
-      tmp_xyz = (*gt)->currentPosition();
-      // not all sph ghost particles in these received particles are inside the
-      // container
-      if (tmp_xyz.x() >= xmax || tmp_xyz.y() >= ymax || tmp_xyz.z() >= zmax ||
-          tmp_xyz.x() <= xmin || tmp_xyz.y() <= ymin || tmp_xyz.z() <= zmin)
-        continue; // this sph ghost particle is outside of the container, go to
-      next sph ghost particle num =
-        int((tmp_xyz.y() - ymin) / kernelSize) * Nx * Nz +
-        int((tmp_xyz.z() - zmin) / kernelSize) * Nx +
-        int((tmp_xyz.x() - xmin) / kernelSize);
-      d_sphPatchGrid[num].push_back(*gt);
-    }
-  }
-
-} // assignParticlesToPatchGrid3D
-*/
-
-/*
-//// the momentum equilibrium equation and state equation are implemented as
-// in Monaghan's paper (1994), simulate free surface flow using sph
-//// here the neighboring list of SPH particles is searched by the cells,
-vector<vector<sph::SPHParticle*>> d_sphPatchGrid;
-void
-SmoothParticleHydro::calculateSPHDensityRateAccelerationLinkedList3D()
-{
-
-  // divide the SPH domain into different cells, each cell will contain SPH
-  // particles within it
-  assignParticlesToPatchGrid3D();
-
-  //  checkDivision();  // pass, May 22, 2015
-  //  checkNeighborCells3D();  // pass, May 22, 2015
-
-  // initialize the densityRate and velocityDot of all the SPH particles
-  dem::Vec tmp_vec = dem::Vec(0,0,
--(util::getParam<REAL>("gravAccel")*(util::getParam<REAL>("gravScale") );
-  dem::Vec zero_vec = dem::Vec(0,0,0);
-  // in the calculation of forces between sph particles, we need to use the
-//mergeSPHParticleVec,
-  // since mergeVec contains the sph particles from neighboring cpus. While we
-//can only update and migrate and communicate d_sphParticleVec
-  for(std::vector<sph::SPHParticle*>::iterator pt=mergeSPHParticleVec.begin();
-pt!=mergeSPHParticleVec.end(); pt++){
-    (*pt)->setDensityRateAccelerationZero();
-    (*pt)->calculateParticleViscosity(); // everytime when use
-    // getParticleViscolisity(), make sure that pressure has been calculated!!!!
-    (*pt)->calculateParticlePressure(); // everytime when use
-    // getPressure(), make sure that pressure has been calculated!!!!
-    switch ((*pt)->getType()) {
-      case 1: // free sph particle
-        (*pt)->incAcceleration(tmp_vec);
-        break;
-      case 2: // ghost sph particle
-        break;
-      case 3: // boundary sph particle
-        (*pt)->incAcceleration(zero_vec);
-        break;
-      default:
-        std::cout << "SPH particle type of sph_part_a should be 1, 2 or 3!"
-                  << std::endl;
-        exit(-1);
-    } // switch
-  }
-
-  std::vector<sph::SPHParticle*>::iterator gt;
-  for(std::vector<Particle*>::iterator pdt=mergeParticleVec.begin();
-pdt!=mergeParticleVec.end(); pdt++){  // all sph ghost particles
-    for (gt = (*pdt)->SPHGhostParticleVec.begin();
-         gt != (*pdt)->SPHGhostParticleVec.end(); gt++) {
-      (*gt)->setDensityRateAccelerationZero();
-      (*gt)->calculateParticleViscosity(); // everytime when use
-      // getParticleViscolisity(), make sure that pressure has been
-      // calculated!!!!
-      (*gt)->calculateParticlePressure(); // everytime when use
-      // getPressure(), make sure that pressure has been calculated!!!!
-    }
-  }
-
-  // temporary variables used in the loop
-  dem::Vec pos_a;
-  dem::Vec pos_b;
-  dem::Vec gradWab_a;
-  dem::Vec gradWba_b;
-  dem::Vec vab;
-  dem::Vec vel_ba;
-  dem::Vec vdem;
-  dem::Vec dva_dt;
-  dem::Vec dvb_dt;
-  dem::Vec delta_a;
-  dem::Vec delta_b;
-  REAL press_a, press_b, rho_a, rho_b, mu_a, mu_b;
-  REAL rab;
-        REAL dWab_dra;
-  REAL dWba_drb;
-  REAL Wab, Wba;
-  REAL da, dB;
-  REAL beta;
-  REAL xa, ya, xB, yB, k, sqrt_xaya;  // variables for Morris' method to
-//calculate da/dB
-  std::vector<sph::SPHParticle*>::iterator sph_part_b;
-  REAL ra, rb, rc;  // the geometry of the dem particle
-  dem::Vec local_a, local_b;  // local position of sph_part_a and sph_part_b in the dem
-//particle
-  dem::Vec dem_pos;
-  REAL Gamma_ab, mu_ab, vel_radial;
-  REAL alpha = util::getParam<REAL>("alpha");
-     REAL alpha_zero = 0;  // the viscous between free and ghost/boundary
-  REAL epsilon = util::getParam<REAL>("epsilon");  // parameter for velocity
-//correction
-  REAL Wq, Ra, Rb, phi_4, coeff_a, coeff_b;
-  dem::Particle* demt;
-
-  int pnum;
-  std::vector<sph::SPHParticle*> tmp_particleVec;  // sph particles in
-//neighboring cells
-  for(int cellIndex=0; cellIndex<d_sphPatchGrid.size(); cellIndex++){
-
-    // store all SPH particles in cellIndex's neighboring cells
-    tmp_particleVec.clear(); // it is the same for the particles in the same
-                             // cell
-    for (std::vector<int>::const_iterator pint = pnum_vec.begin();
-         pint != pnum_vec.end(); pint++) {
-      pnum = cellIndex + (*pint);
-      if (pnum < numCell) {
-        for (std::vector<sph::SPHParticle*>::iterator pt =
-               d_sphPatchGrid[pnum].begin();
-             pt != d_sphPatchGrid[pnum].end(); pt++) {
-          tmp_particleVec.push_back(*pt);
-        }
-      }
-    }
-
-    for (std::vector<sph::SPHParticle*>::iterator sph_part_a =
-           d_sphPatchGrid[cellIndex].begin();
-         sph_part_a != d_sphPatchGrid[cellIndex].end();
-         sph_part_a++) { // SPH particles in cell cellIndex
-      press_a = sph_part_a->getPressure();
-      if (press_a >= 0) {
-        Ra = 0.006;
-      } else {
-        Ra = 0.6;
-      }
-      //        mu_a = sph_part_a->getViscosity();
-      rho_a = sph_part_a->getDensity();
-      pos_a = sph_part_a->currentPosition();
-
-      //    if(sph_part_a->getType()!=1){  // sph_part_a is not free sph particles, i.e.
-      //    sph_part_a is
-      // ghost or boundary particles
-      //        continue;  // do not consider sph_part_a, as we treat before
-      //    }
-
-      for (sph_part_b = sph_part_a + 1; sph_part_b != d_sphPatchGrid[cellIndex].end();
-           sph_part_b++) { // sum over the
-                    // SPH particles in the same cell cellIndex
-        pos_b = sph_part_b->currentPosition();
-        rab = dem::vfabs(pos_a - pos_b);
-        if (rab <= kernelSize) { // sph_part_b is in the smooth kernel
-          press_b = sph_part_b->getPressure();
-          //          mu_b = sph_part_b->getViscosity();
-          rho_b = sph_part_b->getDensity();
-
-          Wq = kernelFunction(rab / smoothLength);
-          phi_4 = pow(Wq / Wqmin, 4);
-          if (press_b >= 0) {
-            Rb = 0.006;
-          } else {
-            Rb = 0.6;
-          }
-          coeff_a = 1 + Ra * phi_4;
-          coeff_b = 1 + Rb * phi_4;
-
-          // we have three types of SPH particles: 1, free particle; 2, ghost
-          // particle; 3, boundary particle
-          // Then we have 3x3 = 9 different types of interactions with the three
-          // types of particles
-          // so we cannot judge the interaction type only by the type of
-          // particle
-          // sph_part_b, we need to consider sph_part_a also
-          // sph_part_a          sph_part_b          need to consider or not
-          // 1            1              V      free with free
-          // 1            2              V      free with ghost
-          // 1            3              V      free with boundary
-
-          // 2            1              V      ghost with free
-          // 2            2              X      ghost with ghost
-          // 2            3              X      ghost with boundary
-
-          // 3            1              V      boundary with free
-          // 3            2              X      boundary with ghost
-          // 3            3              X       boundary with boundary
-
-          // add the density dot for sph_part_a and sph_part_b
-          gradWab_a = gradientKernelFunction(pos_a, pos_b); //
-          // this is to add SPH sph_part_a
-          gradWba_b = -gradWab_a;
-          dWab_dra = partialKernelFunction(pos_a, pos_b); // this
-          // is to add SPH sph_part_a
-          dWba_drb = dWab_dra;
-          Wab = kernelFunction(pos_a, pos_b); // this is to add
-                                                            // SPH sph_part_a
-          Wba = Wab;
-
-          switch (sph_part_b->getType()) {
-            case 1: // sph_part_b is free SPH particle
-              switch (sph_part_a->getType()) {
-                case 1: // free with free
-                  vab = sph_part_a->getVelocity() - sph_part_b->getVelocity();
-                  vel_ba = -vab;
-
-                  sph_part_a->incDensityRate(mass_b *
-                                        (vab * gradWab_a));
-                  sph_part_b->incDensityRate(mass_a *
-                                        (vel_ba * gradWba_b));
-
-                  vel_radial = vab * (pos_a - pos_b);
-                  if (vel_radial < 0) {
-                    mu_ab = smoothLength * vel_radial /
-                            (rab * rab + 0.01 * smoothLength * smoothLength);
-                Gamma_ab =
-(-alpha*(util::getParam<REAL>("soundSpeed")*mu_ab)/(rho_a+rho_b)*2;
-                  } else {
-                    Gamma_ab = 0;
-                  }
-
-                  dva_dt = -mass_b *
-                           (p_rhoSq_a * coeff_a +
-                            p_rhoSq_b * coeff_b + Gamma_ab) *
-                           gradWab_a;
-                  sph_part_a->incAcceleration(dva_dt);
-                  dvb_dt = -mass_a *
-                           (p_rhoSq_b * coeff_b +
-                            p_rhoSq_a * coeff_a + Gamma_ab) *
-                           gradWba_b;
-                  sph_part_b->incAcceleration(dvb_dt);
-
-                  delta_a = epsilon * mass_b * (-vab) * Wab /
-                            (rho_a + rho_b) * 2;
-                  sph_part_a->incVelocityCorrection(delta_a);
-                  delta_b = epsilon * mass_a * (vab)*Wba /
-                            (rho_a + rho_b) * 2;
-                  sph_part_b->incVelocityCorrection(delta_b);
-                  break;
-                case 2: // ghost with free
-                  demt = sph_part_a->getDemParticle();
-                  dem_pos = demt->currentPosition();
-                  local_b =
-                    demt->globalToLocal(pos_b - dem_pos); // the
-                  // local position of sph point sph_part_b
-                  ra = demt->getA();
-                  rb = demt->getB();
-                  rc = demt->getC();
-                  k = 1.0 / (sqrt(local_b.x() * local_b.x() / (ra * ra) +
-                                  local_b.y() * local_b.y() / (rb * rb) +
-                                  local_b.z() * local_b.z() / (rc * rc)));
-                  da = dem::vfabs(local_b -
-                                  k * local_b); // the distance is the same
-                                                  // in rotated coordinates
-
-                  // calculate Vab as the method shown in Morris's paper, 1996
-
-                  // (1) here I wanna use the distance from the point a/b to the
-                  // surface of the ellipsoid to simplify the problem
-                  local_a = sph_part_a->getLocalPosition();
-                  k = 1.0 / (sqrt(local_a.x() * local_a.x() / (ra * ra) +
-                                  local_a.y() * local_a.y() / (rb * rb) +
-                                  local_a.z() * local_a.z() / (rc * rc)));
-                  dB = dem::vfabs(local_a - k * local_a);
-
-                  //              // (2) here the Morris's method is used
-                  //              xa = pos_a.x(); ya = pos_a.y();
-                  //              xB = pos_b.x(); yB = pos_b.y();
-                  //              if(ya==0) {da = xa-radius; dB = radius-xB;}
-                  //              else if(xa==0) {da = ya-radius; dB =
-                  //              radius-yB;}
-                  //              else {
-                  //          sqrt_xaya = sqrt(xa*xa+ya*ya);
-                  //          k = radius/sqrt_xaya;
-                  //          da = radius/k - radius;
-                  //          dB = fabs(xa*xB+ya*yB-k*radius*radius)/sqrt_xaya;
-                  //              }
-
-                  beta = 1 + dB / da;
-                  if (beta > 2 || beta < 0 || isnan(beta)) {
-                    beta = 2;
-                  }
-
-                  vdem = sph_part_a->getVelocity();
-                  vel_ba = beta * (sph_part_b->getVelocity() - vdem);
-                  vab = -vel_ba;
-
-                  sph_part_a->incDensityRate(mass_b *
-                                        (vab * gradWab_a));
-                  sph_part_b->incDensityRate(mass_a *
-                                        (vel_ba * gradWba_b));
-
-                  vel_radial = vab * (pos_a - pos_b);
-                  if (vel_radial < 0) {
-                    mu_ab = smoothLength * vel_radial /
-                            (rab * rab + 0.01 * smoothLength * smoothLength);
-                    Gamma_ab =
-(-alpha_zero*(util::getParam<REAL>("soundSpeed")*mu_ab)/(rho_a+rho_b)*2;
-                  } else {
-                    Gamma_ab = 0;
-                  }
-
-                  dva_dt = -mass_b *
-                           (p_rhoSq_a * coeff_a +
-                            p_rhoSq_b * coeff_b + Gamma_ab) *
-                           gradWab_a;
-                  demt->addForce(mass_a * dva_dt);
-                  demt->addMoment((pos_a - dem_pos) %
-                                  (mass_a * dva_dt));
-                  //                sph_part_a->incAcceleration(dva_dt);
-
-                  dvb_dt = -mass_a *
-                           (p_rhoSq_b * coeff_b +
-                            p_rhoSq_a * coeff_a + Gamma_ab) *
-                           gradWba_b;
-                  sph_part_b->incAcceleration(dvb_dt); // the velocities of the ghost
-                  particles will not envolve as the same way as others
-
-                    //                  delta_a =
-                    // epsilon*mass_b*(-vab)*Wab/(rho_a+rho_b)*2;
-                    //                  sph_part_a->incVelocityCorrection(delta_a);
-                    delta_b = epsilon * mass_a * (vab)*Wba /
-                              (rho_a + rho_b) * 2;
-                  sph_part_b->incVelocityCorrection(delta_b);
-                  break;
-
-                case 3: // boundary with free
-
-                  // calculate Vab as the method shown in Morris's paper, 1996
-                  // interact with boundary particles
-                  da = pos_b.z() - allContainer.getMinCorner().z(); //
-                  // assume with the bottom boundary
-                  dB = allContainer.getMinCorner().z() -
-                       pos_a.x(); // assume with
-                                         // the bottom boundary
-                  if (pos_a.x() <
-                      allContainer.getMinCorner().x()) { // with left
-                                                         // boundary
-                    da = pos_b.x() - allContainer.getMinCorner().x();
-                    dB = allContainer.getMinCorner().x() - pos_a.x();
-                  } else if (pos_a.x() >
-                             allContainer.getMaxCorner().x()) { // with right
-                                                                // boundary
-                    da = allContainer.getMaxCorner().x() - pos_b.x();
-                    dB = pos_a.x() - allContainer.getMaxCorner().x();
-                  } else if (pos_a.z() >
-                             allContainer.getMaxCorner().z()) { // with top
-                                                                // boundary
-                    da = allContainer.getMaxCorner().z() - pos_b.z();
-                    dB = pos_a.z() - allContainer.getMaxCorner().z();
-                  }
-
-                  beta = 1 + dB / da;
-                  if (beta > 2 || beta < 0 || isnan(beta)) {
-                    beta = 2;
-                  }
-
-                  vel_ba = beta * sph_part_b->getVelocity();
-                  vab = -vel_ba;
-
-                  sph_part_a->incDensityRate(mass_b *
-                                        (vab * gradWab_a));
-                  sph_part_b->incDensityRate(mass_a *
-                                        (vel_ba * gradWba_b));
-
-                  vel_radial = vab * (pos_a - pos_b);
-                  if (vel_radial < 0) {
-                    mu_ab = smoothLength * vel_radial /
-                            (rab * rab + 0.01 * smoothLength * smoothLength);
-                Gamma_ab =
-(-alpha_zero*(util::getParam<REAL>("soundSpeed")*mu_ab)/(rho_a+rho_b)*2;
-                  } else {
-                    Gamma_ab = 0;
-                  }
-
-                  //                dva_dt =
-                  //-mass_b*(press_a/(rho_a*rho_a)*coeff_a+press_b/(rho_b*rho_b)*coeff_b+Gamma_ab)*gradWab_a;
-                  //                sph_part_a->incAcceleration(dva_dt);
-                  dvb_dt =
-                    -mass_a *
-                    (p_rhoSq_b + p_rhoSq_a + Gamma_ab) *
-                    gradWba_b;
-                  sph_part_b->incAcceleration(dvb_dt); // the velocities of the ghost
-                  particles will not envolve as the same way as others
-
-                    //            delta_a =
-                    // epsilon*mass_b*(-vab)*Wab/(rho_a+rho_b)*2;
-                    //                sph_part_a->incVelocityCorrection(delta_a);
-                    delta_b = epsilon * mass_a * (vab)*Wba /
-                              (rho_a + rho_b) * 2;
-                  sph_part_b->incVelocityCorrection(delta_b);
-
-                  //            // apply the boundary forces by Lennard-Jones
-                  //            potential as in
-                  // Monaghan's paper(1994)
-                  //                if(rab<=spaceInterval){ // sph_part_b is in the
-                  //                smooth kernel
-                  //                dvb_dt = D*(pow(spaceInterval/rab,
-                  //                p1)-pow(spaceInterval/rab,
-                  // p2))*(pos_b-pos_a)/(rab*rab);
-                  //                sph_part_b->incAcceleration(dvb_dt);
-                  //                } // end if
-
-                  break;
-                default:
-                  std::cout << "SPH particle type of sph_part_a should be 1, 2 or 3!"
-                            << std::endl;
-                  exit(-1);
-              } // end switch sph_part_a
-
-              break;
-            case 2: // sph_part_b is ghost particle
-
-              if (sph_part_a->getType() !=
-                  1) { // sph_part_a is not free sph particles, i.e. sph_part_a
-                       // is ghost or boundary particles
-                break; // do not consider sph_part_a, as we treat before
-              }
-              demt = sph_part_b->getDemParticle();
-              dem_pos = demt->currentPosition();
-              local_a =
-                demt->globalToLocal(pos_a - dem_pos); // the local
-              // position of sph point sph_part_a
-              ra = demt->getA();
-              rb = demt->getB();
-              rc = demt->getC();
-              k = 1.0 / (sqrt(local_a.x() * local_a.x() / (ra * ra) +
-                              local_a.y() * local_a.y() / (rb * rb) +
-                              local_a.z() * local_a.z() / (rc * rc)));
-              da = dem::vfabs(local_a -
-                              k * local_a); // the distance is the same
-                                              // in rotated coordinates
-
-              // calculate Vab as the method shown in Morris's paper, 1996
-
-              // (1) here I wanna use the distance from the point a/b to the
-              // surface of the ellipsoid to simplify the problem
-              local_b = sph_part_b->getLocalPosition();
-              k = 1.0 / (sqrt(local_b.x() * local_b.x() / (ra * ra) +
-                              local_b.y() * local_b.y() / (rb * rb) +
-                              local_b.z() * local_b.z() / (rc * rc)));
-              dB = dem::vfabs(local_b - k * local_b);
-
-              //              // (2) here the Morris's method is used
-              //              xa = pos_a.x(); ya = pos_a.gety();
-              //              xB = pos_b.x(); yB = pos_b.gety();
-              //              if(ya==0) {da = xa-radius; dB = radius-xB;}
-              //              else if(xa==0) {da = ya-radius; dB = radius-yB;}
-              //              else {
-              //          sqrt_xaya = sqrt(xa*xa+ya*ya);
-              //          k = radius/sqrt_xaya;
-              //          da = radius/k - radius;
-              //          dB = fabs(xa*xB+ya*yB-k*radius*radius)/sqrt_xaya;
-              //              }
-
-              beta = 1 + dB / da;
-              if (beta > 2 || beta < 0 || isnan(beta)) {
-                beta = 2;
-              }
-
-              vdem = sph_part_b->getVelocity();
-              vab = beta * (sph_part_a->getVelocity() - vdem);
-              vel_ba = -vab;
-
-              sph_part_a->incDensityRate(mass_b *
-                                    (vab * gradWab_a));
-              sph_part_b->incDensityRate(mass_a *
-                                    (vel_ba * gradWba_b));
-
-              vel_radial = vab * (pos_a - pos_b);
-              if (vel_radial < 0) {
-                mu_ab = smoothLength * vel_radial /
-                        (rab * rab + 0.01 * smoothLength * smoothLength);
-                Gamma_ab =
-(-alpha_zero*(util::getParam<REAL>("soundSpeed")*mu_ab)/(rho_a+rho_b)*2;
-              } else {
-                Gamma_ab = 0;
-              }
-
-              dva_dt = -mass_b *
-                       (p_rhoSq_a * coeff_a +
-                        p_rhoSq_b * coeff_b + Gamma_ab) *
-                       gradWab_a;
-              sph_part_a->incAcceleration(dva_dt);
-              dvb_dt = -mass_a *
-                       (p_rhoSq_b * coeff_b +
-                        p_rhoSq_a * coeff_a + Gamma_ab) *
-                       gradWba_b;
-              demt->addForce(mass_b * dvb_dt);
-              demt->addMoment((pos_b - dem_pos) %
-                              (mass_b * dvb_dt));
-              //              sph_part_b->incAcceleration(dvb_dt);  // the velocities
-              //              of the ghost
-              // particles will not envolve as the same way as others
-
-              delta_a = epsilon * mass_b * (-vab) * Wab /
-                        (rho_a + rho_b) * 2;
-              sph_part_a->incVelocityCorrection(delta_a);
-              //                delta_b =
-              // epsilon*mass_a*(vab)*Wba/(rho_a+rho_b)*2;
-              //                sph_part_b->incVelocityCorrection(delta_b);
-              break;
-            case 3: // sph_part_b is boundary particle
-
-              if (sph_part_a->getType() !=
-                  1) { // sph_part_a is not free sph particles, i.e. sph_part_a
-                       // is ghost or boundary particles
-                break; // do not consider sph_part_a, as we treat before
-              }
-
-              // calculate Vab as the method shown in Morris's paper, 1996
-              // interact with boundary particles
-              da = pos_a.z() - allContainer.getMinCorner().z(); // assume
-              // with the bottom boundary
-              dB = allContainer.getMinCorner().z() -
-                   pos_b.z(); // assume with
-                                     // the bottom boundary
-              if (pos_b.x() <
-                  allContainer.getMinCorner().x()) { // with left
-                                                     // boundary
-                da = pos_a.x() - allContainer.getMinCorner().x();
-                dB = allContainer.getMinCorner().x() - pos_b.x();
-              } else if (pos_b.x() >
-                         allContainer.getMaxCorner().x()) { // with
-                                                            // right boundary
-                da = allContainer.getMaxCorner().x() - pos_a.x();
-                dB = pos_b.x() - allContainer.getMaxCorner().x();
-              } else if (pos_b.z() >
-                         allContainer.getMaxCorner().z()) { // with
-                                                            // top boundary
-                da = allContainer.getMaxCorner().z() - pos_a.z();
-                dB = pos_b.z() - allContainer.getMaxCorner().z();
-              }
-
-              beta = 1 + dB / da;
-              if (beta > 2 || beta < 0 || isnan(beta)) {
-                beta = 2;
-              }
-
-              vab = beta * sph_part_a->getVelocity();
-              vel_ba = -vab;
-
-              sph_part_a->incDensityRate(mass_b *
-                                    (vab * gradWab_a));
-              sph_part_b->incDensityRate(mass_a *
-                                    (vel_ba * gradWba_b));
-
-              vel_radial = vab * (pos_a - pos_b);
-              if (vel_radial < 0) {
-                mu_ab = smoothLength * vel_radial /
-                        (rab * rab + 0.01 * smoothLength * smoothLength);
-            Gamma_ab =
-(-alpha_zero*(util::getParam<REAL>("soundSpeed")*mu_ab)/(rho_a+rho_b)*2;
-              } else {
-                Gamma_ab = 0;
-              }
-
-              dva_dt = -mass_b *
-                       (p_rhoSq_a * coeff_a +
-                        p_rhoSq_b * coeff_b + Gamma_ab) *
-                       gradWab_a;
-              sph_part_a->incAcceleration(dva_dt);
-              //              dvb_dt =
-              //-mass_a*(press_b/(rho_b*rho_b)+press_a/(rho_a*rho_a)+Gamma_ab)*gradWba_b;
-              //              sph_part_b->incAcceleration(dvb_dt);  // the velocities
-              //              of the ghost
-              // particles will not envolve as the same way as others
-
-              delta_a = epsilon * mass_b * (-vab) * Wab /
-                        (rho_a + rho_b) * 2;
-              sph_part_a->incVelocityCorrection(delta_a);
-              //              delta_b =
-              // epsilon*mass_a*(vab)*Wba/(rho_a+rho_b)*2;
-              //              sph_part_b->incVelocityCorrection(delta_b);
-
-              //          // apply the boundary forces by Lennard-Jones
-              //          potential as in
-              // Monaghan's paper(1994)
-              //              if(rab<=spaceInterval){ // sph_part_b is in the smooth
-              //              kernel
-              //            dva_dt = D*(pow(spaceInterval/rab,
-              //            p1)-pow(spaceInterval/rab,
-              // p2))*(pos_a-pos_b)/(rab*rab);
-              //            sph_part_a->incAcceleration(dva_dt);
-              //              } // end if
-              break;
-            default:
-              std::cout << "SPH particle type should be 1, 2 or 3!"
-                        << std::endl;
-              exit(-1);
-
-          } // end swtich type
-        }   // end if 3h
-      }     // end for sph_part_b in the same cell
-
-      for (sph_part_b = tmp_particleVec.begin(); sph_part_b != tmp_particleVec.end();
-           sph_part_b++) { // all
-                    // particles in cellIndex's neighboring cells
-        pos_b = sph_part_b->currentPosition();
-        rab = dem::vfabs(pos_a - pos_b);
-        if (rab <= kernelSize) { // sph_part_b is in the smooth kernel
-          press_b = sph_part_b->getPressure();
-          //          mu_b = sph_part_b->getViscosity();
-          rho_b = sph_part_b->getDensity();
-
-          Wq = kernelFunction(rab / smoothLength);
-          phi_4 = pow(Wq / Wqmin, 4);
-          if (press_b >= 0) {
-            Rb = 0.006;
-          } else {
-            Rb = 0.6;
-          }
-          coeff_a = 1 + Ra * phi_4;
-          coeff_b = 1 + Rb * phi_4;
-
-          // add the density dot for sph_part_a and sph_part_b
-          gradWab_a = gradientKernelFunction(pos_a, pos_b); //
-          // this is to add SPH sph_part_a
-          gradWba_b = -gradWab_a;
-          dWab_dra = partialKernelFunction(pos_a, pos_b); // this
-          // is to add SPH sph_part_a
-          dWba_drb = dWab_dra;
-          Wab = kernelFunction(pos_a, pos_b); // this is to add
-                                                            // SPH sph_part_a
-          Wba = Wab;
-          switch (sph_part_b->getType()) {
-            case 1: // sph_part_b is free SPH particle
-              switch (sph_part_a->getType()) {
-                case 1: // free with free
-                  vab = sph_part_a->getVelocity() - sph_part_b->getVelocity();
-                  vel_ba = -vab;
-
-                  sph_part_a->incDensityRate(mass_b *
-                                        (vab * gradWab_a));
-                  sph_part_b->incDensityRate(mass_a *
-                                        (vel_ba * gradWba_b));
-
-                  vel_radial = vab * (pos_a - pos_b);
-                  if (vel_radial < 0) {
-                    mu_ab = smoothLength * vel_radial /
-                            (rab * rab + 0.01 * smoothLength * smoothLength);
-                Gamma_ab =
-(-alpha*(util::getParam<REAL>("soundSpeed")*mu_ab)/(rho_a+rho_b)*2;
-                  } else {
-                    Gamma_ab = 0;
-                  }
-
-                  dva_dt = -mass_b *
-                           (p_rhoSq_a * coeff_a +
-                            p_rhoSq_b * coeff_b + Gamma_ab) *
-                           gradWab_a;
-                  sph_part_a->incAcceleration(dva_dt);
-                  dvb_dt = -mass_a *
-                           (p_rhoSq_b * coeff_b +
-                            p_rhoSq_a * coeff_a + Gamma_ab) *
-                           gradWba_b;
-                  sph_part_b->incAcceleration(dvb_dt);
-
-                  delta_a = epsilon * mass_b * (-vab) * Wab /
-                            (rho_a + rho_b) * 2;
-                  sph_part_a->incVelocityCorrection(delta_a);
-                  delta_b = epsilon * mass_a * (vab)*Wba /
-                            (rho_a + rho_b) * 2;
-                  sph_part_b->incVelocityCorrection(delta_b);
-                  break;
-                case 2: // ghost with free
-
-                  demt = sph_part_a->getDemParticle();
-                  dem_pos = demt->currentPosition();
-                  local_b =
-                    demt->globalToLocal(pos_b - dem_pos); // the
-                  // local position of sph point sph_part_b
-                  ra = demt->getA();
-                  rb = demt->getB();
-                  rc = demt->getC();
-                  k = 1.0 / (sqrt(local_b.x() * local_b.x() / (ra * ra) +
-                                  local_b.y() * local_b.y() / (rb * rb) +
-                                  local_b.z() * local_b.z() / (rc * rc)));
-                  da = dem::vfabs(local_b -
-                                  k * local_b); // the distance is the same
-                                                  // in rotated coordinates
-
-                  // calculate Vab as the method shown in Morris's paper, 1996
-
-                  // (1) here I wanna use the distance from the point a/b to the
-                  // surface of the ellipsoid to simplify the problem
-                  local_a = sph_part_a->getLocalPosition();
-                  k = 1.0 / (sqrt(local_a.x() * local_a.x() / (ra * ra) +
-                                  local_a.y() * local_a.y() / (rb * rb) +
-                                  local_a.z() * local_a.z() / (rc * rc)));
-                  dB = dem::vfabs(local_a - k * local_a);
-
-                  //              // (2) here the Morris's method is used
-                  //              xa = pos_a.x(); ya = pos_a.y();
-                  //              xB = pos_b.x(); yB = pos_b.y();
-                  //              if(ya==0) {da = xa-radius; dB = radius-xB;}
-                  //              else if(xa==0) {da = ya-radius; dB =
-                  //              radius-yB;}
-                  //              else {
-                  //          sqrt_xaya = sqrt(xa*xa+ya*ya);
-                  //          k = radius/sqrt_xaya;
-                  //          da = radius/k - radius;
-                  //          dB = fabs(xa*xB+ya*yB-k*radius*radius)/sqrt_xaya;
-                  //              }
-
-                  beta = 1 + dB / da;
-                  if (beta > 2 || beta < 0 || isnan(beta)) {
-                    beta = 2;
-                  }
-
-                  vdem = sph_part_a->getVelocity();
-                  vel_ba = beta * (sph_part_b->getVelocity() - vdem);
-                  vab = -vel_ba;
-
-                  sph_part_a->incDensityRate(mass_b *
-                                        (vab * gradWab_a));
-                  sph_part_b->incDensityRate(mass_a *
-                                        (vel_ba * gradWba_b));
-
-                  vel_radial = vab * (pos_a - pos_b);
-                  if (vel_radial < 0) {
-                    mu_ab = smoothLength * vel_radial /
-                            (rab * rab + 0.01 * smoothLength * smoothLength);
-                    Gamma_ab =
-(-alpha_zero*(util::getParam<REAL>("soundSpeed")*mu_ab)/(rho_a+rho_b)*2;
-                  } else {
-                    Gamma_ab = 0;
-                  }
-
-                  dva_dt = -mass_b *
-                           (p_rhoSq_a * coeff_a +
-                            p_rhoSq_b * coeff_b + Gamma_ab) *
-                           gradWab_a;
-                  demt->addForce(mass_a * dva_dt);
-                  demt->addMoment((pos_a - dem_pos) %
-                                  (mass_a * dva_dt));
-                  //                sph_part_a->incAcceleration(dva_dt);
-
-                  dvb_dt = -mass_a *
-                           (p_rhoSq_b * coeff_b +
-                            p_rhoSq_a * coeff_a + Gamma_ab) *
-                           gradWba_b;
-                  sph_part_b->incAcceleration(dvb_dt); // the velocities of the ghost
-                  // particles will not envolve as the same way as others
-
-                  //                  delta_a =
-                  // epsilon*mass_b*(-vab)*Wab/(rho_a+rho_b)*2;
-                  //                  sph_part_a->incVelocityCorrection(delta_a);
-                  delta_b = epsilon * mass_a * (vab)*Wba /
-                            (rho_a + rho_b) * 2;
-                  sph_part_b->incVelocityCorrection(delta_b);
-                  break;
-                case 3: // boundary with free
-
-                  // calculate Vab as the method shown in Morris's paper, 1996
-                  // interact with boundary particles
-                  da = pos_b.z() - allContainer.getMinCorner().z(); //
-                  // assume with the bottom boundary
-                  dB = allContainer.getMinCorner().z() -
-                       pos_a.x(); // assume with
-                                         // the bottom boundary
-                  if (pos_a.x() <
-                      allContainer.getMinCorner().x()) { // with left
-                                                         // boundary
-                    da = pos_b.x() - allContainer.getMinCorner().x();
-                    dB = allContainer.getMinCorner().x() - pos_a.x();
-                  } else if (pos_a.x() >
-                             allContainer.getMaxCorner().x()) { // with right
-                                                                // boundary
-                    da = allContainer.getMaxCorner().x() - pos_b.x();
-                    dB = pos_a.x() - allContainer.getMaxCorner().x();
-                  } else if (pos_a.z() >
-                             allContainer.getMaxCorner().z()) { // with top
-                                                                // boundary
-                    da = allContainer.getMaxCorner().z() - pos_b.z();
-                    dB = pos_a.z() - allContainer.getMaxCorner().z();
-                  }
-
-                  beta = 1 + dB / da;
-                  if (beta > 2 || beta < 0 || isnan(beta)) {
-                    beta = 2;
-                  }
-
-                  vel_ba = beta * sph_part_b->getVelocity();
-                  vab = -vel_ba;
-
-                  sph_part_a->incDensityRate(mass_b *
-                                        (vab * gradWab_a));
-                  sph_part_b->incDensityRate(mass_a *
-                                        (vel_ba * gradWba_b));
-
-                  vel_radial = vab * (pos_a - pos_b);
-                  if (vel_radial < 0) {
-                    mu_ab = smoothLength * vel_radial /
-                            (rab * rab + 0.01 * smoothLength * smoothLength);
-                Gamma_ab =
-(-alpha_zero*(util::getParam<REAL>("soundSpeed")*mu_ab)/(rho_a+rho_b)*2;
-                  } else {
-                    Gamma_ab = 0;
-                  }
-
-                  //                dva_dt =
-                  //-mass_b*(press_a/(rho_a*rho_a)*coeff_a+press_b/(rho_b*rho_b)*coeff_b+Gamma_ab)*gradWab_a;
-                  //                sph_part_a->incAcceleration(dva_dt);
-                  dvb_dt =
-                    -mass_a *
-                    (p_rhoSq_b + p_rhoSq_a + Gamma_ab) *
-                    gradWba_b;
-                  sph_part_b->incAcceleration(dvb_dt); // the velocities of the ghost
-                  particles will not envolve as the same way as others
-
-                    //            delta_a =
-                    // epsilon*mass_b*(-vab)*Wab/(rho_a+rho_b)*2;
-                    //                sph_part_a->incVelocityCorrection(delta_a);
-                    delta_b = epsilon * mass_a * (vab)*Wba /
-                              (rho_a + rho_b) * 2;
-                  sph_part_b->incVelocityCorrection(delta_b);
-
-                  // apply the boundary forces by Lennard-Jones potential as in
-                  // Monaghan's paper(1994)
-                  if (rab <= spaceInterval) { // sph_part_b is in the smooth kernel
-                    dvb_dt = D * (pow(spaceInterval / rab, p1) -
-                                  pow(spaceInterval / rab, p2)) *
-                             (pos_b - pos_a) / (rab * rab);
-                    sph_part_b->incAcceleration(dvb_dt);
-                  } // end if
-
-                  break;
-                default:
-                  std::cout << "SPH particle type of sph_part_a should be 1, 2 or 3!"
-                            << std::endl;
-                  exit(-1);
-              } // end switch sph_part_a
-
-              break;
-            case 2: // sph_part_b is ghost particle
-
-              if (sph_part_a->getType() !=
-                  1) { // sph_part_a is not free sph particles, i.e. sph_part_a
-                       // is ghost or boundary particles
-                break; // do not consider sph_part_a, as we treat before
-              }
-
-              demt = sph_part_b->getDemParticle();
-              dem_pos = demt->currentPosition();
-              local_a =
-                demt->globalToLocal(pos_a - dem_pos); // the local
-              // position of sph point sph_part_a
-              ra = demt->getA();
-              rb = demt->getB();
-              rc = demt->getC();
-              k = 1.0 / (sqrt(local_a.x() * local_a.x() / (ra * ra) +
-                              local_a.y() * local_a.y() / (rb * rb) +
-                              local_a.z() * local_a.z() / (rc * rc)));
-              da = dem::vfabs(local_a -
-                              k * local_a); // the distance is the same
-                                              // in rotated coordinates
-
-              // calculate Vab as the method shown in Morris's paper, 1996
-
-              // (1) here I wanna use the distance from the point a/b to the
-              // surface of the ellipsoid to simplify the problem
-              local_b = sph_part_b->getLocalPosition();
-              k = 1.0 / (sqrt(local_b.x() * local_b.x() / (ra * ra) +
-                              local_b.y() * local_b.y() / (rb * rb) +
-                              local_b.z() * local_b.z() / (rc * rc)));
-              dB = dem::vfabs(local_b - k * local_b);
-
-              //              // (2) here the Morris's method is used
-              //              xa = pos_a.x(); ya = pos_a.y();
-              //              xB = pos_b.x(); yB = pos_b.y();
-              //              if(ya==0) {da = xa-radius; dB = radius-xB;}
-              //              else if(xa==0) {da = ya-radius; dB = radius-yB;}
-              //              else {
-              //          sqrt_xaya = sqrt(xa*xa+ya*ya);
-              //          k = radius/sqrt_xaya;
-              //          da = radius/k - radius;
-              //          dB = fabs(xa*xB+ya*yB-k*radius*radius)/sqrt_xaya;
-              //              }
-
-              beta = 1 + dB / da;
-              if (beta > 2 || beta < 0 || isnan(beta)) {
-                beta = 2;
-              }
-
-              vdem = sph_part_b->getVelocity();
-              vab = beta * (sph_part_a->getVelocity() - vdem);
-              vel_ba = -vab;
-
-              sph_part_a->incDensityRate(mass_b *
-                                    (vab * gradWab_a));
-              sph_part_b->incDensityRate(mass_a *
-                                    (vel_ba * gradWba_b));
-
-              vel_radial = vab * (pos_a - pos_b);
-              if (vel_radial < 0) {
-                mu_ab = smoothLength * vel_radial /
-                        (rab * rab + 0.01 * smoothLength * smoothLength);
-                Gamma_ab =
-(-alpha_zero*(util::getParam<REAL>("soundSpeed")*mu_ab)/(rho_a+rho_b)*2;
-              } else {
-                Gamma_ab = 0;
-              }
-
-              dva_dt = -mass_b *
-                       (p_rhoSq_a * coeff_a +
-                        p_rhoSq_b * coeff_b + Gamma_ab) *
-                       gradWab_a;
-              sph_part_a->incAcceleration(dva_dt);
-              dvb_dt = -mass_a *
-                       (p_rhoSq_b * coeff_b +
-                        p_rhoSq_a * coeff_a + Gamma_ab) *
-                       gradWba_b;
-              demt->addForce(mass_b * dvb_dt);
-              demt->addMoment((pos_b - dem_pos) %
-                              (mass_b * dvb_dt));
-              //              sph_part_b->incAcceleration(dvb_dt);  // the velocities
-              //              of the ghost
-              // particles will not envolve as the same way as others
-
-              delta_a = epsilon * mass_b * (-vab) * Wab /
-                        (rho_a + rho_b) * 2;
-              sph_part_a->incVelocityCorrection(delta_a);
-              //                delta_b =
-              // epsilon*mass_a*(vab)*Wba/(rho_a+rho_b)*2;
-              //                sph_part_b->incVelocityCorrection(delta_b);
-              break;
-            case 3: // sph_part_b is boundary particle
-
-              if (sph_part_a->getType() !=
-                  1) { // sph_part_a is not free sph particles, i.e. sph_part_a
-                       // is ghost or boundary particles
-                break; // do not consider sph_part_a, as we treat before
-              }
-
-              // calculate Vab as the method shown in Morris's paper, 1996
-              // interact with boundary particles
-              da = pos_a.z() - allContainer.getMinCorner().z(); // assume
-              // with the bottom boundary
-              dB = allContainer.getMinCorner().z() -
-                   pos_b.z(); // assume with
-                                     // the bottom boundary
-              if (pos_b.x() <
-                  allContainer.getMinCorner().x()) { // with left
-                                                     // boundary
-                da = pos_a.x() - allContainer.getMinCorner().x();
-                dB = allContainer.getMinCorner().x() - pos_b.x();
-              } else if (pos_b.x() >
-                         allContainer.getMaxCorner().x()) { // with
-                                                            // right boundary
-                da = allContainer.getMaxCorner().x() - pos_a.x();
-                dB = pos_b.x() - allContainer.getMaxCorner().x();
-              } else if (pos_b.z() >
-                         allContainer.getMaxCorner().z()) { // with
-                                                            // top boundary
-                da = allContainer.getMaxCorner().z() - pos_a.z();
-                dB = pos_b.z() - allContainer.getMaxCorner().z();
-              }
-
-              beta = 1 + dB / da;
-              if (beta > 2 || beta < 0 || isnan(beta)) {
-                beta = 2;
-              }
-
-              vab = beta * sph_part_a->getVelocity();
-              vel_ba = -vab;
-
-              sph_part_a->incDensityRate(mass_b *
-                                    (vab * gradWab_a));
-              sph_part_b->incDensityRate(mass_a *
-                                    (vel_ba * gradWba_b));
-
-              vel_radial = vab * (pos_a - pos_b);
-              if (vel_radial < 0) {
-                mu_ab = smoothLength * vel_radial /
-                        (rab * rab + 0.01 * smoothLength * smoothLength);
-            Gamma_ab =
-(-alpha_zero*(util::getParam<REAL>("soundSpeed")*mu_ab)/(rho_a+rho_b)*2;
-              } else {
-                Gamma_ab = 0;
-              }
-
-              dva_dt = -mass_b *
-                       (p_rhoSq_a * coeff_a +
-                        p_rhoSq_b * coeff_b + Gamma_ab) *
-                       gradWab_a;
-              sph_part_a->incAcceleration(dva_dt);
-              //              dvb_dt =
-              //-mass_a*(press_b/(rho_b*rho_b)+press_a/(rho_a*rho_a)+Gamma_ab)*gradWba_b;
-              //              sph_part_b->incAcceleration(dvb_dt);  // the velocities
-              //              of the ghost
-              // particles will not envolve as the same way as others
-
-              delta_a = epsilon * mass_b * (-vab) * Wab /
-                        (rho_a + rho_b) * 2;
-              sph_part_a->incVelocityCorrection(delta_a);
-              //              delta_b =
-              // epsilon*mass_a*(vab)*Wba/(rho_a+rho_b)*2;
-              //              sph_part_b->incVelocityCorrection(delta_b);
-
-              // apply the boundary forces by Lennard-Jones potential as in
-              // Monaghan's paper(1994)
-              if (rab <= spaceInterval) { // sph_part_b is in the smooth kernel
-                dva_dt = D * (pow(spaceInterval / rab, p1) -
-                              pow(spaceInterval / rab, p2)) *
-                         (pos_a - pos_b) / (rab * rab);
-                sph_part_a->incAcceleration(dva_dt);
-              } // end if
-
-              break;
-            default:
-              std::cout << "SPH particle type should be 1, 2 or 3!"
-                        << std::endl;
-              exit(-1);
-
-          } // end swtich type
-        }   // end if 3h
-      }     // end for sph_part_b in neighbor cells
-    }       // end for sph_part_a
-
-    tmp_particleVec.clear(); // clear elements in tmp-vector for particles
-                             // neighboring cells, it is important
-
-  } // end for cellIndex, different cells
-
-  //      // apply the boundary forces by Lennard-Jones potential as in
-  //      Monaghan's
-  // paper(1994)
-  //      for(sph_part_b=SPHBoundaryParticleVec.begin();
-  // sph_part_b!=SPHBoundaryParticleVec.end(); sph_part_b++){
-  //    pos_b = sph_part_b->currentPosition();
-  //    rab = dem::vfabs(pos_a-pos_b);
-  //    if(rab<=spaceInterval){ // sph_part_b is in the smooth kernel
-  //        dva_dt = D*(pow(spaceInterval/rab, p1)-pow(spaceInterval/rab,
-  // p2))*(pos_a-pos_b)/(rab*rab);
-  //        sph_part_a->incAcceleration(dva_dt);
-  //    } // end if
-  //      } // end sph_part_b
-
-} // end calculateSPHDensityRateAccelerationLinkedList3D()
-*/
-
-/*
 void
 SmoothParticleHydro::printSPHParticle(const char* str) const
 {
   std::ofstream ofs(str);
   if (!ofs) {
-    debugInf << "stream error: printSPHParticle" << std::endl;
+    dem::debugInf << "stream error: printSPHParticle" << std::endl;
     exit(-1);
   }
   ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
+  ofs.precision(dem::OPREC);
 
   ofs << "Title = \"SPH Particle Information\"" << std::endl;
-  ofs << "VARIABLES = \"x\", \"y\",\"z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\"
-\"Vy\" \"Vz\" \"Pressure\" \"a_x\" \"a_y\" \"a_z\" \"density_dot\" "
-  "\"density\" "
+  ofs << "VARIABLES = \"x\", \"y\",\"z\" \"Ux\" \"Uy\" \"Uz\" \"Vx\""
+      << "\"Vy\" \"Vz\" \"Pressure\" \"a_x\" \"a_y\" \"a_z\" \"density_dot\" "
+      << "\"density\" "
       << std::endl;
 
   // Output the coordinates and the array information
-  for (std::vector<sph::SPHParticle*>::const_iterator pt =
-         d_allSPHParticleVec.begin();
-       pt != d_allSPHParticleVec.end(); pt++) {
+  for (const auto& particle: d_allSPHParticleVec) {
 
     //// not print the most right layer of SPH free particles, 2015/05/19
     // if((*pt)->getInitPosition().getx()==25){
     // continue;
     //}
-    if ((*pt)->getType() == 3)
+    if (particle->getType() == SPHParticleType::BOUNDARY)
       continue; // not print out boundary particles
 
-    ofs << std::setw(20) << (*pt)->currentPosition().x() << std::setw(20)
-        << (*pt)->currentPosition().y() << std::setw(20)
-        << (*pt)->currentPosition().z() << std::setw(20)
-        << (*pt)->getDisplacement().x() << std::setw(20)
-        << (*pt)->getDisplacement().y() << std::setw(20)
-        << (*pt)->getDisplacement().z() << std::setw(20)
-        << (*pt)->getVelocity().x() << std::setw(20) << (*pt)->getVelocity().y()
-        << std::setw(20) << (*pt)->getVelocity().z();
+    ofs << std::setw(20) 
+        << particle->currentPosition().x() << std::setw(20)
+        << particle->currentPosition().y() << std::setw(20)
+        << particle->currentPosition().z() << std::setw(20)
+        << particle->getDisplacement().x() << std::setw(20)
+        << particle->getDisplacement().y() << std::setw(20)
+        << particle->getDisplacement().z() << std::setw(20)
+        << particle->getVelocity().x() << std::setw(20) 
+        << particle->getVelocity().y() << std::setw(20) 
+        << particle->getVelocity().z();
 
-    (*pt)->calculateParticlePressure();
-    ofs << std::setw(20) << (*pt)->getPressure();
+    particle->calculatePressure();
+    ofs << std::setw(20) << particle->getPressure();
 
-    ofs << std::setw(20) << (*pt)->getAcceleration().x() << std::setw(20)
-        << (*pt)->getAcceleration().y() << std::setw(20)
-        << (*pt)->getAcceleration().z() << std::setw(20)
-        << (*pt)->getDensityRate() << std::setw(20)
-        << (*pt)->getDensity() << std::endl;
+    ofs << std::setw(20) 
+        << particle->getAcceleration().x() << std::setw(20)
+        << particle->getAcceleration().y() << std::setw(20)
+        << particle->getAcceleration().z() << std::setw(20)
+        << particle->getDensityRate() << std::setw(20)
+        << particle->getDensity() << std::endl;
   }
 
   ofs.close();
 }
-*/
 
 namespace sph {
 template void
