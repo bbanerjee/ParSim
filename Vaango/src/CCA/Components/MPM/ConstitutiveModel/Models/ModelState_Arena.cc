@@ -23,17 +23,17 @@
  */
 
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
 #include <Core/Exceptions/InternalError.h>
 #include <iostream>
 
 using namespace Vaango;
 
-const Uintah::Matrix3 ModelState_MasonSand::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-const double ModelState_MasonSand::sqrtTwo = std::sqrt(2.0);
-const double ModelState_MasonSand::sqrtThree = std::sqrt(3.0);
+const Uintah::Matrix3 ModelState_Arena::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+const double ModelState_Arena::sqrtTwo = std::sqrt(2.0);
+const double ModelState_Arena::sqrtThree = std::sqrt(3.0);
 
-ModelState_MasonSand::ModelState_MasonSand()
+ModelState_Arena::ModelState_Arena()
   : ModelState_Default()
 {
   particleID = 0;
@@ -71,7 +71,7 @@ ModelState_MasonSand::ModelState_MasonSand()
   coherence = 1.0;
 }
 
-ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
+ModelState_Arena::ModelState_Arena(const ModelState_Arena& state)
 {
   particleID = state.particleID;
 
@@ -109,7 +109,7 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand& state)
   yieldParams = state.yieldParams;
 }
 
-ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
+ModelState_Arena::ModelState_Arena(const ModelState_Arena* state)
 {
   particleID = state->particleID;
 
@@ -147,12 +147,12 @@ ModelState_MasonSand::ModelState_MasonSand(const ModelState_MasonSand* state)
   yieldParams = state->yieldParams;
 }
 
-ModelState_MasonSand::~ModelState_MasonSand()
+ModelState_Arena::~ModelState_Arena()
 {
 }
 
-ModelState_MasonSand&
-ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
+ModelState_Arena&
+ModelState_Arena::operator=(const ModelState_Arena& state)
 {
   if (this == &state) return *this;
 
@@ -194,8 +194,8 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand& state)
   return *this;
 }
 
-ModelState_MasonSand*
-ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
+ModelState_Arena*
+ModelState_Arena::operator=(const ModelState_Arena* state)
 {
   if (this == state) return this;
 
@@ -238,7 +238,7 @@ ModelState_MasonSand::operator=(const ModelState_MasonSand* state)
 }
 
 void 
-ModelState_MasonSand::updateStressInvariants()
+ModelState_Arena::updateStressInvariants()
 {
   // Compute the first invariant of the total stress
   double I1 = stressTensor.Trace();  //Pa
@@ -251,7 +251,7 @@ ModelState_MasonSand::updateStressInvariants()
   J2 = (J2 < 1e-16*(I1*I1+J2)) ? 0.0 : J2;
   sqrt_J2 = std::sqrt(J2);
 
-  // Compute I1_eff for partially saturated MasonSand model
+  // Compute I1_eff for partially saturated Arena model
   I1_eff =  I1 + (pbar_w*3.0);
 
   // Compute the Lode coordinates (r, z) of the effective stress
@@ -273,7 +273,7 @@ ModelState_MasonSand::updateStressInvariants()
 }
 
 void 
-ModelState_MasonSand::updatePlasticStrainInvariants()
+ModelState_Arena::updatePlasticStrainInvariants()
 {
   // Compute volumetric strain
   ep_v = plasticStrainTensor.Trace();

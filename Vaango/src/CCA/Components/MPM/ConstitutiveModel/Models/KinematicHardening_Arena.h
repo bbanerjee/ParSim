@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __MASONSAND_POREPRESSURE_KINEMATIC_HARDENING_MODEL_H__
-#define __MASONSAND_POREPRESSURE_KINEMATIC_HARDENING_MODEL_H__
+#ifndef __ARENA_POREPRESSURE_KINEMATIC_HARDENING_MODEL_H__
+#define __ARENA_POREPRESSURE_KINEMATIC_HARDENING_MODEL_H__
 
 
 
@@ -38,7 +38,7 @@ namespace Vaango {
 
   /////////////////////////////////////////////////////////////////////////////
   /*!
-    \class KinematicHardening_MasonSand
+    \class KinematicHardening_Arena
     \brief Backstress model for the pore pressure (Mason sand)
     \author Biswajit Banerjee, 
    
@@ -46,9 +46,9 @@ namespace Vaango {
   */
   /////////////////////////////////////////////////////////////////////////////
 
-  class KinematicHardening_MasonSand : public KinematicHardeningModel {
+  class KinematicHardening_Arena : public KinematicHardeningModel {
 
-    friend class InternalVar_MasonSand;
+    friend class InternalVar_Arena;
 
   private:
 
@@ -66,17 +66,17 @@ namespace Vaango {
     Pressure_Granite d_granite;
 
     // Prevent copying of this class
-    //KinematicHardening_MasonSand(const KinematicHardening_MasonSand &cm);
-    KinematicHardening_MasonSand& operator=(const KinematicHardening_MasonSand &cm);
+    //KinematicHardening_Arena(const KinematicHardening_Arena &cm);
+    KinematicHardening_Arena& operator=(const KinematicHardening_Arena &cm);
 
   public:
     // constructors
-    KinematicHardening_MasonSand(Uintah::ProblemSpecP& ps,
+    KinematicHardening_Arena(Uintah::ProblemSpecP& ps,
                                  InternalVariableModel* intvar);
-    KinematicHardening_MasonSand(const KinematicHardening_MasonSand* cm);
+    KinematicHardening_Arena(const KinematicHardening_Arena* cm);
          
     // destructor 
-    virtual ~KinematicHardening_MasonSand();
+    virtual ~KinematicHardening_Arena();
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
@@ -231,4 +231,4 @@ namespace Vaango {
 
 } // End namespace Uintah
 
-#endif  // __MASONSAND_POREPRESSURE_KINEMATIC_HARDENING_MODEL_H__ 
+#endif  // __ARENA_POREPRESSURE_KINEMATIC_HARDENING_MODEL_H__ 

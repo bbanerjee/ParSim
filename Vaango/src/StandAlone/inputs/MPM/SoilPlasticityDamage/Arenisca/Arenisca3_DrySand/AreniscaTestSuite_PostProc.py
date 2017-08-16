@@ -1074,8 +1074,8 @@ def test01_postProc(uda_path,save_path,**kwargs):
   print "Post Processing Test: 01 - Uniaxial Compression With Rotation"
 
   # Read the experimental data
-  file_name = 'Masonsand052212-035.expt'
-  file_name_alt = 'Masonsand052212-026.expt'
+  file_name = 'Arena052212-035.expt'
+  file_name_alt = 'Arena052212-026.expt'
   time_expt, sigma_a_expt, sigma_r_expt, pp_expt, qq_expt = readExptStressData(uda_path, file_name)
   time_expt_alt, sigma_a_expt_alt, sigma_r_expt_alt, pp_expt_alt, qq_expt_alt = readExptStressData(uda_path, file_name_alt)
 

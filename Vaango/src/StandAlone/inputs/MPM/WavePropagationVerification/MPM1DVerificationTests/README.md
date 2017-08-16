@@ -54,7 +54,7 @@ The procedure for generating the MPM solution is:
     * OneD_pressureBC_explosion_gimp_undamped_lores.ups
     * OneD_pressureBC_explosion_gimp_undamped.ups
 4. These input files may also need 
-  * MasonSand_PhysicalProperties.xml
+  * Arena_PhysicalProperties.xml
   * ParamAreniscaElastic.xml
   * CentrifugeLoadCurveLow.xml
 5. To run these tests use a command of the form

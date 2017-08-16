@@ -162,7 +162,7 @@
     <MaterialProperties>
        <MPM>
          <material name = "Mason sand">
-           <include href="./Arenisca3_DryMasonSand_Rate.xml"/>
+           <include href="./Arenisca3_DryArena_Rate.xml"/>
            <geom_object>
              <sphere label = "hole">
                <origin> [0.0, 0.0, 0.4] </origin>

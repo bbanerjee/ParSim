@@ -64,8 +64,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/NonLocalDruckerPrager.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Arenisca.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Arenisca3.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Arenisca3PartiallySaturated.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Arenisca3PartSatMixture.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ArenaMixture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Arenisca4.h>
 #include <CCA/Components/MPM/ConstitutiveModel/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/CamClay.h>
@@ -122,10 +122,10 @@ ConstitutiveModel* ConstitutiveModelFactory::create(ProblemSpecP& ps,
     return(scinew Arenisca(child,flags));
   else if (mat_type == "Arenisca3")
     return(scinew Arenisca3(child,flags));
-  else if (mat_type == "Arenisca3_part_sat")
-    return(scinew Vaango::Arenisca3PartiallySaturated(child,flags));
-  else if (mat_type == "Arenisca3_part_sat_mixture")
-    return(scinew Vaango::Arenisca3PartSatMixture(child,flags));
+  else if (mat_type == "arena")
+    return(scinew Vaango::Arena(child,flags));
+  else if (mat_type == "arena_mixture")
+    return(scinew Vaango::ArenaMixture(child,flags));
   else if (mat_type == "Arenisca4")
     return(scinew Arenisca4(child,flags));
   else if (mat_type == "soil_model_brannon")

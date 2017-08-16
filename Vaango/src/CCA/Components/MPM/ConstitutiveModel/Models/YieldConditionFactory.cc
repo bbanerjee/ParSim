@@ -30,8 +30,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Gurson.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Arenisca3.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_MasonSand.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_SoilMix.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_ArenaMixture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -56,10 +56,10 @@ YieldCondition* YieldConditionFactory::create(Uintah::ProblemSpecP& ps)
       return(scinew YieldCond_vonMises(child));
    else if (mat_type == "gurson")
       return(scinew YieldCond_Gurson(child));
-   else if (mat_type == "mason_sand")
-      return(scinew YieldCond_MasonSand(child));
-   else if (mat_type == "soil_mix")
-      return(scinew YieldCond_SoilMix(child));
+   else if (mat_type == "arena")
+      return(scinew YieldCond_Arena(child));
+   else if (mat_type == "arena_mixture")
+      return(scinew YieldCond_ArenaMixture(child));
    else 
       throw ProblemSetupException("MPM::ConstitutiveModel:Unknown Yield Condition ("+mat_type+")",
                                   __FILE__, __LINE__);
@@ -100,11 +100,11 @@ YieldConditionFactory::createCopy(const YieldCondition* yc)
    else if (dynamic_cast<const YieldCond_Arenisca3*>(yc))
       return(scinew YieldCond_Arenisca3(dynamic_cast<const YieldCond_Arenisca3*>(yc)));
 
-   else if (dynamic_cast<const YieldCond_MasonSand*>(yc))
-      return(scinew YieldCond_MasonSand(dynamic_cast<const YieldCond_MasonSand*>(yc)));
+   else if (dynamic_cast<const YieldCond_Arena*>(yc))
+      return(scinew YieldCond_Arena(dynamic_cast<const YieldCond_Arena*>(yc)));
 
-   else if (dynamic_cast<const YieldCond_SoilMix*>(yc))
-      return(scinew YieldCond_SoilMix(dynamic_cast<const YieldCond_SoilMix*>(yc)));
+   else if (dynamic_cast<const YieldCond_ArenaMixture*>(yc))
+      return(scinew YieldCond_ArenaMixture(dynamic_cast<const YieldCond_ArenaMixture*>(yc)));
 
    else 
       throw ProblemSetupException("Cannot create copy of unknown yield condition", __FILE__, __LINE__);

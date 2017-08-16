@@ -247,17 +247,17 @@ def post_proc(test,uda_path,save_path):
   test_name = os.path.split(test)[1]
   if test_name in POST_PROCESS_LIST:
     if test_name == 'AreniscaTest_00_UniaxialStrainSHPB_26.ups':
-      test00_postProc(uda_path, save_path, 'Masonsand052212-026.expt')
+      test00_postProc(uda_path, save_path, 'Arena052212-026.expt')
     if test_name == 'AreniscaTest_00_UniaxialStrainSHPB_27.ups':
-      test00_postProc(uda_path, save_path, 'Masonsand052212-027.expt')
+      test00_postProc(uda_path, save_path, 'Arena052212-027.expt')
     if test_name == 'AreniscaTest_00_UniaxialStrainSHPB_28.ups':
-      test00_postProc(uda_path, save_path, 'Masonsand052212-028.expt')
+      test00_postProc(uda_path, save_path, 'Arena052212-028.expt')
     if test_name == 'AreniscaTest_00_UniaxialStrainSHPB_29.ups':
-      test00_postProc(uda_path, save_path, 'Masonsand052212-029.expt')
+      test00_postProc(uda_path, save_path, 'Arena052212-029.expt')
     if test_name == 'AreniscaTest_00_UniaxialStrainSHPB_30.ups':
-      test00_postProc(uda_path, save_path, 'Masonsand052212-030.expt')
+      test00_postProc(uda_path, save_path, 'Arena052212-030.expt')
     if test_name == 'AreniscaTest_00_UniaxialStrainSHPB_35.ups':
-      test00_postProc(uda_path, save_path, 'Masonsand052212-035.expt')
+      test00_postProc(uda_path, save_path, 'Arena052212-035.expt')
     if test_name == 'AreniscaTest_01_UniaxialStrainRotate.ups':
       test01_postProc(uda_path,save_path)
     if test_name == 'AreniscaTest_02_VertexTreatment.ups':

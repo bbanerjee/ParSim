@@ -23,7 +23,7 @@
  */
 
 // Namespace Vaango::
-#include <CCA/Components/MPM/ConstitutiveModel/Arenisca3PartiallySaturated.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
 
@@ -93,23 +93,23 @@ using Uintah::Matrix3;
 using std::ostringstream;
 using std::endl;
 
-const double Arenisca3PartiallySaturated::one_third(1.0/3.0);
-const double Arenisca3PartiallySaturated::two_third(2.0/3.0);
-const double Arenisca3PartiallySaturated::four_third = 4.0/3.0;
-const double Arenisca3PartiallySaturated::sqrt_two = std::sqrt(2.0);
-const double Arenisca3PartiallySaturated::one_sqrt_two = 1.0/sqrt_two;
-const double Arenisca3PartiallySaturated::sqrt_three = std::sqrt(3.0);
-const double Arenisca3PartiallySaturated::one_sqrt_three = 1.0/sqrt_three;
-const double Arenisca3PartiallySaturated::one_sixth = 1.0/6.0;
-const double Arenisca3PartiallySaturated::one_ninth = 1.0/9.0;
-const double Arenisca3PartiallySaturated::pi = M_PI;
-const double Arenisca3PartiallySaturated::pi_fourth = 0.25*pi;
-const double Arenisca3PartiallySaturated::pi_half = 0.5*pi;
-const Matrix3 Arenisca3PartiallySaturated::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-const Matrix3 Arenisca3PartiallySaturated::Zero(0.0);
+const double Arena::one_third(1.0/3.0);
+const double Arena::two_third(2.0/3.0);
+const double Arena::four_third = 4.0/3.0;
+const double Arena::sqrt_two = std::sqrt(2.0);
+const double Arena::one_sqrt_two = 1.0/sqrt_two;
+const double Arena::sqrt_three = std::sqrt(3.0);
+const double Arena::one_sqrt_three = 1.0/sqrt_three;
+const double Arena::one_sixth = 1.0/6.0;
+const double Arena::one_ninth = 1.0/9.0;
+const double Arena::pi = M_PI;
+const double Arena::pi_fourth = 0.25*pi;
+const double Arena::pi_half = 0.5*pi;
+const Matrix3 Arena::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+const Matrix3 Arena::Zero(0.0);
 
 // Requires the necessary input parameters CONSTRUCTORS
-Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& ps, 
+Arena::Arena(Uintah::ProblemSpecP& ps, 
                                                          Uintah::MPMFlags* mpmFlags)
   : Uintah::ConstitutiveModel(mpmFlags)
 {
@@ -179,7 +179,7 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
 
   // MPM needs three functions to interact with ICE in MPMICE
   // 1) p = f(rho) 2) rho = g(p) 3) C = 1/K(rho)
-  // Because the Arenisca3PartiallySaturated bulk modulus model does not have any closed
+  // Because the Arena bulk modulus model does not have any closed
   // form expressions for these functions, we use a Murnaghan equation of state
   // with parameters K_0 and n = K_0'.  These parameters are read in here.
   // **WARNING** The default values are for Mason sand.
@@ -199,7 +199,7 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(Uintah::ProblemSpecP& p
 }
 
 void 
-Arenisca3PartiallySaturated::checkInputParameters()
+Arena::checkInputParameters()
 {
   
   if (d_cm.consistency_bisection_tolerance < 1.0e-16 || d_cm.consistency_bisection_tolerance > 1.0e-2) {
@@ -231,7 +231,7 @@ Arenisca3PartiallySaturated::checkInputParameters()
   // *TODO*  Add checks for the other parameters
 }
 
-Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3PartiallySaturated* cm)
+Arena::Arena(const Arena* cm)
   : ConstitutiveModel(cm)
 {
   d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic);
@@ -276,9 +276,9 @@ Arenisca3PartiallySaturated::Arenisca3PartiallySaturated(const Arenisca3Partiall
 }
 
 // Initialize all labels of the particle variables associated with 
-// Arenisca3PartiallySaturated.
+// Arena.
 void 
-Arenisca3PartiallySaturated::initializeLocalMPMLabels()
+Arena::initializeLocalMPMLabels()
 {
   pElasticVolStrainLabel = VarLabel::create("p.elasticVolStrain",
     ParticleVariable<double>::getTypeDescription());
@@ -354,7 +354,7 @@ Arenisca3PartiallySaturated::initializeLocalMPMLabels()
 }
 
 // DESTRUCTOR
-Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
+Arena::~Arena()
 {
   VarLabel::destroy(pElasticVolStrainLabel);              //Elastic Volumetric Strain
   VarLabel::destroy(pElasticVolStrainLabel_preReloc);
@@ -395,12 +395,12 @@ Arenisca3PartiallySaturated::~Arenisca3PartiallySaturated()
 
 //adds problem specification values to checkpoint data for restart
 void 
-Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
+Arena::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
 {
   ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("constitutive_model");
-    cm_ps->setAttribute("type","Arenisca3_part_sat");
+    cm_ps->setAttribute("type","arena");
   }
 
   d_elastic->outputProblemSpec(cm_ps);
@@ -438,15 +438,15 @@ Arenisca3PartiallySaturated::outputProblemSpec(ProblemSpecP& ps,bool output_cm_t
   cm_ps->appendElement("n_Murnaghan_EOS",  d_cm.n_Murnaghan_EOS);
 }
 
-Arenisca3PartiallySaturated* 
-Arenisca3PartiallySaturated::clone()
+Arena* 
+Arena::clone()
 {
-  return scinew Arenisca3PartiallySaturated(*this);
+  return scinew Arena(*this);
 }
 
 //When a particle is pushed from patch to patch, carry information needed for the particle
 void 
-Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from,
+Arena::addParticleState(std::vector<const VarLabel*>& from,
                                               std::vector<const VarLabel*>& to)
 {
   // Push back all the particle variables associated with Arenisca.
@@ -505,7 +505,7 @@ Arenisca3PartiallySaturated::addParticleState(std::vector<const VarLabel*>& from
 
 /*!------------------------------------------------------------------------*/
 void 
-Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
+Arena::addInitialComputesAndRequires(Task* task,
                                                            const MPMMaterial* matl, 
                                                            const PatchSet* patch) const
 {
@@ -545,7 +545,7 @@ Arenisca3PartiallySaturated::addInitialComputesAndRequires(Task* task,
 
 /*!------------------------------------------------------------------------*/
 void 
-Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
+Arena::initializeCMData(const Patch* patch,
                                               const MPMMaterial* matl,
                                               DataWarehouse* new_dw)
 {
@@ -590,7 +590,7 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
  
   ParameterDict yieldParams = d_yield->getParameters();
   allParams.insert(yieldParams.begin(), yieldParams.end());
-  proc0cout << "Arenisca3PartSat Model parameters are: " << std::endl;
+  proc0cout << "Arena Model parameters are: " << std::endl;
   for (auto param : allParams) {
     proc0cout << "\t \t" << param.first << " " << param.second << std::endl;
   }
@@ -637,7 +637,7 @@ Arenisca3PartiallySaturated::initializeCMData(const Patch* patch,
 }
 
 void 
-Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
+Arena::initializeInternalVariables(const Patch* patch,
                                                          const MPMMaterial* matl,
                                                          ParticleSubset* pset,
                                                          DataWarehouse* new_dw,
@@ -728,7 +728,7 @@ Arenisca3PartiallySaturated::initializeInternalVariables(const Patch* patch,
 // **TODO** The pore pressure is not modified yet.  Do the correct initialization of
 //          pbar_w0
 void 
-Arenisca3PartiallySaturated::initializeStressAndDefGradFromBodyForce(const Patch* patch,
+Arena::initializeStressAndDefGradFromBodyForce(const Patch* patch,
                                                                      const MPMMaterial* matl,
                                                                      DataWarehouse* new_dw) const
 {
@@ -793,7 +793,7 @@ Arenisca3PartiallySaturated::initializeStressAndDefGradFromBodyForce(const Patch
 // Compute stable timestep based on both the particle velocities
 // and wave speed
 void 
-Arenisca3PartiallySaturated::computeStableTimestep(const Patch* patch,
+Arena::computeStableTimestep(const Patch* patch,
                                                    const MPMMaterial* matl,
                                                    DataWarehouse* new_dw)
 {
@@ -851,7 +851,7 @@ Arenisca3PartiallySaturated::computeStableTimestep(const Patch* patch,
 /**
  * Added computes/requires for computeStressTensor
  */
-void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
+void Arena::addComputesAndRequires(Task* task,
                                                          const MPMMaterial* matl,
                                                          const PatchSet* patches ) const
 {
@@ -909,13 +909,13 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* task,
 
 // ------------------------------------- BEGIN COMPUTE STRESS TENSOR FUNCTION
 /**
- *  Arenisca3PartiallySaturated::computeStressTensor 
- *  is the core of the Arenisca3PartiallySaturated model which computes
+ *  Arena::computeStressTensor 
+ *  is the core of the Arena model which computes
  *  the updated stress at the end of the current timestep along with all other
  *  required data such plastic strain, elastic strain, cap position, etc.
  */
 void 
-Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
+Arena::computeStressTensor(const PatchSubset* patches,
                                                  const MPMMaterial* matl,
                                                  DataWarehouse* old_dw,
                                                  DataWarehouse* new_dw)
@@ -1324,7 +1324,7 @@ Arenisca3PartiallySaturated::computeStressTensor(const PatchSubset* patches,
 *   All stress values within computeStep are quasistatic.
 */
 bool 
-Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D, 
+Arena::rateIndependentPlasticUpdate(const Matrix3& D, 
                                                           const double& delT,
                                                           particleIndex idx, 
                                                           long64 pParticleID, 
@@ -1477,7 +1477,7 @@ Arenisca3PartiallySaturated::rateIndependentPlasticUpdate(const Matrix3& D,
  *   **WARNING** Also computes stress invariants and plastic strain invariants
  */
 void 
-Arenisca3PartiallySaturated::computeElasticProperties(ModelState_MasonSand& state)
+Arena::computeElasticProperties(ModelState_MasonSand& state)
 {
   state.updateStressInvariants();
   state.updatePlasticStrainInvariants();
@@ -1517,7 +1517,7 @@ Arenisca3PartiallySaturated::computeElasticProperties(ModelState_MasonSand& stat
  *   over the step.
  */
 Matrix3 
-Arenisca3PartiallySaturated::computeTrialStress(const ModelState_MasonSand& state_old,
+Arena::computeTrialStress(const ModelState_MasonSand& state_old,
                                                 const Matrix3& strain_inc)
 {
   // Compute the trial stress
@@ -1556,7 +1556,7 @@ Arenisca3PartiallySaturated::computeTrialStress(const ModelState_MasonSand& stat
  * Caveat:  Uses the mean values of the yield condition parameters.
  */
 int 
-Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
+Arena::computeStepDivisions(particleIndex idx,
                                                   long64 particleID, 
                                                   const ModelState_MasonSand& state_old,
                                                   const ModelState_MasonSand& state_trial)
@@ -1658,7 +1658,7 @@ Arenisca3PartiallySaturated::computeStepDivisions(particleIndex idx,
  *   elastic, plastic, or partially elastic.   
  */
 bool 
-Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
+Arena::computeSubstep(const Matrix3& D,
                                             const double& dt,
                                             const ModelState_MasonSand& state_k_old,
                                             ModelState_MasonSand& state_k_new)
@@ -1800,7 +1800,7 @@ Arenisca3PartiallySaturated::computeSubstep(const Matrix3& D,
  *   NOTE: all values of r and z in this function are transformed!
  */
 bool 
-Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
+Arena::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                                                 const ModelState_MasonSand& state_k_old,
                                                 const ModelState_MasonSand& state_k_trial,
                                                 Uintah::Matrix3& sig_fixed,
@@ -2040,7 +2040,7 @@ Arenisca3PartiallySaturated::nonHardeningReturn(const Uintah::Matrix3& strain_in
  *   Returns whether the procedure is sucessful or has failed
  */
 bool 
-Arenisca3PartiallySaturated::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
+Arena::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
                                                             const ModelState_MasonSand& state_k_old, 
                                                             const ModelState_MasonSand& state_k_trial,
                                                             const Matrix3& deltaEps_e_fixed, 
@@ -2238,7 +2238,7 @@ Arenisca3PartiallySaturated::consistencyBisectionSimplified(const Matrix3& delta
  *   increment in volumetric plastic strain
  */
 bool
-Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& state,
+Arena::computeInternalVariables(ModelState_MasonSand& state,
                                                       const double& delta_eps_p_v)
 {
   // Internal variables are not allowed to evolve when the effective stress is tensile
@@ -2449,7 +2449,7 @@ Arenisca3PartiallySaturated::computeInternalVariables(ModelState_MasonSand& stat
  *   Compute the drained hydrostatic compressive strength and its derivative
  */
 void 
-Arenisca3PartiallySaturated::computeDrainedHydrostaticStrengthAndDeriv(const double& epsbar_p_v,
+Arena::computeDrainedHydrostaticStrengthAndDeriv(const double& epsbar_p_v,
                                                                        const double& p3,
                                                                        double& Xbar_d,
                                                                        double& derivXbar_d) const
@@ -2495,7 +2495,7 @@ Arenisca3PartiallySaturated::computeDrainedHydrostaticStrengthAndDeriv(const dou
  * Purpose: Update the damage parameters local to this model
  */
 void 
-Arenisca3PartiallySaturated::updateDamageParameters(const Matrix3& D,
+Arena::updateDamageParameters(const Matrix3& D,
                                                     const double& delta_t,
                                                     const ModelState_MasonSand& state_k_old,
                                                     ModelState_MasonSand& state_k_new) const
@@ -2594,7 +2594,7 @@ Arenisca3PartiallySaturated::updateDamageParameters(const Matrix3& D,
  *   by RM Brannon.
  */
 bool 
-Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
+Arena::rateDependentPlasticUpdate(const Matrix3& D,
                                                         const double& delT,
                                                         const ModelState_MasonSand& stateStatic_old,
                                                         const ModelState_MasonSand& stateStatic_new,
@@ -2675,7 +2675,7 @@ Arenisca3PartiallySaturated::rateDependentPlasticUpdate(const Matrix3& D,
 // ****************************************************************************************************
 // ****************************************************************************************************
 
-void Arenisca3PartiallySaturated::addRequiresDamageParameter(Task* task,
+void Arena::addRequiresDamageParameter(Task* task,
                                                              const MPMMaterial* matl,
                                                              const PatchSet* ) const
 {
@@ -2688,7 +2688,7 @@ void Arenisca3PartiallySaturated::addRequiresDamageParameter(Task* task,
 #endif
 }
 
-void Arenisca3PartiallySaturated::getDamageParameter(const Patch* patch,
+void Arena::getDamageParameter(const Patch* patch,
                                                      ParticleVariable<int>& damage,
                                                      int matID,
                                                      DataWarehouse* old_dw,
@@ -2709,7 +2709,7 @@ void Arenisca3PartiallySaturated::getDamageParameter(const Patch* patch,
   }
 }
 
-void Arenisca3PartiallySaturated::carryForward(const PatchSubset* patches,
+void Arena::carryForward(const PatchSubset* patches,
                                                const MPMMaterial* matl,
                                                DataWarehouse* old_dw,
                                                DataWarehouse* new_dw)
@@ -2737,13 +2737,13 @@ void Arenisca3PartiallySaturated::carryForward(const PatchSubset* patches,
 
 
 //T2D: Throw exception that this is not supported
-void Arenisca3PartiallySaturated::addComputesAndRequires(Task* ,
+void Arena::addComputesAndRequires(Task* ,
                                                          const MPMMaterial* ,
                                                          const PatchSet* ,
                                                          const bool, 
                                                          const bool ) const
 {
-  std::cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca3PartiallySaturated"<<endl;
+  std::cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arena"<<endl;
 }
 
 
@@ -2753,7 +2753,7 @@ void Arenisca3PartiallySaturated::addComputesAndRequires(Task* ,
  *  ---------------------------------------------------------------------------------------
  */
 void 
-Arenisca3PartiallySaturated::allocateCMDataAdd(DataWarehouse* new_dw,
+Arena::allocateCMDataAdd(DataWarehouse* new_dw,
                                                ParticleSubset* addset,
                                                ParticleLabelVariableMap* newState,
                                                ParticleSubset* delset,
@@ -2769,7 +2769,7 @@ Arenisca3PartiallySaturated::allocateCMDataAdd(DataWarehouse* new_dw,
 /*---------------------------------------------------------------------------------------
  * MPMICE Hooks
  *---------------------------------------------------------------------------------------*/
-double Arenisca3PartiallySaturated::computeRhoMicroCM(double pressure,
+double Arena::computeRhoMicroCM(double pressure,
                                                       const double p_ref,
                                                       const MPMMaterial* matl,
                                                       double temperature,
@@ -2785,7 +2785,7 @@ double Arenisca3PartiallySaturated::computeRhoMicroCM(double pressure,
   return rho_cur;
 }
 
-void Arenisca3PartiallySaturated::computePressEOSCM(double rho_cur,
+void Arena::computePressEOSCM(double rho_cur,
                                                     double& pressure, double p_ref,
                                                     double& dp_drho, 
                                                     double& soundSpeedSq,
@@ -2808,9 +2808,9 @@ void Arenisca3PartiallySaturated::computePressEOSCM(double rho_cur,
   soundSpeedSq = (bulk + 4.0*shear/3.0)/rho_cur;  // speed of sound squared
 }
 
-double Arenisca3PartiallySaturated::getCompressibility()
+double Arena::getCompressibility()
 {
-  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arenisca3PartiallySaturated"
+  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arena"
        << endl;
   return 1.0/d_cm.K0_Murnaghan_EOS;
 }

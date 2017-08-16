@@ -23,9 +23,7 @@
  */
 
 // Namespace Vaango::
-#include <CCA/Components/MPM/ConstitutiveModel/ArenaMixture.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_ArenaMixture.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_ArenaMixture.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
 
@@ -70,7 +68,8 @@
 #include <boost/foreach.hpp>
 
 #define USE_LOCAL_LOCALIZED_PVAR
-//#define CHECK_FOR_NAN
+#define CHECK_FOR_NAN
+#define CLAMP_DEF_GRAD
 //#define CHECK_FOR_NAN_EXTRA
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
@@ -85,8 +84,8 @@
 //#define CHECK_YIELD_SURFACE_NORMAL
 //#define CHECK_FLOATING_POINT_OVERFLOW
 //#define DEBUG_YIELD_BISECTION_R
-#define USE_SIMPLIFIED_CONSISTENCY_BISECTION
 //#define CHECK_CONSISTENCY_BISECTION_CONVERGENCE
+//#define CHECK_ELASTIC_STRAIN
 
 using namespace Vaango;
 using Uintah::VarLabel;
@@ -94,24 +93,24 @@ using Uintah::Matrix3;
 using std::ostringstream;
 using std::endl;
 
-const double ArenaMixture::one_third(1.0/3.0);
-const double ArenaMixture::two_third(2.0/3.0);
-const double ArenaMixture::four_third = 4.0/3.0;
-const double ArenaMixture::sqrt_two = std::sqrt(2.0);
-const double ArenaMixture::one_sqrt_two = 1.0/sqrt_two;
-const double ArenaMixture::sqrt_three = std::sqrt(3.0);
-const double ArenaMixture::one_sqrt_three = 1.0/sqrt_three;
-const double ArenaMixture::one_sixth = 1.0/6.0;
-const double ArenaMixture::one_ninth = 1.0/9.0;
-const double ArenaMixture::pi = M_PI;
-const double ArenaMixture::pi_fourth = 0.25*pi;
-const double ArenaMixture::pi_half = 0.5*pi;
-const Matrix3 ArenaMixture::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-const Matrix3 ArenaMixture::Zero(0.0);
+const double Arena::one_third(1.0/3.0);
+const double Arena::two_third(2.0/3.0);
+const double Arena::four_third = 4.0/3.0;
+const double Arena::sqrt_two = std::sqrt(2.0);
+const double Arena::one_sqrt_two = 1.0/sqrt_two;
+const double Arena::sqrt_three = std::sqrt(3.0);
+const double Arena::one_sqrt_three = 1.0/sqrt_three;
+const double Arena::one_sixth = 1.0/6.0;
+const double Arena::one_ninth = 1.0/9.0;
+const double Arena::pi = M_PI;
+const double Arena::pi_fourth = 0.25*pi;
+const double Arena::pi_half = 0.5*pi;
+const Matrix3 Arena::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+const Matrix3 Arena::Zero(0.0);
 
 // Requires the necessary input parameters CONSTRUCTORS
-ArenaMixture::ArenaMixture(Uintah::ProblemSpecP& ps, 
-                                                 Uintah::MPMFlags* mpmFlags)
+Arena::Arena(Uintah::ProblemSpecP& ps, 
+                                                         Uintah::MPMFlags* mpmFlags)
   : Uintah::ConstitutiveModel(mpmFlags)
 {
   // Bulk and shear modulus models
@@ -121,12 +120,6 @@ ArenaMixture::ArenaMixture(Uintah::ProblemSpecP& ps,
     desc << "**ERROR** Internal error while creating ElasticModuliModel." << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
-  if (!(dynamic_cast<ElasticModuli_ArenaMixture*>(d_elastic))) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ElasticModuli object has not been created."
-        << " Need ElasticModuli_ArenaMixture.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
 
   // Yield condition model
   d_yield = Vaango::YieldConditionFactory::create(ps);
@@ -134,12 +127,6 @@ ArenaMixture::ArenaMixture(Uintah::ProblemSpecP& ps,
     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating YieldConditionModel." << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
-  }
-  if (!(dynamic_cast<YieldCond_ArenaMixture*>(d_yield))) {
-    std::ostringstream out;
-    out << "**ERROR** The correct YieldCondition object has not been created."
-        << " Need YieldCond_ArenaMixture.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
   // Get initial porosity and saturation
@@ -162,41 +149,27 @@ ArenaMixture::ArenaMixture(Uintah::ProblemSpecP& ps,
   ps->getWithDefault("use_disaggregation_algorithm",
                      d_cm.use_disaggregation_algorithm, false);
 
-  // Get the volume fractions
-  ps->require("vol_frac.phase1", d_volfrac[0]); // Volume fractions
-  d_volfrac[1] = 1.0 - d_volfrac[0];
-
   // Get the hydrostatic compression model parameters
-  ps->require("p0.phase1",     d_crushParam[0].p0);  
-  ps->require("p1.phase1",     d_crushParam[0].p1); 
-  ps->require("p1_sat.phase1", d_crushParam[0].p1_sat);
-  ps->getWithDefault("p1_density_scale_fac.phase1", d_crushParam[0].p1_density_scale_fac, 0.0);
-  ps->require("p2.phase1",     d_crushParam[0].p2); 
-  ps->require("p3.phase1",     d_crushParam[0].p3);
-  ps->require("p0.phase2",     d_crushParam[1].p0);  
-  ps->require("p1.phase2",     d_crushParam[1].p1); 
-  ps->require("p1_sat.phase2", d_crushParam[1].p1_sat);
-  ps->getWithDefault("p1_density_scale_fac.phase2", d_crushParam[1].p1_density_scale_fac, 0.0);
-  ps->require("p2.phase2",     d_crushParam[1].p2); 
-  ps->require("p3.phase2",     d_crushParam[1].p3);
+  ps->require("p0",     d_crushParam.p0);  
+  ps->require("p1",     d_crushParam.p1); 
+  ps->require("p1_sat", d_crushParam.p1_sat);
+  ps->getWithDefault("p1_density_scale_fac", d_crushParam.p1_density_scale_fac, 0.0);
+  ps->require("p2",     d_crushParam.p2); 
+  ps->require("p3",     d_crushParam.p3);
  
   // Make sure p0 is at least 1000 pressure units
-  d_crushParam[1].p0 = std::max(d_crushParam[1].p0, 1000.0);
-  d_crushParam[1].p0 = std::max(d_crushParam[1].p0, 1000.0);
-
+  d_crushParam.p0 = std::max(d_crushParam.p0, 1000.0);
+ 
   // Compute modulus and compressive strength scaling factors
   // Using Pabst and Gregorova, 2015, Materials Science and Tech, 31:15, 1801.
   double phi_0 =   d_fluidParam.phi0;
   double phi_ref = d_fluidParam.phi_ref;
-  double density_fac_phase1 = d_crushParam[0].p1_density_scale_fac;
-  double density_fac_phase2 = d_crushParam[1].p1_density_scale_fac;
-  double density_fac = density_fac_phase1*d_volfrac[0] + density_fac_phase2*d_volfrac[1];
+  double density_fac = d_crushParam.p1_density_scale_fac;
   d_modulus_scale_fac = std::exp(-phi_0/(1.0 - phi_0) +  phi_ref/(1.0 - phi_ref));
   d_strength_scale_fac = std::exp(density_fac*d_modulus_scale_fac*(d_modulus_scale_fac - 1.0));
 
   // Do density scaling
-  d_crushParam[0].p1 *= d_strength_scale_fac;
-  d_crushParam[1].p1 *= d_strength_scale_fac;
+  d_crushParam.p1 *= d_strength_scale_fac;
 
   // Get the damage model parameters
   ps->getWithDefault("do_damage",                    d_cm.do_damage, false);
@@ -206,14 +179,12 @@ ArenaMixture::ArenaMixture(Uintah::ProblemSpecP& ps,
 
   // MPM needs three functions to interact with ICE in MPMICE
   // 1) p = f(rho) 2) rho = g(p) 3) C = 1/K(rho)
-  // Because the ArenaMixture bulk modulus model does not have any closed
+  // Because the Arena bulk modulus model does not have any closed
   // form expressions for these functions, we use a Murnaghan equation of state
   // with parameters K_0 and n = K_0'.  These parameters are read in here.
   // **WARNING** The default values are for Mason sand.
-  ps->getWithDefault("K0_Murnaghan_EOS.phase1", d_mpmiceEOSParam[0].K0_Murnaghan_EOS, 2.5e8);
-  ps->getWithDefault("n_Murnaghan_EOS.phase1", d_mpmiceEOSParam[0].n_Murnaghan_EOS, 13);
-  ps->getWithDefault("K0_Murnaghan_EOS.phase2", d_mpmiceEOSParam[1].K0_Murnaghan_EOS, 2.5e8);
-  ps->getWithDefault("n_Murnaghan_EOS.phase2", d_mpmiceEOSParam[1].n_Murnaghan_EOS, 13);
+  ps->getWithDefault("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS, 2.5e8);
+  ps->getWithDefault("n_Murnaghan_EOS", d_cm.n_Murnaghan_EOS, 13);
 
   checkInputParameters();
 
@@ -228,7 +199,7 @@ ArenaMixture::ArenaMixture(Uintah::ProblemSpecP& ps,
 }
 
 void 
-ArenaMixture::checkInputParameters()
+Arena::checkInputParameters()
 {
   
   if (d_cm.consistency_bisection_tolerance < 1.0e-16 || d_cm.consistency_bisection_tolerance > 1.0e-2) {
@@ -249,12 +220,6 @@ ArenaMixture::checkInputParameters()
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
-  if (d_volfrac[0] < 0.0 || d_volfrac[0] > 1.0) {
-    ostringstream warn;
-    warn << "Phase 1: Volume fraction must be between 0 and 1.  vf_phase1 = " 
-         << d_volfrac[0] << std::endl;
-    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-  }
   /*
   if (d_cm.use_disaggregation_algorithm) {
     ostringstream warn;
@@ -266,7 +231,7 @@ ArenaMixture::checkInputParameters()
   // *TODO*  Add checks for the other parameters
 }
 
-ArenaMixture::ArenaMixture(const ArenaMixture* cm)
+Arena::Arena(const Arena* cm)
   : ConstitutiveModel(cm)
 {
   d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic);
@@ -278,6 +243,9 @@ ArenaMixture::ArenaMixture(const ArenaMixture* cm)
 
   // Porosity and saturation
   d_fluidParam = cm->d_fluidParam;
+
+  // Hydrostatic compression parameters
+  d_crushParam = cm->d_crushParam;
 
   // Yield surface scaling
   d_cm.yield_scale_fac = cm->d_cm.yield_scale_fac;
@@ -300,21 +268,17 @@ ArenaMixture::ArenaMixture(const ArenaMixture* cm)
   d_initializeWithBodyForce = cm->d_initializeWithBodyForce;
   d_surfaceRefPoint = cm->d_surfaceRefPoint;
 
-  // Phase volume fractions, Hydrostatic compression parameters
-  // and for MPMICE Murnaghan EOS
-  for (int ii = 0; ii < 2; ii++) {
-    d_volfrac[ii] = cm->d_volfrac[ii];
-    d_crushParam[ii] = cm->d_crushParam[ii];
-    d_mpmiceEOSParam[ii] = cm->d_mpmiceEOSParam[ii];
-  }
+  // For MPMICE Murnaghan EOS
+  d_cm.K0_Murnaghan_EOS = cm->d_cm.K0_Murnaghan_EOS;
+  d_cm.n_Murnaghan_EOS = cm->d_cm.n_Murnaghan_EOS;
 
   initializeLocalMPMLabels();
 }
 
 // Initialize all labels of the particle variables associated with 
-// ArenaMixture.
+// Arena.
 void 
-ArenaMixture::initializeLocalMPMLabels()
+Arena::initializeLocalMPMLabels()
 {
   pElasticVolStrainLabel = VarLabel::create("p.elasticVolStrain",
     ParticleVariable<double>::getTypeDescription());
@@ -325,6 +289,11 @@ ArenaMixture::initializeLocalMPMLabels()
     ParticleVariable<Matrix3>::getTypeDescription());
   pStressQSLabel_preReloc = VarLabel::create("p.stressQS+",
     ParticleVariable<Matrix3>::getTypeDescription());
+
+  pElasticStrainLabel = Uintah::VarLabel::create("p.elasticStrain",
+    Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+  pElasticStrainLabel_preReloc = Uintah::VarLabel::create("p.elasticStrain+",
+    Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
 
   pPlasticStrainLabel = Uintah::VarLabel::create("p.plasticStrain",
     Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
@@ -385,13 +354,15 @@ ArenaMixture::initializeLocalMPMLabels()
 }
 
 // DESTRUCTOR
-ArenaMixture::~ArenaMixture()
+Arena::~Arena()
 {
   VarLabel::destroy(pElasticVolStrainLabel);              //Elastic Volumetric Strain
   VarLabel::destroy(pElasticVolStrainLabel_preReloc);
   VarLabel::destroy(pStressQSLabel);
   VarLabel::destroy(pStressQSLabel_preReloc);
 
+  VarLabel::destroy(pElasticStrainLabel);
+  VarLabel::destroy(pElasticStrainLabel_preReloc);
   VarLabel::destroy(pPlasticStrainLabel);
   VarLabel::destroy(pPlasticStrainLabel_preReloc);
   VarLabel::destroy(pPlasticCumEqStrainLabel);
@@ -424,12 +395,12 @@ ArenaMixture::~ArenaMixture()
 
 //adds problem specification values to checkpoint data for restart
 void 
-ArenaMixture::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
+Arena::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
 {
   ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("constitutive_model");
-    cm_ps->setAttribute("type","arena_mixture");
+    cm_ps->setAttribute("type","arena");
   }
 
   d_elastic->outputProblemSpec(cm_ps);
@@ -445,25 +416,17 @@ ArenaMixture::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
   cm_ps->appendElement("subcycling_characteristic_number", d_cm.subcycling_characteristic_number);
   cm_ps->appendElement("use_disaggregation_algorithm",     d_cm.use_disaggregation_algorithm);
 
-  cm_ps->appendElement("vol_frac.phase1", d_volfrac[0]); 
-
-  cm_ps->appendElement("p0.phase1",     d_crushParam[0].p0);
-  cm_ps->appendElement("p1.phase1",     d_crushParam[0].p1);
-  cm_ps->appendElement("p1_sat.phase1", d_crushParam[0].p1_sat);
-  cm_ps->appendElement("p1_density_scale_fac.phase1",     d_crushParam[0].p1_density_scale_fac);
-  cm_ps->appendElement("p2.phase1",     d_crushParam[0].p2);
-  cm_ps->appendElement("p3.phase1",     d_crushParam[0].p3);
-
-  cm_ps->appendElement("p0.phase2",     d_crushParam[1].p0);
-  cm_ps->appendElement("p1.phase2",     d_crushParam[1].p1);
-  cm_ps->appendElement("p1_sat.phase2", d_crushParam[1].p1_sat);
-  cm_ps->appendElement("p1_density_scale_fac.phase2",     d_crushParam[1].p1_density_scale_fac);
-  cm_ps->appendElement("p2.phase2",     d_crushParam[1].p2);
-  cm_ps->appendElement("p3.phase2",     d_crushParam[1].p3);
+  cm_ps->appendElement("p0",     d_crushParam.p0);
+  cm_ps->appendElement("p1",     d_crushParam.p1/d_strength_scale_fac);
+  cm_ps->appendElement("p1_density_scale_fac",     d_crushParam.p1_density_scale_fac);
+  cm_ps->appendElement("p1_sat", d_crushParam.p1_sat);
+  cm_ps->appendElement("p2",     d_crushParam.p2);
+  cm_ps->appendElement("p3",     d_crushParam.p3);
 
   // Get the damage model parameters
   cm_ps->appendElement("do_damage",                    d_cm.do_damage);
   cm_ps->appendElement("fspeed",                       d_damageParam.fSpeed);
+  cm_ps->appendElement("time_at_failure",              d_damageParam.tFail);
   cm_ps->appendElement("eq_plastic_strain_at_failure", d_damageParam.ep_f_eq);
 
   // For initialization with body force
@@ -471,21 +434,19 @@ ArenaMixture::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
   cm_ps->appendElement("surface_reference_point", d_surfaceRefPoint);
 
   // MPMICE Murnaghan EOS
-  cm_ps->appendElement("K0_Murnaghan_EOS.phase1", d_mpmiceEOSParam[0].K0_Murnaghan_EOS);
-  cm_ps->appendElement("n_Murnaghan_EOS.phase1",  d_mpmiceEOSParam[0].n_Murnaghan_EOS);
-  cm_ps->appendElement("K0_Murnaghan_EOS.phase2", d_mpmiceEOSParam[1].K0_Murnaghan_EOS);
-  cm_ps->appendElement("n_Murnaghan_EOS.phase2",  d_mpmiceEOSParam[1].n_Murnaghan_EOS);
+  cm_ps->appendElement("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS);
+  cm_ps->appendElement("n_Murnaghan_EOS",  d_cm.n_Murnaghan_EOS);
 }
 
-ArenaMixture* 
-ArenaMixture::clone()
+Arena* 
+Arena::clone()
 {
-  return scinew ArenaMixture(*this);
+  return scinew Arena(*this);
 }
 
 //When a particle is pushed from patch to patch, carry information needed for the particle
 void 
-ArenaMixture::addParticleState(std::vector<const VarLabel*>& from,
+Arena::addParticleState(std::vector<const VarLabel*>& from,
                                               std::vector<const VarLabel*>& to)
 {
   // Push back all the particle variables associated with Arenisca.
@@ -497,6 +458,9 @@ ArenaMixture::addParticleState(std::vector<const VarLabel*>& from,
   to.push_back(pStressQSLabel_preReloc);
 
   // Add the particle state for the internal variable models
+  from.push_back(pElasticStrainLabel);
+  to.push_back(pElasticStrainLabel_preReloc);
+
   from.push_back(pPlasticStrainLabel);
   to.push_back(pPlasticStrainLabel_preReloc);
 
@@ -541,7 +505,7 @@ ArenaMixture::addParticleState(std::vector<const VarLabel*>& from,
 
 /*!------------------------------------------------------------------------*/
 void 
-ArenaMixture::addInitialComputesAndRequires(Task* task,
+Arena::addInitialComputesAndRequires(Task* task,
                                                            const MPMMaterial* matl, 
                                                            const PatchSet* patch) const
 {
@@ -555,6 +519,7 @@ ArenaMixture::addInitialComputesAndRequires(Task* task,
   task->computes(pStressQSLabel,         matlset);
 
   // Add internal evolution variables
+  task->computes(pElasticStrainLabel,    matlset);
   task->computes(pPlasticStrainLabel,    matlset);
   task->computes(pPlasticCumEqStrainLabel,  matlset);
   task->computes(pPlasticVolStrainLabel, matlset);
@@ -580,7 +545,7 @@ ArenaMixture::addInitialComputesAndRequires(Task* task,
 
 /*!------------------------------------------------------------------------*/
 void 
-ArenaMixture::initializeCMData(const Patch* patch,
+Arena::initializeCMData(const Patch* patch,
                                               const MPMMaterial* matl,
                                               DataWarehouse* new_dw)
 {
@@ -601,9 +566,31 @@ ArenaMixture::initializeCMData(const Patch* patch,
   // Initialize variables for yield function parameter variability
   d_yield->initializeLocalVariables(patch, pset, new_dw, pVolume);
 
+  /* **NOTE: May need this if yield parameters are needed for variable initialization
+  // Get the yield parameter variable labels
+  std::vector<std:string> pYieldParamVarLabels = d_yield->getLocalVariableLabels();
+
+  // Get the yield condition parameter variables
+  std::vector<constParticleVariable<double> > pYieldParamVars = 
+      d_yield->getLocalVariables(pset, new_dw);
+
+  // Get yield condition parameters and add to the list of parameters
+  std::vector<ParameterDict> allParamsVec;
+  for(auto iter = pset->begin(); iter != pset->end(); iter++){
+
+    std::string                   yield_param_label;
+    constParticleVariable<double> yield_param_var;
+    ParameterDict particleAllParams;
+    BOOST_FOREACH(boost::tie(yield_param_label, yield_param_var),
+                  boost::combine(pYieldParamLabels, pYieldParamVars)) {
+      particleAllParams[yield_param_label] = yield_param_var[idx];
+    }
+    allParamsVec.push_back(particleAllParams);
+  } */
+ 
   ParameterDict yieldParams = d_yield->getParameters();
   allParams.insert(yieldParams.begin(), yieldParams.end());
-  proc0cout << "Model parameters are: " << std::endl;
+  proc0cout << "Arena Model parameters are: " << std::endl;
   for (auto param : allParams) {
     proc0cout << "\t \t" << param.first << " " << param.second << std::endl;
   }
@@ -650,7 +637,7 @@ ArenaMixture::initializeCMData(const Patch* patch,
 }
 
 void 
-ArenaMixture::initializeInternalVariables(const Patch* patch,
+Arena::initializeInternalVariables(const Patch* patch,
                                                          const MPMMaterial* matl,
                                                          ParticleSubset* pset,
                                                          DataWarehouse* new_dw,
@@ -660,11 +647,13 @@ ArenaMixture::initializeInternalVariables(const Patch* patch,
   new_dw->get(pVolume, lb->pVolumeLabel, pset);
   new_dw->get(pMass,   lb->pMassLabel,   pset);
 
+  Uintah::ParticleVariable<Matrix3> pElasticStrain;
   Uintah::ParticleVariable<Matrix3> pPlasticStrain;
   Uintah::ParticleVariable<Matrix3> pBackstress;
   Uintah::ParticleVariable<double>  pPlasticCumEqStrain, pPlasticVolStrain;
   Uintah::ParticleVariable<double>  pPorosity, pSaturation;
   Uintah::ParticleVariable<double>  pCapX, pP3;
+  new_dw->allocateAndPut(pElasticStrain,    pElasticStrainLabel,    pset);
   new_dw->allocateAndPut(pPlasticStrain,    pPlasticStrainLabel,    pset);
   new_dw->allocateAndPut(pPlasticCumEqStrain,  pPlasticCumEqStrainLabel,  pset);
   new_dw->allocateAndPut(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
@@ -674,11 +663,32 @@ ArenaMixture::initializeInternalVariables(const Patch* patch,
   new_dw->allocateAndPut(pCapX,             pCapXLabel,             pset);
   new_dw->allocateAndPut(pP3,               pP3Label,               pset);
 
+  /* Need these if we are to save pKappa */
+  /*
+  double PEAKI1;
+  double CR;
+  try {
+    PEAKI1 = params.at("PEAKI1");
+    CR = params.at("CR");
+  } catch (std::out_of_range) {
+    std::ostringstream err;
+    err << "**ERROR** Could not find yield parameters PEAKI1, CR" << std::endl;
+    err << "\t Available parameters are:" << std::endl;
+    for (auto param : params) {
+      err << "\t \t" << param.first << " " << param.second << std::endl;
+      throw InternalError(err.str(), __FILE__, __LINE__);
+    }
+  }
+  */
+
   double pbar_w0 = d_fluidParam.pbar_w0;
   double phi0    = d_fluidParam.phi0;
   double Sw0     = d_fluidParam.Sw0;
+  double p0      = d_crushParam.p0;
+  double p1_sat  = d_crushParam.p1_sat;
   for(auto iter = pset->begin();iter != pset->end(); iter++) {
 
+    pElasticStrain[*iter].set(0.0);
     pPlasticStrain[*iter].set(0.0);
     pPlasticCumEqStrain[*iter] = 0.0;
     pPlasticVolStrain[*iter] = 0.0;
@@ -700,49 +710,25 @@ ArenaMixture::initializeInternalVariables(const Patch* patch,
     }
     pP3[*iter] = p3;
 
-    // Calcuate the hydrostatic strength
-    double Xbar_eff_mix = computeHydrostaticStrengthMixture(ep_v_bar, p3, Sw0);
-    double Xbar_mix = Xbar_eff_mix + 3.0*pbar_w0;
-    pCapX[*iter] = -Xbar_mix;
-    //std::cout << "pCapX = " << pCapX[*iter] << std::endl;
-  }
-}
-
-double
-ArenaMixture::computeHydrostaticStrengthMixture(const double& ep_v_bar,
-                                                           const double& p3,
-                                                           const double& Sw0)
-{
-  double Xbar_eff_mix = 0.0;
-
-  for (int ii = 0; ii < 2; ii++) {
-    double p0      = d_crushParam[ii].p0;
-    double p1_sat  = d_crushParam[ii].p1_sat;
-
     // Calcuate the drained hydrostatic strength
     double Xbar_d = 0.0, dXbar_d = 0.0;
-    computeDrainedHydrostaticStrengthAndDeriv(ii, ep_v_bar, p3, Xbar_d, dXbar_d); 
-
-    // Calculate the partially saturated hydrostatic strength
-    double Xbar_eff = 0.0;
+    computeDrainedHydrostaticStrengthAndDeriv(ep_v_bar, p3, Xbar_d, dXbar_d);
     if (Sw0 > 0.0) {
-      Xbar_eff = p0 + (1.0 - Sw0 + p1_sat*Sw0)*(Xbar_d - p0);
+      double Xbar_eff = p0 + (1.0 - Sw0 + p1_sat*Sw0)*(Xbar_d - p0);
+      double Xbar = Xbar_eff + 3.0*pbar_w0;
+      pCapX[*iter] = -Xbar;
     } else {
-      Xbar_eff = Xbar_d;
+      pCapX[*iter] = -Xbar_d;
     }
-
-    // Compute the rule of mixtures
-    Xbar_eff_mix += d_volfrac[ii]*Xbar_d;
+    //std::cout << "pCapX = " << pCapX[*iter] << std::endl;
   }
-
-  return Xbar_eff_mix;
 }
 
 // Initialize stress and deformation gradient using body force
 // **TODO** The pore pressure is not modified yet.  Do the correct initialization of
 //          pbar_w0
 void 
-ArenaMixture::initializeStressAndDefGradFromBodyForce(const Patch* patch,
+Arena::initializeStressAndDefGradFromBodyForce(const Patch* patch,
                                                                      const MPMMaterial* matl,
                                                                      DataWarehouse* new_dw) const
 {
@@ -796,6 +782,9 @@ ArenaMixture::initializeStressAndDefGradFromBodyForce(const Patch* patch,
     Matrix3 strain = pStress[idx]*(0.5/shear) + 
       Identity*((one_ninth/bulk - one_sixth/shear)*pStress[idx].Trace());
 
+    // **TODO** Store strain in pElasticStrain
+    // -- Needs redesign ---
+
     // Update defgrad
     pDefGrad[idx] = Identity + strain;
   }
@@ -804,7 +793,7 @@ ArenaMixture::initializeStressAndDefGradFromBodyForce(const Patch* patch,
 // Compute stable timestep based on both the particle velocities
 // and wave speed
 void 
-ArenaMixture::computeStableTimestep(const Patch* patch,
+Arena::computeStableTimestep(const Patch* patch,
                                                    const MPMMaterial* matl,
                                                    DataWarehouse* new_dw)
 {
@@ -862,7 +851,7 @@ ArenaMixture::computeStableTimestep(const Patch* patch,
 /**
  * Added computes/requires for computeStressTensor
  */
-void ArenaMixture::addComputesAndRequires(Task* task,
+void Arena::addComputesAndRequires(Task* task,
                                                          const MPMMaterial* matl,
                                                          const PatchSet* patches ) const
 {
@@ -881,6 +870,7 @@ void ArenaMixture::addComputesAndRequires(Task* task,
   d_yield->addComputesAndRequires(task, matl, patches);
 
   // Add internal variable computes and requires
+  task->requires(Task::OldDW, pElasticStrainLabel,       matlset, Ghost::None);
   task->requires(Task::OldDW, pPlasticStrainLabel,       matlset, Ghost::None);
   task->requires(Task::OldDW, pPlasticCumEqStrainLabel,  matlset, Ghost::None);
   task->requires(Task::OldDW, pPlasticVolStrainLabel,    matlset, Ghost::None);
@@ -888,6 +878,7 @@ void ArenaMixture::addComputesAndRequires(Task* task,
   task->requires(Task::OldDW, pPorosityLabel,            matlset, Ghost::None);
   task->requires(Task::OldDW, pSaturationLabel,          matlset, Ghost::None);
   task->requires(Task::OldDW, pCapXLabel,                matlset, Ghost::None);
+  task->computes(pElasticStrainLabel_preReloc,         matlset);
   task->computes(pPlasticStrainLabel_preReloc,         matlset);
   task->computes(pPlasticCumEqStrainLabel_preReloc,    matlset);
   task->computes(pPlasticVolStrainLabel_preReloc,      matlset);
@@ -918,13 +909,13 @@ void ArenaMixture::addComputesAndRequires(Task* task,
 
 // ------------------------------------- BEGIN COMPUTE STRESS TENSOR FUNCTION
 /**
- *  ArenaMixture::computeStressTensor 
- *  is the core of the ArenaMixture model which computes
+ *  Arena::computeStressTensor 
+ *  is the core of the Arena model which computes
  *  the updated stress at the end of the current timestep along with all other
  *  required data such plastic strain, elastic strain, cap position, etc.
  */
 void 
-ArenaMixture::computeStressTensor(const PatchSubset* patches,
+Arena::computeStressTensor(const PatchSubset* patches,
                                                  const MPMMaterial* matl,
                                                  DataWarehouse* old_dw,
                                                  DataWarehouse* new_dw)
@@ -957,7 +948,8 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
     // Get the internal variables
     Uintah::constParticleVariable<double>          pEpv, pEpeq_old, pCapX, pP3; 
     Uintah::constParticleVariable<double>          pPorosity_old, pSaturation_old;
-    Uintah::constParticleVariable<Uintah::Matrix3> pEp, pBackstress_old; 
+    Uintah::constParticleVariable<Uintah::Matrix3> pEe, pEp, pBackstress_old; 
+    old_dw->get(pEe,               pElasticStrainLabel,       pset);
     old_dw->get(pEp,               pPlasticStrainLabel,       pset);
     old_dw->get(pEpeq_old,         pPlasticCumEqStrainLabel,  pset);
     old_dw->get(pEpv,              pPlasticVolStrainLabel,    pset);
@@ -967,9 +959,10 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pCapX,             pCapXLabel,                pset);
 
     // Allocate and put internal variables
-    ParticleVariable<Matrix3> pEp_new, pBackstress_new;
+    ParticleVariable<Matrix3> pEe_new, pEp_new, pBackstress_new;
     ParticleVariable<double>  pEpv_new, pEpeq_new, pCapX_new;
     ParticleVariable<double>  pPorosity_new, pSaturation_new;
+    new_dw->allocateAndPut(pEe_new,         pElasticStrainLabel_preReloc,       pset);
     new_dw->allocateAndPut(pEp_new,         pPlasticStrainLabel_preReloc,       pset);
     new_dw->allocateAndPut(pEpeq_new,       pPlasticCumEqStrainLabel_preReloc,  pset);
     new_dw->allocateAndPut(pEpv_new,        pPlasticVolStrainLabel_preReloc,    pset);
@@ -1067,7 +1060,7 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
 #ifdef CHECK_FOR_NAN
       //if (std::abs(DD(0,0)) < 1.0e-16 || std::isnan(DD(0, 0))) {
       if (std::isnan(DD(0, 0))) {
-        proc0cout << " L_new = " << pVelGrad_new[idx]
+        std::cout << " L_new = " << pVelGrad_new[idx]
                   << " F_new = " << pDefGrad_new[idx]
                   << " F = " << FF
                   << " R = " << RR << " U = " << UU
@@ -1098,11 +1091,12 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
       // initial assignment for the updated values of plastic strains, volumetric
       // part of the plastic strain, volumetric part of the elastic strain, 
       // and the backstress. tentative assumption of elasticity
-      ModelState_MasonSand state_old;
+      ModelState_Arena state_old;
       state_old.particleID          = pParticleID[idx];
       state_old.capX                = pCapX[idx];
       state_old.pbar_w              = -pBackstress_old[idx].Trace()/3.0;
       state_old.stressTensor        = sigmaQS_old;
+      state_old.elasticStrainTensor = pEe[idx];
       state_old.plasticStrainTensor = pEp[idx];
       state_old.ep_cum_eq           = pEpeq_old[idx];
       state_old.porosity            = pPorosity_old[idx];
@@ -1128,7 +1122,7 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
       //---------------------------------------------------------
       // Rate-independent plastic step
       // Divides the strain increment into substeps, and calls substep function
-      ModelState_MasonSand state_new;
+      ModelState_Arena state_new;
       bool isSuccess = rateIndependentPlasticUpdate(DD, delT, 
                                                     idx, pParticleID[idx], state_old,
                                                     state_new);
@@ -1138,12 +1132,20 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
         pStressQS_new[idx] = state_new.stressTensor;     // unrotated stress at end of step
         pCapX_new[idx] = state_new.capX;                 // hydrostatic compressive strength at end of step
         pBackstress_new[idx] = Identity*(-state_new.pbar_w);  // trace of isotropic backstress at end of step
+        pEe_new[idx] = state_new.elasticStrainTensor;    // elastic strain at end of step
         pEp_new[idx] = state_new.plasticStrainTensor;    // plastic strain at end of step
         pEpv_new[idx] = pEp_new[idx].Trace();            // Plastic volumetric strain at end of step
         pEpeq_new[idx] = state_new.ep_cum_eq;            // Equivalent plastic strain at end of step
 
         // Elastic volumetric strain at end of step, compute from updated deformation gradient.
+        // H = ln(U) => tr(H) = tr(ln(U)) = ln(det(U)) = ln(sqrt(det(FT) det(F))) = ln J
         pElasticVolStrain_new[idx] = log(pDefGrad_new[idx].Determinant()) - pEpv_new[idx];
+        #ifdef CHECK_ELASTIC_STRAIN
+         double pEev_integrated = pEe_new[idx].Trace();
+         std::cout << "Elastic volume strain error = " << (pElasticVolStrain_new[idx] - pEev_integrated)
+                   << " Integrated = " << pEev_integrated
+                   << " Defgrad-based = " << pElasticVolStrain_new[idx] << std::endl;
+        #endif
 
         pPorosity_new[idx] = state_new.porosity;
         pSaturation_new[idx] = state_new.saturation;
@@ -1157,7 +1159,7 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
         // If the updateStressAndInternalVars function can't converge it will return false.  
         // This indicates substepping has failed, and the particle will be deleted.
         pLocalized_new[idx]=-999;
-        proc0cout << "** WARNING ** Bad step, deleting particle"
+        std::cout << "** WARNING ** Bad step, deleting particle"
                   << " idx = " << idx 
                   << " particleID = " << pParticleID[idx] 
                   << ":" << __FILE__ << ":" << __LINE__ << std::endl;
@@ -1165,6 +1167,7 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
         pStressQS_new[idx] = pStressQS_old[idx];
         pCapX_new[idx] = state_old.capX; 
         pBackstress_new[idx] = pBackstress_old[idx];
+        pEe_new[idx] = state_old.elasticStrainTensor;    // elastic strain at start of step
         pEp_new[idx] = state_old.plasticStrainTensor;    // plastic strain at start of step
         pEpv_new[idx] = pEp_new[idx].Trace();
         pEpeq_new[idx] = pEpeq_old[idx];
@@ -1179,9 +1182,9 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
 
       //---------------------------------------------------------
       // Rate-dependent plastic step
-      ModelState_MasonSand stateQS_old(state_old);
+      ModelState_Arena stateQS_old(state_old);
       stateQS_old.stressTensor = pStressQS_old[idx];
-      ModelState_MasonSand stateQS_new(state_new);
+      ModelState_Arena stateQS_new(state_new);
       stateQS_new.stressTensor = pStressQS_new[idx];
 
 #ifdef CHECK_TRIAL_STRESS
@@ -1213,6 +1216,21 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
       } else {
         FF_new.polarDecompositionRMB(UU, RR);
       }
+
+      // Dont't allow deformation gradients greater than 5.0
+      #ifdef CLAMP_DEF_GRAD
+      if (d_cm.do_damage) {
+        if (Fmax_new > 10.0 || pEpv_new[idx] > 5.0) {
+          pLocalized_new[idx]=-999;
+          proc0cout << "Deformation gradient or volumetric plastic strain too large for soils:"
+                    << "[F] = " << FF 
+                    << "pEpv_new = " << pEpv_new[idx]
+                    << std::endl;
+          proc0cout << "Deleting particle" << " idx = " << idx 
+                    << " particleID = " << pParticleID[idx] << std::endl;
+        }
+      }
+      #endif
 
       // Compute the rotated dynamic and quasistatic stress at the end of the current timestep
       pStress_new[idx] = (RR*pStress_new[idx])*(RR.Transpose());
@@ -1306,12 +1324,12 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
 *   All stress values within computeStep are quasistatic.
 */
 bool 
-ArenaMixture::rateIndependentPlasticUpdate(const Matrix3& D, 
+Arena::rateIndependentPlasticUpdate(const Matrix3& D, 
                                                           const double& delT,
                                                           particleIndex idx, 
                                                           long64 pParticleID, 
-                                                          const ModelState_MasonSand& state_old,
-                                                          ModelState_MasonSand& state_new)
+                                                          const ModelState_Arena& state_old,
+                                                          ModelState_Arena& state_new)
 {
 #ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "Rate independent update:" << std::endl;
@@ -1331,7 +1349,7 @@ ArenaMixture::rateIndependentPlasticUpdate(const Matrix3& D,
   Matrix3 stress_trial = computeTrialStress(state_old, strain_inc);
 
   // Set up a trial state, update the stress invariants, and compute elastic properties
-  ModelState_MasonSand state_trial(state_old);
+  ModelState_Arena state_trial(state_old);
   state_trial.stressTensor = stress_trial;
   computeElasticProperties(state_trial);
   
@@ -1371,8 +1389,8 @@ ArenaMixture::rateIndependentPlasticUpdate(const Matrix3& D,
   bool isSuccess = false;
 
   // Set up the initial states for the substeps
-  ModelState_MasonSand state_k_old(state_old);
-  ModelState_MasonSand state_k_new(state_old);
+  ModelState_Arena state_k_old(state_old);
+  ModelState_Arena state_k_new(state_old);
   do {
 
     //  Call substep function {sigma_new, ep_new, X_new, Zeta_new}
@@ -1412,6 +1430,8 @@ ArenaMixture::rateIndependentPlasticUpdate(const Matrix3& D,
       chi += 1; 
       if (chi > CHI_MAX) {
         state_new = state_k_old;
+        proc0cout << "Substep failed because chi = "  << chi << " > " << CHI_MAX
+                  << std::endl;
         return isSuccess; // isSuccess = false;
       }
 
@@ -1429,6 +1449,7 @@ ArenaMixture::rateIndependentPlasticUpdate(const Matrix3& D,
   state_new = state_k_new;
 
 #ifdef CHECK_INTERNAL_VAR_EVOLUTION
+//if (state_old.particleID == 3377699720593411) {
   std::cout << "rateIndependentPlasticUpdate: "
             << " pbar_w_old = " << state_old.pbar_w
             << " pbar_w_new = " << state_new.pbar_w 
@@ -1439,6 +1460,7 @@ ArenaMixture::rateIndependentPlasticUpdate(const Matrix3& D,
             << " ep_v_old = " << state_old.ep_v
             << " ep_v_new = " << state_new.ep_v
             << std::endl;
+//}
 #endif
 
   return isSuccess;
@@ -1455,7 +1477,7 @@ ArenaMixture::rateIndependentPlasticUpdate(const Matrix3& D,
  *   **WARNING** Also computes stress invariants and plastic strain invariants
  */
 void 
-ArenaMixture::computeElasticProperties(ModelState_MasonSand& state)
+Arena::computeElasticProperties(ModelState_Arena& state)
 {
   state.updateStressInvariants();
   state.updatePlasticStrainInvariants();
@@ -1478,6 +1500,11 @@ ArenaMixture::computeElasticProperties(ModelState_MasonSand& state)
     //double phi = 1.0 - std::exp(-state.p3);
     double phi = std::max(state.porosity, 1.0 - std::exp(-state.p3));
     double scale = (phi > d_fluidParam.phi0) ? std::max((1.0 - phi)/(1.0 + phi), 0.00001) : 1.0;
+    /*
+    if (state.particleID == 3659178992271360) {
+      std::cout << "bulk modulus scale factor = " << scale << std::endl;
+    }
+    */
     state.bulkModulus *= scale;
     state.shearModulus *= scale;
   }
@@ -1490,7 +1517,7 @@ ArenaMixture::computeElasticProperties(ModelState_MasonSand& state)
  *   over the step.
  */
 Matrix3 
-ArenaMixture::computeTrialStress(const ModelState_MasonSand& state_old,
+Arena::computeTrialStress(const ModelState_Arena& state_old,
                                                 const Matrix3& strain_inc)
 {
   // Compute the trial stress
@@ -1500,7 +1527,7 @@ ArenaMixture::computeTrialStress(const ModelState_MasonSand& state_old,
   Matrix3 stress_trial = stress_old + 
                          deps_iso*(3.0*state_old.bulkModulus) + 
                          deps_dev*(2.0*state_old.shearModulus);
-
+//#ifdef CHECK_TRIAL_STRESS
   #ifdef CHECK_FOR_NAN
   if (std::isnan(stress_trial(0, 0))) {
     std::cout << " stress_old = " << stress_old
@@ -1514,7 +1541,7 @@ ArenaMixture::computeTrialStress(const ModelState_MasonSand& state_old,
     throw InternalError("**ERROR** Nan in compute trial stress.", __FILE__, __LINE__);
   }
   #endif
-
+//#endif
 
   return stress_trial;
 } 
@@ -1529,10 +1556,10 @@ ArenaMixture::computeTrialStress(const ModelState_MasonSand& state_old,
  * Caveat:  Uses the mean values of the yield condition parameters.
  */
 int 
-ArenaMixture::computeStepDivisions(particleIndex idx,
+Arena::computeStepDivisions(particleIndex idx,
                                                   long64 particleID, 
-                                                  const ModelState_MasonSand& state_old,
-                                                  const ModelState_MasonSand& state_trial)
+                                                  const ModelState_Arena& state_old,
+                                                  const ModelState_Arena& state_trial)
 {
   
   // Get the yield parameters
@@ -1556,11 +1583,11 @@ ArenaMixture::computeStepDivisions(particleIndex idx,
   double bulk_trial = state_trial.bulkModulus;
 
   int n_bulk = std::max(std::ceil(std::abs(bulk_old - bulk_trial)/bulk_old), 1.0);  
-  #ifdef CHECK_FOR_NAN_EXTRA
+#ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "bulk_old = " << bulk_old 
             << " bulk_trial = " << bulk_trial
             << " n_bulk = " << n_bulk << std::endl;
-  #endif
+#endif
   
   // Compute trial stress increment relative to yield surface size:
   Matrix3 d_sigma = state_trial.stressTensor - state_old.stressTensor;
@@ -1574,7 +1601,8 @@ ArenaMixture::computeStepDivisions(particleIndex idx,
   size *= d_cm.yield_scale_fac;
   int n_yield = ceil(d_sigma.Norm()/size);
 
-  #ifdef CHECK_FOR_NAN_EXTRA
+#ifdef CHECK_FOR_NAN_EXTRA
+//if (state_old.particleID == 3377699720593411) {
   proc0cout << "bulk_old = " << bulk_old 
             << " bulk_trial = " << bulk_trial
             << " n_bulk = " << n_bulk << std::endl;
@@ -1584,7 +1612,8 @@ ArenaMixture::computeStepDivisions(particleIndex idx,
             << " size = " << size 
             << " |dsigma| = " << d_sigma.Norm() 
             << " n_yield = " << n_yield << std::endl;
-  #endif
+//}
+#endif
 
   // nsub is the maximum of the two values.above.  If this exceeds allowable,
   // throw warning and delete particle.
@@ -1629,10 +1658,10 @@ ArenaMixture::computeStepDivisions(particleIndex idx,
  *   elastic, plastic, or partially elastic.   
  */
 bool 
-ArenaMixture::computeSubstep(const Matrix3& D,
+Arena::computeSubstep(const Matrix3& D,
                                             const double& dt,
-                                            const ModelState_MasonSand& state_k_old,
-                                            ModelState_MasonSand& state_k_new)
+                                            const ModelState_Arena& state_k_old,
+                                            ModelState_Arena& state_k_new)
 {
 #ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "\t D = " << D << std::endl;
@@ -1668,7 +1697,7 @@ ArenaMixture::computeSubstep(const Matrix3& D,
 #endif
 
   // Set up a trial state, update the stress invariants
-  ModelState_MasonSand state_k_trial(state_k_old);
+  ModelState_Arena state_k_trial(state_k_old);
   state_k_trial.stressTensor = stress_k_trial;
 
   // Compute elastic moduli at trial stress state
@@ -1689,6 +1718,7 @@ ArenaMixture::computeSubstep(const Matrix3& D,
   // Elastic substep
   if (!(yield == 1)) { 
     state_k_new = state_k_trial;
+    state_k_new.elasticStrainTensor += deltaEps;
 
 #ifdef CHECK_INTERNAL_VAR_EVOLUTION
     std::cout << "computeSubstep:Elastic:sigma_new = " << state_k_new.stressTensor 
@@ -1711,9 +1741,10 @@ ArenaMixture::computeSubstep(const Matrix3& D,
   // Compute non-hardening return to initial yield surface:
   // std::cout << "\t Doing nonHardeningReturn\n";
   Matrix3 sig_fixed(0.0);        // final stress state for non-hardening return
+  Matrix3 deltaEps_e_fixed(0.0); // increment in elastic strain for non-hardening return
   Matrix3 deltaEps_p_fixed(0.0); // increment in plastic strain for non-hardening return
   bool isSuccess = nonHardeningReturn(deltaEps, state_k_old, state_k_trial, 
-                                      sig_fixed, deltaEps_p_fixed);
+                                      sig_fixed, deltaEps_e_fixed, deltaEps_p_fixed);
   if (!isSuccess) {
     proc0cout << "**WARNING** nonHardeningReturn has failed." << std::endl;
     return isSuccess;
@@ -1722,15 +1753,9 @@ ArenaMixture::computeSubstep(const Matrix3& D,
   // Do "consistency bisection"
   // std::cout << "\t Doing consistencyBisection\n";
   state_k_new = state_k_old;
-  #ifdef USE_SIMPLIFIED_CONSISTENCY_BISECTION
   isSuccess = consistencyBisectionSimplified(deltaEps, state_k_old, state_k_trial,
-                                             deltaEps_p_fixed, sig_fixed, 
+                                             deltaEps_e_fixed, deltaEps_p_fixed, sig_fixed, 
                                              state_k_new);
-  #else
-  isSuccess = consistencyBisection(deltaEps, state_k_old, state_k_trial,
-                                   deltaEps_p_fixed, sig_fixed, 
-                                   state_k_new);
-  #endif
 
 #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
   std::cout << "computeSubstep: "
@@ -1754,6 +1779,9 @@ ArenaMixture::computeSubstep(const Matrix3& D,
   // Update damage parameters
   if (isSuccess) {
     updateDamageParameters(D, dt, state_k_old, state_k_new);
+  } else {
+    proc0cout << "consistency bisection has failed in " << __FILE__ << ":" << __LINE__
+              << std::endl;
   }
 
   return isSuccess;
@@ -1772,10 +1800,11 @@ ArenaMixture::computeSubstep(const Matrix3& D,
  *   NOTE: all values of r and z in this function are transformed!
  */
 bool 
-ArenaMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
-                                                const ModelState_MasonSand& state_k_old,
-                                                const ModelState_MasonSand& state_k_trial,
+Arena::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
+                                                const ModelState_Arena& state_k_old,
+                                                const ModelState_Arena& state_k_trial,
                                                 Uintah::Matrix3& sig_fixed,
+                                                Uintah::Matrix3& elasticStrain_inc_fixed,
                                                 Uintah::Matrix3& plasticStrain_inc_fixed)
 {
   // Get the yield parameters
@@ -1844,9 +1873,17 @@ ArenaMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   // Compute new stress
   Matrix3 sig_dev = state_k_trial.deviatoricStressTensor;
   if (state_k_trial.sqrt_J2 > 0.0) {
+    //double z_close = I1_closest*one_sqrt_three;
+    //double r_close = sqrtJ2_closest*sqrt_two;
+    //double norm_Identity = sqrt_three;
+    //double norm_s_trial = sig_dev.Norm();
+    //sig_fixed = Identity*(z_close/norm_Identity) + sig_dev*(r_close/norm_s_trial);
     sig_fixed = one_third*I1_closest*Identity + 
-     (sqrtJ2_closest/state_k_trial.sqrt_J2)*sig_dev;
+      (sqrtJ2_closest/state_k_trial.sqrt_J2)*sig_dev;
   } else {
+    //double z_close = I1_closest*one_sqrt_three;
+    //double norm_Identity = sqrt_three;
+    //sig_fixed = Identity*(z_close/norm_Identity) + sig_dev;
     sig_fixed = one_third*I1_closest*Identity + sig_dev;
   }
 
@@ -1855,8 +1892,17 @@ ArenaMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   Matrix3 sig_inc = sig_fixed - state_k_old.stressTensor;
   Matrix3 sig_inc_iso = one_third*sig_inc.Trace()*Identity;
   Matrix3 sig_inc_dev = sig_inc - sig_inc_iso;
-  Matrix3 elasticStrain_inc = sig_inc_iso*(one_third/K_old) + sig_inc_dev*(0.5/G_old);
-  plasticStrain_inc_fixed = strain_inc - elasticStrain_inc;
+  elasticStrain_inc_fixed = sig_inc_iso*(one_third/K_old) + sig_inc_dev*(0.5/G_old);
+  plasticStrain_inc_fixed = strain_inc - elasticStrain_inc_fixed;
+
+  #ifdef CHECK_ELASTIC_STRAIN
+    //std::cout << "Non-hardening:\n" 
+    //          << "\t Delta sig = " << sig_inc << std::endl
+    //          << "\t Delta Eps_e = " << elasticStrain_inc_fixed << std::endl;
+    std::cout << "press = " << sig_fixed.Trace()/3.0 << " K = " << K_old 
+              << " ev_e = " << (state_k_old.elasticStrainTensor + elasticStrain_inc_fixed).Trace()
+              << std::endl;
+  #endif
 
   // Compute volumetric plastic strain and compare with p3
   Matrix3 eps_p = state_k_old.plasticStrainTensor + plasticStrain_inc_fixed;
@@ -1877,7 +1923,7 @@ ArenaMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
        proc0cout << "Delta sig = " << sig_inc << std::endl;
        proc0cout << "Delta sig_iso = " << sig_inc_iso << std::endl;
        proc0cout << "Delta sig_dev = " << sig_inc_dev << std::endl;
-       proc0cout << "Delta eps_e = " << elasticStrain_inc << std::endl;
+       proc0cout << "Delta eps_e = " << elasticStrain_inc_fixed << std::endl;
        proc0cout << "Delta eps_p = " << plasticStrain_inc_fixed << std::endl;
        proc0cout << "I1_J2_trial = [" << state_k_trial.I1_eff << " " 
                  << state_k_trial.sqrt_J2 << "];" << std::endl;
@@ -1899,11 +1945,11 @@ ArenaMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   std::cout << "Delta sig = " << sig_inc << std::endl;
   std::cout << "Delta sig_iso = " << sig_inc_iso << std::endl;
   std::cout << "Delta sig_dev = " << sig_inc_dev << std::endl;
-  std::cout << "Delta eps_e = " << elasticStrain_inc << std::endl;
+  std::cout << "Delta eps_e = " << elasticStrain_inc_fixed << std::endl;
   std::cout << "Delta eps_p = " << plasticStrain_inc_fixed << std::endl;
 
   // Test normal to yield surface
-  ModelState_MasonSand state_test(state_k_old);
+  ModelState_Arena state_test(state_k_old);
   state_test.stressTensor = sig_fixed;
   state_test.updateStressInvariants();
 
@@ -1929,7 +1975,7 @@ ArenaMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
 
   // Compute a test stress to check normal
   Matrix3 sig_test = sig_fixed + df_dsigma*sig_diff(0,0);
-  ModelState_MasonSand state_sig_test(state_k_old);
+  ModelState_Arena state_sig_test(state_k_old);
   state_sig_test.stressTensor = sig_test;
   state_sig_test.updateStressInvariants();
   std::cout << "I1 = " << state_sig_test.I1_eff << ";" << std::endl;
@@ -1994,12 +2040,13 @@ ArenaMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
  *   Returns whether the procedure is sucessful or has failed
  */
 bool 
-ArenaMixture::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
-                                                            const ModelState_MasonSand& state_k_old, 
-                                                            const ModelState_MasonSand& state_k_trial,
+Arena::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
+                                                            const ModelState_Arena& state_k_old, 
+                                                            const ModelState_Arena& state_k_trial,
+                                                            const Matrix3& deltaEps_e_fixed, 
                                                             const Matrix3& deltaEps_p_fixed, 
                                                             const Matrix3& sig_fixed, 
-                                                            ModelState_MasonSand& state_k_new)
+                                                            ModelState_Arena& state_k_new)
 {
   // bisection convergence tolerance on eta (if changed, change imax)
   const double TOLERANCE = d_cm.consistency_bisection_tolerance; 
@@ -2008,6 +2055,7 @@ ArenaMixture::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
 
   // Get the old state
   Matrix3 sig_old       = state_k_old.stressTensor;
+  Matrix3 eps_e_old     = state_k_old.elasticStrainTensor;
   Matrix3 eps_p_old     = state_k_old.plasticStrainTensor;
 
   // Get the fixed non-hardening return state and compute invariants
@@ -2016,18 +2064,20 @@ ArenaMixture::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
 
   // Create a state for the fixed non-hardening yield surface state
   // and update only the stress and plastic strain
-  ModelState_MasonSand state_k_fixed(state_k_old);
+  ModelState_Arena state_k_fixed(state_k_old);
   state_k_fixed.stressTensor = sig_fixed;
+  state_k_fixed.elasticStrainTensor = eps_e_old + deltaEps_e_fixed;
   state_k_fixed.plasticStrainTensor = eps_p_old + deltaEps_p_fixed;
 
   // Initialize the new consistently updated state
   Matrix3 sig_fixed_new             = sig_fixed;
+  Matrix3 deltaEps_e_fixed_new      = deltaEps_e_fixed;
   Matrix3 deltaEps_p_fixed_new      = deltaEps_p_fixed;
   double  deltaEps_p_v_fixed_new    = deltaEps_p_v_fixed;
   double  norm_deltaEps_p_fixed_new = norm_deltaEps_p_fixed;
 
   // Set up a local trial state
-  ModelState_MasonSand state_trial_local(state_k_trial);
+  ModelState_Arena state_trial_local(state_k_trial);
 
   // Start loop
   int ii = 1;
@@ -2053,6 +2103,7 @@ ArenaMixture::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
     isSuccess = computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
     if (!isSuccess) {
       state_k_new = state_k_old;
+      proc0cout << "computeInternalVariables has failed." << std::endl;
       return false;
     }
 
@@ -2077,15 +2128,17 @@ ArenaMixture::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
     // of the yield surface based on the updated internal variables (keeping the
     // elastic moduli at the values at the beginning of the step) and do 
     // a non-hardening return to that yield surface.
-    ModelState_MasonSand state_k_updated(state_k_old);
+    ModelState_Arena state_k_updated(state_k_old);
     state_k_updated.pbar_w = state_trial_local.pbar_w;
     state_k_updated.porosity = state_trial_local.porosity;
     state_k_updated.saturation = state_trial_local.saturation;
     state_k_updated.capX = state_trial_local.capX;
     state_k_updated.updateStressInvariants();
     isSuccess = nonHardeningReturn(deltaEps_new, state_k_updated, state_trial_local, 
-                                        sig_fixed_new, deltaEps_p_fixed_new);
+                                   sig_fixed_new, deltaEps_e_fixed_new, 
+                                   deltaEps_p_fixed_new);
     if (!isSuccess) {
+      proc0cout << "nonHardeningReturn inside consistencyBisection failed." << std::endl;
       return isSuccess;
     }
 
@@ -2128,6 +2181,8 @@ ArenaMixture::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
     ii++;
     if (ii > IMAX) {
       state_k_new = state_k_old;
+      proc0cout << "Consistency bisection has failed because ii > IMAX." 
+                << ii << " > " << IMAX << std::endl;
       return false;   // bool isSuccess = false;
     }
 
@@ -2139,218 +2194,14 @@ ArenaMixture::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
   isSuccess = computeInternalVariables(state_k_new, deltaEps_p_v_fixed_new);
   if (!isSuccess) {
     state_k_new = state_k_old;
+    proc0cout << "computeInternalVariables has failed." << std::endl;
     return false;
   }
 
   // Update the stress and plastic strain of the new state +  the elastic moduli
   state_k_new.stressTensor        = sig_fixed_new;
-  state_k_new.plasticStrainTensor = eps_p_old + deltaEps_p_fixed_new;;
-  computeElasticProperties(state_k_new);
-
-  #ifdef DEBUG_YIELD_BISECTION_R
-  std::cout << "pbar_w_before_consistency_3 = " << 3.0*state_k_old.pbar_w << std::endl;
-  std::cout << "pbar_w_after_consistency_3 = " << 3.0*state_k_new.pbar_w << std::endl;
-  std::cout << "K_before_consistency = " << state_k_old.bulkModulus << std::endl;
-  std::cout << "K_after_consistency = " << state_k_new.bulkModulus << std::endl;
-  std::cout << "I1_before_consistency = " << state_k_old.stressTensor.Trace() << std::endl;
-  std::cout << "I1_after_consistency = " << state_k_new.stressTensor.Trace() << std::endl;
-  std::cout << "I1_eff_before_consistency = " << state_k_old.I1_eff << std::endl;
-  std::cout << "I1_eff_after_consistency = " << state_k_new.I1_eff << std::endl;
-  #endif
-
-  // Update the cumulative equivalent plastic strain
-  double deltaEps_p_v = deltaEps_p_fixed_new.Trace();
-  Uintah::Matrix3 deltaEps_p_dev = deltaEps_p_fixed_new - Identity*(deltaEps_p_v/3.0);
-  state_k_new.ep_cum_eq = state_k_old.ep_cum_eq +  
-    std::sqrt(2.0/3.0*deltaEps_p_dev.Contract(deltaEps_p_dev));
-
-  #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
-  std::cout << "consistencyBisection: " << std::endl
-            << "\t state_old = " << state_k_old << std::endl
-            << "\t state_new = " << state_k_new << std::endl;
-  #endif
-
-  // Return success = true  
-  return true;   // bool isSuccess = true;
-}
-
-/**
- * Method: consistencyBisection
- * Purpose: 
- *   Find the updated stress for hardening plasticity using the consistency bisection 
- *   algorithm
- *   Returns whether the procedure is sucessful or has failed
- */
-bool 
-ArenaMixture::consistencyBisection(const Matrix3& deltaEps_new,
-                                                  const ModelState_MasonSand& state_k_old, 
-                                                  const ModelState_MasonSand& state_k_trial,
-                                                  const Matrix3& deltaEps_p_fixed, 
-                                                  const Matrix3& sig_fixed, 
-                                                  ModelState_MasonSand& state_k_new)
-{
-  // bisection convergence tolerance on eta (if changed, change imax)
-  const double TOLERANCE = d_cm.consistency_bisection_tolerance; 
-  // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
-  const int    IMAX      = d_cm.max_bisection_iterations;   
-  // jmax = ceil(-10.0*log(TOL)); // Update this if TOL changes
-  const int    JMAX      = d_cm.max_bisection_iterations;   
-
-  // Get the old state
-  Matrix3 sig_old       = state_k_old.stressTensor;
-  Matrix3 eps_p_old     = state_k_old.plasticStrainTensor;
-
-  // Get the fixed non-hardening return state and compute invariants
-  double  deltaEps_p_v_fixed    = deltaEps_p_fixed.Trace();
-  double  norm_deltaEps_p_fixed = deltaEps_p_fixed.Norm();
-
-  // Create a state for the fixed non-hardening yield surface state
-  // and update only the stress and plastic strain
-  ModelState_MasonSand state_k_fixed(state_k_old);
-  state_k_fixed.stressTensor = sig_fixed;
-  state_k_fixed.plasticStrainTensor = eps_p_old + deltaEps_p_fixed;
-
-  // Initialize the new consistently updated state
-  Matrix3 sig_fixed_new             = sig_fixed;
-  Matrix3 deltaEps_p_fixed_new      = deltaEps_p_fixed;
-  double  norm_deltaEps_p_fixed_new = norm_deltaEps_p_fixed;
-
-  // Set up a local trial state
-  ModelState_MasonSand state_trial_local(state_k_trial);
-
-  // Start loop
-  int ii = 1;
-  double eta_lo = 0.0, eta_hi = 1.0, eta_mid = 0.5;
-
-  while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
-
-    #ifdef DEBUG_YIELD_BISECTION_R
-    std::cout << "consistency_iter = " << ii << std::endl;
-    std::cout << "eta_hi = " << eta_hi << std::endl;
-    std::cout << "eta_lo = " << eta_lo << std::endl;
-    #endif
-    // This loop checks whether the yield surface moves beyond the
-    // trial stress state when the internal variables are changed.
-    // If the yield surface is too big, the plastic strain is reduced
-    // by bisecting <eta> and the loop is repeated.
-    int jj = 1;
-    bool isElastic = true;
-    while (isElastic) { 
-
-      // Reset the local trial state 
-      state_trial_local = state_k_trial;
-
-      // Compute the volumetric plastic strain at eta = eta_mid
-      eta_mid = 0.5*(eta_lo + eta_hi); 
-      double deltaEps_p_v_mid = eta_mid*deltaEps_p_v_fixed;
-
-      // Update the internal variables at eta = eta_mid in the local trial state
-      bool isSuccess = computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
-      if (!isSuccess) {
-        state_k_new = state_k_old;
-        return false;
-      }
-
-      #ifdef CHECK_TENSION_STATES
-      std::cout << "While elastic:" << std::endl;
-      std::cout << "\t\t " << "eta_lo = " << eta_lo << " eta_mid = " << eta_mid
-                << " eta_hi = " << eta_hi
-                << " capX_fixed = " << state_k_old.capX 
-                << " capX_new = " << state_trial_local.capX 
-                << " pbar_w_fixed = " << state_k_old.pbar_w 
-                << " pbar_w_new = " << state_trial_local.pbar_w 
-                << " ||delta eps_p_fixed|| = " << norm_deltaEps_p_fixed 
-                << " ||delta eps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new << std::endl;
-      #endif
-
-      // Test the yield condition
-      int yield = (int) d_yield->evalYieldCondition(&state_trial_local);
-
-      // If the local trial state is inside the updated yield surface the yield
-      // condition evaluates to "elastic".  We need to reduce the size of the 
-      // yield surface by decreasing the plastic strain increment.
-      isElastic = false; 
-      if (yield != 1) {
-        isElastic = true;   // Elastic or on yield surface
-        eta_hi = eta_mid;
-        jj++;
-        if (jj > JMAX) {
-          state_k_new = state_k_old;
-          return false;    // bool isSuccess = false;
-        }
-      } 
-    } // end while(isElastic)
-
-    // At this point, state_trial_local contains the trial stress, the plastic strain at
-    // the beginning of the timestep, and the updated values of the internal variables
-    // The yield surface depends only on X and p_w.  We will compute the updated location
-    // of the yield surface based on the updated internal variables (keeping the
-    // elastic moduli at the values at the beginning of the step) and do 
-    // a non-hardening return to that yield surface.
-
-    ModelState_MasonSand state_k_updated(state_k_old);
-    state_k_updated.pbar_w = state_trial_local.pbar_w;
-    state_k_updated.porosity = state_trial_local.porosity;
-    state_k_updated.saturation = state_trial_local.saturation;
-    state_k_updated.capX = state_trial_local.capX;
-    state_k_updated.updateStressInvariants();
-    bool isSuccess = nonHardeningReturn(deltaEps_new, state_k_updated, state_trial_local, 
-                                        sig_fixed_new, deltaEps_p_fixed_new);
-    if (!isSuccess) {
-      return isSuccess;
-    }
-
-    // Check whether the isotropic component of the return has changed sign, as this
-    // would indicate that the cap apex has moved past the trial stress, indicating
-    // too much plastic strain in the return.
-    Matrix3 sig_trial = state_trial_local.stressTensor;
-    double  diff_trial_fixed_new = (sig_trial - sig_fixed_new).Trace();
-    double  diff_trial_fixed     = (sig_trial - sig_fixed).Trace();
-    if (std::signbit(diff_trial_fixed_new) != std::signbit(diff_trial_fixed)) {
-      eta_hi = eta_mid;
-      ii++;
-      continue;
-    }
-
-    // Compare magnitude of plastic strain with prior update
-    norm_deltaEps_p_fixed_new = deltaEps_p_fixed_new.Norm();
-    norm_deltaEps_p_fixed = eta_mid*deltaEps_p_fixed.Norm();
-
-    #ifdef CHECK_TENSION_STATES_1
-    std::cout << "eta_mid = " << eta_mid 
-              << " eta_mid*||deltaEps_p_fixed|| = " << eta_mid*norm_deltaEps_p_fixed
-              << " ||deltaEps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new << std::endl;
-    #endif
-
-    if (norm_deltaEps_p_fixed_new > eta_mid*norm_deltaEps_p_fixed) {
-      eta_lo = eta_mid;
-    } else {
-      eta_hi = eta_mid;
-    }
-
-    // Increment i and check
-    ii++;
-    if (ii > IMAX) {
-      state_k_new = state_k_old;
-      return false;   // bool isSuccess = false;
-    }
-
-  } // end  while (std::abs(eta_hi - eta_lo) > TOLERANCE);
-
-  // Set the new state to the original trial state and
-  // update the internal variables
-  state_k_new            = state_k_trial;
-
-  bool isSuccess = computeInternalVariables(state_k_new, deltaEps_p_fixed_new.Trace());
-  if (!isSuccess) {
-    state_k_new = state_k_old;
-    return false;
-  }
-
-  // Update the rest of the new state including the elastic moduli
-  state_k_new.stressTensor = sig_fixed_new;
-  state_k_new.plasticStrainTensor = eps_p_old + deltaEps_p_fixed_new;;
-
+  state_k_new.elasticStrainTensor = eps_e_old + deltaEps_e_fixed_new;
+  state_k_new.plasticStrainTensor = eps_p_old + deltaEps_p_fixed_new;
   computeElasticProperties(state_k_new);
 
   #ifdef DEBUG_YIELD_BISECTION_R
@@ -2387,7 +2238,7 @@ ArenaMixture::consistencyBisection(const Matrix3& deltaEps_new,
  *   increment in volumetric plastic strain
  */
 bool
-ArenaMixture::computeInternalVariables(ModelState_MasonSand& state,
+Arena::computeInternalVariables(ModelState_Arena& state,
                                                       const double& delta_eps_p_v)
 {
   // Internal variables are not allowed to evolve when the effective stress is tensile
@@ -2495,6 +2346,24 @@ ArenaMixture::computeInternalVariables(ModelState_MasonSand& state,
   pbar_w_new = std::max(pbar_w_new, 0.0);
   //assert(!(pbar_w_new < 0.0));
 
+  // Update the hydrostatic compressive strength
+  // (using integration)
+  /*
+  // Compute the drained hydrostatic compressive strength
+  double Xbar_d = 0.0;
+  double derivXbar_d = 0.0;
+  computeDrainedHydrostaticStrengthAndDeriv(epsbar_p_v_old, p3_old, Xbar_d, derivXbar_d);
+
+  // Update the hydrostatic strength
+  double p1_sat = d_crushParam.p1_sat;
+  double Xbar_new = Xbar_old + ((1.0 - Sw_old + p1_sat*Sw_old)*derivXbar_d +
+    Xbar_d*(p1_sat - 1.0)*one_over_B_p*one_over_one_p_C_p_Sq*dC_p_dpbar_w + 3.0*one_over_B_p)*
+    delta_epsbar_p_v;
+  double Xbar_clamp = d_crushParam.p0 + 3.0*pbar_w_new;
+  Xbar_new = (Xbar_new < Xbar_clamp) ? Xbar_clamp : Xbar_new;
+  //assert(!(Xbar_new < 0.0));
+  */
+
   // Get the new value of the volumetric plastic strain
   double epsbar_p_v_new = epsbar_p_v_old + delta_epsbar_p_v;
 
@@ -2510,17 +2379,45 @@ ArenaMixture::computeInternalVariables(ModelState_MasonSand& state,
   // Update the saturation using closed form expression
   C_p = Sw0*exp_ev_a_minus_ev_w;
   double Sw_new = C_p/(1.0 - Sw0 + C_p);
-  assert(!(Sw_new < 0.0));
+  //assert(!(Sw_new < 0.0));
 
   // Update the porosity using closed form expression
   double phi_new = (1.0 - Sw0)*phi0*exp_ev_p_minus_ev_a +
                    Sw0*phi0*exp_ev_p_minus_ev_w;
-  assert(!(phi_new < 0.0));
+  //assert(!(phi_new < 0.0));
 
   // Update the hydrostatic compressive strength
   // (using closed form solution)
-  double Xbar_eff_mix_new = computeHydrostaticStrengthMixture(epsbar_p_v_new, p3_old, Sw0);
-  double Xbar_mix_new = Xbar_eff_mix_new + 3.0*pbar_w_new;
+  // Compute the drained hydrostatic compressive strength
+  double Xbar_d = 0.0;
+  double derivXbar_d = 0.0;
+  computeDrainedHydrostaticStrengthAndDeriv(epsbar_p_v_new, p3_old, Xbar_d, derivXbar_d);
+  
+  // Update the hydrostatic strength
+  double p0     = d_crushParam.p0;
+  double p1_sat = d_crushParam.p1_sat;
+  double Xbar_new = p0 + (1.0 - Sw0 + p1_sat*Sw0)*(Xbar_d - p0) + 3.0*pbar_w_new;
+  /*
+  if (state.particleID == 3377699720593411) {
+    std::cout << "pbar_w_old = " << pbar_w_old
+              << "pbar_w_new = " << pbar_w_new
+              << "Xbar_d = " << Xbar_d
+              << "Xbar_new = " << Xbar_new << std::endl;
+  }
+  */
+
+#ifdef CHECK_FOR_NAN
+  if (std::isnan(Xbar_new)) {
+    std::cout << "State = " << state << std::endl;
+    std::cout << "epsbar_p_v_new = " << epsbar_p_v_new << std::endl;
+    std::cout << "epsbar_p_v_old " << epsbar_p_v_old << std::endl;
+    std::cout << "delta_epsbar_p_v = " << delta_epsbar_p_v << std::endl;
+    std::cout << "pbar_w_old = " << pbar_w_old
+              << "pbar_w_new = " << pbar_w_new
+              << "Xbar_d = " << Xbar_d
+              << "Xbar_new = " << Xbar_new << std::endl;
+  }
+#endif
 
   if (phi_new > 1.0) {
     proc0cout << "**WARNING** Porosity > 1.0 in particle " << state.particleID << std::endl;
@@ -2541,7 +2438,7 @@ ArenaMixture::computeInternalVariables(ModelState_MasonSand& state,
   state.pbar_w = pbar_w_new;
   state.porosity = phi_new;
   state.saturation = Sw_new;
-  state.capX = -Xbar_mix_new;
+  state.capX = -Xbar_new;
 
   return true;
 }
@@ -2552,19 +2449,18 @@ ArenaMixture::computeInternalVariables(ModelState_MasonSand& state,
  *   Compute the drained hydrostatic compressive strength and its derivative
  */
 void 
-ArenaMixture::computeDrainedHydrostaticStrengthAndDeriv(int phase,
-                                                                   const double& epsbar_p_v,
-                                                                   const double& p3,
-                                                                   double& Xbar_d,
-                                                                   double& derivXbar_d) const
+Arena::computeDrainedHydrostaticStrengthAndDeriv(const double& epsbar_p_v,
+                                                                       const double& p3,
+                                                                       double& Xbar_d,
+                                                                       double& derivXbar_d) const
 {
   // Get the initial porosity
   double phi0 = d_fluidParam.phi0;
 
   // Get the crush curve parameters
-  double p0 = d_crushParam[phase].p0;
-  double p1 = d_crushParam[phase].p1;
-  double p2 = d_crushParam[phase].p2;
+  double p0 = d_crushParam.p0;
+  double p1 = d_crushParam.p1;
+  double p2 = d_crushParam.p2;
   // double p3 = -std::log(1.0 - phi0); // For disaggregation: Use p3 from particle instead
 
   Xbar_d = p0;
@@ -2599,10 +2495,10 @@ ArenaMixture::computeDrainedHydrostaticStrengthAndDeriv(int phase,
  * Purpose: Update the damage parameters local to this model
  */
 void 
-ArenaMixture::updateDamageParameters(const Matrix3& D,
+Arena::updateDamageParameters(const Matrix3& D,
                                                     const double& delta_t,
-                                                    const ModelState_MasonSand& state_k_old,
-                                                    ModelState_MasonSand& state_k_new) const
+                                                    const ModelState_Arena& state_k_old,
+                                                    ModelState_Arena& state_k_new) const
 {
 #ifndef TEST_FRACTURE_STRAIN_CRITERION
   // Compute total strain increment
@@ -2698,11 +2594,11 @@ ArenaMixture::updateDamageParameters(const Matrix3& D,
  *   by RM Brannon.
  */
 bool 
-ArenaMixture::rateDependentPlasticUpdate(const Matrix3& D,
+Arena::rateDependentPlasticUpdate(const Matrix3& D,
                                                         const double& delT,
-                                                        const ModelState_MasonSand& stateStatic_old,
-                                                        const ModelState_MasonSand& stateStatic_new,
-                                                        const ModelState_MasonSand& stateDynamic_old,
+                                                        const ModelState_Arena& stateStatic_old,
+                                                        const ModelState_Arena& stateStatic_new,
+                                                        const ModelState_Arena& stateDynamic_old,
                                                         Matrix3& pStress_new) 
 {
   // Get the T1 & T2 parameters
@@ -2736,7 +2632,7 @@ ArenaMixture::rateDependentPlasticUpdate(const Matrix3& D,
   // the trial stress the average of the elastic moduli at the start and end of the step.
 
   // Compute midstep bulk and shear modulus
-  ModelState_MasonSand stateDynamic(stateDynamic_old);
+  ModelState_Arena stateDynamic(stateDynamic_old);
   stateDynamic.bulkModulus = 0.5*(stateStatic_old.bulkModulus + stateStatic_new.bulkModulus);
   stateDynamic.shearModulus = 0.5*(stateStatic_old.shearModulus + stateStatic_new.shearModulus);
 
@@ -2779,7 +2675,7 @@ ArenaMixture::rateDependentPlasticUpdate(const Matrix3& D,
 // ****************************************************************************************************
 // ****************************************************************************************************
 
-void ArenaMixture::addRequiresDamageParameter(Task* task,
+void Arena::addRequiresDamageParameter(Task* task,
                                                              const MPMMaterial* matl,
                                                              const PatchSet* ) const
 {
@@ -2792,7 +2688,7 @@ void ArenaMixture::addRequiresDamageParameter(Task* task,
 #endif
 }
 
-void ArenaMixture::getDamageParameter(const Patch* patch,
+void Arena::getDamageParameter(const Patch* patch,
                                                      ParticleVariable<int>& damage,
                                                      int matID,
                                                      DataWarehouse* old_dw,
@@ -2813,7 +2709,7 @@ void ArenaMixture::getDamageParameter(const Patch* patch,
   }
 }
 
-void ArenaMixture::carryForward(const PatchSubset* patches,
+void Arena::carryForward(const PatchSubset* patches,
                                                const MPMMaterial* matl,
                                                DataWarehouse* old_dw,
                                                DataWarehouse* new_dw)
@@ -2841,13 +2737,13 @@ void ArenaMixture::carryForward(const PatchSubset* patches,
 
 
 //T2D: Throw exception that this is not supported
-void ArenaMixture::addComputesAndRequires(Task* ,
+void Arena::addComputesAndRequires(Task* ,
                                                          const MPMMaterial* ,
                                                          const PatchSet* ,
                                                          const bool, 
                                                          const bool ) const
 {
-  std::cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR ArenaMixture"<<endl;
+  std::cout << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arena"<<endl;
 }
 
 
@@ -2857,7 +2753,7 @@ void ArenaMixture::addComputesAndRequires(Task* ,
  *  ---------------------------------------------------------------------------------------
  */
 void 
-ArenaMixture::allocateCMDataAdd(DataWarehouse* new_dw,
+Arena::allocateCMDataAdd(DataWarehouse* new_dw,
                                                ParticleSubset* addset,
                                                ParticleLabelVariableMap* newState,
                                                ParticleSubset* delset,
@@ -2873,27 +2769,23 @@ ArenaMixture::allocateCMDataAdd(DataWarehouse* new_dw,
 /*---------------------------------------------------------------------------------------
  * MPMICE Hooks
  *---------------------------------------------------------------------------------------*/
-double ArenaMixture::computeRhoMicroCM(double pressure,
-                                                  const double p_ref,
-                                                  const MPMMaterial* matl,
-                                                  double temperature,
-                                                  double rho_guess)
+double Arena::computeRhoMicroCM(double pressure,
+                                                      const double p_ref,
+                                                      const MPMMaterial* matl,
+                                                      double temperature,
+                                                      double rho_guess)
 {
   double rho_0 = matl->getInitialDensity();
-  double p_gauge = pressure - p_ref;
+  double K0 = d_cm.K0_Murnaghan_EOS;
+  double n = d_cm.n_Murnaghan_EOS;
 
-  double rho_cur = 0.0;
-  for (int ii = 0; ii < 2; ii++) {
-    double K0 = d_mpmiceEOSParam[ii].K0_Murnaghan_EOS;
-    double n  = d_mpmiceEOSParam[ii].n_Murnaghan_EOS;
-    double rho = rho_0*std::pow(((n*p_gauge)/K0 + 1.0), (1.0/n));
-    rho_cur += d_volfrac[ii]*rho;
-  }
+  double p_gauge = pressure - p_ref;
+  double rho_cur = rho_0*std::pow(((n*p_gauge)/K0 + 1), (1.0/n));
 
   return rho_cur;
 }
 
-void ArenaMixture::computePressEOSCM(double rho_cur,
+void Arena::computePressEOSCM(double rho_cur,
                                                     double& pressure, double p_ref,
                                                     double& dp_drho, 
                                                     double& soundSpeedSq,
@@ -2901,38 +2793,25 @@ void ArenaMixture::computePressEOSCM(double rho_cur,
                                                     double temperature)
 {
   double rho_0 = matl->getInitialDensity();
-  double eta   = rho_cur/rho_0;
-  double p_gauge = 0.0, bulk = 0.0, shear = 0.0;
-  
-  for (int ii = 0; ii < 2 ; ii++) {
-    double K0 = d_mpmiceEOSParam[ii].K0_Murnaghan_EOS;
-    double n  = d_mpmiceEOSParam[ii].n_Murnaghan_EOS;
+  double K0 = d_cm.K0_Murnaghan_EOS;
+  double n = d_cm.n_Murnaghan_EOS;
 
-    double p_gauge_phase = K0/n*(std::pow(eta, n) - 1.0);
-    p_gauge += d_volfrac[ii]*p_gauge_phase;
+  double eta = rho_cur/rho_0;
+  double p_gauge = K0/n*(std::pow(eta, n) - 1.0);
 
-    double bulk_phase = K0 + n*p_gauge_phase;
-    bulk += d_volfrac[ii]/bulk_phase;
+  double bulk = K0 + n*p_gauge;
+  // double nu = 0.0;
+  double shear = 1.5*bulk;
 
-    // Assume: double nu = 0.0;
-    double shear_phase = 1.5*bulk_phase;
-    shear += d_volfrac[ii]/shear_phase;
-
-    double dp_drho_phase = K0*std::pow(eta, n-1);
-    dp_drho += d_volfrac[ii]*dp_drho_phase;
-  }
-  bulk = 1.0/bulk;
-  shear = 1.0/shear;
   pressure = p_ref + p_gauge;
+  dp_drho  = K0*std::pow(eta, n-1);
   soundSpeedSq = (bulk + 4.0*shear/3.0)/rho_cur;  // speed of sound squared
 }
 
-double ArenaMixture::getCompressibility()
+double Arena::getCompressibility()
 {
-  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR ArenaMixture"
+  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arena"
        << endl;
-  double one_over_K_mix = d_volfrac[0]/d_mpmiceEOSParam[0].K0_Murnaghan_EOS + 
-                          d_volfrac[1]/d_mpmiceEOSParam[1].K0_Murnaghan_EOS;
-  return one_over_K_mix;
+  return 1.0/d_cm.K0_Murnaghan_EOS;
 }
 

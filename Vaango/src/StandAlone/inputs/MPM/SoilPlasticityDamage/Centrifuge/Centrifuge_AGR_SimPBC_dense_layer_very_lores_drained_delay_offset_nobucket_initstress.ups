@@ -242,9 +242,9 @@
          </material>
 
          <material name = "Mason sand">
-           <include href="./MasonSand_PhysicalProperties.xml"/>
+           <include href="./Arena_PhysicalProperties.xml"/>
            <constitutive_model type="Arenisca3">
-             <include href="./MasonSand_Arenisca3Parameters.xml"/>
+             <include href="./Arena_Arenisca3Parameters.xml"/>
              <initialize_with_body_force> true </initialize_with_body_force>
              <surface_reference_point> [-0.60, 0.0, 0.352] </surface_reference_point>
            </constitutive_model>
@@ -266,9 +266,9 @@
          </material>
 
          <material name = "Dense mason sand">
-           <include href="./MasonSand_Dense_PhysicalProperties.xml"/>
+           <include href="./Arena_Dense_PhysicalProperties.xml"/>
            <constitutive_model type="Arenisca3">
-             <include href="./MasonSand_Dense_Arenisca3Parameters.xml"/>
+             <include href="./Arena_Dense_Arenisca3Parameters.xml"/>
              <initialize_with_body_force> true </initialize_with_body_force>
              <surface_reference_point> [-0.60, 0.0, 0.352] </surface_reference_point>
            </constitutive_model>

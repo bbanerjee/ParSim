@@ -63,8 +63,8 @@ Generating the MPM solution
  * Spherical_source_verification_gimp_quarter_hires_cpdi_nocbdi.ups
  * Spherical_source_verification_gimp_quarter_hires_cpdi_nocbdi_nodamp.ups
 3. These input file depend on
- * MasonSand_PhysicalProperties.xml
- * MasonSand_Arenisca3Parameters.xml
+ * Arena_PhysicalProperties.xml
+ * Arena_Arenisca3Parameters.xml
  * CentrifugeLoadCurveLow.xml
 4. To run these tests use a command of the form
 ```sh

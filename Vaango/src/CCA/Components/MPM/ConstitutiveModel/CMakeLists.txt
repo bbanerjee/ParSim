@@ -58,8 +58,8 @@ SET(MPM_ConstitutiveModel_SRCS
   SoilModelBrannon.cc
   Arenisca.cc
   Arenisca3.cc
-  Arenisca3PartiallySaturated.cc
-  Arenisca3PartSatMixture.cc
+  Arena.cc
+  ArenaMixture.cc
   Arenisca4.cc
   BasicDamageModel.cc
   PolarOrthotropicHypoElastic.cc

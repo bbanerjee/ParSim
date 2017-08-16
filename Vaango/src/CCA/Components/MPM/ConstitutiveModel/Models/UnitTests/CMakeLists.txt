@@ -29,7 +29,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 ADD_EXECUTABLE(testPressure_Air testPressure_Air.cc)
 ADD_EXECUTABLE(testPressure_Water testPressure_Water.cc)
 ADD_EXECUTABLE(testPressure_Granite testPressure_Granite.cc)
-ADD_EXECUTABLE(testElasticModuli_MasonSand testElasticModuli_MasonSand.cc)
+ADD_EXECUTABLE(testElasticModuli_Arena testElasticModuli_Arena.cc)
 ADD_EXECUTABLE(testBoostClosestPoint testBoostClosestPoint.cc)
 
 SET(VAANGO_LIBS 
@@ -58,4 +58,4 @@ SET(VAANGO_LIBS
 TARGET_LINK_LIBRARIES(testPressure_Air ${VAANGO_LIBS})
 TARGET_LINK_LIBRARIES(testPressure_Water ${VAANGO_LIBS})
 TARGET_LINK_LIBRARIES(testPressure_Granite ${VAANGO_LIBS})
-TARGET_LINK_LIBRARIES(testElasticModuli_MasonSand ${VAANGO_LIBS})
+TARGET_LINK_LIBRARIES(testElasticModuli_Arena ${VAANGO_LIBS})

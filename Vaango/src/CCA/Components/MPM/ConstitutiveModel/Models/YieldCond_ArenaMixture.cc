@@ -23,7 +23,7 @@
  */
 
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_SoilMix.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_ArenaMixture.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -39,11 +39,11 @@
 
 using namespace Vaango;
 
-const double YieldCond_SoilMix::sqrt_two = std::sqrt(2.0);
-const double YieldCond_SoilMix::sqrt_three = std::sqrt(3.0);
-const double YieldCond_SoilMix::one_sqrt_three = 1.0/sqrt_three;
+const double YieldCond_ArenaMixture::sqrt_two = std::sqrt(2.0);
+const double YieldCond_ArenaMixture::sqrt_three = std::sqrt(3.0);
+const double YieldCond_ArenaMixture::one_sqrt_three = 1.0/sqrt_three;
 
-YieldCond_SoilMix::YieldCond_SoilMix(Uintah::ProblemSpecP& ps)
+YieldCond_ArenaMixture::YieldCond_ArenaMixture(Uintah::ProblemSpecP& ps)
 {
   ps->require("vol_frac.phase1", d_volfrac[0]); // Volume fractions
   d_volfrac[1] = 1.0 - d_volfrac[0];
@@ -154,7 +154,7 @@ YieldCond_SoilMix::YieldCond_SoilMix(Uintah::ProblemSpecP& ps)
   initializeLocalMPMLabels();
 }
          
-YieldCond_SoilMix::YieldCond_SoilMix(const YieldCond_SoilMix* yc)
+YieldCond_ArenaMixture::YieldCond_ArenaMixture(const YieldCond_ArenaMixture* yc)
 {
   for (int ii = 0; ii < 2; ii++) {
     d_volfrac[ii] = yc->d_volfrac[ii];
@@ -180,7 +180,7 @@ YieldCond_SoilMix::YieldCond_SoilMix(const YieldCond_SoilMix* yc)
   initializeLocalMPMLabels();
 }
          
-YieldCond_SoilMix::~YieldCond_SoilMix()
+YieldCond_ArenaMixture::~YieldCond_ArenaMixture()
 {
   VarLabel::destroy(pPEAKI1Label);
   VarLabel::destroy(pPEAKI1Label_preReloc);
@@ -204,10 +204,10 @@ YieldCond_SoilMix::~YieldCond_SoilMix()
 }
 
 void 
-YieldCond_SoilMix::outputProblemSpec(Uintah::ProblemSpecP& ps)
+YieldCond_ArenaMixture::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
-  yield_ps->setAttribute("type", "soil_mix");
+  yield_ps->setAttribute("type", "arena_mixture");
 
   yield_ps->appendElement("vol_frac.phase1", d_volfrac[0]);
 
@@ -261,7 +261,7 @@ YieldCond_SoilMix::outputProblemSpec(Uintah::ProblemSpecP& ps)
 // Check that the input parameters are reasonable
 //--------------------------------------------------------------
 void
-YieldCond_SoilMix::checkInputParameters()
+YieldCond_ArenaMixture::checkInputParameters()
 {
   std::ostringstream warn;
   if (d_yieldParam[0].PEAKI1 <0.0 || d_yieldParam[0].PEAKI1_failed < 0.0) {
@@ -351,13 +351,13 @@ YieldCond_SoilMix::checkInputParameters()
 // originally written by R.M. Brannon, with modifications by M.S. Swan.
 //--------------------------------------------------------------
 void 
-YieldCond_SoilMix::computeModelParameters(double) {
+YieldCond_ArenaMixture::computeModelParameters(double) {
   computeModelParameters(0);
   computeModelParameters(1);
 }
 
 void 
-YieldCond_SoilMix::computeModelParameters(int phase)
+YieldCond_ArenaMixture::computeModelParameters(int phase)
 {
   double  FSLOPE = d_yieldParam[phase].FSLOPE,  // Slope at I1=PEAKI1
           STREN  = d_yieldParam[phase].STREN,   // Value of rootJ2 at I1=0
@@ -384,7 +384,7 @@ YieldCond_SoilMix::computeModelParameters(int phase)
 }
   
 std::vector<double> 
-YieldCond_SoilMix::computeModelParameters(const double& PEAKI1,
+YieldCond_ArenaMixture::computeModelParameters(const double& PEAKI1,
                                           const double& FSLOPE,
                                           const double& STREN,
                                           const double& YSLOPE)
@@ -451,13 +451,13 @@ YieldCond_SoilMix::computeModelParameters(const double& PEAKI1,
 //              =  1.0 (otherwise)
 //--------------------------------------------------------------
 double 
-YieldCond_SoilMix::evalYieldCondition(const ModelStateBase* state_input)
+YieldCond_ArenaMixture::evalYieldCondition(const ModelStateBase* state_input)
 {
-  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
+  const ModelState_Arena* state = dynamic_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_MasonSand.";
+        << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -547,13 +547,13 @@ YieldCond_SoilMix::evalYieldCondition(const ModelStateBase* state_input)
 // Evaluate yield condition max  value of sqrtJ2
 //--------------------------------------------------------------
 double 
-YieldCond_SoilMix::evalYieldConditionMax(const ModelStateBase* state_input)
+YieldCond_ArenaMixture::evalYieldConditionMax(const ModelStateBase* state_input)
 {
-  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
+  const ModelState_Arena* state = dynamic_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_MasonSand.";
+        << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -649,15 +649,15 @@ YieldCond_SoilMix::evalYieldConditionMax(const ModelStateBase* state_input)
  *                        = df/dJ2 s
 */
 void 
-YieldCond_SoilMix::eval_df_dsigma(const Matrix3& ,
+YieldCond_ArenaMixture::eval_df_dsigma(const Matrix3& ,
                                     const ModelStateBase* state_input,
                                     Matrix3& df_dsigma)
 {
-  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
+  const ModelState_Arena* state = dynamic_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_MasonSand.";
+        << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -699,13 +699,13 @@ YieldCond_SoilMix::eval_df_dsigma(const Matrix3& ,
 //    dI1_eff/dp = 1/3
 //--------------------------------------------------------------
 double 
-YieldCond_SoilMix::computeVolStressDerivOfYieldFunction(const ModelStateBase* state_input)
+YieldCond_ArenaMixture::computeVolStressDerivOfYieldFunction(const ModelStateBase* state_input)
 {
-  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
+  const ModelState_Arena* state = dynamic_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_MasonSand.";
+        << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -788,13 +788,13 @@ YieldCond_SoilMix::computeVolStressDerivOfYieldFunction(const ModelStateBase* st
 //     df/dJ2 = 1
 //--------------------------------------------------------------
 double 
-YieldCond_SoilMix::computeDevStressDerivOfYieldFunction(const ModelStateBase* state_input)
+YieldCond_ArenaMixture::computeDevStressDerivOfYieldFunction(const ModelStateBase* state_input)
 {
-  const ModelState_MasonSand* state = dynamic_cast<const ModelState_MasonSand*>(state_input);
+  const ModelState_Arena* state = dynamic_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_MasonSand.";
+        << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -813,17 +813,17 @@ YieldCond_SoilMix::computeDevStressDerivOfYieldFunction(const ModelStateBase* st
  *   I1 = value of tr(stress) at a point inside the yield surface
  */
 double 
-YieldCond_SoilMix::getInternalPoint(const ModelStateBase* state_old_input,
+YieldCond_ArenaMixture::getInternalPoint(const ModelStateBase* state_old_input,
                                       const ModelStateBase* state_trial_input)
 {
-  const ModelState_MasonSand* state_old = 
-    dynamic_cast<const ModelState_MasonSand*>(state_old_input);
-  const ModelState_MasonSand* state_trial = 
-    dynamic_cast<const ModelState_MasonSand*>(state_trial_input);
+  const ModelState_Arena* state_old = 
+    dynamic_cast<const ModelState_Arena*>(state_old_input);
+  const ModelState_Arena* state_trial = 
+    dynamic_cast<const ModelState_Arena*>(state_trial_input);
   if ((!state_old) || (!state_trial)) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_MasonSand.";
+        << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -869,16 +869,16 @@ YieldCond_SoilMix::getInternalPoint(const ModelStateBase* state_old_input,
  *
  */
 bool 
-YieldCond_SoilMix::getClosestPoint(const ModelStateBase* state_input,
+YieldCond_ArenaMixture::getClosestPoint(const ModelStateBase* state_input,
                                      const double& px, const double& py,
                                      double& cpx, double& cpy)
 {
-  const ModelState_MasonSand* state = 
-    dynamic_cast<const ModelState_MasonSand*>(state_input);
+  const ModelState_Arena* state = 
+    dynamic_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_MasonSand.";
+        << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -912,7 +912,7 @@ YieldCond_SoilMix::getClosestPoint(const ModelStateBase* state_input,
 
 
 void 
-YieldCond_SoilMix::getClosestPointGeometricBisect(const ModelState_MasonSand* state,
+YieldCond_ArenaMixture::getClosestPointGeometricBisect(const ModelState_Arena* state,
                                                   const Uintah::Point& z_r_pt, 
                                                   Uintah::Point& z_r_closest) 
 {
@@ -1107,7 +1107,7 @@ YieldCond_SoilMix::getClosestPointGeometricBisect(const ModelState_MasonSand* st
 }
 
 void 
-YieldCond_SoilMix::getClosestPointAlgebraicBisect(const ModelState_MasonSand* state,
+YieldCond_ArenaMixture::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
                                                     const Uintah::Point& z_r_pt, 
                                                     Uintah::Point& z_r_closest) 
 {
@@ -1318,7 +1318,7 @@ YieldCond_SoilMix::getClosestPointAlgebraicBisect(const ModelState_MasonSand* st
 
 /* Get the points on the yield surface */
 void
-YieldCond_SoilMix::getYieldSurfacePointsAll_RprimeZ(const double& X_eff,
+YieldCond_ArenaMixture::getYieldSurfacePointsAll_RprimeZ(const double& X_eff,
                                                       const double& kappa,
                                                       const double& sqrtKG,
                                                       const double& I1eff_min,
@@ -1334,7 +1334,7 @@ YieldCond_SoilMix::getYieldSurfacePointsAll_RprimeZ(const double& X_eff,
 
 /* Get the points on two segments the yield surface */
 void
-YieldCond_SoilMix::getYieldSurfacePointsSegment_RprimeZ(const double& X_eff,
+YieldCond_ArenaMixture::getYieldSurfacePointsSegment_RprimeZ(const double& X_eff,
                                                           const double& kappa,
                                                           const double& sqrtKG,
                                                           const Uintah::Point& start_point,
@@ -1358,7 +1358,7 @@ YieldCond_SoilMix::getYieldSurfacePointsSegment_RprimeZ(const double& X_eff,
 
 /*! Compute a vector of z_eff, r' values given a range of I1_eff values */
 void
-YieldCond_SoilMix::computeZeff_and_RPrime(const double& X_eff,
+YieldCond_ArenaMixture::computeZeff_and_RPrime(const double& X_eff,
                                             const double& kappa,
                                             const double& sqrtKG,
                                             const double& I1eff_min,
@@ -1414,7 +1414,7 @@ YieldCond_SoilMix::computeZeff_and_RPrime(const double& X_eff,
 
 /* linspace function */
 void
-YieldCond_SoilMix::linspace(const double& start, const double& end, const int& num,
+YieldCond_ArenaMixture::linspace(const double& start, const double& end, const int& num,
                               std::vector<double>& linspaced)
 {
   double delta = (end - start) / (double)num;
@@ -1427,7 +1427,7 @@ YieldCond_SoilMix::linspace(const double& start, const double& end, const int& n
 
 /* Find two yield surface segments that are closest to input point */
 void
-YieldCond_SoilMix::getClosestSegments(const Uintah::Point& pt, 
+YieldCond_ArenaMixture::getClosestSegments(const Uintah::Point& pt, 
                                         const std::vector<Uintah::Point>& poly,
                                         std::vector<Uintah::Point>& segments)
 {
@@ -1496,7 +1496,7 @@ YieldCond_SoilMix::getClosestSegments(const Uintah::Point& pt,
 
 /* Get the closest point on the yield surface */
 void 
-YieldCond_SoilMix::findClosestPoint(const Uintah::Point& p, 
+YieldCond_ArenaMixture::findClosestPoint(const Uintah::Point& p, 
                                       const std::vector<Uintah::Point>& poly,
                                       Uintah::Point& min_p)
 {
@@ -1551,7 +1551,7 @@ YieldCond_SoilMix::findClosestPoint(const Uintah::Point& p,
 
 /* linspace function */
 std::vector<double> 
-YieldCond_SoilMix::linspace(double start, double end, int num)
+YieldCond_ArenaMixture::linspace(double start, double end, int num)
 {
   double delta = (end - start) / (double)num;
 
@@ -1574,7 +1574,7 @@ YieldCond_SoilMix::linspace(double start, double end, int num)
 // Requires:  Equation of state and internal variable
 //--------------------------------------------------------------
 double
-YieldCond_SoilMix::computeVolStrainDerivOfDfDp(const ModelStateBase* state_input,
+YieldCond_ArenaMixture::computeVolStrainDerivOfDfDp(const ModelStateBase* state_input,
                                                  const PressureModel* eos,
                                                  const ShearModulusModel* ,
                                                  const InternalVariableModel* )
@@ -1595,7 +1595,7 @@ YieldCond_SoilMix::computeVolStrainDerivOfDfDp(const ModelStateBase* state_input
 // Requires:  Equation of state 
 //--------------------------------------------------------------
 double
-YieldCond_SoilMix::computeDevStrainDerivOfDfDp(const ModelStateBase* state_input,
+YieldCond_ArenaMixture::computeDevStrainDerivOfDfDp(const ModelStateBase* state_input,
                                                  const PressureModel* eos,
                                                  const ShearModulusModel* ,
                                                  const InternalVariableModel* )
@@ -1616,7 +1616,7 @@ YieldCond_SoilMix::computeDevStrainDerivOfDfDp(const ModelStateBase* state_input
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_SoilMix::computeVolStrainDerivOfDfDq(const ModelStateBase* state_input,
+YieldCond_ArenaMixture::computeVolStrainDerivOfDfDq(const ModelStateBase* state_input,
                                                  const PressureModel* ,
                                                  const ShearModulusModel* shear,
                                                  const InternalVariableModel* )
@@ -1637,7 +1637,7 @@ YieldCond_SoilMix::computeVolStrainDerivOfDfDq(const ModelStateBase* state_input
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_SoilMix::computeDevStrainDerivOfDfDq(const ModelStateBase* state_input,
+YieldCond_ArenaMixture::computeDevStrainDerivOfDfDq(const ModelStateBase* state_input,
                                                  const PressureModel* ,
                                                  const ShearModulusModel* shear,
                                                  const InternalVariableModel* )
@@ -1657,7 +1657,7 @@ YieldCond_SoilMix::computeDevStrainDerivOfDfDq(const ModelStateBase* state_input
 // Requires:  Equation of state, shear modulus model, internal variable model
 //--------------------------------------------------------------
 double
-YieldCond_SoilMix::computeVolStrainDerivOfYieldFunction(const ModelStateBase* state_input,
+YieldCond_ArenaMixture::computeVolStrainDerivOfYieldFunction(const ModelStateBase* state_input,
                                                           const PressureModel* eos,
                                                           const ShearModulusModel* shear,
                                                           const InternalVariableModel* )
@@ -1677,7 +1677,7 @@ YieldCond_SoilMix::computeVolStrainDerivOfYieldFunction(const ModelStateBase* st
 // Requires:  Equation of state, shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_SoilMix::computeDevStrainDerivOfYieldFunction(const ModelStateBase* state_input,
+YieldCond_ArenaMixture::computeDevStrainDerivOfYieldFunction(const ModelStateBase* state_input,
                                                           const PressureModel* eos,
                                                           const ShearModulusModel* shear,
                                                           const InternalVariableModel* )
@@ -1692,7 +1692,7 @@ YieldCond_SoilMix::computeDevStrainDerivOfYieldFunction(const ModelStateBase* st
 
 // Evaluate the yield function.
 double 
-YieldCond_SoilMix::evalYieldCondition(const double p,
+YieldCond_ArenaMixture::evalYieldCondition(const double p,
                                         const double q,
                                         const double dummy0,
                                         const double dummy1,
@@ -1709,7 +1709,7 @@ YieldCond_SoilMix::evalYieldCondition(const double p,
 // Evaluate yield condition (s = deviatoric stress
 //                           p = state->p)
 double 
-YieldCond_SoilMix::evalYieldCondition(const Uintah::Matrix3& ,
+YieldCond_ArenaMixture::evalYieldCondition(const Uintah::Matrix3& ,
                                         const ModelStateBase* state_input)
 {
   std::ostringstream out;
@@ -1728,7 +1728,7 @@ YieldCond_SoilMix::evalYieldCondition(const Uintah::Matrix3& ,
 // where
 //    s = sigma - 1/3 tr(sigma) I
 void 
-YieldCond_SoilMix::evalDerivOfYieldFunction(const Uintah::Matrix3& sig,
+YieldCond_ArenaMixture::evalDerivOfYieldFunction(const Uintah::Matrix3& sig,
                                               const double p_c,
                                               const double ,
                                               Uintah::Matrix3& derivative)
@@ -1744,7 +1744,7 @@ YieldCond_SoilMix::evalDerivOfYieldFunction(const Uintah::Matrix3& sig,
 // Compute df/ds  where s = deviatoric stress
 //    df/ds = 
 void 
-YieldCond_SoilMix::evalDevDerivOfYieldFunction(const Uintah::Matrix3& sigDev,
+YieldCond_ArenaMixture::evalDevDerivOfYieldFunction(const Uintah::Matrix3& sigDev,
                                                  const double ,
                                                  const double ,
                                                  Uintah::Matrix3& derivative)
@@ -1760,7 +1760,7 @@ YieldCond_SoilMix::evalDevDerivOfYieldFunction(const Uintah::Matrix3& sigDev,
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$  
     where \f$s\f$ is deviatoric part of Cauchy stress */
 void 
-YieldCond_SoilMix::eval_df_dxi(const Matrix3& sigDev,
+YieldCond_ArenaMixture::eval_df_dxi(const Matrix3& sigDev,
                                  const ModelStateBase* ,
                                  Matrix3& df_ds)
          
@@ -1774,7 +1774,7 @@ YieldCond_SoilMix::eval_df_dxi(const Matrix3& sigDev,
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 void 
-YieldCond_SoilMix::eval_df_ds_df_dbeta(const Matrix3& sigDev,
+YieldCond_ArenaMixture::eval_df_ds_df_dbeta(const Matrix3& sigDev,
                                            const ModelStateBase*,
                                            Matrix3& df_ds,
                                            Matrix3& df_dbeta)
@@ -1788,7 +1788,7 @@ YieldCond_SoilMix::eval_df_ds_df_dbeta(const Matrix3& sigDev,
 
 /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$) */
 double 
-YieldCond_SoilMix::eval_df_dep(const Matrix3& ,
+YieldCond_ArenaMixture::eval_df_dep(const Matrix3& ,
                                  const double& dsigy_dep,
                                  const ModelStateBase* )
 {
@@ -1801,7 +1801,7 @@ YieldCond_SoilMix::eval_df_dep(const Matrix3& ,
 
 /*! Derivative with respect to the porosity (\f$\epsilon^p \f$) */
 double 
-YieldCond_SoilMix::eval_df_dphi(const Matrix3& ,
+YieldCond_ArenaMixture::eval_df_dphi(const Matrix3& ,
                                   const ModelStateBase* )
 {
   std::ostringstream out;
@@ -1813,7 +1813,7 @@ YieldCond_SoilMix::eval_df_dphi(const Matrix3& ,
 
 /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
 double 
-YieldCond_SoilMix::eval_h_alpha(const Matrix3& ,
+YieldCond_ArenaMixture::eval_h_alpha(const Matrix3& ,
                                     const ModelStateBase* )
 {
   std::ostringstream out;
@@ -1825,7 +1825,7 @@ YieldCond_SoilMix::eval_h_alpha(const Matrix3& ,
 
 /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
 double 
-YieldCond_SoilMix::eval_h_phi(const Matrix3& ,
+YieldCond_ArenaMixture::eval_h_phi(const Matrix3& ,
                                   const double& ,
                                   const ModelStateBase* )
 {
@@ -1839,7 +1839,7 @@ YieldCond_SoilMix::eval_h_phi(const Matrix3& ,
 //--------------------------------------------------------------
 // Tangent moduli
 void 
-YieldCond_SoilMix::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
+YieldCond_ArenaMixture::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
                                                    const Matrix3& sigma, 
                                                    double sigY,
                                                    double dsigYdep,
@@ -1855,7 +1855,7 @@ YieldCond_SoilMix::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
 }
 
 void 
-YieldCond_SoilMix::computeTangentModulus(const TangentModulusTensor& Ce,
+YieldCond_ArenaMixture::computeTangentModulus(const TangentModulusTensor& Ce,
                                            const Matrix3& f_sigma, 
                                            double f_q1,
                                            double h_q1,
@@ -1873,7 +1873,7 @@ YieldCond_SoilMix::computeTangentModulus(const TangentModulusTensor& Ce,
  *  This is used to scale and update the yield parameters 
  */
 void 
-YieldCond_SoilMix::updateLocalVariables(ParticleSubset* pset,
+YieldCond_ArenaMixture::updateLocalVariables(ParticleSubset* pset,
                                         DataWarehouse* old_dw,
                                         DataWarehouse* new_dw,
                                         constParticleVariable<double>& pCoherence_old,

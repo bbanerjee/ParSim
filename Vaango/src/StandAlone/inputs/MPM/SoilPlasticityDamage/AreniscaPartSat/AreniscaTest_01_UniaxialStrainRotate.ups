@@ -84,12 +84,12 @@
         <thermal_conductivity>174.0e-7</thermal_conductivity>
         <specific_heat>134.0e-8</specific_heat>
 
-        <constitutive_model type="Arenisca3_part_sat">
+        <constitutive_model type="arena">
 
           <initial_porosity> 0.4 </initial_porosity>
           <initial_saturation> 0.0 </initial_saturation>
 
-          <elastic_moduli_model type="mason_sand">
+          <elastic_moduli_model type="arena">
 	    <b0>  0.0029  </b0>
 	    <b1>  0.4731  </b1>
 	    <b2>  1.5057  </b2>
@@ -100,7 +100,7 @@
             <nu2> 0.0     </nu2>
           </elastic_moduli_model>
 
-          <internal_variable_model type="mason_sand">
+          <internal_variable_model type="arena">
 	    <p0>  0.0       </p0>
 	    <p1>  482.68e6  </p1>
 	    <p2>  0.719     </p2>
@@ -108,11 +108,11 @@
             <use_disaggregation_algorithm> false </use_disaggregation_algorithm>
           </internal_variable_model>
 
-          <kinematic_hardening_model type="mason_sand">
+          <kinematic_hardening_model type="arena">
             <fluid_pressure_initial> 0.0 </fluid_pressure_initial>
           </kinematic_hardening_model>
 
-          <plastic_yield_condition type="mason_sand">
+          <plastic_yield_condition type="arena">
 	    <PEAKI1> 1.0e3 </PEAKI1>
 	    <FSLOPE> 0.453  </FSLOPE>
 	    <STREN>  1.0e7  </STREN>

@@ -24,12 +24,12 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __PARTIALLY_SATURATED_ARENISCA3_YIELD_CONDITION_MODEL_H__
-#define __PARTIALLY_SATURATED_ARENISCA3_YIELD_CONDITION_MODEL_H__
+#ifndef __ARENA_YIELD_CONDITION_MODEL_H__
+#define __ARENA_YIELD_CONDITION_MODEL_H__
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/WeibParameters.h>
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -40,11 +40,11 @@
 namespace Vaango {
 
   /*! 
-    \class  YieldCond_MasonSand
+    \class  YieldCond_Arena
     \brief  The Partally saturated Arenisca3 yield condition
   */
 
-  class YieldCond_MasonSand : public YieldCondition {
+  class YieldCond_Arena : public YieldCondition {
   
   public:
     
@@ -125,18 +125,18 @@ namespace Vaango {
 
     // Prevent copying of this class
     // copy constructor
-    //YieldCond_MasonSand(const YieldCond_MasonSand &);
-    YieldCond_MasonSand& operator=(const YieldCond_MasonSand &);
+    //YieldCond_Arena(const YieldCond_Arena &);
+    YieldCond_Arena& operator=(const YieldCond_Arena &);
 
   public:
 
     //! Constructor
-    /*! Creates a YieldCond_MasonSand function object */
-    YieldCond_MasonSand(Uintah::ProblemSpecP& ps);
-    YieldCond_MasonSand(const YieldCond_MasonSand* cm);
+    /*! Creates a YieldCond_Arena function object */
+    YieldCond_Arena(Uintah::ProblemSpecP& ps);
+    YieldCond_Arena(const YieldCond_Arena* cm);
          
     //! Destructor 
-    ~YieldCond_MasonSand();
+    ~YieldCond_Arena();
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
@@ -710,10 +710,10 @@ namespace Vaango {
     Uintah::WeibParameters d_weibull_T2;
 
     /* Find the closest point */
-    void getClosestPointAlgebraicBisect(const ModelState_MasonSand* state,
+    void getClosestPointAlgebraicBisect(const ModelState_Arena* state,
                                         const Uintah::Point& z_r_pt, 
                                         Uintah::Point& z_r_closest); 
-    void getClosestPointGeometricBisect(const ModelState_MasonSand* state,
+    void getClosestPointGeometricBisect(const ModelState_Arena* state,
                                         const Uintah::Point& z_r_pt, 
                                         Uintah::Point& z_r_closest); 
 
@@ -760,4 +760,4 @@ namespace Vaango {
 
 } // End namespace Uintah
 
-#endif  // __PARTIALLY_SATURATED_ARENISCA3_YIELD_CONDITION_MODEL_H__ 
+#endif  // __ARENA_YIELD_CONDITION_MODEL_H__ 

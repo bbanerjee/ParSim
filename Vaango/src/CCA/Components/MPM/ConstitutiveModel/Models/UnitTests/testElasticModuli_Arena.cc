@@ -1,5 +1,5 @@
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_MasonSand.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -31,7 +31,7 @@ int main()
 
   // Create root node
   xmlNodePtr rootNode = xmlNewNode(NULL, BAD_CAST "elastic_moduli_model");
-  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "mason_sand");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "arena");
   xmlDocSetRootElement(doc, rootNode);
 
   // Create a child node
@@ -81,8 +81,8 @@ int main()
   }
 
   // Constructors
-  ElasticModuli_MasonSand model(ps);
-  ElasticModuli_MasonSand model_copy(model);
+  ElasticModuli_Arena model(ps);
+  ElasticModuli_Arena model_copy(model);
 
   // Get the initial moduli
   ElasticModuli moduli = model.getInitialElasticModuli();
@@ -108,7 +108,7 @@ int main()
   }
 
   // Drained (dry) sand
-  ModelState_MasonSand state; 
+  ModelState_Arena state; 
   state.porosity = porosities[4];
   state.saturation = saturations[0];
   for (double pp : pressures) {

@@ -1098,7 +1098,7 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
       // initial assignment for the updated values of plastic strains, volumetric
       // part of the plastic strain, volumetric part of the elastic strain, 
       // and the backstress. tentative assumption of elasticity
-      ModelState_MasonSand state_old;
+      ModelState_Arena state_old;
       state_old.particleID          = pParticleID[idx];
       state_old.capX                = pCapX[idx];
       state_old.pbar_w              = -pBackstress_old[idx].Trace()/3.0;
@@ -1128,7 +1128,7 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
       //---------------------------------------------------------
       // Rate-independent plastic step
       // Divides the strain increment into substeps, and calls substep function
-      ModelState_MasonSand state_new;
+      ModelState_Arena state_new;
       bool isSuccess = rateIndependentPlasticUpdate(DD, delT, 
                                                     idx, pParticleID[idx], state_old,
                                                     state_new);
@@ -1179,9 +1179,9 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
 
       //---------------------------------------------------------
       // Rate-dependent plastic step
-      ModelState_MasonSand stateQS_old(state_old);
+      ModelState_Arena stateQS_old(state_old);
       stateQS_old.stressTensor = pStressQS_old[idx];
-      ModelState_MasonSand stateQS_new(state_new);
+      ModelState_Arena stateQS_new(state_new);
       stateQS_new.stressTensor = pStressQS_new[idx];
 
 #ifdef CHECK_TRIAL_STRESS
@@ -1310,8 +1310,8 @@ ArenaMixture::rateIndependentPlasticUpdate(const Matrix3& D,
                                                           const double& delT,
                                                           particleIndex idx, 
                                                           long64 pParticleID, 
-                                                          const ModelState_MasonSand& state_old,
-                                                          ModelState_MasonSand& state_new)
+                                                          const ModelState_Arena& state_old,
+                                                          ModelState_Arena& state_new)
 {
 #ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "Rate independent update:" << std::endl;
@@ -1331,7 +1331,7 @@ ArenaMixture::rateIndependentPlasticUpdate(const Matrix3& D,
   Matrix3 stress_trial = computeTrialStress(state_old, strain_inc);
 
   // Set up a trial state, update the stress invariants, and compute elastic properties
-  ModelState_MasonSand state_trial(state_old);
+  ModelState_Arena state_trial(state_old);
   state_trial.stressTensor = stress_trial;
   computeElasticProperties(state_trial);
   
@@ -1371,8 +1371,8 @@ ArenaMixture::rateIndependentPlasticUpdate(const Matrix3& D,
   bool isSuccess = false;
 
   // Set up the initial states for the substeps
-  ModelState_MasonSand state_k_old(state_old);
-  ModelState_MasonSand state_k_new(state_old);
+  ModelState_Arena state_k_old(state_old);
+  ModelState_Arena state_k_new(state_old);
   do {
 
     //  Call substep function {sigma_new, ep_new, X_new, Zeta_new}
@@ -1455,7 +1455,7 @@ ArenaMixture::rateIndependentPlasticUpdate(const Matrix3& D,
  *   **WARNING** Also computes stress invariants and plastic strain invariants
  */
 void 
-ArenaMixture::computeElasticProperties(ModelState_MasonSand& state)
+ArenaMixture::computeElasticProperties(ModelState_Arena& state)
 {
   state.updateStressInvariants();
   state.updatePlasticStrainInvariants();
@@ -1490,7 +1490,7 @@ ArenaMixture::computeElasticProperties(ModelState_MasonSand& state)
  *   over the step.
  */
 Matrix3 
-ArenaMixture::computeTrialStress(const ModelState_MasonSand& state_old,
+ArenaMixture::computeTrialStress(const ModelState_Arena& state_old,
                                                 const Matrix3& strain_inc)
 {
   // Compute the trial stress
@@ -1531,8 +1531,8 @@ ArenaMixture::computeTrialStress(const ModelState_MasonSand& state_old,
 int 
 ArenaMixture::computeStepDivisions(particleIndex idx,
                                                   long64 particleID, 
-                                                  const ModelState_MasonSand& state_old,
-                                                  const ModelState_MasonSand& state_trial)
+                                                  const ModelState_Arena& state_old,
+                                                  const ModelState_Arena& state_trial)
 {
   
   // Get the yield parameters
@@ -1631,8 +1631,8 @@ ArenaMixture::computeStepDivisions(particleIndex idx,
 bool 
 ArenaMixture::computeSubstep(const Matrix3& D,
                                             const double& dt,
-                                            const ModelState_MasonSand& state_k_old,
-                                            ModelState_MasonSand& state_k_new)
+                                            const ModelState_Arena& state_k_old,
+                                            ModelState_Arena& state_k_new)
 {
 #ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "\t D = " << D << std::endl;
@@ -1668,7 +1668,7 @@ ArenaMixture::computeSubstep(const Matrix3& D,
 #endif
 
   // Set up a trial state, update the stress invariants
-  ModelState_MasonSand state_k_trial(state_k_old);
+  ModelState_Arena state_k_trial(state_k_old);
   state_k_trial.stressTensor = stress_k_trial;
 
   // Compute elastic moduli at trial stress state
@@ -1773,8 +1773,8 @@ ArenaMixture::computeSubstep(const Matrix3& D,
  */
 bool 
 ArenaMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
-                                                const ModelState_MasonSand& state_k_old,
-                                                const ModelState_MasonSand& state_k_trial,
+                                                const ModelState_Arena& state_k_old,
+                                                const ModelState_Arena& state_k_trial,
                                                 Uintah::Matrix3& sig_fixed,
                                                 Uintah::Matrix3& plasticStrain_inc_fixed)
 {
@@ -1903,7 +1903,7 @@ ArenaMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   std::cout << "Delta eps_p = " << plasticStrain_inc_fixed << std::endl;
 
   // Test normal to yield surface
-  ModelState_MasonSand state_test(state_k_old);
+  ModelState_Arena state_test(state_k_old);
   state_test.stressTensor = sig_fixed;
   state_test.updateStressInvariants();
 
@@ -1929,7 +1929,7 @@ ArenaMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
 
   // Compute a test stress to check normal
   Matrix3 sig_test = sig_fixed + df_dsigma*sig_diff(0,0);
-  ModelState_MasonSand state_sig_test(state_k_old);
+  ModelState_Arena state_sig_test(state_k_old);
   state_sig_test.stressTensor = sig_test;
   state_sig_test.updateStressInvariants();
   std::cout << "I1 = " << state_sig_test.I1_eff << ";" << std::endl;
@@ -1995,11 +1995,11 @@ ArenaMixture::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
  */
 bool 
 ArenaMixture::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
-                                                            const ModelState_MasonSand& state_k_old, 
-                                                            const ModelState_MasonSand& state_k_trial,
+                                                            const ModelState_Arena& state_k_old, 
+                                                            const ModelState_Arena& state_k_trial,
                                                             const Matrix3& deltaEps_p_fixed, 
                                                             const Matrix3& sig_fixed, 
-                                                            ModelState_MasonSand& state_k_new)
+                                                            ModelState_Arena& state_k_new)
 {
   // bisection convergence tolerance on eta (if changed, change imax)
   const double TOLERANCE = d_cm.consistency_bisection_tolerance; 
@@ -2016,7 +2016,7 @@ ArenaMixture::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
 
   // Create a state for the fixed non-hardening yield surface state
   // and update only the stress and plastic strain
-  ModelState_MasonSand state_k_fixed(state_k_old);
+  ModelState_Arena state_k_fixed(state_k_old);
   state_k_fixed.stressTensor = sig_fixed;
   state_k_fixed.plasticStrainTensor = eps_p_old + deltaEps_p_fixed;
 
@@ -2027,7 +2027,7 @@ ArenaMixture::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
   double  norm_deltaEps_p_fixed_new = norm_deltaEps_p_fixed;
 
   // Set up a local trial state
-  ModelState_MasonSand state_trial_local(state_k_trial);
+  ModelState_Arena state_trial_local(state_k_trial);
 
   // Start loop
   int ii = 1;
@@ -2077,7 +2077,7 @@ ArenaMixture::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
     // of the yield surface based on the updated internal variables (keeping the
     // elastic moduli at the values at the beginning of the step) and do 
     // a non-hardening return to that yield surface.
-    ModelState_MasonSand state_k_updated(state_k_old);
+    ModelState_Arena state_k_updated(state_k_old);
     state_k_updated.pbar_w = state_trial_local.pbar_w;
     state_k_updated.porosity = state_trial_local.porosity;
     state_k_updated.saturation = state_trial_local.saturation;
@@ -2183,11 +2183,11 @@ ArenaMixture::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
  */
 bool 
 ArenaMixture::consistencyBisection(const Matrix3& deltaEps_new,
-                                                  const ModelState_MasonSand& state_k_old, 
-                                                  const ModelState_MasonSand& state_k_trial,
+                                                  const ModelState_Arena& state_k_old, 
+                                                  const ModelState_Arena& state_k_trial,
                                                   const Matrix3& deltaEps_p_fixed, 
                                                   const Matrix3& sig_fixed, 
-                                                  ModelState_MasonSand& state_k_new)
+                                                  ModelState_Arena& state_k_new)
 {
   // bisection convergence tolerance on eta (if changed, change imax)
   const double TOLERANCE = d_cm.consistency_bisection_tolerance; 
@@ -2206,7 +2206,7 @@ ArenaMixture::consistencyBisection(const Matrix3& deltaEps_new,
 
   // Create a state for the fixed non-hardening yield surface state
   // and update only the stress and plastic strain
-  ModelState_MasonSand state_k_fixed(state_k_old);
+  ModelState_Arena state_k_fixed(state_k_old);
   state_k_fixed.stressTensor = sig_fixed;
   state_k_fixed.plasticStrainTensor = eps_p_old + deltaEps_p_fixed;
 
@@ -2216,7 +2216,7 @@ ArenaMixture::consistencyBisection(const Matrix3& deltaEps_new,
   double  norm_deltaEps_p_fixed_new = norm_deltaEps_p_fixed;
 
   // Set up a local trial state
-  ModelState_MasonSand state_trial_local(state_k_trial);
+  ModelState_Arena state_trial_local(state_k_trial);
 
   // Start loop
   int ii = 1;
@@ -2288,7 +2288,7 @@ ArenaMixture::consistencyBisection(const Matrix3& deltaEps_new,
     // elastic moduli at the values at the beginning of the step) and do 
     // a non-hardening return to that yield surface.
 
-    ModelState_MasonSand state_k_updated(state_k_old);
+    ModelState_Arena state_k_updated(state_k_old);
     state_k_updated.pbar_w = state_trial_local.pbar_w;
     state_k_updated.porosity = state_trial_local.porosity;
     state_k_updated.saturation = state_trial_local.saturation;
@@ -2387,7 +2387,7 @@ ArenaMixture::consistencyBisection(const Matrix3& deltaEps_new,
  *   increment in volumetric plastic strain
  */
 bool
-ArenaMixture::computeInternalVariables(ModelState_MasonSand& state,
+ArenaMixture::computeInternalVariables(ModelState_Arena& state,
                                                       const double& delta_eps_p_v)
 {
   // Internal variables are not allowed to evolve when the effective stress is tensile
@@ -2601,8 +2601,8 @@ ArenaMixture::computeDrainedHydrostaticStrengthAndDeriv(int phase,
 void 
 ArenaMixture::updateDamageParameters(const Matrix3& D,
                                                     const double& delta_t,
-                                                    const ModelState_MasonSand& state_k_old,
-                                                    ModelState_MasonSand& state_k_new) const
+                                                    const ModelState_Arena& state_k_old,
+                                                    ModelState_Arena& state_k_new) const
 {
 #ifndef TEST_FRACTURE_STRAIN_CRITERION
   // Compute total strain increment
@@ -2700,9 +2700,9 @@ ArenaMixture::updateDamageParameters(const Matrix3& D,
 bool 
 ArenaMixture::rateDependentPlasticUpdate(const Matrix3& D,
                                                         const double& delT,
-                                                        const ModelState_MasonSand& stateStatic_old,
-                                                        const ModelState_MasonSand& stateStatic_new,
-                                                        const ModelState_MasonSand& stateDynamic_old,
+                                                        const ModelState_Arena& stateStatic_old,
+                                                        const ModelState_Arena& stateStatic_new,
+                                                        const ModelState_Arena& stateDynamic_old,
                                                         Matrix3& pStress_new) 
 {
   // Get the T1 & T2 parameters
@@ -2736,7 +2736,7 @@ ArenaMixture::rateDependentPlasticUpdate(const Matrix3& D,
   // the trial stress the average of the elastic moduli at the start and end of the step.
 
   // Compute midstep bulk and shear modulus
-  ModelState_MasonSand stateDynamic(stateDynamic_old);
+  ModelState_Arena stateDynamic(stateDynamic_old);
   stateDynamic.bulkModulus = 0.5*(stateStatic_old.bulkModulus + stateStatic_new.bulkModulus);
   stateDynamic.shearModulus = 0.5*(stateStatic_old.shearModulus + stateStatic_new.shearModulus);
 

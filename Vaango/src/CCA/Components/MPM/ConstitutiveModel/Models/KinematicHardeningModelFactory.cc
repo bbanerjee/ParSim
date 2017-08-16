@@ -29,7 +29,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardening_None.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardening_Prager.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardening_Armstrong.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardening_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardening_Arena.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
@@ -81,8 +81,8 @@ KinematicHardeningModel* KinematicHardeningModelFactory::create(ProblemSpecP& ps
    if(!child->getAttribute("type", mat_type))
       throw ProblemSetupException("No type for kinematic hardening model", __FILE__, __LINE__);
 
-   if (mat_type == "mason_sand")
-      return(scinew KinematicHardening_MasonSand(child, intvar));
+   if (mat_type == "arena")
+      return(scinew KinematicHardening_Arena(child, intvar));
    else {
       cerr << "**WARNING** Creating default (no kinematic hardening) model" << endl;
       return(scinew KinematicHardening_None(child));
@@ -103,8 +103,8 @@ KinematicHardeningModelFactory::createCopy(const KinematicHardeningModel* pm)
    } else if (dynamic_cast<const KinematicHardening_Armstrong*>(pm)) {
       return(scinew KinematicHardening_Armstrong(dynamic_cast<const KinematicHardening_Armstrong*>(pm)));
 
-   } else if (dynamic_cast<const KinematicHardening_MasonSand*>(pm)) {
-      return(scinew KinematicHardening_MasonSand(dynamic_cast<const KinematicHardening_MasonSand*>(pm)));
+   } else if (dynamic_cast<const KinematicHardening_Arena*>(pm)) {
+      return(scinew KinematicHardening_Arena(dynamic_cast<const KinematicHardening_Arena*>(pm)));
 
    } else {
       cerr << "**WARNING** Creating copy of default (no kinematic hardening) model" << endl;

@@ -1,5 +1,5 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Air.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
 #include <string>
 #include <map>
 #include <vector>
@@ -52,7 +52,7 @@ int main()
   }
 
   // Test model state input
-  ModelState_MasonSand state; 
+  ModelState_Arena state; 
   for (double pp : pressures) {
     state.I1_eff = -std::pow(10, pp);
     double K = model.computeBulkModulus(&state);

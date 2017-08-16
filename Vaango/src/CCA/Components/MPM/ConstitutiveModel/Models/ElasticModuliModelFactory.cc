@@ -28,8 +28,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Constant.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Arenisca.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_MasonSand.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_SoilMix.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_ArenaMixture.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
@@ -59,10 +59,10 @@ ElasticModuliModel* ElasticModuliModelFactory::create(Uintah::ProblemSpecP& ps)
     return(scinew ElasticModuli_Constant(child));
   else if (mat_type == "arenisca")
     return(scinew ElasticModuli_Arenisca(child));
-  else if (mat_type == "mason_sand")
-    return(scinew ElasticModuli_MasonSand(child));
-  else if (mat_type == "soil_mix")
-    return(scinew ElasticModuli_SoilMix(child));
+  else if (mat_type == "arena")
+    return(scinew ElasticModuli_Arena(child));
+  else if (mat_type == "arena_mixture")
+    return(scinew ElasticModuli_ArenaMixture(child));
   else {
     std::cerr << "**WARNING** No elasticity model provided. "
               << "Creating default (constant elasticity) model" << std::endl;
@@ -77,10 +77,10 @@ ElasticModuliModelFactory::createCopy(const ElasticModuliModel* smm)
     return(scinew ElasticModuli_Constant(dynamic_cast<const ElasticModuli_Constant*>(smm)));
   else if (dynamic_cast<const ElasticModuli_Arenisca*>(smm))
     return(scinew ElasticModuli_Arenisca(dynamic_cast<const ElasticModuli_Arenisca*>(smm)));
-  else if (dynamic_cast<const ElasticModuli_MasonSand*>(smm))
-    return(scinew ElasticModuli_MasonSand(dynamic_cast<const ElasticModuli_MasonSand*>(smm)));
-  else if (dynamic_cast<const ElasticModuli_SoilMix*>(smm))
-    return(scinew ElasticModuli_SoilMix(dynamic_cast<const ElasticModuli_SoilMix*>(smm)));
+  else if (dynamic_cast<const ElasticModuli_Arena*>(smm))
+    return(scinew ElasticModuli_Arena(dynamic_cast<const ElasticModuli_Arena*>(smm)));
+  else if (dynamic_cast<const ElasticModuli_ArenaMixture*>(smm))
+    return(scinew ElasticModuli_ArenaMixture(dynamic_cast<const ElasticModuli_ArenaMixture*>(smm)));
   else {
     std::cerr << "**WARNING** No elasticity model provided. "
               << "Creating default (constant elasticity) model" << std::endl;

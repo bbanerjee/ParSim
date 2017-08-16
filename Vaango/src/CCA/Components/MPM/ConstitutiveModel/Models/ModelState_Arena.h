@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __MODEL_STATE_ARENISCA3_PARTIALLY_SATURATED_H__
-#define __MODEL_STATE_ARENISCA3_PARTIALLY_SATURATED_H__
+#ifndef __MODEL_STATE_ARENA_H__
+#define __MODEL_STATE_ARENA_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 
@@ -31,7 +31,7 @@ namespace Vaango {
 
   /////////////////////////////////////////////////////////////////////////////
   /*!
-    \class ModelState_MasonSand
+    \class ModelState_Arena
     \brief A structure that stores the state data that is specialized for
            the PartallySaturated model.
            ** Derived from PlasticityState:ModelState
@@ -39,7 +39,7 @@ namespace Vaango {
   */
   /////////////////////////////////////////////////////////////////////////////
 
-  class ModelState_MasonSand: public ModelState_Default {
+  class ModelState_Arena: public ModelState_Default {
 
   public:
 
@@ -88,21 +88,21 @@ namespace Vaango {
     // double porosity;    // Porosity
     // Matrix3 backStress; // Back stress
 
-    ModelState_MasonSand();
+    ModelState_Arena();
 
-    ModelState_MasonSand(const ModelState_MasonSand& state);
-    ModelState_MasonSand(const ModelState_MasonSand* state);
+    ModelState_Arena(const ModelState_Arena& state);
+    ModelState_Arena(const ModelState_Arena* state);
 
-    ~ModelState_MasonSand();
+    ~ModelState_Arena();
 
-    ModelState_MasonSand& operator=(const ModelState_MasonSand& state);
-    ModelState_MasonSand* operator=(const ModelState_MasonSand* state);
+    ModelState_Arena& operator=(const ModelState_Arena& state);
+    ModelState_Arena* operator=(const ModelState_Arena* state);
 
     void updateStressInvariants();
     void updatePlasticStrainInvariants();
 
     friend std::ostream& operator<<(std::ostream& os, 
-                                    const ModelState_MasonSand& state) {
+                                    const ModelState_Arena& state) {
       os << "\t ParticleID = " << state.particleID
          << " I1_eff = " << state.I1_eff << ", sqrt_J2 = " << state.sqrt_J2
          << ", r = " << state.rr << ", z_eff = " << state.zz_eff
@@ -125,4 +125,4 @@ namespace Vaango {
 
 } // End namespace Uintah
 
-#endif  // __MODEL_STATE_ARENISCA3_PARTIALLY_SATURATED_H__ 
+#endif  // __MODEL_STATE_ARENA_H__ 

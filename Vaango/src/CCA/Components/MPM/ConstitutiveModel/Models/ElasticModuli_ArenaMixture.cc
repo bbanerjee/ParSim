@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_SoilMix.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_ArenaMixture.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
@@ -42,7 +42,7 @@ using namespace Vaango;
  * } 
  */
 
-ElasticModuli_SoilMix::ElasticModuli_SoilMix(Uintah::ProblemSpecP& ps)
+ElasticModuli_ArenaMixture::ElasticModuli_ArenaMixture(Uintah::ProblemSpecP& ps)
 {
   ps->require("vol_frac.phase1", d_volfrac[0]); // Volume fractions
   d_volfrac[1] = 1.0 - d_volfrac[0];
@@ -74,7 +74,7 @@ ElasticModuli_SoilMix::ElasticModuli_SoilMix(Uintah::ProblemSpecP& ps)
 // Check that the input parameters are reasonable
 //--------------------------------------------------------------
 void
-ElasticModuli_SoilMix::checkInputParameters()
+ElasticModuli_ArenaMixture::checkInputParameters()
 {
   std::ostringstream warn;
 
@@ -134,7 +134,7 @@ ElasticModuli_SoilMix::checkInputParameters()
 }
 
 // Construct a copy of a elasticity model.  
-ElasticModuli_SoilMix::ElasticModuli_SoilMix(const ElasticModuli_SoilMix* model)
+ElasticModuli_ArenaMixture::ElasticModuli_ArenaMixture(const ElasticModuli_ArenaMixture* model)
 {
   for (int ii = 0; ii < 2; ii++) {
     d_volfrac[ii] = model->d_volfrac[ii];
@@ -144,15 +144,15 @@ ElasticModuli_SoilMix::ElasticModuli_SoilMix(const ElasticModuli_SoilMix* model)
 }
 
 // Destructor of elasticity model.  
-ElasticModuli_SoilMix::~ElasticModuli_SoilMix()
+ElasticModuli_ArenaMixture::~ElasticModuli_ArenaMixture()
 {
 }
 
 void 
-ElasticModuli_SoilMix::outputProblemSpec(Uintah::ProblemSpecP& ps)
+ElasticModuli_ArenaMixture::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP elasticModuli_ps = ps->appendChild("elastic_moduli_model");
-  elasticModuli_ps->setAttribute("type", "soil_mix");
+  elasticModuli_ps->setAttribute("type", "arena_mixture");
 
   elasticModuli_ps->appendElement("vol_frac.phase1", d_volfrac[0]);
 
@@ -179,7 +179,7 @@ ElasticModuli_SoilMix::outputProblemSpec(Uintah::ProblemSpecP& ps)
          
 // Compute the elastic moduli
 ElasticModuli 
-ElasticModuli_SoilMix::getInitialElasticModuli() const
+ElasticModuli_ArenaMixture::getInitialElasticModuli() const
 {
   double Ks = d_granite.getBulkModulus();
   double KK0 = Ks*d_bulk[0].b0;
@@ -196,14 +196,14 @@ ElasticModuli_SoilMix::getInitialElasticModuli() const
 }
 
 ElasticModuli 
-ElasticModuli_SoilMix::getCurrentElasticModuli(const ModelStateBase* state_input) 
+ElasticModuli_ArenaMixture::getCurrentElasticModuli(const ModelStateBase* state_input) 
 {
-  const ModelState_MasonSand* state = 
-    dynamic_cast<const ModelState_MasonSand*>(state_input);
+  const ModelState_Arena* state = 
+    dynamic_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_MasonSand.";
+        << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -242,7 +242,7 @@ ElasticModuli_SoilMix::getCurrentElasticModuli(const ModelStateBase* state_input
 }
 
 void
-ElasticModuli_SoilMix::computeDrainedModuli(const double& I1_eff_bar, 
+ElasticModuli_ArenaMixture::computeDrainedModuli(const double& I1_eff_bar, 
                                             const double& ev_p_bar,
                                             double& K_mix,
                                             double& G_mix) 
@@ -257,7 +257,7 @@ ElasticModuli_SoilMix::computeDrainedModuli(const double& I1_eff_bar,
 }
 
 void
-ElasticModuli_SoilMix::computePartialSaturatedModuli(const double& I1_eff_bar, 
+ElasticModuli_ArenaMixture::computePartialSaturatedModuli(const double& I1_eff_bar, 
                                                      const double& pw_bar,
                                                      const double& ev_p_bar,
                                                      const double& phi,
@@ -275,7 +275,7 @@ ElasticModuli_SoilMix::computePartialSaturatedModuli(const double& I1_eff_bar,
 }
 
 void
-ElasticModuli_SoilMix::computeDrainedModuli(int phase,
+ElasticModuli_ArenaMixture::computeDrainedModuli(int phase,
                                             const double& I1_eff_bar, 
                                             const double& ev_p_bar,
                                             double& KK,
@@ -324,7 +324,7 @@ ElasticModuli_SoilMix::computeDrainedModuli(int phase,
 }
 
 void
-ElasticModuli_SoilMix::computePartialSaturatedModuli(int phase,
+ElasticModuli_ArenaMixture::computePartialSaturatedModuli(int phase,
                                                      const double& I1_eff_bar, 
                                                      const double& pw_bar,
                                                      const double& ev_p_bar,

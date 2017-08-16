@@ -107,7 +107,7 @@
     <MaterialProperties>
        <MPM>
          <material name = "Mason sand">
-           <include href="./MasonSand_PhysicalProperties.xml"/>
+           <include href="./Arena_PhysicalProperties.xml"/>
            <constitutive_model type="hypo_elastic">
              <K> 6.0e7 </K>
              <G> 9.0e7</G>

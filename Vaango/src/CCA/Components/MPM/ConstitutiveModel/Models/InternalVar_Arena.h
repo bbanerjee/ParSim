@@ -22,25 +22,25 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __MASON_SAND_INT_VAR_MODEL_H__
-#define __MASON_SAND_INT_VAR_MODEL_H__
+#ifndef __ARENA_INT_VAR_MODEL_H__
+#define __ARENA_INT_VAR_MODEL_H__
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>    
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>    
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>    
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
   ////////////////////////////////////////////////////////////////////////////
   /*! 
-    \class InternalVar_MasonSand
+    \class InternalVar_Arena
     \brief The evolution of the kappa, X, porosity, and saturation internal variables 
            in the partially saturated Arenisca model
   */
   ////////////////////////////////////////////////////////////////////////////
 
-  class InternalVar_MasonSand : public InternalVariableModel {
+  class InternalVar_Arena : public InternalVariableModel {
 
   public:
 
@@ -149,8 +149,8 @@ namespace Vaango {
 
     // Prevent copying of this class
     // copy constructor
-    //InternalVar_MasonSand(const InternalVar_MasonSand &cm);
-    InternalVar_MasonSand& operator=(const InternalVar_MasonSand &cm);
+    //InternalVar_Arena(const InternalVar_Arena &cm);
+    InternalVar_Arena& operator=(const InternalVar_Arena &cm);
 
     // Initialize local VarLabels
     void initializeLocalMPMLabels() 
@@ -183,12 +183,12 @@ namespace Vaango {
 
   public:
     // constructors
-    InternalVar_MasonSand(Uintah::ProblemSpecP& ps,
+    InternalVar_Arena(Uintah::ProblemSpecP& ps,
                           ElasticModuliModel* elastic);
-    InternalVar_MasonSand(const InternalVar_MasonSand* cm);
+    InternalVar_Arena(const InternalVar_Arena* cm);
          
     // destructor 
-    virtual ~InternalVar_MasonSand();
+    virtual ~InternalVar_Arena();
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
@@ -349,4 +349,4 @@ namespace Vaango {
 
 } // End namespace Uintah
 
-#endif  // __MASON_SAND_INT_VAR_MODEL_H__ 
+#endif  // __ARENA_INT_VAR_MODEL_H__ 

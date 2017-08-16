@@ -33,12 +33,12 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Arenisca3.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_CamClay.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Default.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_MasonSand.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Arena.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arenisca.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arenisca.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Constant.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_MasonSand.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_SoilMix.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arena.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_ArenaMixture.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuliModel.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuliModelFactory.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/PressureModel.cc 
@@ -55,8 +55,8 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Arenisca3.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_CamClay.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Gurson.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_MasonSand.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_SoilMix.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Arena.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_ArenaMixture.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_vonMises.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModel.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModelFactory.cc 
@@ -68,12 +68,12 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_None.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_Prager.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_Armstrong.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_MasonSand.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_Arena.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModel.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModelFactory.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_SoilModelBrannonKappa.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_BorjaPressure.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_MasonSand.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_Arena.cc 
   PARENT_SCOPE
 )
 

@@ -26,12 +26,12 @@
 
 
 
-#ifndef __ARENISCA3_PARTIALLY_SATURATED_MIXTURE__
-#define __ARENISCA3_PARTIALLY_SATURATED_MIXTURE__
+#ifndef __ARENA_MIXTURE__
+#define __ARENA_MIXTURE__
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_MasonSand.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
@@ -56,7 +56,7 @@ namespace Uintah {
 
 namespace Vaango {
 
-  class Arenisca3PartSatMixture : public Uintah::ConstitutiveModel {
+  class ArenaMixture : public Uintah::ConstitutiveModel {
 
   public:
     static const double one_third;
@@ -177,23 +177,23 @@ namespace Vaango {
 
     // Prevent copying of this class
     // copy constructor
-    Arenisca3PartSatMixture& operator=(const Arenisca3PartSatMixture &cm);
+    ArenaMixture& operator=(const ArenaMixture &cm);
 
     void initializeLocalMPMLabels();
     void checkInputParameters();
 
   public:
     // constructor
-    Arenisca3PartSatMixture(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
-    Arenisca3PartSatMixture(const Arenisca3PartSatMixture* cm);
+    ArenaMixture(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
+    ArenaMixture(const ArenaMixture* cm);
 
     // destructor
-    virtual ~Arenisca3PartSatMixture();
+    virtual ~ArenaMixture();
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps,bool output_cm_tag = true);
 
     // clone
-    Arenisca3PartSatMixture* clone();
+    ArenaMixture* clone();
 
     /*! Get parameters */
     ParameterDict getParameters() const {
@@ -261,8 +261,8 @@ namespace Vaango {
                                       const double& delT, 
                                       Uintah::particleIndex idx, 
                                       Uintah::long64 pParticleID, 
-                                      const ModelState_MasonSand& state_old,
-                                      ModelState_MasonSand& state_new);
+                                      const ModelState_Arena& state_old,
+                                      ModelState_Arena& state_new);
 
     //////////////////////////////////////////////////////////////////////////
     /** 
@@ -289,9 +289,9 @@ namespace Vaango {
      */
     bool rateDependentPlasticUpdate(const Uintah::Matrix3& D,
                                     const double& delT,
-                                    const ModelState_MasonSand& stateStatic_old,
-                                    const ModelState_MasonSand& stateStatic_new,
-                                    const ModelState_MasonSand& stateDynamic_old,
+                                    const ModelState_Arena& stateStatic_old,
+                                    const ModelState_Arena& stateStatic_new,
+                                    const ModelState_Arena& stateDynamic_old,
                                     Uintah::Matrix3& pStress_new);
 
     //////////////////////////////////////////////////////////////////////////
@@ -309,7 +309,7 @@ namespace Vaango {
      *   state.shearModulus
      */
      //////////////////////////////////////////////////////////////////////////
-    void computeElasticProperties(ModelState_MasonSand& state);
+    void computeElasticProperties(ModelState_Arena& state);
 
     //////////////////////////////////////////////////////////////////////////
     /** 
@@ -329,7 +329,7 @@ namespace Vaango {
      *   stress_trial
      */
      //////////////////////////////////////////////////////////////////////////
-    Uintah::Matrix3 computeTrialStress(const ModelState_MasonSand& state_old,
+    Uintah::Matrix3 computeTrialStress(const ModelState_Arena& state_old,
                                        const Uintah::Matrix3& strain_inc);
 
     //////////////////////////////////////////////////////////////////////////
@@ -353,8 +353,8 @@ namespace Vaango {
      //////////////////////////////////////////////////////////////////////////
     int computeStepDivisions(Uintah::particleIndex idx,
                              Uintah::long64 particleID,
-                             const ModelState_MasonSand& state_substep,
-                             const ModelState_MasonSand& state_trial);
+                             const ModelState_Arena& state_substep,
+                             const ModelState_Arena& state_trial);
 
     //////////////////////////////////////////////////////////////////////////
     /** 
@@ -378,8 +378,8 @@ namespace Vaango {
     //////////////////////////////////////////////////////////////////////////
     bool computeSubstep(const Uintah::Matrix3& D,
                         const double& dt,
-                        const ModelState_MasonSand& state_old,
-                        ModelState_MasonSand& state_new);
+                        const ModelState_Arena& state_old,
+                        ModelState_Arena& state_new);
 
     //////////////////////////////////////////////////////////////////////////
     /** 
@@ -411,8 +411,8 @@ namespace Vaango {
      */
     //////////////////////////////////////////////////////////////////////////
     bool nonHardeningReturn(const Uintah::Matrix3& strain_inc,
-                            const ModelState_MasonSand& state_old,
-                            const ModelState_MasonSand& state_trial,
+                            const ModelState_Arena& state_old,
+                            const ModelState_Arena& state_trial,
                             Uintah::Matrix3& sig_new,
                             Uintah::Matrix3& plasticStrain_inc_new);
 
@@ -441,17 +441,17 @@ namespace Vaango {
      */
     //////////////////////////////////////////////////////////////////////////
     bool consistencyBisectionSimplified(const Matrix3& deltaEps_new,
-                                        const ModelState_MasonSand& state_old, 
-                                        const ModelState_MasonSand& state_trial,
+                                        const ModelState_Arena& state_old, 
+                                        const ModelState_Arena& state_trial,
                                         const Matrix3& deltaEps_p_0, 
                                         const Matrix3& sig_0, 
-                                        ModelState_MasonSand& state_new);
+                                        ModelState_Arena& state_new);
     bool consistencyBisection(const Matrix3& deltaEps_new,
-                              const ModelState_MasonSand& state_old, 
-                              const ModelState_MasonSand& state_trial,
+                              const ModelState_Arena& state_old, 
+                              const ModelState_Arena& state_trial,
                               const Matrix3& deltaEps_p_0, 
                               const Matrix3& sig_0, 
-                              ModelState_MasonSand& state_new);
+                              ModelState_Arena& state_new);
 
     //////////////////////////////////////////////////////////////////////////
     /** 
@@ -472,7 +472,7 @@ namespace Vaango {
      *           false if failure
      */
     //////////////////////////////////////////////////////////////////////////
-    bool computeInternalVariables(ModelState_MasonSand& state,
+    bool computeInternalVariables(ModelState_Arena& state,
                                   const double& delta_eps_p_v);
 
     //////////////////////////////////////////////////////////////////////////
@@ -537,8 +537,8 @@ namespace Vaango {
     //////////////////////////////////////////////////////////////////////////
     void updateDamageParameters(const Matrix3& D,
                                 const double& delta_t,
-                                const ModelState_MasonSand& state_k_old,
-                                ModelState_MasonSand& state_k_new) const;
+                                const ModelState_Arena& state_k_old,
+                                ModelState_Arena& state_k_new) const;
 
 
   public: //Uintah MPM constitutive model specific functions
@@ -631,4 +631,4 @@ namespace Vaango {
 } // End namespace Uintah
 
 
-#endif  // __ARENISCA3_PARTIALLY_SATURATED_MIXTURE__
+#endif  // __ARENA_MIXTURE__

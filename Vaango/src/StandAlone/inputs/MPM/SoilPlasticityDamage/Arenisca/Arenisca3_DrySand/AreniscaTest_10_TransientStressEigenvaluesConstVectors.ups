@@ -51,7 +51,7 @@
     <MaterialProperties>
       <MPM>
         <material>
-          <include href="../Arenisca3_DryMasonSand.xml"/>
+          <include href="../Arenisca3_DryArena.xml"/>
               <geom_object>
                 <box label="Elem">
                   <min>[ 1.0, 1.0, 1.0]</min>

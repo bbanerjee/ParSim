@@ -52,7 +52,7 @@
     <UseMomentumForm>              false      </UseMomentumForm>
     <withColor>                    true       </withColor>
     <UsePrescribedDeformation>     true       </UsePrescribedDeformation>
-    <PrescribedDeformationFile>    inputs/MPM/Arenisca/Masonsand052212-030.defgrad </PrescribedDeformationFile>
+    <PrescribedDeformationFile>    inputs/MPM/Arenisca/Arena052212-030.defgrad </PrescribedDeformationFile>
     <minimum_subcycles_for_F>       -2        </minimum_subcycles_for_F>
     <erosion algorithm = "none"/>
   </MPM>
@@ -64,7 +64,7 @@
   <MaterialProperties>
     <MPM>
       <material name="SimplifiedPlasticity">
-        <include href="../Arenisca3_DryMasonSand_Rate.xml"/>
+        <include href="../Arenisca3_DryArena_Rate.xml"/>
 
         <geom_object>
           <box label = "Plate1">

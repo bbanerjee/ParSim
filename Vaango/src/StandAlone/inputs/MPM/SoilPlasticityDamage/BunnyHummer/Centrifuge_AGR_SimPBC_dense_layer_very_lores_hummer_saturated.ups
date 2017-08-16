@@ -145,7 +145,7 @@
     <MaterialProperties>
        <MPM>
          <material name = "Mason sand">
-           <include href="./Arenisca3_SaturatedMasonSand_Rate.xml"/>
+           <include href="./Arenisca3_SaturatedArena_Rate.xml"/>
            <geom_object>
              <difference>
                <box label = "soil">
@@ -165,7 +165,7 @@
          </material>
 
          <material name = "Dense mason sand">
-           <include href="./Arenisca3_SaturatedMasonSand_Rate_Dense.xml"/>
+           <include href="./Arenisca3_SaturatedArena_Rate_Dense.xml"/>
            <geom_object>
              <difference>
                <sphere label = "outer_hole"> </sphere>
