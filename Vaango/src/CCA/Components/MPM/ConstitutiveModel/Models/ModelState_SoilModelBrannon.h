@@ -24,8 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __DERIVED_MODEL_STATE_ARENA_DATA_H__
-#define __DERIVED_MODEL_STATE_ARENA_DATA_H__
+#ifndef __DERIVED_MODEL_STATE_SOIL_MODEL_BRANNON_DATA_H__
+#define __DERIVED_MODEL_STATE_SOIL_MODEL_BRANNON_DATA_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 
@@ -33,15 +33,15 @@ namespace Vaango {
 
   /////////////////////////////////////////////////////////////////////////////
   /*!
-    \class ModelState_Arena
+    \class ModelState_SoilModelBrannon
     \brief A structure that stores the state data that is specialized for
-           the Arena model.
+           the SoilModelBrannon model.
            ** Derived from PlasticityState:ModelState
     \author Biswajit Banerjee \n
   */
   /////////////////////////////////////////////////////////////////////////////
 
-  class ModelState_Arena: public ModelState_Default {
+  class ModelState_SoilModelBrannon: public ModelState_Default {
 
   public:
 
@@ -53,18 +53,18 @@ namespace Vaango {
     double delta_eps_v;     // Change in Volumetrc strain
     double scale_eps_v;     // Scale factor for Volumetrc strain
 
-    ModelState_Arena();
+    ModelState_SoilModelBrannon();
 
-    ModelState_Arena(const ModelState_Arena& state);
-    ModelState_Arena(const ModelState_Arena* state);
+    ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon& state);
+    ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon* state);
 
-    ~ModelState_Arena();
+    ~ModelState_SoilModelBrannon();
 
-    ModelState_Arena& operator=(const ModelState_Arena& state);
-    ModelState_Arena* operator=(const ModelState_Arena* state);
+    ModelState_SoilModelBrannon& operator=(const ModelState_SoilModelBrannon& state);
+    ModelState_SoilModelBrannon* operator=(const ModelState_SoilModelBrannon* state);
     
   };
 
 } // End namespace Uintah
 
-#endif  // __DERIVED_MODEL_STATE_ARENA_DATA_H__ 
+#endif  // __DERIVED_MODEL_STATE_SOIL_MODEL_BRANNON_DATA_H__ 

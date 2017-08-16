@@ -29,7 +29,7 @@
 SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelStateBase.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Arena.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_SoilModelBrannon.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Arenisca3.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_CamClay.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Default.cc 
@@ -71,7 +71,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_MasonSand.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModel.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModelFactory.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_ArenaKappa.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_SoilModelBrannonKappa.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_BorjaPressure.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_MasonSand.cc 
   PARENT_SCOPE

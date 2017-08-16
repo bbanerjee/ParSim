@@ -55,7 +55,7 @@ SET(MPM_ConstitutiveModel_SRCS
   P_Alpha.cc                    
   SoilFoam.cc	             
   NonLocalDruckerPrager.cc      
-  Arena.cc
+  SoilModelBrannon.cc
   Arenisca.cc
   Arenisca3.cc
   Arenisca3PartiallySaturated.cc

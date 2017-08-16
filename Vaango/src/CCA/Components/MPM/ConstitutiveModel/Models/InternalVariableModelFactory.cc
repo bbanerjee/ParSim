@@ -27,7 +27,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_BorjaPressure.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_ArenaKappa.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_SoilModelBrannonKappa.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_MasonSand.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
@@ -55,8 +55,8 @@ InternalVariableModel* InternalVariableModelFactory::create(ProblemSpecP& ps)
    std::string mat_type;
    if(!child->getAttribute("type", mat_type))
       throw ProblemSetupException("No type for internal_var_model", __FILE__, __LINE__);
-   if (mat_type == "arena_kappa") {
-      return(scinew InternalVar_ArenaKappa(child));
+   if (mat_type == "soil_model_brannon_kappa") {
+      return(scinew InternalVar_SoilModelBrannonKappa(child));
    } else {
       throw ProblemSetupException("Unknown InternalVariable Model ("+mat_type+")", __FILE__, __LINE__);
    }
@@ -100,8 +100,8 @@ InternalVariableModelFactory::createCopy(const InternalVariableModel* pm)
    if (dynamic_cast<const InternalVar_BorjaPressure*>(pm))
       return(scinew InternalVar_BorjaPressure(dynamic_cast<const InternalVar_BorjaPressure*>(pm)));
 
-   else if (dynamic_cast<const InternalVar_ArenaKappa*>(pm))
-      return(scinew InternalVar_ArenaKappa(dynamic_cast<const InternalVar_ArenaKappa*>(pm)));
+   else if (dynamic_cast<const InternalVar_SoilModelBrannonKappa*>(pm))
+      return(scinew InternalVar_SoilModelBrannonKappa(dynamic_cast<const InternalVar_SoilModelBrannonKappa*>(pm)));
 
    else if (dynamic_cast<const InternalVar_MasonSand*>(pm))
       return(scinew InternalVar_MasonSand(dynamic_cast<const InternalVar_MasonSand*>(pm)));

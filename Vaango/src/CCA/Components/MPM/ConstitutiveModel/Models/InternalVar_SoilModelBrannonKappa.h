@@ -24,19 +24,19 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __ARENA_KAPPA_INT_VAR_MODEL_H__
-#define __ARENA_KAPPA_INT_VAR_MODEL_H__
+#ifndef __SOIL_MODEL_BRANNON_KAPPA_INT_VAR_MODEL_H__
+#define __SOIL_MODEL_BRANNON_KAPPA_INT_VAR_MODEL_H__
 
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>    
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>    
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_SoilModelBrannon.h>    
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
   ////////////////////////////////////////////////////////////////////////////
   /*! 
-    \class InternalVar_ArenaKappa
+    \class InternalVar_SoilModelBrannonKappa
     \brief The evolution of the kappa hardening internal variable in the
            Arenisca model
 
@@ -66,7 +66,7 @@ namespace Vaango {
   */
   ////////////////////////////////////////////////////////////////////////////
 
-  class InternalVar_ArenaKappa : public InternalVariableModel {
+  class InternalVar_SoilModelBrannonKappa : public InternalVariableModel {
 
   public:
 
@@ -97,16 +97,16 @@ namespace Vaango {
          
     // Prevent copying of this class
     // copy constructor
-    //InternalVar_ArenaKappa(const InternalVar_ArenaKappa &cm);
-    InternalVar_ArenaKappa& operator=(const InternalVar_ArenaKappa &cm);
+    //InternalVar_SoilModelBrannonKappa(const InternalVar_SoilModelBrannonKappa &cm);
+    InternalVar_SoilModelBrannonKappa& operator=(const InternalVar_SoilModelBrannonKappa &cm);
 
   public:
     // constructors
-    InternalVar_ArenaKappa(Uintah::ProblemSpecP& ps);
-    InternalVar_ArenaKappa(const InternalVar_ArenaKappa* cm);
+    InternalVar_SoilModelBrannonKappa(Uintah::ProblemSpecP& ps);
+    InternalVar_SoilModelBrannonKappa(const InternalVar_SoilModelBrannonKappa* cm);
          
     // destructor 
-    virtual ~InternalVar_ArenaKappa();
+    virtual ~InternalVar_SoilModelBrannonKappa();
 
     virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
          
@@ -322,4 +322,4 @@ namespace Vaango {
 
 } // End namespace Uintah
 
-#endif  // __ARENA_KAPPA_INT_VAR_MODEL_H__ 
+#endif  // __SOIL_MODEL_BRANNON_KAPPA_INT_VAR_MODEL_H__ 

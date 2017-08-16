@@ -25,11 +25,11 @@
  */
 
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_SoilModelBrannon.h>
 
 using namespace Vaango;
 
-ModelState_Arena::ModelState_Arena()
+ModelState_SoilModelBrannon::ModelState_SoilModelBrannon()
   : ModelState_Default()
 {
   kappa = 0.0;
@@ -40,7 +40,7 @@ ModelState_Arena::ModelState_Arena()
   scale_eps_v = 0.0;
 }
 
-ModelState_Arena::ModelState_Arena(const ModelState_Arena& state)
+ModelState_SoilModelBrannon::ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon& state)
 {
   kappa = state.kappa;
   CR = state.CR;
@@ -50,7 +50,7 @@ ModelState_Arena::ModelState_Arena(const ModelState_Arena& state)
   scale_eps_v = state.scale_eps_v;
 }
 
-ModelState_Arena::ModelState_Arena(const ModelState_Arena* state)
+ModelState_SoilModelBrannon::ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon* state)
 {
   kappa = state->kappa;
   CR = state->CR;
@@ -60,12 +60,12 @@ ModelState_Arena::ModelState_Arena(const ModelState_Arena* state)
   scale_eps_v = state->scale_eps_v;
 }
 
-ModelState_Arena::~ModelState_Arena()
+ModelState_SoilModelBrannon::~ModelState_SoilModelBrannon()
 {
 }
 
-ModelState_Arena&
-ModelState_Arena::operator=(const ModelState_Arena& state)
+ModelState_SoilModelBrannon&
+ModelState_SoilModelBrannon::operator=(const ModelState_SoilModelBrannon& state)
 {
   if (this == &state) return *this;
   kappa = state.kappa;
@@ -77,8 +77,8 @@ ModelState_Arena::operator=(const ModelState_Arena& state)
   return *this;
 }
 
-ModelState_Arena*
-ModelState_Arena::operator=(const ModelState_Arena* state)
+ModelState_SoilModelBrannon*
+ModelState_SoilModelBrannon::operator=(const ModelState_SoilModelBrannon* state)
 {
   if (this == state) return this;
   kappa = state->kappa;

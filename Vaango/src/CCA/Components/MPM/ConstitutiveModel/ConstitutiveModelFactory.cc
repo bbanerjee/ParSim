@@ -69,7 +69,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Arenisca4.h>
 #include <CCA/Components/MPM/ConstitutiveModel/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/SoilModelBrannon.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PolarOrthotropicHypoElastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticFortran.h>
 #include <CCA/Components/MPM/MPMFlags.h>
@@ -128,8 +128,8 @@ ConstitutiveModel* ConstitutiveModelFactory::create(ProblemSpecP& ps,
     return(scinew Vaango::Arenisca3PartSatMixture(child,flags));
   else if (mat_type == "Arenisca4")
     return(scinew Arenisca4(child,flags));
-  else if (mat_type == "arena")
-    return(scinew Arena(child,flags));
+  else if (mat_type == "soil_model_brannon")
+    return(scinew SoilModelBrannon(child,flags));
 
   else if (mat_type ==  "comp_neo_hook") {
     if (flags->d_integrator_type == "explicit" || 

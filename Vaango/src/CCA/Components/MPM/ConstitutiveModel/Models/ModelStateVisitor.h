@@ -30,7 +30,7 @@
 namespace Vaango {
 
   class ModelStateBase;
-  class ModelState_Arena;
+  class ModelState_SoilModelBrannon;
   class ModelState_Arenisca3;
   class ModelState_CamClay;
 
@@ -49,7 +49,7 @@ namespace Vaango {
     virtual ~ModelStateVisitorBase();
      
     virtual void visit(ModelStateBase& state) = 0;
-    virtual void visit(ModelState_Arena& state) = 0;
+    virtual void visit(ModelState_SoilModelBrannon& state) = 0;
     virtual void visit(ModelState_Arenisca3& state) = 0;
     virtual void visit(ModelState_CamClay& state) = 0;
   };
@@ -64,7 +64,7 @@ namespace Vaango {
      void visit(ModelStateBase& state) override {
      }
 
-     void visit(ModelState_Arena& state) override {
+     void visit(ModelState_SoilModelBrannon& state) override {
      }
 
      void visit(ModelState_Arenisca3& state) override {
