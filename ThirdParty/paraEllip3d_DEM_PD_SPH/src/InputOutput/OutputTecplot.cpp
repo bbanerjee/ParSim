@@ -65,7 +65,7 @@ OutputTecplot<TArray>::write(int frame)
   // The domain and the patchGrid have to be set before a write is
   // completed.
   if (!d_domain || !d_patchBox || !d_particles) {
-    std::cerr << "**ERROR** Domain and/or Grid and/or Particles have not been "
+    std::cerr << "**ERROR** Domain and/or Patch Grid and/or Particles have not been "
                  "set.  Nothing "
                  "will be written\n";
     return;
@@ -75,7 +75,7 @@ OutputTecplot<TArray>::write(int frame)
   writeDomain(d_domain);
 
   // Write files for the patchGrid representing each processor at each timestep
-  writePatchGrid(d_patchBox);
+  writePatchBoxGrid(d_patchBox);
 
   // Write files for the particle list each timestep
   writeParticles(d_particles, frame);
@@ -129,10 +129,10 @@ OutputTecplot<TArray>::writeDomain(const Box* domain)
 
 template <typename TArray>
 void
-OutputTecplot<TArray>::writePatchGrid(const Box* patchBox)
+OutputTecplot<TArray>::writePatchBoxGrid(const Box* patchBox)
 {
   // Get the filename
-  std::string fileName(d_patchFileName);
+  std::string fileName(d_patchBoxFileName);
   fileName.append(".dat");
 
   std::ofstream ofs(fileName);
@@ -147,8 +147,8 @@ OutputTecplot<TArray>::writePatchGrid(const Box* patchBox)
   int mpiSize = 0;
   MPI_Comm_size(d_cartComm, &mpiSize);
 
-  Vec v1 = d_patchBox->getMinCorner();
-  Vec v2 = d_patchBox->getMaxCorner();
+  Vec v1 = patchBox->getMinCorner();
+  Vec v2 = patchBox->getMaxCorner();
   Vec vspan = v2 - v1;
 
   ofs << "ZONE N=" << (d_mpiProcX + 1) * (d_mpiProcY + 1) * (d_mpiProcZ + 1)

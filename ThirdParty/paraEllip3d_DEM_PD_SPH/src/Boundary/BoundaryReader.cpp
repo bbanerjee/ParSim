@@ -44,8 +44,8 @@ BoundaryReader::read(const std::string& inputFileName, Box& container,
   ifs.close();
 
   /*
-  //std::cout << "container = " << container << "\n";
-  //std::cout << "patchBox = " << patchBox << "\n";
+  std::cout << "container = " << container << "\n";
+  std::cout << "patchBox = " << patchBox << "\n";
   //std::cout << " Boundaries = \n";
   for (auto boundary : boundaries) {
     boundary->print(//std::cout);
@@ -151,8 +151,8 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
   }
 
   /*
-  //std::cout << "container = " << container << "\n";
-  //std::cout << "patchBox = " << patchBox << "\n";
+  std::cout << "container = " << container << "\n";
+  std::cout << "patchBox = " << patchBox << "\n";
   //std::cout << " Boundaries = \n";
   for (auto boundary : boundaries) {
     boundary->print(//std::cout);

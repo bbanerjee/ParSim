@@ -86,7 +86,7 @@ T
 getParam(const std::string str)
 {
   auto param = dem::InputParameter::get().param;
-  REAL val;
+  REAL val = 0;
   try {
     val = param.at(str);
   } catch (const std::out_of_range& err) {

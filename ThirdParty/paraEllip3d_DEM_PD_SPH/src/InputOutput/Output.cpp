@@ -73,7 +73,7 @@ Output::createFileNames()
   std::ostringstream patchOutputFile;
   patchOutputFile << folderName << "/patchGrid_"
     << std::setfill('0') << std::setw(5) << d_outputIteration;
-  d_patchFileName = patchOutputFile.str();
+  d_patchBoxFileName = patchOutputFile.str();
 
   std::ostringstream particleOutputFile;
   particleOutputFile << folderName << "/particle_"
@@ -106,7 +106,7 @@ Output::updateFileNames(const int& iteration, const std::string& extension) {
   createFileNames();
   d_domainFileName += extension;
   d_boundaryFileName += extension;
-  d_patchFileName += extension;
+  d_patchBoxFileName += extension;
   d_particleFileName += extension;
   d_periParticleFileName += extension;
   d_sphParticleFileName += extension;
@@ -137,4 +137,5 @@ operator<<(std::ostream& out, const Output& output)
       << std::endl;
   return out;
 }
+
 }

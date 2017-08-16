@@ -259,6 +259,7 @@ DiscreteElements::readBoundary(const std::string& fileName)
     BoundaryReader reader;
     reader.read(fileName, allContainer, d_demPatchBox, boundaryVec);
   }
+  // std::cout << "d_demPatchBox = " << d_demPatchBox << "\n";
 }
 
 void
@@ -1573,7 +1574,8 @@ DiscreteElements::writePatchGridToFile() const
 {
   d_writer->setMPIComm(s_cartComm);
   d_writer->setMPIProc(s_mpiProcs.x(), s_mpiProcs.y(), s_mpiProcs.z());
-  d_writer->writePatchGrid(&d_demPatchBox);
+  //std::cout << "d_demPatchBox = " << d_demPatchBox << "\n";
+  d_writer->writePatchBoxGrid(&d_demPatchBox);
 }
 
 void

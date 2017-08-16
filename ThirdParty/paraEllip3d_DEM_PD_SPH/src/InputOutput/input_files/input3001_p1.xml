@@ -163,6 +163,11 @@
     
     <!-- # file name of the input peridynamics file -->
     <periFile> peri_part.inp </periFile> 
+
+    <!-- # Translate, rotate, reflect, scale peridynamics particle positions -->
+    <periGeomScaleFactor> 1.0 </periGeomScaleFactor>
+    <periGeomTranslationVector> [50.0, 0.0, 0.0] </periGeomTranslationVector>
+    <periGeomReflectionVector> [1.0, 1.0, 1.0] </periGeomReflectionVector>
     
     <!-- # initialize particles state (velocity, omga, force, moment) 
            from data file or not? -->
@@ -178,6 +183,10 @@
     <!-- # dimensions of peri-domain, Zmax -->
     <maxPeriDomain> [100.0, 20.0, 50.0] </maxPeriDomain>
     
+    <!-- # Remove peridynamic particles inside DEM and vice versa -->
+    <removePeriParticlesInsideDEM> false </removePeriParticlesInsideDEM> 
+    <removeDEMParticlesInsidePeri> true </removeDEMParticlesInsidePeri> 
+
     <Material>
 
       <!-- # Constitutive model type -->

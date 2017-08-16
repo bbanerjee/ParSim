@@ -63,7 +63,7 @@ public:
   }
 
   void writeDomain(const Box* domain);
-  void writePatchGrid(const Box* patchBox);
+  void writePatchBoxGrid(const Box* patchBox);
   void writeParticles(const TArray* particles, int frame);
   void writeSieves(const Gradation* gradation) {}
 

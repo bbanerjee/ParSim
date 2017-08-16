@@ -33,7 +33,7 @@
 #include <vtkPointData.h>
 #include <vtkPoints.h>
 #include <vtkSmartPointer.h>
-#include <vtkUnstructuredGrid.h>
+#include <vtkUnstructuredGrid.h> 
 #include <vtkXMLMultiBlockDataWriter.h>
 #include <vtkXMLUnstructuredGridWriter.h>
 
@@ -90,7 +90,7 @@ OutputVTK<TArray>::write(int frame)
   writeDomain(d_domain);
 
   // Write files for the patchGrid representing each processor at each timestep
-  writePatchGrid(d_patchBox);
+  writePatchBoxGrid(d_patchBox);
 
   // Write files for the particle list each timestep
   writeParticles(d_particles, frame);
@@ -137,14 +137,16 @@ OutputVTK<TArray>::writeDomain(const Box* domain)
 
 template <typename TArray>
 void
-OutputVTK<TArray>::writePatchGrid(const Box* patchBox)
+OutputVTK<TArray>::writePatchBoxGrid(const Box* patchBox)
 {
+
+  //std::cout << "patchBox = " << *patchBox << "\n";
 
   // Create a writer
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
 
   // Get the filename
-  std::string fileName(d_patchFileName);
+  std::string fileName(d_patchBoxFileName);
   fileName.append(".").append(writer->GetDefaultFileExtension());
   writer->SetFileName(fileName.c_str());
 
@@ -163,8 +165,8 @@ OutputVTK<TArray>::writePatchGrid(const Box* patchBox)
   addTimeToVTKDataSet(time, dataSet);
 
   // Create the individual processor domain extents
-  Vec v1 = d_patchBox->getMinCorner();
-  Vec v2 = d_patchBox->getMaxCorner();
+  Vec v1 = patchBox->getMinCorner();
+  Vec v2 = patchBox->getMaxCorner();
   Vec vspan = v2 - v1;
   std::vector<Vec> coords((d_mpiProcX + 1) * (d_mpiProcY + 1) *
                           (d_mpiProcZ + 1));

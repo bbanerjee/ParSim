@@ -46,6 +46,9 @@
 
   <!-- Output -->
   <Output>
+
+    <outputFolder> deposit.pe3d  </outputFolder>
+
     <!--
     #starting snapshot number, (endsStep - startStep +1) must be divided by 
     #(endSnap - startSnap + 1)
@@ -92,6 +95,9 @@
 
     <!-- #coefficient of moment scaling -->
     <momentScaleFactor>  1.0 </momentScaleFactor>
+
+    <!-- #Pile velocity (if any) -->
+    <pileRate> 0.0 </pileRate>
 
     <Material>
       <!-- #particle Young's modulus 
@@ -158,6 +164,11 @@
     <!-- # file name of the input peridynamics file -->
     <periFile> peri_part.inp </periFile> 
     
+    <!-- # Translate, rotate, reflect, scale peridynamics particle positions -->
+    <periGeomScaleFactor> 1.0 </periGeomScaleFactor>
+    <periGeomTranslationVector> [50.0, 0.0, 0.0] </periGeomTranslationVector>
+    <periGeomReflectionVector> [1.0, 1.0, 1.0] </periGeomReflectionVector>
+    
     <!-- # initialize particles state (velocity, omga, force, moment) 
            from data file or not? -->
     <initializeFromFile>  true </initializeFromFile>
@@ -165,14 +176,21 @@
     <!-- # dimensions of peri-domain, Xmin -->
     <!-- # dimensions of peri-domain, Ymin -->
     <!-- # dimensions of peri-domain, Zmin -->
-    <minPeriDomain> [-20, -20, 0] </minPeriDomain>
+    <minPeriDomain> [-20.0, -20.0, 0] </minPeriDomain>
 
     <!-- # dimensions of peri-domain, Xmax -->
     <!-- # dimensions of peri-domain, Ymax -->
     <!-- # dimensions of peri-domain, Zmax -->
-    <maxPeriDomain> [20, 20, 11] </maxPeriDomain>
+    <maxPeriDomain> [100.0, 20.0, 50.0] </maxPeriDomain>
+    
+    <!-- # Remove peridynamic particles inside DEM and vice versa -->
+    <removePeriParticlesInsideDEM> false </removePeriParticlesInsideDEM> 
+    <removeDEMParticlesInsidePeri> true </removeDEMParticlesInsidePeri> 
     
     <Material>
+
+      <!-- # Constitutive model type -->
+      <typeConstitutive> 1 </typeConstitutive>
 
       <!-- # density of peri-domain -->
       <periDensity> 1250.0 </periDensity>
@@ -219,6 +237,17 @@
       </constitutive_model>
     
     </Material>
+
+    <BoundaryConditions>
+
+       <fixRadius> 0.0 </fixRadius>
+       <periFixCentroidX> 0.0 </periFixCentroidX>
+       <periFixCentroidY> 0.0 </periFixCentroidY>
+       <periFixCentroidZ> 0.0 </periFixCentroidZ>
+       <periForce> 0.0 </periForce>
+       <rampStep> 1.0 </rampStep>
+
+    </BoundaryConditions>
 
   </Peridynamics>
 

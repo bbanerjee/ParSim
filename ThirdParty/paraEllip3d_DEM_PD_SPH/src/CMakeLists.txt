@@ -26,21 +26,23 @@
 #----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
 
-project(PARAELLIP3D_DEM_PD CXX)
+if (USE_CLANG)
+  set(CMAKE_C_COMPILER "/usr/local/bin/clang")
+  set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
+endif ()
+
+project(PARAELLIP3D_DEM_PD_SPH CXX)
 
 set(MAJOR_VERSION "0")
 set(MINOR_VERSION "1")
 set(PATCH_VERSION "0")
-
-if (USE_CLANG)
-  set(CMAKE_CXX_COMPILER "clang++")
-endif ()
 
 #set(CMAKE_VERBOSE_MAKEFILE 1)
 #set(CMAKE_BUILD_TYPE "Release")
 set(BUILD_SHARED_LIBS ON)
 set(CMAKE_BUILD_TYPE "Debug")
 
+message("USE_CLANG = ${USE_CLANG}")
 if (USE_CLANG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-deprecated -fopenmp")
 else ()
@@ -69,6 +71,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 # Find the MPI package to use
 #----------------------------------------------------------------------------
 find_package(MPI REQUIRED)
+message(STATUS "MPI_C_FOUND = ${MPI_C_FOUND}")
+message(STATUS "MPI_CXX_FOUND = ${MPI_CXX_FOUND}")
+message(STATUS "MPI_FOUND = ${MPI_FOUND}")
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
   # Take the MPI include path and split it into -I's
@@ -87,6 +92,7 @@ endif()
 #----------------------------------------------------------------------------
 # Needs boost libraries: at least 1.53
 #----------------------------------------------------------------------------
+set(BOOST_LIBRARYDIR /usr/lib/x86_64-linux-gnu)
 find_package(Boost 1.53 COMPONENTS mpi serialization REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 

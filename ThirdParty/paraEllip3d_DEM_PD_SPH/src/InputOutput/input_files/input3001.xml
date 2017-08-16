@@ -6,7 +6,7 @@
   </Meta>  
 
   <!-- #simulation type -->
-  <SimulationType>  001 </SimulationType>
+  <SimulationType>  3001 </SimulationType>
 
   <!-- Parallel setup -->
   <Parallel>
@@ -47,7 +47,7 @@
   <!-- Output -->
   <Output>
 
-    <outputFolder> deposit.pe3d  </outputFolder>
+    <outputFolder> rigidPDInclusion.pe3d  </outputFolder>
 
     <!--
     #starting snapshot number, (endsStep - startStep +1) must be divided by 
@@ -163,7 +163,7 @@
     
     <!-- # file name of the input peridynamics file -->
     <periFile> peri_part.inp </periFile> 
-    
+
     <!-- # Translate, rotate, reflect, scale peridynamics particle positions -->
     <periGeomScaleFactor> 1.0 </periGeomScaleFactor>
     <periGeomTranslationVector> [50.0, 0.0, 0.0] </periGeomTranslationVector>
@@ -186,12 +186,12 @@
     <!-- # Remove peridynamic particles inside DEM and vice versa -->
     <removePeriParticlesInsideDEM> false </removePeriParticlesInsideDEM> 
     <removeDEMParticlesInsidePeri> true </removeDEMParticlesInsidePeri> 
-    
+
     <Material>
 
       <!-- # Constitutive model type -->
       <typeConstitutive> 1 </typeConstitutive>
-
+    
       <!-- # density of peri-domain -->
       <periDensity> 1250.0 </periDensity>
     
@@ -235,7 +235,7 @@
         <youngModulus> 5.000000000E+7 </youngModulus>
 
       </constitutive_model>
-    
+
     </Material>
 
     <BoundaryConditions>
