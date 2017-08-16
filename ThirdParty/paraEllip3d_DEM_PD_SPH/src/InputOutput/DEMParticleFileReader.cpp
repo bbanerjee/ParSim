@@ -3,7 +3,7 @@
 #include <Core/Math/Vec.h>
 #include <DiscreteElements/DEMParticle.h>
 #include <InputOutput/DEMParticleFileReader.h>
-#include <InputOutput/cppcodec/cppcodec/base64_default_rfc4648.hpp>
+#include <cppcodec/cppcodec/base64_default_rfc4648.hpp>
 #include <fstream>
 #include <sstream>
 #include <type_traits>

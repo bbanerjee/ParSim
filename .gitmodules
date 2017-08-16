@@ -1,0 +1,6 @@
+[submodule "ThirdParty/paraEllip3d_DEM_PD_SPH/src/googletest"]
+	path = ThirdParty/paraEllip3d_DEM_PD_SPH/src/googletest
+	url = git@github.com:google/googletest.git
+[submodule "ThirdParty/paraEllip3d_DEM_PD_SPH/src/cppcodec"]
+	path = ThirdParty/paraEllip3d_DEM_PD_SPH/src/cppcodec
+	url = git://github.com/tplgy/cppcodec.git
