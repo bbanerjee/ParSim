@@ -176,14 +176,14 @@ The inputs for the Arena soil model are typically specified as follows.
       <save label = "p.plasticVolStrain"/>
       <save label = "p.p3"/>
       <save label = "p.porePressure"/>
-      <save label = "p.ArenaPEAKI1"/>
-      <save label = "p.ArenaFSLOPE"/>
-      <save label = "p.ArenaSTREN"/>
-      <save label = "p.ArenaYSLOPE"/>
-      <save label = "p.ArenaBETA"/>
-      <save label = "p.ArenaCR"/>
-      <save label = "p.ArenaT1"/>
-      <save label = "p.ArenaT2"/>
+      <save label = "p.PEAKI1"/>
+      <save label = "p.FSLOPE"/>
+      <save label = "p.STREN"/>
+      <save label = "p.YSLOPE"/>
+      <save label = "p.BETA"/>
+      <save label = "p.CR"/>
+      <save label = "p.T1"/>
+      <save label = "p.T2"/>
       <save label = "p.porosity"/>
       <save label = "p.saturation"/>
       <save label = "p.elasticVolStrain"/>
@@ -226,7 +226,7 @@ The inputs for the Arena soil model are typically specified as follows.
         <thermal_conductivity>174.0e-7</thermal_conductivity>
         <specific_heat>134.0e-8</specific_heat>
 
-        <constitutive_model type="ArenaSoil">
+        <constitutive_model type="arena">
 
           <reference_porosity> 0.42 </reference_porosity>
           <initial_porosity>   0.40 </initial_porosity>
@@ -1050,7 +1050,7 @@ followed by initialization of the stress (and the deformation gradient if needed
   \item $\Bsig^{0}$ : {\Ochre The initial Cauchy stress at a particle.}
 \end{itemize}
 \begin{breakablealgorithm}
-  \caption{Creating the ArenaPartiallySaturated constitutive model object}
+  \caption{Creating the Arena constitutive model object}
   \begin{algorithmic}[1]
     \Require \TTObj{mpmFlags}, \TTObj{xmlProblemSpec}
     \Procedure{createConstitutiveModel}{}
@@ -1068,7 +1068,7 @@ followed by initialization of the stress (and the deformation gradient if needed
 \end{breakablealgorithm}
 
 \begin{breakablealgorithm}
-  \caption{Initializing the ArenaPartiallySaturated particle variables}
+  \caption{Initializing the Arena particle variables}
   \begin{algorithmic}[1]
     \Require $\phi_0$, $S_0$, $\bar{p^w_0}$, \TTList{particleList}, $V_p^0$, $m_p^0$, $\Bv_p^0$,
              \TTList{fluidParams}, 
@@ -1109,7 +1109,7 @@ that the Biot coefficient is $B = 1$, and has the following form.  Here we intro
   \item $K^{n}, G^n$ : {\Ochre The particle bulk and shear modulus at $t = t_n$.}
 \end{itemize}
 \begin{breakablealgorithm}
-  \caption{Computing the Arena partially saturated stress tensor}
+  \caption{Computing the Arena stress tensor}
   \begin{algorithmic}[1]
     \Require $\Delta t$, $\Bx_p^n$, $m_p$, $V_p^{n+1}$, $\Bh_p^n$, $\BlT_p^{n+1}$, $\BF_p^n$, $\BF_p^{n+1}$,
              $X^n_p$, $\kappa^n_p$, $\Veps^n_{v,p}$, $p^n_{3,p}$, $\Beps^{\Tp,n}_p$, $\Balpha^n_p$  
@@ -2958,7 +2958,7 @@ where
   \Beq
     \frac{1}{K_f(\bar{p^w})} = \frac{S_w}{K_w(\bar{p^w})} + \frac{1-S_w}{K_a(\bar{p^w})} 
   \Eeq
-  and get the expression for the bulk modulus that is use in the partially saturated Arena model
+  and get the expression for the bulk modulus that is used in the Arena model
   \Beq
     \Khat(\pbar_\Teff, \bar{p^w}, \bar{\Veps_v^p}, \phi, S_w) = 
      K_d(\pbar_\Teff) + \cfrac{B^2(\pbar_\Teff)}%

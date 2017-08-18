@@ -1,4 +1,7 @@
-\chapter{Arenisca: Partially Saturated Soils}
+\chapter{Arena: Partially Saturated Soils}
+
+{\Red \bf For a more detailed description and a sample of the input file format, please see
+the manual in the \textsf{ArenaSoil} directory.}
 
 The convention used in Vaango is that tension is positive and compression is negative.  To keep the
 notation simple  we define, for any $x$,
@@ -7,7 +10,7 @@ notation simple  we define, for any $x$,
 \Eeq
 
 \section{Elasticity}
-The elasticity model used by Arenisca has the form
+The elasticity model used by Arena has the form
 \Beq
   \dot{\Bsig^\Teff} = \dot{\Bsig} - \dot{\Balpha} 
      = \SfC^\Te(\Bsig,\Bveps^\Tp,\phi,S_w):\dot{\Bveps^\Te} - \dot{\lambda}\BZ 
@@ -41,7 +44,7 @@ the elasticity model (without the coupling term), simplifies to
   \dot{\pbar} = K(\Bsig, \alpha, \Bveps^\Tp, \phi, S_w) \dot{\overbar{\Veps^\Te_v}}
   ~,~~ \dot{\Bs} = 2G(\Bsig, \alpha, \Bveps^\Tp, \phi, S_w) \,\dot{\Bgamma^\Te} \,.
 \Eeq
-The partially saturated Arenisca model assumes the moduli depend only on
+The partially saturated Arena model assumes the moduli depend only on
 \Beq
   I_1 := \Tr(\Bsig)  ~,~~ \zeta = \Tr(\Balpha) ~,~~ \Veps^\Tp_v := \Tr(\Bveps^\Tp)
   ~,~~ \phi ~,~~ S_w \,.
@@ -165,7 +168,7 @@ The partially saturated Arenisca model assumes the moduli depend only on
 \section{Rate-independent plasticity}
 
   \subsection{Yield function}
-  The Arenisca yield function is
+  The Arena yield function is
   \Beq
      f = \sqrt{J_2} - F_f(\Ionebar, \zeta) \, F_c(\Ionebar, \zetabar, \Xbar, \kappabar)
        = \sqrt{J_2} - F_f(\pbar^\Teff) \, F_c(\pbar^\Teff, \Xbar, \kappabar)
@@ -336,7 +339,7 @@ The partially saturated Arenisca model assumes the moduli depend only on
   \end{SummaryBox}
 
   \begin{SummaryBox}[label=box:YieldFunction]{Yield function}
-  The Arenisca yield function is
+  The Arena yield function is
   \Beq
      f = \sqrt{J_2} - F_f(\Ionebar, \zeta) \, F_c(\Ionebar, \zetabar, \Xbar, \kappabar)
        = \sqrt{J_2} - F_f(\pbar^\Teff) \, F_c(\pbar^\Teff, \Xbar, \kappabar)
@@ -487,10 +490,10 @@ requires timesteps to be large.
 
 \paragraph{Remark:}
 {\footnotesize
-Note that in the Kayenta model (which is the basis for Arenisca), the bulk modulus has a high pressure 
+Note that in the Kayenta model (which is the basis for Arenisca and Arena), the bulk modulus has a high pressure 
 limit.  This limit was used by Michael Homel in Arenisca3 and Arenisca4 to define conservative elastic
 properties during the stress and internal variable update.  However, the bulk modulus model used 
-by the partially saturated version of Arenisca does not have this limit.  Therefore the trial stress
+by the partially saturated version of Arena does not have this limit.  Therefore the trial stress
 for the partially saturated model is computed using an alternative approach that assumes that
 the elastic moduli are those at the beginning of the timestep (or load substep).
 }

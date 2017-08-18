@@ -58,8 +58,6 @@ SET(MPM_ConstitutiveModel_SRCS
   SoilModelBrannon.cc
   Arenisca.cc
   Arenisca3.cc
-  Arena.cc
-  ArenaMixture.cc
   Arenisca4.cc
   BasicDamageModel.cc
   PolarOrthotropicHypoElastic.cc
@@ -67,6 +65,8 @@ SET(MPM_ConstitutiveModel_SRCS
   SmallStrainPlastic.cc     
   CNH_MMS.cc                    
   HypoElastic_MMS.cc
+  Arena.cc
+  ArenaMixture.cc
 )
 
 #message(STATUS "Compiling FORTRAN code? ${FORTRAN}")
