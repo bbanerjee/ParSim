@@ -23,8 +23,8 @@
  * IN THE SOFTWARE.
  */
 
-//  ProgramBurn.h 
-//  class ConstitutiveModel ConstitutiveModel data type -- 3D - 
+//  ProgramBurn.h
+//  class ConstitutiveModel ConstitutiveModel data type -- 3D -
 //  holds ConstitutiveModel
 //    Features:
 //      Usage:
@@ -32,144 +32,126 @@
 #ifndef __PROGRAM_BURN_CONSTITUTIVE_MODEL_H__
 #define __PROGRAM_BURN_CONSTITUTIVE_MODEL_H__
 
-#include <cmath>
-#include "ConstitutiveModel.h"  
-#include <Core/Math/Matrix3.h>
-#include <vector>
+#include "ConstitutiveModel.h"
 #include <Core/Disclosure/TypeDescription.h>
+#include <Core/Math/Matrix3.h>
+#include <cmath>
+#include <vector>
 
 namespace Uintah {
-  class ProgramBurn : public ConstitutiveModel {
+class ProgramBurn : public ConstitutiveModel
+{
 
-  public:
+public:
+  // Create datatype for storing model parameters
+  struct CMData
+  {
+    // These two parameters are used for the unburned Murnahan EOS
+    double d_K;
+    double d_n;
 
-    // Create datatype for storing model parameters
-    struct CMData {
-      // These two parameters are used for the unburned Murnahan EOS
-      double d_K;
-      double d_n;
+    // These parameters are used for the product JWL EOS
+    double d_A;
+    double d_B;
+    double d_C;
+    double d_R1;
+    double d_R2;
+    double d_om;
+    double d_rho0;
 
-      // These parameters are used for the product JWL EOS
-      double d_A;
-      double d_B;
-      double d_C;
-      double d_R1;
-      double d_R2;
-      double d_om;
-      double d_rho0;
+    // These parameters are needed for the reaction model
+    Point d_start_place; // Starting point of the detonation
+    Vector d_direction;  // Direction if starting from a plane (point-normal)
+    double d_D;          // Detonation velocity
+    double d_T0;         // Detonation initiation time
+  };
 
-      // These parameters are needed for the reaction model
-      Point  d_start_place; // Starting point of the detonation
-      Vector d_direction;   // Direction if starting from a plane (point-normal)
-      double d_D;           // Detonation velocity
-      double d_T0;          // Detonation initiation time
-    };
+  const VarLabel* pProgressFLabel;
+  const VarLabel* pProgressFLabel_preReloc;
+  const VarLabel* pLocalizedLabel;
+  const VarLabel* pLocalizedLabel_preReloc;
 
-    const VarLabel* pProgressFLabel;
-    const VarLabel* pProgressFLabel_preReloc;
-    const VarLabel* pLocalizedLabel;
-    const VarLabel* pLocalizedLabel_preReloc;
+protected:
+  CMData d_initialData;
+  bool d_useModifiedEOS;
+  int d_8or27;
 
-  protected:
+private:
+  // Prevent copying of this class
+  // copy constructor
+  // ProgramBurn(const ProgramBurn &cm);
+  ProgramBurn& operator=(const ProgramBurn& cm);
 
-    CMData d_initialData;
-    bool d_useModifiedEOS; 
-    int d_8or27;
+public:
+  // constructors
+  ProgramBurn(ProblemSpecP& ps, MPMFlags* flag);
+  ProgramBurn(const ProgramBurn* cm);
 
-  private:
-    // Prevent copying of this class
-    // copy constructor
-    //ProgramBurn(const ProgramBurn &cm);
-    ProgramBurn& operator=(const ProgramBurn &cm);
+  // destructor
+  ~ProgramBurn() override;
 
-  public:
-    // constructors
-    ProgramBurn(ProblemSpecP& ps, MPMFlags* flag);
-    ProgramBurn(const ProgramBurn* cm);
-       
-    // destructor
-    virtual ~ProgramBurn();
+  void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag = true);
+  // clone
+  ProgramBurn* clone() override;
 
-    // clone
-    ProgramBurn* clone();
+  void addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
+                                  const PatchSet* patches) const override;
 
-    virtual void addRequiresDamageParameter(Task* task,
-                                            const MPMMaterial* matl,
-                                            const PatchSet* patches) const;
+  void getDamageParameter(const Patch* patch, ParticleVariable<int>& damage,
+                          int dwi, DataWarehouse* old_dw,
+                          DataWarehouse* new_dw) override;
 
-    virtual void getDamageParameter(const Patch* patch, 
-                                    ParticleVariable<int>& damage, int dwi,
-                                    DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw);
-    
-    // compute stable timestep for this patch
-    virtual void computeStableTimestep(const Patch* patch,
-                                       const MPMMaterial* matl,
-                                       DataWarehouse* new_dw);
-
-    // compute stress at each particle in the patch
-    virtual void computeStressTensor(const PatchSubset* patches,
+  // compute stable timestep for this patch
+  virtual void computeStableTimestep(const Patch* patch,
                                      const MPMMaterial* matl,
-                                     DataWarehouse* old_dw,
                                      DataWarehouse* new_dw);
 
-    // carry forward CM data for RigidMPM
-    virtual void carryForward(const PatchSubset* patches,
-                              const MPMMaterial* matl,
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw);
+  // compute stress at each particle in the patch
+  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw) override;
 
-    // initialize  each particle's constitutive model data
-    virtual void initializeCMData(const Patch* patch,
-                                  const MPMMaterial* matl,
-                                  DataWarehouse* new_dw);
+  // carry forward CM data for RigidMPM
+  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
+                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
 
-    virtual void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                           const PatchSet* patch, 
-                                           MPMLabel* lb) const;
+  // initialize  each particle's constitutive model data
+  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
+                        DataWarehouse* new_dw) override;
 
+  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+                                 const PatchSet* patch,
+                                 MPMLabel* lb) const override;
 
-    virtual void allocateCMDataAdd(DataWarehouse* new_dw,
-                                   ParticleSubset* subset,
-                                   ParticleLabelVariableMap* newState,
-                                   ParticleSubset* delset,
-                                   DataWarehouse* old_dw);
+  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
+                         ParticleLabelVariableMap* newState,
+                         ParticleSubset* delset,
+                         DataWarehouse* old_dw) override;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches) const;
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches,
-                                        const bool recursion,
-                                        const bool SchedParent) const;
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches, const bool recursion,
+                              const bool SchedParent) const override;
 
-    virtual void addInitialComputesAndRequires(Task* task,
-                                               const MPMMaterial* matl,
-                                               const PatchSet* patches) const;
+  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                     const PatchSet* patches) const override;
 
-    virtual double computeRhoMicroCM(double pressure,
-                                     const double p_ref,
-                                     const MPMMaterial* matl,
-                                     double temperature,
-                                     double rho_guess);
+  double computeRhoMicroCM(double pressure, const double p_ref,
+                           const MPMMaterial* matl, double temperature,
+                           double rho_guess) override;
 
-    virtual void computePressEOSCM(double rho_m, double& press_eos,
-                                   double p_ref,
-                                   double& dp_drho, double& ss_new,
-                                   const MPMMaterial* matl,
-                                   double temperature);
+  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
+                         double& dp_drho, double& ss_new,
+                         const MPMMaterial* matl, double temperature) override;
 
-    virtual double getCompressibility();
+  double getCompressibility() override;
 
-    virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                  std::vector<const VarLabel*>& to);
-
-  };
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
+};
 } // End namespace Uintah
 
-#endif  // __WATER_CONSTITUTIVE_MODEL_H__ 
-
+#endif // __WATER_CONSTITUTIVE_MODEL_H__

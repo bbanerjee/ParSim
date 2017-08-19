@@ -27,223 +27,206 @@
 #ifndef __SUVIC_I_H__
 #define __SUVIC_I_H__
 
-
-#include "ViscoPlasticityModel.h"    
+#include "ViscoPlasticityModel.h"
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*! 
-    \class SuvicI
-    \brief SUVIC-Ice
-    \author Jonah Lee,
-    \author Department of Mechanical Engineering,
-    \author University of Alaska Fairbanks,
-    Copyright (C) 2008 University of Alaska Fairbanks
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class SuvicI
+  \brief SUVIC-Ice
+  \author Jonah Lee,
+  \author Department of Mechanical Engineering,
+  \author University of Alaska Fairbanks,
+  Copyright (C) 2008 University of Alaska Fairbanks
 
-    The yield criterion is given by
-    
-    \f$<(X_{ae}-R)/K>\f$
-    
-    where \f$X_{ae}=\sqrt{ {3/2} (S_{ij}-B_{ij})(S_{ij}-B_{ij})}\f$=effective reduced stress \n
-    \f$ R\f$ is the yield stress, \f$ K \f$ is the drag stress, \f$ B_{ij}\f$ the back stress \n
+  The yield criterion is given by
 
-    The inelastic strain rate is given by
+  \f$<(X_{ae}-R)/K>\f$
 
-    \f$\dot{\epsilon}^i_{ij}=A<(X_{ae}-R)/K>^N n_{ij}\exp(-Q/RT)\f$
+  where \f$X_{ae}=\sqrt{ {3/2} (S_{ij}-B_{ij})(S_{ij}-B_{ij})}\f$=effective
+  reduced stress \n
+  \f$ R\f$ is the yield stress, \f$ K \f$ is the drag stress, \f$ B_{ij}\f$ the
+  back stress \n
 
-    where \f$ n_{ij} = {3/2} (S_{ij}-B_{ij})/X_{ae}) \f$, \f$Q, R, T\f$
-    are the activation energy, Universal gas constant and the absolute temperature,
-    respectively.
+  The inelastic strain rate is given by
 
-    The integration scheme is an adaptation of 
+  \f$\dot{\epsilon}^i_{ij}=A<(X_{ae}-R)/K>^N n_{ij}\exp(-Q/RT)\f$
 
-    A Tangent Modulus Method for Rate Dependent Solids, 
-    D. Peirce, C.F. Shih and A. Needleman, Computers and  Structures
-    pp. 875-887, 1984
+  where \f$ n_{ij} = {3/2} (S_{ij}-B_{ij})/X_{ae}) \f$, \f$Q, R, T\f$
+  are the activation energy, Universal gas constant and the absolute
+  temperature,
+  respectively.
 
-    See the following and the references therein for details: 
-    Plane Strain Indentation of Snow At The Microscale
-    Jonah H. Lee, Proceedings of 10th International Conference on Advanced
-    Vehicle and Tire Technologies, Paper# DETC2008-49374,  August 2008, ASME,
-  */  
-  /////////////////////////////////////////////////////////////////////////////
+  The integration scheme is an adaptation of
 
-  class SuvicI : public ViscoPlasticityModel {
+  A Tangent Modulus Method for Rate Dependent Solids,
+  D. Peirce, C.F. Shih and A. Needleman, Computers and  Structures
+  pp. 875-887, 1984
 
-    // Create datatype for storing model parameters
-  public:
-    // Create datatype for storing state variable parameters      
-    struct StateVariableData {
-      double ba1;     /*< coefficient of backstress evol [MPa]  */
-      double bq;      /*< exponent of backstress evol */
-      double bc;     /*< normalizing back stress [MPa] */
-      double b0;     /*< coeff of saturation backstress [MPa] */
-      double de0;     /*< ref strain rate [1/sec] */
-      double bn;     /*< exponent of backstress */
+  See the following and the references therein for details:
+  Plane Strain Indentation of Snow At The Microscale
+  Jonah H. Lee, Proceedings of 10th International Conference on Advanced
+  Vehicle and Tire Technologies, Paper# DETC2008-49374,  August 2008, ASME,
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-      double a;      /*< normalizing inelastic strain rate [1/sec] */
-      double q;      /*< activation energy [J/Mole] */
-      double t;      /*< temperature [K]; TODO- where defined elsewhere*/
-      double xn;     /*< exponent of inelastic strain rate [1/sec] */
+class SuvicI : public ViscoPlasticityModel
+{
 
-      double r0;     /*< coef of yield stress saturation [MPa] */
-      double rm;     /*< exponent of yield stress */
-      double rai;    /*< A3 [MPa] */
+  // Create datatype for storing model parameters
+public:
+  // Create datatype for storing state variable parameters
+  struct StateVariableData
+  {
+    double ba1; /*< coefficient of backstress evol [MPa]  */
+    double bq;  /*< exponent of backstress evol */
+    double bc;  /*< normalizing back stress [MPa] */
+    double b0;  /*< coeff of saturation backstress [MPa] */
+    double de0; /*< ref strain rate [1/sec] */
+    double bn;  /*< exponent of backstress */
 
-      double xmn;    /*< exponent in K [MPa */
-      double xai;    /*< A5 [MPa] */
-      double rr;      /*< R Universal Gas Constant [8.3144J/(mole . K)] */
-      
-      double s0;     /*< coeff of saturation of stress [MPa]*/
-      
-      double initial_yield; /* initial yield stress [MPa] */
-      double initial_drag;  /*initial drag stress - never zero! [MPa]*/
+    double a;  /*< normalizing inelastic strain rate [1/sec] */
+    double q;  /*< activation energy [J/Mole] */
+    double t;  /*< temperature [K]; TODO- where defined elsewhere*/
+    double xn; /*< exponent of inelastic strain rate [1/sec] */
 
-      double theta; /*< plasticity integration from 0 (explict) to 1 (implicit) */
-    };
+    double r0;  /*< coef of yield stress saturation [MPa] */
+    double rm;  /*< exponent of yield stress */
+    double rai; /*< A3 [MPa] */
 
-    constParticleVariable<double> pYield; //scalar yield stress
-    ParticleVariable<double> pYield_new;
-    constParticleVariable<double> pDrag; //scalar drag stress
-    ParticleVariable<double> pDrag_new;
-    constParticleVariable<Matrix3> pBackStress; //tensorial back stress
-    ParticleVariable<Matrix3> pBackStress_new;
+    double xmn; /*< exponent in K [MPa */
+    double xai; /*< A5 [MPa] */
+    double rr;  /*< R Universal Gas Constant [8.3144J/(mole . K)] */
 
-    const VarLabel* pYieldLabel;  
-    const VarLabel* pYieldLabel_preReloc;
-    const VarLabel* pDragLabel;  
-    const VarLabel* pDragLabel_preReloc;
-    const VarLabel* pBackStressLabel;  
-    const VarLabel* pBackStressLabel_preReloc;
+    double s0; /*< coeff of saturation of stress [MPa]*/
 
+    double initial_yield; /* initial yield stress [MPa] */
+    double initial_drag;  /*initial drag stress - never zero! [MPa]*/
 
-  private:
+    double theta; /*< plasticity integration from 0 (explict) to 1 (implicit) */
+  };
 
-        StateVariableData d_SV;
-         
-    // Prevent copying of this class
-    // copy constructor
-    //SuvicI(const SuvicI &cm);
-    SuvicI& operator=(const SuvicI &cm);
+  constParticleVariable<double> pYield; // scalar yield stress
+  ParticleVariable<double> pYield_new;
+  constParticleVariable<double> pDrag; // scalar drag stress
+  ParticleVariable<double> pDrag_new;
+  constParticleVariable<Matrix3> pBackStress; // tensorial back stress
+  ParticleVariable<Matrix3> pBackStress_new;
 
-  public:
-    // constructors
-    SuvicI(ProblemSpecP& ps);
-    SuvicI(const SuvicI* cm);
-         
-    // destructor 
-    virtual ~SuvicI();
+  const VarLabel* pYieldLabel;
+  const VarLabel* pYieldLabel_preReloc;
+  const VarLabel* pDragLabel;
+  const VarLabel* pDragLabel_preReloc;
+  const VarLabel* pBackStressLabel;
+  const VarLabel* pBackStressLabel_preReloc;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    // Computes and requires for internal evolution variables
-    // Three internal variables for ISUVIC-I :: yield, drag and back stress + plastic strain
-    virtual void addInitialComputesAndRequires(Task* task,
-                                               const MPMMaterial* matl,
-                                               const PatchSet* patches) const;
+private:
+  StateVariableData d_SV;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches) const;
+  // Prevent copying of this class
+  // copy constructor
+  // SuvicI(const SuvicI &cm);
+  SuvicI& operator=(const SuvicI& cm);
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches,
-                                        bool recurse) const;
+public:
+  // constructors
+  SuvicI(ProblemSpecP& ps);
+  SuvicI(const SuvicI* cm);
 
-    virtual void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                           const PatchSet* patch, 
-                                           MPMLabel* lb) const;
+  // destructor
+  ~SuvicI() override;
 
-    virtual void allocateCMDataAdd(DataWarehouse* new_dw,
-                                   ParticleSubset* addset,
-                                   ParticleLabelVariableMap* newState,
-                                   ParticleSubset* delset,
-                                   DataWarehouse* old_dw);
+  void outputProblemSpec(ProblemSpecP& ps) override;
 
+  // Computes and requires for internal evolution variables
+  // Three internal variables for ISUVIC-I :: yield, drag and back stress +
+  // plastic strain
+  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                     const PatchSet* patches) const override;
 
-    virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                  std::vector<const VarLabel*>& to);
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
 
-    virtual void initializeInternalVars(ParticleSubset* pset,
-                                        DataWarehouse* new_dw);
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches,
+                              bool recurse) const override;
 
-    virtual void getInternalVars(ParticleSubset* pset,
-                                 DataWarehouse* old_dw);
+  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+                                 const PatchSet* patch,
+                                 MPMLabel* lb) const override;
 
-    virtual void allocateAndPutInternalVars(ParticleSubset* pset,
-                                            DataWarehouse* new_dw); 
+  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
+                         ParticleLabelVariableMap* newState,
+                         ParticleSubset* delset,
+                         DataWarehouse* old_dw) override;
 
-    virtual void allocateAndPutRigid(ParticleSubset* pset,
-                                     DataWarehouse* new_dw); 
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
 
-    virtual void updateElastic(const particleIndex idx);
+  void initializeInternalVars(ParticleSubset* pset,
+                              DataWarehouse* new_dw) override;
 
-   
+  void getInternalVars(ParticleSubset* pset, DataWarehouse* old_dw) override;
 
-    ///////////////////////////////////////////////////////////////////////////
-    /*! compute the flow stress */
-    ///////////////////////////////////////////////////////////////////////////
-//     virtual double computeFlowStress(const PlasticityState* state,
-//                                      const double& delT,
-//                                      const double& tolerance,
-//                                      const MPMMaterial* matl,
-//                                      const particleIndex idx);
-                                     
-//     virtual double computeFlowStress(const PlasticityState* state,
-//                                      const double& delT,
-//                                      const double& tolerance,
-//                                      const MPMMaterial* matl,
-//                                      const particleIndex idx,
-//                                   const Matrix3 pStress);
+  void allocateAndPutInternalVars(ParticleSubset* pset,
+                                  DataWarehouse* new_dw) override;
 
-    virtual double computeFlowStress(const particleIndex idx,
-                                     const Matrix3 pStress,
-                                     const Matrix3 tensorR,
-                                     const int implicitFlag);
+  void allocateAndPutRigid(ParticleSubset* pset,
+                           DataWarehouse* new_dw) override;
 
-    ///////////////////////////////////////////////////////////////////////////
-    /*!
-      \brief Compute the shear modulus. 
-    */
-    ///////////////////////////////////////////////////////////////////////////
-    double computeShearModulus(const PlasticityState* state);
+  void updateElastic(const particleIndex idx) override;
 
-    ///////////////////////////////////////////////////////////////////////////
-    /*!
-      \brief Compute the melting temperature
-    */
-    ///////////////////////////////////////////////////////////////////////////
-    double computeMeltingTemp(const PlasticityState* state);
-            
+  ///////////////////////////////////////////////////////////////////////////
+  /*! compute the flow stress */
+  ///////////////////////////////////////////////////////////////////////////
+  //     virtual double computeFlowStress(const PlasticityState* state,
+  //                                      const double& delT,
+  //                                      const double& tolerance,
+  //                                      const MPMMaterial* matl,
+  //                                      const particleIndex idx);
 
-   protected:
+  //     virtual double computeFlowStress(const PlasticityState* state,
+  //                                      const double& delT,
+  //                                      const double& tolerance,
+  //                                      const MPMMaterial* matl,
+  //                                      const particleIndex idx,
+  //                                   const Matrix3 pStress);
 
-   void computeNij(Matrix3& nij, 
-                            Matrix3& reducedEta, 
-                            double& xae, 
-                            const particleIndex idx,
-                            const Matrix3 pStress,
-                            const Matrix3 tensorR,
-                            const int implicitFlag);
-                            
-   void computeStressIncTangent(double& epdot,
-                                Matrix3& stressRate, 
-                                TangentModulusTensor& Cep,
-                                const double delT,
-                                const particleIndex idx, 
-                                const TangentModulusTensor Ce,
-                                const Matrix3 tensorD,
-                                const Matrix3 pStress,
-                                const int implicitFlag,
-                                const Matrix3 tensorR);
-                                
-   bool checkFailureMaxTensileStress(const Matrix3 pStress);
-                                         
+  double computeFlowStress(const particleIndex idx, const Matrix3 pStress,
+                           const Matrix3 tensorR,
+                           const int implicitFlag) override;
 
-   };
+  ///////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Compute the shear modulus.
+  */
+  ///////////////////////////////////////////////////////////////////////////
+  double computeShearModulus(const PlasticityState* state) override;
+
+  ///////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Compute the melting temperature
+  */
+  ///////////////////////////////////////////////////////////////////////////
+  double computeMeltingTemp(const PlasticityState* state) override;
+
+protected:
+  void computeNij(Matrix3& nij, Matrix3& reducedEta, double& xae,
+                  const particleIndex idx, const Matrix3 pStress,
+                  const Matrix3 tensorR, const int implicitFlag);
+
+  void computeStressIncTangent(double& epdot, Matrix3& stressRate,
+                               TangentModulusTensor& Cep, const double delT,
+                               const particleIndex idx,
+                               const TangentModulusTensor Ce,
+                               const Matrix3 tensorD, const Matrix3 pStress,
+                               const int implicitFlag,
+                               const Matrix3 tensorR) override;
+
+  bool checkFailureMaxTensileStress(const Matrix3 pStress) override;
+};
 } // End namespace Uintah
 
-#endif  // __SUVIC_I_H__ 
+#endif // __SUVIC_I_H__

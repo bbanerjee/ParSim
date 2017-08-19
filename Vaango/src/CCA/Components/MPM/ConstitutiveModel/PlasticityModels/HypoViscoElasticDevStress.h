@@ -49,85 +49,74 @@
 #ifndef __HypoViscoElasticDEVSTRESS_H__
 #define __HypoViscoElasticDEVSTRESS_H__
 
-
 #include "DevStressModel.h"
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Containers/StaticArray.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <Core/Grid/Variables/ParticleVariable.h>
 
 namespace Uintah {
 
+class HypoViscoElasticDevStress : public DevStressModel
+{
 
-  class HypoViscoElasticDevStress : public DevStressModel {
+private:
+  std::vector<const VarLabel*> d_sigmaDevLabel;
+  std::vector<const VarLabel*> d_sigmaDevLabel_preReloc;
 
-  private:
+  std::vector<constParticleVariable<Matrix3>*> d_sigmaDev;
+  std::vector<ParticleVariable<Matrix3>*> d_sigmaDev_new;
 
-    std::vector<const VarLabel*> d_sigmaDevLabel;
-    std::vector<const VarLabel*> d_sigmaDevLabel_preReloc;
-    
-    
-    std::vector< constParticleVariable<Matrix3 > * > d_sigmaDev;
-    std::vector< ParticleVariable<Matrix3>* > d_sigmaDev_new;
-    
-    unsigned int d_MaxwellElements;        // number of Maxwell Elements
-    std::vector<double>  d_tau_MW;         // tau Maxwell Elements
-    std::vector<double>  d_inv_tau_MW;     // 1.0/tau Maxwell Elements  (for speed)
-    std::vector<double>  d_mu_MW;          // mu Maxwell
-    
-  public:
-    // constructors
-    HypoViscoElasticDevStress(ProblemSpecP& ps);
-         
-    // destructor 
-    virtual ~HypoViscoElasticDevStress();
+  unsigned int d_MaxwellElements;   // number of Maxwell Elements
+  std::vector<double> d_tau_MW;     // tau Maxwell Elements
+  std::vector<double> d_inv_tau_MW; // 1.0/tau Maxwell Elements  (for speed)
+  std::vector<double> d_mu_MW;      // mu Maxwell
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    // Computes and requires for internal evolution variables
-    virtual void addInitialComputesAndRequires(Task* task,
-                                               const MPMMaterial* matl);
+public:
+  // constructors
+  HypoViscoElasticDevStress(ProblemSpecP& ps);
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl);
+  // destructor
+  ~HypoViscoElasticDevStress() override;
 
-    // For computeStressTensorImplicit
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        bool SchedParent);
+  void outputProblemSpec(ProblemSpecP& ps) override;
 
+  // Computes and requires for internal evolution variables
+  void addInitialComputesAndRequires(Task* task,
+                                     const MPMMaterial* matl) override;
 
-    virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                  std::vector<const VarLabel*>& to);
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl) override;
 
-    virtual void initializeInternalVars(ParticleSubset* pset,
-                                        DataWarehouse* new_dw);
+  // For computeStressTensorImplicit
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              bool SchedParent) override;
 
-    virtual void getInternalVars(ParticleSubset* pset,
-                                 DataWarehouse* old_dw);
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
 
-    virtual void allocateAndPutInternalVars(ParticleSubset* pset,
-                                            DataWarehouse* new_dw); 
+  void initializeInternalVars(ParticleSubset* pset,
+                              DataWarehouse* new_dw) override;
 
+  void getInternalVars(ParticleSubset* pset, DataWarehouse* old_dw) override;
 
-    virtual void allocateAndPutRigid(ParticleSubset* pset,
-                                     DataWarehouse* new_dw);
-                                     
-    virtual void computeDeviatoricStressInc( const particleIndex idx,
-                                             const PlasticityState* plaState,
-                                             DeformationState* defState,
-                                             const double delT);
+  void allocateAndPutInternalVars(ParticleSubset* pset,
+                                  DataWarehouse* new_dw) override;
 
-    virtual void updateInternalStresses( const particleIndex idx,
-                                         const Matrix3&,
-                                         DeformationState* defState,
-                                         const double delT );
+  void allocateAndPutRigid(ParticleSubset* pset,
+                           DataWarehouse* new_dw) override;
 
-    virtual void rotateInternalStresses( const particleIndex idx,
-                                         const Matrix3&);
+  void computeDeviatoricStressInc(const particleIndex idx,
+                                  const PlasticityState* plaState,
+                                  DeformationState* defState,
+                                  const double delT) override;
 
-  };
+  void updateInternalStresses(const particleIndex idx, const Matrix3&,
+                              DeformationState* defState,
+                              const double delT) override;
+
+  void rotateInternalStresses(const particleIndex idx, const Matrix3&) override;
+};
 
 } // End namespace Uintah
 
-#endif  // __HypoViscoElasticDEVSTRESS_H__
+#endif // __HypoViscoElasticDEVSTRESS_H__

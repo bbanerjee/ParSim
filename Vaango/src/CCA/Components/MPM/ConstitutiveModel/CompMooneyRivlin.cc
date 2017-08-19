@@ -24,41 +24,40 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/CompMooneyRivlin.h>
-#include <Core/Grid/Patch.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Grid/Variables/NCVariable.h>
-#include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Grid/Task.h>
-#include <Core/Labels/MPMLabel.h>
-#include <Core/Grid/Variables/VarLabel.h>
-#include <Core/Grid/Variables/NodeIterator.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Level.h>
-#include <Core/Exceptions/ParameterNotFound.h>
-#include <Core/Math/MinMax.h>
-#include <Core/Math/Matrix3.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <Core/Grid/Patch.h>
+#include <Core/Grid/Task.h>
+#include <Core/Grid/Variables/NCVariable.h>
+#include <Core/Grid/Variables/NodeIterator.h>
+#include <Core/Grid/Variables/ParticleVariable.h>
+#include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
+#include <Core/Labels/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/Math/Matrix3.h>
+#include <Core/Math/MinMax.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 
-#include <sci_values.h>
 #include <iostream>
+#include <sci_values.h>
 
 using namespace std;
 using namespace Uintah;
 
-// Material Constants are C1, C2 and PR (poisson's ratio).  
+// Material Constants are C1, C2 and PR (poisson's ratio).
 // The shear modulus = 2(C1 + C2).
 
-CompMooneyRivlin::CompMooneyRivlin(ProblemSpecP& ps, MPMFlags* Mflag) 
+CompMooneyRivlin::CompMooneyRivlin(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
 
-  ps->require("he_constant_1",d_initialData.C1);
-  ps->require("he_constant_2",d_initialData.C2);
-  ps->require("he_PR",d_initialData.PR);
-
+  ps->require("he_constant_1", d_initialData.C1);
+  ps->require("he_constant_2", d_initialData.C2);
+  ps->require("he_PR", d_initialData.PR);
 }
 
 CompMooneyRivlin::CompMooneyRivlin(const CompMooneyRivlin* cm)
@@ -69,32 +68,30 @@ CompMooneyRivlin::CompMooneyRivlin(const CompMooneyRivlin* cm)
   d_initialData.PR = cm->d_initialData.PR;
 }
 
-CompMooneyRivlin::~CompMooneyRivlin()
-{
-}
+CompMooneyRivlin::~CompMooneyRivlin() = default;
 
-
-void CompMooneyRivlin::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
+void
+CompMooneyRivlin::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 {
   ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("constitutive_model");
-    cm_ps->setAttribute("type","comp_mooney_rivlin");
+    cm_ps->setAttribute("type", "comp_mooney_rivlin");
   }
-    
-  cm_ps->appendElement("he_constant_1",d_initialData.C1);
-  cm_ps->appendElement("he_constant_2",d_initialData.C2);
-  cm_ps->appendElement("he_PR",d_initialData.PR);
+
+  cm_ps->appendElement("he_constant_1", d_initialData.C1);
+  cm_ps->appendElement("he_constant_2", d_initialData.C2);
+  cm_ps->appendElement("he_PR", d_initialData.PR);
 }
 
-CompMooneyRivlin* CompMooneyRivlin::clone()
+CompMooneyRivlin*
+CompMooneyRivlin::clone()
 {
   return scinew CompMooneyRivlin(*this);
 }
 
-void 
-CompMooneyRivlin::initializeCMData(const Patch* patch,
-                                   const MPMMaterial* matl,
+void
+CompMooneyRivlin::initializeCMData(const Patch* patch, const MPMMaterial* matl,
                                    DataWarehouse* new_dw)
 {
   // Initialize the variables shared by all constitutive models
@@ -105,13 +102,12 @@ CompMooneyRivlin::initializeCMData(const Patch* patch,
 }
 
 ///////////////////////////////////////////////////////////////////////////
-/*! Allocate data required during the conversion of failed particles 
+/*! Allocate data required during the conversion of failed particles
     from one material to another */
 ///////////////////////////////////////////////////////////////////////////
-void 
-CompMooneyRivlin::allocateCMDataAddRequires(Task* task,
-                                            const MPMMaterial* matl,
-                                            const PatchSet* patches ,
+void
+CompMooneyRivlin::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+                                            const PatchSet* patches,
                                             MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -120,27 +116,24 @@ CompMooneyRivlin::allocateCMDataAddRequires(Task* task,
   // for the particle convert operation
   // This method is defined in the ConstitutiveModel base class.
   addSharedRForConvertExplicit(task, matlset, patches);
-
 }
 
-
-void CompMooneyRivlin::allocateCMDataAdd(DataWarehouse* new_dw,
-                                         ParticleSubset* addset,
-                                         map<const VarLabel*,
-                                         ParticleVariableBase*>* newState,
-                                         ParticleSubset* delset,
-                                         DataWarehouse* )
+void
+CompMooneyRivlin::allocateCMDataAdd(
+  DataWarehouse* new_dw, ParticleSubset* addset,
+  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
+  DataWarehouse*)
 {
-  // Copy the data common to all constitutive models from the particle to be 
-  // deleted to the particle to be added. 
+  // Copy the data common to all constitutive models from the particle to be
+  // deleted to the particle to be added.
   // This method is defined in the ConstitutiveModel base class.
   copyDelToAddSetForConvertExplicit(new_dw, delset, addset, newState);
 }
 
-
-void CompMooneyRivlin::computeStableTimestep(const Patch* patch,
-                                             const MPMMaterial* matl,
-                                             DataWarehouse* new_dw)
+void
+CompMooneyRivlin::computeStableTimestep(const Patch* patch,
+                                        const MPMMaterial* matl,
+                                        DataWarehouse* new_dw)
 {
   // This is only called for the initial timestep - all other timesteps
   // are computed as a side-effect of computeStressTensor
@@ -151,49 +144,48 @@ void CompMooneyRivlin::computeStableTimestep(const Patch* patch,
   constParticleVariable<double> pmass, pvolume;
   constParticleVariable<Vector> pvelocity;
 
-  new_dw->get(pmass,     lb->pMassLabel,     pset);
-  new_dw->get(pvolume,   lb->pVolumeLabel,   pset);
+  new_dw->get(pmass, lb->pMassLabel, pset);
+  new_dw->get(pvolume, lb->pVolumeLabel, pset);
   new_dw->get(pvelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
-  Vector WaveSpeed(1.e-12,1.e-12,1.e-12);
+  Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
   double C1 = d_initialData.C1;
   double C2 = d_initialData.C2;
   double PR = d_initialData.PR;
 
-  for(ParticleSubset::iterator iter = pset->begin();
-      iter != pset->end(); iter++){
-     particleIndex idx = *iter;
-
-     // Compute wave speed + particle velocity at each particle, 
-     // store the maximum
-     double mu = 2.*(C1 + C2);
-     //double C4 = .5*(C1*(5.*PR-2) + C2*(11.*PR-5)) / (1. - 2.*PR);
-     c_dil = sqrt(2.*mu*(1.- PR)*pvolume[idx]/((1.-2.*PR)*pmass[idx]));
-     WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
-                      Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
-                      Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
+  for (int idx : *pset) {
+    // Compute wave speed + particle velocity at each particle,
+    // store the maximum
+    double mu = 2. * (C1 + C2);
+    // double C4 = .5*(C1*(5.*PR-2) + C2*(11.*PR-5)) / (1. - 2.*PR);
+    c_dil =
+      sqrt(2. * mu * (1. - PR) * pvolume[idx] / ((1. - 2. * PR) * pmass[idx]));
+    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
   }
-  WaveSpeed = dx/WaveSpeed;
+  WaveSpeed = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
-  if(delT_new < 1.e-12)
+  if (delT_new < 1.e-12)
     new_dw->put(delt_vartype(DBL_MAX), lb->delTLabel, patch->getLevel());
   else
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 }
 
-void CompMooneyRivlin::computeStressTensor(const PatchSubset* patches,
-                                           const MPMMaterial* matl,
-                                           DataWarehouse* old_dw,
-                                           DataWarehouse* new_dw)
+void
+CompMooneyRivlin::computeStressTensor(const PatchSubset* patches,
+                                      const MPMMaterial* matl,
+                                      DataWarehouse* old_dw,
+                                      DataWarehouse* new_dw)
 {
-  for(int p=0;p<patches->size();p++){
+  for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    Matrix3 Identity,B;
-    double invar1,invar2,invar3,J,w3,i3w3,C1pi1C2;
+    Matrix3 Identity, B;
+    double invar1, invar2, invar3, J, w3, i3w3, C1pi1C2;
     Identity.Identity();
-    double c_dil = 0.0,se=0.0;
-    Vector WaveSpeed(1.e-12,1.e-12,1.e-12);
+    double c_dil = 0.0, se = 0.0;
+    Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
 
     ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
@@ -201,7 +193,7 @@ void CompMooneyRivlin::computeStressTensor(const PatchSubset* patches,
     vector<double> S(interpolator->size());
 
     Vector dx = patch->dCell();
-    //double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
+    // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
     int dwi = matl->getDWIndex();
 
@@ -215,161 +207,162 @@ void CompMooneyRivlin::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<double> pvolume;
     constParticleVariable<Vector> pvelocity;
     constParticleVariable<Matrix3> psize;
-    ParticleVariable<double> pdTdt,p_q;
+    ParticleVariable<double> pdTdt, p_q;
 
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
-    //Ghost::GhostType  gac   = Ghost::AroundCells;
-    old_dw->get(px,                  lb->pXLabel,                  pset);
-    old_dw->get(pmass,               lb->pMassLabel,               pset);
-    old_dw->get(psize,               lb->pSizeLabel,               pset);
-    old_dw->get(pvelocity,           lb->pVelocityLabel,           pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel,            pset);
-    new_dw->get(pvolume,             lb->pVolumeLabel_preReloc,    pset);
+    // Ghost::GhostType  gac   = Ghost::AroundCells;
+    old_dw->get(px, lb->pXLabel, pset);
+    old_dw->get(pmass, lb->pMassLabel, pset);
+    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
+    new_dw->get(pvolume, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
 
-    new_dw->allocateAndPut(pstress,  lb->pStressLabel_preReloc,    pset);
-    new_dw->allocateAndPut(pdTdt,    lb->pdTdtLabel_preReloc,      pset);
-    new_dw->allocateAndPut(p_q,      lb->p_qLabel_preReloc,        pset);
+    new_dw->allocateAndPut(pstress, lb->pStressLabel_preReloc, pset);
+    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
+    new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
 
     constParticleVariable<Matrix3> velGrad;
     new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
 
     double C1 = d_initialData.C1;
     double C2 = d_initialData.C2;
-    double C3 = .5*C1 + C2;
+    double C3 = .5 * C1 + C2;
     double PR = d_initialData.PR;
-    double C4 = .5*(C1*(5.*PR-2) + C2*(11.*PR-5)) / (1. - 2.*PR);
+    double C4 =
+      .5 * (C1 * (5. * PR - 2) + C2 * (11. * PR - 5)) / (1. - 2. * PR);
 
     double rho_orig = matl->getInitialDensity();
 
-    for(ParticleSubset::iterator iter = pset->begin();iter!=pset->end();iter++){
-      particleIndex idx = *iter;
-
+    for (int idx : *pset) {
       // Assign zero internal heating by default - modify if necessary.
       pdTdt[idx] = 0.0;
 
       // Compute the left Cauchy-Green deformation tensor
-      B = deformationGradient_new[idx]*deformationGradient_new[idx].Transpose();
+      B =
+        deformationGradient_new[idx] * deformationGradient_new[idx].Transpose();
 
       // Compute the invariants
       invar1 = B.Trace();
-      invar2 = 0.5*((invar1*invar1) - (B*B).Trace());
+      invar2 = 0.5 * ((invar1 * invar1) - (B * B).Trace());
       J = deformationGradient_new[idx].Determinant();
-      invar3 = J*J;
+      invar3 = J * J;
 
-      w3 = -2.0*C3/(invar3*invar3*invar3) + 2.0*C4*(invar3 -1.0);
+      w3 = -2.0 * C3 / (invar3 * invar3 * invar3) + 2.0 * C4 * (invar3 - 1.0);
 
       // Compute T = 2/sqrt(I3)*(I3*W3*Identity + (W1+I1*W2)*B - W2*B^2)
       // W1 = C1, W2 = C2
-      C1pi1C2 = C1 + invar1*C2;
-      i3w3 = invar3*w3;
+      C1pi1C2 = C1 + invar1 * C2;
+      i3w3 = invar3 * w3;
 
-      pstress[idx]=(B*C1pi1C2 - (B*B)*C2 + Identity*i3w3)*2.0/J;
+      pstress[idx] = (B * C1pi1C2 - (B * B) * C2 + Identity * i3w3) * 2.0 / J;
 
-      // Compute wave speed + particle velocity at each particle, 
+      // Compute wave speed + particle velocity at each particle,
       // store the maximum
-      c_dil = sqrt((4.*(C1+C2*invar2)/J
-                    +8.*(2.*C3/(invar3*invar3*invar3)+C4*(2.*invar3-1.))
-                    -Min((pstress[idx])(0,0),(pstress[idx])(1,1)
-                         ,(pstress[idx])(2,2))/J)*pvolume[idx]/pmass[idx]);
-      WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
-                       Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
-                       Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
+      c_dil = sqrt(
+        (4. * (C1 + C2 * invar2) / J +
+         8. * (2. * C3 / (invar3 * invar3 * invar3) + C4 * (2. * invar3 - 1.)) -
+         Min((pstress[idx])(0, 0), (pstress[idx])(1, 1), (pstress[idx])(2, 2)) /
+           J) *
+        pvolume[idx] / pmass[idx]);
+      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
+                         Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
+                         Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
-        double dx_ave = (dx.x() + dx.y() + dx.z())/3.0;
-        double bulk = (4.*(C1+C2*invar2)/J);  // I'm a little fuzzy here - JG
-        double rho_cur = rho_orig/J;
-        double c_bulk = sqrt(bulk/rho_cur);
-        Matrix3 D=(velGrad[idx] + velGrad[idx].Transpose())*0.5;
+        double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
+        double bulk =
+          (4. * (C1 + C2 * invar2) / J); // I'm a little fuzzy here - JG
+        double rho_cur = rho_orig / J;
+        double c_bulk = sqrt(bulk / rho_cur);
+        Matrix3 D = (velGrad[idx] + velGrad[idx].Transpose()) * 0.5;
         p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
       } else {
         p_q[idx] = 0.;
       }
 
       // Compute the strain energy for all the particles
-      double e = (C1*(invar1-3.0) + C2*(invar2-3.0) +
-            C3*(1.0/(invar3*invar3) - 1.0) +
-            C4*(invar3-1.0)*(invar3-1.0))*pvolume[idx]/J;
+      double e = (C1 * (invar1 - 3.0) + C2 * (invar2 - 3.0) +
+                  C3 * (1.0 / (invar3 * invar3) - 1.0) +
+                  C4 * (invar3 - 1.0) * (invar3 - 1.0)) *
+                 pvolume[idx] / J;
 
       se += e;
-    }  // end loop over particles
+    } // end loop over particles
 
-    WaveSpeed = dx/WaveSpeed;
+    WaveSpeed = dx / WaveSpeed;
     double delT_new = WaveSpeed.minComponent();
 
-    if(delT_new < 1.e-12)
+    if (delT_new < 1.e-12)
       new_dw->put(delt_vartype(DBL_MAX), lb->delTLabel);
     else
       new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 
     if (flag->d_reductionVars->accStrainEnergy ||
         flag->d_reductionVars->strainEnergy) {
-      new_dw->put(sum_vartype(se),      lb->StrainEnergyLabel);
+      new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
     }
     delete interpolator;
   }
 }
 
-void CompMooneyRivlin::carryForward(const PatchSubset* patches,
-                                    const MPMMaterial* matl,
-                                    DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw)
+void
+CompMooneyRivlin::carryForward(const PatchSubset* patches,
+                               const MPMMaterial* matl, DataWarehouse* old_dw,
+                               DataWarehouse* new_dw)
 {
-  for(int p=0;p<patches->size();p++){
+  for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
     int dwi = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
-    // Carry forward the data common to all constitutive models 
+    // Carry forward the data common to all constitutive models
     // when using RigidMPM.
     // This method is defined in the ConstitutiveModel base class.
     carryForwardSharedData(pset, old_dw, new_dw, matl);
 
-    // Carry forward the data local to this constitutive model 
+    // Carry forward the data local to this constitutive model
     new_dw->put(delt_vartype(1.e10), lb->delTLabel, patch->getLevel());
-    
+
     if (flag->d_reductionVars->accStrainEnergy ||
         flag->d_reductionVars->strainEnergy) {
-      new_dw->put(sum_vartype(0.),     lb->StrainEnergyLabel);
+      new_dw->put(sum_vartype(0.), lb->StrainEnergyLabel);
     }
   }
 }
 
-         
-void CompMooneyRivlin::addParticleState(std::vector<const VarLabel*>& from,
-                                        std::vector<const VarLabel*>& to)
+void
+CompMooneyRivlin::addParticleState(std::vector<const VarLabel*>& from,
+                                   std::vector<const VarLabel*>& to)
 {
 }
 
-void CompMooneyRivlin::addComputesAndRequires(Task* task,
-                                              const MPMMaterial* matl,
-                                              const PatchSet* patches ) const
+void
+CompMooneyRivlin::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                         const PatchSet* patches) const
 {
-  // Add the computes and requires that are common to all explicit 
+  // Add the computes and requires that are common to all explicit
   // constitutive models.  The method is defined in the ConstitutiveModel
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForExplicit(task, matlset, patches);
 }
 
-void 
-CompMooneyRivlin::addComputesAndRequires(Task* ,
-                                   const MPMMaterial* ,
-                                   const PatchSet* ,
-                                   const bool, 
-                                   const bool ) const
+void
+CompMooneyRivlin::addComputesAndRequires(Task*, const MPMMaterial*,
+                                         const PatchSet*, const bool,
+                                         const bool) const
 {
 }
 
-double CompMooneyRivlin::computeRhoMicroCM(double /*pressure*/,
-                                      const double /*p_ref*/,
-                                           const MPMMaterial* /*matl*/,
-                                           double temperature,
-                                           double rho_guess)
+double
+CompMooneyRivlin::computeRhoMicroCM(double /*pressure*/, const double /*p_ref*/,
+                                    const MPMMaterial* /*matl*/,
+                                    double temperature, double rho_guess)
 {
 #if 0
   double rho_orig = matl->getInitialDensity();
@@ -384,16 +377,17 @@ double CompMooneyRivlin::computeRhoMicroCM(double /*pressure*/,
   cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR CompMooneyRivlin"
        << endl;
 
-  double rho_cur=0.;
+  double rho_cur = 0.;
 
   return rho_cur;
 }
 
-void CompMooneyRivlin::computePressEOSCM(double /*rho_cur*/,double& /*pressure*/,
-                                         double /*p_ref*/,
-                                         double& /*dp_drho*/, double& /*tmp*/,
-                                         const MPMMaterial* /*matl*/, 
-                                         double temperature)
+void
+CompMooneyRivlin::computePressEOSCM(double /*rho_cur*/, double& /*pressure*/,
+                                    double /*p_ref*/, double& /*dp_drho*/,
+                                    double& /*tmp*/,
+                                    const MPMMaterial* /*matl*/,
+                                    double temperature)
 {
 #if 0
   double bulk = d_initialData.Bulk;
@@ -410,14 +404,13 @@ void CompMooneyRivlin::computePressEOSCM(double /*rho_cur*/,double& /*pressure*/
        << endl;
 }
 
-double CompMooneyRivlin::getCompressibility()
+double
+CompMooneyRivlin::getCompressibility()
 {
   cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR CompMooneyRivlin"
        << endl;
   return 1.0;
 }
-
-
 
 namespace Uintah {
 

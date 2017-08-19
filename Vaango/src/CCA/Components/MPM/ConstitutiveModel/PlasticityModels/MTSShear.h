@@ -54,41 +54,39 @@
 
 namespace Uintah {
 
-  /*! \class MTSShear
-   *  \brief The shear modulus model used by Folansbee and Kocks in 
-   *         the MTS plasticity model.
-   *  \author Biswajit Banerjee, 
-   *  \author C-SAFE and Department of Mechanical Engineering,
-   *  \author University of Utah.
-   *
-  */
-  class MTSShear : public ShearModulusModel {
+/*! \class MTSShear
+ *  \brief The shear modulus model used by Folansbee and Kocks in
+ *         the MTS plasticity model.
+ *  \author Biswajit Banerjee,
+ *  \author C-SAFE and Department of Mechanical Engineering,
+ *  \author University of Utah.
+ *
+*/
+class MTSShear : public ShearModulusModel
+{
 
-  private:
+private:
+  double d_mu0; // Material constant (also in MTS model)
+  double d_D;   // Material constant (also in MTS model)
+  double d_T0;  // Material constant (also in MTS model)
 
-    double d_mu0; // Material constant (also in MTS model)
-    double d_D;   // Material constant (also in MTS model)
-    double d_T0;  // Material constant (also in MTS model)
+  MTSShear& operator=(const MTSShear& smm);
 
-    MTSShear& operator=(const MTSShear &smm);
+public:
+  /*! Construct a constant shear modulus model. */
+  MTSShear(ProblemSpecP& ps);
 
-  public:
-         
-    /*! Construct a constant shear modulus model. */
-    MTSShear(ProblemSpecP& ps);
+  /*! Construct a copy of constant shear modulus model. */
+  MTSShear(const MTSShear* smm);
 
-    /*! Construct a copy of constant shear modulus model. */
-    MTSShear(const MTSShear* smm);
+  /*! Destructor of constant shear modulus model.   */
+  ~MTSShear() override;
 
-    /*! Destructor of constant shear modulus model.   */
-    virtual ~MTSShear();
+  void outputProblemSpec(ProblemSpecP& ps) override;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    /*! Compute the shear modulus */
-    double computeShearModulus(const PlasticityState* state);
-  };
+  /*! Compute the shear modulus */
+  double computeShearModulus(const PlasticityState* state) override;
+};
 } // End namespace Uintah
-      
-#endif  // __MTS_SHEAR_MODEL_H__
 
+#endif // __MTS_SHEAR_MODEL_H__

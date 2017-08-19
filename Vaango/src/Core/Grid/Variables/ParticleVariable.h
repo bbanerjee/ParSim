@@ -44,6 +44,8 @@
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Disclosure/TypeUtils.h>
 #include <Core/IO/SpecializedRunLengthEncoder.h>
+#include <Core/Math/Short27.h>
+#include <Core/Math/Matrix3.h>
 #include <iostream>
 #include <cstring>
 

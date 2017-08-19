@@ -25,58 +25,66 @@
  */
 
 #include "PressureModelFactory.h"
-#include "LinearElasticPressure.h"
-#include "DefaultHyperelasticPressure.h"
 #include "BorjaHyperelasticPressure.h"
+#include "DefaultHyperelasticPressure.h"
+#include "LinearElasticPressure.h"
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
-#include <string>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <iostream>
+#include <string>
 
 using namespace std;
 using namespace Uintah;
 
-PressureModel* PressureModelFactory::create(ProblemSpecP& ps)
+PressureModel*
+PressureModelFactory::create(ProblemSpecP& ps)
 {
-   ProblemSpecP child = ps->findBlock("pressure_model");
-   if(!child) {
-      ostringstream msg;
-      msg << "No <pressure_model> tag in input file." << endl;
-      throw ProblemSetupException(msg.str(), _FILE__, __LINE__);
-   }
-   string model_type;
-   if(!child->getAttribute("type", model_type)) {
-      ostringstream msg;
-      msg << "No type has been specified for <pressure_model type=?> in input file." << endl;
-      throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
-   }
-   
-   if (model_type == "linear_elastic")
-      return(scinew LinearElasticPressure(child));
-   else if (model_type == "hyperelastic")
-      return(scinew DefaultHyperelasticPressure(child));
-   else if (model_type == "borja")
-      return(scinew BorjaHyperelasticPressure(child));
-   else {
-      ostringstream msg;
-      msg << "Unknown type in <pressure_model type=" << model_type << "> in input file." << endl;
-      throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
-   }
+  ProblemSpecP child = ps->findBlock("pressure_model");
+  if (!child) {
+    ostringstream msg;
+    msg << "No <pressure_model> tag in input file." << endl;
+    throw ProblemSetupException(msg.str(), _FILE__, __LINE__);
+  }
+  string model_type;
+  if (!child->getAttribute("type", model_type)) {
+    ostringstream msg;
+    msg
+      << "No type has been specified for <pressure_model type=?> in input file."
+      << endl;
+    throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
+  }
+
+  if (model_type == "linear_elastic")
+    return (scinew LinearElasticPressure(child));
+  else if (model_type == "hyperelastic")
+    return (scinew DefaultHyperelasticPressure(child));
+  else if (model_type == "borja")
+    return (scinew BorjaHyperelasticPressure(child));
+  else {
+    ostringstream msg;
+    msg << "Unknown type in <pressure_model type=" << model_type
+        << "> in input file." << endl;
+    throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
+  }
 }
 
-PressureModel* 
+PressureModel*
 PressureModelFactory::createCopy(const PressureModel* smm)
 {
-   if (dynamic_cast<const LinearElasticPressure*>(smm))
-      return(scinew LinearElasticPressure(dynamic_cast<const LinearElasticPressure*>(smm)));
-   else if (dynamic_cast<const DefaultHyperelasticPressure*>(smm))
-      return(scinew DefaultHyperelasticPressure(dynamic_cast<const DefaultHyperelasticPressure*>(smm)));
-   else if (dynamic_cast<const BorjaHyperelasticPressure*>(smm))
-      return(scinew BorjaHyperelasticPressure(dynamic_cast<const BorjaHyperelasticPressure*>(smm)));
-   else {
-      ostringstream msg;
-      msg << "The type in <pressure_model type=" << model_type << "> does not exist." << endl;
-      throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
-   }
+  if (dynamic_cast<const LinearElasticPressure*>(smm))
+    return (scinew LinearElasticPressure(
+      dynamic_cast<const LinearElasticPressure*>(smm)));
+  else if (dynamic_cast<const DefaultHyperelasticPressure*>(smm))
+    return (scinew DefaultHyperelasticPressure(
+      dynamic_cast<const DefaultHyperelasticPressure*>(smm)));
+  else if (dynamic_cast<const BorjaHyperelasticPressure*>(smm))
+    return (scinew BorjaHyperelasticPressure(
+      dynamic_cast<const BorjaHyperelasticPressure*>(smm)));
+  else {
+    ostringstream msg;
+    msg << "The type in <pressure_model type=" << model_type
+        << "> does not exist." << endl;
+    throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
+  }
 }

@@ -24,7 +24,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_CamClay.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
@@ -38,37 +37,36 @@ YieldCond_CamClay::YieldCond_CamClay(Uintah::ProblemSpecP& ps,
 {
   d_intvar = intvar;
 
-  ps->require("M",d_M);
+  ps->require("M", d_M);
 }
-         
+
 YieldCond_CamClay::YieldCond_CamClay(const YieldCond_CamClay* yc)
 {
   d_intvar = yc->d_intvar;
 
-  d_M = yc->d_M; 
-}
-         
-YieldCond_CamClay::~YieldCond_CamClay()
-{
+  d_M = yc->d_M;
 }
 
-void YieldCond_CamClay::outputProblemSpec(Uintah::ProblemSpecP& ps)
+YieldCond_CamClay::~YieldCond_CamClay() = default;
+
+void
+YieldCond_CamClay::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
-  yield_ps->setAttribute("type","camclay");
-  yield_ps->appendElement("M",d_M);
-
+  yield_ps->setAttribute("type", "camclay");
+  yield_ps->appendElement("M", d_M);
 }
-         
+
 //--------------------------------------------------------------
 // Evaluate yield condition (q = state->q
 //                           p = state->p
 //                           p_c = state->p_c)
 //--------------------------------------------------------------
-double 
+double
 YieldCond_CamClay::evalYieldCondition(const ModelStateBase* state_input)
 {
-  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  const ModelState_CamClay* state =
+    dynamic_cast<const ModelState_CamClay*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -79,7 +77,7 @@ YieldCond_CamClay::evalYieldCondition(const ModelStateBase* state_input)
   double p = state->p;
   double q = state->q;
   double p_c = state->p_c;
-  return q*q/(d_M*d_M) + p*(p - p_c);
+  return q * q / (d_M * d_M) + p * (p - p_c);
 }
 
 //--------------------------------------------------------------
@@ -87,10 +85,11 @@ YieldCond_CamClay::evalYieldCondition(const ModelStateBase* state_input)
 //                               p = state->p
 //                               p_c = state->p_c)
 //--------------------------------------------------------------
-double 
+double
 YieldCond_CamClay::evalYieldConditionMax(const ModelStateBase* state_input)
 {
-  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  const ModelState_CamClay* state =
+    dynamic_cast<const ModelState_CamClay*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -99,8 +98,8 @@ YieldCond_CamClay::evalYieldConditionMax(const ModelStateBase* state_input)
   }
 
   double p_c = state->p_c;
-  double qmax = fabs(0.5*d_M*p_c);
-  return qmax*qmax/(d_M*d_M);
+  double qmax = fabs(0.5 * d_M * p_c);
+  return qmax * qmax / (d_M * d_M);
 }
 
 //--------------------------------------------------------------
@@ -110,10 +109,12 @@ YieldCond_CamClay::evalYieldConditionMax(const ModelStateBase* state_input)
 // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
 //   df/dp = 2p - p_c
 //--------------------------------------------------------------
-double 
-YieldCond_CamClay::computeVolStressDerivOfYieldFunction(const ModelStateBase* state_input)
+double
+YieldCond_CamClay::computeVolStressDerivOfYieldFunction(
+  const ModelStateBase* state_input)
 {
-  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  const ModelState_CamClay* state =
+    dynamic_cast<const ModelState_CamClay*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -121,18 +122,21 @@ YieldCond_CamClay::computeVolStressDerivOfYieldFunction(const ModelStateBase* st
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  // std::cout << " p = " << state->p << " pc = " << state->p_c << " dfdp = " << 2*state->p-state->p_c << endl;
-  return (2.0*state->p - state->p_c);
+  // std::cout << " p = " << state->p << " pc = " << state->p_c << " dfdp = " <<
+  // 2*state->p-state->p_c << endl;
+  return (2.0 * state->p - state->p_c);
 }
 
 //--------------------------------------------------------------
-// Compute df/dq  
+// Compute df/dq
 //   df/dq = 2q/M^2
 //--------------------------------------------------------------
-double 
-YieldCond_CamClay::computeDevStressDerivOfYieldFunction(const ModelStateBase* state_input)
+double
+YieldCond_CamClay::computeDevStressDerivOfYieldFunction(
+  const ModelStateBase* state_input)
 {
-  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  const ModelState_CamClay* state =
+    dynamic_cast<const ModelState_CamClay*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -140,7 +144,7 @@ YieldCond_CamClay::computeDevStressDerivOfYieldFunction(const ModelStateBase* st
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  return 2.0*state->q/(d_M*d_M);
+  return 2.0 * state->q / (d_M * d_M);
 }
 
 //--------------------------------------------------------------
@@ -151,31 +155,30 @@ YieldCond_CamClay::computeDevStressDerivOfYieldFunction(const ModelStateBase* st
 // Requires:  Equation of state and internal variable
 //--------------------------------------------------------------
 double
-YieldCond_CamClay::computeVolStrainDerivOfDfDp(const ModelStateBase* state_input,
-                                               const PressureModel* eos,
-                                               const ShearModulusModel* ,
-                                               const InternalVariableModel* intvar)
+YieldCond_CamClay::computeVolStrainDerivOfDfDp(
+  const ModelStateBase* state_input, const PressureModel* eos,
+  const ShearModulusModel*, const InternalVariableModel* intvar)
 {
   double dpdepsev = eos->computeDpDepse_v(state_input);
-  double dpcdepsev = intvar->computeVolStrainDerivOfInternalVariable(state_input);
-  return 2.0*dpdepsev - dpcdepsev;
+  double dpcdepsev =
+    intvar->computeVolStrainDerivOfInternalVariable(state_input);
+  return 2.0 * dpdepsev - dpcdepsev;
 }
 
 //--------------------------------------------------------------
 // Compute d/depse_s(df/dp)
 //   df/dp = 2p(epse_v, epse_s) - p_c(epse_v)
-//   d/depse_s(df/dp) = 2dp/depse_s 
+//   d/depse_s(df/dp) = 2dp/depse_s
 //
-// Requires:  Equation of state 
+// Requires:  Equation of state
 //--------------------------------------------------------------
 double
-YieldCond_CamClay::computeDevStrainDerivOfDfDp(const ModelStateBase* state_input,
-                                               const PressureModel* eos,
-                                               const ShearModulusModel* ,
-                                               const InternalVariableModel* )
+YieldCond_CamClay::computeDevStrainDerivOfDfDp(
+  const ModelStateBase* state_input, const PressureModel* eos,
+  const ShearModulusModel*, const InternalVariableModel*)
 {
   double dpdepses = eos->computeDpDepse_s(state_input);
-  return 2.0*dpdepses;
+  return 2.0 * dpdepses;
 }
 
 //--------------------------------------------------------------
@@ -186,13 +189,12 @@ YieldCond_CamClay::computeDevStrainDerivOfDfDp(const ModelStateBase* state_input
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_CamClay::computeVolStrainDerivOfDfDq(const ModelStateBase* state_input,
-                                               const PressureModel* ,
-                                               const ShearModulusModel* shear,
-                                               const InternalVariableModel* )
+YieldCond_CamClay::computeVolStrainDerivOfDfDq(
+  const ModelStateBase* state_input, const PressureModel*,
+  const ShearModulusModel* shear, const InternalVariableModel*)
 {
   double dqdepsev = shear->computeDqDepse_v(state_input);
-  return (2.0*dqdepsev)/(d_M*d_M);
+  return (2.0 * dqdepsev) / (d_M * d_M);
 }
 
 //--------------------------------------------------------------
@@ -203,13 +205,12 @@ YieldCond_CamClay::computeVolStrainDerivOfDfDq(const ModelStateBase* state_input
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_CamClay::computeDevStrainDerivOfDfDq(const ModelStateBase* state_input,
-                                                   const PressureModel* ,
-                                                   const ShearModulusModel* shear,
-                                                   const InternalVariableModel* )
+YieldCond_CamClay::computeDevStrainDerivOfDfDq(
+  const ModelStateBase* state_input, const PressureModel*,
+  const ShearModulusModel* shear, const InternalVariableModel*)
 {
   double dqdepses = shear->computeDqDepse_s(state_input);
-  return (2.0*dqdepses)/(d_M*d_M);
+  return (2.0 * dqdepses) / (d_M * d_M);
 }
 
 //--------------------------------------------------------------
@@ -219,12 +220,12 @@ YieldCond_CamClay::computeDevStrainDerivOfDfDq(const ModelStateBase* state_input
 // Requires:  Equation of state, shear modulus model, internal variable model
 //--------------------------------------------------------------
 double
-YieldCond_CamClay::computeVolStrainDerivOfYieldFunction(const ModelStateBase* state_input,
-                                                        const PressureModel* eos,
-                                                        const ShearModulusModel* shear,
-                                                        const InternalVariableModel* intvar)
+YieldCond_CamClay::computeVolStrainDerivOfYieldFunction(
+  const ModelStateBase* state_input, const PressureModel* eos,
+  const ShearModulusModel* shear, const InternalVariableModel* intvar)
 {
-  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  const ModelState_CamClay* state =
+    dynamic_cast<const ModelState_CamClay*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -236,29 +237,29 @@ YieldCond_CamClay::computeVolStrainDerivOfYieldFunction(const ModelStateBase* st
   double dfdp = computeVolStressDerivOfYieldFunction(state_input);
   double dqdepsev = shear->computeDqDepse_v(state_input);
   double dpdepsev = eos->computeDpDepse_v(state_input);
-  double dpcdepsev = intvar->computeVolStrainDerivOfInternalVariable(state_input);
-  double dfdepsev = dfdq*dqdepsev + dfdp*dpdepsev - state->p*dpcdepsev;
+  double dpcdepsev =
+    intvar->computeVolStrainDerivOfInternalVariable(state_input);
+  double dfdepsev = dfdq * dqdepsev + dfdp * dpdepsev - state->p * dpcdepsev;
 
   return dfdepsev;
 }
 
 //--------------------------------------------------------------
 // Compute df/depse_s
-//   df/depse_s = df/dq dq/depse_s + df/dp dp/depse_s 
+//   df/depse_s = df/dq dq/depse_s + df/dp dp/depse_s
 //
 // Requires:  Equation of state, shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_CamClay::computeDevStrainDerivOfYieldFunction(const ModelStateBase* state_input,
-                                                        const PressureModel* eos,
-                                                        const ShearModulusModel* shear,
-                                                        const InternalVariableModel* )
+YieldCond_CamClay::computeDevStrainDerivOfYieldFunction(
+  const ModelStateBase* state_input, const PressureModel* eos,
+  const ShearModulusModel* shear, const InternalVariableModel*)
 {
   double dfdq = computeDevStressDerivOfYieldFunction(state_input);
   double dfdp = computeVolStressDerivOfYieldFunction(state_input);
   double dqdepses = shear->computeDqDepse_s(state_input);
   double dpdepses = eos->computeDpDepse_s(state_input);
-  double dfdepses = dfdq*dqdepses + dfdp*dpdepses;
+  double dfdepses = dfdq * dqdepses + dfdp * dpdepses;
 
   return dfdepses;
 }
@@ -269,11 +270,12 @@ YieldCond_CamClay::computeDevStrainDerivOfYieldFunction(const ModelStateBase* st
 // Evaluate yield condition (s = deviatoric stress
 //                           p = state->p
 //                           p_c = state->p_c)
-double 
-YieldCond_CamClay::evalYieldCondition(const Uintah::Matrix3& ,
+double
+YieldCond_CamClay::evalYieldCondition(const Uintah::Matrix3&,
                                       const ModelStateBase* state_input)
 {
-  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  const ModelState_CamClay* state =
+    dynamic_cast<const ModelState_CamClay*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -288,18 +290,15 @@ YieldCond_CamClay::evalYieldCondition(const Uintah::Matrix3& ,
   return evalYieldCondition(p, q, pc, 0.0, dummy);
 }
 
-double 
-YieldCond_CamClay::evalYieldCondition(const double p,
-                                      const double q,
-                                      const double p_c,
-                                      const double,
-                                      double& )
+double
+YieldCond_CamClay::evalYieldCondition(const double p, const double q,
+                                      const double p_c, const double, double&)
 {
-  return q*q/(d_M*d_M) + p*(p - p_c);
+  return q * q / (d_M * d_M) + p * (p - p_c);
 }
 
 //--------------------------------------------------------------
-// Other derivatives 
+// Other derivatives
 
 // Compute df/dsigma
 //    df/dsigma = (2p - p_c)/3 I + sqrt(3/2) 2q/M^2 s/||s||
@@ -307,45 +306,45 @@ YieldCond_CamClay::evalYieldCondition(const double p,
 //              = 1/3 df/dp I + df/ds
 // where
 //    s = sigma - 1/3 tr(sigma) I
-void 
+void
 YieldCond_CamClay::evalDerivOfYieldFunction(const Uintah::Matrix3& sig,
-                                            const double p_c,
-                                            const double ,
+                                            const double p_c, const double,
                                             Uintah::Matrix3& derivative)
 {
-  Matrix3 One; One.Identity();
-  double p = sig.Trace()/3.0;
-  Matrix3 sigDev = sig - One*p;
-  double df_dp = 2.0*p - p_c;
+  Matrix3 One;
+  One.Identity();
+  double p = sig.Trace() / 3.0;
+  Matrix3 sigDev = sig - One * p;
+  double df_dp = 2.0 * p - p_c;
   Matrix3 df_ds(0.0);
   evalDevDerivOfYieldFunction(sigDev, 0.0, 0.0, df_ds);
-  derivative = One*(df_dp/3.0) + df_ds;
+  derivative = One * (df_dp / 3.0) + df_ds;
   return;
 }
 
 // Compute df/ds  where s = deviatoric stress
 //    df/ds = sqrt(3/2) df/dq s/||s|| = sqrt(3/2) 2q/M^2 n
-void 
+void
 YieldCond_CamClay::evalDevDerivOfYieldFunction(const Uintah::Matrix3& sigDev,
-                                               const double ,
-                                               const double ,
+                                               const double, const double,
                                                Uintah::Matrix3& derivative)
 {
   double sigDevNorm = sigDev.Norm();
-  Matrix3 n = sigDev/sigDevNorm;
-  double q_scaled = 3.0*sigDevNorm;
-  derivative = n*(q_scaled/d_M*d_M);
+  Matrix3 n = sigDev / sigDevNorm;
+  double q_scaled = 3.0 * sigDevNorm;
+  derivative = n * (q_scaled / d_M * d_M);
   return;
 }
 
 /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$) */
 //   p_c = state->p_c
-void 
+void
 YieldCond_CamClay::eval_df_dsigma(const Matrix3& sig,
                                   const ModelStateBase* state_input,
                                   Matrix3& df_dsigma)
 {
-  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  const ModelState_CamClay* state =
+    dynamic_cast<const ModelState_CamClay*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -357,11 +356,10 @@ YieldCond_CamClay::eval_df_dsigma(const Matrix3& sig,
   return;
 }
 
-/*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$  
+/*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
     where \f$s\f$ is deviatoric part of Cauchy stress */
-void 
-YieldCond_CamClay::eval_df_dxi(const Matrix3& sigDev,
-                               const ModelStateBase* ,
+void
+YieldCond_CamClay::eval_df_dxi(const Matrix3& sigDev, const ModelStateBase*,
                                Matrix3& df_ds)
 {
   evalDevDerivOfYieldFunction(sigDev, 0.0, 0.0, df_ds);
@@ -369,51 +367,46 @@ YieldCond_CamClay::eval_df_dxi(const Matrix3& sigDev,
 }
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
-void 
+void
 YieldCond_CamClay::eval_df_ds_df_dbeta(const Matrix3& sigDev,
-                                       const ModelStateBase*,
-                                       Matrix3& df_ds,
+                                       const ModelStateBase*, Matrix3& df_ds,
                                        Matrix3& df_dbeta)
 {
   evalDevDerivOfYieldFunction(sigDev, 0.0, 0.0, df_ds);
   Matrix3 zero(0.0);
-  df_dbeta = zero; 
+  df_dbeta = zero;
   return;
 }
 
 /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$) */
-double 
-YieldCond_CamClay::eval_df_dep(const Matrix3& ,
-                               const double& dsigy_dep,
-                               const ModelStateBase* )
+double
+YieldCond_CamClay::eval_df_dep(const Matrix3&, const double& dsigy_dep,
+                               const ModelStateBase*)
 {
   cout << "YieldCond_CamClay: eval_df_dep not implemented yet " << endl;
   return 0.0;
 }
 
 /*! Derivative with respect to the porosity (\f$\epsilon^p \f$) */
-double 
-YieldCond_CamClay::eval_df_dphi(const Matrix3& ,
-                                const ModelStateBase* )
+double
+YieldCond_CamClay::eval_df_dphi(const Matrix3&, const ModelStateBase*)
 {
   cout << "YieldCond_CamClay: eval_df_dphi not implemented yet " << endl;
   return 0.0;
 }
 
 /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-double 
-YieldCond_CamClay::eval_h_alpha(const Matrix3& ,
-                                const ModelStateBase* )
+double
+YieldCond_CamClay::eval_h_alpha(const Matrix3&, const ModelStateBase*)
 {
   cout << "YieldCond_CamClay: eval_h_alpha not implemented yet " << endl;
   return 1.0;
 }
 
 /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-double 
-YieldCond_CamClay::eval_h_phi(const Matrix3& ,
-                              const double& ,
-                              const ModelStateBase* )
+double
+YieldCond_CamClay::eval_h_phi(const Matrix3&, const double&,
+                              const ModelStateBase*)
 {
   cout << "YieldCond_CamClay: eval_h_phi not implemented yet " << endl;
   return 0.0;
@@ -421,28 +414,25 @@ YieldCond_CamClay::eval_h_phi(const Matrix3& ,
 
 //--------------------------------------------------------------
 // Tangent moduli
-void 
+void
 YieldCond_CamClay::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
-                                                 const Matrix3& sigma, 
-                                                 double sigY,
-                                                 double dsigYdep,
-                                                 double porosity,
-                                                 double ,
+                                                 const Matrix3& sigma,
+                                                 double sigY, double dsigYdep,
+                                                 double porosity, double,
                                                  TangentModulusTensor& Cep)
 {
-  cout << "YieldCond_CamClay: computeElasPlasTangentModulus not implemented yet " << endl;
+  cout
+    << "YieldCond_CamClay: computeElasPlasTangentModulus not implemented yet "
+    << endl;
   return;
 }
 
-void 
+void
 YieldCond_CamClay::computeTangentModulus(const TangentModulusTensor& Ce,
-                                         const Matrix3& f_sigma, 
-                                         double f_q1,
-                                         double h_q1,
-                                         TangentModulusTensor& Cep)
+                                         const Matrix3& f_sigma, double f_q1,
+                                         double h_q1, TangentModulusTensor& Cep)
 {
-  cout << "YieldCond_CamClay: computeTangentModulus not implemented yet " << endl;
+  cout << "YieldCond_CamClay: computeTangentModulus not implemented yet "
+       << endl;
   return;
 }
-
-

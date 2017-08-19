@@ -24,19 +24,13 @@
  * IN THE SOFTWARE.
  */
 
-
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 
 using namespace Vaango;
 
-PressureModel::PressureModel()
-{
-}
+PressureModel::PressureModel() = default;
 
-PressureModel::~PressureModel()
-{
-}
+PressureModel::~PressureModel() = default;
 
 // Calculate rate of temperature change due to compression/expansion
 double

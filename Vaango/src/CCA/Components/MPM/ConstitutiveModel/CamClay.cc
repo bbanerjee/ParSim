@@ -27,108 +27,114 @@
 // This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
 // make the isnan function not work.  This define makes the cmath header
 // not get included since we do not need it anyway.
-#  define _CPP_CMATH
+#define _CPP_CMATH
 #endif
 
 #include <CCA/Components/MPM/ConstitutiveModel/CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <Core/Grid/Patch.h>
-#include <Core/Grid/LinearInterpolator.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
+#include <Core/Grid/Level.h>
+#include <Core/Grid/LinearInterpolator.h>
+#include <Core/Grid/Patch.h>
+#include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/ParticleSubset.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Grid/Task.h>
-#include <Core/Grid/Level.h>
 #include <Core/Grid/Variables/VarLabel.h>
+#include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Labels/MPMLabel.h>
-#include <Core/Math/MinMax.h>
+#include <Core/Malloc/Allocator.h>
+#include <Core/Math/FastMatrix.h>
 #include <Core/Math/Gaussian.h>
 #include <Core/Math/Matrix3.h>
+#include <Core/Math/MinMax.h>
 #include <Core/Math/SymmMatrix3.h>
-#include <Core/Math/FastMatrix.h>
-#include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Malloc/Allocator.h>
 #include <Core/Util/DebugStream.h>
 #include <cmath>
 #include <iostream>
 
-#include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/ConvergenceFailure.h>
-#include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/InternalError.h>
-
+#include <Core/Exceptions/InvalidValue.h>
+#include <Core/Exceptions/ParameterNotFound.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 
 using namespace std;
 using namespace Uintah;
 
-
 //__________________________________
 //  To turn on debug flags use, e.g.,
-//  csh/tcsh : setenv SCI_DEBUG "CamClay:+,CamClayDefGrad:+,CamClayStrain:+".....
+//  csh/tcsh : setenv SCI_DEBUG
+//  "CamClay:+,CamClayDefGrad:+,CamClayStrain:+".....
 //  bash     : export SCI_DEBUG="CamClay:+,CamClayDefGrad:+,CamClayConv:+" )
 //  default is OFF
 
-static DebugStream cout_CC("CamClay",false);
-static DebugStream cout_CC_Conv("CamClayConv",false);
-static DebugStream cout_CC_F("CamClayDefGrad",false);
-static DebugStream cout_CC_Eps("CamClayStrain",false);
+static DebugStream cout_CC("CamClay", false);
+static DebugStream cout_CC_Conv("CamClayConv", false);
+static DebugStream cout_CC_F("CamClayDefGrad", false);
+static DebugStream cout_CC_Eps("CamClayStrain", false);
 
 CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
   d_eos = Vaango::PressureModelFactory::create(ps);
-  if(!d_eos){
+  if (!d_eos) {
     ostringstream desc;
-    desc << "**ERROR** Internal error while creating CamClay->PressureModelFactory." << endl;
+    desc << "**ERROR** Internal error while creating "
+            "CamClay->PressureModelFactory."
+         << endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
   d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos);
   if (!d_shear) {
     ostringstream desc;
-    desc << "**ERROR** Internal error while creating CamClay->ShearModulusModelFactory." << endl;
+    desc << "**ERROR** Internal error while creating "
+            "CamClay->ShearModulusModelFactory."
+         << endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
-  
+
   d_intvar = Vaango::InternalVariableModelFactory::create(ps, d_shear);
-  if(!d_intvar){
+  if (!d_intvar) {
     ostringstream desc;
-    desc << "**ERROR** Internal error while creating CamClay->InternalVariableModelFactory." << endl;
+    desc << "**ERROR** Internal error while creating "
+            "CamClay->InternalVariableModelFactory."
+         << endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
   d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar);
-  if(!d_yield){
+  if (!d_yield) {
     ostringstream desc;
-    desc << "**ERROR** Internal error while creating CamClay->YieldConditionFactory." << endl;
+    desc << "**ERROR** Internal error while creating "
+            "CamClay->YieldConditionFactory."
+         << endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
   initializeLocalMPMLabels();
-
 }
 
-CamClay::CamClay(const CamClay* cm) :
-  ConstitutiveModel(cm)
+CamClay::CamClay(const CamClay* cm)
+  : ConstitutiveModel(cm)
 {
   d_eos = Vaango::PressureModelFactory::createCopy(cm->d_eos);
   d_shear = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
   d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
   d_intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
-  
+
   initializeLocalMPMLabels();
 }
 
 CamClay::~CamClay()
 {
-  // Destructor 
+  // Destructor
   VarLabel::destroy(pStrainLabel);
   VarLabel::destroy(pElasticStrainLabel);
   VarLabel::destroy(pDeltaGammaLabel);
@@ -143,47 +149,46 @@ CamClay::~CamClay()
   delete d_intvar;
 }
 
-
-void CamClay::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
+void
+CamClay::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 {
   ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("constitutive_model");
-    cm_ps->setAttribute("type","camclay");
+    cm_ps->setAttribute("type", "camclay");
   }
-  
+
   d_eos->outputProblemSpec(cm_ps);
   d_shear->outputProblemSpec(cm_ps);
   d_yield->outputProblemSpec(cm_ps);
   d_intvar->outputProblemSpec(cm_ps);
 }
 
-
-CamClay* CamClay::clone()
+CamClay*
+CamClay::clone()
 {
   return scinew CamClay(*this);
 }
 
-
 void
 CamClay::initializeLocalMPMLabels()
 {
-  pStrainLabel = VarLabel::create("p.strain",
-    ParticleVariable<Matrix3>::getTypeDescription());
-  pElasticStrainLabel = VarLabel::create("p.elasticStrain",
-    ParticleVariable<Matrix3>::getTypeDescription());
-  pDeltaGammaLabel = VarLabel::create("p.deltaGamma",
-    ParticleVariable<double>::getTypeDescription());
+  pStrainLabel = VarLabel::create(
+    "p.strain", ParticleVariable<Matrix3>::getTypeDescription());
+  pElasticStrainLabel = VarLabel::create(
+    "p.elasticStrain", ParticleVariable<Matrix3>::getTypeDescription());
+  pDeltaGammaLabel = VarLabel::create(
+    "p.deltaGamma", ParticleVariable<double>::getTypeDescription());
 
-  pStrainLabel_preReloc = VarLabel::create("p.strain+",
-    ParticleVariable<Matrix3>::getTypeDescription());
-  pElasticStrainLabel_preReloc = VarLabel::create("p.elasticStrain+",
-    ParticleVariable<Matrix3>::getTypeDescription());
-  pDeltaGammaLabel_preReloc = VarLabel::create("p.deltaGamma+",
-    ParticleVariable<double>::getTypeDescription());
+  pStrainLabel_preReloc = VarLabel::create(
+    "p.strain+", ParticleVariable<Matrix3>::getTypeDescription());
+  pElasticStrainLabel_preReloc = VarLabel::create(
+    "p.elasticStrain+", ParticleVariable<Matrix3>::getTypeDescription());
+  pDeltaGammaLabel_preReloc = VarLabel::create(
+    "p.deltaGamma+", ParticleVariable<double>::getTypeDescription());
 }
 
-void 
+void
 CamClay::addParticleState(std::vector<const VarLabel*>& from,
                           std::vector<const VarLabel*>& to)
 {
@@ -200,9 +205,8 @@ CamClay::addParticleState(std::vector<const VarLabel*>& from,
   d_intvar->addParticleState(from, to);
 }
 
-void 
-CamClay::addInitialComputesAndRequires(Task* task,
-                                       const MPMMaterial* matl,
+void
+CamClay::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
                                        const PatchSet* patch) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -210,14 +214,13 @@ CamClay::addInitialComputesAndRequires(Task* task,
   task->computes(pStrainLabel, matlset);
   task->computes(pElasticStrainLabel, matlset);
   task->computes(pDeltaGammaLabel, matlset);
- 
+
   // Add internal evolution variables computed by internal variable model
   d_intvar->addInitialComputesAndRequires(task, matl, patch);
 }
 
-void 
-CamClay::initializeCMData(const Patch* patch,
-                          const MPMMaterial* matl,
+void
+CamClay::initializeCMData(const Patch* patch, const MPMMaterial* matl,
                           DataWarehouse* new_dw)
 {
   // Initialize the variables shared by all constitutive models
@@ -227,31 +230,31 @@ CamClay::initializeCMData(const Patch* patch,
 
   // Put stuff in here to initialize each particle's
   // constitutive model parameters
-  Matrix3 one, zero(0.); one.Identity();
+  Matrix3 one, zero(0.);
+  one.Identity();
 
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
-  ParticleVariable<Matrix3>  pStrain, pElasticStrain; 
-  ParticleVariable<double>   pDeltaGamma;
+  ParticleVariable<Matrix3> pStrain, pElasticStrain;
+  ParticleVariable<double> pDeltaGamma;
 
   new_dw->allocateAndPut(pStrain, pStrainLabel, pset);
   new_dw->allocateAndPut(pElasticStrain, pElasticStrainLabel, pset);
   new_dw->allocateAndPut(pDeltaGamma, pDeltaGammaLabel, pset);
 
-  for(ParticleSubset::iterator iter = pset->begin();iter != pset->end();iter++){
+  for (int& iter : *pset) {
 
-    pStrain[*iter] = zero;
-    pElasticStrain[*iter] = zero;
-    pDeltaGamma[*iter] = 0.0;
+    pStrain[iter] = zero;
+    pElasticStrain[iter] = zero;
+    pDeltaGamma[iter] = 0.0;
   }
 
   // Initialize the data for the internal variable model
   d_intvar->initializeInternalVariable(pset, new_dw);
 }
 
-void 
-CamClay::computeStableTimestep(const Patch* patch,
-                               const MPMMaterial* matl,
+void
+CamClay::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
                                DataWarehouse* new_dw)
 {
   // This is only called for the initial timestep - all other timesteps
@@ -265,77 +268,77 @@ CamClay::computeStableTimestep(const Patch* patch,
   constParticleVariable<double> pMass, pVol_new;
   constParticleVariable<Vector> pVelocity;
 
-  new_dw->get(pMass,     lb->pMassLabel,     pset);
-  new_dw->get(pVol_new,  lb->pVolumeLabel,   pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVol_new, lb->pVolumeLabel, pset);
   new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
-  Vector waveSpeed(1.e-12,1.e-12,1.e-12);
+  Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
 
   double shear = d_shear->computeInitialShearModulus();
   double bulk = d_eos->computeInitialBulkModulus();
 
-  ParticleSubset::iterator iter = pset->begin(); 
-  for(; iter != pset->end(); iter++){
+  ParticleSubset::iterator iter = pset->begin();
+  for (; iter != pset->end(); iter++) {
     particleIndex idx = *iter;
 
     // Compute wave speed at each particle, store the maximum
     Vector pvelocity_idx = pVelocity[idx];
-    if(pMass[idx] > 0){
+    if (pMass[idx] > 0) {
       // ** WARNING ** assuming incrementally linear elastic
       //               this is the volumetric wave speed
-      c_dil = sqrt((bulk + 4.0*shear/3.0)*pVol_new[idx]/pMass[idx]);
+      c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pVol_new[idx] / pMass[idx]);
     } else {
       c_dil = 0.0;
-      pvelocity_idx = Vector(0.0,0.0,0.0);
+      pvelocity_idx = Vector(0.0, 0.0, 0.0);
     }
-    waveSpeed=Vector(Max(c_dil+fabs(pvelocity_idx.x()),waveSpeed.x()),
-                     Max(c_dil+fabs(pvelocity_idx.y()),waveSpeed.y()),
-                     Max(c_dil+fabs(pvelocity_idx.z()),waveSpeed.z()));
+    waveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), waveSpeed.x()),
+                       Max(c_dil + fabs(pvelocity_idx.y()), waveSpeed.y()),
+                       Max(c_dil + fabs(pvelocity_idx.z()), waveSpeed.z()));
   }
 
-  waveSpeed = dx/waveSpeed;
+  waveSpeed = dx / waveSpeed;
   double delT_new = waveSpeed.minComponent();
   new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 }
 
-void 
-CamClay::addComputesAndRequires(Task* task,
-                                const MPMMaterial* matl,
+void
+CamClay::addComputesAndRequires(Task* task, const MPMMaterial* matl,
                                 const PatchSet* patches) const
 {
-  // Add the computes and requires that are common to all explicit 
+  // Add the computes and requires that are common to all explicit
   // constitutive models.  The method is defined in the ConstitutiveModel
   // base class.
-  Ghost::GhostType  gnone = Ghost::None;
+  Ghost::GhostType gnone = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForHypoExplicit(task, matlset, patches);
 
   // Other constitutive model and input dependent computes and requires
-  task->requires(Task::OldDW, pStrainLabel,      matlset, gnone);
-  task->requires(Task::OldDW, pElasticStrainLabel,    matlset, gnone);
-  task->requires(Task::OldDW, pDeltaGammaLabel,    matlset, gnone);
+  task->requires(Task::OldDW, pStrainLabel, matlset, gnone);
+  task->requires(Task::OldDW, pElasticStrainLabel, matlset, gnone);
+  task->requires(Task::OldDW, pDeltaGammaLabel, matlset, gnone);
 
-  task->computes(pStrainLabel_preReloc,    matlset);
-  task->computes(pElasticStrainLabel_preReloc,  matlset);
-  task->computes(pDeltaGammaLabel_preReloc,  matlset);
+  task->computes(pStrainLabel_preReloc, matlset);
+  task->computes(pElasticStrainLabel_preReloc, matlset);
+  task->computes(pDeltaGammaLabel_preReloc, matlset);
 
   // Add internal evolution variables computed by internal variable model
   d_intvar->addComputesAndRequires(task, matl, patches);
 }
 
-void 
+void
 CamClay::computeStressTensor(const PatchSubset* patches,
-                             const MPMMaterial* matl,
-                             DataWarehouse* old_dw,
+                             const MPMMaterial* matl, DataWarehouse* old_dw,
                              DataWarehouse* new_dw)
 {
   // Constants
-  Matrix3 one; one.Identity(); Matrix3 zero(0.0);
+  Matrix3 one;
+  one.Identity();
+  Matrix3 zero(0.0);
   double sqrtThreeTwo = sqrt(1.5);
-  double sqrtTwoThird = 1.0/sqrtThreeTwo;
-  Ghost::GhostType  gac = Ghost::AroundCells;
-  Vector waveSpeed(1.e-12,1.e-12,1.e-12);
+  double sqrtTwoThird = 1.0 / sqrtThreeTwo;
+  Ghost::GhostType gac = Ghost::AroundCells;
+  Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
   double rho_0 = matl->getInitialDensity();
   double totalStrainEnergy = 0.0;
 
@@ -344,7 +347,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
   // double strain_v = 0.0;                // Volumeric strain (eps_v)
   // Matrix3 strain_dev(0.0);              // Deviatoric strain (e)
   // double strain_dev_norm = 0.0;         // ||e||
-  // double strain_s = 0.0;                // eps_s = sqrt(2/3) ||e|| 
+  // double strain_s = 0.0;                // eps_s = sqrt(2/3) ||e||
 
   // Matrix3 strain_elast_tr(0.0);         // Trial elastic strain
   // double strain_elast_v_tr(0.0);        // Trial volumetric elastic strain
@@ -361,88 +364,85 @@ CamClay::computeStressTensor(const PatchSubset* patches,
   // Matrix3 nn(0.0);                    // Plastic flow direction n = ee/||ee||
 
   // Newton iteration constants
-  double tolr = 1.0e-4; //1e-4
+  double tolr = 1.0e-4; // 1e-4
   double tolf = 1.0e-8;
   int iter_break = 100;
 
   // Loop thru patches
-  for(int patchIndex=0; patchIndex<patches->size(); patchIndex++){
+  for (int patchIndex = 0; patchIndex < patches->size(); patchIndex++) {
     const Patch* patch = patches->get(patchIndex);
 
     ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
-    vector<Vector>    d_S(interpolator->size());
-    vector<double>    S(interpolator->size());
-    
+    vector<Vector> d_S(interpolator->size());
+    vector<double> S(interpolator->size());
+
     // Get grid size
     Vector dx = patch->dCell();
-    //double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
+    // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
     // Get the set of particles
     int dwi = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
-    // GET GLOBAL DATA 
+    // GET GLOBAL DATA
 
     // Get the deformation gradient (F) and velocity gradient (L)
-    constParticleVariable<Matrix3>  pDefGrad_old, pDefGrad_new;
-    constParticleVariable<Matrix3>  pVelGrad_old, pVelGrad_new;
+    constParticleVariable<Matrix3> pDefGrad_old, pDefGrad_new;
+    constParticleVariable<Matrix3> pVelGrad_old, pVelGrad_new;
     old_dw->get(pDefGrad_old, lb->pDefGradLabel, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
     old_dw->get(pVelGrad_old, lb->pVelGradLabel, pset);
     new_dw->get(pVelGrad_new, lb->pVelGradLabel_preReloc, pset);
 
     // Get the particle location, particle size, particle mass, particle volume
-    constParticleVariable<Point>  px;
+    constParticleVariable<Point> px;
     constParticleVariable<Matrix3> psize;
     constParticleVariable<double> pMass, pVol_new;
-    old_dw->get(px,       lb->pXLabel,      pset);
-    old_dw->get(psize,    lb->pSizeLabel,   pset);
-    old_dw->get(pMass,    lb->pMassLabel,   pset);
+    old_dw->get(px, lb->pXLabel, pset);
+    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pMass, lb->pMassLabel, pset);
     new_dw->get(pVol_new, lb->pVolumeLabel_preReloc, pset);
 
     // Get the velocity from the grid and particle velocity
     constParticleVariable<Vector> pVelocity;
-    constNCVariable<Vector>       gVelocity;
+    constNCVariable<Vector> gVelocity;
     old_dw->get(pVelocity, lb->pVelocityLabel, pset);
     new_dw->get(gVelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
 
-    // Get the particle stress 
+    // Get the particle stress
     constParticleVariable<Matrix3> pStress_old;
-    old_dw->get(pStress_old, lb->pStressLabel,       pset);
+    old_dw->get(pStress_old, lb->pStressLabel, pset);
 
     // Get the time increment (delT)
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
-    // GET LOCAL DATA 
-    constParticleVariable<Matrix3> pStrain_old, pElasticStrain_old; 
-    constParticleVariable<double>  pDeltaGamma_old;
-    old_dw->get(pStrain_old,       pStrainLabel,       pset);
-    old_dw->get(pElasticStrain_old,     pElasticStrainLabel,     pset);
-    old_dw->get(pDeltaGamma_old,        pDeltaGammaLabel,        pset);
+    // GET LOCAL DATA
+    constParticleVariable<Matrix3> pStrain_old, pElasticStrain_old;
+    constParticleVariable<double> pDeltaGamma_old;
+    old_dw->get(pStrain_old, pStrainLabel, pset);
+    old_dw->get(pElasticStrain_old, pElasticStrainLabel, pset);
+    old_dw->get(pDeltaGamma_old, pDeltaGammaLabel, pset);
 
     // Create and allocate arrays for storing the updated information
     // GLOBAL
     ParticleVariable<Matrix3> pStress_new;
-    ParticleVariable<double>  pdTdt, p_q;
+    ParticleVariable<double> pdTdt, p_q;
 
-    new_dw->allocateAndPut(pStress_new,      
-                           lb->pStressLabel_preReloc,             pset);
-    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc,        pset);
-    new_dw->allocateAndPut(p_q,   lb->p_qLabel_preReloc,          pset);
+    new_dw->allocateAndPut(pStress_new, lb->pStressLabel_preReloc, pset);
+    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
+    new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
 
     // LOCAL
-    ParticleVariable<Matrix3>  pStrain_new, pElasticStrain_new; 
+    ParticleVariable<Matrix3> pStrain_new, pElasticStrain_new;
     ParticleVariable<double> pDeltaGamma_new;
-    new_dw->allocateAndPut(pStrain_new,      
-                           pStrainLabel_preReloc,            pset);
-    new_dw->allocateAndPut(pElasticStrain_new,      
-                           pElasticStrainLabel_preReloc,          pset);
-    new_dw->allocateAndPut(pDeltaGamma_new,      
-                           pDeltaGammaLabel_preReloc,             pset);
+    new_dw->allocateAndPut(pStrain_new, pStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(pElasticStrain_new, pElasticStrainLabel_preReloc,
+                           pset);
+    new_dw->allocateAndPut(pDeltaGamma_new, pDeltaGammaLabel_preReloc, pset);
 
-    // Get the internal variable and allocate space for the updated internal 
+    // Get the internal variable and allocate space for the updated internal
     // variables
     constParticleVariable<double> pPc;
     ParticleVariable<double> pPc_new;
@@ -450,8 +450,8 @@ CamClay::computeStressTensor(const PatchSubset* patches,
     d_intvar->allocateAndPutInternalVariable(pset, new_dw, pPc_new);
 
     // Loop thru particles
-    ParticleSubset::iterator iter = pset->begin(); 
-    for( ; iter != pset->end(); iter++){
+    ParticleSubset::iterator iter = pset->begin();
+    for (; iter != pset->end(); iter++) {
       particleIndex idx = *iter;
 
       // Assign zero internal heating by default - modify if necessary.
@@ -463,39 +463,49 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       Matrix3 defGrad_new = pDefGrad_new[idx];
       double J_new = defGrad_new.Determinant();
       Matrix3 velGrad_new = pVelGrad_new[idx];
-      Matrix3 rateOfDef_new = (velGrad_new + velGrad_new.Transpose())*0.5;
+      Matrix3 rateOfDef_new = (velGrad_new + velGrad_new.Transpose()) * 0.5;
 
       // Calculate the current mass density and deformed volume
-      double rho_cur = rho_0/J_new;
+      double rho_cur = rho_0 / J_new;
 
       // Compute polar decompositions of F_old and F_new (F = RU)
-      Matrix3 rightStretch_old; rightStretch_old.Identity();
-      Matrix3 rotation_old; rotation_old.Identity();
+      Matrix3 rightStretch_old;
+      rightStretch_old.Identity();
+      Matrix3 rotation_old;
+      rotation_old.Identity();
       pDefGrad_old[idx].polarDecompositionRMB(rightStretch_old, rotation_old);
-      Matrix3 rightStretch_new; rightStretch_new.Identity();
-      Matrix3 rotation_new; rotation_new.Identity();
+      Matrix3 rightStretch_new;
+      rightStretch_new.Identity();
+      Matrix3 rotation_new;
+      rotation_new.Identity();
       defGrad_new.polarDecompositionRMB(rightStretch_new, rotation_new);
 
       // Unrotate the spatial rate of deformation tensor and elastic strain
-      rateOfDef_new = (rotation_old.Transpose())*(rateOfDef_new*rotation_old);
-      Matrix3 elasticStrain_old = (rotation_old.Transpose())*(pElasticStrain_old[idx]*rotation_old);
+      rateOfDef_new =
+        (rotation_old.Transpose()) * (rateOfDef_new * rotation_old);
+      Matrix3 elasticStrain_old =
+        (rotation_old.Transpose()) * (pElasticStrain_old[idx] * rotation_old);
 
-      // Calc volumetric and deviatoric elastic strains at beginninging of timestep (t_n)
+      // Calc volumetric and deviatoric elastic strains at beginninging of
+      // timestep (t_n)
       double strain_elast_v_n = elasticStrain_old.Trace();
-      Matrix3 strain_elast_dev_n = elasticStrain_old - one*(strain_elast_v_n/3.0);
+      Matrix3 strain_elast_dev_n =
+        elasticStrain_old - one * (strain_elast_v_n / 3.0);
       double strain_elast_dev_n_norm = strain_elast_dev_n.Norm();
-      double strain_elast_s_n = sqrtTwoThird*strain_elast_dev_n_norm;
-      
+      double strain_elast_s_n = sqrtTwoThird * strain_elast_dev_n_norm;
+
       if (cout_CC_Eps.active()) {
-        cout_CC_Eps << "CamClay: idx = " << idx 
-                << " t_n: eps_v_e = " << strain_elast_v_n << " eps_s_e = " << strain_elast_s_n << endl;
+        cout_CC_Eps << "CamClay: idx = " << idx
+                    << " t_n: eps_v_e = " << strain_elast_v_n
+                    << " eps_s_e = " << strain_elast_s_n << endl;
       }
 
-      // Compute strain increment from rotationally corrected rate of deformation
+      // Compute strain increment from rotationally corrected rate of
+      // deformation
       // (Forward Euler)
-      Matrix3 strainInc = rateOfDef_new*delT; 
+      Matrix3 strainInc = rateOfDef_new * delT;
 
-      // Calculate the total strain  
+      // Calculate the total strain
       //   Volumetric strain &  Deviatoric strain
       // Matrix3 strain = pStrain_old[idx] + strainInc;
       // double strain_v = strain.Trace();
@@ -505,16 +515,17 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       //   Volumetric elastic strain &  Deviatoric elastic strain
       Matrix3 strain_elast_tr = elasticStrain_old + strainInc;
       double strain_elast_v_tr = strain_elast_tr.Trace();
-      Matrix3 strain_elast_devtr = strain_elast_tr - one*(strain_elast_v_tr/3.0);
+      Matrix3 strain_elast_devtr =
+        strain_elast_tr - one * (strain_elast_v_tr / 3.0);
       double strain_elast_devtr_norm = strain_elast_devtr.Norm();
-      double strain_elast_s_tr = sqrtTwoThird*strain_elast_devtr_norm;
+      double strain_elast_s_tr = sqrtTwoThird * strain_elast_devtr_norm;
 
       // Set up the ModelState (for t_n)
       Vaango::ModelState_CamClay state;
-      state.density             = rho_cur;
-      state.initialDensity      = rho_0;
-      state.volume              = pVol_new[idx];
-      state.initialVolume       = pMass[idx]/rho_0;
+      state.density = rho_cur;
+      state.initialDensity = rho_0;
+      state.volume = pVol_new[idx];
+      state.initialVolume = pMass[idx] / rho_0;
       state.elasticStrainTensor = strain_elast_tr;
       state.epse_v = strain_elast_v_tr;
       state.epse_s = strain_elast_s_tr;
@@ -532,8 +543,8 @@ CamClay::computeStressTensor(const PatchSubset* patches,
 
       if (std::isnan(q)) {
         ostringstream desc;
-        desc << "idx = " << idx << " epse_v = " << state.epse_v << " epse_s = " << state.epse_s
-             << " q = " << q << endl;
+        desc << "idx = " << idx << " epse_v = " << state.epse_v
+             << " epse_s = " << state.epse_s << " q = " << q << endl;
         throw InvalidValue(desc.str(), __FILE__, __LINE__);
       }
 
@@ -541,21 +552,21 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       double p = d_eos->computePressure(matl, &state, zero, zero, 0.0);
       double bulk = d_eos->computeBulkModulus(rho_0, rho_cur);
       state.p = p;
-      
+
       if (std::isnan(p)) {
         ostringstream desc;
-        desc << "idx = " << idx << " epse_v = " << state.epse_v << " epse_s = " << state.epse_s
-             << " p = " << p << endl;
+        desc << "idx = " << idx << " epse_v = " << state.epse_v
+             << " epse_s = " << state.epse_s << " p = " << p << endl;
         throw InvalidValue(desc.str(), __FILE__, __LINE__);
       }
 
       // compute the local sound wave speed
-      double c_dil = sqrt((bulk + 4.0*mu/3.0)/rho_cur);
+      double c_dil = sqrt((bulk + 4.0 * mu / 3.0) / rho_cur);
 
       // Get internal state variable (p_c)
       double pc_n = d_intvar->computeInternalVariable(&state);
       state.p_c = pc_n;
-        
+
       //-----------------------------------------------------------------------
       // Stage 2: Elastic-plastic stress update
       //-----------------------------------------------------------------------
@@ -563,15 +574,19 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       // Compute plastic flow direction (n = ee/||ee||)
       // Magic to deal with small strains
       double small = 1.0e-12;
-      double oo_strain_elast_s_tr =  (strain_elast_s_tr > small) ? 1.0/strain_elast_s_tr : 1.0;
-      Matrix3 nn = strain_elast_devtr*(sqrtTwoThird*oo_strain_elast_s_tr);
-      
+      double oo_strain_elast_s_tr =
+        (strain_elast_s_tr > small) ? 1.0 / strain_elast_s_tr : 1.0;
+      Matrix3 nn = strain_elast_devtr * (sqrtTwoThird * oo_strain_elast_s_tr);
+
       // Calculate yield function
       double ftrial = d_yield->evalYieldCondition(&state);
-      double p_old = p; double q_old = q; double pc_old = pc_n; double f_old = ftrial;
+      double p_old = p;
+      double q_old = q;
+      double pc_old = pc_n;
+      double f_old = ftrial;
 
       small = 1.0e-8; // **WARNING** Should not be hard coded (use d_tol)
-     
+
       double strain_elast_v = strain_elast_v_n;
       double strain_elast_s = strain_elast_s_n;
       double delgamma = pDeltaGamma_old[idx];
@@ -589,8 +604,8 @@ CamClay::computeStressTensor(const PatchSubset* patches,
         double dfdq = d_yield->computeDevStressDerivOfYieldFunction(&state);
 
         // Residual
-        double rv = strain_elast_v_k - strain_elast_v_tr + delgamma_k*dfdp;
-        double rs = strain_elast_s_k - strain_elast_s_tr + delgamma_k*dfdq;
+        double rv = strain_elast_v_k - strain_elast_v_tr + delgamma_k * dfdp;
+        double rs = strain_elast_s_k - strain_elast_s_tr + delgamma_k * dfdq;
         double rf = fyield;
 
         // Set up Newton iterations
@@ -598,37 +613,40 @@ CamClay::computeStressTensor(const PatchSubset* patches,
         double rtols = 1.0;
         double rtolf = 1.0;
         int klocal = 0;
- 
+
         // Do Newton iterations
         state.elasticStrainTensor = elasticStrain_old;
         state.elasticStrainTensorTrial = strain_elast_tr;
         double fmax = 1.0;
-        while ((rtolv > tolr) || (rtols > tolr) || (rtolf > tolf))
-        {
+        while ((rtolv > tolr) || (rtols > tolr) || (rtolf > tolf)) {
           klocal++;
-         
+
           // Compute needed derivatives
           double dpdepsev = d_eos->computeDpDepse_v(&state);
           double dpdepses = d_eos->computeDpDepse_s(&state);
           double dqdepsev = dpdepses;
           double dqdepses = d_shear->computeDqDepse_s(&state);
-          double dpcdepsev = d_intvar->computeVolStrainDerivOfInternalVariable(&state);
+          double dpcdepsev =
+            d_intvar->computeVolStrainDerivOfInternalVariable(&state);
 
           // Compute derivatives of residuals
-          double dr1_dx1 = 1.0 + delgamma_k*(2.0*dpdepsev - dpcdepsev);
-          double dr1_dx2 = 2.0*delgamma_k*dpdepses;
+          double dr1_dx1 = 1.0 + delgamma_k * (2.0 * dpdepsev - dpcdepsev);
+          double dr1_dx2 = 2.0 * delgamma_k * dpdepses;
           double dr1_dx3 = dfdp;
 
-          double d2fdqdepsv = d_yield->computeVolStrainDerivOfDfDq(&state, d_eos, d_shear, d_intvar); 
-          double d2fdqdepss = d_yield->computeDevStrainDerivOfDfDq(&state, d_eos, d_shear, d_intvar); 
-          double dr2_dx1 = delgamma_k*d2fdqdepsv;
-          double dr2_dx2 = 1.0 + delgamma_k*d2fdqdepss;
+          double d2fdqdepsv = d_yield->computeVolStrainDerivOfDfDq(
+            &state, d_eos, d_shear, d_intvar);
+          double d2fdqdepss = d_yield->computeDevStrainDerivOfDfDq(
+            &state, d_eos, d_shear, d_intvar);
+          double dr2_dx1 = delgamma_k * d2fdqdepsv;
+          double dr2_dx2 = 1.0 + delgamma_k * d2fdqdepss;
           double dr2_dx3 = dfdq;
 
-          double dr3_dx1 = dfdq*dqdepsev + dfdp*dpdepsev - state.p*dpcdepsev;
-          double dr3_dx2 = dfdq*dqdepses + dfdp*dpdepses;
+          double dr3_dx1 =
+            dfdq * dqdepsev + dfdp * dpdepsev - state.p * dpcdepsev;
+          double dr3_dx2 = dfdq * dqdepses + dfdp * dpdepses;
 
-          FastMatrix A_MAT(2, 2), inv_A_MAT(2,2);
+          FastMatrix A_MAT(2, 2), inv_A_MAT(2, 2);
           A_MAT(0, 0) = dr1_dx1;
           A_MAT(0, 1) = dr1_dx2;
           A_MAT(1, 0) = dr2_dx1;
@@ -637,7 +655,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
           inv_A_MAT.destructiveInvert(A_MAT);
 
           vector<double> B_MAT(2), C_MAT(2), AinvB(2), rvs_vec(2), Ainvrvs(2);
-          B_MAT[0] = dr1_dx3; 
+          B_MAT[0] = dr1_dx3;
           B_MAT[1] = dr2_dx3;
 
           C_MAT[0] = dr3_dx1;
@@ -650,18 +668,20 @@ CamClay::computeStressTensor(const PatchSubset* patches,
 
           inv_A_MAT.multiply(rvs_vec, Ainvrvs);
 
-          double denom = C_MAT[0]*AinvB[0] + C_MAT[1]*AinvB[1];
+          double denom = C_MAT[0] * AinvB[0] + C_MAT[1] * AinvB[1];
           double deldelgamma = 0.0;
           if (fabs(denom) > 1e-20) {
-            deldelgamma = (-C_MAT[0]*Ainvrvs[0]-C_MAT[1]*Ainvrvs[1] + rf)/denom;
-          } 
+            deldelgamma =
+              (-C_MAT[0] * Ainvrvs[0] - C_MAT[1] * Ainvrvs[1] + rf) / denom;
+          }
 
           vector<double> delvoldev(2);
-          delvoldev[0] = -Ainvrvs[0] - AinvB[0]*deldelgamma;
-          delvoldev[1] = -Ainvrvs[1] - AinvB[1]*deldelgamma;
+          delvoldev[0] = -Ainvrvs[0] - AinvB[0] * deldelgamma;
+          delvoldev[1] = -Ainvrvs[1] - AinvB[1] * deldelgamma;
 
-          //std::cout << "deldelgamma = " << deldelgamma 
-          //          << " delvoldev = " << delvoldev[0] << " , " << delvoldev[1] << endl;
+          // std::cout << "deldelgamma = " << deldelgamma
+          //          << " delvoldev = " << delvoldev[0] << " , " <<
+          //          delvoldev[1] << endl;
 
           // Allow for line search step
           double delgamma = 0.0;
@@ -671,11 +691,11 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             strain_elast_v = strain_elast_v_k + delvoldev[0];
             strain_elast_s = strain_elast_s_k + delvoldev[1];
             if (strain_elast_s < 0.0) {
-               strain_elast_s = strain_elast_s_k;
+              strain_elast_s = strain_elast_s_k;
             }
             delgamma = delgamma_k + deldelgamma;
-            //if (delgamma < 0.0) delgamma = delgamma_k;
-        
+            // if (delgamma < 0.0) delgamma = delgamma_k;
+
             state.epse_v = strain_elast_v;
             state.epse_s = strain_elast_s;
 
@@ -686,26 +706,35 @@ CamClay::computeStressTensor(const PatchSubset* patches,
 
             if (std::isnan(p)) {
               ostringstream desc;
-              desc << "idx = " << idx << " k = " << klocal 
-                   << " epse_v = " << state.epse_v << " epse_s = " << state.epse_s
-                   << " p = " << p << " q = " << q << " pc = " << pc << " f = " << fyield << endl;
-              desc << " rf = " << rf << " rv = " << rv << " rs = " << rs << endl;
+              desc << "idx = " << idx << " k = " << klocal
+                   << " epse_v = " << state.epse_v
+                   << " epse_s = " << state.epse_s << " p = " << p
+                   << " q = " << q << " pc = " << pc << " f = " << fyield
+                   << endl;
+              desc << " rf = " << rf << " rv = " << rv << " rs = " << rs
+                   << endl;
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
             }
             if (std::isnan(q)) {
               ostringstream desc;
-              desc << "idx = " << idx << " k = " << klocal 
-                   << " epse_v = " << state.epse_v << " epse_s = " << state.epse_s
-                   << " p = " << p << " q = " << q << " pc = " << pc << " f = " << fyield << endl;
-              desc << " rf = " << rf << " rv = " << rv << " rs = " << rs << endl;
+              desc << "idx = " << idx << " k = " << klocal
+                   << " epse_v = " << state.epse_v
+                   << " epse_s = " << state.epse_s << " p = " << p
+                   << " q = " << q << " pc = " << pc << " f = " << fyield
+                   << endl;
+              desc << " rf = " << rf << " rv = " << rv << " rs = " << rs
+                   << endl;
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
             }
             if (std::isnan(pc)) {
               ostringstream desc;
-              desc << "idx = " << idx << " k = " << klocal 
-                   << " epse_v = " << state.epse_v << " epse_s = " << state.epse_s
-                   << " p = " << p << " q = " << q << " pc = " << pc << " f = " << fyield << endl;
-              desc << " rf = " << rf << " rv = " << rv << " rs = " << rs << endl;
+              desc << "idx = " << idx << " k = " << klocal
+                   << " epse_v = " << state.epse_v
+                   << " epse_s = " << state.epse_s << " p = " << p
+                   << " q = " << q << " pc = " << pc << " f = " << fyield
+                   << endl;
+              desc << " rf = " << rf << " rv = " << rv << " rs = " << rs
+                   << endl;
               throw InvalidValue(desc.str(), __FILE__, __LINE__);
             }
 
@@ -727,30 +756,37 @@ CamClay::computeStressTensor(const PatchSubset* patches,
 
             // save old residuals
             double rf_old = rf;
-            //double rv_old = rv;
-            //double rs_old = rs;
+            // double rv_old = rv;
+            // double rs_old = rs;
 
             // update residual
-            rv = strain_elast_v - strain_elast_v_tr + delgamma*dfdp;
-            rs = strain_elast_s - strain_elast_s_tr + delgamma*dfdq;
+            rv = strain_elast_v - strain_elast_v_tr + delgamma * dfdp;
+            rs = strain_elast_s - strain_elast_s_tr + delgamma * dfdq;
             rf = fyield;
 
             if (cout_CC_Conv.active()) {
               if (idx == 14811) {
-                cout_CC_Conv << "idx = " << idx << " k = " << klocal  
-                        << " rv = " << rv << " rs = " << rs << " rf = " << rf << " rf_old = " << rf_old 
-                        << " fmax = " << fmax << endl;
-                cout_CC_Conv << " rtolv = " << rtolv << " rtols = " << rtols << " rtolf = " << rtolf 
-                        << " tolr = " << tolr << " tolf = " << tolf << endl;
-                cout_CC_Conv << " pqpc = [" << p << " " << q << " " << pc << "]" 
-                        << " pqpc_old = [" << p_old << " " << q_old << " " << pc_old << "]" 
-                        << " fold = " << f_old << endl;
-                cout_CC_Conv << " epsv = " << strain_elast_v << " epss = " << strain_elast_s << " f = " << fyield << endl;
+                cout_CC_Conv << "idx = " << idx << " k = " << klocal
+                             << " rv = " << rv << " rs = " << rs
+                             << " rf = " << rf << " rf_old = " << rf_old
+                             << " fmax = " << fmax << endl;
+                cout_CC_Conv << " rtolv = " << rtolv << " rtols = " << rtols
+                             << " rtolf = " << rtolf << " tolr = " << tolr
+                             << " tolf = " << tolf << endl;
+                cout_CC_Conv << " pqpc = [" << p << " " << q << " " << pc << "]"
+                             << " pqpc_old = [" << p_old << " " << q_old << " "
+                             << pc_old << "]"
+                             << " fold = " << f_old << endl;
+                cout_CC_Conv << " epsv = " << strain_elast_v
+                             << " epss = " << strain_elast_s
+                             << " f = " << fyield << endl;
               }
-            } 
-            if (fabs(rf/rf_old) > 1.0e-2) {
-              if ((fabs(rf) > fabs(rf_old)) || (rf < 0.0 && fabs(rf-rf_old) > fmax)) {
-                //std::cout << "idx = " << idx << " rf = " << rf << " rf_old = " << rf_old << endl;
+            }
+            if (fabs(rf / rf_old) > 1.0e-2) {
+              if ((fabs(rf) > fabs(rf_old)) ||
+                  (rf < 0.0 && fabs(rf - rf_old) > fmax)) {
+                // std::cout << "idx = " << idx << " rf = " << rf << " rf_old =
+                // " << rf_old << endl;
                 do_line_search = true;
                 delvoldev[0] *= 0.5;
                 delvoldev[1] *= 0.5;
@@ -767,53 +803,65 @@ CamClay::computeStressTensor(const PatchSubset* patches,
           delgamma_k = delgamma;
 
           // calculate tolerances
-          rtolv=fabs(delvoldev[0]);
-          rtols=fabs(delvoldev[1]);
-          rtolf=fabs(fyield/fmax);
+          rtolv = fabs(delvoldev[0]);
+          rtols = fabs(delvoldev[1]);
+          rtolf = fabs(fyield / fmax);
 
           // Check max iters
           if (klocal == iter_break) {
             ostringstream desc;
             desc << "**ERROR** Newton iterations did not converge" << endl
-                 << " idx = " << idx << " rtolv = " << rtolv << " rtols = " << rtols << " rtolf = " << rtolf 
+                 << " idx = " << idx << " rtolv = " << rtolv
+                 << " rtols = " << rtols << " rtolf = " << rtolf
                  << " klocal = " << klocal << endl;
-            //desc << " p_old = " << p << " q_old = " << q << " pc_old = " << pc_n << " f_old = " << ftrial << endl;
-            desc << " p = " << p << " q = " << q << " pc = " << pc << " f = " << fyield << endl
-                      << " eps_v_e = " << strain_elast_v << " eps_s_e = " << strain_elast_s << endl;
-            desc <<  "L = " << velGrad_new << endl;
+            // desc << " p_old = " << p << " q_old = " << q << " pc_old = " <<
+            // pc_n << " f_old = " << ftrial << endl;
+            desc << " p = " << p << " q = " << q << " pc = " << pc
+                 << " f = " << fyield << endl
+                 << " eps_v_e = " << strain_elast_v
+                 << " eps_s_e = " << strain_elast_s << endl;
+            desc << "L = " << velGrad_new << endl;
             desc << "F_old = " << pDefGrad_old[idx] << endl;
             desc << "F_new = " << defGrad_new << endl;
             desc << "J_old = " << pDefGrad_old[idx].Determinant() << endl;
             desc << "J_new = " << J_new << endl;
-            throw ConvergenceFailure(desc.str(), iter_break, rtolf, tolf, __FILE__, __LINE__);
+            throw ConvergenceFailure(desc.str(), iter_break, rtolf, tolf,
+                                     __FILE__, __LINE__);
           }
           if (cout_CC_Eps.active()) {
             if (idx == 14811) {
-              Matrix3 eps_e = nn*(sqrtThreeTwo*strain_elast_s) + one*(strain_elast_v/3.0);
+              Matrix3 eps_e = nn * (sqrtThreeTwo * strain_elast_s) +
+                              one * (strain_elast_v / 3.0);
               Matrix3 eps_p = strain_elast_tr - eps_e;
               double eps_v_p = eps_p.Trace();
               cout_CC_Eps << "idx = " << idx << " k = " << klocal << endl
-                      << " eps_v_e = " << strain_elast_v << " eps_v_p = " << eps_v_p
-                      << " eps_s_e = " << strain_elast_s << endl
-                      << " f_n+1 = " << fyield <<  " pqpc = [" << p << " " << q << " " << pc <<"]" 
-                      << " rtolf = " << rtolf << " tolf = " << tolf << endl;
-            } 
+                          << " eps_v_e = " << strain_elast_v
+                          << " eps_v_p = " << eps_v_p
+                          << " eps_s_e = " << strain_elast_s << endl
+                          << " f_n+1 = " << fyield << " pqpc = [" << p << " "
+                          << q << " " << pc << "]"
+                          << " rtolf = " << rtolf << " tolf = " << tolf << endl;
+            }
           }
 
         } // End of Newton-Raphson while
 
         if ((delgamma < 0.0) && (fabs(delgamma) > 1.0e-10)) {
           ostringstream desc;
-          desc << "**ERROR** delgamma less than 0.0 in local converged solution." << endl;
-          throw ConvergenceFailure(desc.str(), klocal, rtolf, delgamma, __FILE__, __LINE__);
+          desc
+            << "**ERROR** delgamma less than 0.0 in local converged solution."
+            << endl;
+          throw ConvergenceFailure(desc.str(), klocal, rtolf, delgamma,
+                                   __FILE__, __LINE__);
         }
 
         // update stress
-        pStress_new[idx] = one*p + nn*(sqrtTwoThird*q);
+        pStress_new[idx] = one * p + nn * (sqrtTwoThird * q);
 
         // update elastic strain
         pStrain_new[idx] = strain_elast_tr;
-        pElasticStrain_new[idx] = nn*(sqrtThreeTwo*strain_elast_s) + one*(strain_elast_v/3.0);
+        pElasticStrain_new[idx] =
+          nn * (sqrtThreeTwo * strain_elast_s) + one * (strain_elast_v / 3.0);
 
         // update delta gamma (plastic strain)
         pDeltaGamma_new[idx] = pDeltaGamma_old[idx] + delgamma;
@@ -824,7 +872,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       } else { // Elastic range
 
         // update stress from trial elastic strain
-        pStress_new[idx] = one*p + nn*(sqrtTwoThird*q);
+        pStress_new[idx] = one * p + nn * (sqrtTwoThird * q);
 
         // update elastic strain from trial value
         pStrain_new[idx] = strain_elast_tr;
@@ -834,7 +882,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
 
         // update delta gamma (plastic strain increament)
         pDeltaGamma_new[idx] = pDeltaGamma_old[idx];
- 
+
         // Update consolidation pressure
         pPc_new[idx] = pPc[idx];
       }
@@ -843,39 +891,42 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       // Stage 4:
       //-----------------------------------------------------------------------
       // Rotate back to spatial configuration
-      pStress_new[idx] = rotation_new*(pStress_new[idx]*rotation_new.Transpose());
-      pStrain_new[idx] = rotation_new*(pStrain_new[idx]*rotation_new.Transpose());
-      pElasticStrain_new[idx] = rotation_new*(pElasticStrain_new[idx]*rotation_new.Transpose());
+      pStress_new[idx] =
+        rotation_new * (pStress_new[idx] * rotation_new.Transpose());
+      pStrain_new[idx] =
+        rotation_new * (pStrain_new[idx] * rotation_new.Transpose());
+      pElasticStrain_new[idx] =
+        rotation_new * (pElasticStrain_new[idx] * rotation_new.Transpose());
 
-      // Compute the strain energy 
+      // Compute the strain energy
       double W_vol = d_eos->computeStrainEnergy(&state);
       double W_dev = d_shear->computeStrainEnergy(&state);
-      totalStrainEnergy = (W_vol + W_dev)*pVol_new[idx];
+      totalStrainEnergy = (W_vol + W_dev) * pVol_new[idx];
 
       // Compute wave speed at each particle, store the maximum
       Vector pVel = pVelocity[idx];
-      waveSpeed=Vector(Max(c_dil+fabs(pVel.x()),waveSpeed.x()),
-                       Max(c_dil+fabs(pVel.y()),waveSpeed.y()),
-                       Max(c_dil+fabs(pVel.z()),waveSpeed.z()));
+      waveSpeed = Vector(Max(c_dil + fabs(pVel.x()), waveSpeed.x()),
+                         Max(c_dil + fabs(pVel.y()), waveSpeed.y()),
+                         Max(c_dil + fabs(pVel.z()), waveSpeed.z()));
 
-      //delete state;
+      // delete state;
 
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
-        double dx_ave = (dx.x() + dx.y() + dx.z())/3.0;
-        double c_bulk = sqrt(bulk/rho_cur);
+        double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
+        double c_bulk = sqrt(bulk / rho_cur);
         double Dkk = rateOfDef_new.Trace();
         p_q[idx] = artificialBulkViscosity(Dkk, c_bulk, rho_cur, dx_ave);
       } else {
         p_q[idx] = 0.;
       }
-    }  // end loop over particles
+    } // end loop over particles
 
-    waveSpeed = dx/waveSpeed;
+    waveSpeed = dx / waveSpeed;
     double delT_new = waveSpeed.minComponent();
 
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
-    
+
     if (flag->d_reductionVars->accStrainEnergy ||
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(totalStrainEnergy), lb->StrainEnergyLabel);
@@ -883,72 +934,63 @@ CamClay::computeStressTensor(const PatchSubset* patches,
     delete interpolator;
   }
 
-  if (cout_CC.active()) 
+  if (cout_CC.active())
     cout_CC << getpid() << "... End." << endl;
-
 }
 
-void 
-CamClay::carryForward(const PatchSubset* patches,
-                      const MPMMaterial* matl,
-                      DataWarehouse* old_dw,
-                      DataWarehouse* new_dw)
+void
+CamClay::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
+                      DataWarehouse* old_dw, DataWarehouse* new_dw)
 {
-  for(int p=0;p<patches->size();p++){
+  for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
     int dwi = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
-    // Carry forward the data common to all constitutive models 
+    // Carry forward the data common to all constitutive models
     // when using RigidMPM.
     // This method is defined in the ConstitutiveModel base class.
     carryForwardSharedData(pset, old_dw, new_dw, matl);
 
-    // Carry forward the data local to this constitutive model 
-    constParticleVariable<Matrix3>  pStrain, pElasticStrain;
-    constParticleVariable<double>   pDeltaGamma; 
+    // Carry forward the data local to this constitutive model
+    constParticleVariable<Matrix3> pStrain, pElasticStrain;
+    constParticleVariable<double> pDeltaGamma;
 
-    old_dw->get(pStrain,         pStrainLabel,         pset);
-    old_dw->get(pElasticStrain,  pElasticStrainLabel,  pset);
-    old_dw->get(pDeltaGamma,     pDeltaGammaLabel,     pset);
+    old_dw->get(pStrain, pStrainLabel, pset);
+    old_dw->get(pElasticStrain, pElasticStrainLabel, pset);
+    old_dw->get(pDeltaGamma, pDeltaGammaLabel, pset);
 
-    ParticleVariable<Matrix3>       pStrain_new, pElasticStrain_new; 
-    ParticleVariable<double>        pDeltaGamma_new;
+    ParticleVariable<Matrix3> pStrain_new, pElasticStrain_new;
+    ParticleVariable<double> pDeltaGamma_new;
 
-    new_dw->allocateAndPut(pStrain_new,      
-                           pStrainLabel_preReloc,            pset);
-    new_dw->allocateAndPut(pElasticStrain_new,      
-                           pElasticStrainLabel_preReloc,     pset);
-    new_dw->allocateAndPut(pDeltaGamma_new,      
-                           pDeltaGammaLabel_preReloc,        pset);
+    new_dw->allocateAndPut(pStrain_new, pStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(pElasticStrain_new, pElasticStrainLabel_preReloc,
+                           pset);
+    new_dw->allocateAndPut(pDeltaGamma_new, pDeltaGammaLabel_preReloc, pset);
 
     // Get and copy the internal variables
     constParticleVariable<double> pPc;
     d_intvar->getInternalVariable(pset, old_dw, pPc);
     d_intvar->allocateAndPutRigid(pset, new_dw, pPc);
 
-    for(ParticleSubset::iterator iter = pset->begin();
-        iter != pset->end(); iter++){
-      particleIndex idx = *iter;
+    for (int idx : *pset) {
       pStrain_new[idx] = pStrain[idx];
       pElasticStrain_new[idx] = pElasticStrain[idx];
       pDeltaGamma_new[idx] = pDeltaGamma[idx];
     }
 
     new_dw->put(delt_vartype(1.e10), lb->delTLabel, patch->getLevel());
-    
+
     if (flag->d_reductionVars->accStrainEnergy ||
         flag->d_reductionVars->strainEnergy) {
-      new_dw->put(sum_vartype(0.),     lb->StrainEnergyLabel);
+      new_dw->put(sum_vartype(0.), lb->StrainEnergyLabel);
     }
   }
 }
 
-void 
-CamClay::allocateCMDataAddRequires(Task* task,
-                                   const MPMMaterial* matl,
-                                   const PatchSet* patch,
-                                   MPMLabel* lb) const
+void
+CamClay::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+                                   const PatchSet* patch, MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -958,65 +1000,61 @@ CamClay::allocateCMDataAddRequires(Task* task,
   addSharedRForConvertExplicit(task, matlset, patch);
 
   // Add requires local to this model
-  Ghost::GhostType  gnone = Ghost::None;
-  task->requires(Task::NewDW, pStrainLabel_preReloc,         matlset, gnone);
-  task->requires(Task::NewDW, pElasticStrainLabel_preReloc,  matlset, gnone);
-  task->requires(Task::NewDW, pDeltaGammaLabel_preReloc,     matlset, gnone);
-  d_intvar->allocateCMDataAddRequires(task,matl,patch,lb);
+  Ghost::GhostType gnone = Ghost::None;
+  task->requires(Task::NewDW, pStrainLabel_preReloc, matlset, gnone);
+  task->requires(Task::NewDW, pElasticStrainLabel_preReloc, matlset, gnone);
+  task->requires(Task::NewDW, pDeltaGammaLabel_preReloc, matlset, gnone);
+  d_intvar->allocateCMDataAddRequires(task, matl, patch, lb);
 }
 
-void 
-CamClay::allocateCMDataAdd(DataWarehouse* new_dw,
-                           ParticleSubset* addset,
-                           map<const VarLabel*, 
-                           ParticleVariableBase*>* newState,
-                           ParticleSubset* delset,
-                           DataWarehouse* old_dw)
+void
+CamClay::allocateCMDataAdd(
+  DataWarehouse* new_dw, ParticleSubset* addset,
+  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
+  DataWarehouse* old_dw)
 {
-  // Copy the data common to all constitutive models from the particle to be 
-  // deleted to the particle to be added. 
+  // Copy the data common to all constitutive models from the particle to be
+  // deleted to the particle to be added.
   // This method is defined in the ConstitutiveModel base class.
   copyDelToAddSetForConvertExplicit(new_dw, delset, addset, newState);
-  
-  // Copy the data local to this constitutive model from the particles to 
+
+  // Copy the data local to this constitutive model from the particles to
   // be deleted to the particles to be added
-  ParticleSubset::iterator n,o;
+  ParticleSubset::iterator n, o;
 
-  ParticleVariable<Matrix3>  pStrain, pElasticStrain; 
-  ParticleVariable<double>   pDeltaGamma;
+  ParticleVariable<Matrix3> pStrain, pElasticStrain;
+  ParticleVariable<double> pDeltaGamma;
 
-  constParticleVariable<Matrix3>  o_Strain, o_ElasticStrain; 
-  constParticleVariable<double>   o_DeltaGamma;
+  constParticleVariable<Matrix3> o_Strain, o_ElasticStrain;
+  constParticleVariable<double> o_DeltaGamma;
 
-  new_dw->allocateTemporary(pStrain,addset);
-  new_dw->allocateTemporary(pElasticStrain,addset);
-  new_dw->allocateTemporary(pDeltaGamma,addset);
+  new_dw->allocateTemporary(pStrain, addset);
+  new_dw->allocateTemporary(pElasticStrain, addset);
+  new_dw->allocateTemporary(pDeltaGamma, addset);
 
-  new_dw->get(o_Strain,pStrainLabel_preReloc,delset);
-  new_dw->get(o_ElasticStrain,pElasticStrainLabel_preReloc,delset);
-  new_dw->get(o_DeltaGamma,pDeltaGammaLabel_preReloc,delset);
+  new_dw->get(o_Strain, pStrainLabel_preReloc, delset);
+  new_dw->get(o_ElasticStrain, pElasticStrainLabel_preReloc, delset);
+  new_dw->get(o_DeltaGamma, pDeltaGammaLabel_preReloc, delset);
 
   n = addset->begin();
-  for (o=delset->begin(); o != delset->end(); o++, n++) {
+  for (o = delset->begin(); o != delset->end(); o++, n++) {
     pStrain[*n] = o_Strain[*o];
     pElasticStrain[*n] = o_ElasticStrain[*o];
     pDeltaGamma[*n] = o_DeltaGamma[*o];
   }
 
-  (*newState)[pStrainLabel]=pStrain.clone();
-  (*newState)[pElasticStrainLabel]=pElasticStrain.clone();
-  (*newState)[pDeltaGammaLabel]=pDeltaGamma.clone();
-  
+  (*newState)[pStrainLabel] = pStrain.clone();
+  (*newState)[pElasticStrainLabel] = pElasticStrain.clone();
+  (*newState)[pDeltaGammaLabel] = pDeltaGamma.clone();
+
   // Initialize the data for the internal variable model
-  d_intvar->allocateCMDataAdd(new_dw,addset, newState, delset, old_dw);
+  d_intvar->allocateCMDataAdd(new_dw, addset, newState, delset, old_dw);
 }
 
-
-double CamClay::computeRhoMicroCM(double pressure,
-                                  const double p_ref,
-                                  const MPMMaterial* matl,
-                                  double temperature,
-                                  double rho_guess)
+double
+CamClay::computeRhoMicroCM(double pressure, const double p_ref,
+                           const MPMMaterial* matl, double temperature,
+                           double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   pressure -= p_ref;
@@ -1032,11 +1070,10 @@ double CamClay::computeRhoMicroCM(double pressure,
   return rho_cur;
 }
 
-void CamClay::computePressEOSCM(double rho_cur,double& pressure,
-                                double p_ref,  
-                                double& dp_drho, double& csquared,
-                                const MPMMaterial* matl,
-                                double temperature)
+void
+CamClay::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
+                           double& dp_drho, double& csquared,
+                           const MPMMaterial* matl, double temperature)
 {
   double rho_orig = matl->getInitialDensity();
   d_eos->computePressure(rho_orig, rho_cur, pressure, dp_drho, csquared);
@@ -1050,30 +1087,30 @@ void CamClay::computePressEOSCM(double rho_cur,double& pressure,
   }
 }
 
-double CamClay::getCompressibility()
+double
+CamClay::getCompressibility()
 {
-  return 1.0/d_eos->initialBulkModulus();
+  return 1.0 / d_eos->initialBulkModulus();
 }
 
 void
-CamClay::scheduleCheckNeedAddMPMMaterial(Task* task,
-                                         const MPMMaterial* ,
-                                         const PatchSet* ) const
+CamClay::scheduleCheckNeedAddMPMMaterial(Task* task, const MPMMaterial*,
+                                         const PatchSet*) const
 {
   task->computes(lb->NeedAddMPMMaterialLabel);
 }
 
-void CamClay::checkNeedAddMPMMaterial(const PatchSubset* patches,
-                                      const MPMMaterial* matl,
-                                      DataWarehouse* ,
-                                      DataWarehouse* new_dw)
+void
+CamClay::checkNeedAddMPMMaterial(const PatchSubset* patches,
+                                 const MPMMaterial* matl, DataWarehouse*,
+                                 DataWarehouse* new_dw)
 {
   if (cout_CC.active()) {
     cout_CC << getpid() << "checkNeedAddMPMMaterial: In : Matl = " << matl
-            << " id = " << matl->getDWIndex() <<  " patch = "
-            << (patches->get(0))->getID();
+            << " id = " << matl->getDWIndex()
+            << " patch = " << (patches->get(0))->getID();
   }
 
-  double need_add=0.;
-  new_dw->put(sum_vartype(need_add),     lb->NeedAddMPMMaterialLabel);
+  double need_add = 0.;
+  new_dw->put(sum_vartype(need_add), lb->NeedAddMPMMaterialLabel);
 }

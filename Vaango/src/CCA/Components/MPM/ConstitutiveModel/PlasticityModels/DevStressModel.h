@@ -49,7 +49,6 @@
 #ifndef __DEVSTRESSMODEL_H__
 #define __DEVSTRESSMODEL_H__
 
-
 #include "DeformationState.h"
 #include "PlasticityState.h"
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
@@ -61,69 +60,61 @@
 
 namespace Uintah {
 
-  ///////////////////////////////////////////////////////////////////////////
-  /*!
-    \class  DevStressModel
-    \brief  Abstract Base class for Deviatoric Stress models
-    \author Todd Harman
-  */
-  ///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+/*!
+  \class  DevStressModel
+  \brief  Abstract Base class for Deviatoric Stress models
+  \author Todd Harman
+*/
+///////////////////////////////////////////////////////////////////////////
 
-  class DevStressModel {
+class DevStressModel
+{
 
-  private:
+private:
+public:
+  DevStressModel();
+  virtual ~DevStressModel();
 
-  public:
-         
-    DevStressModel();
-    virtual ~DevStressModel();
+  virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
-         
-    // Computes and requires for internal evolution variables
-    virtual void addInitialComputesAndRequires( Task* task,
-                                                const MPMMaterial* matl) {};
+  // Computes and requires for internal evolution variables
+  virtual void addInitialComputesAndRequires(Task* task,
+                                             const MPMMaterial* matl){};
 
-    virtual void addComputesAndRequires( Task* task,
-                                         const MPMMaterial* matl ) {};
+  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl){};
 
-    virtual void addComputesAndRequires( Task* task,
-                                         const MPMMaterial* matl,
-                                         bool SchedParent ) {};
+  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                      bool SchedParent){};
 
-    virtual void addParticleState( std::vector<const VarLabel*>& from,
-                                   std::vector<const VarLabel*>& to ){};
+  virtual void addParticleState(std::vector<const VarLabel*>& from,
+                                std::vector<const VarLabel*>& to){};
 
-    virtual void initializeInternalVars( ParticleSubset* pset,
-                                         DataWarehouse* new_dw){};
+  virtual void initializeInternalVars(ParticleSubset* pset,
+                                      DataWarehouse* new_dw){};
 
-    virtual void getInternalVars( ParticleSubset* pset,
-                                  DataWarehouse* old_dw ){};
+  virtual void getInternalVars(ParticleSubset* pset, DataWarehouse* old_dw){};
 
-    virtual void allocateAndPutInternalVars( ParticleSubset* pset,
-                                             DataWarehouse* new_dw ){}; 
+  virtual void allocateAndPutInternalVars(ParticleSubset* pset,
+                                          DataWarehouse* new_dw){};
 
-    virtual void allocateAndPutRigid( ParticleSubset* pset,
-                                      DataWarehouse* new_dw ){};
-                               
-    //__________________________________
-    //  where the work is done
-    virtual void computeDeviatoricStressInc( const particleIndex idx,         
-                                             const PlasticityState* plaState, 
-                                             DeformationState* defState,      
-                                             const double delT){};            
+  virtual void allocateAndPutRigid(ParticleSubset* pset,
+                                   DataWarehouse* new_dw){};
 
-    virtual void updateInternalStresses( const particleIndex idx,
-                                         const Matrix3&,
-                                         DeformationState* defState,
-                                         const double delT ){};
+  //__________________________________
+  //  where the work is done
+  virtual void computeDeviatoricStressInc(const particleIndex idx,
+                                          const PlasticityState* plaState,
+                                          DeformationState* defState,
+                                          const double delT){};
 
-    virtual void rotateInternalStresses( const particleIndex idx,
-                                         const Matrix3&){};
-  };
+  virtual void updateInternalStresses(const particleIndex idx, const Matrix3&,
+                                      DeformationState* defState,
+                                      const double delT){};
+
+  virtual void rotateInternalStresses(const particleIndex idx,
+                                      const Matrix3&){};
+};
 } // End namespace Uintah
-      
 
-
-#endif  // __DEVSTRESSMODEL_H__
-
+#endif // __DEVSTRESSMODEL_H__

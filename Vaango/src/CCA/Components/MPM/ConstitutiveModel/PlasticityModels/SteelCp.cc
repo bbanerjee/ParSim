@@ -47,35 +47,35 @@
  */
 
 #include "SteelCp.h"
-#include <cmath>
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <cmath>
 
 using namespace Uintah;
-         
-// Construct a specific heat model.  
+
+// Construct a specific heat model.
 SteelCp::SteelCp(ProblemSpecP& ps)
 {
   d_Tc = 1040.0;
-  ps->get("T_transition",d_Tc);
+  ps->get("T_transition", d_Tc);
   d_A0 = 190.14;
-  ps->get("A_LowT",d_A0);
+  ps->get("A_LowT", d_A0);
   d_B0 = 273.75;
-  ps->get("B_LowT",d_B0);
+  ps->get("B_LowT", d_B0);
   d_C0 = 418.30;
-  ps->get("C_LowT",d_C0);
+  ps->get("C_LowT", d_C0);
   d_n0 = 0.2;
-  ps->get("n_LowT",d_n0);
+  ps->get("n_LowT", d_n0);
   d_A1 = 465.21;
-  ps->get("A_HighT",d_A1);
+  ps->get("A_HighT", d_A1);
   d_B1 = 267.52;
-  ps->get("B_HighT",d_B1);
+  ps->get("B_HighT", d_B1);
   d_C1 = 58.16;
-  ps->get("C_HighT",d_C1);
+  ps->get("C_HighT", d_C1);
   d_n1 = 0.35;
-  ps->get("n_HighT",d_n1);
+  ps->get("n_HighT", d_n1);
 }
 
-// Construct a copy of a specific heat model.  
+// Construct a copy of a specific heat model.
 SteelCp::SteelCp(const SteelCp* ccp)
 {
   d_Tc = ccp->d_Tc;
@@ -89,29 +89,28 @@ SteelCp::SteelCp(const SteelCp* ccp)
   d_n1 = ccp->d_n1;
 }
 
-// Destructor of specific heat model.  
-SteelCp::~SteelCp()
-{
-}
-         
-void SteelCp::outputProblemSpec(ProblemSpecP& ps)
+// Destructor of specific heat model.
+SteelCp::~SteelCp() = default;
+
+void
+SteelCp::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP cm_ps = ps->appendChild("specific_heat_model");
-  cm_ps->setAttribute("type","steel_Cp");
+  cm_ps->setAttribute("type", "steel_Cp");
 
-  cm_ps->appendElement("T_transition",d_Tc);
-  cm_ps->appendElement("A_LowT",d_A0);
-  cm_ps->appendElement("B_LowT",d_B0);
-  cm_ps->appendElement("C_LowT",d_C0);
-  cm_ps->appendElement("n_LowT",d_n0);
-  cm_ps->appendElement("A_HighT",d_A1);
-  cm_ps->appendElement("B_HighT",d_B1);
-  cm_ps->appendElement("C_HighT",d_C1);
-  cm_ps->appendElement("n_HighT",d_n1);
+  cm_ps->appendElement("T_transition", d_Tc);
+  cm_ps->appendElement("A_LowT", d_A0);
+  cm_ps->appendElement("B_LowT", d_B0);
+  cm_ps->appendElement("C_LowT", d_C0);
+  cm_ps->appendElement("n_LowT", d_n0);
+  cm_ps->appendElement("A_HighT", d_A1);
+  cm_ps->appendElement("B_HighT", d_B1);
+  cm_ps->appendElement("C_HighT", d_C1);
+  cm_ps->appendElement("n_HighT", d_n1);
 }
 
 // Compute the specific heat
-double 
+double
 SteelCp::computeSpecificHeat(const PlasticityState* state)
 {
   double Cp = 470.0;
@@ -122,12 +121,11 @@ SteelCp::computeSpecificHeat(const PlasticityState* state)
     T = T - 1.0;
   }
   if (T < d_Tc) {
-    double t = 1 - T/d_Tc;
-    Cp = d_A0 - d_B0*t + d_C0/pow(t, d_n0);
+    double t = 1 - T / d_Tc;
+    Cp = d_A0 - d_B0 * t + d_C0 / pow(t, d_n0);
   } else {
-    double t = T/d_Tc - 1.0;
-    Cp = d_A1 + d_B1*t + d_C1/pow(t, d_n1);
+    double t = T / d_Tc - 1.0;
+    Cp = d_A1 + d_B1 * t + d_C1 / pow(t, d_n1);
   }
   return Cp;
 }
-

@@ -24,12 +24,10 @@
  * IN THE SOFTWARE.
  */
 
-
-
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Hypoelastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
-#include <Core/Exceptions/ParameterNotFound.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Hypoelastic.h>
 #include <Core/Exceptions/InternalError.h>
+#include <Core/Exceptions/ParameterNotFound.h>
 #include <cmath>
 
 using namespace Uintah;
@@ -38,66 +36,64 @@ using namespace Vaango;
 Pressure_Hypoelastic::Pressure_Hypoelastic()
 {
   d_bulkModulus = -1.0;
-} 
+}
 
-Pressure_Hypoelastic::Pressure_Hypoelastic(Uintah::ProblemSpecP& )
+Pressure_Hypoelastic::Pressure_Hypoelastic(Uintah::ProblemSpecP&)
 {
   d_bulkModulus = -1.0;
-} 
-         
+}
+
 Pressure_Hypoelastic::Pressure_Hypoelastic(const Pressure_Hypoelastic* cm)
 {
   d_bulkModulus = cm->d_bulkModulus;
-} 
-         
-Pressure_Hypoelastic::~Pressure_Hypoelastic()
-{
 }
 
+Pressure_Hypoelastic::~Pressure_Hypoelastic() = default;
 
-void Pressure_Hypoelastic::outputProblemSpec(Uintah::ProblemSpecP& ps)
+void
+Pressure_Hypoelastic::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP eos_ps = ps->appendChild("pressure_model");
-  eos_ps->setAttribute("type","default_hypo");
+  eos_ps->setAttribute("type", "default_hypo");
 }
-         
 
 //////////
 // Calculate the pressure using the elastic constitutive equation
-double 
-Pressure_Hypoelastic::computePressure(const Uintah::MPMMaterial* ,
-                                       const ModelStateBase* state_input,
-                                       const Uintah::Matrix3& ,
-                                       const Uintah::Matrix3& rateOfDeformation,
-                                       const double& delT)
+double
+Pressure_Hypoelastic::computePressure(const Uintah::MPMMaterial*,
+                                      const ModelStateBase* state_input,
+                                      const Uintah::Matrix3&,
+                                      const Uintah::Matrix3& rateOfDeformation,
+                                      const double& delT)
 {
-  const ModelState_Default* state = dynamic_cast<const ModelState_Default*>(state_input);
+  const ModelState_Default* state =
+    dynamic_cast<const ModelState_Default*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
-
 
   // Get the state data
   double kappa = state->bulkModulus;
   double p_n = state->pressure;
 
   // Calculate pressure increment
-  double delp = rateOfDeformation.Trace()*(kappa*delT);
+  double delp = rateOfDeformation.Trace() * (kappa * delT);
 
   // Calculate pressure
   double p = p_n + delp;
   return p;
 }
 
-double 
+double
 Pressure_Hypoelastic::eval_dp_dJ(const Uintah::MPMMaterial* matl,
-                                  const double& detF, 
-                                  const ModelStateBase* state_input)
+                                 const double& detF,
+                                 const ModelStateBase* state_input)
 {
-  const ModelState_Default* state = dynamic_cast<const ModelState_Default*>(state_input);
+  const ModelState_Default* state =
+    dynamic_cast<const ModelState_Default*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -105,94 +101,97 @@ Pressure_Hypoelastic::eval_dp_dJ(const Uintah::MPMMaterial* matl,
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  return (state->bulkModulus/detF);
+  return (state->bulkModulus / detF);
 }
 
-// Compute pressure (option 1)  
+// Compute pressure (option 1)
 //  (assume linear relation holds and bulk modulus does not change
 //   with deformation)
-double 
+double
 Pressure_Hypoelastic::computePressure(const double& rho_orig,
-                                       const double& rho_cur)
+                                      const double& rho_cur)
 {
   if (d_bulkModulus < 0.0) {
-    throw ParameterNotFound("Please initialize bulk modulus in EOS before computing pressure",
-                            __FILE__, __LINE__);
+    throw ParameterNotFound(
+      "Please initialize bulk modulus in EOS before computing pressure",
+      __FILE__, __LINE__);
   }
 
-  double J = rho_orig/rho_cur;
-  double p = d_bulkModulus*(1.0 - 1.0/J);
+  double J = rho_orig / rho_cur;
+  double p = d_bulkModulus * (1.0 - 1.0 / J);
   return p;
 }
 
 // Compute pressure (option 2)  (assume small strain relation holds)
 //  (assume linear relation holds and bulk modulus does not change
 //   with deformation)
-void 
+void
 Pressure_Hypoelastic::computePressure(const double& rho_orig,
-                                       const double& rho_cur,
-                                       double& pressure,
-                                       double& dp_drho,
-                                       double& csquared)
+                                      const double& rho_cur, double& pressure,
+                                      double& dp_drho, double& csquared)
 {
   if (d_bulkModulus < 0.0) {
-    throw ParameterNotFound("Please initialize bulk modulus in EOS before computing pressure",
-                            __FILE__, __LINE__);
+    throw ParameterNotFound(
+      "Please initialize bulk modulus in EOS before computing pressure",
+      __FILE__, __LINE__);
   }
 
-  double J = rho_orig/rho_cur;
-  pressure = d_bulkModulus*(1.0 - 1.0/J);
-  dp_drho  = -d_bulkModulus/rho_orig;
-  csquared = d_bulkModulus/rho_cur;
+  double J = rho_orig / rho_cur;
+  pressure = d_bulkModulus * (1.0 - 1.0 / J);
+  dp_drho = -d_bulkModulus / rho_orig;
+  csquared = d_bulkModulus / rho_cur;
 }
 
 // Compute bulk modulus
-double 
+double
 Pressure_Hypoelastic::computeInitialBulkModulus()
 {
-  return d_bulkModulus;  // return -1 if uninitialized
+  return d_bulkModulus; // return -1 if uninitialized
 }
 
-double 
+double
 Pressure_Hypoelastic::computeBulkModulus(const double& rho_orig,
-                                          const double& rho_cur)
+                                         const double& rho_cur)
 {
   if (d_bulkModulus < 0.0) {
-    throw ParameterNotFound("Please initialize bulk modulus in EOS before computing modulus",
-                            __FILE__, __LINE__);
+    throw ParameterNotFound(
+      "Please initialize bulk modulus in EOS before computing modulus",
+      __FILE__, __LINE__);
   }
 
-  double J = rho_orig/rho_cur;
-  double bulk = d_bulkModulus/(J*J);
+  double J = rho_orig / rho_cur;
+  double bulk = d_bulkModulus / (J * J);
   return bulk;
 }
 
 // Compute strain energy
 // (integrate the equation for p)
-double 
+double
 Pressure_Hypoelastic::computeStrainEnergy(const double& rho_orig,
-                                           const double& rho_cur)
+                                          const double& rho_cur)
 {
   if (d_bulkModulus < 0.0) {
-    throw ParameterNotFound("Please initialize bulk modulus in EOS before computing energy",
-                            __FILE__, __LINE__);
+    throw ParameterNotFound(
+      "Please initialize bulk modulus in EOS before computing energy", __FILE__,
+      __LINE__);
   }
 
-  double J = rho_orig/rho_cur;
-  double U = d_bulkModulus*(J - 1.0 - log(J));
+  double J = rho_orig / rho_cur;
+  double U = d_bulkModulus * (J - 1.0 - log(J));
   return U;
 }
 
 // Compute density given pressure
-double 
+double
 Pressure_Hypoelastic::computeDensity(const double& rho_orig,
-                                      const double& pressure)
+                                     const double& pressure)
 {
   if (d_bulkModulus < 0.0) {
-    throw ParameterNotFound("Please initialize bulk modulus in EOS before computing density",
-                            __FILE__, __LINE__);
+    throw ParameterNotFound(
+      "Please initialize bulk modulus in EOS before computing density",
+      __FILE__, __LINE__);
   }
 
-  double rho_cur = rho_orig*(1.0 - pressure/d_bulkModulus);
+  double rho_cur = rho_orig * (1.0 - pressure / d_bulkModulus);
   return rho_cur;
 }

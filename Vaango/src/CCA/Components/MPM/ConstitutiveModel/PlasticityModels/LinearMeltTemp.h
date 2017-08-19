@@ -54,46 +54,44 @@
 
 namespace Uintah {
 
-  /*! \class LinearMeltTemp
-   *  \brief The melting temperature varies linearly with pressure
-   *  \author Joseph Peterson, 
-   *  \author C-SAFE and Department of Chemistry,
-   *  \author University of Utah.
-   *
-  */
-  class LinearMeltTemp : public MeltingTempModel {
+/*! \class LinearMeltTemp
+ *  \brief The melting temperature varies linearly with pressure
+ *  \author Joseph Peterson,
+ *  \author C-SAFE and Department of Chemistry,
+ *  \author University of Utah.
+ *
+*/
+class LinearMeltTemp : public MeltingTempModel
+{
 
-  private:
-    LinearMeltTemp& operator=(const LinearMeltTemp &mtm);
+private:
+  LinearMeltTemp& operator=(const LinearMeltTemp& mtm);
 
-    bool d_usePressureForm;
-    bool d_useVolumeForm;
+  bool d_usePressureForm;
+  bool d_useVolumeForm;
 
-    double d_Tm0;    // Initial melting temperature (K)
-    double d_a;      // Kraut-Kennedy coefficient 
-    double d_Gamma;  // Gruneisen gamma 
-    double d_b;      // Pressure coefficient (K/Pa)
-    double d_K_T;    // Isothermal bulk modulus (Pa)
+  double d_Tm0;   // Initial melting temperature (K)
+  double d_a;     // Kraut-Kennedy coefficient
+  double d_Gamma; // Gruneisen gamma
+  double d_b;     // Pressure coefficient (K/Pa)
+  double d_K_T;   // Isothermal bulk modulus (Pa)
 
+public:
+  /*! Construct a linear melt temp model. */
+  LinearMeltTemp();
+  LinearMeltTemp(ProblemSpecP& ps);
 
-  public:
-         
-    /*! Construct a linear melt temp model. */
-    LinearMeltTemp();
-    LinearMeltTemp(ProblemSpecP& ps);
+  /*! Construct a copy of linear melt temp model. */
+  LinearMeltTemp(const LinearMeltTemp* mtm);
 
-    /*! Construct a copy of linear melt temp model. */
-    LinearMeltTemp(const LinearMeltTemp* mtm);
+  /*! Destructor of linear melt temp model.   */
+  ~LinearMeltTemp() override;
 
-    /*! Destructor of linear melt temp model.   */
-    virtual ~LinearMeltTemp();
-         
-    virtual void outputProblemSpec(ProblemSpecP& ps);
+  void outputProblemSpec(ProblemSpecP& ps) override;
 
-    /*! Compute the melt temp */
-    double computeMeltingTemp(const PlasticityState* state);
-  };
+  /*! Compute the melt temp */
+  double computeMeltingTemp(const PlasticityState* state) override;
+};
 } // End namespace Uintah
-      
-#endif  // __LINEAR_MELT_TEMP_MODEL_H__
 
+#endif // __LINEAR_MELT_TEMP_MODEL_H__

@@ -51,7 +51,6 @@
 #include <cmath>
 #include <vector>
 
-
 using namespace Uintah;
 using namespace std;
 
@@ -59,7 +58,7 @@ NoneCheck::NoneCheck()
 {
 }
 
-NoneCheck::NoneCheck(ProblemSpecP& )
+NoneCheck::NoneCheck(ProblemSpecP&)
 {
 }
 
@@ -67,23 +66,18 @@ NoneCheck::NoneCheck(const NoneCheck*)
 {
 }
 
-NoneCheck::~NoneCheck()
-{
-}
+NoneCheck::~NoneCheck() = default;
 
-void NoneCheck::outputProblemSpec(ProblemSpecP& ps)
+void
+NoneCheck::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP stability_ps = ps->appendChild("stability_check");
-  stability_ps->setAttribute("type","none");
-
+  stability_ps->setAttribute("type", "none");
 }
-         
-bool 
-NoneCheck::checkStability(const Matrix3& ,
-                          const Matrix3& ,
-                          const TangentModulusTensor& ,
-                          Vector& )
+
+bool
+NoneCheck::checkStability(const Matrix3&, const Matrix3&,
+                          const TangentModulusTensor&, Vector&)
 {
   return true;
 }
-

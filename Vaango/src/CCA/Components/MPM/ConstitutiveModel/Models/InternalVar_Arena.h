@@ -25,328 +25,335 @@
 #ifndef __ARENA_INT_VAR_MODEL_H__
 #define __ARENA_INT_VAR_MODEL_H__
 
-
-#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>    
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>    
+#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-  ////////////////////////////////////////////////////////////////////////////
-  /*! 
-    \class InternalVar_Arena
-    \brief The evolution of the kappa, X, porosity, and saturation internal variables 
-           in the partially saturated Arenisca model
-  */
-  ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+/*!
+  \class InternalVar_Arena
+  \brief The evolution of the kappa, X, porosity, and saturation internal
+  variables
+         in the partially saturated Arenisca model
+*/
+////////////////////////////////////////////////////////////////////////////
 
-  class InternalVar_Arena : public InternalVariableModel {
+class InternalVar_Arena : public InternalVariableModel
+{
 
-  public:
+public:
+  // Internal variables
+  const Uintah::VarLabel* pKappaLabel; // Branch point
+  const Uintah::VarLabel* pKappaLabel_preReloc;
 
-    // Internal variables
-    const Uintah::VarLabel* pKappaLabel;                         // Branch point
-    const Uintah::VarLabel* pKappaLabel_preReloc; 
+  const Uintah::VarLabel* pCapXLabel; // Hydrostatic strength
+  const Uintah::VarLabel* pCapXLabel_preReloc;
 
-    const Uintah::VarLabel* pCapXLabel;                          // Hydrostatic strength
-    const Uintah::VarLabel* pCapXLabel_preReloc; 
+  const Uintah::VarLabel* pPlasticStrainLabel; // Plastic Strain
+  const Uintah::VarLabel* pPlasticStrainLabel_preReloc;
 
-    const Uintah::VarLabel* pPlasticStrainLabel;                 // Plastic Strain
-    const Uintah::VarLabel* pPlasticStrainLabel_preReloc;
+  const Uintah::VarLabel* pPlasticVolStrainLabel; // Plastic Volumetric Strain
+  const Uintah::VarLabel* pPlasticVolStrainLabel_preReloc;
 
-    const Uintah::VarLabel* pPlasticVolStrainLabel;              // Plastic Volumetric Strain
-    const Uintah::VarLabel* pPlasticVolStrainLabel_preReloc;
-    
-    const Uintah::VarLabel* pP3Label;                            // Evolution of parameter P3
-    const Uintah::VarLabel* pP3Label_preReloc;
+  const Uintah::VarLabel* pP3Label; // Evolution of parameter P3
+  const Uintah::VarLabel* pP3Label_preReloc;
 
-    // Get the internal variables
-    std::vector<Uintah::constParticleVariable<double> >
-         getInternalVariables(Uintah::ParticleSubset* pset,
-                              Uintah::DataWarehouse* old_dw,
-                              const double& dummy)
-    {
-      Uintah::constParticleVariable<double> pKappa, pCapX, pPlasticVolStrain, pP3; 
-      old_dw->get(pKappa,            pKappaLabel,            pset);
-      old_dw->get(pCapX,             pCapXLabel,             pset);
-      old_dw->get(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
-      old_dw->get(pP3,               pP3Label,               pset);
+  // Get the internal variables
+  std::vector<Uintah::constParticleVariable<double>> getInternalVariables(
+    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* old_dw,
+    const double& dummy) override
+  {
+    Uintah::constParticleVariable<double> pKappa, pCapX, pPlasticVolStrain, pP3;
+    old_dw->get(pKappa, pKappaLabel, pset);
+    old_dw->get(pCapX, pCapXLabel, pset);
+    old_dw->get(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
+    old_dw->get(pP3, pP3Label, pset);
 
-      std::vector<Uintah::constParticleVariable<double> > pIntVars;
-      pIntVars.emplace_back(pKappa);
-      pIntVars.emplace_back(pCapX);
-      pIntVars.emplace_back(pPlasticVolStrain);
-      pIntVars.emplace_back(pP3);
-    
-      return pIntVars;
-    }
+    std::vector<Uintah::constParticleVariable<double>> pIntVars;
+    pIntVars.emplace_back(pKappa);
+    pIntVars.emplace_back(pCapX);
+    pIntVars.emplace_back(pPlasticVolStrain);
+    pIntVars.emplace_back(pP3);
 
-    std::vector<Uintah::constParticleVariable<Uintah::Matrix3> >
-         getInternalVariables(Uintah::ParticleSubset* pset,
-                              Uintah::DataWarehouse* old_dw,
-                              const Uintah::Matrix3& dummy)
-    {
-      Uintah::constParticleVariable<Uintah::Matrix3> pPlasticStrain; 
-      old_dw->get(pPlasticStrain, pPlasticStrainLabel, pset);
+    return pIntVars;
+  }
 
-      std::vector<Uintah::constParticleVariable<Uintah::Matrix3> > pIntVars;
-      pIntVars.emplace_back(pPlasticStrain);
-    
-      return pIntVars;
-    }
+  std::vector<Uintah::constParticleVariable<Uintah::Matrix3>>
+  getInternalVariables(Uintah::ParticleSubset* pset,
+                       Uintah::DataWarehouse* old_dw,
+                       const Uintah::Matrix3& dummy) override
+  {
+    Uintah::constParticleVariable<Uintah::Matrix3> pPlasticStrain;
+    old_dw->get(pPlasticStrain, pPlasticStrainLabel, pset);
 
-    // Allocate and put the local particle internal variables
-    void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                        Uintah::DataWarehouse* new_dw,
-                                        vectorParticleDoubleP& pVars) {
-      new_dw->allocateAndPut(*pVars[0], pKappaLabel_preReloc,            pset);
-      new_dw->allocateAndPut(*pVars[1], pCapXLabel_preReloc,             pset);
-      new_dw->allocateAndPut(*pVars[2], pPlasticVolStrainLabel_preReloc, pset);
-      new_dw->allocateAndPut(*pVars[3], pP3Label_preReloc,               pset);
-    }
+    std::vector<Uintah::constParticleVariable<Uintah::Matrix3>> pIntVars;
+    pIntVars.emplace_back(pPlasticStrain);
 
-    // Allocate and put the local <Matrix3> particle variables
-    void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                        Uintah::DataWarehouse* new_dw,
-                                        vectorParticleMatrix3P& pVars) {
-      new_dw->allocateAndPut(*pVars[0], pPlasticStrainLabel_preReloc, pset);
-    }
+    return pIntVars;
+  }
 
-    // Return the internal variable labels
-    std::vector<const Uintah::VarLabel*> getLabels() const
-    {
-       std::vector<const Uintah::VarLabel*> labels;
-       labels.push_back(pKappaLabel);                         // Branch point
-       labels.push_back(pKappaLabel_preReloc); 
+  // Allocate and put the local particle internal variables
+  void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                      Uintah::DataWarehouse* new_dw,
+                                      vectorParticleDoubleP& pVars) override
+  {
+    new_dw->allocateAndPut(*pVars[0], pKappaLabel_preReloc, pset);
+    new_dw->allocateAndPut(*pVars[1], pCapXLabel_preReloc, pset);
+    new_dw->allocateAndPut(*pVars[2], pPlasticVolStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(*pVars[3], pP3Label_preReloc, pset);
+  }
 
-       labels.push_back(pCapXLabel);                          // Hydrostatic strength
-       labels.push_back(pCapXLabel_preReloc); 
+  // Allocate and put the local <Matrix3> particle variables
+  void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                      Uintah::DataWarehouse* new_dw,
+                                      vectorParticleMatrix3P& pVars) override
+  {
+    new_dw->allocateAndPut(*pVars[0], pPlasticStrainLabel_preReloc, pset);
+  }
 
-       labels.push_back(pPlasticStrainLabel);                 // Plastic Strain
-       labels.push_back(pPlasticStrainLabel_preReloc);
+  // Return the internal variable labels
+  std::vector<const Uintah::VarLabel*> getLabels() const override
+  {
+    std::vector<const Uintah::VarLabel*> labels;
+    labels.push_back(pKappaLabel); // Branch point
+    labels.push_back(pKappaLabel_preReloc);
 
-       labels.push_back(pPlasticVolStrainLabel);              // Plastic Volumetric Strain
-       labels.push_back(pPlasticVolStrainLabel_preReloc);
-    
-       labels.push_back(pP3Label);                            // Evolution of parameter P3
-       labels.push_back(pP3Label_preReloc);
+    labels.push_back(pCapXLabel); // Hydrostatic strength
+    labels.push_back(pCapXLabel_preReloc);
 
-       return labels;
-    }
+    labels.push_back(pPlasticStrainLabel); // Plastic Strain
+    labels.push_back(pPlasticStrainLabel_preReloc);
 
-  private:
+    labels.push_back(pPlasticVolStrainLabel); // Plastic Volumetric Strain
+    labels.push_back(pPlasticVolStrainLabel_preReloc);
 
-    // Crush Curve Model parameters
-    struct CrushParameters {
-      double p0;
-      double p1;
-      double p2;
-      double p3;
-    };
+    labels.push_back(pP3Label); // Evolution of parameter P3
+    labels.push_back(pP3Label_preReloc);
 
-    CrushParameters d_crushParam;
-    bool d_use_disaggregation_algorithm;
+    return labels;
+  }
 
-    // Prevent copying of this class
-    // copy constructor
-    //InternalVar_Arena(const InternalVar_Arena &cm);
-    InternalVar_Arena& operator=(const InternalVar_Arena &cm);
+private:
+  // Crush Curve Model parameters
+  struct CrushParameters
+  {
+    double p0;
+    double p1;
+    double p2;
+    double p3;
+  };
 
-    // Initialize local VarLabels
-    void initializeLocalMPMLabels() 
-    {
-      pKappaLabel = Uintah::VarLabel::create("p.kappa",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-      pKappaLabel_preReloc = Uintah::VarLabel::create("p.kappa+",
-        Uintah::ParticleVariable<double>::getTypeDescription());
+  CrushParameters d_crushParam;
+  bool d_use_disaggregation_algorithm;
 
-      pCapXLabel = Uintah::VarLabel::create("p.capX",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-      pCapXLabel_preReloc = Uintah::VarLabel::create("p.capX+",
-        Uintah::ParticleVariable<double>::getTypeDescription());
+  // Prevent copying of this class
+  // copy constructor
+  // InternalVar_Arena(const InternalVar_Arena &cm);
+  InternalVar_Arena& operator=(const InternalVar_Arena& cm);
 
-      pPlasticStrainLabel = Uintah::VarLabel::create("p.plasticStrain",
-        Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-      pPlasticStrainLabel_preReloc = Uintah::VarLabel::create("p.plasticStrain+",
-        Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+  // Initialize local VarLabels
+  void initializeLocalMPMLabels()
+  {
+    pKappaLabel = Uintah::VarLabel::create(
+      "p.kappa", Uintah::ParticleVariable<double>::getTypeDescription());
+    pKappaLabel_preReloc = Uintah::VarLabel::create(
+      "p.kappa+", Uintah::ParticleVariable<double>::getTypeDescription());
 
-      pPlasticVolStrainLabel = Uintah::VarLabel::create("p.plasticVolStrain",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-      pPlasticVolStrainLabel_preReloc = Uintah::VarLabel::create("p.plasticVolStrain+",
-        Uintah::ParticleVariable<double>::getTypeDescription());
+    pCapXLabel = Uintah::VarLabel::create(
+      "p.capX", Uintah::ParticleVariable<double>::getTypeDescription());
+    pCapXLabel_preReloc = Uintah::VarLabel::create(
+      "p.capX+", Uintah::ParticleVariable<double>::getTypeDescription());
 
-      pP3Label = Uintah::VarLabel::create("p.p3",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-      pP3Label_preReloc = Uintah::VarLabel::create("p.p3+",
-        Uintah::ParticleVariable<double>::getTypeDescription());
-    }
+    pPlasticStrainLabel = Uintah::VarLabel::create(
+      "p.plasticStrain",
+      Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+    pPlasticStrainLabel_preReloc = Uintah::VarLabel::create(
+      "p.plasticStrain+",
+      Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
 
-  public:
-    // constructors
-    InternalVar_Arena(Uintah::ProblemSpecP& ps,
-                          ElasticModuliModel* elastic);
-    InternalVar_Arena(const InternalVar_Arena* cm);
-         
-    // destructor 
-    virtual ~InternalVar_Arena();
+    pPlasticVolStrainLabel = Uintah::VarLabel::create(
+      "p.plasticVolStrain",
+      Uintah::ParticleVariable<double>::getTypeDescription());
+    pPlasticVolStrainLabel_preReloc = Uintah::VarLabel::create(
+      "p.plasticVolStrain+",
+      Uintah::ParticleVariable<double>::getTypeDescription());
 
-    virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
-         
-    /*! Get parameters */
-    ParameterDict getParameters() const {
-      ParameterDict params;
-      params["p0"] = d_crushParam.p0;
-      params["p1"] = d_crushParam.p1;
-      params["p2"] = d_crushParam.p2;
-      params["p3"] = d_crushParam.p3;
-      return params;
-    }
+    pP3Label = Uintah::VarLabel::create(
+      "p.p3", Uintah::ParticleVariable<double>::getTypeDescription());
+    pP3Label_preReloc = Uintah::VarLabel::create(
+      "p.p3+", Uintah::ParticleVariable<double>::getTypeDescription());
+  }
 
-    // Computes and requires for internal evolution variables
-    virtual void addInitialComputesAndRequires(Uintah::Task* task,
-                                               const Uintah::MPMMaterial* matl,
-                                               const Uintah::PatchSet* patches);
+public:
+  // constructors
+  InternalVar_Arena(Uintah::ProblemSpecP& ps, ElasticModuliModel* elastic);
+  InternalVar_Arena(const InternalVar_Arena* cm);
 
-    virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
-                                            Uintah::DataWarehouse* new_dw) {}
+  // destructor
+  ~InternalVar_Arena() override;
 
-    virtual void initializeInternalVariable(const Uintah::Patch* patch,
-                                            const Uintah::MPMMaterial* matl,
-                                            Uintah::ParticleSubset* pset,
-                                            Uintah::DataWarehouse* new_dw,
-                                            Uintah::MPMLabel* lb,
-                                            ParameterDict& params);
+  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
-    virtual void addComputesAndRequires(Uintah::Task* task,
-                                        const Uintah::MPMMaterial* matl,
-                                        const Uintah::PatchSet* patches);
+  /*! Get parameters */
+  ParameterDict getParameters() const override
+  {
+    ParameterDict params;
+    params["p0"] = d_crushParam.p0;
+    params["p1"] = d_crushParam.p1;
+    params["p2"] = d_crushParam.p2;
+    params["p3"] = d_crushParam.p3;
+    return params;
+  }
 
-    virtual void allocateCMDataAddRequires(Uintah::Task* task, 
-                                           const Uintah::MPMMaterial* matl,
-                                           const Uintah::PatchSet* patch, 
-                                           Uintah::MPMLabel* lb);
+  // Computes and requires for internal evolution variables
+  void addInitialComputesAndRequires(Uintah::Task* task,
+                                     const Uintah::MPMMaterial* matl,
+                                     const Uintah::PatchSet* patches) override;
 
-    virtual void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
-                                   Uintah::ParticleSubset* addset,
-                                   Uintah::ParticleLabelVariableMap* newState,
-                                   Uintah::ParticleSubset* delset,
-                                   Uintah::DataWarehouse* old_dw);
+  void initializeInternalVariable(Uintah::ParticleSubset* pset,
+                                  Uintah::DataWarehouse* new_dw) override
+  {
+  }
 
-    virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                                  std::vector<const Uintah::VarLabel*>& to);
+  void initializeInternalVariable(const Uintah::Patch* patch,
+                                  const Uintah::MPMMaterial* matl,
+                                  Uintah::ParticleSubset* pset,
+                                  Uintah::DataWarehouse* new_dw,
+                                  Uintah::MPMLabel* lb,
+                                  ParameterDict& params) override;
 
+  void addComputesAndRequires(Uintah::Task* task,
+                              const Uintah::MPMMaterial* matl,
+                              const Uintah::PatchSet* patches) override;
 
-    virtual void allocateAndPutRigid(Uintah::ParticleSubset* pset, 
-                                     Uintah::DataWarehouse* new_dw,
-                                     Uintah::constParticleLabelVariableMap& intvar);
+  void allocateCMDataAddRequires(Uintah::Task* task,
+                                 const Uintah::MPMMaterial* matl,
+                                 const Uintah::PatchSet* patch,
+                                 Uintah::MPMLabel* lb) override;
 
-    ///////////////////////////////////////////////////////////////////////////
-    /*! \brief Compute the internal variable */
-    double computeInternalVariable(const ModelStateBase* state) const;
+  void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
+                         Uintah::ParticleSubset* addset,
+                         Uintah::ParticleLabelVariableMap* newState,
+                         Uintah::ParticleSubset* delset,
+                         Uintah::DataWarehouse* old_dw) override;
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Compute derivative of internal variable with respect to volumetric
-    // elastic strain
-    double computeVolStrainDerivOfInternalVariable(const ModelStateBase*) const
-    {
-      return 0.0;
-    }
+  void addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                        std::vector<const Uintah::VarLabel*>& to) override;
 
- private:
+  void allocateAndPutRigid(
+    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* new_dw,
+    Uintah::constParticleLabelVariableMap& intvar) override;
 
-    /**
-     * Function: computeDrainedHydrostaticStrength
-     *
-     * Purpose:
-     *   Compute the drained hydrostatic strength (X) using the crush curve
-     *   and the initial porosity
-     *
-     * Inputs:
-     *   ep_v_bar = -tr(ep) = volumetric part of plastic strain tensor
-     *   phi0     = initial porosity
-     *
-     * Returns:
-     *   Xbar     = hydrostatic compressive strength     
-     */
-    double computeDrainedHydrostaticStrength(const double& ep_v_bar,
-                                             const double& phi0) const;
+  ///////////////////////////////////////////////////////////////////////////
+  /*! \brief Compute the internal variable */
+  double computeInternalVariable(const ModelStateBase* state) const override;
 
-    /**
-     * Function: computeP3
-     *
-     * Purpose:
-     *   Compute the crush curve parameter P3 from the initial porosity
-     *
-     * Inputs:
-     *   phi0 = initial porosity
-     *
-     * Returns:
-     *   p3 = crush curve parameter
-     */
-    inline double computeP3(const double& phi0) const {
-      double p3 = -std::log(1.0 - phi0);
-      return p3;
-    };
+  ///////////////////////////////////////////////////////////////////////////
+  // Compute derivative of internal variable with respect to volumetric
+  // elastic strain
+  double computeVolStrainDerivOfInternalVariable(
+    const ModelStateBase*) const override
+  {
+    return 0.0;
+  }
 
-    /**
-     * Function: computePorosity
-     *
-     * Purpose:
-     *   Compute the porosity from crush curve parameter P3
-     *
-     * Inputs:
-     *   ep_v = volumetric plastic strain
-     *   p3 = crush
-     *
-     * Returns:
-     *   porosity = porosity from crush curve parameter
-     */
-    inline double computePorosity(const double& ep_v, const double& p3) const {
-      double porosity = 1.0 - std::exp(-p3 + ep_v);
-      return porosity;
-    }
+private:
+  /**
+   * Function: computeDrainedHydrostaticStrength
+   *
+   * Purpose:
+   *   Compute the drained hydrostatic strength (X) using the crush curve
+   *   and the initial porosity
+   *
+   * Inputs:
+   *   ep_v_bar = -tr(ep) = volumetric part of plastic strain tensor
+   *   phi0     = initial porosity
+   *
+   * Returns:
+   *   Xbar     = hydrostatic compressive strength
+   */
+  double computeDrainedHydrostaticStrength(const double& ep_v_bar,
+                                           const double& phi0) const;
 
-    /**
-     * Function: computeElasticVolStrainAtYield
-     *
-     * Purpose:
-     *   Compute the elastic volumetric strain at yield
-     *
-     * Inputs:
-     *   ep_v_bar = -tr(ep) = volumetric part of plastic strain tensor
-     *   phi0     = initial porosity
-     *
-     * Returns:
-     *   ev_e_yield = elastic volumetric strain at yield
-     */
-    double computeElasticVolStrainAtYield(const double& ep_v_bar,
-                                          const double& phi0) const;
+  /**
+   * Function: computeP3
+   *
+   * Purpose:
+   *   Compute the crush curve parameter P3 from the initial porosity
+   *
+   * Inputs:
+   *   phi0 = initial porosity
+   *
+   * Returns:
+   *   p3 = crush curve parameter
+   */
+  inline double computeP3(const double& phi0) const
+  {
+    double p3 = -std::log(1.0 - phi0);
+    return p3;
+  };
 
-    /**
-     * Function: computePartSatHydrostaticStrength
-     *
-     * Purpose:
-     *   Compute the partially saturated hydrostatic strength (X_sat)
-     *
-     * Inputs:
-     *   I1_eff_bar   = -tr(sigma) = isotropic part of effective stress tensor
-     *   pw_bar   = pore pressure
-     *   ep_v_bar = -tr(ep) = volumetric part of plastic strain tensor
-     *   phi      = porosity
-     *   Sw       = saturation
-     *   phi0     = initial porosity
-     *
-     * Returns:
-     *   Xbar_sat = hydrostatic compressive strength     
-     */
-    double computePartSatHydrostaticStrength(const double& I1_bar, 
-                                             const double& pw_bar,
-                                             const double& ep_v_bar,
-                                             const double& phi,
-                                             const double& Sw,
-                                             const double& phi0) const;
- };
+  /**
+   * Function: computePorosity
+   *
+   * Purpose:
+   *   Compute the porosity from crush curve parameter P3
+   *
+   * Inputs:
+   *   ep_v = volumetric plastic strain
+   *   p3 = crush
+   *
+   * Returns:
+   *   porosity = porosity from crush curve parameter
+   */
+  inline double computePorosity(const double& ep_v, const double& p3) const
+  {
+    double porosity = 1.0 - std::exp(-p3 + ep_v);
+    return porosity;
+  }
+
+  /**
+   * Function: computeElasticVolStrainAtYield
+   *
+   * Purpose:
+   *   Compute the elastic volumetric strain at yield
+   *
+   * Inputs:
+   *   ep_v_bar = -tr(ep) = volumetric part of plastic strain tensor
+   *   phi0     = initial porosity
+   *
+   * Returns:
+   *   ev_e_yield = elastic volumetric strain at yield
+   */
+  double computeElasticVolStrainAtYield(const double& ep_v_bar,
+                                        const double& phi0) const;
+
+  /**
+   * Function: computePartSatHydrostaticStrength
+   *
+   * Purpose:
+   *   Compute the partially saturated hydrostatic strength (X_sat)
+   *
+   * Inputs:
+   *   I1_eff_bar   = -tr(sigma) = isotropic part of effective stress tensor
+   *   pw_bar   = pore pressure
+   *   ep_v_bar = -tr(ep) = volumetric part of plastic strain tensor
+   *   phi      = porosity
+   *   Sw       = saturation
+   *   phi0     = initial porosity
+   *
+   * Returns:
+   *   Xbar_sat = hydrostatic compressive strength
+   */
+  double computePartSatHydrostaticStrength(const double& I1_bar,
+                                           const double& pw_bar,
+                                           const double& ep_v_bar,
+                                           const double& phi, const double& Sw,
+                                           const double& phi0) const;
+};
 
 } // End namespace Uintah
 
-#endif  // __ARENA_INT_VAR_MODEL_H__ 
+#endif // __ARENA_INT_VAR_MODEL_H__

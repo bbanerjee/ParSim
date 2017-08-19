@@ -28,38 +28,38 @@
 // This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
 // make the isnan function not work.  This define makes the cmath header
 // not get included since we do not need it anyway.
-#  define _CPP_CMATH
+#define _CPP_CMATH
 #endif
 
 #include "LinearElasticPressure.h"
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
 
-
 using namespace Uintah;
 using namespace std;
 
-// Construct a pressure model.  
-LinearElasticPressure::LinearElasticPressure(ProblemSpecP& ps )
+// Construct a pressure model.
+LinearElasticPressure::LinearElasticPressure(ProblemSpecP& ps)
 {
   ps->require("bulk_modulus", d_kappa);
 }
 
-// Construct a copy of a pressure model.  
+// Construct a copy of a pressure model.
 LinearElasticPressure::LinearElasticPressure(const LinearElasticPressure* pm)
 {
   d_kappa = pm->d_kappa;
 }
 
-// Destructor of pressure model.  
+// Destructor of pressure model.
 LinearElasticPressure::~LinearElasticPressure()
 {
 }
 
-void LinearElasticPressure::outputProblemSpec(ProblemSpecP& ps)
+void
+LinearElasticPressure::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP pressure_ps = ps->appendChild("pressure_model");
   pressure_ps->setAttribute("type", "linear_elastic");
@@ -68,61 +68,59 @@ void LinearElasticPressure::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the pressure (increment in this case)
 //   Delta p = kappa*tr(Delta t * rate_of_deformation)
-double 
+double
 LinearElasticPressure::computePressure(const DeformationState* state)
 {
   state->computeHypoelasticStrain();
-  return state->eps_v*d_kappa;
+  return state->eps_v * d_kappa;
 }
 
 // Calculate the pressure without considering internal energy (option 1)
 //   p = kappa Tr(eps) = kappa (V-V0)/V0 = kappa (rho0/rho - 1)
-double 
+double
 LinearElasticPressure::computePressure(const double& rho_orig,
                                        const double& rho_cur)
 {
-   return d_kappa*(rho_orig/rho_cur - 1);
+  return d_kappa * (rho_orig / rho_cur - 1);
 }
 
-// Calculate the pressure without considering internal energy (option 2).  
-//   Also compute dp/drho and c^2. 
+// Calculate the pressure without considering internal energy (option 2).
+//   Also compute dp/drho and c^2.
 //   p = kappa Tr(eps) = kappa (V-V0)/V0 = kappa (rho0/rho - 1)
 //   dp_drho = -kappa rho0/rho^2
 //   c^2 = kappa/rho
-void 
+void
 LinearElasticPressure::computePressure(const double& rho_orig,
-                                       const double& rho_cur,
-                                       double& pressure,
-                                       double& dp_drho,
-                                       double& csquared)
+                                       const double& rho_cur, double& pressure,
+                                       double& dp_drho, double& csquared)
 {
-   pressure = d_kappa*(rho_orig/rho_cur - 1);
-   dp_drho = -d_kappa*rho_orig/(rho_cur*rho_cur);
-   csquared = d_kappa/rho_cur;
+  pressure = d_kappa * (rho_orig / rho_cur - 1);
+  dp_drho = -d_kappa * rho_orig / (rho_cur * rho_cur);
+  csquared = d_kappa / rho_cur;
 }
 
-// Calculate the tangent bulk modulus 
-double 
+// Calculate the tangent bulk modulus
+double
 LinearElasticPressure::computeTangentBulkModulus(const double& rho_orig,
                                                  const double& rho_cur)
 {
-   return d_kappa;
+  return d_kappa;
 }
 
 // Calculate the accumulated strain energy (increment)
 //   Delta W_pressure = p*Tr(d)*Delta t
-double 
+double
 LinearElasticPressure::computeStrainEnergy(const double& pressure,
                                            const DeformationState* state)
 {
-   return pressure*eps_v; 
+  return pressure * eps_v;
 }
 
-// Calculate the mass density at a given pressure 
+// Calculate the mass density at a given pressure
 //   rho = rho0*kappa/(p + kappa)
-double 
+double
 LinearElasticPressure::computeDensity(const double& rho_orig,
                                       const double& pressure)
 {
-    return rho_orig*d_kappa/(pressure + d_kappa);
+  return rho_orig * d_kappa / (pressure + d_kappa);
 }

@@ -49,101 +49,92 @@
 #ifndef __EQUATION_OF_STATE_H__
 #define __EQUATION_OF_STATE_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include "PlasticityState.h"
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Core/Math/Matrix3.h>
-
 
 namespace Uintah {
 
-  ////////////////////////////////////////////////////////////////////////////
-  /*! 
-    \class MPMEquationOfState
-    \brief Abstract base class for solid equations of state
-    \author Biswajit Banerjee, \n
-    C-SAFE and Department of Mechanical Engineering, \n
-    University of Utah \n
+////////////////////////////////////////////////////////////////////////////
+/*!
+  \class MPMEquationOfState
+  \brief Abstract base class for solid equations of state
+  \author Biswajit Banerjee, \n
+  C-SAFE and Department of Mechanical Engineering, \n
+  University of Utah \n
 
-  */
-  ////////////////////////////////////////////////////////////////////////////
+*/
+////////////////////////////////////////////////////////////////////////////
 
-  class MPMEquationOfState {
+class MPMEquationOfState
+{
 
-  protected:
-    double d_bulk;
+protected:
+  double d_bulk;
 
-  public:
-         
-    MPMEquationOfState();
-    virtual ~MPMEquationOfState();
+public:
+  MPMEquationOfState();
+  virtual ~MPMEquationOfState();
 
-    virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
-         
-    void setBulkModulus(const double& bulk) {d_bulk = bulk;}
-    double initialBulkModulus() {return d_bulk;}
+  virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
 
-    ////////////////////////////////////////////////////////////////////////
-    /*! Calculate the hydrostatic component of stress (pressure)
-        using an equation of state */
-    ////////////////////////////////////////////////////////////////////////
-    virtual double computePressure(const MPMMaterial* matl,
-                                   const PlasticityState* state,
-                                   const Matrix3& deformGrad,
-                                   const Matrix3& rateOfDeformation,
-                                   const double& delT) = 0;
+  void setBulkModulus(const double& bulk) { d_bulk = bulk; }
+  double initialBulkModulus() { return d_bulk; }
 
-    ////////////////////////////////////////////////////////////////////////
-    /*! Calculate the pressure without considering internal energy 
-        (option 1)*/
-    ////////////////////////////////////////////////////////////////////////
-    virtual double computePressure(const double& rho_orig,
-                                   const double& rho_cur) = 0;
+  ////////////////////////////////////////////////////////////////////////
+  /*! Calculate the hydrostatic component of stress (pressure)
+      using an equation of state */
+  ////////////////////////////////////////////////////////////////////////
+  virtual double computePressure(const MPMMaterial* matl,
+                                 const PlasticityState* state,
+                                 const Matrix3& deformGrad,
+                                 const Matrix3& rateOfDeformation,
+                                 const double& delT) = 0;
 
-    ////////////////////////////////////////////////////////////////////////
-    /*! Calculate the pressure without considering internal energy 
-        (option 2).  Also compute dp/drho and c^2. */
-    ////////////////////////////////////////////////////////////////////////
-    virtual void computePressure(const double& rho_orig,
-                                 const double& rho_cur,
-                                 double& pressure,
-                                 double& dp_drho,
-                                 double& csquared) = 0;
+  ////////////////////////////////////////////////////////////////////////
+  /*! Calculate the pressure without considering internal energy
+      (option 1)*/
+  ////////////////////////////////////////////////////////////////////////
+  virtual double computePressure(const double& rho_orig,
+                                 const double& rho_cur) = 0;
 
+  ////////////////////////////////////////////////////////////////////////
+  /*! Calculate the pressure without considering internal energy
+      (option 2).  Also compute dp/drho and c^2. */
+  ////////////////////////////////////////////////////////////////////////
+  virtual void computePressure(const double& rho_orig, const double& rho_cur,
+                               double& pressure, double& dp_drho,
+                               double& csquared) = 0;
 
-    /*! Calculate the derivative of \f$p(J)\f$ wrt \f$J\f$ 
-        where \f$J = det(F) = rho_0/rho\f$ */
-    virtual double eval_dp_dJ(const MPMMaterial* matl,
-                              const double& delF,
-                              const PlasticityState* state) = 0;
+  /*! Calculate the derivative of \f$p(J)\f$ wrt \f$J\f$
+      where \f$J = det(F) = rho_0/rho\f$ */
+  virtual double eval_dp_dJ(const MPMMaterial* matl, const double& delF,
+                            const PlasticityState* state) = 0;
 
-    // Calculate rate of temperature change due to compression/expansion
-    virtual double computeIsentropicTemperatureRate(const double T,
-                                                    const double rho_0,
-                                                    const double rho_cur,
-                                                    const double Dtrace);
+  // Calculate rate of temperature change due to compression/expansion
+  virtual double computeIsentropicTemperatureRate(const double T,
+                                                  const double rho_0,
+                                                  const double rho_cur,
+                                                  const double Dtrace);
 
-    ////////////////////////////////////////////////////////////////////////
-    /*! Calculate the tangent bulk modulus */
-    ////////////////////////////////////////////////////////////////////////
-    virtual double computeBulkModulus(const double& rho_orig,
-                                      const double& rho_cur) = 0;
+  ////////////////////////////////////////////////////////////////////////
+  /*! Calculate the tangent bulk modulus */
+  ////////////////////////////////////////////////////////////////////////
+  virtual double computeBulkModulus(const double& rho_orig,
+                                    const double& rho_cur) = 0;
 
-    ////////////////////////////////////////////////////////////////////////
-    /*! Calculate the accumulated strain energy */
-    ////////////////////////////////////////////////////////////////////////
-    virtual double computeStrainEnergy(const double& rho_orig,
-                                       const double& rho_cur) = 0;
+  ////////////////////////////////////////////////////////////////////////
+  /*! Calculate the accumulated strain energy */
+  ////////////////////////////////////////////////////////////////////////
+  virtual double computeStrainEnergy(const double& rho_orig,
+                                     const double& rho_cur) = 0;
 
-    ////////////////////////////////////////////////////////////////////////
-    /*! Calculate the mass density given a pressure */
-    ////////////////////////////////////////////////////////////////////////
-    virtual double computeDensity(const double& rho_orig,
-                                  const double& pressure) = 0;
-
-  };
+  ////////////////////////////////////////////////////////////////////////
+  /*! Calculate the mass density given a pressure */
+  ////////////////////////////////////////////////////////////////////////
+  virtual double computeDensity(const double& rho_orig,
+                                const double& pressure) = 0;
+};
 } // End namespace Uintah
-      
 
-
-#endif  // __EQUATION_OF_STATE_H__
-
+#endif // __EQUATION_OF_STATE_H__

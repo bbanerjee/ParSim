@@ -24,7 +24,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #include "ElasticityModel.h"
 
 using namespace Uintah;

@@ -24,11 +24,11 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 using namespace Vaango;
 
-ModelStateBase::ModelStateBase():PlasticityState()
+ModelStateBase::ModelStateBase()
+  : PlasticityState()
 {
 }
 
@@ -40,7 +40,4 @@ ModelStateBase::ModelStateBase(const ModelStateBase* state)
 {
 }
 
-ModelStateBase::~ModelStateBase()
-{
-}
-
+ModelStateBase::~ModelStateBase() = default;

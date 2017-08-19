@@ -46,15 +46,10 @@
  * IN THE SOFTWARE.
  */
 
-
 #include "ViscoPlasticityModel.h"
 
 using namespace Uintah;
 
-ViscoPlasticityModel::ViscoPlasticityModel()
-{
-}
+ViscoPlasticityModel::ViscoPlasticityModel() = default;
 
-ViscoPlasticityModel::~ViscoPlasticityModel()
-{
-}
+ViscoPlasticityModel::~ViscoPlasticityModel() = default;

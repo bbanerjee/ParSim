@@ -46,15 +46,10 @@
  * IN THE SOFTWARE.
  */
 
-
 #include "DevStressModel.h"
 
 using namespace Uintah;
 
-DevStressModel::DevStressModel()
-{
-}
+DevStressModel::DevStressModel() = default;
 
-DevStressModel::~DevStressModel()
-{
-}
+DevStressModel::~DevStressModel() = default;

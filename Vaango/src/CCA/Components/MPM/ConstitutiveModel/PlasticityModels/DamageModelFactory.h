@@ -54,16 +54,16 @@
 
 namespace Uintah {
 
-  class DamageModel;
-  class MPMLabel;
+class DamageModel;
+class MPMLabel;
 
-  class DamageModelFactory
-  {
-  public:
-    // this function has a switch for all known mat_types
-    static DamageModel* create(ProblemSpecP& ps);
-    static DamageModel* createCopy(const DamageModel* dm);
-  };
+class DamageModelFactory
+{
+public:
+  // this function has a switch for all known mat_types
+  static DamageModel* create(ProblemSpecP& ps);
+  static DamageModel* createCopy(const DamageModel* dm);
+};
 } // End namespace Uintah
-      
+
 #endif /* _DAMAGEMODELFACTORY_H_ */

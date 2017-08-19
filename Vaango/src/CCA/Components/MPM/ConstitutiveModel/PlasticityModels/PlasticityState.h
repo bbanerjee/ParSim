@@ -31,53 +31,53 @@
 
 namespace Uintah {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class PlasticityState
-    \brief A structure that store the plasticity state data
-    \author Biswajit Banerjee \n
-    C-SAFE and Department of Mechanical Engineering \n
-    University of Utah \n
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class PlasticityState
+  \brief A structure that store the plasticity state data
+  \author Biswajit Banerjee \n
+  C-SAFE and Department of Mechanical Engineering \n
+  University of Utah \n
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  class PlasticityState {
+class PlasticityState
+{
 
-  public:
-    double yieldStress;
-    double strainRate;
-    double plasticStrainRate;
-    double plasticStrain;
-    double pressure;
-    double temperature;
-    double initialTemperature;
-    double density;
-    double initialDensity;
-    double volume;
-    double initialVolume;
-    double bulkModulus;
-    double initialBulkModulus;
-    double shearModulus;
-    double initialShearModulus;
-    double meltingTemp;
-    double initialMeltTemp;
-    double specificHeat;
-    double porosity;
-    double energy;
-    const Matrix3* backStress;
+public:
+  double yieldStress;
+  double strainRate;
+  double plasticStrainRate;
+  double plasticStrain;
+  double pressure;
+  double temperature;
+  double initialTemperature;
+  double density;
+  double initialDensity;
+  double volume;
+  double initialVolume;
+  double bulkModulus;
+  double initialBulkModulus;
+  double shearModulus;
+  double initialShearModulus;
+  double meltingTemp;
+  double initialMeltTemp;
+  double specificHeat;
+  double porosity;
+  double energy;
+  const Matrix3* backStress;
 
-    PlasticityState();
+  PlasticityState();
 
-    PlasticityState(const PlasticityState& state);
-    PlasticityState(const PlasticityState* state);
+  PlasticityState(const PlasticityState& state);
+  PlasticityState(const PlasticityState* state);
 
-    ~PlasticityState();
+  ~PlasticityState();
 
-    PlasticityState& operator=(const PlasticityState& state);
-    PlasticityState* operator=(const PlasticityState* state);
-    
-  };
+  PlasticityState& operator=(const PlasticityState& state);
+  PlasticityState* operator=(const PlasticityState* state);
+};
 
 } // End namespace Uintah
 
-#endif  // __PLASTICITY_STATE_DATA_H__ 
+#endif // __PLASTICITY_STATE_DATA_H__

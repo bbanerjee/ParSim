@@ -31,67 +31,57 @@
 
 namespace Uintah {
 
-  ////////////////////////////////////////////////////////////////////////////
-  /*! 
-    \class DefaultHyperelasticPressure
-    \brief Compute pressure for a hyperelastic material with
-            W = D1 (J-1)^2 = 0.5*kappa*(J-1)^2
-            p = dW/dJ = kappa*(J-1)
-            dp/dJ = d2W/dJ^2 = kappa
-            k = p + J dp/dJ = kappa*(2J-1)
-            c^2 = k/rho
-    \author Biswajit Banerjee, \n
-  */
-  ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+/*!
+  \class DefaultHyperelasticPressure
+  \brief Compute pressure for a hyperelastic material with
+          W = D1 (J-1)^2 = 0.5*kappa*(J-1)^2
+          p = dW/dJ = kappa*(J-1)
+          dp/dJ = d2W/dJ^2 = kappa
+          k = p + J dp/dJ = kappa*(2J-1)
+          c^2 = k/rho
+  \author Biswajit Banerjee, \n
+*/
+////////////////////////////////////////////////////////////////////////////
 
-  class DefaultHyperelasticPressure : public PressureModel {
+class DefaultHyperelasticPressure : public PressureModel
+{
 
-  private:
+private:
+  double d_kappa; // Bulk modulus
 
-    double d_kappa;    // Bulk modulus
-  
-    DefaultHyperelasticPressure& operator=(const DefaultHyperelasticPressure& pm);
+  DefaultHyperelasticPressure& operator=(const DefaultHyperelasticPressure& pm);
 
-  public:
-         
-    DefaultHyperelasticPressure(ProblemSpecP& ps);
-    DefaultHyperelasticPressure(const DefaultHyperelasticPressure* pm);
+public:
+  DefaultHyperelasticPressure(ProblemSpecP& ps);
+  DefaultHyperelasticPressure(const DefaultHyperelasticPressure* pm);
 
-    virtual ~DefaultHyperelasticPressure();
+  virtual ~DefaultHyperelasticPressure();
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    // Calculate the hydrostatic component of stress (pressure)
-    double computePressure(const DeformationState* state);
+  virtual void outputProblemSpec(ProblemSpecP& ps);
 
-    // Calculate the pressure without considering internal energy (option 1)
-    double computePressure(const double& rho_orig,
-                           const double& rho_cur);
+  // Calculate the hydrostatic component of stress (pressure)
+  double computePressure(const DeformationState* state);
 
-    // Calculate the pressure without considering internal energy (option 2).  
-    //   Also compute dp/drho and c^2. 
-    void computePressure(const double& rho_orig,
-                         const double& rho_cur,
-                         double& pressure,
-                         double& dp_drho,
-                         double& csquared);
+  // Calculate the pressure without considering internal energy (option 1)
+  double computePressure(const double& rho_orig, const double& rho_cur);
 
-    // Calculate the tangent bulk modulus 
-    double computeTangentBulkModulus(const double& rho_orig,
-                                     const double& rho_cur);
+  // Calculate the pressure without considering internal energy (option 2).
+  //   Also compute dp/drho and c^2.
+  void computePressure(const double& rho_orig, const double& rho_cur,
+                       double& pressure, double& dp_drho, double& csquared);
 
-    // Calculate the accumulated strain energy 
-    double computeStrainEnergy(const double& pressure,
-                               const DeformationState* state);
+  // Calculate the tangent bulk modulus
+  double computeTangentBulkModulus(const double& rho_orig,
+                                   const double& rho_cur);
 
-    // Calculate the mass density at a given pressure 
-    double computeDensity(const double& rho_orig,
-                          const double& pressure);
+  // Calculate the accumulated strain energy
+  double computeStrainEnergy(const double& pressure,
+                             const DeformationState* state);
 
-  };
+  // Calculate the mass density at a given pressure
+  double computeDensity(const double& rho_orig, const double& pressure);
+};
 } // End namespace Uintah
-      
 
-
-#endif  // __DEFAULT_HYPERELASTIC_PRESSURE_MODEL_H__
-
+#endif // __DEFAULT_HYPERELASTIC_PRESSURE_MODEL_H__

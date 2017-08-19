@@ -27,156 +27,150 @@
 #ifndef __BORJA_PRESSURE_MODEL_H__
 #define __BORJA_PRESSURE_MODEL_H__
 
-
-
-#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-  ////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class Pressure_Borja
-   
-    \brief The Borja model for calculating pressure
-   
-    Reference:Borja, R.I. and Tamagnini, C.(1998) Cam-Clay plasticity Part III: 
-    Extension of the infinitesimal model to include finite strains,
-    Computer Methods in Applied Mechanics and Engineering, 155 (1-2),
-    pp. 73-95.
-    
-    The pressure is given by
+////////////////////////////////////////////////////////////////////////////
+/*!
+  \class Pressure_Borja
 
-    p = p0 beta exp[(epse_v - epse_v0)/kappatilde]
+  \brief The Borja model for calculating pressure
 
-    where 
-   
-    p0 = constant
-    beta = 1 + 3/2 alpha/kappatilde epse_s^2
-    alpha = constant
-    kappatilde = constant
-    epse_s = sqrt(2/3) ||epse||
-    epse_v = tr(epse)
-    epse_v0 = constant
-    epse = elastic strain tensor
+  Reference:Borja, R.I. and Tamagnini, C.(1998) Cam-Clay plasticity Part III:
+  Extension of the infinitesimal model to include finite strains,
+  Computer Methods in Applied Mechanics and Engineering, 155 (1-2),
+  pp. 73-95.
 
-  */
-  ////////////////////////////////////////////////////////////////////////////
+  The pressure is given by
 
-  class Pressure_Borja : public PressureModel {
+  p = p0 beta exp[(epse_v - epse_v0)/kappatilde]
 
-  private:
+  where
 
-    double d_p0;         // Reference pressure
-    double d_alpha;      // Pressure-shear coupling constant
-    double d_kappatilde; // Reference compressibility
-    double d_epse_v0;    // Volumetric strain at reference pressure
-         
-    // Prevent copying of this class
-    // copy constructor
-    Pressure_Borja& operator=(const Pressure_Borja &cm);
+  p0 = constant
+  beta = 1 + 3/2 alpha/kappatilde epse_s^2
+  alpha = constant
+  kappatilde = constant
+  epse_s = sqrt(2/3) ||epse||
+  epse_v = tr(epse)
+  epse_v0 = constant
+  epse = elastic strain tensor
 
-  public:
-    // constructors
-    Pressure_Borja(Uintah::ProblemSpecP& ps); 
-    Pressure_Borja(const Pressure_Borja* cm);
-         
-    // Special operator for computing internal energy
-    double operator()(double eta) const;
+*/
+////////////////////////////////////////////////////////////////////////////
 
-    // destructor 
-    virtual ~Pressure_Borja();
+class Pressure_Borja : public PressureModel
+{
 
-    virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
-         
-    /*! Get parameters */
-    std::map<std::string, double> getParameters() const {
-      std::map<std::string, double> params;
-      params["p0"] =  d_p0;
-      params["alpha"] =  d_alpha;
-      params["kappatilde"] =  d_kappatilde;
-      params["epse_v0"] =  d_epse_v0;
-      return params;
-    }
+private:
+  double d_p0;         // Reference pressure
+  double d_alpha;      // Pressure-shear coupling constant
+  double d_kappatilde; // Reference compressibility
+  double d_epse_v0;    // Volumetric strain at reference pressure
 
-    /////////////////////////////////////////////////////////////////////////
-    /*! Calculate the pressure using a equation of state */
-    /////////////////////////////////////////////////////////////////////////
-    virtual double computePressure(const Uintah::MPMMaterial* matl,
-                                   const ModelStateBase* state,
-                                   const Uintah::Matrix3& deformGrad,
-                                   const Uintah::Matrix3& rateOfDeformation,
-                                   const double& delT);
+  // Prevent copying of this class
+  // copy constructor
+  Pressure_Borja& operator=(const Pressure_Borja& cm);
 
-    // Compute the bulk modulus
-    double computeBulkModulus(const ModelStateBase* state);
+public:
+  // constructors
+  Pressure_Borja(Uintah::ProblemSpecP& ps);
+  Pressure_Borja(const Pressure_Borja* cm);
 
-    // Compute the volumetric strain energy 
-    double computeStrainEnergy(const ModelStateBase* state);
+  // Special operator for computing internal energy
+  double operator()(double eta) const;
 
-    double eval_dp_dJ(const Uintah::MPMMaterial* matl,
-                      const double& delF,
-                      const ModelStateBase* state);
+  // destructor
+  ~Pressure_Borja() override;
 
-    ////////////////////////////////////////////////////////////////////////
-    /*! Calculate the derivative of p with respect to epse_v
-        where epse_v = tr(epse)
-              epse = total elastic strain */
-    ////////////////////////////////////////////////////////////////////////
-    double computeDpDepse_v(const ModelStateBase* state) const;
+  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
-    ////////////////////////////////////////////////////////////////////////
-    /*! Calculate the derivative of p with respect to epse_s
-        where epse_s = sqrt{2}{3} ||ee||
-              ee = epse - 1/3 tr(epse) I
-              epse = total elastic strain */
-    ////////////////////////////////////////////////////////////////////////
-    double computeDpDepse_s(const ModelStateBase* state) const;
+  /*! Get parameters */
+  std::map<std::string, double> getParameters() const override
+  {
+    std::map<std::string, double> params;
+    params["p0"] = d_p0;
+    params["alpha"] = d_alpha;
+    params["kappatilde"] = d_kappatilde;
+    params["epse_v0"] = d_epse_v0;
+    return params;
+  }
 
-    // Calculate rate of temperature change due to compression/expansion
-    double computeIsentropicTemperatureRate(const double T,
-                                            const double rho_0,
-                                            const double rho_cur,
-                                            const double Dtrace);
-  
-    // Compute pressure (option 1)
-    double computePressure(const double& rho_orig,
-                           const double& rho_cur);
+  /////////////////////////////////////////////////////////////////////////
+  /*! Calculate the pressure using a equation of state */
+  /////////////////////////////////////////////////////////////////////////
+  double computePressure(const Uintah::MPMMaterial* matl,
+                         const ModelStateBase* state,
+                         const Uintah::Matrix3& deformGrad,
+                         const Uintah::Matrix3& rateOfDeformation,
+                         const double& delT) override;
 
-    // Compute pressure (option 2)
-    void computePressure(const double& rho_orig,
-                         const double& rho_cur,
-                         double& pressure,
-                         double& dp_drho,
-                         double& csquared);
+  // Compute the bulk modulus
+  double computeBulkModulus(const ModelStateBase* state) override;
 
-    // Compute bulk modulus
-    void setInitialBulkModulus();
-    double computeInitialBulkModulus();
-    double computeBulkModulus(const double& rho_orig,
-                              const double& rho_cur);
+  // Compute the volumetric strain energy
+  double computeStrainEnergy(const ModelStateBase* state) override;
 
-    // Compute strain energy
-    double computeStrainEnergy(const double& rho_orig,
-                               const double& rho_cur);
+  double eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& delF,
+                    const ModelStateBase* state) override;
 
-    // Compute density given pressure
-    double computeDensity(const double& rho_orig,
-                          const double& pressure);
+  ////////////////////////////////////////////////////////////////////////
+  /*! Calculate the derivative of p with respect to epse_v
+      where epse_v = tr(epse)
+            epse = total elastic strain */
+  ////////////////////////////////////////////////////////////////////////
+  double computeDpDepse_v(const ModelStateBase* state) const override;
 
-  private:
+  ////////////////////////////////////////////////////////////////////////
+  /*! Calculate the derivative of p with respect to epse_s
+      where epse_s = sqrt{2}{3} ||ee||
+            ee = epse - 1/3 tr(epse) I
+            epse = total elastic strain */
+  ////////////////////////////////////////////////////////////////////////
+  double computeDpDepse_s(const ModelStateBase* state) const override;
 
-    //  Pressure computation
-    double evalPressure(const double& epse_v, const double& epse_s) const;
+  // Calculate rate of temperature change due to compression/expansion
+  double computeIsentropicTemperatureRate(const double T, const double rho_0,
+                                          const double rho_cur,
+                                          const double Dtrace) override;
 
-    //  Pressure derivative computation
-    double evalDpDepse_v(const double& epse_v, const double& epse_s) const;
+  // Compute pressure (option 1)
+  double computePressure(const double& rho_orig,
+                         const double& rho_cur) override;
 
-    //  Shear derivative computation
-    double evalDpDepse_s(const double& epse_v, const double& epse_s) const;
-  };
+  // Compute pressure (option 2)
+  void computePressure(const double& rho_orig, const double& rho_cur,
+                       double& pressure, double& dp_drho,
+                       double& csquared) override;
+
+  // Compute bulk modulus
+  void setInitialBulkModulus();
+  double computeInitialBulkModulus() override;
+  double computeBulkModulus(const double& rho_orig,
+                            const double& rho_cur) override;
+
+  // Compute strain energy
+  double computeStrainEnergy(const double& rho_orig,
+                             const double& rho_cur) override;
+
+  // Compute density given pressure
+  double computeDensity(const double& rho_orig,
+                        const double& pressure) override;
+
+private:
+  //  Pressure computation
+  double evalPressure(const double& epse_v, const double& epse_s) const;
+
+  //  Pressure derivative computation
+  double evalDpDepse_v(const double& epse_v, const double& epse_s) const;
+
+  //  Shear derivative computation
+  double evalDpDepse_s(const double& epse_v, const double& epse_s) const;
+};
 
 } // End namespace Uintah
 
-#endif  // __BORJA_PRESSURE_MODEL_H__ 
+#endif // __BORJA_PRESSURE_MODEL_H__

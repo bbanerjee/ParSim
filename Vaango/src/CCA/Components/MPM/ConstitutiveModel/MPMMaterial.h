@@ -30,43 +30,40 @@
 // (#includes of other MPM files is ok.  However, if you #include'd ARCHES
 // or something, then a circular dependency would be created.)
 
-#include <Core/Grid/Material.h>
-#include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Grid/Variables/CCVariable.h>
-#include <Core/Grid/SimulationStateP.h>
-#include <Core/Grid/SimulationState.h>
 #include <CCA/Components/MPM/MPMFlags.h>
+#include <Core/Grid/Material.h>
+#include <Core/Grid/SimulationState.h>
+#include <Core/Grid/SimulationStateP.h>
+#include <Core/Grid/Variables/CCVariable.h>
+#include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 
-
 #include <vector>
 
-// This is to avoid circular dependencies between MPMMaterial and BasicDamageModel
+// This is to avoid circular dependencies between MPMMaterial and
+// BasicDamageModel
 // Better design needed? --BB
 namespace Vaango {
-  class BasicDamageModel;
+class BasicDamageModel;
 }
 
 namespace Uintah {
 
-  class Patch;
-  class Grid;
-  class DataWarehouse;
-  class VarLabel;
-  class GeometryObject;
-  class ConstitutiveModel;
-  class MPMLabel;
-  class ParticleCreator;
-  class ScalarDiffusionModel;
+class Patch;
+class Grid;
+class DataWarehouse;
+class VarLabel;
+class GeometryObject;
+class ConstitutiveModel;
+class MPMLabel;
+class ParticleCreator;
+class ScalarDiffusionModel;
 
-  
-
-      
 /**************************************
-     
+
 CLASS
    MPMMaterial
 
@@ -93,125 +90,112 @@ WARNING
 
 ****************************************/
 
-  class MPMMaterial : public Material {
-  public:
+class MPMMaterial : public Material
+{
+public:
+  // Default Constructor
+  MPMMaterial();
 
-    // Default Constructor
-    MPMMaterial();
+  // Standard MPM Material Constructor
+  MPMMaterial(ProblemSpecP& ps, const GridP grid, SimulationStateP& ss,
+              MPMFlags* flags);
 
-    // Standard MPM Material Constructor
-    MPMMaterial(ProblemSpecP& ps, 
-                const GridP grid,
-                SimulationStateP& ss, 
-                MPMFlags* flags);
-         
-    ~MPMMaterial();
+  ~MPMMaterial() override;
 
-    virtual void registerParticleState(SimulationState* ss);
+  void registerParticleState(SimulationState* ss) override;
 
-    virtual ProblemSpecP outputProblemSpec(ProblemSpecP& ps);
+  ProblemSpecP outputProblemSpec(ProblemSpecP& ps) override;
 
-    /*!  Create a copy of the material without the associated geometry */
-    void copyWithoutGeom(ProblemSpecP& ps,const MPMMaterial* mat,
-                         MPMFlags* flags);
-         
-    //////////
-    // Return correct constitutive model pointer for this material
-    ConstitutiveModel* getConstitutiveModel() const;
+  /*!  Create a copy of the material without the associated geometry */
+  void copyWithoutGeom(ProblemSpecP& ps, const MPMMaterial* mat,
+                       MPMFlags* flags);
 
-    //////////
-    // Return correct basic damage model pointer for this material
-    Vaango::BasicDamageModel* getBasicDamageModel() const;
+  //////////
+  // Return correct constitutive model pointer for this material
+  ConstitutiveModel* getConstitutiveModel() const;
 
-    ScalarDiffusionModel* getScalarDiffusionModel() const;
+  //////////
+  // Return correct basic damage model pointer for this material
+  Vaango::BasicDamageModel* getBasicDamageModel() const;
 
-    particleIndex createParticles(
-      CCVariable<short int>& cellNAPID,
-      const Patch*,
-      DataWarehouse* new_dw);
+  ScalarDiffusionModel* getScalarDiffusionModel() const;
 
+  particleIndex createParticles(CCVariable<short int>& cellNAPID, const Patch*,
+                                DataWarehouse* new_dw);
 
-    ParticleCreator* getParticleCreator();
+  ParticleCreator* getParticleCreator();
 
-    double getInitialDensity() const;
+  double getInitialDensity() const;
 
-    // Get the specific heats at room temperature
-    double getInitialCp() const;
-    double getInitialCv() const;
+  // Get the specific heats at room temperature
+  double getInitialCp() const;
+  double getInitialCv() const;
 
-    // for temperature dependent plasticity models
-    double getRoomTemperature() const;
-    double getMeltTemperature() const;
+  // for temperature dependent plasticity models
+  double getRoomTemperature() const;
+  double getMeltTemperature() const;
 
-    bool getIsRigid() const;
+  bool getIsRigid() const;
 
-    bool getIncludeFlowWork() const;
-    double getSpecificHeat() const;
-    double getThermalConductivity() const;
+  bool getIncludeFlowWork() const;
+  double getSpecificHeat() const;
+  double getThermalConductivity() const;
 
-    int nullGeomObject() const;
+  int nullGeomObject() const;
 
+  // For MPMICE
+  double getGamma() const;
+  void initializeCCVariables(CCVariable<double>& rhom, CCVariable<double>& rhC,
+                             CCVariable<double>& temp, CCVariable<Vector>& vCC,
+                             CCVariable<double>& vfCC, const Patch* patch);
 
-    // For MPMICE
-    double getGamma() const;
-    void initializeCCVariables(CCVariable<double>& rhom,
-                               CCVariable<double>& rhC,
-                               CCVariable<double>& temp,   
-                               CCVariable<Vector>& vCC,
-                               CCVariable<double>& vfCC,
-                               const Patch* patch);
+  void initializeDummyCCVariables(CCVariable<double>& rhom,
+                                  CCVariable<double>& rhC,
+                                  CCVariable<double>& temp,
+                                  CCVariable<Vector>& vCC,
+                                  CCVariable<double>& vfCC, const Patch* patch);
 
-    void initializeDummyCCVariables(CCVariable<double>& rhom,
-                                    CCVariable<double>& rhC,
-                                    CCVariable<double>& temp,   
-                                    CCVariable<Vector>& vCC,
-                                    CCVariable<double>& vfCC,
-                                    const Patch* patch);
+  bool d_doBasicDamage;
 
-    bool d_doBasicDamage;
+private:
+  MPMLabel* d_lb;
+  ConstitutiveModel* d_cm;
+  ParticleCreator* d_particle_creator;
+  ScalarDiffusionModel* d_sdm;
 
-  private:
+  double d_density;
+  bool d_includeFlowWork;
+  double d_specificHeat;
+  double d_thermalConductivity;
 
-    MPMLabel* d_lb;
-    ConstitutiveModel* d_cm;
-    ParticleCreator* d_particle_creator;
-    ScalarDiffusionModel* d_sdm;
+  // Specific heats at constant pressure and constant volume
+  // (values at room temperature - [273.15 + 20] K)
+  double d_Cp, d_Cv;
 
-    double d_density;
-    bool d_includeFlowWork;
-    double d_specificHeat;
-    double d_thermalConductivity;
+  // for temperature dependent plasticity models
+  double d_troom;
+  double d_tmelt;
 
-    // Specific heats at constant pressure and constant volume
-    // (values at room temperature - [273.15 + 20] K)
-    double d_Cp, d_Cv;
+  // for implicit rigid body contact
+  bool d_is_rigid;
 
-    // for temperature dependent plasticity models
-    double d_troom;
-    double d_tmelt;
+  // For basic damage computations
+  Vaango::BasicDamageModel* d_basicDamageModel;
 
-    // for implicit rigid body contact
-    bool d_is_rigid;
+  std::vector<GeometryObject*> d_geom_objs;
 
-    // For basic damage computations
-    Vaango::BasicDamageModel* d_basicDamageModel;
+  // Prevent copying of this class
+  // copy constructor
+  MPMMaterial(const MPMMaterial& mpmm);
+  MPMMaterial& operator=(const MPMMaterial& mpmm);
 
-    std::vector<GeometryObject*> d_geom_objs;
-
-    // Prevent copying of this class
-    // copy constructor
-    MPMMaterial(const MPMMaterial &mpmm);
-    MPMMaterial& operator=(const MPMMaterial &mpmm);
-
-    ///////////////////////////////////////////////////////////////////////////
-    //
-    // The standard set of initialization actions except particlecreator
-    //
-    void standardInitialization(ProblemSpecP& ps, 
-                                const GridP grid,
-                                SimulationStateP& ss,
-                                MPMFlags* flags);
-  };
+  ///////////////////////////////////////////////////////////////////////////
+  //
+  // The standard set of initialization actions except particlecreator
+  //
+  void standardInitialization(ProblemSpecP& ps, const GridP grid,
+                              SimulationStateP& ss, MPMFlags* flags);
+};
 
 } // End namespace Uintah
 

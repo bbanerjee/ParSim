@@ -31,47 +31,46 @@
 
 namespace Vaango {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class ModelState_CamClay
-    \brief A structure that stores the state data that is specialized for
-           the CamClay model.
-           ** Derived from PlasticityState:ModelState
-    \author Biswajit Banerjee \n
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class ModelState_CamClay
+  \brief A structure that stores the state data that is specialized for
+         the CamClay model.
+         ** Derived from PlasticityState:ModelState
+  \author Biswajit Banerjee \n
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  class ModelState_CamClay: public ModelState_Default {
+class ModelState_CamClay : public ModelState_Default
+{
 
-  public:
+public:
+  double p_c;  // consolidation pressure
+  double p_c0; // consolidation pressure at the beginning of time step
 
-    double p_c;       // consolidation pressure
-    double p_c0;      // consolidation pressure at the beginning of time step
+  double p; // pressure = tr(sigma)/3
+  double q; // shear = sqrt(3J2); J2 = 1/2 s:s; s = sigma - p I
 
-    double p;         // pressure = tr(sigma)/3
-    double q;         // shear = sqrt(3J2); J2 = 1/2 s:s; s = sigma - p I
+  double epse_v;    // volumetric elastic strain = tr(epse)
+  double epse_s;    // deviatoric elastic strain = sqrt(2/3) ||ee||
+                    //  ee = epse - 1/3 epse_v I
+  double epse_v_tr; // trial volumetric elastic strain
+  double epse_s_tr; // trial deviatoric elastic strain
 
-    double epse_v;    // volumetric elastic strain = tr(epse)
-    double epse_s;    // deviatoric elastic strain = sqrt(2/3) ||ee||
-                      //  ee = epse - 1/3 epse_v I
-    double epse_v_tr; // trial volumetric elastic strain
-    double epse_s_tr; // trial deviatoric elastic strain 
+  Uintah::Matrix3 elasticStrainTensor;
+  Uintah::Matrix3 elasticStrainTensorTrial;
 
-    Uintah::Matrix3 elasticStrainTensor;
-    Uintah::Matrix3 elasticStrainTensorTrial;
+  ModelState_CamClay();
 
-    ModelState_CamClay();
+  ModelState_CamClay(const ModelState_CamClay& state);
+  ModelState_CamClay(const ModelState_CamClay* state);
 
-    ModelState_CamClay(const ModelState_CamClay& state);
-    ModelState_CamClay(const ModelState_CamClay* state);
+  ~ModelState_CamClay() override;
 
-    ~ModelState_CamClay();
-
-    ModelState_CamClay& operator=(const ModelState_CamClay& state);
-    ModelState_CamClay* operator=(const ModelState_CamClay* state);
-    
-  };
+  ModelState_CamClay& operator=(const ModelState_CamClay& state);
+  ModelState_CamClay* operator=(const ModelState_CamClay* state);
+};
 
 } // End namespace Uintah
 
-#endif  // __DERIVED_MODEL_STATE_CAMCLAY_DATA_H__ 
+#endif // __DERIVED_MODEL_STATE_CAMCLAY_DATA_H__

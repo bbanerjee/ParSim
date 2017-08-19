@@ -50,43 +50,41 @@
 #define __MELTING_TEMP_MODEL_H__
 
 #include "PlasticityState.h"
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  /*! \class MeltingTempModel
-   *  \brief A generic wrapper for various melting temp models
-   *  \author Biswajit Banerjee, 
-   *  \author C-SAFE and Department of Mechanical Engineering,
-   *  \author University of Utah.
-   *
-   * Provides an abstract base class for various melting temp models used
-   * in the plasticity and damage models
+/*! \class MeltingTempModel
+ *  \brief A generic wrapper for various melting temp models
+ *  \author Biswajit Banerjee,
+ *  \author C-SAFE and Department of Mechanical Engineering,
+ *  \author University of Utah.
+ *
+ * Provides an abstract base class for various melting temp models used
+ * in the plasticity and damage models
+*/
+class MeltingTempModel
+{
+
+public:
+  //! Construct a melting temp model.
+  /*! This is an abstract base class. */
+  MeltingTempModel();
+
+  //! Destructor of melting temp model.
+  /*! Virtual to ensure correct behavior */
+  virtual ~MeltingTempModel();
+
+  virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Compute the melting temperature
   */
-  class MeltingTempModel {
-
-  public:
-         
-    //! Construct a melting temp model.  
-    /*! This is an abstract base class. */
-    MeltingTempModel();
-
-    //! Destructor of melting temp model.  
-    /*! Virtual to ensure correct behavior */
-    virtual ~MeltingTempModel();
-
-    virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
-         
-    /////////////////////////////////////////////////////////////////////////
-    /*! 
-      \brief Compute the melting temperature
-    */
-    /////////////////////////////////////////////////////////////////////////
-    virtual double computeMeltingTemp(const PlasticityState* state) = 0;
-
-  };
+  /////////////////////////////////////////////////////////////////////////
+  virtual double computeMeltingTemp(const PlasticityState* state) = 0;
+};
 } // End namespace Uintah
-      
-#endif  // __MELTING_TEMP_MODEL_H__
 
+#endif // __MELTING_TEMP_MODEL_H__

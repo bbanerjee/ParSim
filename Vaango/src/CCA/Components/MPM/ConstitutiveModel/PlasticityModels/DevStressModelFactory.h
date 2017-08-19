@@ -52,13 +52,13 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 namespace Uintah {
 
-  class DevStressModel;
+class DevStressModel;
 
-  class DevStressModelFactory
-  {
-  public:
-    static DevStressModel* create(ProblemSpecP& ps);
-  };
+class DevStressModelFactory
+{
+public:
+  static DevStressModel* create(ProblemSpecP& ps);
+};
 }
-      
+
 #endif

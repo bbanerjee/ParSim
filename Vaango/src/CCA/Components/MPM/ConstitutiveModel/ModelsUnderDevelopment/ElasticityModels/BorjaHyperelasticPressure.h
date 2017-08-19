@@ -32,67 +32,57 @@
 
 namespace Uintah {
 
-  ////////////////////////////////////////////////////////////////////////////
-  /*! 
-    \class BorjaHyperelasticPressure
-    \brief Compute pressure for a hyperelastic material with
-            W = p0 kappa_tilde exp[(eps_v - eps_v0)/kappa_tilde]
-            p = dW/dJ = 
-            dp/dJ = d2W/dJ^2 = 
-            k = p + J dp/dJ = 
-            c^2 = k/rho
-    \author Biswajit Banerjee, \n
-  */
-  ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+/*!
+  \class BorjaHyperelasticPressure
+  \brief Compute pressure for a hyperelastic material with
+          W = p0 kappa_tilde exp[(eps_v - eps_v0)/kappa_tilde]
+          p = dW/dJ =
+          dp/dJ = d2W/dJ^2 =
+          k = p + J dp/dJ =
+          c^2 = k/rho
+  \author Biswajit Banerjee, \n
+*/
+////////////////////////////////////////////////////////////////////////////
 
-  class BorjaHyperelasticPressure : public PressureModel {
+class BorjaHyperelasticPressure : public PressureModel
+{
 
-  private:
+private:
+  double d_kappa; // Bulk modulus
 
-    double d_kappa;    // Bulk modulus
-  
-    BorjaHyperelasticPressure& operator=(const BorjaHyperelasticPressure& pm);
+  BorjaHyperelasticPressure& operator=(const BorjaHyperelasticPressure& pm);
 
-  public:
-         
-    BorjaHyperelasticPressure(ProblemSpecP& ps);
-    BorjaHyperelasticPressure(const BorjaHyperelasticPressure* pm);
+public:
+  BorjaHyperelasticPressure(ProblemSpecP& ps);
+  BorjaHyperelasticPressure(const BorjaHyperelasticPressure* pm);
 
-    virtual ~BorjaHyperelasticPressure();
+  virtual ~BorjaHyperelasticPressure();
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    // Calculate the hydrostatic component of stress (pressure)
-    double computePressure(const DeformationState* state);
+  virtual void outputProblemSpec(ProblemSpecP& ps);
 
-    // Calculate the pressure without considering internal energy (option 1)
-    double computePressure(const double& rho_orig,
-                           const double& rho_cur);
+  // Calculate the hydrostatic component of stress (pressure)
+  double computePressure(const DeformationState* state);
 
-    // Calculate the pressure without considering internal energy (option 2).  
-    //   Also compute dp/drho and c^2. 
-    void computePressure(const double& rho_orig,
-                         const double& rho_cur,
-                         double& pressure,
-                         double& dp_drho,
-                         double& csquared);
+  // Calculate the pressure without considering internal energy (option 1)
+  double computePressure(const double& rho_orig, const double& rho_cur);
 
-    // Calculate the tangent bulk modulus 
-    double computeTangentBulkModulus(const double& rho_orig,
-                                     const double& rho_cur);
+  // Calculate the pressure without considering internal energy (option 2).
+  //   Also compute dp/drho and c^2.
+  void computePressure(const double& rho_orig, const double& rho_cur,
+                       double& pressure, double& dp_drho, double& csquared);
 
-    // Calculate the accumulated strain energy 
-    double computeStrainEnergy(const double& pressure,
-                               const DeformationState* state);
+  // Calculate the tangent bulk modulus
+  double computeTangentBulkModulus(const double& rho_orig,
+                                   const double& rho_cur);
 
-    // Calculate the mass density at a given pressure 
-    double computeDensity(const double& rho_orig,
-                          const double& pressure);
+  // Calculate the accumulated strain energy
+  double computeStrainEnergy(const double& pressure,
+                             const DeformationState* state);
 
-  };
+  // Calculate the mass density at a given pressure
+  double computeDensity(const double& rho_orig, const double& pressure);
+};
 } // End namespace Uintah
-      
 
-
-#endif  // __BORJA_HYPERELASTIC_PRESSURE_MODEL_H__
-
+#endif // __BORJA_HYPERELASTIC_PRESSURE_MODEL_H__

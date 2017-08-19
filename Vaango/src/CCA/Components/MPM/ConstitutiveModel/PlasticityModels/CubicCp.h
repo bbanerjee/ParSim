@@ -54,52 +54,50 @@
 
 namespace Uintah {
 
-  /*! \class CubicCp
-   *  \brief The specfic heat varies from the Debye cubic temperature dependence 
-   *    to constant at the asymptotic upper limit is reached.
-   *  \author Joseph Peterson, 
-   *  \author Department of Chemistry,
-   *  \author University of Utah.
-   *
-  */
-  class CubicCp : public SpecificHeatModel {
+/*! \class CubicCp
+ *  \brief The specfic heat varies from the Debye cubic temperature dependence
+ *    to constant at the asymptotic upper limit is reached.
+ *  \author Joseph Peterson,
+ *  \author Department of Chemistry,
+ *  \author University of Utah.
+ *
+*/
+class CubicCp : public SpecificHeatModel
+{
 
-  private:
-    CubicCp& operator=(const CubicCp &smm);
+private:
+  CubicCp& operator=(const CubicCp& smm);
 
-    double d_a;
-    double d_b;
-    double d_beta; // Volumetric coefficient of thermal expansion, K^-1
-    double d_c0;   // kgK/J
-    double d_c1;   // kgK/J
-    double d_c2;   // kgK/J
-    double d_c3;   // kgK/J
-      
-    /*! A helper function to compute the Debye Temperature */
-    double computeDebyeT(double, double);
-      
-  public:
-         
-    /*! Construct a constant specfic heat model. */
-    CubicCp();
-    CubicCp(ProblemSpecP& ps);
+  double d_a;
+  double d_b;
+  double d_beta; // Volumetric coefficient of thermal expansion, K^-1
+  double d_c0;   // kgK/J
+  double d_c1;   // kgK/J
+  double d_c2;   // kgK/J
+  double d_c3;   // kgK/J
 
-    /*! Construct a copy of constant specfic heat model. */
-    CubicCp(const CubicCp* smm);
+  /*! A helper function to compute the Debye Temperature */
+  double computeDebyeT(double, double);
 
-    /*! Destructor of constant specfic heat model.   */
-    virtual ~CubicCp();
-         
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    /*! Compute the specfic heat */
-    double computeSpecificHeat(const PlasticityState* state);
-      
-    /*! A helper function to compute the Gruneisen coefficient */
-    double computeGamma(double,double);
-      
-  };
+public:
+  /*! Construct a constant specfic heat model. */
+  CubicCp();
+  CubicCp(ProblemSpecP& ps);
+
+  /*! Construct a copy of constant specfic heat model. */
+  CubicCp(const CubicCp* smm);
+
+  /*! Destructor of constant specfic heat model.   */
+  ~CubicCp() override;
+
+  void outputProblemSpec(ProblemSpecP& ps) override;
+
+  /*! Compute the specfic heat */
+  double computeSpecificHeat(const PlasticityState* state) override;
+
+  /*! A helper function to compute the Gruneisen coefficient */
+  double computeGamma(double, double);
+};
 } // End namespace Uintah
-      
-#endif  // __CUBIC_SPECIFIC_HEAT_MODEL_H__
 
+#endif // __CUBIC_SPECIFIC_HEAT_MODEL_H__

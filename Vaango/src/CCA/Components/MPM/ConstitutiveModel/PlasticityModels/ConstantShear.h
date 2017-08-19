@@ -54,36 +54,35 @@
 
 namespace Uintah {
 
-  /*! \class ConstantShear
-   *  \brief The shear modulus does not vary with density and temperature
-   *  \author Biswajit Banerjee, 
-   *  \author C-SAFE and Department of Mechanical Engineering,
-   *  \author University of Utah.
-   *
-  */
-  class ConstantShear : public ShearModulusModel {
+/*! \class ConstantShear
+ *  \brief The shear modulus does not vary with density and temperature
+ *  \author Biswajit Banerjee,
+ *  \author C-SAFE and Department of Mechanical Engineering,
+ *  \author University of Utah.
+ *
+*/
+class ConstantShear : public ShearModulusModel
+{
 
-  private:
-    ConstantShear& operator=(const ConstantShear &smm);
+private:
+  ConstantShear& operator=(const ConstantShear& smm);
 
-  public:
-         
-    /*! Construct a constant shear modulus model. */
-    ConstantShear();
-    ConstantShear(ProblemSpecP& ps);
+public:
+  /*! Construct a constant shear modulus model. */
+  ConstantShear();
+  ConstantShear(ProblemSpecP& ps);
 
-    /*! Construct a copy of constant shear modulus model. */
-    ConstantShear(const ConstantShear* smm);
+  /*! Construct a copy of constant shear modulus model. */
+  ConstantShear(const ConstantShear* smm);
 
-    /*! Destructor of constant shear modulus model.   */
-    virtual ~ConstantShear();
-         
-    virtual void outputProblemSpec(ProblemSpecP& ps);
+  /*! Destructor of constant shear modulus model.   */
+  ~ConstantShear() override;
 
-    /*! Compute the shear modulus */
-    double computeShearModulus(const PlasticityState* state);
-  };
+  void outputProblemSpec(ProblemSpecP& ps) override;
+
+  /*! Compute the shear modulus */
+  double computeShearModulus(const PlasticityState* state) override;
+};
 } // End namespace Uintah
-      
-#endif  // __CONSTANT_SHEAR_MODEL_H__
 
+#endif // __CONSTANT_SHEAR_MODEL_H__

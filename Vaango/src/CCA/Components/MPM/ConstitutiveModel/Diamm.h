@@ -30,122 +30,101 @@
 //    Features:
 //      Usage:
 
-
-
 #ifndef __DIAMM_H__
 #define __DIAMM_H__
 
-#include <cmath>
 #include "ConstitutiveModel.h"
-#include <Core/Math/Matrix3.h>
-#include <vector>
 #include <Core/Grid/Variables/VarLabel.h>
+#include <Core/Math/Matrix3.h>
+#include <cmath>
+#include <vector>
 
 namespace Uintah {
-  class Diamm : public ConstitutiveModel {
-  public:
+class Diamm : public ConstitutiveModel
+{
+public:
+  int d_NDMMPROP, d_NMGDC;
+  int d_NBASICINPUTS;
+  double rinit[100];
+  double UI[190];
 
-    int d_NDMMPROP,d_NMGDC;
-    int d_NBASICINPUTS;
-    double rinit[100];
-    double UI[190];
+  vector<const VarLabel*> ISVLabels;
+  vector<const VarLabel*> ISVLabels_preReloc;
+  int d_NINSV;
 
-    vector<const VarLabel*> ISVLabels;
-    vector<const VarLabel*> ISVLabels_preReloc;
-    int d_NINSV;
+private:
+  // Prevent copying of this class
+  // copy constructor
+  Diamm& operator=(const Diamm& cm);
 
-  private:
-    // Prevent copying of this class
-    // copy constructor
-    Diamm& operator=(const Diamm &cm);
+  void getInputParameters(ProblemSpecP& ps);
 
-    void getInputParameters(ProblemSpecP& ps);
+  void initializeLocalMPMLabels();
 
-    void initializeLocalMPMLabels();
+public:
+  // constructors
+  Diamm(ProblemSpecP& ps, MPMFlags* flag);
+  Diamm(const Diamm* cm);
 
-  public:
-    // constructors
-    Diamm(ProblemSpecP& ps, MPMFlags* flag);
-    Diamm(const Diamm* cm);
+  // destructor
+  ~Diamm() override;
 
-    // destructor
-    virtual ~Diamm();
+  void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag = true);
+  // clone
+  Diamm* clone() override;
 
-    // clone
-    Diamm* clone();
-
-    // compute stable timestep for this patch
-    virtual void computeStableTimestep(const Patch* patch,
-                                       const MPMMaterial* matl,
-                                       DataWarehouse* new_dw);
-
-    // compute stress at each particle in the patch
-    virtual void computeStressTensor(const PatchSubset* patches,
+  // compute stable timestep for this patch
+  virtual void computeStableTimestep(const Patch* patch,
                                      const MPMMaterial* matl,
-                                     DataWarehouse* old_dw,
                                      DataWarehouse* new_dw);
 
+  // compute stress at each particle in the patch
+  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw) override;
 
-    // carry forward CM data for RigidMPM
-    virtual void carryForward(const PatchSubset* patches,
-                              const MPMMaterial* matl,
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw);
+  // carry forward CM data for RigidMPM
+  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
+                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
 
-    // initialize  each particle's constitutive model data
-    virtual void initializeCMData(const Patch* patch,
-                                  const MPMMaterial* matl,
-                                  DataWarehouse* new_dw);
+  // initialize  each particle's constitutive model data
+  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
+                        DataWarehouse* new_dw) override;
 
-    virtual void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                           const PatchSet* patch,
-                                           MPMLabel* lb) const;
+  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+                                 const PatchSet* patch,
+                                 MPMLabel* lb) const override;
 
+  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
+                         ParticleLabelVariableMap* newState,
+                         ParticleSubset* delset,
+                         DataWarehouse* old_dw) override;
 
-    virtual void allocateCMDataAdd(DataWarehouse* new_dw,
-                                   ParticleSubset* subset,
-                                   ParticleLabelVariableMap* newState,
-                                   ParticleSubset* delset,
-                                   DataWarehouse* old_dw);
+  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                     const PatchSet* patches) const override;
 
-    virtual void addInitialComputesAndRequires(Task* task,
-                                               const MPMMaterial* matl,
-                                               const PatchSet* patches) const;
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches) const;
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches, const bool recursion,
+                              const bool schedParent = true) const override;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches,
-                                        const bool recursion,
-                                        const bool schedParent=true) const;
+  double computeRhoMicroCM(double pressure, const double p_ref,
+                           const MPMMaterial* matl, double temperature,
+                           double rho_guess) override;
 
-    virtual double computeRhoMicroCM(double pressure,
-                                     const double p_ref,
-                                     const MPMMaterial* matl, 
-                                     double temperature,
-                                     double rho_guess);
+  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
+                         double& dp_drho, double& ss_new,
+                         const MPMMaterial* matl, double temperature) override;
 
+  double getCompressibility() override;
 
-    virtual void computePressEOSCM(double rho_m, double& press_eos,
-                                   double p_ref,
-                                   double& dp_drho, double& ss_new,
-                                   const MPMMaterial* matl, 
-                                   double temperature);
-
-    virtual double getCompressibility();
-
-
-    virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                  std::vector<const VarLabel*>& to);
-
-
-  };
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
+};
 
 } // End namespace Uintah
 
-#endif  // __DIAMM_H__
+#endif // __DIAMM_H__

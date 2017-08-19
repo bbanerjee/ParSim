@@ -51,50 +51,47 @@
 
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  /*! \class StabilityCheck
-    \brief  A generic wrapper for various methods of checking stability. 
-   
-    \author  Biswajit Banerjee, \n
-    C-SAFE and Department of Mechanical Engineering,\n
-    University of Utah.\n
+/*! \class StabilityCheck
+  \brief  A generic wrapper for various methods of checking stability.
 
-    Examples: loss of hyperbolicity/ellipticity, Drucker 
-    stability criterion, Hill condition etc.
-    Provides an abstract base class for various methods of checking 
-    the stability of motion/bifurcation points
-  */
-  class StabilityCheck {
+  \author  Biswajit Banerjee, \n
+  C-SAFE and Department of Mechanical Engineering,\n
+  University of Utah.\n
 
-  public:
-         
-    //! Construct an object that can be used to check stability
-    StabilityCheck();
+  Examples: loss of hyperbolicity/ellipticity, Drucker
+  stability criterion, Hill condition etc.
+  Provides an abstract base class for various methods of checking
+  the stability of motion/bifurcation points
+*/
+class StabilityCheck
+{
 
-    //! Destructor of stability check
-    virtual ~StabilityCheck();
+public:
+  //! Construct an object that can be used to check stability
+  StabilityCheck();
 
-    virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
+  //! Destructor of stability check
+  virtual ~StabilityCheck();
 
-    // Determine if we do the stability.  Instead of checking for the
-    // existence of d_stable in ElasticPlastic.cc, instead check 
-    // do() which is true except for NoneCheck.cc.
-    virtual bool doIt() {
-      return true;
-    }
-         
-    /*! Check the stability and return the direction of instability
-      if any */
-    virtual bool checkStability(const Matrix3& cauchyStress,
-                                const Matrix3& deformRate,
-                                const TangentModulusTensor& tangentModulus,
-                                Vector& direction) = 0;
-  };
+  virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
+
+  // Determine if we do the stability.  Instead of checking for the
+  // existence of d_stable in ElasticPlastic.cc, instead check
+  // do() which is true except for NoneCheck.cc.
+  virtual bool doIt() { return true; }
+
+  /*! Check the stability and return the direction of instability
+    if any */
+  virtual bool checkStability(const Matrix3& cauchyStress,
+                              const Matrix3& deformRate,
+                              const TangentModulusTensor& tangentModulus,
+                              Vector& direction) = 0;
+};
 } // End namespace Uintah
-      
-#endif  // __STABILITY_CHECK_H__
 
+#endif // __STABILITY_CHECK_H__

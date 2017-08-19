@@ -32,18 +32,18 @@
 
 namespace Vaango {
 
-  class KinematicHardeningModel;
-  class InternalVariableModel;
+class KinematicHardeningModel;
+class InternalVariableModel;
 
-  class KinematicHardeningModelFactory
-  {
-  public:
-    // this function has a switch for all known mat_types
-    static KinematicHardeningModel* create(Uintah::ProblemSpecP& ps);
-    static KinematicHardeningModel* create(Uintah::ProblemSpecP& ps,
-                                           InternalVariableModel* intvar);
-    static KinematicHardeningModel* createCopy(const KinematicHardeningModel* pm);
-  };
+class KinematicHardeningModelFactory
+{
+public:
+  // this function has a switch for all known mat_types
+  static KinematicHardeningModel* create(Uintah::ProblemSpecP& ps);
+  static KinematicHardeningModel* create(Uintah::ProblemSpecP& ps,
+                                         InternalVariableModel* intvar);
+  static KinematicHardeningModel* createCopy(const KinematicHardeningModel* pm);
+};
 } // End namespace Uintah
-      
+
 #endif /* _BB_KINEMATIC_HARDENING_MODELFACTORY_H_ */

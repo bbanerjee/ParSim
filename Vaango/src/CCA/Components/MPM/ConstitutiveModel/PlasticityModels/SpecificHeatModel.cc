@@ -46,16 +46,10 @@
  * IN THE SOFTWARE.
  */
 
-
 #include "SpecificHeatModel.h"
 
 using namespace Uintah;
 
-SpecificHeatModel::SpecificHeatModel()
-{
-}
+SpecificHeatModel::SpecificHeatModel() = default;
 
-SpecificHeatModel::~SpecificHeatModel()
-{
-}
-         
+SpecificHeatModel::~SpecificHeatModel() = default;

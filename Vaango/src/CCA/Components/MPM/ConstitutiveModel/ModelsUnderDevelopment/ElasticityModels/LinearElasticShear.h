@@ -32,36 +32,35 @@
 
 namespace Uintah {
 
-  /*! \class LinearElasticShear
-   *  \brief An isotropic linear elastic (hypoelastic) shear stress model.
-   *  \author Biswajit Banerjee, 
-   *
-  */
-  class LinearElasticShear : public ShearStressModel {
+/*! \class LinearElasticShear
+ *  \brief An isotropic linear elastic (hypoelastic) shear stress model.
+ *  \author Biswajit Banerjee,
+ *
+*/
+class LinearElasticShear : public ShearStressModel
+{
 
-  private:
+private:
+  double d_mu; // Shear modulus
 
-    double d_mu;    // Shear modulus
+  LinearElasticShear& operator=(const LinearElasticShear& smm);
 
-    LinearElasticShear& operator=(const LinearElasticShear &smm);
+public:
+  /*! Construct a linear elastic shear stress model. */
+  LinearElasticShear(ProblemSpecP& ps);
 
-  public:
-         
-    /*! Construct a linear elastic shear stress model. */
-    LinearElasticShear(ProblemSpecP& ps);
+  /*! Construct a copy of linear elastic shear stress model. */
+  LinearElasticShear(const LinearElasticShear* smm);
 
-    /*! Construct a copy of linear elastic shear stress model. */
-    LinearElasticShear(const LinearElasticShear* smm);
+  /*! Destructor of linear elastic shear stress model.   */
+  virtual ~LinearElasticShear();
 
-    /*! Destructor of linear elastic shear stress model.   */
-    virtual ~LinearElasticShear();
+  virtual void outputProblemSpec(ProblemSpecP& ps);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    /*! Compute the shear stress */
-    void computeShearStress(const DeformationState* state, Matrix3& stress_stress);
-  };
+  /*! Compute the shear stress */
+  void computeShearStress(const DeformationState* state,
+                          Matrix3& stress_stress);
+};
 } // End namespace Uintah
-      
-#endif  // __LINEAR_ELASTIC_SHEAR_H__
 
+#endif // __LINEAR_ELASTIC_SHEAR_H__

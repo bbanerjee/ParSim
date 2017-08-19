@@ -23,75 +23,72 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/ArmstrongFrederickKinematicHardening.h>
 #include <cmath>
 
-
 using namespace Uintah;
 
-ArmstrongFrederickKinematicHardening::ArmstrongFrederickKinematicHardening(ProblemSpecP& ps)
+ArmstrongFrederickKinematicHardening::ArmstrongFrederickKinematicHardening(
+  ProblemSpecP& ps)
 {
   d_cm.beta = 1.0;
   ps->get("beta", d_cm.beta);
   ps->require("hardening_modulus_1", d_cm.hardening_modulus_1);
   ps->require("hardening_modulus_2", d_cm.hardening_modulus_2);
 }
-         
-ArmstrongFrederickKinematicHardening::ArmstrongFrederickKinematicHardening(const ArmstrongFrederickKinematicHardening* cm)
+
+ArmstrongFrederickKinematicHardening::ArmstrongFrederickKinematicHardening(
+  const ArmstrongFrederickKinematicHardening* cm)
 {
   d_cm.beta = cm->d_cm.beta;
   d_cm.hardening_modulus_1 = cm->d_cm.hardening_modulus_1;
   d_cm.hardening_modulus_2 = cm->d_cm.hardening_modulus_2;
 }
-         
-ArmstrongFrederickKinematicHardening::~ArmstrongFrederickKinematicHardening()
-{
-}
 
-void ArmstrongFrederickKinematicHardening::outputProblemSpec(ProblemSpecP& ps)
+ArmstrongFrederickKinematicHardening::~ArmstrongFrederickKinematicHardening() =
+  default;
+
+void
+ArmstrongFrederickKinematicHardening::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP plastic_ps = ps->appendChild("kinematic_hardening_model");
-  plastic_ps->setAttribute("type","armstrong_frederick_hardening");
+  plastic_ps->setAttribute("type", "armstrong_frederick_hardening");
 
   plastic_ps->appendElement("beta", d_cm.beta);
   plastic_ps->appendElement("hardening_modulus_1", d_cm.hardening_modulus_1);
   plastic_ps->appendElement("hardening_modulus_2", d_cm.hardening_modulus_2);
 }
 
-void 
-ArmstrongFrederickKinematicHardening::computeBackStress(const PlasticityState* state,
-                                                        const double& delT,
-                                                        const particleIndex idx,
-                                                        const double& delLambda,
-                                                        const Matrix3& df_dsigma_normal_new,
-                                                        const Matrix3& backStress_old,
-                                                        Matrix3& backStress_new)
+void
+ArmstrongFrederickKinematicHardening::computeBackStress(
+  const PlasticityState* state, const double& delT, const particleIndex idx,
+  const double& delLambda, const Matrix3& df_dsigma_normal_new,
+  const Matrix3& backStress_old, Matrix3& backStress_new)
 {
-  // Get the hardening modulus 
-  double H_1 = d_cm.beta*d_cm.hardening_modulus_1;
-  double H_2 = d_cm.beta*d_cm.hardening_modulus_2;
-  double stt = sqrt(3.0/2.0);
-  double o_stt = 1.0/stt;
-  double denom = 1.0/(1.0 + stt*H_2*delLambda);
+  // Get the hardening modulus
+  double H_1 = d_cm.beta * d_cm.hardening_modulus_1;
+  double H_2 = d_cm.beta * d_cm.hardening_modulus_2;
+  double stt = sqrt(3.0 / 2.0);
+  double o_stt = 1.0 / stt;
+  double denom = 1.0 / (1.0 + stt * H_2 * delLambda);
 
   // Compute updated backstress
-  backStress_new = backStress_old + df_dsigma_normal_new*(delLambda*H_1*o_stt);
-  backStress_new = backStress_new*denom;
+  backStress_new =
+    backStress_old + df_dsigma_normal_new * (delLambda * H_1 * o_stt);
+  backStress_new = backStress_new * denom;
 
   return;
 }
 
-void 
+void
 ArmstrongFrederickKinematicHardening::eval_h_beta(const Matrix3& df_dsigma,
-                                              const PlasticityState* state,
-                                              Matrix3& h_beta)
+                                                  const PlasticityState* state,
+                                                  Matrix3& h_beta)
 {
-  double H_1 = d_cm.beta*d_cm.hardening_modulus_1;
-  double H_2 = d_cm.beta*d_cm.hardening_modulus_2;
+  double H_1 = d_cm.beta * d_cm.hardening_modulus_1;
+  double H_2 = d_cm.beta * d_cm.hardening_modulus_2;
   Matrix3 beta = *(state->backStress);
   double norm_r = df_dsigma.Norm();
-  h_beta = df_dsigma*(2.0/3.0*H_1) - beta*(H_2*norm_r);
+  h_beta = df_dsigma * (2.0 / 3.0 * H_1) - beta * (H_2 * norm_r);
   return;
 }
-

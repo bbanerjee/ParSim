@@ -54,41 +54,39 @@
 
 namespace Uintah {
 
-  /*! \class SCGMeltTemp
-   *  \brief The melt temp model used by Steinberg,Cochran,Guinan in
-   *         the SCG plasticity model.
-   *  \author Biswajit Banerjee, 
-   *  \author C-SAFE and Department of Mechanical Engineering,
-   *  \author University of Utah.
-   *
-  */
-  class SCGMeltTemp : public MeltingTempModel {
+/*! \class SCGMeltTemp
+ *  \brief The melt temp model used by Steinberg,Cochran,Guinan in
+ *         the SCG plasticity model.
+ *  \author Biswajit Banerjee,
+ *  \author C-SAFE and Department of Mechanical Engineering,
+ *  \author University of Utah.
+ *
+*/
+class SCGMeltTemp : public MeltingTempModel
+{
 
-  private:
+private:
+  double d_Gamma0; // Material constant (also in SCG model)
+  double d_a;      // Material constant (also in SCG model)
+  double d_Tm0;    // Material constant (also in SCG model)
 
-    double d_Gamma0; // Material constant (also in SCG model)
-    double d_a;      // Material constant (also in SCG model)
-    double d_Tm0;   // Material constant (also in SCG model)
+  SCGMeltTemp& operator=(const SCGMeltTemp& mtm);
 
-    SCGMeltTemp& operator=(const SCGMeltTemp &mtm);
+public:
+  /*! Construct a constant melt temp model. */
+  SCGMeltTemp(ProblemSpecP& ps);
 
-  public:
-         
-    /*! Construct a constant melt temp model. */
-    SCGMeltTemp(ProblemSpecP& ps);
+  /*! Construct a copy of constant melt temp model. */
+  SCGMeltTemp(const SCGMeltTemp* mtm);
 
-    /*! Construct a copy of constant melt temp model. */
-    SCGMeltTemp(const SCGMeltTemp* mtm);
+  /*! Destructor of constant melt temp model.   */
+  ~SCGMeltTemp() override;
 
-    /*! Destructor of constant melt temp model.   */
-    virtual ~SCGMeltTemp();
+  void outputProblemSpec(ProblemSpecP& ps) override;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    /*! Compute the melt temp */
-    double computeMeltingTemp(const PlasticityState* state);
-  };
+  /*! Compute the melt temp */
+  double computeMeltingTemp(const PlasticityState* state) override;
+};
 } // End namespace Uintah
-      
-#endif  // __SCG_MELT_TEMP_MODEL_H__
 
+#endif // __SCG_MELT_TEMP_MODEL_H__

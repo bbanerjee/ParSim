@@ -27,56 +27,53 @@
 #ifndef __BB_CONSTANT_ELASTICITY_MODEL_H__
 #define __BB_CONSTANT_ELASTICITY_MODEL_H__
 
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-  /*! \class ElasticModuli_Constant
-   *  \brief The elasticity does not vary with density and temperature
-   *  \author Biswajit Banerjee, 
-   *
-  */
-  class ElasticModuli_Constant : public ElasticModuliModel {
+/*! \class ElasticModuli_Constant
+ *  \brief The elasticity does not vary with density and temperature
+ *  \author Biswajit Banerjee,
+ *
+*/
+class ElasticModuli_Constant : public ElasticModuliModel
+{
 
-  private:
+private:
+  double d_bulk;
+  double d_shear;
 
-    double d_bulk;
-    double d_shear;
+  ElasticModuli_Constant& operator=(const ElasticModuli_Constant& smm);
 
-    ElasticModuli_Constant& operator=(const ElasticModuli_Constant &smm);
+public:
+  /*! Construct a constant elasticity model. */
+  ElasticModuli_Constant(Uintah::ProblemSpecP& ps);
 
-  public:
-         
-    /*! Construct a constant elasticity model. */
-    ElasticModuli_Constant(Uintah::ProblemSpecP& ps);
+  /*! Construct a copy of constant elasticity model. */
+  ElasticModuli_Constant(const ElasticModuli_Constant* smm);
 
-    /*! Construct a copy of constant elasticity model. */
-    ElasticModuli_Constant(const ElasticModuli_Constant* smm);
+  /*! Destructor of constant elasticity model.   */
+  ~ElasticModuli_Constant() override;
 
-    /*! Destructor of constant elasticity model.   */
-    virtual ~ElasticModuli_Constant();
-         
-    virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
+  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
-    /*! Get parameters */
-    std::map<std::string, double> getParameters() const {
-      std::map<std::string, double> params;
-      params["K"] = d_bulk;
-      params["G"] = d_shear;
-      return params;
-    }
+  /*! Get parameters */
+  std::map<std::string, double> getParameters() const override
+  {
+    std::map<std::string, double> params;
+    params["K"] = d_bulk;
+    params["G"] = d_shear;
+    return params;
+  }
 
-    /*! Compute the elasticity */
-    ElasticModuli getInitialElasticModuli() const;
-    ElasticModuli getCurrentElasticModuli(const ModelStateBase* );
-    ElasticModuli getElasticModuliLowerBound() const;
-    ElasticModuli getElasticModuliUpperBound() const;
-
-  };
+  /*! Compute the elasticity */
+  ElasticModuli getInitialElasticModuli() const override;
+  ElasticModuli getCurrentElasticModuli(const ModelStateBase*) override;
+  ElasticModuli getElasticModuliLowerBound() const override;
+  ElasticModuli getElasticModuliUpperBound() const override;
+};
 } // End namespace Uintah
-      
-#endif  // __CONSTANT_ELASTICITY_MODEL_H__
 
+#endif // __CONSTANT_ELASTICITY_MODEL_H__

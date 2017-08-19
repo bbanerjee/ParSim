@@ -46,27 +46,27 @@
  * IN THE SOFTWARE.
  */
 //#include </usr/include/valgrind/callgrind.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/simplifiedGeoModel.h>
-#include <Core/Grid/Patch.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Grid/Variables/NCVariable.h>
-#include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Grid/Task.h>
-#include <Core/Labels/MPMLabel.h>
-#include <Core/Grid/Variables/VarLabel.h>
-#include <Core/Grid/Variables/NodeIterator.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Level.h>
-#include <Core/Exceptions/ParameterNotFound.h>
-#include <Core/Math/MinMax.h>
-#include <Core/Math/Matrix3.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <Core/Grid/Patch.h>
+#include <Core/Grid/Task.h>
+#include <Core/Grid/Variables/NCVariable.h>
+#include <Core/Grid/Variables/NodeIterator.h>
+#include <Core/Grid/Variables/ParticleVariable.h>
+#include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Grid/Variables/VarTypes.h>
+#include <Core/Labels/MPMLabel.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/Math/Matrix3.h>
+#include <Core/Math/MinMax.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 
-#include <sci_values.h>
 #include <iostream>
+#include <sci_values.h>
 
 using std::cerr;
 
@@ -77,20 +77,21 @@ simplifiedGeoModel::simplifiedGeoModel(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
 
-  ps->require("FSLOPE",d_cm.FSLOPE);
-  ps->require("FSLOPE_p",d_cm.FSLOPE_p);
-  ps->require("hardening_modulus",d_cm.hardening_modulus);
-  ps->require("CR",d_cm.CR);
-  ps->require("p0_crush_curve",d_cm.p0_crush_curve);
-  ps->require("p1_crush_curve",d_cm.p1_crush_curve);
-  ps->require("p3_crush_curve",d_cm.p3_crush_curve);
-  ps->require("p4_fluid_effect",d_cm.p4_fluid_effect);
-  ps->require("fluid_B0",d_cm.fluid_B0);
-  ps->require("fluid_pressur_initial",d_cm.fluid_pressur_initial);
-  ps->require("kinematic_hardening_constant",d_cm.kinematic_hardening_constant);
-  ps->require("PEAKI1",d_cm.PEAKI1);
-  ps->require("B0",d_cm.B0);
-  ps->require("G0",d_cm.G0);
+  ps->require("FSLOPE", d_cm.FSLOPE);
+  ps->require("FSLOPE_p", d_cm.FSLOPE_p);
+  ps->require("hardening_modulus", d_cm.hardening_modulus);
+  ps->require("CR", d_cm.CR);
+  ps->require("p0_crush_curve", d_cm.p0_crush_curve);
+  ps->require("p1_crush_curve", d_cm.p1_crush_curve);
+  ps->require("p3_crush_curve", d_cm.p3_crush_curve);
+  ps->require("p4_fluid_effect", d_cm.p4_fluid_effect);
+  ps->require("fluid_B0", d_cm.fluid_B0);
+  ps->require("fluid_pressur_initial", d_cm.fluid_pressur_initial);
+  ps->require("kinematic_hardening_constant",
+              d_cm.kinematic_hardening_constant);
+  ps->require("PEAKI1", d_cm.PEAKI1);
+  ps->require("B0", d_cm.B0);
+  ps->require("G0", d_cm.G0);
   initializeLocalMPMLabels();
 }
 
@@ -129,81 +130,83 @@ simplifiedGeoModel::~simplifiedGeoModel()
   VarLabel::destroy(pBackStressLabel_preReloc);
   VarLabel::destroy(pBackStressIsoLabel);
   VarLabel::destroy(pBackStressIsoLabel_preReloc);
-
 }
 
-void simplifiedGeoModel::outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag)
+void
+simplifiedGeoModel::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 {
   ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("constitutive_model");
-    cm_ps->setAttribute("type","simplified_geo_model");
+    cm_ps->setAttribute("type", "simplified_geo_model");
   }
 
-  cm_ps->appendElement("FSLOPE",d_cm.FSLOPE);
-  cm_ps->appendElement("FSLOPE_p",d_cm.FSLOPE_p);
-  cm_ps->appendElement("hardening_modulus",d_cm.hardening_modulus);
-  cm_ps->appendElement("CR",d_cm.CR);
-  cm_ps->appendElement("p0_crush_curve",d_cm.p0_crush_curve);
-  cm_ps->appendElement("p1_crush_curve",d_cm.p1_crush_curve);
-  cm_ps->appendElement("p3_crush_curve",d_cm.p3_crush_curve);
-  cm_ps->appendElement("p4_fluid_effect",d_cm.p4_fluid_effect);
-  cm_ps->appendElement("fluid_B0",d_cm.fluid_B0);
-  cm_ps->appendElement("fluid_pressur_initial",d_cm.fluid_pressur_initial);
-  cm_ps->appendElement("kinematic_hardening_constant",d_cm.kinematic_hardening_constant);
-  cm_ps->appendElement("PEAKI1",d_cm.PEAKI1);
-  cm_ps->appendElement("B0",d_cm.B0);
-  cm_ps->appendElement("G0",d_cm.G0);
-
+  cm_ps->appendElement("FSLOPE", d_cm.FSLOPE);
+  cm_ps->appendElement("FSLOPE_p", d_cm.FSLOPE_p);
+  cm_ps->appendElement("hardening_modulus", d_cm.hardening_modulus);
+  cm_ps->appendElement("CR", d_cm.CR);
+  cm_ps->appendElement("p0_crush_curve", d_cm.p0_crush_curve);
+  cm_ps->appendElement("p1_crush_curve", d_cm.p1_crush_curve);
+  cm_ps->appendElement("p3_crush_curve", d_cm.p3_crush_curve);
+  cm_ps->appendElement("p4_fluid_effect", d_cm.p4_fluid_effect);
+  cm_ps->appendElement("fluid_B0", d_cm.fluid_B0);
+  cm_ps->appendElement("fluid_pressur_initial", d_cm.fluid_pressur_initial);
+  cm_ps->appendElement("kinematic_hardening_constant",
+                       d_cm.kinematic_hardening_constant);
+  cm_ps->appendElement("PEAKI1", d_cm.PEAKI1);
+  cm_ps->appendElement("B0", d_cm.B0);
+  cm_ps->appendElement("G0", d_cm.G0);
 }
 
-simplifiedGeoModel* simplifiedGeoModel::clone()
+simplifiedGeoModel*
+simplifiedGeoModel::clone()
 {
   return scinew simplifiedGeoModel(*this);
 }
 
-void simplifiedGeoModel::initializeCMData(const Patch* patch,
-                                   const MPMMaterial* matl,
-                                   DataWarehouse* new_dw)
+void
+simplifiedGeoModel::initializeCMData(const Patch* patch,
+                                     const MPMMaterial* matl,
+                                     DataWarehouse* new_dw)
 {
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
   initSharedDataForExplicit(patch, matl, new_dw);
-  ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(),patch);
+  ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
   ParticleVariable<double> pPlasticStrain;
   ParticleVariable<double> pPlasticStrainVol;
   ParticleVariable<double> pElasticStrainVol;
   ParticleVariable<double> pKappa;
   ParticleVariable<Matrix3> pBackStress;
   ParticleVariable<Matrix3> pBackStressIso;
-  new_dw->allocateAndPut(pPlasticStrain,     pPlasticStrainLabel, pset);
-  new_dw->allocateAndPut(pPlasticStrainVol,     pPlasticStrainVolLabel, pset);
-  new_dw->allocateAndPut(pElasticStrainVol,     pElasticStrainVolLabel, pset);
-  new_dw->allocateAndPut(pKappa,     pKappaLabel, pset);
-  new_dw->allocateAndPut(pBackStress,     pBackStressLabel, pset);
-  new_dw->allocateAndPut(pBackStressIso,  pBackStressIsoLabel, pset);
+  new_dw->allocateAndPut(pPlasticStrain, pPlasticStrainLabel, pset);
+  new_dw->allocateAndPut(pPlasticStrainVol, pPlasticStrainVolLabel, pset);
+  new_dw->allocateAndPut(pElasticStrainVol, pElasticStrainVolLabel, pset);
+  new_dw->allocateAndPut(pKappa, pKappaLabel, pset);
+  new_dw->allocateAndPut(pBackStress, pBackStressLabel, pset);
+  new_dw->allocateAndPut(pBackStressIso, pBackStressIsoLabel, pset);
 
   ParticleSubset::iterator iter = pset->begin();
   Matrix3 Identity;
   Identity.Identity();
-  for(;iter != pset->end();iter++){
+  for (; iter != pset->end(); iter++) {
     pPlasticStrain[*iter] = 0.0;
     pPlasticStrainVol[*iter] = 0.0;
     pElasticStrainVol[*iter] = 0.0;
-    pKappa[*iter] = (d_cm.p0_crush_curve +
-      d_cm.CR*d_cm.FSLOPE*d_cm.PEAKI1 )/
-      (d_cm.CR*d_cm.FSLOPE+1.0);
+    pKappa[*iter] =
+      (d_cm.p0_crush_curve + d_cm.CR * d_cm.FSLOPE * d_cm.PEAKI1) /
+      (d_cm.CR * d_cm.FSLOPE + 1.0);
     pBackStress[*iter].set(0.0);
-    pBackStressIso[*iter] = Identity*d_cm.fluid_pressur_initial;
+    pBackStressIso[*iter] = Identity * d_cm.fluid_pressur_initial;
   }
   computeStableTimestep(patch, matl, new_dw);
 }
 
 void
 simplifiedGeoModel::allocateCMDataAddRequires(Task* task,
-                                            const MPMMaterial* matl,
-                                            const PatchSet* patches ,
-                                            MPMLabel* lb) const
+                                              const MPMMaterial* matl,
+                                              const PatchSet* patches,
+                                              MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -211,54 +214,53 @@ simplifiedGeoModel::allocateCMDataAddRequires(Task* task,
   // for the particle convert operation
   // This method is defined in the ConstitutiveModel base class.
   addSharedRForConvertExplicit(task, matlset, patches);
-
 }
 
-void simplifiedGeoModel::allocateCMDataAdd(DataWarehouse* new_dw,
-                                         ParticleSubset* addset,
-          map<const VarLabel*, ParticleVariableBase*>* newState,
-                                         ParticleSubset* delset,
-                                         DataWarehouse* )
+void
+simplifiedGeoModel::allocateCMDataAdd(
+  DataWarehouse* new_dw, ParticleSubset* addset,
+  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
+  DataWarehouse*)
 {
-
 }
 
-void simplifiedGeoModel::computeStableTimestep(const Patch* patch,
-                                             const MPMMaterial* matl,
-                                             DataWarehouse* new_dw)
+void
+simplifiedGeoModel::computeStableTimestep(const Patch* patch,
+                                          const MPMMaterial* matl,
+                                          DataWarehouse* new_dw)
 {
-   // This is only called for the initial timestep - all other timesteps
-   // are computed as a side-effect of computeStressTensor
+  // This is only called for the initial timestep - all other timesteps
+  // are computed as a side-effect of computeStressTensor
   Vector dx = patch->dCell();
   int dwi = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
   constParticleVariable<double> pmass, pvolume;
   constParticleVariable<Vector> pvelocity;
-  new_dw->get(pmass,     lb->pMassLabel,     pset);
-  new_dw->get(pvolume,   lb->pVolumeLabel,   pset);
+  new_dw->get(pmass, lb->pMassLabel, pset);
+  new_dw->get(pvolume, lb->pVolumeLabel, pset);
   new_dw->get(pvelocity, lb->pVelocityLabel, pset);
 
   double c_dil = 0.0;
-  Vector WaveSpeed(1.e-12,1.e-12,1.e-12);
+  Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
   double bulk = d_cm.B0;
-  double shear= d_cm.G0;
-  for(ParticleSubset::iterator iter = pset->begin();
-      iter != pset->end(); iter++){
-     particleIndex idx = *iter;
-     // Compute wave speed + particle velocity at each particle,
-     // store the maximum
-     c_dil = sqrt((bulk+4.0*shear/3.0)*pvolume[idx]/pmass[idx]);
-     WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
-                      Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
-                      Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
-    }
-    WaveSpeed = dx/WaveSpeed;
-    double delT_new = WaveSpeed.minComponent();
-    if(delT_new < 1.e-12)
-      new_dw->put(delt_vartype(DBL_MAX), lb->delTLabel, patch->getLevel());
-    else
-      new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+  double shear = d_cm.G0;
+  for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
+       iter++) {
+    particleIndex idx = *iter;
+    // Compute wave speed + particle velocity at each particle,
+    // store the maximum
+    c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pvolume[idx] / pmass[idx]);
+    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
+                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
+                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+  }
+  WaveSpeed = dx / WaveSpeed;
+  double delT_new = WaveSpeed.minComponent();
+  if (delT_new < 1.e-12)
+    new_dw->put(delt_vartype(DBL_MAX), lb->delTLabel, patch->getLevel());
+  else
+    new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 }
 
 #if 0
@@ -773,26 +775,27 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
 }
 #endif
 
-void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
-                                           const MPMMaterial* matl,
-                                           DataWarehouse* old_dw,
-                                           DataWarehouse* new_dw)
+void
+simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
+                                        const MPMMaterial* matl,
+                                        DataWarehouse* old_dw,
+                                        DataWarehouse* new_dw)
 {
 
   // Define some constants
-  double one_sixth = 1.0/(6.0);
-  double one_third = 1.0/(3.0);
-  double two_third = 2.0/(3.0);
-  double four_third = 4.0/(3.0);
+  double one_sixth = 1.0 / (6.0);
+  double one_third = 1.0 / (3.0);
+  double two_third = 2.0 / (3.0);
+  double four_third = 4.0 / (3.0);
 
-  for(int p=0;p<patches->size();p++){
+  for (int p = 0; p < patches->size(); p++) {
 
     const Patch* patch = patches->get(p);
-    Matrix3 Identity,D;
+    Matrix3 Identity, D;
     double J;
     Identity.Identity();
-    double c_dil = 0.0,se=0.0;
-    Vector WaveSpeed(1.e-12,1.e-12,1.e-12);
+    double c_dil = 0.0, se = 0.0;
+    Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
 
     ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
@@ -800,7 +803,7 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
     vector<double> S(interpolator->size());
 
     Vector dx = patch->dCell();
-    double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
+    double oodx[3] = { 1. / dx.x(), 1. / dx.y(), 1. / dx.z() };
     int dwi = matl->getDWIndex();
 
     // Create array for the particle position
@@ -811,21 +814,21 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
     ParticleVariable<Matrix3> stress_new;
     constParticleVariable<Point> px;
     constParticleVariable<double> pmass;
-    ParticleVariable<double> pvolume,p_q;
-    constParticleVariable<Vector> pvelocity,psize;
+    ParticleVariable<double> pvolume, p_q;
+    constParticleVariable<Vector> pvelocity, psize;
     ParticleVariable<double> pdTdt;
     constParticleVariable<double> pPlasticStrain;
-    ParticleVariable<double>  pPlasticStrain_new;
+    ParticleVariable<double> pPlasticStrain_new;
     constParticleVariable<double> pPlasticStrainVol;
-    ParticleVariable<double>  pPlasticStrainVol_new;
+    ParticleVariable<double> pPlasticStrainVol_new;
     constParticleVariable<double> pElasticStrainVol;
-    ParticleVariable<double>  pElasticStrainVol_new;
+    ParticleVariable<double> pElasticStrainVol_new;
     constParticleVariable<double> pKappa;
-    ParticleVariable<double>  pKappa_new;
+    ParticleVariable<double> pKappa_new;
     constParticleVariable<Matrix3> pBackStress;
-    ParticleVariable<Matrix3>  pBackStress_new;
+    ParticleVariable<Matrix3> pBackStress_new;
     constParticleVariable<Matrix3> pBackStressIso;
-    ParticleVariable<Matrix3>  pBackStressIso_new;
+    ParticleVariable<Matrix3> pBackStressIso_new;
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
     old_dw->get(pPlasticStrain, pPlasticStrainLabel, pset);
@@ -834,25 +837,29 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pKappa, pKappaLabel, pset);
     old_dw->get(pBackStress, pBackStressLabel, pset);
     old_dw->get(pBackStressIso, pBackStressIsoLabel, pset);
-    new_dw->allocateAndPut(pPlasticStrain_new,pPlasticStrainLabel_preReloc,pset);
-    new_dw->allocateAndPut(pPlasticStrainVol_new,pPlasticStrainVolLabel_preReloc,pset);
-    new_dw->allocateAndPut(pElasticStrainVol_new,pElasticStrainVolLabel_preReloc,pset);
-    new_dw->allocateAndPut(pKappa_new,pKappaLabel_preReloc,pset);
-    new_dw->allocateAndPut(pBackStress_new,pBackStressLabel_preReloc,pset);
-    new_dw->allocateAndPut(pBackStressIso_new,pBackStressIsoLabel_preReloc,pset);
-    Ghost::GhostType  gac   = Ghost::AroundCells;
-    old_dw->get(px,                  lb->pXLabel,                        pset);
-    old_dw->get(pmass,               lb->pMassLabel,                     pset);
-    old_dw->get(psize,               lb->pSizeLabel,                     pset);
-    old_dw->get(pvelocity,           lb->pVelocityLabel,                 pset);
-    old_dw->get(defGrad, lb->pDeformationMeasureLabel,       pset);
-    old_dw->get(stress_old,             lb->pStressLabel,                pset);
-    new_dw->allocateAndPut(stress_new,  lb->pStressLabel_preReloc,       pset);
-    new_dw->allocateAndPut(pvolume,  lb->pVolumeLabel_preReloc,          pset);
-    new_dw->allocateAndPut(pdTdt,    lb->pdTdtLabel_preReloc,            pset);
-    new_dw->allocateAndPut(defGrad_new,
-                                  lb->pDeformationMeasureLabel_preReloc, pset);
-    new_dw->allocateAndPut(p_q,      lb->p_qLabel_preReloc,              pset);
+    new_dw->allocateAndPut(pPlasticStrain_new, pPlasticStrainLabel_preReloc,
+                           pset);
+    new_dw->allocateAndPut(pPlasticStrainVol_new,
+                           pPlasticStrainVolLabel_preReloc, pset);
+    new_dw->allocateAndPut(pElasticStrainVol_new,
+                           pElasticStrainVolLabel_preReloc, pset);
+    new_dw->allocateAndPut(pKappa_new, pKappaLabel_preReloc, pset);
+    new_dw->allocateAndPut(pBackStress_new, pBackStressLabel_preReloc, pset);
+    new_dw->allocateAndPut(pBackStressIso_new, pBackStressIsoLabel_preReloc,
+                           pset);
+    Ghost::GhostType gac = Ghost::AroundCells;
+    old_dw->get(px, lb->pXLabel, pset);
+    old_dw->get(pmass, lb->pMassLabel, pset);
+    old_dw->get(psize, lb->pSizeLabel, pset);
+    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
+    old_dw->get(defGrad, lb->pDeformationMeasureLabel, pset);
+    old_dw->get(stress_old, lb->pStressLabel, pset);
+    new_dw->allocateAndPut(stress_new, lb->pStressLabel_preReloc, pset);
+    new_dw->allocateAndPut(pvolume, lb->pVolumeLabel_preReloc, pset);
+    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
+    new_dw->allocateAndPut(defGrad_new, lb->pDeformationMeasureLabel_preReloc,
+                           pset);
+    new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
 
     Matrix3 velGrad(0.0), rotation(0.0), trial_stress(0.0);
     double rho_cur = 0.0;
@@ -860,9 +867,10 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
     const double p3_crush_curve = d_cm.p3_crush_curve;
     const double p4_fluid_effect = d_cm.p4_fluid_effect;
     const double fluid_B0 = d_cm.fluid_B0;
-    const double kinematic_hardening_constant = d_cm.kinematic_hardening_constant;
+    const double kinematic_hardening_constant =
+      d_cm.kinematic_hardening_constant;
     double bulk = d_cm.B0;
-    const double shear= d_cm.G0;
+    const double shear = d_cm.G0;
 
     // create node data for the plastic multiplier field
     double rho_orig = matl->getInitialDensity();
@@ -871,67 +879,73 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
     // Get the deformation gradients first.  This is done differently
     // depending on whether or not the grid is reset.  (Should it be??? -JG)
     constNCVariable<Vector> gvelocity;
-    new_dw->get(gvelocity, lb->gVelocityStarLabel,dwi,patch,gac,NGN);
-    for(ParticleSubset::iterator iter=pset->begin();iter!=pset->end();iter++){
+    new_dw->get(gvelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
+    for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
+         iter++) {
       particleIndex idx = *iter;
 
-      //re-zero the velocity gradient:
+      // re-zero the velocity gradient:
       L_new.set(0.0);
-      if(!flag->d_axisymmetric){
+      if (!flag->d_axisymmetric) {
         // Get the node indices that surround the cell
-        interpolator->findCellAndShapeDerivatives(px[idx],ni,d_S,psize[idx],
-        defGrad[idx]);
+        interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx],
+                                                  defGrad[idx]);
 
-        computeVelocityGradient(L_new,ni,d_S, oodx, gvelocity);
-      } else {  // axi-symmetric kinematics
+        computeVelocityGradient(L_new, ni, d_S, oodx, gvelocity);
+      } else { // axi-symmetric kinematics
         // Get the node indices that surround the cell
-        interpolator->findCellAndWeightsAndShapeDerivatives(px[idx],ni,S,d_S,
-                                  psize[idx],defGrad[idx]);
+        interpolator->findCellAndWeightsAndShapeDerivatives(
+          px[idx], ni, S, d_S, psize[idx], defGrad[idx]);
         // x -> r, y -> z, z -> theta
-        computeAxiSymVelocityGradient(L_new,ni,d_S,S,oodx,gvelocity,px[idx]);
+        computeAxiSymVelocityGradient(L_new, ni, d_S, S, oodx, gvelocity,
+                                      px[idx]);
       }
 
       // Update vel grad, def grad, J
-      velGrad=L_new;
-      defGrad_new[idx]=(L_new*delT+Identity)*defGrad[idx];
+      velGrad = L_new;
+      defGrad_new[idx] = (L_new * delT + Identity) * defGrad[idx];
       J = defGrad_new[idx].Determinant();
-      if (J <= 0){
-        cout<< "ERROR, negative J! in particle "<< idx << endl;
-        cout<<"J= "<<J<<endl;
-        cout<<"L= "<<L_new<<endl;
+      if (J <= 0) {
+        cout << "ERROR, negative J! in particle " << idx << endl;
+        cout << "J= " << J << endl;
+        cout << "L= " << L_new << endl;
         exit(1);
       }
 
       // Update particle volumes
-      pvolume[idx]=(pmass[idx]/rho_orig)*J;
-      rho_cur = rho_orig/J;
+      pvolume[idx] = (pmass[idx] / rho_orig) * J;
+      rho_cur = rho_orig / J;
 
       // Initialize dT/dt to zero
       pdTdt[idx] = 0.0;
 
-      // Compute incremental bulk modulus based on EOS (see EOS functions at the end)
-      double Gamma = 0.11;  // HARDCODED for soil
-      double c0 = sqrt(bulk/rho_orig);
-      double s = 1.5;       // HARDCODED for soil
+      // Compute incremental bulk modulus based on EOS (see EOS functions at the
+      // end)
+      double Gamma = 0.11; // HARDCODED for soil
+      double c0 = sqrt(bulk / rho_orig);
+      double s = 1.5; // HARDCODED for soil
 
-      double eta = rho_cur/rho_orig -1.0;
+      double eta = rho_cur / rho_orig - 1.0;
       if (fabs(eta) > 0.05) {
-        double dp_drho = c0*c0*(1 - eta*(Gamma - 1-s))/pow((1 + eta*(1-s)), 3);
-        //bulk = dp_drho*rho_cur;
-        if (idx == 3120) cerr << "bulk modulus = " << bulk << endl;
+        double dp_drho =
+          c0 * c0 * (1 - eta * (Gamma - 1 - s)) / pow((1 + eta * (1 - s)), 3);
+        // bulk = dp_drho*rho_cur;
+        if (idx == 3120)
+          cerr << "bulk modulus = " << bulk << endl;
       }
 
       // modify the bulk modulus based on the fluid effects
-      double vol_strain = pPlasticStrainVol[idx]+pElasticStrainVol[idx];
-      double bulk_temp = exp(p3_crush_curve+p4_fluid_effect+vol_strain);
-      bulk = bulk + fluid_B0*
-           ( exp(p3_crush_curve+p4_fluid_effect)-1.0 ) * bulk_temp
-           / ( (bulk_temp-1.0)*(bulk_temp-1.0) );
+      double vol_strain = pPlasticStrainVol[idx] + pElasticStrainVol[idx];
+      double bulk_temp = exp(p3_crush_curve + p4_fluid_effect + vol_strain);
+      bulk = bulk +
+             fluid_B0 * (exp(p3_crush_curve + p4_fluid_effect) - 1.0) *
+               bulk_temp / ((bulk_temp - 1.0) * (bulk_temp - 1.0));
 
-      double lame = bulk - two_third*shear;
-      double lame_inverse = one_sixth/(bulk*shear) * ( two_third*shear - bulk );
+      double lame = bulk - two_third * shear;
+      double lame_inverse =
+        one_sixth / (bulk * shear) * (two_third * shear - bulk);
 
-      // Compute stress using the return algorithm      
+      // Compute stress using the return algorithm
       double eps_p = pPlasticStrain[idx];
       double epsv_p = pPlasticStrainVol[idx];
       double epsv_e = pElasticStrainVol[idx];
@@ -939,9 +953,9 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
 
       Matrix3 strain_inc(0.0);
       int lvl = 0;
-      computeStress(idx, lvl, delT, lame, lame_inverse, 
-                    L_new, defGrad[idx], stress_old[idx], pBackStress[idx],
-                    eps_p, epsv_e, epsv_p, kappa, strain_inc, defGrad_new[idx], rotation,
+      computeStress(idx, lvl, delT, lame, lame_inverse, L_new, defGrad[idx],
+                    stress_old[idx], pBackStress[idx], eps_p, epsv_e, epsv_p,
+                    kappa, strain_inc, defGrad_new[idx], rotation,
                     stress_new[idx]);
       // update total plastic strain magnitude
       pPlasticStrain_new[idx] = eps_p;
@@ -957,75 +971,81 @@ void simplifiedGeoModel::computeStressTensor(const PatchSubset* patches,
       if (strain_inc.Norm() != 0.0) {
 
         // compute invariants of the plastic strain rate
-        double I1_plasStrain,J2_plasStrain;
+        double I1_plasStrain, J2_plasStrain;
         Matrix3 S_plasStrain;
-        computeInvariants(strain_inc, S_plasStrain, I1_plasStrain, J2_plasStrain);
+        computeInvariants(strain_inc, S_plasStrain, I1_plasStrain,
+                          J2_plasStrain);
         // update the backstress
-        double deltaBackStressIso_temp = exp(p3_crush_curve+pPlasticStrainVol[idx]);
-        deltaBackStress = stress_new[idx]*kinematic_hardening_constant*sqrt(J2_plasStrain);
-        deltaBackStressIso = Identity*( 3.0*fluid_B0*
-                            (exp(p3_crush_curve+p4_fluid_effect)-1.0) * deltaBackStressIso_temp
-                            /( (deltaBackStressIso_temp-1.0)*(deltaBackStressIso_temp-1.0) ) )*
-                            strain_inc.Trace();
+        double deltaBackStressIso_temp =
+          exp(p3_crush_curve + pPlasticStrainVol[idx]);
+        deltaBackStress =
+          stress_new[idx] * kinematic_hardening_constant * sqrt(J2_plasStrain);
+        deltaBackStressIso =
+          Identity *
+          (3.0 * fluid_B0 * (exp(p3_crush_curve + p4_fluid_effect) - 1.0) *
+           deltaBackStressIso_temp / ((deltaBackStressIso_temp - 1.0) *
+                                      (deltaBackStressIso_temp - 1.0))) *
+          strain_inc.Trace();
       }
 
       // compute stress from the shifted stress
       stress_new[idx] += pBackStress[idx];
-      pBackStress_new[idx] = pBackStress[idx] + deltaBackStress + deltaBackStressIso;
+      pBackStress_new[idx] =
+        pBackStress[idx] + deltaBackStress + deltaBackStressIso;
       pBackStressIso_new[idx] = pBackStressIso[idx] + deltaBackStressIso;
 
-      stress_new[idx] = (rotation*stress_new[idx])*(rotation.Transpose());
+      stress_new[idx] = (rotation * stress_new[idx]) * (rotation.Transpose());
       // Compute wave speed + particle velocity at each particle,
       // store the maximum
-      c_dil = sqrt((bulk+four_third*shear)/(rho_cur));
-      WaveSpeed=Vector(Max(c_dil+fabs(pvelocity[idx].x()),WaveSpeed.x()),
-                       Max(c_dil+fabs(pvelocity[idx].y()),WaveSpeed.y()),
-                       Max(c_dil+fabs(pvelocity[idx].z()),WaveSpeed.z()));
+      c_dil = sqrt((bulk + four_third * shear) / (rho_cur));
+      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
+                         Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
+                         Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
-        double dx_ave = (dx.x() + dx.y() + dx.z())*one_third;
-        double c_bulk = sqrt(bulk/rho_cur);
+        double dx_ave = (dx.x() + dx.y() + dx.z()) * one_third;
+        double c_bulk = sqrt(bulk / rho_cur);
         p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
       } else {
         p_q[idx] = 0.;
       }
-      Matrix3 AvgStress = (stress_new[idx] + stress_old[idx])*0.5;
+      Matrix3 AvgStress = (stress_new[idx] + stress_old[idx]) * 0.5;
 
-      double e = (D(0,0)*AvgStress(0,0) +
-                  D(1,1)*AvgStress(1,1) +
-                  D(2,2)*AvgStress(2,2) +
-              2.*(D(0,1)*AvgStress(0,1) +
-                  D(0,2)*AvgStress(0,2) +
-                  D(1,2)*AvgStress(1,2))) * pvolume[idx]*delT;
+      double e = (D(0, 0) * AvgStress(0, 0) + D(1, 1) * AvgStress(1, 1) +
+                  D(2, 2) * AvgStress(2, 2) +
+                  2. * (D(0, 1) * AvgStress(0, 1) + D(0, 2) * AvgStress(0, 2) +
+                        D(1, 2) * AvgStress(1, 2))) *
+                 pvolume[idx] * delT;
       se += e;
 
-    }  // end loop over particles
+    } // end loop over particles
 
-    WaveSpeed = dx/WaveSpeed;
+    WaveSpeed = dx / WaveSpeed;
     double delT_new = WaveSpeed.minComponent();
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 
     if (flag->d_reductionVars->accStrainEnergy ||
         flag->d_reductionVars->strainEnergy) {
-      new_dw->put(sum_vartype(se),        lb->StrainEnergyLabel);
+      new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
     }
 
     delete interpolator;
 
-  }// end loop over patches
-
+  } // end loop over patches
 }
 
-
-void simplifiedGeoModel::computeStress(const particleIndex idx, int& lvl, const double delT, 
-                                       const double lame, const double lame_inv, 
-                                       const Matrix3& L_new, const Matrix3& F_old,
-                                       const Matrix3& Sig_old, const Matrix3& Alpha_old,
-                                       double& eps_p, double& epsv_e, double& epsv_p, double& kappa, 
-                                       Matrix3& Eps_inc, Matrix3& F_new, Matrix3& R_new,
-                                       Matrix3& Sig_new)
+void
+simplifiedGeoModel::computeStress(const particleIndex idx, int& lvl,
+                                  const double delT, const double lame,
+                                  const double lame_inv, const Matrix3& L_new,
+                                  const Matrix3& F_old, const Matrix3& Sig_old,
+                                  const Matrix3& Alpha_old, double& eps_p,
+                                  double& epsv_e, double& epsv_p, double& kappa,
+                                  Matrix3& Eps_inc, Matrix3& F_new,
+                                  Matrix3& R_new, Matrix3& Sig_new)
 {
-  if (lvl > 5) return;
+  if (lvl > 5)
+    return;
 
   // Constants
   /*
@@ -1033,14 +1053,14 @@ void simplifiedGeoModel::computeStress(const particleIndex idx, int& lvl, const 
   double two_third = 2.0/(3.0);
   double four_third = 4.0/(3.0);
   */
-  double one_third = 1.0/(3.0);
+  double one_third = 1.0 / (3.0);
   double sqrt_two = sqrt(2.0);
   double sqrt_three = sqrt(3.0);
-  double one_sqrt_two = 1.0/sqrt_two;
-  double one_sqrt_three = 1.0/sqrt_three;
+  double one_sqrt_two = 1.0 / sqrt_two;
+  double one_sqrt_three = 1.0 / sqrt_three;
   Matrix3 One, Zero(0.0);
   One.Identity();
-  
+
   // Read constants again
   const double fSlope = d_cm.FSLOPE;
   const double fSlope_p = d_cm.FSLOPE_p;
@@ -1052,46 +1072,48 @@ void simplifiedGeoModel::computeStress(const particleIndex idx, int& lvl, const 
   const double p4 = d_cm.p4_fluid_effect;
   const double fluid_B0 = d_cm.fluid_B0;
   const double i1_peak = d_cm.PEAKI1;
-  const double shear= d_cm.G0;
+  const double shear = d_cm.G0;
 
   // Calculate derived quantities
-  double shear_inv = 0.5/shear;
-  double i1_peak_hard = i1_peak*fSlope + iso_hard*eps_p;
-  double cap_rad = -cap_ratio*(fSlope*kappa - i1_peak_hard);
+  double shear_inv = 0.5 / shear;
+  double i1_peak_hard = i1_peak * fSlope + iso_hard * eps_p;
+  double cap_rad = -cap_ratio * (fSlope * kappa - i1_peak_hard);
 
   // Compute deformation gradient and rate of deformation tensor
-  F_new = (L_new*delT+One)*F_old;
-  if (isnan(F_new(0,0))) {
+  F_new = (L_new * delT + One) * F_old;
+  if (isnan(F_new(0, 0))) {
     cerr << "F_new = " << F_new << endl;
     cerr << "F_old = " << F_old << endl;
     cerr << "L_new = " << L_new << endl;
     cerr << "delT = " << delT << endl;
   }
-  //double j_new = F_new.Determinant();
+  // double j_new = F_new.Determinant();
   Matrix3 U_new;
   F_new.polarDecompositionRMB(U_new, R_new);
-  Matrix3 D_new = (L_new + L_new.Transpose())*.5;
-  D_new = (R_new.Transpose())*(D_new*R_new);
+  Matrix3 D_new = (L_new + L_new.Transpose()) * .5;
+  D_new = (R_new.Transpose()) * (D_new * R_new);
 
-  // modify the bulk modulus based on the fluid effects  (** WILL have to add back later **)
+  // modify the bulk modulus based on the fluid effects  (** WILL have to add
+  // back later **)
   // double vol_strain = epsv_p+pElasticStrainVol[idx];
 
   // update the actual stress:
-  Matrix3 Sig_unrot = (R_new.Transpose())*(Sig_old*R_new);
-  Matrix3 Sig_trial = Sig_unrot + One*lame*(D_new.Trace()*delT) + D_new*(2.0*shear*delT);
+  Matrix3 Sig_unrot = (R_new.Transpose()) * (Sig_old * R_new);
+  Matrix3 Sig_trial = Sig_unrot + One * lame * (D_new.Trace() * delT) +
+                      D_new * (2.0 * shear * delT);
 
   // compute shifted stress
   Sig_trial -= Alpha_old;
   Sig_new = Sig_unrot;
 
   // compute stress invariants for the trial stress
-  double i1_trial,j2_trial;
+  double i1_trial, j2_trial;
   Matrix3 S_trial;
   computeInvariants(Sig_trial, S_trial, i1_trial, j2_trial);
 
   // compute the value of the yield function for the trial stress
-  double f_trial = evalYieldFunction(j2_trial, i1_trial, fSlope, kappa, cap_rad, 
-                                     i1_peak_hard);
+  double f_trial =
+    evalYieldFunction(j2_trial, i1_trial, fSlope, kappa, cap_rad, i1_peak_hard);
 
   // save old values
   double eps_p_old = eps_p;
@@ -1100,82 +1122,88 @@ void simplifiedGeoModel::computeStress(const particleIndex idx, int& lvl, const 
   double kappa_old = kappa;
   Matrix3 Eps_inc_old = Eps_inc;
 
-  // initial assignment for the plastic strains and the position of the cap function
+  // initial assignment for the plastic strains and the position of the cap
+  // function
   double eps_p_new = eps_p;
   double epsv_p_new = epsv_p;
-  epsv_e = epsv_e + D_new.Trace()*delT;
+  epsv_e = epsv_e + D_new.Trace() * delT;
   /* double kappa_new = kappa; */
 
-  // check if the stress is elastic or plastic: If it is elastic the new stres is equal
+  // check if the stress is elastic or plastic: If it is elastic the new stres
+  // is equal
   // to trial stress otherwise, the plasticity return algrithm would be used.
   if (f_trial < 0.0) {
     Sig_new = Sig_trial;
   } else {
     // plasticity vertex treatment begins
-    double i1_hard_fSlope = i1_peak_hard/fSlope;
+    double i1_hard_fSlope = i1_peak_hard / fSlope;
     bool return_to_vertex = true;
     if (i1_trial > i1_hard_fSlope) {
-      if (j2_trial < 0.00000001){
-        Sig_new = One*i1_hard_fSlope*one_third;
+      if (j2_trial < 0.00000001) {
+        Sig_new = One * i1_hard_fSlope * one_third;
         return_to_vertex = false;
       } else {
-        int count_1_fix=0;
-        int count_2_fix=0;
+        int count_1_fix = 0;
+        int count_2_fix = 0;
 
         // compute the relative trial stress in respect with the vertex
-        Matrix3 Sig_rel = Sig_trial - One*(i1_hard_fSlope*one_third);
+        Matrix3 Sig_rel = Sig_trial - One * (i1_hard_fSlope * one_third);
 
         // compute two unit tensors of the stress space
-        Matrix3 One_scaled = One/sqrt_three;
+        Matrix3 One_scaled = One / sqrt_three;
         double sqrt_J2_trial = sqrt(j2_trial);
-        double one_sqrt_J2_trial = 1.0/sqrt_J2_trial;
-        Matrix3 S_trial_scaled = S_trial*(one_sqrt_J2_trial*one_sqrt_two);
+        double one_sqrt_J2_trial = 1.0 / sqrt_J2_trial;
+        Matrix3 S_trial_scaled = S_trial * (one_sqrt_J2_trial * one_sqrt_two);
 
         // compute the unit tensor in the direction of the plastic strain
-        Matrix3 M = (One*fSlope_p + S_trial*(0.5*one_sqrt_J2_trial))/
-                       sqrt(3.0*fSlope_p*fSlope_p + 0.5);
+        Matrix3 M = (One * fSlope_p + S_trial * (0.5 * one_sqrt_J2_trial)) /
+                    sqrt(3.0 * fSlope_p * fSlope_p + 0.5);
 
         // compute the projection direction tensor
-        Matrix3 P = One*(lame*M.Trace()) + M*(2.0*shear);
+        Matrix3 P = One * (lame * M.Trace()) + M * (2.0 * shear);
 
         // compute the components of P tensor in respect with two scaled tensors
-        double p_vol = P.Trace()*one_sqrt_three;
-        Matrix3 P_dev = P - One_scaled*p_vol;
-        for (int count_1=0 ; count_1<=2 ; count_1++){
-          for (int count_2=0 ; count_2<=2 ; count_2++){
-            if (fabs(S_trial_scaled(count_1,count_2))>
-                fabs(S_trial_scaled(count_1_fix,count_2_fix))){
+        double p_vol = P.Trace() * one_sqrt_three;
+        Matrix3 P_dev = P - One_scaled * p_vol;
+        for (int count_1 = 0; count_1 <= 2; count_1++) {
+          for (int count_2 = 0; count_2 <= 2; count_2++) {
+            if (fabs(S_trial_scaled(count_1, count_2)) >
+                fabs(S_trial_scaled(count_1_fix, count_2_fix))) {
               count_1_fix = count_1;
               count_2_fix = count_2;
             }
           }
         }
-        double p_dev_scaled_ij = P_dev(count_1_fix,count_2_fix)/
-                                 S_trial_scaled(count_1_fix,count_2_fix);
+        double p_dev_scaled_ij = P_dev(count_1_fix, count_2_fix) /
+                                 S_trial_scaled(count_1_fix, count_2_fix);
 
-        // calculation of the components of Sig_rel with respect to two scaled unit tensors
-        double sig_rel_vol_scaled = Sig_rel.Trace()*one_sqrt_three;
-        Matrix3 S_rel = Sig_rel - One_scaled*sig_rel_vol_scaled;
-        double s_rel_scaled_ij = S_rel(count_1_fix,count_2_fix)/
-                                 S_trial_scaled(count_1_fix,count_2_fix);
+        // calculation of the components of Sig_rel with respect to two scaled
+        // unit tensors
+        double sig_rel_vol_scaled = Sig_rel.Trace() * one_sqrt_three;
+        Matrix3 S_rel = Sig_rel - One_scaled * sig_rel_vol_scaled;
+        double s_rel_scaled_ij = S_rel(count_1_fix, count_2_fix) /
+                                 S_trial_scaled(count_1_fix, count_2_fix);
 
-        // condition to determine if the stress_trial is in the vertex zone or not?
-        double ratio_plus  = (sig_rel_vol_scaled*p_dev_scaled_ij + s_rel_scaled_ij*p_vol)/ 
-                             (p_vol*p_vol);
-        double ratio_minus = (sig_rel_vol_scaled*p_dev_scaled_ij - s_rel_scaled_ij*p_vol)/ 
-                             (p_vol*p_vol);
-        if ( ratio_plus >= 0.0 && ratio_minus >= 0.0) {
-          Sig_new = One*(i1_hard_fSlope*one_third);
+        // condition to determine if the stress_trial is in the vertex zone or
+        // not?
+        double ratio_plus =
+          (sig_rel_vol_scaled * p_dev_scaled_ij + s_rel_scaled_ij * p_vol) /
+          (p_vol * p_vol);
+        double ratio_minus =
+          (sig_rel_vol_scaled * p_dev_scaled_ij - s_rel_scaled_ij * p_vol) /
+          (p_vol * p_vol);
+        if (ratio_plus >= 0.0 && ratio_minus >= 0.0) {
+          Sig_new = One * (i1_hard_fSlope * one_third);
           return_to_vertex = false;
         }
       }
     }
     // plasticity vertex treatment ends
     // nested return algorithm begins
-    if (return_to_vertex){
-      double gamma_tol = 0.01;   // **HARDCODED**
-      double del_gamma = 100.;   // **HARDCODED**
-      int max_iter = 500;        // **HARDCODED**
+    if (return_to_vertex) {
+      double gamma_tol = 0.01; // **HARDCODED**
+      double del_gamma = 100.; // **HARDCODED**
+      int max_iter = 500;      // **HARDCODED**
       double gamma = 0.0;
       double gamma_old = 0.0;
       double i1_upd = 0.0, j2_upd = 0.0;
@@ -1188,126 +1216,144 @@ void simplifiedGeoModel::computeStress(const particleIndex idx, int& lvl, const 
 
       // Multi-stage return loop begins
       int count = 1;
-      while(abs(del_gamma)>gamma_tol && count<=max_iter){
-        //cout << "Particle = " << idx << " return algo count = " << count 
+      while (abs(del_gamma) > gamma_tol && count <= max_iter) {
+        // cout << "Particle = " << idx << " return algo count = " << count
         //     << " del_gamma = " << del_gamma << endl;
-        count=count+1;
+        count = count + 1;
 
         // compute the invariants of the trial stres in the loop
         computeInvariants(Sig_upd, S_upd, i1_upd, j2_upd);
         double sqrt_J2_upd = sqrt(j2_upd);
-        double one_sqrt_J2_upd = 1.0/sqrt_J2_upd;
+        double one_sqrt_J2_upd = 1.0 / sqrt_J2_upd;
         Matrix3 S_upd_temp_Ali;
-        double i1_upd_Ali,j2_upd_Ali;
+        double i1_upd_Ali, j2_upd_Ali;
 
         // fast return algorithm to the yield surface
-        if (i1_upd > i1_hard_fSlope){
-          Sig_upd += One*(i1_upd*one_third)*((i1_peak_hard-sqrt_J2_upd)/(fSlope*i1_upd)-1);
+        if (i1_upd > i1_hard_fSlope) {
+          Sig_upd += One * (i1_upd * one_third) *
+                     ((i1_peak_hard - sqrt_J2_upd) / (fSlope * i1_upd) - 1);
 
-        } else if (i1_upd < kappa-0.9*cap_rad) {
-          //double i1_upd_old = i1_upd;
+        } else if (i1_upd < kappa - 0.9 * cap_rad) {
+          // double i1_upd_old = i1_upd;
           double i1_upd1 = i1_upd;
           double i1_upd2 = kappa;
-          double i1_upd3 = (i1_upd1+i1_upd2)*0.5;
-          Matrix3 Sig_upd_temp = Sig_upd + One*(i1_upd*one_third)*(i1_upd3/i1_upd-1.0);
-          //Matrix3 Sig_upd_temp = Sig_upd + One*(i1_upd1*one_third)*(i1_upd3/i1_upd1-1.0);
+          double i1_upd3 = (i1_upd1 + i1_upd2) * 0.5;
+          Matrix3 Sig_upd_temp =
+            Sig_upd + One * (i1_upd * one_third) * (i1_upd3 / i1_upd - 1.0);
+          // Matrix3 Sig_upd_temp = Sig_upd +
+          // One*(i1_upd1*one_third)*(i1_upd3/i1_upd1-1.0);
           Matrix3 S_upd_temp(0.0);
-          computeInvariants(Sig_upd_temp, S_upd_temp_Ali, i1_upd_Ali, j2_upd_Ali);
-          double f_upd = evalYieldFunction(j2_upd_Ali, i1_upd_Ali, fSlope, kappa, cap_rad, 
-                                           i1_peak_hard);
-          int count_temp=0;
-          while ((abs(f_upd)>0.0000001*sqrt(j2_upd+i1_upd*i1_upd) 
-                      && count_temp<2000) || count_temp==0) {
+          computeInvariants(Sig_upd_temp, S_upd_temp_Ali, i1_upd_Ali,
+                            j2_upd_Ali);
+          double f_upd = evalYieldFunction(j2_upd_Ali, i1_upd_Ali, fSlope,
+                                           kappa, cap_rad, i1_peak_hard);
+          int count_temp = 0;
+          while ((abs(f_upd) > 0.0000001 * sqrt(j2_upd + i1_upd * i1_upd) &&
+                  count_temp < 2000) ||
+                 count_temp == 0) {
             count_temp = count_temp + 1;
-            if (f_upd < 0.0){
+            if (f_upd < 0.0) {
               i1_upd2 = i1_upd3;
-              i1_upd3 = (i1_upd1+i1_upd2)*0.5;
+              i1_upd3 = (i1_upd1 + i1_upd2) * 0.5;
             } else {
               i1_upd1 = i1_upd3;
-              i1_upd3 = (i1_upd1+i1_upd2)*0.5;
+              i1_upd3 = (i1_upd1 + i1_upd2) * 0.5;
             }
-            Sig_upd_temp = Sig_upd + One*i1_upd*one_third*(i1_upd3/i1_upd-1.0);
-            computeInvariants(Sig_upd_temp, S_upd_temp_Ali, i1_upd_Ali, j2_upd_Ali);
-            f_upd = evalYieldFunction(j2_upd_Ali, i1_upd_Ali, fSlope, kappa, cap_rad, 
-                                       i1_peak_hard);
+            Sig_upd_temp =
+              Sig_upd + One * i1_upd * one_third * (i1_upd3 / i1_upd - 1.0);
+            computeInvariants(Sig_upd_temp, S_upd_temp_Ali, i1_upd_Ali,
+                              j2_upd_Ali);
+            f_upd = evalYieldFunction(j2_upd_Ali, i1_upd_Ali, fSlope, kappa,
+                                      cap_rad, i1_peak_hard);
           }
           Sig_upd = Sig_upd_temp;
         } else if (i1_upd < kappa) {
-          beta_cap = sqrt(1.0 - (kappa-i1_upd)*(kappa-i1_upd)/(cap_rad*cap_rad));
-          Sig_upd += S_upd*((i1_peak_hard-fSlope*i1_upd)*beta_cap*one_sqrt_J2_upd - 1);
+          beta_cap = sqrt(
+            1.0 - (kappa - i1_upd) * (kappa - i1_upd) / (cap_rad * cap_rad));
+          Sig_upd +=
+            S_upd *
+            ((i1_peak_hard - fSlope * i1_upd) * beta_cap * one_sqrt_J2_upd - 1);
         } else {
 
-          Sig_upd += S_upd*((i1_peak_hard-fSlope*i1_upd)*one_sqrt_J2_upd - 1);
+          Sig_upd +=
+            S_upd * ((i1_peak_hard - fSlope * i1_upd) * one_sqrt_J2_upd - 1);
         }
 
-        // compute the invariants of the trial stres in the loop returned to the yield surface
+        // compute the invariants of the trial stres in the loop returned to the
+        // yield surface
         computeInvariants(Sig_upd, S_upd, i1_upd, j2_upd);
         sqrt_J2_upd = sqrt(j2_upd);
-        one_sqrt_J2_upd = 1.0/sqrt_J2_upd;
+        one_sqrt_J2_upd = 1.0 / sqrt_J2_upd;
 
         // check if the stress state is in the cap zone or not?
-        if (i1_upd >= kappa){
+        if (i1_upd >= kappa) {
           // compute the gradient of the plastic potential
-          G = One*fSlope + S_upd*(0.5*one_sqrt_J2_upd);
+          G = One * fSlope + S_upd * (0.5 * one_sqrt_J2_upd);
           // compute the unit tensor in the direction of the plastic strain
-          M = ( One*fSlope_p + S_upd*(0.5*one_sqrt_J2_upd) )/ sqrt(3.0*fSlope_p*fSlope_p + 0.5);
+          M = (One * fSlope_p + S_upd * (0.5 * one_sqrt_J2_upd)) /
+              sqrt(3.0 * fSlope_p * fSlope_p + 0.5);
         } else {
-          if (j2_upd<0.00000001){
+          if (j2_upd < 0.00000001) {
             // compute the gradient of the plastic potential
-            G = One*(-1.0);
+            G = One * (-1.0);
             // compute the unit tensor in the direction of the plastic strain
-            M = One*(-one_sqrt_three);
+            M = One * (-one_sqrt_three);
           } else {
-            beta_cap = sqrt( 1.0 - (kappa-i1_upd)*(kappa-i1_upd)/(cap_rad*cap_rad) );
-            fSlope_cap = (fSlope*i1_upd-i1_peak_hard)*(kappa-i1_upd)/
-                            (cap_rad*cap_rad*beta_cap) + fSlope*beta_cap;
+            beta_cap = sqrt(
+              1.0 - (kappa - i1_upd) * (kappa - i1_upd) / (cap_rad * cap_rad));
+            fSlope_cap = (fSlope * i1_upd - i1_peak_hard) * (kappa - i1_upd) /
+                           (cap_rad * cap_rad * beta_cap) +
+                         fSlope * beta_cap;
             // compute the gradient of the plastic potential
-            G = One*fSlope_cap + S_upd*(0.5*one_sqrt_J2_upd);
+            G = One * fSlope_cap + S_upd * (0.5 * one_sqrt_J2_upd);
             // compute the unit tensor in the direction of the plastic strain
-            M = G*(1.0/sqrt(3.0*fSlope_cap*fSlope_cap + 0.5));
+            M = G * (1.0 / sqrt(3.0 * fSlope_cap * fSlope_cap + 0.5));
           }
         }
         // compute the projection direction tensor
-        P = One*(lame*M.Trace()) + M*(2.0*shear);
+        P = One * (lame * M.Trace()) + M * (2.0 * shear);
         // store the last value of gamma for calculation of the changes in gamma
         gamma_old = gamma;
         // compute the new value for gamma
-        gamma = (G.Contract(Sig_trial-Sig_upd))/(G.Contract(P));
+        gamma = (G.Contract(Sig_trial - Sig_upd)) / (G.Contract(P));
         // compute new trial stress in the loop
-        Sig_upd = Sig_trial - P*gamma;
+        Sig_upd = Sig_trial - P * gamma;
         // compute the changes of gamma in order to control converging
-        del_gamma = (gamma-gamma_old)/gamma;
+        del_gamma = (gamma - gamma_old) / gamma;
       }
       // Multi-stage return loop ends
 
       // compute the new stress state
       double hard_scaled = 0.0;
       double G_mag = G.Norm();
-      double one_G_mag = 1/G_mag;
+      double one_G_mag = 1 / G_mag;
       double kappa_i1_upd = kappa - i1_upd;
-      double cap_rad_sq = cap_rad*cap_rad;
-      if (kappa_i1_upd <= 0.0){
-        hard_scaled = iso_hard*one_G_mag;
+      double cap_rad_sq = cap_rad * cap_rad;
+      if (kappa_i1_upd <= 0.0) {
+        hard_scaled = iso_hard * one_G_mag;
       } else {
         if (j2_upd < 0.00000001) {
           beta_cap = 0.0;
         } else {
-          beta_cap = 1.0 - (kappa_i1_upd*kappa_i1_upd)/cap_rad_sq;
+          beta_cap = 1.0 - (kappa_i1_upd * kappa_i1_upd) / cap_rad_sq;
         }
-        hard_scaled = (sqrt(beta_cap)*iso_hard +
-                      2.0*cap_ratio*(fSlope*i1_upd-i1_peak_hard)*kappa_i1_upd
-                         /(cap_rad_sq*cap_rad*(1.0+fSlope*cap_ratio)*p3*p3)*
-                         exp(-p1*(kappa-cap_rad-p0))*M.Trace())*one_G_mag;
+        hard_scaled =
+          (sqrt(beta_cap) * iso_hard +
+           2.0 * cap_ratio * (fSlope * i1_upd - i1_peak_hard) * kappa_i1_upd /
+             (cap_rad_sq * cap_rad * (1.0 + fSlope * cap_ratio) * p3 * p3) *
+             exp(-p1 * (kappa - cap_rad - p0)) * M.Trace()) *
+          one_G_mag;
       }
-      Matrix3 G_unit = G*one_G_mag;
+      Matrix3 G_unit = G * one_G_mag;
       double GP = G_unit.Contract(P);
-      gamma *= GP/(GP+hard_scaled);
-      Sig_new = Sig_trial - P*gamma;
+      gamma *= GP / (GP + hard_scaled);
+      Sig_new = Sig_trial - P * gamma;
 
     } // End return to vertex if
 
     Matrix3 Sig_diff = Sig_trial - Sig_new;
-    Matrix3 Eps_diff = One*(lame_inv*Sig_diff.Trace()) + Sig_diff*(2.0*shear_inv);
+    Matrix3 Eps_diff =
+      One * (lame_inv * Sig_diff.Trace()) + Sig_diff * (2.0 * shear_inv);
     Eps_inc += Eps_diff;
 
     // update total plastic strain magnitude
@@ -1320,134 +1366,144 @@ void simplifiedGeoModel::computeStress(const particleIndex idx, int& lvl, const 
     epsv_e = epsv_e - Eps_diff.Trace();
 
     // update the position of the cap
-    double var1 = exp(p3+p4+epsv_p_new);
-    double var2 = exp(p3+epsv_p_new);
-    kappa += ( exp(-p1*(kappa-cap_rad-p0))/(p3*p1) -
-               3.0*fluid_B0*(exp(p3+p4)-1.0)*(var1/((var1-1.0)*(var1-1.0)) +
-                                              var2/((var2-1.0)*(var2-1.0))) )
-               *Eps_diff.Trace()/(1.0+fSlope*cap_ratio);
+    double var1 = exp(p3 + p4 + epsv_p_new);
+    double var2 = exp(p3 + epsv_p_new);
+    kappa += (exp(-p1 * (kappa - cap_rad - p0)) / (p3 * p1) -
+              3.0 * fluid_B0 * (exp(p3 + p4) - 1.0) *
+                (var1 / ((var1 - 1.0) * (var1 - 1.0)) +
+                 var2 / ((var2 - 1.0) * (var2 - 1.0)))) *
+             Eps_diff.Trace() / (1.0 + fSlope * cap_ratio);
 
-    i1_peak_hard = i1_peak*fSlope + iso_hard*eps_p_new;
-    cap_rad = -cap_ratio*(fSlope*kappa-i1_peak_hard);
+    i1_peak_hard = i1_peak * fSlope + iso_hard * eps_p_new;
+    cap_rad = -cap_ratio * (fSlope * kappa - i1_peak_hard);
 
     // compute the value of the yield function for the new stress
     Matrix3 S_new(0.0);
     double j2_new = 0.0, i1_new = 0.0;
     computeInvariants(Sig_new, S_new, i1_new, j2_new);
-    double f_new = evalYieldFunction(j2_new, i1_new, fSlope, kappa, cap_rad, 
-                                       i1_peak_hard);
-    if (abs(f_new) > 0.01*sqrt(j2_new+i1_new*i1_new)) {
+    double f_new =
+      evalYieldFunction(j2_new, i1_new, fSlope, kappa, cap_rad, i1_peak_hard);
+    if (abs(f_new) > 0.01 * sqrt(j2_new + i1_new * i1_new)) {
       // Error message
       lvl += 1;
-      cerr << "ERROR!  Particle " << idx << " Recursion level = " << lvl  
+      cerr << "ERROR!  Particle " << idx << " Recursion level = " << lvl
            << " did not return to yield surface (simplifiedGeomodel.cc)"
            << " with delT = " << delT << endl;
-      cerr << "  f_new= " << f_new << " sqrt(J2_new)= " << sqrt(j2_new) 
+      cerr << "  f_new= " << f_new << " sqrt(J2_new)= " << sqrt(j2_new)
            << " I1_new= " << i1_new << endl;
-      cerr << "  f_trial= " << f_trial << " sqrt(J2_trial)= " << sqrt(j2_trial) 
+      cerr << "  f_trial= " << f_trial << " sqrt(J2_trial)= " << sqrt(j2_trial)
            << " I1_trial= " << i1_trial << endl;
-      //exit(1);
+      // exit(1);
 
       // Split again and see it is gets to the yield surface
-      double delT_new = delT*0.5;
+      double delT_new = delT * 0.5;
       Matrix3 Sig_tmp(0.0);
       Matrix3 F_tmp(0.0);
       Matrix3 R_tmp(0.0);
-      computeStress(idx, lvl, delT_new, lame, lame_inv, 
-                    L_new, F_old, Sig_old, Alpha_old,
-                    eps_p_old, epsv_e_old, epsv_p_old, kappa_old, Eps_inc_old, F_tmp, R_tmp,
-                    Sig_tmp);
-      computeStress(idx, lvl, delT_new, lame, lame_inv, 
-                    L_new, F_tmp, Sig_tmp, Alpha_old,
-                    eps_p, epsv_e, epsv_p, kappa, Eps_inc, F_new, R_new,
-                    Sig_new);
+      computeStress(idx, lvl, delT_new, lame, lame_inv, L_new, F_old, Sig_old,
+                    Alpha_old, eps_p_old, epsv_e_old, epsv_p_old, kappa_old,
+                    Eps_inc_old, F_tmp, R_tmp, Sig_tmp);
+      computeStress(idx, lvl, delT_new, lame, lame_inv, L_new, F_tmp, Sig_tmp,
+                    Alpha_old, eps_p, epsv_e, epsv_p, kappa, Eps_inc, F_new,
+                    R_new, Sig_new);
       lvl -= 1;
     }
   }
   return;
 }
 
-void simplifiedGeoModel::computeInvariants(Matrix3& stress, Matrix3& S,  double& I1, double& J2){
+void
+simplifiedGeoModel::computeInvariants(Matrix3& stress, Matrix3& S, double& I1,
+                                      double& J2)
+{
 
   Matrix3 Identity;
   Identity.Identity();
   I1 = stress.Trace();
-  S = stress - Identity*(1.0/3.0)*I1;
-  J2 = 0.5*S.Contract(S);
-
+  S = stress - Identity * (1.0 / 3.0) * I1;
+  J2 = 0.5 * S.Contract(S);
 }
 
-void simplifiedGeoModel::computeInvariants(const Matrix3& stress, Matrix3& S,  double& I1, double& J2){
+void
+simplifiedGeoModel::computeInvariants(const Matrix3& stress, Matrix3& S,
+                                      double& I1, double& J2)
+{
 
   Matrix3 Identity;
   Identity.Identity();
   I1 = stress.Trace();
-  S = stress - Identity*(1.0/3.0)*I1;
-  J2 = 0.5*S.Contract(S);
-
+  S = stress - Identity * (1.0 / 3.0) * I1;
+  J2 = 0.5 * S.Contract(S);
 }
 
- double simplifiedGeoModel::YieldFunction(const Matrix3& stress, const double& FSLOPE, const double& kappa, const double& cap_radius, const double&PEAKI1){
+double
+simplifiedGeoModel::YieldFunction(const Matrix3& stress, const double& FSLOPE,
+                                  const double& kappa, const double& cap_radius,
+                                  const double& PEAKI1)
+{
 
   Matrix3 S;
-  double I1,J2,b;
-  computeInvariants(stress,S,I1,J2);
-  if (I1>kappa){
-    return sqrt(J2) + FSLOPE*I1 - PEAKI1;
-  }else{
-    b = 1.0 - (kappa-I1)/(cap_radius)*(kappa-I1)/(cap_radius);
-    if (b>0.0){
-      return sqrt(J2) + FSLOPE*I1*sqrt(b) - PEAKI1*sqrt(b);
-    }else{
-      return sqrt(J2)+kappa-cap_radius-I1;
+  double I1, J2, b;
+  computeInvariants(stress, S, I1, J2);
+  if (I1 > kappa) {
+    return sqrt(J2) + FSLOPE * I1 - PEAKI1;
+  } else {
+    b = 1.0 - (kappa - I1) / (cap_radius) * (kappa - I1) / (cap_radius);
+    if (b > 0.0) {
+      return sqrt(J2) + FSLOPE * I1 * sqrt(b) - PEAKI1 * sqrt(b);
+    } else {
+      return sqrt(J2) + kappa - cap_radius - I1;
     }
   }
+}
 
- }
-
- double simplifiedGeoModel::YieldFunction(Matrix3& stress, const double& FSLOPE, const double& kappa, const double& cap_radius, const double&PEAKI1){
+double
+simplifiedGeoModel::YieldFunction(Matrix3& stress, const double& FSLOPE,
+                                  const double& kappa, const double& cap_radius,
+                                  const double& PEAKI1)
+{
 
   Matrix3 S;
-  double I1,J2,b;
-  computeInvariants(stress,S,I1,J2);
-  if (I1>kappa){
-    return sqrt(J2) + FSLOPE*I1 - PEAKI1;
-  }else{
-    b = 1.0 - (kappa-I1)/(cap_radius)*(kappa-I1)/(cap_radius);
-    if (b>0.0){
-      return sqrt(J2) + FSLOPE*I1*sqrt(b) - PEAKI1*sqrt(b);
-    }else{
-      return sqrt(J2)+kappa-cap_radius-I1;
+  double I1, J2, b;
+  computeInvariants(stress, S, I1, J2);
+  if (I1 > kappa) {
+    return sqrt(J2) + FSLOPE * I1 - PEAKI1;
+  } else {
+    b = 1.0 - (kappa - I1) / (cap_radius) * (kappa - I1) / (cap_radius);
+    if (b > 0.0) {
+      return sqrt(J2) + FSLOPE * I1 * sqrt(b) - PEAKI1 * sqrt(b);
+    } else {
+      return sqrt(J2) + kappa - cap_radius - I1;
     }
   }
+}
 
- }
-
-double simplifiedGeoModel::evalYieldFunction(const double& J2, const double& I1, 
-                                             const double& f_slope, 
-                                             const double& kappa, 
-                                             const double& cap_radius, 
-                                             const double& i1_peak_hard) 
+double
+simplifiedGeoModel::evalYieldFunction(const double& J2, const double& I1,
+                                      const double& f_slope,
+                                      const double& kappa,
+                                      const double& cap_radius,
+                                      const double& i1_peak_hard)
 {
   double kappa_I1 = kappa - I1;
   if (kappa_I1 < 0) {
-    return sqrt(J2) + f_slope*I1 - i1_peak_hard;
+    return sqrt(J2) + f_slope * I1 - i1_peak_hard;
   } else {
-    double b = 1.0 - kappa_I1*kappa_I1/(cap_radius*cap_radius);
-    if (b > 0.0){
-      return sqrt(J2) + (f_slope*I1 - i1_peak_hard)*sqrt(b);
-    }else{
+    double b = 1.0 - kappa_I1 * kappa_I1 / (cap_radius * cap_radius);
+    if (b > 0.0) {
+      return sqrt(J2) + (f_slope * I1 - i1_peak_hard) * sqrt(b);
+    } else {
       return sqrt(J2) + kappa_I1 - cap_radius;
     }
   }
 }
 
-void simplifiedGeoModel::carryForward(const PatchSubset* patches,
-                                    const MPMMaterial* matl,
-                                    DataWarehouse* old_dw,
-                                    DataWarehouse* new_dw)
+void
+simplifiedGeoModel::carryForward(const PatchSubset* patches,
+                                 const MPMMaterial* matl, DataWarehouse* old_dw,
+                                 DataWarehouse* new_dw)
 {
-  for(int p=0;p<patches->size();p++){
+  for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
     int dwi = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
@@ -1462,15 +1518,15 @@ void simplifiedGeoModel::carryForward(const PatchSubset* patches,
 
     if (flag->d_reductionVars->accStrainEnergy ||
         flag->d_reductionVars->strainEnergy) {
-      new_dw->put(sum_vartype(0.),     lb->StrainEnergyLabel);
+      new_dw->put(sum_vartype(0.), lb->StrainEnergyLabel);
     }
   }
 }
 
-void simplifiedGeoModel::addParticleState(std::vector<const VarLabel*>& from,
-                                        std::vector<const VarLabel*>& to)
+void
+simplifiedGeoModel::addParticleState(std::vector<const VarLabel*>& from,
+                                     std::vector<const VarLabel*>& to)
 {
-
 
   from.push_back(pPlasticStrainLabel);
   from.push_back(pPlasticStrainVolLabel);
@@ -1484,12 +1540,12 @@ void simplifiedGeoModel::addParticleState(std::vector<const VarLabel*>& from,
   to.push_back(pKappaLabel_preReloc);
   to.push_back(pBackStressLabel_preReloc);
   to.push_back(pBackStressIsoLabel_preReloc);
-
 }
 
-void simplifiedGeoModel::addInitialComputesAndRequires(Task* task,
-                                            const MPMMaterial* matl,
-                                            const PatchSet* ) const
+void
+simplifiedGeoModel::addInitialComputesAndRequires(Task* task,
+                                                  const MPMMaterial* matl,
+                                                  const PatchSet*) const
 {
   // Add the computes and requires that are common to all explicit
   // constitutive models.  The method is defined in the ConstitutiveModel
@@ -1504,12 +1560,11 @@ void simplifiedGeoModel::addInitialComputesAndRequires(Task* task,
   task->computes(pKappaLabel, matlset);
   task->computes(pBackStressLabel, matlset);
   task->computes(pBackStressIsoLabel, matlset);
-
 }
 
-void simplifiedGeoModel::addComputesAndRequires(Task* task,
-                                              const MPMMaterial* matl,
-                                              const PatchSet* patches ) const
+void
+simplifiedGeoModel::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                           const PatchSet* patches) const
 {
 
   // Add the computes and requires that are common to all explicit
@@ -1517,26 +1572,23 @@ void simplifiedGeoModel::addComputesAndRequires(Task* task,
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForHypoExplicit(task, matlset, patches);
-  task->requires(Task::OldDW, pPlasticStrainLabel,    matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticStrainVolLabel,    matlset, Ghost::None);
-  task->requires(Task::OldDW, pElasticStrainVolLabel,    matlset, Ghost::None);
-  task->requires(Task::OldDW, pKappaLabel,    matlset, Ghost::None);
-  task->requires(Task::OldDW, pBackStressLabel,    matlset, Ghost::None);
-  task->requires(Task::OldDW, pBackStressIsoLabel,    matlset, Ghost::None);
-  task->computes(pPlasticStrainLabel_preReloc,  matlset);
-  task->computes(pPlasticStrainVolLabel_preReloc,  matlset);
-  task->computes(pElasticStrainVolLabel_preReloc,  matlset);
-  task->computes(pKappaLabel_preReloc,  matlset);
-  task->computes(pBackStressLabel_preReloc,  matlset);
-  task->computes(pBackStressIsoLabel_preReloc,  matlset);
-
+  task->requires(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pPlasticStrainVolLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pElasticStrainVolLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pKappaLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pBackStressLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pBackStressIsoLabel, matlset, Ghost::None);
+  task->computes(pPlasticStrainLabel_preReloc, matlset);
+  task->computes(pPlasticStrainVolLabel_preReloc, matlset);
+  task->computes(pElasticStrainVolLabel_preReloc, matlset);
+  task->computes(pKappaLabel_preReloc, matlset);
+  task->computes(pBackStressLabel_preReloc, matlset);
+  task->computes(pBackStressIsoLabel_preReloc, matlset);
 }
 
 void
-simplifiedGeoModel::addComputesAndRequires(Task* ,
-                                   const MPMMaterial* ,
-                                   const PatchSet* ,
-                                   const bool ) const
+simplifiedGeoModel::addComputesAndRequires(Task*, const MPMMaterial*,
+                                           const PatchSet*, const bool) const
 {
 }
 
@@ -1548,23 +1600,24 @@ simplifiedGeoModel::addComputesAndRequires(Task* ,
 //       = p/(K-p)
 //   rho = rho0*(1+eta)
 // Under high pressures:
-//  (from "Craters produced by underground explosions" by Luccioni et al., 2009, 
+//  (from "Craters produced by underground explosions" by Luccioni et al., 2009,
 //         Computers and Structures, vol. 87, no. 21-22, pp. 1366-1373.)
 //   p = p_h + Gamma rho0 (E - E_h)
 //     where p_h = rho0*c0^2*eta*(1+eta)/[1 - (s-1)eta]^2
 //           E = rho0*cv*(T-T0)
 //           E_h = 1/2 p_h/rho0 * eta/(1+eta)
-//     =  rho0 Gamma E + rho0 c0^2 eta (2 (1+eta)- Gamma eta)/(2 (1 + (1-s)eta)^2)
+//     =  rho0 Gamma E + rho0 c0^2 eta (2 (1+eta)- Gamma eta)/(2 (1 +
+//     (1-s)eta)^2)
 //   eta = rho/rho0 -1
 //   rho = rho0*(1+eta)
 //
-// ** Will need to be changed to something consistent with the constitutive model.**
+// ** Will need to be changed to something consistent with the constitutive
+// model.**
 //*******************************************************************************
-double simplifiedGeoModel::computeRhoMicroCM(double pressure,
-                                             const double p_ref,
-                                             const MPMMaterial* matl,
-                                             double temperature,
-                                             double rho_guess)
+double
+simplifiedGeoModel::computeRhoMicroCM(double pressure, const double p_ref,
+                                      const MPMMaterial* matl,
+                                      double temperature, double rho_guess)
 {
   double rho0 = matl->getInitialDensity();
   double K = d_cm.B0;
@@ -1575,40 +1628,46 @@ double simplifiedGeoModel::computeRhoMicroCM(double pressure,
   bool d_linear_eos = false;
 
   if (d_linear_eos) {
-     eta = p_gauge/(K - p_gauge);
-     rho = rho0*(1+eta);
+    eta = p_gauge / (K - p_gauge);
+    rho = rho0 * (1 + eta);
   } else {
     double Cv = matl->getSpecificHeat();
     double T0 = matl->getRoomTemperature();
-    double E = rho0*Cv*(temperature-T0);
-    E = 0.0; // HARDCODED so that sp. internal energy change is zero
-             // Not tension cutoff yet
-    double Gamma = 0.11;  // HARDCODED for soil
-    double c0 = sqrt(K/rho0);
-    double s = 1.5;       // HARDCODED for soil
+    double E = rho0 * Cv * (temperature - T0);
+    E = 0.0;             // HARDCODED so that sp. internal energy change is zero
+                         // Not tension cutoff yet
+    double Gamma = 0.11; // HARDCODED for soil
+    double c0 = sqrt(K / rho0);
+    double s = 1.5; // HARDCODED for soil
 
     // Newton iterations to find eta
     eta = 1.9;
     double f = 0.0;
     double fPrime = 0.0;
     do {
-      double p = rho0*(Gamma*E + 0.5*c0*c0*eta*(2*(1+eta) - Gamma*eta)/pow((1 + (1-s)*eta),2));
+      double p = rho0 * (Gamma * E +
+                         0.5 * c0 * c0 * eta * (2 * (1 + eta) - Gamma * eta) /
+                           pow((1 + (1 - s) * eta), 2));
       f = p - p_gauge;
-      double dp_drho = c0*c0*(1 - eta*(Gamma - 1-s))/pow((1 + eta*(1-s)), 3);
-      fPrime = rho0*dp_drho; 
-      eta -= f/fPrime;
+      double dp_drho =
+        c0 * c0 * (1 - eta * (Gamma - 1 - s)) / pow((1 + eta * (1 - s)), 3);
+      fPrime = rho0 * dp_drho;
+      eta -= f / fPrime;
     } while (fabs(f) > 1.0e-5);
-    //cerr << "eta = " << eta << " rho = " << rho << " p = " << p_gauge << endl;
-    rho = rho0*(1+eta);
+    // cerr << "eta = " << eta << " rho = " << rho << " p = " << p_gauge <<
+    // endl;
+    rho = rho0 * (1 + eta);
   }
 
   if (!(rho > 0.0)) {
-    cerr << "**Warning**Negative mass density in SimplifiedGeoModel::computeRhoMicroCM " << rho
-         << " rho0 = " << rho0 << " eta = " << eta << " p = " << p_gauge << endl;
+    cerr << "**Warning**Negative mass density in "
+            "SimplifiedGeoModel::computeRhoMicroCM "
+         << rho << " rho0 = " << rho0 << " eta = " << eta << " p = " << p_gauge
+         << endl;
   }
 
   // eta cannot be less than -1 or greater than 2
-  // if (eta <= -1.0) eta = -0.999999999999; 
+  // if (eta <= -1.0) eta = -0.999999999999;
   // if (eta >= 2.0) eta = 1.999999999999;
   // rho = rho0*(1+eta);
   return rho;
@@ -1622,69 +1681,78 @@ double simplifiedGeoModel::computeRhoMicroCM(double pressure,
 //   dp/drho = dp/deta*deta/drho = K/(rho0*(1+eta)^2) = K*rho0/rho^2
 //   c = sqrt(K/rho)
 // Under high pressures:
-//  (from "Craters produced by underground explosions" by Luccioni et al., 2009, 
+//  (from "Craters produced by underground explosions" by Luccioni et al., 2009,
 //         Computers and Structures, vol. 87, no. 21-22, pp. 1366-1373.)
 //   p = p_h + Gamma rho (E - E_h)
 //     where p_h = rho0*c0^2*eta*(1+eta)/[1 - (s-1)eta]^2
 //           E = rho0*cv*(T-T0)
 //           E_h = 1/2 p_h/rho0 * eta/(1+eta)
-//     =  rho0 Gamma E + rho0 c0^2 eta (2 (1+eta)- Gamma eta)/(2 (1 + (1-s)eta)^2)
+//     =  rho0 Gamma E + rho0 c0^2 eta (2 (1+eta)- Gamma eta)/(2 (1 +
+//     (1-s)eta)^2)
 //   eta = rho/rho0 -1
 //   dp_drho = c0*c0*(1 - eta*(Gamma - 1-s))/(1 + eta*(1-s))^3;
 //   c^2 = (dp/drho)^2
 //
-// ** Will need to be changed to something consistent with the constitutive model.**
+// ** Will need to be changed to something consistent with the constitutive
+// model.**
 //*******************************************************************************
-void simplifiedGeoModel::computePressEOSCM(double rho, double& pressure,
-                                           double p_ref,
-                                           double& dp_drho, double& csquared,
-                                           const MPMMaterial* matl,
-                                           double temperature)
+void
+simplifiedGeoModel::computePressEOSCM(double rho, double& pressure,
+                                      double p_ref, double& dp_drho,
+                                      double& csquared, const MPMMaterial* matl,
+                                      double temperature)
 {
 
   double K = d_cm.B0;
   double rho0 = matl->getInitialDensity();
-  double eta = rho/rho0 - 1;
+  double eta = rho / rho0 - 1;
 
   // eta cannot be less than -1 or greater than 2
   // if (eta <= -1.0) eta = -0.999999999999;
   // if (eta >= 2.0) eta = 1.999999999999;
   bool d_linear_eos = false;
   if (d_linear_eos) {
-    pressure = K*eta/(1+eta) + p_ref;
-    dp_drho  = K*rho0/(rho*rho);
-    csquared = K/rho;  // speed of sound squared
+    pressure = K * eta / (1 + eta) + p_ref;
+    dp_drho = K * rho0 / (rho * rho);
+    csquared = K / rho; // speed of sound squared
   } else {
     double Cv = matl->getSpecificHeat();
     double T0 = matl->getRoomTemperature();
-    double E = rho0*Cv*(temperature-T0);
-    E = 0.0; // HARDCODED so that sp. internal energy change is zero
-             // Not tension cutoff yet
-    double Gamma = 0.11;  // HARDCODED for soil
-    double c0 = sqrt(K/rho0);
-    double s = 1.5;       // HARDCODED for soil
+    double E = rho0 * Cv * (temperature - T0);
+    E = 0.0;             // HARDCODED so that sp. internal energy change is zero
+                         // Not tension cutoff yet
+    double Gamma = 0.11; // HARDCODED for soil
+    double c0 = sqrt(K / rho0);
+    double s = 1.5; // HARDCODED for soil
 
-    pressure = rho0*(Gamma*E + 0.5*c0*c0*eta*(2*(1+eta) - Gamma*eta)/pow((1 + (1-s)*eta),2));
+    pressure = rho0 * (Gamma * E +
+                       0.5 * c0 * c0 * eta * (2 * (1 + eta) - Gamma * eta) /
+                         pow((1 + (1 - s) * eta), 2));
     pressure += p_ref;
-    dp_drho = c0*c0*(1 - eta*(Gamma - 1-s))/pow((1 + eta*(1-s)), 3);
-    csquared = dp_drho*dp_drho;
+    dp_drho =
+      c0 * c0 * (1 - eta * (Gamma - 1 - s)) / pow((1 + eta * (1 - s)), 3);
+    csquared = dp_drho * dp_drho;
     if (csquared < 0.0) {
-      cerr << "**ERROR**simplifiedGeoMode:computePressEOSCM:impaginary sound speed: c^2 = " 
-           << csquared << " p = " << (pressure - p_ref) << " eta = " << eta << endl;
+      cerr << "**ERROR**simplifiedGeoMode:computePressEOSCM:impaginary sound "
+              "speed: c^2 = "
+           << csquared << " p = " << (pressure - p_ref) << " eta = " << eta
+           << endl;
     }
-    //if (pressure < p_ref) {
-    //  cerr << "simplifiedGeoMode:computePressEOSCM:eta = " << eta 
-    //       << " p = " << (pressure - p_ref) << " dp_drho = " << dp_drho << endl;
+    // if (pressure < p_ref) {
+    //  cerr << "simplifiedGeoMode:computePressEOSCM:eta = " << eta
+    //       << " p = " << (pressure - p_ref) << " dp_drho = " << dp_drho <<
+    //       endl;
     //}
   }
-  //cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR simplifiedGeoModel"
+  // cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR simplifiedGeoModel"
   //     << endl;
 }
 
 //***************************************************************************
 // Inverse of the bulk modulus
 //***************************************************************************
-double simplifiedGeoModel::getCompressibility()
+double
+simplifiedGeoModel::getCompressibility()
 {
   cout << "NO VERSION OF getCompressibility EXISTS YET FOR simplifiedGeoModel"
        << endl;
@@ -1695,29 +1763,28 @@ void
 simplifiedGeoModel::initializeLocalMPMLabels()
 {
 
-  pPlasticStrainLabel = VarLabel::create("p.plasticStrain",
-    ParticleVariable<double>::getTypeDescription());
-  pPlasticStrainLabel_preReloc = VarLabel::create("p.plasticStrain+",
-    ParticleVariable<double>::getTypeDescription());
-  pPlasticStrainVolLabel = VarLabel::create("p.plasticStrainVol",
-    ParticleVariable<double>::getTypeDescription());
-  pPlasticStrainVolLabel_preReloc = VarLabel::create("p.plasticStrainVol+",
-    ParticleVariable<double>::getTypeDescription());
-  pElasticStrainVolLabel = VarLabel::create("p.elasticStrainVol",
-    ParticleVariable<double>::getTypeDescription());
-  pElasticStrainVolLabel_preReloc = VarLabel::create("p.elasticStrainVol+",
-    ParticleVariable<double>::getTypeDescription());
-  pKappaLabel = VarLabel::create("p.kappa",
-    ParticleVariable<double>::getTypeDescription());
-  pKappaLabel_preReloc = VarLabel::create("p.kappa+",
-    ParticleVariable<double>::getTypeDescription());
-  pBackStressLabel = VarLabel::create("p.BackStress",
-    ParticleVariable<Matrix3>::getTypeDescription());
-  pBackStressLabel_preReloc = VarLabel::create("p.BackStress+",
-    ParticleVariable<Matrix3>::getTypeDescription());
-  pBackStressIsoLabel = VarLabel::create("p.BackStressIso",
-    ParticleVariable<Matrix3>::getTypeDescription());
-  pBackStressIsoLabel_preReloc = VarLabel::create("p.BackStressIso+",
-    ParticleVariable<Matrix3>::getTypeDescription());
-
+  pPlasticStrainLabel = VarLabel::create(
+    "p.plasticStrain", ParticleVariable<double>::getTypeDescription());
+  pPlasticStrainLabel_preReloc = VarLabel::create(
+    "p.plasticStrain+", ParticleVariable<double>::getTypeDescription());
+  pPlasticStrainVolLabel = VarLabel::create(
+    "p.plasticStrainVol", ParticleVariable<double>::getTypeDescription());
+  pPlasticStrainVolLabel_preReloc = VarLabel::create(
+    "p.plasticStrainVol+", ParticleVariable<double>::getTypeDescription());
+  pElasticStrainVolLabel = VarLabel::create(
+    "p.elasticStrainVol", ParticleVariable<double>::getTypeDescription());
+  pElasticStrainVolLabel_preReloc = VarLabel::create(
+    "p.elasticStrainVol+", ParticleVariable<double>::getTypeDescription());
+  pKappaLabel =
+    VarLabel::create("p.kappa", ParticleVariable<double>::getTypeDescription());
+  pKappaLabel_preReloc = VarLabel::create(
+    "p.kappa+", ParticleVariable<double>::getTypeDescription());
+  pBackStressLabel = VarLabel::create(
+    "p.BackStress", ParticleVariable<Matrix3>::getTypeDescription());
+  pBackStressLabel_preReloc = VarLabel::create(
+    "p.BackStress+", ParticleVariable<Matrix3>::getTypeDescription());
+  pBackStressIsoLabel = VarLabel::create(
+    "p.BackStressIso", ParticleVariable<Matrix3>::getTypeDescription());
+  pBackStressIsoLabel_preReloc = VarLabel::create(
+    "p.BackStressIso+", ParticleVariable<Matrix3>::getTypeDescription());
 }

@@ -49,91 +49,86 @@
 #ifndef __DEFAULT_HYPOELASTIC_EOS_MODEL_H__
 #define __DEFAULT_HYPOELASTIC_EOS_MODEL_H__
 
-
-#include "MPMEquationOfState.h" 
+#include "MPMEquationOfState.h"
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  ////////////////////////////////////////////////////////////////////////////
-  /*! 
-    \class DefaultHypoElasticEOS
-    \brief Not really an equation of state but just an isotropic
-    hypoelastic pressure calculator based on bulk modulus.
-    \author Biswajit Banerjee, \n
-    C-SAFE and Department of Mechanical Engineering, \n
-    University of Utah \n
+////////////////////////////////////////////////////////////////////////////
+/*!
+  \class DefaultHypoElasticEOS
+  \brief Not really an equation of state but just an isotropic
+  hypoelastic pressure calculator based on bulk modulus.
+  \author Biswajit Banerjee, \n
+  C-SAFE and Department of Mechanical Engineering, \n
+  University of Utah \n
 
-    The equation of state is given by
-    \f[
-    p = Tr(D) K \Delta T
-    \f]
-    where \n
-    \f$p\f$ = pressure\n
-    \f$D\f$ = rate of deformation tensor\n
-    \f$K\f$ = bulk modulus\n
-    \f$\Delta T\f$ = time increment
-  */
-  ////////////////////////////////////////////////////////////////////////////
+  The equation of state is given by
+  \f[
+  p = Tr(D) K \Delta T
+  \f]
+  where \n
+  \f$p\f$ = pressure\n
+  \f$D\f$ = rate of deformation tensor\n
+  \f$K\f$ = bulk modulus\n
+  \f$\Delta T\f$ = time increment
+*/
+////////////////////////////////////////////////////////////////////////////
 
-  class DefaultHypoElasticEOS : public MPMEquationOfState {
+class DefaultHypoElasticEOS : public MPMEquationOfState
+{
 
-  private:
+private:
+  // Prevent copying of this class
+  // copy constructor
+  // DefaultHypoElasticEOS(const DefaultHypoElasticEOS &cm);
+  DefaultHypoElasticEOS& operator=(const DefaultHypoElasticEOS& cm);
 
-    // Prevent copying of this class
-    // copy constructor
-    //DefaultHypoElasticEOS(const DefaultHypoElasticEOS &cm);
-    DefaultHypoElasticEOS& operator=(const DefaultHypoElasticEOS &cm);
+public:
+  // constructors
+  DefaultHypoElasticEOS(); // This constructor is used when there is
+                           // no equation_of_state tag in the input
+                           // file  ** WARNING **
+  DefaultHypoElasticEOS(ProblemSpecP& ps);
+  DefaultHypoElasticEOS(const DefaultHypoElasticEOS* cm);
 
-  public:
-    // constructors
-    DefaultHypoElasticEOS(); // This constructor is used when there is
-                                        // no equation_of_state tag in the input
-                                        // file  ** WARNING **
-    DefaultHypoElasticEOS(ProblemSpecP& ps); 
-    DefaultHypoElasticEOS(const DefaultHypoElasticEOS* cm);
-         
-    // destructor 
-    virtual ~DefaultHypoElasticEOS();
+  // destructor
+  ~DefaultHypoElasticEOS() override;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    //////////
-    // Calculate the pressure using a equation of state
-    double computePressure(const MPMMaterial* matl,
-                           const PlasticityState* state,
-                           const Matrix3& deformGrad,
-                           const Matrix3& rateOfDeformation,
-                           const double& delT);
-  
-    double eval_dp_dJ(const MPMMaterial* matl,
-                      const double& detF,
-                      const PlasticityState* state);
-    
-    // Compute pressure (option 1)
-    double computePressure(const double& rho_orig,
-                           const double& rho_cur);
+  void outputProblemSpec(ProblemSpecP& ps) override;
 
-    // Compute pressure (option 2)
-    void computePressure(const double& rho_orig,
-                         const double& rho_cur,
-                         double& pressure,
-                         double& dp_drho,
-                         double& csquared);
+  //////////
+  // Calculate the pressure using a equation of state
+  double computePressure(const MPMMaterial* matl, const PlasticityState* state,
+                         const Matrix3& deformGrad,
+                         const Matrix3& rateOfDeformation,
+                         const double& delT) override;
 
-    // Compute bulk modulus
-    double computeBulkModulus(const double& rho_orig,
-                              const double& rho_cur);
+  double eval_dp_dJ(const MPMMaterial* matl, const double& detF,
+                    const PlasticityState* state) override;
 
-    // Compute strain energy
-    double computeStrainEnergy(const double& rho_orig,
-                               const double& rho_cur);
+  // Compute pressure (option 1)
+  double computePressure(const double& rho_orig,
+                         const double& rho_cur) override;
 
-    // Compute density given pressure
-    double computeDensity(const double& rho_orig,
-                          const double& pressure);
-  };
+  // Compute pressure (option 2)
+  void computePressure(const double& rho_orig, const double& rho_cur,
+                       double& pressure, double& dp_drho,
+                       double& csquared) override;
+
+  // Compute bulk modulus
+  double computeBulkModulus(const double& rho_orig,
+                            const double& rho_cur) override;
+
+  // Compute strain energy
+  double computeStrainEnergy(const double& rho_orig,
+                             const double& rho_cur) override;
+
+  // Compute density given pressure
+  double computeDensity(const double& rho_orig,
+                        const double& pressure) override;
+};
 
 } // End namespace Uintah
 
-#endif  // __DEFAULT_HYPOELASTIC_EOS_MODEL_H__ 
+#endif // __DEFAULT_HYPOELASTIC_EOS_MODEL_H__

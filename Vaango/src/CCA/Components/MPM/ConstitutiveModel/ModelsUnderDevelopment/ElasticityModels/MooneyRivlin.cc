@@ -28,40 +28,40 @@
 // This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
 // make the isnan function not work.  This define makes the cmath header
 // not get included since we do not need it anyway.
-#  define _CPP_CMATH
+#define _CPP_CMATH
 #endif
 
 #include "MooneyRivlin.h"
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
 
-
 using namespace Uintah;
 using namespace std;
 
-// Construct a shear stress model.  
-MooneyRivlin::MooneyRivlin(ProblemSpecP& ps )
+// Construct a shear stress model.
+MooneyRivlin::MooneyRivlin(ProblemSpecP& ps)
 {
   ps->require("C_10", d_C1);
   ps->require("C_01", d_C2);
 }
 
-// Construct a copy of a shear stress model.  
+// Construct a copy of a shear stress model.
 MooneyRivlin::MooneyRivlin(const MooneyRivlin* ssm)
 {
   d_C1 = ssm->d_C1;
   d_C2 = ssm->d_C2;
 }
 
-// Destructor of shear stress model.  
+// Destructor of shear stress model.
 MooneyRivlin::~MooneyRivlin()
 {
 }
 
-void MooneyRivlin::outputProblemSpec(ProblemSpecP& ps)
+void
+MooneyRivlin::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP shear_ps = ps->appendChild("shear_stress_model");
   shear_ps->setAttribute("type", "mooney_rivlin");
@@ -75,11 +75,12 @@ void MooneyRivlin::outputProblemSpec(ProblemSpecP& ps)
 //   B_bar = 1/J^(2/3) B = 1/J^(2/3) F.Ft
 // and
 //   I1_bar = 1/J^{2/3} I1 = 1/J^{2/3} Tr(B) = Tr(B_bar)
-void 
+void
 MooneyRivlin::computeShearStress(const DeformationState* state,
-                               Matrix3& shear_stress)
+                                 Matrix3& shear_stress)
 {
   state->computeCauchyGreenBbar();
-  shear_stress = (state->strain*(d_C1 + state->eps_v*d_C2) - (state->strain*state->strain)*d_C2)*2.0;
+  shear_stress = (state->strain * (d_C1 + state->eps_v * d_C2) -
+                  (state->strain * state->strain) * d_C2) *
+                 2.0;
 }
-

@@ -32,36 +32,34 @@
 
 namespace Uintah {
 
-  /*! \class NeoHookean
-   *  \brief An isotropic neo Hookean shear stress model.
-   *  \author Biswajit Banerjee, 
-   *
-  */
-  class NeoHookean : public ShearStressModel {
+/*! \class NeoHookean
+ *  \brief An isotropic neo Hookean shear stress model.
+ *  \author Biswajit Banerjee,
+ *
+*/
+class NeoHookean : public ShearStressModel
+{
 
-  private:
+private:
+  double d_mu; // Shear modulus
 
-    double d_mu;    // Shear modulus
+  NeoHookean& operator=(const NeoHookean& smm);
 
-    NeoHookean& operator=(const NeoHookean &smm);
+public:
+  /*! Construct a neo Hookean shear stress model. */
+  NeoHookean(ProblemSpecP& ps);
 
-  public:
-         
-    /*! Construct a neo Hookean shear stress model. */
-    NeoHookean(ProblemSpecP& ps);
+  /*! Construct a copy of neo Hookean shear stress model. */
+  NeoHookean(const NeoHookean* smm);
 
-    /*! Construct a copy of neo Hookean shear stress model. */
-    NeoHookean(const NeoHookean* smm);
+  /*! Destructor of neo Hookean shear stress model.   */
+  virtual ~NeoHookean();
 
-    /*! Destructor of neo Hookean shear stress model.   */
-    virtual ~NeoHookean();
+  virtual void outputProblemSpec(ProblemSpecP& ps);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    /*! Compute the shear stress */
-    void computeShearStress(const DeformationState* state, Matrix3& stress);
-  };
+  /*! Compute the shear stress */
+  void computeShearStress(const DeformationState* state, Matrix3& stress);
+};
 } // End namespace Uintah
-      
-#endif  // __NEO_HOOKEAN_SHEAR_H__
 
+#endif // __NEO_HOOKEAN_SHEAR_H__

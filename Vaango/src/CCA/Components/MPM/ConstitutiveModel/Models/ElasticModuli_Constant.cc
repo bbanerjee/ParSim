@@ -24,40 +24,39 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Constant.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 
 using namespace Uintah;
 using namespace Vaango;
-         
-// Construct a default elasticity model.  
+
+// Construct a default elasticity model.
 ElasticModuli_Constant::ElasticModuli_Constant(Uintah::ProblemSpecP& ps)
 {
   ps->require("bulk_modulus", d_bulk);
   ps->require("shear_modulus", d_shear);
 }
 
-// Construct a copy of a elasticity model.  
-ElasticModuli_Constant::ElasticModuli_Constant(const ElasticModuli_Constant* model)
+// Construct a copy of a elasticity model.
+ElasticModuli_Constant::ElasticModuli_Constant(
+  const ElasticModuli_Constant* model)
 {
   d_bulk = model->d_bulk;
   d_shear = model->d_shear;
 }
 
-// Destructor of elasticity model.  
-ElasticModuli_Constant::~ElasticModuli_Constant()
-{
-}
+// Destructor of elasticity model.
+ElasticModuli_Constant::~ElasticModuli_Constant() = default;
 
-void ElasticModuli_Constant::outputProblemSpec(Uintah::ProblemSpecP& ps)
+void
+ElasticModuli_Constant::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP elasticModuli_ps = ps->appendChild("elastic_moduli_model");
-  elasticModuli_ps->setAttribute("type","constant");
+  elasticModuli_ps->setAttribute("type", "constant");
   elasticModuli_ps->appendElement("bulk_modulus", d_bulk);
   elasticModuli_ps->appendElement("shear_modulus", d_shear);
 }
-         
+
 // Compute the elasticity
 ElasticModuli
 ElasticModuli_Constant::getInitialElasticModuli() const
@@ -71,15 +70,14 @@ ElasticModuli_Constant::getCurrentElasticModuli(const ModelStateBase*)
   return ElasticModuli(d_bulk, d_shear);
 }
 
-ElasticModuli 
+ElasticModuli
 ElasticModuli_Constant::getElasticModuliLowerBound() const
 {
   return ElasticModuli(d_bulk, d_shear);
 }
 
-ElasticModuli 
+ElasticModuli
 ElasticModuli_Constant::getElasticModuliUpperBound() const
 {
   return ElasticModuli(d_bulk, d_shear);
 }
-

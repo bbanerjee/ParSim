@@ -49,67 +49,51 @@
 #ifndef __HYPOELASTICDEVSTRESS_H__
 #define __HYPOELASTICDEVSTRESS_H__
 
-
 #include "DevStressModel.h"
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
+class HypoElasticDevStress : public DevStressModel
+{
 
-  class HypoElasticDevStress : public DevStressModel {
+public:
+  // constructors
+  HypoElasticDevStress();
 
-  public:
-    // constructors
-    HypoElasticDevStress();
-         
-    // destructor 
-    virtual ~HypoElasticDevStress();
+  // destructor
+  ~HypoElasticDevStress() override;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    // Computes and requires for internal evolution variables
-    virtual void addInitialComputesAndRequires(Task* ,
-                                               const MPMMaterial* );
+  void outputProblemSpec(ProblemSpecP& ps) override;
 
-    virtual void addComputesAndRequires(Task* ,
-                                        const MPMMaterial* );
+  // Computes and requires for internal evolution variables
+  void addInitialComputesAndRequires(Task*, const MPMMaterial*) override;
 
-    // For computeStressTensorImplicit
-    virtual void addComputesAndRequires(Task* ,
-                                        const MPMMaterial* ,
-                                        bool );
+  void addComputesAndRequires(Task*, const MPMMaterial*) override;
 
+  // For computeStressTensorImplicit
+  void addComputesAndRequires(Task*, const MPMMaterial*, bool) override;
 
-    virtual void addParticleState(std::vector<const VarLabel*>& ,
-                                  std::vector<const VarLabel*>& );
+  void addParticleState(std::vector<const VarLabel*>&,
+                        std::vector<const VarLabel*>&) override;
 
-    virtual void initializeInternalVars(ParticleSubset* ,
-                                        DataWarehouse* );
+  void initializeInternalVars(ParticleSubset*, DataWarehouse*) override;
 
-    virtual void getInternalVars(ParticleSubset* ,
-                                 DataWarehouse* );
+  void getInternalVars(ParticleSubset*, DataWarehouse*) override;
 
-    virtual void allocateAndPutInternalVars(ParticleSubset* ,
-                                            DataWarehouse* ); 
+  void allocateAndPutInternalVars(ParticleSubset*, DataWarehouse*) override;
 
+  void allocateAndPutRigid(ParticleSubset*, DataWarehouse*) override;
 
-    virtual void allocateAndPutRigid(ParticleSubset* ,
-                                     DataWarehouse* );
-                                     
-    virtual void computeDeviatoricStressInc( const particleIndex ,
-                                             const PlasticityState* ,
-                                             DeformationState* ,
-                                             const double );
+  void computeDeviatoricStressInc(const particleIndex, const PlasticityState*,
+                                  DeformationState*, const double) override;
 
-    virtual void updateInternalStresses( const particleIndex,
-                                         const Matrix3&,
-                                         DeformationState* ,
-                                         const double  );
+  void updateInternalStresses(const particleIndex, const Matrix3&,
+                              DeformationState*, const double) override;
 
-    virtual void rotateInternalStresses( const particleIndex,
-                                         const Matrix3&); 
-  };
+  void rotateInternalStresses(const particleIndex, const Matrix3&) override;
+};
 
 } // End namespace Uintah
 
-#endif  // __HYPOELASTICDEVSTRESS_H__
+#endif // __HYPOELASTICDEVSTRESS_H__

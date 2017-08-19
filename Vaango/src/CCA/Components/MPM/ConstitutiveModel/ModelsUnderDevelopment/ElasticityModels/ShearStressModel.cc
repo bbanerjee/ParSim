@@ -24,7 +24,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #include "ShearStressModel.h"
 
 using namespace Uintah;
@@ -36,4 +35,3 @@ ShearStressModel::ShearStressModel()
 ShearStressModel::~ShearStressModel()
 {
 }
-         

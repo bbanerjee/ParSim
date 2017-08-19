@@ -32,37 +32,35 @@
 
 namespace Uintah {
 
-  /*! \class MooneyRivlin
-   *  \brief An isotropic Mooney-Rivlin shear stress model.
-   *  \author Biswajit Banerjee, 
-   *
-  */
-  class MooneyRivlin : public ShearStressModel {
+/*! \class MooneyRivlin
+ *  \brief An isotropic Mooney-Rivlin shear stress model.
+ *  \author Biswajit Banerjee,
+ *
+*/
+class MooneyRivlin : public ShearStressModel
+{
 
-  private:
+private:
+  double d_C1; // Constant C_10  [mu = 2 (C_01 + C_10)]
+  double d_C2; // Constant C_01
 
-    double d_C1;    // Constant C_10  [mu = 2 (C_01 + C_10)]
-    double d_C2;    // Constant C_01
+  MooneyRivlin& operator=(const MooneyRivlin& smm);
 
-    MooneyRivlin& operator=(const MooneyRivlin &smm);
+public:
+  /*! Construct a Mooney-Rivlin shear stress model. */
+  MooneyRivlin(ProblemSpecP& ps);
 
-  public:
-         
-    /*! Construct a Mooney-Rivlin shear stress model. */
-    MooneyRivlin(ProblemSpecP& ps);
+  /*! Construct a copy of Mooney-Rivlin shear stress model. */
+  MooneyRivlin(const MooneyRivlin* smm);
 
-    /*! Construct a copy of Mooney-Rivlin shear stress model. */
-    MooneyRivlin(const MooneyRivlin* smm);
+  /*! Destructor of Mooney-Rivlin shear stress model.   */
+  virtual ~MooneyRivlin();
 
-    /*! Destructor of Mooney-Rivlin shear stress model.   */
-    virtual ~MooneyRivlin();
+  virtual void outputProblemSpec(ProblemSpecP& ps);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    /*! Compute the shear stress */
-    void computeShearStress(const DeformationState* state, Matrix3& stress);
-  };
+  /*! Compute the shear stress */
+  void computeShearStress(const DeformationState* state, Matrix3& stress);
+};
 } // End namespace Uintah
-      
-#endif  // __MOONEY_RIVLIN_SHEAR_H__
 
+#endif // __MOONEY_RIVLIN_SHEAR_H__

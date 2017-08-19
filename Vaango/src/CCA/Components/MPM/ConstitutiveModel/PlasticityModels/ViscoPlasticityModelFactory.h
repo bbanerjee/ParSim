@@ -54,16 +54,16 @@
 
 namespace Uintah {
 
-  class ViscoPlasticityModel;
-  class MPMLabel;
+class ViscoPlasticityModel;
+class MPMLabel;
 
-  class ViscoPlasticityModelFactory
-  {
-  public:
-    // this function has a switch for all known mat_types
-    static ViscoPlasticityModel* create(ProblemSpecP& ps);
-    static ViscoPlasticityModel* createCopy(const ViscoPlasticityModel* pm);
-  };
+class ViscoPlasticityModelFactory
+{
+public:
+  // this function has a switch for all known mat_types
+  static ViscoPlasticityModel* create(ProblemSpecP& ps);
+  static ViscoPlasticityModel* createCopy(const ViscoPlasticityModel* pm);
+};
 } // End namespace Uintah
-      
+
 #endif /* _VISCOPLASTICITYMODELFACTORY_H_ */

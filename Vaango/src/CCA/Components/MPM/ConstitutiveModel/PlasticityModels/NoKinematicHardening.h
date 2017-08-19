@@ -49,59 +49,55 @@
 #ifndef __NO_KINEMATIC_HARDENING_MODEL_H__
 #define __NO_KINEMATIC_HARDENING_MODEL_H__
 
-
-#include "KinematicHardeningModel.h"    
+#include "KinematicHardeningModel.h"
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class NoKinematicHardening
-    \brief Default kinematic hardening model - no kinematic hardening
-    \author Biswajit Banerjee, 
-    Department of Mechanical Engineering, 
-    University of Utah
-   
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class NoKinematicHardening
+  \brief Default kinematic hardening model - no kinematic hardening
+  \author Biswajit Banerjee,
+  Department of Mechanical Engineering,
+  University of Utah
 
-  class NoKinematicHardening : public KinematicHardeningModel {
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  private:
+class NoKinematicHardening : public KinematicHardeningModel
+{
 
-    // Prevent copying of this class
-    // copy constructor
-    //NoKinematicHardening(const NoKinematicHardening &cm);
-    NoKinematicHardening& operator=(const NoKinematicHardening &cm);
+private:
+  // Prevent copying of this class
+  // copy constructor
+  // NoKinematicHardening(const NoKinematicHardening &cm);
+  NoKinematicHardening& operator=(const NoKinematicHardening& cm);
 
-  public:
-    // constructors
-    NoKinematicHardening();
-    NoKinematicHardening(ProblemSpecP& ps);
-    NoKinematicHardening(const NoKinematicHardening* cm);
-         
-    // destructor 
-    virtual ~NoKinematicHardening();
+public:
+  // constructors
+  NoKinematicHardening();
+  NoKinematicHardening(ProblemSpecP& ps);
+  NoKinematicHardening(const NoKinematicHardening* cm);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    //////////
-    /*! \brief Calculate the back stress */
-    //////////
-    virtual void computeBackStress(const PlasticityState* state,
-                                   const double& delT,
-                                   const particleIndex idx,
-                                   const double& delLambda,
-                                   const Matrix3& df_dsigma_new,
-                                   const Matrix3& backStress_old,
-                                   Matrix3& backStress_new);
+  // destructor
+  ~NoKinematicHardening() override;
 
-    void eval_h_beta(const Matrix3& df_dsigma,
-                     const PlasticityState* state,
-                     Matrix3& h_beta);
-  };
+  void outputProblemSpec(ProblemSpecP& ps) override;
+
+  //////////
+  /*! \brief Calculate the back stress */
+  //////////
+  void computeBackStress(const PlasticityState* state, const double& delT,
+                         const particleIndex idx, const double& delLambda,
+                         const Matrix3& df_dsigma_new,
+                         const Matrix3& backStress_old,
+                         Matrix3& backStress_new) override;
+
+  void eval_h_beta(const Matrix3& df_dsigma, const PlasticityState* state,
+                   Matrix3& h_beta) override;
+};
 
 } // End namespace Uintah
 
-#endif  // __NO_KINEMATIC_HARDENING_MODEL_H__ 
+#endif // __NO_KINEMATIC_HARDENING_MODEL_H__

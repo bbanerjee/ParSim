@@ -48,28 +48,28 @@ PlasticityState::PlasticityState()
   specificHeat = 0.0;
   porosity = 0.0;
   energy = 0.0;
-  backStress = 0;
+  backStress = nullptr;
 }
 
 PlasticityState::PlasticityState(const PlasticityState& state)
 {
-  yieldStress = state.yieldStress ;
+  yieldStress = state.yieldStress;
   strainRate = state.strainRate;
-  plasticStrainRate = state.plasticStrainRate ;
-  plasticStrain = state.plasticStrain ;
-  pressure = state.pressure ;
-  temperature = state.temperature ;
-  initialTemperature = state.initialTemperature ;
-  density = state.density ;
-  initialDensity = state.initialDensity ;
-  volume = state.volume ;
-  initialVolume = state.initialVolume ;
-  bulkModulus = state.bulkModulus ;
-  initialBulkModulus = state.initialBulkModulus ;
-  shearModulus = state.shearModulus ;
-  initialShearModulus = state.initialShearModulus ;
-  meltingTemp = state.meltingTemp ;
-  initialMeltTemp = state.initialMeltTemp ;
+  plasticStrainRate = state.plasticStrainRate;
+  plasticStrain = state.plasticStrain;
+  pressure = state.pressure;
+  temperature = state.temperature;
+  initialTemperature = state.initialTemperature;
+  density = state.density;
+  initialDensity = state.initialDensity;
+  volume = state.volume;
+  initialVolume = state.initialVolume;
+  bulkModulus = state.bulkModulus;
+  initialBulkModulus = state.initialBulkModulus;
+  shearModulus = state.shearModulus;
+  initialShearModulus = state.initialShearModulus;
+  meltingTemp = state.meltingTemp;
+  initialMeltTemp = state.initialMeltTemp;
   specificHeat = state.specificHeat;
   porosity = state.porosity;
   energy = state.energy;
@@ -78,54 +78,53 @@ PlasticityState::PlasticityState(const PlasticityState& state)
 
 PlasticityState::PlasticityState(const PlasticityState* state)
 {
-  yieldStress = state->yieldStress ;
+  yieldStress = state->yieldStress;
   strainRate = state->strainRate;
-  plasticStrainRate = state->plasticStrainRate ;
-  plasticStrain = state->plasticStrain ;
-  pressure = state->pressure ;
-  temperature = state->temperature ;
-  initialTemperature = state->initialTemperature ;
-  density = state->density ;
-  initialDensity = state->initialDensity ;
-  volume = state->volume ;
-  initialVolume = state->initialVolume ;
-  bulkModulus = state->bulkModulus ;
-  initialBulkModulus = state->initialBulkModulus ;
-  shearModulus = state->shearModulus ;
-  initialShearModulus = state->initialShearModulus ;
-  meltingTemp = state->meltingTemp ;
-  initialMeltTemp = state->initialMeltTemp ;
+  plasticStrainRate = state->plasticStrainRate;
+  plasticStrain = state->plasticStrain;
+  pressure = state->pressure;
+  temperature = state->temperature;
+  initialTemperature = state->initialTemperature;
+  density = state->density;
+  initialDensity = state->initialDensity;
+  volume = state->volume;
+  initialVolume = state->initialVolume;
+  bulkModulus = state->bulkModulus;
+  initialBulkModulus = state->initialBulkModulus;
+  shearModulus = state->shearModulus;
+  initialShearModulus = state->initialShearModulus;
+  meltingTemp = state->meltingTemp;
+  initialMeltTemp = state->initialMeltTemp;
   specificHeat = state->specificHeat;
   porosity = state->porosity;
   energy = state->energy;
   backStress = state->backStress;
 }
 
-PlasticityState::~PlasticityState()
-{
-}
+PlasticityState::~PlasticityState() = default;
 
 PlasticityState&
 PlasticityState::operator=(const PlasticityState& state)
 {
-  if (this == &state) return *this;
-  yieldStress = state.yieldStress ;
+  if (this == &state)
+    return *this;
+  yieldStress = state.yieldStress;
   strainRate = state.strainRate;
-  plasticStrainRate = state.plasticStrainRate ;
-  plasticStrain = state.plasticStrain ;
-  pressure = state.pressure ;
-  temperature = state.temperature ;
-  initialTemperature = state.initialTemperature ;
-  density = state.density ;
-  initialDensity = state.initialDensity ;
-  volume = state.volume ;
-  initialVolume = state.initialVolume ;
-  bulkModulus = state.bulkModulus ;
-  initialBulkModulus = state.initialBulkModulus ;
-  shearModulus = state.shearModulus ;
-  initialShearModulus = state.initialShearModulus ;
-  meltingTemp = state.meltingTemp ;
-  initialMeltTemp = state.initialMeltTemp ;
+  plasticStrainRate = state.plasticStrainRate;
+  plasticStrain = state.plasticStrain;
+  pressure = state.pressure;
+  temperature = state.temperature;
+  initialTemperature = state.initialTemperature;
+  density = state.density;
+  initialDensity = state.initialDensity;
+  volume = state.volume;
+  initialVolume = state.initialVolume;
+  bulkModulus = state.bulkModulus;
+  initialBulkModulus = state.initialBulkModulus;
+  shearModulus = state.shearModulus;
+  initialShearModulus = state.initialShearModulus;
+  meltingTemp = state.meltingTemp;
+  initialMeltTemp = state.initialMeltTemp;
   specificHeat = state.specificHeat;
   porosity = state.porosity;
   energy = state.energy;
@@ -136,24 +135,25 @@ PlasticityState::operator=(const PlasticityState& state)
 PlasticityState*
 PlasticityState::operator=(const PlasticityState* state)
 {
-  if (this == state) return this;
-  yieldStress = state->yieldStress ;
+  if (this == state)
+    return this;
+  yieldStress = state->yieldStress;
   strainRate = state->strainRate;
-  plasticStrainRate = state->plasticStrainRate ;
-  plasticStrain = state->plasticStrain ;
-  pressure = state->pressure ;
-  temperature = state->temperature ;
-  initialTemperature = state->initialTemperature ;
-  density = state->density ;
-  initialDensity = state->initialDensity ;
-  volume = state->volume ;
-  initialVolume = state->initialVolume ;
-  bulkModulus = state->bulkModulus ;
-  initialBulkModulus = state->initialBulkModulus ;
-  shearModulus = state->shearModulus ;
-  initialShearModulus = state->initialShearModulus ;
-  meltingTemp = state->meltingTemp ;
-  initialMeltTemp = state->initialMeltTemp ;
+  plasticStrainRate = state->plasticStrainRate;
+  plasticStrain = state->plasticStrain;
+  pressure = state->pressure;
+  temperature = state->temperature;
+  initialTemperature = state->initialTemperature;
+  density = state->density;
+  initialDensity = state->initialDensity;
+  volume = state->volume;
+  initialVolume = state->initialVolume;
+  bulkModulus = state->bulkModulus;
+  initialBulkModulus = state->initialBulkModulus;
+  shearModulus = state->shearModulus;
+  initialShearModulus = state->initialShearModulus;
+  meltingTemp = state->meltingTemp;
+  initialMeltTemp = state->initialMeltTemp;
   specificHeat = state->specificHeat;
   porosity = state->porosity;
   energy = state->energy;

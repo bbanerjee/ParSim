@@ -51,61 +51,53 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Core/Math/Matrix3.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class DamageModel
+  \brief Abstract base class for damage models
+  \author Biswajit Banerjee \n
+  C-SAFE and Department of Mechanical Engineering \n
+  University of Utah \n
+*/
+/////////////////////////////////////////////////////////////////////////////
+
+class DamageModel
+{
+public:
+  DamageModel();
+  virtual ~DamageModel();
+
+  virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
+
+  //////////////////////////////////////////////////////////////////////////
   /*!
-    \class DamageModel
-    \brief Abstract base class for damage models   
-    \author Biswajit Banerjee \n
-    C-SAFE and Department of Mechanical Engineering \n
-    University of Utah \n
+    Initialize the damage parameter in the calling function
   */
-  /////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////
+  virtual double initialize() = 0;
 
-  class DamageModel {
-  public:
-         
-    DamageModel();
-    virtual ~DamageModel();
+  //////////////////////////////////////////////////////////////////////////
+  /*!
+    Determine if damage has crossed cut off
+  */
+  //////////////////////////////////////////////////////////////////////////
+  virtual bool hasFailed(double damage) = 0;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
-         
-    //////////////////////////////////////////////////////////////////////////
-    /*! 
-      Initialize the damage parameter in the calling function
-    */
-    //////////////////////////////////////////////////////////////////////////
-    virtual double initialize() = 0;
-
-    //////////////////////////////////////////////////////////////////////////
-    /*! 
-      Determine if damage has crossed cut off
-    */
-    //////////////////////////////////////////////////////////////////////////
-    virtual bool hasFailed(double damage) = 0;
-    
-    //////////////////////////////////////////////////////////////////////////
-    /*! 
-      Calculate the scalar damage parameter 
-    */
-    //////////////////////////////////////////////////////////////////////////
-    virtual double computeScalarDamage(const double& plasticStrainRate,
-                                       const Matrix3& stress,
-                                       const double& temperature,
-                                       const double& delT,
-                                       const MPMMaterial* matl,
-                                       const double& tolerance,
-                                       const double& damage_old) = 0;
-
-  };
+  //////////////////////////////////////////////////////////////////////////
+  /*!
+    Calculate the scalar damage parameter
+  */
+  //////////////////////////////////////////////////////////////////////////
+  virtual double computeScalarDamage(
+    const double& plasticStrainRate, const Matrix3& stress,
+    const double& temperature, const double& delT, const MPMMaterial* matl,
+    const double& tolerance, const double& damage_old) = 0;
+};
 } // End namespace Uintah
-      
 
-
-#endif  // __DAMAGE_MODEL_H__
-
+#endif // __DAMAGE_MODEL_H__

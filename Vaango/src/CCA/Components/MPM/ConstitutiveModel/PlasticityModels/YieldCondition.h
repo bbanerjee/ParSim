@@ -49,116 +49,105 @@
 #ifndef __YIELD_CONDITION_H__
 #define __YIELD_CONDITION_H__
 
+#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/PlasticityState.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Math/TangentModulusTensor.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/PlasticityState.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  /*! \class YieldCondition
-   *  \brief A generic wrapper for various yield conditions
-   *  \author Biswajit Banerjee, 
-   *  \author C-SAFE and Department of Mechanical Engineering,
-   *  \author University of Utah.
-   *  \warning Mixing and matching yield conditions with damage and plasticity 
-   *           models should be done with care.  No checks are provided to stop
-   *           the user from using the wrong combination of models.
-   *
-   * Provides an abstract base class for various yield conditions used
-   * in the plasticity and damage models
+/*! \class YieldCondition
+ *  \brief A generic wrapper for various yield conditions
+ *  \author Biswajit Banerjee,
+ *  \author C-SAFE and Department of Mechanical Engineering,
+ *  \author University of Utah.
+ *  \warning Mixing and matching yield conditions with damage and plasticity
+ *           models should be done with care.  No checks are provided to stop
+ *           the user from using the wrong combination of models.
+ *
+ * Provides an abstract base class for various yield conditions used
+ * in the plasticity and damage models
+*/
+class YieldCondition
+{
+
+public:
+  //! Construct a yield condition.
+  /*! This is an abstract base class. */
+  YieldCondition();
+
+  //! Destructor of yield condition.
+  /*! Virtual to ensure correct behavior */
+  virtual ~YieldCondition();
+
+  virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate the yield function \f$(\Phi)\f$.
+
+    If \f$\Phi \le 0\f$ the state is elastic.
+    If \f$\Phi > 0\f$ the state is plastic and a normal return
+    mapping algorithm is necessary.
+
+    Returns the appropriate value of sig(t+delT) that is on
+    the flow surface.
   */
-  class YieldCondition {
+  /////////////////////////////////////////////////////////////////////////
+  virtual double evalYieldCondition(const double equivStress,
+                                    const double flowStress,
+                                    const double traceOfCauchyStress,
+                                    const double porosity, double& sig) = 0;
 
-  public:
-         
-    //! Construct a yield condition.  
-    /*! This is an abstract base class. */
-    YieldCondition();
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
+    with respect to \f$\sigma_{ij}\f$.
 
-    //! Destructor of yield condition.  
-    /*! Virtual to ensure correct behavior */
-    virtual ~YieldCondition();
+    This is for the associated flow rule.
+  */
+  /////////////////////////////////////////////////////////////////////////
+  virtual void evalDerivOfYieldFunction(const Matrix3& stress,
+                                        const double flowStress,
+                                        const double porosity,
+                                        Matrix3& derivative) = 0;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
-         
-    /////////////////////////////////////////////////////////////////////////
-    /*! 
-      \brief Evaluate the yield function \f$(\Phi)\f$.
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
+    with respect to \f$s_{ij}\f$.
 
-      If \f$\Phi \le 0\f$ the state is elastic.
-      If \f$\Phi > 0\f$ the state is plastic and a normal return 
-      mapping algorithm is necessary. 
+    This is for the associated flow rule with \f$s_{ij}\f$ being
+    the deviatoric stress.
+  */
+  /////////////////////////////////////////////////////////////////////////
+  virtual void evalDevDerivOfYieldFunction(const Matrix3& stress,
+                                           const double flowStress,
+                                           const double porosity,
+                                           Matrix3& derivative) = 0;
 
-      Returns the appropriate value of sig(t+delT) that is on
-      the flow surface.
-    */
-    /////////////////////////////////////////////////////////////////////////
-    virtual double evalYieldCondition(const double equivStress,
-                                      const double flowStress,
-                                      const double traceOfCauchyStress,
-                                      const double porosity,
-                                      double& sig) = 0;
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Compute the elastic-plastic tangent modulus.
+  */
+  /////////////////////////////////////////////////////////////////////////
+  virtual void computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
+                                             const Matrix3& sigma, double sigY,
+                                             double dsigYdV, double porosity,
+                                             double voidNuclFac,
+                                             TangentModulusTensor& Cep) = 0;
 
-    /////////////////////////////////////////////////////////////////////////
-    /*! 
-      \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
-      with respect to \f$\sigma_{ij}\f$.
-
-      This is for the associated flow rule.
-    */
-    /////////////////////////////////////////////////////////////////////////
-    virtual void evalDerivOfYieldFunction(const Matrix3& stress,
-                                          const double flowStress,
-                                          const double porosity,
-                                          Matrix3& derivative) = 0;
-
-    /////////////////////////////////////////////////////////////////////////
-    /*! 
-      \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
-      with respect to \f$s_{ij}\f$.
-
-      This is for the associated flow rule with \f$s_{ij}\f$ being
-      the deviatoric stress.
-    */
-    /////////////////////////////////////////////////////////////////////////
-    virtual void evalDevDerivOfYieldFunction(const Matrix3& stress,
-                                             const double flowStress,
-                                             const double porosity,
-                                             Matrix3& derivative) = 0;
-
-    /////////////////////////////////////////////////////////////////////////
-    /*! 
-      \brief Compute the elastic-plastic tangent modulus.
-    */
-    /////////////////////////////////////////////////////////////////////////
-    virtual void computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
-                                               const Matrix3& sigma, 
-                                               double sigY,
-                                               double dsigYdV,
-                                               double porosity,
-                                               double voidNuclFac,
-                                               TangentModulusTensor& Cep) = 0;
-
-    /*! Compute continuum elastic-plastic tangent modulus.
-       df_dsigma = r */ 
-    virtual void computeElasPlasTangentModulus(const Matrix3& r, 
-                                               const Matrix3& df_ds, 
-                                               const Matrix3& h_beta,
-                                               const Matrix3& df_dbeta, 
-                                               const double& h_alpha,             
-                                               const double& df_dep,
-                                               const double& h_phi,             
-                                               const double& df_phi,
-                                               const double& J,
-                                               const double& dp_dJ,
-                                               const PlasticityState* state,
-                                               TangentModulusTensor& Cep);
-
-  };
+  /*! Compute continuum elastic-plastic tangent modulus.
+     df_dsigma = r */
+  virtual void computeElasPlasTangentModulus(
+    const Matrix3& r, const Matrix3& df_ds, const Matrix3& h_beta,
+    const Matrix3& df_dbeta, const double& h_alpha, const double& df_dep,
+    const double& h_phi, const double& df_phi, const double& J,
+    const double& dp_dJ, const PlasticityState* state,
+    TangentModulusTensor& Cep);
+};
 } // End namespace Uintah
-      
-#endif  // __YIELD_CONDITION_H__
 
+#endif // __YIELD_CONDITION_H__

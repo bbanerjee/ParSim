@@ -27,89 +27,83 @@
 #ifndef __ELASTICITY_MODEL_H__
 #define __ELASTICITY_MODEL_H__
 
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-  using ParameterDict = std::map<std::string, double>;
+using ParameterDict = std::map<std::string, double>;
 
-  /*! \class ElasticModuli
-   *  \brief A struct containing the instantaneous bulk and shear modulus
-   *  \author Biswajit Banerjee, 
+/*! \class ElasticModuli
+ *  \brief A struct containing the instantaneous bulk and shear modulus
+ *  \author Biswajit Banerjee,
+*/
+struct ElasticModuli
+{
+  double bulkModulus;
+  double shearModulus;
+
+  ElasticModuli(const double& bulk, const double& shear)
+    : bulkModulus(bulk)
+    , shearModulus(shear)
+  {
+  }
+};
+
+/*! \class ElasticModuliModel
+ *  \brief A generic wrapper for various elasticity models
+ *  \author Biswajit Banerjee,
+ *
+ * Provides an abstract base class for various isotropic elasticity models
+*/
+
+class ElasticModuliModel
+{
+
+public:
+  //! Construct a elasticity model and initialize value
+  /*! This is an abstract base class. */
+  ElasticModuliModel();
+
+  //! Destructor of elasticity model.
+  /*! Virtual to ensure correct behavior */
+  virtual ~ElasticModuliModel();
+
+  virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Get the model parameters
+   */
+  /////////////////////////////////////////////////////////////////////////
+  virtual ParameterDict getParameters() const = 0;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Get the elastic moduli
   */
-  struct ElasticModuli {
-    double bulkModulus;
-    double shearModulus;
+  /////////////////////////////////////////////////////////////////////////
+  virtual ElasticModuli getInitialElasticModuli() const = 0;
+  virtual ElasticModuli getCurrentElasticModuli(
+    const ModelStateBase* state) = 0; // not const
+                                      // modifies d_bulk
+  virtual ElasticModuli getElasticModuliLowerBound() const = 0;
+  virtual ElasticModuli getElasticModuliUpperBound() const = 0;
 
-    ElasticModuli(const double& bulk, const double& shear) 
-      : bulkModulus(bulk), shearModulus(shear) { }
-  };
-
-  /*! \class ElasticModuliModel
-   *  \brief A generic wrapper for various elasticity models
-   *  \author Biswajit Banerjee, 
-   *
-   * Provides an abstract base class for various isotropic elasticity models
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief For partially saturated materials, get the drained and
+           partially saturated moduli
   */
-
-  class ElasticModuliModel {
-
-  public:
-         
-    //! Construct a elasticity model and initialize value
-    /*! This is an abstract base class. */
-    ElasticModuliModel();
-
-    //! Destructor of elasticity model.  
-    /*! Virtual to ensure correct behavior */
-    virtual ~ElasticModuliModel();
-
-    virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
-             
-    /////////////////////////////////////////////////////////////////////////
-    /*!
-      \brief Get the model parameters
-     */
-    /////////////////////////////////////////////////////////////////////////
-    virtual ParameterDict getParameters() const = 0 ;
-
-    /////////////////////////////////////////////////////////////////////////
-    /*! 
-      \brief Get the elastic moduli
-    */
-    /////////////////////////////////////////////////////////////////////////
-    virtual ElasticModuli getInitialElasticModuli() const = 0;
-    virtual
-    ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) = 0; // not const
-                                                                            // modifies d_bulk
-    virtual ElasticModuli getElasticModuliLowerBound() const = 0;
-    virtual ElasticModuli getElasticModuliUpperBound() const = 0;
-
-    /////////////////////////////////////////////////////////////////////////
-    /*! 
-      \brief For partially saturated materials, get the drained and 
-             partially saturated moduli
-    */
-    /////////////////////////////////////////////////////////////////////////
-    virtual 
-    void computeDrainedModuli(const double& I1_bar, 
-                              const double& ev_p_bar,
-                              double& KK,
-                              double& GG) {};
-    virtual
-    void computePartialSaturatedModuli(const double& I1_eff_bar, 
-                                       const double& pw_bar,
-                                       const double& ev_p_bar,
-                                       const double& phi,
-                                       const double& S_w,
-                                       double& KK,
-                                       double& GG) {};
-    
-  };
+  /////////////////////////////////////////////////////////////////////////
+  virtual void computeDrainedModuli(const double& I1_bar,
+                                    const double& ev_p_bar, double& KK,
+                                    double& GG){};
+  virtual void computePartialSaturatedModuli(
+    const double& I1_eff_bar, const double& pw_bar, const double& ev_p_bar,
+    const double& phi, const double& S_w, double& KK, double& GG){};
+};
 } // End namespace Uintah
-      
-#endif  // __ELASTICITY_MODEL_H__
 
+#endif // __ELASTICITY_MODEL_H__

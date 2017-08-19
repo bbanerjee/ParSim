@@ -31,22 +31,22 @@
 
 namespace Uintah {
 
-  // Forward declarations
-  class ShearStressModel;
+// Forward declarations
+class ShearStressModel;
 
-  /*! \class ShearStressModelFactory
-   *  \brief Creates instances of Shear stress Models
-   *  \author  Biswajit Banerjee,
-  */
+/*! \class ShearStressModelFactory
+ *  \brief Creates instances of Shear stress Models
+ *  \author  Biswajit Banerjee,
+*/
 
-  class ShearStressModelFactory {
+class ShearStressModelFactory
+{
 
-  public:
-
-    //! Create a shear modulus model from the input file problem specification.
-    static ShearStressModel* create(ProblemSpecP& ps);
-    static ShearStressModel* createCopy(const ShearStressModel* yc);
-  };
+public:
+  //! Create a shear modulus model from the input file problem specification.
+  static ShearStressModel* create(ProblemSpecP& ps);
+  static ShearStressModel* createCopy(const ShearStressModel* yc);
+};
 } // End namespace Uintah
-      
+
 #endif /* _SHEAR_STRESS_MODEL_FACTORY_H_ */

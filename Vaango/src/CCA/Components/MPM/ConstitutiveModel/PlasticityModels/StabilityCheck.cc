@@ -46,16 +46,10 @@
  * IN THE SOFTWARE.
  */
 
-
 #include "StabilityCheck.h"
 
 using namespace Uintah;
 
-StabilityCheck::StabilityCheck()
-{
-}
+StabilityCheck::StabilityCheck() = default;
 
-StabilityCheck::~StabilityCheck()
-{
-}
-         
+StabilityCheck::~StabilityCheck() = default;

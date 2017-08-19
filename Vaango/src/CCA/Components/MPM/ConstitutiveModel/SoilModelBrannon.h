@@ -106,13 +106,13 @@ public:
   SoilModelBrannon(const SoilModelBrannon* cm);
 
   // destructor
-  virtual ~SoilModelBrannon();
+  ~SoilModelBrannon() override;
 
-  virtual void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true);
+  void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
 
-  SoilModelBrannon* clone();
+  SoilModelBrannon* clone() override;
 
   // compute stable timestep for this patch
   virtual void computeStableTimestep(const Patch* patch,
@@ -120,10 +120,9 @@ public:
                                      DataWarehouse* new_dw);
 
   // compute stress at each particle in the patch
-  virtual void computeStressTensor(const PatchSubset* patches,
-                                   const MPMMaterial* matl,
-                                   DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw);
+  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw) override;
 
   void computeInvariants(Matrix3& stress, Matrix3& S, double& I1, double& J2);
 
@@ -142,57 +141,56 @@ public:
   /* Make the value for pLocalized computed locally available outside of the
    * model. */
   ////////////////////////////////////////////////////////////////////////
-  virtual void addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
-                                          const PatchSet* patches) const;
+  void addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
+                                  const PatchSet* patches) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /* Make the value for pLocalized computed locally available outside of the
    * model */
   ////////////////////////////////////////////////////////////////////////
-  virtual void getDamageParameter(const Patch* patch,
-                                  ParticleVariable<int>& damage, int dwi,
-                                  DataWarehouse* old_dw, DataWarehouse* new_dw);
+  void getDamageParameter(const Patch* patch, ParticleVariable<int>& damage,
+                          int dwi, DataWarehouse* old_dw,
+                          DataWarehouse* new_dw) override;
 
   // carry forward CM data for RigidMPM
-  virtual void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                            DataWarehouse* old_dw, DataWarehouse* new_dw);
+  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
+                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
 
   // initialize  each particle's constitutive model data
-  virtual void initializeCMData(const Patch* patch, const MPMMaterial* matl,
-                                DataWarehouse* new_dw);
+  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
+                        DataWarehouse* new_dw) override;
 
-  virtual void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                         const PatchSet* patch,
-                                         MPMLabel* lb) const;
+  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+                                 const PatchSet* patch,
+                                 MPMLabel* lb) const override;
 
-  virtual void addInitialComputesAndRequires(Task* task,
-                                             const MPMMaterial* matl,
-                                             const PatchSet* patches) const;
+  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                     const PatchSet* patches) const override;
 
-  virtual void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
-                                 ParticleLabelVariableMap* newState,
-                                 ParticleSubset* delset, DataWarehouse* old_dw);
+  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
+                         ParticleLabelVariableMap* newState,
+                         ParticleSubset* delset,
+                         DataWarehouse* old_dw) override;
 
-  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                      const PatchSet* patches) const;
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
 
-  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                      const PatchSet* patches,
-                                      const bool recursion,
-                                      const bool dummy) const;
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches, const bool recursion,
+                              const bool dummy) const override;
 
-  virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                std::vector<const VarLabel*>& to);
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
 
-  virtual double computeRhoMicroCM(double pressure, const double p_ref,
-                                   const MPMMaterial* matl, double temperature,
-                                   double rho_guess);
+  double computeRhoMicroCM(double pressure, const double p_ref,
+                           const MPMMaterial* matl, double temperature,
+                           double rho_guess) override;
 
-  virtual void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
-                                 double& dp_drho, double& ss_new,
-                                 const MPMMaterial* matl, double temperature);
+  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
+                         double& dp_drho, double& ss_new,
+                         const MPMMaterial* matl, double temperature) override;
 
-  virtual double getCompressibility();
+  double getCompressibility() override;
 
 private:
   void computeEffectiveModuli(const double& eps_v, double& bulk_modulus,

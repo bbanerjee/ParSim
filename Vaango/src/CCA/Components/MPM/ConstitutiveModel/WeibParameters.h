@@ -30,88 +30,84 @@
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
 
-#include <Core/Math/Weibull.h> 
+#include <Core/Math/Weibull.h>
 
-#include <string>
 #include <iostream>
+#include <string>
 
 namespace Uintah {
 
-  class WeibParameters {
+class WeibParameters
+{
 
-  private:
+private:
+  bool d_Perturb; // 'True' for perturbed parameter
+  double
+    d_WeibMed; // Median distrib. value OR const value depending on bool Perturb
+  int d_WeibSeed;         // seed for random number generator
+  double d_WeibMod;       // Weibull modulus
+  double d_WeibRefVol;    // Reference Volume
+  std::string d_WeibDist; // String for Distribution
 
-    bool        d_Perturb;     // 'True' for perturbed parameter
-    double      d_WeibMed;     // Median distrib. value OR const value depending on bool Perturb
-    int         d_WeibSeed;    // seed for random number generator
-    double      d_WeibMod;     // Weibull modulus
-    double      d_WeibRefVol;  // Reference Volume
-    std::string d_WeibDist;    // String for Distribution
+public:
+  WeibParameters();
+  WeibParameters(const std::string& weibDist);
+  WeibParameters(const WeibParameters* weibull);
+  WeibParameters& operator=(const WeibParameters& weibull);
 
+  virtual ~WeibParameters();
 
-  public:
+  /**
+   * Parse input string for Webull distribution parameters
+   *
+   *
+   * Weibull input parser that accepts a structure of input
+   * parameters defined as:
+   *
+   * bool        d_Perturb       'True' for perturbed parameter
+   * double      d_WeibMed       Median distrib. value OR const value
+   *                             depending on bool Perturb
+   * double      d_WeibMod       Weibull modulus
+   * double      d_WeibRefVol    Reference Volume
+   * int         d_WeibSeed      Seed for random number generator
+   * std::string d_WeibDist      String for Distribution
+   *
+   * the string 'WeibDist' accepts strings of the following form
+   * when a perturbed value is desired:
+   *
+   * --Distribution--|-Median-|-Modulus-|-Reference Vol -|- Seed -|
+   * "    weibull,      45e6,      4,        0.0001,          0"
+   *
+   * or simply a number if no perturbed value is desired.
+   */
+  void WeibullParser(const std::string& weibDist);
 
-    WeibParameters();
-    WeibParameters(const std::string& weibDist);
-    WeibParameters(const WeibParameters* weibull);
-    WeibParameters& operator=(const WeibParameters& weibull);
+  /**
+   *  Get method
+   */
+  std::string getWeibDist() const { return d_WeibDist; }
 
-    virtual ~WeibParameters();
+  /**
+   * Set the value of a variable using the Weibull distribution
+   */
+  void assignWeibullVariability(const Patch* patch, ParticleSubset* pset,
+                                constParticleVariable<double>& pVolume,
+                                ParticleVariable<double>& pvar);
 
-    /**
-     * Parse input string for Webull distribution parameters
-     *
-     *
-     * Weibull input parser that accepts a structure of input
-     * parameters defined as:
-     *
-     * bool        d_Perturb       'True' for perturbed parameter
-     * double      d_WeibMed       Median distrib. value OR const value
-     *                             depending on bool Perturb
-     * double      d_WeibMod       Weibull modulus
-     * double      d_WeibRefVol    Reference Volume
-     * int         d_WeibSeed      Seed for random number generator
-     * std::string d_WeibDist      String for Distribution
-     *
-     * the string 'WeibDist' accepts strings of the following form
-     * when a perturbed value is desired:
-     *
-     * --Distribution--|-Median-|-Modulus-|-Reference Vol -|- Seed -|
-     * "    weibull,      45e6,      4,        0.0001,          0"
-     *
-     * or simply a number if no perturbed value is desired.
-     */
-    void WeibullParser(const std::string& weibDist);
-
-    /**
-     *  Get method
-     */
-    std::string getWeibDist() const {return d_WeibDist;}
-
-    /**
-     * Set the value of a variable using the Weibull distribution
-     */
-    void assignWeibullVariability(const Patch* patch,
-                                  ParticleSubset* pset,
-                                  constParticleVariable<double>& pVolume,
-                                  ParticleVariable<double>& pvar);
-                               
-    /**
-     * Print Weibull parameters
-     */
-    friend std::ostream& operator<<(std::ostream& os, const WeibParameters& weibull) {
-      os << " Weibull: Perturb = " << weibull.d_Perturb
-         << " Dist = " << weibull.d_WeibDist
-         << " Seed = " << weibull.d_WeibSeed
-         << " Median = " << weibull.d_WeibMed
-         << " Modulus = " << weibull.d_WeibMod
-         << " Ref.Vol. = " << weibull.d_WeibRefVol;
-      return os;
-    }
-
-  };
-
-  
+  /**
+   * Print Weibull parameters
+   */
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const WeibParameters& weibull)
+  {
+    os << " Weibull: Perturb = " << weibull.d_Perturb
+       << " Dist = " << weibull.d_WeibDist << " Seed = " << weibull.d_WeibSeed
+       << " Median = " << weibull.d_WeibMed
+       << " Modulus = " << weibull.d_WeibMod
+       << " Ref.Vol. = " << weibull.d_WeibRefVol;
+    return os;
+  }
+};
 }
 
 #endif

@@ -47,50 +47,46 @@
  */
 
 #include "BeckerCheck.h"
+#include <Core/Math/SymmMatrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
-#include <Core/Math/SymmMatrix3.h>
 #include <cmath>
 #include <vector>
-
 
 using namespace Uintah;
 using namespace std;
 
-BeckerCheck::BeckerCheck(ProblemSpecP& )
+BeckerCheck::BeckerCheck(ProblemSpecP&)
 {
 }
 
-BeckerCheck::BeckerCheck(const BeckerCheck* )
+BeckerCheck::BeckerCheck(const BeckerCheck*)
 {
 }
 
-BeckerCheck::~BeckerCheck()
-{
-}
+BeckerCheck::~BeckerCheck() = default;
 
-void BeckerCheck::outputProblemSpec(ProblemSpecP& ps)
+void
+BeckerCheck::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP stability_ps = ps->appendChild("stability_check");
-  stability_ps->setAttribute("type","becker");
+  stability_ps->setAttribute("type", "becker");
 }
-         
-bool 
-BeckerCheck::checkStability(const Matrix3& stress ,
-                            const Matrix3& ,
-                            const TangentModulusTensor& M,
-                            Vector& )
+
+bool
+BeckerCheck::checkStability(const Matrix3& stress, const Matrix3&,
+                            const TangentModulusTensor& M, Vector&)
 {
   // Find the magnitudes and directions of the principal stresses
-        
+
   SymmMatrix3 sigma(stress);
-  Vector sig(0.0,0.0,0.0);
+  Vector sig(0.0, 0.0, 0.0);
   Matrix3 evec;
   sigma.eigen(sig, evec);
-  //cout << "stress = \n";
-  //cout << stress << endl;
-  //cout << "Eigenvalues : " << sig << endl;
-  //cout << "Eigenvectors : " << evec << endl;
+  // cout << "stress = \n";
+  // cout << stress << endl;
+  // cout << "Eigenvalues : " << sig << endl;
+  // cout << "Eigenvectors : " << evec << endl;
 
   /* OLD CALC USING MATRIX3 methods
   // If all three principal stresses are equal, numEV = 1,
@@ -103,7 +99,7 @@ BeckerCheck::checkStability(const Matrix3& stress ,
 
   // Get the eigenvectors of the stress tensor
   vector<Vector> eigVec;
-  for (int ii = 0; ii < numEV; ii++)  
+  for (int ii = 0; ii < numEV; ii++)
      eigVec = stress.getEigenVectors(sig[ii], sig[0]);
 
   // Calculate the coefficients of the quadric
@@ -111,23 +107,25 @@ BeckerCheck::checkStability(const Matrix3& stress ,
   else if (numEV == 2) sig[2] = sig[1];
   */
 
-  double A = M(2,0,2,0)*(-sig[2] + 2.0*M(2,2,2,2));
-  double C = M(2,0,2,0)*(-sig[0] + 2.0*M(0,0,0,0));
-  double B = M(2,0,2,0)*(sig[2] - 2.0*M(0,0,2,2) + sig[0] - 2.0*M(2,2,0,0)) +
-             sig[0]*(M(2,2,0,0) - M(2,2,2,2)) + 
-             sig[2]*(M(0,0,2,2) - M(0,0,0,0)) +
-             2.0*(-M(0,0,2,2)*M(2,2,0,0)+M(0,0,0,0)*M(2,2,2,2));
+  double A = M(2, 0, 2, 0) * (-sig[2] + 2.0 * M(2, 2, 2, 2));
+  double C = M(2, 0, 2, 0) * (-sig[0] + 2.0 * M(0, 0, 0, 0));
+  double B =
+    M(2, 0, 2, 0) *
+      (sig[2] - 2.0 * M(0, 0, 2, 2) + sig[0] - 2.0 * M(2, 2, 0, 0)) +
+    sig[0] * (M(2, 2, 0, 0) - M(2, 2, 2, 2)) +
+    sig[2] * (M(0, 0, 2, 2) - M(0, 0, 0, 0)) +
+    2.0 * (-M(0, 0, 2, 2) * M(2, 2, 0, 0) + M(0, 0, 0, 0) * M(2, 2, 2, 2));
 
   // Solve the quadric
   // Substitute x^2 by y and solve the quadratic
-  double B2_4AC = B*B - 4.0*A*C;
+  double B2_4AC = B * B - 4.0 * A * C;
   if (B2_4AC < 0.0) {
     // No real roots - no bifurcation
     return false;
   } else {
     ASSERT(!(A == 0));
-    double yplus = (-B + sqrt(B2_4AC))/(2.0*A);
-    double yminus = (-B - sqrt(B2_4AC))/(2.0*A);
+    double yplus = (-B + sqrt(B2_4AC)) / (2.0 * A);
+    double yminus = (-B - sqrt(B2_4AC)) / (2.0 * A);
     if (yplus < 0.0 && yminus < 0.0) {
       // No real roots - no bifurcation
       return false;
@@ -135,10 +133,9 @@ BeckerCheck::checkStability(const Matrix3& stress ,
       if (yplus < 0.0 || yminus < 0.0) {
         // Two real roots -  bifurcation ? (parabolic)
         return false;
-      } 
+      }
     }
   }
-  // Four real roots -  bifurcation 
+  // Four real roots -  bifurcation
   return true;
 }
-

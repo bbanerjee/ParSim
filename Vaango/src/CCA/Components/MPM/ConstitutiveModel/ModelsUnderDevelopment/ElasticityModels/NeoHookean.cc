@@ -28,38 +28,38 @@
 // This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
 // make the isnan function not work.  This define makes the cmath header
 // not get included since we do not need it anyway.
-#  define _CPP_CMATH
+#define _CPP_CMATH
 #endif
 
 #include "NeoHookean.h"
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
 
-
 using namespace Uintah;
 using namespace std;
 
-// Construct a shear stress model.  
-NeoHookean::NeoHookean(ProblemSpecP& ps )
+// Construct a shear stress model.
+NeoHookean::NeoHookean(ProblemSpecP& ps)
 {
   ps->require("shear_modulus", d_mu);
 }
 
-// Construct a copy of a shear stress model.  
+// Construct a copy of a shear stress model.
 NeoHookean::NeoHookean(const NeoHookean* ssm)
 {
   d_mu = ssm->d_mu;
 }
 
-// Destructor of shear stress model.  
+// Destructor of shear stress model.
 NeoHookean::~NeoHookean()
 {
 }
 
-void NeoHookean::outputProblemSpec(ProblemSpecP& ps)
+void
+NeoHookean::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP shear_ps = ps->appendChild("shear_stress_model");
   shear_ps->setAttribute("type", "neo_hookean");
@@ -70,11 +70,10 @@ void NeoHookean::outputProblemSpec(ProblemSpecP& ps)
 //   sigma_shear = dev(B_bar)*(mu/J)
 // where
 //   B_bar = 1/J^(2/3) B = 1/J^(2/3) F.Ft
-void 
+void
 NeoHookean::computeShearStress(const DeformationState* state,
                                Matrix3& shear_stress)
 {
   state->computeCauchyGreenBbar();
-  shear_stress = state->dev_strain*(d_mu/state->J);
+  shear_stress = state->dev_strain * (d_mu / state->J);
 }
-

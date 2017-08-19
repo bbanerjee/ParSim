@@ -47,8 +47,8 @@
  */
 
 #include "SCGShear.h"
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -56,15 +56,15 @@
 using namespace Uintah;
 using namespace std;
 
-// Construct a shear modulus model.  
-SCGShear::SCGShear(ProblemSpecP& ps )
+// Construct a shear modulus model.
+SCGShear::SCGShear(ProblemSpecP& ps)
 {
-  ps->require("mu_0",d_mu0);
-  ps->require("A",d_A);
-  ps->require("B",d_B);
+  ps->require("mu_0", d_mu0);
+  ps->require("A", d_A);
+  ps->require("B", d_B);
 }
 
-// Construct a copy of a shear modulus model.  
+// Construct a copy of a shear modulus model.
 SCGShear::SCGShear(const SCGShear* smm)
 {
   d_mu0 = smm->d_mu0;
@@ -72,33 +72,31 @@ SCGShear::SCGShear(const SCGShear* smm)
   d_B = smm->d_B;
 }
 
-// Destructor of shear modulus model.  
-SCGShear::~SCGShear()
-{
-}
+// Destructor of shear modulus model.
+SCGShear::~SCGShear() = default;
 
-void SCGShear::outputProblemSpec(ProblemSpecP& ps)
+void
+SCGShear::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP shear_ps = ps->appendChild("shear_modulus_model");
-  shear_ps->setAttribute("type","scg_shear");
+  shear_ps->setAttribute("type", "scg_shear");
 
-  shear_ps->appendElement("mu_0",d_mu0);
-  shear_ps->appendElement("A",d_A);
-  shear_ps->appendElement("B",d_B);
+  shear_ps->appendElement("mu_0", d_mu0);
+  shear_ps->appendElement("A", d_A);
+  shear_ps->appendElement("B", d_B);
 }
 
-         
 // Compute the shear modulus
-double 
+double
 SCGShear::computeShearModulus(const PlasticityState* state)
 {
-  double eta = state->density/state->initialDensity;
+  double eta = state->density / state->initialDensity;
   ASSERT(eta > 0.0);
-  eta = pow(eta, 1.0/3.0);
+  eta = pow(eta, 1.0 / 3.0);
 
   // Pressure is +ve in this calcualtion
   double P = -state->pressure;
-  double mu = d_mu0*(1.0 + d_A*P/eta - d_B*(state->temperature - 300.0));
+  double mu =
+    d_mu0 * (1.0 + d_A * P / eta - d_B * (state->temperature - 300.0));
   return mu;
 }
-

@@ -27,143 +27,141 @@
 #ifndef __BORJA_PRESSURE_INT_VAR_MODEL_H__
 #define __BORJA_PRESSURE_INT_VAR_MODEL_H__
 
-
-#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>    
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>    
+#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-  ////////////////////////////////////////////////////////////////////////////
-  /*! 
-    \class InternalVar_BorjaPressure
-    \brief The evolution of the consolidation pressure internal variable in the
-           Borja model
+////////////////////////////////////////////////////////////////////////////
+/*!
+  \class InternalVar_BorjaPressure
+  \brief The evolution of the consolidation pressure internal variable in the
+         Borja model
 
-    Reference:Borja, R.I. and Tamagnini, C.(1998) Cam-Clay plasticity Part III: 
-    Extension of the infinitesimal model to include finite strains,
-    Computer Methods in Applied Mechanics and Engineering, 155 (1-2),
-    pp. 73-95.
+  Reference:Borja, R.I. and Tamagnini, C.(1998) Cam-Clay plasticity Part III:
+  Extension of the infinitesimal model to include finite strains,
+  Computer Methods in Applied Mechanics and Engineering, 155 (1-2),
+  pp. 73-95.
 
-    The consolidation presure (p_c) is defined by the rate equation
+  The consolidation presure (p_c) is defined by the rate equation
 
-           1/p_c dp_c/dt = 1/(lambdatilde - kappatilde) depsp_v/dt
+         1/p_c dp_c/dt = 1/(lambdatilde - kappatilde) depsp_v/dt
 
-           where lambdatilde = material constant
-                 kappatilde = material constant
-                 epsp_v = volumetric plastic strain
+         where lambdatilde = material constant
+               kappatilde = material constant
+               epsp_v = volumetric plastic strain
 
-    The incremental update of the consolidation pressure is given by
+  The incremental update of the consolidation pressure is given by
 
-       (p_c)_{n+1} = (p_c)_n exp[((epse_v)_trial - (epse_v)_{n+1})/(lambdabar - kappabar)]
-  */
-  ////////////////////////////////////////////////////////////////////////////
+     (p_c)_{n+1} = (p_c)_n exp[((epse_v)_trial - (epse_v)_{n+1})/(lambdabar -
+  kappabar)]
+*/
+////////////////////////////////////////////////////////////////////////////
 
-  class InternalVar_BorjaPressure : public InternalVariableModel {
+class InternalVar_BorjaPressure : public InternalVariableModel
+{
 
-  public:
+public:
+  // Internal variables
+  const Uintah::VarLabel* pPcLabel;
+  const Uintah::VarLabel* pPcLabel_preReloc;
 
-    // Internal variables
-    const Uintah::VarLabel* pPcLabel; 
-    const Uintah::VarLabel* pPcLabel_preReloc; 
+  // Return the internal variable labels
+  std::vector<const Uintah::VarLabel*> getLabels() const override
+  {
+    std::vector<const Uintah::VarLabel*> labels;
+    labels.push_back(pPcLabel); // Preconsolidation pressure
+    labels.push_back(pPcLabel_preReloc);
 
-    // Return the internal variable labels
-    std::vector<const Uintah::VarLabel*> getLabels() const
-    {
-       std::vector<const Uintah::VarLabel*> labels;
-       labels.push_back(pPcLabel);                         // Preconsolidation pressure
-       labels.push_back(pPcLabel_preReloc); 
+    return labels;
+  }
 
-       return labels;
-    }
+private:
+  // Model parameters
+  double d_pc0;
+  double d_lambdatilde;
+  double d_kappatilde;
 
-  private:
+  // Prevent copying of this class
+  // copy constructor
+  // InternalVar_BorjaPressure(const InternalVar_BorjaPressure &cm);
+  InternalVar_BorjaPressure& operator=(const InternalVar_BorjaPressure& cm);
 
-    // Model parameters
-    double d_pc0;
-    double d_lambdatilde;
-    double d_kappatilde;
+public:
+  // constructors
+  InternalVar_BorjaPressure(Uintah::ProblemSpecP& ps, ShearModulusModel* shear);
+  InternalVar_BorjaPressure(const InternalVar_BorjaPressure* cm);
 
-         
-    // Prevent copying of this class
-    // copy constructor
-    //InternalVar_BorjaPressure(const InternalVar_BorjaPressure &cm);
-    InternalVar_BorjaPressure& operator=(const InternalVar_BorjaPressure &cm);
+  // destructor
+  ~InternalVar_BorjaPressure() override;
 
-  public:
-    // constructors
-    InternalVar_BorjaPressure(Uintah::ProblemSpecP& ps,
-                              ShearModulusModel* shear);
-    InternalVar_BorjaPressure(const InternalVar_BorjaPressure* cm);
-         
-    // destructor 
-    virtual ~InternalVar_BorjaPressure();
+  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
-    virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
-         
-    /*! Get parameters */
-    std::map<std::string, double> getParameters() const {
-      std::map<std::string, double> params;
-      params["pc0"] = d_pc0;
-      params["lambdatilde"] = d_lambdatilde;
-      params["kappatilde"] = d_kappatilde;
-      return params;
-    }
+  /*! Get parameters */
+  std::map<std::string, double> getParameters() const override
+  {
+    std::map<std::string, double> params;
+    params["pc0"] = d_pc0;
+    params["lambdatilde"] = d_lambdatilde;
+    params["kappatilde"] = d_kappatilde;
+    return params;
+  }
 
-    // Computes and requires for internal evolution variables
-    virtual void addInitialComputesAndRequires(Uintah::Task* task,
-                                               const Uintah::MPMMaterial* matl,
-                                               const Uintah::PatchSet* patches);
+  // Computes and requires for internal evolution variables
+  void addInitialComputesAndRequires(Uintah::Task* task,
+                                     const Uintah::MPMMaterial* matl,
+                                     const Uintah::PatchSet* patches) override;
 
-    virtual void addComputesAndRequires(Uintah::Task* task,
-                                        const Uintah::MPMMaterial* matl,
-                                        const Uintah::PatchSet* patches);
+  void addComputesAndRequires(Uintah::Task* task,
+                              const Uintah::MPMMaterial* matl,
+                              const Uintah::PatchSet* patches) override;
 
-    virtual void allocateCMDataAddRequires(Uintah::Task* task, 
-                                           const Uintah::MPMMaterial* matl,
-                                           const Uintah::PatchSet* patch, 
-                                           Uintah::MPMLabel* lb);
+  void allocateCMDataAddRequires(Uintah::Task* task,
+                                 const Uintah::MPMMaterial* matl,
+                                 const Uintah::PatchSet* patch,
+                                 Uintah::MPMLabel* lb) override;
 
-    virtual void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
-                                   Uintah::ParticleSubset* addset,
-                                   std::map<const Uintah::VarLabel*, 
-                                     Uintah::ParticleVariableBase*>* newState,
-                                   Uintah::ParticleSubset* delset,
-                                   Uintah::DataWarehouse* old_dw);
+  void allocateCMDataAdd(
+    Uintah::DataWarehouse* new_dw, Uintah::ParticleSubset* addset,
+    std::map<const Uintah::VarLabel*, Uintah::ParticleVariableBase*>* newState,
+    Uintah::ParticleSubset* delset, Uintah::DataWarehouse* old_dw) override;
 
-    virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                                  std::vector<const Uintah::VarLabel*>& to);
+  void addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                        std::vector<const Uintah::VarLabel*>& to) override;
 
-    virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
-                                            Uintah::DataWarehouse* new_dw);
+  void initializeInternalVariable(Uintah::ParticleSubset* pset,
+                                  Uintah::DataWarehouse* new_dw) override;
 
-    virtual void getInternalVariable(Uintah::ParticleSubset* pset,
-                                     Uintah::DataWarehouse* old_dw,
-                                     Uintah::constParticleVariableBase& intvar);
+  void getInternalVariable(Uintah::ParticleSubset* pset,
+                           Uintah::DataWarehouse* old_dw,
+                           Uintah::constParticleVariableBase& intvar) override;
 
-    virtual void getInternalVariable(Uintah::ParticleSubset* pset,
-                                     Uintah::DataWarehouse* old_dw,
-                                     Uintah::constParticleLabelVariableMap& intvar) {}
+  virtual void getInternalVariable(
+    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* old_dw,
+    Uintah::constParticleLabelVariableMap& intvar)
+  {
+  }
 
-    virtual void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                                Uintah::DataWarehouse* new_dw,
-                                                Uintah::ParticleVariableBase& intvar); 
+  void allocateAndPutInternalVariable(
+    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* new_dw,
+    Uintah::ParticleVariableBase& intvar) override;
 
-    virtual void allocateAndPutRigid(Uintah::ParticleSubset* pset, 
-                                     Uintah::DataWarehouse* new_dw,
-                                     Uintah::constParticleVariableBase& intvar);
+  void allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                           Uintah::DataWarehouse* new_dw,
+                           Uintah::constParticleVariableBase& intvar) override;
 
-    ///////////////////////////////////////////////////////////////////////////
-    /*! \brief Compute the internal variable */
-    ///////////////////////////////////////////////////////////////////////////
-    double computeInternalVariable(const ModelStateBase* state) const;
+  ///////////////////////////////////////////////////////////////////////////
+  /*! \brief Compute the internal variable */
+  ///////////////////////////////////////////////////////////////////////////
+  double computeInternalVariable(const ModelStateBase* state) const override;
 
-    // Compute derivative of internal variable with respect to volumetric
-    // elastic strain
-    double computeVolStrainDerivOfInternalVariable(const ModelStateBase* state) const;
-
- };
+  // Compute derivative of internal variable with respect to volumetric
+  // elastic strain
+  double computeVolStrainDerivOfInternalVariable(
+    const ModelStateBase* state) const override;
+};
 
 } // End namespace Uintah
 
-#endif  // __BORJA_PRESSURE_INT_VAR_MODEL_H__ 
+#endif // __BORJA_PRESSURE_INT_VAR_MODEL_H__

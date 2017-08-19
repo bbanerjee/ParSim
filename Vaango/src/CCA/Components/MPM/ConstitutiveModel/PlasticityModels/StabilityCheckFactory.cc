@@ -47,66 +47,75 @@
  */
 
 #include "StabilityCheckFactory.h"
-#include "DruckerCheck.h"
 #include "BeckerCheck.h"
-#include "NoneCheck.h"
 #include "DruckerBeckerCheck.h"
+#include "DruckerCheck.h"
+#include "NoneCheck.h"
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
-#include <string>
 #include <Core/Parallel/Parallel.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
+#include <string>
 
 using namespace std;
 using namespace Uintah;
 
 /// Create an instance of a stabilty check method
 /*! Available checks are : loss of ellipticity of the acoustic tensor */
-StabilityCheck* StabilityCheckFactory::create(ProblemSpecP& ps)
+StabilityCheck*
+StabilityCheckFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("stability_check");
-  if(!child) {
-    proc0cout << "**WARNING** Creating default action (no stability check)" << endl;
-    return(scinew NoneCheck());
-    throw ProblemSetupException("Cannot find stability check criterion.", __FILE__, __LINE__);
+  if (!child) {
+    proc0cout << "**WARNING** Creating default action (no stability check)"
+              << endl;
+    return (scinew NoneCheck());
+    throw ProblemSetupException("Cannot find stability check criterion.",
+                                __FILE__, __LINE__);
   }
 
   string mat_type;
-  if(!child->getAttribute("type", mat_type))
-    throw ProblemSetupException("No type for stability check criterion.", __FILE__, __LINE__);
-   
+  if (!child->getAttribute("type", mat_type))
+    throw ProblemSetupException("No type for stability check criterion.",
+                                __FILE__, __LINE__);
+
   if (mat_type == "drucker")
-    return(scinew DruckerCheck(child));
+    return (scinew DruckerCheck(child));
   else if (mat_type == "becker")
-    return(scinew BeckerCheck(child));
+    return (scinew BeckerCheck(child));
   else if (mat_type == "drucker_becker")
-    return(scinew DruckerBeckerCheck(child));
+    return (scinew DruckerBeckerCheck(child));
   else if (mat_type == "none")
-    return(scinew NoneCheck(child));
+    return (scinew NoneCheck(child));
   else {
-    proc0cout << "**WARNING** Creating default action (no stability check)" << endl;
-    return(scinew NoneCheck(child));
-    // throw ProblemSetupException("Unknown Stability Check ("+mat_type+")", __FILE__, __LINE__);
+    proc0cout << "**WARNING** Creating default action (no stability check)"
+              << endl;
+    return (scinew NoneCheck(child));
+    // throw ProblemSetupException("Unknown Stability Check ("+mat_type+")",
+    // __FILE__, __LINE__);
   }
 }
 
-StabilityCheck* 
+StabilityCheck*
 StabilityCheckFactory::createCopy(const StabilityCheck* sc)
 {
   if (dynamic_cast<const DruckerCheck*>(sc))
-    return(scinew DruckerCheck(dynamic_cast<const DruckerCheck*>(sc)));
+    return (scinew DruckerCheck(dynamic_cast<const DruckerCheck*>(sc)));
 
   else if (dynamic_cast<const BeckerCheck*>(sc))
-    return(scinew BeckerCheck(dynamic_cast<const BeckerCheck*>(sc)));
+    return (scinew BeckerCheck(dynamic_cast<const BeckerCheck*>(sc)));
 
   else if (dynamic_cast<const DruckerBeckerCheck*>(sc))
-    return(scinew DruckerBeckerCheck(dynamic_cast<const DruckerBeckerCheck*>(sc)));
+    return (
+      scinew DruckerBeckerCheck(dynamic_cast<const DruckerBeckerCheck*>(sc)));
   else if (dynamic_cast<const NoneCheck*>(sc))
-    return(scinew NoneCheck(dynamic_cast<const NoneCheck*>(sc)));
+    return (scinew NoneCheck(dynamic_cast<const NoneCheck*>(sc)));
 
   else {
-    proc0cout << "**WARNING** Creating copy of default action (no stability check)" << endl;
-    return(scinew NoneCheck(dynamic_cast<const NoneCheck*>(sc)));
+    proc0cout
+      << "**WARNING** Creating copy of default action (no stability check)"
+      << endl;
+    return (scinew NoneCheck(dynamic_cast<const NoneCheck*>(sc)));
     //  return 0;
   }
 }

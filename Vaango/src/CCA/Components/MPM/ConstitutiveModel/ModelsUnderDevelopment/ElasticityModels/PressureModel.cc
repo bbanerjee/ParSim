@@ -24,7 +24,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #include "PressureModel.h"
 
 using namespace Uintah;

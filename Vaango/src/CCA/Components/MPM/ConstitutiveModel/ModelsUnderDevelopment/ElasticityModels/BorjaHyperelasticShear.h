@@ -32,42 +32,41 @@
 
 namespace Uintah {
 
-  /*! \class BorjaHyperelasticShear
-   *  \brief An isotropic Borja-Tamagnini-Amorosi shear stress model.
-   *         Ref: Borja et al., 1997, "Coupling plasticity and energy-conserving
-   *              elasticity models for clays", J. Geotech. Geoenv. Engg., 123(10),
-   *              p. 948.
-   *  \author Biswajit Banerjee 
-   *
-  */
-  class BorjaHyperelasticShear : public ShearStressModel {
+/*! \class BorjaHyperelasticShear
+ *  \brief An isotropic Borja-Tamagnini-Amorosi shear stress model.
+ *         Ref: Borja et al., 1997, "Coupling plasticity and energy-conserving
+ *              elasticity models for clays", J. Geotech. Geoenv. Engg.,
+ * 123(10),
+ *              p. 948.
+ *  \author Biswajit Banerjee
+ *
+*/
+class BorjaHyperelasticShear : public ShearStressModel
+{
 
-  private:
+private:
+  double d_mu0;   // Reference shear modulus
+  double d_p0;    // Reference pressure
+  double d_epsv0; // Reference volumetric strain
+  double d_alpha; // scaling parameter
 
-    double d_mu0;    // Reference shear modulus
-    double d_p0;     // Reference pressure
-    double d_epsv0;  // Reference volumetric strain
-    double d_alpha;  // scaling parameter
+  BorjaHyperelasticShear& operator=(const BorjaHyperelasticShear& smm);
 
-    BorjaHyperelasticShear& operator=(const BorjaHyperelasticShear &smm);
+public:
+  /*! Construct a Borja shear stress model. */
+  BorjaHyperelasticShear(ProblemSpecP& ps);
 
-  public:
-         
-    /*! Construct a Borja shear stress model. */
-    BorjaHyperelasticShear(ProblemSpecP& ps);
+  /*! Construct a copy of Borja shear stress model. */
+  BorjaHyperelasticShear(const BorjaHyperelasticShear* smm);
 
-    /*! Construct a copy of Borja shear stress model. */
-    BorjaHyperelasticShear(const BorjaHyperelasticShear* smm);
+  /*! Destructor of Borja shear stress model.   */
+  virtual ~BorjaHyperelasticShear();
 
-    /*! Destructor of Borja shear stress model.   */
-    virtual ~BorjaHyperelasticShear();
+  virtual void outputProblemSpec(ProblemSpecP& ps);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    /*! Compute the shear stress */
-    void computeShearStress(const DeformationState* state, Matrix3& stress);
-  };
+  /*! Compute the shear stress */
+  void computeShearStress(const DeformationState* state, Matrix3& stress);
+};
 } // End namespace Uintah
-      
-#endif  // __BORJA_HYPERELASTIC_SHEAR_H__
 
+#endif // __BORJA_HYPERELASTIC_SHEAR_H__

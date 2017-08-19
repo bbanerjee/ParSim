@@ -25,7 +25,8 @@
  */
 /*
 
-This source code is for a simplified constitutive model, named ``SoilModelBrannon'',
+This source code is for a simplified constitutive model, named
+``SoilModelBrannon'',
 which has some of the basic features needed for modeling geomaterials.
 To better explain the source code, the comments in this file frequently refer
 to the equations in the following three references:
@@ -47,10 +48,10 @@ porosity).
 */
 
 // INCLUDE SECTION: tells the preprocessor to include the necessary files
-#include <CCA/Components/MPM/ConstitutiveModel/SoilModelBrannon.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_SoilModelBrannon.h>
+#include <CCA/Components/MPM/ConstitutiveModel/SoilModelBrannon.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ParameterNotFound.h>
@@ -195,7 +196,7 @@ SoilModelBrannon::clone()
 
 void
 SoilModelBrannon::initializeCMData(const Patch* patch, const MPMMaterial* matl,
-                        DataWarehouse* new_dw)
+                                   DataWarehouse* new_dw)
 {
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
@@ -235,7 +236,8 @@ SoilModelBrannon::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
 void
 SoilModelBrannon::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                 const PatchSet* patches, MPMLabel* lb) const
+                                            const PatchSet* patches,
+                                            MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   // Allocate the variables shared by all constitutive models
@@ -248,9 +250,11 @@ SoilModelBrannon::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-SoilModelBrannon::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
-                         ParticleLabelVariableMap* newState,
-                         ParticleSubset* delset, DataWarehouse* old_dw)
+SoilModelBrannon::allocateCMDataAdd(DataWarehouse* new_dw,
+                                    ParticleSubset* addset,
+                                    ParticleLabelVariableMap* newState,
+                                    ParticleSubset* delset,
+                                    DataWarehouse* old_dw)
 {
   // Initialize the data for the internal variable model
   d_intvar->allocateCMDataAdd(new_dw, addset, newState, delset, old_dw);
@@ -259,8 +263,9 @@ SoilModelBrannon::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addse
 // Compute stable timestep based on both the particle velocities
 // and wave speed
 void
-SoilModelBrannon::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
-                             DataWarehouse* new_dw)
+SoilModelBrannon::computeStableTimestep(const Patch* patch,
+                                        const MPMMaterial* matl,
+                                        DataWarehouse* new_dw)
 {
   Vector dx = patch->dCell();
   int dwi = matl->getDWIndex();
@@ -281,10 +286,7 @@ SoilModelBrannon::computeStableTimestep(const Patch* patch, const MPMMaterial* m
   double shear = d_cm.G0;
 
   // loop over the particles
-  for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
-       iter++) {
-    particleIndex idx = *iter;
-
+  for (int idx : *pset) {
     // Compute wave speed + particle velocity at each particle,
     // store the maximum
     c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pvolume[idx] / pmass[idx]);
@@ -305,15 +307,18 @@ SoilModelBrannon::computeStableTimestep(const Patch* patch, const MPMMaterial* m
 
 /*
 
-SoilModelBrannon::computeStressTensor is the core of the SoilModelBrannon model which computes
+SoilModelBrannon::computeStressTensor is the core of the SoilModelBrannon model
+which computes
 the updated stress at the end of the current timestep along with all other
 required data such plastic strain, elastic strain, cap position, etc.
 
 */
 
 void
-SoilModelBrannon::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
-                           DataWarehouse* old_dw, DataWarehouse* new_dw)
+SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
+                                      const MPMMaterial* matl,
+                                      DataWarehouse* old_dw,
+                                      DataWarehouse* new_dw)
 {
   // Define some constants
   Ghost::GhostType gac = Ghost::AroundCells;
@@ -445,10 +450,7 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches, const MPMMater
 
     // Loop over the particles of the current patch to compute particle
     // deformation gradient, volume, and density
-    for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
-         iter++) {
-      particleIndex idx = *iter;
-
+    for (int idx : *pset) {
       // re-zero the velocity gradient:
       pLocalized_new[idx] = pLocalized[idx];
       Matrix3 velGrad(0.0);
@@ -503,7 +505,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches, const MPMMater
       particleIndex idx = *iter;
 
       // A parameter to consider the thermal effects of the plastic work which
-      // is not coded in the current source code. Further development of SoilModelBrannon
+      // is not coded in the current source code. Further development of
+      // SoilModelBrannon
       // may ativate this feature.
       pdTdt[idx] = 0.0;
 
@@ -651,13 +654,15 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches, const MPMMater
         // in SoilModelBrannon.
 
         // Determine a characteristic length of the yield surface.
-        // If SoilModelBrannon is used as the Drucker-Prager model, which is determined by
+        // If SoilModelBrannon is used as the Drucker-Prager model, which is
+        // determined by
         // very small
         // \kappa value (pKappa1<-1.0e80), the characteristic length is two
         // times the vaue of
         // sqrt(J2) at I1=0, and if it lead to a small value the chracteristic
         // length equals
-        // two times peakI1. If two-surface SoilModelBrannon is used, the minumum of the
+        // two times peakI1. If two-surface SoilModelBrannon is used, the
+        // minumum of the
         // following two
         // values is considered as the characteristic length: "peakI1-X" and
         // "2*(fSlope*X-peakI1)"
@@ -1810,7 +1815,9 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches, const MPMMater
         // If not, an error message should be sent to the host code.
         if (sqrt(abs(f_new)) < 1.0e-1 * char_length_yield_surface) {
         } else {
-          cerr << "ERROR!  did not return to yield surface (SoilModelBrannon.cc)" << endl;
+          cerr
+            << "ERROR!  did not return to yield surface (SoilModelBrannon.cc)"
+            << endl;
           cerr << "J2_new= " << J2_new << endl;
           cerr << "I1_new= " << I1_new << endl;
           cerr << "pKappa_new[idx]= " << kappa_new << endl;
@@ -1839,10 +1846,7 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches, const MPMMater
     // Compute the total strain energy and the stable timestep based on both
     // the particle velocities and wave speed.
     // Loop over the particles of the current patch.
-    for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
-         iter++) {
-
-      particleIndex idx = *iter;
+    for (int idx : *pset) {
 
       // Use polar decomposition to compute the rotation and stretch tensors
       Matrix3 tensorU, tensorR;
@@ -1912,7 +1916,8 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches, const MPMMater
 }
 
 void
-SoilModelBrannon::computeInvariants(Matrix3& stress, Matrix3& S, double& I1, double& J2)
+SoilModelBrannon::computeInvariants(Matrix3& stress, Matrix3& S, double& I1,
+                                    double& J2)
 {
 
   // Compute the invariants of a second-order tensor
@@ -1931,8 +1936,8 @@ SoilModelBrannon::computeInvariants(Matrix3& stress, Matrix3& S, double& I1, dou
 }
 
 void
-SoilModelBrannon::computeInvariants(const Matrix3& stress, Matrix3& S, double& I1,
-                         double& J2)
+SoilModelBrannon::computeInvariants(const Matrix3& stress, Matrix3& S,
+                                    double& I1, double& J2)
 {
 
   // Compute the invariants of a second-order tensor
@@ -1952,8 +1957,8 @@ SoilModelBrannon::computeInvariants(const Matrix3& stress, Matrix3& S, double& I
 
 double
 SoilModelBrannon::YieldFunction(const Matrix3& stress, const double& fSlope,
-                     const double& kappa, const double& cap_radius,
-                     const double& peakI1)
+                                const double& kappa, const double& cap_radius,
+                                const double& peakI1)
 {
 
   // Compute the yield function.
@@ -1993,8 +1998,9 @@ SoilModelBrannon::YieldFunction(const Matrix3& stress, const double& fSlope,
 }
 
 double
-SoilModelBrannon::YieldFunction(Matrix3& stress, const double& fSlope, const double& kappa,
-                     const double& cap_radius, const double& peakI1)
+SoilModelBrannon::YieldFunction(Matrix3& stress, const double& fSlope,
+                                const double& kappa, const double& cap_radius,
+                                const double& peakI1)
 {
 
   // Compute the yield function.
@@ -2034,8 +2040,9 @@ SoilModelBrannon::YieldFunction(Matrix3& stress, const double& fSlope, const dou
 }
 
 void
-SoilModelBrannon::addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
-                                  const PatchSet*) const
+SoilModelBrannon::addRequiresDamageParameter(Task* task,
+                                             const MPMMaterial* matl,
+                                             const PatchSet*) const
 {
 
   // Require the damage parameter
@@ -2044,8 +2051,10 @@ SoilModelBrannon::addRequiresDamageParameter(Task* task, const MPMMaterial* matl
 }
 
 void
-SoilModelBrannon::getDamageParameter(const Patch* patch, ParticleVariable<int>& damage,
-                          int dwi, DataWarehouse* old_dw, DataWarehouse* new_dw)
+SoilModelBrannon::getDamageParameter(const Patch* patch,
+                                     ParticleVariable<int>& damage, int dwi,
+                                     DataWarehouse* old_dw,
+                                     DataWarehouse* new_dw)
 {
 
   // Get the damage parameter
@@ -2061,8 +2070,9 @@ SoilModelBrannon::getDamageParameter(const Patch* patch, ParticleVariable<int>& 
 }
 
 void
-SoilModelBrannon::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw)
+SoilModelBrannon::carryForward(const PatchSubset* patches,
+                               const MPMMaterial* matl, DataWarehouse* old_dw,
+                               DataWarehouse* new_dw)
 {
 
   // Carry forward the data.
@@ -2093,7 +2103,7 @@ SoilModelBrannon::carryForward(const PatchSubset* patches, const MPMMaterial* ma
 
 void
 SoilModelBrannon::addParticleState(std::vector<const VarLabel*>& from,
-                        std::vector<const VarLabel*>& to)
+                                   std::vector<const VarLabel*>& to)
 {
 
   // Push back all the particle variables associated with SoilModelBrannon.
@@ -2117,8 +2127,9 @@ SoilModelBrannon::addParticleState(std::vector<const VarLabel*>& from,
 }
 
 void
-SoilModelBrannon::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                     const PatchSet* patch) const
+SoilModelBrannon::addInitialComputesAndRequires(Task* task,
+                                                const MPMMaterial* matl,
+                                                const PatchSet* patch) const
 {
 
   // Add the computes and requires that are common to all explicit
@@ -2141,7 +2152,7 @@ SoilModelBrannon::addInitialComputesAndRequires(Task* task, const MPMMaterial* m
 
 void
 SoilModelBrannon::addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const
+                                         const PatchSet* patches) const
 {
 
   // Add the computes and requires that are common to all explicit
@@ -2170,15 +2181,16 @@ SoilModelBrannon::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-SoilModelBrannon::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
-                              const bool, const bool) const
+SoilModelBrannon::addComputesAndRequires(Task*, const MPMMaterial*,
+                                         const PatchSet*, const bool,
+                                         const bool) const
 {
 }
 
 double
 SoilModelBrannon::computeRhoMicroCM(double pressure, const double p_ref,
-                         const MPMMaterial* matl, double temperature,
-                         double rho_guess)
+                                    const MPMMaterial* matl, double temperature,
+                                    double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
   double p_gauge = pressure - p_ref;
@@ -2190,14 +2202,15 @@ SoilModelBrannon::computeRhoMicroCM(double pressure, const double p_ref,
   return rho_cur;
 
 #if 1
-//  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR SoilModelBrannon"<<endl;
+//  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR
+//  SoilModelBrannon"<<endl;
 #endif
 }
 
 void
-SoilModelBrannon::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
-                         double& dp_drho, double& tmp, const MPMMaterial* matl,
-                         double temperature)
+SoilModelBrannon::computePressEOSCM(double rho_cur, double& pressure,
+                                    double p_ref, double& dp_drho, double& tmp,
+                                    const MPMMaterial* matl, double temperature)
 {
 
   double bulk = d_cm.B0;
@@ -2232,7 +2245,8 @@ void
 SoilModelBrannon::initializeLocalMPMLabels()
 {
 
-  // Initialize all labels of the particle variables associated with SoilModelBrannon.
+  // Initialize all labels of the particle variables associated with
+  // SoilModelBrannon.
   pPlasticStrainLabel = VarLabel::create(
     "p.plasticStrain", ParticleVariable<double>::getTypeDescription());
   pPlasticStrainLabel_preReloc = VarLabel::create(
@@ -2267,8 +2281,9 @@ SoilModelBrannon::initializeLocalMPMLabels()
 // Compute effective bulk and lame modulus using the volumetric strain
 // (sum of elastic and plastic volume strain)
 void
-SoilModelBrannon::computeEffectiveModuli(const double& eps_v, double& bulk_modulus,
-                              double& lame_modulus) const
+SoilModelBrannon::computeEffectiveModuli(const double& eps_v,
+                                         double& bulk_modulus,
+                                         double& lame_modulus) const
 {
   // Initialize
   double p3p4 = d_cm.p3_crush_curve + d_cm.p4_fluid_effect;

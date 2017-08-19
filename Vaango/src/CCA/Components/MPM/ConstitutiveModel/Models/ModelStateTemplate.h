@@ -29,49 +29,55 @@
 
 namespace Vaango {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class ModelStateTemplate
-    \brief Template class for a structure that stores the local state data. 
-    \author Biswajit Banerjee \n
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class ModelStateTemplate
+  \brief Template class for a structure that stores the local state data.
+  \author Biswajit Banerjee \n
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  template <class Model>
-  class ModelStateTemplate {
+template <class Model>
+class ModelStateTemplate
+{
 
-  public:
+public:
+  Model d_model;
 
-    Model d_model;
+  ModelStateTemplate<Model>()
+    : d_model()
+  {
+  }
 
-    ModelStateTemplate<Model>() : d_model() {
-    }
+  ModelStateTemplate<Model>(const ModelStateTemplate<Model>& state)
+  {
+    d_model = state.d_model;
+  }
 
-    ModelStateTemplate<Model>(const ModelStateTemplate<Model>& state) {
-      d_model = state.d_model;
-    }
+  ModelStateTemplate<Model>(const ModelStateTemplate<Model>* state)
+  {
+    d_model = state->d_model;
+  }
 
-    ModelStateTemplate<Model>(const ModelStateTemplate<Model>* state) {
-      d_model = state->d_model;
-    }
+  ~ModelStateTemplate<Model>() {}
 
-    ~ModelStateTemplate<Model>() {
-    }
-
-    ModelStateTemplate<Model>& operator=(const ModelStateTemplate<Model>& state) {
-      if (this == &state) return *this;
-      d_model = state.d_model;
+  ModelStateTemplate<Model>& operator=(const ModelStateTemplate<Model>& state)
+  {
+    if (this == &state)
       return *this;
-    }
+    d_model = state.d_model;
+    return *this;
+  }
 
-    ModelStateTemplate<Model>* operator=(const ModelStateTemplate<Model>* state) {
-      if (this == state) return *this;
-      d_model = state->d_model;
-      return this;
-    }
-    
-  };
+  ModelStateTemplate<Model>* operator=(const ModelStateTemplate<Model>* state)
+  {
+    if (this == state)
+      return *this;
+    d_model = state->d_model;
+    return this;
+  }
+};
 
 } // End namespace Vaango
 
-#endif  // __MODEL_STATE_TEMPLATE_H__ 
+#endif // __MODEL_STATE_TEMPLATE_H__

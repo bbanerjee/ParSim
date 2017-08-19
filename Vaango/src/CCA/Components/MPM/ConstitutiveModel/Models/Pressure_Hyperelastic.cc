@@ -24,10 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-
-
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Hyperelastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Hyperelastic.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>
@@ -41,39 +39,38 @@ using std::endl;
 Pressure_Hyperelastic::Pressure_Hyperelastic()
 {
   d_bulkModulus = -1.0;
-} 
+}
 
 Pressure_Hyperelastic::Pressure_Hyperelastic(Uintah::ProblemSpecP&)
 {
   d_bulkModulus = -1.0;
-} 
-         
+}
+
 Pressure_Hyperelastic::Pressure_Hyperelastic(const Pressure_Hyperelastic* cm)
 {
   d_bulkModulus = cm->d_bulkModulus;
-} 
-         
-Pressure_Hyperelastic::~Pressure_Hyperelastic()
-{
 }
 
-void Pressure_Hyperelastic::outputProblemSpec(Uintah::ProblemSpecP& ps)
+Pressure_Hyperelastic::~Pressure_Hyperelastic() = default;
+
+void
+Pressure_Hyperelastic::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP eos_ps = ps->appendChild("pressure_model");
-  eos_ps->setAttribute("type","default_Hyper");
+  eos_ps->setAttribute("type", "default_Hyper");
 }
-         
 
 //////////
 // Calculate the pressure using the elastic constitutive equation
-double 
+double
 Pressure_Hyperelastic::computePressure(const Uintah::MPMMaterial* matl,
                                        const ModelStateBase* state_input,
-                                       const Uintah::Matrix3& ,
+                                       const Uintah::Matrix3&,
                                        const Uintah::Matrix3& rateOfDeformation,
                                        const double& delT)
 {
-  const ModelState_Default* state = dynamic_cast<const ModelState_Default*>(state_input);
+  const ModelState_Default* state =
+    dynamic_cast<const ModelState_Default*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -83,19 +80,20 @@ Pressure_Hyperelastic::computePressure(const Uintah::MPMMaterial* matl,
 
   double rho_0 = matl->getInitialDensity();
   double rho = state->density;
-  double J = rho_0/rho;
+  double J = rho_0 / rho;
   double kappa = state->bulkModulus;
 
-  double p = 0.5*kappa*(J - 1.0/J);
+  double p = 0.5 * kappa * (J - 1.0 / J);
   return p;
 }
 
-double 
+double
 Pressure_Hyperelastic::eval_dp_dJ(const Uintah::MPMMaterial* matl,
-                                  const double& detF, 
+                                  const double& detF,
                                   const ModelStateBase* state_input)
 {
-  const ModelState_Default* state = dynamic_cast<const ModelState_Default*>(state_input);
+  const ModelState_Default* state =
+    dynamic_cast<const ModelState_Default*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -106,106 +104,110 @@ Pressure_Hyperelastic::eval_dp_dJ(const Uintah::MPMMaterial* matl,
   double J = detF;
   double kappa = state->bulkModulus;
 
-  double dpdJ = 0.5*kappa*(1.0 + 1.0/(J*J));
+  double dpdJ = 0.5 * kappa * (1.0 + 1.0 / (J * J));
   return dpdJ;
 }
 
 // Compute pressure (option 1)
-double 
+double
 Pressure_Hyperelastic::computePressure(const double& rho_orig,
-                                 const double& rho_cur)
+                                       const double& rho_cur)
 {
   /*
   if (d_bulkModulus < 0.0) {
-    throw InternalError("Please initialize bulk modulus in EOS before computing pressure",
+    throw InternalError("Please initialize bulk modulus in EOS before computing
+  pressure",
                             __FILE__, __LINE__);
   }
   */
 
-  double J = rho_orig/rho_cur;
-  double p = 0.5*d_bulkModulus*(J - 1.0/J);
+  double J = rho_orig / rho_cur;
+  double p = 0.5 * d_bulkModulus * (J - 1.0 / J);
   return p;
 }
 
 // Compute pressure (option 2)
-void 
+void
 Pressure_Hyperelastic::computePressure(const double& rho_orig,
-                                 const double& rho_cur,
-                                 double& pressure,
-                                 double& dp_drho,
-                                 double& csquared)
+                                       const double& rho_cur, double& pressure,
+                                       double& dp_drho, double& csquared)
 {
   /*
   if (d_bulkModulus < 0.0) {
-    throw InternalError("Please initialize bulk modulus in EOS before computing pressure",
+    throw InternalError("Please initialize bulk modulus in EOS before computing
+  pressure",
                             __FILE__, __LINE__);
   }
   */
 
-  double J = rho_orig/rho_cur;
-  pressure = 0.5*d_bulkModulus*(J - 1.0/J);
-  double dp_dJ = 0.5*d_bulkModulus*(1.0 + 1.0/J*J);
-  dp_drho = -0.5*d_bulkModulus*(1.0 + J*J)/rho_orig;
-  csquared = dp_dJ/rho_cur;
+  double J = rho_orig / rho_cur;
+  pressure = 0.5 * d_bulkModulus * (J - 1.0 / J);
+  double dp_dJ = 0.5 * d_bulkModulus * (1.0 + 1.0 / J * J);
+  dp_drho = -0.5 * d_bulkModulus * (1.0 + J * J) / rho_orig;
+  csquared = dp_dJ / rho_cur;
 }
 
 // Compute bulk modulus
-double 
+double
 Pressure_Hyperelastic::computeInitialBulkModulus()
 {
-  return d_bulkModulus;  // return -1 if uninitialized
+  return d_bulkModulus; // return -1 if uninitialized
 }
 
-double 
+double
 Pressure_Hyperelastic::computeBulkModulus(const double& rho_orig,
-                                    const double& rho_cur)
+                                          const double& rho_cur)
 {
   /*
   if (d_bulkModulus < 0.0) {
-    throw InternalError("Please initialize bulk modulus in EOS before computing modulus",
+    throw InternalError("Please initialize bulk modulus in EOS before computing
+  modulus",
                             __FILE__, __LINE__);
   }
   */
 
-  double J = rho_orig/rho_cur;
-  double bulk = 0.5*d_bulkModulus*(1.0 + 1.0/J*J);
+  double J = rho_orig / rho_cur;
+  double bulk = 0.5 * d_bulkModulus * (1.0 + 1.0 / J * J);
   return bulk;
 }
 
 // Compute strain energy
-double 
+double
 Pressure_Hyperelastic::computeStrainEnergy(const double& rho_orig,
-                                     const double& rho_cur)
+                                           const double& rho_cur)
 {
   /*
   if (d_bulkModulus < 0.0) {
-    throw InternalError("Please initialize bulk modulus in EOS before computing energy",
+    throw InternalError("Please initialize bulk modulus in EOS before computing
+  energy",
                             __FILE__, __LINE__);
   }
   */
 
-  double J = rho_orig/rho_cur;
-  double U = 0.5*d_bulkModulus*(0.5*(J*J - 1.0) - log(J));
+  double J = rho_orig / rho_cur;
+  double U = 0.5 * d_bulkModulus * (0.5 * (J * J - 1.0) - log(J));
   return U;
 }
 
 // Compute density given pressure (tension +ve)
-double 
+double
 Pressure_Hyperelastic::computeDensity(const double& rho_orig,
-                                const double& pressure)
+                                      const double& pressure)
 {
   /*
   if (d_bulkModulus < 0.0) {
-    throw InternalError("Please initialize bulk modulus in EOS before computing density",
+    throw InternalError("Please initialize bulk modulus in EOS before computing
+  density",
                             __FILE__, __LINE__);
   }
   */
-  double numer1 = d_bulkModulus*d_bulkModulus + pressure*pressure;
+  double numer1 = d_bulkModulus * d_bulkModulus + pressure * pressure;
   double sqrtNumer = sqrt(numer1);
-  double rho = rho_orig/d_bulkModulus*(-pressure + sqrtNumer);
+  double rho = rho_orig / d_bulkModulus * (-pressure + sqrtNumer);
   if (rho < 0) {
     ostringstream desc;
-    desc << "Value of pressure (" << pressure << ") is beyond the range of validity of model" << endl
+    desc << "Value of pressure (" << pressure
+         << ") is beyond the range of validity of model" << endl
          << "  density = " << rho << endl;
     throw InvalidValue(desc.str(), __FILE__, __LINE__);
   }

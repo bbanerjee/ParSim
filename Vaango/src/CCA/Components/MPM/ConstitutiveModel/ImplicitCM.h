@@ -26,136 +26,118 @@
 #ifndef __IMPLICIT_CM_H__
 #define __IMPLICIT_CM_H__
 
-#include <Core/Grid/Variables/ComputeSet.h>
-#include <vector>
-#include <Core/Math/Matrix3.h>
-#include <Core/Math/Short27.h>
+#include <CCA/Components/MPM/MPMFlags.h>
+#include <CCA/Components/MPM/Solver.h>
 #include <Core/Containers/StaticArray.h>
 #include <Core/Grid/Variables/Array3.h>
-#include <CCA/Components/MPM/Solver.h>
+#include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Math/FastMatrix.h>
-#include <CCA/Components/MPM/MPMFlags.h>
+#include <Core/Math/Matrix3.h>
+#include <Core/Math/Short27.h>
+#include <Core/Parallel/ProcessorGroup.h>
+#include <vector>
 
 namespace Uintah {
 
-  class Task;
-  class Patch;
-  class VarLabel;
-  class MPMLabel;
-  class MPMFlags;
-  class MPMMaterial;
-  class DataWarehouse;
-  class ParticleSubset;
-  class ParticleVariableBase;
+class Task;
+class Patch;
+class VarLabel;
+class MPMLabel;
+class MPMFlags;
+class MPMMaterial;
+class DataWarehouse;
+class ParticleSubset;
+class ParticleVariableBase;
 
-  //////////////////////////////////////////////////////////////////////////
-  /*!
-    \class ImplicitCM
-   
-    \brief Base class for contitutive models.
+//////////////////////////////////////////////////////////////////////////
+/*!
+  \class ImplicitCM
 
-    \author Steven G. Parker \n
-    Department of Computer Science \n
-    University of Utah \n
-    Center for the Simulation of Accidental Fires and Explosions (C-SAFE) \n
+  \brief Base class for contitutive models.
 
-    Long description...
-  */
-  //////////////////////////////////////////////////////////////////////////
+  \author Steven G. Parker \n
+  Department of Computer Science \n
+  University of Utah \n
+  Center for the Simulation of Accidental Fires and Explosions (C-SAFE) \n
 
-  class ImplicitCM {
-  public:
-         
-    ImplicitCM();
-    ImplicitCM(const ImplicitCM* cm);
-    virtual ~ImplicitCM();
-         
-    virtual void computeStressTensorImplicit(const PatchSubset* patches,
-                                             const MPMMaterial* matl,
-                                             DataWarehouse* old_dw,
-                                             DataWarehouse* new_dw,
-                                             Solver* solver,
-                                             const bool recursion);
-         
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches,
-                                        const bool recursion,
-                                        const bool schedParent=true) const;
+  Long description...
+*/
+//////////////////////////////////////////////////////////////////////////
 
-    void carryForwardSharedDataImplicit(ParticleSubset* pset,
-                                        DataWarehouse*  old_dw,
-                                        DataWarehouse*  new_dw,
-                                        const MPMMaterial* matl);
+class ImplicitCM
+{
+public:
+  ImplicitCM();
+  ImplicitCM(const ImplicitCM* cm);
+  virtual ~ImplicitCM();
 
-  protected:
+  virtual void computeStressTensorImplicit(
+    const PatchSubset* patches, const MPMMaterial* matl, DataWarehouse* old_dw,
+    DataWarehouse* new_dw, Solver* solver, const bool recursion);
 
+  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                      const PatchSet* patches,
+                                      const bool recursion,
+                                      const bool schedParent = true) const;
 
-    void BnltDBnl(double Bnl[3][24], double sig[3][3], double Kg[24][24]) const;
+  void carryForwardSharedDataImplicit(ParticleSubset* pset,
+                                      DataWarehouse* old_dw,
+                                      DataWarehouse* new_dw,
+                                      const MPMMaterial* matl);
 
-    void BnltDBnlGIMP(double Bnl[3][81], double sig[3][3],
-                      double Kg[81][81]) const;
+protected:
+  void BnltDBnl(double Bnl[3][24], double sig[3][3], double Kg[24][24]) const;
 
-    void BtDB(const double B[6][24], const double D[6][6], 
-              double Km[24][24]) const;
+  void BnltDBnlGIMP(double Bnl[3][81], double sig[3][3],
+                    double Kg[81][81]) const;
 
-    void BtDBGIMP(const double B[6][81], const double D[6][6], 
-                  double Km[81][81]) const;
+  void BtDB(const double B[6][24], const double D[6][6],
+            double Km[24][24]) const;
 
-    void loadBMats(Array3<int> l2g, int dof[24], double B[6][24], 
-                   double Bnl[3][24], vector<Vector> d_S, 
-                   vector<IntVector> ni, double oodx[3]) const;
+  void BtDBGIMP(const double B[6][81], const double D[6][6],
+                double Km[81][81]) const;
 
-    void loadBMatsGIMP(Array3<int> l2g, int dof[81], double B[6][81], 
-                       double Bnl[3][81], vector<Vector> d_S, 
-                       vector<IntVector> ni, double oodx[3]) const;
+  void loadBMats(Array3<int> l2g, int dof[24], double B[6][24],
+                 double Bnl[3][24], vector<Vector> d_S, vector<IntVector> ni,
+                 double oodx[3]) const;
 
-    ///////////////////////////////////////////////////////////////////////
-    /*! Initialize the common quantities that all the implicit constituive
-     *  models compute : called by initializeCMData */
-    ///////////////////////////////////////////////////////////////////////
-    void initSharedDataForImplicit(const Patch* patch,
-                                   const MPMMaterial* matl,
-                                   DataWarehouse* new_dw);
+  void loadBMatsGIMP(Array3<int> l2g, int dof[81], double B[6][81],
+                     double Bnl[3][81], vector<Vector> d_S,
+                     vector<IntVector> ni, double oodx[3]) const;
 
+  ///////////////////////////////////////////////////////////////////////
+  /*! Initialize the common quantities that all the implicit constituive
+   *  models compute : called by initializeCMData */
+  ///////////////////////////////////////////////////////////////////////
+  void initSharedDataForImplicit(const Patch* patch, const MPMMaterial* matl,
+                                 DataWarehouse* new_dw);
 
-    /////////////////////////////////////////////////////////////////
-    /*! Computes and Requires common to all constitutive models that
-     *  do implicit time stepping : called by addComputesAndRequires */
-    /////////////////////////////////////////////////////////////////
-    void addSharedCRForImplicit(Task* task,
-                                const MaterialSubset* matlset,
-                                const bool reset) const;
+  /////////////////////////////////////////////////////////////////
+  /*! Computes and Requires common to all constitutive models that
+   *  do implicit time stepping : called by addComputesAndRequires */
+  /////////////////////////////////////////////////////////////////
+  void addSharedCRForImplicit(Task* task, const MaterialSubset* matlset,
+                              const bool reset) const;
 
-    void addSharedCRForImplicitHypo(Task* task,
-                                    const MaterialSubset* matlset,
-                                    const bool reset) const;
+  void addSharedCRForImplicitHypo(Task* task, const MaterialSubset* matlset,
+                                  const bool reset) const;
 
-    /////////////////////////////////////////////////////////////////
-    /*! Computes and Requires common to all constitutive models that
-     *  do implicit time stepping : called by addComputesAndRequires */
-    /////////////////////////////////////////////////////////////////
-    void addSharedCRForImplicit(Task* task,
-                                const MaterialSubset* matlset,
-                                const bool reset,
-                                const bool recurse,
-                                const bool SchedParent) const;
+  /////////////////////////////////////////////////////////////////
+  /*! Computes and Requires common to all constitutive models that
+   *  do implicit time stepping : called by addComputesAndRequires */
+  /////////////////////////////////////////////////////////////////
+  void addSharedCRForImplicit(Task* task, const MaterialSubset* matlset,
+                              const bool reset, const bool recurse,
+                              const bool SchedParent) const;
 
-    void addSharedCRForImplicitHypo(Task* task,
-                                    const MaterialSubset* matlset,
-                                    const bool reset,
-                                    const bool recurse,
-                                    const bool SchedParent) const;
+  void addSharedCRForImplicitHypo(Task* task, const MaterialSubset* matlset,
+                                  const bool reset, const bool recurse,
+                                  const bool SchedParent) const;
 
-    MPMLabel* d_lb;
-
-  };
+  MPMLabel* d_lb;
+};
 } // End namespace Uintah
-      
 
-
-#endif  
-
+#endif

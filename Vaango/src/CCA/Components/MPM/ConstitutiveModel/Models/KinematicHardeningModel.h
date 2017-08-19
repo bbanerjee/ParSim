@@ -27,135 +27,123 @@
 #ifndef __BB_KINEMATIC_HARDENING_MODEL_H__
 #define __BB_KINEMATIC_HARDENING_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 
-#include <Core/Math/Matrix3.h>
-#include <vector>
-#include <Core/Grid/Variables/ParticleVariable.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Task.h>
+#include <Core/Grid/Variables/ParticleVariable.h>
 #include <Core/Grid/Variables/VarLabel.h>
-
-
+#include <Core/Math/Matrix3.h>
+#include <vector>
 
 namespace Vaango {
 
-  ///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+/*!
+  \class  KinematicHardeningModel
+  \brief  Abstract Base class for kinematic hardening models
+  \author Biswajit Banerjee, \n
+          C-SAFE and Department of Mechanical Engineering, \n
+          University of Utah,\n
+  \warn   Assumes vonMises yield condition and the associated flow rule for
+          all cases other than Gurson plasticity.
+*/
+///////////////////////////////////////////////////////////////////////////
+
+class KinematicHardeningModel
+{
+
+protected:
+  InternalVariableModel* d_intvar;
+
+public:
+  const Uintah::VarLabel* pBackStressLabel;
+  const Uintah::VarLabel* pBackStressLabel_preReloc;
+
+public:
+  KinematicHardeningModel();
+  virtual ~KinematicHardeningModel();
+
+  virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
+
+  /////////////////////////////////////////////////////////////////////////
   /*!
-    \class  KinematicHardeningModel
-    \brief  Abstract Base class for kinematic hardening models 
-    \author Biswajit Banerjee, \n
-            C-SAFE and Department of Mechanical Engineering, \n
-            University of Utah,\n
-    \warn   Assumes vonMises yield condition and the associated flow rule for 
-            all cases other than Gurson plasticity.
-  */
-  ///////////////////////////////////////////////////////////////////////////
+    \brief Get the model parameters
+   */
+  /////////////////////////////////////////////////////////////////////////
+  virtual std::map<std::string, double> getParameters() const = 0;
 
-  class KinematicHardeningModel {
+  //////////
+  /*! \brief Calculate the back stress */
+  /* Note that df_dsigma_normal_new is the normalized value of df_dsigma */
+  //////////
+  virtual void computeBackStress(const ModelStateBase* state,
+                                 const double& delT,
+                                 const Uintah::particleIndex idx,
+                                 const double& delLambda,
+                                 const Uintah::Matrix3& df_dsigma_normal_new,
+                                 const Uintah::Matrix3& backStress_old,
+                                 Uintah::Matrix3& backStress_new) = 0;
 
-  protected:
+  virtual void computeBackStress(const ModelStateBase* state,
+                                 Uintah::Matrix3& backStress_new)
+  {
+  }
 
-    InternalVariableModel* d_intvar;
+  /*! Compute the direction of back stress evolution (\f$h^beta\f$)
+      for the equation \f$ d/dt(\beta) = d/dt(\gamma) h^beta \f$ */
+  virtual void eval_h_beta(const Uintah::Matrix3& df_dsigma,
+                           const ModelStateBase* state,
+                           Uintah::Matrix3& h_beta) = 0;
 
-  public:
+  /*!  Data management apparatus */
+  virtual void addInitialComputesAndRequires(
+    Uintah::Task* task, const Uintah::MPMMaterial* matl,
+    const Uintah::PatchSet* patches) const;
 
-    const Uintah::VarLabel* pBackStressLabel;
-    const Uintah::VarLabel* pBackStressLabel_preReloc;
+  virtual void addComputesAndRequires(Uintah::Task* task,
+                                      const Uintah::MPMMaterial* matl,
+                                      const Uintah::PatchSet* patches) const;
 
-  public:
-         
-    KinematicHardeningModel();
-    virtual ~KinematicHardeningModel();
+  virtual void addComputesAndRequires(Uintah::Task* task,
+                                      const Uintah::MPMMaterial* matl,
+                                      const Uintah::PatchSet* patches,
+                                      bool recurse) const;
 
-    virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
-         
-    /////////////////////////////////////////////////////////////////////////
-    /*!
-      \brief Get the model parameters
-     */
-    /////////////////////////////////////////////////////////////////////////
-    virtual std::map<std::string, double> getParameters() const = 0 ;
+  virtual void allocateCMDataAddRequires(Uintah::Task* task,
+                                         const Uintah::MPMMaterial* matl,
+                                         const Uintah::PatchSet* patch,
+                                         Uintah::MPMLabel* lb) const;
 
-    //////////
-    /*! \brief Calculate the back stress */
-    /* Note that df_dsigma_normal_new is the normalized value of df_dsigma */
-    //////////
-    virtual
-    void computeBackStress(const ModelStateBase* state,
-                           const double& delT,
-                           const Uintah::particleIndex idx,
-                           const double& delLambda,
-                           const Uintah::Matrix3& df_dsigma_normal_new,
-                           const Uintah::Matrix3& backStress_old,
-                           Uintah::Matrix3& backStress_new) = 0;
- 
-    virtual
-    void computeBackStress(const ModelStateBase* state,
-                           Uintah::Matrix3& backStress_new) {}
- 
-    /*! Compute the direction of back stress evolution (\f$h^beta\f$) 
-        for the equation \f$ d/dt(\beta) = d/dt(\gamma) h^beta \f$ */
-    virtual
-    void eval_h_beta(const Uintah::Matrix3& df_dsigma,
-                     const ModelStateBase* state,
-                     Uintah::Matrix3& h_beta) = 0;
+  virtual void allocateCMDataAdd(
+    Uintah::DataWarehouse* new_dw, Uintah::ParticleSubset* addset,
+    std::map<const Uintah::VarLabel*, Uintah::ParticleVariableBase*>* newState,
+    Uintah::ParticleSubset* delset, Uintah::DataWarehouse* old_dw);
 
-    /*!  Data management apparatus */
-    virtual void addInitialComputesAndRequires(Uintah::Task* task,
-                                               const Uintah::MPMMaterial* matl,
-                                               const Uintah::PatchSet* patches) const;
+  virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                                std::vector<const Uintah::VarLabel*>& to);
 
-    virtual void addComputesAndRequires(Uintah::Task* task,
-                                        const Uintah::MPMMaterial* matl,
-                                        const Uintah::PatchSet* patches) const;
+  virtual void initializeBackStress(Uintah::ParticleSubset* pset,
+                                    Uintah::DataWarehouse* new_dw);
 
-    virtual void addComputesAndRequires(Uintah::Task* task,
-                                        const Uintah::MPMMaterial* matl,
-                                        const Uintah::PatchSet* patches,
-                                        bool recurse) const;
+  virtual void initializeLocalVariables(
+    const Uintah::Patch* patch, Uintah::ParticleSubset* pset,
+    Uintah::DataWarehouse* new_dw,
+    Uintah::constParticleVariable<double>& pVolume){};
 
+  virtual void getBackStress(
+    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* old_dw,
+    Uintah::constParticleVariable<Uintah::Matrix3>& pBackStress);
 
-    virtual void allocateCMDataAddRequires(Uintah::Task* task, 
-                                           const Uintah::MPMMaterial* matl,
-                                           const Uintah::PatchSet* patch, 
-                                           Uintah::MPMLabel* lb) const;
+  virtual void allocateAndPutBackStress(
+    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* new_dw,
+    Uintah::ParticleVariable<Uintah::Matrix3>& pBackStress);
 
-    virtual void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
-                                   Uintah::ParticleSubset* addset,
-                                   std::map<const Uintah::VarLabel*, 
-                                     Uintah::ParticleVariableBase*>* newState,
-                                   Uintah::ParticleSubset* delset,
-                                   Uintah::DataWarehouse* old_dw);
-
-    virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                                  std::vector<const Uintah::VarLabel*>& to);
-
-    virtual void initializeBackStress(Uintah::ParticleSubset* pset,
-                                      Uintah::DataWarehouse* new_dw);
-
-    virtual void initializeLocalVariables(const Uintah::Patch* patch,
-                                          Uintah::ParticleSubset* pset,
-                                          Uintah::DataWarehouse* new_dw,
-                                          Uintah::constParticleVariable<double>& pVolume) {};
-
-    virtual void getBackStress(Uintah::ParticleSubset* pset,
-                               Uintah::DataWarehouse* old_dw,
-                               Uintah::constParticleVariable<Uintah::Matrix3>& pBackStress);
-
-    virtual void allocateAndPutBackStress(Uintah::ParticleSubset* pset,
-                                          Uintah::DataWarehouse* new_dw, 
-                                          Uintah::ParticleVariable<Uintah::Matrix3>& pBackStress);
-
-    virtual void allocateAndPutRigid(Uintah::ParticleSubset* pset,
-                                     Uintah::DataWarehouse* new_dw); 
-
-  };
+  virtual void allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                                   Uintah::DataWarehouse* new_dw);
+};
 } // End namespace Uintah
-      
 
-
-#endif  // __BB_KINEMATIC_HARDENING_MODEL_H__
-
+#endif // __BB_KINEMATIC_HARDENING_MODEL_H__

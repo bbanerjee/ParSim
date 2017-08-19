@@ -22,9 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Water.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Water.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>
@@ -34,48 +33,50 @@ using namespace Vaango;
 
 Pressure_Water::Pressure_Water()
 {
-  d_p0 = 0.0001;  // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec later.
+  d_p0 = 0.0001; // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec
+                 // later.
   d_K0 = 2.21e9;
   d_n = 6.029;
-  d_bulkModulus = d_K0;  
-} 
+  d_bulkModulus = d_K0;
+}
 
 Pressure_Water::Pressure_Water(Uintah::ProblemSpecP&)
 {
-  d_p0 = 0.0001;  // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec later.
+  d_p0 = 0.0001; // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec
+                 // later.
   d_K0 = 2.21e9;
   d_n = 6.029;
-  d_bulkModulus = d_K0;  
-} 
-         
+  d_bulkModulus = d_K0;
+}
+
 Pressure_Water::Pressure_Water(const Pressure_Water* cm)
 {
   d_p0 = cm->d_p0;
   d_K0 = cm->d_K0;
   d_n = cm->d_n;
   d_bulkModulus = cm->d_bulkModulus;
-} 
-         
-Pressure_Water::~Pressure_Water()
-{
 }
 
-void Pressure_Water::outputProblemSpec(Uintah::ProblemSpecP& ps)
+Pressure_Water::~Pressure_Water() = default;
+
+void
+Pressure_Water::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP eos_ps = ps->appendChild("pressure_model");
-  eos_ps->setAttribute("type","water");
+  eos_ps->setAttribute("type", "water");
 }
-         
+
 //////////
 // Calculate the pressure using the elastic constitutive equation
-double 
+double
 Pressure_Water::computePressure(const Uintah::MPMMaterial* matl,
                                 const ModelStateBase* state_input,
-                                const Uintah::Matrix3& ,
+                                const Uintah::Matrix3&,
                                 const Uintah::Matrix3& rateOfDeformation,
                                 const double& delT)
 {
-  const ModelState_Arena* state = dynamic_cast<const ModelState_Arena*>(state_input);
+  const ModelState_Arena* state =
+    dynamic_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -90,44 +91,41 @@ Pressure_Water::computePressure(const Uintah::MPMMaterial* matl,
 }
 
 // Compute pressure (option 1)
-double 
-Pressure_Water::computePressure(const double& rho_orig,
-                                const double& rho_cur)
+double
+Pressure_Water::computePressure(const double& rho_orig, const double& rho_cur)
 {
-  double J = rho_orig/rho_cur;
-  double p = (J > 1.0) ? d_p0 : d_p0 + d_K0/d_n*(std::pow(J, -d_n) - 1);
+  double J = rho_orig / rho_cur;
+  double p = (J > 1.0) ? d_p0 : d_p0 + d_K0 / d_n * (std::pow(J, -d_n) - 1);
   return p;
 }
 
 // Compute pressure (option 2)
-void 
-Pressure_Water::computePressure(const double& rho_orig,
-                                const double& rho_cur,
-                                double& pressure,
-                                double& dp_drho,
+void
+Pressure_Water::computePressure(const double& rho_orig, const double& rho_cur,
+                                double& pressure, double& dp_drho,
                                 double& csquared)
 {
-  double J = rho_orig/rho_cur;
+  double J = rho_orig / rho_cur;
   if (J > 1.0) {
     pressure = d_p0;
     double dp_dJ = -d_K0;
-    dp_drho = d_K0/rho_cur;
-    csquared = dp_dJ/rho_cur;
+    dp_drho = d_K0 / rho_cur;
+    csquared = dp_dJ / rho_cur;
   } else {
-    pressure = d_p0 + d_K0/d_n*(std::pow(J, -d_n) - 1);
-    double dp_dJ = -d_K0*std::pow(J, -(d_n+1));
-    dp_drho = d_K0/rho_cur*std::pow(J, -d_n);
-    csquared = dp_dJ/rho_cur;
+    pressure = d_p0 + d_K0 / d_n * (std::pow(J, -d_n) - 1);
+    double dp_dJ = -d_K0 * std::pow(J, -(d_n + 1));
+    dp_drho = d_K0 / rho_cur * std::pow(J, -d_n);
+    csquared = dp_dJ / rho_cur;
   }
 }
 
-// Compute derivative of pressure 
-double 
-Pressure_Water::eval_dp_dJ(const Uintah::MPMMaterial* matl,
-                           const double& detF, 
+// Compute derivative of pressure
+double
+Pressure_Water::eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
                            const ModelStateBase* state_input)
 {
-  const ModelState_Arena* state = dynamic_cast<const ModelState_Arena*>(state_input);
+  const ModelState_Arena* state =
+    dynamic_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -136,25 +134,25 @@ Pressure_Water::eval_dp_dJ(const Uintah::MPMMaterial* matl,
   }
 
   double J = detF;
-  double dpdJ = (J > 1.0) ? -d_K0 : -d_K0*std::pow(J, -(d_n+1));
+  double dpdJ = (J > 1.0) ? -d_K0 : -d_K0 * std::pow(J, -(d_n + 1));
   return dpdJ;
 }
 
 // Compute bulk modulus
-double 
+double
 Pressure_Water::computeInitialBulkModulus()
 {
-  return d_K0;  
+  return d_K0;
 }
 
-double 
+double
 Pressure_Water::computeBulkModulus(const double& pressure)
 {
-  d_bulkModulus = (pressure < d_p0) ? d_K0 : d_K0 + d_n*(pressure - d_p0);
+  d_bulkModulus = (pressure < d_p0) ? d_K0 : d_K0 + d_n * (pressure - d_p0);
   return d_bulkModulus;
 }
 
-double 
+double
 Pressure_Water::computeBulkModulus(const double& rho_orig,
                                    const double& rho_cur)
 {
@@ -163,10 +161,11 @@ Pressure_Water::computeBulkModulus(const double& rho_orig,
   return d_bulkModulus;
 }
 
-double 
+double
 Pressure_Water::computeBulkModulus(const ModelStateBase* state_input)
 {
-  const ModelState_Arena* state = dynamic_cast<const ModelState_Arena*>(state_input);
+  const ModelState_Arena* state =
+    dynamic_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -180,39 +179,40 @@ Pressure_Water::computeBulkModulus(const ModelStateBase* state_input)
 }
 
 // Compute strain energy
-double 
+double
 Pressure_Water::computeStrainEnergy(const double& rho_orig,
                                     const double& rho_cur)
 {
-  throw InternalError("ComputeStrainEnergy has not been implemented yet for Water.",
-    __FILE__, __LINE__);
+  throw InternalError(
+    "ComputeStrainEnergy has not been implemented yet for Water.", __FILE__,
+    __LINE__);
   return 0.0;
 }
 
-double 
+double
 Pressure_Water::computeStrainEnergy(const ModelStateBase* state)
 {
-  throw InternalError("ComputeStrainEnergy has not been implemented yet for Water.",
-    __FILE__, __LINE__);
+  throw InternalError(
+    "ComputeStrainEnergy has not been implemented yet for Water.", __FILE__,
+    __LINE__);
   return 0.0;
 }
 
-
 // Compute density given pressure (tension +ve)
-double 
-Pressure_Water::computeDensity(const double& rho_orig,
-                               const double& pressure)
+double
+Pressure_Water::computeDensity(const double& rho_orig, const double& pressure)
 {
   throw InternalError("ComputeDensity has not been implemented yet for Water.",
-    __FILE__, __LINE__);
+                      __FILE__, __LINE__);
   return 0.0;
 }
 
 //  Calculate the derivative of p with respect to epse_v
-double 
+double
 Pressure_Water::computeDpDepse_v(const ModelStateBase* state_input) const
 {
-  const ModelState_Arena* state = dynamic_cast<const ModelState_Arena*>(state_input);
+  const ModelState_Arena* state =
+    dynamic_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -221,7 +221,7 @@ Pressure_Water::computeDpDepse_v(const ModelStateBase* state_input) const
   }
 
   double p = state->pbar_w;
-  double dp_depse_v = (p < d_p0) ? d_K0 : d_K0 + d_n*(p - d_p0);
+  double dp_depse_v = (p < d_p0) ? d_K0 : d_K0 + d_n * (p - d_p0);
   return dp_depse_v;
 }
 
@@ -237,12 +237,12 @@ Pressure_Water::computeDpDepse_v(const ModelStateBase* state_input) const
  *   p0 = initial pressure
  *
  * Returns:
- *   eps_e_v = current elastic volume strain 
- */ 
+ *   eps_e_v = current elastic volume strain
+ */
 ////////////////////////////////////////////////////////////////////////
-double 
+double
 Pressure_Water::computeElasticVolumetricStrain(const double& pp,
-                                               const double& p0) 
+                                               const double& p0)
 {
 
   // ASSERT(!(pp < 0))
@@ -252,8 +252,8 @@ Pressure_Water::computeElasticVolumetricStrain(const double& pp,
   double Kw = computeBulkModulus(pp);
 
   // Compute volume strain
-  double eps_e_v0 = (p0 < d_p0) ? 0.0 : -(p0 - d_p0)/Kw0;
-  double eps_e_v = (pp < d_p0) ? 0.0 : -(pp - d_p0)/Kw;
+  double eps_e_v0 = (p0 < d_p0) ? 0.0 : -(p0 - d_p0) / Kw0;
+  double eps_e_v = (pp < d_p0) ? 0.0 : -(pp - d_p0) / Kw;
   return (eps_e_v - eps_e_v0);
 }
 
@@ -269,12 +269,12 @@ Pressure_Water::computeElasticVolumetricStrain(const double& pp,
  *   p0 = initial pressure
  *
  * Returns:
- *   exp(eps_e_v) = exponential of the current elastic volume strain 
- */ 
+ *   exp(eps_e_v) = exponential of the current elastic volume strain
+ */
 ////////////////////////////////////////////////////////////////////////
-double 
+double
 Pressure_Water::computeExpElasticVolumetricStrain(const double& pp,
-                                                  const double& p0) 
+                                                  const double& p0)
 {
   // ASSERT(!(pp < 0))
 
@@ -288,7 +288,7 @@ Pressure_Water::computeExpElasticVolumetricStrain(const double& pp,
  * Function: computeDerivExpElasticVolumetricStrain
  *
  * Purpose:
- *   Compute the pressure drivative of the exponential of 
+ *   Compute the pressure drivative of the exponential of
  *   the volumetric strain at a given pressure (p)
  *
  * Inputs:
@@ -300,13 +300,13 @@ Pressure_Water::computeExpElasticVolumetricStrain(const double& pp,
  *
  * Returns:
  *   deriv = d/dp[exp(eps_e_v)] = derivative of the exponential of
- *                                current elastic volume strain 
- */ 
+ *                                current elastic volume strain
+ */
 ////////////////////////////////////////////////////////////////////////
-double 
+double
 Pressure_Water::computeDerivExpElasticVolumetricStrain(const double& pp,
                                                        const double& p0,
-                                                       double& exp_eps_e_v) 
+                                                       double& exp_eps_e_v)
 {
 
   // ASSERT(!(pp < 0))
@@ -318,6 +318,5 @@ Pressure_Water::computeDerivExpElasticVolumetricStrain(const double& pp,
   double Kw = computeBulkModulus(pp);
   std::cout << "p = " << pp << " Kw = " << Kw << std::endl;
 
-  return -exp_eps_e_v/Kw;
+  return -exp_eps_e_v / Kw;
 }
-

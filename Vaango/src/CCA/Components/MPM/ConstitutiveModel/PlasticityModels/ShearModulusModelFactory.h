@@ -53,24 +53,24 @@
 
 namespace Uintah {
 
-  // Forward declarations
-  class ShearModulusModel;
+// Forward declarations
+class ShearModulusModel;
 
-  /*! \class ShearModulusModelFactory
-   *  \brief Creates instances of Shear Modulus Models
-   *  \author  Biswajit Banerjee,
-   *  \author  C-SAFE and Department of Mechanical Engineering,
-   *  \author  University of Utah.
-  */
+/*! \class ShearModulusModelFactory
+ *  \brief Creates instances of Shear Modulus Models
+ *  \author  Biswajit Banerjee,
+ *  \author  C-SAFE and Department of Mechanical Engineering,
+ *  \author  University of Utah.
+*/
 
-  class ShearModulusModelFactory {
+class ShearModulusModelFactory
+{
 
-  public:
-
-    //! Create a shear modulus model from the input file problem specification.
-    static ShearModulusModel* create(ProblemSpecP& ps);
-    static ShearModulusModel* createCopy(const ShearModulusModel* yc);
-  };
+public:
+  //! Create a shear modulus model from the input file problem specification.
+  static ShearModulusModel* create(ProblemSpecP& ps);
+  static ShearModulusModel* createCopy(const ShearModulusModel* yc);
+};
 } // End namespace Uintah
-      
+
 #endif /* _SHEARMODULUSMODELFACTORY_H_ */

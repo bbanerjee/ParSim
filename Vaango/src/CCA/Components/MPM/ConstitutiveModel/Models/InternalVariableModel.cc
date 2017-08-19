@@ -24,16 +24,10 @@
  * IN THE SOFTWARE.
  */
 
-
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
 
 using namespace Vaango;
 
-InternalVariableModel::InternalVariableModel()
-{
-}
+InternalVariableModel::InternalVariableModel() = default;
 
-InternalVariableModel::~InternalVariableModel()
-{
-}
+InternalVariableModel::~InternalVariableModel() = default;

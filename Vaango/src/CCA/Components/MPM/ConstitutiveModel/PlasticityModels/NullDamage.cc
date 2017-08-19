@@ -46,7 +46,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #include "NullDamage.h"
 #include <cmath>
 
@@ -54,48 +53,41 @@ using namespace Uintah;
 
 NullDamage::NullDamage()
 {
-} 
-         
-NullDamage::NullDamage(ProblemSpecP& )
-{
-} 
-         
-NullDamage::NullDamage(const NullDamage* )
-{
-} 
-         
-NullDamage::~NullDamage()
+}
+
+NullDamage::NullDamage(ProblemSpecP&)
 {
 }
 
-void NullDamage::outputProblemSpec(ProblemSpecP& ps)
+NullDamage::NullDamage(const NullDamage*)
+{
+}
+
+NullDamage::~NullDamage() = default;
+
+void
+NullDamage::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP damage_ps = ps->appendChild("damage_model");
-  damage_ps->setAttribute("type","null");
+  damage_ps->setAttribute("type", "null");
 }
 
-         
-inline double 
+inline double
 NullDamage::initialize()
 {
   return 0.0;
 }
 
 inline bool
-NullDamage:: hasFailed(double )
+NullDamage::hasFailed(double)
 {
   return false;
 }
-    
-double 
-NullDamage::computeScalarDamage(const double& ,
-                                const Matrix3& ,
-                                const double& ,
-                                const double& ,
-                                const MPMMaterial*,
-                                const double& ,
-                                const double& )
+
+double
+NullDamage::computeScalarDamage(const double&, const Matrix3&, const double&,
+                                const double&, const MPMMaterial*,
+                                const double&, const double&)
 {
   return 0.0;
 }
- 

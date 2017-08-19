@@ -23,129 +23,110 @@
  * IN THE SOFTWARE.
  */
 
-//  Membrane.h 
-//  class ConstitutiveModel ConstitutiveModel data type -- 3D - 
+//  Membrane.h
+//  class ConstitutiveModel ConstitutiveModel data type -- 3D -
 //  holds ConstitutiveModel
 //  information for the FLIP technique:
 //    This is for Compressible NeoHookean materials
 //    Features:
 //      Usage:
 
-
-
 #ifndef __MEMBRANE_CONSTITUTIVE_MODEL_H__
 #define __MEMBRANE_CONSTITUTIVE_MODEL_H__
 
-
-#include <cmath>
-#include "ConstitutiveModel.h"  
+#include "ConstitutiveModel.h"
 #include <Core/Math/Matrix3.h>
+#include <cmath>
 #include <vector>
 
 namespace Uintah {
-  class Membrane : public ConstitutiveModel {
-  private:
-    // Create datatype for storing model parameters
-  public:
-    struct CMData {
-      double Bulk;
-      double Shear;
-    };
-  private:
-    CMData d_initialData;
+class Membrane : public ConstitutiveModel
+{
+private:
+  // Create datatype for storing model parameters
+public:
+  struct CMData
+  {
+    double Bulk;
+    double Shear;
+  };
 
-    // Prevent copying of this class
-    // copy constructor
-    //Membrane(const Membrane &cm);
-    Membrane& operator=(const Membrane &cm);
+private:
+  CMData d_initialData;
 
-  public:
-    // constructors
-    Membrane(ProblemSpecP& ps, MPMFlags* flag);
-    Membrane(const Membrane* cm);
+  // Prevent copying of this class
+  // copy constructor
+  // Membrane(const Membrane &cm);
+  Membrane& operator=(const Membrane& cm);
 
-    // destructor
-    virtual ~Membrane();
+public:
+  // constructors
+  Membrane(ProblemSpecP& ps, MPMFlags* flag);
+  Membrane(const Membrane* cm);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag = true);
+  // destructor
+  ~Membrane() override;
 
-    // clone
-    Membrane* clone();
+  void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
-    // compute stable timestep for this patch
-    virtual void computeStableTimestep(const Patch* patch,
-                                       const MPMMaterial* matl,
-                                       DataWarehouse* new_dw);
+  // clone
+  Membrane* clone() override;
 
-    // compute stress at each particle in the patch
-    virtual void computeStressTensor(const PatchSubset* patches,
+  // compute stable timestep for this patch
+  virtual void computeStableTimestep(const Patch* patch,
                                      const MPMMaterial* matl,
-                                     DataWarehouse* old_dw,
                                      DataWarehouse* new_dw);
 
-    // initialize  each particle's constitutive model data
-    virtual void initializeCMData(const Patch* patch,
-                                  const MPMMaterial* matl,
-                                  DataWarehouse* new_dw);
+  // compute stress at each particle in the patch
+  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw) override;
 
-    virtual void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                           const PatchSet* patch, 
-                                           MPMLabel* lb) const;
+  // initialize  each particle's constitutive model data
+  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
+                        DataWarehouse* new_dw) override;
 
+  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+                                 const PatchSet* patch,
+                                 MPMLabel* lb) const override;
 
-    virtual void allocateCMDataAdd(DataWarehouse* new_dw,
-                                   ParticleSubset* subset,
-                                   ParticleLabelVariableMap* newState,
-                                   ParticleSubset* delset,
-                                   DataWarehouse* old_dw);
+  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
+                         ParticleLabelVariableMap* newState,
+                         ParticleSubset* delset,
+                         DataWarehouse* old_dw) override;
 
+  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                     const PatchSet* patches) const override;
 
-    virtual void addInitialComputesAndRequires(Task* task,
-                                               const MPMMaterial* matl,
-                                               const PatchSet* patches) const;
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches) const;
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches, const bool recursion,
+                              const bool schedParent = true) const override;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches,
-                                        const bool recursion,
-                                        const bool schedParent=true) const;
+  double computeRhoMicroCM(double pressure, const double p_ref,
+                           const MPMMaterial* matl, double temperature,
+                           double rho_guess) override;
 
-    virtual double computeRhoMicroCM(double pressure,
-                                     const double p_ref,
-                                     const MPMMaterial* matl,
-                                     double temperature,
-                                     double rho_guess);
+  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
+                         double& dp_drho, double& ss_new,
+                         const MPMMaterial* matl, double temperature) override;
 
-    virtual void computePressEOSCM(double rho_m, double& press_eos,
-                                   double p_ref,
-                                   double& dp_drho, double& ss_new,
-                                   const MPMMaterial* matl, 
-                                   double temperature);
+  double getCompressibility() override;
 
-    virtual double getCompressibility();
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
 
-
-    virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                  std::vector<const VarLabel*>& to);
-
-
-    const VarLabel* pTang1Label;
-    const VarLabel* pTang2Label;
-    const VarLabel* pNormLabel;
-    const VarLabel* defGradInPlaneLabel;
-    const VarLabel* pTang1Label_preReloc;
-    const VarLabel* pTang2Label_preReloc;
-    const VarLabel* pNormLabel_preReloc;
-    const VarLabel* defGradInPlaneLabel_preReloc;
-
-  };
+  const VarLabel* pTang1Label;
+  const VarLabel* pTang2Label;
+  const VarLabel* pNormLabel;
+  const VarLabel* defGradInPlaneLabel;
+  const VarLabel* pTang1Label_preReloc;
+  const VarLabel* pTang2Label_preReloc;
+  const VarLabel* pNormLabel_preReloc;
+  const VarLabel* defGradInPlaneLabel_preReloc;
+};
 } // End namespace Uintah
-      
 
-
-#endif  // __MEMBRANE_CONSTITUTIVE_MODEL_H__ 
-
+#endif // __MEMBRANE_CONSTITUTIVE_MODEL_H__

@@ -9,10 +9,10 @@
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
 
-#include <string>
-#include <map>
-#include <vector>
 #include <iostream>
+#include <map>
+#include <string>
+#include <vector>
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
@@ -22,35 +22,26 @@ using Uintah::ProblemSpec;
 using Uintah::ProblemSpecP;
 using Uintah::Matrix3;
 
-
-
-int main()
+int
+main()
 {
   // Create a new document
   xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
 
   // Create root node
-  xmlNodePtr rootNode = xmlNewNode(NULL, BAD_CAST "elastic_moduli_model");
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "elastic_moduli_model");
   xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "arena");
   xmlDocSetRootElement(doc, rootNode);
 
   // Create a child node
-  xmlNewChild(rootNode, NULL, BAD_CAST "b0",
-              BAD_CAST "0.00290858181781614");
-  xmlNewChild(rootNode, NULL, BAD_CAST "b1",
-              BAD_CAST "0.47312420784766");
-  xmlNewChild(rootNode, NULL, BAD_CAST "b2",
-              BAD_CAST "1.50567779375549");
-  xmlNewChild(rootNode, NULL, BAD_CAST "b3",
-              BAD_CAST "2.57284042409447");
-  xmlNewChild(rootNode, NULL, BAD_CAST "b4",
-              BAD_CAST "2.07992105987609");
-  xmlNewChild(rootNode, NULL, BAD_CAST "G0",
-              BAD_CAST "1.0e8");
-  xmlNewChild(rootNode, NULL, BAD_CAST "nu1",
-              BAD_CAST "0.35");
-  xmlNewChild(rootNode, NULL, BAD_CAST "nu2",
-              BAD_CAST "-0.35");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "b0", BAD_CAST "0.00290858181781614");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "b1", BAD_CAST "0.47312420784766");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "b2", BAD_CAST "1.50567779375549");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "b3", BAD_CAST "2.57284042409447");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "b4", BAD_CAST "2.07992105987609");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "G0", BAD_CAST "1.0e8");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "nu1", BAD_CAST "0.35");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "nu2", BAD_CAST "-0.35");
 
   // Print the document to stdout
   xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
@@ -69,7 +60,7 @@ int main()
     std::string child_name((const char *)(d_child->name));
     std::cout << "child_name = " << child_name << std::endl;
     d_child = d_child->next;
-  } 
+  }
   */
 
   // Create a ProblemSpec
@@ -86,29 +77,32 @@ int main()
 
   // Get the initial moduli
   ElasticModuli moduli = model.getInitialElasticModuli();
-  std::cout << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+  std::cout << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
+            << std::endl;
 
   // Get the moduli upper bound at zero pressure
   moduli = model.getElasticModuliUpperBound();
-  std::cout << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+  std::cout << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
+            << std::endl;
 
   // Set up list of pressures in log10 scale
-  std::vector<double> pressures = {-2, 0, 6, 8, 11};
+  std::vector<double> pressures = { -2, 0, 6, 8, 11 };
 
   // Set up volumetric plastic strains
-  std::vector<double> volPlasticStrains = {-1.0, -0.1, 0.0, 0.1, 0.3, 1.0};
-  std::vector<double> porosities = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
-  std::vector<double> saturations = {0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
+  std::vector<double> volPlasticStrains = { -1.0, -0.1, 0.0, 0.1, 0.3, 1.0 };
+  std::vector<double> porosities = { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
+  std::vector<double> saturations = { 0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0 };
 
   // Set up plastic strain matrices
   std::vector<Matrix3> plasticStrains;
   for (double ep_v : volPlasticStrains) {
-    double ep = -ep_v/3.0;
-    plasticStrains.emplace_back(Matrix3(ep, 0.0, 0.0, 0.0, ep, 0.0, 0.0, 0.0, ep));
+    double ep = -ep_v / 3.0;
+    plasticStrains.emplace_back(
+      Matrix3(ep, 0.0, 0.0, 0.0, ep, 0.0, 0.0, 0.0, ep));
   }
 
   // Drained (dry) sand
-  ModelState_Arena state; 
+  ModelState_Arena state;
   state.porosity = porosities[4];
   state.saturation = saturations[0];
   for (double pp : pressures) {
@@ -116,20 +110,20 @@ int main()
     state.plasticStrainTensor = plasticStrains[0];
     state.I1_eff = -std::pow(10, pp);
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace()
               << " phi = " << state.porosity << " S_w = " << state.saturation
-              << " I1_eff = " << state.I1_eff 
-              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+              << " I1_eff = " << state.I1_eff << " K = " << moduli.bulkModulus
+              << " G = " << moduli.shearModulus << std::endl;
   }
   for (double pp : pressures) {
     // ** Tension tests **
     state.plasticStrainTensor = plasticStrains[5];
     state.I1_eff = std::pow(10, pp);
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace()
               << " phi = " << state.porosity << " S_w = " << state.saturation
-              << " I1_eff = " << state.I1_eff 
-              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+              << " I1_eff = " << state.I1_eff << " K = " << moduli.bulkModulus
+              << " G = " << moduli.shearModulus << std::endl;
   }
 
   // Partially saturated sand
@@ -140,20 +134,20 @@ int main()
     state.plasticStrainTensor = plasticStrains[1];
     state.I1_eff = -std::pow(10, pp);
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace()
               << " phi = " << state.porosity << " S_w = " << state.saturation
-              << " I1_eff = " << state.I1_eff 
-              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+              << " I1_eff = " << state.I1_eff << " K = " << moduli.bulkModulus
+              << " G = " << moduli.shearModulus << std::endl;
   }
   for (double pp : pressures) {
     // ** Tension tests **
     state.plasticStrainTensor = plasticStrains[4];
     state.I1_eff = std::pow(10, pp);
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace()
               << " phi = " << state.porosity << " S_w = " << state.saturation
-              << " I1_eff = " << state.I1_eff 
-              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+              << " I1_eff = " << state.I1_eff << " K = " << moduli.bulkModulus
+              << " G = " << moduli.shearModulus << std::endl;
   }
 
   // Fully saturated sand
@@ -164,20 +158,20 @@ int main()
     state.plasticStrainTensor = plasticStrains[1];
     state.I1_eff = -std::pow(10, pp);
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace()
               << " phi = " << state.porosity << " S_w = " << state.saturation
-              << " I1_eff = " << state.I1_eff 
-              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+              << " I1_eff = " << state.I1_eff << " K = " << moduli.bulkModulus
+              << " G = " << moduli.shearModulus << std::endl;
   }
   for (double pp : pressures) {
     // ** Tension tests **
     state.plasticStrainTensor = plasticStrains[4];
     state.I1_eff = std::pow(10, pp);
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace()
               << " phi = " << state.porosity << " S_w = " << state.saturation
-              << " I1_eff = " << state.I1_eff 
-              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+              << " I1_eff = " << state.I1_eff << " K = " << moduli.bulkModulus
+              << " G = " << moduli.shearModulus << std::endl;
   }
 
   // Vary saturation
@@ -188,12 +182,12 @@ int main()
   for (double sw : saturations) {
     state.saturation = sw;
     moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "ep_v = " << state.plasticStrainTensor.Trace() 
+    std::cout << "ep_v = " << state.plasticStrainTensor.Trace()
               << " phi = " << state.porosity << " S_w = " << state.saturation
-              << " I1_eff = " << state.I1_eff 
-              << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus << std::endl; 
+              << " I1_eff = " << state.I1_eff << " K = " << moduli.bulkModulus
+              << " G = " << moduli.shearModulus << std::endl;
   }
-  
+
   /*
   // Get initial parameters
   std::map<std::string, double> params = model.getParameters();
@@ -210,7 +204,7 @@ int main()
 
   // Compute the pressure
   for (double rho : rho_cur) {
-    double pp = model.computePressure(rho_orig, rho);  
+    double pp = model.computePressure(rho_orig, rho);
     std::cout << "p = " << pp << std::endl;
   }
 
@@ -234,7 +228,7 @@ int main()
   }
 
   // Test model state input
-  ModelState_Arenisca3 state; 
+  ModelState_Arenisca3 state;
   for (double pp : pressures) {
     state.I1_eff = -std::pow(10, pp);
     double K = model.computeBulkModulus(&state);
@@ -242,7 +236,7 @@ int main()
     std::cout << "After: params[Ks] = " << params["Ks"]  << " Pa" << std::endl;
     std::cout << "I1_eff = " << state.I1_eff << " K = " << K << std::endl;
   }
-  
+
   // Test tension states
   // Convert to Pa and Compute bulk modulus
   std::cout << "Tension:" << std::endl;
@@ -266,8 +260,7 @@ int main()
     std::cout << "I1_eff = " << state.I1_eff << " K = " << K << std::endl;
   }
   */
-  
+
   // Free the document (*WARNING** `doc` seems to be getting freed elsewhere)
-  //xmlFreeDoc(doc);
-  
+  // xmlFreeDoc(doc);
 }

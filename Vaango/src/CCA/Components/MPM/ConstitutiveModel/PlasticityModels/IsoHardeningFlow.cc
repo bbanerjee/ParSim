@@ -46,10 +46,9 @@
  * IN THE SOFTWARE.
  */
 
-
-#include "IsoHardeningFlow.h"        
-#include <Core/Math/FastMatrix.h>       
+#include "IsoHardeningFlow.h"
 #include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Math/FastMatrix.h>
 #include <cmath>
 
 using namespace std;
@@ -57,155 +56,149 @@ using namespace Uintah;
 
 IsoHardeningFlow::IsoHardeningFlow(ProblemSpecP& ps)
 {
-  ps->require("K",d_CM.K);
-  ps->require("sigma_Y",d_CM.sigma_0);
+  ps->require("K", d_CM.K);
+  ps->require("sigma_Y", d_CM.sigma_0);
 
   // Initialize internal variable labels for evolution
-  pAlphaLabel = VarLabel::create("p.alpha",
-        ParticleVariable<double>::getTypeDescription());
-  pAlphaLabel_preReloc = VarLabel::create("p.alpha+",
-        ParticleVariable<double>::getTypeDescription());
+  pAlphaLabel =
+    VarLabel::create("p.alpha", ParticleVariable<double>::getTypeDescription());
+  pAlphaLabel_preReloc = VarLabel::create(
+    "p.alpha+", ParticleVariable<double>::getTypeDescription());
 }
-         
+
 IsoHardeningFlow::IsoHardeningFlow(const IsoHardeningFlow* cm)
 {
   d_CM.K = cm->d_CM.K;
   d_CM.sigma_0 = cm->d_CM.sigma_0;
 
   // Initialize internal variable labels for evolution
-  pAlphaLabel = VarLabel::create("p.alpha",
-        ParticleVariable<double>::getTypeDescription());
-  pAlphaLabel_preReloc = VarLabel::create("p.alpha+",
-        ParticleVariable<double>::getTypeDescription());
+  pAlphaLabel =
+    VarLabel::create("p.alpha", ParticleVariable<double>::getTypeDescription());
+  pAlphaLabel_preReloc = VarLabel::create(
+    "p.alpha+", ParticleVariable<double>::getTypeDescription());
 }
-         
+
 IsoHardeningFlow::~IsoHardeningFlow()
 {
   VarLabel::destroy(pAlphaLabel);
   VarLabel::destroy(pAlphaLabel_preReloc);
 }
 
-void IsoHardeningFlow::outputProblemSpec(ProblemSpecP& ps)
+void
+IsoHardeningFlow::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP flow_ps = ps->appendChild("flow_model");
-  flow_ps->setAttribute("type","isotropic_hardening");
-  flow_ps->appendElement("K",d_CM.K);
-  flow_ps->appendElement("sigma_Y",d_CM.sigma_0);
+  flow_ps->setAttribute("type", "isotropic_hardening");
+  flow_ps->appendElement("K", d_CM.K);
+  flow_ps->appendElement("sigma_Y", d_CM.sigma_0);
 }
-         
-void 
+
+void
 IsoHardeningFlow::addInitialComputesAndRequires(Task* task,
-                                                   const MPMMaterial* matl,
-                                                   const PatchSet*)
+                                                const MPMMaterial* matl,
+                                                const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pAlphaLabel, matlset);
 }
 
-void 
-IsoHardeningFlow::addComputesAndRequires(Task* task,
-                                            const MPMMaterial* matl,
-                                            const PatchSet*)
+void
+IsoHardeningFlow::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                         const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, pAlphaLabel, matlset,Ghost::None);
+  task->requires(Task::OldDW, pAlphaLabel, matlset, Ghost::None);
   task->computes(pAlphaLabel_preReloc, matlset);
 }
 
-void 
-IsoHardeningFlow::addComputesAndRequires(Task* task,
-                                   const MPMMaterial* matl,
-                                   const PatchSet*,
-                                   bool /*recurse*/,
-                                   bool SchedParent)
+void
+IsoHardeningFlow::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                         const PatchSet*, bool /*recurse*/,
+                                         bool SchedParent)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  if(SchedParent){
-    task->requires(Task::ParentOldDW, pAlphaLabel, matlset,Ghost::None);
-  }else{
-    task->requires(Task::OldDW, pAlphaLabel, matlset,Ghost::None);
+  if (SchedParent) {
+    task->requires(Task::ParentOldDW, pAlphaLabel, matlset, Ghost::None);
+  } else {
+    task->requires(Task::OldDW, pAlphaLabel, matlset, Ghost::None);
   }
 }
 
-void 
+void
 IsoHardeningFlow::addParticleState(std::vector<const VarLabel*>& from,
-                                      std::vector<const VarLabel*>& to)
+                                   std::vector<const VarLabel*>& to)
 {
   from.push_back(pAlphaLabel);
   to.push_back(pAlphaLabel_preReloc);
 }
 
-void 
-IsoHardeningFlow::allocateCMDataAddRequires(Task* task,
-                                               const MPMMaterial* matl,
-                                               const PatchSet* ,
-                                               MPMLabel* )
+void
+IsoHardeningFlow::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+                                            const PatchSet*, MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::NewDW, pAlphaLabel_preReloc, matlset, Ghost::None);
-  //task->requires(Task::OldDW, pAlphaLabel, matlset, Ghost::None);
+  // task->requires(Task::OldDW, pAlphaLabel, matlset, Ghost::None);
 }
 
-void IsoHardeningFlow::allocateCMDataAdd(DataWarehouse* new_dw,
-                                            ParticleSubset* addset,
-                                            ParticleLabelVariableMap* newState,
-                                            ParticleSubset* delset,
-                                            DataWarehouse* )
+void
+IsoHardeningFlow::allocateCMDataAdd(DataWarehouse* new_dw,
+                                    ParticleSubset* addset,
+                                    ParticleLabelVariableMap* newState,
+                                    ParticleSubset* delset, DataWarehouse*)
 {
   // Put stuff in here to initialize each particle's
   // constitutive model parameters and deformationMeasure
- 
+
   ParticleVariable<double> pAlpha;
   constParticleVariable<double> o_Alpha;
 
-  new_dw->allocateTemporary(pAlpha,addset);
+  new_dw->allocateTemporary(pAlpha, addset);
 
-  new_dw->get(o_Alpha,pAlphaLabel_preReloc,delset);
-  //old_dw->get(o_Alpha,pAlphaLabel,delset);
+  new_dw->get(o_Alpha, pAlphaLabel_preReloc, delset);
+  // old_dw->get(o_Alpha,pAlphaLabel,delset);
 
-  ParticleSubset::iterator o,n = addset->begin();
-  for(o = delset->begin(); o != delset->end(); o++, n++) {
+  ParticleSubset::iterator o, n = addset->begin();
+  for (o = delset->begin(); o != delset->end(); o++, n++) {
     pAlpha[*n] = o_Alpha[*o];
   }
 
-  (*newState)[pAlphaLabel]=pAlpha.clone();
-
+  (*newState)[pAlphaLabel] = pAlpha.clone();
 }
 
-void 
+void
 IsoHardeningFlow::initializeInternalVars(ParticleSubset* pset,
-                                            DataWarehouse* new_dw)
+                                         DataWarehouse* new_dw)
 {
   new_dw->allocateAndPut(pAlpha_new, pAlphaLabel, pset);
   ParticleSubset::iterator iter = pset->begin();
-  for(;iter != pset->end(); iter++) {
+  for (; iter != pset->end(); iter++) {
     pAlpha_new[*iter] = 0.0;
   }
 }
 
-void 
-IsoHardeningFlow::getInternalVars(ParticleSubset* pset,
-                                     DataWarehouse* old_dw) 
+void
+IsoHardeningFlow::getInternalVars(ParticleSubset* pset, DataWarehouse* old_dw)
 {
   old_dw->get(pAlpha, pAlphaLabel, pset);
 }
 
-void 
+void
 IsoHardeningFlow::allocateAndPutInternalVars(ParticleSubset* pset,
-                                                DataWarehouse* new_dw) 
+                                             DataWarehouse* new_dw)
 {
   new_dw->allocateAndPut(pAlpha_new, pAlphaLabel_preReloc, pset);
 }
 
 void
 IsoHardeningFlow::allocateAndPutRigid(ParticleSubset* pset,
-                                         DataWarehouse* new_dw)
+                                      DataWarehouse* new_dw)
 {
   new_dw->allocateAndPut(pAlpha_new, pAlphaLabel_preReloc, pset);
   // Initializing to zero for the sake of RigidMPM's carryForward
   ParticleSubset::iterator iter = pset->begin();
-  for(;iter != pset->end(); iter++){
-     pAlpha_new[*iter] = 0.0;
+  for (; iter != pset->end(); iter++) {
+    pAlpha_new[*iter] = 0.0;
   }
 }
 
@@ -216,52 +209,45 @@ IsoHardeningFlow::updateElastic(const particleIndex idx)
 }
 
 void
-IsoHardeningFlow::updatePlastic(const particleIndex idx, 
-                                   const double& delGamma)
+IsoHardeningFlow::updatePlastic(const particleIndex idx, const double& delGamma)
 {
-  pAlpha_new[idx] = pAlpha[idx] + sqrt(2.0/3.0)*delGamma;
+  pAlpha_new[idx] = pAlpha[idx] + sqrt(2.0 / 3.0) * delGamma;
 }
 
-double 
-IsoHardeningFlow::computeFlowStress(const PlasticityState* state,
-                                       const double& ,
-                                       const double& ,
-                                       const MPMMaterial* ,
-                                       const particleIndex idx)
+double
+IsoHardeningFlow::computeFlowStress(const PlasticityState* state, const double&,
+                                    const double&, const MPMMaterial*,
+                                    const particleIndex idx)
 {
   //  double flowStress = d_CM.sigma_0 + d_CM.K*pAlpha[idx];
-  
-  double flowStress = d_CM.sigma_0 + d_CM.K*state->plasticStrain;
+
+  double flowStress = d_CM.sigma_0 + d_CM.K * state->plasticStrain;
   return flowStress;
 }
 
-double 
-IsoHardeningFlow::computeEpdot(const PlasticityState* state,
-                                  const double& ,
-                                  const double& ,
-                                  const MPMMaterial* ,
-                                  const particleIndex)
+double
+IsoHardeningFlow::computeEpdot(const PlasticityState* state, const double&,
+                               const double&, const MPMMaterial*,
+                               const particleIndex)
 {
   return state->plasticStrainRate;
 }
 
- 
-void 
+void
 IsoHardeningFlow::computeTangentModulus(const Matrix3& stress,
-                                           const PlasticityState* ,
-                                           const double& ,
-                                           const MPMMaterial* ,
-                                           const particleIndex ,
-                                           TangentModulusTensor& ,
-                                           TangentModulusTensor& )
+                                        const PlasticityState*, const double&,
+                                        const MPMMaterial*, const particleIndex,
+                                        TangentModulusTensor&,
+                                        TangentModulusTensor&)
 {
-  throw InternalError("Empty Function: IsoHardeningFlow::computeTangentModulus", __FILE__, __LINE__);
+  throw InternalError("Empty Function: IsoHardeningFlow::computeTangentModulus",
+                      __FILE__, __LINE__);
 }
 
 void
 IsoHardeningFlow::evalDerivativeWRTScalarVars(const PlasticityState* state,
-                                                 const particleIndex idx,
-                                                 Vector& derivs)
+                                              const particleIndex idx,
+                                              Vector& derivs)
 {
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
@@ -270,7 +256,7 @@ IsoHardeningFlow::evalDerivativeWRTScalarVars(const PlasticityState* state,
 
 double
 IsoHardeningFlow::evalDerivativeWRTPlasticStrain(const PlasticityState*,
-                                                    const particleIndex )
+                                                 const particleIndex)
 {
   return d_CM.K;
 }
@@ -294,22 +280,22 @@ IsoHardeningFlow::computeMeltingTemp(const PlasticityState* state)
 }
 
 double
-IsoHardeningFlow::evalDerivativeWRTTemperature(const PlasticityState* ,
-                                                  const particleIndex )
+IsoHardeningFlow::evalDerivativeWRTTemperature(const PlasticityState*,
+                                               const particleIndex)
 {
   return 0.0;
 }
 
 double
-IsoHardeningFlow::evalDerivativeWRTStrainRate(const PlasticityState* ,
-                                                 const particleIndex )
+IsoHardeningFlow::evalDerivativeWRTStrainRate(const PlasticityState*,
+                                              const particleIndex)
 {
   return 0.0;
 }
 
 double
-IsoHardeningFlow::evalDerivativeWRTAlpha(const PlasticityState* ,
-                                            const particleIndex )
+IsoHardeningFlow::evalDerivativeWRTAlpha(const PlasticityState*,
+                                         const particleIndex)
 {
   return d_CM.K;
 }

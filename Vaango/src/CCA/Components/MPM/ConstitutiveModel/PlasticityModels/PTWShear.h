@@ -54,42 +54,40 @@
 
 namespace Uintah {
 
-  /*! \class PTWShear
-   *  \brief The shear modulus model used by Preston,Tonks,Wallace
-   *         the PTW plasticity model.
-   *  \author Biswajit Banerjee, 
-   *  \author C-SAFE and Department of Mechanical Engineering,
-   *  \author University of Utah.
-   *
-  */
-  class PTWShear : public ShearModulusModel {
+/*! \class PTWShear
+ *  \brief The shear modulus model used by Preston,Tonks,Wallace
+ *         the PTW plasticity model.
+ *  \author Biswajit Banerjee,
+ *  \author C-SAFE and Department of Mechanical Engineering,
+ *  \author University of Utah.
+ *
+*/
+class PTWShear : public ShearModulusModel
+{
 
-  private:
+private:
+  double d_mu0;                 // Material constant
+  double d_alpha;               // Material constant
+  double d_alphap;              // Material constant
+  double d_slope_mu_p_over_mu0; // Material constant (constant A in SCG model)
 
-    double d_mu0;     // Material constant 
-    double d_alpha;   // Material constant 
-    double d_alphap;  // Material constant 
-    double d_slope_mu_p_over_mu0; // Material constant (constant A in SCG model)
+  PTWShear& operator=(const PTWShear& smm);
 
-    PTWShear& operator=(const PTWShear &smm);
+public:
+  /*! Construct a constant shear modulus model. */
+  PTWShear(ProblemSpecP& ps);
 
-  public:
-         
-    /*! Construct a constant shear modulus model. */
-    PTWShear(ProblemSpecP& ps);
+  /*! Construct a copy of constant shear modulus model. */
+  PTWShear(const PTWShear* smm);
 
-    /*! Construct a copy of constant shear modulus model. */
-    PTWShear(const PTWShear* smm);
+  /*! Destructor of constant shear modulus model.   */
+  ~PTWShear() override;
 
-    /*! Destructor of constant shear modulus model.   */
-    virtual ~PTWShear();
+  void outputProblemSpec(ProblemSpecP& ps) override;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    /*! Compute the shear modulus */
-    double computeShearModulus(const PlasticityState* state);
-  };
+  /*! Compute the shear modulus */
+  double computeShearModulus(const PlasticityState* state) override;
+};
 } // End namespace Uintah
-      
-#endif  // __PTW_SHEAR_MODEL_H__
 
+#endif // __PTW_SHEAR_MODEL_H__

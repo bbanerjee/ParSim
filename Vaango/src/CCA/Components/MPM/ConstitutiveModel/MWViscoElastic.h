@@ -23,134 +23,119 @@
  * IN THE SOFTWARE.
  */
 
-//  MWViscoElastic.h 
-//  class ConstitutiveModel ConstitutiveModel data type -- 3D - 
+//  MWViscoElastic.h
+//  class ConstitutiveModel ConstitutiveModel data type -- 3D -
 //  holds ConstitutiveModel
 //  information for the FLIP technique:
 //    This is for MWViscoElastic
 //    Features:
 //      Usage:
 
-
-
 #ifndef __MWVISCOELASTIC_CONSTITUTIVE_MODEL_H__
 #define __MWVISCOELASTIC_CONSTITUTIVE_MODEL_H__
 
-
-#include <cmath>
-#include "ConstitutiveModel.h"  
+#include "ConstitutiveModel.h"
 #include <Core/Math/Matrix3.h>
+#include <cmath>
 #include <vector>
 
 namespace Uintah {
-  class MWViscoElastic : public ConstitutiveModel {
-  private:
-    // Create datatype for storing model parameters
-  public:
-    struct CMData {
-      double E_Shear;
-      double E_Bulk;
-      double VE_Shear;
-      double VE_Bulk;
-      double V_Viscosity;
-      double D_Viscosity;
-    };
+class MWViscoElastic : public ConstitutiveModel
+{
+private:
+  // Create datatype for storing model parameters
+public:
+  struct CMData
+  {
+    double E_Shear;
+    double E_Bulk;
+    double VE_Shear;
+    double VE_Bulk;
+    double V_Viscosity;
+    double D_Viscosity;
+  };
 
-  private:
-    friend const TypeDescription* fun_getTypeDescription(CMData*);
+private:
+  friend const TypeDescription* fun_getTypeDescription(CMData*);
 
-    CMData d_initialData;
-    double d_se;
-    const VarLabel* pStress_eLabel;
-    const VarLabel* pStress_ve_vLabel;
-    const VarLabel* pStress_ve_dLabel;
-    const VarLabel* pStress_e_vLabel;
-    const VarLabel* pStress_e_dLabel;
-    const VarLabel* pStress_eLabel_preReloc;
-    const VarLabel* pStress_ve_vLabel_preReloc;
-    const VarLabel* pStress_ve_dLabel_preReloc;
-    const VarLabel* pStress_e_vLabel_preReloc;
-    const VarLabel* pStress_e_dLabel_preReloc;
+  CMData d_initialData;
+  double d_se;
+  const VarLabel* pStress_eLabel;
+  const VarLabel* pStress_ve_vLabel;
+  const VarLabel* pStress_ve_dLabel;
+  const VarLabel* pStress_e_vLabel;
+  const VarLabel* pStress_e_dLabel;
+  const VarLabel* pStress_eLabel_preReloc;
+  const VarLabel* pStress_ve_vLabel_preReloc;
+  const VarLabel* pStress_ve_dLabel_preReloc;
+  const VarLabel* pStress_e_vLabel_preReloc;
+  const VarLabel* pStress_e_dLabel_preReloc;
 
-    // Prevent copying of this class
-    // copy constructor
-    //MWViscoElastic(const MWViscoElastic &cm);
-    MWViscoElastic& operator=(const MWViscoElastic &cm);
+  // Prevent copying of this class
+  // copy constructor
+  // MWViscoElastic(const MWViscoElastic &cm);
+  MWViscoElastic& operator=(const MWViscoElastic& cm);
 
-  public:
-    // constructors
-    MWViscoElastic(ProblemSpecP& ps, MPMFlags* flag);
-    MWViscoElastic(const MWViscoElastic* cm);
-       
-    // destructor
-    virtual ~MWViscoElastic();
+public:
+  // constructors
+  MWViscoElastic(ProblemSpecP& ps, MPMFlags* flag);
+  MWViscoElastic(const MWViscoElastic* cm);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag = true);
+  // destructor
+  ~MWViscoElastic() override;
 
-    // clone
-    MWViscoElastic* clone();
+  void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
-    // compute stable timestep for this patch
-    virtual void computeStableTimestep(const Patch* patch,
-                                       const MPMMaterial* matl,
-                                       DataWarehouse* new_dw);
+  // clone
+  MWViscoElastic* clone() override;
 
-    // compute stress at each particle in the patch
-    virtual void computeStressTensor(const PatchSubset* patches,
+  // compute stable timestep for this patch
+  virtual void computeStableTimestep(const Patch* patch,
                                      const MPMMaterial* matl,
-                                     DataWarehouse* old_dw,
                                      DataWarehouse* new_dw);
 
+  // compute stress at each particle in the patch
+  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw) override;
 
-    // initialize  each particle's constitutive model data
-    virtual void initializeCMData(const Patch* patch,
-                                  const MPMMaterial* matl,
-                                  DataWarehouse* new_dw);
+  // initialize  each particle's constitutive model data
+  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
+                        DataWarehouse* new_dw) override;
 
+  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+                                 const PatchSet* patch,
+                                 MPMLabel* lb) const override;
 
-    virtual void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                           const PatchSet* patch, 
-                                           MPMLabel* lb) const;
+  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
+                         ParticleLabelVariableMap* newState,
+                         ParticleSubset* delset,
+                         DataWarehouse* old_dw) override;
 
-    virtual void allocateCMDataAdd(DataWarehouse* new_dw,
-                                   ParticleSubset* subset,
-                                   ParticleLabelVariableMap* newState,
-                                   ParticleSubset* delset,
-                                   DataWarehouse* old_dw);
+  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                     const PatchSet* patches) const override;
 
-    virtual void addInitialComputesAndRequires(Task* task,
-                                               const MPMMaterial* matl,
-                                               const PatchSet* patches) const;
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches) const;
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches, const bool recursion,
+                              const bool schedParent = true) const override;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches,
-                                        const bool recursion,
-                                        const bool schedParent=true) const;
+  double computeRhoMicroCM(double pressure, const double p_ref,
+                           const MPMMaterial* matl, double temperature,
+                           double rho_guess) override;
 
-    virtual double computeRhoMicroCM(double pressure,
-                                     const double p_ref,
-                                     const MPMMaterial* matl,
-                                     double temperature,
-                                     double rho_guess);
+  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
+                         double& dp_drho, double& ss_new,
+                         const MPMMaterial* matl, double temperature) override;
 
-    virtual void computePressEOSCM(double rho_m, double& press_eos,
-                                   double p_ref,
-                                   double& dp_drho, double& ss_new,
-                                   const MPMMaterial* matl,
-                                   double temperature);
+  double getCompressibility() override;
 
-    virtual double getCompressibility();
-
-
-    virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                  std::vector<const VarLabel*>& to);
-  };
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
+};
 
 } // End namespace Uintah
 
-#endif  // __MWVISCOELASTIC_CONSTITUTIVE_MODEL_H__ 
+#endif // __MWVISCOELASTIC_CONSTITUTIVE_MODEL_H__

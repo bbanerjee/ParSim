@@ -29,52 +29,46 @@
 
 namespace Vaango {
 
-  class ModelStateBase;
-  class ModelState_SoilModelBrannon;
-  class ModelState_Arenisca3;
-  class ModelState_CamClay;
+class ModelStateBase;
+class ModelState_SoilModelBrannon;
+class ModelState_Arenisca3;
+class ModelState_CamClay;
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class ModelStateVisitor
-    \brief A visitor function that allows modifications to the ModelStateBase
-           class objects as new models are introduced to the software
-    \author Biswajit Banerjee \n
-  */
-  /////////////////////////////////////////////////////////////////////////////
-  class ModelStateVisitorBase {
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class ModelStateVisitor
+  \brief A visitor function that allows modifications to the ModelStateBase
+         class objects as new models are introduced to the software
+  \author Biswajit Banerjee \n
+*/
+/////////////////////////////////////////////////////////////////////////////
+class ModelStateVisitorBase
+{
 
-  public:
+public:
+  virtual ~ModelStateVisitorBase();
 
-    virtual ~ModelStateVisitorBase();
-     
-    virtual void visit(ModelStateBase& state) = 0;
-    virtual void visit(ModelState_SoilModelBrannon& state) = 0;
-    virtual void visit(ModelState_Arenisca3& state) = 0;
-    virtual void visit(ModelState_CamClay& state) = 0;
-  };
+  virtual void visit(ModelStateBase& state) = 0;
+  virtual void visit(ModelState_SoilModelBrannon& state) = 0;
+  virtual void visit(ModelState_Arenisca3& state) = 0;
+  virtual void visit(ModelState_CamClay& state) = 0;
+};
 
-  class ModelStateVisitor: public ModelStateVisitorBase {
+class ModelStateVisitor : public ModelStateVisitorBase
+{
 
-  public:
+public:
+  ~ModelStateVisitor() override = default;
 
-     ~ModelStateVisitor() {
-     }
+  void visit(ModelStateBase& state) override {}
 
-     void visit(ModelStateBase& state) override {
-     }
+  void visit(ModelState_SoilModelBrannon& state) override {}
 
-     void visit(ModelState_SoilModelBrannon& state) override {
-     }
+  void visit(ModelState_Arenisca3& state) override {}
 
-     void visit(ModelState_Arenisca3& state) override {
-     }
-
-     void visit(ModelState_CamClay& state) override {
-     }
-   
-  };
+  void visit(ModelState_CamClay& state) override {}
+};
 
 } // End namespace Vaango
 
-#endif  // __MODEL_STATE_VISITOR_H__ 
+#endif // __MODEL_STATE_VISITOR_H__

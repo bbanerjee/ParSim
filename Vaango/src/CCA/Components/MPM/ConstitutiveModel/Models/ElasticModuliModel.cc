@@ -24,17 +24,10 @@
  * IN THE SOFTWARE.
  */
 
-
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
 
 using namespace Vaango;
 
-ElasticModuliModel::ElasticModuliModel()
-{
-}
+ElasticModuliModel::ElasticModuliModel() = default;
 
-ElasticModuliModel::~ElasticModuliModel()
-{
-}
-         
+ElasticModuliModel::~ElasticModuliModel() = default;

@@ -24,21 +24,19 @@
  * IN THE SOFTWARE.
  */
 
-
-#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_BorjaPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_SoilModelBrannonKappa.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <fstream>
 #include <iostream>
 #include <string>
-
 
 using namespace Vaango;
 using Uintah::ProblemSpecP;
@@ -47,66 +45,80 @@ using std::cerr;
 using std::ifstream;
 using std::ofstream;
 
-InternalVariableModel* InternalVariableModelFactory::create(ProblemSpecP& ps)
+InternalVariableModel*
+InternalVariableModelFactory::create(ProblemSpecP& ps)
 {
-   ProblemSpecP child = ps->findBlock("internal_variable_model");
-   if(!child)
-      throw ProblemSetupException("Cannot find internal_var_model tag", __FILE__, __LINE__);
-   std::string mat_type;
-   if(!child->getAttribute("type", mat_type))
-      throw ProblemSetupException("No type for internal_var_model", __FILE__, __LINE__);
-   if (mat_type == "soil_model_brannon_kappa") {
-      return(scinew InternalVar_SoilModelBrannonKappa(child));
-   } else {
-      throw ProblemSetupException("Unknown InternalVariable Model ("+mat_type+")", __FILE__, __LINE__);
-   }
+  ProblemSpecP child = ps->findBlock("internal_variable_model");
+  if (!child)
+    throw ProblemSetupException("Cannot find internal_var_model tag", __FILE__,
+                                __LINE__);
+  std::string mat_type;
+  if (!child->getAttribute("type", mat_type))
+    throw ProblemSetupException("No type for internal_var_model", __FILE__,
+                                __LINE__);
+  if (mat_type == "soil_model_brannon_kappa") {
+    return (scinew InternalVar_SoilModelBrannonKappa(child));
+  } else {
+    throw ProblemSetupException(
+      "Unknown InternalVariable Model (" + mat_type + ")", __FILE__, __LINE__);
+  }
 }
 
-InternalVariableModel* InternalVariableModelFactory::create(ProblemSpecP& ps,
-                                                            ShearModulusModel* shear)
+InternalVariableModel*
+InternalVariableModelFactory::create(ProblemSpecP& ps, ShearModulusModel* shear)
 {
-   ProblemSpecP child = ps->findBlock("internal_variable_model");
-   if(!child)
-      throw ProblemSetupException("Cannot find internal_var_model tag", __FILE__, __LINE__);
-   std::string mat_type;
-   if(!child->getAttribute("type", mat_type))
-      throw ProblemSetupException("No type for internal_var_model", __FILE__, __LINE__);
-   if (mat_type == "borja_consolidation_pressure")
-      return(scinew InternalVar_BorjaPressure(child, shear));
-   else {
-      throw ProblemSetupException("Unknown InternalVariable Model ("+mat_type+")", __FILE__, __LINE__);
-   }
+  ProblemSpecP child = ps->findBlock("internal_variable_model");
+  if (!child)
+    throw ProblemSetupException("Cannot find internal_var_model tag", __FILE__,
+                                __LINE__);
+  std::string mat_type;
+  if (!child->getAttribute("type", mat_type))
+    throw ProblemSetupException("No type for internal_var_model", __FILE__,
+                                __LINE__);
+  if (mat_type == "borja_consolidation_pressure")
+    return (scinew InternalVar_BorjaPressure(child, shear));
+  else {
+    throw ProblemSetupException(
+      "Unknown InternalVariable Model (" + mat_type + ")", __FILE__, __LINE__);
+  }
 }
 
-InternalVariableModel* InternalVariableModelFactory::create(ProblemSpecP& ps,
-                                                            ElasticModuliModel* elastic)
+InternalVariableModel*
+InternalVariableModelFactory::create(ProblemSpecP& ps,
+                                     ElasticModuliModel* elastic)
 {
-   ProblemSpecP child = ps->findBlock("internal_variable_model");
-   if(!child)
-      throw ProblemSetupException("Cannot find internal_var_model tag", __FILE__, __LINE__);
-   std::string mat_type;
-   if(!child->getAttribute("type", mat_type))
-      throw ProblemSetupException("No type for internal_var_model", __FILE__, __LINE__);
-   if (mat_type == "arena")
-      return(scinew InternalVar_Arena(child, elastic));
-   else {
-      throw ProblemSetupException("Unknown InternalVariable Model ("+mat_type+")", __FILE__, __LINE__);
-   }
+  ProblemSpecP child = ps->findBlock("internal_variable_model");
+  if (!child)
+    throw ProblemSetupException("Cannot find internal_var_model tag", __FILE__,
+                                __LINE__);
+  std::string mat_type;
+  if (!child->getAttribute("type", mat_type))
+    throw ProblemSetupException("No type for internal_var_model", __FILE__,
+                                __LINE__);
+  if (mat_type == "arena")
+    return (scinew InternalVar_Arena(child, elastic));
+  else {
+    throw ProblemSetupException(
+      "Unknown InternalVariable Model (" + mat_type + ")", __FILE__, __LINE__);
+  }
 }
 
-InternalVariableModel* 
+InternalVariableModel*
 InternalVariableModelFactory::createCopy(const InternalVariableModel* pm)
 {
-   if (dynamic_cast<const InternalVar_BorjaPressure*>(pm))
-      return(scinew InternalVar_BorjaPressure(dynamic_cast<const InternalVar_BorjaPressure*>(pm)));
+  if (dynamic_cast<const InternalVar_BorjaPressure*>(pm))
+    return (scinew InternalVar_BorjaPressure(
+      dynamic_cast<const InternalVar_BorjaPressure*>(pm)));
 
-   else if (dynamic_cast<const InternalVar_SoilModelBrannonKappa*>(pm))
-      return(scinew InternalVar_SoilModelBrannonKappa(dynamic_cast<const InternalVar_SoilModelBrannonKappa*>(pm)));
+  else if (dynamic_cast<const InternalVar_SoilModelBrannonKappa*>(pm))
+    return (scinew InternalVar_SoilModelBrannonKappa(
+      dynamic_cast<const InternalVar_SoilModelBrannonKappa*>(pm)));
 
-   else if (dynamic_cast<const InternalVar_Arena*>(pm))
-      return(scinew InternalVar_Arena(dynamic_cast<const InternalVar_Arena*>(pm)));
-   else {
-      throw Uintah::ProblemSetupException("Cannot create copy of unknown internal var model", __FILE__, __LINE__);
-   }
+  else if (dynamic_cast<const InternalVar_Arena*>(pm))
+    return (
+      scinew InternalVar_Arena(dynamic_cast<const InternalVar_Arena*>(pm)));
+  else {
+    throw Uintah::ProblemSetupException(
+      "Cannot create copy of unknown internal var model", __FILE__, __LINE__);
+  }
 }
-

@@ -53,24 +53,24 @@
 
 namespace Uintah {
 
-  // Forward declarations
-  class SpecificHeatModel;
+// Forward declarations
+class SpecificHeatModel;
 
-  /*! \class SpecificHeatModelFactory
-   *  \brief Creates instances of Specific Heat Models
-   *  \author  Biswajit Banerjee,
-   *  \author  C-SAFE and Department of Mechanical Engineering,
-   *  \author  University of Utah.
-  */
+/*! \class SpecificHeatModelFactory
+ *  \brief Creates instances of Specific Heat Models
+ *  \author  Biswajit Banerjee,
+ *  \author  C-SAFE and Department of Mechanical Engineering,
+ *  \author  University of Utah.
+*/
 
-  class SpecificHeatModelFactory {
+class SpecificHeatModelFactory
+{
 
-  public:
-
-    //! Create a shear modulus model from the input file problem specification.
-    static SpecificHeatModel* create(ProblemSpecP& ps);
-    static SpecificHeatModel* createCopy(const SpecificHeatModel* yc);
-  };
+public:
+  //! Create a shear modulus model from the input file problem specification.
+  static SpecificHeatModel* create(ProblemSpecP& ps);
+  static SpecificHeatModel* createCopy(const SpecificHeatModel* yc);
+};
 } // End namespace Uintah
-      
+
 #endif /* _SPECIFIC_HEAT_MODELFACTORY_H_ */

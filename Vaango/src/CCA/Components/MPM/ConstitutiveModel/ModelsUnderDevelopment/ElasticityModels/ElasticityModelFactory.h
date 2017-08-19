@@ -32,16 +32,16 @@
 
 namespace Uintah {
 
-  class ElasticityModel;
-  class MPMLabel;
+class ElasticityModel;
+class MPMLabel;
 
-  class ElasticityModelFactory
-  {
-  public:
-    // this function has a switch for all known mat_types
-    static ElasticityModel* create(ProblemSpecP& ps);
-    static ElasticityModel* createCopy(const ElasticityModel* pm);
-  };
+class ElasticityModelFactory
+{
+public:
+  // this function has a switch for all known mat_types
+  static ElasticityModel* create(ProblemSpecP& ps);
+  static ElasticityModel* createCopy(const ElasticityModel* pm);
+};
 } // End namespace Uintah
-      
+
 #endif /* _ELASTICITYMODELFACTORY_H_ */

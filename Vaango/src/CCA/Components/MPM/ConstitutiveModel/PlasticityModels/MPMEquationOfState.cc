@@ -46,18 +46,13 @@
  * IN THE SOFTWARE.
  */
 
-
 #include "MPMEquationOfState.h"
 
 using namespace Uintah;
 
-MPMEquationOfState::MPMEquationOfState()
-{
-}
+MPMEquationOfState::MPMEquationOfState() = default;
 
-MPMEquationOfState::~MPMEquationOfState()
-{
-}
+MPMEquationOfState::~MPMEquationOfState() = default;
 
 // Calculate rate of temperature change due to compression/expansion
 double

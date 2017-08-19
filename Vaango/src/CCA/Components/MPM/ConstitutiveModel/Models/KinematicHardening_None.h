@@ -27,68 +27,66 @@
 #ifndef __BB_NO_KINEMATIC_HARDENING_MODEL_H__
 #define __BB_NO_KINEMATIC_HARDENING_MODEL_H__
 
-
-
-#include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModel.h>    
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>    
+#include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class KinematicHardening_None
-    \brief Default kinematic hardening model - no kinematic hardening
-    \author Biswajit Banerjee, 
-    Department of Mechanical Engineering, 
-    University of Utah
-   
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class KinematicHardening_None
+  \brief Default kinematic hardening model - no kinematic hardening
+  \author Biswajit Banerjee,
+  Department of Mechanical Engineering,
+  University of Utah
 
-  class KinematicHardening_None : public KinematicHardeningModel {
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  private:
+class KinematicHardening_None : public KinematicHardeningModel
+{
 
-    // Prevent copying of this class
-    // copy constructor
-    //KinematicHardening_None(const KinematicHardening_None &cm);
-    KinematicHardening_None& operator=(const KinematicHardening_None &cm);
+private:
+  // Prevent copying of this class
+  // copy constructor
+  // KinematicHardening_None(const KinematicHardening_None &cm);
+  KinematicHardening_None& operator=(const KinematicHardening_None& cm);
 
-  public:
-    // constructors
-    KinematicHardening_None();
-    KinematicHardening_None(Uintah::ProblemSpecP& ps);
-    KinematicHardening_None(const KinematicHardening_None* cm);
-         
-    // destructor 
-    virtual ~KinematicHardening_None();
+public:
+  // constructors
+  KinematicHardening_None();
+  KinematicHardening_None(Uintah::ProblemSpecP& ps);
+  KinematicHardening_None(const KinematicHardening_None* cm);
 
-    virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
-         
-    /*! Get parameters */
-    std::map<std::string, double> getParameters() const {
-      std::map<std::string, double> params;
-      params["None"] = 0.0;
-      return params;
-    }
+  // destructor
+  ~KinematicHardening_None() override;
 
-    //////////
-    /*! \brief Calculate the back stress */
-    //////////
-    virtual void computeBackStress(const ModelStateBase* state,
-                                   const double& delT,
-                                   const Uintah::particleIndex idx,
-                                   const double& delLambda,
-                                   const Uintah::Matrix3& df_dsigma_new,
-                                   const Uintah::Matrix3& backStress_old,
-                                   Uintah::Matrix3& backStress_new);
+  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
-    void eval_h_beta(const Uintah::Matrix3& df_dsigma,
-                     const ModelStateBase* state,
-                     Uintah::Matrix3& h_beta);
-  };
+  /*! Get parameters */
+  std::map<std::string, double> getParameters() const override
+  {
+    std::map<std::string, double> params;
+    params["None"] = 0.0;
+    return params;
+  }
+
+  //////////
+  /*! \brief Calculate the back stress */
+  //////////
+  void computeBackStress(const ModelStateBase* state, const double& delT,
+                         const Uintah::particleIndex idx,
+                         const double& delLambda,
+                         const Uintah::Matrix3& df_dsigma_new,
+                         const Uintah::Matrix3& backStress_old,
+                         Uintah::Matrix3& backStress_new) override;
+
+  void eval_h_beta(const Uintah::Matrix3& df_dsigma,
+                   const ModelStateBase* state,
+                   Uintah::Matrix3& h_beta) override;
+};
 
 } // End namespace Uintah
 
-#endif  // __BB_NO_KINEMATIC_HARDENING_MODEL_H__ 
+#endif // __BB_NO_KINEMATIC_HARDENING_MODEL_H__

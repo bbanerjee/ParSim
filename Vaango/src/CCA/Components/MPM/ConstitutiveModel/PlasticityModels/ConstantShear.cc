@@ -49,37 +49,34 @@
 #include "ConstantShear.h"
 
 using namespace Uintah;
-         
-// Construct a shear modulus model.  
+
+// Construct a shear modulus model.
 ConstantShear::ConstantShear()
 {
 }
 
-ConstantShear::ConstantShear(ProblemSpecP& )
+ConstantShear::ConstantShear(ProblemSpecP&)
 {
 }
 
-// Construct a copy of a shear modulus model.  
-ConstantShear::ConstantShear(const ConstantShear* )
+// Construct a copy of a shear modulus model.
+ConstantShear::ConstantShear(const ConstantShear*)
 {
 }
 
-// Destructor of shear modulus model.  
-ConstantShear::~ConstantShear()
-{
-}
+// Destructor of shear modulus model.
+ConstantShear::~ConstantShear() = default;
 
-
-void ConstantShear::outputProblemSpec(ProblemSpecP& ps)
+void
+ConstantShear::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP shear_ps = ps->appendChild("shear_modulus_model");
-  shear_ps->setAttribute("type","constant_shear");
+  shear_ps->setAttribute("type", "constant_shear");
 }
-         
+
 // Compute the shear modulus
-double 
+double
 ConstantShear::computeShearModulus(const PlasticityState* state)
 {
   return state->initialShearModulus;
 }
-

@@ -46,16 +46,10 @@
  * IN THE SOFTWARE.
  */
 
-
 #include "ShearModulusModel.h"
 
 using namespace Uintah;
 
-ShearModulusModel::ShearModulusModel()
-{
-}
+ShearModulusModel::ShearModulusModel() = default;
 
-ShearModulusModel::~ShearModulusModel()
-{
-}
-         
+ShearModulusModel::~ShearModulusModel() = default;

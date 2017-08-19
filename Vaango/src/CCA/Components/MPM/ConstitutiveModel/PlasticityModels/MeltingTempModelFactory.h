@@ -53,24 +53,24 @@
 
 namespace Uintah {
 
-  // Forward declarations
-  class MeltingTempModel;
+// Forward declarations
+class MeltingTempModel;
 
-  /*! \class MeltingTempModelFactory
-   *  \brief Creates instances of Melting Temp Models
-   *  \author  Biswajit Banerjee,
-   *  \author  C-SAFE and Department of Mechanical Engineering,
-   *  \author  University of Utah.
-  */
+/*! \class MeltingTempModelFactory
+ *  \brief Creates instances of Melting Temp Models
+ *  \author  Biswajit Banerjee,
+ *  \author  C-SAFE and Department of Mechanical Engineering,
+ *  \author  University of Utah.
+*/
 
-  class MeltingTempModelFactory {
+class MeltingTempModelFactory
+{
 
-  public:
-
-    //! Create a melting temp model from the input file problem specification.
-    static MeltingTempModel* create(ProblemSpecP& ps);
-    static MeltingTempModel* createCopy(const MeltingTempModel* yc);
-  };
+public:
+  //! Create a melting temp model from the input file problem specification.
+  static MeltingTempModel* create(ProblemSpecP& ps);
+  static MeltingTempModel* createCopy(const MeltingTempModel* yc);
+};
 } // End namespace Uintah
-      
+
 #endif /* _MELTING_TEMP_MODELFACTORY_H_ */

@@ -53,26 +53,26 @@
 
 namespace Uintah {
 
-  // Forward declarations
-  class StabilityCheck;
+// Forward declarations
+class StabilityCheck;
 
-  /*! \class StabilityCheckFactory
-   *  \brief Creates instances of stability check methods
-   *  \author  Biswajit Banerjee,
-   *  \author  C-SAFE and Department of Mechanical Engineering,
-   *  \author  University of Utah.
-   *  \warning Currently implemented stability checks
-   *           Acoustic tensor (loss of ellipticity/hyperbolicity)
-  */
+/*! \class StabilityCheckFactory
+ *  \brief Creates instances of stability check methods
+ *  \author  Biswajit Banerjee,
+ *  \author  C-SAFE and Department of Mechanical Engineering,
+ *  \author  University of Utah.
+ *  \warning Currently implemented stability checks
+ *           Acoustic tensor (loss of ellipticity/hyperbolicity)
+*/
 
-  class StabilityCheckFactory {
+class StabilityCheckFactory
+{
 
-  public:
-
-    //! Create a yield condition from the input file problem specification.
-    static StabilityCheck* create(ProblemSpecP& ps);
-    static StabilityCheck* createCopy(const StabilityCheck* sc);
-  };
+public:
+  //! Create a yield condition from the input file problem specification.
+  static StabilityCheck* create(ProblemSpecP& ps);
+  static StabilityCheck* createCopy(const StabilityCheck* sc);
+};
 } // End namespace Uintah
-      
+
 #endif /* _STABILITYCHECKFACTORY_H_ */

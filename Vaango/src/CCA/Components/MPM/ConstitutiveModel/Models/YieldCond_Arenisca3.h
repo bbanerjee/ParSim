@@ -27,282 +27,271 @@
 #ifndef __ARENISC3_YIELD_MODEL_H__
 #define __ARENISC3_YIELD_MODEL_H__
 
-
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arenisca3.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-  /*! 
-   \class  YieldCond_Arenisca3
-   \brief  The Arenisca3 yield condition
-  */
+/*!
+ \class  YieldCond_Arenisca3
+ \brief  The Arenisca3 yield condition
+*/
 
-  class YieldCond_Arenisca3 : public YieldCondition {
-  
-  public:
-    
-    static const double sqrt_three;
-    static const double one_sqrt_three;
+class YieldCond_Arenisca3 : public YieldCondition
+{
 
-  private:
+public:
+  static const double sqrt_three;
+  static const double one_sqrt_three;
 
-    struct InputParameters {
-      double PEAKI1;
-      double FSLOPE;
-      double STREN;
-      double YSLOPE;
-      double BETA_nonassociativity;
-    };
-
-    struct CapParameters {
-      double CR;
-    };
-
-    struct ModelParameters {
-      double a1;
-      double a2;
-      double a3;
-      double a4;
-      double beta;
-      double capRatio;
-    };
-
-    InputParameters d_inputParam;
-    CapParameters   d_capParam;
-    ModelParameters d_modelParam;
-
-    void checkInputParameters();
-    void computeModelParameters(double factor=1.0);
-
-    // Prevent copying of this class
-    // copy constructor
-    //YieldCond_Arenisca3(const YieldCond_Arenisca3 &);
-    YieldCond_Arenisca3& operator=(const YieldCond_Arenisca3 &);
-
-  public:
-
-    //! Constructor
-    /*! Creates a YieldCond_Arenisca3 function object */
-    YieldCond_Arenisca3(Uintah::ProblemSpecP& ps,
-                        InternalVariableModel* intvar);
-    YieldCond_Arenisca3(const YieldCond_Arenisca3* cm);
-         
-    //! Destructor 
-    ~YieldCond_Arenisca3();
-
-    virtual void outputProblemSpec(Uintah::ProblemSpecP& ps);
-         
-    /*! Get parameters */
-    std::map<std::string, double> getParameters() const {
-      std::map<std::string, double> params;
-      params["PEAKI1"] = d_inputParam.PEAKI1;
-      params["FSLOPE"] = d_inputParam.FSLOPE;
-      params["STREN"] = d_inputParam.STREN;
-      params["YSLOPE"] = d_inputParam.YSLOPE;
-      params["BETA"] = d_inputParam.BETA_nonassociativity;
-      params["CR"] = d_capParam.CR;
-      params["a1"] = d_modelParam.a1;
-      params["a2"] = d_modelParam.a2;
-      params["a3"] = d_modelParam.a3;
-      params["a4"] = d_modelParam.a4;
-      return params;
-    }
-
-    //--------------------------------------------------------------
-    // Compute value of yield function
-    //--------------------------------------------------------------
-    double evalYieldCondition(const ModelStateBase* state);
-    double evalYieldConditionMax(const ModelStateBase* state);
-
-    //--------------------------------------------------------------
-    // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
-    //--------------------------------------------------------------
-    double computeVolStressDerivOfYieldFunction(const ModelStateBase* state);
-
-    //--------------------------------------------------------------
-    // Compute df/dq  where q = sqrt(3 J_2), J_2 = 2nd invariant deviatoric stress
-    //--------------------------------------------------------------
-    double computeDevStressDerivOfYieldFunction(const ModelStateBase* state);
-
-    //--------------------------------------------------------------
-    // Compute d/depse_v(df/dp)
-    //--------------------------------------------------------------
-    double computeVolStrainDerivOfDfDp(const ModelStateBase* state,
-                                       const PressureModel* eos,
-                                       const ShearModulusModel* shear,
-                                       const InternalVariableModel* intvar);
-
-    //--------------------------------------------------------------
-    // Compute d/depse_s(df/dp)
-    //--------------------------------------------------------------
-    double computeDevStrainDerivOfDfDp(const ModelStateBase* state,
-                                       const PressureModel* eos,
-                                       const ShearModulusModel* shear,
-                                       const InternalVariableModel* intvar);
-
-    //--------------------------------------------------------------
-    // Compute d/depse_v(df/dq)
-    //--------------------------------------------------------------
-    double computeVolStrainDerivOfDfDq(const ModelStateBase* state,
-                                       const PressureModel* eos,
-                                       const ShearModulusModel* shear,
-                                       const InternalVariableModel* intvar);
-
-    //--------------------------------------------------------------
-    // Compute d/depse_s(df/dq)
-    //--------------------------------------------------------------
-    double computeDevStrainDerivOfDfDq(const ModelStateBase* state,
-                                       const PressureModel* eos,
-                                       const ShearModulusModel* shear,
-                                       const InternalVariableModel* intvar);
-
-    //--------------------------------------------------------------
-    // Compute df/depse_v
-    //--------------------------------------------------------------
-    double computeVolStrainDerivOfYieldFunction(const ModelStateBase* state,
-                                                const PressureModel* eos,
-                                                const ShearModulusModel* shear,
-                                                const InternalVariableModel* intvar);
-
-    //--------------------------------------------------------------
-    // Compute df/depse_s
-    //--------------------------------------------------------------
-    double computeDevStrainDerivOfYieldFunction(const ModelStateBase* state,
-                                                const PressureModel* eos,
-                                                const ShearModulusModel* shear,
-                                                const InternalVariableModel* intvar);
-
-    double getInternalPoint(const ModelStateBase* state_old,
-                            const ModelStateBase* state_new) {return 0.0;}
-
-    //================================================================================
-    // Other options below.
-    //================================================================================
-
-    // Evaluate the yield function.
-    double evalYieldCondition(const double p,
-                              const double q,
-                              const double dummy0,
-                              const double dummy1,
-                              double& dummy2);
-
-    // Evaluate yield condition (s = deviatoric stress = sigDev
-    //                           p = state->pressure
-    //                           p_c = state->yieldStress)
-    double evalYieldCondition(const Uintah::Matrix3& sigDev,
-                              const ModelStateBase* state);
-
-    /////////////////////////////////////////////////////////////////////////
-    /*! 
-      \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
-      with respect to \f$\sigma_{ij}\f$.
-    */
-    /////////////////////////////////////////////////////////////////////////
-    void evalDerivOfYieldFunction(const Uintah::Matrix3& stress,
-                                  const double dummy1,
-                                  const double dummy2,
-                                  Uintah::Matrix3& derivative);
-
-    /////////////////////////////////////////////////////////////////////////
-    /*! 
-      \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
-      with respect to \f$s_{ij}\f$.
-
-      This is for the associated flow rule with \f$s_{ij}\f$ being
-      the deviatoric stress.
-    */
-    /////////////////////////////////////////////////////////////////////////
-    void evalDevDerivOfYieldFunction(const Uintah::Matrix3& stress,
-                                     const double dummy1,
-                                     const double dummy2,
-                                     Uintah::Matrix3& derivative);
-
-    /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
-    void eval_df_dsigma(const Uintah::Matrix3& xi,
-                        const ModelStateBase* state,
-                        Uintah::Matrix3& df_dsigma);
-
-    /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$  
-        where \f$s\f$ is deviatoric part of Cauchy stress and 
-        \f$\beta\f$ is the backstress */
-    void eval_df_dxi(const Uintah::Matrix3& xi,
-                     const ModelStateBase* state,
-                     Uintah::Matrix3& df_xi);
-
-    /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
-    void eval_df_ds_df_dbeta(const Uintah::Matrix3& xi,
-                             const ModelStateBase* state,
-                             Uintah::Matrix3& df_ds,
-                             Uintah::Matrix3& df_dbeta);
-
-    /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
-    double eval_df_dep(const Uintah::Matrix3& xi,
-                       const double& d_sigy_dep,
-                       const ModelStateBase* state);
-
-    /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
-    double eval_df_dphi(const Uintah::Matrix3& xi,
-                        const ModelStateBase* state);
-
-    /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-    double eval_h_alpha(const Uintah::Matrix3& xi,
-                        const ModelStateBase* state);
-
-    /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-    double eval_h_phi(const Uintah::Matrix3& xi,
-                      const double& factorA,
-                      const ModelStateBase* state);
-
-    /////////////////////////////////////////////////////////////////////////
-    /*! 
-      \brief Compute the elastic-plastic tangent modulus.
-    */
-    /////////////////////////////////////////////////////////////////////////
-    void computeElasPlasTangentModulus(const Uintah::TangentModulusTensor& Ce,
-                                       const Uintah::Matrix3& sigma, 
-                                       double sigY,
-                                       double dsigYdep,
-                                       double porosity,
-                                       double voidNuclFac,
-                                       Uintah::TangentModulusTensor& Cep);
-
-    /////////////////////////////////////////////////////////////////////////
-    /*!
-      \brief Evaluate the factor \f$h_1\f$ for plastic strain
-
-      \f[
-      h_1 = \frac{\sigma : f_{\sigma}}{\sigma_Y}
-      \f]
-      
-      \return factor 
-    */
-    /////////////////////////////////////////////////////////////////////////
-    inline double computePlasticStrainFactor(double sigma_f_sigma,
-                                             double sigma_Y);
-
-    /////////////////////////////////////////////////////////////////////////
-    /*!
-      \brief Compute the continuum elasto-plastic tangent modulus
-      assuming associated flow rule.
-
-      \f[
-      C_{ep} = C_{e} - \frac{(C_e:f_{\sigma})\otimes(f_{\sigma}:C_e)}
-      {-f_q.h_q + f_{\sigma}:C_e:f_{\sigma}}
-      \f]
-      
-      \return TangentModulusTensor \f$ C_{ep} \f$.
-    */
-    /////////////////////////////////////////////////////////////////////////
-    void computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
-                               const Uintah::Matrix3& f_sigma, 
-                               double f_q1, 
-                               double h_q1,
-                               Uintah::TangentModulusTensor& Cep);
-
+private:
+  struct InputParameters
+  {
+    double PEAKI1;
+    double FSLOPE;
+    double STREN;
+    double YSLOPE;
+    double BETA_nonassociativity;
   };
+
+  struct CapParameters
+  {
+    double CR;
+  };
+
+  struct ModelParameters
+  {
+    double a1;
+    double a2;
+    double a3;
+    double a4;
+    double beta;
+    double capRatio;
+  };
+
+  InputParameters d_inputParam;
+  CapParameters d_capParam;
+  ModelParameters d_modelParam;
+
+  void checkInputParameters();
+  void computeModelParameters(double factor = 1.0) override;
+
+  // Prevent copying of this class
+  // copy constructor
+  // YieldCond_Arenisca3(const YieldCond_Arenisca3 &);
+  YieldCond_Arenisca3& operator=(const YieldCond_Arenisca3&);
+
+public:
+  //! Constructor
+  /*! Creates a YieldCond_Arenisca3 function object */
+  YieldCond_Arenisca3(Uintah::ProblemSpecP& ps, InternalVariableModel* intvar);
+  YieldCond_Arenisca3(const YieldCond_Arenisca3* cm);
+
+  //! Destructor
+  ~YieldCond_Arenisca3() override;
+
+  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+
+  /*! Get parameters */
+  std::map<std::string, double> getParameters() const override
+  {
+    std::map<std::string, double> params;
+    params["PEAKI1"] = d_inputParam.PEAKI1;
+    params["FSLOPE"] = d_inputParam.FSLOPE;
+    params["STREN"] = d_inputParam.STREN;
+    params["YSLOPE"] = d_inputParam.YSLOPE;
+    params["BETA"] = d_inputParam.BETA_nonassociativity;
+    params["CR"] = d_capParam.CR;
+    params["a1"] = d_modelParam.a1;
+    params["a2"] = d_modelParam.a2;
+    params["a3"] = d_modelParam.a3;
+    params["a4"] = d_modelParam.a4;
+    return params;
+  }
+
+  //--------------------------------------------------------------
+  // Compute value of yield function
+  //--------------------------------------------------------------
+  double evalYieldCondition(const ModelStateBase* state) override;
+  double evalYieldConditionMax(const ModelStateBase* state) override;
+
+  //--------------------------------------------------------------
+  // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
+  //--------------------------------------------------------------
+  double computeVolStressDerivOfYieldFunction(
+    const ModelStateBase* state) override;
+
+  //--------------------------------------------------------------
+  // Compute df/dq  where q = sqrt(3 J_2), J_2 = 2nd invariant deviatoric stress
+  //--------------------------------------------------------------
+  double computeDevStressDerivOfYieldFunction(
+    const ModelStateBase* state) override;
+
+  //--------------------------------------------------------------
+  // Compute d/depse_v(df/dp)
+  //--------------------------------------------------------------
+  double computeVolStrainDerivOfDfDp(
+    const ModelStateBase* state, const PressureModel* eos,
+    const ShearModulusModel* shear,
+    const InternalVariableModel* intvar) override;
+
+  //--------------------------------------------------------------
+  // Compute d/depse_s(df/dp)
+  //--------------------------------------------------------------
+  double computeDevStrainDerivOfDfDp(
+    const ModelStateBase* state, const PressureModel* eos,
+    const ShearModulusModel* shear,
+    const InternalVariableModel* intvar) override;
+
+  //--------------------------------------------------------------
+  // Compute d/depse_v(df/dq)
+  //--------------------------------------------------------------
+  double computeVolStrainDerivOfDfDq(
+    const ModelStateBase* state, const PressureModel* eos,
+    const ShearModulusModel* shear,
+    const InternalVariableModel* intvar) override;
+
+  //--------------------------------------------------------------
+  // Compute d/depse_s(df/dq)
+  //--------------------------------------------------------------
+  double computeDevStrainDerivOfDfDq(
+    const ModelStateBase* state, const PressureModel* eos,
+    const ShearModulusModel* shear,
+    const InternalVariableModel* intvar) override;
+
+  //--------------------------------------------------------------
+  // Compute df/depse_v
+  //--------------------------------------------------------------
+  double computeVolStrainDerivOfYieldFunction(
+    const ModelStateBase* state, const PressureModel* eos,
+    const ShearModulusModel* shear,
+    const InternalVariableModel* intvar) override;
+
+  //--------------------------------------------------------------
+  // Compute df/depse_s
+  //--------------------------------------------------------------
+  double computeDevStrainDerivOfYieldFunction(
+    const ModelStateBase* state, const PressureModel* eos,
+    const ShearModulusModel* shear,
+    const InternalVariableModel* intvar) override;
+
+  double getInternalPoint(const ModelStateBase* state_old,
+                          const ModelStateBase* state_new) override
+  {
+    return 0.0;
+  }
+
+  //================================================================================
+  // Other options below.
+  //================================================================================
+
+  // Evaluate the yield function.
+  double evalYieldCondition(const double p, const double q, const double dummy0,
+                            const double dummy1, double& dummy2) override;
+
+  // Evaluate yield condition (s = deviatoric stress = sigDev
+  //                           p = state->pressure
+  //                           p_c = state->yieldStress)
+  double evalYieldCondition(const Uintah::Matrix3& sigDev,
+                            const ModelStateBase* state) override;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
+    with respect to \f$\sigma_{ij}\f$.
+  */
+  /////////////////////////////////////////////////////////////////////////
+  void evalDerivOfYieldFunction(const Uintah::Matrix3& stress,
+                                const double dummy1, const double dummy2,
+                                Uintah::Matrix3& derivative) override;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
+    with respect to \f$s_{ij}\f$.
+
+    This is for the associated flow rule with \f$s_{ij}\f$ being
+    the deviatoric stress.
+  */
+  /////////////////////////////////////////////////////////////////////////
+  void evalDevDerivOfYieldFunction(const Uintah::Matrix3& stress,
+                                   const double dummy1, const double dummy2,
+                                   Uintah::Matrix3& derivative) override;
+
+  /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
+  void eval_df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state,
+                      Uintah::Matrix3& df_dsigma) override;
+
+  /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
+      where \f$s\f$ is deviatoric part of Cauchy stress and
+      \f$\beta\f$ is the backstress */
+  void eval_df_dxi(const Uintah::Matrix3& xi, const ModelStateBase* state,
+                   Uintah::Matrix3& df_xi) override;
+
+  /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
+  void eval_df_ds_df_dbeta(const Uintah::Matrix3& xi,
+                           const ModelStateBase* state, Uintah::Matrix3& df_ds,
+                           Uintah::Matrix3& df_dbeta) override;
+
+  /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
+  double eval_df_dep(const Uintah::Matrix3& xi, const double& d_sigy_dep,
+                     const ModelStateBase* state) override;
+
+  /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
+  double eval_df_dphi(const Uintah::Matrix3& xi,
+                      const ModelStateBase* state) override;
+
+  /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
+  double eval_h_alpha(const Uintah::Matrix3& xi,
+                      const ModelStateBase* state) override;
+
+  /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
+  double eval_h_phi(const Uintah::Matrix3& xi, const double& factorA,
+                    const ModelStateBase* state) override;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Compute the elastic-plastic tangent modulus.
+  */
+  /////////////////////////////////////////////////////////////////////////
+  void computeElasPlasTangentModulus(
+    const Uintah::TangentModulusTensor& Ce, const Uintah::Matrix3& sigma,
+    double sigY, double dsigYdep, double porosity, double voidNuclFac,
+    Uintah::TangentModulusTensor& Cep) override;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate the factor \f$h_1\f$ for plastic strain
+
+    \f[
+    h_1 = \frac{\sigma : f_{\sigma}}{\sigma_Y}
+    \f]
+
+    \return factor
+  */
+  /////////////////////////////////////////////////////////////////////////
+  inline double computePlasticStrainFactor(double sigma_f_sigma,
+                                           double sigma_Y);
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Compute the continuum elasto-plastic tangent modulus
+    assuming associated flow rule.
+
+    \f[
+    C_{ep} = C_{e} - \frac{(C_e:f_{\sigma})\otimes(f_{\sigma}:C_e)}
+    {-f_q.h_q + f_{\sigma}:C_e:f_{\sigma}}
+    \f]
+
+    \return TangentModulusTensor \f$ C_{ep} \f$.
+  */
+  /////////////////////////////////////////////////////////////////////////
+  void computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
+                             const Uintah::Matrix3& f_sigma, double f_q1,
+                             double h_q1, Uintah::TangentModulusTensor& Cep);
+};
 
 } // End namespace Uintah
 
-#endif  // __ARENISC3_YIELD_MODEL_H__ 
+#endif // __ARENISC3_YIELD_MODEL_H__

@@ -49,55 +49,49 @@
 #ifndef __NONE_CHECK_H__
 #define __NONE_CHECK_H__
 
-#include "StabilityCheck.h"     
-#include <Core/ProblemSpec/ProblemSpecP.h>
+#include "StabilityCheck.h"
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/TangentModulusTensor.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  /*! \class NoneCheck
-   *  \brief Do not check for loss of ellipticity/hyperbolicity.
-   *  \author  Biswajit Banerjee, \n
-   *           C-SAFE and Department of Mechanical Engineering,\n
-   *           University of Utah.\n
+/*! \class NoneCheck
+ *  \brief Do not check for loss of ellipticity/hyperbolicity.
+ *  \author  Biswajit Banerjee, \n
+ *           C-SAFE and Department of Mechanical Engineering,\n
+ *           University of Utah.\n
+*/
+class NoneCheck : public StabilityCheck
+{
+
+public:
+  //! Construct an object that can be used to check stability
+  NoneCheck();
+  NoneCheck(ProblemSpecP& ps);
+  NoneCheck(const NoneCheck* cm);
+
+  //! Destructor of stability check
+  ~NoneCheck() override;
+
+  void outputProblemSpec(ProblemSpecP& ps) override;
+
+  bool doIt() override { return false; };
+
+  /*! Check the stability.
+
+    \return true if unstable
+    \return false if stable
   */
-  class NoneCheck : public StabilityCheck {
+  bool checkStability(const Matrix3& stress, const Matrix3& deformRate,
+                      const TangentModulusTensor& tangentModulus,
+                      Vector& direction) override;
 
-  public:
-         
-    //! Construct an object that can be used to check stability
-    NoneCheck();
-    NoneCheck(ProblemSpecP& ps);
-    NoneCheck(const NoneCheck* cm);
-
-    //! Destructor of stability check
-    ~NoneCheck();
-
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-
-    virtual bool doIt() {
-      return false;
-    };
-         
-    /*! Check the stability.
-
-      \return true if unstable
-      \return false if stable
-    */
-    bool checkStability(const Matrix3& stress,
-                        const Matrix3& deformRate,
-                        const TangentModulusTensor& tangentModulus,
-                        Vector& direction);
-
-  private:
-
-
-    // Prevent copying of this class and copy constructor
-    //NoneCheck(const NoneCheck &);
-    NoneCheck& operator=(const NoneCheck &);
-  };
+private:
+  // Prevent copying of this class and copy constructor
+  // NoneCheck(const NoneCheck &);
+  NoneCheck& operator=(const NoneCheck&);
+};
 } // End namespace Uintah
-      
-#endif  // __NONE_CHECK_H__
 
+#endif // __NONE_CHECK_H__

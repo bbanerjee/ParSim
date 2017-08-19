@@ -31,40 +31,41 @@
 
 namespace Vaango {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class ModelState_SoilModelBrannon
-    \brief A structure that stores the state data that is specialized for
-           the SoilModelBrannon model.
-           ** Derived from PlasticityState:ModelState
-    \author Biswajit Banerjee \n
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class ModelState_SoilModelBrannon
+  \brief A structure that stores the state data that is specialized for
+         the SoilModelBrannon model.
+         ** Derived from PlasticityState:ModelState
+  \author Biswajit Banerjee \n
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  class ModelState_SoilModelBrannon: public ModelState_Default {
+class ModelState_SoilModelBrannon : public ModelState_Default
+{
 
-  public:
+public:
+  Uintah::Matrix3 plasticStrainTensor; // The tensor form of plastic strain
+  double kappa;                        // The cap kappa parameter
+  double CR;                           // Initial cap radius
+  double maxX;        // The max. cap hydrostatic compressive strength X
+  double eps_v;       // Volumetrc strain
+  double delta_eps_v; // Change in Volumetrc strain
+  double scale_eps_v; // Scale factor for Volumetrc strain
 
-    Uintah::Matrix3 plasticStrainTensor;  // The tensor form of plastic strain
-    double kappa;     // The cap kappa parameter
-    double CR;        // Initial cap radius
-    double maxX;      // The max. cap hydrostatic compressive strength X 
-    double eps_v;     // Volumetrc strain
-    double delta_eps_v;     // Change in Volumetrc strain
-    double scale_eps_v;     // Scale factor for Volumetrc strain
+  ModelState_SoilModelBrannon();
 
-    ModelState_SoilModelBrannon();
+  ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon& state);
+  ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon* state);
 
-    ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon& state);
-    ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon* state);
+  ~ModelState_SoilModelBrannon() override;
 
-    ~ModelState_SoilModelBrannon();
-
-    ModelState_SoilModelBrannon& operator=(const ModelState_SoilModelBrannon& state);
-    ModelState_SoilModelBrannon* operator=(const ModelState_SoilModelBrannon* state);
-    
-  };
+  ModelState_SoilModelBrannon& operator=(
+    const ModelState_SoilModelBrannon& state);
+  ModelState_SoilModelBrannon* operator=(
+    const ModelState_SoilModelBrannon* state);
+};
 
 } // End namespace Uintah
 
-#endif  // __DERIVED_MODEL_STATE_SOIL_MODEL_BRANNON_DATA_H__ 
+#endif // __DERIVED_MODEL_STATE_SOIL_MODEL_BRANNON_DATA_H__

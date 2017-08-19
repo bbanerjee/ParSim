@@ -53,21 +53,23 @@
 
 namespace Uintah {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class DeformationState
-    \brief A structure that stores deformation state data
-    \author Todd Harman \n
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class DeformationState
+  \brief A structure that stores deformation state data
+  \author Todd Harman \n
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  struct DeformationState{
-    Matrix3 tensorD;
-    Matrix3 tensorEta;
-    Matrix3 devStressInc;
-    double viscoElasticWorkRate;
-    ~DeformationState() {};
-  };
+struct DeformationState
+{
+  Matrix3 tensorD;
+  Matrix3 tensorEta;
+  Matrix3 devStressInc;
+  double viscoElasticWorkRate;
+  ~DeformationState() = default;
+  ;
+};
 } // End namespace Uintah
 
-#endif  // __DEFORMATION_STATE_DATA_H__
+#endif // __DEFORMATION_STATE_DATA_H__

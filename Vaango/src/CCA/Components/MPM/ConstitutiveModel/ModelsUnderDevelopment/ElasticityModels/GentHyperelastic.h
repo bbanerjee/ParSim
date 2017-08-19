@@ -32,37 +32,35 @@
 
 namespace Uintah {
 
-  /*! \class GentHyperelastic
-   *  \brief An isotropic Gent shear stress model.
-   *  \author Biswajit Banerjee, 
-   *
-  */
-  class GentHyperelastic : public ShearStressModel {
+/*! \class GentHyperelastic
+ *  \brief An isotropic Gent shear stress model.
+ *  \author Biswajit Banerjee,
+ *
+*/
+class GentHyperelastic : public ShearStressModel
+{
 
-  private:
+private:
+  double d_mu; // Initial shear modulus
+  double d_Jm; // Limiting value of I1 - 3 >> 1
 
-    double d_mu;    // Initial shear modulus
-    double d_Jm;    // Limiting value of I1 - 3 >> 1
+  GentHyperelastic& operator=(const GentHyperelastic& smm);
 
-    GentHyperelastic& operator=(const GentHyperelastic &smm);
+public:
+  /*! Construct a Gent shear stress model. */
+  GentHyperelastic(ProblemSpecP& ps);
 
-  public:
-         
-    /*! Construct a Gent shear stress model. */
-    GentHyperelastic(ProblemSpecP& ps);
+  /*! Construct a copy of Gent shear stress model. */
+  GentHyperelastic(const GentHyperelastic* smm);
 
-    /*! Construct a copy of Gent shear stress model. */
-    GentHyperelastic(const GentHyperelastic* smm);
+  /*! Destructor of Gent shear stress model.   */
+  virtual ~GentHyperelastic();
 
-    /*! Destructor of Gent shear stress model.   */
-    virtual ~GentHyperelastic();
+  virtual void outputProblemSpec(ProblemSpecP& ps);
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    /*! Compute the shear stress */
-    void computeShearStress(const DeformationState* state, Matrix3& stress);
-  };
+  /*! Compute the shear stress */
+  void computeShearStress(const DeformationState* state, Matrix3& stress);
+};
 } // End namespace Uintah
-      
-#endif  // __GENT_SHEAR_H__
 
+#endif // __GENT_SHEAR_H__

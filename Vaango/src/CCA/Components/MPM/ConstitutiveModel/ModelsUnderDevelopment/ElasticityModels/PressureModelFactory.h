@@ -31,22 +31,22 @@
 
 namespace Uintah {
 
-  // Forward declarations
-  class PressureModel;
+// Forward declarations
+class PressureModel;
 
-  /*! \class PressureModelFactory
-   *  \brief Creates instances of pressure models
-   *  \author  Biswajit Banerjee,
-  */
+/*! \class PressureModelFactory
+ *  \brief Creates instances of pressure models
+ *  \author  Biswajit Banerjee,
+*/
 
-  class PressureModelFactory {
+class PressureModelFactory
+{
 
-  public:
-
-    //! Create a shear modulus model from the input file problem specification.
-    static PressureModel* create(ProblemSpecP& ps);
-    static PressureModel* createCopy(const PressureModel* yc);
-  };
+public:
+  //! Create a shear modulus model from the input file problem specification.
+  static PressureModel* create(ProblemSpecP& ps);
+  static PressureModel* createCopy(const PressureModel* yc);
+};
 } // End namespace Uintah
-      
+
 #endif /* _PRESSURE_MODEL_FACTORY_H_ */

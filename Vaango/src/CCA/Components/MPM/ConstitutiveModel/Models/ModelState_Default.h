@@ -27,37 +27,36 @@
 #ifndef __MODEL_STATE_DEFAULT_H__
 #define __MODEL_STATE_DEFAULT_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/PlasticityState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/PlasticityState.h>
 #include <Core/Math/Matrix3.h>
 
 namespace Vaango {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class ModelState_Default
-    \brief A structure that store the plasticity state data derived
-           from PlasticityState
-    \author Biswajit Banerjee \n
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class ModelState_Default
+  \brief A structure that store the plasticity state data derived
+         from PlasticityState
+  \author Biswajit Banerjee \n
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  class ModelState_Default: public ModelStateBase {
+class ModelState_Default : public ModelStateBase
+{
 
-  public:
+public:
+  ModelState_Default();
 
-    ModelState_Default();
+  ModelState_Default(const ModelState_Default& state);
+  ModelState_Default(const ModelState_Default* state);
 
-    ModelState_Default(const ModelState_Default& state);
-    ModelState_Default(const ModelState_Default* state);
+  ~ModelState_Default() override;
 
-    virtual ~ModelState_Default();
-
-    ModelState_Default& operator=(const ModelState_Default& state);
-    ModelState_Default* operator=(const ModelState_Default* state);
-    
-  };
+  ModelState_Default& operator=(const ModelState_Default& state);
+  ModelState_Default* operator=(const ModelState_Default* state);
+};
 
 } // End namespace Uintah
 
-#endif  // __MODEL_STATE_DEFAULT_H__ 
+#endif // __MODEL_STATE_DEFAULT_H__

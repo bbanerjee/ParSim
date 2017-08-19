@@ -47,8 +47,8 @@
  */
 
 #include "MTSShear.h"
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -56,15 +56,15 @@
 using namespace Uintah;
 using namespace std;
 
-// Construct a shear modulus model.  
-MTSShear::MTSShear(ProblemSpecP& ps )
+// Construct a shear modulus model.
+MTSShear::MTSShear(ProblemSpecP& ps)
 {
-  ps->require("mu_0",d_mu0);
-  ps->require("D",d_D);
-  ps->require("T_0",d_T0);
+  ps->require("mu_0", d_mu0);
+  ps->require("D", d_D);
+  ps->require("T_0", d_T0);
 }
 
-// Construct a copy of a shear modulus model.  
+// Construct a copy of a shear modulus model.
 MTSShear::MTSShear(const MTSShear* smm)
 {
   d_mu0 = smm->d_mu0;
@@ -72,31 +72,29 @@ MTSShear::MTSShear(const MTSShear* smm)
   d_T0 = smm->d_T0;
 }
 
-// Destructor of shear modulus model.  
-MTSShear::~MTSShear()
-{
-}
+// Destructor of shear modulus model.
+MTSShear::~MTSShear() = default;
 
-void MTSShear::outputProblemSpec(ProblemSpecP& ps)
+void
+MTSShear::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP shear_ps = ps->appendChild("shear_modulus_model");
-  shear_ps->setAttribute("type","mts_shear");
+  shear_ps->setAttribute("type", "mts_shear");
 
-  shear_ps->appendElement("mu_0",d_mu0);
-  shear_ps->appendElement("D",d_D);
-  shear_ps->appendElement("T_0",d_T0);
+  shear_ps->appendElement("mu_0", d_mu0);
+  shear_ps->appendElement("D", d_D);
+  shear_ps->appendElement("T_0", d_T0);
 }
 
-         
 // Compute the shear modulus
-double 
+double
 MTSShear::computeShearModulus(const PlasticityState* state)
 {
   double T = state->temperature;
   ASSERT(T > 0.0);
-  double expT0_T = exp(d_T0/T) - 1.0;
+  double expT0_T = exp(d_T0 / T) - 1.0;
   ASSERT(expT0_T != 0);
-  double mu = d_mu0 - d_D/expT0_T;
+  double mu = d_mu0 - d_D / expT0_T;
   if (!(mu > 0.0)) {
     ostringstream desc;
     desc << "**Compute MTS Shear Modulus ERROR** Shear modulus <= 0." << endl;
@@ -106,4 +104,3 @@ MTSShear::computeShearModulus(const PlasticityState* state)
   }
   return mu;
 }
-

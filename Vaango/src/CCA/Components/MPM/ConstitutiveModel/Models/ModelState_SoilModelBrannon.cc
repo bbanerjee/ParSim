@@ -24,7 +24,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_SoilModelBrannon.h>
 
 using namespace Vaango;
@@ -40,7 +39,8 @@ ModelState_SoilModelBrannon::ModelState_SoilModelBrannon()
   scale_eps_v = 0.0;
 }
 
-ModelState_SoilModelBrannon::ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon& state)
+ModelState_SoilModelBrannon::ModelState_SoilModelBrannon(
+  const ModelState_SoilModelBrannon& state)
 {
   kappa = state.kappa;
   CR = state.CR;
@@ -50,7 +50,8 @@ ModelState_SoilModelBrannon::ModelState_SoilModelBrannon(const ModelState_SoilMo
   scale_eps_v = state.scale_eps_v;
 }
 
-ModelState_SoilModelBrannon::ModelState_SoilModelBrannon(const ModelState_SoilModelBrannon* state)
+ModelState_SoilModelBrannon::ModelState_SoilModelBrannon(
+  const ModelState_SoilModelBrannon* state)
 {
   kappa = state->kappa;
   CR = state->CR;
@@ -60,14 +61,13 @@ ModelState_SoilModelBrannon::ModelState_SoilModelBrannon(const ModelState_SoilMo
   scale_eps_v = state->scale_eps_v;
 }
 
-ModelState_SoilModelBrannon::~ModelState_SoilModelBrannon()
-{
-}
+ModelState_SoilModelBrannon::~ModelState_SoilModelBrannon() = default;
 
 ModelState_SoilModelBrannon&
 ModelState_SoilModelBrannon::operator=(const ModelState_SoilModelBrannon& state)
 {
-  if (this == &state) return *this;
+  if (this == &state)
+    return *this;
   kappa = state.kappa;
   CR = state.CR;
   maxX = state.maxX;
@@ -80,7 +80,8 @@ ModelState_SoilModelBrannon::operator=(const ModelState_SoilModelBrannon& state)
 ModelState_SoilModelBrannon*
 ModelState_SoilModelBrannon::operator=(const ModelState_SoilModelBrannon* state)
 {
-  if (this == state) return this;
+  if (this == state)
+    return this;
   kappa = state->kappa;
   CR = state->CR;
   maxX = state->maxX;

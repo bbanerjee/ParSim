@@ -44,38 +44,40 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
- */#include "DevStressModelFactory.h"
+ */ #include "DevStressModelFactory.h"
 #include "HypoElasticDevStress.h"
-#include "HypoViscoElasticDevStress.h" 
+#include "HypoViscoElasticDevStress.h"
 #include <Core/Exceptions/ProblemSetupException.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <string>
 
-using namespace Uintah;
+  using namespace Uintah;
 
-DevStressModel* DevStressModelFactory::create(ProblemSpecP& ps)
+DevStressModel*
+DevStressModelFactory::create(ProblemSpecP& ps)
 {
-   ProblemSpecP dsm_ps = ps->findBlock("deviatoric_stress_model");
+  ProblemSpecP dsm_ps = ps->findBlock("deviatoric_stress_model");
 
-  if(dsm_ps){
+  if (dsm_ps) {
 
-    string type="NULL";
+    string type = "NULL";
 
-    if( !dsm_ps->getAttribute("type", type) ){
-      throw ProblemSetupException("No type specified for DeviatoricStress", __FILE__, __LINE__);
+    if (!dsm_ps->getAttribute("type", type)) {
+      throw ProblemSetupException("No type specified for DeviatoricStress",
+                                  __FILE__, __LINE__);
     }
-    if (type == "hypoElastic"){
-      return( scinew HypoElasticDevStress() );
+    if (type == "hypoElastic") {
+      return (scinew HypoElasticDevStress());
 
-    } else if (type == "hypoViscoElastic"){
-      return( scinew HypoViscoElasticDevStress(dsm_ps) );
+    } else if (type == "hypoViscoElastic") {
+      return (scinew HypoViscoElasticDevStress(dsm_ps));
 
     } else {
-      throw ProblemSetupException("Unknown DeviatoricStress type ("+type+")", __FILE__, __LINE__);
+      throw ProblemSetupException(
+        "Unknown DeviatoricStress type (" + type + ")", __FILE__, __LINE__);
     }
-  } else{
-    return( scinew HypoElasticDevStress() );  // DEFAULT  Deviatoric Stress Model
+  } else {
+    return (scinew HypoElasticDevStress()); // DEFAULT  Deviatoric Stress Model
   }
 }
-

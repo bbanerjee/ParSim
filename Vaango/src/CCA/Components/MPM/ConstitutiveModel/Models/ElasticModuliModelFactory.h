@@ -31,22 +31,22 @@
 
 namespace Vaango {
 
-  // Forward declarations
-  class ElasticModuliModel;
+// Forward declarations
+class ElasticModuliModel;
 
-  /*! \class ElasticModuliModelFactory
-   *  \brief Creates instances of elasticity Models
-   *  \author  Biswajit Banerjee,
-  */
+/*! \class ElasticModuliModelFactory
+ *  \brief Creates instances of elasticity Models
+ *  \author  Biswajit Banerjee,
+*/
 
-  class ElasticModuliModelFactory {
+class ElasticModuliModelFactory
+{
 
-  public:
-
-    //! Create a elastic modulus model from the input file problem specification.
-    static ElasticModuliModel* create(Uintah::ProblemSpecP& ps);
-    static ElasticModuliModel* createCopy(const ElasticModuliModel* yc);
-  };
+public:
+  //! Create a elastic modulus model from the input file problem specification.
+  static ElasticModuliModel* create(Uintah::ProblemSpecP& ps);
+  static ElasticModuliModel* createCopy(const ElasticModuliModel* yc);
+};
 } // End namespace Vaango
-      
+
 #endif /* _ELASTICITY_MODEL_FACTORY_H_ */

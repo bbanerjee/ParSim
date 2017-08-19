@@ -46,33 +46,30 @@
  * IN THE SOFTWARE.
  */
 
-
-#include "DefaultHyperElasticEOS.h"     
+#include "DefaultHyperElasticEOS.h"
 #include <cmath>
 
 using namespace Uintah;
 
 DefaultHyperElasticEOS::DefaultHyperElasticEOS(ProblemSpecP&)
 {
-} 
-         
+}
+
 DefaultHyperElasticEOS::DefaultHyperElasticEOS(const DefaultHyperElasticEOS*)
 {
-} 
-         
+}
+
 DefaultHyperElasticEOS::~DefaultHyperElasticEOS()
 {
 }
-         
 
 //////////
 // Calculate the pressure using the elastic constitutive equation
-double 
-DefaultHyperElasticEOS::computePressure(const MPMMaterial* ,
+double
+DefaultHyperElasticEOS::computePressure(const MPMMaterial*,
                                         const PlasticityState* state,
                                         const Matrix3& deformGrad,
-                                        const Matrix3& ,
-                                        const double& )
+                                        const Matrix3&, const double&)
 {
   // Get the state data
   double K = state->bulkModulus;
@@ -81,6 +78,6 @@ DefaultHyperElasticEOS::computePressure(const MPMMaterial* ,
   double J = deformGrad.Determinant();
 
   // Calculate pressure
-  double p = 0.5*K*(J - 1.0/J);
+  double p = 0.5 * K * (J - 1.0 / J);
   return p;
 }

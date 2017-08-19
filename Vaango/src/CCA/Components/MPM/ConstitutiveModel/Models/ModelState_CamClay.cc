@@ -24,7 +24,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>
 using namespace Vaango;
 
@@ -71,14 +70,13 @@ ModelState_CamClay::ModelState_CamClay(const ModelState_CamClay* state)
   elasticStrainTensorTrial = state->elasticStrainTensorTrial;
 }
 
-ModelState_CamClay::~ModelState_CamClay()
-{
-}
+ModelState_CamClay::~ModelState_CamClay() = default;
 
 ModelState_CamClay&
 ModelState_CamClay::operator=(const ModelState_CamClay& state)
 {
-  if (this == &state) return *this;
+  if (this == &state)
+    return *this;
   p_c = state.p_c;
   p_c0 = state.p_c0;
   p = state.p;
@@ -95,7 +93,8 @@ ModelState_CamClay::operator=(const ModelState_CamClay& state)
 ModelState_CamClay*
 ModelState_CamClay::operator=(const ModelState_CamClay* state)
 {
-  if (this == state) return this;
+  if (this == state)
+    return this;
   p_c = state->p_c;
   p_c0 = state->p_c0;
   p = state->p;

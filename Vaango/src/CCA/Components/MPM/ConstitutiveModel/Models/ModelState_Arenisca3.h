@@ -31,39 +31,38 @@
 
 namespace Vaango {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class ModelState_Arenisca3
-    \brief A structure that stores the state data that is specialized for
-           the Arenisca3 model.
-           ** Derived from PlasticityState:ModelState
-    \author Biswajit Banerjee \n
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class ModelState_Arenisca3
+  \brief A structure that stores the state data that is specialized for
+         the Arenisca3 model.
+         ** Derived from PlasticityState:ModelState
+  \author Biswajit Banerjee \n
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  class ModelState_Arenisca3: public ModelState_Default {
+class ModelState_Arenisca3 : public ModelState_Default
+{
 
-  public:
- 
-    double I1;        // I1 = Tr(sigma)
-    double sqrt_J2;   // sqrt(J2) 
-    Uintah::Matrix3 plasticStrainTensor;  // The tensor form of plastic strain
-    double kappa;     // The cap kappa parameter
-    double capX;      // The cap hydrostatic compressive strength X 
-    double zeta;      // The back stress parameter
+public:
+  double I1;                           // I1 = Tr(sigma)
+  double sqrt_J2;                      // sqrt(J2)
+  Uintah::Matrix3 plasticStrainTensor; // The tensor form of plastic strain
+  double kappa;                        // The cap kappa parameter
+  double capX; // The cap hydrostatic compressive strength X
+  double zeta; // The back stress parameter
 
-    ModelState_Arenisca3();
+  ModelState_Arenisca3();
 
-    ModelState_Arenisca3(const ModelState_Arenisca3& state);
-    ModelState_Arenisca3(const ModelState_Arenisca3* state);
+  ModelState_Arenisca3(const ModelState_Arenisca3& state);
+  ModelState_Arenisca3(const ModelState_Arenisca3* state);
 
-    ~ModelState_Arenisca3();
+  ~ModelState_Arenisca3() override;
 
-    ModelState_Arenisca3& operator=(const ModelState_Arenisca3& state);
-    ModelState_Arenisca3* operator=(const ModelState_Arenisca3* state);
-    
-  };
+  ModelState_Arenisca3& operator=(const ModelState_Arenisca3& state);
+  ModelState_Arenisca3* operator=(const ModelState_Arenisca3* state);
+};
 
 } // End namespace Uintah
 
-#endif  // __MODEL_STATE_ARENISCA3_H__ 
+#endif // __MODEL_STATE_ARENISCA3_H__

@@ -46,16 +46,10 @@
  * IN THE SOFTWARE.
  */
 
-
 #include "MeltingTempModel.h"
 
 using namespace Uintah;
 
-MeltingTempModel::MeltingTempModel()
-{
-}
+MeltingTempModel::MeltingTempModel() = default;
 
-MeltingTempModel::~MeltingTempModel()
-{
-}
-         
+MeltingTempModel::~MeltingTempModel() = default;

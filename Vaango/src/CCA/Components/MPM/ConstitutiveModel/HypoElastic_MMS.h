@@ -25,125 +25,109 @@
 #ifndef __HYPOELASTIC_MMS_CONSTITUTIVE_MODEL_H__
 #define __HYPOELASTIC_MMS_CONSTITUTIVE_MODEL_H__
 
-#include "ConstitutiveModel.h"  
+#include "ConstitutiveModel.h"
 #include <Core/Math/Matrix3.h>
 #include <cmath>
 #include <vector>
 
 namespace Uintah {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class HypoElastic_MMS
-    \brief Hypoelastic material model for testing manufactured solutions
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class HypoElastic_MMS
+  \brief Hypoelastic material model for testing manufactured solutions
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  class HypoElastic_MMS : public ConstitutiveModel {
+class HypoElastic_MMS : public ConstitutiveModel
+{
 
-  public:
+public:
+  struct CMData
+  {
+    double rho0;
+    double kappa;
+    double mu;
+    double lambda;
+    double cp;
+    double alpha;
+    double omega;
+  };
 
-    struct CMData {
-      double rho0;
-      double kappa;
-      double mu;
-      double lambda;
-      double cp;
-      double alpha;
-      double omega;
-    };
+  // constructors
+  HypoElastic_MMS(ProblemSpecP& ps, MPMFlags* flag);
+  HypoElastic_MMS(const HypoElastic_MMS* cm);
 
-    // constructors
-    HypoElastic_MMS(ProblemSpecP& ps, MPMFlags* flag);
-    HypoElastic_MMS(const HypoElastic_MMS* cm);
-       
-    // destructor
-    virtual ~HypoElastic_MMS();
+  // destructor
+  ~HypoElastic_MMS() override;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps,bool output_cm_tag = true);
+  void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
-    // clone
-    HypoElastic_MMS* clone();
+  // clone
+  HypoElastic_MMS* clone() override;
 
-    // compute stable timestep for this patch
-    virtual void computeStableTimestep(const Patch* patch,
-                                       const MPMMaterial* matl,
-                                       DataWarehouse* new_dw);
-
-    // compute stress at each particle in the patch
-    virtual void computeStressTensor(const PatchSubset* patches,
+  // compute stable timestep for this patch
+  virtual void computeStableTimestep(const Patch* patch,
                                      const MPMMaterial* matl,
-                                     DataWarehouse* old_dw,
                                      DataWarehouse* new_dw);
 
-    // carry forward CM data for RigidMPM
-    virtual void carryForward(const PatchSubset* patches,
-                              const MPMMaterial* matl,
-                              DataWarehouse* old_dw,
-                              DataWarehouse* new_dw);
+  // compute stress at each particle in the patch
+  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw) override;
 
-    // initialize  each particle's constitutive model data
-    virtual void initializeCMData(const Patch* patch,
-                                  const MPMMaterial* matl,
-                                  DataWarehouse* new_dw);
+  // carry forward CM data for RigidMPM
+  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
+                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
 
-    virtual void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                           const PatchSet* patch, 
-                                           MPMLabel* lb) const;
+  // initialize  each particle's constitutive model data
+  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
+                        DataWarehouse* new_dw) override;
 
+  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+                                 const PatchSet* patch,
+                                 MPMLabel* lb) const override;
 
-    virtual void allocateCMDataAdd(DataWarehouse* new_dw,
-                                   ParticleSubset* subset,
-                                   ParticleLabelVariableMap* newState,
-                                   ParticleSubset* delset,
-                                   DataWarehouse* old_dw);
+  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
+                         ParticleLabelVariableMap* newState,
+                         ParticleSubset* delset,
+                         DataWarehouse* old_dw) override;
 
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches) const;
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches, const bool recursion,
+                              const bool schedParent = true) const override;
 
-    virtual void addComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet* patches,
-                                        const bool recursion,
-                                        const bool schedParent=true) const;
+  double computeRhoMicroCM(double pressure, const double p_ref,
+                           const MPMMaterial* matl, double temperature,
+                           double rho_guess) override;
 
-    virtual double computeRhoMicroCM(double pressure,
-                                     const double p_ref,
-                                     const MPMMaterial* matl, 
-                                     double temperature,
-                                     double rho_guess);
+  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
+                         double& dp_drho, double& ss_new,
+                         const MPMMaterial* matl, double temperature) override;
 
-    virtual void computePressEOSCM(double rho_m, double& press_eos,
-                                   double p_ref,
-                                   double& dp_drho, double& ss_new,
-                                   const MPMMaterial* matl, 
-                                   double temperature);
+  double getCompressibility() override;
 
-    virtual double getCompressibility();
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
 
+private:
+  CMData d_cm;
 
-    virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                  std::vector<const VarLabel*>& to);
+  // Prevent assignment of objects of this class
+  HypoElastic_MMS& operator=(const HypoElastic_MMS& cm);
 
-  private:
+  void initStressAndDefGradUniaxialStrainHarmonic(const Patch* patch,
+                                                  const MPMMaterial* matl,
+                                                  DataWarehouse* new_dw);
 
-    CMData d_cm;
-
-    // Prevent assignment of objects of this class
-    HypoElastic_MMS& operator=(const HypoElastic_MMS &cm);
-
-    void initStressAndDefGradUniaxialStrainHarmonic(const Patch* patch,
-                                                    const MPMMaterial* matl,
-                                                    DataWarehouse* new_dw);
-
-    void initStressAndDefGradUniaxialStrainHomogeneous(const Patch* patch,
-                                                       const MPMMaterial* matl,
-                                                       DataWarehouse* new_dw);
-
-  };
+  void initStressAndDefGradUniaxialStrainHomogeneous(const Patch* patch,
+                                                     const MPMMaterial* matl,
+                                                     DataWarehouse* new_dw);
+};
 
 } // End namespace Uintah
 
-#endif  // __HYPOELASTIC_MMS_CONSTITUTIVE_MODEL_H__ 
+#endif // __HYPOELASTIC_MMS_CONSTITUTIVE_MODEL_H__

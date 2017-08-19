@@ -46,73 +46,91 @@
  * IN THE SOFTWARE.
  */
 #include "HypoElasticDevStress.h"
-#include <Core/Math/FastMatrix.h>
 #include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Math/FastMatrix.h>
 #include <cmath>
 using namespace std;
 using namespace Uintah;
 
 // constructor
-HypoElasticDevStress::HypoElasticDevStress(){}
+HypoElasticDevStress::HypoElasticDevStress()
+{
+}
 
 // destructor
-HypoElasticDevStress::~HypoElasticDevStress(){}
-
+HypoElasticDevStress::~HypoElasticDevStress() = default;
 
 //______________________________________________________________________
 //
-void HypoElasticDevStress::computeDeviatoricStressInc( const particleIndex ,
-                                                       const PlasticityState* plaState ,
-                                                       DeformationState* defState ,
-                                                       const double delT ){ 
-  //proc0cout << " HypoElasticDevStress:computeDevStessInc " << endl;
+void
+HypoElasticDevStress::computeDeviatoricStressInc(
+  const particleIndex, const PlasticityState* plaState,
+  DeformationState* defState, const double delT)
+{
+  // proc0cout << " HypoElasticDevStress:computeDevStessInc " << endl;
   double mu = plaState->shearModulus;
   defState->devStressInc = defState->tensorEta * (2.0 * mu * delT);
 }
-
 
 //______________________________________________________________________
 //    EMPTY METHODS & FUNCTIONS
 //______________________________________________________________________
 
-void HypoElasticDevStress::outputProblemSpec(ProblemSpecP& ps){}
-
-void 
-HypoElasticDevStress::addInitialComputesAndRequires(Task* ,
-                                                    const MPMMaterial* ){}
-
-void 
-HypoElasticDevStress::addComputesAndRequires(Task* ,
-                                             const MPMMaterial* ){}
+void
+HypoElasticDevStress::outputProblemSpec(ProblemSpecP& ps)
+{
+}
 
 void
-HypoElasticDevStress::addComputesAndRequires(Task* ,
-                                             const MPMMaterial*,
-                                             bool ) {}
+HypoElasticDevStress::addInitialComputesAndRequires(Task*, const MPMMaterial*)
+{
+}
 
-void 
-HypoElasticDevStress::addParticleState(std::vector<const VarLabel*>& ,
-                                       std::vector<const VarLabel*>& ){}
-
-void 
-HypoElasticDevStress::initializeInternalVars( ParticleSubset* ,
-                                              DataWarehouse* ) {}
-
-void 
-HypoElasticDevStress::getInternalVars( ParticleSubset*,
-                                       DataWarehouse* ) {}
-
-void 
-HypoElasticDevStress::allocateAndPutInternalVars( ParticleSubset* ,
-                                                  DataWarehouse* ) {}
 void
-HypoElasticDevStress::allocateAndPutRigid( ParticleSubset* ,
-                                           DataWarehouse* ) {}
+HypoElasticDevStress::addComputesAndRequires(Task*, const MPMMaterial*)
+{
+}
 
-void HypoElasticDevStress::updateInternalStresses( const particleIndex,
-                                                   const Matrix3& ,
-                                                   DeformationState* ,
-                                                   const double) {}
+void
+HypoElasticDevStress::addComputesAndRequires(Task*, const MPMMaterial*, bool)
+{
+}
 
-void HypoElasticDevStress::rotateInternalStresses( const particleIndex,
-                                                   const Matrix3& ){}
+void
+HypoElasticDevStress::addParticleState(std::vector<const VarLabel*>&,
+                                       std::vector<const VarLabel*>&)
+{
+}
+
+void
+HypoElasticDevStress::initializeInternalVars(ParticleSubset*, DataWarehouse*)
+{
+}
+
+void
+HypoElasticDevStress::getInternalVars(ParticleSubset*, DataWarehouse*)
+{
+}
+
+void
+HypoElasticDevStress::allocateAndPutInternalVars(ParticleSubset*,
+                                                 DataWarehouse*)
+{
+}
+void
+HypoElasticDevStress::allocateAndPutRigid(ParticleSubset*, DataWarehouse*)
+{
+}
+
+void
+HypoElasticDevStress::updateInternalStresses(const particleIndex,
+                                             const Matrix3&, DeformationState*,
+                                             const double)
+{
+}
+
+void
+HypoElasticDevStress::rotateInternalStresses(const particleIndex,
+                                             const Matrix3&)
+{
+}

@@ -54,16 +54,16 @@
 
 namespace Uintah {
 
-  class FlowModel;
-  class MPMLabel;
+class FlowModel;
+class MPMLabel;
 
-  class FlowStressModelFactory
-  {
-  public:
-    // this function has a switch for all known mat_types
-    static FlowModel* create(ProblemSpecP& ps);
-    static FlowModel* createCopy(const FlowModel* pm);
-  };
+class FlowStressModelFactory
+{
+public:
+  // this function has a switch for all known mat_types
+  static FlowModel* create(ProblemSpecP& ps);
+  static FlowModel* createCopy(const FlowModel* pm);
+};
 } // End namespace Uintah
-      
+
 #endif /* _FlowMODELFACTORY_H_ */

@@ -46,115 +46,110 @@
  * IN THE SOFTWARE.
  */
 
-//  ElasticConstitutiveModel.cc 
-//  class ConstitutiveModel ConstitutiveModel data type -- 3D - 
+//  ElasticConstitutiveModel.cc
+//  class ConstitutiveModel ConstitutiveModel data type -- 3D -
 //  holds ConstitutiveModel
 //  information for the FLIP technique:
 //    This is for elastic materials
 //    Features:
 //      Usage:
 
-
-#include "ConstitutiveModelFactory.h"
 #include "ElasticConstitutiveModel.h"
-#include <Core/Grid/Variables/ParticleVariable.h>
-#include <Core/Grid/Variables/VarLabel.h>
-#include <CCA/Ports/DataWarehouse.h>
+#include "ConstitutiveModelFactory.h"
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/MPMLabel.h>
+#include <CCA/Ports/DataWarehouse.h>
+#include <Core/Grid/Variables/ParticleVariable.h>
+#include <Core/Grid/Variables/VarLabel.h>
 
-#include <CCA/Components/MPM/Util/Matrix.cc> // for bounded array multiplier    
+#include <CCA/Components/MPM/Util/Matrix.cc> // for bounded array multiplier
 #include <fstream>
 #include <iostream>
 using namespace std;
 using namespace Uintah;
 
-ElasticConstitutiveModel::ElasticConstitutiveModel(ProblemSpecP &ps)
+ElasticConstitutiveModel::ElasticConstitutiveModel(ProblemSpecP& ps)
 {
-  ps->require("youngs_modulus",d_initialData.YngMod);
-  ps->require("poissons_ratio",d_initialData.PoiRat); 
-  p_cmdata_label = VarLabel::create("p.cmdata",
-                                ParticleVariable<CMData>::getTypeDescription());
-  p_cmdata_label_preReloc = VarLabel::create("p.cmdata+",
-                                ParticleVariable<CMData>::getTypeDescription());
-
+  ps->require("youngs_modulus", d_initialData.YngMod);
+  ps->require("poissons_ratio", d_initialData.PoiRat);
+  p_cmdata_label = VarLabel::create(
+    "p.cmdata", ParticleVariable<CMData>::getTypeDescription());
+  p_cmdata_label_preReloc = VarLabel::create(
+    "p.cmdata+", ParticleVariable<CMData>::getTypeDescription());
 }
 
-void ElasticConstitutiveModel::addParticleState(std::vector<const VarLabel*>& from,
-                                                std::vector<const VarLabel*>& to)
+void
+ElasticConstitutiveModel::addParticleState(std::vector<const VarLabel*>& from,
+                                           std::vector<const VarLabel*>& to)
 {
-   from.push_back(p_cmdata_label);
-   to.push_back(p_cmdata_label_preReloc);
+  from.push_back(p_cmdata_label);
+  to.push_back(p_cmdata_label_preReloc);
 }
 
 ElasticConstitutiveModel::~ElasticConstitutiveModel()
 {
   // Destructor
 
-  //cout << "Calling ElasticConstitutiveModel destructor . . . " << endl;
+  // cout << "Calling ElasticConstitutiveModel destructor . . . " << endl;
   VarLabel::destroy(p_cmdata_label);
   VarLabel::destroy(p_cmdata_label_preReloc);
- 
 }
 
-
-
-void ElasticConstitutiveModel::setStressTensor(Matrix3 st) 
+void
+ElasticConstitutiveModel::setStressTensor(Matrix3 st)
 {
   // Assign the stress tensor (3 x 3 matrix)
 
   stressTensor = st;
-
 }
 
-void ElasticConstitutiveModel::setDeformationMeasure(Matrix3 st) 
+void
+ElasticConstitutiveModel::setDeformationMeasure(Matrix3 st)
 {
   // Assign the strain tensor (3 x 3 matrix)
 
   strainTensor = st;
-
 }
 
-void ElasticConstitutiveModel::setStrainIncrement(Matrix3 si) 
+void
+ElasticConstitutiveModel::setStrainIncrement(Matrix3 si)
 {
   // Assign the strain increment tensor (3 x 3 matrix)
 
   strainIncrement = si;
-
 }
 
-void ElasticConstitutiveModel::setStressIncrement(Matrix3 si) 
+void
+ElasticConstitutiveModel::setStressIncrement(Matrix3 si)
 {
   // Assign the stress increment tensor (3 x 3 matrix)
 
   stressIncrement = si;
-
 }
 
-void ElasticConstitutiveModel::setRotationIncrement(Matrix3 ri) 
+void
+ElasticConstitutiveModel::setRotationIncrement(Matrix3 ri)
 {
   // Assign the rotation increment tensor (3 x 3 matrix)
 
   rotationIncrement = ri;
-
 }
 
-Matrix3 ElasticConstitutiveModel::getStressTensor() const
+Matrix3
+ElasticConstitutiveModel::getStressTensor() const
 {
   // Return the stress tensor (3 x 3 matrix)
 
   return stressTensor;
-
 }
 
-Matrix3 ElasticConstitutiveModel::getDeformationMeasure() const
+Matrix3
+ElasticConstitutiveModel::getDeformationMeasure() const
 {
   // Return the strain tensor (3 x 3 matrix)
 
   return strainTensor;
-
 }
-
 
 #if 0
 std::vector<double> ElasticConstitutiveModel::getMechProps() const
@@ -171,28 +166,28 @@ std::vector<double> ElasticConstitutiveModel::getMechProps() const
 }
 #endif
 
-Matrix3 ElasticConstitutiveModel::getStrainIncrement() const
+Matrix3
+ElasticConstitutiveModel::getStrainIncrement() const
 {
   // Return the strain increment tensor (3 x 3 matrix)
 
   return strainIncrement;
-
 }
 
-Matrix3 ElasticConstitutiveModel::getStressIncrement() const
+Matrix3
+ElasticConstitutiveModel::getStressIncrement() const
 {
   // Return the stress increment tensor (3 x 3 matrix)
 
   return stressIncrement;
-
 }
 
-Matrix3 ElasticConstitutiveModel::getRotationIncrement() const
+Matrix3
+ElasticConstitutiveModel::getRotationIncrement() const
 {
   // Return the rotation increment tensor (3 x 3 matrix)
 
   return rotationIncrement;
-
 }
 
 #if 0
@@ -215,67 +210,68 @@ double ElasticConstitutiveModel::getMu() const
 }
 #endif
 
-void ElasticConstitutiveModel::computeRotationIncrement(Matrix3 defInc)
+void
+ElasticConstitutiveModel::computeRotationIncrement(Matrix3 defInc)
 {
   // Compute the rotation increment following Sulsky in CFDLIB
 
   // This is hocus pocus
 
- 
-  BoundedArray<double> alpha(1,3,0.);
-  
-  alpha[1] = defInc(2,3) - defInc(3,2);
-  alpha[2] = defInc(3,1) - defInc(1,3);
-  alpha[3] = defInc(1,2) - defInc(2,1);
+  BoundedArray<double> alpha(1, 3, 0.);
+
+  alpha[1] = defInc(2, 3) - defInc(3, 2);
+  alpha[2] = defInc(3, 1) - defInc(1, 3);
+  alpha[3] = defInc(1, 2) - defInc(2, 1);
 
   double q = alpha * alpha;
-  q = q/4.;
+  q = q / 4.;
   double tracea = 2.0 - defInc.Trace();
-  double p = (tracea * tracea)/4.;
+  double p = (tracea * tracea) / 4.;
   double fn = 1. - p - q;
   double fd = p + q;
-  double tempc = p * (1. + fn*p/(fd*fd)*(3.-2.*p/fd));
+  double tempc = p * (1. + fn * p / (fd * fd) * (3. - 2. * p / fd));
   tempc = sqrt(tempc);
-  if(tracea>=0.0){
-                tempc = fabs(tempc);
-  }
-  else {
-                tempc = -fabs(tempc);
+  if (tracea >= 0.0) {
+    tempc = fabs(tempc);
+  } else {
+    tempc = -fabs(tempc);
   }
 
-  //  Get sin(thetaa)/2/sqrt(q) 
-  double temps=sqrt((p*q*(3.0-q)+pow(p,3.0)+pow(q,2.0))/pow((p+q),3.0))/2.0;
+  //  Get sin(thetaa)/2/sqrt(q)
+  double temps =
+    sqrt((p * q * (3.0 - q) + pow(p, 3.0) + pow(q, 2.0)) / pow((p + q), 3.0)) /
+    2.0;
 
-  //  Get (1-cos(thetaa))/4/q  
+  //  Get (1-cos(thetaa))/4/q
 
   double tempc2;
 
-  if(q > 0.01){
-     tempc2=(1.0-tempc)/4.0/q;
+  if (q > 0.01) {
+    tempc2 = (1.0 - tempc) / 4.0 / q;
+  } else {
+    // I am sure that this can be simplified if it ever shows up
+    // on a profile.
+    // - Steve
+    tempc2 = 1.0 / 8.0 +
+             q / 32.0 / pow(p, 2.0) * (pow(p, 2.0) - 12.0 * p + 12.0) +
+             pow(q, 2.0) / 64.0 / pow(p, 3.0) * (p - 2.0) *
+               (pow(p, 2.0) - 10.0 * p + 32.0) +
+             pow(q, 3.0) / 512.0 / pow(p, 4.0) *
+               (1104.0 - 992.0 * p + 376.0 * pow(p, 2.0) - 72.0 * pow(p, 3.0) +
+                5.0 * pow(p, 4.0));
   }
-  else{
-      // I am sure that this can be simplified if it ever shows up
-      // on a profile.
-      // - Steve
-     tempc2 =1.0/8.0+q/32.0/pow(p,2.0)*(pow(p,2.0)-12.0*p+12.0) 
-      +pow(q,2.0)/64.0/pow(p,3.0)*(p-2.0)*(pow(p,2.0)-10.0*p+32.0)
-      +pow(q,3.0)/512.0/pow(p,4.0)*(1104.0-992.0*p+376.0*pow(p,2.0)
-                                    -72.0*pow(p,3.0)+5.0*pow(p,4.0));
-  }
 
- 
-  rotationIncrement(1,1) = tempc+pow(alpha[1],2.0)*tempc2;
-  rotationIncrement(1,2) = tempc2*alpha[1]*alpha[2]+temps*alpha[3];
-  rotationIncrement(1,3) = tempc2*alpha[1]*alpha[3]-temps*alpha[2];
+  rotationIncrement(1, 1) = tempc + pow(alpha[1], 2.0) * tempc2;
+  rotationIncrement(1, 2) = tempc2 * alpha[1] * alpha[2] + temps * alpha[3];
+  rotationIncrement(1, 3) = tempc2 * alpha[1] * alpha[3] - temps * alpha[2];
 
-  rotationIncrement(2,1) = tempc2*alpha[1]*alpha[2]-temps*alpha[3];
-  rotationIncrement(2,2) = tempc+pow(alpha[2],2.0)*tempc2;
-  rotationIncrement(2,3) = tempc2*alpha[2]*alpha[3]+temps*alpha[1];
+  rotationIncrement(2, 1) = tempc2 * alpha[1] * alpha[2] - temps * alpha[3];
+  rotationIncrement(2, 2) = tempc + pow(alpha[2], 2.0) * tempc2;
+  rotationIncrement(2, 3) = tempc2 * alpha[2] * alpha[3] + temps * alpha[1];
 
-  rotationIncrement(3,1) = tempc2*alpha[1]*alpha[3]+temps*alpha[2];
-  rotationIncrement(3,2) = tempc2*alpha[2]*alpha[3]-temps*alpha[1];
-  rotationIncrement(3,3) = tempc+pow(alpha[3],2.0)*tempc2;
-
+  rotationIncrement(3, 1) = tempc2 * alpha[1] * alpha[3] + temps * alpha[2];
+  rotationIncrement(3, 2) = tempc2 * alpha[2] * alpha[3] - temps * alpha[1];
+  rotationIncrement(3, 3) = tempc + pow(alpha[3], 2.0) * tempc2;
 }
 
 #if 0
@@ -315,74 +311,78 @@ void ElasticConstitutiveModel::computeStressIncrement()
 }
 #endif
 
-void ElasticConstitutiveModel::computeStressTensor(const PatchSubset* /*patches*/,
-                                                   const MPMMaterial* /*matl*/,
-                                                   DataWarehouse* /*new_dw*/,
-                                                   DataWarehouse* /*old_dw*/)
+void
+ElasticConstitutiveModel::computeStressTensor(const PatchSubset* /*patches*/,
+                                              const MPMMaterial* /*matl*/,
+                                              DataWarehouse* /*new_dw*/,
+                                              DataWarehouse* /*old_dw*/)
 {
   cerr << "computeStressTensor not finished\n";
 }
 
-double ElasticConstitutiveModel::computeStrainEnergy(const Patch* /*patch*/,
-                                                     const MPMMaterial* /*matl*/,
-                                                     DataWarehouse* /*new_dw*/)
+double
+ElasticConstitutiveModel::computeStrainEnergy(const Patch* /*patch*/,
+                                              const MPMMaterial* /*matl*/,
+                                              DataWarehouse* /*new_dw*/)
 {
   cerr << "computeStrainEnergy not finished\n";
   return -1;
 }
 
-void ElasticConstitutiveModel::initializeCMData(const Patch* patch,
-                                                const MPMMaterial* matl,
-                                                DataWarehouse* new_dw)
+void
+ElasticConstitutiveModel::initializeCMData(const Patch* patch,
+                                           const MPMMaterial* matl,
+                                           DataWarehouse* new_dw)
 {
   //   const MPMLabel* lb = MPMLabel::getLabels();
-   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
-   ParticleVariable<CMData> cmdata;
-   new_dw->allocateAndPut(cmdata, p_cmdata_label, pset);
-   for(ParticleSubset::iterator iter = pset->begin();
-       iter != pset->end(); iter++)
-      cmdata[*iter] = d_initialData;
-   // allocateAndPut instead:
-   /* new_dw->put(cmdata, p_cmdata_label); */;
+  ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
+  ParticleVariable<CMData> cmdata;
+  new_dw->allocateAndPut(cmdata, p_cmdata_label, pset);
+  for (ParticleSubset::iterator iter = pset->begin(); iter != pset->end();
+       iter++)
+    cmdata[*iter] = d_initialData;
+  // allocateAndPut instead:
+  /* new_dw->put(cmdata, p_cmdata_label); */;
 }
 
 #ifdef WONT_COMPILE_YET
-double ElasticConstitutiveModel::computeStrainEnergy()
+double
+ElasticConstitutiveModel::computeStrainEnergy()
 {
   double se;
 
-  se = ((1.0/(2.0*YngMod))*
-       (pow(stressTensor(1,1),2.0)+pow(stressTensor(2,2),2.0)+
-                                         pow(stressTensor(3,3),2.0) -
-       2.0*PoiRat*(stressTensor(1,1)*stressTensor(2,2)+
-       stressTensor(2,2)*stressTensor(3,3)+stressTensor(3,3)*stressTensor(1,1)))+
-       (1.0/(2.0*YngMod/(2.*(1. + PoiRat))))*
-       (pow(stressTensor(1,2),2.0)+pow(stressTensor(2,3),2.0)+
-                                         pow(stressTensor(1,3),2.0)));
-
+  se = ((1.0 / (2.0 * YngMod)) *
+          (pow(stressTensor(1, 1), 2.0) + pow(stressTensor(2, 2), 2.0) +
+           pow(stressTensor(3, 3), 2.0) -
+           2.0 * PoiRat * (stressTensor(1, 1) * stressTensor(2, 2) +
+                           stressTensor(2, 2) * stressTensor(3, 3) +
+                           stressTensor(3, 3) * stressTensor(1, 1))) +
+        (1.0 / (2.0 * YngMod / (2. * (1. + PoiRat)))) *
+          (pow(stressTensor(1, 2), 2.0) + pow(stressTensor(2, 3), 2.0) +
+           pow(stressTensor(1, 3), 2.0)));
 
   return se;
 }
 
-void ElasticConstitutiveModel::computeStressTensor
-                        (Matrix3 velocityGradient, double time_step)
+void
+ElasticConstitutiveModel::computeStressTensor(Matrix3 velocityGradient,
+                                              double time_step)
 {
 
   // Calculate the stress Tensor (Symmetric 3 x 3 matrix) given the
   // time step and the velocity gradient and the material constants
   // Poisson's Ratio and Young's Modulus
 
-  
-  // Compute the deformation gradient using the time_step and velocity 
+  // Compute the deformation gradient using the time_step and velocity
   // gradient
   Matrix3 defInc(0.0);
   defInc = velocityGradient * time_step;
 
   // Compute the strain Increment given the deformation Increment
-  strainIncrement = (defInc + defInc.Transpose())*.5;
+  strainIncrement = (defInc + defInc.Transpose()) * .5;
 
   // Update the strain tensor with the strain increment
-  strainTensor = strainTensor +  strainIncrement;
+  strainTensor = strainTensor + strainIncrement;
 
   // Compute the rotation increment given the deformation increment
   computeRotationIncrement(defInc);
@@ -393,31 +393,32 @@ void ElasticConstitutiveModel::computeStressTensor
   // Rotate the stress increment
   Matrix3 tempStressIncrement(0.0);
   tempStressIncrement = stressIncrement;
-  stressIncrement = 
+  stressIncrement =
     rotationIncrement * tempStressIncrement * rotationIncrement.Transpose();
 
   // Update the stress tensor with the rotated stress increment
-  stressTensor = stressTensor +  stressIncrement;
-
+  stressTensor = stressTensor + stressIncrement;
 }
 #endif
 
-void ElasticConstitutiveModel::addComputesAndRequires(Task* task,
-                                                      const MPMMaterial* /*matl*/,
-                                                      const PatchSet* patches) const
+void
+ElasticConstitutiveModel::addComputesAndRequires(Task* task,
+                                                 const MPMMaterial* /*matl*/,
+                                                 const PatchSet* patches) const
 {
-   cerr << "ElasticConsitutive::addComputesAndRequires needs to be filled in\n";
+  cerr << "ElasticConsitutive::addComputesAndRequires needs to be filled in\n";
 }
 
-void ElasticConstitutiveModel::readParameters(ProblemSpecP ps, double *p_array)
+void
+ElasticConstitutiveModel::readParameters(ProblemSpecP ps, double* p_array)
 {
 
-  ps->require("youngs_modulus",p_array[0]);
-  ps->require("poissons_ratio",p_array[1]);
-
+  ps->require("youngs_modulus", p_array[0]);
+  ps->require("poissons_ratio", p_array[1]);
 }
 
-void ElasticConstitutiveModel::writeParameters(ofstream& out, double *p_array)
+void
+ElasticConstitutiveModel::writeParameters(ofstream& out, double* p_array)
 {
   out << p_array[0] << " " << p_array[1] << " ";
 }
@@ -427,10 +428,11 @@ ElasticConstitutiveModel::readParametersAndCreate(ProblemSpecP ps)
 {
   double p_array[2];
   readParameters(ps, p_array);
-  return(create(p_array));
+  return (create(p_array));
 }
 
-void ElasticConstitutiveModel::writeRestartParameters(ofstream& out) const
+void
+ElasticConstitutiveModel::writeRestartParameters(ofstream& out) const
 {
 #if 0
   out << getType() << " ";
@@ -465,62 +467,68 @@ ElasticConstitutiveModel::readRestartParametersAndCreate(ProblemSpecP ps)
 }
 
 ConstitutiveModel*
-ElasticConstitutiveModel::create(double *p_array)
+ElasticConstitutiveModel::create(double* p_array)
 {
 #ifdef WONT_COMPILE_YET
-  return(scinew ElasticConstitutiveModel(p_array[0], p_array[1]));
+  return (scinew ElasticConstitutiveModel(p_array[0], p_array[1]));
 #else
   return 0;
 #endif
 }
 
-int ElasticConstitutiveModel::getType() const
+int
+ElasticConstitutiveModel::getType() const
 {
   //  return(ConstitutiveModelFactory::CM_ELASTIC);
 }
 
-string ElasticConstitutiveModel::getName() const
+string
+ElasticConstitutiveModel::getName() const
 {
-  return("Elastic");
+  return ("Elastic");
 }
 
-int ElasticConstitutiveModel::getNumParameters() const
+int
+ElasticConstitutiveModel::getNumParameters() const
 {
-  return(2);
+  return (2);
 }
 
-void ElasticConstitutiveModel::printParameterNames(ofstream& out) const
+void
+ElasticConstitutiveModel::printParameterNames(ofstream& out) const
 {
-  out << "Yng's Mod" << endl
-      << "Pois. Rat" << endl;
+  out << "Yng's Mod" << endl << "Pois. Rat" << endl;
 }
-
 
 namespace Uintah {
 
-static MPI_Datatype makeMPI_CMData()
+static MPI_Datatype
+makeMPI_CMData()
 {
-   ASSERTEQ(sizeof(ElasticConstitutiveModel::CMData), sizeof(double)*2);
-   MPI_Datatype mpitype;
-   MPI_Type_vector(1, 2, 2, MPI_DOUBLE, &mpitype);
-   MPI_Type_commit(&mpitype);
-   return mpitype;
+  ASSERTEQ(sizeof(ElasticConstitutiveModel::CMData), sizeof(double) * 2);
+  MPI_Datatype mpitype;
+  MPI_Type_vector(1, 2, 2, MPI_DOUBLE, &mpitype);
+  MPI_Type_commit(&mpitype);
+  return mpitype;
 }
 
-const TypeDescription* fun_getTypeDescription(ElasticConstitutiveModel::CMData*)
+const TypeDescription*
+fun_getTypeDescription(ElasticConstitutiveModel::CMData*)
 {
-   static TypeDescription* td = 0;
-   if(!td){
-      td = scinew TypeDescription(TypeDescription::Other, "ElasticConstitutiveModel::CMData", true, &makeMPI_CMData);
-   }
-   return td;   
+  static TypeDescription* td = 0;
+  if (!td) {
+    td = scinew TypeDescription(TypeDescription::Other,
+                                "ElasticConstitutiveModel::CMData", true,
+                                &makeMPI_CMData);
+  }
+  return td;
 }
 
 ConstitutiveModel*
 ElasticConstitutiveModel::copy() const
 {
 #ifdef WONT_COMPILE_YET
-  return( scinew ElasticConstitutiveModel(*this) );
+  return (scinew ElasticConstitutiveModel(*this));
 #else
   return 0;
 #endif
@@ -543,13 +551,14 @@ ElasticConstitutiveModel::operator=(const ElasticConstitutiveModel &cm)
   return (*this);
 #endif
 
-int ElasticConstitutiveModel::getSize() const
+int
+ElasticConstitutiveModel::getSize() const
 {
   int s = 0;
-  s += sizeof(double) * 6;  // stressTensor elements
-  s += sizeof(double) * 2;  // properties
-  s += sizeof(int) * 1;     // type
-  return(s);
+  s += sizeof(double) * 6; // stressTensor elements
+  s += sizeof(double) * 2; // properties
+  s += sizeof(int) * 1;    // type
+  return (s);
 }
 
-} //namespace Uintah
+} // namespace Uintah

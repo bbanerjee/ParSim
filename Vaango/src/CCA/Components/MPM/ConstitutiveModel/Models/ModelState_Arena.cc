@@ -22,14 +22,14 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
 #include <Core/Exceptions/InternalError.h>
 #include <iostream>
 
 using namespace Vaango;
 
-const Uintah::Matrix3 ModelState_Arena::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+const Uintah::Matrix3 ModelState_Arena::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+                                                 0.0, 0.0, 1.0);
 const double ModelState_Arena::sqrtTwo = std::sqrt(2.0);
 const double ModelState_Arena::sqrtThree = std::sqrt(3.0);
 
@@ -123,7 +123,7 @@ ModelState_Arena::ModelState_Arena(const ModelState_Arena* state)
   stressTensor = state->stressTensor;
   deviatoricStressTensor = state->deviatoricStressTensor;
   I1_eff = state->I1_eff;
-  J2= state->J2;
+  J2 = state->J2;
   sqrt_J2 = state->sqrt_J2;
   rr = state->rr;
   zz_eff = state->zz_eff;
@@ -147,14 +147,13 @@ ModelState_Arena::ModelState_Arena(const ModelState_Arena* state)
   yieldParams = state->yieldParams;
 }
 
-ModelState_Arena::~ModelState_Arena()
-{
-}
+ModelState_Arena::~ModelState_Arena() = default;
 
 ModelState_Arena&
 ModelState_Arena::operator=(const ModelState_Arena& state)
 {
-  if (this == &state) return *this;
+  if (this == &state)
+    return *this;
 
   particleID = state.particleID;
 
@@ -197,7 +196,8 @@ ModelState_Arena::operator=(const ModelState_Arena& state)
 ModelState_Arena*
 ModelState_Arena::operator=(const ModelState_Arena* state)
 {
-  if (this == state) return this;
+  if (this == state)
+    return this;
 
   particleID = state->particleID;
 
@@ -237,34 +237,39 @@ ModelState_Arena::operator=(const ModelState_Arena* state)
   return this;
 }
 
-void 
+void
 ModelState_Arena::updateStressInvariants()
 {
   // Compute the first invariant of the total stress
-  double I1 = stressTensor.Trace();  //Pa
+  double I1 = stressTensor.Trace(); // Pa
 
   // Compute the deviatoric part of the total stress tensor
-  deviatoricStressTensor = stressTensor - Identity*(I1/3.0);  //Pa
+  deviatoricStressTensor = stressTensor - Identity * (I1 / 3.0); // Pa
 
   // Compute the second invariant of the deviatoric total stress
-  J2 = 0.5*deviatoricStressTensor.Contract(deviatoricStressTensor);  //Pa^2
-  J2 = (J2 < 1e-16*(I1*I1+J2)) ? 0.0 : J2;
+  J2 = 0.5 * deviatoricStressTensor.Contract(deviatoricStressTensor); // Pa^2
+  J2 = (J2 < 1e-16 * (I1 * I1 + J2)) ? 0.0 : J2;
   sqrt_J2 = std::sqrt(J2);
 
   // Compute I1_eff for partially saturated Arena model
-  I1_eff =  I1 + (pbar_w*3.0);
+  I1_eff = I1 + (pbar_w * 3.0);
 
   // Compute the Lode coordinates (r, z) of the effective stress
-  rr = sqrtTwo*sqrt_J2;
-  zz_eff = I1_eff/sqrtThree;
+  rr = sqrtTwo * sqrt_J2;
+  zz_eff = I1_eff / sqrtThree;
 
 #ifdef TEST_EFFECT_OF_J2_SIGN
   // Compute the third invariant of the deviatoric total stress
-  double J3 = deviatoricStressTensor(0,0)*deviatoricStressTensor(1,1)*deviatoricStressTensor(2,2) 
-    + 2.0*deviatoricStressTensor(0,1)*deviatoricStressTensor(1,2)*deviatoricStressTensor(2,0) 
-    - (deviatoricStressTensor(0,0)*deviatoricStressTensor(1,2)*deviatoricStressTensor(1,2) 
-    + deviatoricStressTensor(1,1)*deviatoricStressTensor(2,0)*deviatoricStressTensor(2,0) 
-    + deviatoricStressTensor(2,2)*deviatoricStressTensor(0,1)*deviatoricStressTensor(0,1));
+  double J3 = deviatoricStressTensor(0, 0) * deviatoricStressTensor(1, 1) *
+                deviatoricStressTensor(2, 2) +
+              2.0 * deviatoricStressTensor(0, 1) *
+                deviatoricStressTensor(1, 2) * deviatoricStressTensor(2, 0) -
+              (deviatoricStressTensor(0, 0) * deviatoricStressTensor(1, 2) *
+                 deviatoricStressTensor(1, 2) +
+               deviatoricStressTensor(1, 1) * deviatoricStressTensor(2, 0) *
+                 deviatoricStressTensor(2, 0) +
+               deviatoricStressTensor(2, 2) * deviatoricStressTensor(0, 1) *
+                 deviatoricStressTensor(0, 1));
 
   // Change the sign of sqrtJ2 and rr based on sign of J3
   sqrt_J2 = std::copysign(sqrt_J2, J3);
@@ -272,13 +277,14 @@ ModelState_Arena::updateStressInvariants()
 #endif
 }
 
-void 
+void
 ModelState_Arena::updatePlasticStrainInvariants()
 {
   // Compute volumetric strain
   ep_v = plasticStrainTensor.Trace();
 
   // Compute equivalent plastic strain
-  Uintah::Matrix3 devPlasticStrain = plasticStrainTensor - Identity*(ep_v/3.0);
-  ep_eq = std::sqrt(2.0/3.0*devPlasticStrain.Contract(devPlasticStrain));
+  Uintah::Matrix3 devPlasticStrain =
+    plasticStrainTensor - Identity * (ep_v / 3.0);
+  ep_eq = std::sqrt(2.0 / 3.0 * devPlasticStrain.Contract(devPlasticStrain));
 }

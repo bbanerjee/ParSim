@@ -27,62 +27,55 @@
 #ifndef __PRESSURE_MODEL_H__
 #define __PRESSURE_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include "DeformationState.h"
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Core/Math/Matrix3.h>
-
 
 namespace Uintah {
 
-  ////////////////////////////////////////////////////////////////////////////
-  /*! 
-    \class PressureModel
-    \brief Abstract base class for solid equations of state and other models
-           for computing the pressure
-    \author Biswajit Banerjee, \n
-  */
-  ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+/*!
+  \class PressureModel
+  \brief Abstract base class for solid equations of state and other models
+         for computing the pressure
+  \author Biswajit Banerjee, \n
+*/
+////////////////////////////////////////////////////////////////////////////
 
-  class PressureModel {
+class PressureModel
+{
 
-  public:
-         
-    PressureModel();
-    virtual ~PressureModel();
+public:
+  PressureModel();
+  virtual ~PressureModel();
 
-    virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
-         
-    // Calculate the hydrostatic component of stress (pressure)
-    virtual double computePressure(const DeformationState* state) = 0;
+  virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
 
-    // Calculate the pressure without considering internal energy (option 1)
-    virtual double computePressure(const double& rho_orig,
-                                   const double& rho_cur) = 0;
+  // Calculate the hydrostatic component of stress (pressure)
+  virtual double computePressure(const DeformationState* state) = 0;
 
-    // Calculate the pressure without considering internal energy (option 2).  
-    //   Also compute dp/drho and c^2. 
-    virtual void computePressure(const double& rho_orig,
-                                 const double& rho_cur,
-                                 double& pressure,
-                                 double& dp_drho,
-                                 double& csquared) = 0;
+  // Calculate the pressure without considering internal energy (option 1)
+  virtual double computePressure(const double& rho_orig,
+                                 const double& rho_cur) = 0;
 
-    // Calculate the tangent bulk modulus 
-    virtual double computeTangentBulkModulus(const double& rho_orig,
-                                             const double& rho_cur) = 0;
+  // Calculate the pressure without considering internal energy (option 2).
+  //   Also compute dp/drho and c^2.
+  virtual void computePressure(const double& rho_orig, const double& rho_cur,
+                               double& pressure, double& dp_drho,
+                               double& csquared) = 0;
 
-    // Calculate the accumulated strain energy 
-    virtual double computeStrainEnergy(const double& pressure,
-                                       const DeformationState* state) = 0;
+  // Calculate the tangent bulk modulus
+  virtual double computeTangentBulkModulus(const double& rho_orig,
+                                           const double& rho_cur) = 0;
 
-    // Calculate the mass density at a given pressure 
-    virtual double computeDensity(const double& rho_orig,
-                                  const double& pressure) = 0;
+  // Calculate the accumulated strain energy
+  virtual double computeStrainEnergy(const double& pressure,
+                                     const DeformationState* state) = 0;
 
-  };
+  // Calculate the mass density at a given pressure
+  virtual double computeDensity(const double& rho_orig,
+                                const double& pressure) = 0;
+};
 } // End namespace Uintah
-      
 
-
-#endif  // __PRESSURE_MODEL_H__
-
+#endif // __PRESSURE_MODEL_H__

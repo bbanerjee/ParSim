@@ -31,18 +31,17 @@
 
 namespace Uintah {
 
-  class ConstitutiveModel;
-  class MPMLabel;
-  class MPMFlags;
+class ConstitutiveModel;
+class MPMLabel;
+class MPMFlags;
 
-  class ConstitutiveModelFactory
-  {
-  public:
-    // this function has a switch for all known mat_types
-    
-    static ConstitutiveModel* create(ProblemSpecP& ps, MPMFlags* flags);
+class ConstitutiveModelFactory
+{
+public:
+  // this function has a switch for all known mat_types
 
-  };
+  static ConstitutiveModel* create(ProblemSpecP& ps, MPMFlags* flags);
+};
 } // End namespace Uintah
-      
+
 #endif /* _CONSTITUTIVEMODELFACTORY_H_ */

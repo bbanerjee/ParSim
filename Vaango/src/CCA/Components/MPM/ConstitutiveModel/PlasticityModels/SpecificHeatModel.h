@@ -27,41 +27,40 @@
 #define __SPECIFIC_HEAT_MODEL_H__
 
 #include "PlasticityState.h"
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  /*! \class SpecificHeatModel
-   *  \brief A generic wrapper for various specific heat models
-   *  \author Biswajit Banerjee, 
-   *  \author C-SAFE and Department of Mechanical Engineering,
-   *  \author University of Utah.
-   *
-   * Provides an abstract base class for various specific heat models
+/*! \class SpecificHeatModel
+ *  \brief A generic wrapper for various specific heat models
+ *  \author Biswajit Banerjee,
+ *  \author C-SAFE and Department of Mechanical Engineering,
+ *  \author University of Utah.
+ *
+ * Provides an abstract base class for various specific heat models
+*/
+class SpecificHeatModel
+{
+
+public:
+  //! Construct a specific heat model.
+  /*! This is an abstract base class. */
+  SpecificHeatModel();
+
+  //! Destructor of specific heat model.
+  /*! Virtual to ensure correct behavior */
+  virtual ~SpecificHeatModel();
+
+  virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Compute the specific heat
   */
-  class SpecificHeatModel {
-
-  public:
-         
-    //! Construct a specific heat model.  
-    /*! This is an abstract base class. */
-    SpecificHeatModel();
-
-    //! Destructor of specific heat model.  
-    /*! Virtual to ensure correct behavior */
-    virtual ~SpecificHeatModel();
-         
-    virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
-         
-    /////////////////////////////////////////////////////////////////////////
-    /*! 
-      \brief Compute the specific heat
-    */
-    /////////////////////////////////////////////////////////////////////////
-    virtual double computeSpecificHeat(const PlasticityState* state) = 0;
-  };
+  /////////////////////////////////////////////////////////////////////////
+  virtual double computeSpecificHeat(const PlasticityState* state) = 0;
+};
 } // End namespace Uintah
-      
-#endif  // __SPECIFIC_HEAT_MODEL_H__
 
+#endif // __SPECIFIC_HEAT_MODEL_H__

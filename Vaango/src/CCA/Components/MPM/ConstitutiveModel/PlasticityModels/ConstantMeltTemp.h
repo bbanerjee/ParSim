@@ -54,36 +54,35 @@
 
 namespace Uintah {
 
-  /*! \class ConstantMeltTemp
-   *  \brief The melting temperature does not vary with pressure
-   *  \author Biswajit Banerjee, 
-   *  \author C-SAFE and Department of Mechanical Engineering,
-   *  \author University of Utah.
-   *
-  */
-  class ConstantMeltTemp : public MeltingTempModel {
+/*! \class ConstantMeltTemp
+ *  \brief The melting temperature does not vary with pressure
+ *  \author Biswajit Banerjee,
+ *  \author C-SAFE and Department of Mechanical Engineering,
+ *  \author University of Utah.
+ *
+*/
+class ConstantMeltTemp : public MeltingTempModel
+{
 
-  private:
-    ConstantMeltTemp& operator=(const ConstantMeltTemp &mtm);
+private:
+  ConstantMeltTemp& operator=(const ConstantMeltTemp& mtm);
 
-  public:
-         
-    /*! Construct a constant melt temp model. */
-    ConstantMeltTemp();
-    ConstantMeltTemp(ProblemSpecP& ps);
+public:
+  /*! Construct a constant melt temp model. */
+  ConstantMeltTemp();
+  ConstantMeltTemp(ProblemSpecP& ps);
 
-    /*! Construct a copy of constant melt temp model. */
-    ConstantMeltTemp(const ConstantMeltTemp* mtm);
+  /*! Construct a copy of constant melt temp model. */
+  ConstantMeltTemp(const ConstantMeltTemp* mtm);
 
-    /*! Destructor of constant melt temp model.   */
-    virtual ~ConstantMeltTemp();
-         
-    virtual void outputProblemSpec(ProblemSpecP& ps);
+  /*! Destructor of constant melt temp model.   */
+  ~ConstantMeltTemp() override;
 
-    /*! Compute the melt temp */
-    double computeMeltingTemp(const PlasticityState* state);
-  };
+  void outputProblemSpec(ProblemSpecP& ps) override;
+
+  /*! Compute the melt temp */
+  double computeMeltingTemp(const PlasticityState* state) override;
+};
 } // End namespace Uintah
-      
-#endif  // __CONSTANT_MELT_TEMP_MODEL_H__
 
+#endif // __CONSTANT_MELT_TEMP_MODEL_H__

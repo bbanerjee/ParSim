@@ -54,36 +54,35 @@
 
 namespace Uintah {
 
-  /*! \class ConstantCp
-   *  \brief The specfic heat does not vary with temperature
-   *  \author Biswajit Banerjee, 
-   *  \author C-SAFE and Department of Mechanical Engineering,
-   *  \author University of Utah.
-   *
-  */
-  class ConstantCp : public SpecificHeatModel {
+/*! \class ConstantCp
+ *  \brief The specfic heat does not vary with temperature
+ *  \author Biswajit Banerjee,
+ *  \author C-SAFE and Department of Mechanical Engineering,
+ *  \author University of Utah.
+ *
+*/
+class ConstantCp : public SpecificHeatModel
+{
 
-  private:
-    ConstantCp& operator=(const ConstantCp &smm);
+private:
+  ConstantCp& operator=(const ConstantCp& smm);
 
-  public:
-         
-    /*! Construct a constant specfic heat model. */
-    ConstantCp();
-    ConstantCp(ProblemSpecP& ps);
+public:
+  /*! Construct a constant specfic heat model. */
+  ConstantCp();
+  ConstantCp(ProblemSpecP& ps);
 
-    /*! Construct a copy of constant specfic heat model. */
-    ConstantCp(const ConstantCp* smm);
+  /*! Construct a copy of constant specfic heat model. */
+  ConstantCp(const ConstantCp* smm);
 
-    /*! Destructor of constant specfic heat model.   */
-    virtual ~ConstantCp();
-         
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    /*! Compute the specfic heat */
-    double computeSpecificHeat(const PlasticityState* state);
-  };
+  /*! Destructor of constant specfic heat model.   */
+  ~ConstantCp() override;
+
+  void outputProblemSpec(ProblemSpecP& ps) override;
+
+  /*! Compute the specfic heat */
+  double computeSpecificHeat(const PlasticityState* state) override;
+};
 } // End namespace Uintah
-      
-#endif  // __CONSTANT_SPECIFIC_HEAT_MODEL_H__
 
+#endif // __CONSTANT_SPECIFIC_HEAT_MODEL_H__

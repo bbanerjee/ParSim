@@ -28,22 +28,21 @@
 // This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
 // make the isnan function not work.  This define makes the cmath header
 // not get included since we do not need it anyway.
-#  define _CPP_CMATH
+#define _CPP_CMATH
 #endif
 
 #include "BorjaHyperelasticShear.h"
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
 
-
 using namespace Uintah;
 using namespace std;
 
-// Construct a shear stress model.  
-BorjaHyperelasticShear::BorjaHyperelasticShear(ProblemSpecP& ps )
+// Construct a shear stress model.
+BorjaHyperelasticShear::BorjaHyperelasticShear(ProblemSpecP& ps)
 {
   ps->require("mu_0", d_mu0);
   ps->require("p_0", d_p0);
@@ -52,8 +51,9 @@ BorjaHyperelasticShear::BorjaHyperelasticShear(ProblemSpecP& ps )
   ps->require("kappa_tilde", d_kappa);
 }
 
-// Construct a copy of a shear stress model.  
-BorjaHyperelasticShear::BorjaHyperelasticShear(const BorjaHyperelasticShear* ssm)
+// Construct a copy of a shear stress model.
+BorjaHyperelasticShear::BorjaHyperelasticShear(
+  const BorjaHyperelasticShear* ssm)
 {
   d_mu0 = ssm->d_mu0;
   d_p0 = ssm->d_p0;
@@ -62,12 +62,13 @@ BorjaHyperelasticShear::BorjaHyperelasticShear(const BorjaHyperelasticShear* ssm
   d_kappa = ssm->d_kappa;
 }
 
-// Destructor of shear stress model.  
+// Destructor of shear stress model.
 BorjaHyperelasticShear::~BorjaHyperelasticShear()
 {
 }
 
-void BorjaHyperelasticShear::outputProblemSpec(ProblemSpecP& ps)
+void
+BorjaHyperelasticShear::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP shear_ps = ps->appendChild("shear_stress_model");
   shear_ps->setAttribute("type", "borja");
@@ -79,17 +80,17 @@ void BorjaHyperelasticShear::outputProblemSpec(ProblemSpecP& ps)
 }
 
 // Compute the shear stress (not an increment in this case)
-//   sigma_shear = 2 mu dev[eps] = sqrt(2/3) q n 
+//   sigma_shear = 2 mu dev[eps] = sqrt(2/3) q n
 // where
-//   q = 3 mu eps_s ,   eps_s = sqrt{2/3} ||dev[eps]|| ,   n = dev[eps]/||dev[eps]||
+//   q = 3 mu eps_s ,   eps_s = sqrt{2/3} ||dev[eps]|| ,   n =
+//   dev[eps]/||dev[eps]||
 // and
 //   mu = mu_0 + alpha p_0 exp[(eps_v - eps_v0)/kappa_tilde]
-void 
+void
 BorjaHyperelasticShear::computeShearStress(const DeformationState* state,
                                            Matrix3& shear_stress)
 {
   state->computeAlmansiStrain();
-  double mu = d_mu0 + d_alpha*d_p0*exp((state->eps_v - d_epsv0)/d_kappa);
-  shear_stress = dev_strain*(2.0*mu);
+  double mu = d_mu0 + d_alpha * d_p0 * exp((state->eps_v - d_epsv0) / d_kappa);
+  shear_stress = dev_strain * (2.0 * mu);
 }
-

@@ -46,15 +46,10 @@
  * IN THE SOFTWARE.
  */
 
-
 #include "FlowModel.h"
 
 using namespace Uintah;
 
-FlowModel::FlowModel()
-{
-}
+FlowModel::FlowModel() = default;
 
-FlowModel::~FlowModel()
-{
-}
+FlowModel::~FlowModel() = default;

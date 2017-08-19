@@ -26,38 +26,38 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_BorjaPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
+#include <Core/Exceptions/InternalError.h>
+#include <Core/Exceptions/InvalidValue.h>
 #include <cmath>
 #include <iostream>
-#include <Core/Exceptions/InvalidValue.h>
-#include <Core/Exceptions/InternalError.h>
 
 using namespace Vaango;
 using namespace Uintah;
 using namespace std;
 
-
 InternalVar_BorjaPressure::InternalVar_BorjaPressure(ProblemSpecP& ps,
                                                      ShearModulusModel* shear)
 {
-  d_elastic = 0;
+  d_elastic = nullptr;
   d_shear = shear;
-  
+
   ParameterDict eosParams = (d_shear->getPressureModel())->getParameters();
   d_kappatilde = eosParams["kappatilde"];
- 
-  ps->require("pc0",d_pc0);
-  ps->require("lambdatilde",d_lambdatilde);
+
+  ps->require("pc0", d_pc0);
+  ps->require("lambdatilde", d_lambdatilde);
 
   // Initialize internal variable labels for evolution
-  pPcLabel = VarLabel::create("p.p_c",
-        ParticleVariable<double>::getTypeDescription());
-  pPcLabel_preReloc = VarLabel::create("p.p_c+",
-        ParticleVariable<double>::getTypeDescription());
+  pPcLabel =
+    VarLabel::create("p.p_c", ParticleVariable<double>::getTypeDescription());
+  pPcLabel_preReloc =
+    VarLabel::create("p.p_c+", ParticleVariable<double>::getTypeDescription());
 }
-         
-InternalVar_BorjaPressure::InternalVar_BorjaPressure(const InternalVar_BorjaPressure* cm)
+
+InternalVar_BorjaPressure::InternalVar_BorjaPressure(
+  const InternalVar_BorjaPressure* cm)
 {
   d_elastic = cm->d_elastic;
   d_shear = cm->d_shear;
@@ -67,137 +67,132 @@ InternalVar_BorjaPressure::InternalVar_BorjaPressure(const InternalVar_BorjaPres
   d_kappatilde = cm->d_kappatilde;
 
   // Initialize internal variable labels for evolution
-  pPcLabel = VarLabel::create("p.p_c",
-        ParticleVariable<double>::getTypeDescription());
-  pPcLabel_preReloc = VarLabel::create("p.p_c+",
-        ParticleVariable<double>::getTypeDescription());
+  pPcLabel =
+    VarLabel::create("p.p_c", ParticleVariable<double>::getTypeDescription());
+  pPcLabel_preReloc =
+    VarLabel::create("p.p_c+", ParticleVariable<double>::getTypeDescription());
 }
-         
+
 InternalVar_BorjaPressure::~InternalVar_BorjaPressure()
 {
   VarLabel::destroy(pPcLabel);
   VarLabel::destroy(pPcLabel_preReloc);
 }
 
-
-void InternalVar_BorjaPressure::outputProblemSpec(ProblemSpecP& ps)
+void
+InternalVar_BorjaPressure::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP int_var_ps = ps->appendChild("internal_variable_model");
-  int_var_ps->setAttribute("type","borja_consolidation_pressure");
+  int_var_ps->setAttribute("type", "borja_consolidation_pressure");
 
-  int_var_ps->appendElement("pc0",d_pc0);
-  int_var_ps->appendElement("lambdatilde",d_lambdatilde);
+  int_var_ps->appendElement("pc0", d_pc0);
+  int_var_ps->appendElement("lambdatilde", d_lambdatilde);
 }
 
-         
-void 
-InternalVar_BorjaPressure::addInitialComputesAndRequires(Task* task,
-                                                   const MPMMaterial* matl ,
-                                                   const PatchSet*)
+void
+InternalVar_BorjaPressure::addInitialComputesAndRequires(
+  Task* task, const MPMMaterial* matl, const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pPcLabel, matlset);
 }
 
-void 
+void
 InternalVar_BorjaPressure::addComputesAndRequires(Task* task,
-                                   const MPMMaterial* matl ,
-                                   const PatchSet*)
+                                                  const MPMMaterial* matl,
+                                                  const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, pPcLabel, matlset,Ghost::None);
+  task->requires(Task::OldDW, pPcLabel, matlset, Ghost::None);
   task->computes(pPcLabel_preReloc, matlset);
 }
 
-void 
+void
 InternalVar_BorjaPressure::addParticleState(std::vector<const VarLabel*>& from,
-                                      std::vector<const VarLabel*>& to)
+                                            std::vector<const VarLabel*>& to)
 {
   from.push_back(pPcLabel);
   to.push_back(pPcLabel_preReloc);
 }
 
-void 
+void
 InternalVar_BorjaPressure::allocateCMDataAddRequires(Task* task,
-                                               const MPMMaterial* matl ,
-                                               const PatchSet* ,
-                                               MPMLabel* )
+                                                     const MPMMaterial* matl,
+                                                     const PatchSet*, MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::NewDW, pPcLabel_preReloc, matlset, Ghost::None);
 }
 
-void 
-InternalVar_BorjaPressure::allocateCMDataAdd(DataWarehouse* old_dw,
-                                       ParticleSubset* addset,
-                                       map<const VarLabel*, 
-                                         ParticleVariableBase*>* newState,
-                                       ParticleSubset* delset,
-                                       DataWarehouse* new_dw )
+void
+InternalVar_BorjaPressure::allocateCMDataAdd(
+  DataWarehouse* old_dw, ParticleSubset* addset,
+  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
+  DataWarehouse* new_dw)
 {
   ParticleVariable<double> pPc;
   constParticleVariable<double> o_Pc;
 
-  new_dw->allocateTemporary(pPc,addset);
+  new_dw->allocateTemporary(pPc, addset);
 
-  new_dw->get(o_Pc,pPcLabel_preReloc,delset);
+  new_dw->get(o_Pc, pPcLabel_preReloc, delset);
 
-  ParticleSubset::iterator o,n = addset->begin();
-  for(o = delset->begin(); o != delset->end(); o++, n++) {
+  ParticleSubset::iterator o, n = addset->begin();
+  for (o = delset->begin(); o != delset->end(); o++, n++) {
     pPc[*n] = o_Pc[*o];
   }
 
-  (*newState)[pPcLabel]=pPc.clone();
-
+  (*newState)[pPcLabel] = pPc.clone();
 }
 
-void 
+void
 InternalVar_BorjaPressure::initializeInternalVariable(ParticleSubset* pset,
                                                       DataWarehouse* new_dw)
 {
   ParticleVariable<double> pPc;
   new_dw->allocateAndPut(pPc, pPcLabel, pset);
   ParticleSubset::iterator iter = pset->begin();
-  for(;iter != pset->end(); iter++) {
+  for (; iter != pset->end(); iter++) {
     pPc[*iter] = d_pc0;
   }
 }
 
-void 
-InternalVar_BorjaPressure::getInternalVariable(ParticleSubset* pset ,
+void
+InternalVar_BorjaPressure::getInternalVariable(ParticleSubset* pset,
                                                DataWarehouse* old_dw,
-                                               constParticleVariableBase& pPc) 
+                                               constParticleVariableBase& pPc)
 {
   old_dw->get(pPc, pPcLabel, pset);
 }
 
-void 
-InternalVar_BorjaPressure::allocateAndPutInternalVariable(ParticleSubset* pset,
-                                                          DataWarehouse* new_dw,
-                                                          ParticleVariableBase& pPc_new) 
+void
+InternalVar_BorjaPressure::allocateAndPutInternalVariable(
+  ParticleSubset* pset, DataWarehouse* new_dw, ParticleVariableBase& pPc_new)
 {
   new_dw->allocateAndPut(pPc_new, pPcLabel_preReloc, pset);
 }
 
 void
-InternalVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset ,
+InternalVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset,
                                                DataWarehouse* new_dw,
                                                constParticleVariableBase& pPc)
 {
   ParticleVariable<double> pPc_new;
   new_dw->allocateAndPut(pPc_new, pPcLabel_preReloc, pset);
   ParticleSubset::iterator iter = pset->begin();
-  for(;iter != pset->end(); iter++){
-     pPc_new[*iter] = dynamic_cast<constParticleVariable<double>& >(pPc)[*iter];
+  for (; iter != pset->end(); iter++) {
+    pPc_new[*iter] = dynamic_cast<constParticleVariable<double>&>(pPc)[*iter];
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //  Compute the internal variable
-double 
-InternalVar_BorjaPressure::computeInternalVariable(const ModelStateBase* state_input) const
+double
+InternalVar_BorjaPressure::computeInternalVariable(
+  const ModelStateBase* state_input) const
 {
-  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  const ModelState_CamClay* state =
+    dynamic_cast<const ModelState_CamClay*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -206,7 +201,7 @@ InternalVar_BorjaPressure::computeInternalVariable(const ModelStateBase* state_i
   }
 
   // Get old p_c
-  double pc_n = state->p_c0;  // Old Pc
+  double pc_n = state->p_c0; // Old Pc
 
   // Get the trial elastic strain and the updated elastic strain
   // (volumetric part)
@@ -214,17 +209,20 @@ InternalVar_BorjaPressure::computeInternalVariable(const ModelStateBase* state_i
   double strain_elast_v = state->epse_v;
 
   // Calculate new p_c
-  double pc = pc_n*exp(-(strain_elast_v_tr-strain_elast_v)/(d_lambdatilde-d_kappatilde));
+  double pc = pc_n * exp(-(strain_elast_v_tr - strain_elast_v) /
+                         (d_lambdatilde - d_kappatilde));
   return pc;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Compute derivative of internal variable with respect to volumetric
 // elastic strain
-double 
-InternalVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(const ModelStateBase* state_input) const
+double
+InternalVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
+  const ModelStateBase* state_input) const
 {
-  const ModelState_CamClay* state = dynamic_cast<const ModelState_CamClay*>(state_input);
+  const ModelState_CamClay* state =
+    dynamic_cast<const ModelState_CamClay*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
@@ -241,6 +239,8 @@ InternalVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(const ModelSt
   double strain_elast_v = state->epse_v;
 
   // Calculate  dp_c/depse_v
-  double pc = pc_n*exp(-(strain_elast_v_tr-strain_elast_v)/(d_lambdatilde-d_kappatilde));
-  return pc/(d_lambdatilde-d_kappatilde);;
+  double pc = pc_n * exp(-(strain_elast_v_tr - strain_elast_v) /
+                         (d_lambdatilde - d_kappatilde));
+  return pc / (d_lambdatilde - d_kappatilde);
+  ;
 }

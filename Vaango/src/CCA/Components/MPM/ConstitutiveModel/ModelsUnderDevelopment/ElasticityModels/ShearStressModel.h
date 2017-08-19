@@ -28,36 +28,36 @@
 #define __SHEAR_STRESS_MODEL_H__
 
 #include "DeformationState.h"
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  /*! \class ShearStressModel
-   *  \brief A generic wrapper for various shear stress models for isotropic
-   *         materials.
-   *  \author Biswajit Banerjee, 
-  */
-  class ShearStressModel {
+/*! \class ShearStressModel
+ *  \brief A generic wrapper for various shear stress models for isotropic
+ *         materials.
+ *  \author Biswajit Banerjee,
+*/
+class ShearStressModel
+{
 
-  public:
-         
-    //! Construct a shear stress model.  
-    /*! This is an abstract base class. */
-    ShearStressModel();
+public:
+  //! Construct a shear stress model.
+  /*! This is an abstract base class. */
+  ShearStressModel();
 
-    //! Destructor of shear stress model.  
-    /*! Virtual to ensure correct behavior */
-    virtual ~ShearStressModel();
+  //! Destructor of shear stress model.
+  /*! Virtual to ensure correct behavior */
+  virtual ~ShearStressModel();
 
-    virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
-         
-    // Compute the shear stress using the time increment, the determinant of the deformation gradient,
-    // and the symmetric part of the velocity gradient.
-    virtual void computeShearStress(const DeformationState* defState,
-                                    Matrix3& shearStress) = 0;
-  };
+  virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
+
+  // Compute the shear stress using the time increment, the determinant of the
+  // deformation gradient,
+  // and the symmetric part of the velocity gradient.
+  virtual void computeShearStress(const DeformationState* defState,
+                                  Matrix3& shearStress) = 0;
+};
 } // End namespace Uintah
-      
-#endif  // __SHEAR_STRESS_MODEL_H__
 
+#endif // __SHEAR_STRESS_MODEL_H__

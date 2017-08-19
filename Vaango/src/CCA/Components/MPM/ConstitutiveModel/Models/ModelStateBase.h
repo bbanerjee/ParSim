@@ -32,28 +32,27 @@
 
 namespace Vaango {
 
-  /////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class ModelStateBase
-    \brief A structure that store the plasticity state data derived
-           from PlasticityState
-    \author Biswajit Banerjee \n
-  */
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class ModelStateBase
+  \brief A structure that store the plasticity state data derived
+         from PlasticityState
+  \author Biswajit Banerjee \n
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  class ModelStateBase: public Uintah::PlasticityState {
+class ModelStateBase : public Uintah::PlasticityState
+{
 
-  public:
+public:
+  ModelStateBase();
 
-    ModelStateBase();
+  ModelStateBase(const ModelStateBase& state);
+  ModelStateBase(const ModelStateBase* state);
 
-    ModelStateBase(const ModelStateBase& state);
-    ModelStateBase(const ModelStateBase* state);
-
-    virtual ~ModelStateBase();
-
-  };
+  virtual ~ModelStateBase();
+};
 
 } // End namespace Uintah
 
-#endif  // __MODEL_STATE_BASE_DERIVED_FROM_PLASTICITY_STATE_DATA_H__ 
+#endif // __MODEL_STATE_BASE_DERIVED_FROM_PLASTICITY_STATE_DATA_H__

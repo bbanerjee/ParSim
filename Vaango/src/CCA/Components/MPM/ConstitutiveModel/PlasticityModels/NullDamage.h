@@ -49,70 +49,65 @@
 #ifndef __NULL_DAMAGE_MODEL_H__
 #define __NULL_DAMAGE_MODEL_H__
 
-
-#include "DamageModel.h"        
+#include "DamageModel.h"
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  /////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/*!
+  \class NullDamage
+  \brief Default Damage Model (no damage)
+  \author Biswajit Banerjee \n
+  C-SAFE and Department of Mechanical Engineering \n
+  University of Utah \n
+*/
+/////////////////////////////////////////////////////////////////////////////
+
+class NullDamage : public DamageModel
+{
+
+public:
+private:
+  // Prevent copying of this class
+  // copy constructor
+  // NullDamage(const NullDamage &cm);
+  NullDamage& operator=(const NullDamage& cm);
+
+public:
+  // constructors
+  NullDamage();
+  NullDamage(ProblemSpecP& ps);
+  NullDamage(const NullDamage* cm);
+
+  // destructor
+  ~NullDamage() override;
+
+  void outputProblemSpec(ProblemSpecP& ps) override;
+
+  //////////////////////////////////////////////////////////////////////////
   /*!
-    \class NullDamage
-    \brief Default Damage Model (no damage)
-    \author Biswajit Banerjee \n
-    C-SAFE and Department of Mechanical Engineering \n
-    University of Utah \n
+    Initialize the damage parameter in the calling function
   */
-  /////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////
+  double initialize() override;
 
-  class NullDamage : public DamageModel {
+  //////////////////////////////////////////////////////////////////////////
+  /*!
+    Determine if damage has crossed cut off
+  */
+  //////////////////////////////////////////////////////////////////////////
+  bool hasFailed(double damage) override;
 
-  public:
-
-  private:
-
-    // Prevent copying of this class
-    // copy constructor
-    //NullDamage(const NullDamage &cm);
-    NullDamage& operator=(const NullDamage &cm);
-
-  public:
-    // constructors
-    NullDamage(); 
-    NullDamage(ProblemSpecP& ps); 
-    NullDamage(const NullDamage* cm);
-         
-    // destructor 
-    virtual ~NullDamage();
-
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    //////////////////////////////////////////////////////////////////////////
-    /*! 
-      Initialize the damage parameter in the calling function
-    */
-    //////////////////////////////////////////////////////////////////////////
-    double initialize();
-
-    //////////////////////////////////////////////////////////////////////////
-    /*! 
-      Determine if damage has crossed cut off
-    */
-    //////////////////////////////////////////////////////////////////////////
-    bool hasFailed(double damage);
-    
-    //////////
-    // Calculate the scalar damage parameter 
-    virtual double computeScalarDamage(const double& plasticStrainRate,
-                                       const Matrix3& stress,
-                                       const double& temperature,
-                                       const double& delT,
-                                       const MPMMaterial* matl,
-                                       const double& tolerance,
-                                       const double& damage_old);
-  
-  };
+  //////////
+  // Calculate the scalar damage parameter
+  double computeScalarDamage(const double& plasticStrainRate,
+                             const Matrix3& stress, const double& temperature,
+                             const double& delT, const MPMMaterial* matl,
+                             const double& tolerance,
+                             const double& damage_old) override;
+};
 
 } // End namespace Uintah
 
-#endif  // __NULL_DAMAGE_MODEL_H__ 
+#endif // __NULL_DAMAGE_MODEL_H__

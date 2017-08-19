@@ -50,121 +50,128 @@
 #define __ZERILLI_ARMSTRONG_POLYMER_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/FlowModel.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Exceptions/InternalError.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
 ////////////////////////////////////////////////////////////////////////////////
-  /*!
-    \class ZAPolymerFlow
-    \brief Zerilli-Armstrong 
-    \author Todd Harman/Scott Bardenhagen 
-    Department of Mechanical Engineering, 
-    University of Utah
-   
-    <<<< Scott: Please add a reference and any documention>>>>>>
+/*!
+  \class ZAPolymerFlow
+  \brief Zerilli-Armstrong
+  \author Todd Harman/Scott Bardenhagen
+  Department of Mechanical Engineering,
+  University of Utah
 
-  */
-  /////////////////////////////////////////////////////////////////////////////
+  <<<< Scott: Please add a reference and any documention>>>>>>
 
-  class ZAPolymerFlow : public FlowModel {
+*/
+/////////////////////////////////////////////////////////////////////////////
 
-  public:
+class ZAPolymerFlow : public FlowModel
+{
 
-    // Create datatype for storing model parameters
-    struct CMData {
-      double sigma_g;
-      double B_pa;
-      double B_pb;
-      double B_pn;
-      double beta_0;
-      double beta_1;
-      double T_0;
-      double B_0pa;
-      double B_0pb;
-      double B_0pn;
-      double omega_a;
-      double omega_b;
-      double omega_p;
-      double alpha_0;
-      double alpha_1;
-    };   
-
-  private:
-
-    CMData d_CM;
-         
-    // Prevent copying of this class
-    // copy constructor
-    ZAPolymerFlow& operator=(const ZAPolymerFlow &cm);
-
-  public:
-
-    // constructors
-    ZAPolymerFlow(ProblemSpecP& ps);
-    ZAPolymerFlow(const ZAPolymerFlow* cm);
-         
-    // destructor 
-    virtual ~ZAPolymerFlow();
-
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-
-    ///////////////////////////////////////////////////////////////////////////
-    /*! \brief  compute the flow stress */
-    ///////////////////////////////////////////////////////////////////////////
-    virtual double computeFlowStress(const PlasticityState* state,
-                                     const double& delT,
-                                     const double& tolerance,
-                                     const MPMMaterial* matl,
-                                     const particleIndex idx);
-
-
-    ///////////////////////////////////////////////////////////////////////////
-    /*!
-      \brief Evaluate derivative of flow stress with respect to plastic strain
-    */
-    ///////////////////////////////////////////////////////////////////////////
-    double evalDerivativeWRTPlasticStrain(const PlasticityState* state,
-                                          const particleIndex idx);
-
-    ///////////////////////////////////////////////////////////////////////////
-    /*!
-      \brief Evaluate derivative of flow stress with respect to strain rate.
-    */
-    ///////////////////////////////////////////////////////////////////////////
-    double evalDerivativeWRTStrainRate(const PlasticityState* state,
-                                       const particleIndex idx);
-
-    ///////////////////////////////////////////////////////////////////////////
-    /*!
-      \brief Compute the shear modulus. 
-    */
-    ///////////////////////////////////////////////////////////////////////////
-    double computeShearModulus(const PlasticityState* state);
-    
-    
-    //______________________________________________________________________
-    //  Empty functions
-    virtual double computeEpdot(const PlasticityState* ,
-                            const double& ,const double& ,const MPMMaterial* ,const particleIndex ){
-      throw InternalError("ZAPolymerFlow::ComputeEpdot has not been implemented",__FILE__,__LINE__);
-    };
-                            
-    double computeMeltingTemp(const PlasticityState* ){
-      throw InternalError("ZAPolymerFlow::computeMeltingTemp has not been implemented",__FILE__,__LINE__);
-    };
-    
-    void evalDerivativeWRTScalarVars(const PlasticityState*, const particleIndex, Vector&){
-      throw InternalError("ZAPolymerFlow::evalDerivativeWRTScalarVars has not been implemented",__FILE__,__LINE__);
-    }
-    
-    double evalDerivativeWRTTemperature(const PlasticityState*, const particleIndex){
-      throw InternalError("ZAPolymerFlow::evalDerivativeWRTTemperature has not been implemented",__FILE__,__LINE__);
-    }
-
+public:
+  // Create datatype for storing model parameters
+  struct CMData
+  {
+    double sigma_g;
+    double B_pa;
+    double B_pb;
+    double B_pn;
+    double beta_0;
+    double beta_1;
+    double T_0;
+    double B_0pa;
+    double B_0pb;
+    double B_0pn;
+    double omega_a;
+    double omega_b;
+    double omega_p;
+    double alpha_0;
+    double alpha_1;
   };
+
+private:
+  CMData d_CM;
+
+  // Prevent copying of this class
+  // copy constructor
+  ZAPolymerFlow& operator=(const ZAPolymerFlow& cm);
+
+public:
+  // constructors
+  ZAPolymerFlow(ProblemSpecP& ps);
+  ZAPolymerFlow(const ZAPolymerFlow* cm);
+
+  // destructor
+  ~ZAPolymerFlow() override;
+
+  void outputProblemSpec(ProblemSpecP& ps) override;
+
+  ///////////////////////////////////////////////////////////////////////////
+  /*! \brief  compute the flow stress */
+  ///////////////////////////////////////////////////////////////////////////
+  double computeFlowStress(const PlasticityState* state, const double& delT,
+                           const double& tolerance, const MPMMaterial* matl,
+                           const particleIndex idx) override;
+
+  ///////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate derivative of flow stress with respect to plastic strain
+  */
+  ///////////////////////////////////////////////////////////////////////////
+  double evalDerivativeWRTPlasticStrain(const PlasticityState* state,
+                                        const particleIndex idx) override;
+
+  ///////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate derivative of flow stress with respect to strain rate.
+  */
+  ///////////////////////////////////////////////////////////////////////////
+  double evalDerivativeWRTStrainRate(const PlasticityState* state,
+                                     const particleIndex idx) override;
+
+  ///////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Compute the shear modulus.
+  */
+  ///////////////////////////////////////////////////////////////////////////
+  double computeShearModulus(const PlasticityState* state) override;
+
+  //______________________________________________________________________
+  //  Empty functions
+  double computeEpdot(const PlasticityState*, const double&, const double&,
+                      const MPMMaterial*, const particleIndex) override
+  {
+    throw InternalError("ZAPolymerFlow::ComputeEpdot has not been implemented",
+                        __FILE__, __LINE__);
+  };
+
+  double computeMeltingTemp(const PlasticityState*) override
+  {
+    throw InternalError(
+      "ZAPolymerFlow::computeMeltingTemp has not been implemented", __FILE__,
+      __LINE__);
+  };
+
+  void evalDerivativeWRTScalarVars(const PlasticityState*, const particleIndex,
+                                   Vector&) override
+  {
+    throw InternalError(
+      "ZAPolymerFlow::evalDerivativeWRTScalarVars has not been implemented",
+      __FILE__, __LINE__);
+  }
+
+  double evalDerivativeWRTTemperature(const PlasticityState*,
+                                      const particleIndex)
+  {
+    throw InternalError(
+      "ZAPolymerFlow::evalDerivativeWRTTemperature has not been implemented",
+      __FILE__, __LINE__);
+  }
+};
 
 } // End namespace Uintah
 
-#endif  // __ZERILLI_ARMSTRONG_POLYMER_MODEL_H__
+#endif // __ZERILLI_ARMSTRONG_POLYMER_MODEL_H__

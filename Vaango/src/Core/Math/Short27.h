@@ -32,18 +32,18 @@
 #include <Core/Util/Assert.h>
 #include <Core/Disclosure/TypeUtils.h> // for get_funTD(Short27) prototype
 
+#include <Core/Math/TntJama/tnt.h>
+#include <Core/Datatypes/TypeName.h>
+
 #include <cmath>
 #include <iosfwd>
 #include <vector>
+#include <string>
 
 namespace Uintah {
+
   class FETypeDescription;
   class Piostream;
-}
-#include <Core/Math/TntJama/tnt.h>
-
-namespace Uintah {
-using namespace Uintah;
 
 class Short27 {
 
@@ -87,15 +87,13 @@ inline short &Short27::operator [] (int i)
 } // End namespace Uintah
 
 // Added for compatibility with FE core types
-#include <Core/Datatypes/TypeName.h>
-#include <string>
 namespace Uintah {
-  using namespace Uintah;
- void swapbytes( Uintah::Short27& s );
-template<>  const string find_type_name(Short27*);
- const FETypeDescription* get_fetype_description(Short27*);
 
- void Pio( Piostream&, Uintah::Short27& );
+  void swapbytes(Short27& s );
+  template<>  const string find_type_name(Short27*);
+  const FETypeDescription* get_fetype_description(Short27*);
+
+  void Pio( Piostream&, Uintah::Short27& );
 
 } // namespace Uintah
 

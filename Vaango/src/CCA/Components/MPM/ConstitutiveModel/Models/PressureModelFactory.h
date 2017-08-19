@@ -32,15 +32,15 @@
 
 namespace Vaango {
 
-  class PressureModel;
+class PressureModel;
 
-  class PressureModelFactory
-  {
-  public:
-    // this function has a switch for all known mat_types
-    static PressureModel* create(Uintah::ProblemSpecP& ps);
-    static PressureModel* createCopy(const PressureModel* cm);
-  };
+class PressureModelFactory
+{
+public:
+  // this function has a switch for all known mat_types
+  static PressureModel* create(Uintah::ProblemSpecP& ps);
+  static PressureModel* createCopy(const PressureModel* cm);
+};
 } // End namespace Uintah
-      
+
 #endif /* _BB_EQUATIONOFSTATEFACTORY_H_ */

@@ -28,38 +28,38 @@
 // This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
 // make the isnan function not work.  This define makes the cmath header
 // not get included since we do not need it anyway.
-#  define _CPP_CMATH
+#define _CPP_CMATH
 #endif
 
 #include "LinearElasticShear.h"
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
 
-
 using namespace Uintah;
 using namespace std;
 
-// Construct a shear stress model.  
-LinearElasticShear::LinearElasticShear(ProblemSpecP& ps )
+// Construct a shear stress model.
+LinearElasticShear::LinearElasticShear(ProblemSpecP& ps)
 {
   ps->require("shear_modulus", d_mu);
 }
 
-// Construct a copy of a shear stress model.  
+// Construct a copy of a shear stress model.
 LinearElasticShear::LinearElasticShear(const LinearElasticShear* ssm)
 {
   d_mu = ssm->d_mu;
 }
 
-// Destructor of shear stress model.  
+// Destructor of shear stress model.
 LinearElasticShear::~LinearElasticShear()
 {
 }
 
-void LinearElasticShear::outputProblemSpec(ProblemSpecP& ps)
+void
+LinearElasticShear::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP shear_ps = ps->appendChild("shear_stress_model");
   shear_ps->setAttribute("type", "linear_elastic");
@@ -68,11 +68,10 @@ void LinearElasticShear::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the shear stress (increment in this case)
 //   Delta sigma_shear = 2*mu*dev(Delta t * rate_of_deformation)
-void 
+void
 LinearElasticShear::computeShearStress(const DeformationState* state,
                                        Matrix3& shear_stress_inc)
 {
   state->computeHypoelasticStrain();
-  shear_stress_inc = state->dev_strain*(2.0*d_mu);
+  shear_stress_inc = state->dev_strain * (2.0 * d_mu);
 }
-

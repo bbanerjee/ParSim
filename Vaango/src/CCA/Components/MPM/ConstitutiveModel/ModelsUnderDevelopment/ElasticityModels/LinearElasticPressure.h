@@ -31,62 +31,53 @@
 
 namespace Uintah {
 
-  ////////////////////////////////////////////////////////////////////////////
-  /*! 
-    \class LinearElasticPressure
-    \brief Compute pressure for ain isotropic linear elastic (hypoelastic) material.
-    \author Biswajit Banerjee, \n
-  */
-  ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+/*!
+  \class LinearElasticPressure
+  \brief Compute pressure for ain isotropic linear elastic (hypoelastic)
+  material.
+  \author Biswajit Banerjee, \n
+*/
+////////////////////////////////////////////////////////////////////////////
 
-  class LinearElasticPressure : public PressureModel {
+class LinearElasticPressure : public PressureModel
+{
 
-  private:
+private:
+  double d_kappa; // Bulk modulus
 
-    double d_kappa;    // Bulk modulus
-  
-    LinearElasticPressure& operator=(const LinearElasticPressure& pm);
+  LinearElasticPressure& operator=(const LinearElasticPressure& pm);
 
-  public:
-         
-    LinearElasticPressure(ProblemSpecP& ps);
-    LinearElasticPressure(const LinearElasticPressure* pm);
+public:
+  LinearElasticPressure(ProblemSpecP& ps);
+  LinearElasticPressure(const LinearElasticPressure* pm);
 
-    virtual ~LinearElasticPressure();
+  virtual ~LinearElasticPressure();
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    // Calculate the hydrostatic component of stress (pressure)
-    double computePressure(const DeformationState* state);
+  virtual void outputProblemSpec(ProblemSpecP& ps);
 
-    // Calculate the pressure without considering internal energy (option 1)
-    double computePressure(const double& rho_orig,
-                           const double& rho_cur);
+  // Calculate the hydrostatic component of stress (pressure)
+  double computePressure(const DeformationState* state);
 
-    // Calculate the pressure without considering internal energy (option 2).  
-    //   Also compute dp/drho and c^2. 
-    void computePressure(const double& rho_orig,
-                         const double& rho_cur,
-                         double& pressure,
-                         double& dp_drho,
-                         double& csquared);
+  // Calculate the pressure without considering internal energy (option 1)
+  double computePressure(const double& rho_orig, const double& rho_cur);
 
-    // Calculate the tangent bulk modulus 
-    double computeTangentBulkModulus(const double& rho_orig,
-                                     const double& rho_cur);
+  // Calculate the pressure without considering internal energy (option 2).
+  //   Also compute dp/drho and c^2.
+  void computePressure(const double& rho_orig, const double& rho_cur,
+                       double& pressure, double& dp_drho, double& csquared);
 
-    // Calculate the accumulated strain energy 
-    double computeStrainEnergy(const double& pressure,
-                               const DeformationState* state);
+  // Calculate the tangent bulk modulus
+  double computeTangentBulkModulus(const double& rho_orig,
+                                   const double& rho_cur);
 
-    // Calculate the mass density at a given pressure 
-    double computeDensity(const double& rho_orig,
-                          const double& pressure);
+  // Calculate the accumulated strain energy
+  double computeStrainEnergy(const double& pressure,
+                             const DeformationState* state);
 
-  };
+  // Calculate the mass density at a given pressure
+  double computeDensity(const double& rho_orig, const double& pressure);
+};
 } // End namespace Uintah
-      
 
-
-#endif  // __LINEAR_ELASTIC_PRESSURE_MODEL_H__
-
+#endif // __LINEAR_ELASTIC_PRESSURE_MODEL_H__

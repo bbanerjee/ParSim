@@ -49,51 +49,47 @@
 #ifndef __DRUCKERBECKER_CHECK_H__
 #define __DRUCKERBECKER_CHECK_H__
 
-#include "StabilityCheck.h"     
-#include <Core/ProblemSpec/ProblemSpecP.h>
+#include "StabilityCheck.h"
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/TangentModulusTensor.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
 
-  /*! \class DruckerBeckerCheck
-   *  \brief Checks the loss of ellipticity/hyperbolicity using both the 
-   *         the Drucker and Becker stability postulate.
-   *  \author  Biswajit Banerjee, \n
-   *           C-SAFE and Department of Mechanical Engineering,\n
-   *           University of Utah.\n
-   */
-  class DruckerBeckerCheck : public StabilityCheck {
+/*! \class DruckerBeckerCheck
+ *  \brief Checks the loss of ellipticity/hyperbolicity using both the
+ *         the Drucker and Becker stability postulate.
+ *  \author  Biswajit Banerjee, \n
+ *           C-SAFE and Department of Mechanical Engineering,\n
+ *           University of Utah.\n
+ */
+class DruckerBeckerCheck : public StabilityCheck
+{
 
-  public:
-         
-    //! Construct an object that can be used to check stability
-    DruckerBeckerCheck(ProblemSpecP& ps);
-    DruckerBeckerCheck(const DruckerBeckerCheck* cm);
+public:
+  //! Construct an object that can be used to check stability
+  DruckerBeckerCheck(ProblemSpecP& ps);
+  DruckerBeckerCheck(const DruckerBeckerCheck* cm);
 
-    //! Destructor of stability check
-    ~DruckerBeckerCheck();
+  //! Destructor of stability check
+  ~DruckerBeckerCheck() override;
 
-    virtual void outputProblemSpec(ProblemSpecP& ps);
-         
-    /*! Check the stability.
+  void outputProblemSpec(ProblemSpecP& ps) override;
 
-    \return true if unstable
-    \return false if stable
-    */
-    bool checkStability(const Matrix3& stress,
-                        const Matrix3& deformRate,
-                        const TangentModulusTensor& tangentModulus,
-                        Vector& direction);
+  /*! Check the stability.
 
-  private:
+  \return true if unstable
+  \return false if stable
+  */
+  bool checkStability(const Matrix3& stress, const Matrix3& deformRate,
+                      const TangentModulusTensor& tangentModulus,
+                      Vector& direction) override;
 
-
-    // Prevent copying of this class and copy constructor
-    DruckerBeckerCheck(const DruckerBeckerCheck &);
-    DruckerBeckerCheck& operator=(const DruckerBeckerCheck &);
-  };
+private:
+  // Prevent copying of this class and copy constructor
+  DruckerBeckerCheck(const DruckerBeckerCheck&);
+  DruckerBeckerCheck& operator=(const DruckerBeckerCheck&);
+};
 } // End namespace Uintah
-      
-#endif  // __DRUCKERBECKER_CHECK_H__
 
+#endif // __DRUCKERBECKER_CHECK_H__
