@@ -210,13 +210,25 @@ endif(CXX_FLAGS)
 #------
 # For C++11
 #------
+# if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+# #  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Weverything")
+#   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+# elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+#   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++11 -Wall")
+# elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+#   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -no-ipo -fp-model precise -wd584 -wd1418 -wd1918 -wd383 -wd869 -wd981 -wd424 -wd1419 -wd444 -wd271 -wd2259 -wd1572 -wd1599 -wd82 -wd177 -wd593 -fno-omit-frame-pointer -Wall -Woverloaded-virtual -Wno-deprecated -w1 -Wno-strict-aliasing -Wno-write-strings -Wno-invalid-offsetof -fno-operator-names")
+# endif ()
+
+#------
+# For C++14
+#------
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Weverything")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Weverything")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++11 -Wall")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++14 -Wall")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -no-ipo -fp-model precise -wd584 -wd1418 -wd1918 -wd383 -wd869 -wd981 -wd424 -wd1419 -wd444 -wd271 -wd2259 -wd1572 -wd1599 -wd82 -wd177 -wd593 -fno-omit-frame-pointer -Wall -Woverloaded-virtual -Wno-deprecated -w1 -Wno-strict-aliasing -Wno-write-strings -Wno-invalid-offsetof -fno-operator-names")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -no-ipo -fp-model precise -wd584 -wd1418 -wd1918 -wd383 -wd869 -wd981 -wd424 -wd1419 -wd444 -wd271 -wd2259 -wd1572 -wd1599 -wd82 -wd177 -wd593 -fno-omit-frame-pointer -Wall -Woverloaded-virtual -Wno-deprecated -w1 -Wno-strict-aliasing -Wno-write-strings -Wno-invalid-offsetof -fno-operator-names")
 endif ()
 
 #SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-rdynamic")
@@ -843,7 +855,7 @@ if (HAVE_REGRESSION_TESTS)
 endif()
 
 #----------------------------------------------------------------------------------
-# Unit testing
+# Unit testing (CTest)
 #----------------------------------------------------------------------------------
 #enable_testing()
 #add_test(NAME create_gold_standards 
@@ -853,4 +865,13 @@ endif()
 #   -P ${Vaango_SOURCE_DIR}/cmake/Macros/goldstandards.cmake)
 #set_tests_properties(create_gold_standards PROPERTIES ENVIRONMENT
 #  "PYTHONPATH=${Vaango_SOURCE_DIR}/R_Tester/toplevel;${Vaango_SOURCE_DIR}/R_Tester")
+
+#----------------------------------------------------------------------------------
+# Unit testing (googletests)
+#----------------------------------------------------------------------------------
+if (USE_CLANG)
+  set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
+endif ()
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+add_subdirectory(submodules)
 

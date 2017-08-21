@@ -59,3 +59,22 @@ TARGET_LINK_LIBRARIES(testPressure_Air ${VAANGO_LIBS})
 TARGET_LINK_LIBRARIES(testPressure_Water ${VAANGO_LIBS})
 TARGET_LINK_LIBRARIES(testPressure_Granite ${VAANGO_LIBS})
 TARGET_LINK_LIBRARIES(testElasticModuli_Arena ${VAANGO_LIBS})
+
+#------------------------
+# Google tests
+#------------------------
+set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
+set(GTEST_LIB gtest_main gtest)
+include_directories(${GTEST_INCLUDE_DIR})
+
+add_executable(testTableEOS testTableEOS.cc)
+target_link_libraries(testTableEOS
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testTableEOS)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
