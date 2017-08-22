@@ -13,7 +13,7 @@ namespace Vaango {
     virtual ~TableBase() = default;
 
     virtual void addIndependentVariable(const std::string& varName) = 0;
-    virtual int  addDependentVariable(const std::string& varName) = 0;
+    virtual std::size_t addDependentVariable(const std::string& varName) = 0;
 
     virtual void setup() = 0;
 

@@ -26,6 +26,17 @@
 #
 # CMakeLists.txt for Vaango/src/CCA/Components/MPM/ConstitutiveModel/Biswajit/Models
 
+#-----------------------------------------------------------------------------
+# For reading JSON input files
+#-----------------------------------------------------------------------------
+#set(JSON_INCLUDES ${Vaango_SOURCE_DIR}/submodules/json/src)
+#message(STATUS "JSON include dir = ${JSON_INCLUDES}")
+#include_directories(${JSON_INCLUDES})
+#set(CMAKE_VERBOSE_MAKEFILE 1)
+
+#-----------------------------------------------------------------------------
+# The models
+#-----------------------------------------------------------------------------
 SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelStateBase.cc 

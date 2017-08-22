@@ -3,6 +3,9 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TableBase.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
+
+#include <submodules/json/src/json.hpp>
+
 #include <string>
 #include <vector>
 #include <memory>
@@ -17,7 +20,7 @@ namespace Vaango {
     ~TableEOS() override = default;
 
     void addIndependentVariable(const std::string& varName) override;
-    int  addDependentVariable(const std::string& varName) override;
+    std::size_t addDependentVariable(const std::string& varName) override;
 
     void setup() override;
 
@@ -26,6 +29,12 @@ namespace Vaango {
 
     private:
       std::string d_filename;
+
+      struct InterpolationAxis {
+        std::vector<double> weights;
+        std::vector<long> offset;
+      };
+      using InterpolationAxisP = std::unique_ptr<InterpolationAxis>;
 
       struct IndependentVar {
         std::string name;
@@ -38,7 +47,7 @@ namespace Vaango {
       struct DependentVar {
         std::string name;
         std::vector<IndependentVarP> independents;
-        //std::vector<InterpolationAxisP> axes;
+        std::vector<InterpolationAxisP> axes;
         double* data;
         DependentVar() = delete;
         DependentVar(const std::string name) {this->name = name;}
@@ -47,6 +56,19 @@ namespace Vaango {
       std::vector<DependentVarP> d_depVars;
 
       std::vector<std::string> parseVariableNames(const std::string& vars);
+      void readJSONTableFile(const std::string& tableFile);
+
+      nlohmann::json loadJSON(std::stringstream& inputStream,
+                              const std::string& fileName);
+      nlohmann::json getContentsJSON(const nlohmann::json& doc,
+                                     const std::string& fileName);
+      std::string getTitleJSON(const nlohmann::json& contents,
+                               const std::string& fileName);
+      nlohmann::json getAllDataJSON(const nlohmann::json& contents,
+                                    const std::string& fileName);
+      std::vector<double> getVectorJSON(const nlohmann::json& object,
+                                        const std::string key,
+                                        const std::string& tableFile);
   };
 }
 

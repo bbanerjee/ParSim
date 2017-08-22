@@ -1,5 +1,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TableUtils.h>
 #include <sstream>
+#include <algorithm>
 
 namespace Vaango {
 
@@ -48,6 +49,21 @@ namespace Vaango {
     trim(std::string& s, const char* t)
     {
       return ltrim(rtrim(s, t), t);
+    }
+
+    // Convert into double
+    double
+    toDouble(std::string& str)
+    {
+      // Remove illegal characters
+      const std::string illegalChars = " [\\/:?\"<>|]";
+      str.erase(remove_if(str.begin(), str.end(),
+        [&illegalChars](char cc){
+          return (illegalChars.find(cc) != std::string::npos) ? true : false;
+        }), str.end());
+
+      // Convert the string to double
+      return std::stod(str);
     }
 
   } // End namespace Util

@@ -810,6 +810,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/wx_testdefs.h.in ${C
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sci_defs/z_testdefs.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/sci_defs/z_defs.h)
 
 #-----------------------------------------------------------------------------
+# For reading JSON input files
+#-----------------------------------------------------------------------------
+#set(JSON_INCLUDES ${Vaango_SOURCE_DIR}/submodules/json/src)
+#include_directories(${JSON_INCLUDES})
+
+#-----------------------------------------------------------------------------
 # Packages to enable (must enable packages when building core for now)
 set(LOAD_PACKAGE "Vaango" CACHE string "Building Vaango package by default.")
 set(HANDLED_PACKAGE_Vaango "YES")
