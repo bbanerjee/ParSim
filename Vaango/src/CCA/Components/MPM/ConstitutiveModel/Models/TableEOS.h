@@ -27,6 +27,11 @@ namespace Vaango {
     double interpolate(int index,
                        std::vector<double>& independents) override;
 
+    void readJSONTableFromFile(const std::string& tableFile);
+
+    void readJSONTable(const nlohmann::json& doc,
+                       const std::string& tableFile);
+
     private:
       std::string d_filename;
 
@@ -56,7 +61,6 @@ namespace Vaango {
       std::vector<DependentVarP> d_depVars;
 
       std::vector<std::string> parseVariableNames(const std::string& vars);
-      void readJSONTableFile(const std::string& tableFile);
 
       nlohmann::json loadJSON(std::stringstream& inputStream,
                               const std::string& fileName);
@@ -64,11 +68,14 @@ namespace Vaango {
                                      const std::string& fileName);
       std::string getTitleJSON(const nlohmann::json& contents,
                                const std::string& fileName);
-      nlohmann::json getAllDataJSON(const nlohmann::json& contents,
-                                    const std::string& fileName);
+      nlohmann::json getDataJSON(const nlohmann::json& contents,
+                                 const std::string& fileName);
       std::vector<double> getVectorJSON(const nlohmann::json& object,
                                         const std::string key,
                                         const std::string& tableFile);
+      std::vector<double> getDoubleArrayJSON(const nlohmann::json& object,
+                                             const std::string key,
+                                             const std::string& tableFile);
   };
 }
 

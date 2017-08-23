@@ -3,6 +3,7 @@
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Exceptions/ProblemSetupException.h>
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
@@ -17,6 +18,8 @@
 using namespace Vaango;
 using Uintah::ProblemSpec;
 using Uintah::ProblemSpecP;
+using Uintah::ProblemSetupException;
+using nlohmann::json;
 
 TEST(TableEOSTest, parseVariableNames)
 {
@@ -46,5 +49,111 @@ TEST(TableEOSTest, parseVariableNames)
 
   // Create a table eos
   TableEOS eos(ps);
+
+}
+
+TEST(TableEOSTest, readJSONTableFromStream)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "table_eos");
+  xmlNewProp(rootNode, BAD_CAST "interpolation", BAD_CAST "linear");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // Create a child node
+  xmlNewChild(rootNode, nullptr, BAD_CAST "filename", BAD_CAST "table_eos.json");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "independent_variables", 
+              BAD_CAST "Salinity, Temperature, Volume");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "dependent_variables", 
+              BAD_CAST "Pressure");
+
+  // Print the document to stdout
+  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Create a table eos
+  TableEOS eos(ps);
+
+  // Create a test JSON document
+  // {"Vaango_tabular_data": {
+  //    "Meta" : {
+  //      "title" : "Test data"
+  //    },
+  //    "Data" : {
+  //      "Salinity" : [0.1, 0.2],
+  //      "Data" : {
+  //        "Temperature" : [100, 200, 300],
+  //        "Data" : {
+  //          "Volume" : [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8],
+  //          "Pressure" : [10 20 30 40 50 60 70 80]
+  //        }, {
+  //          "Volume" : [0.15 0.25 0.35],
+  //          "Pressure" : [100 200 300]
+  //        }, {
+  //          "Volume" : [0.05 0.45 0.75],
+  //          "Pressure" : [1000 2000 3000]
+  //        }
+  //      },{
+  //        "Temperature" : [0, 400],
+  //        "Data" : {
+  //          "Volume" : [0.1 0.2 0.3 0.4],
+  //          "Pressure" : [15 25 35 45]
+  //        }, {
+  //          "Volume" : [0.1 0.45 0.65],
+  //          "Pressure" : [150 250 350]
+  //        }
+  //      }
+  //    }
+  //  }
+  json docJSON = {
+    {"Vaango_tabular_data", {
+      {"Meta" , {
+        {"title" , "Test data"}
+      }},
+      {"Data" , {
+        {"Salinity" , {0.1, 0.2}},
+        {"Data" , {{
+          {"Temperature" , {100, 200, 300}},
+          {"Data" , {{
+            {"Volume" , {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8}},
+            {"Pressure" , {10, 20, 30, 40, 50, 60, 70, 80}}
+          }, {
+            {"Volume" , {0.15, 0.25, 0.35}},
+            {"Pressure" , {100, 200, 300}}
+          }, {
+            {"Volume" , {0.05, 0.45, 0.75}},
+            {"Pressure" , {1000, 2000, 3000}}
+          }}}
+        }, {
+          {"Temperature" , {0, 400}},
+          {"Data" , {{
+            {"Volume" , {0.1, 0.2, 0.3, 0.4}},
+            {"Pressure" , {15, 25, 35, 45}}
+          }, {
+            {"Volume" , {0.1, 0.45, 0.65}},
+            {"Pressure" , {150, 250, 350}}
+          }}}
+        }}}
+      }}
+   } }
+  };
+
+
+  //std::cout << docJSON;
+
+  try {
+    eos.readJSONTable(docJSON, "test_dummy");
+  } catch (ProblemSetupException e) {
+    std::cout << e.message() << std::endl;
+  }
 
 }
