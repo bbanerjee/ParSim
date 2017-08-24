@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <memory>
 
 namespace Vaango {
@@ -27,22 +28,51 @@ namespace Vaango {
     double interpolate(int index,
                        std::vector<double>& independents) override;
 
+    template <int dim>
     void readJSONTableFromFile(const std::string& tableFile);
 
+    template <int dim>
     void readJSONTable(const nlohmann::json& doc,
                        const std::string& tableFile);
 
     private:
       std::string d_filename;
 
-      struct InterpolationAxis {
-        std::vector<double> weights;
-        std::vector<long> offset;
+      struct IndexKey {
+        std::uint8_t _ii;
+        std::uint8_t _jj;
+        std::uint8_t _kk;
+        std::uint8_t _ll;
+        IndexKey(std::uint8_t ii, std::uint8_t jj, 
+                 std::uint8_t kk, std::uint8_t ll)
+                 : _ii(ii), _jj(jj), _kk(kk), _ll(ll)
+        {
+        }
       };
-      using InterpolationAxisP = std::unique_ptr<InterpolationAxis>;
+
+      struct IndexEqual {
+        bool operator()(const IndexKey& lhs, const IndexKey& rhs) const {
+          return (lhs._ii == rhs._ii && lhs._jj == rhs._jj && 
+                  lhs._kk == rhs._kk && lhs._ll == rhs._ll);
+        }
+      };
+
+      struct IndexHash {
+        std::size_t operator()(const IndexKey& key) const {
+          std::size_t hashval = key._ii;
+          hashval *= 37;
+          hashval += key._jj;
+          hashval *= 37;
+          hashval += key._kk;
+          hashval *= 37;
+          hashval += key._ll;
+          return hashval;
+        }
+      };
 
       struct IndependentVar {
         std::string name;
+        std::unordered_map<IndexKey, std::vector<double>, IndexHash, IndexEqual> data;
         IndependentVar() = delete;
         IndependentVar(const std::string name) {this->name = name;}
       };
@@ -51,9 +81,7 @@ namespace Vaango {
 
       struct DependentVar {
         std::string name;
-        std::vector<IndependentVarP> independents;
-        std::vector<InterpolationAxisP> axes;
-        double* data;
+        std::unordered_map<IndexKey, std::vector<double>, IndexHash, IndexEqual> data;
         DependentVar() = delete;
         DependentVar(const std::string name) {this->name = name;}
       };

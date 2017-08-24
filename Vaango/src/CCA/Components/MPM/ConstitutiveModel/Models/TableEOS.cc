@@ -77,7 +77,9 @@ TableEOS::addDependentVariable(const std::string& varName)
 void 
 TableEOS::setup()
 {
-  readJSONTableFromFile(d_filename);
+  if (d_depVars.size() == 4) {
+    readJSONTableFromFile<4>(d_filename);
+  }
 }
 
 double 
@@ -87,6 +89,7 @@ TableEOS::interpolate(int index,
   return 0; 
 }
 
+template <int dim>
 void
 TableEOS::readJSONTableFromFile(const std::string& tableFile)
 {
@@ -104,7 +107,7 @@ TableEOS::readJSONTableFromFile(const std::string& tableFile)
   inputFile.close();
 
   json doc = loadJSON(inputStream, tableFile);
-  readJSONTable(doc, tableFile);
+  readJSONTable<dim>(doc, tableFile);
 }
 
 json
@@ -125,9 +128,31 @@ TableEOS::loadJSON(std::stringstream& inputStream,
   return doc;
 }
 
+namespace Vaango {
+template <>
 void
-TableEOS::readJSONTable(const json& doc,
-                        const std::string& tableFile)
+TableEOS::readJSONTable<1>(const json& doc,
+                           const std::string& tableFile)
+{
+  json contents = getContentsJSON(doc, tableFile);
+  std::string title = getTitleJSON(contents, tableFile);
+  json data = getDataJSON(contents, tableFile);
+
+  std::vector<double> indepVarData = 
+    getDoubleArrayJSON(data, d_indepVars[0]->name, tableFile);
+  d_indepVars[0]->data.insert({IndexKey(0,0,0,0), indepVarData});
+  
+  for (const auto& depVar : d_depVars) {
+    std::vector<double> depVarData = 
+      getDoubleArrayJSON(data, depVar->name, tableFile);
+    depVar->data.insert({IndexKey(0,0,0,0), depVarData});
+  }
+}
+
+template <>
+void
+TableEOS::readJSONTable<4>(const json& doc,
+                           const std::string& tableFile)
 {
   json contents = getContentsJSON(doc, tableFile);
   std::string title = getTitleJSON(contents, tableFile);
@@ -160,6 +185,7 @@ TableEOS::readJSONTable(const json& doc,
       }
     }
   }
+}
 }
 
 json
@@ -203,7 +229,7 @@ TableEOS::getDataJSON(const json& contents,
   json data;
   try {
     data = contents["Data"];
-  } catch (std::exception err) {
+  } catch (std::out_of_range err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Key \"Data\" not found in tabular EOS input file "
@@ -221,8 +247,8 @@ TableEOS::getVectorJSON(const json& object,
 {
   std::string str;
   try {
-    str = object[key].get<std::string>();
-  } catch (std::exception err) {
+    str = object.at(key).get<std::string>();
+  } catch (std::out_of_range err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \""
@@ -244,20 +270,34 @@ TableEOS::getDoubleArrayJSON(const json& object,
                              const std::string key,
                              const std::string& tableFile)
 {
+  // First check if the key exists
+  json data;
+  try {
+    data = object.at(key);
+  } catch (std::out_of_range err) {
+    std::ostringstream out;
+    out << "**ERROR**"
+        << " Variable \""
+        << key << "\" not found in tabular EOS input file "
+        << tableFile ;
+    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+
   std::vector<double> vec;
   try {
-    vec = object[key].get<std::vector<double>>();
+    vec = data.get<std::vector<double>>();
+    /*
     std::cout << key << ":";
     for (const auto& val : vec) {
       std::cout << val << " ";
     }
     std::cout << std::endl;
-
+    */
   } catch (std::exception err) {
     std::ostringstream out;
     out << "**ERROR**"
         << " Variable \""
-        << key << "\" not found in tabular EOS input file "
+        << key << "\" contains invalid data. "
         << tableFile ;
     throw ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
