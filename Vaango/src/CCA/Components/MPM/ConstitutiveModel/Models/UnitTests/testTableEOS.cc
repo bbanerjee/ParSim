@@ -4,6 +4,7 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Exceptions/InvalidValue.h>
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
@@ -19,6 +20,7 @@ using namespace Vaango;
 using Uintah::ProblemSpec;
 using Uintah::ProblemSpecP;
 using Uintah::ProblemSetupException;
+using Uintah::InvalidValue;
 using nlohmann::json;
 
 TEST(TableEOSTest, parseVariableNames)
@@ -115,6 +117,16 @@ TEST(TableEOSTest, readJSONTableFromStream1D)
     std::cout << e.message() << std::endl;
   }
 
+  EXPECT_EQ(eos.getNumIndependents(), 1u);
+  EXPECT_EQ(eos.getNumDependents(), 2u);
+
+  auto indepData = eos.getIndependentVarData("Volume", TableEOS::IndexKey(0, 0, 0, 0));
+  auto depData = eos.getDependentVarData("Pressure", TableEOS::IndexKey(0, 0, 0, 0));
+  EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline1D(0.1, indepData, depData), 10);
+  EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline1D(0.8, indepData, depData), 80);
+  EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline1D(0.625, indepData, depData), 62.5);
+  EXPECT_THROW(eos.interpolateLinearSpline1D(-0.1, indepData, depData), InvalidValue);
+  EXPECT_THROW(eos.interpolateLinearSpline1D(0.9, indepData, depData), InvalidValue);
 }
 
 // Create a 4D test JSON document

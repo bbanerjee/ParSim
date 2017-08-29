@@ -1,6 +1,9 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TableEOS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TableUtils.h>
 #include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Exceptions/InvalidValue.h>
+
+#include <Eigen/Sparse>
 
 #include <iostream>
 #include <fstream>
@@ -10,6 +13,7 @@
 using namespace Vaango;
 using ProblemSpecP = Uintah::ProblemSpecP;
 using ProblemSetupException = Uintah::ProblemSetupException;
+using InvalidValue = Uintah::InvalidValue;
 using json = nlohmann::json;
 
 TableEOS::TableEOS(ProblemSpecP& ps)
@@ -26,7 +30,7 @@ TableEOS::TableEOS(ProblemSpecP& ps)
   std::cout << "Independent:";
   int index = 0;
   for (const auto& name : indepVarNames) {
-    d_indepVars.push_back(std::make_unique<IndependentVar>(name));
+    addIndependentVariable(name);
     std::cout << index << ":" << name << " ";
     index++;
   }
@@ -35,7 +39,7 @@ TableEOS::TableEOS(ProblemSpecP& ps)
   std::cout << "Dependent:";
   index = 0;
   for (const auto& name : depVarNames) {
-    d_depVars.push_back(std::make_unique<DependentVar>(name));
+    addDependentVariable(name);
     std::cout << index << ":" << name << " ";
     index++;
   }
@@ -80,13 +84,6 @@ TableEOS::setup()
   if (d_depVars.size() == 4) {
     readJSONTableFromFile<4>(d_filename);
   }
-}
-
-double 
-TableEOS::interpolate(int index,
-                      std::vector<double>& independents)
-{
-  return 0; 
 }
 
 template <int dim>
@@ -304,3 +301,76 @@ TableEOS::getDoubleArrayJSON(const json& object,
   return vec;
 }
 
+double 
+TableEOS::interpolate(const std::string& depVarName,
+                      std::vector<double>& independents)
+{
+  return 0; 
+}
+
+double
+TableEOS::interpolateLinearSpline1D(const double& indepValue,
+                                    const std::vector<double>& indepVar,
+                                    const std::vector<double>& depVar) const
+{
+  if (indepValue < *(indepVar.begin()) || indepValue > *(indepVar.end()-1)) {
+    std::ostringstream out;
+    out << "**ERROR**"
+        << " The independent variable value \""
+        << indepValue << "\" is outside the range of known data. ";
+    throw InvalidValue(out.str(), __FILE__, __LINE__);
+  }
+  auto lower = std::find_if(indepVar.begin(), indepVar.end(),
+                            [&indepValue](const auto& value) {
+                              return (indepValue <= value);
+                            });
+  double depValue = 0.0;
+  if (lower == indepVar.begin()) {
+    depValue = *(depVar.begin());
+  } else if (lower == indepVar.end()-1) {
+    depValue = *(depVar.end()-1);
+  } else {
+    auto position = lower - indepVar.begin();
+    double t = (indepValue - *lower)/(*(lower+1) - *lower);
+    depValue = (1 - t)*depVar[position] + t*depVar[position+1];
+  }
+  return depValue;
+}
+
+std::vector<double>
+TableEOS::fitCubicSpline1D(const DependentVar depVar,
+                          const IndependentVar indepVar) 
+{
+
+}
+
+// See: https://cs.uwaterloo.ca/research/tr/1983/CS-83-09.pdf
+double
+TableEOS::interpolateCubicSpline1D(const double& t) {
+  
+}
+
+std::vector<double> 
+TableEOS::getIndependentVarData(const std::string& name,
+                                const IndexKey& index)
+{
+  auto varIter = std::find_if(d_indepVars.begin(), d_indepVars.end(),
+                              [&name](const auto& indepVar) {
+                                  return (indepVar->name == name);
+                              });
+  auto position = std::distance(d_indepVars.begin(), varIter);
+  return d_indepVars[position]->data.at(index);
+}
+
+std::vector<double> 
+TableEOS::getDependentVarData(const std::string& name,
+                              const IndexKey& index)
+{
+  auto varIter = std::find_if(d_depVars.begin(), d_depVars.end(),
+                              [&name](const auto& depVar) {
+                                  return (depVar->name == name);
+                              });
+  auto position = std::distance(d_depVars.begin(), varIter);
+  return d_depVars[position]->data.at(index);
+
+}

@@ -8,10 +8,12 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <memory>
 
 namespace Vaango {
+
+  using IndependentVarP = std::unique_ptr<TableBase::IndependentVar>;
+  using DependentVarP = std::unique_ptr<TableBase::DependentVar>;
 
   class TableEOS : public TableBase {
 
@@ -25,7 +27,7 @@ namespace Vaango {
 
     void setup() override;
 
-    double interpolate(int index,
+    double interpolate(const std::string& depvarName,
                        std::vector<double>& independents) override;
 
     template <int dim>
@@ -35,57 +37,26 @@ namespace Vaango {
     void readJSONTable(const nlohmann::json& doc,
                        const std::string& tableFile);
 
+    double interpolateLinearSpline1D(const double& indepValue,
+                                     const std::vector<double>& indepVar,
+                                     const std::vector<double>& depVar) const;
+
+    std::vector<double> fitCubicSpline1D(const DependentVar depVar,
+                                         const IndependentVar indepVar);
+
+    double interpolateCubicSpline1D(const double& t);
+
+    std::size_t getNumIndependents() const {return d_indepVars.size();}
+    std::size_t getNumDependents() const {return d_depVars.size();}
+
+    std::vector<double> getIndependentVarData(const std::string& name,
+                                              const IndexKey& index);
+    std::vector<double> getDependentVarData(const std::string& name,
+                                            const IndexKey& index);
+
     private:
       std::string d_filename;
-
-      struct IndexKey {
-        std::uint8_t _ii;
-        std::uint8_t _jj;
-        std::uint8_t _kk;
-        std::uint8_t _ll;
-        IndexKey(std::uint8_t ii, std::uint8_t jj, 
-                 std::uint8_t kk, std::uint8_t ll)
-                 : _ii(ii), _jj(jj), _kk(kk), _ll(ll)
-        {
-        }
-      };
-
-      struct IndexEqual {
-        bool operator()(const IndexKey& lhs, const IndexKey& rhs) const {
-          return (lhs._ii == rhs._ii && lhs._jj == rhs._jj && 
-                  lhs._kk == rhs._kk && lhs._ll == rhs._ll);
-        }
-      };
-
-      struct IndexHash {
-        std::size_t operator()(const IndexKey& key) const {
-          std::size_t hashval = key._ii;
-          hashval *= 37;
-          hashval += key._jj;
-          hashval *= 37;
-          hashval += key._kk;
-          hashval *= 37;
-          hashval += key._ll;
-          return hashval;
-        }
-      };
-
-      struct IndependentVar {
-        std::string name;
-        std::unordered_map<IndexKey, std::vector<double>, IndexHash, IndexEqual> data;
-        IndependentVar() = delete;
-        IndependentVar(const std::string name) {this->name = name;}
-      };
-      using IndependentVarP = std::unique_ptr<IndependentVar>;
       std::vector<IndependentVarP> d_indepVars;
-
-      struct DependentVar {
-        std::string name;
-        std::unordered_map<IndexKey, std::vector<double>, IndexHash, IndexEqual> data;
-        DependentVar() = delete;
-        DependentVar(const std::string name) {this->name = name;}
-      };
-      using DependentVarP = std::unique_ptr<DependentVar>;
       std::vector<DependentVarP> d_depVars;
 
       std::vector<std::string> parseVariableNames(const std::string& vars);
