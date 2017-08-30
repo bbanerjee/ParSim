@@ -135,14 +135,48 @@ TableEOS::readJSONTable<1>(const json& doc,
   std::string title = getTitleJSON(contents, tableFile);
   json data = getDataJSON(contents, tableFile);
 
-  std::vector<double> indepVarData = 
+  DoubleVec1D indepVarData = 
     getDoubleArrayJSON(data, d_indepVars[0]->name, tableFile);
   d_indepVars[0]->data.insert({IndexKey(0,0,0,0), indepVarData});
   
   for (const auto& depVar : d_depVars) {
-    std::vector<double> depVarData = 
+    DoubleVec1D depVarData = 
       getDoubleArrayJSON(data, depVar->name, tableFile);
     depVar->data.insert({IndexKey(0,0,0,0), depVarData});
+  }
+}
+
+template <>
+void
+TableEOS::readJSONTable<2>(const json& doc,
+                           const std::string& tableFile)
+{
+  json contents = getContentsJSON(doc, tableFile);
+  std::string title = getTitleJSON(contents, tableFile);
+  json data = getDataJSON(contents, tableFile);
+
+  DoubleVec1D indepVar0Data = 
+    getDoubleArrayJSON(data, d_indepVars[0]->name, tableFile);
+  d_indepVars[0]->data.insert({IndexKey(0,0,0,0), indepVar0Data});
+
+  json data0 = getDataJSON(data, tableFile);
+  for (auto ii = 0u; ii < indepVar0Data.size() ; ii++) {
+
+    DoubleVec1D indepVar1Data = 
+      getDoubleArrayJSON(data0[ii], d_indepVars[1]->name, tableFile);
+    /*
+    std::cout << "Read " << d_indepVars[1]->name << " ii = " << ii << " ";
+    std::copy(indepVar1Data.begin(), indepVar1Data.end(),
+              std::ostream_iterator<double>(std::cout, " "));
+    std::cout << std::endl;
+    */
+    d_indepVars[1]->data.insert({IndexKey(ii,0,0,0), indepVar1Data});
+
+    for (const auto& depVar : d_depVars) {
+      DoubleVec1D depVarData = 
+        getDoubleArrayJSON(data0[ii], depVar->name, tableFile);
+      depVar->data.insert({IndexKey(ii,0,0,0), depVarData});
+    }
   }
 }
 
@@ -155,13 +189,13 @@ TableEOS::readJSONTable<4>(const json& doc,
   std::string title = getTitleJSON(contents, tableFile);
   json data = getDataJSON(contents, tableFile);
 
-  std::vector<double> indepVar0 = 
+  DoubleVec1D indepVar0 = 
     getDoubleArrayJSON(data, d_indepVars[0]->name, tableFile);
   json data0 = getDataJSON(data, tableFile);
   
   for (auto ii = 0u; ii < indepVar0.size() ; ii++) {
 
-    std::vector<double> indepVar1 = 
+    DoubleVec1D indepVar1 = 
       getDoubleArrayJSON(data0[ii], d_indepVars[1]->name, tableFile);
     json data1 = getDataJSON(data0[ii], tableFile);
 
@@ -170,14 +204,14 @@ TableEOS::readJSONTable<4>(const json& doc,
       int index = 0;
       for (const auto& indepVar : d_indepVars) {
         if (index > 1) {
-          std::vector<double> indepVar2 = 
+          DoubleVec1D indepVar2 = 
             getDoubleArrayJSON(data1[jj], indepVar->name, tableFile);
         }
         index++;
       }
 
       for (const auto& depVar : d_depVars) {
-        std::vector<double> depVar2 = 
+        DoubleVec1D depVar2 = 
           getDoubleArrayJSON(data1[jj], depVar->name, tableFile);
       }
     }
@@ -237,7 +271,7 @@ TableEOS::getDataJSON(const json& contents,
 }
 
 
-std::vector<double>
+DoubleVec1D
 TableEOS::getVectorJSON(const json& object,
                         const std::string key,
                         const std::string& tableFile)
@@ -254,7 +288,7 @@ TableEOS::getVectorJSON(const json& object,
     throw ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
   std::vector<std::string> vecStr = Vaango::Util::split(str, ',');
-  std::vector<double> vec;
+  DoubleVec1D vec;
   for (auto& val : vecStr) {
     vec.push_back(Vaango::Util::toDouble(val));
   }
@@ -262,7 +296,7 @@ TableEOS::getVectorJSON(const json& object,
 }
 
 
-std::vector<double>
+DoubleVec1D
 TableEOS::getDoubleArrayJSON(const json& object,
                              const std::string key,
                              const std::string& tableFile)
@@ -271,6 +305,7 @@ TableEOS::getDoubleArrayJSON(const json& object,
   json data;
   try {
     data = object.at(key);
+    //std::cout << "Data = " << data << std::endl;
   } catch (std::out_of_range err) {
     std::ostringstream out;
     out << "**ERROR**"
@@ -280,9 +315,9 @@ TableEOS::getDoubleArrayJSON(const json& object,
     throw ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
-  std::vector<double> vec;
+  DoubleVec1D vec;
   try {
-    vec = data.get<std::vector<double>>();
+    vec = data.get<DoubleVec1D>();
     /*
     std::cout << key << ":";
     for (const auto& val : vec) {
@@ -303,15 +338,15 @@ TableEOS::getDoubleArrayJSON(const json& object,
 
 double 
 TableEOS::interpolate(const std::string& depVarName,
-                      std::vector<double>& independents)
+                      DoubleVec1D& independents)
 {
   return 0; 
 }
 
 double
 TableEOS::interpolateLinearSpline1D(const double& indepValue,
-                                    const std::vector<double>& indepVar,
-                                    const std::vector<double>& depVar) const
+                                    const DoubleVec1D& indepVar,
+                                    const DoubleVec1D& depVar) const
 {
   if (indepValue < *(indepVar.begin()) || indepValue > *(indepVar.end()-1)) {
     std::ostringstream out;
@@ -321,8 +356,8 @@ TableEOS::interpolateLinearSpline1D(const double& indepValue,
     throw InvalidValue(out.str(), __FILE__, __LINE__);
   }
   auto lower = std::find_if(indepVar.begin(), indepVar.end(),
-                            [&indepValue](const auto& value) {
-                              return (indepValue <= value);
+                            [&indepValue](const auto& tableValue) {
+                              return (indepValue <= tableValue);
                             });
   double depValue = 0.0;
   if (lower == indepVar.begin()) {
@@ -337,7 +372,83 @@ TableEOS::interpolateLinearSpline1D(const double& indepValue,
   return depValue;
 }
 
-std::vector<double>
+double
+TableEOS::interpolateLinearSpline2D(const std::array<double,2>& indepValues,
+                                    const DoubleVec1D& indepVarData0,
+                                    const DoubleVec2D& indepVarData1,
+                                    const DoubleVec2D& depVarData) const
+{
+  // First find the segment containing the first independent variable value
+  // and the value of parameter s
+  auto location0 = findLocation(indepValues[0], indepVarData0);
+  auto sval = computeParameter(indepValues[0], location0, indepVarData0);
+  std::cout << "location 0 = " << location0 << " s = " << sval << std::endl;
+
+  // Choose the two vectors containing the relevant independent variable data
+  // and find the segments containing the data
+  std::array<double, 2> pvals;
+  for (auto index = 0u; index < 2; index++) {
+
+    auto tableCol1 = indepVarData1[location0+index];
+    auto location1 = findLocation(indepValues[1], tableCol1);
+    auto tval = computeParameter(indepValues[1], location1, tableCol1);
+
+    auto tableCol2 = depVarData[location0+index];
+    pvals[index] = computeInterpolated(tval, location1, tableCol2);
+
+    std::cout << "location 1 = " << location1 
+              << " t[" << index << "] = " << tval 
+              << " p = " << pvals[index] << std::endl;
+  }
+  
+  double depValue = (1 - sval)*pvals[0] + sval*pvals[1];
+
+  return depValue;
+}
+
+std::size_t
+TableEOS::findLocation(const double& value,
+                       const DoubleVec1D& varData) const
+{
+  if (value < varData.front() || value > varData.back()) {
+    std::ostringstream out;
+    out << "**ERROR**"
+        << " The independent variable value \""
+        << value << "\" is outside the range of known data. ";
+    throw InvalidValue(out.str(), __FILE__, __LINE__);
+  }
+
+  auto lower = std::lower_bound(varData.begin(), varData.end(), value);
+  return (lower - varData.begin() - 1);
+}
+
+double
+TableEOS::computeParameter(const double& input,
+                           const std::size_t& startIndex,
+                           const DoubleVec1D& data) const
+{
+  if (data.size() < 2) return 0.0;
+  auto t = (input - data[startIndex]) / (data[startIndex+1] - data[startIndex]);
+  return t;
+}
+
+double
+TableEOS::computeInterpolated(const double& tval,
+                              const std::size_t& startIndex,
+                              const DoubleVec1D& data) const
+{
+  if (data.empty()) {
+    std::ostringstream out;
+    out << "**ERROR**"
+        << " No data available for interpolation.";
+    throw InvalidValue(out.str(), __FILE__, __LINE__);
+  } 
+
+  return (data.size() == 1) ? data.front() : 
+           (1 - tval)*data[startIndex] + tval*data[startIndex+1];
+}
+
+DoubleVec1D
 TableEOS::fitCubicSpline1D(const DependentVar depVar,
                           const IndependentVar indepVar) 
 {
@@ -350,7 +461,7 @@ TableEOS::interpolateCubicSpline1D(const double& t) {
   
 }
 
-std::vector<double> 
+DoubleVec1D 
 TableEOS::getIndependentVarData(const std::string& name,
                                 const IndexKey& index)
 {
@@ -362,7 +473,7 @@ TableEOS::getIndependentVarData(const std::string& name,
   return d_indepVars[position]->data.at(index);
 }
 
-std::vector<double> 
+DoubleVec1D 
 TableEOS::getDependentVarData(const std::string& name,
                               const IndexKey& index)
 {

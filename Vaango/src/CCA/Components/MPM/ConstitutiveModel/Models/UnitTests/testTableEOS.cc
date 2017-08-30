@@ -108,7 +108,7 @@ TEST(TableEOSTest, readJSONTableFromStream1D)
       }}
    }}
   };
-  std::cout << docJSON1D << std::endl;
+  //std::cout << docJSON1D << std::endl;
 
 
   try {
@@ -121,12 +121,159 @@ TEST(TableEOSTest, readJSONTableFromStream1D)
   EXPECT_EQ(eos.getNumDependents(), 2u);
 
   auto indepData = eos.getIndependentVarData("Volume", TableEOS::IndexKey(0, 0, 0, 0));
+
   auto depData = eos.getDependentVarData("Pressure", TableEOS::IndexKey(0, 0, 0, 0));
   EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline1D(0.1, indepData, depData), 10);
   EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline1D(0.8, indepData, depData), 80);
   EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline1D(0.625, indepData, depData), 62.5);
   EXPECT_THROW(eos.interpolateLinearSpline1D(-0.1, indepData, depData), InvalidValue);
   EXPECT_THROW(eos.interpolateLinearSpline1D(0.9, indepData, depData), InvalidValue);
+
+  depData = eos.getDependentVarData("Density", TableEOS::IndexKey(0, 0, 0, 0));
+  EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline1D(0.625, indepData, depData), 6.35);
+}
+
+// Create a 2D test JSON document
+// {"Vaango_tabular_data": {
+//    "Meta" : {
+//      "title" : "Test data"
+//    },
+//    "Data" : {
+//      "Temperature" : [100, 200, 300],
+//      "Data" : [{
+//        "Volume" : [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8],
+//        "Pressure" : [10 20 30 40 50 60 70 80]
+//      }, {
+//        "Volume" : [0.15 0.25 0.35],
+//        "Pressure" : [100 200 300]
+//      }, {
+//        "Volume" : [0.05 0.45 0.75],
+//        "Pressure" : [1000 2000 3000]
+//      }]
+//    }
+//  }}
+TEST(TableEOSTest, readJSONTableFromStream2D)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "table_eos");
+  xmlNewProp(rootNode, BAD_CAST "interpolation", BAD_CAST "linear");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // Create a child node
+  xmlNewChild(rootNode, nullptr, BAD_CAST "filename", BAD_CAST "table_eos.json");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "independent_variables", 
+              BAD_CAST "Temperature, Volume");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "dependent_variables", 
+              BAD_CAST "Pressure");
+
+  // Print the document to stdout
+  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Create a table eos
+  TableEOS eos(ps);
+
+  json docJSON2D = {
+    {"Vaango_tabular_data", {
+      {"Meta" , {
+        {"title" , "Test data"}
+      }},
+      {"Data" , {
+        {"Temperature" , {100, 200, 300}},
+        {"Data" , {{
+          {"Volume" , {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8}},
+          {"Pressure" , {10, 20, 30, 40, 50, 60, 70, 80}}
+        }, {
+          {"Volume" , {0.15, 0.25, 0.35}},
+          {"Pressure" , {100, 200, 300}}
+        }, {
+          {"Volume" , {0.05, 0.45, 0.75}},
+          {"Pressure" , {1000, 2000, 3000}}
+        }}}
+      }}
+    }}
+  };
+  std::cout << docJSON2D;
+
+  try {
+    eos.readJSONTable<2>(docJSON2D, "test_dummy");
+  } catch (ProblemSetupException e) {
+    std::cout << e.message() << std::endl;
+  }
+
+  EXPECT_EQ(eos.getNumIndependents(), 2u);
+  EXPECT_EQ(eos.getNumDependents(), 1u);
+
+  auto tempData = eos.getIndependentVarData("Temperature", 
+                                             TableEOS::IndexKey(0, 0, 0, 0));
+  std::vector<std::vector<double>> indepData;
+  std::vector<std::vector<double>> depData;
+  for (auto ii = 0u; ii < tempData.size(); ii++) {
+    indepData.push_back(eos.getIndependentVarData("Volume", 
+                                             TableEOS::IndexKey(ii, 0, 0, 0)));
+    depData.push_back(eos.getDependentVarData("Pressure", 
+                                         TableEOS::IndexKey(ii, 0, 0, 0)));
+    std::cout << "Volume[" << ii << "]";
+    std::copy(indepData[ii].begin(), indepData[ii].end(),
+              std::ostream_iterator<double>(std::cout, " "));
+    std::cout << std::endl;
+    std::cout << "Pressure[" << ii << "]";
+    std::copy(depData[ii].begin(), depData[ii].end(),
+              std::ostream_iterator<double>(std::cout, " "));
+    std::cout << std::endl;
+  }
+                                          
+  std::array<double, 2> indepVals = {{150, 0.25}};
+  auto val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
+  std::cout << "val = " << val << " input: " << indepVals[0] << "," << indepVals[1] << std::endl;
+
+  indepVals = {{20, 0.25}};
+  try {
+  val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
+  } catch (InvalidValue e) {
+    std::cout << e.message() << std::endl;
+  }
+
+  indepVals = {{500, 0.25}};
+  try {
+  val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
+  } catch (InvalidValue e) {
+    std::cout << e.message() << std::endl;
+  }
+
+  indepVals = {{220, 0.01}};
+  try {
+  val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
+  } catch (InvalidValue e) {
+    std::cout << e.message() << std::endl;
+  }
+
+  indepVals = {{220, 0.4}};
+  try {
+  val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
+  } catch (InvalidValue e) {
+    std::cout << e.message() << std::endl;
+  }
+
+  indepVals = {{220, 0.349}};
+  try {
+  val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
+  } catch (InvalidValue e) {
+    std::cout << e.message() << std::endl;
+  }
+
+  std::cout << "val = " << val << " input: " << indepVals[0] << "," << indepVals[1] << std::endl;
+ //EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline2D(indepVals, indepData, depData), 10);
 }
 
 // Create a 4D test JSON document

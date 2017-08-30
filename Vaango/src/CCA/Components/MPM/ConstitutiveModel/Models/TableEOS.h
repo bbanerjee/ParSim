@@ -8,9 +8,13 @@
 
 #include <string>
 #include <vector>
+#include <array>
 #include <memory>
 
 namespace Vaango {
+
+  using DoubleVec1D = std::vector<double>;
+  using DoubleVec2D = std::vector<DoubleVec1D>;
 
   using IndependentVarP = std::unique_ptr<TableBase::IndependentVar>;
   using DependentVarP = std::unique_ptr<TableBase::DependentVar>;
@@ -28,7 +32,7 @@ namespace Vaango {
     void setup() override;
 
     double interpolate(const std::string& depvarName,
-                       std::vector<double>& independents) override;
+                       DoubleVec1D& independents) override;
 
     template <int dim>
     void readJSONTableFromFile(const std::string& tableFile);
@@ -38,10 +42,15 @@ namespace Vaango {
                        const std::string& tableFile);
 
     double interpolateLinearSpline1D(const double& indepValue,
-                                     const std::vector<double>& indepVar,
-                                     const std::vector<double>& depVar) const;
+                                     const DoubleVec1D& indepVar,
+                                     const DoubleVec1D& depVar) const;
 
-    std::vector<double> fitCubicSpline1D(const DependentVar depVar,
+    double interpolateLinearSpline2D(const std::array<double,2>& indepValue,
+                                     const DoubleVec1D& indepVar0,
+                                     const DoubleVec2D& indepVars,
+                                     const DoubleVec2D& depVar) const;
+
+    DoubleVec1D fitCubicSpline1D(const DependentVar depVar,
                                          const IndependentVar indepVar);
 
     double interpolateCubicSpline1D(const double& t);
@@ -49,9 +58,9 @@ namespace Vaango {
     std::size_t getNumIndependents() const {return d_indepVars.size();}
     std::size_t getNumDependents() const {return d_depVars.size();}
 
-    std::vector<double> getIndependentVarData(const std::string& name,
+    DoubleVec1D getIndependentVarData(const std::string& name,
                                               const IndexKey& index);
-    std::vector<double> getDependentVarData(const std::string& name,
+    DoubleVec1D getDependentVarData(const std::string& name,
                                             const IndexKey& index);
 
     private:
@@ -69,12 +78,20 @@ namespace Vaango {
                                const std::string& fileName);
       nlohmann::json getDataJSON(const nlohmann::json& contents,
                                  const std::string& fileName);
-      std::vector<double> getVectorJSON(const nlohmann::json& object,
+      DoubleVec1D getVectorJSON(const nlohmann::json& object,
                                         const std::string key,
                                         const std::string& tableFile);
-      std::vector<double> getDoubleArrayJSON(const nlohmann::json& object,
+      DoubleVec1D getDoubleArrayJSON(const nlohmann::json& object,
                                              const std::string key,
                                              const std::string& tableFile);
+      std::size_t findLocation(const double& value,
+                               const DoubleVec1D& varData) const;
+      double computeParameter(const double& input,
+                              const std::size_t& startIndex,
+                              const DoubleVec1D& data) const;
+      double computeInterpolated(const double& tval,
+                                 const std::size_t& startIndex,
+                                 const DoubleVec1D& data) const;
   };
 }
 
