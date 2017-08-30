@@ -203,7 +203,7 @@ TEST(TableEOSTest, readJSONTableFromStream2D)
       }}
     }}
   };
-  std::cout << docJSON2D;
+  //std::cout << docJSON2D;
 
   try {
     eos.readJSONTable<2>(docJSON2D, "test_dummy");
@@ -223,6 +223,7 @@ TEST(TableEOSTest, readJSONTableFromStream2D)
                                              TableEOS::IndexKey(ii, 0, 0, 0)));
     depData.push_back(eos.getDependentVarData("Pressure", 
                                          TableEOS::IndexKey(ii, 0, 0, 0)));
+    /*
     std::cout << "Volume[" << ii << "]";
     std::copy(indepData[ii].begin(), indepData[ii].end(),
               std::ostream_iterator<double>(std::cout, " "));
@@ -231,49 +232,40 @@ TEST(TableEOSTest, readJSONTableFromStream2D)
     std::copy(depData[ii].begin(), depData[ii].end(),
               std::ostream_iterator<double>(std::cout, " "));
     std::cout << std::endl;
+    */
   }
                                           
   std::array<double, 2> indepVals = {{150, 0.25}};
-  auto val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
-  std::cout << "val = " << val << " input: " << indepVals[0] << "," << indepVals[1] << std::endl;
+  EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline2D(indepVals, tempData, 
+                   indepData, depData), 112.5);
 
   indepVals = {{20, 0.25}};
+  EXPECT_THROW(eos.interpolateLinearSpline2D(indepVals, tempData, 
+               indepData, depData), InvalidValue);
+  /*
   try {
   val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
   } catch (InvalidValue e) {
     std::cout << e.message() << std::endl;
   }
+  std::cout << "val = " << val << " input: " << indepVals[0] << "," << indepVals[1] << std::endl;
+  */
 
   indepVals = {{500, 0.25}};
-  try {
-  val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
-  } catch (InvalidValue e) {
-    std::cout << e.message() << std::endl;
-  }
+  EXPECT_THROW(eos.interpolateLinearSpline2D(indepVals, tempData, 
+               indepData, depData), InvalidValue);
 
   indepVals = {{220, 0.01}};
-  try {
-  val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
-  } catch (InvalidValue e) {
-    std::cout << e.message() << std::endl;
-  }
+  EXPECT_THROW(eos.interpolateLinearSpline2D(indepVals, tempData, 
+               indepData, depData), InvalidValue);
 
   indepVals = {{220, 0.4}};
-  try {
-  val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
-  } catch (InvalidValue e) {
-    std::cout << e.message() << std::endl;
-  }
+  EXPECT_THROW(eos.interpolateLinearSpline2D(indepVals, tempData, 
+               indepData, depData), InvalidValue);
 
   indepVals = {{220, 0.349}};
-  try {
-  val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
-  } catch (InvalidValue e) {
-    std::cout << e.message() << std::endl;
-  }
-
-  std::cout << "val = " << val << " input: " << indepVals[0] << "," << indepVals[1] << std::endl;
- //EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline2D(indepVals, indepData, depData), 10);
+  EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline2D(indepVals, tempData, 
+                   indepData, depData), 588.7);
 }
 
 // Create a 4D test JSON document

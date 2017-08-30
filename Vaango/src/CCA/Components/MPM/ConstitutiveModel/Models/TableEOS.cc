@@ -382,7 +382,7 @@ TableEOS::interpolateLinearSpline2D(const std::array<double,2>& indepValues,
   // and the value of parameter s
   auto location0 = findLocation(indepValues[0], indepVarData0);
   auto sval = computeParameter(indepValues[0], location0, indepVarData0);
-  std::cout << "location 0 = " << location0 << " s = " << sval << std::endl;
+  //std::cout << "location 0 = " << location0 << " s = " << sval << std::endl;
 
   // Choose the two vectors containing the relevant independent variable data
   // and find the segments containing the data
@@ -396,9 +396,9 @@ TableEOS::interpolateLinearSpline2D(const std::array<double,2>& indepValues,
     auto tableCol2 = depVarData[location0+index];
     pvals[index] = computeInterpolated(tval, location1, tableCol2);
 
-    std::cout << "location 1 = " << location1 
-              << " t[" << index << "] = " << tval 
-              << " p = " << pvals[index] << std::endl;
+    //std::cout << "location 1 = " << location1 
+    //          << " t[" << index << "] = " << tval 
+    //          << " p = " << pvals[index] << std::endl;
   }
   
   double depValue = (1 - sval)*pvals[0] + sval*pvals[1];
