@@ -34,8 +34,8 @@ namespace Vaango {
 
     void setup() override;
 
-    double interpolate(const std::string& depvarName,
-                       DoubleVec1D& independents) override;
+    template <int dim>
+    DoubleVec1D interpolate(const std::array<double, dim>& indepValues);
 
     template <int dim>
     void readJSONTableFromFile(const std::string& tableFile);
@@ -49,10 +49,7 @@ namespace Vaango {
                                         const IndepVarPArray& indepVars,
                                         const DepVarPArray& depVars) const;
 
-    DoubleVec1D fitCubicSpline1D(const DependentVar depVar,
-                                         const IndependentVar indepVar);
-
-    double interpolateCubicSpline1D(const double& t);
+    // double interpolateCubicSpline1D(const double& t); 
 
     std::size_t getNumIndependents() const {return d_indepVars.size();}
     std::size_t getNumDependents() const {return d_depVars.size();}

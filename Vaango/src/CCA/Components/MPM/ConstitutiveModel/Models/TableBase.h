@@ -18,9 +18,6 @@ namespace Vaango {
 
     virtual void setup() = 0;
 
-    virtual double interpolate(const std::string& varName,
-                               std::vector<double>& independents) = 0;
-
     struct IndexKey {
       std::uint8_t _ii;
       std::uint8_t _jj;
