@@ -19,6 +19,9 @@ namespace Vaango {
   using IndependentVarP = std::unique_ptr<TableBase::IndependentVar>;
   using DependentVarP = std::unique_ptr<TableBase::DependentVar>;
 
+  using IndepVarPArray = std::vector<IndependentVarP>;
+  using DepVarPArray = std::vector<DependentVarP>;
+
   class TableEOS : public TableBase {
 
   public:
@@ -50,6 +53,11 @@ namespace Vaango {
                                      const DoubleVec2D& indepVars,
                                      const DoubleVec2D& depVar) const;
 
+    template <int dim>
+    DoubleVec1D interpolateLinearSpline(const std::array<double,dim>& indepValues,
+                                        const IndepVarPArray& indepVars,
+                                        const DepVarPArray& depVars) const;
+
     DoubleVec1D fitCubicSpline1D(const DependentVar depVar,
                                          const IndependentVar indepVar);
 
@@ -59,14 +67,17 @@ namespace Vaango {
     std::size_t getNumDependents() const {return d_depVars.size();}
 
     DoubleVec1D getIndependentVarData(const std::string& name,
-                                              const IndexKey& index);
+                                      const IndexKey& index) const;
     DoubleVec1D getDependentVarData(const std::string& name,
-                                            const IndexKey& index);
+                                    const IndexKey& index) const;
+
+    const IndepVarPArray& getIndependentVars() const {return d_indepVars;} 
+    const DepVarPArray& getDependentVars() const {return d_depVars;} 
 
     private:
       std::string d_filename;
-      std::vector<IndependentVarP> d_indepVars;
-      std::vector<DependentVarP> d_depVars;
+      IndepVarPArray d_indepVars;
+      DepVarPArray d_depVars;
 
       std::vector<std::string> parseVariableNames(const std::string& vars);
 

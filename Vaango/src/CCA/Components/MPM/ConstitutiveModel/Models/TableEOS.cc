@@ -2,6 +2,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TableUtils.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/Util/FancyAssert.h>
 
 #include <Eigen/Sparse>
 
@@ -81,8 +82,18 @@ TableEOS::addDependentVariable(const std::string& varName)
 void 
 TableEOS::setup()
 {
-  if (d_depVars.size() == 4) {
-    readJSONTableFromFile<4>(d_filename);
+  if (d_indepVars.size() == 1) {
+    readJSONTableFromFile<1>(d_filename);
+  } else if (d_indepVars.size() == 2) {
+    readJSONTableFromFile<2>(d_filename);
+  } else if (d_indepVars.size() == 3) {
+    readJSONTableFromFile<3>(d_filename);
+  } else {
+    std::ostringstream out;
+    out << "**ERROR**"
+        << " More than three independent variables not allowed in "
+        << d_filename;
+    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 }
 
@@ -143,6 +154,8 @@ TableEOS::readJSONTable<1>(const json& doc,
     DoubleVec1D depVarData = 
       getDoubleArrayJSON(data, depVar->name, tableFile);
     depVar->data.insert({IndexKey(0,0,0,0), depVarData});
+
+    ASSERTEQ(indepVarData.size(), depVarData.size());
   }
 }
 
@@ -176,43 +189,50 @@ TableEOS::readJSONTable<2>(const json& doc,
       DoubleVec1D depVarData = 
         getDoubleArrayJSON(data0[ii], depVar->name, tableFile);
       depVar->data.insert({IndexKey(ii,0,0,0), depVarData});
+
+      ASSERTEQ(indepVar1Data.size(), depVarData.size());
     }
+
   }
 }
 
 template <>
 void
-TableEOS::readJSONTable<4>(const json& doc,
+TableEOS::readJSONTable<3>(const json& doc,
                            const std::string& tableFile)
 {
   json contents = getContentsJSON(doc, tableFile);
   std::string title = getTitleJSON(contents, tableFile);
   json data = getDataJSON(contents, tableFile);
 
-  DoubleVec1D indepVar0 = 
+  DoubleVec1D indepVar0Data = 
     getDoubleArrayJSON(data, d_indepVars[0]->name, tableFile);
+  d_indepVars[0]->data.insert({IndexKey(0,0,0,0), indepVar0Data});
+
   json data0 = getDataJSON(data, tableFile);
-  
-  for (auto ii = 0u; ii < indepVar0.size() ; ii++) {
+  for (auto ii = 0u; ii < indepVar0Data.size() ; ii++) {
 
-    DoubleVec1D indepVar1 = 
+    DoubleVec1D indepVar1Data = 
       getDoubleArrayJSON(data0[ii], d_indepVars[1]->name, tableFile);
-    json data1 = getDataJSON(data0[ii], tableFile);
+    d_indepVars[1]->data.insert({IndexKey(ii,0,0,0), indepVar1Data});
 
-    for (auto jj = 0u; jj < indepVar1.size() ; jj++) {
+    json data1 = getDataJSON(data0[ii], tableFile);
+    for (auto jj = 0u; jj < indepVar1Data.size() ; jj++) {
 
       int index = 0;
       for (const auto& indepVar : d_indepVars) {
         if (index > 1) {
-          DoubleVec1D indepVar2 = 
+          DoubleVec1D indepVar2Data = 
             getDoubleArrayJSON(data1[jj], indepVar->name, tableFile);
+          indepVar->data.insert({IndexKey(ii,jj,0,0), indepVar2Data});
         }
         index++;
       }
 
       for (const auto& depVar : d_depVars) {
-        DoubleVec1D depVar2 = 
+        DoubleVec1D depVar2Data = 
           getDoubleArrayJSON(data1[jj], depVar->name, tableFile);
+        depVar->data.insert({IndexKey(ii,jj,0,0), depVar2Data});
       }
     }
   }
@@ -345,30 +365,13 @@ TableEOS::interpolate(const std::string& depVarName,
 
 double
 TableEOS::interpolateLinearSpline1D(const double& indepValue,
-                                    const DoubleVec1D& indepVar,
-                                    const DoubleVec1D& depVar) const
+                                    const DoubleVec1D& indepVarData,
+                                    const DoubleVec1D& depVarData) const
 {
-  if (indepValue < *(indepVar.begin()) || indepValue > *(indepVar.end()-1)) {
-    std::ostringstream out;
-    out << "**ERROR**"
-        << " The independent variable value \""
-        << indepValue << "\" is outside the range of known data. ";
-    throw InvalidValue(out.str(), __FILE__, __LINE__);
-  }
-  auto lower = std::find_if(indepVar.begin(), indepVar.end(),
-                            [&indepValue](const auto& tableValue) {
-                              return (indepValue <= tableValue);
-                            });
-  double depValue = 0.0;
-  if (lower == indepVar.begin()) {
-    depValue = *(depVar.begin());
-  } else if (lower == indepVar.end()-1) {
-    depValue = *(depVar.end()-1);
-  } else {
-    auto position = lower - indepVar.begin();
-    double t = (indepValue - *lower)/(*(lower+1) - *lower);
-    depValue = (1 - t)*depVar[position] + t*depVar[position+1];
-  }
+  ASSERTEQ(indepVarData.size(), depVarData.size());
+  auto location = findLocation(indepValue, indepVarData);
+  auto sval = computeParameter(indepValue, location, indepVarData);
+  auto depValue = computeInterpolated(sval, location, depVarData);
   return depValue;
 }
 
@@ -378,6 +381,9 @@ TableEOS::interpolateLinearSpline2D(const std::array<double,2>& indepValues,
                                     const DoubleVec2D& indepVarData1,
                                     const DoubleVec2D& depVarData) const
 {
+  ASSERTEQ(indepVarData0.size(), indepVarData1.size());
+  ASSERTEQ(indepVarData1.size(), depVarData.size());
+
   // First find the segment containing the first independent variable value
   // and the value of parameter s
   auto location0 = findLocation(indepValues[0], indepVarData0);
@@ -405,6 +411,155 @@ TableEOS::interpolateLinearSpline2D(const std::array<double,2>& indepValues,
 
   return depValue;
 }
+
+namespace Vaango {
+template <>
+DoubleVec1D
+TableEOS::interpolateLinearSpline<1>(const std::array<double,1>& indepValues,
+                                     const IndepVarPArray& indepVars,
+                                     const DepVarPArray& depVars) const
+{
+  // Get the numbers of vars
+  auto numIndepVars = indepVars.size();
+  auto numDepVars = depVars.size();
+
+  // First find the segment containing the first independent variable value
+  // and the value of parameter s
+  auto indepVarData0 = getIndependentVarData(indepVars[0]->name, 
+                                             TableEOS::IndexKey(0, 0, 0, 0));
+  auto segLowIndex0 = findLocation(indepValues[0], indepVarData0);
+  auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
+  //std::cout << "Lo Index 0 = " << segLowIndex0 << " s = " << sval << std::endl;
+
+  DoubleVec1D depVals;
+  for (const auto& depVar : depVars) {
+    auto depVarData = getDependentVarData(depVar->name, 
+                                          TableEOS::IndexKey(0, 0, 0, 0));
+    auto depval = computeInterpolated(sval, segLowIndex0, depVarData);
+    depVals.push_back(depval);
+    //std::cout << "Lo Index 0 = " << segLowIndex0 << " p = " << depval << std::endl;
+  }
+
+  return depVals;
+}
+
+template <>
+DoubleVec1D
+TableEOS::interpolateLinearSpline<2>(const std::array<double,2>& indepValues,
+                                     const IndepVarPArray& indepVars,
+                                     const DepVarPArray& depVars) const
+{
+  // Get the numbers of vars
+  auto numIndepVars = indepVars.size();
+  auto numDepVars = depVars.size();
+
+  // First find the segment containing the first independent variable value
+  // and the value of parameter s
+  auto indepVarData0 = getIndependentVarData(indepVars[0]->name, 
+                                             TableEOS::IndexKey(0, 0, 0, 0));
+  auto segLowIndex0 = findLocation(indepValues[0], indepVarData0);
+  auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
+  //std::cout << "Lo Index 0 = " << segLowIndex0 << " s = " << sval << std::endl;
+
+  // Choose the two vectors containing the relevant independent variable data
+  // and find the segments containing the data
+  DoubleVec1D depValsT;
+  for (auto ii = segLowIndex0; ii <= segLowIndex0+1; ii++) {
+    auto indepVarData1 = getIndependentVarData(indepVars[1]->name, 
+                                               TableEOS::IndexKey(ii, 0, 0, 0));
+    auto segLowIndex1 = findLocation(indepValues[1], indepVarData1);
+    auto tval = computeParameter(indepValues[1], segLowIndex1, indepVarData1);
+    //std::cout << "Lo Index 1 = " << segLowIndex1 << " t = " << tval << std::endl;
+
+    for (const auto& depVar : depVars) {
+      auto depVarData = getDependentVarData(depVar->name, 
+                                            TableEOS::IndexKey(ii, 0, 0, 0));
+      auto depvalT = computeInterpolated(tval, segLowIndex1, depVarData);
+      depValsT.push_back(depvalT);
+      //std::cout << "Lo Index 1 = " << segLowIndex1 << " p = " << depvalT << std::endl;
+    }
+  }
+
+  DoubleVec1D depVals;
+  auto index = 0u;
+  for (const auto& depVar : depVars) {
+    auto depval = (1 - sval)*depValsT[index] + sval*depValsT[index+numDepVars];
+    depVals.push_back(depval);
+    //std::cout << "Lo Index 0 = " << segLowIndex0 << " q = " << depval << std::endl;
+    index++;
+  }
+
+  return depVals;
+}
+
+template <>
+DoubleVec1D
+TableEOS::interpolateLinearSpline<3>(const std::array<double,3>& indepValues,
+                                     const IndepVarPArray& indepVars,
+                                     const DepVarPArray& depVars) const
+{
+  // Get the numbers of vars
+  auto numIndepVars = indepVars.size();
+  auto numDepVars = depVars.size();
+
+  // First find the segment containing the first independent variable value
+  // and the value of parameter s
+  auto indepVarData0 = getIndependentVarData(indepVars[0]->name, 
+                                             TableEOS::IndexKey(0, 0, 0, 0));
+  auto segLowIndex0 = findLocation(indepValues[0], indepVarData0);
+  auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
+  //std::cout << "Lo Index 0 = " << segLowIndex0 << " s = " << sval << std::endl;
+
+  // Choose the two vectors containing the relevant independent variable data
+  // and find the segments containing the data
+  DoubleVec1D depValsT;
+  for (auto ii = segLowIndex0; ii <= segLowIndex0+1; ii++) {
+    auto indepVarData1 = getIndependentVarData(indepVars[1]->name, 
+                                               TableEOS::IndexKey(ii, 0, 0, 0));
+    auto segLowIndex1 = findLocation(indepValues[1], indepVarData1);
+    auto tval = computeParameter(indepValues[1], segLowIndex1, indepVarData1);
+    //std::cout << "Lo Index 1 = " << segLowIndex1 << " t = " << tval << std::endl;
+
+    // Choose the last two vectors containing the relevant independent variable data
+    // and find the segments containing the data
+    DoubleVec1D depValsU;
+    for (auto jj = segLowIndex1; jj <= segLowIndex1+1; jj++) {
+      auto indepVarData2 = getIndependentVarData(indepVars[2]->name, 
+                                                 TableEOS::IndexKey(ii, jj, 0, 0));
+      auto segLowIndex2 = findLocation(indepValues[2], indepVarData2);
+      auto uval = computeParameter(indepValues[2], segLowIndex2, indepVarData2);
+      //std::cout << "Lo Index 2 = " << segLowIndex2 << " u = " << uval << std::endl;
+
+      for (const auto& depVar : depVars) {
+        auto depVarData = getDependentVarData(depVar->name, 
+                                              TableEOS::IndexKey(ii, jj, 0, 0));
+        auto depvalU = computeInterpolated(uval, segLowIndex2, depVarData);
+        depValsU.push_back(depvalU);
+        //std::cout << "Lo Index 2 = " << segLowIndex2 << " p = " << depvalU << std::endl;
+      }
+    }
+
+    auto index = 0u;
+    for (const auto& depVar : depVars) {
+      auto depvalT = (1 - tval)*depValsU[index] + tval*depValsU[index+numDepVars];
+      depValsT.push_back(depvalT);
+      //std::cout << "Lo Index 1 = " << segLowIndex1 << " q = " << depvalT << std::endl;
+      index++;
+    }
+  }
+
+  DoubleVec1D depVals;
+  auto index = 0u;
+  for (const auto& depVar : depVars) {
+    auto depval = (1 - sval)*depValsT[index] + sval*depValsT[index+numDepVars];
+    depVals.push_back(depval);
+    //std::cout << "Lo Index 0 = " << segLowIndex0 << " r = " << depval << std::endl;
+    index++;
+  }
+
+  return depVals;
+}
+} // end namespace for template specialization (needed by gcc)
 
 std::size_t
 TableEOS::findLocation(const double& value,
@@ -450,7 +605,7 @@ TableEOS::computeInterpolated(const double& tval,
 
 DoubleVec1D
 TableEOS::fitCubicSpline1D(const DependentVar depVar,
-                          const IndependentVar indepVar) 
+                           const IndependentVar indepVar) 
 {
 
 }
@@ -463,7 +618,7 @@ TableEOS::interpolateCubicSpline1D(const double& t) {
 
 DoubleVec1D 
 TableEOS::getIndependentVarData(const std::string& name,
-                                const IndexKey& index)
+                                const IndexKey& index) const
 {
   auto varIter = std::find_if(d_indepVars.begin(), d_indepVars.end(),
                               [&name](const auto& indepVar) {
@@ -475,7 +630,7 @@ TableEOS::getIndependentVarData(const std::string& name,
 
 DoubleVec1D 
 TableEOS::getDependentVarData(const std::string& name,
-                              const IndexKey& index)
+                              const IndexKey& index) const
 {
   auto varIter = std::find_if(d_depVars.begin(), d_depVars.end(),
                               [&name](const auto& depVar) {
@@ -483,5 +638,4 @@ TableEOS::getDependentVarData(const std::string& name,
                               });
   auto position = std::distance(d_depVars.begin(), varIter);
   return d_depVars[position]->data.at(index);
-
 }
