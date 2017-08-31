@@ -39,7 +39,7 @@ TEST(TableEOSTest, parseVariableNames)
   xmlNewChild(rootNode, nullptr, BAD_CAST "dependent_variables", BAD_CAST "pressure, volume 1, other 2");
 
   // Print the document to stdout
-  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -83,7 +83,7 @@ TEST(TableEOSTest, readJSONTableFromStream1D)
               BAD_CAST "Pressure, Density");
 
   // Print the document to stdout
-  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -121,16 +121,7 @@ TEST(TableEOSTest, readJSONTableFromStream1D)
   EXPECT_EQ(eos.getNumDependents(), 2u);
 
   auto indepData = eos.getIndependentVarData("Volume", TableEOS::IndexKey(0, 0, 0, 0));
-
   auto depData = eos.getDependentVarData("Pressure", TableEOS::IndexKey(0, 0, 0, 0));
-  EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline1D(0.1, indepData, depData), 10);
-  EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline1D(0.8, indepData, depData), 80);
-  EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline1D(0.625, indepData, depData), 62.5);
-  EXPECT_THROW(eos.interpolateLinearSpline1D(-0.1, indepData, depData), InvalidValue);
-  EXPECT_THROW(eos.interpolateLinearSpline1D(0.9, indepData, depData), InvalidValue);
-
-  depData = eos.getDependentVarData("Density", TableEOS::IndexKey(0, 0, 0, 0));
-  EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline1D(0.625, indepData, depData), 6.35);
 
   auto val = eos.interpolateLinearSpline<1>({{0.1}}, 
              eos.getIndependentVars(), eos.getDependentVars());
@@ -186,7 +177,7 @@ TEST(TableEOSTest, readJSONTableFromStream2D)
               BAD_CAST "Pressure");
 
   // Print the document to stdout
-  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -252,38 +243,6 @@ TEST(TableEOSTest, readJSONTableFromStream2D)
   }
                                           
   std::array<double, 2> indepVals = {{150, 0.25}};
-  EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline2D(indepVals, tempData, 
-                   indepData, depData), 112.5);
-
-  indepVals = {{20, 0.25}};
-  EXPECT_THROW(eos.interpolateLinearSpline2D(indepVals, tempData, 
-               indepData, depData), InvalidValue);
-  /*
-  try {
-  val = eos.interpolateLinearSpline2D(indepVals, tempData, indepData, depData);
-  } catch (InvalidValue e) {
-    std::cout << e.message() << std::endl;
-  }
-  std::cout << "val = " << val << " input: " << indepVals[0] << "," << indepVals[1] << std::endl;
-  */
-
-  indepVals = {{500, 0.25}};
-  EXPECT_THROW(eos.interpolateLinearSpline2D(indepVals, tempData, 
-               indepData, depData), InvalidValue);
-
-  indepVals = {{220, 0.01}};
-  EXPECT_THROW(eos.interpolateLinearSpline2D(indepVals, tempData, 
-               indepData, depData), InvalidValue);
-
-  indepVals = {{220, 0.4}};
-  EXPECT_THROW(eos.interpolateLinearSpline2D(indepVals, tempData, 
-               indepData, depData), InvalidValue);
-
-  indepVals = {{220, 0.349}};
-  EXPECT_DOUBLE_EQ(eos.interpolateLinearSpline2D(indepVals, tempData, 
-                   indepData, depData), 588.7);
-
-  indepVals = {{150, 0.25}};
   auto val = eos.interpolateLinearSpline<2>(indepVals, 
              eos.getIndependentVars(), eos.getDependentVars());
   EXPECT_DOUBLE_EQ(val[0], 112.5);
@@ -354,7 +313,7 @@ TEST(TableEOSTest, readJSONTableFromStream4D)
               BAD_CAST "Pressure, Density");
 
   // Print the document to stdout
-  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -417,10 +376,12 @@ TEST(TableEOSTest, readJSONTableFromStream4D)
 
   auto salData = eos.getIndependentVarData("Salinity", 
                                            TableEOS::IndexKey(0, 0, 0, 0));
+  /*
   std::cout << "Salinity ";
   std::copy(salData.begin(), salData.end(),
             std::ostream_iterator<double>(std::cout, " "));
   std::cout << std::endl;
+  */
 
   std::vector<std::vector<double>> indepData;
   std::vector<std::vector<double>> depData;
@@ -428,16 +389,20 @@ TEST(TableEOSTest, readJSONTableFromStream4D)
   for (auto ii = 0u; ii < numSal; ii++) {
     auto tempData = eos.getIndependentVarData("Temperature", 
                                               TableEOS::IndexKey(ii, 0, 0, 0));
+    /*
     std::cout << "Temperature[" << ii << "]";
     std::copy(tempData.begin(), tempData.end(),
               std::ostream_iterator<double>(std::cout, " "));
     std::cout << std::endl;
+    */
+
     auto numTemp = tempData.size();
     for (auto jj = 0u; jj < numTemp; jj++) {
       indepData.push_back(eos.getIndependentVarData("Volume", 
                                              TableEOS::IndexKey(ii, jj, 0, 0)));
       depData.push_back(eos.getDependentVarData("Pressure", 
                                          TableEOS::IndexKey(ii, jj, 0, 0)));
+      /*
       std::cout << "Volume[" << ii << ", " << jj << "]";
       std::copy(indepData[jj].begin(), indepData[jj].end(),
                 std::ostream_iterator<double>(std::cout, " "));
@@ -446,6 +411,7 @@ TEST(TableEOSTest, readJSONTableFromStream4D)
       std::copy(depData[jj].begin(), depData[jj].end(),
                 std::ostream_iterator<double>(std::cout, " "));
       std::cout << std::endl;
+      */
     }
   }
 
@@ -453,9 +419,41 @@ TEST(TableEOSTest, readJSONTableFromStream4D)
   auto val = eos.interpolateLinearSpline<3>(indepVals, 
                                             eos.getIndependentVars(),
                                             eos.getDependentVars());
+  EXPECT_EQ(val.size(), eos.getNumDependents());
+  EXPECT_NEAR(val[0], 1.08214285714286e+02, 1.0e-10);
+  EXPECT_NEAR(val[1], 2.30696428571429e+00, 1.0e-10);
+
+  //std::cout << "vals = " << val[0] << " " << val[1] << std::endl;
 
   indepVals = {{0.12, 230, 0.5}};
   val = eos.interpolateLinearSpline<3>(indepVals, 
                                        eos.getIndependentVars(),
                                        eos.getDependentVars());
+  EXPECT_NEAR(val[0], 6.81225714285714e+02, 1.0e-10);
+  EXPECT_NEAR(val[1], 3.11120357142857e+00, 1.0e-10);
+  //std::cout << "vals = " << val[0] << " " << val[1] << std::endl;
+
+  indepVals = {{0.05, 230, 0.5}};
+  EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
+               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+
+  indepVals = {{0.3, 230, 0.5}};
+  EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
+               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+
+  indepVals = {{0.12, 301, 0.5}};
+  EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
+               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+
+  indepVals = {{0.12, 0, 0.5}};
+  EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
+               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+
+  indepVals = {{0.12, 230, 0.6}};
+  EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
+               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+
+  indepVals = {{0.12, 230, 0.05}};
+  EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
+               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
 }

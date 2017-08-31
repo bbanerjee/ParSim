@@ -44,15 +44,6 @@ namespace Vaango {
     void readJSONTable(const nlohmann::json& doc,
                        const std::string& tableFile);
 
-    double interpolateLinearSpline1D(const double& indepValue,
-                                     const DoubleVec1D& indepVar,
-                                     const DoubleVec1D& depVar) const;
-
-    double interpolateLinearSpline2D(const std::array<double,2>& indepValue,
-                                     const DoubleVec1D& indepVar0,
-                                     const DoubleVec2D& indepVars,
-                                     const DoubleVec2D& depVar) const;
-
     template <int dim>
     DoubleVec1D interpolateLinearSpline(const std::array<double,dim>& indepValues,
                                         const IndepVarPArray& indepVars,
