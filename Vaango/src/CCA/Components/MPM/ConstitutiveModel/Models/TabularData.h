@@ -1,7 +1,7 @@
-#ifndef VAANGO_MPM_CONSTITUTIVE_MODEL_TABLE_EOS_H
-#define VAANGO_MPM_CONSTITUTIVE_MODEL_TABLE_EOS_H
+#ifndef VAANGO_MPM_CONSTITUTIVE_MODEL_TABULAR_DATA_H
+#define VAANGO_MPM_CONSTITUTIVE_MODEL_TABULAR_DATA_H
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TableBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TableContainers.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 #include <submodules/json/src/json.hpp>
@@ -13,26 +13,28 @@
 
 namespace Vaango {
 
+  using IndexKey = TableContainers::IndexKey;
+
   using DoubleVec1D = std::vector<double>;
   using DoubleVec2D = std::vector<DoubleVec1D>;
 
-  using IndependentVarP = std::unique_ptr<TableBase::IndependentVar>;
-  using DependentVarP = std::unique_ptr<TableBase::DependentVar>;
+  using IndependentVarP = std::unique_ptr<TableContainers::IndependentVar>;
+  using DependentVarP = std::unique_ptr<TableContainers::DependentVar>;
 
   using IndepVarPArray = std::vector<IndependentVarP>;
   using DepVarPArray = std::vector<DependentVarP>;
 
-  class TableEOS : public TableBase {
+  class TabularData {
 
   public:
-    TableEOS() = delete;
-    TableEOS(Uintah::ProblemSpecP& ps);
-    ~TableEOS() override = default;
+    TabularData() = delete;
+    TabularData(Uintah::ProblemSpecP& ps);
+    ~TabularData() = default;
 
-    void addIndependentVariable(const std::string& varName) override;
-    std::size_t addDependentVariable(const std::string& varName) override;
+    void addIndependentVariable(const std::string& varName);
+    std::size_t addDependentVariable(const std::string& varName);
 
-    void setup() override;
+    void setup();
 
     template <int dim>
     DoubleVec1D interpolate(const std::array<double, dim>& indepValues);
@@ -94,4 +96,4 @@ namespace Vaango {
   };
 }
 
-#endif // VAANGO_MPM_CONSTITUTIVE_MODEL_TABLE_EOS_H
+#endif // VAANGO_MPM_CONSTITUTIVE_MODEL_TABULAR_DATA_H

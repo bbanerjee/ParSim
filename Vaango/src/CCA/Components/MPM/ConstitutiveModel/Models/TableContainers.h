@@ -1,5 +1,5 @@
-#ifndef VAANGO_MPM_CONSTITUTIVE_MODEL_TABLE_BASE_H
-#define VAANGO_MPM_CONSTITUTIVE_MODEL_TABLE_BASE_H
+#ifndef VAANGO_MPM_CONSTITUTIVE_MODEL_TABLE_CONTAINERS_H
+#define VAANGO_MPM_CONSTITUTIVE_MODEL_TABLE_CONTAINERS_H
 
 #include <string>
 #include <vector>
@@ -7,16 +7,11 @@
 
 namespace Vaango {
 
-  class TableBase {
+  class TableContainers {
 
   public:
-    TableBase() = default;
-    virtual ~TableBase() = default;
-
-    virtual void addIndependentVariable(const std::string& varName) = 0;
-    virtual std::size_t addDependentVariable(const std::string& varName) = 0;
-
-    virtual void setup() = 0;
+    TableContainers() = default;
+    ~TableContainers() = default;
 
     struct IndexKey {
       std::uint8_t _ii;
@@ -66,4 +61,4 @@ namespace Vaango {
   };
 }
 
-#endif // VAANGO_MPM_CONSTITUTIVE_MODEL_TABLE_BASE_H
+#endif // VAANGO_MPM_CONSTITUTIVE_MODEL_TABLE_CONTAINERS_H

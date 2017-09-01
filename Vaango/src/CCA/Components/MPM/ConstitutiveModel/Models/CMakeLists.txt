@@ -86,7 +86,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_BorjaPressure.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_Arena.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/TableUtils.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/TableEOS.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/TabularData.cc 
   PARENT_SCOPE
 )
 

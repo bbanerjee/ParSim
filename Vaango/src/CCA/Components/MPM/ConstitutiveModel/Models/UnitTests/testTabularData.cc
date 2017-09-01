@@ -1,4 +1,4 @@
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TableEOS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
 
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -23,7 +23,7 @@ using Uintah::ProblemSetupException;
 using Uintah::InvalidValue;
 using nlohmann::json;
 
-TEST(TableEOSTest, parseVariableNames)
+TEST(TabularDataTest, parseVariableNames)
 {
   // Create a new document
   xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
@@ -50,7 +50,7 @@ TEST(TableEOSTest, parseVariableNames)
   }
 
   // Create a table eos
-  TableEOS eos(ps);
+  TabularData eos(ps);
 
 }
 
@@ -65,7 +65,7 @@ TEST(TableEOSTest, parseVariableNames)
 //     "Density" : [1.1 2.1 3.1 4.1 5.1 6.1 7.1 8.1]
 //   }
 // }
-TEST(TableEOSTest, readJSONTableFromStream1D)
+TEST(TabularDataTest, readJSONTableFromStream1D)
 {
   // Create a new document
   xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
@@ -94,7 +94,7 @@ TEST(TableEOSTest, readJSONTableFromStream1D)
   }
 
   // Create a table eos
-  TableEOS eos(ps);
+  TabularData eos(ps);
 
   json docJSON1D = {
     {"Vaango_tabular_data", {
@@ -120,8 +120,8 @@ TEST(TableEOSTest, readJSONTableFromStream1D)
   EXPECT_EQ(eos.getNumIndependents(), 1u);
   EXPECT_EQ(eos.getNumDependents(), 2u);
 
-  auto indepData = eos.getIndependentVarData("Volume", TableEOS::IndexKey(0, 0, 0, 0));
-  auto depData = eos.getDependentVarData("Pressure", TableEOS::IndexKey(0, 0, 0, 0));
+  auto indepData = eos.getIndependentVarData("Volume", TableContainers::IndexKey(0, 0, 0, 0));
+  auto depData = eos.getDependentVarData("Pressure", TableContainers::IndexKey(0, 0, 0, 0));
 
   auto val = eos.interpolateLinearSpline<1>({{0.1}}, 
              eos.getIndependentVars(), eos.getDependentVars());
@@ -159,7 +159,7 @@ TEST(TableEOSTest, readJSONTableFromStream1D)
 //      }]
 //    }
 //  }}
-TEST(TableEOSTest, readJSONTableFromStream2D)
+TEST(TabularDataTest, readJSONTableFromStream2D)
 {
   // Create a new document
   xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
@@ -188,7 +188,7 @@ TEST(TableEOSTest, readJSONTableFromStream2D)
   }
 
   // Create a table eos
-  TableEOS eos(ps);
+  TabularData eos(ps);
 
   json docJSON2D = {
     {"Vaango_tabular_data", {
@@ -222,14 +222,14 @@ TEST(TableEOSTest, readJSONTableFromStream2D)
   EXPECT_EQ(eos.getNumDependents(), 1u);
 
   auto tempData = eos.getIndependentVarData("Temperature", 
-                                             TableEOS::IndexKey(0, 0, 0, 0));
+                                             TableContainers::IndexKey(0, 0, 0, 0));
   std::vector<std::vector<double>> indepData;
   std::vector<std::vector<double>> depData;
   for (auto ii = 0u; ii < tempData.size(); ii++) {
     indepData.push_back(eos.getIndependentVarData("Volume", 
-                                             TableEOS::IndexKey(ii, 0, 0, 0)));
+                                             TableContainers::IndexKey(ii, 0, 0, 0)));
     depData.push_back(eos.getDependentVarData("Pressure", 
-                                         TableEOS::IndexKey(ii, 0, 0, 0)));
+                                         TableContainers::IndexKey(ii, 0, 0, 0)));
     /*
     std::cout << "Volume[" << ii << "]";
     std::copy(indepData[ii].begin(), indepData[ii].end(),
@@ -295,7 +295,7 @@ TEST(TableEOSTest, readJSONTableFromStream2D)
 //      }]
 //    }
 //  }
-TEST(TableEOSTest, readJSONTableFromStream4D)
+TEST(TabularDataTest, readJSONTableFromStream4D)
 {
   // Create a new document
   xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
@@ -324,7 +324,7 @@ TEST(TableEOSTest, readJSONTableFromStream4D)
   }
 
   // Create a table eos
-  TableEOS eos(ps);
+  TabularData eos(ps);
 
   json docJSON3D = {
     {"Vaango_tabular_data", {
@@ -375,7 +375,7 @@ TEST(TableEOSTest, readJSONTableFromStream4D)
   EXPECT_EQ(eos.getNumDependents(), 2u);
 
   auto salData = eos.getIndependentVarData("Salinity", 
-                                           TableEOS::IndexKey(0, 0, 0, 0));
+                                           TableContainers::IndexKey(0, 0, 0, 0));
   /*
   std::cout << "Salinity ";
   std::copy(salData.begin(), salData.end(),
@@ -388,7 +388,7 @@ TEST(TableEOSTest, readJSONTableFromStream4D)
   auto numSal = salData.size();
   for (auto ii = 0u; ii < numSal; ii++) {
     auto tempData = eos.getIndependentVarData("Temperature", 
-                                              TableEOS::IndexKey(ii, 0, 0, 0));
+                                              TableContainers::IndexKey(ii, 0, 0, 0));
     /*
     std::cout << "Temperature[" << ii << "]";
     std::copy(tempData.begin(), tempData.end(),
@@ -399,9 +399,9 @@ TEST(TableEOSTest, readJSONTableFromStream4D)
     auto numTemp = tempData.size();
     for (auto jj = 0u; jj < numTemp; jj++) {
       indepData.push_back(eos.getIndependentVarData("Volume", 
-                                             TableEOS::IndexKey(ii, jj, 0, 0)));
+                                             TableContainers::IndexKey(ii, jj, 0, 0)));
       depData.push_back(eos.getDependentVarData("Pressure", 
-                                         TableEOS::IndexKey(ii, jj, 0, 0)));
+                                         TableContainers::IndexKey(ii, jj, 0, 0)));
       /*
       std::cout << "Volume[" << ii << ", " << jj << "]";
       std::copy(indepData[jj].begin(), indepData[jj].end(),
