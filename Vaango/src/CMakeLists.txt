@@ -224,7 +224,7 @@ endif(CXX_FLAGS)
 #------
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
 #  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Weverything")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wextra")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Werror -Wunused")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++14 -Wall")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")

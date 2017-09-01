@@ -1143,7 +1143,7 @@ CNHDamage::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
 void
 CNHDamage::allocateCMDataAdd(
   DataWarehouse* new_dw, ParticleSubset* addset,
-  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
+  ParticleLabelVariableMap* newState, ParticleSubset* delset,
   DataWarehouse* old_dw)
 {
   CompNeoHook::allocateCMDataAdd(new_dw, addset, newState, delset, old_dw);

@@ -146,8 +146,8 @@ WARNING
     virtual int getOutputProc(const Patch* patch) = 0;
 
     //! Tells the load balancer on which procs data was output.
-    virtual void restartInitialize(DataArchive* archive, int time_index, 
-                                   const std::string& ts_url, const GridP& grid) {}
+    virtual void restartInitialize(DataArchive* /*archive*/, int /*time_index*/, 
+                                   const std::string& /*ts_url*/, const GridP& /*grid*/) {}
     
     // state variables
     enum {

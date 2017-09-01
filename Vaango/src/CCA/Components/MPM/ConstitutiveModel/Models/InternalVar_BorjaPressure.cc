@@ -127,7 +127,7 @@ InternalVar_BorjaPressure::allocateCMDataAddRequires(Task* task,
 void
 InternalVar_BorjaPressure::allocateCMDataAdd(
   DataWarehouse* old_dw, ParticleSubset* addset,
-  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
+  ParticleLabelVariableMap* newState, ParticleSubset* delset,
   DataWarehouse* new_dw)
 {
   ParticleVariable<double> pPc;

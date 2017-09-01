@@ -989,7 +989,7 @@ void ParticleCreator::allocateVariablesAddRequires(Task* task,
 /*! For particle material change operation */
 void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
                                            ParticleSubset* addset,
-                                           map<const VarLabel*, ParticleVariableBase*>* newState,
+                                           ParticleLabelVariableMap* newState,
                                            ParticleSubset* delset,
                                            DataWarehouse* old_dw)
 {

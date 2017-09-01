@@ -70,7 +70,7 @@ class ParticleVariableBase;
 
 // Needed for adding and deleting materials during particle conversion
 // Defined in Ports/DataWarehouse.h
-// typedef map<const VarLabel*, ParticleVariableBase*> ParticleLabelVariableMap;
+// typedef ParticleLabelVariableMap ParticleLabelVariableMap;
 
 class ConstitutiveModel
 {

@@ -110,7 +110,7 @@ public:
 
   void allocateCMDataAdd(
     DataWarehouse* new_dw, ParticleSubset* subset,
-    std::map<const VarLabel*, ParticleVariableBase*>* newState,
+    ParticleLabelVariableMap* newState,
     ParticleSubset* delset, DataWarehouse* old_dw) override;
 
   void addComputesAndRequires(Task* task, const MPMMaterial* matl,

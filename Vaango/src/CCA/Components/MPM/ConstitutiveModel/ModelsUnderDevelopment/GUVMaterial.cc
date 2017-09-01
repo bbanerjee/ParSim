@@ -218,7 +218,7 @@ GUVMaterial::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
 void
 GUVMaterial::allocateCMDataAdd(
   DataWarehouse* new_dw, ParticleSubset* addset,
-  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
+  ParticleLabelVariableMap* newState, ParticleSubset* delset,
   DataWarehouse* old_dw)
 {
   // Put stuff in here to initialize each particle's

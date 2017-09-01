@@ -187,7 +187,7 @@ P_Alpha::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
 void
 P_Alpha::allocateCMDataAdd(
   DataWarehouse* new_dw, ParticleSubset* addset,
-  std::map<const VarLabel*, ParticleVariableBase*>* newState,
+  ParticleLabelVariableMap* newState,
   ParticleSubset* delset, DataWarehouse*)
 {
   // Copy the data common to all constitutive models from the particle to be

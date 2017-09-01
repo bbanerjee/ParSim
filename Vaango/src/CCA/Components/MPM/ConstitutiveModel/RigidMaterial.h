@@ -115,7 +115,7 @@ public:
 
   /*! Add requires to task graph for particle conversion */
   void allocateCMDataAdd(DataWarehouse*, ParticleSubset*,
-                         map<const VarLabel*, ParticleVariableBase*>*,
+                         ParticleLabelVariableMap*,
                          ParticleSubset*, DataWarehouse*) override
   {
   }

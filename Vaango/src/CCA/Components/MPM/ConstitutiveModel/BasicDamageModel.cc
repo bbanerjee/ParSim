@@ -523,7 +523,7 @@ BasicDamageModel::initializeDamageData(const Patch* patch,
 void
 BasicDamageModel::copyDamageDataFromDeletedToAddedParticle(
   DataWarehouse* new_dw, ParticleSubset* addset,
-  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
+  ParticleLabelVariableMap* newState, ParticleSubset* delset,
   DataWarehouse* old_dw)
 {
   constParticleVariable<double> o_pFailureStrain;

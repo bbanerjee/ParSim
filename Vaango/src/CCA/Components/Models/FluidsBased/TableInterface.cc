@@ -46,7 +46,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <CCA/Components/Models/FluidsBased/TableInterface.h>
 
 using namespace Uintah;

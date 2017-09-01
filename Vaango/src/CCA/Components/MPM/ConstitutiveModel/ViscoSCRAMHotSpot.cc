@@ -620,7 +620,7 @@ ViscoSCRAMHotSpot::allocateCMDataAddRequires(Task* task,
 void
 ViscoSCRAMHotSpot::allocateCMDataAdd(
   DataWarehouse* new_dw, ParticleSubset* addset,
-  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
+  ParticleLabelVariableMap* newState, ParticleSubset* delset,
   DataWarehouse* old_dw)
 {
   // Call the ViscoScram method first

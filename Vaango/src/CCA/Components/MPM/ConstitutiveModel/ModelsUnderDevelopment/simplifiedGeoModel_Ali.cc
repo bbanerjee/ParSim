@@ -219,7 +219,7 @@ simplifiedGeoModel::allocateCMDataAddRequires(Task* task,
 void
 simplifiedGeoModel::allocateCMDataAdd(
   DataWarehouse* new_dw, ParticleSubset* addset,
-  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
+  ParticleLabelVariableMap* newState, ParticleSubset* delset,
   DataWarehouse*)
 {
 }

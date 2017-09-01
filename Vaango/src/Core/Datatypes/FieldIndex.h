@@ -115,7 +115,7 @@ operator*(const vector<CellIndex<T> >& r, double &) {
 
 template <class T>
 vector<CellIndex<T> >
-operator+=(const vector<CellIndex<T> >& l, const vector<CellIndex<T> >& r) {
+operator+=(const vector<CellIndex<T> >& l, const vector<CellIndex<T> >& /*r*/) {
   ASSERTFAIL("FieldIndex.h Bogus operator");
   return l;
 }

@@ -100,7 +100,7 @@ KinematicHardeningModel::allocateCMDataAddRequires(Task* task,
 void
 KinematicHardeningModel::allocateCMDataAdd(
   DataWarehouse* new_dw, ParticleSubset* addset,
-  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
+  ParticleLabelVariableMap* newState, ParticleSubset* delset,
   DataWarehouse* old_dw)
 {
   ParticleVariable<double> pBackStress_upd;

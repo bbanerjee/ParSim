@@ -231,7 +231,11 @@ void Exception::sci_throw(const Exception& exc)
   }
 }
 
+#if defined(_WIN32)
 string getStackTrace(void* context /*=0*/)
+#else
+string getStackTrace(void* /*context*/ /*=0*/)
+#endif
 {
   ostringstream stacktrace;
 #if defined(HAVE_EXC) || (defined(__GNUC__) && defined(__linux)) || defined(REDSTORM)

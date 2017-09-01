@@ -1,31 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -185,9 +162,8 @@ void BCDataArray::determineIteratorLimits(Patch::FaceType face,
   for (mat_id_itr = d_BCDataArray.begin();
        mat_id_itr != d_BCDataArray.end(); ++mat_id_itr) {
     vector<BCGeomBase*>& bc_objects = mat_id_itr->second;
-    for (vector<BCGeomBase*>::iterator obj = bc_objects.begin();
-         obj != bc_objects.end(); ++obj) {
-      (*obj)->determineIteratorLimits(face,patch,test_pts);
+    for (auto & bc_object : bc_objects) {
+      bc_object->determineIteratorLimits(face,patch,test_pts);
 #if 0
       (*obj)->printLimits();
 #endif
@@ -225,19 +201,18 @@ void BCDataArray::combineBCGeometryTypes(int mat_id)
   if (count_if(d_BCDataArray_vec.begin(),d_BCDataArray_vec.end(),
                cmp_type<SideBCData>()) > 1) {
     
-    SideBCData* side_bc = scinew SideBCData();
-    for (vector<BCGeomBase*>::const_iterator itr = d_BCDataArray_vec.begin();
-         itr != d_BCDataArray_vec.end(); ++ itr) {
-      if (typeid(*(*itr)) == typeid(SideBCData)) {
+    auto  side_bc = scinew SideBCData();
+    for (const auto& bcDataP : d_BCDataArray_vec) {
+      if (typeid(*bcDataP) == typeid(SideBCData)) {
         BCDA_dbg<< "Found SideBCData" << endl;
         BCData bcd,s_bcd;
-        (*itr)->getBCData(bcd);
+        bcDataP->getBCData(bcd);
         side_bc->getBCData(s_bcd);
         s_bcd.combine(bcd);
         side_bc->addBCData(s_bcd);
         side_bc->print();
       } else {
-        new_bcdata_array.push_back((*itr)->clone());
+        new_bcdata_array.push_back(bcDataP->clone());
       }
       
     }
@@ -289,10 +264,9 @@ void BCDataArray::combineBCGeometryTypes_NEW(int mat_id)
   if (count_if(d_BCDataArray_vec.begin(),d_BCDataArray_vec.end(),
                cmp_type<SideBCData>()) > 1) {
     BCDA_dbg<< "Have duplicates Before . . ." << endl;
-    for (v_itr = d_BCDataArray_vec.begin(); v_itr != d_BCDataArray_vec.end(); 
-         ++v_itr) {
-      BCDA_dbg<< "type of element = " << typeid(*(*v_itr)).name() << endl;
-      (*v_itr)->print();
+    for (const auto& bcDataP : d_BCDataArray_vec) {
+      BCDA_dbg<< "type of element = " << typeid(*bcDataP).name() << endl;
+      bcDataP->print();
     }
     BCDA_dbg<< endl << endl;
   }
@@ -359,7 +333,7 @@ BCDataArray::getBoundCondData(int mat_id, const string type, int ichild) const
   BCData new_bc,new_bc_all;
   // Need to check two scenarios -- the given mat_id and the all mat_id (-1)
   // Check the given mat_id
-  bcDataArrayType::const_iterator itr = d_BCDataArray.find(mat_id);
+  auto itr = d_BCDataArray.find(mat_id);
   
   if (itr != d_BCDataArray.end()) {
     itr->second[ichild]->getBCData(new_bc);
@@ -385,16 +359,16 @@ BCDataArray::getBoundCondData(int mat_id, const string type, int ichild) const
         if (found_it)
           return new_bc_all.getBCValues("Auxiliary");
       }
-      return 0;
+      return nullptr;
     }
   }
-  return 0;
+  return nullptr;
 }
 
 
 void BCDataArray::getCellFaceIterator(int mat_id, Iterator& b_ptr, int ichild) const
 {
-  bcDataArrayType::const_iterator itr = d_BCDataArray.find(mat_id);
+  auto itr = d_BCDataArray.find(mat_id);
   if (itr != d_BCDataArray.end()) {
     itr->second[ichild]->getCellFaceIterator(b_ptr);
   }
@@ -409,7 +383,7 @@ void BCDataArray::getCellFaceIterator(int mat_id, Iterator& b_ptr, int ichild) c
 
 void BCDataArray::getNodeFaceIterator(int mat_id, Iterator& b_ptr, int ichild) const
 {
-  bcDataArrayType::const_iterator itr = d_BCDataArray.find(mat_id);
+  auto itr = d_BCDataArray.find(mat_id);
   if (itr != d_BCDataArray.end()) {
     itr->second[ichild]->getNodeFaceIterator(b_ptr);
   }
@@ -422,7 +396,7 @@ void BCDataArray::getNodeFaceIterator(int mat_id, Iterator& b_ptr, int ichild) c
 
 int BCDataArray::getNumberChildren(int mat_id) const
 {
-  bcDataArrayType::const_iterator itr = d_BCDataArray.find(mat_id);
+  auto itr = d_BCDataArray.find(mat_id);
   if (itr != d_BCDataArray.end())
     return itr->second.size();
   else {
@@ -435,7 +409,7 @@ int BCDataArray::getNumberChildren(int mat_id) const
 
 BCGeomBase* BCDataArray::getChild(int mat_id,int i) const
 {
-  bcDataArrayType::const_iterator itr = d_BCDataArray.find(mat_id);
+  auto itr = d_BCDataArray.find(mat_id);
   if (itr != d_BCDataArray.end())
     return itr->second[i];
   else {
@@ -443,7 +417,7 @@ BCGeomBase* BCDataArray::getChild(int mat_id,int i) const
     if (itr != d_BCDataArray.end())
       return itr->second[i];
   }
-  return 0;
+  return nullptr;
 }
 
 void BCDataArray::print()
@@ -453,11 +427,10 @@ void BCDataArray::print()
        bcda_itr++) {
     BCDA_dbg << endl << "mat_id = " << bcda_itr->first << endl;
     BCDA_dbg<< "Size of BCGeomBase vector = " << bcda_itr->second.size() << endl;
-    for (vector<BCGeomBase*>::const_iterator i = bcda_itr->second.begin();
-         i != bcda_itr->second.end(); ++i) {
-      BCDA_dbg << "BCGeometry Type = " << typeid(*(*i)).name() <<  " "
-           << *i << endl;
-      (*i)->print();
+    for (auto i : bcda_itr->second) {
+      BCDA_dbg << "BCGeometry Type = " << typeid(*i).name() <<  " "
+           << i << endl;
+      i->print();
     }
   }
         

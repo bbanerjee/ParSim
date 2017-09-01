@@ -210,7 +210,7 @@ SCGFlow::allocateCMDataAddRequires(Task*, const MPMMaterial*, const PatchSet*,
 
 void
 SCGFlow::allocateCMDataAdd(DataWarehouse*, ParticleSubset*,
-                           map<const VarLabel*, ParticleVariableBase*>*,
+                           ParticleLabelVariableMap*,
                            ParticleSubset*, DataWarehouse*)
 {
 }

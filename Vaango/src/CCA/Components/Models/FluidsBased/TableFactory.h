@@ -46,20 +46,19 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef Uintah_TableFactory_h
 #define Uintah_TableFactory_h
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 namespace Uintah {
-  class TableInterface;
+class TableInterface;
 
 /****************************************
 
 CLASS
    TableFactory
-   
+
    Short description...
 
 GENERAL INFORMATION
@@ -71,26 +70,27 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-   
+
+
 KEYWORDS
    TableFactory
 
 DESCRIPTION
    Long description...
-  
+
 WARNING
-  
+
 ****************************************/
 
-  class TableFactory {
-  public:
+class TableFactory
+{
+public:
+  static TableInterface* readTable(const ProblemSpecP& params,
+                                   const std::string& name);
 
-    static TableInterface* readTable(const ProblemSpecP& params,
-                                     const std::string& name);
-  private:
-    TableFactory();
-  };
+private:
+  TableFactory();
+};
 } // End namespace Uintah
-    
+
 #endif

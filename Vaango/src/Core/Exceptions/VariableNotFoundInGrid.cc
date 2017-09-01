@@ -81,11 +81,19 @@ VariableNotFoundInGrid::VariableNotFoundInGrid(const std::string& varname,
 #endif
 }
 
+#ifdef EXCEPTIONS_CRASH
 VariableNotFoundInGrid::VariableNotFoundInGrid(const std::string& varname,
 					       IntVector loc,
 					       int matlIndex,
 					       const std::string& extramsg,
-                                               const char* file, int line)
+                 const char* file, int line)
+#else
+VariableNotFoundInGrid::VariableNotFoundInGrid(const std::string& varname,
+					       IntVector loc,
+					       int matlIndex,
+					       const std::string& extramsg,
+                 const char* /*file*/, int /*line*/)
+#endif
 {
   std::ostringstream s;
   s << "Grid Variable not found: " << varname;

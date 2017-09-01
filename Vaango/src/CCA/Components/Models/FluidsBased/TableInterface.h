@@ -46,7 +46,6 @@
  * IN THE SOFTWARE.
  */
 
-
 #ifndef Uintah_TableInterface_h
 #define Uintah_TableInterface_h
 
@@ -58,7 +57,7 @@ namespace Uintah {
 
 CLASS
    TableInterface
-   
+
    Short description...
 
 GENERAL INFORMATION
@@ -70,36 +69,37 @@ GENERAL INFORMATION
    University of Utah
 
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-   
+
+
 KEYWORDS
    TableInterface
 
 DESCRIPTION
    Long description...
-  
+
 WARNING
-  
+
 ****************************************/
 
-  class TableInterface {
-  public:
-    TableInterface();
-    virtual ~TableInterface();
+class TableInterface
+{
+public:
+  TableInterface();
+  virtual ~TableInterface();
 
-    virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
-    virtual void addIndependentVariable(const string&) = 0;
-    virtual int addDependentVariable(const string&) = 0;
-    
-    virtual void setup(const bool cerrSwitch) = 0;
-    
-    virtual void interpolate(int index, CCVariable<double>& result,
-                             const CellIterator&,
-                             vector<constCCVariable<double> >& independents) = 0;
-    virtual double interpolate(int index, vector<double>& independents) = 0;
+  virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
+  virtual void addIndependentVariable(const string&) = 0;
+  virtual int addDependentVariable(const string&) = 0;
 
-  private:
-  };
+  virtual void setup(const bool cerrSwitch) = 0;
+
+  virtual void interpolate(int index, CCVariable<double>& result,
+                           const CellIterator&,
+                           vector<constCCVariable<double>>& independents) = 0;
+  virtual double interpolate(int index, vector<double>& independents) = 0;
+
+private:
+};
 } // End namespace Uintah
-    
+
 #endif

@@ -2354,8 +2354,8 @@ void FractureMPM::addNewParticles(const ProcessorGroup*,
         }
 
 
-        map<const VarLabel*, ParticleVariableBase*>* newState
-          = scinew map<const VarLabel*, ParticleVariableBase*>;
+        ParticleLabelVariableMap* newState
+          = scinew ParticleLabelVariableMap;
 
         if (cout_dbg.active()) {
           cout_dbg << "Address of newState = " << newState << endl;
@@ -2503,8 +2503,8 @@ void FractureMPM::convertLocalizedParticles(const ProcessorGroup*,
         ParticleCreator* particle_creator = conv_matl->getParticleCreator();
         ParticleSubset* addset = scinew ParticleSubset(numparticles, conv_dwi, patch);
 
-        map<const VarLabel*, ParticleVariableBase*>* newState
-          = scinew map<const VarLabel*, ParticleVariableBase*>;
+        ParticleLabelVariableMap* newState
+          = scinew ParticleLabelVariableMap;
 
         if (cout_convert.active())
           cout_convert << "New Material" << endl;

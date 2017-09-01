@@ -145,7 +145,7 @@ InternalVar_SoilModelBrannonKappa::allocateCMDataAddRequires(
 void
 InternalVar_SoilModelBrannonKappa::allocateCMDataAdd(
   DataWarehouse* old_dw, ParticleSubset* addset,
-  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
+  ParticleLabelVariableMap* newState, ParticleSubset* delset,
   DataWarehouse* new_dw)
 {
   ParticleVariable<double> pKappa;

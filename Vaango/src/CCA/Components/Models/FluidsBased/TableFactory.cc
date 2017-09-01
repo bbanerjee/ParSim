@@ -46,29 +46,29 @@
  * IN THE SOFTWARE.
  */
 
-
-#include <CCA/Components/Models/FluidsBased/TableFactory.h>
 #include <CCA/Components/Models/FluidsBased/ArchesTable.h>
+#include <CCA/Components/Models/FluidsBased/TableFactory.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
 using namespace Uintah;
 
-TableInterface* TableFactory::readTable(const ProblemSpecP& params,
-                                        const std::string& name)
+TableInterface*
+TableFactory::readTable(const ProblemSpecP& params, const std::string& name)
 {
   for (ProblemSpecP child = params->findBlock("table"); child != 0;
        child = child->findNextBlock("table")) {
     string tname;
-    if(child->getAttribute("name", tname) && tname == name){
+    if (child->getAttribute("name", tname) && tname == name) {
       string type;
-      if(!child->getAttribute("type", type))
-        throw ProblemSetupException("Cannot read table type from table", __FILE__, __LINE__);
-      if(type == "Arches")
+      if (!child->getAttribute("type", type))
+        throw ProblemSetupException("Cannot read table type from table",
+                                    __FILE__, __LINE__);
+      if (type == "Arches")
         return scinew ArchesTable(child);
       else
-        throw ProblemSetupException("Unknown table type: "+type, __FILE__, __LINE__);
+        throw ProblemSetupException("Unknown table type: " + type, __FILE__,
+                                    __LINE__);
     }
   }
-  throw ProblemSetupException("Cannot find table: "+name, __FILE__, __LINE__);
+  throw ProblemSetupException("Cannot find table: " + name, __FILE__, __LINE__);
 }
-

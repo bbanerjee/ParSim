@@ -549,7 +549,7 @@ PTWFlow::allocateCMDataAddRequires(Task*, const MPMMaterial*, const PatchSet*,
 
 void
 PTWFlow::allocateCMDataAdd(DataWarehouse*, ParticleSubset*,
-                           map<const VarLabel*, ParticleVariableBase*>*,
+                           ParticleLabelVariableMap*,
                            ParticleSubset*, DataWarehouse*)
 {
 }

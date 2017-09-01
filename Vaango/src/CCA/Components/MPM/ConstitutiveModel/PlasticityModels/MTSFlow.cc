@@ -233,7 +233,7 @@ MTSFlow::allocateCMDataAddRequires(Task*, const MPMMaterial*, const PatchSet*,
 
 void
 MTSFlow::allocateCMDataAdd(DataWarehouse*, ParticleSubset*,
-                           map<const VarLabel*, ParticleVariableBase*>*,
+                           ParticleLabelVariableMap*,
                            ParticleSubset*, DataWarehouse*)
 {
   // Put stuff in here to initialize each particle's

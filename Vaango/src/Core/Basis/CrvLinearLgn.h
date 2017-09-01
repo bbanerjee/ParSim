@@ -271,7 +271,7 @@ public:
 
   //! get derivative weight factors at parametric coordinate 
   inline
-  static void get_derivate_weights(const std::vector<double> &coords, double *w) 
+  static void get_derivate_weights(const std::vector<double> &/*coords*/, double *w) 
   {
     //const double x = coords[0];
     w[0] = -1.;
@@ -280,7 +280,7 @@ public:
 
   //! get first derivative at parametric coordinate
   template <class ElemData>
-  void derivate(const std::vector<double> &coords, const ElemData &cd, 
+  void derivate(const std::vector<double> &/*coords*/, const ElemData &cd, 
 		std::vector<T> &derivs) const
   {
     derivs.resize(1);

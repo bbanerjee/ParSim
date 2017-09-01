@@ -33,6 +33,8 @@ using namespace std;
 void
 CostProfiler::setMinPatchSize( const vector<IntVector> & min_patch_size )
 {
+  d_lb = nullptr;
+  d_myworld = nullptr;
   d_profiler.setMinPatchSize(min_patch_size);
 }
 //______________________________________________________________________

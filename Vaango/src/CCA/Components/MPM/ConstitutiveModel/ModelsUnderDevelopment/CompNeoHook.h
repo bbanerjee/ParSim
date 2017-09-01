@@ -126,7 +126,7 @@ public:
 
   virtual void allocateCMDataAdd(
     DataWarehouse* new_dw, ParticleSubset* subset,
-    map<const VarLabel*, ParticleVariableBase*>* newState,
+    ParticleLabelVariableMap* newState,
     ParticleSubset* delset, DataWarehouse* old_dw);
 
   virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,

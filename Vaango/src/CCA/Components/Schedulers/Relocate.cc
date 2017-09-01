@@ -1125,7 +1125,7 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
         MPIRecvBuffer* recvs = scatter_records.findRecv(toPatch, matl);
 
         // create a map for the new particles
-        map<const VarLabel*, ParticleVariableBase*>* newParticles_map = 0;
+        ParticleLabelVariableMap* newParticles_map = 0;
         newParticles_map = new_dw->getNewParticleState(matl, toPatch);
         bool adding_new_particles = false;
         
@@ -1160,7 +1160,7 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
           if(newParticles_map){
             
             // bulletproofing
-            map<const VarLabel*, ParticleVariableBase*>::iterator piter;
+            ParticleLabelVariableMap::iterator piter;
             piter = newParticles_map->find(reloc_new_posLabel);
             
             if(piter == newParticles_map->end()){
@@ -1195,7 +1195,7 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
           
           if(newParticles_map){
             // bulletproofing
-            map<const VarLabel*, ParticleVariableBase*>::iterator piter;
+            ParticleLabelVariableMap::iterator piter;
             piter = newParticles_map->find(reloc_new_posLabel);
             
             if(piter == newParticles_map->end()){
@@ -1227,7 +1227,7 @@ Relocate::relocateParticlesModifies(const ProcessorGroup* pg,
             
             if(newParticles_map){
               // bulletproofing
-              map<const VarLabel*, ParticleVariableBase*>::iterator piter;
+              ParticleLabelVariableMap::iterator piter;
               piter = newParticles_map->find(reloc_new_labels[m][v]);
               
               if(piter == newParticles_map->end()) {
@@ -1579,7 +1579,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
         bool adding_new_particles = false;
 #if 0
         // create a map for the new particles
-        map<const VarLabel*, ParticleVariableBase*>* newParticles_map = 0;
+        ParticleLabelVariableMap* newParticles_map = 0;
         newParticles_map = new_dw->getNewParticleState(matl, toPatch);
         bool adding_new_particles = false;
         
@@ -1619,7 +1619,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
 #if 0
           if(newParticles_map){
             // bulletproofing
-            map<const VarLabel*, ParticleVariableBase*>::iterator piter;
+            ParticleLabelVariableMap::iterator piter;
             piter = newParticles_map->find(reloc_new_posLabel);
             
             if(piter == newParticles_map->end()){
@@ -1658,7 +1658,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
 #if 0
           if(newParticles_map){
             // bulletproofing
-            map<const VarLabel*, ParticleVariableBase*>::iterator piter;
+            ParticleLabelVariableMap::iterator piter;
             piter = newParticles_map->find(reloc_new_posLabel);
             
             if(piter == newParticles_map->end()){
@@ -1703,7 +1703,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
 #if 0
             if(newParticles_map){
               // bulletproofing
-              map<const VarLabel*, ParticleVariableBase*>::iterator piter;
+              ParticleLabelVariableMap::iterator piter;
               piter = newParticles_map->find(reloc_new_labels[m][v]);
               
               if(piter == newParticles_map->end()) {

@@ -26,6 +26,7 @@
 #define __TABULAR_EOS_CONSTITUTIVE_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -39,16 +40,8 @@ class MPMFlags;
 class TabularEquationOfState : public ConstitutiveModel
 {
 
-public:
-  struct CMData
-  {
-    double C1;
-    double C2;
-    double PR;
-  };
-
 private:
-  CMData d_initialData;
+  TabularData d_table;
 
   // Prevent copying of this class
   // copy constructor

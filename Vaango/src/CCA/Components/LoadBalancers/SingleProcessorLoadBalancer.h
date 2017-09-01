@@ -29,61 +29,62 @@
 #include <Core/Parallel/UintahParallelComponent.h>
 
 namespace Uintah {
-   /**************************************
-     
-     CLASS
-       SingleProcessorLoadBalancer
-      
-       Short Description...
-      
-     GENERAL INFORMATION
-      
-       SingleProcessorLoadBalancer.h
-      
-       Steven G. Parker
-       Department of Computer Science
-       University of Utah
-      
-       Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-      
-             
-     KEYWORDS
-       SingleProcessorLoadBalancer
-      
-     DESCRIPTION
-       Long description...
-      
-     WARNING
-      
-     ****************************************/
-    
-  class SingleProcessorLoadBalancer : public LoadBalancerCommon {
+/**************************************
 
-  public:
-    SingleProcessorLoadBalancer( const ProcessorGroup * myworld );
-    ~SingleProcessorLoadBalancer();
+  CLASS
+    SingleProcessorLoadBalancer
 
-    virtual void assignResources( DetailedTasks & tg );
-    virtual int  getPatchwiseProcessorAssignment( const Patch * patch );
+    Short Description...
 
-    //! The old processor is the same as the current for this load balancer.
-    virtual int  getOldProcessorAssignment( const Patch * patch ) { return getPatchwiseProcessorAssignment( patch ); }
+  GENERAL INFORMATION
 
-            void createNeighborhood( const GridP & grid );
+    SingleProcessorLoadBalancer.h
 
-    virtual bool inNeighborhood( const PatchSubset* );
-    virtual bool inNeighborhood( const Patch * );
-    
-    virtual const PatchSet* createPerProcessorPatchSet( const LevelP & level );
+    Steven G. Parker
+    Department of Computer Science
+    University of Utah
 
-  private:
+    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
 
-    SingleProcessorLoadBalancer(const SingleProcessorLoadBalancer&);
-    SingleProcessorLoadBalancer& operator=(const SingleProcessorLoadBalancer&);
-      
-   };
+
+  KEYWORDS
+    SingleProcessorLoadBalancer
+
+  DESCRIPTION
+    Long description...
+
+  WARNING
+
+  ****************************************/
+
+class SingleProcessorLoadBalancer : public LoadBalancerCommon
+{
+
+public:
+  SingleProcessorLoadBalancer(const ProcessorGroup* myworld);
+  ~SingleProcessorLoadBalancer();
+
+  virtual void assignResources(DetailedTasks& tg);
+  virtual int getPatchwiseProcessorAssignment(const Patch* patch);
+
+  //! The old processor is the same as the current for this load balancer.
+  virtual int getOldProcessorAssignment(const Patch* patch)
+  {
+    return getPatchwiseProcessorAssignment(patch);
+  }
+
+  void createNeighborhood(const GridP& grid, const GridP& oldGrid) {};
+  void createNeighborhood(const GridP& grid);
+
+  virtual bool inNeighborhood(const PatchSubset*);
+  virtual bool inNeighborhood(const Patch*);
+
+  virtual const PatchSet* createPerProcessorPatchSet(const LevelP& level);
+
+private:
+  SingleProcessorLoadBalancer(const SingleProcessorLoadBalancer&);
+  SingleProcessorLoadBalancer& operator=(const SingleProcessorLoadBalancer&);
+};
 } // End namespace Uintah
 
-
 #endif
-

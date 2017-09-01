@@ -137,7 +137,7 @@ JohnsonCookFlow::allocateCMDataAddRequires(Task*, const MPMMaterial*,
 
 void
 JohnsonCookFlow::allocateCMDataAdd(DataWarehouse*, ParticleSubset*,
-                                   map<const VarLabel*, ParticleVariableBase*>*,
+                                   ParticleLabelVariableMap*,
                                    ParticleSubset*, DataWarehouse*)
 {
 }

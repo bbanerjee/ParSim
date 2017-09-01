@@ -22,62 +22,57 @@
  * IN THE SOFTWARE.
  */
 
-
-
 #include <CCA/Components/LoadBalancers/SingleProcessorLoadBalancer.h>
-#include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Components/Schedulers/DetailedTasks.h>
+#include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Level.h>
 
 using namespace Uintah;
 using namespace std;
 
-SingleProcessorLoadBalancer::SingleProcessorLoadBalancer( const ProcessorGroup* myworld )
-   : LoadBalancerCommon( myworld )
+SingleProcessorLoadBalancer::SingleProcessorLoadBalancer(
+  const ProcessorGroup* myworld)
+  : LoadBalancerCommon(myworld)
 {
 }
 
-SingleProcessorLoadBalancer::~SingleProcessorLoadBalancer()
-{
-}
+SingleProcessorLoadBalancer::~SingleProcessorLoadBalancer() = default;
 
 void
-SingleProcessorLoadBalancer::assignResources( DetailedTasks & graph )
+SingleProcessorLoadBalancer::assignResources(DetailedTasks& graph)
 {
   int ntasks = graph.numTasks();
-  for( int i = 0; i < ntasks; i++ ) {
-    graph.getTask(i)->assignResource( 0 );
+  for (int i = 0; i < ntasks; i++) {
+    graph.getTask(i)->assignResource(0);
   }
 }
 
 int
-SingleProcessorLoadBalancer::getPatchwiseProcessorAssignment( const Patch * )
+SingleProcessorLoadBalancer::getPatchwiseProcessorAssignment(const Patch*)
 {
   return 0;
 }
 
 const PatchSet*
-SingleProcessorLoadBalancer::createPerProcessorPatchSet( const LevelP & level )
+SingleProcessorLoadBalancer::createPerProcessorPatchSet(const LevelP& level)
 {
   return level->allPatches();
 }
 
-
 void
-SingleProcessorLoadBalancer::createNeighborhood( const GridP & grid )
+SingleProcessorLoadBalancer::createNeighborhood(const GridP& grid)
 {
   // Nothing to do
 }
 
 bool
-SingleProcessorLoadBalancer::inNeighborhood( const PatchSubset* )
+SingleProcessorLoadBalancer::inNeighborhood(const PatchSubset*)
 {
   return true;
 }
 
 bool
-SingleProcessorLoadBalancer::inNeighborhood( const Patch* )
+SingleProcessorLoadBalancer::inNeighborhood(const Patch*)
 {
   return true;
 }
-

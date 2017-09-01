@@ -44,28 +44,19 @@
 #include <iostream>
 #include <sci_values.h>
 
-using namespace std;
 using namespace Uintah;
-
-// Material Constants are C1, C2 and PR (poisson's ratio).
-// The shear modulus = 2(C1 + C2).
 
 TabularEquationOfState::TabularEquationOfState(ProblemSpecP& ps,
                                                MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
+  , d_table(ps)
 {
-
-  ps->require("he_constant_1", d_initialData.C1);
-  ps->require("he_constant_2", d_initialData.C2);
-  ps->require("he_PR", d_initialData.PR);
 }
 
 TabularEquationOfState::TabularEquationOfState(const TabularEquationOfState* cm)
   : ConstitutiveModel(cm)
 {
-  d_initialData.C1 = cm->d_initialData.C1;
-  d_initialData.C2 = cm->d_initialData.C2;
-  d_initialData.PR = cm->d_initialData.PR;
+  d_table = cm->d_table;
 }
 
 TabularEquationOfState::~TabularEquationOfState()
@@ -78,12 +69,9 @@ TabularEquationOfState::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("constitutive_model");
-    cm_ps->setAttribute("type", "comp_mooney_rivlin");
+    cm_ps->setAttribute("type", "tabular_eos");
   }
-
-  cm_ps->appendElement("he_constant_1", d_initialData.C1);
-  cm_ps->appendElement("he_constant_2", d_initialData.C2);
-  cm_ps->appendElement("he_PR", d_initialData.PR);
+  d_table->outputProblemSpec(cm_ps);
 }
 
 TabularEquationOfState*
@@ -123,10 +111,11 @@ TabularEquationOfState::allocateCMDataAddRequires(Task* task,
 }
 
 void
-TabularEquationOfState::allocateCMDataAdd(
-  DataWarehouse* new_dw, ParticleSubset* addset,
-  map<const VarLabel*, ParticleVariableBase*>* newState, ParticleSubset* delset,
-  DataWarehouse*)
+TabularEquationOfState::allocateCMDataAdd(DataWarehouse* new_dw,
+                                          ParticleSubset* addset,
+                                          ParticleLabelVariableMap* newState,
+                                          ParticleSubset* delset,
+                                          DataWarehouse*)
 {
   // Copy the data common to all constitutive models from the particle to be
   // deleted to the particle to be added.
@@ -134,17 +123,17 @@ TabularEquationOfState::allocateCMDataAdd(
   copyDelToAddSetForConvertExplicit(new_dw, delset, addset, newState);
 }
 
+// This is only called for the initial timestep - all other timesteps
+// are computed as a side-effect of computeStressTensor
 void
 TabularEquationOfState::computeStableTimestep(const Patch* patch,
                                               const MPMMaterial* matl,
                                               DataWarehouse* new_dw)
 {
-  // This is only called for the initial timestep - all other timesteps
-  // are computed as a side-effect of computeStressTensor
   Vector dx = patch->dCell();
-  int dwi = matl->getDWIndex();
-  // Retrieve the array of constitutive parameters
-  ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
+  int matlID = matl->getDWIndex();
+
+  ParticleSubset* pset = new_dw->getParticleSubset(matlID, patch);
   constParticleVariable<double> pmass, pvolume;
   constParticleVariable<Vector> pvelocity;
 
@@ -202,10 +191,10 @@ TabularEquationOfState::computeStressTensor(const PatchSubset* patches,
     Vector dx = patch->dCell();
     // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
-    int dwi = matl->getDWIndex();
+    int matlID = matl->getDWIndex();
 
     // Create array for the particle position
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+    ParticleSubset* pset = old_dw->getParticleSubset(matlID, patch);
     constParticleVariable<Point> px;
     constParticleVariable<Matrix3> deformationGradient_new;
     constParticleVariable<Matrix3> deformationGradient;
@@ -328,8 +317,8 @@ TabularEquationOfState::carryForward(const PatchSubset* patches,
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    int dwi = matl->getDWIndex();
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+    int matlID = matl->getDWIndex();
+    ParticleSubset* pset = old_dw->getParticleSubset(matlID, patch);
 
     // Carry forward the data common to all constitutive models
     // when using RigidMPM.
