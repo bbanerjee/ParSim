@@ -41,7 +41,7 @@ class TabularEquationOfState : public ConstitutiveModel
 {
 
 private:
-  TabularData d_table;
+  Vaango::TabularData d_table;
 
   // Prevent copying of this class
   // copy constructor
@@ -86,6 +86,8 @@ public:
 
   virtual double getCompressibility();
 
+  double computeBulkModulus(const double& volume) const;
+
   // initialize  each particle's constitutive model data
   virtual void initializeCMData(const Patch* patch, const MPMMaterial* matl,
                                 DataWarehouse* new_dw);
@@ -108,6 +110,7 @@ public:
 
   virtual void addParticleState(std::vector<const VarLabel*>& from,
                                 std::vector<const VarLabel*>& to);
+
 };
 } // End namespace Uintah
 

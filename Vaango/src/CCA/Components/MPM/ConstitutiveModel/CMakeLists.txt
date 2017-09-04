@@ -67,6 +67,7 @@ SET(MPM_ConstitutiveModel_SRCS
   HypoElastic_MMS.cc
   Arena.cc
   ArenaMixture.cc
+  TabularEquationOfState.cc
 )
 
 #message(STATUS "Compiling FORTRAN code? ${FORTRAN}")

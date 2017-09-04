@@ -58,18 +58,11 @@ public:
     std::string name;
     std::unordered_map<IndexKey, std::vector<double>, IndexHash, IndexEqual>
       data;
-    IndependentVar() = delete;
+    IndependentVar() {}
     IndependentVar(const std::string name) { this->name = name; }
   };
 
-  struct DependentVar
-  {
-    std::string name;
-    std::unordered_map<IndexKey, std::vector<double>, IndexHash, IndexEqual>
-      data;
-    DependentVar() = delete;
-    DependentVar(const std::string name) { this->name = name; }
-  };
+  using DependentVar = IndependentVar;
 };
 }
 

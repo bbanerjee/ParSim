@@ -23,7 +23,43 @@ TabularData::TabularData(ProblemSpecP& ps)
   ps->require("independent_variables", d_indepVarNames);
   ps->require("dependent_variables", d_depVarNames);
   ps->require("filename", d_filename);
+  initialize();
+}
 
+TabularData::TabularData(const TabularData& table) {
+  d_indepVarNames = table.d_indepVarNames;
+  d_depVarNames = table.d_depVarNames;
+  d_filename = table.d_filename;
+  initialize();
+  for (auto ii = 0u; ii < table.d_indepVars.size(); ii++) {
+    d_indepVars[ii]->name = table.d_indepVars[ii]->name;
+    d_indepVars[ii]->data = table.d_indepVars[ii]->data;
+  }
+  for (auto ii = 0u; ii < table.d_depVars.size(); ii++) {
+    d_depVars[ii]->name = table.d_depVars[ii]->name;
+    d_depVars[ii]->data = table.d_depVars[ii]->data;
+  }
+}
+
+TabularData& 
+TabularData::operator=(const TabularData& table) {
+  d_indepVarNames = table.d_indepVarNames;
+  d_depVarNames = table.d_depVarNames;
+  d_filename = table.d_filename;
+  for (auto ii = 0u; ii < table.d_indepVars.size(); ii++) {
+    d_indepVars[ii]->name = table.d_indepVars[ii]->name;
+    d_indepVars[ii]->data = table.d_indepVars[ii]->data;
+  }
+  for (auto ii = 0u; ii < table.d_depVars.size(); ii++) {
+    d_depVars[ii]->name = table.d_depVars[ii]->name;
+    d_depVars[ii]->data = table.d_depVars[ii]->data;
+  }
+  return *this;
+}
+
+void
+TabularData::initialize() 
+{
   std::vector<std::string> indepVarNames = parseVariableNames(d_indepVarNames);
   std::vector<std::string> depVarNames = parseVariableNames(d_depVarNames);
 
@@ -344,7 +380,7 @@ TabularData::getDoubleArrayJSON(const json& object, const std::string key,
 
 template <int dim>
 DoubleVec1D
-TabularData::interpolate(const std::array<double, dim>& indepValues)
+TabularData::interpolate(const std::array<double, dim>& indepValues) const
 {
   return interpolateLinearSpline<dim>(indepValues, d_indepVars, d_depVars);
 }
@@ -566,4 +602,13 @@ TabularData::getDependentVarData(const std::string& name,
     [&name](const auto& depVar) { return (depVar->name == name); });
   auto position = std::distance(d_depVars.begin(), varIter);
   return d_depVars[position]->data.at(index);
+}
+
+namespace Vaango {
+template DoubleVec1D
+TabularData::interpolate<1>(const std::array<double, 1>& indepValues) const;
+template DoubleVec1D
+TabularData::interpolate<2>(const std::array<double, 2>& indepValues) const;
+template DoubleVec1D
+TabularData::interpolate<3>(const std::array<double, 3>& indepValues) const;
 }

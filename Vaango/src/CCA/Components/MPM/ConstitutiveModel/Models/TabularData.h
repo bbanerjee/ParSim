@@ -28,10 +28,13 @@ class TabularData
 {
 
 public:
-  TabularData() = delete;
+  TabularData() {};
   TabularData(Uintah::ProblemSpecP& ps);
+  TabularData(const TabularData& table);
   ~TabularData() = default;
+  TabularData& operator=(const TabularData& table);
 
+  void initialize();
   void outputProblemSpec(Uintah::ProblemSpecP& ps);
 
   void addIndependentVariable(const std::string& varName);
@@ -40,7 +43,7 @@ public:
   void setup();
 
   template <int dim>
-  DoubleVec1D interpolate(const std::array<double, dim>& indepValues);
+  DoubleVec1D interpolate(const std::array<double, dim>& indepValues) const;
 
   template <int dim>
   void readJSONTableFromFile(const std::string& tableFile);
