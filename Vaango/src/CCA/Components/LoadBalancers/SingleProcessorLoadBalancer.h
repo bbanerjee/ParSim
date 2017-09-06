@@ -73,7 +73,7 @@ public:
     return getPatchwiseProcessorAssignment(patch);
   }
 
-  void createNeighborhood(const GridP& grid, const GridP& oldGrid) {};
+  //void createNeighborhood(const GridP& grid, const GridP& oldGrid) {};
   void createNeighborhood(const GridP& grid);
 
   virtual bool inNeighborhood(const PatchSubset*);
