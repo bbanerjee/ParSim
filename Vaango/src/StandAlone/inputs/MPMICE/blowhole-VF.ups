@@ -47,7 +47,7 @@
        <use_load_curves>false</use_load_curves>
        <do_grid_reset>true</do_grid_reset>
        <testForNegTemps_mpm>false</testForNegTemps_mpm>
-       <withColor>  true </withColor>
+       <with_color>  true </with_color>
     </MPM>
     <CFD>
        <cfl>0.25</cfl>

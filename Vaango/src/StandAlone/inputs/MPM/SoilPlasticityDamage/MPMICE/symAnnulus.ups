@@ -146,7 +146,7 @@
         <interpolator>gimp</interpolator>
         <testForNegTemps_mpm>true</testForNegTemps_mpm>
         <DoExplicitHeatConduction>false</DoExplicitHeatConduction>
-        <withColor>      false      </withColor>
+        <with_color>      false      </with_color>
         <artificial_damping_coeff> 1.0 </artificial_damping_coeff>
     </MPM>
 

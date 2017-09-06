@@ -37,9 +37,9 @@
     <MPM>
       	<time_integrator>           explicit   </time_integrator>
       	<interpolator>              gimp       </interpolator>
-        <withColor>                 false      </withColor>
-        <UsePrescribedDeformation>  true       </UsePrescribedDeformation>
-        <PrescribedDeformationFile>     inputs/MPM/Arenisca/AreniscaTest_11_PrescribedDeformation.inp  </PrescribedDeformationFile>
+        <with_color>                 false      </with_color>
+        <use_prescribed_deformation>  true       </use_prescribed_deformation>
+        <prescribed_deformation_file>     inputs/MPM/Arenisca/AreniscaTest_11_PrescribedDeformation.inp  </prescribed_deformation_file>
         <minimum_subcycles_for_F>       -2     </minimum_subcycles_for_F>
     </MPM>
 

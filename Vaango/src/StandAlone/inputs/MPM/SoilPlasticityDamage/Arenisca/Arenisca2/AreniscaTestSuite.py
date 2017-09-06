@@ -111,13 +111,13 @@ copys deformation file to same root folder.'''
   to_file_root = os.path.split(to_file)[0]
   #Copy the ups but change the Prescribed def filebase also copy this file
   for line in from_file_lines:
-    if '<PrescribedDeformationFile>' in line and '</PrescribedDeformationFile>' in line:
-      def_file = line.split('<PrescribedDeformationFile>')[1].split('</PrescribedDeformationFile>')[0].strip()
-      print "PrescribedDeformationFile = ", def_file
+    if '<prescribed_deformation_file>' in line and '</prescribed_deformation_file>' in line:
+      def_file = line.split('<prescribed_deformation_file>')[1].split('</prescribed_deformation_file>')[0].strip()
+      print "prescribed_deformation_file = ", def_file
       line = line.replace(def_file,def_file.split('inputs/MPM/Arenisca/')[1])
-      print "PrescribedDeformationFile line = ", line
+      print "prescribed_deformation_file line = ", line
       def_file = def_file.split('inputs/MPM/Arenisca/')[1]
-      print "PrescribedDeformationFile final = ", def_file
+      print "prescribed_deformation_file final = ", def_file
       shutil.copyfile(default_inputs_path+'/'+def_file,to_file_root+'/'+def_file)
     F_to_file.write(line+'\n')
   F_to_file.close()

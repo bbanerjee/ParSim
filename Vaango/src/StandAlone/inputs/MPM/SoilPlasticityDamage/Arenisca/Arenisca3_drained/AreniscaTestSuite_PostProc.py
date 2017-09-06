@@ -359,8 +359,8 @@ def get_defTable(uda_path,working_dir):
     ups_file = os.path.abspath(uda_path)+'/input.xml'
     F = open(ups_file,"r")
   for line in F:
-    if '<PrescribedDeformationFile>' in line and '</PrescribedDeformationFile>' in line:
-      def_file = line.split('<PrescribedDeformationFile>')[1].split('</PrescribedDeformationFile>')[0].strip()
+    if '<prescribed_deformation_file>' in line and '</prescribed_deformation_file>' in line:
+      def_file = line.split('<prescribed_deformation_file>')[1].split('</prescribed_deformation_file>')[0].strip()
   F.close()
   #Assumes the input deck and uda share the same parent folder. 
   def_file = working_dir+'/'+def_file

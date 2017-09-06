@@ -35,8 +35,8 @@
       	<time_integrator>           explicit  </time_integrator>
       	<use_load_curves>           true      </use_load_curves>
       	<interpolator>              gimp      </interpolator>
-	<UsePrescribedDeformation>  true      </UsePrescribedDeformation>
-        <PrescribedDeformationFile>     inputs/MPM/Arenisca/AreniscaTest_12_PrescribedDeformation.inp  </PrescribedDeformationFile>
+	<use_prescribed_deformation>  true      </use_prescribed_deformation>
+        <prescribed_deformation_file>     inputs/MPM/Arenisca/AreniscaTest_12_PrescribedDeformation.inp  </prescribed_deformation_file>
         <minimum_subcycles_for_F>       -2    </minimum_subcycles_for_F>
     </MPM>
 

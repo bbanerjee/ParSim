@@ -126,7 +126,7 @@
         <artificial_viscosity>           true       </artificial_viscosity>
         <use_load_curves>                true       </use_load_curves>
         <erosion algorithm = "none"/>
-        <withColor> true </withColor>
+        <with_color> true </with_color>
         <deformation_gradient algorithm="taylor_series"> 
           <num_terms> 5 </num_terms>
         </deformation_gradient>

@@ -208,7 +208,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   mpm_flag_ps->get("interpolator", d_interpolator_type);
   mpm_flag_ps->getWithDefault("cpdi_lcrit", d_cpdi_lcrit, 1.e10);
   mpm_flag_ps->get("axisymmetric", d_axisymmetric);
-  mpm_flag_ps->get("withColor",  d_with_color);
+  mpm_flag_ps->get("with_color",  d_with_color);
   mpm_flag_ps->get("artificial_damping_coeff", d_artificialDampCoeff);
   mpm_flag_ps->get("artificial_viscosity",     d_artificial_viscosity);
   if(d_artificial_viscosity){
@@ -249,9 +249,9 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   mpm_flag_ps->get("minimum_particle_mass",    d_min_part_mass);
   mpm_flag_ps->get("minimum_mass_for_acc",     d_min_mass_for_acceleration);
   mpm_flag_ps->get("maximum_particle_velocity",d_max_vel);
-  mpm_flag_ps->get("UsePrescribedDeformation",d_prescribeDeformation);
+  mpm_flag_ps->get("use_prescribed_deformation",d_prescribeDeformation);
   if(d_prescribeDeformation){
-    mpm_flag_ps->get("PrescribedDeformationFile",d_prescribedDeformationFile);
+    mpm_flag_ps->get("prescribed_deformation_file",d_prescribedDeformationFile);
   }
 //MMS
   mpm_flag_ps->get("RunMMSProblem",d_mms_type);
@@ -390,7 +390,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
 
   mpm_flag_ps->get("boundary_traction_faces", d_bndy_face_txt_list);
 
-  mpm_flag_ps->get("UseMomentumForm", d_use_momentum_form);
+  mpm_flag_ps->get("use_momentum_form", d_use_momentum_form);
 
   // Deformation gradient computer options
   // Options other than "first_order"/"subcycling" should be defined in DeformationGradientComputer
@@ -485,7 +485,7 @@ MPMFlags::outputProblemSpec(ProblemSpecP& ps)
   ps->appendElement("cpdi_lcrit", d_cpdi_lcrit);
   ps->appendElement("AMR", d_AMR);
   ps->appendElement("axisymmetric", d_axisymmetric);
-  ps->appendElement("withColor",  d_with_color);
+  ps->appendElement("with_color",  d_with_color);
   ps->appendElement("artificial_damping_coeff", d_artificialDampCoeff);
   ps->appendElement("artificial_viscosity",     d_artificial_viscosity);
   ps->appendElement("artificial_viscosity_heating", d_artificial_viscosity_heating);
@@ -510,9 +510,9 @@ MPMFlags::outputProblemSpec(ProblemSpecP& ps)
   ps->appendElement("minimum_particle_mass",    d_min_part_mass);
   ps->appendElement("minimum_mass_for_acc",     d_min_mass_for_acceleration);
   ps->appendElement("maximum_particle_velocity",d_max_vel);
-  ps->appendElement("UsePrescribedDeformation",d_prescribeDeformation);
+  ps->appendElement("use_prescribed_deformation",d_prescribeDeformation);
   if(d_prescribeDeformation){
-    ps->appendElement("PrescribedDeformationFile",d_prescribedDeformationFile);
+    ps->appendElement("prescribed_deformation_file",d_prescribedDeformationFile);
   }
 //MMS
   ps->appendElement("RunMMSProblem",d_mms_type);
@@ -532,7 +532,7 @@ MPMFlags::outputProblemSpec(ProblemSpecP& ps)
 
   ps->appendElement("boundary_traction_faces", d_bndy_face_txt_list);
 
-  ps->appendElement("UseMomentumForm", d_use_momentum_form);
+  ps->appendElement("use_momentum_form", d_use_momentum_form);
 
   // Deformation gradient computer options
   ProblemSpecP defgrad_ps = ps->appendChild("deformation_gradient");

@@ -46,10 +46,10 @@
     <artificial_viscosity_heating> false     </artificial_viscosity_heating>
     <do_contact_friction_heating>  false     </do_contact_friction_heating>
     <create_new_particles>         false     </create_new_particles>
-    <UseMomentumForm>              false     </UseMomentumForm>
-    <withColor>                    true      </withColor>
-    <UsePrescribedDeformation>     true      </UsePrescribedDeformation>
-    <PrescribedDeformationFile>    inputs/MPM/SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_02_PrescribedDeformation.inp  </PrescribedDeformationFile>
+    <use_momentum_form>              false     </use_momentum_form>
+    <with_color>                    true      </with_color>
+    <use_prescribed_deformation>     true      </use_prescribed_deformation>
+    <prescribed_deformation_file>    inputs/MPM/SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_02_PrescribedDeformation.inp  </prescribed_deformation_file>
     <minimum_subcycles_for_F>       -2       </minimum_subcycles_for_F>
     <erosion algorithm = "none"/>
   </MPM>

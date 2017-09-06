@@ -48,13 +48,13 @@
       <use_CBDI_boundary_condition        spec="OPTIONAL BOOLEAN" />
       <use_cohesive_zones                 spec="OPTIONAL BOOLEAN" />
       <use_volume_integral                spec="OPTIONAL BOOLEAN" /> 
-      <UsePrescribedDeformation           spec="OPTIONAL BOOLEAN" /> 
-      <PrescribedDeformationFile          spec="OPTIONAL STRING" />
+      <use_prescribed_deformation           spec="OPTIONAL BOOLEAN" /> 
+      <prescribed_deformation_file          spec="OPTIONAL STRING" />
       <exactDeformation                   spec="OPTIONAL BOOLEAN" /> 
       <InsertParticles                    spec="OPTIONAL BOOLEAN" /> 
       <InsertParticlesFile                spec="OPTIONAL STRING" /> 
-      <withColor                          spec="OPTIONAL BOOLEAN" />
-      <UseMomentumForm                    spec="OPTIONAL BOOLEAN" />
+      <with_color                          spec="OPTIONAL BOOLEAN" />
+      <use_momentum_form                    spec="OPTIONAL BOOLEAN" />
       
       <!-- FIXME:  THE FOLLOW APPLY ONLY TO THE IMPLICIT MPM CODE -->
       <dynamic                            spec="OPTIONAL BOOLEAN" />

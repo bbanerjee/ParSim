@@ -30,7 +30,7 @@
         <time_integrator>explicit</time_integrator>
         <interpolator>gimp</interpolator>
         <DoExplicitHeatConduction>false</DoExplicitHeatConduction>
-        <withColor>true</withColor>
+        <with_color>true</with_color>
     </MPM>
 
     <PhysicalConstants>

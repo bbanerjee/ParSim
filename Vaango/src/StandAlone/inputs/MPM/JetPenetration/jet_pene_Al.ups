@@ -41,7 +41,7 @@
        <artificial_viscosity_heating>false</artificial_viscosity_heating>
        <do_contact_friction_heating>false</do_contact_friction_heating>
        <axisymmetric>true</axisymmetric>
-       <withColor>      true      </withColor>
+       <with_color>      true      </with_color>
        <InsertParticles>    true   </InsertParticles>
        <InsertParticlesFile>InsertParticles.dat </InsertParticlesFile>
        <erosion algorithm = "RemoveMass"/>

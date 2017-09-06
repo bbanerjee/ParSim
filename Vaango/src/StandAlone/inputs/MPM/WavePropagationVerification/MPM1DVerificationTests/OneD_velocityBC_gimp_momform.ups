@@ -97,7 +97,7 @@
     <artificial_damping_coeff>       0.0        </artificial_damping_coeff>
     <artificial_viscosity>           false      </artificial_viscosity>
     <use_load_curves>                true       </use_load_curves>
-    <UseMomentumForm>                true       </UseMomentumForm>      
+    <use_momentum_form>                true       </use_momentum_form>      
     <erosion algorithm = "none"/>
     <deformation_gradient algorithm="taylor_series"> 
       <num_terms> 5 </num_terms>

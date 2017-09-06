@@ -196,7 +196,7 @@
     <time_integrator>explicit</time_integrator>
     <interpolator>gimp</interpolator>
     <axisymmetric>false</axisymmetric>
-    <withColor>false</withColor>
+    <with_color>false</with_color>
     <artificial_damping_coeff>0</artificial_damping_coeff>
     <artificial_viscosity>true</artificial_viscosity>
     <artificial_viscosity_heating>true</artificial_viscosity_heating>
@@ -217,13 +217,13 @@
     <minimum_particle_mass>3.0000000000000001e-12</minimum_particle_mass>
     <minimum_mass_for_acc>0</minimum_mass_for_acc>
     <maximum_particle_velocity>1000</maximum_particle_velocity>
-    <UsePrescribedDeformation>false</UsePrescribedDeformation>
+    <use_prescribed_deformation>false</use_prescribed_deformation>
     <InsertParticles>false</InsertParticles>
     <do_contact_friction_heating>true</do_contact_friction_heating>
     <delete_rogue_particles>false</delete_rogue_particles>
     <erosion algorithm="ZeroStress"/>
     <boundary_traction_faces>[]</boundary_traction_faces>
-    <UseMomentumForm>false</UseMomentumForm>
+    <use_momentum_form>false</use_momentum_form>
     <testForNegTemps_mpm>false</testForNegTemps_mpm>
   </MPM>
   <!--____________________________________________________________________-->
