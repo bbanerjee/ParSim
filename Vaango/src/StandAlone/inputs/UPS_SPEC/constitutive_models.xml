@@ -969,10 +969,15 @@
     <G_r_theta spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_hypoelastic"/>
 
     <!-- These are for tabular_eos -->
-    <filename spec="REQUIRED STRING" need_applies_to="type tabular_eos"/>
-    <independent_variables spec="REQUIRED STRING" need_applies_to="type tabular_eos"/>
-    <dependent_variables spec="REQUIRED STRING" need_applies_to="type tabular_eos"/>
-    <interpolation spec="REQUIRED STRING" need_applies_to="type tabular_eos"/>
+    <filename              spec="REQUIRED STRING" 
+                           need_applies_to="type tabular_eos"/>
+    <independent_variables spec="REQUIRED STRING" 
+                           need_applies_to="type tabular_eos"/>
+    <dependent_variables   spec="REQUIRED STRING" 
+                           need_applies_to="type tabular_eos"/>
+    <interpolation         spec="REQUIRED NO_DATA" 
+                           attribute1="type REQUIRED STRING 'linear, cubic'"
+                           need_applies_to="type tabular_eos"/>
   </constitutive_model>
 
 

@@ -56,8 +56,8 @@ NIGHTLYTESTS = [
                   #("Centrifuge_2D_AGR_SimPBC_dense_layer_lores_loforce", "SoilPlasticityDamage/RotatingCoords/Centrifuge_2D_AGR_SimPBC_dense_layer_lores_loforce.ups",                       4,  "Linux", ["exactComparison"] ), \
                   #("Centrifuge_AGR_SimPBC_dense_layer_very_lores_drained_delay_offset_nobucket_initstress", "SoilPlasticityDamage/Centrifuge/Centrifuge_AGR_SimPBC_dense_layer_very_lores_drained_delay_offset_nobucket_initstress.ups",                       4,  "Linux", ["exactComparison"] ), \
 #                  ("DropBunny2Frags", "SoilPlasticityDamage/BunnyHummer/DropBunny2Frags.ups",                       1,  "Linux", ["exactComparison"] ), \
-                  #("const_test_viscoelastic_fortran.ups", "ViscoElastic/const_test_viscoelastic_fortran.ups",                       1,  "Linux", ["exactComparison"] ), \
-                  #("const_test_brittle_damage", "SoilPlasticityDamage/const_test_brittle_damage.ups",                       1,  "Linux", ["exactComparison"] ), \
+                  ("const_test_viscoelastic_fortran.ups", "ViscoElastic/const_test_viscoelastic_fortran.ups",                       1,  "Linux", ["exactComparison"] ), \
+                  ("const_test_brittle_damage", "SoilPlasticityDamage/const_test_brittle_damage.ups",                       1,  "Linux", ["exactComparison"] ), \
                   ("AreniscaTest_01a_UniaxialStrainCompressExtend", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_01a_UniaxialStrainCompressExtend.ups", 1, "Linux", ["exactComparison"] ), \
                   #("AreniscaTest_01_UniaxialStrainRotate", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_01_UniaxialStrainRotate.ups", 1, "Linux", ["exactComparison"] ), \
                   #("AreniscaTest_02_VertexTreatment", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_02_VertexTreatment.ups", 1, "Linux", ["exactComparison"] ), \
@@ -73,17 +73,17 @@ NIGHTLYTESTS = [
                   #("AreniscaTest_11_UniaxialStrainJ2plasticity", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_11_UniaxialStrainJ2plasticity.ups", 1, "Linux", ["exactComparison"] ), \
                   #("AreniscaTest_12_NonlinearElasticity", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_12_NonlinearElasticity.ups", 1, "Linux", ["exactComparison"] ), \
                   #("AreniscaTest_13_UniaxialStrainRateDependence", "SoilPlasticityDamage/Arenisca/Arenisca3/AreniscaTest_13_UniaxialStrainRateDependence.ups", 1, "Linux", ["exactComparison"] ), \
-                  #("disks_complex",                       "disks_complex.ups",                       4,  "Linux", ["exactComparison"] ), \
-                  #("heatcond2mat",                        "heatcond2mat.ups",                        1,  "Linux", ["exactComparison"] ),  \
-                  #("inclined_plane_sphere",               "inclined_plane_sphere.ups",               1,  "Linux", ["exactComparison"] ),  \
+                  ("disks_complex",                       "disks_complex.ups",                       4,  "Linux", ["exactComparison"] ), \
+                  ("heatcond2mat",                        "heatcond2mat.ups",                        1,  "Linux", ["exactComparison"] ),  \
+                  ("inclined_plane_sphere",               "inclined_plane_sphere.ups",               1,  "Linux", ["exactComparison"] ),  \
                   #("foam_crush",                          "foam_crush.ups",                          4,  "Linux", ["exactComparison"] ),  \
                   #("periodic_disks",                      "periodic_disks.ups",                      1,  "Linux", ["exactComparison"] ),  \
                   #("periodic_spheres3D",                  "periodic_spheres3D.ups",                  8,  "Linux", ["exactComparison"] ),  \
-                  #("const_test_hypo",                     "const_test_hypo.ups",                     1,  "Linux", ["exactComparison"] ),  \
-                  #("const_test_cmr",                      "const_test_cmr.ups",                      1,  "Linux", ["exactComparison"] ),  \
-                  #("const_test_nhp",                      "const_test_nhp.ups",                      1,  "Linux", ["exactComparison"] ),  \
-                  #("const_test_vs",                       "const_test_vs.ups",                       1,  "Linux", ["exactComparison"] ),  \
-                  #("adiCuJC4000s696K",                    "adiCuJC4000s696K.ups",                    1,  "Linux", ["exactComparison"] ),  \
+                  ("const_test_hypo",                     "const_test_hypo.ups",                     1,  "Linux", ["exactComparison"] ),  \
+                  ("const_test_cmr",                      "const_test_cmr.ups",                      1,  "Linux", ["exactComparison"] ),  \
+                  ("const_test_nhp",                      "const_test_nhp.ups",                      1,  "Linux", ["exactComparison"] ),  \
+                  ("const_test_vs",                       "const_test_vs.ups",                       1,  "Linux", ["exactComparison"] ),  \
+                  ("adiCuJC4000s696K",                    "adiCuJC4000s696K.ups",                    1,  "Linux", ["exactComparison"] ),  \
                   #("adiCuMTS4000s696K",                   "adiCuMTS4000s696K.ups",                   1,  "Linux", ["exactComparison"] ),  \
                   #("adiCuPTW4000s696K",                   "adiCuPTW4000s696K.ups",                   1,  "Linux", ["exactComparison"] ),  \
                   #("adiCuSCG4000s696K",                   "adiCuSCG4000s696K.ups",                   1,  "Linux", ["exactComparison"] ),  \

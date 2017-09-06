@@ -143,7 +143,7 @@
     <MaterialProperties>
        <MPM>
          <material name = "Mason sand">
-           <include href="inputs/MPM/SoilPlasticityDamage/RotatingCoords/Arenisca3_DryArena_Rate.xml"/>
+           <include href="inputs/MPM/SoilPlasticityDamage/RotatingCoords/Arenisca3_DryMasonSand_Rate.xml"/>
            <geom_object>
              <difference>
                <box label = "soil">
@@ -162,7 +162,7 @@
          </material>
 
          <material name = "Dense mason sand">
-           <include href="inputs/MPM/SoilPlasticityDamage/RotatingCoords/Arenisca3_DryArena_Rate_Dense.xml"/>
+           <include href="inputs/MPM/SoilPlasticityDamage/RotatingCoords/Arenisca3_DryMasonSand_Rate_Dense.xml"/>
            <geom_object>
              <difference>
                <sphere label = "outer_hole"> </sphere>

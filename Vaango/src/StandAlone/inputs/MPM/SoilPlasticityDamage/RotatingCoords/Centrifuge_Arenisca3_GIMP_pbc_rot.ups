@@ -138,7 +138,7 @@
     <MaterialProperties>
        <MPM>
          <material name = "Mason sand">
-           <include href="./Arenisca3_DryArena_Rate.xml"/>
+           <include href="./Arenisca3_DryMasonSand_Rate.xml"/>
            <geom_object>
              <difference>
                <box label = "soil">

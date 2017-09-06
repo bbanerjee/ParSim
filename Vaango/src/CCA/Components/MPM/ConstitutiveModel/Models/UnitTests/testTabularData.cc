@@ -37,10 +37,12 @@ TEST(TabularDataTest, parseVariableNames)
   xmlNewChild(rootNode, nullptr, BAD_CAST "filename", BAD_CAST "table_eos.json");
   xmlNewChild(rootNode, nullptr, BAD_CAST "independent_variables", BAD_CAST "temperature, density, other 1, other 2, other 3");
   xmlNewChild(rootNode, nullptr, BAD_CAST "dependent_variables", BAD_CAST "pressure, volume 1, other 2");
-  xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation", BAD_CAST "linear");
+  auto interp = xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation",
+                            BAD_CAST "");
+  xmlNewProp(interp, BAD_CAST "type", BAD_CAST "linear");
 
   // Print the document to stdout
-  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -82,7 +84,9 @@ TEST(TabularDataTest, readJSONTableFromStream1D)
               BAD_CAST "Volume");
   xmlNewChild(rootNode, nullptr, BAD_CAST "dependent_variables", 
               BAD_CAST "Pressure, Density");
-  xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation", BAD_CAST "linear");
+  auto interp = xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation",
+                            BAD_CAST "");
+  xmlNewProp(interp, BAD_CAST "type", BAD_CAST "linear");
 
   // Print the document to stdout
   xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
@@ -177,7 +181,9 @@ TEST(TabularDataTest, readJSONTableFromStream2D)
               BAD_CAST "Temperature, Volume");
   xmlNewChild(rootNode, nullptr, BAD_CAST "dependent_variables", 
               BAD_CAST "Pressure");
-  xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation", BAD_CAST "linear");
+  auto interp = xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation",
+                            BAD_CAST "");
+  xmlNewProp(interp, BAD_CAST "type", BAD_CAST "linear");
 
   // Print the document to stdout
   //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
@@ -298,7 +304,7 @@ TEST(TabularDataTest, readJSONTableFromStream2D)
 //      }]
 //    }
 //  }
-TEST(TabularDataTest, readJSONTableFromStream4D)
+TEST(TabularDataTest, readJSONTableFromStream3D)
 {
   // Create a new document
   xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
@@ -314,7 +320,9 @@ TEST(TabularDataTest, readJSONTableFromStream4D)
               BAD_CAST "Salinity, Temperature, Volume");
   xmlNewChild(rootNode, nullptr, BAD_CAST "dependent_variables", 
               BAD_CAST "Pressure, Density");
-  xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation", BAD_CAST "linear");
+  auto interp = xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation",
+                            BAD_CAST "");
+  xmlNewProp(interp, BAD_CAST "type", BAD_CAST "linear");
 
   // Print the document to stdout
   //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);

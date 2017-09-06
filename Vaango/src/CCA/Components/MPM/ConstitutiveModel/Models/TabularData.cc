@@ -23,8 +23,16 @@ TabularData::TabularData(ProblemSpecP& ps)
   ps->require("independent_variables", d_indepVarNames);
   ps->require("dependent_variables", d_depVarNames);
   ps->require("filename", d_filename);
-  //d_interpType = "linear";
-  ps->getWithDefault("interpolation", d_interpType, "linear");
+  //ps->getWithDefault("interpolation", d_interpType, "linear");
+  ProblemSpecP interp = ps->findBlock("interpolation");
+  if (!interp) {
+    d_interpType = "linear";
+  } else {
+    if (!interp->getAttribute("type", d_interpType)) {
+      throw ProblemSetupException("**ERROR** Interpolation \
+        tag needs type=linear/cubic", __FILE__, __LINE__);
+    }
+  }
   initialize();
 }
 

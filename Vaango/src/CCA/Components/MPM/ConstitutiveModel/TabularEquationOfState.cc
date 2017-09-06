@@ -221,7 +221,6 @@ TabularEquationOfState::computeStressTensor(const PatchSubset* patches,
       pdTdt[pidx] = 0.0;
 
       double rho = pMass[pidx]/pVolume[pidx];
-      std::cout << "Density = " << rho << "\n";
       DoubleVec1D pressure = d_table.interpolate<1>({{rho/rho_0}});
       pStress[pidx] = Identity * (-pressure[0]);
 
@@ -229,6 +228,8 @@ TabularEquationOfState::computeStressTensor(const PatchSubset* patches,
       // store the maximum
       double bulkModulus = computeBulkModulus(rho_0, rho);
       double c_bulk = std::sqrt(bulkModulus/rho);
+      std::cout << "Density = " << rho << " K = " << bulkModulus
+                << " c_p = " << c_bulk << "\n";
       WaveSpeed = Vector(Max(c_bulk + fabs(pVelocity[pidx].x()), WaveSpeed.x()),
                          Max(c_bulk + fabs(pVelocity[pidx].y()), WaveSpeed.y()),
                          Max(c_bulk + fabs(pVelocity[pidx].z()), WaveSpeed.z()));
