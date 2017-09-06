@@ -23,6 +23,8 @@ TabularData::TabularData(ProblemSpecP& ps)
   ps->require("independent_variables", d_indepVarNames);
   ps->require("dependent_variables", d_depVarNames);
   ps->require("filename", d_filename);
+  //d_interpType = "linear";
+  ps->getWithDefault("interpolation", d_interpType, "linear");
   initialize();
 }
 
@@ -63,23 +65,23 @@ TabularData::initialize()
   std::vector<std::string> indepVarNames = parseVariableNames(d_indepVarNames);
   std::vector<std::string> depVarNames = parseVariableNames(d_depVarNames);
 
-  // std::cout << "Independent:";
+  //std::cout << "Independent:";
   int index = 0;
   for (const auto& name : indepVarNames) {
     addIndependentVariable(name);
-    // std::cout << index << ":" << name << " ";
+    //std::cout << index << ":" << name << " ";
     index++;
   }
-  // std::cout << std::endl;
+  //std::cout << std::endl;
 
-  // std::cout << "Dependent:";
+  //std::cout << "Dependent:";
   index = 0;
   for (const auto& name : depVarNames) {
     addDependentVariable(name);
-    // std::cout << index << ":" << name << " ";
+    //std::cout << index << ":" << name << " ";
     index++;
   }
-  // std::cout << std::endl;
+  //std::cout << std::endl;
 }
 
 void
@@ -189,10 +191,18 @@ TabularData::readJSONTable<1>(const json& doc, const std::string& tableFile)
   DoubleVec1D indepVarData =
     getDoubleArrayJSON(data, d_indepVars[0]->name, tableFile);
   d_indepVars[0]->data.insert({ IndexKey(0, 0, 0, 0), indepVarData });
+  //std::cout << "Read " << d_indepVars[0]->name << " ";
+  //std::copy(indepVarData.begin(), indepVarData.end(),
+  //          std::ostream_iterator<double>(std::cout, " "));
+  //std::cout << std::endl;
 
   for (const auto& depVar : d_depVars) {
     DoubleVec1D depVarData = getDoubleArrayJSON(data, depVar->name, tableFile);
     depVar->data.insert({ IndexKey(0, 0, 0, 0), depVarData });
+    //std::cout << "Read " << depVar->name << " ";
+    //std::copy(depVarData.begin(), depVarData.end(),
+    //          std::ostream_iterator<double>(std::cout, " "));
+    //std::cout << std::endl;
 
     ASSERTEQ(indepVarData.size(), depVarData.size());
   }

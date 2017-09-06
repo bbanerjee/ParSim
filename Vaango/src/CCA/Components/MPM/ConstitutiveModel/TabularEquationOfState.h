@@ -86,7 +86,8 @@ public:
 
   virtual double getCompressibility();
 
-  double computeBulkModulus(const double& volume) const;
+  double computeBulkModulus(const double& rho0,
+                            const double& rho) const;
 
   // initialize  each particle's constitutive model data
   virtual void initializeCMData(const Patch* patch, const MPMMaterial* matl,

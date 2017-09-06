@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -68,6 +68,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ShellMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SoilFoam.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SoilModelBrannon.h>
+#include <CCA/Components/MPM/ConstitutiveModel/TabularEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/UCNH.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticFortran.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoPlastic.h>
@@ -133,6 +134,8 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
     return (scinew Arenisca4(child, flags));
   else if (mat_type == "soil_model_brannon")
     return (scinew SoilModelBrannon(child, flags));
+  else if (mat_type == "tabular_eos")
+    return (scinew TabularEquationOfState(child, flags));
 
   else if (mat_type == "comp_neo_hook") {
     if (flags->d_integrator_type == "explicit" ||

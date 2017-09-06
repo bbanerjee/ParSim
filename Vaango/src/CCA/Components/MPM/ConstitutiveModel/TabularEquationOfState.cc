@@ -53,6 +53,7 @@ TabularEquationOfState::TabularEquationOfState(ProblemSpecP& ps,
   : ConstitutiveModel(Mflag)
   , d_table(ps)
 {
+  d_table.setup();
 }
 
 TabularEquationOfState::TabularEquationOfState(const TabularEquationOfState* cm)
@@ -62,8 +63,7 @@ TabularEquationOfState::TabularEquationOfState(const TabularEquationOfState* cm)
 }
 
 TabularEquationOfState::~TabularEquationOfState()
-{
-}
+= default;
 
 void
 TabularEquationOfState::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
@@ -134,6 +134,7 @@ TabularEquationOfState::computeStableTimestep(const Patch* patch,
 {
   Vector dx = patch->dCell();
   int matID = matl->getDWIndex();
+  double rho_0 = matl->getInitialDensity();
 
   ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
   constParticleVariable<double> pMass, pVolume;
@@ -147,25 +148,31 @@ TabularEquationOfState::computeStableTimestep(const Patch* patch,
   // store the maximum
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
   for (const auto& pidx : *pset) {
-    double bulkModulus = computeBulkModulus(pVolume[pidx]);
     double rho = pMass[pidx]/pVolume[pidx];
+    std::cout << "Density = " << rho << "\n";
+    double bulkModulus = computeBulkModulus(rho_0, rho);
     double c_bulk = std::sqrt(bulkModulus/rho);
+    std::cout << "K = " << bulkModulus 
+              << " c_p = " << c_bulk << "\n";
     WaveSpeed = Vector(Max(c_bulk + std::abs(pVelocity[pidx].x()), WaveSpeed.x()),
                        Max(c_bulk + std::abs(pVelocity[pidx].y()), WaveSpeed.y()),
                        Max(c_bulk + std::abs(pVelocity[pidx].z()), WaveSpeed.z()));
   }
   WaveSpeed = dx / WaveSpeed;
-  double delT_new = WaveSpeed.minComponent();
-  new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+  double delT = WaveSpeed.minComponent();
+  std::cout << "delT = " << delT << "\n";
+  new_dw->put(delt_vartype(delT), lb->delTLabel, patch->getLevel());
 }
 
 double
-TabularEquationOfState::computeBulkModulus(const double& volume) const
+TabularEquationOfState::computeBulkModulus(const double& rho_0,
+                                           const double& rho) const
 {
   double epsilon = 1.0e-6;
-  DoubleVec1D pressure_lo = d_table.interpolate<1>({{volume - epsilon}});
-  DoubleVec1D pressure_hi = d_table.interpolate<1>({{volume + epsilon}});
-  return volume*(pressure_hi[0] - pressure_lo[0])/(2*epsilon);
+  double rho_over_rho0 = rho/rho_0;
+  DoubleVec1D pressure_lo = d_table.interpolate<1>({{rho_over_rho0 - epsilon}});
+  DoubleVec1D pressure_hi = d_table.interpolate<1>({{rho_over_rho0 + epsilon}});
+  return rho*(pressure_hi[0] - pressure_lo[0])/(2*epsilon);
 }
 
 void
@@ -176,7 +183,7 @@ TabularEquationOfState::computeStressTensor(const PatchSubset* patches,
 {
   Matrix3 Identity;
   Identity.Identity();
-  double rho_orig = matl->getInitialDensity();
+  double rho_0 = matl->getInitialDensity();
 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
@@ -213,13 +220,14 @@ TabularEquationOfState::computeStressTensor(const PatchSubset* patches,
       // Assign zero internal heating by default - modify if necessary.
       pdTdt[pidx] = 0.0;
 
-      DoubleVec1D pressure = d_table.interpolate<1>({{pVolume[pidx]}});
+      double rho = pMass[pidx]/pVolume[pidx];
+      std::cout << "Density = " << rho << "\n";
+      DoubleVec1D pressure = d_table.interpolate<1>({{rho/rho_0}});
       pStress[pidx] = Identity * (-pressure[0]);
 
       // Compute wave speed + particle velocity at each particle,
       // store the maximum
-      double bulkModulus = computeBulkModulus(pVolume[pidx]);
-      double rho = pMass[pidx]/pVolume[pidx];
+      double bulkModulus = computeBulkModulus(rho_0, rho);
       double c_bulk = std::sqrt(bulkModulus/rho);
       WaveSpeed = Vector(Max(c_bulk + fabs(pVelocity[pidx].x()), WaveSpeed.x()),
                          Max(c_bulk + fabs(pVelocity[pidx].y()), WaveSpeed.y()),
@@ -235,7 +243,7 @@ TabularEquationOfState::computeStressTensor(const PatchSubset* patches,
       }
 
       // Compute the strain energy for all the particles (0.5*p*eps_v)
-      double e = 0.5*pressure[0]*std::log(rho_orig/rho);
+      double e = 0.5*pressure[0]*std::log(rho_0/rho);
       se += e;
     } // end loop over particles
 
@@ -308,13 +316,13 @@ TabularEquationOfState::computeRhoMicroCM(double /*pressure*/,
                                           double temperature, double rho_guess)
 {
 #if 0
-  double rho_orig = matl->getInitialDensity();
+  double rho_0 = matl->getInitialDensity();
   double bulk = d_initialData.Bulk;
 
   double p_gauge = pressure - p_ref;
   double rho_cur;
 
-  rho_cur = rho_orig*(p_gauge/bulk + sqrt((p_gauge/bulk)*(p_gauge/bulk) +1));
+  rho_cur = rho_0*(p_gauge/bulk + sqrt((p_gauge/bulk)*(p_gauge/bulk) +1));
 #endif
 
   std::cout
@@ -337,11 +345,11 @@ TabularEquationOfState::computePressEOSCM(double /*rho_cur*/,
 #if 0
   double bulk = d_initialData.Bulk;
   double shear = d_initialData.Shear;
-  double rho_orig = matl->getInitialDensity();
+  double rho_0 = matl->getInitialDensity();
 
-  double p_g = .5*bulk*(rho_cur/rho_orig - rho_orig/rho_cur);
+  double p_g = .5*bulk*(rho_cur/rho_0 - rho_0/rho_cur);
   pressure = p_ref + p_g;
-  dp_drho  = .5*bulk*(rho_orig/(rho_cur*rho_cur) + 1./rho_orig);
+  dp_drho  = .5*bulk*(rho_0/(rho_cur*rho_cur) + 1./rho_0);
   tmp = (bulk + 4.*shear/3.)/rho_cur;  // speed of sound squared
 #endif
 

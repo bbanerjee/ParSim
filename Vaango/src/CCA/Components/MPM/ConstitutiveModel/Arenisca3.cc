@@ -744,6 +744,7 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
       // Arenisca
       // may ativate this feature.
       pdTdt[idx] = 0.0;
+      pAreniscaFlag_new[idx] = pAreniscaFlag[idx];
 
       // Particle deletion variable
       pLocalized_new[idx] = pLocalized[idx];

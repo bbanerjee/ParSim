@@ -73,6 +73,7 @@ private:
   std::string d_filename;
   std::string d_indepVarNames;
   std::string d_depVarNames;
+  std::string d_interpType;
 
   IndepVarPArray d_indepVars;
   DepVarPArray d_depVars;
