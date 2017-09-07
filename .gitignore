@@ -3,6 +3,7 @@ dbg
 dbg_clang
 opt_clang
 opt_clang_amr
+opt_visit
 opt_Packages
 runs
 gold_standards
@@ -25,3 +26,8 @@ Copyright*
 *.toc
 *.session
 *.session.gui
+CMakeCache.txt
+CMakeFiles
+build
+cmake_install.cmake
+.vscode
