@@ -42,20 +42,26 @@ struct Tag;
 class ProblemSpecReader : public ProblemSpecInterface
 {
 public:
-  ProblemSpecReader();
+  ProblemSpecReader() = default;
   ~ProblemSpecReader();
 
   // Be sure to call releaseDocument on this ProblemSpecP.  Most users should
   // not use the 'insertAfterThisNode' parameter.
-  virtual ProblemSpecP readInputFile(const std::string& filename,
-                                     bool validate = false);
+  ProblemSpecP readInputFile(const std::string& filename,
+                             bool validate = false) override;
 
   // Returns the main xml file name.
-  virtual std::string getInputFile() { return *d_upsFilename[0]; }
+  std::string getInputFile() override { return *d_upsFilename[0]; }
+
+  // Set the xml data and file name
+  // ** WARNING ** Only for testing purposes
+  void setData(ProblemSpecP data) override;
+  void setFilename(const std::string& filename) override;
 
 private:
-  ProblemSpecReader(const ProblemSpecReader&);
-  ProblemSpecReader& operator=(const ProblemSpecReader&);
+
+  ProblemSpecReader(const ProblemSpecReader&) = delete;
+  ProblemSpecReader& operator=(const ProblemSpecReader&) = delete;
 
   ////////////////////////////////////////////////////////////////////////////////
   // Variables:

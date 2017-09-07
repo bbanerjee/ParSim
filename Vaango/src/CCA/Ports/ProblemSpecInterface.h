@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -64,15 +65,18 @@ WARNING
 
    class ProblemSpecInterface : public UintahParallelPort {
    public:
-      ProblemSpecInterface();
-      virtual ~ProblemSpecInterface();
+      ProblemSpecInterface() = default;
+      virtual ~ProblemSpecInterface() = default;
 
       virtual ProblemSpecP readInputFile( const std::string & filename, bool validate = false ) = 0;
       virtual std::string getInputFile() = 0;
+
+      virtual void setData(ProblemSpecP data) = 0;
+      virtual void setFilename(const std::string& fileName) = 0;
       
    private:
-      ProblemSpecInterface( const ProblemSpecInterface & );
-      ProblemSpecInterface & operator=( const ProblemSpecInterface & );
+      ProblemSpecInterface( const ProblemSpecInterface & ) = delete;
+      ProblemSpecInterface & operator=( const ProblemSpecInterface & ) = delete;
    };
 } // End namespace Uintah
 

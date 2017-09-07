@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,6 +28,7 @@
 
 using namespace Uintah;
 
+/*
 ProblemSpecInterface::ProblemSpecInterface()
 {
 }
@@ -34,4 +36,5 @@ ProblemSpecInterface::ProblemSpecInterface()
 ProblemSpecInterface::~ProblemSpecInterface()
 {
 }
+*/
 

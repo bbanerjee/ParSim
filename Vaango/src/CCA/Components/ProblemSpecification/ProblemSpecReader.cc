@@ -2069,10 +2069,6 @@ ProblemSpecReader::validateProblemSpec(ProblemSpecP& prob_spec)
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-ProblemSpecReader::ProblemSpecReader()
-{
-}
-
 ProblemSpecReader::~ProblemSpecReader()
 {
   d_xmlData = nullptr;
@@ -2230,6 +2226,20 @@ ProblemSpecReader::readInputFile(const string& filename,
   return prob_spec;
 
 } // end readInputFile()
+
+void
+ProblemSpecReader::setData(ProblemSpecP data)
+{
+  d_xmlData = data;
+}
+
+void
+ProblemSpecReader::setFilename(const std::string& filename)
+{
+  string full_filename = validateFilename(filename, nullptr);
+  auto strPtr = new string(full_filename);
+  d_upsFilename.push_back(strPtr);
+}
 
 string*
 ProblemSpecReader::findFileNamePtr(const string& filename)

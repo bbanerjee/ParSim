@@ -26,6 +26,16 @@
 message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
+#------------------------
+# Copy input files
+#------------------------
+configure_file(tabular_eos.json tabular_eos.json COPYONLY)
+configure_file(HydrostaticCompression_PrescribedDeformation.inp 
+               HydrostaticCompression_PrescribedDeformation.inp COPYONLY)
+
+#------------------------
+# Libraries needed
+#------------------------
 SET(VAANGO_LIBS 
         Vaango_Core_Thread       
         Vaango_Core_DataArchive 

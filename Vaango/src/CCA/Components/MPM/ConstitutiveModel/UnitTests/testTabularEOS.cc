@@ -1,11 +1,30 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
 
+#include <CCA/Components/ProblemSpecification/ProblemSpecReader.h>
+#include <CCA/Components/SimulationController/AMRSimulationController.h>
+#include <CCA/Components/Regridder/RegridderCommon.h>
+#include <CCA/Components/Solvers/SolverFactory.h>
+#include <CCA/Components/Parent/ComponentFactory.h>
+#include <CCA/Components/LoadBalancers/LoadBalancerCommon.h>
+#include <CCA/Components/LoadBalancers/LoadBalancerFactory.h>
+#include <CCA/Components/DataArchiver/DataArchiver.h>
+#include <CCA/Components/Schedulers/SchedulerCommon.h>
+#include <CCA/Components/Schedulers/SchedulerFactory.h>
+
+#include <CCA/Ports/SolverInterface.h>
+#include <CCA/Ports/SimulationInterface.h>
+#include <CCA/Ports/Output.h>
+
 #include <Core/Parallel/Parallel.h>
+#include <Core/Parallel/UintahParallelComponent.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Exceptions/Exception.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/Util/Environment.h>
+#include <Core/OS/Dir.h>
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
@@ -18,21 +37,41 @@
 #include <gtest/gtest.h>
 
 using namespace Vaango;
+using nlohmann::json;
+using Uintah::Dir;
 using Uintah::ProblemSpec;
 using Uintah::ProblemSpecP;
+using Uintah::ProblemSpecReader;
+using Uintah::Exception;
 using Uintah::ProblemSetupException;
 using Uintah::InvalidValue;
-using nlohmann::json;
+using Uintah::ProcessorGroup;
+using Uintah::SimulationController;
+using Uintah::AMRSimulationController;
+using Uintah::RegridderCommon;
+using Uintah::SolverInterface;
+using Uintah::SolverFactory;
+using Uintah::UintahParallelComponent;
+using Uintah::ComponentFactory;
+using Uintah::SimulationInterface;
+using Uintah::LoadBalancerCommon;
+using Uintah::LoadBalancerFactory;
+using Uintah::DataArchiver;
+using Uintah::Output;
+using Uintah::SchedulerCommon;
+using Uintah::SchedulerFactory;
 
 class VaangoEnv : public ::testing::Environment {
 public:
 
   int d_argc;
   char** d_argv;
+  char** d_env;
 
-  explicit VaangoEnv(int argc, char**argv) {
+  explicit VaangoEnv(int argc, char** argv, char* env[]) {
     d_argc = argc;
     d_argv = argv;
+    d_env = env;
   }
 
   virtual ~VaangoEnv() {}
@@ -40,17 +79,20 @@ public:
   virtual void SetUp() {
     Uintah::Parallel::determineIfRunningUnderMPI(d_argc, d_argv);
     Uintah::Parallel::initializeManager(d_argc, d_argv);
-    auto ps = createInput();
-
-
+    Uintah::create_sci_environment(d_env, 0, true );
   }
 
   virtual void TearDown() {
     Uintah::Parallel::finalizeManager();
-
   }
 
-  ProblemSpecP createInput() {
+  static ProblemSpecP createInput() {
+
+    char currPath[2000];
+    if (!getcwd(currPath, sizeof(currPath))) {
+      std::cout << "Current path not found\n";
+    }
+    //std::cout << "Dir = " << currPath << std::endl;
 
     // Create a new document
     xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
@@ -75,9 +117,11 @@ public:
     xmlNewChild(time, nullptr, BAD_CAST "delt_min", BAD_CAST "1.0e-6");
     xmlNewChild(time, nullptr, BAD_CAST "delt_max", BAD_CAST "0.01");
     xmlNewChild(time, nullptr, BAD_CAST "timestep_multiplier", BAD_CAST "0.3");
+    xmlNewChild(time, nullptr, BAD_CAST "max_Timesteps", BAD_CAST "5");
 
     // DataArchiver
     auto da = xmlNewChild(rootNode, nullptr, BAD_CAST "DataArchiver", BAD_CAST "");
+    xmlNewChild(da, nullptr, BAD_CAST "filebase", BAD_CAST "HydrostaticCompressionTabular.uda");
     xmlNewChild(da, nullptr, BAD_CAST "outputTimestepInterval", BAD_CAST "1");
     auto save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
     xmlNewProp(save, BAD_CAST "label", BAD_CAST "g.mass");
@@ -102,6 +146,7 @@ public:
     xmlNewProp(save, BAD_CAST "timestepInterval", BAD_CAST "4000");
 
     // MPM
+    std::string prescribed = std::string(currPath) + "/" + "HydrostaticCompression_PrescribedDeformation.inp";
     auto mpm = xmlNewChild(rootNode, nullptr, BAD_CAST "MPM", BAD_CAST "");
     xmlNewChild(mpm, nullptr, BAD_CAST "time_integrator", BAD_CAST "explicit");
     xmlNewChild(mpm, nullptr, BAD_CAST "interpolator", BAD_CAST "linear");
@@ -117,7 +162,7 @@ public:
     xmlNewChild(mpm, nullptr, BAD_CAST "use_momentum_form", BAD_CAST "false");
     xmlNewChild(mpm, nullptr, BAD_CAST "with_color", BAD_CAST "true");
     xmlNewChild(mpm, nullptr, BAD_CAST "use_prescribed_deformation", BAD_CAST "true");
-    xmlNewChild(mpm, nullptr, BAD_CAST "prescribed_deformation_file", BAD_CAST "HydrostaticCompression_PrescribedDeformation.inp");
+    xmlNewChild(mpm, nullptr, BAD_CAST "prescribed_deformation_file", BAD_CAST prescribed.c_str());
     xmlNewChild(mpm, nullptr, BAD_CAST "minimum_subcycles_for_F", BAD_CAST "-2");
     auto ero = xmlNewChild(mpm, nullptr, BAD_CAST "erosion", BAD_CAST "");
     xmlNewProp(ero, BAD_CAST "algorithm", BAD_CAST "none");
@@ -127,6 +172,7 @@ public:
     xmlNewChild(pc, nullptr, BAD_CAST "gravity", BAD_CAST "[0,0,0]");
 
     // Material properties
+    std::string table = std::string(currPath) + "/" + "tabular_eos.json";
     auto matProp = xmlNewChild(rootNode, nullptr, BAD_CAST "MaterialProperties", BAD_CAST "");
     mpm = xmlNewChild(matProp, nullptr, BAD_CAST "MPM", BAD_CAST "");
     auto mat = xmlNewChild(mpm, nullptr, BAD_CAST "material", BAD_CAST "");
@@ -138,7 +184,7 @@ public:
     xmlNewChild(mat, nullptr, BAD_CAST "specific_heat", BAD_CAST "134.0e-8");
     auto cm = xmlNewChild(mat, nullptr, BAD_CAST "constitutive_model", BAD_CAST "");
     xmlNewProp(cm, BAD_CAST "type", BAD_CAST "tabular_eos");
-    xmlNewChild(cm, nullptr, BAD_CAST "filename", BAD_CAST "tabular_eos.json");
+    xmlNewChild(cm, nullptr, BAD_CAST "filename", BAD_CAST table.c_str());
     xmlNewChild(cm, nullptr, BAD_CAST "independent_variables", BAD_CAST "DensityRatio");
     xmlNewChild(cm, nullptr, BAD_CAST "dependent_variables", BAD_CAST "Pressure");
     auto interp = xmlNewChild(cm, nullptr, BAD_CAST "interpolation", BAD_CAST "");
@@ -161,7 +207,7 @@ public:
     auto grid = xmlNewChild(rootNode, nullptr, BAD_CAST "Grid", BAD_CAST "");
     xmlNewChild(grid, nullptr, BAD_CAST "BoundaryConditions", BAD_CAST "");
     auto level = xmlNewChild(grid, nullptr, BAD_CAST "Level", BAD_CAST "");
-    box = xmlNewChild(level, nullptr, BAD_CAST "box", BAD_CAST "");
+    box = xmlNewChild(level, nullptr, BAD_CAST "Box", BAD_CAST "");
     xmlNewProp(box, BAD_CAST "label", BAD_CAST "1");
     xmlNewChild(box, nullptr, BAD_CAST "lower", BAD_CAST "[-2,-2,-2]");
     xmlNewChild(box, nullptr, BAD_CAST "upper", BAD_CAST "[3,3,3]");
@@ -171,6 +217,8 @@ public:
 
     // Print the document to stdout
     xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+    std::string ups_file = std::string(currPath) + "/" + "HydrostaticCompressionTabular.ups";
+    xmlSaveFormatFileEnc(ups_file.c_str(), doc, "ISO-8859-1", 1);
 
     // Create a ProblemSpec
     ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -184,13 +232,85 @@ public:
   }
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv, char* env[]) {
 
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new VaangoEnv(argc, argv));
+  ::testing::AddGlobalTestEnvironment(new VaangoEnv(argc, argv, env));
   return RUN_ALL_TESTS();
 }
 
-TEST(TabularDataTest, parseVariableNames)
+TEST(TabularEOSTest, singleParticleTest)
 {
+  char currPath[2000];
+  if (!getcwd(currPath, sizeof(currPath))) {
+    std::cout << "Current path not found\n";
+  }
+  std::string ups_file = std::string(currPath) + "/" + 
+                         "HydrostaticCompressionTabular.ups";
+  //std::cout << "Created Filename = " << ups_file << std::endl;
+
+  // Remove existing uda
+  std::string uda_file = std::string(currPath) + "/" + 
+                         "HydrostaticCompressionTabular.uda.000";
+  Dir::removeDir(uda_file.c_str());
+
+  char * start_addr = (char*)sbrk(0);
+  bool thrownException = false;
+
+  try {
+    ProblemSpecP ups = VaangoEnv::createInput();
+    ups->getNode()->_private = (void *) ups_file.c_str();
+    //std::cout << "Filename = " << static_cast<char*>(ups->getNode()->_private) << std::endl;
+
+    const ProcessorGroup* world = Uintah::Parallel::getRootProcessorGroup();
+    SimulationController* ctl = scinew AMRSimulationController(world, false, ups);
+    
+    RegridderCommon* reg = 0;
+    SolverInterface* solve = SolverFactory::create(ups, world, "");
+
+    UintahParallelComponent* comp = ComponentFactory::create(ups, world, false, "");
+    SimulationInterface* sim = dynamic_cast<SimulationInterface*>(comp);
+    ctl->attachPort("sim", sim);
+    comp->attachPort("solver", solve);
+    comp->attachPort("regridder", reg);
+
+    LoadBalancerCommon* lbc = LoadBalancerFactory::create(ups, world);
+    lbc->attachPort("sim", sim);
+
+    DataArchiver* dataarchiver = scinew DataArchiver(world, -1);
+    Output* output = dataarchiver;
+    ctl->attachPort("output", dataarchiver);
+    dataarchiver->attachPort("load balancer", lbc);
+    comp->attachPort("output", dataarchiver);
+    dataarchiver->attachPort("sim", sim);
+
+    SchedulerCommon* sched = SchedulerFactory::create(ups, world, output);
+    sched->attachPort("load balancer", lbc);
+    ctl->attachPort("scheduler", sched);
+    lbc->attachPort("scheduler", sched);
+    comp->attachPort("scheduler", sched);
+    sched->setStartAddr( start_addr );
+    sched->addReference();
+
+    ctl->run();
+    delete ctl;
+
+    sched->removeReference();
+    delete sched;
+    delete lbc;
+    delete sim;
+    delete solve;
+    delete output; 
+
+  } catch (ProblemSetupException& e) {
+    std::cout << e.message() << std::endl;
+    thrownException = true;
+  } catch (Exception& e) {
+    std::cout << e.message() << std::endl;
+    thrownException = true;
+  } catch (...) {
+    std::cout << "**ERROR** Unknown exception" << std::endl;
+    thrownException = true;
+  }
+
 }
