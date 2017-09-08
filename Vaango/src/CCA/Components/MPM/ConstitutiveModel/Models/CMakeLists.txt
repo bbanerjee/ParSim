@@ -71,6 +71,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Gurson.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Arena.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_ArenaMixture.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Tabular.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_vonMises.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModel.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModelFactory.cc 

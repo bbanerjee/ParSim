@@ -23,6 +23,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -30,7 +31,6 @@
 #include <cmath>
 
 #define USE_GEOMETRIC_BISECTION
-//#define USE_ALGEBRAIC_BISECTION
 //#define DEBUG_YIELD_BISECTION
 //#define DEBUG_YIELD_BISECTION_I1_J2
 //#define DEBUG_YIELD_BISECTION_R
@@ -47,6 +47,7 @@ YieldCond_Tabular::YieldCond_Tabular(Uintah::ProblemSpecP& ps)
 {
   // Check the input parameters
   checkInputParameters();
+  setYieldConditionRange();
 }
 
 void
@@ -57,10 +58,9 @@ YieldCond_Tabular::checkInputParameters()
 YieldCond_Tabular::YieldCond_Tabular(const YieldCond_Tabular* yc)
 {
   d_yield = yc->d_yield;
-}
-
-YieldCond_Tabular::~YieldCond_Tabular()
-{
+  d_I1bar_min = yc->d_I1bar_min;
+  d_I1bar_max = yc->d_I1bar_max;
+  d_sqrtJ2_max = yc->d_sqrtJ2_max;
 }
 
 void
@@ -75,11 +75,10 @@ YieldCond_Tabular::outputProblemSpec(Uintah::ProblemSpecP& ps)
 //--------------------------------------------------------------
 // Evaluate yield condition
 //
-// f := J2 - g(p) = 0
+// f := sqrt(J2) - g(p) = 0
 // where
 //     J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
-//     kappa = I1_peak - CR*(I1_peak - X_eff)
-//     g(p) = table
+//     g(pbar) = table,  pbar = -p
 //
 // Returns:
 //   hasYielded = -1.0 (if elastic)
@@ -100,14 +99,10 @@ YieldCond_Tabular::evalYieldCondition(const ModelStateBase* state_input)
   // Initialize hasYielded to -1
   double hasYielded = -1.0;
 
-  // Cauchy stress invariants: I1 = 3*p, J2 = q^2/3
-  double I1 = state->I1;
-  double sqrt_J2 = state->sqrt_J2;
+  double p_bar = -state->I1/3;
+  DoubleVec1D gg = d_yield.table.interpolate<1>({{p_bar}}); 
 
-  double pp = -I1/3;
-  DoubleVec1D gg = d_yield.table.interpolate<1>({{pp}}); 
-
-  if (sqrt_2 > gg) {
+  if (state->sqrt_J2 > gg[0]) {
     hasYielded = 1.0;
   }
 
@@ -118,44 +113,31 @@ YieldCond_Tabular::evalYieldCondition(const ModelStateBase* state_input)
 // Derivatives needed by return algorithms and Newton iterations
 
 //--------------------------------------------------------------
-// Evaluate yield condition max  value of sqrtJ2
+// Evaluate yield condition max value of sqrtJ2
 //--------------------------------------------------------------
 double
-YieldCond_Tabular::evalYieldConditionMax(const ModelStateBase* state_input)
+YieldCond_Tabular::evalYieldConditionMax(const ModelStateBase* )
 {
-  const ModelState_Tabular* state =
-    dynamic_cast<const ModelState_Tabular*>(state_input);
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Tabular.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  setYieldConditionRange();
+  return d_sqrtJ2_max;
+}
+
+/* Yield surface does not change over time.  So we can caculate the
+   max sqrt(J2) at the beginning */
+void 
+YieldCond_Tabular::setYieldConditionRange() {
+
+  d_I1bar_min = std::numeric_limits<double>::max();
+  d_I1bar_max = std::numeric_limits<double>::min();
+  d_sqrtJ2_max = std::numeric_limits<double>::min();
+
+  DoubleVec1D pvals = d_yield.table.getIndependentVarData("Pressure", IndexKey(0,0,0,0));
+  for (auto p_bar : pvals) {
+    DoubleVec1D gg = d_yield.table.interpolate<1>({{p_bar}}); 
+    d_I1bar_min = std::min(d_I1bar_min, 3.0*p_bar);
+    d_I1bar_max = std::max(d_I1bar_max, 3.0*p_bar);
+    d_sqrtJ2_max = std::max(d_sqrtJ2_max, gg[0]);
   }
-
-  // Number of points
-  int num_points = 10;
-
-  // Set up I1 values
-  double rad = 0.5 * (d_local.PEAKI1 - X_eff);
-  double cen = 0.5 * (d_local.PEAKI1 + X_eff);
-  double theta_min = 0.0;
-  double theta_max = M_PI;
-  std::vector<double> theta_vec;
-  linspace(theta_min, theta_max, num_points, theta_vec);
-  double J2_max = std::numeric_limits<double>::min();
-  // for (auto I1_eff : I1_eff_vec) {
-  for (auto theta : theta_vec) {
-
-    double I1 = cen + rad * std::cos(theta);
-
-    double pp = -I1/3;
-    DoubleVec1D gg = d_yield.table.interpolate<1>({{pp}}); 
-
-    // Compute J2
-    J2_max = std::max(J2_max, gg);
-  }
-
-  return std::sqrt(J2_max);
 }
 
 //--------------------------------------------------------------
@@ -163,18 +145,13 @@ YieldCond_Tabular::evalYieldConditionMax(const ModelStateBase* state_input)
  *  Compute df/dsigma
  *
  *  for the yield function
- *      f := J2 - Ff^2*Fc^2 = 0
+ *      f := sqrt(J2(s)) - g(p) = 0
  *  where
  *      J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
- *      I1_eff = 3*(p + pbar_w)
- *      X_eff  = X + 3*pbar_w
- *      kappa = I1_peak - CR*(I1_peak - X_eff)
- *      Ff := a1 - a3*exp(a2*I1_eff) - a4*I1_eff
- *      Fc^2 := 1 - (kappa - I1_eff)^2/(kappa - X_eff)^2
+ *      g(pbar) = table, pbar = -p
  *
  *  The derivative is
  *      df/dsigma = df/dp dp/dsigma + df/ds : ds/dsigma
- *
  *  where
  *      df/dp = computeVolStressDerivOfYieldFunction
  *      dp/dsigma = 1/3 I
@@ -211,7 +188,6 @@ YieldCond_Tabular::eval_df_dsigma(const Matrix3&,
   Matrix3 s_term = state->deviatoricStressTensor * (df_dJ2);
 
   df_dsigma = p_term + s_term;
-  // df_dsigma /= df_dsigma.Norm();
 
   return;
 }
@@ -221,24 +197,13 @@ YieldCond_Tabular::eval_df_dsigma(const Matrix3&,
 //   df/dp = derivative of the yield function wrt p
 //
 // for the yield function
-//     f := J2 - Ff^2*Fc^2 = 0
+//     f := sqrt(J2) - g(p) = 0
 // where
 //     J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
-//     I1_eff = 3*(p + pbar_w)
-//     X_eff  = X + 3*pbar_w
-//     kappa = I1_peak - CR*(I1_peak - X_eff)
-//     Ff := a1 - a3*exp(a2*I1_eff) - a4*I1_eff
-//     Fc^2 := 1 - (kappa - I1_eff)^2/(kappa - X_eff)^2
+//     g(pbar) := table,  pbar = -p
 //
 // the derivative is
-//     df/dp = -2 Ff Fc^2 dFf/dp - Ff^2 dFc^2/dp
-// where
-//     dFf/dp = dFf/dI1_eff dI1_eff/dp
-//            = -[a2 a3 exp(a2 I1_eff) + a4] dI1_eff/dp
-//     dFc^2/dp = dFc^2/dI1_eff dI1_eff/dp
-//            = 2 (kappa - I1_eff)/(kappa - X_eff)^2  dI1_eff/dp
-// and
-//    dI1_eff/dp = 1/3
+//     df/dp = -dg/dp = -dg/dpbar dpbar/dp = dg/dpbar
 //--------------------------------------------------------------
 double
 YieldCond_Tabular::computeVolStressDerivOfYieldFunction(
@@ -253,65 +218,14 @@ YieldCond_Tabular::computeVolStressDerivOfYieldFunction(
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  // Get the particle specific internal variables from the model state
-  double PEAKI1 = state->yieldParams.at("PEAKI1");
-  double FSLOPE = state->yieldParams.at("FSLOPE");
-  double STREN = state->yieldParams.at("STREN");
-  double YSLOPE = state->yieldParams.at("YSLOPE");
-  double CR = state->yieldParams.at("CR");
+  double p_bar = -state->I1/3;
 
-  std::vector<double> limitParameters =
-    computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
-  double a1 = limitParameters[0];
-  double a2 = limitParameters[1];
-  double a3 = limitParameters[2];
-  double a4 = limitParameters[3];
+  double epsilon = 1.0e-6;
+  DoubleVec1D g_lo = d_yield.table.interpolate<1>({{p_bar-epsilon}});
+  DoubleVec1D g_hi = d_yield.table.interpolate<1>({{p_bar+epsilon}});
+  double dg_dpbar = (g_hi[0] - g_lo[0])/(2*epsilon);
 
-  // Get the plastic internal variables from the model state
-  double X_eff = state->capX + 3.0 * state->pbar_w;
-  double kappa = state->kappa;
-
-  // Cauchy stress invariants: I1 = 3*p, J2 = q^2/3
-  double I1_eff = state->I1_eff;
-
-  // --------------------------------------------------------------------
-  // *** SHEAR LIMIT FUNCTION (Ff) ***
-  // --------------------------------------------------------------------
-  double Ff = a1 - a3 * exp(a2 * I1_eff) - a4 * I1_eff;
-
-  // --------------------------------------------------------------------
-  // *** Branch Point (Kappa) ***
-  // --------------------------------------------------------------------
-  kappa = PEAKI1 - CR * (PEAKI1 - X_eff); // Branch Point
-
-  // --------------------------------------------------------------------
-  // **Elliptical Cap Function: (fc)**
-  // --------------------------------------------------------------------
-  double kappa_I1_eff = kappa - I1_eff;
-  double kappa_X_eff = kappa - X_eff;
-  double kappaRatio = kappa_I1_eff / kappa_X_eff;
-  double Fc_sq = 1.0 - kappaRatio * kappaRatio;
-
-  // --------------------------------------------------------------------
-  // Derivatives
-  // --------------------------------------------------------------------
-  // dI1_eff/dp = 1/3
-  double dI1_eff_dp = 1.0 / 3.0;
-
-  // dFf/dp = dFf/dI1_eff dI1_eff/dp
-  //        = -[a2 a3 exp(a2 I1_eff) + a4] dI1_eff/dp
-  double dFf_dp = -(a2 * a3 * std::exp(a2 * I1_eff) + a4) * dI1_eff_dp;
-
-  // dFc^2/dp = dFc^2/dI1_eff dI1_eff/dp
-  //        = 2 (kappa - I1_eff)/(kappa - X_eff)^2  dI1_eff/dp
-  double dFc_sq_dp =
-    (2.0 * kappa_I1_eff / (kappa_X_eff * kappa_X_eff)) * dI1_eff_dp;
-
-  // df/dp = -2 Ff Fc^2 dFf/dp - 2 Ff^2 dFc^2/dp
-  //       = -2 Ff (Fc^2 dFf/dp + Ff dFc^2/dp)
-  double df_dp = -Ff * (2.0 * Fc_sq * dFf_dp + Ff * dFc_sq_dp);
-
-  return df_dp;
+  return dg_dpbar;
 }
 
 //--------------------------------------------------------------
@@ -320,17 +234,13 @@ YieldCond_Tabular::computeVolStressDerivOfYieldFunction(
 //   df/dJ2 = derivative of the yield function wrt J2
 //
 // for the yield function
-//     f := J2 - Ff^2*Fc^2 = 0
+//     f := sqrt(J2) - g(p) = 0
 // where
 //     J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
-//     I1_eff = 3*(p + pbar_w)
-//     X_eff  = X + 3*pbar_w
-//     kappa = I1_peak - CR*(I1_peak - X_eff)
-//     Ff := a1 - a3*exp(a2*I1_eff) - a4*I1_eff
-//     Fc^2 := 1 - (kappa - I1_eff)^2/(kappa - X_eff)^2
+//     g(pbar) := table, pbar = -p
 //
 // the derivative is
-//     df/dJ2 = 1
+//     df/dJ2 = 1/(2 sqrt(J2))
 //--------------------------------------------------------------
 double
 YieldCond_Tabular::computeDevStressDerivOfYieldFunction(
@@ -345,86 +255,22 @@ YieldCond_Tabular::computeDevStressDerivOfYieldFunction(
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  return 1.0;
-}
+  double df_dJ2 = 1/(2*state->sqrt_J2);
 
-/**
- * Function: getInternalPoint
- *
- * Purpose: Get a point that is inside the yield surface
- *
- * Inputs:
- *  state = state at the current time
- *
- * Returns:
- *   I1 = value of tr(stress) at a point inside the yield surface
- */
-double
-YieldCond_Tabular::getInternalPoint(const ModelStateBase* state_old_input,
-                                    const ModelStateBase* state_trial_input)
-{
-  const ModelState_Tabular* state_old =
-    dynamic_cast<const ModelState_Tabular*>(state_old_input);
-  const ModelState_Tabular* state_trial =
-    dynamic_cast<const ModelState_Tabular*>(state_trial_input);
-  if ((!state_old) || (!state_trial)) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Tabular.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-
-  // Compute effective trial stress
-  double I1_eff_trial =
-    state_trial->I1_eff - state_trial->pbar_w + state_old->pbar_w;
-
-  // Get the particle specific internal variables from the model state
-  double PEAKI1 = state_old->yieldParams.at("PEAKI1");
-
-  // It may be better to use an interior point at the center of the yield
-  // surface, rather than at
-  // pbar_w, in particular when PEAKI1=0.  Picking the midpoint between PEAKI1
-  // and X would be
-  // problematic when the user has specified some no porosity condition (e.g.
-  // p0=-1e99)
-  double I1_eff_interior = 0.0;
-  double upperI1 = PEAKI1;
-  if (I1_eff_trial < upperI1) {
-    if (I1_eff_trial >
-        state_old->capX +
-          3.0 * state_old->pbar_w) { // Trial is above yield surface
-      I1_eff_interior = state_trial->I1_eff;
-    } else { // Trial is past X, use yield midpoint as interior point
-      I1_eff_interior =
-        -3.0 * state_old->pbar_w +
-        0.5 * (PEAKI1 + state_old->capX + 3.0 * state_old->pbar_w);
-    }
-  } else { // I1_trial + pbar_w >= I1_peak => Trial is past vertex
-    double lTrial = sqrt(I1_eff_trial * I1_eff_trial +
-                         state_trial->sqrt_J2 * state_trial->sqrt_J2);
-    double lYield = 0.5 * (PEAKI1 - state_old->capX - 3.0 * state_old->pbar_w);
-    I1_eff_interior =
-      -3.0 * state_old->pbar_w + upperI1 - std::min(lTrial, lYield);
-  }
-
-  return I1_eff_interior;
+  return df_dJ2;
 }
 
 /**
  * Function: getClosestPoint
- *
  * Purpose: Get the point on the yield surface that is closest to a given point
  * (2D)
- *
  * Inputs:
  *  state = current state
  *  px = x-coordinate of point
  *  py = y-coordinate of point
- *
  * Outputs:
  *  cpx = x-coordinate of closest point on yield surface
  *  cpy = y-coordinate of closest point
- *
  */
 bool
 YieldCond_Tabular::getClosestPoint(const ModelStateBase* state_input,
@@ -440,29 +286,16 @@ YieldCond_Tabular::getClosestPoint(const ModelStateBase* state_input,
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-#ifdef USE_GEOMETRIC_BISECTION
-  // std::chrono::time_point<std::chrono::system_clock> start, end;
-  // start = std::chrono::system_clock::now();
+  //std::chrono::time_point<std::chrono::system_clock> start, end;
+  //start = std::chrono::system_clock::now();
   Point pt(px, py, 0.0);
   Point closest(0.0, 0.0, 0.0);
   getClosestPointGeometricBisect(state, pt, closest);
   cpx = closest.x();
   cpy = closest.y();
-// end = std::chrono::system_clock::now();
-// std::cout << "Geomeric Bisection : Time taken = " <<
-//    std::chrono::duration<double>(end-start).count() << std::endl;
-#else
-  // std::chrono::time_point<std::chrono::system_clock> start, end;
-  // start = std::chrono::system_clock::now();
-  Point pt(px, py, 0.0);
-  Point closest(0.0, 0.0, 0.0);
-  getClosestPointAlgebraicBisect(state, pt, closest);
-  cpx = closest.x();
-  cpy = closest.y();
-// end = std::chrono::system_clock::now();
-// std::cout << "Algebraic Bisection : Time taken = " <<
-//    std::chrono::duration<double>(end-start).count() << std::endl;
-#endif
+  //end = std::chrono::system_clock::now();
+  //std::cout << "Geomeric Bisection : Time taken = " <<
+  //std::chrono::duration<double>(end-start).count() << std::endl;
 
   return true;
 }
@@ -472,52 +305,28 @@ YieldCond_Tabular::getClosestPointGeometricBisect(
   const ModelState_Tabular* state, const Uintah::Point& z_r_pt,
   Uintah::Point& z_r_closest)
 {
-  // Get the particle specific internal variables from the model state
-  // Store in a local struct
-  d_local.PEAKI1 = state->yieldParams.at("PEAKI1");
-  d_local.FSLOPE = state->yieldParams.at("FSLOPE");
-  d_local.STREN = state->yieldParams.at("STREN");
-  d_local.YSLOPE = state->yieldParams.at("YSLOPE");
-  d_local.BETA = state->yieldParams.at("BETA");
-  d_local.CR = state->yieldParams.at("CR");
-
-  std::vector<double> limitParameters = computeModelParameters(
-    d_local.PEAKI1, d_local.FSLOPE, d_local.STREN, d_local.YSLOPE);
-  d_local.a1 = limitParameters[0];
-  d_local.a2 = limitParameters[1];
-  d_local.a3 = limitParameters[2];
-  d_local.a4 = limitParameters[3];
-
-  // Get the plastic internal variables from the model state
-  double pbar_w = state->pbar_w;
-  double X_eff = state->capX + 3.0 * pbar_w;
-
-  // Compute kappa
-  double I1_diff = d_local.PEAKI1 - X_eff;
-  double kappa = d_local.PEAKI1 - d_local.CR * I1_diff;
-
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
 
   // Compute diameter of yield surface in z-r space
-  double sqrtJ2_diff = 2.0 * evalYieldConditionMax(state);
+  double I1_diff = d_I1bar_max - d_I1bar_min;
+  double sqrtJ2_diff = 2*d_sqrtJ2_max;
   double yield_surf_dia_zrprime =
     std::max(I1_diff * one_sqrt_three, sqrtJ2_diff * sqrt_two * sqrtKG);
   double dist_to_trial_zr =
     std::sqrt(z_r_pt.x() * z_r_pt.x() + z_r_pt.y() * z_r_pt.y());
   double dist_dia_ratio = dist_to_trial_zr / yield_surf_dia_zrprime;
-  // int num_points = std::max(5, (int) std::ceil(std::log(dist_dia_ratio)));
   int num_points = std::max(5, (int)std::ceil(std::log(dist_dia_ratio)));
 
   // Set up I1 limits
-  double I1eff_min = X_eff;
-  double I1eff_max = d_local.PEAKI1;
+  double I1_min = -d_I1bar_max;
+  double I1_max = -d_I1bar_min;
 
   // Set up bisection
   double eta_lo = 0.0, eta_hi = 1.0;
 
   // Set up mid point
-  double I1eff_mid = 0.5 * (I1eff_min + I1eff_max);
+  double I1_mid = 0.5 * (I1_min + I1_max);
   double eta_mid = 0.5 * (eta_lo + eta_hi);
 
   // Do bisection
@@ -534,24 +343,16 @@ YieldCond_Tabular::getClosestPointGeometricBisect(
 
     // Get the yield surface points
     z_r_points.clear();
-    getYieldSurfacePointsAll_RprimeZ(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max,
+    getYieldSurfacePointsAll_RprimeZ(sqrtKG, I1_min, I1_max,
                                      num_points, z_r_points);
 
     // Find the closest point
-    findClosestPoint(z_r_pt, z_r_points, z_r_closest);
+    Vaango::Util::findClosestPoint(z_r_pt, z_r_points, z_r_closest);
 
 #ifdef DEBUG_YIELD_BISECTION_R
     std::cout << "iteration = " << iters << std::endl;
     std::cout << "K = " << state->bulkModulus << std::endl;
     std::cout << "G = " << state->shearModulus << std::endl;
-    std::cout << "X = " << state->capX << std::endl;
-    std::cout << "pbar_w = " << state->pbar_w << std::endl;
-    std::cout << "yieldParams = list(BETA = " << d_local.BETA << ", "
-              << "CR = " << d_local.CR << ", "
-              << "FSLOPE = " << d_local.FSLOPE << ", "
-              << "PEAKI1 = " << d_local.PEAKI1 << ", "
-              << "STREN = " << d_local.STREN << ", "
-              << "YSLOPE = " << d_local.YSLOPE << ")" << std::endl;
     std::cout << "z_r_pt = c(" << z_r_pt.x() << "," << z_r_pt.y() << ")"
               << std::endl;
     std::cout << "z_r_closest = c(" << z_r_closest.x() << "," << z_r_closest.y()
@@ -594,7 +395,6 @@ YieldCond_Tabular::getClosestPointGeometricBisect(
 #endif
 
 #ifdef DEBUG_YIELD_BISECTION
-    // if (state->particleID == 3377699720593411) {
     std::cout << "Iteration = " << iters << std::endl;
     std::cout << "State = " << *state << std::endl;
     std::cout << "z_r_pt = " << z_r_pt << ";" << std::endl;
@@ -615,12 +415,10 @@ YieldCond_Tabular::getClosestPointGeometricBisect(
     std::cout
       << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');"
       << std::endl;
-//}
 #endif
 #ifdef DEBUG_YIELD_BISECTION_I1_J2
-    // if (state->particleID == 3377699720593411) {
-    double fac_z = std::sqrt(3.0);
-    double fac_r = d_local.BETA * sqrtKG * std::sqrt(2.0);
+    double fac_z = sqrt_three;
+    double fac_r = d_local.BETA * sqrtKG * sqrt_two;
     std::cout << "Iteration = " << iters << std::endl;
     std::cout << "I1_J2_trial = [" << z_r_pt.x() * fac_z << " "
               << z_r_pt.y() / fac_r << "];" << std::endl;
@@ -642,22 +440,21 @@ YieldCond_Tabular::getClosestPointGeometricBisect(
     std::cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) "
                  "I1_J2_closest(2)], '--');"
               << std::endl;
-//}
 #endif
 
     // Compute I1 for the closest point
-    double I1eff_closest = sqrt_three * z_r_closest.x();
+    double I1_closest = sqrt_three * z_r_closest.x();
 
     // If (I1_closest < I1_mid)
-    if (I1eff_closest < I1eff_mid) {
-      I1eff_max = I1eff_mid;
+    if (I1_closest < I1_mid) {
+      I1_max = I1_mid;
       eta_hi = eta_mid;
     } else {
-      I1eff_min = I1eff_mid;
+      I1_min = I1_mid;
       eta_lo = eta_mid;
     }
 
-    I1eff_mid = 0.5 * (I1eff_min + I1eff_max);
+    I1_mid = 0.5 * (I1_min + I1_max);
     eta_mid = 0.5 * (eta_lo + eta_hi);
 
     // Distance to old closest point
@@ -674,90 +471,51 @@ YieldCond_Tabular::getClosestPointGeometricBisect(
 
 /* Get the points on the yield surface */
 void
-YieldCond_Tabular::getYieldSurfacePointsAll_RprimeZ(
-  const double& X_eff, const double& kappa, const double& sqrtKG,
-  const double& I1eff_min, const double& I1eff_max, const int& num_points,
+YieldCond_Tabular::getYieldSurfacePointsAll_RprimeZ(const double& sqrtKG,
+  const double& I1_min, const double& I1_max, const int& num_points,
   std::vector<Uintah::Point>& z_r_vec)
 {
-  // Compute z_eff and r'
-  computeZeff_and_RPrime(X_eff, kappa, sqrtKG, I1eff_min, I1eff_max, num_points,
-                         z_r_vec);
+  // Compute z and r'
+  computeZ_and_RPrime(sqrtKG, I1_min, I1_max, num_points, z_r_vec);
 
   return;
 }
 
-/* Get the points on two segments the yield surface */
+/*! Compute a vector of z, r' values given a range of I1 values */
 void
-YieldCond_Tabular::getYieldSurfacePointsSegment_RprimeZ(
-  const double& X_eff, const double& kappa, const double& sqrtKG,
-  const Uintah::Point& start_point, const Uintah::Point& end_point,
-  const int& num_points, std::vector<Uintah::Point>& z_r_poly)
-{
-
-  // Find the start I1 and end I1 values of the segments
-  // **TODO** make sure that the start and end points are differenet
-  double z_effStart = start_point.x();
-  double z_effEnd = end_point.x();
-  double I1_effStart = sqrt_three * z_effStart;
-  double I1_effEnd = sqrt_three * z_effEnd;
-
-  // Compute z_eff and r'
-  computeZeff_and_RPrime(X_eff, kappa, sqrtKG, I1_effStart, I1_effEnd,
-                         num_points, z_r_poly);
-
-  return;
-}
-
-/*! Compute a vector of z_eff, r' values given a range of I1_eff values */
-void
-YieldCond_Tabular::computeZeff_and_RPrime(
-  const double& X_eff, const double& kappa, const double& sqrtKG,
-  const double& I1eff_min, const double& I1eff_max, const int& num_points,
+YieldCond_Tabular::computeZ_and_RPrime(const double& sqrtKG,
+  const double& I1_min, const double& I1_max, const int& num_points,
   std::vector<Uintah::Point>& z_r_vec)
 {
   // Set up points
-  double rad = 0.5 * (d_local.PEAKI1 - X_eff);
-  double cen = 0.5 * (d_local.PEAKI1 + X_eff);
-  double theta_max = std::acos(std::max((I1eff_min - cen) / rad, -1.0));
-  double theta_min = std::acos(std::min((I1eff_max - cen) / rad, 1.0));
+  double rad = 0.5 * (I1_max - I1_min);
+  double cen = 0.5 * (I1_max + I1_min);
+  double theta_max = std::acos(std::max((I1_min - cen) / rad, -1.0));
+  double theta_min = std::acos(std::min((I1_max - cen) / rad, 1.0));
   std::vector<double> theta_vec;
-  linspace(theta_min, theta_max, num_points, theta_vec);
+  Vaango::Util::linspace(theta_min, theta_max, num_points, theta_vec);
 
   for (auto theta : theta_vec) {
-    double I1_eff = std::max(cen + rad * std::cos(theta), X_eff);
-
-    // Compute F_f
-    double Ff = d_local.a1 - d_local.a3 * std::exp(d_local.a2 * I1_eff) -
-                d_local.a4 * (I1_eff);
-    double Ff_sq = Ff * Ff;
-
-    // Compute Fc
-    double Fc_sq = 1.0;
-    if (I1_eff < kappa) {
-      double ratio = (kappa - I1_eff) / (kappa - X_eff);
-      Fc_sq = std::max(1.0 - ratio * ratio, 0.0);
-    }
-
-    // Compute J2
-    double J2 = Ff_sq * Fc_sq;
+    double I1 = std::max(cen + rad * std::cos(theta), I1_max);
+    double p_bar = -I1/3.0;
+    DoubleVec1D gg = d_yield.table.interpolate<1>({{p_bar}}); 
+    double sqrt_J2 = gg[0];
 
 // Check for nans
 #ifdef CHECK_FOR_NANS
-    if (std::isnan(I1_eff) || std::isnan(J2)) {
-      double ratio = (kappa - I1_eff) / (kappa - X_eff);
-      std::cout << "theta = " << theta << " kappa = " << kappa
-                << " X_eff = " << X_eff << " I1_eff = " << I1_eff
-                << " J2 = " << J2 << " Ff = " << Ff << " Fc_sq = " << Fc_sq
-                << " ratio = " << ratio << std::endl;
+    if (std::isnan(I1) || std::isnan(sqrt_J2)) {
+      std::cout << "theta = " << theta 
+                << " I1 = " << I1
+                << " sqrtJ2 = " << sqrt_J2 << std::endl;
       std::cout << "rad = " << rad << " cen = " << cen
                 << " theta_max = " << theta_max << " theta_min = " << theta_min
-                << " I1eff_max = " << I1eff_max << " I1eff_min = " << I1eff_min
+                << " I1_max = " << I1_max << " I1_min = " << I1_min
                 << std::endl;
     }
 #endif
 
     z_r_vec.push_back(Uintah::Point(
-      I1_eff / sqrt_three, d_local.BETA * std::sqrt(2.0 * J2) * sqrtKG, 0.0));
+      I1 / sqrt_three, sqrt_two * sqrt_J2 * sqrtKG, 0.0));
   }
 
   return;

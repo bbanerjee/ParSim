@@ -29,6 +29,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Tabular.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
 #include <CCA/Components/MPM/ConstitutiveModel/WeibParameters.h>
 
 #include <Core/Grid/Variables/VarLabel.h>
@@ -148,7 +149,10 @@ public:
    *   I1 = value of tr(stress) at a point inside the yield surface
    */
   double getInternalPoint(const ModelStateBase* state_old,
-                          const ModelStateBase* state_trial) override;
+                          const ModelStateBase* state_trial) override
+  {
+    return 0.0;
+  }
 
   /**
    * Function: getClosestPoint
@@ -308,8 +312,12 @@ private:
   };
 
   YieldFunctionParameters d_yield;
+  double d_I1bar_min;
+  double d_I1bar_max;
+  double d_sqrtJ2_max;
 
   void checkInputParameters();
+  void setYieldConditionRange();
 
   /* Find the closest point */
   void getClosestPointGeometricBisect(const ModelState_Tabular* state,
@@ -317,18 +325,12 @@ private:
                                       Uintah::Point& z_r_closest);
 
   /* Get the points on the yield surface */
-  void getYieldSurfacePointsAll_RprimeZ(
-    const double& X_eff, const double& kappa, const double& sqrtKG,
+  void getYieldSurfacePointsAll_RprimeZ(const double& sqrtKG,
     const double& I1eff_min, const double& I1eff_max, const int& num_points,
     std::vector<Uintah::Point>& polyline);
-  void getYieldSurfacePointsSegment_RprimeZ(
-    const double& X_eff, const double& kappa, const double& sqrtKG,
-    const Uintah::Point& start_point, const Uintah::Point& end_point,
-    const int& num_points, std::vector<Uintah::Point>& polyline);
 
   /*! Compute a vector of z_eff, r' values given a range of I1_eff values */
-  void computeZeff_and_RPrime(const double& X_eff, const double& kappa,
-                              const double& sqrtKG, const double& I1eff_min,
+  void computeZ_and_RPrime(const double& sqrtKG, const double& I1eff_min,
                               const double& I1eff_max, const int& num_points,
                               std::vector<Uintah::Point>& z_r_vec);
 };

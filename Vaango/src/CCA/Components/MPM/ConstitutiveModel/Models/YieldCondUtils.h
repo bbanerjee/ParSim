@@ -8,6 +8,12 @@ namespace Vaango {
 
 namespace Util {
 
+/* For static asserts in class methods that should not be called */
+template <typename T>
+struct DoNotUse : std::false_type
+{
+};
+
 /* Get the closest point on a polyline from a given point */
 void findClosestPoint(const Uintah::Point& p,
                       const std::vector<Uintah::Point>& poly,
