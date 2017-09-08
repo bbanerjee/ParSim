@@ -95,26 +95,25 @@ ElasticModuli_Tabular::getCurrentElasticModuli(const ModelStateBase* state_input
   }
 
   // Make sure the quantities are positive in compression
-  double ev_bar = -((state->elasticStrainTensor).Trace() +
-                    (state->plasticStrainTensor).Trace());
+  double ev_e_bar = -(state->elasticStrainTensor).Trace();
   double ev_p_bar = -(state->plasticStrainTensor).Trace();
 
   // Compute the elastic moduli
-  double K = computeBulkModulus(ev_bar, ev_p_bar);
+  double K = computeBulkModulus(ev_e_bar, ev_p_bar);
   double G = computeShearModulus(K);
 
   return ElasticModuli(K, G);
 }
 
 double 
-ElasticModuli_Tabular::computeBulkModulus(const double& totalVolStrain,
+ElasticModuli_Tabular::computeBulkModulus(const double& elasticVolStrain,
                                           const double& plasticVolStrain) const
 {
   double epsilon = 1.0e-6;
   DoubleVec1D pressure_lo = 
-    d_bulk.table.interpolate<2>({{plasticVolStrain, totalVolStrain-epsilon}});
+    d_bulk.table.interpolate<2>({{plasticVolStrain, elasticVolStrain-epsilon}});
   DoubleVec1D pressure_hi = 
-    d_bulk.table.interpolate<2>({{plasticVolStrain, totalVolStrain+epsilon}});
+    d_bulk.table.interpolate<2>({{plasticVolStrain, elasticVolStrain+epsilon}});
   double K = (pressure_hi[0] - pressure_lo[0])/(2*epsilon);
   return K;
 }

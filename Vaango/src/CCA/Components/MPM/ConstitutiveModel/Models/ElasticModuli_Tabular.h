@@ -46,17 +46,12 @@ class ElasticModuli_Tabular : public ElasticModuliModel
 
 public:
 
-  /*! Construct a constant elasticity model. */
-  ElasticModuli_Tabular(Uintah::ProblemSpecP& ps);
-
+  ElasticModuli_Tabular() = delete;
   ElasticModuli_Tabular(const ElasticModuli_Tabular& smm) = delete;
-
-  /*! Construct a copy of constant elasticity model. */
-  ElasticModuli_Tabular(const ElasticModuli_Tabular* smm);
-
-  /*! Destructor of constant elasticity model.   */
   ~ElasticModuli_Tabular() = default;
 
+  ElasticModuli_Tabular(Uintah::ProblemSpecP& ps);
+  ElasticModuli_Tabular(const ElasticModuli_Tabular* smm);
   ElasticModuli_Tabular& operator=(const ElasticModuli_Tabular& smm) = delete;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
@@ -93,6 +88,7 @@ private:
     BulkModulusParameters() = default;
     BulkModulusParameters(Uintah::ProblemSpecP& ps) : table(ps) {
       table.setup();
+      table.translate<2>();
     }
     BulkModulusParameters(const BulkModulusParameters& bulk) {
       table = bulk.table;
@@ -118,7 +114,7 @@ private:
 
   void checkInputParameters();
 
-  double computeBulkModulus(const double& totalStrain,
+  double computeBulkModulus(const double& elasticStrain,
                             const double& plasticStrain) const;
   double computeShearModulus(const double& bulkModulus) const;
 

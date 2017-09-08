@@ -216,7 +216,7 @@ public:
     xmlNewChild(box, nullptr, BAD_CAST "patches", BAD_CAST "[1,1,1]");
 
     // Print the document to stdout
-    xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+    //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
     std::string ups_file = std::string(currPath) + "/" + "HydrostaticCompressionTabular.ups";
     xmlSaveFormatFileEnc(ups_file.c_str(), doc, "ISO-8859-1", 1);
 

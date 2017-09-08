@@ -49,26 +49,21 @@ public:
 
   Uintah::long64 particleID;
 
-  Uintah::Matrix3 stressTensor; // The tensor form of the total stress
-  Uintah::Matrix3
-    deviatoricStressTensor; // The deviatoric part of the total stress
   double I1;      // I1= Tr(sigma)
   double J2;
   double sqrt_J2; // sqrt(J2)
   double zz;      // Lode coordinate 'z'
   double rr;      // Lode coordinate 'r'
-
-  Uintah::Matrix3 elasticStrainTensor; // The tensor form of elastic strain
-  Uintah::Matrix3 plasticStrainTensor; // The tensor form of plastic strain
   double ep_v;      // ep_v = Tr(ep) : Volumetric part of the plastic strain
-  double dep_v;     // Increment of the volumetric plastic strain
-  double ep_cum_eq; // The cumulative equivalent plastic strain
-                    // (This quantity always increases)
   double ep_eq;     // The equivalent plastic strain computed from the current
-                    // plastic strain
-                    // (This quantity can decrease)
+                    // plastic strain (This quantity can decrease)
 
-  ModelState_Tabular() = default;
+  Uintah::Matrix3 stressTensor; 
+  Uintah::Matrix3 deviatoricStressTensor; 
+  Uintah::Matrix3 elasticStrainTensor; 
+  Uintah::Matrix3 plasticStrainTensor;
+
+  ModelState_Tabular();
 
   ModelState_Tabular(const ModelState_Tabular& state) = default;
   ModelState_Tabular(const ModelState_Tabular* state);
@@ -84,10 +79,15 @@ public:
   friend std::ostream& operator<<(std::ostream& os,
                                   const ModelState_Tabular& state)
   {
-    os << "\t ParticleID = " << state.particleID << " I1 = " << state.I1
+    os << "ParticleID = " << state.particleID << "\n"
+       << "\t sigma = " << state.stressTensor << "\n"
+       << "\t dev(sigma) = " << state.deviatoricStressTensor << "\n"
+       << "\t I1 = " << state.I1 << ", J2 = " << state.J2
        << ", sqrt_J2 = " << state.sqrt_J2 << ", r = " << state.rr
        << ", z = " << state.zz << "\n"
-       << ", evp = " << state.ep_v << " ep_eq = " << state.ep_eq 
+       << "\t eps_e = " << state.elasticStrainTensor << "\n"
+       << "\t eps_p = " << state.plasticStrainTensor << "\n"
+       << "\t evp = " << state.ep_v << " ep_eq = " << state.ep_eq << "\n"
        << "\t K = " << state.bulkModulus << ", G = " << state.shearModulus
        << "\n";
     return os;

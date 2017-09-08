@@ -34,6 +34,16 @@ const double ModelState_Tabular::sqrtTwo = std::sqrt(2.0);
 const double ModelState_Tabular::sqrtThree = std::sqrt(3.0);
 
 
+ModelState_Tabular::ModelState_Tabular() 
+ : ModelState_Default()
+ , particleID(0)
+ , I1(0) , J2(0) , sqrt_J2(0) , zz(0) , rr(0)
+ , ep_v(0) , ep_eq(0)
+ , stressTensor(0) , deviatoricStressTensor(0)
+ , elasticStrainTensor(0) , plasticStrainTensor(0)
+{
+}
+
 ModelState_Tabular::ModelState_Tabular(const ModelState_Tabular* state)
 {
   *this = *state;

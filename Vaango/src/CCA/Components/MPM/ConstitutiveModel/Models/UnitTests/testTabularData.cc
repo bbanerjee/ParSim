@@ -251,6 +251,9 @@ TEST(TabularDataTest, readJSONTableFromStream2D)
     */
   }
                                           
+  //---------------------------------------------------
+  // Interpolation test
+  //---------------------------------------------------
   std::array<double, 2> indepVals = {{150, 0.25}};
   auto val = eos.interpolateLinearSpline<2>(indepVals, 
              eos.getIndependentVars(), eos.getDependentVars());
@@ -271,6 +274,29 @@ TEST(TabularDataTest, readJSONTableFromStream2D)
   val = eos.interpolateLinearSpline<2>(indepVals, 
              eos.getIndependentVars(), eos.getDependentVars());
   EXPECT_DOUBLE_EQ(val[0], 588.7);
+
+  //---------------------------------------------------
+  // Translation test
+  //---------------------------------------------------
+  eos.translate<2>();
+  for (auto ii = 0u; ii < tempData.size(); ii++) {
+    auto data = eos.getIndependentVarData("Volume", 
+                                          TableContainers::IndexKey(ii, 0, 0, 0));
+    if (ii == 0) {
+      EXPECT_DOUBLE_EQ(data[0], -99.9);
+    } else if (ii == 1) {
+      EXPECT_DOUBLE_EQ(data[1], -199.75);
+    } else if (ii == 2) {
+      EXPECT_DOUBLE_EQ(data[2], -299.25);
+    }
+    /*
+    std::cout << "Volume[" << ii << "]";
+    std::copy(data.begin(), data.end(),
+              std::ostream_iterator<double>(std::cout, " "));
+    std::cout << std::endl;
+    */
+  }
+
 }
 
 // Create a 3D test JSON document

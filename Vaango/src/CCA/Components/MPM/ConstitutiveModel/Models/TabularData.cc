@@ -40,28 +40,30 @@ TabularData::TabularData(const TabularData& table) {
   d_indepVarNames = table.d_indepVarNames;
   d_depVarNames = table.d_depVarNames;
   d_filename = table.d_filename;
-  initialize();
   for (auto ii = 0u; ii < table.d_indepVars.size(); ii++) {
-    d_indepVars[ii]->name = table.d_indepVars[ii]->name;
+    addIndependentVariable(table.d_indepVars[ii]->name);
     d_indepVars[ii]->data = table.d_indepVars[ii]->data;
   }
   for (auto ii = 0u; ii < table.d_depVars.size(); ii++) {
-    d_depVars[ii]->name = table.d_depVars[ii]->name;
+    addDependentVariable(table.d_depVars[ii]->name);
     d_depVars[ii]->data = table.d_depVars[ii]->data;
   }
 }
 
 TabularData& 
 TabularData::operator=(const TabularData& table) {
+
+  if (this == &table) return *this;
+
   d_indepVarNames = table.d_indepVarNames;
   d_depVarNames = table.d_depVarNames;
   d_filename = table.d_filename;
   for (auto ii = 0u; ii < table.d_indepVars.size(); ii++) {
-    d_indepVars[ii]->name = table.d_indepVars[ii]->name;
+    addIndependentVariable(table.d_indepVars[ii]->name);
     d_indepVars[ii]->data = table.d_indepVars[ii]->data;
   }
   for (auto ii = 0u; ii < table.d_depVars.size(); ii++) {
-    d_depVars[ii]->name = table.d_depVars[ii]->name;
+    addDependentVariable(table.d_depVars[ii]->name);
     d_depVars[ii]->data = table.d_depVars[ii]->data;
   }
   return *this;
@@ -233,12 +235,10 @@ TabularData::readJSONTable<2>(const json& doc, const std::string& tableFile)
 
     DoubleVec1D indepVar1Data =
       getDoubleArrayJSON(data0[ii], d_indepVars[1]->name, tableFile);
-    /*
-    std::cout << "Read " << d_indepVars[1]->name << " ii = " << ii << " ";
-    std::copy(indepVar1Data.begin(), indepVar1Data.end(),
-              std::ostream_iterator<double>(std::cout, " "));
-    std::cout << std::endl;
-    */
+    //std::cout << "Read " << d_indepVars[1]->name << " ii = " << ii << " ";
+    //std::copy(indepVar1Data.begin(), indepVar1Data.end(),
+    //          std::ostream_iterator<double>(std::cout, " "));
+    //std::cout << std::endl;
     d_indepVars[1]->data.insert({ IndexKey(ii, 0, 0, 0), indepVar1Data });
 
     for (const auto& depVar : d_depVars) {
@@ -396,6 +396,33 @@ TabularData::getDoubleArrayJSON(const json& object, const std::string key,
   return vec;
 }
 
+template <>
+void
+TabularData::translate<2>() 
+{
+  // First find the segment containing the first independent variable value
+  // and the value of parameter s
+  auto indepVarData0 =
+    getIndependentVarData(d_indepVars[0]->name, IndexKey(0, 0, 0, 0));
+  //std::cout << "Read " << d_indepVars[0]->name << " ";
+  //std::copy(indepVarData0.begin(), indepVarData0.end(),
+  //          std::ostream_iterator<double>(std::cout, " "));
+  //std::cout << std::endl;
+
+  for (auto ii = 0u; ii < indepVarData0.size() ; ii++) {
+    auto indepVarData1 =
+      getIndependentVarData(d_indepVars[1]->name, IndexKey(ii, 0, 0, 0));
+    //std::cout << "Read " << d_indepVars[1]->name << " ";
+    //std::copy(indepVarData1.begin(), indepVarData1.end(),
+    //          std::ostream_iterator<double>(std::cout, " "));
+    //std::cout << std::endl;
+    for (auto& val : indepVarData1) {
+      val -= indepVarData0[ii];
+    }
+    d_indepVars[1]->data[IndexKey(ii, 0, 0, 0)] =  indepVarData1;
+  }
+}
+
 template <int dim>
 DoubleVec1D
 TabularData::interpolate(const std::array<double, dim>& indepValues) const
@@ -448,10 +475,14 @@ TabularData::interpolateLinearSpline<2>(
   // and the value of parameter s
   auto indepVarData0 =
     getIndependentVarData(indepVars[0]->name, IndexKey(0, 0, 0, 0));
+  //std::cout << "Read " << indepVars[0]->name << " ";
+  //std::copy(indepVarData0.begin(), indepVarData0.end(),
+  //          std::ostream_iterator<double>(std::cout, " "));
+  //std::cout << std::endl;
   auto segLowIndex0 = findLocation(indepValues[0], indepVarData0);
   auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
-  // std::cout << "Lo Index 0 = " << segLowIndex0 << " s = " << sval <<
-  // std::endl;
+  //std::cout << "Lo Index 0 = " << segLowIndex0 << " s = " << sval <<
+  //std::endl;
 
   // Choose the two vectors containing the relevant independent variable data
   // and find the segments containing the data
@@ -459,18 +490,22 @@ TabularData::interpolateLinearSpline<2>(
   for (auto ii = segLowIndex0; ii <= segLowIndex0 + 1; ii++) {
     auto indepVarData1 =
       getIndependentVarData(indepVars[1]->name, IndexKey(ii, 0, 0, 0));
+    //std::cout << "Read " << indepVars[1]->name << " ";
+    //std::copy(indepVarData1.begin(), indepVarData1.end(),
+    //          std::ostream_iterator<double>(std::cout, " "));
+    //std::cout << std::endl;
     auto segLowIndex1 = findLocation(indepValues[1], indepVarData1);
     auto tval = computeParameter(indepValues[1], segLowIndex1, indepVarData1);
-    // std::cout << "Lo Index 1 = " << segLowIndex1 << " t = " << tval <<
-    // std::endl;
+    //std::cout << "Lo Index 1 = " << segLowIndex1 << " t = " << tval <<
+    //std::endl;
 
     for (const auto& depVar : depVars) {
       auto depVarData =
         getDependentVarData(depVar->name, IndexKey(ii, 0, 0, 0));
       auto depvalT = computeInterpolated(tval, segLowIndex1, depVarData);
       depValsT.push_back(depvalT);
-      // std::cout << "Lo Index 1 = " << segLowIndex1 << " p = " << depvalT <<
-      // std::endl;
+      //std::cout << "Lo Index 1 = " << segLowIndex1 << " p = " << depvalT <<
+      //std::endl;
     }
   }
 
@@ -480,8 +515,8 @@ TabularData::interpolateLinearSpline<2>(
     auto depval =
       (1 - sval) * depValsT[index] + sval * depValsT[index + numDepVars];
     depVals.push_back(depval);
-    // std::cout << "Lo Index 0 = " << segLowIndex0 << " q = " << depval <<
-    // std::endl;
+    //std::cout << "Lo Index 0 = " << segLowIndex0 << " q = " << depval <<
+    //std::endl;
   }
 
   return depVals;
@@ -555,13 +590,18 @@ TabularData::findLocation(const double& value, const DoubleVec1D& varData) const
   if (value < varData.front() || value > varData.back()) {
     std::ostringstream out;
     out << "**ERROR**"
-        << " The independent variable value \"" << value
-        << "\" is outside the range of known data. ";
+        << " The independent variable value \"" 
+        << std::setprecision(10) << std::scientific << value
+        << "\" is outside the range of known data ["
+        << varData.front() << "," << varData.back() << "]";
     throw InvalidValue(out.str(), __FILE__, __LINE__);
   }
 
   auto lower = std::lower_bound(varData.begin(), varData.end(), value);
-  return (lower - varData.begin() - 1);
+  auto index = (lower == varData.begin()) 
+               ? lower - varData.begin() 
+               : lower - varData.begin() - 1;
+  return index;
 }
 
 double

@@ -43,6 +43,9 @@ public:
   void setup();
 
   template <int dim>
+  void translate();
+
+  template <int dim>
   DoubleVec1D interpolate(const std::array<double, dim>& indepValues) const;
 
   template <int dim>

@@ -26,12 +26,23 @@
 message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
+#------------------------
+# Copy input files
+#------------------------
+configure_file(table_elastic.json table_elastic.json COPYONLY)
+
+#------------------------
+# CTest tests
+#------------------------
 ADD_EXECUTABLE(testPressure_Air testPressure_Air.cc)
 ADD_EXECUTABLE(testPressure_Water testPressure_Water.cc)
 ADD_EXECUTABLE(testPressure_Granite testPressure_Granite.cc)
 ADD_EXECUTABLE(testElasticModuli_Arena testElasticModuli_Arena.cc)
 ADD_EXECUTABLE(testBoostClosestPoint testBoostClosestPoint.cc)
 
+#------------------------
+# Vaango libs
+#------------------------
 SET(VAANGO_LIBS 
         Vaango_Core_Thread       
         Vaango_Core_DataArchive 
@@ -73,6 +84,30 @@ target_link_libraries(testTabularData
   ${VAANGO_LIBS}
 )
 set(UNIT_TEST testTabularData)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+add_executable(testModelState_Tabular testModelState_Tabular.cc)
+target_link_libraries(testModelState_Tabular
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testModelState_Tabular)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+add_executable(testElasticModuli_Tabular testElasticModuli_Tabular.cc)
+target_link_libraries(testElasticModuli_Tabular
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testElasticModuli_Tabular)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD
