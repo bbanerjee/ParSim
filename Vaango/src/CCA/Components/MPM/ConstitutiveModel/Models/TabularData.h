@@ -41,7 +41,7 @@ public:
   std::size_t addDependentVariable(const std::string& varName);
 
   void setup();
-
+  
   template <int dim>
   void translate();
 

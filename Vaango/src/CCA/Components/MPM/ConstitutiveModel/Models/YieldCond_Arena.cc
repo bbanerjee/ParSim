@@ -23,6 +23,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -497,13 +498,13 @@ YieldCond_Arena::evalYieldConditionMax(const ModelStateBase* state_input)
   // double I1eff_min = 0.99999*X_eff;
   // double I1eff_max = 0.99999*d_local.PEAKI1;
   // std::vector<double> I1_eff_vec;
-  // linspace(I1eff_min, I1eff_max, num_points, I1_eff_vec);
+  // Vaango::Util::linspace(I1eff_min, I1eff_max, num_points, I1_eff_vec);
   double rad = 0.5 * (d_local.PEAKI1 - X_eff);
   double cen = 0.5 * (d_local.PEAKI1 + X_eff);
   double theta_min = 0.0;
   double theta_max = M_PI;
   std::vector<double> theta_vec;
-  linspace(theta_min, theta_max, num_points, theta_vec);
+  Vaango::Util::linspace(theta_min, theta_max, num_points, theta_vec);
   double J2_max = std::numeric_limits<double>::min();
   // for (auto I1_eff : I1_eff_vec) {
   for (auto theta : theta_vec) {
@@ -909,7 +910,7 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
                                      num_points, z_r_points);
 
     // Find the closest point
-    findClosestPoint(z_r_pt, z_r_points, z_r_closest);
+    Vaango::Util::findClosestPoint(z_r_pt, z_r_points, z_r_closest);
 
 #ifdef DEBUG_YIELD_BISECTION_R
     std::cout << "iteration = " << iters << std::endl;
@@ -1193,7 +1194,7 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
   double rad = 0.5 * (d_local.PEAKI1 - X_eff);
   double cen = 0.5 * (d_local.PEAKI1 + X_eff);
   std::vector<double> theta_vec;
-  linspace(0.0, M_PI, num_points, theta_vec);
+  Vaango::Util::linspace(0.0, M_PI, num_points, theta_vec);
 
   std::vector<double> gvec;
   std::vector<double> I1vec;
@@ -1306,7 +1307,7 @@ YieldCond_Arena::computeZeff_and_RPrime(
   double theta_max = std::acos(std::max((I1eff_min - cen) / rad, -1.0));
   double theta_min = std::acos(std::min((I1eff_max - cen) / rad, 1.0));
   std::vector<double> theta_vec;
-  linspace(theta_min, theta_max, num_points, theta_vec);
+  Vaango::Util::linspace(theta_min, theta_max, num_points, theta_vec);
 
   for (auto theta : theta_vec) {
     double I1_eff = std::max(cen + rad * std::cos(theta), X_eff);
@@ -1346,154 +1347,6 @@ YieldCond_Arena::computeZeff_and_RPrime(
   }
 
   return;
-}
-
-/* linspace function */
-void
-YieldCond_Arena::linspace(const double& start, const double& end,
-                          const int& num, std::vector<double>& linspaced)
-{
-  double delta = (end - start) / (double)num;
-
-  for (int i = 0; i < num + 1; ++i) {
-    linspaced.push_back(start + delta * (double)i);
-  }
-  return;
-}
-
-/* Find two yield surface segments that are closest to input point */
-void
-YieldCond_Arena::getClosestSegments(const Uintah::Point& pt,
-                                    const std::vector<Uintah::Point>& poly,
-                                    std::vector<Uintah::Point>& segments)
-{
-  // Set up the first segment to start from the end of the polygon
-  // **TODO** Make sure that the second to last point is being chosen because
-  // the
-  //          polygon has been closed
-  Uintah::Point p_prev = *(poly.rbegin() + 1);
-
-  // Set up the second segment to start from the beginning of the polygon
-  auto iterNext = poly.begin();
-  ++iterNext;
-  Uintah::Point p_next = *iterNext;
-  Uintah::Point min_p_prev, min_p, min_p_next;
-
-  double min_dSq = std::numeric_limits<double>::max();
-
-  // Loop through the polygon
-  Uintah::Point closest;
-  for (const auto& poly_pt : poly) {
-
-#ifdef DEBUG_YIELD_BISECTION
-    std::cout << "Pt = " << pt << std::endl
-              << " Poly_pt = " << poly_pt << std::endl
-              << " Prev = " << p_prev << std::endl
-              << " Next = " << p_next << std::endl;
-#endif
-
-    std::vector<Uintah::Point> segment = { poly_pt, p_next };
-    findClosestPoint(pt, segment, closest);
-
-    // Compute distance sq
-    double dSq = (pt - closest).length2();
-#ifdef DEBUG_YIELD_BISECTION
-    std::cout << " distance = " << dSq << std::endl;
-    std::cout << " min_distance = " << min_dSq << std::endl;
-#endif
-
-    if (dSq - min_dSq < 1.0e-16) {
-      min_dSq = dSq;
-      min_p = closest;
-      min_p_prev = p_prev;
-      min_p_next = p_next;
-    }
-
-    ++iterNext;
-
-    // Update prev and next
-    p_prev = poly_pt;
-    p_next = *iterNext;
-  }
-
-  // Return the three points
-  segments.push_back(min_p_prev);
-  segments.push_back(min_p);
-  segments.push_back(min_p_next);
-#ifdef DEBUG_YIELD_BISECTION
-  std::cout << "Closest_segments = " << min_p_prev << std::endl
-            << min_p << std::endl
-            << min_p_next << std::endl;
-#endif
-
-  return;
-}
-
-/* Get the closest point on the yield surface */
-void
-YieldCond_Arena::findClosestPoint(const Uintah::Point& p,
-                                  const std::vector<Uintah::Point>& poly,
-                                  Uintah::Point& min_p)
-{
-  double TOLERANCE_MIN = 1.0e-12;
-  std::vector<Uintah::Point> XP;
-
-  // Loop through the segments of the polyline
-  auto iterStart = poly.begin();
-  auto iterEnd = poly.end();
-  auto iterNext = iterStart;
-  ++iterNext;
-  for (; iterNext != iterEnd; ++iterStart, ++iterNext) {
-    Point start = *iterStart;
-    Point next = *iterNext;
-
-    // Find shortest distance from point to the polyline line
-    Vector m = next - start;
-    Vector n = p - start;
-    if (m.length2() < TOLERANCE_MIN) {
-      XP.push_back(start);
-    } else {
-      const double t0 = Dot(m, n) / Dot(m, m);
-      if (t0 <= 0.0) {
-        XP.push_back(start);
-      } else if (t0 >= 1.0) {
-        XP.push_back(next);
-      } else {
-        // Shortest distance is inside segment; this is the closest point
-        min_p = m * t0 + start;
-        XP.push_back(min_p);
-        // std::cout << "Closest: " << min_p << std::endl;
-        // return;
-      }
-    }
-  }
-
-  double min_d = std::numeric_limits<double>::max();
-  for (const auto& xp : XP) {
-    // Compute distance sq
-    double dSq = (p - xp).length2();
-    if (dSq < min_d) {
-      min_d = dSq;
-      min_p = xp;
-    }
-  }
-
-  // std::cout << "Closest: " << min_p << std::endl
-  //          << "At: " << min_d << std::endl;
-  return;
-}
-
-/* linspace function */
-std::vector<double>
-YieldCond_Arena::linspace(double start, double end, int num)
-{
-  double delta = (end - start) / (double)num;
-
-  std::vector<double> linspaced;
-  for (int i = 0; i < num + 1; ++i) {
-    linspaced.push_back(start + delta * (double)i);
-  }
-  return linspaced;
 }
 
 //--------------------------------------------------------------

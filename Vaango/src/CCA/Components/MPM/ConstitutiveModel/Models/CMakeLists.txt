@@ -65,6 +65,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Pressure_Granite.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCondition.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldConditionFactory.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCondUtils.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Arenisca3.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_CamClay.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Gurson.cc 
