@@ -46,7 +46,7 @@ namespace Vaango {
 
 class YieldCond_Tabular : public YieldCondition
 {
-
+friend std::ostream& operator<<(std::ostream& out, const YieldCond_Tabular& yc);
 public:
   // Constants
   static const double sqrt_two;
@@ -57,10 +57,10 @@ public:
   YieldCond_Tabular() = delete;
   YieldCond_Tabular(const YieldCond_Tabular&) = delete;
   ~YieldCond_Tabular() = default;
+  YieldCond_Tabular& operator=(const YieldCond_Tabular&) = delete;
 
   YieldCond_Tabular(Uintah::ProblemSpecP& ps);
   YieldCond_Tabular(const YieldCond_Tabular* yc);
-  YieldCond_Tabular& operator=(const YieldCond_Tabular&) = delete;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 

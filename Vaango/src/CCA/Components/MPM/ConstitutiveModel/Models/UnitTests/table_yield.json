@@ -1,0 +1,9 @@
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test yield data"
+  },
+  "Data" : {
+    "Pressure" : [-10,  10, 200, 300, 400, 800, 1600, 3200, 6400],
+    "SqrtJ2" :   [  0, 100, 200, 300, 500, 600,  700,  800,  900]
+  }
+}}

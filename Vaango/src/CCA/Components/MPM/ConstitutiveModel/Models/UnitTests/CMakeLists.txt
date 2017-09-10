@@ -30,6 +30,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 # Copy input files
 #------------------------
 configure_file(table_elastic.json table_elastic.json COPYONLY)
+configure_file(table_yield.json table_yield.json COPYONLY)
 
 #------------------------
 # CTest tests
@@ -108,6 +109,18 @@ target_link_libraries(testElasticModuli_Tabular
   ${VAANGO_LIBS}
 )
 set(UNIT_TEST testElasticModuli_Tabular)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+add_executable(testYieldCond_Tabular testYieldCond_Tabular.cc)
+target_link_libraries(testYieldCond_Tabular
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testYieldCond_Tabular)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD

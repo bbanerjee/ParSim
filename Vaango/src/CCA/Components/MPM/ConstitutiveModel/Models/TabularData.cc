@@ -398,10 +398,8 @@ TabularData::getDoubleArrayJSON(const json& object, const std::string key,
 
 template <>
 void
-TabularData::translate<2>() 
+TabularData::translateIndepVar1ByIndepVar0<2>() 
 {
-  // First find the segment containing the first independent variable value
-  // and the value of parameter s
   auto indepVarData0 =
     getIndependentVarData(d_indepVars[0]->name, IndexKey(0, 0, 0, 0));
   //std::cout << "Read " << d_indepVars[0]->name << " ";
@@ -421,6 +419,30 @@ TabularData::translate<2>()
     }
     d_indepVars[1]->data[IndexKey(ii, 0, 0, 0)] =  indepVarData1;
   }
+}
+
+template <>
+void
+TabularData::translateIndepVar0<1>(const double& shift) 
+{
+  auto indepVarData0 =
+    getIndependentVarData(d_indepVars[0]->name, IndexKey(0, 0, 0, 0));
+  //std::cout << "Read " << d_indepVars[0]->name << " ";
+  //std::copy(indepVarData0.begin(), indepVarData0.end(),
+  //          std::ostream_iterator<double>(std::cout, " "));
+  //std::cout << std::endl;
+
+  for (auto& val : indepVarData0) {
+    val += shift;
+  }
+  d_indepVars[0]->data[IndexKey(0, 0, 0, 0)] = indepVarData0;
+
+  auto data =
+    getIndependentVarData(d_indepVars[0]->name, IndexKey(0, 0, 0, 0));
+  std::cout << "Translated " << d_indepVars[0]->name << " ";
+  std::copy(data.begin(), data.end(),
+            std::ostream_iterator<double>(std::cout, " "));
+  std::cout << std::endl;
 }
 
 template <int dim>
@@ -648,6 +670,16 @@ TabularData::getIndependentVarData(const std::string& name,
     d_indepVars.begin(), d_indepVars.end(),
     [&name](const auto& indepVar) { return (indepVar->name == name); });
   auto position = std::distance(d_indepVars.begin(), varIter);
+  /*
+  std::cout << "position = " << position << "\n";
+  try {
+  DoubleVec1D data = d_indepVars[0]->data.at(IndexKey(0,0,0,0));
+  std::copy(data.begin(), data.end(),
+            std::ostream_iterator<double>(std::cout, " "));
+  } catch (std::out_of_range e) {
+    std::cout << e.what() << std::endl;
+  }
+  */
   return d_indepVars[position]->data.at(index);
 }
 

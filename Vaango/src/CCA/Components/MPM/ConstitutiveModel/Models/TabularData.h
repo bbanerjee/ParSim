@@ -43,7 +43,10 @@ public:
   void setup();
   
   template <int dim>
-  void translate();
+  void translateIndepVar0(const double& shift);
+
+  template <int dim>
+  void translateIndepVar1ByIndepVar0();
 
   template <int dim>
   DoubleVec1D interpolate(const std::array<double, dim>& indepValues) const;

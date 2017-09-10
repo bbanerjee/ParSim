@@ -144,6 +144,20 @@ TEST(TabularDataTest, readJSONTableFromStream1D)
         eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
   EXPECT_THROW(eos.interpolateLinearSpline<1>({{0.9}}, 
         eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+
+  //---------------------------------------------------
+  // Translation test
+  //---------------------------------------------------
+  eos.translateIndepVar0<1>(-0.1);
+  auto data = eos.getIndependentVarData("Volume", 
+                                        TableContainers::IndexKey(0, 0, 0, 0));
+  EXPECT_DOUBLE_EQ(data[0], 0);
+  /*
+  std::cout << "Volume:" ;
+  std::copy(data.begin(), data.end(),
+            std::ostream_iterator<double>(std::cout, " "));
+  std::cout << std::endl;
+  */
 }
 
 // Create a 2D test JSON document
@@ -278,7 +292,7 @@ TEST(TabularDataTest, readJSONTableFromStream2D)
   //---------------------------------------------------
   // Translation test
   //---------------------------------------------------
-  eos.translate<2>();
+  eos.translateIndepVar1ByIndepVar0<2>();
   for (auto ii = 0u; ii < tempData.size(); ii++) {
     auto data = eos.getIndependentVarData("Volume", 
                                           TableContainers::IndexKey(ii, 0, 0, 0));

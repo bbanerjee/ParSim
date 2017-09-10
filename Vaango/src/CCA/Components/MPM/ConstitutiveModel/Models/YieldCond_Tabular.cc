@@ -25,6 +25,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Tabular.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
 #include <Core/Exceptions/InternalError.h>
+#include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <chrono>
@@ -53,6 +54,7 @@ YieldCond_Tabular::YieldCond_Tabular(Uintah::ProblemSpecP& ps)
 void
 YieldCond_Tabular::checkInputParameters()
 {
+  // **TODO** Check convexity 
 }
 
 YieldCond_Tabular::YieldCond_Tabular(const YieldCond_Tabular* yc)
@@ -96,17 +98,19 @@ YieldCond_Tabular::evalYieldCondition(const ModelStateBase* state_input)
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  // Initialize hasYielded to -1
-  double hasYielded = -1.0;
-
   double p_bar = -state->I1/3;
-  DoubleVec1D gg = d_yield.table.interpolate<1>({{p_bar}}); 
-
-  if (state->sqrt_J2 > gg[0]) {
-    hasYielded = 1.0;
+  if (p_bar < d_I1bar_min) {
+    return 1.0;
   }
 
-  return hasYielded;
+  DoubleVec1D gg = d_yield.table.interpolate<1>({{p_bar}}); 
+  //std::cout << "p_bar = " << p_bar << " gg = " << gg[0] 
+  //          << " sqrtJ2 = " << state->sqrt_J2 << std::endl;
+  if (state->sqrt_J2 > gg[0]) {
+    return 1.0;
+  }
+
+  return -1.0;
 }
 
 //--------------------------------------------------------------
@@ -131,7 +135,8 @@ YieldCond_Tabular::setYieldConditionRange() {
   d_I1bar_max = std::numeric_limits<double>::min();
   d_sqrtJ2_max = std::numeric_limits<double>::min();
 
-  DoubleVec1D pvals = d_yield.table.getIndependentVarData("Pressure", IndexKey(0,0,0,0));
+  DoubleVec1D pvals = 
+    d_yield.table.getIndependentVarData("Pressure", IndexKey(0,0,0,0));
   for (auto p_bar : pvals) {
     DoubleVec1D gg = d_yield.table.interpolate<1>({{p_bar}}); 
     d_I1bar_min = std::min(d_I1bar_min, 3.0*p_bar);
@@ -218,12 +223,20 @@ YieldCond_Tabular::computeVolStressDerivOfYieldFunction(
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  double p_bar = -state->I1/3;
-
   double epsilon = 1.0e-6;
-  DoubleVec1D g_lo = d_yield.table.interpolate<1>({{p_bar-epsilon}});
-  DoubleVec1D g_hi = d_yield.table.interpolate<1>({{p_bar+epsilon}});
-  double dg_dpbar = (g_hi[0] - g_lo[0])/(2*epsilon);
+  double p_bar = -state->I1/3;
+  double dg_dpbar = 0.0;
+  if (p_bar < d_I1bar_min/3.0) {
+    TabularData shifted(d_yield.table);
+    shifted.translateIndepVar0<1>(p_bar+epsilon);
+    DoubleVec1D g_lo = shifted.interpolate<1>({{p_bar-epsilon}});
+    DoubleVec1D g_hi = shifted.interpolate<1>({{p_bar+epsilon}});
+    dg_dpbar = (g_hi[0] - g_lo[0])/(2*epsilon);
+  } else {
+    DoubleVec1D g_lo = d_yield.table.interpolate<1>({{p_bar-epsilon}});
+    DoubleVec1D g_hi = d_yield.table.interpolate<1>({{p_bar+epsilon}});
+    dg_dpbar = (g_hi[0] - g_lo[0])/(2*epsilon);
+  }
 
   return dg_dpbar;
 }
@@ -255,7 +268,7 @@ YieldCond_Tabular::computeDevStressDerivOfYieldFunction(
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  double df_dJ2 = 1/(2*state->sqrt_J2);
+  double df_dJ2 = (state->sqrt_J2 == 0) ? 0 : 1/(2*state->sqrt_J2);
 
   return df_dJ2;
 }
@@ -813,3 +826,41 @@ YieldCond_Tabular::computeTangentModulus(const TangentModulusTensor& Ce,
   throw InternalError(out.str(), __FILE__, __LINE__);
   return;
 }
+
+namespace Vaango {
+
+std::ostream&
+operator<<(std::ostream& out, const YieldCond_Tabular& yc)
+{
+  DoubleVec1D pvals, qvals;
+  try {
+    pvals = yc.d_yield.table.getIndependentVarData("Pressure", 
+                                                   IndexKey(0,0,0,0));
+  } catch (Uintah::InvalidValue e) {
+    std::cout << e.message() << std::endl;
+  }
+
+  try {
+    qvals = yc.d_yield.table.getDependentVarData("SqrtJ2", 
+                                                 IndexKey(0,0,0,0));
+  } catch (Uintah::InvalidValue e) {
+    std::cout << e.message() << std::endl;
+  }
+
+  out << "p:";
+  std::copy(pvals.begin(), pvals.end(),
+            std::ostream_iterator<double>(out, " "));
+  out << std::endl;
+  out << "sqrtJ2:";
+  std::copy(qvals.begin(), qvals.end(),
+            std::ostream_iterator<double>(out, " "));
+  out << std::endl;
+
+  out << "I1_bar_min = " << yc.d_I1bar_min
+      << " I1_bar_max = " << yc.d_I1bar_max
+      << " sqrtJ2_max = " << yc.d_sqrtJ2_max << std::endl;
+
+  return out;
+}
+
+} // end namespace Vaango

@@ -85,7 +85,7 @@ private:
     BulkModulusParameters() = default;
     BulkModulusParameters(Uintah::ProblemSpecP& ps) : table(ps) {
       table.setup();
-      table.translate<2>();
+      table.translateIndepVar1ByIndepVar0<2>();
     }
     BulkModulusParameters(const BulkModulusParameters& bulk) {
       table = bulk.table;
