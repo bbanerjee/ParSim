@@ -126,3 +126,15 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+
+add_executable(testYieldCondUtils testYieldCondUtils.cc)
+target_link_libraries(testYieldCondUtils
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testYieldCondUtils)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)

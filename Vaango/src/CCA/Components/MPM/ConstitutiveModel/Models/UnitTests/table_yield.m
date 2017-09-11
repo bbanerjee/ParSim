@@ -5,6 +5,7 @@ function table_yield()
 
   [p, q] = hull(p, q);
   plot(p, q,'g-', 'LineWidth', 2);
+  [p' q']
 
   p_closed = [p p(length(p)) p(1)];
   q_closed = [q q(1) q(1)];

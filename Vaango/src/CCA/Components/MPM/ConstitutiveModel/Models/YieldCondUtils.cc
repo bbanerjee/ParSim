@@ -7,6 +7,49 @@ namespace Vaango {
 
 namespace Util {
 
+/* Checks whethere three points are in counter-clockwise order */
+double
+checkOrder(const Uintah::Point& p1, const Uintah::Point& p2,
+           const Uintah::Point& p3)
+{
+  return (p2.x() - p1.x())*(p3.y() - p1.y()) -
+         (p2.y() - p1.y())*(p3.x() - p1.x());
+}
+
+/* Compute the convex hull of a set of points in 2D */
+std::vector<Uintah::Point> 
+convexHull2D(const std::vector<Uintah::Point>& points)
+{
+  std::vector<Uintah::Point> lower;
+  for (const auto& point : points) {
+    auto k = lower.size();
+    while (k > 1 && 
+           Vaango::Util::checkOrder(lower[k-2], lower[k-1], point) <= 0) {
+      lower.pop_back();
+      k = lower.size();
+    }
+    lower.push_back(point);
+  }
+  lower.pop_back();
+
+  std::vector<Uintah::Point> upper;
+  for (const auto& point : Vaango::Util::reverse(points)) {
+    auto k = upper.size();
+    while (k > 1 && 
+           Vaango::Util::checkOrder(upper[k-2], upper[k-1], point) <= 0) {
+      upper.pop_back();
+      k = upper.size();
+    }
+    upper.push_back(point);
+  }
+  upper.pop_back();
+
+  lower.insert(lower.end(), 
+               std::make_move_iterator(upper.begin()), 
+               std::make_move_iterator(upper.end()));
+  return lower;
+}
+
 /* Get the closest point on the yield surface */
 void
 findClosestPoint(const Uintah::Point& p, const std::vector<Uintah::Point>& poly,
@@ -126,11 +169,12 @@ getClosestSegments(const Uintah::Point& pt,
 std::vector<double>
 linspace(double start, double end, int num)
 {
-  double delta = (end - start) / (double)num;
-
   std::vector<double> linspaced;
-  for (int i = 0; i < num + 1; ++i) {
-    linspaced.push_back(start + delta * (double)i);
+  if (num > 0) {
+    double delta = (end - start) / (double)num;
+    for (int i = 0; i < num + 1; ++i) {
+      linspaced.push_back(start + delta * (double)i);
+    }
   }
   return linspaced;
 }
@@ -140,10 +184,12 @@ void
 linspace(const double& start, const double& end, const int& num,
          std::vector<double>& linspaced)
 {
-  double delta = (end - start) / (double)num;
-
-  for (int i = 0; i < num + 1; ++i) {
-    linspaced.push_back(start + delta * (double)i);
+  linspaced.clear();
+  if (num > 0) {
+    double delta = (end - start) / (double)num;
+    for (int i = 0; i < num + 1; ++i) {
+      linspaced.push_back(start + delta * (double)i);
+    }
   }
   return;
 }
