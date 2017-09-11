@@ -49,6 +49,19 @@ YieldCond_Tabular::YieldCond_Tabular(Uintah::ProblemSpecP& ps)
   // Check the input parameters
   checkInputParameters();
   setYieldConditionRange();
+
+  // Compute normals at each point of of the table
+  computeNormals();
+
+}
+
+YieldCond_Tabular::YieldCond_Tabular(const YieldCond_Tabular* yc)
+{
+  d_yield = yc->d_yield;
+  d_I1bar_min = yc->d_I1bar_min;
+  d_I1bar_max = yc->d_I1bar_max;
+  d_sqrtJ2_max = yc->d_sqrtJ2_max;
+  d_normals = yc->d_normals;
 }
 
 void
@@ -139,12 +152,56 @@ YieldCond_Tabular::checkInputParameters()
 
 }
 
-YieldCond_Tabular::YieldCond_Tabular(const YieldCond_Tabular* yc)
+/* Yield surface does not change over time.  So we can caculate the
+   max sqrt(J2) at the beginning */
+void 
+YieldCond_Tabular::setYieldConditionRange() {
+
+  d_I1bar_min = std::numeric_limits<double>::max();
+  d_I1bar_max = std::numeric_limits<double>::min();
+  d_sqrtJ2_max = std::numeric_limits<double>::min();
+
+  DoubleVec1D pvals = 
+    d_yield.table.getIndependentVarData("Pressure", IndexKey(0,0,0,0));
+  for (auto p_bar : pvals) {
+    DoubleVec1D gg = d_yield.table.interpolate<1>({{p_bar}}); 
+    d_I1bar_min = std::min(d_I1bar_min, 3.0*p_bar);
+    d_I1bar_max = std::max(d_I1bar_max, 3.0*p_bar);
+    d_sqrtJ2_max = std::max(d_sqrtJ2_max, gg[0]);
+  }
+}
+
+/* Compute normal at each point on the yield surface */
+void
+YieldCond_Tabular::computeNormals()
 {
-  d_yield = yc->d_yield;
-  d_I1bar_min = yc->d_I1bar_min;
-  d_I1bar_max = yc->d_I1bar_max;
-  d_sqrtJ2_max = yc->d_sqrtJ2_max;
+  DoubleVec1D xvals = 
+    d_yield.table.getIndependentVarData("Pressure", IndexKey(0,0,0,0));
+  DoubleVec1D yvals = 
+    d_yield.table.getDependentVarData("SqrtJ2",IndexKey(0,0,0,0));
+
+  std::vector<Point> polyline;
+  polyline.push_back(Point(xvals[2], -yvals[2], 0));
+  polyline.push_back(Point(xvals[1], -yvals[1], 0));
+  for (auto ii = 0u; ii < xvals.size(); ii++) {
+    polyline.push_back(Point(xvals[ii], yvals[ii], 0));
+  }
+  Point last = polyline[polyline.size()-1];
+  Point secondlast = polyline[polyline.size()-2];
+  double t = 1.1;
+  Vector extra1 = secondlast*(1 - t) + last*t;
+  Vector extra2 = secondlast*(1 - t)*t + last*(t*t + 1 - t);
+  polyline.push_back(Point(extra1));
+  polyline.push_back(Point(extra2));
+  //std::copy(polyline.begin(), polyline.end(),
+  //          std::ostream_iterator<Point>(std::cout, " "));
+  //std::cout << std::endl;
+
+  d_normals = Vaango::Util::computeNormals(polyline);
+  //std::cout << "Normals:";
+  //std::copy(d_normals.begin(), d_normals.end(),
+  //          std::ostream_iterator<Uintah::Vector>(std::cout, " "));
+  //std::cout << std::endl;
 }
 
 void
@@ -206,25 +263,6 @@ YieldCond_Tabular::evalYieldConditionMax(const ModelStateBase* )
 {
   setYieldConditionRange();
   return d_sqrtJ2_max;
-}
-
-/* Yield surface does not change over time.  So we can caculate the
-   max sqrt(J2) at the beginning */
-void 
-YieldCond_Tabular::setYieldConditionRange() {
-
-  d_I1bar_min = std::numeric_limits<double>::max();
-  d_I1bar_max = std::numeric_limits<double>::min();
-  d_sqrtJ2_max = std::numeric_limits<double>::min();
-
-  DoubleVec1D pvals = 
-    d_yield.table.getIndependentVarData("Pressure", IndexKey(0,0,0,0));
-  for (auto p_bar : pvals) {
-    DoubleVec1D gg = d_yield.table.interpolate<1>({{p_bar}}); 
-    d_I1bar_min = std::min(d_I1bar_min, 3.0*p_bar);
-    d_I1bar_max = std::max(d_I1bar_max, 3.0*p_bar);
-    d_sqrtJ2_max = std::max(d_sqrtJ2_max, gg[0]);
-  }
 }
 
 //--------------------------------------------------------------
@@ -310,7 +348,7 @@ YieldCond_Tabular::computeVolStressDerivOfYieldFunction(
   double dg_dpbar = 0.0;
   if (p_bar < d_I1bar_min/3.0) {
     TabularData shifted(d_yield.table);
-    shifted.translateIndepVar0<1>(p_bar+epsilon);
+    shifted.translateAlongNormals<1>(d_normals, std::abs(p_bar));
     DoubleVec1D g_lo = shifted.interpolate<1>({{p_bar-epsilon}});
     DoubleVec1D g_hi = shifted.interpolate<1>({{p_bar+epsilon}});
     dg_dpbar = (g_hi[0] - g_lo[0])/(2*epsilon);
@@ -942,6 +980,10 @@ operator<<(std::ostream& out, const YieldCond_Tabular& yc)
       << " I1_bar_max = " << yc.d_I1bar_max
       << " sqrtJ2_max = " << yc.d_sqrtJ2_max << std::endl;
 
+  out << "Normals:";
+  std::copy(yc.d_normals.begin(), yc.d_normals.end(),
+            std::ostream_iterator<Vector>(out, " "));
+  out << std::endl;
   return out;
 }
 

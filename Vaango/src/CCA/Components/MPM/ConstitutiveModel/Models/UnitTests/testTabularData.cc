@@ -148,16 +148,20 @@ TEST(TabularDataTest, readJSONTableFromStream1D)
   //---------------------------------------------------
   // Translation test
   //---------------------------------------------------
-  eos.translateIndepVar0<1>(-0.1);
+  std::vector<Uintah::Vector> normals;
+  for (auto val : indepData) {
+    normals.push_back(Uintah::Vector(val,0,0));
+  }
+  eos.translateAlongNormals<1>(normals, -0.1);
   auto data = eos.getIndependentVarData("Volume", 
                                         TableContainers::IndexKey(0, 0, 0, 0));
-  EXPECT_DOUBLE_EQ(data[0], 0);
-  /*
-  std::cout << "Volume:" ;
-  std::copy(data.begin(), data.end(),
-            std::ostream_iterator<double>(std::cout, " "));
-  std::cout << std::endl;
-  */
+  EXPECT_DOUBLE_EQ(data[0], 0.09);
+  
+  //std::cout << "Volume:" ;
+  //std::copy(data.begin(), data.end(),
+  //          std::ostream_iterator<double>(std::cout, " "));
+  //std::cout << std::endl;
+  
 }
 
 // Create a 2D test JSON document

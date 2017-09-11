@@ -315,9 +315,11 @@ private:
   double d_I1bar_min;
   double d_I1bar_max;
   double d_sqrtJ2_max;
+  std::vector<Uintah::Vector> d_normals;
 
   void checkInputParameters();
   void setYieldConditionRange();
+  void computeNormals();
 
   /* Find the closest point */
   void getClosestPointGeometricBisect(const ModelState_Tabular* state,

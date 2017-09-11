@@ -129,7 +129,7 @@ TEST_F(YieldCondTabularTest, eval_df_dsigma)
   state.I1 = 300*3; // Tension
   state.sqrt_J2 = 1000;
   try {
-  model.eval_df_dsigma(zero, &state, df_dsigma);
+    model.eval_df_dsigma(zero, &state, df_dsigma);
   } catch (Uintah::InvalidValue e)  {
     std::cout <<  e.message() << std::endl;
   }

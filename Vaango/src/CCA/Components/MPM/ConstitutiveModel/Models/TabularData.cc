@@ -16,6 +16,7 @@ using DependentVar = TableContainers::DependentVar;
 using ProblemSpecP = Uintah::ProblemSpecP;
 using ProblemSetupException = Uintah::ProblemSetupException;
 using InvalidValue = Uintah::InvalidValue;
+using Vector = Uintah::Vector;
 using json = nlohmann::json;
 
 TabularData::TabularData(ProblemSpecP& ps)
@@ -423,19 +424,24 @@ TabularData::translateIndepVar1ByIndepVar0<2>()
 
 template <>
 void
-TabularData::translateIndepVar0<1>(const double& shift) 
+TabularData::translateAlongNormals<1>(const std::vector<Vector>& normals,
+                                      const double& shift) 
 {
   auto indepVarData0 =
     getIndependentVarData(d_indepVars[0]->name, IndexKey(0, 0, 0, 0));
+  auto depVarData0 =
+    getDependentVarData(d_depVars[0]->name, IndexKey(0, 0, 0, 0));
   //std::cout << "Read " << d_indepVars[0]->name << " ";
   //std::copy(indepVarData0.begin(), indepVarData0.end(),
   //          std::ostream_iterator<double>(std::cout, " "));
   //std::cout << std::endl;
 
-  for (auto& val : indepVarData0) {
-    val += shift;
+  for (auto ii = 0u; ii < indepVarData0.size(); ii++) {
+    indepVarData0[ii] += normals[ii].x()*shift;
+    depVarData0[ii] += normals[ii].y()*shift;
   }
   d_indepVars[0]->data[IndexKey(0, 0, 0, 0)] = indepVarData0;
+  d_depVars[0]->data[IndexKey(0, 0, 0, 0)] = depVarData0;
 
   //auto data =
   //  getIndependentVarData(d_indepVars[0]->name, IndexKey(0, 0, 0, 0));

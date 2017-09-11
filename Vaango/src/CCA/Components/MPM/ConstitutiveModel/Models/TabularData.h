@@ -3,6 +3,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TableContainers.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Geometry/Vector.h>
 
 #include <submodules/json/src/json.hpp>
 
@@ -43,7 +44,8 @@ public:
   void setup();
   
   template <int dim>
-  void translateIndepVar0(const double& shift);
+  void translateAlongNormals(const std::vector<Uintah::Vector>& vec,
+                             const double& shift);
 
   template <int dim>
   void translateIndepVar1ByIndepVar0();
