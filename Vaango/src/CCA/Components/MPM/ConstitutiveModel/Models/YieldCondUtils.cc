@@ -1,7 +1,9 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
 #include <Core/Geometry/Vector.h>
 #include <algorithm>
+#include <iostream>
 #include <sstream>
+#include <iterator>
 
 namespace Vaango {
 
@@ -11,7 +13,37 @@ namespace Util {
 std::vector<Uintah::Vector>
 computeNormals(const std::vector<Uintah::Point>& polyline)
 {
+  const double tminus = 0.99; 
+  const double tplus = 0.01; 
+  std::vector<Uintah::Vector> tangents;
+  for (auto ii = 1u; ii < polyline.size()-1; ii++) {
+    Uintah::Vector minus = polyline[ii-1]*(1 - tminus) + polyline[ii]*tminus;
+    Uintah::Vector plus = polyline[ii]*(1 - tplus) + polyline[ii+1]*tplus;
+    Uintah::Vector tangent = (plus - minus)/2.0;
 
+    tangent.normalize();
+    tangents.push_back(tangent);
+  }
+  //std::cout << "Tangents:";
+  //std::copy(tangents.begin(), tangents.end(),
+  //          std::ostream_iterator<Uintah::Vector>(std::cout, " "));
+  //std::cout << std::endl;
+
+  std::vector<Uintah::Vector> normals;
+  for (auto ii = 1u; ii < tangents.size()-1; ii++) {
+    Uintah::Vector minus = tangents[ii-1]*(1 - tminus) + tangents[ii]*tminus;
+    Uintah::Vector plus = tangents[ii]*(1 - tplus) + tangents[ii+1]*tplus;
+    Uintah::Vector normal = -(plus - minus)/2.0;
+    normal.normalize();
+    normals.push_back(normal);
+  }
+
+  //std::cout << "Normals:";
+  //std::copy(normals.begin(), normals.end(),
+  //          std::ostream_iterator<Uintah::Vector>(std::cout, " "));
+  //std::cout << std::endl;
+
+  return normals;
 }
 
 /* Checks whethere three points are in counter-clockwise order */

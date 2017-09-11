@@ -64,6 +64,7 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
   yyn2 = (1 - t)*y(n) + t*yyn1;
   xx = [xx0 xx1 x xxn1 xxn2];
   yy = [yy0 yy1 y yyn1 yyn2];
+  [xx' yy']
 
   xgrad = [];
   ygrad = [];
@@ -118,7 +119,6 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
     xnormal(i) = xnormal(i)/len;
     ynormal(i) = ynormal(i)/len;
   end
-  [xnormal' ynormal']
 
   ggradx = gradient(gradx);
   ggrady = gradient(grady);
@@ -136,6 +136,7 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
  
   xnormal = -xnormal;
   ynormal = -ynormal;
+  [xnormal' ynormal']
 end
 
 function [val] = ccw(p1x, p1y, p2x, p2y, p3x, p3y)

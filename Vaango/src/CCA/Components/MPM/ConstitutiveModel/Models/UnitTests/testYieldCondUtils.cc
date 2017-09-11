@@ -9,6 +9,7 @@
 
 using namespace Vaango;
 using Uintah::Point;
+using Uintah::Vector;
 
 TEST(YieldCondUtilsTest, reverse)
 {
@@ -19,6 +20,64 @@ TEST(YieldCondUtilsTest, reverse)
     if (index == array.size()-1) EXPECT_EQ(i, 1);
     index++;
   }
+}
+
+TEST(YieldCondUtilsTest, computeNormals)
+{
+  std::vector<Point> points = {{Point(-10,0,0), Point(10,100,0),
+                                Point(400,500,0), Point(800,600,0),
+                                Point(1600,700,0), Point(3200,800,0),
+                                Point(6400,900,0)}};
+  std::vector<Point> polyline;
+  polyline.push_back(Point(points[2].x(), -points[2].y(), 0));
+  polyline.push_back(Point(points[1].x(), -points[1].y(), 0));
+  polyline.insert(polyline.end(), points.begin(), points.end());
+  Point last = points[points.size()-1];
+  Point secondlast = points[points.size()-2];
+  double t = 1.1;
+  Vector extra1 = secondlast*(1 - t) + last*t;
+  Vector extra2 = secondlast*(1 - t)*t + last*(t*t + 1 - t);
+  polyline.push_back(Point(extra1));
+  polyline.push_back(Point(extra2));
+  //std::copy(polyline.begin(), polyline.end(),
+  //          std::ostream_iterator<Point>(std::cout, " "));
+  //std::cout << std::endl;
+
+  std::vector<Vector> normals = Vaango::Util::computeNormals(polyline);
+
+  //std::cout << "Normals:";
+  //std::copy(normals.begin(), normals.end(),
+  //          std::ostream_iterator<Uintah::Vector>(std::cout, " "));
+  //std::cout << std::endl;
+  EXPECT_EQ(points.size(), normals.size());
+  EXPECT_NEAR(normals[0].x(), 
+              Vector(-1.00000000000000e+00, -0.00000000000000e+00, 0).x(), 1.0e-10);
+  EXPECT_NEAR(normals[0].y(), 
+              Vector(-1.00000000000000e+00, -0.00000000000000e+00, 0).y(), 1.0e-10);
+  EXPECT_NEAR(normals[1].x(), 
+              Vector(-8.76013011703533e-01, 4.82287469592675e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(normals[2].x(), 
+              Vector(-5.00835396432814e-01, 8.65542549895720e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(normals[3].x(), 
+              Vector(-3.18081036180333e-01, 9.48063528684890e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(normals[4].x(), 
+              Vector(-1.03211498859446e-01, 9.94659432420558e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(normals[5].x(), 
+              Vector(-5.71593617013789e-02, 9.98365067182286e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(normals[6].x(), 
+              Vector(-3.64331413805806e-02, 9.99336092718132e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(normals[1].y(), 
+              Vector(-8.76013011703533e-01, 4.82287469592675e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(normals[2].y(), 
+              Vector(-5.00835396432814e-01, 8.65542549895720e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(normals[3].y(), 
+              Vector(-3.18081036180333e-01, 9.48063528684890e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(normals[4].y(), 
+              Vector(-1.03211498859446e-01, 9.94659432420558e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(normals[5].y(), 
+              Vector(-5.71593617013789e-02, 9.98365067182286e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(normals[6].y(), 
+              Vector(-3.64331413805806e-02, 9.99336092718132e-01, 0).y(), 1.0e-10);
 }
 
 TEST(YieldCondUtilsTest, convexHull2D)
