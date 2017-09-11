@@ -42,7 +42,7 @@ TEST(TabularDataTest, parseVariableNames)
   xmlNewProp(interp, BAD_CAST "type", BAD_CAST "linear");
 
   // Print the document to stdout
-  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -89,7 +89,7 @@ TEST(TabularDataTest, readJSONTableFromStream1D)
   xmlNewProp(interp, BAD_CAST "type", BAD_CAST "linear");
 
   // Print the document to stdout
-  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);

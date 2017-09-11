@@ -71,6 +71,12 @@ public:
                                     const IndexKey& index) const;
   DoubleVec1D getDependentVarData(const std::string& name,
                                   const IndexKey& index) const;
+  void setIndependentVarData(const std::string& name,
+                             const IndexKey& index,
+                             const DoubleVec1D& data);
+  void setDependentVarData(const std::string& name,
+                           const IndexKey& index,
+                           const DoubleVec1D& data);
 
   const IndepVarPArray& getIndependentVars() const { return d_indepVars; }
   const DepVarPArray& getDependentVars() const { return d_depVars; }

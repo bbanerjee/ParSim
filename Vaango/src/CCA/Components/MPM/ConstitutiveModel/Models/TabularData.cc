@@ -437,12 +437,12 @@ TabularData::translateIndepVar0<1>(const double& shift)
   }
   d_indepVars[0]->data[IndexKey(0, 0, 0, 0)] = indepVarData0;
 
-  auto data =
-    getIndependentVarData(d_indepVars[0]->name, IndexKey(0, 0, 0, 0));
-  std::cout << "Translated " << d_indepVars[0]->name << " ";
-  std::copy(data.begin(), data.end(),
-            std::ostream_iterator<double>(std::cout, " "));
-  std::cout << std::endl;
+  //auto data =
+  //  getIndependentVarData(d_indepVars[0]->name, IndexKey(0, 0, 0, 0));
+  //std::cout << "Translated " << d_indepVars[0]->name << " ";
+  //std::copy(data.begin(), data.end(),
+  //          std::ostream_iterator<double>(std::cout, " "));
+  //std::cout << std::endl;
 }
 
 template <int dim>
@@ -669,18 +669,8 @@ TabularData::getIndependentVarData(const std::string& name,
   auto varIter = std::find_if(
     d_indepVars.begin(), d_indepVars.end(),
     [&name](const auto& indepVar) { return (indepVar->name == name); });
-  auto position = std::distance(d_indepVars.begin(), varIter);
-  /*
-  std::cout << "position = " << position << "\n";
-  try {
-  DoubleVec1D data = d_indepVars[0]->data.at(IndexKey(0,0,0,0));
-  std::copy(data.begin(), data.end(),
-            std::ostream_iterator<double>(std::cout, " "));
-  } catch (std::out_of_range e) {
-    std::cout << e.what() << std::endl;
-  }
-  */
-  return d_indepVars[position]->data.at(index);
+
+  return (*varIter)->data.at(index);
 }
 
 DoubleVec1D
@@ -690,8 +680,30 @@ TabularData::getDependentVarData(const std::string& name,
   auto varIter = std::find_if(
     d_depVars.begin(), d_depVars.end(),
     [&name](const auto& depVar) { return (depVar->name == name); });
-  auto position = std::distance(d_depVars.begin(), varIter);
-  return d_depVars[position]->data.at(index);
+
+  return (*varIter)->data.at(index);
+}
+
+void 
+TabularData::setIndependentVarData(const std::string& name,
+                                   const IndexKey& index,
+                                   const DoubleVec1D& data)
+{
+  auto varIter = std::find_if(
+    d_indepVars.begin(), d_indepVars.end(),
+    [&name](const auto& indepVar) { return (indepVar->name == name); });
+  (*varIter)->data[index] = data;
+}
+
+void 
+TabularData::setDependentVarData(const std::string& name,
+                                 const IndexKey& index,
+                                 const DoubleVec1D& data)
+{
+  auto varIter = std::find_if(
+    d_depVars.begin(), d_depVars.end(),
+    [&name](const auto& depVar) { return (depVar->name == name); });
+  (*varIter)->data[index] = data;
 }
 
 namespace Vaango {

@@ -40,6 +40,10 @@ reverse_range<T> reverse(T &x)
   return reverse_range<T>(x);
 }
 
+/* Compute outward normal at each point of a polyline */
+std::vector<Uintah::Vector>
+computeNormals(const std::vector<Uintah::Point>& polyline);
+
 /* Check whether three points are clockwise or anticloskwise order */
 double
 checkOrder(const Uintah::Point& p1, const Uintah::Point& p2,

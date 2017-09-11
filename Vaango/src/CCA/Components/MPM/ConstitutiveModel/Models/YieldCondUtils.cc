@@ -7,6 +7,13 @@ namespace Vaango {
 
 namespace Util {
 
+/* Compute outward normal at each point of a polyline */
+std::vector<Uintah::Vector>
+computeNormals(const std::vector<Uintah::Point>& polyline)
+{
+
+}
+
 /* Checks whethere three points are in counter-clockwise order */
 double
 checkOrder(const Uintah::Point& p1, const Uintah::Point& p2,

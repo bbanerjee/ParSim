@@ -54,7 +54,89 @@ YieldCond_Tabular::YieldCond_Tabular(Uintah::ProblemSpecP& ps)
 void
 YieldCond_Tabular::checkInputParameters()
 {
-  // **TODO** Check convexity 
+  if (d_yield.table.getNumIndependents() != 1) {
+    std::ostringstream out;
+    out << "**ERROR** The tabular yield data file contains more than one"
+        << " independent variable.";
+    throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+  if (d_yield.table.getNumDependents() != 1) {
+    std::ostringstream out;
+    out << "**ERROR** The tabular yield data file contains more than one"
+        << " dependent variable.";
+    throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+
+  // Check that the table contains the right variables
+  for (const auto& var : d_yield.table.getIndependentVars()) {
+    if (var->name != "Pressure") {
+      std::ostringstream out;
+      out << "**ERROR** The tabular yield data file does not contain the"
+          << " independent variable \"Presssure\"";
+      throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
+    }
+  }
+  for (const auto& var : d_yield.table.getDependentVars()) {
+    if (var->name != "SqrtJ2") {
+      std::ostringstream out;
+      out << "**ERROR** The tabular yield data file does not contain the"
+          << " dependent variable \"SqrtJ2\"";
+      throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
+    }
+  }
+
+  // Check that independent and dependent var data contain the
+  // same number of points
+  DoubleVec1D xvals = 
+    d_yield.table.getIndependentVarData("Pressure", IndexKey(0,0,0,0));
+  DoubleVec1D yvals = 
+    d_yield.table.getDependentVarData("SqrtJ2",IndexKey(0,0,0,0));
+  if (xvals.size() != yvals.size()) {
+    std::ostringstream out;
+    out << "**ERROR** The tabular yield data file does not contain the"
+          << " same number of \"Pressure\" and \"SqrtJ2\" data points";
+    throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+
+  // Check convexity; If not convex, make convex
+  std::vector<Point> points;
+  for (auto ii = 0u; ii < xvals.size(); ii++) {
+    points.push_back(Point(xvals[ii], yvals[ii], 0));
+  }
+  std::vector<Point> hull = Vaango::Util::convexHull2D(points);
+  //std::copy(hull.begin(), hull.end(),
+  //          std::ostream_iterator<Point>(std::cout, " "));
+  //std::cout << std::endl;
+
+  if (points.size() != hull.size()) {
+    std::sort(hull.begin(), hull.end(),
+              [](const Point& a, const Point& b) {
+                return a.x() < b.x();
+              });
+    //std::copy(hull.begin(), hull.end(),
+    //          std::ostream_iterator<Point>(std::cout, " "));
+    //std::cout << std::endl;
+    xvals.clear();
+    yvals.clear();
+    for (const auto& point : hull) {
+      xvals.push_back(point.x());
+      yvals.push_back(point.y());
+    }
+    d_yield.table.setIndependentVarData("Pressure", IndexKey(0,0,0,0), xvals);
+    d_yield.table.setDependentVarData("SqrtJ2", IndexKey(0,0,0,0), yvals);
+  }
+
+  //DoubleVec1D xvals_new = 
+  //  d_yield.table.getIndependentVarData("Pressure", IndexKey(0,0,0,0));
+  //DoubleVec1D yvals_new = 
+  //  d_yield.table.getDependentVarData("SqrtJ2",IndexKey(0,0,0,0));
+  //std::copy(xvals_new.begin(), xvals_new.end(),
+  //          std::ostream_iterator<double>(std::cout, " "));
+  //std::cout << std::endl;
+  //std::copy(yvals_new.begin(), yvals_new.end(),
+  //          std::ostream_iterator<double>(std::cout, " "));
+  //std::cout << std::endl;
+
 }
 
 YieldCond_Tabular::YieldCond_Tabular(const YieldCond_Tabular* yc)
