@@ -31,7 +31,7 @@
 #include <chrono>
 #include <cmath>
 
-#define USE_GEOMETRIC_BISECTION
+//#define USE_GEOMETRIC_BISECTION
 //#define DEBUG_YIELD_BISECTION
 //#define DEBUG_YIELD_BISECTION_I1_J2
 //#define DEBUG_YIELD_BISECTION_R
@@ -221,7 +221,7 @@ YieldCond_Tabular::computeNormals()
 }
 
 Point 
-YieldCond_Tabular::findClosestPoint(const double& p_bar, const double& sqrtJ2)
+YieldCond_Tabular::getClosestPoint(const double& p_bar, const double& sqrtJ2)
 {
   Point curr(p_bar, sqrtJ2, 0.0);
   Point closest;
@@ -375,7 +375,7 @@ YieldCond_Tabular::computeVolStressDerivOfYieldFunction(
   }
 
   double epsilon = 1.0e-6;
-  Point closest = findClosestPoint(-state->I1/3, state->sqrt_J2);
+  Point closest = getClosestPoint(-state->I1/3, state->sqrt_J2);
   if (closest.x() - epsilon < d_I1bar_min/3.0) {
     return large_number;
   }
@@ -425,16 +425,16 @@ YieldCond_Tabular::computeDevStressDerivOfYieldFunction(
  * (2D)
  * Inputs:
  *  state = current state
- *  px = x-coordinate of point
- *  py = y-coordinate of point
+ *  z = x-coordinate of point
+ *  rprime = y-coordinate of point
  * Outputs:
- *  cpx = x-coordinate of closest point on yield surface
- *  cpy = y-coordinate of closest point
+ *  cz = x-coordinate of closest point on yield surface
+ *  crprime = y-coordinate of closest point
  */
 bool
 YieldCond_Tabular::getClosestPoint(const ModelStateBase* state_input,
-                                   const double& px, const double& py,
-                                   double& cpx, double& cpy)
+                                   const double& z, const double& rprime,
+                                   double& cz, double& crprime)
 {
   const ModelState_Tabular* state =
     dynamic_cast<const ModelState_Tabular*>(state_input);
@@ -447,11 +447,16 @@ YieldCond_Tabular::getClosestPoint(const ModelStateBase* state_input,
 
   //std::chrono::time_point<std::chrono::system_clock> start, end;
   //start = std::chrono::system_clock::now();
-  Point pt(px, py, 0.0);
-  Point closest(0.0, 0.0, 0.0);
-  getClosestPointGeometricBisect(state, pt, closest);
-  cpx = closest.x();
-  cpy = closest.y();
+  Point pt(z, rprime, 0.0);
+
+#ifdef USE_GEOMETRIC_BISECTION
+  Point closest = getClosestPointGeometricBisect(state, pt);
+#else
+  Point closest = getClosestPointDirect(state, pt);
+#endif
+
+  cz = closest.x();
+  crprime = closest.y();
   //end = std::chrono::system_clock::now();
   //std::cout << "Geomeric Bisection : Time taken = " <<
   //std::chrono::duration<double>(end-start).count() << std::endl;
@@ -459,10 +464,58 @@ YieldCond_Tabular::getClosestPoint(const ModelStateBase* state_input,
   return true;
 }
 
-void
+Point
+YieldCond_Tabular::getClosestPointDirect(const ModelState_Tabular* state, 
+                                         const Uintah::Point& z_r_pt)
+{
+  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
+  double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
+
+  // Compute z and r' for the yield surface
+  std::vector<Uintah::Point> z_r_points;
+  for (const auto& pt : d_polyline) {
+    double p_bar = pt.x();
+    double sqrt_J2 = pt.y();
+    double z = -sqrt_three * p_bar;
+    double rprime = sqrt_two * sqrt_J2 * sqrtKG;
+    z_r_points.push_back(Uintah::Point(z, rprime, 0));
+  }
+
+  // Find the closest point
+  Point z_r_closest(0,0,0);
+  Vaango::Util::findClosestPoint(z_r_pt, z_r_points, z_r_closest);
+
+#ifdef DEBUG_YIELD_BISECTION_I1_J2
+    double fac_z = sqrt_three;
+    double fac_r = sqrtKG * sqrt_two;
+    std::cout << "I1_J2_trial = [" << z_r_pt.x() * fac_z << " "
+              << z_r_pt.y() / fac_r << "];" << std::endl;
+    std::cout << "I1_J2_closest = [" << z_r_closest.x() * fac_z << " "
+              << z_r_closest.y() / fac_r << "];" << std::endl;
+    std::cout << "I1_J2_yield_I1 = [";
+    for (auto& pt : z_r_points) {
+      std::cout << pt.x() * fac_z << " ";
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "I1_J2_yield_J2 = [";
+    for (auto& pt : z_r_points) {
+      std::cout << pt.y() / fac_r << " ";
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "plot(I1_J2_yield_I1, I1_J2_yield_J2); hold on;" << std::endl;
+    std::cout << "plot(I1_J2_trial(1), I1_J2_trial(2), 'ko');" << std::endl;
+    std::cout << "plot(I1_J2_closest(1), I1_J2_closest(2));" << std::endl;
+    std::cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) "
+                 "I1_J2_closest(2)], '--');"
+              << std::endl;
+#endif
+
+  return z_r_closest;
+}
+
+Point
 YieldCond_Tabular::getClosestPointGeometricBisect(
-  const ModelState_Tabular* state, const Uintah::Point& z_r_pt,
-  Uintah::Point& z_r_closest)
+  const ModelState_Tabular* state, const Uintah::Point& z_r_pt)
 {
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
@@ -494,10 +547,11 @@ YieldCond_Tabular::getClosestPointGeometricBisect(
   std::vector<Uintah::Point> z_r_points;
   std::vector<Uintah::Point> z_r_segments;
   std::vector<Uintah::Point> z_r_segment_points;
-  Uintah::Point z_r_closest_old;
-  z_r_closest_old.x(std::numeric_limits<double>::max());
-  z_r_closest_old.y(std::numeric_limits<double>::max());
-  z_r_closest_old.z(0.0);
+  Uintah::Point z_r_closest;
+  z_r_closest.x(std::numeric_limits<double>::max());
+  z_r_closest.y(std::numeric_limits<double>::max());
+  z_r_closest.z(0.0);
+  Uintah::Point z_r_closest_old(z_r_closest);
   while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
 
     // Get the yield surface points
@@ -577,7 +631,7 @@ YieldCond_Tabular::getClosestPointGeometricBisect(
 #endif
 #ifdef DEBUG_YIELD_BISECTION_I1_J2
     double fac_z = sqrt_three;
-    double fac_r = d_local.BETA * sqrtKG * sqrt_two;
+    double fac_r = sqrtKG * sqrt_two;
     std::cout << "Iteration = " << iters << std::endl;
     std::cout << "I1_J2_trial = [" << z_r_pt.x() * fac_z << " "
               << z_r_pt.y() / fac_r << "];" << std::endl;
@@ -625,19 +679,7 @@ YieldCond_Tabular::getClosestPointGeometricBisect(
     ++iters;
   }
 
-  return;
-}
-
-/* Get the points on the yield surface */
-void
-YieldCond_Tabular::getYieldSurfacePointsAll_RprimeZ(const double& sqrtKG,
-  const double& I1_min, const double& I1_max, const int& num_points,
-  std::vector<Uintah::Point>& z_r_vec)
-{
-  // Compute z and r'
-  computeZ_and_RPrime(sqrtKG, I1_min, I1_max, num_points, z_r_vec);
-
-  return;
+  return z_r_closest;
 }
 
 /*! Compute a vector of z, r' values given a range of I1 values */
@@ -680,8 +722,16 @@ YieldCond_Tabular::computeZ_and_RPrime(const double& sqrtKG,
   return;
 }
 
+/* Get the points on the yield surface */
+void 
+YieldCond_Tabular::getYieldSurfacePointsAll_RprimeZ(const double& sqrtKG,
+    const double& I1eff_min, const double& I1eff_max, const int& num_points,
+    std::vector<Uintah::Point>& polyline)
+{
+}
+
 //--------------------------------------------------------------
-// Other yield condition functions
+// Other yield condition functions (not used)
 
 //--------------------------------------------------------------
 // Compute d/depse_v(df/dp)

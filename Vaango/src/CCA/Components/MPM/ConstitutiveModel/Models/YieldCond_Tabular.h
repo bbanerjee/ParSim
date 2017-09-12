@@ -324,12 +324,14 @@ private:
   void setYieldConditionRange();
   void saveAsPolyline();
   void computeNormals();
-  Uintah::Point findClosestPoint(const double& p_bar, const double& sqrtJ2);
 
   /* Find the closest point */
-  void getClosestPointGeometricBisect(const ModelState_Tabular* state,
-                                      const Uintah::Point& z_r_pt,
-                                      Uintah::Point& z_r_closest);
+  Uintah::Point getClosestPoint(const double& p_bar, const double& sqrtJ2);
+  Uintah::Point getClosestPointDirect(const ModelState_Tabular* state,
+                                      const Uintah::Point& z_r_pt);
+
+  Uintah::Point getClosestPointGeometricBisect(const ModelState_Tabular* state,
+                                               const Uintah::Point& z_r_pt);
 
   /* Get the points on the yield surface */
   void getYieldSurfacePointsAll_RprimeZ(const double& sqrtKG,
@@ -338,8 +340,8 @@ private:
 
   /*! Compute a vector of z_eff, r' values given a range of I1_eff values */
   void computeZ_and_RPrime(const double& sqrtKG, const double& I1eff_min,
-                              const double& I1eff_max, const int& num_points,
-                              std::vector<Uintah::Point>& z_r_vec);
+                           const double& I1eff_max, const int& num_points,
+                           std::vector<Uintah::Point>& z_r_vec);
 };
 
 } // End namespace Uintah
