@@ -31,6 +31,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 #------------------------
 configure_file(table_elastic.json table_elastic.json COPYONLY)
 configure_file(table_yield.json table_yield.json COPYONLY)
+configure_file(table_yield_circle.json table_yield_circle.json COPYONLY)
 
 #------------------------
 # CTest tests

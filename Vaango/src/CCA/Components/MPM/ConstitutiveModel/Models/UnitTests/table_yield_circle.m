@@ -1,10 +1,12 @@
-function table_yield()
-  p = [-10   10  200  300  400  800  1600  3200 6400];
-  q = [  0  100  200  300  500  600   700   800   900];
-  plot(p,q); hold on;
+function table_yield_circle()
+
+  theta = linspace(180, 0, 31);
+  p = cos(theta*pi/180);
+  q = sin(theta*pi/180);
+  plot(p, q,'k-', 'LineWidth', 2); hold on;
 
   [p, q] = hull(p, q);
-  plot(p, q,'g-', 'LineWidth', 2);
+  plot(p, q,'g-', 'LineWidth', 2); hold on;
   [p' q']
 
   p_closed = [p p(length(p)) p(1)];
@@ -25,8 +27,8 @@ function table_yield()
   [xnormal, ynormal, p_ext, q_ext] = calcNormals(p, q);
   plot(p_ext, q_ext, 'r-', 'Linewidth', 3);
 
-  p_normal = p + xnormal*900;
-  q_normal = q + ynormal*900;
+  p_normal = p + xnormal*0.9;
+  q_normal = q + ynormal*0.9;
   for i=1:length(p)
     plot([p(i) p_normal(i)],[q(i) q_normal(i)], 'b-', 'Linewidth', 1);
   end
@@ -34,55 +36,50 @@ function table_yield()
   plot(p_normal, q_normal,'b-', 'LineWidth', 2);
   axis equal
 
-  point = [-2000, 1000];
-  plot(point(1), point(2), 'gx', 'LineWidth', 3, 'Markersize', 7);
+  point = [-2, 1]
+  s = [[0 1 0];[1 0 0];[0 0 0]];
+  compute_df_dsigma(point, s, p, q, xnormal, ynormal, 'g');
+
+  point = [-2, 4]
+  s = [[0 4 0];[4 0 0];[0 0 0]];
+  compute_df_dsigma(point, s, p, q, xnormal, ynormal, 'm');
+
+  point = [2, 4]
+  s = [[0 4 0];[4 0 0];[0 0 0]];
+  compute_df_dsigma(point, s, p, q, xnormal, ynormal, 'k');
+
+  point = [-3, 0]
+  s = [[0 0 0];[0 0 0];[0 0 0]];
+  compute_df_dsigma(point, s, p, q, xnormal, ynormal, 'b');
+
+  point = [-3, 1]
+  s = [[0 1 0];[1 0 0];[0 0 0]];
+  compute_df_dsigma(point, s, p, q, xnormal, ynormal, 'r');
+
+  point = [3, 1]
+  s = [[0 1 0];[1 0 0];[0 0 0]];
+  compute_df_dsigma(point, s, p, q, xnormal, ynormal, 'r');
+
+end
+
+function compute_df_dsigma(point, s, p, q, xnormal, ynormal, color)
+  plot(point(1), point(2), 's', 'Color', color, 'LineWidth', 3, 'Markersize', 7);
 
   [xc, yc, r] = closestPoint(point(1), point(2), p, q);
-  plot(xc, yc, 'go', 'LineWidth', 3, 'Markersize', 7);
+  plot(xc, yc, 'o', 'Color', color, 'LineWidth', 3, 'Markersize', 7);
+  [xc yc]
 
   p_new = p + xnormal*r;
   q_new = q + ynormal*r;
-  plot(p_new, q_new,'g-', 'LineWidth', 2);
+  plot(p_new, q_new, '-', 'Color', color, 'LineWidth', 2);
 
-  point = [-2000, 4000];
-  plot(point(1), point(2), 'mx', 'LineWidth', 3, 'Markersize', 7);
-
-  [xc, yc, r] = closestPoint(point(1), point(2), p, q);
-  plot(xc, yc, 'mo', 'LineWidth', 3, 'Markersize', 7);
-
-  p_new = p + xnormal*r;
-  q_new = q + ynormal*r;
-  plot(p_new, q_new,'m-', 'LineWidth', 2);
-
-  point = [2000, 4000];
-  plot(point(1), point(2), 'kx', 'LineWidth', 3, 'Markersize', 7);
-
-  [xc, yc, r] = closestPoint(point(1), point(2), p, q);
-  plot(xc, yc, 'ko', 'LineWidth', 3, 'Markersize', 7);
-
-  p_new = p + xnormal*r;
-  q_new = q + ynormal*r;
-  plot(p_new, q_new,'k-', 'LineWidth', 2);
-
-  point = [-3000, 0];
-  plot(point(1), point(2), 'bx', 'LineWidth', 3, 'Markersize', 7);
-
-  [xc, yc, r] = closestPoint(point(1), point(2), p, q);
-  plot(xc, yc, 'bo', 'LineWidth', 3, 'Markersize', 7);
-
-  p_new = p + xnormal*r;
-  q_new = q + ynormal*r;
-  plot(p_new, q_new,'b-', 'LineWidth', 2);
-
-  point = [300 1000];
-  plot(point(1), point(2), 'rx', 'LineWidth', 3, 'Markersize', 7);
-
-  [xc, yc, r] = closestPoint(point(1), point(2), p, q);
-  plot(xc, yc, 'ro', 'LineWidth', 3, 'Markersize', 7);
-
-  p_new = p + xnormal*r;
-  q_new = q + ynormal*r;
-  plot(p_new, q_new,'r-', 'LineWidth', 2);
+  pbar = xc;
+  dg_dp = -pbar/sqrt(1 - pbar^2)
+  dg_dq = 1/(2*point(2))
+  p_term = eye(3) * (dg_dp / 3.0);
+  s_term = s * dg_dq;
+  df_dsigma = p_term + s_term;
+  df_dsigma = df_dsigma/sqrt(trace(df_dsigma*df_dsigma))
 end
 
 function [x_cen, y_cen] = calcCentroid(x, y) 
@@ -114,7 +111,7 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
   yyn2 = (1 - t)*y(n) + t*yyn1;
   xx = [xx0 xx1 x xxn1 xxn2];
   yy = [yy0 yy1 y yyn1 yyn2];
-  [xx' yy']
+  %[xx' yy']
 
   xgrad = [];
   ygrad = [];
@@ -135,7 +132,7 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
     xgrad(i) = xgrad(i)/len;
     ygrad(i) = ygrad(i)/len;
   end
-  [xgrad' ygrad']
+  %[xgrad' ygrad']
 
   gradx = gradient(xx(:));
   grady = gradient(yy(:));
@@ -145,7 +142,7 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
   for i=1:size(dr)(1)
    T(i,:) = dr(i,:)/(sqrt(dr(i,1)^2 + dr(i,2)^2));
   end
-  T
+  %T
 
   %xnormal = xgrad(2:length(xgrad)-1)
   %ynormal = ygrad(2:length(ygrad)-1)
@@ -182,11 +179,11 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
   for i=1:size(ddr)(1)
    N(i,:) = ddr(i,:)/(sqrt(ddr(i,1)^2 + ddr(i,2)^2));
   end
-  N
+  N;
  
   xnormal = -xnormal;
   ynormal = -ynormal;
-  [xnormal' ynormal']
+  %[xnormal' ynormal']
 end
 
 function [val] = ccw(p1x, p1y, p2x, p2y, p3x, p3y)

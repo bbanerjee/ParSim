@@ -9,6 +9,8 @@
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xmlstring.h>
 
 #include <iostream>
 #include <map>
@@ -64,14 +66,35 @@ protected:
       std::cout << __FILE__ << ":" << __LINE__ << std::endl;
       exit(-1);
     }
+
+    // Update the json file and create a circular yield function
+    auto doc1 = xmlCopyDoc(doc, 1);
+    auto node = xmlDocGetRootElement(doc1);
+    auto xpathCtx = xmlXPathNewContext(doc1);
+    const xmlChar* xpathExpr = xmlStrncatNew(BAD_CAST ".//", BAD_CAST "filename", -1);
+    auto xpathObj = xmlXPathNodeEval(node, xpathExpr, xpathCtx);
+    xmlXPathFreeContext(xpathCtx);
+    auto jsonNode = xpathObj->nodesetval->nodeTab[0];
+
+    xmlNodeSetContent(jsonNode, BAD_CAST "table_yield_circle.json");
+    xmlSaveFormatFileEnc("-", doc1, "ISO-8859-1", 1);
+
+    ps_circle = scinew ProblemSpec(xmlDocGetRootElement(doc1), false);
+    if (!ps_circle) {
+      std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+      std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+      exit(-1);
+    }
   }
 
   static void TearDownTestCase() {}
 
   static ProblemSpecP ps;
+  static ProblemSpecP ps_circle;
 };
 
 ProblemSpecP YieldCondTabularTest::ps = nullptr;
+ProblemSpecP YieldCondTabularTest::ps_circle = nullptr;
 
 TEST_F(YieldCondTabularTest, constructorTest)
 {
@@ -82,6 +105,9 @@ TEST_F(YieldCondTabularTest, constructorTest)
   // Copy
   YieldCond_Tabular modelCopy(&model);
   //std::cout << modelCopy;
+
+  YieldCond_Tabular model_circle(ps_circle);
+  //std::cout << model_circle;
 }
 
 TEST_F(YieldCondTabularTest, evalYieldCondition)
@@ -122,29 +148,57 @@ TEST_F(YieldCondTabularTest, eval_df_dsigma)
   ModelState_Tabular state;
   Matrix3 zero(0.0);
   Matrix3 df_dsigma(0.0);
+  //std::cout << model;
 
+  // Zero everything (elastic)
   model.eval_df_dsigma(zero, &state, df_dsigma);
-  EXPECT_NEAR(df_dsigma(0,0), 1.666666, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
-  state.I1 = 300*3; // Tension
+  // Tension (zero stress)
+  state.I1 = 300*3; 
   state.sqrt_J2 = 1000;
-  try {
-    model.eval_df_dsigma(zero, &state, df_dsigma);
-  } catch (Uintah::InvalidValue e)  {
-    std::cout <<  e.message() << std::endl;
-  }
+  model.eval_df_dsigma(zero, &state, df_dsigma);
+  EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
-  std::cout << "df_dsigma = " << df_dsigma << std::endl;
-  //std::cout << "Has yielded = " << hasYielded << std::endl;
+  // Circular yield function
+  YieldCond_Tabular model_circle(ps_circle);
+  ModelState_Tabular state_circle;
+
+  state_circle.stressTensor = Matrix3(2, 4, 0, 4, 2, 0, 0, 0, 2);
+  state_circle.updateStressInvariants();
+  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
+  EXPECT_NEAR(df_dsigma(0,0), 0.22177, 1.0e-5); // Exact value = 0.20569
+  EXPECT_NEAR(df_dsigma(0,1), 0.65286, 1.0e-5); // Exact value = 0.66071
+
+  state_circle.stressTensor = Matrix3(-2, 4, 0, 4, -2, 0, 0, 0, -2);
+  state_circle.updateStressInvariants();
+  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
+  EXPECT_NEAR(df_dsigma(0,0), -0.22177, 1.0e-5); // Exact value = -0.20569
+  EXPECT_NEAR(df_dsigma(0,1), 0.65286, 1.0e-5); // Exact value = 0.66071
+
+  state_circle.stressTensor = Matrix3(3, 0, 0, 0, 3, 0, 0, 0, 3);
+  state_circle.updateStressInvariants();
+  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
+  EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
+
+  state_circle.stressTensor = Matrix3(3, 1, 0, 1, 3, 0, 0, 0, 3);
+  state_circle.updateStressInvariants();
+  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
+  EXPECT_NEAR(df_dsigma(0,0), 0.53852, 1.0e-5); // Exact value = 0.53644
+  EXPECT_NEAR(df_dsigma(0,1), 0.25494, 1.0e-5); // Exact value = 0.26145
+
+  state_circle.stressTensor = Matrix3(-3, 1, 0, 1, -3, 0, 0, 0, -3);
+  state_circle.updateStressInvariants();
+  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
+  EXPECT_NEAR(df_dsigma(0,0), -0.53852, 1.0e-5); // Exact value = -0.53644
+  EXPECT_NEAR(df_dsigma(0,1), 0.25494, 1.0e-5); // Exact value = 0.26145
+
   /*
   try {
-    YieldCond moduli = model.getCurrentYieldCond(&state);
-    EXPECT_NEAR(moduli.bulkModulus, 9040, 1.0e-7);
-    EXPECT_NEAR(moduli.shearModulus, 6780, 1.0e-7);
-    //std::cout << "K,G = " << moduli.bulkModulus << "," 
-    //            << moduli.shearModulus << std::endl;
-  } catch (Uintah::InvalidValue e) {
-    std::cout << e.message() << std::endl;
+    state_circle.stressTensor = Matrix3(3, 0, 0, 0, 3, 0, 0, 0, 3);
+    std::cout << "df_dsigma = " << df_dsigma << std::endl;
+  } catch (Uintah::InvalidValue e)  {
+    std::cout <<  e.message() << std::endl;
   }
   */
 }

@@ -54,7 +54,7 @@ std::vector<Uintah::Point>
 convexHull2D(const std::vector<Uintah::Point>& points);
 
 /* Get the closest point on a polyline from a given point */
-void 
+double 
 findClosestPoint(const Uintah::Point& p,
                  const std::vector<Uintah::Point>& poly,
                  Uintah::Point& min_p);

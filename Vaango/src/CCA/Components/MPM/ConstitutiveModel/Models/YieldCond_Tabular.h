@@ -52,6 +52,8 @@ public:
   static const double sqrt_two;
   static const double sqrt_three;
   static const double one_sqrt_three;
+  static const double large_number;
+  static const Uintah::Matrix3 One;
 
 public:
   YieldCond_Tabular() = delete;
@@ -315,11 +317,14 @@ private:
   double d_I1bar_min;
   double d_I1bar_max;
   double d_sqrtJ2_max;
+  std::vector<Uintah::Point>  d_polyline;
   std::vector<Uintah::Vector> d_normals;
 
   void checkInputParameters();
   void setYieldConditionRange();
+  void saveAsPolyline();
   void computeNormals();
+  Uintah::Point findClosestPoint(const double& p_bar, const double& sqrtJ2);
 
   /* Find the closest point */
   void getClosestPointGeometricBisect(const ModelState_Tabular* state,

@@ -675,6 +675,9 @@ TabularData::getIndependentVarData(const std::string& name,
   auto varIter = std::find_if(
     d_indepVars.begin(), d_indepVars.end(),
     [&name](const auto& indepVar) { return (indepVar->name == name); });
+  if (varIter == d_indepVars.end()) {
+    return DoubleVec1D();
+  }
 
   return (*varIter)->data.at(index);
 }
@@ -686,6 +689,9 @@ TabularData::getDependentVarData(const std::string& name,
   auto varIter = std::find_if(
     d_depVars.begin(), d_depVars.end(),
     [&name](const auto& depVar) { return (depVar->name == name); });
+  if (varIter == d_indepVars.end()) {
+    return DoubleVec1D();
+  }
 
   return (*varIter)->data.at(index);
 }

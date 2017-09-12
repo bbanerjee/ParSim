@@ -42,6 +42,8 @@ using namespace Vaango;
 const double YieldCond_Tabular::sqrt_two = std::sqrt(2.0);
 const double YieldCond_Tabular::sqrt_three = std::sqrt(3.0);
 const double YieldCond_Tabular::one_sqrt_three = 1.0 / sqrt_three;
+const double YieldCond_Tabular::large_number = 1.0e100;
+const Uintah::Matrix3 YieldCond_Tabular::One(1,0,0,0,1,0,0,0,1);
 
 YieldCond_Tabular::YieldCond_Tabular(Uintah::ProblemSpecP& ps)
   : d_yield(ps)
@@ -49,6 +51,9 @@ YieldCond_Tabular::YieldCond_Tabular(Uintah::ProblemSpecP& ps)
   // Check the input parameters
   checkInputParameters();
   setYieldConditionRange();
+
+  // Save the data as a polyline
+  saveAsPolyline();
 
   // Compute normals at each point of of the table
   computeNormals();
@@ -61,6 +66,7 @@ YieldCond_Tabular::YieldCond_Tabular(const YieldCond_Tabular* yc)
   d_I1bar_min = yc->d_I1bar_min;
   d_I1bar_max = yc->d_I1bar_max;
   d_sqrtJ2_max = yc->d_sqrtJ2_max;
+  d_polyline = yc->d_polyline;
   d_normals = yc->d_normals;
 }
 
@@ -149,7 +155,6 @@ YieldCond_Tabular::checkInputParameters()
   //std::copy(yvals_new.begin(), yvals_new.end(),
   //          std::ostream_iterator<double>(std::cout, " "));
   //std::cout << std::endl;
-
 }
 
 /* Yield surface does not change over time.  So we can caculate the
@@ -171,37 +176,59 @@ YieldCond_Tabular::setYieldConditionRange() {
   }
 }
 
-/* Compute normal at each point on the yield surface */
-void
-YieldCond_Tabular::computeNormals()
+/* Save the yield surface points as a polyline for future computations */
+void 
+YieldCond_Tabular::saveAsPolyline()
 {
   DoubleVec1D xvals = 
     d_yield.table.getIndependentVarData("Pressure", IndexKey(0,0,0,0));
   DoubleVec1D yvals = 
     d_yield.table.getDependentVarData("SqrtJ2",IndexKey(0,0,0,0));
 
-  std::vector<Point> polyline;
-  polyline.push_back(Point(xvals[2], -yvals[2], 0));
-  polyline.push_back(Point(xvals[1], -yvals[1], 0));
+  d_polyline.push_back(Point(xvals[2], -yvals[2], 0));
+  d_polyline.push_back(Point(xvals[1], -yvals[1], 0));
   for (auto ii = 0u; ii < xvals.size(); ii++) {
-    polyline.push_back(Point(xvals[ii], yvals[ii], 0));
+    d_polyline.push_back(Point(xvals[ii], yvals[ii], 0));
   }
-  Point last = polyline[polyline.size()-1];
-  Point secondlast = polyline[polyline.size()-2];
+  Point last = d_polyline[d_polyline.size()-1];
+  Point secondlast = d_polyline[d_polyline.size()-2];
   double t = 1.1;
   Vector extra1 = secondlast*(1 - t) + last*t;
   Vector extra2 = secondlast*(1 - t)*t + last*(t*t + 1 - t);
-  polyline.push_back(Point(extra1));
-  polyline.push_back(Point(extra2));
-  //std::copy(polyline.begin(), polyline.end(),
+  d_polyline.push_back(Point(extra1));
+  d_polyline.push_back(Point(extra2));
+  //std::copy(d_polyline.begin(), d_polyline.end(),
   //          std::ostream_iterator<Point>(std::cout, " "));
   //std::cout << std::endl;
+}
 
-  d_normals = Vaango::Util::computeNormals(polyline);
+/* Compute normal at each point on the yield surface */
+void
+YieldCond_Tabular::computeNormals()
+{
+  if (d_polyline.size() < 2) {
+    std::ostringstream out;
+    out << "**ERROR** The tabular yield data has not yet been saved"
+        << " as a polyline";
+    throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+
+  d_normals = Vaango::Util::computeNormals(d_polyline);
   //std::cout << "Normals:";
   //std::copy(d_normals.begin(), d_normals.end(),
   //          std::ostream_iterator<Uintah::Vector>(std::cout, " "));
   //std::cout << std::endl;
+}
+
+Point 
+YieldCond_Tabular::findClosestPoint(const double& p_bar, const double& sqrtJ2)
+{
+  Point curr(p_bar, sqrtJ2, 0.0);
+  Point closest;
+  Vaango::Util::findClosestPoint(curr, d_polyline, closest);
+  //double distSq = Vaango::Util::findClosestPoint(curr, d_polyline, closest);
+  //std::cout << "closest = " << closest << " distSq = " << distSq << "\n";
+  return closest;
 }
 
 void
@@ -304,15 +331,19 @@ YieldCond_Tabular::eval_df_dsigma(const Matrix3&,
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  double df_dp = computeVolStressDerivOfYieldFunction(state_input);
-  double df_dJ2 = computeDevStressDerivOfYieldFunction(state_input);
+  //std::cout << "p = " << state->I1/3 << " sqrtJ2 = " << state->sqrt_J2 << "\n";
 
-  Matrix3 One;
-  One.Identity();
+  double df_dp = computeVolStressDerivOfYieldFunction(state);
+  double df_dJ2 = computeDevStressDerivOfYieldFunction(state);
+
+  //std::cout << "df_dp = " << df_dp << " df_dJ2 = " << df_dJ2 << "\n";
+
   Matrix3 p_term = One * (df_dp / 3.0);
   Matrix3 s_term = state->deviatoricStressTensor * (df_dJ2);
 
   df_dsigma = p_term + s_term;
+
+  df_dsigma /= df_dsigma.Norm();
 
   return;
 }
@@ -344,19 +375,14 @@ YieldCond_Tabular::computeVolStressDerivOfYieldFunction(
   }
 
   double epsilon = 1.0e-6;
-  double p_bar = -state->I1/3;
-  double dg_dpbar = 0.0;
-  if (p_bar < d_I1bar_min/3.0) {
-    TabularData shifted(d_yield.table);
-    shifted.translateAlongNormals<1>(d_normals, std::abs(p_bar));
-    DoubleVec1D g_lo = shifted.interpolate<1>({{p_bar-epsilon}});
-    DoubleVec1D g_hi = shifted.interpolate<1>({{p_bar+epsilon}});
-    dg_dpbar = (g_hi[0] - g_lo[0])/(2*epsilon);
-  } else {
-    DoubleVec1D g_lo = d_yield.table.interpolate<1>({{p_bar-epsilon}});
-    DoubleVec1D g_hi = d_yield.table.interpolate<1>({{p_bar+epsilon}});
-    dg_dpbar = (g_hi[0] - g_lo[0])/(2*epsilon);
+  Point closest = findClosestPoint(-state->I1/3, state->sqrt_J2);
+  if (closest.x() - epsilon < d_I1bar_min/3.0) {
+    return large_number;
   }
+
+  DoubleVec1D g_lo = d_yield.table.interpolate<1>({{closest.x()-epsilon}});
+  DoubleVec1D g_hi = d_yield.table.interpolate<1>({{closest.x()+epsilon}});
+  double dg_dpbar = (g_hi[0] - g_lo[0])/(2*epsilon);
 
   return dg_dpbar;
 }
@@ -388,7 +414,7 @@ YieldCond_Tabular::computeDevStressDerivOfYieldFunction(
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  double df_dJ2 = (state->sqrt_J2 == 0) ? 0 : 1/(2*state->sqrt_J2);
+  double df_dJ2 = (state->sqrt_J2 == 0) ? large_number : 1/(2*state->sqrt_J2);
 
   return df_dJ2;
 }
@@ -979,6 +1005,11 @@ operator<<(std::ostream& out, const YieldCond_Tabular& yc)
   out << "I1_bar_min = " << yc.d_I1bar_min
       << " I1_bar_max = " << yc.d_I1bar_max
       << " sqrtJ2_max = " << yc.d_sqrtJ2_max << std::endl;
+
+  out << "Polyline:";
+  std::copy(yc.d_polyline.begin(), yc.d_polyline.end(),
+            std::ostream_iterator<Point>(out, " "));
+  out << std::endl;
 
   out << "Normals:";
   std::copy(yc.d_normals.begin(), yc.d_normals.end(),

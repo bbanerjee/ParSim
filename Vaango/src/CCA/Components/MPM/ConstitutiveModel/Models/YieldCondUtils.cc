@@ -38,11 +38,6 @@ computeNormals(const std::vector<Uintah::Point>& polyline)
     normals.push_back(normal);
   }
 
-  //std::cout << "Normals:";
-  //std::copy(normals.begin(), normals.end(),
-  //          std::ostream_iterator<Uintah::Vector>(std::cout, " "));
-  //std::cout << std::endl;
-
   return normals;
 }
 
@@ -90,7 +85,7 @@ convexHull2D(const std::vector<Uintah::Point>& points)
 }
 
 /* Get the closest point on the yield surface */
-void
+double
 findClosestPoint(const Uintah::Point& p, const std::vector<Uintah::Point>& poly,
                  Uintah::Point& min_p)
 {
@@ -139,7 +134,7 @@ findClosestPoint(const Uintah::Point& p, const std::vector<Uintah::Point>& poly,
 
   // std::cout << "Closest: " << min_p << std::endl
   //          << "At: " << min_d << std::endl;
-  return;
+  return min_d;
 }
 
 /* Find two yield surface segments that are closest to input point */
