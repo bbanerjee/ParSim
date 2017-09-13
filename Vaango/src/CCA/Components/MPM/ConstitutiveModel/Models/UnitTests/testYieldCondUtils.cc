@@ -146,3 +146,37 @@ TEST(YieldCondUtilsTest, linspace)
   //          std::ostream_iterator<double>(std::cout, " "));
   //std::cout << std::endl;
 }
+
+TEST(YieldCondUtilsTest, computeBSpline)
+{
+  std::vector<Point> polyline = 
+    {{Point(1, -1 ,0), Point(2, 1, 0), Point(3, -1, 0), Point(4, 1, 0),
+      Point(5, -1, 0), Point(6, 1, 0)}};
+  std::vector<Point> spline;
+  Vaango::Util::computeOpenUniformQuadraticBSpline(polyline, 5, spline);
+  //std::copy(spline.begin(), spline.end(),
+  //          std::ostream_iterator<Point>(std::cout, " "));
+  //std::cout << std::endl;
+  EXPECT_EQ(spline.size(), 21);
+  EXPECT_NEAR(spline[0].x(), Point(1.000e+00, -1.000e+00, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[1].x(), Point(1.380e+00, -3.200e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[2].x(), Point(1.720e+00,  1.200e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[3].x(), Point(2.020e+00,  3.200e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[4].x(), Point(2.280e+00,  2.800e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[5].x(), Point(2.500e+00,  0.000e+00, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[6].x(), Point(2.700e+00, -3.200e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[7].x(), Point(2.900e+00, -4.800e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[8].x(), Point(3.100e+00, -4.800e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[9].x(), Point(3.300e+00, -3.200e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[10].y(), Point(3.500e+00,  0.000e+00, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[11].y(), Point(3.700e+00,  3.200e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[12].y(), Point(3.900e+00,  4.800e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[13].y(), Point(4.100e+00,  4.800e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[14].y(), Point(4.300e+00,  3.200e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[15].y(), Point(4.500e+00,  0.000e+00, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[16].y(), Point(4.720e+00, -2.800e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[17].y(), Point(4.980e+00, -3.200e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[18].y(), Point(5.280e+00, -1.200e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[19].y(), Point(5.620e+00,  3.200e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[20].y(), Point(6.000e+00,  1.000e+00, 0).y(), 1.0e-10);
+}

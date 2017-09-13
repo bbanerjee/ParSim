@@ -228,6 +228,64 @@ linspace(const double& start, const double& end, const int& num,
   return;
 }
 
+/* Create open quadratic uniform B-spline between approximating a polyline */
+void
+computeOpenUniformQuadraticBSpline(const std::vector<Uintah::Point>& polyline,
+                                   size_t ptsPerSegment,
+                                   std::vector<Uintah::Point>& spline)
+{
+  auto n = polyline.size() - 1;
+  if (n < 2) {
+    spline = polyline;
+    return;
+  }
+
+  auto k = 2u;
+  auto tvals = Vaango::Util::linspace(0.0, 1.0, ptsPerSegment);
+
+  Uintah::Point splinePoint(0.0, 0.0, 0.0);
+  for (auto jj = 0u; jj < n - k + 1; jj++) {
+    for (const auto t : tvals) {
+      if (jj == 0) {
+        splinePoint = 
+          computeOpenUniformQuadraticBSpline(t, quadBSplineLo, polyline[jj],
+                                             polyline[jj+1], polyline[jj+2]);
+        if (t < 1) {
+          spline.push_back(splinePoint);
+        }
+      } else if (jj == n-2) {
+        splinePoint = 
+          computeOpenUniformQuadraticBSpline(t, quadBSplineHi, polyline[jj],
+                                             polyline[jj+1], polyline[jj+2]);
+        spline.push_back(splinePoint);
+      } else {
+        splinePoint = 
+          computeOpenUniformQuadraticBSpline(t, quadBSpline, polyline[jj],
+                                             polyline[jj+1], polyline[jj+2]);
+        if (t < 1) {
+          spline.push_back(splinePoint);
+        }
+      }
+    }
+  }
+}
+
+/* Get a single point on open quadratic uniform B-spline between three points */
+Uintah::Point
+computeOpenUniformQuadraticBSpline(const double& t,
+                                   const Uintah::Matrix3& splineMatrix,
+                                   const Uintah::Point& point_k,
+                                   const Uintah::Point& point_k1,
+                                   const Uintah::Point& point_k2)
+{
+  Uintah::Vector A(1, t, t*t);
+  Uintah::Vector Px(point_k.x(), point_k1.x(), point_k2.x());
+  Uintah::Vector Py(point_k.y(), point_k1.y(), point_k2.y());
+  double sx = Uintah::Dot(A, (splineMatrix*Px*0.5));
+  double sy = Uintah::Dot(A, (splineMatrix*Py*0.5));
+  return Uintah::Point(sx, sy, 0.0);
+}
+
 } // End namespace Util
 
 } // end namespace Vaango

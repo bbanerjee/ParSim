@@ -2,6 +2,7 @@
 #define VAANGO_MPM_CONSTITUTIVE_MODEL_YIELDCOND_UTIL_H
 
 #include <Core/Geometry/Point.h>
+#include <Core/Math/Matrix3.h>
 #include <vector>
 
 namespace Vaango {
@@ -71,6 +72,25 @@ linspace(const double& start, const double& end, const int& num,
          std::vector<double>& linspaced);
 std::vector<double> 
 linspace(double start, double end, int num);
+
+/* Quadratic B-spline matrices */
+static Uintah::Matrix3 quadBSplineLo(2, 0, 0, -4, 4, 0, 2, -3, 1);
+static Uintah::Matrix3 quadBSplineHi(1, 1, 0, -2, 2, 0, 1, -3, 2);
+static Uintah::Matrix3 quadBSpline(1, 1, 0, -2, 2, 0, 1, -2, 1);
+
+/* Create open quadratic uniform B-spline between approximating a polyline */
+void
+computeOpenUniformQuadraticBSpline(const std::vector<Uintah::Point>& polyline,
+                                   size_t ptsPerSegment,
+                                   std::vector<Uintah::Point>& spline);
+
+/* Get a single point on open quadratic uniform B-spline between three points */
+Uintah::Point
+computeOpenUniformQuadraticBSpline(const double& t,
+                                   const Uintah::Matrix3& splineMatrix,
+                                   const Uintah::Point& point_k,
+                                   const Uintah::Point& point_k1,
+                                   const Uintah::Point& point_k2);
 }
 }
 

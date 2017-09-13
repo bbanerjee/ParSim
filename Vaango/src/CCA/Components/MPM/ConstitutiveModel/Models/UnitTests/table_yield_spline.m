@@ -1,5 +1,22 @@
 function table_yield_spline()
-  %format long e
+  format long e
+  table_yield_spline_quad();
+  %table_yield_spline_all();
+end
+
+function table_yield_spline_quad()
+  figure
+  p = [1 2 3 4 5 6];
+  q = [-1 1 -1 1 -1 1];
+  numpts = 6;
+  [xspline, yspline] = B_spline_quadratic(p, q, numpts);
+  [xspline' yspline']
+  plot(p, q, 'b-', 'LineWidth', 2); hold on;
+  plot(xspline,yspline, 'r-', 'LineWidth', 2);
+end
+
+function table_yield_spline_all()
+  figure
   K = 1.0e5;
   G = 1.0e5;
   sqrtKG = sqrt(1.5*K/G);
@@ -16,13 +33,12 @@ function table_yield_spline()
 
   %p = [1 2 3 4 5 6 7 8];
   %q = [-1 1 -1 1 -1 1 -1 1];
-  %p = [1 2 3 4 5 6];
-  %q = [-1 1 -1 1 -1 1];
 
   plot(p, q, 'b-', 'LineWidth', 2); hold on;
   %axis equal
 
-  [xspline, yspline] = B_spline_quadratic(p, q);
+  numpts = 10;
+  [xspline, yspline] = B_spline_quadratic(p, q, numpts);
   plot(xspline,yspline, 'r-', 'LineWidth', 2);
 
   [xspline, yspline] = B_spline_cubic(p, q);
@@ -125,12 +141,12 @@ function [xc, yc, mindist] = closestPoint(xp, yp, xpoly, ypoly)
   mindist = sqrt(mindSq);
 end
 
-function [xspline, yspline] = B_spline_quadratic(xvals, yvals)
+function [xspline, yspline] = B_spline_quadratic(xvals, yvals, numpts)
 
   n = length(xvals)-1;
   k = 2;
 
-  tvals = linspace(0, 1, 10);
+  tvals = linspace(0, 1, numpts);
 
   count = 0;
   for j=1 : n - k + 1
