@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,8 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef _BB_YIELDCONDITIONFACTORY_H_
-#define _BB_YIELDCONDITIONFACTORY_H_
+#ifndef _MPM_CONSTITUTIVEMODELS_MODELS_YIELDCONDITIONFACTORY_H_
+#define _MPM_CONSTITUTIVEMODELS_MODELS_YIELDCONDITIONFACTORY_H_
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -56,4 +56,4 @@ public:
 };
 } // End namespace Uintah
 
-#endif /* _BB_YIELDCONDITIONFACTORY_H_ */
+#endif /* _MPM_CONSTITUTIVEMODELS_MODELS_YIELDCONDITIONFACTORY_H_ */

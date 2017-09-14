@@ -68,6 +68,15 @@ YieldCond_Tabular::YieldCond_Tabular(const YieldCond_Tabular* yc)
 }
 
 void
+YieldCond_Tabular::outputProblemSpec(Uintah::ProblemSpecP& ps)
+{
+  ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
+  yield_ps->setAttribute("type", "tabular");
+
+  d_yield.table.outputProblemSpec(yield_ps);
+}
+
+void
 YieldCond_Tabular::checkInputParameters()
 {
   if (d_yield.table.getNumIndependents() != 1) {
@@ -226,15 +235,6 @@ YieldCond_Tabular::getClosestPoint(const double& p_bar, const double& sqrtJ2)
   //double distSq = Vaango::Util::findClosestPoint(curr, d_polyline, closest);
   //std::cout << "closest = " << closest << " distSq = " << distSq << "\n";
   return closest;
-}
-
-void
-YieldCond_Tabular::outputProblemSpec(Uintah::ProblemSpecP& ps)
-{
-  ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
-  yield_ps->setAttribute("type", "tabular");
-
-  d_yield.table.outputProblemSpec(yield_ps);
 }
 
 //--------------------------------------------------------------

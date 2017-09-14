@@ -29,6 +29,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_ArenaMixture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Arenisca.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Constant.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Tabular.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -64,6 +65,8 @@ ElasticModuliModelFactory::create(Uintah::ProblemSpecP& ps)
     return (scinew ElasticModuli_Arena(child));
   else if (mat_type == "arena_mixture")
     return (scinew ElasticModuli_ArenaMixture(child));
+  else if (mat_type == "tabular")
+    return (scinew ElasticModuli_Tabular(child));
   else {
     std::cerr << "**WARNING** No elasticity model provided. "
               << "Creating default (constant elasticity) model" << std::endl;
@@ -86,6 +89,9 @@ ElasticModuliModelFactory::createCopy(const ElasticModuliModel* smm)
   else if (dynamic_cast<const ElasticModuli_ArenaMixture*>(smm))
     return (scinew ElasticModuli_ArenaMixture(
       dynamic_cast<const ElasticModuli_ArenaMixture*>(smm)));
+  else if (dynamic_cast<const ElasticModuli_Tabular*>(smm))
+    return (scinew ElasticModuli_Tabular(
+      dynamic_cast<const ElasticModuli_Tabular*>(smm)));
   else {
     std::cerr << "**WARNING** No elasticity model provided. "
               << "Creating default (constant elasticity) model" << std::endl;

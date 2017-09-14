@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -30,6 +30,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Arenisca3.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Gurson.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Tabular.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_vonMises.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -64,6 +65,8 @@ YieldConditionFactory::create(Uintah::ProblemSpecP& ps)
     return (scinew YieldCond_Arena(child));
   else if (mat_type == "arena_mixture")
     return (scinew YieldCond_ArenaMixture(child));
+  else if (mat_type == "tabular")
+    return (scinew YieldCond_Tabular(child));
   else
     throw ProblemSetupException(
       "MPM::ConstitutiveModel:Unknown Yield Condition (" + mat_type + ")",
@@ -120,6 +123,10 @@ YieldConditionFactory::createCopy(const YieldCondition* yc)
   else if (dynamic_cast<const YieldCond_ArenaMixture*>(yc))
     return (scinew YieldCond_ArenaMixture(
       dynamic_cast<const YieldCond_ArenaMixture*>(yc)));
+
+  else if (dynamic_cast<const YieldCond_Tabular*>(yc))
+    return (scinew YieldCond_Tabular(
+      dynamic_cast<const YieldCond_Tabular*>(yc)));
 
   else
     throw ProblemSetupException("Cannot create copy of unknown yield condition",
