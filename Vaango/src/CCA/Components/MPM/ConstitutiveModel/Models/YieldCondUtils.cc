@@ -137,66 +137,54 @@ findClosestPoint(const Uintah::Point& p, const std::vector<Uintah::Point>& poly,
   return min_d;
 }
 
-/* Find two yield surface segments that are closest to input point */
-void
+/* Find two yield surface segment that is closest to input point */
+std::size_t
 getClosestSegments(const Uintah::Point& pt,
                    const std::vector<Uintah::Point>& poly,
                    std::vector<Uintah::Point>& segments)
 {
-  // Set up the first segment to start from the end of the polygon
-  // **TODO** Make sure that the second to last point is being chosen because
-  // the
-  //          polygon has been closed
-  Uintah::Point p_prev = *(poly.rbegin() + 1);
-
-  // Set up the second segment to start from the beginning of the polygon
-  auto iterNext = poly.begin();
-  ++iterNext;
-  Uintah::Point p_next = *iterNext;
-  Uintah::Point min_p_prev, min_p, min_p_next;
-
-  double min_dSq = std::numeric_limits<double>::max();
-
-  // Loop through the polygon
-  Uintah::Point closest;
-  for (const auto& poly_pt : poly) {
-
-    // std::cout << "Pt = " << pt << std::endl
-    //          << " Poly_pt = " << poly_pt << std::endl
-    //          << " Prev = " << p_prev << std::endl
-    //          << " Next = " << p_next << std::endl;
-
-    std::vector<Uintah::Point> segment = { poly_pt, p_next };
-    Vaango::Util::findClosestPoint(pt, segment, closest);
-
-    // Compute distance sq
-    double dSq = (pt - closest).length2();
-    // std::cout << " distance = " << dSq << std::endl;
-    // std::cout << " min_distance = " << min_dSq << std::endl;
-
-    if (dSq - min_dSq < 1.0e-16) {
-      min_dSq = dSq;
-      min_p = closest;
-      min_p_prev = p_prev;
-      min_p_next = p_next;
-    }
-
-    ++iterNext;
-
-    // Update prev and next
-    p_prev = poly_pt;
-    p_next = *iterNext;
+  if (poly.size() < 4) {
+    segments = poly;
+    return 0;
   }
 
-  // Return the three points
-  segments.push_back(min_p_prev);
-  segments.push_back(min_p);
-  segments.push_back(min_p_next);
-  // std::cout << "Closest_segments = " << min_p_prev << std::endl
-  //          << min_p << std::endl
-  //          << min_p_next << std::endl;
+  segments.clear();
+  std::size_t min_index = 0;
+  double min_dSq = std::numeric_limits<double>::max();
+  for (auto index = 0u; index < poly.size()-1; index++) {
+    std::vector<Uintah::Point> segment = { poly[index], poly[index+1] };
+    auto segmentLength = (segment[1] - segment[0]).length();
+    Uintah::Point closest(0, 0, 0);
+    Vaango::Util::findClosestPoint(pt, segment, closest);
 
-  return;
+    double dSq = (pt - closest).length2();
+    if (dSq < min_dSq) {
+      min_dSq = dSq;
+      if ((closest - segment[0]).length() < 0.5*segmentLength) {
+        min_index = index;
+      } else {
+        min_index = index+1;
+      }
+    }
+  } 
+
+  auto close_index = min_index;
+  if (min_index == 0) {
+    segments.push_back(poly[min_index]);
+    segments.push_back(poly[min_index+1]);
+    segments.push_back(poly[min_index+2]);
+    close_index = min_index+1;
+  } else if (min_index == poly.size()-1) {
+    segments.push_back(poly[min_index-2]);
+    segments.push_back(poly[min_index-1]);
+    segments.push_back(poly[min_index]);
+  } else {
+    segments.push_back(poly[min_index-1]);
+    segments.push_back(poly[min_index]);
+    segments.push_back(poly[min_index+1]);
+  }
+
+  return close_index;
 }
 
 /* linspace function */
@@ -234,6 +222,19 @@ computeOpenUniformQuadraticBSpline(const std::vector<Uintah::Point>& polyline,
                                    size_t ptsPerSegment,
                                    std::vector<Uintah::Point>& spline)
 {
+  computeOpenUniformQuadraticBSpline(polyline, 0, polyline.size()-1,
+                                     ptsPerSegment, spline);
+}
+
+/* Create open quadratic uniform B-spline approximating a segment of a polyline */
+/* WARNING : Creates duplicate points at shared segement end points */
+void
+computeOpenUniformQuadraticBSpline(const std::vector<Uintah::Point>& polyline,
+                                   size_t segmentStartIndex,
+                                   size_t segmentEndIndex,
+                                   size_t ptsPerSegment,
+                                   std::vector<Uintah::Point>& spline)
+{
   auto n = polyline.size() - 1;
   if (n < 2) {
     spline = polyline;
@@ -244,28 +245,23 @@ computeOpenUniformQuadraticBSpline(const std::vector<Uintah::Point>& polyline,
   auto tvals = Vaango::Util::linspace(0.0, 1.0, ptsPerSegment);
 
   Uintah::Point splinePoint(0.0, 0.0, 0.0);
-  for (auto jj = 0u; jj < n - k + 1; jj++) {
+  //for (auto jj = 0u; jj < n - k + 1; jj++) {
+  for (auto jj = segmentStartIndex; jj < segmentEndIndex - k + 1; jj++) {
     for (const auto t : tvals) {
       if (jj == 0) {
         splinePoint = 
           computeOpenUniformQuadraticBSpline(t, quadBSplineLo, polyline[jj],
                                              polyline[jj+1], polyline[jj+2]);
-        if (t < 1) {
-          spline.push_back(splinePoint);
-        }
       } else if (jj == n-2) {
         splinePoint = 
           computeOpenUniformQuadraticBSpline(t, quadBSplineHi, polyline[jj],
                                              polyline[jj+1], polyline[jj+2]);
-        spline.push_back(splinePoint);
       } else {
         splinePoint = 
           computeOpenUniformQuadraticBSpline(t, quadBSpline, polyline[jj],
                                              polyline[jj+1], polyline[jj+2]);
-        if (t < 1) {
-          spline.push_back(splinePoint);
-        }
       }
+      spline.push_back(splinePoint);
     }
   }
 }

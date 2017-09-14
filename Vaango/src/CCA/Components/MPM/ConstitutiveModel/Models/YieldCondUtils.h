@@ -61,7 +61,7 @@ findClosestPoint(const Uintah::Point& p,
                  Uintah::Point& min_p);
 
 /* Get closest segments */
-void 
+std::size_t 
 getClosestSegments(const Uintah::Point& pt,
                    const std::vector<Uintah::Point>& poly,
                    std::vector<Uintah::Point>& segments);
@@ -78,9 +78,17 @@ static Uintah::Matrix3 quadBSplineLo(2, 0, 0, -4, 4, 0, 2, -3, 1);
 static Uintah::Matrix3 quadBSplineHi(1, 1, 0, -2, 2, 0, 1, -3, 2);
 static Uintah::Matrix3 quadBSpline(1, 1, 0, -2, 2, 0, 1, -2, 1);
 
-/* Create open quadratic uniform B-spline between approximating a polyline */
+/* Create open quadratic uniform B-spline approximating a polyline */
 void
 computeOpenUniformQuadraticBSpline(const std::vector<Uintah::Point>& polyline,
+                                   size_t ptsPerSegment,
+                                   std::vector<Uintah::Point>& spline);
+
+/* Create open quadratic uniform B-spline approximating a segment of a polyline */
+void
+computeOpenUniformQuadraticBSpline(const std::vector<Uintah::Point>& polyline,
+                                   size_t segmentStartIndex,
+                                   size_t segmentEndIndex,
                                    size_t ptsPerSegment,
                                    std::vector<Uintah::Point>& spline);
 

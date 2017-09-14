@@ -220,26 +220,23 @@ TEST_F(YieldCondTabularTest, getClosestPoint)
   double rprime = state.rr*sqrtKG;
   double z_close = 0.0, rprime_close = 0.0;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  //std::cout << Point(z_close, rprime_close, 0) << "\n";
-  EXPECT_NEAR(z_close, -6.92820323027551e+02, 1.0e-10);
-  EXPECT_NEAR(rprime_close, 8.66025403784439e+02, 1.0e-10);
+  EXPECT_NEAR(z_close, -664.8953, 1.0e-4);
+  EXPECT_NEAR(rprime_close, 781.4511, 1.0e-4);
 
   state.stressTensor = Matrix3(-2000, 4000, 0, 4000, -2000, 0, 0, 0, -2000);
   state.updateStressInvariants();
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  //std::cout << Point(z_close, rprime_close, 0) << "\n";
-  EXPECT_NEAR(z_close, -3.81725127395725e+03, 1.0e-10);
-  EXPECT_NEAR(rprime_close, 1.27780868916365e+03, 1.0e-10);
+  EXPECT_NEAR(z_close, -3839.0782, 1.0e-4);
+  EXPECT_NEAR(rprime_close, 1278.5554, 1.0e-4);
 
   state.stressTensor = Matrix3(3000, 0, 0, 0, 3000, 0, 0, 0, 3000);
   state.updateStressInvariants();
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  //std::cout << Point(z_close, rprime_close, 0) << "\n";
-  EXPECT_NEAR(z_close, 1.73205080756888e+01, 1.0e-10);
+  EXPECT_NEAR(z_close, 8.66025, 1.0e-4);
   EXPECT_NEAR(rprime_close, 0, 1.0e-10);
 
   state.stressTensor = Matrix3(3000, 1000, 0, 1000, 3000, 0, 0, 0, 3000);
@@ -247,16 +244,14 @@ TEST_F(YieldCondTabularTest, getClosestPoint)
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  //std::cout << Point(z_close, rprime_close, 0) << "\n";
-  EXPECT_NEAR(z_close, -1.73205080756888e+01, 1.0e-10);
-  EXPECT_NEAR(rprime_close, 1.73205080756888e+02, 1.0e-10);
+  EXPECT_NEAR(z_close, -1.51073, 1.0e-4);
+  EXPECT_NEAR(rprime_close, 92.6647, 1.0e-4);
 
   state.stressTensor = Matrix3(-3000, 1000, 0, 1000, -3000, 0, 0, 0, -3000);
   state.updateStressInvariants();
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  //std::cout << Point(z_close, rprime_close, 0) << "\n";
-  EXPECT_NEAR(z_close, -5.21906671354606e+03, 1.0e-10);
-  EXPECT_NEAR(rprime_close, 1.36542215413796e+03, 1.0e-10);
+  EXPECT_NEAR(z_close, -5214.01272, 1.0e-4);
+  EXPECT_NEAR(rprime_close, 1355.79387, 1.0e-4);
 }

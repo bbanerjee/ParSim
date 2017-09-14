@@ -39,6 +39,8 @@
 
 namespace Vaango {
 
+  using Polyline = std::vector<Uintah::Point>;
+
 /*!
   \class  YieldCond_Tabular
   \brief  The Tabular yield condition
@@ -317,7 +319,7 @@ private:
   double d_I1bar_min;
   double d_I1bar_max;
   double d_sqrtJ2_max;
-  std::vector<Uintah::Point>  d_polyline;
+  Polyline  d_polyline;
   std::vector<Uintah::Vector> d_normals;
 
   void checkInputParameters();
@@ -327,21 +329,14 @@ private:
 
   /* Find the closest point */
   Uintah::Point getClosestPoint(const double& p_bar, const double& sqrtJ2);
-  Uintah::Point getClosestPointDirect(const ModelState_Tabular* state,
+  Uintah::Point getClosestPointTable(const ModelState_Tabular* state,
+                                     const Uintah::Point& z_r_pt);
+  Uintah::Point getClosestPointSpline(const ModelState_Tabular* state,
                                       const Uintah::Point& z_r_pt);
 
-  Uintah::Point getClosestPointGeometricBisect(const ModelState_Tabular* state,
-                                               const Uintah::Point& z_r_pt);
+  /* Convert yield function data to z_rprime coordinates */
+  void convertToZRprime(const double& sqrtKG, Polyline& z_r_points) const;
 
-  /* Get the points on the yield surface */
-  void getYieldSurfacePointsAll_RprimeZ(const double& sqrtKG,
-    const double& I1eff_min, const double& I1eff_max, const int& num_points,
-    std::vector<Uintah::Point>& polyline);
-
-  /*! Compute a vector of z_eff, r' values given a range of I1_eff values */
-  void computeZ_and_RPrime(const double& sqrtKG, const double& I1eff_min,
-                           const double& I1eff_max, const int& num_points,
-                           std::vector<Uintah::Point>& z_r_vec);
 };
 
 } // End namespace Uintah

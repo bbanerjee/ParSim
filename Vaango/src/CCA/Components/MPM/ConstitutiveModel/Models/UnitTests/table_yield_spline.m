@@ -1,7 +1,7 @@
 function table_yield_spline()
   format long e
   table_yield_spline_quad();
-  %table_yield_spline_all();
+  table_yield_spline_all();
 end
 
 function table_yield_spline_quad()
@@ -13,6 +13,18 @@ function table_yield_spline_quad()
   [xspline' yspline']
   plot(p, q, 'b-', 'LineWidth', 2); hold on;
   plot(xspline,yspline, 'r-', 'LineWidth', 2);
+
+  [xspline, yspline] = B_spline_quadratic(xspline, yspline, numpts);
+  plot(xspline,yspline, 'g-', 'LineWidth', 2);
+
+  numpts = 20;
+  [xspline, yspline] = B_spline_quadratic(p, q, numpts);
+  plot(xspline,yspline, 'm-', 'LineWidth', 2);
+
+  %for i=1:length(p)-2
+  %  [xspline, yspline] = B_spline_quadratic(p(i:i+2), q(i:i+2), numpts);
+  %  plot(xspline,yspline, '-', 'LineWidth', 2, 'Color', [1-i/10 i/10 0]);
+  %end
 end
 
 function table_yield_spline_all()
@@ -150,7 +162,7 @@ function [xspline, yspline] = B_spline_quadratic(xvals, yvals, numpts)
 
   count = 0;
   for j=1 : n - k + 1
-    [length(xvals) j j+1 j+2]
+    [length(xvals) j j+1 j+2];
     for i=1:length(tvals)
       t = tvals(i);
       Pj = [xvals(j) yvals(j)];

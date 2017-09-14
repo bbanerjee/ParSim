@@ -106,6 +106,97 @@ TEST(YieldCondUtilsTest, convexHull2D)
   EXPECT_EQ(hull[6], Point(10, 100, 0));
 }
 
+TEST(YieldCondUtilsTest, findClosestPoint)
+{
+  std::vector<Point> poly = {{
+    Point(-692.82, -866.025, 0), Point(-17.3205, -173.205, 0), 
+    Point(17.3205, 0, 0),        Point(-17.3205, 173.205, 0), 
+    Point(-692.82, 866.025, 0),  Point(-1385.64, 1039.23, 0), 
+    Point(-2771.28, 1212.44, 0), Point(-5542.56, 1385.64, 0), 
+    Point(-11085.1, 1558.85, 0), Point(-11639.4, 1576.17, 0), 
+    Point(-11694.8, 1577.9, 0) 
+  }};
+  {
+    Point min_pt(0, 0, 0);
+    Point pt(3464.1, 6928.2, 0);
+    Vaango::Util::findClosestPoint(pt, poly, min_pt);
+    EXPECT_NEAR(min_pt.x(), -6.9282e+02, 1.0e-10);
+    EXPECT_NEAR(min_pt.y(), 8.66025e+02, 1.0e-10);
+  }
+  {
+    Point min_pt(0, 0, 0);
+    Point pt(-3464.1, 6928.2, 0);
+    Vaango::Util::findClosestPoint(pt, poly, min_pt);
+    EXPECT_NEAR(min_pt.x(), -3.8172391454861686e+03, 1.0e-10);
+    EXPECT_NEAR(min_pt.y(), 1.2778105594520239e+03, 1.0e-10);
+  }
+  {
+    Point min_pt(0, 0, 0);
+    Point pt(5196.15, 0, 0);
+    Vaango::Util::findClosestPoint(pt, poly, min_pt);
+    EXPECT_NEAR(min_pt.x(), 1.73205e+01, 1.0e-10);
+    EXPECT_NEAR(min_pt.y(), 0, 1.0e-10);
+  }
+  {
+    Point min_pt(0, 0, 0);
+    Point pt(5196.15, 1732.05, 0);
+    Vaango::Util::findClosestPoint(pt, poly, min_pt);
+    EXPECT_NEAR(min_pt.x(), -1.73205e+01, 1.0e-10);
+    EXPECT_NEAR(min_pt.y(), 1.73205e+02, 1.0e-10);
+  }
+  {
+    Point min_pt(0, 0, 0);
+    Point pt(-5196.15, 1732.05, 0);
+    Vaango::Util::findClosestPoint(pt, poly, min_pt);
+    EXPECT_NEAR(min_pt.x(), -5.2190635849151222e+03, 1.0e-10);
+    EXPECT_NEAR(min_pt.y(), 1.3654220577160372e+03, 1.0e-10);
+  }
+}
+
+TEST(YieldCondUtilsTest, findClosestSegments)
+{
+  std::vector<Point> poly = {{
+    Point(17.3205, 0, 0),        Point(-17.3205, 173.205, 0), 
+    Point(-692.82, 866.025, 0),  Point(-1385.64, 1039.23, 0), 
+    Point(-2771.28, 1212.44, 0), Point(-5542.56, 1385.64, 0), 
+    Point(-11085.1, 1558.85, 0)
+  }};
+  {
+    std::vector<Point> min_seg;
+    Point pt(3464.1, 6928.2, 0);
+    auto index = Vaango::Util::getClosestSegments(pt, poly, min_seg);
+    EXPECT_EQ(index, 2);
+  }
+  {
+    std::vector<Point> min_seg;
+    Point pt(-3464.1, 6928.2, 0);
+    auto index = Vaango::Util::getClosestSegments(pt, poly, min_seg);
+    EXPECT_EQ(index, 4);
+  }
+  {
+    std::vector<Point> min_seg;
+    Point pt(5196.15, 0, 0);
+    auto index = Vaango::Util::getClosestSegments(pt, poly, min_seg);
+    EXPECT_EQ(index, 1);
+  }
+  {
+    std::vector<Point> min_seg;
+    Point pt(5196.15, 1732.05, 0);
+    auto index = Vaango::Util::getClosestSegments(pt, poly, min_seg);
+    EXPECT_EQ(index, 1);
+  }
+  {
+    std::vector<Point> min_seg;
+    Point pt(-5196.15, 1732.05, 0);
+    auto index = Vaango::Util::getClosestSegments(pt, poly, min_seg);
+    EXPECT_EQ(index, 5);
+    //std::cout << "index = " << index;
+    //std::copy(min_seg.begin(), min_seg.end(),
+    //          std::ostream_iterator<Point>(std::cout, " "));
+    //std::cout << std::endl;
+  }
+}
+
 TEST(YieldCondUtilsTest, linspace)
 {
   std::vector<double> array;
@@ -157,26 +248,26 @@ TEST(YieldCondUtilsTest, computeBSpline)
   //std::copy(spline.begin(), spline.end(),
   //          std::ostream_iterator<Point>(std::cout, " "));
   //std::cout << std::endl;
-  EXPECT_EQ(spline.size(), 21);
+  EXPECT_EQ(spline.size(), 24);
   EXPECT_NEAR(spline[0].x(), Point(1.000e+00, -1.000e+00, 0).x(), 1.0e-10);
   EXPECT_NEAR(spline[1].x(), Point(1.380e+00, -3.200e-01, 0).x(), 1.0e-10);
   EXPECT_NEAR(spline[2].x(), Point(1.720e+00,  1.200e-01, 0).x(), 1.0e-10);
   EXPECT_NEAR(spline[3].x(), Point(2.020e+00,  3.200e-01, 0).x(), 1.0e-10);
   EXPECT_NEAR(spline[4].x(), Point(2.280e+00,  2.800e-01, 0).x(), 1.0e-10);
   EXPECT_NEAR(spline[5].x(), Point(2.500e+00,  0.000e+00, 0).x(), 1.0e-10);
-  EXPECT_NEAR(spline[6].x(), Point(2.700e+00, -3.200e-01, 0).x(), 1.0e-10);
-  EXPECT_NEAR(spline[7].x(), Point(2.900e+00, -4.800e-01, 0).x(), 1.0e-10);
-  EXPECT_NEAR(spline[8].x(), Point(3.100e+00, -4.800e-01, 0).x(), 1.0e-10);
-  EXPECT_NEAR(spline[9].x(), Point(3.300e+00, -3.200e-01, 0).x(), 1.0e-10);
-  EXPECT_NEAR(spline[10].y(), Point(3.500e+00,  0.000e+00, 0).y(), 1.0e-10);
-  EXPECT_NEAR(spline[11].y(), Point(3.700e+00,  3.200e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(spline[12].y(), Point(3.900e+00,  4.800e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(spline[13].y(), Point(4.100e+00,  4.800e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(spline[14].y(), Point(4.300e+00,  3.200e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(spline[15].y(), Point(4.500e+00,  0.000e+00, 0).y(), 1.0e-10);
-  EXPECT_NEAR(spline[16].y(), Point(4.720e+00, -2.800e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(spline[17].y(), Point(4.980e+00, -3.200e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(spline[18].y(), Point(5.280e+00, -1.200e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(spline[19].y(), Point(5.620e+00,  3.200e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(spline[20].y(), Point(6.000e+00,  1.000e+00, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[7].x(), Point(2.700e+00, -3.200e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[8].x(), Point(2.900e+00, -4.800e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[9].x(), Point(3.100e+00, -4.800e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[10].x(), Point(3.300e+00, -3.200e-01, 0).x(), 1.0e-10);
+  EXPECT_NEAR(spline[11].y(), Point(3.500e+00,  0.000e+00, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[13].y(), Point(3.700e+00,  3.200e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[14].y(), Point(3.900e+00,  4.800e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[15].y(), Point(4.100e+00,  4.800e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[16].y(), Point(4.300e+00,  3.200e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[17].y(), Point(4.500e+00,  0.000e+00, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[19].y(), Point(4.720e+00, -2.800e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[20].y(), Point(4.980e+00, -3.200e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[21].y(), Point(5.280e+00, -1.200e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[22].y(), Point(5.620e+00,  3.200e-01, 0).y(), 1.0e-10);
+  EXPECT_NEAR(spline[23].y(), Point(6.000e+00,  1.000e+00, 0).y(), 1.0e-10);
 }

@@ -31,19 +31,16 @@
 #include <chrono>
 #include <cmath>
 
-//#define USE_GEOMETRIC_BISECTION
-//#define DEBUG_YIELD_BISECTION
-//#define DEBUG_YIELD_BISECTION_I1_J2
-//#define DEBUG_YIELD_BISECTION_R
-//#define CHECK_FOR_NANS
-
 using namespace Vaango;
+using Point = Uintah::Point;
+using Vector = Uintah::Vector;
+using Matrix3 = Uintah::Matrix3;
 
 const double YieldCond_Tabular::sqrt_two = std::sqrt(2.0);
 const double YieldCond_Tabular::sqrt_three = std::sqrt(3.0);
 const double YieldCond_Tabular::one_sqrt_three = 1.0 / sqrt_three;
 const double YieldCond_Tabular::large_number = 1.0e100;
-const Uintah::Matrix3 YieldCond_Tabular::One(1,0,0,0,1,0,0,0,1);
+const Matrix3 YieldCond_Tabular::One(1,0,0,0,1,0,0,0,1);
 
 YieldCond_Tabular::YieldCond_Tabular(Uintah::ProblemSpecP& ps)
   : d_yield(ps)
@@ -216,7 +213,7 @@ YieldCond_Tabular::computeNormals()
   d_normals = Vaango::Util::computeNormals(d_polyline);
   //std::cout << "Normals:";
   //std::copy(d_normals.begin(), d_normals.end(),
-  //          std::ostream_iterator<Uintah::Vector>(std::cout, " "));
+  //          std::ostream_iterator<Vector>(std::cout, " "));
   //std::cout << std::endl;
 }
 
@@ -448,12 +445,7 @@ YieldCond_Tabular::getClosestPoint(const ModelStateBase* state_input,
   //std::chrono::time_point<std::chrono::system_clock> start, end;
   //start = std::chrono::system_clock::now();
   Point pt(z, rprime, 0.0);
-
-#ifdef USE_GEOMETRIC_BISECTION
-  Point closest = getClosestPointGeometricBisect(state, pt);
-#else
-  Point closest = getClosestPointDirect(state, pt);
-#endif
+  Point closest = getClosestPointSpline(state, pt);
 
   cz = closest.x();
   crprime = closest.y();
@@ -465,271 +457,96 @@ YieldCond_Tabular::getClosestPoint(const ModelStateBase* state_input,
 }
 
 Point
-YieldCond_Tabular::getClosestPointDirect(const ModelState_Tabular* state, 
-                                         const Uintah::Point& z_r_pt)
+YieldCond_Tabular::getClosestPointTable(const ModelState_Tabular* state, 
+                                        const Point& z_r_pt)
 {
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
 
-  // Compute z and r' for the yield surface
-  std::vector<Uintah::Point> z_r_points;
-  for (const auto& pt : d_polyline) {
-    double p_bar = pt.x();
-    double sqrt_J2 = pt.y();
-    double z = -sqrt_three * p_bar;
-    double rprime = sqrt_two * sqrt_J2 * sqrtKG;
-    z_r_points.push_back(Uintah::Point(z, rprime, 0));
-  }
+  // Convert tabular data to z-rprime coordinates
+  Polyline z_r_table;
+  convertToZRprime(sqrtKG, z_r_table);
 
   // Find the closest point
-  Point z_r_closest(0,0,0);
-  Vaango::Util::findClosestPoint(z_r_pt, z_r_points, z_r_closest);
-
-#ifdef DEBUG_YIELD_BISECTION_I1_J2
-    double fac_z = sqrt_three;
-    double fac_r = sqrtKG * sqrt_two;
-    std::cout << "I1_J2_trial = [" << z_r_pt.x() * fac_z << " "
-              << z_r_pt.y() / fac_r << "];" << std::endl;
-    std::cout << "I1_J2_closest = [" << z_r_closest.x() * fac_z << " "
-              << z_r_closest.y() / fac_r << "];" << std::endl;
-    std::cout << "I1_J2_yield_I1 = [";
-    for (auto& pt : z_r_points) {
-      std::cout << pt.x() * fac_z << " ";
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "I1_J2_yield_J2 = [";
-    for (auto& pt : z_r_points) {
-      std::cout << pt.y() / fac_r << " ";
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "plot(I1_J2_yield_I1, I1_J2_yield_J2); hold on;" << std::endl;
-    std::cout << "plot(I1_J2_trial(1), I1_J2_trial(2), 'ko');" << std::endl;
-    std::cout << "plot(I1_J2_closest(1), I1_J2_closest(2));" << std::endl;
-    std::cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) "
-                 "I1_J2_closest(2)], '--');"
-              << std::endl;
-#endif
+  Point z_r_closest;
+  Vaango::Util::findClosestPoint(z_r_pt, z_r_table, z_r_closest);
 
   return z_r_closest;
 }
 
 Point
-YieldCond_Tabular::getClosestPointGeometricBisect(
-  const ModelState_Tabular* state, const Uintah::Point& z_r_pt)
+YieldCond_Tabular::getClosestPointSpline(const ModelState_Tabular* state, 
+                                         const Point& z_r_pt)
 {
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
 
-  // Compute diameter of yield surface in z-r space
-  double I1_diff = d_I1bar_max - d_I1bar_min;
-  double sqrtJ2_diff = 2*d_sqrtJ2_max;
-  double yield_surf_dia_zrprime =
-    std::max(I1_diff * one_sqrt_three, sqrtJ2_diff * sqrt_two * sqrtKG);
-  double dist_to_trial_zr =
-    std::sqrt(z_r_pt.x() * z_r_pt.x() + z_r_pt.y() * z_r_pt.y());
-  double dist_dia_ratio = dist_to_trial_zr / yield_surf_dia_zrprime;
-  int num_points = std::max(5, (int)std::ceil(std::log(dist_dia_ratio)));
+  // Convert tabular data to z-rprime coordinates
+  Polyline z_r_table;
+  convertToZRprime(sqrtKG, z_r_table);
 
-  // Set up I1 limits
-  double I1_min = -d_I1bar_max;
-  double I1_max = -d_I1bar_min;
+  // Find the closest segments
+  Polyline z_r_segments;
+  std::size_t closest_index = 
+    Vaango::Util::getClosestSegments(z_r_pt, z_r_table, z_r_segments);
 
-  // Set up bisection
-  double eta_lo = 0.0, eta_hi = 1.0;
-
-  // Set up mid point
-  double I1_mid = 0.5 * (I1_min + I1_max);
-  double eta_mid = 0.5 * (eta_lo + eta_hi);
-
-  // Do bisection
-  int iters = 1;
-  double TOLERANCE = 1.0e-10;
-  std::vector<Uintah::Point> z_r_points;
-  std::vector<Uintah::Point> z_r_segments;
-  std::vector<Uintah::Point> z_r_segment_points;
-  Uintah::Point z_r_closest;
-  z_r_closest.x(std::numeric_limits<double>::max());
-  z_r_closest.y(std::numeric_limits<double>::max());
-  z_r_closest.z(0.0);
-  Uintah::Point z_r_closest_old(z_r_closest);
-  while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
-
-    // Get the yield surface points
-    z_r_points.clear();
-    getYieldSurfacePointsAll_RprimeZ(sqrtKG, I1_min, I1_max,
-                                     num_points, z_r_points);
-
-    // Find the closest point
-    Vaango::Util::findClosestPoint(z_r_pt, z_r_points, z_r_closest);
-
-#ifdef DEBUG_YIELD_BISECTION_R
-    std::cout << "iteration = " << iters << std::endl;
-    std::cout << "K = " << state->bulkModulus << std::endl;
-    std::cout << "G = " << state->shearModulus << std::endl;
-    std::cout << "z_r_pt = c(" << z_r_pt.x() << "," << z_r_pt.y() << ")"
-              << std::endl;
-    std::cout << "z_r_closest = c(" << z_r_closest.x() << "," << z_r_closest.y()
-              << ")" << std::endl;
-    std::cout << "z_r_yield_z = c(";
-    for (auto& pt : z_r_points) {
-      if (pt == z_r_points.back()) {
-        std::cout << pt.x();
-      } else {
-        std::cout << pt.x() << ",";
-      }
-    }
-    std::cout << ")" << std::endl;
-    std::cout << "z_r_yield_r = c(";
-    for (auto& pt : z_r_points) {
-      if (pt == z_r_points.back()) {
-        std::cout << pt.y();
-      } else {
-        std::cout << pt.y() << ",";
-      }
-    }
-    std::cout << ")" << std::endl;
-    if (iters == 1) {
-      std::cout << "zr_df = \n"
-                << "  ComputeFullYieldSurface(yieldParams, X, pbar_w, K, G, "
-                   "num_points,\n"
-                << "                          z_r_pt, z_r_closest, "
-                   "z_r_yield_z, z_r_yield_r,\n"
-                << "                          iteration, consistency_iter)"
-                << std::endl;
-    } else {
-      std::cout << "zr_df = rbind(zr_df,\n"
-                << "  ComputeFullYieldSurface(yieldParams, X, pbar_w, K, G, "
-                   "num_points,\n"
-                << "                          z_r_pt, z_r_closest, "
-                   "z_r_yield_z, z_r_yield_r,\n"
-                << "                          iteration, consistency_iter))"
-                << std::endl;
-    }
-#endif
-
-#ifdef DEBUG_YIELD_BISECTION
-    std::cout << "Iteration = " << iters << std::endl;
-    std::cout << "State = " << *state << std::endl;
-    std::cout << "z_r_pt = " << z_r_pt << ";" << std::endl;
-    std::cout << "z_r_closest = " << z_r_closest << ";" << std::endl;
-    std::cout << "z_r_yield_z = [";
-    for (auto& pt : z_r_points) {
-      std::cout << pt.x() << " ";
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "z_r_yield_r = [";
-    for (auto& pt : z_r_points) {
-      std::cout << pt.y() << " ";
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
-    std::cout << "plot(z_r_pt(1), z_r_pt(2));" << std::endl;
-    std::cout << "plot(z_r_closest(1), z_r_closest(2));" << std::endl;
-    std::cout
-      << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');"
-      << std::endl;
-#endif
-#ifdef DEBUG_YIELD_BISECTION_I1_J2
-    double fac_z = sqrt_three;
-    double fac_r = sqrtKG * sqrt_two;
-    std::cout << "Iteration = " << iters << std::endl;
-    std::cout << "I1_J2_trial = [" << z_r_pt.x() * fac_z << " "
-              << z_r_pt.y() / fac_r << "];" << std::endl;
-    std::cout << "I1_J2_closest = [" << z_r_closest.x() * fac_z << " "
-              << z_r_closest.y() / fac_r << "];" << std::endl;
-    std::cout << "I1_J2_yield_I1 = [";
-    for (auto& pt : z_r_points) {
-      std::cout << pt.x() * fac_z << " ";
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "I1_J2_yield_J2 = [";
-    for (auto& pt : z_r_points) {
-      std::cout << pt.y() / fac_r << " ";
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "plot(I1_J2_yield_I1, I1_J2_yield_J2); hold on;" << std::endl;
-    std::cout << "plot(I1_J2_trial(1), I1_J2_trial(2), 'ko');" << std::endl;
-    std::cout << "plot(I1_J2_closest(1), I1_J2_closest(2));" << std::endl;
-    std::cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) "
-                 "I1_J2_closest(2)], '--');"
-              << std::endl;
-#endif
-
-    // Compute I1 for the closest point
-    double I1_closest = sqrt_three * z_r_closest.x();
-
-    // If (I1_closest < I1_mid)
-    if (I1_closest < I1_mid) {
-      I1_max = I1_mid;
-      eta_hi = eta_mid;
-    } else {
-      I1_min = I1_mid;
-      eta_lo = eta_mid;
-    }
-
-    I1_mid = 0.5 * (I1_min + I1_max);
-    eta_mid = 0.5 * (eta_lo + eta_hi);
-
-    // Distance to old closest point
-    if (iters > 10 && (z_r_closest - z_r_closest_old).length2() < 1.0e-16) {
-      break;
-    }
-    z_r_closest_old = z_r_closest;
-
-    ++iters;
+  // Get the yield surface points for the closest segments
+  // (Fit quadratic B_spline)
+  std::size_t numPts = z_r_table.size();
+  std::size_t ptsPerSegment = 30;
+  Polyline z_r_spline;
+  if (closest_index == 0) {
+    Vaango::Util::computeOpenUniformQuadraticBSpline(z_r_table, 
+                                                     0, 1, ptsPerSegment,
+                                                     z_r_spline);
+  } else if (closest_index == numPts-2) {
+    Vaango::Util::computeOpenUniformQuadraticBSpline(z_r_table, 
+                                                     numPts-2, numPts-1,
+                                                     ptsPerSegment,
+                                                     z_r_spline);
+  } else {
+    Vaango::Util::computeOpenUniformQuadraticBSpline(z_r_table, 
+                                                     closest_index-1,
+                                                     closest_index+1,
+                                                     ptsPerSegment,
+                                                     z_r_spline);
   }
+
+  // Find the closest point
+  Point z_r_closest;
+  Vaango::Util::findClosestPoint(z_r_pt, z_r_spline, z_r_closest);
+
+  /*
+  std::cout << "ZRPoint = " << z_r_pt << std::endl;
+  std::cout << "ZRTable = ";
+  std::copy(z_r_table.begin(), z_r_table.end(),
+            std::ostream_iterator<Point>(std::cout, " "));
+  std::cout << std::endl;
+  std::cout << "ZRSpline = ";
+  std::copy(z_r_spline.begin(), z_r_spline.end(),
+            std::ostream_iterator<Point>(std::cout, " "));
+  std::cout << std::endl;
+  std::cout << "ZRClose = " << z_r_closest << "\n";
+  */
 
   return z_r_closest;
 }
 
-/*! Compute a vector of z, r' values given a range of I1 values */
-void
-YieldCond_Tabular::computeZ_and_RPrime(const double& sqrtKG,
-  const double& I1_min, const double& I1_max, const int& num_points,
-  std::vector<Uintah::Point>& z_r_vec)
-{
-  // Set up points
-  double rad = 0.5 * (I1_max - I1_min);
-  double cen = 0.5 * (I1_max + I1_min);
-  double theta_max = std::acos(std::max((I1_min - cen) / rad, -1.0));
-  double theta_min = std::acos(std::min((I1_max - cen) / rad, 1.0));
-  std::vector<double> theta_vec;
-  Vaango::Util::linspace(theta_min, theta_max, num_points, theta_vec);
-
-  for (auto theta : theta_vec) {
-    double I1 = std::max(cen + rad * std::cos(theta), I1_max);
-    double p_bar = -I1/3.0;
-    DoubleVec1D gg = d_yield.table.interpolate<1>({{p_bar}}); 
-    double sqrt_J2 = gg[0];
-
-// Check for nans
-#ifdef CHECK_FOR_NANS
-    if (std::isnan(I1) || std::isnan(sqrt_J2)) {
-      std::cout << "theta = " << theta 
-                << " I1 = " << I1
-                << " sqrtJ2 = " << sqrt_J2 << std::endl;
-      std::cout << "rad = " << rad << " cen = " << cen
-                << " theta_max = " << theta_max << " theta_min = " << theta_min
-                << " I1_max = " << I1_max << " I1_min = " << I1_min
-                << std::endl;
-    }
-#endif
-
-    z_r_vec.push_back(Uintah::Point(
-      I1 / sqrt_three, sqrt_two * sqrt_J2 * sqrtKG, 0.0));
-  }
-
-  return;
-}
-
-/* Get the points on the yield surface */
+/* Convert yield function data to z_rprime coordinates */
 void 
-YieldCond_Tabular::getYieldSurfacePointsAll_RprimeZ(const double& sqrtKG,
-    const double& I1eff_min, const double& I1eff_max, const int& num_points,
-    std::vector<Uintah::Point>& polyline)
+YieldCond_Tabular::convertToZRprime(const double& sqrtKG, 
+                                    Polyline& z_r_points) const
 {
+  // Compute z and r' for the yield surface
+  for (const auto& pt : d_polyline) {
+    double p_bar = pt.x();
+    double sqrt_J2 = pt.y();
+    double z = -sqrt_three * p_bar;
+    double rprime = sqrt_two * sqrt_J2 * sqrtKG;
+    z_r_points.push_back(Point(z, rprime, 0));
+  }
 }
-
+                   
 //--------------------------------------------------------------
 // Other yield condition functions (not used)
 
@@ -872,7 +689,7 @@ YieldCond_Tabular::evalYieldCondition(const double p, const double q,
 // Evaluate yield condition (s = deviatoric stress
 //                           p = state->p)
 double
-YieldCond_Tabular::evalYieldCondition(const Uintah::Matrix3&,
+YieldCond_Tabular::evalYieldCondition(const Matrix3&,
                                       const ModelStateBase* state_input)
 {
   std::ostringstream out;
@@ -892,9 +709,9 @@ YieldCond_Tabular::evalYieldCondition(const Uintah::Matrix3&,
 // where
 //    s = sigma - 1/3 tr(sigma) I
 void
-YieldCond_Tabular::evalDerivOfYieldFunction(const Uintah::Matrix3& sig,
+YieldCond_Tabular::evalDerivOfYieldFunction(const Matrix3& sig,
                                             const double p_c, const double,
-                                            Uintah::Matrix3& derivative)
+                                            Matrix3& derivative)
 {
   std::ostringstream out;
   out << "**ERROR** evalDerivOfYieldCondition with a Matrix3 argument should "
@@ -908,9 +725,9 @@ YieldCond_Tabular::evalDerivOfYieldFunction(const Uintah::Matrix3& sig,
 // Compute df/ds  where s = deviatoric stress
 //    df/ds =
 void
-YieldCond_Tabular::evalDevDerivOfYieldFunction(const Uintah::Matrix3& sigDev,
+YieldCond_Tabular::evalDevDerivOfYieldFunction(const Matrix3& sigDev,
                                                const double, const double,
-                                               Uintah::Matrix3& derivative)
+                                               Matrix3& derivative)
 {
   std::ostringstream out;
   out << "**ERROR** evalDerivOfYieldCondition with a Matrix3 argument should "
