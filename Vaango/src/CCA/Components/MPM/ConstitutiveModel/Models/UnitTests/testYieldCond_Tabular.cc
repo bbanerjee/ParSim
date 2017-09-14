@@ -108,6 +108,11 @@ TEST_F(YieldCondTabularTest, constructorTest)
 
   YieldCond_Tabular model_circle(ps_circle);
   //std::cout << model_circle;
+
+  auto params = model.getParameters();
+  ASSERT_DOUBLE_EQ(params.at("I1_min"), -19200);
+  ASSERT_DOUBLE_EQ(params.at("I1_max"), 30);
+  ASSERT_DOUBLE_EQ(params.at("sqrtJ2_max"), 900);
 }
 
 TEST_F(YieldCondTabularTest, evalYieldCondition)

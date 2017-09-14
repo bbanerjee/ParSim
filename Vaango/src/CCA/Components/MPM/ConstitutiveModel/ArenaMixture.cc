@@ -534,7 +534,7 @@ void
 ArenaMixture::addParticleState(std::vector<const VarLabel*>& from,
                                std::vector<const VarLabel*>& to)
 {
-  // Push back all the particle variables associated with Arenisca.
+  // Push back all the particle variables associated with Arena.
   // Important to keep from and to lists in same order!
   from.push_back(pElasticVolStrainLabel);
   to.push_back(pElasticVolStrainLabel_preReloc);
@@ -1099,7 +1099,7 @@ ArenaMixture::computeStressTensor(const PatchSubset* patches,
 
       // A parameter to consider the thermal effects of the plastic work which
       // is not coded in the current source code. Further development of
-      // Arenisca
+      // Arena
       // may activate this feature.
       pdTdt[idx] = 0.0;
 
@@ -3026,7 +3026,7 @@ ArenaMixture::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
                                 ParticleSubset* delset, DataWarehouse* old_dw)
 {
   std::ostringstream out;
-  out << "Material conversion after failure not implemented for Arenisca.";
+  out << "Material conversion after failure not implemented for Arena.";
   throw ProblemSetupException(out.str(), __FILE__, __LINE__);
   // task->requires(Task::NewDW, pPorosityLabel_preReloc,         matlset,
   // Ghost::None);

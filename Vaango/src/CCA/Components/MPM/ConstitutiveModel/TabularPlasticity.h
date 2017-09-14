@@ -28,7 +28,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Tabular.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondtion.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -69,8 +69,6 @@ public:
   struct CMData
   {
     double yield_scale_fac;
-    double consistency_bisection_tolerance;
-    double max_bisection_iterations;
     double subcycling_characteristic_number;
   };
 
@@ -86,8 +84,8 @@ public:
   const Uintah::VarLabel* pPlasticVolStrainLabel_preReloc;
 
   TabularPlasticity(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
-  TabularPlasticity(const Tabular* cm);
-  TabularPlasticity(const TabularPlasticity& cm) = delete;
+  TabularPlasticity(const TabularPlasticity* cm);
+  TabularPlasticity(const TabularPlasticity& cm);
   ~TabularPlasticity() override;
   TabularPlasticity& operator=(const TabularPlasticity& cm) = delete;
 
@@ -102,14 +100,6 @@ public:
   ParameterDict getParameters() const
   {
     ParameterDict params;
-    params["phi0"] = d_fluidParam.phi0;
-    params["Sw0"] = d_fluidParam.Sw0;
-    params["pbar_w0"] = d_fluidParam.pbar_w0;
-    params["p0"] = d_crushParam.p0;
-    params["p1"] = d_crushParam.p1;
-    params["p1_sat"] = d_crushParam.p1_sat;
-    params["p2"] = d_crushParam.p2;
-    params["p3"] = d_crushParam.p3;
     return params;
   }
 
@@ -191,7 +181,7 @@ public:
 private:
 
   ElasticModuliModel* d_elastic;
-  YieldCondtion* d_yield;
+  YieldCondition* d_yield;
 
   CMData d_cm;
 

@@ -57,6 +57,8 @@ public:
   double ep_v;      // ep_v = Tr(ep) : Volumetric part of the plastic strain
   double ep_eq;     // The equivalent plastic strain computed from the current
                     // plastic strain (This quantity can decrease)
+  double ep_cum_eq; // The cumulative equivalent plastic strain
+                    // (This quantity increases monotonically)
 
   Uintah::Matrix3 stressTensor; 
   Uintah::Matrix3 deviatoricStressTensor; 
@@ -87,7 +89,8 @@ public:
        << ", z = " << state.zz << "\n"
        << "\t eps_e = " << state.elasticStrainTensor << "\n"
        << "\t eps_p = " << state.plasticStrainTensor << "\n"
-       << "\t evp = " << state.ep_v << " ep_eq = " << state.ep_eq << "\n"
+       << "\t evp = " << state.ep_v << " ep_eq = " << state.ep_eq 
+       << "\t ep_cum_eq = " << state.ep_cum_eq << "\n"
        << "\t K = " << state.bulkModulus << ", G = " << state.shearModulus
        << "\n";
     return os;

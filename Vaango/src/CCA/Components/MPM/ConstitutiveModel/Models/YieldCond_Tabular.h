@@ -72,6 +72,9 @@ public:
   std::map<std::string, double> getParameters() const override
   {
     std::map<std::string, double> params;
+    params["I1_min"] = -d_I1bar_max;
+    params["I1_max"] = -d_I1bar_min;
+    params["sqrtJ2_max"] = d_sqrtJ2_max;
     return params;
   }
 
