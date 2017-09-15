@@ -82,6 +82,8 @@ public:
   const Uintah::VarLabel* pElasticVolStrainLabel_preReloc;
   const Uintah::VarLabel* pPlasticVolStrainLabel; // Plastic Volumetric Strain
   const Uintah::VarLabel* pPlasticVolStrainLabel_preReloc;
+  const Uintah::VarLabel* pRemoveLabel; // Flag for removal
+  const Uintah::VarLabel* pRemoveLabel_preReloc;
 
   TabularPlasticity(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
   TabularPlasticity(const TabularPlasticity* cm);

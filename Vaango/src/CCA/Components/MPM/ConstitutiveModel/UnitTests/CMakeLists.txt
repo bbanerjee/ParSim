@@ -33,6 +33,11 @@ configure_file(tabular_eos.json tabular_eos.json COPYONLY)
 configure_file(HydrostaticCompression_PrescribedDeformation.inp 
                HydrostaticCompression_PrescribedDeformation.inp COPYONLY)
 
+configure_file(tabular_linear_elastic.json tabular_linear_elastic.json COPYONLY)
+configure_file(tabular_von_mises.json tabular_von_mises.json COPYONLY)
+configure_file(UniaxialStrainRotate_PrescribedDeformation.inp 
+               UniaxialStrainRotate_PrescribedDeformation.inp COPYONLY)
+
 #------------------------
 # Libraries needed
 #------------------------
@@ -72,6 +77,18 @@ target_link_libraries(testTabularEOS
   ${VAANGO_LIBS}
 )
 set(UNIT_TEST testTabularEOS)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+add_executable(testTabularPlasticity testTabularPlasticity.cc)
+target_link_libraries(testTabularPlasticity
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testTabularPlasticity)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD

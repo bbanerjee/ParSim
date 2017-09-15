@@ -36,8 +36,11 @@ namespace Uintah {
 
 class MPMLabel;
 class MPMFlags;
+}
 
-class TabularEquationOfState : public ConstitutiveModel
+namespace Vaango {
+
+class TabularEquationOfState : public Uintah::ConstitutiveModel
 {
 
 private:
@@ -50,39 +53,39 @@ private:
 
 public:
   // constructor
-  TabularEquationOfState(ProblemSpecP& ps, MPMFlags* flag);
+  TabularEquationOfState(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
   TabularEquationOfState(const TabularEquationOfState* cm);
 
   // destructor
   virtual ~TabularEquationOfState();
 
-  virtual void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true);
+  virtual void outputProblemSpec(Uintah::ProblemSpecP& ps, bool output_cm_tag = true);
 
   // clone
   TabularEquationOfState* clone();
 
   // compute stable timestep for this patch
-  virtual void computeStableTimestep(const Patch* patch,
-                                     const MPMMaterial* matl,
-                                     DataWarehouse* new_dw);
+  virtual void computeStableTimestep(const Uintah::Patch* patch,
+                                     const Uintah::MPMMaterial* matl,
+                                     Uintah::DataWarehouse* new_dw);
 
   // compute stress at each particle in the patch
-  virtual void computeStressTensor(const PatchSubset* patches,
-                                   const MPMMaterial* matl,
-                                   DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw);
+  virtual void computeStressTensor(const Uintah::PatchSubset* patches,
+                                   const Uintah::MPMMaterial* matl,
+                                   Uintah::DataWarehouse* old_dw,
+                                   Uintah::DataWarehouse* new_dw);
 
   // carry forward CM data for RigidMPM
-  virtual void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                            DataWarehouse* old_dw, DataWarehouse* new_dw);
+  virtual void carryForward(const Uintah::PatchSubset* patches, const Uintah::MPMMaterial* matl,
+                            Uintah::DataWarehouse* old_dw, Uintah::DataWarehouse* new_dw);
 
   virtual double computeRhoMicroCM(double pressure, const double p_ref,
-                                   const MPMMaterial* matl, double temperature,
+                                   const Uintah::MPMMaterial* matl, double temperature,
                                    double rho_guess);
 
   virtual void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
                                  double& dp_drho, double& ss_new,
-                                 const MPMMaterial* matl, double temperature);
+                                 const Uintah::MPMMaterial* matl, double temperature);
 
   virtual double getCompressibility();
 
@@ -90,29 +93,29 @@ public:
                             const double& rho) const;
 
   // initialize  each particle's constitutive model data
-  virtual void initializeCMData(const Patch* patch, const MPMMaterial* matl,
-                                DataWarehouse* new_dw);
+  virtual void initializeCMData(const Uintah::Patch* patch, const Uintah::MPMMaterial* matl,
+                                Uintah::DataWarehouse* new_dw);
 
-  virtual void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                         const PatchSet* patch,
-                                         MPMLabel* lb) const;
+  virtual void allocateCMDataAddRequires(Uintah::Task* task, const Uintah::MPMMaterial* matl,
+                                         const Uintah::PatchSet* patch,
+                                         Uintah::MPMLabel* lb) const;
 
-  virtual void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
-                                 ParticleLabelVariableMap* newState,
-                                 ParticleSubset* delset, DataWarehouse* old_dw);
+  virtual void allocateCMDataAdd(Uintah::DataWarehouse* new_dw, Uintah::ParticleSubset* addset,
+                                 Uintah::ParticleLabelVariableMap* newState,
+                                 Uintah::ParticleSubset* delset, Uintah::DataWarehouse* old_dw);
 
-  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                      const PatchSet* patches) const;
+  virtual void addComputesAndRequires(Uintah::Task* task, const Uintah::MPMMaterial* matl,
+                                      const Uintah::PatchSet* patches) const;
 
-  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                      const PatchSet* patches,
+  virtual void addComputesAndRequires(Uintah::Task* task, const Uintah::MPMMaterial* matl,
+                                      const Uintah::PatchSet* patches,
                                       const bool recursion,
                                       const bool schedParent = true) const;
 
-  virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                std::vector<const VarLabel*>& to);
+  virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                                std::vector<const Uintah::VarLabel*>& to);
 
 };
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __TABULAR_EOS_CONSTITUTIVE_MODEL_H__

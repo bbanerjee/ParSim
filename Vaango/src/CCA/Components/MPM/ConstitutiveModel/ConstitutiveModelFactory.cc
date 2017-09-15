@@ -69,6 +69,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/SoilFoam.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SoilModelBrannon.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularEquationOfState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticity.h>
 #include <CCA/Components/MPM/ConstitutiveModel/UCNH.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticFortran.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoPlastic.h>
@@ -120,22 +121,33 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
 
   else if (mat_type == "comp_mooney_rivlin")
     return (scinew CompMooneyRivlin(child, flags));
+
   else if (mat_type == "nonlocal_drucker_prager")
     return (scinew NonLocalDruckerPrager(child, flags));
+
   else if (mat_type == "Arenisca")
     return (scinew Arenisca(child, flags));
+
   else if (mat_type == "Arenisca3")
     return (scinew Arenisca3(child, flags));
+
   else if (mat_type == "arena")
     return (scinew Vaango::Arena(child, flags));
+
   else if (mat_type == "arena_mixture")
     return (scinew Vaango::ArenaMixture(child, flags));
+
   else if (mat_type == "Arenisca4")
     return (scinew Arenisca4(child, flags));
+
   else if (mat_type == "soil_model_brannon")
     return (scinew SoilModelBrannon(child, flags));
+
   else if (mat_type == "tabular_eos")
-    return (scinew TabularEquationOfState(child, flags));
+    return (scinew Vaango::TabularEquationOfState(child, flags));
+
+  else if (mat_type == "tabular_plasticity")
+    return (scinew Vaango::TabularPlasticity(child, flags));
 
   else if (mat_type == "comp_neo_hook") {
     if (flags->d_integrator_type == "explicit" ||

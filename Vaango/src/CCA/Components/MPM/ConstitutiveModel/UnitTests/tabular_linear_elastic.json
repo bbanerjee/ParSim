@@ -1,0 +1,15 @@
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test linear elastic data"
+  },
+  "Data" : {
+    "PlasticStrainVol" : [-10.0, 10.0],
+    "Data" : [{
+      "TotalStrainVol" : [-20.0, 20.0],
+      "Pressure" : [-1.0e6,  1.0e6]
+    }, {
+      "TotalStrainVol" : [-20.0, 20.0],
+      "Pressure" : [-1.0e6, 1.0e6]
+    }]
+  }
+}}

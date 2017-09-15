@@ -44,9 +44,27 @@
 #include <iostream>
 #include <sci_values.h>
 
-using namespace Uintah;
-using Vaango::TabularData;
-using Vaango::DoubleVec1D;
+using namespace Vaango;
+
+using ProblemSpecP = Uintah::ProblemSpecP;
+using Task = Uintah::Task;
+using Patch = Uintah::Patch;
+using PatchSet = Uintah::PatchSet;
+using PatchSubset = Uintah::PatchSubset;
+using MaterialSubset = Uintah::MaterialSubset;
+using ParticleSubset = Uintah::ParticleSubset;
+using constParticleVariableBase = Uintah::constParticleVariableBase;
+using ParticleVariableBase = Uintah::ParticleVariableBase;
+using ParticleLabelVariableMap = Uintah::ParticleLabelVariableMap;
+using DataWarehouse = Uintah::DataWarehouse;
+using VarLabel = Uintah::VarLabel;
+using MPMFlags = Uintah::MPMFlags;
+using MPMLabel = Uintah::MPMLabel;
+using MPMMaterial = Uintah::MPMMaterial;
+using delt_vartype = Uintah::delt_vartype;
+using sum_vartype = Uintah::sum_vartype;
+using Vector = Uintah::Vector;
+using Matrix3 = Uintah::Matrix3;
 
 TabularEquationOfState::TabularEquationOfState(ProblemSpecP& ps,
                                                MPMFlags* Mflag)
@@ -137,8 +155,8 @@ TabularEquationOfState::computeStableTimestep(const Patch* patch,
   double rho_0 = matl->getInitialDensity();
 
   ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
-  constParticleVariable<double> pMass, pVolume;
-  constParticleVariable<Vector> pVelocity;
+  Uintah::constParticleVariable<double> pMass, pVolume;
+  Uintah::constParticleVariable<Vector> pVelocity;
 
   new_dw->get(pMass, lb->pMassLabel, pset);
   new_dw->get(pVolume, lb->pVolumeLabel, pset);
@@ -154,9 +172,9 @@ TabularEquationOfState::computeStableTimestep(const Patch* patch,
     double c_bulk = std::sqrt(bulkModulus/rho);
     std::cout << "K = " << bulkModulus 
               << " c_p = " << c_bulk << "\n";
-    WaveSpeed = Vector(Max(c_bulk + std::abs(pVelocity[pidx].x()), WaveSpeed.x()),
-                       Max(c_bulk + std::abs(pVelocity[pidx].y()), WaveSpeed.y()),
-                       Max(c_bulk + std::abs(pVelocity[pidx].z()), WaveSpeed.z()));
+    WaveSpeed = Vector(Uintah::Max(c_bulk + std::abs(pVelocity[pidx].x()), WaveSpeed.x()),
+                       Uintah::Max(c_bulk + std::abs(pVelocity[pidx].y()), WaveSpeed.y()),
+                       Uintah::Max(c_bulk + std::abs(pVelocity[pidx].z()), WaveSpeed.z()));
   }
   WaveSpeed = dx / WaveSpeed;
   double delT = WaveSpeed.minComponent();
@@ -197,18 +215,18 @@ TabularEquationOfState::computeStressTensor(const PatchSubset* patches,
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
-    constParticleVariable<double> pMass;
-    constParticleVariable<Vector> pVelocity;
+    Uintah::constParticleVariable<double> pMass;
+    Uintah::constParticleVariable<Vector> pVelocity;
     old_dw->get(pMass,     lb->pMassLabel, pset);
     old_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
-    constParticleVariable<double> pVolume;
-    constParticleVariable<Matrix3> pVelGrad;
+    Uintah::constParticleVariable<double> pVolume;
+    Uintah::constParticleVariable<Matrix3> pVelGrad;
     new_dw->get(pVolume,  lb->pVolumeLabel_preReloc, pset);
     new_dw->get(pVelGrad, lb->pVelGradLabel_preReloc, pset);
 
-    ParticleVariable<Matrix3> pStress;
-    ParticleVariable<double> pdTdt, p_q;
+    Uintah::ParticleVariable<Matrix3> pStress;
+    Uintah::ParticleVariable<double> pdTdt, p_q;
     new_dw->allocateAndPut(pStress, lb->pStressLabel_preReloc, pset);
     new_dw->allocateAndPut(pdTdt,   lb->pdTdtLabel_preReloc, pset);
     new_dw->allocateAndPut(p_q,     lb->p_qLabel_preReloc, pset);
@@ -230,9 +248,9 @@ TabularEquationOfState::computeStressTensor(const PatchSubset* patches,
       double c_bulk = std::sqrt(bulkModulus/rho);
       std::cout << "Density = " << rho << " K = " << bulkModulus
                 << " c_p = " << c_bulk << "\n";
-      WaveSpeed = Vector(Max(c_bulk + fabs(pVelocity[pidx].x()), WaveSpeed.x()),
-                         Max(c_bulk + fabs(pVelocity[pidx].y()), WaveSpeed.y()),
-                         Max(c_bulk + fabs(pVelocity[pidx].z()), WaveSpeed.z()));
+      WaveSpeed = Vector(Uintah::Max(c_bulk + fabs(pVelocity[pidx].x()), WaveSpeed.x()),
+                         Uintah::Max(c_bulk + fabs(pVelocity[pidx].y()), WaveSpeed.y()),
+                         Uintah::Max(c_bulk + fabs(pVelocity[pidx].z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
@@ -328,7 +346,7 @@ TabularEquationOfState::computeRhoMicroCM(double /*pressure*/,
 
   std::cout
     << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR TabularEquationOfState"
-    << endl;
+    << std::endl;
 
   double rho_cur = 0.;
 
@@ -356,7 +374,7 @@ TabularEquationOfState::computePressEOSCM(double /*rho_cur*/,
 
   std::cout
     << "NO VERSION OF computePressEOSCM EXISTS YET FOR TabularEquationOfState"
-    << endl;
+    << std::endl;
 }
 
 double
@@ -364,6 +382,6 @@ TabularEquationOfState::getCompressibility()
 {
   std::cout
     << "NO VERSION OF getCompressibility EXISTS YET FOR TabularEquationOfState"
-    << endl;
+    << std::endl;
   return 1.0;
 }

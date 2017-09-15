@@ -39,6 +39,7 @@
                                       Arenisca4, 
                                       soil_model_brannon, 
                                       tabular_eos, 
+                                      tabular_plasticity, 
                                       camclay,
                                       polar_orthotropic_hypoelastic,
                                       viscoelastic_fortran'">
@@ -734,8 +735,8 @@
     <fspeed                       spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture" />
     <time_at_failure              spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture" />
     <eq_plastic_strain_at_failure spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture" />
-    <yield_surface_radius_scaling_factor spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture" />
-    <consistency_bisection_tolerance spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture" />
+    <yield_surface_radius_scaling_factor spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture tabular_plasticity" />
+    <consistency_bisection_tolerance spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture tabular_plasticity" />
 
     <initialize_with_body_force spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3 arena arena_mixture"/>
     <surface_reference_point    spec="OPTIONAL VECTOR"  need_applies_to="type Arenisca3 arena arena_mixture"/>
@@ -968,16 +969,16 @@
     <G_z_r spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_hypoelastic"/>
     <G_r_theta spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_hypoelastic"/>
 
-    <!-- These are for tabular_eos -->
+    <!-- These are for tabular_eos and tabular_plasticity -->
     <filename              spec="REQUIRED STRING" 
-                           need_applies_to="type tabular_eos"/>
+                           need_applies_to="type tabular_eos tabular_plasticity"/>
     <independent_variables spec="REQUIRED STRING" 
-                           need_applies_to="type tabular_eos"/>
+                           need_applies_to="type tabular_eos tabular_plasticity"/>
     <dependent_variables   spec="REQUIRED STRING" 
-                           need_applies_to="type tabular_eos"/>
+                           need_applies_to="type tabular_eos tabular_plasticity"/>
     <interpolation         spec="REQUIRED NO_DATA" 
                            attribute1="type REQUIRED STRING 'linear, cubic'"
-                           need_applies_to="type tabular_eos"/>
+                           need_applies_to="type tabular_eos tabular_plasticity"/>
   </constitutive_model>
 
 
