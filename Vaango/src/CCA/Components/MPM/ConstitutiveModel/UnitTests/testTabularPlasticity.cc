@@ -256,7 +256,7 @@ public:
     // Print the document to stdout
     //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
     std::string ups_file = std::string(currPath) + "/" + 
-                           "UniaxialStrianRotateTabularPlasticity.ups";
+                           "UniaxialStrainRotateTabularPlasticity.ups";
     xmlSaveFormatFileEnc(ups_file.c_str(), doc, "ISO-8859-1", 1);
 
     // Create a ProblemSpec
@@ -285,7 +285,7 @@ TEST(TabularPlasticityTest, singleParticleTest)
     std::cout << "Current path not found\n";
   }
   std::string ups_file = std::string(currPath) + "/" + 
-                         "UniaxialStrianRotateTabularPlasticity.ups";
+                         "UniaxialStrainRotateTabularPlasticity.ups";
   //std::cout << "Created Filename = " << ups_file << std::endl;
 
   // Remove existing uda

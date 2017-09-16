@@ -820,8 +820,8 @@
     <!--______________________________________________________________________ -->    
     <!-- For CamClay and related models developed by Biswajit for ONR_MURI -->
     <elastic_moduli_model  spec="OPTIONAL NO_DATA"
-                     attribute1="type REQUIRED STRING 'constant, arenisca3, soil_model_brannon, arena, arena_mixture'"
-                     need_applies_to="type arena Arenisca3 camclay soil_model_brannon arena, arena_mixture">
+                     attribute1="type REQUIRED STRING 'constant  arenisca3  soil_model_brannon  arena  arena_mixture  tabular'"
+                     need_applies_to="type arena Arenisca3 camclay soil_model_brannon arena  arena_mixture  tabular_plasticity">
       
       <!-- type = constant -->
       <bulk_modulus spec="REQUIRED DOUBLE" need_applies_to="type constant" />
@@ -833,7 +833,7 @@
       <B2 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon" />
       <B3 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon" />
       <B4 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon" />
-      <G0 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon arena" />
+      <G0 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon arena tabular" />
       <G1 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon" />
       <G2 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon" />
       <G3 spec="REQUIRED DOUBLE" need_applies_to="type arenisca3 soil_model_brannon" />
@@ -866,6 +866,14 @@
       <G0.phase2        spec="REQUIRED DOUBLE" need_applies_to="type arena_mixture" />
       <nu1.phase2       spec="REQUIRED DOUBLE" need_applies_to="type arena_mixture" />
       <nu2.phase2       spec="REQUIRED DOUBLE" need_applies_to="type arena_mixture" />
+
+      <!-- type = tabular -->
+      <filename              spec="REQUIRED STRING" need_applies_to="type tabular"/>
+      <independent_variables spec="REQUIRED STRING" need_applies_to="type tabular"/>
+      <dependent_variables   spec="REQUIRED STRING" need_applies_to="type tabular"/>
+      <interpolation         spec="REQUIRED NO_DATA" attribute1="type REQUIRED STRING 'linear, cubic'"
+                             need_applies_to="type tabular"/>
+      <nu                    spec="REQUIRED DOUBLE" need_applies_to="type tabular" />
     </elastic_moduli_model>
 
     <pressure_model  spec="REQUIRED NO_DATA"
@@ -882,9 +890,12 @@
       <mu0 spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_shear_modulus"/>
     </elastic_shear_modulus_model>
     <plastic_yield_condition  spec="REQUIRED NO_DATA"
-                              attribute1="type REQUIRED STRING 'camclay arena arena_mixture'"
-                              need_applies_to="type camclay arena arena_mixture">
+                              attribute1="type REQUIRED STRING 'camclay arena arena_mixture tabular'"
+                              need_applies_to="type camclay arena arena_mixture tabular_plasticity">
+      <!-- type = camclay -->
       <M spec="REQUIRED DOUBLE 'positive'" need_applies_to="type camclay"/>
+
+      <!-- type = arena -->
       <PEAKI1 spec="REQUIRED DOUBLE" need_applies_to="type arena" />
       <FSLOPE spec="REQUIRED DOUBLE" need_applies_to="type arena" />
       <STREN  spec="REQUIRED DOUBLE" need_applies_to="type arena" />
@@ -905,6 +916,8 @@
       <weibullDist_CR     spec="OPTIONAL STRING" need_applies_to="type arena arena_mixture" />
       <weibullDist_T1     spec="OPTIONAL STRING" need_applies_to="type arena arena_mixture" />
       <weibullDist_T2     spec="OPTIONAL STRING" need_applies_to="type arena arena_mixture" />
+
+      <!-- type = arena_mixture -->
       <vol_frac.phase1 spec="REQUIRED DOUBLE" need_applies_to="type arena_mixture" />
       <PEAKI1.phase1 spec="REQUIRED DOUBLE" need_applies_to="type arena_mixture" />
       <FSLOPE.phase1 spec="REQUIRED DOUBLE" need_applies_to="type arena_mixture" />
@@ -930,6 +943,13 @@
       <CR.phase2     spec="REQUIRED DOUBLE" need_applies_to="type arena_mixture" />
       <T1.phase2     spec="REQUIRED DOUBLE" need_applies_to="type arena_mixture" />
       <T2.phase2     spec="REQUIRED DOUBLE" need_applies_to="type arena_mixture" />
+
+      <!-- type = tabular -->
+      <filename              spec="REQUIRED STRING" need_applies_to="type tabular"/>
+      <independent_variables spec="REQUIRED STRING" need_applies_to="type tabular"/>
+      <dependent_variables   spec="REQUIRED STRING" need_applies_to="type tabular"/>
+      <interpolation         spec="REQUIRED NO_DATA" attribute1="type REQUIRED STRING 'linear, cubic'"
+                             need_applies_to="type tabular"/>
     </plastic_yield_condition>
     <internal_variable_model  spec="REQUIRED NO_DATA"
                               attribute1="type REQUIRED STRING 'borja_consolidation_pressure,soil_model_brannon_kappa, arena'"
@@ -969,16 +989,16 @@
     <G_z_r spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_hypoelastic"/>
     <G_r_theta spec="REQUIRED DOUBLE" need_applies_to="type polar_orthotropic_hypoelastic"/>
 
-    <!-- These are for tabular_eos and tabular_plasticity -->
+    <!-- These are for tabular_eos -->
     <filename              spec="REQUIRED STRING" 
-                           need_applies_to="type tabular_eos tabular_plasticity"/>
+                           need_applies_to="type tabular_eos"/>
     <independent_variables spec="REQUIRED STRING" 
-                           need_applies_to="type tabular_eos tabular_plasticity"/>
+                           need_applies_to="type tabular_eos"/>
     <dependent_variables   spec="REQUIRED STRING" 
-                           need_applies_to="type tabular_eos tabular_plasticity"/>
+                           need_applies_to="type tabular_eos"/>
     <interpolation         spec="REQUIRED NO_DATA" 
                            attribute1="type REQUIRED STRING 'linear, cubic'"
-                           need_applies_to="type tabular_eos tabular_plasticity"/>
+                           need_applies_to="type tabular_eos"/>
   </constitutive_model>
 
 
