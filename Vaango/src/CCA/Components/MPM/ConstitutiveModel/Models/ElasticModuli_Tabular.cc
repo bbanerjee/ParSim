@@ -102,6 +102,9 @@ ElasticModuli_Tabular::getCurrentElasticModuli(const ModelStateBase* state_input
   double K = computeBulkModulus(ev_e_bar, ev_p_bar);
   double G = computeShearModulus(K);
 
+  std::cout << "ev_e = " << ev_e_bar << " ev_p = " << ev_p_bar
+            << " K = " << K << " G = " << G << std::endl;
+
   return ElasticModuli(K, G);
 }
 

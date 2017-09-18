@@ -13,13 +13,16 @@ from TabularTestSuite_PostProc import *
 #Post processing list, ie tests that have a method to do their post processing
 POST_PROCESS_LIST = [
   'TabularTest_01_UniaxialStrainRotateJ2Lin.ups',
-  'TabularTest_02_VertexTreatment.ups',
+  'TabularTest_01a_UniaxialStressJ2Lin.ups',
+  'TabularTest_01b_UniaxialStrainLoadUnloadJ2Lin.ups',
+  'TabularTest_02_UniaxialStrainLoadUnloadJ2NonLin.ups',
   'TabularTest_03_UniaxialStrainNoHardening.ups',
   'TabularTest_04_CurvedYieldSurface.ups',
-  'TabularTest_08_LoadingUnloading.ups',
+  'TabularTest_08_LoadUnload.ups',
   'TabularTest_10_TransientStressEigenvaluesConstVectors.ups',
   'TabularTest_11_UniaxialStrainJ2plasticity.ups',
   'TabularTest_12_NonlinearElasticity.ups',
+  'TabularTest_22_VertexTreatment.ups',
 ]
 
 #get uintah/src path as enviornmental variable
@@ -54,10 +57,10 @@ for test in POST_PROCESS_LIST:
   TEST_LIST.append(default_inputs_path + '/' + test)
 
 TEST_LIST = [
-  TEST_LIST[0], #Test 01
+#  TEST_LIST[0], #Test 01
 #  TEST_LIST[1], #Test 02
 #  TEST_LIST[2], #Test 03
-#  TEST_LIST[3], #Test 04
+  TEST_LIST[3], #Test 04
 #  TEST_LIST[4], #Test 05
 #  TEST_LIST[5], #Test 06
 #  TEST_LIST[6], #Test 07
@@ -269,7 +272,7 @@ if __name__ == "__main__":
   TEST_METHODS = False
   #POST_PROC_ONLY = True
   POST_PROC_ONLY = False
-  CLEAR_UDA = True
-  #CLEAR_UDA = False
+  #CLEAR_UDA = True
+  CLEAR_UDA = False
   run_all_tests(TEST_METHODS, CLEAR_UDA, POST_PROC_ONLY)
 

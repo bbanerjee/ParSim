@@ -101,7 +101,7 @@ def str_to_mathbf(string):
 #-----------------------------------------------------------------------------
 # Plot the yield surface
 #-----------------------------------------------------------------------------
-def plotPQYieldSurfaceSim(plt, material_dict, yield_table, ev_e_list, ev_p_list, time_list):
+def plotPQYieldSurfaceSim(plt, material_dict, yield_table, ev_e_list, ev_p_list, time_list, pmin, pmax, qmax):
 
   # Extract the data from the yield table
   pressures = yield_table['Pressure']
@@ -121,14 +121,8 @@ def plotPQYieldSurfaceSim(plt, material_dict, yield_table, ev_e_list, ev_p_list,
   plt.setp(line2, color=plt_color)
   plt.legend(loc=2, prop={'size':8}) 
 
-  # Find min and max
-  pmin = min(ps)
-  pmax = max(ps)
-  qmax = max(qs)
-
   axes = plt.gca()
-  axes.set_xlim([1.0e-6*pmin, 1.0e-6*pmax])
-  #axes.set_xlim([1.3*pmin, 1.3*pmax])
+  axes.set_xlim([1.3*pmin, 1.3*pmax])
   axes.set_ylim([-1.3*qmax, 1.3*qmax])
   return pmin, qmax
    

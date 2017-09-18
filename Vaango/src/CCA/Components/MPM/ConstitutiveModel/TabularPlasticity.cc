@@ -1244,6 +1244,35 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   // Compute volumetric plastic strain and compare with p3
   Matrix3 eps_p = state_k_old.plasticStrainTensor + plasticStrain_inc_fixed;
   double ep_v = eps_p.Trace();
+
+      /*
+      proc0cout << " K_old = " << K_old << " G_old = " << G_old << std::endl;
+      proc0cout << " state_k_trial " << state_k_trial << std::endl;
+      proc0cout << " z_trial = " << z_trial
+                << " r_trial = " << rprime_trial / sqrt_K_over_G_old
+                << std::endl;
+      proc0cout << " z_closest = " << z_closest
+                << " r_closest = " << rprime_closest / sqrt_K_over_G_old
+                << std::endl;
+      proc0cout << "Delta eps = " << strain_inc << std::endl;
+      proc0cout << "sig_n = " << state_k_old.stressTensor << std::endl;
+      proc0cout << "sig_n+1 = " << sig_fixed << std::endl;
+      proc0cout << "Delta sig = " << sig_inc << std::endl;
+      proc0cout << "Delta sig_iso = " << sig_inc_iso << std::endl;
+      proc0cout << "Delta sig_dev = " << sig_inc_dev << std::endl;
+      proc0cout << "Delta eps_e = " << elasticStrain_inc_fixed << std::endl;
+      proc0cout << "Delta eps_p = " << plasticStrain_inc_fixed << std::endl;
+      proc0cout << "I1_J2_trial = [" << state_k_trial.I1 << " "
+                << state_k_trial.sqrt_J2 << "];" << std::endl;
+      proc0cout << "I1_J2_closest = [" << I1_closest
+                << " " << sqrtJ2_closest << "];" << std::endl;
+      proc0cout << "plot([I1 I1_J2_closest(1)],[sqrtJ2 I1_J2_closest(2)],'gx')"
+                << ";" << std::endl;
+      proc0cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) "
+                   "I1_J2_closest(2)],'r-')"
+                << ";" << std::endl;
+      */
+
   if (ep_v < 0.0) {
     if (-ep_v > 10) {
       proc0cout << "**WARNING** Nonhardening return has failed because "

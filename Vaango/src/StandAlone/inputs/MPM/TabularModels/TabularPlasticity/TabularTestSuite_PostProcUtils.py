@@ -154,10 +154,10 @@ def get_ps_and_qs(sigmas):
 # Read the internal state variables from the UDA file for a set of times
 # using linear interpolation
 #---------------------------------------------------------------------------------
-def getInternalVariables(uda_path, analytical_times):
+def getInternalVariables(uda_path, analytical_times, matID = 0):
 
   # Get the internal variables
-  ev_e, ev_p, times = getAllInternalVariables(uda_path)
+  ev_e, ev_p, times = getAllInternalVariables(uda_path, matID)
 
   # Create a clean list containing the data as functions of time
   ev_e_list = []
@@ -193,24 +193,26 @@ def getInternalVariables(uda_path, analytical_times):
   #print("ev_e = ", ev_e_list)
   #print("ev_p = ", ev_p_list)
 
-  return ev_e_list, ev_p_list, time_list
+  return ev_e_list, ev_p_list, time_list, ev_e, ev_p
 
 #---------------------------------------------------------------------------------
 # Read the internal state variables from the UDA file:
 #---------------------------------------------------------------------------------
-def getAllInternalVariables(uda_path):
+def getAllInternalVariables(uda_path, matID):
 
   # Get the internal variables
-  times, ev_e_list = get_pElasticStrainVol(uda_path)
-  times, ev_p_list = get_pPlasticStrainVol(uda_path)
+  times, ev_e_list = get_pElasticStrainVol(uda_path, matID)
+  times_list, ev_p_list = get_pPlasticStrainVol(uda_path, matID)
 
-  return ev_e_list, ev_p_list, times
+  #print(times_list, ev_e_list, ev_p_list)
 
-def get_pStress(uda_path):
+  return ev_e_list, ev_p_list, times_list
+
+def get_pStress(uda_path, matID = 0):
   NAN_FAIL = False
   #Extract stress history
   print("Extracting stress history...")
-  args = [partextract_exe, "-partvar","p.stress",uda_path]
+  args = [partextract_exe, "-mat", str(matID), "-partvar","p.stress",uda_path]
   print(args)
   F_stress = tempfile.TemporaryFile()
   #F_stress = open("./tempStressFileOut.txt","w+")
@@ -254,11 +256,11 @@ def get_pStress(uda_path):
     print("\nERROR: 'nan's found reading in stress. Will not plot correctly")
   return times,sigmas
 
-def get_pDeformationMeasure(uda_path):
+def get_pDeformationMeasure(uda_path, matID = 0):
   NAN_FAIL = False
   #Extract stress history
   print("Extracting deformation history...")
-  args = [partextract_exe, "-partvar","p.deformationGradient",uda_path]
+  args = [partextract_exe, "-mat", str(matID), "-partvar","p.deformationGradient",uda_path]
   F_defMes = tempfile.TemporaryFile()
   #open(os.path.split(uda_path)[0]+'/stressHistory.dat',"w+")
   tmp = sub_proc.Popen(args,stdout=F_defMes,stderr=sub_proc.PIPE)
@@ -298,11 +300,12 @@ def get_epsilons(uda_path):
     epsils.append(np.array([[np.log(F[0][0]),0,0],[0,np.log(F[1][1]),0],[0,0,np.log(F[2][2])]]))
   return times,epsils
 
-def get_pPlasticStrainVol(uda_path):
+def get_pPlasticStrainVol(uda_path, matID = 0):
   FAIL_NAN = False
   #Extract stress history
   print("Extracting plasticStrainVol history...")
-  args = [partextract_exe, "-partvar","p.plasticVolStrain",uda_path]
+  args = [partextract_exe, "-mat", str(matID), "-partvar","p.plasticVolStrain",uda_path]
+  print(args)
   F_plasticStrainVol = tempfile.TemporaryFile()
   #open(os.path.split(uda_path)[0]+'/plasticStrainVolHistory.dat',"w+")
   tmp = sub_proc.Popen(args,stdout=F_plasticStrainVol,stderr=sub_proc.PIPE)
@@ -323,11 +326,11 @@ def get_pPlasticStrainVol(uda_path):
     print("\ERROR: 'nan' encountered while retrieving p.evp, will not plot correctly."  )
   return times,plasticStrainVol  
 
-def get_pElasticStrainVol(uda_path):
+def get_pElasticStrainVol(uda_path, matID = 0):
   FAIL_NAN = False
   #Extract elastic strain history
   print("Extracting elasticStrainVol history...")
-  args = [partextract_exe, "-partvar","p.elasticVolStrain",uda_path]
+  args = [partextract_exe, "-mat", str(matID), "-partvar","p.elasticVolStrain",uda_path]
   F_elasticStrainVol = tempfile.TemporaryFile()
   #open(os.path.split(uda_path)[0]+'/elasticStrainVolHistory.dat',"w+")
   tmp = sub_proc.Popen(args,stdout=F_elasticStrainVol,stderr=sub_proc.PIPE)
@@ -1689,13 +1692,13 @@ def test13_postProc(uda_path,save_path,**kwargs):
 #-----------------------------------------------------------------------------------
 # Read the simulation stress data and compute p,q (converts to Pa)
 #-----------------------------------------------------------------------------------
-def readSimStressData(uda_path):
+def readSimStressData(uda_path, matID = 0):
 
   NAN_FAIL = False
 
   #Extract stress history
   print("Extracting stress history...")
-  args = [partextract_exe, "-partvar","p.stress",uda_path]
+  args = [partextract_exe, "-mat", str(matID), "-partvar","p.stress",uda_path]
   print(args)
   F_stress = tempfile.TemporaryFile()
   tmp = sub_proc.Popen(args,stdout=F_stress,stderr=sub_proc.PIPE)
@@ -1752,13 +1755,17 @@ def readSimStressData(uda_path):
   # Compute I1 and J2
   I1_sim = []
   J2_sim = []
+  J3_sim = []
   for sigma in sigma_sim:
     I1_sim.append(sigma_I1(sigma))
     J2_sim.append(sigma_J2(sigma))
+    J3_sim.append(sigma_J3(sigma))
 
   # Compute p, q
-  pp_sim = -np.array(I1_sim)/3.0
-  qq_sim = np.sqrt(3.0*np.array(J2_sim))
+  pp_sim = list(map(lambda I1 : -I1/3, I1_sim))
+  qq_sim = list(map(lambda J2, J3 : np.sign(J3)*np.sqrt(3*J2), J2_sim, J3_sim))
+  #pp_sim = -np.array(I1_sim)/3.0
+  #qq_sim = np.sqrt(3.0*np.array(J2_sim))
 
   return time_sim, sigma_sim, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim
 
@@ -1783,9 +1790,30 @@ def getDataTimeSnapshots(time_snapshots, time, data):
   return time_list, val_list
 
 #-----------------------------------------------------------------------------------
+# Plot the sim data as a function of stress vs strain
+#-----------------------------------------------------------------------------------
+def plotSimDataSigmaEps(fig, time_snapshots, time_sim, pp_sim, ev_e_sim, ev_p_sim):
+
+  # Get snapshots from data
+  time_snap, pp_snap = getDataTimeSnapshots(time_snapshots, time_sim, pp_sim)
+
+  # Activate the figure
+  plt.figure(fig.number)
+
+  ev_sim = list(map(lambda ev_e, ev_p : ev_e + ev_p, ev_e_sim ,ev_p_sim))
+
+  # Plot sigma_a vs. time
+  plt.plot(ev_sim, pp_sim, '--r', label='p')
+
+  return time_snap, pp_snap
+
+#-----------------------------------------------------------------------------------
 # Plot the sim data as a function of time (assume Pa)
 #-----------------------------------------------------------------------------------
-def plotSimDataSigmaTime(fig, time_snapshots, time_sim, sigma_a_sim, sigma_r_sim, sigma_ar_sim):
+def plotSimDataSigmaTime(fig, time_snapshots, time_sim, sigma_a_sim, sigma_r_sim, sigma_ar_sim,
+                         labelxx = '$\sigma_a$ (sim)',
+                         labelyy = '$\sigma_r$ (sim)',
+                         labelxy = '$\sigma_{ar}$ (sim)'):
 
   # Get snapshots from data
   time_snap, sigma_a_snap = getDataTimeSnapshots(time_snapshots, time_sim, sigma_a_sim)
@@ -1796,9 +1824,9 @@ def plotSimDataSigmaTime(fig, time_snapshots, time_sim, sigma_a_sim, sigma_r_sim
   plt.figure(fig.number)
 
   # Plot sigma_a vs. time
-  plt.plot(time_sim, sigma_a_sim, '--r', label='$\sigma_a$ (sim)')
-  plt.plot(time_sim, sigma_r_sim, '--b', label='$\sigma_r$ (sim)')
-  plt.plot(time_sim, sigma_ar_sim, '--g', label='$\sigma_{ar}$ (sim)')
+  plt.plot(time_sim, sigma_a_sim, '--r', label=labelxx)
+  plt.plot(time_sim, sigma_r_sim, '--b', label=labelyy)
+  plt.plot(time_sim, sigma_ar_sim, '--g', label=labelxy)
 
   # Plot filled circles at time snapshots
   for ii in range(0, len(time_snap)):
