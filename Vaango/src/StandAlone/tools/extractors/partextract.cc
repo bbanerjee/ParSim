@@ -774,26 +774,23 @@ void printParticleVariable(DataArchive* da,
       LevelP level = grid->getLevel(l);
 
       // Loop thru all the patches
-      Level::const_patchIterator iter = level->patchesBegin(); 
       int patchIndex = 0;
-      for(; iter != level->patchesEnd(); iter++){
+      for(auto iter = level->patchesBegin(); iter != level->patchesEnd(); iter++){
         const Patch* patch = *iter;
         ++patchIndex; 
 
         // Loop thru all the variables 
-        for(int v=0;v<(int)vars.size();v++){
-          std::string var = vars[v];
-          const Uintah::TypeDescription* td = types[v];
+        std::size_t v = 0;
+        for (const auto& var : vars) {
+          const Uintah::TypeDescription* td = types[v++];
           const Uintah::TypeDescription* subtype = td->getSubType();
 
           // Check if the variable is a ParticleVariable
           if(td->getType() == Uintah::TypeDescription::ParticleVariable) { 
 
             // loop thru all the materials
-            ConsecutiveRangeSet matls = da->queryMaterials(var, patch, t);
-            ConsecutiveRangeSet::iterator matlIter = matls.begin(); 
-            for(; matlIter != matls.end(); matlIter++){
-              int matl = *matlIter;
+            auto matls = da->queryMaterials(var, patch, t);
+            for (const auto& matl : matls) {
 
               if (mat != -1 && matl != mat) continue;
 
@@ -808,20 +805,20 @@ void printParticleVariable(DataArchive* da,
                     ParticleVariable<long64> pid;
                     da->query(pid, "p.particleID", matl, patch, t);
                     ParticleSubset* pset = value.getParticleSubset();
+                    std::cout << "numParticles = " << pset->numParticles() << std::endl;
                     if(pset->numParticles() > 0){
-                      ParticleSubset::iterator iter = pset->begin();
                       if (particleID == 0) {
-                        for(;iter != pset->end(); iter++){
+                        for (const auto& pidx : *pset) {
                           cout << time << " " << patchIndex << " " << matl; 
-                          cout << " " << pid[*iter];
-                          cout << " " << value[*iter] << endl;
+                          cout << " " << pid[pidx];
+                          cout << " " << value[pidx] << endl;
                         }
                       } else {
-                        for(;iter != pset->end(); iter++){
-                          if (particleID != pid[*iter]) continue;
+                        for (const auto& pidx : *pset) {
+                          if (particleID != pid[pidx]) continue;
                           cout << time << " " << patchIndex << " " << matl; 
-                          cout << " " << pid[*iter];
-                          cout << " " << value[*iter] << endl;
+                          cout << " " << pid[pidx];
+                          cout << " " << value[pidx] << endl;
                         }
                       }
                     }
