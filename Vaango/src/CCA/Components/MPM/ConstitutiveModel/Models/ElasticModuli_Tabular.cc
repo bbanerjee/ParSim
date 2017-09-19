@@ -122,9 +122,9 @@ ElasticModuli_Tabular::computeBulkModulus(const double& elasticVolStrain,
       d_bulk.table.interpolate<2>({{plasticVolStrain, elasticVolStrain+epsilon}});
   } catch (Uintah::InvalidValue& e) {
     std::ostringstream out;
-    out << "**ERROR** In ElasticModuli_Tabular::computeBulkModulus:"
+    out << "**ERROR** In computeBulkModulus:"
         << " elasticVolStrain = " << elasticVolStrain
-        << " plasticVolStrain = " << plasticVolStrain
+        << " plasticVolStrain = " << plasticVolStrain << "\n"
         << e.message();
     throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
   }

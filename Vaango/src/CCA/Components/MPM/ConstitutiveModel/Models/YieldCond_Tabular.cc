@@ -273,11 +273,20 @@ YieldCond_Tabular::evalYieldCondition(const ModelStateBase* state_input)
   }
 
   double p_bar = -state->I1/3;
-  if (p_bar < d_I1bar_min) {
+  if (p_bar < d_I1bar_min/3) {
     return 1.0;
   }
 
-  DoubleVec1D gg = d_yield.table.interpolate<1>({{p_bar}}); 
+  DoubleVec1D gg;
+  try {
+    gg = d_yield.table.interpolate<1>({{p_bar}}); 
+  } catch (Uintah::InvalidValue& e) {
+    std::ostringstream out;
+    out << "**ERROR** In evalYieldCondition:"
+        << " p_bar = " << p_bar << "\n"
+        << e.message() ;
+    throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
+  }
   //std::cout << "p_bar = " << p_bar << " gg = " << gg[0] 
   //          << " sqrtJ2 = " << state->sqrt_J2 << std::endl;
   if (state->sqrt_J2 > gg[0]) {
@@ -388,8 +397,17 @@ YieldCond_Tabular::computeVolStressDerivOfYieldFunction(
     return large_number;
   }
 
-  DoubleVec1D g_lo = d_yield.table.interpolate<1>({{closest.x()-epsilon}});
-  DoubleVec1D g_hi = d_yield.table.interpolate<1>({{closest.x()+epsilon}});
+  DoubleVec1D g_lo, g_hi;
+  try {
+    g_lo = d_yield.table.interpolate<1>({{closest.x()-epsilon}});
+    g_hi = d_yield.table.interpolate<1>({{closest.x()+epsilon}});
+  } catch (Uintah::InvalidValue& e) {
+    std::ostringstream out;
+    out << "**ERROR** In compute df/dp:"
+        << " p_bar = " << closest.x() << "\n"
+        << e.message() ;
+    throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
+  }
   double dg_dpbar = (g_hi[0] - g_lo[0])/(2*epsilon);
 
   return dg_dpbar;

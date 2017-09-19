@@ -17,13 +17,14 @@ POST_PROCESS_LIST = [
   'TabularTest_01b_UniaxialStrainLoadUnloadJ2Lin.ups',
   'TabularTest_02_UniaxialStrainLoadUnloadJ2NonLin.ups',
   'TabularTest_03_UniaxialStrainRotateDPLin.ups',
-  'TabularTest_04_CurvedYieldSurface.ups',
+  'TabularTest_03a_UniaxialStrainLoadUnloadDPLin.ups',
   'TabularTest_08_LoadUnload.ups',
   'TabularTest_10_TransientStressEigenvaluesConstVectors.ups',
   'TabularTest_11_UniaxialStrainJ2plasticity.ups',
   'TabularTest_12_NonlinearElasticity.ups',
   'TabularTest_22_VertexTreatment.ups',
   'TabularTest_23_UniaxialStrainNoHardening.ups',
+  'TabularTest_24_CurvedYieldSurface.ups',
 ]
 
 #get uintah/src path as enviornmental variable
@@ -62,7 +63,8 @@ TEST_LIST = [
 #  TEST_LIST[1], #Test 01a
 #  TEST_LIST[2], #Test 01b
 #  TEST_LIST[3], #Test 02
-   TEST_LIST[4], #Test 03
+#  TEST_LIST[4], #Test 03
+  TEST_LIST[5], #Test 03a
 #  TEST_LIST[4], #Test 05
 #  TEST_LIST[5], #Test 06
 #  TEST_LIST[6], #Test 07
@@ -274,7 +276,7 @@ if __name__ == "__main__":
   TEST_METHODS = False
   #POST_PROC_ONLY = True
   POST_PROC_ONLY = False
-  #CLEAR_UDA = True
-  CLEAR_UDA = False
+  CLEAR_UDA = True
+  #CLEAR_UDA = False
   run_all_tests(TEST_METHODS, CLEAR_UDA, POST_PROC_ONLY)
 
