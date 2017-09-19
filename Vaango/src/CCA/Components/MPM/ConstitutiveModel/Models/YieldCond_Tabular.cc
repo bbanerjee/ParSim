@@ -31,6 +31,8 @@
 #include <chrono>
 #include <cmath>
 
+//#define DEBUG_CLOSEST_POINT
+
 using namespace Vaango;
 using Point = Uintah::Point;
 using Vector = Uintah::Vector;
@@ -191,18 +193,27 @@ YieldCond_Tabular::saveAsPolyline()
   DoubleVec1D yvals = 
     d_yield.table.getDependentVarData("SqrtJ2",IndexKey(0,0,0,0));
 
-  d_polyline.push_back(Point(xvals[2], -yvals[2], 0));
-  d_polyline.push_back(Point(xvals[1], -yvals[1], 0));
-  for (auto ii = 0u; ii < xvals.size(); ii++) {
-    d_polyline.push_back(Point(xvals[ii], yvals[ii], 0));
+  if (xvals.size() < 3) {
+    // Just extending the data so that normals can be computed
+    d_polyline.push_back(Point(xvals[0], -10.0, 0));
+    for (auto ii = 0u; ii < xvals.size(); ii++) {
+      d_polyline.push_back(Point(xvals[ii], yvals[ii], 0));
+    }
+    d_polyline.push_back(Point(xvals[1], -10.0, 0));
+  } else {
+    d_polyline.push_back(Point(xvals[2], -yvals[2], 0));
+    d_polyline.push_back(Point(xvals[1], -yvals[1], 0));
+    for (auto ii = 0u; ii < xvals.size(); ii++) {
+      d_polyline.push_back(Point(xvals[ii], yvals[ii], 0));
+    }
+    Point last = d_polyline[d_polyline.size()-1];
+    Point secondlast = d_polyline[d_polyline.size()-2];
+    double t = 1.1;
+    Vector extra1 = secondlast*(1 - t) + last*t;
+    Vector extra2 = secondlast*(1 - t)*t + last*(t*t + 1 - t);
+    d_polyline.push_back(Point(extra1));
+    d_polyline.push_back(Point(extra2));
   }
-  Point last = d_polyline[d_polyline.size()-1];
-  Point secondlast = d_polyline[d_polyline.size()-2];
-  double t = 1.1;
-  Vector extra1 = secondlast*(1 - t) + last*t;
-  Vector extra2 = secondlast*(1 - t)*t + last*(t*t + 1 - t);
-  d_polyline.push_back(Point(extra1));
-  d_polyline.push_back(Point(extra2));
   //std::copy(d_polyline.begin(), d_polyline.end(),
   //          std::ostream_iterator<Point>(std::cout, " "));
   //std::cout << std::endl;
@@ -445,7 +456,12 @@ YieldCond_Tabular::getClosestPoint(const ModelStateBase* state_input,
   //std::chrono::time_point<std::chrono::system_clock> start, end;
   //start = std::chrono::system_clock::now();
   Point pt(z, rprime, 0.0);
-  Point closest = getClosestPointSpline(state, pt);
+  Point closest(0.0, 0.0, 0.0);
+  if (d_polyline.size() < 5) {
+    closest = getClosestPointTable(state, pt);
+  } else {
+    closest = getClosestPointSpline(state, pt);
+  }
 
   cz = closest.x();
   crprime = closest.y();
@@ -516,18 +532,18 @@ YieldCond_Tabular::getClosestPointSpline(const ModelState_Tabular* state,
   Point z_r_closest;
   Vaango::Util::findClosestPoint(z_r_pt, z_r_spline, z_r_closest);
 
-  /*
-  std::cout << "ZRPoint = " << z_r_pt << std::endl;
-  std::cout << "ZRTable = ";
-  std::copy(z_r_table.begin(), z_r_table.end(),
-            std::ostream_iterator<Point>(std::cout, " "));
-  std::cout << std::endl;
-  std::cout << "ZRSpline = ";
-  std::copy(z_r_spline.begin(), z_r_spline.end(),
-            std::ostream_iterator<Point>(std::cout, " "));
-  std::cout << std::endl;
-  std::cout << "ZRClose = " << z_r_closest << "\n";
-  */
+  #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "ZRPoint = " << z_r_pt << std::endl;
+    std::cout << "ZRTable = ";
+    std::copy(z_r_table.begin(), z_r_table.end(),
+              std::ostream_iterator<Point>(std::cout, " "));
+    std::cout << std::endl;
+    std::cout << "ZRSpline = ";
+    std::copy(z_r_spline.begin(), z_r_spline.end(),
+              std::ostream_iterator<Point>(std::cout, " "));
+    std::cout << std::endl;
+    std::cout << "ZRClose = " << z_r_closest << "\n";
+  #endif
 
   return z_r_closest;
 }

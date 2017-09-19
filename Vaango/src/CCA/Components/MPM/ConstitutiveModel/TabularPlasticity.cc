@@ -63,13 +63,7 @@
 #include <iostream>
 #include <limits>
 
-// Boost
-#include <boost/foreach.hpp>
-#include <boost/range/combine.hpp>
-
-#define USE_LOCAL_LOCALIZED_PVAR
 #define CHECK_FOR_NAN
-#define CLAMP_DEF_GRAD
 //#define CHECK_FOR_NAN_EXTRA
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
@@ -84,7 +78,6 @@
 //#define CHECK_YIELD_SURFACE_NORMAL
 //#define CHECK_FLOATING_POINT_OVERFLOW
 //#define DEBUG_YIELD_BISECTION_R
-//#define CHECK_CONSISTENCY_BISECTION_CONVERGENCE
 //#define CHECK_ELASTIC_STRAIN
 
 using namespace Vaango;

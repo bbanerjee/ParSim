@@ -402,10 +402,31 @@ def exp_fmt(x,loc):
       exp = '+'+exp
     return r'$\mathbf{'+lead+r'\cdot{}10^{'+exp+'}}$' 
 
-def eqShear_vs_meanStress(xs,ys,Xlims=False,Ylims=False,LINE_LABEL='Vaango',GRID=True):
+def eqShear_vs_meanStress(xs, ys, compression = 'negative', 
+                          Xlims = False, Ylims = False, 
+                          LINE_LABEL = 'Vaango', GRID = True):
 
   ax1 = plt.subplot(111)
-  plt.plot(np.array(xs),np.array(ys),'-r',label=LINE_LABEL)
+  if (compression == 'negative'):
+    x_data = np.array(xs)
+    y_data = np.array(ys)
+    plt.quiver(x_data[:-1], y_data[:-1],
+               x_data[1:]-x_data[:-1], y_data[1:]-y_data[:-1],
+               scale_units='xy', angles='xy', scale=1.0, width=0.001,
+               headwidth=7, headlength=10,
+               linewidth=0.5, edgecolor='b', color='k')
+    plt.plot(x_data, y_data,'-r',label=LINE_LABEL)
+  else:
+    xs = list(map(lambda x : -x, xs))
+    ys = list(map(lambda y : -y, ys))
+    x_data = np.array(xs)
+    y_data = np.array(ys)
+    plt.quiver(x_data[:-1], y_data[:-1],
+               x_data[1:]-x_data[:-1], y_data[1:]-y_data[:-1],
+               scale_units='xy', angles='xy', scale=1.0, width=0.001,
+               headwidth=7, headlength=10,
+               linewidth=0.5, edgecolor='b', color='k')
+    plt.plot(x_data, y_data,'-r',label=LINE_LABEL)
   
   plt.xlabel(str_to_mathbf('Mean Stress, p (Pa)'))
   plt.ylabel(str_to_mathbf('Equivalent Shear Stress, q, (Pa)'))
@@ -1734,9 +1755,9 @@ def readSimStressData(uda_path, matID = 0):
     S32 = np.float64(line[11])
     S33 = np.float64(line[12])
 
-    sigma_a = -S11
-    sigma_r = -S22
-    sigma_ar = -S12
+    sigma_a = S11
+    sigma_r = S22
+    sigma_ar = S12
     
     time_sim.append(float(line[0]))
     sigma_sim.append(np.array([[S11,S12,S13],[S21,S22,S23],[S31,S32,S33]]))
@@ -1762,10 +1783,8 @@ def readSimStressData(uda_path, matID = 0):
     J3_sim.append(sigma_J3(sigma))
 
   # Compute p, q
-  pp_sim = list(map(lambda I1 : -I1/3, I1_sim))
+  pp_sim = list(map(lambda I1 : I1/3, I1_sim))
   qq_sim = list(map(lambda J2, J3 : np.sign(J3)*np.sqrt(3*J2), J2_sim, J3_sim))
-  #pp_sim = -np.array(I1_sim)/3.0
-  #qq_sim = np.sqrt(3.0*np.array(J2_sim))
 
   return time_sim, sigma_sim, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim
 
@@ -1792,7 +1811,8 @@ def getDataTimeSnapshots(time_snapshots, time, data):
 #-----------------------------------------------------------------------------------
 # Plot the sim data as a function of stress vs strain
 #-----------------------------------------------------------------------------------
-def plotSimDataSigmaEps(fig, time_snapshots, time_sim, pp_sim, ev_e_sim, ev_p_sim):
+def plotSimDataSigmaEps(fig, time_snapshots, time_sim, pp_sim, ev_e_sim, ev_p_sim,
+                        compression = 'negative'):
 
   # Get snapshots from data
   time_snap, pp_snap = getDataTimeSnapshots(time_snapshots, time_sim, pp_sim)
@@ -1803,7 +1823,12 @@ def plotSimDataSigmaEps(fig, time_snapshots, time_sim, pp_sim, ev_e_sim, ev_p_si
   ev_sim = list(map(lambda ev_e, ev_p : ev_e + ev_p, ev_e_sim ,ev_p_sim))
 
   # Plot sigma_a vs. time
-  plt.plot(ev_sim, pp_sim, '--r', label='p')
+  if (compression == 'positive'):
+    ev_data = list(map(lambda p : -p, ev_sim))
+    pp_data = list(map(lambda p : -p, pp_sim))
+    plt.plot(ev_data, pp_data, '--r', label='p')
+  else:
+    plt.plot(ev_sim, pp_sim, '--r', label='p')
 
   return time_snap, pp_snap
 
@@ -1811,9 +1836,9 @@ def plotSimDataSigmaEps(fig, time_snapshots, time_sim, pp_sim, ev_e_sim, ev_p_si
 # Plot the sim data as a function of time (assume Pa)
 #-----------------------------------------------------------------------------------
 def plotSimDataSigmaTime(fig, time_snapshots, time_sim, sigma_a_sim, sigma_r_sim, sigma_ar_sim,
-                         labelxx = '$\sigma_a$ (sim)',
-                         labelyy = '$\sigma_r$ (sim)',
-                         labelxy = '$\sigma_{ar}$ (sim)'):
+                         labelxx = '$\sigma_a$ (sim)', labelyy = '$\sigma_r$ (sim)',
+                         labelxy = '$\sigma_{ar}$ (sim)',
+                         compression = 'negative'):
 
   # Get snapshots from data
   time_snap, sigma_a_snap = getDataTimeSnapshots(time_snapshots, time_sim, sigma_a_sim)
@@ -1824,25 +1849,37 @@ def plotSimDataSigmaTime(fig, time_snapshots, time_sim, sigma_a_sim, sigma_r_sim
   plt.figure(fig.number)
 
   # Plot sigma_a vs. time
-  plt.plot(time_sim, sigma_a_sim, '--r', label=labelxx)
-  plt.plot(time_sim, sigma_r_sim, '--b', label=labelyy)
-  plt.plot(time_sim, sigma_ar_sim, '--g', label=labelxy)
+  if (compression == 'positive'):
+    sigma_a_data = list(map(lambda p : -p, sigma_a_sim))
+    sigma_r_data = list(map(lambda p : -p, sigma_r_sim))
+    sigma_ar_data = list(map(lambda p : -p, sigma_ar_sim))
+    plt.plot(time_sim, sigma_a_data, '--r', label=labelxx)
+    plt.plot(time_sim, sigma_r_data, '--b', label=labelyy)
+    plt.plot(time_sim, sigma_ar_data, '--g', label=labelxy)
+  else:
+    plt.plot(time_sim, sigma_a_sim, '--r', label=labelxx)
+    plt.plot(time_sim, sigma_r_sim, '--b', label=labelyy)
+    plt.plot(time_sim, sigma_ar_sim, '--g', label=labelxy)
 
   # Plot filled circles at time snapshots
   for ii in range(0, len(time_snap)):
 
     # Choose the Paired colormap
     plt_color = cm.Paired(float(ii)/len(time_snap))
-    plt.plot(time_snap[ii], sigma_a_snap[ii], 'o', color=plt_color) 
-    plt.plot(time_snap[ii], sigma_r_snap[ii], 'o', color=plt_color) 
-    #plt.plot(time_snap[ii], sigma_ar_snap[ii], 'o', color=plt_color) 
+    if (compression == 'positive'):
+      plt.plot(time_snap[ii], -sigma_a_snap[ii], 'o', color=plt_color) 
+      plt.plot(time_snap[ii], -sigma_r_snap[ii], 'o', color=plt_color) 
+    else:
+      plt.plot(time_snap[ii], sigma_a_snap[ii], 'o', color=plt_color) 
+      plt.plot(time_snap[ii], sigma_r_snap[ii], 'o', color=plt_color) 
+      #plt.plot(time_snap[ii], sigma_ar_snap[ii], 'o', color=plt_color) 
 
   return time_snap, sigma_a_snap, sigma_r_snap, sigma_ar_snap
 
 #-----------------------------------------------------------------------------------
 # Plot the sim data (pq) as a function of time (aasume Pa)
 #-----------------------------------------------------------------------------------
-def plotSimDataPQTime(fig, time_snapshots, time_sim, p_sim, q_sim):
+def plotSimDataPQTime(fig, time_snapshots, time_sim, p_sim, q_sim, compression='negative'):
 
   # Get snapshots from sim data
   time_snap, p_snap = getDataTimeSnapshots(time_snapshots, time_sim, p_sim)
@@ -1852,16 +1889,26 @@ def plotSimDataPQTime(fig, time_snapshots, time_sim, p_sim, q_sim):
   plt.figure(fig.number)
 
   # Plot sigma_a vs. time
-  plt.plot(time_sim, p_sim, '--r', label='$p$ (sim)')
-  plt.plot(time_sim, q_sim, '--b', label='$q$ (sim)')
+  if (compression == 'positive'):
+    p_data = list(map(lambda p : -p, p_sim))
+    q_data = list(map(lambda q : -q, q_sim))
+    plt.plot(time_sim, p_data, '--r', label='$p$ (sim)')
+    plt.plot(time_sim, q_data, '--b', label='$q$ (sim)')
+  else:
+    plt.plot(time_sim, p_sim, '--r', label='$p$ (sim)')
+    plt.plot(time_sim, q_sim, '--b', label='$q$ (sim)')
 
   # Plot filled circles at time snapshots
   for ii in range(0, len(time_snap)):
 
     # Choose the Paired colormap
     plt_color = cm.Paired(float(ii)/len(time_snap))
-    plt.plot(time_snap[ii], p_snap[ii], 'o', color=plt_color) 
-    plt.plot(time_snap[ii], q_snap[ii], 'o', color=plt_color) 
+    if (compression == 'positive'):
+      plt.plot(time_snap[ii], -p_snap[ii], 'o', color=plt_color) 
+      plt.plot(time_snap[ii], -q_snap[ii], 'o', color=plt_color) 
+    else:
+      plt.plot(time_snap[ii], p_snap[ii], 'o', color=plt_color) 
+      plt.plot(time_snap[ii], q_snap[ii], 'o', color=plt_color) 
 
   return time_snap, p_snap, q_snap
 

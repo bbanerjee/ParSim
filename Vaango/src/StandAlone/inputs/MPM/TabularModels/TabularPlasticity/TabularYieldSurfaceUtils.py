@@ -99,30 +99,49 @@ def str_to_mathbf(string):
   return return_string[0:-1]
   
 #-----------------------------------------------------------------------------
-# Plot the yield surface
+# Plot the yield surface (compression positive)
 #-----------------------------------------------------------------------------
-def plotPQYieldSurfaceSim(plt, material_dict, yield_table, ev_e_list, ev_p_list, time_list, pmin, pmax, qmax):
+def plotPQYieldSurfaceSim(plt, material_dict, yield_table, ev_e_list, ev_p_list, time_list, pmin, pmax, qmax,
+                          compression = 'negative'):
 
   # Extract the data from the yield table
   pressures = yield_table['Pressure']
   sqrtJ2s   = yield_table['SqrtJ2']
 
-  # Convert into p and q (Pa)
-  ps = list(map(lambda pbar: -pbar, pressures))
-  qs = list(map(lambda sqrtJ2 : np.sqrt(3)*sqrtJ2, sqrtJ2s))
- 
   # Choose the Paired colormap
   plt_color = cm.Paired(float(1)/len(ev_p_list))
 
   # Plot
-  line1 = plt.plot(ps,  qs, '-b',linewidth=1)
-  line2 = plt.plot(ps, list(map(lambda q : -q,  qs)), '-b',linewidth=1)  
-  plt.setp(line1, color=plt_color)
-  plt.setp(line2, color=plt_color)
-  plt.legend(loc=2, prop={'size':8}) 
+  #print('Compression = ', compression)
+  if (compression == 'negative'):
+    ps = list(map(lambda pbar: -pbar, pressures))
+    qs = list(map(lambda sqrtJ2 : np.sqrt(3)*sqrtJ2, sqrtJ2s))
+ 
+    line1 = plt.plot(ps,  qs, '-b',linewidth=1)
+    line2 = plt.plot(ps, list(map(lambda q : -q,  qs)), '-b',linewidth=1)  
+    plt.setp(line1, color=plt_color)
+    plt.setp(line2, color=plt_color)
+    plt.legend(loc=2, prop={'size':8}) 
 
-  axes = plt.gca()
-  axes.set_xlim([1.3*pmin, 1.3*pmax])
-  axes.set_ylim([-1.3*qmax, 1.3*qmax])
+    axes = plt.gca()
+    axes.set_xlim([1.3*pmin, 1.3*pmax])
+    axes.set_ylim([-1.3*qmax, 1.3*qmax])
+  else:
+    ps = list(map(lambda pbar: pbar, pressures))
+    qs = list(map(lambda sqrtJ2 : np.sqrt(3)*sqrtJ2, sqrtJ2s))
+    #print("yield surface: pmin = ", pmin, "pmax = ", pmax, "p = ", ps)
+    #print("yield surface: qmax = ", qmax, "q = ", qs)
+    line1 = plt.plot(ps,  qs, '-b',linewidth=1)
+    line2 = plt.plot(ps, list(map(lambda q : -q,  qs)), '-b',linewidth=1)  
+    plt.setp(line1, color=plt_color)
+    plt.setp(line2, color=plt_color)
+    plt.legend(loc=2, prop={'size':8}) 
+    plt.axis('equal')
+
+    axes = plt.gca()
+    axes.set_xlim([1.3*pmin, 1.3*pmax])
+    axes.set_ylim([-1.3*qmax, 1.3*qmax])
+ 
+
   return pmin, qmax
    
