@@ -12,17 +12,17 @@ def uniaxialStrainRotateJ2Lin(uda_path, save_path,**kwargs):
   cosines = list(map(lambda t : np.cos(t*math.pi/180), rotation_angles))
   sines = list(map(lambda t : np.sin(t*math.pi/180), rotation_angles))
   rot_mats = list(map(lambda c, s : np.array([[c, s, 0],[-s, c, 0],[0, 0, 1]]), cosines, sines))
-  print(rot_mats)
+  #print(rot_mats)
 
   # Compute the stress components in the rotated coordinate system
   sigmas_rot = list(map(lambda Q, sigma :  np.dot(np.dot(Q , sigma), Q.transpose()), rot_mats, sigmas))
-  print(sigmas_rot)
+  #print(sigmas_rot)
 
   # Set up time points
   analytical_times = np.linspace(0.0, times[-1], 15)
 
   # Read the interval variable simulation data
-  ev_e_list, ev_p_list, times_list = getInternalVariables(uda_path, analytical_times)
+  ev_e_list, ev_p_list, times_list, ev_e, ev_p = getInternalVariables(uda_path, analytical_times)
 
   # Get the model parameters
   material_dict = get_yield_surface_data(uda_path)
@@ -52,10 +52,10 @@ def uniaxialStrainRotateJ2Lin(uda_path, save_path,**kwargs):
   Syy_min = min(Syy)
   Sxx_max = max(Sxx)
   Syy_max = max(Syy)
-  print("Sxx_min = ", Sxx_min)
-  print("Sxx_max = ", Sxx_max)
-  print("Syy_min = ", Syy_min)
-  print("Syy_max = ", Syy_max)
+  #print("Sxx_min = ", Sxx_min)
+  #print("Sxx_max = ", Sxx_max)
+  #print("Syy_min = ", Syy_min)
+  #print("Syy_max = ", Syy_max)
 
   ###PLOTTING
   formatter = ticker.FormatStrFormatter('$\mathbf{%g}$') 
@@ -100,8 +100,14 @@ def uniaxialStrainRotateJ2Lin(uda_path, save_path,**kwargs):
     plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color) 
 
   # Plot yield surfaces
-  pMin, qMax = plotPQYieldSurfaceSim(plt, material_dict, yield_table,
-                                     ev_e_list, ev_p_list, times_list) 
+  pmin = min(pp_sim)
+  pmax = max(pp_sim)
+  qmin = min(qq_sim)
+  qmax = max(map(lambda q : abs(q), qq_sim))
+  print("minmax: ", pmin, pmax, qmin, qmax)
+  plotPQYieldSurfaceSim(plt, material_dict, yield_table,
+                        ev_e_list, ev_p_list, times_list,
+                        pmin, pmax, qmax) 
 
   savePNG(save_path+'/UnixialStrainRotateJ2Lin_yield_surface','1280x960')
   #plt.show()

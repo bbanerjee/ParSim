@@ -12,7 +12,7 @@ def uniaxialStrainLoadUnloadJ2Lin(uda_path, save_path,**kwargs):
   #analytical_times = np.linspace(0.0, times[-1], 15)
 
   # Read the interval variable simulation data
-  ev_e_list, ev_p_list, times_list = getInternalVariables(uda_path, analytical_times)
+  ev_e_list, ev_p_list, times_list, ev_e, ev_p = getInternalVariables(uda_path, analytical_times)
 
   # Get the model parameters
   material_dict = get_yield_surface_data(uda_path)
@@ -65,8 +65,12 @@ def uniaxialStrainLoadUnloadJ2Lin(uda_path, save_path,**kwargs):
     plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color) 
 
   # Plot yield surface
-  pMin, qMax = plotPQYieldSurfaceSim(plt, material_dict, yield_table,
-                                     ev_e_list, ev_p_list, times_list) 
+  pmin = min(pp_sim)
+  pmax = max(pp_sim)
+  qmax = max(map(lambda q : abs(q), qq_sim))
+  plotPQYieldSurfaceSim(plt, material_dict, yield_table,
+                        ev_e_list, ev_p_list, times_list,
+                        pmin, pmax, qmax) 
 
   savePNG(save_path+'/UnixialStrainLoadUnloadJ2Lin_yield_surface','1280x960')
   #plt.show()

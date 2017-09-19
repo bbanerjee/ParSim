@@ -85,7 +85,7 @@ def uniaxialStrainLoadUnloadJ2NonLin(uda_path, save_path,**kwargs):
   qmax = max(qq_sim)
   plotPQYieldSurfaceSim(plt, material_dict, yield_table,
                         ev_e_list, ev_p_list, times_list,
-                        pmin, pmax, qmax) 
+                        pmin, pmax, qmax, compression = 'positive') 
 
   savePNG(save_path+'/UnixialStrainLoadUnloadJ2NonLin_yield_surface','1280x960')
   #plt.show()
