@@ -4,6 +4,7 @@ from TabularTest_01b_UniaxialStrainLoadUnloadJ2Lin import *
 from TabularTest_02_UniaxialStrainLoadUnloadJ2NonLin import *
 from TabularTest_03_UniaxialStrainRotateDPLin import *
 from TabularTest_03a_UniaxialStrainLoadUnloadDPLin import *
+from TabularTest_04_UniaxialStrainLoadUnloadDPNonLin import *
 
 def post_proc(test, uda_path, save_path, POST_PROCESS_LIST):
   test_name = os.path.split(test)[1]
@@ -20,6 +21,8 @@ def post_proc(test, uda_path, save_path, POST_PROCESS_LIST):
       uniaxialStrainRotateDPLin(uda_path,save_path)
     elif test_name == 'TabularTest_03a_UniaxialStrainLoadUnloadDPLin.ups':
       uniaxialStrainLoadUnloadDPLin(uda_path,save_path)
+    elif test_name == 'TabularTest_04_UniaxialStrainLoadUnloadDPNonLin.ups':
+      uniaxialStrainLoadUnloadDPNonLin(uda_path,save_path)
     else:
       print('\nERROR: test: ',test,'\n\tNot on post processing list.\n')
   else:

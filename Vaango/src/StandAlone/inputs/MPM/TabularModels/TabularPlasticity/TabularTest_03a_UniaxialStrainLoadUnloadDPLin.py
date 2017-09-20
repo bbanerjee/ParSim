@@ -77,7 +77,7 @@ def uniaxialStrainLoadUnloadDPLin(uda_path, save_path,**kwargs):
                         ev_e_list, ev_p_list, times_list,
                         pbarmin, pbarmax, qmax, compression)
 
-  savePNG(save_path+'/UnixialStrainLoadUnloadDPLin_yield_surface','1280x960')
+  savePNG(save_path+'/UniaxialStrainLoadUnloadDPLin_yield_surface','1280x960')
   #plt.show()
 
   #---------------------------------------------------------------------------------

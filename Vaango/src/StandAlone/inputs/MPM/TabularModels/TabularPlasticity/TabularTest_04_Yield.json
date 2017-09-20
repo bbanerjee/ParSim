@@ -1,0 +1,9 @@
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test von Mises yield data"
+  },
+  "Data" : {
+    "Pressure" : [-0.1e3,  0.1e10],
+    "SqrtJ2" :   [  0,  3.0e8]
+  }
+}}

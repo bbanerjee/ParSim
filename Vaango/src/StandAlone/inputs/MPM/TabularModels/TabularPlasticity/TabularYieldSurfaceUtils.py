@@ -122,6 +122,7 @@ def plotPQYieldSurfaceSim(plt, material_dict, yield_table, ev_e_list, ev_p_list,
     plt.setp(line1, color=plt_color)
     plt.setp(line2, color=plt_color)
     plt.legend(loc=2, prop={'size':8}) 
+    plt.axis('equal')
 
     axes = plt.gca()
     axes.set_xlim([1.3*pmin, 1.3*pmax])

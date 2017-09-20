@@ -18,6 +18,7 @@ POST_PROCESS_LIST = [
   'TabularTest_02_UniaxialStrainLoadUnloadJ2NonLin.ups',
   'TabularTest_03_UniaxialStrainRotateDPLin.ups',
   'TabularTest_03a_UniaxialStrainLoadUnloadDPLin.ups',
+  'TabularTest_04_UniaxialStrainLoadUnloadDPNonLin.ups',
   'TabularTest_08_LoadUnload.ups',
   'TabularTest_10_TransientStressEigenvaluesConstVectors.ups',
   'TabularTest_11_UniaxialStrainJ2plasticity.ups',
@@ -64,7 +65,8 @@ TEST_LIST = [
 #  TEST_LIST[2], #Test 01b
 #  TEST_LIST[3], #Test 02
 #  TEST_LIST[4], #Test 03
-  TEST_LIST[5], #Test 03a
+#  TEST_LIST[5], #Test 03a
+  TEST_LIST[6], #Test 04
 #  TEST_LIST[4], #Test 05
 #  TEST_LIST[5], #Test 06
 #  TEST_LIST[6], #Test 07

@@ -72,7 +72,7 @@ def uniaxialStrainLoadUnloadJ2Lin(uda_path, save_path,**kwargs):
                         ev_e_list, ev_p_list, times_list,
                         pmin, pmax, qmax) 
 
-  savePNG(save_path+'/UnixialStrainLoadUnloadJ2Lin_yield_surface','1280x960')
+  savePNG(save_path+'/UniaxialStrainLoadUnloadJ2Lin_yield_surface','1280x960')
   #plt.show()
 
   #---------------------------------------------------------------------------------
