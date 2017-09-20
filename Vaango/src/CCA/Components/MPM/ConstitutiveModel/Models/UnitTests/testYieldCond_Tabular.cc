@@ -241,7 +241,7 @@ TEST_F(YieldCondTabularTest, getClosestPoint)
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  EXPECT_NEAR(z_close, 8.66025, 1.0e-4);
+  EXPECT_NEAR(z_close, 17.2339, 1.0e-4);
   EXPECT_NEAR(rprime_close, 0, 1.0e-10);
 
   state.stressTensor = Matrix3(3000, 1000, 0, 1000, 3000, 0, 0, 0, 3000);
@@ -249,8 +249,8 @@ TEST_F(YieldCondTabularTest, getClosestPoint)
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  EXPECT_NEAR(z_close, -1.51073, 1.0e-4);
-  EXPECT_NEAR(rprime_close, 92.6647, 1.0e-4);
+  EXPECT_NEAR(z_close, -1.67258, 1.0e-4);
+  EXPECT_NEAR(rprime_close, 93.47397, 1.0e-4);
 
   state.stressTensor = Matrix3(-3000, 1000, 0, 1000, -3000, 0, 0, 0, -3000);
   state.updateStressInvariants();

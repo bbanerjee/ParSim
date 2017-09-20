@@ -199,17 +199,25 @@ YieldCond_Tabular::saveAsPolyline()
     for (auto ii = 0u; ii < xvals.size(); ii++) {
       d_polyline.push_back(Point(xvals[ii], yvals[ii], 0));
     }
-    d_polyline.push_back(Point(xvals[1], -10.0, 0));
+    double t = 1.1;
+    Vector extra = d_polyline[1]*(1 - t) + d_polyline[2]*t;
+    d_polyline.push_back(Point(extra));
   } else {
-    d_polyline.push_back(Point(xvals[2], -yvals[2], 0));
-    d_polyline.push_back(Point(xvals[1], -yvals[1], 0));
-    for (auto ii = 0u; ii < xvals.size(); ii++) {
+    Point first(xvals[0], 0, 0);
+    Point second(xvals[1], -yvals[1], 0);
+    double t = 0.01;
+    Vector extra1 = first*(1 - t) + second*(t);
+    d_polyline.push_back(second);
+    d_polyline.push_back(Point(extra1));
+    d_polyline.push_back(Point(xvals[0], yvals[0], 0));
+    d_polyline.push_back(Point(extra1.x(), -extra1.y(), 0));
+    for (auto ii = 1u; ii < xvals.size(); ii++) {
       d_polyline.push_back(Point(xvals[ii], yvals[ii], 0));
     }
     Point last = d_polyline[d_polyline.size()-1];
     Point secondlast = d_polyline[d_polyline.size()-2];
-    double t = 1.1;
-    Vector extra1 = secondlast*(1 - t) + last*t;
+    t = 1.1;
+    extra1 = secondlast*(1 - t) + last*t;
     Vector extra2 = secondlast*(1 - t)*t + last*(t*t + 1 - t);
     d_polyline.push_back(Point(extra1));
     d_polyline.push_back(Point(extra2));
