@@ -1,0 +1,103 @@
+\subsection{Hypo-Elastic Plasticity in Uintah}  \label{Sec:ElasticPlastic}
+
+The hypoelastic-plastic stress update is a mix and match combination
+of isotropic models.  The equation of state may be varied
+independently of the deviatoric response.  For elastic deviatoric
+response the shear moduli may be taken to be functions of temperature
+and pressure.  Plasticity is based on an additive decomposition of the
+rate of deformation tensor into elastic and plastic parts.
+Incompressibility is assumed for plastic deformations, i.e. the
+plastic strain rate is proportional to the deviatoric stress.  Various
+yield conditions and flow stresses may be mixed and matched.  There
+are also options for damage/melting modeling.  {\it Note that there
+  are few checks to prevent users from mixing and matching
+  inappropriate models}.
+
+Additional models can be added to this framework.  Presently, the
+material models available are:
+\begin{enumerate}
+    \item Adiabatic Heating and Specific Heat:
+      \begin{itemize}
+        \item Taylor-Quinney coefficient.
+        \item Constant Specific Heat ({\bf default}).
+        \item Cubic Specific Heat.
+        \item Specific Heat for Copper.
+        \item Specific Heat for Steel.
+      \end{itemize}
+    \item The equation of state (pressure/volume response):
+      \begin{itemize}
+        \item Hypoelastic ({\bf default}).
+        \item Neo-Hookean.
+        \item Mie-Gruneisen.
+      \end{itemize}
+    \item The deviatoric stress model:
+      \begin{itemize}
+        \item Linear hypoelasticity ({\bf default}).
+        \item Linear hypoviscoelasticity.
+      \end{itemize}
+    \item The melting model:
+      \begin{itemize}
+        \item Constant melt temperature ({\bf default}).
+        \item Linear melt temperature.
+        \item Steinberg-Cochran-Guinan (SCG) melt.
+        \item Burakovsky-Preston-Silbar (BPS) melt.
+      \end{itemize}
+    \item Temperature and pressure dependent shear moduli (only works
+      with linear hypoelastic deviatoric stress model):
+      \begin{itemize}
+        \item Constant shear modulus ({\bf default}).
+        \item Mechanical Threshold Stress (MTS) model.
+        \item Steinberg-Cochran-Guinan (SCG) model.
+        \item Nadal-LePoac (NP) model.
+        \item Preston-Tonks-Wallace (PTW) model.
+      \end{itemize}
+    \item The yield condition:
+      \begin{itemize}
+        \item von Mises.
+        \item Gurson-Tvergaard-Needleman (GTN).
+      \end{itemize}
+    \item The flow stress:
+      \begin{itemize}
+        \item the Isotropic Hardening model
+        \item the Johnson-Cook (JC) model
+        \item the Steinberg-Cochran-Guinan-Lund (SCG) model.
+        \item the Zerilli-Armstrong (ZA) model.
+        \item the Zerilli-Armstrong for polymers model.
+        \item the Mechanical Threshold Stress (MTS) model.
+        \item the Preston-Tonks-Wallace (PTW) model.
+      \end{itemize}
+    \item The plastic return algorithm:
+      \begin{itemize}
+        \item Radial Return ({\bf default}).
+        \item Modified Nemat-Nasser/Maudlin.
+      \end{itemize}
+    \item The damage model:
+      \begin{itemize}
+        \item Johnson-Cook damage model.
+      \end{itemize}
+\end{enumerate}
+
+This model is invoked using
+  \begin{lstlisting}
+      <constitutive_model="elastic_plastic_hp">
+        <shear_modulus>0.2845e4</shear_modulus>
+        <bulk_modulus>1.41e4</bulk_modulus>
+        <initial_material_temperature>298</initial_material_temperature>
+        <plastic_convergence_algo>radialReturn</plastic_convergence_algo>
+        <taylor_quinney_coeff> 0.9 </taylor_quinney_coeff>
+
+        submodels
+
+      </constitutive_model>
+  \end{lstlisting}
+  where ``submodels'' indicates subsets of tags corresponding to the
+  listed above (and detailed below).  {\it Note that the specified
+    bulk and shear moduli are used to calcuate a stable time step size
+    for the first time step (hence it is important that they be
+    consistent with EOS and deviatoric stress submodel material
+    constants).  However, if the default EOS and/or deviatoric stress
+    models are used, then these material constants are sufficient for
+    bulk and/or deviatoric stress response, and are automatically used
+    in those models.}  The bulk modulus is also used to determine
+  artificial viscosity parameters (throughout the simulation).
+

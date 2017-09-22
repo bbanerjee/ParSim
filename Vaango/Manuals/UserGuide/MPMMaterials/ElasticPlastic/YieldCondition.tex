@@ -1,0 +1,115 @@
+\subsection{Yield conditions}
+When failure is to be simulated we can use the
+Gurson-Tvergaard-Needleman yield condition instead of the von Mises
+condition.
+
+  \subsubsection{The von Mises yield condition}
+  The von Mises yield condition is the default.  It specifies a yield condition of
+  the form
+  \begin{equation}
+    \Phi = \sqrt{3J_2} - \sigma_y
+  \end{equation}
+  where $J_2$ is the second invariant of the deviatoric stress tensor
+  ($J_2={1\over2}\Bs:\Bs$) and $\sigma_y$ is the flow stress. Currently
+  the return algorithms are restricted to plastic flow in the
+  direction of the deviatoric stress
+  (Eqn. \ref{eq:associated_flow}). See the discussion in the Radial
+  Return algorithm description for details.  The von Mises yield
+  condition is invoked using the tags
+  \begin{lstlisting}
+    <yield_condition type="vonMises">
+    </yield_condition>
+  \end{lstlisting}
+
+  \subsubsection{The Gurson-Tvergaard-Needleman (GTN) yield condition}
+  The Gurson-Tvergaard-Needleman (GTN) yield
+  condition~\cite{Gurson77,Tver84} depends on porosity.  {\it This
+  model is for experts only!!!}  Here are some caveats: Formally,
+  you can replace the flow stress in Gurson’s model with the flow
+  stresses of Johnson-Cook, ZA, etc., but the internal variable
+  updates would have to be modified extensively.  For example, the JC
+  yield stress depends on the equivalent plastic strain, but this
+  needs to be the equivalent plastic strain of the matrix material,
+  which is very different from the equivalent plastic strain of the
+  porous composite. For example, under pure hydrostatic compression at
+  the macroscale, the matrix material will suffer massive amounts of
+  plastic SHEAR strains at the microscale (even though, for
+  hydrostatic loading, it has zero plastic shear strain at the
+  macroscale) and thus would need to harden. While the models should
+  run, they are unlikely to give realistic results.
+
+  The GTN yield condition is a fairly good bound in compression but a
+  TERRIBLE bound in tension (in fact using it in tension can produce
+  non-physical predictions of negative plastic work tantamount to
+  tension causing pore COLLAPSE; very few Gurson implementations catch
+  this problem because very few of them include run-time checks of
+  solution quality, including this one).
+
+  The GTN yield condition will not work with Radial Return.  An error
+  will be generated in this case.  Presently it only runs with the
+  modified Nemat-Nasser/Maudlin return algorithm.  Plastic flow is
+  assumed to be in the direction of deviatoric stress.  Hence this
+  is nonassociated flow for this pressure dependent yield condition.
+
+  The GTN yield condition can be written as
+  \begin{equation}
+    \Phi = \left(\frac{\sigma_{eq}}{\sigma_f}\right)^2 +
+    2 q_1 f_* \cosh \left(q_2 \frac{Tr(\sigma)}{2\sigma_f}\right) -
+    (1+q_3 f_*^2) = 0
+  \end{equation}
+  where $q_1,q_2,q_3$ are material constants and $f_*$ is the porosity
+  (damage) function given by
+  \begin{equation}
+    f* = 
+    \begin{cases}
+      f & \text{for}~~ f \le f_c,\\ 
+      f_c + k (f - f_c) & \text{for}~~ f > f_c 
+    \end{cases}
+  \end{equation}
+  where $k$ is a constant and $f$ is the porosity (void volume fraction).  The
+  flow stress in the matrix material is computed using either of the two
+  plasticity models discussed earlier.  Note that the flow stress in the matrix
+  material also remains on the undamaged matrix yield surface and uses an
+  associated flow rule.
+
+  This yield condition is invoked using
+  \begin{lstlisting}
+    <yield_condition type="gurson">
+      <q1> 1.5 </q1>
+      <q2> 1.0 </q2>
+      <q3> 2.25 </q3>
+      <k> 4.0 </k>
+      <f_c> 0.05 </f_c>
+    </yield_condition>
+  \end{lstlisting}
+
+  \subsubsection{Porosity model}
+  The evolution of porosity is calculated as the sum of the rate of growth
+  and the rate of nucleation~\cite{Ramaswamy98a}.  The rate of growth of
+  porosity and the void nucleation rate are given by the following equations
+  ~\cite{Chu80}
+  \begin{align}
+    \dot{f} &= \dot{f}_{\text{nucl}} + \dot{f}_{\text{grow}} \\
+    \dot{f}_{\text{grow}} & = (1-f) \text{Tr}(\BD_p) \\
+    \dot{f}_{\text{nucl}} & = \cfrac{f_n}{(s_n \sqrt{2\pi})}
+            \exp\left[-\Half \cfrac{(\epsilon_p - \epsilon_n)^2}{s_n^2}\right]
+            \dot{\epsilon}_p
+  \end{align}
+  where $\BD_p$ is the rate of plastic deformation tensor, $f_n$ is the volume
+  fraction of void nucleating particles , $\epsilon_n$ is the mean of the
+  distribution of nucleation strains, and $s_n$ is the standard
+  deviation of the distribution.
+
+  The inputs tags for porosity are of the form
+  \begin{lstlisting}
+    <evolve_porosity> true </evolve_porosity>
+    <initial_mean_porosity>         0.005 </initial_mean_porosity>
+    <initial_std_porosity>          0.001 </initial_std_porosity>
+    <critical_porosity>             0.3   </critical_porosity>
+    <frac_nucleation>               0.1   </frac_nucleation>
+    <meanstrain_nucleation>         0.3   </meanstrain_nucleation>
+    <stddevstrain_nucleation>       0.1   </stddevstrain_nucleation>
+    <initial_porosity_distrib>      gauss </initial_porosity_distrib>
+  \end{lstlisting}
+
+

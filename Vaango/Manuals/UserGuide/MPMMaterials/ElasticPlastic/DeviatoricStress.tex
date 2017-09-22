@@ -1,0 +1,45 @@
+\subsection{Deviatoric Stress Models}
+The elastic-plastic stress update assumes that the deviatoric part of
+the Cauchy stress can be calculated independently of the equation of
+state.  There are two deviatoric stress models that are implemented in
+Uintah.  These are
+\begin{enumerate}
+    \item A default hypoelastic deviatoric stress.
+    \item A linear hypoviscooelastic deviatoric stress.
+\end{enumerate}
+
+\subsubsection{Default Hypoelastic Deviatoric Stress}
+  In this case the stress rate is given by
+  \begin{equation}
+    \dot{\Bs} = 2\mu(\Beta - \Beta^p)
+  \end{equation}
+  where $\mu$ is the shear modulus.  This model is invoked using
+  \begin{lstlisting}  
+      <deviatoric_stress_model type="hypoElastic">
+      </deviatoric_stress_model>
+  \end{lstlisting}
+  If a deviatoric stress model is not specified then this model is the
+  {\bf default}.
+
+\subsubsection{Linear Hypoviscoelastic Deviatoric Stress}
+  This model is a three--dimensional version of a Generalized Maxwell
+  model, as presented in \cite{Zerilli07}.  It is specifically
+  implemented to be combined with the ZA for Polymers Flow Stress
+  Model described previously.  Together these models combine into a
+  hypoviscoplastic model.  The stress update is given by
+  \begin{equation}
+    \dot{\Bs} = 2\mu(\Beta - \Beta^p) - \sum_{i=1}^N {\Bs_i\over \tau_i}
+  \end{equation}
+  where $\mu$ is the shear modulus and $\Bs_i$ are maxwell element
+  stresses which are tracked internally.  Also
+  \begin{equation}
+    \Bs = \sum_{i=1}^N \Bs_i \quad\quad \mu = \sum_{i=1}^N \mu_i
+  \end{equation}
+  This model is invoked using
+  \begin{lstlisting}  
+      <deviatoric_stress_model type="hypoViscoElastic">
+        <mu> [3.0, 5.0, 7.0] </mu>
+        <tau> [1.67, 10.7, 107.0] </tau>
+      </deviatoric_stress_model>
+  \end{lstlisting}
+where the number of elements in arrays mu and tau must be the same.

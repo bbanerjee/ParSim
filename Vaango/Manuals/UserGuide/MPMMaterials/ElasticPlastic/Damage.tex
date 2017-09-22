@@ -1,0 +1,147 @@
+\subsection{Damage Models and Failure}
+Only the Johnson-Cook damage evolution rule has been added to the
+DamageModelFactory so far.  The damage model framework is designed
+to be similar to the plasticity model framework.  New models can
+be added using the approach described later in this section.
+
+  A particle is tagged as ``failed'' when its temperature is greater than the
+  melting point of the material at the applied pressure.  An additional
+  condition for failure is when the porosity of a particle increases beyond a
+  critical limit and the strain exceeds the fracture strain of the material.
+  Another condition for failure is when a material bifurcation
+  condition such as the Drucker stability postulate is satisfied.  Upon failure,
+  a particle is either removed from the computation by setting the stress to
+  zero or is converted into a material with a different velocity field
+  which interacts with the remaining particles via contact.  Either approach
+  leads to the simulation of a newly created surface.  More details of the
+  approach can be found in ~\cite{Banerjee04a,Banerjee04c,Banerjee05}.
+
+  \subsubsection{Damage model}
+  After the stress state has been determined on the basis of the yield condition
+  and the associated flow rule, a scalar damage state in each material point can
+  be calculated using the Johnson-Cook model ~\cite{Johnson85}.
+  The Johnson-Cook model has an explicit dependence on temperature, plastic
+  strain, ans strain rate.
+
+  The damage evolution rule for the Johnson-Cook damage model can be written as
+  \begin{equation}
+    \dot{D} = \cfrac{\dot{\epsilon_p}}{\epsilon_p^f} ~;~~
+    \epsilon_p^f = 
+      \left[D_1 + D_2 \exp \left(\cfrac{D_3}{3} \sigma^*\right)\right]
+      \left[1+ D_4 \ln(\dot{\epsilon_p}^*)\right]
+      \left[1+D_5 T^*\right]~;~~
+    \sigma^*= \cfrac{\text{Tr}(\Bsig)}{\sigma_{eq}}~;~~
+  \end{equation}
+  where $D$ is the damage variable which has a value of 0 for virgin material
+  and a value of 1 at fracture, $\epsilon_p^f$ is the fracture strain,
+  $D_1, D_2, D_3, D_4, D_5$ are constants, $\Bsig$ is the Cauchy stress, and
+  $T^*$ is the scaled temperature as in the Johnson-Cook plasticity model.
+
+  The input tags for the damage model are :
+  \begin{lstlisting}
+    <damage_model type="johnson_cook">
+      <D1>0.05</D1>
+      <D2>3.44</D2>
+      <D3>-2.12</D3>
+      <D4>0.002</D4>
+      <D5>0.61</D5>
+    </damage_model>
+  \end{lstlisting}
+
+  An initial damage distribution can be created using the following tags
+  \begin{lstlisting}
+    <evolve_damage>                 true  </evolve_damage>
+    <initial_mean_scalar_damage>    0.005  </initial_mean_scalar_damage>
+    <initial_std_scalar_damage>     0.001 </initial_std_scalar_damage>
+    <critical_scalar_damage>        1.0   </critical_scalar_damage>
+    <initial_scalar_damage_distrib> gauss </initial_scalar_damage_distrib>
+  \end{lstlisting}
+
+  \subsubsection{Erosion algorithm}
+  Under normal conditions, the heat generated at a material point is conducted
+  away at the end of a time step using the heat equation.  If special adiabatic
+  conditions apply (such as in impact problems), the heat is accumulated at a
+  material point and is not conducted to the surrounding particles.  This
+  localized heating can be used to determine whether a material point has
+  melted.
+
+  The determination of whether a particle has failed can be made on the
+  basis of either or all of the following conditions:
+  \begin{itemize}
+    \item The particle temperature exceeds the melting temperature.
+    \item The TEPLA-F fracture condition~\cite{Johnson88} is satisfied.
+       This condition can be written as
+       \begin{equation}
+         (f/f_c)^2 + (\epsilon_p/\epsilon_p^f)^2 = 1
+       \end{equation}
+       where $f$ is the current porosity, $f_c$ is the maximum
+       allowable porosity, $\epsilon_p$ is the current plastic strain, and
+       $\epsilon_p^f$ is the plastic strain at fracture.
+    \item An alternative to ad-hoc damage criteria is to use the concept of
+       bifurcation to determine whether a particle has failed or not.  Two
+       stability criteria have been explored in this paper - the Drucker
+       stability postulate~\cite{Drucker59} and the loss of hyperbolicity
+       criterion (using the determinant of the acoustic tensor)
+       \cite{Rudnicki75,Perzyna98}.
+  \end{itemize}
+
+  The simplest criterion that can be used is the Drucker stability postulate
+  \cite{Drucker59} which states that time rate of change of the rate of
+  work done by a material cannot be negative.  Therefore, the material is
+  assumed to become unstable (and a particle fails) when
+  \begin{equation}
+    \dot\Bsig:\BD^p \le 0
+  \end{equation}
+  Another stability criterion that is less restrictive is the acoustic
+  tensor criterion which states that the material loses stability if the
+  determinant of the acoustic tensor changes sign~\cite{Rudnicki75,Perzyna98}.
+  Determination of the acoustic tensor requires a search for a normal vector
+  around the material point and is therefore computationally expensive.  A
+  simplification of this criterion is a check which assumes that the direction
+  of instability lies in the plane of the maximum and minimum principal
+  stress~\cite{Becker02}.  In this approach, we assume that the strain is
+  localized in a band with normal $\Bn$, and the magnitude of the velocity
+  difference across the band is $\Bg$.  Then the bifurcation condition
+  leads to the relation
+  \begin{equation} 
+    R_{ij} g_{j} = 0 ~;~~~
+    R_{ij} = M_{ikjl} n_k n_l + M_{ilkj} n_k n_l - \sigma_{ik} n_j n_k
+  \end{equation}
+  where $M_{ijkl}$ are the components of the co-rotational tangent
+  modulus tensor and $\sigma_{ij}$ are the components of the co-rotational
+  stress tensor.  If $\det(R_{ij}) \le 0 $, then $g_j$ can be arbitrary and
+  there is a possibility of strain localization.  If this condition for
+  loss of hyperbolicity is met,  then a particle deforms in an unstable
+  manner and failure can be assumed to have occurred at that particle.
+  We use a combination of these criteria to simulate failure.
+
+  Since the material in the container may unload locally after fracture, the
+  hypoelastic-plastic stress update may not work accurately under certain
+  circumstances.  An improvement would be to use a hyperelastic-plastic stress
+  update algorithm.  Also, the plasticity models are temperature dependent.
+  Hence there is the issue of severe mesh dependence due to change of the
+  governing equations from hyperbolic to elliptic in the softening regime
+  ~\cite{Hill75,Bazant85,Tver90}.  Viscoplastic stress update models or
+  nonlocal/gradient plasticity models~\cite{Ramaswamy98,Hao00} can be used
+  to eliminate some of these effects and are currently under investigation.
+
+  The tags used to control the erosion algorithm are in two places.
+  In the \TT{<MPM> </MPM>} section the following flags can be set
+  \begin{lstlisting}
+    <erosion algorithm = "ZeroStress"/>
+    <create_new_particles>           false      </create_new_particles>
+    <manual_new_material>            false      </manual_new_material>
+  \end{lstlisting}
+  If the erosion algorithm is \TT{"none"} then no particle failure is done.
+
+  In the \TT{<constitutive_model type="elastic_plastic">} section, the
+  following flags can be set
+  \begin{lstlisting}
+    <evolve_porosity>               true  </evolve_porosity>
+    <evolve_damage>                 true  </evolve_damage>
+    <do_melting>                    true  </do_melting>
+    <useModifiedEOS>                true  </useModifiedEOS>
+    <check_TEPLA_failure_criterion> true  </check_TEPLA_failure_criterion>
+    <check_max_stress_failure>      false </check_max_stress_failure>
+    <critical_stress>              12.0e9 </critical_stress>
+  \end{lstlisting}

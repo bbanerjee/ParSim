@@ -1,0 +1,222 @@
+\subsection{Equation of State Models}
+The elastic-plastic stress update assumes that the volumetric part of
+the Cauchy stress can be calculated using an equation of state.  There
+are three equations of state that are implemented in Uintah.  These
+are
+\begin{enumerate}
+    \item A default hypoelastic equation of state.
+    \item A neo-Hookean equation of state.
+    \item A Mie-Gruneisen type equation of state.
+\end{enumerate}
+
+\subsubsection{Default hypoelastic equation of state}
+In this case we assume that the stress rate is given by
+\Beq
+    \dot{\Bsig} = \lambda~\Tr(\Bd^e)~\Bone + 2~\mu~\Bd^e
+\Eeq
+where $\Bsig$ is the Cauchy stress, $\Bd^e$ is the elastic part of
+the rate of deformation, and $\lambda, \mu$ are constants.
+
+If $\Beta^e$ is the deviatoric part of $\Bd^e$ then we can write
+\Beq
+    \dot{\Bsig} = \left(\lambda + \frac{2}{3}~\mu\right)~\Tr(\Bd^e)~\Bone +
+        2~\mu~\Beta^e = \kappa~\Tr(\Bd^e)~\Bone + 2~\mu~\Beta^e ~.
+\Eeq
+If we split $\Bsig$ into a volumetric and a deviatoric part, i.e.,
+$\Bsig = p~\Bone + \Bs$ and take the time derivative to get
+$\dot{\Bsig} = \dot{p}~\Bone + \dot{\Bs}$ then
+\Beq
+    \dot{p} = \kappa~\Tr(\Bd^e) ~.
+\Eeq
+In addition we assume that $\Bd = \Bd^e + \Bd^p$.  If we also assume that
+the plastic volume change is negligible, we can then write that
+\Beq
+    \dot{p} = \kappa~\Tr(\Bd) ~.
+\Eeq
+This is the equation that is used to calculate the pressure $p$ in the
+default hypoelastic equation of state, i.e.,
+\Beq
+    \boxed{
+    p_{n+1} = p_n + \kappa~\Tr(\Bd_{n+1})~\Delta t ~.
+    }
+\Eeq
+To get the derivative of $p$ with respect to $J$, where $J = \det(\BF)$,
+we note that
+\Beq
+    \dot{p} = \Partial{p}{J}~\dot{J} = \Partial{p}{J}~J~\Tr(\Bd) ~.
+\Eeq
+Therefore,
+\Beq
+    \boxed{
+    \Partial{p}{J} = \cfrac{\kappa}{J} ~.
+    }
+\Eeq
+
+This model is invoked in Uintah using
+\begin{lstlisting}
+  <equation_of_state type="default_hypo">
+  </equation_of_state>
+\end{lstlisting}
+The code is in \tt.../MPM/ConstitutiveModel/PlasticityModels/DefaultHypoElasticEOS.cc \normalfont
+If an EOS is not specified then this model is the {\bf default}.
+
+\subsubsection{Default hyperelastic equation of state}
+In this model the pressure is computed using the relation
+\begin{equation}
+  p = \Half~\kappa~\left(J^e - \cfrac{1}{J^e}\right)
+\end{equation}
+where $\kappa$ is the bulk modulus and $J^e$ is determinant of the elastic
+part of the deformation gradient.
+
+We can also compute
+\begin{equation}
+  \Deriv{p}{J} = \Half~\kappa~\left(1 + \cfrac{1}{(J^e)^2}\right) ~.
+\end{equation}
+
+This model is invoked in Uintah using
+\begin{lstlisting}
+  <equation_of_state type="default_hyper">
+  </equation_of_state>
+\end{lstlisting}
+The code is in \TT{.../MPM/ConstitutiveModel/PlasticityModels/HyperElasticEOS.cc}.
+
+\subsubsection{Mie-Gruneisen equation of state}
+The pressure ($p$) is calculated using a Mie-Gr{\"u}neisen equation of state
+\begin{equation} \label{eq:MG}
+  p = p_{ref} +\rho \Gamma (e - e_{ref})
+\end{equation}
+where $\rho$ is the mass density, $\Gamma$ the Gr{\"u}neisen parameter (unitless) and $p_{ref}$
+and $e_{ref}$ are known pressure and internal specific energy on a reference curve {\it and are a function
+of volume only}.  As the form can be formally viewed as an expansion valid near the reference curve,
+ideally the reference curve prescribes states near those of interest.  The reference curve could be
+the shock Hugoniot, the standard adiabat (through the initial state), the 0 K isotherm, the isobar $p=0$,
+the curve $e=0$, or some composite of these curves to cover the range of interest.  
+
+For shock calculations it makes sense to use the Hugoniot as a reference curve.  We Assume the following
+relationship between shock wave velocity, $U_s$ and particle velocity,  $U_p$,
+\begin{equation} \label{eq:SteinbergUsUp}
+  U_s = C_0 + s_\alpha U_p + s_2 \frac{U_p^2}{U_s} + s_3 \frac{U_p^3}{U_s^2}
+\end{equation}
+where $C_0$ is the bulk speed of sound, and the $s$'s are dimensionless coefficients.
+This form is due to Steinberg (\cite{Steinberg91}), and is a straight--forward extension to a nonlinear 
+shock velocity, particle velocity relationship.  It reduces to the linear relationship most frequently 
+used, e.g. (\cite{Wilkins99,Zocher00}), with $s_2 = s_3 = 0$.  Using the steady shock jump conditions for
+conservation of mass, momentum and energy, the Hugoniot reference pressure, $p_H$ and specific energy,
+$e_H$ may be determined
+\begin{equation} \label{eq:pH}
+  p_H = \frac{\rho_0 C_0^2 \eta}{1 - s_\alpha \eta - s_2 \eta^2 - s_3 \eta^3}
+\end{equation}
+\begin{equation} \label{eq:eH}
+  e_H = \frac{p_H \eta}{2 \rho_0}
+\end{equation}
+where $\rho_0$ is the initial density (pre-shock) and
+\begin{equation} \label{eq:eta}
+  \eta = 1-\frac{\rho_0}{\rho}
+\end{equation}
+is a measure of volumetric deformation.  Using these relationships and the additional assumption that
+$\rho\Gamma=\rho_0\Gamma_0$ the Mie-Gr{\"u}neisen equation of state may be written
+\begin{equation} \label{eq:EOSMG_upd}
+  \boxed{
+  p =  \frac{\rho_0~C_0^2~\eta(1-\frac{\Gamma_0\eta}{2})}{(1 - s_\alpha \eta - s_2 \eta^2 - s_3 \eta^3)^2}
+           + \rho_0\Gamma_0~e
+  }
+\end{equation}
+To extend the Mie Gr{\"u}neisen EOS into tensile stress regimes, for $\eta<0$ the pressure is evaluated as
+\begin{equation} \label{eq:EOSMG_upd_1}
+  \boxed{
+  p =  \rho_0~C_0^2~\eta + \rho_0\Gamma_0~e
+  }
+\end{equation}
+This equation is integrated explicitly, using beginning timestep values for energy and the current value
+of density to update the pressure.  For isochoric plasticity,
+\begin{equation*}
+  J^e = J = \det(\BF) = \cfrac{\rho_0}{\rho} ~.
+\end{equation*}
+where $\BF^e$ is the elastic part of the deformation gradient.  
+The increment in specific internal energy is computed using
+  \begin{equation}
+    \rho^* \Delta e = (\sigma^*_{ij} D_{ij} - q D_{kk}) \Delta t
+  \end{equation}
+where $\sigma^*_{ij}$ and $\rho^*$ are the average stress and density over the time step, 
+$D_{ij}$ is the rate of deformation tensor, and $q$ is
+the artificial viscosity.  Note that the artificial velocity term must be included explicitly
+since it is not accumulated in the total stress.
+
+The temperature, $T$, is calculated using the thermodynamic relationship
+  \begin{equation}\label{eq:dTthermo}
+    dT = -\rho\Gamma T dv + \frac{TdS}{C_v}
+  \end{equation}
+where $v$ is the specific volume, $S$ the entropy and $C_v$ the specific heat at constant volume.
+Entropy change is associated with irreversible, or dissipative, processes.  Equating $TdS$ to the
+dissipated work terms, those components of temperature change are computed in the appropriate routines,
+such as plasticity or artificial viscosity.  In fact, not all of the dissipated energy needs be
+converted to heat, as allowed for by using the Taylor--Quinney coefficient (see below).  The first term
+in \label{eq:dT} may be integrated to give the isentropic temperature change
+  \begin{equation}\label{eq:dTisentropic}
+    \Delta T_{isentropic} = -T\Gamma_0\frac{\rho_0}{\rho}D_{kk}\Delta t
+  \end{equation}
+where the same assumption, $\rho\Gamma=\rho_0\Gamma_0$ is used.  The isentropic temperature change
+is computed as part of the EOS response.
+
+Should an implicit integration scheme be used the tangent moduli are needed, which in turn require calculation of
+\Beq
+  \boxed{
+  \Partial{p}{J^e} =
+  \cfrac{\rho_0~C_0^2~[1 + (S_{\alpha}-\Gamma_0)~(1-J^e)]}
+        {[1-S_{\alpha}~(1-J^e)]^3} - \Gamma_0~\Partial{e}{J^e}.
+  }
+\Eeq
+We neglect the $\Partial{e}{J^e}$ term in our calculations.  {\it Note: this calculation hasn't been updated for
+the Steinberg nonlinear shock velocity, particle velocity relationship.}
+
+This model is invoked in Uintah using
+\begin{lstlisting}
+  <equation_of_state type="mie_gruneisen">
+    <C_0>5386</C_0>
+    <Gamma_0>1.99</Gamma_0>
+    <S_alpha>1.339</S_alpha>
+    <S_2>1.339</S_2>
+    <S_3>1.339</S_3>
+  </equation_of_state>
+\end{lstlisting}
+The code is in \TT{.../MPM/ConstitutiveModel/PlasticityModels/MieGruneisenEOS.cc}.
+
+It is worth noting that this approach to calculating energy and temperature is not necessarily consistent
+with existing implementations.  In fact, it does not appear that there is a standard approach, many shock
+codes have unique implementations.  In particular, it appears that the elastic stored energy term is 
+often neglected, as well as the isentropic temperature change.
+
+It is worth noting that the approach outlined above is consistent with that taken fairly
+recently by Wilkins (\cite{Wilkins99}).  Wilkins expands the pressure and energy as polynomials in $\eta$
+and uses Hugoniot data (and a linear $U_s$, $U_p$ relationship) to determine the coefficients.  Using the
+additional thermodynamic relationship
+  \begin{equation}\label{eq:de}
+    de = -p dv + TdS
+  \end{equation}
+and substituting for $TdS$ from \ref{eq:dTthermo}, assuming $C_v$ constant and 
+$\rho\Gamma=\rho_0\Gamma_0$ (as in Wilkins), the following relationship may be derived
+  \begin{equation}\label{eq:e}
+    e = -\int_{v_0}^v (p - \rho_0 \Gamma_0 C_v T) dv + C_v(T-T_0)
+  \end{equation}
+Since the integral is for $dS=0$, it may be integrated to give an alternate form of \ref{eq:dTisentropic},
+  \begin{equation}\label{eq:dTisentropic2}
+    T_{isentropic} = T_0\exp(\Gamma_0(1-\frac{\rho_0}{\rho}))
+  \end{equation}
+which may be substituted into \ref{eq:e} along with the expansion for $p(\eta)$ (here for $s_2=s_3=0$)
+  \begin{equation}\label{eq:pofeta}
+    p = \rho_0\Gamma_0 e + \rho_0 C_0^2(\eta + (2s_\alpha-\frac{\Gamma_0}{2})\eta^2 + s_\alpha(3s_\alpha-\Gamma_0)\eta^3) + O(\eta^4)
+  \end{equation}
+to give the equation
+  \begin{equation}\label{eq:e2}
+    e+\int_{v_0}^v\rho_0\Gamma_0 e dv = C_v(T-T_0) + \rho_0 \Gamma_0C_vT_0\int_{v_0}^v \exp(\Gamma_0\eta)dv 
+       -\rho_0\Gamma_0\int_{v_0}^v(\eta + (2s_\alpha-\frac{\Gamma_0}{2})\eta^2 + s_\alpha(3s_\alpha-\Gamma_0)\eta^3)dv
+  \end{equation}
+Finally, using 
+  \begin{equation}
+    e = e_0(\eta) + \int_{T_0}^T C_vdT
+  \end{equation}
+with a polynomial expansion for $e(\eta)$ in powers of $\eta$, \ref{eq:e2} can be integrated 
+to determine the coefficients in the expansion.  Determining the coefficients this way gives 
+exactly the same expansion for energy as derived in
+Wilkins, using a different approach.  The advantages of the approach outlined above are it's relative simplicity,
+and generality -- no assumption of constant specific heat is needed.

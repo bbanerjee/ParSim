@@ -1,0 +1,110 @@
+\subsection{Melting Temperature}
+  \subsubsection{Default model}
+  The default model is to use a constant melting temperature.  This model
+  is invoked using
+  \begin{lstlisting}
+      <melting_temp_model type="constant_Tm">
+      </melting_temp_model>
+  \end{lstlisting}
+
+  \subsubsection{Linear melt model}
+  A melting temperature model designed to be linear in pressure can be invoked using
+  \begin{lstlisting}
+      <melting_temp_model type="linear_Tm">
+        <T_m0> </T_m0>
+        <a>   </a>
+        <b> </b>
+        <Gamma_0> </Gamma_0>
+        <K_T> </K_T>
+      </melting_temp_model>
+  \end{lstlisting}
+
+  where T\_m0 is required, and either a or Gamma\_0 along with K\_T, or b.  
+  T\_m0 is the initial melting temperature in Kelvin, a is the Kraut-Kennedy coefficient,
+  Gamma\_0 is the Gruniesen Gamma, b is the pressure coefficient in Kelvin per Pascal, and K\_T
+  is the isothermal bulk modulus in Pascals.
+  The pressure is calculated using either
+  \begin{equation}
+    T_{m}=T_{m0}+bP
+  \end{equation}
+  or
+  \begin{equation}
+    T_{m}=T_{m0}\left(1+a\frac{\rho_0}{\rho}\right)
+  \end{equation}
+  The constants in these equations are linked together via the following equation
+  \begin{equation}
+   b=\frac{aT_{m0}}{K_T}
+  \end{equation}
+  and a is related to the Gruneisen Gamma by the Lindemann Law \cite{Poirier91}:
+  \begin{equation}
+   a=2\left(\Gamma_0-\frac{1}{3}\right)
+  \end{equation}
+
+  
+
+  \subsubsection{SCG melt model}
+  We use a pressure dependent relation to determine the melting
+  temperature ($T_m$).  The Steinberg-Cochran-Guinan (SCG) melt model
+  (\cite{Steinberg80}) has been used for our simulations of copper.
+  This model is based on a modified Lindemann law and has the form
+  \begin{equation} \label{eq:TmSCG}
+    T_m(\rho) = T_{m0} \exp\left[2a\left(1-\frac{1}{\eta}\right)\right]
+              \eta^{2(\Gamma_0-a-1/3)}; \quad
+    \eta = \frac{\rho}{\rho_0}
+  \end{equation}
+  where $T_{m0}$ is the melt temperature at $\eta = 1$,
+  $a$ is the coefficient of the first order volume correction to
+  Gr{\"u}neisen's gamma ($\Gamma_0$).
+
+  This model is invoked with
+  \begin{lstlisting}
+    <melting_temp_model type="scg_Tm">
+      <T_m0> 2310.0 </T_m0>
+      <Gamma_0> 3.0 </Gamma_0>
+      <a> 1.67 </a>
+    </melting_temp_model>
+  \end{lstlisting}
+
+  \subsubsection{BPS melt model}
+  An alternative melting relation that is based on dislocation-mediated
+  phase transitions - the Burakovsky-Preston-Silbar (BPS) model
+  (\cite{Burakovsky00}) can also be used.  This model has been used to
+  determine the melt temperature for 4340 steel.  The BPS model has the form
+  \begin{align}
+    T_m(p) & = T_m(0)
+      \left[\cfrac{1}{\eta} + 
+            \cfrac{1}{\eta^{4/3}}~\cfrac{\mu_0^{'}}{\mu_0}~p\right]~; 
+    \quad
+    \eta = \left(1 + \cfrac{K_0^{'}}{K_0}~p\right)^{1/K_0^{'}} 
+    \label{eq:TmBPS}\\
+    T_m(0) & = \cfrac{\kappa\lambda\mu_0~v_{WS}}{8\pi\ln(z-1)~k_b}
+               \ln\left(\cfrac{\alpha^2}{4~b^2\rho_c(T_m)}\right)
+  \end{align}
+  where $p$ is the pressure, $\eta = \rho/\rho_0$ is the compression,
+  $\mu_0$ is the shear modulus at room temperature and zero pressure,
+  $\mu_0^{'} = \partial\mu/\partial p$ is the derivative of the shear modulus
+  at zero pressure, $K_0$ is the bulk modulus at room temperature and
+  zero pressure, $K_0^{'} = \partial K/\partial p$ is the derivative of the
+  bulk modulus at zero pressure, $\kappa$ is a constant, $\lambda = b^3/v_{WS}$
+  where $b$ is the magnitude of the Burgers' vector, $v_{WS}$ is the
+  Wigner-Seitz volume, $z$ is the coordination number, $\alpha$ is a
+  constant, $\rho_c(T_m)$ is the critical density of dislocations, and
+  $k_b$ is the Boltzmann constant.
+
+  This model is invoked with
+  \begin{lstlisting}
+    <melting_temp_model type="bps_Tm">
+      <B0> 137e9 </B0>
+      <dB_dp0> 5.48 <dB_dp0>
+      <G0> 47.7e9 <G0>
+      <dG_dp0> 1.4 <dG_dp0>
+      <kappa> 1.25 <kappa>
+      <z> 12 <z>
+      <b2rhoTm> 0.64 <b2rhoTm>
+      <alpha> 2.9 <alpha>
+      <lambda> 1.41 <lambda>
+      <a> 3.6147e-9<a>
+      <v_ws_a3_factor> 1/4 <v_ws_a3_factor>
+      <Boltzmann_Constant> <Boltzmann_Constant>
+    </melting_temp_model>
+  \end{lstlisting}

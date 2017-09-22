@@ -1,0 +1,131 @@
+\section{ElasticPlastic} The \tt <elastic\_plastic> \normalfont model is a
+general purpose model that was primarily implemented for the purpose of
+modeling high strain rate metal plasticity.  Dr. Biswajit Banerjee has
+written an extensive description of the theory, implementation and use of
+this model.  Because of the amount of detail involved, and because these
+subtopics are interwoven, this model is given its own section below.
+
+
+There is a large number remaining models but these are not frequently utilized. 
+This includes models for viscoelasticity, soil models, and transverse isotropic materials (i.e., fiber reinforced composites).
+Examples of their use can be found in the \tt inputs \normalfont directory.
+Input files can also be constructed by checking the source code to see
+what parameters are required.
+
+There are a few models whose use is explicitly not recommended.  In particular,
+\tt HypoElasticPlastic, Membrane and SmallStrainPlastic. \normalfont  Input
+files calling for the first of these should be switched to the
+\tt ElasticPlastic \normalfont model instead.
+
+  \paragraph{Example input file for the HypoElasticPlastic model}
+  An example of the portion of an input file that specifies a copper body
+  with a hypoelastic stress update, Johnson-Cook plasticity model,
+  Johnson-Cook Damage Model and Mie-Gruneisen Equation of State is shown
+  below.
+  \begin{lstlisting}
+  <material>
+
+    <include href="inputs/MPM/MaterialData/MaterialConstAnnCopper.xml"/>
+    <constitutive_model type="elastic_plastic">
+      <tolerance>5.0e-10</tolerance>
+      <include href="inputs/MPM/MaterialData/IsotropicElasticAnnCopper.xml"/>
+      <include href="inputs/MPM/MaterialData/JohnsonCookPlasticAnnCopper.xml"/>
+      <include href="inputs/MPM/MaterialData/JohnsonCookDamageAnnCopper.xml"/>
+      <include href="inputs/MPM/MaterialData/MieGruneisenEOSAnnCopper.xml"/>
+    </constitutive_model>
+
+    <geom_object>
+      <cylinder label = "Cylinder">
+        <bottom>[0.0,0.0,0.0]</bottom>
+        <top>[0.0,2.54e-2,0.0]</top>
+        <radius>0.762e-2</radius>
+      </cylinder>
+      <res>[3,3,3]</res>
+      <velocity>[0.0,-208.0,0.0]</velocity>
+      <temperature>294</temperature>
+    </geom_object>
+
+  </material>
+  \end{lstlisting}
+
+  The general material constants for copper are in the file
+  \TT{MaterialConstAnnCopper.xml}.  The contents are shown below
+  \begin{lstlisting}
+  <?xml version='1.0' encoding='ISO-8859-1' ?>
+  <Uintah_Include>
+    <density>8930.0</density>
+    <toughness>10.e6</toughness>
+    <thermal_conductivity>1.0</thermal_conductivity>
+    <specific_heat>383</specific_heat>
+    <room_temp>294.0</room_temp>
+    <melt_temp>1356.0</melt_temp>
+  </Uintah_Include>
+  \end{lstlisting}
+
+  The elastic properties are in the file \TT{IsotropicElasticAnnCopper.xml}.
+  The contents of this file are shown below.
+  \begin{lstlisting}
+  <?xml version='1.0' encoding='ISO-8859-1' ?>
+  <Uintah_Include>
+    <shear_modulus>45.45e9</shear_modulus>
+    <bulk_modulus>136.35e9</bulk_modulus>
+  </Uintah_Include>
+  \end{lstlisting}
+
+  The constants for the Johnson-Cook plasticity model are in the file
+  \TT{JohnsonCookPlasticAnnCopper.xml}.  The contents of this file are
+  shown below.
+  \begin{lstlisting}
+  <?xml version='1.0' encoding='ISO-8859-1' ?>
+  <Uintah_Include>
+    <flow_model type="johnson_cook">
+      <A>89.6e6</A>
+      <B>292.0e6</B>
+      <C>0.025</C>
+      <n>0.31</n>
+      <m>1.09</m>
+    </flow_model>
+  </Uintah_Include>
+  \end{lstlisting}
+
+  The constants for the Johnson-Cook damage model are in the file
+  \TT{JohnsonCookDamageAnnCopper.xml}.  The contents of this file are
+  shown below.
+  \begin{lstlisting}
+  <?xml version='1.0' encoding='ISO-8859-1' ?>
+  <Uintah_Include>
+    <damage_model type="johnson_cook">
+      <D1>0.54</D1>
+      <D2>4.89</D2>
+      <D3>-3.03</D3>
+      <D4>0.014</D4>
+      <D5>1.12</D5>
+    </damage_model>
+  </Uintah_Include>
+  \end{lstlisting}
+
+  The constants for the Mie-Gruneisen model (as implemented in the
+  Uintah Computational Framework) are in the file
+  \TT{MieGruneisenEOSAnnCopper.xml}.  The contents of this file are
+  shown below.
+  \begin{lstlisting}
+  <?xml version='1.0' encoding='ISO-8859-1' ?>
+  <Uintah_Include>
+    <equation_of_state type="mie_gruneisen">
+      <C_0>3940</C_0>
+      <Gamma_0>2.02</Gamma_0>
+      <S_alpha>1.489</S_alpha>
+    </equation_of_state>
+  </Uintah_Include>
+  \end{lstlisting}
+
+  As can be seen from the input file, any other plasticity model, damage
+  model and equation of state can be used to replace the Johnson-Cook
+  and Mie-Gruneisen models without any extra effort (provided the models
+  have been implemented and the data exist).
+
+  The material data can easily be taken from a material database or specified
+  for a new material in an input file kept at a centralized location.  At this
+  stage material data for a range of materials is kept in the directory
+  \TT{.../Uintah/StandAlone/inputs/MPM/MaterialData}.
+

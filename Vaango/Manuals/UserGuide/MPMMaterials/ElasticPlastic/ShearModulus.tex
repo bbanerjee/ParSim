@@ -1,0 +1,94 @@
+  \subsection{Shear Modulus} \label{sec:ModelShear}
+  Three models for the shear modulus ($\mu$) have been tested in our
+  simulations.  The first has been associated with the Mechanical
+  Threshold Stress (MTS) model and we call it the MTS shear model.
+  The second is the model used by Steinberg-Cochran-Guinan and we call
+  it the SCG shear model while the third is a model developed by
+  Nadal and Le Poac that we call the NP shear model.
+
+  \subsubsection{Default model}
+  The default model gives a constant shear modulus.  The model is
+  invoked using
+  \begin{lstlisting}
+    <shear_modulus_model type="constant_shear">
+    </shear_modulus_model>
+  \end{lstlisting}
+
+  \subsubsection{MTS Shear Modulus Model}
+  The simplest model is of the form suggested by \cite{Varshni70}
+  (\cite{Chen96})
+  \begin{equation} \label{eq:MTSShear}
+    \mu(T) = \mu_0 - \frac{D}{exp(T_0/T) - 1}
+  \end{equation}
+  where $\mu_0$ is the shear modulus at 0K, and $D, T_0$ are material
+  constants.
+
+  The model is invoked using
+  \begin{lstlisting}
+    <shear_modulus_model type="mts_shear">
+      <mu_0>28.0e9</mu_0>
+      <D>4.50e9</D>
+      <T_0>294</T_0>
+    </shear_modulus_model>
+  \end{lstlisting}
+
+  \subsubsection{SCG Shear Modulus Model}
+  The Steinberg-Cochran-Guinan (SCG) shear modulus
+  model (\cite{Steinberg80,Zocher00}) is pressure dependent and
+  has the form
+  \begin{equation} \label{eq:SCGShear}
+    \mu(p,T) = \mu_0 + \Partial{\mu}{p} \frac{p}{\eta^{1/3}} +
+         \Partial{\mu}{T}(T - 300) ; \quad
+    \eta = \rho/\rho_0
+  \end{equation}
+  where, $\mu_0$ is the shear modulus at the reference state($T$ = 300 K,
+  $p$ = 0, $\eta$ = 1), $p$ is the pressure, and $T$ is the temperature.
+  When the temperature is above $T_m$, the shear modulus is instantaneously
+  set to zero in this model.
+
+  The model is invoked using
+  \begin{lstlisting}
+  <shear_modulus_model type="scg_shear">
+    <mu_0> 81.8e9 </mu_0>
+    <A> 20.6e-12 </A>
+    <B> 0.16e-3 </B>
+  </shear_modulus_model>
+  \end{lstlisting}
+
+  \subsubsection{NP Shear Modulus Model}
+  A modified version of the SCG model has been developed by
+  \cite{Nadal03} that attempts to capture the sudden drop in the
+  shear modulus close to the melting temperature in a smooth manner.
+  The Nadal-LePoac (NP) shear modulus model has the form
+  \begin{equation} \label{eq:NPShear}
+    \mu(p,T) = \frac{1}{\mathcal{J}(\That)}
+      \left[
+        \left(\mu_0 + \Partial{\mu}{p} \cfrac{p}{\eta^{1/3}} \right)
+        (1 - \That) + \frac{\rho}{Cm}~k_b~T\right]; \quad
+    C := \cfrac{(6\pi^2)^{2/3}}{3} f^2
+  \end{equation}
+  where
+  \begin{equation}
+    \mathcal{J}(\That) := 1 + \exp\left[-\cfrac{1+1/\zeta}
+        {1+\zeta/(1-\That)}\right] \quad
+       \text{for} \quad \That:=\frac{T}{T_m}\in[0,1+\zeta],
+  \end{equation}
+  $\mu_0$ is the shear modulus at 0 K and ambient pressure, $\zeta$ is
+  a material parameter, $k_b$ is the Boltzmann constant, $m$ is the atomic
+  mass, and $f$ is the Lindemann constant.
+
+  The model is invoked using
+  \begin{lstlisting}
+    <shear_modulus_model type="np_shear">
+      <mu_0>26.5e9</mu_0>
+      <zeta>0.04</zeta>
+      <slope_mu_p_over_mu0>65.0e-12</slope_mu_p_over_mu0>
+      <C> 0.047 </C>
+      <m> 26.98 </m>
+    </shear_modulus_model>
+  \end{lstlisting}
+
+  \subsubsection{PTW Shear model}
+  The PTW shear model is a simplified version of the SCG shear model.
+  The inputs can be found in \TT{.../MPM/ConstitutiveModel/PlasticityModel/PTWShear.h}.
+

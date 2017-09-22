@@ -1053,3 +1053,9 @@ code.output {
     background: #454545;
   }
 }
+
+#markdown-toc { 
+  font-size: 0.7em;
+  @include border-radius(5px);
+  @include box-shadow(0 1px 3px rgba(255,255,0,.3));
+}

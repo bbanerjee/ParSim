@@ -1,0 +1,203 @@
+\subsection{Return Algorithms}
+
+Two return algorithms are presently available.  Both assume the direction
+of plastic flow is proportional to the current deviatoric stress.
+  \begin{enumerate}
+    \item Radial Return ({\bf default}).
+    \item Modified Nemat-Nasser/Maudlin Return Algorithm.
+  \end{enumerate}
+
+\subsubsection{Radial Return Algorithm}
+The plastic state is obtained using an iterative radial return
+procedure as described in \cite{Simo98}, page 124, except that the
+Newton procedure has been generalized to allow flow stresses to be
+functions of both equivalent plastic strain and equivalent plastic
+strain rate.
+
+The rotated spatial rate of deformation tensor ($\Bd$) is additively
+decomposed into an elastic part, $\Bd^e$, and a plastic part, $\Bd^p$,
+  \begin{equation}
+     \Bd = \Bd^e + \Bd^p
+  \end{equation}
+  It is convenient to work with the deviatoric parts of $\Bd$,
+  $\Bd^e$, and $\Bd^p$, denoted $\Beta$, $\Beta^e$, and
+  $\Beta^p$ respectively. The same additive decomposition obtains
+  \begin{equation}
+     \Beta = \Beta^e + \Beta^p
+  \end{equation}
+  Presently these models are limited to the case of plastic
+  incompressibility ($\Tr{(\Bd^p)} = 0$), so that $\Bd^p=\Beta^p$.
+
+The radial return algorithm assumes a yield condition of the form 
+  \begin{equation}\label{eq:yield_condition}
+    f(\Bs,\Ep,\dot{\Ep}) = \sqrt{3J_2} - \sigma_y(\Ep,\dot{\Ep})
+  \end{equation}
+where $\sigma_y$ is the flow stress, $J_2 = {1\over2}\Bs:\Bs$ is the
+second invariant of the deviatoric part of the Cauchy stress, $\Bs$,
+and the equivalent plastic strain is defined as
+  \begin{equation}\label{eq:ep}
+    \Ep = \int_0^t\sqrt{{2\over3}\Bd^p:\Bd^p}dt = \int_0^t\sqrt{{2\over3}\Beta^p:\Beta^p}dt
+  \end{equation}
+Assuming a state at the end of the previous time step, time $t^n$,
+satisfying $f(\Bs^n,\Ep^n,\Epdot{}^n)\le0$, a new state satisfying
+Eqn. \ref{eq:yield_condition} at time $t^{n+1}=t^n+\Delta t$, where
+$\Delta t$ is the time step size, is sought.
+
+Attention is further restricted to plastic flow associated with the yield condition,
+Eqn. \ref{eq:yield_condition}, i.e.
+  \begin{equation}\label{eq:associated_flow}
+    \Bd^p = \Beta^p \propto \Partial{f}{\Bsig} = \lambdadot{\Bs\over\norm{\Bs}} = \lambdadot\Bn
+  \end{equation}
+where $\Bsig$ is the Cauchy stress , $\Bn={\Bs/\norm{\Bs}}$ and
+$\lambdadot>0$ is a proportionality constant to be determined.
+Attention is also restricted to isotropic materials, for which the
+deviatoric response may be separated from the volumetric response.
+The linear hypoelastic/plastic constitutive equation for deviatoric
+response is
+  \begin{equation}\label{eq:linearhypoelasticity}
+    \dot{\Bs} = 2\mu(\Beta - \Beta^p)
+  \end{equation}
+where $\mu$ is the shear modulus.  The shear modulus is required to be
+constant over the time step.  This permits evolution of the shear
+modulus based on the state at the beginning of the time step using the
+various shear modulus models described later, which are pressure and
+temperature dependent.  It also allows for a visoelastic deviatoric
+stress response provided an instantaneous shear modulus may be
+defined, as described later in this section for linear
+hypoviscoelasticity.
+
+A trial stress is calculated assuming no plastic deformation, i.e.
+  \begin{equation}\label{eq:strial}
+    {\Bs^{\text{trial}}} = \Bs^n + 2\mu\Beta\Delta t
+  \end{equation}
+If $f(\Bs^{\text{trial}},\Ep^n,0)\le0$, the deformation is purely
+elastic and the solution at time $t^{n+1}$ is
+$\Bs^{n+1}=\Bs^{\text{trial}}$, $\Ep^{n+1}=\Ep^n$.  If
+$f(\Bs^{\text{trial}},\Ep^n,0)>0$, the deformation is at least
+partially plastic.  In this case
+  \begin{equation}\label{eq:stress_update_0}
+    \Bs^{n+1} = \Bs^n + \dot{\Bs}\Delta t
+  \end{equation}
+where $\dot{\Bs}$ is given by Eqn. \ref{eq:linearhypoelasticity}.
+Eqn. \ref{eq:stress_update_0} may be rewritten in terms of the trial
+stress
+  \begin{equation}\label{eq:stress_update_1}
+    \Bs^{n+1} = \Bs^{\text{trial}} - 2\mu\Beta^p\Delta t = \Bs^{\text{trial}} - 2\mu\lambdadot\Delta t {\Bs^{n+1}\over\norm{\Bs^{n+1}}}
+  \end{equation}
+using Eqn.s \ref{eq:strial}, \ref{eq:linearhypoelasticity} and
+\ref{eq:associated_flow}.  This equation may be rearranged to give
+  \begin{equation}
+    \Bs^{\text{trial}} = \Bs^{n+1} \left[ 1 + {2\mu\lambdadot\Delta t\over\norm{\Bs^{n+1}}}\right]
+  \end{equation}
+which gives the key result that $\Bs^{\text{trial}} \propto
+\Bs^{n+1}$, i.e. the trial stress and the updated stress are in the
+same direction.  Consequently the flow direction may be written
+  \begin{equation}\label{eq:flow_direction}
+    \Bn={\Bs^{n+1}\over\norm{\Bs^{n+1}}}={\Bs^{\text{trial}}\over\norm{\Bs^{\text{trial}}}}
+  \end{equation}
+and Eqn. \ref{eq:stress_update_1} may be rewritten
+  \begin{equation}\label{eq:stress_update_2}
+    \Bs^{n+1} = \Bs^{\text{trial}} - 2\mu\lambdadot\Delta t \Bn
+  \end{equation}
+or, contracting both sides with $\Bn$, and using Eqn. \ref{eq:flow_direction},
+  \begin{equation}
+    \norm{\Bs^{n+1}} = \norm{\Bs^{\text{trial}}} - 2\mu\lambdadot\Delta t
+  \end{equation}
+which is a scalar equation for the proportionality constant
+$\lambdadot$.  Using the yield condition
+$f(\Bs^{n+1},\Ep^{n+1},\Epdot{}^{n+1})=0$
+(Eqn. \ref{eq:yield_condition}), this equation may be written in terms
+of $\lambdadot$
+  \begin{equation}\label{eq:stress_update_3}
+     \sqrt{2\over3}\sigma_y(\Ep^{n+1},\Epdot{}^{n+1}) = \norm{\Bs^{\text{trial}}} - 2\mu\lambdadot\Delta t
+  \end{equation}
+where from Eqn.s \ref{eq:ep} and \ref{eq:associated_flow},
+$\Ep^{n+1}=\Ep^n+\sqrt{2\over3}\lambdadot\Delta t$ and $\dot{\Ep}^{n+1}=\sqrt{2\over3}\lambdadot$.
+
+For the special case of linear isotropic hardening,
+$\sigma_y(\Ep,\Epdot{})=\sigma_{y0}+k\Ep$, where $\sigma_{y0}$ is the
+initial yield stress and $k$ is the hardening modulus,
+Eqn. \ref{eq:stress_update_3} may be solved exactly.  More generally
+the solution may be found using Newton iteration.  Defining
+$\Delta\lambda = \lambdadot\Delta t$, and letting $j$ denote the
+iteration, define
+  \begin{equation}
+     g(\Delta\lambda_j) = \norm{\Bs^{\text{trial}}} - 2\mu\Delta\lambda_j - \sqrt{2\over3}\sigma_y(\Epj^{n+1},\dot{\epsilon}_{p,j}^{n+1})
+  \end{equation}
+and, using the chain rule, the derivative may be calculated
+  \begin{equation}
+     {dg\over d\Delta\lambda}(\Delta\lambda_j) = - 2\mu - {2\over3}\left[{\partial\sigma_y\over \partial\Ep}(\Epj^{n+1},\dot{\epsilon}_{p,j}^{n+1}) + {\partial\sigma_y\over \partial{\dot{\epsilon}_{p,j}^{n+1}}}(\Epj^{n+1},\dot{\epsilon}_{p,j}^{n+1}){1\over\Delta t} \right]
+  \end{equation}
+Then until $|g(\Delta\lambda_{j+1})| < \text{TOL}$, calculate
+  \begin{equation}
+     \Delta\lambda_{j+1}=\Delta\lambda_j-{g(\Delta\lambda_j)\over{dg\over d\Delta\lambda}(\Delta\lambda_j)}
+  \end{equation}
+where $\Delta\lambda_0=0$, $\Epo^{n+1}=\Ep^n$,
+$\dot{\epsilon}_{p,0}^{n+1}=0$, and, once $\Delta\lambda$ has been
+determined to a specified accuracy, the final values of plastic strain
+and strain rate are given by
+  \begin{equation}
+    \Ep^{n+1}=\Ep^n+\sqrt{2\over3}\Delta\lambda_{j+1}
+  \end{equation}
+  \begin{equation}
+    \dot{\Ep}^{n+1}=\sqrt{2\over3}{\Delta\lambda_{j+1}\over\Delta t}
+  \end{equation}
+and the final value of $\Bs^{n+1}$ is calculated from Eqn. \ref{eq:stress_update_2}.
+
+While several of the allowed flow stresses are of the form
+$\sigma_y(\Ep,\dot{\Ep})$ as given in Eqn. \ref{eq:yield_condition},
+others include temperature and/or pressure dependence.  Similarly,
+several of the shear moduli models are functions of temperature and/or
+pressure.  Using the radial return algorithm in these cases amounts to
+convergence to the yield surface neglecting temperature changes, and
+assuming a non-associated flow rule of the form in
+Eqn. \ref{eq:associated_flow} (which is non-associated because the
+pressure dependence of the flow stress has been neglected,
+i.e. Eqn. \ref{eq:associated_flow} no longer holds).  This non
+associated flow rule results in zero plastic dilation (actually
+dilitation).  The end result is convergence to the flow stress with
+temperature and pressure held constant, i.e. to
+$\sigma_y(\Ep^{n+1},\dot{\Ep}^{n+1},p^n,T^n)$ with $\mu(p^n,T^n)$ and
+no plastic dilitation.  While holding pressure and temperature fixed
+over a time step is probably a good approximation for most explicit
+calculations, non-associated flow may not be.
+
+Finally, it was found that this return algorithm worked equally well
+for linear hypoviscoelastic deviatoric response, i.e.
+  \begin{equation}\label{eq:linearhypoviscoelasticity}
+    \dot{\Bs} = 2\mu(\Beta - \Beta^p) - \sum_{i=1}^N {\Bs_i\over \tau_i}
+  \end{equation}
+rather than Eqn. \ref{eq:linearhypoelasticity}.
+Eqn. \ref{eq:linearhypoviscoelasticity} is the constitutive equation
+for $N$ linear Maxwell elements in parallel, each with shear modulus
+$\mu_i$, time constant $\tau_i$, and deviatoric stress $\Bs_i$, and
+  \begin{equation}
+    \Bs = \sum_{i=1}^N \Bs_i \quad\quad \mu = \sum_{i=1}^N \mu_i
+  \end{equation}
+This model is detailed in the Deviatoric Stress Models section.
+Combined with a yield condition, the combination results in a
+model for viscoplastic material response.
+
+The radial return algorith is the {\bf default}, and also may be
+explicitely invoked with the tag
+  \begin{lstlisting}
+    <plastic_convergence_algo>radialReturn</plastic_convergence_algo>
+  \end{lstlisting}
+
+\subsubsection{Modified Nemat-Nasser/Maudlin Return Algorithm}
+
+This stress update algorithm is a slightly modified version of the
+approach taken by Nemat-Nasser et
+al. (1991,1992)~\cite{Nemat91,Nemat92}, Wang (1994)~\cite{Wang94},
+Maudlin (1996)~\cite{Maudlin96}, and Zocher et
+al. (2000)~\cite{Zocher00}.  It is presently only documented in the
+code itself.  It is also known to give erroneous results under uniaxial
+stress conditions.
+
+The modified Nemat-Nasser/Maudlin return algorith is invoked with
+the tag
+  \begin{lstlisting}
+    <plastic_convergence_algo>biswajit</plastic_convergence_algo>
+  \end{lstlisting}
+{\it This is an experts only algorithm!!!}
+

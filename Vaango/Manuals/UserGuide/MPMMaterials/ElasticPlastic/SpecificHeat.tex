@@ -1,0 +1,97 @@
+  \subsection{Adiabatic Heating and Specific Heat}
+  A part of the plastic work done is converted into heat and used to update the
+  temperature of a particle.  The increase in temperature ($\Delta T$) due to
+  an increment in plastic strain ($\Delta\epsilon_p$) is given by the equation
+  \begin{equation}
+    \Delta T = \cfrac{\chi\sigma_y}{\rho C_p} \Delta \epsilon_p
+  \end{equation}
+  where $\chi$ is the Taylor-Quinney coefficient, and $C_p$ is the specific
+  heat.  The value of the Taylor-Quinney coefficient is taken to be 0.9
+  in all our simulations (see \cite{Ravi01} for more details on the
+  variation of $\chi$ with strain and strain rate).
+
+  The Taylor-Quinney coefficient is taken as input in the ElasticPlastic model
+  using the tags
+  \begin{lstlisting}
+    <taylor_quinney_coeff> 0.9 </taylor_quinney_coeff>
+  \end{lstlisting}
+
+  \subsubsection{Default specific heat model}
+  The default model returns a constant specific heat and is invoked using
+  \begin{lstlisting}
+    <specific_heat_model type="constant_Cp">
+    </specific_heat_model>
+  \end{lstlisting}
+
+  \subsubsection{Cubic specific heat model}
+  The specific heat model is of the form \cite{Menikoff2003}:
+  \Beq
+    C_v = \frac{\tilde{T}^3}{c_3\tilde{T}^3+c_2\tilde{T}^2+c_1\tilde{T}+c_0} 
+  \Eeq
+  where $\tilde{T}$ is the reduced temperature, and $c_0$-$c_3$ are fit parameters.
+  The reduced temperature is calculated using $\tilde{T}=T/\theta (V)$ and the
+  Debye temperature is:
+  \Beq
+    \theta (V)=\theta_0\left(\frac{V_0}{V}\right)^ae^{b\left(V_0-V\right)/V}
+  \Eeq
+  where $V$ is the specific volume and $\theta_0$ is the reference Debye temperature and
+  a and b are fit parameters.
+  The constant pressure specific heat is calculated via:
+  \Beq
+    C_p = C_v+\beta^2TVK_T
+  \Eeq
+  where $\beta$ and $K_T$ are the volumetric expansion coefficeint and 
+  isothermal bulk modulus respectively.
+  
+  The model is invoked using:
+  \begin{lstlisting}
+    <specific_heat_model type="cubic_Cp">
+      <a> 1.0 </a>
+      <b> 1.0 </b>
+      <beta> 1.0 </beta>
+      <c0> 1.0 </c0>
+      <c1> 1.0 </c1>
+      <c2> 1.0 </c2>
+      <c3> 1.0 </c3>
+    </specific_heat_model>
+  \end{lstlisting}
+  where all parameters but $\beta$, $a$ and $b$ are required.
+
+
+  \subsubsection{Specific heat model for copper}
+  The specific heat model for copper is of the form
+  \Beq
+    C_p =
+    \begin{cases}
+      A_0~T^3 - B_0~T^2 + C_0~T - D_0 & \text{if} ~~T < T_0 \\
+      A_1~T + B_1 & \text{if} ~~T \ge T_0 ~.
+    \end{cases}
+  \Eeq
+  The model is invoked using
+  \begin{lstlisting}
+  <specific_heat_model type = "copper_Cp"> </specific_heat_model>
+  \end{lstlisting}
+
+  \subsubsection{Specific heat model for steel}
+  A relation for the dependence of $C_p$ upon temperature is
+  used for the steel (\cite{Lederman74}).
+  \begin{align}
+    C_p & = \begin{cases}
+            A_1 + B_1~t + C_1~|t|^{-\alpha} & \text{if}~~ T < T_c \\
+            A_2 + B_2~t + C_2~t^{-\alpha^{'}} & \text{if}~~ T > T_c 
+          \end{cases} \label{eq:CpSteel}\\
+    t & = \cfrac{T}{T_c} - 1 
+  \end{align}
+  where $T_c$ is the critical temperature at which the phase transformation
+  from the $\alpha$ to the $\gamma$ phase takes place, and $A_1, A_2, B_1, B_2,
+  \alpha, \alpha^{'}$ are constants.
+
+  The model is invoked using
+  \begin{lstlisting}
+  <specific_heat_model type = "steel_Cp"> </specific_heat_model>
+  \end{lstlisting}
+
+  The heat generated at a material point is conducted away at the end of a
+  time step using the transient heat equation.  The effect of conduction on
+  material point temperature is negligible (but non-zero) for the high
+  strain-rate problems simulated using Uintah.
