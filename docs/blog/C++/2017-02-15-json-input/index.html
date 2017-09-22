@@ -1,0 +1,338 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reading JSON in C++</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim//assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim//assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim/">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim//docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Reading JSON in C++</h1>
+          <p>In my previous post on <a href="http://www.parresianz.com/c++/xml/xml-input/">reading XML input files</a>, I discussed how input files can be made more human friendly with XML markup.  In some situations, it may be preferable to have <a href="http://json.org/example.html">JSON format files</a> instead.</p>
+
+<p>JSON is particularly useful when the <a href="http://es6-features.org/#Constants">Javascript</a> is used during reading and writing.  Though Javascript is not the ideal platform for computational engineering, it has some potential is used for user interface development.</p>
+
+<p class="notice"><em>Note</em>: It remains to be seen how useful Javascript user interfaces are when used for engineering applications, though cross-platform tools such as <a href="http://electron.atom.io/">Electron</a> has potential.  User interfaces designed with <a href="https://www.wxwidgets.org/">wxWidgets</a> or <a href="https://www.qt.io/">Qt</a> still dominate the landscape for engineering software.</p>
+
+<h5 id="the-json-input-file">The JSON input file</h5>
+<p>In JSON format, our <code>Boundary</code> input file can be expressed as:</p>
+
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span>  <span class="p">{</span><span class="nt">&quot;Boundary&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;containerMin&quot;</span><span class="p">:</span>  <span class="s2">&quot;[0.0,  -1.0,  0.0]&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;containerMax&quot;</span><span class="p">:</span>  <span class="s2">&quot;[100.0, 1.0, 50.0]&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;boundary&quot;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="p">{</span>
+       <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;plane&quot;</span><span class="p">,</span> <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+       <span class="nt">&quot;direction&quot;</span><span class="p">:</span> <span class="s2">&quot;[-1.0, 0.0, 0.0]&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;position&quot;</span><span class="p">:</span> <span class="s2">&quot;[100.0, 0.0, 25.0]&quot;</span><span class="p">,</span>
+      <span class="p">},</span>
+      <span class="p">{</span>
+       <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;plane&quot;</span><span class="p">,</span> <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+       <span class="nt">&quot;direction&quot;</span><span class="p">:</span> <span class="s2">&quot;[1.0, 0.0, 0.0]&quot;</span><span class="p">,</span>
+       <span class="nt">&quot;position&quot;</span><span class="p">:</span> <span class="s2">&quot;[100.0, 0.0, 25.0]&quot;</span>
+      <span class="p">}</span>
+    <span class="p">]</span>
+  <span class="p">}}</span></code></pre></figure>
+
+<p>Recall that the equivalent XML input file  has the form</p>
+
+<figure class="highlight"><pre><code class="language-xml" data-lang="xml"><span></span>  <span class="cp">&lt;?xml version=&#39;1.0&#39; encoding=&#39;ISO-8859-1&#39; ?&gt;</span>
+  <span class="nt">&lt;Boundary&gt;</span>
+    <span class="c">&lt;!-- Container limits --&gt;</span>
+    <span class="nt">&lt;containerMin&gt;</span>  [0.0,  -1.0,  0.0] <span class="nt">&lt;/containerMin&gt;</span>
+    <span class="nt">&lt;containerMax&gt;</span>  [100.0, 1.0, 50.0] <span class="nt">&lt;/containerMax&gt;</span>
+    <span class="c">&lt;!-- Internal boundaries --&gt;</span>
+    <span class="nt">&lt;boundary</span> <span class="na">type=</span><span class="s">&quot;plane&quot;</span> <span class="na">id=</span><span class="s">&quot;1&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;direction&gt;</span> [-1.0, 0.0, 0.0] <span class="nt">&lt;/direction&gt;</span>
+      <span class="nt">&lt;position&gt;</span> [100.0, 0.0, 25.0] <span class="nt">&lt;/position&gt;</span>
+    <span class="nt">&lt;/boundary&gt;</span>
+    <span class="nt">&lt;boundary</span> <span class="na">type=</span><span class="s">&quot;plane&quot;</span> <span class="na">id=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;direction&gt;</span> [1.0, 0.0, 0.0] <span class="nt">&lt;/direction&gt;</span>
+      <span class="nt">&lt;position&gt;</span> [100.0, 0.0, 25.0] <span class="nt">&lt;/position&gt;</span>
+    <span class="nt">&lt;/boundary&gt;</span>
+  <span class="nt">&lt;/Boundary&gt;</span></code></pre></figure>
+
+<p>I prefer the XML version, but most new students will be familiar with
+JSON and may prefer that format, particularly as that format appears to
+be preferred in IoT applications.</p>
+
+<h5 id="reading-json">Reading JSON</h5>
+<p>A large list of JSON readers for C++ can be found in the <a href="http://www.json.org/">JSON webdocs</a>.  A reasonably good header-only library is <a href="https://github.com/nlohmann/json">JSON for Modern C++</a>.  I have chosen to use that library because its constructs are similar to those of <a href="http://zenxml.sourceforge.net/">ZenXml</a>.</p>
+
+<p>We add a new method, <code>readJSON</code>, to the class <code>BoundaryReader</code> and
+implement it as follows.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="cp">#include</span> <span class="cpf">&lt;BoundaryReader.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;json.hpp&gt;</span><span class="cp"></span>
+<span class="k">using</span> <span class="n">json</span> <span class="o">=</span> <span class="n">nlohmann</span><span class="o">::</span><span class="n">json</span><span class="p">;</span>
+<span class="kt">bool</span>
+<span class="n">BoundaryReader</span><span class="o">::</span><span class="n">readXML</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">inputFileName</span><span class="p">)</span> <span class="k">const</span> 
+<span class="p">{</span>
+  <span class="c1">// Create an input filestream</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">ifstream</span> <span class="n">ifs</span><span class="p">(</span><span class="n">inputFileName</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">ifs</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;*ERROR** Could not read input file &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">inputFileName</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// Read the file stream into a string stream</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">stringstream</span> <span class="n">iss</span><span class="p">;</span>
+  <span class="n">iss</span> <span class="o">&lt;&lt;</span> <span class="n">ifs</span><span class="p">.</span><span class="n">rdbuf</span><span class="p">();</span>
+  <span class="n">ifs</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+  <span class="c1">// Parse the input stream</span>
+  <span class="n">json</span> <span class="n">docs</span><span class="p">;</span>
+  <span class="k">try</span> <span class="p">{</span>
+    <span class="n">docs</span> <span class="o">&lt;&lt;</span> <span class="n">iss</span><span class="p">;</span>
+  <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">invalid_argument</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;*ERROR** Could not parse input file &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">inputFileName</span>
+              <span class="o">&lt;&lt;</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Please check for correctness using a linter.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// Read the boundary information</span>
+  <span class="n">json</span> <span class="n">boundary_ps</span><span class="p">;</span>
+  <span class="k">try</span> <span class="p">{</span>
+    <span class="n">boundary_ps</span> <span class="o">=</span> <span class="n">ps</span><span class="p">[</span><span class="s">&quot;Boundary&quot;</span><span class="p">];</span>
+  <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">exception</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;**ERROR** </span><span class="se">\&quot;</span><span class="s">Boundary</span><span class="se">\&quot;</span><span class="s"> key not found. </span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// Read the container dimensions</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">vecStr</span><span class="p">;</span>
+  <span class="k">try</span> <span class="p">{</span>
+    <span class="n">vecStr</span> <span class="o">=</span> <span class="n">boundary_ps</span><span class="p">[</span><span class="s">&quot;containerMin&quot;</span><span class="p">].</span><span class="n">get</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">();</span>
+  <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">exception</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span>
+      <span class="o">&lt;&lt;</span> <span class="s">&quot;**ERROR** Container min. position not found in boundary geometry</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;  Add the containerMin: [x, y, z]  tag.&quot;</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">Vec</span> <span class="n">boxMin</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">::</span><span class="n">fromString</span><span class="p">(</span><span class="n">vecStr</span><span class="p">);</span>
+  <span class="k">try</span> <span class="p">{</span>
+    <span class="n">vecStr</span> <span class="o">=</span> <span class="n">boundary_ps</span><span class="p">[</span><span class="s">&quot;containerMax&quot;</span><span class="p">].</span><span class="n">get</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">();</span>
+  <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">exception</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">.....</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">Vec</span> <span class="n">boxMax</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">::</span><span class="n">fromString</span><span class="p">(</span><span class="n">vecStr</span><span class="p">);</span>
+  
+  <span class="k">try</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">bound_ps</span> <span class="o">=</span> <span class="n">boundary_ps</span><span class="p">[</span><span class="s">&quot;boundary&quot;</span><span class="p">];</span>
+    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="nl">object</span> <span class="p">:</span> <span class="n">bound_ps</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">boundaryType</span> <span class="o">=</span> <span class="n">object</span><span class="p">[</span><span class="s">&quot;type&quot;</span><span class="p">].</span><span class="n">get</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">();</span>
+      <span class="n">BoundaryId</span> <span class="n">id</span> <span class="o">=</span> <span class="n">object</span><span class="p">[</span><span class="s">&quot;id&quot;</span><span class="p">].</span><span class="n">get</span><span class="o">&lt;</span><span class="n">BoundaryId</span><span class="o">&gt;</span><span class="p">();</span>
+      <span class="n">vecStr</span> <span class="o">=</span> <span class="n">ps</span><span class="p">[</span><span class="s">&quot;direction&quot;</span><span class="p">].</span><span class="n">get</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">();</span>
+      <span class="n">Vec</span> <span class="n">direc</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">::</span><span class="n">fromString</span><span class="p">(</span><span class="n">vecStr</span><span class="p">);</span>
+      <span class="n">vecStr</span> <span class="o">=</span> <span class="n">ps</span><span class="p">[</span><span class="s">&quot;position&quot;</span><span class="p">].</span><span class="n">get</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">();</span>
+      <span class="n">Vec</span> <span class="n">point</span> <span class="o">=</span> <span class="n">Vec</span><span class="o">::</span><span class="n">fromString</span><span class="p">(</span><span class="n">vecStr</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">exception</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;**ERROR** Boundaries not found in boundary geometry</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;  Add the boundary key: value array tags etc.&quot;</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>I’m not really a fan of <code>try-catch</code> blocks, but that’s the easiest way of dealing cleanly with read/parse failures when using <code>JSON for Modern C++</code>.  For research codes, this approach will suffice.  An alternative is to use a check of the form</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="p">{</span>
+  <span class="k">auto</span> <span class="n">ps_iter</span> <span class="o">=</span> <span class="n">ps</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="s">&quot;key_name&quot;</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">ps_iter</span> <span class="o">==</span> <span class="n">ps</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+    <span class="c1">// Error</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<h4 id="remarks">Remarks</h4>
+<p>Sometimes input/output files for engineering simulations can be quite large.  In those situations I would suggest XML with binary data. In future post I’ll show you how to create a VTK XML format output file with binary data.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot json (without the dot json).</p>
+
+<p><a href="https://twitter.com/share" class="twitter-share-button" data-via="parresianz">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(docsument, 'script', 'twitter-wjs');</script>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+<!-- <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?lang=cpp&amp;skin=sunburst"></script> -->
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

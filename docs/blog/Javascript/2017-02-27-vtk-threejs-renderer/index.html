@@ -1,0 +1,395 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Setting up the Three.js renderer</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim//assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim//assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim/">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim//docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Setting up the Three.js renderer</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#the-graphics-panel" id="markdown-toc-the-graphics-panel">The graphics panel</a></li>
+  <li><a href="#the-renderer-template" id="markdown-toc-the-renderer-template">The renderer template</a></li>
+  <li><a href="#the-renderer-implementation" id="markdown-toc-the-renderer-implementation">The renderer implementation</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h5 id="introduction">Introduction</h5>
+<p>The previous articles in this series were about:</p>
+
+<ol>
+  <li><a href="http://www.parresianz.com/javascript/typescript/vue/vuex/xml/reading-vtk-particles/">Part 1: Reading VTK format particles with Javascript in a browser</a></li>
+  <li><a href="http://www.parresianz.com/javascript/typescript/vue/vuex/vuex-store/">Part 2: Saving the read-in particle data in a Vuex store</a></li>
+  <li><a href="http://www.parresianz.com/javascript/typescript/threejs/vue/vtk-threejs/">Part 3: Initialization of a store and the user interface</a> before plotting the particles with Three.js.</li>
+</ol>
+
+<p>In this article we will discuss the actual process of visualization of the particles.<br />
+The particles we are interested in are <a href="https://en.wikipedia.org/wiki/Ellipsoid">oriented ellipsoids</a>.</p>
+
+<h5 id="the-graphics-panel">The graphics panel</h5>
+<p>In the <code>main-panel</code> Vue component introduced in Part 3, we had declared a graphics panel
+component called <code>three-graphics-panel</code>.  A simple Vue template for this component can be
+written as:</p>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html"><span></span><span class="p">&lt;</span><span class="nt">template</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&#39;three-graphics-container&#39;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;uk-card uk-card-default uk-card-large&quot;</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;uk-card-body&quot;</span><span class="p">&gt;</span>
+        <span class="c">&lt;!-- The renderer Vue component --&gt;</span>
+        <span class="p">&lt;</span><span class="nt">three-renderer</span> <span class="na">v-bind:size</span><span class="o">=</span><span class="s">&quot;{w:500, h:500}&quot;</span><span class="p">&gt;</span>
+          <span class="c">&lt;!-- The scene Vue component --&gt;</span>
+          <span class="p">&lt;</span><span class="nt">three-scene</span> <span class="na">v-bind:size</span><span class="o">=</span><span class="s">&quot;size&quot;</span><span class="p">&gt;</span> 
+            <span class="c">&lt;!-- The camera Vue component --&gt;</span>
+            <span class="p">&lt;</span><span class="nt">three-camera</span>  <span class="na">v-bind:size</span><span class="o">=</span><span class="s">&quot;size&quot;</span>
+                           <span class="na">v-bind:position</span><span class="o">=</span><span class="s">&quot;{x: 100,  z: 15 }&quot;</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="nt">three-camera</span><span class="p">&gt;</span>
+            <span class="c">&lt;!-- The particles Vue component --&gt;</span>
+            <span class="p">&lt;</span><span class="nt">three-ellipsoid-particles</span><span class="p">&gt;</span> <span class="p">&lt;/</span><span class="nt">three-ellipsoid-particles</span><span class="p">&gt;</span>
+          <span class="p">&lt;/</span><span class="nt">three-scene</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">three-renderer</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">template</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;./ThreeGraphicsPanel.ts&quot;</span><span class="p">&gt;</span> <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span></code></pre></figure>
+
+<p>As before, the CSS classes used in this example are from Uikit3.  The graphics panel uses
+four child Vue components, <code>three-renderer</code>, <code>three-scene</code>, <code>three-camera</code>, and
+<code>three-ellipsoid-particles</code>.  The implementation of <code>ThreeGraphicsPanel.ts</code> is also
+straightforward in this case:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kr">import</span> <span class="o">*</span> <span class="nx">as</span> <span class="nx">Vue</span> <span class="nx">from</span> <span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+<span class="kr">import</span> <span class="p">{</span><span class="nx">Component</span><span class="p">}</span> <span class="nx">from</span> <span class="s2">&quot;av-ts&quot;</span><span class="p">;</span>
+<span class="err">@</span><span class="nx">Component</span><span class="p">({</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;three-graphics-panel&#39;</span>
+<span class="p">})</span>
+<span class="kr">export</span> <span class="k">default</span> <span class="kr">class</span> <span class="nx">ThreeGraphicsPanel</span> <span class="kr">extends</span> <span class="nx">Vue</span> <span class="p">{</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="nx">string</span> <span class="o">=</span> <span class="s2">&quot;ThreeGraphicsPanel&quot;</span><span class="p">;</span>
+  <span class="nx">size</span><span class="o">:</span> <span class="nb">Object</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">w</span><span class="o">:</span> <span class="mi">200</span><span class="p">,</span>
+    <span class="nx">h</span><span class="o">:</span> <span class="mi">200</span>
+  <span class="p">};</span>
+<span class="p">}</span></code></pre></figure>
+
+<p class="notice">The <code>size</code> property is passed on to the children of three-graphics-panel and determines the
+default size of the window in which the particles will be displayed.  This property can be
+accessed by the children by using the
+<a href="https://vuejs.org/v2/guide/components.html#Passing-Data-with-Props">“passing data with props approach.”</a></p>
+
+<h5 id="the-renderer-template">The renderer template</h5>
+<p>The first component instantiated in <code>three-graphics-panel</code> is the <code>three-renderer</code> component which
+is passed the <code>size</code> argument using the <code>v-bind</code> directive.  Let use first examine
+the <code>ThreeRenderer.vue</code> code:</p>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html"><span></span><span class="p">&lt;</span><span class="nt">template</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;three-renderer-div&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">slot</span><span class="p">&gt;&lt;/</span><span class="nt">slot</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">ref</span><span class="o">=</span><span class="s">&quot;three-graphics-container&quot;</span>
+         <span class="na">id</span><span class="o">=</span><span class="s">&quot;three-renderer-graphics-div&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">template</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;./ThreeRenderer.ts&quot;</span><span class="p">&gt;</span> <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span></code></pre></figure>
+
+<p class="notice">The first new aspect to notice is the use of the
+<a href="https://vuejs.org/v2/guide/components.html#Content-Distribution-with-Slots"><code>slot</code> tag</a>.  This
+is needed to make sure that the <code>three-scene</code>, <code>three-camera</code>, and <code>three-ellipsoid-particles</code>
+from the <code>three-graphics-panel</code> parent components are correctly instantiated and interpolated
+into the DOM.</p>
+
+<p class="notice">The second new aspect is the use of the <a href="https://vuejs.org/v2/api/#ref"><code>ref</code> attribute</a>
+in the <code>div</code> element after the <code>slot</code>.  This element is used to create the HTML canvas as
+a child of the renderer component.</p>
+
+<p class="notice--info">We could add event handlers to this template to handle interactions with the camera.  That
+aspect of the user interface will be discussed in a future article.</p>
+
+<h5 id="the-renderer-implementation">The renderer implementation</h5>
+<p>The renderer component is implemented in <code>ThreeRenderer.ts</code> which contains the following
+code:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kr">import</span> <span class="o">*</span> <span class="nx">as</span> <span class="nx">Vue</span> <span class="nx">from</span> <span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">THREE</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;three&#39;</span><span class="p">);</span>
+<span class="kr">import</span> <span class="p">{</span> <span class="nx">Component</span><span class="p">,</span> <span class="nx">Lifecycle</span><span class="p">,</span> <span class="nx">Prop</span><span class="p">,</span> <span class="nx">p</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">&#39;av-ts&#39;</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">Store</span> <span class="nx">from</span> <span class="s1">&#39;../vuex/Store&#39;</span><span class="p">;</span>
+<span class="kr">interface</span> <span class="nx">ScreenSize</span> <span class="p">{</span>
+  <span class="nx">left</span> <span class="o">:</span> <span class="nx">number</span><span class="p">,</span> <span class="nx">top</span> <span class="o">:</span> <span class="nx">number</span><span class="p">,</span> <span class="nx">width</span> <span class="o">:</span> <span class="nx">number</span><span class="p">,</span> <span class="nx">height</span> <span class="o">:</span> <span class="nx">number</span>
+<span class="p">}</span>
+<span class="err">@</span><span class="nx">Component</span><span class="p">({</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;ThreeRenderer&#39;</span>
+<span class="p">})</span>
+<span class="kr">export</span> <span class="k">default</span> <span class="kr">class</span> <span class="nx">ThreeRenderer</span> <span class="kr">extends</span> <span class="nx">Vue</span> <span class="p">{</span>
+  <span class="c1">// These are the &quot;prop&quot; variables used by Vue</span>
+  <span class="err">@</span><span class="nx">Prop</span>
+  <span class="nx">size</span> <span class="o">=</span> <span class="nx">p</span><span class="p">({</span>
+    <span class="nx">type</span><span class="o">:</span> <span class="nb">Object</span><span class="p">,</span> <span class="c1">// { w, h }</span>
+    <span class="nx">required</span><span class="o">:</span> <span class="kc">true</span>
+  <span class="p">});</span>
+  <span class="err">@</span><span class="nx">Prop</span>
+  <span class="nx">renderer</span> <span class="o">=</span> <span class="nx">p</span><span class="p">({</span>
+    <span class="nx">type</span><span class="o">:</span> <span class="nx">THREE</span><span class="p">.</span><span class="nx">WebGLRenderer</span>
+  <span class="p">});</span>
+  <span class="c1">// These are the &quot;data&quot; variables used by Vue</span>
+  <span class="kr">public</span>  <span class="nx">d_renderer</span><span class="o">:</span> <span class="nx">THREE</span><span class="p">.</span><span class="nx">WebGLRenderer</span><span class="p">;</span>
+  <span class="kr">private</span> <span class="nx">d_size</span><span class="o">:</span> <span class="nx">ScreenSize</span><span class="p">;</span>
+  <span class="c1">// These are the computed properties</span>
+  <span class="nx">get</span> <span class="nx">getScene</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">scene</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="nx">get</span> <span class="nx">getCamera</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">camera</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// These are the lifecycle hooks</span>
+  <span class="err">@</span><span class="nx">Lifecycle</span>
+  <span class="nx">created</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">renderer</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span> <span class="k">instanceof</span> <span class="nx">THREE</span><span class="p">.</span><span class="nx">WebGLRenderer</span><span class="p">))</span> <span class="p">{</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">THREE</span><span class="p">.</span><span class="nx">WebGLRenderer</span><span class="p">({</span> <span class="nx">antialias</span><span class="o">:</span> <span class="kc">true</span> <span class="p">});</span>
+    <span class="p">}</span>
+    <span class="kd">let</span> <span class="nx">w</span> <span class="o">=</span> <span class="p">(</span><span class="o">&lt;</span><span class="nx">any</span><span class="o">&gt;</span><span class="k">this</span><span class="p">.</span><span class="nx">size</span><span class="p">).</span><span class="nx">w</span><span class="p">;</span>
+    <span class="kd">let</span> <span class="nx">h</span> <span class="o">=</span> <span class="p">(</span><span class="o">&lt;</span><span class="nx">any</span><span class="o">&gt;</span><span class="k">this</span><span class="p">.</span><span class="nx">size</span><span class="p">).</span><span class="nx">h</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span> <span class="o">=</span> <span class="p">{</span><span class="nx">left</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">top</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">width</span><span class="o">:</span> <span class="nx">w</span><span class="p">,</span> <span class="nx">height</span><span class="o">:</span> <span class="nx">w</span><span class="p">};</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">setSize</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">h</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">setClearColor</span><span class="p">(</span><span class="mh">0x52576e</span><span class="p">)</span>
+  <span class="p">}</span>
+  <span class="err">@</span><span class="nx">Lifecycle</span>
+  <span class="nx">mounted</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">domElement</span><span class="p">.</span><span class="nx">setAttribute</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;three-graphics-canvas&quot;</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">((</span><span class="k">this</span><span class="p">.</span><span class="nx">$refs</span><span class="p">)[</span><span class="s2">&quot;three-graphics-container&quot;</span><span class="p">])</span> <span class="p">{</span>
+      <span class="kd">let</span> <span class="nx">el</span>  <span class="o">=</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">$refs</span><span class="p">)[</span><span class="s2">&quot;three-graphics-container&quot;</span><span class="p">];</span>
+      <span class="p">(</span><span class="o">&lt;</span><span class="nx">any</span><span class="o">&gt;</span><span class="nx">el</span><span class="p">).</span><span class="nx">appendChild</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">domElement</span><span class="p">);</span>
+
+      <span class="c1">// Update based on actual screen size</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">setActualScreenSize</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">domElement</span><span class="p">);</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">setSize</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">width</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">height</span><span class="p">);</span>
+      <span class="kd">let</span> <span class="nx">camera</span> <span class="o">=</span> <span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">camera</span><span class="p">;</span>
+      <span class="nx">camera</span><span class="p">.</span><span class="nx">aspect</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">width</span> <span class="o">/</span> <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">height</span><span class="p">;</span>
+      <span class="nx">camera</span><span class="p">.</span><span class="nx">updateProjectionMatrix</span><span class="p">();</span>
+      <span class="nx">Store</span><span class="p">.</span><span class="nx">commit</span><span class="p">(</span><span class="s1">&#39;SET_CAMERA&#39;</span><span class="p">,</span> <span class="nx">camera</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">animate</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="err">@</span><span class="nx">Lifecycle</span>
+  <span class="nx">beforeDestroy</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">Store</span><span class="p">.</span><span class="nx">commit</span><span class="p">(</span><span class="s1">&#39;DELETE_SCENE&#39;</span><span class="p">);</span>
+    <span class="nx">Store</span><span class="p">.</span><span class="nx">commit</span><span class="p">(</span><span class="s1">&#39;DELETE_CAMERA&#39;</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="c1">// If there is a resize, compute the new screen size</span>
+  <span class="kr">private</span> <span class="nx">setActualScreenSize</span><span class="p">(</span><span class="nx">domElement</span><span class="o">:</span> <span class="nx">HTMLCanvasElement</span><span class="p">)</span> <span class="o">:</span> <span class="k">void</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">box</span> <span class="o">=</span> <span class="nx">domElement</span><span class="p">.</span><span class="nx">getBoundingClientRect</span><span class="p">();</span>
+    <span class="kd">let</span> <span class="nx">d</span> <span class="o">=</span> <span class="nx">domElement</span><span class="p">.</span><span class="nx">ownerDocument</span><span class="p">.</span><span class="nx">docsumentElement</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">left</span> <span class="o">=</span> <span class="nx">box</span><span class="p">.</span><span class="nx">left</span> <span class="o">+</span> <span class="nb">window</span><span class="p">.</span><span class="nx">docsXOffset</span> <span class="o">-</span> <span class="nx">d</span><span class="p">.</span><span class="nx">clientLeft</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">top</span> <span class="o">=</span> <span class="nx">box</span><span class="p">.</span><span class="nx">top</span> <span class="o">+</span> <span class="nb">window</span><span class="p">.</span><span class="nx">docsYOffset</span> <span class="o">-</span> <span class="nx">d</span><span class="p">.</span><span class="nx">clientTop</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">width</span> <span class="o">=</span> <span class="nx">box</span><span class="p">.</span><span class="nx">width</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_size</span><span class="p">.</span><span class="nx">height</span> <span class="o">=</span> <span class="nx">box</span><span class="p">.</span><span class="nx">height</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// Start the animation loop</span>
+  <span class="kr">private</span> <span class="nx">animate</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">requestAnimationFrame</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">animate</span> <span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">render</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="c1">// Do the actual rendering using the THREE.js render method</span>
+  <span class="kr">private</span> <span class="nx">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">d_renderer</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">scene</span><span class="p">,</span> <span class="nx">Store</span><span class="p">.</span><span class="nx">getters</span><span class="p">.</span><span class="nx">camera</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p class="notice">The main thing to note here is that we are using the THREE.WebGLRenderer, and 
+the creation of the <code>canvas</code> element as a child of the renderer div element.<br />
+The canvas element is created in the <code>mount</code> stage of the instance lifecycle and
+all the plotting is done on that element.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>In the next part of this article we’ll discuss more details of setting up the scene and camera.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

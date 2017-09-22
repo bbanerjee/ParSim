@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ParSim</title>
+  <title>Formatting C++ code</title>
   <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim//assets/css/screen.css">
   <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
   <script src="https://bbanerjee.github.io/ParSim//assets/js/modernizr.min.js"></script>
@@ -32,7 +32,7 @@
   <li class="">
     <a href="https://bbanerjee.github.io/ParSim/">Home</a>
   </li>
-  <li class="">
+  <li class="current">
     <a href="https://bbanerjee.github.io/ParSim//docs/home">Vaango Docs</a>
   </li>
   <li>
@@ -46,78 +46,131 @@
 
 
 
-  <section class="intro">
-  <div class="grid">
-    <div class="unit whole center-on-mobiles">
-      <h1>Parsim : Particle-based Simulation </h1>
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Formatting C++ code</h1>
+          <p>Every once in a while I need to recall how <code>clang-format</code> is set up and run on my Ubuntu 16.04 
+machine.  This post is mean to act as a reminder.</p>
+
+<p>If I want to change all the files in my repository to a particular format (I prefer the
+Mozilla style), I use:</p>
+
+<pre><code class="language-bash">
+  find . -name "*.cc" -exec clang-format -i -style Mozilla {} \;
+  find . -name "*.h" -exec clang-format -i -style Mozilla {} \;
+
+</code></pre>
+
+<p>For integration into vim, I create a <code>.vimrc</code> file and add the following into it</p>
+
+<pre><code class="language-vim">
+  map &lt;C-I&gt; :py3f /path/to/clang-format.py&lt;cr&gt;
+  imap &lt;C-I&gt; &lt;c-o&gt; :py3f /path/to/clang-format.py&lt;cr&gt;
+  map &lt;C-a&gt; &lt;esc&gt;ggVG&lt;cr&gt;
+
+</code></pre>
+
+<p>The first two commands map <code>ctrl-i</code> to clang-format while the third command just
+maps <code>ctrl-a</code> to “select all the code”.</p>
+
+<p>The <code>clang-format.py</code> file needs to be a Python3 compatible version and can be downloaded
+from <a href="https://github.com/llvm-mirror/clang/blob/master/tools/clang-format/clang-format.py">LLVM</a>.</p>
+
+<p>To make sure that the right format is used by vim, you have to create a 
+<code>.clang-format</code> file containing the style options you will use.  In my case I use</p>
+
+<pre><code class="language-bash">
+  clang-format -style=Mozilla -dump-config &gt; .clang-format
+
+</code></pre>
+
+<p>You can also watch a talk on various clang tools below.</p>
+
+<iframe width="970" height="546" src="//www.youtube.com/embed/cX_GhJ6BuWI" frameborder="0" allowfullscreen=""></iframe>
+
+<p><a href="https://twitter.com/share" class="twitter-share-button" data-via="parresianz">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(docsument, 'script', 'twitter-wjs');</script>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
     </div>
-  </div>
-  <div class="clear"></div>
-</section>
-
-<section class="features">
-  <div class="grid">
-    <div class="unit two-thirds center-on-mobiles">
-
-      <p>
-        ParSim is a fork of the <a href="http://uintah.utah.edu">Uintah simulation software</a> 
-        with a focus on solid mechanics modeling and simulation.
-      </p>
-
-      <p>
-        Current development is focussed on <a href="https://github.com/bbanerjee/ParSim/tree/master/Vaango">Vaango</a>,
-        a MPM code, 
-        and <a href="https://github.com/bbanerjee/ParSim/tree/master/ThirdParty/paraEllip3d_DEM_PD_SPH">ParaEllip3D</a>,
-        a DEM-SPH-Peridynamics code.
-      </p>
-
-      <p>
-        We are also exploring the development of a 
-        <a href="https://github.com/bbanerjee/VaangoUI">user interface</a> for these tools. 
-      </p>
-
-       
-    </div>
-  </div>
-  <div class="clear"></div>
-</section>
-
-<section class="intro">
-  <div class="grid">
-    <div class="unit two-thirds align-right">
-      <h3>Hints</h3>
-
-      The following hint boxes are used in this  documentation:
-
-      <div class="note">
-        <h5>Tips</h5>
-        <p>These are tips and tricks that will make your development and simulations easier.</p>
-      </div>
-
-      <div class="note info">
-        <h5>Notes</h5>
-        <p>These are notes on features that may trip you up.</p>
-      </div>
-
-      <div class="note warning">
-        <h5>Warnings</h5>
-        <p>Notes on things such as exceptions.</p>
-      </div>
-
-      <div class="note unreleased">
-        <h5>Unreleased</h5>
-        <p>These are experimental features that should be used with caution.</p>
-      </div>
-    </div>
-  </div>
-  <div class="clear"></div>
-
-</section>
-
-
-
-
-
+  </section>
 
 
   <footer>

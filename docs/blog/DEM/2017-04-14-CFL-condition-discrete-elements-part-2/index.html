@@ -1,0 +1,392 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The CFL condition for explicit discrete element methods:2</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim//assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim//assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim/">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim//docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>The CFL condition for explicit discrete element methods:2</h1>
+          <link rel="stylesheet" type="text/css" href="https://bbanerjee.github.io/ParSim//assets/js/animateCFL.css" />
+
+<ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#the-von-neumann-approach-to-stability-analysis" id="markdown-toc-the-von-neumann-approach-to-stability-analysis">The von Neumann approach to stability analysis</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h4 id="introduction">Introduction</h4>
+<p>In the <a href="https://bbanerjee.github.io/ParSim//dem/CFL-condition-discrete-elements/">first part</a> of this article,
+we looked at the one-dimensional linear second-order wave equation</p>
+<div>
+$$
+  \frac{\partial^2 u}{\partial t^2} - \frac{\partial^2 u}{\partial x^2} = 0 
+$$
+</div>
+<p>We saw that for a discretization with grid size <script type="math/tex">\Delta x</script> and  timestep <script type="math/tex">\Delta t</script>, a
+central difference approximation is convergent if the CFL condition</p>
+<div>
+$$
+  \frac{\Delta x}{\Delta t} &gt; 1
+$$
+</div>
+<p>is satisfied.
+The numerical method is also stable in this case because the PDE is linear.</p>
+
+<p>Of course, in the above equation we have chosen the units of space and time such that the
+wave speed is 1.  In general, it is more convenient to work with quantities for which the
+wave speed is not 1, and the 1D wave equation has the form</p>
+<div>
+$$
+  \frac{\partial^2 u}{\partial t^2} - c^2\frac{\partial^2 u}{\partial x^2} = 0 \,\quad
+  c = \sqrt{\frac{K}{\rho}}
+$$
+</div>
+<p>where, for linear elasticity, <script type="math/tex">K</script> is the bulk modulus and <script type="math/tex">\rho</script> is the mass-density.
+In that case the CFL condition will be scaled accordingly by the wave speed.</p>
+
+<p>Note that the above equation is equivalent to the following first-order wave equations:</p>
+<div>
+$$
+  \frac{\partial u}{\partial t} - c\frac{\partial u}{\partial x} = 0 \,\quad
+  \frac{\partial u}{\partial t} + c\frac{\partial u}{\partial x} = 0 
+$$
+</div>
+
+<p>Linear PDEs with constant coefficients of this form have <strong>plane wave</strong> solutions:</p>
+<div>
+$$
+  u(x, t) = \exp[i(\kappa x - \omega t)]
+$$
+</div>
+<p>where <script type="math/tex">\kappa</script> is the (real) wave number and <script type="math/tex">\omega</script> is the (complex) frequency.  The
+relation between the wave number and the frequency, <script type="math/tex">\omega= \omega(\kappa )</script>,
+is called a <strong>dispersion relation</strong>.</p>
+
+<h4 id="the-von-neumann-approach-to-stability-analysis">The von Neumann approach to stability analysis</h4>
+<p>A numerical algorithm for solving a PDE is said to be <strong>stable</strong> if the solution
+at a given time does not blow up as the time step decreases, i.e., approximation errors
+do not increase with time.</p>
+
+<p>The von Neumann technique, proposed by John von Neumann in the 1950s expanding upon earlier
+work by Crank and Nicolson, is the most popular approach for finding stability conditions
+for <strong>linear PDEs with periodic boundary conditions</strong>.  No general approach is for stability
+analysis is yet known for nonlinear PDEs.  However, for many practical nonlinear PDEs, the
+linearized form is amenable to the same type of analysis.</p>
+
+<p>The von Neumann approach uses the observation that linear PDEs admit plane wave solutions
+to find a bound on numerical errors produced by explicit one-step finite differences.
+Let us examine the technique in a bit more detail for the first-order wave equation
+with forward differences.  We have</p>
+
+<div>
+$$
+  \frac{u(x, t+\Delta t) - u(x,t)}{\Delta t}
+  + c\,\frac{u(x+\Delta x, t) - u(x,t)}{\Delta x} = 0 
+$$
+</div>
+<p>We can write the above as</p>
+<div>
+$$
+  u_{i,j+1} - u_{i,j} + \frac{c \Delta t}{\Delta x} (u_{i+1,j} - u_{i,j}) = 0
+$$
+</div>
+<p>or,</p>
+<div>
+$$
+  u_{i,j+1} =  (1 + C) u_{i,j} - C u_{i+1,j} \quad \text{where} \quad
+  C := \frac{c \Delta t}{\Delta x} 
+$$
+</div>
+<p>Since the PDE admits plane wave solutions, let us examine what happens when we insert solutions
+of that form into the discretized equation, i.e.,</p>
+<div>
+$$
+  u(x_i, t_j) = e^{i(\kappa x_i - \omega t_j)} 
+$$
+</div>
+<p>We then get</p>
+<div>
+$$
+  u_{i,j+1} = (1 + C) e^{i(\kappa x_i - \omega t_j)}
+              - Ce^{i(\kappa x_{i+1} - \omega t_j)} 
+$$
+</div>
+<p>or</p>
+<div>
+$$
+  \begin{align}
+  u_{i,j+1} &amp; = (1 + C) e^{i(\kappa x_i - \omega t_j)}
+              = Ce^{i(\kappa x_i - \omega t_j)} e^{i\kappa\Delta x} \\
+            &amp; = (1 + C - Ce^{i\kappa\Delta x}) u_{i,j} 
+  \end{align}
+$$
+</div>
+<p>Therefore the expected numerical solution at <script type="math/tex">x_i</script> is of the form</p>
+<div>
+$$
+  u_{j+1} = \mathcal{G}[u_{j}] 
+$$
+</div>
+<p>However, due to cumulative numerical rounding errors, we get a sequence of solutions</p>
+<div>
+$$
+  u_0 + \epsilon_0, u_1 + \epsilon_1, u_2 + \epsilon_2, \dots
+$$
+</div>
+<p>and the actual numerical solution that we get is</p>
+<div>
+$$
+  u_{j+1} + \epsilon_{j+1} = \mathcal{G}[u_j + \epsilon_j] 
+$$
+</div>
+<p>If we assume that a Taylor series expansion of the function <script type="math/tex">\mathcal{G}</script> is possible,
+we can make the first-order approximation</p>
+<div>
+$$
+  u_{j+1} + \epsilon_{j+1} = \mathcal{G}[u_j] + \epsilon_j\,\frac{\partial\mathcal{G}}{\partial u_j}
+    = u_{j+1} + G\,\epsilon^j \quad \implies \epsilon_{j+1} = G\,\epsilon_j 
+$$
+</div>
+<p>The quantity <script type="math/tex">G</script> is called the <strong>amplification factor</strong>.  For the first-order wave equation
+with forward differences, from the plane wave solution we have</p>
+<div>
+$$
+  G = \frac{\partial\mathcal{G}}{\partial u_j}
+    = \frac{\partial}{\partial u_j}\left[\left(1 + C - Ce^{i\kappa\Delta x}\right) u_{j}\right]  
+    = 1 + C - Ce^{i\kappa\Delta x} 
+$$
+</div>
+<p>Clearly, for the solution to be stable, the amplification factor must satisfy the requirement that</p>
+<div class="notice--info">
+$$
+  |G| = \Bigl|\frac{\epsilon_{j+1}}{\epsilon_j}\Bigr| \le 1
+$$
+</div>
+<p>which implies that errors do not grow in an unbounded manner with time.  For the first-order wave equation,</p>
+<div>
+$$
+  \begin{align}
+  |G|^2 &amp; = G\bar{G} = \left[1 + C(1-\cos\kappa\Delta x) - iC\sin\kappa\Delta x\right]
+                     \left[1 + C(1-\cos\kappa\Delta x) + iC\sin\kappa\Delta x\right] \\
+        &amp; = 1 + 2C(1+C)(1-\cos\kappa\Delta x) \le 1
+  \end{align}
+$$
+</div>
+<p>Since <script type="math/tex">\kappa\Delta x</script> is arbitrary, the above condition is satisfied only if</p>
+<div>
+$$
+  2C(1+C) \le 0 \quad \implies \quad -1 \le C \le 0
+   \equiv -1 \le \frac{c \Delta t}{\Delta x} \le 0
+$$
+</div>
+<p>You can easily show that this is equivalent to the CFL condition for this particular
+backward propagating one-dimensional wave propagation problem.</p>
+
+<p>For the forward propagating second-order wave equation, the equivalent stability condition is,
+(from both CFL analysis and the von Neumann analysis)</p>
+<div class="notice--info">
+$$
+   0 \lt \frac{c \Delta t}{\Delta x} \le 1 \quad \equiv \quad
+   \Delta t \le \frac{\Delta x}{c}
+$$
+</div>
+
+<h4 id="remarks">Remarks</h4>
+<p>The CFL procedure is inadequate for closed form stability bounds for many PDEs even though
+convergence results can be obtained.  The von Neumann approach solves some of these issues
+for linear PDEs.</p>
+
+<p>We will see how these ideas are applied to discrete element methods in the next part of this
+series.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

@@ -1,0 +1,403 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The difference between the spin and angular velocity tensors</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim//assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim//assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim/">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim//docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>The difference between the spin and angular velocity tensors</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#the-spin-tensor" id="markdown-toc-the-spin-tensor">The spin tensor</a></li>
+  <li><a href="#the-green-naghdi-objective-rate" id="markdown-toc-the-green-naghdi-objective-rate">The Green-Naghdi objective rate</a></li>
+  <li><a href="#relation-between-spin-and-angular-velocity" id="markdown-toc-relation-between-spin-and-angular-velocity">Relation between spin and angular velocity</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h4 id="introduction">Introduction</h4>
+<p>Several years ago I took created a Wikpedia article on <a href="https://en.wikipedia.org/wiki/Objective_stress_rate">objective stress rates</a> based on <a href="https://en.wikiversity.org/wiki/Nonlinear_finite_elements/Objective_stress_rates">lecture notes</a> in nonlinear finite elements for a class that I taught at the University of Utah.  In this article I will attempt to clarify one recurring question on the subject: what is the difference between the spin tensor (<script type="math/tex">\boldsymbol{w}</script>) and the angular velocity tensor (<script type="math/tex">\boldsymbol{\Omega}</script>)?</p>
+
+<h4 id="the-spin-tensor">The spin tensor</h4>
+<p>Following standard continuum mechanics notation, let us denote a deformation by</p>
+<div>
+$$
+  \mathbf{x} = \boldsymbol{\chi}(\mathbf{X}, t)
+$$
+</div>
+<p>where <script type="math/tex">\mathbf{x}</script> is the position at time <script type="math/tex">t</script> and <script type="math/tex">\mathbf{X}</script> is the reference position of a
+material point in a body.</p>
+
+<p>The motion is a <strong>rigid body translation or rotation</strong> (or a combination of rigid body motions) if the
+distance, <script type="math/tex">D(t)</script>, between two points in the body does not change with time, i.e.,</p>
+<div>
+$$
+  \dot{D} = \frac{d}{dt} D(t) = \frac{d}{dt} \lVert \mathbf{x}_1(t) - \mathbf{x}_2(t) \rVert = 
+  \frac{\partial}{\partial t} \lVert \boldsymbol{\chi}(\mathbf{X}_1, t) - \boldsymbol{\chi}(\mathbf{X}_2, t) \rVert = 0
+$$
+</div>
+<p>for all points with initial positions <script type="math/tex">\mathbf{X}_1</script> and <script type="math/tex">\mathbf{X}_2</script>.</p>
+
+<p>Taking the derivative, we have</p>
+<div>
+$$
+  \frac{\partial}{\partial t} \lVert \boldsymbol{\chi}(\mathbf{X}_1, t) - \boldsymbol{\chi}(\mathbf{X}_2, t) \rVert
+  = \frac{\boldsymbol{\chi}(\mathbf{X}_1,t) - \boldsymbol{\chi}(\mathbf{X}_2,t)}{\lVert\boldsymbol{\chi}(\mathbf{X}_1,t) - \boldsymbol{\chi}(\mathbf{X}_2,t)\rVert}
+    \cdot\left[ \frac{\partial }{\partial t}\boldsymbol{\chi}(\mathbf{X}_1, t) -
+           \frac{\partial }{\partial t}\boldsymbol{\chi}(\mathbf{X}_2, t) \right]
+$$
+</div>
+<p>or</p>
+<div>
+$$
+  D\dot{D} = (\mathbf{x}_1 - \mathbf{x}_2)\cdot[\mathbf{v}(\mathbf{x}_1,t) - \mathbf{v}(\mathbf{x}_2,t)]
+$$
+</div>
+<p>where <script type="math/tex">\mathbf{v}</script> is the velocity.  Therefore, for a rigid body motion,</p>
+<div class="notice">
+$$
+  (\mathbf{x}_1 - \mathbf{x}_2)\cdot[\mathbf{v}(\mathbf{x}_1,t) - \mathbf{v}(\mathbf{x}_2,t)] = 0
+$$
+</div>
+
+<p>Let us now take the gradient of this relation with respect to <script type="math/tex">\mathbf{x}_1</script>.  Then</p>
+<div>
+$$
+  \boldsymbol{\nabla}_{x_1} \left[
+  (\mathbf{x}_1 - \mathbf{x}_2)\cdot[\mathbf{v}(\mathbf{x}_1,t) - \mathbf{v}(\mathbf{x}_2,t)]\right]
+  = \mathbf{v}(\mathbf{x}_1,t) - \mathbf{v}(\mathbf{x}_2,t) +
+    (\mathbf{x}_1 - \mathbf{x}_2) \cdot \boldsymbol{\nabla}_{x_1}\mathbf{v}(\mathbf{x}_1,t)
+  = 0
+$$
+</div>
+<p>Next, if we compute the gradient with respect to <script type="math/tex">\mathbf{x}_2</script>, we have</p>
+<div>
+$$
+  -\boldsymbol{\nabla}_{x_2}\mathbf{v}(\mathbf{x}_2,t) - 
+     [\boldsymbol{\nabla}_{x_1}\mathbf{v}(\mathbf{x}_1,t)]^T = 0
+$$
+</div>
+<p>If we take the limit as <script type="math/tex">\mathbf{x}_2 \rightarrow \mathbf{x}_1 = \mathbf{x}</script>, we find that
+the velocity gradient, <script type="math/tex">\boldsymbol{l}</script>,  is</p>
+<div class="notice">
+$$
+  \boldsymbol{l} := \boldsymbol{\nabla}\mathbf{v} = -[\boldsymbol{\nabla}\mathbf{v}]^T = -\boldsymbol{l}^T \,.
+$$
+</div>
+<p>The velocity gradient for deformable bodies is typically decomposed into a symmetric part, <script type="math/tex">\boldsymbol{d}</script> and a skew-symmetric part <script type="math/tex">\boldsymbol{w}</script>. Clearly, from the above relation, the symmetric part is
+zero and we are left with</p>
+<div class="notice--info">
+$$
+  \boldsymbol{l} = \boldsymbol{w} \,.
+$$
+</div>
+<p class="notice--warning">Therefore, the velocity gradient during a rigid body motion is called the <strong>spin</strong> tensor.</p>
+
+<h4 id="the-green-naghdi-objective-rate">The Green-Naghdi objective rate</h4>
+<p>The Lie derivative of the Cauchy stress is given by</p>
+<div>
+$$
+  \overset{\circ}{\boldsymbol{\sigma}} = J^{-1}~\boldsymbol{F}\cdot
+       \left[\cfrac{\partial}{\partial t}\left(J~\boldsymbol{F}^{-1}\cdot\boldsymbol{\sigma}\cdot\boldsymbol{F}^{-T}\right)\right]
+       \cdot\boldsymbol{F}^T 
+$$
+</div>
+<p>where <script type="math/tex">\boldsymbol{F}</script> is the deformation gradient and <script type="math/tex">J = \det\boldsymbol{F}</script>.
+From the polar decomposition theorem we have</p>
+<div>
+$$
+  \boldsymbol{F} = \boldsymbol{R}\cdot\boldsymbol{U}
+$$
+</div>
+<p>where <script type="math/tex">\boldsymbol{R}</script> is the orthogonal rotation tensor (<script type="math/tex">\boldsymbol{R}^{-1} = \boldsymbol{R}^T</script>)
+and <script type="math/tex">\boldsymbol{U}</script> is the symmetric, positive definite, right stretch.</p>
+
+<p>If we assume that <script type="math/tex">\boldsymbol{U} = \boldsymbol{\mathit{1}}</script> we get
+<script type="math/tex">\boldsymbol{F} = \boldsymbol{R}</script>.  Also, since there is no stretch, <script type="math/tex">J = 1</script>.  Note that this
+doesn’t mean that there is not stretch in the actual body; this simplification is just
+for the purposes of defining an objective stress rate.  Therefore,</p>
+<div>
+$$
+  \overset{\circ}{\boldsymbol{\sigma}} = \boldsymbol{R}\cdot
+       \left[\cfrac{\partial}{\partial t}\left(\boldsymbol{R}^{-1}\cdot\boldsymbol{\sigma}\cdot\boldsymbol{R}^{-T}\right)\right]
+       \cdot\boldsymbol{R}^T 
+    = \boldsymbol{R}\cdot\left[\cfrac{\partial }{\partial t}\left(\boldsymbol{R}^T\cdot\boldsymbol{\sigma}\cdot\boldsymbol{R}\right)\right]
+       \cdot\boldsymbol{R}^T 
+$$
+</div>
+<p>If we define the <strong>angular velocity tensor</strong>, <script type="math/tex">\boldsymbol{\Omega}</script>, as</p>
+<div class="notice--info">
+$$
+  \boldsymbol{\Omega} := \dot{\boldsymbol{R}}\cdot\boldsymbol{R}^T
+$$
+</div>
+<p>the Lie derivative of the Cauchy stress reduces to the <strong>Green–Naghdi</strong> rate:</p>
+<div class="notice">
+$$
+  \overset{\square}{\boldsymbol{\sigma}} = \dot{\boldsymbol{\sigma}} + \boldsymbol{\sigma}\cdot\boldsymbol{\Omega}
+    - \boldsymbol{\Omega}\cdot\boldsymbol{\sigma} \,.
+$$
+</div>
+
+<h4 id="relation-between-spin-and-angular-velocity">Relation between spin and angular velocity</h4>
+<p>We know that</p>
+<div>
+$$
+  \boldsymbol{l} = \dot{\boldsymbol{F}}\cdot\boldsymbol{F}^{-1} ~,~~
+  \boldsymbol{w} = \tfrac{1}{2}(\boldsymbol{l} - \boldsymbol{l}^T) \,.
+$$
+</div>
+<p>Therefore</p>
+<div>
+$$
+  \boldsymbol{w} = \tfrac{1}{2}(\dot{\boldsymbol{F}}\cdot\boldsymbol{F}^{-1} - \boldsymbol{F}^{-T}\cdot\dot{\boldsymbol{F}}^T)
+$$
+</div>
+<p>Using</p>
+<div>
+$$
+  \boldsymbol{F} = \boldsymbol{R}\cdot\boldsymbol{U} 
+  \quad \implies \quad \dot{\boldsymbol{F}} = \dot{\boldsymbol{R}}\cdot\boldsymbol{U} + \boldsymbol{R}\cdot\dot{\boldsymbol{U}}
+$$
+</div>
+<p>we have</p>
+<div>
+$$
+  \dot{\boldsymbol{F}}\cdot\boldsymbol{F}^{-1} =  (\dot{\boldsymbol{R}}\cdot\boldsymbol{U} + \boldsymbol{R}\cdot\dot{\boldsymbol{U}})\cdot
+     (\boldsymbol{U}^{-1}\cdot\boldsymbol{R}^T)
+     = \dot{\boldsymbol{R}}\cdot\boldsymbol{R}^T + \boldsymbol{R}\cdot\dot{\boldsymbol{U}}\cdot\boldsymbol{U}^{-1}\cdot\boldsymbol{R}^T
+$$
+</div>
+<p>and</p>
+<div>
+$$
+  \boldsymbol{F}^{-T}\cdot\dot{\boldsymbol{F}}^T =  (\boldsymbol{R}\cdot\boldsymbol{U}^{-1})\cdot
+      (\boldsymbol{U}\cdot\dot{\boldsymbol{R}}^T + \dot{\boldsymbol{U}}\cdot\boldsymbol{R}^T)
+    = \boldsymbol{R}\cdot\dot{\boldsymbol{R}}^T + \boldsymbol{R}\cdot\boldsymbol{U}^{-1}\cdot\dot{\boldsymbol{U}}\cdot\boldsymbol{R}^T \,.
+$$
+</div>
+<p>Combining the two relations above in the expression for <script type="math/tex">\boldsymbol{w}</script> gives us</p>
+<div>
+$$
+  \boldsymbol{w} = \frac{1}{2}~(\dot{\boldsymbol{R}}\cdot\boldsymbol{R}^T + \boldsymbol{R}\cdot\dot{\boldsymbol{U}}\cdot\boldsymbol{U}^{-1}\cdot\boldsymbol{R}^T
+         - \boldsymbol{R}\cdot\dot{\boldsymbol{R}}^T - \boldsymbol{R}\cdot\boldsymbol{U}^{-1}\cdot\dot{\boldsymbol{U}}\cdot\boldsymbol{R}^T) \,.
+$$
+</div>
+<p>We can simplify the above relation by noting that</p>
+<div>
+$$
+  \boldsymbol{R}\cdot\boldsymbol{R}^T = \boldsymbol{\mathit{1}} 
+  \quad \implies \quad \dot{\boldsymbol{R}}\cdot\boldsymbol{R}^T + \boldsymbol{R}\cdot\dot{\boldsymbol{R}}^T = \boldsymbol{\mathit{0}}\,.
+$$
+</div>
+<p>Therefore</p>
+<div>
+$$
+  \boldsymbol{w} = \dot{\boldsymbol{R}}\cdot\boldsymbol{R}^T + \frac{1}{2}~\boldsymbol{R}\cdot(\dot{\boldsymbol{U}}\cdot\boldsymbol{U}^{-1} - 
+             \boldsymbol{U}^{-1}\cdot\dot{\boldsymbol{U}})\cdot\boldsymbol{R}^T
+$$
+</div>
+<p>For pure <strong>rigid body motion</strong>, the stretch is identity and its rate of change is zero.  So we have</p>
+<div class="notice--info">
+$$
+  \boldsymbol{w} = \dot{\boldsymbol{R}}\cdot\boldsymbol{R}^T = \boldsymbol{\Omega}
+$$
+</div>
+<p class="notice--warning">That implies that the spin tensor and the angular velocity tensor are identical to the
+velocity gradient for rigid body motions.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>In many practical applications the spin and the angular velocity tensors are assumed to be identical.
+One has to be careful to make sure that the assumptions made during that identification are valid
+for the application under consideration.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

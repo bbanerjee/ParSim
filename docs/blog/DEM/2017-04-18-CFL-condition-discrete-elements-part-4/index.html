@@ -1,0 +1,288 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The CFL condition for explicit discrete element methods:4</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim//assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim//assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim/">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim//docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>The CFL condition for explicit discrete element methods:4</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#one-dimensional-equations-for-impact" id="markdown-toc-one-dimensional-equations-for-impact">One-dimensional equations for impact</a></li>
+  <li><a href="#stability-of-central-difference-for-one-dimensional-impact" id="markdown-toc-stability-of-central-difference-for-one-dimensional-impact">Stability of central difference for one-dimensional impact</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h4 id="introduction">Introduction</h4>
+<p>In <a href="https://bbanerjee.github.io/ParSim//dem/CFL-condition-discrete-elements-part-3/">Part 3</a> of this article I
+discussed the approach where the equations for a system of rigid bodies are
+approximated by a spring-mass system.  The numerical stability conditions of that
+system are then taken to be representative of the system of discrete rigid bodies.
+In that case, for a typical central difference scheme, the time step size is</p>
+<div>
+$$
+  \Delta t \le \frac{2}{\omega}(\sqrt{\zeta^2+1} - \zeta) 
+$$
+</div>
+<p>In terms of the spring stiffness <script type="math/tex">k</script>, the damping coefficient <script type="math/tex">c</script>, and the mass <script type="math/tex">m</script>,
+we have</p>
+<div class="notice">
+$$
+  \Delta t \le 2\sqrt{\frac{m}{k}}(\sqrt{\frac{c^2}{4km}+1} - \frac{c}{2\sqrt{km}}) 
+$$
+</div>
+<p>This condition assumes that the system of ODEs is linear.  Note that this assumption
+is clearly violated for complex discrete element calculations.</p>
+
+<p>Let us now look at some simple stability bounds for a system of discontinuous
+rigid bodies that interact occasionally via impact.</p>
+
+<h4 id="one-dimensional-equations-for-impact">One-dimensional equations for impact</h4>
+<p>The impact between two rigid bodies in discrete elements can be simplified to the following
+one-dimensional system of equations:</p>
+<div>
+$$
+  m\ddot{d} = \begin{cases}
+                -c\dot{d} - kd &amp; \quad \text{for} \quad d \ge 0 \quad \text{:contact} \\
+                0 &amp; \quad \text{for} \quad d \lt 0 \quad \text{:separated} 
+              \end{cases}
+$$
+</div>
+<p>where <script type="math/tex">d</script> is the gap distance.  An animation of the one-dimensional problem is shown below.
+In the animation, the smaller ball has been replaced with a spring and damper system (shown
+as a spring in the figure).
+Note that while the bodies are in contact, the governing equation is identical to
+that for a system of springs-dampers-masses.</p>
+
+<div>
+  <canvas id="ballball" width="500" height="300"></canvas>
+</div>
+
+<p>At the end of the impact event, the bodies will typically separate.  The duration
+of impact (which can be found by solving the linear ODE for <script type="math/tex">d \ge 0</script>), is</p>
+<div>
+$$
+  t_d = \frac{\pi}{\sqrt{1 - \zeta^2}}
+$$
+</div>
+<p>and the exit velocity is</p>
+<div>
+$$
+  v_e = v_0 \exp\left[-\frac{\zeta\pi}{\sqrt{1-\zeta^2}}\right]
+$$
+</div>
+
+<h4 id="stability-of-central-difference-for-one-dimensional-impact">Stability of central difference for one-dimensional impact</h4>
+<p>An algorithm that is used to solve the above non-linear problem will be stable is
+the exit velocity satisfies the condition <script type="math/tex">v_e \le v_0</script> where <script type="math/tex">v_0</script> is the
+relative velocity of the two bodies.</p>
+
+<p>Feng’s work (IJNME 2005, 64:1959) used numerical solutions of the one-dimensional problem to prove that
+discrete element calculations can become unconditionally unstable for
+<script type="math/tex">% <![CDATA[
+\Delta t < 2/\omega %]]></script>, except for a few values where the exit velocity is equal
+to <script type="math/tex">v_0</script>.  However, a small amount of damping can improve the stability behavior
+of the system.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>In general, there is no known closed-form expression that can be used to determine
+the region of stability of the nonlinear system of ODEs that describes DEM calculations.
+As a result, practitioners typically use timesteps that are a small fraction
+of that suggested by the analysis of the continuous linear ODE that describes
+a spring-mass-damper system.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+<script src="https://bbanerjee.github.io/ParSim//assets/js/d3.v4.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim//assets/js/demImpact.js"></script>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

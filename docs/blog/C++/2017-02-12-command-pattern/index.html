@@ -1,0 +1,331 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Command pattern for regression testing</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim//assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim//assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim/">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim//docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Command pattern for regression testing</h1>
+          <p>A few days ago I had to refactor a 20,000 line class that was being used as
+a regression tester for <a href="https://en.wikipedia.org/wiki/Discrete_element_method">discrete element</a>
+and <a href="https://en.wikipedia.org/wiki/Peridynamics">peridynamics</a> simulations.  After some thought, I 
+realized that the easiest way to achieve what I wanted was by using the <a href="https://en.wikipedia.org/wiki/Command_pattern">Command 
+design pattern</a> (minus the undo option).
+My approach was to keep the implementation simple enough that a typical student of
+mechanics would be able to follow the details, i.e., no <a href="https://en.wikipedia.org/wiki/Template_metaprogramming">template metaprogramming</a> a la <a href="http://loki-lib.sourceforge.net/index.php?n=Main.HomePage">Loki</a>.</p>
+
+<h4 id="the-original-code">The original code</h4>
+<p>The regression tester in the original code looked something like this:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span>    <span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+      <span class="n">RegressionTester</span> <span class="n">tester</span><span class="p">;</span>
+      <span class="k">switch</span><span class="p">(</span><span class="n">testType</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">case</span> <span class="nl">TEST1</span><span class="p">:</span>
+        <span class="n">tester</span><span class="p">.</span><span class="n">doTest1</span><span class="p">();</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="nl">TEST2</span><span class="p">:</span>
+        <span class="n">tester</span><span class="p">.</span><span class="n">doTest2</span><span class="p">();</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="p">...</span>
+      <span class="p">}</span>
+      <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span></code></pre></figure>
+
+<p>The <code>RegressionTester</code> class was huge and contained the code for a large number of tests,
+each of which was quite involved.</p>
+
+<p>I wanted to separate out each test into its own self-contained class.</p>
+
+<h4 id="the-command-pattern-approach">The Command pattern approach</h4>
+<p>There are several variations on the command pattern, but the basic idea is to 
+use object polymorphism to provide a clean interface for function calls.</p>
+
+<h5 id="step-1-create-a-command-interface">Step 1: Create a Command interface</h5>
+<p>I created a directory called <code>TestSimulations</code> and in that directory created the Command interface
+file <code>Command.h</code>.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="cp">#include</span> <span class="cpf">&lt;RegressionTester.h&gt;</span><span class="cp"></span>
+<span class="k">class</span> <span class="nc">Command</span>
+<span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+  <span class="k">virtual</span> <span class="o">~</span><span class="n">Command</span><span class="p">(){};</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="nf">execute</span><span class="p">(</span><span class="n">RegressionTester</span><span class="o">*</span> <span class="n">tester</span><span class="p">)</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">};</span></code></pre></figure>
+
+<h5 id="step-2-create-a-command-handler">Step 2: Create a Command handler</h5>
+<p>The command handler class returns a pointer to the chosen command that is polymorphic
+and will return the pointer to the correct test. The header first</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="cp">#include</span> <span class="cpf">&lt;memory&gt;</span><span class="cp"></span>
+<span class="k">class</span> <span class="nc">Command</span><span class="p">;</span>
+<span class="k">using</span> <span class="n">CommandP</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">Command</span><span class="o">&gt;</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">CommandHandler</span>
+<span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+  <span class="n">CommandP</span> <span class="n">handleCommand</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">testType</span><span class="p">);</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>and then the implementation (<code>getEnum</code> translates the string to an enum)</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="cp">#include</span> <span class="cpf">&lt;TestSimulations/Command.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;TestSimulations/CommandHandler.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;TestSimulations/Test1.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;TestSimulations/Test2.h&gt;</span><span class="cp"></span>
+<span class="n">CommandP</span>
+<span class="n">CommandHandler</span><span class="o">::</span><span class="n">handleCommand</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">testType</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">switch</span> <span class="p">(</span><span class="n">getEnum</span><span class="p">(</span><span class="n">testType</span><span class="p">))</span> <span class="p">{</span>
+  <span class="k">case</span> <span class="nl">TEST1</span><span class="p">:</span> 
+    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">Test1</span><span class="o">&gt;</span><span class="p">();</span>
+    <span class="k">break</span><span class="p">;</span>
+  <span class="k">case</span> <span class="nl">TEST2</span><span class="p">:</span> 
+    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">Test2</span><span class="o">&gt;</span><span class="p">();</span>
+    <span class="k">break</span><span class="p">;</span>
+  <span class="p">...</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="k">nullptr</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<h5 id="step-3-create-the-test-classes">Step 3: Create the test classes</h5>
+<p>Next we add the actual test classes.  The headers have the form</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="cp">#include</span> <span class="cpf">&lt;TestSimulations/Command.h&gt;</span><span class="cp"></span>
+<span class="k">class</span> <span class="nc">Test1</span> <span class="o">:</span> <span class="k">public</span> <span class="n">Command</span>
+<span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+  <span class="k">virtual</span> <span class="kt">void</span> <span class="n">execute</span><span class="p">(</span><span class="n">RegressionTester</span><span class="o">*</span> <span class="n">tester</span><span class="p">);</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>while the code contains the detailed algorithm for each test:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="cp">#include</span> <span class="cpf">&lt;TestSimulations/Test1.h&gt;</span><span class="cp"></span>
+<span class="kt">void</span>
+<span class="n">Test1</span><span class="o">::</span><span class="n">execute</span><span class="p">(</span><span class="n">RegressionTester</span><span class="o">*</span> <span class="n">tester</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Complex test algorithm</span>
+<span class="p">}</span></code></pre></figure>
+
+<h5 id="step-4-call-the-regression-tester">Step 4: Call the regression tester</h5>
+<p>This is the entry point.  Even though we have used the <code>RegressionTester</code>
+class, we haven’t explained what it does.  You can use it for generic 
+algorithms that some or all tests use, or for anything else that each
+test may need.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="cp">#include</span> <span class="cpf">&lt;RegressionTester.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;TestSimulations/Command.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;TestSimulations/CommandHandler.h&gt;</span><span class="cp"></span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">testTypes</span> <span class="o">=</span> <span class="n">getTestTypesFromInput</span><span class="p">();</span>
+  <span class="n">RegressionTester</span> <span class="n">tester</span><span class="p">;</span>
+  <span class="n">CommandHandler</span> <span class="n">handler</span><span class="p">;</span>
+  <span class="c1">// Loop through the tests </span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="nl">testType</span> <span class="p">:</span> <span class="n">testTypes</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// The command hadler returns the right type of test object</span>
+    <span class="n">CommandP</span> <span class="n">command</span> <span class="o">=</span> <span class="n">handler</span><span class="p">.</span><span class="n">handleCommand</span><span class="p">(</span><span class="n">testType</span><span class="p">);</span>
+    <span class="c1">// Run the test</span>
+    <span class="n">command</span><span class="o">-&gt;</span><span class="n">execute</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tester</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<h5 id="step-5-run-you-regression-tests">Step 5: Run you regression tests</h5>
+<p>Make sure you save a set of “gold-standard” outputs to compare with the
+results from your regression tester.  Typically a Python script or a shell
+script is used to do the runs, comparisons, and output to a webdocs.</p>
+
+<h4 id="conclusion">Conclusion</h4>
+<p>So, at the expense of an increase in the number of classes and the need for
+some look-ups of the virtual table, we have a much cleaner implementation
+of the tests and we can add more tests quite easily.</p>
+
+<p><a href="https://twitter.com/share" class="twitter-share-button" data-via="parresianz">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(docsument, 'script', 'twitter-wjs');</script>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+<!-- <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?lang=cpp&amp;skin=sunburst"></script> -->
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

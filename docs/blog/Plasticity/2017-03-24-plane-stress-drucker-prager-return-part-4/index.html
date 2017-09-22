@@ -1,0 +1,421 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plane stress forward Euler Drucker-Prager</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim//assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim//assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim/">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim//docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Plane stress forward Euler Drucker-Prager</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#finding-deltalambda" id="markdown-toc-finding-deltalambda">Finding <script type="math/tex">\Delta\lambda</script></a></li>
+  <li><a href="#an-attempt-at-simplification" id="markdown-toc-an-attempt-at-simplification">An attempt at simplification</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h5 id="introduction">Introduction</h5>
+<p>In <a href="https://bbanerjee.github.io/ParSim//mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/">Part 2</a>
+of this series, we saw that a forward Euler return algorithm leads to the discretized equations</p>
+<div class="notice">
+$$
+ \boldsymbol{\sigma}_{n+1}
+   = \boldsymbol{\sigma}_{n+1}^{\text{trial}} - \Delta\lambda \,\mathbf{C}\, \boldsymbol{n}_{n}
+$$
+</div>
+<p>where</p>
+<div>
+$$
+ \boldsymbol{n}_n = \begin{bmatrix} n^n_{11} \\ n^n_{22} \\ n^n_{12} \end{bmatrix}
+   = \left(
+     \tfrac{1}{\sqrt{2}}
+       \frac{\mathbf{P}\,\boldsymbol{\sigma_n}}{
+         \sqrt{\boldsymbol{\sigma_n}^T\,\mathbf{P}\,\boldsymbol{\sigma_n}}
+       }
+     - \tfrac{1}{3} \frac{dq}{dp}(\boldsymbol{\sigma}_n)\,\mathbf{I}
+   \right)
+$$
+</div>
+<p>and</p>
+<div>
+$$
+  \mathbf{C} = \begin{bmatrix}
+    \frac{4\mu(\lambda+\mu)}{\lambda+2\mu} &amp; \frac{2\mu\lambda}{\lambda+2\mu} &amp; 0 \\
+    \frac{2\mu\lambda}{\lambda+2\mu} &amp; \frac{4\mu(\lambda+\mu)}{\lambda+2\mu} &amp; 0 \\
+    0 &amp; 0 &amp; \mu
+  \end{bmatrix}
+  \quad \mathbf{P} = \begin{bmatrix}
+                       2 &amp; -1 &amp; 0 \\ -1 &amp; 2 &amp; 0 \\ 0 &amp; 0 &amp; 6
+                      \end{bmatrix}
+   \quad \boldsymbol{\sigma}_n = 
+     \begin{bmatrix} \sigma^n_{11} \\ \sigma^n_{22} \\ \sigma^n_{12} \end{bmatrix}
+   \quad \mathbf{I} =  \begin{bmatrix} 1 \\ 1 \\ 0 \end{bmatrix}
+$$
+</div>
+<p>The discrete consistency condition is</p>
+<div class="notice">
+$$
+  f(\boldsymbol{\sigma}_{n+1}) = 0 = 
+  \sqrt{\tfrac{1}{2} \boldsymbol{\sigma}_{n+1}^T \,\mathbf{P} \,\boldsymbol{\sigma}_{n+1}} - q(p_{n+1}) 
+$$
+</div>
+<p>In <a href="https://bbanerjee.github.io/ParSim//mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-3/">Part 3</a>, we saw that</p>
+<div class="notice">
+$$
+  \mathbf{C} = \mathbf{Q} \mathbf{L}_C \mathbf{Q}^T \quad
+  \mathbf{P} = \mathbf{Q} \mathbf{L}_P \mathbf{Q}^T 
+$$
+</div>
+<p>where</p>
+<div>
+$$
+  \mathbf{Q} = \begin{bmatrix} 0 &amp; \frac{1}{\sqrt{2}} &amp; -\frac{1}{\sqrt{2}} \\
+                         0 &amp; \frac{1}{\sqrt{2}} &amp; \frac{1}{\sqrt{2}} \\
+                         1 &amp; 0 &amp; 0 \end{bmatrix}
+  \quad
+  \mathbf{L}_P = \begin{bmatrix} 6 &amp; 0 &amp; 0 \\ 0 &amp; 1 &amp; 0 \\
+                                  0 &amp; 0 &amp; 3 \end{bmatrix}
+  \quad
+  \mathbf{L}_C = \begin{bmatrix} \mu &amp; 0 &amp; 0 \\ 0 &amp; \frac{E}{1-\nu} &amp; 0 \\
+                                  0 &amp; 0 &amp; 2\mu \end{bmatrix}
+$$
+</div>
+<p>Let us now try to find <script type="math/tex">\Delta\lambda</script> and <script type="math/tex">\boldsymbol{\sigma}_{n+1}</script> and check
+whether we can find simple expressions for those.</p>
+
+<h5 id="finding-deltalambda">Finding <script type="math/tex">\Delta\lambda</script></h5>
+<p>To find <script type="math/tex">\Delta\lambda</script>, we use the consistency condition and express all quantities in
+that expression in terms of the trial stress.  Then,</p>
+<div>
+$$
+  \tfrac{1}{\sqrt{2}}
+  \sqrt{
+  \left[\boldsymbol{\sigma}^\text{trial}_{n+1} -\Delta\lambda \mathbf{C}\boldsymbol{n}_n\right]^T
+  \mathbf{P}
+  \left[\boldsymbol{\sigma}^\text{trial}_{n+1} -\Delta\lambda \mathbf{C}\boldsymbol{n}_n\right]}
+  = q(\text{tr}[\boldsymbol{\sigma}_{n+1}^\text{trial} - \Delta\lambda\mathbf{C}\boldsymbol{n}_n])
+$$
+</div>
+<p>or</p>
+<div>
+$$
+  \left[(\boldsymbol{\sigma}^\text{trial}_{n+1})^T -\Delta\lambda \boldsymbol{n}_n^T\mathbf{C}\right]
+  \left[\mathbf{P}\boldsymbol{\sigma}^\text{trial}_{n+1} -\Delta\lambda \mathbf{P}\mathbf{C}\boldsymbol{n}_n\right]
+  = 2q^2(\text{tr}[\boldsymbol{\sigma}_{n+1}^\text{trial} - \Delta\lambda\mathbf{C}\boldsymbol{n}_n])
+$$
+</div>
+<p>or</p>
+<div class="notice">
+$$
+  (\boldsymbol{\sigma}^\text{trial}_{n+1})^T\mathbf{P}\boldsymbol{\sigma}^\text{trial}_{n+1}
+  - 2\Delta\lambda (\boldsymbol{\sigma}^\text{trial}_{n+1})^T\mathbf{P}\mathbf{C}\boldsymbol{n}_n
+  + (\Delta\lambda)^2 (\mathbf{C}\boldsymbol{n}_n)^T\mathbf{P}\mathbf{C}\boldsymbol{n}_n \\
+   = 2q^2(\text{tr}[\boldsymbol{\sigma}_{n+1}^\text{trial} - \Delta\lambda\mathbf{C}\boldsymbol{n}_n])
+$$
+</div>
+
+<p class="notice--warning">Because of the potential dependence on <script type="math/tex">\Delta\lambda</script> in the expression for <script type="math/tex">q^2</script>,
+this equation is best solved
+using a root-finding method.  The quadratic equation in <script type="math/tex">\Delta\lambda</script> has two solutions, only
+one of which should be greater than 0 for the solution to be unique.  It is not straightforward
+to show that this is indeed the case.</p>
+
+<h5 id="an-attempt-at-simplification">An attempt at simplification</h5>
+<p>Let us try to find a simpler expression for <script type="math/tex">\mathbf{C}\boldsymbol{n}_n</script> and related
+quantities.  We have</p>
+<div>
+$$
+  \mathbf{C}\boldsymbol{n}_n = 
+    \left(
+     \tfrac{1}{\sqrt{2}}
+       \frac{\mathbf{C}\,\mathbf{P}\,\boldsymbol{\sigma_n}}{
+         \sqrt{\boldsymbol{\sigma_n}^T\,\mathbf{P}\,\boldsymbol{\sigma_n}}
+       }
+     - \tfrac{1}{3} \frac{dq}{dp}(\boldsymbol{\sigma}_n)\,\mathbf{C}\,\mathbf{I}
+   \right)
+$$
+</div>
+<p>Therefore,</p>
+<div>
+$$
+  \mathbf{P}\mathbf{C}\boldsymbol{n}_n = 
+    \left(
+     \tfrac{1}{\sqrt{2}}
+       \frac{\mathbf{P}\mathbf{C}\,\mathbf{P}\,\boldsymbol{\sigma_n}}{
+         \sqrt{\boldsymbol{\sigma_n}^T\,\mathbf{P}\,\boldsymbol{\sigma_n}}
+       }
+     - \tfrac{1}{3} \frac{dq}{dp}(\boldsymbol{\sigma}_n)\,\mathbf{P}\mathbf{C}\,\mathbf{I}
+   \right)
+$$
+</div>
+<p>and</p>
+<div>
+$$
+  (\mathbf{C}\boldsymbol{n}_n)^T\mathbf{P}\mathbf{C}\boldsymbol{n}_n = 
+    \left(
+     \tfrac{1}{\sqrt{2}}
+       \frac{\mathbf{C}\,\mathbf{P}\,\boldsymbol{\sigma_n}}{
+         \sqrt{\boldsymbol{\sigma_n}^T\,\mathbf{P}\,\boldsymbol{\sigma_n}}
+       }
+     - \tfrac{1}{3} \frac{dq}{dp}(\boldsymbol{\sigma}_n)\,\mathbf{C}\,\mathbf{I}
+   \right)^T
+    \left(
+     \tfrac{1}{\sqrt{2}}
+       \frac{\mathbf{P}\mathbf{C}\,\mathbf{P}\,\boldsymbol{\sigma_n}}{
+         \sqrt{\boldsymbol{\sigma_n}^T\,\mathbf{P}\,\boldsymbol{\sigma_n}}
+       }
+     - \tfrac{1}{3} \frac{dq}{dp}(\boldsymbol{\sigma}_n)\,\mathbf{P}\mathbf{C}\,\mathbf{I}
+   \right)
+$$
+</div>
+<p>Now,</p>
+<div>
+$$
+  \mathbf{C}\mathbf{P}\boldsymbol{\sigma}_n = \mathbf{Q}\mathbf{L}_C\mathbf{L}_P\mathbf{Q}^T\boldsymbol{\sigma}_n \quad \text{and} \quad
+  \boldsymbol{\sigma}_n^T\mathbf{P}\boldsymbol{\sigma}_n = \boldsymbol{\sigma}_n^T\mathbf{Q}\mathbf{L}_P\mathbf{Q}^T\boldsymbol{\sigma}_n 
+$$
+</div>
+<p>Define <script type="math/tex">\mathbf{R}_n := \mathbf{Q}^T\boldsymbol{\sigma}_n</script> and
+<script type="math/tex">\mathbf{R}_{n+1}^{\text{trial}} := \mathbf{Q}^T\boldsymbol{\sigma}_{n+1}^{\text{trial}}</script>.
+Then,</p>
+<div>
+$$
+  \mathbf{C}\mathbf{P}\boldsymbol{\sigma}_n = \mathbf{Q}\mathbf{L}_C\mathbf{L}_P\mathbf{R}_n
+  \quad , \quad
+  \mathbf{P}\mathbf{C}\mathbf{P}\boldsymbol{\sigma}_n = \mathbf{Q}\mathbf{L}_C\mathbf{L}_P^2\mathbf{R}_n
+  \quad \text{and} \quad
+  \boldsymbol{\sigma}_n^T\mathbf{P}\boldsymbol{\sigma}_n = \mathbf{R}_n^T\mathbf{L}_P\mathbf{R}_n
+$$
+</div>
+<p>Then we get the following expressions for the terms in the nonlinear equation for
+<script type="math/tex">\Delta\lambda</script> (after defining <script type="math/tex">\mathbf{Q}_I := \mathbf{Q}^T \mathbf{I}</script>):</p>
+<div class="notice">
+$$
+ \begin{align}
+  &amp; (\boldsymbol{\sigma}^\text{trial}_{n+1})^T\mathbf{P}\boldsymbol{\sigma}^\text{trial}_{n+1}
+  = (\mathbf{R}_{n+1}^\text{trial})^T\mathbf{L}_P\mathbf{R}_{n+1}^\text{trial} \\
+  &amp; (\boldsymbol{\sigma}^\text{trial}_{n+1})^T\mathbf{P}\mathbf{C}\boldsymbol{n}_n
+  = (\mathbf{R}_{n+1}^{\text{trial}})^T\mathbf{L}_C\mathbf{L}_P
+    \left(
+     \tfrac{1}{\sqrt{2}}
+       \frac{\mathbf{L}_P\mathbf{R}_n}{\sqrt{\mathbf{R}_n^T\mathbf{L}_P\mathbf{R}_n}}
+     - \tfrac{1}{3} \frac{dq}{dp}\,\mathbf{Q}_I
+   \right)\\
+  &amp; (\mathbf{C}\boldsymbol{n}_n)^T\mathbf{P}\mathbf{C}\boldsymbol{n}_n = 
+  \tfrac{1}{2} \frac{\mathbf{R}_n^T\mathbf{L}_C^2\mathbf{L}_P^3\mathbf{R}_n}{\sqrt{\mathbf{R}_n^T\mathbf{L}_P\mathbf{R}_n}} -
+  \tfrac{2}{3\sqrt{2}} \frac{dq}{dp}\frac{\mathbf{R}_n^T\mathbf{L}_C^2\mathbf{L}_P^2}{\sqrt{\mathbf{R}_n^T\mathbf{L}_P\mathbf{R}_n}}\mathbf{Q}_{I} +
+  \tfrac{1}{9}\left(\frac{dq}{dp}\right)^2 \mathbf{Q}_I^T\mathbf{L}_C^2\mathbf{L}_P\mathbf{Q}_I 
+ \end{align}
+$$
+</div>
+
+<p>For <script type="math/tex">J_2</script> (von Mises) plasticity, the <script type="math/tex">dq/dp</script> terms are zero and further simplification
+is possible.  However, for a general Drucker-Prager material no such benefit is found from
+the use of the spectral decomposition, other than efficiency of computation.</p>
+
+<p>In our case, the two column matrices that can help with computational efficiency are
+<script type="math/tex">\mathbf{R}</script> and <script type="math/tex">\mathbf{Q}_I</script>:</p>
+<div class="notice--info">
+$$
+  \mathbf{R} = \tfrac{1}{\sqrt{2}}\begin{bmatrix} \sqrt{2}\sigma_{12} \\ \sigma_{11}+\sigma_{22}
+    \\ -\sigma_{11}+\sigma_{22} \end{bmatrix}
+  \quad \text{and} \quad
+  \mathbf{Q}_I = \sqrt{2} \begin{bmatrix} 0 \\ 1 \\ 0 \end{bmatrix} \,.
+$$
+</div>
+
+<h4 id="remarks">Remarks</h4>
+<p>These results show that the “radial return” approach is applicable only to a very
+specific class of plasticity models.  The next parts of this series will discuss
+the backward Euler approach and geometric approaches for return algorithms.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

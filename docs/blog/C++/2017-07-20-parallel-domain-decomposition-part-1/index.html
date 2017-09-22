@@ -1,0 +1,361 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parallel domain decomposition for particle methods: Part 1</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim//assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim//assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim/">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim//docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Parallel domain decomposition for particle methods: Part 1</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#creating-and-scattering-particles" id="markdown-toc-creating-and-scattering-particles">Creating and scattering particles</a></li>
+  <li><a href="#mpi-implementation" id="markdown-toc-mpi-implementation">MPI implementation</a>    <ul>
+      <li><a href="#mpi-setup" id="markdown-toc-mpi-setup">MPI setup</a></li>
+      <li><a href="#the-scatter-operation" id="markdown-toc-the-scatter-operation">The scatter operation</a></li>
+    </ul>
+  </li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h4 id="introduction">Introduction</h4>
+<p>For parallel particle codes that have to be written quickly (while retaining flexibility), the
+task-based parallelism approach doesn’t always work well.  The usual approach that is taken
+in those situations is some sort of domain decomposition and a lot of associated fine-grained
+code for communication between processes.  One tries to strike the appropriate balance between
+communication and computation while making sure that the computation is load-balanced.  As a
+rule of thumb, less communication is better.</p>
+
+<p>One approach (among many) in particle-based codes that are being parallelized starting from
+a serial version is:</p>
+
+<ul>
+  <li>The creation of the particles on the root/master processor.</li>
+  <li>Scattering the particles to various processes.</li>
+  <li>Communicating ghost regions at processor boundaries.</li>
+  <li>Migrating particles that have crossed processor boundaries to the appropriate process.</li>
+</ul>
+
+<p>In the interest of simplicity, we ignore the communication of interparticle forces.</p>
+
+<h4 id="creating-and-scattering-particles">Creating and scattering particles</h4>
+<p>Particles are created on the master process (P0) and then transferred to other parallel
+processes during the “scatter” operation.  In the animation below, we assume that there
+are nine processes - P0 through P8.  The domain is decomposed into nine squares and the
+contents of each square are sent to the appropriate process.</p>
+
+<div>
+  <input name="restartButton" type="button" value="Scatter particles" onclick="restartAnimation()" />
+</div>
+<div>
+  <canvas id="particle-scatter" height="500" width="500"></canvas>
+</div>
+
+<h4 id="mpi-implementation">MPI implementation</h4>
+<p>A possible MPI implementation of the scattering process is described below.  For convenience
+we use the <code>boost::mpi</code> wrappers around MPI calls is most cases.  However, some MPI calls
+do not have associated Boost calls and we have to use the MPI calls directly.</p>
+
+<h5 id="mpi-setup">MPI setup</h5>
+<p>The first step is to set up the MPI communicator and determine the rank (and MPI coordinates
+in a virtual Cartesian topology) of the current process:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="cp">#include</span> <span class="cpf">&lt;boost/mpi.hpp&gt;</span><span class="cp"></span>
+<span class="p">........</span>
+<span class="p">........</span>
+
+<span class="kt">void</span> <span class="n">mpiSetup</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// The Boost MPI communicator</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span> <span class="n">boostWorld</span><span class="p">;</span>
+  <span class="c1">// The standard MPI communicator</span>
+  <span class="n">MPI_Comm</span> <span class="n">mpiWorld</span> <span class="o">=</span> <span class="n">MPI_Comm</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">);</span>
+  <span class="c1">// Create a 3D Cartesian virtual process topology (3 x 3 x 1)</span>
+  <span class="kt">int</span> <span class="n">dimensions</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+  <span class="n">IntVec</span> <span class="n">mpiProcs</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+  <span class="n">IntVec</span> <span class="n">periods</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">reordering</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">MPI_Comm</span> <span class="n">cartesianComm</span><span class="p">;</span>
+  <span class="n">MPI_Cart_create</span><span class="p">(</span><span class="n">mpiWorld</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">mpiProcs</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">periods</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">reordering</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cartesianComm</span><span class="p">);</span>
+  <span class="c1">// Find the process rank</span>
+  <span class="kt">int</span> <span class="n">mpiRank</span><span class="p">;</span>
+  <span class="n">MPI_Comm_rank</span><span class="p">(</span><span class="n">cartesianComm</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">mpiRank</span><span class="p">);</span>
+  <span class="c1">// Find the number of processes associated with the communicator</span>
+  <span class="kt">int</span> <span class="n">mpiSize</span><span class="p">;</span>
+  <span class="n">MPI_Comm_size</span><span class="p">(</span><span class="n">cartesianComm</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">mpiSize</span><span class="p">);</span>
+  <span class="c1">// Find the MPI coordinates of the process</span>
+  <span class="n">IntVec</span> <span class="n">mpiCoords</span><span class="p">;</span>
+  <span class="n">MPI_Cart_coords</span><span class="p">(</span><span class="n">cartesianComm</span><span class="p">,</span> <span class="n">mpiRank</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">mpiCoords</span><span class="p">.</span><span class="n">data</span><span class="p">());</span>
+  <span class="c1">// Save the communicator, rank, coordinates, size etc.</span>
+  <span class="p">........</span>
+  <span class="p">........</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>In the above, the <code>IntVec</code> class is an <code>std::array&lt;int, 3&gt;</code>.</p>
+
+<h5 id="the-scatter-operation">The scatter operation</h5>
+<p>In the scatter operation, the particles are assigned to each patch and then
+sent to the appropriate patches using the asynchronous <code>isend</code> operation:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="cm">/**</span>
+<span class="cm"> * boostComm     : The boost MPI communicator</span>
+<span class="cm"> * cartesianComm : The MPI Cartesian communicator</span>
+<span class="cm"> * dimensions    : The number of dimensions in the virtual topology</span>
+<span class="cm"> * mpiRank       : Rank of the current process</span>
+<span class="cm"> * mpiSize       : Number of MPI processes</span>
+<span class="cm"> * mpiProcs      : Vector containing the number of processes in each dimension</span>
+<span class="cm"> * domainMin/Max : Minimum/maximum corners of box representing physical domain</span>
+<span class="cm"> * particles     : Vector of shared pointers to particles</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="nf">scatterParticles</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostComm</span><span class="p">,</span>
+                      <span class="n">MPI_Comm</span><span class="o">&amp;</span> <span class="n">cartesianComm</span><span class="p">,</span>
+                      <span class="kt">int</span> <span class="n">dimensions</span><span class="p">,</span> <span class="kt">int</span> <span class="n">mpiRank</span><span class="p">,</span> <span class="kt">int</span> <span class="n">mpiSize</span><span class="p">,</span>
+                      <span class="k">const</span> <span class="n">IntVec</span><span class="o">&amp;</span> <span class="n">mpiProcs</span><span class="p">,</span>
+                      <span class="k">const</span> <span class="n">Vec</span><span class="o">&amp;</span> <span class="n">domainMin</span><span class="p">,</span> <span class="k">const</span> <span class="n">Vec</span><span class="o">&amp;</span> <span class="n">domainMax</span><span class="p">,</span>
+                      <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">particles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Find the physical dimensions of each patch</span>
+  <span class="n">Vec</span> <span class="n">patchWidth</span> <span class="o">=</span> <span class="p">(</span><span class="n">domainMax</span> <span class="o">-</span> <span class="n">domainMin</span><span class="p">)</span><span class="o">/</span><span class="n">mpiProcs</span><span class="p">;</span>
+
+  <span class="c1">// For the root process</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">mpiRank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Create a set of send requests</span>
+    <span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">request</span> <span class="n">requests</span><span class="p">[</span><span class="n">mpiSize</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+    <span class="c1">// Loop through the number of processors in reverse order</span>
+    <span class="c1">// so that the root processor rank is accessed last</span>
+    <span class="n">ParticlePArray</span> <span class="n">insideParticles</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">rank</span> <span class="o">=</span> <span class="n">mpiSize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="n">rank</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="o">--</span><span class="n">rank</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">insideParticles</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+      <span class="c1">// Find the MPI coordinates of the processor</span>
+      <span class="n">IntVec</span> <span class="n">mpiCoords</span><span class="p">;</span>
+      <span class="n">MPI_Cart_coords</span><span class="p">(</span><span class="n">cartesianComm</span><span class="p">,</span> <span class="n">rank</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">mpiCoords</span><span class="p">.</span><span class="n">data</span><span class="p">());</span>
+      <span class="c1">// Convert these MPI coordinates into physical patch coordinates</span>
+      <span class="n">Vec</span> <span class="n">patchLower</span> <span class="o">=</span> <span class="n">domainMin</span> <span class="o">+</span> <span class="n">patchWidth</span><span class="o">*</span><span class="n">mpiCoords</span><span class="p">;</span> 
+      <span class="n">Vec</span> <span class="n">patchUpper</span> <span class="o">=</span> <span class="n">patchLower</span> <span class="o">+</span> <span class="n">patchWidth</span><span class="p">;</span> 
+      <span class="c1">// Find which particles are contained in the current patch</span>
+      <span class="n">findParticles</span><span class="p">(</span><span class="n">patchLower</span><span class="p">,</span> <span class="n">patchUpper</span><span class="p">,</span> <span class="n">particles</span><span class="p">,</span> <span class="n">insideParticles</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">rank</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// Send the particles inside the patch to the appropriate process</span>
+        <span class="c1">// (asynchronous)</span>
+        <span class="n">requests</span><span class="p">[</span><span class="n">rank</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">boostComm</span><span class="p">.</span><span class="n">isend</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">insideParticles</span><span class="p">);</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="c1">// All that remains in the root patch are particles that have</span>
+        <span class="c1">// not been sent to other processors. We just copy the insideParticles</span>
+        <span class="c1">// to particles</span>
+        <span class="p">.....</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="c1">// Now wait until all the asynchronous data transfer is complete</span>
+    <span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">wait_all</span><span class="p">(</span><span class="n">requests</span><span class="p">,</span> <span class="n">requests</span> <span class="o">+</span> <span class="n">mpiSize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="c1">// Receive data from the root patch</span>
+    <span class="n">boostComm</span><span class="p">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">particles</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Here <code>ParticlePArray</code> is a <code>std::vector&lt;ParticleP&gt;</code> and <code>ParticleP</code> is
+a <code>std::shared_ptr&lt;Particle&gt;</code>.  The <code>Particle</code> class contains particle
+data.  For simplicity, we do not consider the performance implications
+of an array of structures (as used in this implementation) versus
+a structure of arrays (which is more efficient).</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>In the next part of this series, we will discuss two approaches for inter-patch communication
+for particle-based simulations.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+<script src="https://bbanerjee.github.io/ParSim//assets/js/d3.v4.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim//assets/js/colorbrewer.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim//assets/js/particleScatter.js"></script>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ParSim</title>
+  <title>Custom 404 Page</title>
   <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim//assets/css/screen.css">
   <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
   <script src="https://bbanerjee.github.io/ParSim//assets/js/modernizr.min.js"></script>
@@ -46,78 +46,102 @@
 
 
 
-  <section class="intro">
-  <div class="grid">
-    <div class="unit whole center-on-mobiles">
-      <h1>Parsim : Particle-based Simulation </h1>
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Custom 404 Page</h1>
+          <p>You can easily serve custom 404 error pages with Jekyll to replace the default <strong>Error 404 – File Not Found</strong> page displayed when one tries to access a broken link on your site.</p>
+
+<h2 id="on-github-pages">On GitHub Pages</h2>
+
+<p>Any <code>404.html</code> at the <strong>root of your <code>_site</code> directory</strong> will be served automatically by GitHub Pages and the local WEBrick development server.</p>
+
+<p>Simply add a <code>404.md</code> or <code>404.html</code> at the root of your site’s source directory and include the YAML Front Matter data to use the theme’s base layout.</p>
+
+<p>If you plan to organize your files under subdirectories, the error page should have the following Front Matter Data, set: <code>permalink: /404.html</code>. This is to ensure that the compiled <code>404.html</code> resides at the root of your processed site, where it’ll be picked by the server.</p>
+
+<pre><code>---
+# example 404.md
+
+layout: default
+permalink: /404.html
+---
+
+# 404
+
+Page not found! :(
+</code></pre>
+
+<h2 id="hosting-on-apache-web-servers">Hosting on Apache Web Servers</h2>
+
+<p>Apache Web Servers load a configuration file named <a href="http://www.htaccess-guide.com/"><code>.htaccess</code></a> that modifies the functionality of these servers.</p>
+
+<p>Simply add the following to your <code>.htaccess</code> file.</p>
+
+<pre><code>ErrorDocument 404 /404.html
+</code></pre>
+
+<p>With an <code>.htaccess</code> file, you have the freedom to place your error page within a subdirectory.</p>
+
+<pre><code>ErrorDocument 404 /error_pages/404.html
+</code></pre>
+
+<p>Where the path is relative to your site’s domain.</p>
+
+<p>More info on configuring Apache Error Pages can found in <a href="https://httpd.apache.org/docs/current/mod/core.html#errordocument">official documentation</a>.</p>
+
+<h2 id="hosting-on-nginx-server">Hosting on Nginx server</h2>
+
+<p>The procedure is just as simple as configuring Apache servers, but slightly different.</p>
+
+<p>Add the following to the nginx configuration file, <code>nginx.conf</code>, which is usually located inside <code>/etc/nginx/</code> or <code>/etc/nginx/conf/</code>:</p>
+
+<pre><code>server {
+  error_page 404 /404.html;
+  location  /404.html {
+    internal;
+  }
+}
+</code></pre>
+<p>The <code>location</code> directive prevents users from directly browsing the 404.html page.</p>
+
+          
+
+
+
+
+
+  
+  
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Tutorials</h4>
+
+   <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
     </div>
-  </div>
-  <div class="clear"></div>
-</section>
-
-<section class="features">
-  <div class="grid">
-    <div class="unit two-thirds center-on-mobiles">
-
-      <p>
-        ParSim is a fork of the <a href="http://uintah.utah.edu">Uintah simulation software</a> 
-        with a focus on solid mechanics modeling and simulation.
-      </p>
-
-      <p>
-        Current development is focussed on <a href="https://github.com/bbanerjee/ParSim/tree/master/Vaango">Vaango</a>,
-        a MPM code, 
-        and <a href="https://github.com/bbanerjee/ParSim/tree/master/ThirdParty/paraEllip3d_DEM_PD_SPH">ParaEllip3D</a>,
-        a DEM-SPH-Peridynamics code.
-      </p>
-
-      <p>
-        We are also exploring the development of a 
-        <a href="https://github.com/bbanerjee/VaangoUI">user interface</a> for these tools. 
-      </p>
-
-       
-    </div>
-  </div>
-  <div class="clear"></div>
-</section>
-
-<section class="intro">
-  <div class="grid">
-    <div class="unit two-thirds align-right">
-      <h3>Hints</h3>
-
-      The following hint boxes are used in this  documentation:
-
-      <div class="note">
-        <h5>Tips</h5>
-        <p>These are tips and tricks that will make your development and simulations easier.</p>
-      </div>
-
-      <div class="note info">
-        <h5>Notes</h5>
-        <p>These are notes on features that may trip you up.</p>
-      </div>
-
-      <div class="note warning">
-        <h5>Warnings</h5>
-        <p>Notes on things such as exceptions.</p>
-      </div>
-
-      <div class="note unreleased">
-        <h5>Unreleased</h5>
-        <p>These are experimental features that should be used with caution.</p>
-      </div>
-    </div>
-  </div>
-  <div class="clear"></div>
-
-</section>
-
-
-
-
-
+  </section>
 
 
   <footer>

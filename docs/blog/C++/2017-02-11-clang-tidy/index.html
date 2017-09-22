@@ -1,0 +1,326 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auto-modernizing C++ code</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim//assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim//assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim/">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim//docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Auto-modernizing C++ code</h1>
+          <p>The Clang static analyzer tools come with a handy interface called <a href="http://releases.llvm.org/3.8.0/tools/clang/tools/extra/docs/clang-tidy/index.html">clang-tidy</a>.</p>
+
+<p>I’ve been try to set up this tool in my <code>cmake</code> toolchain with varying levels of success.  In 
+particular I’d like to automate the conversion of old code into a version that uses C++11 and
+some C++14 constructs.</p>
+
+<hr />
+
+<h4 id="attempt-1">Attempt 1</h4>
+
+<hr />
+
+<p>In my first attempt I created a <code>cmake</code> directory at the top level of my source tree and
+added a <code>clang-tidy.cmake</code> file that contained the following:</p>
+
+<pre><code class="language-bash">
+  file(GLOB_RECURSE ALL_MY_SOURCE_FILES *.cpp *.hpp *.cc *.h)
+  add_custom_target(
+        clang-tidy
+        COMMAND /usr/bin/clang-tidy
+        ${ALL_MY_SOURCE_FILES}
+        -config=''
+        -export-fixes='clang-tidy-fixes.dat'
+        --
+        -std=c++14
+        -I${MY_SOURCE_INCLUDE_DIR}
+        -I${MY_MPI_INCLUDE_DIR1}
+        -I${MY_MPI_INCLUDE_DIR2}
+        -I${MY_MPI_INCLUDE_DIR3}
+        -I${MY_BOOST_INCLUDE_DIR}
+        -I${MY_VTK_INCLUDE_DIR}
+  )
+
+</code></pre>
+
+<p>At the bottom of my main <code>CMakeList.txt</code> file I added</p>
+
+<pre><code class="language-bash">
+  include(cmake/clang-tidy.cmake)
+
+</code></pre>
+
+<p>When I ran <code>cmake</code> and then <code>make clang-tidy</code>, there were several complaints about
+header files not being found, but the suggested fixes were written to the
+file <code>clang-tidy-fixes.dat</code>.  That file contained numerous suggested fixes in the format</p>
+
+<pre><code class="language-bash">
+    - FilePath:        /path/to/file/parser.h
+      Offset:          9558
+      Length:          52
+      ReplacementText: '(const auto &amp; token : tokens)'
+
+</code></pre>
+
+<p>Going through that file and then hand-coding the changes
+looked daunting, so I looked at automating the code change process.</p>
+
+<hr />
+
+<h4 id="attempt-2">Attempt 2</h4>
+
+<hr />
+
+<p>To make <code>clang-tidy</code> apply the fixes automatically, I replaced</p>
+
+<pre><code class="language-bash">
+        -export-fixes='clang-tidy-fixes.dat'
+
+</code></pre>
+
+<p>in <code>clang-tidy.cmake</code> to</p>
+
+<pre><code class="language-bash">
+        -fix-errors
+
+</code></pre>
+
+<p>When I ran <code>make clang-tidy</code> after that change, fixes were automatically applied,
+but also applied multiple times.  For example, I got</p>
+
+<pre><code class="language-c">
+   std::move(std::move(std::move(std::move(a))));
+
+</code></pre>
+
+<p>instead of</p>
+
+<pre><code class="language-c">
+   std::move(a);
+
+</code></pre>
+
+<hr />
+
+<h4 id="attempt-3">Attempt 3</h4>
+
+<hr />
+<p>Clearly, attempt 2 wasn’t solving the problem, and I went back to the <code>clang-tidy</code>
+manual and found that I could actually export the compile commands from by build using</p>
+
+<pre><code class="language-bash">
+  cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ../src
+
+</code></pre>
+
+<p>That command created a <code>compile_commands.json</code> file which contained all the 
+path and header information that a build could need.</p>
+
+<p>I then located the python script for running clang-tidy from</p>
+
+<pre><code class="language-bash">
+  /usr/lib/llvm-3.8/share/clang/run-clang-tidy.py
+
+</code></pre>
+
+<p>and, from my build directory containing <code>compile_commands.json</code>, I ran</p>
+
+<pre><code class="language-bash">
+  run-clang-tidy.py ../src -checks=modernize* -fix
+
+</code></pre>
+
+<p>No more complaints about missing header files, and all fixes appeared to have been
+applied only once.  It’s much easier to use this process than to try to create a
+custom target for cmake.</p>
+
+<p><a href="https://twitter.com/share" class="twitter-share-button" data-via="parresianz">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(docsument, 'script', 'twitter-wjs');</script></p>
+
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+
+<script type="IN/Share" data-counter="right"></script>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

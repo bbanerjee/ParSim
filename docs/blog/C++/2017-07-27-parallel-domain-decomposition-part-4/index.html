@@ -1,0 +1,408 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parallel domain decomposition for particle methods: Part 4</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim//assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim//assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim/">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim//docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Parallel domain decomposition for particle methods: Part 4</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#plimptons-scheme-for-migrating-particles" id="markdown-toc-plimptons-scheme-for-migrating-particles">Plimpton’s scheme for migrating particles</a></li>
+  <li><a href="#mpi-implementation" id="markdown-toc-mpi-implementation">MPI implementation</a>    <ul>
+      <li><a href="#patch-struct" id="markdown-toc-patch-struct">Patch struct</a></li>
+    </ul>
+  </li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h4 id="introduction">Introduction</h4>
+<p>The Plimpton scheme of communicating ghost information between patches was described
+in <a href="https://bbanerjee.github.io/ParSim//mpi/c++/parallel-domain-decomposition-part-3/">Part 3</a> of this series.
+Let us now see how a similar approach can be used to migrate particles that have
+moved across patches.</p>
+
+<p>In the animation below we just move the particles within each patch randomly.  To make
+the identity of the particles clear, we have used solid circles for the patch particles and
+three-quarter circle for the particles in the ghost regions. As you can see, some of the
+particles have moved outside the patches and need either to be deleted (if they have
+left the computational domain - assuming that the domain size remains unchanged) or they
+need to be moved to adjacent patches.</p>
+
+<div align="center" style="border:1px solid black">
+<div>
+  <input name="restartMotion" type="button" value="Repeat particle motion" onclick="particleMotion.restartAnimation()" />
+</div>
+<div>
+  <canvas id="particle-motion" height="500" width="500"></canvas>
+</div>
+</div>
+<p />
+
+<h4 id="plimptons-scheme-for-migrating-particles">Plimpton’s scheme for migrating particles</h4>
+<p>If we run Plimpton’s scheme in reverse order, we can move the particles to the appropriate
+patches with only four communication steps in 2D and six in 3D.  Notice in the animation
+below that we start with a search region in the x-direction that contains the top and bottom
+patches along with the right (or left) patch.  We relocate particles in this region first and
+then need to move particles only in the top and bottom patches.  Note also that the ghost particles
+have been moved back to their original locations, indicating that we can ignore these during the
+migration process.  Depending on the requirements of the problem, we may either delete particles
+that have left the domain, introduce them back in a periodic manner, or extend the domain itself.</p>
+
+<div align="center" style="border:1px solid black">
+<div>
+  <input name="restartMigrate" type="button" value="Migrate particles across patches" onclick="particleMigrate.restartAnimation()" />
+</div>
+<div>
+  <canvas id="particle-migrate" height="500" width="500"></canvas>
+</div>
+</div>
+<p />
+
+<h4 id="mpi-implementation">MPI implementation</h4>
+<p>The implementation of the migration process is similar to that for ghost exchange. A typical
+<code>migrateParticles</code> function can have the following form:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="k">using</span> <span class="n">ParticleIDHashMap</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">unordered_set</span><span class="o">&lt;</span><span class="n">ParticleID</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="kt">void</span> <span class="nf">migrateParticle</span><span class="p">(....,</span> <span class="k">const</span> <span class="n">Vec</span><span class="o">&amp;</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">ParticleIDHashMap</span> <span class="n">sentParticles</span><span class="p">;</span>  <span class="c1">// sent particles per process</span>
+  <span class="n">ParticlePArray</span>    <span class="n">recvParticles</span><span class="p">;</span>  <span class="c1">// received particles per process</span>
+  <span class="c1">// First migrate in the x-direction</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvMigrateXMinus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvMigrateXPlus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">waitToFinishX</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineSentParticlesX</span><span class="p">(</span><span class="n">sentParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineReceivedParticlesX</span><span class="p">(</span><span class="n">recvParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">deleteSentParticles</span><span class="p">(</span><span class="n">sentParticles</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">addReceivedParticles</span><span class="p">(</span><span class="n">recvParticles</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="c1">// Next migrate in the y-direction</span>
+  <span class="n">sentParticles</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+  <span class="n">recvParticles</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvMigrateYMinus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvMigrateYPlus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">waitToFinishY</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineSentParticlesY</span><span class="p">(</span><span class="n">sentParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineReceivedParticlesY</span><span class="p">(</span><span class="n">recvParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">deleteSentParticles</span><span class="p">(</span><span class="n">sentParticles</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">addReceivedParticles</span><span class="p">(</span><span class="n">recvParticles</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="c1">// Next migrate in the z-direction</span>
+  <span class="n">sentParticles</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+  <span class="n">recvParticles</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvMigrateZMinus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvMigrateZPlus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">patchWidth</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">waitToFinishZ</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineSentParticlesZ</span><span class="p">(</span><span class="n">sentParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineReceivedParticlesZ</span><span class="p">(</span><span class="n">recvParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">deleteSentParticles</span><span class="p">(</span><span class="n">sentParticles</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">addReceivedParticles</span><span class="p">(</span><span class="n">recvParticles</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="c1">// delete outgoing particles (if needed by the problem)</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">removeParticlesOutsidePatch</span><span class="p">(</span><span class="n">patchParticles</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>In <a href="https://bbanerjee.github.io/ParSim//mpi/c++/parallel-domain-decomposition-part-2/">Part 2</a> we defined
+a <code>PatchNeighborComm</code> struct and a <code>Patch</code> struct.  We can keep the <code>PatchNeighborComm</code>
+struct in the same form, with the possible addition of a method of two.  However, the <code>Patch</code>
+struct becomes considerably simplified as show below.</p>
+
+<h5 id="patch-struct">Patch struct</h5>
+<p>The <code>Patch</code> struct described in <a href="https://bbanerjee.github.io/ParSim//mpi/c++/parallel-domain-decomposition-part-3/">Part 3</a>
+now has a few more methods.  Let us see how some of these new functions may be implemented.</p>
+
+<p>The first new function is <code>sendRecvMigrateXMinus</code> which is the equivalent of <code>sendRecvGhostXMinus</code>
+for th emigration process.  Note that the only difference between these two function is the
+definition of the search box.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="kt">void</span> 
+<span class="n">Patch</span><span class="o">::</span><span class="n">sendRecvMigrateXMinus</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostWorld</span><span class="p">,</span> 
+                             <span class="k">const</span> <span class="n">Vec</span><span class="o">&amp;</span> <span class="n">neighborWidth</span><span class="p">,</span>
+                             <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">particles</span><span class="p">)</span> 
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">d_xMinus</span><span class="p">.</span><span class="n">d_boundary</span> <span class="o">==</span> <span class="n">PatchBoundary</span><span class="o">::</span><span class="n">inside</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">Vec</span> <span class="n">neighborLower</span> <span class="o">=</span> <span class="n">d_lower</span> <span class="o">-</span> <span class="n">neighborWidth</span><span class="p">;</span>
+    <span class="n">Vec</span> <span class="n">neighborUpper</span> <span class="o">=</span> <span class="n">d_upper</span> <span class="o">+</span> <span class="n">neighborWidth</span><span class="p">;</span>
+    <span class="n">neighborUpper</span><span class="p">.</span><span class="n">setX</span><span class="p">(</span><span class="n">d_lower</span><span class="p">.</span><span class="n">x</span><span class="p">());</span>
+    <span class="n">Box</span> <span class="nf">neighborBox</span><span class="p">(</span><span class="n">neighborLower</span><span class="p">,</span> <span class="n">neighborUpper</span><span class="p">);</span>
+    <span class="n">d_xMinus</span><span class="p">.</span><span class="n">asyncSendRecv</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> 
+                           <span class="n">neighborBox</span><span class="p">,</span> <span class="n">d_tolerance</span><span class="p">,</span>
+                           <span class="n">particles</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The next new method is <code>combineSentParticlesX</code> which is defined as:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="kt">void</span> 
+<span class="n">Patch</span><span class="o">::</span><span class="n">combineSentParticlesX</span><span class="p">(</span><span class="n">ParticleIDHashMap</span><span class="o">&amp;</span> <span class="n">sent</span><span class="p">)</span> 
+<span class="p">{</span>
+  <span class="n">d_xMinus</span><span class="p">.</span><span class="n">combineSentParticles</span><span class="p">(</span><span class="n">sent</span><span class="p">);</span>
+  <span class="n">d_xPlus</span><span class="p">.</span><span class="n">combineSentParticles</span><span class="p">(</span><span class="n">sent</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The <code>combineSentParticles</code> method in <code>PatchNeighborComm</code> is defined as</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="kt">void</span> 
+<span class="n">PatchNeighborComm</span><span class="o">::</span><span class="n">combineSentParticles</span><span class="p">(</span><span class="n">ParticleIDHashMap</span><span class="o">&amp;</span> <span class="n">sent</span><span class="p">)</span> 
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">d_sentParticles</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="nl">particle</span> <span class="p">:</span> <span class="n">d_sentParticles</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">sent</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">particle</span><span class="o">-&gt;</span><span class="n">getId</span><span class="p">());</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>One also needs to delete the sent particles from the patch, using the method
+<code>deleteSentParticles</code>;  this is where the use of a hashmap becomes handy.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="kt">void</span>
+<span class="n">Patch</span><span class="o">::</span><span class="n">deleteSentParticles</span><span class="p">(</span><span class="k">const</span> <span class="n">ParticleIDHashMap</span><span class="o">&amp;</span> <span class="n">sent</span><span class="p">,</span>
+                           <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">particles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">sent</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">particles</span><span class="p">.</span><span class="n">erase</span><span class="p">(</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">remove_if</span><span class="p">(</span>
+        <span class="n">particles</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">particles</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span>
+        <span class="p">[</span><span class="o">&amp;</span><span class="n">sent</span><span class="p">](</span><span class="k">const</span> <span class="n">ParticleP</span><span class="o">&amp;</span> <span class="n">particle</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="p">(</span><span class="n">sent</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">particle</span><span class="o">-&gt;</span><span class="n">getId</span><span class="p">())</span> <span class="o">!=</span> <span class="n">std</span><span class="o">::</span><span class="n">end</span><span class="p">(</span><span class="n">sent</span><span class="p">));</span>
+        <span class="p">}),</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">end</span><span class="p">(</span><span class="n">particles</span><span class="p">));</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Finally, we add the received particles to the list of particles in the patch using
+<code>addReceivedParticles</code>:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="kt">void</span>
+<span class="n">Patch</span><span class="o">::</span><span class="n">addReceivedParticles</span><span class="p">(</span><span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">received</span><span class="p">,</span>
+                            <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">particles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">particles</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">particles</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">received</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">received</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>In some special cases, we will also need to remove particles outside the domain.  One
+approach is to use <code>removeParticlesOutsidePatch</code>, but this step is typically not recommended
+in general as it is costly and often not necessary.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="kt">void</span> 
+<span class="n">Patch</span><span class="o">::</span><span class="n">removeParticlesOutsidePatch</span><span class="p">(</span><span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">particles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">Box</span> <span class="n">box</span><span class="p">(</span><span class="n">d_lower</span><span class="p">,</span> <span class="n">d_upper</span><span class="p">);</span>
+  <span class="kt">double</span> <span class="n">epsilon</span> <span class="o">=</span> <span class="n">d_tolerance</span><span class="p">;</span>
+  <span class="n">particles</span><span class="p">.</span><span class="n">erase</span><span class="p">(</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">remove_if</span><span class="p">(</span>
+      <span class="n">particles</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">particles</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span>
+      <span class="p">[</span><span class="o">&amp;</span><span class="n">box</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">epsilon</span><span class="p">](</span><span class="n">ParticleP</span> <span class="n">particle</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">box</span><span class="p">.</span><span class="n">inside</span><span class="p">(</span><span class="n">particle</span><span class="o">-&gt;</span><span class="n">currentPos</span><span class="p">(),</span> <span class="n">epsilon</span><span class="p">))</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+      <span class="p">}),</span>
+    <span class="n">particles</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+<span class="p">}</span></code></pre></figure>
+
+<p />
+
+<h4 id="remarks">Remarks</h4>
+<p>In the next part of this series we will explore how information about forces can be communicated
+across patches.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+<script src="https://bbanerjee.github.io/ParSim//assets/js/d3.v4.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim//assets/js/colorbrewer.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim//assets/js/seedrandom.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim//assets/js/particleMigrate.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim//assets/js/particleMotion.js"></script>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href=""></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim//assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>
