@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sampling large data sets (Part 1)</title>
+  <title>Checking the build</title>
   <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
   <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
   <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
@@ -51,65 +51,41 @@
 
       <div class="unit four-fifths">
         <article>
-          <h1>Sampling large data sets (Part 1)</h1>
-          <p><img style="float:right;width:300px" alt="SensorArray" src="https://bbanerjee.github.io/ParSim/assets/blogimg/SensorArray.png" /></p>
+          <h1>Checking the build</h1>
+          <p>To check the build, you should run a few example problems.</p>
 
-<p>The amount of data is large.  Before we analyze the whole set of data, we can find trends<br />
-by examining a smaller set of sensors.  A smaller set is also useful if we want to
-train a model.</p>
+<ul>
+  <li>Create a directory called <code>runs</code> under <code>Vaango</code></li>
+</ul>
 
-<p>One of extracting a smaller set from the data is to generate a <a href="http://en.wikipedia.org/wiki/Latin_hypercube_sampling">Latin hypercube sample</a> from a uniform three-dimensional distribution.
-The R package <code>lhs</code> can be used to generate a sample:</p>
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>     mkdir runs</code></pre></figure>
 
-<pre><code class="language-R">  # Install and load the lhs library
-  install.packages("lhs")
-  library("lhs")
+<ul>
+  <li>Create links to the optimized and debug executables:</li>
+</ul>
 
-  # Create a Latin Hypercube sample of coordinates between 0 and 1
-  # 100 samples, 3 dimensions
-  sampleCoords &lt;- randomLHS(100, 3)
-</code></pre>
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>     <span class="nb">cd</span> runs
+     ln -s ../dbg/StandAlone/vaango vaango_dbg
+     ln -s ../opt/StandAlone/vaango vaango_dbg</code></pre></figure>
 
-<p><img style="float:right;width:300px" alt="LHS samples" src="https://bbanerjee.github.io/ParSim/assets/blogimg/SampleCoords.png" /><br />
-The sampling algorithm produces a set of points whose coordinates are in <script type="math/tex">[0,1]</script>.  The 
-adjacent figure shows some of the points.  Blue circles indicate the distance of the point
-from the plane of the screen.</p>
+<ul>
+  <li>Create links to the <code>inputs</code> directory:</li>
+</ul>
 
-<p>To get a set of sample points that samples the sensor positions equally well, we have to
-map the cube into a cylinder.</p>
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>     ln -s ../src/StandAlone/inputs/MPM MPM_inputs</code></pre></figure>
 
-<p>A <a href="http://mathproofs.blogspot.co.nz/2005/07/mapping-square-to-circle.html">simple map</a> that takes lines in the <script type="math/tex">[-1,1]</script> square to ellipses in the unit circle is</p>
+<ul>
+  <li>Do a serial test run</li>
+</ul>
 
-<p><script type="math/tex">r = \sqrt{x^2 + y^2 - x^2\,y^2}  \,,</script>
-<script type="math/tex">\theta = \tan^{-1}\left(\cfrac{y\sqrt{1-x^2/2}}{x\sqrt{1-y^2/2}}\right) \,,</script>
-<script type="math/tex">z = z \,.</script></p>
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>     ./vaango_opt MPM_inputs/const_test_hypo.ups</code></pre></figure>
 
-<p>A slightly better map is the <a href="https://mediatech.aalto.fi/~jaakko/T111-5310/K2013/JGT-97.pdf">Shirley-Chew idea</a> that attempts to reduce distortion during mapping.
-Polar plots of the mapped LHS points show how the two maps operate.</p>
+<ul>
+  <li>Do a parallel test run</li>
+</ul>
 
-<table>
-  <tbody>
-    <tr>
-      <td><img style="float:right;width:300px" alt="PolarPlots" src="https://bbanerjee.github.io/ParSim/assets/blogimg/PolarPrime.png" /></td>
-      <td><img style="float:right;width:300px" alt="SensorArray" src="https://bbanerjee.github.io/ParSim/assets/blogimg/PolarShirleyChew.png" /></td>
-    </tr>
-  </tbody>
-</table>
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>    mpirun  -np <span class="m">1</span> ./vaango_opt MPM_inputs/const_test_hypo.ups</code></pre></figure>
 
-<p><img style="float:right;width:300px" alt="Sensors and samples" src="https://bbanerjee.github.io/ParSim/assets/blogimg/SensorsAndSamples.png" /><br />
-The sample coordinates generated in the unit disk can then be transformed so that 
-they lie in the first quadrant.</p>
-
-<p>Now that we have the samples, the next step is to find the sensors that are
-closest to the sample points in some manner.  The next post will discuss how
-that is done.</p>
-
-<p><a href="https://twitter.com/share" class="twitter-share-button" data-via="parresianz">Tweet</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(docsument, 'script', 'twitter-wjs');</script>
-<script src="//platform.linkedin.com/in.js" type="text/javascript">
-  lang: en_US
-</script>
-<script type="IN/Share" data-counter="right"></script></p>
 
           
 
@@ -152,7 +128,7 @@ that is done.</p>
 
   
   
-  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/build-check/">Checking the build</a></li>
+  <li class="current"><a href="https://bbanerjee.github.io/ParSim/docs/build-check/">Checking the build</a></li>
 
 </ul>
 

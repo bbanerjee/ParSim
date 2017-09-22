@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome</title>
+  <title>Download</title>
   <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
   <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
   <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
@@ -51,17 +51,123 @@
 
       <div class="unit four-fifths">
         <article>
-          <h1>Welcome</h1>
-          <h2 id="helpful-hints">Helpful Hints</h2>
+          <h1>Download</h1>
+          <h3 id="user-version">User version</h3>
 
-<p>Throughout this guide there are a number of small-but-handy pieces of
-information that can make using Jekyll easier, more interesting, and less
-hazardous. Here’s what to look out for.</p>
+<ul>
+  <li>Create a clone of the ParSim repository</li>
+</ul>
 
-<div class="note">
-  <h5>ProTips™ help you get more from Jekyll</h5>
-  <p>These are tips and tricks that will help you be a Jekyll wizard!</p>
-</div>
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>   git clone https://github.com/bbanerjee/ParSim</code></pre></figure>
+
+<ul>
+  <li>Check status</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>  git status
+  git diff origin/master</code></pre></figure>
+
+<ul>
+  <li>Just in case the master has changed, update your copy</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>  git pull</code></pre></figure>
+
+<h3 id="developer-version-for-ubuntu">Developer version (for Ubuntu)</h3>
+
+<p>If you are a developer, we will suggest the following longer version.</p>
+
+<ul>
+  <li>Create a <code>GitHub</code> account</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>   https://github.com/signup/free</code></pre></figure>
+
+<ul>
+  <li>Install <code>git</code> on your machine</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>   sudo apt-get install git-core</code></pre></figure>
+
+<ul>
+  <li>Setup git configuration</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>   git config --global user.email <span class="s2">&quot;your_email@your_address.com&quot;</span>
+   git config --global user.name <span class="s2">&quot;your_github_username&quot;</span></code></pre></figure>
+
+<ul>
+  <li>Email your <code>github</code> username to Biswajit @ gmail.com</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>   b.banerjee.nz</code></pre></figure>
+
+<ul>
+  <li>Create a clone of the ParSim repository</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>   git clone https://github.com/bbanerjee/ParSim</code></pre></figure>
+
+<ul>
+  <li>Check branches/master</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>  git branch -a</code></pre></figure>
+
+<ul>
+  <li>Configure <code>ssh</code> for secure access (if needed)</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>  <span class="nb">cd</span> ~/.ssh
+  mkdir backup
+  cp * backup/
+  rm id_rsa*
+  ssh-keygen -t rsa -C <span class="s2">&quot;your_email@your_address.com&quot;</span>
+  sudo apt-get install xclip
+  <span class="nb">cd</span> ~/ParSim/
+  xclip -sel clip &lt; ~/.ssh/id_rsa.pub
+  ssh -T git@github.com
+  ssh-add
+  ssh -T git@github.com</code></pre></figure>
+
+<ul>
+  <li>For password-less access with <code>ssh</code>, use</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>  git remote set-url origin git@github.com:bbanerjee/ParSim.git</code></pre></figure>
+
+<ul>
+  <li>To change the default message editor, do</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>  git config --global core.editor <span class="s2">&quot;vim&quot;</span></code></pre></figure>
+
+<h4 id="getting-the-latest-version-adding-files-etc">Getting the latest version, adding files etc.</h4>
+<ul>
+  <li>Check status</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>  git status
+  git diff origin/master</code></pre></figure>
+
+<ul>
+  <li>Update local repository</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>  git pull</code></pre></figure>
+
+<ul>
+  <li>Add file to your local repository</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>  git add README
+  git commit -m <span class="s1">&#39;Added README file for git&#39;</span></code></pre></figure>
+
+<ul>
+  <li>Update main repository with your changes</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>  git push origin master</code></pre></figure>
 
 
           
@@ -97,15 +203,15 @@ hazardous. Here’s what to look out for.</p>
 
   
   
-  <li class="current"><a href="https://bbanerjee.github.io/ParSim/docs/home/">Welcome</a></li>
+  <li class="current"><a href="https://bbanerjee.github.io/ParSim/docs/home/">Download</a></li>
 
   
   
-  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/quickstart/">Quick-start guide</a></li>
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/build-instructions/">Building Vaango</a></li>
 
   
   
-  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/installation/">Installation</a></li>
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/build-check/">Checking the build</a></li>
 
 </ul>
 
