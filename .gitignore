@@ -31,3 +31,5 @@ CMakeFiles
 build
 cmake_install.cmake
 .vscode
+_site
+gh-pages

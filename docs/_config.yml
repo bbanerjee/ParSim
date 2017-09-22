@@ -11,8 +11,8 @@ description: "»ParSim« ParSim is a fork of the Uintah simulation software that
 
 
 # This is a switch to easily change the {{ site.url }}-variable to develop the theme locally
-#url: "http://localhost:4000"
-url: "https://bbanerjee.github.io/ParSim"
+url: "http://localhost:4000"
+#url: "https://bbanerjee.github.io/ParSim"
 baseurl: ""
 
 # Repo

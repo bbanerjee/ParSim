@@ -14,7 +14,7 @@ Although websites can have sophisticated features and controls, we'll keep thing
 
 ## What is a Jekyll Website?
 
-First, let's start with a grounding in the basics. Stripping a Jekyll site down to an extremely basic level will help clarify what happens in a Jekyll site. If you haven't already installed the jekyll gem, [install it]({% link _docs/installation.md %}).
+First, let's start with a grounding in the basics. Stripping a Jekyll site down to an extremely basic level will help clarify what happens in a Jekyll site. If you haven't already installed the jekyll gem, [install it]({% link _docs/index.md %}).
 
 We'll start with a *basic Jekyll site* consisting of three files:
 
