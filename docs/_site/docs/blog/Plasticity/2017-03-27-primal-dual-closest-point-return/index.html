@@ -1,0 +1,472 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nonlinear programming and closest point return plasticity</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim/docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Nonlinear programming and closest point return plasticity</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#background" id="markdown-toc-background">Background</a>    <ul>
+      <li><a href="#primal-form" id="markdown-toc-primal-form">Primal form</a></li>
+      <li><a href="#the-lagrangian" id="markdown-toc-the-lagrangian">The Lagrangian</a></li>
+      <li><a href="#dual-function" id="markdown-toc-dual-function">Dual function</a></li>
+      <li><a href="#dual-form" id="markdown-toc-dual-form">Dual form</a></li>
+      <li><a href="#karush-kuhn-tucker-optimality-conditions" id="markdown-toc-karush-kuhn-tucker-optimality-conditions">Karush-Kuhn-Tucker optimality conditions</a></li>
+    </ul>
+  </li>
+  <li><a href="#similarity-with-plasticity" id="markdown-toc-similarity-with-plasticity">Similarity with plasticity</a></li>
+  <li><a href="#closest-point-return" id="markdown-toc-closest-point-return">Closest point return</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h5 id="introduction">Introduction</h5>
+<p>In <a href="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/">Part 5</a> I
+briefly hinted at the closest-point return algorithm.  The ideas behind this were made rigorous in the
+mid-to-late 1980s by a group of researchers influenced by developments in convex optimization. Since
+then there has been a statis in the development of return algorithms for phenomenological plasticity.
+However, the recent surge in improvements in machine learning has the potential of leading to another
+leap forward in our understanding and implementation of nonlinear, history-dependent, constitutive models.</p>
+
+<p>Let us explore the basic ideas behind closest-point algorithms.</p>
+
+<h5 id="background">Background</h5>
+<p>In nonlinear optimization, the method of <a href="https://en.wikipedia.org/wiki/Lagrange_multiplier">Lagrange multipliers</a> has been used since the mid 1800s to solve minimization problems with <em>equality</em> constraints.  In
+1950, this approach was generalized by <a href="https://projecteuclid.org/euclid.bsmsp/1200500249">Kuhn and Tucker</a> to allow for <em>inequality</em> constraints.  Later it was discovered that W. Karush from the University of Chicago had reached the same conclusions in his MSc thesis from 1939.</p>
+
+<h6 id="primal-form">Primal form</h6>
+<p>The primal form of the optimization problem is</p>
+<div>
+$$
+  \begin{align}
+    &amp; \text{minimize}   &amp; &amp; f(\mathbf{x}) \\
+    &amp; \text{subject to} &amp; &amp; g_i(\mathbf{x}) \le 0, \quad i = 1, \dots, m \\
+    &amp;                   &amp; &amp; h_j(\mathbf{x}) = 0, \quad j = 1, \dots, p 
+  \end{align}
+$$
+</div>
+<p>Note that there is no convexity requirement for this problem.</p>
+
+<h6 id="the-lagrangian">The Lagrangian</h6>
+<p>The Lagrangian (<script type="math/tex">\mathcal{L}</script>) associated with the primal form is just the weighted sum of
+the objective function <script type="math/tex">f_0</script> and the constraint functions <script type="math/tex">g_i</script> and <script type="math/tex">h_j</script>.
+Thus</p>
+<div>
+$$
+  \mathcal{L}(\mathbf{x}, \boldsymbol{\lambda}, \boldsymbol{\nu})
+    = f(\mathbf{x}) + \boldsymbol{\lambda}\cdot\mathbf{g}(\mathbf{x}) +
+      \boldsymbol{\nu}\cdot\mathbf{h}(\mathbf{x})
+$$
+</div>
+<p>where</p>
+<div>
+$$
+  \boldsymbol{\lambda} = \begin{bmatrix} \lambda_1 \\ \lambda_2 \\ \vdots \\ \lambda_m \end{bmatrix} ~,~~
+  \mathbf{g} = \begin{bmatrix} g_1 \\ g_2 \\ \vdots \\ g_m \end{bmatrix} ~,~~
+  \boldsymbol{\nu} = \begin{bmatrix} \nu_1 \\ \nu_2 \\ \vdots \\ \nu_p \end{bmatrix} ~,~~
+  \mathbf{h} = \begin{bmatrix} h_1 \\ h_2 \\ \vdots \\ h_p \end{bmatrix} \,.
+$$
+</div>
+<p>The vectors <script type="math/tex">\boldsymbol{\lambda}</script> and <script type="math/tex">\boldsymbol{\nu}</script> are called <em>Lagrange multiplier vectors</em> or,
+more frequently, the <em>dual variables</em> of the primal problem.</p>
+
+<h6 id="dual-function">Dual function</h6>
+<p>The dual function (<script type="math/tex">\mathcal{F}(\boldsymbol{\lambda},\boldsymbol{\nu})</script>)
+to the primal problem is defined as</p>
+<div>
+$$
+  \mathcal{F}(\boldsymbol{\lambda},\boldsymbol{\nu}) = \inf_{\mathbf{x}}
+  \mathcal{L}(\mathbf{x}, \boldsymbol{\lambda}, \boldsymbol{\nu})
+    = \inf_{\mathbf{x}} \left[f(\mathbf{x}) + \boldsymbol{\lambda}\cdot\mathbf{g}(\mathbf{x}) +
+      \boldsymbol{\nu}\cdot\mathbf{h}(\mathbf{x})\right]
+$$
+</div>
+<p>Note that the dual function is the minimum of a family of affine functions (linear + a constant term)
+in <script type="math/tex">(\boldsymbol{\lambda},\boldsymbol{\nu})</script>.  This makes the dual problem concave.  Note also that
+since the dual function is affine, it is bounded from below by <script type="math/tex">-\infty</script> when the value of <script type="math/tex">\mathbf{x}</script>
+is unbounded.</p>
+
+<p>Simplified forms for <script type="math/tex">\mathcal{F}</script> can be found for many problems, including problems that
+can be expressed as quadratic forms.</p>
+
+<h6 id="dual-form">Dual form</h6>
+<p>Since the dual function is the largest lower bound on the Lagrangian, the <em>Lagrange dual form</em> of the
+primal minimization can be expressed as</p>
+<div>
+$$
+  \begin{align}
+    &amp; \text{maximize}   &amp; &amp; \mathcal{F}(\boldsymbol{\lambda},\boldsymbol{\nu}) \\
+    &amp; \text{subject to} &amp; &amp; \boldsymbol{\lambda} \succeq \mathbf{0}
+  \end{align}
+$$
+</div>
+<p>We don’t have any constraint on <script type="math/tex">\boldsymbol{\nu}</script> because <script type="math/tex">\mathbf{h}(\mathbf{x}) = \mathbf{0}</script>.</p>
+
+<h6 id="karush-kuhn-tucker-optimality-conditions">Karush-Kuhn-Tucker optimality conditions</h6>
+<p>Let <script type="math/tex">\mathbf{x}^\star</script> be the optimal solution for the primal problem and
+let <script type="math/tex">(\boldsymbol{\lambda}^\star, \boldsymbol{\nu}^\star)</script> be the optimal solution
+of the dual problem.  When these two solutions lead to a zero duality gap, i.e.,</p>
+<div>
+$$
+  f(\mathbf{x}^\star) = \mathcal{F}(\boldsymbol{\lambda}^\star, \boldsymbol{\nu}^\star)
+$$
+</div>
+<p>the Lagrangian at that optimal point is</p>
+<div>
+$$
+  \mathcal{L}(\mathbf{x}^\star, \boldsymbol{\lambda}^\star, \boldsymbol{\nu}^\star)
+    = f(\mathbf{x}^\star) + \boldsymbol{\lambda}^\star\cdot\mathbf{g}(\mathbf{x}^\star) +
+      \boldsymbol{\nu}^\star\cdot\mathbf{h}(\mathbf{x}^\star)
+$$
+</div>
+<p>Also, since <script type="math/tex">\boldsymbol{\lambda}^\star \ge 0</script> and <script type="math/tex">\mathbf{h} = 0</script>,</p>
+<div>
+$$
+  f(\mathbf{x}^\star) = \mathcal{F}(\boldsymbol{\lambda}^\star, \boldsymbol{\nu}^\star)
+  = \inf_{\mathbf{x}} \mathcal{L}(\mathbf{x}, \boldsymbol{\lambda}^\star, \boldsymbol{\nu}^\star)
+  \le \mathcal{L}(\mathbf{x}^\star, \boldsymbol{\lambda}^\star, \boldsymbol{\nu}^\star)
+  \le f(\mathbf{x}^\star)
+$$
+</div>
+<p>The only way for the above to be true is when</p>
+<div>
+$$
+  \boldsymbol{\lambda}^\star\cdot\mathbf{g}(\mathbf{x}^\star) = 0  \quad \leftrightarrow \quad
+  \lambda^\star_i g_i(\mathbf{x}^\star) = 0 \,.
+$$
+</div>
+<p>Also, since <script type="math/tex">\mathbf{x}^\star</script> minimizes the Lagrangian, its gradient is zero at that point:</p>
+<div>
+$$
+  \frac{\partial}{\partial \mathbf{x}}
+    \mathcal{L}(\mathbf{x}^\star, \boldsymbol{\lambda}^\star, \boldsymbol{\nu}^\star)
+    = \mathbf{0} 
+    = \frac{\partial f(\mathbf{x}^\star)}{\partial\mathbf{x}} +
+      \boldsymbol{\lambda}^\star\cdot\frac{\partial\mathbf{g}(\mathbf{x}^\star)}{\partial\mathbf{x}} +
+      \boldsymbol{\nu}^\star\cdot\frac{\partial\mathbf{h}(\mathbf{x}^\star)}{\partial\mathbf{x}}
+$$
+</div>
+<p>These results, along with the original constraints of the primal and dual problems, are collected
+together into the <em>Karush-Kuhn-Tucker optimality conditions</em>:</p>
+<div class="notice">
+$$
+  \begin{align}
+    &amp; g_i(\mathbf{x}^\star) \le 0 &amp; &amp; 
+     h_j(\mathbf{x}^\star) = 0  \\
+    &amp; \lambda_i^\star \ge 0  &amp; &amp; 
+    \lambda^\star_i g_i(\mathbf{x}^\star) = 0 \\
+    &amp; \frac{\partial f(\mathbf{x}^\star)}{\partial\mathbf{x}} +
+      \boldsymbol{\lambda}^\star\cdot\frac{\partial\mathbf{g}(\mathbf{x}^\star)}{\partial\mathbf{x}} +
+      \boldsymbol{\nu}^\star\cdot\frac{\partial\mathbf{h}(\mathbf{x}^\star)}{\partial\mathbf{x}} = \mathbf{0}
+  \end{align}
+$$
+</div>
+
+<h5 id="similarity-with-plasticity">Similarity with plasticity</h5>
+<p>The plastic loading-unloading conditions are similar to the Karush-Kush-Tucker optimality conditions
+in that we have</p>
+<div>
+$$
+  \begin{align}
+    g(\boldsymbol{\sigma}) \le 0 ~,~~
+    \dot{\lambda} \ge 0 ~,~~ \dot{\lambda} g(\boldsymbol{\sigma}) = 0
+  \end{align}
+$$
+</div>
+<p>where <script type="math/tex">g(\boldsymbol{\sigma})</script> is the yield surface constraining the values of <script type="math/tex">\boldsymbol{\sigma}</script>.
+We may also interpret the flow rule as the last Karush-Kuhn-Tucker condition:</p>
+<div>
+$$
+  -\dot{\boldsymbol{\varepsilon}}^p + \dot{\lambda}\frac{\partial g}{\partial \boldsymbol{\sigma}} = 0 
+  \quad \text{where} \quad
+  -\dot{\boldsymbol{\varepsilon}}^p =: \frac{\partial f}{\partial \boldsymbol{\sigma}}
+$$
+</div>
+<p>and <script type="math/tex">f(\boldsymbol{\sigma})</script> is the quantity that is minimized in the primal problem.  We can
+interpret <script type="math/tex">f</script> as the negative of the maximum plastic dissipation, i.e.,
+<script type="math/tex">f(\boldsymbol{\sigma}) = -\boldsymbol{\sigma}:\dot{\boldsymbol{\varepsilon}}^p \,.</script></p>
+
+<p>If we use a first-order update approach, the discretized equations for perfect plasticity are
+(see <a href="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-5/">Part 5</a>)</p>
+<div>
+$$
+  \begin{align}
+    \boldsymbol{\sigma}_{n+1} &amp; = \mathbf{C}:(\boldsymbol{\varepsilon}_{n+1} - \boldsymbol{\varepsilon}_{n+1}^p)
+    = \boldsymbol{\sigma}_{n+1}^{\text{trial}} - \mathbf{C}:(\boldsymbol{\varepsilon}_{n+1}^p - \boldsymbol{\varepsilon}_{n}^p)\\
+    \boldsymbol{\varepsilon}_{n+1}^p &amp; = \boldsymbol{\varepsilon}_n^p + \Delta\lambda \left.\frac{\partial g}{\partial \boldsymbol{\sigma}}\right|_{\boldsymbol{\sigma}_{n}}
+    \quad \text{or} \quad
+    \boldsymbol{\varepsilon}_{n+1}^p = \boldsymbol{\varepsilon}_n^p + \Delta\lambda \left.\frac{\partial g}{\partial \boldsymbol{\sigma}}\right|_{\boldsymbol{\sigma}_{n+1}} \\
+    &amp; g(\boldsymbol{\sigma}_{n+1})  \le 0 ~,~~
+    \Delta\lambda \ge 0 ~,~~ \Delta\lambda g(\boldsymbol{\sigma}_{n+1}) = 0
+  \end{align}
+$$
+</div>
+<p class="notice--info">Note that if we interpret the flow rule as an optimality condition
+a backward Euler update is consistent with the Karush-Kuhn-Tucker conditions
+and a forward Euler update is ruled out.</p>
+
+<h5 id="closest-point-return">Closest point return</h5>
+<p>Let <script type="math/tex">\boldsymbol{\sigma}^{\text{trial}}</script> be the trial stress and let
+<script type="math/tex">g(\boldsymbol{\sigma}^{\text{trial}})</script> be the value of the yield function at that state.  Let
+<script type="math/tex">\boldsymbol{\sigma}_{n+1}</script> be actual stress and let <script type="math/tex">g(\boldsymbol{\sigma}_{n+1}) = 0</script> be the value
+of the yield function at the actual stress state.</p>
+
+<p>Let us assume the actual stress state on the yield surface is at the closest distance from the trial stress.
+Then we can devise the primal minimization problem:</p>
+<div>
+$$
+  \begin{align}
+    &amp; \text{minimize}   &amp; &amp; f(\boldsymbol{\sigma}) = \lVert \boldsymbol{\sigma}^{\text{trial}} - \boldsymbol{\sigma}\rVert^2 \\
+    &amp; \text{subject to} &amp; &amp; g(\boldsymbol{\sigma}) \le 0 \\
+  \end{align}
+$$
+</div>
+<p>where</p>
+<div>
+$$
+  \lVert \boldsymbol{\sigma} \rVert = \sqrt{\boldsymbol{\sigma}:\boldsymbol{\sigma}}
+$$
+</div>
+<p>The Lagrangian for this problem is</p>
+<div>
+$$
+  \mathcal{L}(\boldsymbol{\sigma},\lambda) =
+  f(\boldsymbol{\sigma})+ \Delta\lambda g(\boldsymbol{\sigma}) = 
+  \lVert \boldsymbol{\sigma}^{\text{trial}} - \boldsymbol{\sigma}\rVert^2 + \Delta\lambda g(\boldsymbol{\sigma})
+$$
+</div>
+<p>The Karush-Kuhn-Tucker conditions for this problem at the optimum value <script type="math/tex">\boldsymbol{\sigma}_{n+1}</script> are</p>
+<div>
+$$
+  \begin{align}
+    &amp; g(\boldsymbol{\sigma}_{n+1}) \le 0 ~,~~
+      \Delta\lambda \ge 0 ~,~~
+      \Delta\lambda g(\boldsymbol{\sigma}_{n+1}) = 0 \\
+    &amp; \frac{\partial f(\boldsymbol{\sigma}_{n+1})}{\partial\boldsymbol{\sigma}} + \Delta\lambda \frac{\partial g(\boldsymbol{\sigma}_{n+1})}{\partial \boldsymbol{\sigma}} =  
+      -2(\boldsymbol{\sigma}^{\text{trial}} - \boldsymbol{\sigma}_{n+1}) + \Delta\lambda \frac{\partial g(\boldsymbol{\sigma}_{n+1})}{\partial \boldsymbol{\sigma}} = \mathbf{0} 
+  \end{align}
+$$
+</div>
+<p>From the last condition we see that the closest distance using this criterion leads to a stress value of</p>
+<div>
+$$
+   \boldsymbol{\sigma}_{n+1} = 
+      \boldsymbol{\sigma}^{\text{trial}} -  \tfrac{1}{2} \Delta\lambda \frac{\partial g(\boldsymbol{\sigma}_{n+1})}{\partial \boldsymbol{\sigma}}
+$$
+</div>
+<p>But we have seen previously that the first-order stress update with backward Euler leads to</p>
+<div>
+$$
+  \boldsymbol{\sigma}_{n+1}  
+    = \boldsymbol{\sigma}^{\text{trial}} - \Delta\lambda\mathbf{C}: \frac{\partial g(\boldsymbol{\sigma}_{n+1})}{\partial \boldsymbol{\sigma}}
+$$
+</div>
+<p>The similarity between the two indicates that we are on the right track, i.e., the actual stress is at
+the closest distance from the trial stress to the yield surface.  But the correct closest distance is
+not in the standard standard stress space, but in a space where the norm to be minimized is given by</p>
+<div class="notice--info">
+$$
+  \lVert \boldsymbol{\sigma} \rVert_{\mathbf{C}^{-1}} = \sqrt{\boldsymbol{\sigma}:\mathbf{C}^{-1}:\boldsymbol{\sigma}}
+$$
+</div>
+
+<p>This can be verified by repeating the above exercise with the new definition of the norm.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>Most methods used for finding <script type="math/tex">\boldsymbol{\sigma}_{n+1}</script> using the closest-point projection idea
+use variations on the Newton method that require the computation of second-derivatives of the
+yield function.  We will discuss a method that avoids those computations in the next part of this series.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

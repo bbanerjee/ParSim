@@ -1,0 +1,442 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parallel domain decomposition for particle methods: Part 3</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim/docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Parallel domain decomposition for particle methods: Part 3</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#plimptons-scheme-for-exchanging-particles" id="markdown-toc-plimptons-scheme-for-exchanging-particles">Plimpton’s scheme for exchanging particles</a></li>
+  <li><a href="#mpi-implementation" id="markdown-toc-mpi-implementation">MPI implementation</a>    <ul>
+      <li><a href="#patch-struct" id="markdown-toc-patch-struct">Patch struct</a></li>
+      <li><a href="#the-particle-exchange-function" id="markdown-toc-the-particle-exchange-function">The particle exchange function</a></li>
+    </ul>
+  </li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h4 id="introduction">Introduction</h4>
+<p>In <a href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/">Part 2</a> of this series
+we showed the direct way of communicating ghost particles between patches.  That approach
+requires 26 communication steps per patch in three-dimensions.  In this article we discuss
+the approach suggested by Steve Plimpton (“Fast parallel algorithms for short-range molecular 
+dynamics”, Sandia Report SAND91-1144.UC-405, 1993).</p>
+
+<p>Plimpton’s paper has been cited almost 15,000 times since its publication.  Among other
+things, the paper explains how the number of communication steps can be reduced to six in
+three dimensions.</p>
+
+<h4 id="plimptons-scheme-for-exchanging-particles">Plimpton’s scheme for exchanging particles</h4>
+<p>If you run the animation below, you will notice that the left-right ghost particles are
+exchanged first.  The ghost regions in the up-down directions are then extended to include
+the left-right ghost regions.  The particles in these enlarged regions are then transferred
+in the up-down directions.  Therefore, there are only four communication steps in two-dimensions.
+The same process can be used in three-dimensions, leading to only six communication steps.</p>
+
+<div align="center" style="border:1px solid black">
+<div>
+  <input name="restartExchange" type="button" value="Exchange ghost particles" onclick="particlePlimpton.restartAnimation()" />
+</div>
+<div>
+  <canvas id="particle-exchange-plimpton" height="500" width="500"></canvas>
+</div>
+</div>
+<p />
+
+<h4 id="mpi-implementation">MPI implementation</h4>
+<p>In <a href="https://bbanerjee.github.io/ParSim/mpi/c++/parallel-domain-decomposition-part-2/">Part 2</a> we defined
+a <code>PatchNeighborComm</code> struct and a <code>Patch</code> struct.  We can keep the <code>PatchNeighborComm</code>
+struct in the same form, with the possible addition of a method of two.  However, the <code>Patch</code>
+struct becomes considerably simplified as show below.</p>
+
+<h5 id="patch-struct">Patch struct</h5>
+<p>The <code>Patch</code> struct now needs only six <code>PatchNeighborComm</code> objects but three <code>waitToFinish</code>
+and <code>combineReceivedParticles</code> methods.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="k">struct</span> <span class="n">Patch</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">d_rank</span><span class="p">;</span>
+  <span class="kt">double</span> <span class="n">d_ghostWidth</span><span class="p">,</span> <span class="n">d_tolerance</span><span class="p">;</span>
+  <span class="n">IntVec</span> <span class="n">d_patchMPICoords</span><span class="p">;</span>
+  <span class="n">Vec</span> <span class="n">d_lower</span><span class="p">,</span> <span class="n">d_upper</span><span class="p">;</span>
+  <span class="n">PatchNeighborComm</span> <span class="n">d_xMinus</span><span class="p">,</span> <span class="n">d_yMinus</span><span class="p">,</span> <span class="n">d_zMinus</span><span class="p">,</span> <span class="n">d_xPlus</span><span class="p">,</span> <span class="n">d_yPlus</span><span class="p">,</span> <span class="n">d_zPlus</span><span class="p">;</span>
+  <span class="n">Patch</span><span class="p">(</span><span class="n">MPI_Comm</span><span class="o">&amp;</span> <span class="n">cartComm</span><span class="p">,</span>
+        <span class="kt">int</span> <span class="n">rank</span><span class="p">,</span> <span class="k">const</span> <span class="n">IntVec</span><span class="o">&amp;</span> <span class="n">mpiCoords</span><span class="p">,</span> <span class="k">const</span> <span class="n">Vec</span><span class="o">&amp;</span> <span class="n">lower</span><span class="p">,</span> <span class="k">const</span> <span class="n">Vec</span><span class="o">&amp;</span> <span class="n">upper</span><span class="p">,</span>
+        <span class="kt">double</span> <span class="n">ghostWidth</span><span class="p">,</span> <span class="kt">double</span> <span class="n">tolerance</span><span class="p">);</span>
+  <span class="kt">void</span> <span class="nf">setXMinus</span><span class="p">(</span><span class="n">MPI_Comm</span><span class="o">&amp;</span> <span class="n">cartComm</span><span class="p">);</span> <span class="c1">// A patch boundary is at the domain boundary</span>
+  <span class="kt">void</span> <span class="nf">setXPlus</span><span class="p">(</span><span class="n">MPI_Comm</span><span class="o">&amp;</span> <span class="n">cartComm</span><span class="p">);</span>
+  <span class="kt">void</span> <span class="nf">setYMinus</span><span class="p">(</span><span class="n">MPI_Comm</span><span class="o">&amp;</span> <span class="n">cartComm</span><span class="p">);</span>
+  <span class="c1">// .....</span>
+  <span class="kt">void</span> <span class="nf">setZPlus</span><span class="p">(</span><span class="n">MPI_Comm</span><span class="o">&amp;</span> <span class="n">cartComm</span><span class="p">);</span>
+  <span class="c1">// Step 1: Send and receive data from x+ and x-</span>
+  <span class="kt">void</span> <span class="nf">sendRecvGhostXMinus</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostWorld</span><span class="p">,</span>
+                           <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="kt">void</span> <span class="nf">sendRecvGhostXPlus</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostWorld</span><span class="p">,</span>
+                          <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="kt">void</span> <span class="nf">waitToFinishX</span><span class="p">();</span>
+  <span class="kt">void</span> <span class="nf">combineReceivedParticlesX</span><span class="p">(</span><span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="c1">// Step 2: Send and receive data from y+ and y-</span>
+  <span class="kt">void</span> <span class="nf">sendRecvGhostYMinus</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostWorld</span><span class="p">,</span>
+                           <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="kt">void</span> <span class="nf">sendRecvGhostYPlus</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostWorld</span><span class="p">,</span>
+                          <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="kt">void</span> <span class="nf">waitToFinishY</span><span class="p">();</span>
+  <span class="kt">void</span> <span class="nf">combineReceivedParticlesY</span><span class="p">(</span><span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="c1">// Step 3: Send and receive data from z+ and z-</span>
+  <span class="kt">void</span> <span class="nf">sendRecvGhostZMinus</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostWorld</span><span class="p">,</span>
+                           <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="kt">void</span> <span class="nf">sendRecvGhostZPlus</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostWorld</span><span class="p">,</span>
+                          <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="kt">void</span> <span class="nf">waitToFinishZ</span><span class="p">();</span>
+  <span class="kt">void</span> <span class="nf">combineReceivedParticlesZ</span><span class="p">(</span><span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">);</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>The new implementation of the <code>Patch</code> struct is shown below.  The initialization of
+the struct is the same as before; as are the <code>setXMinus</code> etc. methods.  Also, the
+<code>sendRecvGhostXMinus</code> and <code>sendRecvGhostXPlus</code> methods are the same as before.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="n">Patch</span><span class="o">::</span><span class="n">Patch</span><span class="p">(</span><span class="c1">//...) {</span>
+  <span class="c1">//.....  Same as for direct communication</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">setXMinus</span><span class="p">(</span><span class="n">MPI_Comm</span><span class="o">&amp;</span> <span class="n">cartComm</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">//.....  Same as for direct communication</span>
+<span class="p">}</span>
+<span class="c1">//......</span></code></pre></figure>
+
+<p>Next we do the communication of the x+ and x- neighbors and combine the
+received particles with the particles in the current patch.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="c1">// Step 1:  Do the x+ and x- communication</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">sendRecvGhostXMinus</span><span class="p">(</span><span class="c1">//....) {</span>
+  <span class="c1">//.....  Same as for direct communication</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">sendRecvGhostXPlus</span><span class="p">(</span><span class="c1">//....) {</span>
+  <span class="c1">//.....  Same as for direct communication</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">waitToFinishX</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">d_xMinus</span><span class="p">.</span><span class="n">d_boundary</span> <span class="o">==</span> <span class="n">PatchBoundary</span><span class="o">::</span><span class="n">inside</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">d_xMinus</span><span class="p">.</span><span class="n">waitToFinish</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">d_xPlus</span><span class="p">.</span><span class="n">d_boundary</span> <span class="o">==</span> <span class="n">PatchBoundary</span><span class="o">::</span><span class="n">inside</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">d_xPlus</span><span class="p">.</span><span class="n">waitToFinish</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">combineReceivedParticlesX</span><span class="p">(</span><span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">received</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+  <span class="n">d_xMinus</span><span class="p">.</span><span class="n">combineReceivedParticles</span><span class="p">(</span><span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_xPlus</span><span class="p">.</span><span class="n">combineReceivedParticles</span><span class="p">(</span><span class="n">patchParticles</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Now that the <code>patchParticles</code> vector has been updated, we can repeat the
+process for the y+ and y- directions.  Note that the size of the ghost
+region has been expanded in the negative and positive x-direction.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="c1">// Step 2:  Do the y+ and y- communication</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">sendRecvGhostYMinus</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostWorld</span><span class="p">,</span> <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">d_yMinus</span><span class="p">.</span><span class="n">d_boundary</span> <span class="o">==</span> <span class="n">PatchBoundary</span><span class="o">::</span><span class="n">inside</span><span class="p">)</span> <span class="p">{</span> 
+    <span class="n">Vec</span> <span class="n">ghostLower</span> <span class="o">=</span> <span class="n">d_lower</span> <span class="o">-</span> <span class="n">Vec</span><span class="p">(</span><span class="n">d_ghostWidth</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
+    <span class="n">Vec</span> <span class="n">ghostUpper</span> <span class="o">=</span> <span class="n">d_upper</span> <span class="o">+</span> <span class="n">Vec</span><span class="p">(</span><span class="n">d_ghostWidth</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
+    <span class="n">ghostUpper</span><span class="p">.</span><span class="n">setY</span><span class="p">(</span><span class="n">d_lower</span><span class="p">.</span><span class="n">y</span><span class="p">()</span> <span class="o">+</span> <span class="n">d_ghostWidth</span><span class="p">);</span>
+    <span class="n">Box</span> <span class="nf">ghostBox</span><span class="p">(</span><span class="n">ghostLower</span><span class="p">,</span> <span class="n">ghostUpper</span><span class="p">);</span>
+    <span class="n">d_yMinus</span><span class="p">.</span><span class="n">asyncSendRecv</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">ghostBox</span><span class="p">,</span> <span class="n">d_tolerance</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">sendRecvGhostYPlus</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostWorld</span><span class="p">,</span> <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">d_yPlus</span><span class="p">.</span><span class="n">d_boundary</span> <span class="o">==</span> <span class="n">PatchBoundary</span><span class="o">::</span><span class="n">inside</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">Vec</span> <span class="n">ghostLower</span> <span class="o">=</span> <span class="n">d_lower</span> <span class="o">-</span> <span class="n">Vec</span><span class="p">(</span><span class="n">d_ghostWidth</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
+    <span class="n">ghostLower</span><span class="p">.</span><span class="n">setY</span><span class="p">(</span><span class="n">d_upper</span><span class="p">.</span><span class="n">y</span><span class="p">()</span> <span class="o">-</span> <span class="n">d_ghostWidth</span><span class="p">);</span>
+    <span class="n">Vec</span> <span class="n">ghostUpper</span> <span class="o">=</span> <span class="n">d_upper</span> <span class="o">+</span> <span class="n">Vec</span><span class="p">(</span><span class="n">d_ghostWidth</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
+    <span class="n">Box</span> <span class="nf">ghostBox</span><span class="p">(</span><span class="n">ghostLower</span><span class="p">,</span> <span class="n">ghostUpper</span><span class="p">);</span>
+    <span class="n">d_yPlus</span><span class="p">.</span><span class="n">asyncSendRecv</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">ghostBox</span><span class="p">,</span> <span class="n">d_tolerance</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">waitToFinishY</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">d_yMinus</span><span class="p">.</span><span class="n">d_boundary</span> <span class="o">==</span> <span class="n">PatchBoundary</span><span class="o">::</span><span class="n">inside</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">d_yMinus</span><span class="p">.</span><span class="n">waitToFinish</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">d_yPlus</span><span class="p">.</span><span class="n">d_boundary</span> <span class="o">==</span> <span class="n">PatchBoundary</span><span class="o">::</span><span class="n">inside</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">d_yPlus</span><span class="p">.</span><span class="n">waitToFinish</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">combineReceivedParticlesY</span><span class="p">(</span><span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">received</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+  <span class="n">d_yMinus</span><span class="p">.</span><span class="n">combineReceivedParticles</span><span class="p">(</span><span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_yPlus</span><span class="p">.</span><span class="n">combineReceivedParticles</span><span class="p">(</span><span class="n">patchParticles</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Finally, we do the third stage of communication in the z-direction.  The ghost-regions
+have now been expanded to contain for the x-, x+ and y-, y+ extensions.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="c1">// Step 2:  Do the z+ and z- communication</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">sendRecvGhostZMinus</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostWorld</span><span class="p">,</span> <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">d_zMinus</span><span class="p">.</span><span class="n">d_boundary</span> <span class="o">==</span> <span class="n">PatchBoundary</span><span class="o">::</span><span class="n">inside</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">Vec</span> <span class="n">ghostLower</span> <span class="o">=</span> <span class="n">d_lower</span> <span class="o">-</span> <span class="n">Vec</span><span class="p">(</span><span class="n">d_ghostWidth</span><span class="p">,</span> <span class="n">d_ghostWidth</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
+    <span class="n">Vec</span> <span class="n">ghostUpper</span> <span class="o">=</span> <span class="n">d_upper</span> <span class="o">+</span> <span class="n">Vec</span><span class="p">(</span><span class="n">d_ghostWidth</span><span class="p">,</span> <span class="n">d_ghostWidth</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
+    <span class="n">ghostUpper</span><span class="p">.</span><span class="n">setZ</span><span class="p">(</span><span class="n">d_lower</span><span class="p">.</span><span class="n">z</span><span class="p">()</span> <span class="o">+</span> <span class="n">d_ghostWidth</span><span class="p">);</span>
+    <span class="n">Box</span> <span class="nf">ghostBox</span><span class="p">(</span><span class="n">ghostLower</span><span class="p">,</span> <span class="n">ghostUpper</span><span class="p">);</span>
+    <span class="n">d_zMinus</span><span class="p">.</span><span class="n">asyncSendRecv</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">ghostBox</span><span class="p">,</span> <span class="n">d_tolerance</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">sendRecvGhostZPlus</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">communicator</span><span class="o">&amp;</span> <span class="n">boostWorld</span><span class="p">,</span> <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">d_zPlus</span><span class="p">.</span><span class="n">d_boundary</span> <span class="o">==</span> <span class="n">PatchBoundary</span><span class="o">::</span><span class="n">inside</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">Vec</span> <span class="n">ghostLower</span> <span class="o">=</span> <span class="n">d_lower</span> <span class="o">-</span> <span class="n">Vec</span><span class="p">(</span><span class="n">d_ghostWidth</span><span class="p">,</span> <span class="n">d_ghostWidth</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
+    <span class="n">ghostLower</span><span class="p">.</span><span class="n">setZ</span><span class="p">(</span><span class="n">d_upper</span><span class="p">.</span><span class="n">z</span><span class="p">()</span> <span class="o">-</span> <span class="n">d_ghostWidth</span><span class="p">);</span>
+    <span class="n">Vec</span> <span class="n">ghostUpper</span> <span class="o">=</span> <span class="n">d_upper</span> <span class="o">+</span> <span class="n">Vec</span><span class="p">(</span><span class="n">d_ghostWidth</span><span class="p">,</span> <span class="n">d_ghostWidth</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">);</span>
+    <span class="n">Box</span> <span class="nf">ghostBox</span><span class="p">(</span><span class="n">ghostLower</span><span class="p">,</span> <span class="n">ghostUpper</span><span class="p">);</span>
+    <span class="n">d_zPlus</span><span class="p">.</span><span class="n">asyncSendRecv</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">ghostBox</span><span class="p">,</span> <span class="n">d_tolerance</span><span class="p">,</span> <span class="n">patchParticles</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">waitToFinish</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">d_zMinus</span><span class="p">.</span><span class="n">d_boundary</span> <span class="o">==</span> <span class="n">PatchBoundary</span><span class="o">::</span><span class="n">inside</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">d_zMinus</span><span class="p">.</span><span class="n">waitToFinish</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">d_zPlus</span><span class="p">.</span><span class="n">d_boundary</span> <span class="o">==</span> <span class="n">PatchBoundary</span><span class="o">::</span><span class="n">inside</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">d_zPlus</span><span class="p">.</span><span class="n">waitToFinish</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="kt">void</span> <span class="n">Patch</span><span class="o">::</span><span class="n">combineReceivedParticlesY</span><span class="p">(</span><span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">patchParticles</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">received</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+  <span class="n">d_zMinus</span><span class="p">.</span><span class="n">combineReceivedParticles</span><span class="p">(</span><span class="n">patchParticles</span><span class="p">);</span>
+  <span class="n">d_zPlus</span><span class="p">.</span><span class="n">combineReceivedParticles</span><span class="p">(</span><span class="n">patchParticles</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p />
+
+<h5 id="the-particle-exchange-function">The particle exchange function</h5>
+<p>The Plimpton particle exchange function the main simulation can then be simplified to
+the following.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="kt">void</span> <span class="n">ParticleCode</span><span class="o">::</span><span class="n">exchangeGhostParticles</span><span class="p">()</span> <span class="p">{</span>
+  <span class="c1">// Initialize list of all particles in patch + ghost</span>
+  <span class="n">mergeParticleVec</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+  <span class="n">mergeParticleVec</span> <span class="o">=</span> <span class="n">particleVec</span><span class="p">;</span>
+  <span class="c1">// First the x+/x- directions</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvGhostXMinus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">mergeParticleVec</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvGhostXPlus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">mergeParticleVec</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">waitToFinishX</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineReceivedParticlesX</span><span class="p">(</span><span class="n">mergeParticleVec</span><span class="p">);</span>
+  <span class="c1">// Next the y+/y- directions</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvGhostYMinus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">mergeParticleVec</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvGhostYPlus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">mergeParticleVec</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">waitToFinishX</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineReceivedParticlesX</span><span class="p">(</span><span class="n">mergeParticleVec</span><span class="p">);</span>
+  <span class="c1">// Next the z+/z- directions</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvGhostZMinus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">mergeParticleVec</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">sendRecvGhostZPlus</span><span class="p">(</span><span class="n">boostWorld</span><span class="p">,</span> <span class="n">mergeParticleVec</span><span class="p">);</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">waitToFinishX</span><span class="p">();</span>
+  <span class="n">d_patchP</span><span class="o">-&gt;</span><span class="n">combineReceivedParticlesX</span><span class="p">(</span><span class="n">mergeParticleVec</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>In this case the number of communication steps is much smaller.  However, there is a wait period
+at the end of each communication step that may reduce the benefits of the Plimpton approach
+in some situations where the particles are unevenly distributed.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>Plimpton’s scheme is attractive for its simplicity in communicating ghost particle positions.
+However, there are two more important communication steps that need to be considered - the
+computation of interparticle forces and the migration of particles between patches.  In the next
+part of this series, we will discuss the migration of particles when we use the Plimpton scheme.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/d3.v4.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/colorbrewer.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/particlePlimpton.js"></script>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

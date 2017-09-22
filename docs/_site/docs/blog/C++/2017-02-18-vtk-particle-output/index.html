@@ -1,0 +1,384 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Particle data in VTK XML</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim/docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Particle data in VTK XML</h1>
+          <p>In my previous post on <a href="http://www.parresianz.com/c++/xml/vtk/vtk-output/">writing VTK output files</a> I described how mesh data can be output in VTK XML format. In this article I will talk about how I output particle data from my simulations.</p>
+
+<p>These simulations use a number of techniques depending on the requirements. I use the MPM
+(Material Point Method) and RBD (Rigid body dynamics) with the occasional 
+DEM (Discrete/Distict element method) and Peridynamics simulation.  When I am
+running RBD or DEM simulations, the particles may have not spherical shapes and the shape
+and orientation information have to be encoded into the output data in addition to other
+physical state variables.</p>
+
+<p class="notice">Note: The visualization of non-spherical particles in Visit/Paraview requires the
+implementation of a plugin that can perform the appropriate transformation.  Alternatively,
+we can convert each particle into a surface mesh before writing the output. We will not
+discuss these issues at this stage.  However, in future posts we will show how these plots
+can be generated using Javascript.</p>
+
+<h5 id="particle-data">Particle data</h5>
+
+<p>We will assume that the particles are ellipsoids.  The particle data that we will output in
+this example are:</p>
+<ul>
+  <li>The particle ID</li>
+  <li>The particle radii in the three principal axis directions</li>
+  <li>The three principal axis orientations</li>
+  <li>The particle position</li>
+  <li>The particle velocity</li>
+</ul>
+
+<h5 id="writing-the-particle-data">Writing the particle data</h5>
+<p>To write the particles data to the disk, we follow the same approach as we did
+for the grid/mesh data in the previous post.  The <code>writeParticles</code> function
+has the form</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="kt">void</span>
+<span class="n">OutputVTK</span><span class="o">::</span><span class="n">writeParticles</span><span class="p">(</span><span class="kt">double</span> <span class="n">time</span><span class="p">,</span>
+                          <span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">*</span> <span class="n">particles</span><span class="p">,</span>
+                          <span class="n">std</span><span class="o">::</span><span class="n">ostringstream</span><span class="o">&amp;</span> <span class="n">fileName</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Create a writer</span>
+  <span class="k">auto</span> <span class="n">writer</span> <span class="o">=</span> <span class="n">vtkXMLUnstructuredGridWriterP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="c1">// Get the filename with extension</span>
+  <span class="n">fileName</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;.&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">writer</span><span class="o">-&gt;</span><span class="n">GetDefaultFileExtension</span><span class="p">();</span>
+  <span class="n">writer</span><span class="o">-&gt;</span><span class="n">SetFileName</span><span class="p">((</span><span class="n">fileName</span><span class="p">.</span><span class="n">str</span><span class="p">()).</span><span class="n">c_str</span><span class="p">());</span>
+  <span class="c1">// Create a pointer to a VTK Unstructured Grid data set</span>
+  <span class="k">auto</span> <span class="n">dataSet</span> <span class="o">=</span> <span class="n">vtkUnstructuredGridP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="c1">// Set up pointer to point data</span>
+  <span class="k">auto</span> <span class="n">pts</span> <span class="o">=</span> <span class="n">vtkPointsP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="c1">// Count the total number of points</span>
+  <span class="kt">int</span> <span class="n">num_pts</span> <span class="o">=</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">particles</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">());</span>
+  <span class="n">pts</span><span class="o">-&gt;</span><span class="n">SetNumberOfPoints</span><span class="p">(</span><span class="n">num_pts</span><span class="p">);</span>
+  <span class="c1">// Add the time</span>
+  <span class="n">addTimeToVTKDataSet</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">);</span>
+  <span class="c1">// Add the particle data to the unstructured grid</span>
+  <span class="n">addParticlesToVTKDataSet</span><span class="p">(</span><span class="n">particles</span><span class="p">,</span> <span class="n">pts</span><span class="p">,</span> <span class="n">dataSet</span><span class="p">);</span>
+  <span class="c1">// Set the points</span>
+  <span class="n">dataSet</span><span class="o">-&gt;</span><span class="n">SetPoints</span><span class="p">(</span><span class="n">pts</span><span class="p">);</span>
+  <span class="c1">// Remove unused memory</span>
+  <span class="n">dataSet</span><span class="o">-&gt;</span><span class="n">Squeeze</span><span class="p">();</span>
+  <span class="c1">// Write the data</span>
+  <span class="n">writer</span><span class="o">-&gt;</span><span class="n">SetInput</span><span class="p">(</span><span class="n">dataSet</span><span class="p">);</span>
+  <span class="n">writer</span><span class="o">-&gt;</span><span class="n">SetDataModeToBinary</span><span class="p">();</span>
+  <span class="n">writer</span><span class="o">-&gt;</span><span class="n">Write</span><span class="p">();</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>We have already seen the <code>addTimeToVTKDataSet</code> method in the previous post.
+The main difference in this case is the new <code>addParticlesToVTKDataSet</code> method:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="kt">void</span>
+<span class="n">OutputVTK</span><span class="o">::</span><span class="n">addParticlesToVTKDataSet</span><span class="p">(</span><span class="k">const</span> <span class="n">ParticlePArray</span><span class="o">*</span> <span class="n">particles</span><span class="p">,</span>
+                                    <span class="n">vtkPointsP</span><span class="o">&amp;</span> <span class="n">pts</span><span class="p">,</span>
+                                    <span class="n">vtkUnstructuredGridP</span><span class="o">&amp;</span> <span class="n">dataSet</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// Set up pointers for material property data</span>
+  <span class="k">auto</span> <span class="n">ID</span> <span class="o">=</span> <span class="n">vtkDoubleArrayP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">ID</span><span class="o">-&gt;</span><span class="n">SetNumberOfComponents</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+  <span class="n">ID</span><span class="o">-&gt;</span><span class="n">SetNumberOfTuples</span><span class="p">(</span><span class="n">pts</span><span class="o">-&gt;</span><span class="n">GetNumberOfPoints</span><span class="p">());</span>
+  <span class="n">ID</span><span class="o">-&gt;</span><span class="n">SetName</span><span class="p">(</span><span class="s">&quot;ID&quot;</span><span class="p">);</span>
+
+  <span class="k">auto</span> <span class="n">radii</span> <span class="o">=</span> <span class="n">vtkDoubleArrayP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">radii</span><span class="o">-&gt;</span><span class="n">SetNumberOfComponents</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+  <span class="n">radii</span><span class="o">-&gt;</span><span class="n">SetNumberOfTuples</span><span class="p">(</span><span class="n">pts</span><span class="o">-&gt;</span><span class="n">GetNumberOfPoints</span><span class="p">());</span>
+  <span class="n">radii</span><span class="o">-&gt;</span><span class="n">SetName</span><span class="p">(</span><span class="s">&quot;Radius&quot;</span><span class="p">);</span>
+
+  <span class="k">auto</span> <span class="n">axis_a</span> <span class="o">=</span> <span class="n">vtkDoubleArrayP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">axis_a</span><span class="o">-&gt;</span><span class="n">SetNumberOfComponents</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+  <span class="n">axis_a</span><span class="o">-&gt;</span><span class="n">SetNumberOfTuples</span><span class="p">(</span><span class="n">pts</span><span class="o">-&gt;</span><span class="n">GetNumberOfPoints</span><span class="p">());</span>
+  <span class="n">axis_a</span><span class="o">-&gt;</span><span class="n">SetName</span><span class="p">(</span><span class="s">&quot;Axis a&quot;</span><span class="p">);</span>
+
+  <span class="k">auto</span> <span class="n">axis_b</span> <span class="o">=</span> <span class="n">vtkDoubleArrayP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">vtkDoubleArrayP</span> <span class="n">axis_b</span> <span class="o">=</span> <span class="n">vtkDoubleArrayP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">axis_b</span><span class="o">-&gt;</span><span class="n">SetNumberOfComponents</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+  <span class="n">axis_b</span><span class="o">-&gt;</span><span class="n">SetNumberOfTuples</span><span class="p">(</span><span class="n">pts</span><span class="o">-&gt;</span><span class="n">GetNumberOfPoints</span><span class="p">());</span>
+  <span class="n">axis_b</span><span class="o">-&gt;</span><span class="n">SetName</span><span class="p">(</span><span class="s">&quot;Axis b&quot;</span><span class="p">);</span>
+
+  <span class="k">auto</span> <span class="n">axis_c</span> <span class="o">=</span> <span class="n">vtkDoubleArrayP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">axis_c</span><span class="o">-&gt;</span><span class="n">SetNumberOfComponents</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+  <span class="n">axis_c</span><span class="o">-&gt;</span><span class="n">SetNumberOfTuples</span><span class="p">(</span><span class="n">pts</span><span class="o">-&gt;</span><span class="n">GetNumberOfPoints</span><span class="p">());</span>
+  <span class="n">axis_c</span><span class="o">-&gt;</span><span class="n">SetName</span><span class="p">(</span><span class="s">&quot;Axis c&quot;</span><span class="p">);</span>
+
+  <span class="k">auto</span> <span class="n">position</span> <span class="o">=</span> <span class="n">vtkDoubleArrayP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">position</span><span class="o">-&gt;</span><span class="n">SetNumberOfComponents</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+  <span class="n">position</span><span class="o">-&gt;</span><span class="n">SetNumberOfTuples</span><span class="p">(</span><span class="n">pts</span><span class="o">-&gt;</span><span class="n">GetNumberOfPoints</span><span class="p">());</span>
+  <span class="n">position</span><span class="o">-&gt;</span><span class="n">SetName</span><span class="p">(</span><span class="s">&quot;Position&quot;</span><span class="p">);</span>
+
+  <span class="k">auto</span> <span class="n">velocity</span> <span class="o">=</span> <span class="n">vtkDoubleArrayP</span><span class="o">::</span><span class="n">New</span><span class="p">();</span>
+  <span class="n">velocity</span><span class="o">-&gt;</span><span class="n">SetNumberOfComponents</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+  <span class="n">velocity</span><span class="o">-&gt;</span><span class="n">SetNumberOfTuples</span><span class="p">(</span><span class="n">pts</span><span class="o">-&gt;</span><span class="n">GetNumberOfPoints</span><span class="p">());</span>
+  <span class="n">velocity</span><span class="o">-&gt;</span><span class="n">SetName</span><span class="p">(</span><span class="s">&quot;Velocity&quot;</span><span class="p">);</span>
+
+  <span class="c1">// Loop through particles</span>
+  <span class="n">Vec</span> <span class="n">vObj</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="kt">double</span> <span class="n">vec</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="nl">particle</span> <span class="p">:</span> <span class="o">*</span><span class="n">particles</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="c1">// Position</span>
+    <span class="n">vObj</span> <span class="o">=</span> <span class="n">particle</span><span class="o">-&gt;</span><span class="n">getCurrPos</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getX</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getY</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getZ</span><span class="p">();</span>
+    <span class="n">pts</span><span class="o">-&gt;</span><span class="n">SetPoint</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">vec</span><span class="p">);</span>
+
+    <span class="c1">// ID</span>
+    <span class="n">ID</span><span class="o">-&gt;</span><span class="n">InsertValue</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">particle</span><span class="o">-&gt;</span><span class="n">getId</span><span class="p">());</span>
+
+    <span class="c1">// Ellipsoid radii</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">particle</span><span class="o">-&gt;</span><span class="n">getA</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">particle</span><span class="o">-&gt;</span><span class="n">getB</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">particle</span><span class="o">-&gt;</span><span class="n">getC</span><span class="p">();</span>
+    <span class="n">radii</span><span class="o">-&gt;</span><span class="n">InsertTuple</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">vec</span><span class="p">);</span>
+
+    <span class="c1">// Current direction A</span>
+    <span class="n">vObj</span> <span class="o">=</span> <span class="n">particle</span><span class="o">-&gt;</span><span class="n">getCurrDirecA</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getX</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getY</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getZ</span><span class="p">();</span>
+    <span class="n">axis_a</span><span class="o">-&gt;</span><span class="n">InsertTuple</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">vec</span><span class="p">);</span>
+
+    <span class="c1">// Current direction B</span>
+    <span class="n">vObj</span> <span class="o">=</span> <span class="n">particle</span><span class="o">-&gt;</span><span class="n">getCurrDirecB</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getX</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getY</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getZ</span><span class="p">();</span>
+    <span class="n">axis_b</span><span class="o">-&gt;</span><span class="n">InsertTuple</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">vec</span><span class="p">);</span>
+
+    <span class="c1">// Current direction C</span>
+    <span class="n">vObj</span> <span class="o">=</span> <span class="n">particle</span><span class="o">-&gt;</span><span class="n">getCurrDirecC</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getX</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getY</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getZ</span><span class="p">();</span>
+    <span class="n">axis_c</span><span class="o">-&gt;</span><span class="n">InsertTuple</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">vec</span><span class="p">);</span>
+
+    <span class="c1">// Velocity</span>
+    <span class="n">vObj</span> <span class="o">=</span> <span class="n">particle</span><span class="o">-&gt;</span><span class="n">getCurrVeloc</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getX</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getY</span><span class="p">();</span>
+    <span class="n">vec</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">vObj</span><span class="p">.</span><span class="n">getZ</span><span class="p">();</span>
+    <span class="n">velocity</span><span class="o">-&gt;</span><span class="n">InsertTuple</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">vec</span><span class="p">);</span>
+    
+    <span class="o">++</span><span class="n">id</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="c1">// Add points to data set</span>
+  <span class="n">dataSet</span><span class="o">-&gt;</span><span class="n">GetPointData</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddArray</span><span class="p">(</span><span class="n">ID</span><span class="p">);</span>
+  <span class="n">dataSet</span><span class="o">-&gt;</span><span class="n">GetPointData</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddArray</span><span class="p">(</span><span class="n">radii</span><span class="p">);</span>
+  <span class="n">dataSet</span><span class="o">-&gt;</span><span class="n">GetPointData</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddArray</span><span class="p">(</span><span class="n">axis_a</span><span class="p">);</span>
+  <span class="n">dataSet</span><span class="o">-&gt;</span><span class="n">GetPointData</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddArray</span><span class="p">(</span><span class="n">axis_b</span><span class="p">);</span>
+  <span class="n">dataSet</span><span class="o">-&gt;</span><span class="n">GetPointData</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddArray</span><span class="p">(</span><span class="n">axis_c</span><span class="p">);</span>
+  <span class="n">dataSet</span><span class="o">-&gt;</span><span class="n">GetPointData</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">AddArray</span><span class="p">(</span><span class="n">velocity</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>You can see a working example of this approach in the <a href="https://github.com/bbanerjee/ParSim/blob/master/Matiti/src/InputOutput/OutputVTK.cc">Matiti code</a>.</p>
+
+<h5 id="displaying-the-output">Displaying the output</h5>
+<p>The VTK XML file output to disk using this approach can be visualized in Visit or ParaView.  Notice that we are not able to  use the particle geometry and orientation information in either of these tools without extra work.  The plot below shows the output of a rigid body dynamics simulation in the presence of Coriolis forces.</p>
+
+<p><img src="https://bbanerjee.github.io/ParSim/assets/blogimg/CentrifugeRigidParticlesWithWallBothMat_060006.jpg" alt="Plot produced by Visit" class="img-responsive" margin="0 auto" display="block" height="450px" border="3px" /></p>
+
+<h4 id="remarks">Remarks</h4>
+<p>Now that the basic input/output issues have been addressed, we will be able to
+explore possible designs of an integrated user interface to automate the generation
+of input files and perform simple visualizations of the results.  Future blog posts
+will discuss our exploration of Javascript frameworks and libraries that can potentially
+aid this process.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

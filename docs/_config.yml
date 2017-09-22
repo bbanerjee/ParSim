@@ -1,0 +1,53 @@
+# Title of your website
+title: "ParSim"
+
+
+# The slogan describes your website and is used on homepage in <title> and other important places
+slogan: "Parallel particle-based simulation tools"
+
+
+# The description is used on homepage and in the footer to quickly describe your website. Use a maximum of 150 characters for SEO-purposes.
+description: "»ParSim« ParSim is a fork of the Uintah simulation software that intends to include better capabilities for modeling fracturing in solids and solid-fluid interaction."
+
+
+# This is a switch to easily change the {{ site.url }}-variable to develop the theme locally
+#url: "http://localhost:4000"
+url: "https://bbanerjee.github.io/ParSim"
+baseurl: ""
+
+# Repo
+repository: https://github.com/bbanerjee/ParSim
+
+# Logo size is 600x80 pixels
+#logo: "logo.png"
+logo: "ParresiaLogoDec2016.png"
+
+
+# Theme works best with Kramdown (using the table of contents function)
+markdown: kramdown
+permalink: /:categories/:title/
+highlighter: pygments
+exclude: []
+include: ['.htaccess']
+
+sass:
+  style: compressed
+
+
+# The data
+defaults:
+  -
+    scope:
+      path: "_docs"
+      type: "docs"
+    values:
+      layout: "docs"
+
+
+collections:
+  docs:
+    permalink: /:collection/:path/
+    output: true
+  tutorials:
+    output: true
+

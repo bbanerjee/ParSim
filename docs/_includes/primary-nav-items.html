@@ -1,0 +1,11 @@
+<ul>
+  <li class="{% if page.overview %}current{% endif %}">
+    <a href="{{ site.url }}">Home</a>
+  </li>
+  <li class="{% if page.url contains '/docs/' %}current{% endif %}">
+    <a href="{{ site.url }}/docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="{{ site.repository }}">GitHub Source</a>
+  </li>
+</ul>

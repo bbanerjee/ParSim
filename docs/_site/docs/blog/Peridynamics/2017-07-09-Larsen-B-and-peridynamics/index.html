@@ -1,0 +1,277 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Can the Larsen-C ice shelf failure be predicted with Peridynamics?</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim/docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Can the Larsen-C ice shelf failure be predicted with Peridynamics?</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#issues-to-be-resolved-before-a-simulation" id="markdown-toc-issues-to-be-resolved-before-a-simulation">Issues to be resolved before a simulation</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h4 id="introduction">Introduction</h4>
+<p>On July 7, 2017, the <a href="http://www.projectmidas.org/blog/multiple-branches/">Project Midas group</a>
+released a couple of plots of material velocities and interferograms showing the evolution of a
+large rift the <a href="https://en.wikipedia.org/wiki/Larsen_Ice_Shelf#Larsen_C">Larsen-C ice shelf</a> in Antarctica.  The crack grew 11 miles in a few days before
+slowing down.</p>
+
+<div align="center">
+<img style="width:400px" alt="Larsen-C cracks" src="https://bbanerjee.github.io/ParSim/assets/blogimg/LarsenC_crack.png" /> 
+</div>
+
+<p>The image above (from http://www.projectmidas.org/blog/multiple-branches/) shows a number of branches
+in the main crack as it approaches the sea.  This image reminded me of crack branching that
+we observed in two-dimensional Peridynamics simulations.</p>
+
+<div align="center">
+<img style="width:500px" alt="Peridynamics crack" src="https://bbanerjee.github.io/ParSim/assets/blogimg/CrackPeri02.png" /> 
+</div>
+
+<p>Will it be possible to predict when the main Larsen-C crack will reach the sea using Peridynamics?</p>
+
+<h4 id="issues-to-be-resolved-before-a-simulation">Issues to be resolved before a simulation</h4>
+<p>I haven’t done the simulation yet, but several simplifications are needed before we can
+estimate of the time to failure.  Complications arise because:</p>
+
+<ol>
+  <li>
+    <p>The primary problem is the size of the body that has to be simulated.  The ice-shelf is around
+100 km long, 50 km wide, and 0.5 km thick and is supported by sea water.  It is possible that
+inertial effects on crack growth are significant in a body of this size.</p>
+  </li>
+  <li>
+    <p>The crack growth rate has varied significantly over time, but is much slower than typical
+cracks that are simulated with peridynamics.</p>
+  </li>
+  <li>
+    <p>The crack has reached a stage where branching is prominent.  That implies that the stress state
+is much more complex that was the case when the crack appeared to be a tension dominated one.</p>
+  </li>
+  <li>
+    <p>The geometry of the crack is not linear and the thickness of the ice shelf is not uniform.</p>
+  </li>
+  <li>
+    <p>Material properties of the ice are not known very well.  For complexities of ice behavior see
+<a href="http://www.dtic.mil/dtic/tr/fulltext/u2/284777.pdf">THE MECHANICAL PROPERTIES OF ICE</a>.</p>
+  </li>
+</ol>
+
+<p>Some of these challenges can be addressed by simplifying the problem.  For instance:</p>
+
+<ol>
+  <li>
+    <p>We can assume that the body is a cantilevered plate supported by an elastic foundation.</p>
+  </li>
+  <li>
+    <p>Scale similarity can be used to reduce the size of the problem and also scale the mass
+density of the ice to get a simulation that can be completed in a reasonable amount of time.</p>
+  </li>
+  <li>
+    <p>We can assume isotropic linear elasticity and a constant fracture toughness.</p>
+  </li>
+</ol>
+
+<p>Even with these simplifications, predicting an estimate of the time the crack will take to reach the
+sea is not straightforward and the error bounds will be large.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>Even though we have seen enormous improvements in algorithms and computational capabilities for
+fracture simulation over the last 15 years, predicting dynamic fracture continues to be elusive.
+The research that we do at Parresia attempts to improve the predictive fidelity of
+numerical methods to solve these types of problems.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

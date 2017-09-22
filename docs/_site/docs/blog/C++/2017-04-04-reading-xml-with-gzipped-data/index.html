@@ -1,0 +1,505 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reading XML files containing gzipped data in C++</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim/docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Reading XML files containing gzipped data in C++</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#recap" id="markdown-toc-recap">Recap</a></li>
+  <li><a href="#the-header-file" id="markdown-toc-the-header-file">The header file</a></li>
+  <li><a href="#the-implementation" id="markdown-toc-the-implementation">The implementation</a>    <ul>
+      <li><a href="#the-read-function" id="markdown-toc-the-read-function">The <code>read</code> function</a></li>
+      <li><a href="#the-readparticlevalues-templated-function" id="markdown-toc-the-readparticlevalues-templated-function">The <code>readParticleValues</code> templated function</a></li>
+      <li><a href="#the-decodeanduncompress-templated-function" id="markdown-toc-the-decodeanduncompress-templated-function">The <code>decodeAndUncompress</code> templated function</a></li>
+      <li><a href="#the-convertt-template-specializations" id="markdown-toc-the-convertt-template-specializations">The <code>convert&lt;T&gt;</code> template specializations</a></li>
+    </ul>
+  </li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h4 id="introduction">Introduction</h4>
+<p>We saw how to create an XML file containing compressed particle data in
+the article <a href="https://bbanerjee.github.io/ParSim/r/xml/xml-particle-input-file/">“XML format for particle input files”</a>.
+Let us now explore how to read in that data in our C++ particle simulation code.</p>
+
+<h4 id="recap">Recap</h4>
+<p>Recall that the compressed base64 XML file contains data of the form shown below.  We would like
+to convert these data back into numerical values that can be used by the simulation.</p>
+
+<figure class="highlight"><pre><code class="language-xml" data-lang="xml"><span></span><span class="cp">&lt;?xml version=&quot;1.0&quot;?&gt;</span>
+<span class="nt">&lt;Ellip3D_input&gt;</span>
+  <span class="nt">&lt;Particles</span> <span class="na">number=</span><span class="s">&quot;3&quot;</span> <span class="na">type=</span><span class="s">&quot;ellipsoid&quot;</span> <span class="na">compression=</span><span class="s">&quot;gzip&quot;</span> <span class="na">encoding=</span><span class="s">&quot;base64&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;id</span> <span class="na">unit=</span><span class="s">&quot;none&quot;</span> <span class="na">numComponents=</span><span class="s">&quot;1&quot;</span><span class="nt">&gt;</span>eJwzVDC0MFcwNjcGAAg2Aa8=<span class="nt">&lt;/id&gt;</span>
+    <span class="nt">&lt;radii</span> <span class="na">unit=</span><span class="s">&quot;m&quot;</span> <span class="na">numComponents=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>eJwz1DM0VTDQA2EzSwVD3DwAm34HcA==<span class="nt">&lt;/radii&gt;</span>
+    <span class="nt">&lt;axle_a</span> <span class="na">unit=</span><span class="s">&quot;rad&quot;</span> <span class="na">numComponents=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>eJxVy8ENwEAIA8FWqABx5oxx/40lz+S30miRYBVvnKRKnqgcGRQDyZ5Zfc3DdemtNXrB/7j3tB+22RBv<span class="nt">&lt;/axle_a&gt;</span>
+    <span class="nt">&lt;axle_b</span> <span class="na">unit=</span><span class="s">&quot;rad&quot;</span> <span class="na">numComponents=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>eJxNyckNACAIAMFWaEACIldB9t+Cmojxt5llVCdPg4HGKTYbOXDhjSNBoiJ7P42KhI5hmhT/1gVJPxJZ<span class="nt">&lt;/axle_b&gt;</span>
+    <span class="nt">&lt;axle_c</span> <span class="na">unit=</span><span class="s">&quot;rad&quot;</span> <span class="na">numComponents=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>eJxNyckNADAIxMBWUgGCheXov7HwS34jGxIJdx4TltbkgYCqjIXVtvgXPbO5iHSreUulB97oC4BQD7g=<span class="nt">&lt;/axle_c&gt;</span>
+    <span class="nt">&lt;position</span> <span class="na">unit=</span><span class="s">&quot;m&quot;</span> <span class="na">numComponents=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>eJwNyMERAEAEA8BWVGBCONJ/Y+e3syUfxpTB4BLfZFsfAb3LdiY6ZYRvROUdfbUgP13AC20=<span class="nt">&lt;/position&gt;</span>
+    <span class="nt">&lt;velocity</span> <span class="na">unit=</span><span class="s">&quot;m/s&quot;</span> <span class="na">numComponents=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>eJwlitsNACAIxFZhAUmRh7j/YpKY3M+1RdnQuAmCkjnzloU6Fl05fI5NcT+38Xef30cFduoB3dgNXA==<span class="nt">&lt;/velocity&gt;</span>
+    <span class="nt">&lt;omega</span> <span class="na">unit=</span><span class="s">&quot;rad/s&quot;</span> <span class="na">numComponents=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>eJwzUDDQMzAytzC0NDRXMABCXSDf3MDMzNDSAsY3sjA1szQ2VDAAAL6CCE8=<span class="nt">&lt;/omega&gt;</span>
+    <span class="nt">&lt;force</span> <span class="na">unit=</span><span class="s">&quot;N&quot;</span> <span class="na">numComponents=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>eJwdycERACAIA7BVWACuYK2w/2J6fhPnpJoG8yzNanMyVxzUNzR2sK1qpNjPpNcgL0K4Cu8=<span class="nt">&lt;/force&gt;</span>
+    <span class="nt">&lt;moment</span> <span class="na">unit=</span><span class="s">&quot;Nm&quot;</span> <span class="na">numComponents=</span><span class="s">&quot;3&quot;</span><span class="nt">&gt;</span>eJwdy8kNwDAMA8FW1IAE0rr7byyxf4MFFsaayS1RcppHFObYsxOXZEeNi3q1u+XciOzY9JKfwQBWNOGwqDeBi674ADeiEak=<span class="nt">&lt;/moment&gt;</span>
+  <span class="nt">&lt;/Particles&gt;</span>
+  <span class="nt">&lt;Sieves</span> <span class="na">number=</span><span class="s">&quot;5&quot;</span> <span class="na">compression=</span><span class="s">&quot;none&quot;</span> <span class="na">encoding=</span><span class="s">&quot;ascii&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;percent_passing&gt;</span>1 0.8 0.6 0.3 0.1<span class="nt">&lt;/percent_passing&gt;</span>
+    <span class="nt">&lt;size</span> <span class="na">unit=</span><span class="s">&quot;mm&quot;</span><span class="nt">&gt;</span>1.4 1.3 1.2 1.15 1<span class="nt">&lt;/size&gt;</span>
+    <span class="nt">&lt;sieve_ratio&gt;</span>
+      <span class="nt">&lt;ratio_ba&gt;</span>0.8<span class="nt">&lt;/ratio_ba&gt;</span>
+      <span class="nt">&lt;ratio_ca&gt;</span>0.6<span class="nt">&lt;/ratio_ca&gt;</span>
+    <span class="nt">&lt;/sieve_ratio&gt;</span>
+  <span class="nt">&lt;/Sieves&gt;</span>
+<span class="nt">&lt;/Ellip3D_input&gt;</span></code></pre></figure>
+
+<h4 id="the-header-file">The header file</h4>
+<p>We use a <code>ParticleFileReader</code> object to read the file.  The declaration of the object is
+listed below. Particle data are stored in an array of pointers to <code>Particle</code>
+objects, called <code>ParticlePArray</code>.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="cp">#include</span> <span class="cpf">&lt;zenxml/xml.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;string&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp"></span>
+<span class="k">class</span> <span class="nc">ParticleFileReader</span>
+<span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+  <span class="p">....</span>
+  <span class="kt">void</span> <span class="n">read</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">fileName</span><span class="p">,</span>
+            <span class="n">ParticlePArray</span><span class="o">&amp;</span> <span class="n">particles</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+<span class="k">private</span><span class="o">:</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+  <span class="kt">bool</span> <span class="n">readParticleValues</span><span class="p">(</span><span class="n">zen</span><span class="o">::</span><span class="n">XmlIn</span><span class="o">&amp;</span> <span class="n">ps</span><span class="p">,</span>
+                          <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span>
+                          <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">particleType</span><span class="p">,</span>
+                          <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span> <span class="n">output</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+  <span class="kt">bool</span> <span class="n">decodeAndUncompress</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">inputStr</span><span class="p">,</span>
+                           <span class="k">const</span> <span class="kt">int</span><span class="o">&amp;</span> <span class="n">numComponents</span><span class="p">,</span>
+                           <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span> <span class="n">output</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+  <span class="n">T</span> <span class="n">convert</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">str</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+  <span class="p">....</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>The main workhorse methods in this class are the templated functions
+<code>readParticleValues</code>, <code>decodeAndUncompress</code>, and <code>convert</code>.  Templates
+are used because similar logic is used for different variable types.</p>
+
+<h4 id="the-implementation">The implementation</h4>
+<p>Let us now look at the implementations of these functions.  We will ignore
+any checks that are necessary to make sure that the XML file is readable
+and contains the right data.</p>
+
+<h5 id="the-read-function">The <code>read</code> function</h5>
+<p>The point of entry is the <code>read</code> function:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="kt">bool</span>
+<span class="n">ParticleFileReader</span><span class="o">::</span><span class="n">read</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">inputFileName</span><span class="p">,</span>
+                         <span class="n">ParticlePArray</span> <span class="o">&amp;</span><span class="n">particles</span><span class="p">)</span> <span class="k">const</span>
+<span class="p">{</span>
+  <span class="c1">// Read the input file</span>
+  <span class="n">zen</span><span class="o">::</span><span class="n">XmlDoc</span> <span class="n">docs</span> <span class="o">=</span> <span class="n">zen</span><span class="o">::</span><span class="n">load</span><span class="p">(</span><span class="n">inputFileName</span><span class="p">);</span>
+  <span class="c1">// Load the docsument into input proxy for easier element access</span>
+  <span class="n">zen</span><span class="o">::</span><span class="n">XmlIn</span> <span class="n">ps</span><span class="p">(</span><span class="n">docs</span><span class="p">);</span>
+  <span class="c1">// Loop through the particle types in the input file</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">particle_ps</span> <span class="o">=</span> <span class="n">ps</span><span class="p">[</span><span class="s">&quot;Particles&quot;</span><span class="p">];</span> <span class="n">particle_ps</span><span class="p">;</span> <span class="n">particle_ps</span><span class="p">.</span><span class="n">next</span><span class="p">())</span> <span class="p">{</span>
+    <span class="c1">// Get the attributes of the particles</span>
+    <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">numParticles</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">particleType</span> <span class="o">=</span> <span class="s">&quot;sphere&quot;</span><span class="p">,</span> <span class="n">compression</span> <span class="o">=</span> <span class="s">&quot;none&quot;</span><span class="p">,</span> <span class="n">encoding</span> <span class="o">=</span> <span class="s">&quot;none&quot;</span><span class="p">;</span>
+    <span class="n">particle_ps</span><span class="p">.</span><span class="n">attribute</span><span class="p">(</span><span class="s">&quot;number&quot;</span><span class="p">,</span> <span class="n">numParticles</span><span class="p">);</span>
+    <span class="n">particle_ps</span><span class="p">.</span><span class="n">attribute</span><span class="p">(</span><span class="s">&quot;type&quot;</span><span class="p">,</span> <span class="n">particleType</span><span class="p">);</span>
+    <span class="n">particle_ps</span><span class="p">.</span><span class="n">attribute</span><span class="p">(</span><span class="s">&quot;compression&quot;</span><span class="p">,</span> <span class="n">compression</span><span class="p">);</span>
+    <span class="n">particle_ps</span><span class="p">.</span><span class="n">attribute</span><span class="p">(</span><span class="s">&quot;encoding&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="p">);</span>
+    <span class="c1">// Assume that the input file is encoded and compressed</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">encoding</span> <span class="o">==</span> <span class="s">&quot;base64&quot;</span> <span class="o">&amp;&amp;</span> <span class="n">compression</span> <span class="o">==</span> <span class="s">&quot;gzip&quot;</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">// Get the particle ids</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span> <span class="n">particleIDs</span><span class="p">;</span>
+      <span class="kt">bool</span> <span class="n">success</span> <span class="o">=</span> <span class="n">readParticleValues</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">particle_ps</span><span class="p">,</span>
+                                                <span class="s">&quot;id&quot;</span><span class="p">,</span> <span class="n">particleType</span><span class="p">,</span>
+                                                <span class="n">particleIDs</span><span class="p">);</span>
+      <span class="c1">// Get the particle radii</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Vec</span><span class="o">&gt;</span> <span class="n">particleRadii</span><span class="p">;</span>
+      <span class="n">success</span> <span class="o">=</span> <span class="n">readParticleValues</span><span class="o">&lt;</span><span class="n">Vec</span><span class="o">&gt;</span><span class="p">(</span><span class="n">particle_ps</span><span class="p">,</span>
+                                        <span class="s">&quot;radii&quot;</span><span class="p">,</span> <span class="n">particleType</span><span class="p">,</span>
+                                        <span class="n">particleRadii</span><span class="p">);</span>
+      <span class="p">............</span>
+      <span class="p">............</span>
+      <span class="c1">// Create the Particle array</span>
+      <span class="k">for</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">ii</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">ii</span> <span class="o">&lt;</span> <span class="n">numParticles</span><span class="p">;</span> <span class="o">++</span><span class="n">ii</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">ParticleP</span> <span class="n">pt</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">Particle</span><span class="o">&gt;</span><span class="p">(</span>
+            <span class="n">particleIDs</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">particleType</span><span class="p">,</span> <span class="n">particleRadii</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="p">....);</span>
+        <span class="n">particles</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">pt</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">}</span> <span class="c1">// end if (encoding == &quot;base64&quot; &amp;&amp; compression == &quot;gzip&quot;) </span>
+  <span class="p">}</span> <span class="c1">// end for</span>
+  <span class="p">.....</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The particle data associated with each tag is an array containing either 1 or 3
+components.  We use the <code>explicitly instantiated</code> templated function
+<code>readParticleValues&lt;T&gt;</code> to read in the data into arrays.</p>
+
+<h5 id="the-readparticlevalues-templated-function">The <code>readParticleValues</code> templated function</h5>
+<p>Let us now look at the <code>readParticleValues</code> function that does the extraction
+and conversion of the compressed and encoded data.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">bool</span>
+<span class="n">ParticleFileReader</span><span class="o">::</span><span class="n">readParticleValues</span><span class="p">(</span><span class="n">zen</span><span class="o">::</span><span class="n">XmlIn</span> <span class="o">&amp;</span><span class="n">ps</span><span class="p">,</span>
+                                       <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">name</span><span class="p">,</span>
+                                       <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">particleType</span><span class="p">,</span>
+                                       <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">output</span><span class="p">)</span> <span class="k">const</span>
+<span class="p">{</span>
+  <span class="c1">// Get the particle values</span>
+  <span class="kt">int</span> <span class="n">numComp</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">particleDataStr</span><span class="p">;</span>
+  <span class="k">auto</span> <span class="n">prop_ps</span> <span class="o">=</span> <span class="n">ps</span><span class="p">[</span><span class="n">name</span><span class="p">];</span>
+  <span class="n">prop_ps</span><span class="p">.</span><span class="n">attribute</span><span class="p">(</span><span class="s">&quot;numComponents&quot;</span><span class="p">,</span> <span class="n">numComp</span><span class="p">);</span>
+  <span class="n">prop_ps</span><span class="p">(</span><span class="n">particleDataStr</span><span class="p">);</span>
+  <span class="c1">// Do the decoding and inflation of the compressed data</span>
+  <span class="kt">bool</span> <span class="n">success</span> <span class="o">=</span> <span class="n">decodeAndUncompress</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">particleDataStr</span><span class="p">,</span> <span class="n">numComp</span><span class="p">,</span> <span class="n">output</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">success</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The function just extracts the encoded data from the XML file and the number
+of components in the data (1 or 3).  It then passes these on to the actual
+decode and uncompress code.</p>
+
+<h5 id="the-decodeanduncompress-templated-function">The <code>decodeAndUncompress</code> templated function</h5>
+<p>This is where the main work is done.  For decoding the data into
+binary form, we use the <a href="https://github.com/tplgy/cppcodec">cppcodec</a>
+library.  For decompression we use <a href="http://zlib.net/zlib_how.html">ZLib</a>.
+To make sure that the <code>cppcodec</code> library is available in the repository
+where our code is stored, we add it as a submodule using</p>
+
+<pre><code>git submodule add git://github.com/tplgy/cppcodec.git cppcodec
+</code></pre>
+
+<p>For the <code>Zlib</code> library to be available to our <code>cmake</code> build system, we add
+the following to our <code>CMakeLists.txt</code> file:</p>
+
+<pre><code>#-------------------------------------------------------
+# Add requirements for Zlib compression library 
+#-------------------------------------------------------
+find_package(ZLIB REQUIRED)
+if (ZLIB_FOUND)
+  message(STATUS "Zlib compression library found")
+  include_directories(${ZLIB_INCLUDE_DIRS})
+else()
+  message(STATUS "Zlib compression library not found")
+  set(ZLIB_DIR "")
+  set(ZLIB_LIBRARIES "")
+  set(ZLIB_INCLUDE_DIRS "")
+endif()
+</code></pre>
+
+<p>The code for the <code>decodeAndUncompress</code> function is listed below.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="cp">#include</span> <span class="cpf">&lt;cppcodec/cppcodec/base64_default_rfc4648.hpp&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;zlib.h&quot;</span><span class="cp"></span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">bool</span>
+<span class="n">ParticleFileReader</span><span class="o">::</span><span class="n">decodeAndUncompress</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">inputStr</span><span class="p">,</span>
+                                        <span class="k">const</span> <span class="kt">int</span> <span class="o">&amp;</span><span class="n">numComponents</span><span class="p">,</span>
+                                        <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">output</span><span class="p">)</span> <span class="k">const</span>
+<span class="p">{</span>
+  <span class="c1">// Decode from base64</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">uint8_t</span><span class="o">&gt;</span> <span class="n">decoded</span> <span class="o">=</span> <span class="n">base64</span><span class="o">::</span><span class="n">decode</span><span class="p">(</span><span class="n">inputStr</span><span class="p">);</span>
+  <span class="c1">// Uncompress from gzip</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">uint8_t</span><span class="o">&gt;</span> <span class="n">uncompressed</span><span class="p">;</span>
+  <span class="n">z_stream</span> <span class="n">stream</span><span class="p">;</span>
+  <span class="c1">// Allocate inflate state</span>
+  <span class="n">stream</span><span class="p">.</span><span class="n">zalloc</span> <span class="o">=</span> <span class="n">Z_NULL</span><span class="p">;</span>
+  <span class="n">stream</span><span class="p">.</span><span class="n">zfree</span> <span class="o">=</span> <span class="n">Z_NULL</span><span class="p">;</span>
+  <span class="n">stream</span><span class="p">.</span><span class="n">opaque</span> <span class="o">=</span> <span class="n">Z_NULL</span><span class="p">;</span>
+  <span class="n">stream</span><span class="p">.</span><span class="n">avail_in</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">stream</span><span class="p">.</span><span class="n">next_in</span> <span class="o">=</span> <span class="n">Z_NULL</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">err</span> <span class="o">=</span> <span class="n">inflateInit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">stream</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">!=</span> <span class="n">Z_OK</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;inflateInit&quot;</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; error: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">err</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// Uncompress until stream ends</span>
+  <span class="n">stream</span><span class="p">.</span><span class="n">avail_in</span> <span class="o">=</span> <span class="n">decoded</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+  <span class="n">stream</span><span class="p">.</span><span class="n">next_in</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">decoded</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+  <span class="k">do</span> <span class="p">{</span>
+    <span class="k">do</span> <span class="p">{</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">uint8_t</span><span class="o">&gt;</span> <span class="n">out</span><span class="p">(</span><span class="n">decoded</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+      <span class="n">stream</span><span class="p">.</span><span class="n">avail_out</span> <span class="o">=</span> <span class="n">out</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+      <span class="n">stream</span><span class="p">.</span><span class="n">next_out</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+      <span class="n">err</span> <span class="o">=</span> <span class="n">inflate</span><span class="p">(</span><span class="o">&amp;</span><span class="n">stream</span><span class="p">,</span> <span class="n">Z_SYNC_FLUSH</span><span class="p">);</span>
+      <span class="n">uncompressed</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">end</span><span class="p">(</span><span class="n">uncompressed</span><span class="p">),</span> <span class="n">std</span><span class="o">::</span><span class="n">begin</span><span class="p">(</span><span class="n">out</span><span class="p">),</span> <span class="n">std</span><span class="o">::</span><span class="n">end</span><span class="p">(</span><span class="n">out</span><span class="p">));</span>
+    <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">stream</span><span class="p">.</span><span class="n">avail_out</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">err</span> <span class="o">!=</span> <span class="n">Z_STREAM_END</span><span class="p">);</span>
+  <span class="c1">// Clean up and exit</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">inflateEnd</span><span class="p">(</span><span class="o">&amp;</span><span class="n">stream</span><span class="p">)</span> <span class="o">!=</span> <span class="n">Z_OK</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;inflateEnd&quot;</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; error: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">err</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// Split the uncompressed string into a vector of tokens</span>
+  <span class="c1">// (Assume that data are space separated)</span>
+  <span class="c1">// (See: https://stackoverflow.com/questions/236129/split-a-string-in-c)</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">istringstream</span> <span class="n">iss</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="n">uncompressed</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">uncompressed</span><span class="p">.</span><span class="n">end</span><span class="p">()));</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">outputStr</span> <span class="o">=</span> <span class="p">{</span><span class="n">std</span><span class="o">::</span><span class="n">istream_iterator</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">{</span><span class="n">iss</span><span class="p">},</span>
+                                        <span class="n">std</span><span class="o">::</span><span class="n">istream_iterator</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">{}};</span>
+  <span class="c1">// Convert the strings into the right type</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">iter</span> <span class="o">=</span> <span class="n">outputStr</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span> <span class="n">iter</span> <span class="o">!=</span> <span class="n">outputStr</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="n">iter</span> <span class="o">+=</span> <span class="n">numComponents</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">str</span> <span class="o">=</span> <span class="o">*</span><span class="n">iter</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">ii</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">ii</span> <span class="o">&lt;</span> <span class="n">numComponents</span><span class="p">;</span> <span class="n">ii</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">// For more than one component, join into string with space separator</span>
+      <span class="n">str</span> <span class="o">+=</span> <span class="s">&quot; &quot;</span><span class="p">;</span>
+      <span class="n">str</span> <span class="o">+=</span> <span class="o">*</span><span class="p">(</span><span class="n">iter</span> <span class="o">+</span> <span class="n">ii</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">output</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">convert</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">str</span><span class="p">));</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Here the main complication arises during the inflation of the compressed data.  We
+don’t know the size of the output buffer beforehand and have to read the buffer repeatedly
+until the entire input buffer has been inflated.  After each chunk has been read
+into the <code>out</code> vector, we insert the data into <code>uncompressed</code> and continue the process.</p>
+
+<p>After the entire stream has be uncompressed, we convert the string into the correct
+size type using the <code>convert&lt;T&gt;</code> function.  Notice that this function is <code>implicitly
+instantiated</code> using <code>output.push_back(convert&lt;T&gt;(str))</code>.  Template specialization
+is needed at this stage to make sure the right work is work during the conversion
+of each type.  To see why this is not always a good idea, see the article 
+<a href="http://www.gotw.ca/publications/mill17.htm">Why Not Specialize Function Templates?</a>.
+Care is needed to make sure that we don’t try to explictly instantiate <code>convert&lt;T&gt;</code>
+elsewhere, and modern compilers will probably throw an error if that is attempted.</p>
+
+<h5 id="the-convertt-template-specializations">The <code>convert&lt;T&gt;</code> template specializations</h5>
+<p>We will define two specializations here;  the first function deals with
+properties such as particle ID while the second deals with vector properties
+such as position and force.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span></span><span class="k">template</span> <span class="o">&lt;&gt;</span>
+<span class="kt">size_t</span>
+<span class="n">ParticleFileReader</span><span class="o">::</span><span class="n">convert</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">str</span><span class="p">)</span> <span class="k">const</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">stoul</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">template</span> <span class="o">&lt;&gt;</span>
+<span class="n">Vec</span>
+<span class="n">ParticleFileReader</span><span class="o">::</span><span class="n">convert</span><span class="o">&lt;</span><span class="n">Vec</span><span class="o">&gt;</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="o">&amp;</span><span class="n">str</span><span class="p">)</span> <span class="k">const</span>
+<span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">istringstream</span> <span class="n">iss</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="n">str</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">str</span><span class="p">.</span><span class="n">end</span><span class="p">()));</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">split</span> <span class="o">=</span> <span class="p">{</span><span class="n">std</span><span class="o">::</span><span class="n">istream_iterator</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">{</span><span class="n">iss</span><span class="p">},</span>
+                                    <span class="n">std</span><span class="o">::</span><span class="n">istream_iterator</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">{}};</span>
+  <span class="k">return</span> <span class="nf">Vec</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">stod</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">std</span><span class="o">::</span><span class="n">stod</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">std</span><span class="o">::</span><span class="n">stod</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="mi">2</span><span class="p">]));</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>That completes the implementation.  To see a version of this approach in action,
+look at <a href="https://github.com/bbanerjee/ParSim/blob/master/ThirdParty/paraEllip3d_DEM_PD/src/InputOutput/ParticleFileReader.cpp">ParticleFileReader.cpp</a>.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>We can see that the process or decoding and unzipping the data in the XML file is
+quite straightforward.  But it takes a bit more effort than reading a formatted text file.
+However, if our data include millions of particles, and these particles have to be
+broadcast to several nodes of a multiprocessor system, compression can not only save us a
+lot of communication time during simulations but also disk space.</p>
+
+<p>In the next article, we will explore some more aspects of our particle simulation code.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/yieldsurface.js"></script>
+
+<script>
+  d3.json("https://bbanerjee.github.io/ParSim/assets/json/yieldSurfData.json", drawYieldSurface);
+</script>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

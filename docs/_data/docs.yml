@@ -1,0 +1,13 @@
+- title: Getting Started
+  docs:
+  - home
+  - quickstart
+  - installation
+
+- title: Vaango tutorials
+  docs:
+  - running_vaango
+
+- title: Vaango manuals
+  docs:
+  - mpm-material-models

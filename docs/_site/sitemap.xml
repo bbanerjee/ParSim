@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/</loc>
+      
+        <lastmod>2017-09-22T14:16:08+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/assets/css/screen.css</loc>
+      
+        <lastmod>2017-09-22T14:16:08+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+    
+    <url>
+      <loc>https://bbanerjee.github.io/ParSim/sitemap.xml</loc>
+      
+        <lastmod>2017-09-22T14:16:08+12:00</lastmod>
+      
+      
+        <changefreq>monthly</changefreq>
+      
+      
+        <priority>0.3</priority>
+      
+    </url>
+    
+  
+</urlset>

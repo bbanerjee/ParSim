@@ -1,0 +1,478 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Are stresses tensile or compressive during rigid body rotation?</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim/docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Are stresses tensile or compressive during rigid body rotation?</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#the-question" id="markdown-toc-the-question">The question</a></li>
+  <li><a href="#the-finite-element-solution" id="markdown-toc-the-finite-element-solution">The finite element solution</a></li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h4 id="introduction">Introduction</h4>
+<p>Recently, I came across a question in StackExchange that pointed out that some
+books on continuum mechanics suggest that an element will <em>increase in size</em>
+when rotated if a small strain approximation is used in a finite element simulation.
+This issue may be a source of confusion for students of mechanics.  Let us
+explore some aspects of the problem and try to answer the StackExchange question.</p>
+
+<h4 id="the-question">The question</h4>
+<p>The animation below shows the motion of a two-dimensional square in the <script type="math/tex">x</script>-<script type="math/tex">y</script>-plane.
+We rotate the square clockwise around one of its corners and the angle of rotation is <script type="math/tex">\beta</script>.
+If the position of a point in the reference configuration of the square is <script type="math/tex">(X,Y)</script>,
+the rotated position <script type="math/tex">(x,y)</script> is</p>
+<div>
+$$
+  \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} \cos\beta &amp; \sin\beta \\ -\sin\beta &amp; \cos\beta \end{bmatrix} \begin{bmatrix} X \\ Y \end{bmatrix}
+$$
+</div>
+<p>Using the definition of engineering strains:</p>
+<div>
+$$
+  \varepsilon_{ij} = \tfrac{1}{2}\left(\frac{\partial u_i}{\partial X_j} + \frac{\partial u_j}{\partial X_i}\right)
+$$
+</div>
+<p>and the displacements</p>
+<div>
+$$
+  \begin{bmatrix} u_x \\ u_y \end{bmatrix} = \begin{bmatrix} x - X \\ y - Y \end{bmatrix}
+    = \begin{bmatrix} X\cos\beta + Y\sin\beta - X \\ -X\sin\beta + Y\cos\beta - Y\end{bmatrix}
+$$
+</div>
+<p>we have</p>
+<div>
+$$
+  \begin{bmatrix} \varepsilon_{xx} \\ \varepsilon_{yy} \\ 2\varepsilon_{xy} \end{bmatrix} =
+  \begin{bmatrix} \cos\beta - 1 \\ \cos\beta - 1 \\ 0 \end{bmatrix} 
+$$
+</div>
+<p>The animation below shows the implications of the above.  The blue square is the
+reference configuration.  Pure rotation of the square leads to the configuration in green.
+The pink square shows the implication of the strains calculated above on the shape of
+the square.</p>
+<div>
+  <input name="restartButton" type="button" value="Restart animation" onclick="restartSimulation()" />
+</div>
+<div>
+  <canvas id="rot-elem" height="450" width="450"></canvas>
+</div>
+
+<div class="notice--info">
+To depict the deformed shape with the apparent strains we have used the transformations
+$$
+  \begin{bmatrix} \varepsilon_{xx}^{\text{rot}} \\ \varepsilon_{yy}^{\text{rot}} \\ 2\varepsilon_{xy}^{\text{rot}} \end{bmatrix} =
+  \begin{bmatrix} \cos^2\beta &amp; \sin^2\beta &amp; \sin\beta\cos\beta \\
+                  \sin^2\beta &amp; \cos^2\beta &amp; -\sin\beta\cos\beta \\
+                  -2\sin\beta\cos\beta &amp; 2\sin\beta\cos\beta &amp; \cos^2\beta-\sin^2\beta
+  \end{bmatrix} 
+  \begin{bmatrix} \varepsilon_{xx} \\ \varepsilon_{yy} \\ 2\varepsilon_{xy} \end{bmatrix} 
+$$
+to compute the strains in a coordinate system aligned with the sides of the rotated square.
+You can easily check that these strains are identical to those in the unrotated coordinate
+system.
+</div>
+
+<p class="notice--warning">The animation clearly shows, if we consider the strained square, that the square appears
+to <strong>decrease</strong> in size (compressive stresses), invert, and then increase in size as the
+rotation proceeds.  Some textbooks depict an <strong>increase</strong> (tensile stresses) in the size of
+the square to illustrate the same issue, apparently the result of finite element
+computations.  The StackExchange question wanted to find out
+which was correct, an increase or a decrease.</p>
+
+<h4 id="the-finite-element-solution">The finite element solution</h4>
+<p>The question seems to be “why does FEA seemingly produce results that are contradictory 
+to theory?”  Let us do the FE calculation for a rotating square and see what the results are.</p>
+
+<p>Consider a square element with nodes</p>
+
+<pre><code class="language-bash">id  x    y
+1 -1.0 -1.0
+2  1.0 -1.0
+3  1.0  1.0
+4 -1.0  1.0
+</code></pre>
+
+<p>The displacement field in the element is</p>
+<div>
+$$
+  u_x(x,y) = \sum_{j=1}^4 u_x^j N_j(x,y) ~,~~
+  u_y(x,y) = \sum_{j=1}^4 u_y^j N_j(x,y)
+$$
+</div>
+<p>and the corresponding (small) strain field is</p>
+<div>
+$$
+  \begin{align}
+  \varepsilon_{xx}(x,y) &amp; = \sum_{j=1}^4 u_x^j \frac{\partial N_j(x,y)}{\partial x} ~,~~
+  \varepsilon_{yy}(x,y) = \sum_{j=1}^4 u_y^j \frac{\partial N_j(x,y)}{\partial y} \\
+  \varepsilon_{xy}(x,y) &amp; = \tfrac{1}{2}\sum_{j=1}^4 \left[u_x^j \frac{\partial N_j(x,y)}{\partial y} + u_y^j \frac{\partial N_j(x,y)}{\partial x}\right]
+  \end{align}
+$$
+</div>
+<p>The nodal shape functions are</p>
+<div>
+$$
+  \begin{align}
+  N_1(x,y) &amp; = \frac{(1-x)(1-y)}{4} ~,~~
+  N_2(x,y) = \frac{(1+x)(1-y)}{4} \\
+  N_3(x,y) &amp; = \frac{(1+x)(1+y)}{4} ~,~~
+  N_4(x,y) = \frac{(1-x)(1+y)}{4}
+  \end{align}
+$$
+</div>
+<p>The gradients of the shape functions are</p>
+<div>
+$$
+  \begin{align}
+   G_{1x} := \frac{\partial N_1(x,y)}{\partial x} &amp; = -\frac{(1-y)}{4} ~,~~
+   G_{1y} := \frac{\partial N_1(x,y)}{\partial y} = -\frac{(1-x)}{4} \\
+   G_{2x} := \frac{\partial N_2(x,y)}{\partial x} &amp; = \frac{(1-y)}{4} ~,~~
+   G_{2y} := \frac{\partial N_2(x,y)}{\partial y} = -\frac{(1+x)}{4} \\
+   G_{3x} := \frac{\partial N_3(x,y)}{\partial x} &amp; = \frac{(1+y)}{4} ~,~~
+   G_{3y} := \frac{\partial N_3(x,y)}{\partial y} = \frac{(1+x)}{4} \\
+   G_{4x} := \frac{\partial N_4(x,y)}{\partial x} &amp; = -\frac{(1+y)}{4} ~,~~
+   G_{4y} := \frac{\partial N_4(x,y)}{\partial y} = \frac{(1-x)}{4}
+  \end{align}
+$$
+</div>
+<p>Therefore the strain field can be expressed as</p>
+<div>
+$$
+  \begin{bmatrix}  
+   \varepsilon_{xx}(x,y) \\ \varepsilon_{yy}(x,y) \\ 2\varepsilon_{xy}(x,y) 
+  \end{bmatrix}
+ = \begin{bmatrix} 
+     G_{1x} &amp; G_{2x} &amp; G_{3x} &amp; G_{4x} &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
+     0 &amp; 0 &amp; 0 &amp; 0 &amp; G_{1y} &amp; G_{2y} &amp; G_{3y} &amp; G_{4y} \\
+     G_{1y} &amp; G_{2y} &amp; G_{3y} &amp; G_{4y} &amp; G_{1x} &amp; G_{2x} &amp; G_{3x} &amp; G_{4x}
+   \end{bmatrix} \mathbf{u}
+ $$
+</div>
+<p>where</p>
+<div>
+ $$
+   \mathbf{u} = \begin{bmatrix}
+     u_x^1 &amp; u_x^2 &amp; u_x^3 &amp; u_x^4 &amp; u_y^1 &amp; u_y^2 &amp; u_y^3 &amp; u_y^4
+   \end{bmatrix}^T
+ $$
+</div>
+<p>Now consider the situation where the square is rotated by 90 degrees clockwise around
+node 1 so that the new positions of the nodes are</p>
+
+<pre><code class="language-bash">id  x    y
+1 -1.0 -1.0
+2 -1.0 -3.0
+3  1.0 -3.0
+4  1.0 -1.0
+</code></pre>
+
+<p><em>Note that we are not assuming any deformation of the square.</em>
+Then the nodal displacements are</p>
+
+<pre><code class="language-bash">id  u_x  u_y
+1   0.0  0.0
+2  -2.0 -2.0
+3   0.0 -4.0
+4   2.0 -2.0
+</code></pre>
+
+<p>Let us do the calculation using Matlab/Octave.</p>
+
+<figure class="highlight"><pre><code class="language-matlab" data-lang="matlab"><span></span><span class="o">&gt;&gt;</span> <span class="n">x</span> <span class="p">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span> <span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+<span class="o">&gt;&gt;</span> <span class="n">y</span> <span class="p">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span> <span class="o">-</span><span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span><span class="p">];</span>
+<span class="o">&gt;&gt;</span> <span class="n">G1x</span> <span class="p">=</span> <span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span>
+<span class="n">G1x</span> <span class="p">=</span> <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G1y</span> <span class="p">=</span> <span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span>
+<span class="n">G1y</span> <span class="p">=</span> <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G2x</span> <span class="p">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span>
+<span class="n">G2x</span> <span class="p">=</span> <span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G2y</span> <span class="p">=</span> <span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span>
+<span class="n">G2y</span> <span class="p">=</span> <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G3x</span> <span class="p">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span>
+<span class="n">G3x</span> <span class="p">=</span> <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>   <span class="mf">0.50000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G3y</span> <span class="p">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span>
+<span class="n">G3y</span> <span class="p">=</span> <span class="mf">0.00000</span>   <span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G4x</span> <span class="p">=</span> <span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span>
+<span class="n">G4x</span> <span class="p">=</span> <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>
+<span class="o">&gt;&gt;</span> <span class="n">G4y</span> <span class="p">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span>
+<span class="n">G4y</span> <span class="p">=</span> <span class="mf">0.50000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>
+<span class="o">&gt;&gt;</span> <span class="n">u</span> <span class="p">=</span> <span class="p">[</span><span class="mi">0</span> <span class="o">-</span><span class="mi">2</span> <span class="mi">0</span> <span class="mi">2</span> <span class="mi">0</span> <span class="o">-</span><span class="mi">2</span> <span class="o">-</span><span class="mi">4</span> <span class="o">-</span><span class="mi">2</span><span class="p">];</span>
+<span class="o">&gt;&gt;</span> <span class="n">B1</span> <span class="p">=</span> <span class="p">[[</span><span class="n">G1x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">];</span><span class="c">...</span>
+         <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="n">G1y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">1</span><span class="p">)];</span><span class="c">...</span>
+         <span class="p">[</span><span class="n">G1y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G1x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">1</span><span class="p">)]]</span>
+<span class="n">B1</span> <span class="p">=</span>
+  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>
+   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>
+  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>
+<span class="o">&gt;&gt;</span> <span class="n">B2</span> <span class="p">=</span> <span class="p">[[</span><span class="n">G1x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">];</span><span class="c">...</span>
+         <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="n">G1y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">2</span><span class="p">)];</span><span class="c">...</span>
+         <span class="p">[</span><span class="n">G1y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G1x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">2</span><span class="p">)]]</span>
+<span class="n">B2</span> <span class="p">=</span>
+  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>
+   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>
+  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>
+<span class="o">&gt;&gt;</span> <span class="n">B3</span> <span class="p">=</span> <span class="p">[[</span><span class="n">G1x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">];</span><span class="c">...</span>
+         <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="n">G1y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">3</span><span class="p">)];</span><span class="c">...</span>
+         <span class="p">[</span><span class="n">G1y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G1x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">3</span><span class="p">)]]</span>
+<span class="n">B3</span> <span class="p">=</span>
+  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>
+   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>
+  <span class="o">-</span><span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.50000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>
+<span class="o">&gt;&gt;</span> <span class="n">B4</span> <span class="p">=</span> <span class="p">[[</span><span class="n">G1x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span><span class="p">];</span><span class="c">...</span>
+         <span class="p">[</span><span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">0</span> <span class="n">G1y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">4</span><span class="p">)];</span><span class="c">...</span>
+         <span class="p">[</span><span class="n">G1y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G2y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G3y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G4y</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G1x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G2x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G3x</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> <span class="n">G4x</span><span class="p">(</span><span class="mi">4</span><span class="p">)]]</span>
+<span class="n">B4</span> <span class="p">=</span>
+  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>
+   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.00000</span>  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>
+  <span class="o">-</span><span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.00000</span>   <span class="mf">0.00000</span>   <span class="mf">0.50000</span>  <span class="o">-</span><span class="mf">0.50000</span>
+<span class="o">&gt;&gt;</span> <span class="n">eps1</span> <span class="p">=</span> <span class="n">B1</span><span class="o">*</span><span class="n">u</span><span class="o">&#39;</span>
+<span class="n">eps1</span> <span class="p">=</span>
+  <span class="o">-</span><span class="mi">1</span>
+  <span class="o">-</span><span class="mi">1</span>
+   <span class="mi">0</span>
+<span class="o">&gt;&gt;</span> <span class="n">eps2</span> <span class="p">=</span> <span class="n">B2</span><span class="o">*</span><span class="n">u</span><span class="o">&#39;</span>
+<span class="n">eps2</span> <span class="p">=</span>
+  <span class="o">-</span><span class="mi">1</span>
+  <span class="o">-</span><span class="mi">1</span>
+   <span class="mi">0</span>
+<span class="o">&gt;&gt;</span> <span class="n">eps3</span> <span class="p">=</span> <span class="n">B3</span><span class="o">*</span><span class="n">u</span><span class="o">&#39;</span>
+<span class="n">eps3</span> <span class="p">=</span>
+  <span class="o">-</span><span class="mi">1</span>
+  <span class="o">-</span><span class="mi">1</span>
+   <span class="mi">0</span>
+<span class="o">&gt;&gt;</span> <span class="n">eps4</span> <span class="p">=</span> <span class="n">B4</span><span class="o">*</span><span class="n">u</span><span class="o">&#39;</span>
+<span class="n">eps4</span> <span class="p">=</span>
+  <span class="o">-</span><span class="mi">1</span>
+  <span class="o">-</span><span class="mi">1</span>
+   <span class="mi">0</span></code></pre></figure>
+
+<p>In the above script, we compute the strains at the four nodes of the square
+using the nodal displacement vector</p>
+
+<pre><code class="language-bash">u = [0 -2 0 2 0 -2 -4 -2]
+</code></pre>
+
+<p>and find that the strain at each of the nodes is</p>
+
+<pre><code class="language-bash">eps = B*u' = [-1 -1 0]'
+</code></pre>
+
+<p class="notice--info">You can easily show that <strong>the finite element solution is identical to the analytical
+solution</strong>.   The solution implies that <strong>stresses will develop in the element due to
+pure rigid body rotation even if the element does not deform</strong> if we use small strain theory.</p>
+
+<p class="notice--warning">This result also implies that the element cannot grow in size with rigid body rotation,
+and that the illustrations shown in some textbooks are wrong even though the stress may
+transition from more compressive to less compressive during the rotation process.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>The finite element method is typically implemented in displacement form. So one specifies
+the displacements and then find the stresses in the element.  An alternative would be to
+specify moments that would rotate the element based on forces computed using a displacement
+based solution.</p>
+
+<p>Of course one should not miss the point of the exercise which is to show that the
+correct strain measures have to be used for large deformation problems.  Even if a small
+strain measure is used, rotations have to be removed from the deformation before any
+stress computations are done.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/d3.v4.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/elemRotate.js"></script>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

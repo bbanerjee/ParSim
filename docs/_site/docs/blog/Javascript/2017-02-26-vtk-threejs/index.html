@@ -1,0 +1,355 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plotting VTK particles with Three.js</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim/docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Plotting VTK particles with Three.js</h1>
+          <ul id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#a-vuex-store-for-graphics" id="markdown-toc-a-vuex-store-for-graphics">A Vuex store for graphics</a></li>
+  <li><a href="#interacting-with-vue" id="markdown-toc-interacting-with-vue">Interacting with Vue</a></li>
+  <li><a href="#conclusion" id="markdown-toc-conclusion">Conclusion</a></li>
+</ul>
+
+<h5 id="introduction">Introduction</h5>
+<p>In <a href="http://www.parresianz.com/javascript/typescript/vue/vuex/vuex-store/">Part 2</a>
+of this series, we showed how the particle data are saved into a Vuex store.  Now we are ready
+to visualize the data.  In this article, we will discuss how <a href="https://threejs.org/">three.js</a>
+can be used to display the particles. Interaction with the particles will be discussed in
+a future article.</p>
+
+<h5 id="a-vuex-store-for-graphics">A Vuex store for graphics</h5>
+<p>To make our manipulations of the data more convenient, we use a store for the graphics state too.
+The setup is similar to that discussed in Part 2, and we have a state, getters, mutations, and
+actions.  In this case, we implement the state in a file called <code>ThreeGraphicsState.ts</code>:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kr">import</span> <span class="nx">THREE</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;three&#39;</span><span class="p">);</span>
+<span class="kr">export</span> <span class="kr">class</span> <span class="nx">ThreeGraphicsState</span> <span class="p">{</span>
+  <span class="nx">scene</span>      <span class="o">:</span> <span class="nx">THREE</span><span class="p">.</span><span class="nx">Scene</span><span class="p">;</span>
+  <span class="nx">camera</span>     <span class="o">:</span> <span class="nx">THREE</span><span class="p">.</span><span class="nx">Camera</span><span class="p">;</span>
+  <span class="nx">threeObjectsCreated</span> <span class="o">:</span> <span class="kr">boolean</span><span class="p">;</span>
+  <span class="nx">constructor</span><span class="p">(</span><span class="nx">w</span><span class="o">:</span> <span class="nx">number</span><span class="p">,</span> <span class="nx">h</span><span class="o">:</span> <span class="nx">number</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">scene</span> <span class="o">=</span> <span class="o">&lt;</span><span class="nx">THREE</span><span class="p">.</span><span class="nx">Scene</span><span class="o">&gt;</span><span class="kc">null</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">camera</span> <span class="o">=</span> <span class="o">&lt;</span><span class="nx">THREE</span><span class="p">.</span><span class="nx">Camera</span><span class="o">&gt;</span><span class="kc">null</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">threeObjectsCreated</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">};</span></code></pre></figure>
+
+<p>The state contains the scene, one camera (multiple cameras can be added if necessary), and
+a flag to indicate whether the store contains objects or not.  The associated getters are
+straightforward, but there are a few more mutation functions in this case:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kr">import</span> <span class="nx">THREE</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;three&#39;</span><span class="p">);</span>
+<span class="kr">import</span> <span class="p">{</span><span class="nx">Mutation</span><span class="p">,</span> <span class="nx">MutationTree</span><span class="p">}</span> <span class="nx">from</span> <span class="s1">&#39;vuex&#39;</span><span class="p">;</span>
+<span class="kr">import</span> <span class="p">{</span><span class="nx">ThreeGraphicsState</span><span class="p">}</span> <span class="nx">from</span> <span class="s1">&#39;./ThreeGraphicsState&#39;</span><span class="p">;</span>
+<span class="kr">export</span> <span class="kd">function</span> <span class="nx">SET_SCENE</span><span class="p">(</span><span class="nx">state</span><span class="o">:</span> <span class="nx">ThreeGraphicsState</span><span class="p">,</span> <span class="nx">scene</span><span class="o">:</span> <span class="nx">THREE</span><span class="p">.</span><span class="nx">Scene</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">state</span><span class="p">.</span><span class="nx">scene</span> <span class="o">=</span> <span class="nx">scene</span><span class="p">;</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;set scene&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kr">export</span> <span class="kd">function</span> <span class="nx">SET_CAMERA</span><span class="p">(</span><span class="nx">state</span><span class="o">:</span> <span class="nx">ThreeGraphicsState</span><span class="p">,</span> <span class="nx">camera</span><span class="o">:</span> <span class="nx">THREE</span><span class="p">.</span><span class="nx">Camera</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">state</span><span class="p">.</span><span class="nx">camera</span> <span class="o">=</span> <span class="nx">camera</span><span class="p">;</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;set camera&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kr">export</span> <span class="kd">function</span> <span class="nx">DELETE_SCENE</span><span class="p">(</span><span class="nx">state</span><span class="o">:</span> <span class="nx">ThreeGraphicsState</span><span class="p">,</span> <span class="nx">message</span><span class="o">:</span> <span class="nx">string</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">state</span><span class="p">.</span><span class="nx">scene</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;deleted scene&quot;</span> <span class="o">+</span> <span class="nx">message</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kr">export</span> <span class="kd">function</span> <span class="nx">DELETE_CAMERA</span><span class="p">(</span><span class="nx">state</span><span class="o">:</span> <span class="nx">ThreeGraphicsState</span><span class="p">,</span> <span class="nx">message</span><span class="o">:</span> <span class="nx">string</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">state</span><span class="p">.</span><span class="nx">camera</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;deleted camera&quot;</span> <span class="o">+</span> <span class="nx">message</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kr">export</span> <span class="kd">function</span> <span class="nx">ADD_THREE_OBJECT</span><span class="p">(</span><span class="nx">state</span><span class="o">:</span> <span class="nx">ThreeGraphicsState</span><span class="p">,</span> <span class="nx">object</span><span class="o">:</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">state</span><span class="p">.</span><span class="nx">scene</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">object</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kr">export</span> <span class="kd">function</span> <span class="nx">THREE_OBJECTS_CREATED</span><span class="p">(</span><span class="nx">state</span><span class="o">:</span> <span class="nx">ThreeGraphicsState</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span> <span class="kr">boolean</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">state</span><span class="p">.</span><span class="nx">threeObjectsCreated</span> <span class="o">=</span> <span class="nx">value</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kr">export</span> <span class="k">default</span> <span class="o">&lt;</span><span class="nx">MutationTree</span><span class="o">&lt;</span><span class="nx">ThreeGraphicsState</span><span class="o">&gt;&gt;</span> <span class="p">{</span>
+  <span class="nx">SET_SCENE</span><span class="p">,</span>
+  <span class="nx">SET_CAMERA</span><span class="p">,</span>
+  <span class="nx">DELETE_SCENE</span><span class="p">,</span>
+  <span class="nx">DELETE_CAMERA</span><span class="p">,</span>
+  <span class="nx">ADD_THREE_OBJECT</span><span class="p">,</span>
+  <span class="nx">THREE_OBJECTS_CREATED</span><span class="p">,</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>We can also add functions that can delete objects if needed.</p>
+
+<h5 id="interacting-with-vue">Interacting with Vue</h5>
+<p><a href="https://vuejs.org/">Vue2’s</a> capabilities simplify the development of the user interface, but a
+significant penalty has to be paid in terms of performance.  In this section we will
+take a glimpse at how Vue makes development of the user interface easier.</p>
+
+<p class="notice">Vue2 was designed for business applications and is not the optimal choice for graphics-heavy
+applications.</p>
+
+<p>In the <code>Main.ts</code> file that acts as the entry point, we declare the following:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kr">import</span> <span class="o">*</span> <span class="nx">as</span> <span class="nx">Vue</span> <span class="nx">from</span> <span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+<span class="c1">// Include the .vue files that contains the templates, scripts, and styles for each Vue component</span>
+<span class="kd">var</span> <span class="nx">MainPanel</span>               <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;./MainPanel.vue&quot;</span><span class="p">).</span><span class="k">default</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">ThreeGraphicsPanel</span>      <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;./ThreeGraphicsPanel.vue&quot;</span><span class="p">).</span><span class="k">default</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">ThreeRenderer</span>           <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;./ThreeRenderer.vue&quot;</span><span class="p">).</span><span class="k">default</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">ThreeScene</span>              <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;./ThreeScene.vue&quot;</span><span class="p">).</span><span class="k">default</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">ThreeCamera</span>             <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;./ThreeCamera.vue&quot;</span><span class="p">).</span><span class="k">default</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">ThreeEllipsoidParticles</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;./ThreeEllipsoidParticles.vue&quot;</span><span class="p">).</span><span class="k">default</span><span class="p">;</span>
+<span class="c1">// Register the three.js graphics Vue components</span>
+<span class="nx">Vue</span><span class="p">.</span><span class="nx">component</span><span class="p">(</span><span class="s1">&#39;three-graphics-panel&#39;</span><span class="p">,</span>      <span class="nx">ThreeGraphicsPanel</span><span class="p">);</span>
+<span class="nx">Vue</span><span class="p">.</span><span class="nx">component</span><span class="p">(</span><span class="s1">&#39;three-renderer&#39;</span><span class="p">,</span>            <span class="nx">ThreeRenderer</span><span class="p">);</span>
+<span class="nx">Vue</span><span class="p">.</span><span class="nx">component</span><span class="p">(</span><span class="s1">&#39;three-scene&#39;</span><span class="p">,</span>               <span class="nx">ThreeScene</span><span class="p">);</span>
+<span class="nx">Vue</span><span class="p">.</span><span class="nx">component</span><span class="p">(</span><span class="s1">&#39;three-camera&#39;</span><span class="p">,</span>              <span class="nx">ThreeCamera</span><span class="p">);</span>
+<span class="nx">Vue</span><span class="p">.</span><span class="nx">component</span><span class="p">(</span><span class="s1">&#39;three-ellipsoid-particles&#39;</span><span class="p">,</span> <span class="nx">ThreeEllipsoidParticles</span><span class="p">);</span>
+<span class="kr">class</span> <span class="nx">Main</span> <span class="p">{</span>
+  <span class="kr">public</span> <span class="nx">vm</span> <span class="o">:</span> <span class="nx">Vue</span><span class="p">;</span>
+  <span class="nx">constructor</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">vm</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Vue</span> <span class="p">({</span>
+        <span class="nx">store</span><span class="o">:</span> <span class="nx">Store</span><span class="p">,</span>
+        <span class="nx">el</span><span class="o">:</span> <span class="s1">&#39;#main-panel&#39;</span><span class="p">,</span>
+        <span class="nx">components</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s1">&#39;main-panel&#39;</span> <span class="o">:</span> <span class="nx">MainPanel</span>
+        <span class="p">},</span>
+        <span class="nx">render</span><span class="o">:</span> <span class="nx">h</span> <span class="o">=&gt;</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">h</span><span class="p">(</span><span class="s1">&#39;main-panel&#39;</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>In the <code>MainPanel.vue</code> file, we set up the basic components used in the user interface; in
+this case just a single window for display the particle data.  I have used
+<a href="https://getuikit.com/">Uikit3</a> for some of the CSS styling that I refer to in this series, mainly
+because it is <em>relatively</em> lightweight.</p>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html"><span></span><span class="p">&lt;</span><span class="nt">template</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&#39;vaango-main-panel&#39;</span> 
+       <span class="na">class</span><span class="o">=</span><span class="s">&quot;uk-container uk-container-center uk-margin-remove-top uk-margin-remove-left </span>
+<span class="s">              uk-margin-remove-right uk-margin-large-bottom&quot;</span><span class="p">&gt;</span> 
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;container&quot;</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;uk-flex uk-flex-around&quot;</span><span class="p">&gt;</span>
+      <span class="c">&lt;!-- The THREE graphics Vue component --&gt;</span>
+      <span class="p">&lt;</span><span class="nt">three-graphics-panel</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;uk-width-xxlarge&quot;</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">three-graphics-panel</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">template</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;./MainPanel.ts&quot;</span><span class="p">&gt;</span> <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">style</span><span class="p">&gt;</span>
+ <span class="p">.</span><span class="nc">uk-container</span> <span class="p">{</span>
+   <span class="k">padding-left</span><span class="p">:</span> <span class="mi">5</span><span class="kt">px</span><span class="p">;</span>
+   <span class="k">padding-right</span><span class="p">:</span> <span class="mi">5</span><span class="kt">px</span><span class="p">;</span>
+ <span class="p">}</span>
+<span class="p">&lt;/</span><span class="nt">style</span><span class="p">&gt;</span></code></pre></figure>
+
+<p class="notice">Note that we can specify the source code and the styling in the same file.  This has the potential
+of greatly reducing the complexity of the code.</p>
+
+<p>The <code>MainPanel.ts</code> file is just an entry panel that acts as a container.  Therefore, it contains
+little content, but is useful to illustrate the layout of a typical Vue2 component using
+<a href="https://github.com/HerringtonDarkholme/av-ts">av-ts</a> Typescript decorators.  Here’s the code</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kr">import</span> <span class="o">*</span> <span class="nx">as</span> <span class="nx">Vue</span> <span class="nx">from</span> <span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+<span class="kr">import</span> <span class="p">{</span><span class="nx">Component</span><span class="p">}</span> <span class="nx">from</span> <span class="s2">&quot;av-ts&quot;</span><span class="p">;</span>
+<span class="err">@</span><span class="nx">Component</span><span class="p">({</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;main-panel&#39;</span><span class="p">,</span>
+<span class="p">})</span>
+<span class="kr">export</span> <span class="k">default</span> <span class="kr">class</span> <span class="nx">MainPanel</span> <span class="kr">extends</span> <span class="nx">Vue</span> <span class="p">{</span>
+  <span class="nx">name</span> <span class="o">:</span> <span class="nx">string</span> <span class="o">=</span> <span class="s2">&quot;MainPanel&quot;</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<h4 id="conclusion">Conclusion</h4>
+<p>We are now ready to get into the details of the actual graphics components.  I’ll discuss how
+I implemented that in the next part of this series.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

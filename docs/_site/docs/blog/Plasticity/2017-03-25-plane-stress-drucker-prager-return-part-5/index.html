@@ -1,0 +1,441 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forward vs. Backward Euler: Plane stress plasticity</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim/docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Forward vs. Backward Euler: Plane stress plasticity</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#forward-difference-for-stress-rate" id="markdown-toc-forward-difference-for-stress-rate">Forward difference for stress rate</a></li>
+  <li><a href="#forward-and-backward-euler-for-stress-rate" id="markdown-toc-forward-and-backward-euler-for-stress-rate">Forward and Backward Euler for stress rate</a></li>
+  <li><a href="#forward-and-backward-euler-for-flow-rule" id="markdown-toc-forward-and-backward-euler-for-flow-rule">Forward and Backward Euler for flow rule</a></li>
+  <li><a href="#forwardbackward-euler-stress-updates" id="markdown-toc-forwardbackward-euler-stress-updates">Forward/Backward Euler stress updates</a></li>
+  <li><a href="#does-the-choice-of-forwardbackward-euler-matter" id="markdown-toc-does-the-choice-of-forwardbackward-euler-matter">Does the choice of Forward/Backward Euler matter?</a>    <ul>
+      <li><a href="#accuracy" id="markdown-toc-accuracy">Accuracy</a></li>
+      <li><a href="#stability" id="markdown-toc-stability">Stability</a></li>
+      <li><a href="#optimization" id="markdown-toc-optimization">Optimization</a></li>
+    </ul>
+  </li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h5 id="introduction">Introduction</h5>
+<p>One of the main points of divergence of many implementations of plastic
+return algorithms is the choice of the algorithm used for numerical integration.
+Typically, this choice is limited to <a href="https://en.wikipedia.org/wiki/Euler_method">forward Euler vs. backward Euler</a> for simplicity.</p>
+
+<p>Recall from <a href="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return/">Part 2</a> that the rate equations that we need to integrate are:</p>
+<div>
+$$
+  \dot{\boldsymbol{\sigma}} = \mathbf{C}\dot{\boldsymbol{\varepsilon}}^e
+   = \mathbf{C}\left(
+    \dot{\boldsymbol{\varepsilon}} - \dot{\boldsymbol{\varepsilon}}^p\right)
+$$
+</div>
+<p>and</p>
+<div>
+$$
+\dot{\boldsymbol{\varepsilon}}^p = \dot{\lambda}\,\boldsymbol{n} = 
+    \dot{\lambda} \left(
+     \tfrac{1}{\sqrt{2}}
+       \frac{\mathbf{P}\,\boldsymbol{\sigma}}{
+         \sqrt{\boldsymbol{\sigma}^T\,\mathbf{P}\,\boldsymbol{\sigma}}
+       }
+     - \tfrac{1}{3} \frac{dq}{dp}\,\mathbf{I}
+   \right)
+$$
+</div>
+
+<p>Let us examine way of integrating these rate equations.</p>
+
+<h5 id="forward-difference-for-stress-rate">Forward difference for stress rate</h5>
+<p>The first equation is typically solved using a first-order 
+<a href="https://en.wikipedia.org/wiki/Finite_difference">forward finite difference</a> approach:</p>
+<div>
+$$
+  \frac{\boldsymbol{\sigma}_{n+1} - \boldsymbol{\sigma}_n}{\Delta t} = 
+  \mathbf{C}\left[
+  \frac{\boldsymbol{\varepsilon}_{n+1} - \boldsymbol{\varepsilon}_n}{\Delta t}
+  - \frac{\boldsymbol{\varepsilon}_{n+1}^p - \boldsymbol{\varepsilon}_n^p}{\Delta t}\right]
+$$
+</div>
+<p>To simplify things, a trial stress state is defined using the rate equation</p>
+<div>
+$$
+  \dot{\boldsymbol{\sigma}}^{\text{trial}} = \mathbf{C}\dot{\boldsymbol{\varepsilon}}
+$$
+</div>
+<p>and this equation is also integrated using a first-order forward difference:</p>
+<div>
+$$
+  \frac{\boldsymbol{\sigma}_{n+1}^{\text{trial}} - \boldsymbol{\sigma}_n^{\text{trial}}}{\Delta t} = 
+  \mathbf{C}\left[
+  \frac{\boldsymbol{\varepsilon}_{n+1} - \boldsymbol{\varepsilon}_n}{\Delta t}
+  \right]
+$$
+</div>
+<p>We can then write</p>
+<div>
+$$
+  \frac{\boldsymbol{\sigma}_{n+1} - \boldsymbol{\sigma}_n}{\Delta t} = 
+  \frac{\boldsymbol{\sigma}_{n+1}^{\text{trial}} - \boldsymbol{\sigma}_n^{\text{trial}}}{\Delta t} - 
+  \mathbf{C}\left[
+   \frac{\boldsymbol{\varepsilon}_{n+1}^p - \boldsymbol{\varepsilon}_n^p}{\Delta t}\right]
+$$
+</div>
+<p>Setting <script type="math/tex">\boldsymbol{\sigma}_n^{\text{trial}} = \boldsymbol{\sigma}_n</script>, we get the plastic return expression</p>
+<div>
+$$
+  \boldsymbol{\sigma}_{n+1} = 
+  \boldsymbol{\sigma}_{n+1}^{\text{trial}} - 
+  \mathbf{C}\left[
+   \boldsymbol{\varepsilon}_{n+1}^p - \boldsymbol{\varepsilon}_n^p\right]
+$$
+</div>
+<p class="notice--info">Note that this approach is valid only if <script type="math/tex">\mathbf{C}</script> is constant.
+For a varying stiffness matrix, we have to pick either a forward Euler or a backward Euler approach to retain first-order accuracy in <script type="math/tex">\Delta t</script>.</p>
+
+<h5 id="forward-and-backward-euler-for-stress-rate">Forward and Backward Euler for stress rate</h5>
+<p>In many constitutive models, we get a stress-rate equation of the form</p>
+<div>
+$$
+  \dot{\boldsymbol{\sigma}} = \mathbf{C}(\boldsymbol{\sigma})\,\dot{\boldsymbol{\varepsilon}}^e
+   = \mathbf{C}(\boldsymbol{\sigma})\left(
+    \dot{\boldsymbol{\varepsilon}} - \dot{\boldsymbol{\varepsilon}}^p\right)
+$$
+</div>
+<p>In those situations we can use two variations on the first-order forward
+difference scheme: forward Euler and backward Euler.  The forward Euler
+scheme gives us the discrete form</p>
+<div>
+$$
+  \boldsymbol{\sigma}_{n+1} = 
+  \boldsymbol{\sigma}_{n+1}^{\text{trial}} - 
+  \mathbf{C}_n\left[
+   \boldsymbol{\varepsilon}_{n+1}^p - \boldsymbol{\varepsilon}_n^p\right]
+$$
+</div>
+<p>while the backward Euler scheme leads to</p>
+<div>
+$$
+  \boldsymbol{\sigma}_{n+1} = 
+  \boldsymbol{\sigma}_{n+1}^{\text{trial}} - 
+  \mathbf{C}_{n+1}\left[
+   \boldsymbol{\varepsilon}_{n+1}^p - \boldsymbol{\varepsilon}_n^p\right]
+$$
+</div>
+<p class="notice--warning">Note that for problems where <script type="math/tex">\mathbf{C}</script> is a function of the stress/deformation state, tangent modulus calculations needed by Backward Euler methods can easily become intractable and prone to bugs.  Forward Euler integration is therefore preferred for complex constitutive models, particular when there is elastic-plastic coupling.</p>
+
+<h5 id="forward-and-backward-euler-for-flow-rule">Forward and Backward Euler for flow rule</h5>
+<p>For the flow rule, if we use a forward Euler scheme, we have</p>
+<div>
+$$
+  \frac{\boldsymbol{\varepsilon}_{n+1}^p - \boldsymbol{\varepsilon}_{n}^p}{\Delta t} = \frac{\lambda_{n+1} - \lambda_n}{\Delta t} \, \boldsymbol{n}_{n} 
+$$
+</div>
+<p>or</p>
+<div>
+$$
+  \boldsymbol{\varepsilon}_{n+1}^p = \boldsymbol{\varepsilon}_{n}^p
+   + \Delta\lambda \, \boldsymbol{n}_{n} 
+$$
+</div>
+<p>The equivalent backward Euler update leads to</p>
+<div>
+$$
+  \boldsymbol{\varepsilon}_{n+1}^p = \boldsymbol{\varepsilon}_{n}^p
+   + \Delta\lambda \, \boldsymbol{n}_{n+1} 
+$$
+</div>
+
+<h5 id="forwardbackward-euler-stress-updates">Forward/Backward Euler stress updates</h5>
+<p>Using the expressions from the previous two sections, we see that for
+forward Euler,</p>
+<div>
+$$
+  \boldsymbol{\sigma}_{n+1} = 
+  \boldsymbol{\sigma}_{n+1}^{\text{trial}} - 
+  \Delta\lambda\mathbf{C}_n \boldsymbol{n}_n
+$$
+</div>
+<p>where <script type="math/tex">\Delta \lambda</script> can be solved using (see <a href="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/plane-stress-drucker-prager-return-part-4/">Part 4</a>)</p>
+<div>
+$$
+  (\boldsymbol{\sigma}^\text{trial}_{n+1})^T\mathbf{P}\boldsymbol{\sigma}^\text{trial}_{n+1}
+  - 2\Delta\lambda (\boldsymbol{\sigma}^\text{trial}_{n+1})^T\mathbf{P}\mathbf{C}_n\boldsymbol{n}_n
+  + (\Delta\lambda)^2 (\mathbf{C}\boldsymbol{n}_n)^T\mathbf{P}\mathbf{C}_n\boldsymbol{n}_n \\
+   = 2q^2(\text{tr}[\boldsymbol{\sigma}_{n+1}^\text{trial} - \Delta\lambda\mathbf{C}_n\boldsymbol{n}_n])
+$$
+</div>
+<p>On the other hand, for backward Euler,</p>
+<div>
+$$
+  \boldsymbol{\sigma}_{n+1} = 
+  \boldsymbol{\sigma}_{n+1}^{\text{trial}} - 
+  \Delta\lambda\mathbf{C}_{n+1} \boldsymbol{n}_{n+1}
+$$
+</div>
+<p>In the particular case of plane stress Drucker-Prager plasticity with
+a constant elastic stiffness, we have the backward Euler scheme</p>
+<div>
+$$
+  \boldsymbol{\sigma}_{n+1} = 
+  \boldsymbol{\sigma}_{n+1}^{\text{trial}} - 
+  \Delta\lambda\mathbf{C}
+    \left(
+     \tfrac{1}{\sqrt{2}}
+       \frac{\mathbf{P}\,\boldsymbol{\sigma}_{n+1}}{
+         \sqrt{\boldsymbol{\sigma}_{n+1}^T\,\mathbf{P}\,\boldsymbol{\sigma}_{n+1}}
+       }
+     - \tfrac{1}{3} \frac{dq}{dp}(p_{n+1})\,\mathbf{I}
+   \right)
+$$
+</div>
+<p class="notice--info">Note that in this case there is no straightforward way to cast this equation
+such that we can compute <script type="math/tex">\boldsymbol{\sigma}_{n+1}</script> in terms of a factor that scales <script type="math/tex">\boldsymbol{\sigma}_{n+1}^{\text{trial}}</script> as is usually done for von Mises plasticity.</p>
+<p class="notice--warning">Note also that for the backward Euler case, there is no straightforward
+quadratic equation in <script type="math/tex">\Delta\lambda</script> that can be solved directly.  Instead,
+we need a closest point projection algorithm (or some other similar
+algorithm) to find <script type="math/tex">\Delta\lambda</script> and <script type="math/tex">\boldsymbol{\sigma}_{n+1}</script>
+simultaneously.  This needs the solution of a system of equations at each
+step of a Newton iteration method.</p>
+
+<h5 id="does-the-choice-of-forwardbackward-euler-matter">Does the choice of Forward/Backward Euler matter?</h5>
+<p>The forward Euler approach is easier to implement compared to the
+backward Euler approach.  This is because the backward Euler approach
+leads to an “implicit” set of equations that have to cast into matrix
+form solved (usually iteratively) for <script type="math/tex">\boldsymbol{\sigma}_{n+1}</script> 
+and <script type="math/tex">\Delta\lambda</script>.</p>
+
+<p class="notice">A question that naturally arises at this stage is whether the extra effort
+needed for a backward Euler approach is justified.</p>
+
+<h6 id="accuracy">Accuracy</h6>
+<p>Since both approaches are first-order accurate in <script type="math/tex">\Delta h</script>, and the
+backward Euler approach is typically chosen for stability in the face of
+larger values of <script type="math/tex">\Delta h</script>, a stable forward Euler approach produces as
+accurate solutions as the backward Euler approach for the same timestep size.</p>
+
+<h6 id="stability">Stability</h6>
+<p>The backward Euler approach is unconditionally stable, while the stability
+of the forward Euler method is limited by step size (particularly for stiff
+ODE systems).  In general, the stiffness properties of complicated
+constitutive equations in plasticity are non-trivial to determine as if
+the safe step size.  Therefore, it is safer to use backward Euler.  However,
+there is an accuracy penalty is large step sizes and backward Euler are used
+and the predicted return point can deviate significantly from the exact solution.</p>
+
+<h6 id="optimization">Optimization</h6>
+<p>From an optimization point of view, the equations produced by the backward
+Euler approach can be interpreted as a convex optimization problem and solved
+and examined using techniques from that field.</p>
+
+<p class="notice--warning">The interpretation as an optimization problem and the robustness
+of backward Euler have made it popular in commercial mechanics codes.  But
+one should always keep in mind the fact that accuracy is often lost in the
+process (because larger timesteps are taken).</p>
+
+<p class="notice--info">A large amount of effort is typically spent deriving consistent tangents
+in implicit numerical algorithms for faster Newton-type solves.
+Often, the result of these efforts is
+rapid and stable convergence to inaccurate solutions.  The fact that
+inaccurate solutions can have strong effects on the predictions of plasticity
+models is typically ignored.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>We mentioned the “closest-point return” approach in passing in this article.  In the next part of this series we will examine that approach in more detail.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

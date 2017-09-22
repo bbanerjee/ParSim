@@ -1,0 +1,409 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reading VTK particles in Javascript</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim/docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Reading VTK particles in Javascript</h1>
+          <p>In our <a href="http://www.parresianz.com/c++/xml/vtk/vtk-particle-output/">previous article</a>
+we discussed the process of calling XML functions in C++ to write data produced by
+particle simulations in XML format files.  These output files can then
+be viewed in powerful tools such as VisIt or Paraview.</p>
+
+<p>Modern browsers have become powerful in recent years and can now render
+3D graphics quite efficiently.  The next few blog posts will discuss our
+experience in developing a basic user interface with standard web tools
+to visualize simulation output data.  In this article, I will explain
+how the input process would work in such a tool.</p>
+
+<h5 id="the-vtk-xml-particle-data-format">The VTK XML particle data format</h5>
+<p>Output data from our simulations are written to disk every few timesteps.  At
+each timestep, we get a data file like the one listed below.</p>
+
+<figure class="highlight"><pre><code class="language-xml" data-lang="xml"><span></span><span class="cp">&lt;?xml version=&quot;1.0&quot;?&gt;</span>
+<span class="nt">&lt;VTKFile</span> <span class="na">type=</span><span class="s">&quot;UnstructuredGrid&quot;</span> <span class="na">version=</span><span class="s">&quot;0.1&quot;</span> <span class="na">byte_order=</span><span class="s">&quot;LittleEndian&quot;</span> <span class="na">compressor=</span><span class="s">&quot;vtkZLibDataCompressor&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;UnstructuredGrid&gt;</span>
+    <span class="nt">&lt;FieldData&gt;</span>
+      <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">&quot;Float64&quot;</span> <span class="na">Name=</span><span class="s">&quot;TIME&quot;</span> <span class="na">NumberOfTuples=</span><span class="s">&quot;1&quot;</span> <span class="na">format=</span><span class="s">&quot;ascii&quot;</span> <span class="na">RangeMin=</span><span class="s">&quot;0&quot;</span> <span class="na">RangeMax=</span><span class="s">&quot;0&quot;</span><span class="nt">&gt;</span>
+        0.001
+      <span class="nt">&lt;/DataArray&gt;</span>
+    <span class="nt">&lt;/FieldData&gt;</span>
+    <span class="nt">&lt;Piece</span> <span class="na">NumberOfPoints=</span><span class="s">&quot;412&quot;</span> <span class="na">NumberOfCells=</span><span class="s">&quot;0&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;PointData&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">&quot;Float64&quot;</span> <span class="na">Name=</span><span class="s">&quot;Radius&quot;</span> <span class="na">NumberOfComponents=</span><span class="s">&quot;3&quot;</span> <span class="na">format=</span><span class="s">&quot;ascii&quot;</span> <span class="na">RangeMin=</span><span class="s">&quot;0.83645083538&quot;</span> <span class="na">RangeMax=</span><span class="s">&quot;1.7075128111&quot;</span><span class="nt">&gt;</span>
+          1.15 0.5 0.69 1.15 0.5 0.69
+          1.15 0.5 0.69 0.575 0.5 0.345
+          1.15 0.5 0.69 0.575 0.5 0.345
+          0.575 0.5 0.345 1.15 0.5 0.69
+          ...........
+        <span class="nt">&lt;/DataArray&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">&quot;Float64&quot;</span> <span class="na">Name=</span><span class="s">&quot;Axis a&quot;</span> <span class="na">NumberOfComponents=</span><span class="s">&quot;3&quot;</span> <span class="na">format=</span><span class="s">&quot;ascii&quot;</span> <span class="na">RangeMin=</span><span class="s">&quot;1.923869419&quot;</span> <span class="na">RangeMax=</span><span class="s">&quot;3.8462926819&quot;</span><span class="nt">&gt;</span>
+          2.250054 1.570796 0.6792575 2.536687 1.570796 0.9658907
+          0.8923825 1.570796 0.6784139 1.576513 1.570796 0.005716666
+          1.523425 1.570796 0.0473713 2.090659 1.570796 2.62173
+          2.128077 1.570796 0.5572808 0.0678937 1.570796 1.502903        
+          ...........
+        <span class="nt">&lt;/DataArray&gt;</span>
+        ................................................
+      <span class="nt">&lt;/PointData&gt;</span>
+      <span class="nt">&lt;CellData&gt;</span>
+      <span class="nt">&lt;/CellData&gt;</span>
+      <span class="nt">&lt;Points&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">&quot;Float32&quot;</span> <span class="na">Name=</span><span class="s">&quot;Points&quot;</span> <span class="na">NumberOfComponents=</span><span class="s">&quot;3&quot;</span> <span class="na">format=</span><span class="s">&quot;ascii&quot;</span> <span class="na">RangeMin=</span><span class="s">&quot;29.109286806&quot;</span> <span class="na">RangeMax=</span><span class="s">&quot;99.675090711&quot;</span><span class="nt">&gt;</span>
+          49.731739044 0 0.99367249012 50.900959015 0 5.3205289841
+          30.811420441 0 3.8980329037 54.012958527 0 5.2524261475
+          71.06136322 0 7.7233600616 65.397392273 0 6.3970627785
+          42.516990662 0 11.963620186 48.560340881 0 2.5312030315
+          ...........
+        <span class="nt">&lt;/DataArray&gt;</span>
+      <span class="nt">&lt;/Points&gt;</span>
+      <span class="nt">&lt;Cells&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">&quot;Int64&quot;</span> <span class="na">Name=</span><span class="s">&quot;connectivity&quot;</span> <span class="na">format=</span><span class="s">&quot;ascii&quot;</span> <span class="na">RangeMin=</span><span class="s">&quot;1e+299&quot;</span> <span class="na">RangeMax=</span><span class="s">&quot;-1e+299&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/DataArray&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">&quot;Int64&quot;</span> <span class="na">Name=</span><span class="s">&quot;offsets&quot;</span> <span class="na">format=</span><span class="s">&quot;ascii&quot;</span> <span class="na">RangeMin=</span><span class="s">&quot;1e+299&quot;</span> <span class="na">RangeMax=</span><span class="s">&quot;-1e+299&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/DataArray&gt;</span>
+        <span class="nt">&lt;DataArray</span> <span class="na">type=</span><span class="s">&quot;UInt8&quot;</span> <span class="na">Name=</span><span class="s">&quot;types&quot;</span> <span class="na">format=</span><span class="s">&quot;ascii&quot;</span> <span class="na">RangeMin=</span><span class="s">&quot;1e+299&quot;</span> <span class="na">RangeMax=</span><span class="s">&quot;-1e+299&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/DataArray&gt;</span>
+      <span class="nt">&lt;/Cells&gt;</span>
+    <span class="nt">&lt;/Piece&gt;</span>
+  <span class="nt">&lt;/UnstructuredGrid&gt;</span>
+<span class="nt">&lt;/VTKFile&gt;</span></code></pre></figure>
+
+<p>For now, let us consider only data that have been written in ASCII format.</p>
+
+<h5 id="reading-the-particle-xml-data">Reading the particle XML data</h5>
+<p>We will read in this data into a code that provides a user interface to visualize
+the particle data.</p>
+
+<p>For now, the details of the user interface are not important,
+but it is worth noting the following : <br /></p>
+<ul class="notice">
+  <li>it is written in <a href="https://www.typescriptlang.org/">Typescript</a> <br /></li>
+  <li>it uses the <a href="https://vuejs.org/">Vue</a> framework for user interactions and <a href="https://vuex.vuejs.org/en/">Vuex</a> for data management <br /></li>
+  <li>Typescript type definitions are from <a href="https://www.npmjs.com/">npm</a> and <a href="https://github.com/HerringtonDarkholme/av-ts">av-ts</a> <br /></li>
+  <li>the code is transpiled to <a href="http://es6-features.org/#Constants">ES6</a>
+using <code>tsc</code> and <a href="https://babeljs.io/">babel</a>, and <br /></li>
+  <li>packaged using <a href="https://webpack.github.io/">webpack</a> before it is run on a browser</li>
+</ul>
+
+<p>First let us examine the actual reader code:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="c1">// Function: parseAndSaveVTKXML</span>
+<span class="c1">// Input:   xmlDoc : XMLDocument (The current version of jquery.d.ts declares the return type of parseXML as &quot;any&quot;)</span>
+<span class="c1">// Store:   pointData : any {} (A key-value object containing arrays of particle data)</span>
+<span class="kr">public</span> <span class="nx">parseAndSaveVTKXML</span><span class="p">(</span><span class="nx">xmlDoc</span> <span class="o">:</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Use jquery to read the xmlDoc</span>
+    <span class="kd">let</span> <span class="nx">$xml</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">xmlDoc</span><span class="p">);</span>
+    <span class="c1">// Check that the file is actual a VTK XML file</span>
+    <span class="kd">let</span> <span class="nx">fileType</span> <span class="o">=</span> <span class="nx">$xml</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;VTKFile&quot;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">fileType</span> <span class="o">!=</span> <span class="s2">&quot;UnstructuredGrid&quot;</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Invalid file type&quot;</span> <span class="o">+</span> <span class="nx">fileType</span><span class="p">);</span>
+      <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">// Read time stamp after trimming the string</span>
+    <span class="kd">let</span> <span class="nx">timeStr</span> <span class="o">=</span> <span class="nx">$xml</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;FieldData&quot;</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;DataArray&quot;</span><span class="p">).</span><span class="nx">text</span><span class="p">().</span><span class="nx">trim</span><span class="p">();</span>
+    <span class="kd">let</span> <span class="nx">time</span> <span class="o">=</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">time</span><span class="p">);</span>
+    <span class="c1">// Read the number of points in the data set</span>
+    <span class="kd">let</span> <span class="nx">numPtsStr</span> <span class="o">=</span> <span class="nx">$xml</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;Piece&quot;</span><span class="p">).</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;NumberOfPoints&#39;</span><span class="p">).</span><span class="nx">trim</span><span class="p">();</span>
+    <span class="kd">let</span> <span class="nx">numPts</span> <span class="o">=</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">numPtsStr</span><span class="p">);</span>
+    <span class="c1">// Read the state data one by one</span>
+    <span class="kd">var</span> <span class="nx">pointData</span><span class="o">:</span><span class="nx">any</span> <span class="o">=</span> <span class="p">{};</span>
+    <span class="nx">$</span><span class="p">(</span><span class="nx">$xml</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;PointData&quot;</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;DataArray&quot;</span><span class="p">)).</span><span class="nx">each</span><span class="p">(</span>
+      <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="kd">let</span> <span class="nx">data</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>  <span class="c1">// &quot;this&quot; is now pointing to the data XMLDocument</span>
+        <span class="kd">let</span> <span class="nx">key</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;Name&quot;</span><span class="p">);</span>  <span class="c1">// Use the name of the variable as the key</span>
+        <span class="kd">let</span> <span class="nx">type</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">);</span>
+        <span class="kd">let</span> <span class="nx">numComponents</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;NumberOfComponents&quot;</span><span class="p">);</span> 
+        <span class="k">if</span> <span class="p">(</span><span class="nx">numComponents</span><span class="p">)</span> <span class="p">{</span>  <span class="c1">// More than one component</span>
+          <span class="kd">let</span> <span class="nx">numComp</span> <span class="o">=</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">numComponents</span><span class="p">);</span>
+          <span class="kd">let</span> <span class="nx">dataArray</span> <span class="o">=</span> <span class="nx">convertTo1DArray</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+          <span class="kd">let</span> <span class="nx">arrayOfVec</span> <span class="o">:</span> <span class="nx">any</span> <span class="o">=</span> <span class="p">[];</span>
+          <span class="k">while</span> <span class="p">(</span><span class="nx">dataArray</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">arrayOfVec</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">dataArray</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nx">numComp</span><span class="p">));</span>  <span class="c1">// Convert into 2D array        </span>
+          <span class="p">}</span>
+          <span class="nx">pointData</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">arrayOfVec</span><span class="p">;</span> <span class="c1">// Save the data                      </span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">// Only one component</span>
+          <span class="nx">pointData</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">convertTo1DArray</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">);</span>
+
+    <span class="c1">// Read the position data</span>
+    <span class="kd">let</span> <span class="nx">points</span> <span class="o">=</span> <span class="nx">$xml</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;Points&quot;</span><span class="p">).</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;DataArray&quot;</span><span class="p">);</span>
+    <span class="kd">let</span> <span class="nx">numComponents</span> <span class="o">=</span> <span class="nx">points</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;NumberOfComponents&quot;</span><span class="p">);</span>
+    <span class="kd">let</span> <span class="nx">dataArray</span> <span class="o">=</span> <span class="nx">convertTo1DArray</span><span class="p">(</span><span class="nx">points</span><span class="p">);</span>
+    <span class="kd">let</span> <span class="nx">numComp</span> <span class="o">=</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">numComponents</span><span class="p">);</span>
+    <span class="kd">let</span> <span class="nx">arrayOfVec</span> <span class="o">:</span> <span class="nx">any</span> <span class="o">=</span> <span class="p">[];</span>
+    <span class="k">while</span> <span class="p">(</span><span class="nx">dataArray</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">arrayOfVec</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">dataArray</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nx">numComp</span><span class="p">));</span>                   
+    <span class="p">}</span>
+    <span class="nx">pointData</span><span class="p">[</span><span class="s2">&quot;Position&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nx">arrayOfVec</span><span class="p">;</span>
+    <span class="c1">// Save the data</span>
+    <span class="nx">Store</span><span class="p">.</span><span class="nx">commit</span><span class="p">(</span><span class="s1">&#39;SET_VTK_PARTICLE_DATA&#39;</span><span class="p">,</span> <span class="nx">pointData</span><span class="p">);</span> <span class="c1">// Save to a Vuex store</span>
+  <span class="p">}</span></code></pre></figure>
+
+<p>The <code>convertTo1DArray</code> method has the form</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kr">private</span> <span class="nx">convertTo1DArray</span><span class="p">(</span><span class="nx">data</span> <span class="o">:</span> <span class="nx">string</span><span class="p">)</span> <span class="o">:</span> <span class="nx">number</span><span class="p">[]</span> <span class="p">{</span>
+  <span class="kd">let</span> <span class="nx">dataArray</span> <span class="o">=</span>
+    <span class="nx">data</span><span class="p">.</span><span class="nx">text</span><span class="p">().</span><span class="nx">trim</span><span class="p">()</span>                 <span class="c1">// Remove leading/trailing white spaces</span>
+        <span class="p">.</span><span class="nx">replace</span><span class="p">(</span> <span class="sr">/\s\s+/g</span><span class="p">,</span> <span class="s1">&#39; &#39;</span> <span class="p">)</span>      <span class="c1">// Replace multiple spaces with one space</span>
+        <span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/(\r\n|\n|\r)/gm</span><span class="p">,</span><span class="s2">&quot; &quot;</span><span class="p">)</span> <span class="c1">// Replace newline characters with space</span>
+        <span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>                    <span class="c1">// Convert into 1D array</span>
+        <span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nb">parseFloat</span><span class="p">);</span>              <span class="c1">// Convert into floats</span>
+  <span class="k">return</span> <span class="nx">dataArray</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Note that we have not saved the time in this simplified version. The JSON representation
+of the saved data is of the form</p>
+
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="p">{</span>
+  <span class="nt">&quot;Position&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],[</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">],</span><span class="err">....</span><span class="p">],</span>
+  <span class="nt">&quot;Radius&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mf">0.1</span><span class="p">,</span><span class="mf">0.2</span><span class="p">,</span><span class="mf">0.3</span><span class="p">],[</span><span class="mf">0.4</span><span class="p">,</span><span class="mf">0.5</span><span class="p">,</span><span class="mf">0.6</span><span class="p">],</span><span class="err">....</span><span class="p">],</span>
+  <span class="err">....</span>
+<span class="p">}</span></code></pre></figure>
+
+<h5 id="asynchronous-io-and-reading-the-file">Asynchronous IO and reading the file</h5>
+<p>The previous section assumes that a file has been read in and parsed using <code>parseXML</code>.
+Let us now see how the file is actually read from disk.  We will assume that a
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/File">File object</a> is available and
+has been obtained using the <code>&lt;input&gt;</code> tag in the HTML docsument. The <code>FileReader</code> feature
+of HTML5 makes it possible to read files easily from disk without using the <code>fs</code> library from
+<code>node.js</code>.</p>
+
+<p>The HTML input tag inside the appropriate <code>Vue</code> template has the form</p>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html"><span></span>  <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;file&quot;</span> <span class="na">v-on:change</span><span class="o">=</span><span class="s">&quot;readVTKXMLParticleFile&quot;</span><span class="p">&gt;</span></code></pre></figure>
+
+<p>The <code>readVTKXMLParticleFile</code> function is called after a file has been selected from the
+list of files.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kr">public</span> <span class="nx">readVTKXMLParticleFile</span><span class="p">(</span><span class="nx">event</span><span class="o">:</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// Choose first file in selected list</span>
+  <span class="kd">let</span> <span class="nx">file</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">files</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+  <span class="c1">// Read the file as text and store data</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">readXMLFile</span><span class="p">(</span><span class="nx">file</span><span class="p">,</span> <span class="s2">&quot;vtk-xml&quot;</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The actual asynchronous read is defined in <code>readXMLFile</code>:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kr">import</span> <span class="nx">$</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;jquery&quot;</span><span class="p">);</span> <span class="c1">// Use jQuery for the parsing</span>
+<span class="p">.....</span>
+  <span class="kr">public</span> <span class="nx">readXMLFile</span><span class="p">(</span><span class="nx">file</span><span class="o">:</span> <span class="nx">any</span><span class="p">,</span> <span class="nx">type</span><span class="o">:</span> <span class="nx">string</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">file</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">let</span> <span class="nx">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FileReader</span><span class="p">();</span>
+      <span class="nx">reader</span><span class="p">.</span><span class="nx">readAsText</span><span class="p">(</span><span class="nx">file</span><span class="p">);</span>
+      <span class="c1">// Use a closure to pass on the actual parser function</span>
+      <span class="nx">reader</span><span class="p">.</span><span class="nx">onload</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="kd">function</span><span class="p">(</span><span class="nx">parserFunction</span><span class="o">:</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="kd">function</span><span class="p">(</span><span class="nx">event</span><span class="o">:</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">let</span> <span class="nx">xmlData</span> <span class="o">=</span> <span class="nx">reader</span><span class="p">.</span><span class="nx">result</span><span class="p">;</span>      <span class="c1">// The text that has been read in</span>
+            <span class="kd">let</span> <span class="nx">xmlDoc</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">parseXML</span><span class="p">(</span><span class="nx">xmlData</span><span class="p">);</span> <span class="c1">// Use jQuery to do the parsing</span>
+            <span class="nx">parserFunction</span><span class="p">(</span><span class="nx">xmlDoc</span><span class="p">);</span>
+          <span class="p">};</span>
+        <span class="p">}</span>
+      <span class="p">)(</span><span class="k">this</span><span class="p">.</span><span class="nx">parseAndSaveVTKXML</span><span class="p">);</span> <span class="c1">// This is where the actual parsing is done</span>
+
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Unable to load file &quot;</span><span class="p">,</span> <span class="nx">file</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span></code></pre></figure>
+
+<h4 id="remarks">Remarks</h4>
+<p>Once the data have been stored, we can start the process of visualization.  Future articles will
+discuss our experience with <a href="https://kitware.github.io/vtk-js/">vtk.js</a> and <a href="https://threejs.org/">three.js</a>.  We will also discuss the potential and pitfalls of Typescript and Vue.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>

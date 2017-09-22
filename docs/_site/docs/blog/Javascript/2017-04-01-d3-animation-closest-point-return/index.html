@@ -1,0 +1,1072 @@
+<!DOCTYPE HTML>
+<html class="no-js" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creating an animation with d3.js</title>
+  <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
+  <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
+</head>
+
+
+<body class="wrap">
+
+  <script type="text/javascript"
+    src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML">
+  </script>
+
+  <header>
+  <div class="grid">
+    <div class="unit one-third center-on-mobiles">
+      <h1>
+        <a href="/">
+          <span class="sr-only">ParSim</span>
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/ParresiaLogoDec2016.png" 
+               width="249" height="115" alt="ParSim">
+        </a>
+      </h1>
+    </div>
+    <nav class="main-nav unit two-thirds hide-on-mobiles">
+      <ul>
+  <li class="">
+    <a href="https://bbanerjee.github.io/ParSim">Home</a>
+  </li>
+  <li class="current">
+    <a href="https://bbanerjee.github.io/ParSim/docs/home">Vaango Docs</a>
+  </li>
+  <li>
+    <a href="https://github.com/bbanerjee/ParSim">GitHub Source</a>
+  </li>
+</ul>
+
+    </nav>
+  </div>
+</header>
+
+
+
+    <section class="docs">
+    <div class="grid">
+
+      <div class="unit four-fifths">
+        <article>
+          <h1>Creating an animation with d3.js</h1>
+          <ul class="notice--content" id="markdown-toc">
+  <li><a href="#introduction" id="markdown-toc-introduction">Introduction</a></li>
+  <li><a href="#input-data" id="markdown-toc-input-data">Input data</a></li>
+  <li><a href="#the-html-file" id="markdown-toc-the-html-file">The HTML file</a></li>
+  <li><a href="#the-javascript-code" id="markdown-toc-the-javascript-code">The Javascript code</a>    <ul>
+      <li><a href="#generating-points-on-the-yield-surface" id="markdown-toc-generating-points-on-the-yield-surface">Generating points on the yield surface</a></li>
+      <li><a href="#drawing-the-yield-surface-and-closest-point-projection" id="markdown-toc-drawing-the-yield-surface-and-closest-point-projection">Drawing the yield surface and closest-point projection</a>        <ul>
+          <li><a href="#creating-the-svg" id="markdown-toc-creating-the-svg">Creating the SVG</a></li>
+          <li><a href="#creating-the-canvas-group" id="markdown-toc-creating-the-canvas-group">Creating the canvas group</a></li>
+          <li><a href="#creating-map-from-real-to-canvas-coordinates" id="markdown-toc-creating-map-from-real-to-canvas-coordinates">Creating map from real to canvas coordinates</a></li>
+          <li><a href="#creating-svg-polyline-generator" id="markdown-toc-creating-svg-polyline-generator">Creating SVG polyline generator</a></li>
+          <li><a href="#creating-the-axes-and-the-yield-surface" id="markdown-toc-creating-the-axes-and-the-yield-surface">Creating the axes and the yield surface</a></li>
+          <li><a href="#creating-groups-for-each-iteration" id="markdown-toc-creating-groups-for-each-iteration">Creating groups for each iteration</a></li>
+          <li><a href="#adding-circles-to-the-approximate-surface" id="markdown-toc-adding-circles-to-the-approximate-surface">Adding circles to the approximate surface</a></li>
+          <li><a href="#adding-triangles-to-the-projection-line" id="markdown-toc-adding-triangles-to-the-projection-line">Adding triangles to the projection line</a></li>
+          <li><a href="#setting-up-the-animation" id="markdown-toc-setting-up-the-animation">Setting up the animation</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><a href="#remarks" id="markdown-toc-remarks">Remarks</a></li>
+</ul>
+
+<h5 id="introduction">Introduction</h5>
+<p>In <a href="https://bbanerjee.github.io/ParSim/mechanics/plasticity/algorithm/geometric-closest-point-return/">Part 8</a> of the
+series on return algorithms for plasticity we animated the closest-point return algorithm as
+shown below.</p>
+
+<div class="yield-surf-canvas">
+</div>
+
+<p>An animated GIF of the plot can be generated using the following <code>R</code> script.</p>
+
+<figure class="highlight"><pre><code class="language-r" data-lang="r"><span></span><span class="kn">require</span><span class="p">(</span><span class="s">&quot;ggplot2&quot;</span><span class="p">)</span>
+<span class="kn">require</span><span class="p">(</span><span class="s">&quot;animation&quot;</span><span class="p">)</span>
+<span class="kn">require</span><span class="p">(</span><span class="s">&quot;latex2exp&quot;</span><span class="p">)</span>
+
+<span class="c1">#------------------------------------------------------</span>
+<span class="c1"># Plot single iteration</span>
+<span class="c1">#------------------------------------------------------</span>
+plotYieldSurface <span class="o">&lt;-</span> <span class="kr">function</span><span class="p">(</span>zrprime_data<span class="p">)</span> <span class="p">{</span>
+
+  zrprime_trial_closest <span class="o">=</span> zrprime_data<span class="p">[</span><span class="kp">which</span><span class="p">(</span>zrprime_data<span class="o">$</span>Label <span class="o">==</span> <span class="s">&quot;trial&quot;</span> <span class="o">|</span>
+                                             zrprime_data<span class="o">$</span>Label <span class="o">==</span> <span class="s">&quot;closest&quot;</span><span class="p">),]</span>
+  plt <span class="o">=</span> ggplot<span class="p">()</span> <span class="o">+</span> 
+        geom_path<span class="p">(</span>data <span class="o">=</span> zrprime_data<span class="p">,</span> 
+                  aes<span class="p">(</span>x <span class="o">=</span> z<span class="o">*</span><span class="m">1.0e-6</span><span class="p">,</span> y <span class="o">=</span> rprime<span class="o">*</span><span class="m">1.0e-6</span><span class="p">,</span> group<span class="o">=</span>Label<span class="p">,</span> color <span class="o">=</span> Label<span class="p">),</span>
+                      size <span class="o">=</span> <span class="m">1</span><span class="p">)</span><span class="o">+</span>
+        geom_point<span class="p">(</span>data <span class="o">=</span> zrprime_data<span class="p">,</span> 
+                   aes<span class="p">(</span>x <span class="o">=</span> z<span class="o">*</span><span class="m">1.0e-6</span><span class="p">,</span> y <span class="o">=</span> rprime<span class="o">*</span><span class="m">1.0e-6</span><span class="p">,</span> group<span class="o">=</span>Label<span class="p">,</span> color <span class="o">=</span> Label<span class="p">))</span> <span class="o">+</span>
+        geom_line<span class="p">(</span>data <span class="o">=</span> zrprime_trial_closest<span class="p">,</span>
+                  aes<span class="p">(</span>x <span class="o">=</span> z<span class="o">*</span><span class="m">1.0e-6</span><span class="p">,</span> y <span class="o">=</span> rprime<span class="o">*</span><span class="m">1.0e-6</span><span class="p">),</span>
+                  color <span class="o">=</span> <span class="s">&quot;red&quot;</span><span class="p">,</span> linetype <span class="o">=</span> <span class="m">1</span><span class="p">,</span>
+                  size <span class="o">=</span> <span class="m">1</span><span class="p">)</span> <span class="o">+</span>
+        xlab<span class="p">(</span>TeX<span class="p">(</span><span class="kp">paste</span><span class="p">(</span><span class="s">&quot;$z = I_1/\\sqrt{3}$&quot;</span><span class="p">,</span> <span class="s">&quot;MPa&quot;</span><span class="p">)))</span> <span class="o">+</span>
+        ylab<span class="p">(</span>TeX<span class="p">(</span><span class="kp">paste</span><span class="p">(</span><span class="s">&quot;$r&#39; = \\beta\\sqrt{3K/2G}\\sqrt{2J_2}$&quot;</span><span class="p">,</span> <span class="s">&quot;MPa&quot;</span><span class="p">)))</span> <span class="o">+</span>
+        coord_fixed<span class="p">()</span> <span class="o">+</span>
+        theme_bw<span class="p">()</span> <span class="o">+</span> 
+        theme<span class="p">(</span>legend.justification<span class="o">=</span><span class="kt">c</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="m">1</span><span class="p">),</span> legend.position<span class="o">=</span><span class="kt">c</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="m">1</span><span class="p">),</span>
+            plot.title <span class="o">=</span> element_text<span class="p">(</span>size <span class="o">=</span> <span class="m">14</span><span class="p">),</span>
+            axis.title.x <span class="o">=</span> element_text<span class="p">(</span>size<span class="o">=</span><span class="m">16</span><span class="p">),</span>
+            axis.title.y <span class="o">=</span> element_text<span class="p">(</span>size<span class="o">=</span><span class="m">16</span><span class="p">),</span>
+            axis.text.x <span class="o">=</span> element_text<span class="p">(</span>size<span class="o">=</span><span class="m">14</span><span class="p">),</span>
+            axis.text.y <span class="o">=</span> element_text<span class="p">(</span>size<span class="o">=</span><span class="m">14</span><span class="p">),</span>
+            legend.text <span class="o">=</span> element_text<span class="p">(</span>size<span class="o">=</span><span class="m">12</span><span class="p">))</span>
+  <span class="kp">print</span><span class="p">(</span>plt<span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">#------------------------------------------------------</span>
+<span class="c1"># Animate the plots</span>
+<span class="c1">#------------------------------------------------------</span>
+animateIterations <span class="o">&lt;-</span> <span class="kr">function</span><span class="p">(</span>yieldSurfData<span class="p">,</span> num_iterations<span class="p">,</span> consistency_iter<span class="p">)</span> <span class="p">{</span>
+  <span class="kp">lapply</span><span class="p">(</span><span class="kp">seq</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> num_iterations<span class="p">,</span> <span class="m">1</span><span class="p">),</span> 
+         <span class="kr">function</span><span class="p">(</span>iteration<span class="p">)</span> <span class="p">{</span>
+           plotYieldSurface<span class="p">(</span>extractIteration<span class="p">(</span>yieldSurfData<span class="p">,</span> iteration<span class="p">,</span> consistency_iter<span class="p">))</span>
+         <span class="p">})</span>
+<span class="p">}</span>
+
+<span class="c1">#------------------------------------------------------</span>
+<span class="c1"># Function to create animated gif</span>
+<span class="c1">#------------------------------------------------------</span>
+createGIFIterations <span class="o">&lt;-</span> <span class="kr">function</span><span class="p">(</span>yieldSurfData<span class="p">,</span> consistency_iter<span class="p">)</span> <span class="p">{</span>
+
+  outputGIFFile <span class="o">=</span> <span class="kp">paste0</span><span class="p">(</span><span class="s">&quot;closest_point_iter&quot;</span><span class="p">,</span> <span class="s">&quot;.gif&quot;</span><span class="p">)</span>
+
+  <span class="c1"># Compute number of iterations</span>
+  num_iterations <span class="o">=</span> <span class="kp">length</span><span class="p">(</span><span class="kp">unique</span><span class="p">(</span>yieldSurfData<span class="o">$</span>Iteration<span class="p">))</span>
+
+  <span class="c1"># Save as animation</span>
+  ani.options<span class="p">(</span>ani.height <span class="o">=</span> <span class="m">600</span><span class="p">,</span> ani.width <span class="o">=</span> <span class="m">600</span><span class="p">)</span>
+  saveGIF<span class="p">(</span>animateIterations<span class="p">(</span>yieldSurfData<span class="p">,</span> num_iterations<span class="p">,</span> consistency_iter<span class="p">),</span> 
+          interval<span class="o">=</span><span class="m">1.0</span><span class="p">,</span> 
+          movie.name<span class="o">=</span>outputGIFFile<span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+<span class="c1"># Compute the full yield surface and create data frame</span>
+<span class="c1">#-------------------------------------------------------------------------</span>
+ComputeFullYieldSurface <span class="o">&lt;-</span> <span class="kr">function</span><span class="p">(</span>yieldParams<span class="p">,</span> capX<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                                    z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                                    iteration<span class="p">,</span> consistency_iter<span class="p">)</span> <span class="p">{</span>
+
+  <span class="c1"># Get yield parameters</span>
+  yieldParams <span class="o">=</span> <span class="kp">unlist</span><span class="p">(</span>yieldParams<span class="p">)</span>
+  PEAKI1 <span class="o">=</span> <span class="kp">as.numeric</span><span class="p">(</span>yieldParams<span class="p">[</span><span class="s">&#39;PEAKI1&#39;</span><span class="p">])</span>
+  FSLOPE <span class="o">=</span> <span class="kp">as.numeric</span><span class="p">(</span>yieldParams<span class="p">[</span><span class="s">&#39;FSLOPE&#39;</span><span class="p">])</span>
+  STREN  <span class="o">=</span> <span class="kp">as.numeric</span><span class="p">(</span>yieldParams<span class="p">[</span><span class="s">&#39;STREN&#39;</span><span class="p">])</span>
+  YSLOPE <span class="o">=</span> <span class="kp">as.numeric</span><span class="p">(</span>yieldParams<span class="p">[</span><span class="s">&#39;YSLOPE&#39;</span><span class="p">])</span>
+  CR     <span class="o">=</span> <span class="kp">as.numeric</span><span class="p">(</span>yieldParams<span class="p">[</span><span class="s">&#39;CR&#39;</span><span class="p">])</span>
+
+  <span class="c1"># Set up constants</span>
+  a1 <span class="o">=</span> STREN
+  a2 <span class="o">=</span> <span class="p">(</span>FSLOPE<span class="o">-</span>YSLOPE<span class="p">)</span><span class="o">/</span><span class="p">(</span>STREN<span class="o">-</span>YSLOPE<span class="o">*</span>PEAKI1<span class="p">)</span>
+  a3 <span class="o">=</span> <span class="p">(</span>STREN<span class="o">-</span>YSLOPE<span class="o">*</span>PEAKI1<span class="p">)</span><span class="o">*</span><span class="kp">exp</span><span class="p">(</span><span class="o">-</span>a2<span class="o">*</span>PEAKI1<span class="p">)</span>
+  a4 <span class="o">=</span> YSLOPE
+
+  <span class="c1"># Compute kappa</span>
+  X_eff <span class="o">=</span> capX <span class="o">+</span> <span class="m">3</span><span class="o">*</span>pbar_w
+  kappa <span class="o">=</span> PEAKI1 <span class="o">-</span> CR<span class="o">*</span><span class="p">(</span>PEAKI1 <span class="o">-</span> X_eff<span class="p">)</span>
+
+  <span class="c1"># Create an array of I1_eff values</span>
+  I1eff_min <span class="o">=</span> X_eff<span class="p">;</span>
+  I1eff_max <span class="o">=</span> PEAKI1<span class="p">;</span>
+
+  rad <span class="o">=</span> <span class="m">0.5</span><span class="o">*</span><span class="p">(</span>PEAKI1 <span class="o">-</span> X_eff<span class="p">)</span>
+  cen <span class="o">=</span> <span class="m">0.5</span><span class="o">*</span><span class="p">(</span>PEAKI1 <span class="o">+</span> X_eff<span class="p">)</span>
+  theta_max <span class="o">=</span> <span class="kp">acos</span><span class="p">(</span><span class="kp">max</span><span class="p">((</span>I1eff_min <span class="o">-</span> cen<span class="p">)</span><span class="o">/</span>rad<span class="p">,</span> <span class="m">-1.0</span><span class="p">))</span>
+  theta_min <span class="o">=</span> <span class="kp">acos</span><span class="p">(</span><span class="kp">min</span><span class="p">((</span>I1eff_max <span class="o">-</span> cen<span class="p">)</span><span class="o">/</span>rad<span class="p">,</span> <span class="m">1.0</span><span class="p">))</span>
+  theta_vec <span class="o">=</span> <span class="kp">seq</span><span class="p">(</span>from <span class="o">=</span> theta_min<span class="p">,</span> to <span class="o">=</span> theta_max<span class="p">,</span> length.out <span class="o">=</span> num_points<span class="p">)</span>
+  I1_list <span class="o">=</span> cen <span class="o">+</span> rad<span class="o">*</span><span class="kp">cos</span><span class="p">(</span>theta_vec<span class="p">)</span>
+  I1_eff_list <span class="o">=</span> <span class="kp">lapply</span><span class="p">(</span>I1_list<span class="p">,</span> <span class="kr">function</span><span class="p">(</span>val<span class="p">)</span> <span class="p">{</span><span class="kp">max</span><span class="p">(</span>val<span class="p">,</span> X_eff<span class="p">)})</span>
+  sqrtJ2_list <span class="o">=</span> <span class="kp">lapply</span><span class="p">(</span>I1_eff_list<span class="p">,</span>
+    <span class="kr">function</span><span class="p">(</span>I1_eff<span class="p">)</span> <span class="p">{</span>
+      <span class="c1"># Compute F_f</span>
+      Ff <span class="o">=</span> a1 <span class="o">-</span> a3<span class="o">*</span><span class="kp">exp</span><span class="p">(</span>a2<span class="o">*</span>I1_eff<span class="p">)</span> <span class="o">-</span> a4<span class="o">*</span><span class="p">(</span>I1_eff<span class="p">)</span>
+
+      <span class="c1"># Compute Fc</span>
+      Fc_sq <span class="o">=</span> <span class="m">1.0</span>
+      <span class="kr">if</span> <span class="p">((</span>I1_eff <span class="o">&lt;</span> <span class="kp">kappa</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span>X_eff <span class="o">&lt;=</span> I1_eff<span class="p">))</span> <span class="p">{</span>
+        ratio <span class="o">=</span> <span class="p">(</span>kappa <span class="o">-</span> I1_eff<span class="p">)</span><span class="o">/</span><span class="p">(</span>kappa <span class="o">-</span> X_eff<span class="p">)</span>
+        Fc_sq <span class="o">=</span> <span class="m">1.0</span> <span class="o">-</span> ratio<span class="o">^</span><span class="m">2</span>
+      <span class="p">}</span>
+
+      <span class="c1"># Compute sqrt(J2)</span>
+      sqrtJ2 <span class="o">=</span> Ff<span class="o">*</span><span class="kp">sqrt</span><span class="p">(</span>Fc_sq<span class="p">)</span>
+      <span class="kr">return</span><span class="p">(</span>sqrtJ2<span class="p">)</span>
+    <span class="p">})</span>
+  zrprime_data <span class="o">=</span> <span class="kt">data.frame</span><span class="p">(</span>z <span class="o">=</span> <span class="kp">unlist</span><span class="p">(</span>I1_eff_list<span class="p">)</span><span class="o">/</span><span class="kp">sqrt</span><span class="p">(</span><span class="m">3</span><span class="p">),</span> 
+                            rprime <span class="o">=</span> <span class="kp">unlist</span><span class="p">(</span>sqrtJ2_list<span class="p">)</span><span class="o">*</span><span class="kp">sqrt</span><span class="p">(</span><span class="m">2</span><span class="p">)</span><span class="o">*</span><span class="kp">sqrt</span><span class="p">(</span><span class="m">1.5</span><span class="o">*</span>K<span class="o">/</span>G<span class="p">),</span> 
+                            Iteration <span class="o">=</span> <span class="kp">as.factor</span><span class="p">(</span>iteration<span class="p">),</span>
+                            CIteration <span class="o">=</span> <span class="kp">as.factor</span><span class="p">(</span>consistency_iter<span class="p">),</span>
+                            Label<span class="o">=</span><span class="s">&quot;yield&quot;</span><span class="p">)</span>
+  zrprime_data <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zrprime_data<span class="p">,</span>
+                       <span class="kt">data.frame</span><span class="p">(</span>z <span class="o">=</span> z_r_pt<span class="p">[</span><span class="m">1</span><span class="p">],</span> rprime <span class="o">=</span> z_r_pt<span class="p">[</span><span class="m">2</span><span class="p">],</span> 
+                                  Iteration <span class="o">=</span> <span class="kp">as.factor</span><span class="p">(</span>iteration<span class="p">),</span>
+                                  CIteration <span class="o">=</span> <span class="kp">as.factor</span><span class="p">(</span>consistency_iter<span class="p">),</span>
+                                  Label <span class="o">=</span> <span class="s">&quot;trial&quot;</span><span class="p">))</span>
+  zrprime_data <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zrprime_data<span class="p">,</span>
+                       <span class="kt">data.frame</span><span class="p">(</span>z <span class="o">=</span> z_r_closest<span class="p">[</span><span class="m">1</span><span class="p">],</span> rprime <span class="o">=</span> z_r_closest<span class="p">[</span><span class="m">2</span><span class="p">],</span> 
+                                  Iteration <span class="o">=</span> <span class="kp">as.factor</span><span class="p">(</span>iteration<span class="p">),</span>
+                                  CIteration <span class="o">=</span> <span class="kp">as.factor</span><span class="p">(</span>consistency_iter<span class="p">),</span>
+                                  Label <span class="o">=</span> <span class="s">&quot;closest&quot;</span><span class="p">))</span>
+  zrprime_data <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zrprime_data<span class="p">,</span>
+                       <span class="kt">data.frame</span><span class="p">(</span>z <span class="o">=</span> z_r_yield_z<span class="p">,</span> rprime <span class="o">=</span> z_r_yield_r<span class="p">,</span> 
+                                  Iteration <span class="o">=</span> <span class="kp">as.factor</span><span class="p">(</span>iteration<span class="p">),</span>
+                                  CIteration <span class="o">=</span> <span class="kp">as.factor</span><span class="p">(</span>consistency_iter<span class="p">),</span>
+                                  Label <span class="o">=</span> <span class="s">&quot;polyline&quot;</span><span class="p">))</span>
+ 
+  <span class="kr">return</span><span class="p">(</span>zrprime_data<span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+<span class="c1"># Read data and plot for animation</span>
+<span class="c1">#-------------------------------------------------------------------------</span>
+ReadAndPlotClosestPoint <span class="o">&lt;-</span> <span class="kr">function</span><span class="p">()</span> <span class="p">{)</span>
+
+  num_points <span class="o">=</span> <span class="m">50</span>
+  consistency_iter <span class="o">=</span> <span class="m">1</span>
+
+  iteration <span class="o">=</span> <span class="m">1</span>
+  K <span class="o">=</span> <span class="m">3.98447e+07</span>
+  G <span class="o">=</span> <span class="m">1.32816e+07</span>
+  X <span class="o">=</span> <span class="m">-1.87891e+07</span>
+  pbar_w <span class="o">=</span> <span class="m">5.24774e+06</span>
+  yieldParams <span class="o">=</span> <span class="kt">list</span><span class="p">(</span>BETA <span class="o">=</span> <span class="m">1</span><span class="p">,</span> CR <span class="o">=</span> <span class="m">0.5</span><span class="p">,</span> FSLOPE <span class="o">=</span> <span class="m">0.355309</span><span class="p">,</span> PEAKI1 <span class="o">=</span> <span class="m">996.118</span><span class="p">,</span> STREN <span class="o">=</span> <span class="m">1.76382e+07</span><span class="p">,</span> YSLOPE <span class="o">=</span> <span class="m">0.353622</span><span class="p">)</span>
+  z_r_pt <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">52172.3</span><span class="p">,</span><span class="m">3.60195e+06</span><span class="p">)</span>
+  z_r_closest <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.15079e+06</span><span class="p">,</span><span class="m">2.02165e+06</span><span class="p">)</span>
+  z_r_yield_z <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">575.109</span><span class="p">,</span><span class="m">-167406</span><span class="p">,</span><span class="m">-607187</span><span class="p">,</span><span class="m">-1.15079e+06</span><span class="p">,</span><span class="m">-1.59057e+06</span><span class="p">,</span><span class="m">-1.75855e+06</span><span class="p">)</span>
+  z_r_yield_r <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">2.45257e-09</span><span class="p">,</span><span class="m">310133</span><span class="p">,</span><span class="m">1.12207e+06</span><span class="p">,</span><span class="m">2.02165e+06</span><span class="p">,</span><span class="m">1.72669e+06</span><span class="p">,</span><span class="m">0</span><span class="p">)</span>
+  zr_df <span class="o">=</span> 
+  ComputeFullYieldSurface<span class="p">(</span>yieldParams<span class="p">,</span> X<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                          z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                          iteration<span class="p">,</span> consistency_iter<span class="p">)</span>
+  iteration <span class="o">=</span> <span class="m">2</span>
+  K <span class="o">=</span> <span class="m">3.98447e+07</span>
+  G <span class="o">=</span> <span class="m">1.32816e+07</span>
+  X <span class="o">=</span> <span class="m">-1.87891e+07</span>
+  pbar_w <span class="o">=</span> <span class="m">5.24774e+06</span>
+  yieldParams <span class="o">=</span> <span class="kt">list</span><span class="p">(</span>BETA <span class="o">=</span> <span class="m">1</span><span class="p">,</span> CR <span class="o">=</span> <span class="m">0.5</span><span class="p">,</span> FSLOPE <span class="o">=</span> <span class="m">0.355309</span><span class="p">,</span> PEAKI1 <span class="o">=</span> <span class="m">996.118</span><span class="p">,</span> STREN <span class="o">=</span> <span class="m">1.76382e+07</span><span class="p">,</span> YSLOPE <span class="o">=</span> <span class="m">0.353622</span><span class="p">)</span>
+  z_r_pt <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">52172.3</span><span class="p">,</span><span class="m">3.60195e+06</span><span class="p">)</span>
+  z_r_closest <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.15079e+06</span><span class="p">,</span><span class="m">2.02165e+06</span><span class="p">)</span>
+  z_r_yield_z <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-878986</span><span class="p">,</span><span class="m">-1.15079e+06</span><span class="p">,</span><span class="m">-1.39598e+06</span><span class="p">,</span><span class="m">-1.59057e+06</span><span class="p">,</span><span class="m">-1.7155e+06</span><span class="p">,</span><span class="m">-1.75855e+06</span><span class="p">)</span>
+  z_r_yield_r <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">1.62388e+06</span><span class="p">,</span><span class="m">2.02165e+06</span><span class="p">,</span><span class="m">2.08595e+06</span><span class="p">,</span><span class="m">1.72669e+06</span><span class="p">,</span><span class="m">979052</span><span class="p">,</span><span class="m">0</span><span class="p">)</span>
+  zr_df <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zr_df<span class="p">,</span>
+  ComputeFullYieldSurface<span class="p">(</span>yieldParams<span class="p">,</span> X<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                          z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                          iteration<span class="p">,</span> consistency_iter<span class="p">))</span>
+  iteration <span class="o">=</span> <span class="m">3</span>
+  K <span class="o">=</span> <span class="m">3.98447e+07</span>
+  G <span class="o">=</span> <span class="m">1.32816e+07</span>
+  X <span class="o">=</span> <span class="m">-1.87891e+07</span>
+  pbar_w <span class="o">=</span> <span class="m">5.24774e+06</span>
+  yieldParams <span class="o">=</span> <span class="kt">list</span><span class="p">(</span>BETA <span class="o">=</span> <span class="m">1</span><span class="p">,</span> CR <span class="o">=</span> <span class="m">0.5</span><span class="p">,</span> FSLOPE <span class="o">=</span> <span class="m">0.355309</span><span class="p">,</span> PEAKI1 <span class="o">=</span> <span class="m">996.118</span><span class="p">,</span> STREN <span class="o">=</span> <span class="m">1.76382e+07</span><span class="p">,</span> YSLOPE <span class="o">=</span> <span class="m">0.353622</span><span class="p">)</span>
+  z_r_pt <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">52172.3</span><span class="p">,</span><span class="m">3.60195e+06</span><span class="p">)</span>
+  z_r_closest <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.15079e+06</span><span class="p">,</span><span class="m">2.02165e+06</span><span class="p">)</span>
+  z_r_yield_z <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-878986</span><span class="p">,</span><span class="m">-970925</span><span class="p">,</span><span class="m">-1.06186e+06</span><span class="p">,</span><span class="m">-1.15079e+06</span><span class="p">,</span><span class="m">-1.23674e+06</span><span class="p">,</span><span class="m">-1.31877e+06</span><span class="p">)</span>
+  z_r_yield_r <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">1.62388e+06</span><span class="p">,</span><span class="m">1.7838e+06</span><span class="p">,</span><span class="m">1.91864e+06</span><span class="p">,</span><span class="m">2.02165e+06</span><span class="p">,</span><span class="m">2.08688e+06</span><span class="p">,</span><span class="m">2.10948e+06</span><span class="p">)</span>
+  zr_df <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zr_df<span class="p">,</span>
+  ComputeFullYieldSurface<span class="p">(</span>yieldParams<span class="p">,</span> X<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                          z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                          iteration<span class="p">,</span> consistency_iter<span class="p">))</span>
+  iteration <span class="o">=</span> <span class="m">4</span>
+  K <span class="o">=</span> <span class="m">3.98447e+07</span>
+  G <span class="o">=</span> <span class="m">1.32816e+07</span>
+  X <span class="o">=</span> <span class="m">-1.87891e+07</span>
+  pbar_w <span class="o">=</span> <span class="m">5.24774e+06</span>
+  yieldParams <span class="o">=</span> <span class="kt">list</span><span class="p">(</span>BETA <span class="o">=</span> <span class="m">1</span><span class="p">,</span> CR <span class="o">=</span> <span class="m">0.5</span><span class="p">,</span> FSLOPE <span class="o">=</span> <span class="m">0.355309</span><span class="p">,</span> PEAKI1 <span class="o">=</span> <span class="m">996.118</span><span class="p">,</span> STREN <span class="o">=</span> <span class="m">1.76382e+07</span><span class="p">,</span> YSLOPE <span class="o">=</span> <span class="m">0.353622</span><span class="p">)</span>
+  z_r_pt <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">52172.3</span><span class="p">,</span><span class="m">3.60195e+06</span><span class="p">)</span>
+  z_r_closest <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18969e+06</span><span class="p">,</span><span class="m">2.05584e+06</span><span class="p">)</span>
+  z_r_yield_z <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.09888e+06</span><span class="p">,</span><span class="m">-1.14468e+06</span><span class="p">,</span><span class="m">-1.18969e+06</span><span class="p">,</span><span class="m">-1.2338e+06</span><span class="p">,</span><span class="m">-1.27687e+06</span><span class="p">,</span><span class="m">-1.31877e+06</span><span class="p">)</span>
+  z_r_yield_r <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">1.96539e+06</span><span class="p">,</span><span class="m">2.01563e+06</span><span class="p">,</span><span class="m">2.05584e+06</span><span class="p">,</span><span class="m">2.0853e+06</span><span class="p">,</span><span class="m">2.10336e+06</span><span class="p">,</span><span class="m">2.10948e+06</span><span class="p">)</span>
+  zr_df <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zr_df<span class="p">,</span>
+  ComputeFullYieldSurface<span class="p">(</span>yieldParams<span class="p">,</span> X<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                          z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                          iteration<span class="p">,</span> consistency_iter<span class="p">))</span>
+  iteration <span class="o">=</span> <span class="m">5</span>
+  K <span class="o">=</span> <span class="m">3.98447e+07</span>
+  G <span class="o">=</span> <span class="m">1.32816e+07</span>
+  X <span class="o">=</span> <span class="m">-1.87891e+07</span>
+  pbar_w <span class="o">=</span> <span class="m">5.24774e+06</span>
+  yieldParams <span class="o">=</span> <span class="kt">list</span><span class="p">(</span>BETA <span class="o">=</span> <span class="m">1</span><span class="p">,</span> CR <span class="o">=</span> <span class="m">0.5</span><span class="p">,</span> FSLOPE <span class="o">=</span> <span class="m">0.355309</span><span class="p">,</span> PEAKI1 <span class="o">=</span> <span class="m">996.118</span><span class="p">,</span> STREN <span class="o">=</span> <span class="m">1.76382e+07</span><span class="p">,</span> YSLOPE <span class="o">=</span> <span class="m">0.353622</span><span class="p">)</span>
+  z_r_pt <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">52172.3</span><span class="p">,</span><span class="m">3.60195e+06</span><span class="p">)</span>
+  z_r_closest <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18723e+06</span><span class="p">,</span><span class="m">2.05389e+06</span><span class="p">)</span>
+  z_r_yield_z <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.09888e+06</span><span class="p">,</span><span class="m">-1.12123e+06</span><span class="p">,</span><span class="m">-1.14342e+06</span><span class="p">,</span><span class="m">-1.16542e+06</span><span class="p">,</span><span class="m">-1.18723e+06</span><span class="p">,</span><span class="m">-1.20882e+06</span><span class="p">)</span>
+  z_r_yield_r <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">1.96539e+06</span><span class="p">,</span><span class="m">1.99102e+06</span><span class="p">,</span><span class="m">2.01438e+06</span><span class="p">,</span><span class="m">2.03536e+06</span><span class="p">,</span><span class="m">2.05389e+06</span><span class="p">,</span><span class="m">2.06989e+06</span><span class="p">)</span>
+  zr_df <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zr_df<span class="p">,</span>
+  ComputeFullYieldSurface<span class="p">(</span>yieldParams<span class="p">,</span> X<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                          z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                          iteration<span class="p">,</span> consistency_iter<span class="p">))</span>
+  iteration <span class="o">=</span> <span class="m">6</span>
+  K <span class="o">=</span> <span class="m">3.98447e+07</span>
+  G <span class="o">=</span> <span class="m">1.32816e+07</span>
+  X <span class="o">=</span> <span class="m">-1.87891e+07</span>
+  pbar_w <span class="o">=</span> <span class="m">5.24774e+06</span>
+  yieldParams <span class="o">=</span> <span class="kt">list</span><span class="p">(</span>BETA <span class="o">=</span> <span class="m">1</span><span class="p">,</span> CR <span class="o">=</span> <span class="m">0.5</span><span class="p">,</span> FSLOPE <span class="o">=</span> <span class="m">0.355309</span><span class="p">,</span> PEAKI1 <span class="o">=</span> <span class="m">996.118</span><span class="p">,</span> STREN <span class="o">=</span> <span class="m">1.76382e+07</span><span class="p">,</span> YSLOPE <span class="o">=</span> <span class="m">0.353622</span><span class="p">)</span>
+  z_r_pt <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">52172.3</span><span class="p">,</span><span class="m">3.60195e+06</span><span class="p">)</span>
+  z_r_closest <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18699e+06</span><span class="p">,</span><span class="m">2.05371e+06</span><span class="p">)</span>
+  z_r_yield_z <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.15385e+06</span><span class="p">,</span><span class="m">-1.16495e+06</span><span class="p">,</span><span class="m">-1.176e+06</span><span class="p">,</span><span class="m">-1.18699e+06</span><span class="p">,</span><span class="m">-1.19794e+06</span><span class="p">,</span><span class="m">-1.20882e+06</span><span class="p">)</span>
+  z_r_yield_r <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">2.0246e+06</span><span class="p">,</span><span class="m">2.03493e+06</span><span class="p">,</span><span class="m">2.04464e+06</span><span class="p">,</span><span class="m">2.05371e+06</span><span class="p">,</span><span class="m">2.06213e+06</span><span class="p">,</span><span class="m">2.06989e+06</span><span class="p">)</span>
+  zr_df <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zr_df<span class="p">,</span>
+  ComputeFullYieldSurface<span class="p">(</span>yieldParams<span class="p">,</span> X<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                          z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                          iteration<span class="p">,</span> consistency_iter<span class="p">))</span>
+  iteration <span class="o">=</span> <span class="m">7</span>
+  K <span class="o">=</span> <span class="m">3.98447e+07</span>
+  G <span class="o">=</span> <span class="m">1.32816e+07</span>
+  X <span class="o">=</span> <span class="m">-1.87891e+07</span>
+  pbar_w <span class="o">=</span> <span class="m">5.24774e+06</span>
+  yieldParams <span class="o">=</span> <span class="kt">list</span><span class="p">(</span>BETA <span class="o">=</span> <span class="m">1</span><span class="p">,</span> CR <span class="o">=</span> <span class="m">0.5</span><span class="p">,</span> FSLOPE <span class="o">=</span> <span class="m">0.355309</span><span class="p">,</span> PEAKI1 <span class="o">=</span> <span class="m">996.118</span><span class="p">,</span> STREN <span class="o">=</span> <span class="m">1.76382e+07</span><span class="p">,</span> YSLOPE <span class="o">=</span> <span class="m">0.353622</span><span class="p">)</span>
+  z_r_pt <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">52172.3</span><span class="p">,</span><span class="m">3.60195e+06</span><span class="p">)</span>
+  z_r_closest <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18686e+06</span><span class="p">,</span><span class="m">2.0536e+06</span><span class="p">)</span>
+  z_r_yield_z <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18133e+06</span><span class="p">,</span><span class="m">-1.18686e+06</span><span class="p">,</span><span class="m">-1.19237e+06</span><span class="p">,</span><span class="m">-1.19787e+06</span><span class="p">,</span><span class="m">-1.20335e+06</span><span class="p">,</span><span class="m">-1.20882e+06</span><span class="p">)</span>
+  z_r_yield_r <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">2.04911e+06</span><span class="p">,</span><span class="m">2.0536e+06</span><span class="p">,</span><span class="m">2.05792e+06</span><span class="p">,</span><span class="m">2.06208e+06</span><span class="p">,</span><span class="m">2.06607e+06</span><span class="p">,</span><span class="m">2.06989e+06</span><span class="p">)</span>
+  zr_df <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zr_df<span class="p">,</span>
+  ComputeFullYieldSurface<span class="p">(</span>yieldParams<span class="p">,</span> X<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                          z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                          iteration<span class="p">,</span> consistency_iter<span class="p">))</span>
+  iteration <span class="o">=</span> <span class="m">8</span>
+  K <span class="o">=</span> <span class="m">3.98447e+07</span>
+  G <span class="o">=</span> <span class="m">1.32816e+07</span>
+  X <span class="o">=</span> <span class="m">-1.87891e+07</span>
+  pbar_w <span class="o">=</span> <span class="m">5.24774e+06</span>
+  yieldParams <span class="o">=</span> <span class="kt">list</span><span class="p">(</span>BETA <span class="o">=</span> <span class="m">1</span><span class="p">,</span> CR <span class="o">=</span> <span class="m">0.5</span><span class="p">,</span> FSLOPE <span class="o">=</span> <span class="m">0.355309</span><span class="p">,</span> PEAKI1 <span class="o">=</span> <span class="m">996.118</span><span class="p">,</span> STREN <span class="o">=</span> <span class="m">1.76382e+07</span><span class="p">,</span> YSLOPE <span class="o">=</span> <span class="m">0.353622</span><span class="p">)</span>
+  z_r_pt <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">52172.3</span><span class="p">,</span><span class="m">3.60195e+06</span><span class="p">)</span>
+  z_r_closest <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18684e+06</span><span class="p">,</span><span class="m">2.05359e+06</span><span class="p">)</span>
+  z_r_yield_z <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18133e+06</span><span class="p">,</span><span class="m">-1.18409e+06</span><span class="p">,</span><span class="m">-1.18684e+06</span><span class="p">,</span><span class="m">-1.18959e+06</span><span class="p">,</span><span class="m">-1.19234e+06</span><span class="p">,</span><span class="m">-1.19508e+06</span><span class="p">)</span>
+  z_r_yield_r <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">2.04911e+06</span><span class="p">,</span><span class="m">2.05137e+06</span><span class="p">,</span><span class="m">2.05359e+06</span><span class="p">,</span><span class="m">2.05576e+06</span><span class="p">,</span><span class="m">2.05789e+06</span><span class="p">,</span><span class="m">2.05999e+06</span><span class="p">)</span>
+  zr_df <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zr_df<span class="p">,</span>
+  ComputeFullYieldSurface<span class="p">(</span>yieldParams<span class="p">,</span> X<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                          z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                          iteration<span class="p">,</span> consistency_iter<span class="p">))</span>
+  iteration <span class="o">=</span> <span class="m">9</span>
+  K <span class="o">=</span> <span class="m">3.98447e+07</span>
+  G <span class="o">=</span> <span class="m">1.32816e+07</span>
+  X <span class="o">=</span> <span class="m">-1.87891e+07</span>
+  pbar_w <span class="o">=</span> <span class="m">5.24774e+06</span>
+  yieldParams <span class="o">=</span> <span class="kt">list</span><span class="p">(</span>BETA <span class="o">=</span> <span class="m">1</span><span class="p">,</span> CR <span class="o">=</span> <span class="m">0.5</span><span class="p">,</span> FSLOPE <span class="o">=</span> <span class="m">0.355309</span><span class="p">,</span> PEAKI1 <span class="o">=</span> <span class="m">996.118</span><span class="p">,</span> STREN <span class="o">=</span> <span class="m">1.76382e+07</span><span class="p">,</span> YSLOPE <span class="o">=</span> <span class="m">0.353622</span><span class="p">)</span>
+  z_r_pt <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">52172.3</span><span class="p">,</span><span class="m">3.60195e+06</span><span class="p">)</span>
+  z_r_closest <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18683e+06</span><span class="p">,</span><span class="m">2.05358e+06</span><span class="p">)</span>
+  z_r_yield_z <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18133e+06</span><span class="p">,</span><span class="m">-1.18271e+06</span><span class="p">,</span><span class="m">-1.18409e+06</span><span class="p">,</span><span class="m">-1.18546e+06</span><span class="p">,</span><span class="m">-1.18683e+06</span><span class="p">,</span><span class="m">-1.18821e+06</span><span class="p">)</span>
+  z_r_yield_r <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">2.04911e+06</span><span class="p">,</span><span class="m">2.05025e+06</span><span class="p">,</span><span class="m">2.05137e+06</span><span class="p">,</span><span class="m">2.05248e+06</span><span class="p">,</span><span class="m">2.05358e+06</span><span class="p">,</span><span class="m">2.05467e+06</span><span class="p">)</span>
+  zr_df <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zr_df<span class="p">,</span>
+  ComputeFullYieldSurface<span class="p">(</span>yieldParams<span class="p">,</span> X<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                          z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                          iteration<span class="p">,</span> consistency_iter<span class="p">))</span>
+  iteration <span class="o">=</span> <span class="m">10</span>
+  K <span class="o">=</span> <span class="m">3.98447e+07</span>
+  G <span class="o">=</span> <span class="m">1.32816e+07</span>
+  X <span class="o">=</span> <span class="m">-1.87891e+07</span>
+  pbar_w <span class="o">=</span> <span class="m">5.24774e+06</span>
+  yieldParams <span class="o">=</span> <span class="kt">list</span><span class="p">(</span>BETA <span class="o">=</span> <span class="m">1</span><span class="p">,</span> CR <span class="o">=</span> <span class="m">0.5</span><span class="p">,</span> FSLOPE <span class="o">=</span> <span class="m">0.355309</span><span class="p">,</span> PEAKI1 <span class="o">=</span> <span class="m">996.118</span><span class="p">,</span> STREN <span class="o">=</span> <span class="m">1.76382e+07</span><span class="p">,</span> YSLOPE <span class="o">=</span> <span class="m">0.353622</span><span class="p">)</span>
+  z_r_pt <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">52172.3</span><span class="p">,</span><span class="m">3.60195e+06</span><span class="p">)</span>
+  z_r_closest <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18658e+06</span><span class="p">,</span><span class="m">2.05338e+06</span><span class="p">)</span>
+  z_r_yield_z <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18477e+06</span><span class="p">,</span><span class="m">-1.18546e+06</span><span class="p">,</span><span class="m">-1.18615e+06</span><span class="p">,</span><span class="m">-1.18683e+06</span><span class="p">,</span><span class="m">-1.18752e+06</span><span class="p">,</span><span class="m">-1.18821e+06</span><span class="p">)</span>
+  z_r_yield_r <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">2.05192e+06</span><span class="p">,</span><span class="m">2.05248e+06</span><span class="p">,</span><span class="m">2.05303e+06</span><span class="p">,</span><span class="m">2.05358e+06</span><span class="p">,</span><span class="m">2.05412e+06</span><span class="p">,</span><span class="m">2.05467e+06</span><span class="p">)</span>
+  zr_df <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zr_df<span class="p">,</span>
+  ComputeFullYieldSurface<span class="p">(</span>yieldParams<span class="p">,</span> X<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                          z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                          iteration<span class="p">,</span> consistency_iter<span class="p">))</span>
+  iteration <span class="o">=</span> <span class="m">11</span>
+  K <span class="o">=</span> <span class="m">3.98447e+07</span>
+  G <span class="o">=</span> <span class="m">1.32816e+07</span>
+  X <span class="o">=</span> <span class="m">-1.87891e+07</span>
+  pbar_w <span class="o">=</span> <span class="m">5.24774e+06</span>
+  yieldParams <span class="o">=</span> <span class="kt">list</span><span class="p">(</span>BETA <span class="o">=</span> <span class="m">1</span><span class="p">,</span> CR <span class="o">=</span> <span class="m">0.5</span><span class="p">,</span> FSLOPE <span class="o">=</span> <span class="m">0.355309</span><span class="p">,</span> PEAKI1 <span class="o">=</span> <span class="m">996.118</span><span class="p">,</span> STREN <span class="o">=</span> <span class="m">1.76382e+07</span><span class="p">,</span> YSLOPE <span class="o">=</span> <span class="m">0.353622</span><span class="p">)</span>
+  z_r_pt <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">52172.3</span><span class="p">,</span><span class="m">3.60195e+06</span><span class="p">)</span>
+  z_r_closest <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18649e+06</span><span class="p">,</span><span class="m">2.0533e+06</span><span class="p">)</span>
+  z_r_yield_z <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18649e+06</span><span class="p">,</span><span class="m">-1.18683e+06</span><span class="p">,</span><span class="m">-1.18718e+06</span><span class="p">,</span><span class="m">-1.18752e+06</span><span class="p">,</span><span class="m">-1.18786e+06</span><span class="p">,</span><span class="m">-1.18821e+06</span><span class="p">)</span>
+  z_r_yield_r <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">2.0533e+06</span><span class="p">,</span><span class="m">2.05358e+06</span><span class="p">,</span><span class="m">2.05385e+06</span><span class="p">,</span><span class="m">2.05412e+06</span><span class="p">,</span><span class="m">2.0544e+06</span><span class="p">,</span><span class="m">2.05467e+06</span><span class="p">)</span>
+  zr_df <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zr_df<span class="p">,</span>
+  ComputeFullYieldSurface<span class="p">(</span>yieldParams<span class="p">,</span> X<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                          z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                          iteration<span class="p">,</span> consistency_iter<span class="p">))</span>
+  iteration <span class="o">=</span> <span class="m">12</span>
+  K <span class="o">=</span> <span class="m">3.98447e+07</span>
+  G <span class="o">=</span> <span class="m">1.32816e+07</span>
+  X <span class="o">=</span> <span class="m">-1.87891e+07</span>
+  pbar_w <span class="o">=</span> <span class="m">5.24774e+06</span>
+  yieldParams <span class="o">=</span> <span class="kt">list</span><span class="p">(</span>BETA <span class="o">=</span> <span class="m">1</span><span class="p">,</span> CR <span class="o">=</span> <span class="m">0.5</span><span class="p">,</span> FSLOPE <span class="o">=</span> <span class="m">0.355309</span><span class="p">,</span> PEAKI1 <span class="o">=</span> <span class="m">996.118</span><span class="p">,</span> STREN <span class="o">=</span> <span class="m">1.76382e+07</span><span class="p">,</span> YSLOPE <span class="o">=</span> <span class="m">0.353622</span><span class="p">)</span>
+  z_r_pt <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">52172.3</span><span class="p">,</span><span class="m">3.60195e+06</span><span class="p">)</span>
+  z_r_closest <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18649e+06</span><span class="p">,</span><span class="m">2.0533e+06</span><span class="p">)</span>
+  z_r_yield_z <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">-1.18649e+06</span><span class="p">,</span><span class="m">-1.18666e+06</span><span class="p">,</span><span class="m">-1.18683e+06</span><span class="p">,</span><span class="m">-1.187e+06</span><span class="p">,</span><span class="m">-1.18718e+06</span><span class="p">,</span><span class="m">-1.18735e+06</span><span class="p">)</span>
+  z_r_yield_r <span class="o">=</span> <span class="kt">c</span><span class="p">(</span><span class="m">2.0533e+06</span><span class="p">,</span><span class="m">2.05344e+06</span><span class="p">,</span><span class="m">2.05358e+06</span><span class="p">,</span><span class="m">2.05371e+06</span><span class="p">,</span><span class="m">2.05385e+06</span><span class="p">,</span><span class="m">2.05399e+06</span><span class="p">)</span>
+  zr_df <span class="o">=</span> <span class="kp">rbind</span><span class="p">(</span>zr_df<span class="p">,</span>
+  ComputeFullYieldSurface<span class="p">(</span>yieldParams<span class="p">,</span> X<span class="p">,</span> pbar_w<span class="p">,</span> K<span class="p">,</span> G<span class="p">,</span> num_points<span class="p">,</span>
+                          z_r_pt<span class="p">,</span> z_r_closest<span class="p">,</span> z_r_yield_z<span class="p">,</span> z_r_yield_r<span class="p">,</span>
+                          iteration<span class="p">,</span> consistency_iter<span class="p">))</span>
+  createGIFIterations<span class="p">(</span>zr_df<span class="p">,</span> consistency_iter<span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">#-------------------------------------------------------------------------</span>
+<span class="c1"># Call function to read data and plot</span>
+<span class="c1">#-------------------------------------------------------------------------</span>
+ReadAndPlotClosestPoint<span class="p">()</span></code></pre></figure>
+
+<p>Let us explore how the animation at the top of the docs was produced using <a href="https://d3js.org/">d3.js</a>.</p>
+
+<h4 id="input-data">Input data</h4>
+<p>The input data that can be seen in the <code>R</code> function <code>ReadAndPlotClosestPoint</code> were generated
+during a simulation using print statements.  These have to be converted into a form that can
+be read easily by Javascript.  For our simulation we converted these into JSON and created the
+file <code>yieldSurfData.json</code> that contains:</p>
+
+<figure class="highlight"><pre><code class="language-json" data-lang="json"><span></span><span class="p">{</span>
+  <span class="nt">&quot;num_points&quot;</span><span class="p">:</span><span class="mi">50</span><span class="p">,</span>
+  <span class="nt">&quot;consistency_iter&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+  <span class="nt">&quot;data&quot;</span><span class="p">:[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;iteration&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+      <span class="nt">&quot;K&quot;</span><span class="p">:</span><span class="mf">3.98447e+07</span><span class="p">,</span>
+      <span class="nt">&quot;G&quot;</span><span class="p">:</span><span class="mf">1.32816e+07</span><span class="p">,</span>
+      <span class="nt">&quot;X&quot;</span><span class="p">:</span><span class="mf">-1.87891e+07</span><span class="p">,</span>
+      <span class="nt">&quot;pbar_w&quot;</span><span class="p">:</span><span class="mf">5.24774e+06</span><span class="p">,</span>
+      <span class="nt">&quot;BETA&quot;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+      <span class="nt">&quot;CR&quot;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">,</span>
+      <span class="nt">&quot;FSLOPE&quot;</span><span class="p">:</span><span class="mf">0.355309</span><span class="p">,</span>
+      <span class="nt">&quot;PEAKI1&quot;</span><span class="p">:</span><span class="mf">996.118</span><span class="p">,</span>
+      <span class="nt">&quot;STREN&quot;</span><span class="p">:</span><span class="mf">1.76382e+07</span><span class="p">,</span>
+      <span class="nt">&quot;YSLOPE&quot;</span><span class="p">:</span><span class="mf">0.353622</span><span class="p">,</span>
+      <span class="nt">&quot;z_r_pt&quot;</span><span class="p">:[</span>
+        <span class="mf">52172.3</span><span class="p">,</span>
+        <span class="mf">3.60195e+06</span>
+      <span class="p">],</span>
+      <span class="nt">&quot;z_r_closest&quot;</span><span class="p">:[</span>
+        <span class="mf">-1.15079e+06</span><span class="p">,</span>
+        <span class="mf">2.02165e+06</span>
+      <span class="p">],</span>
+      <span class="nt">&quot;z_r_yield_z&quot;</span><span class="p">:[</span>
+        <span class="mf">575.109</span><span class="p">,</span>
+        <span class="mi">-167406</span><span class="p">,</span>
+        <span class="mi">-607187</span><span class="p">,</span>
+        <span class="mf">-1.15079e+06</span><span class="p">,</span>
+        <span class="mf">-1.59057e+06</span><span class="p">,</span>
+        <span class="mf">-1.75855e+06</span>
+      <span class="p">],</span>
+      <span class="nt">&quot;z_r_yield_r&quot;</span><span class="p">:[</span>
+        <span class="mf">2.45257e-09</span><span class="p">,</span>
+        <span class="mi">310133</span><span class="p">,</span>
+        <span class="mf">1.12207e+06</span><span class="p">,</span>
+        <span class="mf">2.02165e+06</span><span class="p">,</span>
+        <span class="mf">1.72669e+06</span><span class="p">,</span>
+        <span class="mi">0</span>
+      <span class="p">]</span>
+    <span class="p">},</span>
+    <span class="err">.....</span>
+  <span class="p">]</span>
+<span class="p">}</span></code></pre></figure>
+
+<h4 id="the-html-file">The HTML file</h4>
+<p>In the HTML file, I added the following to allow the animation to be added to the DOM.</p>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html"><span></span>  <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+     ...
+     <span class="c">&lt;!-- Create div where the svg canvas will be added --&gt;</span>
+     <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;yield-surf-canvas&quot;</span><span class="p">&gt;</span> <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+     <span class="c">&lt;!-- Load D3.js --&gt;</span>
+     <span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;https://d3js.org/d3.v4.min.js&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+     <span class="c">&lt;!-- Load javascript for animating yield surface --&gt;</span>
+     <span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;https://bbanerjee.github.io/ParSim/assets/js/yieldsurface.js&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+     <span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+       <span class="c1">// Read JSON file and then call javascript function to animate yield surface </span>
+       <span class="nx">d3</span><span class="p">.</span><span class="nx">json</span><span class="p">(</span><span class="s2">&quot;https://bbanerjee.github.io/ParSim/assets/json/yieldSurfData.json&quot;</span><span class="p">,</span> <span class="nx">drawYieldSurface</span><span class="p">);</span>
+     <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span></code></pre></figure>
+
+<h4 id="the-javascript-code">The Javascript code</h4>
+<p>Let us now explore the Javascript code used to generate the animation.</p>
+
+<h5 id="generating-points-on-the-yield-surface">Generating points on the yield surface</h5>
+<p>We first generate points on the yield surface in <script type="math/tex">z-r'</script>-space.  These are displayed in blue in the figure.
+The function <code>computeYieldSurface</code> takes an input the data for a single iteration (read from the
+JSON file) and the number of points to be used to discretize the yield surface.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kd">function</span> <span class="nx">computeYieldSurface</span><span class="p">(</span><span class="nx">iterData</span><span class="p">,</span> <span class="nx">numPts</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="c1">// Get the moduli</span>
+  <span class="kd">let</span> <span class="nx">K</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">[</span><span class="s1">&#39;K&#39;</span><span class="p">];</span>
+  <span class="kd">let</span> <span class="nx">G</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">[</span><span class="s1">&#39;G&#39;</span><span class="p">];</span>
+
+  <span class="c1">// Get yield parameters</span>
+  <span class="kd">let</span> <span class="nx">PEAKI1</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">[</span><span class="s1">&#39;PEAKI1&#39;</span><span class="p">];</span>
+  <span class="kd">let</span> <span class="nx">FSLOPE</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">[</span><span class="s1">&#39;FSLOPE&#39;</span><span class="p">];</span>
+  <span class="kd">let</span> <span class="nx">STREN</span>  <span class="o">=</span> <span class="nx">iterData</span><span class="p">[</span><span class="s1">&#39;STREN&#39;</span><span class="p">];</span>
+  <span class="kd">let</span> <span class="nx">YSLOPE</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">[</span><span class="s1">&#39;YSLOPE&#39;</span><span class="p">];</span>
+  <span class="kd">let</span> <span class="nx">CR</span>     <span class="o">=</span> <span class="nx">iterData</span><span class="p">[</span><span class="s1">&#39;CR&#39;</span><span class="p">];</span>
+
+  <span class="c1">// Set up constants</span>
+  <span class="kd">let</span> <span class="nx">a1</span> <span class="o">=</span> <span class="nx">STREN</span><span class="p">;</span>
+  <span class="kd">let</span> <span class="nx">a2</span> <span class="o">=</span> <span class="p">(</span><span class="nx">FSLOPE</span><span class="o">-</span><span class="nx">YSLOPE</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="nx">STREN</span><span class="o">-</span><span class="nx">YSLOPE</span><span class="o">*</span><span class="nx">PEAKI1</span><span class="p">);</span>
+  <span class="kd">let</span> <span class="nx">a3</span> <span class="o">=</span> <span class="p">(</span><span class="nx">STREN</span><span class="o">-</span><span class="nx">YSLOPE</span><span class="o">*</span><span class="nx">PEAKI1</span><span class="p">)</span><span class="o">*</span><span class="nb">Math</span><span class="p">.</span><span class="nx">exp</span><span class="p">(</span><span class="o">-</span><span class="nx">a2</span><span class="o">*</span><span class="nx">PEAKI1</span><span class="p">);</span>
+  <span class="kd">let</span> <span class="nx">a4</span> <span class="o">=</span> <span class="nx">YSLOPE</span><span class="p">;</span>
+
+  <span class="c1">// Compute kappa</span>
+  <span class="kd">let</span> <span class="nx">X_eff</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">*</span><span class="nx">iterData</span><span class="p">[</span><span class="s1">&#39;pbar_w&#39;</span><span class="p">];</span>
+  <span class="kd">let</span> <span class="nx">kappa</span> <span class="o">=</span> <span class="nx">PEAKI1</span> <span class="o">-</span> <span class="nx">CR</span><span class="o">*</span><span class="p">(</span><span class="nx">PEAKI1</span> <span class="o">-</span> <span class="nx">X_eff</span><span class="p">);</span>
+
+  <span class="c1">// Create an array of I1_eff values</span>
+  <span class="kd">let</span> <span class="nx">I1eff_min</span> <span class="o">=</span> <span class="nx">X_eff</span><span class="p">;</span>
+  <span class="kd">let</span> <span class="nx">I1eff_max</span> <span class="o">=</span> <span class="nx">PEAKI1</span><span class="p">;</span>
+
+  <span class="kd">let</span> <span class="nx">rad</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="nx">PEAKI1</span> <span class="o">-</span> <span class="nx">X_eff</span><span class="p">);</span>
+  <span class="kd">let</span> <span class="nx">cen</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="nx">PEAKI1</span> <span class="o">+</span> <span class="nx">X_eff</span><span class="p">);</span>
+  <span class="kd">let</span> <span class="nx">theta_max</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">acos</span><span class="p">(</span><span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">((</span><span class="nx">I1eff_min</span> <span class="o">-</span> <span class="nx">cen</span><span class="p">)</span><span class="o">/</span><span class="nx">rad</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">));</span>
+  <span class="kd">let</span> <span class="nx">theta_min</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">acos</span><span class="p">(</span><span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">((</span><span class="nx">I1eff_max</span> <span class="o">-</span> <span class="nx">cen</span><span class="p">)</span><span class="o">/</span><span class="nx">rad</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">));</span>
+  <span class="kd">let</span> <span class="nx">theta_inc</span> <span class="o">=</span> <span class="p">(</span><span class="nx">theta_max</span><span class="o">-</span><span class="nx">theta_min</span><span class="p">)</span><span class="o">/</span><span class="nx">numPts</span><span class="p">;</span>
+  <span class="kd">let</span> <span class="nx">theta_vec</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">range</span><span class="p">(</span><span class="nx">theta_min</span><span class="p">,</span> <span class="nx">theta_max</span><span class="o">+</span><span class="nx">theta_inc</span><span class="p">,</span> <span class="nx">theta_inc</span><span class="p">);</span>
+  <span class="kd">let</span> <span class="nx">I1_list</span> <span class="o">=</span> <span class="nx">theta_vec</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">theta</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nx">cen</span> <span class="o">+</span> <span class="nx">rad</span><span class="o">*</span><span class="nb">Math</span><span class="p">.</span><span class="nx">cos</span><span class="p">(</span><span class="nx">theta</span><span class="p">);});</span>
+  <span class="kd">let</span> <span class="nx">I1_eff_list</span> <span class="o">=</span> <span class="nx">I1_list</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">I1</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="nx">I1</span><span class="p">,</span> <span class="nx">X_eff</span><span class="p">);});</span>
+
+  <span class="c1">// Create an array of sqrtJ2 values</span>
+  <span class="kd">let</span> <span class="nx">sqrtJ2_list</span> <span class="o">=</span> <span class="nx">I1_eff_list</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span>
+          <span class="kd">function</span><span class="p">(</span><span class="nx">I1_eff</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// Compute F_f</span>
+            <span class="kd">let</span> <span class="nx">Ff</span> <span class="o">=</span> <span class="nx">a1</span> <span class="o">-</span> <span class="nx">a3</span><span class="o">*</span><span class="nb">Math</span><span class="p">.</span><span class="nx">exp</span><span class="p">(</span><span class="nx">a2</span><span class="o">*</span><span class="nx">I1_eff</span><span class="p">)</span> <span class="o">-</span> <span class="nx">a4</span><span class="o">*</span><span class="p">(</span><span class="nx">I1_eff</span><span class="p">);</span>
+
+            <span class="c1">// Compute Fc</span>
+            <span class="kd">let</span> <span class="nx">Fc_sq</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">((</span><span class="nx">I1_eff</span> <span class="o">&lt;</span> <span class="nx">kappa</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">X_eff</span> <span class="o">&lt;=</span> <span class="nx">I1_eff</span><span class="p">))</span> <span class="p">{</span>
+              <span class="kd">let</span> <span class="nx">ratio</span> <span class="o">=</span> <span class="p">(</span><span class="nx">kappa</span> <span class="o">-</span> <span class="nx">I1_eff</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="nx">kappa</span> <span class="o">-</span> <span class="nx">X_eff</span><span class="p">);</span>
+              <span class="nx">Fc_sq</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="nx">ratio</span><span class="o">*</span><span class="nx">ratio</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="c1">// Compute sqrt(J2)</span>
+            <span class="kd">let</span> <span class="nx">sqrtJ2</span> <span class="o">=</span> <span class="nx">Ff</span><span class="o">*</span><span class="nb">Math</span><span class="p">.</span><span class="nx">sqrt</span><span class="p">(</span><span class="nx">Fc_sq</span><span class="p">);</span>
+            <span class="k">return</span><span class="p">(</span><span class="nx">sqrtJ2</span><span class="p">);</span>
+          <span class="p">});</span>
+
+  <span class="c1">// Compute z and r&#39;</span>
+  <span class="kd">let</span> <span class="nx">z_list</span> <span class="o">=</span> <span class="nx">I1_eff_list</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">I1_eff</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nx">I1_eff</span><span class="o">/</span><span class="nb">Math</span><span class="p">.</span><span class="nx">sqrt</span><span class="p">(</span><span class="mf">3.0</span><span class="p">);});</span>
+  <span class="kd">let</span> <span class="nx">rprime_list</span> <span class="o">=</span> <span class="nx">sqrtJ2_list</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">sqrtJ2</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nx">sqrtJ2</span><span class="o">*</span><span class="nb">Math</span><span class="p">.</span><span class="nx">sqrt</span><span class="p">(</span><span class="mf">3.0</span><span class="o">*</span><span class="nx">K</span><span class="o">/</span><span class="nx">G</span><span class="p">);});</span>
+
+  <span class="c1">// Create zipped array</span>
+  <span class="kd">let</span> <span class="nx">zrprime_data</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">zip</span><span class="p">(</span><span class="nx">z_list</span><span class="p">,</span> <span class="nx">rprime_list</span><span class="p">);</span>
+  <span class="k">return</span> <span class="nx">zrprime_data</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The procedure is identical to that used in the <code>R</code> script, except for two differences:</p>
+
+<ul>
+  <li>the <code>d3.range</code> function is used to create the vector of <script type="math/tex">\theta</script> values.  This function
+differs from the <code>R</code> function <code>seq</code> in that the end point of the range is not included in
+the sequence that is produced.  Therefore, the set of points produced by <code>d3.js</code> is not
+identical to that produced by <code>R</code>.</li>
+  <li>the function returns a zipped array created with <code>d3.zip</code> instead of a <code>R</code> dataframe.</li>
+</ul>
+
+<h5 id="drawing-the-yield-surface-and-closest-point-projection">Drawing the yield surface and closest-point projection</h5>
+<p>We use the <code>drawYieldSurface</code> function to plot and animate the yield surface and the closest-point
+projection.  Let us look at the full code first and then explore some of the details.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kd">function</span> <span class="nx">drawYieldSurface</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="c1">// Create svg</span>
+  <span class="kd">var</span> <span class="nx">svgsize</span> <span class="o">=</span> <span class="p">{</span><span class="nx">x</span><span class="o">:</span> <span class="mi">600</span><span class="p">,</span> <span class="nx">y</span><span class="o">:</span> <span class="mi">600</span><span class="p">};</span>
+  <span class="kd">var</span> <span class="nx">margin</span> <span class="o">=</span> <span class="p">{</span><span class="nx">top</span><span class="o">:</span> <span class="mi">50</span><span class="p">,</span> <span class="nx">right</span><span class="o">:</span> <span class="mi">50</span><span class="p">,</span> <span class="nx">bottom</span><span class="o">:</span> <span class="mi">50</span><span class="p">,</span> <span class="nx">left</span><span class="o">:</span> <span class="mi">50</span><span class="p">};</span>
+  <span class="kd">var</span> <span class="nx">width</span> <span class="o">=</span> <span class="nx">svgsize</span><span class="p">.</span><span class="nx">x</span> <span class="o">-</span> <span class="nx">margin</span><span class="p">.</span><span class="nx">left</span> <span class="o">-</span> <span class="nx">margin</span><span class="p">.</span><span class="nx">right</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">height</span> <span class="o">=</span> <span class="nx">svgsize</span><span class="p">.</span><span class="nx">y</span> <span class="o">-</span> <span class="nx">margin</span><span class="p">.</span><span class="nx">top</span> <span class="o">-</span> <span class="nx">margin</span><span class="p">.</span><span class="nx">bottom</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">svg</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">select</span><span class="p">(</span><span class="s2">&quot;.yield-surf-canvas&quot;</span><span class="p">)</span>
+              <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;svg&quot;</span><span class="p">)</span>
+                 <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;width&quot;</span><span class="p">,</span> <span class="nx">svgsize</span><span class="p">.</span><span class="nx">x</span><span class="p">)</span>
+                 <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;height&quot;</span><span class="p">,</span> <span class="nx">svgsize</span><span class="p">.</span><span class="nx">y</span><span class="p">);</span>
+
+  <span class="c1">// Create chart area</span>
+  <span class="kd">var</span> <span class="nx">chart</span> <span class="o">=</span> <span class="nx">svg</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
+                    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;chart&quot;</span><span class="p">)</span>
+                    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> 
+                          <span class="s2">&quot;translate(&quot;</span> <span class="o">+</span> <span class="nx">margin</span><span class="p">.</span><span class="nx">left</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nx">margin</span><span class="p">.</span><span class="nx">top</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">);</span>
+
+  <span class="c1">// Process the input data</span>
+  <span class="kd">let</span> <span class="nx">numPts</span> <span class="o">=</span> <span class="nx">data</span><span class="p">[</span><span class="s1">&#39;num_points&#39;</span><span class="p">];</span>
+  <span class="kd">let</span> <span class="nx">numIter</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+
+  <span class="c1">// Compute yield surface in z and r&#39; from first element of data</span>
+  <span class="c1">// (Note: the yield surface does not change at each iteration)</span>
+  <span class="kd">let</span> <span class="nx">iterData</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">data</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+  <span class="kd">let</span> <span class="nx">zrprime</span> <span class="o">=</span> <span class="nx">computeYieldSurface</span><span class="p">(</span><span class="nx">iterData</span><span class="p">,</span> <span class="nx">numPts</span><span class="p">);</span>
+
+  <span class="c1">// Get the coordinates of the trial stress</span>
+  <span class="kd">let</span> <span class="nx">ztrial</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">.</span><span class="nx">z_r_pt</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+  <span class="kd">let</span> <span class="nx">rprimetrial</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">.</span><span class="nx">z_r_pt</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+
+  <span class="c1">// Compute min max of domain</span>
+  <span class="kd">let</span> <span class="nx">zmin</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="nx">zrprime</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nx">d</span><span class="p">[</span><span class="mi">0</span><span class="p">];})</span>
+  <span class="kd">let</span> <span class="nx">zmax</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="nx">zrprime</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nx">d</span><span class="p">[</span><span class="mi">0</span><span class="p">];})</span>
+  <span class="kd">let</span> <span class="nx">rprimemin</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="nx">zrprime</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nx">d</span><span class="p">[</span><span class="mi">1</span><span class="p">];})</span>
+  <span class="kd">let</span> <span class="nx">rprimemax</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="nx">zrprime</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nx">d</span><span class="p">[</span><span class="mi">1</span><span class="p">];})</span>
+  <span class="nx">zmin</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="nx">zmin</span><span class="p">,</span> <span class="nx">ztrial</span><span class="p">);</span>
+  <span class="nx">zmax</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="nx">zmax</span><span class="p">,</span> <span class="nx">ztrial</span><span class="p">);</span>
+  <span class="nx">rprimemin</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="nx">rprimemin</span><span class="p">,</span> <span class="nx">rprimetrial</span><span class="p">);</span>
+  <span class="nx">rprimemax</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">(</span><span class="nx">rprimemax</span><span class="p">,</span> <span class="nx">rprimetrial</span><span class="p">);</span>
+
+  <span class="c1">// Create scaling functions</span>
+  <span class="kd">var</span> <span class="nx">xscale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scaleLinear</span><span class="p">().</span><span class="nx">domain</span><span class="p">([</span><span class="nx">zmin</span><span class="p">,</span> <span class="nx">zmax</span><span class="p">]).</span><span class="nx">rangeRound</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="nx">width</span><span class="p">]);</span>
+  <span class="kd">var</span> <span class="nx">yscale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scaleLinear</span><span class="p">().</span><span class="nx">domain</span><span class="p">([</span><span class="nx">rprimemin</span><span class="p">,</span> <span class="nx">rprimemax</span><span class="p">]).</span><span class="nx">rangeRound</span><span class="p">([</span><span class="nx">height</span><span class="p">,</span> <span class="mi">0</span><span class="p">]);</span>
+  <span class="kd">var</span> <span class="nx">xscaleAxis</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scaleLinear</span><span class="p">().</span><span class="nx">domain</span><span class="p">([</span><span class="nx">zmin</span><span class="o">*</span><span class="mf">1.0</span><span class="nx">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="nx">zmax</span><span class="o">*</span><span class="mf">1.0</span><span class="nx">e</span><span class="o">-</span><span class="mi">6</span><span class="p">]).</span><span class="nx">rangeRound</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="nx">width</span><span class="p">]);</span>
+  <span class="kd">var</span> <span class="nx">yscaleAxis</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scaleLinear</span><span class="p">().</span><span class="nx">domain</span><span class="p">([</span><span class="nx">rprimemin</span><span class="o">*</span><span class="mf">1.0</span><span class="nx">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="nx">rprimemax</span><span class="o">*</span><span class="mf">1.0</span><span class="nx">e</span><span class="o">-</span><span class="mi">6</span><span class="p">]).</span><span class="nx">rangeRound</span><span class="p">([</span><span class="nx">height</span><span class="p">,</span> <span class="mi">0</span><span class="p">]);</span>
+
+  <span class="c1">// Create polyline generation function</span>
+  <span class="kd">var</span> <span class="nx">line</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">line</span><span class="p">()</span>
+                 <span class="p">.</span><span class="nx">x</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">xscale</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span> <span class="p">})</span>
+                 <span class="p">.</span><span class="nx">y</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">yscale</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span> <span class="p">});</span>
+
+  <span class="c1">// Create bottom axis</span>
+  <span class="nx">chart</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="s2">&quot;translate(0,&quot;</span> <span class="o">+</span> <span class="nx">height</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">d3</span><span class="p">.</span><span class="nx">axisBottom</span><span class="p">(</span><span class="nx">xscaleAxis</span><span class="p">))</span>
+        <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+           <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="s2">&quot;#000&quot;</span><span class="p">)</span>
+           <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span>
+                 <span class="s2">&quot;translate(&quot;</span> <span class="o">+</span> <span class="p">(</span><span class="nx">width</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; ,&quot;</span> <span class="o">+</span> 
+                                <span class="p">(</span><span class="nx">margin</span><span class="p">.</span><span class="nx">top</span> <span class="o">-</span> <span class="mi">20</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+           <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;text-anchor&quot;</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">)</span>
+           <span class="p">.</span><span class="nx">text</span><span class="p">(</span><span class="s2">&quot;z (MPa)&quot;</span><span class="p">);</span> 
+
+  <span class="c1">// Create left axis</span>
+  <span class="nx">chart</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
+       <span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">d3</span><span class="p">.</span><span class="nx">axisLeft</span><span class="p">(</span><span class="nx">yscaleAxis</span><span class="p">))</span>
+       <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="s2">&quot;#000&quot;</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="s2">&quot;rotate(-90)&quot;</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;dy&quot;</span><span class="p">,</span> <span class="s2">&quot;0.71em&quot;</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;text-anchor&quot;</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">text</span><span class="p">(</span><span class="s2">&quot;r&#39; (MPa)&quot;</span><span class="p">);</span> 
+
+  <span class="c1">// Plot yield surface</span>
+  <span class="nx">chart</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;yield_surf&quot;</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">datum</span><span class="p">(</span><span class="nx">zrprime</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">)</span>    
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke&quot;</span><span class="p">,</span> <span class="s2">&quot;steelblue&quot;</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke-linejoin&quot;</span><span class="p">,</span> <span class="s2">&quot;round&quot;</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke-linecap&quot;</span><span class="p">,</span> <span class="s2">&quot;round&quot;</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke-width&quot;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">line</span><span class="p">);</span>
+
+  <span class="c1">// Loop through the iterations</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kd">let</span> <span class="nx">iter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">iter</span> <span class="o">&lt;</span> <span class="nx">numIter</span><span class="p">;</span> <span class="nx">iter</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="nx">iterData</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">data</span><span class="p">[</span><span class="nx">iter</span><span class="p">];</span>
+
+    <span class="c1">// Create group for each iteration</span>
+    <span class="kd">let</span> <span class="nx">iterGroup</span> <span class="o">=</span> <span class="nx">chart</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
+                            <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;iteration&quot;</span><span class="o">+</span><span class="nx">iter</span><span class="p">)</span>
+                            <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+    <span class="c1">// Create group for the yield surface points + circles</span>
+    <span class="kd">let</span> <span class="nx">yieldSurfGroup</span> <span class="o">=</span> <span class="nx">iterGroup</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">)</span> 
+                                     <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;approx_yield_surf&quot;</span><span class="o">+</span><span class="nx">iter</span><span class="p">);</span>
+
+    <span class="c1">// Get the coordinates of polyline approximation</span>
+    <span class="kd">let</span> <span class="nx">zpoly</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">.</span><span class="nx">z_r_yield_z</span><span class="p">;</span>
+    <span class="kd">let</span> <span class="nx">rprimepoly</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">.</span><span class="nx">z_r_yield_r</span><span class="p">;</span>
+    <span class="kd">let</span> <span class="nx">zrprimepoly</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">zip</span><span class="p">(</span><span class="nx">zpoly</span><span class="p">,</span> <span class="nx">rprimepoly</span><span class="p">);</span>
+
+    <span class="c1">// Add the yield surface polyline to the svg</span>
+    <span class="nx">yieldSurfGroup</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nx">datum</span><span class="p">(</span><span class="nx">zrprimepoly</span><span class="p">)</span>
+                     <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">)</span>    
+                     <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke&quot;</span><span class="p">,</span> <span class="s2">&quot;red&quot;</span><span class="p">)</span>
+                     <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke-linejoin&quot;</span><span class="p">,</span> <span class="s2">&quot;round&quot;</span><span class="p">)</span>
+                     <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke-linecap&quot;</span><span class="p">,</span> <span class="s2">&quot;round&quot;</span><span class="p">)</span>
+                     <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke-width&quot;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+                     <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">line</span><span class="p">);</span>
+
+    <span class="c1">// Add circles to the yield surface polyline</span>
+    <span class="nx">yieldSurfGroup</span><span class="p">.</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;.approx_yield_surf_circle&quot;</span><span class="o">+</span><span class="nx">iter</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">zrprimepoly</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nx">enter</span><span class="p">()</span>
+                  <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;circle&quot;</span><span class="p">)</span>
+                     <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                     <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;cx&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nx">xscale</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]);})</span>
+                     <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;cy&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nx">yscale</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]);})</span>
+                     <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">)</span>
+                     <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke&quot;</span><span class="p">,</span> <span class="s2">&quot;black&quot;</span><span class="p">);</span>
+
+    <span class="c1">// Create group for the projection line and points</span>
+    <span class="kd">let</span> <span class="nx">projLineGroup</span> <span class="o">=</span> <span class="nx">iterGroup</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">)</span> 
+                                    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;projection_line&quot;</span><span class="o">+</span><span class="nx">iter</span><span class="p">);</span>
+
+    <span class="c1">// Get the coordinates of the trial stress</span>
+    <span class="kd">let</span> <span class="nx">ztrial</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">.</span><span class="nx">z_r_pt</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+    <span class="kd">let</span> <span class="nx">rprimetrial</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">.</span><span class="nx">z_r_pt</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+
+    <span class="c1">// Get the coordinates of the closest point stress</span>
+    <span class="kd">let</span> <span class="nx">zclosest</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">.</span><span class="nx">z_r_closest</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+    <span class="kd">let</span> <span class="nx">rprimeclosest</span> <span class="o">=</span> <span class="nx">iterData</span><span class="p">.</span><span class="nx">z_r_closest</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+
+    <span class="c1">// Set up projection line</span>
+    <span class="kd">let</span> <span class="nx">zrprimeproj</span> <span class="o">=</span> <span class="p">[[</span><span class="nx">ztrial</span><span class="p">,</span> <span class="nx">rprimetrial</span><span class="p">],[</span><span class="nx">zclosest</span><span class="p">,</span> <span class="nx">rprimeclosest</span><span class="p">]];</span>
+
+    <span class="c1">// Add the projection line to the svg</span>
+    <span class="nx">projLineGroup</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span>
+                 <span class="p">.</span><span class="nx">datum</span><span class="p">(</span><span class="nx">zrprimeproj</span><span class="p">)</span>
+                   <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">)</span>    
+                   <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke&quot;</span><span class="p">,</span> <span class="s2">&quot;green&quot;</span><span class="p">)</span>
+                   <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke-linejoin&quot;</span><span class="p">,</span> <span class="s2">&quot;round&quot;</span><span class="p">)</span>
+                   <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke-linecap&quot;</span><span class="p">,</span> <span class="s2">&quot;round&quot;</span><span class="p">)</span>
+                   <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke-width&quot;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+                   <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">line</span><span class="p">);</span>
+
+    <span class="c1">// Add the triangles at the end points of the projection line</span>
+    <span class="nx">projLineGroup</span><span class="p">.</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;.projection_line_point&quot;</span><span class="o">+</span><span class="nx">iter</span><span class="p">)</span>
+                 <span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">zrprimeproj</span><span class="p">)</span>
+                 <span class="p">.</span><span class="nx">enter</span><span class="p">()</span>
+                 <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span>
+                    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;projection_line_point&quot;</span><span class="o">+</span><span class="nx">iter</span><span class="p">)</span>
+                    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">symbol</span><span class="p">().</span><span class="nx">type</span><span class="p">(</span><span class="nx">d3</span><span class="p">.</span><span class="nx">symbolTriangle</span><span class="p">))</span>
+                    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> 
+                      <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="s2">&quot;translate(&quot;</span> <span class="o">+</span> <span class="nx">xscale</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nx">yscale</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">;});</span>
+
+  <span class="p">}</span> <span class="c1">// End for loop over iterations</span>
+
+  <span class="c1">// Function to do the animation</span>
+  <span class="kd">function</span> <span class="nx">drawAnimation</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">iterationID</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="c1">// Function to draw the surface for the next iteration</span>
+    <span class="kd">function</span> <span class="nx">drawNextSurf</span><span class="p">()</span> <span class="p">{</span>
+
+      <span class="nx">d3</span><span class="p">.</span><span class="nx">active</span><span class="p">(</span><span class="k">this</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">.</span><span class="nx">transition</span><span class="p">()</span>
+          <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+          <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+      <span class="nx">iterationID</span><span class="o">++</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">iterationID</span> <span class="o">===</span> <span class="nx">numIter</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">iterationID</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="nx">chart</span><span class="p">.</span><span class="nx">select</span><span class="p">(</span><span class="s2">&quot;.iteration&quot;</span><span class="o">+</span><span class="nx">iterationID</span><span class="p">)</span>
+           <span class="p">.</span><span class="nx">transition</span><span class="p">()</span>
+             <span class="p">.</span><span class="nx">delay</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+             <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+           <span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="nx">drawNextSurf</span><span class="p">);</span>            
+
+    <span class="p">}</span> <span class="c1">// end function drawNextSurf</span>
+
+    <span class="c1">// Start the animation</span>
+    <span class="nx">chart</span><span class="p">.</span><span class="nx">select</span><span class="p">(</span><span class="s2">&quot;.iteration0&quot;</span><span class="p">)</span>
+         <span class="p">.</span><span class="nx">transition</span><span class="p">()</span>
+           <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+         <span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="nx">drawNextSurf</span><span class="p">);</span>
+
+  <span class="p">}</span> <span class="c1">// end function drawAnimation</span>
+
+  <span class="c1">// Do the animation</span>
+  <span class="nx">drawAnimation</span><span class="p">();</span>
+
+<span class="p">}</span> </code></pre></figure>
+
+<p>Let us now look at some of the details of the code.</p>
+
+<h6 id="creating-the-svg">Creating the SVG</h6>
+<p>First we select the <code>&lt;div&gt;</code> in
+our HTML file using <code>d3.select</code> and add a SVG canvas to it:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kd">var</span> <span class="nx">svg</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">select</span><span class="p">(</span><span class="s2">&quot;.yield-surf-canvas&quot;</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;svg&quot;</span><span class="p">)</span>
+              <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;width&quot;</span><span class="p">,</span> <span class="nx">svgsize</span><span class="p">.</span><span class="nx">x</span><span class="p">)</span>
+              <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;height&quot;</span><span class="p">,</span> <span class="nx">svgsize</span><span class="p">.</span><span class="nx">y</span><span class="p">);</span></code></pre></figure>
+
+<h6 id="creating-the-canvas-group">Creating the canvas group</h6>
+<p>Then we create a subset of the SVG canvas as the region where the plot will be
+produced and identify it using a group <code>g</code>.  This area has to be translated
+so that the top left hand corner is at the right position.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kd">var</span> <span class="nx">chart</span> <span class="o">=</span> <span class="nx">svg</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
+                 <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;chart&quot;</span><span class="p">)</span>
+                 <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> 
+                       <span class="s2">&quot;translate(&quot;</span> <span class="o">+</span> <span class="nx">margin</span><span class="p">.</span><span class="nx">left</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nx">margin</span><span class="p">.</span><span class="nx">top</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">);</span></code></pre></figure>
+
+<h6 id="creating-map-from-real-to-canvas-coordinates">Creating map from real to canvas coordinates</h6>
+<p>We then compute the true yield surface and find the extents of the domain of
+the plot based on the yield surface and the trial stress state.  We use
+these extents to create maps from real coordinates to svg coordinates.
+Separate maps are also created so that the axis labels can be converted into MPa.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kd">var</span> <span class="nx">xscale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scaleLinear</span><span class="p">()</span>
+                 <span class="p">.</span><span class="nx">domain</span><span class="p">([</span><span class="nx">zmin</span><span class="p">,</span> <span class="nx">zmax</span><span class="p">])</span>
+                 <span class="p">.</span><span class="nx">rangeRound</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="nx">width</span><span class="p">]);</span>
+<span class="kd">var</span> <span class="nx">yscale</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scaleLinear</span><span class="p">()</span>
+                 <span class="p">.</span><span class="nx">domain</span><span class="p">([</span><span class="nx">rprimemin</span><span class="p">,</span> <span class="nx">rprimemax</span><span class="p">])</span>
+                 <span class="p">.</span><span class="nx">rangeRound</span><span class="p">([</span><span class="nx">height</span><span class="p">,</span> <span class="mi">0</span><span class="p">]);</span>
+<span class="kd">var</span> <span class="nx">xscaleAxis</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scaleLinear</span><span class="p">()</span>
+                     <span class="p">.</span><span class="nx">domain</span><span class="p">([</span><span class="nx">zmin</span><span class="o">*</span><span class="mf">1.0</span><span class="nx">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="nx">zmax</span><span class="o">*</span><span class="mf">1.0</span><span class="nx">e</span><span class="o">-</span><span class="mi">6</span><span class="p">])</span>
+                     <span class="p">.</span><span class="nx">rangeRound</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="nx">width</span><span class="p">]);</span>
+<span class="kd">var</span> <span class="nx">yscaleAxis</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">scaleLinear</span><span class="p">()</span>
+                     <span class="p">.</span><span class="nx">domain</span><span class="p">([</span><span class="nx">rprimemin</span><span class="o">*</span><span class="mf">1.0</span><span class="nx">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="nx">rprimemax</span><span class="o">*</span><span class="mf">1.0</span><span class="nx">e</span><span class="o">-</span><span class="mi">6</span><span class="p">])</span>
+                     <span class="p">.</span><span class="nx">rangeRound</span><span class="p">([</span><span class="nx">height</span><span class="p">,</span> <span class="mi">0</span><span class="p">]);</span></code></pre></figure>
+
+<h6 id="creating-svg-polyline-generator">Creating SVG polyline generator</h6>
+<p>To plot the polylines that represent the yield surface, its approximation, and
+the closest point projection, we need a function that can convert a set of points
+to the SVG representation of a polyline.  We generate that function using
+<code>d3.line</code>:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kd">var</span> <span class="nx">line</span> <span class="o">=</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">line</span><span class="p">()</span>
+               <span class="p">.</span><span class="nx">x</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">xscale</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span> <span class="p">})</span>
+               <span class="p">.</span><span class="nx">y</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">yscale</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span> <span class="p">});</span></code></pre></figure>
+
+<h6 id="creating-the-axes-and-the-yield-surface">Creating the axes and the yield surface</h6>
+<p>Next, we create the axes.  The generation of axes using <code>d3.js</code> is straightforward,
+but we have to keep in mind that a translation may be required depending on the
+position of the axis.</p>
+
+<p>After the axes have been created, we add the polyline representing the yield surface
+to the SVG.  This is done using the zipped data returned from the <code>computeYieldSurface</code>
+function.  Because the yield surface does not change during closest-point search iterations,
+we use the data from the first iteration to plot this curve.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="nx">chart</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span>
+       <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;yield_surf&quot;</span><span class="p">)</span>
+     <span class="p">.</span><span class="nx">datum</span><span class="p">(</span><span class="nx">zrprime</span><span class="p">)</span>
+       <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">)</span>    
+       <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke&quot;</span><span class="p">,</span> <span class="s2">&quot;steelblue&quot;</span><span class="p">)</span>
+       <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke-width&quot;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+       <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">line</span><span class="p">);</span></code></pre></figure>
+
+<p>Notice that we use the <code>.datum</code> method in this case and that the attribute <code>d</code> is set
+using the <code>line</code> function we had defined earlier.</p>
+
+<h6 id="creating-groups-for-each-iteration">Creating groups for each iteration</h6>
+<p>Now that the fixed content of the plot has been created, we are ready to create the
+content that changes between iterations.  To do that, we loop through the iterations
+and add a group for each iteration:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="kd">let</span> <span class="nx">iterGroup</span> <span class="o">=</span> <span class="nx">chart</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
+                       <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;iteration&quot;</span><span class="o">+</span><span class="nx">iter</span><span class="p">)</span>
+                       <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span></code></pre></figure>
+
+<p>We set the opacity of the group to 0 so that although all the objects in the
+plot have been created, none are visible when the animation starts.</p>
+
+<h6 id="adding-circles-to-the-approximate-surface">Adding circles to the approximate surface</h6>
+<p>Now we are ready to add in the polyline approximation to the yield surface
+in red.  The procedure is identical to the plot of the full yield surface.
+We also add circles to each vertex of the polyline using</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="nx">yieldSurfGroup</span><span class="p">.</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;.approx_yield_surf_circle&quot;</span><span class="o">+</span><span class="nx">iter</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">zrprimepoly</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">enter</span><span class="p">()</span>
+                <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;circle&quot;</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;approx_yield_surf_circle&quot;</span><span class="o">+</span><span class="nx">iter</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;cx&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nx">xscale</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]);})</span>
+                  <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;cy&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="nx">yscale</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]);})</span>
+                  <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;fill&quot;</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">)</span>
+                  <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;stroke&quot;</span><span class="p">,</span> <span class="s2">&quot;black&quot;</span><span class="p">);</span></code></pre></figure>
+
+<h6 id="adding-triangles-to-the-projection-line">Adding triangles to the projection line</h6>
+<p>Next we add the line that represents the closest-point projection (in green)
+and add triangles to the end points for clarity.  The triangles are
+added using</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="nx">projLineGroup</span><span class="p">.</span><span class="nx">selectAll</span><span class="p">(</span><span class="s2">&quot;.projection_line_point&quot;</span><span class="o">+</span><span class="nx">iter</span><span class="p">)</span>
+               <span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">zrprimeproj</span><span class="p">)</span>
+               <span class="p">.</span><span class="nx">enter</span><span class="p">()</span>
+               <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span>
+                 <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;projection_line_point&quot;</span><span class="o">+</span><span class="nx">iter</span><span class="p">)</span>
+                 <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">symbol</span><span class="p">().</span><span class="nx">type</span><span class="p">(</span><span class="nx">d3</span><span class="p">.</span><span class="nx">symbolTriangle</span><span class="p">))</span>
+                 <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> 
+                      <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span><span class="k">return</span> <span class="s2">&quot;translate(&quot;</span> <span class="o">+</span> <span class="nx">xscale</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nx">yscale</span><span class="p">(</span><span class="nx">d</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">;});</span></code></pre></figure>
+
+<h6 id="setting-up-the-animation">Setting up the animation</h6>
+<p>Now we can terminate the loop of the iterations and proceed to setting up the animation.
+We start the animation by selecting the group that has class <code>iteration0</code> and use a transition
+that takes 1 second to move from one frame to the next.  We call the <code>drawNextSurf</code> method when
+the animation starts.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="nx">chart</span><span class="p">.</span><span class="nx">select</span><span class="p">(</span><span class="s2">&quot;.iteration0&quot;</span><span class="p">)</span>
+     <span class="p">.</span><span class="nx">transition</span><span class="p">()</span>
+       <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+     <span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="nx">drawNextSurf</span><span class="p">);</span></code></pre></figure>
+
+<p>The <code>drawNextSurf</code> method changes the opacity of the active group to 1, waits for 1 second,
+and then changes back the opacity to 0.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="nx">d3</span><span class="p">.</span><span class="nx">active</span><span class="p">(</span><span class="k">this</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+  <span class="p">.</span><span class="nx">transition</span><span class="p">()</span>
+    <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">&quot;opacity&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span></code></pre></figure>
+
+<p>After that, it increments to iteration count, selects the next group, and recurses after a short delay.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span></span><span class="nx">chart</span><span class="p">.</span><span class="nx">select</span><span class="p">(</span><span class="s2">&quot;.iteration&quot;</span><span class="o">+</span><span class="nx">iterationID</span><span class="p">)</span>
+     <span class="p">.</span><span class="nx">transition</span><span class="p">()</span>
+       <span class="p">.</span><span class="nx">delay</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+       <span class="p">.</span><span class="nx">duration</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+     <span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="nx">drawNextSurf</span><span class="p">);</span></code></pre></figure>
+
+<p>To allow for the animation to loop, we set the iteration index to 0 when the total number of
+iterations in the data is reached.</p>
+
+<h4 id="remarks">Remarks</h4>
+<p>This <code>d3.js</code> animation took me 2 days to complete, starting from absolutely no knowledge of the
+library, and with significant breaks in the workflow.  I’d suggest that, since a novice can learn and
+use the library so quickly, <code>d3.js</code> should be an essential tool in the computational engineers toolbox
+to make data available in the form of interactive plots instead of the static (and hard to grasp) plots
+that are the norm in engineering literature.</p>
+
+<p>In the next article, we will go back to the work on XML particle data that we had started earlier
+and discuss ways to reading XML files using C++ code.</p>
+
+<p>If you have questions/comments/corrections, please contact banerjee at parresianz dot com dot zen (without the dot zen).</p>
+
+<p><a class="twitter-share-button" href="https://twitter.com/intent/tweet" data-via="parresianz"> Tweet</a>
+<script src="//platform.linkedin.com/in.js" type="text/javascript">
+  lang: en_US
+</script>
+<script type="IN/Share" data-counter="right"></script></p>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<script src="https://bbanerjee.github.io/ParSim/assets/js/yieldsurface.js"></script>
+
+<script>
+  d3.json("https://bbanerjee.github.io/ParSim/assets/json/yieldSurfData.json", drawYieldSurface);
+</script>
+
+
+          
+
+
+
+
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+
+        </article>
+      </div>
+
+      <div class="unit one-fifth hide-on-mobiles">
+  <aside>
+    
+    <h4>Getting Started</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/home/">Welcome</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/quickstart/">Quick-start guide</a></li>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/installation/">Installation</a></li>
+
+</ul>
+
+    
+    <h4>Vaango tutorials</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+    <h4>Vaango manuals</h4>
+    <ul>
+
+  
+  
+  <li class=""><a href="https://bbanerjee.github.io/ParSim"></a></li>
+
+</ul>
+
+    
+  </aside>
+</div>
+
+
+      <div class="clear"></div>
+
+    </div>
+  </section>
+
+
+  <footer>
+  <div class="grid">
+    <div class="unit one-third center">
+      <p>&copy;&nbsp;2017 under the terms of the <a href="https://github.com/bbanerjee/ParSim/blob/master/LICENSE">MIT&nbsp;License</a>.</p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Built with
+        <a href="https://jekyllrb.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/logo-2x.png" width = "70" height="30" alt="Jekyll">
+        </a>
+      </p>
+    </div>
+    <div class="unit one-third align-right center">
+      <p>
+        Hosted by
+        <a href="https://github.com">
+          <img src="https://bbanerjee.github.io/ParSim/assets/img/footer-logo.png" width="100" height="30" alt="GitHub • Social coding">
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+  <script>
+  var anchorForId = function (id) {
+    var anchor = document.createElement("a");
+    anchor.className = "header-link";
+    anchor.href      = "#" + id;
+    anchor.innerHTML = "<span class=\"sr-only\">Permalink</span><i class=\"fa fa-link\"></i>";
+    anchor.title = "Permalink";
+    return anchor;
+  };
+
+  var linkifyAnchors = function (level, containingElement) {
+    var headers = containingElement.getElementsByTagName("h" + level);
+    for (var h = 0; h < headers.length; h++) {
+      var header = headers[h];
+
+      if (typeof header.id !== "undefined" && header.id !== "") {
+        header.appendChild(anchorForId(header.id));
+      }
+    }
+  };
+
+  document.onreadystatechange = function () {
+    if (this.readyState === "complete") {
+      var contentBlock = document.getElementsByClassName("docs")[0] || document.getElementsByClassName("news")[0];
+      if (!contentBlock) {
+        return;
+      }
+      for (var level = 1; level <= 6; level++) {
+        linkifyAnchors(level, contentBlock);
+      }
+    }
+  };
+</script>
+
+  
+</body>
+</html>
