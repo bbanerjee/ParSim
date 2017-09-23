@@ -203,9 +203,9 @@ Conversions are done internally in the code to make sure that signs are consiste
 \begin{SummaryBox}[label=box:TableShearModulusModel]{Shear modulus model}
   The shear modulus is either a constant ($G_0$) or determined using a Poisson's ratio ($\nu$)
   from the tabular bulk modulus, $K(p)$, using a linear elastic model:
-  \[
+  \Beq
     G = \frac{3K(1-2\nu)}{2(1+\nu)}
-  \]
+  \Eeq
   This relation is activated if $\nu \in [-1.0, 0.5)$, otherwise the constant shear modulus
   is used.
 \end{SummaryBox}

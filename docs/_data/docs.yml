@@ -6,8 +6,8 @@
 
 - title: Vaango tutorials
   docs:
-  - running_vaango
+  - vaango/tutorials/tabular-j2-lin-elas
 
-- title: Vaango manuals
+- title: MPM material models
   docs:
-  - mpm-material-models
+  - vaango/mpm-materials/tabular-plasticity
