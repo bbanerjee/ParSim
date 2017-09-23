@@ -12,7 +12,7 @@ NOTE: Support for Implicit CNH and CNH with specified solver is still lacking (f
 
 The basic input section for UCNH:
 
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
             <constitutive_model type="UCNH"> 
               <!-- Necessary flags for all CNH models -->
                <bulk_modulus>   8.9e9  </bulk_modulus>
@@ -35,21 +35,21 @@ To use these features the following four steps are required:
 
 In the \tt <MPM> \normalfont block, the erosion algorithm must be set to one of the following: 
 
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
 <erosion algorithm="AllowNoTension"/>
 <erosion algorithm="AllowNoShear"/>
 <erosion algorithm="ZeroStress"/>
 \end{lstlisting}
 
 In the \tt <constitutive\_model> \normalfont block:
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
 <useDamage>true</useDamage>
 \end{lstlisting}
 
 2. The failure surface type must be specified.  This is also in the \tt <constitutive\_model> \normalfont 
 block.  One of the following must be specified:
 
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
 <failure_criteria>  MohrCoulomb </failure_criteria>
 <failure_criteria>  MaximumPrincipalStress </failure_criteria>
 <failure_criteria>  MaximumPrincipalStrain </failure_criteria>
@@ -66,7 +66,7 @@ where $\sigma_i$ are the ordered principal stresses, positive in tension
 ($\sigma_3 > \sigma_2 > \sigma_1$).  Note, the MohrCoulomb failure 
 surface also requires a friction angle, $\phi$, (in degrees):
 
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
 <friction_angle> friction angle </friction_angle>
 \end{lstlisting}
 
@@ -74,7 +74,7 @@ A tensile cutoff failure surface may be added for MohrCoulomb.
 The tensile cutoff is taken to be a fraction of the cohesion.  
 This parameter is specified using:
 
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
 <tensile_cutoff_fraction> 0.1 </tensile_cutoff_fraction> 
 \end{lstlisting}
 
@@ -87,7 +87,7 @@ spatially (an independent assignment for each material point).  Material heterog
 distributed spatially by assigning values consistent with a distribution function.  Three different 
 distributions may be used.  All parameters are in the \tt <constitutive\_model> \normalfont block:
 
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
 <failure_distrib> gauss </failure_distrib>
 <failure_distrib> weibull </failure_distrib>
 <failure_distrib> constant </failure_distrib>
@@ -95,21 +95,21 @@ distributions may be used.  All parameters are in the \tt <constitutive\_model> 
 
 A Gaussian (gauss) distribution requires the following parameters:
 
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
 <failure_mean> Gaussian mean value of cohesion </failure_mean>
 <failure_std> Gaussian standard deviation of cohesion </failure_std>
 <failure_seed> random number generator seed </failure_seed>
 \end{lstlisting}
 
 A Weibull (weibull) distribution requires the following parameters:
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
 <failure_mean> Weibull mean value of cohesion </failure_mean>
 <failure_std> Weibull modulus </failure_std>
 <failure_seed> random number generator seed </failure_seed>
 \end{lstlisting}
 
 A homogeneous (constant) assignment requires the following parameters:
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
 <failure_mean> value (all particles assigned one value) </failure_mean>
 \end{lstlisting}
 
@@ -117,7 +117,7 @@ A homogeneous (constant) assignment requires the following parameters:
 available for Gaussian and Weibull distributions.  All parameters are in the 
 \tt <constitutive\_model> \normalfont block:
 
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
 <scaling> kayenta </scaling>
 <scaling> none (default) </scaling>
 \end{lstlisting}
@@ -128,7 +128,7 @@ For kayenta scaling, the mean value of the distribution is scaled by the factor
 \end{equation}
 where $V$ is the particle volume, a function of numerical resolution.  The reference volume, 
 $\bar V$ and exponent, $n$, both must be specified
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
 <reference_volume> $\bar V$ </reference_volume>
 <exponent> n </exponent>
 \end{lstlisting}
@@ -139,7 +139,7 @@ consistent with the observation that smaller quantities of material contain fewe
 \tt <comp\_neo\_hook> \normalfont is a basic elastic model, which calls the underlying \tt <UCNH> \normalfont .
 The specifications for CNH are:
 
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
           <constitutive_model type="comp_neo_hook">
                <bulk_modulus> 8.9e9  </bulk_modulus>
                <shear_modulus>3.52e9  </shear_modulus>
@@ -153,7 +153,7 @@ to include plasticity with isotropic linear hardening,
 which is equivalent to \tt <usePlasticity> \normalfont in UCNH.
 The specifications for CNHP are:
 
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
           <constitutive_model type="comp_neo_hook_plastic">
                <bulk_modulus> 8.9e9     </bulk_modulus>
                <shear_modulus>3.52e9    </shear_modulus>
@@ -174,7 +174,7 @@ Note that the post-failure behaviour of simulations is not always robust.
 
 The specification for CNHD are:
 
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
             <constitutive_model type="cnh_damage"> 
                <bulk_modulus>   8.9e9  </bulk_modulus>
                <shear_modulus>  3.52e9 </shear_modulus>
@@ -201,7 +201,7 @@ a function of time \tt TotalLocalizedParticle \normalfont can be output.
 Another damage model that can be used with \tt <cnh\_damage> \normalfont and
 \tt <cnhp\_damage> \normalfont is a subset of the brittle damage model of LS-DYNA's Concrete
  Model 159 (FHWA-HRT-057-062, 2007). The model is invoked by the following MPMFlag
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
      <erosion algorithm="BrittleDamage"/>
 \end{lstlisting}
 in the \tt <MPM> \normalfont section of the input file. Two key features of the model are the use of
@@ -242,7 +242,7 @@ The brittle damage model is applicable to \tt <cnh\_damage> \normalfont and
 \tt <cnhp\_damage>. \normalfont For \tt cnh\_damage, \normalfont 
 the parameters for brittle damage can be specified as
 
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
                 <constitutive_model type="cnh_damage">
                <shear_modulus>3.52e9</shear_modulus>
                  <bulk_modulus>8.9e9</bulk_modulus>

@@ -14,7 +14,7 @@ Uintah.  These are
     \dot{\Bs} = 2\mu(\Beta - \Beta^p)
   \end{equation}
   where $\mu$ is the shear modulus.  This model is invoked using
-  \begin{lstlisting}  
+  \begin{lstlisting}[language=XML]
       <deviatoric_stress_model type="hypoElastic">
       </deviatoric_stress_model>
   \end{lstlisting}
@@ -36,7 +36,7 @@ Uintah.  These are
     \Bs = \sum_{i=1}^N \Bs_i \quad\quad \mu = \sum_{i=1}^N \mu_i
   \end{equation}
   This model is invoked using
-  \begin{lstlisting}  
+  \begin{lstlisting}[language=XML]  
       <deviatoric_stress_model type="hypoViscoElastic">
         <mu> [3.0, 5.0, 7.0] </mu>
         <tau> [1.67, 10.7, 107.0] </tau>

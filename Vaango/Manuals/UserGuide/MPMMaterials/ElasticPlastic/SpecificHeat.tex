@@ -12,13 +12,13 @@
 
   The Taylor-Quinney coefficient is taken as input in the ElasticPlastic model
   using the tags
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <taylor_quinney_coeff> 0.9 </taylor_quinney_coeff>
   \end{lstlisting}
 
   \subsubsection{Default specific heat model}
   The default model returns a constant specific heat and is invoked using
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <specific_heat_model type="constant_Cp">
     </specific_heat_model>
   \end{lstlisting}
@@ -44,7 +44,7 @@
   isothermal bulk modulus respectively.
   
   The model is invoked using:
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <specific_heat_model type="cubic_Cp">
       <a> 1.0 </a>
       <b> 1.0 </b>
@@ -68,7 +68,7 @@
     \end{cases}
   \Eeq
   The model is invoked using
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
   <specific_heat_model type = "copper_Cp"> </specific_heat_model>
   \end{lstlisting}
 
@@ -87,7 +87,7 @@
   \alpha, \alpha^{'}$ are constants.
 
   The model is invoked using
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
   <specific_heat_model type = "steel_Cp"> </specific_heat_model>
   \end{lstlisting}
 

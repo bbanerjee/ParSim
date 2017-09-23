@@ -53,7 +53,7 @@ Therefore,
 \Eeq
 
 This model is invoked in Uintah using
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
   <equation_of_state type="default_hypo">
   </equation_of_state>
 \end{lstlisting}
@@ -74,7 +74,7 @@ We can also compute
 \end{equation}
 
 This model is invoked in Uintah using
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
   <equation_of_state type="default_hyper">
   </equation_of_state>
 \end{lstlisting}
@@ -170,7 +170,7 @@ We neglect the $\Partial{e}{J^e}$ term in our calculations.  {\it Note: this cal
 the Steinberg nonlinear shock velocity, particle velocity relationship.}
 
 This model is invoked in Uintah using
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
   <equation_of_state type="mie_gruneisen">
     <C_0>5386</C_0>
     <Gamma_0>1.99</Gamma_0>

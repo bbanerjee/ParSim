@@ -16,7 +16,7 @@ condition.
   (Eqn. \ref{eq:associated_flow}). See the discussion in the Radial
   Return algorithm description for details.  The von Mises yield
   condition is invoked using the tags
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <yield_condition type="vonMises">
     </yield_condition>
   \end{lstlisting}
@@ -73,7 +73,7 @@ condition.
   associated flow rule.
 
   This yield condition is invoked using
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <yield_condition type="gurson">
       <q1> 1.5 </q1>
       <q2> 1.0 </q2>
@@ -101,7 +101,7 @@ condition.
   deviation of the distribution.
 
   The inputs tags for porosity are of the form
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <evolve_porosity> true </evolve_porosity>
     <initial_mean_porosity>         0.005 </initial_mean_porosity>
     <initial_std_porosity>          0.001 </initial_std_porosity>

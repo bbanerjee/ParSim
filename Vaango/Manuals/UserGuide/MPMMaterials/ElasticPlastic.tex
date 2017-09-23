@@ -22,7 +22,7 @@ files calling for the first of these should be switched to the
   with a hypoelastic stress update, Johnson-Cook plasticity model,
   Johnson-Cook Damage Model and Mie-Gruneisen Equation of State is shown
   below.
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
   <material>
 
     <include href="inputs/MPM/MaterialData/MaterialConstAnnCopper.xml"/>
@@ -50,7 +50,7 @@ files calling for the first of these should be switched to the
 
   The general material constants for copper are in the file
   \TT{MaterialConstAnnCopper.xml}.  The contents are shown below
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
   <?xml version='1.0' encoding='ISO-8859-1' ?>
   <Uintah_Include>
     <density>8930.0</density>
@@ -64,7 +64,7 @@ files calling for the first of these should be switched to the
 
   The elastic properties are in the file \TT{IsotropicElasticAnnCopper.xml}.
   The contents of this file are shown below.
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
   <?xml version='1.0' encoding='ISO-8859-1' ?>
   <Uintah_Include>
     <shear_modulus>45.45e9</shear_modulus>
@@ -75,7 +75,7 @@ files calling for the first of these should be switched to the
   The constants for the Johnson-Cook plasticity model are in the file
   \TT{JohnsonCookPlasticAnnCopper.xml}.  The contents of this file are
   shown below.
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
   <?xml version='1.0' encoding='ISO-8859-1' ?>
   <Uintah_Include>
     <flow_model type="johnson_cook">
@@ -91,7 +91,7 @@ files calling for the first of these should be switched to the
   The constants for the Johnson-Cook damage model are in the file
   \TT{JohnsonCookDamageAnnCopper.xml}.  The contents of this file are
   shown below.
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
   <?xml version='1.0' encoding='ISO-8859-1' ?>
   <Uintah_Include>
     <damage_model type="johnson_cook">
@@ -108,7 +108,7 @@ files calling for the first of these should be switched to the
   Uintah Computational Framework) are in the file
   \TT{MieGruneisenEOSAnnCopper.xml}.  The contents of this file are
   shown below.
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
   <?xml version='1.0' encoding='ISO-8859-1' ?>
   <Uintah_Include>
     <equation_of_state type="mie_gruneisen">

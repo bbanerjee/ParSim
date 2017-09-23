@@ -38,7 +38,7 @@ be added using the approach described later in this section.
   $T^*$ is the scaled temperature as in the Johnson-Cook plasticity model.
 
   The input tags for the damage model are :
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <damage_model type="johnson_cook">
       <D1>0.05</D1>
       <D2>3.44</D2>
@@ -49,7 +49,7 @@ be added using the approach described later in this section.
   \end{lstlisting}
 
   An initial damage distribution can be created using the following tags
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <evolve_damage>                 true  </evolve_damage>
     <initial_mean_scalar_damage>    0.005  </initial_mean_scalar_damage>
     <initial_std_scalar_damage>     0.001 </initial_std_scalar_damage>
@@ -127,7 +127,7 @@ be added using the approach described later in this section.
 
   The tags used to control the erosion algorithm are in two places.
   In the \TT{<MPM> </MPM>} section the following flags can be set
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <erosion algorithm = "ZeroStress"/>
     <create_new_particles>           false      </create_new_particles>
     <manual_new_material>            false      </manual_new_material>
@@ -136,7 +136,7 @@ be added using the approach described later in this section.
 
   In the \TT{<constitutive_model type="elastic_plastic">} section, the
   following flags can be set
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <evolve_porosity>               true  </evolve_porosity>
     <evolve_damage>                 true  </evolve_damage>
     <do_melting>                    true  </do_melting>

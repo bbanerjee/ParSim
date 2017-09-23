@@ -2,14 +2,14 @@
   \subsubsection{Default model}
   The default model is to use a constant melting temperature.  This model
   is invoked using
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
       <melting_temp_model type="constant_Tm">
       </melting_temp_model>
   \end{lstlisting}
 
   \subsubsection{Linear melt model}
   A melting temperature model designed to be linear in pressure can be invoked using
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
       <melting_temp_model type="linear_Tm">
         <T_m0> </T_m0>
         <a>   </a>
@@ -57,7 +57,7 @@
   Gr{\"u}neisen's gamma ($\Gamma_0$).
 
   This model is invoked with
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <melting_temp_model type="scg_Tm">
       <T_m0> 2310.0 </T_m0>
       <Gamma_0> 3.0 </Gamma_0>
@@ -92,7 +92,7 @@
   $k_b$ is the Boltzmann constant.
 
   This model is invoked with
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <melting_temp_model type="bps_Tm">
       <B0> 137e9 </B0>
       <dB_dp0> 5.48 <dB_dp0>

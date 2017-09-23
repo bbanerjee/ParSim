@@ -21,7 +21,7 @@
   where $\Ep$ is the equivalent plastic strain, $\sigma_y$ and $k$ are material constants.
 
   The inputs for this model are
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
   <flow_model type="isotropic_hardening">
     <sigma_Y>792.0e6</sigma_y>
     <K>510.0e6</K>
@@ -47,7 +47,7 @@
   For conditions where $T^* < 0$, we assume that $m = 1$.
 
   The inputs for this model are
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
   <flow_model type="johnson_cook">
     <A>792.0e6</A>
     <B>510.0e6</B>
@@ -103,7 +103,7 @@
   $w$ is the width of a kink loop, and $D$ is the drag coefficient.
 
   The inputs for this model are of the form
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <flow_model type="steinberg_cochran_guinan">
       <mu_0> 81.8e9 </mu_0>
       <sigma_0> 1.15e9 </sigma_0>
@@ -148,7 +148,7 @@
   computations.
 
   The inputs for this model are of the form
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     
     <flow_model type="zerilli_armstrong">
        <sigma_g>     50.0e6   </sigma_g>
@@ -201,7 +201,7 @@
   pressure is taken to be min(p,0), eliminating pressure dependence in tension.
 
   The inputs for this model are of the form
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     
          <flow_model type="zerilli_armstrong_polymer">
            <sigma_g>     50.0e6      </sigma_g>
@@ -277,7 +277,7 @@
   that the maximum strain rate is usually limited to about $10^7$/s.
 
   The inputs for this model are of the form
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <flow_model type="mts_model">
       <sigma_a>363.7e6</sigma_a>
       <mu_0>28.0e9</mu_0>
@@ -355,7 +355,7 @@
   where $\rho$ is the density, and $M$ is the atomic mass.
 
   The inputs for this model are of the form
-  \begin{lstlisting}
+  \begin{lstlisting}[language=XML]
     <flow_model type="preston_tonks_wallace">
       <theta> 0.025 </theta>
       <p> 2.0 </p>
