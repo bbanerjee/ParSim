@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Checking the build</title>
+  <title>Tabular J2-plasticity with linear elasticity</title>
   <link rel="stylesheet" href="https://bbanerjee.github.io/ParSim/assets/css/screen.css">
   <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic%7cVolkhov:400,700' rel='stylesheet' type='text/css'>
   <script src="https://bbanerjee.github.io/ParSim/assets/js/modernizr.min.js"></script>
@@ -51,47 +51,17 @@
 
       <div class="unit four-fifths">
         <article>
-          <h1>Checking the build</h1>
-          <p>To check the build, you should run a few example problems.</p>
-
-<ul>
-  <li>Create a directory called <code>runs</code> under <code>Vaango</code></li>
-</ul>
-
-<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>     mkdir runs</code></pre></figure>
-
-<ul>
-  <li>Create links to the optimized and debug executables:</li>
-</ul>
-
-<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>     <span class="nb">cd</span> runs
-     ln -s ../dbg/StandAlone/vaango vaango_dbg
-     ln -s ../opt/StandAlone/vaango vaango_dbg</code></pre></figure>
-
-<ul>
-  <li>Create links to the <code>inputs</code> directory:</li>
-</ul>
-
-<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>     ln -s ../src/StandAlone/inputs/MPM MPM_inputs</code></pre></figure>
-
-<ul>
-  <li>Do a serial test run</li>
-</ul>
-
-<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>     ./vaango_opt MPM_inputs/const_test_hypo.ups</code></pre></figure>
-
-<ul>
-  <li>Do a parallel test run</li>
-</ul>
-
-<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span></span>    mpirun  -np <span class="m">1</span> ./vaango_opt MPM_inputs/const_test_hypo.ups</code></pre></figure>
-
+          <h1>Tabular J2-plasticity with linear elasticity</h1>
+          
 
           
 
 
 
 
+
+  
+  
 
   
   
@@ -106,14 +76,14 @@
           
             
             
-            <a href="https://bbanerjee.github.io/ParSim/docs/build-instructions/" class="prev">Back</a>
+            <a href="https://bbanerjee.github.io/ParSim/docs/build-check/" class="prev">Back</a>
           
       </div>
       <div class="right align-left">
           
             
             
-            <a href="https://bbanerjee.github.io/ParSim/docs/vaango/tutorials/tabular-j2-lin-elas/" class="next">Next</a>
+            <a href="https://bbanerjee.github.io/ParSim/docs/vaango/mpm-materials/tabular-plasticity/" class="next">Next</a>
           
       </div>
     </div>
@@ -139,7 +109,7 @@
 
   
   
-  <li class="current"><a href="https://bbanerjee.github.io/ParSim/docs/build-check/">Checking the build</a></li>
+  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/build-check/">Checking the build</a></li>
 
 </ul>
 
@@ -149,7 +119,7 @@
 
   
   
-  <li class=""><a href="https://bbanerjee.github.io/ParSim/docs/vaango/tutorials/tabular-j2-lin-elas/">Tabular J2-plasticity with linear elasticity</a></li>
+  <li class="current"><a href="https://bbanerjee.github.io/ParSim/docs/vaango/tutorials/tabular-j2-lin-elas/">Tabular J2-plasticity with linear elasticity</a></li>
 
 </ul>
 
