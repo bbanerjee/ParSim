@@ -27,7 +27,7 @@ particular model.
 
 The flow stress is calculated from the plasticity model using a
 function call of the form
-\begin{lstlisting}[language=C++]
+\begin{lstlisting}[language=Cpp]
     double flowStress = d_plasticity->computeFlowStress(tensorEta, tensorS, 
                                                         pTemperature[idx],
                                                         delT, d_tol, matl, idx);
@@ -41,7 +41,7 @@ are updated using a polymorphic function along the lines of
 
 The equation of state is used to calculate the hydrostatic stress using
 a function call of the form
-\begin{lstlisting}[language=C++]
+\begin{lstlisting}[language=Cpp]
     Matrix3 tensorHy = d_eos->computePressure(matl, bulk, shear, 
                                               tensorF_new, tensorD, 
                                               tensorP, pTemperature[idx], 
@@ -49,7 +49,7 @@ a function call of the form
 \end{lstlisting}
 
 Similarly, the damage model is called using a function of the type
-\begin{lstlisting}[language=C++]
+\begin{lstlisting}[language=Cpp]
     double damage = d_damage->computeScalarDamage(tensorEta, tensorS, 
                                                   pTemperature[idx],
                                                   delT, matl, d_tol, 

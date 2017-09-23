@@ -97,6 +97,7 @@
   %keywordstyle=\color{cyan},
   keywordstyle=\color{Brickred},
   backgroundcolor=\color{background},
+  frame=lines,
   morekeywords={xmlns,version,type}% list your attributes here
 }
 
@@ -104,7 +105,21 @@
 {
   keywordstyle=\color{Brickred},
   stringstyle=\color{red},
+  identifierstyle=\color{darkblue},
   backgroundcolor=\color{background},
+  frame=lines,
+  morecomment=[l][\color{magenta}]{\#}
+}
+
+\lstdefinelanguage{Cpp}
+{
+  keywordstyle=\color{Brickred},
+  stringstyle=\color{red},
+  identifierstyle=\color{darkblue},
+  emph={int,char,double,float,unsigned},
+  emphstyle=\color{Brickred},
+  backgroundcolor=\color{background},
+  frame=lines,
   morecomment=[l][\color{magenta}]{\#}
 }
 
