@@ -1,0 +1,603 @@
+\chapter{The MPM component}
+The \MPM component solves the momentum equations
+\Beq
+  \Div{\Bsig} + \rho\Bb = \rho\dot{\Bv} 
+\Eeq
+using an updated Lagrangian formulation. The momentum solve for solid materials is
+complicated by the fact that the equations need material constitutive models for
+closure.  These material constitutive models vary significantly between materials
+and contribute a large fraction of the computational cost of a simulation.
+
+In this chapter we discuss the algorithm used in \Vaango to solve the momentum
+equations using \MPM.  The implementation follows the approach discussed in
+the previous chapter.
+
+\section{The MPM algorithm}
+
+The momentum equation is solved using the MPM algorithm while forward Euler time-stepping
+is use to integrate time derivatives.  The pseudocode of the overall algorithm is given below.
+The main quantities of interest are:
+\begin{itemize} 
+  \setlength\itemsep{1pt}
+  \item $t_\Tmax$ : {\Ochre The maximum time until which the simulation is to run.}
+  \item $t, \Delta t$ : {\Ochre The current time ($t = t_n$) and the time step.}
+  \item $\Bh_g$ : {\Ochre The grid spacing vector.}
+  \item $m_p$ : {\Ochre The particle mass.}
+  \item $V_p^n, V_p^{n+1}$ : {\Ochre The particle volume at $t = t_n$ and $t = t_{n+1}$.}
+  \item $\Bx_p^n, \Bx_p^{n+1}$ : {\Ochre The particle position at $t = t_n$ and $t = t_{n+1}$.}
+  \item $\Bu_p^n, \Bu_p^{n+1}$ : {\Ochre The particle displacement at $t = t_n$ and $t = t_{n+1}$.}
+  \item $\Bv_p^n, \Bv_p^{n+1}$ : {\Ochre The particle velocity at $t = t_n$ and $t = t_{n+1}$.}
+  \item $\Bsig_p^n, \Bsig_p^{n+1}$ : {\Ochre The particle Cauchy stress at time $t = t_n$ and $t = t_{n+1}$.}
+  \item $\BF_p^n, \BF_p^{n+1}$ : {\Ochre The particle deformation gradient at time $t = t_n$ and $t = t_{n+1}$.}
+\end{itemize}
+
+\begin{breakablealgorithm}
+  \caption{The algorithm}
+  \begin{algorithmic}[1]
+    \Procedure{run}{inputUPSFile}
+      \State $t_\Tmax$, $\Bh_g$, \TTObj{xmlProblemSpec}, \TTObj{grid}, \TTObj{globalState} $\leftarrow$ 
+             \textsc{readInputUPSFile}(inputUPSFile)
+        \Comment{Parse \WRP the input XML file (<filename>.ups), create the background grid,
+                 and \WRP set up a \textsc{SimulationState}.}
+      \State \TTObj{mpmFlags}, \TTObj{prescribedDefGrad}, \TTObj{particleBC}, \TTObj{contactModel}, 
+             \TTObj{constitutiveModel}, \WRP \TTObj{defGradComputer}, \TTObj{damageModel} $\leftarrow$
+              \textsc{problemSetup}(\TTObj{xmlProblemSpec}, \TTObj{grid}, \WRP \TTObj{globalState})
+        \Comment{Set up flags, the constitutive model, and the 
+                 deformation gradient \WRP algorithm based on data in input file.}
+      \State $t \leftarrow 0$, $n \leftarrow 0$
+      \State $\Bx^n_p$, $\Bu^n_p$, $m_p$, $V^n_p$, $\Bv^n_p$, $\Bsig^n_p$, $\BF^n_p$ $\leftarrow$
+               \textsc{initialize}(\TTObj{xmlProblemSpec})
+        \Comment{Find the grid size and initialize \WRP particle variables based on geometry and other
+                 information in the input file.}
+      \State isSuccess $\leftarrow$ FALSE
+      \Repeat
+        \State $\Delta t \leftarrow$ \textsc{computeStableTimeStep}($\Bh_g$, $\Bv_p$)
+          \Comment{Find a stable time increment based on \WRP grid size and velocity}
+        \State $t \leftarrow t + \Delta t$, $n \leftarrow n+1$
+          \Comment{Update the time}
+        \State isSuccess, $\Bx^{n+1}_p$, $\Bu^{n+1}_p$, $v^{n+1}_p$, $\Bv^{n+1}_p$, $\Bsig^{n+1}_p$, $\BF^{n+1}_p$ 
+           $\leftarrow$ \textsc{timeAdvance}($\Bh_g$, $\Bx^n_p$, $\Bu^n_p$, $m_p$, $V^n_p$, \WRP $\Bv^n_p$, $\Bsig^n_p$, $\BF^n_p$)
+           \Comment{Compute updated quantities}
+        \State \textsc{outputData}($\Bx^{n+1}_p$, $\Bu^{n+1}_p$, $V^{n+1}_p$, $\Bv^{n+1}_p$, $\Bsig^{n+1}_p$, $\BF^{n+1}_p$) 
+           \Comment{Save the solution}
+        \State $n \leftarrow n+1$
+      \Until {$t \ge t_\Tmax$}
+      \State \Return isSuccess
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+      
+\section{Reading the input file}
+The process used to read the input file is identical to that discussed earlier in this manual.
+
+\section{Problem setup}
+The overall structure of the problem setup code is given below.  Details can be found in
+the code.
+\begin{breakablealgorithm}
+  \caption{Problem setup}
+  \begin{algorithmic}[1]
+    \Require \TTObj{xmlProblemSpec}, \TTObj{grid}, \TTObj{globalState}
+    \Procedure{problemSetup}{\TTObj{xmlProblemSpec}, \TTObj{grid}, \TTObj{globalState}}
+      \State \TTObj{flags} $\leftarrow$ \textsc{readMPMFlags}(\TTObj{xmlProblemSpec})
+         \Comment{Read the option flags that determine \WRP the details of the MPM algorithm to be
+                  used in the simulation.}
+      \If {\TTObj{flags}.prescribeDeformation = TRUE}
+         \State \TTObj{prescribedDefGrad} $\leftarrow$ \textsc{readPrescribedDeformations}(\TTObj{flags}.prescribedFileName)
+      \EndIf
+      \State \TTObj{particleBC} $\leftarrow$ \textsc{createMPMPhysicalBC}(\TTObj{xmlProblemSpec}, \TTObj{grid}, \TTObj{flags})
+        \Comment{Create the model\WRP  used to apply pressures and forces directly to particles.}
+      \State \TTObj{contactModel} $\leftarrow$ \textsc{createContactModel}(\TTObj{xmlProblemSpec}, \TTObj{grid}, \TTObj{flags}, \TTObj{globalState})
+        \Comment{Create\WRP  the contact algorithm model used to compute interactions between
+                 objects.}
+      \State \TTObj{constitutiveModel} $\leftarrow$ \textsc{createConstitutiveModels}(\TTObj{xmlProblemSpec}, \TTObj{grid}, \TTObj{flags}, \WRP \TTObj{globalState})
+        \Comment{Create the constitutive models that are needed\WRP  for the simulation.}
+      \State \TTObj{defGradComputer} $\leftarrow$ \textsc{createDeformationGradientComputer}(\TTObj{flags}, \TTObj{globalState})
+        \Comment{Create \WRP the model that will be used to compute velocity and \WRP deformation
+                 gradients.}
+      \If {\TTObj{flags}.doBasicDamage = TRUE}
+        \State \TTObj{damageModel} $\leftarrow$ \textsc{createBasicDamageModel}(\TTObj{flags}, \TTObj{globalState})
+      \EndIf
+      \State \Return \TTObj{flags}, \TTObj{prescribedDefGrad}, \TTObj{particleBC}, 
+         \TTObj{contactModel}, \TTObj{constitutiveModel}, \WRP
+         \TTObj{damageModel}, \TTObj{defGradComputer}
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\section{Initialization}
+An outline of the initialization process is described below.  Specific details have been 
+discussed in earlier reports. The new quantities introduced in this section are
+\begin{itemize} 
+  \setlength\itemsep{1pt}
+  \item $n_p$ : {\Ochre The number of particles used to discretize a body.}
+  \item $\Bb_p^n, \Bb_p^{n+1}$ : {\Ochre The particle body force acceleration at $t = t_n$ and $t = t_{n+1}$.}
+  \item $D_p^n, D_p^{n+1}$ : {\Ochre The particle damage parameter at $t = t_n$ and $t = t_{n+1}$.}
+  \item $\Bf_p^{\Text,n}, \Bf_p^{\Text,n+1}$ : {\Ochre The particle external force at $t = t_n$ and $t = t_{n+1}$.}
+\end{itemize}
+\begin{breakablealgorithm}
+  \caption{Initialization}
+  \begin{algorithmic}[1]
+    \Require \TTObj{xmlProblemSpec}, \TTObj{defGradComputer}, \TTObj{constitutiveModel}, 
+             \TTObj{damageModel}, \TTObj{particleBC},\WRP 
+             \TTObj{mpmFlags} \TTList{materialList}, 
+    \Procedure{initialize}{}
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \State $n_p$[\TTmatl], $\Bx^0_p$[\TTmatl], $\Bu^0_p$[\TTmatl], $m_p$[\TTmatl], 
+             $V^0_p$[\TTmatl], $\Bv^0_p$[\TTmatl], $\Bb^0_p$[\TTmatl], \WRP
+             $\Bf^{\Text,0}_p$[\TTmatl] $\leftarrow$ \TTmatl.\textsc{createParticles}()
+        \State $\BF^0_p$[\TTmatl] $\leftarrow$ \TTObj{defGradComputer}.\textsc{initialize}(\TTmatl)
+        \State $\Bsig^0_p$[\TTmatl] $\leftarrow$ \TTObj{constitutiveModel}.\textsc{initialize}(\TTmatl)
+        \State $D^0_p$[\TTmatl] $\leftarrow$ \TTObj{damageModel}.\textsc{initialize}(\TTmatl)
+      \EndFor
+      \If {\TTObj{mpmFlags}.initializeStressWithBodyForce = TRUE}
+        \State $\Bb^0_p \leftarrow$ \textsc{initializeBodyForce}()
+        \State $\Bsig^0_p, \BF^0_p$ $\leftarrow$ \textsc{initializeStressAndDefGradFromBodyForce}()
+      \EndIf
+      \If {\TTObj{mpmFlags}.applyParticleBCs = TRUE}
+        \State $\Bf^{\Text,0}_p$ $\leftarrow$ \TTObj{particleBC}.\textsc{initializePressureBCs}()
+      \EndIf
+      \State \Return $n_p$, $\Bx^0_p$, $\Bu^0_p$, $m_p$, 
+             $V^0_p$, $\Bv^0_p$, $\Bb^0_p$, $\Bf^{\Text,0}_p$, $\BF^0_p$, $\Bsig^0_p$, $D^0_p$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\section{Time advance}
+The operations performed during a timestep are shown in the pseudocode below.
+\begin{breakablealgorithm}
+  \caption{The MPM time advance algorithm}
+  \begin{algorithmic}[1]
+    \Procedure{timeAdvance}{$\Bh_g$, $x^n_p$, $u^n_p$, $m_p$, $V^n_p$, $\Bv^n_p$, $\Bf^{\Text,n}_p$,
+                            $\BdT^n_p$}%, $\Bsig^n_p$}%, $\BF^n_p$}
+      \State $\Bb_p^n \leftarrow$ \textsc{computeParticleBodyForce}()
+        \Comment{Compute the body force term}
+      \State $\Bf_p^{\Text,n+1} \leftarrow$ \textsc{applyExternalLoads}()
+        \Comment{Apply external loads to the particles}
+      \State $m_g$, $V_g$, $\Bv_g$, $\Bb_g$, $\Bf^\Text_g$ $\leftarrow $ 
+        \textsc{interpolateParticlesToGrid}()
+        \Comment{Interpolate particle data to the grid}
+      \State \textsc{exchangeMomentumInterpolated}()
+        \Comment{Exchange momentum between bodies on grid. \WRP Not discussed in this report.}
+      \State $\Bf^\Tint_g$, $\Bsig_g$, $\Bv_g$ $\leftarrow$ \textsc{computeInternalForce}()
+        \Comment{Compute the internal force at the grid nodes}
+      \State $\Bv_g^\star$, $\Ba_g$ $\leftarrow$ \textsc{computeAndIntegrateAcceleration}()
+        \Comment{Compute the grid velocity \WRP and grid acceleration}
+      \State \textsc{exchangeMomentumIntegrated}()
+        \Comment{Exchange momentum between bodies on grid \WRP using integrated values.  
+                 Not discussed in this report.}
+      \State $\Bv_g^\star$, $\Ba_g$ $\leftarrow$ \textsc{setGridBoundaryConditions}()
+        \Comment{Update the grid velocity and grid \WRP acceleration using the BCs}
+      \State $\BlT_p^n$, $\BF_p^{n+1}$, $V_p^{n+1}$ $\leftarrow$ \textsc{computeDeformationGradient}()
+        \Comment{Compute the velocity gradient \WRP and the deformation gradient}
+      \State $\Bsig_p^{n+1}$, $\Beta_p^{n+1}$ $\leftarrow$ \textsc{computeStressTensor}()
+        \Comment{Compute the updated stress and \WRP internal variables (if any)}
+      \State $\Bsig_p^{n+1}$, $\Beta_p^{n+1}$, $\chi_p^{n+1}$, $D_p^{n+1}$ $\leftarrow$ 
+        \textsc{computeBasicDamage}()
+        \Comment{Compute the damage parameter \WRP and update the stress and internal variables}
+      \State $\chi_p^{n+1}$, $D_p^{n+1}$ $\leftarrow$ \textsc{updateErosionParameter}()
+        \Comment{Update the indicator variable that is used \WRP to delete particles at the
+                 end of a time step}
+      \State $V_p^{n+1}$, $\Bu_p^{n+1}$, $\Bv_p^{n+1}$, $\Bx_p^{n+1}$, $m_p$, $\Bh_p^{n+1}$ $\leftarrow$
+        \textsc{interpolateToParticlesAndUpdate}()
+        \Comment{Update the \WRP particle variables after interpolating grid quantities to particles}
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+The algorithms used for the above operations are discussed next.
+
+\subsection{Computing the body force}
+The body force consists of a gravitational term and, optionally, centrifugal and coriolis terms
+that are needed for simulations inside a rotating frame such as a centrifuge.
+\begin{breakablealgorithm}
+  \caption{Computing the body force on particles}
+  \begin{algorithmic}[1]
+    \Require $\Bx_p^n$, $\Bv_p^n$, \TTList{materialList}, \TTList{particleList}, \TTObj{mpmFlags}
+    \Procedure{computeParticleBodyForce}{}
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \If {\TTObj{mpmFlags}.\texttt{rotatingCoordSystem} = TRUE}
+           \State $\Bg \leftarrow$ \TTObj{mpmFlags}.\texttt{gravityAcceleration}
+           \State $\Bb_p^{n}$[\TTmatl] $\leftarrow$ $\Bg$
+        \Else
+          \For{\TTpart\, \textbf{in} \TTList{particleList}}
+             \State $\Bg \leftarrow$ \TTObj{mpmFlags}.\texttt{gravityAcceleration}
+             \State $\Bx_{rc} \leftarrow$ \TTObj{mpmFlags}.\texttt{coordRotationCenter}
+             \State $\Bz_r \leftarrow$ \TTObj{mpmFlags}.\texttt{coordRotationAxis}
+             \State $w \leftarrow$ \TTObj{mpmFlags}.\texttt{coordRotationSpeed}
+             \State $\Bomega \leftarrow w\Bz_r$
+               \Comment{Compute angular velocity vector}
+             \State $\Ba_{\text{corolis}} \leftarrow 2 \Bomega \times \Bv_p^{n}[\TTmatl,\TTpart]$
+               \Comment{Compute Coriolis acceleration}
+             \State $\Br \leftarrow \Bx_p^{n}[\TTmatl,\TTpart] - \Bx_{rc}$
+             \State $\Ba_{\text{centrifugal}} \leftarrow \Bomega \times \Bomega \times \Br$
+               \Comment{Compute the centrifugal body force acceleration}
+             \State $\Bb_p^{n}$[\TTmatl,\TTpart] $\leftarrow$ 
+                $\Bg -\Ba_{\text{centrifugal}} - \Ba_{\text{coriolis}}$
+               \Comment{Compute the body force acceleration}
+          \EndFor
+        \EndIf
+      \EndFor
+      \State \Return $\Bb_p^{n}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Applying external loads}
+Note that the updated deformation gradient has not been computed yet at this stage and the 
+particle force is applied based on the deformation gradient at the beginning of the timestep.
+The new quantities introduced in this section are:
+\begin{itemize} 
+  \setlength\itemsep{1pt}
+  \item $\Bh_p^n$ : {\Ochre The particle size matrix at time $t = t_n$.}
+\end{itemize}
+\begin{breakablealgorithm}
+  \caption{Applying external loads to particles}
+  \begin{algorithmic}[1]
+    \Require $t_{n+1}$, $\Bx_p^n$, $\Bh_p^n$, $\Bu_p^n$, $\Bf^{\Text,n}_p$, $\BF_p^n$,
+             \TTList{materialList}, \TTList{particleList}, 
+             \TTObj{mpmFlags}, \TTObj{particleBC}
+    \Procedure{applyExternalLoads}{}
+      \State $f_p$ $\leftarrow$ $0$
+      \If {\TTObj{mpmFlags}.\texttt{useLoadCurves} = TRUE}
+        \State $f_p$ $\leftarrow$ \TTObj{particleBC}.\textsc{computeForcePerParticle}($t^{n+1}$)
+        \Comment{Compute the force per particle \WRP due to the applied pressure}
+      \EndIf
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \If {\TTObj{mpmFlags}.\texttt{useLoadCurves} = TRUE}
+          \For{\TTpart\, \textbf{in} \TTList{particleList}}
+            \State $\Bf^{\Text,n+1}_p$[\TTmatl,\TTpart] $\leftarrow$ 
+               \TTObj{particleBC}.\textsc{getForceVector}($t_{n+1}$, $\Bx_p^n$, $\Bh_p^n$, $\Bu_p^n$, \WWRP
+                  $f_p$, $\BF_p^{n}$)
+               \Comment{Compute the applied force vector at each particle}
+          \EndFor
+        \Else
+          \State $\Bf^{\Text,n+1}_p$[\TTmatl] $\leftarrow$ $\Bf^{\Text,n}_p$[\TTmatl]
+        \EndIf
+      \EndFor
+      \State \Return $\Bf_p^{\Text,n+1}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Interpolating particles to grid}
+The grid quantities computed during this procedure and not stored for the next timestep except for
+the purpose of visualization.  The new quantities introduced in this section are
+\begin{itemize} 
+  \setlength\itemsep{1pt}
+  \item $m_g$ : {\Ochre The mass at a grid node.}
+  \item $V_g$ : {\Ochre The volume at a grid node.}
+  \item $\Bv_g$ : {\Ochre The velocity at a grid node.}
+  \item $\Bf^\Text_g$ : {\Ochre The external force at a grid node.}
+  \item $\Bb_g$ : {\Ochre The body force at a grid node.}
+\end{itemize}
+\begin{breakablealgorithm}
+  \caption{Interpolating particle data to background grid}
+  \begin{algorithmic}[1]
+    \Require $m_p$, $V_p^n$, $\Bx_p^n$, $\Bh_p^n$, $\Bb_p^n$, $\Bf^{\Text,n+1}_p$, $\BF_p^n$,
+             \TTList{materialList}, \TTList{particleList}, \TTList{gridNodeList}
+             \TTObj{mpmFlags}, \TTObj{particleBC}
+    \Procedure{interpolateParticlesToGrid}{}
+      \State \TTObj{interpolator} $\leftarrow$ \textsc{createInterpolator}(\TTObj{mpmFlags})
+        \Comment{Create the interpolator \WRP and find number of grid nodes that can affect a particle}
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \For{\TTpart\, \textbf{in} \TTList{particleList}}
+          \State $n_{gp}$, $S_{gp}$ $\leftarrow$ 
+            \TTObj{interpolator}.\textsc{findCellsAndWeights}($\Bx_p^n$, $\Bh_p^n$, $\BF_p^n$)
+            \Comment{Find the node \WWRP indices of the cells affecting the particle and the 
+                     interpolation weights}
+          \State $\Bp_p$ $\leftarrow$ $m_p$[\TTmatl][\TTpart] $\Bv_p^n$[\TTmatl][\TTpart] 
+            \Comment{Compute particle momentum}
+          \For{\TTnode\, \textbf{in} $n_{gp}$}
+            \State $m_g$[\TTmatl][\TTnode] $\leftarrow$ $m_g$[\TTmatl][\TTnode] + $m_p$[\TTmatl][\TTpart] $S_{gp}$[\TTnode]
+            \State $V_g$[\TTmatl][\TTnode] $\leftarrow$ $V_g$[\TTmatl][\TTnode] + $V_p^n$[\TTmatl][\TTpart] $S_{gp}$[\TTnode]
+            \State $\Bv_g$[\TTmatl][\TTnode] $\leftarrow$ $\Bv_g$[\TTmatl][\TTnode] + $\Bp_p$ $S_{gp}$[\TTnode]
+            \State $\Bf^{\Text}_g$[\TTmatl][\TTnode] $\leftarrow$ $\Bf^{\Text}_g$[\TTmatl][\TTnode] + $\Bf^{\Text,n+1}_p$[\TTmatl][\TTpart] $S_{gp}$[\TTnode]
+            \State $\Bb_g$[\TTnode] $\leftarrow$ $\Bb_g$[\TTnode] + $m_p$[\TTmatl][\TTpart] $\Bb^n_p$[\TTmatl][\TTpart] $S_{gp}$[\TTnode]
+          \EndFor
+        \EndFor
+        \For{\TTnode\, \textbf{in} \TTList{gridNodeList}}
+          \State $\Bv_g$[\TTmatl][\TTnode] $\leftarrow$ $\Bv_g$[\TTmatl][\TTnode]/$m_g$[\TTmatl][\TTnode]
+        \EndFor
+        \State $\Bv_g$[\TTmatl] $\leftarrow$ \textsc{applySymmetryVelocityBC}($\Bv_g$[\TTmatl])
+          \Comment{Apply any symmetry \WRP velocity BCs that may be applicable}
+      \EndFor
+      \State \Return $m_g$, $V_g$, $\Bv_g$, $\Bb_g$, $\Bf_g^{\Text}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Exchanging momentum using interpolated grid values}
+The exchange of momentum is carried out using a contact model.  Details can be found in the
+Uintah Developers Manual.
+
+\subsection{Computing the internal force}
+This procedure computes the internal force at the grid nodes. The new quantities introduced in this 
+section are
+\begin{itemize} 
+  \setlength\itemsep{1pt}
+  \item $n_{gp}$ : {\Ochre The number of grid nodes that are used to interpolate from particle to grid.}
+  \item $S_{gp}$ : {\Ochre The nodal interpolation function evaluated at a particle}
+  \item $\BG_{gp}$ : {\Ochre The gradient of the nodal interpolation function evaluated at a particle}
+  \item $\Bsig_v$ : {\Ochre A volume weighted grid node stress.}
+  \item $\Bf^\Tint_g$ : {\Ochre The internal force at a grid node.}
+\end{itemize}
+\begin{breakablealgorithm}
+  \caption{Computing the internal force}
+  \begin{algorithmic}[1]
+    \Require $\Bh_g$, $V_g$, $V_p^n$, $\Bx_p^n$, $\Bh_p^n$, $\Bsig_p^n$, $\BF_p^n$,
+             \TTList{materialList}, \TTList{particleList}, \TTList{gridNodeList}
+             \TTObj{mpmFlags}
+    \Procedure{computeInternalForce}{}
+      \State \TTObj{interpolator} $\leftarrow$ \textsc{createInterpolator}(\TTObj{mpmFlags})
+        \Comment{Create the interpolator and \WRP find number of grid nodes that can affect a particle}
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \For{\TTpart\, \textbf{in} \TTList{particleList}}
+          \State $n_{gp}$, $S_{gp}$, $\BGv_{gp}$ $\leftarrow$   \WWRP
+            \TTObj{interpolator}.\textsc{findCellsAndWeightsAndShapeDervatives}($\Bx_p^n$, $\Bh_p^n$, $\BF_p^n$) \WWRP
+            \Comment{Find the node indices of the cells affecting the particle and \WWRP the 
+                     interpolation weights and gradients}
+          \State $\Bsig_v$ $\leftarrow$ $V_p$[\TTmatl][\TTpart] $\Bsig_p^n$[\TTmatl][\TTpart] 
+          \For{\TTnode\, \textbf{in} $n_{gp}$}
+            \State $\Bf^{\Tint}_g$[\TTmatl][\TTnode] $\leftarrow$ $\Bf^{\Tint}_g$[\TTmatl][\TTnode] - 
+               ($\BGv_{gp}$[\TTnode]$/\Bh_g$) $\cdot \Bsig_p^n$[\TTmatl][\TTpart] $V_p^n$[\TTpart]
+            \State $\Bsig_g$[\TTmatl][\TTnode] $\leftarrow$ $\Bsig_g$[\TTmatl][\TTnode] + $\Bsig_v$ $S_{gp}$[\TTnode]
+          \EndFor
+        \EndFor
+        \For{\TTnode\, \textbf{in} \TTList{gridNodeList}}
+          \State $\Bsig_g$[\TTmatl][\TTnode] $\leftarrow$ $\Bsig_g$[\TTmatl][\TTnode]/$V_g$[\TTmatl][\TTnode]
+        \EndFor
+        \State $\Bv_g$[\TTmatl] $\leftarrow$ \textsc{applySymmetryTractionBC}()
+          \Comment{Apply any symmetry tractions BCs \WWRP that may be applicable}
+      \EndFor
+      \State \Return $\Bf_g^{\Tint}$, $\Bsig_g$, $\Bv_g$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Computing and integrating the acceleration}
+This procedure computes the accelerations at the grid nodes and integrates the grid accelerations
+using forward Euler to compute grid velocities. The new quantities introduced in this section are
+\begin{itemize} 
+  \setlength\itemsep{1pt}
+  \item $\Ba_{g}$ : {\Ochre The grid accelerations.}
+  \item $\Bv_{g}^\star$ : {\Ochre The integrated grid velocities.}
+\end{itemize}
+\begin{breakablealgorithm}
+  \caption{Computing and integrating the acceleration}
+  \begin{algorithmic}[1]
+    \Require $\Delta t$, $m_g$, $\Bf^{\Tint}_g$, $\Bf^{\Text}_g$, $\Bb_g$, $\Bv_g$,
+             \TTList{materialList}, \TTList{gridNodeList},
+             \TTObj{mpmFlags}
+    \Procedure{computeAndIntegrateAcceleration}{}
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \For{\TTnode\, \textbf{in} \TTList{gridNodeList}}
+          \State $\Ba_g$[\TTmatl][\TTnode] $\leftarrow$ 
+            ($\Bf^{\Tint}_g$[\TTmatl][\TTnode] +
+             $\Bf^{\Text}_g$[\TTmatl][\TTnode] + 
+             $\Bb_g$[\TTmatl][\TTnode])$/m_g$[\TTmatl][\TTnode]
+          \State $\Bv_g^{\star}$ $\leftarrow$ $\Bv_g$[\TTmatl][\TTnode] + 
+            $\Ba_g$[\TTmatl][\TTnode] $* \Delta t$
+        \EndFor
+      \EndFor
+      \State \Return $\Bv_g^{\star}$, $\Ba_g$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Exchanging momentum using integrated grid values}
+The exchange of momentum is carried out using a contact model.  Details can be found in the
+Uintah Developers Manual.
+
+\subsection{Setting grid boundary conditions}
+\begin{breakablealgorithm}
+  \caption{Setting grid boundary conditions}
+  \begin{algorithmic}[1]
+    \Require $\Delta t$, $\Ba_g$, $\Bv_g^{\star}$, $\Bv_g$,
+             \TTList{materialList}, \TTList{gridNodeList},
+             \TTObj{mpmFlags}
+    \Procedure{setGridBoundaryConditions}{}
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \State $\Bv_g^\star$[\TTmatl] $\leftarrow$ \textsc{applySymmetryVelocityBC}($\Bv_g^\star$[\TTmatl])
+        \For{\TTnode\, \textbf{in} \TTList{gridNodeList}}
+          \State $\Ba_g$[\TTmatl][\TTnode] $\leftarrow$ ($\Bv_g^\star$[\TTmatl][\TTnode] - $\Bv_g$[\TTmatl][\TTnode]) $/ \Delta t$
+        \EndFor
+      \EndFor
+      \State \Return $\Bv_g^\star$, $\Ba_g$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Computing the deformation gradient}
+The velocity gradient is computed using the integrated grid velocities and then used to 
+compute the deformation gradient. The new quantities introduced in this section are
+\begin{itemize} 
+  \setlength\itemsep{1pt}
+  \item $\Delta\BF_{p}^n$ : {\Ochre The increment of the particle deformation gradient.}
+  \item $\BlT_p^{n+1}$ : {\Ochre The particle velocity gradient.}
+  \item $\rho_0$ : {\Ochre The initial mass density of the material.}
+\end{itemize}
+\begin{breakablealgorithm}
+  \caption{Computing the velocity gradient and deformation gradient}
+  \begin{algorithmic}[1]
+    \Require $\Delta t$, $\Bx_p^n$, $m_p$, $V_p^n$, $\Bh_p^n$, $\Bv_p^n$, $\BlT_p^n$, $\BF_p^n$,
+             $\Bh_g$, $\Bv_g$, $\Bv_g^\star$, $\rho_0$
+             \TTList{materialList}, \TTList{gridNodeList},
+             \TTObj{mpmFlags}, \TTObj{velGradComputer}
+    \Procedure{computeDeformationGradient}{}
+      \State \TTObj{interpolator} $\leftarrow$ \textsc{createInterpolator}(\TTObj{mpmFlags})
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \For{\TTpart\, \textbf{in} \TTList{particleList}}
+          \State $\BlT_p^{n+1}$[\TTmatl,\TTpart] $\leftarrow$ 
+           \TTObj{velGradComputer}.\textsc{computeVelGrad}(\TTObj{interpolator},
+            $\Bh_g$, $\Bx_p^n$[\TTmatl,\TTpart], \WWRP
+            $\Bh_p^n$[\TTmatl,\TTpart], $\BF_p^n$[\TTmatl,\TTpart], 
+            $\Bv_g^\star$[\TTmatl])
+            \Comment{Compute the velocity gradient}
+          \State $\BF_p^{n+1}$[\TTmatl,\TTpart], $\Delta \BF_p^{n+1}$ $\leftarrow$ 
+            \textsc{computeDeformationGradientFromVelocity}($\BlT_p^n$[\TTmatl,\TTpart], \WWRP
+            $\BlT_p^{n+1}$[\TTmatl,\TTpart], $\BF_p^n$[\TTmatl,\TTpart])
+            \Comment{Compute the deformation gradient}
+          \State $V_p^{n+1}$[\TTmatl,\TTpart] $\leftarrow$ $m_p$[\TTmatl,\TTpart]/$\rho_0$ 
+            $*\det(\BF_p^{n+1}$[\TTmatl,\TTpart])
+        \EndFor
+      \EndFor
+      \State \Return $\BlT_p^{n+1}$, $\BF_p^{n+1}$, $V_p^{n+1}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+  \caption{Computing the deformation gradient using the velocity gradient}
+  \begin{algorithmic}[1]
+    \Require $\Delta t$, $\BlT_p^{n+1}$, $\BF_p^n$,
+             \TTObj{mpmFlags}
+    \Procedure{computeDeformationGradientFromVelocity}{}
+      \If {\TTObj{mpmFlags}.\texttt{defGradAlgorithm} = \texttt{"first\_order"}}
+         \State $\BF_p^{n+1}$, $\Delta\BF_p^{n+1}$  $\leftarrow$ 
+           \textsc{seriesUpdateConstantVelGrad}(\texttt{numTerms} = 1, $\Delta t$, $\BlT_p^{n+1}$, $\BF_p^n$) 
+      \ElsIf {\TTObj{mpmFlags}.\texttt{defGradAlgorithm} = \texttt{"subcycle"}}
+         \State $\BF_p^{n+1}$, $\Delta\BF_p^{n+1}$  $\leftarrow$
+           \textsc{subcycleUpdateConstantVelGrad}($\Delta t$, $\BlT_p^{n+1}$, $\BF_p^n$) 
+      \ElsIf {\TTObj{mpmFlags}.\texttt{defGradAlgorithm} = \texttt{"taylor\_series"}}
+         \State $\BF_p^{n+1}$, $\Delta\BF_p^{n+1}$  $\leftarrow$
+           \textsc{seriesUpdateConstantVelGrad}(\texttt{numTerms} = \TTObj{mpmFlags}.\texttt{numTaylorSeriesTerms}, 
+              $\Delta t$, $\BlT_p^{n+1}$, $\BF_p^n$) 
+      \Else
+         \State $\BF_p^{n+1}$, $\Delta\BF_p^{n+1}$  $\leftarrow$
+           \textsc{cayleyUpdateConstantVelGrad}($\Delta t$, $\BlT_p^{n+1}$, $\BF_p^n$) 
+      \EndIf
+      \State \Return $\BF_p^{n+1}$, $\Delta\BF_p^{n+1}$ 
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Computing the stress tensor}
+The stress tensor is compute by individual constitutive models.  Details of the Arena partially
+saturated model are given later. The new quantities introduced in this section are
+\begin{itemize} 
+  \setlength\itemsep{1pt}
+  \item $\Beta_p^n, \Beta_p^{n+1}$ : {\Ochre The internal variables needed by the constitutive model.}
+\end{itemize}
+\begin{breakablealgorithm}
+  \caption{Computing the stress tensor}
+  \begin{algorithmic}[1]
+    \Require $\Delta t$, $\Bx_p^n$, $m_p$, $V_p^{n+1}$, $\Bh_p^n$, $\BlT_p^{n+1}$, $\BF_p^{n+1}$,
+             $\Bsig_p^n$, $\Beta_p^n$, $\rho_0$, \TTList{materialList}, \TTObj{mpmFlags}, \TTObj{constitutiveModel}
+    \Procedure{computeStressTensor}{}
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \State $\Bsig^{n+1}$, $\Beta_p^{n+1}$ $\leftarrow$
+          \TTObj{constitutiveModel}[\TTmatl].\textsc{computeStressTensor}($\Delta t$, $\Bx_p^n$, $m_p$, 
+             $V_p^{n+1}$, $\Bh_p^n$, \WWRP 
+             $\BlT_p^{n+1}$, $\BF_p^{n+1}$, $\Bsig_p^n$, $\Beta_p^n$, $\rho_0$, \TTObj{mpmFlags})
+          \Comment{Update the stress and any \WWRP internal variables needed by the constitutive model}
+      \EndFor
+      \State \Return $\Bsig_p^{n+1}$, $\Beta_p^{n+1}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Computing the basic damage parameter}
+The damage parameter is updated and the particle stress is modified in this procedure. The new 
+quantities introduced in this section are
+\begin{itemize} 
+  \setlength\itemsep{1pt}
+  \item $\Veps_p^{f,n}, \Veps_p^{f,n+1}$ : {\Ochre The particle strain to failure at $t = T_n$ 
+        and $t = T_{n+1}$.}
+  \item $\chi_p^{n}, \chi_p^{n+1}$ : {\Ochre An indicator function that identifies whether a particle
+        has failed completely.} 
+  \item $t_p^{\chi,n}, t_p^{\chi,n+1}$ : {\Ochre The time to failure of a particle.}
+  \item $D_p^{n}, D_p^{n+1}$ : {\Ochre A particle damage parameter that can be used to modify the stress.}
+\end{itemize}
+\begin{breakablealgorithm}
+  \caption{Computing the damage parameter}
+  \begin{algorithmic}[1]
+    \Require $t^{n+1}$, $V_p^{n+1}$, $\BF_p^{n+1}$, $\Bsig_p^{n+1}$, $D_p^n$, $\Veps_p^{f,n}$, $\chi^n_p$, 
+             $t^{\chi,n}_p$,
+             \TTList{materialList}, \TTObj{mpmFlags}
+    \Procedure{computeDamage}{}
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \For{\TTpart\, \textbf{in} \TTList{particleList}}
+          \If {\texttt{brittleDamage} = TRUE} 
+            \State $\Bsig_p^{n+1}$, $\Veps_p^{f,n+1}$, $\chi^{n+1}_p$, $t^{\chi,n+1}_p$, $D_p^{n+1}$ $\leftarrow$
+               \textsc{updateDamageAndModifyStress}($V_p^{n+1}$, $\BF_p^{n+1}$, \WWRP 
+                  $\Bsig_p^{n+1}$, $D_p^n$, $\Veps_p^{f,n}$, $\chi^n_p$, $t^{\chi,n}_p$)
+             \Comment{Update the damage parameters and stress}
+          \Else
+            \State $\Bsig_p^{n+1}$, $\Veps_p^{f,n+1}$, $\chi^{n+1}_p$, $t^{\chi,n+1}_p$ $\leftarrow$
+               \textsc{updateFailedParticlesAndModifyStress}($V_p^{n+1}$, $\BF_p^{n+1}$, \WWRP 
+                  $\Bsig_p^{n+1}$, $\Veps_p^{f,n}$, $\chi^n_p$, $t^{\chi,n}_p$, $t^{n+1}$)
+             \Comment{Update the failed particles and stress}
+          \EndIf
+        \EndFor
+      \EndFor
+      \State \Return $\Bsig_p^{n+1}$, $\Veps_p^{f,n+1}$, $\chi^{n+1}_p$, $t^{\chi,n+1}_p$, $D_p^{n+1}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Updating the particle erosion parameter}
+The particle failure indicator function is updated in this procedure and used later for 
+particle deletion if needed.
+\begin{breakablealgorithm}
+  \caption{Updating the particle erosion parameter}
+  \begin{algorithmic}[1]
+    \Require $D_p^n$, $\chi^n_p$
+             \TTList{materialList}, \TTObj{mpmFlags}, \TTObj{constitutiveModel}
+    \Procedure{updateErosionParameter}{}
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \For{\TTpart\, \textbf{in} \TTList{particleList}}
+          \If {\TTmatl.\texttt{doBasicDamage} = TRUE} 
+            \State $\chi^{n+1}_p$ $\leftarrow$
+               \TTObj{damageModel}.\textsc{getLocalizationParameter}()
+             \Comment{Just get the indicator \WWRP parameter for particles that will be eroded.}
+          \Else
+            \State $\chi^{n+1}_p$, $D_p^{n+1}$ $\leftarrow$
+               \TTObj{constitutiveModel}[\TTmatl].\textsc{getDamageParameter}($\chi^n_p$, $D^n_p$)
+             \WWRP \Comment{Update the damage parameter in the constitutive model.}
+          \EndIf
+        \EndFor
+      \EndFor
+      \State \Return $\chi^{n+1}_p$, $D_p^{n+1}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Interpolating back to the particles and update}
+This is the final step at which the particle velocities and positions are updated and the grid
+is reset.  Particle that are to be removed are dealt with in a subsequent \texttt{relocation} step.
+\begin{breakablealgorithm}
+  \caption{Interpolating back to the particles and position update}
+  \begin{algorithmic}[1]
+    \Require $\Delta t$, 
+             $\Ba_g$, $\Bv_g^\star$, $\Bx_p^n$, $\Bv_p^n$, $\Bu_p^n$, $\Bh_p^n$, $\chi_p^{n+1}$, $\BF_p^{n+1}$,
+             $V_p^{n+1}$,
+             \TTList{materialList}, \TTList{particleList}, \TTList{gridNodeList}, \TTObj{mpmFlags}
+    \Procedure{interpolateToParticlesAndUpdate}{}
+      \State \texttt{interpolator} $\leftarrow$ \textsc{createInterpolator}(\TTObj{mpmFlags})
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \State $\Bh_p^{n+1}$ $\leftarrow$ $\Bh_p^n$
+        \For{\TTpart\, \textbf{in} \TTList{particleList}}
+          \State $n_{gp}$, $S_{gp}$ $\leftarrow$ 
+            \texttt{interpolator}.\textsc{findCellsAndWeights}($\Bx_p^n$, $\Bh_p^{n+1}$, $\BF_p^{n+1}$)
+          \State $\Bv$ $\leftarrow$ $\Bzero$,~~ $\Ba$ $\leftarrow$ $\Bzero$,~
+          \For{\TTnode\, \textbf{in} \TTList{gridNodeList}}
+            \State $\Bv$ $\leftarrow$ $\Bv$ + $\Bv_g^\star$[\TTnode] $*$ $S_{gp}$[\TTnode]
+              \Comment{Update particle velocity}
+            \State $\Ba$ $\leftarrow$ $\Ba$ + $\Ba_g$[\TTnode] $*$ $S_{gp}$[\TTnode]
+              \Comment{Update particle acceleration}
+          \EndFor
+          \State $\Bx_p^{n+1}$ $\leftarrow$ $\Bx_p^n$ + $\Bv * \Delta t$
+            \Comment{Update position}
+          \State $\Bu_p^{n+1}$ $\leftarrow$ $\Bu_p^n$ + $\Bv * \Delta t$
+            \Comment{Update displacement}
+          \State $\Bv_p^{n+1}$ $\leftarrow$ $\Bv_p^n$ + $\Ba * \Delta t$
+            \Comment{Update velocity}
+        \EndFor
+      \EndFor
+      \State \textsc{deleteRogueParticles}()
+        \Comment{Delete particles that are to be eroded.}
+      \State \Return $V_p^{n+1}$, $\Bu_p^{n+1}$, $\Bv_p^{n+1}$, $\Bx_p^{n+1}$, $m_p$, $\Bh_p^{n+1}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\clearpage 

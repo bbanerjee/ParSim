@@ -1,0 +1,919 @@
+\chapter{Example MPM material model}
+
+In this chapter, we will examine the pseudocode for a reasonably complex material model
+that exercises most of the machinery for explicitly time integrated MPM
+material models in \Vaango.  The material model discussed in here is called \Arena.  A detailed
+description of the theory behind the model can be found in the \Vaango Theory manual.
+
+The main purpose of the material models is to compute the stress in a MPM particle given a state
+of deformation.
+
+The stress tensor computation procedure calls the \textsc{computeStressTensor} routine that is
+specific to each constitutive model.
+\begin{breakablealgorithm}
+  \caption{Computing the stress tensor}
+  \begin{algorithmic}[1]
+    \Require $\Delta t$, $\Bx_p^n$, $m_p$, $V_p^{n+1}$, $\Bh_p^n$, $\BlT_p^{n+1}$, $\BF_p^{n+1}$,
+             $\Bsig_p^n$, $\Beta_p^n$, $\rho_0$, \TTList{materialList}, \TTObj{mpmFlags}, \TTObj{constitutiveModel}
+    \Procedure{computeStressTensor}{}
+      \For{\TTmatl\, \textbf{in} \TTList{materialList}}
+        \State $\Bsig_p^{n+1}$, $\Beta_p^{n+1}$ $\leftarrow$
+          \TTObj{constitutiveModel}[\TTmatl].\textsc{computeStressTensor}($\Delta t$, $\Bx_p^n$, 
+             $m_p$, $V_p^{n+1}$, $\Bh_p^n$, \WRP
+             $\BlT_p^{n+1}$, $\BF_p^{n+1}$, $\Bsig_p^n$, $\Beta_p^n$, $\rho_0$, 
+             \TTObj{mpmFlags})
+          \Comment{Update the stress and any internal variables \WRP needed by the constitutive model}
+      \EndFor
+      \State \Return $\Bsig_p^{n+1}$, $\Beta_p^{n+1}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+The \Arena model is a high strain-rate soil plasticity model that uses a
+``consistency bisection'' algorithm to find the plastic strain direction and to 
+update the internal state variables.  A closest-point return algorithm in transformed 
+stress space is used to project the trial stress state on to the yield surface. 
+Because of the nonlinearities in the material models, it is easier to solve the problem by 
+dividing the strain increment to substeps.
+
+The \Arena model treats the porosity ($\phi$) and saturation ($S_w$) as internal 
+variables in addition to the hydrostatic compressive strength ($X$), the isotropic 
+backstress ($\zeta$), and the plastic strain ($\Bveps^\Tp$).
+
+\section{Initialization of the model}
+The model is initialized in two steps.  In the first step, the constitutive model object is created
+followed by initialization of the stress (and the deformation gradient if needed). Here
+\begin{itemize} 
+  \setlength\itemsep{1pt}
+  \item $\phi_0$ : {\Ochre The initial porosity.}
+  \item $S_0$ : {\Ochre The initial porosity.}
+  \item $n_\Tmax$ : {\Ochre The maximum number of subcycles in the plastic return algorithm.}
+  \item $\Veps^{e,n}_{v,p}$ : {\Ochre The elastic volumetric strain at a particle at $t = t_n$.}
+  \item $\Bsig^{n}_{p}$ : {\Ochre The dynamic Cauchy stress at a particle at $t = t_n$.}
+  \item $\Bsig^{n}_{qs,p}$ : {\Ochre The quasistatic Cauchy stress at a particle at $t = t_n$.}
+  \item $\Bsig^{0}$ : {\Ochre The initial Cauchy stress at a particle.}
+\end{itemize}
+\begin{breakablealgorithm}
+  \caption{Creating the Arena constitutive model object}
+  \begin{algorithmic}[1]
+    \Require \TTObj{mpmFlags}, \TTObj{xmlProblemSpec}
+    \Procedure{createConstitutiveModel}{}
+      \State \TTObj{elasticityModel} $\leftarrow$ 
+        \TTFac{ElasticModuliModelFactory}.\textsc{create}(\TTObj{xmlProblemSpec})
+      \State \TTObj{yieldCondition} $\leftarrow$ 
+        \TTFac{YieldConditionFactory}.\textsc{create}(\TTObj{xmlProblemSpec})
+      \State $p_0, p_1, p_1^\Tsat, p_2$ $\leftarrow$ \textsc{readCrushCurveParameters}(\TTObj{xmlProblemSpec})
+      \State $\phi_0, S_0, \bar{p^w_0}$ $\leftarrow$ \textsc{readInitialPorosityAndSaturation}(\TTObj{xmlProblemSpec})
+      \State $n_\Tmax$ $\leftarrow$ \textsc{readSubcyclingCharacteristicNumber}(\TTObj{xmlProblemSpec})
+      \State \Return \TTObj{elasticityModel}, \TTObj{yieldCondition}, $\phi_0$, $S_0$, $\bar{p^w_0}$, $n_\Tmax$, 
+        $p_0, p_1, p_1^\Tsat, p_2$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+  \caption{Initializing the Arena particle variables}
+  \begin{algorithmic}[1]
+    \Require $\phi_0$, $S_0$, $\bar{p^w_0}$, \TTList{particleList}, $V_p^0$, $m_p^0$, $\Bv_p^0$,
+             \TTList{fluidParams}, 
+             \TTObj{elasticityModel}, \TTObj{yieldCondition}
+    \Procedure{initialize}{}
+      \State \TTObj{yieldCondition}.\textsc{initialize}(\TTList{particleList}, $V_p^0$)
+      \State \TTList{yieldParams} $\leftarrow$ \TTObj{yieldCondition}.\textsc{getParameters}()
+      \For{\TTpart\, \textbf{in} \TTList{particleList}}
+        \State $\phi_p^0$[\TTpart] $\leftarrow$ $\phi_0$
+        \State $S_{w,p}^0$[\TTpart] $\leftarrow$ $S_0$
+        \State $\chi_p^0$[\TTpart] $\leftarrow$ $0$
+        \State $\Veps_{v,p}^{\Te,0}$[\TTpart] $\leftarrow$ $0$
+        \State $\Bsig_p^0$[\TTpart] $\leftarrow$ (\TTList{fluidParams}.$\bar{p^w_0}$) $\BI$
+        \State $\Bsig_{qs,p}^0$[\TTpart] $\leftarrow$ $\Bsig^0$
+      \EndFor
+      \State $\Delta t$ $\leftarrow$ \textsc{computeStableTimestep}($V_p^0$, $m_p$, $\Bv_p^0$,
+                                                                    \TTObj{elasticityModel})
+      \State \Return $\phi_p^0$, $S_{w,p}^0$, $\chi_p^0$, $\Veps_{v,p}^{\Te,0}$, $\Bsig_{qs,p}^0$, $\Bsig_p^0$, $\Delta t$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\section{Computing the stress and internal variables}
+The \textsc{computeStressTensor} routine in the partially saturated Arena model assumes
+that the Biot coefficient is $B = 1$, and has the following form.  Here we introduce the new variables
+\begin{itemize} 
+  \setlength\itemsep{1pt}
+  \item $\phi_p^n, \phi_p^{n+1}$ : {\Ochre The porosity at $t = t_n$ and $t = t_{n+1}$.}
+  \item $S_{w,p}^n, S_{w,p}^{n+1}$ : {\Ochre The saturation at $t = t_n$ and $t = t_{n+1}$.}
+  \item $a_{1,p}, a_{2,p}, a_{3,p}, a_{4,p}$ : {\Ochre Yield condition parameters at each particle.}
+  \item $p^n_{3,p}$ : {\Ochre The particle crush curve parameter $p_3$ at $t = t_n$.}
+  \item $X_p^n$ : {\Ochre The particle hydrostatic compressive strength at $t = t_n$.}
+  \item $\kappa_p^n$ : {\Ochre The yield function branch point at $t = t_n$.}
+  \item $\Beps_{p}^{\Tp,n}$ : {\Ochre The particle plastic strain tensor at $t = t_n$.}
+  \item $\Balpha_{p}^{n}$ : {\Ochre The particle backstress tensor at $t = t_n$.}
+  \item $\Bd^{n}$ : {\Ochre The particle rate of deformation tensor at $t = t_n$.}
+  \item $\BR^{n}, \BU^n$ : {\Ochre The particle rotation and stretch tensors at $t = t_n$.}
+  \item $K^{n}, G^n$ : {\Ochre The particle bulk and shear modulus at $t = t_n$.}
+\end{itemize}
+\begin{breakablealgorithm}
+  \caption{Computing the Arena stress tensor}
+  \begin{algorithmic}[1]
+    \Require $\Delta t$, $\Bx_p^n$, $m_p$, $V_p^{n+1}$, $\Bh_p^n$, $\BlT_p^{n+1}$, $\BF_p^n$, $\BF_p^{n+1}$,
+             $X^n_p$, $\kappa^n_p$, $\Veps^n_{v,p}$, $p^n_{3,p}$, $\Beps^{\Tp,n}_p$, $\Balpha^n_p$  
+             $\phi_p^n$, $S_{w,p}^n$, $\chi_p^n$, $\Veps_{v,p}^{\Te,n}$, $\Bsig_{qs,p}^n$, 
+             $\Bsig_p^n$, $\rho_0$, \TTList{particleList}, \TTObj{mpmFlags},
+             \TTObj{elasticityModel}, \TTObj{yieldCondition}
+    \Procedure{computeStressTensor}{}
+      \State \TTList{yieldParams} $\leftarrow$ \TTObj{yieldCondition}.\textsc{getParameters}()
+      \State $a_{1,p}$, $a_{2,p}$, $a_{3,p}$, $a_{4,p}$, $I_{1,p}^\Tpeak$, $R_{c,p}$ $\leftarrow$ 
+        \TTObj{yieldCondition}.\textsc{getLocalVariables}() \WRP
+        \Comment{Yield condition parameters vary at each particle. \WRP Get the per-particle values of these
+                 parameters.}
+      \For{\TTpart\, \textbf{in} \TTList{particleList}}
+        \State $\chi_p^{n+1}$[\TTpart] $\leftarrow$ $\chi_p^n$[\TTpart]
+          \Comment{Copy over failure indicator variable}
+        \State $\BdT^{n+1}$ $\leftarrow$ $[\BlT_p^{n+1}$[\TTpart] $+ (\BlT_p^{n+1}$[\TTpart]$)^T]/2$
+          \Comment{Compute rate of deformation}
+        \State $\BR^n$, $\BU^n$ $\leftarrow$ \textsc{polarDecomposition}($\BF_p^n$[\TTpart])
+          \Comment{Compute rotation and stretch tensors}
+        \State $\BdT^{n+1}_{\Tunrot}$ $\leftarrow$ $(\BR^n)^T \cdot \BdT^{n+1} \cdot \BR^n$
+          \Comment{Unrotate the rate of deformation tensor}
+        \State $\Bsig^n_{qs,\Tunrot}$ $\leftarrow$ $(\BR^n)^T \cdot \Bsig^n_{qs,p}$[\TTpart]$ \cdot \BR^n$
+          \Comment{Unrotate the quasistatic stress}
+        \State $\Bsig^n_\Tunrot$ $\leftarrow$ $(\BR^n)^T \cdot \Bsig^n_p$[\TTpart]$ \cdot \BR^n$
+          \Comment{Unrotate the total stress}
+        \State $K^n$, $G^n$, $\BsT^n$, $(\bar{p^w})^n$, $I_1^{\Teff,n}$, 
+             $\sqrt{J_2^n}$, $r^n$, $z_\Teff^n$, $\Veps_v^{\Tp,n}$ $\leftarrow$ \WRP
+          \textsc{computeElasticProperties}($\Bsig^n_{qs,\Tunrot}$[\TTpart], \WRP
+             $\phi_p^n$[\TTpart], $S_{w,p}^n$[\TTpart], $\Beps^{\Tp,n}_p$[\TTpart], $\Balpha^n_p$[\TTpart],
+             $p^n_{3,p}$[\TTpart]) \WRP
+          \Comment{Compute elastic properties and stress invariants}
+        \State \texttt{isSuccess}, $\Bsig_{qs,\Tunrot}^{n+1}$, $\phi_{qs}^{n+1}$, $S_{w,qs}^{n+1}$, 
+           $X_{p}^{n+1}$[\TTpart], $\Balpha_{p}^{n+1}$[\TTpart],
+           $\Beps_{p}^{\Tp,n+1}$[\TTpart] $\leftarrow$ \WRP 
+           \textsc{rateIndependentPlasticUpdate}($\Delta t$, $\BdT_{\Tunrot}^{n+1}$, 
+                 $K^n$, $G^n$, $\BsT^n$, $(\bar{p^w})^n$, $I_1^{\Teff,n}$, 
+                 $\sqrt{J_2^n}$, $r^n$, $z_\Teff^n$, \WRP $\Veps_v^{\Tp,n}$,
+                 $\Bsig_{qs,\Tunrot}^n$, $\phi_p^n$[\TTpart], $S_{w,p}^n$[\TTpart], $X_p^n$[\TTpart], 
+                 $\Balpha_p^n$[\TTpart], $\Beps_p^{\Tp,n}$[\TTpart], 
+                 $p^n_{3,p}$[\TTpart], \WRP $a_{1,p}$[\TTpart], $a_{2,p}$[\TTpart], 
+                 $a_{3,p}$[\TTpart], $a_{4,p}$[\TTpart]) \WRP
+          \Comment{Compute updated quasistatic state using the consistency bisection algorithm}
+        \If {\texttt{isSuccess} = FALSE}
+          \State \textsc{flagParticleForDeletion}(\TTpart)
+        \EndIf
+        \State $\Bsig_\Tunrot^{n+1}$ $\leftarrow$ 
+           \textsc{rateDependentPlasticUpdate}($\Delta t$, $\BdT_{\Tunrot}^{n+1}$, 
+                 $\Bsig_{qs,\Tunrot}^n$, $\Bsig_{qs,\Tunrot}^{n+1}$, 
+                 $\phi_p^n$[\TTpart], $\phi_{qs}^{n+1}$, \WRP 
+                 $S_{w,p}^n$[\TTpart], $S_{w,qs}^{n+1}$, 
+                 $X_p^n$[\TTpart], $X_p^{n+1}$[\TTpart], 
+                 $\Balpha_p^n$[\TTpart], $\Balpha_{p}^{n+1}$[\TTpart], \WRP
+                 $\Beps_p^{\Tp,n}$[\TTpart], $\Beps_{p}^{\Tp,n+1}$[\TTpart], 
+                 $p^n_{3,p}$[\TTpart], \WRP $a_{1,p}$[\TTpart], $a_{2,p}$[\TTpart], 
+                 $a_{3,p}$[\TTpart], $a_{4,p}$[\TTpart])
+        \State $\BR^{n+1}$, $\BU^{n+1}$ $\leftarrow$ \textsc{polarDecomposition}($\BF_p^{n+1}$[\TTpart])
+          \Comment{Compute rotation and stretch tensors}
+        \State $\Bsig^{n+1}_{p,qs}$[\TTpart] $\leftarrow$ $\BR^{n+1} \cdot \Bsig^{n+1}_{qs,\Tunrot}$$ \cdot (\BR^{n+1})^T$
+          \Comment{Rotate the quasistatic stress}
+        \State $\Bsig_p^{n+1}$[\TTpart] $\leftarrow$  $\BR^{n+1} \cdot \Bsig^{n+1}_{\Tunrot}$$ \cdot (\BR^{n+1})^T$
+          \Comment{Rotate the dynamic stress}
+      \EndFor
+      \State $\Delta t^{n+1}$ $\leftarrow$ \textsc{computeStableTimestep}($V_p^{n+1}$, $m_p$, $\Bsig_p^{n+1}$,
+                  $\Bsig_p^n$, $\BlT_p^{n+1}$, \TTObj{elasticityModel})
+      \State \Return $\Bsig_p^{n+1}$, $\Bsig_{p,qs}^{n+1}$, $\phi_p^{n+1}$, $S_{w,p}^{n+1}$, $\Balpha_p^{n+1}$,
+                $X_p^{n+1}$, $\Beps_p^{\Tp, n+1}$, $\Delta t^{n+1}$.
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Compute elastic properties}
+  The pseudocode for the generic \textsc{computeElasticProperties} is listed below.  The function 
+  has side effects beyond computing the elastic properties and should be used carefully. Note that
+  the subscript $p$ has been dropped for simplicity because all quantities are particle-based.
+  \begin{breakablealgorithm}
+  \caption{Computing the elastic properties}
+  \begin{algorithmic}[1]
+    \Require $\Bsig$, $\phi$, $S_w$, $\Beps^\Tp$, $\Balpha$, $p_3$, \TTObj{elasticityModel}
+    \Procedure{computeElasticProperties}{}
+      \State $\BsT$, $\bar{p^w}$, $I_1^\Teff$, $\sqrt{J_2}$, $r$, $z_\Teff$ $\leftarrow$
+             \textsc{updateStressInvariants}($\Bsig$, $\Balpha$)
+        \Comment{Compute the deviatoric stress and the invariants of the input stress tensor.}
+      \State $\Veps_v^\Tp \leftarrow$
+             \textsc{updateVolumetricPlasticStrain}($\Beps^\Tp$)
+        \Comment{Compute the volumetric plastic strain from the input plastic strain tensor.}
+      \State $K$, $G$ $\leftarrow$ \TTObj{elasticityModel}.\textsc{getCurrentElasticModuli}($I_1^\Teff$, 
+          $\bar{p^w}$, $\Veps_v^\Tp$, $\phi$, $S_w$)
+        \Comment{Compute the elastic moduli corresponding to the input state.}
+      \If {useDisaggregationAlgorithm = TRUE}
+        \State scale = MAX($\exp[-(p_3 + \Veps_v^\Tp)]$, $10^{-5}$)
+        \State $K$ $\leftarrow$ $K$*scale ~,~~ $G$ $\leftarrow$ $G$*scale
+      \EndIf
+      \State \Return $K$, $G$, $\BsT$, $\bar{p^w}$, $I_1^\Teff$, $\sqrt{J_2}$, $r$, $z_\Teff$, $\Veps_v^\Tp$
+    \EndProcedure
+  \end{algorithmic}
+  \end{breakablealgorithm}
+
+  \begin{breakablealgorithm}
+  \caption{Updating the stress invariants}
+  \begin{algorithmic}[1]
+    \Procedure{updateStressInvariants}{$\Bsig$, $\Balpha$}
+      \State $I_1 \leftarrow \Tr(\Bsig)$
+      \State $\BsT \leftarrow \Bsig - (I_1/3)\BI$
+         \Comment{Compute deviatoric stress}
+      \State $\bar{p^w} \leftarrow -\Tr(\Balpha)/3$
+         \Comment{Compute pore pressure}
+      \State $I_1^\Teff \leftarrow I_1 + 3\bar{p^w}$ ~,\quad
+             $\sqrt{J_2} \leftarrow \sqrt{(1/2) \BsT:\BsT}$
+         \Comment{Compute invariants of the effective stress}
+      \State $r \leftarrow \sqrt{2 J_2}$ ~,\quad
+             $z_\Teff \leftarrow I_1^\Teff/\sqrt{3}$
+         \Comment{Compute Lode coordinates of the effective stress}
+      \State \Return $\BsT$, $\bar{p^w}$, $I_1^\Teff$, $\sqrt{J_2}$, $r$, $z_\Teff$
+    \EndProcedure
+  \end{algorithmic}
+  \end{breakablealgorithm}
+
+  \subsubsection{The elastic modulus computation procedures:}
+  The functions used to compute the moduli are listed in the pseudocode below.
+  \begin{breakablealgorithm}
+  \caption{Computing the current elastic moduli}
+  \begin{algorithmic}[1]
+    \Require $I_1^\Teff$, $\bar{p^w}$, $\Veps_v^\Tp$, $\phi$, $S_w$
+    \Procedure{getCurrentElasticModuli}{}
+      \State $\bar{I_1}^\Teff \leftarrow -I_1^\Teff$, $\bar{\Veps_v^\Tp} \leftarrow -\Veps_v^\Tp$,
+      \State $K \leftarrow 0$, $G \leftarrow 0$
+      \If {$S_w > 0$}
+        \State $K, G \leftarrow$ \textsc{computePartialSaturatedModuli}($\bar{I_1}^\Teff$, $\bar{p^w}$,
+           $\bar{\Veps_v^\Tp}$, $\phi$, $S_w$)
+      \Else
+        \State $K, G \leftarrow$ \textsc{computeDrainedModuli}($\bar{I_1}^\Teff$, $\bar{\Veps_v^\Tp}$)
+      \EndIf
+      \State \Return $K$, $G$
+    \EndProcedure
+  \end{algorithmic}
+  \end{breakablealgorithm}
+
+  \begin{breakablealgorithm}
+  \caption{Computing the partially saturated elastic moduli}
+  \begin{algorithmic}[1]
+    \Require $K_{s0}$, $n_s$, $\pbar_{s0}$, $K_{w0}$, $n_w$, $\pbar_{w0}$, $\gamma$, $\pbar_r$
+    \Procedure{computePartialSaturatedModuli}{$\Ionebar^\Teff$, $\bar{p^w}$, $\bar{\Veps^\Tp_v}$, 
+                                              $\phi$, $S_w$}
+      \If {$\Ionebar^\Teff > 0$}
+        \State $\pbar^\Teff \leftarrow \Ionebar^\Teff/3$
+        \State $K_s \leftarrow K_{s0} + n_s (\pbar^\Teff - \pbar_{s0})$
+        \State $K_w \leftarrow K_{w0} + n_w (\bar{p^w} - \pbar_{w0})$
+        \State $K_a \leftarrow \gamma (\bar{p^w} + \pbar_r)$
+        \State $K_d, G \leftarrow$ \textsc{computeDrainedModuli}($\Ionebar^\Teff$, $\bar{\Veps^\Tp_v}$)
+        \State $K_f \leftarrow 1/\left[S_w/K_w + (1-S_w)/K_a\right]$
+          \Comment{Bulk modulus of air + water mixture}
+        \State $\text{numer} \leftarrow (1 - K_d/K_s)^2$
+        \State $\text{denom} \leftarrow (1/K_s)\,(1 - K_d/K_s) + \phi\,(1/K_f - 1/K_s)$
+        \State $K \leftarrow K_d + \text{numer}/\text{denom}$
+          \Comment{Bulk modulus of partially saturated material \WRP (Biot-Gassman model)}
+      \Else
+        \State $K, G \leftarrow$ \textsc{computeDrainedModuli}($\Ionebar$, $\bar{\Veps^\Tp_v}$)
+      \EndIf
+      \State \Return $K, G$
+    \EndProcedure
+  \end{algorithmic}
+  \end{breakablealgorithm}
+
+  \begin{breakablealgorithm}
+  \caption{Computing the drained elastic moduli}
+  \begin{algorithmic}[1]
+    \Require $K_{s0}$, $n_s$, $\pbar_{s0}$, $b_0$, $b_1$, $b_2$, $b_3$, $b_4$, $G_0$, $\nu_1$, $\nu_2$
+    \Procedure{computeDrainedModuli}{$\Ionebar^\Teff$, $\bar{\Veps^\Tp_v}$}
+      \If {$\Ionebar^\Teff > 0$}
+        \State $\pbar^\Teff \leftarrow \Ionebar^\Teff/3$
+        \State $K_s \leftarrow K_{s0} + n_s (\pbar^\Teff - \pbar_{s0})$
+        \State $K_s^\Tratio \leftarrow K_s/(1 - n_s \pbar^\Teff/K_s)$
+        \State $\Veps^\Te_v \leftarrow$ \textsc{pow}($(b_3 \pbar^\Teff)/(b_1K_s - b_2\pbar^\Teff)$, $(1/b_4)$);
+        \State $y \leftarrow $ \textsc{pow}($\Veps^\Te_v$, $b_4$)
+        \State $z \leftarrow b_2y + b_3$
+        \State $K \leftarrow K_s^\Tratio[b_0 + (1/\Veps^\Te_v)b_1b_3b_4y/z^2]$;
+          \Comment{ Compute compressive bulk modulus}
+        \State $\nu = \nu_1 + \nu_2\exp(-K/K_s)$
+        \State $ G \leftarrow G_0$
+        \If {$\nu > 0$}
+          \State $G \leftarrow 1.5K\,(1-2\nu)/(1+\nu)$
+            \Comment{Update the shear modulus (if $\nu_1, \nu_2 > 0$)}
+        \EndIf
+      \Else
+        \State $K \leftarrow b_0K_{s0}$
+          \Comment{Tensile bulk modulus = Bulk modulus at $p = 0$}
+        \State $G \leftarrow G_0$
+          \Comment{Tensile shear modulus}
+      \EndIf
+      \State \Return $K, G$
+    \EndProcedure
+  \end{algorithmic}
+  \end{breakablealgorithm}
+
+
+\subsection{Rate-independent stress update}
+  The partially saturated soil model uses a ``consistency bisection'' 
+  algorithm
+  to find the plastic strain direction and to update the internal state variables.  A closest-point
+  return algorithm in transformed stress space is used to project the trial stress state on to the
+  yield surface. Because of the nonlinearities in the material models, it is easier to solve 
+  the problem by dividing the strain increment into substeps.
+
+  The pseudocode for the algorithm is given below.  All quantities are particle-based and the
+  subscript $p$ has been dropped for convenience.
+\begin{breakablealgorithm}
+  \caption{The rate-independent stress and internal variable update algorithm}
+  \begin{algorithmic}[1]
+    \Require $\Delta t$, $\BdT^{n+1}$, 
+             $K^n$, $G^n$, $\BsT^n$, $(\bar{p^w})^n$, $I_1^{\Teff,n}$, 
+             $\sqrt{J_2^n}$, $r^n$, $z_\Teff^n$, $\Veps_v^{\Tp,n}$,
+             $a_1$, $a_2$, $a_3$, $a_4$, $p_3^n$, 
+             $\Bsig_{qs}^n$, $\phi^n$, $S_w^n$, $X^n$, $\Balpha^n$, $\Bveps^{\Tp,n}$,
+             $n_\Tmax$, $\epsilon_\Tsub$, $\chi_\Tmax$ 
+    \Procedure{rateIndependentPlasticUpdate}{}
+      \State $\Bsig_\Trial \leftarrow$ \textsc{computeTrialStress}($\Bsig_{qs}^n$, $K^n$, $G^n$, 
+                                                                  $\BdT^{n+1}$, $\Delta t$)
+        \Comment{Compute trial stress}
+      \State $\Balpha^\Trial \leftarrow \Balpha^n$, 
+             $p_3^\Trial \leftarrow p_3^n$, 
+             $\phi^\Trial \leftarrow \phi^n$, 
+             $S_w^\Trial \leftarrow S_w^n$, \WRP
+             $X^\Trial \leftarrow X^n$, 
+             $\Bveps^{\Tp,\Trial} \leftarrow \Bveps^{\Tp,n}$ 
+        \Comment{Set all other trial quantities to the values \WRP at the beginning of the timestep}
+      \State $K^\Trial$, $G^\Trial$, $\BsT^\Trial$, $(\bar{p^w})^\Trial$, $I_1^{\Teff,\Trial}$, 
+             $\sqrt{J_2^\Trial}$, $r^\Trial$, $z_\Teff^\Trial$, $\Veps_v^{\Tp,\Trial}$ $\leftarrow$ \WRP
+          \textsc{computeElasticProperties}($\Bsig_\Trial$, 
+             $\phi^\Trial$, $S_w^\Trial$, $\Beps^{\Tp,\Trial}$, $\Balpha^\Trial$, $p_3^\Trial$)
+        \Comment{Update the trial \WRP values of the moduli and 
+                 compute the invariants of the trial stress}
+      \State $n_\Tsub \leftarrow $ \textsc{computeStepDivisions}($n_\Tmax$, $\epsilon_\Tsub$, $K^n$, 
+               $K^\Trial$, $I_1^\Tpeak$, $a_1$, $X^n$, $\Bsig_{qs}^n$, $\Bsig_\Trial$) \WRP
+        \Comment{Compute number of substeps used by the return algorithm}
+      \If {$n_\Tsub < 0$}
+        \State \Return isSuccess = FALSE
+      \EndIf
+      \State $\delta t \leftarrow \cfrac{\Delta t}{n_\Tsub}$
+        \Comment{Substep timestep}
+      \State $\chi \leftarrow 1$, $t_\Tlocal \leftarrow 0$
+        \Comment{Initialize substep multiplier and accumulated time increment}
+      \State $\Bsig^k \leftarrow \Bsig_{qs}^n$, $\Bveps^{\Tp,k} \leftarrow \Bveps^{\Tp,n}$,
+             $\phi^k \leftarrow \phi^n$, $S_w^k \leftarrow S_w^n$,
+             $X^k \leftarrow X^n$, $\Balpha^k \leftarrow \Balpha^n$,
+             $K^k \leftarrow K^n$, $G^k \leftarrow G^n$, 
+             $p_3^k \leftarrow p_3^n$, \WRP
+             $\BsT^k \leftarrow \BsT^n$, $(\bar{p^w})^k \leftarrow (\bar{p^w})^n$, 
+             $I_1^{\Teff,k} \leftarrow I_1^{\Teff,n}$, 
+             $\sqrt{J_2^k} \leftarrow \sqrt{J_2^n}$, $r^k \leftarrow r^n$, 
+             $z_\Teff^k \leftarrow z_\Teff^n$, $\Veps_v^{\Tp,k} \leftarrow \Veps_v^{\Tp,n}$
+      \Repeat
+        \State isSuccess, $\Bsig^{k+1}$, $\Bveps^{\Tp,{k+1}}$, $\phi^{k+1}$, $S_w^{k+1}$, $X^{k+1}$, 
+          $\Balpha^{k+1}$, $K^{k+1}$, $G^{k+1}$, $p_3^{k+1}$ $\leftarrow$ \WRP
+          \textsc{computeSubstep}($\Bsig^k$, $\Bveps^{\Tp,k}$, $\phi^k$, $S_w^k$, 
+                                  $X^k$, $\Balpha^k$, $K^k$, $G^k$,
+                                  $\BsT^k$, $(\bar{p^w})^k$, $I_1^{\Teff,k}$,  
+                                  $\sqrt{J_2^k}$, $r^k$, $z_\Teff^k$, \WRP 
+                                  $\Veps_v^{\Tp,k}$,
+                                  $p_3^k$, $\BdT^{n+1}$, $\delta t$) \WRP
+          \Comment{Compute updated stress and internal variables for the current substep}
+        
+        \If {isSuccess = TRUE}
+           \State $t_\Tlocal \leftarrow t_\Tlocal + \delta t$
+           \State $\Bsig^k \leftarrow \Bsig^{k+1}$, $\Bveps^{\Tp,k} \leftarrow \Bveps^{\Tp,{k+1}}$,
+                  $\phi^k \leftarrow \phi^{k+1}$, $S_w^k \leftarrow S_w^{k+1}$,
+                  $X^k \leftarrow X^{k+1}$, $\Balpha^k \leftarrow \Balpha^{k+1}$ 
+           \State $K^k \leftarrow K^{k+1}$, $G^k \leftarrow G^{k+1}$, $p_3^k \leftarrow p_3^{k+1}$
+        \Else
+           \State $\delta t \leftarrow \delta t/2$
+             \Comment {Halve the timestep}
+           \State $\chi \leftarrow 2\chi$
+             \Comment {Keep a count of how many times the timestep has been halved.}
+           \If {$\chi > \chi_\Tmax$}
+             \State \Return isSuccess = FALSE, $\Bsig^k$, $\phi^k$, $S_w^k$, $X^k$, $\Balpha^k$,
+                                            $\Bveps^{\Tp,k}$, $K^k$, $G^k$, $p_3^k$ \WWRP 
+               \Comment {Algorithm has failed to converge}
+           \EndIf
+        \EndIf
+      \Until {$t_\Tlocal \ge \Delta t$}
+      \State $\Bsig_{qs}^{n+1}$ $\leftarrow$ $\Bsig^{k+1}$,  
+             $\Balpha^{n+1}$ $\leftarrow$ $\Balpha^{k+1}$,
+             $\Beps^{\Tp,n+1}$ $\leftarrow$ $\Beps^{\Tp,{k+1}}$, 
+             $\phi^{n+1}$ $\leftarrow$ $\phi^{{k+1}}$, 
+             $S_w^{n+1}$ $\leftarrow$ $S_w^{{k+1}}$, 
+             $X^{n+1}$ $\leftarrow$ $X^{{k+1}}$ 
+      \State $K^{n+1} \leftarrow K^{k+1}$, $G^{n+1} \leftarrow G^{k+1}$, $p_3^{n+1} \leftarrow p_3^{k+1}$
+      \State \Return isSuccess = TRUE, $\Bsig_{qs}^{n+1}$, $\phi^{n+1}$, $S_w^{n+1}$, $X^{n+1}$, 
+        $\Balpha^{n+1}$, $\Bveps^{\Tp,n+1}$, $K^{n+1}$, $G^{n+1}$, $p_3^{n+1}$ \WRP
+        \Comment {Algorithm has converged}
+      
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsubsection{Computing the trial stress}
+  The pseudocode of the trial stress algorithm is given below.
+\begin{breakablealgorithm}
+  \caption{Computing the trial stress}
+  \begin{algorithmic}[1]
+    \Procedure{computeTrialStress}{$\Bsig_{qs}^n$, $K^n$, $G^n$, $\BdT^{n+1}$, $\Delta t$}
+      \State $\Delta\Bveps \leftarrow \BdT^{n+1}\,\Delta t$
+        \Comment{Total strain increment}
+      \State $\Delta\Bveps^\Tiso \leftarrow \Third \Tr(\Delta\Bveps) \BI$
+      \State $\Delta\Bveps^\Tdev \leftarrow \Delta\Bveps - \Delta\Bveps^\Tiso$
+      \State $\Bsig_\Trial \leftarrow \Bsig_{qs}^n + 3 K^n \Delta\Bveps^\Tiso 
+               + 2 G^n \Delta\Bveps^\Tdev$ 
+      \State \Return $\Bsig_\Trial$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsubsection{Computing the number of subcycles in the return algorithm}
+To allow for nonlinear parameter variations, the algorithm breaks a trial loading step into
+subcycles.  The algorithm below, determines the number of substeps based on the magnitude of
+the trial stress increment relative to the characteristic dimensions of the yield surface.  Another
+comparison uses the value of the pressure dependent elastic properties at $\Bsig_{qs}^n$ and
+$\Bsig_\Trial$ and adjusts the number of substeps if there is a large change in elastic moduli.
+This ensures an accurate solution for nonlinear elasticity even with fully elastic loading.
+
+
+\begin{breakablealgorithm}
+  \caption{Computing the number of subcycles}
+  \begin{algorithmic}[1]
+    \Require $n_\Tmax$, $\epsilon_\Tsub \leftarrow 10^{-4}$, $K^n$, $K^\Trial$, 
+       $I_1^\Tpeak$, $a_1$, $X^n$, $\Bsig_{qs}^n$, $\Bsig_\Trial$
+    \Procedure{computeStepDivisions}{}
+      \State $n_{\text{bulk}} \leftarrow \lceil\left|K^n - K^\Trial\right|/K^n\rceil$  
+        \Comment {Compute change in bulk modulus}
+      \State $\Delta\Bsig \leftarrow \Bsig_\Trial - \Bsig_{qs}^n$
+      \State $L \leftarrow \Half(I_1^\Tpeak - X^n)$
+      \If {$a_1$ $> 0$}
+        \State $L \leftarrow $ \textsc{min}($L$, $a_1$)
+      \EndIf
+      \State $n_{\text{yield}} \leftarrow \lceil\epsilon_\Tsub \times \Norm{\Delta\Bsig}{}/L\rceil$
+        \Comment{Compute trial stress increment relative to yield surface size}
+      \State $n_\Tsub \leftarrow$ \textsc{max}($n_\text{bulk}$, $n_\text{yield}$)
+        \Comment{$n_\Tsub$ is the maximum of the two values}
+      \If {$n_\Tsub > n_\Tmax$}
+        \State $n_\Tsub \leftarrow -1$
+      \EndIf
+      \State \Return $n_\Tsub$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsubsection{Updating the stress for a substep:  consistency bisection}
+This procedure computes the updated stress state for a substep that may be either elastic, plastic, or 
+partially elastic.  It uses Homel's consistency bisection and non-hardening return 
+concepts~\cite{Homel2015}.
+
+\begin{breakablealgorithm}
+  \caption{Computing the stress and internal variable update for a substep}
+  \begin{algorithmic}[1]
+    \Require $\BdT^{n+1}$, $\delta t$, $\Bsig^k$, $\Bveps^{\Tp,k}$, $\phi^k$, $S_w^k$, $X^k$, $\Balpha^k$, 
+             $K^k$, $G^k$, $\BsT^k$, $(\bar{p^w})^k$, $I_1^{\Teff,k}$, 
+             $\sqrt{J_2^k}$, $r^k$, $z_\Teff^k$, $\Veps_v^{\Tp,k}$,
+             $p_3^k$, $a_1$, $a_2$, $a_3$, $a_4$, $I_1^\Tpeak$, $R_c$, $\beta$,
+             \TTObj{yieldCondition}
+    \Procedure{computeSubstep}{}
+      \State $\delta \Bveps \leftarrow \BdT^{n+1} \delta t$
+        \Comment{Compute strain increment}
+      \State $\Bsig_\Trial \leftarrow$ \textsc{computeTrialStress}($\Bsig^k$, $K^k$, $G^k$,
+                                                                  $\BdT^{n+1}$, $\Delta t$)
+        \Comment{Compute substep trial stress}
+      \State $\Balpha^\Trial \leftarrow \Balpha^k$, 
+             $K^\Trial \leftarrow K^k$, 
+             $G^\Trial \leftarrow G^k$, 
+             $p_3^\Trial \leftarrow p_3^k$, 
+             $\phi^\Trial \leftarrow \phi^k$, 
+             $S_w^\Trial \leftarrow S_w^k$, \WRP
+             $X^\Trial \leftarrow X^k$, 
+             $\Bveps^{\Tp,\Trial} \leftarrow \Bveps^{\Tp,k}$ 
+        \Comment{Set all other trial quantities to the values \WRP at the beginning of the substep}
+      \State $K^\Trial$, $G^\Trial$, $\BsT^\Trial$, $(\bar{p^w})^\Trial$, $I_1^{\Teff,\Trial}$, 
+             $\sqrt{J_2^\Trial}$, $r^\Trial$, $z_\Teff^\Trial$, $\Veps_v^{\Tp,\Trial}$ $\leftarrow$ \WRP
+          \textsc{computeElasticProperties}($\Bsig_\Trial$, 
+             $\phi^\Trial$, $S_w^\Trial$, $\Beps^{\Tp,\Trial}$, $\Balpha^\Trial$, $p_3^\Trial$) \WRP
+        \Comment{Compute elastic moduli and stress invariants for the trial state}
+      \State isElastic $\leftarrow$ 
+        \TTObj{yieldCondition}.\textsc{evalYieldCondition}($I_1^{\Teff,\Trial}$, $\sqrt{J_2^\Trial}$, 
+          $X^\Trial$, $(\bar{p^w})^\Trial$, $\phi^\Trial$, $S_w^\Trial$, \WRP
+          $a_1$, $a_2$, $a_3$, $a_4$, $I_1^\Tpeak$, $R_c$, $\beta$) \WRP
+        \Comment{Determine whether the trial stress is elastic or not}
+      \If {isElastic = TRUE}
+        \State $\Bsig^{k+1} \leftarrow \Bsig_\Trial$,
+               $\Bveps^{\Tp,{k+1}} \leftarrow \Bveps^{\Tp,\Trial}$,
+               $\phi^{k+1} \leftarrow \phi^\Trial$,
+               $S_w^{k+1} \leftarrow S_w^\Trial$,
+               $X^{k+1} \leftarrow X^\Trial$,
+               $\Balpha^{k+1} \leftarrow \Balpha^\Trial$
+        \State $K^{k+1} \leftarrow K^\Trial$, $G^{k+1} \leftarrow G^\Trial$, 
+               $p_3^{k+1} \leftarrow p_3^\Trial$ \WRP
+          \Comment{This is an elastic substep. Update the state to the trial value.}
+        \State isSuccess = TRUE
+        \State \Return isSuccess, $\Bsig^{k+1}$, $\Bveps^{\Tp,{k+1}}$ $\phi^{k+1}$, $S_w^{k+1}$, $X^{k+1}$,
+               $\Balpha^{k+1}$, $K^{k+1}$, $G^{k+1}$, $p_3^{k+1}$
+      \EndIf
+      \State $\Bsig_\Tfix$, $\delta\Bveps^\Tp_\Tfix$ $\leftarrow$
+        \textsc{nonHardeningReturn}($\Bsig^k$, $\delta\Bveps$, $X^k$, $K^k$, $G^k$, $(\bar{p^w})^k$, \WRP
+           $\BsT^\Trial$, $\sqrt{J_2^\Trial}$, $r^\Trial$, $z_\Teff^\Trial$, 
+           $a_1$, $a_2$, $a_3$, $a_4$, $I_1^\Tpeak$, $R_c$, $\beta$) \WRP 
+        \Comment{Compute return to updated yield surface (no hardening)}
+      \State isSuccess, $\Bsig^{k+1}$, $\Bveps^{\Tp,{k+1}}$, $\Balpha^{k+1}$,
+        $(\bar{p^w})^{k+1}$, $\phi^{k+1}$, $S_w^{k+1}$, $X^{k+1}$, $K^{k+1}$, $G^{k+1}$, 
+        $\BsT^{k+1}$, $(\bar{p^w})^{k+1}$, $I_1^{\Teff,{k+1}}$, $\sqrt{J_2^{k+1}}$, \WRP
+        $r^{k+1}$, $z_\Teff^{k+1}$, $\Veps_v^{\Tp,{k+1}}$
+        $\leftarrow$ \textsc{consistencyBisection}($\delta\Bveps$, $\Bveps^{\Tp,k}$, 
+           $\Bsig^k$, $K^k$, $G^k$, $(\bar{p^w})^k$, $\phi^k$, $S_w^k$, $X^k$, \WRP
+           $\BsT^\Trial$, $I_1^{\Teff,\Trial}$, $\sqrt{J_2^\Trial}$, 
+           $r^\Trial$, $z_\Teff^\Trial$, $\Veps_v^{\Tp,\Trial}$,
+           $p_3^\Trial$, $a_1$, $a_2$, $a_3$, $a_4$, $I_1^\Tpeak$, 
+           $R_c$, $\beta$, $i_\Tmax$, $j_\Tmax$, \WRP
+           $\Bsig_\Tfix$, $\delta\Bveps^\Tp_\Tfix$)
+        \Comment{The bisection return algorithm to take care of yield surface hardening.}
+      \If {iSuccess = FALSE}
+        \State \Return isSuccess, $\Bsig^k$, $\Bveps^{\Tp,k}$, $\phi^k$, $S_w^k$, $X^k$, 
+          $\Balpha^k$, $K^k$, $G^k$, $p_3^k$
+      \EndIf
+      \State \Return isSuccess, $\Bsig^{k+1}$, $\Bveps^{\Tp,{k+1}}$, $\phi^{k+1}$, $S_w^{k+1}$, $X^{k+1}$, 
+          $\Balpha^{k+1}$, $K^{k+1}$, $G^{k+1}$, $p_3^{k+1}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsubsection{The nonhardening return algorithm}
+\label{sec:nonhardening_return}
+The nonhardening return algorithm uses a transformed space (see~\cite{Homel2015}) where the computation 
+is carried out in special Lode coordinates ($z_\Teff, r'$) where
+\BBeq
+  z_\Teff :=  \cfrac{\Tr(\Bsig - \Balpha)}{\sqrt{3}} \quad \Tand \quad
+  r' = \beta r \sqrt{\cfrac{3K}{2G}} ~,~~ r := \sqrt{2J_2} \,.
+\BEeq
+If the flow rule is non-associative, the yield surface parameter $\beta \ne 1$. 
+
+
+The nonhardening return algorithm pseudocode is listed below:
+\begin{breakablealgorithm}
+\caption{Non-hardening return algorithm}
+\begin{algorithmic}[1]
+  \Require $\Bsig^k$, $\delta\Bveps$, $X^k$, $K^k$, $G^k$, $(\bar{p^w})^k$, 
+           $\BsT^\Trial$, $\sqrt{J_2^\Trial}$, $r^\Trial$, $z_\Teff^\Trial$, 
+           $a_1$, $a_2$, $a_3$, $a_4$, $I_1^\Tpeak$, $R_c$, $\beta$, \TTObj{yieldCondition}
+  \Procedure{nonHardeningReturn}{}
+  \State $r'_\Trial \leftarrow \beta\,r^\Trial \sqrt{\cfrac{3K^k}{2G^k}}$
+         \Comment{Transform the trial $r$ coordinate}
+  \State $X_\Teff^k \leftarrow X^k + 3 (\bar{p^w})^k$
+  \State $z_\Teff^\Tclose$, $r'_\Tclose$ $\leftarrow$ 
+           \TTObj{yieldCondition}.\textsc{getClosestPoint}($K^k$, $G^k$, $X_\Teff^k$, $a_1$, $a_2$, 
+           $a_3$, $a_4$, $I_1^\Tpeak$, $R_c$, $\beta$, \WRP $z_\Teff^\Trial$, $r'_\Trial$)
+  \State $I_1^{\Tclose} \leftarrow \sqrt{3} z_\Teff^\Tclose - 3 (\bar{p^w})^k$,
+         $\sqrt{J_2^\Tclose} \leftarrow \frac{1}{\beta}\sqrt{\frac{G^k}{3K^k}}\,r'_\Tclose$
+  \If {$\sqrt{J_2^\Trial} > 0$}
+     \State $\Bsig^\Tfix = \Third I_1^{\Tclose} \BI + \frac{\sqrt{J_2^\Tclose}}{\sqrt{J_2^\Trial}}\,\BsT^\Trial$
+     \Comment{Compute updated total stress}
+  \Else
+     \State $\Bsig^\Tfix = \Third I_1^{\Tclose} \BI + \BsT^\Trial$
+     \Comment{Compute updated total stress when the trial stress is hydrostatic}
+  \EndIf
+  \State $\delta\Bsig_\Tfix \leftarrow \Bsig^\Tfix - \Bsig^k$
+    \Comment{Compute stress increment}
+  \State $\delta\Bsig_\Tfix^\Tiso \leftarrow \frac{1}{3} \Tr(\delta\Bsig_\Tfix) \BI$, 
+         $\quad \delta\Bsig_\Tfix^\Tdev \leftarrow \delta\Bsig_\Tfix - \delta\Bsig_\Tfix^\Tiso$ 
+  \State $\delta\Bveps^{\Tp,\Tfix} = \delta\Bveps - \frac{1}{3K^k}\,\delta\Bsig_\Tfix^\Tiso -
+           \frac{1}{2G^k}\,\delta\Bsig_\Tfix^\Tdev$
+         \Comment{Compute plastic strain increment}
+  \State \Return $\Bsig^\Tfix$, $\delta\Bveps^{\Tp,\Tfix}$
+  \EndProcedure
+\end{algorithmic}
+\end{breakablealgorithm}
+
+\paragraph{Finding the closest point in transformed space}
+\begin{breakablealgorithm}
+\caption{Compute the closest point from the trial state to transformed non-hardening yield surface}
+\begin{algorithmic}[1]
+  \Require $K^k$, $G^k$, $X_\Teff^k$, $a_1$, $a_2$, $a_3$, $a_4$, $I_1^\Tpeak$, $R_c$, $\beta$,
+           $z_\Teff^\Trial$, $r'_\Trial$
+  \Procedure{getClosestPoint}{}
+    \State $n_\Tpoly \leftarrow 5$
+    \State Set up $I_1^\Tmax$, $I_1^\Tmin$, $I_1^\Tmid=1/2(I_1^\Tmax+I_1^\Tmin)$ limits of the yield surface.
+    \State Set up bisection: $\eta_\Tlow \leftarrow 0$, $\eta_\Thigh \leftarrow 1$, 
+           $\eta_\Tmid \leftarrow 1/2(\eta_\Tlow + \eta_\Thigh)$
+    \While {\textsc{abs}($\eta^\Thigh - \eta^\Tlow$) $>$ TOLERANCE}
+      \State $\Bx_\Tpoly \leftarrow $ \textsc{getYieldSurfacePointsAll\_RprimeZ}($n_\Tpoly$, 
+        $K^k$, $G^k$, $X_\Teff^k$, \WRP $a_1$, $a_2$, $a_3$, $a_4$, $I_1^\Tpeak$, $R_c$, $\beta$ ) \WRP
+        \Comment{Get the polygon that represents the yield surface in $z_\Teff$-$r'$ space.}
+      \State $\Bx_\Tclose \leftarrow $ \textsc{findClosestPoint}($z_\Teff^\Trial$, $r'_\Trial$,
+                                                                $\Bx_\Tpoly$) \WRP
+        \Comment{Find the closest point in the discretized segments to the trial stress state.}
+      \State Compute $I_1^\Tclose$ from $\Bx_\Tclose$
+      \If {$I_1^\Tclose < I_1^\Tmid$}
+        \State $I_1^\Tmax \leftarrow I_1^\Tmid$, $\eta_\Thigh \leftarrow \eta_\Tmid$
+        \Comment{Update mid point}
+      \Else
+        \State $I_1^\Tmin \leftarrow I_1^\Tmid$, $\eta_\Tlow \leftarrow \eta_\Tmid$
+        \Comment{Update mid point}
+      \EndIf
+      \State Recompute $I_1^\Tmid$, $\eta_\Tmid$ and update old closest point.
+    \EndWhile
+    \State \Return isSuccess = TRUE, $\Bx_\Tclose.z_\Teff$ , $\Bx_\Tclose.r'$ 
+  \EndProcedure
+\end{algorithmic}
+\end{breakablealgorithm}
+
+\paragraph{Finding the yield surface polygon in $z_\Teff$-$r'$ space}
+\begin{breakablealgorithm}
+\caption{Find points in a closed polygon that describes the yield surface in $z_\Teff$-$r'$ space}
+\begin{algorithmic}[1]
+  \Require $n_\Tpoly$, $K^k$, $G^k$, $X_\Teff^k$, $a_1$, $a_2$, $a_3$, $a_4$, $I_1^\Tpeak$, $R_c$, $\beta$
+  \Procedure{getYieldSurfacePointsAll\_RprimeZ}{}
+    \State $\kappa \leftarrow I_1^\Tpeak - R_c (I_1^\Tpeak - X_\Teff^k)$
+      \Comment{Compute $\kappa$.}
+    \State $I_1^\Teff \leftarrow$ \textsc{linspace}(\texttt{from} = $X_\Teff^k$, 
+      \texttt{to} = $I_1^\Tpeak$, \texttt{points} = $n_\Tpoly$)  \WRP
+      \Comment{Create an equally spaced set of $I_1^\Teff$ values.}
+    \For{$I_1$ \textbf{in} $I_1^\Teff$}
+      \State $F_f = a_1 - a_3 \exp(a_2 I_1) - a_4 I_1$;
+        \Comment{Compute $F_f$.}
+      \State $F_c^2 \leftarrow 1$
+      \If {$I_1 < \kappa$ \textbf{and} $X_\Teff^k < I_1$} 
+        \State $F_c^2 = 1 - \left[\frac{\kappa - I_1}{\kappa - X_\Teff^k}\right]^2$;
+          \Comment{Compute $F_c$.}
+      \EndIf
+      \State $J_2 = F_f^2 \,F_c^2$
+        \Comment{Compute $J_2$ and push into a vector}
+    \EndFor
+    \State $z_\Teff \leftarrow I_1^\Teff/\sqrt{3}$ ~,~~ 
+           $r' \leftarrow \beta \sqrt{\frac{3K^k}{2G^k}} \sqrt{2J_2}$
+    \State $\Bx_\Tpoly.z_\Teff \leftarrow z_\Teff \cup \textsc{reverse}(z_\Teff)$ ~,~~
+           $\Bx_\Tpoly.r' \leftarrow r' \cup \textsc{reverse}(-r')$ \WRP
+      \Comment {Add the points on the negative $r'$ side of the polygon}
+    \State $\Bx_\Tpoly[2n_\Tpoly+1] \leftarrow \Bx_\Tpoly[1]$
+      \Comment {Add the first point to close the polygon}
+    \State \Return $\Bx_\Tpoly$
+  \EndProcedure
+\end{algorithmic}
+\end{breakablealgorithm}
+
+
+\paragraph{Finding the closest point on yield surface in $z_\Teff$-$r'$ space}
+\begin{breakablealgorithm}
+\caption{Find the closest point from the trial stress state on the polyline describing the yield surface}
+\begin{algorithmic}[1]
+  \Require $\Bx_\Trial.z_\Teff$, $\Bx_\Trial.r'$, $\Bx_\Tpoly$
+  \Procedure{findClosestPoint}{}
+    \State $i \leftarrow 0$
+    \For {$\{\Bx_\Tstart, \Bx_\Tend\}$ \textbf{in} $\Bx_\Tpoly$}
+      \State $\Bx_\Tseg \leftarrow \Bx_\Tend - \Bx_\Tstart$
+      \State $\Bx_\Tproj \leftarrow \Bx_\Trial - \Bx_\Tstart$
+      \State $ t \leftarrow \frac{\Bx_\Tproj \cdot \Bx_\Tseg}{\Norm{\Bx_\Tseg}{}} $
+      \State $i \leftarrow i+1$
+      \If {$ t < 0$}
+        \State $\Bx[i] \leftarrow \Bx_\Tstart$
+      \ElsIf {$ t > 1 $}
+        \State $\Bx[i] \leftarrow \Bx_\Tend$
+      \Else
+        \State $\Bx[i] \leftarrow \Bx_\Tstart + t\,\Bx_\Tseg$
+      \EndIf
+    \EndFor
+
+    \State $d^2_\Tmin \leftarrow $ DOUBLE\_MAX
+    \State $\Bx_\Tclose \leftarrow \Bzero$
+    \For {$\Bx_i$ \textbf{in} $\Bx$}
+      \State $d^2 \leftarrow $ \textsc{distanceSq}($\Bx_i$, $\Bx_\Trial$)
+      \If {$d^2 < d^2_\Tmin$}
+        \State $d^2_\Tmin \leftarrow d^2$
+        \State $\Bx_\Tclose \leftarrow \Bx_i$
+      \EndIf
+    \EndFor
+
+    \State \Return $\Bx_\Tclose$
+  \EndProcedure
+\end{algorithmic}
+\end{breakablealgorithm}
+
+\subsubsection{Consistency bisection algorithm}
+
+\begin{breakablealgorithm}
+  \caption{The consistency bisection algorithm for partially saturated materials}
+  \begin{algorithmic}[1]
+    \Require $\delta\Bveps$, $\Bveps^{\Tp,k}$, 
+           $\Bsig^k$, $K^k$, $G^k$, $(\bar{p^w})^k$, $\phi^k$, $S_w^k$, $X^k$, 
+           $\BsT^\Trial$, $I_1^{\Teff,\Trial}$, $\sqrt{J_2^\Trial}$, 
+           $r^\Trial$, $z_\Teff^\Trial$, $\Veps_v^{\Tp,\Trial}$,
+           $p_3^\Trial$, $a_1$, $a_2$, $a_3$, $a_4$, $I_1^\Tpeak$, 
+           $R_c$, $\beta$, $i_\Tmax$, $j_\Tmax$,
+           $\Bsig_\Tfix$, $\delta\Bveps^\Tp_\Tfix$ , \TTObj{yieldCondition}
+    \Procedure{consistencyBisection}{}
+      \State $\delta\Veps^{\Tp,\Tfix}_v \leftarrow \Tr(\delta\Bveps^\Tp_\Tfix)$
+      \State $i \leftarrow 1$
+      \State $\eta^\Tin \leftarrow 0$,  $\eta^\Tout \leftarrow 1$ 
+      \While {\textsc{abs}($\eta^\Tout - \eta^\Tin$) $>$ TOLERANCE}
+        \State $j \leftarrow 1$
+        \State isElastic $\leftarrow$ TRUE
+        \While {isElastic = TRUE}
+          \State $\eta^\Tmid \leftarrow \Half(\eta^\Tin + \eta^\Tout)$
+          \State $\delta\Veps^{\Tp,\Tmid}_v$ $\leftarrow$ $\eta^\Tmid \delta\Veps^{\Tp,\Tfix}_v$  
+          \State $(\bar{p^w})^\Tmid$, $\phi^\Tmid$, $S_w^\Tmid$, $X^\Tmid$ $\leftarrow$
+            \textsc{computeInternalVariables}($K^k$, $G^k$, $(\bar{p^w})^k$, $\phi^k$, $S_w^k$,\WWRP 
+              $X^k$, $\delta\Veps^{\Tp,\Tmid}_v$)
+            \Comment{Update the internal variables using the bisected increment \WWRP
+                     of the volumetric plastic strain}
+          \State isElastic $\leftarrow$ 
+            \TTObj{yieldCondition}.\textsc{evalYieldCondition}($I_1^{\Teff,\Trial}$, $\sqrt{J_2^\Trial}$, 
+              $X^\Tmid$, $(\bar{p^w})^\Tmid$, \WWRP
+              $\phi^\Tmid$, $S_w^\Tmid$,
+              $a_1$, $a_2$, $a_3$, $a_4$, $I_1^\Tpeak$, $R_c$, $\beta$) \WWRP
+            \Comment{Determine whether the trial stress is elastic or not}
+          \If {isElastic = TRUE}
+            \State $\eta^\Tout \leftarrow \eta^\Tmid$ 
+            \Comment{If the local trial state is inside the updated yield surface, the yield \WWRP
+                     condition evaluates to ``elastic''.  We need to reduce the size of the  \WWRP
+                     yield surface by decreasing the plastic strain increment.}  
+            \State $j \leftarrow j+1$
+            \If {$j \ge j_\Tmax$}
+             \State \Return isSuccess $\leftarrow$ FALSE
+               \Comment{The bisection algorithm failed because of \WWRP too many iterations.}
+            \EndIf
+          \EndIf
+        \EndWhile
+        \State $\Bsig_\Tfix^\Tnew$, $\delta\Bveps^{\Tp,\Tnew}_\Tfix$ $\leftarrow$
+          \textsc{nonHardeningReturn}($\Bsig^k$, $\delta\Bveps$, $X^\Tmid$, $K^k$, $G^k$, 
+             $(\bar{p^w})^\Tmid$, \WRP
+             $\BsT^\Trial$, $\sqrt{J_2^\Trial}$, $r^\Trial$, $z_\Teff^\Trial$, 
+             $a_1$, $a_2$, $a_3$, $a_4$, $I_1^\Tpeak$, $R_c$, $\beta$) \WRP 
+          \Comment{Compute return to updated yield surface (no hardening)}
+        \If {\textsc{sign}($\Tr(\Bsig_\Trial - \Bsig_\Tfix^\Tnew)$) $\ne$ 
+             \textsc{sign}($\Tr(\Bsig_\Trial - \Bsig_\Tfix)$)}
+          \State $\eta^\Tout \leftarrow \eta^\Tmid$ 
+            \Comment{Too much plastic strain}
+          \State \textbf{continue}
+        \EndIf
+        \If {$\Norm{\delta\Bveps^{\Tp,\Tnew}_\Tfix}{} > \eta^\Tmid \Norm{\delta\Bveps^{\Tp}_\Tfix}{}$}
+          \State $\eta^\Tin \leftarrow \eta^\Tmid$ 
+            \Comment{Too little plastic strain}
+        \Else
+          \State $\eta^\Tout \leftarrow \eta^\Tmid$ 
+            \Comment{Too much plastic strain}
+        \EndIf
+        \State $i \leftarrow i+1$
+        \If {$i \ge i_\Tmax$}
+          \State \Return isSuccess $\leftarrow$ FALSE
+          \Comment {Too many iterations}
+        \EndIf
+      \EndWhile 
+      \State $\delta\Veps^{\Tp,k+1}_{v,\Tfix} \leftarrow \Tr(\delta\Bveps^{\Tp,k+1}_\Tfix)$
+      \State $(\bar{p^w})^{k+1}$, $\phi^{k+1}$, $S_w^{k+1}$, $X^{k+1}$ $\leftarrow$
+        \textsc{computeInternalVariables}($K^k$, $G^k$, $(\bar{p^w})^k$, $\phi^k$, $S_w^k$,\WRP 
+          $X^k$, $\delta\Veps^{\Tp,{k+1}}_{v,\Tfix}$)
+        \Comment{Update the internal variables using the bisected increment \WRP
+                 of the volumetric plastic strain}
+      \State $\Bsig^{k+1} \leftarrow \Bsig^\Tnew_\Tfix$~,~~
+             $\Balpha^{k+1} \leftarrow -(\bar{p^w})^{k+1} \BI$ ~,~~ $p_3^{k+1} \leftarrow p_3^\Trial$
+      \State $\Bveps^{\Tp,{k+1}} = \Bveps^{\Tp,k} + \delta\Bveps^{\Tp,{k+1}}$
+        \Comment{Update the plastic strain}
+      \State $K^{k+1}$, $G^{k+1}$, $\BsT^{k+1}$, $(\bar{p^w})^{k+1}$, $I_1^{\Teff,{k+1}}$, 
+             $\sqrt{J_2^{k+1}}$, $r^{k+1}$, $z_\Teff^{k+1}$, $\Veps_v^{\Tp,{k+1}}$ $\leftarrow$ \WRP
+          \textsc{computeElasticProperties}($\Bsig^{k+1}$, 
+             $\phi^{k+1}$, $S_w^{k+1}$, $\Beps^{\Tp,{k+1}}$, $\Balpha^{k+1}$, $p_3^{k+1}$) \WRP
+        \Comment{Compute elastic moduli and stress invariants for the new state}
+      \State \Return isSuccess $\leftarrow$ TRUE, $\Bsig^{k+1}$, $\Bveps^{\Tp,{k+1}}$, $\Balpha^{k+1}$,
+        $(\bar{p^w})^{k+1}$, $\phi^{k+1}$, $S_w^{k+1}$, $X^{k+1}$, $K^{k+1}$, $G^{k+1}$, \WRP
+        $\BsT^{k+1}$, $(\bar{p^w})^{k+1}$, $I_1^{\Teff,{k+1}}$, $\sqrt{J_2^{k+1}}$, $r^{k+1}$, 
+        $z_\Teff^{k+1}$, $\Veps_v^{\Tp,{k+1}}$, $p_3^{k+1}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+ \subsubsection{Updating the internal variables}
+\begin{breakablealgorithm}
+  \caption{Updating the internal variables for partially saturated materials}
+  \begin{algorithmic}[1]
+    \Require $\Bsig^k$, $\Veps_v^{\Tp,k}$, $K^k$, $G^k$, $(\bar{p^w})^k$, $\phi^k$, $S_w^k$, $X^k$, 
+             $\delta\Veps_v^\Tp$, \TTList{fluidParams}, \TTList{crushParams}, 
+             \TTObj{airModel}, \TTObj{waterModel}
+    \Procedure{computeInternalVariables}{}
+      \State $\bar{\Veps_v^{\Tp,k}} \leftarrow -\Veps_v^{\Tp,k}$,
+             $\delta\bar{\Veps_v^\Tp} \leftarrow -\delta\Veps_v^\Tp$
+      \State $\bar{p^w_0} \leftarrow$ \TTList{fluidParams}.$\bar{p^w_0}$,
+             $S_0 \leftarrow$ \TTList{fluidParams}.$S_0$,
+             $\phi_0 \leftarrow$ \TTList{fluidParams}.$\phi_0$,
+             $p_1^\Tsat \leftarrow$ \TTList{crushParams}.$p_1^\Tsat$
+      \State $K_a \leftarrow$ \TTObj{airModel}.\textsc{computeBulkModulus}($(\bar{p^w})^k$)
+      \State $K_w \leftarrow$ \TTObj{waterModel}.\textsc{computeBulkModulus}($(\bar{p^w})^k$)
+      \State $\Veps_v^{a,0} \leftarrow$ 
+        \TTObj{airModel}.\textsc{computeElasticVolumetricStrain}($\bar{p^w_0}$)
+      \State $\Veps_v^a \leftarrow$ 
+        \TTObj{airModel}.\textsc{computeElasticVolumetricStrain}($(\bar{p^w})^k$)
+      \State $\Veps_v^w \leftarrow$ 
+        \TTObj{waterModel}.\textsc{computeElasticVolumetricStrain}($(\bar{p^w})^k$, $\bar{p^w_0}$)
+      \State $\bar{\Veps_v^a} \leftarrow - (\Veps_v^a - \Veps_v^{a,0})$, 
+             $\bar{\Veps_v^w} \leftarrow - \Veps_v^w$ 
+      \State $\CalC_p \leftarrow S_0\,\exp(\bar{\Veps_v^a} - \bar{\Veps_v^w})$
+      \State $\CalD_p \leftarrow \frac{1 - S_0}{(1 - S_0 + \CalC_p)^2}$
+      \State $\Deriv{\CalC_p}{\bar{p^w}} \leftarrow \CalC_p \left[\frac{1}{K_a} - \frac{1}{K_w}\right]$
+      \State $\CalG_a$ $\leftarrow$ $\exp(\bar{\Veps_v^{\Tp,k}} - \bar{\Veps_v^a})$, ~
+             $\CalG_w$ $\leftarrow$ $\exp(\bar{\Veps_v^{\Tp,k}} - \bar{\Veps_v^w})$
+      \State $\CalB_p \leftarrow \frac{1}{(1 - S_0)\,\CalG_a + S_0\,\CalG_w}
+               \left[-\frac{(1-\phi^k)\phi^k}{\phi_0} \left(\frac{S_w^k}{K_w} + \frac{1 - S_w^k}{K_a} \right) + 
+               \frac{1 - S_0}{K_a}\,\CalG_a + \frac{S_0}{K_w}\,\CalG_w \right] $ 
+      \State $(\bar{p^w})^{k+1} \leftarrow \text{\textsc{max}}\left[(\bar{p^w})^k + \frac{1}{\CalB_p}\,\delta\Veps_v^\Tp, 0\right]$ 
+        \Comment{Update the pore pressure making sure that pressure does\WRP not become negative  during 
+                 dilatative plastic deformations.}
+      \State $\Xbar_d, \Deriv{\Xbar_d}{\Veps_v^\Tp} \leftarrow$ 
+          \textsc{computeDrainedHydrostaticStrengthAndDeriv}($\bar{\Veps_v^{\Tp,k}}$) \WRP
+        \Comment{Compute the drained hydrostatic compressive strength and its derivative}
+      \State $\Xbar^{k+1} = -X^k + \left[(1 - S_w^k + p_1^\Tsat\,S_w^k)\,\Deriv{\Xbar_d}{\Veps_v^\Tp} +
+        \Xbar_d\,(p_1^\Tsat - 1)\,\frac{\CalD_p}{\CalB_p}\,\Deriv{\CalC_p}{\bar{p^w}} + 
+        \frac{3}{\CalB_p}\right]\,\delta\Veps_v^\Tp$ \WRP
+        \Comment{Update the hydrostatic compressive strength}
+      \State $X^{k+1} \leftarrow -\Xbar^{k+1}$
+      \State $\bar{\Veps_v^{\Tp,k+1}} \leftarrow \bar{\Veps_v^{\Tp,k}} + \delta\bar{\Veps_v^\Tp}$
+        \Comment{Compute the updated volumetric plastic strain.}
+      \State $\Veps_v^{a,k+1} \leftarrow$ 
+        \TTObj{airModel}.\textsc{computeElasticVolumetricStrain}($(\bar{p^w})^{k+1}$)
+      \State $\Veps_v^{w,k+1} \leftarrow$ 
+        \TTObj{waterModel}.\textsc{computeElasticVolumetricStrain}($(\bar{p^w})^{k+1}$, $\bar{p^w_0}$)
+      \State $\bar{\Veps_v^{a,k+1}} \leftarrow - (\Veps_v^{a,k+1} - \Veps_v^{a,0})$, 
+             $\bar{\Veps_v^{w,k+1}} \leftarrow - \Veps_v^{w,k+1}$ 
+        \Comment{The updated strains in the fluid phases.}
+      \State $\CalC_p^{k+1} \leftarrow S_0\,\exp(\bar{\Veps_v^{a,k+1}} - \bar{\Veps_v^{w,k+1}})$
+      \State $S_w^{k+1} \leftarrow \frac{\CalC_p^{k+1}}{1 - S_0 + \CalC_p^{k+1}}$ 
+        \Comment{Update the saturation}
+      \State $\CalG_a^{k+1}$ $\leftarrow$ $\exp(\bar{\Veps_v^{\Tp,k+1}} - \bar{\Veps_v^{a,k+1}})$, ~
+             $\CalG_w^{k+1}$ $\leftarrow$ $\exp(\bar{\Veps_v^{\Tp,k+1}} - \bar{\Veps_v^{w,k+1}})$
+      \State $\phi^{k+1} \leftarrow 
+          (1 - S_0)\phi_0 \CalG_a^{k+1} + S_0\phi_0 \CalG_w^{k+1}$ 
+        \Comment{Update the porosity}
+      \State \Return $(\bar{p^w})^{k+1}$, $\phi^{k+1}$, $S_w^{k+1}$, $X^{k+1}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+  \caption{Computing the drained hydrostatic strength and its derivative}
+  \begin{algorithmic}[1]
+    \Require $\bar{\Veps_v^{\Tp,k}}$, \TTList{fluidParams}, \TTList{crushParams} 
+    \Procedure{computeDrainedHydrostaticStrengthAndDeriv}{} 
+      \State $\phi_0 \leftarrow$ \TTList{fluidParams}.$\phi_0$
+      \State $p_0 \leftarrow$ \TTList{crushParams}.$p_0$,
+             $p_1 \leftarrow$ \TTList{crushParams}.$p_1$,
+             $p_1^\Tsat \leftarrow$ \TTList{crushParams}.$p_1^\Tsat$,
+             $p_2 \leftarrow$ \TTList{crushParams}.$p_2$
+      \State $p_3 \leftarrow - \log(1 - \phi_0)$ 
+      \State $\Xbar_d \leftarrow$ \textsc{max}$(p_0, 1000)$;
+        \Comment{$\Xbar_d$ has a minimum value of 1000 pressure units}
+      \State $\Deriv{\Xbar_d}{\Veps_v^\Tp} \leftarrow 0$
+      \If {$\bar{\Veps_v^{\Tp,k}} > 0$}
+        \State $ \phi_\Temp \leftarrow \exp(-p_3 + \bar{\Veps_v^{\Tp,k}})$
+        \State $ \phi \leftarrow 1 - \phi_\Temp$
+        \State $ \bar{\xi} \leftarrow p_1$ \textsc{pow}$\left(\frac{\phi_0}{\phi} - 1, \frac{1}{p_2}\right)$
+        \State $ \Xbar_d \leftarrow \Xbar_d + \bar{\xi}$
+        \State $\Deriv{\Xbar_d}{\Veps_v^\Tp} \leftarrow 
+          \frac{1}{p_2}\,\frac{\phi_0}{\phi}\,\phi_\Temp\,
+          \frac{\bar{\xi}}{\phi\,\left(\frac{\phi_0}{\phi} - 1\right)}$
+      \EndIf
+      \State \Return $\Xbar_d$, $\Deriv{\Xbar_d}{\Veps_v^\Tp}$
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+\subsection{Rate-dependent plastic update}
+
+  Our implementation does not consider rate-dependent updates of the internal variables.
+  We approximate the trial stress using the average of the elastic moduli at the start 
+  and end of the step.
+
+\begin{breakablealgorithm}
+  \caption{Computing the correction to the stress due to rate-dependent plasticity}
+  \begin{algorithmic}[1]
+    \Require $\Delta t$, $\BdT^{n+1}$, 
+             $\Bsig^n$, $K^n$, $G^n$, $\phi^n$, $S_{w}^n$, $X^n$, $\Balpha^n$, $\Beps^{\Tp,n}$, $p_3^n$,
+             $\Bsig_{qs}^n$, $\Bsig_{qs}^{n+1}$, 
+             $K^{n+1}$, $G^{n+1}$, $\phi^{n+1}$, $S_w^{n+1}$, $X^{n+1}$, $\Balpha^{n+1}$, 
+             $\Beps^{\Tp,n+1}$, $p^{n+1}_{3}$, 
+             $a_{1}$, $a_{2}$, $a_{3}$, $a_{4}$, $I_1^\Tpeak$, $R_c$, \TTList{yieldParams}
+    \Procedure{rateDependentPlasticUpdate}{}
+      \State $T_1 \leftarrow$ \TTList{yieldParams}.$T_1$,
+             $T_2 \leftarrow$ \TTList{yieldParams}.$T_2$
+      \If {$T_1 = 0$ \textbf{or} $T_2 = 0$}
+        \Comment{Check if rate-dependent plasticity has been turned on}
+        \State \Return isRateDependent $\leftarrow$ FALSE, $\Bsig_{qs}^{n+1}$
+      \EndIf
+      \State $K_\Tdyn \leftarrow \Half(K^n + K^{n+1})$, $G_\Tdyn \leftarrow \Half(G^n + G^{n+1})$
+        \Comment{Compute mid-step bulk and shear modulus}
+      \State $\Delta\Bveps \leftarrow \Delta t \,\BdT^{n+1}$ 
+      \State $\Bsig_{\Trial,\Tdyn} \leftarrow$ \textsc{computeTrialStress}($\Bsig^n$, $K_\Tdyn$, $G_\Tdyn$,
+                                                                        $\BdT^{n+1}$, $\Delta t$)
+        \Comment{Compute substep trial stress}
+      \State $\dot{\Veps} \leftarrow$ \textsc{max}($\Norm{\BdT^{n+1}}{}$, ABS\_DOUBLE\_MIN)
+      \State $\tau \leftarrow T_1$ \textsc{pow}($\dot{\Veps}$, $T_2$)
+        \Comment{The characteristic time is defined from the rate-dependence \WRP input parameters and the
+                 magnitude of the strain rate}
+      \State $r_h \leftarrow \exp\left(-\frac{\Delta t}{\tau}\right)$
+      \State $R_H \leftarrow \frac{1 - r_h}{\frac{\Delta t}{\tau}}$
+      \State $\Bsig^{n+1} \leftarrow \Bsig_{qs}^{n+1} + \left[(\Bsig_{\Trial,\Tdyn} - \Bsig^n) -
+               (\Bsig_{qs}^{n+1} - \Bsig_{qs}^n)\right]\,R_H + (\Bsig^n - \Bsig_{qs}^n)\,r_h$
+        \Comment{Stress update}
+      \State \Return $\Bsig^{n+1}$, isRateDependent $\leftarrow$ TRUE
+    \EndProcedure
+  \end{algorithmic}
+\end{breakablealgorithm}
+
+
