@@ -1,0 +1,77 @@
+\chapter{Saving Simulation Data}
+The UCF automatically saves data as specified in the .ups file.  This
+works for all data that is stored in the Data Warehouse.  However,
+there are times when a component will need to save its own data.  (It
+is preferable that the Data Warehouse be updated to manage this
+Component data, but sometimes this is not expedient...)  In these
+cases, here is an outline on how to save that data:
+
+\begin{itemize}
+\item Create a function that will save your data:
+  \begin{lstlisting}[language=Cpp]
+    void
+    Component::saveMyData( const PatchSubset * patches )
+    {
+      ...
+    }
+  \end{lstlisting}
+\item From the last \Textbfc{Task} in your algorithm, call the function:
+  \begin{lstlisting}[language=Cpp]
+    saveMyData( patches );
+  \end{lstlisting}
+\item In the function, you need to do several things:
+  Make sure that it is an output timestep.  (Your component must have
+  saved a pointer to the Data Archiver.  Most components already do
+  this... if not, you can do it in \Textsfc{Component::problemSetup()}.)
+  \begin{lstlisting}[language=Cpp]
+    if( dataArchiver_->isOutputTimestep() ) {
+      // Dump your data... (see below)
+    }
+  \end{lstlisting}
+
+\item You need to create a directory to put the data in:
+  \begin{lstlisting}[language=Cpp]
+    const int     & timestep = d_sharedState->getCurrentTopLevelTimeStep();
+    ostringstream   data_dir;
+
+    // This gives you ".../simulation.uda.###/t#####/mydata/
+    data_dir << dataArchiver()->getOutputLocation() << "/t" << setw(5) << setfill('0') << timestep
+    << "/mydata";
+    
+    int result = MKDIR( data_dir.c_str(), 0777 );  // Make sure you #include <Core/OS/Dir.h>
+
+    if( result != 0 ) {
+      ostringstream error;
+      error << "Component::saveMyData(): couldn't create directory '") + data_dir.str() + "' (" << result << ").";
+      throw InternalError( error.str(), __FILE__, __LINE__);        
+    }
+  \end{lstlisting}
+
+\item Loop over the patches and save your data... (Note, depending on
+  how much data you have, you need to determine whether you want to
+  write the files as a binary file, or as an ascii file.  Ascii files
+  are easier for a human to look at for errors, but take a lot more
+  time to read and space to write.)
+  \begin{lstlisting}[language=Cpp]
+    for( int pIndex = 0; pIndex < patches->size(); pIndex++ ){
+      const Patch * patch = patches->get( pIndex );
+      ostringstream file_name;
+      // WARNING... not sure this is the correct naming convention... PLEASE VERIFY AND UPDATE THIS DOC.
+      file_name << data_dir << "/p" << setw(5) << setfill('0') << pIndex;
+
+      ofstream output( ceFileName, ios::out | ios::binary);
+      if( !output ) {
+        throw InternalError( string( "Component::saveMyData(): couldn't open file '") + file_name.str() + "'.",
+        __FILE__, __LINE__);        
+      }
+
+      // Output data
+      for( loop over data ) {
+        output << data...
+      }
+
+      output.close();
+    } // end for pIndex
+  \end{lstlisting}
+
+\end{itemize}

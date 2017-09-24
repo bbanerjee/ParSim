@@ -1,0 +1,50 @@
+\documentclass[11pt,fleqn]{book} % Default font size and left-justified equations
+
+\input{../00Preamble.tex}
+\input{../00LayoutStructure.tex}
+\input{../00LatexMacros.tex}
+
+\begin{document}
+
+% ----------------------------------------------------------------------------------------
+% TITLE PAGE
+% ----------------------------------------------------------------------------------------
+\begingroup
+  \thispagestyle{empty}
+  \AddToShipoutPicture*{\BackgroundPic} % Image background
+  \centering
+  \vspace*{1cm}
+  \par\normalfont\fontsize{35}{35}\sffamily\selectfont
+  \textcolor{white}{Vaango Developers Manual}\par % Book title
+  \vspace*{0.5cm}
+  {\Large \textcolor{white}{\version}}\par
+  {\Large \textcolor{white}{\today}}\par
+  \vspace*{1cm}
+  {\Large \textcolor{white}{The Utah Uintah team}}\par % Author name
+  {\Large \textcolor{white}{and}}\par % Author name
+  {\Large \textcolor{white}{Biswajit Banerjee}}\par % Author name
+\endgroup
+
+\input{../00FrontMatter.tex}
+
+
+% ----------------------------------------------------------------------------------------
+% Start of document
+% ----------------------------------------------------------------------------------------
+
+\input{Introduction}
+
+\input{Concepts}
+
+\input{Examples}
+
+\input{SavingData}
+
+\input{Debugging}
+
+%\input{../00EndMatter.tex}
+
+\end{document}
+
+
+
