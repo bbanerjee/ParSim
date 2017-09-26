@@ -51,6 +51,7 @@ PlasticityState::PlasticityState()
   backStress = nullptr;
 }
 
+/*
 PlasticityState::PlasticityState(const PlasticityState& state)
 {
   yieldStress = state.yieldStress;
@@ -75,9 +76,13 @@ PlasticityState::PlasticityState(const PlasticityState& state)
   energy = state.energy;
   backStress = state.backStress;
 }
+*/
 
 PlasticityState::PlasticityState(const PlasticityState* state)
 {
+  *this = *state;
+
+  /*
   yieldStress = state->yieldStress;
   strainRate = state->strainRate;
   plasticStrainRate = state->plasticStrainRate;
@@ -99,10 +104,14 @@ PlasticityState::PlasticityState(const PlasticityState* state)
   porosity = state->porosity;
   energy = state->energy;
   backStress = state->backStress;
+  */
 }
 
+/*
 PlasticityState::~PlasticityState() = default;
+*/
 
+/*
 PlasticityState&
 PlasticityState::operator=(const PlasticityState& state)
 {
@@ -131,10 +140,14 @@ PlasticityState::operator=(const PlasticityState& state)
   backStress = state.backStress;
   return *this;
 }
+*/
 
 PlasticityState*
 PlasticityState::operator=(const PlasticityState* state)
 {
+  *this = *state;
+
+  /*
   if (this == state)
     return this;
   yieldStress = state->yieldStress;
@@ -158,5 +171,6 @@ PlasticityState::operator=(const PlasticityState* state)
   porosity = state->porosity;
   energy = state->energy;
   backStress = state->backStress;
+  */
   return this;
 }

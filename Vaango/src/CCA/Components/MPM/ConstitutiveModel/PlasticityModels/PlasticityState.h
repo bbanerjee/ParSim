@@ -68,14 +68,15 @@ public:
   const Matrix3* backStress;
 
   PlasticityState();
-
-  PlasticityState(const PlasticityState& state);
   PlasticityState(const PlasticityState* state);
-
-  ~PlasticityState();
-
-  PlasticityState& operator=(const PlasticityState& state);
   PlasticityState* operator=(const PlasticityState* state);
+
+  PlasticityState(const PlasticityState& state) = default;
+  PlasticityState(PlasticityState&& state) = default;
+  PlasticityState& operator=(const PlasticityState& state) = default;
+  PlasticityState& operator=(PlasticityState&& state) = default;
+  ~PlasticityState() = default;
+  
 };
 
 } // End namespace Uintah

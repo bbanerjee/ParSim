@@ -1,0 +1,840 @@
+\chapter{Unit testing in Vaango}
+Older versions of \Vaango used a limited form of CTest-based testing 
+(\url{https://cmake.org/Wiki/CMake/Testing_With_CTest}) to unit test class  APIs
+and utility functions.  Since version 17.0, we have moved to \Textsfc{googletest}
+(\url{https://github.com/google/googletest}) and incorporated a basic version of
+continuous integration into the \Vaango build process.
+
+\section{Setting up googletest}
+\Vaango now uses the combination of \Textsfc{CMake} and \Textsfc{googletest}
+The reason for the shift is the convenience \Textsfc{googletest} provides.
+
+\subsection{Installing googletest}
+\begin{NoteBox}
+To make sure that the \Textsfc{googletest} submodule is checked out when you check
+out \Textsfc{ParSim}, you will have to use the \Textsfc{--recursive} flag:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+git clone --recursive ....
+\end{lstlisting}
+\end{NoteBox}
+
+\Textsfc{googletest} is installed as a 
+\Textsfc{git submodule}(\url{https://git-scm.com/docs/git-submodule})
+in the \Vaango git repository.  The submodule is added using
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+git submodule add git@github.com:google/googletest.git Vaango/src/googletest
+\end{lstlisting}
+Note that the typical user will not need to add a submodule to \Vaango.
+
+\subsection{Making sure cmake finds and compiles googletest}
+\begin{NoteBox}
+For the typical developer, all that is needed for unit testing to be activated is
+to run the following commands from a \Textsfc{dbg} or \Textsfc{opt} directory:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+  cmake -DUSE_CLANG=1 ../src
+  make -j4
+\end{lstlisting}
+\end{NoteBox}
+
+To make sure that \Textsfc{googletest} is found and built during the compile process,
+we have added the following to root \Textsfc{CMakeLists.txt} file in the directory
+\Textsfc{Vaango/src}:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+if (USE_CLANG)
+  set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
+endif ()
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+add_subdirectory(googletest)
+\end{lstlisting}
+
+The \Textsfc{add\_subdirectory}	command is all that is needed for \Textsfc{cmake} to 
+compile \Textsfc{googletest} and produce static libraries.  However, the developer may
+need to specify the absolute path to the \Textsfc{clang} compiler.
+
+\begin{NoteBox}
+At present the unit testing and continuous integration function is turned on by
+default, but only when a \Textsfc{clang} compiler is used.  The absolute path to
+the \Textsfc{clang} compiler is needed because I have not been successful in passing 
+the \Textsfc{clang} compiler name to \Textsfc{googletest} without specifying the 
+full path.  
+\end{NoteBox}
+
+\section{Adding local unit tests}
+The \Vaango convention is to create a \Textsfc{UnitTests} directory in the directory 
+of interest (e.g., \Textsfc{src/CCA/Components/MPM/ConstitutiveModel/Models}) and modify 
+the local \Textsfc{CMakeLists.txt} (e.g., the \Textsfc{Models/CMakeLists.txt})
+to be able to find the \Textsfc{UnitTests} directory.  For example,
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+SET(MPM_ConstitutiveModel_SRCS
+  ${MPM_ConstitutiveModel_SRCS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/ModelStateBase.cc
+  .....
+  PARENT_SCOPE
+)
+IF(NOT CMAKE_COMPILER_IS_GNUCXX)
+  add_subdirectory(UnitTests)
+ENDIF()
+\end{lstlisting}
+
+\subsection{The CMakeLists.txt file in UnitTests}
+Now we are finally ready to add our unit tests to the build chain.  The 
+\Textsfc{CMakeLists.txt} file in the \Textsfc{UnitTests} directory has the 
+following components:
+\begin{enumerate}
+  \item The tests may need to read some input files.  Make sure that these files
+        are copied to the build directory.  For example, if you need to copy
+        \Textsfc{table\_elastic.json}, add the following near the top of
+        the \Textsfc{CMakeLists.txt} file:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+configure_file(table_elastic.json table_elastic.json COPYONLY)
+\end{lstlisting}
+
+  \item The tests will probably need to be linked with all the \Vaango shared
+        libraries.  Add these to the \Textsfc{CMakeLists.txt} file:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+SET(VAANGO_LIBS 
+        Vaango_Core_Thread       
+        Vaango_Core_DataArchive 
+        Vaango_Core_Grid        
+        Vaango_Core_Parallel    
+        Vaango_Core_Labels      
+        Vaango_Core_Util        
+        Vaango_Core_Math        
+        Vaango_Core_Disclosure  
+        Vaango_Core_Exceptions  
+        Vaango_Core_OS  
+        Vaango_CCA_Ports        
+        Vaango_CCA_Components_Parent 
+        Vaango_CCA_Components_DataArchiver  
+        Vaango_CCA_Components_LoadBalancers 
+        Vaango_CCA_Components_Regridder     
+        Vaango_Core_ProblemSpec             
+        Vaango_CCA_Components_SimulationController 
+        Vaango_CCA_Components_Schedulers           
+        Vaango_CCA_Components_ProblemSpecification 
+        Vaango_CCA_Components_Solvers
+)
+\end{lstlisting}
+
+  \item Make sure that the \Textsfc{googletest} libraries can be found:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/include")
+set(GTEST_LIB gtest_main gtest)
+include_directories(${GTEST_INCLUDE_DIR})
+\end{lstlisting}
+        Note that the two \Textsfc{googletest} libraries that we use are 
+        \Textsfc{gtest\_main} and \Textsfc{gtest}.
+
+  \item  Add the actual test compilation and run procedure to the \Textsfc{CMakeLists.txt}
+         file.  The test executable is built and also run during the build process.
+  \item  For a typical unit test (e.g., \Textsfc{testTabularData.cc}) that does not 
+         use \Textsfc{MPI}, the following will 
+         have to be added to the \Textsfc{CMakeLists.txt} file:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+add_executable(testTabularData testTabularData.cc)
+target_link_libraries(testTabularData
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testTabularData)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+\end{lstlisting}
+
+  \item  For a unit test (e.g., \Textsfc{testMPITabularData.cc}) that uses
+         \Textsfc{MPI}, the following will 
+         have to be added to the \Textsfc{CMakeLists.txt} file:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+add_executable(testMPITabularData testMPITabularData.cpp)
+target_link_libraries(testMPITabularData
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  ${MPI_LIBRARY}
+  ....
+)
+set(UNIT_TEST testMPITabularData)
+set(MPI_COMMAND mpirun -np 2 ${UNIT_TEST})
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${MPI_COMMAND}
+)
+\end{lstlisting}
+\end{enumerate}
+
+\begin{NoteBox}
+For the \Textsfc{MPI} tests, the \Textsfc{add\_executable} line identifies the unit test 
+\Textsfc{testMPITabularData.cpp}. The \Textsfc{target\_link\_libraries} lists 
+the libraries that are needed for this test, i.e.,  the \Textsfc{googletest}
+libraries (\Textsfc{GTEST\_LIB}), the \Vaango libraries (\Textsfc{VAANGO\_LIBS}),
+and the \Textsfc{MPI} libraries.
+Then we set up a custom command (\Textsfc{MPI\_COMMAND}) that uses \Textsfc{mpirun}.
+Finally we, add the \Textsfc{add\_custom\_command} line that tells \Textsfc{cmake} 
+to run the \Textsfc{MPI\_COMMAND} after the build is complete (\Textsfc{POST\_BUILD}).
+\end{NoteBox}
+
+\subsection{A simple test}
+Let us look at the test of the \Textbfc{reverse} function in the utility 
+code \Textsfc{testYieldCondUtils.cc}.
+The process is as follows:
+\begin{enumerate}
+  \item First, we include the required headers:
+\begin{lstlisting}[language=Cpp]
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
+#include <gtest/gtest.h>
+\end{lstlisting}
+
+  \item Then we add the test
+\begin{lstlisting}[language=Cpp]
+TEST(YieldCondUtilsTest, reverse)
+{
+  std::vector<double> array = {{1,2,3,4,5,6,7}};
+  std::size_t index = 0;
+  for (auto i : Vaango::Util::reverse(array)) {
+    if (index == 0) EXPECT_EQ(i, 7);
+    if (index == array.size()-1) EXPECT_EQ(i, 1);
+    index++;
+  }
+}
+\end{lstlisting}
+
+  \item When you run \Textsfc{make}, you will get an output of the form:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+[ 83%] Building CXX object CCA/Components/MPM/ConstitutiveModel/Models/UnitTests/CMakeFiles/testYieldCondUtils.dir/testYieldCondUtils.cc.o
+[ 83%] Linking CXX executable testYieldCondUtils
+Running main() from gtest_main.cc
+[==========] Running 1 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 1 tests from YieldCondUtilsTest
+[ RUN      ] YieldCondUtilsTest.reverse
+[       OK ] YieldCondUtilsTest.reverse (0 ms)
+[----------] 1 tests from YieldCondUtilsTest (1 ms total)
+[----------] Global test environment tear-down
+[==========] 1 tests from 1 test case ran. (1 ms total)
+[  PASSED  ] 1 tests.
+[ 83%] Built target testYieldCondUtils
+\end{lstlisting}
+       This indicates that your unit test has passed the checks you have specified.
+\end{enumerate}
+
+\subsection{A  test suite with some initial setup}
+For some unit tests, a lot of setup work is needed.  However, that work does not
+need to be repeated in each test of a suite.  In those situations, we can 
+create a custom \Textsfc{googletest} test procedure.  For example, in the 
+tabular yield condition tests \Textsfc{testYieldCond\_Tabular.cc}, we do the following:
+\begin{enumerate}
+  \item Create a class that is derived from \Textbfc{::testing::Test}:
+\begin{lstlisting}[language=Cpp]
+class YieldCondTabularTest : public ::testing::Test {
+
+protected:
+
+  static void SetUpTestCase() {
+    char currPath[2000];
+    if (!getcwd(currPath, sizeof(currPath))) {
+      std::cout << "Current path not found\n";
+    }
+    std::string json_file = std::string(currPath) + "/" + "table_yield.json";
+
+    // Create a new document
+    xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+    // Create root node
+    xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "plastic_yield_condition");
+    xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "tabular");
+    xmlDocSetRootElement(doc, rootNode);
+
+    // Create a child node
+    xmlNewChild(rootNode, nullptr, BAD_CAST "filename", 
+                BAD_CAST "table_yield.json");
+    xmlNewChild(rootNode, nullptr, BAD_CAST "independent_variables", 
+                BAD_CAST "Pressure");
+    xmlNewChild(rootNode, nullptr, BAD_CAST "dependent_variables", 
+                BAD_CAST "SqrtJ2");
+    auto interp = xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation",
+                              BAD_CAST "");
+    xmlNewProp(interp, BAD_CAST "type", BAD_CAST "linear");
+
+    // Print the document to stdout
+    xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+    // Create a ProblemSpec
+    ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+    if (!ps) {
+      std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+      std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+      exit(-1);
+    }
+
+    // Update the json file and create a circular yield function
+    auto doc1 = xmlCopyDoc(doc, 1);
+    auto node = xmlDocGetRootElement(doc1);
+    auto xpathCtx = xmlXPathNewContext(doc1);
+    const xmlChar* xpathExpr = xmlStrncatNew(BAD_CAST ".//", BAD_CAST "filename", -1);
+    auto xpathObj = xmlXPathNodeEval(node, xpathExpr, xpathCtx);
+    xmlXPathFreeContext(xpathCtx);
+    auto jsonNode = xpathObj->nodesetval->nodeTab[0];
+
+    xmlNodeSetContent(jsonNode, BAD_CAST "table_yield_circle.json");
+    xmlSaveFormatFileEnc("-", doc1, "ISO-8859-1", 1);
+
+    ps_circle = scinew ProblemSpec(xmlDocGetRootElement(doc1), false);
+    if (!ps_circle) {
+      std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+      std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+      exit(-1);
+    }
+  }
+
+  static void TearDownTestCase() {}
+
+  static ProblemSpecP ps;
+  static ProblemSpecP ps_circle;
+};
+\end{lstlisting}
+
+  \item The variables that are used in the tests are declared \Textbfc{static} and
+        initialized with \Textbfc{nullptr}:
+\begin{lstlisting}[language=Cpp]
+ProblemSpecP YieldCondTabularTest::ps = nullptr;
+ProblemSpecP YieldCondTabularTest::ps_circle = nullptr;
+\end{lstlisting}
+
+  \item The actual tests are added using the \Textsfc{TEST\_F} tag:
+\begin{lstlisting}[language=Cpp]
+TEST_F(YieldCondTabularTest, constructorTest)
+{
+  // Create a model
+  YieldCond_Tabular model(ps);
+
+  // Copy
+  YieldCond_Tabular modelCopy(&model);
+  YieldCond_Tabular model_circle(ps_circle);
+
+  // Check parameters
+  auto params = model.getParameters();
+  ASSERT_DOUBLE_EQ(params.at("I1_min"), -19200);
+  ASSERT_DOUBLE_EQ(params.at("I1_max"), 30);
+  ASSERT_DOUBLE_EQ(params.at("sqrtJ2_max"), 900);
+}
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{A test suite with MPI}
+Consider the unit test \Textsfc{testSPHParticleScatter.cpp} that tests whether the
+scatter algorithm is working correctly.  In this case we need to set up the \Textsfc{MPI}
+environment by deriving an class from the \Textbfc{::testing::Environment} class.
+The procedure is similar to the previous examples (note that we use \Textsfc{Boost}
+in this example).
+
+\begin{enumerate}
+  \item First, we include the required headers:
+\begin{lstlisting}[language=Cpp]
+#include <SmoothParticleHydro/SmoothParticleHydro.h>
+#include <gtest/gtest.h>
+#include <boost/mpi.hpp>
+\end{lstlisting}
+
+  \item Ideally we would like to return \Textsfc{RUN\_ALL\_TESTS} from our main
+        function.   However, we cannot use the \Textsfc{boost::mpi::environment} call 
+        to set up \Textsfc{MPI} (because the \Textsfc{environment} object is deleted 
+        before \Textsfc{googletest}s are run).  Instead, we have to set up a custom 
+        environment to run our \Textsfc{MPI} tests by creating a \Textsfc{MPIEnvironment} 
+        class that extends the \Textsfc{::testing::Environment} class provided by 
+        \Textsfc{googletest}.
+\begin{lstlisting}[language=Cpp]
+class MPIEnvironment : public ::testing::Environment
+{
+public:
+  virtual void SetUp() {
+    char** argv;
+    int argc = 0;
+    int mpiError = MPI_Init(&argc, &argv);
+    ASSERT_FALSE(mpiError);
+  }
+  virtual void TearDown() {
+    int mpiError = MPI_Finalize();
+    ASSERT_FALSE(mpiError);
+  }
+  virtual ~MPIEnvironment() {}
+};
+\end{lstlisting}
+       Here, the \Textsfc{SetUp} function calls \Textsfc{MPI\_Init} and sets up 
+       the environment while the \Textsfc{TearDown} function calls 
+       \Textsfc{MPI\_Finalize}.  All tests are performed when the environment is active.
+
+  \item The \Textsfc{main} function in typically not needed in standard 
+        \Textsfc{googletest} tests and is generated by some internal magic.  However, we 
+         do need a \Textsfc{main} function in \Textsfc{testSPHParticleScatter.cpp}
+         because we are using \Textsfc{mpirun} to run the test.
+\begin{lstlisting}[language=Cpp]
+int main(int argc, char* argv[])
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::AddGlobalTestEnvironment(new MPIEnvironment);
+  return RUN_ALL_TESTS();
+}
+\end{lstlisting}
+         The MPI specific environment is created by the \Textsfc{AddGlobalTestEnvironment} 
+         function to which we pass a \Textsfc{MPIEnvironment} object.  The object is 
+         deleted internally by \Textsfc{googletest}.
+
+         The tests in \Textsfc{testSPHParticleScatter.cpp} are then run using 
+         \Textsfc{RUN\_ALL\_TESTS()}.  Note that this function returns from \Textsfc{main} 
+         and, therefore, and non-googletest environment objects created in main (e.g., 
+         boost::mpi::environment) are deleted before the tests are run.
+
+  \item Finally, we add an actual test to \Textsfc{testSPHParticleScatter.cpp} as follows:
+\begin{lstlisting}[language=Cpp]
+TEST(SPHParticleScatterTest, scatter)
+{
+  // Set up communicator
+  boost::mpi::communicator boostWorld;
+  // Set up SPH object
+  SmoothParticleHydro sph;
+  sph.setCommunicator(boostWorld);
+  // ... Some code to create particles
+  // ....
+  sph.setParticles(particles);
+  sph.scatterSPHParticle(domain, ghostWidth, domainBuffer);
+  if (boostWorld.rank() == 0) {
+    EXPECT_EQ(sph.getSPHParticleVec().size(), 100);
+  } else {
+    EXPECT_EQ(sph.getSPHParticleVec().size(), 200);
+  }
+}
+\end{lstlisting}
+       \begin{NoteBox}
+        The \Textsfc{Boost} MPI environment created by
+        \Textsfc{boost::mpi::environment} allows MPI calls to
+        fail without throwing an exception.  This does not create a problem if
+        the \Textsfc{boost::mpi::environment} method is used to set up the
+        MPI environment.  But when setting up the environment explicitly for 
+        the unit tests, we should add
+\begin{lstlisting}[language=Cpp]
+MPI_Errhandler_set(cartComm, MPI_ERRORS_RETURN);
+\end{lstlisting}
+        before calls that can throw exceptions.
+       \end{NoteBox}
+
+  \item Now, if we run \Textsfc{make} the output has the following form:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+[ 69%] Built target ellip3D_lib
+[ 71%] Built target paraEllip3D
+[ 74%] Built target gtest
+[ 76%] Built target gtest_main
+.......
+Scanning dependencies of target testSPHParticleScatter
+[ 90%] Building CXX object SmoothParticleHydro/UnitTests/CMakeFiles/testSPHParticleScatter.dir/testSPHParticleScatter.cpp.o
+[ 91%] Linking CXX executable testSPHParticleScatter
+[==========] Running 1 test from 1 test case.
+[----------] Global test environment set-up.
+[==========] Running 1 test from 1 test case.
+[----------] Global test environment set-up.
+Set up environment
+Set up environment
+[----------] 1 test from SPHParticleScatterTest
+[----------] 1 test from SPHParticleScatterTest
+[ RUN      ] SPHParticleScatterTest.scatter
+[ RUN      ] SPHParticleScatterTest.scatter
+[       OK ] SPHParticleScatterTest.scatter (5 ms)
+[----------] 1 test from SPHParticleScatterTest (5 ms total)
+
+[----------] Global test environment tear-down
+[       OK ] SPHParticleScatterTest.scatter (6 ms)
+[----------] 1 test from SPHParticleScatterTest (6 ms total)
+
+[----------] Global test environment tear-down
+Tore down environment
+[==========] 1 test from 1 test case ran. (289 ms total)
+[  PASSED  ] 1 test.
+Tore down environment
+[==========] 1 test from 1 test case ran. (289 ms total)
+[  PASSED  ] 1 test.
+[ 91%] Built target testSPHParticleScatter
+[ 95%] Built target gmock
+[100%] Built target gmock_main
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{Unit testing a constitutive model}
+Constitutive model testing involves a lot of set up work both for the 
+environment and the computational framework.  This following example
+shows how we test the \Textbfc{TabularPlasticity} model.
+\begin{enumerate}
+  \item First set up headers:
+\begin{lstlisting}[language=Cpp]
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
+
+#include <CCA/Components/ProblemSpecification/ProblemSpecReader.h>
+#include <CCA/Components/SimulationController/AMRSimulationController.h>
+#include <CCA/Components/Regridder/RegridderCommon.h>
+#include <CCA/Components/Solvers/SolverFactory.h>
+#include <CCA/Components/Parent/ComponentFactory.h>
+#include <CCA/Components/LoadBalancers/LoadBalancerCommon.h>
+#include <CCA/Components/LoadBalancers/LoadBalancerFactory.h>
+#include <CCA/Components/DataArchiver/DataArchiver.h>
+#include <CCA/Components/Schedulers/SchedulerCommon.h>
+#include <CCA/Components/Schedulers/SchedulerFactory.h>
+
+#include <CCA/Ports/SolverInterface.h>
+#include <CCA/Ports/SimulationInterface.h>
+#include <CCA/Ports/Output.h>
+
+#include <Core/Parallel/Parallel.h>
+#include <Core/Parallel/UintahParallelComponent.h>
+#include <Core/Malloc/Allocator.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Exceptions/Exception.h>
+#include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Exceptions/InvalidValue.h>
+#include <Core/Util/Environment.h>
+#include <Core/OS/Dir.h>
+
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+
+#include <iostream>
+#include <map>
+#include <string>
+#include <vector>
+
+#include <gtest/gtest.h>
+\end{lstlisting}
+
+  \item Set up aliases:
+\begin{lstlisting}[language=Cpp]
+using namespace Vaango;
+using nlohmann::json;
+using Uintah::Dir;
+using Uintah::ProblemSpec;
+using Uintah::ProblemSpecP;
+using Uintah::ProblemSpecReader;
+using Uintah::Exception;
+using Uintah::ProblemSetupException;
+using Uintah::InvalidValue;
+using Uintah::ProcessorGroup;
+using Uintah::SimulationController;
+using Uintah::AMRSimulationController;
+using Uintah::RegridderCommon;
+using Uintah::SolverInterface;
+using Uintah::SolverFactory;
+using Uintah::UintahParallelComponent;
+using Uintah::ComponentFactory;
+using Uintah::SimulationInterface;
+using Uintah::LoadBalancerCommon;
+using Uintah::LoadBalancerFactory;
+using Uintah::DataArchiver;
+using Uintah::Output;
+using Uintah::SchedulerCommon;
+using Uintah::SchedulerFactory;
+\end{lstlisting}
+
+  \item Set up a test environment class:
+\begin{lstlisting}[language=Cpp]
+class VaangoEnv : public ::testing::Environment {
+public:
+
+  int d_argc;
+  char** d_argv;
+  char** d_env;
+
+  explicit VaangoEnv(int argc, char** argv, char* env[]) {
+    d_argc = argc;
+    d_argv = argv;
+    d_env = env;
+  }
+
+  virtual ~VaangoEnv() {}
+
+  virtual void SetUp() {
+    Uintah::Parallel::determineIfRunningUnderMPI(d_argc, d_argv);
+    Uintah::Parallel::initializeManager(d_argc, d_argv);
+    Uintah::create_sci_environment(d_env, 0, true );
+  }
+
+  virtual void TearDown() {
+    Uintah::Parallel::finalizeManager();
+  }
+
+  static ProblemSpecP createInput() {
+
+    char currPath[2000];
+    if (!getcwd(currPath, sizeof(currPath))) {
+      std::cout << "Current path not found\n";
+    }
+    //std::cout << "Dir = " << currPath << std::endl;
+
+    // Create a new document
+    xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+    // Create root node
+    xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "Uintah_specification");
+    xmlDocSetRootElement(doc, rootNode);
+
+    // Meta
+    auto meta = xmlNewChild(rootNode, nullptr, BAD_CAST "Meta", BAD_CAST "");
+    xmlNewChild(meta, nullptr, BAD_CAST "title", BAD_CAST "Unit test Tabular Plasticity");
+
+    // Simulation component 
+    auto simComp = xmlNewChild(rootNode, nullptr, BAD_CAST "SimulationComponent",
+                               BAD_CAST "");
+    xmlNewProp(simComp, BAD_CAST "type", BAD_CAST "mpm");
+
+    // Time
+    auto time = xmlNewChild(rootNode, nullptr, BAD_CAST "Time", BAD_CAST "");
+    xmlNewChild(time, nullptr, BAD_CAST "maxTime", BAD_CAST "1.0");
+    xmlNewChild(time, nullptr, BAD_CAST "initTime", BAD_CAST "0.0");
+    xmlNewChild(time, nullptr, BAD_CAST "delt_min", BAD_CAST "1.0e-6");
+    xmlNewChild(time, nullptr, BAD_CAST "delt_max", BAD_CAST "0.04");
+    xmlNewChild(time, nullptr, BAD_CAST "timestep_multiplier", BAD_CAST "0.3");
+    xmlNewChild(time, nullptr, BAD_CAST "max_Timesteps", BAD_CAST "5");
+
+    // DataArchiver
+    auto da = xmlNewChild(rootNode, nullptr, BAD_CAST "DataArchiver", BAD_CAST "");
+    xmlNewChild(da, nullptr, BAD_CAST "filebase", BAD_CAST "UniaxialStrainRotateTabularPlasticity.uda");
+    xmlNewChild(da, nullptr, BAD_CAST "outputTimestepInterval", BAD_CAST "1");
+    auto save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    xmlNewProp(save, BAD_CAST "label", BAD_CAST "g.mass");
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.x");
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.color");
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.temperature");
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.velocity");
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.particleID");
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.stress");
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    xmlNewProp(save, BAD_CAST "label", BAD_CAST "p.deformationGradient");
+    save = xmlNewChild(da, nullptr, BAD_CAST "save", BAD_CAST ""); 
+    xmlNewProp(save, BAD_CAST "label", BAD_CAST "g.acceleration");
+    save = xmlNewChild(da, nullptr, BAD_CAST "checkpoint", BAD_CAST "");
+    xmlNewProp(save, BAD_CAST "cycle", BAD_CAST "2");
+    xmlNewProp(save, BAD_CAST "timestepInterval", BAD_CAST "4000");
+
+    // MPM
+    std::string prescribed = 
+      std::string(currPath) + "/" + "UniaxialStrainRotate_PrescribedDeformation.inp";
+    auto mpm = xmlNewChild(rootNode, nullptr, BAD_CAST "MPM", BAD_CAST "");
+    xmlNewChild(mpm, nullptr, BAD_CAST "time_integrator", BAD_CAST "explicit");
+    xmlNewChild(mpm, nullptr, BAD_CAST "interpolator", BAD_CAST "linear");
+    xmlNewChild(mpm, nullptr, BAD_CAST "use_load_curves", BAD_CAST "false");
+    xmlNewChild(mpm, nullptr, BAD_CAST "minimum_particle_mass", BAD_CAST "1.0e-15");
+    xmlNewChild(mpm, nullptr, BAD_CAST "minimum_mass_for_acc", BAD_CAST "1.0e-15");
+    xmlNewChild(mpm, nullptr, BAD_CAST "maximum_particle_velocity", BAD_CAST "1.0e5");
+    xmlNewChild(mpm, nullptr, BAD_CAST "artificial_damping_coeff", BAD_CAST "0.0");
+    xmlNewChild(mpm, nullptr, BAD_CAST "artificial_viscosity", BAD_CAST "true");
+    xmlNewChild(mpm, nullptr, BAD_CAST "artificial_viscosity_heating", BAD_CAST "false");
+    xmlNewChild(mpm, nullptr, BAD_CAST "do_contact_friction_heating", BAD_CAST "false");
+    xmlNewChild(mpm, nullptr, BAD_CAST "create_new_particles", BAD_CAST "false");
+    xmlNewChild(mpm, nullptr, BAD_CAST "use_momentum_form", BAD_CAST "false");
+    xmlNewChild(mpm, nullptr, BAD_CAST "with_color", BAD_CAST "true");
+    xmlNewChild(mpm, nullptr, BAD_CAST "use_prescribed_deformation", BAD_CAST "true");
+    xmlNewChild(mpm, nullptr, BAD_CAST "prescribed_deformation_file", BAD_CAST prescribed.c_str());
+    xmlNewChild(mpm, nullptr, BAD_CAST "minimum_subcycles_for_F", BAD_CAST "-2");
+    auto ero = xmlNewChild(mpm, nullptr, BAD_CAST "erosion", BAD_CAST "");
+    xmlNewProp(ero, BAD_CAST "algorithm", BAD_CAST "none");
+
+    // Physical constants
+    auto pc = xmlNewChild(rootNode, nullptr, BAD_CAST "PhysicalConstants", BAD_CAST "");
+    xmlNewChild(pc, nullptr, BAD_CAST "gravity", BAD_CAST "[0,0,0]");
+
+    // Material properties
+    auto matProp = 
+      xmlNewChild(rootNode, nullptr, BAD_CAST "MaterialProperties", BAD_CAST "");
+    mpm = xmlNewChild(matProp, nullptr, BAD_CAST "MPM", BAD_CAST "");
+    auto mat = xmlNewChild(mpm, nullptr, BAD_CAST "material", BAD_CAST "");
+    xmlNewProp(mat, BAD_CAST "name", BAD_CAST "TabularPlastic");
+
+    // General properties
+    xmlNewChild(mat, nullptr, BAD_CAST "density", BAD_CAST "1050");
+    xmlNewChild(mat, nullptr, BAD_CAST "melt_temp", BAD_CAST "3695.0");
+    xmlNewChild(mat, nullptr, BAD_CAST "room_temp", BAD_CAST "294.0");
+    xmlNewChild(mat, nullptr, BAD_CAST "thermal_conductivity", BAD_CAST "174.0e-7");
+    xmlNewChild(mat, nullptr, BAD_CAST "specific_heat", BAD_CAST "134.0e-8");
+    auto cm = xmlNewChild(mat, nullptr, BAD_CAST "constitutive_model", BAD_CAST "");
+    xmlNewProp(cm, BAD_CAST "type", BAD_CAST "tabular_plasticity");
+
+    // Elastic properties
+    std::string table_elastic = 
+      std::string(currPath) + "/" + "tabular_linear_elastic.json";
+    auto elastic = xmlNewChild(cm, nullptr, BAD_CAST "elastic_moduli_model", 
+                               BAD_CAST "");
+    xmlNewProp(elastic, BAD_CAST "type", BAD_CAST "tabular");
+    xmlNewChild(elastic, nullptr, BAD_CAST "filename", 
+                BAD_CAST table_elastic.c_str());
+    xmlNewChild(elastic, nullptr, BAD_CAST "independent_variables", 
+                BAD_CAST "PlasticStrainVol, TotalStrainVol");
+    xmlNewChild(elastic, nullptr, BAD_CAST "dependent_variables", 
+                BAD_CAST "Pressure");
+    auto interp_elastic = xmlNewChild(elastic, nullptr, BAD_CAST "interpolation",
+                                      BAD_CAST "");
+    xmlNewProp(interp_elastic, BAD_CAST "type", BAD_CAST "linear");
+    xmlNewChild(elastic, nullptr, BAD_CAST "G0", 
+                BAD_CAST "1.0e4");
+    xmlNewChild(elastic, nullptr, BAD_CAST "nu", 
+              BAD_CAST "0.2");
+
+    // Yield criterion
+    std::string table_yield = 
+      std::string(currPath) + "/" + "tabular_von_mises.json";
+    auto yield = xmlNewChild(cm, nullptr, BAD_CAST "plastic_yield_condition", 
+                             BAD_CAST "");
+    xmlNewProp(yield, BAD_CAST "type", BAD_CAST "tabular");
+    xmlNewChild(yield, nullptr, BAD_CAST "filename", 
+                BAD_CAST table_yield.c_str());
+    xmlNewChild(yield, nullptr, BAD_CAST "independent_variables", 
+                BAD_CAST "Pressure");
+    xmlNewChild(yield, nullptr, BAD_CAST "dependent_variables", 
+                BAD_CAST "SqrtJ2");
+    auto yield_interp = xmlNewChild(yield, nullptr, BAD_CAST "interpolation",
+                              BAD_CAST "");
+    xmlNewProp(yield_interp, BAD_CAST "type", BAD_CAST "linear");
+
+    // Geometry
+    auto geom = xmlNewChild(mat, nullptr, BAD_CAST "geom_object", BAD_CAST "");
+    auto box = xmlNewChild(geom, nullptr, BAD_CAST "box", BAD_CAST "");
+    xmlNewProp(box, BAD_CAST "label", BAD_CAST "Plate1");
+    xmlNewChild(box, nullptr, BAD_CAST "min", BAD_CAST "[0.0,0.0,0.0]");
+    xmlNewChild(box, nullptr, BAD_CAST "max", BAD_CAST "[1.0,1.0,1.0]");
+    xmlNewChild(geom, nullptr, BAD_CAST "res", BAD_CAST "[1,1,1]");
+    xmlNewChild(geom, nullptr, BAD_CAST "velocity", BAD_CAST "[0,0,0]");
+    xmlNewChild(geom, nullptr, BAD_CAST "temperature", BAD_CAST "294");
+    xmlNewChild(geom, nullptr, BAD_CAST "color", BAD_CAST "0");
+
+    // Contact
+    auto contact = xmlNewChild(mpm, nullptr, BAD_CAST "contact", BAD_CAST "");
+    xmlNewChild(contact, nullptr, BAD_CAST "type", BAD_CAST "null");
+    xmlNewChild(contact, nullptr, BAD_CAST "materials", BAD_CAST "[0]");
+    xmlNewChild(contact, nullptr, BAD_CAST "mu", BAD_CAST "0.1");
+
+    // Grid
+    auto grid = xmlNewChild(rootNode, nullptr, BAD_CAST "Grid", BAD_CAST "");
+    xmlNewChild(grid, nullptr, BAD_CAST "BoundaryConditions", BAD_CAST "");
+    auto level = xmlNewChild(grid, nullptr, BAD_CAST "Level", BAD_CAST "");
+    box = xmlNewChild(level, nullptr, BAD_CAST "Box", BAD_CAST "");
+    xmlNewProp(box, BAD_CAST "label", BAD_CAST "1");
+    xmlNewChild(box, nullptr, BAD_CAST "lower", BAD_CAST "[-2,-2,-2]");
+    xmlNewChild(box, nullptr, BAD_CAST "upper", BAD_CAST "[3,3,3]");
+    xmlNewChild(box, nullptr, BAD_CAST "resolution", BAD_CAST "[5,5,5]");
+    xmlNewChild(box, nullptr, BAD_CAST "extraCells", BAD_CAST "[0,0,0]");
+    xmlNewChild(box, nullptr, BAD_CAST "patches", BAD_CAST "[1,1,1]");
+
+    // Print the document to stdout
+    //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+    std::string ups_file = std::string(currPath) + "/" + 
+                           "UniaxialStrainRotateTabularPlasticity.ups";
+    xmlSaveFormatFileEnc(ups_file.c_str(), doc, "ISO-8859-1", 1);
+
+    // Create a ProblemSpec
+    ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+    if (!ps) {
+      std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+      std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+      exit(-1);
+    }
+
+    return ps;
+  }
+};
+\end{lstlisting}
+
+  \item Set up the entry function for the test:
+\begin{lstlisting}[language=Cpp]
+int main(int argc, char** argv, char* env[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::AddGlobalTestEnvironment(new VaangoEnv(argc, argv, env));
+  return RUN_ALL_TESTS();
+}
+\end{lstlisting}
+
+  \item Create the test:
+\begin{lstlisting}[language=Cpp]
+TEST(TabularPlasticityTest, singleParticleTest)
+{
+  char currPath[2000];
+  if (!getcwd(currPath, sizeof(currPath))) {
+    std::cout << "Current path not found\n";
+  }
+  std::string ups_file = std::string(currPath) + "/" + 
+                         "UniaxialStrainRotateTabularPlasticity.ups";
+  //std::cout << "Created Filename = " << ups_file << std::endl;
+
+  // Remove existing uda
+  std::string uda_file = std::string(currPath) + "/" + 
+                         "UniaxialStrainRotateTabularPlasticity.uda.000";
+  Dir::removeDir(uda_file.c_str());
+
+  char * start_addr = (char*)sbrk(0);
+  bool thrownException = false;
+
+  try {
+    ProblemSpecP ups = VaangoEnv::createInput();
+    ups->getNode()->_private = (void *) ups_file.c_str();
+    //std::cout << "Filename = " << static_cast<char*>(ups->getNode()->_private) << std::endl;
+
+    const ProcessorGroup* world = Uintah::Parallel::getRootProcessorGroup();
+    SimulationController* ctl = scinew AMRSimulationController(world, false, ups);
+    
+    RegridderCommon* reg = 0;
+    SolverInterface* solve = SolverFactory::create(ups, world, "");
+
+    UintahParallelComponent* comp = ComponentFactory::create(ups, world, false, "");
+    SimulationInterface* sim = dynamic_cast<SimulationInterface*>(comp);
+    ctl->attachPort("sim", sim);
+    comp->attachPort("solver", solve);
+    comp->attachPort("regridder", reg);
+
+    LoadBalancerCommon* lbc = LoadBalancerFactory::create(ups, world);
+    lbc->attachPort("sim", sim);
+
+    DataArchiver* dataarchiver = scinew DataArchiver(world, -1);
+    Output* output = dataarchiver;
+    ctl->attachPort("output", dataarchiver);
+    dataarchiver->attachPort("load balancer", lbc);
+    comp->attachPort("output", dataarchiver);
+    dataarchiver->attachPort("sim", sim);
+
+    SchedulerCommon* sched = SchedulerFactory::create(ups, world, output);
+    sched->attachPort("load balancer", lbc);
+    ctl->attachPort("scheduler", sched);
+    lbc->attachPort("scheduler", sched);
+    comp->attachPort("scheduler", sched);
+    sched->setStartAddr( start_addr );
+    sched->addReference();
+
+    ctl->run();
+    delete ctl;
+
+    sched->removeReference();
+    delete sched;
+    delete lbc;
+    delete sim;
+    delete solve;
+    delete output; 
+
+  } catch (ProblemSetupException& e) {
+    std::cout << e.message() << std::endl;
+    thrownException = true;
+  } catch (Exception& e) {
+    std::cout << e.message() << std::endl;
+    thrownException = true;
+  } catch (...) {
+    std::cout << "**ERROR** Unknown exception" << std::endl;
+    thrownException = true;
+  }
+}
+\end{lstlisting}
+\end{enumerate}
+
+
+
+
