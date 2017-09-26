@@ -175,8 +175,9 @@ TabularPlasticity::TabularPlasticity(const TabularPlasticity& cm)
 }
 
 TabularPlasticity::TabularPlasticity(const TabularPlasticity* cm)
-  : ConstitutiveModel(cm)
+  : TabularPlasticity(*cm)
 {
+  /*
   d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm->d_elastic);
   d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
 
@@ -188,6 +189,7 @@ TabularPlasticity::TabularPlasticity(const TabularPlasticity* cm)
     cm->d_cm.subcycling_characteristic_number;
 
   initializeLocalMPMLabels();
+  */
 }
 
 // Initialize all labels of the particle variables associated with

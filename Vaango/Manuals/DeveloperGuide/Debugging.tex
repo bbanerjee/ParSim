@@ -58,11 +58,11 @@ debuggers (see below).
 Run \Textsfc{vaango}:
 
 \begin{lstlisting}[language=sh,backgroundcolor=\color{background}]
-mpirun -np 8 -m mpihosts vaango inputs/ARCHES/helium_1m.ups
+mpirun -np 4 -m mpihosts vaango inputs/MPM/thickCylinderMPM.ups
 \end{lstlisting}
 
 Create a new terminal window for each processor you are using.  (In
-the above case, 8 windows.)  
+the above case, 4 windows.)  
 
 You will notice that the output from \Textsfc{vaango} will include lines (one for
 each processor used) like this:

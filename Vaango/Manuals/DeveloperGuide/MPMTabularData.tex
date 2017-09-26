@@ -1,0 +1,530 @@
+\section{Models that use tabular data}
+The tabular data infrastructure in the \Textsfc{Models} directory has the 
+potential to be used for many constitutive models.  A brief description
+of the implementation and design choices is given in this section.
+
+The existing tabular data handling classes in \Vaango were designed to
+deal with multidimensional structured data.  However, some \MPM models
+need unstructured tabular data as input.  The \Textbfc{TabularData}
+class was designed to handle unstructured tables containing (at most)
+four independent variables.  However, it can be extended to deal
+with more independent variables at the cost of added complexity.
+
+The input tabular data are expected in the following JSON format:
+
+\begin{lstlisting}[language=JSON]
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test data"
+  },
+  "Data" : {
+    "Salinity" : [0.1, 0.2],
+    "Data" : [{
+      "Temperature" : [100, 200, 300],
+      "Data" : [{
+        "Volume" : [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
+        "Pressure" : [10, 20, 30, 40, 50, 60, 70, 80]
+        }, {
+        "Volume" : [0.15, 0.25, 0.35],
+        "Pressure" : [100, 200, 300]
+        }, {
+        "Volume" : [0.05, 0.45, 0.75],
+        "Pressure" : [1000, 2000, 3000]
+        }] 
+      }, {
+      "Temperature" : [0, 400],
+      "Data" : [{
+        "Volume" : [0.1, 0.2, 0.3, 0.4],
+        "Pressure" : [15, 25, 35, 45]
+        }, {
+        "Volume" : [0.1, 0.45, 0.65],
+        "Pressure" : [150, 250, 350]
+        }]
+      }]
+    }
+  }
+}
+\end{lstlisting}
+
+\subsection{The TableContainers class}
+To keep things easier to understand, the \Textbfc{TabularData} class has been
+split into two parts: a \Textbfc{TableContainers} class and the main \Textbfc{TabularData}
+class.
+
+The \Textbfc{TableContainers} class contains the following:
+\begin{enumerate}
+  \item The independent and dependent variable name and data are stored in the \Textbfc{TableVar}
+        structure which has the form:
+\begin{lstlisting}[language=Cpp]
+  struct TableVar
+  {
+    std::string name;
+    std::unordered_map<IndexKey, std::vector<double>, IndexHash, IndexEqual>
+      data;
+    TableVar() {}
+    TableVar(const std::string name) { this->name = name; }
+  };
+\end{lstlisting}
+        The data for each variable is stored as a vector of doubles and associated with a 
+        key that is determined by the indices of the associated independent variables.
+        For easier reading, the structure TableVar is given the aliases
+        \Textbfc{IndependentVar} and \Textbfc{DependentVar}:
+\begin{lstlisting}[language=Cpp]
+  using IndependentVar = TableVar;
+  using DependentVar = TableVar;
+\end{lstlisting}
+
+  \item The \Textbfc{IndexKey} object that is used to locate a particular table variable data vector
+        has an associated a \Textbfc{IndexHash} functor and an \Textbfc{IndexEqual} equality 
+        operator functor as shown below:
+\begin{lstlisting}[language=Cpp]
+  struct IndexKey
+  {
+    std::uint8_t _ii;
+    std::uint8_t _jj;
+    std::uint8_t _kk;
+    std::uint8_t _ll;
+    IndexKey(std::uint8_t ii, std::uint8_t jj, std::uint8_t kk, std::uint8_t ll)
+      : _ii(ii) , _jj(jj) , _kk(kk) , _ll(ll)
+    {
+    }
+  };
+\end{lstlisting}
+\begin{lstlisting}[language=Cpp]
+  struct IndexEqual
+  {
+    bool operator()(const IndexKey& lhs, const IndexKey& rhs) const
+    {
+      return (lhs._ii == rhs._ii && lhs._jj == rhs._jj && lhs._kk == rhs._kk &&
+              lhs._ll == rhs._ll);
+    }
+  };
+\end{lstlisting}
+\begin{lstlisting}[language=Cpp]
+  struct IndexHash
+  {
+    std::size_t operator()(const IndexKey& key) const
+    {
+      std::size_t hashval = key._ii;
+      hashval *= 37;
+      hashval += key._jj;
+      hashval *= 37;
+      hashval += key._kk;
+      hashval *= 37;
+      hashval += key._ll;
+      return hashval;
+    }
+  };
+\end{lstlisting}
+
+\end{enumerate}
+
+\subsection{The TabularData class}
+The \Textbfc{TabularData} class header file uses, among other things, the
+\Textsfc{json.hpp} header-only JSON library that is included as a git submodule
+in \Vaango.  The current version only allows for linear interpolation and leaves
+higher order interpolation to the calling programs.
+
+\begin{lstlisting}[language=Cpp]
+#ifndef VAANGO_MPM_CONSTITUTIVE_MODEL_TABULAR_DATA_H
+#define VAANGO_MPM_CONSTITUTIVE_MODEL_TABULAR_DATA_H
+
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TableContainers.h>
+#include <submodules/json/src/json.hpp>
+
+namespace Vaango {
+
+class TabularData
+{
+public:
+  // Constructors, assignment, destructor
+  TabularData() {};
+  TabularData(Uintah::ProblemSpecP& ps);
+  TabularData(const TabularData& table);
+  ~TabularData() = default;
+  TabularData& operator=(const TabularData& table);
+
+  // Initialization and output
+  void initialize();
+  void outputProblemSpec(Uintah::ProblemSpecP& ps);
+
+  // Add variables
+  void addIndependentVariable(const std::string& varName);
+  std::size_t addDependentVariable(const std::string& varName);
+
+  // A setup method
+  void setup();
+
+  // A method to modify the table data if needed
+  template <int dim> void translateAlongNormals(const std::vector<Uintah::Vector>& vec, const double& shift);
+  template <int dim> void translateIndepVar1ByIndepVar0();
+
+  // File read methods
+  template <int dim> void readJSONTableFromFile(const std::string& tableFile);
+  template <int dim> void readJSONTable(const nlohmann::json& doc, const std::string& tableFile);
+
+  // A method for interpolation
+  template <int dim> DoubleVec1D interpolate(const std::array<double, dim>& indepValues) const;
+  template <int dim> DoubleVec1D interpolateLinearSpline( const std::array<double, dim>& indepValues, const IndepVarPArray& indepVars, const DepVarPArray& depVars) const;
+
+  // Some get and set methods
+  std::size_t getNumIndependents() const { return d_indepVars.size(); }
+  std::size_t getNumDependents() const { return d_depVars.size(); }
+  const IndepVarPArray& getIndependentVars() const { return d_indepVars; }
+  const DepVarPArray& getDependentVars() const { return d_depVars; }
+
+  DoubleVec1D getIndependentVarData(const std::string& name, const IndexKey& index) const;
+  DoubleVec1D getDependentVarData(const std::string& name, const IndexKey& index) const;
+  void setIndependentVarData(const std::string& name, const IndexKey& index, const DoubleVec1D& data);
+  void setDependentVarData(const std::string& name, const IndexKey& index, const DoubleVec1D& data);
+
+private:
+  std::string d_filename;
+  std::string d_indepVarNames;
+  std::string d_depVarNames;
+  std::string d_interpType;
+
+  IndepVarPArray d_indepVars;
+  DepVarPArray d_depVars;
+
+  // A parser for variable names
+  std::vector<std::string> parseVariableNames(const std::string& vars);
+
+  // JSON related methods
+  nlohmann::json loadJSON(std::stringstream& inputStream, const std::string& fileName);
+  nlohmann::json getContentsJSON(const nlohmann::json& doc, const std::string& fileName);
+  std::string getTitleJSON(const nlohmann::json& contents, const std::string& fileName);
+  nlohmann::json getDataJSON(const nlohmann::json& contents, const std::string& fileName);
+  DoubleVec1D getVectorJSON(const nlohmann::json& object, const std::string key, const std::string& tableFile);
+  DoubleVec1D getDoubleArrayJSON(const nlohmann::json& object, const std::string key, const std::string& tableFile);
+
+  // Search and interpolation methods
+  std::size_t findLocation(const double& value, const DoubleVec1D& varData) const;
+  double computeParameter(const double& input, const std::size_t& startIndex, const DoubleVec1D& data) const;
+  double computeInterpolated(const double& tval, const std::size_t& startIndex, const DoubleVec1D& data) const;
+};
+}
+#endif // VAANGO_MPM_CONSTITUTIVE_MODEL_TABULAR_DATA_H
+\end{lstlisting}
+
+The \Textbfc{TabularData} class uses the following aliases:
+\begin{lstlisting}[language=Cpp]
+using IndexKey = TableContainers::IndexKey;
+
+using DoubleVec1D = std::vector<double>;
+using DoubleVec2D = std::vector<DoubleVec1D>;
+
+using IndependentVarP = std::unique_ptr<TableContainers::IndependentVar>;
+using DependentVarP = std::unique_ptr<TableContainers::DependentVar>;
+
+using IndepVarPArray = std::vector<IndependentVarP>;
+using DepVarPArray = std::vector<DependentVarP>;
+\end{lstlisting}
+
+\subsection{A TabularData implementation}
+The current implementation of \Textbfc{TabularData} was designed with the
+\Textbfc{TabularPlasticity} model in mind, specifically, the need to be able to
+represent and interpolate between several unloading curves at different values
+of plastic strain.
+
+\subsubsection{Construction}
+A \Textbfc{TabularData} object is created during input file processing using
+the following constructor.  A copy constructor and an assignment operator are
+also provided.
+\begin{lstlisting}[language=Cpp]
+// Read input file and construct
+TabularData::TabularData(ProblemSpecP& ps)
+{
+  ps->require("independent_variables", d_indepVarNames);
+  ps->require("dependent_variables", d_depVarNames);
+  ps->require("filename", d_filename);
+  ProblemSpecP interp = ps->findBlock("interpolation");
+  if (!interp) {
+    d_interpType = "linear";
+  } else {
+    if (!interp->getAttribute("type", d_interpType)) {
+      throw ProblemSetupException("**ERROR** Interpolation \
+        tag needs type=linear/cubic", __FILE__, __LINE__);
+    }
+  }
+  initialize();
+}
+\end{lstlisting}
+The \Textsfc{independent\_variables} and \Textsfc{dependent\_variables} have to
+be specified in the format \Textsfc{var1, var2, var3}.  
+
+The constructor calls the \Textsfc{initialize} method that parses
+the variable names from the input lists and allocates heap memory for
+the tabular data.
+\begin{lstlisting}[language=Cpp]
+void
+TabularData::initialize()
+{
+  std::vector<std::string> indepVarNames = parseVariableNames(d_indepVarNames);
+  std::vector<std::string> depVarNames = parseVariableNames(d_depVarNames);
+  for (const auto& name : indepVarNames) {
+    addIndependentVariable(name);
+  }
+  for (const auto& name : depVarNames) {
+    addDependentVariable(name);
+  }
+}
+\end{lstlisting}
+
+The variable name parser splits the strings in the input file using "," as
+a separator.  Variable names may contain spaces in the middle but have to
+be separated by commas.
+\begin{lstlisting}[language=Cpp]
+std::vector<std::string>
+TabularData::parseVariableNames(const std::string& vars)
+{
+  std::vector<std::string> varNames = Vaango::Util::split(vars, ',');
+  for (auto& name : varNames) {
+    name = Vaango::Util::trim(name);
+  }
+  return varNames;
+}
+\end{lstlisting}
+
+Variables are created on the stack and added to the list
+of independent variables.
+\begin{lstlisting}[language=Cpp]
+void
+TabularData::addIndependentVariable(const std::string& varName)
+{
+  d_indepVars.push_back(std::make_unique<IndependentVar>(varName));
+}
+\end{lstlisting}
+
+Each set of independent variables can have more that one dependent variable.
+These are created next.
+\begin{lstlisting}[language=Cpp]
+std::size_t
+TabularData::addDependentVariable(const std::string& varName)
+{
+  // Check if dependent variable already exists
+  // and just return index if true
+  for (auto ii = 0u; ii < d_depVars.size(); ii++) {
+    if (d_depVars[ii]->name == varName) {
+      return ii;
+    }
+  }
+  // Name does not exist, add the new variable and return its index
+  d_depVars.push_back(std::make_unique<DependentVar>(varName));
+  return d_depVars.size() - 1;
+}
+\end{lstlisting}
+The copy constructor calls the assignment operator and carries out a deep
+copy of the data.
+\begin{lstlisting}[language=Cpp]
+TabularData::TabularData(const TabularData& table) {
+  *this = table;
+}
+
+TabularData& 
+TabularData::operator=(const TabularData& table) {
+  if (this != &table) {
+    d_indepVarNames = table.d_indepVarNames;
+    d_depVarNames = table.d_depVarNames;
+    d_filename = table.d_filename;
+    for (auto ii = 0u; ii < table.d_indepVars.size(); ii++) {
+      addIndependentVariable(table.d_indepVars[ii]->name);
+      d_indepVars[ii]->data = table.d_indepVars[ii]->data;
+    }
+    for (auto ii = 0u; ii < table.d_depVars.size(); ii++) {
+      addDependentVariable(table.d_depVars[ii]->name);
+      d_depVars[ii]->data = table.d_depVars[ii]->data;
+    }
+  }
+  return *this;
+}
+\end{lstlisting}
+
+\subsubsection{Setup}
+The \Textsfc{TabularData} data can be populated either by reading a file or
+directly using a JSON object.  {\Red \textbf{Warning}: Do not expect the 
+data to be populated automatically just because you have specified a file name in the input.}
+You have to explicitly call the \Textsfc{setup} method in the calling program
+after you have created the \Textbfc{TabularData} object.
+
+The \Textsfc{setup} method is listed below.  At present we allow for only three
+independent variables, but more can be added with template specializations.
+\begin{lstlisting}[language=Cpp]
+void
+TabularData::setup()
+{
+  if (d_indepVars.size() == 1) {
+    readJSONTableFromFile<1>(d_filename);
+  } else if (d_indepVars.size() == 2) {
+    readJSONTableFromFile<2>(d_filename);
+  } else if (d_indepVars.size() == 3) {
+    readJSONTableFromFile<3>(d_filename);
+  } else {
+    std::ostringstream out;
+    out << "**ERROR**" << " More than three independent variables not allowed in " << d_filename;
+    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+}
+\end{lstlisting}
+
+\subsubsection{Reading the JSON data from a file}
+The process of reading is the JSON data consists of loading the file into an 
+input stream and then converting the stream int a JSON object:
+\begin{lstlisting}[language=Cpp]
+template <int dim>
+void
+TabularData::readJSONTableFromFile(const std::string& tableFile)
+{
+  std::ifstream inputFile(tableFile);
+  if (!inputFile) {
+    std::ostringstream out;
+    out << "**ERROR**" << " Cannot read tabular input data file " << tableFile;
+    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+
+  std::stringstream inputStream;
+  inputStream << inputFile.rdbuf();
+  inputFile.close();
+
+  json doc = loadJSON(inputStream, tableFile);
+  readJSONTable<dim>(doc, tableFile);
+}
+
+json
+TabularData::loadJSON(std::stringstream& inputStream, const std::string& tableFile)
+{
+  json doc;
+  try {
+    doc << inputStream;
+  } catch (std::invalid_argument err) {
+    std::ostringstream out;
+    out << "**ERROR**" << " Cannot parse tabular input data file " << tableFile << "\n" << " Please check that the file is valid JSON using a linter";
+    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+  return doc;
+}
+\end{lstlisting}
+
+\subsubsection{Reading the data from a JSON object}
+After the JSON object has been created, we can interpret the contents according
+to the number of independent variables it contains.  For example, if there
+are three independent variables, we specialize the \Textsfc{readJSONTable} method
+as follows:
+\begin{lstlisting}[language=Cpp]
+template <>
+void
+TabularData::readJSONTable<3>(const json& doc, const std::string& tableFile)
+{
+  json contents = getContentsJSON(doc, tableFile);
+  std::string title = getTitleJSON(contents, tableFile);
+  json data = getDataJSON(contents, tableFile);
+
+  DoubleVec1D indepVar0Data = getDoubleArrayJSON(data, d_indepVars[0]->name, tableFile);
+  d_indepVars[0]->data.insert({ IndexKey(0, 0, 0, 0), indepVar0Data });
+
+  json data0 = getDataJSON(data, tableFile);
+  for (auto ii = 0u; ii < indepVar0Data.size(); ii++) {
+
+    DoubleVec1D indepVar1Data = getDoubleArrayJSON(data0[ii], d_indepVars[1]->name, tableFile);
+    d_indepVars[1]->data.insert({ IndexKey(ii, 0, 0, 0), indepVar1Data });
+
+    json data1 = getDataJSON(data0[ii], tableFile);
+    for (auto jj = 0u; jj < indepVar1Data.size(); jj++) {
+
+      int index = 0;
+      for (const auto& indepVar : d_indepVars) {
+        if (index > 1) {
+          DoubleVec1D indepVar2Data = getDoubleArrayJSON(data1[jj], indepVar->name, tableFile);
+          indepVar->data.insert({ IndexKey(ii, jj, 0, 0), indepVar2Data });
+        }
+        index++;
+      }
+
+      for (const auto& depVar : d_depVars) {
+        DoubleVec1D depVar2Data = getDoubleArrayJSON(data1[jj], depVar->name, tableFile);
+        depVar->data.insert({ IndexKey(ii, jj, 0, 0), depVar2Data });
+      }
+    }
+  }
+}
+\end{lstlisting}
+The helper functions \Textsfc{getContentsJSON}, \Textsfc{getDataJSON}, and \Textsfc{getDoubleArrayJSON}
+are encapsulate \Textsfc{get} methods provided by the JSON library.  Notice that the data are
+expected to be in the order in which the independent variables have been specified.  Checks for
+consistency are minimal.
+
+\subsubsection{Translation of the data}
+In some material submodels, the data have to be translated by a given amount.  These 
+are accomplished by \Textsfc{translateIndepVar1ByIndepVar0<2>} for the tabular elastic moduli model,
+and \Textsfc{translateAlongNormals<1>} for the yield condition model.
+
+\subsubsection{Interpolation of the data}
+The current implementation allows only for linear interpolation of the data. 
+{\Red \textbf{Warning:} Extrapolation is strictly not allowed and will cause an exception to be thrown.}
+The interpolation method has the form
+\begin{lstlisting}[language=Cpp]
+template <int dim>
+DoubleVec1D
+TabularData::interpolate(const std::array<double, dim>& indepValues) const
+{
+  return interpolateLinearSpline<dim>(indepValues, d_indepVars, d_depVars);
+}
+\end{lstlisting}
+The linear interpolation method for three independent variables is listed below.
+\begin{lstlisting}[language=Cpp]
+template <>
+DoubleVec1D
+TabularData::interpolateLinearSpline<3>( const std::array<double, 3>& indepValues, const IndepVarPArray& indepVars, const DepVarPArray& depVars) const
+{
+  // Get the numbers of vars
+  auto numDepVars = depVars.size();
+
+  // First find the segment containing the first independent variable value
+  // and the value of parameter s
+  auto indepVarData0 = getIndependentVarData(indepVars[0]->name, IndexKey(0, 0, 0, 0));
+  auto segLowIndex0 = findLocation(indepValues[0], indepVarData0);
+  auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
+
+  // Choose the two vectors containing the relevant independent variable data
+  // and find the segments containing the data
+  DoubleVec1D depValsT;
+  for (auto ii = segLowIndex0; ii <= segLowIndex0 + 1; ii++) {
+    auto indepVarData1 = getIndependentVarData(indepVars[1]->name, IndexKey(ii, 0, 0, 0));
+    auto segLowIndex1 = findLocation(indepValues[1], indepVarData1);
+    auto tval = computeParameter(indepValues[1], segLowIndex1, indepVarData1);
+
+    // Choose the last two vectors containing the relevant independent variable data
+    // and find the segments containing the data
+    DoubleVec1D depValsU;
+    for (auto jj = segLowIndex1; jj <= segLowIndex1 + 1; jj++) {
+      auto indepVarData2 = getIndependentVarData(indepVars[2]->name, IndexKey(ii, jj, 0, 0));
+      auto segLowIndex2 = findLocation(indepValues[2], indepVarData2);
+      auto uval = computeParameter(indepValues[2], segLowIndex2, indepVarData2);
+
+      for (const auto& depVar : depVars) {
+        auto depVarData = getDependentVarData(depVar->name, IndexKey(ii, jj, 0, 0));
+        auto depvalU = computeInterpolated(uval, segLowIndex2, depVarData);
+        depValsU.push_back(depvalU);
+      }
+    }
+
+    // First interpolation step
+    for (auto index = 0u; index < numDepVars; index++) {
+      auto depvalT = (1 - tval) * depValsU[index] + tval * depValsU[index + numDepVars];
+      depValsT.push_back(depvalT);
+    }
+  }
+
+  // Second interpolation step
+  DoubleVec1D depVals;
+  for (auto index = 0u; index < numDepVars; index++) {
+    auto depval = (1 - sval) * depValsT[index] + sval * depValsT[index + numDepVars];
+    depVals.push_back(depval);
+  }
+
+  return depVals;
+}
+\end{lstlisting}
+In the above, the \Textsfc{findLocation}, \Textsfc{computeParameter}, and \Textsfc{computeInterpolated}
+methods are used to find the data points that are to be interpolated between.  Details can be
+found in the \Vaango Theory Manual.

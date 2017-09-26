@@ -53,16 +53,17 @@ public:
     }
   };
 
-  struct IndependentVar
+  struct TableVar
   {
     std::string name;
     std::unordered_map<IndexKey, std::vector<double>, IndexHash, IndexEqual>
       data;
-    IndependentVar() {}
-    IndependentVar(const std::string name) { this->name = name; }
+    TableVar() {}
+    TableVar(const std::string name) { this->name = name; }
   };
 
-  using DependentVar = IndependentVar;
+  using IndependentVar = TableVar;
+  using DependentVar = TableVar;
 };
 }
 

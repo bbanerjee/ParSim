@@ -1,0 +1,1031 @@
+\section{Models in the ``Models'' directory}
+\Textsfc{Models} contains submodels that include some of the older models from
+the \Textsfc{PlasticityModels} directory but mostly models that are applicable
+to soil and rock plasticity. The approach taken is similar to that in
+\Textsfc{PlasticityModels} in that the models are derived from base classes
+and generated using factories.  
+
+The models in the \Textsfc{Models} folder are derived from the 
+following base classes:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+Models/
+|-- ElasticModuliModel.h
+|-- InternalVariableModel.h
+|-- KinematicHardeningModel.h
+|-- PressureModel.h
+|-- ShearModulusModel.h
+|-- YieldCondition.h
+\end{lstlisting}
+
+The factory approach used for these models is similar to that used for 
+the \Textsfc{PlasticityModels}.  The following factories are available:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+Models/
+|-- ElasticModuliModelFactory.cc
+|-- InternalVariableModelFactory.cc
+|-- KinematicHardeningModelFactory.cc
+|-- PressureModelFactory.cc
+|-- ShearModulusModelFactory.cc
+|-- YieldConditionFactory.cc
+\end{lstlisting}
+
+Two reduce inappropriate mixing of models, the material state is communicated 
+to the submodels through a set of structures that are derived from a
+\Textbfc{ModelStateBase} object.  The available state structures are:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+Models/
+|-- ModelState_Arena.h
+|-- ModelState_Arenisca3.h
+|-- ModelState_CamClay.h
+|-- ModelState_Default.h
+|-- ModelState_SoilModelBrannon.h
+|-- ModelState_Tabular.h
+\end{lstlisting}
+
+Tabular models are created using the \Textbfc{TabularData} class.  Details
+are given in Section~\ref{sec:tabular}.
+
+In addition there are a few utility functions that are implemented in
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+Models/
+|-- TableContainers.h
+|-- TableUtils.cc
+|-- YieldCondUtils.cc
+\end{lstlisting}
+
+\subsection{Implemented ``Model'' models}
+Each model factory can produce several types of submodel objects.  
+The \Vaango implementation contains the following specialized
+submodels.
+
+\subsubsection{Elastic moduli models}
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+├── ElasticModuli_Arena.cc
+├── ElasticModuli_ArenaMixture.cc
+├── ElasticModuli_Arenisca.cc
+├── ElasticModuli_Constant.cc
+├── ElasticModuli_Tabular.cc
+\end{lstlisting}
+
+\subsubsection{Internal variable models}
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+Models/
+├── InternalVar_Arena.cc
+├── InternalVar_BorjaPressure.cc
+├── InternalVar_SoilModelBrannonKappa.cc
+\end{lstlisting}
+
+\subsubsection{Kinematic hardening models}
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+Models/
+├── KinematicHardening_Arena.cc
+├── KinematicHardening_Armstrong.cc
+├── KinematicHardening_None.cc
+├── KinematicHardening_Prager.cc
+\end{lstlisting}
+
+\subsubsection{Pressure models}
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+Models/
+├── Pressure_Air.cc
+├── Pressure_Borja.cc
+├── Pressure_Granite.cc
+├── Pressure_Hyperelastic.cc
+├── Pressure_Hypoelastic.cc
+├── Pressure_MieGruneisen.cc
+├── Pressure_Water.cc
+\end{lstlisting}
+
+\subsubsection{Shear modulus models}
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+Models/
+├── ShearModulus_Borja.cc
+├── ShearModulus_Constant.cc
+├── ShearModulus_Nadal.cc
+\end{lstlisting}
+
+\subsubsection{Yield condition models}
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+Models/
+├── YieldCond_Arena.cc
+├── YieldCond_ArenaMixture.cc
+├── YieldCond_Arenisca3.cc
+├── YieldCond_CamClay.cc
+├── YieldCond_Gurson.cc
+├── YieldCond_Tabular.cc
+├── YieldCond_vonMises.cc
+\end{lstlisting}
+
+\subsection{Using the submodels in ``Models''} \label{sec:tabular}
+The procedure for using the submodels in the \Textsfc{Models} directory in
+a new constitutive model is almost, but not exactly, identical to that
+for the \Textsfc{PlasticityModels}.  As an example, let us see how the
+\Textbfc{TabuarPlasticity} model has been implemented.
+
+The following steps are were used to integrate the submodels needed for
+\Textsfc{TabularPlasticity} into the model.
+
+\begin{enumerate}
+  \item The header file, \Textsfc{TabularPlasticity.h}, contains:
+\begin{lstlisting}[language=Cpp]
+#ifndef __MPM_CONSTITUTIVEMODEL_TABULAR_PLASTICITY_H__
+#define __MPM_CONSTITUTIVEMODEL_TABULAR_PLASTICITY_H__
+
+#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
+
+namespace Vaango {
+  class TabularPlasticity : public ConstitutiveModel {
+    public:
+      // Model parameters
+      struct CMData
+      {
+        double yield_scale_fac;  // A scaling factor for number of substeps
+        double subcycling_characteristic_number; // A max substeps value
+      };
+
+      // Local variables that can be communicated across processes
+      const Uintah::VarLabel* pElasticStrainLabel; // Elastic Strain
+      const Uintah::VarLabel* pElasticStrainLabel_preReloc;
+      const Uintah::VarLabel* pPlasticStrainLabel; // Plastic Strain
+      const Uintah::VarLabel* pPlasticStrainLabel_preReloc;
+      const Uintah::VarLabel* pPlasticCumEqStrainLabel; // Equivalent plastic strain
+      const Uintah::VarLabel* pPlasticCumEqStrainLabel_preReloc;
+      const Uintah::VarLabel* pElasticVolStrainLabel; // Elastic Volumetric Strain
+      const Uintah::VarLabel* pElasticVolStrainLabel_preReloc;
+      const Uintah::VarLabel* pPlasticVolStrainLabel; // Plastic Volumetric Strain
+      const Uintah::VarLabel* pPlasticVolStrainLabel_preReloc;
+      const Uintah::VarLabel* pRemoveLabel; // Flag for removal
+      const Uintah::VarLabel* pRemoveLabel_preReloc;
+
+      // Constructors/assignment/destructors
+      TabularPlasticity(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
+      TabularPlasticity(const TabularPlasticity* cm);
+      TabularPlasticity(const TabularPlasticity& cm);
+      ~TabularPlasticity() override;
+      TabularPlasticity& operator=(const TabularPlasticity& cm) = delete;
+      TabularPlasticity* clone() override;
+
+      // For restart purposes
+      void outputProblemSpec(Uintah::ProblemSpecP& ps, bool output_cm_tag = true) override;
+
+      // Model parameter dictionary get method
+      ParameterDict getParameters() const
+      {
+        ParameterDict params;
+        return params;
+      }
+
+      // Initialization methods
+      void addInitialComputesAndRequires( Uintah::Task* task, const Uintah::MPMMaterial* matl, const Uintah::PatchSet* patches) const override;
+      void initializeCMData(const Uintah::Patch* patch, const Uintah::MPMMaterial* matl, Uintah::DataWarehouse* new_dw) override;
+
+      // Main stress computation methods
+      void addComputesAndRequires(Uintah::Task* task, const Uintah::MPMMaterial* matl, const Uintah::PatchSet* patches) const override;
+      void computeStableTimestep(const Uintah::Patch* patch, const Uintah::MPMMaterial* matl, Uintah::DataWarehouse* new_dw) override;
+      void computeStressTensor(const Uintah::PatchSubset* patches, const Uintah::MPMMaterial* matl, Uintah::DataWarehouse* old_dw, Uintah::DataWarehouse* new_dw) override;
+
+      // Boilerplate methods for data communication
+      void addRequiresDamageParameter( Uintah::Task* task, const Uintah::MPMMaterial* matl, const Uintah::PatchSet* patches) const override;
+      void getDamageParameter(const Uintah::Patch* patch, Uintah::ParticleVariable<int>& damage, int dwi, Uintah::DataWarehouse* old_dw, Uintah::DataWarehouse* new_dw) override;
+      void carryForward(const Uintah::PatchSubset* patches, const Uintah::MPMMaterial* matl, Uintah::DataWarehouse* old_dw, Uintah::DataWarehouse* new_dw) override;
+      void addComputesAndRequires(Uintah::Task* task, const Uintah::MPMMaterial* matl, const Uintah::PatchSet* patches, const bool recursion, const bool dummy) const override;
+      void addParticleState(std::vector<const Uintah::VarLabel*>& from, std::vector<const Uintah::VarLabel*>& to) override;
+      void allocateCMDataAdd(Uintah::DataWarehouse* new_dw, Uintah::ParticleSubset* addset, Uintah::ParticleLabelVariableMap* newState, Uintah::ParticleSubset* delset, Uintah::DataWarehouse* old_dw) override;
+
+      // For communication with MPMICE
+      double computeRhoMicroCM(double pressure, const double p_ref, const Uintah::MPMMaterial* matl, double temperature, double rho_guess) override;
+      void computePressEOSCM(double rho_m, double& press_eos, double p_ref, double& dp_drho, double& ss_new, const Uintah::MPMMaterial* matl, double temperature) override;
+      double getCompressibility() override;
+
+    private:
+      ElasticModuliModel* d_elastic;
+      YieldCondition* d_yield;
+      CMData d_cm;
+
+      void initializeLocalMPMLabels();
+      // Other private methods
+  };
+}
+#endif
+\end{lstlisting}
+
+  \item In the implementation file, \Textsfc{TabularPlasticity.cc}, create copies of the
+        submodel in the constructor, initialize \Textbfc{MPMLabel}s, and delete the copies 
+        in the destructor:
+\begin{lstlisting}[language=Cpp]
+#include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticity.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
+....
+
+// Constructor
+TabularPlasticity::TabularPlasticity(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* mpmFlags) : Uintah::ConstitutiveModel(mpmFlags)
+{
+  // Bulk and shear modulus models
+  d_elastic = Vaango::ElasticModuliModelFactory::create(ps);
+  if (!d_elastic) {
+    std::ostringstream desc;
+    desc << "**ERROR** Internal error while creating ElasticModuliModel."
+         << std::endl;
+    throw InternalError(desc.str(), __FILE__, __LINE__);
+  }
+
+  // Yield condition model
+  d_yield = Vaango::YieldConditionFactory::create(ps);
+  if (!d_yield) {
+    std::ostringstream desc;
+    desc << "**ERROR** Internal error while creating YieldConditionModel."
+         << std::endl;
+    throw InternalError(desc.str(), __FILE__, __LINE__);
+  }
+
+  // Algorithmic parameters
+  ps->getWithDefault("yield_surface_radius_scaling_factor",
+                     d_cm.yield_scale_fac, 1.0);
+  ps->getWithDefault("subcycling_characteristic_number",
+                     d_cm.subcycling_characteristic_number,
+                     256); // allowable subcycles
+
+  initializeLocalMPMLabels();
+}
+
+// Copy constructors (don't allow defaults)
+TabularPlasticity::TabularPlasticity(const TabularPlasticity& cm)
+  : ConstitutiveModel(cm)
+{
+  d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm.d_elastic);
+  d_yield = Vaango::YieldConditionFactory::createCopy(cm.d_yield);
+
+  // Yield surface scaling
+  d_cm.yield_scale_fac = cm.d_cm.yield_scale_fac;
+
+  // Subcycling
+  d_cm.subcycling_characteristic_number =
+    cm.d_cm.subcycling_characteristic_number;
+
+  initializeLocalMPMLabels();
+}
+// *NOTE* Delegation is a C++11 feature
+TabularPlasticity::TabularPlasticity(const TabularPlasticity* cm)
+  : TabularPlasticity(*cm)
+{
+}
+TabularPlasticity*
+TabularPlasticity::clone()
+{
+  return scinew TabularPlasticity(*this);
+}
+
+// Initialize all labels of the particle variables associated with
+// TabularPlasticity.
+void
+TabularPlasticity::initializeLocalMPMLabels()
+{
+  pElasticStrainLabel = Uintah::VarLabel::create(
+    "p.elasticStrain",
+    Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+  pElasticStrainLabel_preReloc = Uintah::VarLabel::create(
+    "p.elasticStrain+",
+    Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+
+  pElasticVolStrainLabel = VarLabel::create(
+    "p.elasticVolStrain", ParticleVariable<double>::getTypeDescription());
+  pElasticVolStrainLabel_preReloc = VarLabel::create(
+    "p.elasticVolStrain+", ParticleVariable<double>::getTypeDescription());
+
+  pPlasticStrainLabel = Uintah::VarLabel::create(
+    "p.plasticStrain",
+    Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+  pPlasticStrainLabel_preReloc = Uintah::VarLabel::create(
+    "p.plasticStrain+",
+    Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
+
+  pPlasticCumEqStrainLabel = Uintah::VarLabel::create(
+    "p.plasticCumEqStrain",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+  pPlasticCumEqStrainLabel_preReloc = Uintah::VarLabel::create(
+    "p.plasticCumEqStrain+",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+
+  pPlasticVolStrainLabel = Uintah::VarLabel::create(
+    "p.plasticVolStrain",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+  pPlasticVolStrainLabel_preReloc = Uintah::VarLabel::create(
+    "p.plasticVolStrain+",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+
+  pRemoveLabel = Uintah::VarLabel::create(
+    "p.remove",
+    Uintah::ParticleVariable<int>::getTypeDescription());
+  pRemoveLabel_preReloc = Uintah::VarLabel::create(
+    "p.remove+",
+    Uintah::ParticleVariable<int>::getTypeDescription());
+}
+
+// Destructor
+TabularPlasticity::~TabularPlasticity()
+{
+  VarLabel::destroy(pElasticStrainLabel);
+  VarLabel::destroy(pElasticStrainLabel_preReloc);
+  VarLabel::destroy(pElasticVolStrainLabel); // Elastic Volumetric Strain
+  VarLabel::destroy(pElasticVolStrainLabel_preReloc);
+  VarLabel::destroy(pPlasticStrainLabel);
+  VarLabel::destroy(pPlasticStrainLabel_preReloc);
+  VarLabel::destroy(pPlasticCumEqStrainLabel);
+  VarLabel::destroy(pPlasticCumEqStrainLabel_preReloc);
+  VarLabel::destroy(pPlasticVolStrainLabel);
+  VarLabel::destroy(pPlasticVolStrainLabel_preReloc);
+  VarLabel::destroy(pRemoveLabel);
+  VarLabel::destroy(pRemoveLabel_preReloc);
+
+  delete d_yield;
+  delete d_elastic;
+}
+\end{lstlisting}
+
+  \item To make sure that the details of the submodels are added to the output for
+        restarting the simulation from a checkpoint, add the
+        following to \Textsfc{TabularPlasticity.cc}:
+\begin{lstlisting}[language=Cpp]
+void
+TabularPlasticity::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
+{
+  ProblemSpecP cm_ps = ps;
+  if (output_cm_tag) {
+    cm_ps = ps->appendChild("constitutive_model");
+    cm_ps->setAttribute("type", "tabular_plasticity");
+  }
+
+  d_elastic->outputProblemSpec(cm_ps);
+  d_yield->outputProblemSpec(cm_ps);
+
+  cm_ps->appendElement("yield_surface_radius_scaling_factor",
+                       d_cm.yield_scale_fac);
+  cm_ps->appendElement("subcycling_characteristic_number",
+                       d_cm.subcycling_characteristic_number);
+}
+\end{lstlisting}
+
+  \item Some submodels have their own associated internal variables, in this case the 
+        \Textbfc{YieldCondition}.  You will
+        have to make sure that these are initialized, even if you don't plan to use a 
+        model with submodel internal variables.
+\begin{lstlisting}[language=Cpp]
+// Add the labels to the label list
+void
+TabularPlasticity::addParticleState(std::vector<const VarLabel*>& from, std::vector<const VarLabel*>& to)
+{
+  from.push_back(pElasticStrainLabel);
+  to.push_back(pElasticStrainLabel_preReloc);
+
+  from.push_back(pElasticVolStrainLabel);
+  to.push_back(pElasticVolStrainLabel_preReloc);
+
+  from.push_back(pPlasticStrainLabel);
+  to.push_back(pPlasticStrainLabel_preReloc);
+
+  from.push_back(pPlasticCumEqStrainLabel);
+  to.push_back(pPlasticCumEqStrainLabel_preReloc);
+
+  from.push_back(pPlasticVolStrainLabel);
+  to.push_back(pPlasticVolStrainLabel_preReloc);
+
+  from.push_back(pRemoveLabel);
+  to.push_back(pRemoveLabel_preReloc);
+
+  // Add the particle state for the yield condition model
+  d_yield->addParticleState(from, to);
+}
+// Set up initialization task
+void
+TabularPlasticity::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl, const PatchSet* patch) const
+{
+  const MaterialSubset* matlset = matl->thisMaterial();
+
+  task->computes(pElasticStrainLabel, matlset);
+  task->computes(pElasticVolStrainLabel, matlset);
+  task->computes(pPlasticStrainLabel, matlset);
+  task->computes(pPlasticCumEqStrainLabel, matlset);
+  task->computes(pPlasticVolStrainLabel, matlset);
+  task->computes(pRemoveLabel, matlset);
+
+  d_yield->addInitialComputesAndRequires(task, matl, patch);
+}
+// Do the actual initialization
+void
+TabularPlasticity::initializeCMData(const Patch* patch, const MPMMaterial* matl, DataWarehouse* new_dw)
+{
+  // Get the particles in the current patch
+  ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
+
+  // Get the particle volume and mass
+  constParticleVariable<double> pVolume, pMass;
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pMass, lb->pMassLabel, pset);
+
+  // Initialize variables for yield function parameter variability
+  d_yield->initializeLocalVariables(patch, pset, new_dw, pVolume);
+
+  // Now initialize the other variables
+  ParticleVariable<int> pRemove;
+  ParticleVariable<double> pdTdt;
+  ParticleVariable<double> pElasticVolStrain;
+  ParticleVariable<double> pPlasticCumEqStrain, pPlasticVolStrain;
+  ParticleVariable<Matrix3> pStress;
+  ParticleVariable<Matrix3> pElasticStrain;
+  ParticleVariable<Matrix3> pPlasticStrain;
+
+  new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel, pset);
+  new_dw->allocateAndPut(pStress, lb->pStressLabel, pset);
+
+  new_dw->allocateAndPut(pRemove, pRemoveLabel, pset);
+  new_dw->allocateAndPut(pElasticStrain, pElasticStrainLabel, pset);
+  new_dw->allocateAndPut(pElasticVolStrain, pElasticVolStrainLabel, pset);
+  new_dw->allocateAndPut(pPlasticStrain, pPlasticStrainLabel, pset);
+  new_dw->allocateAndPut(pPlasticCumEqStrain, pPlasticCumEqStrainLabel, pset);
+  new_dw->allocateAndPut(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
+
+  for (const particleIndex& pidx : *pset) {
+    pRemove[pidx] = 0;
+    pdTdt[pidx] = 0.0;
+    pStress[pidx] = Identity;
+    pElasticStrain[pidx].set(0.0);
+    pElasticVolStrain[pidx] = 0.0;
+    pPlasticStrain[pidx].set(0.0);
+    pPlasticCumEqStrain[pidx] = 0.0;
+    pPlasticVolStrain[pidx] = 0.0;
+  }
+
+  // Compute timestep
+  computeStableTimestep(patch, matl, new_dw);
+}
+// Compute a stable timestep
+void
+TabularPlasticity::computeStableTimestep(const Patch* patch, const MPMMaterial* matl, DataWarehouse* new_dw)
+{
+  int matID = matl->getDWIndex();
+
+  // Compute initial elastic moduli
+  ElasticModuli moduli = d_elastic->getInitialElasticModuli();
+  double bulk = moduli.bulkModulus;
+  double shear = moduli.shearModulus;
+
+  // Initialize wave speed
+  double c_dil = std::numeric_limits<double>::min();
+  Vector dx = patch->dCell();
+  Vector WaveSpeed(c_dil, c_dil, c_dil);
+
+  // Get the particles in the current patch
+  ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
+
+  // Get particles mass, volume, and velocity
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<long64> pParticleID;
+  constParticleVariable<Vector> pVelocity;
+
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pParticleID, lb->pParticleIDLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
+
+  // loop over the particles in the patch
+  for (const particleIndex& idx : *pset) {
+
+    // Compute wave speed + particle velocity at each particle,
+    // store the maximum
+    c_dil = std::sqrt((bulk + four_third * shear) * (pVolume[idx] / pMass[idx]));
+
+    WaveSpeed = Vector(Max(c_dil + std::abs(pVelocity[idx].x()), WaveSpeed.x()), Max(c_dil + std::abs(pVelocity[idx].y()), WaveSpeed.y()), Max(c_dil + std::abs(pVelocity[idx].z()), WaveSpeed.z()));
+  }
+  WaveSpeed = dx / WaveSpeed;
+  double delT_new = WaveSpeed.minComponent();
+  new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+}
+\end{lstlisting}
+
+  \item Now you are almost ready to use the submodels in the stress computation 
+        logic.  To complete the process, you will have to add a task that makes sure 
+        any submodel internal variables are updated correctly during the stress computation
+        process:
+\begin{lstlisting}[language=Cpp]
+void
+TabularPlasticity::addComputesAndRequires(Task* task, const MPMMaterial* matl, const PatchSet* patches) const
+{
+  // Add the computes and requires that are common to all explicit
+  // constitutive models.  The method is defined in the ConstitutiveModel
+  // base class.
+  const MaterialSubset* matlset = matl->thisMaterial();
+  addSharedCRForHypoExplicit(task, matlset, patches);
+  task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
+
+  // Add yield Function computes and requires
+  d_yield->addComputesAndRequires(task, matl, patches);
+
+  // Add internal variable computes and requires
+  task->requires(Task::OldDW, pElasticStrainLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pElasticVolStrainLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pPlasticCumEqStrainLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pRemoveLabel, matlset, Ghost::None);
+
+  task->computes(pElasticStrainLabel_preReloc, matlset);
+  task->computes(pElasticVolStrainLabel_preReloc, matlset);
+  task->computes(pPlasticStrainLabel_preReloc, matlset);
+  task->computes(pPlasticCumEqStrainLabel_preReloc, matlset);
+  task->computes(pPlasticVolStrainLabel_preReloc, matlset);
+  task->computes(pRemoveLabel_preReloc, matlset);
+}
+\end{lstlisting}
+
+  \item Finally, you can use the submodel objects for stress computation:
+\begin{lstlisting}[language=Cpp]
+void
+TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl, DataWarehouse* old_dw, DataWarehouse* new_dw)
+{
+  // Global loop over each patch
+  for (int p = 0; p < patches->size(); p++) {
+
+    // Declare and initial value assignment for some variables
+    const Patch* patch = patches->get(p);
+
+    // Initialize wave speed
+    double c_dil = std::numeric_limits<double>::min();
+    Vector WaveSpeed(c_dil, c_dil, c_dil);
+    Vector dx = patch->dCell();
+
+    // Initialize strain energy
+    double se = 0.0;
+
+    // Get particle subset for the current patch
+    int matID = matl->getDWIndex();
+    ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+
+    // Set up local particle variables to be read and written
+    constParticleVariable<int> pRemove;
+    constParticleVariable<double> pEev, pEpv, pEpeq_old;
+    constParticleVariable<Matrix3> pEe, pEp;
+    old_dw->get(pEe,       pElasticStrainLabel, pset);
+    old_dw->get(pEev,      pElasticVolStrainLabel, pset);
+    old_dw->get(pEp,       pPlasticStrainLabel, pset);
+    old_dw->get(pEpv,      pPlasticVolStrainLabel, pset);
+    old_dw->get(pEpeq_old, pPlasticCumEqStrainLabel, pset);
+    old_dw->get(pRemove,   pRemoveLabel, pset);
+
+    ParticleVariable<int>    pRemove_new;
+    ParticleVariable<double> pEev_new, pEpv_new, pEpeq_new;
+    ParticleVariable<Matrix3> pEe_new, pEp_new;
+    new_dw->allocateAndPut(pEe_new,     pElasticStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(pEev_new,    pElasticVolStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(pEp_new,     pPlasticStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(pEpv_new,    pPlasticVolStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(pEpeq_new,   pPlasticCumEqStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(pRemove_new, pRemoveLabel_preReloc, pset);
+
+    // Set up global particle variables to be read and written
+    delt_vartype delT;
+    constParticleVariable<long64> pParticleID;
+    constParticleVariable<double> pMass;
+    constParticleVariable<Vector> pVelocity;
+    constParticleVariable<Matrix3> pDefGrad, pStress_old;
+
+    old_dw->get(delT,           lb->delTLabel, getLevel(patches));
+    old_dw->get(pMass,          lb->pMassLabel, pset);
+    old_dw->get(pParticleID,    lb->pParticleIDLabel, pset);
+    old_dw->get(pVelocity,      lb->pVelocityLabel, pset);
+    old_dw->get(pDefGrad,       lb->pDefGradLabel, pset);
+    old_dw->get(pStress_old,    lb->pStressLabel, pset);
+
+    // Get the particle variables computed in interpolateToParticlesAndUpdate()
+    constParticleVariable<double> pVolume;
+    constParticleVariable<Matrix3> pVelGrad_new, pDefGrad_new;
+    new_dw->get(pVolume,      lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVelGrad_new, lb->pVelGradLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
+
+    ParticleVariable<double> p_q, pdTdt;
+    ParticleVariable<Matrix3> pStress_new;
+    new_dw->allocateAndPut(p_q,            lb->p_qLabel_preReloc, pset);
+    new_dw->allocateAndPut(pdTdt,          lb->pdTdtLabel_preReloc, pset);
+    new_dw->allocateAndPut(pStress_new,    lb->pStressLabel_preReloc, pset);
+
+    // Loop over particles
+    for (particleIndex& idx : *pset) {
+
+      // No thermal effects
+      pdTdt[idx] = 0.0;
+
+      // Compute the symmetric part of the velocity gradient
+      Matrix3 DD = (pVelGrad_new[idx] + pVelGrad_new[idx].Transpose()) * .5;
+
+      // Use polar decomposition to compute the rotation and stretch tensors
+      Matrix3 FF = pDefGrad[idx];
+      Matrix3 RR, UU;
+      FF.polarDecompositionRMB(UU, RR);
+
+      // Compute the unrotated symmetric part of the velocity gradient
+      DD = (RR.Transpose()) * (DD * RR);
+
+      // Compute the unrotated stress at the start of the current timestep
+      Matrix3 sigma_old = (RR.Transpose()) * (pStress_old[idx] * RR);
+
+      // Set up model state
+      ModelState_Tabular state_old;
+      state_old.particleID = pParticleID[idx];
+      state_old.stressTensor = sigma_old;
+      state_old.elasticStrainTensor = pEe[idx];
+      state_old.plasticStrainTensor = pEp[idx];
+      state_old.ep_cum_eq = pEpeq_old[idx];
+
+      // Compute the elastic moduli at t = t_n
+      computeElasticProperties(state_old);
+
+      // Rate-independent plastic step
+      ModelState_Tabular state_new;
+      bool isSuccess = rateIndependentPlasticUpdate( DD, delT, idx, pParticleID[idx], state_old, state_new);
+
+      if (isSuccess) {
+        pStress_new[idx] = state_new.stressTensor; // unrotated stress at end of step
+        pEe_new[idx] = state_new.elasticStrainTensor; // elastic strain at end of step
+        pEp_new[idx] = state_new.plasticStrainTensor; // plastic strain at end of step
+        pEpv_new[idx] = pEp_new[idx].Trace(); // Plastic volumetric strain at end of step
+        pEpeq_new[idx] = state_new.ep_cum_eq; // Equivalent plastic strain at end of step
+
+        // Elastic volumetric strain at end of step, compute from updated  deformation gradient.
+        // H = ln(U) => tr(H) = tr(ln(U)) = ln(det(U)) = ln(sqrt(det(FT) det(F))) = ln J
+        pEev_new[idx] = log(pDefGrad_new[idx].Determinant()) - pEpv_new[idx];
+
+      } else {
+        // If the updateStressAndInternalVars function can't converge it will  return false.
+        // This indicates substepping has failed, and the particle will be  deleted.
+        pRemove_new[idx] = -999;
+        std::cout << "** WARNING ** Bad step, deleting particle" << " idx = " << idx << " particleID = " << pParticleID[idx] << ":" << __FILE__ << ":" << __LINE__ << std::endl;
+
+        pStress_new[idx] = pStress_old[idx];
+        pEe_new[idx] = state_old.elasticStrainTensor; // elastic strain at start of step
+        pEp_new[idx] = state_old.plasticStrainTensor; // plastic strain at start of step
+        pEpv_new[idx] = pEp_new[idx].Trace();
+        pEpeq_new[idx] = pEpeq_old[idx];
+        pEev_new[idx] = pEe_new[idx].Trace();
+      }
+
+      // Use polar decomposition to compute the rotation and stretch tensors.
+      Matrix3 FF_new = pDefGrad_new[idx];
+      double Fmax_new = FF_new.MaxAbsElem();
+      double JJ_new = FF_new.Determinant();
+      // These checks prevent failure of the polar decomposition algorithm if [F_new] has some extreme values.
+      if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
+        pRemove_new[idx] = -999;
+        proc0cout << "Deformation gradient component unphysical: [F] = " << FF << std::endl;
+        proc0cout << "Resetting [F]=[I] for this step and deleting particle" << " idx = " << idx << " particleID = " << pParticleID[idx] << std::endl;
+        Identity.polarDecompositionRMB(UU, RR);
+      } else {
+        FF_new.polarDecompositionRMB(UU, RR);
+      }
+
+      // Compute the rotated dynamic and quasistatic stress at the end of the current timestep
+      pStress_new[idx] = (RR * pStress_new[idx]) * (RR.Transpose());
+
+      // Compute wave speed + particle velocity at each particle, store the  maximum
+      computeElasticProperties(state_new);
+      double bulk = state_new.bulkModulus;
+      double shear = state_new.shearModulus;
+      double rho_cur = pMass[idx] / pVolume[idx];
+      c_dil = sqrt((bulk + four_third * shear) / rho_cur);
+      WaveSpeed = Vector(Max(c_dil + std::abs(pVelocity[idx].x()), WaveSpeed.x()), Max(c_dil + std::abs(pVelocity[idx].y()), WaveSpeed.y()), Max(c_dil + std::abs(pVelocity[idx].z()), WaveSpeed.z()));
+
+      // Compute artificial viscosity term
+      if (flag->d_artificial_viscosity) {
+        double dx_ave = (dx.x() + dx.y() + dx.z()) * one_third;
+        double c_bulk = sqrt(bulk / rho_cur);
+        p_q[idx] = artificialBulkViscosity(DD.Trace(), c_bulk, rho_cur, dx_ave);
+      } else {
+        p_q[idx] = 0.;
+      }
+
+      // Compute the averaged stress
+      Matrix3 AvgStress = (pStress_new[idx] + pStress_old[idx]) * 0.5;
+
+      // Compute the strain energy increment associated with the particle
+      double e = (DD(0, 0) * AvgStress(0, 0) + DD(1, 1) * AvgStress(1, 1) + DD(2, 2) * AvgStress(2, 2) + 2.0 * (DD(0, 1) * AvgStress(0, 1) + DD(0, 2) * AvgStress(0, 2) + DD(1, 2) * AvgStress(1, 2))) *
+        pVolume[idx] * delT;
+
+      // Accumulate the total strain energy
+      se += e;
+
+    } // End particle set loop
+
+    // Compute the stable timestep based on maximum value of "wave speed + particle velocity"
+    WaveSpeed = dx / WaveSpeed; // Variable now holds critical timestep (not speed)
+
+    double delT_new = WaveSpeed.minComponent();
+
+    // Put the stable timestep and total strain enrgy
+    new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+    if (flag->d_reductionVars->accStrainEnergy || flag->d_reductionVars->strainEnergy) {
+      new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
+    }
+  }
+} 
+\end{lstlisting}
+  \item Note that the submodels are actually called inside the private methods
+        \Textsfc{computeElasticProperties} and \Textsfc{rateIndependentPlasticUpdate}.
+        The details are not relevant for the purposes of this manual and will be
+        discussed in the \Vaango User manual and the \Vaango Theory Manual.  It
+        will suffice to examine the \Textsfc{computeElasticProperties} method here.
+\begin{lstlisting}[language=Cpp]
+void
+TabularPlasticity::computeElasticProperties(ModelState_Tabular& state)
+{
+  state.updateStressInvariants();
+  state.updatePlasticStrainInvariants();
+  ElasticModuli moduli = d_elastic->getCurrentElasticModuli(&state);
+  state.bulkModulus = moduli.bulkModulus;
+  state.shearModulus = moduli.shearModulus;
+}
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{Creating a new model in ``Models''}
+The additions of a model in the \Textsfc{Models} directory is similar to that discussed
+earlier for the \Textsfc{PlasticityModels}.  Let us examine the implementation
+of \Textbfc{ElasticModuli\_Tabular} to get a feel for the process. 
+\begin{enumerate}
+  \item The header file \Textsfc{ElasticModuli\_Tabular.h} in the \Textsfc{Models}
+        directory contains the following code.  Notice that the private structure
+        \Textbfc{BulkModulusParameters} contains a \Textbfc{TabularData} object that
+        is constructed from an input file upon initialization.
+\begin{lstlisting}[language=Cpp]
+#ifndef ___ELASTIC_MODULI_TABULAR_MODEL_H__
+#define ___ELASTIC_MODULI_TABULAR_MODEL_H__
+
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
+#include <limits>
+
+namespace Vaango {
+
+class ElasticModuli_Tabular : public ElasticModuliModel
+{
+
+public:
+
+  ElasticModuli_Tabular() = delete;
+  ElasticModuli_Tabular(const ElasticModuli_Tabular& model) = delete;
+  ~ElasticModuli_Tabular() = default;
+
+  ElasticModuli_Tabular(Uintah::ProblemSpecP& ps);
+  ElasticModuli_Tabular(const ElasticModuli_Tabular* model);
+  ElasticModuli_Tabular& operator=(const ElasticModuli_Tabular& model) = delete;
+
+  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+
+  // Get parameters 
+  std::map<std::string, double> getParameters() const override
+  {
+    std::map<std::string, double> params;
+    params["G0"] = d_shear.G0;
+    params["nu"] = d_shear.nu;
+    return params;
+  }
+
+  // Compute the moduli
+  ElasticModuli getInitialElasticModuli() const override;
+  ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) override;
+
+  ElasticModuli getElasticModuliLowerBound() const override
+  {
+    return getInitialElasticModuli();
+  }
+  ElasticModuli getElasticModuliUpperBound() const override
+  {
+    return ElasticModuli(std::numeric_limits<double>::max(),
+                         std::numeric_limits<double>::max());
+  }
+  /* Tangent bulk modulus parameters */
+  struct BulkModulusParameters
+  {
+    TabularData table;
+    BulkModulusParameters() = default;
+    BulkModulusParameters(Uintah::ProblemSpecP& ps) : table(ps) {
+      table.setup();
+      table.translateIndepVar1ByIndepVar0<2>();
+    }
+    BulkModulusParameters(const BulkModulusParameters& bulk) {
+      table = bulk.table;
+    }
+    BulkModulusParameters& operator=(const BulkModulusParameters& bulk) {
+      if (this != &bulk) {
+        table = bulk.table;
+      }
+      return *this;
+    }
+  };
+
+  /* Tangent shear modulus parameters */
+  struct ShearModulusParameters
+  {
+    double G0;
+    double nu;
+  };
+
+  BulkModulusParameters d_bulk;
+  ShearModulusParameters d_shear;
+
+  void checkInputParameters();
+
+  double computeBulkModulus(const double& elasticStrain, const double& plasticStrain) const;
+  double computeShearModulus(const double& bulkModulus) const;
+
+};
+}
+#endif
+\end{lstlisting}
+
+  \item In the implementation file \Textsfc{ElasticModuli\_Tabular.cc}, we create constructors and make
+        sure that the model input parameters are copied to output files.  Note that there are
+        no internal variables in this model.
+\begin{lstlisting}[language=Cpp]
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Tabular.h>
+#include <Core/Exceptions/InternalError.h>
+#include <Core/Exceptions/InvalidValue.h>
+#include <Core/Exceptions/ProblemSetupException.h>
+
+using namespace Vaango;
+
+// Construct a default elasticity model.
+ElasticModuli_Tabular::ElasticModuli_Tabular(Uintah::ProblemSpecP& ps)
+  : d_bulk(ps)
+{
+  ps->require("G0", d_shear.G0);
+  ps->require("nu", d_shear.nu);
+
+  checkInputParameters();
+}
+
+ElasticModuli_Tabular::ElasticModuli_Tabular(const ElasticModuli_Tabular* model)
+{
+  d_bulk = model->d_bulk;
+  d_shear = model->d_shear;
+}
+
+void
+ElasticModuli_Tabular::outputProblemSpec(Uintah::ProblemSpecP& ps)
+{
+  Uintah::ProblemSpecP elasticModuli_ps = ps->appendChild("elastic_moduli_model");
+  elasticModuli_ps->setAttribute("type", "tabular");
+
+  d_bulk.table.outputProblemSpec(elasticModuli_ps);
+
+  elasticModuli_ps->appendElement("G0", d_shear.G0);
+  elasticModuli_ps->appendElement("nu", d_shear.nu);
+}
+\end{lstlisting}
+
+  \item We can now implement the elastic modulus computation code.  The main point of
+        difference with the models in \Textsfc{PlasticityModels} is that we now enforce
+        strict adherence to a particular \Textbfc{ModelState}, in this case \Textbfc{ModelState\_Tabular},
+        to prevent the use of submodels that are not designed for a particular model.
+        This check, of course, comes at a cost.
+\begin{lstlisting}[language=Cpp]
+ElasticModuli
+ElasticModuli_Tabular::getInitialElasticModuli() const
+{
+  double K = computeBulkModulus(1.0e-6, 0);
+  double G = computeShearModulus(K);
+  return ElasticModuli(K, G);
+}
+
+ElasticModuli
+ElasticModuli_Tabular::getCurrentElasticModuli(const ModelStateBase* state_input)
+{
+  const ModelState_Tabular* state = dynamic_cast<const ModelState_Tabular*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed." << " Need ModelState_Tabular.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  // Make sure the quantities are positive in compression
+  double ev_e_bar = -(state->elasticStrainTensor).Trace();
+  double ev_p_bar = -(state->plasticStrainTensor).Trace();
+
+  // Compute the elastic moduli
+  double K = computeBulkModulus(ev_e_bar, ev_p_bar);
+  double G = computeShearModulus(K);
+
+  return ElasticModuli(K, G);
+}
+\end{lstlisting}
+
+  \item Now we implement the method for the actual bulk and shear modulus computation.
+\begin{lstlisting}[language=Cpp]
+double
+ElasticModuli_Tabular::computeBulkModulus(const double& elasticVolStrain,
+                                          const double& plasticVolStrain) const
+{
+  double epsilon = 1.0e-6;
+  DoubleVec1D pressure_lo;
+  DoubleVec1D pressure_hi;
+  try {
+    pressure_lo = d_bulk.table.interpolate<2>({{plasticVolStrain, elasticVolStrain-epsilon}});
+    pressure_hi = d_bulk.table.interpolate<2>({{plasticVolStrain, elasticVolStrain+epsilon}});
+  } catch (Uintah::InvalidValue& e) {
+    std::ostringstream out;
+    out << "**ERROR** In computeBulkModulus:" << " elasticVolStrain = " << elasticVolStrain
+        << " plasticVolStrain = " << plasticVolStrain << "\n" << e.message();
+    throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
+  }
+  double K = (pressure_hi[0] - pressure_lo[0])/(2*epsilon);
+  return K;
+}
+
+double
+ElasticModuli_Tabular::computeShearModulus(const double& K) const
+{
+  double nu = d_shear.nu;
+  double G = (nu > -1.0 && nu < 0.5) ? 1.5*K*(1.0 - 2.0*nu)/(1.0 + nu) : d_shear.G0;
+  return G;
+}
+\end{lstlisting}
+
+  \item We now add this model to the \Textbfc{ElasticModuliModelFactory} as follows:
+\begin{lstlisting}[language=Cpp]
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Arena.h>
+......
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Tabular.h>
+
+using namespace Vaango;
+ElasticModuliModel*
+ElasticModuliModelFactory::create(Uintah::ProblemSpecP& ps)
+{
+  Uintah::ProblemSpecP child = ps->findBlock("elastic_moduli_model");
+  if (!child) {
+    std::ostringstream out;
+    out << "**Error** No Elastic modulus model provided." << " Default (constant elasticity) model needs at least two input parameters." << std::endl;
+    throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+
+  std::string mat_type;
+  if (!child->getAttribute("type", mat_type)) {
+    std::ostringstream out;
+    out << "MPM::ConstitutiveModel:No type provided for elasticity model.";
+    throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
+  }
+
+  if (mat_type == "constant")
+    return (scinew ElasticModuli_Constant(child));
+  .....
+  else if (mat_type == "tabular")
+    return (scinew ElasticModuli_Tabular(child));
+  else {
+    std::cerr << "**WARNING** No elasticity model provided. "
+              << "Creating default (constant elasticity) model" << std::endl;
+    return (scinew ElasticModuli_Constant(child));
+  }
+}
+ElasticModuliModel*
+ElasticModuliModelFactory::createCopy(const ElasticModuliModel* smm)
+{
+  if (dynamic_cast<const ElasticModuli_Constant*>(smm))
+    return (scinew ElasticModuli_Constant( dynamic_cast<const ElasticModuli_Constant*>(smm)));
+  ....
+  else if (dynamic_cast<const ElasticModuli_Tabular*>(smm))
+    return (scinew ElasticModuli_Tabular( dynamic_cast<const ElasticModuli_Tabular*>(smm)));
+  else {
+    std::cerr << "**WARNING** No elasticity model provided. " << "Creating default (constant elasticity) model" << std::endl;
+    return (scinew ElasticModuli_Constant( dynamic_cast<const ElasticModuli_Constant*>(smm)));
+  }
+}
+\end{lstlisting}
+
+  \item Next we add the new file to the compilation list in \Textsfc{CMakeLists.txt}
+        in the \Textsfc{Models} directory:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+SET(MPM_ConstitutiveModel_Models_SRCS
+   ................
+   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Tabular.cc
+)
+\end{lstlisting}
+
+  \item Finally, we add the new model tags in the \Textsfc{constitutive\_models.xml} file 
+        in the directory \Textsfc{src/StandAlone/inputs/UPS\_SPEC}:
+\begin{lstlisting}[language=XML]
+  <elastic_moduli_model  spec="OPTIONAL NO_DATA" attribute1="type REQUIRED STRING 'constant  arenisca3  soil_model_brannon  arena  arena_mixture  tabular'" need_applies_to="type arena Arenisca3 camclay soil_model_brannon arena  arena_mixture  tabular_plasticity">
+    <!-- type = tabular -->
+    <filename              spec="REQUIRED STRING" need_applies_to="type tabular"/>
+    <independent_variables spec="REQUIRED STRING" need_applies_to="type tabular"/>
+    <dependent_variables   spec="REQUIRED STRING" need_applies_to="type tabular"/>
+    <interpolation         spec="REQUIRED NO_DATA" attribute1="type REQUIRED STRING 'linear, cubic'" need_applies_to="type tabular"/>
+    <nu                    spec="REQUIRED DOUBLE" need_applies_to="type tabular" />
+  </elastic_moduli_model>
+\end{lstlisting}
+
+\end{enumerate}

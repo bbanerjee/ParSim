@@ -38,34 +38,24 @@ TabularData::TabularData(ProblemSpecP& ps)
 }
 
 TabularData::TabularData(const TabularData& table) {
-  d_indepVarNames = table.d_indepVarNames;
-  d_depVarNames = table.d_depVarNames;
-  d_filename = table.d_filename;
-  for (auto ii = 0u; ii < table.d_indepVars.size(); ii++) {
-    addIndependentVariable(table.d_indepVars[ii]->name);
-    d_indepVars[ii]->data = table.d_indepVars[ii]->data;
-  }
-  for (auto ii = 0u; ii < table.d_depVars.size(); ii++) {
-    addDependentVariable(table.d_depVars[ii]->name);
-    d_depVars[ii]->data = table.d_depVars[ii]->data;
-  }
+  *this = table;
 }
 
 TabularData& 
 TabularData::operator=(const TabularData& table) {
 
-  if (this == &table) return *this;
-
-  d_indepVarNames = table.d_indepVarNames;
-  d_depVarNames = table.d_depVarNames;
-  d_filename = table.d_filename;
-  for (auto ii = 0u; ii < table.d_indepVars.size(); ii++) {
-    addIndependentVariable(table.d_indepVars[ii]->name);
-    d_indepVars[ii]->data = table.d_indepVars[ii]->data;
-  }
-  for (auto ii = 0u; ii < table.d_depVars.size(); ii++) {
-    addDependentVariable(table.d_depVars[ii]->name);
-    d_depVars[ii]->data = table.d_depVars[ii]->data;
+  if (this != &table) {
+    d_indepVarNames = table.d_indepVarNames;
+    d_depVarNames = table.d_depVarNames;
+    d_filename = table.d_filename;
+    for (auto ii = 0u; ii < table.d_indepVars.size(); ii++) {
+      addIndependentVariable(table.d_indepVars[ii]->name);
+      d_indepVars[ii]->data = table.d_indepVars[ii]->data;
+    }
+    for (auto ii = 0u; ii < table.d_depVars.size(); ii++) {
+      addDependentVariable(table.d_depVars[ii]->name);
+      d_depVars[ii]->data = table.d_depVars[ii]->data;
+    }
   }
   return *this;
 }
