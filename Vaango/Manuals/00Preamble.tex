@@ -225,6 +225,21 @@
   drop fuzzy shadow,%
   #1}
 
+\newtcolorbox{WarningBox}[1][]{%
+  colback=pink!50,
+  colframe=pink!20!black,
+  before skip=2mm,after skip=3mm,
+  boxrule=0.4pt,left=5mm,right=2mm,top=1mm,bottom=1mm,
+  sharp corners,
+  rounded corners=southeast,arc is angular,arc=3mm,
+  underlay={%
+    \path[fill=tcbcol@back!80!black] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[draw=tcbcol@frame,shorten <=-0.05mm,shorten >=-0.05mm] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[fill=pink!50!black,draw=none] (interior.south west) rectangle node[white]{\Huge\bfseries !} ([xshift=4mm]interior.north west);
+    },
+  drop fuzzy shadow,%
+  #1}
+
 \tcbuselibrary{skins}
 \newtcolorbox[auto counter,number within=chapter]{ExampleBox}[1][]{%
   enhanced,

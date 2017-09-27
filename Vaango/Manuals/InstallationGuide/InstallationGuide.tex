@@ -16,249 +16,312 @@
     \centering
     \vspace*{1cm}
     \par\normalfont\fontsize{35}{35}\sffamily\selectfont
-    \textcolor{white}{Vaango/Uintah Installation Guide}\par % Book title
+    \textcolor{white}{Vaango Installation Guide}\par % Book title
     \vspace*{0.5cm}
-    {\Large \textcolor{white}{Vaango version 16.02}}\par
-    {\Large \textcolor{white}{February 2016}}\par
+    {\Large \textcolor{white}{Version \version}}\par
+    {\Large \textcolor{white}{\today}}\par
     \vspace*{1cm}
-    {\Large \textcolor{white}{The Utah Uintah team}}\par % Author name
+    {\Large \textcolor{white}{The Utah Vaango team}}\par % Author name
     {\Large \textcolor{white}{and}}\par % Author name
     {\Large \textcolor{white}{Biswajit Banerjee}}\par % Author name
   \endgroup
 
   \input{../00FrontMatter.tex}
 
-\chapter{Overview of Uintah} \label{sec:overview} The \textbf{Uintah}
-library is composed of several executables and a generic library
-framework for solving PDEs on structured AMR grids on large parallel
-supercomputers. \textbf{\emph{VisIt}} is used to visualize data
-generated from \textbf{Uintah}.
+\chapter{Overview of Vaango} \label{sec:overview} 
+The \Vaango library is a fork of \Uintah
+(\url{http://uintah.utah.edu}) intended for solid mechanics and
+coupled solid-fluid simulations.  
+
+The main components of \Vaango
+are a material point method (MPM) code, a compressible fluid dynamics
+code (ICE), a coupled MPM-ICE code, and an experimental Peridynamics
+code.  Efforts are underway to incorporate a Discrete Element Method (DEM)
+code and a Smoothed Particle Hydrodynamics (SPH) code into the framework.
+
+The library framework in \Uintah was designed for solving PDEs on 
+structured AMR grids on large parallel supercomputers.  In \Vaango, we
+mainly use the grid for searches and scratch-pad calculations.
+
+\Visit (\url{https://wci.llnl.gov/simulation/computer-codes/visit/})
+is used to visualize data generated from \Vaango.
 
 \section{Obtaining the Code}
-Uintah can be obtained either as a compressed tarball from
-\url{http://www.uintah.utah.edu/trac/chrome/site/uintah.tar.gz} or by
-using Subversion (SVN) to download the latest source code:
+\Vaango can be obtained either as a zipped archive (approx. 550 Mb) from
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+https://github.com/bbanerjee/ParSim/archive/master.zip
+\end{lstlisting}
+or cloned from Github using either HTTP
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+git clone --recursive https://github.com/bbanerjee/ParSim.git
+\end{lstlisting}
+or SSH
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+git clone --recursive git@github.com:bbanerjee/ParSim.git
+\end{lstlisting}
+The above commands check out the \Parsim source tree and
+installs it into a directory called \Textsfc{ParSim} in the user's home
+directory.  The \Parsim code contains several research codes.  The
+main \Vaango code can be found in the \Textsfc{ParSim/Vaango/src}
+directory.  Manuals for \Vaango are in \Textsfc{ParSim/Vaango/Manuals}.
 
-\begin{lstlisting}
-svn co https://gforge.sci.utah.edu/svn/uintah/trunk uintah
+You may also need to install \Textsfc{git} on your machine if you 
+want to clone the repository from \Textsfc{Github}:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install git-core
 \end{lstlisting}
 
-The above command checks out the \textbf{Uintah} source tree and
-installs it into a directory called uintah in the users home
-directory.
+\begin{WarningBox}
+The \Textsfc{--recursive} flag is needed in order to make sure that the
+submodules \Textsfc{googletest} and \Textsfc{json} are also populated
+during the download process.
+\end{WarningBox}
 
-
-\chapter{Installation Overview}
-
-\textbf{Uintah} can be installed individually and in conjunction with
-the visualization tool, \textbf{\emph{VisIt}}.  It is recommended for
-first time users to install \textbf{Uintah} first and then install
-\textbf{\emph{VisIt}} second. Once you have a working build of
-\textbf{Uintah} then go ahead and install \textbf{\emph{VisIt}}.  The
-configure script used by \textbf{Uintah} will have to be slightly
-modified to include the location of the \textbf{\emph{VisIt}}
-installation directory.  
-
-However, if \textbf{Uintah} is installed on a supercomputer,
-\textbf{\emph{VisIt}} does not need to be installed prior to
-installation of \textbf{Uintah}.
-
-The installation procedure follows the basic outline:
-
+\section{Developer version}
+If you are a developer, we will suggest that you use the following longer process.
 \begin{enumerate}
+  \item  Create a \Textsfc{GitHub} account
+\begin{lstlisting}[backgroundcolor=\color{background}]
+   https://github.com/signup/free
+\end{lstlisting}
 
-\item Install basic dependencies: MPI, Blas, Lapack, Hypre, PETSc, \emph{etc}.
+  \item  Install \Textsfc{git} on your machine
+\begin{lstlisting}[backgroundcolor=\color{background}]
+   sudo apt-get install git-core
+\end{lstlisting}
 
-\item Configure Uintah
+  \item  Setup git configuration
+\begin{lstlisting}[backgroundcolor=\color{background}]
+   git config --global user.email "your_email@your_address.com"
+   git config --global user.name "your_github_username"
+\end{lstlisting}
 
-\item Compile Uintah
+  \item Email your \Textsfc{github} username to the owner of \Parsim.
 
-\item Install visualization tools (optional if installing on a
-  supercomputer or first time users) and reconfigure Uintah.
+  \item Create a clone of the ParSim repository
+\begin{lstlisting}[backgroundcolor=\color{background}]
+   git clone https://github.com/bbanerjee/ParSim
+\end{lstlisting}
 
+  \item Check branches/master
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  git branch -a
+\end{lstlisting}
 
+  \item Configure \Textsfc{ssh} for secure access (if needed)
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  cd ~/.ssh
+  mkdir backup
+  cp * backup/
+  rm id_rsa*
+  ssh-keygen -t rsa -C "your_email@your_address.com"
+  sudo apt-get install xclip
+  cd ~/ParSim/
+  xclip -sel clip < ~/.ssh/id_rsa.pub
+  ssh -T git@github.com
+  ssh-add
+  ssh -T git@github.com
+\end{lstlisting}
+
+  \item For password-less access with \Textsfc{ssh}, use
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  git remote set-url origin git@github.com:bbanerjee/ParSim.git
+\end{lstlisting}
+
+  \item To change the default message editor, do
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  git config --global core.editor "vim"
+\end{lstlisting}
 \end{enumerate}
 
+\begin{WarningBox}
+If you are new to \Vaango, we strongly suggest that you fork the code from GitHub and submit 
+your changes via pull requests.
+\end{WarningBox}
 
+\subsection{Getting the latest version, adding files etc.}
+\begin{enumerate}
+  \item Check status
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  git status
+  git diff origin/master
+\end{lstlisting}
 
-\chapter{Generic Library Dependencies}
+  \item Update local repository
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  git pull
+\end{lstlisting}
 
-\textbf{Uintah} depends on several different libraries that are
-commonly available or easily installable on various Linux or Unix like
-OS distributions.
+  \item Add file to your local repository
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  git add README
+  git commit -m 'Added README file for git'
+\end{lstlisting}
 
-Required libraries:
+  \item Update main repository with your changes
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  git push origin master
+\end{lstlisting}
+\end{enumerate}
+
+\begin{WarningBox}
+If you are new to \Vaango, we strongly suggest that you fork the code from GitHub and submit 
+your changes via pull requests.
+\end{WarningBox}
+
+\section{Installation Overview}
+\Vaango can be installed individually and in conjunction with
+the visualization tool, \Visit.  It is recommended for
+first time users to install \Vaango first and then install
+\Visit second after you  have a working build of
+\Vaango.  
+
+\begin{WarningBox}
+\Visit recognizes files in the \Uintah format automatically.  \Vaango
+uses an older version of the \Uintah data file format that may not 
+be recognized by the latest version of \Visit.  We have found that
+\Visit 10.2 works with the \Vaango code.
+\end{WarningBox}
+
+For older versions of \Visit, the \Textsfc{cmake} command used to
+build \Vaango may have to be modified to include the location of 
+the \Visit installation directory.  
+
+\subsection{Explicit time integration only}
+Most of the material models in \Vaango support only explicit time
+integration.  You you want to use only these models, the installation 
+process is relatively straightforward:
+\begin{enumerate}
+\item Install basic dependencies: MPI, etc..
+\item Configure and compile \Vaango
+\item Install visualization tools 
+\end{enumerate}
+
+\subsection{Implicit and explicit time integration}
+A few \Vaango models need implicit time integration.  You you need to use these
+models, the installation procedure follows the basic outline:
+\begin{enumerate}
+\item Install basic dependencies: MPI, Blas, Lapack, Hypre, PETSc, etc.
+\item Configure and compile Vaango
+\item Install visualization tools (optional if installing on a
+  supercomputer or first time users) and reconfigure Vaango.
+\end{enumerate}
+
+\chapter{Prerequisites and library dependencies}
+\Vaango depends on several tools and libraries that are
+commonly available or easily installed on various Linux or Unix like
+OS distributions.  
+
+\begin{WarningBox}
+The following instructions are tailored for installations on Ubuntu/Debian-like systems.
+\end{WarningBox}
+
+\section{Prerequsites for explicit time integration only}
+\subsection{Cmake}
+You will probably need to install \Textsfc{Cmake} to control the software compilation process. To do that:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+     sudo apt-get install cmake
+\end{lstlisting}
+
+\subsection{Compilers}
 \begin{itemize}
-\item mpi (OpenMpi, Mpich, or LAM or a vendor supplied mpi library)
-\item blas
-\item lapack
-\item make
-\item libxml2-devel
-\item zlib-devel
-\item c++
-\item fortran
-\item subversion
-\item cmake
-\item git
+  \item You will need a C++ compiler, either \Textsfc{g++} or \Textsfc{clang}:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install g++
+\end{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install clang-3.8
+\end{lstlisting}
 
+  \item and a C Compiler such as \Textsfc{gcc}:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install gcc
+\end{lstlisting}
+
+  \item You also need to have \Textsfc{gfortran}:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install gfortran
+\end{lstlisting}
+
+  \item You may need \Textsfc{Boost} for parts of the code (and also some of the unit tests) to compile.
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install libboost-all-dev
+\end{lstlisting}
+        \begin{NoteBox}
+        We are trying to remove \Textsfc{Boost} dependencies from the code.  Try to build the code
+        without \Textsfc{Boost}, and only install the library if the build fails.
+        \end{NoteBox}
 \end{itemize}
 
-Useful libraries:
+\subsection{MPI and XML libraries}
 \begin{itemize}
+  \item Install the \Textsfc{OpenMPI} libraries:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install mpi-default-dev
+\end{lstlisting}
+
+  \item and \Textsfc{libxml2}:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install libxml2
+sudo apt-get install libxml2-dev
+\end{lstlisting}
+\end{itemize}
+
+\subsection{Other libraries}
+\begin{itemize}
+  \item You will also need to install the development version of zlib.
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install zlib1g zlib1g-dev
+\end{lstlisting}
+
+  \item The Peridynamics code uses parts of the \Textsfc{Eigen3} library. You will have to install 
+        this library if you don't have it in your system:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install libeigen3-dev
+\end{lstlisting}
+
+  \item The \Textsfc{googletest} libraries are cloned into the repository when you use
+        the \Textsfc{--recursive} flag.  You don't need any further installation.
+
+  \item The \Textsfc{json} header-only library is also cloned into the repository when you use
+        the \Textsfc{--recursive} flag.  You don't need any further installation.
+\end{itemize}
+
+\subsection{Optional libraries}
+\begin{itemize}
+  \item In order for related code like \Textsfc{MPM3D\_xx} etc. to work, you will also need the 
+        \Textsfc{VTK} libraries. Use
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install libvtk5-dev
+sudo apt-get install python-vtk tcl-vtk libvtk-java libvtk5-qt4-dev
+\end{lstlisting}
+        \begin{NoteBox}
+        This dependency is not needed for most installations.
+        \end{NoteBox}
+
+  \item In some older versions of \Vaango, \Textsfc{libpcl} is used read point data file. In order 
+        to get PCL(The Point Cloud Library) you need to run these three commands:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl
+sudo apt-get update
+sudo apt-get install libpcl-all
+\end{lstlisting}
+        \begin{NoteBox}
+        This dependency is not needed for most installations.
+        \end{NoteBox}
+\end{itemize}
+
+\section{Extra prerequisites for implicit  time integration}
+Required libraries:
+\begin{itemize}
+\item blas
+\item lapack
 \item Hypre v2.8.0b (\url{https://computation.llnl.gov/casc/hypre/software.html})
 \item PETSc v3.3 (\url{http://www.mcs.anl.gov/petsc/petsc-as/download/index.html})
 \end{itemize}
-
 Note, we suggest using Hypre v2.8.0b and PETSc v3.3-p3. 
 
-The Wasatch component requires the following:
-\begin{itemize}
-  \item git
-  \item boost-1.44 or higher
-  \item cmake 2.8 or above
-\end{itemize}
-\chapter{OS Version Dependencies}
-
-\section{Debian \& Ubuntu Dependencies}
-\label{sec:debian_dependencies}
-The \textbf{Gnu/Debian} OS \url{http://www.debian.org} and
-\textbf{Ubuntu} OS \url{http://www.ubuntu.org} offer the vast majority
-of libraries necessary for installing \textbf{Uintah} with the
-exception of VisIt and Teem.  Either one of these distributions are
-the recommended OS to install.
-
-Installing the following libraries will ensure that all dependencies
-required for \textbf{Uintah} are satisfied:
-
-\begin{lstlisting} 
-sudo aptitude install subversion libhypre-dev petsc-dev \ 
-libxml2-dev zlib1g-dev liblapack-dev cmake libglew1.5-dev \
-libglui-dev libxmu-dev g++ gfortran libboost-all-dev git \
-libxrender-dev libxi-dev
-\end{lstlisting}
-
-% \noindent Optional: Additional libraries needed for the Wasatch component:
-% \begin{lstlisting}
-%   aptitude install git
-% \end{lstlisting}  
-%  \hspace{0.125in} \textbf{Lenny}:
-% \begin{lstlisting}
-%   aptitude install cmake > 2.8 (from squeeze)
-%   download boost-1.46 from www.boost.org
-%   bootstrap.sh --prefix=path/to/installation/prefix
-%   bjam threading=single install
-% \end{lstlisting}
-% \hspace{0.125in} \textbf{Squeeze}:
-% \begin{lstlisting}
-%   aptitude install cmake > 2.8 (from squeeze)
-  
-%   sudo aptitude install  libboost-date-time1.46-dev \
-%   libboost-date-time1.46.0          \
-%   libboost-iostreams1.46.0          \   
-%   libboost-program-options1.46-dev  \
-%   libboost-program-options1.46.0    \
-%   libboost-serialization1.46-dev    \
-%   libboost-serialization1.46.0      \
-%   libboost-signals1.46-dev          \
-%   libboost-signals1.46.0            \
-%   libboost-thread1.46-dev           \
-%   libboost-thread1.46.0             \
-%   libboost1.46-dev
-% \end{lstlisting}
-
-% \noindent Once these libraries are installed, VisIt can be installed
-% followed by installation of \textbf{Uintah}.
-
-% \noindent To install the latest \TT{Nvidia}video drivers:
-% \begin{lstlisting}
-%   As root run the following commands:
-%   aptitude install module-assistant module-init-tools
-%   aptitude clean
-%   aptitude update
-%   uname -r
-  
-%   apt-get install nvidia-kernel-common
-%   m-a auto-install nvidia-kernel${VERSION}-source
-%   apt-get install nvidia-glx${VERSION}
-%   apt-get install nvidia-xconfig
-%   nvidia-xconfig
-% \end{lstlisting}
-% See: \url{http://wiki.debian.org/NvidiaGraphicsDrivers#Libraries} for additional details
-
-\section{Fedora Core  Dependencies}
-
-\textbf{Fedora Core} \url{http://fedoraproject.org/} offers all the
-dependencies except for PETSc and HYPRE.  Install the following
-libraries:
-
-\begin{lstlisting}
-sudo yum install make openmpi-devel openmpi lapack-devel \
-gcc-gfortran blas-devel gcc-c++ libxml2-devel subversion \ 
-cmake tar diffutils libX11-devel libXext-devel patch wget \
-mesa-libGL-devel mesa-libGLU-devel libXt-devel git boost-devel \
-boost-static libXrender-devel libXi-devel
-\end{lstlisting} 
-
-
-\section{CentOS  Dependencies}
-
-\textbf{CentOS} \url{http://www.centos.org/} is similar to \textbf{Fedora
-Core} 
-
-\begin{lstlisting}
-sudo yum install make openmpi-devel openmpi lapack-devel \
-gcc-gfortran blas-devel gcc-c++ libxml2-devel subversion \ 
-tar diffutils libX11-devel libXext-devel patch wget \
-mesa-libGL-devel mesa-libGLU-devel libXt-devel git \
-libXrender-devel libXi-devel
-\end{lstlisting} 
-
-Note:  The packages for boost and cmake are too old and the user must
-download and build more recent versions, see below for instructions.
-
-\section{OpenSuse  Dependencies}
-
-\textbf{OpenSuse} \url{http://www.opensuse.org/} is similar to
-\textbf{Fedora Core}
-
-\begin{lstlisting}
-sudo zypper install make openmpi-devel openmpi lapack \
-gcc-fortran blas gcc-c++ libxml2-devel subversion \ 
-cmake tar diffutils libX11-devel libXext-devel patch wget \
-mesa-libGL-devel mesa-libGLU-devel libXt-devel git boost-devel \
-boost-static libXrender-devel libXi-devel
-\end{lstlisting} 
-
-\chapter{CMake Installation}
-
-A condensed set of instructions for building \textbf{CMake}
-\url{http://www.cmake.org/} is provided.  The cmake binary and
-resulting libraries are installed in the \texttt{/usr/local} hierarchy.
-
-\begin{lstlisting}
-   tar xf cmake-2.8.9.tar.gz 
-   cd cmake-2.8.9
-  ./bootstrap --prefix=/usr/local
-  make
-  sudo make install
-\end{lstlisting}
-
-\chapter{Boost Installation}
-
-A condensed set of instructions for building the \textbf{Boost
-  Libraries} \url{http://www.boost.org/} is provided.  The libraries
-are installed in the user's home directory.
-
-\begin{lstlisting}
-  tar xvf boost_1_51_0.tar.bz2 
-  cd boost_1_51_0
-  ./bootstrap.sh --prefix=~/boost-1.51
-  ./b2
-  ./b2 install
-\end{lstlisting}
-
-\chapter{PETSc Installation}
-
+\subsection{PETSc Installation}
 PETSc can be installed by executing the following simplified
 instructions.  Please refer to the PETSc website for comprehensive
 installation instructions if you encounter any difficulties.
@@ -266,48 +329,7 @@ installation instructions if you encounter any difficulties.
 Download petsc-v3.3-p3 from
 \url{http://www.mcs.anl.gov/petsc/petsc-as/download/index.html}
 
-\section{Fedora \& CentOS}
-
-The following configure script assumes the location of MPI libaries
-are in \texttt{/usr/lib64/openmpi/lib}.  Note that the
-\texttt{LD\_LIBRARY\_PATH} must be set.  It is helpful to include the
-\texttt{/usr/lib/64/openmpi/bin} in your path for the location of
-mpirun and mpiCC, mpicc, and mpif77.
-
-\begin{lstlisting}
-tar zxf petsc-3.3-p3.tar.gz
-cd petsc-3.3-p3
-
-LD_LIBRARY_PATH=/usr/lib64/openmpi/lib \
-./configure --with-shared-libraries \
---with-debugging=O \
---with-mpi-dir=/usr/lib64/openmpi  \
---prefix=/home/jas/petsc
-
-make PETSC_DIR=/home/jas/petsc-3.3-p3 PETSC_ARCH=arch-linux2-c-opt all
-
-make PETSC_DIR=/home/jas/petsc-3.3-p3 PETSC_ARCH=arch-linux2-c-opt install
-
-\end{lstlisting}
-
-\section{OpenSuse}
-
-\begin{lstlisting}
-tar zxf petsc-3.3-p3.tar.gz
-cd petsc-3.3-p3
-
-./configure --with-mpi-dir=/usr/lib64/mpi/gcc/openmpi \
---with-shared-libraries --with-debugging=0 --prefix=/home/jas/petsc
-
-make PETSC_DIR=/home/jas/petsc-3.3-p3 PETSC_ARCH=arch-linux2-c-opt all
-
-make PETSC_DIR=/home/jas/petsc-3.3-p3 PETSC_ARCH=arch-linux2-c-opt install
-
-\end{lstlisting}
-
-
-\chapter{Hypre Installation}
-
+\subsection{Hypre Installation}
 Hypre can be installed by executing the following simplified
 instructions, however, if you encounter problems please refer to the
 hypre website for troubleshooting.
@@ -315,560 +337,218 @@ hypre website for troubleshooting.
 Download hypre-2.8.0b from
 \url{https://computation.llnl.gov/casc/hypre/software.html}
 
-\section{Fedora \& CentOS}
-
-The following configure script assumes the location of MPI libaries
-are in \texttt{/usr/lib64/openmpi/lib}.  Note that the
-\texttt{LD\_LIBRARY\_PATH} must be set.  It is helpful to include the
-\texttt{/usr/lib/64/openmpi/bin} in your path for the location of
-mpirun and mpiCC, mpicc, and mpif77.
-
-
-\begin{lstlisting}
-cd hypre-2.8.0b/src
-
-LD_LIBRARY_PATH=/usr/lib64/openmpi/lib/ \
- ./configure --enable-shared \
- --with-MPI-lib-dirs=/usr/lib64/openmpi/lib/ \
---with-MPI-include=/usr/include/openmpi-x86_64/ \
---with-MPI-libs="mpi mpi_cxx" \
-CC=/usr/lib64/openmpi/bin/mpicc \
- CXX=/usr/lib64/openmpi/bin/mpic++ \
- F77=/usr/lib64/openmpi/bin/mpif77
-
-make
-
-\end{lstlisting}
-
-\section{OpenSuse}
-
-\begin{lstlisting}
-
-cd hypre-2.8.0b/src
-
-./configure --enable-shared \
-  --with-MPI-libs="mpi mpi_cxx" \
-  CC=/usr/lib64/mpi/gcc/openmpi/bin/mpicc \
-  CXX=/usr/lib64/mpi/gcc/openmpi/bin/mpic++ \
-  F77=/usr/lib64/mpi/gcc/openmpi/bin/mpif77
-
-make
-
-\end{lstlisting}
-
-\section{For OSX (Macs)}
-
-\begin{lstlisting}
-cd hypre-2.8.0b/src
-
-./configure \
-  --prefix=/usr/local \
-  CC=/usr/bin/gcc \
-  CXX=/usr/bin/g++ \
-  CFLAGS=-DMPIPP_H CXXFLAGS=-DMPIPP_H \
-  F77=/usr/local/bin/gfortran \
-  FLIBS="-lcrt1.10.6.o"
-
-\end{lstlisting}
-
-(Note, under OSX, you will not be builing a shared library version of
-Hypre.  Also, the 'FLIBS' line is required for use with some gfortran
-compilers as they try to use crt1.10.5.o (which causes duplicate
-symbol errors).)
-
-\begin{lstlisting}
-make
-make install
-\end{lstlisting}
-
-\emph{Note, under Mac OSX, Hypre does not handle the "--enable-shared" configure
-  flag correctly.}
-
-\chapter{Configuring and Building Uintah}
-
-\section{Configure}
-
-The following information specifies how to run the ``configure''
-script to prepare for building the Uintah executable.  ``Configure''
-is a program that checks the computer's environment and looks for the
-location of libraries and header files, etc.  When it finishes
-running, it will create the \TT{configVars.mk} file which will include
-all the information it has determined about the computer.  The
-following lines show \textbf{generically} how to use ``configure''.
-
-Goto the directory \TT{ \textasciitilde/uintah} and create the
-following directories: \TT{dbg} (debug) and \TT{opt} (optimized)
-
-\begin{lstlisting}
-cd ~/uintah-1.5.0
-mkdir dbg opt
-\end{lstlisting}
-
-Go to the \TT{dbg} directory and enter the following:
-
-\begin{lstlisting}
-../src/configure --enable-debug        
-\end{lstlisting}
-
-
-After the configuration process, type \TT{make} to compile Uintah.
-
-If you wish to attach a debugger to Uintah, make sure you use the
-\TT{--enable-debug} configure option.
-
-If you would like to reduce the amount of output given by the make
-system when making Uintah, you can set the environment variable
-\TT{SCI\_MAKE\_BE\_QUIET} to true:
-
-\begin{lstlisting}
-setenv SCI_MAKE_BE_QUIET true
-\end{lstlisting}
-
-Once a debug build has finished, change to the \TT{opt} directory and
-enter the following configure line:
-
-\begin{lstlisting}
-../src/configure '--enable-optimize=-O3 -mfpmath=sse' 
-\end{lstlisting}
-
-The debug/optimize flags do the following:  --enable-debug adds ``-g''
-to the compile line; --enable-optimize, if used without parameters,
-adds ``-O2'' to the compile line.  Otherwise it adds the parameters
-specified during configure.
-
-\subsection{Other configure options}
-
-Other useful configure options are seen below.  Note, depending on
-where libraries are installed on your system, you may or may not need
-to specify some (or all) of these options:
-
-\begin{lstlisting}
---with-mpi=/usr/lib64/openmpi <= Specifies location of MPI
---enable-64bit                <= Specifies a 32 or 64bit build
---enable-32bit
---with-petsc=/path/petsc-2.3.3-p13 <= Specifies location of PETSc
---with-hypre=/path/hypre-2.0.0/hypre_install  <= Specifies location of Hypre
-
-F77=gfortran-4.3               <= Specifies compilers (Fortran, C, C++).
-CC=/usr/bin/gcc-4.3
-CXX=/usr/bin/g++-4.3
-PETSC_ARCH=linux-gnu-c-real-opt <= Specifies PETSc architecture
-
-        --without-fortran     <= Turns off the use of Fortran (and the Arches/Radiation component.)
-
-        USE_ARCHES=no         <= Turn off the building of specific Uintah components.
-        USE_ICE=no               (Note, turning off Arches also turns off SpatialOps.)
-        USE_MPM=no
-        USE_RADIATION=no
-
-\end{lstlisting}
-To compile the Wasatch component add:
-\begin{lstlisting}
-  --with-boost=<path to boost install>
-  --enable-wasatch_3p
-\end{lstlisting}
-to the configure line.
-
-To see a full list of all the configure options type:
-
-\begin{lstlisting}
-    ../src/configure --help
-\end{lstlisting}
-
-\subsection{Common Configure Lines}
-
-\paragraph{Debian \& Ubuntu}
-
-\begin{lstlisting}
-    ../src/configure --enable-debug --with-boost=/usr --enable-wasatch_3p
-\end{lstlisting}
-
-\paragraph{Fedora-17 \& CentOS-6.3}
-
-\begin{lstlisting}
-../src/configure --enable-debug --with-mpi-lib=/usr/lib64/o
-penmpi/lib --with-mpi-include=/usr/include/openmpi-x86_64 --with-boost=/usr --en
-able-wasatch_3p --with-hypre=/home/jas/hypre2.8.0b/src/hypre --with-petsc=/home/
-jas/petsc
-\end{lstlisting}
-
-\paragraph{OpenSuse-12.2}
-
-\begin{lstlisting}
-../src/configure --enable-debug --with-mpi-lib=/usr/lib64/o
-penmpi/lib --with-mpi-include=/usr/include/openmpi-x86_64 --with-boost=/usr --en
-able-wasatch_3p --with-hypre=/home/jas/hypre2.8.0b/src/hypre --with-petsc=/home/
-jas/petsc
-\end{lstlisting}
-
-\section{Build}
-
-Then build the software by typing \TT{make} at the command line and create symbolic links to the inputs directory found in \TT{\textasciitilde/uintah/src/StandAlone/inputs}.
-\begin{lstlisting}
-   make
-\end{lstlisting}
-
-
-Please see the \textbf{User Guide}
-\url{http://www.uintah.utah.edu/trac/chrome/site/uintah.pdf} on how to use
-the various tools and executables within the \textbf{Uintah}
-framework.
-
-
-\chapter{Installing VisIt}
-
-Visualization of \textbf{Uintah} data is currently possible using
-\textbf{\emph{VisIt}}. The VisIt package from LLNL is general purpose
-visualization software that offers all of the usual capabilities for
-rendering scientific data.  It is still developed and maintained by
-LLNL staff, and its interface to \textbf{Uintah} data is supported by
-the Uintah team.
-
-% Manta offers volume rendering and particle visualization based on
-% parallel (shared memory) ray tracing techniques.  While the
-% capabilities of Manta are more limited, it is a fast way to
-% interactively interrogate reasonably large datasets, provided the user
-% has access to a reasonable shared memory resource, (e.g. an 8 core
-% desktop system).
-
-
-\section{VisIt Installation}
-
-The latest official release of \textbf{\emph{VisIt}} is 2.5.2.
-However, the instructions apply to earlier versions such as 2.5.X.
-The UDA reader plugin must be built against an installed version of
-\textbf{\emph{VisIt}}.  \textbf{\emph{VisIt}} can be installed either
-from one of their binary distributions, or by compiling and installing
-it from source.  You may also need to build \textbf{\emph{VisIt}} from
-source if a binary is not provided for your exact OS and MPI versions
-and is the recommended installation method outlined below.
-
-\subsection{Caveats}
-\label{subsec:VisIt_Caveats}
+\chapter{Configuring and Building Vaango}
+\section{Basic instructions}
+\subsection{ The Vaango repository}
+After you get the code from GitHub, follow these steps:
 \begin{itemize}
-\item Before you install \textbf{\emph{VisIt}}, a number of dependency
-  files are required.  These include X11, GL, GLU, GLX, and libz
-  libraries (it is possible that you will find these libraries in the
-  following rpms: libx11-dev, libxext-dev, libxt-dev, libglu, zlib-dev
-  -- notice that most of these are the 'development' rpm).  You can
-  either install these directly and hope you get them right, or you
-  can install the files listed here~\ref{sec:debian_dependencies}
-  (which will hopefully pull in all the libraries that you need).
-\item MPI must be installed and the MPI compilers (mpicc, etc) must be
-  in your path.
-\item The \textbf{\emph{VisIt}} executable is not relocatable once it
-  is built, so make sure you specify the correct installation location
-  in the beginning.
-\item Building \textbf{\emph{VisIt}} from scratch can take a while.
-  As mentioned below, you can 
-    \begin{lstlisting}
-       tail -f build_visit_log
-    \end{lstlisting} 
-    to watch the progress.
-\item If you are having problems please check the Uintah wiki page on
-  building \textbf{\emph{VisIt}}
-  (\url{http://www.uintah.utah.edu/trac/wiki/visit}).
+  \item Go to the \Textsfc{Vaango} directory:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+     cd ParSim/Vaango
+\end{lstlisting}
+
+  \item  The source code is in the directory \Textsfc{src}.
+\end{itemize}
+
+\subsection{ Out-of-source optimized build}
+\begin{itemize}
+  \item For the optimized build, create a new directory called \Textsfc{opt} under \Textsfc{Vaango}:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+    mkdir opt
+\end{lstlisting}
+
+  \item followed by:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+    cd opt
+\end{lstlisting}
+
+  \item To create the make files do:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+    cmake ../src
+\end{lstlisting}
+\end{itemize}
+
+\subsection{ Out-of-source debug build}
+\begin{itemize}
+ \item For the debug build, create a directory \Textsfc{dbg} under \Textsfc{Vaango}:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+    mkdir dbg
+    cd dbg
+\end{lstlisting}
+
+ \item To create the makefiles for the debug build, use
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+    cmake -DCMAKE_BUILD_TYPE=Debug ../src
+\end{lstlisting}
 
 \end{itemize}
 
+\subsection{ Unit tests}
+If you want the units tests to be compiled, use the alternative command
 
+\begin{lstlisting}[backgroundcolor=\color{background}]
+    cmake ../src -DBUILD_UNITS_TESTS=1
+\end{lstlisting}
 
-\subsection{Using the ``build\_visit'' Script to Build VisIt}
-\label{subsec:VisItVersion2_tarball}
+\subsection{ Clang compiler:}
+If you want to used the \Textsfc{clang} compiler instead of \Textsfc{gcc}:
 
+\begin{lstlisting}[backgroundcolor=\color{background}]
+    cmake ../src -DUSE_CLANG=1
+\end{lstlisting}
+
+\subsection{ Visit build:}
+Older versions of \Textsfc{Visit} required the following extra step if you want to make sure that Visit is able to read Uintah output format files (also called UDA files) you will need to use
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+   cmake ../src -DVISIT_DIR=/path/to/Visit
+\end{lstlisting}
+
+\section{Compiling the code:}
+Next you need to compile the files from \Textsfc{src}. So go to the \Textsfc{opt} directory and then type : 
+\begin{lstlisting}[backgroundcolor=\color{background}]
+make -j4
+\end{lstlisting}
+
+After this compilation you have all the executable files in your \Textsfc{opt} directory.
+The same process can  be used for the debug build.
+
+\chapter{Installing VisIt}
+Visualization of \Vaango data is currently possible using
+\Visit. The \Visit package from LLNL is general purpose
+visualization software that offers all of the usual capabilities for
+rendering scientific data.  It is still developed and maintained by
+LLNL staff, and its interface to \Vaango data is supported by
+the \Uintah team. 
+
+\section{Directory structure}
+The following directory structure is suggested for building VisIt:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+/myPath/VisIt
+/myPath/VisIt/thirdparty
+/myPath/VisIt/2.10.2
+\end{lstlisting}
+
+\section{Using the VisIt install script}
+Download the build script from \\
+\url{http://portal.nersc.gov/project/visit/releases/2.10.2/visit-install2_10_2}.
+Follow the instructions at \url{http://portal.nersc.gov/project/visit/releases/2.10.2/INSTALL_NOTES}.
+\Vaango writes its output in the \Uintah file format.  If \Visit does not recognize the
+\Uintah file format, you may have to follow the detailed instructions below.
+
+\section{Using the VisIt build script}
 \begin{enumerate}
-\item Download the build\_visit script from
-  \url{http://portal.nersc.gov/svn/visit/trunk/releases/2.5.2/build_visit2_5_2}.
+  \item Get the \Textsfc{build\_visit} script from \url{http://portal.nersc.gov/project/visit/releases/2.10.2/build_visit2_10_2}.
 
-
-
-\item Change the mode of the build\_visit script so it can execute, and
-  copy it to a VISIT directory (calling it Visit\_2.3.2 in the
-  following description) where you will build the VisIT source code:
-\begin{lstlisting}
-mkdir ~/Visit_2.5.2
-cp build_visit_2.5.2 Visit_2.5.2
-cd Visit_2.5.2
-chmod +x build_visit_2.5.2
+  \item Set the MPI compiler to be used (must be the same version used to build Uintah):
+\begin{lstlisting}[backgroundcolor=\color{background}]
+export PAR_COMPILER=`which mpic++` 
+export PAR_COMPILER_CXX=`which mpicxx` 
+export PAR_INCLUDE ="-I/usr/lib/openmpi/include/"
 \end{lstlisting}
 
-\item Build the VisIT source (after it downloads everything) using two
-  processors (use the number of available processors on your
-  machine). This will take a long time since all the prerequisite
-  software will be downloaded and compiled. Select the 'parallel'
-  option when the script starts up. 
+  \item Use the \Textsfc{build\_visit} script to download, build, and install the thirdparty 
+        libraries required by VisIt. 
 
-\begin{lstlisting}
-./build_visit2_5_2 --makeflags -j2 --no-icet --console
+  \item Go the the \Visit thirdparty directory:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+cd /mypath/VisIt/thirdparty
 \end{lstlisting}
 
-\emph{NOTE: If you run into problems building QT, you can try setting
-  the environment variable LD\_LIBRARY\_PATH to the following}:
+  \item Run \Textsfc{build\_visit}:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+/myPath/VisIt/2.10.2/build_visit --console --thirdparty-path /myPath/VisIt/thirdparty --no-visit --parallel --fortran --uintah
+\end{lstlisting}
+       \begin{NoteBox}
+       To add additional libraries to enable other database readers using the \Textsfc{build\_visit} script 
+       you will have to add the appropriate flags when you run \Textsfc{build\_visit}.
+       \end{NoteBox}
 
-for csh users:
-\begin{lstlisting}
-setenv LD_LIBRARY_PATH complete_path_to/qt-everywhere-opensource-src-4.6.1/lib
+  \item The \Textsfc{build\_visit} script will take a while to finish.  After the script finishes it 
+        will produce a machine specific \Textsfc{cmake} file called 
+        \Textsfc{\textless your\_machine\_name \textgreater.cmake}. This file will be used when 
+        compiling visit. 
+
+  \item Move the \Textsfc{\textless your\_machine\_name \textgreater.cmake} file
+        to the \Visit source \Textsfc{config-site} directory:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+mv <your_machine_name>.cmake /myPath/VisIt/2.10.2/src/config-site
 \end{lstlisting}
 
-or
-
-for bash users:
-\begin{lstlisting}
-export
-LD_LIBRARY_PATH=complete_path_to/qt-everywhere-opensource-src-4.6.1/lib
+  \item Go to the \Visit source directory:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+cd /myPath/VisIt/2.10.2/src
 \end{lstlisting}
 
-where complete\_path\_to is the full path to the
-qt-everywhere-opensource-src-4.6.1/lib found in the Visit directory.
-
-Once this is set, you can start the build\_visit script again and it
-should pick up where it left off.
-
-\item After VisIT finishes building, go into the visit2.3.2/src
-  directory and make a binary distribution for it so it can be
-  installed.  
-\begin{lstlisting}
-cd visit2.5.2/src
- make package 
+  \item Run \Textsfc{cmake} using the \Textsfc{cmake} that was built by the \Textsfc{build\_visit} script
+\begin{lstlisting}[backgroundcolor=\color{background}]
+/myPath/VisIt/thirdparty/cmake/<version>/<OS-gcc_version>bin/cmake .
 \end{lstlisting}
 
-Within the visit2.5.2/src directory there should be a gzip'ed tar
-file that can be installed in different location (VisIT must be
-installed in order to compile and build the UDA reader plugin to
-visualize Uintah data), i.e
-
-\begin{lstlisting}
-ls visit2.5.2/src
- . . . 
- visit2_5_2.linux-x86_64.tar.gz
- . . .
+  \item Finally make \Visit:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+make -j 8
 \end{lstlisting}
-
-\item Copy the gzip'd tar file to another location and install VisIT
-  (using the visit-install script found in
-  Visit\_2.5.2/visit2.5.2/src/svn\_bin/visit-install) in the directory
-  \emph{visit\_bin\_dir}.
-
-\begin{lstlisting}
-cp visit2_5_2.linux-x86_64.tar.gz ~/
-cd ~/
-~/Visit_2.5.2/visit2.5.2/src/svn_bin/visit-install 2.5.2 linux-x86_64
-visit_bin_dir
-\end{lstlisting}
-
-\item Use the following '--with-visit' configuration line when
-  configuring uintah. Use the full path name for the location of the
-  \emph{visit\_bin\_dir} directory.
-
-\begin{lstlisting}
-    --with-visit=/full_path/visit_bin_dir/ 
-\end{lstlisting}
-
+        One can install VisIt or run it directly from the bin directory.
 \end{enumerate}
-
-
-\subsection{Parallel OS X build}
-\label{sec:ParallelOSXBuild}
-
-A full parallel OS X build can be built using the instructions above,
-but it will fail when it tries to build the visit executable (the last
-stage of the script). When it fails, you will need to follow the
-instructions for building in parallel on a Mac.
-
-\url{http://visitusers.org/index.php?title=Building_in_parallel_on_a_Mac}
-
-  
-Note particularly the changes that need to be made in the file, 
-
-\begin{lstlisting}
-<path\_to\_visit\_src>/config-site/<your_machine_name>.cmake
-\end{lstlisting}
-
-\normalfont Once you make these edits, you can then finish building VisIt by typing make in the \tt <path\_to\_visit>/src \normalfont directory.  
-
-\subsection{When the build script fails}
-\label{sec:WhenTheBuildsSriptFails}
-
-Sometimes the build script doesn't work depending on your
-installation. When this happens, you may be forced to build everything
-by hand. The instructions for doing this are carefully outlined in the
-VisIt Build Notes file,
-
-\begin{lstlisting}
-https://wci.llnl.gov/codes/visit/2.5.2/BUILD_NOTES
-\end{lstlisting}
-
-\subsection{VisIt executable}
-\label{sec:VisItExecutable}
-
-After a successful build, the executable will be placed in,
-
-\begin{lstlisting}
-``visit_bin_dir''/bin/
-\end{lstlisting}
-
-where ``visit\_bin\_dir'' is the directory specified either for the
-visit\_install script if using a prebuilt binary, or for cmake if
-building VisIt from source.
-
-\subsection{Building and installing the UDA reader plugin}
-\label{sec:BuildingAndInstallingUDAPlugin}
-
-Add the following arguments to the \textbf{Uintah} configure line,
-
-\begin{lstlisting}
---with-visit=/path/to/visit
-\end{lstlisting}
-
-For example,
-
-\begin{lstlisting}
---with-visit=/home/csafe/dav/VisIt/blaze/visit \
-\end{lstlisting}
-
-Note, the \tt visit \normalfont directory you point at should
-have \tt data\normalfont , and \tt bin \normalfont sub-directories,
-and a sub-directory for each version of visit installed.  This is the
-installation directory, not the source directory.
-
-\subsection{How it works}
-By specifying the above configure arguments (to the \textbf{Uintah}
-configure), \textbf{Uintah} will automatically build a VisIt plugin
-(when you type "make"). The plugin will be placed in (a sub-directory
-of) \textasciitilde/.visit. When VisIt is run, it will find the plugin
-and allow for reading UDA's.
-
 
 
 \subsection{Remote visualization}
 In order to read data on a remote machine, you will need to have a
-version of VisIt and the UDA reader plugin installed on that
-machine. You will also need to make sure that the VisIt executable is
-in your path. You may need to edit your shell's .rc file so that the
-path to VisIt is included in your shell's PATH variable.
+version of \Visit and the \Uintah data format reader plugin installed on that
+machine. You will also need to make sure that the \Visit executable is
+in your path. You may need to edit your \Textsfc{.\textless shell\textgreater rc} 
+file so that the path to \Visit is included in your shell's \Textsfc{PATH} variable.
 
-NOTE: The version of VisIt installed on your local desktop and the
+\begin{NoteBox}
+The version of VisIt installed on your local desktop and the
 remote machine should be the same.
+\end{NoteBox}
 
 \subsection{Host Profile}
 Next you will want to set up a Host Profile for your remote
-machine. Select 'Host Profiles' from the 'Options' menu and set up a
-new profile as shown in figure ~\ref{VisItHostProfile}.
-
-
-% \begin{wrapfigure}{r}{.50\textwidth}
-
-% %\begin{figure}
-%   \vspace{-30pt}
-%   \begin{center}
-%     \includegraphics[width=.425\textwidth]{VisItHostProfile.png}
-%   \end{center}
-%   \vspace{-20pt}
-%   \caption{Setting up Host Profile}
-%   \vspace{-30pt}
-%   \label{VisItHostProfile}
-% %\end{figure}
-
-% \end{wrapfigure}
-
-
-\begin{wrapfigure}{r}{.50\textwidth}
-
-%\begin{figure}
-   \vspace{-25pt}
-  \begin{center}
-    \includegraphics[width=.425\textwidth]{VisItHostProfile.png}
-  \end{center}
-  \caption{Setting up Host Profile}
-   \vspace{-20pt}
-  \label{VisItHostProfile}
-%\end{figure}
-
-\end{wrapfigure}
-
-
-After filling in the remote machine information, select the 'Advanced
-options' tab, then 'Networking' and check the 'Tunnel data connections
-through SSH' option. This is illustrated in
-figure~\ref{VisItHostProfileAdv}. Click on 'Apply' and then do a 'Save
-Settings' in the 'Options' menu on the gui.
-
-% \begin{wrapfigure}{r}{.50\textwidth}
-
-% %\begin{figure}
-%   \vspace{-30pt}
-%   \begin{center}
-%     \includegraphics[width=.5\textwidth]{VisItHostProfileAdv.png}
-%   \end{center}
-%   \vspace{-20pt}
-%   \caption{Setting up advanced options}
-%   \vspace{-10pt}
-%   \label{VisItHostProfileAdv}
-% %\end{figure}
-
-% \end{wrapfigure}
-
-% \begin{wrapfigure}{r}{.50\textwidth}
-
-% \begin{figure}
-
-%   \begin{center}
-%     \includegraphics[width=.5\textwidth]{VisItHostProfileAdv.png}
-%   \end{center}
-
-%   \caption{Setting up advanced options}
-
-%   \label{VisItHostProfileAdv}
-% \end{figure}
-
-% \end{wrapfigure}
-
-\begin{wrapfigure}{r}{.50\textwidth}
-%\begin{figure}[h]
+machine. Select \Textsfc{Host Profiles} from the \Textsfc{Options} menu and set up a
+new profile as shown in figure~\ref{VisItHostProfile}.
+\begin{figure}
   \centering
-  \vspace{5pt}
-  \subfloat[Setting up advance options]{\label{VisItHostProfileAdv}
-    \includegraphics[width=.5\textwidth]{VisItHostProfileAdv.png}}
-  \hspace{20pt}
-  \subfloat[Setting up advance options]{\label{VisItHostProfileAdv2}
-    \includegraphics[width=.5\textwidth]{VisItHostProfileAdv2.png}}
-  \caption{}
-  \vspace{-10pt}
-  \label{}
-%\end{figure}
-\end{wrapfigure}
+  \includegraphics[width=.425\textwidth]{VisItHostProfile.png}
+  \caption{Setting up Host Profile}
+  \label{VisItHostProfile}
+\end{figure}
 
+After filling in the remote machine information, select the \Textsfc{Advanced
+options} tab, then \Textsfc{Networking} and check the \Textsfc{Tunnel data connections
+through SSH} option. This is illustrated in
+figure~\ref{VisItHostProfileAdv}(a). Click on \Textsfc{Apply} and then do a \Textsfc{Save
+Settings} in the \Textsfc{Options} menu.
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=.5\textwidth]{VisItHostProfileAdv.png} \\
+  (a) Setting up options \\
+  \includegraphics[width=.5\textwidth]{VisItHostProfileAdv2.png} \\
+  (b) Setting up advanced options
+  \caption{Visit remote visualization options}
+  \label{VisItHostProfileAdv}
+\end{figure}
 
 For the remote visualization option to work, you must have ports 5600
 - 5609 open. You can try this by running the following on your local
 desktop (on Linux distributions),
-
 \begin{lstlisting}
 traceroute -p 560[0-9] <remote machine>
 \end{lstlisting}
 
-%\begin{wrapfigure}{r}{.50\textwidth}
-
-% \begin{figure}
-%   \vspace{-30pt}
-%   \begin{center}
-%     \includegraphics[width=.5\textwidth]{VisItHostProfileAdv2.png}
-%   \end{center}
-%   \vspace{-20pt}
-%   \caption{Setting up advanced options}
-%   \vspace{-10pt}
-%   \label{VisItHostProfileAdv2}
-% \end{figure}
-
-%\end{wrapfigure}
-
-
 If the tunneling option doesn't works, try the option as shown in
-figure~\ref{VisItHostProfileAdv2}.
+figure~\ref{VisItHostProfileAdv}(b).
 
-
-
-Now you should be able select 'Open' from VisIt's 'File' menu. After
+Now you should be able select \Textsfc{Open} from the \Visit \Textsfc{File} menu. After
 selecting your host from the host entry list, you will be prompted for
 a password on the remote machine (unless you have set up passwordless
 ssh access).
@@ -877,492 +557,6 @@ Once the ssh login has completed, you should see the directory
 listing. You can then change directories to your UDA and load the
 data.
 
+%\input{../00EndMatter.tex}
 
-% \section{Manta Installation}
-
-% For complete build instructions for Manta, please refer to
-% \url{http://software.sci.utah.edu/manta/index.php/CSAFE}.  
-
-% \begin{enumerate}
-% \item
-% Install Teem see~\ref{subsec:teem}.
-% \item
-% Install wxPython 2.8+ http://www.wxpython.org/ .  
-% to verify that you have 2.8+ installed, run
-% \begin{lstlisting}
-% > python
-% >>> import wxversion
-% >>> wxversion.getInstalled()
-% ['2.8-mac-unicode']
-% \end{lstlisting}
-% \item
-% The next step is to download the Manta source and create a build directory.
-% \begin{lstlisting}
-% mkdir Manta
-% mkdir Manta/build
-% svn co https://code.sci.utah.edu/svn/Manta/trunk Manta/src
-% \end{lstlisting}
-% \item
-% The build is configured with CMake.
-% \begin{lstlisting}
-% cd Manta/build
-% ccmake ..
-% \end{lstlisting}
-% \item First you will need to set the TEEM library path. Press the down
-%   arrow until you get to the variable FOUND\_TEEM\_BIN. Set this to
-%   the location of your TEEM installation by pressing enter and
-%   entering the path, eg /usr/bin. Press "c" to configure. If you get
-%   errors about not finding TeemConfig.cmake (in older versions before
-%   Nov. 2008 it was called TEEMConfig.cmake), you can manually set this
-%   by pressing t and going down to the variable named
-%   FOUND\_TEEMCONFIG\_CMAKE and setting it to TeemConfig.cmake from
-%   your TEEM installation.
-% \item You will need to enable the following by scrolling down to them
-%   and pressing "enter" if they do not already say ON:
-%   BUILD\_SWIG\_INTERFACE, BUILD\_NRRDPARTICLES, MANTA\_SSE. Now press
-%   "c" to configure.
-%  \item
-%  You should now see an option called SCENE\_CSAFE, enable this if not already. Now press "c" to configure again. 
-%  \item
-%  Click "g" to generate the cmake files. you can now build Manta again by typing make. 
-% \end{enumerate}
-
-
-\chapter{Mac OSX Installation}
-
-Following are step-by-step instructions for installing the
-\textbf{Uintah Computational Framework} on \textbf{Mac OSX}.  It is
-assumed that all commands are run as administrator (which may require
-a sudo).  These instructions were tested on OSX 10.5.6 and 10.5.7 but
-should work on previous versions.  \textbf{If you have Snow Leopard,
-go to Section 10.}
-
-\section{Installing Developer Tools}
-Install the suite of developer tools that are packaged with Mac OS X.
-These can be found in the "Optional Installs" directory on the Mac OS
-X Installation CD for newer versions (i.e. Tiger, Leopard) or on the
-included Developer CD if your version of OSX is older). If you don't
-have the installation CD you can download older versions from:
-\url{http://connect.apple.com}
-
-Double-click the XCodeTools.mpkg and follow the installer
-instructions.  This will install GCC, as well as many other useful
-developer tools.
-
-\section{Installing Fortran Compiler}
-Download gfortran from \url{http://hpc.sourceforge.net/} making sure
-the package is designed for your CPU architecture--Intel or PowerPC.
-Put package in root directory and extract.  Extracting from / puts
-everything in the correct places.  Extract using:
-
-\begin{lstlisting}
-	tar -xvf gfortran-*-bin.tar.gz
-\end{lstlisting}
-
-Note: If the Uintah builds correctly, but you are receiving link errors, see section 10.2.
-
-\section{Installing Subversion/libpng3/libxml2/other dependencies}
-As mentioned above, several libraries are required for Uintah, and may
-need to be updated or installed depending on the version of Mac
-running.  Some of these include SVN, libpng3, cmake, zlib and libxml2,
-which are all conveniently part of the fink project.
-
-Download the appropriate version of fink for your version of OSX from
-\url{http://www.finkproject.org/download/srcdist.php}.  Where "x" and
-"y" are version numbers, extract and install with:
-
-\begin{lstlisting}
-	tar -xvf fink-0.x.y-full.tar 
-	cd fink-0.x.y-full
-	./bootstrap 
-	pathsetup.sh
-\end{lstlisting}
-
-For a GUI version of fink, download Fink Commander and install from
-disk image from \url{http://finkcommander.sourceforge.net/} following
-instructions in the installer.  The Fink Commander website stresses
-that you install Commander after fink.
-
-Finally, update or install any necessary packages using Fink
-Commander's search bar.
-
-\section{Install/Update X11}
-X11 can be found in the "Optional Installs" directory accompanying
-your Mac OS Installation CD.  This copy should be updated.
-Alternately, X11 can be downloaded from the web and installed.
-Current versions can be found at
-\url{http://xquartz.macosforge.org/trac/wiki/Releases}.  Find a
-package that matches your version of OSX (or update OSX to newest
-version), and install it.  Installation is as simple as downloading
-the disk image from this site, mounting it, double-clicking the
-installer application, and following instructions.
-
-\section{Installing an LAM MPI}
-We recommend that you avoid using fink to install LAM MPI.
-The files and libraries are installed in non-traditional locations 
-and Uintah cannot find them. (11/10/2010) \\
-
-Download LAM MPI from \url{http://www.lam-mpi.org}
-version 7.1.4 or newer.  Make a new directory in \textasciitilde/ for
-this and all of the following source packages.  This documentation
-assumes this directory is \textasciitilde/Uintah.  Inside this
-directory make another for installation directories.  This
-documentation assumes this directory is
-\textasciitilde/Uintah/installs
-
-\begin{lstlisting}
-	cd ~/Uintah/installs
-	tar -xvf lam-7.1.4.tar.gz
-	cd lam-7.1.4
-	./configure --prefix=/Users/<username>/Uintah/installs/lam-7.1.4 \
-	            --enable-shared=yes --with-fc=gfortran
-	make
-	make install
-\end{lstlisting}
-
-These last two commands will build LAM in the directory to which
---prefix= points.
-
-\section{Installing PETSc}
-PETSc and Hypre (the next two packages to install) are used by Uintah
-for their PDE and linear algebra and capabilities respectively.
-Download PETSc from
-\url{http://www-unix.mcs.anl.gov/petsc/petsc-as/download/index.html}.
-Unarchive it in \textasciitilde/Uintah/installs directory using a
-similar tar command as is found above.  Configure using:
-
-\begin{lstlisting}
-	./config/configure.py \
-	   --prefix=/Users/<username>/Uintah/installs/petsc-2.3.3-p13 \
-	   --with-matlab=false \
-	   --with-x=false \
-	   --with-shared=0 \
-	   --with-debugging=0 \
-	   --with-mpi-dir=/Users/<username>/Uintah/installs/lam-7.1.4
-\end{lstlisting}
-
-Set the environmental variables the configuring process asks you to
-set, and install using:
-
-\begin{lstlisting}
-make
-make install
-\end{lstlisting}
-
-\section{Installing Hypre}
-Download Hypre version 2.x from
-\url{https://computation.llnl.gov/casc/hypre/software.html} to
-\textasciitilde/Uintah/installs.  Unarchive and install by running
-
-\begin{lstlisting}
-cd hypre-2.x.x/src
-./configure \
-   --with-MPI-include=/Users/<username>/Uintah/installs/lam-7.1.4/include \
-   --with-MPI-lib-dirs=/Users/<username>/Uintah/installs/lam-7.1.4/lib \
-   --with-MPI-libs="mpi lam pmpi util" \
-   --prefix=/Users/<username>/Uintah/installs/hypre-2.0.0/hypre_install \
-   CFLAGS="-DMPIPP_H" \
-   CXXFLAGS="-DMPIPP_H" 
-make
-make install
-\end{lstlisting}
-
-Take down of your --prefix line for future reference, as this is where
-you will point Uintah's configure.
-
-\section{Installing Uintah}
-Download the Uintah source from our website using:
-
-\begin{lstlisting}
-cd ~/
-svn co https://gforge.sci.utah.edu/svn/uintah/trunk ~/Uintah
-\end{lstlisting}
-
-Uintah will not install correctly if configured from within the source
-directory.  As such, it is advised to create a directory on the same
-level as /Uintah/src named mac[Numofbits]opt in which to configure and
-build.
-
-\begin{lstlisting}
-cd Uintah
-mkdir mac32opt
-cd mac32opt
-./configure \
-   --enable-optimize \
-   --with-mpi=/Users/<username>/Uintah/installs/lam-7.1.4 \
-   --with-petsc=/Users/<username>/Uintah/installs/petsc-2.3.3-p13 \
-   --with-hypre=/Users/<username>/Uintah/installs/hypre-2.0.0/hypre_install \
-   PETSC_ARCH=darwin9.3.0-c-opt \
-   F77=gfortran
-\end{lstlisting}
-
-The previous configure command is a template, and may need editing.
-Point each of the components to the proper places and it should
-configure just fine.  If you want to build Uintah with support for
-VisIt, add --with-teem=/dir/to/teem/ and --with-visit=/dir/to/visit/
-Finish the process off with:
-
-\begin{lstlisting}
-make all
-\end{lstlisting}
-  
-
-Some useful programs can be found in the installation: sus will be
-built and installed in \textasciitilde/Uintah/mac32opt/StandAlone
-Extraction utilities that extract specific variables from UDA (Uintah
-Data Archive) can be found in
-\textasciitilde/Uintah/mac32opt/StandAlone/tools
-
-\section{Installing VisIt and udaReader on Mac}
-
-A Mac binary distribution is available from LLNL at
-\url{https://wci.llnl.gov/codes/visit/executables.html}.  The main
-difficulty in installing Uintah with udaReader plugin has to do with
-actually finding the VisIt installation executable.  Furthermore,
-naming conventions are slightly different, and thus several links must
-be set up.
-
-Extract the mac install and create links by (substitute i386 and VisIt
-version where necessary):
-
-\begin{lstlisting}
-tar xvf visit1_11_2.darwin-i386.tar.gz
-cd visit/1.11.2
-export PATHTOVISIT=\$(pwd)
-mkdir src
-ln -s \$PATHTOVISIT/darwin-i386/bin src/bin
-ln -s \$PATHTOVISIT/../bin/frontendlaucher src/bin/visit
-\end{lstlisting}
-
-Now that the links have been set up, configure Uintah with
---with-visit=\$PATHTOVISIT and --with-teem=DIR/TO/TEEM.  See Section
-8.1 for Teem installation.
-
-An easier solution is to download the VisIt directory from the Uintah
-source, and run xml2makefile from \$PATHTOVISIT/darwin-i386/bin on
-udareaderMTMD.xml within VisIt/udaReaderMTMD/udaREaderMTMD.xml such
-as:
-
-\begin{lstlisting}
-xml2makefile -clobber -private VisIt/udaReaderMTMD/udaReaderMTMD.xml
-\end{lstlisting}
-
-To install VisIt from source, see build notes for Mac inside source
-tarball.
-
-\subsection{Installing VisIt and the udaReader on a Mac running OSX 10.6.1}
-
-The following steps should allow one to build VisIt and the Uintah VisIt uda reader plug-in on a Macintosh running OsX 10.6.1 (Snow Leopard):
-%
-\begin{enumerate}
-\item Obtain the VisIt source from:
-\begin{lstlisting}
-svn co http://portal.nersc.gov/svn/visit/trunk/src visit/src
-\end{lstlisting}
-\item \begin{lstlisting} cd visit/ \end{lstlisting}
-\item \begin{lstlisting} mkdir third-party/ \end{lstlisting} (here we will compile all the third-party software needed by visit)
-\item Manually download Python.2.6.4 
-\begin{lstlisting}
-http://www.python.org/
-\end{lstlisting}
-to third-party/
-\item Manually download cmake 2.6.4 
-\begin{lstlisting}
-http://www.cmake.org/
-\end{lstlisting}
-to third-party/
-\item Manually download qt-mac-opensource-src-4.5.3 
-\begin{lstlisting}
-http://get.qt.nokia.com/qt/source/qt-mac-opensource-src-4.5.3.tar.gz
-\end{lstlisting}
-to third-party/
-\item Manually download VTK 5.0.0d 
-\begin{lstlisting}
-http://portal.nersc.gov/svn/visit/trunk/third_party/
-\end{lstlisting}
-to third-party/
-\item Inside of third-party,
-\begin{lstlisting}
-cp ../src/svn-build/build_visit . 
-\end{lstlisting}
-\item Execute
-\begin{lstlisting}
-./build_visit --no-visit 
-\end{lstlisting}
-\item Edit the host.conf generated by build\_visit by adding: 
-\begin{lstlisting}
--D__USE_ISOC99
-\end{lstlisting} 
- to the CXXFLAGS variable. 
-\item Copy the host.conf in the third-party/ directory to ../src/config-site/ 
-\begin{lstlisting}
-cp <some name>.conf ../src/config-site/
-\end{lstlisting}
-\item \begin{lstlisting} cd ../src/ \end{lstlisting}
-\item \begin{lstlisting}./configure \end{lstlisting} 
-\item \begin{lstlisting}make \end{lstlisting}
-\item When the make fails with an error of not finding -lGLU, open databases/Shapefile/Makefile and replace -lGLU with -framework OpenGL
-\item Type make again. It should finish successfully and the VisIt executable will be in visit/src/bin
-\item Add 
-\begin{lstlisting}
-#define VERSION "2.1.0"
-\end{lstlisting}  
-to src/include/visit-config.h
-\item Configure Uintah with (for example): 
-\begin{lstlisting}
---with-visit=/Users/<path to visit>  \ 
---with-teem=/Users/<path to SCI thirdparty>/install
-\end{lstlisting}
-\item Build Uintah
-\begin{lstlisting}
-make -j# 
-\end{lstlisting}
-\end{enumerate}  
- % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-\chapter{Mac OSX Snow Leopard Installation (10.6.3)}
-	What follows is a working configuration for installing Uintah on Mac OSX Snow Leopard (10.6.3) under 64 bit. In this example, it is assumed that Uintah is installed under
-	\begin{lstlisting}
-		/Users/username/uintah
-	\end{lstlisting}
-	Also, all packages will be downloaded and installed under 
-	\begin{lstlisting}
-		/Users/username/uintah/packages
-	\end{lstlisting}
-
-	\section{Fink}
-		At the time of writing of this documentation, there is no binary version of the latest Fink distribution for Mac OSX. One must compile from the source by following the instructions on the website \url{http://www.finkproject.org/download/srcdist.php}. Make sure you select 64 bit mode when prompted. Keep all other options to default.
-	
-	\section{gfortran}
-		Install the binary package for gfortran from: \url{http://r.research.att.com/tools/}. Then, set the path properly. If you are using bash, this is done as:
-		\begin{lstlisting}
-			export PATH=/usr/local/bin:$PATH
-		\end{lstlisting}
-		Note: If the Uintah builds correctly, but you receive a dynamic link error from fortran when you try to load a uda, the links in fortran library may be pointing to the wrong place.  This can easily be fixed by navigating to the fortran library and using "otool -L" to recognize the problem, then using install\_name\_tool to fix the problem.  Both are included in the mac developer tools.
-	
-	\section{openmpi}
-		Download the latest version of openmpi from: \url{http://www.open-mpi.org/}. Then configure using:
-		\begin{lstlisting}
-			cd ~/uintah/packages
-			tar -xvf openmpi-1.4.x
-			cd openmpi-1.4.x
-			./configure --prefix=/Users/username/uintah/packages/openmpi-1.4.x-install 
-			\F77=gfortran CFLAGS=-m64 CXXFLAGS=-m64 FFLAGS=-m64
-		\end{lstlisting}
-		Then
-		\begin{lstlisting}
-			make
-			make install
-		\end{lstlisting}
-		
-		\section{hypre}
-		Download the latest version of Hypre from here: \url{https://computation.llnl.gov/casc/hypre/software.html}. Then, configure using:
-		\begin{lstlisting}
-			cd ~/uintah/packages
-			tar -xvf hypre-2.6.0b
-			cd hypre-2.6.0b/src
-			./configure --prefix=/Users/username/uintah/packages/hypre-2.6.0b-install 
-												 \--with-MPI-include=/Users/username/uintah/packages/openmpi-1.4.x-install/include 
-												 \--with-MPI-lib-dirs=/Users/username/uintah/packages/openmpi-1.4.x-install/lib 
-												 \CC='gcc -arch x86_64' \CXX='g++ -arch x86_64' \F77='gfortran -arch x86_64' 
-		\end{lstlisting}
-		Then
-		\begin{lstlisting}
-			make
-			make install
-		\end{lstlisting}
-		
-		\section{PETSc}
-		For the current release of Uintah, Petsc2.3.3 or Petsc2.2.0b has been found to work well. Download the source from here: \url{http://www.mcs.anl.gov/petsc/petsc-as/download/index.html}.
-		Then browse to the packages directory and configure as follows:
-		{\small
-		\begin{lstlisting}
-			cd ~/uintah/packages
-			tar -xvf petsc-2.x.y-p15.tar.gz
-			cd petsc-2.x.y-p15
-			./config/configure.py \--with-shared \--with-debugging=0 
-			\--with-mpi-include=/Users/username/uintah/packages/openmpi-1.4.x-install/include 
-			\--with-mpi-lib=/Users/username/uintah/packages/openmpi-1.4.x-install/lib/libmpi.dylib 
-			\--without-fortran \--prefix=/Users/username/uintah/packages/petsc-2.x.y-p15-install
-		\end{lstlisting}}
-		Finally,
-		{\small
-		\begin{lstlisting}
-			PETSC_DIR=/Users/username/uintah/packages/petsc-2.x.y-p15-install; export PETSC_DIR
-			make all test
-			make install
-		\end{lstlisting}}
-		
-		\section{Uintah}
-		Finally, create a directory in uintah
-		{\small 
-		\begin{lstlisting}
-			mkdir ~/uintah/mac64opt
-		\end{lstlisting}} %
-		\noindent Now browse to the mac64opt directory and configure Uintah using the following:
-		\emph{Note, under Mac OSX 10.6, the build has to be 64-bit.}
-		{\small
-		\begin{lstlisting}
-			cd ~/uintah/mac64opt
-			../src/configure --with-mpi=/Users/username/uintah/packages/openmpi-1.4.1-install 
-			\--with-hypre=/Users/username/uintah/packages/hypre-2.6.0b-install 
-			\--with-petsc=/Users/username/uintah/packages/petsc-2.3.3-p15-install 
-			\--enable-optimize='-O2' \--enable-64bit 
-			CC=gcc CXX=g++ F77=gfortran CFLAGS=-m64 CXXFLAGS=-m64 FFLAGS=-m64
-			PETSC_ARCH=darwin10.3.1-c-opt USE_ICE=yes USE_MPM=yes
-		\end{lstlisting}} %
-		\noindent Finally
-		{\small
-		\begin{lstlisting}
-			make all
-		\end{lstlisting}}
-\chapter{Appendix: Teem Installation}
-
-\label{subsec:teem}
-
-\emph{ \textbf{Note:}Teem is only needed for UdaToNrrd (which is used to
-  translate UDA into NRRD files for visualization with the Manta or
-  RTRT ray tracers.  Users of \textbf{\emph{VisIt}} do not need to install Teem.}
-
-Download Teem from
-\url{http://teem.sourceforge.net/download/index.html}.  Teem uses
-CMake to configure the build system. Installation instructions for
-Teem are found at \url{http://teem.sourceforge.net/build.html}.
-Simplified instructions are as follows:
-
-\begin{lstlisting}
-tar zxf teem-1.10.0-src.tar.gz
-cd teem-1.10.0-src/
-mkdir teem-build
-cd teem-build
-ccmake ../
-\end{lstlisting}
-
-Use the arrow keys to scroll down to the fourth line
-BUILD\_SHARED\_LIBS and press the return key to toggle the ON flag.
-
-\begin{lstlisting}
-Press the 'c' key
-
-Press the 'g' key
-
-make
-make install
-\end{lstlisting}
-The Teem libraries and include files will be install in /usr/local
-hierarchy.  If you have a /usr/local/lib64 directory please make a
-symbolic link to the libteem.so found in /usr/local/lib, i.e.
-
-\begin{lstlisting}
-cd /usr/local/lib64
-ln -s ../lib/libteem.so libteem.so
-\end{lstlisting}
-
-After Teem has been installed then add the location of your Teem
-install to the \textbf{Uintah} as in:
-
-\begin{lstlisting}
---with-teem=/usr/local
-\end{lstlisting}
-
-  \input{../00EndMatter.tex}
 \end{document}
