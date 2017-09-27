@@ -21,8 +21,8 @@
   <!--__________________________________-->
   <DataArchiver>
      <filebase>AA_MMS_2L.uda</filebase>
-    <outputInitTimestep/>
-    <outputTimestepInterval>2</outputTimestepInterval>
+     <outputInitTimestep/>
+     <outputTimestepInterval>2</outputTimestepInterval>
       <save label="p.x"/>
       <save label="p.volume"/>
       <save label="p.displacement"/>

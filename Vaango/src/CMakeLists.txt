@@ -451,13 +451,13 @@ endif ()
 # Configure time cross-platform header file generation
 #-----------------------------------------------------------------------------
 # SCI_MALLOC on?
-if (SCI_MALLOC_ON)
+IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
   set(DEF_MALLOC "")
   set(DEF_MALLOC_LINENUMBERS "")
 else()
   set(DEF_MALLOC "#define DISABLE_SCI_MALLOC 1")
   set(DEF_MALLOC_LINENUMBERS "")
-endif()
+ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 # SCI Assertions
 if (CMAKE_BUILD_TYPE STREQUAL "Release")

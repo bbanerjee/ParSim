@@ -49,7 +49,7 @@ if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
 endif()
 message(STATUS "build type = ${CMAKE_BUILD_TYPE}; IS_DEBUG = ${IS_DEBUG}")
 
-set(SCI_MALLOC_ON "no")  # Default to no for now
+set(SCI_MALLOC_ON "no")  #**TODO** Find out how to check memory usage
 
 set(MAX_PARALLELISM 8)   # Default to 8 (identical to Uintah)
 

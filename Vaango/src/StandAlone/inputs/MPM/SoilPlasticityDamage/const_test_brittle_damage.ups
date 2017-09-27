@@ -10,7 +10,7 @@
    <SimulationComponent type="mpm" />
 
    <Time>
-       <maxTime>0.004</maxTime>
+       <maxTime>3.0e-5</maxTime>
        <initTime>0.0</initTime>
        <delt_min>1.e-6</delt_min>
        <delt_max>2.e-2</delt_max>
@@ -18,7 +18,7 @@
    </Time>
    <DataArchiver>
         <filebase>const_test_brittle_damage.uda</filebase>
-       <outputInterval>1.0e-4</outputInterval>
+        <outputTimestepInterval>1</outputTimestepInterval>
 <!--
         <save label = "NTractionZMinus"/>
 -->
