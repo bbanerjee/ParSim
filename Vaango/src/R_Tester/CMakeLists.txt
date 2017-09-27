@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -154,10 +155,6 @@ FOREACH(_test_file ${_test_names_py})
             ${VAANGO_DIR} ${INPUTS_DIR} ${GOLDSTANDARD_DIR} 
             ${DBG_OPT} ${MAX_PARALLELISM}
 
-    # Run the shell command
-    #COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/toplevel/startLocalTest 
-    #        ${OBJTOP_ABS} ${SRCTOP_ABS} ${IS_DEBUG} ${SCI_MALLOC_ON}
-
     COMMENT "Running regression tests: ${_test_file}"
     )
   ADD_DEPENDENCIES(localRT localRT${_test})
@@ -207,10 +204,6 @@ FOREACH(_test_file ${_test_names_py})
             ${PYTHON_COMMAND} -u ${TEST_ABS}
             ${VAANGO_DIR} ${INPUTS_DIR} ${ALT_GOLDSTANDARD_DIR} 
             ${DBG_OPT} ${MAX_PARALLELISM}
-
-    # Run the shell command
-    #COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/toplevel/startLocalTest 
-    #        ${OBJTOP_ABS} ${SRCTOP_ABS} ${IS_DEBUG} ${SCI_MALLOC_ON}
 
     # Run a shell command
     #COMMAND echo "Done with ${_test_file}"

@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -26,7 +27,7 @@
 
 from sys import argv,exit
 from os import environ
-from helpers.runSusTests import runSusTests
+from helpers.runVaangoTests import runVaangoTests
 
 #______________________________________________________________________
 #  Test syntax: ( "folder name", "input file", # processors, "OS", ["flags1","flag2"])
@@ -44,7 +45,7 @@ from helpers.runSusTests import runSusTests
 #       rel_tolerance=[double]  - relative tolerance used in comparisons
 #       exactComparison         - set absolute/relative tolerance = 0  for uda comparisons
 #       startFromCheckpoint     - start test from checkpoint. (/home/csafe-tester/CheckPoints/..../testname.uda.000)
-#       sus_options="string"    - Additional command line options for sus command
+#       vaango_options="string"    - Additional command line options for vaango command
 #
 #  Notes: 
 #  1) The "folder name" must be the same as input file without the extension.
@@ -52,7 +53,7 @@ from helpers.runSusTests import runSusTests
 #  3) Performance_tests are not run on a debug build.
 #______________________________________________________________________
 NIGHTLYTESTS = [   ("poissonGPU1",       "poissonGPU1.ups",         1, "Linux", ["gpu"]),
-                   ("gpuSchedulerTest",  "gpuSchedulerTest.ups",  1.1, "Linux", ["gpu", "no_restart", "no_uda_comparison", "sus_options=-nthreads 4 -gpu"]),
+                   ("gpuSchedulerTest",  "gpuSchedulerTest.ups",  1.1, "Linux", ["gpu", "no_restart", "no_uda_comparison", "vaango_options=-nthreads 4 -gpu"]),
                ]
 
 # Tests that are run during local regression testing
@@ -74,5 +75,6 @@ if __name__ == "__main__":
     TESTS = LOCALTESTS
   else:
     TESTS = NIGHTLYTESTS
-  result = runSusTests(argv, TESTS, "GPU")
+  print("Running GPU tests")
+  result = runVaangoTests(argv, TESTS, "GPU")
   exit( result )

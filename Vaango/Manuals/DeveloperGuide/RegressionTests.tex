@@ -1,0 +1,356 @@
+\chapter{Regression testing in Vaango}
+This chapter provides documentation for the \Vaango regression testers and the helper
+scripts that they call.  The regression tester code is primarily in Python 
+with a few interspersed shell scripts and is located at
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+Vaango/src/R_tester
+\end{lstlisting}
+The files in this structure are listed below:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+|-- CMakeLists.txt
+|-- Examples.py
+|-- GPU.py
+|-- ICE.py
+|-- IMPM.py
+|-- Models.py
+|-- MPMF.py
+|-- MPMICE.py
+|-- MPM.py
+|-- UCF.py
+|-- helpers
+|   |-- cleanup
+|   |-- compare_dat_files.pl
+|   |-- compare_dats
+|   |-- compare_vaango_runs
+|   |-- compare_vaango_runs_by_udas
+|   |-- highwater_percent.pl
+|   |-- mem_leak_check
+|   |-- modUPS.py
+|   |-- performance_check
+|   |-- performance_percent.pl
+|   |-- plotMemUsage.gp
+|   |-- plotRunTimeHistory.gp
+|   |-- replace_all_GS
+|   |-- replace_gold_standard
+|   |-- runComponentTests
+|   |-- runTests
+|   |-- runVaangoTests.py
+|   |-- selectComponents.sh
+|-- toplevel
+|   |-- generateGoldStandards.py
+\end{lstlisting}
+
+The location of the place where the regression tests are actually run
+is the \Textsfc{\textless build\_dir \textgreater} which is typically called \Textsfc{dbg|opt}
+and the regression tester makefiles and other copied scripts are in
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+Vaango/<build\_dir>/R_tester
+\end{lstlisting}
+
+\section{Basic operation}
+\subsection{Creating gold standards}
+The first step in setting up a local version of the regression tester
+is to create gold standards based on a tested and working version of the code.
+To do that, go to the \Textsfc{\textless build\_dir \textgreater} and run
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+make gold_standard
+\end{lstlisting}
+
+The gold standards are saved in 
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+Vaango/\textless build\_dir>/R_tester/gold_standards
+\end{lstlisting}
+
+\subsection{Running regression tests}
+To run all the regression tests from the \Textsfc{\textless build\_dir \textgreater}, you can do 
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+make localRT
+\end{lstlisting}
+will either be in relation to the tester root, which currently is 
+
+\subsection{Viewing regression tester results}
+Regression tester output is locally stored in the \Textsfc{\textless build\_dir \textgreater/R\_Tester/localRTData}
+directory.  For example, MPM related test results will be stored in the 
+\Textsfc{MPM-results} directory.
+
+There will be many log files saved. They will show you the resulting output 
+of the test, which (hopefully) explains clearly why the test failed.
+
+\subsection{Adding new regression tests}
+After a new model has been developed, it is expected that you will add
+a regression test for the model to the tester.  To do that go to the 
+\Textsfc{Vaango/src/R\_Tester} directory and select the component to 
+which you want to add a new test.  For example, if you want to add a 
+new test called \Textsfc{const\_test\_tabular} that uses two MPI processes
+to \Textsfc{MPM.py}, edit the python script and add the following to 
+the \Textbfc{NIGHTLYTESTS} array:
+\begin{lstlisting}[language=Python]
+NIGHTLYTESTS = [  
+  .........
+  ("const_test_viscoelastic_fortran.ups", 
+   "ViscoElastic/const_test_viscoelastic_fortran.ups",                       
+    1,  "Linux", ["exactComparison"] ), \
+  .........
+  ("const_test_tabular.ups", 
+   "const_test_tabular.ups",                       
+    4,  "Linux", ["exactComparison"] )
+]
+\end{lstlisting}
+
+If you create a new component and want to add a set of tests for that
+component, follow the procedure used in the other test files.  For
+a better understanding of the details, notice that
+NIGHTLYTESTS is a list of tests.  There can be as many tests
+as you like, but each test must be a list of 5-6 items.  For example, in
+MPM we find one of the tests:
+\begin{lstlisting}[language=Python]
+("heatcond2mat", "heatcond2mat.ups", "", 1, "ALL")
+\end{lstlisting}
+The first parameter is the name of the test.  It doesn't really matter
+what the name is, most people just use the name of the ups file, but
+doesn't need to be.
+
+The second parameter is the name of the ups file.
+The third is any additional flags that you want to pass to vaango.
+The fourth is the number of processors to use.
+The fifth is which operating system to run on.  Current choices are
+"Linux", "IRIX64", or "ALL"  - these are case-sensitive.
+
+Next, you'll notice the \Textsfc{exit(runVaangoTests(...))} call at the very
+bottom.  All you need to do here is change the third argument to
+\textless algo \textgreater, where algo is the algorithm directly passed into vaango,
+like "ice" or "mpm", AND the uppercase version of algo must be the
+name of a directory with ups files (ICE, MPM).
+
+The callback function, if passed into runVaangoTests will be called before
+executing every test.  It must have the same parameters as the runVaangoTest
+function, found in runVaangoTests.py.  
+
+Then add that file to the cvs repository and commit it, and the regression
+tester will see it and take care of the rest!
+
+\section{Regression test scripts}
+
+The main script that is used in \Textsfc{runVaangoTests.py}.
+Scripts that are further down the script hierarchy
+
+\subsection{cleanup}
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+cleanup - Vaango/R_Tester/helpers/cleanup (sh script)
+\end{lstlisting}
+-------
+This script can be called from the command line in the \Textsfc{\textless build\_dir \textgreater}.
+It tries to remove all Vaango.* in the directory that don't have a *.lock link
+pointing to it.
+
+  Previously, any directory that had a .lock file pointing to it had a file
+in BUILDROOT/ called lock.  Cleanup removes those lock files, and creates one
+for every folder that is pointed to by a .lock file.
+
+  Moves all the (non-locked) \Vaango.* dirs to the "trash" dir and then
+tries to remove them.  Tries to delete everything in trask.  If not
+successful (due to not owning the files), send email to people to
+clean it up.
+
+\subsection{MPM.py|ICE.py etc.}
+These are called from \Textsfc{runVaangoTests.py}.  Each test is defined in an array
+\begin{lstlisting}[language=Python]
+TESTS = [   (nameOfTests, upsInputFile, extraFlags, numProcs, whichOS),
+             ...,
+	]
+\end{lstlisting}
+Then it calls 
+\begin{lstlisting}[language=Python]
+runVaangoTests(argv, TESTS, algo)
+\end{lstlisting}
+You can create your own test file, and it will automatically run in the tester.
+It will need 755 permissions.
+Example:
+\begin{lstlisting}[language=Python]
+#!/usr/bin/python
+
+from sys import argv,exit
+from helpers.runVaangoTests import runVaangoTests
+
+TESTS = [   ("advect", "advect.ups", "", 1, "ALL"),     \
+            ("hotBlob2mat", "hotBlob2mat.ups", "", 1, "ALL"),     \
+            ("hotBlob2mat_sym", "hotBlob2mat_sym.ups", "", 1, "ALL"),     \
+            ("hotBlob8patch", "hotBlob2mat8patch.ups", "", 8, "ALL"),     \
+        ]
+
+exit(runVaangoTests(argv, TESTS, "ice"))
+\end{lstlisting}
+
+You can also call \Textsfc{modUPS} to use the same ups file with different settings:
+\begin{lstlisting}[language=Python]
+from helpers.modUPS import modUPS
+test8patch_ups = modUPS("%s/MPM" % inputs_root(), \
+                           "test_table.ups", \
+                           ["<patches>[2,2,2]</patches>", \
+                            "<maxTime>10.0</maxTime>"])
+\end{lstlisting}
+This will change the \Textsfc{test\_table.ups} patches from whatever they 
+were to [2,2,2] and the maxTime to 10.0.
+Make sure to put the entire field from the beginning of the tag to the close
+of the tag.
+
+\Textsfc{modUPS} will scan through the ups file and look for the pattern of the tag 
+scecified.  I.e., in the example above, it will look for 
+\begin{lstlisting}[language=XML]
+<patches>...</patches>
+\end{lstlisting}
+and then replace it with 
+\begin{lstlisting}[language=XML]
+<patches>[2,2,2]</patches>. 
+\end{lstlisting}
+It can also replace tags in form 
+\begin{lstlisting}[language=XML]
+<varname=something />.
+\end{lstlisting}
+
+\subsection{runVaangoTests.py}
+\Textsfc{runVaangoTests.py} is divided largely into 2 functions, \Textsfc{runVaangoTests}, 
+and \Textsfc{runVaangoTest}.
+\Textsfc{runVaangoTests} takes the tests passed into it from MPM, ICE, etc. 
+and executes vaango on them.  It then compares the results of the output with the 
+saved goldStandard.
+
+usage:
+\begin{lstlisting}[language=Python]
+  runVaangoTests(argv, TESTS, testtype, callback)
+\end{lstlisting}
+where \Textbfc{argv} is the same as the arguments passed into MPM, ICE etc,
+\Textbfc{vaangodir} inputs goldStandard mode maxParallelism test,
+\Textbfc{TESTS} is a list of tests, 
+\Textbfc{testtype} is the algorithm to run - mpm, ice, mpmice, examples, etc,
+\Textbfc{callback} is an optional parameter.  If you pass a callback, you must define 
+that function, which has parameters:
+\Textbfc{test, vaangodir, inputsdir, compare\_root, algo, mode, max\_parallelism}
+Callback is called before running each test.
+
+Files created by \Textsfc{runVaangoTests} the the \Textbfc{R\_Tester/localRTData} 
+directory include, the directories \Textsfc{\textless resultsdir \textgreater} (MPM-results, ICE-results, etc.).
+In the \Textsfc{\textless resultsdir \textgreater}, the following files are created:
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+  <resultsdir>/<testname>
+  <resultsdir>/<testname>/<testname>.uda.000
+  <resultsdir>/<testname>/replace_gold_standard
+  <resultsdir>/<testname>/compare_vaango_runs.log.txt
+  <resultsdir>/<testname>/timestamp
+  <resultsdir>/<testname>/vaango.log.txt
+  <resultsdir>/<testname>/restart/<testname>.uda.000
+  <resultsdir>/<testname>/restart/compare_vaango_runs.log.txt
+  <resultsdir>/<testname>/restart/timestamp
+  <resultsdir>/<testname>/restart/vaango.log.txt
+\end{lstlisting}
+  
+\Textsfc{runVaangoTests} basically does a lot of error checking.
+It proceeds to iterate through the tests, and if there was a solotest arg
+specified, it will check and see if that is the current test.  
+Then it compares the OS specified of the current test, and if they are not 
+compatible it continues with the next test.  Then it calls the callback if 
+there is one, and calls \Textsfc{runVaangoTest}.  Then it repeats that process for the 
+restart test (if the \Vaango test passed) AND the files created in the resultsdir
+directory will then be created in the restart directory.
+
+\Textsfc{runVaangoTest} is responsible for the running and testing of one individual test.
+It first checks to see if the test requires more processors than the tester's
+max paralellism setting (passed into startTester with the -j flag).  It 
+proceeds to run the tests, noting that at any point if a test fails, it 
+displays where the log message is that will be helpful, and then returns
+immediately.  \Vaango is then run with the parameters as set by the test, and 
+sends its output to \Textsfc{vaango.log.txt}.  If it passes, it proceeds to compare the udas
+generated by vaango with the gold standard, with \Textsfc{compare\_vaango\_runs}, which saves
+its output in \Textsfc{compare\_vaango\_runs.log.txt}.  If we are in debug mode, it tests 
+for memory leaks with \Textsfc{mem\_leak\_check} which saves its output in 
+\Textsfc{mem\_leak\_check.log.txt}.
+
+\subsection{compare\_vaango\_runs - sh script}
+This script compares output of vaango with gold standard and can be called using
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+  compare_vaango_runs <testname> <testdir> <compare_root> <vaangodir>
+\end{lstlisting}
+where \Textsfc{testname} is the name of test, \Textsfc{testdir} is the
+directory where test is, \Textsfc{compare\_root} is the folder where testdir/testname 
+should be - i.e, OS/TestData/mode/ALGO, \Textsfc{vaangodir} is the folder where 
+\Textsfc{vaango} and \Textsfc{compare\_uda} are located.
+
+If there is no data for the specified test in \Textsfc{compare\_root}, \Textsfc{compare\_vaango\_runs}
+creates the necessary directories and copies the output from vaango (in 
+testdir/testname) over to be the new gold standard.  Otherwise, it calls
+\Textsfc{compare\_dats} and \Textsfc{compare\_udas} on the input.
+
+\subsection{mem\_leak\_check - sh script}
+This script checks and compares memory usage and can be called with
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+  mem_leak_check <testname> <stats_file> <compare_stats_file> <tmpdir>
+\end{lstlisting}
+where \Textsfc{stats\_file} is the name of malloc output file -i.e., \Textsfc{malloc\_stats},
+\Textsfc{compare\_stats\_file} is the name/location of file to compare to.
+
+Looks for memory leaks in \Textsfc{stats\_file}, and outputs them to 
+\Textsfc{tmpdir/scinew\_malloc\_stats}.  Then calls \Textsfc{highwater\_percent.pl} to check
+memory usage. If the percentage returned is greater than 10, an error is
+posted, if it returns a percentage less that -5\%, then it replaces the stats
+in the goldStandard.
+
+\subsection{compare\_dats -  sh script}
+It checks to see if there are any .dat files to compare.  If there are,
+it calls \Textsfc{compare\_dat\_files.pl} to compare them.
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+  compare_dats <testname> <testdir> <compare_udadir> <tmpdir>
+\end{lstlisting}
+where \Textsfc{compare\_uda\_dir} is the compare\_root/testname/udadir.
+
+\subsection{compare\_udas  sh script}
+Simply calls \Textsfc{compare\_uda} (executable in vaangodir), with the flags given
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+  compare_udas <vaangodir> <test> <test_udadir> <compare_udadir> <tmp_dir> <flags>
+\end{lstlisting}
+
+\subsection{compare\_dat\_files.pl - perl script}
+Checks to see if values in dat files and gold standard dat files are within
+a tolerable percent of error.
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+  compare_dat_files.pl <abs error> <rel error> <udadir> <compare_udadir> 
+                       <dat filenames>
+\end{lstlisting}
+where \Textsfc{abs error} - Absolute error - the max allowable exact difference,
+\Textsfc{rel error} - Relative error - the max allowable relative difference - 
+based on significant figures,
+\Textsfc{udadir}          - Uda directory with data files,
+\Textsfc{compare\_udadur}  - Gold standard uda directory,
+\Textsfc{dat filenames}   - list of .dat filenames.
+
+\subsection{highwater\_percent.pl -  perl script}
+Compares memory allocated by the two input files and calculates the 
+percent difference.
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+  highwater_percent.pl <malloc_stats_file> <compare_malloc_file>
+\end{lstlisting}
+
+\subsection{replace\_gold\_standard - sh script}
+Script created by \Textsfc{runVaangoTests}.  To be run at the command line, when deemed
+necessary.  It replaces the files in the gold standard with the ones created by this test.
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+(A) calls (B)
+(A)  replace_gold_standard
+(B)  replace_gold_standard gold_standard_dir replacement_dir testname
+\end{lstlisting}
+where \Textsfc{gold\_standard\_dir} is the gold-standard directory,
+\Textsfc{replacement\_dir} is the directory to replace gold standard with
+\Textsfc{testname} is the name of the test
+
+\subsection{Other files}
+These are items that are not scripts themselves, but may give a little insight
+to the tester.
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+__init__.py - \Vaango/R_Tester/helpers/__init__.py
+\end{lstlisting}
+The existence of this file alone (it is virtually empty), helps to create a 
+python package for helpers.  This makes it so the python scripts can call each
+other's functions.
+
+
+
+

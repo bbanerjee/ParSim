@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -26,7 +27,7 @@
 
 from sys import argv,exit
 from os import environ
-from helpers.runSusTests import runSusTests
+from helpers.runVaangoTests import runVaangoTests
 
 #______________________________________________________________________
 #  Test syntax: ( "folder name", "input file", # processors, "OS", ["flags1","flag2",...])
@@ -44,7 +45,7 @@ from helpers.runSusTests import runSusTests
 #       rel_tolerance=[double]  - relative tolerance used in comparisons
 #       exactComparison         - set absolute/relative tolerance = 0  for uda comparisons
 #       startFromCheckpoint     - start test from checkpoint. (/home/csafe-tester/CheckPoints/..../testname.uda.000)
-#       sus_options="string"    - Additional command line options for sus command
+#       vaango_options="string"    - Additional command line options for vaango command
 #
 #  Notes: 
 #  1) The "folder name" must be the same as input file without the extension.
@@ -93,5 +94,5 @@ if __name__ == "__main__":
   else:
     TESTS = NIGHTLYTESTS
 
-  result = runSusTests(argv, TESTS, "MPMICE")
+  result = runVaangoTests(argv, TESTS, "MPMICE")
   exit( result )

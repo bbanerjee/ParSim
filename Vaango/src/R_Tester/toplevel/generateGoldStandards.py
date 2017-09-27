@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -45,11 +46,11 @@ if os.sys.version_info <= (2,5):
 
 import subprocess
 
-from helpers.runSusTests import nameoftest, testOS, input, num_processes, testOS, setGeneratingGoldStandards, userFlags
+from helpers.runVaangoTests import nameoftest, testOS, input, num_processes, testOS, setGeneratingGoldStandards, userFlags
 
 ####################################################################################
 
-vaango           = ""   # full path to vaango executable
+vaango        = ""   # full path to vaango executable
 inputs        = ""   # full path to src/Standalone/inputs/
 OS            = platform.system()
 debug_build   = ""
