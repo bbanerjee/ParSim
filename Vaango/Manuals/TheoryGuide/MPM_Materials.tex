@@ -1,0 +1,143 @@
+
+\chapter{MPM Material Models}
+The MPM material models implemented in \Vaango we originally
+chosen for three purposes:
+\begin{itemize}
+  \item To verify the accuracy of the material point method (MPM)
+        and to validate the coupling between the computational fluid 
+        dynamics code (ICE) and MPM.
+  \item To model the elastic-plastic deformation of metals 
+        and the consequent damage in the regimes of 
+        both high and low strain rates and high and low temperatures.
+  \item To model polymer bonded explosives 
+        under various strain rates and temperatures.
+  \item To model the explosive deformation of rocks and soils.
+\end{itemize}
+In this chapter we discuss some general features of the MPM material
+models.  Individual models are complex and are discussed in separate
+chapters.
+
+\subsection{Material models for the validation of MPM}
+The models that have been implemented for the verification of MPM
+are:
+\begin{itemize}
+   \item Isotropic hypoelastic model using the Jaumann rate of 
+         stress.
+     \begin{enumerate}
+        \item  MPM predictions have been compared with exact results 
+               for thick cylinders under internal pressure for small
+               strains, three-point beam bending, etc.
+        \item  MPM predictions for the strain/stress contours for
+               a set of disks in contact have been found to match
+               experimental results.
+     \end{enumerate}
+   \item Isotropic hyperelastic material models for Mooney-Rivlin
+         rubber and a modified compressible Neo-Hookean material. 
+         Isotropic strain hardening plasticity for the Neo-Hookean
+         material.
+     \begin{enumerate}
+        \item  A billet compression problem has been simulated using
+               MPM and the results have been found to closely 
+               match finite element simulations.
+        \item  MPM simulations for a thick cylinder under internal
+               pressure with plastic deformation (perfect plasticity)
+               compare well with the exact solution.
+     \end{enumerate}
+\end{itemize}
+
+\subsection{Material models for metals}
+The material models for metals are used to determine
+the state of stress  for an applied deformation
+rate and deformation gradient at each material point.  The strain 
+rates can vary from $10^{-3}$/s to $10^6$/s and temperatures in 
+the container can vary from 250 K to 1000 K.  For example, in
+an explosion inside a container, plasticity dominates
+the deformation of the container during the expansion of the 
+explosive gases inside.  At high strain rates the volumetric
+response of the container is best obtained using an equation of 
+state.  After the plastic strain in the container
+has reached a threshold value a damage/erosion model is required to
+rupture the container.
+
+Two plasticity models with strain rate and temperature dependency 
+are the Johnson-Cook and the Mechanical Threshold Stress (MTS) 
+models.  The volumetric response is calculated using a modified
+Mie-Gruneisen equation of state.  A damage model that ties in well 
+with the Johnson-Cook plasticity model is the Johnson-Cook damage 
+model.  The erosion algorithm either removes the contribution
+of the mass of the material point or forces the material point
+to undergo no tension or shear under further loading.
+
+The stress update at each material point is performed using either
+of the two methods discussed below.
+\begin{itemize}
+   \item Isotropic Hypoelastic-plastic material model using an 
+         additive decomposition of the rate of deformation tensor.
+     \begin{enumerate}
+        \item The rate of deformation tensor a material point
+              is calculated using the grid velocities.
+        \item An incremental update of the left stretch and the
+              rate of rotation tensors is calculated.
+        \item The stress and the rate of deformation are rotated
+              into the material coordinates.
+        \item A trial elastic deviatoric stress state is calculated.
+        \item The flow stress is calculated using the plasticity
+              model and compared with the vonMises yield condition.
+        \item If the stress state is elastic, an update of the 
+              stress is computed using the Mie-Gruneisen equation
+              of state or the isotropic hypoelastic constitutive
+              equation.
+        \item If the stress state is plastic, all the strain rate 
+              is considered to the plastic and an elastic correction
+              along with a radial return step move the stress state
+              to the yield surface.  The hydrostatic part of the 
+              stress is calculated using the equation of state or
+              the hypoelastic constitutive equation.
+        \item A scalar damage parameter is calculated and used
+              to determine whether material points are to be eroded
+              or not.
+        \item Stresses and deformation rates are rotated back to the
+              laboratory coordinates.
+     \end{enumerate}
+   \item Isotropic Hyperelastic-plastic material model using a 
+         multiplicative decomposition of the deformation gradient.
+     \begin{enumerate}
+        \item The velocity gradient at a material point
+              is calculated using the grid velocities.
+        \item An incremental update of the deformation gradient and
+              the left Cauchy-Green tensor is calculated.
+        \item A trial elastic deviatoric stress state is calculated
+              assuming a compressible Neo-Hookean elastic model.
+        \item The flow stress is calculated using the plasticity
+              model and compared with the vonMises yield condition.
+        \item If the stress state is elastic, an update of the 
+              stress is computed using the Mie-Gruneisen equation
+              of state or the compressible Neo-Hookean constitutive
+              equation.
+        \item If the stress state is plastic, all the strain rate 
+              is considered to the plastic and an elastic correction
+              along with a radial return step move the stress state
+              to the yield surface.  The hydrostatic part of the 
+              stress state is calculated using the Mie-Gruneisen
+              equation of state or the Neo-Hookean model.
+        \item A scalar damage parameter is calculated and used
+              to determine whether material points are to be eroded
+              or not.
+     \end{enumerate}
+\end{itemize}
+
+The implementations have been tested against Taylor impact test data
+for 4340 steel and HY 100 steel as well as one-dimensional problems
+which have been compared with experimental stress-strain data.  
+
+\subsection{Material models for the explosive}
+The explosive is modeled using the \Textsfc{ViscoSCRAM} constitutive 
+model.  Since large deformations or strains are not expected in 
+the explosive, a small strain formulation has been implemented into 
+\Vaango.  The model consists of five generalized Maxwell elements
+arranged in parallel, crack growth, friction at the crack 
+interfaces and heating due to friction and reactions at the 
+crack surfaces.  The implementation has been verified with 
+experimental data and found to be accurate.
+
+

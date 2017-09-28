@@ -1,15 +1,4 @@
-\chapter{MPMICE: Coupling CFD and MPM} \index{coupling!CFD}
-
-The work presented here describes a numerical approach for
-``full physics" simulations of dynamic fluid structure interactions
-involving large deformations and material transformations (e.g., phase
-change).  ``Full physics" refers to problems involving strong
-interactions between the fluid field and solid field temperatures and 
-velocities, with a full Navier Stokes representation of fluid materials and the
-transient, nonlinear response of solid materials.  These interactions
-may include chemical or physical transformation between the solid
-and fluid fields.
-
+\chapter{MPMICE: Coupling CFD and MPM} \label{ch:MPMICE}
 Approaches to fluid structure interaction (FSI) problems are typically
 divided into two classes.  ``Separated" approaches treat individual materials
 as occupying distinct regions of space, with interactions occurring only at
@@ -53,180 +42,13 @@ the differential limit, the separated model can be recovered.  This means
 that with sufficient grid resolution, the accuracy of the separated model 
 and the robustness of the averaged model can be enjoyed simultaneously.
 
-An exposition of the governing equations is given in the next section, 
-followed by an algorithmic description of the solution of those 
-equations.  This description is first done separately for the materials in 
-the Eulerian and Lagrangian frames of reference, before details associated 
-with the integrated approach are given.  Because this manuscript is focused 
-on explosions of energetic devices, some of the models used to close the
-governing equations are described briefly.  Finally, results from three 
-calculations are presented.  The first two of these are intended to serve 
-as validation of the general approach and the models used, while the third is 
-an unvalidated demonstration calculation.  The reader is encouraged to 
-browse Section~\ref{sec:numerical_results}  at this point to better appreciate
+An exposition of the governing equations of the CFD approach are given
+in Chapter~\ref{ch:ICETheory} while those for MPM can be found in
+Chapter~\ref{ch:MPMTheory}.  Algorithmic description of the solution of those 
+equations can also be found in those chapters, but a summary is provided here.
+The reader is encouraged to 
+browse Section~\ref{sec:numerical_results}  to better appreciate
 the direction that the subsequent development is headed.
-
-\section{Governing Equations}\label{sec:governing_equations}
-
-The governing multi-material model equations are stated and described, but 
-not developed, here.  A complete development can be found 
-in~\cite{Guilkey2005} and~\cite{Kashiwa2000}.  Consider a collection 
-of $N$ materials, and let the subscript $r$ signify one of the 
-materials, such that $r = 1, 2, 3, \dots, N$.  In an arbitrary volume of space
-$V(\Bx,t)$, the averaged thermodynamic state of a material is given by
-the vector 
-$[M_r, \Bu_r, e_r, T_r, v_r, \theta_r, \sigma_r, p]$,
-the elements of which are the r-material mass, velocity, internal
-energy, temperature, specific volume, volume fraction, stress, and the
-equilibration pressure.  The r-material averaged density is
-$\rho_r = M_r/V$.  The rate of change of the state in a volume
-moving with the velocity of r-material is:
-\noindent
-%__________________________________
-% mass
-\begin{eqnarray}
-{1\over V}{D_r M_r \over Dt} &=&
-{\raise1.5pt\hbox{$\scriptstyle\sum_{s=1}^N$}}\Gamma_{rs}
-\label{eqmassr} \\
-\nonumber \\
-%__________________________________
-% momentum
-{1\over V}{D_r (M_r \Bu_r) \over Dt} &=&
-\theta_r \Bnabla\cdot\Bsig
-+\Bnabla\cdot\theta_r(\Bsig_r - \Bsig) + \rho_r\Bg
-+ {\raise1.5pt\hbox{$\scriptstyle\sum_{s=1}^N$}}
-\Bf_{rs} + {\raise1.5pt\hbox{$\scriptstyle\sum_{s=1}^N$}}
-\Bu_{rs}^+ \Gamma_{rs}
-\label{eqmomr}\\ \nonumber \\
-%__________________________________
-% internal energy
-{1\over V}{D_r (M_r e_r) \over Dt} &=& -
-\rho_r p {D_r v_r\over Dt} +
-\theta_r\Btau_r:\nabla\Bu_r - \Bnabla\cdot\Bj_r +
-{\raise1.5pt\hbox{$\scriptstyle\sum_{s=1}^N$}} q_{rs} +
-{\raise1.5pt\hbox{$\scriptstyle\sum_{s=1}^N$}}
-h_{rs}^+ \Gamma_{rs}
-\label{eqenergyr}
-\end{eqnarray}
-
-Equations \ref{eqmassr}-\ref{eqenergyr} are the averaged model equations
-for mass, momentum, and internal energy of r-material, in which $\Bsig$ is
-the mean mixture stress, taken here to be isotropic, so that $\Bsig =
--p\BI$ in terms of the hydrodynamic pressure $p$.  The effects of turbulence
-have been explicitly omitted from these equations, and the subsequent solution,
-for the sake of simplicity.  However, including the effects of turbulence is not precluded by either the model or the solution method used here.
-
-In Eq.~\ref{eqmomr} the term $\sum_{s=1}^{N}\Bf_{rs}$ signifies a
-model for the momentum exchange among materials.  This term results from
-the deviation of the r-field stress from the mean stress, averaged, and
-is typically modeled as a function of the relative velocity between
-materials at a point. (For a two material problem this term might look
-like $\Bf_{12} = K_{12}\theta_1\theta_2(\Bu_1 - \Bu_2)$ where the
-coefficient $K_{12}$ determines the rate at which momentum is transferred
-between materials).  Likewise, in Eq.~\ref{eqenergyr},
-$\sum_{s=1}^{N} q_{rs}$ represents an exchange of heat energy
-among materials.  For a two material problem 
-$q_{12} = H_{12}\theta_1\theta_2(T_2 - T_1)$ where $T_r$ is the
-r-material temperature and the coefficient $H_{rs}$ is analogous to
-a convective heat transfer rate coefficient.  The heat flux is
-$\Bj_r = -\rho_r b_r \Bnabla T_r$ where the thermal
-diffusion coefficient $b_r$ includes both
-molecular and turbulent effects (when the turbulence is included).
-
-In Eqs. \ref{eqmassr}-\ref{eqenergyr} the term $\Gamma_{rs}$
-is the rate of mass conversion from s-material into r-material, such as
-the burning of a solid reactant into gaseous products.  The 
-rate at which mass conversion occurs is governed by a reaction model,
-two examples of which are given in Section~\ref{sec:HEReaction}.
-In Eqs. \ref{eqmomr} and \ref{eqenergyr}, the velocity
-$\Bu_{rs}^+$ and the enthalpy
-$h_{rs}^+$ are those of the s-material that is converted into r-material.
-These are simply the mean values associated with the donor material.
-
-The temperature $T_r$, specific volume $v_r$, volume fraction
-$\theta_r$, and hydrodynamic pressure $p$ are
-related to the r-material mass density, $\rho_r$, and specific internal energy,
-$e_r$, by way of equations of state.  The four relations for the four
-quantites $(T_r, v_r, \theta_r, p)$ are:
-\begin{eqnarray}
-e_r &=& e_r(v_r, T_r) \label{caloric} \\
-v_r &=& v_r(p, T_r) \label{thermal} \\
-\theta_r &=& \rho_r v_r \label{thedef} \\
-0 &=& 1 - {\raise1.5pt\hbox{$\scriptstyle\sum_{s=1}^N$}}\rho_s v_s
-\label{mmeos}
-\end{eqnarray}
-Equations \ref{caloric} and \ref{thermal} are, respectively, the caloric and 
-thermal equations of state.  Equation \ref{thedef} defines the volume 
-fraction, $\theta$, as the volume of r-material per total material volume,
-and with that definition, Equation~\ref{mmeos}, referred to as the 
-multi-material equation of state, follows.  It 
-defines the unique value of the hydrodynamic pressure $p$ that allows 
-arbitrary masses of the multiple materials to identically fill the 
-volume $V$.  This pressure is called the ``equilibration'' 
-pressure \cite{Kashiwa1994}.
-
-A closure relation is still needed for the
-material stress $\Bsig_r$.  For a fluid $\Bsig_r = -p\BI +
-\Btau_r$ where the deviatoric stress is well known for Newtonian fluids.
-For a solid, the material stress is the Cauchy stress.  The Cauchy
-stress is computed using a solid constitutive model and may depend on the 
-the rate of deformation, the current state of deformation ($\BE$), 
-the temperature, and possibly a number of history variables.  Such a 
-relationship may be expressed as:
-\begin{equation}
-{\Bsig}_r \equiv \Bsig_r(\Bnabla\Bu_r, \BE_r, T_r,~ \dots)
-\label{conslaw}
-\end{equation}
-The approach described here imposes no restrictions on the types of 
-constitutive relations that can be considered.  More specific discussion 
-of some of the models used in this work is found in Sec.~\ref{sec:models}
-
-Equations \ref{eqmassr}-\ref{conslaw} form a set of eight equations for
-the eight-element state vector \\
-$[M_r, \Bu_r, e_r, T_r, v_r, \theta_r, \sigma_r, p]$, 
-for any arbitrary volume of space $V$ moving with the r-material velocity.
-The approach described here uses the reference frame most suitable
-for a particular material type.  As such, there is no guarantee that 
-arbitrary volumes will remain coincident for materials described in 
-different reference frames.
-
-This problem is addressed by treating the specific volume as a dynamic variable
-of the material state which is integrated forward in time from initial 
-conditions.  In so doing, at any time, the total volume associated 
-with all of the materials is given by:
-\begin{eqnarray}
-V_t = {\raise1.5pt\hbox{$\scriptstyle\sum_{r=1}^N$}} M_r v_r
-\end{eqnarray}
-so the volume fraction is $\theta_r = M_r v_r / V_t$
-(which sums to one by definition).
-An evolution equation for the r-material specific volume, derived from the 
-time variation of Eqs. \ref{caloric}-\ref{mmeos},
-has been developed in \cite{Kashiwa1996}, \cite{Kashiwa2000} and 
-\cite{Lewis1998}.
-It is stated here as:
-
-\begin{eqnarray}
-{1\over V}{D_r (M_r v_r) \over Dt} =
-f_r^{\theta} \nabla \cdot \Bu &+&
-\left[v_r \Gamma_r -
-f_r^{\theta} {\raise1.5pt\hbox{$\scriptstyle\sum_{s=1}^N$}}
-v_s \Gamma_s \right]  \nonumber \\ &+&
-\left[\theta_r
-\beta_r {D_r T_r\over Dt} -
-f_r^{\theta} {\raise1.5pt\hbox{$\scriptstyle\sum_{s=1}^N$}}
-\theta_s \beta_s {D_s T_s\over Dt} \right] \; .
-\label{eqspvolr}
-\end{eqnarray}
-
-where 
-$f_r^{\theta} = {{\theta_r \kappa_r} \over 
-   {\raise1pt\hbox{${\scriptstyle\sum_{s =1}^N}$}}\theta_s\kappa_s}$, 
-and $\kappa_r$ is the r-material bulk compressibility.
-
-The evaluation of the multi-material equation of state (Eq.~\ref{mmeos}) is 
-still required in order to determine an equilibrium pressure that results in a 
-common value for the  pressure, as well as specific volumes that fill the 
-total volume identically.
 
 \section{Numerical Implementation}\label{sec:numerical_algorithm}
 
@@ -237,7 +59,7 @@ Lagrangian reference frames.  The algorithmic details necesssary for
 integrating them to achieve a tightly coupled fluid-structure interaction 
 capability is provided in Sec.~\ref{sec:coupling}.
 
-\subsection{Eulerian Multi-Material Method}\label{sec:EulerianMFM}
+\subsection{ICE Eulerian Multi-Material Method}\label{sec:EulerianMFM}
 
 The Eulerian method implemented here is a
 cell-centered, finite volume, multi-material version of the ICE
@@ -256,13 +78,13 @@ the types of problems that can be efficiently computed.
  
 Our use of the cell-centered ICE method employs time splitting: first, a
 Lagrangian step updates the state due to the physics of the conservation laws
-(i.e., right hand side of Eqs.~{\ref{eqmassr}-\ref{eqenergyr}}); this is
+(i.e., right hand side of Eqs.~{\ref{eq:eqmassr}-\ref{eq:eqenergyr}}); this is
 followed by an Eulerian step, in which the change due to advection is
 evaluated.  For solution in the Eulerian frame, the method is well developed
 and described in \cite{Kashiwa1994a}.  
 
 In the mixed frame approach used here, a modification to the multi-material equation
-of state is needed.  Equation~\ref{mmeos} is unambiguous when all materials
+of state is needed.  Equation~\ref{eq:mmeos} is unambiguous when all materials
 are fluids or in cases of a flow consisting of dispersed solid
 grains in a carrier fluid.  However in fluid-structure problems the stress
 state of a submerged structure may be strongly directional, and the
@@ -280,19 +102,10 @@ For solid materials, the equation of state is the bulk part of the
 constitutive response (that is, the isotropic part of the Cauchy stress versus
 specific volume and temperature).  If one attempts to equate the isotropic
 part of the Cauchy stress with the fluid pressure, there exist regions in
-pressure-volume space for which Eq.~\ref{mmeos} has no physical solutions
+pressure-volume space for which Eq.~\ref{eq:mmeos} has no physical solutions
 (because the gas pressure is only positive).  This can be seen schematically
 in Fig.~\ref{vpfig}, which sketches equations of state for a gas and a 
 solid, at an arbitrary temperature.
-\begin{figure}[t]
- \hskip 1.0 true in
-  \scalebox{0.5}{\includegraphics{Figs/mpmice/v_p_new.pdf}}
- \caption{Specific volume {\it vs} pressure for a gas phase material 
-          and a solid phase material.  Light dashed line reflects an 
-          altered solid phase equation of state to keep all materials
-          in positive equilibration pressure space.}
- \label{vpfig}
-\end{figure}
 
 Recall that the isothermal compressiblity is the negative slope of
 the specific volume versus pressure.  Embedded structures considered here are
@@ -342,69 +155,7 @@ spatial gradients.  This same grid also functions as an updated Lagrangian grid
 that moves with the particles during advection and thus eliminates the
 diffusion problems associated with advection on an Eulerian grid.  At the end
 of a timestep, the grid is reset to the original, regularly ordered, position.
-
-In explicit MPM, the equations of motion are cast in the form \cite{Sulsky1995}:
-\begin{eqnarray}
-        \Bm \Ba &=& \BF^{\rm{ext}} - \BF^{\rm{int}}  \label{newton2}
-\end{eqnarray}
-where $\Bm$ is the mass matrix, $\Ba$ is the acceleration vector,
-$\BF^{\rm{ext}}$ is the external force vector (sum of the body forces and
-tractions), and $\BF^{\rm{int}}$ is the internal force vector resulting from
-the divergence of the material stresses.
-
-The solution procedure begins by projecting the particle state to the
-nodes of the computational grid, to form the mass matrix $\Bm$ and to find
-the nodal external forces $\BF^{\rm{ext}}$, and velocities,
-$\Bv$.  In practice, a lumped mass matrix is usually used.
-These quantities are calculated at individual nodes by the following 
-equations, where the $\sum\limits_{p}$ represents a summation over all 
-particles:
-\begin{eqnarray}
-m_i = \sum_{p} S_{ip} m_p,  \;\;\;\;\;\; 
-\Bv_i = \frac{\sum\limits_{p} S_{ip} m_p \Bv_p}{m_i},  \;\;\;\;\;\;
-\BF^{\Text}_i &=& \sum_{p} S_{ip} \BF^{\Text}_p
-\label{interpolate}
-\end{eqnarray}
-and $i$ refers to individual nodes of the grid.  $m_p$ is the particle
-mass, $\Bv_p$ is the particle velocity, and $\BF^{\Text}_p$ is the external
-force on the particle.
-$S_{ip}$ is the $i$th node's shape function evaluated at the particle position $\Bx_p$.
-Traditionally, standard tri-linear shape functions are used, but recently
-smoother interpolants, as described in \cite{Bard2004}, have yielded
-improved results.
-
-A velocity gradient,  $\nabla \Bv_p$ is computed at
-the particles using the velocities projected to the grid:
-\begin{equation}
-\nabla \Bv_p = \sum_i \BG_{ip} \Bv_i
-\label{velgrad}
-\end{equation}
-where $\BG_{ip}$ is the gradient of the shape function of the $i$th node
-evaluated at $\Bx_p$.
-
-This is used as input to a constitutive model which is evaluated on a
-per particle basis, the result of which is the Cauchy stress at each
-particle, $\Bsig_p$.  With this, the internal force due to the divergence
-of the stress is calculated via:
-\begin{eqnarray}
-        \BF^{\Tint}_i &=& \sum_{p} \BG_{ip} \Bsig_p V_p,
-\end{eqnarray}
-where $V_p$ is the particle volume.
-
-Equation \ref{newton2} can then be solved for $\Ba$.
-An explicit forward Euler method is used for the time integration:
-\begin{eqnarray}
-\Bv^L= \Bv + \Ba~\DelT
-\label{MPM:euler}
-\end{eqnarray}
-and the particle position and velocity are explicitly updated by:
-\begin{eqnarray}
-  \Bv_p (t + \DelT)  &=& \Bv_p (t)  + \sum_{i} S_{ip} ~\Ba_i  ~\DelT 
-  \label{MPM:updateVp} \\
-  \Bx_p (t + \DelT)  &=& \Bx_p (t)  + \sum_{i} S_{ip} ~\Bv^L_i  ~\DelT 
-  \label{MPM:updateXp}
-\end{eqnarray}
-This completes one timestep.
+Details of the theory of \MPM can be found in Chapter~\ref{ch:MPMTheory}.
 
 By describing and implementing MPM in an independent fashion, validation of 
 the method itself as well as submodels (e.g., constitutive models and contact)
@@ -424,7 +175,7 @@ By choosing the background grid used to update the solid materials to
 be the same grid used in the multi-material Eulerian description,
 all interactions among materials can be computed in the common
 framework, according to the momentum and heat exchange terms in 
-Eqs~\ref{eqmomr}-\ref{eqenergyr}.  This results in a robust and tightly 
+Eqs~\ref{eq:eqmomr}-\ref{eq:eqenergyr}.  This results in a robust and tightly 
 coupled solution for interacting materials with very different responses.
 
 To illustrate how the integration is accomplished in an algorithmic fashion 
@@ -440,27 +191,27 @@ time $t$ to time $t+\Delta{t}$ are described below.
 \item {\bf Project particle state to grid:} A simulation timestep begins by
 interpolating the particle description of the solid to the grid.  This starts
 with a projection of particle data to grid vertices, or nodes, as described
-in Eq.~\ref{interpolate}, and is followed by a subsequent projection from
+in Eq.~\ref{accumulate}, and is followed by a subsequent projection from
 the nodes to the cell-centers.  Since our work uses a uniform structured
 grid, each node has equal weight in its contribution to the cell-centered
 value.  The exception to this is near computational boundaries where
 symmetric boundary conditions are used.  The weight of those nodes on
 the boundary must be doubled in order to achieve the desired effect.
 
-\item {\bf Compute the equilibrium pressure:} While Eq.~\ref{mmeos} and the
+\item {\bf Compute the equilibrium pressure:} While Eq.~\ref{eq:mmeos} and the
 surrounding discussion describes the basic process, one specific point warrants
 further explanation.  In particular, the manner in which each material's
 volume fraction is computed is crucial.  Because the solid and fluid materials 
 are evolved in different frames of reference, the total volume of material in a 
 cell is not necessarily equal to the volume of a computational cell.  Material 
 volume is tracked by evolving the specific volume for each material 
-according to Eq.~\ref{eqspvolr}.
+according to Eq.~\ref{eq:eqspvolr}.
 The details of this are further described in step 11.
 
 With the materials' masses and specific volumes, material volume
 can be computed ($V_r=M_r v_r$) and summed to find the total material volume.  The volume
 fraction $\theta_r$ is then computed as the volume of r-material per total
-material volume.  With this, the solution of Eq.~\ref{mmeos} can be carried
+material volume.  With this, the solution of Eq.~\ref{eq:mmeos} can be carried
 out at each cell using a Newton-Raphson technique\cite{Harlow1975},
 which results in new values for the equilibrium pressure, $p_{\Teq}$,
 volume fraction, $\theta_r$ and specific volume, $v_r$.
@@ -607,8 +358,8 @@ portion of the calculation, according to:
         + \fthetar \nabla \cdot \sum\limits_{s=1}^N{\theta_s^*u_s^*}
                + \theta_r \beta_r \dot{T_r} 
         - \fthetar \sum\limits_{s=1}^N{\theta_s \beta_s \dot{T_s}}\right]   
-     \label{eqspvoldiscrete} \\
-  (mv)_r^L &=& (mv)_r^n + \Delta(mv)_r \label{eqspvolLag}
+     \label{eq:eqspvoldiscrete} \\
+  (mv)_r^L &=& (mv)_r^n + \Delta(mv)_r \label{eq:eqspvolLag}
 \end{eqnarray}
 where $\beta$ is the constant pressure thermal expansivity and
 $\dot{T}=\frac{T^L - T^t}{\Delta{t}}$ is the rate of change of each material's
@@ -656,274 +407,10 @@ The governing equations given in Section~\ref{sec:governing_equations} are
 incomplete without closure equations for quantities such as pressure, stress, 
 and rate of exchange of mass between materials.  Equations of 
 state, constitutive models and reaction models provide
-the needed closure.  Brief descriptions of some of the models used in this work 
-are given below.
+the needed closure.  Some ICE material models have been discussed in
+Chapter~\ref{ch:ICEMaterials}.  Materials used by the \MPM component are
+discussed elsewhere in the Vaango Theory Manual.
 
-\subsection{High Energy Material Reaction Models}\label{sec:HEReaction}
-
-Two types of High Energy (HE) reaction models were considered here.  The first 
-is a model for detonation, in which the reaction front proceeds as a shock 
-wave through the solid reactant, leaving highly pressurized product gases 
-behind the shock.  The second is a deflagration model, in which the 
-reaction proceeds more slowly through the reactant in the form of a thermal
-burn.  Each is described here.
-
-\subsubsection{The JWL++ Detonation Model}\label{sec:JWLPP}
-
-The detonation model used in two of the calculations discussed in 
-Section~\ref{sec:numerical_results} is a reactive flow model known as 
-JWL++\cite{JWLpp}.  JWL++ consists of equations of state for the
-reactant and the products of reaction as well as a rate equation governing 
-the transformation from product to reactant.  In addition, the model consists 
-of a ``mixer" which is a rule for determining the pressure in a mixture of 
-product and reactant, as found in a partially reacted cell.  Because pressure 
-equilibration among materials is already part of the  multi-material CFD 
-formulation described in Section~\ref{sec:numerical_algorithm}, the mixer was 
-not part of the current implementation.  Lastly, two additional rules 
-apply.  The first is that reaction begins in a cell when the pressure in that
-cell exceeds 200 MPa.  Finally, no more than 20\% of the explosive in a cell 
-is allowed to react in a given timestep.
-
-The Murnaghan equation of state~\cite{Murnaghan1944} used for the solid reactant 
-material is given by:
-\begin{eqnarray}
-p=&{1\over n \kappa}\left({1\over v^n}-1\right)&
-\label{Murnaghan}
-\end{eqnarray}
-where $v=\rho_0/\rho$, and $n$ and $\kappa$ are material dependent model 
-parameters.  Note that while the reactants are solid materials, they are 
-assumed to not support deviatoric stress.  Since a detonation propagates 
-faster than shear waves, the strength in shear of the reactants can be 
-neglected.  Since it is not necessary to track the deformation history 
-of a particular material element, in this case, the reactant material was 
-tracked only in the Eulerian frame, \textit{i.e.} not represented by 
-particles within MPM.
-
-The JWL C-term form is the equation of state used for products, and is 
-given by:
-\begin{eqnarray}
-P=&A \exp(-R_1 v) + B \exp(-R_2 v) + {C\over {\rho_0 \kappa v^{n-1}}}&
-\label{JWLC}
-\end{eqnarray}
-where $A$, $B$, $C$, $R_1$, $R_2$, $\rho_0$ and $\kappa$ are all 
-material dependent model parameters.
-
-The rate equation governing the transformation of reactant to product is 
-given by:
-\begin{eqnarray}
-{dF \over dt}=&G(p+q)^b(1-F)
-\label{JWL++rate}
-\end{eqnarray}
-where $G$ is a rate constant, and 
-$b$ indicates the power dependence on pressure.  $q$ is an artificial 
-viscosity, but was not included in the current implementation of
-the model.  Lastly:
-\begin{eqnarray}
-F={{\rho_{\Tproduct}}\over{\rho_{\Treactant}+\rho_{\Tproduct}}}
-\end{eqnarray}
-is the burn fraction in a cell.  This can be differentiated and solved for 
-a mass burn rate in terms of $dF$:
-
-\begin{eqnarray}
-\Gamma&=&{dF \over dt}  \left(\rho_{\Treactant}+\rho_{\Tproduct}\right)
-\end{eqnarray}
-
-\subsubsection{Deflagration Model}\label{sec:deflagration}
-
-The rate of thermal burning, or deflagration, of a monopropellant 
-solid explosive is typically assumed to behave as:
-
-\begin{eqnarray}
-D&=&Ap^n
-\label{deflagration_rate}
-\end{eqnarray}
-where $D$ can be thought of as the velocity at which the burn front 
-propagates through the reactant (with units of length/time) and $p$ is the 
-local pressure~\cite{Son2000}.  $A$ and $n$ are parameters that are 
-empirically determined for particular explosives.  
-Because deflagration is a 
-surface phenomenon, our implementation requires the identification of the 
-surface of the explosive.  The surface is assumed to lie within those cells 
-which have the highest gradient of mass density of the reactant 
-material.  Within each surface cell, an estimate of the surface area $a$
-is made based on the direction of the gradient, and the rate $D$ above 
-is converted to a mass burn rate by:
-\begin{eqnarray}
-\Gamma&=&a D \rho_{\Treactant}
-\label{deflagration_mass_rate}
-\end{eqnarray}
-where $\rho_{\Treactant}$ is the local density of the explosive.  While the reaction 
-rate is independent of temperature, initiation of the burn depends 
-on reaching a threshold temperature at the surface.
-
-Since the rate at which a deflagration propagates is much slower than the 
-shear wave speed in the reactant, it is important to track its deformation 
-as pressure builds up within the container.  This deformation may lead to 
-the formation of more surface area upon which the reaction can take place, and 
-the change to the shape of the explosive can affect the eventual violence of the
-explosion.  Because of this, for deflagration cases, the explosive is 
-represented by particles in the Lagrangian frame.  The stress response is 
-treated by an implementation of ViscoSCRAM \cite{Hackett2000Viscoscram}, which includes 
-representation of the material's viscoelastic response, and considers effects 
-of micro-crack growth within the granular composite material.
-
-\subsection{Constitutive Model for Container Breakup}\label{sec:cons_mod}
-
-  One of the unique features of the approach described here is its ability to 
-  treat the interaction of fluid regions that are initially separated by a 
-  solid material.  Such a situation is found when gaseous products of 
-  reaction are contained in a metal canister surrounded by air.  When the 
-  pressure within the container is sufficient, it will rupture and the 
-  product material will be in direct contact with the surrounding air.  Given 
-  the ability to treat these situations, it is worthwhile to accurately 
-  describe the failure of the container.
-
-  While a full exposition of metal  
-  plasticity and failure is beyond the scope of this manuscript, a brief 
-  description of the current implementation is given here.  More details of
-  the models and algorithms can be found elsewhere 
-  ~\cite{Banerjee2005,Banerjee2005b,Banerjee2005d}.
-
-  The metal container is modeled as a
-  hypoelastic-plastic material.  The Green-Naghdi stress rate is used to 
-  provide objectivity to the constitutive equation.  The Cauchy stress is 
-  additively decomposed into a volumetric component and a deviatoric 
-  component.  
-
-  The volumetric stress is computed using a Mie-Gr{\"u}neisen equation of 
-  state~\cite{Zocher2000}:
-  \begin{equation} \label{eq:EOSMG}
-   p = \frac{\rho_0 C_0^2 (\eta -1)
-              \left[\eta - \frac{\Gamma_0}{2}(\eta-1)\right]}
-             {\left[\eta - S_{\alpha}(\eta-1)\right]^2} + \Gamma_0 E~;~~
-   \eta = \rho/\rho_0
-  \end{equation}
-  where $p$ is the pressure, $C_0$ is the bulk speed of sound,
-  $\Gamma_0$ is the Gr{\"u}neisen's gamma at the reference state,
-  $S_{\alpha}$ is a linear Hugoniot slope coefficient,
-  $E$ is the internal energy per unit reference specific volume,
-  $\rho_0$ is the initial density, and $\rho$ is the current density, 
-
- In the elastic domain, the deviatoric stress is computed using 
-  a hypoelastic model with a constant shear modulus.  The von Mises yield 
-  condition is used to determine whether the material is in the plastic 
-  domain.  The flow stress ($\sigma_y$) is computed using the Johnson-Cook
-  model~\cite{Johnson1983}: 
-  \begin{align}
-    \sigma_y(\Ep,\Epdot{},T) & =
-    \sigma_0\left[1 + \cfrac{B}{\sigma_0} (\Ep)^n\right]
-            \left[1 + C \ln(\Epdot{}^{*})\right]
-            \left[1 - (T^*)^m\right] \\
-    \Epdot{}^{*} & = \cfrac{\Epdot{}}{\Epdot{0}}; \quad
-    T^* = \cfrac{(T-T_0)}{(T_m-T_0)}
-  \end{align}
-  where $\sigma_0$ is the yield stress at zero plastic strain, and
-  $(B, C, n, m)$ are material constants, $\Ep$ is the equivalent plastic strain,
-  $\Epdot{}$ is the plastic strain rate, $\Epdot{0}$ is a reference strain
-  rate, $T_0$ is a reference temperature, and $T_m$ is the melt temperature.
-  
-  The plastic strain and the deviatoric Cauchy stress in the plastic domain 
-  are computed with a semi-implicit stress update 
-  algorithm~\cite{Nemat1991,Maudlin1996}.  A portion of the plastic work is
-  converted into heat using a Taylor-Quinney coefficient of 0.9.  The 
-  temperature of a material point is updated accordingly.
-  
-  Experiments show that metal containers fail both by void nucleation and growth
-  and by adiabatic shear banding.  We use three criteria to determine whether a
-  material point has failed.
-  
-  \begin{enumerate}
-    \item {
-       {\bf Melting:}\hspace{12pt}  
-       A material point is tagged as "failed" when its 
-       temperature is greater than the melting point of the material at the 
-       applied pressure.  
-       \vspace{10pt}
-       }
-
-    \item {
-       {\bf TEPLA-F failure condition:} \hspace{12pt}
-       A material point is also assumed
-       to have failed when the TEPLA-F failure criterion~\cite{Johnson1988} 
-       is satisfied.  This criterion can be written as
-       \begin{equation}
-         (f/f_c)^2 + (\Ep/\Ep^f)^2 = 1
-       \end{equation}
-       where $f$ is the current porosity, $f_c$ is the maximum 
-       allowable porosity, $\Ep$ is the current plastic strain, and
-       $\Ep^f$ is the plastic strain at fracture.
-
-       The evolution of porosity is given by~\cite{Chu1980,Ramaswamy1998a}: 
-       \begin{align}
-         \dot{f} &= \dot{f}_{\text{nucl}} + \dot{f}_{\text{grow}} \\
-         \dot{f}_{\text{grow}} & = (1-f) \text{tr}(\BD_p) \\
-         \dot{f}_{\text{nucl}} & = \cfrac{f_n}{(s_n \sqrt{2\pi})}
-           \exp\left[-\Half \cfrac{(\Ep - \epsilon_n)^2}{s_n^2}\right]
-           \Epdot{}
-       \end{align}
-       where $\BD_p$ is the rate of plastic deformation tensor, $f_n$ is the 
-       volume fraction of void nucleating particles , $\epsilon_n$ is the mean 
-       of the distribution of nucleation strains, and $s_n$ is the standard 
-       deviation of the distribution.  A gaussian distribution of initial 
-       porosity is assumed.
-
-       The plastic strain at fracture is determined using the Johnson-Cook
-       damage model~\cite{Johnson1985}:
-       \begin{equation}
-         \Ep^f = 
-         \left[D_1 + D_2 \exp \left(\cfrac{D_3}{3} \sigma^*\right)\right]
-         \left[1+ D_4 \ln(\dot{\epsilon_p}^*)\right]
-         \left[1+D_5 T^*\right]~;~~
-         \sigma^*= \cfrac{\text{tr}(\Bsig)}{\sigma_{eq}}~;~~
-       \end{equation}
-       where $D_1, D_2, D_3, D_4, D_5$ are material constants, 
-       $\Bsig$ is the Cauchy stress, and $T^*$ is the homologous temperature.
-       We assume that the plastic strains at failure are also distributed
-       in a gaussian manner.  The distribution of fracture strains is 
-       simulated by evolving an internal damage variable based on the plastic 
-       strain and by initializing the damage variable to a non-zero value
-       at the beginning of the simulation.
-       \vspace{10pt}
-       }
-
-    \item {
-       {\bf Loss of material stability:} \hspace{12pt}
-       The third criterion that is used to 
-       determine failure is the loss of material stability of the solid.
-       Since this condition is not sufficient to determine failure, we check
-       two conditions - the Drucker stability condition~\cite{Drucker1959} 
-       and the loss of hyperbolicity of the governing equations (the determinant
-       of the acoustic tensor changes sign)~\cite{Rudnicki1975,Perzyna1998}.  
-
-       Determination of the acoustic tensor requires a search for a normal 
-       vector around the material point and is therefore computationally 
-       expensive.  A simplification of this criterion is a check which 
-       assumes that the direction of instability lies in the plane of the 
-       maximum and minimum principal stress~\cite{Becker2002}.  In this 
-       approach, we assume that the strain is localized in a band with 
-       normal $\Bn$, and the magnitude of the velocity difference across 
-       the band is $\Bg$.  Then the bifurcation condition leads to the relation 
-       \begin{equation} 
-         R_{ij} g_{j} = 0 ~;~~~
-         R_{ij} = M_{ikjl} n_k n_l + M_{ilkj} n_k n_l - \sigma_{ik} n_j n_k
-       \end{equation} 
-       where $M_{ijkl}$ are the components of the co-rotational tangent
-       modulus tensor and $\sigma_{ij}$ are the components of the co-rotational 
-       stress tensor.  If $\det(R_{ij}) \le 0 $, then $g_j$ can be arbitrary 
-       and there is a possibility of strain localization.  
-
-       If this condition 
-       for the loss of hyperbolicity is met, a material point deforms in an 
-       unstable manner and failure is assumed to have occurred at that point.  
-       }
-  \end{enumerate}
-  
-  After it has been determined that a material point has failed, the stress
-  at that point is set to zero - indicating that a free surface has been 
-  created.  As the simulation evolves, cracks develop in the material around
-  the failed particles ultimately leading to the break-up of the container.
-  
- 
 \section{Numerical Results}\label{sec:numerical_results}
 
   The simulation results presented here are intended to serve two purposes, to 
@@ -1185,9 +672,7 @@ Product gas first begins to leave the container through a
 rupture where the side and end of the container
 meet(Fig.~\ref{figCookoff:c}), and ultimately
 also through a rupture in middle (Fig.~\ref{figCookoff:e}).  The
-formation of these openings is governed by material localization as
-described in Sec.~\ref{sec:cons_mod}.
-
+formation of these openings is governed by material localization.
 \begin{figure}[t!]
  \centering
  \begin{subfigure}[b]{0.3\textwidth}
@@ -1234,44 +719,3 @@ due to material failure.  Gas is free to escape through the openings
 simply because there is no longer anything in those computational
 cells to prevent it once the gap is sufficiently wide.
 
-\section{Conclusions} 
-
-An approach for solving full-physics fluid-structure interaction scenarios 
-has been presented which uses a Eulerian frame description for fluids and 
-a Lagrangian frame description for solids.  The equations governing the 
-behavior of these materials, including their interactions, are based on an 
-averaged model approach, which eliminates the need to maintain a description 
-of the interface between the materials.  In addition to allowing for 
-arbitrary distortion of material interfaces, the treatment of solid to gas 
-phase reactions is also facilitated by this approach.
-
-The validation calculations presented here give a high degree of confidence
-in the quality of the solutions obtained by this method, while the final 
-demonstration calculation indicates the complexity of the situations that 
-can be considered.  It is important to point out, however, that in the 
-authors' experience, this approach is best suited to high deformation rate
-problems, and may do less well in situations where the solid is loaded more 
-slowly.  This is true for two reasons.  First, while making the algorithm 
-implicit in time with respect to pressure is relatively straightforward, doing 
-so with respect to the stress waves in the solid is less so.  Implicit 
-versions of MPM have been implemented with success, but the strategy for 
-incorporating any of these within the integrated formulation is not 
-obvious, and may require making the entire algorithm fully implicit in 
-time.  Second, as a method for solid mechanics, currently MPM is best suited 
-for highly dynamic loading, although improvements are continuously being made
-that should improve its performance in quasi-static scenarios.
-
-In order to improve the efficiency of calculations, a structured adaptive mesh 
-refinement (SAMR) strategy is being pursued that will allow resources to be 
-concentrated on those parts of the domain where they are needed.  The current 
-implementation allows for the solid materials described using MPM to be 
-advanced at a single level of resolution, while those materials integrated
-in the Eulerian frame are advanced on an arbitrary number of levels of 
-resolution.  Thus, in the final simulation shown here, the container and 
-solid explosive, which require the greatest degree of resolution to accurately 
-compute the phase transformation and material response, can be represented on 
-the finest level.  Meanwhile the region away from the device can advance at a 
-lower spatial resolution until container expansion and rupture dictate the need 
-for refinement.  This strategy enhances the range of simulations that can be 
-considered, reduces the required computational time and lowers the requirement 
-for the storage of data.

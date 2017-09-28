@@ -1,4 +1,4 @@
-\chapter{The Material Point Method}
+\chapter{The Material Point Method} \label{ch:MPMTheory}
 
 \section{Introduction}
 
@@ -115,7 +115,7 @@ variables from the current (discrete) time $n$ to the subsequent
 time $n+1$.  Note that particle mass, $m_p$, typically remains constant
 throughout a simulation unless solid phase reaction models are utilized,
 a feature that is not present in Uintah-MPM.  (Such models are available
-in MPMICE, see Section \ref{Sec:MPMICE}.)  It is also important to point
+in MPMICE, see Section \ref{ch:MPMICE}.)  It is also important to point
 out that the algorithm for advancing the timestep is based on the so-called
 Update Stress Last (USL) algorithm.  The superiority of this approach over
 the Update Stress First (USF) approach was clearly demonstrated by Wallstedt
@@ -149,8 +149,8 @@ m_i = \sum_{p} S_{ip} m_p,  \;\;\;\;\;\;
 and $i$ refers to individual nodes of the grid.  $m_p$ is the particle
 mass, $\bfv_p$ is the particle velocity, and $\bfF^{\rm{ext}}_p$ is the
 external force on the particle.  The external forces that start on the
-particles typically the result of tractions, the application of which will
-be discussed in Section \ref{sec:PhysicalBCs}.
+particles typically the result of tractions, the application of which is
+discussed in the \Vaango User manual.
 $S_{ip}$ is the shape function of the $ith$ node evaluated at $\bfx_p$.
 The functional form of the shape functions differs between MPM and GIMP.
 This difference is discussed in Section \ref{gimp_mpm}.
@@ -203,8 +203,7 @@ v_p^{n+1} = \rm{Det}(\bfd\bfF_p^{n+1})v_p^n,  \;\;\;\;\;\;\;\;\;
 \end{eqnarray}
 Finally, the velocity gradient, and/or the deformation gradient are
 provided to a constitutive model, which outputs a time advanced stress
-at the particles.  Specifics of this operation will be further discussed
-in Section~\ref{Sec:ConstitutiveModels}
+at the particles.  
 
 At this point in the timestep, the particle position and velocity are explicitly
 updated by:
@@ -231,8 +230,7 @@ at this point, one is ready to advance to the next timestep.
 The algorithm described above is the core of the Uintah-MPM implementation.
 However, it neglects a number of important considerations.  The first is
 kinematic boundary conditions on the grid for velocity and acceleration.
-The manner in which these are handled will be described in
-Section~\ref{Sec:UintahImp}.  Next, is the use of advanced contact
+Next, is the use of advanced contact
 algorithms.  By default, MPM enforces no-slip, no-interpenetration contact.
 This feature is extremely useful, but it also means that two bodies initially
 in ``contact" (meaning that they both contain particles whose data are
@@ -241,7 +239,7 @@ multi-field simulations with frictional contact, or to impose displacement
 based boundary conditions, e.g. a rigid piston, additional steps must be
 taken.  These steps implement contact formulations such as that described
 by Bardenhagen, et al.\cite{Bard2001}.  The {\it use} of the contact
-algorithms is described in Section~\ref{Sec:Contact}, but the reader will be
+algorithms is described briefly in this manual, but the reader will be
 referred to the relevant literature for their development.  Lastly, heat
 conduction is also available in the explicit MPM code, although it may be
 neglected via a run time option in the input file.  Explicit MPM is typically

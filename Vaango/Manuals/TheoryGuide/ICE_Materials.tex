@@ -1,0 +1,111 @@
+\chapter{Fluid material models} \label{ch:ICEMaterials}
+ICE use standard Newtonian fluid models for the simulation of fluids.  However,
+since it was designed for shock-compression applications, we focus on some
+of the high energy material models that are used by ICE in \Vaango.
+
+\section{High Energy Material Reaction Models}\label{sec:HEReaction}
+
+Two types of High Energy (HE) reaction models were considered here.  The first 
+is a model for detonation, in which the reaction front proceeds as a shock 
+wave through the solid reactant, leaving highly pressurized product gases 
+behind the shock.  The second is a deflagration model, in which the 
+reaction proceeds more slowly through the reactant in the form of a thermal
+burn.  Each is described here.
+
+\subsection{The JWL++ Detonation Model}\label{sec:JWLPP}
+
+The detonation model used in two of the calculations discussed in 
+Section~\ref{sec:numerical_results} is a reactive flow model known as 
+JWL++\cite{JWLpp}.  JWL++ consists of equations of state for the
+reactant and the products of reaction as well as a rate equation governing 
+the transformation from product to reactant.  In addition, the model consists 
+of a ``mixer" which is a rule for determining the pressure in a mixture of 
+product and reactant, as found in a partially reacted cell.  Because pressure 
+equilibration among materials is already part of the  multi-material CFD 
+formulation described in Section~\ref{sec:numerical_algorithm}, the mixer was 
+not part of the current implementation.  Lastly, two additional rules 
+apply.  The first is that reaction begins in a cell when the pressure in that
+cell exceeds 200 MPa.  Finally, no more than 20\% of the explosive in a cell 
+is allowed to react in a given timestep.
+
+The Murnaghan equation of state~\cite{Murnaghan1944} used for the solid reactant 
+material is given by:
+\Beq
+  p= \frac{1}{n \kappa}\left(\frac{1}{v^n}-1\right)
+  \label{Murnaghan}
+\Eeq
+where $v=\rho_0/\rho$, and $n$ and $\kappa$ are material dependent model 
+parameters.  Note that while the reactants are solid materials, they are 
+assumed to not support deviatoric stress.  Since a detonation propagates 
+faster than shear waves, the strength in shear of the reactants can be 
+neglected.  Since it is not necessary to track the deformation history 
+of a particular material element, in this case, the reactant material was 
+tracked only in the Eulerian frame, \textit{i.e.} not represented by 
+particles within MPM.
+
+The JWL C-term form is the equation of state used for products, and is 
+given by:
+\Beq
+  P=A \exp(-R_1 v) + B \exp(-R_2 v) + \cfrac{C}{\rho_0 \kappa v^{n-1}}
+  \label{JWLC}
+\Eeq
+where $A$, $B$, $C$, $R_1$, $R_2$, $\rho_0$ and $\kappa$ are all 
+material dependent model parameters.
+
+The rate equation governing the transformation of reactant to product is 
+given by:
+\Beq
+  \Deriv{F}{t}=G(p+q)^b(1-F)
+  \label{JWL++rate}
+\Eeq
+where $G$ is a rate constant, and 
+$b$ indicates the power dependence on pressure.  $q$ is an artificial 
+viscosity, but was not included in the current implementation of
+the model.  Lastly:
+\Beq
+  F= \frac{\rho_{\Tproduct}}{\rho_{\Treactant}+\rho_{\Tproduct}}
+\Eeq
+is the burn fraction in a cell.  This can be differentiated and solved for 
+a mass burn rate in terms of $dF$:
+\Beq
+  \Gamma = \Deriv{F}{t} \left(\rho_{\Treactant}+\rho_{\Tproduct}\right)
+\Eeq
+
+\subsection{Deflagration Model}\label{sec:deflagration}
+
+The rate of thermal burning, or deflagration, of a monopropellant 
+solid explosive is typically assumed to behave as:
+\Beq
+  D=Ap^n
+  \label{deflagration_rate}
+\Eeq
+where $D$ can be thought of as the velocity at which the burn front 
+propagates through the reactant (with units of length/time) and $p$ is the 
+local pressure~\cite{Son2000}.  $A$ and $n$ are parameters that are 
+empirically determined for particular explosives.  
+Because deflagration is a 
+surface phenomenon, our implementation requires the identification of the 
+surface of the explosive.  The surface is assumed to lie within those cells 
+which have the highest gradient of mass density of the reactant 
+material.  Within each surface cell, an estimate of the surface area $a$
+is made based on the direction of the gradient, and the rate $D$ above 
+is converted to a mass burn rate by:
+\Beq
+  \Gamma=a D \rho_{\Treactant}
+  \label{deflagration_mass_rate}
+\Eeq
+where $\rho_{\Treactant}$ is the local density of the explosive.  While the reaction 
+rate is independent of temperature, initiation of the burn depends 
+on reaching a threshold temperature at the surface.
+
+Since the rate at which a deflagration propagates is much slower than the 
+shear wave speed in the reactant, it is important to track its deformation 
+as pressure builds up within the container.  This deformation may lead to 
+the formation of more surface area upon which the reaction can take place, and 
+the change to the shape of the explosive can affect the eventual violence of the
+explosion.  Because of this, for deflagration cases, the explosive is 
+represented by particles in the Lagrangian frame.  The stress response is usually
+treated by an implementation of \Textsfc{ViscoSCRAM} \cite{Hackett2000Viscoscram}, which includes 
+representation of the material's viscoelastic response, and considers effects 
+of micro-crack growth within the granular composite material.
+
