@@ -1,0 +1,101 @@
+\chapter{Load Curves}
+It is often more convenient to apply a specified load at the MPM particles.
+The load may be a function of time.  Such a load versus time curve is called
+a {\bf load curve}.
+
+In Vaango, the load curve infrastructure is available for general use
+(and not only for particles).  However, it has been implemented only for
+a special case of pressure loading.
+
+We invoke the load curve in the \verb|<MPM>| section of the input file
+using  
+\lstset{language=XML}
+\begin{lstlisting}
+  <use_load_curves> true </use_load_curves>i
+\end{lstlisting}  
+The default value is \verb|<use_load_curves> false </use_load_curves>|.
+
+In Vaango, a load curve infrastructure is implemented in the file
+\verb|.../MPM/PhysicalBC/LoadCurve.h|.  This file is essentially a templated
+structure that has the following private data
+\lstset{language=XML}
+\begin{lstlisting}
+  // Load curve information 
+  std::vector<double> d_time;
+  std::vector<T> d_load;
+  int d_id;
+\end{lstlisting}
+The variable \verb|d_id| is the load curve ID, \verb|d_time| is the time,
+and \verb|d_load| is the load.  Note that the load can have any form - scalar,
+vector, matrix, etc.
+
+In our current implementation, the actual specification of the load curve 
+information is in the \verb|<PhysicalBC>| section of the input file.  The
+implementation is limited in that it applies only to pressure boundary 
+conditions for some special geometries (the implementation is in 
+\verb|.../MPM/PhysicalBC/PressureBC.cc|).  However, the load curve template can
+be used in other, more general, contexts.
+
+A sample input file specification of a pressure load curve is shown below.
+In this case, a pressure is applied to the inside and outside of a cylinder.
+The pressure is ramped up from 0 to 1 GPa on the inside and from 0 to 0.1 MPa
+on the outside over a time of 10 microsecs. 
+\lstset{language=XML}
+\begin{lstlisting}
+   <PhysicalBC>
+     <MPM>
+       <pressure>
+         <geom_object>
+           <cylinder label = "inner cylinder">
+             <bottom>           [0.0,0.0,0.0]   </bottom>
+             <top>              [0.0,0.0,.02]   </top>
+             <radius>           0.5             </radius>
+           </cylinder>
+         </geom_object>
+         <load_curve>
+           <id>1</id>
+           <time_point>
+             <time> 0 </time>
+             <load> 0 </load>
+           </time_point>
+           <time_point>
+             <time> 1.0e-5 </time>
+             <load> 1.0e9 </load>
+           </time_point>
+         </load_curve>
+       </pressure>
+       <pressure>
+         <geom_object>
+           <cylinder label = "outer cylinder">
+             <bottom>           [0.0,0.0,0.0]   </bottom>
+             <top>              [0.0,0.0,.02]   </top>
+             <radius>           1.0             </radius>
+           </cylinder>
+         </geom_object>
+         <load_curve>
+           <id>2</id>
+           <time_point>
+             <time> 0 </time>
+             <load> 0 </load>
+           </time_point>
+           <time_point>
+             <time> 1.0e-5 </time>
+             <load> 101325.0 </load>
+           </time_point>
+         </load_curve>
+       </pressure>
+     </MPM>
+   </PhysicalBC>
+\end{lstlisting}
+The complete input file can be found in \verb|Vaango/StandAlone/inputs/MPM/thickCylinderMPM.ups|.
+
+
+%\end{document}
+
+
+
+
+
+
+
+

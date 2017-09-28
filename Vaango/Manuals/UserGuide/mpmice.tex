@@ -941,18 +941,23 @@ pressure due to mass exchange (del\_MassX).  See table
 
 \begin{figure}
   \centering
-  \vspace{-60pt}
-  \subfloat[Receding PBX9501 leads to pressure increase in cylindrical steel shell]{\label{figsimburn1}
-    \includegraphics[width=.4\textwidth]{SimpleBurn0000.png}}
-  \hspace{10pt}
-  \subfloat[Pressure increase causes cylinder to respond]{\label{figsimburn2}
-    \includegraphics[width=.4\textwidth]{SimpleBurn0001.png}}
-  \hspace{10pt}
-  \subfloat[The left half of the image represents particles as spheres colored according to mass and pressure as background color.  Top-right shows delP\_Dilatate and bottom-right shows delP\_MassX]{\label{figsimburn3}
-    \includegraphics[width=.4\textwidth]{SimpleBurn0002.png}}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{SimpleBurn0000.png}
+    \caption{Receding PBX9501 leads to pressure increase in cylindrical steel shell}
+    \label{figsimburn1}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{SimpleBurn0001.png}
+    \caption{Pressure increase causes cylinder to respond}
+    \label{figsimburn2}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{SimpleBurn0002.png}
+    \caption{The left half of the image represents particles as spheres colored according to mass and pressure as background color.  Top-right shows delP\_Dilatate and bottom-right shows delP\_MassX}
+    \label{figsimburn3}
+  \end{subfigure}
   \caption{}
   \label{fig:mpmice1}
-  \vspace{-20pt}
 \end{figure}
 
 
@@ -1024,20 +1029,23 @@ Burn.
 
 \begin{figure}
   \centering
-  \vspace{-40pt}
-  \subfloat[Collapse of PBX into hollow bore of explosive device]{\label{figsteadyburn1}
-    \includegraphics[width=.4\textwidth]{SteadyBurn0000.png}}
-  \hspace{10pt}
-  \subfloat[Expansion of steel casing as explosion occurs--response to pressure build-up]{\label{figsteadyburn2}
-    \includegraphics[width=.4\textwidth]{SteadyBurn0001.png}}
-  \hspace{10pt}
-  
-  \subfloat[Burning Cells denoted by red squares]{\label{figsteadyburn3}
-    \includegraphics[width=.4\textwidth]{SteadyBurn0002.png}}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{SteadyBurn0000.png}
+    \caption{Collapse of PBX into hollow bore of explosive device}
+    \label{figsteadyburn1}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{SteadyBurn0001.png}
+    \caption{Expansion of steel casing as explosion occurs--response to pressure build-up}
+    \label{figsteadyburn2}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{SteadyBurn0002.png}
+    \caption{Burning Cells denoted by red squares}
+    \label{figsteadyburn3}
+  \end{subfigure}
   \caption{}
   \label{fig:mpmice2}
-  
-
 \end{figure}
 
 
@@ -1101,35 +1109,38 @@ Figure~\ref{figtburn1}, ~\ref{figtburn2} and ~\ref{figtburn3} show successive sn
 
 \begin{figure}[htb!]
   \centering
-  %\vspace{-80pt}
-  \subfloat[Time 1: Oscillatory behavior in the form of a pressure wave in a T-Burner.  Contour plot depicts pressure]{\label{figtburn1}
-  \includegraphics[scale=.35]{TBurner0000.png}}
+  \begin{subfigure}[b]{0.25\textwidth}
+    \includegraphics[width=\textwidth]{TBurner0000.png}
+    \caption{Time 1: Oscillatory behavior in the form of a pressure wave in a T-Burner.  Contour plot depicts pressure}
+    \label{figtburn1}
+  \end{subfigure}
 
-   \subfloat[Time 2: Oscillatory behavior in the form of a pressure wave in a T-Burner.  Contour plot depicts pressure]{\label{figtburn2}
-     \includegraphics[scale=.35]{TBurner0001.png}}
+  \begin{subfigure}[b]{0.25\textwidth}
+    \includegraphics[width=\textwidth]{TBurner0001.png}
+    \caption{Time 2: Oscillatory behavior in the form of a pressure wave in a T-Burner.  Contour plot depicts pressure}
+    \label{figtburn2}
+  \end{subfigure}
 
-   \subfloat[Time 3: Oscillatory behavior in the form of a pressure wave in a T-Burner.  Contour plot depicts pressure]{\label{figtburn3}
-     \includegraphics[scale=.35]{TBurner0002.png}}
+  \begin{subfigure}[b]{0.25\textwidth}
+    \includegraphics[width=\textwidth]{TBurner0002.png}
+    \caption{Time 3: Oscillatory behavior in the form of a pressure wave in a T-Burner.  Contour plot depicts pressure}
+    \label{figtburn3}
+  \end{subfigure}
 
-   \subfloat[Velocity vectors of cell material.  Shows how the pressure causes gas to move]{\label{figtburnVel}
-  \includegraphics[scale=.35]{TBurnerVel0000.png}}
+  \begin{subfigure}[b]{0.25\textwidth}
+    \includegraphics[width=\textwidth]{TBurnerVel0000.png}
+    \caption{Velocity vectors of cell material.  Shows how the pressure causes gas to move}
+    \label{figtburnVel}
+  \end{subfigure}
 
   \caption{}
   \label{fig:mpmice3}
-  %\vspace{-30pt}
 \end{figure}
 
 
 Figure~\ref{figtburnVel} shows a snapshot of the simulation at the same instant as the 
 previous figure.  The contour plot depicts pressure.  The arrows are vectors depicting
 the importance   
-% \begin{figure}
-%   \center
-%   \includegraphics[scale=.4]{TBurnerVel0000.png}
-
-%   \caption{Velocity vectors of cell material.  Shows how the pressure causes gas to move.}
-%   \label{figtburnVel}
-% \end{figure}
 
 %
 %__________________________________
@@ -1164,13 +1175,9 @@ mpirun -np 6 sus inputs/UintahRelease/MPMICE/pinWheel.ups
 
 \begin{figure}
   \centering
-  \vspace{-40pt}
-  \subfloat[Pinwheel driven by a jet of air]{\label{pinwheel1}
-    \includegraphics[width=.8\textwidth]{pinWheel.png}}
-  \hspace{10pt}
-  \caption{}
-  \label{fig:mpmice4}
-
+  \includegraphics[width=\textwidth]{pinWheel.png}
+  \caption{Pinwheel driven by a jet of air}
+  \label{pinwheel1}
 \end{figure}
 
 Figure~\ref{pinwheel1} shows a visualization of the pinwheel alongside the air jet represented by the velocity vectors. The air jet contacts a fin on the wheel causing it to continuously rotate counterclockwise as seen by the colored velocity of the boxes.  

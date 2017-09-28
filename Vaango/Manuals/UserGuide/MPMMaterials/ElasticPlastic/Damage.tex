@@ -14,12 +14,12 @@ be added using the approach described later in this section.
   zero or is converted into a material with a different velocity field
   which interacts with the remaining particles via contact.  Either approach
   leads to the simulation of a newly created surface.  More details of the
-  approach can be found in ~\cite{Banerjee04a,Banerjee04c,Banerjee05}.
+  approach can be found in ~\cite{Banerjee2004a,Banerjee2004c,Banerjee2005}.
 
   \subsubsection{Damage model}
   After the stress state has been determined on the basis of the yield condition
   and the associated flow rule, a scalar damage state in each material point can
-  be calculated using the Johnson-Cook model ~\cite{Johnson85}.
+  be calculated using the Johnson-Cook model ~\cite{Johnson1985}.
   The Johnson-Cook model has an explicit dependence on temperature, plastic
   strain, ans strain rate.
 
@@ -69,7 +69,7 @@ be added using the approach described later in this section.
   basis of either or all of the following conditions:
   \begin{itemize}
     \item The particle temperature exceeds the melting temperature.
-    \item The TEPLA-F fracture condition~\cite{Johnson88} is satisfied.
+    \item The TEPLA-F fracture condition~\cite{Johnson1988} is satisfied.
        This condition can be written as
        \begin{equation}
          (f/f_c)^2 + (\epsilon_p/\epsilon_p^f)^2 = 1
@@ -80,13 +80,13 @@ be added using the approach described later in this section.
     \item An alternative to ad-hoc damage criteria is to use the concept of
        bifurcation to determine whether a particle has failed or not.  Two
        stability criteria have been explored in this paper - the Drucker
-       stability postulate~\cite{Drucker59} and the loss of hyperbolicity
+       stability postulate~\cite{Drucker1959} and the loss of hyperbolicity
        criterion (using the determinant of the acoustic tensor)
-       \cite{Rudnicki75,Perzyna98}.
+       \cite{Rudnicki1975,Perzyna1998}.
   \end{itemize}
 
   The simplest criterion that can be used is the Drucker stability postulate
-  \cite{Drucker59} which states that time rate of change of the rate of
+  \cite{Drucker1959} which states that time rate of change of the rate of
   work done by a material cannot be negative.  Therefore, the material is
   assumed to become unstable (and a particle fails) when
   \begin{equation}
@@ -94,12 +94,12 @@ be added using the approach described later in this section.
   \end{equation}
   Another stability criterion that is less restrictive is the acoustic
   tensor criterion which states that the material loses stability if the
-  determinant of the acoustic tensor changes sign~\cite{Rudnicki75,Perzyna98}.
+  determinant of the acoustic tensor changes sign~\cite{Rudnicki1975,Perzyna1998}.
   Determination of the acoustic tensor requires a search for a normal vector
   around the material point and is therefore computationally expensive.  A
   simplification of this criterion is a check which assumes that the direction
   of instability lies in the plane of the maximum and minimum principal
-  stress~\cite{Becker02}.  In this approach, we assume that the strain is
+  stress~\cite{Becker2002}.  In this approach, we assume that the strain is
   localized in a band with normal $\Bn$, and the magnitude of the velocity
   difference across the band is $\Bg$.  Then the bifurcation condition
   leads to the relation
@@ -121,8 +121,8 @@ be added using the approach described later in this section.
   update algorithm.  Also, the plasticity models are temperature dependent.
   Hence there is the issue of severe mesh dependence due to change of the
   governing equations from hyperbolic to elliptic in the softening regime
-  ~\cite{Hill75,Bazant85,Tver90}.  Viscoplastic stress update models or
-  nonlocal/gradient plasticity models~\cite{Ramaswamy98,Hao00} can be used
+  ~\cite{Hill1975,Bazant1985,Tver1990}.  Viscoplastic stress update models or
+  nonlocal/gradient plasticity models~\cite{Ramaswamy1998,Hao2000} can be used
   to eliminate some of these effects and are currently under investigation.
 
   The tags used to control the erosion algorithm are in two places.

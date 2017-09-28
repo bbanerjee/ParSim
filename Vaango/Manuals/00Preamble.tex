@@ -42,6 +42,7 @@
 \definecolor{OliveDrab}{rgb}{0.41961,0.55686,0.13725}
 \definecolor{LightMagenta}{cmyk}{0.1,0.8,0,0.1}
 \definecolor{OliveD}{HTML}{6B8E23}
+\definecolor{authorNoteColor}{rgb}{.8,0,0}
 \newcommand{\Ochre}{\color{ocre}}
 \newcommand{\Red}{\color{Brickred}}
 \newcommand{\Blue}{\color{Royalblue}}
@@ -58,8 +59,9 @@
 %--------------------------------------------------------------------------
 % Bibliography : biblatex does not work with tufte-book
 %--------------------------------------------------------------------------
-\usepackage[style=alphabetic,
-            sorting=nyt,
+\usepackage[style=numeric,
+            citestyle=numeric-comp,
+            sorting=none,
             sortcites=true,
             autopunct=true,
             babel=hyphen,
@@ -318,7 +320,7 @@
 % For text wrap around figures and captions for subfigures
 %-------------------------------------------------------
 \usepackage{wrapfig}
-\usepackage{subfig}
+\usepackage{subcaption}
 
 %-------------------------------------------------------
 % For underlines
@@ -374,6 +376,13 @@
 keepaspectratio]{fire-container-explosion-scirun.png}%
 \vfill
 }}}
+
+%-------------------------------------------------------
+% Subsubsection font color
+%-------------------------------------------------------
+\usepackage{sectsty}
+%\subsubsectionfont{\color{TealBlue}}
+\subsubsectionfont{\color{red}}
 
 %-------------------------------------------------------
 % Versioning

@@ -256,7 +256,8 @@ Here are some examples:
 There are many options available when running MPM simulations.  These
 are generally specified in the \tt <MPM> \normalfont section of the input file.
 A list of these options taken from 
-\lstinline!inputs/UPS_SPEC/mpm_spec.xml!  is given in section \ref{Sec:UintahImp}.
+\lstinline!inputs/UPS_SPEC/mpm_spec.xml!  is given in the Uintah
+Developers Manual.
 
 \section{Geometry objects} \label{Sec:GeometryObjects}
 
@@ -955,65 +956,42 @@ change the operator attributes.  First, apply the Pseudocolor plot to
 a desired variable, and then select the Slice operator from the
 Operators menu.
 
-% \begin{wrapfigure}{r}{.50\textwidth}
-%   \vspace{-10pt}
-%   \center
-%   \includegraphics[width=.3\textwidth]{VisItSelectPlot.png}
-%   \caption{Applying the Pseudocolor plot to a variable}
-%   \vspace{10pt}
-%   \label{VisItSelectPlot}
-% \end{wrapfigure}
-
-
-% \begin{wrapfigure}{r}{.50\textwidth}
-%   \center
-%   \includegraphics[width=.3\textwidth]{VisItSelectOperator.png}
-%   \caption{Applying an operator to a plot}
-%   \label{VisItSelectOperator}
-% \end{wrapfigure}
-
-
-\begin{figure}
-  %\vspace{-100pt}
+\begin{figure}[t!]
   \centering 
-  \subfloat[Applying the Pseudocolor plot to a variable]{\label{VisItSelectPlot}\includegraphics[width=0.3\textwidth]{VisItSelectPlot.png}}
-  \hspace{50pts}
-  \subfloat[Applying an operator to a plot]{\label{VisItSelectOperator}\includegraphics[width=0.3\textwidth]{VisItSelectOperator.png}}
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{VisItSelectPlot.png}
+    \caption{Applying the Pseudocolor plot to a variable}
+    \label{VisItSelectPlot}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{VisItSelectOperator.png}
+    \caption{Applying an operator to a plot}
+    \label{VisItSelectOperator}
+  \end{subfigure}
   \caption{}
   \label{ucf:fig1}
 \end{figure}
 
-
 \begin{figure}
   \centering
-  %\vspace{-20pt}
-  \subfloat[Ordering of an operator and a plot]{\label{VisItOrderOperator}
-  \includegraphics[width=.3\textwidth]{VisItOrderOperator.png}}
-  \hspace{50pt}
-  \subfloat[Slice plot attributes in VisIt]{\label{VisItSliceAtts}
-  \includegraphics[width=.3\textwidth]{VisItSliceAtts.png}}
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{VisItOrderOperator.png}
+    \caption{Ordering of an operator and a plot}
+    \label{VisItOrderOperator}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.4\textwidth}
+  \includegraphics[width=\textwidth]{VisItSliceAtts.png}
+    \caption{Slice plot attributes in VisIt}
+    \label{VisItSliceAtts}
+  \end{subfigure}
   \caption{}
   \label{ucf:fig2}
 \end{figure}
-
-% \begin{wrapfigure}{R}{.50\textwidth}
-%   \center
-%   \includegraphics[width=.3\textwidth]{VisItOrderOperator.png}
-%   \caption{Ordering of an operator and a plot}
-%   \label{VisItSliceAtts}
-% \end{wrapfigure}
 
 At this point in time, you should have an ordering similar to that in
 Figure~\ref{VisItOrderOperator}.  Once you have this order, select
 Slice from the OpAtts menu. This will pop up the Slice operator
 attributes window, as shown in Figure~\ref{VisItSliceAtts}.
-
-% \begin{wrapfigure}{r}{.50\textwidth}
-%   \center
-%   \includegraphics[width=.4\textwidth]{VisItSliceAtts.png}
-%   \caption{Slice plot attributes in VisIt}
-%   \label{VisItSliceAtts}
-% \end{wrapfigure}
 
 You can now play up with the various attributes (eg., selecting normal
 plane) to obtain the desired visualization. The checkbox "Project to
@@ -1023,13 +1001,10 @@ plane) to obtain the desired visualization. The checkbox "Project to
 
 \begin{wrapfigure}{r}{.50\textwidth}
   \center
-  %\vspace{-40pts}
   \includegraphics[width=.48\linewidth]{VisItVectorNumber.png}
   \caption{Increasing the number of Vectors}
-  %\vspace{-20pts}
   \label{VisItVectorNumber}
 \end{wrapfigure}
-
 
 By default, VisIt reduces the number of vectors plotted (to 400) and
 this needs to be manually changed to the original number or something
@@ -1037,13 +1012,10 @@ greater, only if required.  This can be accomplished by changing the
 attributes of the Vector plot. In Figure~\ref{VisItVectorNumber}, the
 number of vectors has been increased to 2000.
 
-
 \begin{wrapfigure}{r}{.50\textwidth}
   \center
-  %\vspace{-50pts}
   \includegraphics[width=.3\textwidth]{VisItVectorScale.png}
   \caption{Increasing the scale of Vectors}
-  %\vspace{-30pts}
   \label{VisItVectorScale}
 \end{wrapfigure}
 
@@ -1067,30 +1039,20 @@ Subset button either on the Active Plots window in the gui or on the
 same option in the Controls menu. This is illustrated in
 Figures~\ref{VisItSubsetIcon} and ~\ref{VisItSubsetWin}.
 
-% \begin{wrapfigure}{r}{100mm}
-%   \center
-%   \includegraphics[width=.5\linewidth]{VisItSubsetIcon.png}
-%   \caption{Clicking on this icon pops up the Subset window}
-%   \label{VisItSubsetIcon}
-% \end{wrapfigure}
-
-% \begin{wrapfigure}{r}{100mm}
-%   \center
-%   \includegraphics[width=.5\linewidth]{VisItSubsetWin.png}
-%   \caption{The Subset window in VisIt}
-%   \label{VisItSubsetWin}
-% \end{wrapfigure}
 
 \begin{figure}
   \centering
-  %\vspace{-80pt}
-  \subfloat[Clicking on this icon pops up the Subset window]{\label{VisItSubsetIcon}
-  \includegraphics[width=.3\linewidth]{VisItSubsetIcon.png}}
-  \hspace{50pt}
-  \subfloat[The Subset window in VisIt]{\label{VisItSubsetWin}
-  \includegraphics[width=.3\linewidth]{VisItSubsetWin.png}}
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=\linewidth]{VisItSubsetIcon.png}
+    \caption{Clicking on this icon pops up the Subset window}
+    \label{VisItSubsetIcon}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=.3\linewidth]{VisItSubsetWin.png}
+    \caption{The Subset window in VisIt}
+    \label{VisItSubsetWin}
+  \end{subfigure}
   \caption{}
-  %\vspace{-10pt}
   \label{ucf:fig3}
 \end{figure}
 
@@ -1103,13 +1065,6 @@ Figures~\ref{VisItSubsetIcon} and ~\ref{VisItSubsetWin}.
 
 \item Read in the uda by selecting the index.xml file. A list of
   timesteps should now appear on the gui.
-
-% \begin{wrapfigure}{r}{.50\textwidth}
-%   \center
-%   \includegraphics[width=.3\textwidth]{VisItTimestepBox.png}
-%   \caption{The window on the gui lists all the timesteps}
-%   \label{VisItTimestepBox}
-% \end{wrapfigure}
 
 
 \item The first timestep (cycle 0000) should be preselected. In case you
@@ -1126,42 +1081,31 @@ want to traverse through the others.
   shown in the Figure~\ref{VisItVolumeTempINATK08}. The number '1'
   refers to the material associated with the variable.
 
-% \begin{wrapfigure}{r}{.50\textwidth}
-%   \center
-%   \includegraphics[width=.3\textwidth]{VisItVolumeTempINATK08.png}
-%   \caption{Selecting a volume plot and an associated variable/ material}
-%   \label{VisItVolumeTempINATK08}
-% \end{wrapfigure}
-
 \item The variable tempIN/1 now appears on the Active plots window
   (Figure~\ref{VisItDrawTempINATK08}). Select the variable and click
   Draw.
 
 \begin{figure}[htb]
   \centering
-  %\vspace{-10pt}
-  \subfloat[The window on the gui lists all the timesteps]{\label{VisItTimestepBox}
-  \includegraphics[width=.3\textwidth]{VisItTimestepBox.png}}
-  \hspace{10pt}
-  \subfloat[Selecting a volume plot and an associated variable/ material]{\label{VisItVolumeTempINATK08}
-  \includegraphics[width=.3\textwidth]{VisItVolumeTempINATK08.png}}
-  \hspace{10pt}
-  \subfloat[The list of plots in the Active plots window]{\label{VisItDrawTempINATK08}
-  \includegraphics[width=.3\textwidth]{VisItDrawTempINATK08.png}}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItTimestepBox.png}
+    \caption{The window on the gui lists all the timesteps}
+    \label{VisItTimestepBox}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItVolumeTempINATK08.png}
+    \caption{Selecting a volume plot and an associated variable/ material}
+    \label{VisItVolumeTempINATK08}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItDrawTempINATK08.png}
+    \caption{The list of plots in the Active plots window}
+    \label{VisItDrawTempINATK08}
+  \end{subfigure}
   \caption{}
-  %\vspace{-10pt}
   \label{ucf:fig4}
 \end{figure}
 
-
-
-
-% \begin{wrapfigure}{r}{.50\textwidth}
-%   \center
-%   \includegraphics[width=.4\textwidth]{VisItDrawTempINATK08.png}
-%   \caption{The list of plots in the Active plots window}
-%   \label{VisItDrawTempINATK08}
-% \end{wrapfigure}
 
 \item A visualization now appears on the Viewer window, as shown in
   Figure~\ref{VisItVolumeTempINATK08Viewer}. You can interact with the
@@ -1171,49 +1115,33 @@ want to traverse through the others.
   etc.
 
 
-
-% \begin{wrapfigure}{r}{.50\textwidth}
-%   \center
-%   \includegraphics[width=.4\textwidth]{VisItVolumeTempINATK08Viewer.png}
-%   \caption{Visualization of a volume on the viewer window}
-%   \label{VisItVolumeTempINATK08Viewer}
-% \end{wrapfigure}
-
 \item Once you have this basic volume visualization, you can change
   its attributes by double clicking on the Volume - tempIN/1 plot in
   the Active plots window. This pops up the Volume plot attributes
   window (Figure~\ref{VisItVolumeAttributes1} and
   figure~\ref{VisItVolumeAttributes2}).
 
-% \begin{wrapfigure}{r}{.50\textwidth}
-%   \center
-%   \includegraphics[width=.4\textwidth]{VisItVolumeAttributes1.png}
-%   \caption{Volume visualization attributes window}
-%   \label{VisItVolumeAttributes1}
-% \end{wrapfigure}
-
-% \begin{wrapfigure}{r}{.50\textwidth}
-%   \center
-%   \includegraphics[width=.4\textwidth]{VisItVolumeAttributes2.png}
-%   \caption{Volume visualization attributes window}
-%   \label{VisItVolumeAttributes2}
-% \end{wrapfigure}
 \end{enumerate}
 
 
 \begin{figure}[htb]
   \centering
-  %\vspace{-10pt}
-  \subfloat[Visualization of a volume on the viewer window]{\label{VisItVolumeTempINATK08Viewer}
-  \includegraphics[width=.3\textwidth]{VisItVolumeTempINATK08Viewer.png}}
-  \hspace{10pt}
-  \subfloat[Volume visualization attributes window]{\label{VisItVolumeAttributes1}
-  \includegraphics[width=.3\textwidth]{VisItVolumeAttributes1.png}}
-  \hspace{10pt}
-  \subfloat[Volume visualization attributes window]{\label{VisItVolumeAttributes2}
-  \includegraphics[width=.3\textwidth]{VisItVolumeAttributes2.png}}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItVolumeTempINATK08Viewer.png}
+    \caption{Visualization of a volume on the viewer window}
+    \label{VisItVolumeTempINATK08Viewer}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItVolumeAttributes1.png}
+    \caption{Volume visualization attributes window}
+    \label{VisItVolumeAttributes1}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItVolumeAttributes2.png}
+    \caption{Volume visualization attributes window}
+    \label{VisItVolumeAttributes2}
+  \end{subfigure}
   \caption{}
-  %\vspace{-10pt}
   \label{ucf.fig5}
 \end{figure}
 
@@ -1233,7 +1161,6 @@ values.
 
 \begin{wrapfigure}{r}{.5\textwidth}
   \center
-  %\vspace{-20pt}
   \includegraphics[width=.4\textwidth]{VisItTransferFunction.png}
   \caption{The opacity transfer function in the attributes window}
   \label{VisItTransferFunction}
@@ -1263,13 +1190,6 @@ rendering methods are selected.
   Figure~\ref{VisItMoleculePTempATK08}. The asterisk '*' refers to all
   the materials associated with the variable.
 
-% \begin{wrapfigure}{r}{.5\textwidth}
-%   \center
-%   \vspace{-30pt}
-%   \includegraphics[width=.4\textwidth]{VisItMoleculePTempATK08.png}
-%   \caption{Selecting a molecule plot and an associated variable/ material}
-%   \label{VisItMoleculePTempATK08}
-% \end{wrapfigure}
 
 \item The variable p.temperature/* now appears on the Active plots
   list. Select the variable and hit Draw. A container in the form of
@@ -1284,28 +1204,24 @@ rendering methods are selected.
 
 \begin{figure}[htb]
   \centering
-  %\vspace{-10pt}
- \subfloat[Selecting a molecule plot and an associated variable/ material]{\label{VisItMoleculePTempATK08}
- \includegraphics[width=.3\textwidth]{VisItMoleculePTempATK08.png}}
-  \hspace{10pt}
- \subfloat[Selecting a molecule plot and an associated variable/ material]{\label{VisItMoleculeAttributesPTemp1}
- \includegraphics[width=.3\textwidth]{VisItMoleculeAttributesPTemp1.png}}
- \hspace{10pt}
- \subfloat[Selecting a molecule plot and an associated variable/ material]{\label{VisItMoleculePTtempViewer}
- \includegraphics[width=.3\textwidth]{VisItMoleculePTtempViewer.png}}
- %\vspace{-10pt}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItMoleculePTempATK08.png}
+    \caption{Selecting a molecule plot and an associated variable/ material}
+    \label{VisItMoleculePTempATK08}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItMoleculeAttributesPTemp1.png}
+    \caption{Selecting a molecule plot and an associated variable/ material}
+    \label{VisItMoleculeAttributesPTemp1}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItMoleculePTtempViewer.png}
+    \caption{Selecting a molecule plot and an associated variable/ material}
+    \label{VisItMoleculePTtempViewer}
+  \end{subfigure}
   \caption{}
   \label{ucf.fig6}
 \end{figure}
-
-
-% \begin{wrapfigure}{r}{.5\textwidth}
-%   \center
-%   \vspace{-30pt}
-%   \includegraphics[width=.4\textwidth]{VisItMoleculeAttributesPTemp1.png}
-%   \caption{Selecting a molecule plot and an associated variable/ material}
-%   \label{VisItMoleculeAttributesPTemp1}
-% \end{wrapfigure}
 
 We choose to visualize the particles as Sphere Impostors (doesn't runs
 the GPU out of memory, drawing as Spheres does). We also choose to
@@ -1317,12 +1233,6 @@ set the Color map for scalars as orangehot.  Combined with volume
 visualization, we get a visualization as shown in
 Figure~\ref{VisItMoleculePTtempViewer}.
 
-% \begin{wrapfigure}{r}{100mm}
-%   \center
-%   \includegraphics[width=.5\linewidth]{VisItMoleculePTtempViewer.png}
-%   \caption{Selecting a molecule plot and an associated variable/ material}
-%   \label{VisItMoleculePTtempViewer}
-% \end{wrapfigure}
 
 \subsection{Visualizing patch boundaries}
 % In order to generate an image, like the one shown in
@@ -1341,28 +1251,19 @@ Figure~\ref{VisItSubsetPlotVariables}, we select one such variable.
 Next, we hit Draw. This produces a visualization as shown in
 Figure~\ref{VisItSubsetPlotViewer}.
 
-%\begin{figure}
-%  \center
-%  \includegraphics[scale=0.5]{VisItSubsetPlot.png}
-%  \caption{Visualizing patch boundaries} 
-%  \label{VisItSubsetPlot}
-%\end{figure}
-
-% \begin{wrapfigure}{r}{.5\textwidth}
-%   \center
-%   \includegraphics[width=.4\textwidth]{VisItSubsetPlotVariables.png}
-%   \caption{A patch/ level variable, associated with every kind of variable}
-%   \label{VisItSubsetPlotVariables}
-% \end{wrapfigure}
-
 \begin{figure}[htb]
   \centering
- \subfloat[A patch/ level variable, associated with every kind of variable]{\label{VisItSubsetPlotVariables}
-  \includegraphics[width=.3\textwidth]{VisItSubsetPlotVariables.png}}
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{VisItSubsetPlotVariables.png}
+    \caption{A patch/ level variable, associated with every kind of variable}
+    \label{VisItSubsetPlotVariables}
   \hspace{50pt}
- \subfloat[The default visualization of patches]{\label{VisItSubsetPlotViewer}
- \includegraphics[width=.3\textwidth]{VisItSubsetPlotViewer.png}}
- %\vspace{-20pt}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{VisItSubsetPlotViewer.png}
+    \caption{The default visualization of patches}
+    \label{VisItSubsetPlotViewer}
+  \end{subfigure}
   \caption{}
   \label{ucf.fig7}
 \end{figure}
@@ -1376,38 +1277,21 @@ Figure`\ref{VisItSubsetPlotAttrib}. This would produce a
 visualization, similar to one shown in
 Figure~\ref{VisItSubsetPlotWireframe}.
 
-% \begin{wrapfigure}{r}{.5\textwidth}
-%   \center
-%   \includegraphics[width=.4\textwidth]{VisItSubsetPlotViewer.png}
-%   \caption{The default visualization of patches} 
-%   \label{VisItSubsetPlotViewer}
-% \end{wrapfigure}
-
-% \begin{wrapfigure}{r}{100mm}
-%   \center
-%   \includegraphics[width=.5\linewidth]{VisItSubsetPlotAttrib.png}
-%   \caption{Enabling the 'Wireframe' mode for visualizing patch boundaries}
-%   \label{VisItSubsetPlotAttrib}
-% \end{wrapfigure}
-
-% \begin{wrapfigure}{r}{100mm}
-%   \center
-%   \includegraphics[width=.5\linewidth]{VisItSubsetPlotWireframe.png}
-%   \caption{The patch boundaries after enabling the wireframe mode}
-%   \label{VisItSubsetPlotWireframe}
-% \end{wrapfigure}
 
 \begin{figure}[htb]
   \centering
- %\vspace{-5pt}
- \subfloat[Enabling the 'Wireframe' mode for visualizing patch boundaries]{\label{VisItSubsetPlotAttrib}
-  \includegraphics[width=.25\textwidth]{VisItSubsetPlotAttrib.png}}
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{VisItSubsetPlotAttrib.png}
+    \caption{Enabling the 'Wireframe' mode for visualizing patch boundaries}
+    \label{VisItSubsetPlotAttrib}
   \hspace{50pt}
- \subfloat[The patch boundaries after enabling the wireframe mode]{\label{VisItSubsetPlotWireframe}
- \includegraphics[width=.3\textwidth]{VisItSubsetPlotWireframe.png}}
- %\vspace{-10pt}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.4\textwidth}
+    \includegraphics[width=\textwidth]{VisItSubsetPlotWireframe.png}
+    \caption{The patch boundaries after enabling the wireframe mode}
+    \label{VisItSubsetPlotWireframe}
+  \end{subfigure}
   \caption{}
- %\vspace{-10pt}
   \label{ucf.fig8}
 \end{figure}
 
@@ -1420,7 +1304,6 @@ this.
 
 \begin{wrapfigure}{r}{.5\textwidth}
   \center
- % \vspace{-35pt}
   \includegraphics[width=0.4\textwidth]{VisItContourPlot.png}
   \caption{Selecting the 'Contour' plot on a regular 3D scalar variable}
   \label{VisItContourPlot}
@@ -1437,34 +1320,20 @@ The 'Select by' option can be changed to 'Value(s)' and
 'Percent(s)'. When specifying multiple values, they should be
 separated by a space.
 
-
-% \begin{wrapfigure}{r}{100mm}
-%   \center
-%   \includegraphics[scale=0.25]{VisItContourPlotViewer.png}
-%   \caption{Iso-surface visualization}
-%   \label{VisItContourPlotViewer}
-% \end{wrapfigure}
-
-% \begin{wrapfigure}{r}{100mm}
-%   \center
-%   \includegraphics[scale=0.5]{VisItContourPlotAttrib.png}
-%   \caption{The attributes window for the 'Contour' plot}
-%   \label{VisItContourPlotAttrib}
-% \end{wrapfigure}
-
 \begin{figure}[htb]
   \centering
- %\vspace{5pt}
- \subfloat[Iso-surface visualization]{\label{VisItContourPlotViewer}
-  \includegraphics[width=.5\textwidth]{VisItContourPlotViewer.png}}
-  \hspace{50pt}
- \subfloat[The attributes window for the 'Contour' plot]{\label{VisItContourPlotAttrib}
- \includegraphics[width=.25\textwidth]{VisItContourPlotAttrib.png}}
- %\vspace{-10pt}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItContourPlotViewer.png}
+    \caption{Iso-surface visualization}
+    \label{VisItContourPlotViewer}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+   \includegraphics[width=\textwidth]{VisItContourPlotAttrib.png}
+    \caption{The attributes window for the 'Contour' plot}
+    \label{VisItContourPlotAttrib}
+  \end{subfigure}
   \caption{}
- %\vspace{-10pt}
   \label{ucf.fig9}
-
 \end{figure}
 
 
@@ -1482,7 +1351,6 @@ plot itself, which pops up the 'Streamlines attributes window'.
 
 \begin{wrapfigure}{r}{.5\textwidth}
   \center
- % \vspace{-10pt}
   \includegraphics[width=.4\textwidth]{VisItStreamlinesPlot.png}
   \caption{Selecting the 'Streamlines' plot on a vector variable}
   \label{VisItStreamlinesPlot}
@@ -1504,43 +1372,26 @@ to 1.e-05. The thing to keep in mind is that this length should be
 order of magnitude smaller than the length of the computational
 domain. This is shown in Figure ~\ref{VisItStreamlinesAttrib2}.
 
-% \begin{wrapfigure}{r}{.5\textwidth}
-%   \center
-%   \includegraphics[width=.4\textwidth]{VisItStreamlinesAttrib1.png}
-%   \caption{Setting the 'Source' tab parameters}
-%   \label{VisItStreamlinesAttrib1}
-% \end{wrapfigure}
-
-% \begin{wrapfigure}{r}{.5\textwidth}
-%   \center
-%   \includegraphics[width=.4\textwidth]{VisItStreamlinesAttrib2.png}
-%   \caption{Setting the 'Advanced' tab parameters}
-%   \label{VisItStreamlinesAttrib2}
-% \end{wrapfigure}
 
 Once these parameters are set, we hit 'Apply' and then click on the 'Draw' button on the gui. This produces a visualization similar to one shown in Figure ~\ref{VisItStreamlinesViewer}.
-
-% \begin{wrapfigure}{r}{100mm}
-%   \center
-%   \includegraphics[scale=0.4]{VisItStreamlinesViewer.png}
-%   \caption{Streamlines visualization}
-%   \label{VisItStreamlinesViewer}
-% \end{wrapfigure}
-
-
 \begin{figure}[htb]
   \centering
- %\vspace{5pt}
- \subfloat[Setting the 'Source' tab parameters]{\label{VisItStreamlinesAttrib1}
-  \includegraphics[width=.25\textwidth]{VisItStreamlinesAttrib1.png}}
-  \hspace{10pt}
- \subfloat[Setting the 'Advanced' tab parameters]{\label{VisItStreamlinesAttrib2}
- \includegraphics[width=.25\textwidth]{VisItStreamlinesAttrib2.png}}
- \hspace{10pt}
- \subfloat[Streamlines visualization]{\label{VisItStreamlinesViewer}
- \includegraphics[width=.4\textwidth]{VisItStreamlinesViewer.png}}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItStreamlinesAttrib1.png}
+    \caption{Setting the 'Source' tab parameters}
+    \label{VisItStreamlinesAttrib1}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItStreamlinesAttrib2.png}
+    \caption{Setting the 'Advanced' tab parameters}
+    \label{VisItStreamlinesAttrib2}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItStreamlinesViewer.png}
+    \caption{Streamlines visualization}
+    \label{VisItStreamlinesViewer}
+  \end{subfigure}
   \caption{}
- %\vspace{-10pt}
   \label{ucf.fig10}
 \end{figure}
 
@@ -1552,48 +1403,31 @@ For visualizing extra cells we use the 'Inverse Ghost Zone' operator
 plot. Since the plugin reads in extra cells as ghost cells, the usage
 of this operator make sense in this scenario.
 
-% \begin{wrapfigure}{r}{.5\textwidth}
-%   \center
-%   \vspace{-20pt}
-%   \includegraphics[width=0.15\textwidth]{VisItInverseGhostZoneOp.png}
-%   \caption{Selecting the Inverse Ghost Zone operator}
-%   \label{VisItInverseGhostZoneOp}
-% \end{wrapfigure}
-
 After the operator is applied to the 'Pseudocolor' plot, we double
 click on the operator to change its attributes. We switch to 'Both
 ghost zones and real zones' in this window
 ~\ref{VisItInverseGhostZoneAttribs} and hit 'Apply'.
 
-% \begin{wrapfigure}{r}{.5\textwidth}
-%   \center
-%   \includegraphics[width=0.4\textwidth]{VisItInverseGhostZoneAttribs.png}
-%   \caption{The attributes window for the 'Inverse Ghost Zone' operator}
-%   \label{VisItInverseGhostZoneAttribs}
-% \end{wrapfigure}
-
 We then hit 'Draw'. When combined with the 'Mesh' plot we get a visualization similar to the one shown in Figure ~\ref{VisItInverseGhostZoneViewer}. The pick operations on the viewer can then be used to investigate the value(s) in these extra cells. 
-
-% \begin{wrapfigure}{r}{.5\textwidth}
-%   \center
-%   \includegraphics[width=0.4\textwidth]{VisItInverseGhostZoneViewer.png}
-%   \caption{Extra cells together with the 'Mesh' plot}
-%   \label{VisItInverseGhostZoneViewer}
-% \end{wrapfigure}
 
 \begin{figure}[htb]
   \centering
- \vspace{5pt}
- \subfloat[Selecting the Inverse Ghost Zone operator]{\label{VisItInverseGhostZoneOp}
-  \includegraphics[width=.15\textwidth]{VisItInverseGhostZoneOp.png}}
-  \hspace{20pt}
- \subfloat[The attributes window for the 'Inverse Ghost Zone' operator]{\label{VisItInverseGhostZoneAttribs}
- \includegraphics[width=.25\textwidth]{VisItInverseGhostZoneAttribs.png}}
- \hspace{20pt}
- \subfloat[Extra cells together with the 'Mesh' plot]{\label{VisItInverseGhostZoneViewer}
- \includegraphics[width=.45\textwidth]{VisItInverseGhostZoneViewer.png}}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItInverseGhostZoneOp.png}
+    \caption{Selecting the Inverse Ghost Zone operator}
+    \label{VisItInverseGhostZoneOp}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItInverseGhostZoneAttribs.png}
+    \caption{The attributes window for the 'Inverse Ghost Zone' operator}
+    \label{VisItInverseGhostZoneAttribs}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \includegraphics[width=\textwidth]{VisItInverseGhostZoneViewer.png}
+    \caption{Extra cells together with the 'Mesh' plot}
+    \label{VisItInverseGhostZoneViewer}
+  \end{subfigure}
   \caption{}
- \vspace{-10pt}
   \label{ucf.fig11}
 \end{figure}
 
@@ -1619,26 +1453,6 @@ user wants to query more variables per pick - they can be added by
 selecting additional variables from the 'Variables' menu and as shown
 in the Figure ~\ref{VisItPickWindow}.
 
-% \begin{wrapfigure}{r}{.5\textwidth}
-%   \center
-%   \includegraphics[width=0.4\textwidth]{VisItPickWindow.png}
-%   \caption{The 'Pick' window }
-%   \label{VisItPickWindow}
-% \end{wrapfigure}
-
-% \begin{figure}[htb]
-%   \centering
-%  \vspace{5pt}
-%  \subfloat[The 'Node pick mode' on the visualization window]{\label{VisItNodePick}
-%   \includegraphics[width=.4\textwidth]{VisItNodePick.png}}
-%   \hspace{20pt}
-%  \subfloat[The 'Pick' window]{\label{VisItPickWindow}
-%  \includegraphics[width=.4\textwidth]{VisItPickWindow.png}}
-%   \caption{}
-%  \vspace{-10pt}
-%   \label{}
-% \end{figure}
-
 \begin{figure}[htb]
   \centering
   \includegraphics[width=.4\textwidth]{VisItPickWindow.png}
@@ -1654,184 +1468,6 @@ if(gt(magnitude(<vel_CC/1>), 0.0), <vel_CC/1>, {0, 0, 0})
 \end{lstlisting}
 
 Put into words, if magnitude of \lstinline!vel_CC/1! is greater than 0.0, display it, else display a zero magnitude vector. To use the 'lesser than' parameter, replace 'gt' with 'lt'.
-
-%\chapter{Visualization Tools -- Manta}
-
-%To run the C-SAFE scene: 
-%\begin{lstlisting}
-%  Manta/build/bin/csafe_scene
-%\end{lstlisting}
-
-%The csafescene window will open showing a transfer function editor.  To add files to load run:
-%\begin{lstlisting}
-%  File -> Add/Remove NRRD Files
-%\end{lstlisting}
-
-%\begin{figure}[htbp]
-%  \center
-%  \includegraphics[width=.5\linewidth]{manta_files.png}
-%  \caption{Opening the scene}
-%  \label{fig:manta_files}
-%\end{figure}
-
-% This will open a window where you can add volume and particle files in .nrrd or .nhdr formats.  Select add particle file(s) and open a particle nrrd file in .nhdr or .nrrd format.  These nrrd files should be created with the uda2nrrd tool.
-
-% \begin{figure}[htbp]
-%   \center
-%   \includegraphics[width=.5\linewidth]{manta_add_files.png}
-%   \caption{Adding files to the scene}
-%   \label{fig:manta_add_files}
-% \end{figure}
-
-% A similarly named volume nrrd should be automatically added if in the same folder.  Close the window by pressing "OK".  The files won't be loaded yet so you can make modifications to the data to be loaded in before loading them.  To load the files:
-
-% \begin{lstlisting}
-%   Scene -> Generate
-% \end{lstlisting}
-
-% The resulting csafe scene window should look similar to:
-
-% \begin{figure}[htbp]
-%   \center
-%   \includegraphics[width=.5\linewidth]{manta_histograms.png}
-%   \caption{C-SAFE window with histograms from loaded nrrd files}
-%   \label{fig:manta_histograms}
-% \end{figure}
-
-% and a separate window will open showing the visualization. 
-
-% \section{Manta Commandline options} 
-% Many of the operations typically used through the GUI can be used through the commandline when running the csafe scene.
-
-% \begin{enumerate}
-
-% \item
-% --np=<int>  : the number of processes to devote to Manta. Should be roughly equivalent to the number of cores in your system.
-% \item
-% --cfg=<string>  : load a configuration file, this has histogram and filenames saved
-% \item
-% --nrrdlist=<string>  : load a nrrdlist
-% \item
-% --uda=<string>  : load an UDA file
-% \item
-% --res <int>x<int>: resolution of window, ie 512x512
-% \item
-% --g  : generate (load) all datasets when starting up, should be used in conjunction with --nrrdlist or --cfg
-
-% \end{enumerate}
-
-% Additionally, many of the commandline options that Manta uses can also be used with the csafe scene.  These commands configure rendering options.  For example, jittered sampling may reduce aliasing effects.
-
-% \begin{enumerate}
-
-% \item
-% --imagetype <string> : manta image type (see manta command line options)
-% \item
-% --shadows <string> : manta shadow algorithm (see manta command line options)
-% \item
-% --imagetraverser <string> : manta image traverser (see manta command line options)
-% \item
-% --loadbalancer <string> : manta load balancer option (see manta command line options)
-% \item
-% --renderer <string> : manta renderer (see manta command line options)
-
-
-% \end{enumerate}
-
-% \section{Saving and Loading}
-
-% You can save the status of your project through File->Save or File->save as. Note that saving your project saves everything from the clipping regions to the transfer functions but currently does not save some things such as the background color or the camera position.
-
-% Exporting transfer functions: You can export the transfer function currently displayed by selecting File->Export Transfer Function. This is The exported format is as follows: position r g b a position r g b a ... position is a number (0-1) that specifies the position of your control point in the transfer function. r g b a are simply the color and alpha values of the control point.
-
-% You can import saved transfer functions from File->import Transfer Function. 
-
-% The configuration file saves the data files used however if you would like to use the same configuration file for multiple sets of data you can select File->Export NrrdList.  This stores the data files as a list in ASCII which can be imported to use with any configuration.  
-
-% \section{Using the Transfer Function Editor}
-
-% \begin{figure}[htbp]
-%   \center
-%   \includegraphics[width=.5\linewidth]{transferF.png}
-%   \caption{Transfer function editor.}
-%   \label{fig:manta_tf}
-% \end{figure}
-
-% The transfer function display in the histogram window displays the currently selected transfer function. To select a different transfer function, click on the color wheel icon next to the histogram. The transfer function can be modified in a similar fashion to gradient editors in popular image editing programs. The color and opacity of the data range can be adjusted by modifying the control points. The default transfer function is a rainbow. To change a color, select a control point and click the color wheel to edit it. Or you can simply right-click on a control point to change the color. To modify opacity, simply move the control points up and down by clicking and dragging them.
-
-% \section{Histogram Controls}
-
-% \begin{figure}[htbp]
-%   \center
-%   \includegraphics[width=.5\linewidth]{histogram.png}
-%   \caption{Histogram with controls.}
-%   \label{fig:manta_histogram}
-% \end{figure}
-
-% Histograms represent the frequency of data values in a data set. Each histogram is associated with an index into either a volume or sphere data. If you select index 0 in the sphere data set, then the histogram mostly likely shows the accumulated range of x-coordinates for all of the sphere data sets. There is a semi-transparent grey box overlaying each histogram. This represents the range of values in the histogram that are displayed. Clicking on the right or left side of this box moves the left or right side of the clipping region accordingly. You can also click and drag the middle of the region to drag the region along the histogram. You can also use the mouse wheel to zoom into a region of the histogram.
-%   Name (\#) - The name associated with the histogram and the index it corresponds to in the NRRD file. 
-% To the right are various controls.
-
-% \begin{enumerate}
-% \item
-% colorwheel : This will make this histogram's transfer function display in the transfer function panel and also make it the active transfer function for either the volume or sphere data.
-% \item
-% Ruler : you can explicitly set specific data ranges for the clipping region or the region of the data to which the transfer function applies to. This is extremely useful if there is only a vary narrow region of the data range that you want to be looking at.
-% \item
-% Zoom in/out: this will zoom in to the clipping region or back out to the zoom where you were previously. 
-% \end{enumerate}
-
-% \section{Ambient Occlusion}
-%   Ambient occlusion is an approximation of global illumination and can give a better sense of relative depth in clusters of objects.  To enable ambient occlusion turn it on in Scene->Preferences.  There are two variables to modify, the cutoff distance and the number of rays shot.  The cutoff distance is how far away objects can be to occlude rays.  To produce a good image it is a good idea to turn off the volume and reduce or remove the lights.  The light can be turned off in the Light dialog in the Manta Menu.  Setting the light color to black will completely disable a light.
-  
-% %\section{CSAFE Window Menus}
-
-% % \subsection{File - Save and Load Configuration File}
-
-% % \subsection{File - Save and Load NRRDFile}
-
-% % \subsection{File - Add Remove NRRD Files}
-
-% % \subsection{File - Import Export Transfer Function}
-
-% % \subsection{Scene - Add Histogram}
-
-% % \subsection{Scene - Scene Preferences}
-
-% % \subsection{Scene - Volume Position Size}
-
-% % \subsection{Scene - Cutting Bounding Box}
-
-% % \subsection{Scene - Generate}
-
-% % \section{Manta Window Menus}
-
-% % \subsection{File - Threads}
-
-% % \subsection{Camera - Auto View}
-
-% % \subsection{Camera - Edit Camera}
-
-% % \subsection{Camera - Edit Background}
-
-% % \subsection{Camera - Camera Paths}
-
-% % \subsection{Camera - Capture Frames}
-
-% % \subsection{Lights - Edit Lights}
-
-% % \subsection{Lights - Enable Visible Lights}
-
-
-% \section{Manta FAQ}
-
-% \begin{enumerate}
-% \item
-% Q. "I get an error Gtk-CRITICAL **: file gtkrange.c".
-% A.  This error pops up on some system and can safely be ignored.
-% Q.  "It is running very slowly"
-% A.  Try increasing the number of threads, shrinking the window size, and reducing the step size through the volume.
-% \end{enumerate}
 
 
 %__________________________________

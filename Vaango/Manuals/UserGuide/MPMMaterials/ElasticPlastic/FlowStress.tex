@@ -29,7 +29,7 @@
   \end{lstlisting}
 
   \subsubsection{JC Flow Stress Model}
-  The Johnson-Cook (JC) model (\cite{Johnson83}) is purely empirical and gives
+  The Johnson-Cook (JC) model (\cite{Johnson1983}) is purely empirical and gives
   the following relation for the flow stress ($\sigma_y$)
   \begin{equation}
     \sigma_y(\Ep,\Epdot{},T) = 
@@ -62,9 +62,9 @@
 
   \subsubsection{SCG Flow Stress Model}
   The Steinberg-Cochran-Guinan-Lund (SCG) model is a semi-empirical model
-  that was developed by \cite{Steinberg80} for high strain rate
+  that was developed by \cite{Steinberg1980} for high strain rate
   situations and extended to low strain rates and bcc materials by
-  \cite{Steinberg89}.  The flow stress in this model is given by
+  \cite{Steinberg1989}.  The flow stress in this model is given by
   \begin{equation}\label{eq:SCGL}
     \sigma_y(\Ep,\Epdot{},T) = 
      \left[\sigma_a f(\Ep) + \sigma_t (\Epdot{}, T)\right]
@@ -83,7 +83,7 @@
   where $\beta, n$ are work hardening parameters, and $\Epi$ is the
   initial equivalent plastic strain.  The thermal component $\sigma_t$
   is computed using a bisection algorithm from the following equation (based
-  on the work of \cite{Hoge77})
+  on the work of \cite{Hoge1977})
   \begin{equation}
     \Epdot{} = \left[\frac{1}{C_1}\exp\left[\frac{2U_k}{k_b~T}
       \left(1 - \frac{\sigma_t}{\sigma_p}\right)^2\right] + 
@@ -120,7 +120,7 @@
   \end{lstlisting}
 
   \subsubsection{ZA Flow Stress Model}
-  The Zerilli-Armstrong (ZA) model (\cite{Zerilli87,Zerilli93,Zerilli04})
+  The Zerilli-Armstrong (ZA) model (\cite{Zerilli1987,Zerilli1993,Zerilli2004})
   is based on simplified dislocation mechanics.  The general form of the
   equation for the flow stress is
   \begin{equation}
@@ -143,7 +143,7 @@
   \end{equation}
   where $\alpha_0, \alpha_1, \beta_0, \beta_1$ are material parameters that
   depend on the type of material (fcc, bcc, hcp, alloys).  The Zerilli-Armstrong
-  model has been modified by \cite{Abed05} for better performance at high
+  model has been modified by \cite{Abed2005} for better performance at high
   temperatures.  However, we have not used the modified equations in our
   computations.
 
@@ -166,7 +166,7 @@
   \end{lstlisting}
 
   \subsubsection{ZA for Polymers Flow Stress Model}
-  The Zerilli-Armstrong flow stress model for polymers(\cite{Zerilli07})
+  The Zerilli-Armstrong flow stress model for polymers(\cite{Zerilli2007})
   is a modification to the ZA flow stress model for metals motivated by considering
   thermally activated processess appropriate to polymers, in place of
   dislocations.  The ZA flow stress function for polymers has three terms.  
@@ -225,7 +225,7 @@
 
   \subsubsection{MTS Flow Stress Model}
   The Mechanical Threshold Stress (MTS) model
-  (\cite{Follans88,Goto00a,Kocks01})
+  (\cite{Follans1988,Goto2000a,Kocks2001})
   gives the following form for the flow stress
   \begin{equation}
     \sigma_y(\Ep,\Epdot{},T) = 
@@ -306,7 +306,7 @@
   \end{lstlisting}
 
   \subsubsection{PTW Flow Stress Model}
-  The Preston-Tonks-Wallace (PTW) model (\cite{Preston03}) attempts to
+  The Preston-Tonks-Wallace (PTW) model (\cite{Preston2003}) attempts to
   provide a model for the flow stress for extreme strain rates
   (up to $10^{11}$/s) and temperatures up to melt.  The flow stress is
   given by
