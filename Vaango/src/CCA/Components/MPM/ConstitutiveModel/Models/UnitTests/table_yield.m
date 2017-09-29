@@ -1,11 +1,17 @@
 function table_yield()
   p = [-10   10  200  300  400  800  1600  3200 6400];
   q = [  0  100  200  300  500  600   700   800   900];
-  plot(p,q); hold on;
+  plot(p, q, 'k.', 'Markersize', 10); hold on;
 
   [p, q] = hull(p, q);
-  plot(p, q,'g-', 'LineWidth', 2);
+  plot(p, q, '-', 'Color', [216,179,101]/255, 'LineWidth', 2);
   [p' q']
+  print -dpdf tabular_yield_hull.pdf
+
+  %plot_table_yield(p, q);
+end
+
+function plot_table_yield(p, q)
 
   p_closed = [p p(length(p)) p(1)];
   q_closed = [q q(1) q(1)];
