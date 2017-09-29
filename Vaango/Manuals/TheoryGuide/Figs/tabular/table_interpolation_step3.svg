@@ -11,8 +11,8 @@
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="252.6756mm"
-   height="238.95247mm"
-   viewBox="0 0 895.30724 846.68197"
+   height="209.07722mm"
+   viewBox="0 0 895.30724 740.82481"
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
@@ -26,7 +26,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="0.89934144"
      inkscape:cx="266.40083"
-     inkscape:cy="398.57635"
+     inkscape:cy="292.7192"
      inkscape:document-units="px"
      inkscape:current-layer="layer2"
      showgrid="true"
@@ -45,7 +45,7 @@
        type="xygrid"
        id="grid4136"
        originx="-19.084357"
-       originy="-380.30843" />
+       originy="-486.16559" />
   </sodipodi:namedview>
   <defs
      id="defs4" />
@@ -57,7 +57,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -89,7 +89,7 @@
        cy="408.67166"
        r="9.1396217" />
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:9,9;stroke-dashoffset:0"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:9, 9;stroke-dashoffset:0;stroke-opacity:1"
        d="m 300.40132,306.23052 98.9613,21.12657"
        id="path8475"
        inkscape:connector-curvature="0" />
@@ -291,7 +291,7 @@
        rx="5.0036616"
        ry="5.6291189" />
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:9, 9;stroke-dashoffset:0"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:9, 9;stroke-dashoffset:0;stroke-opacity:1"
        d="m 373.78835,406.30374 -4.4477,-86.73013"
        id="path8477"
        inkscape:connector-curvature="0" />
