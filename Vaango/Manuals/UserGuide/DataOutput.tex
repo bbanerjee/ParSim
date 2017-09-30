@@ -1,0 +1,59 @@
+\chapter{Data output files: UDA}
+The \Textsfc{UDA} is a file/directory structure used to save \Vaango simulation
+data.  For the most part, the user need not concern himself with the
+UDA layout, but it is a good idea to have a general feeling for how
+the data is stored on disk.
+
+Every time a simulation (\Textsfc{vaango}) is run, a new UDA is created.  \Vaango uses
+the \Textsfc{\textless filebase\textgreater} tag in the simulation input file to name the UDA
+directory (appending a version number).  If an UDA of that name
+already exists, the next version number is used.  Additionally, a
+symbolic link named \Textsfc{<filename>.uda} is updated and will point to
+the newest version of this simulations UDA.  For example,
+\begin{lstlisting}[backgroundcolor=\color{background}]
+disks.uda.000
+disks.uda.001
+disks.uda.001 <- disks.uda
+\end{lstlisting}
+
+Each UDA consists of a number of top level files, a checkpoints
+subdirectory, and subdirectories for each saved timestep.  These files
+include:
+\begin{itemize}
+\item \Textsfc{.dat} files contain global information about the
+  simulation (each line in the .dat files contains: \Textbfc{simulation\_time}
+  value).
+\item \Textsfc{checkpoints} directory contains a limited
+  number of time step data subdirectories that contain a complete
+  snapshot of the simulation (allowing for the simulation to be
+  restarted from that time).
+\item \Textsfc{input.xml} contains the original problem
+  specification (the .ups file).
+\item \Textsfc{ index.xml} contains information on the actual
+  simulation run.
+\item \Textsfc{t0000\#} contains data saved for that specific
+  time step.  The data saved is specified in .ups file and may be a
+  very limited subset of the full simulation data.
+
+\end{itemize}
+
+The \Textsfc{validateUda} script in \Textsfc{src/Packages/Uintah/scripts/} can be used to
+test the integrity of a UDA directory. It does not interrogate the data
+for correctness, but performs 5 basic tests on each uda:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+Usage validateUda  <udas>
+Test 0:  Does index.xml exist?                                        true or false
+Test 1:  Does each timestep in index.xml exist?                       true or false
+Test 2:  Do all timesteps.xml files exist?                            true or false
+Test 3:  Do all the level directories exist:                          true or false
+Test 4:  Do all of the pxxxx.xml files exist and have size >0:        true or false
+Test 5:  Do all of the pxxxx.data files exist and have size > 0:      true or false
+\end{lstlisting}
+
+If any of the tests fail then the corrupt output timestep should be removed from 
+the \Textsfc{index.xml} file.
+
+See Section~\ref{Sec:DataArchiver} for a description of how to specify
+what data are saved and how frequently.
+
+

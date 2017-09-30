@@ -1,0 +1,657 @@
+\chapter{Basic Vaango usage} \label{Chapter:UCF}
+Several executable programs have been developed using the \Vaango
+Computational Framework (UCF).  The primary code that drives the
+components implemented in \Vaango is called \Textsfc{vaango}.
+
+Although \Uintah was developed for complex fire-explosion simulations,
+the general nature of the algorithms and the framework has allowed 
+researchers to use the code to investigate a
+wide range of problems.  The \Vaango framework is general purpose enough to
+allow for the implementation of a variety of implicit and explicit
+algorithms on structured grids but focuses on particle based
+algorithms.
+
+\section{Installing the Vaango software}
+For information on downloading the \Vaango software package 
+and how to setup and build it, please refer to the \Vaango Installation Guide.
+
+\section{Running Vaango}
+For single processor simulations, the \Textsfc{vaango} executable
+is run from the command line prompt like this:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  vaango input.ups
+\end{lstlisting}
+where \Textsfc{input.ups} is an XML formatted input file.  The
+\Vaango software contains numerous example input files located
+in the \Textsfc{src/StandAlone/inputs} directory.
+
+For multiprocessor runs, the user generally uses \Textsfc{mpirun}
+to launch the code.  Depending on the environment, batch
+scheduler, launch scripts, etc, \Textsfc{mpirun} may or may not
+be used.  However, in general, something like the following is used:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  mpirun -np num_processors vaango input.ups
+\end{lstlisting}
+
+\Textbfc{num\_processors} is the number of processors that will
+be used.  The input file must contain a patch layout that has at least
+the same number (or greater) of patches as processors specified by a
+number following the \Textbfc{-np} option shown above.
+
+In addition, the \Textsfc{-mpi} flag is optional but sometimes
+necessary if the mpi environment is not automatically detected from
+within the \Textsfc{vaango} executable.
+
+\Vaango provides for restarting from checkpoint as well.  For information on
+this, see Section~\ref{Sec:DataArchiver}, which describes how to create
+checkpoint data, and how to restart from it.
+
+\section{Vaango Problem Specification} \label{Sec:UPS}
+The \Vaango framework uses XML like input files to specify the various
+parameters required by simulation components.  These are called
+\Textsfc{Uintah Problem Specification} files and have the extension \Textbfc{.ups}
+because they are directly based on the \Uintah input file format.
+The \Textbfc{.ups} files are validated based on the specification
+found in \Textbfc{src/StandAlone/inputs/UPS\_SPEC/ups\_spec.xml}
+and its sibling files.  
+
+The application developer is free to use any of the specified tags to
+specify the data needed by the simulation.  The essential tags that
+are required by \Vaango include the following:
+\begin{lstlisting}[language=XML]
+  <Uintah_specification>
+  <SimulationComponent>
+  <Time>
+  <DataArchiver>
+  <Grid>
+\end{lstlisting}
+
+Individual components have additional tags that specify properties,
+algorithms, materials, etc. that are unique to that individual
+components.  Within the individual sections on MPM, ICE, and MPMICE
+the individual tags will be explained more fully.
+
+The \Textsfc{vaango} executable verifies that the input file adheres to a consistent
+specification and that all necessary tags are specified.  However, it
+is up to the individual creating or modifying the input file to put in
+physically reasonable set of consistent parameters.
+
+\section{Simulation Components} \label{Sec:SimulationComponent}
+The input file tag for \Textsfc{SimulationComponent} has the \Textsfc{type}
+attribute that must be specified with either \Textsfc{mpm, mpmice, ice, peridynamics}
+as in:
+\begin{lstlisting}[language=XML]
+<SimulationComponent type = "mpm" />
+\end{lstlisting}
+
+\section{Time Related Variables} \label{Sec:TimeRelatedVariables}
+\Vaango components are time-dependent codes.  As such, one of the first
+entries in each input file describes the time-stepping parameters.  An
+input file segment is given below that encompasses all of the possible
+parameters.  The function of each of these parameters is described below.
+
+\begin{lstlisting}[language=XML]
+<Time>
+    <maxTime>            1.0         </maxTime>
+    <initTime>           0.0         </initTime>
+    <delt_min>           0.0         </delt_min>
+    <delt_max>           1.0         </delt_max>
+    <delt_init>          1.0e-9      </delt_init>
+    <max_delt_increase>  2.0         </max_delt_increase>
+    <timestep_multiplier>1.0         </timestep_multiplier>
+    <max_Timestep>       100         </max_Timestep>
+    <end_on_max_time_exactly>true    </end_on_max_time_exactly>
+</Time>
+\end{lstlisting}
+
+The following fields are required:
+\begin{itemize}
+\item \Textbfc{maxTime} - how long in physical time to run the simulation for
+\item \Textbfc{initTime} - what time to begin the simulation at
+\item \Textbfc{delt\_min} - the smallest timestep the simulation will take
+\item \Textbfc{delt\_max} - the largest timestep the simulation will take
+\item \Textbfc{timestep\_multiplier} - multiplies the timestep by this number (before adjusting to min or max timestep)
+\end{itemize}
+
+The following fields are optional:
+\begin{itemize}
+\item \Textbfc{delt\_init} - The timestep to take initially (assuming it's less than the one computed by the simulation)
+\item \Textbfc{initial\_delt\_range} - The period of time to use the \Textbfc{delt\_init} (default = 0)
+\item \Textbfc{max\_delt\_increase} - Maximum amount to multiply the previous delt by (if the newly computed delt is greater than the previous one)
+\item \Textbfc{max\_iterations} - The number of timesteps to run the simulation for (even on a restart)
+\item \Textbfc{max\_Timesteps} - The timestep number to end the simulation on (not usually used with \Textbfc{max\_iterations})
+\item \Textbfc{override\_restart\_delt} - On a restart, use this delt instead of the most-recently-used delt.
+\item \Textbfc{clamp\_timesteps\_to\_output} - Sync the delt with the DataArchiver - when an output timestep occurs, reduce the delt to have the time land on the timestep interval (default = false)
+\item \Textbfc{end\_on\_max\_time\_exactly} - clamp the delt such that the last timesteps end on what was specified in \Textbfc{maxTime} (default = false)
+\end{itemize}
+\begin{NoteBox}
+A word about timesteps: In general, the timestep (delt) is computed at various stages within a timestep, and the smallest one is used, unless it needs to raise the delt to the \Textbfc{delt\_min}.
+\end{NoteBox}
+
+\section{Data Archiver} \label{Sec:DataArchiver}
+The Data Archiver section specifies the directory name where data will
+be stored and what variables will be saved and how often data is saved
+and how frequently the simulation is checkpointed.
+
+The \Textsfc{\textless filebase\textgreater} tag is used to specify the directory
+name and by convention, the \Textsfc{.uda} suffix is attached denoting the
+``\Vaango Data Archive".
+
+Data can be saved based on a frequency setting that is either based on integer time
+intervals:
+\begin{lstlisting}[language=XML]
+  <outputTimestepInterval> 100 </outputTimestepInterval>
+\end{lstlisting}
+or real-valued timestep intervals:
+\begin{lstlisting}[language=XML]
+  <outputInterval> 1.0e-3 </outputInterval>}
+\end{lstlisting}
+
+Each simulation component specifies variables with label names that
+can be specified for data output.  By convention, particle data are
+denoted by \Textsfc{p.} followed by a particular variable name
+such as mass, velocity, stress, etc.  Whereas for node based data, the
+convention is to use the \Textsfc{g.} followed by the variable
+name, such as mass, stress, velocity, etc.  Similarly, cell-centered
+and face-centered data typically end with the a trailing \Textsfc{CC}
+or \Textsfc{FC,}  respectively.  Within the DataArchiver
+section, variables are specified with the following format:
+
+\begin{lstlisting}[language=XML]
+   <save label = "p.mass" />
+   <save label = "g.mass" />
+\end{lstlisting}
+
+To see a list of
+variables available for saving for a given component, execute the following
+command from the \Textsfc{StandAlone} directory:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+inputs/labelNames component
+\end{lstlisting}
+where \Textbfc{component} is, e.g., \Textbfc{mpm}, \Textbfc{ice}, etc.
+
+Check-pointing information can be created that provides a mechanism for
+restarting a simulation at a later point in time.  The \Textbfc{\textless checkpoint\textgreater}
+tag with the \Textbfc{cycle} and \Textbfc{ interval} attributes describe how many
+copies of checkpoint data is stored (cycle) and how often it is generated
+(interval).  You may also use the \Textbfc{walltimeStart} and \Textbfc{walltimeInterval}
+options for specifying when and how offen a checkpoint will be output based
+on wall-clock time.
+
+As an example of checkpoint data that has two timesteps worth of
+che dckpoint data that is created every .01 seconds of simulation time
+are shown below:
+
+\begin{lstlisting}[language=XML]
+<checkpoint cycle = "2" interval = "0.01"/>
+\end{lstlisting}
+% d
+
+To restart from a checkpointed archive, simply put \Textsfc{-restart} in the
+\Textsfc{vaango} command-line arguments and specify the .uda directory instead of
+a ups file (\Textsfc{vaango} reads the copied \Textsfc{input.xml} from the
+archive).  One can optionally specify a certain timestep to restart
+from with \Textsfc{-t timestep} with multiple checkpoints, but the
+last checkpointed timestep is the default.  When restarting, \Textsfc{vaango}
+copies all of the appropriate information from the old uda directory to its
+new uda directory.
+% I'M NOT SURE ABOUT THIS, -nocopy REMOVES THE OLD UDA?  I THOUGHT IT
+% JUST LEFT STUFF IN THE OLD UDA, WHERE AS -copy MADE A COPY OF OLD TIMESTEP
+% DATA, AND -move MOVED THE OLD TIMESTEP DATA TO THE NEW UDA.  
+%  If one doesn't want to keep the old uda directory
+%around, they can specify \Textsfc{-nocopy} to have it be removed
+%(e.g., if you are cramped for disk space).  Either way it creates a new uda
+%directory for you as always.
+
+Here are some examples:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+./vaango -restart disks.uda.000 -nocopy
+./vaango -restart disks.uda.000 -t 29
+\end{lstlisting}
+%
+%__________________________________
+
+\section{Simulation Options} \label{Sec:SimulationOptions}
+
+
+There are many options available when running MPM simulations.  These
+are generally specified in the \Textsfc{\textless MPM\textgreater} section of the input file.
+A list of these options taken from 
+\Textbfc{inputs/UPS\_SPEC/mpm\_spec.xml}  is given in the \Vaango
+Developers Manual.
+
+\section{Geometry objects} \label{Sec:GeometryObjects}
+
+Within several of the components, the material is described by a
+combination of physical parameters and the geometry.  Geometry objects
+use the notion of constructive solid geometry operations to compose
+the layout of the material from simple shapes such as boxes, spheres,
+cylinders and cones, as well as operators which include the union,
+intersections, differences of the simple shapes.  In addition to the
+simple shapes, triangulated surfaces can be used in conjunction with
+the simple shapes and the operations on these shapes.
+
+Each geometry object has the following properties, label (string
+name), type (box, cylinder, sphere, etc), resolution (vector
+quantity), and any unique geometry parameters such as origin, corners,
+triangulated data file, etc.  The operators which include, the union,
+the difference, and intersection tags contain either lists of
+additional operators or the primitives pieces.
+
+As an example of a non-trivial geometry object is shown below:
+
+\begin{lstlisting}[language=XML]
+<geom_object>
+     <intersection>
+       <box label = "Domain">
+          <min>[0.0,0.0,0.0]</min>
+          <max>[0.1,0.1,0.1]</max>
+       </box>
+       <union>
+         <sphere label = "First node">
+            <origin>[0.022,0.028,0.1  ]</origin>
+            <radius>0.01</radius>
+         </sphere>
+         <sphere label = "2nd node">
+            <origin>[0.030,0.075,0.1  ]</origin>
+            <radius>0.01</radius>
+         </sphere>
+       </union>
+     </intersection>
+     <res>[2,2,2]</res>
+     <velocity>[0.,0.,0.]</velocity>
+     <temperature>0 </temperature>
+</geom_object>
+\end{lstlisting}
+
+The following geometry objects are given with their required tags:
+
+\subsubsection{Box}
+\Textsfc{box} has the following tags: min and max which are
+vector quantities specified in the \Textsfc{[a, b, c]} format.
+
+\subsubsection{Sphere}
+\Textsfc{sphere} has an origin tag specified as a vector and the
+radius tag specified as a float.
+
+\subsubsection{Cone}
+\Textsfc{cone} has a tag for the top and bottom origins (vector)
+as well as tags for the top and bottom radius (float) to create a
+right circular cone/frustum.
+
+\subsubsection{Cylinder}
+\Textsfc{cylinder} has a tag for the top and bottom origins
+(vector) plus a tag for the radius (float).
+
+\subsubsection{Smooth Cylinder}
+\Textsfc{smoothcyl} is a geomtry object designed for use with
+the cpdi algorithm, which uses a body fit particle spatial
+distribution.  This eliminates ``stair-stepped'' boundaries typical of
+the standard, grid-based, discretization scheme.  
+\begin{NoteBox}
+Thus it is
+  important to note that the \Textsfc{smoothcyl} geometry is only designed to work with
+  \Textsfc{\textless interpolator\textgreater cpdi \textless /interpolator\textgreater}. Other
+  algorithms may give erroneous answers.
+\end{NoteBox}
+
+This geometry has the following tags:
+
+\begin{lstlisting}[language=XML]
+	   <smoothcyl label = "label name">
+	     <discretization_scheme> string </discretization_scheme>
+	     <bottom> vector </bottom>
+	     <top> vector </top>
+	     <outer_radius> float </outer_radius>
+	     <inner_radius> float </inner_radius>
+	     <num_radial> integer </num_radial>
+	     <num_axial> integer </num_axial>
+	     <num_angular> integer </num_angular>
+	     <arc_start_angle> double (in degrees) </arc_start_angle>
+	     <arc_angle> double (in degrees) </arc_angle>
+	   </smoothcyl>
+\end{lstlisting}
+
+The complete or partial annulus or cylinder specified by inner
+(optional, defaulting to zero) and outer radii, cylinder axis bottom
+and top (all required) and start and final angle (both optional,
+defaulting to 0 and 360) will be discretized using planes of
+concentric rings of particles.  Particle density is specified by \Textbfc{num\_axial} and \Textbfc{num\_radial}, the number of
+particles in the axial and radial dimensions, respectively.
+  Note that these particle density specifications
+supercede those specified in the \Textbfc{\textless geom\_object\textgreater \textless res\textgreater}
+tag, which is ignored.
+
+The required discretization scheme may be either \Textbfc{pie\_slices}
+ or \Textbfc{constant\_particle\_volumes}.  For the
+\Textbfc{pie\_slices} discretization, \Textbfc{num\_angular}  is required to specify the number of particles between \Textbfc{arc\_start} and \Textbfc{arc\_angle}.  For the \Textbfc{constant\_particle\_volumes} discretization, the number of
+particles between \Textbfc{arc\_start} and \Textbfc{arc\_angle}
+is determined individually for each ring of particles by
+attempting to keep particle spacings approximately equal in the radial
+and angular directions, and thus particle volumes approximately
+constant.
+
+End caps may be added to the smoothcyl using the optional \Textbfc{\textless endcap\_thickness\textgreater} tag, which specifies the axial
+dimension of cylinders which are appended to each end of the specified
+\Textsfc{smoothcyl} (the radii are the same as the \Textsfc{smoothcyl}
+).  Presently, the end cap body fit discretization uses a
+legacy scheme.
+
+Note: At the time of writing, multiple \Textsfc{smoothcyl}
+geometries within a \Textbfc{\textless geom\_object\textgreater} tag were not
+discretized using a body fit particle distribution as described here
+(rather the default discretization scheme is used).  This will be
+fixed eventually, at which point it may be possible to create more
+general endcaps using unions of \Textsfc{smoothcyl}.
+
+\subsubsection{Ellipsoid}
+\Textsfc{ellipsoid} has an origin tag specified as a vector.  There are 
+two ways to assign axis lengths depending on the orientation of the ellipsoid.
+If the axes are aligned with the Cartesian grid, they may be specified as 
+floating point values with tagnames: rx, ry, rz.  For all other orientation, 
+three vector quantities must be specified in the \Textsfc{[a,b,c]} format.
+Vector quantity tag names are: v1, v2, v3.These vectors must be orthogonal 
+to within 1e-12 after dot product or the simulation will throw an exception.  
+Note, if both vector quantities and floating point tags are used, 
+the vector quantity inputs will take precedence.  
+
+\subsubsection{Parallelepiped}
+\Textsfc{parallelepiped} requires that four points be specified as
+illustrated by the ASCII art snippet taken from the source code:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+//********************************************
+//                                          //
+//             *-------------*              //
+//            / .           / \             //
+//           /   .         /   \            //
+//          P4-------------*    \           //
+//           \    .         \    \          //
+//            \   P2.........\....*         //
+//             \ .            \  /          //
+//             P1--------------P3           //
+//
+//  Returns true if the point is inside (or on) the parallelepiped.
+//  (The order of p2, p3, and p4 doesn't really matter.)
+\end{lstlisting}
+
+\subsubsection{Triangulated surface}
+\Textsfc{tri} is a tag for describing a triangulated surface.
+The name tag specifies the file name to use for reading in the
+triangulated surface description and the points file.  The
+triangulated surface (\Textbfc{file\_name.tri}) contains a list of integers
+describing the connectivity of points specified in \Textbfc{file\_name.pts}.
+Here is an excerpt from a tri file and a points file:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+Triangulated file
+
+1 39 41
+1 41 38
+38 41 42
+. . .
+
+Points file
+
+0 0.03863 -0.005
+0.35227 0.13023 -0.005
+0.00403479 0.0296797 -0.005
+. . .
+\end{lstlisting}
+The Mach 2 Wedge example in Section~\ref{Sec:MPMICE_EXAMPLES} depicts usage of
+this option.
+
+\subsubsection{Boolean operations}
+The boolean operators on the geometry pieces include \Textsfc{difference,
+intersection,} and \Textsfc{union}.
+
+The \Textsfc{difference} takes two geometry pieces and subtracts
+the second geometry piece from the first geometry piece.  The \Textsfc{
+intersection} operator requires at least two geometry
+pieces in forming an intersection geometry piece.  Whereas the \Textsfc{
+union} operator aggregates a collection of geometry pieces.
+Multiple operators can be used to form very complex geometry pieces.
+
+\subsubsection{Resolution}
+An additional input in the \Textbfc{\textless geom\_object\textgreater} field is the
+\Textsfc{\textless res\textgreater} tag.  In MPM, this simply refers to how many particles
+are placed in each cell in each coordinate direction.  For multi-material ICE
+simulations, the \Textsfc{\textless res\textgreater} serves a similar purpose in that one
+can specify the subgrid resolution of the initial material distribution
+of mixed cells at the interface of geometry objects.
+
+\subsubsection{Specifying particle locations directly}
+In addition to the above, it is also possible in MPM simulations to describe
+geometry by providing a file containing a series of particle locations.  These
+can be in either ASCII or binary format.  In addition, it is also possible to
+provide initial data for certain variables on the particles, including
+volume, temperature, external force, fiber direction (used in material models
+with transverse isotropy) and velocity.  The following is an example in which
+external force and fiber direction are specified:
+\begin{lstlisting}[language=XML]
+          <file>
+              <name>LVcoarse.pts</name>
+              <var>p.externalforce</var>
+              <var>p.fiberdir</var>
+          </file>
+\end{lstlisting}
+where the text file \Textsfc{LVcoarse.pts} looks like:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+0.0385 0.0335 0.0015 0 0 0 0.248865 -0.0593421 -0.966718
+0.0395 0.0335 0.0015 0 0 0 0.254892 -0.0220365 -0.966718
+0.0405 0.0335 0.0015 0 0 0 0.267002 0.0197728 -0.963493
+0.0415 0.0335 0.0015 0 0 0 0.261177 0.0588869 -0.963493
+	.
+	.
+	.
+\end{lstlisting}
+Because these files can be arbitrarily large, an additional preprocessing step
+must be taken before issuing the \Textsfc{vaango} command.
+\Textsfc{pfs} for \Textsfc{Particle File Splitter} is a utility that splits the
+data in the \Textsfc{.pts} file into a series of files
+(\Textsfc{file.pts.0, file.pts.1,}, etc), one for each
+patch.  By doing this, each processor needs only read in the data for the
+patches that it contains, rather than each processor reading in the entire file,
+which can be hard on the file system.  Note, that this step is required,
+even if only using a single patch, and must be reissued any time the patch
+configuration is changed.  Usage of this utility, which is compiled
+into the \Textsfc{StandAlone/tools/pfs} directory, is:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+   pfs input.ups
+\end{lstlisting}
+
+\subsubsection{Using image data to create particles}
+One final option is available for initializing particle positions in MPM
+simulations, and that is through the use of three dimensional image data,
+such as might be collected via CT scans or confocal microscopy.  The image data are 
+provided as 8-bit raw files, and usage in the input file is given as:
+\begin{lstlisting}[language=XML]
+        <image>
+          <name>spheres.raw</name>
+          <res>[1600, 1600, 1600]</res>
+          <threshold>[1, 25]</threshold>
+        </image>
+        <file>
+          <name>spheres.pts</name>
+          <format>bin</format>
+        </file>
+\end{lstlisting}
+The \Textsfc{\textless image\textgreater} section gives the name of the file, the resolution, in pixels,
+in the various coordinate directions, and threshold range.  Particles will be
+generated at voxels within the specified range.  The \Textsfc{\textless file\textgreater}
+section is the same as that described above.  A different preprocessing utility
+is provided when using image data (for the same reasons described previously).
+Usage is as follows:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+   pfs2 -b input.ups
+\end{lstlisting}
+The \Textbfc{-b} flag indicates that binary \Textsfc{spheres.pts.\#} files will be created, which
+saves considerable disk space when performing large simulations.
+
+\section{Boundary conditions}\label{sec:ucf_bc}
+
+Boundary conditions are specified within the \Textsfc{\textless Grid\textgreater}
+but are described separately for clarity.  The essential idea is that
+boundary conditions are specified on the domain of the grid.  Values
+can be assigned either on the entire face, or parts of the face.
+Combinations of various geometric descriptions are used to aid in the
+assignment of values over specific regions of the grid.  Each of the
+six faces of the grid is denoted by either the minus or plus side of
+the domain.
+
+The XML description of a particular boundary condition includes which
+side of the domain, the material id, what type of boundary condition
+(Dirichlet or Neumann) and which variable and the value assigned.  The
+following is a an MPM specification of a Dirichlet boundary condition
+assigned to the velocity component on the x minus face (the entire
+side) with a vector value of [0.0,0.0,0.0] applied to all of the materials.
+
+\begin{lstlisting}[language=XML]
+ <Grid>
+       <BoundaryConditions>
+         <Face side = "x-">
+             <BCType id = "all" var = "Dirichlet" label = "Velocity">
+                   <value> [0.0,0.0,0.0] </value>
+             </BCType>
+         </Face>
+         <Face side = "x+">
+            <BCType id = "all" var = "Dirichlet" label = "Velocity">
+                 <value> [0.0,0.0,0.0] </value>
+            </BCType>
+         </Face>
+        . . . .
+        <BoundaryCondition>
+   . . . .
+  <Grid>
+\end{lstlisting}
+
+The notation \Textsfc{\textless Face side = "x-"\textgreater} indicates that the
+entire x minus face of the boundary will have the boundary condition
+applied.  The \Textsfc{id = "all"} means that all the
+materials will have this value.  To specify the boundary condition for
+a particular material, specify an integer number instead of the
+"all".  The \Textsfc{var = "Dirichlet"} is used to specify
+whether it is a Dirichlet or Neumann or symmetry boundary conditions.
+Different components may use the \Textsfc{var} to include a
+variety of different boundary conditions and are explained more fully
+in the following component sections.  The \Textsfc{label = "Velocity"}
+specifies which variable is being assigned and again is
+component dependent.  The \Textsfc{\textless value\textgreater [0.0,0.0,0.0] \textless/value\textgreater}
+specifies the value.
+
+An example of a more complicated boundary condition demonstrating a
+hot jet of fluid issued into the domain is described.  The jet is
+described by a circle on one side of the domain with boundary
+conditions that are different in the circular jet compared to the rest
+of the side.
+\begin{lstlisting}[language=XML]
+ <Face circle = "y-" origin = "0.0 0.0 0.0" radius = ".5">
+        <BCType id = "0"   label = "Pressure" var = "Neumann">
+                              <value> 0.0   </value>
+        </BCType>
+        <BCType id = "0" label = "Velocity" var = "Dirichlet">
+                              <value> [0.,1.,0.] </value>
+        </BCType>
+        <BCType id = "0" label = "Temperature" var = "Dirichlet">
+                              <value> 1000.0  </value>
+        </BCType>
+        <BCType id = "0" label = "Density" var = "Dirichlet">
+                              <value> .35379  </value>
+        </BCType>
+        <BCType id = "0" label = "SpecificVol"  var = "computeFromDensity">
+                              <value> 0.0  </value>
+        </BCType>
+      </Face>
+      <Face side = "y-">
+        <BCType id = "0"   label = "Pressure"     var = "Neumann">
+                              <value> 0.0   </value>
+        </BCType>
+        <BCType id = "0" label = "Velocity"     var = "Dirichlet">
+                              <value> [0.,0.,0.] </value>
+        </BCType>
+        <BCType id = "0" label = "Temperature"  var = "Neumann">
+                              <value> 0.0  </value>
+        </BCType>
+        <BCType id = "0" label = "Density"      var = "Neumann">
+                              <value> 0.0  </value>
+        </BCType>
+        <BCType id = "0" label = "SpecificVol"  var = "computeFromDensity">
+                              <value> 0.0  </value>
+        </BCType>
+      </Face>
+\end{lstlisting}
+The jet is described by the circle on the y minus face with the origin
+at $(0,0,0)$ and a radius of $0.5$.  For the region outside of the circle,
+the boundary conditions are different.  Each side must have at least
+the \Textsfc{side} specified, but additional circles and
+rectangles can be specified on a given face.
+
+An example of the \Textsfc{rectangle} is specified as with the
+lower corner at $(0,0.181,0)$ and upper corner at $(0,0.5,0)$.
+\begin{lstlisting}[language=XML]
+ <Face rectangle = "x-" lower = "0.0 0.181 0.0" upper = "0.0 0.5 0.0">
+\end{lstlisting}
+
+\section{Grid specification} \label{Sec:Grid}
+The \Textsfc{\textless Grid\textgreater} section specifies the domain of the
+structured grid and includes tags which indicate the lower and upper
+corners, the number of extra cells which can be used by various
+components for the application of boundary conditions or interpolation
+schemes.  
+
+The grid is decomposed into a number of patches.  For single processor
+problems, usually one patch is used for the entire domain.  For
+multiple processor simulations, there must be at least one patch per
+processor.  Patches are specified along the x,y,z directions of the
+grid using the \Textsfc{\textless patches\textgreater [2,5,3] \textless/patches\textgreater} which
+specifies two patches along the x direction, five patches along the y
+direction and 3 patches along the z direction.  The maximum number of
+processors that \Textsfc{vaango} could use is $2\times 5\times 3 = 30$.
+Attempting to use more processors than patches
+will cause a run time error during initialization.
+
+Finally, the grid spacing can specified using either a fixed number of
+cells along each x,y,z direction or by the size of the grid cell in
+each direction.  To specify a fixed number of grid cells, use the \Textsfc{
+\textless resolution\textgreater [20,20,3] \textless/resolution\textgreater}.  This specifies 20
+grid cells in the x direction, 20 in the y direction and 3 in the z
+direction.  To specify the grid cell size use the \Textsfc{\textless spacing\textgreater
+[0.5,0.5,0.3] \textless /spacing\textgreater}.  This specifies the a grid cell
+size of .5 in the x and y directions and .3 in the z direction.  The
+\Textsfc{\textless resolution\textgreater} and \Textsfc{\textless spacing\textgreater} cannot be
+specified together.  The following two examples would generate
+identical grids:
+\begin{lstlisting}[language=XML]
+<Level>
+    <Box label="1">
+       <lower>        [0,0,0]          </lower>
+       <upper>        [5,5,5]          </upper>
+       <extraCells>   [1,1,1]          </extraCells>
+       <patches>      [1,1,1]          </patches>
+    </Box>
+    <spacing>         [0.5,0.5,0.5]    </spacing>
+</Level>
+\end{lstlisting}
+
+\begin{lstlisting}[language=XML]
+<Level>
+    <Box label="1">
+       <lower>        [0,0,0]          </lower>
+       <upper>        [5,5,5]          </upper>
+       <resolution>   [10,10,10]       </resolution>
+       <extraCells>   [1,1,1]          </extraCells>
+       <patches>      [1,1,1]          </patches>
+    </Box>
+</Level>
+\end{lstlisting}
+
+The above examples indicate that the grid domain has a lower corner at
+$(0,0,0)$ and an upper corner at $(5,5,5)$ with one extra cell in each
+direction.  The domain is broken down into one patch covering the
+entire domain with a grid spacing of $(.5,.5,.5)$.  Along each dimension
+there are ten cells in the interior of the grid and one layer of
+\Textsfc{extraCells} outside of the domain.  \Textsfc{extraCells}
+are the \Uintah nomenclature for what are frequently referred to 
+as \Textsfc{ghost-cells}.

@@ -1,0 +1,1501 @@
+\chapter{MPM} \label{Sec:MPM}
+
+\section{Introduction}
+The Material Point Method (MPM) as described by Sulsky, et al.
+\cite{Sulsky1994,Sulsky1995} is a
+particle method for structural mechanics simulations.  Solid 
+objects
+are represented by a collection of particles, or ``material 
+points."  Each
+of these particles carries with it information for that part of 
+the
+solid object that it represents.  This includes the mass, 
+volume,
+position, velocity and stress of that material.  MPM differs 
+from other
+so called ``mesh-free" particle methods in that, while each 
+object is primarily 
+represented by a collection of particles, a computational mesh 
+is
+also an important part of the calculation.  Particles do not 
+interact
+with each other directly, rather the particle information is 
+interpolated
+to the grid, where the equations of motion are integrated 
+forward in time.
+This time advanced solution is then used to update the particle 
+state.
+An example of two disks initially approaching each other 
+represented by
+material points on an overlying mesh is show in Figure \ref{fig-disks_init}.
+
+\begin{figure}[h]
+  \centering
+  \scalebox{0.5}{\includegraphics{disks.pdf}}
+  \caption{\label{fig-disks_init} Initial particle representation of two
+                                colliding disks on an overlying mesh.}
+\end{figure}
+
+The method usually uses a regular structured grid as a 
+computational mesh.
+While this grid, in principle, deforms as the material that it 
+is representing
+deforms, at the end of each timestep, it is reset to it's 
+original undeformed
+position, in effect providing a new computational grid for each 
+timestep.
+The use of a regular structured grid for each time step has a 
+number of
+computational advantages.  Computation of spatial gradients is 
+simplified.
+Mesh entanglement, which can plague fully Lagrangian techniques, 
+such as
+the Finite Element Method (FEM), is avoided.  MPM has also been 
+successful
+in solving problems involving contact between colliding objects, 
+having an
+advantage over FEM in that the use of the regular grid 
+eliminates the
+need for doing costly searches for contact surfaces\cite{Bard2001}.
+
+The choice of MPM over FEM as the C-SAFE structural mechanics method
+was only in small part for the above mentioned criteria.  The
+primary motivation was the ability to use MPM together with a multimaterial
+CFD algorithm for solving tightly coupled fluid-structure interaction
+problems.  This capability was first demonstrated in the CFDLIB
+codes from Los Alamos by Bryan Kashiwa and co-workers.  There, as
+in Vaango, MPM serves as the Lagrangian description of the solid
+material in a multimaterial CFD code.  Certain elements of the
+solution procedure are based in the Eulerian CFD algorithm, including
+intermaterial heat and momentum transfer as well as satisfaction
+of a multimaterial equation of state.  The use of a Lagrangian method
+such as MPM to advance the solution of the solid material eliminates
+the diffusion typically associated with Eulerian methods.
+
+\section{Algorithm}
+
+While a more detailed description of MPM can be found in 
+\cite{Sulsky1995},
+the algorithm is laid out here.  The equations of motion are 
+cast in the
+form:
+\begin{equation}
+	\tn{M}_g \cdot \tn{a}_g = \tn{Fext}_g - \tn{Fint}_g  
+\label{newton2}
+\end{equation}
+where $\tn{M}_g$ is the mass matrix, $\tn{a}_g$ is the 
+acceleration vector,
+$\tn{Fext}_g$ is the external force vector (sum of the body 
+forces and
+tractions), and $\tn{Fint}_g$ is the internal force vector 
+resulting from
+the divergence of the material stresses.  In general, $\tn{M}_g$ 
+is a 
+large, sparse matrix.  In practice, and in what follows here, a 
+``lumped"
+mass matrix is used, which only has entries on the diagonal, and 
+is thus
+represented as a column matrix.
+
+The solution procedure begins by interpolating the particle 
+state to the
+grid, to form $\tn{M}_g$, $\tn{Fext}_g$, and to get a velocity 
+on the grid
+$\tn{v}_g$.  These quantities are calculated at each grid
+node by the following equations:
+
+\begin{equation}
+        \tn{M}_i = \sum_{p} S_{ip} m_p  
+\label{expinterpolatemass}
+\end{equation}
+\begin{equation}
+        \tn{v}_i = \frac{\sum\limits_{p} S_{ip} m_p 
+\tn{v}_p}{\tn{M}_i} \label{expinterpolatevel}
+\end{equation}
+\begin{equation}
+        \tn{Fext}_i = \sum_{p} S_{ip} \tn{Fext}_p. 
+\label{expinterpolateFext}
+\end{equation}
+$m_p$ is the particle
+mass, $\tn{v}_p$ is the particle velocity, and $\tn{Fext}_p$ is 
+the external
+force on the particle.  The external force on the particle is 
+generally an applied load of some type.  In Equation 
+\ref{expinterpolatevel}, the numerator is the nodal momentum, 
+which is then divided by the nodal mass to get a velocity.  
+$S_{ip}$ is a ``shape function" for the $ith$ node
+evaluated at $\tn{x}_p$.  Traditionally, the shape functions are 
+multiplicative
+combinations of one dimensional tent functions, as shown in
+Figure \ref{fig-Sip}.  The shape functions serve to distance 
+weight the contribution of each particle to the grid nodes.  
+
+\begin{figure}[htbp!]
+  \centering
+  \scalebox{0.4}{\includegraphics{Sip.pdf}} \hspace{24pt}
+  \scalebox{0.4}{\includegraphics{Gip.pdf}}
+  \caption{\label{fig-Sip} One dimensional linear shape function, 
+           $S(x)$ and its derivative, $G(x)$.}
+  \label{fig-Gip}
+\end{figure}
+
+At this point, a velocity gradient,  $\nabla \tn{v}_p$ is 
+computed at
+each particle using the grid velocities $\tn{v}_g$:
+
+\begin{equation}
+	\nabla \tn{v}_p = \sum_i \tn{G}_{ip} \tn{v}_I
+ \label{velgrad}
+\end{equation}
+
+\noindent
+where $\tn{G}_{ip}$ is the gradient of the $ith$ node's shape 
+function,
+evaluated at $\tn{x}_p$.  A one dimensional example of 
+$\tn{G}_{ip}$ is
+shown in Figure \ref{fig-Gip}.  Note that in going to multiple dimensions,
+the $\tn{G}_{ip}$ are found by taking gradients of the multidimensional
+$S_{ip}$ NOT by forming multiplicative combinations of the one-dimensional
+$\tn{G}_{ip}$.
+
+This velocity gradient is used as input to a constitutive model 
+(stress-strain
+relationship) which is evaluated at each particle.  The 
+specifics of this 
+calculation are dependent on the constitutive model.  An example 
+of a simple elastic material model is described in the appendix.  
+The result of this
+calculation is the Cauchy stress at each particle, $\Bsig_p$.  
+With this,
+the internal force due to the divergence of the stress is 
+calculated:
+
+\begin{equation}
+	\tn{Fint}_g = \sum_{p} \tn{G}_{ip} \sig_p v_p
+\end{equation}
+
+\noindent
+where $v_p$ is the particle volume.  The internal force can be 
+thought of as the force that holds a material together.  For a 
+given deformation, this force is larger for stiffer materials.
+
+Everything is now available to solve Equation \ref{newton2} for 
+$\tn{a}_g$.
+With that, the backward Euler method is used for all time 
+integrations.
+A convective grid velocity $\tn{v}^L_g$ is computed:
+
+\begin{equation}
+	\tn{v}^L_g = \tn{v}_g  + \tn{a}_g dt
+\end{equation}
+
+While the following calculation is never carried out, in 
+principal, the
+nodes of the grid also move with that convective velocity:
+
+\begin{equation}
+	\tn{x}^L_g = \tn{x}_g  + \tn{v}^L_g dt     
+\label{expdefgrid}
+\end{equation}
+
+During this part of the computation, the particles move with the 
+deforming
+grid.  Their position and velocity is explicitly updated by:
+
+\begin{equation}
+	\tn{v}_p (t + dt)  = \tn{v}_p (t)  + \sum_{i} S_{ip} 
+\tn{a}_i  dt
+\end{equation}
+
+\begin{equation}
+	\tn{x}_p (t + dt)  = \tn{x}_p (t)  + \sum_{i} S_{ip} 
+\tn{v}^L_i  dt
+\end{equation}
+
+This completes one timestep.  Note that not carrying out the 
+calculation
+in \ref{expdefgrid} explicitly has the effect of resetting the 
+deformed
+grid to it's undeformed position at the end of the timestep 
+cycle.
+
+As with all explicit time integration methods, a timestep size 
+limit must
+be enforced such that $dt < dx/(|\tn{v}_p| + c)$ for all 
+particles, where $dx$ is the computational grid spacing and $c$ 
+is the speed at which stress waves propagate through the 
+material.
+Failure to adhere to this condition will cause the solution to 
+become
+unstable and blow up.  The material wavespeed depends on the 
+material model used, as well as on the particular parameters
+chosen for that model.  Specifics of calculating the wavespeed
+are \AuthorNote{given in the appendix}.
+
+
+\section{Uintah Specification} \label{Sec:UintahSpecMPM}
+
+Uintah input files are constructed in XML format.  Each begins with:
+
+\begin{lstlisting}
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+\end{lstlisting}
+while the remainder of the file is enclosed within the following tags:
+\begin{lstlisting}
+<Uintah_specification>
+</Uintah_specification>
+\end{lstlisting}
+
+The following subsections describe the remaining inputs needed to construct
+an input file for an MPM simulation.  The order of the various sections 
+of the input file is not important.  {\bf The MPM, ICE and MPMICE components
+are dimensionless calculations.  It is the responsibility of the analyst
+to provide the following inputs using a consistent set of units.}
+
+\subsection{Common Inputs} \label{Sec:commonInputs}
+
+Each Uintah component is invoked using a single executable called
+\it sus \normalfont, which chooses the type of simulation
+to execute based on the \it SimulationComponent \normalfont tag in the
+input file.  For the case of MPM simulations, this looks like:
+
+\begin{lstlisting}
+ <SimulationComponent type="mpm" />
+\end{lstlisting}
+
+There are a number of fields that are required for any component.  The first
+is that describing the timestepping parameters, these are largely common to
+all components, and are described in Section~\ref{Sec:TimeRelatedVariables}.
+The only one that bears commenting on at this point is:
+
+\begin{lstlisting}
+  <timestep_multiplier>    0.5     </timestep_multiplier>
+\end{lstlisting}
+This is effectively the CFL number for MPM simulations, that is the number
+multiplied by the timestep size that is automatically calculated by the MPM
+code.  Experience indicates that one should generally keep this value below
+$0.5$, and should expect to use smaller values for high-rate, large-deformation
+simulations.
+
+The next field common to the input files for all components is:
+
+\begin{lstlisting}
+   <DataArchiver>
+   </DataArchiver>
+\end{lstlisting}
+This is described in Section~\ref{Sec:DataArchiver}.  To see a list of
+variables available for saving in MPM simulations, execute the following
+command from the \tt StandAlone \normalfont directory:
+
+\begin{lstlisting}
+inputs/labelNames mpm
+\end{lstlisting}
+Note that for visualizing particle data, one must save \tt p.x, \normalfont
+and at least one other variable by which to color the particles.
+
+The other principle common field is that which describes the computational
+grid.  For MPM, this is typically broken up into two parts, the
+\tt <Level> \normalfont section specifies the physical extents and spatial
+resolution of the grid.  For more information, consult Section~\ref{Sec:Grid}.
+The other part specifies kinematic boundary conditions on the grid boundaries.
+These are discussed below in Section~\ref{Sec:MPM_BCs}.
+
+\subsection{Physical Constants} \label{Sec:physicalConstants}
+The only physical constant required (or optional for that matter) for
+MPM simulations is gravity, this is specified as:
+
+\begin{lstlisting}
+<PhysicalConstants>
+   <gravity>            [0,0,0]   </gravity>
+</PhysicalConstants>
+\end{lstlisting}
+
+\subsection{MPM Flags} \label{Sec:MPMFlags}
+
+There are many options available when running MPM simulations.  These
+are generally specified in the \tt <MPM> \normalfont section of the input file.
+Below is a list of these options taken from
+\tt inputs/UPS\_SPEC/mpm\_spec.xml \normalfont 
+This file also gives possible values, or at least expected datatype,
+for these flags.  A description of their functionality is forthcoming,
+in the meantime, consult the code and input files.  A default value is
+set for many, see \tt MPM/MPMFlags.cc \normalfont for more.
+
+\begin{lstlisting}
+    <MPM>
+     <!-- These are commonly used options -->
+      <artificial_damping_coeff           spec="OPTIONAL DOUBLE 'positive'"/>
+      <artificial_viscosity               spec="OPTIONAL BOOLEAN" />
+      <artificial_viscosity_coeff1        spec="OPTIONAL DOUBLE" />
+      <artificial_viscosity_coeff2        spec="OPTIONAL DOUBLE" />
+      <axisymmetric                       spec="OPTIONAL BOOLEAN" />
+      <boundary_traction_faces            spec="OPTIONAL STRING" />
+      <DoExplicitHeatConduction           spec="OPTIONAL BOOLEAN" />
+      <DoPressureStabilization            spec="OPTIONAL BOOLEAN" />
+      <erosion                            spec="OPTIONAL NO_DATA"
+            attribute1="algorithm REQUIRED STRING 'none, KeepStress, ZeroStress, RemoveMass'" />
+      <interpolator                       spec="OPTIONAL STRING 'linear, gimp, 3rdorderBS, 4thorderBS'" />
+      <minimum_particle_mass              spec="OPTIONAL DOUBLE 'positive'"/>
+      <minimum_mass_for_acc               spec="OPTIONAL DOUBLE 'positive'"/>
+      <maximum_particle_velocity          spec="OPTIONAL DOUBLE 'positive'"/>
+      <testForNegTemps_mpm                spec="OPTIONAL BOOLEAN" />
+      <time_integrator                    spec="OPTIONAL STRING 'explicit, fracture, implicit'" />
+      <use_load_curves                    spec="OPTIONAL BOOLEAN" />
+      <UsePrescribedDeformation           spec="OPTIONAL BOOLEAN" />
+      <withColor                          spec="OPTIONAL BOOLEAN" />
+
+     <!-- These are not commonly used options -->
+      <CanAddMPMMaterial                  spec="OPTIONAL BOOLEAN" />
+      <create_new_particles               spec="OPTIONAL BOOLEAN" />
+      <do_contact_friction_heating        spec="OPTIONAL BOOLEAN" />
+      <do_grid_reset                      spec="OPTIONAL BOOLEAN" />
+      <DoThermalExpansion                 spec="OPTIONAL BOOLEAN" />
+      <ForceBC_force_increment_factor     spec="OPTIONAL DOUBLE" />
+      <manual_new_material                spec="OPTIONAL BOOLEAN" />
+      <interpolateParticleTempToGridEveryStep spec="OPTIONAL BOOLEAN" />
+      <temperature_solve                  spec="OPTIONAL BOOLEAN" />
+
+     <!-- THE FOLLOWING APPLY ONLY TO THE IMPLICIT MPM CODE -->
+      <dynamic                            spec="OPTIONAL BOOLEAN" />
+      <solver                             spec="OPTIONAL STRING 'petsc, simple'" />
+      <convergence_criteria_disp          spec="OPTIONAL DOUBLE 'positive'"/>
+      <convergence_criteria_energy        spec="OPTIONAL DOUBLE 'positive'"/>
+      <num_iters_to_decrease_delT         spec="OPTIONAL INTEGER" />
+      <num_iters_to_increase_delT         spec="OPTIONAL INTEGER" />
+      <iters_before_timestep_restart      spec="OPTIONAL INTEGER" />
+      <DoTransientImplicitHeatConduction  spec="OPTIONAL BOOLEAN" />
+      <delT_decrease_factor               spec="OPTIONAL DOUBLE" />
+      <delT_increase_factor               spec="OPTIONAL DOUBLE" />
+      <DoImplicitHeatConduction           spec="OPTIONAL BOOLEAN" />
+      <DoMechanics                        spec="OPTIONAL BOOLEAN" />
+
+      <!-- THE FOLLOWING APPLY ONLY TO THE FRACTURE MPM CODE -->
+      <dadx                               spec="OPTIONAL DOUBLE" />
+      <smooth_crack_front                 spec="OPTIONAL BOOLEAN" />
+      <calculate_fracture_parameters      spec="OPTIONAL BOOLEAN" />
+      <do_crack_propagation               spec="OPTIONAL BOOLEAN" />
+      <use_volume_integral                spec="OPTIONAL BOOLEAN" />
+    </MPM>
+\end{lstlisting}
+
+
+
+\subsection{Material Properties} \label{Sec:mat_props}
+
+The \tt Material Properties \normalfont section of the input file
+actually contains not only those, but also the geometry and initial
+condition data as well.  Below is a simple example, copied from
+\tt inputs/MPM/disks.ups. \normalfont  The \tt name \normalfont field
+is optional.  The first field is the material \tt <density>. \normalfont
+The \tt <constitutive\_model> \normalfont field refers
+to the model used to generate a stress tensor on each material point.
+The use of these models is described in detail in
+Section~\ref{Sec:ConstitutiveModels}.  Next are the thermal transport properties,
+\tt <thermal\_conductivity> \normalfont and 
+\tt <specific\_heat>. \normalfont  Note that these are required even if
+heat conduction is not being computed.  These are the required material
+properties.  There are additional optional parameters that are used in
+other auxiliary calculations, for a list of these
+see the \tt inputs/UPS\_SPEC/mpm\_spec.xml \normalfont.
+
+Next is the specification of the geometry, and, along with it, the initial
+state of the material contained in that geometry.  For more information on
+how initial geometry can be specified, see Section~\ref{Sec:GeometryObjects}.  Within the
+\tt <geom\_object> \normalfont is the \tt <res> \normalfont field.  This
+indicates how many particles per cell are to be used in each of the 
+coordinate directions.  Following that are initial values for velocity and
+temperature.  Finally, the \tt <color> \normalfont designation has a number
+of uses, for example when one wishes to identify initially distinct regions
+of the same material.  In Section~\ref{Sec:OTFA_MPM} is a description of how
+this field is used to identify particles for on the fly data extraction.
+
+An arbitray number of \tt <material> \normalfont fields can be specified.
+As the calculation proceeds, each of these materials has their own field
+variables, and, as such, each material behaves independently of the others.
+Interactions between materials occur as a result of ``contact" models.
+Their use is described in detail in Section~\ref{Sec:Contact}.
+
+\begin{lstlisting}
+    <MaterialProperties>
+       <MPM>
+           <material name="disks">
+              <density>1000.0</density>
+              <constitutive_model type="comp_mooney_rivlin">
+                 <he_constant_1>100000.0</he_constant_1>
+                 <he_constant_2>20000.0</he_constant_2>
+                 <he_PR>.49</he_PR>
+              </constitutive_model>
+              <thermal_conductivity>1.0</thermal_conductivity>
+              <specific_heat>5</specific_heat>
+              <geom_object>
+                  <cylinder label = "gp1">
+                     <bottom>[.25,.25,.05]</bottom>
+                     <top>[.25,.25,.1]</top>
+                     <radius> .2 </radius>
+                  </cylinder>
+                  <res>[2,2,2]</res>
+                  <velocity>[2.0,2.0,0]</velocity>
+                  <temperature>300</temperature>
+                  <color>             0               </color>
+               </geom_object>
+           </material>
+
+           <contact>
+             <type>null</type>
+             <materials>[0]</materials>
+           </contact>
+       </MPM>
+    </MaterialProperties>
+\end{lstlisting}
+
+\subsection{Contact}  \label{Sec:Contact}
+
+When multiple materials are specified in the input file, each material
+interacts with its own field variables.  In other words, each material has
+its own mass, velocity, acceleration, etc.  Without any mechanism for their
+interaction, each material would behave as if it were the only one in the
+domain.  Contact models provide the mechanism by which to specify rules
+for inter material interactions.  There are a number of contact models
+from which to choose, the use of each is described next.  See the input
+file segment in Section~\ref{Sec:mat_props} for an example of their proper
+placement in the input file, namely, after all of the MPM materials have
+been described.
+
+The simplest contact model is the \tt null \normalfont model, which indicates
+that no inter material interactions are to take place.  This is typically only
+used in single material simulations.  Its usage looks like:
+
+\begin{lstlisting}
+           <contact>
+             <type>null</type>
+           </contact>
+\end{lstlisting}
+
+The next simplest model is the \tt single\_velocity \normalfont model.
+The basic MPM formulation provides ``free" no-slip, no-interpenetration
+contact, assuming that all particle data communicates with a single field
+on the grid.  For a single material simulation with multiple objects, that
+is the case.  If one wishes to achieve that behavior in Uintah-MPM when
+multiple materials are present, the \tt single\_velocity \normalfont contact
+model should be used.  It is specified as:
+
+\begin{lstlisting}
+           <contact>
+             <type>single_velocity</type>
+             <materials>[0,1]</materials>
+           </contact>
+\end{lstlisting}
+Note that for this, and all of the contact models,
+the \tt <materials> \normalfont tag is optional.  If it is omitted,
+the assumption is that all materials will interact via the same contact model.
+(This will be further discussed below.)
+
+The ultimate in contact models is the \tt friction \normalfont contact 
+model.  For a full description, the reader is directed to the paper by
+Bardenhagen et al.\cite{Bard2001}.  Briefly, the model both overcomes
+some deficiences in the single velocity field contact (either the ``free"
+contact or the model described above, which behave identically), and it
+enables some additional features.  With single velocity field contact,
+initially adjacent objects are treated as if they are effectively stuck
+together.  The friction contact model overcomes this by detecting if
+materials are approaching or departing at a given node.  If they are
+approaching, contact is ``enforced" and if they are departing, another
+check is made to determine if the objects are in compression or tension.
+If they are in compression, then they are still rebounding from each other,
+and so contact is enforced.  If tension is detected, they are allowed
+to move apart independently.  Frictional sliding is allowed, based on
+the value specified for \tt <mu> \normalfont and the normal force between
+the objects.  An example of the use of this model is given here:
+
+\begin{lstlisting}
+           <contact>
+              <type>friction</type>
+              <materials>[0,1,2]</materials>
+              <mu> 0.5 </mu>
+           </contact>
+\end{lstlisting}
+
+A slightly simplified version of the friction model is the
+\tt <approach> \normalfont model.  It is the same as the frictional model
+above, except that it doesn't make the additional check on the traction
+between two bodies at each node.  At times, it is necessary to neglect this,
+but some loss of energy will result.  Specification is of the model is 
+also nearly identical:
+
+\begin{lstlisting}
+           <contact>
+              <type>approach</type>
+              <materials>[0,1,2]</materials>
+              <mu> 0.5 </mu>
+           </contact>
+\end{lstlisting}
+
+Finally, the contact infrastructure is also used to provide a moving
+displacement boundary condition.  Imagine a billet being smashed by a
+rigid platen, for example.  Usage of this model, known as
+\tt <specified> \normalfont contact, looks like:
+
+\begin{lstlisting}
+           <contact>
+             <type>specified</type>
+             <filename>TXC.txt</filename>
+             <materials>[0,1,2]</materials>
+             <master_material>0</master_material>
+             <direction>[1,1,1]</direction>
+             <stop_time>1.0 </stop_time>
+             <velocity_after_stop>[0, 0, 0]</velocity_after_stop>
+           </contact>
+\end{lstlisting}
+For reasons of backwards compatibility, the
+\tt <type>specified</type> \normalfont is interchangable with
+\tt <type>rigid</type>. \normalfont  By default, when either model is
+chosen, material 0 is the ``rigid" material, although this can be
+over ridden by the use of the
+\tt <master\_material> \normalfont field.  If no
+\tt <filename> \normalfont field is specified, then the particles of the
+rigid material proceed with the velocity that they were given as their
+initial condition, either until the reach a computational boundary, or
+until the simulation time has reached \tt <stop\_time>, \normalfont after
+which, their velocity becomes that given in the
+\tt <velocity\_after\_stop> \normalfont field.  The \tt <direction> \normalfont
+field indicates in which cartesian directions contact should be specified.
+Values of $1$ indicate that contact should be specified, $0$ indicates that
+the subject materials should be allowed to slide in that direction.  If
+a \tt <filename> \normalfont field {\it is} specified, then the user can
+create a text file which contains four entries per line.  These are:
+\begin{lstlisting}
+time1 velocity_x1 velocity_y1 velocity_z1
+time2 velocity_x2 velocity_y2 velocity_z2
+     .
+     .
+     .
+\end{lstlisting}
+The velocity of the rigid material particles will be set to these values,
+based on linear interpolation between times, until \tt <stop\_time> \normalfont
+is reached.  Note, one should not try to apply traction boundary conditions
+(via the  \TT{<PhysicalBC>} tag), to the rigid material used in this type of contact, as this constitutes trying to mix displacement and traction boundary
+conditions. 
+
+Finally, it is possible to specify more than one contact model.  Suppose
+one has a simulation with three materials, one rigid, and the other two
+deformable.  The user may want to have the rigid material interact in a
+rigid manner with the other two materials, while the two deformable materials
+interact with each other in a single velocity field manner.  Specification
+for this, assuming the rigid material is $0$ would look like:
+
+\begin{lstlisting}
+            <contact>
+                <type>single_velocity</type>
+                <materials>[1,2]</materials>
+            </contact>
+
+            <contact>
+                <type>specified</type>
+                <filename>prof.txt</filename>
+                <stop_time>1.0</stop_time>
+                <direction>[0, 0, 1]</direction>
+            </contact>
+\end{lstlisting}
+An example of this usage can be found in \tt inputs/MPM/twoblock-single-rigid.ups. \normalfont
+
+\section{BoundaryConditions} \label{Sec:MPM_BCs}
+
+Boundary conditions must be specified on each face of the computational
+domain $(x^-, x^+, y^-, y^+,z^-,z^+)$ for each material.  An example of their
+specification is as follows, where the entire \tt <Grid> \normalfont field
+is included for context:
+\begin{lstlisting}
+    <Grid>
+       <BoundaryConditions>
+         <Face side = "x-">
+             <BCType id = "all" var = "Dirichlet" label = "Velocity">
+                   <value> [0.0,0.0,0.0] </value>
+             </BCType>
+         </Face>
+         <Face side = "x+">
+            <BCType id = "all" var = "Neumann" label = "Velocity">
+                 <value> [0.0,0.0,0.0] </value>
+            </BCType>
+         </Face>
+         <Face side = "y-">
+           <BCType id = "all" var = "Dirichlet" label = "Velocity">
+                  <value> [0.0,0.0,0.0] </value>
+           </BCType>
+         </Face>
+         <Face side = "y+">
+           <BCType id = "all" var = "Neumann" label = "Velocity">
+                  <value> [0.0,0.0,0.0] </value>
+           </BCType>
+         </Face>
+         <Face side = "z-">
+           <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+         </Face>
+         <Face side = "z+">
+           <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+         </Face>
+       </BoundaryConditions>
+       <Level>
+\end{lstlisting}
+
+... See Section~\ref{Sec:Grid} ...
+
+\begin{lstlisting}
+       </Level>
+    </Grid>
+\end{lstlisting}
+
+The three main types of numerical boundary conditions (BCs) that can
+be applied are ``Neumann", ``Dirichlet", and ``Symmetric", and the use of
+each is illustrated above.  In the case of
+MPM simulations, Neumann BCs are used when one wishes to allow particles to
+advect freely out of the computational domain.  Dirichlet BCs are used to
+specify a velocity, zero or otherwise (indicated by the \tt <value> \normalfont
+tag), on one of the computational boundaries.
+Symmetric BCs are used to indicate a plane of symmetry.  This has a variety
+of uses.  The most obvious is simply when a simulation of interest has symmetry
+that one can take advantage of to reduce the cost of a calculation.  Similarly,
+since Uintah is a three-dimensional code, if one wishes to achieve plane-strain
+conditions, this can be done by carrying out a simulation that is one cell thick
+with Symmetric BCs applied to each face of the plane, as in the example above.
+Finally, Symmetric BCs also provide a free slip boundary.
+
+There is also the field \tt id = "all" \normalfont.  In principal, one could
+set different boundary condition types for different materials.  In practice,
+this is rarely used, so the usage illustrated here should be used.
+
+\subsection{Physical Boundary Conditions} \label{sec:PhysicalBCs}
+
+It is often more convenient to apply a specified load at the MPM particles.
+The load may be a function of time.  Such a load versus time curve is called
+a {\bf load curve}.
+In Uintah, the load curve infrastructure is available for general use
+(and not only for particles).  However, it has been implemented only for
+a special case of pressure loading.  Namely, a surface is
+specified through the use of the \tt <geom\_object> \normalfont description,
+and a pressure vs. time curve is described by specifying their values
+at discrete points in time, between which linear interpolation is used
+to find values at any time.  At $t=0$, those particles in the vicinity
+of the the surface are tagged with a load curve ID, and those particles
+are assigned external forces such that the desired pressure is achieved.
+
+We invoke the load curve in the \TT{<MPM>} section
+(See Section~\ref{Sec:MPMFlags})of the input file
+using  \TT{<use_load_curves> true </use_load_curves>}.  The default value
+is \TT{<use_load_curves> false </use_load_curves>}.
+
+In Uintah, a load curve infrastructure is implemented in the file \\
+\TT{.../MPM/PhysicalBC/LoadCurve.h}.  This file is essentially a templated
+structure that has the following private data
+\begin{lstlisting}
+  // Load curve information 
+  std::vector<double> d_time;
+  std::vector<T> d_load;
+  int d_id;
+\end{lstlisting}
+The variable \TT{d_id} is the load curve ID, \TT{d_time} is the time,
+and \TT{d_load} is the load.  Note that the load can have any form - scalar,
+vector, matrix, etc.
+
+In our current implementation, the actual specification of the load curve
+information is in the \TT{<PhysicalBC>} section of the input file.  The
+implementation is limited in that it applies only to pressure boundary
+conditions for some special geometries (the implementation is in
+\TT{.../MPM/PhysicalBC/PressureBC.cc}).  However, the load curve template can
+be used in other, more general, contexts.
+
+A sample input file specification of a pressure load curve is shown below.
+In this case, a pressure is applied to the inside and outside of a cylinder.
+The pressure is ramped up from 0 to 1 GPa on the inside and from 0 to 0.1 MPa
+on the outside over a time of 10 microsecs.
+\begin{lstlisting}
+   <PhysicalBC>
+     <MPM>
+       <pressure>
+         <geom_object>
+           <cylinder label = "inner cylinder">
+             <bottom>           [0.0,0.0,0.0]   </bottom>
+             <top>              [0.0,0.0,.02]   </top>
+             <radius>           0.5             </radius>
+           </cylinder>
+         </geom_object>
+         <load_curve>
+           <id>1</id>
+           <time_point>
+             <time> 0 </time>
+             <load> 0 </load>
+           </time_point>
+           <time_point>
+             <time> 1.0e-5 </time>
+             <load> 1.0e9 </load>
+           </time_point>
+         </load_curve>
+       </pressure>
+       <pressure>
+         <geom_object>
+           <cylinder label = "outer cylinder">
+             <bottom>           [0.0,0.0,0.0]   </bottom>
+             <top>              [0.0,0.0,.02]   </top>
+             <radius>           1.0             </radius>
+           </cylinder>
+         </geom_object>
+         <load_curve>
+           <id>2</id>
+           <time_point>
+             <time> 0 </time>
+             <load> 0 </load>
+           </time_point>
+           <time_point>
+             <time> 1.0e-5 </time>
+             <load> 101325.0 </load>
+           </time_point>
+         </load_curve>
+       </pressure>
+     </MPM>
+   </PhysicalBC>
+\end{lstlisting}
+The complete input file can be found in \TT{inputs/MPM/thickCylinderMPM.ups}. 
+An additional example which is used to achieve triaxial loading can be found
+at \TT{inputs/MPM/TXC.ups}.  There, the material geometry is a block, and so
+the regions described are flat surfaces upon which the pressure is applied.
+
+\section{On the Fly DataAnalysis} \label{Sec:OTFA_MPM}
+
+In the event that one wishes to monitor the data for a small region of a
+simulation at a rate that is more frequent than the what the DataArchiver
+can reasonably provide (for reasons of data storage and effect on run time),
+Uintah provides a \tt <DataAnalysis> \normalfont feature.  As it applies
+to MPM, it allows one to specify a group of particles, by assigning those
+particles a particular value of the \tt <color> \normalfont parameter.
+In addition, a list of variables and a frequency of output is provided.
+Then, at run time, a sub-directory (\tt particleExtract/L-0 \normalfont)
+is created inside the uda which contains
+a series of files, named according to their particle IDs, one for each
+tagged particle.  Each of these files contains the time and position for
+that particle, along with whatever other data is specified.  {\bf To use this
+feature, one must include the} \tt <withColor>   true   </withColor> \normalfont
+{\bf tag in the} \tt <MPM> \normalfont {\bf section of the input file.}
+(See Section~\ref{Sec:MPMFlags}.)
+
+The following input file snippet is taken from
+\tt inputs/MPM/disks.ups \normalfont  
+\begin{lstlisting}
+    <DataAnalysis>
+       <Module name="particleExtract">
+
+        <material>disks</material>
+        <samplingFrequency> 1e10 </samplingFrequency>
+        <timeStart>          0   </timeStart>
+        <timeStop>          100  </timeStop>
+        <colorThreshold>
+          0
+        </colorThreshold>
+
+        <Variables>
+          <analyze label="p.velocity"/>
+          <analyze label="p.stress"/>
+        </Variables>
+
+      </Module>
+    </DataAnalysis>
+\end{lstlisting}
+
+For all particles that are assigned a color greater than the
+\tt <colorThreshold>, \normalfont the variables
+\tt p.velocity \normalfont and
+\tt p.stress \normalfont are saved every every
+$1/$\tt <samplingFrequency> \normalfont time units, starting at
+\tt <timeStart> \normalfont until
+\tt <timeStop>. \normalfont
+
+It is also possible to save grid based data with this module,
+see Section~\ref{Sec:ICE} for more information.
+
+\section{Prescribed Motion} \label{Sec:PrescribedMotion} The prescribed motion
+capability in Uintah allows the user to prescribe arbitrary material
+deformations and superimposed rotations.  This capability is particularly
+useful in verifying that the constitutive model is behaving as expected and is
+frame indifferent.  To prescribe material motion the following tag must be
+included in the \tt <MPM> \normalfont section of the input file:
+
+\begin{lstlisting}
+ <MPM>
+     <UsePrescribedDeformation>true</UsePrescribedDeformation>
+ </MPM>
+\end{lstlisting}
+
+The desired motion must then be specified in a file named \tt time\_defgrad\_rotation \normalfont.  The format of this file is as follows:
+
+\begin{lstlisting}
+t0 F11 F12 F13 F21 F22 F23 F31 F32 F33 theta0 a0 a1 a2
+t1 F11 F12 F13 F21 F22 F23 F31 F32 F33 theta1 a0 a1 a2
+. . .
+tn F11 F12 F13 F21 F22 F23 F31 F32 F33 thetan a0 a1 a2
+
+\end{lstlisting}
+where the first column is time, columns two through ten are the nine components of the prescribed deformation gradient, the eleventh column is the desired rotation angle, and the remaining three columns are the three components of the axis of prescribed rotation.  The components of the deformation gradient are linearly interpolated for times between those specified in the table.  The axis of rotation may be changed for each specified time.  As a result, the angle of rotation about the specified axis linearly increases from zero to the specified value at the end of the specified interval.  For example, the following table:
+
+\begin{lstlisting}
+0 1 0 0 0 1 0 0 0 1 0 0 0 0
+1 1 0 0 0 1 0 0 0 1 90 0 0 1
+2 1 0 0 0 1 0 0 0 1 91 0 0 1
+\end{lstlisting}
+specifies a pure rotation (no stretch) about the 3-axis.  At time=0 the material will have rotated 90 degrees about the 3-axis.  At time=2 the material will have rotated an additional 91 degrees about the 3-axis for a total of 181 degrees of rotation.  As a warning to the user, it is possible to specify the deformation gradient such that interpolating between to entries in the table results in a singular deformation gradient.  For example:
+\begin{lstlisting}
+0 1 0 0 0 1 0 0 0 1 0 0 0 0
+1 1 0 0 0 1 0 0 0 1 0 0 0 1
+2 -1 0 0 0 -1 0 0 0 1 0 0 0 1
+\end{lstlisting}
+would result in the simulation failing due to a negative jacobian error between time=1 and time=2 since the 11 and 22 components are linearly varying from 1 to -1 during that time, which will attempt to invert the computational cell.  The deformation gradient at time=2 corresponds to a 180 degree rotation about the 3-axis, and can be accomplished using the rotation feature described above.
+
+As a final example the table:
+\begin{lstlisting}
+0 1 0 0 0 1 0 0 0 1 0 0 0 0
+1 0.5 0 0 0 0.5 0 0 0 0.5 45 0 1 0
+2 0.5 0 0 0.5 0.5 0 0 0 0.5 90 0 0 1
+\end{lstlisting}
+would result in 50\% hydrostatic compression at time=1 with a 45 degree superimposed rotation about the 2-axis, followed by  simple shear and a 90 degree rotation about the 3-axis between time=1 and time=2.
+
+\section{Cohesive Zones} \label{Sec:CohesiveZones}
+A cohesive zone formulation is available in Uintah based on the description
+by Daphalapurkar, et al.~\cite{Daphalapurkar}.  As in their implementation,
+that in Uintah has several limitations.  It is limited to a 2D implementation,
+and the cohesive zone segments are assumed to not rotate or deform.
+
+In order to use cohesive zones, the following field must be added to the
+\tt <MPM> \normalfont section of the input file:
+
+\begin{lstlisting}
+ <MPM>
+     <use_cohesive_zones>true</use_cohesive_zones>
+ </MPM>
+\end{lstlisting}
+
+The traction functions used in Uintah are those given in Eq. 15
+of~\cite{Daphalapurkar}.  These require 4 input parameters.  They are
+$\sig_{max}$, $\tau_{max}$, $\delta_n$ and $\delta_t$, the cohesive strengths
+in the normal and shear directions, and the displacement jumps in the normal and
+tangential directions corresponding to the maximum normal and shear strength
+values, respectively.
+
+In an input file, the description of a cohesive zone looks like:
+
+\begin{lstlisting}
+            <cohesive_zone>
+              <sig_max> 240. </sig_max>
+              <tau_max> 240. </tau_max>
+              <delta_n> 0.00004   </delta_n>
+              <delta_t> 0.0000933 </delta_t>
+              <cz_filename>HOM.txt</cz_filename>
+            </cohesive_zone>
+\end{lstlisting}
+
+Note that in addition to the four parameters listed above, a cohesive zone
+filename is also specified.  The format of this file will be described below.
+Units on the strength and displacement correspond to the units for
+stress and length used in the remainder of the input file.
+
+Cohesive zones describe a cohesion law between adjacent materials. As such,
+they take the place of a contact model.  Thus, when using cohesive zones to
+describe the interaction of materials 1 and 2, the contact section of the input
+file would be:
+
+\begin{lstlisting}
+            <contact>
+                <type>null</type>
+                <materials>[1,2]</materials>
+            </contact>
+\end{lstlisting}
+
+Use of friction or approach contact to describe interaction between objects
+subsequent to decohesion should be possible and is being investigated.
+
+The traction that is applied to the two materials governed by a
+cohesive zone model is based on the displacement between those two materials,
+both normal and tangential.  The two adjacent materials are referred to in the
+implementation as the ``Top" and ``Bottom" materials.  A normal and tangential
+vector describes the orientation of the cohesive zone surface.  The convention
+for the normal vector is that it points in the direction from the bottom
+material to the top material.  With this information in hand, we can describe
+the format of the \tt <cz\_filename> \normalfont mentioned above.
+
+\begin{lstlisting}
+px1 py1 pz1 length1 normx1 normy1 normz1 tangx1 tangy1 tangz1 botmat1 topmat1
+px2 py2 pz2 length2 normx2 normy2 normz2 tangx2 tangy2 tangz2 botmat2 topmat2
+. . .
+pxN pyN pzN lengthN normxN normyN normzN tangxN tangyN tangzN botmatN topmatN
+\end{lstlisting}
+
+where the first three columns are the x, y and z coordinates of the position, 
+the fourth column is the length, the fifth through seventh column is the normal
+direction (x, y, z) and the eighth through tenth column is the tangential
+direction (x, y, z).  Finally, the eleventh and twelth columns are the bottom
+and top material indices, respectively.
+
+An example of 3 cohesive zone segments follows:
+
+\begin{lstlisting}
+2.5125 0.0 0.025 0.00125 0.0 1.0 0.0 1.0 0.0 0.0 1 2
+2.5375 0.0 0.025 0.00125 0.0 1.0 0.0 1.0 0.0 0.0 1 2
+2.5625 0.0 0.025 0.00125 0.0 1.0 0.0 1.0 0.0 0.0 1 2
+\end{lstlisting}
+
+As a 2D simulation in Uintah is actually a 3D simulation that is 1 cell thick,
+the ``length" parameter described above is actually going to be an area.
+Namely, the length in the plane of the simulation multiplied by the domain
+thickness in the out of plane direction.
+
+\section{Particle Insertion} \label{Sec:ParticleInsert}
+MPM has the ability to insert or transport blocks of particles into or
+ around the computational domain.  The functionality uses a time threshold for 
+activation of the insertion. Currently, capabilities include translation some 
+distances x, y and z and initiation of a new ``initial" velocity vector.  Particles, 
+defined by color, specified as an integer, in the geometry object section of the 
+input file, can have a limitless number of transformations applied to them.  
+There are no limits to how many geometry objects can be specified, however,
+each transformation can only act on one color index.  Thus movement of more than
+one block of particles can require multiple input lines.
+ 
+This functionality is defined in a text file in the order: 
+
+\begin{lstlisting}
+<time> <color> <trans x> <trans y> <trans z> <new x vel> <new y vel> <new z vel>
+\end{lstlisting}  
+
+During the first timestep in which the current physical time plus the calculated 
+$\Delta$t for the current timestep exceeds the time specified for a color block, the 
+particles of that color will be translated along the three coordinates and given 
+a new velocity.  Each line in the file can be used to define a unique transformation
+for one particle color group.  For instance, if a file contained the line:
+
+\begin{lstlisting}
+0.1 1 10 10 0 0 0 8 
+\end{lstlisting}
+
+\noindent after `0.1 s' of physical time any particle of color `1' will be translated 10 
+units in the positive x and y direction, 0 units in the positive z direction 
+and given a new velocity of 8 units/s in the positive z direction, with no 
+velocity in the x or y direction.
+
+Particle insertion is activated and directed with the following flags found in the 
+MPM section of the input file:
+\begin{lstlisting}
+<MPM>
+    <withColor>         true   </withColor>
+    <InsertParticles>   true   </InsertParticles>
+    <InsertParticlesFile>  "path/to/file.txt" </InsertParticlesFile>
+</MPM>
+\end{lstlisting}
+
+An example problem exists in ``inputs/MPM/" named Extrude that demonstrates 
+particle insertion.  ``extrude.ups" defines the problem setup, ``extrude.xml" defines 
+the geometry objects (also where the color is defined) and then pulled in to 
+``extrude.ups", and ``insert.dat" which defines the times, translations and new 
+velocity of the particle blocks.  Figure ~\ref{figinsertparticles} shows an image 
+of a simulation in progress that uses particle insertion.  The image shows a stream 
+of rubbery material flying into the domain and folding on itself.  Another particularly 
+useful idea to note from the image, is the secondary box above the normal domain, in which 
+the particles to be inserted reside before they are inserted.  Current application 
+of particle insertion tends to follow this motif.
+
+\begin{figure}
+  \center
+  \includegraphics[scale=.35]{insertParticles.png}
+  \caption{Particles being inserted from top box into bottom box.}
+  \label{figinsertparticles}
+\end{figure}
+
+
+%
+%______________________________________________________________________
+\section{Examples} \label{Sec:ExamplesMPM}
+
+The following examples are meant to be illustrative of a variety of
+capabilities of Uintah-MPM, but are by no means exhaustive.  Input files
+for the examples given here can be found in:
+\begin{lstlisting}
+inputs/UintahRelease/MPM
+\end{lstlisting}
+
+Additional (mostly undocumented) input files that exercise a greater range
+of code capabilities can be found in:
+\begin{lstlisting}
+inputs/MPM
+\end{lstlisting}
+
+
+\subsection*{\center Colliding Disks}
+\paragraph*{\underline{Problem Description}}
+This is an implementation of an example calculation from \cite{Sulsky1994} in
+which two elastic disks collide and rebound.  See Section 7.3 of that
+manuscript for a description of the problem.
+ 
+\paragraph*{\underline{Simulation Specifics}}
+\begin{description} 
+\item [Component used:] \hfill MPM
+\item [Input file name:] \hfill disks\_sulsky.ups
+\item [Command used to run input file:]\hfill sus disks\_sulsky.ups
+\item [Simulation Domain:]\hfill    1.0 x 1.0 x 0.05 m
+
+\item [Cell Spacing:]\hfill \\ 
+.05 x .05 x .05 m (Level 0)
+
+\item [Example Runtimes:] \hfill \\
+ 4 seconds  (1 processor, 3.16 GHz Xeon)\\
+
+\item [Physical time simulated:] \hfill 3.0 seconds
+
+\item [Associate VisIt session:] \hfill disks.session
+
+\end{description}
+
+\paragraph*{\underline{Results}}
+
+Figure~\ref{figdisks} shows a snapshot of the simulation, as the disks
+are beginning to collide.
+\begin{figure}
+  \center
+  \includegraphics[scale=.25]{disks.png}
+  \caption{Colliding elastic disks.  Particles colored according to
+velocity magnitude.}
+  \label{figdisks}
+\end{figure}
+
+Additional data is available within the uda in the form of "dat" files.
+In this case, both the kinetic and strain energies are avaiable and can
+be plotted to create a graph similar to that in Fig. 5a of \cite{Sulsky1994}.
+e.g. using gnuplot:
+
+\begin{lstlisting}
+cd disks.uda.000
+gnuplot
+gnuplot> plot "StrainEnergy.dat", "KineticEnergy.dat"
+gnuplot> quit
+\end{lstlisting}
+%
+%__________________________________
+\subsection*{\center Taylor Impact Test}
+\addcontentsline{toc}{subsection}{Taylor Impact Test}
+\paragraph*{\underline{Problem Description}}
+This is a simulation of an Taylor impact experiment calculation from 
+\cite{Gust1982} in a copper cylinder at 718 K that is fired at a
+rigid anvil at 188 m/s.  The copper cylinder has a length of 30 mm and
+a diameter of 6 mm.  The cylinder rebounds from the anvil after 100 $\mu$s.
+ 
+\paragraph*{\underline{Simulation Specifics}}
+\begin{description} 
+\item [Component used:] \hfill MPM
+\item [Input file name:] \hfill taylorImpact.ups
+\item [Command used to run input file:]\hfill sus inputs/UintahRelease/MPM/taylorImpact.ups
+\item [Simulation Domain:]\hfill 8 mm x 33 mm x 8 mm
+
+\item [Cell Spacing:]\hfill \\ 
+  1/3 mm x 1/3 mm x 1/3 mm (Level 0)
+
+\item [Example Runtimes:] \hfill \\
+  1 hour   (1 processor, Xeon 3.16 GHz)\\
+
+\item [Physical time simulated:] \hfill 100 $\mu$seconds
+
+\item [Associate VisIt session:] \hfill taylorImpact.session
+
+\end{description}
+
+\paragraph*{\underline{Results}}
+Figure~\ref{fig:taylorImpact_slide} shows a snapshot from the end of the simulation.
+There, the cylinder is allowed to slide laterally across the plate due
+to the following optional specification in the \tt <contact> \normalfont
+section:
+
+\begin{lstlisting}
+        <direction>[0,1,0]</direction>
+\end{lstlisting}
+
+\begin{figure}
+  \center
+  \includegraphics[scale=.25]{taylorImpact_slide.png}
+  \caption{Taylor impact simulation with sliding between cylinder and
+           target.  Particles colored according to temperature.}
+  \label{fig:taylorImpact_slide}
+\end{figure}
+
+Figure~\ref{fig:taylorImpact_stick} shows a snapshot from the end of a
+similar simulation.  In this case, the cylinder is restricted from sliding
+laterally across the plate by altering the \tt <contact> \normalfont
+section as follows:
+\begin{lstlisting}
+        <direction>[1,1,1]</direction>
+\end{lstlisting}
+
+\begin{figure}
+  \center
+  \includegraphics[scale=.25]{taylorImpact_stick.png}
+  \caption{Taylor impact simulation with sliding prohibited between
+           cylinder and target.  Particles colored according to temperature.}
+  \label{fig:taylorImpact_stick}
+\end{figure}
+
+%__________________________________
+\subsection*{\center Sphere Rolling Down an Inclined Plane}
+\addcontentsline{toc}{subsection}{Sphere Rolling Down an Inclined Plane}
+\paragraph*{\underline{Problem Description}}
+Here, a sphere of soft plastic, initially at rest, rolls under the
+influence of gravity down a plane of a harder plastic.  Gravity is
+oriented such that the plane is effectively angled at 45 degrees to
+the horizontal.  This simulation demonstrates the effectiveness of
+the contact algorithm, described in~\cite{Bard2001}.  Frictional
+contact, using a friction coefficient of $\mu = 0.495$ causes the ball
+to start rolling as it impacts the plane, after being dropped from
+barely above it.  The same simulation is also run using a friction
+coefficient of $\mu = 0.0$.  The difference in the results is shown
+below.
+ 
+\paragraph*{\underline{Simulation Specifics}}
+\begin{description} 
+\item [Component used:] \hfill MPM
+\item [Input file name:] \hfill inclinedPlaneSphere.ups
+\item [Command used to run input file:]\hfill sus inputs/UintahRelease/MPM/inclinedPlaneSphere.ups
+\item [Simulation Domain:]\hfill    12.0 x 2.0 x 4.8 m
+
+\item [Cell Spacing:]\hfill \\ 
+.2 x .2 x .2 m (Level 0)
+
+\item [Example Runtimes:] \hfill \\
+ 2.7 hours  (1 core, 3.16 GHz Xeon)\\
+
+\item [Physical time simulated:] \hfill 2.2 seconds
+
+\item [Associate VisIt session:] \hfill incplane.session
+
+\end{description}
+
+\paragraph*{\underline{Results}}
+Figure~\ref{figincplaneSphere_bigmu} and Figure~\ref{figincplaneSphere_0mu}
+show snapshots of the simulation, as
+the sphere is about halfway down the plane.
+\begin{figure}
+  \center
+  \vspace{-35pt}
+  \includegraphics[width=.5\textwidth]{incplane_mu_495.png}
+  \caption{Sphere rolling down an ``inclined" plane.  The gravity vector
+is oriented at a 45 degree angle relative to the plane.  Particles are colored
+by velocity magnitude. A friction coefficient of $\mu = 0.495$ is used.
+Particles are colored according
+to velocity magnitude, note that the particles at the top of the sphere
+are moving most rapidly, and those near the surface of the plane are 
+basically stationary, as expected.}
+  \label{figincplaneSphere_bigmu}
+\end{figure}
+
+\begin{figure}
+  \center
+  \vspace{-15pt}
+  \includegraphics[width=.5\textwidth]{incplane_mu_0.png}
+  \caption{Sphere rolling down an ``inclined" plane.  The gravity vector
+is oriented at a 45 degree angle relative to the plane.  Particles are colored
+by velocity magnitude.  A friction coefficient of $\mu = 0.0$ is used.
+Particles are colored according to velocity magnitude.  In this case,
+the particles throughout the sphere are moving at roughly the same velocity,
+because the sphere is sliding as it moves down the plane, as opposed to
+sticking and rolling.}
+  \label{figincplaneSphere_0mu}
+\end{figure}
+
+%__________________________________
+\subsection*{\center Crushing a Foam Microstructure}
+\addcontentsline{toc}{subsection}{Crushing a Foam Microstructure}
+\paragraph*{\underline{Problem Description}}
+This calculation demonstrates two important strength of MPM.  The first
+is the ability to quickly generate a computational representation of
+complex geometries.  The second is the ability of the method to handle
+large deformations, including self contact.
+
+In particular, in this calculation a small sample of foam, the geometry
+for which was collected using microCT, is represented via material points.
+The sample is crushed to 87.5\% compaction through the use of a rigid plate, which
+acts as a constant velocity boundary condition on the top of the sample.  This
+calculation is a small example of those described in \cite{brydonfoam}.  The
+geometry of the foam is created by image procesing the CT data, and based
+on the intensity of each voxel in the image data, the space represented
+by that voxel either recieves a particle with the material properties of the
+foam's constituent material, or is left as void space.  This particle
+representation avoids the time consuming steps required to build a suitable
+unstructured mesh for this very complicated geometry.
+ 
+\paragraph*{\underline{Simulation Specifics}}
+\begin{description} 
+\item [Component used:] \hfill MPM
+\item [Input file name:] \hfill foam.ups
+\item [Instruction to run input file:]
+
+First, copy foam.ups and foam.pts.gz to the same directory as sus.
+Adjust the number of patches in the ups file based on
+the number of processors available to you for this run.
+First, uncompress the pts file:
+\begin{lstlisting}
+ gunzip foam.pts.gz
+\end{lstlisting}
+
+Then the command:
+\begin{lstlisting}
+ tools/pfs/pfs foam.ups
+\end{lstlisting}
+will divide the foam.pts
+file, which contains the geometric description of the foam,
+into number of patches smaller files, named foam.pts.0,
+foam.pts.1, etc.  This is done so that for large simulations,
+each processor is only reading that data which it needs, and
+prevents the thrashing of the file system that would occur
+if each processor needed to read the entire pts file.  This
+command only needs to be done once, or anytime the patch
+distibution is changed.  Note that this step must be done even
+if only one processor is available.
+
+To run this simulation:
+\begin{lstlisting}
+  mpirun -np NP sus foam.ups
+\end{lstlisting}
+where NP is the number of processors being used.
+
+\item [Simulation Domain:]\hfill  0.2 X 0.2 X 0.2125 mm
+
+\item [Number of Computational Cells:]\hfill \\ 
+102 X 102 X 85 (Level 0)
+
+\item [Example Runtimes:] \hfill \\
+2.4 hours  (4 cores, 3.16 GHz Xeon)\\
+
+\item [Physical time simulated:] \hfill 3.75 seconds
+
+\item [Associated VisIt session 1:] \hfill foam.iso.session
+\item [Associated VisIt session 2:] \hfill foam.part.session
+
+\end{description}
+
+\paragraph*{\underline{Results}}
+
+Figure~\ref{figfoam} shows a snapshot of the simulation via isosurfacing,
+as the foam is at about 50\% compaction.
+\begin{figure}
+  \center
+  \includegraphics[scale=.15]{foam_iso.png}
+  \caption{Compaction of a foam microstructure shown via isosurfacing.}
+  \label{figfoam}
+\end{figure}
+
+Figure~\ref{figfoampart} shows a snapshot of the simulation via particles
+colored by equivalent stress as the foam is at about 60\% compaction.
+\begin{figure}
+  \center
+  \includegraphics[scale=.15]{foam_part.png}
+  \caption{Compaction of a foam microstructure rendered as particles colored
+           by equivalent stress.}
+  \label{figfoampart}
+\end{figure}
+
+In this simulation, the reaction forces at 5 of the 6 computational boundaries
+are also recorded and can be viewed using a simple plotting package such
+as gnuplot.  At each timestep, the internal force at each of the boundaries
+is accumulated and stored in ``dat" files within the uda,
+e.g. BndyForce\_zminus.dat.  Because the reaction force is a vector, it
+is enclosed in square brackets which may be removed by use of a script in
+the inputs directory:
+
+\begin{lstlisting}
+cd foam.uda.000
+../inputs/ICE/Scripts/removeBraces BndyForce\_zminus.dat
+gnuplot
+gnuplot> plot "BndyForce\_zminus.dat" using 1:4
+gnuplot> quit
+\end{lstlisting}
+
+These reaction forces are similar to what would be measured on a mechanical
+testing device, and help to understand the material behavior.
+
+%__________________________________
+\subsection*{\center Hole in an Elastic Plate}
+\addcontentsline{toc}{subsection}{Hole in an Elastic Plate}
+\paragraph*{\underline{Problem Description}}
+A flat plate with a hole in the center is loaded in tension.  To achieve a
+quasi-static solution, the load is applied slowly and a viscous damping force
+is used to reduce transients in the solution.  As such, this simulation
+demonstrates those two capabilities.  Specifically, take note of:
+\begin{lstlisting}
+       <use_load_curves> true </use_load_curves>
+       <artificial_damping_coeff>1.0</artificial_damping_coeff>
+\end{lstlisting}
+in the \tt <MPM> \normalfont section of the input file, and:
+\begin{lstlisting}
+   <PhysicalBC>
+     <MPM>
+       <pressure>
+	.
+	.
+	.
+\end{lstlisting}
+section below that.
+
+ 
+\paragraph*{\underline{Simulation Specifics}}
+\begin{description} 
+\item [Component used:] \hfill MPM
+\item [Input file name:] \hfill holePlate.ups
+\item [Command used to run input file:]\hfill sus inputs/UintahRelease/MPM/holePlate.ups
+\item [Simulation Domain:]\hfill 5.0 m x 5.0 m x 0.1 m
+
+\item [Cell Spacing:]\hfill \\ 
+  0.1 m x 0.1 m x 0.1 m (Level 0)
+
+\item [Example Runtimes:] \hfill \\
+ 2 minutes  (1 processor, Xeon 3.16 GHz)\\
+
+\item [Physical time simulated:] \hfill 10 seconds
+
+\item [Associate VisIt session:] \hfill holeInPlate.session
+
+\end{description}
+
+\paragraph*{\underline{Results}}
+
+Figure~\ref{fig:holeInPlate} shows a snapshot of the equivalent stress
+throughout the plate, as well as the load applied to the vectors near the
+edge of the plate.  Expected maximum stress is $300 Pa$.  The $238 Pa$ maximum
+observed here is significantly lower, but upon doubling the resolution in the
+x and y directions, the maximum stress is $308 Pa$.  To recreate this image, select
+Controls in the upper left corner of the screen.  Select Expressions, then click the New 
+button.  Now select Insert Function, then Tensor, then effective\_tensor.  The last step is
+to select Insert Variable, then Tensor, then p. stress.  
+\begin{figure}
+  \center
+  \includegraphics[scale=.25]{holeInPlate.png}
+  \caption{Elastic plate with a hole loaded in tension.  Particles are
+           colored by equivalent stress, vectors indicate applied load.}
+  \label{fig:holeInPlate}
+\end{figure}
+\newpage
+
+%__________________________________
+\subsection*{\center Tungsten Sphere Impacting a Steel Target}
+\addcontentsline{toc}{subsection}{Tungsten Sphere Impacting a Steel Target}
+\paragraph*{\underline{Problem Description}}
+A $1 mm$ tungsten sphere with an initial velocity of $5000 m/s$
+impacts a steel target.  Axisymmetric conditions are used in this case,
+conversion of the input file to the full 3D simulation is straightforward.
+The user may wish to do both simulations of both to gain confidence in the
+applicability of axisymmetry. 
+
+This simulation exercises the \tt elastic\_plastic \normalfont
+constitutive model for the
+steel material. This includes sub-models for equations of state,
+variable shear modulus, melting, plasticity, etc.  The tungsten is modeled
+using the \tt comp\_neo\_hook\_plastic, \normalfont which is simple vonMises
+plasticity with linear hardening.  One difficulty with using the more 
+sophisticated models is that parameters can be difficult to find for many
+materials.
+
+\paragraph*{\underline{Simulation Specifics}}
+\begin{description}
+\item [Component used:] \hfill MPM
+\item [Input file name:] \hfill WSphereIntoSteel.axi.ups
+\item [Command used to run input file:]\hfill sus inputs/UintahRelease/MPM/WSphereIntoSteel.axi.ups
+\item [Simulation Domain:]\hfill 1.0 cm x 1.5 cm x axisymmetric
+
+\item [Cell Spacing:]\hfill \\
+  0.333 mm x 0.333 mm x axisymmetry (Level 0)
+
+\item [Example Runtimes:] \hfill \\
+ 15 seconds  (1 processor, Xeon 3.16 GHz)\\
+
+\item [Physical time simulated:] \hfill 4 $\mu$seconds
+
+\item [Associate VisIt session:] \hfill WSphereSteel.session
+
+\end{description}
+
+\paragraph*{\underline{Results}}
+
+Figure~\ref{fig:WSphereSteelInit} shows the initial configuration for
+this simulation, with particles colored by the magnitude of their velocity.
+Figure~\ref{fig:WSphereSteelFinal} shows the state of the simulation after
+$4 \mu$seconds this simulation, with particles still colored by velocity
+magnitude.
+
+\begin{figure}
+  \center
+  \includegraphics[scale=.20]{WShereInitAxi.png}
+  \caption{Initial configuration of hypervelocity impact of tungsten sphere
+           into a steel target.  Particles are
+           colored by velocity magnitude.}
+  \label{fig:WSphereSteelInit}
+\end{figure}
+\newpage
+\begin{figure}
+  \center
+  \includegraphics[scale=.20]{WShereFinalAxi.png}
+  \caption{State of the tunsgsten and steel after $4 \mu$seconds.
+           Particles are colored by velocity magnitude.}
+  \label{fig:WSphereSteelFinal}
+\end{figure}
+
+\subsection{Method Of Manufactured Solutions (MMS)}
+There are three manufactured solutions available in Uintah for nonlinear elastic constitutive models. The input files are available in the {\tt inputs/MPM} folder. 
+\begin{lstlisting}
+AA.ups (Axis Aligned MMS)
+GenVortex.ups (Genralized Vortex MMS)
+Ring_MMS.ups (Expanding Ring MMS)
+\end{lstlisting}
+All these input files have the following tag included in the {\tt <MPM>} section of the input file:
+\begin{lstlisting}
+<MPM>
+   <RunMMSProblem>Name of the MMS</RunMMSProblem>	
+</MPM>
+\end{lstlisting}
+The exact solutions for these problems are available in {\tt puda}, and the call to extract the error is
+\begin{lstlisting}
+puda -AA_MMS_2 AA_MMS.uda (for AxisAligned MMS)
+puda -GV_MMS GenVortex.uda (for Generalized Vortex MMS)
+puda -ER_MMS Ring_MMS.uda (for Expanding Ring MMS)
+\end{lstlisting}
+
+The current implementation allows the user to add a new manufactured solution in the {\tt MPM} component in a relatively-straight forward way. The current implementation of these manufactured solutions are located in {\tt src/CCA/Components/MPM/MMS} folder.
+The following files require modifications either to change the exisiting MMS or add a new one.
+\begin{lstlisting}
+1) src/CCA/Components/MPM/MPMFlags.cc
+2) src/StandAlone/inputs/UPS_SPEC/mpm_spec.xml
+3) src/CCA/Components/MPM/MMS/MMS.cc
+4) src/CCA/Components/MPM/ConstitutiveModel/CNH_MMS.cc (Right now, all these MMS use
+the same constitutive model. User can change the constitutive model accordingly)
+5) src/StandAlone/tools/puda/puda.cc
+\end{lstlisting}
+Following are the sequential steps to add a new MMS to the existing framework. 
+\newline
+1) In {\tt MPMFlags.cc}, add another {\tt if} condition for the new MMS string in the following {\tt loop}
+\begin{lstlisting}
+if(d_mms_type=="AxisAligned"){
+    d_mms_type = "AxisAligned";
+  } else if(d_mms_type=="GeneralizedVortex"){
+    d_mms_type = "GeneralizedVortex";
+  } else if(d_mms_type=="ExpandingRing"){
+    d_mms_type = "ExpandingRing";
+  } else if(d_mms_type=="AxisAligned3L"){
+    d_mms_type = "AxisAligned3L";
+  }
+}
+\end{lstlisting}
+2) Add the same string in the {\tt <RunMMSProblem>} tag located in the {\tt mpm\_spec.xml} file.
+\newline
+3) There are two member functions available in {\tt MMS.cc}.
+\begin{lstlisting}
+		MMS::initializeParticleForMMS
+		MMS::computeExternalForceForMMS
+\end{lstlisting}
+Similar to step $1$, add another {\tt if} condition in both the member functions for the new MMS. In the {\tt initializeParticleForMMS} function, initialize the particle data at time $t=0$, and in the {\tt computeExternalForceForMMS} function, code the analytical body forces. The exisiting analytical solutions can be used as a guide.
+\newline
+4) Add the exact solution in the {\tt src/StandAlone/tools/puda} folder. Look at the {\tt AA\_MMS.cc, GV\_MMS.cc, and ER\_MMS.cc} for reference. Add the option for the new MMS in the {\tt puda.cc} file.
+\newline
+5) If the new MMS has a non-zero stress, necessary modifications needs to be made in the {\tt initializeCMData} function located in that particular constitutive model (CNH\_MMS.cc for reference).
+
+%______________________________________________________________________
+%\section{References}
+%\bibliographystyle{plain}
+%\bibliography{mpm}
+

@@ -1,14 +1,12 @@
-\section{Dynamic Load Balancing} \label{loadbalancer}
-
-Uintah has a couple of load balancing options which may be useful for increasing performance by decreasing
+\chapter{Dynamic Load Balancing} \label{loadbalancer}
+\Vaango has a few load balancing options which may be useful for increasing performance by decreasing
 the load imbalance.  The following describes the loadbalancer section of an input file and what effects
 it has on the load balancer.  
 
 If no load balancer is specified then a simple load balancing method which assigns an equal number of patches
 to processors. This is not ideal in most cases and should be avoided.
-
-\subsection{Input File Specs}
-\begin{lstlisting}
+\section{Input File Specs}
+\begin{lstlisting}[language=XML]
    <LoadBalancer type="DLB"> 
         <!-- DLB specific flags -->
         <costAlgorithm>ModelLS</costAlgorithm>
@@ -19,28 +17,27 @@ to processors. This is not ideal in most cases and should be avoided.
         <gainThreshold>0.15</gainThreshold>
         <outputNthProc>1</outputNthProc>
         <doSpaceCurve>true</doSpaceCurve>
-
    </LoadBalancer>
 \end{lstlisting}
 
-There are two main load balancers used in Uintah.  The first is the DLB load balancer.
+There are two main load balancers used in \Vaango.  The first is the \Textsfc{DLB load balancer}.
 This is a robust load balancer that is good for many problems.  In addition,
 this load balancer can utilize profiling in order to tune itself during the runtime
 in order to achieve better results.  
 
-To use this load balancer the user must specify the type as "DLB".  It is also suggested
-that the user specify a costAlgorithm which can be "Model", "ModelLS", "Memory", or
-"Kalman" with the default being "ModelLS".  If "hasParticles" is set to true then
+To use this load balancer the user must specify the type as \Textbfc{DLB}.  It is also suggested
+that the user specify a costAlgorithm which can be \Textbfc{Model}, \Textbfc{ModelLS}, \Textbfc{Memory}, or
+\Textbfc{Kalman} with the default being \Textbfc{ModelLS}.  If \Textbfc{hasParticles} is set to true then
 these cost algorithms will take the number of particles into account when determining
 the cost.
 
-This algorithm first orders the patches linearly.  If doSpaceCurve is set to true
+This algorithm first orders the patches linearly.  If \Textbfc{doSpaceCurve} is set to true
 then this ordering is done according to a Hilbert Space-Filling curve, which will
 likely provide better clusterings.  Once the patches are ordered linearly, costs
 are assigned to each patch and the patches are distributed onto processors so that
 the costs on each processor are even.  
 
-The PLB load balancer is an alterantive to the DLB load balancer which is
+The \Textsfc{PLB} load balancer is an alterantive to the \Textsfc{DLB} load balancer which is
 likely more efficent for particle based calculations.  This load balancer
 divides the patches into two sets (cell dominate and particle domintate), 
 which is determined using the particleCost and cellCost parameters.
@@ -53,8 +50,8 @@ curve.
 
 The following list describes other flags utilized by these load balancers:
 \begin{itemize}
-  \item timestepInterval - how many timesteps must pass before reevaluating the load balance.  
-  \item gainThreshold - the predicted percent improvement that is required to reload balance.  
-  \item outputNthProc - output data on only every Nth processor (experimental). 
+  \item \Textbfc{timestepInterval} - how many timesteps must pass before reevaluating the load balance.  
+  \item \Textbfc{gainThreshold} - the predicted percent improvement that is required to reload balance.  
+  \item \Textbfc{outputNthProc} - output data on only every Nth processor (experimental). 
 \end{itemize}
 
