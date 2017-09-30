@@ -1,4 +1,4 @@
-\section{\bf Simplified Geomodel} This is a simplified model which has the basic features
+\section{Arenisca} This is a simplified model which has the basic features
 needed for geomaterials. The yield function of this model is a two-surface plasticity model 
 which includes a linear Drucker-Prager part and a cap yield function. The “cap” part reflects
 the fact that plastic deformations can occur even under purely hydrostatic compression as
@@ -6,7 +6,7 @@ a consequence of void collapse. It means that the simplified geomodel considers 
 of both microscale flaws such as porosity and networks of microcracks. This mdel uses a 
 multi-stage return algorithm proposed in \cite{Brannon2010}. Usage is as follows:
 \begin{lstlisting}[language=XML]
-        <constitutive_model type="simplified_geo_model">
+        <constitutive_model type="Arenisca">
             <B0>10000</B0>
             <G0>3750</G0>
             <hardening_modulus>0.0</hardening_modulus>
@@ -45,7 +45,7 @@ in which $\bar{p}$ is the pressure.
 In pure kinematic hardening the center of the yield surface changes with its size and
 shape remaining unchanged.
 Generally, kinematic hardening is modeled by introducing the back stress tensor, and defining
-an appropriate evolution rule for it. In the simplified geomodel, linear Ziegler’s rule is used:
+an appropriate evolution rule for it. In the Arenisca model, linear Ziegler’s rule is used:
 \begin{equation}
 \dot{\alpha}_{ij}=\dot{\mu}(\Bsig_{ij}-\alpha_{ij})
 \end{equation}
@@ -58,7 +58,7 @@ where $\dot{\xi}^p$ is the deviatoric invariant of the rate of plastic strain an
 constant defined yb the user as \tt <kinematic\_hardening\_constant> \normalfont.
 
 Based on the research work done by M. Homel at the University of Utah, the following equations
-are used in the simplified geomodel to consider the fluid-filled porous effects:
+are used in the Arenisca model to consider the fluid-filled porous effects:
 \begin{eqnarray}
 \frac{\partial X}{\partial\varepsilon^p_v}=
 && \frac{1}{p_1p_3}\exp{(-p_1X-p_0)}

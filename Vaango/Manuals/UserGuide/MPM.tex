@@ -510,7 +510,7 @@ which, their velocity becomes that given in the
 field indicates in which cartesian directions contact should be specified.
 Values of $1$ indicate that contact should be specified, $0$ indicates that
 the subject materials should be allowed to slide in that direction.  If
-a \Textsfc{filename} field {\Textsfc{is} specified, then the user can
+a \Textsfc{filename} field \Textsfc{is} specified, then the user can
 create a text file which contains four entries per line.  These are:
 \begin{lstlisting}[backgroundcolor=\color{background}]
 time1 velocity_x1 velocity_y1 velocity_z1
@@ -1394,26 +1394,26 @@ magnitude.
 
 \newpage
 \section{Method Of Manufactured Solutions (MMS)}
-There are three manufactured solutions available in \Vaango for nonlinear elastic constitutive models. The input files are available in the {\Textsfc{inputs/MPM} folder. 
+There are three manufactured solutions available in \Vaango for nonlinear elastic constitutive models. The input files are available in the \Textsfc{inputs/MPM} folder. 
 \begin{lstlisting}[backgroundcolor=\color{background}]
 AA.ups (Axis Aligned MMS)
 GenVortex.ups (Genralized Vortex MMS)
 Ring_MMS.ups (Expanding Ring MMS)
 \end{lstlisting}
-All these input files have the following tag included in the {\Textsfc{MPM} section of the input file:
+All these input files have the following tag included in the \Textsfc{MPM} section of the input file:
 \begin{lstlisting}[language=XML]
 <MPM>
    <RunMMSProblem>Name of the MMS</RunMMSProblem>  
 </MPM>
 \end{lstlisting}
-The exact solutions for these problems are available in {\Textsfc{puda}, and the call to extract the error is
+The exact solutions for these problems are available in \Textsfc{puda}, and the call to extract the error is
 \begin{lstlisting}[backgroundcolor=\color{background}]
 puda -AA_MMS_2 AA_MMS.uda (for AxisAligned MMS)
 puda -GV_MMS GenVortex.uda (for Generalized Vortex MMS)
 puda -ER_MMS Ring_MMS.uda (for Expanding Ring MMS)
 \end{lstlisting}
 
-The current implementation allows the user to add a new manufactured solution in the {\Textsfc{MPM} component in a relatively-straight forward way. The current implementation of these manufactured solutions are located in {\Textsfc{src/CCA/Components/MPM/MMS} folder.
+The current implementation allows the user to add a new manufactured solution in the \Textsfc{MPM} component in a relatively-straight forward way. The current implementation of these manufactured solutions are located in \Textsfc{src/CCA/Components/MPM/MMS} folder.
 The following files require modifications either to change the exisiting MMS or add a new one.
 \begin{lstlisting}[backgroundcolor=\color{background}]
 1) src/CCA/Components/MPM/MPMFlags.cc
@@ -1425,7 +1425,7 @@ the same constitutive model. User can change the constitutive model accordingly)
 \end{lstlisting}
 Following are the sequential steps to add a new MMS to the existing framework. 
 \newline
-1) In {\Textsfc{MPMFlags.cc}, add another {\Textsfc{if} condition for the new MMS string in the following {\Textsfc{loop}
+1) In \Textsfc{MPMFlags.cc}, add another \Textsfc{if} condition for the new MMS string in the following \Textsfc{loop}
 \begin{lstlisting}[language=Cpp]
 if(d_mms_type=="AxisAligned"){
     d_mms_type = "AxisAligned";
@@ -1438,16 +1438,16 @@ if(d_mms_type=="AxisAligned"){
   }
 }
 \end{lstlisting}
-2) Add the same string in the {\Textsfc{RunMMSProblem} tag located in the {\Textsfc{mpm\_spec.xml} file.
+2) Add the same string in the \Textsfc{RunMMSProblem} tag located in the \Textsfc{mpm\_spec.xml} file.
 \newline
-3) There are two member functions available in {\Textsfc{MMS.cc}.
+3) There are two member functions available in \Textsfc{MMS.cc}.
 \begin{lstlisting}[language=Cpp]
     MMS::initializeParticleForMMS
     MMS::computeExternalForceForMMS
 \end{lstlisting}
-Similar to step $1$, add another {\Textsfc{if} condition in both the member functions for the new MMS. In the {\Textsfc{initializeParticleForMMS} function, initialize the particle data at time $t=0$, and in the {\Textsfc{computeExternalForceForMMS} function, code the analytical body forces. The exisiting analytical solutions can be used as a guide.
+Similar to step $1$, add another \Textsfc{if} condition in both the member functions for the new MMS. In the \Textsfc{initializeParticleForMMS} function, initialize the particle data at time $t=0$, and in the \Textsfc{computeExternalForceForMMS} function, code the analytical body forces. The exisiting analytical solutions can be used as a guide.
 \newline
-4) Add the exact solution in the {\Textsfc{src/StandAlone/tools/puda} folder. Look at the {\Textsfc{AA\_MMS.cc, GV\_MMS.cc, and ER\_MMS.cc} for reference. Add the option for the new MMS in the {\Textsfc{puda.cc} file.
+4) Add the exact solution in the \Textsfc{src/StandAlone/tools/puda} folder. Look at the \Textsfc{AA\_MMS.cc, GV\_MMS.cc, and ER\_MMS.cc} for reference. Add the option for the new MMS in the \Textsfc{puda.cc} file.
 \newline
-5) If the new MMS has a non-zero stress, necessary modifications needs to be made in the {\Textsfc{initializeCMData} function located in that particular constitutive model (CNH\_MMS.cc for reference).
+5) If the new MMS has a non-zero stress, necessary modifications needs to be made in the \Textsfc{initializeCMData} function located in that particular constitutive model (CNH\_MMS.cc for reference).
 

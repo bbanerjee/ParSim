@@ -17,29 +17,6 @@ At this time, the reader is directed to the manuscript by Guilkey,
 Harman and Banerjee~\cite{fourthmit} for the theoretical and algorithmic
 description of the method.
 
-%\subsection{Uintah Specification}
-
-%\paragraph{ICE}
-
-%\paragraph{Basic Inputs}
-%\paragraph{Physical Constants}
-%\paragraph{Material Properties}
-%\paragraph{Equation of State}
-%\paragraph{Exchange Properties}
-%\paragraph{BoundaryConditions}
-%\paragraph{Solvers}
-
-
-%\subsection{MPM}
-
-%\paragraph{Basic Inputs}
-%\paragraph{Physical Constants}
-%\paragraph{Material Properties}
-%\paragraph{Constitutive Models}
-%\paragraph{Contact}
-%\paragraph{BoundaryConditions}
-%\paragraph{Physical Boundary Conditions}
-
 \section{Solid State Kinetic Models}
 
 A generalized reaction model for solid state kinetics based on the
@@ -596,7 +573,7 @@ Berghout et al. \cite{ref:Berghout2002}  The parameters are presented in the fol
 
 
 \newpage
-\paragraph{Dynamic Output Intervals} \label {Sec:DDT2}
+\subsubsection{Dynamic Output Intervals} \label {Sec:DDT2}
 The dynamic output intervals section is used to change how frequently the output interval and check point interval are saved. The intervals can be changed when the pressure is a cell with reactant is greater than the set pressure threshold and/or when detonation is detected. This only works when using the DDT1 reaction model.
 
 
@@ -642,7 +619,7 @@ The input file specification is as follows:
 \end{lstlisting}
 
 \newpage
-\paragraph{Induction Time} \label {Sec:Induction Time }
+\subsubsection{Induction Time} \label {Sec:Induction Time }
 To accurately represent the propagation of deflagration an "induction" period, or wait time was introduced. This induction period is the time a cell must wait before reactant mass would be converted to product gas using the WSB burn model \cite{ref:wardsonbrewster}.   The induction time is dependent on the surrounding pressure and the size of the cell. The induction time model is based off experimentally determined flame propagation on a surface as seen in equation \ref{FlameSpread} \cite{flameProp}, where P is the dimensionless pressure (p/p$_0$) and S$_f$ is the flame propagation in $cm/s$. Equation \ref{FlameSpread} is used in determining the induction time as seen by equation \ref{inducTime} where x is the size of the cell and A is a constant used to speed up or slow down the propagation of convective deflagration. A varies depending on the length of the cell but should be used to give the correct propagation of convective deflagration only. The model determines which direction the flame is coming from in turn adjusting A according to the angle of penetration.
 For instance if the flame is propagating along a surface but not into the solid A = 1 but if the flame is propagating directly into the surface A equals the value set in the input file.
 
@@ -699,7 +676,7 @@ The pressure shift, exponential and pre-exponential constants presented above ar
 
 \subsection*{\center Mach 2 Wedge}
 \addcontentsline{toc}{subsection}{Mach 2 Wedge}
-\paragraph*{\underline{Problem Description}}
+\subsubsection*{\underline{Problem Description}}
 This is a simulation of a symmetric $20^o$ wedge traveling through initially
 quiescent air at Mach 2.0.  A shock forms at the leading edge of the
 wedge and an expansion fan over its top.  Consultation of oblique shock
@@ -713,7 +690,7 @@ triangulated surface, rather than the geometric primitives usually used.
 This allows the user to study flow around arbitrarily complex objects,
 without the difficulty of generating a body fitted mesh around that object.
 
-\paragraph*{\underline{Simulation Specifics}}
+\subsubsection*{\underline{Simulation Specifics}}
 \begin{description}
 \item [Component used:] \hfill rmpmice (Rigid MPM-ICE)
 \item [Input file name:] \hfill Mach2wedge.ups
@@ -737,14 +714,14 @@ the same directory as sus.)
 
 \newpage
 
-\paragraph*{\underline{Results}}
+\subsubsection*{\underline{Results}}
 
 Figure~\ref{figwedge} shows a snapshot of the simulation.  Contour
 plot depicts pressure and reflects the presence of a leading shock
 and an expansion fan.
 \begin{figure}
   \center
-  \includegraphics[scale=.4]{M2wedge.png}
+  \includegraphics[width=0.5\textwidth]{M2wedge.png}
 
   \caption{$20^o$ wedge moving at Mach 2.0 through initially stationary
 air.  Contour plot depicts pressure.}
@@ -755,7 +732,7 @@ air.  Contour plot depicts pressure.}
 %__________________________________
 \subsection*{\center Cylinder in a Crossflow}
 \addcontentsline{toc}{subsection}{Cylinder in a Crossflow}
-\paragraph*{\underline{Problem Description}}
+\subsubsection*{\underline{Problem Description}}
 In this example the domain is initially filled with air moving at a uniform velocity of $0.03m/s$  A ridgid cylinder $O.D. = 0.02m$ is placed $0.1m$ from the inlet and a passive scalar is injected into the domain through a $0.002m$ hole on in the inlet boundary of the domain.  A velocity perturbation is placed upstream of the cylinder to produce an instablity that will help trigger the onset of the K\'arm\'an vortex street.
 %
 \subsection*{\underline{Simulation Specifics}}
@@ -785,7 +762,7 @@ Figure~\ref{fig:cylCrossFlow} shows a snapshot of the simulation at time $t=60se
 plot of the passive scalar shows the K\'arm\'an vortex street behind the cylinder at $Re=700$.
 \begin{figure}
   \center
-  \includegraphics[scale=.5]{cylCrossFlow.png}
+  \includegraphics[width=0.5\textwidth]{cylCrossFlow.png}
   \caption{Flow over a stationary cylinder, $Re=700$, a passive scalar is used as a flow marker}
   \label{fig:cylCrossFlow}
 \end{figure}
@@ -799,7 +776,7 @@ A movie of the results is located at
 %__________________________________
 \subsection*{\center Copper Clad Rate Stick (aka ``Cylinder Test")}
 \addcontentsline{toc}{subsection}{"Cylinder Test"}
-\paragraph*{\underline{Problem Description}}
+\subsubsection*{\underline{Problem Description}}
 
 This is a two-dimensional version of the ``cylinder test" which is used to
 characterize equations of state for explosive products.  In those tests, a
@@ -825,7 +802,7 @@ uncommenting the Neumann conditions, as well as changing the spatial extents
 and resolution in the Z direction to match those in the Y direction.
 
 %
-\paragraph*{\underline{Simulation Specifics}}
+\subsubsection*{\underline{Simulation Specifics}}
 \begin{description}
 \item [Component used:] \hfill mpmice (MPM-ICE)
 \item [Input file name:] \hfill \TT{QM100CuRS.ups}
@@ -846,14 +823,14 @@ and resolution in the Z direction to match those in the Y direction.
 
 \end{description}
 
-\paragraph*{\underline{Results}}
+\subsubsection*{\underline{Results}}
 
 Figure~\ref{fig:QM100} shows a snapshot of the simulation at time $t=60sec$.
 Particles are colored by velocity magnitude, contours reflect the density of
 explosive, note the highly compressed region near the shock front.
 \begin{figure}
   \center
-  \includegraphics[scale=.45]{QM100.png}
+  \includegraphics[width=0.5\textwidth]{QM100.png}
   \caption{Detonation in a copper cylinder (2-D).  Particles are colored by
            velocity magnitude, contours indicate density of unreacted
            explosive.}
@@ -916,7 +893,7 @@ pressure due to mass exchange (del\_MassX).  See table
 
 % \begin{figure}
 %   \center
-%   \includegraphics[scale=.3]{SimpleBurn0000.png}
+%   \includegraphics[width=0.5\textwidth]{SimpleBurn0000.png}
 
 %   \caption{Receding PBX9501 leads to pressure increase in cylindrical steel shell.}
 %   \label{figsimburn1}
@@ -924,7 +901,7 @@ pressure due to mass exchange (del\_MassX).  See table
 
 % \begin{figure}
 %   \center
-%   \includegraphics[scale=.3]{SimpleBurn0001.png}
+%   \includegraphics[width=0.5\textwidth]{SimpleBurn0001.png}
 
 %   \caption{Pressure increase causes cylinder to respond.}
 %   \label{figsimburn2}
@@ -932,7 +909,7 @@ pressure due to mass exchange (del\_MassX).  See table
 
 % \begin{figure}
 %   \center
-%   \includegraphics[scale=.3]{SimpleBurn0002.png}
+%   \includegraphics[width=0.5\textwidth]{SimpleBurn0002.png}
 
 %   \caption{The left half of the image represents particles as spheres colored according to mass and pressure as background color.  Top-right shows delP\_Dilatate and bottom-right shows delP\_MassX.}
 %   \label{figsimburn3}
@@ -1004,7 +981,7 @@ Burn.
 
 % \begin{figure}
 %   \center
-%   \includegraphics[scale=.3]{SteadyBurn0000.png}
+%   \includegraphics[width=0.5\textwidth]{SteadyBurn0000.png}
 
 %   \caption{Collapse of PBX into hollow bore of explosive device.}
 %   \label{figsteadyburn1}
@@ -1012,7 +989,7 @@ Burn.
 
 % \begin{figure}
 %   \center
-%   \includegraphics[scale=.4]{SteadyBurn0001.png}
+%   \includegraphics[width=0.5\textwidth]{SteadyBurn0001.png}
 
 %   \caption{Expansion of steel casing as explosion occurs--response to pressure build-up.}
 %   \label{figsteadyburn2}
@@ -1020,7 +997,7 @@ Burn.
 
 % \begin{figure}
 %   \center
-%   \includegraphics[scale=.4]{SteadyBurn0002.png}
+%   \includegraphics[width=0.5\textwidth]{SteadyBurn0002.png}
 
 %   \caption{Burning Cells denoted by red squares.}
 %   \label{figsteadyburn3}
@@ -1085,7 +1062,7 @@ Notes: \\
 Figure~\ref{figtburn1}, ~\ref{figtburn2} and ~\ref{figtburn3} show successive snapshots of the simulation.  Contour plot depicts pressure and represents the wave front as it oscillates between two sheets of burning PBX 9501.  Figure ~\ref{figtburnVel} shows velocities of gas cells.
 % \begin{figure}
 %   \center
-%   \includegraphics[scale=.4]{TBurner0000.png}
+%   \includegraphics[width=0.5\textwidth]{TBurner0000.png}
 
 %   \caption{Time 1: Oscillatory behavior in the form of a pressure wave in a T-Burner.  Contour plot depicts pressure.}
 %   \label{figtburn1}
@@ -1093,14 +1070,14 @@ Figure~\ref{figtburn1}, ~\ref{figtburn2} and ~\ref{figtburn3} show successive sn
 
 % \begin{figure}
 %   \center
-%   \includegraphics[scale=.4]{TBurner0001.png}
+%   \includegraphics[width=0.5\textwidth]{TBurner0001.png}
 
 %   \caption{Time 2: Oscillatory behavior in the form of a pressure wave in a T-Burner.  Contour plot depicts pressure.}
 %   \label{figtburn2}
 % \end{figure}
 % \begin{figure}
 %   \center
-%   \includegraphics[scale=.4]{TBurner0002.png}
+%   \includegraphics[width=0.5\textwidth]{TBurner0002.png}
 
 %   \caption{Time 3: Oscillatory behavior in the form of a pressure wave in a T-Burner.  Contour plot depicts pressure.}
 %   \label{figtburn3}
@@ -1175,12 +1152,9 @@ mpirun -np 6 sus inputs/UintahRelease/MPMICE/pinWheel.ups
 
 \begin{figure}
   \centering
-  \includegraphics[width=\textwidth]{pinWheel.png}
+  \includegraphics[width=0.5\textwidth]{pinWheel.png}
   \caption{Pinwheel driven by a jet of air}
   \label{pinwheel1}
 \end{figure}
 
 Figure~\ref{pinwheel1} shows a visualization of the pinwheel alongside the air jet represented by the velocity vectors. The air jet contacts a fin on the wheel causing it to continuously rotate counterclockwise as seen by the colored velocity of the boxes.  
-
-%\bibliographystyle{plain}
-%\bibliography{ice}

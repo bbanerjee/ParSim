@@ -28,7 +28,7 @@ Uintah.  These are
   Model described previously.  Together these models combine into a
   hypoviscoplastic model.  The stress update is given by
   \begin{equation}
-    \dot{\Bs} = 2\mu(\Beta - \Beta^p) - \sum_{i=1}^N {\Bs_i\over \tau_i}
+    \dot{\Bs} = 2\mu(\Beta - \Beta^p) - \sum_{i=1}^N \frac{\Bs_i}{\tau_i}
   \end{equation}
   where $\mu$ is the shear modulus and $\Bs_i$ are maxwell element
   stresses which are tracked internally.  Also

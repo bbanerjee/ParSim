@@ -1,272 +1,6 @@
 \chapter{ICE} \label{Sec:ICE}
 
-
-\section{Introduction}
-The work presented here describes a multi-material CFD approach
-designed to solve ``full physics" simulations of dynamic fluid
-structure interactions involving large deformations and material
-transformations (e.g., phase change).  ``Full physics" refers to
-problems involving strong interactions between the fluid field and
-solid field temperatures and velocities, with a full Navier Stokes
-representation of fluid materials and the transient, nonlinear
-response of solid materials.  These interactions may include chemical
-or physical transformation between the solid and fluid fields.
-
-The theoretical and algorithmic basis for the multi-material CFD
-algorithm presented here is based on a body of work of several
-investigators at Los Alamos National Laboratory, primarily Bryan
-Kashiwa, Rick Rauenzahn and Matt Lewis.  Several reports by these
-researchers are publicly available and are cited herein.  It is
-largely through our personal interactions that we have been able to
-bring these ideas to bear on the simulations described herein.
-
-
-An exposition of the governing equations is given in the next section,
-followed by an algorithmic description of the solution of those equations.
-This description is first done separately for the materials in the Eulerian
-and Lagrangian frames of reference, before details associated with the
-integrated approach are given. 
-
-\subsection{Governing Equations}\label{sec:governing_equations}
-The governing multi-material model equations are stated and described, but
-not developed, here.  Their development can be found in~\cite{Kashiwa2000}.
-Here, our intent is to identify the quantities of interest, of which there
-are eight, as well as those equations (or closure models) which govern their
-behavior.  Consider a collection of $N$ materials, and let the subscript r
-signify one of the materials, such that $\rmr = 1, 2, 3, \dots, N$.  In an
-arbitary volume of space $V(\bfx,t)$, the averaged thermodynamic state of a
-material is given by the vector $[M_\rmr, \bfu_\rmr, e_\rmr, T_\rmr, v_\rmr,
-\theta_\rmr, \sig_\rmr, p]$, the elements of which are the r-material mass,
-velocity, internal energy, temperature, specific volume, volume fraction,
-stress, and the equilibration pressure.  The r-material averaged density is
-$\rho_\rmr = M_\rmr/V$.  The rate of change of the state in a volume moving
-with the velocity of r-material is:
-%
-\noindent
-%__________________________________
-% mass
-\begin{eqnarray}
-{1\over V}{D_\rmr M_\rmr \over Dt} &=&
-\SUM\Gamma_{\rmr\rms}
-\label{eqmassr} \\
-\nonumber \\
-%__________________________________
-% momentum
-{1\over V}{D_\rmr (M_\rmr \bfu_\rmr) \over Dt} &=&
-\theta_\rmr \bnabla\cdot\sig +
-\bnabla\cdot\theta_\rmr(\sig_\rmr - \sig) + 
-\rho_\rmr\bfg + 
-\SUM \bff_{\rmr\rms} + 
-\SUM \bfu_{\rmr\rms}^+ 
-\Gamma_{\rmr\rms}
-\label{eqmomr}\\ \nonumber \\
-%__________________________________
-% internal energy
-{1\over V}{D_\rmr (M_\rmr e_\rmr) \over Dt} &=& -
-\rho_\rmr p {D_\rmr v_\rmr\over Dt} +
-\theta_\rmr\taubold_\rmr:\nabla\bfu_\rmr - 
-\bnabla\cdot\bfj_\rmr +
-\SUM q_{\rmr\rms} +
-\SUM h_{\rmr\rms}^+ 
-\Gamma_{\rmr\rms}
-\label{eqenergyr}
-\end{eqnarray}
-
-Equations (\ref{eqmassr}-\ref{eqenergyr}) are the averaged model equations
-for mass, momentum, and internal energy of r-material, in which $\sig$ is
-the mean mixture stress, taken here to be isotropic, so that $\sig = -p\bfI$
-in terms of the hydrodynamic pressure $p$.  The effects of turbulence have
-been explicitly omitted from these equations, and the subsequent solution,
-for the sake of simplicity.  However, including the effects of turbulence
-is not precluded by either the model or the solution method used here.
-
-In Eq. (\ref{eqmomr}) the term $\sum_{s=1}^{N}\bff_{\rmr\rms}$ signifies
-a model for the momentum exchange among materials.  This term results from
-the deviation of the r-field stress from the mean stress, averaged, and is
-typically modeled as a function of the relative velocity between materials
-at a point. (For a two material problem this term might look like $\bff_{12}
-= K_{12}\theta_1\theta_2(\bfu_1 - \bfu_2)$ where the coefficient $K_{12}$
-determines the rate at which momentum is transferred between materials).
-Likewise, in Eq. (\ref{eqenergyr}), $\sum_{\rms=1}^{N} q_{\rmr\rms}$
-represents an exchange of heat energy among materials.  For a two material
-problem $q_{12} = H_{12}\theta_1\theta_2(T_2 - T_1)$ where $T_\rmr$ is the
-r-material temperature and the coefficient $H_{\rmr\rms}$ is analogous to a
-convective heat transfer rate coefficient.  The heat flux is $\bfj_\rmr =
--\rho_\rmr b_\rmr \bnabla T_\rmr$ where the thermal diffusion coefficient
-$b_\rmr$ includes both molecular and turbulent effects (when the turbulence
-is included).
-
-In Eqs. (\ref{eqmassr}-\ref{eqenergyr}) the term $\Gamma_{\rmr\rms}$ is
-the rate of mass conversion from s-material into r-material, for example,
-the burning of a solid or liquid reactant into gaseous products.  The rate at which
-mass conversion occurs is governed by a reaction model.  In Eqs. (\ref{eqmomr})
-and (\ref{eqenergyr}), the velocity $\bfu_{\rmr\rms}^+$ and the enthalpy
-$h_{\rmr\rms}^+$ are those of the s-material that is converted into r-material.
-These are simply the mean values associated with the donor material.
-
-The temperature $T_\rmr$, specific volume $v_\rmr$, volume fraction
-$\theta_\rmr$, and hydrodynamic pressure $p$ are related to the r-material
-mass density, $\rho_\rmr$, and specific internal energy, $e_\rmr$, by way
-of equations of state.  The four relations for the four quantites $(T_\rmr,
-v_\rmr, \theta_\rmr, p)$ are:
-
-%
-\begin{eqnarray}
-e_\rmr &=& e_\rmr(v_\rmr, T_\rmr) \label{caloric} \\
-v_\rmr &=& v_\rmr(p, T_\rmr) \label{thermal} \\
-\theta_\rmr &=& \rho_\rmr v_\rmr \label{thedef} \\
-0 &=& 1 - \SUM\rho_\rms v_\rms
-\label{mmeos}
-\end{eqnarray}
-%
-Equations (\ref{caloric}) and (\ref{thermal}) are, respectively, the caloric
-and thermal equations of state.  Equation (\ref{thedef}) defines the volume
-fraction, $\theta$, as the volume of r-material per total material volume,
-and with that definition, Equation (\ref{mmeos}), referred to as the
-multi-material equation of state, follows.  It defines the unique value of
-the hydrodynamic pressure $p$ that allows arbitrary masses of the multiple
-materials to identically fill the volume $V$.  This pressure is called the
-``equilibration'' pressure \cite{kashiwaICE94}.
-
-A closure relation is still needed for the material stress $\sig_\rmr$.
-For a fluid $\sig_\rmr = -p\bfI + \taubold_\rmr$ where the deviatoric stress
-is well known for Newtonian fluids.  For a solid, the material stress is the
-Cauchy stress.  The Cauchy stress is computed using a solid constitutive
-model and may depend on the the rate of deformation, the current state of
-deformation ($\bfE$), the temperature, and possibly a number of history
-variables.  Such a relationship may be expressed as:
-
-%
-\begin{equation}
-{\sig}_\rmr \equiv \sig_\rmr(\bnabla\bfu_\rmr, \bfE_\rmr, T_\rmr,~ \dots)
-\label{conslaw}
-\end{equation}
-%
-The approach described here imposes no restrictions on the types of constitutive relations
-that can be considered.  More specific discussion of some of the models
-used in this work is found in Sec.~\ref{sec:models}
-
-Equations (\ref{eqmassr}-\ref{conslaw}) form a set of eight equations for
-the eight-element state vector, \\ $[M_\rmr, \bfu_\rmr, e_\rmr, T_\rmr,
-v_\rmr, \theta_\rmr, \sig_\rmr, p]$, for any arbitrary volume of space $V$
-moving with the r-material velocity.  The approach described here uses the
-reference frame most suitable for a particular material type.  As such,
-there is no guarantee that arbitrary volumes will remain coincident for
-materials described in different reference frames.  This problem is addressed
-by treating the specific volume as a dynamic variable of the material state
-which is integrated forward in time from initial conditions.  In so doing,
-at any time, the total volume associated with all of the materials is given by:
-%
-\begin{eqnarray}
-V_t = {\raise1.5pt\hbox{$\scriptstyle\sum_{r=1}^N$}} M_\rmr v_\rmr
-\end{eqnarray}
-%
-so the volume fraction is $\theta_\rmr = M_\rmr v_\rmr / V_t$ (which sums
-to one by definition).  An evolution equation for the r-material specific
-volume, derived from the time variation of Eqs. (\ref{caloric}-\ref{mmeos}),
-has been developed in \cite{Kashiwa2000}.  It is stated here as:
-%
-\begin{eqnarray}
-{1\over V}{D_\rmr (M_\rmr v_\rmr) \over Dt} =
-f_\rmr^{\theta} \bnabla \cdot \bfu &+&
-\left[v_\rmr \Gamma_\rmr -
-f_\rmr^{\theta} \SUM
-v_\rms \Gamma_\rms \right]  \nonumber \\ &+&
-\left[\theta_\rmr
-\beta_\rmr {D_\rmr T_\rmr\over Dt} -
-f_\rmr^{\theta} \SUM
-\theta_\rms \beta_\rms {D_\rms T_\rms\over Dt} \right] \; .
-\label{eqspvolr}
-\end{eqnarray}
-
-where $f_\rmr^{\theta} = {{\theta_\rmr \kappa_\rmr} \over
-{\raise1pt\hbox{${\scriptstyle\sum_{\rms =1}^N}$}} \theta_\rms\kappa_\rms}$,
-and $\kappa_\rmr$ is the r-material bulk compressibility.
-
-The evaluation of the multi-material equation of state (Eq. (\ref{mmeos}))
-is still required in order to determine an equilibrium pressure that results
-in a common value for the  pressure, as well as specific volumes that fill
-the total volume identically.
-
-A description of the means by which numerical solutions to the equations in
-Section~\ref{sec:ICE:algorithm} are found is presented next.  This begins
-with separate, brief overviews of the methodologies used for the Eulerian
-and Lagrangian reference frames.  The algorithmic details necesssary for
-integrating them to achieve a tightly coupled fluid-structure interaction
-capability is provided in Sec.~\ref{Sec:MPMICE}.
-
-\section{Algorithm Description}\label{sec:ICE:algorithm}
-
-The Eulerian method implemented here is a cell-centered, finite volume,
-multi-material version of the ICE (for Implicit, Continuous fluid, Eulerian)
-method \cite{harlowamsden68} developed by Kashiwa and others at Los Alamos
-National Laboratory \cite{kashiwaCCICE94}.  ``Cell-centered'' means that all
-elements of the state are colocated at the grid cell-center (in contrast to
-a staggered grid, in which velocity components may be centered at the faces
-of grid cells, for example).  This colocation is particularly important
-in regions where a material mass is vanishing.  By using the same control
-volume for mass and momentum it can be assured that as the material mass goes
-to zero, the mass and momentum also go to zero at the same rate, leaving a
-well-defined velocity.  The technique is fully compressible, allowing wide
-generality in the types of problems that can be addressed.
- 
-Our use of the cell-centered ICE method employs time splitting: first,
-a Lagrangian step updates the state due to the physics of the conservation
-laws (i.e., right hand side of Eqs.~{\ref{eqmassr}-\ref{eqenergyr}}); this
-is followed by an Eulerian step, in which the change due to advection is
-evaluated.  For solution in the Eulerian frame, the method is well developed
-and described in \cite{kashiwaCCICE94}.
-
-In the mixed frame approach used here, a modification to the multi-material
-equation of state is needed.  Equation (\ref{mmeos}) is unambiguous when all
-materials are fluids or in cases of a flow consisting of dispersed solid grains
-in a carrier fluid.  However in fluid-structure problems the stress state of a
-submerged structure may be strongly directional, and the isotropic part of the
-stress has nothing to do with the hydrodynamic (equilibration) pressure $p$.
-The equilibrium that typically exists between a fluid and a solid is at the
-interface between the two materials: there the normal part of the traction
-equals the pressure exerted by the fluid on the solid over the interface.
-Because the orientation of the interface is not explicitly known at any
-point (it is effectively lost in the averaging) such an equilibrium cannot
-be computed.
-
-The difficulty, and the modification that resolves it, can be understood by
-considering a solid material in tension coexisting with a gas.  For solid
-materials, the equation of state is the bulk part of the constitutive response
-(that is, the isotropic part of the Cauchy stress versus specific volume and
-temperature).  If one attempts to equate the isotropic part of the stress
-with the fluid pressure, there exist regions in pressure-volume space for
-which Eq. (\ref{mmeos}) has no physical solutions (because the gas pressure
-is only positive).  This can be seen schematically in Fig.~\ref{vpfig}, which
-sketches equations of state for a gas and a solid, at an arbitrary temperature.
-
-Recall that the isothermal compressiblity is the negative slope of the
-specific volume versus pressure.  Embedded structures considered here are
-solids and, at low pressure, possess a much smaller compressibility than
-the gasses in which they are submerged.  Nevertheless the variation of
-condensed phase specific volume can be important at very high pressures,
-where the compressibilities of the gas and condensed phase materials can
-become comparable (as in a detonation wave, for example).  Because the speed of
-shock waves in materials is determined by their equations of state, obtaining
-accurate high pressure behavior is an important goal of our FSI studies.
-
-To compensate for the lack of directional information for the embedded
-surfaces, we evaluate the solid phase equations of state in two parts.
-Above a specified postive threshold pressure (typically 1 atmosphere),
-the full equation of state is respected; below that threshold pressure, the
-solid phase pressure follows a polynomial chosen to be $C^1$ continuous at the
-threshold value and which approaches zero as the specific volume becomes large.
-The effect is to decouple the solid phase specific volume from the stress when
-the isotropic part of the stress falls below a threshold value.  In regions
-of coexistence at states below the threshold pressure, $p$ tends to behave
-according to the fluid equation of state (due to the greater compressibility)
-while in regions of pure condensed phase material $p$ tends rapidly toward
-zero and the full material stress dominates the dynamics as it should.
-
-%FIXME
-%\subsection{Uintah Implementation}
-%- to be filled in\\
-
+The theory of the ICE-CFD approach can be found in the \Vaango Theory Manual.
 \section{Uintah Specification}
 %______________________________________________________________________
 \subsection{Basic Inputs}
@@ -969,12 +703,12 @@ package VisIT should be used.  VisIT session files are included.
  
 \subsection*{\center Poiseuille Flow}
 \addcontentsline{toc}{subsection}{Poiseuille Flow}
-\paragraph*{\underline{Problem Description}}
+\subsubsection*{\underline{Problem Description}}
 The Poiseuille flow problem is classical viscous flow problem in which flow is
 driven through two parallel plates from fixed pressure gradient.  The pressure
 gradient is balanced by the diffusion $x$ momentum in the $y$ direction.
 
-\paragraph*{\underline{Simulation Specifics}}
+\subsubsection*{\underline{Simulation Specifics}}
 \begin{description} 
 \footnotesize
 \item [Component used:] \hfill ICE
@@ -1006,13 +740,13 @@ This will generate a postscript file Couette\-Poiseuille.ps
 \item [Physical time simulated:] \hfill 15 sec.
 \end{description}
 
-\paragraph*{\underline{Results}}
+\subsubsection*{\underline{Results}}
 Figure \ref{fig:Poiseuille} shows a comparison of the exact and simulated u
 velocity at time $t = 15sec$, 5 cells from the end of the domain.  The lower
 plot shows the difference of the velocity $\|u - u_{exact}\|$.
 %
 \begin{figure}
-  \includegraphics[scale=.80]{Poiseuille.png}
+  \includegraphics[width=0.5\textwidth]{Poiseuille.png}
   \caption{ Comparison of $u$ velocity $t = 15sec$}
   \label{fig:Poiseuille}
   \end{figure}
@@ -1021,7 +755,7 @@ plot shows the difference of the velocity $\|u - u_{exact}\|$.
 %______________________________________________________________________
 \subsection*{\center Combined Couette-Poiseuille Flow}
 \addcontentsline{toc}{subsection}{Combined Couette-Poiseuille Flow}
-\paragraph*{\underline{Problem Description}}
+\subsubsection*{\underline{Problem Description}}
 The combined Couette-Poiseuille flow problem is another classical viscous
 flow problem in which flow is driven through a channel by a pressure gradient
 and a wall moving.  The reduced x momentum equation differential is
@@ -1032,7 +766,7 @@ and a wall moving.  The reduced x momentum equation differential is
 subject to the no slip boundary condition $u(\pm h) = \text{wall velocity}$,
 where $h$ is half the height of the channel \cite{ref:white}.
 
-\paragraph*{\underline{Simulation Specifics}}
+\subsubsection*{\underline{Simulation Specifics}}
 \begin{description} 
 \footnotesize
 \item [Component used:] \hfill ICE
@@ -1053,13 +787,13 @@ This Octave script will generate a postscript file Couette\-Poiseuille.ps
 \item [Physical time simulated:] \hfill 15 sec.
 \end{description}
 
-\paragraph*{\underline{Results}}
+\subsubsection*{\underline{Results}}
 Figure \ref{fig:CombinedPoiseuille} shows a comparison of the exact and simulated u
 velocity at time $t = 15sec$, 5 cells from the end of the domain.  The lower
 plot shows the difference of the velocity $\|u - u_{exact}\|$.
 %
 \begin{figure}
-  \includegraphics[scale=.85]{Couette-Poiseuille.png}
+  \includegraphics[width=0.5\textwidth]{Couette-Poiseuille.png}
   \vspace{-20pt}
   \caption{ Comparison of $u$ velocity $t = 15sec$}
   \label{fig:CombinedPoiseuille}
@@ -1069,7 +803,7 @@ plot shows the difference of the velocity $\|u - u_{exact}\|$.
 %______________________________________________________________________
 \subsection*{\center Shock Tube}
 \addcontentsline{toc}{subsection}{Shock Tube}
-\paragraph*{\underline{Problem Description}}
+\subsubsection*{\underline{Problem Description}}
 The shock tube problem is a standard 1D compressible flow problem that
 has been used by many as a validation test case \cite{ref:laney, ref:sod, ref:toro}.
 At time $t=0$ the computational domain is divided into two separate regions of
@@ -1082,7 +816,7 @@ fan moves towards the left while the shockwave and contact discontinutity
 move to the right.  This problem tests the algorithm's ability to capture
 steep gradients and solve Eulers equations.
 %
-\paragraph*{\underline{Simulation Specifics}}
+\subsubsection*{\underline{Simulation Specifics}}
 \begin{description} 
 \footnotesize
 \item [Component used:] \hfill ICE
@@ -1102,12 +836,12 @@ This Octave script will generate a postscript file shockTube.ps
 \item [Physical time simulated:] \hfill 0.005 sec.
 \end{description}
 
-\paragraph*{\underline{Results}}
+\subsubsection*{\underline{Results}}
 Figure \ref{results.ST} shows a comparison of the exact versus simulated
 results at time $t = 5msec$.
 %
 \begin{figure}
-  \includegraphics[scale=.65]{shockTube.png}
+  \includegraphics[width=0.5\textwidth5]{shockTube.png}
   \caption{Shock tube results at time $t = 5msec$}
   \label{results.ST}
   \end{figure}
@@ -1116,7 +850,7 @@ results at time $t = 5msec$.
 %__________________________________SHOCKTUBE AMR
 \subsection*{\center Shock Tube with Adaptive Mesh Refinement}
 \addcontentsline{toc}{subsection}{Shock Tube with Adaptive Mesh Refinement}
-\paragraph*{\underline{Simulation Specifics}}
+\subsubsection*{\underline{Simulation Specifics}}
 \begin{description} 
 \footnotesize
 \item [Component used:] \hfill ICE
@@ -1140,10 +874,10 @@ This Octave script will generate a postscript file shockTube\_AMR.ps
 
 \end{description}
 
-\paragraph*{\underline{Results}}
+\subsubsection*{\underline{Results}}
 Figure \ref{results.ST.AMR} shows a comparison of the exact versus simulated results at time $t = 5msec$.
 \begin{figure}
-  \includegraphics[scale=.85]{shockTube_AMR.png}
+  \includegraphics[width=0.5\textwidth]{shockTube_AMR.png}
   \vspace{-10pt}
   \caption{Shock tube results at time $t = 5msec$}
   \label{results.ST.AMR}
@@ -1153,7 +887,7 @@ Figure \ref{results.ST.AMR} shows a comparison of the exact versus simulated res
 %__________________________________riemann2D
 \subsection*{\center 2D Riemann Problem with Adaptive Mesh Refinement}
 \addcontentsline{toc}{subsection}{2D Riemann Problem with Adaptive Mesh Refinement}
-\paragraph*{\underline{Problem Description}}
+\subsubsection*{\underline{Problem Description}}
 In two-dimensional Riemann problems there 15 different solutions that combine
 rarefaction waves, shock waves and a slip line or contact discontinuities
 \cite{ref:schulz_collins_glaz, ref:Liska_Wendroff}.  Here we simulate 4 slip
@@ -1164,7 +898,7 @@ four quadrants are $V_{ll}=(1, 1, -0.75, 0.5), V_{lr}=(1, 3, -0.75,-0.5),
 V_{ul}=(1,2,0.75,0.5), V_{ur}=(1,1,0.75,-0.5)$ where, $p$ is pressure,
 $\rho$ is the density of the polytropic gas, $u$ and $v$ are the $x$ and $y$
 component of velocity.
-\paragraph*{\underline{Simulation Specifics}}
+\subsubsection*{\underline{Simulation Specifics}}
 \begin{description} 
 \footnotesize
 \item [Component used:] \hfill ICE
@@ -1183,10 +917,10 @@ component of velocity.
 \item [Physical time simulated:] \hfill 0.3 sec.
 \end{description}
 
-\paragraph*{\underline{Results}}
+\subsubsection*{\underline{Results}}
 Figure \ref{fig:riemann2D} shows a flood and line contour plot(s) of the density of the gas at 0.03sec.
 \begin{figure}
-  \includegraphics[scale=.6]{riemann2D.png}
+  \includegraphics[width=0.5\textwidth]{riemann2D.png}
   \caption{Contour plot of density for the 2D Riemann problem at time $t = 0.3sec$.  Bottom plot shows the outline of the patches on the 3 levels.}
   \label{fig:riemann2D}
   \end{figure}
@@ -1195,7 +929,7 @@ Figure \ref{fig:riemann2D} shows a flood and line contour plot(s) of the density
 %__________________________________
 \subsection*{\center Explosion 2D}
 \addcontentsline{toc}{subsection}{Explosion 2D}
-\paragraph*{\underline{Problem Description}}
+\subsubsection*{\underline{Problem Description}}
 For the multidimensional blast wave orexplosion test is a standard compressible
 flow problem that has been used by many as a validation test case.  At time
 $t=0$ there is a circular region of gas at the center of the domain at a
@@ -1211,7 +945,7 @@ with a radius $R=0.4$ and the surrounding box 2x2x0.1.  The initial condition
 inside of the circular region were $(p=1, \rho=1, u=0, v=0)$  and outside
 $(p=0.1, \rho=0.125, u=0, v=0).$  The fluid was an ideal, inviscid, polytropic gas.
 %
-\paragraph*{\underline{Simulation Specifics}}
+\subsubsection*{\underline{Simulation Specifics}}
 \begin{description} 
 \item [Component used:] \hfill ICE
 \item [Input file name:] \hfill \TT{explosion.ups}
@@ -1236,18 +970,18 @@ This Octave script will generate a postscript file explosion\_AMR.ps
 
 \end{description}
 
-\paragraph*{\underline{Results}}
+\subsubsection*{\underline{Results}}
 Figures \ref{fig:pressExplode} and \ref{fig:rhoExplode} shows surface plots of the pressure and density at $t=0.25.$  
 %\newpage
 \begin{figure}
- \includegraphics[scale=.5]{explode_press.png}
+ \includegraphics[width=0.5\textwidth]{explode_press.png}
 \caption{Pressure field at $t=0.25$}
 \label{fig:pressExplode}
 \end{figure}
 %
 %\newpage
 \begin{figure}
-  \includegraphics[scale=.5]{explode_rho.png}
+  \includegraphics[width=0.5\textwidth]{explode_rho.png}
   \caption{Density field at time $t=0.25$}
   \label{fig:rhoExplode}
 \end{figure}
@@ -1256,7 +990,7 @@ Figures \ref{fig:pressExplode} and \ref{fig:rhoExplode} shows surface plots of t
 Since this test is symetrical we can use results from the equivalent 1 dimensional problem to compare against
 %
 \begin{figure}
-  \includegraphics[scale=.75]{explode_1D.png}
+  \includegraphics[width=0.5\textwidth]{explode_1D.png}
   \caption{$t=0.25$}
   \label{fig:1dExplode}
 \end{figure}
@@ -1265,7 +999,7 @@ Since this test is symetrical we can use results from the equivalent 1 dimension
 %__________________________________
 \subsection*{\center ANFO Rate Stick}
 \addcontentsline{toc}{subsection}{ANFO Rate Stick}
-\paragraph*{\underline{Problem Description}}
+\subsubsection*{\underline{Problem Description}}
 A cylindrical stick ($r = 8 mm$) of Ammonium Nitrate Fuel Oil (ANFO) given an initial
 velocity of $90 m/s$.  As it strikes the domain boundary, pressure is generated
 sufficient to reach the initial pressure required to activate the 
@@ -1281,7 +1015,7 @@ simulated by shrinking the computational domain to one cell in each of the
 transverse directions.
 
 %
-\paragraph*{\underline{Simulation Specifics}}
+\subsubsection*{\underline{Simulation Specifics}}
 \begin{description}
 \item [Component used:] \hfill ICE
 \item [Input file name:] \hfill \TT{JWLpp8mmRS.ups}
@@ -1300,11 +1034,11 @@ transverse directions.
 
 \end{description}
 
-\paragraph*{\underline{Results}}
+\subsubsection*{\underline{Results}}
 Figure \ref{fig:RateStick} shows a volume rendering of the density of the
 reactant.  Note the curvature of the reaction zone.
 \begin{figure}
- \includegraphics[scale=.5]{RateStick.png}
+ \includegraphics[width=0.5\textwidth]{RateStick.png}
 \caption{Density of reactant material.}
 \label{fig:RateStick}
 \end{figure}
@@ -1347,7 +1081,7 @@ reactant.  Note the curvature of the reaction zone.
 %Figure \ref{results.CH4} shows a 3D view of the initial puff just before it leaves the computational
 %doman.  
 %\begin{figure}
-%\includegraphics[scale=.66]{3DFire.png}
+%\includegraphics[width=0.5\textwidth]{3DFire.png}
 %\caption{Temperature field at time $t = 1.5 sec$}
 %\label{results.CH4}
 %\end{figure}
