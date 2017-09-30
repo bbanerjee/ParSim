@@ -1,29 +1,22 @@
-%__________________________________
 \chapter{Data Extraction Tools}
-
-Uintah offers a number of tools for accessing data stored in Uintah
-Data Archives (``UDAs").  Because the format of Uintah data is
-specific to the framework, these tools allow a user to quickly extract
-data, which can then either be postprocessed within that tool (simple
-modification of the source code may be necessary), postprocessed with
-external software such as Matlab or Octave, or simply plotted with,
-e.g. gnuplot.  These tools are not compiled automatically when ``make
-sus'' is issued.  To compile them cd to ``opt/StandAlone/tools'' and
-issue ``make''.  These tools are described below.
+\Vaango offers a number of tools for accessing simulation output data 
+stored in \Textsfc{UDA} archives.  The user can use these tools in 
+combination with Python, R, or Octave scripts to examine and plot the
+simulation data.
 
 \section{puda}
+The command line extraction utility \Textsfc{puda} (short for ``parse UDA'')
+has a number of uses.  For example, it may be
+used to extract a subset of particle data from a UDA.  
 
-The command line extraction utility \tt puda \normalfont (for ``parse
-Uintah data archive") has a number of uses.  For example, it may be
-used to extract a subset of particle data from a UDA.  Once the
-extraction tools have been compiled, the puda executable will be
-located in \tt opt/StandAlone/tools/puda/. \normalfont If the
-executable is run with no additional command line arguments, the
+Once the extraction tools have been compiled, the puda executable will be
+located in \\
+\Textsfc{\textless build\_dir\textgreater/StandAlone/tools/puda/.} 
+If the executable is run with no additional command line arguments, the
 following usage information will be displayed:
 
-\begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
 Usage: puda [options] <archive file>
-
 Valid options are:
   -h[elp]
   -timesteps
@@ -53,17 +46,17 @@ Valid options are:
 *NOTE* ptonly, patch, material, timesteplow, timestephigh are used in conjunction with -PTvar.
 \end{lstlisting}
 
-As an example of how to use \tt puda, \normalfont suppose that one
+As an example of how to use \Textsfc{puda,} suppose that one
 wanted to know the locations of all particles at the last archived
-timestep for the \lstinline!const_test_hypo.uda!. First one may
+timestep for the \Textsfc{const\_test\_hypo.uda}. First one may
 wish to know how many timesteps have been archived.  This could be
 accomplished by:
-
-\begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
  puda -timesteps const_test_hypo.uda
 \end{lstlisting}
+
 The resulting terminal output would be:
-\begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
 Parsing const_test_hypo.uda/index.xml
 There are 11 timesteps:
 1: 1.8257001926347728e-05
@@ -83,14 +76,12 @@ These represent all of the timesteps for which data has been archived.
 Suppose now that we wish to know what the stress state is for all
 particles (in this case two) at the final archived timestep.  For this
 one could issue:
-
-\begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
 puda -partvar p.stress -timesteplow 10 -timestephigh 10 const_test_hypo.uda
 \end{lstlisting}
 
 The resulting output is:
-
-\begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
 Parsing const_test_hypo.uda/index.xml
 1.00016560e-01 1 0 281474976710656 -2.72031498e-10 -1.05064208e-26 -2.53781271e-08 -1.05064208e-26 -2.72031498e-10 -1.23584688e-09 -2.53781271e-08 -1.23584688e-09 1.63840079e-07
 1.00016560e-01 1 1 0 1.93256890e-13 6.56787331e-18 1.85514400e-14 6.56787331e-18 2.24310469e-13 1.85519650e-14 1.85514400e-14 1.85519650e-14 -3.20052991e+06
@@ -104,17 +95,15 @@ $\sigma_{32}$,$\sigma_{33}$).  If desired, the terminal output can be
 redirected to a text file for further use.
 
 \section{partextract}
-
-The command-line utility \tt partextract \normalfont may be used to
+The command-line utility \Textsfc{partextract} may be used to
 extract data from an individual particle.  To do this you first need
 to know the ID number of the particle you are interested in.  This may
 be done by using the puda utility, or the visualization tools.  Once
 the extraction tools have been compiled, the partextract utility
-executable will be located in \tt /opt/StandAlone/tools/extractors/
-\normalfont.  If the executable is run without any arguments the
+executable will be located in \Textsfc{/opt/StandAlone/tools/extractors/
+}.  If the executable is run without any arguments the
 following usage guide will be displayed in the terminal:
-
-\begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
 No archive file specified
 Usage: partextract [options] <archive file>
 
@@ -130,17 +119,15 @@ Valid options are:
 
 As an example of how to use the partextract utility, suppose we wanted
 to find the velocity at every archived timestep for the particle with
-ID 281474976710656 (found above using puda) in the
-``\lstinline!const_test_hypo.uda!'' file (src/StandAlone/inputs/MPM).  The
+ID 281474976710656 (found above using \Textsfc{puda}) in the\\
+\Textsfc{const\_test\_hypo.uda} file.  The
 appropriate command to issue is:
-
-\begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
 partextract -partvar p.velocity -partid 281474976710656 const_test_hypo.uda
 \end{lstlisting}
 
 The output to the terminal is:
-
-\begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
 Parsing const_test_hypo.uda/index.xml
 1.82570019e-05 1 0 281474976710656 0.00000000e+00 0.00000000e+00 -1.00000000e-02
 1.00129149e-02 1 0 281474976710656 -1.03554318e-19 -1.03554318e-19 -1.00000000e-02
@@ -151,8 +138,7 @@ Parsing const_test_hypo.uda/index.xml
 \end{lstlisting}
 
 It is noted that if the stress tensor is output using the partextract utility, the output format is different than for the puda utility.  The partextract utility only outputs the six independent components instead of all nine.  For example, if we use partextract to get the stress tensor for the same particle as above at the last archived timestep only, the output is:
-
-\begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
 partextract -partvar p.stress -partid 281474976710656 -timesteplow 10 -timestephigh 10 const_test_hypo.uda
 Parsing const_test_hypo.uda/index.xml
 1.00016560e-01 1 0 281474976710656 -2.72031498e-10 -1.05064208e-26 -2.53781271e-08 -1.05064208e-26 -2.72031498e-10 -1.23584688e-09 -2.53781271e-08 -1.23584688e-09 1.63840079e-07
@@ -164,13 +150,12 @@ partextract are $\sigma_{11}$,$\sigma_{22}$, $\sigma_{33}$,
 $\sigma_{23}$, $\sigma_{13}$ , $\sigma_{12}$.
 
 \section{lineextract}
-
-Lineextract is used to extract an array of data from a region of a
+\Textsfc{Lineextract} is used to extract an array of data from a region of a
 computational domain. Data can be extracted from a point, along a
 line, or from a three dimensional region and then stored as a variable
 for ease of post processing.
-
-Usage: \begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
+Usage: 
 ./lineextract [options] -uda <archive file>
 
 Valid options are:
@@ -196,46 +181,39 @@ Valid options are:
 The following example shows the usage of lineextract for extracting
 density data at the 60th computational cell in the x-direction,
 spanning the width of the domain in the y-direction (0 to 1000), at
-timestep, 7, (note ``timestep" actually refers to the seventh data
+timestep, 7, (note \Textbfc{timestep} actually refers to the seventh data
 dump, not necessarily the seventh timestep in the simulation. The
-variable containing the density data within the uda is ``\lstinline!rho_CC!," and
+variable containing the density data within the uda is \Textbfc{rho\_CC}, and
 the output variable that will store the data for post processing is
-``rho."
-\begin{lstlisting}
+\Textbfc{rho}.
+\begin{lstlisting}[backgroundcolor=\color{background}]
 ./lineextract -v rho_CC  -timestep 7 -istart 60 0 0 -iend 60 1000 0 -m 1 -o rho -uda test01.uda.000
 \end{lstlisting}
 
 %__________________________________
-\section{\lstinline!compute_Lnorm_udas!}
-\lstinline!Compute_Lnorm_udas! computes the $L_1$, $L_2$ and $L_\infty$
+\section{compute\_Lnorm\_udas}
+\Textbfc{Compute\_Lnorm\_udas} computes the $L_1$, $L_2$ and $L_\infty$
 norms for each variable in two udas.  This utility is useful in
 monitoring how the solution differs from small changes in either the
 solution tolerances, input parameters or algorithmic changes.  You can
 also use it to test the domain size influence.  The norms are computed
 using:
-%
 \begin{equation}
-  d[i] = |uda_1[i] - uda_2[i]|
+  d[i] = \Norm{\text{UDA}_1[i] - \text{UDA}_2[i]}{}
 \end{equation}
 %
 \begin{equation}
-  L_1 = \frac{\raise1.5pt\hbox{$\sum_i^{\rm{All Cells}}$}d[i]}{\rm{number of cells}}
+  L_1  = \cfrac{\sum_i^{\text{All Cells}} d[i]}{\text{number of cells}} ~,~~
+  L_2 =  \sqrt{\cfrac{\sum_i^{\text{All Cells}} d[i]^2}{\text{number of cells}} } ~,~~
+  L_\infty = \text{max}(d[i])
 \end{equation}
 %
-\begin{equation}
-  L_2 = \sqrt{ \frac{\raise1.5pt\hbox{$\sum_i^{\rm{All Cells}}$}d[i]^2}{\rm{number of cells}} }
-\end{equation}
-%
-\begin{equation}
-  L_\infty = \rm{max}(d[i])
-\end{equation}
-%
-These norms are computed for each \lstinline!CC, NC, SFCX, SFCY, SFCZ!
+These norms are computed for each \Textbfc{CC, NC, SFCX, SFCY, SFCZ}
 variable, on each level for each timestep.  The output is displayed on
 the screen and is placed in a directory named `Lnorm.'  The directory
 structure is:
 %
-\begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
  Lnorm/
    -- L-0
     |-- delP_Dilatate_0
@@ -247,15 +225,14 @@ structure is:
     |--etc
 \end{lstlisting}
 %
-and in each variable file is the physical time, $L_1$, $L_2$ and $L_\infty.$  These data can be plotted using \lstinline!gnuplot! or another plotting program.
+and in each variable file is the physical time, $L_1$, $L_2$ and $L_\infty.$  These data can be plotted using \Textbfc{gnuplot} or another plotting program.
 
 The command usage is
-%
-\begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
   compute_Lnorm_udas <uda1> <uda2>
 \end{lstlisting}
 %
-The utility allows for \lstinline!udas! that have different computational
+The utility allows for \Textbfc{udas} that have different computational
 domains and different patch distributions to be compared.  The uda
 with the smallest computational domain should always be specified
 first.
@@ -265,13 +242,12 @@ In order for the norms to be computed the physical times must satisfy
 | \rm{physical Time}_{uda_1} - \rm{physical Time}_{uda_2}| < 1e^{-5}.
 \end{equation*} 
 
-%__________________________________
 \section{timeextract} 
-
-Timeextract is used to extract a user specified variable from a point in a computational
+\Textsfc{Timeextract} is used to extract a user specified variable from a point in a computational
 domain.  
 
-Usage: \begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
+Usage: 
 ./timeextract [options] -uda <archive file>
 
 Valid options are:
@@ -287,29 +263,26 @@ Valid options are:
   -vv,--verbose (prints status of output)
   -q,--quite (only print data values)
   -noxml,--xml-cache-off (turn off XML caching in DataArchive)
- \end{lstlisting} 
+\end{lstlisting} 
 
 The following example shows the usage of timeextract for extracting density data
 at the computationat cell coordinates 5,0,0, from timestep 0 to the last
-timestep. The variable containing the density data within the uda is "\lstinline!rho_CC!" and the output variable that
-will store the data for post processing is "rho." 
-\begin{lstlisting}
+timestep. The variable containing the density data within the uda is \Textbfc{rho\_CC} and the output variable that
+will store the data for post processing is \Textsfc{rho}. 
+\begin{lstlisting}[backgroundcolor=\color{background}]
 ./timeextract -v rho_CC -i 5 0 0 -o rho -uda test01.uda.000
 \end{lstlisting}
 
-%__________________________________
 \section{particle2tiff} 
-particle2tiff is used to extract a user specified particle variable,
+\Textsfc{particle2tiff} is used to extract a user specified particle variable,
 compute a cell centered average and write that data to a series of tiff
 slices that can be used in further image processing.  Each slice in the tiff
 file corresponds to a plane in $z$ direction in the computational domain.
 Each pixel in the tiff image represents a cell in the computational domain.
-This utility depends on \lstinline!libtiff4, libtiff4-dev, \& libtiffxx0c2!, please
+This utility depends on \Textbfc{libtiff4, libtiff4-dev, \& libtiffxx0c2}, please
 verify that they are installed on your system before configuring and compiling.
-
-
   
-The data types supported are\lstinline! double, Vector, Matrix3!, and the equations for computing the cell-centered average are:
+The data types supported are\Textbfc{ double, Vector, Matrix3}, and the equations for computing the cell-centered average are:
 \begin{eqnarray}
   CC_{ave} =& \cfrac{\sum_{p=1}^{\text{nParticles}} \text{Double[p]}}{\text{nParticles}} \nonumber \\
   CC_{ave} =& \cfrac{\sum_{p=1}^{\text{nParticles}} \text{Vector[p].length()}}{\text{nParticles}} \nonumber \\
@@ -317,7 +290,7 @@ The data types supported are\lstinline! double, Vector, Matrix3!, and the equati
 \end{eqnarray}
 
 \noindent The usage is
-\begin{lstlisting}
+\begin{lstlisting}[backgroundcolor=\color{background}]
 Usage: tools/extractors/particle2tiff [options] -uda <archive file>
 
 Valid options are:
@@ -360,8 +333,8 @@ Valid options are:
 
 The following example shows the usage of particle2tiff for averaging the particle stress (p.stress)
 for all materials over the interior cells of the computational domain.  A series of 3 tiff slices 
-are saved for every timestep in the directory``output." 
-\begin{lstlisting}
+are saved for every timestep in the directory \Textsfc{output}. 
+\begin{lstlisting}[backgroundcolor=\color{background}]
 tools/extractors/particle2tiff -m all -d output -v p.stress -uda disks2mat4patch.uda.000/
 There are 14 timesteps
  Initializing time_step_upper to 13
@@ -390,15 +363,12 @@ Timestep[3] = 0.0300137
 \end{lstlisting}
 A montage showing the average particle stress computed from particle2tiff is shown
 in Fig. \ref{fig:p2tiff}.  In this simulation two similar disks collided at the center of the domain.
-\vspace{-0.5in}
 \begin{figure}
   \includegraphics[scale=.60]{particle2tiff.png}
   \caption{Montage showing the averaged particle stress for two cylindrical disks colliding.}
   \label{fig:p2tiff}
 \end{figure}
 
-
-%__________________________________
 \section{On the fly analysis} 
 On the fly analysis is used to determine the minimum and maximum of specified variables while the simulation is running.  Parameters are included in the input file to specify at what frequency the data is analyzed and which variables to look at. A new directory will be made in the uda directory for each level (e.g. L-0). Within the new directory the max and min of each variable for the specified material is determined as a function of time at the given sampling frequency. 
 
@@ -421,9 +391,8 @@ On the fly analysis is used to determine the minimum and maximum of specified va
 \end{tabular}
 \end{center}
 
-
 The input file specification is as follows:
-\begin{lstlisting}
+\begin{lstlisting}[language=XML]
 <DataAnalysis>
   <Module name = "minMax">
     <samplingFrequency> 1e8 </samplingFrequency>
@@ -438,54 +407,3 @@ The input file specification is as follows:
 </DataAnalysis>
 \end{lstlisting}
 
-
-%\section{compare_uda}
-
-%__________________________________
-%\section{plotting tools}
-% - plotStats\\
-% - plotRegridder \\
-% - plotCPU_usage \\
-% - plotComponents
-
-%__________________________________
-%FIXME
-%\subsection{Code}
-%-explain the basic directory structure of src
-%\begin{lstlisting}
-%|-- CCA
-%|-- Components
-%|   |-- Angio
-%|   |-- Arches
-%|   |-- DataArchiver
-%|   |-- Examples
-%|   |-- ICE
-%|   |-- LoadBalancers
-%|   |-- MPM
-%|   |-- MPMArches
-%|   |-- MPMICE
-%|   |-- Models
-%|   |-- OnTheFlyAnalysis
-%|   |-- Parent
-%|   |-- PatchCombiner
-%|   |-- ProblemSpecification
-%|   |-- Regridder
-%|   |-- Schedulers
-%|   |-- SimulationController
-%|   |-- Solvers
-%|   |-- SpatialOps
-%|   `-- SwitchingCriteria
-%|-- Ports
-%|-- Core
-%|-- R_Tester
-%|-- StandAlone
-%|-- Teem
-%|-- VisIt
-%|-- build_scripts
-%|-- include
-%|-- orderAccuracy
-%|-- scripts
-%|-- tau
-%|-- testprograms
-%`-- tools
-%\end{lstlisting}
