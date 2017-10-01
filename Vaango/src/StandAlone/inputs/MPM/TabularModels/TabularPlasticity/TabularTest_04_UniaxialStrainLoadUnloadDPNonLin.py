@@ -48,8 +48,8 @@ def uniaxialStrainLoadUnloadDPNonLin(uda_path, save_path,**kwargs):
 
   fig1 = plt.figure(1)
   plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
   plotSimDataSigmaEps(fig1, analytical_times, times, pp_sim, ev_e_sim, ev_p_sim, compression)
 
   axes = plt.gca()
@@ -67,8 +67,8 @@ def uniaxialStrainLoadUnloadDPNonLin(uda_path, save_path,**kwargs):
   # Set up figure
   fig2 = plt.figure(2)
   plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
 
   # Plot p vs. q simulation results
   eqShear_vs_meanStress(pp_sim, qq_sim, compression)  
@@ -98,8 +98,8 @@ def uniaxialStrainLoadUnloadDPNonLin(uda_path, save_path,**kwargs):
   # Plot experimental and simulation data as a function of time
   fig3 = plt.figure(3)
   plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
   plotSimDataSigmaTime(fig3, analytical_times, times, sigma_a_sim, sigma_r_sim, sigma_ar_sim,
                        '$\sigma_{xx}$ (sim)', '$\sigma_{yy}$ (sim)',
                        '$\sigma_{xy}$ (sim)', compression)
@@ -115,8 +115,8 @@ def uniaxialStrainLoadUnloadDPNonLin(uda_path, save_path,**kwargs):
 
   fig4 = plt.figure(4)
   plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
   plotSimDataPQTime(fig4, analytical_times, times, pp_sim, qq_sim, compression)
   axes = plt.gca()
   axes.xaxis.set_major_formatter(formatter)

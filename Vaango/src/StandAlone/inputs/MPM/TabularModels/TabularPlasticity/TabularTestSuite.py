@@ -20,13 +20,6 @@ POST_PROCESS_LIST = [
   'TabularTest_03a_UniaxialStrainLoadUnloadDPLin.ups',
   'TabularTest_04_UniaxialStrainLoadUnloadDPNonLin.ups',
   'TabularTest_05_UniaxialStrainLoadUnloadNonLinDPNonLin.ups',
-  'TabularTest_08_LoadUnload.ups',
-  'TabularTest_10_TransientStressEigenvaluesConstVectors.ups',
-  'TabularTest_11_UniaxialStrainJ2plasticity.ups',
-  'TabularTest_12_NonlinearElasticity.ups',
-  'TabularTest_22_VertexTreatment.ups',
-  'TabularTest_23_UniaxialStrainNoHardening.ups',
-  'TabularTest_24_CurvedYieldSurface.ups',
 ]
 
 #get uintah/src path as enviornmental variable
@@ -61,18 +54,14 @@ for test in POST_PROCESS_LIST:
   TEST_LIST.append(default_inputs_path + '/' + test)
 
 TEST_LIST = [
-#  TEST_LIST[0], #Test 01
-#  TEST_LIST[1], #Test 01a
-#  TEST_LIST[2], #Test 01b
-#  TEST_LIST[3], #Test 02
-#  TEST_LIST[4], #Test 03
-#  TEST_LIST[5], #Test 03a
-#  TEST_LIST[6], #Test 04
+  TEST_LIST[0], #Test 01
+  TEST_LIST[1], #Test 01a
+  TEST_LIST[2], #Test 01b
+  TEST_LIST[3], #Test 02
+  TEST_LIST[4], #Test 03
+  TEST_LIST[5], #Test 03a
+  TEST_LIST[6], #Test 04
   TEST_LIST[7], #Test 05
-#  TEST_LIST[5], #Test 06
-#  TEST_LIST[6], #Test 07
-#  TEST_LIST[7], #Test 08
-#  TEST_LIST[8], #Test 09
   ]
 ### --------------------- ###
 

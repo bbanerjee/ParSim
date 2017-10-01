@@ -1,6 +1,6 @@
 {"Vaango_tabular_data": {
   "Meta" : {
-    "title" : "Test von Mises yield data"
+    "title" : "Test linear Drucker-Prager yield data"
   },
   "Data" : {
     "Pressure" : [-0.1e3,  0.1e10],

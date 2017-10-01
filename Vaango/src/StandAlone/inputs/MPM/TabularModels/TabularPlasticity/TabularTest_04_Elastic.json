@@ -1,6 +1,6 @@
 {"Vaango_tabular_data": {
   "Meta" : {
-    "title" : "Test linear elastic data"
+    "title" : "Test nonlinear elastic data"
   },
   "Data" : {
     "PlasticStrainVol" : [-2.5, 2.5],

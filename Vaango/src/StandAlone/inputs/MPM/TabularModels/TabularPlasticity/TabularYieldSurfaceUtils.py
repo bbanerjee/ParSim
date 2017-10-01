@@ -94,7 +94,8 @@ def str_to_mathbf(string):
   string = string.split()
   return_string = ''
   for elem in string:
-    elem = r'$\mathbf{'+elem+'}$'
+    #elem = r'$\mathbf{'+elem+'}$'
+    elem = r''+elem+''
     return_string+=elem+'  '
   return return_string[0:-1]
   
@@ -116,6 +117,8 @@ def plotPQYieldSurfaceSim(plt, material_dict, yield_table, ev_e_list, ev_p_list,
   if (compression == 'negative'):
     ps = list(map(lambda pbar: -pbar, pressures))
     qs = list(map(lambda sqrtJ2 : np.sqrt(3)*sqrtJ2, sqrtJ2s))
+    print("yield surface: pmin = ", pmin, "pmax = ", pmax, "p = ", ps)
+    print("yield surface: qmax = ", qmax, "q = ", qs)
  
     line1 = plt.plot(ps,  qs, '-b',linewidth=1)
     line2 = plt.plot(ps, list(map(lambda q : -q,  qs)), '-b',linewidth=1)  

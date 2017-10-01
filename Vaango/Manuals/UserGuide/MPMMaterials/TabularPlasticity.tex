@@ -238,5 +238,254 @@ Conversions are done internally in the code to make sure that signs are consiste
   \textsf{Pressure} while the dependent variable will have the name \textsf{SqrtJ2}.
 \end{SummaryBox}
 
+\subsection{Examples}
+Several examples of input files for exercising various features of the
+\Textsfc{TabularPlasticity} model can be found in the directory
+\Textsfc{StandAlone/inputs/MPM/TabularModels/TabularPlasticity}.
 
+\subsubsection{von Mises plasticity with linear elasticity compression with rotation}
+The input file is \Textsfc{TabularTest\_01\_UniaxialStrainRotateJ2Lin.ups}.
+For this problem, $g(\pbar) = \sigma_y$ and $K, G$ are constant. The 
+input JSON file for the bulk modulus model is
+\begin{lstlisting}[language=JSON]
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test linear elastic data"
+  },
+  "Data" : {
+    "PlasticStrainVol" : [-10.0, 10.0],
+    "Data" : [{
+      "TotalStrainVol" : [-20.0, 20.0],
+      "Pressure" : [-1.0e5,  1.0e5]
+    }, {
+      "TotalStrainVol" : [-20.0, 20.0],
+      "Pressure" : [-1.0e5, 1.0e5]
+    }]
+  }
+}}
+\end{lstlisting}
+and that for the yield function is
+\begin{lstlisting}[language=JSON]
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test von Mises yield data"
+  },
+  "Data" : {
+    "Pressure" : [-0.1e10,  0.1e10],
+    "SqrtJ2" :   [  1.0e3,  1.0e3]
+  }
+}}
+\end{lstlisting}
+We drive the simulation using uniaxial strain with rotation using the
+prescribed deformation file
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+0.0   1.000  0.0  0.0   0.0  1.0  0.0   0.0  0.0  1.0    0    0 0 1
+1.0   0.900  0.0  0.0   0.0  1.0  0.0   0.0  0.0  1.0   360   0 0 1
+\end{lstlisting}
+After running the simulation, we get the response shown in Figure~\ref{fig:J2LinRot}.
+\begin{figure}[htbp!]
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainRotateJ2Lin_yield_surface.pdf}
+    \caption{Stress state and yield surface.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainRotateJ2Lin_sigma_rot_time.pdf}
+    \caption{Rotated stress-time curve.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainRotateJ2Lin_pq_time.pdf}
+    \caption{Mean and deviatoric stress.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainRotateJ2Lin_sigma_time.pdf}
+    \caption{Unrotated stress-time curve.}
+  \end{subfigure}
+  \caption{Stress evolution for $J_2$ plasticity with linear elasticity under uniaxial
+           strain compression with rotation.}
+  \label{fig:J2LinRot}
+\end{figure}
 
+\newpage
+\subsubsection{von Mises plasticity with linear elasticity loading-unloading} 
+If we change the prescribed deformation to loading-unloading, using the input 
+deformation
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+0  1.0  0  0  0  1  0  0  0  1  0  0  0  0
+1  1.15  0  0  0  1  0  0  0  1  0  0  0  0
+3  1.0  0  0  0  1  0  0  0  1  0  0  0  0
+5  0.85  0  0  0  1  0  0  0  1  0  0  0  0
+7  1.0  0  0  0  1  0  0  0  1  0  0  0  0
+8  1.02 0  0  0  1  0  0  0  1  0  0  0  0
+\end{lstlisting}
+we get the response shown in Figure~\ref{fig:J2LinLoadUnload}
+\begin{figure}[htbp!]
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadJ2Lin_yield_surface.pdf}
+    \caption{Stress state and yield surface.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadJ2Lin_pq_time.pdf}
+    \caption{Mean and deviatoric stress vs. time.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadJ2Lin_sigma_time.pdf}
+    \caption{Stress versus time.}
+  \end{subfigure}
+  \caption{Stress evolution for $J_2$ plasticity with linear elasticity under uniaxial strain
+           loading and unloading.}
+  \label{fig:J2LinLoadUnload}
+\end{figure}
+
+\newpage
+\subsubsection{von Mises plasticity with nonlinear elasticity loading-unloading} 
+If we replace the linear elastic model with a nonlinear one:
+\begin{lstlisting}[language=JSON]
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test nonlinear elastic data"
+  },
+  "Data" : {
+    "PlasticStrainVol" : [-0.02, 0.02],
+    "Data" : [{
+      "TotalStrainVol" : [-0.295000, -0.276034, -0.257069, -0.238103, -0.219138, -0.200172, -0.181207, -0.162241, -0.143276, -0.124310, -0.105345, -0.086379, -0.067414, -0.048448, -0.029483, -0.010517, 0.008448,0.027414, 0.046379, 0.065345, 0.084310, 0.103276, 0.122241, 0.141207, 0.160172, 0.179138, 0.198103, 0.217069, 0.236034, 0.255000],
+      "Pressure" : [-3000.000000, -2982.413871, -2929.861667, -2842.959514, -2722.726259, -2570.571529, -2388.279197, -2177.986476, -1942.158854, -1683.561196, -1405.225322, -1110.414466, -802.585016, -485.345990, -162.416726, 162.416726, 485.345990, 802.585016, 1110.414466, 1405.225322, 1683.561196, 1942.158854, 2177.986476, 2388.279197, 2570.571529, 2722.726259, 2842.959514, 2929.861667, 2982.413871, 3000.000000]
+    }, {
+      "TotalStrainVol" : [-0.255000, -0.236034, -0.217069, -0.198103, -0.179138, -0.160172, -0.141207, -0.122241, -0.103276, -0.084310, -0.065345, -0.046379, -0.027414, -0.008448, 0.010517, 0.029483, 0.048448, 0.067414, 0.086379, 0.105345, 0.124310, 0.143276, 0.162241, 0.181207, 0.200172, 0.219138, 0.238103, 0.257069, 0.276034, 0.295000],
+      "Pressure" : [-3000.000000, -2982.413871, -2929.861667, -2842.959514, -2722.726259, -2570.571529, -2388.279197, -2177.986476, -1942.158854, -1683.561196, -1405.225322, -1110.414466, -802.585016, -485.345990, -162.416726, 162.416726, 485.345990, 802.585016, 1110.414466, 1405.225322, 1683.561196, 1942.158854, 2177.986476, 2388.279197, 2570.571529, 2722.726259, 2842.959514, 2929.861667, 2982.413871, 3000.000000]
+    }]
+  }
+}}
+\end{lstlisting}
+we get the response shown in Figure~\ref{fig:J2NonLinLoadUnload}
+\begin{figure}[htbp!]
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadJ2NonLin_yield_surface.pdf}
+    \caption{Stress state and yield surface.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadJ2NonLin_sigma_eps.pdf}
+    \caption{Stress vs. strain.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadJ2NonLin_pq_time.pdf}
+    \caption{Mean and deviatoric stress vs. time.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadJ2NonLin_sigma_time.pdf}
+    \caption{Stress versus time.}
+  \end{subfigure}
+  \caption{Stress evolution for $J_2$ plasticity with nonlinear elasticity under uniaxial strain
+           loading and unloading.}
+  \label{fig:J2NonLinLoadUnload}
+\end{figure}
+
+\newpage
+\subsubsection{Linear Drucker-Prager plasticity with nonlinear elasticity loading-unloading} 
+If we change the yield function to a linear Drucker-Prager type model:
+\begin{lstlisting}[language=JSON]
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test linear Drucker-Prager yield data"
+  },
+  "Data" : {
+    "Pressure" : [-0.1e3,  0.1e10],
+    "SqrtJ2" :   [  0,  3.0e8]
+  }
+}}
+\end{lstlisting}
+and use the nonlinear elastic model:
+\begin{lstlisting}[language=JSON]
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test nonlinear elastic data"
+  },
+  "Data" : {
+    "PlasticStrainVol" : [-2.5, 2.5],
+    "Data" : [{
+      "TotalStrainVol" : [-15.000000, -14.310345, -13.620690, -12.931034, -12.241379, -11.551724, -10.862069, -10.172414, -9.482759, -8.793103, -8.103448, -7.413793, -6.724138, -6.034483, -5.344828, -4.655172, -3.965517, -3.275862, -2.586207, -1.896552, -1.206897, -0.517241, 0.172414, 0.862069, 1.551724, 2.241379, 2.931034, 3.620690, 4.310345, 5.000000],
+      "Pressure" : [-2959.842894, -2943.464146, -2920.494168, -2888.366995, -2843.600634, -2781.548344, -2696.156593, -2579.811517, -2423.426002, -2217.004505, -1950.975669, -1618.496214, -1218.556435, -759.014896, -257.981931, 257.981931, 759.014896, 1218.556435, 1618.496214, 1950.975669, 2217.004505, 2423.426002, 2579.811517, 2696.156593, 2781.548344, 2843.600634, 2888.366995, 2920.494168, 2943.464146, 2959.842894]
+    }, {
+      "TotalStrainVol" : [-5.000000, -4.310345, -3.620690, -2.931034, -2.241379, -1.551724, -0.862069, -0.172414, 0.517241, 1.206897, 1.896552, 2.586207, 3.275862, 3.965517, 4.655172, 5.344828, 6.034483, 6.724138, 7.413793, 8.103448, 8.793103, 9.482759, 10.172414, 10.862069, 11.551724, 12.241379, 12.931034, 13.620690, 14.310345, 15.000000],
+      "Pressure" : [-2959.842894, -2943.464146, -2920.494168, -2888.366995, -2843.600634, -2781.548344, -2696.156593, -2579.811517, -2423.426002, -2217.004505, -1950.975669, -1618.496214, -1218.556435, -759.014896, -257.981931, 257.981931, 759.014896, 1218.556435, 1618.496214, 1950.975669, 2217.004505, 2423.426002, 2579.811517, 2696.156593, 2781.548344, 2843.600634, 2888.366995, 2920.494168, 2943.464146, 2959.842894]
+    }]
+  }
+}}
+\end{lstlisting}
+we get the response shown in Figure~\ref{fig:DPNonLinLoadUnload}
+\begin{figure}[htbp!]
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadDPNonLin_yield_surface.pdf}
+    \caption{Stress state and yield surface.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadDPNonLin_sigma_eps.pdf}
+    \caption{Stress vs. strain.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadDPNonLin_pq_time.pdf}
+    \caption{Mean and deviatoric stress vs. time.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadDPNonLin_sigma_time.pdf}
+    \caption{Stress versus time.}
+  \end{subfigure}
+  \caption{Stress evolution for Drucker-Prager plasticity with nonlinear elasticity under uniaxial strain
+           loading and unloading.}
+  \label{fig:DPNonLinLoadUnload}
+\end{figure}
+
+\newpage
+\subsubsection{Nonlinear Drucker-Prager plasticity with nonlinear elasticity loading-unloading} 
+Finally, if we change the yield function to a nonlinear Drucker-Prager type model:
+\begin{lstlisting}[language=JSON]
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test nonlinear Drucker-Prager yield data"
+  },
+  "Data" : {
+    "Pressure" : [-333.333333, -298.850575, -264.367816, -229.885057, -195.402299, -160.919540, -126.436782, -91.954023, -57.471264, -22.988506, 11.494253, 45.977011, 80.459770, 114.942529, 149.425287, 183.908046, 218.390805, 252.873563, 287.356322, 321.839080, 356.321839, 390.804598, 425.287356, 459.770115, 494.252874, 528.735632, 563.218391, 597.701149, 632.183908, 666.666667],
+    "SqrtJ2" :   [0.000000, 45.485883, 64.326752, 78.783860, 90.971765, 101.709526, 111.417203, 120.344334, 128.653504, 136.457648, 143.838990, 150.859606, 157.567719, 164.001682, 170.192589, 176.166066,181.943530, 187.543098, 192.980256, 198.268366, 203.419051, 208.442500, 213.347701, 218.142630, 222.834406, 227.429413, 231.933403, 236.351579, 240.688667, 244.948974]
+  }
+}}
+\end{lstlisting}
+we get the response shown in Figure~\ref{fig:NonLinDPNonLinLoadUnload}
+\begin{figure}[htbp!]
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadNonLinDPNonLin_yield_surface.pdf}
+    \caption{Stress state and yield surface.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadNonLinDPNonLin_sigma_eps.pdf}
+    \caption{Stress vs. strain.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadNonLinDPNonLin_pq_time.pdf}
+    \caption{Mean and deviatoric stress vs. time.}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{MPMMaterials/FIGS/UniaxialStrainLoadUnloadNonLinDPNonLin_sigma_time.pdf}
+    \caption{Stress versus time.}
+  \end{subfigure}
+  \caption{Stress evolution for Drucker-Prager plasticity with nonlinear elasticity under uniaxial strain
+           loading and unloading.}
+  \label{fig:NonLinDPNonLinLoadUnload}
+\end{figure}

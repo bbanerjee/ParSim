@@ -66,8 +66,8 @@ def uniaxialStrainRotateDPLin(uda_path, save_path,**kwargs):
   # Plot rotated stress as a function of time
   fig1 = plt.figure(1)
   plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
   plotSimDataSigmaTime(fig1, analytical_times, times, Sxx_rot, Syy_rot, Sxy_rot,
                        '$\sigma_{a}$ (sim)', '$\sigma_{r}$ (sim)',
                        '$\sigma_{ar}$ (sim)', compression)
@@ -87,8 +87,8 @@ def uniaxialStrainRotateDPLin(uda_path, save_path,**kwargs):
   # Set up figure
   fig2 = plt.figure(2)
   plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
 
   # Plot p vs. q simulation results
   eqShear_vs_meanStress(pp_sim, qq_sim, compression)
@@ -120,8 +120,8 @@ def uniaxialStrainRotateDPLin(uda_path, save_path,**kwargs):
   # Plot experimental and simulation data as a function of time
   fig3 = plt.figure(3)
   plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
   plotSimDataSigmaTime(fig3, analytical_times, times, sigma_a_sim, sigma_r_sim, sigma_ar_sim,
                        '$\sigma_{xx}$ (sim)', '$\sigma_{yy}$ (sim)',
                        '$\sigma_{xy}$ (sim)', compression)
@@ -137,8 +137,8 @@ def uniaxialStrainRotateDPLin(uda_path, save_path,**kwargs):
 
   fig4 = plt.figure(4)
   plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
   plotSimDataPQTime(fig4, analytical_times, times, pp_sim, qq_sim, compression)
   axes = plt.gca()
   axes.xaxis.set_major_formatter(formatter)

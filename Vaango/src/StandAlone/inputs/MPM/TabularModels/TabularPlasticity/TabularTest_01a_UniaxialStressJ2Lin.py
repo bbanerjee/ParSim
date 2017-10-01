@@ -50,8 +50,8 @@ def uniaxialStressJ2Lin(uda_path, save_path,**kwargs):
   # Set up figure
   fig1 = plt.figure(1)
   plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
 
   # Plot p vs. q simulation results
   eqShear_vs_meanStress(pp_sim, qq_sim)  
@@ -78,8 +78,8 @@ def uniaxialStressJ2Lin(uda_path, save_path,**kwargs):
   # Plot experimental and simulation data as a function of time
   fig2 = plt.figure(2)
   plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
   plotSimDataSigmaTime(fig2, analytical_times, times, sigma_a_sim, sigma_r_sim, sigma_ar_sim,
                        '$\sigma_{xx}$ (sim)', '$\sigma_{yy}$ (sim)',
                        '$\sigma_{xy}$ (sim)')
@@ -95,8 +95,8 @@ def uniaxialStressJ2Lin(uda_path, save_path,**kwargs):
 
   fig3 = plt.figure(3)
   plt.clf()
-  plt.subplots_adjust(right=0.75)
-  plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
+  #plt.subplots_adjust(right=0.75)
+  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
   plotSimDataPQTime(fig3, analytical_times, times, pp_sim, qq_sim)
   axes = plt.gca()
   axes.xaxis.set_major_formatter(formatter)
