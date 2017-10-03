@@ -1,9 +1,8 @@
-#include "zlib.h"
+#include <InputOutput/DEMParticleFileReader.h>
+#include <InputOutput/IOUtils.h>
 #include <Core/Math/IntVec.h>
 #include <Core/Math/Vec.h>
 #include <DiscreteElements/DEMParticle.h>
-#include <InputOutput/DEMParticleFileReader.h>
-#include <cppcodec/cppcodec/base64_default_rfc4648.hpp>
 #include <fstream>
 #include <sstream>
 #include <type_traits>
@@ -88,14 +87,8 @@ DEMParticleFileReader::readParticlesText(const std::string& inputParticle,
     allDEMParticleVec.push_back(pt);
   }
 
-  std::size_t sieveNum;
-  ifs >> sieveNum;
-  std::vector<REAL> percent(sieveNum), size(sieveNum);
-  for (auto i = 0u; i < sieveNum; ++i)
-    ifs >> percent[i] >> size[i];
-  REAL ratio_ba, ratio_ca;
-  ifs >> ratio_ba >> ratio_ca;
-  gradation.set(sieveNum, percent, size, ratio_ba, ratio_ca);
+  // Save the gradation data
+  gradation.initializeFromCSVFile(ifs);
 
   ifs.close();
 }
@@ -215,27 +208,8 @@ DEMParticleFileReader::readParticlesXML(const std::string& inputFileName,
 
   } // end of loop over particles
 
-  // Sieve data (assume ASCII)
-  // **TODO** Add validity checks
-  auto sieve_ps = ps["Sieves"];
-  if (sieve_ps) {
-    std::size_t numSieves;
-    sieve_ps.attribute("number", numSieves);
-
-    std::string percentPassingStr;
-    sieve_ps["percent_passing"](percentPassingStr);
-    std::vector<REAL> percentPassing = convertStrArray<REAL>(percentPassingStr);
-
-    std::string sizeStr;
-    sieve_ps["size"](sizeStr);
-    std::vector<REAL> size = convertStrArray<REAL>(sizeStr);
-
-    REAL ratio_ba, ratio_ca;
-    sieve_ps["sieve_ratio"]["ratio_ba"](ratio_ba);
-    sieve_ps["sieve_ratio"]["ratio_ca"](ratio_ca);
-
-    gradation.set(numSieves, percentPassing, size, ratio_ba, ratio_ca);
-  }
+  // Save the gradation data
+  gradation.initializeFromXMLFile(ps);
 
   return true;
 }
@@ -259,7 +233,8 @@ DEMParticleFileReader::readParticleValues(zen::XmlIn& ps, const std::string& nam
   prop_ps(particleDataStr);
   int numComp = 0;
   prop_ps.attribute("numComponents", numComp);
-  bool success = decodeAndUncompress<T>(particleDataStr, numComp, output);
+  bool success = 
+    Ellip3D::Util::decodeAndUncompress<T>(particleDataStr, numComp, output);
   if (!success) {
     std::cerr << "**ERROR** Could not decode and uncompress particle " << name
               << "\n";
@@ -268,151 +243,4 @@ DEMParticleFileReader::readParticleValues(zen::XmlIn& ps, const std::string& nam
   return true;
 }
 
-template <typename T>
-bool
-DEMParticleFileReader::decodeAndUncompress(const std::string& inputStr,
-                                        const int& numComponents,
-                                        std::vector<T>& output) const
-{
-  // Decode from base64
-  std::vector<std::uint8_t> decoded = base64::decode(inputStr);
-
-  // Uncompress from gzip
-  std::vector<std::uint8_t> uncompressed;
-  z_stream stream;
-
-  // Allocate inflate state
-  stream.zalloc = Z_NULL;
-  stream.zfree = Z_NULL;
-  stream.opaque = Z_NULL;
-  stream.avail_in = 0;
-  stream.next_in = Z_NULL;
-  int err = inflateInit(&stream);
-  if (err != Z_OK) {
-    std::cerr << "inflateInit"
-              << " error: " << err << std::endl;
-    return false;
-  }
-
-  // Uncompress until stream ends
-  stream.avail_in = decoded.size();
-  stream.next_in = &decoded[0];
-  do {
-    do {
-      std::vector<std::uint8_t> out(decoded.size());
-      stream.avail_out = out.size();
-      stream.next_out = &out[0];
-
-      err = inflate(&stream, Z_SYNC_FLUSH);
-      // auto have = decoded.size() - stream.avail_out;
-      uncompressed.insert(std::end(uncompressed), std::begin(out),
-                          std::end(out));
-
-    } while (stream.avail_out == 0);
-  } while (err != Z_STREAM_END);
-
-  if (inflateEnd(&stream) != Z_OK) {
-    std::cerr << "inflateEnd"
-              << " error: " << err << std::endl;
-    return false;
-  }
-
-  // Split the uncompressed string into a vector of tokens
-  // (Assume that data are space separated)
-  // (See: https://stackoverflow.com/questions/236129/split-a-string-in-c)
-  std::istringstream iss(std::string(uncompressed.begin(), uncompressed.end()));
-  std::vector<std::string> outputStr = { std::istream_iterator<std::string>{
-                                           iss },
-                                         std::istream_iterator<std::string>{} };
-  for (auto iter = outputStr.begin(); iter != outputStr.end();
-       iter += numComponents) {
-    std::string str = *iter;
-    for (int ii = 1; ii < numComponents; ii++) {
-      str += " ";
-      str += *(iter + ii);
-    }
-    output.push_back(convert<T>(str));
-  }
-
-  return true;
-}
-
-template <>
-int
-DEMParticleFileReader::convert<int>(const std::string& str) const
-{
-  return std::stoi(str);
-}
-
-template <>
-size_t
-DEMParticleFileReader::convert<size_t>(const std::string& str) const
-{
-  return std::stoul(str);
-}
-
-template <>
-double
-DEMParticleFileReader::convert<double>(const std::string& str) const
-{
-  return std::stod(str);
-}
-
-template <>
-Vec
-DEMParticleFileReader::convert<Vec>(const std::string& str) const
-{
-  std::istringstream iss(std::string(str.begin(), str.end()));
-  std::vector<std::string> split = { std::istream_iterator<std::string>{ iss },
-                                     std::istream_iterator<std::string>{} };
-  return Vec(std::stod(split[0]), std::stod(split[1]), std::stod(split[2]));
-}
-
-template <>
-IntVec
-DEMParticleFileReader::convert<IntVec>(const std::string& str) const
-{
-  std::istringstream iss(std::string(str.begin(), str.end()));
-  std::vector<std::string> split = { std::istream_iterator<std::string>{ iss },
-                                     std::istream_iterator<std::string>{} };
-  return IntVec(std::stoi(split[0]), std::stoi(split[1]), std::stoi(split[2]));
-}
-
-template <>
-std::vector<double>
-DEMParticleFileReader::convert<std::vector<double>>(const std::string& str) const
-{
-  std::istringstream iss(std::string(str.begin(), str.end()));
-  std::vector<std::string> split = { std::istream_iterator<std::string>{ iss },
-                                     std::istream_iterator<std::string>{} };
-  std::vector<double> vec;
-  for (auto str : split) {
-    vec.push_back(std::stod(str));
-  }
-  return vec;
-}
-
-template <typename T>
-std::vector<T>
-DEMParticleFileReader::convertStrArray(const std::string& str) const
-{
-  std::istringstream iss(std::string(str.begin(), str.end()));
-  std::vector<std::string> split = { std::istream_iterator<std::string>{ iss },
-                                     std::istream_iterator<std::string>{} };
-  std::vector<T> vec;
-
-  if (std::is_same<T, REAL>::value) {
-    for (auto str : split) {
-      vec.push_back(std::stod(str));
-    }
-  } else if (std::is_same<T, size_t>::value) {
-    for (auto str : split) {
-      vec.push_back(std::stoul(str));
-    }
-  } else {
-    std::cerr << "**ERROR** Conversion of string array is allowed only for"
-              << " numeric types\n";
-  }
-  return vec;
-}
 } // end namespace dem

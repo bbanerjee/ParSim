@@ -90,7 +90,6 @@ public:
 
   void generateParticle(std::size_t particleLayers,
                         const std::string& genParticle);
-  void buildBoundary(std::size_t boundaryNum, const std::string& boundaryFile);
   void trim(bool toRebuild, const std::string& inputParticle,
             const std::string& trmParticle);
   void deposit(const std::string& boundaryFile,

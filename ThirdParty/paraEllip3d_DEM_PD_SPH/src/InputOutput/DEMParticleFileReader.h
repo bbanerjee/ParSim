@@ -36,17 +36,6 @@ private:
                           const std::string& particleType,
                           std::vector<T>& output) const;
 
-  template <typename T>
-  bool decodeAndUncompress(const std::string& inputStr,
-                           const int& numComponents,
-                           std::vector<T>& output) const;
-
-  template <typename T>
-  T convert(const std::string& str) const;
-
-  template <typename T>
-  std::vector<T> convertStrArray(const std::string& str) const;
-
   DEMParticleFileReader(DEMParticleFileReader const&) = delete; // don't implement
   void operator=(DEMParticleFileReader const&) = delete;     // don't implement
 };

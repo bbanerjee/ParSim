@@ -18,11 +18,11 @@ public:
 
   void writeCSV(std::size_t boundaryNum,
                 const std::string& outputFileName, 
-                Box& allContainer) const;
+                const Box& allContainer) const;
 
   void writeXML(std::size_t boundaryNum,
                 const std::string& outputFileName, 
-                Box& allContainer) const;
+                const Box& allContainer) const;
 
 private:
   enum BoundaryFlag

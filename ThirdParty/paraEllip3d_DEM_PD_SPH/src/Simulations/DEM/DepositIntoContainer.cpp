@@ -1,8 +1,10 @@
 #include <Simulations/DEM/DepositIntoContainer.h>
+#include <Boundary/BoundaryFileWriter.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;
 using util::combine;
+
 
 void
 DepositIntoContainer::execute(DiscreteElements* dem)
@@ -18,7 +20,9 @@ DepositIntoContainer::execute(DiscreteElements* dem)
 
     dem->setContainer(Box(minX, minY, minZ, maxX, maxY, maxZ));
 
-    dem->buildBoundary(5, "deposit_boundary_ini");
+    BoundaryFileWriter boundaryWriter;
+    boundaryWriter.writeXML(5, "deposit_boundary_ini.xml", dem->getAllContainer());
+    boundaryWriter.writeCSV(5, "deposit_boundary_ini.txt", dem->getAllContainer());
 
     auto sieveNum = util::getParam<std::size_t>("sieveNum");
     std::vector<REAL> percent(sieveNum), size(sieveNum);
@@ -46,7 +50,11 @@ DepositIntoContainer::execute(DiscreteElements* dem)
       allContainer.getMinCorner().z(), allContainer.getMaxCorner().x(),
       allContainer.getMaxCorner().y(),
       util::getParam<REAL>("trimHeight")));
-    dem->buildBoundary(6, "trim_boundary_ini");
+
+    BoundaryFileWriter boundaryWriter;
+    boundaryWriter.writeXML(6, "trim_boundary_ini.xml", dem->getAllContainer());
+    boundaryWriter.writeCSV(6, "trim_boundary_ini.txt", dem->getAllContainer());
+
     auto endSnap = util::getParam<std::size_t>("endSnap");
     dem->trim(
       false, combine(".", "deposit_particle_", endSnap, 3),

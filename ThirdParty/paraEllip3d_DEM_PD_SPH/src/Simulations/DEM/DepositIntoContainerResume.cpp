@@ -1,4 +1,5 @@
 #include <Simulations/DEM/DepositIntoContainerResume.h>
+#include <Boundary/BoundaryFileWriter.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;
@@ -18,7 +19,11 @@ DepositIntoContainerResume::execute(DiscreteElements* dem)
       allContainer.getMinCorner().z(), allContainer.getMaxCorner().x(),
       allContainer.getMaxCorner().y(),
       util::getParam<REAL>("trimHeight")));
-    dem->buildBoundary(6, "trim_boundary_ini");
+
+    BoundaryFileWriter boundaryWriter;
+    boundaryWriter.writeXML(6, "trim_boundary_ini.xml", dem->getAllContainer());
+    boundaryWriter.writeCSV(6, "trim_boundary_ini.txt", dem->getAllContainer());
+
     auto endSnap = util::getParam<std::size_t>("endSnap");
     dem->trim(
       false, combine(".", "deposit_particle_", endSnap, 3),

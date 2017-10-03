@@ -12,7 +12,7 @@ using namespace dem;
 void
 BoundaryFileWriter::writeCSV(std::size_t boundaryNum,
                              const std::string& outputFileName, 
-                             Box& allContainer) const
+                             const Box& allContainer) const
 {
   // Open the output file
   std::ofstream ofs(outputFileName);
@@ -133,7 +133,7 @@ BoundaryFileWriter::writeCSV(std::size_t boundaryNum,
 void
 BoundaryFileWriter::writeXML(std::size_t boundaryNum,
                              const std::string& outputFileName, 
-                             Box& allContainer) const
+                             const Box& allContainer) const
 {
   // Get the container limits and center
   Vec domainMin = allContainer.getMinCorner();

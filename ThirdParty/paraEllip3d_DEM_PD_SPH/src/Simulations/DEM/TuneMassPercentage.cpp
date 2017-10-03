@@ -1,4 +1,5 @@
 #include <Simulations/DEM/TuneMassPercentage.h>
+#include <Boundary/BoundaryFileWriter.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;
@@ -22,7 +23,9 @@ TuneMassPercentage::execute(DiscreteElements* dem)
 
     dem->setContainer(Box(minX, minY, minZ, maxX, maxY, maxZ));
 
-    dem->buildBoundary(5, "deposit_boundary_ini");
+    BoundaryFileWriter boundaryWriter;
+    boundaryWriter.writeXML(5, "deposit_boundary_ini.xml", dem->getAllContainer());
+    boundaryWriter.writeCSV(5, "deposit_boundary_ini.txt", dem->getAllContainer());
 
     auto sieveNum = util::getParam<std::size_t>("sieveNum");
     std::vector<REAL> percent(sieveNum), size(sieveNum);

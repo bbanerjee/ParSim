@@ -4,8 +4,12 @@
 #include <Core/Types/realtypes.h>
 #include <boost/mpi.hpp>
 #include <boost/serialization/vector.hpp>
+#include <InputOutput/IOUtils.h>
+#include <InputOutput/zenxml/xml.h>
 #include <cstddef>
 #include <vector>
+#include <iostream>
+#include <fstream>
 
 namespace dem {
 
@@ -40,6 +44,42 @@ public:
     size = v2;
     ratioBA = ba;
     ratioCA = ca;
+  }
+
+  void initializeFromCSVFile(std::ifstream& ifs)
+  {
+    std::size_t sieveNum;
+    ifs >> sieveNum;
+    std::vector<REAL> percent(sieveNum), size(sieveNum);
+    for (auto i = 0u; i < sieveNum; ++i)
+      ifs >> percent[i] >> size[i];
+    REAL ratio_ba, ratio_ca;
+    ifs >> ratio_ba >> ratio_ca;
+    set(sieveNum, percent, size, ratio_ba, ratio_ca);
+  }
+
+  // **TODO** Add validity checks
+  void initializeFromXMLFile(zen::XmlIn& ps)
+  {
+    auto sieve_ps = ps["Sieves"];
+    if (sieve_ps) {
+      std::size_t numSieves;
+      sieve_ps.attribute("number", numSieves);
+
+      std::string percentPassingStr;
+      sieve_ps["percent_passing"](percentPassingStr);
+      std::vector<REAL> percentPassing = Ellip3D::Util::convertStrArray<REAL>(percentPassingStr);
+
+      std::string sizeStr;
+      sieve_ps["size"](sizeStr);
+      std::vector<REAL> size = Ellip3D::Util::convertStrArray<REAL>(sizeStr);
+
+      REAL ratio_ba, ratio_ca;
+      sieve_ps["sieve_ratio"]["ratio_ba"](ratio_ba);
+      sieve_ps["sieve_ratio"]["ratio_ca"](ratio_ca);
+
+      set(numSieves, percentPassing, size, ratio_ba, ratio_ca);
+    }
   }
 
   std::size_t getSieveNum() const { return sieveNum; }
