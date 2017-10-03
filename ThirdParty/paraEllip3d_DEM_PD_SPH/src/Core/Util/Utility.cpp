@@ -90,7 +90,10 @@ getParam(const std::string str)
   try {
     val = param.at(str);
   } catch (const std::out_of_range& err) {
-    std::cerr << "Required InputParameter [" << str << "] not found in input file" << '\n';
+    std::ostringstream out;
+    out << "Required InputParameter [" << str << "] not found in input file";
+    std::cerr << out.str() << '\n';
+    throw std::out_of_range(out.str());
   }
   return static_cast<T>(param[str]);
 }

@@ -19,53 +19,6 @@ namespace dem {
 
 class DEMParticle
 {
-
-private:
-  // types of individual particle:
-  //   0 - free particle
-  //   1 - fixed particle
-  //   2 - special case 2 (pure moment): translate first, then rotate only,
-  // MNT_START needs to be defined
-  //   3 - special case 3 (displacemental ellipsoidal pile): translate in
-  // vertical direction only
-  //   4 - special case 4 (impacting ellipsoidal penetrator): impact with inital
-  // velocity in vertical direction only
-  //   5 - free boundary particle
-  //   6 - translate only, no rotation
-  //  10 - ghost particle
-  std::size_t d_id;
-  std::size_t d_type;
-  REAL d_a, d_b, d_c; // three semi-axle length, must satisfy a >= b >= c
-  REAL d_young; // note: a(currDirecA), b(currDirecB), c(currDirecC) corresponds
-                // to x, y, z in local frame, respectively
-  REAL d_poisson;
-  Vec d_currPos; // particle center
-  Vec d_prevPos;
-  Vec d_currDirecA, d_currDirecB,
-    d_currDirecC; // direction of the three axles, in radian
-  Vec d_prevDirecA, d_prevDirecB, d_prevDirecC;
-  Vec d_currVeloc; // the velocity of the mass center
-  Vec d_prevVeloc;
-  Vec d_currOmga; // angular velocity in global frame!
-  Vec d_prevOmga;
-  Vec d_force;
-  std::map<size_t, Vec> d_forceIDMap;
-  Vec d_prevForce;
-  Vec d_moment;
-  std::map<size_t, Vec> d_momentIDMap;
-  Vec d_prevMoment;
-  Vec d_constForce;
-  Vec d_constMoment;
-  REAL d_density; // specific gravity
-  REAL d_mass;
-  REAL d_volume;
-  Vec d_momentJ;      // moment of inertia in local body-fixed frame
-  REAL d_coef[10];    // particle's coefficients in global coordinates
-  REAL d_kinetEnergy; // kinetic energy
-  std::size_t d_contactNum;
-  bool d_inContact; // in contact with other particle or boundary
-  std::vector<std::vector<REAL>> d_fluidGrid;
-
 public:
   DEMParticle();
   DEMParticle(std::size_t n, std::size_t type, Vec center, REAL r, REAL young,
@@ -214,9 +167,53 @@ public:
   void dragForce();
 
 private:
+  // types of individual particle:
+  //   0 - free particle
+  //   1 - fixed particle
+  //   2 - special case 2 (pure moment): translate first, then rotate only,
+  // MNT_START needs to be defined
+  //   3 - special case 3 (displacemental ellipsoidal pile): translate in
+  // vertical direction only
+  //   4 - special case 4 (impacting ellipsoidal penetrator): impact with inital
+  // velocity in vertical direction only
+  //   5 - free boundary particle
+  //   6 - translate only, no rotation
+  //  10 - ghost particle
+  std::size_t d_id;
+  std::size_t d_type;
+  REAL d_a, d_b, d_c; // three semi-axle length, must satisfy a >= b >= c
+  REAL d_young; // note: a(currDirecA), b(currDirecB), c(currDirecC) corresponds
+                // to x, y, z in local frame, respectively
+  REAL d_poisson;
+  Vec d_currPos; // particle center
+  Vec d_prevPos;
+  Vec d_currDirecA, d_currDirecB,
+    d_currDirecC; // direction of the three axles, in radian
+  Vec d_prevDirecA, d_prevDirecB, d_prevDirecC;
+  Vec d_currVeloc; // the velocity of the mass center
+  Vec d_prevVeloc;
+  Vec d_currOmga; // angular velocity in global frame!
+  Vec d_prevOmga;
+  Vec d_force;
+  std::map<size_t, Vec> d_forceIDMap;
+  Vec d_prevForce;
+  Vec d_moment;
+  std::map<size_t, Vec> d_momentIDMap;
+  Vec d_prevMoment;
+  Vec d_constForce;
+  Vec d_constMoment;
+  REAL d_density; // specific gravity
+  REAL d_mass;
+  REAL d_volume;
+  Vec d_momentJ;      // moment of inertia in local body-fixed frame
+  REAL d_coef[10];    // particle's coefficients in global coordinates
+  REAL d_kinetEnergy; // kinetic energy
+  std::size_t d_contactNum;
+  bool d_inContact; // in contact with other particle or boundary
+  std::vector<std::vector<REAL>> d_fluidGrid;
+
   void init();
 
-private:
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)

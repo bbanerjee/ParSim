@@ -26,6 +26,7 @@ SET(DEM_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/DiscreteElements.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMContact.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticle.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticleCreator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Spring.cpp
 )
 

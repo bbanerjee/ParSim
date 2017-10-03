@@ -14,7 +14,7 @@ DepositIntoContainer::execute(DiscreteElements* dem)
     REAL maxX = util::getParam<REAL>("maxX");
     REAL maxY = util::getParam<REAL>("maxY");
     REAL maxZ = util::getParam<REAL>("maxZ");
-    auto particleLayers = util::getParam<size_t>("particleLayers");
+    auto particleLayers = util::getParam<std::size_t>("particleLayers");
 
     dem->setContainer(Box(minX, minY, minZ, maxX, maxY, maxZ));
 

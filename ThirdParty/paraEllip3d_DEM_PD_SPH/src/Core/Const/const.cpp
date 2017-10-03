@@ -11,10 +11,11 @@ const REAL EPS = 1.0E-12;
 // random number seed (Not a constant)
 long idum = -1;
 
-// output field width and precision
-const std::size_t OWID = 15; // output width
-const std::size_t OPREC =
-  6; // output precision, number of digits after decimal dot
+// output field width 
+const std::size_t OWID = 15; 
+
+// output precision, number of digits after decimal dot
+const std::size_t OPREC = 6; 
 
 // other global variables
 std::ofstream debugInf; // debug info
