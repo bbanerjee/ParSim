@@ -21,19 +21,30 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
+set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/googletest/googletest/include")
+set(TEST_LIB gtest_main gtest)
+#set(CMAKE_VERBOSE_MAKEFILE 1)
 
-SET(DEM_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/Boundary.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/PlaneBoundary.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/CylinderBoundary.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/BoundaryReader.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/BoundaryFileWriter.cpp
+include_directories(${GTEST_INCLUDE_DIR})
+
+#--------------------------------------
+# BoundaryFileWriter
+#--------------------------------------
+add_executable(testBoundaryFileWriter testBoundaryFileWriter.cpp)
+
+target_link_libraries(testBoundaryFileWriter
+  ${TEST_LIB}
+  ELLIP3D_LIB
+  ${MPI_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${VTK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
 )
 
-SET(ELLIP3D_SRCS
-  ${ELLIP3D_SRCS}
-  ${DEM_SRCS}
-  PARENT_SCOPE
+set(UNIT_TEST testBoundaryFileWriter)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
 )
 
-add_subdirectory(UnitTests)
