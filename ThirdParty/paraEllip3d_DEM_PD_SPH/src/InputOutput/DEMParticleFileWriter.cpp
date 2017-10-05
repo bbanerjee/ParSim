@@ -173,7 +173,8 @@ DEMParticleFileWriter::writeXML(const DEMParticlePArray& particles,
     }
 
     std::string type = DEMParticle::getDEMParticleShape(particleType);
-    zen::XmlElement& element = xml["Particles"].ref();
+    zen::XmlElement& root = xml.ref();
+    zen::XmlElement& element = root.addChild("Particles");
     zen::XmlOut particles(element);
     particles.attribute("number", particleIDs.size());
     particles.attribute("type", type);
