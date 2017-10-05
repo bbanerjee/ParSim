@@ -103,12 +103,8 @@ TEST(DEMParticleFileWriterTest, writeTwoTypes) {
   DEMParticlePArray particles;
   std::copy(particles_ellipse.begin(), particles_ellipse.end(),
             std::back_inserter(particles));
-  std::cout << "Ellipse size = " << particles_ellipse.size()
-            << " new = " << particles.size() << std::endl;
   std::copy(particles_sphere.begin(), particles_sphere.end(),
             std::back_inserter(particles));
-  std::cout << "Sphere size = " << particles_sphere.size()
-            << " new = " << particles.size() << std::endl;
 
   // Write particles
   DEMParticleFileWriter writer;

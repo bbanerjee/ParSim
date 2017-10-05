@@ -1144,69 +1144,6 @@ DiscreteElements::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
   return false;
 }
 
-// particleLayers:
-// 0 - one free particle
-// 1 - a horizontal layer of free particles
-// 2 - multiple layers of free particles
-void
-DiscreteElements::generateParticle(std::size_t particleLayers,
-                           const std::string& genParticle)
-{
-  REAL young = util::getParam<REAL>("young");
-  REAL poisson = util::getParam<REAL>("poisson");
-
-  REAL x, y, z;
-  std::size_t particleNum = 0;
-  REAL diameter = gradation.getPtclMaxRadius() * 2.0;
-
-  REAL offset = 0;
-  REAL edge = diameter;
-  if (gradation.getSize().size() == 1 && gradation.getPtclRatioBA() == 1.0 &&
-      gradation.getPtclRatioCA() == 1.0) {
-    edge = diameter * 2.0;
-    offset = diameter * 0.25;
-  }
-
-  REAL x1 = allContainer.getMinCorner().x() + edge;
-  REAL y1 = allContainer.getMinCorner().y() + edge;
-  REAL z1 = allContainer.getMinCorner().z() + diameter;
-  REAL x2 = allContainer.getMaxCorner().x() - edge;
-  REAL y2 = allContainer.getMaxCorner().y() - edge;
-  // REAL z2 = allContainer.getMaxCorner().z() - diameter;
-  REAL z2 = util::getParam<REAL>("floatMaxZ") - diameter;
-  REAL x0 = allContainer.getCenter().x();
-  REAL y0 = allContainer.getCenter().y();
-  REAL z0 = allContainer.getCenter().z();
-
-  if (particleLayers == 0) { // just one free particle
-    DEMParticleP newptcl = std::make_shared<DEMParticle>(
-      particleNum + 1, 0, Vec(x0, y0, z0), gradation, young, poisson);
-    allDEMParticleVec.push_back(newptcl);
-    particleNum++;
-  } else if (particleLayers == 1) { // a horizontal layer of free particles
-    for (x = x1; x - x2 < EPS; x += diameter)
-      for (y = y1; y - y2 < EPS; y += diameter) {
-        DEMParticleP newptcl = std::make_shared<DEMParticle>(
-          particleNum + 1, 0, Vec(x, y, z0), gradation, young, poisson);
-        allDEMParticleVec.push_back(newptcl);
-        particleNum++;
-      }
-  } else if (particleLayers == 2) { // multiple layers of free particles
-    for (z = z1; z - z2 < EPS; z += diameter) {
-      for (x = x1 + offset; x - x2 < EPS; x += diameter)
-        for (y = y1 + offset; y - y2 < EPS; y += diameter) {
-          DEMParticleP newptcl = std::make_shared<DEMParticle>(
-            particleNum + 1, 0, Vec(x, y, z), gradation, young, poisson);
-          allDEMParticleVec.push_back(newptcl);
-          particleNum++;
-        }
-      offset *= -1;
-    }
-  }
-
-  printParticle(genParticle, 0);
-}
-
 void
 DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
                const std::string& trmParticle)

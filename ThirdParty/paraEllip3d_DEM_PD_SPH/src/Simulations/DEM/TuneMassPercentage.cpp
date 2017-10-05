@@ -1,4 +1,6 @@
 #include <Simulations/DEM/TuneMassPercentage.h>
+#include <DiscreteElements/DEMParticleCreator.h>
+#include <InputOutput/DEMParticleFileWriter.h>
 #include <Boundary/BoundaryFileWriter.h>
 #include <Core/Util/Utility.h>
 
@@ -19,29 +21,30 @@ TuneMassPercentage::execute(DiscreteElements* dem)
     REAL maxX = util::getParam<REAL>("maxX");
     REAL maxY = util::getParam<REAL>("maxY");
     REAL maxZ = util::getParam<REAL>("maxZ");
-    auto particleLayers = util::getParam<std::size_t>("particleLayers");
 
     dem->setContainer(Box(minX, minY, minZ, maxX, maxY, maxZ));
+    Box container = dem->getAllContainer();
 
     BoundaryFileWriter boundaryWriter;
     boundaryWriter.writeXML(5, "deposit_boundary_ini.xml", dem->getAllContainer());
     boundaryWriter.writeCSV(5, "deposit_boundary_ini.txt", dem->getAllContainer());
 
-    auto sieveNum = util::getParam<std::size_t>("sieveNum");
-    std::vector<REAL> percent(sieveNum), size(sieveNum);
-    std::vector<std::pair<REAL, REAL>>& grada =
-      InputParameter::get().gradation;
-    assert(grada.size() == sieveNum);
-    for (std::size_t i = 0; i < sieveNum; ++i) {
-      percent[i] = grada[i].first;
-      size[i] = grada[i].second;
-    }
-    REAL ratioBA = util::getParam<REAL>("ratioBA");
-    REAL ratioCA = util::getParam<REAL>("ratioCA");
-    dem->setGradation(
-      Gradation(sieveNum, percent, size, ratioBA, ratioCA));
+    Gradation gradation;
+    gradation.initializeFromInputParameters();
+    dem->setGradation(gradation);
 
-    dem->generateParticle(particleLayers, "float_particle_ini");
+    auto layerFlag = util::getParam<std::size_t>("particleLayers");
+    DEMParticle::DEMParticleShape particleType = 
+      DEMParticle::DEMParticleShape::ELLIPSOID;
+
+    DEMParticleCreator creator;
+    DEMParticlePArray particles = 
+      creator.generateDEMParticles(layerFlag, particleType, container, gradation);
+    dem->setAllDEMParticleVec(particles);
+
+    DEMParticleFileWriter writer;
+    writer.writeCSV(particles, gradation, "float_particle_ini.csv");
+    writer.writeXML(particles, gradation, "float_particle_ini.xml");
 
     // statistics of mass distribution
     Gradation massGrad = dem->getGradation();

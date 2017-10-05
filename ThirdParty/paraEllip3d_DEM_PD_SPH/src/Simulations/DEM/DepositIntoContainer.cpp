@@ -1,5 +1,6 @@
 #include <Simulations/DEM/DepositIntoContainer.h>
 #include <DiscreteElements/DEMParticleCreator.h>
+#include <InputOutput/DEMParticleFileWriter.h>
 #include <Boundary/BoundaryFileWriter.h>
 #include <Core/Util/Utility.h>
 
@@ -37,7 +38,9 @@ DepositIntoContainer::execute(DiscreteElements* dem)
       creator.generateDEMParticles(layerFlag, particleType, container, gradation);
     dem->setAllDEMParticleVec(particles);
 
-    dem->printParticle("float_particle_ini.xml", 0);
+    DEMParticleFileWriter writer;
+    writer.writeCSV(particles, gradation, "float_particle_ini.csv");
+    writer.writeXML(particles, gradation, "float_particle_ini.xml");
   }
 
   dem->deposit("deposit_boundary_ini", "float_particle_ini");
