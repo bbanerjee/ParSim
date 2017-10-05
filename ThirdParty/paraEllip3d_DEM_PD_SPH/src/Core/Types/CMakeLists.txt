@@ -23,7 +23,7 @@
 #
 
 SET(TYPES_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/realtypes.cpp          
+  ${CMAKE_CURRENT_SOURCE_DIR}/RealTypes.cpp          
 )
 
 SET(ELLIP3D_SRCS

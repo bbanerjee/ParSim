@@ -4,7 +4,7 @@
 #include <Boundary/Boundary.h>
 #include <Core/Geometry/Box.h>
 #include <Core/Math/Vec.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <DiscreteElements/DEMContainers.h>
 #include <DiscreteElements/Gradation.h>
 #include <DiscreteElements/DEMParticle.h>

@@ -6,7 +6,7 @@
 #include <Core/Geometry/Box.h>
 #include <Core/Geometry/Cylinder.h>
 #include <Core/Math/Vec.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <DiscreteElements/Gradation.h>
 #include <InputOutput/InputParameter.h>
 #include <boost/mpi.hpp>
@@ -20,6 +20,43 @@ namespace dem {
 class DEMParticle
 {
 public:
+  enum class DEMParticleShape
+  {
+    NONE,
+    ELLIPSOID,
+    SPHERE,
+    CUBE,
+    POLYELLIPSOID
+  };
+
+  static std::string getDEMParticleShape(std::size_t type)
+  {
+    if (type == static_cast<std::size_t>(DEMParticleShape::ELLIPSOID))
+      return "ellipsoid";
+    else if (type == static_cast<std::size_t>(DEMParticleShape::SPHERE))
+      return "sphere";
+    else if (type == static_cast<std::size_t>(DEMParticleShape::POLYELLIPSOID))
+      return "polyellipsoid";
+    else if (type == static_cast<std::size_t>(DEMParticleShape::CUBE))
+      return "cube";
+
+    return "none";
+  }
+
+  static std::size_t getDEMParticleShape(const std::string& type)
+  {
+    if (type == "ellipsoid") 
+      return static_cast<std::size_t>(DEMParticleShape::ELLIPSOID);
+    else if (type == "sphere") 
+      return static_cast<std::size_t>(DEMParticleShape::SPHERE);
+    else if (type == "polyellipsoid") 
+      return static_cast<std::size_t>(DEMParticleShape::POLYELLIPSOID);
+    else if (type == "cube") 
+      return static_cast<std::size_t>(DEMParticleShape::CUBE);
+
+    return static_cast<std::size_t>(DEMParticleShape::NONE);
+  }
+
   DEMParticle();
   DEMParticle(std::size_t n, std::size_t type, Vec center, REAL r, REAL young,
            REAL poisson);

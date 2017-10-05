@@ -1,5 +1,5 @@
 #include <SmoothParticleHydro/SPHKernels.h>
-#include <Core/Const/const.h>
+#include <Core/Const/Constants.h>
 
 using namespace sph;
 

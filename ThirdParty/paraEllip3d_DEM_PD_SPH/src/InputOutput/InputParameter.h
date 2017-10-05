@@ -18,7 +18,7 @@ code before the types can be transmitted using Boost.MPI.
 #ifndef PARAMETER_H
 #define PARAMETER_H
 
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <boost/mpi.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/string.hpp>

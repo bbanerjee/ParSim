@@ -1,9 +1,9 @@
 #ifndef PERIDEMBOND_H
 #define PERIDEMBOND_H
 
-#include <Core/Const/const.h>
+#include <Core/Const/Constants.h>
 #include <Core/Math/Vec.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <DiscreteElements/DEMParticle.h>
 #include <InputOutput/InputParameter.h>
 #include <Peridynamics/PeriParticle.h>

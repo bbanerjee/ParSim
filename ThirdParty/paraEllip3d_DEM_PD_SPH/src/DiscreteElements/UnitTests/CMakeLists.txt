@@ -47,4 +47,3 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
-

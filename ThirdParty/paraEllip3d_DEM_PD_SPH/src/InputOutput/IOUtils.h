@@ -43,10 +43,24 @@ namespace Util {
                            std::vector<T>& output);
 
   /**
+   * Compress a string created from a std::vector and then encode to base64
+   */
+  template <typename T>
+  bool compressAndEncode(const std::vector<T>& input,
+                         const int& numComponents,
+                         std::string& outputStr);
+
+  /**
    * Convert a string to another type
    */
   template <typename T>
   T convert(const std::string& str);
+
+  /**
+   * Convert a value to a string
+   */
+  template <typename T>
+  std::string convert(const T& value);
 
   /**
    * Convert a string to an array of another type

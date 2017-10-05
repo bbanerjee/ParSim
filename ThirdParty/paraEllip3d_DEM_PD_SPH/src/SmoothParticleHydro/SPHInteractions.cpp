@@ -1,7 +1,7 @@
 #include <SmoothParticleHydro/SPHInteractions.h>
 #include <SmoothParticleHydro/SPHKernels.h>
 #include <DiscreteElements/DEMParticle.h>
-#include <Core/Const/const.h>
+#include <Core/Const/Constants.h>
 #include <Core/Math/Vec.h>
 
 using namespace sph;

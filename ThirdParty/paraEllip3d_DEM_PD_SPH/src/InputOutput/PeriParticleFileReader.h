@@ -1,8 +1,8 @@
 #ifndef ELLIP3D_PERI_PARTICLE_FILE_READER_H
 #define ELLIP3D_PERI_PARTICLE_FILE_READER_H
 
-#include <Core/Types/realtypes.h>
-#include <Core/Types/integertypes.h>
+#include <Core/Types/RealTypes.h>
+#include <Core/Types/IntegerTypes.h>
 #include <Peridynamics/PeriContainers.h>
 #include <InputOutput/zenxml/xml.h>
 #include <vector>

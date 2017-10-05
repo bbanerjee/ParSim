@@ -25,7 +25,7 @@
 //      true  - overlapped and vector point returns the deepest penetrated
 //      point.
 
-#include <Core/Const/const.h>
+#include <Core/Const/Constants.h>
 #include <Core/Math/nr.h>
 #include <Core/Math/root6.h>
 #include <fstream>

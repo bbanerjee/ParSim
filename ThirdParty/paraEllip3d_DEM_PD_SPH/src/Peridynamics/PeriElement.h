@@ -1,7 +1,7 @@
 #ifndef PERI_ELEMENT_H
 #define PERI_ELEMENT_H
 
-#include <Core/Types/integertypes.h>
+#include <Core/Types/IntegerTypes.h>
 #include <vector>
 
 namespace pd {

@@ -1,9 +1,9 @@
-#ifndef ELLIP3D_BOUNDARY_READER_H_H
-#define ELLIP3D_BOUNDARY_READER_H_H
+#ifndef ELLIP3D_BOUNDARY_FILE_WRITER_H
+#define ELLIP3D_BOUNDARY_FILE_WRITER_H
 
 #include <Boundary/BoundaryContainers.h>
 #include <Core/Geometry/Box.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 
 #include <InputOutput/zenxml/xml.h>
 

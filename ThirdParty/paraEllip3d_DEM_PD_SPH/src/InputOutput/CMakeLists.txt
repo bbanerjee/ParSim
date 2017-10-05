@@ -28,6 +28,7 @@ SET(IO_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/OutputTecplot.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/OutputVTK.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticleFileReader.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticleFileWriter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/PeriParticleFileReader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/IOUtils.cpp
 )
@@ -37,3 +38,5 @@ SET(ELLIP3D_SRCS
   ${IO_SRCS}
   PARENT_SCOPE
 )
+
+add_subdirectory(UnitTests)

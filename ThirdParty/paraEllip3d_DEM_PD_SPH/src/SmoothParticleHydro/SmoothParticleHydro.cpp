@@ -2,7 +2,7 @@
 #include <SmoothParticleHydro/SmoothParticleHydro.h>
 #include <SmoothParticleHydro/SPHInteractions.h>
 
-#include <Core/Const/const.h>
+#include <Core/Const/Constants.h>
 #include <Core/Math/IntVec.h>
 #include <Core/Math/Matrix.h>
 #include <Core/Util/Utility.h>

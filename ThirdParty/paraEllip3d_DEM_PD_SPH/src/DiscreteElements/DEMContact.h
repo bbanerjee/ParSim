@@ -1,7 +1,7 @@
 #ifndef CONTACT_H
 #define CONTACT_H
 
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <DiscreteElements/DEMContainers.h>
 #include <DiscreteElements/DEMParticle.h>
 #include <boost/functional/hash.hpp>

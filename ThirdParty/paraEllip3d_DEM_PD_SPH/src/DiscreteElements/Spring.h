@@ -2,7 +2,7 @@
 #define SPRING_H
 
 #include <Core/Math/Vec.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <DiscreteElements/DEMParticle.h>
 #include <cassert>
 #include <cstddef>

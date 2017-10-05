@@ -1,9 +1,9 @@
 #ifndef CYLINDER_H
 #define CYLINDER_H
 
-#include <Core/Const/const.h>
+#include <Core/Const/Constants.h>
 #include <Core/Math/Vec.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 
 namespace dem {
 

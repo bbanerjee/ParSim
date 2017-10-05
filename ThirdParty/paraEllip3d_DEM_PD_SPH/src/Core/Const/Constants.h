@@ -1,6 +1,6 @@
 #ifndef CONST_H
 #define CONST_H
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <cstddef>
 #include <fstream>
 #include <mpi.h>

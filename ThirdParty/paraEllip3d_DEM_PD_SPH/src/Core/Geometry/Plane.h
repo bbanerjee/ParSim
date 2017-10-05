@@ -1,7 +1,7 @@
 #ifndef CORE_GEOMETRY_PLANE_H
 #define CORE_GEOMETRY_PLANE_H
 
-#include <Core/Const/const.h>
+#include <Core/Const/Constants.h>
 #include <Core/Math/Vec.h>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>

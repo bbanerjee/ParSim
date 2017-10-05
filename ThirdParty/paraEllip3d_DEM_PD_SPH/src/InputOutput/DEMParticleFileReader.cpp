@@ -179,8 +179,7 @@ DEMParticleFileReader::readParticlesXML(const std::string& inputFileName,
         return false;
       }
 
-      // **TODO** Assign type num using particleType
-      std::size_t particleTypeNum = 0;
+      std::size_t particleTypeNum = DEMParticle::getDEMParticleShape(particleType);
       for (std::size_t ii = 0; ii < numParticles; ++ii) {
         DEMParticleP pt = std::make_shared<DEMParticle>(
           particleIDs[ii], particleTypeNum, particleRadii[ii], particlePos[ii],

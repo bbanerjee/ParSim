@@ -1,7 +1,7 @@
 #
 # The MIT License
 #
-# Copyright (c) 2017- Parresia Research Limited, New Zealand
+# Copyright (c) 2017-2018 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -27,6 +27,7 @@ SET(DEM_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMContact.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticle.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticleCreator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Gradation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Spring.cpp
 )
 

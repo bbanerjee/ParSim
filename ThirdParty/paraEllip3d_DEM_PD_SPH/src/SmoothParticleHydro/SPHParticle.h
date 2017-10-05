@@ -2,8 +2,8 @@
 #define SPH_PARTICLE_H
 
 #include <Core/Math/Vec.h>
-#include <Core/Types/integertypes.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/IntegerTypes.h>
+#include <Core/Types/RealTypes.h>
 #include <DiscreteElements/DEMContainers.h>
 #include <InputOutput/InputParameter.h>
 

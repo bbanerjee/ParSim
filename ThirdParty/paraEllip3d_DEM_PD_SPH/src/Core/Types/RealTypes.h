@@ -1,5 +1,5 @@
-#ifndef REALTYPES_H
-#define REALTYPES_H
+#ifndef RealTypes_H
+#define RealTypes_H
 
 #ifndef QUADMATH
 #include <cmath>

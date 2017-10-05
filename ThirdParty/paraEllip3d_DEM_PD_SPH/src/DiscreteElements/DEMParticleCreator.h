@@ -11,15 +11,6 @@ class DEMParticleCreator
 {
 public:
 
-  DEMParticleCreator() = default;
-  ~DEMParticleCreator() = default;
-
-  template <std::size_t layerFlag>
-  DEMParticlePArray generateDEMParticles(const dem::Box& allContainer,
-                                         dem::Gradation& gradation);
-
-private:
-
   struct ParticleParameters {
     REAL youngModulus;
     REAL poissonRatio;
@@ -28,11 +19,28 @@ private:
     REAL offset;
   };
 
+  DEMParticleCreator() = default;
+  ~DEMParticleCreator() = default;
+
+  DEMParticlePArray generateDEMParticles(std::size_t layerFlag,
+                                         DEMParticle::DEMParticleShape,
+                                         const dem::Box& allContainer,
+                                         dem::Gradation& gradation);
+
+private:
+
   ParticleParameters getParticleParameters(const dem::Gradation& gradation);
 
   template <std::size_t layerFlag>
-  DEMParticlePArray createParticles(const dem::Box& allContainer, 
-    dem::Gradation& gradation, const ParticleParameters& params);
+  DEMParticlePArray generateDEMParticles(DEMParticle::DEMParticleShape type,
+                                         const dem::Box& allContainer,
+                                         dem::Gradation& gradation);
+
+  template <std::size_t layerFlag>
+  DEMParticlePArray createParticles(DEMParticle::DEMParticleShape type,
+                                    const dem::Box& allContainer, 
+                                    dem::Gradation& gradation, 
+                                    const ParticleParameters& params);
 
 };
 

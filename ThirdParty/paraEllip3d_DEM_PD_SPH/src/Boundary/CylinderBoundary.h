@@ -6,7 +6,7 @@
 #include <Boundary/BoundaryContainers.h>
 #include <Core/Geometry/Cylinder.h>
 #include <Core/Math/Vec.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>
 #include <iostream>

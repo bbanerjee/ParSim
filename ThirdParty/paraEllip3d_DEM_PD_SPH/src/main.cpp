@@ -4,10 +4,10 @@
 //                                  Email: beichuan.yan@colorado.edu //
 //                              Institute: University of Colorado at Boulder //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
-#include <Core/Const/const.h>
+#include <Core/Const/Constants.h>
 #include <Core/Geometry/Box.h>
 #include <Core/Math/Vec.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <Core/Util/Utility.h>
 #include <DiscreteElements/DiscreteElements.h>
 #include <DiscreteElements/Gradation.h>

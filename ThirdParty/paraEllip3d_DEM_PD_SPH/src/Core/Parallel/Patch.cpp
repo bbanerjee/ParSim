@@ -4,7 +4,7 @@
 #include <Peridynamics/PeriParticle.h>
 #include <SmoothParticleHydro/SPHContainers.h>
 #include <SmoothParticleHydro/SPHParticle.h>
-#include <Core/Types/integertypes.h>
+#include <Core/Types/IntegerTypes.h>
 #include <set>
 #include <ostream>
 

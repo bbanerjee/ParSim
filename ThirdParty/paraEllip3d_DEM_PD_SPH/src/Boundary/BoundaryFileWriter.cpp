@@ -2,7 +2,7 @@
 #include <Boundary/BoundaryContainers.h>
 #include <Core/Geometry/Box.h>
 #include <Core/Math/IntVec.h>
-#include <Core/Const/const.h>
+#include <Core/Const/Constants.h>
 
 using namespace dem;
 

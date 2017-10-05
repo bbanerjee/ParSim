@@ -1,7 +1,7 @@
 #ifndef ELLIP3D_PARTICLE_FILE_READER_H
 #define ELLIP3D_PARTICLE_FILE_READER_H
 
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <DiscreteElements/DEMContainers.h>
 #include <DiscreteElements/Gradation.h>
 #include <InputOutput/zenxml/xml.h>

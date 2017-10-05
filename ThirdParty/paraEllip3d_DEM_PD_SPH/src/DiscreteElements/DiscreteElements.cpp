@@ -33,7 +33,7 @@
 #include <Boundary/BoundaryReader.h>
 #include <Boundary/CylinderBoundary.h>
 #include <Boundary/PlaneBoundary.h>
-#include <Core/Const/const.h>
+#include <Core/Const/Constants.h>
 #include <Core/Util/Utility.h>
 #include <Core/Math/IntVec.h>
 #include <InputOutput/DEMParticleFileReader.h>

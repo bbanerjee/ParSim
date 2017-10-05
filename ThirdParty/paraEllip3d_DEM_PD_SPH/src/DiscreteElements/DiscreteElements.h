@@ -6,7 +6,7 @@
 #include <Core/Geometry/Cylinder.h>
 #include <Core/Math/Vec.h>
 #include <Core/Math/IntVec.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <DiscreteElements/DEMContact.h>
 #include <DiscreteElements/DEMContainers.h>
 #include <DiscreteElements/Gradation.h>
@@ -87,6 +87,9 @@ public:
   void setContainer(Box cont) { allContainer = cont; }
   void setPatchBox(Box cont) { d_demPatchBox = cont; }
   void setGradation(Gradation grad) { gradation = grad; }
+  void setAllDEMParticleVec(const DEMParticlePArray& particles) {
+    allDEMParticleVec = particles;
+  }
 
   void generateParticle(std::size_t particleLayers,
                         const std::string& genParticle);

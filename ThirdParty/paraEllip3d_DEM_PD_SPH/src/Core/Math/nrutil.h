@@ -8,7 +8,7 @@
 #ifndef _NR_UTILS_H_
 #define _NR_UTILS_H_
 
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 
 namespace dem {
 

@@ -1,7 +1,33 @@
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2017-2018 Parresia Research Limited, New Zealand
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
 #ifndef GRADATION_H
 #define GRADATION_H
 
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
+#include <Core/Util/Utility.h>
+#include <InputOutput/InputParameter.h>
 #include <boost/mpi.hpp>
 #include <boost/serialization/vector.hpp>
 #include <InputOutput/IOUtils.h>
@@ -15,17 +41,8 @@ namespace dem {
 
 class Gradation
 {
-
 public:
-  Gradation()
-    : sieveNum()
-    , percent()
-    , size()
-    , ratioBA()
-    , ratioCA()
-  {
-  }
-
+  Gradation() = default;
   Gradation(std::size_t sn, std::vector<REAL> v1, std::vector<REAL> v2, REAL ba,
             REAL ca)
     : sieveNum(sn)
@@ -46,41 +63,24 @@ public:
     ratioCA = ca;
   }
 
-  void initializeFromCSVFile(std::ifstream& ifs)
-  {
-    std::size_t sieveNum;
-    ifs >> sieveNum;
-    std::vector<REAL> percent(sieveNum), size(sieveNum);
-    for (auto i = 0u; i < sieveNum; ++i)
-      ifs >> percent[i] >> size[i];
-    REAL ratio_ba, ratio_ca;
-    ifs >> ratio_ba >> ratio_ca;
-    set(sieveNum, percent, size, ratio_ba, ratio_ca);
-  }
+  /**
+   * Initialize the particle size information from
+   * CSV or XML files
+   */
+  void initializeFromCSVFile(std::ifstream& ifs);
+  void initializeFromXMLFile(zen::XmlIn& ps);
 
-  // **TODO** Add validity checks
-  void initializeFromXMLFile(zen::XmlIn& ps)
-  {
-    auto sieve_ps = ps["Sieves"];
-    if (sieve_ps) {
-      std::size_t numSieves;
-      sieve_ps.attribute("number", numSieves);
+  /**
+   * Initialize the particle size information from
+   * the global input parameters
+   */
+  void initializeFromInputParameters();
 
-      std::string percentPassingStr;
-      sieve_ps["percent_passing"](percentPassingStr);
-      std::vector<REAL> percentPassing = Ellip3D::Util::convertStrArray<REAL>(percentPassingStr);
-
-      std::string sizeStr;
-      sieve_ps["size"](sizeStr);
-      std::vector<REAL> size = Ellip3D::Util::convertStrArray<REAL>(sizeStr);
-
-      REAL ratio_ba, ratio_ca;
-      sieve_ps["sieve_ratio"]["ratio_ba"](ratio_ba);
-      sieve_ps["sieve_ratio"]["ratio_ca"](ratio_ca);
-
-      set(numSieves, percentPassing, size, ratio_ba, ratio_ca);
-    }
-  }
+  /**
+   * Output the gradation data in CSV or XMLformat
+   */
+  void outputCSV(std::ofstream& ofs) const;
+  void outputXML(zen::XmlOut& xml) const;
 
   std::size_t getSieveNum() const { return sieveNum; }
   std::vector<REAL>& getPercent() { return percent; }
@@ -94,6 +94,15 @@ public:
 
   REAL getPtclMaxRadius() const { return size[0]; }
   REAL getPtclMinRadius() const { return size[sieveNum - 1] * ratioCA; }
+
+  friend std::ostream& operator<<(std::ostream& out, const Gradation& grad)
+  {
+    zen::XmlDoc doc("Gradation");
+    zen::XmlOut xml(doc);
+    grad.outputXML(xml);
+    out << zen::serialize(doc);
+    return out;
+  }
 
 private:
   std::size_t sieveNum; // sieveNum == percent.size() == size.size()

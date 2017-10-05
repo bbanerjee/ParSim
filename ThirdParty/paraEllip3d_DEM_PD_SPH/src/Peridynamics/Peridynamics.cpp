@@ -3,7 +3,7 @@
 #include <InputOutput/PeriParticleFileReader.h>
 #include <InputOutput/OutputTecplot.h>
 #include <InputOutput/OutputVTK.h>
-#include <Core/Const/const.h>
+#include <Core/Const/Constants.h>
 #include <Core/Math/IntVec.h>
 #include <chrono>
 

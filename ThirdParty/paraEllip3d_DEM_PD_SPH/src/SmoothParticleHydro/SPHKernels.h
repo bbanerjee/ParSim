@@ -2,8 +2,8 @@
 #define SPH_KERNELS_H
 
 #include <Core/Math/Vec.h>
-#include <Core/Types/integertypes.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/IntegerTypes.h>
+#include <Core/Types/RealTypes.h>
 
 #include <iostream>
 #include <math.h>

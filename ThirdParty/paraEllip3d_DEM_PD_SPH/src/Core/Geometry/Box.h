@@ -2,7 +2,7 @@
 #define BOX_H
 
 #include <Core/Math/Vec.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 
 namespace dem {
 

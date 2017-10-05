@@ -2,7 +2,7 @@
 #define ROOT6_H
 
 #include <Core/Math/Vec.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 
 namespace dem {
 bool root6(REAL coef1[], REAL coef2[], Vec& v);

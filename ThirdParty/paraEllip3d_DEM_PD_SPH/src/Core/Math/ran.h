@@ -1,7 +1,7 @@
 #ifndef RAN_H
 #define RAN_H
 
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 
 namespace dem {
 REAL ran(long* idum);

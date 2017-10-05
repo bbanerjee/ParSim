@@ -1,7 +1,7 @@
 #ifndef VEC_H
 #define VEC_H
 
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <boost/mpi.hpp>
 #include <iomanip>
 #include <iostream>

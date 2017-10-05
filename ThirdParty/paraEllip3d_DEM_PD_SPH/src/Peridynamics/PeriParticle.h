@@ -7,7 +7,7 @@
 
 #include <Core/Math/Matrix.h>
 #include <Core/Math/Vec.h>
-#include <Core/Types/realtypes.h>
+#include <Core/Types/RealTypes.h>
 #include <Core/Util/Utility.h>
 #include <Peridynamics/PeriContainers.h>
 #include <InputOutput/InputParameter.h>
