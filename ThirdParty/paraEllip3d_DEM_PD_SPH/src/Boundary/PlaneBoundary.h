@@ -20,27 +20,11 @@ class DEMParticle; // forward declaration, only use pointer to class DEMParticle
 ///////////////////////////////////////
 class PlaneBoundary : public Boundary
 {
-private:
-  Vec direc;
-  Vec point;
-  Vec prevPoint;
-  Vec veloc;
-  Vec prevVeloc;
-
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive& ar, const unsigned int version)
-  {
-    ar& boost::serialization::base_object<Boundary>(*this);
-    ar& direc;
-    ar& point;
-    ar& prevPoint;
-    ar& veloc;
-    ar& prevVeloc;
-  }
-
 public:
-  PlaneBoundary(BoundaryId id = 0, BoundaryType tp = 0, EdgeCount en = 0)
+
+  PlaneBoundary(BoundaryID id = BoundaryID::NONE, 
+                Boundary::BoundaryType tp = Boundary::BoundaryType::NONE, 
+                EdgeCount en = 0)
     : Boundary(id, tp, en)
     , direc(0)
     , point(0)
@@ -50,9 +34,9 @@ public:
   {
   }
 
-  PlaneBoundary(BoundaryType type, std::ifstream& ifs);
-  PlaneBoundary(BoundaryId id, BoundaryType type, const XMLProblemSpec& ps);
-  PlaneBoundary(BoundaryId id, BoundaryType type, const JsonProblemSpec& ps);
+  PlaneBoundary(Boundary::BoundaryType type, std::ifstream& ifs);
+  PlaneBoundary(Boundary::BoundaryType type, BoundaryID id, const XMLProblemSpec& ps);
+  PlaneBoundary(Boundary::BoundaryType type, BoundaryID id, const JsonProblemSpec& ps);
 
   Vec getDirec() const { return direc; }
   Vec getPoint() const override { return point; }
@@ -85,6 +69,26 @@ public:
                           REAL sigmaX, REAL sigmaY) override;
   void findBdryContact(DEMParticlePArray& ptcls) override;
   void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) override;
+
+private:
+  Vec direc;
+  Vec point;
+  Vec prevPoint;
+  Vec veloc;
+  Vec prevVeloc;
+
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar& boost::serialization::base_object<Boundary>(*this);
+    ar& direc;
+    ar& point;
+    ar& prevPoint;
+    ar& veloc;
+    ar& prevVeloc;
+  }
+
 };
 
 } // namespace dem ends

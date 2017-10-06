@@ -1,5 +1,6 @@
 #include <Boundary/BoundaryFileWriter.h>
 #include <Boundary/BoundaryContainers.h>
+#include <Boundary/Boundary.h>
 #include <Core/Geometry/Box.h>
 #include <Core/Math/IntVec.h>
 #include <Core/Const/Constants.h>
@@ -44,47 +45,47 @@ BoundaryFileWriter::writeCSV(std::size_t boundaryNum,
   ofs << std::endl;
 
   // Get the boundary flag type
-  BoundaryFlag flag = getBoundaryFlag(boundaryNum);
+  Boundary::BoundaryFlag flag = Boundary::getBoundaryFlag(boundaryNum);
 
   // Various cases
   switch(flag) {
 
-  case ONLY_BOTTOM_BOUNDARY:
+  case Boundary::BoundaryFlag::ONLY_BOTTOM_BOUNDARY:
 
     writeHeader(0u, ofs);
-    writeBoundaryID(BoundaryID::ZMINUS, ofs);
+    writeBoundaryID(Boundary::BoundaryID::ZMINUS, ofs);
     writeZMinusCSV(domainMin, domainMax, domainCen, ofs);
     writeEmptyLine(ofs);
     break;
 
-  case NO_TOP_BOUNDARY:
+  case Boundary::BoundaryFlag::NO_TOP_BOUNDARY:
 
     writeHeader(1u, ofs);
-    writeBoundaryID(BoundaryID::XMINUS, ofs);
+    writeBoundaryID(Boundary::BoundaryID::XMINUS, ofs);
     writeXMinusCSV(domainMin, domainMax, domainCen, ofs);
     writeExtraZPlusCSV(domainMin, domainMax, domainCen, ofs);
     writeEmptyLine(ofs);
 
     writeHeader(1u, ofs);
-    writeBoundaryID(BoundaryID::XPLUS, ofs);
+    writeBoundaryID(Boundary::BoundaryID::XPLUS, ofs);
     writeXPlusCSV(domainMin, domainMax, domainCen, ofs);
     writeExtraZPlusCSV(domainMin, domainMax, domainCen, ofs);
     writeEmptyLine(ofs);
 
     writeHeader(1u, ofs);
-    writeBoundaryID(BoundaryID::YMINUS, ofs);
+    writeBoundaryID(Boundary::BoundaryID::YMINUS, ofs);
     writeYMinusCSV(domainMin, domainMax, domainCen, ofs);
     writeExtraZPlusCSV(domainMin, domainMax, domainCen, ofs);
     writeEmptyLine(ofs);
 
     writeHeader(1u, ofs);
-    writeBoundaryID(BoundaryID::YPLUS, ofs);
+    writeBoundaryID(Boundary::BoundaryID::YPLUS, ofs);
     writeYPlusCSV(domainMin, domainMax, domainCen, ofs);
     writeExtraZPlusCSV(domainMin, domainMax, domainCen, ofs);
     writeEmptyLine(ofs);
 
     writeHeader(1u, ofs);
-    writeBoundaryID(BoundaryID::ZMINUS, ofs);
+    writeBoundaryID(Boundary::BoundaryID::ZMINUS, ofs);
     writeZMinusCSV(domainMin, domainMax, domainCen, ofs);
     writeExtraZPlusCSV(domainMin, domainMax, domainCen, ofs);
     writeEmptyLine(ofs);
@@ -93,32 +94,32 @@ BoundaryFileWriter::writeCSV(std::size_t boundaryNum,
   default:
 
     writeHeader(0u, ofs);
-    writeBoundaryID(BoundaryID::XMINUS, ofs);
+    writeBoundaryID(Boundary::BoundaryID::XMINUS, ofs);
     writeXMinusCSV(domainMin, domainMax, domainCen, ofs);
     writeEmptyLine(ofs);
 
     writeHeader(0u, ofs);
-    writeBoundaryID(BoundaryID::XPLUS, ofs);
+    writeBoundaryID(Boundary::BoundaryID::XPLUS, ofs);
     writeXPlusCSV(domainMin, domainMax, domainCen, ofs);
     writeEmptyLine(ofs);
 
     writeHeader(0u, ofs);
-    writeBoundaryID(BoundaryID::YMINUS, ofs);
+    writeBoundaryID(Boundary::BoundaryID::YMINUS, ofs);
     writeYMinusCSV(domainMin, domainMax, domainCen, ofs);
     writeEmptyLine(ofs);
 
     writeHeader(0u, ofs);
-    writeBoundaryID(BoundaryID::YPLUS, ofs);
+    writeBoundaryID(Boundary::BoundaryID::YPLUS, ofs);
     writeYPlusCSV(domainMin, domainMax, domainCen, ofs);
     writeEmptyLine(ofs);
 
     writeHeader(0u, ofs);
-    writeBoundaryID(BoundaryID::ZMINUS, ofs);
+    writeBoundaryID(Boundary::BoundaryID::ZMINUS, ofs);
     writeZMinusCSV(domainMin, domainMax, domainCen, ofs);
     writeEmptyLine(ofs);
 
     writeHeader(0u, ofs);
-    writeBoundaryID(BoundaryID::ZPLUS, ofs);
+    writeBoundaryID(Boundary::BoundaryID::ZPLUS, ofs);
     writeZPlusCSV(domainMin, domainMax, domainCen, ofs);
     writeEmptyLine(ofs);
     break;
@@ -166,31 +167,31 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
   xml["Boundary"]["containerMax"](stream.str());
 
   // Get the boundary flag type
-  BoundaryFlag flag = getBoundaryFlag(boundaryNum);
+  Boundary::BoundaryFlag flag = Boundary::getBoundaryFlag(boundaryNum);
 
   // Various cases
   switch(flag) {
 
-  case ONLY_BOTTOM_BOUNDARY:
+  case Boundary::BoundaryFlag::ONLY_BOTTOM_BOUNDARY:
 
     {
     zen::XmlElement& element = xml["Boundary"].ref();
     zen::XmlElement& child = element.addChild("boundary");
     zen::XmlOut xml_child(child);
     writeHeader(0u, xml_child);
-    writeBoundaryID(BoundaryID::ZMINUS, xml_child);
+    writeBoundaryID(Boundary::BoundaryID::ZMINUS, xml_child);
     writeZMinusXML(domainMin, domainMax, domainCen, xml_child);
     }
     break;
 
-  case NO_TOP_BOUNDARY:
+  case Boundary::BoundaryFlag::NO_TOP_BOUNDARY:
 
     {
     zen::XmlElement& element = xml["Boundary"].ref();
     zen::XmlElement& child = element.addChild("boundary");
     zen::XmlOut xml_child(child);
     writeHeader(1u, xml_child);
-    writeBoundaryID(BoundaryID::XMINUS, xml_child);
+    writeBoundaryID(Boundary::BoundaryID::XMINUS, xml_child);
     writeXMinusXML(domainMin, domainMax, domainCen, xml_child);
     writeExtraZPlusXML(domainMin, domainMax, domainCen, xml_child);
     }
@@ -200,7 +201,7 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
     zen::XmlElement& child = element.addChild("boundary");
     zen::XmlOut xml_child(child);
     writeHeader(1u, xml_child);
-    writeBoundaryID(BoundaryID::XPLUS, xml_child);
+    writeBoundaryID(Boundary::BoundaryID::XPLUS, xml_child);
     writeXPlusXML(domainMin, domainMax, domainCen, xml_child);
     writeExtraZPlusXML(domainMin, domainMax, domainCen, xml_child);
     }
@@ -210,7 +211,7 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
     zen::XmlElement& child = element.addChild("boundary");
     zen::XmlOut xml_child(child);
     writeHeader(1u, xml_child);
-    writeBoundaryID(BoundaryID::YMINUS, xml_child);
+    writeBoundaryID(Boundary::BoundaryID::YMINUS, xml_child);
     writeYMinusXML(domainMin, domainMax, domainCen, xml_child);
     writeExtraZPlusXML(domainMin, domainMax, domainCen, xml_child);
     }
@@ -220,7 +221,7 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
     zen::XmlElement& child = element.addChild("boundary");
     zen::XmlOut xml_child(child);
     writeHeader(1u, xml_child);
-    writeBoundaryID(BoundaryID::YPLUS, xml_child);
+    writeBoundaryID(Boundary::BoundaryID::YPLUS, xml_child);
     writeYPlusXML(domainMin, domainMax, domainCen, xml_child);
     writeExtraZPlusXML(domainMin, domainMax, domainCen, xml_child);
     }
@@ -230,7 +231,7 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
     zen::XmlElement& child = element.addChild("boundary");
     zen::XmlOut xml_child(child);
     writeHeader(1u, xml_child);
-    writeBoundaryID(BoundaryID::ZMINUS, xml_child);
+    writeBoundaryID(Boundary::BoundaryID::ZMINUS, xml_child);
     writeZMinusXML(domainMin, domainMax, domainCen, xml_child);
     writeExtraZPlusXML(domainMin, domainMax, domainCen, xml_child);
     }
@@ -243,7 +244,7 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
     zen::XmlElement& child = element.addChild("boundary");
     zen::XmlOut xml_child(child);
     writeHeader(0u, xml_child);
-    writeBoundaryID(BoundaryID::XMINUS, xml_child);
+    writeBoundaryID(Boundary::BoundaryID::XMINUS, xml_child);
     writeXMinusXML(domainMin, domainMax, domainCen, xml_child);
     }
 
@@ -252,7 +253,7 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
     zen::XmlElement& child = element.addChild("boundary");
     zen::XmlOut xml_child(child);
     writeHeader(0u, xml_child);
-    writeBoundaryID(BoundaryID::XPLUS, xml_child);
+    writeBoundaryID(Boundary::BoundaryID::XPLUS, xml_child);
     writeXPlusXML(domainMin, domainMax, domainCen, xml_child);
     }
 
@@ -261,7 +262,7 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
     zen::XmlElement& child = element.addChild("boundary");
     zen::XmlOut xml_child(child);
     writeHeader(0u, xml_child);
-    writeBoundaryID(BoundaryID::YMINUS, xml_child);
+    writeBoundaryID(Boundary::BoundaryID::YMINUS, xml_child);
     writeYMinusXML(domainMin, domainMax, domainCen, xml_child);
     }
 
@@ -270,7 +271,7 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
     zen::XmlElement& child = element.addChild("boundary");
     zen::XmlOut xml_child(child);
     writeHeader(0u, xml_child);
-    writeBoundaryID(BoundaryID::YPLUS, xml_child);
+    writeBoundaryID(Boundary::BoundaryID::YPLUS, xml_child);
     writeYPlusXML(domainMin, domainMax, domainCen, xml_child);
     }
 
@@ -279,7 +280,7 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
     zen::XmlElement& child = element.addChild("boundary");
     zen::XmlOut xml_child(child);
     writeHeader(0u, xml_child);
-    writeBoundaryID(BoundaryID::ZMINUS, xml_child);
+    writeBoundaryID(Boundary::BoundaryID::ZMINUS, xml_child);
     writeZMinusXML(domainMin, domainMax, domainCen, xml_child);
     }
 
@@ -288,7 +289,7 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
     zen::XmlElement& child = element.addChild("boundary");
     zen::XmlOut xml_child(child);
     writeHeader(0u, xml_child);
-    writeBoundaryID(BoundaryID::ZPLUS, xml_child);
+    writeBoundaryID(Boundary::BoundaryID::ZPLUS, xml_child);
     writeZPlusXML(domainMin, domainMax, domainCen, xml_child);
     }
     break;
@@ -306,7 +307,7 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
 }
 
 /**
- * For XML output
+ * For CSV output
  */
 void
 BoundaryFileWriter::writeHeader(std::size_t extraBoundaries,
@@ -317,13 +318,13 @@ BoundaryFileWriter::writeHeader(std::size_t extraBoundaries,
 }
 
 void
-BoundaryFileWriter::writeBoundaryID(BoundaryID id,
+BoundaryFileWriter::writeBoundaryID(Boundary::BoundaryID id,
                                     std::ofstream& ofs) const
 {
-  if (id == BoundaryID::NONE) {
+  if (id == Boundary::BoundaryID::NONE) {
     ofs << std::setw(OWID) << " ";
   } else {
-    ofs << std::setw(OWID) << id;
+    ofs << std::setw(OWID) << static_cast<int>(id);
   }
 }
 
@@ -337,7 +338,7 @@ void
 BoundaryFileWriter::writeExtraZPlusCSV(const Vec& domainMin, const Vec& domainMax,
                                        const Vec& domainCen, std::ofstream& ofs) const
 {
-  writeBoundaryID(BoundaryID::NONE, ofs);
+  writeBoundaryID(Boundary::BoundaryID::NONE, ofs);
   writeZPlusCSV(domainMin, domainMax, domainCen, ofs);
 }
 
@@ -412,12 +413,11 @@ BoundaryFileWriter::writeHeader(std::size_t extraBoundaries,
 }
 
 void
-BoundaryFileWriter::writeBoundaryID(BoundaryID id,
+BoundaryFileWriter::writeBoundaryID(Boundary::BoundaryID id,
                                     zen::XmlOut& xml) const
 {
-  if (id != BoundaryID::NONE) {
-    xml.attribute("id", static_cast<int>(id));
-  }
+  std::string idStr = Boundary::getBoundaryIDStr(id);
+  xml.attribute("id", idStr);
 }
 
 void

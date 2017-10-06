@@ -22,22 +22,6 @@ public:
                 BoundaryPArray& boundaries) const;
 
 private:
-  enum BoundaryTypes
-  {
-    PLANE,
-    CYLINDER,
-    NONE
-  };
-
-  BoundaryTypes getEnum(const std::string& str) const
-  {
-    if (str == "plane")
-      return BoundaryTypes::PLANE;
-    else if (str == "cylinder")
-      return BoundaryTypes::CYLINDER;
-    else
-      return BoundaryTypes::NONE;
-  }
 
   BoundaryReader(BoundaryReader const&) = delete; // don't implement
   void operator=(BoundaryReader const&) = delete; // don't implement

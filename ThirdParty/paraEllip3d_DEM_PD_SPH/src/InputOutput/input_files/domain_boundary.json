@@ -7,7 +7,7 @@
     "containerMax":  "[100.0, 1.0, 50.0]",
     "boundary": [
       {
-       "type": "plane", "id": 1,
+       "type": "plane", "id": "x-",
        "direction": "[-1.0, 0.0, 0.0]",
        "position": "[100.0, 0.0, 25.0]",
        "extraEdge": [
@@ -18,27 +18,27 @@
        ]
       },
       {
-       "type": "plane", "id": 2,
+       "type": "plane", "id": "x+",
        "direction": "[1.0, 0.0, 0.0]",
        "position": "[100.0, 0.0, 25.0]"
       },
       {
-       "type": "plane", "id": 3,
+       "type": "plane", "id": "y-",
        "direction": "[0.0, -1.0, 0.0]",
        "position": "[50.0, -1.0, 25.0]"
       },
       {
-       "type": "plane", "id": 3,
+       "type": "plane", "id": "y+",
        "direction": "[0.0, 1.0, 0.0]",
        "position": "[50.0, 1.0, 25.0]"
       },
       {
-       "type": "plane", "id": 3,
+       "type": "plane", "id": "z-",
        "direction": "[0.0, 0.0, -1.0]",
        "position": "[50.0, 0.0, 0.0]"
       },
       {
-       "type": "plane", "id": 3,
+       "type": "plane", "id": "z+",
        "direction": "[0.0, 0.0, 1.0]",
        "position": "[50.0, 0.0, 50.0]"
       }

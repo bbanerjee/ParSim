@@ -12,7 +12,7 @@
     <containerMax>  [100.0, 1.0, 50.0] </containerMax>
 
     <!-- # Internal boundaries -->
-    <boundary type="plane" id="1">
+    <boundary type="plane" id="x-">
       <direction> [-1.0, 0.0, 0.0] </direction>
       <position> [100.0, 0.0, 25.0] </position>
       <extraEdge>
@@ -21,27 +21,27 @@
       </extraEdge>
     </boundary>
 
-    <boundary type="plane" id="2">
+    <boundary type="plane" id="x+">
       <direction> [1.0, 0.0, 0.0] </direction>
       <position> [100.0, 0.0, 25.0] </position>
     </boundary>
 
-    <boundary type="plane" id="3">
+    <boundary type="plane" id="y-">
       <direction> [0.0, -1.0, 0.0] </direction>
       <position> [50.0, -1.0, 25.0] </position>
     </boundary>
 
-    <boundary type="plane" id="4">
+    <boundary type="plane" id="y+">
       <direction> [0.0, 1.0, 0.0] </direction>
       <position> [50.0, 1.0, 25.0] </position>
     </boundary>
 
-    <boundary type="plane" id="5">
+    <boundary type="plane" id="z-">
       <direction> [0.0, 0.0, -1.0] </direction>
       <position> [50.0, 0.0, 0.0] </position>
     </boundary>
 
-    <boundary type="plane" id="6">
+    <boundary type="plane" id="z+">
       <direction> [0.0, 0.0, 1.0] </direction>
       <position> [50.0, 0.0, 50.0] </position>
     </boundary>

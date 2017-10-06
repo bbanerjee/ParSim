@@ -6,13 +6,15 @@
 
 using namespace dem;
 
-PlaneBoundary::PlaneBoundary(BoundaryType tp, std::ifstream& ifs)
+PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, std::ifstream& ifs)
   : Boundary()
 {
   // These are defined in the base class
   b_type = tp;
   ifs >> b_extraNum;
-  ifs >> b_id;
+  int id;
+  ifs >> id;
+  b_id = Boundary::getBoundaryID(id);
 
   // These variables are local to the PlaneBoundary class
   REAL dx, dy, dz, px, py, pz;
@@ -29,7 +31,7 @@ PlaneBoundary::PlaneBoundary(BoundaryType tp, std::ifstream& ifs)
   }
 }
 
-PlaneBoundary::PlaneBoundary(BoundaryId id, BoundaryType tp,
+PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, BoundaryID id, 
                              const XMLProblemSpec& ps)
   : Boundary()
 {
@@ -80,7 +82,7 @@ PlaneBoundary::PlaneBoundary(BoundaryId id, BoundaryType tp,
   }
 }
 
-PlaneBoundary::PlaneBoundary(BoundaryId id, BoundaryType tp,
+PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, BoundaryID id, 
                              const JsonProblemSpec& ps)
   : Boundary()
 {
@@ -213,7 +215,7 @@ PlaneBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap)
 
   // checkout tangential forces and displacements after each particle is
   // processed
-  boundaryTgtMap[this->b_id] = vtmp;
+  boundaryTgtMap[static_cast<size_t>(this->b_id)] = vtmp;
 
   updateStatForce();
 }
@@ -232,7 +234,7 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
 
   REAL vel, pos;
   switch (b_id) {
-    case 1:
+    case BoundaryID::XMINUS:
       if (fabs(normal.x() / areaX + sigma) / sigma > tol) {
         vel = ((normal.x() + sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.x() * (2-atf) / (2+atf) + (normal.x() + sigma *
@@ -242,7 +244,7 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setPoint(Vec(pos, getPoint().y(), getPoint().z()));
       }
       break;
-    case 2:
+    case BoundaryID::XPLUS:
       if (fabs(normal.x() / areaX - sigma) / sigma > tol) {
         vel = ((normal.x() - sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.x() * (2-atf) / (2+atf) + (normal.x() - sigma *
@@ -252,7 +254,7 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setPoint(Vec(pos, getPoint().y(), getPoint().z()));
       }
       break;
-    case 3:
+    case BoundaryID::YMINUS:
       if (fabs(normal.y() / areaY + sigma) / sigma > tol) {
         vel = ((normal.y() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.y() * (2-atf) / (2+atf) + (normal.y() + sigma *
@@ -262,7 +264,7 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setPoint(Vec(getPoint().x(), pos, getPoint().z()));
       }
       break;
-    case 4:
+    case BoundaryID::YPLUS:
       if (fabs(normal.y() / areaY - sigma) / sigma > tol) {
         vel = ((normal.y() - sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.y() * (2-atf) / (2+atf) + (normal.y() - sigma *
@@ -272,7 +274,7 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setPoint(Vec(getPoint().x(), pos, getPoint().z()));
       }
       break;
-    case 5:
+    case BoundaryID::ZMINUS:
       if (fabs(normal.z() / areaZ + sigma) / sigma > tol) {
         vel = ((normal.z() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.z() * (2-atf) / (2+atf) + (normal.z() + sigma *
@@ -282,7 +284,7 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setPoint(Vec(getPoint().x(), getPoint().y(), pos));
       }
       break;
-    case 6:
+    case BoundaryID::ZPLUS:
       if (fabs(normal.z() / areaZ - sigma) / sigma > tol) {
         vel = ((normal.z() - sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
         if (normal.z() == 0)
@@ -293,6 +295,8 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setVeloc(Vec(getVeloc().x(), getVeloc().y(), vel));
         setPoint(Vec(getPoint().x(), getPoint().y(), pos));
       }
+      break;
+    default:
       break;
   }
   prevPoint = point;
@@ -312,7 +316,7 @@ PlaneBoundary::updateOdometer(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
 
   REAL vel, pos;
   switch (b_id) {
-    case 5:
+    case BoundaryID::ZMINUS:
       if (fabs(normal.z() / areaZ + sigma) / sigma > tol) {
         vel = ((normal.z() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.z() * (2-atf) / (2+atf) + (normal.z() + sigma *
@@ -322,7 +326,7 @@ PlaneBoundary::updateOdometer(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setPoint(Vec(getPoint().x(), getPoint().y(), pos));
       }
       break;
-    case 6:
+    case BoundaryID::ZPLUS:
       if (fabs(normal.z() / areaZ - sigma) / sigma > tol) {
         vel = ((normal.z() - sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.z() * (2-atf) / (2+atf) + (normal.z() - sigma *
@@ -331,6 +335,8 @@ PlaneBoundary::updateOdometer(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setVeloc(Vec(getVeloc().x(), getVeloc().y(), vel));
         setPoint(Vec(getPoint().x(), getPoint().y(), pos));
       }
+      break;
+    default:
       break;
   }
   prevPoint = point;
@@ -352,7 +358,7 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
 
   REAL vel = 0.0, pos = 0.0;
   switch (b_id) {
-    case 1:
+    case BoundaryID::XMINUS:
       if (fabs(normal.x() / areaX + sigma) / sigma > tol) {
         vel = ((normal.x() + sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.x() * (2-atf) / (2+atf) + (normal.x() + sigma *
@@ -362,7 +368,7 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setPoint(Vec(pos, getPoint().y(), getPoint().z()));
       }
       break;
-    case 2:
+    case BoundaryID::XPLUS:
       if (fabs(normal.x() / areaX - sigma) / sigma > tol) {
         vel = ((normal.x() - sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.x() * (2-atf) / (2+atf) + (normal.x() - sigma *
@@ -372,7 +378,7 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setPoint(Vec(pos, getPoint().y(), getPoint().z()));
       }
       break;
-    case 3:
+    case BoundaryID::YMINUS:
       if (fabs(normal.y() / areaY + sigma) / sigma > tol) {
         vel = ((normal.y() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.y() * (2-atf) / (2+atf) + (normal.y() + sigma *
@@ -382,7 +388,7 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setPoint(Vec(getPoint().x(), pos, getPoint().z()));
       }
       break;
-    case 4:
+    case BoundaryID::YPLUS:
       if (fabs(normal.y() / areaY - sigma) / sigma > tol) {
         vel = ((normal.y() - sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.y() * (2-atf) / (2+atf) + (normal.y() - sigma *
@@ -392,7 +398,7 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setPoint(Vec(getPoint().x(), pos, getPoint().z()));
       }
       break;
-    case 5:
+    case BoundaryID::ZMINUS:
       if (triaxialType == 1)
         vel = boundaryRate;
       else if (triaxialType == 2) {
@@ -415,7 +421,7 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       setVeloc(Vec(getVeloc().x(), getVeloc().y(), vel));
       setPoint(Vec(getPoint().x(), getPoint().y(), pos));
       break;
-    case 6:
+    case BoundaryID::ZPLUS:
       if (triaxialType == 1)
         vel = -boundaryRate;
       else if (triaxialType == 2) {
@@ -437,6 +443,8 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       pos = prevPoint.z() + vel * timeStep;
       setVeloc(Vec(getVeloc().x(), getVeloc().y(), vel));
       setPoint(Vec(getPoint().x(), getPoint().y(), pos));
+      break;
+    default:
       break;
   }
   prevPoint = point;
@@ -459,7 +467,7 @@ PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
 
   REAL vel, pos;
   switch (b_id) { // boundary x1(1) and boundary x2(2) do not move
-    case 3:
+    case BoundaryID::YMINUS:
       if (fabs(normal.y() / areaY + sigma) / sigma > tol) {
         vel = ((normal.y() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate *
               sideRateRatio;
@@ -470,7 +478,7 @@ PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         setPoint(Vec(getPoint().x(), pos, getPoint().z()));
       }
       break;
-    case 4:
+    case BoundaryID::YPLUS:
       if (fabs(normal.y() / areaY - sigma) / sigma > tol) {
         vel = ((normal.y() - sigma * areaY) > 0 ? 1 : -1) * boundaryRate *
               sideRateRatio;
@@ -482,7 +490,7 @@ PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       }
       break;
     // displacement control, leading to zero volumetric strain
-    case 5:
+    case BoundaryID::ZMINUS:
       if (plnstrnType == 1)
         vel = boundaryRate;
       else if (plnstrnType == 2) {
@@ -508,7 +516,7 @@ PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       setVeloc(Vec(getVeloc().x(), getVeloc().y(), vel));
       setPoint(Vec(getPoint().x(), getPoint().y(), pos));
       break;
-    case 6:
+    case BoundaryID::ZPLUS:
       if (plnstrnType == 1)
         vel = -boundaryRate;
       else if (plnstrnType == 2) {
@@ -534,6 +542,8 @@ PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       setVeloc(Vec(getVeloc().x(), getVeloc().y(), vel));
       setPoint(Vec(getPoint().x(), getPoint().y(), pos));
       break;
+    default:
+      break;
   }
   prevPoint = point;
   prevVeloc = veloc;
@@ -554,7 +564,7 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
 
   REAL vel, pos;
   switch (b_id) {
-    case 1:
+    case BoundaryID::XMINUS:
       if (fabs(normal.x() / areaX + sigmaX) / sigmaX > tol) {
         vel = ((normal.x() + sigmaX * areaX) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.x() * (2-atf) / (2+atf) + (normal.x() + sigma *
@@ -564,7 +574,7 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
         setPoint(Vec(pos, getPoint().y(), getPoint().z()));
       }
       break;
-    case 2:
+    case BoundaryID::XPLUS:
       if (fabs(normal.x() / areaX - sigmaX) / sigmaX > tol) {
         vel = ((normal.x() - sigmaX * areaX) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.x() * (2-atf) / (2+atf) + (normal.x() - sigma *
@@ -574,7 +584,7 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
         setPoint(Vec(pos, getPoint().y(), getPoint().z()));
       }
       break;
-    case 3:
+    case BoundaryID::YMINUS:
       if (fabs(normal.y() / areaY + sigmaY) / sigmaY > tol) {
         vel = ((normal.y() + sigmaY * areaY) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.y() * (2-atf) / (2+atf) + (normal.y() + sigma *
@@ -584,7 +594,7 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
         setPoint(Vec(getPoint().x(), pos, getPoint().z()));
       }
       break;
-    case 4:
+    case BoundaryID::YPLUS:
       if (fabs(normal.y() / areaY - sigmaY) / sigmaY > tol) {
         vel = ((normal.y() - sigmaY * areaY) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.y() * (2-atf) / (2+atf) + (normal.y() - sigma *
@@ -594,7 +604,7 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
         setPoint(Vec(getPoint().x(), pos, getPoint().z()));
       }
       break;
-    case 5:
+    case BoundaryID::ZMINUS:
       if (fabs(normal.z() / areaZ + sigma) / sigma > tol) {
         vel = ((normal.z() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.z() * (2-atf) / (2+atf) + (normal.z() + sigma *
@@ -604,7 +614,7 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
         setPoint(Vec(getPoint().x(), getPoint().y(), pos));
       }
       break;
-    case 6:
+    case BoundaryID::ZPLUS:
       if (fabs(normal.z() / areaZ - sigma) / sigma > tol) {
         vel = ((normal.z() - sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
         // vel = prevVeloc.z() * (2-atf) / (2+atf) + (normal.z() - sigma *
@@ -613,6 +623,8 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
         setVeloc(Vec(getVeloc().x(), getVeloc().y(), vel));
         setPoint(Vec(getPoint().x(), getPoint().y(), pos));
       }
+      break;
+    default:
       break;
   }
   prevPoint = point;

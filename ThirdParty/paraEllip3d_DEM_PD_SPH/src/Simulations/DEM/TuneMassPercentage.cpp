@@ -53,20 +53,23 @@ TuneMassPercentage::execute(DiscreteElements* dem)
     for (double& i : massPercent)
       i = 0;
 
-    for (const auto& itr : dem->getAllDEMParticleVec())
-      for (int i = massPercent.size() - 1; i >= 0;
-           --i) { // do not use size_t for descending series
-        if (itr->getA() <= massSize[i])
-          massPercent[i] += itr->getMass();
+    for (const auto& particle : dem->getAllDEMParticleVec()) {
+      for (int i = massPercent.size() - 1; i >= 0; --i) { 
+        if (particle->getA() <= massSize[i])
+          massPercent[i] += particle->getMass();
       }
+    }
+
     REAL totalMass = massPercent[0];
-    for (double& i : massPercent)
+    for (double& i : massPercent) {
       i /= totalMass;
+    }
     debugInf << std::endl
              << "mass percentage of particles:" << std::endl
              << std::setw(OWID) << massPercent.size() << std::endl;
-    for (std::size_t i = 0; i < massPercent.size(); ++i)
+    for (std::size_t i = 0; i < massPercent.size(); ++i) {
       debugInf << std::setw(OWID) << massPercent[i] << std::setw(OWID)
                << massSize[i] << std::endl;
+    }
   }
 }

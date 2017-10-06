@@ -19,24 +19,6 @@ class DEMParticle; // forward declaration, only use pointer to class DEMParticle
 ///////////////////////////////////////
 class CylinderBoundary : public Boundary
 {
-private:
-  Vec direc;
-  Vec point;
-  Vec prevPoint;
-  Vec veloc;
-  Vec prevVeloc;
-  REAL radius;
-
-private:
-  friend class boost::serialization::access;
-  template <class Archive>
-  void serialize(Archive& ar, const unsigned int version)
-  {
-    ar& boost::serialization::base_object<Boundary>(*this);
-    ar& direc;
-    ar& point;
-    ar& radius;
-  }
 
 public:
   CylinderBoundary()
@@ -50,10 +32,10 @@ public:
   {
   }
 
-  CylinderBoundary(std::size_t type, std::ifstream& ifs);
+  CylinderBoundary(Boundary::BoundaryType type, std::ifstream& ifs);
 
-  CylinderBoundary(BoundaryId id, BoundaryType tp, const XMLProblemSpec& ps);
-  CylinderBoundary(BoundaryId id, BoundaryType tp, const JsonProblemSpec& ps);
+  CylinderBoundary(Boundary::BoundaryType tp, BoundaryID id, const XMLProblemSpec& ps);
+  CylinderBoundary(Boundary::BoundaryType tp, BoundaryID id, const JsonProblemSpec& ps);
 
   Vec getDirec() const { return direc; }
   Vec getPoint() const override { return point; }
@@ -78,6 +60,25 @@ public:
 
   void findBdryContact(DEMParticlePArray& ptcls) override;
   void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) override;
+
+private:
+  Vec direc;
+  Vec point;
+  Vec prevPoint;
+  Vec veloc;
+  Vec prevVeloc;
+  REAL radius;
+
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive& ar, const unsigned int version)
+  {
+    ar& boost::serialization::base_object<Boundary>(*this);
+    ar& direc;
+    ar& point;
+    ar& radius;
+  }
+
 };
 
 } // namespace dem ends

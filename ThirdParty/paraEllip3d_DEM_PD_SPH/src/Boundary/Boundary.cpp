@@ -16,14 +16,15 @@ void
 Boundary::print(std::ostream& os)
 {
   os << std::endl
-     << std::setw(OWID) << b_type << std::setw(OWID) << b_extraNum << std::endl
-     << std::setw(OWID) << b_id;
+     << std::setw(OWID) << static_cast<int>(b_type) 
+     << std::setw(OWID) << b_extraNum << std::endl
+     << std::setw(OWID) << static_cast<int>(b_id);
 }
 
 void
 Boundary::printContactInfo(std::ostream& os)
 {
-  os << std::setw(OWID) << b_id << std::endl
+  os << std::setw(OWID) << static_cast<int>(b_id) << std::endl
      << std::setw(OWID) << contactInfo.size() << std::endl
      << std::setw(OWID) << "pos_x" << std::setw(OWID) << "pos_y"
      << std::setw(OWID) << "pos_z" << std::setw(OWID) << "normal_x"

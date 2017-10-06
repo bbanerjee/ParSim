@@ -185,7 +185,7 @@ public:
                     BoundaryTangentArray& vtmp);
 
   // calculate the normal force between particle and a cylinder wall
-  Vec cylinderRBForce(std::size_t boundaryId, const Cylinder& S, int side);
+  Vec cylinderRBForce(std::size_t BoundaryID, const Cylinder& S, int side);
   void clearFluidGrid();
   void recordFluidGrid(std::size_t i, std::size_t j, std::size_t k,
                        REAL volFrac);

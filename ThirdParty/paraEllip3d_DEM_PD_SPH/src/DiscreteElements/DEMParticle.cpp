@@ -898,7 +898,7 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
     inf.setf(std::ios::scientific, std::ios::floatfield);
     inf << "DEMParticle.cpp: iter=" << std::setw(8) << iteration
         << "  ptcl=" << std::setw(8) << getId() << "  bdry=" << std::setw(8)
-        << plane->getId() << " penetr=" << std::setw(OWID) << penetr
+        << static_cast<int>(plane->getId()) << " penetr=" << std::setw(OWID) << penetr
         << " allow=" << std::setw(OWID) << allowedOverlap << std::endl;
     MPI_Status status;
     int length = OWID * 2 + 8 * 3 + 19 + 7 * 3 + 8 + 1;
@@ -919,7 +919,7 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
   /*
     //std::cout << ' ' << iteration
     << ' ' << getId()
-    << ' ' << plane->boundaryId
+    << ' ' << plane->BoundaryID
     << ' ' << pt1.x()
     << ' ' << pt1.y()
     << ' ' << pt1.z()
@@ -960,15 +960,14 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
     REAL tgtPeak = 0;
 
     bool tgtLoading = true;
-    BoundaryTangentArray::iterator it;
-    for (it = BdryTgtMap[plane->getId()].begin();
-         it != BdryTgtMap[plane->getId()].end(); ++it) {
-      if (d_id == it->particleId) {
-        prevTgtForce = it->tgtForce;
-        prevTgtDisp = it->tgtDisp;
+    auto boundaryID = static_cast<size_t>(plane->getId());
+    for (const auto& tangent : BdryTgtMap[boundaryID]) {
+      if (d_id == tangent.particleId) {
+        prevTgtForce = tangent.tgtForce;
+        prevTgtDisp = tangent.tgtDisp;
         // prevTgtLoading = it->tgtLoading;
-        tgtDispStart = it->tgtDispStart;
-        tgtPeak = it->tgtPeak;
+        tgtDispStart = tangent.tgtDispStart;
+        tgtPeak = tangent.tgtPeak;
         break;
       }
     }
@@ -1106,7 +1105,7 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
 }
 
 Vec
-DEMParticle::cylinderRBForce(std::size_t boundaryId, const Cylinder& S, int side)
+DEMParticle::cylinderRBForce(std::size_t BoundaryID, const Cylinder& S, int side)
 {
   // side == -1, the particles are inside the cylinder
   // side == +1, the particles are outside the cylinder

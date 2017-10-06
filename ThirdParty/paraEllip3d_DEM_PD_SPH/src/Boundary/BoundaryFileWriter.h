@@ -2,6 +2,7 @@
 #define ELLIP3D_BOUNDARY_FILE_WRITER_H
 
 #include <Boundary/BoundaryContainers.h>
+#include <Boundary/Boundary.h>
 #include <Core/Geometry/Box.h>
 #include <Core/Types/RealTypes.h>
 
@@ -13,6 +14,7 @@ class BoundaryFileWriter
 {
 
 public:
+
   BoundaryFileWriter() = default;
   ~BoundaryFileWriter() = default;
 
@@ -25,36 +27,9 @@ public:
                 const Box& allContainer) const;
 
 private:
-  enum BoundaryFlag
-  {
-    ONLY_BOTTOM_BOUNDARY,
-    NO_TOP_BOUNDARY,
-    ALL_BOUNDARIES
-  };
-
-  enum BoundaryID
-  {
-    NONE,
-    XMINUS,
-    XPLUS,
-    YMINUS,
-    YPLUS,
-    ZMINUS,
-    ZPLUS
-  };
-
-  BoundaryFlag getBoundaryFlag(std::size_t boundaryNum) const
-  {
-    if (boundaryNum == 1) 
-      return BoundaryFlag::ONLY_BOTTOM_BOUNDARY;
-    else if (boundaryNum == 5)
-      return BoundaryFlag::NO_TOP_BOUNDARY;
-    else
-      return BoundaryFlag::ALL_BOUNDARIES;
-  }
 
   inline void writeHeader(std::size_t extraBoundaries, std::ofstream& ofs) const;
-  inline void writeBoundaryID(BoundaryID id, std::ofstream& ofs) const;
+  inline void writeBoundaryID(Boundary::BoundaryID id, std::ofstream& ofs) const;
   inline void writeEmptyLine(std::ofstream& ofs) const;
   inline void writeXMinusCSV(const Vec& domainMin, const Vec& domainMax,
                              const Vec& domainCen, std::ofstream& ofs) const;
@@ -72,7 +47,7 @@ private:
                                  const Vec& domainCen, std::ofstream& ofs) const;
 
   inline void writeHeader(std::size_t extraBoundaries, zen::XmlOut& xml) const;
-  inline void writeBoundaryID(BoundaryID id, zen::XmlOut& xml) const;
+  inline void writeBoundaryID(Boundary::BoundaryID id, zen::XmlOut& xml) const;
   inline void writeXMinusXML(const Vec& domainMin, const Vec& domainMax,
                              const Vec& domainCen, zen::XmlOut& xml) const;
   inline void writeXPlusXML(const Vec& domainMin, const Vec& domainMax,

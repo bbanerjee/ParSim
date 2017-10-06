@@ -31,14 +31,15 @@ BoundaryReader::read(const std::string& inputFileName, Box& container,
 
   boundaries.clear();
   std::size_t boundaryNum;
-  std::size_t type;
   ifs >> boundaryNum;
   for (std::size_t i = 0; i < boundaryNum; ++i) {
+    std::size_t type;
     ifs >> type;
+    Boundary::BoundaryType boundaryType = Boundary::getBoundaryType(type);
     if (type == 1) // plane boundary
-      boundaries.push_back(std::make_shared<PlaneBoundary>(type, ifs));
+      boundaries.push_back(std::make_shared<PlaneBoundary>(boundaryType, ifs));
     else if (type == 2) // cylindrical boundary
-      boundaries.push_back(std::make_shared<CylinderBoundary>(type, ifs));
+      boundaries.push_back(std::make_shared<CylinderBoundary>(boundaryType, ifs));
   }
 
   ifs.close();
@@ -127,25 +128,27 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
   patchBox.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
            boxMax.z());
 
-  BoundaryType type;
   boundaries.clear();
   for (auto bound_ps = boundary_ps["boundary"]; bound_ps; bound_ps.next()) {
+
     std::string boundaryType;
     bound_ps.attribute("type", boundaryType);
-    BoundaryId id;
-    bound_ps.attribute("id", id);
-    switch (getEnum(boundaryType)) {
-      case PLANE:
-        type = 1;
+    Boundary::BoundaryType type = Boundary::getBoundaryType(boundaryType);
+
+    std::string boundaryID;
+    bound_ps.attribute("id", boundaryID);
+    Boundary::BoundaryID id = Boundary::getBoundaryID(boundaryID);
+
+    switch (type) {
+      case Boundary::BoundaryType::PLANE:
         boundaries.push_back(
-          std::make_shared<PlaneBoundary>(id, type, bound_ps));
+          std::make_shared<PlaneBoundary>(type, id, bound_ps));
         break;
-      case CYLINDER:
-        type = 2;
+      case Boundary::BoundaryType::CYLINDER:
         boundaries.push_back(
-          std::make_shared<CylinderBoundary>(id, type, bound_ps));
+          std::make_shared<CylinderBoundary>(type, id, bound_ps));
         break;
-      case NONE:
+      case Boundary::BoundaryType::NONE:
         break;
     }
   }
@@ -254,7 +257,6 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
   patchBox.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
            boxMax.z());
 
-  BoundaryType type;
   boundaries.clear();
   try {
     auto bound_ps = boundary_ps["boundary"];
@@ -262,19 +264,19 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
     // //std::cout << std::setw(2) << bound_ps << "\n";
     for (auto object : bound_ps) {
       std::string boundaryType = object["type"].get<std::string>();
-      BoundaryId id = object["id"].get<BoundaryId>();
-      switch (getEnum(boundaryType)) {
-        case PLANE:
-          type = 1;
+      std::string boundaryID = object["id"].get<std::string>();
+      Boundary::BoundaryType type = Boundary::getBoundaryType(boundaryType);
+      Boundary::BoundaryID id = Boundary::getBoundaryID(boundaryID);
+      switch (type) {
+        case Boundary::BoundaryType::PLANE:
           boundaries.push_back(
             std::make_shared<PlaneBoundary>(type, id, object));
           break;
-        case CYLINDER:
-          type = 2;
+        case Boundary::BoundaryType::CYLINDER:
           boundaries.push_back(
             std::make_shared<CylinderBoundary>(type, id, object));
           break;
-        case NONE:
+        case Boundary::BoundaryType::NONE:
           break;
       }
     }

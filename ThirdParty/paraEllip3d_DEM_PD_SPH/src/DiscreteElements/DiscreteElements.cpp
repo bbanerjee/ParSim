@@ -37,6 +37,7 @@
 #include <Core/Util/Utility.h>
 #include <Core/Math/IntVec.h>
 #include <InputOutput/DEMParticleFileReader.h>
+#include <InputOutput/DEMParticleFileWriter.h>
 #include <InputOutput/PeriParticleFileReader.h>
 
 #include <algorithm>
@@ -998,64 +999,60 @@ DiscreteElements::openDepositProg(std::ofstream& ofs, const std::string& str)
 void
 DiscreteElements::printDepositProg(std::ofstream& ofs)
 {
-  REAL var[6];
+  std::vector<REAL> data = {{0, 0, 0, 0, 0, 0}};
 
   // normalForce
-  for (double& i : var)
-    i = 0;
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    std::size_t id = (*it)->getId();
-    Vec normal = (*it)->getNormalForce();
+  for (const auto& boundary : mergeBoundaryVec) {
+    Vec normal = boundary->getNormalForce();
     //std::cout << "normal force = " << std::setprecision(16) << normal << "\n";
-
+    Boundary::BoundaryID id = boundary->getId();
     switch (id) {
-      case 1:
-        var[0] = fabs(normal.x());
+      case Boundary::BoundaryID::XMINUS:
+        data[0] = fabs(normal.x());
         break;
-      case 2:
-        var[1] = normal.x();
+      case Boundary::BoundaryID::XPLUS:
+        data[1] = normal.x();
         break;
-      case 3:
-        var[2] = fabs(normal.y());
+      case Boundary::BoundaryID::YMINUS:
+        data[2] = fabs(normal.y());
         break;
-      case 4:
-        var[3] = normal.y();
+      case Boundary::BoundaryID::YPLUS:
+        data[3] = normal.y();
         break;
-      case 5:
-        var[4] = fabs(normal.z());
+      case Boundary::BoundaryID::ZMINUS:
+        data[4] = fabs(normal.z());
         break;
-      case 6:
-        var[5] = normal.z();
+      case Boundary::BoundaryID::ZPLUS:
+        data[5] = normal.z();
+        break;
+      default:
         break;
     }
   }
   ofs << std::setw(OWID) << iteration;
-  for (double i : var)
-    ofs << std::setw(OWID) << i;
+  for (auto datum : data)
+    ofs << std::setw(OWID) << datum;
 
   // contactNum
-  for (double& i : var)
-    i = 0;
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    std::size_t id = (*it)->getId();
-    var[id - 1] = (*it)->getContactNum();
+  data.clear();
+  data.reserve(6);
+  for (const auto& boundary : mergeBoundaryVec) {
+    Boundary::BoundaryID id = boundary->getId();
+    data[static_cast<size_t>(id) - 1] = boundary->getContactNum();
   }
-  for (double i : var)
-    ofs << std::setw(OWID) << static_cast<std::size_t>(i);
+  for (double datum : data)
+    ofs << std::setw(OWID) << static_cast<std::size_t>(datum);
   ofs << std::setw(OWID) << allContactNum;
 
   // avgPenetr
-  for (double& i : var)
-    i = 0;
-  for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-       it != mergeBoundaryVec.end(); ++it) {
-    std::size_t id = (*it)->getId();
-    var[id - 1] = (*it)->getAvgPenetr();
+  data.clear();
+  data.reserve(6);
+  for (const auto& boundary : mergeBoundaryVec) {
+    Boundary::BoundaryID id = boundary->getId();
+    data[static_cast<size_t>(id) - 1] = boundary->getAvgPenetr();
   }
-  for (double i : var)
-    ofs << std::setw(OWID) << i;
+  for (double datum : data)
+    ofs << std::setw(OWID) << datum;
 
   // average data
   ofs << std::setw(OWID) << avgNormal << std::setw(OWID) << avgShear
@@ -1083,34 +1080,36 @@ DiscreteElements::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
   std::map<std::string, REAL> normalForce;
   REAL x1, x2, y1, y2, z1, z2;
   // do not use mergeBoundaryVec because each process calls this function.
-  for (const auto& it : boundaryVec) {
-    std::size_t id = it->getId();
-    Vec normal = it->getNormalForce();
-    Vec point = it->getPoint();
+  for (const auto& boundary : boundaryVec) {
+    Boundary::BoundaryID id = boundary->getId();
+    Vec normal = boundary->getNormalForce();
+    Vec point = boundary->getPoint();
     switch (id) {
-      case 1:
-        normalForce["x1"] = fabs(normal.x());
+      case Boundary::BoundaryID::XMINUS:
+        normalForce["x-"] = fabs(normal.x());
         x1 = point.x();
         break;
-      case 2:
-        normalForce["x2"] = normal.x();
+      case Boundary::BoundaryID::XPLUS:
+        normalForce["x+"] = normal.x();
         x2 = point.x();
         break;
-      case 3:
-        normalForce["y1"] = fabs(normal.y());
+      case Boundary::BoundaryID::YMINUS:
+        normalForce["y-"] = fabs(normal.y());
         y1 = point.y();
         break;
-      case 4:
-        normalForce["y2"] = normal.y();
+      case Boundary::BoundaryID::YPLUS:
+        normalForce["y+"] = normal.y();
         y2 = point.y();
         break;
-      case 5:
-        normalForce["z1"] = fabs(normal.z());
+      case Boundary::BoundaryID::ZMINUS:
+        normalForce["z-"] = fabs(normal.z());
         z1 = point.z();
         break;
-      case 6:
-        normalForce["z2"] = normal.z();
+      case Boundary::BoundaryID::ZPLUS:
+        normalForce["z+"] = normal.z();
         z2 = point.z();
+        break;
+      default:
         break;
     }
   }
@@ -1119,27 +1118,27 @@ DiscreteElements::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
   REAL areaZ = (x2 - x1) * (y2 - y1);
 
   if (type.compare("isotropic") == 0)
-    return (fabs(normalForce["x1"] / areaX - sigma) / sigma <= tol &&
-            fabs(normalForce["x2"] / areaX - sigma) / sigma <= tol &&
-            fabs(normalForce["y1"] / areaY - sigma) / sigma <= tol &&
-            fabs(normalForce["y2"] / areaY - sigma) / sigma <= tol &&
-            fabs(normalForce["z1"] / areaZ - sigma) / sigma <= tol &&
-            fabs(normalForce["z2"] / areaZ - sigma) / sigma <= tol);
+    return (fabs(normalForce["x-"] / areaX - sigma) / sigma <= tol &&
+            fabs(normalForce["x+"] / areaX - sigma) / sigma <= tol &&
+            fabs(normalForce["y-"] / areaY - sigma) / sigma <= tol &&
+            fabs(normalForce["y+"] / areaY - sigma) / sigma <= tol &&
+            fabs(normalForce["z-"] / areaZ - sigma) / sigma <= tol &&
+            fabs(normalForce["z+"] / areaZ - sigma) / sigma <= tol);
 
   else if (type.compare("odometer") == 0)
-    return (fabs(normalForce["z1"] / areaZ - sigma) / sigma <= tol &&
-            fabs(normalForce["z2"] / areaZ - sigma) / sigma <= tol);
+    return (fabs(normalForce["z-"] / areaZ - sigma) / sigma <= tol &&
+            fabs(normalForce["z+"] / areaZ - sigma) / sigma <= tol);
 
   else if (type.compare("triaxial") == 0)
     return true; // always near equilibrium
 
   else if (type.compare("trueTriaxial") == 0)
-    return (fabs(normalForce["x1"] / areaX - sigmaX) / sigmaX <= tol &&
-            fabs(normalForce["x2"] / areaX - sigmaX) / sigmaX <= tol &&
-            fabs(normalForce["y1"] / areaY - sigmaY) / sigmaY <= tol &&
-            fabs(normalForce["y2"] / areaY - sigmaY) / sigmaY <= tol &&
-            fabs(normalForce["z1"] / areaZ - sigma) / sigma <= tol &&
-            fabs(normalForce["z2"] / areaZ - sigma) / sigma <= tol);
+    return (fabs(normalForce["x-"] / areaX - sigmaX) / sigmaX <= tol &&
+            fabs(normalForce["x+"] / areaX - sigmaX) / sigmaX <= tol &&
+            fabs(normalForce["y-"] / areaY - sigmaY) / sigmaY <= tol &&
+            fabs(normalForce["y+"] / areaY - sigmaY) / sigmaY <= tol &&
+            fabs(normalForce["z-"] / areaZ - sigma) / sigma <= tol &&
+            fabs(normalForce["z+"] / areaZ - sigma) / sigma <= tol);
 
   return false;
 }
@@ -1148,8 +1147,10 @@ void
 DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
                const std::string& trmParticle)
 {
-  if (toRebuild)
+  if (toRebuild) {
     readParticles(inputParticle);
+  }
+
   trimHistoryNum = allDEMParticleVec.size();
 
   Vec v1 = allContainer.getMinCorner();
@@ -1179,24 +1180,9 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
                    }),
     allDEMParticleVec.end());
 
-  /*
-  DEMParticlePArray::iterator itr;
-  Vec center;
-  for (auto itr = allDEMParticleVec.begin(); itr != allDEMParticleVec.end(); ) {
-    center=(*itr)->currentPosition();
-    if(center.x() < x1 || center.x() > x2 ||
-   center.y() < y1 || center.y() > y2 ||
-   center.z() < z1 || center.z() + maxR > z2)
-  {
-    delete (*itr); // release memory
-    itr = allDEMParticleVec.erase(itr);
-  }
-    else
-  ++itr;
-  }
-  */
-
-  printParticle(trmParticle, 0);
+  DEMParticleFileWriter writer;
+  writer.writeCSV(allDEMParticleVec, gradation, trmParticle+".csv");
+  writer.writeXML(allDEMParticleVec, gradation, trmParticle+".xml");
 }
 
 void
@@ -1508,417 +1494,6 @@ DiscreteElements::migrateParticle()
 
 }
 
-/*
-void
-DiscreteElements::migrateParticle()
-{
-*/
-/*
-  Vec vspan = d_demPatchBox.getMaxCorner() - d_demPatchBox.getMinCorner();
-  Vec seg = vspan / s_mpiProcs;
-  REAL segX = seg.x();
-  REAL segY = seg.y();
-  REAL segZ = seg.z();
-  Vec v1 = container.getMinCorner(); // v1, v2 in terms of process
-  Vec v2 = container.getMaxCorner();
-
-  // if a neighbor exists, transfer particles crossing the boundary in between.
-  DEMParticlePArray particleX1, particleX2;
-  DEMParticlePArray particleY1, particleY2;
-  DEMParticlePArray particleZ1, particleZ2;
-  DEMParticlePArray particleX1Y1, particleX1Y2, particleX1Z1, particleX1Z2;
-  DEMParticlePArray particleX2Y1, particleX2Y2, particleX2Z1, particleX2Z2;
-  DEMParticlePArray particleY1Z1, particleY1Z2, particleY2Z1, particleY2Z2;
-  DEMParticlePArray particleX1Y1Z1, particleX1Y1Z2, particleX1Y2Z1, particleX1Y2Z2;
-  DEMParticlePArray particleX2Y1Z1, particleX2Y1Z2, particleX2Y2Z1, particleX2Y2Z2;
-  boost::mpi::request reqX1[2], reqX2[2];
-  boost::mpi::request reqY1[2], reqY2[2];
-  boost::mpi::request reqZ1[2], reqZ2[2];
-  boost::mpi::request reqX1Y1[2], reqX1Y2[2], reqX1Z1[2], reqX1Z2[2];
-  boost::mpi::request reqX2Y1[2], reqX2Y2[2], reqX2Z1[2], reqX2Z2[2];
-  boost::mpi::request reqY1Z1[2], reqY1Z2[2], reqY2Z1[2], reqY2Z2[2];
-  boost::mpi::request reqX1Y1Z1[2], reqX1Y1Z2[2], reqX1Y2Z1[2], reqX1Y2Z2[2];
-  boost::mpi::request reqX2Y1Z1[2], reqX2Y1Z2[2], reqX2Y2Z1[2], reqX2Y2Z2[2];
-
-  // 6 surfaces
-  if (rankX1 >= 0) { // surface x1
-    Box containerX1(v1.x() - segX, v1.y(), v1.z(), v1.x(), v2.y(), v2.z());
-    findParticleInBox(containerX1, particleVec, particleX1);
-    reqX1[0] = boostWorld.isend(rankX1, mpiTag, particleX1);
-    reqX1[1] = boostWorld.irecv(rankX1, mpiTag, rParticleX1);
-  }
-  if (rankX2 >= 0) { // surface x2
-    Box containerX2(v2.x(), v1.y(), v1.z(), v2.x() + segX, v2.y(), v2.z());
-    findParticleInBox(containerX2, particleVec, particleX2);
-    reqX2[0] = boostWorld.isend(rankX2, mpiTag, particleX2);
-    reqX2[1] = boostWorld.irecv(rankX2, mpiTag, rParticleX2);
-  }
-  if (rankY1 >= 0) { // surface y1
-    Box containerY1(v1.x(), v1.y() - segY, v1.z(), v2.x(), v1.y(), v2.z());
-    findParticleInBox(containerY1, particleVec, particleY1);
-    reqY1[0] = boostWorld.isend(rankY1, mpiTag, particleY1);
-    reqY1[1] = boostWorld.irecv(rankY1, mpiTag, rParticleY1);
-  }
-  if (rankY2 >= 0) { // surface y2
-    Box containerY2(v1.x(), v2.y(), v1.z(), v2.x(), v2.y() + segY, v2.z());
-    findParticleInBox(containerY2, particleVec, particleY2);
-    reqY2[0] = boostWorld.isend(rankY2, mpiTag, particleY2);
-    reqY2[1] = boostWorld.irecv(rankY2, mpiTag, rParticleY2);
-  }
-  if (rankZ1 >= 0) { // surface z1
-    Box containerZ1(v1.x(), v1.y(), v1.z() - segZ, v2.x(), v2.y(), v1.z());
-    findParticleInBox(containerZ1, particleVec, particleZ1);
-    reqZ1[0] = boostWorld.isend(rankZ1, mpiTag, particleZ1);
-    reqZ1[1] = boostWorld.irecv(rankZ1, mpiTag, rParticleZ1);
-  }
-  if (rankZ2 >= 0) { // surface z2
-    Box containerZ2(v1.x(), v1.y(), v2.z(), v2.x(), v2.y(), v2.z() + segZ);
-    findParticleInBox(containerZ2, particleVec, particleZ2);
-    reqZ2[0] = boostWorld.isend(rankZ2, mpiTag, particleZ2);
-    reqZ2[1] = boostWorld.irecv(rankZ2, mpiTag, rParticleZ2);
-  }
-  // 12 edges
-  if (rankX1Y1 >= 0) { // edge x1y1
-    Box containerX1Y1(v1.x() - segX, v1.y() - segY, v1.z(), v1.x(), v1.y(),
-                      v2.z());
-    findParticleInBox(containerX1Y1, particleVec, particleX1Y1);
-    reqX1Y1[0] = boostWorld.isend(rankX1Y1, mpiTag, particleX1Y1);
-    reqX1Y1[1] = boostWorld.irecv(rankX1Y1, mpiTag, rParticleX1Y1);
-  }
-  if (rankX1Y2 >= 0) { // edge x1y2
-    Box containerX1Y2(v1.x() - segX, v2.y(), v1.z(), v1.x(), v2.y() + segY,
-                      v2.z());
-    findParticleInBox(containerX1Y2, particleVec, particleX1Y2);
-    reqX1Y2[0] = boostWorld.isend(rankX1Y2, mpiTag, particleX1Y2);
-    reqX1Y2[1] = boostWorld.irecv(rankX1Y2, mpiTag, rParticleX1Y2);
-  }
-  if (rankX1Z1 >= 0) { // edge x1z1
-    Box containerX1Z1(v1.x() - segX, v1.y(), v1.z() - segZ, v1.x(), v2.y(),
-                      v1.z());
-    findParticleInBox(containerX1Z1, particleVec, particleX1Z1);
-    reqX1Z1[0] = boostWorld.isend(rankX1Z1, mpiTag, particleX1Z1);
-    reqX1Z1[1] = boostWorld.irecv(rankX1Z1, mpiTag, rParticleX1Z1);
-  }
-  if (rankX1Z2 >= 0) { // edge x1z2
-    Box containerX1Z2(v1.x() - segX, v1.y(), v2.z(), v1.x(), v2.y(),
-                      v2.z() + segZ);
-    findParticleInBox(containerX1Z2, particleVec, particleX1Z2);
-    reqX1Z2[0] = boostWorld.isend(rankX1Z2, mpiTag, particleX1Z2);
-    reqX1Z2[1] = boostWorld.irecv(rankX1Z2, mpiTag, rParticleX1Z2);
-  }
-  if (rankX2Y1 >= 0) { // edge x2y1
-    Box containerX2Y1(v2.x(), v1.y() - segY, v1.z(), v2.x() + segX, v1.y(),
-                      v2.z());
-    findParticleInBox(containerX2Y1, particleVec, particleX2Y1);
-    reqX2Y1[0] = boostWorld.isend(rankX2Y1, mpiTag, particleX2Y1);
-    reqX2Y1[1] = boostWorld.irecv(rankX2Y1, mpiTag, rParticleX2Y1);
-  }
-  if (rankX2Y2 >= 0) { // edge x2y2
-    Box containerX2Y2(v2.x(), v2.y(), v1.z(), v2.x() + segX, v2.y() + segY,
-                      v2.z());
-    findParticleInBox(containerX2Y2, particleVec, particleX2Y2);
-    reqX2Y2[0] = boostWorld.isend(rankX2Y2, mpiTag, particleX2Y2);
-    reqX2Y2[1] = boostWorld.irecv(rankX2Y2, mpiTag, rParticleX2Y2);
-  }
-  if (rankX2Z1 >= 0) { // edge x2z1
-    Box containerX2Z1(v2.x(), v1.y(), v1.z() - segZ, v2.x() + segX, v2.y(),
-                      v1.z());
-    findParticleInBox(containerX2Z1, particleVec, particleX2Z1);
-    reqX2Z1[0] = boostWorld.isend(rankX2Z1, mpiTag, particleX2Z1);
-    reqX2Z1[1] = boostWorld.irecv(rankX2Z1, mpiTag, rParticleX2Z1);
-  }
-  if (rankX2Z2 >= 0) { // edge x2z2
-    Box containerX2Z2(v2.x(), v1.y(), v2.z(), v2.x() + segX, v2.y(),
-                      v2.z() + segZ);
-    findParticleInBox(containerX2Z2, particleVec, particleX2Z2);
-    reqX2Z2[0] = boostWorld.isend(rankX2Z2, mpiTag, particleX2Z2);
-    reqX2Z2[1] = boostWorld.irecv(rankX2Z2, mpiTag, rParticleX2Z2);
-  }
-  if (rankY1Z1 >= 0) { // edge y1z1
-    Box containerY1Z1(v1.x(), v1.y() - segY, v1.z() - segZ, v2.x(), v1.y(),
-                      v1.z());
-    findParticleInBox(containerY1Z1, particleVec, particleY1Z1);
-    reqY1Z1[0] = boostWorld.isend(rankY1Z1, mpiTag, particleY1Z1);
-    reqY1Z1[1] = boostWorld.irecv(rankY1Z1, mpiTag, rParticleY1Z1);
-  }
-  if (rankY1Z2 >= 0) { // edge y1z2
-    Box containerY1Z2(v1.x(), v1.y() - segY, v2.z(), v2.x(), v1.y(),
-                      v2.z() + segZ);
-    findParticleInBox(containerY1Z2, particleVec, particleY1Z2);
-    reqY1Z2[0] = boostWorld.isend(rankY1Z2, mpiTag, particleY1Z2);
-    reqY1Z2[1] = boostWorld.irecv(rankY1Z2, mpiTag, rParticleY1Z2);
-  }
-  if (rankY2Z1 >= 0) { // edge y2z1
-    Box containerY2Z1(v1.x(), v2.y(), v1.z() - segZ, v2.x(), v2.y() + segY,
-                      v1.z());
-    findParticleInBox(containerY2Z1, particleVec, particleY2Z1);
-    reqY2Z1[0] = boostWorld.isend(rankY2Z1, mpiTag, particleY2Z1);
-    reqY2Z1[1] = boostWorld.irecv(rankY2Z1, mpiTag, rParticleY2Z1);
-  }
-  if (rankY2Z2 >= 0) { // edge y2z2
-    Box containerY2Z2(v1.x(), v2.y(), v2.z(), v2.x(), v2.y() + segY,
-                      v2.z() + segZ);
-    findParticleInBox(containerY2Z2, particleVec, particleY2Z2);
-    reqY2Z2[0] = boostWorld.isend(rankY2Z2, mpiTag, particleY2Z2);
-    reqY2Z2[1] = boostWorld.irecv(rankY2Z2, mpiTag, rParticleY2Z2);
-  }
-  // 8 vertices
-  if (rankX1Y1Z1 >= 0) { // edge x1y1z1
-    Box containerX1Y1Z1(v1.x() - segX, v1.y() - segY, v1.z() - segZ, v1.x(),
-                        v1.y(), v1.z());
-    findParticleInBox(containerX1Y1Z1, particleVec, particleX1Y1Z1);
-    reqX1Y1Z1[0] = boostWorld.isend(rankX1Y1Z1, mpiTag, particleX1Y1Z1);
-    reqX1Y1Z1[1] = boostWorld.irecv(rankX1Y1Z1, mpiTag, rParticleX1Y1Z1);
-  }
-  if (rankX1Y1Z2 >= 0) { // edge x1y1z2
-    Box containerX1Y1Z2(v1.x() - segX, v1.y() - segY, v2.z(), v1.x(), v1.y(),
-                        v2.z() + segZ);
-    findParticleInBox(containerX1Y1Z2, particleVec, particleX1Y1Z2);
-    reqX1Y1Z2[0] = boostWorld.isend(rankX1Y1Z2, mpiTag, particleX1Y1Z2);
-    reqX1Y1Z2[1] = boostWorld.irecv(rankX1Y1Z2, mpiTag, rParticleX1Y1Z2);
-  }
-  if (rankX1Y2Z1 >= 0) { // edge x1y2z1
-    Box containerX1Y2Z1(v1.x() - segX, v2.y(), v1.z() - segZ, v1.x(),
-                        v2.y() + segY, v1.z());
-    findParticleInBox(containerX1Y2Z1, particleVec, particleX1Y2Z1);
-    reqX1Y2Z1[0] = boostWorld.isend(rankX1Y2Z1, mpiTag, particleX1Y2Z1);
-    reqX1Y2Z1[1] = boostWorld.irecv(rankX1Y2Z1, mpiTag, rParticleX1Y2Z1);
-  }
-  if (rankX1Y2Z2 >= 0) { // edge x1y2z2
-    Box containerX1Y2Z2(v1.x() - segX, v2.y(), v2.z(), v1.x(), v2.y() + segY,
-                        v2.z() + segZ);
-    findParticleInBox(containerX1Y2Z2, particleVec, particleX1Y2Z2);
-    reqX1Y2Z2[0] = boostWorld.isend(rankX1Y2Z2, mpiTag, particleX1Y2Z2);
-    reqX1Y2Z2[1] = boostWorld.irecv(rankX1Y2Z2, mpiTag, rParticleX1Y2Z2);
-  }
-  if (rankX2Y1Z1 >= 0) { // edge x2y1z1
-    Box containerX2Y1Z1(v2.x(), v1.y() - segY, v1.z() - segZ, v2.x() + segX,
-                        v1.y(), v1.z());
-    findParticleInBox(containerX2Y1Z1, particleVec, particleX2Y1Z1);
-    reqX2Y1Z1[0] = boostWorld.isend(rankX2Y1Z1, mpiTag, particleX2Y1Z1);
-    reqX2Y1Z1[1] = boostWorld.irecv(rankX2Y1Z1, mpiTag, rParticleX2Y1Z1);
-  }
-  if (rankX2Y1Z2 >= 0) { // edge x2y1z2
-    Box containerX2Y1Z2(v2.x(), v1.y() - segY, v2.z(), v2.x() + segX, v1.y(),
-                        v2.z() + segZ);
-    findParticleInBox(containerX2Y1Z2, particleVec, particleX2Y1Z2);
-    reqX2Y1Z2[0] = boostWorld.isend(rankX2Y1Z2, mpiTag, particleX2Y1Z2);
-    reqX2Y1Z2[1] = boostWorld.irecv(rankX2Y1Z2, mpiTag, rParticleX2Y1Z2);
-  }
-  if (rankX2Y2Z1 >= 0) { // edge x2y2z1
-    Box containerX2Y2Z1(v2.x(), v2.y(), v1.z() - segZ, v2.x() + segX,
-                        v2.y() + segY, v1.z());
-    findParticleInBox(containerX2Y2Z1, particleVec, particleX2Y2Z1);
-    reqX2Y2Z1[0] = boostWorld.isend(rankX2Y2Z1, mpiTag, particleX2Y2Z1);
-    reqX2Y2Z1[1] = boostWorld.irecv(rankX2Y2Z1, mpiTag, rParticleX2Y2Z1);
-  }
-  if (rankX2Y2Z2 >= 0) { // edge x2y2z2
-    Box containerX2Y2Z2(v2.x(), v2.y(), v2.z(), v2.x() + segX, v2.y() + segY,
-                        v2.z() + segZ);
-    findParticleInBox(containerX2Y2Z2, particleVec, particleX2Y2Z2);
-    reqX2Y2Z2[0] = boostWorld.isend(rankX2Y2Z2, mpiTag, particleX2Y2Z2);
-    reqX2Y2Z2[1] = boostWorld.irecv(rankX2Y2Z2, mpiTag, rParticleX2Y2Z2);
-  }
-  // 6 surfaces
-  if (rankX1 >= 0)
-    boost::mpi::wait_all(reqX1, reqX1 + 2);
-  if (rankX2 >= 0)
-    boost::mpi::wait_all(reqX2, reqX2 + 2);
-  if (rankY1 >= 0)
-    boost::mpi::wait_all(reqY1, reqY1 + 2);
-  if (rankY2 >= 0)
-    boost::mpi::wait_all(reqY2, reqY2 + 2);
-  if (rankZ1 >= 0)
-    boost::mpi::wait_all(reqZ1, reqZ1 + 2);
-  if (rankZ2 >= 0)
-    boost::mpi::wait_all(reqZ2, reqZ2 + 2);
-  // 12 edges
-  if (rankX1Y1 >= 0)
-    boost::mpi::wait_all(reqX1Y1, reqX1Y1 + 2);
-  if (rankX1Y2 >= 0)
-    boost::mpi::wait_all(reqX1Y2, reqX1Y2 + 2);
-  if (rankX1Z1 >= 0)
-    boost::mpi::wait_all(reqX1Z1, reqX1Z1 + 2);
-  if (rankX1Z2 >= 0)
-    boost::mpi::wait_all(reqX1Z2, reqX1Z2 + 2);
-  if (rankX2Y1 >= 0)
-    boost::mpi::wait_all(reqX2Y1, reqX2Y1 + 2);
-  if (rankX2Y2 >= 0)
-    boost::mpi::wait_all(reqX2Y2, reqX2Y2 + 2);
-  if (rankX2Z1 >= 0)
-    boost::mpi::wait_all(reqX2Z1, reqX2Z1 + 2);
-  if (rankX2Z2 >= 0)
-    boost::mpi::wait_all(reqX2Z2, reqX2Z2 + 2);
-  if (rankY1Z1 >= 0)
-    boost::mpi::wait_all(reqY1Z1, reqY1Z1 + 2);
-  if (rankY1Z2 >= 0)
-    boost::mpi::wait_all(reqY1Z2, reqY1Z2 + 2);
-  if (rankY2Z1 >= 0)
-    boost::mpi::wait_all(reqY2Z1, reqY2Z1 + 2);
-  if (rankY2Z2 >= 0)
-    boost::mpi::wait_all(reqY2Z2, reqY2Z2 + 2);
-  // 8 vertices
-  if (rankX1Y1Z1 >= 0)
-    boost::mpi::wait_all(reqX1Y1Z1, reqX1Y1Z1 + 2);
-  if (rankX1Y1Z2 >= 0)
-    boost::mpi::wait_all(reqX1Y1Z2, reqX1Y1Z2 + 2);
-  if (rankX1Y2Z1 >= 0)
-    boost::mpi::wait_all(reqX1Y2Z1, reqX1Y2Z1 + 2);
-  if (rankX1Y2Z2 >= 0)
-    boost::mpi::wait_all(reqX1Y2Z2, reqX1Y2Z2 + 2);
-  if (rankX2Y1Z1 >= 0)
-    boost::mpi::wait_all(reqX2Y1Z1, reqX2Y1Z1 + 2);
-  if (rankX2Y1Z2 >= 0)
-    boost::mpi::wait_all(reqX2Y1Z2, reqX2Y1Z2 + 2);
-  if (rankX2Y2Z1 >= 0)
-    boost::mpi::wait_all(reqX2Y2Z1, reqX2Y2Z1 + 2);
-  if (rankX2Y2Z2 >= 0)
-    boost::mpi::wait_all(reqX2Y2Z2, reqX2Y2Z2 + 2);
-
-  // delete outgoing particles
-  removeParticleOutBox();
-
-  // add incoming particles
-  recvParticleVec.clear(); // new use of recvParticleVec
-  // 6 surfaces
-  if (rankX1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1.begin(),
-                           rParticleX1.end());
-  if (rankX2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2.begin(),
-                           rParticleX2.end());
-  if (rankY1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY1.begin(),
-                           rParticleY1.end());
-  if (rankY2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY2.begin(),
-                           rParticleY2.end());
-  if (rankZ1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleZ1.begin(),
-                           rParticleZ1.end());
-  if (rankZ2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleZ2.begin(),
-                           rParticleZ2.end());
-  // 12 edges
-  if (rankX1Y1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1.begin(),
-                           rParticleX1Y1.end());
-  if (rankX1Y2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2.begin(),
-                           rParticleX1Y2.end());
-  if (rankX1Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Z1.begin(),
-                           rParticleX1Z1.end());
-  if (rankX1Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Z2.begin(),
-                           rParticleX1Z2.end());
-  if (rankX2Y1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1.begin(),
-                           rParticleX2Y1.end());
-  if (rankX2Y2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2.begin(),
-                           rParticleX2Y2.end());
-  if (rankX2Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Z1.begin(),
-                           rParticleX2Z1.end());
-  if (rankX2Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Z2.begin(),
-                           rParticleX2Z2.end());
-  if (rankY1Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY1Z1.begin(),
-                           rParticleY1Z1.end());
-  if (rankY1Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY1Z2.begin(),
-                           rParticleY1Z2.end());
-  if (rankY2Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY2Z1.begin(),
-                           rParticleY2Z1.end());
-  if (rankY2Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleY2Z2.begin(),
-                           rParticleY2Z2.end());
-  // 8 vertices
-  if (rankX1Y1Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1Z1.begin(),
-                           rParticleX1Y1Z1.end());
-  if (rankX1Y1Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y1Z2.begin(),
-                           rParticleX1Y1Z2.end());
-  if (rankX1Y2Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2Z1.begin(),
-                           rParticleX1Y2Z1.end());
-  if (rankX1Y2Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX1Y2Z2.begin(),
-                           rParticleX1Y2Z2.end());
-  if (rankX2Y1Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1Z1.begin(),
-                           rParticleX2Y1Z1.end());
-  if (rankX2Y1Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y1Z2.begin(),
-                           rParticleX2Y1Z2.end());
-  if (rankX2Y2Z1 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2Z1.begin(),
-                           rParticleX2Y2Z1.end());
-  if (rankX2Y2Z2 >= 0)
-    recvParticleVec.insert(recvParticleVec.end(), rParticleX2Y2Z2.begin(),
-                           rParticleX2Y2Z2.end());
-
-  particleVec.insert(particleVec.end(), recvParticleVec.begin(),
-                     recvParticleVec.end());
-
-  */
-  /*
-    if (recvParticleVec.size() > 0) {
-    debugInf << "iter=" << std::setw(8) << iteration << " rank=" << std::setw(2)
-    << s_mpiRank
-    << "   added=";
-    for (DEMParticlePArray::const_iterator it = recvParticleVec.begin(); it !=
-    recvParticleVec.end(); ++it)
-    debugInf << std::setw(3) << (*it)->getId();
-    debugInf << " now " << particleVec.size() << ": ";
-    for (DEMParticlePArray::const_iterator it = particleVec.begin(); it !=
-    particleVec.end(); ++it)
-    debugInf << std::setw(3) << (*it)->getId();
-    debugInf << std::endl;
-    }
-  */
-
-  /*
-  // do not release memory of received particles because they are part of and
-  // managed by particleVec
-  // 6 surfaces
-  rParticleX1.clear();
-  rParticleX2.clear();
-  rParticleY1.clear();
-  rParticleY2.clear();
-  rParticleZ1.clear();
-  rParticleZ2.clear();
-  // 12 edges
-  rParticleX1Y1.clear();
-  rParticleX1Y2.clear();
-  rParticleX1Z1.clear();
-  rParticleX1Z2.clear();
-  rParticleX2Y1.clear();
-  rParticleX2Y2.clear();
-  rParticleX2Z1.clear();
-  rParticleX2Z2.clear();
-  rParticleY1Z1.clear();
-  rParticleY1Z2.clear();
-  rParticleY2Z1.clear();
-  rParticleY2Z2.clear();
-  // 8 vertices
-  rParticleX1Y1Z1.clear();
-  rParticleX1Y1Z2.clear();
-  rParticleX1Y2Z1.clear();
-  rParticleX1Y2Z2.clear();
-  rParticleX2Y1Z1.clear();
-  rParticleX2Y1Z2.clear();
-  rParticleX2Y2Z1.clear();
-  rParticleX2Y2Z2.clear();
-
-  recvParticleVec.clear();
-}
-*/
-
 
 void
 DiscreteElements::gatherParticle()
@@ -2023,28 +1598,29 @@ DiscreteElements::closeProg(std::ofstream& ofs)
 void
 DiscreteElements::getStartDimension(REAL& distX, REAL& distY, REAL& distZ)
 {
-  REAL x1, x2, y1, y2, z1, z2;
+  REAL x1 = 0, x2 = 0, y1 = 0, y2 = 0, z1 = 0, z2 = 0;
   // use boundaryVec
-  for (BoundaryPArray::const_iterator it = boundaryVec.begin();
-       it != boundaryVec.end(); ++it) {
-    switch ((*it)->getId()) {
-      case 1:
-        x1 = (*it)->getPoint().x();
+  for (const auto& boundary : boundaryVec) {
+    switch (boundary->getId()) {
+      case Boundary::BoundaryID::XMINUS:
+        x1 = boundary->getPoint().x();
         break;
-      case 2:
-        x2 = (*it)->getPoint().x();
+      case Boundary::BoundaryID::XPLUS:
+        x2 = boundary->getPoint().x();
         break;
-      case 3:
-        y1 = (*it)->getPoint().y();
+      case Boundary::BoundaryID::YMINUS:
+        y1 = boundary->getPoint().y();
         break;
-      case 4:
-        y2 = (*it)->getPoint().y();
+      case Boundary::BoundaryID::YPLUS:
+        y2 = boundary->getPoint().y();
         break;
-      case 5:
-        z1 = (*it)->getPoint().z();
+      case Boundary::BoundaryID::ZMINUS:
+        z1 = boundary->getPoint().z();
         break;
-      case 6:
-        z2 = (*it)->getPoint().z();
+      case Boundary::BoundaryID::ZPLUS:
+        z2 = boundary->getPoint().z();
+        break;
+      default:
         break;
     }
   }
@@ -2107,23 +1683,25 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
   REAL x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0, z1 = 0.0, z2 = 0.0;
   for (const auto& boundary : mergeBoundaryVec) {
     switch (boundary->getId()) {
-      case 1:
+      case Boundary::BoundaryID::XMINUS:
         x1 = boundary->getPoint().x();
         break;
-      case 2:
+      case Boundary::BoundaryID::XPLUS:
         x2 = boundary->getPoint().x();
         break;
-      case 3:
+      case Boundary::BoundaryID::YMINUS:
         y1 = boundary->getPoint().y();
         break;
-      case 4:
+      case Boundary::BoundaryID::YPLUS:
         y2 = boundary->getPoint().y();
         break;
-      case 5:
+      case Boundary::BoundaryID::ZMINUS:
         z1 = boundary->getPoint().z();
         break;
-      case 6:
+      case Boundary::BoundaryID::ZPLUS:
         z2 = boundary->getPoint().z();
+        break;
+      default:
         break;
     }
   }
@@ -2144,33 +1722,35 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
     vel[i] = 0;
   }
   for (const auto& boundary : mergeBoundaryVec) {
-    std::size_t id = boundary->getId();
+    Boundary::BoundaryID id = boundary->getId();
     Vec normal = boundary->getNormalForce();
     Vec veloc = boundary->getVeloc();
     switch (id) {
-      case 1:
+      case Boundary::BoundaryID::XMINUS:
         var[0] = fabs(normal.x()) / areaX;
         vel[0] = veloc.x();
         break;
-      case 2:
+      case Boundary::BoundaryID::XPLUS:
         var[1] = normal.x() / areaX;
         vel[1] = veloc.x();
         break;
-      case 3:
+      case Boundary::BoundaryID::YMINUS:
         var[2] = fabs(normal.y()) / areaY;
         vel[2] = veloc.y();
         break;
-      case 4:
+      case Boundary::BoundaryID::YPLUS:
         var[3] = normal.y() / areaY;
         vel[3] = veloc.y();
         break;
-      case 5:
+      case Boundary::BoundaryID::ZMINUS:
         var[4] = fabs(normal.z()) / areaZ;
         vel[4] = veloc.z();
         break;
-      case 6:
+      case Boundary::BoundaryID::ZPLUS:
         var[5] = normal.z() / areaZ;
         vel[5] = veloc.z();
+        break;
+      default:
         break;
     }
   }
@@ -2200,8 +1780,8 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
     i = 0;
   }
   for (const auto& boundary : mergeBoundaryVec) {
-    std::size_t id = boundary->getId();
-    var[id - 1] = boundary->getContactNum();
+    Boundary::BoundaryID id = boundary->getId();
+    var[static_cast<size_t>(id) - 1] = boundary->getContactNum();
   }
   for (double i : var)
     ofs << std::setw(OWID) << static_cast<std::size_t>(i);
@@ -2211,8 +1791,8 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
   for (double& i : var)
     i = 0;
   for (const auto& boundary : mergeBoundaryVec) {
-    std::size_t id = boundary->getId();
-    var[id - 1] = boundary->getAvgPenetr();
+    auto id = boundary->getId();
+    var[static_cast<size_t>(id) - 1] = boundary->getAvgPenetr();
   }
   for (double i : var)
     ofs << std::setw(OWID) << i;
@@ -2258,30 +1838,32 @@ DiscreteElements::openParticleProg(std::ofstream& ofs, const std::string& str)
 }
 
 void
-DiscreteElements::updateBoundary(REAL sigma, std::string type, REAL sigmaX, REAL sigmaY)
+DiscreteElements::updateBoundary(REAL sigma, std::string type, 
+                                 REAL sigmaX, REAL sigmaY)
 {
   if (s_mpiRank == 0) {
     REAL x1, x2, y1, y2, z1, z2;
-    for (BoundaryPArray::const_iterator it = mergeBoundaryVec.begin();
-         it != mergeBoundaryVec.end(); ++it) {
-      switch ((*it)->getId()) {
-        case 1:
-          x1 = (*it)->getPoint().x();
+    for (const auto& boundary : mergeBoundaryVec) {
+      switch (boundary->getId()) {
+        case Boundary::BoundaryID::XMINUS:
+          x1 = boundary->getPoint().x();
           break;
-        case 2:
-          x2 = (*it)->getPoint().x();
+        case Boundary::BoundaryID::XPLUS:
+          x2 = boundary->getPoint().x();
           break;
-        case 3:
-          y1 = (*it)->getPoint().y();
+        case Boundary::BoundaryID::YMINUS:
+          y1 = boundary->getPoint().y();
           break;
-        case 4:
-          y2 = (*it)->getPoint().y();
+        case Boundary::BoundaryID::YPLUS:
+          y2 = boundary->getPoint().y();
           break;
-        case 5:
-          z1 = (*it)->getPoint().z();
+        case Boundary::BoundaryID::ZMINUS:
+          z1 = boundary->getPoint().z();
           break;
-        case 6:
-          z2 = (*it)->getPoint().z();
+        case Boundary::BoundaryID::ZPLUS:
+          z2 = boundary->getPoint().z();
+          break;
+        default:
           break;
       }
     }
@@ -2313,26 +1895,27 @@ DiscreteElements::updateBoundary(REAL sigma, std::string type, REAL sigmaX, REAL
       it->clearContactInfo();
 
     // update allContainer
-    for (BoundaryPArray::const_iterator it = boundaryVec.begin();
-         it != boundaryVec.end(); ++it) {
-      switch ((*it)->getId()) {
-        case 1:
-          x1 = (*it)->getPoint().x();
+    for (const auto& boundary : boundaryVec) {
+      switch (boundary->getId()) {
+        case Boundary::BoundaryID::XMINUS:
+          x1 = boundary->getPoint().x();
           break;
-        case 2:
-          x2 = (*it)->getPoint().x();
+        case Boundary::BoundaryID::XPLUS:
+          x2 = boundary->getPoint().x();
           break;
-        case 3:
-          y1 = (*it)->getPoint().y();
+        case Boundary::BoundaryID::YMINUS:
+          y1 = boundary->getPoint().y();
           break;
-        case 4:
-          y2 = (*it)->getPoint().y();
+        case Boundary::BoundaryID::YPLUS:
+          y2 = boundary->getPoint().y();
           break;
-        case 5:
-          z1 = (*it)->getPoint().z();
+        case Boundary::BoundaryID::ZMINUS:
+          z1 = boundary->getPoint().z();
           break;
-        case 6:
-          z2 = (*it)->getPoint().z();
+        case Boundary::BoundaryID::ZPLUS:
+          z2 = boundary->getPoint().z();
+          break;
+        default:
           break;
       }
     }

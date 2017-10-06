@@ -4,13 +4,15 @@
 
 using namespace dem;
 
-CylinderBoundary::CylinderBoundary(std::size_t tp, std::ifstream& ifs)
+CylinderBoundary::CylinderBoundary(Boundary::BoundaryType tp, std::ifstream& ifs)
   : Boundary()
 {
   // These are declared in the boundary base class
   b_type = tp;
   ifs >> b_extraNum;
-  ifs >> b_id;
+  int id;
+  ifs >> id;
+  b_id = Boundary::getBoundaryID(id);
 
   REAL dx, dy, dz, px, py, pz;
   ifs >> dx >> dy >> dz >> px >> py >> pz >> radius;
@@ -18,13 +20,13 @@ CylinderBoundary::CylinderBoundary(std::size_t tp, std::ifstream& ifs)
   point = Vec(px, py, pz);
 }
 
-CylinderBoundary::CylinderBoundary(BoundaryId id, BoundaryType tp,
+CylinderBoundary::CylinderBoundary(Boundary::BoundaryType tp, BoundaryID id, 
                                    const XMLProblemSpec& ps)
   : Boundary()
 {
 }
 
-CylinderBoundary::CylinderBoundary(BoundaryId id, BoundaryType tp,
+CylinderBoundary::CylinderBoundary(Boundary::BoundaryType tp, BoundaryID id, 
                                    const JsonProblemSpec& ps)
   : Boundary()
 {
@@ -57,7 +59,7 @@ CylinderBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap)
 
   // checkout tangential forces and displacements after each particle is
   // processed
-  boundaryTgtMap[this->b_id] = vtmp;
+  boundaryTgtMap[static_cast<size_t>(this->b_id)] = vtmp;
 
   updateStatForce();
 }
