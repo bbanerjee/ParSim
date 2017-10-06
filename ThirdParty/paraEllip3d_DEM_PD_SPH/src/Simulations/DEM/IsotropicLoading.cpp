@@ -12,9 +12,9 @@ IsotropicLoading::execute(DiscreteElements* dem)
   auto isotropicType = util::getParam<std::size_t>("isotropicType");
   if (dem->getMPIRank() == 0) {
     dem->readBoundary(
-      InputParameter::get().datafile["boundaryFile"]);
+      InputParameter::get().datafile["boundaryFilename"]);
     dem->readParticles(
-      InputParameter::get().datafile["particleFile"]);
+      InputParameter::get().datafile["particleFilename"]);
     dem->openCompressProg(progressInf, "isotropic_progress");
     dem->openCompressProg(balancedInf, "isotropic_balanced");
   }

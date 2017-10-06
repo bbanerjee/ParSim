@@ -7,7 +7,7 @@ void
 CavityExpansion::execute(DiscreteElements* dem)
 {
   if (dem->getMPIRank() == 0) {
-    auto inputParticle = InputParameter::get().datafile["particleFile"];
+    auto inputParticle = InputParameter::get().datafile["particleFilename"];
     REAL percent = util::getParam<REAL>("expandPercent");
     dem->readParticles(inputParticle);
 
@@ -35,6 +35,6 @@ CavityExpansion::execute(DiscreteElements* dem)
   }
 
   dem->deposit(
-    InputParameter::get().datafile["boundaryFile"],
+    InputParameter::get().datafile["boundaryFilename"],
     "expand_particle_ini");
 }

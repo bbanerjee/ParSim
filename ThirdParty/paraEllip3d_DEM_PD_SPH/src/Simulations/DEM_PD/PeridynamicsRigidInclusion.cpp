@@ -36,8 +36,8 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     dem->setPatchBox(Box(x1, y1, z1, x2, y2, z2)); 
     pd->setPatchBox(Box(x1, y1, z1, x2, y2, z2)); 
 
-    dem->readParticles(InputParameter::get().datafile["particleFile"]);
-    pd->readPeriDynamicsData(InputParameter::get().datafile["periFile"]);
+    dem->readParticles(InputParameter::get().datafile["particleFilename"]);
+    pd->readPeriDynamicsData(InputParameter::get().datafile["periFilename"]);
 
     dem->openCompressProg(progressInf, "rigidInc_progress");
     pd->openPeriProgress(periProgInf, "rigidInc_peri.dat");

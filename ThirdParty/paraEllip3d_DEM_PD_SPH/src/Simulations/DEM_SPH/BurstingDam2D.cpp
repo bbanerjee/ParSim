@@ -14,11 +14,11 @@ BurstingDam2D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
   REAL bufferLength = 0.0;
 
   if (dem->getMPIRank() == 0) {
-    auto boundaryFile = InputParameter::get().datafile["boundaryFile"];
-    dem->readBoundary(boundaryFile);
+    auto boundaryFilename = InputParameter::get().datafile["boundaryFilename"];
+    dem->readBoundary(boundaryFilename);
 
-    auto particleFile = InputParameter::get().datafile["particleFile"];
-    dem->readParticles(particleFile);
+    auto particleFilename = InputParameter::get().datafile["particleFilename"];
+    dem->readParticles(particleFilename);
 
     Box container = dem->getAllContainer();
     DEMParticlePArray demParticles= dem->getAllDEMParticleVec();

@@ -90,16 +90,16 @@ IntVec DiscreteElements::s_mpiCoords = IntVec(-1,-1,-1);
 
 
 void
-DiscreteElements::deposit(const std::string& boundaryFile,
-                  const std::string& particleFile)
+DiscreteElements::deposit(const std::string& boundaryFilename,
+                  const std::string& particleFilename)
 {
   // The output folder (default name is .)
   std::string outputFolder(".");
 
   // Read the input data
   if (s_mpiRank == 0) {
-    readBoundary(boundaryFile);
-    readParticles(particleFile);
+    readBoundary(boundaryFilename);
+    readParticles(particleFilename);
     openDepositProg(progressInf, "deposit_progress");
   }
 
@@ -264,14 +264,14 @@ DiscreteElements::readBoundary(const std::string& fileName)
 }
 
 void
-DiscreteElements::readParticles(const std::string& particleFile)
+DiscreteElements::readParticles(const std::string& particleFilename)
 {
   REAL young = util::getParam<REAL>("young");
   REAL poisson = util::getParam<REAL>("poisson");
   bool doInitialize = (util::getParam<int>("toInitParticle") == 1);
 
   DEMParticleFileReader reader;
-  reader.read(particleFile, young, poisson, doInitialize, allDEMParticleVec,
+  reader.read(particleFilename, young, poisson, doInitialize, allDEMParticleVec,
               gradation);
 }
 

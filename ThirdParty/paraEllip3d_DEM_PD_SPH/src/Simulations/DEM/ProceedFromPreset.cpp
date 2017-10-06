@@ -9,13 +9,12 @@ using namespace dem;
 void
 ProceedFromPreset::execute(DiscreteElements* dem)
 {
-  std::string boundFile =
-    InputParameter::get().datafile["boundaryFile"];
-  std::string partFile =
-    InputParameter::get().datafile["particleFile"];
+  std::string boundaryFilename =
+    InputParameter::get().datafile["boundaryFilename"];
+  std::string particleFilename =
+    InputParameter::get().datafile["particleFilename"];
   //std::cout << "Called ProceedFromPresetCommand with: "
-  //          << " BoundaryFile = " << boundFile << " and "
-  //          << " ParticleFile = " << partFile << std::endl;
-  // dem->deposit(boundFile.c_str(), partFile.c_str());
-  dem->deposit(boundFile, partFile.c_str());
+  //          << " BoundaryFile = " << boundaryFilename << " and "
+  //          << " ParticleFile = " << particleFilename << std::endl;
+  dem->deposit(boundaryFilename, particleFilename);
 }

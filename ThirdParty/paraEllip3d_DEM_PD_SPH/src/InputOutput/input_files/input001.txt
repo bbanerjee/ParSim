@@ -102,13 +102,13 @@ measureOverlap  1.0E-8
 ###################################################################
 
 # file name of the input boundary file
-boundaryFile  domain_boundary.inp
+boundaryFilename  domain_boundary.inp
 
 # file name of the input particle file
-particleFile  part_dist.inp
+particleFilename  part_dist.inp
 
 # file name of the input peridynamics file
-periFile peri_part.inp 
+periFilename peri_part.inp 
 
 # initialize particles state (velocity, omga, force, moment) from data file or not?
 toInitParticle  1

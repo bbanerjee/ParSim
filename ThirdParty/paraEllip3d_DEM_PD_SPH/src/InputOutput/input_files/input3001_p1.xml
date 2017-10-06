@@ -74,9 +74,9 @@
   <Boundary>
 
     <!-- # file name of the input boundary file -->
-    <!-- <boundaryFile>  domain_boundary.inp </boundaryFile> -->
-    <boundaryFile>  domain_boundary.xml </boundaryFile>
-    <!-- <boundaryFile>  domain_boundary.json </boundaryFile> -->
+    <!-- <boundaryFilename>  domain_boundary.inp </boundaryFilename> -->
+    <boundaryFilename>  domain_boundary.xml </boundaryFilename>
+    <!-- <boundaryFilename>  domain_boundary.json </boundaryFilename> -->
 
     <!-- #coefficient of particle-boundary static friction -->
     <boundaryFriction>  0.5 </boundaryFriction>
@@ -87,8 +87,8 @@
   <DEM>
 
     <!-- # file name of the input particle file -->
-    <particleFile> particle_distribution.base64.xml </particleFile>
-    <!-- <particleFile> part_dist.inp </particleFile> -->
+    <particleFilename> particle_distribution.base64.xml </particleFilename>
+    <!-- <particleFilename> part_dist.inp </particleFilename> -->
 
     <!-- #coefficient of mass scaling -->
     <massScaleFactor>  1.0 </massScaleFactor>
@@ -162,7 +162,7 @@
   <Peridynamics>
     
     <!-- # file name of the input peridynamics file -->
-    <periFile> peri_part.inp </periFile> 
+    <periFilename> peri_part.inp </periFilename> 
 
     <!-- # Translate, rotate, reflect, scale peridynamics particle positions -->
     <periGeomScaleFactor> 1.0 </periGeomScaleFactor>

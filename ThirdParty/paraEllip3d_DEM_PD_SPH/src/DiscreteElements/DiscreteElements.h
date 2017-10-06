@@ -95,8 +95,8 @@ public:
                         const std::string& genParticle);
   void trim(bool toRebuild, const std::string& inputParticle,
             const std::string& trmParticle);
-  void deposit(const std::string& boundaryFile,
-               const std::string& particleFile);
+  void deposit(const std::string& boundaryFilename,
+               const std::string& particleFilename);
 
   bool tractionErrorTol(REAL sigma, std::string type, REAL sigmaX = 0,
                         REAL sigmaY = 0);

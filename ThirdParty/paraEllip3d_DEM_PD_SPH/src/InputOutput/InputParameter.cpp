@@ -138,32 +138,32 @@ InputParameter::readInXML(const std::string& inputFileName)
   //          << "gravityScale = " << gravityScale << "\n";
 
   // Read the boundary information
-  std::string boundaryFile;
+  std::string boundaryFilename;
   double boundaryFriction = 0.0;
-  ps["Boundary"]["boundaryFile"](boundaryFile);
+  ps["Boundary"]["boundaryFilename"](boundaryFilename);
   ps["Boundary"]["boundaryFriction"](boundaryFriction);
 
-  datafile["boundaryFile"] = trim(boundaryFile);
+  datafile["boundaryFilename"] = trim(boundaryFilename);
   param["boundaryFric"] = boundaryFriction;
-  //std::cout << "boundaryFile = " << trim(boundaryFile) << "\n"
+  //std::cout << "boundaryFilename = " << trim(boundaryFilename) << "\n"
   //          << "boundaryFriction = " << boundaryFriction << "\n";
 
   // Read the DEM base information
-  std::string particleFile;
+  std::string particleFilename;
   double massScaleFactor = 1.0;
   double momentScaleFactor = 1.0;
   double pileRate = 0.0;
-  ps["DEM"]["particleFile"](particleFile);
+  ps["DEM"]["particleFilename"](particleFilename);
   ps["DEM"]["massScaleFactor"](massScaleFactor);
   ps["DEM"]["momentScaleFactor"](momentScaleFactor);
   ps["DEM"]["pileRate"](pileRate);
 
-  datafile["particleFile"] = trim(particleFile);
+  datafile["particleFilename"] = trim(particleFilename);
   param["massScale"] = massScaleFactor;
   param["mntScale"] = momentScaleFactor;
   param["pileRate"] = pileRate;
 
-  //std::cout << "particleFile = " << trim(particleFile) << "\n"
+  //std::cout << "particleFilename = " << trim(particleFilename) << "\n"
   //          << "massScaleFactor = " << massScaleFactor << "\n"
   //          << "momentScaleFactor = " << momentScaleFactor << "\n";
 
@@ -214,10 +214,10 @@ InputParameter::readInXML(const std::string& inputFileName)
   auto peri_ps = ps["Peridynamics"];
   if (peri_ps) {
 
-    std::string periFile;
-    peri_ps["periFile"](periFile);
-    datafile["periFile"] = trim(periFile);
-    std::cout << "periFile = " << trim(periFile) << "\n";
+    std::string periFilename;
+    peri_ps["periFilename"](periFilename);
+    datafile["periFilename"] = trim(periFilename);
+    std::cout << "periFilename = " << trim(periFilename) << "\n";
 
     REAL fac = 1.0;
     if (!peri_ps["periGeomScaleFactor"](fac)) {
