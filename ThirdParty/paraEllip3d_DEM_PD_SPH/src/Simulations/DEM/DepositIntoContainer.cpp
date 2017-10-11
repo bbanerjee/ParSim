@@ -12,13 +12,17 @@ void
 DepositIntoContainer::execute(DiscreteElements* dem)
 {
   if (dem->getMPIRank() == 0) {
-    REAL minX = util::getParam<REAL>("minX");
-    REAL minY = util::getParam<REAL>("minY");
-    REAL minZ = util::getParam<REAL>("minZ");
-    REAL maxX = util::getParam<REAL>("maxX");
-    REAL maxY = util::getParam<REAL>("maxY");
-    REAL maxZ = util::getParam<REAL>("maxZ");
-    dem->setContainer(Box(minX, minY, minZ, maxX, maxY, maxZ));
+    std::string boundaryFilename =
+      InputParameter::get().datafile["boundaryFilename"];
+    dem->readBoundary(boundaryFilename);
+
+    //REAL minX = util::getParam<REAL>("minX");
+    //REAL minY = util::getParam<REAL>("minY");
+    //REAL minZ = util::getParam<REAL>("minZ");
+    //REAL maxX = util::getParam<REAL>("maxX");
+    //REAL maxY = util::getParam<REAL>("maxY");
+    //REAL maxZ = util::getParam<REAL>("maxZ");
+    //dem->setContainer(Box(minX, minY, minZ, maxX, maxY, maxZ));
     Box container = dem->getAllContainer();
 
     BoundaryFileWriter boundaryWriter;

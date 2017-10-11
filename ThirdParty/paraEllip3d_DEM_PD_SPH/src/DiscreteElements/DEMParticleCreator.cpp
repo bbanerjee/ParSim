@@ -138,7 +138,7 @@ DEMParticleCreator::createParticles<1>(DEMParticleShape particleType,
 }
 
 /** 
- * Create a multiple horizontal layers of particles from a starting 
+ * Create multiple horizontal layers of particles from a starting 
  * z-position to an ending z-position inside the container.
  * Particles in each layer are offset by a small amount in a zig-zag
  * manner.

@@ -35,6 +35,12 @@ class InputParameter
 {
 
 public:
+
+  std::map<std::string, REAL> param;
+  std::vector<std::pair<REAL, REAL>> gradation;
+  std::map<std::string, std::string> datafile;
+  std::vector<REAL> sigmaPath;
+
   // static function is part of the class, not part of the object, so it is used
   // like InputParameter::get(). it can only access static members.
   // it is public so that it can be called by others like
@@ -65,13 +71,6 @@ private:
   InputParameter(InputParameter const&) = delete;      // don't implement
   void operator=(InputParameter const&) = delete; // don't implement
 
-public:
-  std::map<std::string, REAL> param;
-  std::vector<std::pair<REAL, REAL>> gradation;
-  std::map<std::string, std::string> datafile;
-  std::vector<REAL> sigmaPath;
-
-private:
   friend class boost::serialization::access;
   template <class ArchiveType>
   void serialize(ArchiveType& ar, const unsigned int version)

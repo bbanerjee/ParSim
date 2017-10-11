@@ -2,6 +2,7 @@
 #include <Core/Math/Vec.h>
 #include <InputOutput/InputParameter.h>
 #include <InputOutput/zenxml/xml.h>
+#include <InputOutput/IOUtils.h>
 #include <cstddef>
 #include <cstdlib>
 #include <fstream>
@@ -68,6 +69,11 @@ InputParameter::readInXML(const std::string& inputFileName)
   //std::cout << "simulationType = " << simType << "\n";
   param["simuType"] = simType;
 
+  bool readParticlesFromFile = true;
+  if (simType == 101) {
+    readParticlesFromFile = false;
+  }
+
   // Read the parallel setup
   std::string mpiProcStr;
   if (!ps["Parallel"]["mpiProc"](mpiProcStr)) {
@@ -96,8 +102,8 @@ InputParameter::readInXML(const std::string& inputFileName)
   // Read time stepping info
   int startStep = 1;
   int endStep = 100;
-  double timeAccrued = 0.0;
-  double timeStep = 0.1;
+  REAL timeAccrued = 0.0;
+  REAL timeStep = 0.1;
   ps["Time"]["startStep"](startStep);
   ps["Time"]["endStep"](endStep);
   ps["Time"]["timeAccrued"](timeAccrued);
@@ -127,8 +133,8 @@ InputParameter::readInXML(const std::string& inputFileName)
   //          << "endSnapshot = " << endSnapshot << "\n";
 
   // Read the physical constants
-  double gravity = 9.8;
-  double gravityScale = 0.0;
+  REAL gravity = 9.8;
+  REAL gravityScale = 0.0;
   ps["PhysicalConstants"]["gravityAcceleration"](gravity);
   ps["PhysicalConstants"]["gravityScaleFactor"](gravityScale);
 
@@ -139,7 +145,7 @@ InputParameter::readInXML(const std::string& inputFileName)
 
   // Read the boundary information
   std::string boundaryFilename;
-  double boundaryFriction = 0.0;
+  REAL boundaryFriction = 0.0;
   ps["Boundary"]["boundaryFilename"](boundaryFilename);
   ps["Boundary"]["boundaryFriction"](boundaryFriction);
 
@@ -148,17 +154,72 @@ InputParameter::readInXML(const std::string& inputFileName)
   //std::cout << "boundaryFilename = " << trim(boundaryFilename) << "\n"
   //          << "boundaryFriction = " << boundaryFriction << "\n";
 
-  // Read the DEM base information
-  std::string particleFilename;
-  double massScaleFactor = 1.0;
-  double momentScaleFactor = 1.0;
-  double pileRate = 0.0;
-  ps["DEM"]["particleFilename"](particleFilename);
+  // Read the DEM particle file information
+  int initializeFromFile = 0;
+  ps["DEM"]["initializeFromFile"](initializeFromFile);
+  param["toInitParticle"] = initializeFromFile;
+
+  std::string particleFilename = "none";
+  REAL massScaleFactor = 1.0;
+  REAL momentScaleFactor = 1.0;
+  REAL pileRate = 0.0;
+  if (readParticlesFromFile) {
+
+    ps["DEM"]["particleFilename"](particleFilename);
+    datafile["particleFilename"] = trim(particleFilename);
+
+  } else {
+
+    // Read the number of particle layers
+    ps["DEM"]["particleLayers"](param["particleLayers"]);
+    
+    // Read the minZ and maxZ for initial particle generation
+    ps["DEM"]["floatMinZ"](param["floatMinZ"]);
+    ps["DEM"]["floatMaxZ"](param["floatMaxZ"]);
+
+    // Read the trimming height after particle deposition
+    ps["DEM"]["trimHeight"](param["trimHeight"]);
+
+    // Read the gradation information
+    auto sieve_ps = ps["DEM"]["Sieves"];
+    if (!sieve_ps) {
+      std::cerr << "**ERROR** For particles to be generated you will"
+                << " have to provide gradation information in the input"
+                << " file." << std::endl;
+      exit(-1);
+    }
+
+    std::size_t numSieves;
+    sieve_ps.attribute("number", numSieves);
+    param["sieveNum"] = numSieves;
+
+    std::string percentPassingStr;
+    sieve_ps["percent_passing"](percentPassingStr);
+    std::vector<REAL> percentPassing = 
+      Ellip3D::Util::convertStrArray<REAL>(percentPassingStr);
+    assert(percentPassing.size() == numSieves);
+
+    std::string sizeStr;
+    sieve_ps["size"](sizeStr);
+    std::vector<REAL> size = Ellip3D::Util::convertStrArray<REAL>(sizeStr);
+    assert(size.size() == numSieves);
+
+    for (std::size_t i = 0; i < numSieves; ++i) {
+      gradation.push_back(std::pair<REAL,REAL>(percentPassing[i], size[i]));
+    }
+
+    REAL ratio_ba, ratio_ca;
+    sieve_ps["sieve_ratio"]["ratio_ba"](ratio_ba);
+    sieve_ps["sieve_ratio"]["ratio_ca"](ratio_ca);
+    param["ratioBA"] = ratio_ba;
+    param["ratioCA"] = ratio_ba;
+  }
+
+  // Read other DEM information
   ps["DEM"]["massScaleFactor"](massScaleFactor);
   ps["DEM"]["momentScaleFactor"](momentScaleFactor);
   ps["DEM"]["pileRate"](pileRate);
 
-  datafile["particleFilename"] = trim(particleFilename);
   param["massScale"] = massScaleFactor;
   param["mntScale"] = momentScaleFactor;
   param["pileRate"] = pileRate;
@@ -168,12 +229,12 @@ InputParameter::readInXML(const std::string& inputFileName)
   //          << "momentScaleFactor = " << momentScaleFactor << "\n";
 
   // Read the DEM material information
-  double youngModulus = 1.0e10;
-  double poissonRatio = 0.3;
-  double specificGravity = 1.0;
-  double membraneYoungModulus = 1.0e6;
-  double forceDamping = 0.0;
-  double momentDamping = 0.0;
+  REAL youngModulus = 1.0e10;
+  REAL poissonRatio = 0.3;
+  REAL specificGravity = 1.0;
+  REAL membraneYoungModulus = 1.0e6;
+  REAL forceDamping = 0.0;
+  REAL momentDamping = 0.0;
   ps["DEM"]["Material"]["youngModulus"](youngModulus);
   ps["DEM"]["Material"]["poissonRatio"](poissonRatio);
   ps["DEM"]["Material"]["specificGravity"](specificGravity);
