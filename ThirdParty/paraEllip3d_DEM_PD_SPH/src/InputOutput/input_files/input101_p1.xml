@@ -67,7 +67,7 @@
     <gravityAcceleration>  9.8 </gravityAcceleration>
 
     <!-- #coefficient of gravity scaling -->
-    <gravityScaleFactor>  0 </gravityScaleFactor> 
+    <gravityScaleFactor>  1 </gravityScaleFactor> 
 
   </PhysicalConstants>
 

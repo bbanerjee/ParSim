@@ -69,11 +69,6 @@ InputParameter::readInXML(const std::string& inputFileName)
   //std::cout << "simulationType = " << simType << "\n";
   param["simuType"] = simType;
 
-  bool readParticlesFromFile = true;
-  if (simType == 101) {
-    readParticlesFromFile = false;
-  }
-
   // Read the parallel setup
   std::string mpiProcStr;
   if (!ps["Parallel"]["mpiProc"](mpiProcStr)) {
@@ -134,7 +129,7 @@ InputParameter::readInXML(const std::string& inputFileName)
 
   // Read the physical constants
   REAL gravity = 9.8;
-  REAL gravityScale = 0.0;
+  REAL gravityScale = 1.0;
   ps["PhysicalConstants"]["gravityAcceleration"](gravity);
   ps["PhysicalConstants"]["gravityScaleFactor"](gravityScale);
 
@@ -155,16 +150,17 @@ InputParameter::readInXML(const std::string& inputFileName)
   //          << "boundaryFriction = " << boundaryFriction << "\n";
 
   // Read the DEM particle file information
-  int initializeFromFile = 0;
+  bool initializeFromFile = true;
   ps["DEM"]["initializeFromFile"](initializeFromFile);
-  param["toInitParticle"] = initializeFromFile;
+  param["demToInitParticle"] = static_cast<int>(initializeFromFile);
 
-  std::string particleFilename = "none";
   REAL massScaleFactor = 1.0;
   REAL momentScaleFactor = 1.0;
   REAL pileRate = 0.0;
-  if (readParticlesFromFile) {
 
+  if (simType != 101) {
+
+    std::string particleFilename;
     ps["DEM"]["particleFilename"](particleFilename);
     datafile["particleFilename"] = trim(particleFilename);
 
@@ -329,10 +325,10 @@ InputParameter::readInXML(const std::string& inputFileName)
       param["periReflVecZ"] = vec.z();
     }
 
-    int initializeFromFile = 0;
+    bool initializeFromFile = true;
     peri_ps["initializeFromFile"](initializeFromFile);
     std::cout << "initializeFromFile = " << initializeFromFile << "\n";
-    param["toInitParticle"] = initializeFromFile;
+    param["periToInitParticle"] = static_cast<int>(initializeFromFile);
 
     if (!peri_ps["minPeriDomain"](vecStr)) {
       std::cerr

@@ -27,7 +27,7 @@ DepositIntoContainer::execute(DiscreteElements* dem)
 
     BoundaryFileWriter boundaryWriter;
     boundaryWriter.writeXML(5, "deposit_boundary_ini.xml", container);
-    boundaryWriter.writeCSV(5, "deposit_boundary_ini.txt", container);
+    boundaryWriter.writeCSV(5, "deposit_boundary_ini.csv", container);
 
     Gradation gradation;
     gradation.initializeFromInputParameters();
@@ -60,7 +60,7 @@ DepositIntoContainer::execute(DiscreteElements* dem)
 
     BoundaryFileWriter boundaryWriter;
     boundaryWriter.writeXML(6, "trim_boundary_ini.xml", trimmedContainer);
-    boundaryWriter.writeCSV(6, "trim_boundary_ini.txt", trimmedContainer);
+    boundaryWriter.writeCSV(6, "trim_boundary_ini.csv", trimmedContainer);
 
     dem->trim(false, "dummy", "trim_particle_ini");
   }

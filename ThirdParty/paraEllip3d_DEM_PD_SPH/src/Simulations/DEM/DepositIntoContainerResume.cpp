@@ -22,7 +22,7 @@ DepositIntoContainerResume::execute(DiscreteElements* dem)
 
     BoundaryFileWriter boundaryWriter;
     boundaryWriter.writeXML(6, "trim_boundary_ini.xml", dem->getAllContainer());
-    boundaryWriter.writeCSV(6, "trim_boundary_ini.txt", dem->getAllContainer());
+    boundaryWriter.writeCSV(6, "trim_boundary_ini.csv", dem->getAllContainer());
 
     auto endSnap = util::getParam<std::size_t>("endSnap");
     dem->trim(

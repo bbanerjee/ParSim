@@ -67,7 +67,10 @@ DEMParticleFileReader::readParticlesText(const std::string& inputParticle,
       omz >> fx >> fy >> fz >> mx >> my >> mz;
 
     DEMParticleP pt = std::make_shared<DEMParticle>(
-      id, type, Vec(a, b, c), Vec(px, py, pz), Vec(dax, day, daz),
+      id, 
+      DEMParticle::DEMParticleShape::ELLIPSOID, 
+      static_cast<DEMParticle::DEMParticleType>(type),
+      Vec(a, b, c), Vec(px, py, pz), Vec(dax, day, daz),
       Vec(dbx, dby, dbz), Vec(dcx, dcy, dcz), d_youngModulus, d_poissonRatio);
 
     // optional settings for a particle's initial status
@@ -130,8 +133,8 @@ DEMParticleFileReader::readParticlesXML(const std::string& inputFileName,
     // Get the attributes of the particles
     std::size_t numParticles = 0;
     particle_ps.attribute("number", numParticles);
-    std::string particleType = "sphere";
-    particle_ps.attribute("type", particleType);
+    std::string particleShapeStr = "sphere";
+    particle_ps.attribute("shape", particleShapeStr);
     std::string compression = "none";
     particle_ps.attribute("compression", compression);
     std::string encoding = "none";
@@ -141,37 +144,42 @@ DEMParticleFileReader::readParticlesXML(const std::string& inputFileName,
 
       // Get the particle ids
       std::vector<size_t> particleIDs;
-      bool success = readParticleValues<size_t>(particle_ps, "id", particleType,
+      bool success = readParticleValues<size_t>(particle_ps, "id", particleShapeStr,
                                                 particleIDs);
+
+      // Get the particle types
+      std::vector<size_t> particleTypes;
+      success = readParticleValues<size_t>(particle_ps, "type", particleShapeStr,
+                                           particleTypes);
 
       // Get the particle radii
       std::vector<Vec> particleRadii;
-      success = readParticleValues<Vec>(particle_ps, "radii", particleType,
+      success = readParticleValues<Vec>(particle_ps, "radii", particleShapeStr,
                                         particleRadii);
 
       // Get the particle axle_a, axle_b, axle_c
       std::vector<Vec> particleAxleA, particleAxleB, particleAxleC;
-      success = readParticleValues<Vec>(particle_ps, "axle_a", particleType,
+      success = readParticleValues<Vec>(particle_ps, "axle_a", particleShapeStr,
                                         particleAxleA);
-      success = readParticleValues<Vec>(particle_ps, "axle_b", particleType,
+      success = readParticleValues<Vec>(particle_ps, "axle_b", particleShapeStr,
                                         particleAxleB);
-      success = readParticleValues<Vec>(particle_ps, "axle_c", particleType,
+      success = readParticleValues<Vec>(particle_ps, "axle_c", particleShapeStr,
                                         particleAxleC);
 
       // Get the particle position, velocity, omega
       std::vector<Vec> particlePos, particleVel, particleRot;
-      success = readParticleValues<Vec>(particle_ps, "position", particleType,
+      success = readParticleValues<Vec>(particle_ps, "position", particleShapeStr,
                                         particlePos);
-      success = readParticleValues<Vec>(particle_ps, "velocity", particleType,
+      success = readParticleValues<Vec>(particle_ps, "velocity", particleShapeStr,
                                         particleVel);
-      success = readParticleValues<Vec>(particle_ps, "omega", particleType,
+      success = readParticleValues<Vec>(particle_ps, "omega", particleShapeStr,
                                         particleRot);
 
       // Get the particle force and moment
       std::vector<Vec> particleForce, particleMoment;
-      success = readParticleValues<Vec>(particle_ps, "force", particleType,
+      success = readParticleValues<Vec>(particle_ps, "force", particleShapeStr,
                                         particleForce);
-      success = readParticleValues<Vec>(particle_ps, "moment", particleType,
+      success = readParticleValues<Vec>(particle_ps, "moment", particleShapeStr,
                                         particleMoment);
 
       if (!success) {
@@ -179,10 +187,13 @@ DEMParticleFileReader::readParticlesXML(const std::string& inputFileName,
         return false;
       }
 
-      std::size_t particleTypeNum = DEMParticle::getDEMParticleShape(particleType);
+      auto particleShape = DEMParticle::getDEMParticleShape(particleShapeStr);
       for (std::size_t ii = 0; ii < numParticles; ++ii) {
         DEMParticleP pt = std::make_shared<DEMParticle>(
-          particleIDs[ii], particleTypeNum, particleRadii[ii], particlePos[ii],
+          particleIDs[ii], 
+          particleShape, 
+          static_cast<DEMParticle::DEMParticleType>(particleTypes[ii]), 
+          particleRadii[ii], particlePos[ii],
           particleAxleA[ii], particleAxleB[ii], particleAxleC[ii],
           d_youngModulus, d_poissonRatio);
 

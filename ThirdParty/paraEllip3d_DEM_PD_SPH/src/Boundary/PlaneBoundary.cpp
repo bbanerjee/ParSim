@@ -170,32 +170,33 @@ PlaneBoundary::printContactInfo(std::ostream& os)
 }
 
 void
-PlaneBoundary::findBdryContact(DEMParticlePArray& ptcls)
+PlaneBoundary::findBdryContact(DEMParticlePArray& particles)
 {
   possParticle.clear();
   contactInfo.clear();
   clearStatForce();
 
-  for (auto& ptcl : ptcls) {
-    if (ptcl->getType() == 0) { // only process free particles, excluding type 5
-      REAL dist = distanceToBdry(ptcl->currentPosition());
+  for (auto& particle : particles) {
+    // only process free particles, excluding type 5
+    if (particle->getType() == DEMParticle::DEMParticleType::FREE) { 
+      REAL dist = distanceToBdry(particle->currentPosition());
       /*
-      if (ptcl->getId() == 2 || ptcl->getId() == 95) {
-        //std::cout << "Boundary distance: DEMParticle " << ptcl->getId() << ":"
+      if (particle->getId() == 2 || particle->getId() == 95) {
+        //std::cout << "Boundary distance: DEMParticle " << particle->getId() << ":"
         //          << std::setprecision(16) << dist << "\n";
       }
       */
-      if (dist < 0 && fabs(dist) <= ptcl->getA()) {
+      if (dist < 0 && fabs(dist) <= particle->getA()) {
         bool inside = true;
         for (auto& et : b_extraEdge) {
-          REAL eDist = distanceToBdry(ptcl->currentPosition(), et);
+          REAL eDist = distanceToBdry(particle->currentPosition(), et);
           if (eDist >= 0) {
             inside = false;
             break;
           }
         }
         if (inside)
-          possParticle.push_back(ptcl);
+          possParticle.push_back(particle);
       }
     }
   }

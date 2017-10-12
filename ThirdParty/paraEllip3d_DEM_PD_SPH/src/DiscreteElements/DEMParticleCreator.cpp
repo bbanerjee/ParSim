@@ -10,16 +10,16 @@ using ParticleParameters = DEMParticleCreator::ParticleParameters;
 
 DEMParticlePArray
 DEMParticleCreator::generateDEMParticles(std::size_t layerFlag,
-                                         DEMParticleShape particleType,
+                                         DEMParticleShape particleShape,
                                          const Box& allContainer, 
                                          Gradation& gradation)
 {
   if (layerFlag == 0) {
-    return generateDEMParticles<0>(particleType, allContainer, gradation);
+    return generateDEMParticles<0>(particleShape, allContainer, gradation);
   } else if (layerFlag == 1) {
-    return generateDEMParticles<1>(particleType, allContainer, gradation);
+    return generateDEMParticles<1>(particleShape, allContainer, gradation);
   } 
-  return generateDEMParticles<2>(particleType, allContainer, gradation);
+  return generateDEMParticles<2>(particleShape, allContainer, gradation);
 }
 
 /**
@@ -30,7 +30,7 @@ DEMParticleCreator::generateDEMParticles(std::size_t layerFlag,
  */
 template <std::size_t layerFlag>
 DEMParticlePArray
-DEMParticleCreator::generateDEMParticles(DEMParticleShape particleType,
+DEMParticleCreator::generateDEMParticles(DEMParticleShape particleShape,
                                          const Box& allContainer, 
                                          Gradation& gradation)
 {
@@ -38,7 +38,7 @@ DEMParticleCreator::generateDEMParticles(DEMParticleShape particleType,
   ParticleParameters params = getParticleParameters(gradation);
 
   // Create the particles
-  DEMParticlePArray particles = createParticles<layerFlag>(particleType,
+  DEMParticlePArray particles = createParticles<layerFlag>(particleShape,
     allContainer, gradation, params);
 
   return particles;
@@ -82,7 +82,7 @@ DEMParticleCreator::getParticleParameters(const Gradation& gradation)
  */
 template <>
 DEMParticlePArray
-DEMParticleCreator::createParticles<0>(DEMParticleShape particleType,
+DEMParticleCreator::createParticles<0>(DEMParticleShape particleShape,
                                        const Box& allContainer, 
                                        Gradation& gradation, 
                                        const ParticleParameters& params)
@@ -91,7 +91,7 @@ DEMParticleCreator::createParticles<0>(DEMParticleShape particleType,
   std::size_t particleNum = 0;
 
   DEMParticleP particle = std::make_shared<DEMParticle>(++particleNum, 
-    static_cast<std::size_t>(particleType),
+    particleShape, DEMParticle::DEMParticleType::FREE,
     allContainer.getCenter(), gradation, 
     params.youngModulus, params.poissonRatio);
 
@@ -106,7 +106,7 @@ DEMParticleCreator::createParticles<0>(DEMParticleShape particleType,
  */
 template <>
 DEMParticlePArray
-DEMParticleCreator::createParticles<1>(DEMParticleShape particleType,
+DEMParticleCreator::createParticles<1>(DEMParticleShape particleShape,
                                        const Box& allContainer, 
                                        Gradation& gradation, 
                                        const ParticleParameters& params)
@@ -114,11 +114,11 @@ DEMParticleCreator::createParticles<1>(DEMParticleShape particleType,
   auto z_cen = allContainer.getCenter().z();
 
   auto x_min = allContainer.getMinCorner().x() + params.edge;
-  auto x_max = allContainer.getMinCorner().x() - params.edge;
+  auto x_max = allContainer.getMaxCorner().x() - params.edge;
   auto xCoords = util::linspaceApprox<REAL>(x_min, x_max, params.maxDiameter);
 
   auto y_min = allContainer.getMinCorner().y() + params.edge;
-  auto y_max = allContainer.getMinCorner().y() - params.edge;
+  auto y_max = allContainer.getMaxCorner().y() - params.edge;
   auto yCoords = util::linspaceApprox<REAL>(y_min, y_max, params.maxDiameter);
 
   DEMParticlePArray particles;
@@ -127,7 +127,7 @@ DEMParticleCreator::createParticles<1>(DEMParticleShape particleType,
   for (auto xCoord : xCoords) {
     for (auto yCoord : yCoords) {
       DEMParticleP particle = std::make_shared<DEMParticle>(++particleNum, 
-        static_cast<std::size_t>(particleType),
+        particleShape, DEMParticle::DEMParticleType::FREE,
         Vec(xCoord, yCoord, z_cen), gradation, params.youngModulus,
         params.poissonRatio);
       particles.push_back(particle);
@@ -145,7 +145,7 @@ DEMParticleCreator::createParticles<1>(DEMParticleShape particleType,
  */
 template <>
 DEMParticlePArray
-DEMParticleCreator::createParticles<2>(DEMParticleShape particleType,
+DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
                                        const Box& allContainer, 
                                        Gradation& gradation, 
                                        const ParticleParameters& params)
@@ -168,11 +168,22 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleType,
   auto zCoords = util::linspaceApprox<REAL>(z_min, z_max, params.maxDiameter);
 
   auto x_min = allContainer.getMinCorner().x() + params.edge;
-  auto x_max = allContainer.getMinCorner().x() - params.edge;
+  auto x_max = allContainer.getMaxCorner().x() - params.edge;
   auto xCoords = util::linspaceApprox<REAL>(x_min, x_max, params.maxDiameter);
 
+  /*
+  std::cout << "maxDia = " << params.maxDiameter
+            << " edge = " << params.edge
+            << " xmin = " << x_min << " xmax = " << x_max
+            << "x: ";
+  for (auto x : xCoords) {
+    std::cout << x << " ";
+  }
+  std::cout << std::endl;
+  */
+
   auto y_min = allContainer.getMinCorner().y() + params.edge;
-  auto y_max = allContainer.getMinCorner().y() - params.edge;
+  auto y_max = allContainer.getMaxCorner().y() - params.edge;
   auto yCoords = util::linspaceApprox<REAL>(y_min, y_max, params.maxDiameter);
 
   DEMParticlePArray particles;
@@ -185,7 +196,7 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleType,
       for (auto yCoord : yCoords) {
         yCoord += offset;
         DEMParticleP particle = std::make_shared<DEMParticle>(++particleNum, 
-          static_cast<std::size_t>(particleType),
+          particleShape, DEMParticle::DEMParticleType::FREE,
           Vec(xCoord, yCoord, zCoord), gradation, params.youngModulus,
           params.poissonRatio);
         particles.push_back(particle);
@@ -199,9 +210,9 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleType,
 
 namespace dem {
 template DEMParticlePArray DEMParticleCreator::generateDEMParticles<0>(
-  DEMParticleShape type, const Box& allContainer, Gradation& gradation);
+  DEMParticleShape shape, const Box& allContainer, Gradation& gradation);
 template DEMParticlePArray DEMParticleCreator::generateDEMParticles<1>(
-  DEMParticleShape type, const Box& allContainer, Gradation& gradation);
+  DEMParticleShape shape, const Box& allContainer, Gradation& gradation);
 template DEMParticlePArray DEMParticleCreator::generateDEMParticles<2>(
-  DEMParticleShape type, const Box& allContainer, Gradation& gradation);
+  DEMParticleShape shape, const Box& allContainer, Gradation& gradation);
 }

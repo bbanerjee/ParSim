@@ -43,11 +43,11 @@ public:
     , avgNormal(0)
     , avgShear(0)
     , avgPenetr(0)
-    , transEnergy(0)
-    , rotatEnergy(0)
-    , kinetEnergy(0)
-    , graviEnergy(0)
-    , mechaEnergy(0)
+    , d_translationalEnergy(0)
+    , d_rotationalEnergy(0)
+    , d_kineticEnergy(0)
+    , d_gravitationalEnergy(0)
+    , d_mechanicalEnergy(0)
     , vibraTimeStep(0)
     , impactTimeStep(0)
   {
@@ -197,16 +197,16 @@ public:
   void calcImpactTimeStep();
   void calcContactNum();
 
-  REAL getAvgTransVelocity() const;
-  REAL getAvgRotatVelocity() const;
+  REAL getAvgTranslationalVelocity() const;
+  REAL getAvgRotationalVelocity() const;
   REAL getAvgForce() const;
   REAL getAvgMoment() const;
 
-  void calcTransEnergy();
-  void calcRotatEnergy();
-  void calcKinetEnergy();
-  void calcGraviEnergy(REAL ref);
-  void calcMechaEnergy();
+  void calcTranslationalEnergy();
+  void calcRotationalEnergy();
+  void calcKineticEnergy();
+  void calcGravitationalEnergy(REAL ref);
+  void calcMechanicalEnergy();
   void gatherEnergy();
 
   void setTrimHistoryNum(std::size_t n) { trimHistoryNum = n; }
@@ -527,11 +527,11 @@ private:
   REAL avgPenetr; // only meaningful to root process
 
   // energy data
-  REAL transEnergy; // only meaningful to root process
-  REAL rotatEnergy; // only meaningful to root process
-  REAL kinetEnergy; // only meaningful to root process
-  REAL graviEnergy; // only meaningful to root process
-  REAL mechaEnergy; // only meaningful to root process
+  REAL d_translationalEnergy; // only meaningful to root process
+  REAL d_rotationalEnergy; // only meaningful to root process
+  REAL d_kineticEnergy; // only meaningful to root process
+  REAL d_gravitationalEnergy; // only meaningful to root process
+  REAL d_mechanicalEnergy; // only meaningful to root process
 
   // time step
   REAL vibraTimeStep;  // meaningful to all processes

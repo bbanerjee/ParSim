@@ -119,21 +119,21 @@ doConversion <- function(partDistCSV, encoding = "ascii") {
   xml <- xmlOutputDOM(tag = "Ellip3D_input")
 
   startID = 1
-  partTypes = unique(df_part$type)
-  for (partType in partTypes) {
-    partTypeName = "ellipsoid"
-    if (partType == 1) {
-      partTypeName = "sphere"
-    } else if (partType == 2) {
-      partTypeName = "cube"
-    } else if (partType == 3) {
-      partTypeName = "polyellipsoid"
+  partShapes = unique(df_part$type)
+  for (partShape in partShapes) {
+    partShapeName = "ellipsoid"
+    if (partShape == 1) {
+      partShapeName = "sphere"
+    } else if (partShape == 2) {
+      partShapeName = "cube"
+    } else if (partShape == 3) {
+      partShapeName = "polyellipsoid"
     } else {
-      partTypeName = "ellipsoid"
+      partShapeName = "ellipsoid"
     }
-    df = df_part[which(df_part$type == partType),]
+    df = df_part[which(df_part$type == partShape),]
     xml$addTag("Particles", 
-               attrs = c(number = nrow(df), type = partTypeName, 
+               attrs = c(number = nrow(df), shape = partShapeName, 
                          compression = compression, encoding = encoding), 
                close = FALSE)
 
@@ -144,6 +144,11 @@ doConversion <- function(partDistCSV, encoding = "ascii") {
     partID = paste(part_ids, collapse=" ")
     partID = doEncoding(partID, encoding)
     xml$addTag("id", partID, attrs = c(unit = "none", numComponents = "1"))
+
+    # Add Type
+    partType = paste(df$type, collapse=" ")
+    partType = doEncoding(partType, encoding)
+    xml$addTag("type", partType, attrs = c(unit = "none", numComponents = "1"))
 
     # Add radius
     radius = cbind(df$radius_a, df$radius_b, df$radius_c)
@@ -247,8 +252,8 @@ doConversion <- function(partDistCSV, encoding = "ascii") {
   cat(xmlFormat(xml), sep = "\n", file = partDistXML)
 }
 
-doConversion("particle_distribution.short.csv", "ascii")
-doConversion("particle_distribution.short.csv", "base64")
+#doConversion("particle_distribution.short.csv", "ascii")
+#doConversion("particle_distribution.short.csv", "base64")
 #doConversion("particle_distribution.short.csv", "raw")
 doConversion("particle_distribution.csv", "ascii")
 doConversion("particle_distribution.csv", "base64")

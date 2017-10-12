@@ -243,7 +243,7 @@ OutputTecplot<DEMParticlePArray>::writeParticles(const DEMParticlePArray* partic
   Vec vObj;
   for (const auto& part : *particles) {
     ofs << std::setw(OWID) << part->getId() << std::setw(OWID)
-        << part->getType() << std::setw(OWID) << part->getA() << std::setw(OWID)
+        << static_cast<int>(part->getType()) << std::setw(OWID) << part->getA() << std::setw(OWID)
         << part->getB() << std::setw(OWID) << part->getC();
 
     vObj = part->currentPosition();

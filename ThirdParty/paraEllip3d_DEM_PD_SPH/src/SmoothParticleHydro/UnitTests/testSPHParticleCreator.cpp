@@ -202,7 +202,9 @@ TEST(SPHParticleCreatorTest, generateSPHParticleDam)
     //          force
     //          << " moment = " << moment << std::endl;
     dem::DEMParticleP pt = std::make_shared<dem::DEMParticle>(
-      id, 0, radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
+      id, dem::DEMParticle::DEMParticleShape::ELLIPSOID, 
+      dem::DEMParticle::DEMParticleType::FREE,
+      radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
     pt->setPrevVeloc(vel);
     pt->setCurrVeloc(vel);
     pt->setPrevOmega(omega);
@@ -386,7 +388,9 @@ TEST(SPHParticleCreatorTest, generateSPHParticleNoBottom)
     //          << " force = " << force
     //          << " moment = " << moment << std::endl;
     dem::DEMParticleP pt = std::make_shared<dem::DEMParticle>(
-      id, 0, radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
+      id, dem::DEMParticle::DEMParticleShape::ELLIPSOID, 
+      dem::DEMParticle::DEMParticleType::FREE,
+      radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
     pt->setPrevVeloc(vel);
     pt->setCurrVeloc(vel);
     pt->setPrevOmega(omega);
@@ -573,7 +577,9 @@ TEST(SPHParticleCreatorTest, generateSPHParticleMiddleLayers)
     //          << " force = " << force
     //          << " moment = " << moment << std::endl;
     dem::DEMParticleP pt = std::make_shared<dem::DEMParticle>(
-      id, 0, radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
+      id, dem::DEMParticle::DEMParticleShape::ELLIPSOID, 
+      dem::DEMParticle::DEMParticleType::FREE,
+      radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
     pt->setPrevVeloc(vel);
     pt->setCurrVeloc(vel);
     pt->setPrevOmega(omega);

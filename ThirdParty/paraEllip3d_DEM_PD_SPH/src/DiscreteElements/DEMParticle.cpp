@@ -15,11 +15,104 @@ const std::size_t START =
 
 //#define MINDLIN_ASSUMED
 
-namespace dem {
+using namespace dem;
+
+std::string 
+DEMParticle::getDEMParticleShape(DEMParticleShape shape)
+{
+  if (shape == DEMParticleShape::ELLIPSOID)
+    return "ellipsoid";
+  else if (shape == DEMParticleShape::SPHERE)
+    return "sphere";
+  else if (shape == DEMParticleShape::POLYELLIPSOID)
+    return "polyellipsoid";
+  else if (shape == DEMParticleShape::CUBE)
+    return "cube";
+
+  return "none";
+}
+
+DEMParticle::DEMParticleShape
+DEMParticle::getDEMParticleShape(const std::string& shape)
+{
+  if (shape == "ellipsoid") 
+    return DEMParticleShape::ELLIPSOID;
+  else if (shape == "sphere") 
+    return DEMParticleShape::SPHERE;
+  else if (shape == "polyellipsoid") 
+    return DEMParticleShape::POLYELLIPSOID;
+  else if (shape == "cube") 
+    return DEMParticleShape::CUBE;
+
+  return DEMParticleShape::NONE;
+}
+
+std::string 
+DEMParticle::getDEMParticleType(DEMParticle::DEMParticleType type)
+{
+  std::string str = "";
+  switch (type) {
+    case DEMParticleType::FREE :
+      str = "free";
+      break;
+    case DEMParticleType::FIXED :
+      str = "fixed";
+      break;
+    case DEMParticleType::ROTATE_ONLY :
+      str = "rotate_only";
+      break;
+    case DEMParticleType::TRANSLATE_Z_ONLY :
+      str = "translate_z_only";
+      break;
+    case DEMParticleType::IMPACT_Z_ONLY :
+      str = "impact_z_only";
+      break;
+    case DEMParticleType::BOUNDARY_FREE :
+      str = "boundary_free";
+      break;
+    case DEMParticleType::TRANSLATE_ONLY :
+      str = "translate_only";
+      break;
+    case DEMParticleType::GHOST :
+      str = "ghost";
+      break;
+    default :
+      str = "free";
+      break;
+  }
+  return str;
+}
+
+DEMParticle::DEMParticleType 
+DEMParticle::getDEMParticleType(const std::string& type)
+{
+  DEMParticle::DEMParticleType val = DEMParticleType::FREE;
+  if (type == "free")
+    val = DEMParticleType::FREE;
+  else if (type == "fixed")
+    val = DEMParticleType::FIXED;
+  else if (type == "rotate_only")
+    val = DEMParticleType::ROTATE_ONLY;
+  else if (type == "translate_z_only")
+    val = DEMParticleType::TRANSLATE_Z_ONLY;
+  else if (type == "impact_z_only")
+    val = DEMParticleType::IMPACT_Z_ONLY;
+  else if (type == "boundary_free")
+    val = DEMParticleType::BOUNDARY_FREE;
+  else if (type == "translate_only")
+    val = DEMParticleType::TRANSLATE_ONLY;
+  else if (type == "ghost")
+    val = DEMParticleType::GHOST;
+  else
+    val = DEMParticleType::FREE;
+
+  return val;
+}
 
 DEMParticle::DEMParticle()
   : d_id(0)
-  , d_type(0)
+  , d_shape(DEMParticleShape::ELLIPSOID)
+  , d_type(DEMParticleType::FREE)
   , d_a(0)
   , d_b(0)
   , d_c(0)
@@ -47,7 +140,7 @@ DEMParticle::DEMParticle()
   , d_mass(0)
   , d_volume(0)
   , d_momentJ(0)
-  , d_kinetEnergy(0)
+  , d_kineticEnergy(0)
   , d_contactNum(0)
   , d_inContact(false)
 {
@@ -110,10 +203,12 @@ DEMParticle::init()
   globalCoef();
 }
 
-DEMParticle::DEMParticle(std::size_t n, std::size_t tp, Vec center, REAL r, REAL yng,
-                   REAL poi)
+DEMParticle::DEMParticle(std::size_t n, 
+                         DEMParticleShape shape, DEMParticleType type,
+                         Vec center, REAL r, REAL yng, REAL poi)
   : d_id(n)
-  , d_type(tp)
+  , d_shape(shape)
+  , d_type(type)
   , d_a(r)
   , d_b(r)
   , d_c(r)
@@ -124,10 +219,13 @@ DEMParticle::DEMParticle(std::size_t n, std::size_t tp, Vec center, REAL r, REAL
   init();
 }
 
-DEMParticle::DEMParticle(std::size_t n, std::size_t tp, Vec center, REAL ra, REAL rb,
-                   REAL rc, REAL yng, REAL poi)
+DEMParticle::DEMParticle(std::size_t n, 
+                         DEMParticleShape shape, DEMParticleType type,
+                         Vec center, REAL ra, REAL rb,
+                         REAL rc, REAL yng, REAL poi)
   : d_id(n)
-  , d_type(tp)
+  , d_shape(shape)
+  , d_type(type)
   , d_a(ra)
   , d_b(rb)
   , d_c(rc)
@@ -138,10 +236,13 @@ DEMParticle::DEMParticle(std::size_t n, std::size_t tp, Vec center, REAL ra, REA
   init();
 }
 
-DEMParticle::DEMParticle(std::size_t n, std::size_t tp, Vec center, Gradation& grad,
-                   REAL yng, REAL poi)
+DEMParticle::DEMParticle(std::size_t n, 
+                         DEMParticleShape shape, DEMParticleType type,
+                         Vec center, Gradation& grad,
+                         REAL yng, REAL poi)
   : d_id(n)
-  , d_type(tp)
+  , d_shape(shape)
+  , d_type(type)
   , d_young(yng)
   , d_poisson(poi)
   , d_currPos(std::move(center))
@@ -168,10 +269,13 @@ DEMParticle::DEMParticle(std::size_t n, std::size_t tp, Vec center, Gradation& g
   init();
 }
 
-DEMParticle::DEMParticle(std::size_t n, std::size_t tp, Vec dim, Vec position,
-                   Vec dirca, Vec dircb, Vec dircc, REAL yng, REAL poi)
+DEMParticle::DEMParticle(std::size_t n, 
+                         DEMParticleShape shape, DEMParticleType type,
+                         Vec dim, Vec position,
+                         Vec dirca, Vec dircb, Vec dircc, REAL yng, REAL poi)
   : d_id(n)
-  , d_type(tp)
+  , d_shape(shape)
+  , d_type(type)
   , d_young(yng)
   , d_poisson(poi)
 {
@@ -255,13 +359,13 @@ DEMParticle::localToGlobalPrev(Vec input) const
 // 2. angular velocities in global frame needs to be converted to those in local
 // frame.
 REAL
-DEMParticle::getTransEnergy() const
+DEMParticle::getTranslationalEnergy() const
 {
   return d_mass * pow(vnormL2(d_currVeloc), 2) / 2;
 }
 
 REAL
-DEMParticle::getRotatEnergy() const
+DEMParticle::getRotationalEnergy() const
 {
   Vec currLocalOmga = globalToLocal(d_currOmga);
 
@@ -271,15 +375,18 @@ DEMParticle::getRotatEnergy() const
 }
 
 REAL
-DEMParticle::getKinetEnergy() const
+DEMParticle::getKineticEnergy() const
 {
-  return getTransEnergy() + getRotatEnergy();
+  return getTranslationalEnergy() + getRotationalEnergy();
 }
 
 REAL
-DEMParticle::getPotenEnergy(REAL ref) const
+DEMParticle::getPotentialEnergy(REAL ref) const
 {
-  return util::getParam<REAL>("gravAccel") * d_mass * (d_currPos.z() - ref);
+  auto gravity = util::getParam<REAL>("gravAccel");
+  //std::cout << "g = " << gravity << " m = " << d_mass 
+  //          << " (z - z_ref) = " << d_currPos.z() << "-" << ref << std::endl;
+  return gravity * d_mass * (d_currPos.z() - ref);
 }
 
 void
@@ -533,9 +640,12 @@ DEMParticle::clearContactForce()
 
   // Unit is Newton, gravScale is for amplification.
   d_force += Vec(0, 0, -gravAccel * d_mass * gravScale);
+  //std::cout << "d_force = " << d_force << " g = " << gravAccel
+  //          << " scale = " << gravScale << " m = " << d_mass << std::endl;
   d_inContact = false;
 
-  if (getType() == 3) // ellipsoidal pile
+  // ellipsoidal pile
+  if (getType() == DEMParticle::DEMParticleType::TRANSLATE_Z_ONLY) 
     d_force -= Vec(0, 0, -gravAccel * d_mass * gravScale);
 
 #ifdef MOMENT
@@ -586,11 +696,11 @@ DEMParticle::update()
   }
   setMoment(resultantMoment);
 
-  /*
-  std::cout << "DEMParticle::update:: id = " << d_id 
-            << " force = " << resultantForce
-            << " moment = " << resultantMoment << "\n";
+  //std::cout << "DEMParticle::update:: id = " << d_id 
+  //          << " force = " << resultantForce
+  //          << " moment = " << resultantMoment << "\n";
 
+  /*
   if (getId() == 2) {
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -620,7 +730,8 @@ DEMParticle::update()
 
   // 0-free, 1-fixed, 5-free bounary particle
   // It is important to distinguish global frame from local frame!
-  if (getType() == 0 || getType() == 5) {
+  if (getType() == DEMParticle::DEMParticleType::FREE || 
+      getType() == DEMParticle::DEMParticleType::BOUNDARY_FREE) {
     Vec prevLocalOmga;
     Vec currLocalOmga;
     Vec localMoment;
@@ -686,7 +797,7 @@ DEMParticle::update()
   }
 #ifdef MOMENT
   // special case 2 (moment): translate first, then rotate
-  else if (getType() == 2) {
+  else if (getType() == DEMParticle::DEMParticleType::ROTATE_ONLY) {
     Vec prevLocalOmga;
     Vec currLocalOmga;
     Vec localMoment;
@@ -724,7 +835,7 @@ DEMParticle::update()
 #endif
   // special case 3 (displacemental ellipsoidal
   // pile): translate in vertical direction only
-  else if (getType() == 3) {
+  else if (getType() == DEMParticle::DEMParticleType::TRANSLATE_Z_ONLY) {
     d_currVeloc.setX(0);
     d_currVeloc.setY(0);
     d_currVeloc.setZ(-pileRate);
@@ -732,7 +843,7 @@ DEMParticle::update()
   }
   // special case 4 (impacting ellipsoidal penetrator): impact
   // with inital velocity in vertical direction only
-  else if (getType() == 4) {
+  else if (getType() == DEMParticle::DEMParticleType::IMPACT_Z_ONLY) {
     REAL atf = forceDamp * 2;
     d_currVeloc = d_prevVeloc * (2 - atf) / (2 + atf) +
                   d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
@@ -741,7 +852,7 @@ DEMParticle::update()
     d_currPos = d_prevPos + d_currVeloc * timeStep;
   }
   // translation only, no rotation
-  else if (getType() == 6) {
+  else if (getType() == DEMParticle::DEMParticleType::TRANSLATE_ONLY) {
     REAL atf = forceDamp * 2;
     d_currVeloc = d_prevVeloc * (2 - atf) / (2 + atf) +
                   d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
@@ -749,7 +860,7 @@ DEMParticle::update()
   }
   // special case 10: pull out a DEM particle in
   // peri-domain, prescribed constant velocity
-  else if (getType() == 10) {
+  else if (getType() == DEMParticle::DEMParticleType::GHOST) {
     d_currPos = d_prevPos + d_currVeloc * timeStep;
   }
 
@@ -1238,5 +1349,3 @@ DEMParticle::dragForce()
   addForce(globalForce);
 }
 
-
-} // namespace dem ends

@@ -22,53 +22,57 @@ class DEMParticle
 public:
   enum class DEMParticleShape
   {
-    NONE,
-    ELLIPSOID,
-    SPHERE,
-    CUBE,
-    POLYELLIPSOID
+    NONE = 0,
+    ELLIPSOID = 1,
+    SPHERE = 2,
+    CUBE = 3,
+    POLYELLIPSOID = 4
   };
 
-  static std::string getDEMParticleShape(std::size_t type)
+  static std::string getDEMParticleShape(DEMParticleShape shape);
+  static DEMParticleShape getDEMParticleShape(const std::string& shape);
+
+  // types of individual particle:
+  //   0 - free particle
+  //   1 - fixed particle
+  //   2 - special case 2 (pure moment): translate first, then rotate only,
+  // MNT_START needs to be defined
+  //   3 - special case 3 (displacemental ellipsoidal pile): translate in
+  // vertical direction only
+  //   4 - special case 4 (impacting ellipsoidal penetrator): impact with inital
+  // velocity in vertical direction only
+  //   5 - free boundary particle
+  //   6 - translate only, no rotation
+  //  10 - ghost particle
+  enum class DEMParticleType
   {
-    if (type == static_cast<std::size_t>(DEMParticleShape::ELLIPSOID))
-      return "ellipsoid";
-    else if (type == static_cast<std::size_t>(DEMParticleShape::SPHERE))
-      return "sphere";
-    else if (type == static_cast<std::size_t>(DEMParticleShape::POLYELLIPSOID))
-      return "polyellipsoid";
-    else if (type == static_cast<std::size_t>(DEMParticleShape::CUBE))
-      return "cube";
+    FREE = 0,
+    FIXED = 1,
+    ROTATE_ONLY = 2,
+    TRANSLATE_Z_ONLY = 3,
+    IMPACT_Z_ONLY = 4,
+    BOUNDARY_FREE = 5,
+    TRANSLATE_ONLY = 6,
+    GHOST = 10
+  };
 
-    return "none";
-  }
-
-  static std::size_t getDEMParticleShape(const std::string& type)
-  {
-    if (type == "ellipsoid") 
-      return static_cast<std::size_t>(DEMParticleShape::ELLIPSOID);
-    else if (type == "sphere") 
-      return static_cast<std::size_t>(DEMParticleShape::SPHERE);
-    else if (type == "polyellipsoid") 
-      return static_cast<std::size_t>(DEMParticleShape::POLYELLIPSOID);
-    else if (type == "cube") 
-      return static_cast<std::size_t>(DEMParticleShape::CUBE);
-
-    return static_cast<std::size_t>(DEMParticleShape::NONE);
-  }
+  static std::string getDEMParticleType(DEMParticleType type);
+  static DEMParticleType getDEMParticleType(const std::string& type);
 
   DEMParticle();
-  DEMParticle(std::size_t n, std::size_t type, Vec center, REAL r, REAL young,
-           REAL poisson);
-  DEMParticle(std::size_t n, std::size_t type, Vec center, REAL a, REAL b, REAL c,
-           REAL young, REAL poisson);
-  DEMParticle(std::size_t n, std::size_t type, Vec center, Gradation& grad,
-           REAL young, REAL poisson);
-  DEMParticle(std::size_t n, std::size_t type, Vec dim, Vec position, Vec dirca,
-           Vec dircb, Vec dircc, REAL young, REAL poisson);
+  DEMParticle(std::size_t n, DEMParticleShape shape, DEMParticleType type, 
+              Vec center, REAL r, REAL young, REAL poisson);
+  DEMParticle(std::size_t n, DEMParticleShape shape, DEMParticleType type, 
+              Vec center, REAL a, REAL b, REAL c, REAL young, REAL poisson);
+  DEMParticle(std::size_t n, DEMParticleShape shape, DEMParticleType type, 
+              Vec center, Gradation& grad, REAL young, REAL poisson);
+  DEMParticle(std::size_t n, DEMParticleShape shape, DEMParticleType type, 
+              Vec dim, Vec position, Vec dirca, Vec dircb, Vec dircc, 
+              REAL young, REAL poisson);
 
   std::size_t getId() const { return d_id; }
-  std::size_t getType() const { return d_type; }
+  const DEMParticleShape& getShape() const { return d_shape; }
+  const DEMParticleType&  getType() const { return d_type; }
   REAL getA() const { return d_a; }
   REAL getB() const { return d_b; }
   REAL getC() const { return d_c; }
@@ -101,13 +105,14 @@ public:
   std::size_t getContactNum() const { return d_contactNum; }
 
   REAL getRadius(Vec v) const;
-  REAL getTransEnergy() const;
-  REAL getRotatEnergy() const;
-  REAL getKinetEnergy() const;
-  REAL getPotenEnergy(REAL ref) const;
+  REAL getTranslationalEnergy() const;
+  REAL getRotationalEnergy() const;
+  REAL getKineticEnergy() const;
+  REAL getPotentialEnergy(REAL ref) const;
 
   void setId(std::size_t n) { d_id = n; }
-  void setType(std::size_t n) { d_type = n; }
+  void setShape(std::size_t n) { d_shape = static_cast<DEMParticleShape>(n); }
+  void setType(std::size_t n) { d_type = static_cast<DEMParticleType>(n); }
   void setA(REAL dd) { d_a = dd; }
   void setB(REAL dd) { d_b = dd; }
   void setC(REAL dd) { d_c = dd; }
@@ -204,20 +209,9 @@ public:
   void dragForce();
 
 private:
-  // types of individual particle:
-  //   0 - free particle
-  //   1 - fixed particle
-  //   2 - special case 2 (pure moment): translate first, then rotate only,
-  // MNT_START needs to be defined
-  //   3 - special case 3 (displacemental ellipsoidal pile): translate in
-  // vertical direction only
-  //   4 - special case 4 (impacting ellipsoidal penetrator): impact with inital
-  // velocity in vertical direction only
-  //   5 - free boundary particle
-  //   6 - translate only, no rotation
-  //  10 - ghost particle
   std::size_t d_id;
-  std::size_t d_type;
+  DEMParticleShape d_shape;
+  DEMParticleType d_type;
   REAL d_a, d_b, d_c; // three semi-axle length, must satisfy a >= b >= c
   REAL d_young; // note: a(currDirecA), b(currDirecB), c(currDirecC) corresponds
                 // to x, y, z in local frame, respectively
@@ -244,7 +238,7 @@ private:
   REAL d_volume;
   Vec d_momentJ;      // moment of inertia in local body-fixed frame
   REAL d_coef[10];    // particle's coefficients in global coordinates
-  REAL d_kinetEnergy; // kinetic energy
+  REAL d_kineticEnergy; // kinetic energy
   std::size_t d_contactNum;
   bool d_inContact; // in contact with other particle or boundary
   std::vector<std::vector<REAL>> d_fluidGrid;
@@ -256,6 +250,7 @@ private:
   void serialize(Archive& ar, const unsigned int version)
   {
     ar& d_id;
+    ar& d_shape;
     ar& d_type;
     ar& d_a;
     ar& d_b;
@@ -287,7 +282,7 @@ private:
     ar& d_volume;
     ar& d_momentJ;
     ar& d_coef;
-    ar& d_kinetEnergy;
+    ar& d_kineticEnergy;
     ar& d_contactNum;
     ar& d_inContact;
     ar& d_fluidGrid;

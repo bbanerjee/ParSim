@@ -268,7 +268,7 @@ DiscreteElements::readParticles(const std::string& particleFilename)
 {
   REAL young = util::getParam<REAL>("young");
   REAL poisson = util::getParam<REAL>("poisson");
-  bool doInitialize = (util::getParam<int>("toInitParticle") == 1);
+  bool doInitialize = (util::getParam<int>("demToInitParticle") == 1);
 
   DEMParticleFileReader reader;
   reader.read(particleFilename, young, poisson, doInitialize, allDEMParticleVec,
@@ -572,6 +572,7 @@ DiscreteElements::findContactSingleThread()
       auto mergeParticleType = mergeParticle->getType();
       auto mergeParticleRad = mergeParticle->getA();
 
+      /*
       if ((particle->getId() == 2 && mergeParticle->getId() == 94) ||
           (particle->getId() == 94 && mergeParticle->getId() == 2)) {
         int world_rank;
@@ -582,14 +583,18 @@ DiscreteElements::findContactSingleThread()
         //          << "), mergeParticle = (" << mergeParticle->getId()
         //          << ", " << mergeParticleType << ")\n";
       } 
+      */
 
       if ((vnormL2(v - u) < particleRad + mergeParticleRad) &&
           // not both are fixed particles
-          (particleType != 1 || mergeParticleType != 1) &&
+          (particleType != DEMParticle::DEMParticleType::FIXED || 
+           mergeParticleType != DEMParticle::DEMParticleType::FIXED) &&
           // not both are free boundary particles
-          (particleType != 5 || mergeParticleType != 5) &&
+          (particleType != DEMParticle::DEMParticleType::BOUNDARY_FREE || 
+           mergeParticleType != DEMParticle::DEMParticleType::BOUNDARY_FREE) &&
           // not both are ghost particles
-          (particleType != 10 || mergeParticleType != 10)) {
+          (particleType != DEMParticle::DEMParticleType::GHOST || 
+           mergeParticleType != DEMParticle::DEMParticleType::GHOST)) {
 
         DEMContact tmpContact(particle.get(), mergeParticle.get());
 
@@ -628,7 +633,8 @@ DiscreteElements::findContactMultiThread(int ompThreads)
   startOuter = Timer::now();
 #endif
 
-  std::size_t i, j, particleType, mergeParticleType;
+  std::size_t i, j;
+  DEMParticle::DEMParticleType particleType, mergeParticleType;
   Vec u, v;
   auto num1 = particleVec.size();      // particles inside container
   auto num2 = mergeParticleVec.size(); // particles inside container
@@ -646,11 +652,14 @@ DiscreteElements::findContactMultiThread(int ompThreads)
       if ((vnormL2(v - u) <
            particleVec[i]->getA() + mergeParticleVec[j]->getA()) &&
           // not both are fixed particles
-          (particleType != 1 || mergeParticleType != 1) &&
+          (particleType != DEMParticle::DEMParticleType::FIXED || 
+           mergeParticleType != DEMParticle::DEMParticleType::FIXED) &&
           // not both are free boundary particles
-          (particleType != 5 || mergeParticleType != 5) &&
+          (particleType != DEMParticle::DEMParticleType::BOUNDARY_FREE || 
+           mergeParticleType != DEMParticle::DEMParticleType::BOUNDARY_FREE) &&
           // not both are ghost particles
-          (particleType != 10 || mergeParticleType != 10)) {
+          (particleType != DEMParticle::DEMParticleType::GHOST || 
+           mergeParticleType != DEMParticle::DEMParticleType::GHOST)) {
 
         DEMContact tmpContact(particleVec[i].get(), mergeParticleVec[j].get());
 
@@ -986,9 +995,9 @@ DiscreteElements::openDepositProg(std::ofstream& ofs, const std::string& str)
       << std::setw(OWID) << "avgNormal" << std::setw(OWID) << "avgShear"
       << std::setw(OWID) << "avgPenetr"
 
-      << std::setw(OWID) << "transEnergy" << std::setw(OWID) << "rotatEnergy"
-      << std::setw(OWID) << "kinetEnergy" << std::setw(OWID) << "graviEnergy"
-      << std::setw(OWID) << "mechaEnergy"
+      << std::setw(OWID) << "transEnergy" << std::setw(OWID) << "rotEnergy"
+      << std::setw(OWID) << "kinEnergy" << std::setw(OWID) << "gravEnergy"
+      << std::setw(OWID) << "mechEnergy"
 
       << std::setw(OWID) << "vibra_est_dt" << std::setw(OWID) << "impact_est_dt"
       << std::setw(OWID) << "actual_dt" << std::setw(OWID) << "accruedTime"
@@ -1059,9 +1068,9 @@ DiscreteElements::printDepositProg(std::ofstream& ofs)
       << std::setw(OWID) << avgPenetr;
 
   // energy
-  ofs << std::setw(OWID) << transEnergy << std::setw(OWID) << rotatEnergy
-      << std::setw(OWID) << kinetEnergy << std::setw(OWID) << graviEnergy
-      << std::setw(OWID) << mechaEnergy;
+  ofs << std::setw(OWID) << d_translationalEnergy << std::setw(OWID) << d_rotationalEnergy
+      << std::setw(OWID) << d_kineticEnergy << std::setw(OWID) << d_gravitationalEnergy
+      << std::setw(OWID) << d_mechanicalEnergy;
 
   // time
   ofs << std::setw(OWID) << vibraTimeStep << std::setw(OWID) << impactTimeStep
@@ -1582,11 +1591,11 @@ DiscreteElements::gatherBdryContact()
 void
 DiscreteElements::gatherEnergy()
 {
-  calcTransEnergy();
-  calcRotatEnergy();
-  calcKinetEnergy();
-  calcGraviEnergy(allContainer.getMinCorner().z());
-  calcMechaEnergy();
+  calcTranslationalEnergy();
+  calcRotationalEnergy();
+  calcKineticEnergy();
+  calcGravitationalEnergy(allContainer.getMinCorner().z());
+  calcMechanicalEnergy();
 }
 
 void
@@ -1666,9 +1675,9 @@ DiscreteElements::openCompressProg(std::ofstream& ofs, const std::string& str)
       << std::setw(OWID) << "avgNormal" << std::setw(OWID) << "avgShear"
       << std::setw(OWID) << "avgPenetr"
 
-      << std::setw(OWID) << "transEnergy" << std::setw(OWID) << "rotatEnergy"
-      << std::setw(OWID) << "kinetEnergy" << std::setw(OWID) << "graviEnergy"
-      << std::setw(OWID) << "mechaEnergy"
+      << std::setw(OWID) << "transEnergy" << std::setw(OWID) << "rotEnergy"
+      << std::setw(OWID) << "kinEnergy" << std::setw(OWID) << "gravEnergy"
+      << std::setw(OWID) << "mechEnergy"
 
       << std::setw(OWID) << "vibra_est_dt" << std::setw(OWID) << "impact_est_dt"
       << std::setw(OWID) << "actual_dt"
@@ -1802,9 +1811,9 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
       << std::setw(OWID) << avgPenetr;
 
   // energy
-  ofs << std::setw(OWID) << transEnergy << std::setw(OWID) << rotatEnergy
-      << std::setw(OWID) << kinetEnergy << std::setw(OWID) << graviEnergy
-      << std::setw(OWID) << mechaEnergy;
+  ofs << std::setw(OWID) << d_translationalEnergy << std::setw(OWID) << d_rotationalEnergy
+      << std::setw(OWID) << d_kineticEnergy << std::setw(OWID) << d_gravitationalEnergy
+      << std::setw(OWID) << d_mechanicalEnergy;
 
   // time
   ofs << std::setw(OWID) << vibraTimeStep << std::setw(OWID) << impactTimeStep
@@ -2054,65 +2063,65 @@ DiscreteElements::printContact(const std::string& str) const
 }
 
 void
-DiscreteElements::calcTransEnergy()
+DiscreteElements::calcTranslationalEnergy()
 {
-  REAL pEngy = 0;
-  DEMParticlePArray::const_iterator it;
-  for (it = particleVec.begin(); it != particleVec.end(); ++it) {
-    if ((*it)->getType() == 0)
-      pEngy += (*it)->getTransEnergy();
+  REAL pEnergy = 0;
+  for (const auto& particle : particleVec) {
+    if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
+      pEnergy += particle->getTranslationalEnergy();
+    }
   }
-  MPI_Reduce(&pEngy, &transEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
+  MPI_Reduce(&pEnergy, &d_translationalEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
 }
 
 void
-DiscreteElements::calcRotatEnergy()
+DiscreteElements::calcRotationalEnergy()
 {
-  REAL pEngy = 0;
-  DEMParticlePArray::const_iterator it;
-  for (it = particleVec.begin(); it != particleVec.end(); ++it) {
-    if ((*it)->getType() == 0)
-      pEngy += (*it)->getRotatEnergy();
+  REAL pEnergy = 0;
+  for (const auto& particle : particleVec) {
+    if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
+      pEnergy += particle->getRotationalEnergy();
+    }
   }
-  MPI_Reduce(&pEngy, &rotatEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
+  MPI_Reduce(&pEnergy, &d_rotationalEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
 }
 
 void
-DiscreteElements::calcKinetEnergy()
+DiscreteElements::calcKineticEnergy()
 {
-  REAL pEngy = 0;
-  DEMParticlePArray::const_iterator it;
-  for (it = particleVec.begin(); it != particleVec.end(); ++it) {
-    if ((*it)->getType() == 0)
-      pEngy += (*it)->getKinetEnergy();
+  REAL pEnergy = 0;
+  for (const auto& particle : particleVec) {
+    if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
+      pEnergy += particle->getKineticEnergy();
+    }
   }
-  MPI_Reduce(&pEngy, &kinetEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
+  MPI_Reduce(&pEnergy, &d_kineticEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
 }
 
 void
-DiscreteElements::calcGraviEnergy(REAL ref)
+DiscreteElements::calcGravitationalEnergy(REAL ref)
 {
-  REAL pEngy = 0;
-  DEMParticlePArray::const_iterator it;
-  for (it = particleVec.begin(); it != particleVec.end(); ++it) {
-    if ((*it)->getType() == 0)
-      pEngy += (*it)->getPotenEnergy(ref);
+  REAL pEnergy = 0;
+  for (const auto& particle : particleVec) {
+    if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
+      pEnergy += particle->getPotentialEnergy(ref);
+    }
   }
-  MPI_Reduce(&pEngy, &graviEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
+  MPI_Reduce(&pEnergy, &d_gravitationalEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
 }
 
 void
-DiscreteElements::calcMechaEnergy()
+DiscreteElements::calcMechanicalEnergy()
 {
-  mechaEnergy = kinetEnergy + graviEnergy;
+  d_mechanicalEnergy = d_kineticEnergy + d_gravitationalEnergy;
 }
 
 REAL
 DiscreteElements::getMass() const
 {
   REAL var = 0;
-  for (const auto& it : allDEMParticleVec)
-    var += it->getMass();
+  for (const auto& particle : allDEMParticleVec)
+    var += particle->getMass();
   return var;
 }
 
@@ -2120,37 +2129,37 @@ REAL
 DiscreteElements::getVolume() const
 {
   REAL var = 0;
-  for (const auto& it : allDEMParticleVec)
-    if (it->getType() == 0)
-      var += it->getVolume();
+  for (const auto& particle : allDEMParticleVec)
+    if (particle->getType() == DEMParticle::DEMParticleType::FREE)
+      var += particle->getVolume();
   return var;
 }
 
 REAL
-DiscreteElements::getAvgTransVelocity() const
+DiscreteElements::getAvgTranslationalVelocity() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
-  DEMParticlePArray::const_iterator it;
-  for (it = particleVec.begin(); it != particleVec.end(); ++it)
-    if ((*it)->getType() == 0) {
-      avgv += vnormL2((*it)->currentVelocity());
+  for (const auto& particle : particleVec) {
+    if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
+      avgv += vnormL2(particle->currentVelocity());
       ++count;
     }
+  }
   return avgv /= count;
 }
 
 REAL
-DiscreteElements::getAvgRotatVelocity() const
+DiscreteElements::getAvgRotationalVelocity() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
-  DEMParticlePArray::const_iterator it;
-  for (it = particleVec.begin(); it != particleVec.end(); ++it)
-    if ((*it)->getType() == 0) {
-      avgv += vnormL2((*it)->currentOmega());
+  for (const auto& particle : particleVec) {
+    if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
+      avgv += vnormL2(particle->currentOmega());
       ++count;
     }
+  }
   return avgv /= count;
 }
 
@@ -2159,12 +2168,12 @@ DiscreteElements::getAvgForce() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
-  DEMParticlePArray::const_iterator it;
-  for (it = particleVec.begin(); it != particleVec.end(); ++it)
-    if ((*it)->getType() == 0) {
-      avgv += vnormL2((*it)->getForce());
+  for (const auto& particle : particleVec) {
+    if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
+      avgv += vnormL2(particle->getForce());
       ++count;
     }
+  }
   return avgv / count;
 }
 
@@ -2173,12 +2182,12 @@ DiscreteElements::getAvgMoment() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
-  DEMParticlePArray::const_iterator it;
-  for (it = particleVec.begin(); it != particleVec.end(); ++it)
-    if ((*it)->getType() == 0) {
-      avgv += vnormL2((*it)->getMoment());
+  for (const auto& particle : particleVec) {
+    if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
+      avgv += vnormL2(particle->getMoment());
       ++count;
     }
+  }
   return avgv /= count;
 }
 

@@ -71,7 +71,7 @@ DEMParticleFileWriter::writeCSV(const DEMParticlePArray& particles,
   Vec vObj;
   for (const auto& part : particles) {
     ofs << std::setw(OWID) << part->getId() << std::setw(OWID)
-        << part->getType() << std::setw(OWID) << part->getA() << std::setw(OWID)
+        << static_cast<int>(part->getType()) << std::setw(OWID) << part->getA() << std::setw(OWID)
         << part->getB() << std::setw(OWID) << part->getC();
 
     vObj = part->currentPosition();
@@ -127,21 +127,22 @@ DEMParticleFileWriter::writeXML(const DEMParticlePArray& particles,
   // Create a proxy output
   zen::XmlOut xml(doc);
 
-  // Find the number of unique particle types
-  std::vector<std::size_t> uniqueParticleTypes;
+  // Find the number of unique particle shapes
+  std::vector<DEMParticle::DEMParticleShape> uniqueParticleShapes;
   for (const auto& particle : particles) {
-    uniqueParticleTypes.push_back(particle->getType());
+    uniqueParticleShapes.push_back(particle->getShape());
   }
-  std::sort(uniqueParticleTypes.begin(), uniqueParticleTypes.end());
-  auto last = std::unique(uniqueParticleTypes.begin(), uniqueParticleTypes.end());
-  uniqueParticleTypes.erase(last, uniqueParticleTypes.end());
+  std::sort(uniqueParticleShapes.begin(), uniqueParticleShapes.end());
+  auto last = std::unique(uniqueParticleShapes.begin(), uniqueParticleShapes.end());
+  uniqueParticleShapes.erase(last, uniqueParticleShapes.end());
 
-  // Loop through the particle types
-  for (const auto particleType : uniqueParticleTypes) {
+  // Loop through the particle shapes
+  for (const auto particleShape : uniqueParticleShapes) {
 
     // Loop through the particles and store in vectors
     std::size_t numParticles = particles.size();
     std::vector<std::size_t> particleIDs;
+    std::vector<std::size_t> particleTypes;
     std::vector<Vec> particleRadii;
     std::vector<Vec> particleAxleA, particleAxleB, particleAxleC;
     std::vector<Vec> particlePos, particleVel, particleRot;
@@ -157,8 +158,9 @@ DEMParticleFileWriter::writeXML(const DEMParticlePArray& particles,
     particleForce.reserve(numParticles);
     particleMoment.reserve(numParticles);
     for (const auto& particle : particles) {
-      if (particle->getType() == particleType) {
+      if (particle->getShape() == particleShape) {
         particleIDs.push_back(particle->getId());
+        particleTypes.push_back(static_cast<std::size_t>(particle->getType()));
         particleRadii.push_back(Vec(particle->getA(), particle->getB(), 
                                     particle->getC()));
         particleAxleA.push_back(particle->getCurrDirecA());
@@ -172,17 +174,20 @@ DEMParticleFileWriter::writeXML(const DEMParticlePArray& particles,
       }
     }
 
-    std::string type = DEMParticle::getDEMParticleShape(particleType);
+    std::string shape = DEMParticle::getDEMParticleShape(particleShape);
     zen::XmlElement& root = xml.ref();
     zen::XmlElement& element = root.addChild("Particles");
     zen::XmlOut particles(element);
     particles.attribute("number", particleIDs.size());
-    particles.attribute("type", type);
+    particles.attribute("shape", shape);
     particles.attribute("compression", "gzip");
     particles.attribute("encoding", "base64");
 
     // Write particle IDs
     writeParticleValues<std::size_t, 1>(element, "id", "none", particleIDs);
+
+    // Write particle types
+    writeParticleValues<std::size_t, 1>(element, "type", "none", particleTypes);
 
     // Write particle radii
     writeParticleValues<Vec, 3>(element, "radii", "mm", particleRadii);

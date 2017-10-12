@@ -481,7 +481,7 @@ OutputVTK<DEMParticlePArray>::createVTKUnstructuredGrid(const DEMParticlePArray*
     ID->InsertValue(id, particle->getId());
 
     // Type
-    type->InsertValue(id, particle->getType());
+    type->InsertValue(id, static_cast<int>(particle->getType()));
 
     // Ellipsoid radii
     vec[0] = particle->getA();
@@ -595,10 +595,10 @@ OutputVTK<PeriParticlePArray>::createVTKUnstructuredGrid(const PeriParticlePArra
   velocity->SetNumberOfTuples(pts->GetNumberOfPoints());
   velocity->SetName("Velocity");
 
-  vtkDoubleArrayP kineticEnergy = vtkDoubleArrayP::New();
-  kineticEnergy->SetNumberOfComponents(1);
-  kineticEnergy->SetNumberOfTuples(pts->GetNumberOfPoints());
-  kineticEnergy->SetName("KineticEnergy");
+  vtkDoubleArrayP d_kineticEnergy = vtkDoubleArrayP::New();
+  d_kineticEnergy->SetNumberOfComponents(1);
+  d_kineticEnergy->SetNumberOfTuples(pts->GetNumberOfPoints());
+  d_kineticEnergy->SetName("KineticEnergy");
 
   vtkDoubleArrayP meanStress = vtkDoubleArrayP::New();
   meanStress->SetNumberOfComponents(1);
@@ -659,7 +659,7 @@ OutputVTK<PeriParticlePArray>::createVTKUnstructuredGrid(const PeriParticlePArra
     velocity->InsertTuple(id, vec);
 
     // Kinetic energy
-    kineticEnergy->InsertValue(id, KE);
+    d_kineticEnergy->InsertValue(id, KE);
 
     // Mean stress
     meanStress->InsertValue(id, sigma_m);
@@ -674,7 +674,7 @@ OutputVTK<PeriParticlePArray>::createVTKUnstructuredGrid(const PeriParticlePArra
   dataSet->GetPointData()->AddArray(ID);
   dataSet->GetPointData()->AddArray(displacement);
   dataSet->GetPointData()->AddArray(velocity);
-  dataSet->GetPointData()->AddArray(kineticEnergy);
+  dataSet->GetPointData()->AddArray(d_kineticEnergy);
   dataSet->GetPointData()->AddArray(meanStress);
   dataSet->GetPointData()->AddArray(vonMisesStress);
 

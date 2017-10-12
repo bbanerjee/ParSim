@@ -86,6 +86,10 @@
   <!-- Discrete elements -->
   <DEM>
 
+    <!-- # initialize particles state (velocity, omga, force, moment) 
+           from data file or not? -->
+    <initializeFromFile>  true </initializeFromFile>
+
     <!-- # file name of the input particle file -->
     <particleFilename> particle_distribution.base64.xml </particleFilename>
     <!-- <particleFilename> part_dist.inp </particleFilename> -->

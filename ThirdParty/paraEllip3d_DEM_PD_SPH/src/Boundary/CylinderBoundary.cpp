@@ -33,14 +33,14 @@ CylinderBoundary::CylinderBoundary(Boundary::BoundaryType tp, BoundaryID id,
 }
 
 void
-CylinderBoundary::findBdryContact(DEMParticlePArray& ptcls)
+CylinderBoundary::findBdryContact(DEMParticlePArray& particles)
 {
   possParticle.clear();
   contactInfo.clear();
 
-  for (auto& ptcl : ptcls) {
-    if (ptcl->getType() == 0) { // only process free particles, excluding type 5
-      ;
+  for (auto& particle : particles) {
+    // only process free particles, excluding type 5
+    if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
     }
   }
 }
