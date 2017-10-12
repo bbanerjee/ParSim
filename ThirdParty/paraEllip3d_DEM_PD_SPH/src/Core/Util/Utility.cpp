@@ -138,6 +138,27 @@ std::vector<T> linspace(const T& low, const T& high, int numSpaces)
   return output;
 }
 
+// Replace an extension (e.g., ".yyy") with (e.g., ."zzz") in a string 
+// of the form "xxxx.yyy"
+// Taken from : 
+// https://www.safaribooksonline.com/library/view/c-cookbook/0596007612/ch10s17.html
+std::string 
+replaceExtension(const std::string& str, const std::string& newExtension)
+{
+  std::string newStr = str;
+  auto index = str.rfind('.', str.length());
+  if (index != std::string::npos) {
+    if (newExtension.length() == 0) {
+      newStr = str.substr(0, index);
+    } else {
+      newStr.replace(index+1, newExtension.length(), newExtension);
+    }
+  } else {
+    newStr = newStr.append("." + newExtension);
+  }
+  return newStr;
+}
+
 } // end namespace util
 
 // Specializations

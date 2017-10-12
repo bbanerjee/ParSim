@@ -24,9 +24,6 @@ DepositIntoContainerResume::execute(DiscreteElements* dem)
     boundaryWriter.writeXML(6, "trim_boundary_ini.xml", dem->getAllContainer());
     boundaryWriter.writeCSV(6, "trim_boundary_ini.csv", dem->getAllContainer());
 
-    auto endSnap = util::getParam<std::size_t>("endSnap");
-    dem->trim(
-      false, combine(".", "deposit_particle_", endSnap, 3),
-      "trim_particle_ini");
+    dem->trim(false, "dummy", "trim_particle_ini");
   }
 }

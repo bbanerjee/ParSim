@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Ellip3D_input>
+
+  <Meta>  
+     <title> Simulation domain boundary sample input file </title>
+  </Meta>  
+
+  <Boundary>
+
+    <!-- # Container limits -->
+    <containerMin>  [-10.0,  -10.0,  0.0] </containerMin>
+    <containerMax>  [ 10.0,   10.0, 25.0] </containerMax>
+
+  </Boundary>
+
+</Ellip3D_input>

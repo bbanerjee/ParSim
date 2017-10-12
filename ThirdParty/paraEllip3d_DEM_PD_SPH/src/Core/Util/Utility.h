@@ -29,5 +29,9 @@ std::vector<T> linspaceApprox(const T& low, const T& high, T spacing);
 template <typename T>
 std::vector<T> linspace(const T& low, const T& high, int numSteps);
 
+// Replace an extension (e.g., ".yyy") with (e.g., ."zzz") in a string 
+// of the form "xxxx.yyy"
+std::string replaceExtension(const std::string& str, const std::string& newExtension);
+
 } // end namespace util
 #endif // PARELLIP3D_CORE_UTIL_H

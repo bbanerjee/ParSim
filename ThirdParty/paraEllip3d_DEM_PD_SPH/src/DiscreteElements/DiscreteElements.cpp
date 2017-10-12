@@ -28,11 +28,13 @@
 //
 
 #include <DiscreteElements/DiscreteElements.h>
+#include <DiscreteElements/DEMParticleCreator.h>
 #include <Core/Parallel/Patch.h>
 
 #include <Boundary/BoundaryReader.h>
 #include <Boundary/CylinderBoundary.h>
 #include <Boundary/PlaneBoundary.h>
+#include <Boundary/BoundaryFileWriter.h>
 #include <Core/Const/Constants.h>
 #include <Core/Util/Utility.h>
 #include <Core/Math/IntVec.h>
@@ -88,6 +90,49 @@ int DiscreteElements::s_mpiSize = -1;
 IntVec DiscreteElements::s_mpiProcs = IntVec(-1,-1,-1);
 IntVec DiscreteElements::s_mpiCoords = IntVec(-1,-1,-1);
 
+
+/**
+ * 1) Reads the bounding box from an input boundary file
+ * 2) Creates internal boundaries form DEM contact calculations
+ * 3) Creates particles
+ * 4) Writes the particle data and internal boundary data to the
+ *    output files
+ * 
+ * REQUIRES: d_gradation
+ */
+void 
+DiscreteElements::createAndSaveParticlesAndBoundaries(
+  const std::string& outputBoundaryFilename,
+  const std::string& outputParticleFilename)
+{
+  // Get the domain information
+  std::string inputBoundaryFilename =
+    InputParameter::get().datafile["boundaryFilename"];
+  readBoundary(inputBoundaryFilename);
+  Box container = getAllContainer();
+
+  // Write the domain and inner boundaries
+  BoundaryFileWriter boundaryWriter;
+  std::string xmlfile = util::replaceExtension(outputBoundaryFilename, "xml");
+  boundaryWriter.writeXML(5, xmlfile, container);
+  std::string csvfile = util::replaceExtension(outputBoundaryFilename, "csv");
+  boundaryWriter.writeCSV(5, csvfile, container);
+
+  auto layerFlag = util::getParam<std::size_t>("particleLayers");
+  DEMParticle::DEMParticleShape particleType = 
+    DEMParticle::DEMParticleShape::ELLIPSOID;
+
+  DEMParticleCreator creator;
+  DEMParticlePArray particles = 
+    creator.generateDEMParticles(layerFlag, particleType, container, d_gradation);
+  setAllDEMParticleVec(particles);
+
+  DEMParticleFileWriter writer;
+  xmlfile = util::replaceExtension(outputParticleFilename, "xml");
+  writer.writeXML(particles, d_gradation, xmlfile);
+  csvfile = util::replaceExtension(outputParticleFilename, "csv");
+  writer.writeCSV(particles, d_gradation, csvfile);
+}
 
 void
 DiscreteElements::deposit(const std::string& boundaryFilename,
@@ -272,7 +317,7 @@ DiscreteElements::readParticles(const std::string& particleFilename)
 
   DEMParticleFileReader reader;
   reader.read(particleFilename, young, poisson, doInitialize, allDEMParticleVec,
-              gradation);
+              d_gradation);
 }
 
 void
@@ -283,7 +328,7 @@ DiscreteElements::scatterParticle()
     setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
                 d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
                 d_demPatchBox.getMaxCorner().y(),
-                getPtclMaxZ(allDEMParticleVec) + gradation.getPtclMaxRadius()));
+                getPtclMaxZ(allDEMParticleVec) + d_gradation.getPtclMaxRadius()));
 
     Vec v1 = d_demPatchBox.getMinCorner();
     Vec v2 = d_demPatchBox.getMaxCorner();
@@ -335,13 +380,13 @@ DiscreteElements::scatterParticle()
   //proc0cout << "DEM::scatter:: num particles = " << particleVec.size() << "\n";
 
   // broadcast necessary info
-  broadcast(boostWorld, gradation, 0);
+  broadcast(boostWorld, d_gradation, 0);
   broadcast(boostWorld, boundaryVec, 0);
   broadcast(boostWorld, allContainer, 0);
   broadcast(boostWorld, d_demPatchBox, 0);
 
   // Create patch for the current process
-  REAL ghostWidth = gradation.getPtclMaxRadius() * 2;
+  REAL ghostWidth = d_gradation.getPtclMaxRadius() * 2;
   createPatch(0, ghostWidth);
 }
 
@@ -393,7 +438,7 @@ void
 DiscreteElements::commuParticle(const int& iteration)
 {
   // determine container of each process
-  REAL ghostWidth = gradation.getPtclMaxRadius() * 2;
+  REAL ghostWidth = d_gradation.getPtclMaxRadius() * 2;
   updatePatch(iteration, ghostWidth);
 
   // duplicate pointers, pointing to the same memory
@@ -790,7 +835,7 @@ DiscreteElements::updatePatchBoxMinX()
   REAL minX = 0;
   MPI_Allreduce(&pMinX, &minX, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
-  setPatchBox(Box(minX - gradation.getPtclMaxRadius(), d_demPatchBox.getMinCorner().y(),
+  setPatchBox(Box(minX - d_gradation.getPtclMaxRadius(), d_demPatchBox.getMinCorner().y(),
               d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
               d_demPatchBox.getMaxCorner().y(), d_demPatchBox.getMaxCorner().z()));
 }
@@ -803,7 +848,7 @@ DiscreteElements::updatePatchBoxMaxX()
   MPI_Allreduce(&pMaxX, &maxX, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
   setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
-              d_demPatchBox.getMinCorner().z(), maxX + gradation.getPtclMaxRadius(),
+              d_demPatchBox.getMinCorner().z(), maxX + d_gradation.getPtclMaxRadius(),
               d_demPatchBox.getMaxCorner().y(), d_demPatchBox.getMaxCorner().z()));
 }
 
@@ -814,7 +859,7 @@ DiscreteElements::updatePatchBoxMinY()
   REAL minY = 0;
   MPI_Allreduce(&pMinY, &minY, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
-  setPatchBox(Box(d_demPatchBox.getMinCorner().x(), minY - gradation.getPtclMaxRadius(),
+  setPatchBox(Box(d_demPatchBox.getMinCorner().x(), minY - d_gradation.getPtclMaxRadius(),
               d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
               d_demPatchBox.getMaxCorner().y(), d_demPatchBox.getMaxCorner().z()));
 }
@@ -828,7 +873,7 @@ DiscreteElements::updatePatchBoxMaxY()
 
   setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
               d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
-              maxY + gradation.getPtclMaxRadius(), d_demPatchBox.getMaxCorner().z()));
+              maxY + d_gradation.getPtclMaxRadius(), d_demPatchBox.getMaxCorner().z()));
 }
 
 void
@@ -839,7 +884,7 @@ DiscreteElements::updatePatchBoxMinZ()
   MPI_Allreduce(&pMinZ, &minZ, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
   setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
-              minZ - gradation.getPtclMaxRadius(), d_demPatchBox.getMaxCorner().x(),
+              minZ - d_gradation.getPtclMaxRadius(), d_demPatchBox.getMaxCorner().x(),
               d_demPatchBox.getMaxCorner().y(), d_demPatchBox.getMaxCorner().z()));
 }
 
@@ -854,7 +899,7 @@ DiscreteElements::updatePatchBoxMaxZ()
   // no need to broadcast grid as it is updated in each process
   setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
               d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
-              d_demPatchBox.getMaxCorner().y(), maxZ + gradation.getPtclMaxRadius()));
+              d_demPatchBox.getMaxCorner().y(), maxZ + d_gradation.getPtclMaxRadius()));
 }
 
 void
@@ -940,7 +985,7 @@ void
 DiscreteElements::writeParticlesToFile(int frame) const
 {
   d_writer->writeParticles(&allDEMParticleVec, frame);
-  d_writer->writeSieves(&gradation);
+  d_writer->writeSieves(&d_gradation);
 }
 
 void
@@ -1170,7 +1215,7 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
   REAL x2 = v2.x();
   REAL y2 = v2.y();
   REAL z2 = v2.z();
-  REAL maxR = gradation.getPtclMaxRadius();
+  REAL maxR = d_gradation.getPtclMaxRadius();
 
   // BB: Feb 2, 2017:
   // Not an efficient operation
@@ -1190,8 +1235,18 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
     allDEMParticleVec.end());
 
   DEMParticleFileWriter writer;
-  writer.writeCSV(allDEMParticleVec, gradation, trmParticle+".csv");
-  writer.writeXML(allDEMParticleVec, gradation, trmParticle+".xml");
+  writer.writeCSV(allDEMParticleVec, d_gradation, trmParticle+".csv");
+  writer.writeXML(allDEMParticleVec, d_gradation, trmParticle+".xml");
+
+  // Also create a VTK output for viz
+  // Create the output writer in the master process
+  auto folderName =  dem::InputParameter::get().datafile["outputFolder"]+"_trim";
+  std::string outputFolder = util::createOutputFolder(folderName);
+  //std::cout << "Output folder = " << outputFolder << "\n";
+  createOutputWriter(outputFolder, 0);
+
+  writeBoundaryToFile();
+  writeParticlesToFile(0);
 }
 
 void

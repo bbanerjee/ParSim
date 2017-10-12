@@ -11,44 +11,24 @@ using util::combine;
 void
 DepositIntoContainer::execute(DiscreteElements* dem)
 {
+  std::string particleFile = "float_particle_ini.xml";
+  std::string boundaryFile = "deposit_boundary_ini.xml";
+
   if (dem->getMPIRank() == 0) {
-    std::string boundaryFilename =
-      InputParameter::get().datafile["boundaryFilename"];
-    dem->readBoundary(boundaryFilename);
 
-    //REAL minX = util::getParam<REAL>("minX");
-    //REAL minY = util::getParam<REAL>("minY");
-    //REAL minZ = util::getParam<REAL>("minZ");
-    //REAL maxX = util::getParam<REAL>("maxX");
-    //REAL maxY = util::getParam<REAL>("maxY");
-    //REAL maxZ = util::getParam<REAL>("maxZ");
-    //dem->setContainer(Box(minX, minY, minZ, maxX, maxY, maxZ));
-    Box container = dem->getAllContainer();
-
-    BoundaryFileWriter boundaryWriter;
-    boundaryWriter.writeXML(5, "deposit_boundary_ini.xml", container);
-    boundaryWriter.writeCSV(5, "deposit_boundary_ini.csv", container);
-
+    // Set up gradation
     Gradation gradation;
     gradation.initializeFromInputParameters();
     dem->setGradation(gradation);
 
-    auto layerFlag = util::getParam<std::size_t>("particleLayers");
-    DEMParticle::DEMParticleShape particleType = 
-      DEMParticle::DEMParticleShape::ELLIPSOID;
-
-    DEMParticleCreator creator;
-    DEMParticlePArray particles = 
-      creator.generateDEMParticles(layerFlag, particleType, container, gradation);
-    dem->setAllDEMParticleVec(particles);
-
-    DEMParticleFileWriter writer;
-    writer.writeCSV(particles, gradation, "float_particle_ini.csv");
-    writer.writeXML(particles, gradation, "float_particle_ini.xml");
+    // Create and save particle and boundaries
+    dem->createAndSaveParticlesAndBoundaries(boundaryFile, particleFile);
   }
 
-  dem->deposit("deposit_boundary_ini.xml", "float_particle_ini.xml");
+  // Do gravity deposition
+  dem->deposit(boundaryFile, particleFile);
 
+  // Reduce the size of the domain for further calculations
   if (dem->getMPIRank() == 0) {
     const Box allContainer = dem->getAllContainer();
     Box trimmedContainer(allContainer.getMinCorner().x(), 

@@ -15,36 +15,17 @@ void
 TuneMassPercentage::execute(DiscreteElements* dem)
 {
   if (dem->getMPIRank() == 0) {
-    REAL minX = util::getParam<REAL>("minX");
-    REAL minY = util::getParam<REAL>("minY");
-    REAL minZ = util::getParam<REAL>("minZ");
-    REAL maxX = util::getParam<REAL>("maxX");
-    REAL maxY = util::getParam<REAL>("maxY");
-    REAL maxZ = util::getParam<REAL>("maxZ");
 
-    dem->setContainer(Box(minX, minY, minZ, maxX, maxY, maxZ));
-    Box container = dem->getAllContainer();
+    std::string boundaryFile = "deposit_boundary_ini.xml";
+    std::string particleFile = "float_particle_ini.xml";
 
-    BoundaryFileWriter boundaryWriter;
-    boundaryWriter.writeXML(5, "deposit_boundary_ini.xml", dem->getAllContainer());
-    boundaryWriter.writeCSV(5, "deposit_boundary_ini.txt", dem->getAllContainer());
-
+    // Set up gradation
     Gradation gradation;
     gradation.initializeFromInputParameters();
     dem->setGradation(gradation);
 
-    auto layerFlag = util::getParam<std::size_t>("particleLayers");
-    DEMParticle::DEMParticleShape particleType = 
-      DEMParticle::DEMParticleShape::ELLIPSOID;
-
-    DEMParticleCreator creator;
-    DEMParticlePArray particles = 
-      creator.generateDEMParticles(layerFlag, particleType, container, gradation);
-    dem->setAllDEMParticleVec(particles);
-
-    DEMParticleFileWriter writer;
-    writer.writeCSV(particles, gradation, "float_particle_ini.csv");
-    writer.writeXML(particles, gradation, "float_particle_ini.xml");
+    // Create and save particle and boundaries
+    dem->createAndSaveParticlesAndBoundaries(boundaryFile, particleFile);
 
     // statistics of mass distribution
     Gradation massGrad = dem->getGradation();

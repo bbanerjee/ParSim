@@ -158,13 +158,7 @@ InputParameter::readInXML(const std::string& inputFileName)
   REAL momentScaleFactor = 1.0;
   REAL pileRate = 0.0;
 
-  if (simType != 101) {
-
-    std::string particleFilename;
-    ps["DEM"]["particleFilename"](particleFilename);
-    datafile["particleFilename"] = trim(particleFilename);
-
-  } else {
+  if (simType == 002 || simType == 101) {
 
     // Read the number of particle layers
     ps["DEM"]["particleLayers"](param["particleLayers"]);
@@ -209,6 +203,19 @@ InputParameter::readInXML(const std::string& inputFileName)
     sieve_ps["sieve_ratio"]["ratio_ca"](ratio_ca);
     param["ratioBA"] = ratio_ba;
     param["ratioCA"] = ratio_ba;
+
+  } else {
+
+    std::string particleFilename;
+    ps["DEM"]["particleFilename"](particleFilename);
+    datafile["particleFilename"] = trim(particleFilename);
+
+    // Read the trimming height after particle deposition
+    // if needed
+    if (simType == 102) {
+      ps["DEM"]["trimHeight"](param["trimHeight"]);
+    }
+
   }
 
   // Read other DEM information

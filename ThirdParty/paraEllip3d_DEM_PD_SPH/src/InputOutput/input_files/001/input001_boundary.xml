@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Ellip3D_input>
+
+  <Meta>  
+     <title> Simulation domain boundary sample input file </title>
+  </Meta>  
+
+  <Boundary>
+
+    <!-- # Container limits -->
+    <containerMin>  [0.0,  -1.0,  0.0] </containerMin>
+    <containerMax>  [100.0, 1.0, 50.0] </containerMax>
+
+    <!-- # Internal boundaries -->
+    <boundary type="plane" id="x-">
+      <direction> [-1.0, 0.0, 0.0] </direction>
+      <position> [0.0, 0.0, 25.0] </position>
+      <!--
+      <extraEdge>
+        <direction> [-1.0, 0.0, 0.0] </direction>
+        <position> [100.0, 0.0, 25.0] </position>
+      </extraEdge>
+      -->
+    </boundary>
+
+    <boundary type="plane" id="x+">
+      <direction> [1.0, 0.0, 0.0] </direction>
+      <position> [100.0, 0.0, 25.0] </position>
+    </boundary>
+
+    <boundary type="plane" id="y-">
+      <direction> [0.0, -1.0, 0.0] </direction>
+      <position> [50.0, -1.0, 25.0] </position>
+    </boundary>
+
+    <boundary type="plane" id="y+">
+      <direction> [0.0, 1.0, 0.0] </direction>
+      <position> [50.0, 1.0, 25.0] </position>
+    </boundary>
+
+    <boundary type="plane" id="z-">
+      <direction> [0.0, 0.0, -1.0] </direction>
+      <position> [50.0, 0.0, 0.0] </position>
+    </boundary>
+
+    <boundary type="plane" id="z+">
+      <direction> [0.0, 0.0, 1.0] </direction>
+      <position> [50.0, 0.0, 50.0] </position>
+    </boundary>
+
+  </Boundary>
+
+</Ellip3D_input>

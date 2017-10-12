@@ -79,20 +79,28 @@ public:
   DEMParticlePArray& getModifiableParticleVec() { return particleVec; }
   DEMParticlePArray& getMergedParticleVec() { return mergeParticleVec; }
 
-  const Gradation& getGradation() const { return gradation; }
+  const Gradation& getGradation() const { return d_gradation; }
   const Box& getAllContainer() const { return allContainer; }
   Fluid& getFluid() { return fluid; }
 
   void setCommunicator(boost::mpi::communicator& comm);
   void setContainer(Box cont) { allContainer = cont; }
   void setPatchBox(Box cont) { d_demPatchBox = cont; }
-  void setGradation(Gradation grad) { gradation = grad; }
+  void setGradation(Gradation grad) { d_gradation = grad; }
   void setAllDEMParticleVec(const DEMParticlePArray& particles) {
     allDEMParticleVec = particles;
   }
 
-  void generateParticle(std::size_t particleLayers,
-                        const std::string& genParticle);
+  /**
+   * 1) Reads the bounding box from an input boundary file
+   * 2) Creates internal boundaries form DEM contact calculations
+   * 3) Creates particles
+   * 4) Writes the particle data and internal boundary data to the
+   *    output files
+   */
+  void createAndSaveParticlesAndBoundaries(const std::string& boundaryFilename,
+                                           const std::string& particleFilename);
+
   void trim(bool toRebuild, const std::string& inputParticle,
             const std::string& trmParticle);
   void deposit(const std::string& boundaryFilename,
@@ -484,39 +492,47 @@ private:
   // The output writer pointer
   std::unique_ptr<Output> d_writer;
 
-  // particles property
-  Gradation
-    gradation; // particles gradation, broadcast among processes for once
-  DEMParticlePArray
-    allDEMParticleVec;           // all particles, only meaningful to root process
+  // Particle gradation; broadcast among processes for once
+  Gradation d_gradation; 
+
+  // all particles, only meaningful to root process
+  DEMParticlePArray allDEMParticleVec;           
   DEMParticlePArray particleVec; // particles per process
-  std::size_t trimHistoryNum; // historical maximum numbering before trimming,
-                              // only meaningful to root process
+
+  // historical maximum numbering before trimming,
+  // only meaningful to root process
+  std::size_t trimHistoryNum; 
 
   ContactArray contactVec; // contacts per process
-  ContactTangentArray
-    contactTgtVec; // tangential contact force and displacement per process
-  std::size_t allContactNum; // estimated total contact number, only meaningful
-                             // to root process
+
+  // tangential contact force and displacement per process
+  ContactTangentArray contactTgtVec; 
+
+  // estimated total contact number, only meaningful to root process
+  std::size_t allContactNum; 
 
   MembraneParticlePArray memBoundary; // membrane particle boundaries
   SpringUPArray springVec;            // springs connecting membrane particles
 
-  // container property
-  Box allContainer; // whole container, broadcast among processes for once
+  // whole container, broadcast among processes for once
+  Box allContainer; 
   Box container;    // container per process
   Box cavity;       // cavity inside container
-  Box d_demPatchBox; // adaptive compute patchBox, broadcast among processes for once,
-                     // updated per process
 
-  // boundaries property
-  BoundaryPArray
-    boundaryVec; // rigid boundaries, broadcast among processes upon changed.
-  BoundaryPArray
-    mergeBoundaryVec; // rigid boundaries with stats from all processes
+  // adaptive compute patchBox, broadcast among processes for once,
+  // updated per process
+  Box d_demPatchBox; 
+
+  // rigid boundaries, broadcast among processes upon changed.
+  BoundaryPArray boundaryVec; 
+
+  // rigid boundaries with stats from all processes
+  BoundaryPArray mergeBoundaryVec; 
+
   BoundaryPArray cavityBoundaryVec; // rigid cavity boundaries
-  std::map<std::size_t, BoundaryTangentArray>
-    boundaryTgtMap; // particle-boundary contact tangential info
+
+  // particle-boundary contact tangential info
+  std::map<std::size_t, BoundaryTangentArray> boundaryTgtMap; 
 
   // fluid property
   Fluid fluid;
@@ -575,7 +591,6 @@ private:
   // stream
   std::ofstream progressInf;
   std::ofstream balancedInf;
-
 
 };
 

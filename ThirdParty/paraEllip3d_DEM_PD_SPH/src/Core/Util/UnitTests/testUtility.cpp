@@ -225,3 +225,13 @@ TEST(LinspaceTest, REALLinspace6) {
   EXPECT_DOUBLE_EQ(vec[0], 0);
   EXPECT_NEAR(vec[7], 1.4, 1.0e-6);
 }
+
+TEST(StringTest, replaceExt) {
+  std::string str = "myfilename.xml";
+  std::string newStr = util::replaceExtension(str, "csv");
+  EXPECT_EQ(newStr, "myfilename.csv");
+  newStr = util::replaceExtension(str, "");
+  EXPECT_EQ(newStr, "myfilename");
+  newStr = util::replaceExtension(str, "xml");
+  EXPECT_EQ(newStr, "myfilename.xml");
+}
