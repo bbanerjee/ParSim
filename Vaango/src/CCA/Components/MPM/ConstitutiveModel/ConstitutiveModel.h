@@ -28,7 +28,7 @@
 
 #include <CCA/Components/MPM/MPMFlags.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <Core/Grid/LinearInterpolator.h>
 #include <Core/Grid/SimulationStateP.h>
 #include <Core/Grid/Variables/Array3.h>

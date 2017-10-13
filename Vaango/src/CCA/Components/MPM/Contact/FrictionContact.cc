@@ -37,7 +37,7 @@
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Labels/MPMLabel.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
@@ -174,13 +174,13 @@ void FrictionContact::exMomInterpolated(const ProcessorGroup*,
   ASSERTEQ(numMatls, matls->size());
 
   // Need access to all velocity fields at once
-  StaticArray<constNCVariable<double> >  gmass(numMatls);
-  StaticArray<constNCVariable<double> >  gvolume(numMatls);
-  StaticArray<NCVariable<Vector> >       gvelocity(numMatls);
-  StaticArray<NCVariable<Vector> >       gsurfnorm(numMatls);
-  StaticArray<NCVariable<double> >       frictionWork(numMatls);
-  StaticArray<NCVariable<Matrix3> >      gstress(numMatls);
-  StaticArray<NCVariable<double> >       gnormtraction(numMatls);
+  std::vector<constNCVariable<double> >  gmass(numMatls);
+  std::vector<constNCVariable<double> >  gvolume(numMatls);
+  std::vector<NCVariable<Vector> >       gvelocity(numMatls);
+  std::vector<NCVariable<Vector> >       gsurfnorm(numMatls);
+  std::vector<NCVariable<double> >       frictionWork(numMatls);
+  std::vector<NCVariable<Matrix3> >      gstress(numMatls);
+  std::vector<NCVariable<double> >       gnormtraction(numMatls);
 
   constNCVariable<double> gm;
 
@@ -575,12 +575,12 @@ void FrictionContact::exMomIntegrated(const ProcessorGroup*,
 
   // Need access to all velocity fields at once, so store in
   // vectors of NCVariables
-  StaticArray<constNCVariable<double> > gmass(numMatls);
-  StaticArray<constNCVariable<double> > gvolume(numMatls);
-  StaticArray<NCVariable<Vector> >      gvelocity_star(numMatls);
-  StaticArray<constNCVariable<double> > normtraction(numMatls);
-  StaticArray<NCVariable<double> >      frictionWork(numMatls);
-  StaticArray<constNCVariable<Vector> > gsurfnorm(numMatls);    
+  std::vector<constNCVariable<double> > gmass(numMatls);
+  std::vector<constNCVariable<double> > gvolume(numMatls);
+  std::vector<NCVariable<Vector> >      gvelocity_star(numMatls);
+  std::vector<constNCVariable<double> > normtraction(numMatls);
+  std::vector<NCVariable<double> >      frictionWork(numMatls);
+  std::vector<constNCVariable<Vector> > gsurfnorm(numMatls);    
 
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);

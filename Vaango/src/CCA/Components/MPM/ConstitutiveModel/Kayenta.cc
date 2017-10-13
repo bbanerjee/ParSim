@@ -42,7 +42,7 @@
 #include <Core/Math/Short27.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/MinMax.h>
 #include <Core/Parallel/Parallel.h>
@@ -388,7 +388,7 @@ Kayenta::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
-  StaticArray<ParticleVariable<double>> ISVs(d_NINSV + 1);
+  std::vector<ParticleVariable<double>> ISVs(d_NINSV + 1);
 
   //  proc0cout << "In initializeCMData" << endl;
   for (int i = 0; i < d_NINSV; i++) {
@@ -464,8 +464,8 @@ Kayenta::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
   // This method is defined in the ConstitutiveModel base class.
   copyDelToAddSetForConvertExplicit(new_dw, delset, addset, newState);
 
-  StaticArray<ParticleVariable<double>> ISVs(d_NINSV + 1);
-  StaticArray<constParticleVariable<double>> o_ISVs(d_NINSV + 1);
+  std::vector<ParticleVariable<double>> ISVs(d_NINSV + 1);
+  std::vector<constParticleVariable<double>> o_ISVs(d_NINSV + 1);
   constParticleVariable<double> o_peakI1IDist;
   ParticleVariable<int> pLocalized;
   constParticleVariable<int> o_Localized;
@@ -680,7 +680,7 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
     old_dw->get(peakI1IDist, peakI1IDistLabel, pset);
     old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
 
-    StaticArray<constParticleVariable<double>> ISVs(d_NINSV + 1);
+    std::vector<constParticleVariable<double>> ISVs(d_NINSV + 1);
     for (int i = 0; i < d_NINSV; i++) {
       old_dw->get(ISVs[i], ISVLabels[i], pset);
     }
@@ -698,7 +698,7 @@ Kayenta::computeStressTensor(const PatchSubset* patches,
 
     peakI1IDist_new.copyData(peakI1IDist);
 
-    StaticArray<ParticleVariable<double>> ISVs_new(d_NINSV + 1);
+    std::vector<ParticleVariable<double>> ISVs_new(d_NINSV + 1);
     for (int i = 0; i < d_NINSV; i++) {
       new_dw->allocateAndPut(ISVs_new[i], ISVLabels_preReloc[i], pset);
     }
@@ -925,8 +925,8 @@ Kayenta::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
     carryForwardSharedData(pset, old_dw, new_dw, matl);
 
     // Carry forward the data local to this constitutive model
-    StaticArray<constParticleVariable<double>> ISVs(d_NINSV + 1);
-    StaticArray<ParticleVariable<double>> ISVs_new(d_NINSV + 1);
+    std::vector<constParticleVariable<double>> ISVs(d_NINSV + 1);
+    std::vector<ParticleVariable<double>> ISVs_new(d_NINSV + 1);
     ParticleVariable<int> pLocalized_new;
 
     for (int i = 0; i < d_NINSV; i++) {

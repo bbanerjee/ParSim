@@ -29,7 +29,7 @@
 #include <Core/Grid/SimulationStateP.h>
 
 #include <Core/Grid/Variables/ComputeSet.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <Core/Grid/Variables/Array3.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/Variables/ParticleVariable.h>

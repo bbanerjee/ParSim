@@ -47,7 +47,7 @@
 #include <Core/Parallel/ProcessorGroup.h>
 #include <Core/Exceptions/InvalidValue.h>
 
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <Core/Math/MiscMath.h>
 #include <iostream>
 #include <Core/Util/DebugStream.h>

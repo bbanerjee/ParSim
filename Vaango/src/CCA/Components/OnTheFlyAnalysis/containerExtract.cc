@@ -58,7 +58,7 @@
 #include <Core/Parallel/UintahParallelComponent.h>
 
 #include <Core/Exceptions/InternalError.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <Core/OS/Dir.h> // for MKDIR
 #include <Core/Util/FileUtils.h>
 #include <Core/Util/DebugStream.h>

@@ -70,7 +70,7 @@
 #include <Core/Labels/MPMLabel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -115,8 +115,8 @@ void SingleVelContact::exMomInterpolated(const ProcessorGroup*,
     Vector centerOfMassVelocity(0.0,0.0,0.0);
 
     // Retrieve necessary data from DataWarehouse
-    StaticArray<constNCVariable<double> > gmass(numMatls);
-    StaticArray<NCVariable<Vector> > gvelocity(numMatls);
+    std::vector<constNCVariable<double> > gmass(numMatls);
+    std::vector<NCVariable<Vector> > gvelocity(numMatls);
     for(int m=0;m<matls->size();m++){
       int dwindex = matls->get(m);
       new_dw->get(gmass[m], lb->gMassLabel,    dwindex, patch,Ghost::None,0);
@@ -171,8 +171,8 @@ void SingleVelContact::exMomIntegrated(const ProcessorGroup*,
     double centerOfMassMass;
 
     // Retrieve necessary data from DataWarehouse
-    StaticArray<constNCVariable<double> > gmass(numMatls);
-    StaticArray<NCVariable<Vector> > gvelocity_star(numMatls);
+    std::vector<constNCVariable<double> > gmass(numMatls);
+    std::vector<NCVariable<Vector> > gvelocity_star(numMatls);
 
     for(int m=0;m<matls->size();m++){
      int dwi = matls->get(m);

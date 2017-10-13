@@ -28,7 +28,7 @@
 #include <Core/Grid/Variables/ComputeSet.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Grid/LinearInterpolator.h>
 #include <CCA/Components/MPM/MPMFlags.h>

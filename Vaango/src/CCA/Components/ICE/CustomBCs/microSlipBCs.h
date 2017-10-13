@@ -56,7 +56,7 @@
 #include <Core/Grid/SimulationStateP.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Grid/Variables/CCVariable.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <typeinfo>
 using namespace Uintah;
 namespace Uintah {

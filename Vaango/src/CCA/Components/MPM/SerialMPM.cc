@@ -2230,8 +2230,8 @@ SerialMPM::updateCohesiveZones(const ProcessorGroup*,
     old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
 
     int numMPMMatls=d_sharedState->getNumMPMMatls();
-    StaticArray<constNCVariable<Vector> > gvelocity(numMPMMatls);
-    StaticArray<constNCVariable<double> > gmass(numMPMMatls);
+    std::vector<constNCVariable<Vector> > gvelocity(numMPMMatls);
+    std::vector<constNCVariable<double> > gmass(numMPMMatls);
     double rho_init[numMPMMatls];
     Vector dx = patch-> dCell();
     for(int m = 0; m < numMPMMatls; m++){
@@ -2522,7 +2522,7 @@ SerialMPM::addCohesiveZoneForces(const ProcessorGroup*,
     vector<double> S(interpolator->size());
 
     int numMPMMatls=d_sharedState->getNumMPMMatls();
-    StaticArray<NCVariable<Vector> > gext_force(numMPMMatls);
+    std::vector<NCVariable<Vector> > gext_force(numMPMMatls);
     for(int m = 0; m < numMPMMatls; m++){
       MPMMaterial* cz_matl = d_sharedState->getMPMMaterial( m );
       int dwi = cz_matl->getDWIndex();

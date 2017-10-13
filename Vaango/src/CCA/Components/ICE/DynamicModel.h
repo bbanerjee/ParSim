@@ -51,7 +51,7 @@
 
 #include <CCA/Components/ICE/Turbulence.h>
 #include <CCA/Components/ICE/SmagorinskyModel.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <cmath>
 
 namespace Uintah {
@@ -101,8 +101,8 @@ namespace Uintah {
                            CCVariable<T>& var_hat);
        
     void applyFilter(const Patch* patch,
-                           Uintah::StaticArray<CCVariable<double> >& var,
-                           Uintah::StaticArray<CCVariable<double> >& var_hat);
+                           std::vector<CCVariable<double> >& var,
+                           std::vector<CCVariable<double> >& var_hat);
                                                                 
     Smagorinsky_Model d_smag;
     

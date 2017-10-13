@@ -50,7 +50,7 @@
 #define __HypoViscoElasticDEVSTRESS_H__
 
 #include "DevStressModel.h"
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <Core/Grid/Variables/ParticleVariable.h>

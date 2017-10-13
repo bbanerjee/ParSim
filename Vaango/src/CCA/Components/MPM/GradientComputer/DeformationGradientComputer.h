@@ -34,7 +34,7 @@
 #include <Core/Labels/MPMLabel.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Short27.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <Core/Parallel/ProcessorGroup.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Components/MPM/MPMFlags.h>

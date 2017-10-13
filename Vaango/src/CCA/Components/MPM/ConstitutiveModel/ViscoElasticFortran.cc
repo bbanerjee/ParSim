@@ -361,7 +361,7 @@ ViscoElasticFortran::initializeCMData(const Patch* patch,
   VISCOINI(&d_nProp, &d_props[0], &d_nStateV, &statev[0]);
 
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
-  StaticArray<ParticleVariable<double>> stateV(d_nStateV + 1);
+  std::vector<ParticleVariable<double>> stateV(d_nStateV + 1);
   for (int i = 0; i < d_nStateV; i++) {
     // std::cout << " State Var Index = " << i << std::endl;
     new_dw->allocateAndPut(stateV[i], stateVLabels[i], pset);
@@ -403,8 +403,8 @@ ViscoElasticFortran::allocateCMDataAdd(DataWarehouse* new_dw,
   // This method is defined in the ConstitutiveModel base class.
   copyDelToAddSetForConvertExplicit(new_dw, delset, addset, newState);
 
-  StaticArray<ParticleVariable<double>> stateV(d_nStateV + 1);
-  StaticArray<constParticleVariable<double>> o_stateV(d_nStateV + 1);
+  std::vector<ParticleVariable<double>> stateV(d_nStateV + 1);
+  std::vector<constParticleVariable<double>> o_stateV(d_nStateV + 1);
   for (int i = 0; i < d_nStateV; i++) {
     new_dw->allocateTemporary(stateV[i], addset);
     new_dw->get(o_stateV[i], stateVLabels_preReloc[i], delset);
@@ -514,7 +514,7 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
     old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
     // Get the state variables
-    StaticArray<constParticleVariable<double>> stateV(d_nStateV + 1);
+    std::vector<constParticleVariable<double>> stateV(d_nStateV + 1);
     for (int i = 0; i < d_nStateV; i++) {
       old_dw->get(stateV[i], stateVLabels[i], pset);
     }
@@ -526,7 +526,7 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
     new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
 
-    StaticArray<ParticleVariable<double>> stateV_new(d_nStateV + 1);
+    std::vector<ParticleVariable<double>> stateV_new(d_nStateV + 1);
     for (int i = 0; i < d_nStateV; i++) {
       new_dw->allocateAndPut(stateV_new[i], stateVLabels_preReloc[i], pset);
     }
@@ -690,8 +690,8 @@ ViscoElasticFortran::carryForward(const PatchSubset* patches,
     carryForwardSharedData(pset, old_dw, new_dw, matl);
 
     // Carry forward the data local to this constitutive model
-    StaticArray<constParticleVariable<double>> stateV(d_nStateV + 1);
-    StaticArray<ParticleVariable<double>> stateV_new(d_nStateV + 1);
+    std::vector<constParticleVariable<double>> stateV(d_nStateV + 1);
+    std::vector<ParticleVariable<double>> stateV_new(d_nStateV + 1);
     for (int i = 0; i < d_nStateV; i++) {
       old_dw->get(stateV[i], stateVLabels[i], pset);
       new_dw->allocateAndPut(stateV_new[i], stateVLabels_preReloc[i], pset);

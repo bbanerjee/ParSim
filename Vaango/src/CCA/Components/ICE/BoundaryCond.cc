@@ -423,9 +423,9 @@ void set_imp_DelP_BC( CCVariable<double>& imp_delP,
     c) during initialization only get rho_micro for ice_matls, you can't
        get rho_micro for mpm_matls
  ---------------------------------------------------------------------  */
-void get_rho_micro(StaticArray<CCVariable<double> >& rho_micro,
-                   StaticArray<CCVariable<double> >& rho_micro_tmp,
-                   StaticArray<constCCVariable<double> >& sp_vol_CC,
+void get_rho_micro(std::vector<CCVariable<double> >& rho_micro,
+                   std::vector<CCVariable<double> >& rho_micro_tmp,
+                   std::vector<constCCVariable<double> >& sp_vol_CC,
                    const Patch* patch,
                    const string& which_Var,
                    SimulationStateP& sharedState,
@@ -512,7 +512,7 @@ void get_rho_micro(StaticArray<CCVariable<double> >& rho_micro,
  // On Dirichlet side walls you still have to add HPA
   
 void HydrostaticPressureAdjustment(CCVariable<double>& press_CC,
-                                   StaticArray<CCVariable<double> >& rho_micro,
+                                   std::vector<CCVariable<double> >& rho_micro,
                                    const Vector gravity,
                                    const int surroundingMatl_indx,
                                    const string& bc_kind, 
@@ -578,8 +578,8 @@ void HydrostaticPressureAdjustment(CCVariable<double>& press_CC,
  Function~  setBC-- (pressure)
  ---------------------------------------------------------------------  */
 void setBC(CCVariable<double>& press_CC,
-           StaticArray<CCVariable<double> >& rho_micro_tmp,   //or placeHolder
-           StaticArray<constCCVariable<double> >& sp_vol_CC,  //or placeHolder
+           std::vector<CCVariable<double> >& rho_micro_tmp,   //or placeHolder
+           std::vector<constCCVariable<double> >& sp_vol_CC,  //or placeHolder
            const int surroundingMatl_indx,
            const string& which_Var,
            const string& kind, 
@@ -599,7 +599,7 @@ void setBC(CCVariable<double>& press_CC,
   int numALLMatls = sharedState->getNumMatls();
   bool isNotInitialTimestep = (sharedState->getCurrentTopLevelTimeStep() > 0);  
   Vector gravity = custom_BC_basket->d_gravity;
-  StaticArray<CCVariable<double> > rho_micro(numALLMatls);
+  std::vector<CCVariable<double> > rho_micro(numALLMatls);
   
   for (int m = 0; m < numALLMatls; m++) {
     new_dw->allocateTemporary(rho_micro[m],  patch);
@@ -1364,8 +1364,8 @@ void setBC(CCVariable<double>& var,
 } 
 //__________________________________  
 void setBC(CCVariable<double>& press_CC,          
-         StaticArray<CCVariable<double> >& rho_micro,
-         StaticArray<constCCVariable<double> >& sp_vol,
+         std::vector<CCVariable<double> >& rho_micro,
+         std::vector<constCCVariable<double> >& sp_vol,
          const int surroundingMatl_indx,
          const std::string& whichVar, 
          const std::string& kind, 

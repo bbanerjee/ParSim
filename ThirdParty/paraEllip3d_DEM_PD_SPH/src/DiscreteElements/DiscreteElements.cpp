@@ -1542,12 +1542,6 @@ DiscreteElements::gatherEnergy()
 }
 
 void
-DiscreteElements::closeProgressOutputFile(std::ofstream& ofs)
-{
-  ofs.close();
-}
-
-void
 DiscreteElements::getStartDimension(REAL& distX, REAL& distY, REAL& distZ)
 {
   REAL x1 = 0, x2 = 0, y1 = 0, y2 = 0, z1 = 0, z2 = 0;
@@ -1754,6 +1748,12 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, REAL distX, REA
       << std::setw(OWID) << timeStep;
 
   ofs << std::endl;
+}
+
+void
+DiscreteElements::closeProgressOutputFile(std::ofstream& ofs)
+{
+  ofs.close();
 }
 
 void

@@ -57,7 +57,7 @@
 #include <Core/Grid/SimulationStateP.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Grid/Variables/CCVariable.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <typeinfo>
 using namespace Uintah;
 namespace Uintah {
@@ -87,7 +87,7 @@ namespace Uintah {
     CCVariable<double> press_tmp;        
     CCVariable<double> E;          // total energy
     CCVariable<Vector> nu;               
-    StaticArray<CCVariable<Vector> > di; 
+    std::vector<CCVariable<Vector> > di; 
     double delT;
     bool setLodiBcs; 
     Lodi_variable_basket* var_basket;           
@@ -97,10 +97,10 @@ namespace Uintah {
   // apply the Lodi pressure bcs.
   struct Lodi_vars_pressBC{
     Lodi_vars_pressBC(int numMatls): Temp_CC(numMatls), f_theta(numMatls), cv(numMatls),gamma(numMatls) {}
-    StaticArray<constCCVariable<double> > Temp_CC;
-    StaticArray<constCCVariable<double> > f_theta;
-    StaticArray<constCCVariable<double> > cv;
-    StaticArray<constCCVariable<double> > gamma;
+    std::vector<constCCVariable<double> > Temp_CC;
+    std::vector<constCCVariable<double> > f_theta;
+    std::vector<constCCVariable<double> > cv;
+    std::vector<constCCVariable<double> > gamma;
     bool usingLODI;
     bool setLodiBcs;                  
   };
@@ -138,7 +138,7 @@ namespace Uintah {
                  const Patch* patch,
                  SimulationStateP& sharedState);  
 
-  void computeDi(StaticArray<CCVariable<Vector> >& d,
+  void computeDi(std::vector<CCVariable<Vector> >& d,
                  constCCVariable<double>& rho_old,  
                  const CCVariable<double>& press_tmp, 
                  constCCVariable<Vector>& vel_old, 
@@ -181,7 +181,7 @@ namespace Uintah {
                
   void FacePress_LODI(const Patch* patch,
                       CCVariable<double>& press_CC,
-                      StaticArray<CCVariable<double> >& rho_micro,
+                      std::vector<CCVariable<double> >& rho_micro,
                       SimulationStateP& sharedState, 
                       Patch::FaceType face,
                       Lodi_vars_pressBC* lv);

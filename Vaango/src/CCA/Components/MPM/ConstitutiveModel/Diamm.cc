@@ -42,7 +42,7 @@
 #include <Core/Math/Short27.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/MinMax.h>
 
@@ -229,7 +229,7 @@ Diamm::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
-  StaticArray<ParticleVariable<double>> ISVs(d_NINSV + 1);
+  std::vector<ParticleVariable<double>> ISVs(d_NINSV + 1);
 
   cout << "In initializeCMData" << endl;
   for (int i = 0; i < d_NINSV; i++) {
@@ -269,8 +269,8 @@ Diamm::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
   // This method is defined in the ConstitutiveModel base class.
   copyDelToAddSetForConvertExplicit(new_dw, delset, addset, newState);
 
-  StaticArray<ParticleVariable<double>> ISVs(d_NINSV + 1);
-  StaticArray<constParticleVariable<double>> o_ISVs(d_NINSV + 1);
+  std::vector<ParticleVariable<double>> ISVs(d_NINSV + 1);
+  std::vector<constParticleVariable<double>> o_ISVs(d_NINSV + 1);
 
   for (int i = 0; i < d_NINSV; i++) {
     new_dw->allocateTemporary(ISVs[i], addset);
@@ -381,7 +381,7 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
     old_dw->get(ptemperature, lb->pTemperatureLabel, pset);
     old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
 
-    StaticArray<constParticleVariable<double>> ISVs(d_NINSV + 1);
+    std::vector<constParticleVariable<double>> ISVs(d_NINSV + 1);
     for (int i = 0; i < d_NINSV; i++) {
       old_dw->get(ISVs[i], ISVLabels[i], pset);
     }
@@ -396,7 +396,7 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
     new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
     new_dw->allocateAndPut(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
-    StaticArray<ParticleVariable<double>> ISVs_new(d_NINSV + 1);
+    std::vector<ParticleVariable<double>> ISVs_new(d_NINSV + 1);
     for (int i = 0; i < d_NINSV; i++) {
       new_dw->allocateAndPut(ISVs_new[i], ISVLabels_preReloc[i], pset);
     }
@@ -582,8 +582,8 @@ Diamm::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
     carryForwardSharedData(pset, old_dw, new_dw, matl);
 
     // Carry forward the data local to this constitutive model
-    StaticArray<constParticleVariable<double>> ISVs(d_NINSV + 1);
-    StaticArray<ParticleVariable<double>> ISVs_new(d_NINSV + 1);
+    std::vector<constParticleVariable<double>> ISVs(d_NINSV + 1);
+    std::vector<ParticleVariable<double>> ISVs_new(d_NINSV + 1);
 
     for (int i = 0; i < d_NINSV; i++) {
       old_dw->get(ISVs[i], ISVLabels[i], pset);

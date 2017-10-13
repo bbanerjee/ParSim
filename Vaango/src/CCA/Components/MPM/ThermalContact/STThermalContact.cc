@@ -55,7 +55,7 @@
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Variables/VarTypes.h>
 #include <Core/Labels/MPMLabel.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <vector>
 
 using namespace Uintah;
@@ -88,14 +88,14 @@ void STThermalContact::computeHeatExchange(const ProcessorGroup*,
 
     int numMatls = d_sharedState->getNumMPMMatls();
 
-    StaticArray<constNCVariable<double> > gmass(numMatls);
-    StaticArray<constNCVariable<double> > gTemp(numMatls);
-    StaticArray<NCVariable<double> > thermalContactTemperatureRate(numMatls);
+    std::vector<constNCVariable<double> > gmass(numMatls);
+    std::vector<constNCVariable<double> > gTemp(numMatls);
+    std::vector<NCVariable<double> > thermalContactTemperatureRate(numMatls);
     vector<double> Cp(numMatls);
     // for Fracture (additional field)-----------------------------------------
-    StaticArray<constNCVariable<double> > Gmass(numMatls);
-    StaticArray<constNCVariable<double> > GTemp(numMatls);
-    StaticArray<NCVariable<double> > GthermalContactTemperatureRate(numMatls);
+    std::vector<constNCVariable<double> > Gmass(numMatls);
+    std::vector<constNCVariable<double> > GTemp(numMatls);
+    std::vector<NCVariable<double> > GthermalContactTemperatureRate(numMatls);
 
     delt_vartype delT;
     old_dw->get(delT, lb->delTLabel, getLevel(patches));

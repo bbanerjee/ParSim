@@ -66,7 +66,7 @@
 #include <Core/Grid/BoundaryConditions/BCDataArray.h>
 #include <Core/Parallel/Parallel.h>
 #include <Core/Util/DebugStream.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 
 using namespace std;
 using namespace Uintah;

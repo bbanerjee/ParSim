@@ -29,7 +29,7 @@
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/Scheduler.h>
 
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <Core/Geometry/Vector.h>
 #include <Core/Geometry/IntVector.h>
 
@@ -63,7 +63,7 @@ using Uintah::Task;
 using Uintah::Patch;
 using Uintah::Ghost;
 using Uintah::NodeIterator;
-using Uintah::StaticArray;
+
 using Uintah::delt_vartype;
 
 using Uintah::NCVariable;
@@ -128,8 +128,8 @@ SingleVelocityContact::exchangeMomentumInterpolated(const ProcessorGroup*,
     Vector centerOfMassVelocity(0.0,0.0,0.0);
 
     // Retrieve necessary data from DataWarehouse
-    StaticArray<constNCVariable<double> > gmass(numBodies);
-    StaticArray<NCVariable<Vector> > gvelocity(numBodies);
+    std::vector<constNCVariable<double> > gmass(numBodies);
+    std::vector<NCVariable<Vector> > gvelocity(numBodies);
     for (int m=0; m<matls->size(); m++) {
       int matlIndex = matls->get(m);
       new_dw->get(gmass[m], d_labels->gMassLabel, matlIndex, patch, Ghost::None, 0);
@@ -204,8 +204,8 @@ SingleVelocityContact::exchangeMomentumIntegrated(const ProcessorGroup*,
     double centerOfMassMass;
 
     // Retrieve necessary data from DataWarehouse
-    StaticArray<constNCVariable<double> > gmass(numBodies);
-    StaticArray<NCVariable<Vector> > gvelocity_star(numBodies);
+    std::vector<constNCVariable<double> > gmass(numBodies);
+    std::vector<NCVariable<Vector> > gvelocity_star(numBodies);
 
     for(int m=0; m < matls->size();m++){
      int matlIndex = matls->get(m);

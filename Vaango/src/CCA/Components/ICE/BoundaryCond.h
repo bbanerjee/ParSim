@@ -65,7 +65,7 @@
 
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Util/DebugStream.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <time.h>
 
 namespace Uintah {
@@ -99,8 +99,8 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
   //__________________________________
   //  P R E S S U R E        
    void setBC(CCVariable<double>& press_CC,          
-                      StaticArray<CCVariable<double> >& rho_micro,
-                      StaticArray<constCCVariable<double> >& sp_vol,
+                      std::vector<CCVariable<double> >& rho_micro,
+                      std::vector<constCCVariable<double> >& sp_vol,
                       const int surroundingMatl_indx,
                       const std::string& whichVar, 
                       const std::string& kind, 
@@ -111,8 +111,8 @@ static DebugStream cout_BC_FC("ICE_BC_FC", false);
                       customBC_var_basket* C_BC_basket);
              
    void setBC(CCVariable<double>& press_CC,          
-                      StaticArray<CCVariable<double> >& rho_micro,
-                      StaticArray<constCCVariable<double> >& sp_vol,
+                      std::vector<CCVariable<double> >& rho_micro,
+                      std::vector<constCCVariable<double> >& sp_vol,
                       const int surroundingMatl_indx,
                       const std::string& whichVar, 
                       const std::string& kind,       // stub function 

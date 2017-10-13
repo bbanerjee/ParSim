@@ -71,7 +71,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <Core/Grid/Variables/VarTypes.h>
-#include <Core/Containers/StaticArray.h>
+#include <vector>
 #include <vector>
 #include <iostream>
 #include <fstream>

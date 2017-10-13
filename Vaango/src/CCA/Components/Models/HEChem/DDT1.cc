@@ -640,8 +640,8 @@ void DDT1::computeBurnLogic(const ProcessorGroup*,
     constCCVariable<double> prodRho, prodRho2;
     // Domain Wide Variables
     constCCVariable<double> press_CC; 
-    StaticArray<constCCVariable<double> > vol_frac_CC(numAllMatls);
-    StaticArray<constCCVariable<double> > temp_CC(numAllMatls);
+    std::vector<constCCVariable<double> > vol_frac_CC(numAllMatls);
+    std::vector<constCCVariable<double> > temp_CC(numAllMatls);
 
 
     Vector dx = patch->dCell();
@@ -1014,8 +1014,8 @@ void DDT1::computeModelSources(const ProcessorGroup*,
     
     // Domain Wide Variables
     constCCVariable<double> press_CC; 
-    StaticArray<constCCVariable<double> > vol_frac_CC(numAllMatls);
-    StaticArray<constCCVariable<double> > temp_CC(numAllMatls);
+    std::vector<constCCVariable<double> > vol_frac_CC(numAllMatls);
+    std::vector<constCCVariable<double> > temp_CC(numAllMatls);
 
     Vector dx = patch->dCell();
 
