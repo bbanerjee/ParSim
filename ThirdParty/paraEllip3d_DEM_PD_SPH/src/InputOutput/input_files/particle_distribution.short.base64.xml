@@ -33,7 +33,7 @@
     <position unit="m" numComponents="3">eJwNyUkRADAIA0ArKGASjlD8Gyvf3QpvatdgpK9SYfW8hayz22QgrcYR7D4bJ/QqP0/GCyg=</position>
     <velocity unit="m/s" numComponents="3">eJwti9sJADEMw1bJAi2O87h6/8UulP5JAi1stkqRBsMGwVS0reFTzNuvdDnHhgNHKb3B8Tn1A/BaDaA=</velocity>
     <omega unit="rad/s" numComponents="3">eJwdx8ERACAIBLFWaEBmPUXovzKVySvYwGfGCW3j+a0lUl0cQSVhXLO3CAA=</omega>
-    <force unit="N" numComponents="3">eJwVyEkRACAMA0ArNUCGhl7xbwzY53KCKIVtU4s4xzwnG9WvPEq9QVvvcsCf9K7C6AJUTgtZ</force>
+    <force unit="N" numComponents="3">eJwVyEkRACAMA0ArNUCGhl7xbwzY53KCKIVtU4s4xzwnG9WvPEq9QVvvcsCf9K7C6AJUTangentZ</force>
     <moment unit="Nm" numComponents="3">eJwlisENADEIw1ZhgaIAgcL+i13RfSLHMhTwnIFfsYpSusnBs8/kRV3ZE+xmyYlMLzVuYpxG/xjDLNlRe7AKjDZ+fT0SbQ==</moment>
   </Particles>
   <Particles number="3" type="polyellipsoid" compression="gzip" encoding="base64">

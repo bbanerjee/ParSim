@@ -59,7 +59,7 @@ public:
   }
 
   void findBdryContact(DEMParticlePArray& ptcls) override;
-  void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) override;
+  void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap) override;
 
 private:
   Vec direction;

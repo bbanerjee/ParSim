@@ -186,7 +186,7 @@ public:
 
   // calculate the normal force between particle and a plane rigid boundary
   void planeRBForce(PlaneBoundary* plane,
-                    BoundaryTangentArrayMap& BoundarytgtMap,
+                    BoundaryTangentArrayMap& BoundarytangentMap,
                     BoundaryTangentArray& vtmp);
 
   // calculate the normal force between particle and a cylinder wall

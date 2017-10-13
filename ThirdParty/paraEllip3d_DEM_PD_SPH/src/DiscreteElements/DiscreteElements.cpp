@@ -759,26 +759,26 @@ DiscreteElements::internalForce()
 
   // checkin previous tangential force and displacment
   for (auto& contact : contactVec) {
-    contact.checkinPrevTgt(contactTgtVec);
+    contact.checkinPreviousContactTangents(contactTangentVec);
   }
 
 #ifdef TIME_PROFILE
   auto start = Timer::now();
 #endif
 
-  // contactTgtVec must be cleared before filling in new values.
-  contactTgtVec.clear();
+  // contactTangentVec must be cleared before filling in new values.
+  contactTangentVec.clear();
 
   for (auto& contact : contactVec) {
     // cannot be parallelized as it may change a
     // particle's force simultaneously.
-    contact.contactForce();
+    contact.computeContactForces();
 
     // checkout current tangential force and displacment
-    contact.checkoutTgt(contactTgtVec);
+    contact.checkoutContactTangents(contactTangentVec);
 
-    pAvg[0] += contact.getNormalForce();
-    pAvg[1] += contact.getTgtForce();
+    pAvg[0] += contact.getNormalForceMagnitude();
+    pAvg[1] += contact.getTangentForceMagnitude();
     pAvg[2] += contact.getPenetration();
   }
 
@@ -805,7 +805,7 @@ void
 DiscreteElements::boundaryForce()
 {
   for (auto& boundary : boundaryVec) {
-    boundary->boundaryForce(boundaryTgtMap);
+    boundary->boundaryForce(boundaryTangentMap);
   }
 }
 
@@ -2016,17 +2016,17 @@ DiscreteElements::printContact(const std::string& str) const
         << std::setw(OWID) << it.getPoint2().y() << std::setw(OWID)
         << it.getPoint2().z() << std::setw(OWID) << it.getRadius1()
         << std::setw(OWID) << it.getRadius2() << std::setw(OWID)
-        << it.getPenetration() << std::setw(OWID) << it.getTgtDisp()
+        << it.getPenetration() << std::setw(OWID) << it.getTangentDisplacement()
         << std::setw(OWID) << it.getContactRadius() << std::setw(OWID)
         << it.getR0() << std::setw(OWID) << it.getE0() << std::setw(OWID)
-        << it.getNormalForce() << std::setw(OWID) << it.getTgtForce()
+        << it.getNormalForceMagnitude() << std::setw(OWID) << it.getTangentForceMagnitude()
         << std::setw(OWID) << (it.getPoint1().x() + it.getPoint2().x()) / 2
         << std::setw(OWID) << (it.getPoint1().y() + it.getPoint2().y()) / 2
         << std::setw(OWID) << (it.getPoint1().z() + it.getPoint2().z()) / 2
-        << std::setw(OWID) << it.normalForceVec().x() << std::setw(OWID)
-        << it.normalForceVec().y() << std::setw(OWID) << it.normalForceVec().z()
-        << std::setw(OWID) << it.tgtForceVec().x() << std::setw(OWID)
-        << it.tgtForceVec().y() << std::setw(OWID) << it.tgtForceVec().z()
+        << std::setw(OWID) << it.getNormalForce().x() << std::setw(OWID)
+        << it.getNormalForce().y() << std::setw(OWID) << it.getNormalForce().z()
+        << std::setw(OWID) << it.getTangentForce().x() << std::setw(OWID)
+        << it.getTangentForce().y() << std::setw(OWID) << it.getTangentForce().z()
         << std::setw(OWID) << it.getVibraTimeStep() << std::setw(OWID)
         << it.getImpactTimeStep() << std::endl;
 
@@ -2095,21 +2095,21 @@ DiscreteElements::printContact(const std::string& str) const
     << std::setw(OWID) << it->getRadius1()
     << std::setw(OWID) << it->getRadius2()
     << std::setw(OWID) << it->getPenetration()
-    << std::setw(OWID) << it->getTgtDisp()
+    << std::setw(OWID) << it->getTangentDisplacement()
     << std::setw(OWID) << it->getContactRadius()
     << std::setw(OWID) << it->getR0()
     << std::setw(OWID) << it->getE0()
-    << std::setw(OWID) << it->getNormalForce()
-    << std::setw(OWID) << it->getTgtForce()
+    << std::setw(OWID) << it->getNormalForceMagnitude()
+    << std::setw(OWID) << it->getTangentForceMagnitude()
     << std::setw(OWID) << ( it->getPoint1().x() + it->getPoint2().x() )/2
     << std::setw(OWID) << ( it->getPoint1().y() + it->getPoint2().y() )/2
     << std::setw(OWID) << ( it->getPoint1().z() + it->getPoint2().z() )/2
-    << std::setw(OWID) << it->normalForceVec().x()
-    << std::setw(OWID) << it->normalForceVec().y()
-    << std::setw(OWID) << it->normalForceVec().z()
-    << std::setw(OWID) << it->tgtForceVec().x()
-    << std::setw(OWID) << it->tgtForceVec().y()
-    << std::setw(OWID) << it->tgtForceVec().z()
+    << std::setw(OWID) << it->getNormalForce().x()
+    << std::setw(OWID) << it->getNormalForce().y()
+    << std::setw(OWID) << it->getNormalForce().z()
+    << std::setw(OWID) << it->getTangentForce().x()
+    << std::setw(OWID) << it->getTangentForce().y()
+    << std::setw(OWID) << it->getTangentForce().z()
     << std::setw(OWID) << it->getVibraTimeStep()
     << std::setw(OWID) << it->getImpactTimeStep()
     << std::endl;

@@ -506,7 +506,7 @@ private:
   ContactArray contactVec; // contacts per process
 
   // tangential contact force and displacement per process
-  ContactTangentArray contactTgtVec; 
+  ContactTangentArray contactTangentVec; 
 
   // estimated total contact number, only meaningful to root process
   std::size_t allContactNum; 
@@ -532,7 +532,7 @@ private:
   BoundaryPArray cavityBoundaryVec; // rigid cavity boundaries
 
   // particle-boundary contact tangential info
-  std::map<std::size_t, BoundaryTangentArray> boundaryTgtMap; 
+  std::map<std::size_t, BoundaryTangentArray> boundaryTangentMap; 
 
   // fluid property
   Fluid fluid;

@@ -151,7 +151,7 @@ public:
   virtual void print(std::ostream& os);
   virtual void printContactInfo(std::ostream& os);
   virtual void findBdryContact(DEMParticlePArray& ptcls) = 0;
-  virtual void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) = 0;
+  virtual void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap) = 0;
   virtual void updateStatForce();
   void clearStatForce();
   void clearBoundaryContacts();

@@ -68,7 +68,7 @@ public:
   void updateTrueTriaxial(REAL simga, REAL areaX, REAL areaY, REAL areaZ,
                           REAL sigmaX, REAL sigmaY) override;
   void findBdryContact(DEMParticlePArray& ptcls) override;
-  void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) override;
+  void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap) override;
 
 private:
   Vec d_direction;

@@ -953,7 +953,7 @@ DEMParticle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s, Vec& ptnp) const
 
 void
 DEMParticle::planeRBForce(PlaneBoundary* plane,
-                       BoundaryTangentArrayMap& BdryTgtMap,
+                       BoundaryTangentArrayMap& BdryTangentMap,
                        BoundaryTangentArray& vtmp)
 {
   // (p, q, r) are in the same direction as the outward normal vector,
@@ -1061,24 +1061,24 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
   addForce(cntDampingForce);
   addMoment(cross(((pt1 + pt2) / 2 - d_currPos), cntDampingForce));
 
-  Vec tgtForce = 0;
+  Vec tangentForce = 0;
   if (util::getParam<REAL>("boundaryFric") != 0) {
     // checkin previous tangential force and displacement
-    Vec prevTgtForce;
-    Vec prevTgtDisp;
-    // bool prevTgtLoading = true;
-    Vec tgtDispStart;
-    REAL tgtPeak = 0;
+    Vec prevTangentForce;
+    Vec prevTangentDisp;
+    // bool prevTangentLoading = true;
+    Vec tangentDispStart;
+    REAL tangentPeak = 0;
 
-    bool tgtLoading = true;
+    bool tangentLoading = true;
     auto boundaryID = static_cast<size_t>(plane->getId());
-    for (const auto& tangent : BdryTgtMap[boundaryID]) {
+    for (const auto& tangent : BdryTangentMap[boundaryID]) {
       if (d_id == tangent.particleId) {
-        prevTgtForce = tangent.tgtForce;
-        prevTgtDisp = tangent.tgtDisp;
-        // prevTgtLoading = it->tgtLoading;
-        tgtDispStart = tangent.tgtDispStart;
-        tgtPeak = tangent.tgtPeak;
+        prevTangentForce = tangent.tangentForce;
+        prevTangentDisp = tangent.tangentDisp;
+        // prevTangentLoading = it->tangentLoading;
+        tangentDispStart = tangent.tangentDispStart;
+        tangentPeak = tangent.tangentPeak;
         break;
       }
     }
@@ -1090,33 +1090,33 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
     //      here global frame is used for better convenience.
     Vec relaDispInc =
       (d_currentVelocity + cross(d_currOmga, ((pt1 + pt2) / 2 - d_currPos))) * timeStep;
-    Vec tgtDispInc = relaDispInc - dot(relaDispInc, normalDirc) * normalDirc;
-    Vec tgtDisp = prevTgtDisp + tgtDispInc; // prevTgtDisp read by checkin
-    Vec TgtDirc;
+    Vec tangentDispInc = relaDispInc - dot(relaDispInc, normalDirc) * normalDirc;
+    Vec tangentDisp = prevTangentDisp + tangentDispInc; // prevTangentDisp read by checkin
+    Vec TangentDirc;
 
-    if (vnormL2(tgtDisp) == 0)
-      TgtDirc = 0;
+    if (vnormL2(tangentDisp) == 0)
+      TangentDirc = 0;
     else
-      TgtDirc = normalize(-tgtDisp); // TgtDirc points along tangential forces
+      TangentDirc = normalize(-tangentDisp); // TangentDirc points along tangential forces
                                      // exerted on particle 1
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     // linear friction model
     REAL fP = util::getParam<REAL>("boundaryFric") * vnormL2(normalForce);
     REAL ks = 4 * G0 * contactRadius / (2 - d_poisson);
-    tgtForce =
-      prevTgtForce + ks * (-tgtDispInc); // prevTgtForce read by checkin
+    tangentForce =
+      prevTangentForce + ks * (-tangentDispInc); // prevTangentForce read by checkin
 
     Vec fricDampingForce = 0;
-    if (vnormL2(tgtForce) > fP) // slide case
-      tgtForce = fP * TgtDirc;
+    if (vnormL2(tangentForce) > fP) // slide case
+      tangentForce = fP * TangentDirc;
     else { // adhered/slip case
 
       // obtain tangential damping force
       Vec relaVel = d_currentVelocity + cross(d_currOmga, ((pt1 + pt2) / 2 - d_currPos));
-      Vec TgtVel = relaVel - dot(relaVel, normalDirc) * normalDirc;
+      Vec TangentVel = relaVel - dot(relaVel, normalDirc) * normalDirc;
       REAL dampCritical = 2 * sqrt(getMass() * ks); // critical damping
-      fricDampingForce = 1.0 * dampCritical * (-TgtVel);
+      fricDampingForce = 1.0 * dampCritical * (-TangentVel);
     }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1127,57 +1127,57 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
 #ifdef MINDLIN_ASSUMED
     REAL val = 0;
     fP = contactFric * vnormL2(normalForce);
-    tgtLoading = (prevTgtDisp * tgtDispInc >= 0);
+    tangentLoading = (prevTangentDisp * tangentDispInc >= 0);
 
-    if (tgtLoading) {        // loading
-      if (!prevTgtLoading) { // pre-step is unloading
-        val = 8 * G0 * contactRadius * vnormL2(tgtDispInc) /
+    if (tangentLoading) {        // loading
+      if (!prevTangentLoading) { // pre-step is unloading
+        val = 8 * G0 * contactRadius * vnormL2(tangentDispInc) /
               (3 * (2 - d_poisson) * fP);
-        tgtDispStart = prevTgtDisp;
+        tangentDispStart = prevTangentDisp;
       } else // pre-step is loading
-        val = 8 * G0 * contactRadius * vnormL2(tgtDisp - tgtDispStart) /
+        val = 8 * G0 * contactRadius * vnormL2(tangentDisp - tangentDispStart) /
               (3 * (2 - d_poisson) * fP);
 
       if (val > 1.0)
-        tgtForce = fP * TgtDirc;
+        tangentForce = fP * TangentDirc;
       else {
         ks = 4 * G0 * contactRadius / (2 - d_poisson) * sqrt(1 - val);
         // incremental method
-        tgtForce =
-          prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
-        // total value method: tgtForce = fP*(1-pow(1-val, 1.5))*TgtDirc;
+        tangentForce =
+          prevTangentForce + ks * (-tangentDispInc); // tangentDispInc determines signs
+        // total value method: tangentForce = fP*(1-pow(1-val, 1.5))*TangentDirc;
       }
     } else {                // unloading
-      if (prevTgtLoading) { // pre-step is loading
-        val = 8 * G0 * contactRadius * vnormL2(tgtDisp - tgtDispStart) /
+      if (prevTangentLoading) { // pre-step is loading
+        val = 8 * G0 * contactRadius * vnormL2(tangentDisp - tangentDispStart) /
               (3 * (2 - d_poisson) * fP);
-        tgtPeak = vnormL2(prevTgtForce);
+        tangentPeak = vnormL2(prevTangentForce);
       } else // pre-step is unloading
-        val = 8 * G0 * contactRadius * vnormL2(tgtDisp - tgtDispStart) /
+        val = 8 * G0 * contactRadius * vnormL2(tangentDisp - tangentDispStart) /
               (3 * (2 - d_poisson) * fP);
 
-      if (val > 1.0 || tgtPeak > fP)
-        tgtForce = fP * TgtDirc;
+      if (val > 1.0 || tangentPeak > fP)
+        tangentForce = fP * TangentDirc;
       else {
         ks = 2 * sqrt(2) * G0 * contactRadius / (2 - d_poisson) *
-             sqrt(1 + pow(1 - tgtPeak / fP, 2.0 / 3.0) + val);
+             sqrt(1 + pow(1 - tangentPeak / fP, 2.0 / 3.0) + val);
         // incremental method
-        tgtForce =
-          prevTgtForce + ks * (-tgtDispInc); // tgtDispInc determines signs
-        // total value method: tgtForce = (tgtPeak-2*fP*(1-sqrt(2)/4*pow(1+
-        // pow(1-tgtPeak/fP,2.0/3.0) + val,1.5)))*TgtDirc;
+        tangentForce =
+          prevTangentForce + ks * (-tangentDispInc); // tangentDispInc determines signs
+        // total value method: tangentForce = (tangentPeak-2*fP*(1-sqrt(2)/4*pow(1+
+        // pow(1-tangentPeak/fP,2.0/3.0) + val,1.5)))*TangentDirc;
       }
     }
 
-    if (vnormL2(tgtForce) > fP) // slice case
-      tgtForce = fP * TgtDirc;
+    if (vnormL2(tangentForce) > fP) // slice case
+      tangentForce = fP * TangentDirc;
     else { // adhered/slip case
 
       // obtain tangential damping force
       Vec relaVel = d_currentVelocity + d_currOmga * ((pt1 + pt2) / 2 - d_currPos);
-      Vec TgtVel = relaVel - (relaVel * normalDirc) * normalDirc;
+      Vec TangentVel = relaVel - (relaVel * normalDirc) * normalDirc;
       REAL dampCritical = 2 * sqrt(getMass() * ks); // critical damping
-      fricDampingForce = 1.0 * dampCritical * (-TgtVel);
+      fricDampingForce = 1.0 * dampCritical * (-TangentVel);
     }
 
 #endif
@@ -1189,7 +1189,7 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
         << " normalForce=" << vnormL2(normalForce)
         << " cntDampingForce= " << vnormL2(cntDampingForce)
         << " kn=" << kn
-        << " tgtForce=" << vnormL2(tgtForce)
+        << " tangentForce=" << vnormL2(tangentForce)
         << " fricDampingForce=" << vnormL2(fricDampingForce)
         << " ks=" << ks
         << std::endl;
@@ -1197,21 +1197,21 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // apply tangential force
-    addForce(tgtForce);
-    addMoment(cross(((pt1 + pt2) / 2 - d_currPos), tgtForce));
+    addForce(tangentForce);
+    addMoment(cross(((pt1 + pt2) / 2 - d_currPos), tangentForce));
 
     // apply tangential damping force for adhered/slip case
     addForce(fricDampingForce);
 
     // update current tangential force and displacement, don't checkout.
-    // checkout in rigidBF() ensures BdryTgtMap update after each particles
+    // checkout in rigidBF() ensures BdryTangentMap update after each particles
     // contacting this boundary is processed.
-    vtmp.push_back(BoundaryTangent(d_id, tgtForce, tgtDisp, tgtLoading,
-                                   tgtDispStart, tgtPeak));
+    vtmp.push_back(BoundaryTangent(d_id, tangentForce, tangentDisp, tangentLoading,
+                                   tangentDispStart, tangentPeak));
   }
 
   plane->getBoundaryContacts().push_back(
-    BoundaryContact(this, pt1, -normalForce, -tgtForce, d_penetration));
+    BoundaryContact(this, pt1, -normalForce, -tangentForce, d_penetration));
   // update forces acting on boundary in class Boundary, not here
 }
 

@@ -46,7 +46,7 @@ CylinderBoundary::findBdryContact(DEMParticlePArray& particles)
 }
 
 void
-CylinderBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap)
+CylinderBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap)
 {
   // for each plane boundary, define a temparory variable vtmp to use,
   // better than define a member variable which needs to be cleared.
@@ -59,7 +59,7 @@ CylinderBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap)
 
   // checkout tangential forces and displacements after each particle is
   // processed
-  boundaryTgtMap[static_cast<size_t>(this->b_id)] = vtmp;
+  boundaryTangentMap[static_cast<size_t>(this->b_id)] = vtmp;
 
   updateStatForce();
 }
