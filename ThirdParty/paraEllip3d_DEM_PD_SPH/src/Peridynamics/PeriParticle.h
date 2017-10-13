@@ -62,7 +62,7 @@ public:
   int getBondsNumber() const { return bondVec.size(); }
   dem::Vec getInitPosition() const { return initPosition; }
   dem::Vec currentPosition() const { return initPosition + displacement; }
-  dem::Vec getPrevPosition() const { return initPosition + prevDisp; }
+  dem::Vec getPreviousPosition() const { return initPosition + prevDisp; }
   dem::Vec getDisplacement() const { return displacement; }
   dem::Vec getVelocity() const { return velocity; }
   bool getIsAlive() const { return isAlive; }

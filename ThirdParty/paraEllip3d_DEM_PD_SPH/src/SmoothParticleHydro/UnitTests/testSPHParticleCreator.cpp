@@ -205,8 +205,8 @@ TEST(SPHParticleCreatorTest, generateSPHParticleDam)
       id, dem::DEMParticle::DEMParticleShape::ELLIPSOID, 
       dem::DEMParticle::DEMParticleType::FREE,
       radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
-    pt->setPrevVeloc(vel);
-    pt->setCurrVeloc(vel);
+    pt->setPrevVelocity(vel);
+    pt->setCurrVelocity(vel);
     pt->setPrevOmega(omega);
     pt->setCurrOmega(omega);
     pt->setForce(force);
@@ -391,8 +391,8 @@ TEST(SPHParticleCreatorTest, generateSPHParticleNoBottom)
       id, dem::DEMParticle::DEMParticleShape::ELLIPSOID, 
       dem::DEMParticle::DEMParticleType::FREE,
       radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
-    pt->setPrevVeloc(vel);
-    pt->setCurrVeloc(vel);
+    pt->setPrevVelocity(vel);
+    pt->setCurrVelocity(vel);
     pt->setPrevOmega(omega);
     pt->setCurrOmega(omega);
     pt->setForce(force);
@@ -580,8 +580,8 @@ TEST(SPHParticleCreatorTest, generateSPHParticleMiddleLayers)
       id, dem::DEMParticle::DEMParticleShape::ELLIPSOID, 
       dem::DEMParticle::DEMParticleType::FREE,
       radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
-    pt->setPrevVeloc(vel);
-    pt->setCurrVeloc(vel);
+    pt->setPrevVelocity(vel);
+    pt->setCurrVelocity(vel);
     pt->setPrevOmega(omega);
     pt->setCurrOmega(omega);
     pt->setForce(force);

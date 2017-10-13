@@ -6,10 +6,10 @@ namespace dem {
 
 Boundary::Boundary()
 {
-  contactNum = 0;
-  normal = 0;
-  tangt = 0;
-  penetr = 0;
+  b_numContacts = 0;
+  b_normalForce = 0;
+  b_tangentForce = 0;
+  b_penetration = 0;
 }
 
 void
@@ -25,45 +25,45 @@ void
 Boundary::printContactInfo(std::ostream& os)
 {
   os << std::setw(OWID) << static_cast<int>(b_id) << std::endl
-     << std::setw(OWID) << contactInfo.size() << std::endl
+     << std::setw(OWID) << b_contacts.size() << std::endl
      << std::setw(OWID) << "pos_x" << std::setw(OWID) << "pos_y"
      << std::setw(OWID) << "pos_z" << std::setw(OWID) << "normal_x"
      << std::setw(OWID) << "normal_y" << std::setw(OWID) << "normal_z"
      << std::setw(OWID) << "tangt_x" << std::setw(OWID) << "tangt_y"
      << std::setw(OWID) << "tangt_z" << std::setw(OWID) << "pentr" << std::endl;
 
-  for (auto& it : contactInfo)
+  for (auto& it : b_contacts)
     it.print(os);
 }
 
 void
 Boundary::clearStatForce()
 {
-  contactNum = 0;
-  normal = 0;
-  tangt = 0;
-  penetr = 0;
+  b_numContacts = 0;
+  b_normalForce = 0;
+  b_tangentForce = 0;
+  b_penetration = 0;
 }
 
 void
 Boundary::updateStatForce()
 {
   clearStatForce();
-  contactNum = contactInfo.size();
-  for (auto& it : contactInfo) {
-    normal += it.normal;
-    tangt += it.tangt;
-    penetr += it.penetr;
+  b_numContacts = b_contacts.size();
+  for (auto& boundaryContact : b_contacts) {
+    b_normalForce += boundaryContact.bc_normalForce;
+    b_tangentForce += boundaryContact.bc_tangentForce;
+    b_penetration += boundaryContact.bc_penetration;
   }
-  if (contactNum != 0)
-    penetr /= contactNum;
+  if (b_numContacts != 0)
+    b_penetration /= b_numContacts;
 }
 
 void
-Boundary::clearContactInfo()
+Boundary::clearBoundaryContacts()
 {
-  possParticle.clear();
-  contactInfo.clear();
+  b_probableBoundaryParticles.clear();
+  b_contacts.clear();
 }
 
 } // namespace dem ends

@@ -127,10 +127,10 @@ public:
     : b_id(id)
     , b_type(tp)
     , b_extraNum(en)
-    , contactNum(0)
-    , normal(0)
-    , tangt(0)
-    , penetr(0)
+    , b_numContacts(0)
+    , b_normalForce(0)
+    , b_tangentForce(0)
+    , b_penetration(0)
   {
   }
 
@@ -139,12 +139,14 @@ public:
 
   BoundaryID getId() { return b_id; }
   BoundaryType getType() { return b_type; }
-  DEMParticlePArray& getPossParticle() { return possParticle; }
-  BoundaryContactArray& getContactInfo() { return contactInfo; }
-  ContactCount getContactNum() const { return contactNum; }
-  Vec getNormalForce() const { return normal; }
-  Vec getTangtForce() const { return tangt; }
-  REAL getAvgPenetr() const { return penetr; }
+  DEMParticlePArray& getProbableBoundaryParticles() { 
+    return b_probableBoundaryParticles; 
+  }
+  BoundaryContactArray& getBoundaryContacts() { return b_contacts; }
+  ContactCount getNumBoundaryContacts() const { return b_numContacts; }
+  Vec getNormalForce() const { return b_normalForce; }
+  Vec getTangentForce() const { return b_tangentForce; }
+  REAL getAvgPenetration() const { return b_penetration; }
 
   virtual void print(std::ostream& os);
   virtual void printContactInfo(std::ostream& os);
@@ -152,7 +154,7 @@ public:
   virtual void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) = 0;
   virtual void updateStatForce();
   void clearStatForce();
-  void clearContactInfo();
+  void clearBoundaryContacts();
 
   virtual void updateIsotropic(REAL simga, REAL areaX, REAL areaY, REAL areaZ)
   {
@@ -166,12 +168,12 @@ public:
                                   REAL areaZ, REAL sigmaX, REAL sigmaY)
   {
   }
-  virtual Vec getPoint() const = 0;
-  virtual Vec getVeloc() const = 0;
-  virtual Vec getPrevPoint() const = 0;
-  virtual Vec getPrevVeloc() const = 0;
-  virtual void setPoint(Vec pnt) = 0;
-  virtual void setVeloc(Vec vel) = 0;
+  virtual Vec getPosition() const = 0;
+  virtual Vec getVelocity() const = 0;
+  virtual Vec getPreviousPosition() const = 0;
+  virtual Vec getPreviousVelocity() const = 0;
+  virtual void setPosition(Vec pnt) = 0;
+  virtual void setVelocity(Vec vel) = 0;
 
 protected:
 
@@ -183,12 +185,12 @@ protected:
   EdgeCount b_extraNum;
   EdgeArray b_extraEdge;
 
-  DEMParticlePArray possParticle;
-  BoundaryContactArray contactInfo;
-  ContactCount contactNum;
-  Vec normal;
-  Vec tangt;
-  REAL penetr;
+  DEMParticlePArray b_probableBoundaryParticles;
+  BoundaryContactArray b_contacts;
+  ContactCount b_numContacts;
+  Vec b_normalForce;
+  Vec b_tangentForce;
+  REAL b_penetration;
 
 private:
   friend class boost::serialization::access;
@@ -199,12 +201,12 @@ private:
     ar& b_type;
     ar& b_extraNum;
     ar& b_extraEdge;
-    ar& possParticle;
-    ar& contactInfo;
-    ar& contactNum;
-    ar& normal;
-    ar& tangt;
-    ar& penetr;
+    ar& b_probableBoundaryParticles;
+    ar& b_contacts;
+    ar& b_numContacts;
+    ar& b_normalForce;
+    ar& b_tangentForce;
+    ar& b_penetration;
   }
 
 };

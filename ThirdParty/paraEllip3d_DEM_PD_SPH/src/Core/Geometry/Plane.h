@@ -13,39 +13,39 @@ namespace dem {
 class Plane
 {
 public:
-  Vec direc;
+  Vec direction;
   Vec point;
 
 public:
   Plane()
-    : direc(0)
+    : direction(0)
     , point(0)
   {
   }
 
   Plane(Vec dir, Vec pt)
-    : direc(std::move(dir))
+    : direction(std::move(dir))
     , point(std::move(pt))
   {
   }
 
   void print(std::ostream& os)
   {
-    os << std::setw(OWID) << direc.x() << std::setw(OWID) << direc.y()
-       << std::setw(OWID) << direc.z() << std::setw(OWID) << point.x()
+    os << std::setw(OWID) << direction.x() << std::setw(OWID) << direction.y()
+       << std::setw(OWID) << direction.z() << std::setw(OWID) << point.x()
        << std::setw(OWID) << point.y() << std::setw(OWID) << point.z()
        << std::endl;
   }
 
-  Vec getDirec() const { return direc; }
-  Vec getPoint() const { return point; }
+  Vec getDirection() const { return direction; }
+  Vec getPosition() const { return point; }
 
 private:
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
-    ar& direc;
+    ar& direction;
     ar& point;
   }
 };

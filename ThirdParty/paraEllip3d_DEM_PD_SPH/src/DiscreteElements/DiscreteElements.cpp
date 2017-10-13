@@ -1087,12 +1087,12 @@ DiscreteElements::printDepositProg(std::ofstream& ofs)
   for (auto datum : data)
     ofs << std::setw(OWID) << datum;
 
-  // contactNum
+  // b_numContacts
   data.clear();
   data.reserve(6);
   for (const auto& boundary : mergeBoundaryVec) {
     Boundary::BoundaryID id = boundary->getId();
-    data[static_cast<size_t>(id) - 1] = boundary->getContactNum();
+    data[static_cast<size_t>(id) - 1] = boundary->getNumBoundaryContacts();
   }
   for (double datum : data)
     ofs << std::setw(OWID) << static_cast<std::size_t>(datum);
@@ -1103,7 +1103,7 @@ DiscreteElements::printDepositProg(std::ofstream& ofs)
   data.reserve(6);
   for (const auto& boundary : mergeBoundaryVec) {
     Boundary::BoundaryID id = boundary->getId();
-    data[static_cast<size_t>(id) - 1] = boundary->getAvgPenetr();
+    data[static_cast<size_t>(id) - 1] = boundary->getAvgPenetration();
   }
   for (double datum : data)
     ofs << std::setw(OWID) << datum;
@@ -1137,7 +1137,7 @@ DiscreteElements::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
   for (const auto& boundary : boundaryVec) {
     Boundary::BoundaryID id = boundary->getId();
     Vec normal = boundary->getNormalForce();
-    Vec point = boundary->getPoint();
+    Vec point = boundary->getPosition();
     switch (id) {
       case Boundary::BoundaryID::XMINUS:
         normalForce["x-"] = fabs(normal.x());
@@ -1630,10 +1630,10 @@ DiscreteElements::gatherBdryContact()
         // merge tmpBoundaryVec into mergeBoundaryVec
         assert(tmpBoundaryVec.size() == mergeBoundaryVec.size());
         for (std::size_t jt = 0; jt < tmpBoundaryVec.size(); ++jt)
-          mergeBoundaryVec[jt]->getContactInfo().insert(
-            mergeBoundaryVec[jt]->getContactInfo().end(),
-            tmpBoundaryVec[jt]->getContactInfo().begin(),
-            tmpBoundaryVec[jt]->getContactInfo().end());
+          mergeBoundaryVec[jt]->getBoundaryContacts().insert(
+            mergeBoundaryVec[jt]->getBoundaryContacts().end(),
+            tmpBoundaryVec[jt]->getBoundaryContacts().begin(),
+            tmpBoundaryVec[jt]->getBoundaryContacts().end());
       }
     }
 
@@ -1667,22 +1667,22 @@ DiscreteElements::getStartDimension(REAL& distX, REAL& distY, REAL& distZ)
   for (const auto& boundary : boundaryVec) {
     switch (boundary->getId()) {
       case Boundary::BoundaryID::XMINUS:
-        x1 = boundary->getPoint().x();
+        x1 = boundary->getPosition().x();
         break;
       case Boundary::BoundaryID::XPLUS:
-        x2 = boundary->getPoint().x();
+        x2 = boundary->getPosition().x();
         break;
       case Boundary::BoundaryID::YMINUS:
-        y1 = boundary->getPoint().y();
+        y1 = boundary->getPosition().y();
         break;
       case Boundary::BoundaryID::YPLUS:
-        y2 = boundary->getPoint().y();
+        y2 = boundary->getPosition().y();
         break;
       case Boundary::BoundaryID::ZMINUS:
-        z1 = boundary->getPoint().z();
+        z1 = boundary->getPosition().z();
         break;
       case Boundary::BoundaryID::ZPLUS:
-        z2 = boundary->getPoint().z();
+        z2 = boundary->getPosition().z();
         break;
       default:
         break;
@@ -1748,22 +1748,22 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
   for (const auto& boundary : mergeBoundaryVec) {
     switch (boundary->getId()) {
       case Boundary::BoundaryID::XMINUS:
-        x1 = boundary->getPoint().x();
+        x1 = boundary->getPosition().x();
         break;
       case Boundary::BoundaryID::XPLUS:
-        x2 = boundary->getPoint().x();
+        x2 = boundary->getPosition().x();
         break;
       case Boundary::BoundaryID::YMINUS:
-        y1 = boundary->getPoint().y();
+        y1 = boundary->getPosition().y();
         break;
       case Boundary::BoundaryID::YPLUS:
-        y2 = boundary->getPoint().y();
+        y2 = boundary->getPosition().y();
         break;
       case Boundary::BoundaryID::ZMINUS:
-        z1 = boundary->getPoint().z();
+        z1 = boundary->getPosition().z();
         break;
       case Boundary::BoundaryID::ZPLUS:
-        z2 = boundary->getPoint().z();
+        z2 = boundary->getPosition().z();
         break;
       default:
         break;
@@ -1788,31 +1788,31 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
   for (const auto& boundary : mergeBoundaryVec) {
     Boundary::BoundaryID id = boundary->getId();
     Vec normal = boundary->getNormalForce();
-    Vec veloc = boundary->getVeloc();
+    Vec velocity = boundary->getVelocity();
     switch (id) {
       case Boundary::BoundaryID::XMINUS:
         var[0] = fabs(normal.x()) / areaX;
-        vel[0] = veloc.x();
+        vel[0] = velocity.x();
         break;
       case Boundary::BoundaryID::XPLUS:
         var[1] = normal.x() / areaX;
-        vel[1] = veloc.x();
+        vel[1] = velocity.x();
         break;
       case Boundary::BoundaryID::YMINUS:
         var[2] = fabs(normal.y()) / areaY;
-        vel[2] = veloc.y();
+        vel[2] = velocity.y();
         break;
       case Boundary::BoundaryID::YPLUS:
         var[3] = normal.y() / areaY;
-        vel[3] = veloc.y();
+        vel[3] = velocity.y();
         break;
       case Boundary::BoundaryID::ZMINUS:
         var[4] = fabs(normal.z()) / areaZ;
-        vel[4] = veloc.z();
+        vel[4] = velocity.z();
         break;
       case Boundary::BoundaryID::ZPLUS:
         var[5] = normal.z() / areaZ;
-        vel[5] = veloc.z();
+        vel[5] = velocity.z();
         break;
       default:
         break;
@@ -1839,13 +1839,13 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
   for (double i : vel)
     ofs << std::setw(OWID) << i;
 
-  // contactNum
+  // b_numContacts
   for (double& i : var) {
     i = 0;
   }
   for (const auto& boundary : mergeBoundaryVec) {
     Boundary::BoundaryID id = boundary->getId();
-    var[static_cast<size_t>(id) - 1] = boundary->getContactNum();
+    var[static_cast<size_t>(id) - 1] = boundary->getNumBoundaryContacts();
   }
   for (double i : var)
     ofs << std::setw(OWID) << static_cast<std::size_t>(i);
@@ -1856,7 +1856,7 @@ DiscreteElements::printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
     i = 0;
   for (const auto& boundary : mergeBoundaryVec) {
     auto id = boundary->getId();
-    var[static_cast<size_t>(id) - 1] = boundary->getAvgPenetr();
+    var[static_cast<size_t>(id) - 1] = boundary->getAvgPenetration();
   }
   for (double i : var)
     ofs << std::setw(OWID) << i;
@@ -1910,22 +1910,22 @@ DiscreteElements::updateBoundary(REAL sigma, std::string type,
     for (const auto& boundary : mergeBoundaryVec) {
       switch (boundary->getId()) {
         case Boundary::BoundaryID::XMINUS:
-          x1 = boundary->getPoint().x();
+          x1 = boundary->getPosition().x();
           break;
         case Boundary::BoundaryID::XPLUS:
-          x2 = boundary->getPoint().x();
+          x2 = boundary->getPosition().x();
           break;
         case Boundary::BoundaryID::YMINUS:
-          y1 = boundary->getPoint().y();
+          y1 = boundary->getPosition().y();
           break;
         case Boundary::BoundaryID::YPLUS:
-          y2 = boundary->getPoint().y();
+          y2 = boundary->getPosition().y();
           break;
         case Boundary::BoundaryID::ZMINUS:
-          z1 = boundary->getPoint().z();
+          z1 = boundary->getPosition().z();
           break;
         case Boundary::BoundaryID::ZPLUS:
-          z2 = boundary->getPoint().z();
+          z2 = boundary->getPosition().z();
           break;
         default:
           break;
@@ -1952,32 +1952,32 @@ DiscreteElements::updateBoundary(REAL sigma, std::string type,
         it->updateTrueTriaxial(sigma, areaX, areaY, areaZ, sigmaX, sigmaY);
     }
 
-    // update boundaryVec from mergeBoundaryVec and remove contactInfo to reduce
+    // update boundaryVec from mergeBoundaryVec and remove b_contacts to reduce
     // MPI transmission
     boundaryVec = mergeBoundaryVec;
     for (auto& it : boundaryVec)
-      it->clearContactInfo();
+      it->clearBoundaryContacts();
 
     // update allContainer
     for (const auto& boundary : boundaryVec) {
       switch (boundary->getId()) {
         case Boundary::BoundaryID::XMINUS:
-          x1 = boundary->getPoint().x();
+          x1 = boundary->getPosition().x();
           break;
         case Boundary::BoundaryID::XPLUS:
-          x2 = boundary->getPoint().x();
+          x2 = boundary->getPosition().x();
           break;
         case Boundary::BoundaryID::YMINUS:
-          y1 = boundary->getPoint().y();
+          y1 = boundary->getPosition().y();
           break;
         case Boundary::BoundaryID::YPLUS:
-          y2 = boundary->getPoint().y();
+          y2 = boundary->getPosition().y();
           break;
         case Boundary::BoundaryID::ZMINUS:
-          z1 = boundary->getPoint().z();
+          z1 = boundary->getPosition().z();
           break;
         case Boundary::BoundaryID::ZPLUS:
-          z2 = boundary->getPoint().z();
+          z2 = boundary->getPosition().z();
           break;
         default:
           break;

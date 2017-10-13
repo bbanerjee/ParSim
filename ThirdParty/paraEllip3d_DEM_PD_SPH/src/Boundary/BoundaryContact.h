@@ -16,38 +16,38 @@ class DEMParticle; // forward declaration, only use pointer to class DEMParticle
 class BoundaryContact
 {
 public:
-  DEMParticle* ptcl;
-  Vec point;
-  Vec normal;
-  Vec tangt;
-  REAL penetr;
+  DEMParticle* bc_particle;
+  Vec bc_point;
+  Vec bc_normalForce;
+  Vec bc_tangentForce;
+  REAL bc_penetration;
 
 public:
   BoundaryContact()
-    : ptcl(nullptr)
-    , point(0)
-    , normal(0)
-    , tangt(0)
-    , penetr(0)
+    : bc_particle(nullptr)
+    , bc_point(0)
+    , bc_normalForce(0)
+    , bc_tangentForce(0)
+    , bc_penetration(0)
   {
   }
 
   BoundaryContact(DEMParticle* p, Vec pt, Vec nm, Vec tg, REAL pntr)
-    : ptcl(p)
-    , point(std::move(pt))
-    , normal(std::move(nm))
-    , tangt(std::move(tg))
-    , penetr(pntr)
+    : bc_particle(p)
+    , bc_point(std::move(pt))
+    , bc_normalForce(std::move(nm))
+    , bc_tangentForce(std::move(tg))
+    , bc_penetration(pntr)
   {
   }
 
   void print(std::ostream& os)
   {
-    os << std::setw(OWID) << point.x() << std::setw(OWID) << point.y()
-       << std::setw(OWID) << point.z() << std::setw(OWID) << normal.x()
-       << std::setw(OWID) << normal.y() << std::setw(OWID) << normal.z()
-       << std::setw(OWID) << tangt.x() << std::setw(OWID) << tangt.y()
-       << std::setw(OWID) << tangt.z() << std::setw(OWID) << penetr
+    os << std::setw(OWID) << bc_point.x() << std::setw(OWID) << bc_point.y()
+       << std::setw(OWID) << bc_point.z() << std::setw(OWID) << bc_normalForce.x()
+       << std::setw(OWID) << bc_normalForce.y() << std::setw(OWID) << bc_normalForce.z()
+       << std::setw(OWID) << bc_tangentForce.x() << std::setw(OWID) << bc_tangentForce.y()
+       << std::setw(OWID) << bc_tangentForce.z() << std::setw(OWID) << bc_penetration
        << std::endl;
   }
 
@@ -56,11 +56,11 @@ private:
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
-    ar& ptcl;
-    ar& point;
-    ar& normal;
-    ar& tangt;
-    ar& penetr;
+    ar& bc_particle;
+    ar& bc_point;
+    ar& bc_normalForce;
+    ar& bc_tangentForce;
+    ar& bc_penetration;
   }
 };
 

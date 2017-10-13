@@ -26,11 +26,11 @@ public:
                 Boundary::BoundaryType tp = Boundary::BoundaryType::NONE, 
                 EdgeCount en = 0)
     : Boundary(id, tp, en)
-    , direc(0)
-    , point(0)
-    , prevPoint(0)
-    , veloc(0)
-    , prevVeloc(0)
+    , d_direction(0)
+    , d_position(0)
+    , d_previousPosition(0)
+    , d_velocity(0)
+    , d_previousVelocity(0)
   {
   }
 
@@ -38,23 +38,23 @@ public:
   PlaneBoundary(Boundary::BoundaryType type, BoundaryID id, const XMLProblemSpec& ps);
   PlaneBoundary(Boundary::BoundaryType type, BoundaryID id, const JsonProblemSpec& ps);
 
-  Vec getDirec() const { return direc; }
-  Vec getPoint() const override { return point; }
-  Vec getVeloc() const override { return veloc; }
-  Vec getPrevPoint() const override { return prevPoint; }
-  Vec getPrevVeloc() const override { return prevVeloc; }
+  Vec getDirection() const { return d_direction; }
+  Vec getPosition() const override { return d_position; }
+  Vec getVelocity() const override { return d_velocity; }
+  Vec getPreviousPosition() const override { return d_previousPosition; }
+  Vec getPreviousVelocity() const override { return d_previousVelocity; }
 
-  void setDirec(Vec dir) { direc = dir; }
-  void setPoint(Vec pnt) override { point = pnt; }
-  void setVeloc(Vec vel) override { veloc = vel; }
+  void setDirection(Vec dir) { d_direction = dir; }
+  void setPosition(Vec pnt) override { d_position = pnt; }
+  void setVelocity(Vec vel) override { d_velocity = vel; }
 
   REAL distanceToBdry(Vec pos) const
   {
-    return dot((pos - point) , normalize(direc));
+    return dot((pos - d_position) , normalize(d_direction));
   }
   REAL distanceToBdry(Vec pos, Plane pn) const
   {
-    return dot(pos - pn.getPoint() , normalize(pn.getDirec()));
+    return dot(pos - pn.getPosition() , normalize(pn.getDirection()));
   }
 
   void print(std::ostream& os) override;
@@ -71,22 +71,22 @@ public:
   void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) override;
 
 private:
-  Vec direc;
-  Vec point;
-  Vec prevPoint;
-  Vec veloc;
-  Vec prevVeloc;
+  Vec d_direction;
+  Vec d_position;
+  Vec d_previousPosition;
+  Vec d_velocity;
+  Vec d_previousVelocity;
 
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
     ar& boost::serialization::base_object<Boundary>(*this);
-    ar& direc;
-    ar& point;
-    ar& prevPoint;
-    ar& veloc;
-    ar& prevVeloc;
+    ar& d_direction;
+    ar& d_position;
+    ar& d_previousPosition;
+    ar& d_velocity;
+    ar& d_previousVelocity;
   }
 
 };

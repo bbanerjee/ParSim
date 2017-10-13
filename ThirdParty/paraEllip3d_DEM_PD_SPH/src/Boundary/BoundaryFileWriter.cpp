@@ -442,6 +442,7 @@ BoundaryFileWriter::writeXMinusXML(const Vec& domainMin, const Vec& domainMax,
          << domainMin.x() << ", " << domainCen.y() << ", " << domainCen.z() 
          << "]";
   xml["position"](stream.str());
+  xml["initial_velocity"]("[0, 0, 0]");
 }
 
 void
@@ -456,6 +457,7 @@ BoundaryFileWriter::writeXPlusXML(const Vec& domainMin, const Vec& domainMax,
          << domainMax.x() << ", " << domainCen.y() << ", " << domainCen.z() 
          << "]";
   xml["position"](stream.str());
+  xml["initial_velocity"]("[0, 0, 0]");
 }
 
 void
@@ -470,6 +472,7 @@ BoundaryFileWriter::writeYMinusXML(const Vec& domainMin, const Vec& domainMax,
          << domainCen.x() << ", " << domainMin.y() << ", " << domainCen.z()
          << "]";
   xml["position"](stream.str());
+  xml["initial_velocity"]("[0, 0, 0]");
 }
 
 void
@@ -484,6 +487,7 @@ BoundaryFileWriter::writeYPlusXML(const Vec& domainMin, const Vec& domainMax,
          << domainCen.x() << ", " << domainMax.y() << ", " << domainCen.z()
          << "]";
   xml["position"](stream.str());
+  xml["initial_velocity"]("[0, 0, 0]");
 }
 
 void
@@ -498,6 +502,7 @@ BoundaryFileWriter::writeZMinusXML(const Vec& domainMin, const Vec& domainMax,
          << domainCen.x() << ", " << domainCen.y() << ", " << domainMin.z()
          << "]";
   xml["position"](stream.str());
+  xml["initial_velocity"]("[0, 0, 0]");
 }
 
 void
@@ -512,4 +517,5 @@ BoundaryFileWriter::writeZPlusXML(const Vec& domainMin, const Vec& domainMax,
          << domainCen.x() << ", " << domainCen.y() << ", " << domainMax.z()
          << "]";
   xml["position"](stream.str());
+  xml["initial_velocity"]("[0, 0, 0]");
 }

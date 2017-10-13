@@ -82,15 +82,15 @@ public:
   REAL getMass() const { return d_mass; }
   REAL getDensity() const { return d_density; }
   Vec currentPosition() const { return d_currPos; }
-  Vec getPrevPosition() const { return d_prevPos; }
+  Vec getPreviousPosition() const { return d_prevPos; }
   Vec getCurrDirecA() const { return d_currDirecA; }
   Vec getCurrDirecB() const { return d_currDirecB; }
   Vec getCurrDirecC() const { return d_currDirecC; }
   Vec getPrevDirecA() const { return d_prevDirecA; }
   Vec getPrevDirecB() const { return d_prevDirecB; }
   Vec getPrevDirecC() const { return d_prevDirecC; }
-  Vec currentVelocity() const { return d_currVeloc; }
-  Vec getPrevVeloc() const { return d_prevVeloc; }
+  Vec currentVelocity() const { return d_currentVelocity; }
+  Vec getPreviousVelocity() const { return d_previousVelocity; }
   Vec currentOmega() const { return d_currOmga; }
   Vec getPrevOmga() const { return d_prevOmga; }
   Vec getForce() const { return d_force; }
@@ -102,7 +102,7 @@ public:
   Vec getConstMoment() const { return d_constMoment; }
   Vec getmomentJ() const { return d_momentJ; }
   bool isInContact() const { return d_inContact; }
-  std::size_t getContactNum() const { return d_contactNum; }
+  std::size_t getNumBoundaryContacts() const { return d_contactNum; }
 
   REAL getRadius(Vec v) const;
   REAL getTranslationalEnergy() const;
@@ -130,8 +130,8 @@ public:
   void setPrevDirecA(Vec vv) { d_prevDirecA = vv; }
   void setPrevDirecB(Vec vv) { d_prevDirecB = vv; }
   void setPrevDirecC(Vec vv) { d_prevDirecC = vv; }
-  void setCurrVeloc(Vec vv) { d_currVeloc = vv; }
-  void setPrevVeloc(Vec vv) { d_prevVeloc = vv; }
+  void setCurrVelocity(Vec vv) { d_currentVelocity = vv; }
+  void setPrevVelocity(Vec vv) { d_previousVelocity = vv; }
   void setCurrOmega(Vec vv) { d_currOmga = vv; }
   void setPrevOmega(Vec vv) { d_prevOmga = vv; }
   void setForce(Vec vv)
@@ -221,8 +221,8 @@ private:
   Vec d_currDirecA, d_currDirecB,
     d_currDirecC; // direction of the three axles, in radian
   Vec d_prevDirecA, d_prevDirecB, d_prevDirecC;
-  Vec d_currVeloc; // the velocity of the mass center
-  Vec d_prevVeloc;
+  Vec d_currentVelocity; // the velocity of the mass center
+  Vec d_previousVelocity;
   Vec d_currOmga; // angular velocity in global frame!
   Vec d_prevOmga;
   Vec d_force;
@@ -265,8 +265,8 @@ private:
     ar& d_prevDirecA;
     ar& d_prevDirecB;
     ar& d_prevDirecC;
-    ar& d_currVeloc;
-    ar& d_prevVeloc;
+    ar& d_currentVelocity;
+    ar& d_previousVelocity;
     ar& d_currOmga;
     ar& d_prevOmga;
     ar& d_force;

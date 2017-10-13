@@ -101,7 +101,7 @@ public:
 private:
   DEMParticle* d_p1;       // particle 1
   DEMParticle* d_p2;       // particle 2
-  REAL d_penetr;        // penetr
+  REAL d_penetr;        // d_penetration
   REAL d_contactRadius; // radius of contact surface
   Vec d_point1;         // point1 on particle 1, innermost to particle 2
   Vec d_point2;         // point2 on particle 2, innermost to particle 1

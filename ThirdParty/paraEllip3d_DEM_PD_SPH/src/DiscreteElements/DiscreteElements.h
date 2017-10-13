@@ -197,7 +197,7 @@ public:
                       REAL sigmaY = 0);
 
   REAL getMass() const;
-  REAL getAvgPenetr() const;
+  REAL getAvgPenetration() const;
   REAL getVolume() const;
 
   void calcTimeStep();

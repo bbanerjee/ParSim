@@ -79,8 +79,8 @@ DEMParticleFileReader::readParticlesText(const std::string& inputParticle,
     // //std::cout << "doInitialize = " << std::boolalpha << d_doInitialize <<
     // std::endl;
     if (d_doInitialize) {
-      pt->setPrevVeloc(Vec(vx, vy, vz));
-      pt->setCurrVeloc(Vec(vx, vy, vz));
+      pt->setPrevVelocity(Vec(vx, vy, vz));
+      pt->setCurrVelocity(Vec(vx, vy, vz));
       pt->setPrevOmega(Vec(omx, omy, omz));
       pt->setCurrOmega(Vec(omx, omy, omz));
       pt->setForce(Vec(fx, fy, fz));  // initial force
@@ -201,8 +201,8 @@ DEMParticleFileReader::readParticlesXML(const std::string& inputFileName,
         // std::cout << "doInitialize = " << std::boolalpha << d_doInitialize <<
         // std::endl;
         if (d_doInitialize) {
-          pt->setPrevVeloc(particleVel[ii]);
-          pt->setCurrVeloc(particleVel[ii]);
+          pt->setPrevVelocity(particleVel[ii]);
+          pt->setCurrVelocity(particleVel[ii]);
           pt->setPrevOmega(particleRot[ii]);
           pt->setCurrOmega(particleRot[ii]);
           pt->setForce(particleForce[ii]);   // initial force

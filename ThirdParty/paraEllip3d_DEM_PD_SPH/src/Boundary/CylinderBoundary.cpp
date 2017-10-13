@@ -16,7 +16,7 @@ CylinderBoundary::CylinderBoundary(Boundary::BoundaryType tp, std::ifstream& ifs
 
   REAL dx, dy, dz, px, py, pz;
   ifs >> dx >> dy >> dz >> px >> py >> pz >> radius;
-  direc = Vec(dx, dy, dz);
+  direction = Vec(dx, dy, dz);
   point = Vec(px, py, pz);
 }
 
@@ -35,8 +35,8 @@ CylinderBoundary::CylinderBoundary(Boundary::BoundaryType tp, BoundaryID id,
 void
 CylinderBoundary::findBdryContact(DEMParticlePArray& particles)
 {
-  possParticle.clear();
-  contactInfo.clear();
+  b_probableBoundaryParticles.clear();
+  b_contacts.clear();
 
   for (auto& particle : particles) {
     // only process free particles, excluding type 5
@@ -54,7 +54,7 @@ CylinderBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap)
   BoundaryTangentArray vtmp;
 
   // for each possible boundary particle
-  for (auto it = possParticle.begin(); it != possParticle.end(); ++it)
+  for (auto it = b_probableBoundaryParticles.begin(); it != b_probableBoundaryParticles.end(); ++it)
     ; // (*it)->cylinderRBForce();
 
   // checkout tangential forces and displacements after each particle is

@@ -136,7 +136,7 @@ DEMContact::isOverlapped()
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     //std::cout << " MPI_Rank = " << world_rank << " Particles "
     //          << " p1 = " << d_p1->getId() << " p2 = " << d_p2->getId()
-    //          << " penetr = " << d_penetr << "\n"
+    //          << " d_penetration = " << d_penetr << "\n"
     //          << " \t Pos1 = " << d_p1->currentPosition()
     //          << " \t Pos2 = " << d_p2->currentPosition() << "\n"
     //          << " \t b1 = " << b1 << " b2 = " << b2 << "\n"
@@ -228,7 +228,7 @@ DEMContact::contactForce()
     //          << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
     //          << " f1 = " << d_p1->getForce() << "\n\t"
     //          << " f2 = " << d_p2->getForce() << "\n\t"
-    //          << " penetr=" << d_penetr << "\n\t" << "\n";
+    //          << " d_penetration=" << d_penetr << "\n\t" << "\n";
   }
   */
 
@@ -241,8 +241,8 @@ DEMContact::contactForce()
   REAL contactFric = util::getParam<REAL>("contactFric");
 
   // obtain normal force, using absolute equation instead of stiffness method
-  d_p1->setContactNum(d_p1->getContactNum() + 1);
-  d_p2->setContactNum(d_p2->getContactNum() + 1);
+  d_p1->setContactNum(d_p1->getNumBoundaryContacts() + 1);
+  d_p2->setContactNum(d_p2->getNumBoundaryContacts() + 1);
   d_p1->setInContact(true);
   d_p2->setInContact(true);
 
@@ -255,7 +255,7 @@ DEMContact::contactForce()
     inf << " DEMContact.cpp: iter=" << std::setw(8) << iteration
         << " ptcl1=" << std::setw(8) << getP1()->getId()
         << " ptcl2=" << std::setw(8) << getP2()->getId()
-        << " penetr=" << std::setw(OWID) << d_penetr
+        << " d_penetration=" << std::setw(OWID) << d_penetr
         << " allow=" << std::setw(OWID) << allowedOverlap << std::endl;
     MPI_Status status;
     int length = OWID * 2 + 8 * 3 + 19 + 7 * 3 + 8 + 1;
@@ -357,7 +357,7 @@ DEMContact::contactForce()
     //          << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
     //          << " f1 = " << d_p1->getForce() << "\n\t"
     //          << " f2 = " << d_p2->getForce() << "\n\t"
-    //          << " penetr=" << d_penetr << "\n\t" << "\n";
+    //          << " d_penetration=" << d_penetr << "\n\t" << "\n";
   }
   */
   /*

@@ -23,11 +23,11 @@ class CylinderBoundary : public Boundary
 public:
   CylinderBoundary()
     : Boundary()
-    , direc(0)
+    , direction(0)
     , point(0)
     , prevPoint(0)
-    , veloc(0)
-    , prevVeloc(0)
+    , velocity(0)
+    , prevVelocity(0)
     , radius(0)
   {
   }
@@ -37,22 +37,22 @@ public:
   CylinderBoundary(Boundary::BoundaryType tp, BoundaryID id, const XMLProblemSpec& ps);
   CylinderBoundary(Boundary::BoundaryType tp, BoundaryID id, const JsonProblemSpec& ps);
 
-  Vec getDirec() const { return direc; }
-  Vec getPoint() const override { return point; }
-  Vec getVeloc() const override { return veloc; }
-  Vec getPrevPoint() const override { return prevPoint; }
-  Vec getPrevVeloc() const override { return prevVeloc; }
+  Vec getDirection() const { return direction; }
+  Vec getPosition() const override { return point; }
+  Vec getVelocity() const override { return velocity; }
+  Vec getPreviousPosition() const override { return prevPoint; }
+  Vec getPreviousVelocity() const override { return prevVelocity; }
   REAL getRadius() const { return radius; }
 
-  void setDirec(Vec dir) { direc = dir; }
-  void setPoint(Vec pnt) override { point = pnt; }
-  void setVeloc(Vec vel) override { veloc = vel; }
+  void setDirection(Vec dir) { direction = dir; }
+  void setPosition(Vec pnt) override { point = pnt; }
+  void setVelocity(Vec vel) override { velocity = vel; }
 
   void print(std::ostream& os) override
   {
     Boundary::print(os);
-    os << std::setw(OWID) << direc.x() << std::setw(OWID) << direc.y()
-       << std::setw(OWID) << direc.z() << std::setw(OWID) << point.x()
+    os << std::setw(OWID) << direction.x() << std::setw(OWID) << direction.y()
+       << std::setw(OWID) << direction.z() << std::setw(OWID) << point.x()
        << std::setw(OWID) << point.y() << std::setw(OWID) << point.z()
        << std::setw(OWID) << radius << std::endl
        << std::endl;
@@ -62,11 +62,11 @@ public:
   void boundaryForce(BoundaryTangentArrayMap& boundaryTgtMap) override;
 
 private:
-  Vec direc;
+  Vec direction;
   Vec point;
   Vec prevPoint;
-  Vec veloc;
-  Vec prevVeloc;
+  Vec velocity;
+  Vec prevVelocity;
   REAL radius;
 
   friend class boost::serialization::access;
@@ -74,7 +74,7 @@ private:
   void serialize(Archive& ar, const unsigned int version)
   {
     ar& boost::serialization::base_object<Boundary>(*this);
-    ar& direc;
+    ar& direction;
     ar& point;
     ar& radius;
   }
