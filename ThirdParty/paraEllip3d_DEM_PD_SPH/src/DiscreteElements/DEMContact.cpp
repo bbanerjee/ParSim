@@ -29,9 +29,9 @@ DEMContact::DEMContact()
   d_tangentLoadingActive = d_prevTangentLoadingActive = true;
   d_normalForce = d_prevNormalForce = 0;
   d_tangentForce = d_prevTangentForce = 0;
-  d_tangentDisplacement = d_prevTangentDisp = 0;
-  d_tangentDispStart = 0;
-  d_tangentSlidingActive = d_prevTangentSlide = false;
+  d_tangentDisplacement = d_prevTangentDisplacement = 0;
+  d_tangentDisplacementStart = 0;
+  d_tangentSlidingActive = d_prevTangentSlidingActive = false;
   d_tangentForcePeak = 0;
 
   d_cohesionForce = 0;
@@ -54,9 +54,9 @@ DEMContact::DEMContact(DEMParticle* t1, DEMParticle* t2)
   d_tangentLoadingActive = d_prevTangentLoadingActive = true;
   d_normalForce = d_prevNormalForce = 0;
   d_tangentForce = d_prevTangentForce = 0;
-  d_tangentDisplacement = d_prevTangentDisp = 0;
-  d_tangentDispStart = 0;
-  d_tangentSlidingActive = d_prevTangentSlide = false;
+  d_tangentDisplacement = d_prevTangentDisplacement = 0;
+  d_tangentDisplacementStart = 0;
+  d_tangentSlidingActive = d_prevTangentSlidingActive = false;
   d_tangentForcePeak = 0;
 
   d_cohesionForce = 0;
@@ -170,17 +170,17 @@ DEMContact::checkinPreviousContactTangents(ContactTangentArray& contactTangentVe
     if (tangent.ct_particle1 == d_p1->getId() && 
         tangent.ct_particle2 == d_p2->getId()) {
       d_prevTangentForce = tangent.ct_tangentForce;
-      d_prevTangentDisp = tangent.ct_tangentDisplacement;
+      d_prevTangentDisplacement = tangent.ct_tangentDisplacement;
       d_prevTangentLoadingActive = tangent.ct_tangentLoadingActive;
-      d_tangentDispStart = tangent.ct_tangentDispStart;
+      d_tangentDisplacementStart = tangent.ct_tangentDispStart;
       d_tangentForcePeak = tangent.ct_tangentForcePeak;
-      d_prevTangentSlide = tangent.ct_tangentSlidingActive;
+      d_prevTangentSlidingActive = tangent.ct_tangentSlidingActive;
       /*
       if ((it.d_particle1 == 2 && it.d_particle2 == 94) ||
           (it.d_particle1 == 94 && it.d_particle2 == 2)) {
         //std::cout << "DEMContact tangents: " << std::setprecision(16)
         //          << " TangentForce =  " << d_prevTangentForce
-        //          << " TangentDisp =  " << d_prevTangentDisp << "\n";
+        //          << " TangentDisp =  " << d_prevTangentDisplacement << "\n";
       }
       */
       break;
@@ -192,7 +192,7 @@ void
 DEMContact::checkoutContactTangents(ContactTangentArray& contactTangentVec)
 {
   contactTangentVec.push_back(DEMContactTangent(d_p1->getId(), d_p2->getId(), d_tangentForce,
-                                     d_tangentDisplacement, d_tangentLoadingActive, d_tangentDispStart,
+                                     d_tangentDisplacement, d_tangentLoadingActive, d_tangentDisplacementStart,
                                      d_tangentForcePeak, d_tangentSlidingActive));
 }
 
@@ -287,7 +287,7 @@ DEMContact::computeContactForces()
   REAL m2 = getP2()->getMass();
   REAL kn = pow(6 * vnormL2(d_normalForce) * d_R0 * pow(d_E0, 2), 1.0 / 3.0);
   REAL dampCritical = 2 * sqrt(m1 * m2 / (m1 + m2) * kn); // critical damping
-  Vec cntDampingForce = contactDamp * dampCritical *
+  Vec contactDampingForce = contactDamp * dampCritical *
                         dot(veloc1 - veloc2, d_normalDirection) * d_normalDirection;
 
   d_vibraTimeStep = 2.0 * sqrt(m1 * m2 / (m1 + m2) / kn);
@@ -304,7 +304,7 @@ DEMContact::computeContactForces()
     Vec RelaDispInc = (veloc1 - veloc2) * timeStep;
     Vec tangentDispInc = RelaDispInc - dot(RelaDispInc, d_normalDirection) * d_normalDirection;
     // prevTangentDisp read by checkinPreviousContactTangents()
-    d_tangentDisplacement = d_prevTangentDisp + tangentDispInc;
+    d_tangentDisplacement = d_prevTangentDisplacement + tangentDispInc;
     if (vnormL2(d_tangentDisplacement) == 0) {
       d_tangentDirection = 0;
     } else {
@@ -334,9 +334,9 @@ DEMContact::computeContactForces()
 
   // apply forces
   Vec totalForce = d_normalForce +  d_tangentForce + d_cohesionForce
-                   - cntDampingForce;
+                   - contactDampingForce;
   Vec momentArm = cp - d_p1->currentPosition();
-  Vec totalMoment = cross(momentArm, (d_normalForce + d_tangentForce - cntDampingForce));
+  Vec totalMoment = cross(momentArm, (d_normalForce + d_tangentForce - contactDampingForce));
 
   // Update the forces and moments
   //d_p1->addForce(totalForce);
@@ -365,7 +365,7 @@ DEMContact::computeContactForces()
     //std::cout << " cohesionForce=" << d_cohesionForce << "\n\t"
               << " normalForce=" << d_normalForce << "\n\t"
               << " tangentForce =" << d_tangentForce << "\n\t"
-              << " dampingForce = " << cntDampingForce << "\n\t"
+              << " dampingForce = " << contactDampingForce << "\n\t"
               << " totalForce = " << totalForce << "\n\t"
               << " totalMoment = " << totalMoment << "\n\t"
               << " accumulated time=" << iteration * timeStep << "\n"
@@ -396,15 +396,15 @@ DEMContact::computeTangentForceMindlinAssumed(const REAL& contactFric,
 {
   REAL val = 0, ks = 0;
   REAL fP = contactFric * vnormL2(d_normalForce);
-  d_tangentLoadingActive = (dot(d_prevTangentDisp, tangentDispInc) >= 0);
+  d_tangentLoadingActive = (dot(d_prevTangentDisplacement, tangentDispInc) >= 0);
 
   if (d_tangentLoadingActive) {        // loading
     if (!d_prevTangentLoadingActive) { // pre-step is unloading
       val = 8 * d_G0 * d_contactRadius * vnormL2(tangentDispInc) /
             (3 * (2 - poisson) * fP);
-      d_tangentDispStart = d_prevTangentDisp;
+      d_tangentDisplacementStart = d_prevTangentDisplacement;
     } else // pre-step is loading
-      val = 8 * d_G0 * d_contactRadius * vnormL2(d_tangentDisplacement - d_tangentDispStart) /
+      val = 8 * d_G0 * d_contactRadius * vnormL2(d_tangentDisplacement - d_tangentDisplacementStart) /
             (3 * (2 - poisson) * fP);
 
     if (val > 1.0)
@@ -418,11 +418,11 @@ DEMContact::computeTangentForceMindlinAssumed(const REAL& contactFric,
     }
   } else {                  // unloading
     if (d_prevTangentLoadingActive) { // pre-step is loading
-      val = 8 * d_G0 * d_contactRadius * vnormL2(d_tangentDisplacement - d_tangentDispStart) /
+      val = 8 * d_G0 * d_contactRadius * vnormL2(d_tangentDisplacement - d_tangentDisplacementStart) /
             (3 * (2 - poisson) * fP);
       d_tangentForcePeak = vnormL2(d_prevTangentForce);
     } else // pre-step is unloading
-      val = 8 * d_G0 * d_contactRadius * vnormL2(d_tangentDisplacement - d_tangentDispStart) /
+      val = 8 * d_G0 * d_contactRadius * vnormL2(d_tangentDisplacement - d_tangentDisplacementStart) /
             (3 * (2 - poisson) * fP);
 
     if (val > 1.0 || d_tangentForcePeak > fP)
@@ -456,11 +456,11 @@ DEMContact::computeTangentForceMindlinKnown(const REAL& contactFric,
 {
   REAL val = 0, ks = 0;
   REAL fP = contactFric * vnormL2(d_normalForce);
-  if (d_prevTangentSlide)
+  if (d_prevTangentSlidingActive)
     val =
       8 * d_G0 * d_contactRadius * vnormL2(tangentDispInc) / (3 * (2 - poisson) * fP);
   else
-    val = 8 * d_G0 * d_contactRadius * vnormL2(d_tangentDisplacement - d_tangentDispStart) /
+    val = 8 * d_G0 * d_contactRadius * vnormL2(d_tangentDisplacement - d_tangentDisplacementStart) /
           (3 * (2 - poisson) * fP);
 
   if (iteration > 10000 &&
@@ -469,7 +469,7 @@ DEMContact::computeTangentForceMindlinKnown(const REAL& contactFric,
       d_tangentForce = fP * d_tangentDirection;
       d_tangentSlidingActive = true;
     } else {
-      if (!d_prevTangentSlide) {
+      if (!d_prevTangentSlidingActive) {
         ks = 4 * d_G0 * d_contactRadius / (2 - poisson) * sqrt(1 - val);
         d_tangentForce =
           d_prevTangentForce + ks * (-tangentDispInc); // tangentDispInc determines signs
@@ -487,7 +487,7 @@ DEMContact::computeTangentForceMindlinKnown(const REAL& contactFric,
       d_tangentForce = fP * d_tangentDirection;
       d_tangentSlidingActive = true;
     } else {
-      if (!d_prevTangentSlide) {
+      if (!d_prevTangentSlidingActive) {
         ks = 2 * sqrt(2) * d_G0 * d_contactRadius / (2 - poisson) *
              sqrt(1 + pow(1 - d_tangentForcePeak / fP, 2.0 / 3.0) + val);
         d_tangentForce =
@@ -498,7 +498,7 @@ DEMContact::computeTangentForceMindlinKnown(const REAL& contactFric,
           d_tangentSlidingActive = true;
         else {
           d_tangentSlidingActive = false;
-          d_tangentDispStart = d_tangentDisplacement;
+          d_tangentDisplacementStart = d_tangentDisplacement;
         }
       }
     }
@@ -506,7 +506,7 @@ DEMContact::computeTangentForceMindlinKnown(const REAL& contactFric,
 
   /*
         //std::cout<< "DEMContact.h: iter="<iteration
-                 << " prevTangentSlide=" << d_prevTangentSlide
+                 << " prevTangentSlide=" << d_prevTangentSlidingActive
                  << " tangentSlide=" << d_tangentSlidingActive
                  << " val=" << val
                  << " ks=" << ks

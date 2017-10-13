@@ -27,7 +27,7 @@ Drainage::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
       creator.generateSPHParticleNoBottom<3>(container, demParticles);
     sph->setAllSPHParticleVec(sphParticles);
 
-    dem->openDepositProg(demProgressInf, "deposit_progress");
+    dem->openProgressOutputFile(demProgressInf, "deposit_progress");
     //sph->openSPHTecplot(sphTecplotInf, "sph_results.dat");
 
     ghostWidth = dem->getGradation().getPtclMaxRadius() * 2;
@@ -41,7 +41,7 @@ Drainage::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
   broadcast(dem->getMPIWorld(), bufferLength, 0);
 
   // scatter particles only once; also updates patchGrid for the first time
-  dem->scatterParticle(); 
+  dem->scatterParticles(); 
   sph->scatterSPHParticle(dem->getAllContainer(), ghostWidth, bufferLength); 
 
   // sph parameters
@@ -79,7 +79,7 @@ Drainage::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
     dem->writeBoundaryToFile();
     dem->writePatchGridToFile();
     dem->writeParticlesToFile(iterSnap);
-    dem->printBdryContact();
+    dem->printBoundaryContacts();
     //sph->printSPHTecplot(sphTecplotInf, iterSnap-1);
     sph->writeParticlesToFile(iterSnap);
     //sph->printSPHProgress(sphProgressInf, 0);
@@ -121,11 +121,11 @@ Drainage::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
     // use values from last step, must call before findContact (which clears data)
     dem->calcTimeStep(); 
     dem->findContact();
-    if (dem->isBdryProcess()) dem->findBdryContact();
+    if (dem->isBoundaryProcess()) dem->findBoundaryContacts();
 
     dem->clearContactForce();
     dem->internalForce();
-    if (dem->isBdryProcess()) dem->boundaryForce();
+    if (dem->isBoundaryProcess()) dem->boundaryForce();
 
     dem->dragForce();
 
@@ -134,7 +134,7 @@ Drainage::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
                                        kernelSize, smoothLength);
                                        
 
-    dem->updateParticle();   
+    dem->updateParticles();   
 
     // update velocity of SPH particles based on equation (4.2)
     sph->updateSPHLeapFrogVelocity(timeStep);	
@@ -152,9 +152,9 @@ Drainage::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
         time2 = MPI_Wtime();
       }
 
-      dem->gatherParticle();
+      dem->gatherParticles();
       sph->gatherSPHParticle();
-      dem->gatherBdryContact();
+      dem->gatherBoundaryContacts();
       dem->gatherEnergy(); 
       
       if (toCheckTime) {
@@ -166,10 +166,10 @@ Drainage::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
         dem->writeBoundaryToFile();
         dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
-        dem->printBdryContact();
+        dem->printBoundaryContacts();
         sph->writeParticlesToFile(iterSnap);
         //sph->printSPHTecplot(sphTecplotInf, iterSnap);
-        dem->printDepositProg(demProgressInf);
+        dem->appendToProgressOutputFile(demProgressInf);
       }
       dem->printContact(util::combine(outputFolder, "drainage_contact_", iterSnap, 3));
     
@@ -180,7 +180,7 @@ Drainage::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
     if (toCheckTime) {
       time1 = MPI_Wtime();
     }
-    dem->migrateParticle();
+    dem->migrateParticles();
 
     if (toCheckTime) {
       time2 = MPI_Wtime(); 
@@ -200,7 +200,7 @@ Drainage::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
   }
 
   if (dem->getMPIRank() == 0) {
-    dem->closeProg(demProgressInf);
+    dem->closeProgressOutputFile(demProgressInf);
   }
 }
 

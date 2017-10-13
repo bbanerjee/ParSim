@@ -26,7 +26,7 @@ BoundaryReader::read(const std::string& inputFileName, Box& container,
   ifs >> x1 >> y1 >> z1 >> x2 >> y2 >> z2;
   container.set(x1, y1, z1, x2, y2, z2);
   // compute patchGrid assumed to be the same as container, change in
-  // scatterParticle() if necessary.
+  // scatterParticles() if necessary.
   patchBox.set(x1, y1, z1, x2, y2, z2);
 
   boundaries.clear();
@@ -124,7 +124,7 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
                 boxMax.z());
 
   // compute patchGrid assumed to be the same as container, change in
-  // scatterParticle() if necessary.
+  // scatterParticles() if necessary.
   patchBox.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
            boxMax.z());
 
@@ -253,7 +253,7 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
                 boxMax.z());
 
   // compute patchGrid assumed to be the same as container, change in
-  // scatterParticle() if necessary.
+  // scatterParticles() if necessary.
   patchBox.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
            boxMax.z());
 

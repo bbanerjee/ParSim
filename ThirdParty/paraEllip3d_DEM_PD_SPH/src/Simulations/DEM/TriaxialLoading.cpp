@@ -13,9 +13,9 @@ TriaxialLoading::execute(DiscreteElements* dem)
       InputParameter::get().datafile["boundaryFilename"]);
     dem->readParticles(
       InputParameter::get().datafile["particleFilename"]);
-    dem->openCompressProg(progressInf, "triaxial_progress");
+    dem->openProgressOutputFile(progressInf, "triaxial_progress");
   }
-  dem->scatterParticle();
+  dem->scatterParticles();
 
   auto startStep = util::getParam<std::size_t>("startStep");
   auto endStep = util::getParam<std::size_t>("endStep");
@@ -43,7 +43,7 @@ TriaxialLoading::execute(DiscreteElements* dem)
     dem->writeBoundaryToFile();
     dem->writePatchGridToFile();
     dem->writeParticlesToFile(iterSnap);
-    dem->printBdryContact();
+    dem->printBoundaryContacts();
     dem->printBoundary();
     dem->getStartDimension(distX, distY, distZ);
   }
@@ -66,22 +66,22 @@ TriaxialLoading::execute(DiscreteElements* dem)
     // calcTimeStep().
     // calcTimeStep(); // use values from last step, must call before findConact
     dem->findContact();
-    if (dem->isBdryProcess())
-      dem->findBdryContact();
+    if (dem->isBoundaryProcess())
+      dem->findBoundaryContacts();
 
     dem->clearContactForce();
     dem->internalForce();
-    if (dem->isBdryProcess())
+    if (dem->isBoundaryProcess())
       dem->boundaryForce();
 
-    dem->updateParticle();
-    dem->gatherBdryContact(); // must call before updateBoundary
+    dem->updateParticles();
+    dem->gatherBoundaryContacts(); // must call before updateBoundary
     dem->updateBoundary(sigmaConf, "triaxial");
     dem->updatePatchBox();
 
     if (iteration % (netStep / netSnap) == 0) {
       time1 = MPI_Wtime();
-      dem->gatherParticle();
+      dem->gatherParticles();
       dem->gatherEnergy();
       time2 = MPI_Wtime();
       gatherT = time2 - time1;
@@ -91,20 +91,20 @@ TriaxialLoading::execute(DiscreteElements* dem)
         dem->writeBoundaryToFile();
         dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
-        dem->printBdryContact();
+        dem->printBoundaryContacts();
         dem->printBoundary();
-        // dem->printCompressProg(progressInf, distX, distY, distZ); //
+        // dem->appendToProgressOutputFile(progressInf, distX, distY, distZ); //
         // redundant
       }
       dem->printContact(combine(outputFolder, "triaxial_contact_", iterSnap, 3));
       ++iterSnap;
     }
 
-    dem->releaseRecvParticle(); // late release because
+    dem->releaseReceivedParticles(); // late release because
                                      // dem->printContact refers to
                                      // received particles
     time1 = MPI_Wtime();
-    dem->migrateParticle();
+    dem->migrateParticles();
     time2 = MPI_Wtime();
     migraT = time2 - time1;
     totalT = time2 - time0;
@@ -117,7 +117,7 @@ TriaxialLoading::execute(DiscreteElements* dem)
                << std::endl;
 
     if (dem->getMPIRank() == 0 && iteration % 10 == 0)
-      dem->printCompressProg(progressInf, distX, distY, distZ);
+      dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
 
     // no break condition, just through top/bottom displacement control
     ++iteration;
@@ -126,11 +126,11 @@ TriaxialLoading::execute(DiscreteElements* dem)
   if (dem->getMPIRank() == 0) {
     dem->updateFileNames(iterSnap, ".end");
     dem->writeParticlesToFile(iterSnap);
-    dem->printBdryContact();
+    dem->printBoundaryContacts();
     dem->printBoundary();
-    dem->printCompressProg(progressInf, distX, distY, distZ);
+    dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
   }
 
   if (dem->getMPIRank() == 0)
-    dem->closeProg(progressInf);
+    dem->closeProgressOutputFile(progressInf);
 }

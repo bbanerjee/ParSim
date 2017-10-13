@@ -115,18 +115,18 @@ public:
   void readBoundary(const std::string& fileName);
   void readParticles(const std::string& fileName);
 
-  void scatterParticle();
+  void scatterParticles();
   void scatterDEMPeriParticle();
   void commuParticle();
   void commuParticle(const int& iteration);
-  bool isBdryProcess();
-  void releaseRecvParticle();
+  bool isBoundaryProcess();
+  void releaseReceivedParticles();
   void releaseGatheredParticle();
   void releaseGatheredContact();
-  void migrateParticle();
+  void migrateParticles();
   void removeParticleOutBox();
-  void gatherParticle();
-  void gatherBdryContact();
+  void gatherParticles();
+  void gatherBoundaryContacts();
   void findBoundaryPeriParticles(); // for all cpus
   void applyTractionBoundary(int);
 
@@ -158,14 +158,13 @@ public:
     return d_writer->getParticleFileName();
   }
 
-  void openDepositProg(std::ofstream& ofs, const std::string& str);
-  void printDepositProg(std::ofstream& ofs);
-  void openCompressProg(std::ofstream& ofs, const std::string& str);
+  void openProgressOutputFile(std::ofstream& ofs, const std::string& str);
   void openPeriProgress(std::ofstream& ofs, const std::string& str);
-  void printCompressProg(std::ofstream& ofs, REAL distX, REAL distY,
-                         REAL distZ);
+  void appendToProgressOutputFile(std::ofstream& ofs, 
+                                  REAL distX = 1, REAL distY = 1,
+                                  REAL distZ = 1);
   void openParticleProg(std::ofstream& ofs, const std::string& str);
-  void closeProg(std::ofstream& ofs);
+  void closeProgressOutputFile(std::ofstream& ofs);
 
   void trimCavity(bool toRebuild, const std::string& Particlefile,
                   const std::string& cavParticle);
@@ -175,7 +174,7 @@ public:
   void findContact(); // detect and resolve contact between particles
   void findContactSingleThread();
   void findContactMultiThread(int numThreads);
-  void findBdryContact();      // find particles on boundaries
+  void findBoundaryContacts();      // find particles on boundaries
   void findParticleOnCavity(); // find particle on cavity boundaries
 
   void clearContactForce(); // clear forces and moments for all particles
@@ -184,7 +183,7 @@ public:
   void boundaryForce(); // calcualte forces between rigid boundaries and
                         // particles
   void cavityBoundaryForce();
-  void updateParticle(); // update motion of particles
+  void updateParticles(); // update motion of particles
 
   REAL ellipPileForce();  // for force pile only
   void ellipPileUpdate(); // for force pile only
@@ -222,7 +221,7 @@ public:
   void writeParticlesToFile(DEMParticlePArray& particleVec, int frame) const; // print particles info
   void printParticle(const std::string& fileName, int frame) const; // print all particles
   void printParticle(const std::string& fileName, DEMParticlePArray& particleVec, int frame) const; // print particles info
-  void printBdryContact() const; // print all boundary contact info
+  void printBoundaryContacts() const; // print all boundary contact info
   void printMemParticle(
     const std::string& str) const; // print membrane particles
   void plotSpring(

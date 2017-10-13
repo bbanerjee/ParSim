@@ -130,7 +130,7 @@ public:
   void clearPeriDEMBonds();
   void eraseBrokenPeriDEMBonds();
 
-  bool isBdryProcess();
+  bool isBoundaryProcess();
 
   void releaseRecvPeriParticle();
   void releasePeriBondVec();

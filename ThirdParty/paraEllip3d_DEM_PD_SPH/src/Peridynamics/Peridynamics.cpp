@@ -979,7 +979,7 @@ Peridynamics::findRecvPeriBonds()
 }
 
 bool
-Peridynamics::isBdryProcess()
+Peridynamics::isBoundaryProcess()
 {
   return (d_mpiCoords.x() == 0 || d_mpiCoords.x() == d_mpiProcs.x() - 1 ||
           d_mpiCoords.y() == 0 || d_mpiCoords.y() == d_mpiProcs.y() - 1 ||

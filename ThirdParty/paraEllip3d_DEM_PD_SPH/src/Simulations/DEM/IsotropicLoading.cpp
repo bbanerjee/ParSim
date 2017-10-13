@@ -15,10 +15,10 @@ IsotropicLoading::execute(DiscreteElements* dem)
       InputParameter::get().datafile["boundaryFilename"]);
     dem->readParticles(
       InputParameter::get().datafile["particleFilename"]);
-    dem->openCompressProg(progressInf, "isotropic_progress");
-    dem->openCompressProg(balancedInf, "isotropic_balanced");
+    dem->openProgressOutputFile(progressInf, "isotropic_progress");
+    dem->openProgressOutputFile(balancedInf, "isotropic_balanced");
   }
-  dem->scatterParticle();
+  dem->scatterParticles();
 
   auto startStep = util::getParam<std::size_t>("startStep");
   auto endStep = util::getParam<std::size_t>("endStep");
@@ -66,7 +66,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
     dem->printBoundary();
     dem->writePatchGridToFile();
     dem->writeParticlesToFile(iterSnap);
-    dem->printBdryContact();
+    dem->printBoundaryContacts();
     dem->getStartDimension(distX, distY, distZ);
   }
   if (dem->getMPIRank() == 0)
@@ -87,22 +87,22 @@ IsotropicLoading::execute(DiscreteElements* dem)
     dem->calcTimeStep(); // use values from last step, must call before
                               // findConact
     dem->findContact();
-    if (dem->isBdryProcess())
-      dem->findBdryContact();
+    if (dem->isBoundaryProcess())
+      dem->findBoundaryContacts();
 
     dem->clearContactForce();
     dem->internalForce();
-    if (dem->isBdryProcess())
+    if (dem->isBoundaryProcess())
       dem->boundaryForce();
 
-    dem->updateParticle();
-    dem->gatherBdryContact(); // must call before updateBoundary
+    dem->updateParticles();
+    dem->gatherBoundaryContacts(); // must call before updateBoundary
     dem->updateBoundary(sigmaVar, "isotropic");
     dem->updatePatchBox();
 
     if (iteration % (netStep / netSnap) == 0) {
       time1 = MPI_Wtime();
-      dem->gatherParticle();
+      dem->gatherParticles();
       dem->gatherEnergy();
       time2 = MPI_Wtime();
       gatherT = time2 - time1;
@@ -113,18 +113,18 @@ IsotropicLoading::execute(DiscreteElements* dem)
         dem->printBoundary();
         dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
-        dem->printBdryContact();
-        dem->printCompressProg(progressInf, distX, distY, distZ);
+        dem->printBoundaryContacts();
+        dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
       }
       dem->printContact(combine(outputFolder, "isotropic_contact_", iterSnap, 3));
       ++iterSnap;
     }
 
     dem
-      ->releaseRecvParticle(); // late release because printContact refers to
+      ->releaseReceivedParticles(); // late release because printContact refers to
                                // received particles
     time1 = MPI_Wtime();
-    dem->migrateParticle();
+    dem->migrateParticles();
     time2 = MPI_Wtime();
     migraT = time2 - time1;
     totalT = time2 - time0;
@@ -141,25 +141,25 @@ IsotropicLoading::execute(DiscreteElements* dem)
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
           dem->writeParticlesToFile(iterSnap);
-          dem->printBdryContact();
+          dem->printBoundaryContacts();
           dem->printBoundary();
-          dem->printCompressProg(balancedInf, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
         }
         break;
       }
     } else if (isotropicType == 2) {
       if (dem->tractionErrorTol(sigmaVar, "isotropic")) {
         if (dem->getMPIRank() == 0)
-          dem->printCompressProg(balancedInf, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
         sigmaVar += sigmaInc;
       }
       if (dem->tractionErrorTol(sigmaEnd, "isotropic")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
           dem->writeParticlesToFile(iterSnap);
-          dem->printBdryContact();
+          dem->printBoundaryContacts();
           dem->printBoundary();
-          dem->printCompressProg(balancedInf, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
         }
         break;
       }
@@ -168,7 +168,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
     if (isotropicType == 3) {
       if (dem->tractionErrorTol(sigmaVar, "isotropic")) {
         if (dem->getMPIRank() == 0)
-          dem->printCompressProg(balancedInf, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
         sigmaVar += sigmaInc;
         if (sigmaVar == sigmaPath[sigma_i + 1]) {
           sigmaVar = sigmaPath[++sigma_i];
@@ -179,9 +179,9 @@ IsotropicLoading::execute(DiscreteElements* dem)
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
           dem->writeParticlesToFile(iterSnap);
-          dem->printBdryContact();
+          dem->printBoundaryContacts();
           dem->printBoundary();
-          dem->printCompressProg(balancedInf, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
         }
         break;
       }
@@ -191,7 +191,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
   }
 
   if (dem->getMPIRank() == 0) {
-    dem->closeProg(progressInf);
-    dem->closeProg(balancedInf);
+    dem->closeProgressOutputFile(progressInf);
+    dem->closeProgressOutputFile(balancedInf);
   }
 }

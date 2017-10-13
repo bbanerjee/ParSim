@@ -18,12 +18,12 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
       InputParameter::get().datafile["boundaryFilename"]);
     dem->readParticles(
       InputParameter::get().datafile["particleFilename"]);
-    dem->openDepositProg(progressInf, "couple_progress");
+    dem->openProgressOutputFile(progressInf, "couple_progress");
     dem->openParticleProg(particleInf, "particle_progress");
     /*1*/ fluid.initParameter(allContainer, gradation);
     /*1*/ fluid.initialize();
   }
-  dem->scatterParticle();
+  dem->scatterParticles();
 
   auto startStep = util::getParam<std::size_t>("startStep");
   auto endStep = util::getParam<std::size_t>("endStep");
@@ -51,7 +51,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
     dem->writeBoundaryToFile();
     dem->writePatchGridToFile();
     dem->writeParticlesToFile(iterSnap);
-    dem->printBdryContact();
+    dem->printBoundaryContacts();
     /*3*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap - 1, 3) + ".dat");
   }
   /*
@@ -74,8 +74,8 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
     dem->calcTimeStep(); // use values from last step, must call before
                               // findConact
     dem->findContact();
-    if (dem->isBdryProcess())
-      dem->findBdryContact();
+    if (dem->isBoundaryProcess())
+      dem->findBoundaryContacts();
 
     dem->clearContactForce();
 
@@ -86,18 +86,18 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
     /*7*/ fluid.penalize();
 
     dem->internalForce();
-    if (dem->isBdryProcess())
+    if (dem->isBoundaryProcess())
       dem->boundaryForce();
 
-    dem->updateParticle();
+    dem->updateParticles();
     dem->updatePatchBoxMaxZ();
 
     timeCount += timeStep;
     timeAccrued += timeStep;
     if (timeCount >= timeTotal / netSnap) {
       // REAL time1 = MPI_Wtime();
-      dem->gatherParticle();
-      dem->gatherBdryContact();
+      dem->gatherParticles();
+      dem->gatherBoundaryContacts();
       dem->gatherEnergy();
       // time2 = MPI_Wtime();
       // REAL gatherT = time2 - time1;
@@ -107,8 +107,8 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
         dem->writeBoundaryToFile();
         dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
-        dem->printBdryContact();
-        dem->printDepositProg(progressInf);
+        dem->printBoundaryContacts();
+        dem->appendToProgressOutputFile(progressInf);
         /*8*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap, 3) + ".dat");
       }
       dem->printContact(util::combine(".", "couple_contact_", iterSnap, 3));
@@ -118,10 +118,10 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
     }
 
     dem
-      ->releaseRecvParticle(); // late release because printContact refers to
+      ->releaseReceivedParticles(); // late release because printContact refers to
                                // received particles
     // REAL time1 = MPI_Wtime();
-    dem->migrateParticle();
+    dem->migrateParticles();
     // time2 = MPI_Wtime();
     // REAL migraT = time2 - time1;
     // REAL totalT = time2 - time0;
@@ -138,7 +138,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
   }
 
   if (dem->getMPIRank() == 0) {
-    dem->closeProg(progressInf);
-    dem->closeProg(particleInf);
+    dem->closeProgressOutputFile(progressInf);
+    dem->closeProgressOutputFile(particleInf);
   }
 }

@@ -193,7 +193,7 @@ PlaneBoundary::printContactInfo(std::ostream& os)
 }
 
 void
-PlaneBoundary::findBdryContact(DEMParticlePArray& particles)
+PlaneBoundary::findBoundaryContacts(DEMParticlePArray& particles)
 {
   b_probableBoundaryParticles.clear();
   b_contacts.clear();

@@ -64,14 +64,14 @@ private:
     d_tangentForce; // TangentrDirc points along tangential forces exerted on particle 1
   Vec d_tangentDisplacement; // tangential relative displacment total vector
   Vec
-    d_tangentDispStart; // displacement start value for each loading-unloading loop
+    d_tangentDisplacementStart; // displacement start value for each loading-unloading loop
   bool d_tangentSlidingActive;  // tangential silde or not
 
   bool d_prevTangentLoadingActive; // previous loading-unloading status
   Vec d_prevNormalForce;
   Vec d_prevTangentForce;
-  Vec d_prevTangentDisp; // previous tangential relative displacment total vector
-  bool d_prevTangentSlide;
+  Vec d_prevTangentDisplacement; // previous tangential relative displacment total vector
+  bool d_prevTangentSlidingActive;
   REAL d_tangentForcePeak;
 
   Vec d_cohesionForce; // cohesion force between particles
@@ -109,13 +109,13 @@ private:
     ar& d_normalForce;
     ar& d_tangentForce;
     ar& d_tangentDisplacement;
-    ar& d_tangentDispStart;
+    ar& d_tangentDisplacementStart;
     ar& d_tangentSlidingActive;
     ar& d_prevTangentLoadingActive;
     ar& d_prevNormalForce;
     ar& d_prevTangentForce;
-    ar& d_prevTangentDisp;
-    ar& d_prevTangentSlide;
+    ar& d_prevTangentDisplacement;
+    ar& d_prevTangentSlidingActive;
     ar& d_tangentForcePeak;
     ar& d_cohesionForce;
     ar& d_spinResist;

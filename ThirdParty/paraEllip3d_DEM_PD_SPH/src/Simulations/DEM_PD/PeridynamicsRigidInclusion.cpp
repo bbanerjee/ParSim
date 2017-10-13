@@ -31,7 +31,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
 
     // compute patchGrid assumed to be
     // the same as container,
-    // change in scatterParticle()
+    // change in scatterParticles()
     // if necessary.
     dem->setPatchBox(Box(x1, y1, z1, x2, y2, z2)); 
     pd->setPatchBox(Box(x1, y1, z1, x2, y2, z2)); 
@@ -39,7 +39,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     dem->readParticles(InputParameter::get().datafile["particleFilename"]);
     pd->readPeriDynamicsData(InputParameter::get().datafile["periFilename"]);
 
-    dem->openCompressProg(progressInf, "rigidInc_progress");
+    dem->openProgressOutputFile(progressInf, "rigidInc_progress");
     pd->openPeriProgress(periProgInf, "rigidInc_peri.dat");
 
     // volume and horizon size are related to
@@ -67,7 +67,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
   }
 
   //proc0cout << "**NOTICE** Scattering dem particles\n";
-  dem->scatterParticle();
+  dem->scatterParticles();
 
   //proc0cout << "**NOTICE** Scattering pd particles\n";
   pd->scatterPeriParticle(dem->getAllContainer());
@@ -171,7 +171,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
   pd->calcParticleAcceleration();
 
   //proc0cout << "**NOTICE** DEM release\n";
-  dem->releaseRecvParticle();
+  dem->releaseReceivedParticles();
 
   //proc0cout << "**NOTICE** PD release\n";
   pd->releaseRecvPeriParticle();
@@ -406,14 +406,14 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     // dem->findConact
     //proc0cout << "**NOTICE** DEM findContact\n";
     dem->findContact();
-    if (dem->isBdryProcess())
-      dem->findBdryContact();
+    if (dem->isBoundaryProcess())
+      dem->findBoundaryContacts();
 
     dem->clearContactForce();
 
     //proc0cout << "**NOTICE** DEM internal force\n";
     dem->internalForce();
-    if (dem->isBdryProcess())
+    if (dem->isBoundaryProcess())
       dem->boundaryForce();
 
     //proc0cout << "**NOTICE** PD first half step\n";
@@ -436,17 +436,17 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     //proc0cout << "**NOTICE** PD second half step\n";
     pd->runSecondHalfStep();
 
-    dem->updateParticle();
+    dem->updateParticles();
 
     //proc0cout << "**NOTICE** DEM gather boundary contact\n";
-    dem->gatherBdryContact(); // must call before updateBoundary
+    dem->gatherBoundaryContacts(); // must call before updateBoundary
     //      updateBoundary(sigmaConf, "triaxial");
     //      updatePatchBox();
     pd->updatePeriPatchGrid(pd->getPeriParticleVec());
 
     if (iteration % (netStep / netSnap) == 0) {
       // time1 = MPI_Wtime();
-      dem->gatherParticle();
+      dem->gatherParticles();
       pd->gatherPeriParticle();
       dem->gatherEnergy();
       // time2 = MPI_Wtime(); gatherT = time2 - time1;
@@ -458,16 +458,16 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
         dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
         pd->writeParticlesToFile(iterSnap);
-        dem->printBdryContact();
+        dem->printBoundaryContacts();
         dem->printBoundary();
-        // dem->printCompressProg(progressInf, distX, distY, distZ); //
+        // dem->appendToProgressOutputFile(progressInf, distX, distY, distZ); //
         // redundant
         pd->printPeriProgress(periProgInf, iterSnap);
       }
       dem->printContact(combine(".", "rigidInc_contact_", iterSnap, 3));
       ++iterSnap;
     }
-    dem->releaseRecvParticle();     // late dem->release because
+    dem->releaseReceivedParticles();     // late dem->release because
                                          // dem->printContact refers to
                                          // received particles
     pd->releaseRecvPeriParticle(); // dem->release
@@ -478,7 +478,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     // time1 = MPI_Wtime();
 
     //proc0cout << "**NOTICE** DEM migrate\n";
-    dem->migrateParticle();
+    dem->migrateParticles();
 
     //proc0cout << "**NOTICE** PD migrate\n";
     pd->migratePeriParticle(iteration);
@@ -494,7 +494,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     //         migraT)/totalT*100 << std::endl;
 
     if (dem->getMPIRank() == 0 && iteration % 10 == 0)
-      dem->printCompressProg(progressInf, distX, distY, distZ);
+      dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
 
     // no break condition, just through top/bottom displacement control
     ++iteration;
@@ -504,13 +504,13 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     dem->updateFileNames(iterSnap, ".end");
     dem->writeParticlesToFile(iterSnap);
     pd->writeParticlesToFile(iterSnap);
-    dem->printBdryContact();
+    dem->printBoundaryContacts();
     dem->printBoundary();
-    dem->printCompressProg(progressInf, distX, distY, distZ);
+    dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
     //      dem->printPeriProgress(periProgInf, iterSnap);
   }
   if (dem->getMPIRank() == 0) {
-    dem->closeProg(progressInf);
-    dem->closeProg(periProgInf);
+    dem->closeProgressOutputFile(progressInf);
+    dem->closeProgressOutputFile(periProgInf);
   }
 }
