@@ -36,8 +36,6 @@
 
 namespace Uintah {
 
-using namespace Uintah;
-
 /**************************************
 
 CLASS
