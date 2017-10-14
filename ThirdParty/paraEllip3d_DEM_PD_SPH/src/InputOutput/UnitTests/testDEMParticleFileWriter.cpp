@@ -28,7 +28,7 @@ TEST(DEMParticleFileWriterTest, writeSingleType) {
   gradation.set(sieveNum, percent, size, ratio_ba, ratio_ca);
 
   // Set up domain
-  Box allContainer(0, 0, 0, 1, 1, 1);
+  Box spatialDomain(0, 0, 0, 1, 1, 1);
 
   // Set up layer flag (one layer)
   auto layerFlag = 1u;
@@ -38,7 +38,7 @@ TEST(DEMParticleFileWriterTest, writeSingleType) {
   DEMParticlePArray particles =
     creator.generateDEMParticles(layerFlag, 
                                  DEMParticle::DEMParticleShape::ELLIPSOID,
-                                 allContainer, gradation);
+                                 spatialDomain, gradation);
 
   // Write particles
   DEMParticleFileWriter writer;
@@ -85,7 +85,7 @@ TEST(DEMParticleFileWriterTest, writeTwoTypes) {
   gradation.set(sieveNum, percent, size, ratio_ba, ratio_ca);
 
   // Set up domain
-  Box allContainer(0, 0, 0, 1, 1, 1);
+  Box spatialDomain(0, 0, 0, 1, 1, 1);
 
   // Set up layer flag (one layer)
   auto layerFlag = 1u;
@@ -95,11 +95,11 @@ TEST(DEMParticleFileWriterTest, writeTwoTypes) {
   DEMParticlePArray particles_ellipse =
     creator.generateDEMParticles(layerFlag, 
                                  DEMParticle::DEMParticleShape::ELLIPSOID,
-                                 allContainer, gradation);
+                                 spatialDomain, gradation);
   DEMParticlePArray particles_sphere =
     creator.generateDEMParticles(layerFlag, 
                                  DEMParticle::DEMParticleShape::SPHERE,
-                                 allContainer, gradation);
+                                 spatialDomain, gradation);
   DEMParticlePArray particles;
   std::copy(particles_ellipse.begin(), particles_ellipse.end(),
             std::back_inserter(particles));

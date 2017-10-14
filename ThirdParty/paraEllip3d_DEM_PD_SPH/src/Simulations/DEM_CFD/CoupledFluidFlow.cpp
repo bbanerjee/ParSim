@@ -5,7 +5,7 @@ using namespace dem;
 void
 CoupledFluidFlow::execute(DiscreteElements* dem)
 {
-  Box allContainer = dem->getAllContainer();
+  Box spatialDomain = dem->getSpatialDomain();
   Gradation gradation = dem->getGradation();
   Fluid fluid = dem->getFluid();
   DEMParticlePArray particleVec = dem->getDEMParticleVec();
@@ -20,7 +20,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
       InputParameter::get().datafile["particleFilename"]);
     dem->openProgressOutputFile(progressInf, "couple_progress");
     dem->openParticleProg(particleInf, "particle_progress");
-    /*1*/ fluid.initParameter(allContainer, gradation);
+    /*1*/ fluid.initParameter(spatialDomain, gradation);
     /*1*/ fluid.initialize();
   }
   dem->scatterParticles();

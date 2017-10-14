@@ -20,11 +20,11 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
     auto particleFilename = InputParameter::get().datafile["particleFilename"];
     dem->readParticles(particleFilename);
 
-    Box container = dem->getAllContainer();
+    Box domain = dem->getSpatialDomain();
     DEMParticlePArray demParticles= dem->getAllDEMParticleVec();
     sph::SPHParticleCreator creator;
     sph::SPHParticlePArray sphParticles = 
-      creator.generateSPHParticleMiddleLayers<3>(container, demParticles);
+      creator.generateSPHParticleMiddleLayers<3>(domain, demParticles);
     sph->setAllSPHParticleVec(sphParticles);
 
     dem->openProgressOutputFile(demProgressInf, "deposit_progress");
@@ -43,7 +43,7 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
 
   // scatter particles only once; also updates patchGrid for the first time
   dem->scatterParticles(); 
-  sph->scatterSPHParticle(dem->getAllContainer(), ghostWidth, bufferLength); 
+  sph->scatterSPHParticle(dem->getSpatialDomain(), ghostWidth, bufferLength); 
 
   // sph parameters
   auto space_interval = util::getParam<REAL>("spaceInterval");
@@ -130,7 +130,7 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
 
     dem->dragForce();
 
-    sph->updateParticleInteractions<3>(dem->getAllContainer(),
+    sph->updateParticleInteractions<3>(dem->getSpatialDomain(),
                                        bufferLength, ghostWidth,
                                        kernelSize, smoothLength);
                                        

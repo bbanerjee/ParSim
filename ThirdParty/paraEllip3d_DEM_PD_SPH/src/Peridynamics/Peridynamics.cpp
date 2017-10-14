@@ -694,10 +694,10 @@ Peridynamics::removeInsideDEMParticles(DEMParticlePArray& allDEMParticleVec) con
 //     partition, constructNeighbor() is called, then these peri-bonds,
 //     boundary-bonds, and peri-DEM-bonds will be generated
 void
-Peridynamics::scatterPeriParticle(const Box& allContainer)
+Peridynamics::scatterPeriParticle(const Box& spatialDomain)
 {
   if (d_mpiRank == 0) { // process 0
-    setPatchBox(Box(allContainer, d_maxDistBetweenParticles*0.2));
+    setPatchBox(Box(spatialDomain, d_maxDistBetweenParticles*0.2));
 
     Vec v1 = d_periPatchBox.getMinCorner();
     Vec v2 = d_periPatchBox.getMaxCorner();
@@ -716,9 +716,9 @@ Peridynamics::scatterPeriParticle(const Box& allContainer)
 
       Vec lower = v1 + vspan*coords;
       Vec upper = lower + vspan;
-      Box container(lower, upper);
+      Box domain(lower, upper);
 
-      findPeriParticleInBox(container, allPeriParticleVec, insidePeriParticleVec);
+      findPeriParticleInBox(domain, allPeriParticleVec, insidePeriParticleVec);
 
       if (iRank != 0) {
 
@@ -775,13 +775,13 @@ Peridynamics::scatterPeriParticle(const Box& allContainer)
 } // scatterDEMPeriParticle
 
 void
-Peridynamics::findPeriParticleInBox(const Box& container,
+Peridynamics::findPeriParticleInBox(const Box& domain,
                                     const PeriParticlePArray& periParticles,
                                     PeriParticlePArray& insideParticles)
 {
   for (const auto& particle : periParticles) {
     // it is critical to use EPS
-    if (container.inside(particle->currentPosition(), dem::EPS)) {
+    if (domain.inside(particle->currentPosition(), dem::EPS)) {
       insideParticles.push_back(particle);
     }
   }
@@ -803,7 +803,7 @@ void
 Peridynamics::createPatch(int iteration, 
                           const REAL& ghostWidth) 
 {
-  // determine container of each process
+  // determine domain of each process
   Vec v1 = d_periPatchBox.getMinCorner();
   Vec v2 = d_periPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / d_mpiProcs;
@@ -817,13 +817,13 @@ void
 Peridynamics::updatePatch(int iteration,
                           const REAL& ghostWidth)
 {
-  // determine container of each process
+  // determine domain of each process
   Vec v1 = d_periPatchBox.getMinCorner();
   Vec v2 = d_periPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / d_mpiProcs;
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
-  Box container(lower, upper);
+  Box domain(lower, upper);
   d_patchP->update(iteration, lower, upper, ghostWidth);
 }
 
@@ -837,7 +837,7 @@ Peridynamics::commuPeriParticle(int iteration,
   // deformationGradient and sigma of the other peri-points in the bond are
   // needed,
   // this means that the deformationGradient, sigma and Kinv of the other
-  // peri-point should also be calculated even if it is in recvParticleVec, thus
+  // peri-point should also be calculated even if it is in d_receivedParticles, thus
   // we need to transfer 2*cellSize peri-points, the peri-points in the outer
   // cell are used to calculate the deformationGradient, sigma and Kinv
   // of the peri-points in inner cell
@@ -850,7 +850,7 @@ Peridynamics::commuPeriParticle(int iteration,
   mergePeriParticleVec = periParticleVec;
 
   // Initialize an array for just the received particles during each phase
-  //PeriParticlePArray recvParticleVec;
+  //PeriParticlePArray d_receivedParticles;
 
   // Plimpton scheme: x-ghost exchange
   d_patchP->sendRecvGhostXMinus(d_boostWorld, iteration, mergePeriParticleVec);
@@ -1412,7 +1412,7 @@ Peridynamics::eraseBrokenPeriDEMBonds()
 // dem particle) entering the influence domain of a DEM particle,
 // then construct peri-DEM bond between this peri-point and this DEM particle
 void
-Peridynamics::findPeriDEMBonds(dem::DEMParticlePArray mergeParticleVec)
+Peridynamics::findPeriDEMBonds(dem::DEMParticlePArray d_mergedParticles)
 {
   eraseBrokenPeriDEMBonds();
   // construct sand peri-bonds
@@ -1420,7 +1420,7 @@ Peridynamics::findPeriDEMBonds(dem::DEMParticlePArray mergeParticleVec)
   // crossing the boundary between two cpus, then sand-peri bonds between
   // the communicated peri-points can provide force on the DEM particle from the
   // peri-points in neighboring cpus
-  // mergeParticleVec is used, since if a DEM particle is crossing the boundary
+  // d_mergedParticles is used, since if a DEM particle is crossing the boundary
   // between two cpus, then these sand-peri bonds between the communicated
   // DEM particles can provide force on peri-points from the DEM particles in
   // neighboring cpus
@@ -1435,7 +1435,7 @@ Peridynamics::findPeriDEMBonds(dem::DEMParticlePArray mergeParticleVec)
   for (peri_pt = 0; peri_pt < num; peri_pt++) {
     Vec xyz_peri = mergePeriParticleVec[peri_pt]->currentPosition();
 
-    for (auto& dem_pt : mergeParticleVec) {
+    for (auto& dem_pt : d_mergedParticles) {
       // check and construct the periDEMBondVec in this particle
       REAL ra = dem_pt->getA();
       REAL rb = dem_pt->getB();

@@ -20,11 +20,11 @@ BurstingDam3D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
     auto particleFilename = InputParameter::get().datafile["particleFilename"];
     dem->readParticles(particleFilename);
 
-    Box container = dem->getAllContainer();
+    Box domain = dem->getSpatialDomain();
     DEMParticlePArray demParticles= dem->getAllDEMParticleVec();
     sph::SPHParticleCreator creator;
     sph::SPHParticlePArray sphParticles = 
-      creator.generateSPHParticleDam<3>(container, demParticles);
+      creator.generateSPHParticleDam<3>(domain, demParticles);
     sph->setAllSPHParticleVec(sphParticles);
 
     dem->openProgressOutputFile(demProgressInf, "deposit_progress");
@@ -42,7 +42,7 @@ BurstingDam3D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
 
   // scatter particles only once; also updates patchGrid for the first time
   dem->scatterParticles(); 
-  sph->scatterSPHParticle(dem->getAllContainer(), ghostWidth, bufferLength); 
+  sph->scatterSPHParticle(dem->getSpatialDomain(), ghostWidth, bufferLength); 
 
   // sph parameters
   auto waterLength = util::getParam<REAL>("waterLength");
@@ -130,7 +130,7 @@ BurstingDam3D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
 
     dem->dragForce();
 
-    sph->updateParticleInteractions<3>(dem->getAllContainer(),
+    sph->updateParticleInteractions<3>(dem->getSpatialDomain(),
                                        bufferLength, ghostWidth,
                                        kernelSize, smoothLength);
                                        

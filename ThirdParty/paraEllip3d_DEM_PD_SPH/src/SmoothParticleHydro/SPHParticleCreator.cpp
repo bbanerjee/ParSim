@@ -12,7 +12,7 @@ using namespace sph;
 template <int dim>
 SPHParticlePArray
 SPHParticleCreator::generateSPHParticleDam(
-  const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles)
+  const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles)
 {
   // Determine length parameter and SPH point spacing
   auto sphLength = util::getParam<REAL>("waterLength");
@@ -36,8 +36,8 @@ SPHParticleCreator::generateSPHParticleDam(
   auto sphMass = computeMass<dim>(sphInitialDensity, sphLength, numSPHPoint);
 
   // get the dimensions of the sph domain
-  Vec vmin = allContainer.getMinCorner();
-  Vec vmax = allContainer.getMaxCorner();
+  Vec vmin = spatialDomain.getMinCorner();
+  Vec vmax = spatialDomain.getMaxCorner();
 
   // Create an linearly spaced arrays of x/y/zcoords
   std::vector<REAL> xCoords, yCoords, zCoords;
@@ -127,17 +127,17 @@ SPHParticleCreator::generateSPHParticleDam(
 
 } // generateSPHParticle2D
 
-// For drainage problem with open bottomed container
+// For drainage problem with open bottomed domain
 // make only primary cpu generate particles
 // if (getMPIRank() != 0) return; 
 template <int dim>
 SPHParticlePArray
 SPHParticleCreator::generateSPHParticleNoBottom(
-  const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles)
+  const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles)
 {
   // Determine length parameter and SPH point spacing
-  REAL xMin = allContainer.getMinCorner().x();
-  REAL xMax = allContainer.getMaxCorner().x();
+  REAL xMin = spatialDomain.getMinCorner().x();
+  REAL xMax = spatialDomain.getMaxCorner().x();
   auto sphLength = xMin - xMax;
   auto spaceInterval = util::getParam<REAL>("spaceInterval");
   auto numSPHPoint = sphLength/spaceInterval + 1;
@@ -157,8 +157,8 @@ SPHParticleCreator::generateSPHParticleNoBottom(
   auto sphMass = computeMass<dim>(sphInitialDensity, sphLength, numSPHPoint);
 
   // get the dimensions of the sph domain
-  Vec vmin = allContainer.getMinCorner();
-  Vec vmax = allContainer.getMaxCorner();
+  Vec vmin = spatialDomain.getMinCorner();
+  Vec vmax = spatialDomain.getMaxCorner();
 
   // Create an linearly spaced arrays of x/y/zcoords
   std::vector<REAL> xCoords, yCoords, zCoords;
@@ -245,11 +245,11 @@ SPHParticleCreator::generateSPHParticleNoBottom(
 template <int dim>
 SPHParticlePArray
 SPHParticleCreator::generateSPHParticleMiddleLayers(
-  const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles)
+  const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles)
 {
   // Determine length parameter and SPH point spacing
-  REAL xMin = allContainer.getMinCorner().x();
-  REAL xMax = allContainer.getMaxCorner().x();
+  REAL xMin = spatialDomain.getMinCorner().x();
+  REAL xMax = spatialDomain.getMaxCorner().x();
   auto sphLength = xMin - xMax;
   auto spaceInterval = util::getParam<REAL>("spaceInterval");
   auto numSPHPoint = sphLength/spaceInterval + 1;
@@ -273,8 +273,8 @@ SPHParticleCreator::generateSPHParticleMiddleLayers(
   auto sphMass = computeMass<dim>(sphInitialDensity, sphLength, numSPHPoint);
 
   // get the dimensions of the sph domain
-  Vec vmin = allContainer.getMinCorner();
-  Vec vmax = allContainer.getMaxCorner();
+  Vec vmin = spatialDomain.getMinCorner();
+  Vec vmax = spatialDomain.getMaxCorner();
 
   // Create an linearly spaced arrays of x/y/zcoords
   std::vector<REAL> xCoords, yCoords, zCoords;
@@ -500,15 +500,15 @@ SPHParticleCreator::removeRedundantSPHParticles(SPHParticlePArray& allSPHParticl
 
 namespace sph {
 template SPHParticlePArray SPHParticleCreator::generateSPHParticleDam<2>(
-  const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);
+  const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles);
 template SPHParticlePArray SPHParticleCreator::generateSPHParticleDam<3>(
-  const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);
+  const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles);
 template SPHParticlePArray SPHParticleCreator::generateSPHParticleNoBottom<2>(
-  const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);
+  const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles);
 template SPHParticlePArray SPHParticleCreator::generateSPHParticleNoBottom<3>(
-  const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);
+  const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles);
 template SPHParticlePArray SPHParticleCreator::generateSPHParticleMiddleLayers<2>(
-  const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);
+  const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles);
 template SPHParticlePArray SPHParticleCreator::generateSPHParticleMiddleLayers<3>(
-  const dem::Box& allContainer, const dem::DEMParticlePArray& allDEMParticles);
+  const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles);
 }

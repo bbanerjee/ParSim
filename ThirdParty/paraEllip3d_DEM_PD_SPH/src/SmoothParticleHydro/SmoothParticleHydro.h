@@ -74,7 +74,7 @@ public:
   void clearAllSPHParticleVec() { d_allSPHParticleVec.clear(); }
 
   // Scatter the sph particles
-  void scatterSPHParticle(const dem::Box& allContainer,
+  void scatterSPHParticle(const dem::Box& spatialDomain,
                           const REAL& ghostWidth,
                           REAL& bufferLength);
 
@@ -86,7 +86,7 @@ public:
   void gatherSPHParticle();
 
   template <int dim>
-  void updateParticleInteractions(const dem::Box& allContainer,
+  void updateParticleInteractions(const dem::Box& spatialDomain,
                                   const REAL& bufferWidth,
                                   const REAL& ghostWidth,
                                   const REAL& kernelSize,
@@ -154,14 +154,14 @@ private:
   // Particles in patch + ghpst
   SPHParticlePArray d_mergeSPHParticleVec;
 
-  void findSPHParticleInBox(const dem::Box& container,
+  void findSPHParticleInBox(const dem::Box& domain,
                             const SPHParticlePArray& allParticles,
                             SPHParticlePArray& foundParticles);
 
   void initializeDensityRateAndAcceleration();
 
   template <int dim>
-  void assignParticlesToPatchGrid(const dem::Box& container,
+  void assignParticlesToPatchGrid(const dem::Box& domain,
                                   const REAL& bufferWidth,
                                   const REAL& ghostWidth,
                                   const REAL& kernelSize);
@@ -189,7 +189,7 @@ private:
                                    SPHParticleP& sph_part_b,
                                    const REAL& kernelSize,
                                    const REAL& smoothLength,
-                                   const dem::Box& allContainer) const;
+                                   const dem::Box& spatialDomain) const;
 
 };
 

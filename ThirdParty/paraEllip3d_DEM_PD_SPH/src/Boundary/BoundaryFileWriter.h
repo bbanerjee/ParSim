@@ -20,11 +20,11 @@ public:
 
   void writeCSV(std::size_t boundaryNum,
                 const std::string& outputFileName, 
-                const Box& allContainer) const;
+                const Box& spatialDomain) const;
 
   void writeXML(std::size_t boundaryNum,
                 const std::string& outputFileName, 
-                const Box& allContainer) const;
+                const Box& spatialDomain) const;
 
 private:
 

@@ -124,7 +124,7 @@ private:
 public:
   Fluid() {}
 
-  void initParameter(Box& container, Gradation& gradation);
+  void initParameter(Box& domain, Gradation& gradation);
   void initialize();
   void initialCondition();
   REAL calcTimeStep();

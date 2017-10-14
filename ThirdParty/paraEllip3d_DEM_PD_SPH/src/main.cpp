@@ -147,8 +147,8 @@ including snapshots
 including snapshots
                      "dgr_progress",     // output file, statistical info
                      "dgr_debug");       // output file, debug info
-// container properties
-dem::Box container(0.05, 0.05, 0.05, vec(0, 0, 0)); // dimx, dimy, dimz, center
+// domain properties
+dem::Box domain(0.05, 0.05, 0.05, vec(0, 0, 0)); // dimx, dimy, dimz, center
 // particle shape, size and percentage
 REAL ptcl_ratio_ba = 1;//0.8;  // ratio of radius b to radius a
 REAL ptcl_ratio_ca = 1;//0.6;  // ratio of radius c to radius a
@@ -162,7 +162,7 @@ percent.push_back(1.00); ptclSize.push_back(2.5e-3);
 //percent.push_back(0.10); ptclSize.push_back(1.0e-3);
 dem::Gradation ptclGradation(percent.size(), percent, ptclSize, ptcl_ratio_ba,
 ptcl_ratio_ca);
-assemb.setContainer(container);
+assemb.setSpatialDomain(domain);
 assemb.setGradation(ptclGradation);
 ///////////////////////////////////////////////////////////////////////////////////
 // trim(), createMemParticle() and iso_MemBdry() must be called together
@@ -277,7 +277,7 @@ ptclSize);
 assemb.deposit_PtclBdry(grad,
                         2,                  // particleLayers, setting of free
 particles
-                        1.0,                // relative container size,
+                        1.0,                // relative domain size,
 0.8/1.0/1.2---small/medium/large
                         100000,             // total_steps
                         100,                // number of snapshots
@@ -296,7 +296,7 @@ assemb.scale_PtclBdry(20000,             // total_steps
                       10,                // print interval
                       0.05,              // dimension of
 particle-composed-boundary
-                      1.0,               // relative container size,
+                      1.0,               // relative domain size,
 0.8/1.0/1.2---small/medium/large
                       "dep_particle_end",// input file, initial particles
                       "scl_particle",    // output file, resulted particles,
@@ -312,7 +312,7 @@ assemb.ellipPile_Disp(50000,              // total_steps
                       10,                 // print interval
                       0.05,               // dimension of
 particle-composed-boundary
-                      1.0,                // relative container size,
+                      1.0,                // relative domain size,
 0.8/1.0/1.2---small/medium/large
                       "pile_particle_ini",// input file, initial particles, an
 ellipsoidal pile info added

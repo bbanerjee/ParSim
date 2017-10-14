@@ -13,16 +13,16 @@ DepositIntoContainerResume::execute(DiscreteElements* dem)
     InputParameter::get().datafile["particleFilename"]);
 
   if (dem->getMPIRank() == 0) {
-    const Box& allContainer = dem->getAllContainer();
-    dem->setContainer(Box(
-      allContainer.getMinCorner().x(), allContainer.getMinCorner().y(),
-      allContainer.getMinCorner().z(), allContainer.getMaxCorner().x(),
-      allContainer.getMaxCorner().y(),
+    const Box& spatialDomain = dem->getSpatialDomain();
+    dem->setSpatialDomain(Box(
+      spatialDomain.getMinCorner().x(), spatialDomain.getMinCorner().y(),
+      spatialDomain.getMinCorner().z(), spatialDomain.getMaxCorner().x(),
+      spatialDomain.getMaxCorner().y(),
       util::getParam<REAL>("trimHeight")));
 
     BoundaryFileWriter boundaryWriter;
-    boundaryWriter.writeXML(6, "trim_boundary_ini.xml", dem->getAllContainer());
-    boundaryWriter.writeCSV(6, "trim_boundary_ini.csv", dem->getAllContainer());
+    boundaryWriter.writeXML(6, "trim_boundary_ini.xml", dem->getSpatialDomain());
+    boundaryWriter.writeCSV(6, "trim_boundary_ini.csv", dem->getSpatialDomain());
 
     dem->trim(false, "dummy", "trim_particle_ini");
   }

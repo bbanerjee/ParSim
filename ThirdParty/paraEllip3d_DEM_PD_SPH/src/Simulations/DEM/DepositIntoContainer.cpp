@@ -30,13 +30,13 @@ DepositIntoContainer::execute(DiscreteElements* dem)
 
   // Reduce the size of the domain for further calculations
   if (dem->getMPIRank() == 0) {
-    const Box allContainer = dem->getAllContainer();
-    Box trimmedContainer(allContainer.getMinCorner().x(), 
-      allContainer.getMinCorner().y(), allContainer.getMinCorner().z(), 
-      allContainer.getMaxCorner().x(), allContainer.getMaxCorner().y(),
+    const Box spatialDomain = dem->getSpatialDomain();
+    Box trimmedContainer(spatialDomain.getMinCorner().x(), 
+      spatialDomain.getMinCorner().y(), spatialDomain.getMinCorner().z(), 
+      spatialDomain.getMaxCorner().x(), spatialDomain.getMaxCorner().y(),
       util::getParam<REAL>("trimHeight"));
 
-    dem->setContainer(trimmedContainer);
+    dem->setSpatialDomain(trimmedContainer);
 
     BoundaryFileWriter boundaryWriter;
     boundaryWriter.writeXML(6, "trim_boundary_ini.xml", trimmedContainer);

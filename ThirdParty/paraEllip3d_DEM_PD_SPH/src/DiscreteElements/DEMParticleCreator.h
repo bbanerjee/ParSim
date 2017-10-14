@@ -24,7 +24,7 @@ public:
 
   DEMParticlePArray generateDEMParticles(std::size_t layerFlag,
                                          DEMParticle::DEMParticleShape,
-                                         const dem::Box& allContainer,
+                                         const dem::Box& spatialDomain,
                                          dem::Gradation& gradation);
 
 private:
@@ -33,12 +33,12 @@ private:
 
   template <std::size_t layerFlag>
   DEMParticlePArray generateDEMParticles(DEMParticle::DEMParticleShape type,
-                                         const dem::Box& allContainer,
+                                         const dem::Box& spatialDomain,
                                          dem::Gradation& gradation);
 
   template <std::size_t layerFlag>
   DEMParticlePArray createParticles(DEMParticle::DEMParticleShape type,
-                                    const dem::Box& allContainer, 
+                                    const dem::Box& spatialDomain, 
                                     dem::Gradation& gradation, 
                                     const ParticleParameters& params);
 

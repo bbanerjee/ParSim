@@ -13,7 +13,7 @@ using namespace dem;
 void
 BoundaryFileWriter::writeCSV(std::size_t boundaryNum,
                              const std::string& outputFileName, 
-                             const Box& allContainer) const
+                             const Box& spatialDomain) const
 {
   // Open the output file
   std::ofstream ofs(outputFileName);
@@ -28,10 +28,10 @@ BoundaryFileWriter::writeCSV(std::size_t boundaryNum,
   ofs.precision(dem::OPREC);
   ofs.width(dem::OWID);
 
-  // Get the container limits and center
-  Vec domainMin = allContainer.getMinCorner();
-  Vec domainMax = allContainer.getMaxCorner();
-  Vec domainCen = allContainer.getCenter();
+  // Get the domain limits and center
+  Vec domainMin = spatialDomain.getMinCorner();
+  Vec domainMax = spatialDomain.getMaxCorner();
+  Vec domainCen = spatialDomain.getCenter();
 
   // Write the boundaryNum flag
   ofs << std::setw(OWID) << domainMin.x() 
@@ -134,12 +134,12 @@ BoundaryFileWriter::writeCSV(std::size_t boundaryNum,
 void
 BoundaryFileWriter::writeXML(std::size_t boundaryNum,
                              const std::string& outputFileName, 
-                             const Box& allContainer) const
+                             const Box& spatialDomain) const
 {
-  // Get the container limits and center
-  Vec domainMin = allContainer.getMinCorner();
-  Vec domainMax = allContainer.getMaxCorner();
-  Vec domainCen = allContainer.getCenter();
+  // Get the domain limits and center
+  Vec domainMin = spatialDomain.getMinCorner();
+  Vec domainMax = spatialDomain.getMaxCorner();
+  Vec domainCen = spatialDomain.getCenter();
 
   // Create empty document
   zen::XmlDoc doc("Ellip3D_input");
@@ -151,19 +151,19 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
   std::string title = "Ellip3D boundary XML file";
   xml["Meta"]["title"](title);
 
-  // Write the container dimensions
+  // Write the domain dimensions
   std::ostringstream stream;
   stream.setf(std::ios::scientific, std::ios::floatfield);
   stream.precision(dem::OPREC);
-  stream << "[" << allContainer.getMinCorner().x() << ", "
-                << allContainer.getMinCorner().y() << ", "
-                << allContainer.getMinCorner().z() << "]";
+  stream << "[" << spatialDomain.getMinCorner().x() << ", "
+                << spatialDomain.getMinCorner().y() << ", "
+                << spatialDomain.getMinCorner().z() << "]";
   xml["Boundary"]["containerMin"](stream.str());
 
   stream.str("");
-  stream << "[" << allContainer.getMaxCorner().x() << ", "
-                << allContainer.getMaxCorner().y() << ", "
-                << allContainer.getMaxCorner().z() << "]";
+  stream << "[" << spatialDomain.getMaxCorner().x() << ", "
+                << spatialDomain.getMaxCorner().y() << ", "
+                << spatialDomain.getMaxCorner().z() << "]";
   xml["Boundary"]["containerMax"](stream.str());
 
   // Get the boundary flag type

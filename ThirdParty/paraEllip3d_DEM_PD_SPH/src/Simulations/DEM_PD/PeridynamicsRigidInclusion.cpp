@@ -27,10 +27,10 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     REAL y2 = util::getParam<REAL>("Ymax");
     REAL z1 = util::getParam<REAL>("Zmin");
     REAL z2 = util::getParam<REAL>("Zmax");
-    dem->setContainer(Box(x1, y1, z1, x2, y2, z2));
+    dem->setSpatialDomain(Box(x1, y1, z1, x2, y2, z2));
 
     // compute patchGrid assumed to be
-    // the same as container,
+    // the same as domain,
     // change in scatterParticles()
     // if necessary.
     dem->setPatchBox(Box(x1, y1, z1, x2, y2, z2)); 
@@ -70,7 +70,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
   dem->scatterParticles();
 
   //proc0cout << "**NOTICE** Scattering pd particles\n";
-  pd->scatterPeriParticle(dem->getAllContainer());
+  pd->scatterPeriParticle(dem->getSpatialDomain());
 
   // dem->construct the Matrix members in
   // periParticleVec

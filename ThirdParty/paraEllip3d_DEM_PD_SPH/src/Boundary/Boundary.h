@@ -181,7 +181,7 @@ protected:
   BoundaryType b_type;
 
   // extra edges that are necessary to define a finite plane
-  // e.g., side wall of a top-open container
+  // e.g., side wall of a top-open domain
   EdgeCount b_extraNum;
   EdgeArray b_extraEdge;
 

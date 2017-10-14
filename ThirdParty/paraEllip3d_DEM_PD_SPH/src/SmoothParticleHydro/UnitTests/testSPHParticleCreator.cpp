@@ -215,9 +215,9 @@ TEST(SPHParticleCreatorTest, generateSPHParticleDam)
   }
 
   SPHParticleCreator sph;
-  dem::Box container(dem::Vec(30.0, -2.0, 0.95), dem::Vec(52.0, 2.0, 5.5));
+  dem::Box domain(dem::Vec(30.0, -2.0, 0.95), dem::Vec(52.0, 2.0, 5.5));
   SPHParticlePArray sph_particles = 
-    sph.generateSPHParticleDam<2>(container, allDEMParticles);
+    sph.generateSPHParticleDam<2>(domain, allDEMParticles);
 
   // std::cout << "Size:" << sph_particles.size() << "\n";
   std::size_t noneP = 0;
@@ -401,9 +401,9 @@ TEST(SPHParticleCreatorTest, generateSPHParticleNoBottom)
   }
 
   SPHParticleCreator sph;
-  dem::Box container(dem::Vec(30.0, -2.0, 0.95), dem::Vec(52.0, 2.0, 5.5));
+  dem::Box domain(dem::Vec(30.0, -2.0, 0.95), dem::Vec(52.0, 2.0, 5.5));
   SPHParticlePArray sph_particles = 
-    sph.generateSPHParticleNoBottom<2>(container, allDEMParticles);
+    sph.generateSPHParticleNoBottom<2>(domain, allDEMParticles);
 
   //std::cout << "Size:" << sph_particles.size() << "\n";
   std::size_t noneP = 0;
@@ -590,9 +590,9 @@ TEST(SPHParticleCreatorTest, generateSPHParticleMiddleLayers)
   }
 
   SPHParticleCreator sph;
-  dem::Box container(dem::Vec(30.0, -2.0, 0.95), dem::Vec(52.0, 2.0, 5.5));
+  dem::Box domain(dem::Vec(30.0, -2.0, 0.95), dem::Vec(52.0, 2.0, 5.5));
   SPHParticlePArray sph_particles = 
-    sph.generateSPHParticleMiddleLayers<2>(container, allDEMParticles);
+    sph.generateSPHParticleMiddleLayers<2>(domain, allDEMParticles);
 
   //std::cout << "Size:" << sph_particles.size() << "\n";
   std::size_t noneP = 0;

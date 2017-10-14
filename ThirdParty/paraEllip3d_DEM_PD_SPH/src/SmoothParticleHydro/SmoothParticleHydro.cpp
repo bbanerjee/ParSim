@@ -94,9 +94,9 @@ SmoothParticleHydro::setCommunicator(const communicator& boostWorldComm)
 //        since the total domain is divided, while there are lots of voids in
 // the domain. (partition only free sph particles will be better)
 //        But our goal is to simulate the porous media in triaxial, insotropic
-// or SHPB simulations, particles are filled in the container.
+// or SHPB simulations, particles are filled in the domain.
 void
-SmoothParticleHydro::scatterSPHParticle(const Box& allContainer,
+SmoothParticleHydro::scatterSPHParticle(const Box& spatialDomain,
                                         const REAL& ghostWidth,
                                         REAL& bufferLength)
 {
@@ -106,7 +106,7 @@ SmoothParticleHydro::scatterSPHParticle(const Box& allContainer,
   // bufferLength = spaceInterval * numLayers;
 
   // Set d_sphPatchBox on all procs
-  setPatchBox(Box(allContainer, bufferLength));
+  setPatchBox(Box(spatialDomain, bufferLength));
 
   // Create patch for the current process
   int iteration = 0;
@@ -139,9 +139,9 @@ SmoothParticleHydro::scatterSPHParticle(const Box& allContainer,
 
       Vec lower = v1 + vspan * coords;
       Vec upper = lower + vspan;
-      Box container(lower, upper);
+      Box domain(lower, upper);
 
-      findSPHParticleInBox(container, d_allSPHParticleVec,
+      findSPHParticleInBox(domain, d_allSPHParticleVec,
                            d_patchSPHParticleVec);
 
       if (iRank != 0) {
@@ -173,13 +173,13 @@ SmoothParticleHydro::scatterSPHParticle(const Box& allContainer,
 } // scatterDEMSPHParticle
 
 void
-SmoothParticleHydro::findSPHParticleInBox(const Box& container,
+SmoothParticleHydro::findSPHParticleInBox(const Box& domain,
                                           const SPHParticlePArray& sphParticles,
                                           SPHParticlePArray& insideParticles)
 {
   for (const auto& particle : sphParticles) {
     // it is critical to use EPS
-    if (container.inside(particle->currentPosition(), dem::EPS)) {
+    if (domain.inside(particle->currentPosition(), dem::EPS)) {
       insideParticles.push_back(particle);
     }
   }
@@ -188,7 +188,7 @@ SmoothParticleHydro::findSPHParticleInBox(const Box& container,
 void
 SmoothParticleHydro::createPatch(int iteration, const REAL& ghostWidth)
 {
-  // determine container of each process
+  // determine domain of each process
   Vec v1 = d_sphPatchBox.getMinCorner();
   Vec v2 = d_sphPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / d_mpiProcs;
@@ -201,13 +201,13 @@ SmoothParticleHydro::createPatch(int iteration, const REAL& ghostWidth)
 void
 SmoothParticleHydro::updatePatch(int iteration, const REAL& ghostWidth)
 {
-  // determine container of each process
+  // determine domain of each process
   Vec v1 = d_sphPatchBox.getMinCorner();
   Vec v2 = d_sphPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / d_mpiProcs;
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
-  Box container(lower, upper);
+  Box domain(lower, upper);
   d_patchP->update(iteration, lower, upper, ghostWidth);
 }
 
@@ -395,7 +395,7 @@ SmoothParticleHydro::gatherSPHParticle()
 //// here the neighboring list of SPH particles is searched by the cells,
 template <int dim>
 void
-SmoothParticleHydro::updateParticleInteractions(const Box& allContainer,
+SmoothParticleHydro::updateParticleInteractions(const Box& spatialDomain,
                                                 const REAL& bufferWidth,
                                                 const REAL& ghostWidth,
                                                 const REAL& kernelSize,
@@ -406,7 +406,7 @@ SmoothParticleHydro::updateParticleInteractions(const Box& allContainer,
 
   // divide the SPH domain into different cells, each cell may contain SPH
   // particles within it
-  assignParticlesToPatchGrid<dim>(allContainer, bufferWidth, ghostWidth, kernelSize);
+  assignParticlesToPatchGrid<dim>(spatialDomain, bufferWidth, ghostWidth, kernelSize);
 
   for (int cellIndex=0; cellIndex < d_sphPatchGrid.size(); ++cellIndex) {
 
@@ -424,7 +424,7 @@ SmoothParticleHydro::updateParticleInteractions(const Box& allContainer,
         if (sph_part_b->isOutsideInfluenceZone(*sph_part_a, kernelSize)) continue;
 
         computeParticleInteractions<dim>(sph_part_a, sph_part_b,
-                                         kernelSize, smoothLength, allContainer);
+                                         kernelSize, smoothLength, spatialDomain);
 
       } // end for sph_part_b in the same cell
 
@@ -434,7 +434,7 @@ SmoothParticleHydro::updateParticleInteractions(const Box& allContainer,
         if (sph_part_b->isOutsideInfluenceZone(*sph_part_a, kernelSize)) continue;
 
         computeParticleInteractions<dim>(sph_part_a, sph_part_b,
-                                         kernelSize, smoothLength, allContainer);
+                                         kernelSize, smoothLength, spatialDomain);
 
       } // end for sph_part_b in neighbor cells
     } // end for sph_part_a
@@ -481,7 +481,7 @@ SmoothParticleHydro::initializeDensityRateAndAcceleration()
 // **NOTE** bufferWidth = spaceInterval;
 template <int dim>
 void
-SmoothParticleHydro::assignParticlesToPatchGrid(const Box& container,
+SmoothParticleHydro::assignParticlesToPatchGrid(const Box& domain,
                                                 const REAL& bufferWidth,
                                                 const REAL& ghostWidth,
                                                 const REAL& kernelSize)
@@ -489,8 +489,8 @@ SmoothParticleHydro::assignParticlesToPatchGrid(const Box& container,
   REAL small_value = 0.01 * bufferWidth;
   REAL ghostBuffer = ghostWidth + small_value;
 
-  // expand the container by bufferWidth + small_value
-  Box expandedContainer(container, ghostBuffer);
+  // expand the domain by bufferWidth + small_value
+  Box expandedContainer(domain, ghostBuffer);
 
   // Compute the number of cells in each dimension
   int nx = std::round(expandedContainer.getDimx()/kernelSize) + 1;
@@ -694,7 +694,7 @@ SmoothParticleHydro::computeParticleInteractions(SPHParticleP& sph_part_a,
                                                  SPHParticleP& sph_part_b,
                                                  const REAL& kernelSize,
                                                  const REAL& smoothLength,
-                                                 const Box& allContainer) const
+                                                 const Box& spatialDomain) const
 {
   REAL alpha = util::getParam<REAL>("alpha");
   REAL epsilon = util::getParam<REAL>("epsilon");  // parameter for velocity
@@ -744,7 +744,7 @@ SmoothParticleHydro::computeParticleInteractions(SPHParticleP& sph_part_a,
 
       // calculate Vab as the method shown in Morris's paper, 1996
       // interact with boundary particles
-      interaction.doDomainBoundaryVelocityCorrection(allContainer);
+      interaction.doDomainBoundaryVelocityCorrection(spatialDomain);
       interaction.updateMomentumExchangeCoeffs(smoothLength, alpha, soundSpeed);
       interaction.updateInteractionBoundaryFree(sph_part_a, sph_part_b, epsilon);
       break;        
@@ -765,7 +765,7 @@ SmoothParticleHydro::computeParticleInteractions(SPHParticleP& sph_part_a,
               sph_part_a->getType() == SPHParticleType::FREE) {
 
     interaction.swapParticles();
-    interaction.doDomainBoundaryVelocityCorrection(allContainer);
+    interaction.doDomainBoundaryVelocityCorrection(spatialDomain);
     interaction.updateMomentumExchangeCoeffs(smoothLength, alpha, soundSpeed);
     interaction.updateInteractionBoundaryFree(sph_part_b, sph_part_a, epsilon);
 
@@ -936,20 +936,20 @@ SmoothParticleHydro::printSPHParticle(const char* str) const
 namespace sph {
 
 template void
-SmoothParticleHydro::updateParticleInteractions<2>(const Box& allContainer,
+SmoothParticleHydro::updateParticleInteractions<2>(const Box& spatialDomain,
   const REAL& bufferWidth, const REAL& ghostWidth, const REAL& kernelSize,
   const REAL& smoothLength);
 
 template void
-SmoothParticleHydro::updateParticleInteractions<3>(const Box& allContainer,
+SmoothParticleHydro::updateParticleInteractions<3>(const Box& spatialDomain,
   const REAL& bufferWidth, const REAL& ghostWidth, const REAL& kernelSize,
   const REAL& smoothLength);
 
 template void
-SmoothParticleHydro::assignParticlesToPatchGrid<2>(const Box& container,
+SmoothParticleHydro::assignParticlesToPatchGrid<2>(const Box& domain,
   const REAL& bufferWidth, const REAL& ghostWidth, const REAL& kernelSize);
 
 template void
-SmoothParticleHydro::assignParticlesToPatchGrid<3>(const Box& container,
+SmoothParticleHydro::assignParticlesToPatchGrid<3>(const Box& domain,
   const REAL& bufferWidth, const REAL& ghostWidth, const REAL& kernelSize);
 }

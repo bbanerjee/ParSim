@@ -60,15 +60,15 @@ TEST(SPHParticleCommuTest, communicate)
     dem::DEMParticlePArray allDEMParticles;
 
     SPHParticleCreator creator;
-    dem::Box container(dem::Vec(0, 0, 0), dem::Vec(0.1, 0.1, 0.1));
-    sph_particles = creator.generateSPHParticleNoBottom<2>(container, allDEMParticles);
+    dem::Box domain(dem::Vec(0, 0, 0), dem::Vec(0.1, 0.1, 0.1));
+    sph_particles = creator.generateSPHParticleNoBottom<2>(domain, allDEMParticles);
 
     EXPECT_EQ(sph_particles.size(), 25);
   }
 
 
   // Set up SPH domain
-  dem::Box allContainer(dem::Vec(-0.01, -0.01, -0.01), dem::Vec(0.11, 0.11, 0.11));
+  dem::Box spatialDomain(dem::Vec(-0.01, -0.01, -0.01), dem::Vec(0.11, 0.11, 0.11));
   REAL spaceInterval = util::getParam<REAL>("spaceInterval");
   int numLayers = util::getParam<int>("numLayers");
   REAL ghostWidth = spaceInterval;
@@ -81,7 +81,7 @@ TEST(SPHParticleCommuTest, communicate)
     sph.setAllSPHParticleVec(sph_particles);
     EXPECT_EQ(sph.getAllSPHParticleVec().size(), 25);
   }
-  sph.scatterSPHParticle(allContainer, ghostWidth, bufferLength);
+  sph.scatterSPHParticle(spatialDomain, ghostWidth, bufferLength);
 
   // Communicate ghost regions
   int iteration = 0;

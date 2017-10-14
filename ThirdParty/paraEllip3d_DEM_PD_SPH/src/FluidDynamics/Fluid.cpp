@@ -8,7 +8,7 @@ namespace dem {
 constexpr REAL Fluid::Rs;
 
 void
-Fluid::initParameter(Box& container, Gradation& gradation)
+Fluid::initParameter(Box& domain, Gradation& gradation)
 {
 
   RK = util::getParam<REAL>("RK");
@@ -28,16 +28,16 @@ Fluid::initParameter(Box& container, Gradation& gradation)
   std::size_t ptclGrid = util::getParam<std::size_t>("ptclGrid");
   volFrac = util::getParam<REAL>("volFrac");
 
-  REAL minX = container.getMinCorner().x();
-  REAL minY = container.getMinCorner().y();
-  REAL minZ = container.getMinCorner().z();
+  REAL minX = domain.getMinCorner().x();
+  REAL minY = domain.getMinCorner().y();
+  REAL minZ = domain.getMinCorner().z();
   REAL z1Distance = util::getParam<REAL>("z1Distance");
   minZ -= z1Distance;
   z0 = minZ + z1Distance * util::getParam<REAL>("z1Percent");
 
-  REAL maxX = container.getMaxCorner().x();
-  REAL maxY = container.getMaxCorner().y();
-  REAL maxZ = container.getMaxCorner().z();
+  REAL maxX = domain.getMaxCorner().x();
+  REAL maxY = domain.getMaxCorner().y();
+  REAL maxZ = domain.getMaxCorner().z();
   REAL minR = gradation.getPtclMinRadius();
 
   dx = (minR * 2) / ptclGrid;

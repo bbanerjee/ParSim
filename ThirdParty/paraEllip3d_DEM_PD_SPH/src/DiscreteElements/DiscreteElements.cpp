@@ -109,14 +109,14 @@ DiscreteElements::createAndSaveParticlesAndBoundaries(
   std::string inputBoundaryFilename =
     InputParameter::get().datafile["boundaryFilename"];
   readBoundary(inputBoundaryFilename);
-  Box container = getAllContainer();
+  Box domain = getSpatialDomain();
 
   // Write the domain and inner boundaries
   BoundaryFileWriter boundaryWriter;
   std::string xmlfile = util::replaceExtension(outputBoundaryFilename, "xml");
-  boundaryWriter.writeXML(5, xmlfile, container);
+  boundaryWriter.writeXML(5, xmlfile, domain);
   std::string csvfile = util::replaceExtension(outputBoundaryFilename, "csv");
-  boundaryWriter.writeCSV(5, csvfile, container);
+  boundaryWriter.writeCSV(5, csvfile, domain);
 
   auto layerFlag = util::getParam<std::size_t>("particleLayers");
   DEMParticle::DEMParticleShape particleType = 
@@ -124,7 +124,7 @@ DiscreteElements::createAndSaveParticlesAndBoundaries(
 
   DEMParticleCreator creator;
   DEMParticlePArray particles = 
-    creator.generateDEMParticles(layerFlag, particleType, container, d_gradation);
+    creator.generateDEMParticles(layerFlag, particleType, domain, d_gradation);
   setAllDEMParticleVec(particles);
 
   DEMParticleFileWriter writer;
@@ -295,15 +295,15 @@ DiscreteElements::readBoundary(const std::string& fileName)
     // Read the file
     //std::cout << "Using the XML reader\n";
     BoundaryReader reader;
-    reader.readXML(fileName, allContainer, d_demPatchBox, boundaryVec);
+    reader.readXML(fileName, d_spatialDomain, d_demPatchBox, d_boundaries);
   } else if (firstChar == '{') { // JSON
     //std::cout << "Using the JSON reader\n";
     BoundaryReader reader;
-    reader.readJSON(fileName, allContainer, d_demPatchBox, boundaryVec);
+    reader.readJSON(fileName, d_spatialDomain, d_demPatchBox, d_boundaries);
   } else {
     //std::cout << "Using the default text reader\n";
     BoundaryReader reader;
-    reader.read(fileName, allContainer, d_demPatchBox, boundaryVec);
+    reader.read(fileName, d_spatialDomain, d_demPatchBox, d_boundaries);
   }
   // std::cout << "d_demPatchBox = " << d_demPatchBox << "\n";
 }
@@ -316,7 +316,7 @@ DiscreteElements::readParticles(const std::string& particleFilename)
   bool doInitialize = (util::getParam<int>("demToInitParticle") == 1);
 
   DEMParticleFileReader reader;
-  reader.read(particleFilename, young, poisson, doInitialize, allDEMParticleVec,
+  reader.read(particleFilename, young, poisson, doInitialize, d_allDEMParticles,
               d_gradation);
 }
 
@@ -328,7 +328,7 @@ DiscreteElements::scatterParticles()
     setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
                 d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
                 d_demPatchBox.getMaxCorner().y(),
-                getPtclMaxZ(allDEMParticleVec) + d_gradation.getPtclMaxRadius()));
+                getPtclMaxZ(d_allDEMParticles) + d_gradation.getPtclMaxRadius()));
 
     Vec v1 = d_demPatchBox.getMinCorner();
     Vec v2 = d_demPatchBox.getMaxCorner();
@@ -352,37 +352,37 @@ DiscreteElements::scatterParticles()
 
       Vec lower = v1 + vspan*coords;
       Vec upper = lower + vspan;
-      Box container(lower, upper);
+      Box domain(lower, upper);
       //std::cout << "lower = " << lower 
       //          << " upper = " << upper << "\n";
 
-      findParticleInBox(container, allDEMParticleVec, tmpParticleVec);
+      findParticleInBox(domain, d_allDEMParticles, tmpParticleVec);
 
       if (iRank != 0)
         reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag,
                                            tmpParticleVec); // non-blocking send
       if (iRank == 0) {
-        particleVec.resize(tmpParticleVec.size());
-        for (auto i = 0u; i < particleVec.size(); ++i)
-          particleVec[i] = std::make_shared<DEMParticle>(
+        d_patchParticles.resize(tmpParticleVec.size());
+        for (auto i = 0u; i < d_patchParticles.size(); ++i)
+          d_patchParticles[i] = std::make_shared<DEMParticle>(
             *tmpParticleVec[i]); // default synthesized copy constructor
-      } // now particleVec do not share memeory with allDEMParticleVec
+      } // now d_patchParticles do not share memeory with d_allDEMParticles
     }
     boost::mpi::wait_all(reqs, reqs + s_mpiSize - 1); // for non-blocking send
     delete[] reqs;
 
   } else { // other processes except 0
-    boostWorld.recv(0, mpiTag, particleVec);
+    boostWorld.recv(0, mpiTag, d_patchParticles);
   }
 
-  // content of allDEMParticleVec may need to be printed, so do not clear it.
+  // content of d_allDEMParticles may need to be printed, so do not clear it.
   // if (s_mpiRank == 0) releaseGatheredParticle();
-  //proc0cout << "DEM::scatter:: num particles = " << particleVec.size() << "\n";
+  //proc0cout << "DEM::scatter:: num particles = " << d_patchParticles.size() << "\n";
 
   // broadcast necessary info
   broadcast(boostWorld, d_gradation, 0);
-  broadcast(boostWorld, boundaryVec, 0);
-  broadcast(boostWorld, allContainer, 0);
+  broadcast(boostWorld, d_boundaries, 0);
+  broadcast(boostWorld, d_spatialDomain, 0);
   broadcast(boostWorld, d_demPatchBox, 0);
 
   // Create patch for the current process
@@ -393,7 +393,7 @@ DiscreteElements::scatterParticles()
 void 
 DiscreteElements::createPatch(int iteration, const REAL& ghostWidth) 
 {
-  // determine container of each process
+  // determine domain of each process
   Vec v1 = d_demPatchBox.getMinCorner();
   Vec v2 = d_demPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / s_mpiProcs;
@@ -412,7 +412,7 @@ DiscreteElements::createPatch(int iteration, const REAL& ghostWidth)
 void 
 DiscreteElements::updatePatch(int iteration, const REAL& ghostWidth)
 {
-  // determine container of each process
+  // determine domain of each process
   Vec v1 = d_demPatchBox.getMinCorner();
   Vec v2 = d_demPatchBox.getMaxCorner();
   Vec vspan = (v2 - v1) / s_mpiProcs;
@@ -437,66 +437,66 @@ DiscreteElements::commuParticle()
 void
 DiscreteElements::commuParticle(const int& iteration)
 {
-  // determine container of each process
+  // determine domain of each process
   REAL ghostWidth = d_gradation.getPtclMaxRadius() * 2;
   updatePatch(iteration, ghostWidth);
 
   // duplicate pointers, pointing to the same memory
-  mergeParticleVec.clear();
-  mergeParticleVec = particleVec; 
+  d_mergedParticles.clear();
+  d_mergedParticles = d_patchParticles; 
 
   /*
   std::ostringstream out;
   if (s_mpiRank == 0) {
-    out << "Rank: " << s_mpiRank << ": in: " << particleVec.size()
-        << " merge: " << mergeParticleVec.size();
+    out << "Rank: " << s_mpiRank << ": in: " << d_patchParticles.size()
+        << " merge: " << d_mergedParticles.size();
   }
   */
 
-  d_patchP->sendRecvGhostXMinus(boostWorld, iteration, mergeParticleVec);
-  d_patchP->sendRecvGhostXPlus(boostWorld, iteration, mergeParticleVec);
+  d_patchP->sendRecvGhostXMinus(boostWorld, iteration, d_mergedParticles);
+  d_patchP->sendRecvGhostXPlus(boostWorld, iteration, d_mergedParticles);
   d_patchP->waitToFinishX(iteration);
-  d_patchP->combineReceivedParticlesX(iteration, mergeParticleVec);
+  d_patchP->combineReceivedParticlesX(iteration, d_mergedParticles);
 
   /*
   if (s_mpiRank == 0) {
-    out << " -> " << mergeParticleVec.size();
+    out << " -> " << d_mergedParticles.size();
   }
   */
 
-  d_patchP->sendRecvGhostYMinus(boostWorld, iteration, mergeParticleVec);
-  d_patchP->sendRecvGhostYPlus(boostWorld, iteration, mergeParticleVec);
+  d_patchP->sendRecvGhostYMinus(boostWorld, iteration, d_mergedParticles);
+  d_patchP->sendRecvGhostYPlus(boostWorld, iteration, d_mergedParticles);
   d_patchP->waitToFinishY(iteration);
-  d_patchP->combineReceivedParticlesY(iteration, mergeParticleVec);
+  d_patchP->combineReceivedParticlesY(iteration, d_mergedParticles);
 
   /*
   if (s_mpiRank == 0) {
-    out << " -> " << mergeParticleVec.size();
+    out << " -> " << d_mergedParticles.size();
   }
   */
 
-  d_patchP->sendRecvGhostZMinus(boostWorld, iteration, mergeParticleVec);
-  d_patchP->sendRecvGhostZPlus(boostWorld, iteration, mergeParticleVec);
+  d_patchP->sendRecvGhostZMinus(boostWorld, iteration, d_mergedParticles);
+  d_patchP->sendRecvGhostZPlus(boostWorld, iteration, d_mergedParticles);
   d_patchP->waitToFinishZ(iteration);
-  d_patchP->combineReceivedParticlesZ(iteration, mergeParticleVec);
+  d_patchP->combineReceivedParticlesZ(iteration, d_mergedParticles);
 
   /*
   if (s_mpiRank == 0) {
-    out << " -> " << mergeParticleVec.size();
+    out << " -> " << d_mergedParticles.size();
   }
   */
 
-  //d_patchP->removeDuplicates(mergeParticleVec);
+  //d_patchP->removeDuplicates(d_mergedParticles);
 
   /*
   if (s_mpiRank == 0) {
-    out << " -> " << mergeParticleVec.size() << "\n";
+    out << " -> " << d_mergedParticles.size() << "\n";
 
     //std::ostringstream out;
-    //out << "Rank: " << s_mpiRank << ": in: " << particleVec.size()
-    //    << " recv: " << recvParticleVec.size();
-    //out <<  ": out: " << particleVec.size()
-    //    << " merge: " << mergeParticleVec.size() << "\n";
+    //out << "Rank: " << s_mpiRank << ": in: " << d_patchParticles.size()
+    //    << " recv: " << d_receivedParticles.size();
+    //out <<  ": out: " << d_patchParticles.size()
+    //    << " merge: " << d_mergedParticles.size() << "\n";
     std::cout << out.str();
   }
   */
@@ -512,14 +512,14 @@ DiscreteElements::calcTimeStep()
   REAL CFL = 0.5;
   std::valarray<REAL> dt(3);
   dt[0] = util::getParam<REAL>("timeStep");
-  dt[1] = CFL * vibraTimeStep;
-  dt[2] = CFL * impactTimeStep;
+  dt[1] = CFL * d_vibrationTimeStep;
+  dt[2] = CFL * d_impactTimeStep;
 
   timeStep = dt.min();
   //if (s_mpiRank == 0) {
     //std::cout << "Timestep = " << timeStep
-    //          << " Vibration timestep = " << vibraTimeStep
-    //          << " Impact timestep = " << impactTimeStep << "\n";
+    //          << " Vibration timestep = " << d_vibrationTimeStep
+    //          << " Impact timestep = " << d_impactTimeStep << "\n";
   //}
 }
 
@@ -527,43 +527,43 @@ void
 DiscreteElements::calcVibraTimeStep()
 {
   REAL pTimeStep = 1 / EPS;
-  if (contactVec.size() == 0) {
+  if (d_contacts.size() == 0) {
     pTimeStep = 1 / EPS;
   } else {
-    auto it = contactVec.cbegin();
+    auto it = d_contacts.cbegin();
     pTimeStep = it->getVibraTimeStep();
-    for (++it; it != contactVec.cend(); ++it) {
+    for (++it; it != d_contacts.cend(); ++it) {
       REAL val = it->getVibraTimeStep();
       pTimeStep = val < pTimeStep ? val : pTimeStep;
     }
   }
 
-  MPI_Allreduce(&pTimeStep, &vibraTimeStep, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
+  MPI_Allreduce(&pTimeStep, &d_vibrationTimeStep, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 }
 
 void
 DiscreteElements::calcImpactTimeStep()
 {
   REAL pTimeStep = 1 / EPS;
-  if (contactVec.size() == 0)
+  if (d_contacts.size() == 0)
     pTimeStep = 1 / EPS;
   else {
-    auto it = contactVec.cbegin();
+    auto it = d_contacts.cbegin();
     pTimeStep = it->getImpactTimeStep();
-    for (++it; it != contactVec.cend(); ++it) {
+    for (++it; it != d_contacts.cend(); ++it) {
       REAL val = it->getImpactTimeStep();
       pTimeStep = val < pTimeStep ? val : pTimeStep;
     }
   }
 
-  MPI_Allreduce(&pTimeStep, &impactTimeStep, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
+  MPI_Allreduce(&pTimeStep, &d_impactTimeStep, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 }
 
 void
 DiscreteElements::calcContactNum()
 {
-  std::size_t pContactNum = contactVec.size();
-  MPI_Reduce(&pContactNum, &allContactNum, 1, MPI_INT, MPI_SUM, 0, s_mpiWorld);
+  std::size_t pContactNum = d_contacts.size();
+  MPI_Reduce(&pContactNum, &d_allContactNum, 1, MPI_INT, MPI_SUM, 0, s_mpiWorld);
 }
 
 void
@@ -589,7 +589,7 @@ void
 DiscreteElements::findContactSingleThread()
 {
 
-  contactVec.clear();
+  d_contacts.clear();
 
 #ifdef TIME_PROFILE
   Timer::time_point startOuter, endOuter;
@@ -597,22 +597,22 @@ DiscreteElements::findContactSingleThread()
   startOuter = Timer::now();
 #endif
 
-  auto num1 = particleVec.size();      // particles inside container
-  auto num2 = mergeParticleVec.size(); // particles inside container
+  auto num1 = d_patchParticles.size();      // particles inside domain
+  auto num2 = d_mergedParticles.size(); // particles inside domain
                                        // (at front) + particles from
                                        // neighboring blocks (at end)
   // NOT (num1 - 1), in parallel situation where one particle
   // could contact received particles!
   for (auto i = 0; i < num1; ++i) {
 
-    auto particle = particleVec[i];
+    auto particle = d_patchParticles[i];
     Vec u = particle->currentPosition();
     auto particleType = particle->getType();
     auto particleRad = particle->getA();
 
     for (auto j = i + 1; j < num2; ++j) {
 
-      auto mergeParticle = mergeParticleVec[j];
+      auto mergeParticle = d_mergedParticles[j];
       Vec v = mergeParticle->currentPosition();
       auto mergeParticleType = mergeParticle->getType();
       auto mergeParticleRad = mergeParticle->getA();
@@ -647,7 +647,7 @@ DiscreteElements::findContactSingleThread()
         startInner = Timer::now();
 #endif
         if (tmpContact.isOverlapped()) {
-          contactVec.push_back(tmpContact); // containers use value
+          d_contacts.push_back(tmpContact); // domains use value
                                             // semantics, so a "copy" is
                                             // pushed back.
         }
@@ -671,7 +671,7 @@ void
 DiscreteElements::findContactMultiThread(int ompThreads)
 {
 
-  contactVec.clear();
+  d_contacts.clear();
 
 #ifdef TIME_PROFILE
   Timer::time_point startOuter, endOuter;
@@ -681,21 +681,21 @@ DiscreteElements::findContactMultiThread(int ompThreads)
   std::size_t i, j;
   DEMParticle::DEMParticleType particleType, mergeParticleType;
   Vec u, v;
-  auto num1 = particleVec.size();      // particles inside container
-  auto num2 = mergeParticleVec.size(); // particles inside container
+  auto num1 = d_patchParticles.size();      // particles inside domain
+  auto num2 = d_mergedParticles.size(); // particles inside domain
                                        // (at front) + particles from
                                        // neighboring blocks (at end)
 #pragma omp parallel for num_threads(ompThreads) private(                      \
   i, j, u, v, particleType, mergeParticleType)                                 \
     shared(num1, num2) schedule(dynamic)
   for (i = 0; i < num1; ++i) {
-    u = particleVec[i]->currentPosition();
-    particleType = particleVec[i]->getType();
+    u = d_patchParticles[i]->currentPosition();
+    particleType = d_patchParticles[i]->getType();
     for (j = i + 1; j < num2; ++j) {
-      Vec v = mergeParticleVec[j]->currentPosition();
-      mergeParticleType = mergeParticleVec[j]->getType();
+      Vec v = d_mergedParticles[j]->currentPosition();
+      mergeParticleType = d_mergedParticles[j]->getType();
       if ((vnormL2(v - u) <
-           particleVec[i]->getA() + mergeParticleVec[j]->getA()) &&
+           d_patchParticles[i]->getA() + d_mergedParticles[j]->getA()) &&
           // not both are fixed particles
           (particleType != DEMParticle::DEMParticleType::FIXED || 
            mergeParticleType != DEMParticle::DEMParticleType::FIXED) &&
@@ -706,11 +706,11 @@ DiscreteElements::findContactMultiThread(int ompThreads)
           (particleType != DEMParticle::DEMParticleType::GHOST || 
            mergeParticleType != DEMParticle::DEMParticleType::GHOST)) {
 
-        DEMContact tmpContact(particleVec[i].get(), mergeParticleVec[j].get());
+        DEMContact tmpContact(d_patchParticles[i].get(), d_mergedParticles[j].get());
 
         if (tmpContact.isOverlapped()) {
 #pragma omp critical
-          contactVec.push_back(tmpContact); // containers use value
+          d_contacts.push_back(tmpContact); // domains use value
                                             // semantics, so a "copy" is
                                             // pushed back.
         }
@@ -728,15 +728,15 @@ DiscreteElements::findContactMultiThread(int ompThreads)
 void
 DiscreteElements::findBoundaryContacts()
 {
-  for (auto& boundary : boundaryVec) {
-    boundary->findBoundaryContacts(particleVec);
+  for (auto& boundary : d_boundaries) {
+    boundary->findBoundaryContacts(d_patchParticles);
   }
 }
 
 void
 DiscreteElements::clearContactForce()
 {
-  for (auto& particle : particleVec) {
+  for (auto& particle : d_patchParticles) {
     particle->clearContactForce();
   }
 }
@@ -758,33 +758,33 @@ DiscreteElements::internalForce()
   }
 
   // checkin previous tangential force and displacment
-  for (auto& contact : contactVec) {
-    contact.checkinPreviousContactTangents(contactTangentVec);
+  for (auto& contact : d_contacts) {
+    contact.checkinPreviousContactTangents(d_contactTangents);
   }
 
 #ifdef TIME_PROFILE
   auto start = Timer::now();
 #endif
 
-  // contactTangentVec must be cleared before filling in new values.
-  contactTangentVec.clear();
+  // d_contactTangents must be cleared before filling in new values.
+  d_contactTangents.clear();
 
-  for (auto& contact : contactVec) {
+  for (auto& contact : d_contacts) {
     // cannot be parallelized as it may change a
     // particle's force simultaneously.
     contact.computeContactForces();
 
     // checkout current tangential force and displacment
-    contact.checkoutContactTangents(contactTangentVec);
+    contact.checkoutContactTangents(d_contactTangents);
 
     pAvg[0] += contact.getNormalForceMagnitude();
     pAvg[1] += contact.getTangentForceMagnitude();
     pAvg[2] += contact.getPenetration();
   }
 
-  if (contactVec.size() != 0) {
+  if (d_contacts.size() != 0) {
     for (double& pVal : pAvg) {
-      pVal /= contactVec.size();
+      pVal /= d_contacts.size();
     }
   }
 
@@ -796,24 +796,24 @@ DiscreteElements::internalForce()
 #endif
 
   MPI_Reduce(pAvg, sumAvg, 3, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
-  avgNormal = sumAvg[0] / s_mpiSize;
-  avgShear = sumAvg[1] / s_mpiSize;
-  avgPenetr = sumAvg[2] / s_mpiSize;
+  d_avgNormalForce = sumAvg[0] / s_mpiSize;
+  d_avgShearForce = sumAvg[1] / s_mpiSize;
+  d_avgPenetration = sumAvg[2] / s_mpiSize;
 }
 
 void
 DiscreteElements::boundaryForce()
 {
-  for (auto& boundary : boundaryVec) {
-    boundary->boundaryForce(boundaryTangentMap);
+  for (auto& boundary : d_boundaries) {
+    boundary->boundaryForce(d_boundaryTangentMap);
   }
 }
 
 void
 DiscreteElements::updateParticles()
 {
-  //proc0cout << "Num DEM particles = " << particleVec.size() << "\n";
-  for (auto& particle : particleVec)
+  //proc0cout << "Num DEM particles = " << d_patchParticles.size() << "\n";
+  for (auto& particle : d_patchParticles)
     particle->update();
 }
 
@@ -831,7 +831,7 @@ DiscreteElements::updatePatchBox()
 void
 DiscreteElements::updatePatchBoxMinX()
 {
-  REAL pMinX = getPtclMinX(particleVec);
+  REAL pMinX = getPtclMinX(d_patchParticles);
   REAL minX = 0;
   MPI_Allreduce(&pMinX, &minX, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
@@ -843,7 +843,7 @@ DiscreteElements::updatePatchBoxMinX()
 void
 DiscreteElements::updatePatchBoxMaxX()
 {
-  REAL pMaxX = getPtclMaxX(particleVec);
+  REAL pMaxX = getPtclMaxX(d_patchParticles);
   REAL maxX = 0;
   MPI_Allreduce(&pMaxX, &maxX, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
@@ -855,7 +855,7 @@ DiscreteElements::updatePatchBoxMaxX()
 void
 DiscreteElements::updatePatchBoxMinY()
 {
-  REAL pMinY = getPtclMinY(particleVec);
+  REAL pMinY = getPtclMinY(d_patchParticles);
   REAL minY = 0;
   MPI_Allreduce(&pMinY, &minY, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
@@ -867,7 +867,7 @@ DiscreteElements::updatePatchBoxMinY()
 void
 DiscreteElements::updatePatchBoxMaxY()
 {
-  REAL pMaxY = getPtclMaxY(particleVec);
+  REAL pMaxY = getPtclMaxY(d_patchParticles);
   REAL maxY = 0;
   MPI_Allreduce(&pMaxY, &maxY, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
@@ -879,7 +879,7 @@ DiscreteElements::updatePatchBoxMaxY()
 void
 DiscreteElements::updatePatchBoxMinZ()
 {
-  REAL pMinZ = getPtclMinZ(particleVec);
+  REAL pMinZ = getPtclMinZ(d_patchParticles);
   REAL minZ = 0;
   MPI_Allreduce(&pMinZ, &minZ, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
@@ -892,7 +892,7 @@ void
 DiscreteElements::updatePatchBoxMaxZ()
 {
   // update compute grids adaptively due to particle motion
-  REAL pMaxZ = getPtclMaxZ(particleVec);
+  REAL pMaxZ = getPtclMaxZ(d_patchParticles);
   REAL maxZ = 0;
   MPI_Allreduce(&pMaxZ, &maxZ, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
@@ -903,14 +903,14 @@ DiscreteElements::updatePatchBoxMaxZ()
 }
 
 void
-DiscreteElements::findParticleInBox(const Box& container,
+DiscreteElements::findParticleInBox(const Box& domain,
                             const DEMParticlePArray& allParticles,
                             DEMParticlePArray& insideParticles)
 {
   insideParticles.clear();
   for (const auto& particle : allParticles) {
     // it is critical to use EPS
-    if (container.inside(particle->currentPosition(), EPS)) {
+    if (domain.inside(particle->currentPosition(), EPS)) {
       insideParticles.push_back(particle);
     }
   }
@@ -919,7 +919,7 @@ DiscreteElements::findParticleInBox(const Box& container,
 void
 DiscreteElements::writeBoundaryToFile() const
 {
-  d_writer->writeDomain(&allContainer);
+  d_writer->writeDomain(&d_spatialDomain);
 }
 
 void
@@ -932,8 +932,8 @@ DiscreteElements::printBoundary() const
   }
   ofs.setf(std::ios::scientific, std::ios::floatfield);
 
-  Vec v1 = allContainer.getMinCorner();
-  Vec v2 = allContainer.getMaxCorner();
+  Vec v1 = d_spatialDomain.getMinCorner();
+  Vec v2 = d_spatialDomain.getMaxCorner();
   REAL x1 = v1.x();
   REAL y1 = v1.y();
   REAL z1 = v1.z();
@@ -945,9 +945,9 @@ DiscreteElements::printBoundary() const
       << std::setw(OWID) << x2 << std::setw(OWID) << y2 << std::setw(OWID) << z2
       << std::endl
       << std::endl
-      << std::setw(OWID) << boundaryVec.size() << std::endl;
+      << std::setw(OWID) << d_boundaries.size() << std::endl;
 
-  for (const auto& it : boundaryVec) {
+  for (const auto& it : d_boundaries) {
     it->print(ofs);
   }
 
@@ -965,7 +965,7 @@ DiscreteElements::printBoundaryContacts() const
   ofs.setf(std::ios::scientific, std::ios::floatfield);
   ofs.precision(OPREC);
 
-  for (const auto& it : mergeBoundaryVec) {
+  for (const auto& it : d_mergedBoundaries) {
     it->printContactInfo(ofs);
   }
 
@@ -984,7 +984,7 @@ DiscreteElements::writePatchGridToFile() const
 void
 DiscreteElements::writeParticlesToFile(int frame) const
 {
-  d_writer->writeParticles(&allDEMParticleVec, frame);
+  d_writer->writeParticles(&d_allDEMParticles, frame);
   d_writer->writeSieves(&d_gradation);
 }
 
@@ -999,7 +999,7 @@ DiscreteElements::printParticle(const std::string& fileName, int frame) const
 {
   OutputTecplot<DEMParticlePArray> writer(".", 0);
   writer.setParticleFileName(fileName);
-  writer.writeParticles(&allDEMParticleVec, frame);
+  writer.writeParticles(&d_allDEMParticles, frame);
 }
 
 void
@@ -1021,8 +1021,8 @@ DiscreteElements::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
 
   std::map<std::string, REAL> normalForce;
   REAL x1, x2, y1, y2, z1, z2;
-  // do not use mergeBoundaryVec because each process calls this function.
-  for (const auto& boundary : boundaryVec) {
+  // do not use d_mergedBoundaries because each process calls this function.
+  for (const auto& boundary : d_boundaries) {
     Boundary::BoundaryID id = boundary->getId();
     Vec normal = boundary->getNormalForce();
     Vec point = boundary->getPosition();
@@ -1093,10 +1093,10 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
     readParticles(inputParticle);
   }
 
-  trimHistoryNum = allDEMParticleVec.size();
+  d_trimHistoryNum = d_allDEMParticles.size();
 
-  Vec v1 = allContainer.getMinCorner();
-  Vec v2 = allContainer.getMaxCorner();
+  Vec v1 = d_spatialDomain.getMinCorner();
+  Vec v2 = d_spatialDomain.getMaxCorner();
   REAL x1 = v1.x();
   REAL y1 = v1.y();
   REAL z1 = v1.z();
@@ -1109,8 +1109,8 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
   // Not an efficient operation
   // Better approach may be to use a list if random access of vector
   // members is not needed
-  allDEMParticleVec.erase(
-    std::remove_if(allDEMParticleVec.begin(), allDEMParticleVec.end(),
+  d_allDEMParticles.erase(
+    std::remove_if(d_allDEMParticles.begin(), d_allDEMParticles.end(),
                    [&x1, &y1, &z1, &x2, &y2, &z2, &maxR](DEMParticleP particle) {
                      Vec center = particle->currentPosition();
                      if (center.x() < x1 || center.x() > x2 ||
@@ -1120,11 +1120,11 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
                      }
                      return false;
                    }),
-    allDEMParticleVec.end());
+    d_allDEMParticles.end());
 
   DEMParticleFileWriter writer;
-  writer.writeCSV(allDEMParticleVec, d_gradation, trmParticle+".csv");
-  writer.writeXML(allDEMParticleVec, d_gradation, trmParticle+".xml");
+  writer.writeCSV(d_allDEMParticles, d_gradation, trmParticle+".csv");
+  writer.writeXML(d_allDEMParticles, d_gradation, trmParticle+".xml");
 
   // Also create a VTK output for viz
   // Create the output writer in the master process
@@ -1140,8 +1140,8 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
 void
 DiscreteElements::removeParticleOutBox()
 {
-  Vec v1 = container.getMinCorner();
-  Vec v2 = container.getMaxCorner();
+  Vec v1 = d_patchDomain.getMinCorner();
+  Vec v2 = d_patchDomain.getMaxCorner();
   REAL x1 = v1.x();
   REAL y1 = v1.y();
   REAL z1 = v1.z();
@@ -1155,9 +1155,9 @@ DiscreteElements::removeParticleOutBox()
   // members is not needed
   //std::cout << "MPI Cart rank = " << s_mpiRank << "\n";
   REAL epsilon = EPS;
-  particleVec.erase(
+  d_patchParticles.erase(
     std::remove_if(
-      particleVec.begin(), particleVec.end(),
+      d_patchParticles.begin(), d_patchParticles.end(),
       [&x1, &y1, &z1, &x2, &y2, &z2, &epsilon](DEMParticleP particle) {
         Vec center = particle->currentPosition();
         if (!(center.x() - x1 >= -epsilon && center.x() - x2 < -epsilon &&
@@ -1166,7 +1166,7 @@ DiscreteElements::removeParticleOutBox()
           /*
           if (particle->getId() == 2 || particle->getId() == 94) {
             //std::cout << "**WARNING** Removing particle " << particle->getId()
-                      << " from container with \n "
+                      << " from domain with \n "
                       << " x : " << center.x() << " not in [" << x1 << ","  << x2 << "]\n"
                       << " y : " << center.y() << " not in [" << y1 << ","  << y2 << "]\n"
                       << " z : " << center.z() << " not in [" << z1 << ","  << z2 << "]\n";
@@ -1176,14 +1176,14 @@ DiscreteElements::removeParticleOutBox()
         }
         return false;
       }),
-    particleVec.end());
+    d_patchParticles.end());
 
   /*
   DEMParticlePArray::iterator itr;
   Vec center;
   //std::size_t flag = 0;
 
-  for (itr = particleVec.begin(); itr != particleVec.end(); ) {
+  for (itr = d_patchParticles.begin(); itr != d_patchParticles.end(); ) {
     center=(*itr)->currentPosition();
     // it is critical to use EPS
     if ( !(center.x() - x1 >= -EPS && center.x() - x2 < -EPS &&
@@ -1195,7 +1195,7 @@ DiscreteElements::removeParticleOutBox()
     // << " removed=" << std::setw(3) << (*itr)->getId();
     // flag = 1;
     delete (*itr); // release memory
-    itr = particleVec.erase(itr);
+    itr = d_patchParticles.erase(itr);
   }
     else
   ++itr;
@@ -1204,9 +1204,9 @@ DiscreteElements::removeParticleOutBox()
 
   /*
     if (flag == 1) {
-    debugInf << " now " << particleVec.size() << ": ";
-    for (DEMParticlePArray::const_iterator it = particleVec.begin(); it !=
-    particleVec.end(); ++it)
+    debugInf << " now " << d_patchParticles.size() << ": ";
+    for (DEMParticlePArray::const_iterator it = d_patchParticles.begin(); it !=
+    d_patchParticles.end(); ++it)
     debugInf << std::setw(3) << (*it)->getId();
     debugInf << std::endl;
     }
@@ -1352,96 +1352,60 @@ void
 DiscreteElements::releaseReceivedParticles()
 {
   // release memory of received particles
-  /*
-  for (DEMParticlePArray::iterator it = recvParticleVec.begin(); it !=
-  recvParticleVec.end(); ++it)
-    delete (*it);
-  */
-  recvParticleVec.clear();
-  // 6 surfaces
-  rParticleX1.clear();
-  rParticleX2.clear();
-  rParticleY1.clear();
-  rParticleY2.clear();
-  rParticleZ1.clear();
-  rParticleZ2.clear();
-  // 12 edges
-  rParticleX1Y1.clear();
-  rParticleX1Y2.clear();
-  rParticleX1Z1.clear();
-  rParticleX1Z2.clear();
-  rParticleX2Y1.clear();
-  rParticleX2Y2.clear();
-  rParticleX2Z1.clear();
-  rParticleX2Z2.clear();
-  rParticleY1Z1.clear();
-  rParticleY1Z2.clear();
-  rParticleY2Z1.clear();
-  rParticleY2Z2.clear();
-  // 8 vertices
-  rParticleX1Y1Z1.clear();
-  rParticleX1Y1Z2.clear();
-  rParticleX1Y2Z1.clear();
-  rParticleX1Y2Z2.clear();
-  rParticleX2Y1Z1.clear();
-  rParticleX2Y1Z2.clear();
-  rParticleX2Y2Z1.clear();
-  rParticleX2Y2Z2.clear();
+  d_receivedParticles.clear();
 }
-
-
 
 void
 DiscreteElements::migrateParticles()
 {
   //std::ostringstream out;
-  //out << "Migrate: Rank: " << s_mpiRank << ": in: " << particleVec.size();
+  //out << "Migrate: Rank: " << s_mpiRank << ": in: " << d_patchParticles.size();
 
   Vec vspan = d_demPatchBox.getMaxCorner() - d_demPatchBox.getMinCorner();
   Vec width = vspan / s_mpiProcs;
 
-  sentParticleVec.clear();
-  recvParticleVec.clear();
-  d_patchP->sendRecvMigrateXMinus(boostWorld, iteration, width, particleVec);
-  d_patchP->sendRecvMigrateXPlus(boostWorld, iteration, width, particleVec);
+  d_sentParticles.clear();
+  d_receivedParticles.clear();
+  d_patchP->sendRecvMigrateXMinus(boostWorld, iteration, width, d_patchParticles);
+  d_patchP->sendRecvMigrateXPlus(boostWorld, iteration, width, d_patchParticles);
   d_patchP->waitToFinishX(iteration);
-  d_patchP->combineSentParticlesX(iteration, sentParticleVec);
-  d_patchP->combineReceivedParticlesX(iteration, recvParticleVec);
-  d_patchP->deleteSentParticles<DEMParticleP>(iteration, sentParticleVec, particleVec);
-  d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
-  //out << " sentX : " << sentParticleVec.size()
-  //    << " recvX : " << recvParticleVec.size();
+  d_patchP->combineSentParticlesX(iteration, d_sentParticles);
+  d_patchP->combineReceivedParticlesX(iteration, d_receivedParticles);
+  d_patchP->deleteSentParticles<DEMParticleP>(iteration, d_sentParticles, d_patchParticles);
+  d_patchP->addReceivedParticles(iteration, d_receivedParticles, d_patchParticles);
+  //out << " sentX : " << d_sentParticles.size()
+  //    << " recvX : " << d_receivedParticles.size();
 
-  sentParticleVec.clear();
-  recvParticleVec.clear();
-  d_patchP->sendRecvMigrateYMinus(boostWorld, iteration, width, particleVec);
-  d_patchP->sendRecvMigrateYPlus(boostWorld, iteration, width, particleVec);
+  d_sentParticles.clear();
+  d_receivedParticles.clear();
+  d_patchP->sendRecvMigrateYMinus(boostWorld, iteration, width, d_patchParticles);
+  d_patchP->sendRecvMigrateYPlus(boostWorld, iteration, width, d_patchParticles);
   d_patchP->waitToFinishY(iteration);
-  d_patchP->combineSentParticlesY(iteration, sentParticleVec);
-  d_patchP->combineReceivedParticlesY(iteration, recvParticleVec);
-  d_patchP->deleteSentParticles<DEMParticleP>(iteration, sentParticleVec, particleVec);
-  d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
-  //out << " sentY : " << sentParticleVec.size()
-  //    << " recvY : " << recvParticleVec.size();
+  d_patchP->combineSentParticlesY(iteration, d_sentParticles);
+  d_patchP->combineReceivedParticlesY(iteration, d_receivedParticles);
+  d_patchP->deleteSentParticles<DEMParticleP>(iteration, d_sentParticles, d_patchParticles);
+  d_patchP->addReceivedParticles(iteration, d_receivedParticles, d_patchParticles);
+  //out << " sentY : " << d_sentParticles.size()
+  //    << " recvY : " << d_receivedParticles.size();
 
-  sentParticleVec.clear();
-  recvParticleVec.clear();
-  d_patchP->sendRecvMigrateZMinus(boostWorld, iteration, width, particleVec);
-  d_patchP->sendRecvMigrateZPlus(boostWorld, iteration, width, particleVec);
+  d_sentParticles.clear();
+  d_receivedParticles.clear();
+  d_patchP->sendRecvMigrateZMinus(boostWorld, iteration, width, d_patchParticles);
+  d_patchP->sendRecvMigrateZPlus(boostWorld, iteration, width, d_patchParticles);
   d_patchP->waitToFinishZ(iteration);
-  d_patchP->combineSentParticlesZ(iteration, sentParticleVec);
-  d_patchP->combineReceivedParticlesZ(iteration, recvParticleVec);
-  d_patchP->deleteSentParticles<DEMParticleP>(iteration, sentParticleVec, particleVec);
-  d_patchP->addReceivedParticles(iteration, recvParticleVec, particleVec);
-  //out << " sentZ : " << sentParticleVec.size()
-  //    << " recvZ : " << recvParticleVec.size();
+  d_patchP->combineSentParticlesZ(iteration, d_sentParticles);
+  d_patchP->combineReceivedParticlesZ(iteration, d_receivedParticles);
+  d_patchP->deleteSentParticles<DEMParticleP>(iteration, d_sentParticles, d_patchParticles);
+  d_patchP->addReceivedParticles(iteration, d_receivedParticles, d_patchParticles);
+  //out << " sentZ : " << d_sentParticles.size()
+  //    << " recvZ : " << d_receivedParticles.size();
 
   // delete outgoing particles
-  d_patchP->removeParticlesOutsidePatch<DEMParticleP>(particleVec);
-  //out << " outside: " << particleVec.size();
+  d_patchP->removeParticlesOutsidePatch<DEMParticleP>(d_patchParticles);
+  //out << " outside: " << d_patchParticles.size();
 
-  //d_patchP->removeDuplicates<DEMParticleP>(particleVec);
-  //out <<  ": dup out: " << particleVec.size() << "\n";
+  //d_patchP->removeDuplicates<DEMParticleP>(d_patchParticles);
+  //out <<  ": dup out: " << d_patchParticles.size() << "\n";
   //std::cout << out.str();
 
 }
@@ -1450,23 +1414,23 @@ DiscreteElements::migrateParticles()
 void
 DiscreteElements::gatherParticles()
 {
-  // update allDEMParticleVec: process 0 collects all updated particles from each
+  // update d_allDEMParticles: process 0 collects all updated particles from each
   // other process
   if (s_mpiRank != 0) { // each process except 0
-    boostWorld.send(0, mpiTag, particleVec);
+    boostWorld.send(0, mpiTag, d_patchParticles);
   } else { // process 0
-    // allDEMParticleVec is cleared before filling with new data
+    // d_allDEMParticles is cleared before filling with new data
     releaseGatheredParticle();
 
-    // duplicate particleVec so that it is not destroyed by allDEMParticleVec in
+    // duplicate d_patchParticles so that it is not destroyed by d_allDEMParticles in
     // next iteration,
     // otherwise it causes memory error.
-    DEMParticlePArray dupParticleVec(particleVec.size());
+    DEMParticlePArray dupParticleVec(d_patchParticles.size());
     for (std::size_t i = 0; i < dupParticleVec.size(); ++i)
-      dupParticleVec[i] = std::make_shared<DEMParticle>(*particleVec[i]);
+      dupParticleVec[i] = std::make_shared<DEMParticle>(*d_patchParticles[i]);
 
-    // fill allDEMParticleVec with dupParticleVec and received particles
-    allDEMParticleVec.insert(allDEMParticleVec.end(), dupParticleVec.begin(),
+    // fill d_allDEMParticles with dupParticleVec and received particles
+    d_allDEMParticles.insert(d_allDEMParticles.end(), dupParticleVec.begin(),
                           dupParticleVec.end());
 
     DEMParticlePArray tmpParticleVec;
@@ -1474,7 +1438,7 @@ DiscreteElements::gatherParticles()
     for (int iRank = 1; iRank < s_mpiSize; ++iRank) {
       tmpParticleVec.clear(); // do not destroy particles!
       boostWorld.recv(iRank, mpiTag, tmpParticleVec);
-      allDEMParticleVec.insert(allDEMParticleVec.end(), tmpParticleVec.begin(),
+      d_allDEMParticles.insert(d_allDEMParticles.end(), tmpParticleVec.begin(),
                             tmpParticleVec.end());
       gatherRam += tmpParticleVec.size();
     }
@@ -1486,14 +1450,14 @@ DiscreteElements::gatherParticles()
 void
 DiscreteElements::releaseGatheredParticle()
 {
-  // clear allDEMParticleVec, avoid long time memory footprint.
+  // clear d_allDEMParticles, avoid long time memory footprint.
   /*
-  for (DEMParticlePArray::iterator it = allDEMParticleVec.begin(); it !=
-  allDEMParticleVec.end(); ++it)
+  for (DEMParticlePArray::iterator it = d_allDEMParticles.begin(); it !=
+  d_allDEMParticles.end(); ++it)
     delete (*it);
   */
-  allDEMParticleVec.clear();
-  DEMParticlePArray().swap(allDEMParticleVec); // actual memory release
+  d_allDEMParticles.clear();
+  DEMParticlePArray().swap(d_allDEMParticles); // actual memory release
 }
 
 
@@ -1502,31 +1466,31 @@ DiscreteElements::gatherBoundaryContacts()
 {
   if (isBoundaryProcess()) {
     if (s_mpiRank != 0)
-      boostWorld.send(0, mpiTag, boundaryVec);
+      boostWorld.send(0, mpiTag, d_boundaries);
   }
 
   if (s_mpiRank == 0) {
-    mergeBoundaryVec.clear();
-    BoundaryPArray().swap(mergeBoundaryVec); // actual memory release
-    mergeBoundaryVec = boundaryVec;
+    d_mergedBoundaries.clear();
+    BoundaryPArray().swap(d_mergedBoundaries); // actual memory release
+    d_mergedBoundaries = d_boundaries;
 
     BoundaryPArray tmpBoundaryVec;
     for (unsigned long bdryProces : bdryProcess) {
       if (bdryProces != 0) {    // not root process
         tmpBoundaryVec.clear(); // do not destroy particles!
         boostWorld.recv(bdryProces, mpiTag, tmpBoundaryVec);
-        // merge tmpBoundaryVec into mergeBoundaryVec
-        assert(tmpBoundaryVec.size() == mergeBoundaryVec.size());
+        // merge tmpBoundaryVec into d_mergedBoundaries
+        assert(tmpBoundaryVec.size() == d_mergedBoundaries.size());
         for (std::size_t jt = 0; jt < tmpBoundaryVec.size(); ++jt)
-          mergeBoundaryVec[jt]->getBoundaryContacts().insert(
-            mergeBoundaryVec[jt]->getBoundaryContacts().end(),
+          d_mergedBoundaries[jt]->getBoundaryContacts().insert(
+            d_mergedBoundaries[jt]->getBoundaryContacts().end(),
             tmpBoundaryVec[jt]->getBoundaryContacts().begin(),
             tmpBoundaryVec[jt]->getBoundaryContacts().end());
       }
     }
 
     // must update after collecting all boundary contact info
-    for (auto& it : mergeBoundaryVec)
+    for (auto& it : d_mergedBoundaries)
       it->updateStatForce();
   }
 }
@@ -1537,7 +1501,7 @@ DiscreteElements::gatherEnergy()
   calcTranslationalEnergy();
   calcRotationalEnergy();
   calcKineticEnergy();
-  calcGravitationalEnergy(allContainer.getMinCorner().z());
+  calcGravitationalEnergy(d_spatialDomain.getMinCorner().z());
   calcMechanicalEnergy();
 }
 
@@ -1545,8 +1509,8 @@ void
 DiscreteElements::getStartDimension(REAL& distX, REAL& distY, REAL& distZ)
 {
   REAL x1 = 0, x2 = 0, y1 = 0, y2 = 0, z1 = 0, z2 = 0;
-  // use boundaryVec
-  for (const auto& boundary : boundaryVec) {
+  // use d_boundaries
+  for (const auto& boundary : d_boundaries) {
     switch (boundary->getId()) {
       case Boundary::BoundaryID::XMINUS:
         x1 = boundary->getPosition().x();
@@ -1635,7 +1599,7 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, REAL distX, REA
   std::vector<REAL> normalForce = {{0, 0, 0, 0, 0, 0}};
   std::vector<REAL> normalVelocity = {{0, 0, 0, 0, 0, 0}};
 
-  for (const auto& boundary : mergeBoundaryVec) {
+  for (const auto& boundary : d_mergedBoundaries) {
     Boundary::BoundaryID id = boundary->getId();
     switch (id) {
       case Boundary::BoundaryID::XMINUS:
@@ -1716,18 +1680,18 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, REAL distX, REA
 
   // b_numContacts
   std::vector<REAL> data = {{0, 0, 0, 0, 0, 0}};
-  for (const auto& boundary : mergeBoundaryVec) {
+  for (const auto& boundary : d_mergedBoundaries) {
     Boundary::BoundaryID id = boundary->getId();
     data[static_cast<size_t>(id) - 1] = boundary->getNumBoundaryContacts();
   }
   for (double datum : data)
     ofs << std::setw(OWID) << static_cast<std::size_t>(datum);
-  ofs << std::setw(OWID) << allContactNum;
+  ofs << std::setw(OWID) << d_allContactNum;
 
   // avgPenetr
   data.clear();
   data.reserve(6);
-  for (const auto& boundary : mergeBoundaryVec) {
+  for (const auto& boundary : d_mergedBoundaries) {
     auto id = boundary->getId();
     data[static_cast<size_t>(id) - 1] = boundary->getAvgPenetration();
   }
@@ -1735,8 +1699,8 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, REAL distX, REA
     ofs << std::setw(OWID) << datum;
 
   // average data
-  ofs << std::setw(OWID) << avgNormal << std::setw(OWID) << avgShear
-      << std::setw(OWID) << avgPenetr;
+  ofs << std::setw(OWID) << d_avgNormalForce << std::setw(OWID) << d_avgShearForce
+      << std::setw(OWID) << d_avgPenetration;
 
   // energy
   ofs << std::setw(OWID) << d_translationalEnergy << std::setw(OWID) << d_rotationalEnergy
@@ -1744,7 +1708,7 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, REAL distX, REA
       << std::setw(OWID) << d_mechanicalEnergy;
 
   // time
-  ofs << std::setw(OWID) << vibraTimeStep << std::setw(OWID) << impactTimeStep
+  ofs << std::setw(OWID) << d_vibrationTimeStep << std::setw(OWID) << d_impactTimeStep
       << std::setw(OWID) << timeStep;
 
   ofs << std::endl;
@@ -1786,7 +1750,7 @@ DiscreteElements::updateBoundary(REAL sigma, std::string type,
 {
   if (s_mpiRank == 0) {
     REAL x1, x2, y1, y2, z1, z2;
-    for (const auto& boundary : mergeBoundaryVec) {
+    for (const auto& boundary : d_mergedBoundaries) {
       switch (boundary->getId()) {
         case Boundary::BoundaryID::XMINUS:
           x1 = boundary->getPosition().x();
@@ -1815,30 +1779,30 @@ DiscreteElements::updateBoundary(REAL sigma, std::string type,
     REAL areaZ = (x2 - x1) * (y2 - y1);
 
     if (type.compare("isotropic") == 0) {
-      for (auto& it : mergeBoundaryVec)
+      for (auto& it : d_mergedBoundaries)
         it->updateIsotropic(sigma, areaX, areaY, areaZ);
     } else if (type.compare("odometer") == 0) {
-      for (auto& it : mergeBoundaryVec)
+      for (auto& it : d_mergedBoundaries)
         it->updateOdometer(sigma, areaX, areaY, areaZ);
     } else if (type.compare("triaxial") == 0) {
-      for (auto& it : mergeBoundaryVec)
+      for (auto& it : d_mergedBoundaries)
         it->updateTriaxial(sigma, areaX, areaY, areaZ);
     } else if (type.compare("plnstrn") == 0) {
-      for (auto& it : mergeBoundaryVec)
+      for (auto& it : d_mergedBoundaries)
         it->updatePlaneStrain(sigma, areaX, areaY, areaZ);
     } else if (type.compare("trueTriaxial") == 0) {
-      for (auto& it : mergeBoundaryVec)
+      for (auto& it : d_mergedBoundaries)
         it->updateTrueTriaxial(sigma, areaX, areaY, areaZ, sigmaX, sigmaY);
     }
 
-    // update boundaryVec from mergeBoundaryVec and remove b_contacts to reduce
+    // update d_boundaries from d_mergedBoundaries and remove b_contacts to reduce
     // MPI transmission
-    boundaryVec = mergeBoundaryVec;
-    for (auto& it : boundaryVec)
+    d_boundaries = d_mergedBoundaries;
+    for (auto& it : d_boundaries)
       it->clearBoundaryContacts();
 
-    // update allContainer
-    for (const auto& boundary : boundaryVec) {
+    // update d_spatialDomain
+    for (const auto& boundary : d_boundaries) {
       switch (boundary->getId()) {
         case Boundary::BoundaryID::XMINUS:
           x1 = boundary->getPosition().x();
@@ -1862,10 +1826,10 @@ DiscreteElements::updateBoundary(REAL sigma, std::string type,
           break;
       }
     }
-    setContainer(Box(x1, y1, z1, x2, y2, z2));
+    setSpatialDomain(Box(x1, y1, z1, x2, y2, z2));
   }
 
-  broadcast(boostWorld, boundaryVec, 0);
+  broadcast(boostWorld, d_boundaries, 0);
 }
 
 void
@@ -1887,7 +1851,7 @@ DiscreteElements::printContact(const std::string& str) const
   std::stringstream inf;
   inf.setf(std::ios::scientific, std::ios::floatfield);
 
-  for (const auto& it : contactVec)
+  for (const auto& it : d_contacts)
     inf << std::setw(OWID) << it.getP1()->getId() << std::setw(OWID)
         << it.getP2()->getId() << std::setw(OWID) << it.getPoint1().x()
         << std::setw(OWID) << it.getPoint1().y() << std::setw(OWID)
@@ -1909,7 +1873,7 @@ DiscreteElements::printContact(const std::string& str) const
         << std::setw(OWID) << it.getVibraTimeStep() << std::setw(OWID)
         << it.getImpactTimeStep() << std::endl;
 
-  int length = (OWID * 28 + 1) * contactVec.size();
+  int length = (OWID * 28 + 1) * d_contacts.size();
   // write a file at a location specified by a shared file pointer (blocking,
   // collective)
   // note MPI_File_write_shared is non-collective
@@ -1930,7 +1894,7 @@ DiscreteElements::printContact(const std::string& str) const
   ofs.setf(std::ios::scientific, std::ios::floatfield);
   ofs.precision(OPREC);
 
-  ofs << std::setw(OWID) << contactVec.size() << std::endl;
+  ofs << std::setw(OWID) << d_contacts.size() << std::endl;
   ofs << std::setw(OWID) << "ptcl_1"
   << std::setw(OWID) << "ptcl_2"
   << std::setw(OWID) << "point1_x"
@@ -1962,7 +1926,7 @@ DiscreteElements::printContact(const std::string& str) const
   << std::endl;
 
   ContactArray::const_iterator it;
-  for (it = contactVec.begin(); it != contactVec.end(); ++it)
+  for (it = d_contacts.begin(); it != d_contacts.end(); ++it)
     ofs << std::setw(OWID) << it->getP1()->getId()
     << std::setw(OWID) << it->getP2()->getId()
     << std::setw(OWID) << it->getPoint1().x()
@@ -2000,7 +1964,7 @@ void
 DiscreteElements::calcTranslationalEnergy()
 {
   REAL pEnergy = 0;
-  for (const auto& particle : particleVec) {
+  for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
       pEnergy += particle->getTranslationalEnergy();
     }
@@ -2012,7 +1976,7 @@ void
 DiscreteElements::calcRotationalEnergy()
 {
   REAL pEnergy = 0;
-  for (const auto& particle : particleVec) {
+  for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
       pEnergy += particle->getRotationalEnergy();
     }
@@ -2024,7 +1988,7 @@ void
 DiscreteElements::calcKineticEnergy()
 {
   REAL pEnergy = 0;
-  for (const auto& particle : particleVec) {
+  for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
       pEnergy += particle->getKineticEnergy();
     }
@@ -2036,7 +2000,7 @@ void
 DiscreteElements::calcGravitationalEnergy(REAL ref)
 {
   REAL pEnergy = 0;
-  for (const auto& particle : particleVec) {
+  for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
       pEnergy += particle->getPotentialEnergy(ref);
     }
@@ -2054,7 +2018,7 @@ REAL
 DiscreteElements::getMass() const
 {
   REAL var = 0;
-  for (const auto& particle : allDEMParticleVec)
+  for (const auto& particle : d_allDEMParticles)
     var += particle->getMass();
   return var;
 }
@@ -2063,7 +2027,7 @@ REAL
 DiscreteElements::getVolume() const
 {
   REAL var = 0;
-  for (const auto& particle : allDEMParticleVec)
+  for (const auto& particle : d_allDEMParticles)
     if (particle->getType() == DEMParticle::DEMParticleType::FREE)
       var += particle->getVolume();
   return var;
@@ -2074,7 +2038,7 @@ DiscreteElements::getAvgTranslationalVelocity() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
-  for (const auto& particle : particleVec) {
+  for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
       avgv += vnormL2(particle->currentVelocity());
       ++count;
@@ -2088,7 +2052,7 @@ DiscreteElements::getAvgRotationalVelocity() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
-  for (const auto& particle : particleVec) {
+  for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
       avgv += vnormL2(particle->currentOmega());
       ++count;
@@ -2102,7 +2066,7 @@ DiscreteElements::getAvgForce() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
-  for (const auto& particle : particleVec) {
+  for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
       avgv += vnormL2(particle->getForce());
       ++count;
@@ -2116,7 +2080,7 @@ DiscreteElements::getAvgMoment() const
 {
   REAL avgv = 0;
   std::size_t count = 0;
-  for (const auto& particle : particleVec) {
+  for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
       avgv += vnormL2(particle->getMoment());
       ++count;
@@ -2128,7 +2092,7 @@ DiscreteElements::getAvgMoment() const
 void
 DiscreteElements::dragForce() 
 {
-  for (auto& particle : particleVec) {
+  for (auto& particle : d_patchParticles) {
     particle->dragForce();
   }
 }

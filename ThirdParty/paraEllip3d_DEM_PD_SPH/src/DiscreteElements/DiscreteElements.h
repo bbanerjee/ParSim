@@ -38,29 +38,29 @@ class DiscreteElements
 {
 public:
   DiscreteElements()
-    : trimHistoryNum(0)
-    , allContactNum(0)
-    , avgNormal(0)
-    , avgShear(0)
-    , avgPenetr(0)
+    : d_trimHistoryNum(0)
+    , d_allContactNum(0)
+    , d_avgNormalForce(0)
+    , d_avgShearForce(0)
+    , d_avgPenetration(0)
     , d_translationalEnergy(0)
     , d_rotationalEnergy(0)
     , d_kineticEnergy(0)
     , d_gravitationalEnergy(0)
     , d_mechanicalEnergy(0)
-    , vibraTimeStep(0)
-    , impactTimeStep(0)
+    , d_vibrationTimeStep(0)
+    , d_impactTimeStep(0)
   {
   }
 
   ~DiscreteElements()
   {
     // in case of consecutive simulations
-    allDEMParticleVec.clear();
-    particleVec.clear();
-    boundaryVec.clear();
-    cavityBoundaryVec.clear();
-    springVec.clear();
+    d_allDEMParticles.clear();
+    d_patchParticles.clear();
+    d_boundaries.clear();
+    d_cavityBoundaries.clear();
+    d_springs.clear();
   } // ~DiscreteElements()
 
   // Accessor methods
@@ -72,23 +72,23 @@ public:
   static IntVec getMPIProcs() { return s_mpiProcs; }
   static IntVec getMPICoords() { return s_mpiCoords; }
 
-  const DEMParticlePArray& getAllDEMParticleVec() const { return allDEMParticleVec; }
-  DEMParticlePArray& getModifiableAllParticleVec() { return allDEMParticleVec; }
+  const DEMParticlePArray& getAllDEMParticleVec() const { return d_allDEMParticles; }
+  DEMParticlePArray& getModifiableAllParticleVec() { return d_allDEMParticles; }
 
-  const DEMParticlePArray& getDEMParticleVec() const { return particleVec; }
-  DEMParticlePArray& getModifiableParticleVec() { return particleVec; }
-  DEMParticlePArray& getMergedParticleVec() { return mergeParticleVec; }
+  const DEMParticlePArray& getDEMParticleVec() const { return d_patchParticles; }
+  DEMParticlePArray& getModifiableParticleVec() { return d_patchParticles; }
+  DEMParticlePArray& getMergedParticleVec() { return d_mergedParticles; }
 
   const Gradation& getGradation() const { return d_gradation; }
-  const Box& getAllContainer() const { return allContainer; }
+  const Box& getSpatialDomain() const { return d_spatialDomain; }
   Fluid& getFluid() { return fluid; }
 
   void setCommunicator(boost::mpi::communicator& comm);
-  void setContainer(Box cont) { allContainer = cont; }
+  void setSpatialDomain(Box cont) { d_spatialDomain = cont; }
   void setPatchBox(Box cont) { d_demPatchBox = cont; }
   void setGradation(Gradation grad) { d_gradation = grad; }
   void setAllDEMParticleVec(const DEMParticlePArray& particles) {
-    allDEMParticleVec = particles;
+    d_allDEMParticles = particles;
   }
 
   /**
@@ -216,11 +216,11 @@ public:
   void calcMechanicalEnergy();
   void gatherEnergy();
 
-  void setTrimHistoryNum(std::size_t n) { trimHistoryNum = n; }
+  void setTrimHistoryNum(std::size_t n) { d_trimHistoryNum = n; }
   void writeParticlesToFile(int frame) const; // print all particles
-  void writeParticlesToFile(DEMParticlePArray& particleVec, int frame) const; // print particles info
+  void writeParticlesToFile(DEMParticlePArray& d_patchParticles, int frame) const; // print particles info
   void printParticle(const std::string& fileName, int frame) const; // print all particles
-  void printParticle(const std::string& fileName, DEMParticlePArray& particleVec, int frame) const; // print particles info
+  void printParticle(const std::string& fileName, DEMParticlePArray& d_patchParticles, int frame) const; // print particles info
   void printBoundaryContacts() const; // print all boundary contact info
   void printMemParticle(
     const std::string& str) const; // print membrane particles
@@ -263,7 +263,7 @@ public:
     std::size_t snapNum = 100,       // number of snapNum
     std::size_t interval = 10,       // print interval
     REAL dimn = 0.05,                // dimension of particle-composed-boundary
-    REAL rsize = 1.0,                // relative container size
+    REAL rsize = 1.0,                // relative spatial domain size
     const std::string& iniptclfile =
       "dep_particle_end", // input file, initial particles
     const std::string& Particlefile =
@@ -292,7 +292,7 @@ public:
     std::size_t snapNum = 100,       // number of snapNum
     std::size_t interval = 10,       // print interval
     REAL dimn = 0.05,                // dimension of particle-composed-boundary
-    REAL rsize = 1.0,                // relative container size
+    REAL rsize = 1.0,                // relative spatial domain size
     const std::string& iniptclfile =
       "flo_particle_end", // input file, initial particles
     const std::string& Particlefile =
@@ -303,7 +303,7 @@ public:
       "dep_progress", // output file, statistical info
     const std::string& debugfile = "dep_debug"); // output file, debug info
 
-  // squeeze paticles inside a container by moving the boundaries
+  // squeeze paticles inside a spatial domain by moving the boundaries
   void squeeze(
     std::size_t total_steps = 20000, // total_steps
     std::size_t init_steps = 5000,   // initial_steps to reach equilibrium
@@ -336,12 +336,12 @@ public:
                      const std::string& progressfile,
                      const std::string& debugfile);
 
-  REAL getPtclMinX(const DEMParticlePArray& particleVec) const;
-  REAL getPtclMaxX(const DEMParticlePArray& particleVec) const;
-  REAL getPtclMinY(const DEMParticlePArray& particleVec) const;
-  REAL getPtclMaxY(const DEMParticlePArray& particleVec) const;
-  REAL getPtclMinZ(const DEMParticlePArray& particleVec) const;
-  REAL getPtclMaxZ(const DEMParticlePArray& particleVec) const;
+  REAL getPtclMinX(const DEMParticlePArray& d_patchParticles) const;
+  REAL getPtclMaxX(const DEMParticlePArray& d_patchParticles) const;
+  REAL getPtclMinY(const DEMParticlePArray& d_patchParticles) const;
+  REAL getPtclMaxY(const DEMParticlePArray& d_patchParticles) const;
+  REAL getPtclMinZ(const DEMParticlePArray& d_patchParticles) const;
+  REAL getPtclMaxZ(const DEMParticlePArray& d_patchParticles) const;
 
   void collapse(std::size_t total_steps, std::size_t snapNum,
                 std::size_t interval, const std::string& iniptclfile,
@@ -480,7 +480,7 @@ public:
   void applyCoupledBoundary(); // this is used to test the coupled force model,
                                // October 10, 2014
 
-  void findParticleInBox(const Box& container,
+  void findParticleInBox(const Box& spatialDomain,
                          const DEMParticlePArray& allParticle,
                          DEMParticlePArray& foundParticle);
 
@@ -495,51 +495,51 @@ private:
   Gradation d_gradation; 
 
   // all particles, only meaningful to root process
-  DEMParticlePArray allDEMParticleVec;           
-  DEMParticlePArray particleVec; // particles per process
+  DEMParticlePArray d_allDEMParticles;           
+  DEMParticlePArray d_patchParticles; // particles per process
 
   // historical maximum numbering before trimming,
   // only meaningful to root process
-  std::size_t trimHistoryNum; 
+  std::size_t d_trimHistoryNum; 
 
-  ContactArray contactVec; // contacts per process
+  ContactArray d_contacts; // contacts per process
 
   // tangential contact force and displacement per process
-  ContactTangentArray contactTangentVec; 
+  ContactTangentArray d_contactTangents; 
 
   // estimated total contact number, only meaningful to root process
-  std::size_t allContactNum; 
+  std::size_t d_allContactNum; 
 
-  MembraneParticlePArray memBoundary; // membrane particle boundaries
-  SpringUPArray springVec;            // springs connecting membrane particles
+  MembraneParticlePArray d_membraneBoundaries; // membrane particle boundaries
+  SpringUPArray d_springs;            // springs connecting membrane particles
 
-  // whole container, broadcast among processes for once
-  Box allContainer; 
-  Box container;    // container per process
-  Box cavity;       // cavity inside container
+  // whole spatial domain, broadcast among processes for once
+  Box d_spatialDomain; 
+  Box d_patchDomain;    // spatial domain per process
+  Box cavity;       // cavity inside spatial domain
 
   // adaptive compute patchBox, broadcast among processes for once,
   // updated per process
   Box d_demPatchBox; 
 
   // rigid boundaries, broadcast among processes upon changed.
-  BoundaryPArray boundaryVec; 
+  BoundaryPArray d_boundaries; 
 
   // rigid boundaries with stats from all processes
-  BoundaryPArray mergeBoundaryVec; 
+  BoundaryPArray d_mergedBoundaries; 
 
-  BoundaryPArray cavityBoundaryVec; // rigid cavity boundaries
+  BoundaryPArray d_cavityBoundaries; // rigid cavity boundaries
 
   // particle-boundary contact tangential info
-  std::map<std::size_t, BoundaryTangentArray> boundaryTangentMap; 
+  std::map<std::size_t, BoundaryTangentArray> d_boundaryTangentMap; 
 
   // fluid property
   Fluid fluid;
 
   // average data
-  REAL avgNormal; // only meaningful to root process
-  REAL avgShear;  // only meaningful to root process
-  REAL avgPenetr; // only meaningful to root process
+  REAL d_avgNormalForce; // only meaningful to root process
+  REAL d_avgShearForce;  // only meaningful to root process
+  REAL d_avgPenetration; // only meaningful to root process
 
   // energy data
   REAL d_translationalEnergy; // only meaningful to root process
@@ -549,8 +549,8 @@ private:
   REAL d_mechanicalEnergy; // only meaningful to root process
 
   // time step
-  REAL vibraTimeStep;  // meaningful to all processes
-  REAL impactTimeStep; // meaningful to all processes
+  REAL d_vibrationTimeStep;  // meaningful to all processes
+  REAL d_impactTimeStep; // meaningful to all processes
 
   // MPI data
   boost::mpi::communicator boostWorld;
@@ -567,25 +567,9 @@ private:
   void createPatch(int iteration, const REAL& ghostWidth);
   void updatePatch(int iteration, const REAL& ghostWidth);
 
-  int rankX1, rankX2, rankY1, rankY2, rankZ1, rankZ2;
-  int rankX1Y1, rankX1Y2, rankX1Z1, rankX1Z2;
-  int rankX2Y1, rankX2Y2, rankX2Z1, rankX2Z2;
-  int rankY1Z1, rankY1Z2, rankY2Z1, rankY2Z2;
-  int rankX1Y1Z1, rankX1Y1Z2, rankX1Y2Z1, rankX1Y2Z2;
-  int rankX2Y1Z1, rankX2Y1Z2, rankX2Y2Z1, rankX2Y2Z2;
-  DEMParticlePArray rParticleX1, rParticleX2; // r stands for received
-  DEMParticlePArray rParticleY1, rParticleY2;
-  DEMParticlePArray rParticleZ1, rParticleZ2;
-  DEMParticlePArray rParticleX1Y1, rParticleX1Y2, rParticleX1Z1, rParticleX1Z2;
-  DEMParticlePArray rParticleX2Y1, rParticleX2Y2, rParticleX2Z1, rParticleX2Z2;
-  DEMParticlePArray rParticleY1Z1, rParticleY1Z2, rParticleY2Z1, rParticleY2Z2;
-  DEMParticlePArray rParticleX1Y1Z1, rParticleX1Y1Z2, rParticleX1Y2Z1,
-    rParticleX1Y2Z2;
-  DEMParticlePArray rParticleX2Y1Z1, rParticleX2Y1Z2, rParticleX2Y2Z1,
-    rParticleX2Y2Z2;
-  ParticleIDHashMap sentParticleVec;  // sent particles per process
-  DEMParticlePArray recvParticleVec;  // received particles per process
-  DEMParticlePArray mergeParticleVec; // merged particles per process
+  ParticleIDHashMap d_sentParticles;  // sent particles per process
+  DEMParticlePArray d_receivedParticles;  // received particles per process
+  DEMParticlePArray d_mergedParticles; // merged particles per process
 
   // stream
   std::ofstream progressInf;

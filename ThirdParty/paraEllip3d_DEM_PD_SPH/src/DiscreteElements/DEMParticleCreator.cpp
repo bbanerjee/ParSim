@@ -11,15 +11,15 @@ using ParticleParameters = DEMParticleCreator::ParticleParameters;
 DEMParticlePArray
 DEMParticleCreator::generateDEMParticles(std::size_t layerFlag,
                                          DEMParticleShape particleShape,
-                                         const Box& allContainer, 
+                                         const Box& spatialDomain, 
                                          Gradation& gradation)
 {
   if (layerFlag == 0) {
-    return generateDEMParticles<0>(particleShape, allContainer, gradation);
+    return generateDEMParticles<0>(particleShape, spatialDomain, gradation);
   } else if (layerFlag == 1) {
-    return generateDEMParticles<1>(particleShape, allContainer, gradation);
+    return generateDEMParticles<1>(particleShape, spatialDomain, gradation);
   } 
-  return generateDEMParticles<2>(particleShape, allContainer, gradation);
+  return generateDEMParticles<2>(particleShape, spatialDomain, gradation);
 }
 
 /**
@@ -31,7 +31,7 @@ DEMParticleCreator::generateDEMParticles(std::size_t layerFlag,
 template <std::size_t layerFlag>
 DEMParticlePArray
 DEMParticleCreator::generateDEMParticles(DEMParticleShape particleShape,
-                                         const Box& allContainer, 
+                                         const Box& spatialDomain, 
                                          Gradation& gradation)
 {
   // Get particle parameters
@@ -39,7 +39,7 @@ DEMParticleCreator::generateDEMParticles(DEMParticleShape particleShape,
 
   // Create the particles
   DEMParticlePArray particles = createParticles<layerFlag>(particleShape,
-    allContainer, gradation, params);
+    spatialDomain, gradation, params);
 
   return particles;
 
@@ -78,12 +78,12 @@ DEMParticleCreator::getParticleParameters(const Gradation& gradation)
 }
 
 /** 
- * Create a single particle at the center of the container box
+ * Create a single particle at the center of the domain box
  */
 template <>
 DEMParticlePArray
 DEMParticleCreator::createParticles<0>(DEMParticleShape particleShape,
-                                       const Box& allContainer, 
+                                       const Box& spatialDomain, 
                                        Gradation& gradation, 
                                        const ParticleParameters& params)
 {
@@ -92,7 +92,7 @@ DEMParticleCreator::createParticles<0>(DEMParticleShape particleShape,
 
   DEMParticleP particle = std::make_shared<DEMParticle>(++particleNum, 
     particleShape, DEMParticle::DEMParticleType::FREE,
-    allContainer.getCenter(), gradation, 
+    spatialDomain.getCenter(), gradation, 
     params.youngModulus, params.poissonRatio);
 
   particles.push_back(particle);
@@ -102,23 +102,23 @@ DEMParticleCreator::createParticles<0>(DEMParticleShape particleShape,
 
 /** 
  * Create a single horizontal layer of particles at the z-location
- * of the center of the container
+ * of the center of the domain
  */
 template <>
 DEMParticlePArray
 DEMParticleCreator::createParticles<1>(DEMParticleShape particleShape,
-                                       const Box& allContainer, 
+                                       const Box& spatialDomain, 
                                        Gradation& gradation, 
                                        const ParticleParameters& params)
 {
-  auto z_cen = allContainer.getCenter().z();
+  auto z_cen = spatialDomain.getCenter().z();
 
-  auto x_min = allContainer.getMinCorner().x() + params.edge;
-  auto x_max = allContainer.getMaxCorner().x() - params.edge;
+  auto x_min = spatialDomain.getMinCorner().x() + params.edge;
+  auto x_max = spatialDomain.getMaxCorner().x() - params.edge;
   auto xCoords = util::linspaceApprox<REAL>(x_min, x_max, params.maxDiameter);
 
-  auto y_min = allContainer.getMinCorner().y() + params.edge;
-  auto y_max = allContainer.getMaxCorner().y() - params.edge;
+  auto y_min = spatialDomain.getMinCorner().y() + params.edge;
+  auto y_max = spatialDomain.getMaxCorner().y() - params.edge;
   auto yCoords = util::linspaceApprox<REAL>(y_min, y_max, params.maxDiameter);
 
   DEMParticlePArray particles;
@@ -139,14 +139,14 @@ DEMParticleCreator::createParticles<1>(DEMParticleShape particleShape,
 
 /** 
  * Create multiple horizontal layers of particles from a starting 
- * z-position to an ending z-position inside the container.
+ * z-position to an ending z-position inside the domain.
  * Particles in each layer are offset by a small amount in a zig-zag
  * manner.
  */
 template <>
 DEMParticlePArray
 DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
-                                       const Box& allContainer, 
+                                       const Box& spatialDomain, 
                                        Gradation& gradation, 
                                        const ParticleParameters& params)
 {
@@ -155,20 +155,20 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
   try {
     z_min = util::getParam<REAL>("floatMinZ");
   } catch (const std::out_of_range& err) {
-    z_min = allContainer.getMinCorner().z();
+    z_min = spatialDomain.getMinCorner().z();
   }
   REAL z_max = 0;
   try {
     z_max = util::getParam<REAL>("floatMaxZ");
   } catch (const std::out_of_range& err) {
-    z_max = allContainer.getMaxCorner().z();
+    z_max = spatialDomain.getMaxCorner().z();
   }
   z_min += params.maxDiameter;
   z_max -= params.maxDiameter;
   auto zCoords = util::linspaceApprox<REAL>(z_min, z_max, params.maxDiameter);
 
-  auto x_min = allContainer.getMinCorner().x() + params.edge;
-  auto x_max = allContainer.getMaxCorner().x() - params.edge;
+  auto x_min = spatialDomain.getMinCorner().x() + params.edge;
+  auto x_max = spatialDomain.getMaxCorner().x() - params.edge;
   auto xCoords = util::linspaceApprox<REAL>(x_min, x_max, params.maxDiameter);
 
   /*
@@ -182,8 +182,8 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
   std::cout << std::endl;
   */
 
-  auto y_min = allContainer.getMinCorner().y() + params.edge;
-  auto y_max = allContainer.getMaxCorner().y() - params.edge;
+  auto y_min = spatialDomain.getMinCorner().y() + params.edge;
+  auto y_max = spatialDomain.getMaxCorner().y() - params.edge;
   auto yCoords = util::linspaceApprox<REAL>(y_min, y_max, params.maxDiameter);
 
   DEMParticlePArray particles;
@@ -210,9 +210,9 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
 
 namespace dem {
 template DEMParticlePArray DEMParticleCreator::generateDEMParticles<0>(
-  DEMParticleShape shape, const Box& allContainer, Gradation& gradation);
+  DEMParticleShape shape, const Box& spatialDomain, Gradation& gradation);
 template DEMParticlePArray DEMParticleCreator::generateDEMParticles<1>(
-  DEMParticleShape shape, const Box& allContainer, Gradation& gradation);
+  DEMParticleShape shape, const Box& spatialDomain, Gradation& gradation);
 template DEMParticlePArray DEMParticleCreator::generateDEMParticles<2>(
-  DEMParticleShape shape, const Box& allContainer, Gradation& gradation);
+  DEMParticleShape shape, const Box& spatialDomain, Gradation& gradation);
 }

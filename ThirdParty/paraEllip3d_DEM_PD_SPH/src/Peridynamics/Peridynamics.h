@@ -103,9 +103,9 @@ public:
   void applyTractionBoundary(int);
 
   // Scatter the peridynamics particles
-  void scatterPeriParticle(const dem::Box& allContainer);
+  void scatterPeriParticle(const dem::Box& spatialDomain);
 
-  void findPeriParticleInBox(const dem::Box& container, 
+  void findPeriParticleInBox(const dem::Box& domain, 
                              const PeriParticlePArray& allParticles,
                              PeriParticlePArray& foundParticles);
 
@@ -115,7 +115,7 @@ public:
   void commuPeriParticle(int iteration,
                          const double& maxDEMParticleRadius);
 
-  void removePeriParticleOutBox(const dem::Box& container,
+  void removePeriParticleOutBox(const dem::Box& domain,
                                 PeriParticlePArray& periParticleVec);
 
   // find peri-bonds between periParticleVec and recvPeriParticleVec
@@ -277,13 +277,6 @@ private:
   REAL d_maxDistBetweenParticles;
   dem::Box d_periPatchBox;
 
-  int rankX1, rankX2, rankY1, rankY2, rankZ1, rankZ2;
-  int rankX1Y1, rankX1Y2, rankX1Z1, rankX1Z2;
-  int rankX2Y1, rankX2Y2, rankX2Z1, rankX2Z2;
-  int rankY1Z1, rankY1Z2, rankY2Z1, rankY2Z2;
-  int rankX1Y1Z1, rankX1Y1Z2, rankX1Y2Z1, rankX1Y2Z2;
-  int rankX2Y1Z1, rankX2Y1Z2, rankX2Y2Z1, rankX2Y2Z2;
-
   // stream
   std::ofstream periProgInf;
   std::ofstream periProgInfHalf;
@@ -343,20 +336,6 @@ private:
   // the peri-points that are near to this particle, in each cpu
   PeriDEMBondPArray periDEMBondVec; 
 
-  PeriParticlePArray rperiParticleX1,
-    rperiParticleX2; // r stands for received
-  PeriParticlePArray rperiParticleY1, rperiParticleY2;
-  PeriParticlePArray rperiParticleZ1, rperiParticleZ2;
-  PeriParticlePArray rperiParticleX1Y1, rperiParticleX1Y2,
-    rperiParticleX1Z1, rperiParticleX1Z2;
-  PeriParticlePArray rperiParticleX2Y1, rperiParticleX2Y2,
-    rperiParticleX2Z1, rperiParticleX2Z2;
-  PeriParticlePArray rperiParticleY1Z1, rperiParticleY1Z2,
-    rperiParticleY2Z1, rperiParticleY2Z2;
-  PeriParticlePArray rperiParticleX1Y1Z1, rperiParticleX1Y1Z2,
-    rperiParticleX1Y2Z1, rperiParticleX1Y2Z2;
-  PeriParticlePArray rperiParticleX2Y1Z1, rperiParticleX2Y1Z2,
-    rperiParticleX2Y2Z1, rperiParticleX2Y2Z2;
   PeriParticlePArray
     recvPeriParticleVec; // received particles per process
   PeriParticlePArray mergePeriParticleVec;

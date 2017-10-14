@@ -60,15 +60,15 @@ TEST(SPHParticleScatterTest, scatter)
     dem::DEMParticlePArray allDEMParticles;
 
     SPHParticleCreator creator;
-    dem::Box container(dem::Vec(0, 0, 0), dem::Vec(0.1, 0.1, 0.1));
-    sph_particles = creator.generateSPHParticleNoBottom<2>(container, allDEMParticles);
+    dem::Box domain(dem::Vec(0, 0, 0), dem::Vec(0.1, 0.1, 0.1));
+    sph_particles = creator.generateSPHParticleNoBottom<2>(domain, allDEMParticles);
 
     EXPECT_EQ(sph_particles.size(), 25);
   }
 
 
   // Set up SPH domain
-  dem::Box allContainer(dem::Vec(-0.01, -0.01, -0.01), dem::Vec(0.11, 0.11, 0.11));
+  dem::Box spatialDomain(dem::Vec(-0.01, -0.01, -0.01), dem::Vec(0.11, 0.11, 0.11));
   REAL spaceInterval = util::getParam<REAL>("spaceInterval");
   int numLayers = util::getParam<int>("numLayers");
   REAL ghostWidth = 3*spaceInterval;
@@ -81,7 +81,7 @@ TEST(SPHParticleScatterTest, scatter)
   if (boostWorld.rank() == 0) {
     EXPECT_EQ(sph.getAllSPHParticleVec().size(), 0);
   }
-  sph.scatterSPHParticle(allContainer, ghostWidth, bufferLength);
+  sph.scatterSPHParticle(spatialDomain, ghostWidth, bufferLength);
   if (boostWorld.rank() == 0) {
     EXPECT_EQ(sph.getSPHParticleVec().size(), 0);
   } else {
@@ -95,7 +95,7 @@ TEST(SPHParticleScatterTest, scatter)
     sph1.setAllSPHParticleVec(sph_particles);
     EXPECT_EQ(sph1.getAllSPHParticleVec().size(), 25);
   }
-  sph1.scatterSPHParticle(allContainer, ghostWidth, bufferLength);
+  sph1.scatterSPHParticle(spatialDomain, ghostWidth, bufferLength);
   if (boostWorld.rank() == 0) {
     EXPECT_EQ(sph1.getSPHParticleVec().size(), 10);
   } else {

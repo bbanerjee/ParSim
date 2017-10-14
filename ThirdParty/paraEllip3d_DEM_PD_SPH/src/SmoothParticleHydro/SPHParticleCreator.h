@@ -14,15 +14,15 @@ public:
   ~SPHParticleCreator() = default;
 
   template <int dim>
-  SPHParticlePArray generateSPHParticleDam(const dem::Box& allContainer,
+  SPHParticlePArray generateSPHParticleDam(const dem::Box& spatialDomain,
                            const dem::DEMParticlePArray& allDEMParticles);
 
   template <int dim>
-  SPHParticlePArray generateSPHParticleNoBottom(const dem::Box& allContainer,
+  SPHParticlePArray generateSPHParticleNoBottom(const dem::Box& spatialDomain,
                                    const dem::DEMParticlePArray& allDEMParticles);
 
   template <int dim>
-  SPHParticlePArray generateSPHParticleMiddleLayers(const dem::Box& allContainer,
+  SPHParticlePArray generateSPHParticleMiddleLayers(const dem::Box& spatialDomain,
                                    const dem::DEMParticlePArray& allDEMParticles);
 
   template <int dim>

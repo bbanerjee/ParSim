@@ -11,7 +11,7 @@ using namespace dem;
 using json = nlohmann::json;
 
 void
-BoundaryReader::read(const std::string& inputFileName, Box& container,
+BoundaryReader::read(const std::string& inputFileName, Box& domain,
                      Box& patchBox, BoundaryPArray& boundaries) const
 {
   std::ifstream ifs(inputFileName);
@@ -24,8 +24,8 @@ BoundaryReader::read(const std::string& inputFileName, Box& container,
 
   REAL x1, y1, z1, x2, y2, z2;
   ifs >> x1 >> y1 >> z1 >> x2 >> y2 >> z2;
-  container.set(x1, y1, z1, x2, y2, z2);
-  // compute patchGrid assumed to be the same as container, change in
+  domain.set(x1, y1, z1, x2, y2, z2);
+  // compute patchGrid assumed to be the same as domain, change in
   // scatterParticles() if necessary.
   patchBox.set(x1, y1, z1, x2, y2, z2);
 
@@ -45,7 +45,7 @@ BoundaryReader::read(const std::string& inputFileName, Box& container,
   ifs.close();
 
   /*
-  std::cout << "container = " << container << "\n";
+  std::cout << "domain = " << domain << "\n";
   std::cout << "patchBox = " << patchBox << "\n";
   //std::cout << " Boundaries = \n";
   for (auto boundary : boundaries) {
@@ -56,7 +56,7 @@ BoundaryReader::read(const std::string& inputFileName, Box& container,
 }
 
 bool
-BoundaryReader::readXML(const std::string& inputFileName, Box& container,
+BoundaryReader::readXML(const std::string& inputFileName, Box& domain,
                         Box& patchBox, BoundaryPArray& boundaries) const
 {
   // Read the input file
@@ -102,7 +102,7 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
     return false;
   }
 
-  // Read the container dimensions
+  // Read the domain dimensions
   std::string vecStr;
   if (!boundary_ps["containerMin"](vecStr)) {
     std::cerr
@@ -120,10 +120,10 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
   }
   Vec boxMax = Vec::fromString(vecStr);
 
-  container.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
+  domain.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
                 boxMax.z());
 
-  // compute patchGrid assumed to be the same as container, change in
+  // compute patchGrid assumed to be the same as domain, change in
   // scatterParticles() if necessary.
   patchBox.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
            boxMax.z());
@@ -154,7 +154,7 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
   }
 
   /*
-  std::cout << "container = " << container << "\n";
+  std::cout << "domain = " << domain << "\n";
   std::cout << "patchBox = " << patchBox << "\n";
   //std::cout << " Boundaries = \n";
   for (auto boundary : boundaries) {
@@ -167,7 +167,7 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& container,
 }
 
 bool
-BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
+BoundaryReader::readJSON(const std::string& inputFileName, Box& domain,
                          Box& patchBox, BoundaryPArray& boundaries) const
 {
   // Create an input ifstream
@@ -227,7 +227,7 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
     return false;
   }
 
-  // Read the container dimensions
+  // Read the domain dimensions
   std::string vecStr;
   try {
     vecStr = boundary_ps["containerMin"].get<std::string>();
@@ -249,10 +249,10 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& container,
   }
   Vec boxMax = Vec::fromString(vecStr);
 
-  container.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
+  domain.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
                 boxMax.z());
 
-  // compute patchGrid assumed to be the same as container, change in
+  // compute patchGrid assumed to be the same as domain, change in
   // scatterParticles() if necessary.
   patchBox.set(boxMin.x(), boxMin.y(), boxMin.z(), boxMax.x(), boxMax.y(),
            boxMax.z());
