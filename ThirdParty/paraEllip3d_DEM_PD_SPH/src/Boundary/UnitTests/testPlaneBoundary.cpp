@@ -61,6 +61,10 @@ TEST(PlaneBoundaryTest, readCSV) {
   PlaneBoundary plane_csv_traction_bc(boundary_type, stream_traction_bc);
   //std::cout << "PlaneBoundary: CSV with traction BC:" << std::endl;
   //std::cout << plane_csv_traction_bc;
+  double traction = plane_csv_traction_bc.getTraction(1.72);
+  double ss = (1.72 - 1)/(2 - 1);
+  double vv = (1 - ss)*5 + ss*10;
+  ASSERT_DOUBLE_EQ(traction, vv);
 
   // Add displacement BC to csv data
   std::stringstream csv_disp_bc;
@@ -89,6 +93,8 @@ TEST(PlaneBoundaryTest, readCSV) {
   PlaneBoundary plane_csv_disp_bc(boundary_type, stream_disp_bc);
   //std::cout << "PlaneBoundary: CSV with disp BC:" << std::endl;
   //std::cout << plane_csv_disp_bc;
+  double disp = plane_csv_disp_bc.getDisplacement(1.72);
+  ASSERT_DOUBLE_EQ(disp, vv);
 }
 
 TEST(PlaneBoundaryTest, readXML) {
@@ -134,6 +140,10 @@ TEST(PlaneBoundaryTest, readXML) {
   PlaneBoundary plane_xml_traction(boundary_type, boundary_id, xml_in_traction);
   //std::cout << "PlaneBoundary: XML with traction BC:" << std::endl;
   //std::cout << plane_xml_traction;
+  double traction = plane_xml_traction.getTraction(1.72);
+  double ss = (1.72 - 1)/(2 - 1);
+  double vv = (1 - ss)*5 + ss*10;
+  ASSERT_DOUBLE_EQ(traction, vv);
 
   // With displacement bc
   zen::XmlDoc doc_disp;
@@ -149,6 +159,8 @@ TEST(PlaneBoundaryTest, readXML) {
   PlaneBoundary plane_xml_disp(boundary_type, boundary_id, xml_in_disp);
   //std::cout << "PlaneBoundary: XML with displacement BC:" << std::endl;
   //std::cout << plane_xml_disp;
+  double disp = plane_xml_disp.getDisplacement(1.72);
+  ASSERT_DOUBLE_EQ(disp, vv);
 }
 
 TEST(PlaneBoundaryTest, readJSON) {
@@ -186,6 +198,10 @@ TEST(PlaneBoundaryTest, readJSON) {
   PlaneBoundary plane_json_traction(boundary_type, boundary_id, json_data_traction);
   //std::cout << "PlaneBoundary: JSON with traction BC:" << std::endl;
   //std::cout << plane_json_traction;
+  double traction = plane_json_traction.getTraction(1.72);
+  double ss = (1.72 - 1)/(2 - 1);
+  double vv = (1 - ss)*5 + ss*10;
+  ASSERT_DOUBLE_EQ(traction, vv);
 
   // With displacement bc
   nlohmann::json json_data_disp = json_data;
@@ -196,4 +212,65 @@ TEST(PlaneBoundaryTest, readJSON) {
   PlaneBoundary plane_json_disp(boundary_type, boundary_id, json_data_disp);
   //std::cout << "PlaneBoundary: JSON with disp BC:" << std::endl;
   //std::cout << plane_json_disp;
+  double disp = plane_json_disp.getDisplacement(1.72);
+  ASSERT_DOUBLE_EQ(disp, vv);
+}
+
+TEST(PlaneBoundaryTest, updatePositionAndVelocity) {
+
+  Boundary::BoundaryType boundary_type = Boundary::BoundaryType::PLANE;
+  Boundary::BoundaryID boundary_id = Boundary::BoundaryID::XMINUS;
+
+  zen::XmlDoc doc;
+  zen::XmlOut xml(doc);
+  xml["direction"]("[-1, 0, 0]");
+  xml["position"]("[0, 0, 25]");
+  xml["initial_velocity"]("[10, 0, 0]");
+  zen::XmlIn xml_in(doc);
+
+  PlaneBoundary plane_xml(boundary_type, boundary_id, xml_in);
+  plane_xml.updatePositionAndVelocity(1.72, 1.0e-3, 1.0, 1.0, 1.0, 0.5);
+  std::cout << "plane_xml = " << plane_xml;
+
+  // With traction bc
+  int num_points = 3;
+  std::vector<double> times(num_points);
+  std::vector<double> bc_values(num_points);
+  for (int ii = 0; ii < num_points; ii++) {
+    times[ii] = ii+1;
+    bc_values[ii] = 5*(ii+1);
+  }
+
+  zen::XmlDoc doc_traction;
+  zen::XmlOut xml_traction(doc_traction);
+  xml_traction["direction"]("[-1, 0, 0]");
+  xml_traction["position"]("[0, 0, 25]");
+  xml_traction["initial_velocity"]("[10, 0, 0]");
+  std::string timeStr = "";
+  std::string valueStr = "";
+  for (int ii = 0; ii < num_points; ii++) {
+    timeStr += std::to_string(times[ii]) + " ";
+    valueStr += std::to_string(bc_values[ii]) + " ";
+  }
+  xml_traction["tractionBC"]["time"](timeStr);
+  xml_traction["tractionBC"]["value"](valueStr);
+  zen::XmlIn xml_in_traction(doc_traction);
+
+  PlaneBoundary plane_xml_traction(boundary_type, boundary_id, xml_in_traction);
+  plane_xml_traction.updatePositionAndVelocity(1.5, 1.0e-3, 1.0, 1.0, 1.0, 0.5);
+  std::cout << "plane_xml_traction = " << plane_xml_traction;
+
+  // With displacement bc
+  zen::XmlDoc doc_disp;
+  zen::XmlOut xml_disp(doc_disp);
+  xml_disp["direction"]("[-1, 0, 0]");
+  xml_disp["position"]("[0, 0, 25]");
+  xml_disp["initial_velocity"]("[10, 0, 0]");
+  xml_disp["displacementBC"]["time"](timeStr);
+  xml_disp["displacementBC"]["value"](valueStr);
+  zen::XmlIn xml_in_disp(doc_disp);
+
+  PlaneBoundary plane_xml_disp(boundary_type, boundary_id, xml_in_disp);
+  plane_xml_disp.updatePositionAndVelocity(1.5, 1.0e-3, 1.0, 1.0, 1.0, 0.5);
+  std::cout << "plane_xml_disp = " << plane_xml_disp;
 }

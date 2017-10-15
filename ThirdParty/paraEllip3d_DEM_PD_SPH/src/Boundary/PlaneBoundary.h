@@ -68,6 +68,35 @@ public:
     return dot(pos - pn.getPosition() , normalize(pn.getDirection()));
   }
 
+  double getTraction(double time)
+  {
+    double traction = 0.0;
+    if (d_bcType == BCType::TRACTION) {
+      traction = d_tractionBC.getBCValue(time);
+    }
+    return traction;
+  }
+
+  double getDisplacement(double time)
+  {
+    double disp = 0.0;
+    if (d_bcType == BCType::DISPLACEMENT) {
+      disp = d_displacementBC.getBCValue(time);
+    }
+    return disp;
+  }
+
+  void updatePositionAndVelocity(double currTime, double deltaT,
+                                 double areaX, double areaY, double areaZ,
+                                 double mass);
+
+  void updateUsingTraction(double deltaT,
+                           double areaX, double areaY, double areaZ, double mass,
+                           const Vec& traction, const Vec& tractionRate);
+
+  void updateUsingDisplacement(double deltaT, 
+                               const Vec& disp, const Vec& dispRate);
+
   void print(std::ostream& os) override;
   void printContactInfo(std::ostream& os) override;
 
@@ -89,9 +118,9 @@ public:
     os << " Velocity: " << plane.d_velocity;
     os << " BCType: " << static_cast<int>(plane.d_bcType) << "\n";
     if (plane.d_bcType == PlaneBoundary::BCType::TRACTION) {
-      os << " Tractions: \n" << plane.d_tractionBC;
+      os << " Tractions: \n\t" << plane.d_tractionBC;
     } else if (plane.d_bcType == PlaneBoundary::BCType::DISPLACEMENT) {
-      os << " Displacements: \n" << plane.d_displacementBC;
+      os << " Displacements: \n\t" << plane.d_displacementBC;
     }
     return os;
   }
