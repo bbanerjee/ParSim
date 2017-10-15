@@ -5,6 +5,7 @@
 #include <Boundary/BoundaryContact.h>
 #include <Boundary/BoundaryTangent.h>
 #include <Boundary/BoundaryContainers.h>
+#include <Boundary/BoundaryConditionCurve.h>
 #include <Core/Geometry/Plane.h>
 #include <Core/Math/Vec.h>
 #include <Core/Types/RealTypes.h>
@@ -22,6 +23,13 @@ class PlaneBoundary : public Boundary
 {
 public:
 
+  enum class BCType 
+  {
+    NONE = 0,
+    TRACTION = 1,
+    DISPLACEMENT = 2
+  };
+
   PlaneBoundary(BoundaryID id = BoundaryID::NONE, 
                 Boundary::BoundaryType tp = Boundary::BoundaryType::NONE, 
                 EdgeCount en = 0)
@@ -31,10 +39,13 @@ public:
     , d_previousPosition(0)
     , d_velocity(0)
     , d_previousVelocity(0)
+    , d_bcType(BCType::NONE)
+    , d_tractionBC()
+    , d_displacementBC()
   {
   }
 
-  PlaneBoundary(Boundary::BoundaryType type, std::ifstream& ifs);
+  PlaneBoundary(Boundary::BoundaryType type, std::istream& ifs);
   PlaneBoundary(Boundary::BoundaryType type, BoundaryID id, const XMLProblemSpec& ps);
   PlaneBoundary(Boundary::BoundaryType type, BoundaryID id, const JsonProblemSpec& ps);
 
@@ -70,12 +81,31 @@ public:
   void findBoundaryContacts(DEMParticlePArray& ptcls) override;
   void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap) override;
 
+  friend std::ostream& 
+  operator<<(std::ostream& os, const PlaneBoundary& plane)
+  {
+    os << " Direction: " << plane.d_direction;
+    os << " Position: " << plane.d_position;
+    os << " Velocity: " << plane.d_velocity;
+    os << " BCType: " << static_cast<int>(plane.d_bcType) << "\n";
+    if (plane.d_bcType == PlaneBoundary::BCType::TRACTION) {
+      os << " Tractions: \n" << plane.d_tractionBC;
+    } else if (plane.d_bcType == PlaneBoundary::BCType::DISPLACEMENT) {
+      os << " Displacements: \n" << plane.d_displacementBC;
+    }
+    return os;
+  }
+
 private:
   Vec d_direction;
   Vec d_position;
   Vec d_previousPosition;
   Vec d_velocity;
   Vec d_previousVelocity;
+
+  BCType d_bcType;
+  BoundaryConditionCurve<double> d_tractionBC;
+  BoundaryConditionCurve<double> d_displacementBC;
 
   friend class boost::serialization::access;
   template <class Archive>
@@ -87,6 +117,9 @@ private:
     ar& d_previousPosition;
     ar& d_velocity;
     ar& d_previousVelocity;
+    ar& d_bcType;
+    ar& d_tractionBC;
+    ar& d_displacementBC;
   }
 
 };

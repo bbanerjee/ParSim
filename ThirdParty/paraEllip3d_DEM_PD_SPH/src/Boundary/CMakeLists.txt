@@ -28,6 +28,7 @@ SET(DEM_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/CylinderBoundary.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BoundaryReader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BoundaryFileWriter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/BoundaryUtils.cpp
 )
 
 SET(ELLIP3D_SRCS

@@ -19,12 +19,28 @@ namespace dem {
   class BoundaryConditionCurve {
 
   public:
-    BoundaryConditionCurve() = delete;
+    BoundaryConditionCurve() = default;
     BoundaryConditionCurve(const BoundaryConditionCurve&) = delete;
     BoundaryConditionCurve& operator=(const BoundaryConditionCurve&) = delete;
     ~BoundaryConditionCurve() = default;
 
-    BoundaryConditionCurve(std::istream& ifs)
+    BoundaryConditionCurve(std::istream& csv_format)
+    {
+      read(csv_format);
+    }
+
+    BoundaryConditionCurve(const XMLProblemSpec& xml_format)
+    {
+      read(xml_format);
+    }
+
+    BoundaryConditionCurve(const JsonProblemSpec& json_format)
+    {
+      read(json_format);
+    }
+
+    void
+    read(std::istream& ifs)
     {
       int num_points = 0, num_components = 0;
       ifs >> num_points >> num_components;
@@ -45,7 +61,8 @@ namespace dem {
       assert(d_times.size() == d_bcValues.size());
     }
 
-    BoundaryConditionCurve(const XMLProblemSpec& ps)
+    void
+    read(const XMLProblemSpec& ps)
     {
       std::string vecStr;
       if (!ps["time"](vecStr)) {
@@ -54,7 +71,7 @@ namespace dem {
         std::cerr << "  Add the <time> t1, t2 t3, ... </time> tag.";
         exit(-1);
       }
-      d_times = dem::BCUtils::convert<double>(vecStr);
+      d_times = dem::BCUtils::convertStrToArray<double>(vecStr);
 
       vecStr = "";
       if (!ps["value"](vecStr)) {
@@ -63,11 +80,12 @@ namespace dem {
         std::cerr << "  Add the <value> v1, v2 v3, ... </value> tag.";
         exit(-1);
       }
-      d_bcValues = dem::BCUtils::convert<T>(vecStr);
+      d_bcValues = dem::BCUtils::convertStrToArray<T>(vecStr);
       assert(d_times.size() == d_bcValues.size());
     }
 
-    BoundaryConditionCurve(const JsonProblemSpec& ps)
+    void
+    read(const JsonProblemSpec& ps)
     {
       std::string vecStr;
       try {
@@ -78,7 +96,7 @@ namespace dem {
         std::cerr << "  Add the time: \"t1 t2 t3 ...\" tag.";
         exit(-1);
       }
-      d_times = dem::BCUtils::convert<double>(vecStr);
+      d_times = dem::BCUtils::convertStrToArray<double>(vecStr);
     
       vecStr = "";
       try {
@@ -89,9 +107,10 @@ namespace dem {
         std::cerr << "  Add the value: \"v1 v2 v3 ...\" tag.";
         exit(-1);
       }
-      d_bcValues = dem::BCUtils::convert<T>(vecStr);
+      d_bcValues = dem::BCUtils::convertStrToArray<T>(vecStr);
       assert(d_times.size() == d_bcValues.size());
     }
+
 
     /**
      * Linear interpolation
@@ -127,7 +146,21 @@ namespace dem {
     std::vector<double> d_times;
     std::vector<T> d_bcValues;
 
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+      ar& d_times;
+      ar& d_bcValues;
+    }
+
   };
 
 } // end namespace dem
+
+namespace dem {
+  template class BoundaryConditionCurve<double>;
+  template class BoundaryConditionCurve<Vec>;
+}
+
 #endif

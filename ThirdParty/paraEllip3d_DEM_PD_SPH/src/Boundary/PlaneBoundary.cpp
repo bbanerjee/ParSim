@@ -6,7 +6,7 @@
 
 using namespace dem;
 
-PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, std::ifstream& ifs)
+PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, std::istream& ifs)
   : Boundary()
 {
   // These are defined in the base class
@@ -29,6 +29,19 @@ PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, std::ifstream& ifs)
     ifs >> dx >> dy >> dz >> px >> py >> pz;
     b_extraEdge.push_back(Plane(Vec(dx, dy, dz), Vec(px, py, pz)));
   }
+
+  // Boundary conditions
+  int bcType = 0;
+  ifs >> bcType;
+  d_bcType = static_cast<BCType>(bcType);
+  if (d_bcType == BCType::TRACTION) {
+    d_tractionBC.read(ifs);
+  } else if (d_bcType == BCType::DISPLACEMENT) {
+    d_displacementBC.read(ifs);
+  } else {
+    d_bcType = BCType::NONE; 
+  }
+
 }
 
 PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, BoundaryID id, 
@@ -92,6 +105,18 @@ PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, BoundaryID id,
     }
     Vec edgePoint = Vec::fromString(vecStr);
     b_extraEdge.push_back(Plane(edgeDirec, edgePoint));
+  }
+
+  // Read the boundary conditions (if any)
+  d_bcType = BCType::NONE; 
+  auto traction_bc_ps = ps["tractionBC"];
+  auto disp_bc_ps = ps["displacementBC"];
+  if (traction_bc_ps) {
+    d_bcType = BCType::TRACTION; 
+    d_tractionBC.read(traction_bc_ps);
+  } else if (disp_bc_ps) {
+    d_bcType = BCType::DISPLACEMENT; 
+    d_displacementBC.read(disp_bc_ps);
   }
 }
 
@@ -159,6 +184,20 @@ PlaneBoundary::PlaneBoundary(Boundary::BoundaryType tp, BoundaryID id,
       std::cerr << "  Add the direction: [x, y, z] tag.";
       std::cerr << "  Add the position: [x, y, z]  tag.";
     }
+  }
+
+  // Read the boundary conditions (if any)
+  d_bcType = BCType::NONE; 
+  auto traction_bc_iter = ps.find("tractionBC");
+  auto disp_bc_iter = ps.find("displacementBC");
+  if (traction_bc_iter != ps.end()) {
+    auto traction_bc_ps = ps["tractionBC"];
+    d_bcType = BCType::TRACTION; 
+    d_tractionBC.read(traction_bc_ps);
+  } else if (disp_bc_iter != ps.end()) {
+    auto disp_bc_ps = ps["displacementBC"];
+    d_bcType = BCType::DISPLACEMENT; 
+    d_displacementBC.read(disp_bc_ps);
   }
 }
 

@@ -74,6 +74,8 @@ TEST(BoundaryConditionCurveTest, test1D) {
   double ss = (1.37 - 1)/(2 - 1);
   double vv = (1 - ss)*5 + ss*10;
   EXPECT_EQ(val, vv);
+  EXPECT_EQ(val, bc_csv.getBCValue(1.37));
+  EXPECT_EQ(val, bc_json.getBCValue(1.37));
   //std::cout << "val = " << val << "\n";
 }
 
@@ -159,4 +161,6 @@ TEST(BoundaryConditionCurveTest, test3D) {
   EXPECT_EQ(val.x(), vv.x());
   EXPECT_EQ(val.y(), vv.y());
   EXPECT_EQ(val.z(), vv.z());
+  EXPECT_EQ(val.y(), bc_csv.getBCValue(1.37).y());
+  EXPECT_EQ(val.y(), bc_json.getBCValue(1.37).y());
 }
