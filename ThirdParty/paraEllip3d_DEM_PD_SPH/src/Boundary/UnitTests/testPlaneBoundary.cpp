@@ -216,61 +216,156 @@ TEST(PlaneBoundaryTest, readJSON) {
   ASSERT_DOUBLE_EQ(disp, vv);
 }
 
-TEST(PlaneBoundaryTest, updatePositionAndVelocity) {
+TEST(PlaneBoundaryTest, updatePositionAndVelocityInitVel) {
+
+  Boundary::BoundaryType boundary_type = Boundary::BoundaryType::PLANE;
+
+  double tt = 1.5;
+  double delT = 1.0e-2;
+  double area = 1.0;
+  double mass = 0.5;
+  double v0 = 10;
+
+  // With fixed speed bc +x
+  Boundary::BoundaryID boundary_id = Boundary::BoundaryID::XPLUS;
+  zen::XmlDoc doc1;
+  zen::XmlOut xml(doc1);
+  xml["direction"]("[1, 0, 0]");
+  xml["position"]("[0, 0, 25]");
+  xml["initial_velocity"]("[10, 0, 0]");
+  zen::XmlIn xml_in(doc1);
+
+  PlaneBoundary plane_xml(boundary_type, boundary_id, xml_in);
+  plane_xml.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  EXPECT_DOUBLE_EQ(plane_xml.getPosition().x(), v0*delT);
+
+  // With fixed speed bc -x
+  boundary_id = Boundary::BoundaryID::XMINUS;
+  zen::XmlDoc doc2;
+  zen::XmlOut xml2(doc2);
+  xml2["direction"]("[-1, 0, 0]");
+  xml2["position"]("[0, 0, 25]");
+  v0 = -10;
+  xml2["initial_velocity"]("[" + std::to_string(v0) + ", 0, 0]");
+  zen::XmlIn xml2_in(doc2);
+
+  PlaneBoundary plane_xml2(boundary_type, boundary_id, xml2_in);
+  plane_xml2.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  EXPECT_DOUBLE_EQ(plane_xml2.getPosition().x(), v0*delT);
+}
+
+TEST(PlaneBoundaryTest, updatePositionAndVelocityTraction) {
+
+  Boundary::BoundaryType boundary_type = Boundary::BoundaryType::PLANE;
+
+  double tt = 1.5;
+  double delT = 1.0e-2;
+  double area = 1.0;
+  double mass = 0.5;
+
+  // Zero traction (x-)
+  Boundary::BoundaryID boundary_id = Boundary::BoundaryID::XMINUS;
+  zen::XmlDoc doc1;
+  zen::XmlOut xml1(doc1);
+  xml1["direction"]("[-1, 0, 0]");
+  xml1["position"]("[0, 0, 25]");
+  xml1["initial_velocity"]("[0, 0, 0]");
+  xml1["tractionBC"]["time"]("0 5");
+  xml1["tractionBC"]["value"]("0 0");
+  zen::XmlIn xml1_in(doc1);
+
+  PlaneBoundary plane_xml1(boundary_type, boundary_id, xml1_in);
+  plane_xml1.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  EXPECT_DOUBLE_EQ(plane_xml1.getPosition().x(), 
+                   plane_xml1.getPreviousPosition().x());
+
+  // Non-zero constant traction (x-)
+  zen::XmlDoc doc2;
+  zen::XmlOut xml2(doc2);
+  xml2["direction"]("[-1, 0, 0]");
+  xml2["position"]("[0, 0, 25]");
+  xml2["initial_velocity"]("[0, 0, 0]");
+  xml2["tractionBC"]["time"]("0 5");
+  xml2["tractionBC"]["value"]("-10 -10");
+  zen::XmlIn xml2_in(doc2);
+
+  PlaneBoundary plane_xml2(boundary_type, boundary_id, xml2_in);
+  plane_xml2.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  EXPECT_DOUBLE_EQ(plane_xml2.getVelocity().x(), 0.2);
+  EXPECT_DOUBLE_EQ(plane_xml2.getPosition().x(), 0.2*delT);
+
+  // Non-zero constant traction (x+)
+  boundary_id = Boundary::BoundaryID::XPLUS;
+  zen::XmlDoc doc3;
+  zen::XmlOut xml3(doc3);
+  xml3["direction"]("[1, 0, 0]");
+  xml3["position"]("[0, 0, 25]");
+  xml3["initial_velocity"]("[0, 0, 0]");
+  xml3["tractionBC"]["time"]("0 5");
+  xml3["tractionBC"]["value"]("-10 -10");
+  zen::XmlIn xml3_in(doc3);
+
+  PlaneBoundary plane_xml3(boundary_type, boundary_id, xml3_in);
+  plane_xml3.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  EXPECT_DOUBLE_EQ(plane_xml3.getVelocity().x(), -0.2);
+  EXPECT_DOUBLE_EQ(plane_xml3.getPosition().x(), -0.2*delT);
+
+  // Non-zero constant traction (arbitrary)
+  boundary_id = Boundary::BoundaryID::NONE;
+  zen::XmlDoc doc4;
+  zen::XmlOut xml4(doc4);
+  xml4["direction"]("[1, 0.2, 0.5]");
+  xml4["position"]("[0, 0, 25]");
+  xml4["initial_velocity"]("[0, 0, 0]");
+  xml4["tractionBC"]["time"]("0 5");
+  xml4["tractionBC"]["value"]("-10 -10");
+  zen::XmlIn xml4_in(doc4);
+
+  PlaneBoundary plane_xml4(boundary_type, boundary_id, xml4_in);
+  plane_xml4.updatePositionAndVelocity(tt, delT, area, 2*area, 3*area, mass);
+  EXPECT_DOUBLE_EQ(plane_xml4.getVelocity().y(), -0.08);
+  EXPECT_DOUBLE_EQ(plane_xml4.getPosition().y(), -0.08*delT);
+}
+
+TEST(PlaneBoundaryTest, updatePositionAndVelocityDisp) {
 
   Boundary::BoundaryType boundary_type = Boundary::BoundaryType::PLANE;
   Boundary::BoundaryID boundary_id = Boundary::BoundaryID::XMINUS;
 
-  zen::XmlDoc doc;
-  zen::XmlOut xml(doc);
-  xml["direction"]("[-1, 0, 0]");
-  xml["position"]("[0, 0, 25]");
-  xml["initial_velocity"]("[10, 0, 0]");
-  zen::XmlIn xml_in(doc);
+  double tt = 1.5;
+  double delT = 1.0e-2;
+  double area = 1.0;
+  double mass = 0.5;
 
-  PlaneBoundary plane_xml(boundary_type, boundary_id, xml_in);
-  plane_xml.updatePositionAndVelocity(1.72, 1.0e-3, 1.0, 1.0, 1.0, 0.5);
-  std::cout << "plane_xml = " << plane_xml;
+  // With zero displacement bc
+  zen::XmlDoc doc1;
+  zen::XmlOut xml1(doc1);
+  xml1["direction"]("[-1, 0, 0]");
+  xml1["position"]("[0, 0, 25]");
+  xml1["initial_velocity"]("[10, 0, 0]");
 
-  // With traction bc
-  int num_points = 3;
-  std::vector<double> times(num_points);
-  std::vector<double> bc_values(num_points);
-  for (int ii = 0; ii < num_points; ii++) {
-    times[ii] = ii+1;
-    bc_values[ii] = 5*(ii+1);
-  }
+  xml1["displacementBC"]["time"]("0 5");
+  xml1["displacementBC"]["value"]("0 0");
+  zen::XmlIn xml1_in(doc1);
 
-  zen::XmlDoc doc_traction;
-  zen::XmlOut xml_traction(doc_traction);
-  xml_traction["direction"]("[-1, 0, 0]");
-  xml_traction["position"]("[0, 0, 25]");
-  xml_traction["initial_velocity"]("[10, 0, 0]");
-  std::string timeStr = "";
-  std::string valueStr = "";
-  for (int ii = 0; ii < num_points; ii++) {
-    timeStr += std::to_string(times[ii]) + " ";
-    valueStr += std::to_string(bc_values[ii]) + " ";
-  }
-  xml_traction["tractionBC"]["time"](timeStr);
-  xml_traction["tractionBC"]["value"](valueStr);
-  zen::XmlIn xml_in_traction(doc_traction);
+  PlaneBoundary plane_xml1(boundary_type, boundary_id, xml1_in);
+  plane_xml1.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  EXPECT_DOUBLE_EQ(plane_xml1.getPosition().x(), 
+                   plane_xml1.getPreviousPosition().x());
 
-  PlaneBoundary plane_xml_traction(boundary_type, boundary_id, xml_in_traction);
-  plane_xml_traction.updatePositionAndVelocity(1.5, 1.0e-3, 1.0, 1.0, 1.0, 0.5);
-  std::cout << "plane_xml_traction = " << plane_xml_traction;
+  // With non-zero displacement bc
+  zen::XmlDoc doc2;
+  zen::XmlOut xml2(doc2);
+  xml2["direction"]("[-1, 0, 0]");
+  xml2["position"]("[0, 0, 25]");
+  xml2["initial_velocity"]("[10, 0, 0]");
 
-  // With displacement bc
-  zen::XmlDoc doc_disp;
-  zen::XmlOut xml_disp(doc_disp);
-  xml_disp["direction"]("[-1, 0, 0]");
-  xml_disp["position"]("[0, 0, 25]");
-  xml_disp["initial_velocity"]("[10, 0, 0]");
-  xml_disp["displacementBC"]["time"](timeStr);
-  xml_disp["displacementBC"]["value"](valueStr);
-  zen::XmlIn xml_in_disp(doc_disp);
+  xml2["displacementBC"]["time"]("0 5");
+  xml2["displacementBC"]["value"]("0 1");
+  zen::XmlIn xml2_in(doc2);
 
-  PlaneBoundary plane_xml_disp(boundary_type, boundary_id, xml_in_disp);
-  plane_xml_disp.updatePositionAndVelocity(1.5, 1.0e-3, 1.0, 1.0, 1.0, 0.5);
-  std::cout << "plane_xml_disp = " << plane_xml_disp;
+  PlaneBoundary plane_xml2(boundary_type, boundary_id, xml2_in);
+  plane_xml2.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  EXPECT_NEAR(plane_xml2.getVelocity().x(), -0.2, 1.0e-8);
+  EXPECT_DOUBLE_EQ(plane_xml2.getPosition().x(), -0.3);
 }

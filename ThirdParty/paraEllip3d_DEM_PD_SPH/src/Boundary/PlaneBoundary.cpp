@@ -291,12 +291,11 @@ PlaneBoundary::updatePositionAndVelocity(double currTime, double deltaT,
   if (d_bcType == BCType::TRACTION) {
 
     double traction_val = d_tractionBC.getBCValue(currTime);
-    double traction_prev = d_tractionBC.getBCValue(currTime-deltaT/2);
-    double traction_next = d_tractionBC.getBCValue(currTime+deltaT/2);
-    double traction_rate = (traction_next - traction_prev)/deltaT;
-    Vec traction = d_direction * traction_val;
-    Vec rate = d_direction * traction_rate;
-    updateUsingTraction(deltaT, areaX, areaY, areaZ, mass, traction, rate);
+    Vec tractionForce = d_direction * traction_val;
+    tractionForce.setX(tractionForce.x()*areaX);
+    tractionForce.setY(tractionForce.y()*areaY);
+    tractionForce.setZ(tractionForce.z()*areaZ);
+    updateUsingTraction(deltaT, mass, tractionForce);
 
   } else if (d_bcType == BCType::DISPLACEMENT) {
 
@@ -310,47 +309,18 @@ PlaneBoundary::updatePositionAndVelocity(double currTime, double deltaT,
 
   } else {
 
-    d_position = d_previousPosition + d_velocity*deltaT;
-    d_velocity = d_previousVelocity;
+    d_previousPosition = d_position;
+    d_position += (d_velocity*deltaT);
+    d_previousVelocity = d_velocity;
 
   }
 }
 
 void 
-PlaneBoundary::updateUsingTraction(double deltaT,
-                                   double areaX, double areaY, double areaZ,
-                                   double mass,
-                                   const Vec& traction, 
-                                   const Vec& tractionRate)
+PlaneBoundary::updateUsingTraction(double deltaT, double mass,
+                                   const Vec& tractionForce) 
 {
-  Vec bcForce(0);
-  switch (b_id) {
-    case BoundaryID::XMINUS:
-      bcForce = traction * areaX;
-      break;
-    case BoundaryID::XPLUS:
-      bcForce = traction * areaX;
-      break;
-    case BoundaryID::YMINUS:
-      bcForce = traction * areaY;
-      break;
-    case BoundaryID::YPLUS:
-      bcForce = traction * areaY;
-      break;
-    case BoundaryID::ZMINUS:
-      bcForce = traction * areaZ;
-      break;
-    case BoundaryID::ZPLUS:
-      bcForce = traction * areaZ;
-      break;
-    default:
-      break;
-  }
-  Vec resultantForce = b_normalForce - bcForce;
-  std::cout << "traction = " << traction 
-            << " force = " << bcForce
-            << " normalForce = " << b_normalForce
-            << " resultant = " << resultantForce << std::endl;
+  Vec resultantForce = tractionForce - b_normalForce;
 
   d_previousVelocity = d_velocity;
   d_velocity += (resultantForce/mass)*deltaT;
@@ -367,7 +337,7 @@ PlaneBoundary::updateUsingDisplacement(double deltaT,
   d_velocity = dispRate;
 
   d_previousPosition = d_position;
-  d_position = d_previousPosition + disp;
+  d_position += disp;
 }
 
 void

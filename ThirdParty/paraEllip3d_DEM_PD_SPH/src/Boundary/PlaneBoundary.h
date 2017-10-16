@@ -90,12 +90,10 @@ public:
                                  double areaX, double areaY, double areaZ,
                                  double mass);
 
-  void updateUsingTraction(double deltaT,
-                           double areaX, double areaY, double areaZ, double mass,
-                           const Vec& traction, const Vec& tractionRate);
+  void updateUsingTraction(double deltaT, double mass, const Vec& traction);
 
-  void updateUsingDisplacement(double deltaT, 
-                               const Vec& disp, const Vec& dispRate);
+  void updateUsingDisplacement(double deltaT, const Vec& disp, 
+                               const Vec& dispRate);
 
   void print(std::ostream& os) override;
   void printContactInfo(std::ostream& os) override;
