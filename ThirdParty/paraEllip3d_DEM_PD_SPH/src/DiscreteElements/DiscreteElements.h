@@ -192,6 +192,7 @@ public:
   REAL ellipPileTipZ();
   REAL ellipPilePeneVol();
 
+  void updateBoundary(REAL time, REAL delT, REAL mass);
   void updateBoundary(REAL simga, std::string type, REAL sigmaX = 0,
                       REAL sigmaY = 0);
 

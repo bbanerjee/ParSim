@@ -36,6 +36,8 @@ private:
                           const std::string& particleType,
                           std::vector<T>& output) const;
 
+  void updateTotalMass(DEMParticlePArray& particles);
+
   DEMParticleFileReader(DEMParticleFileReader const&) = delete; // don't implement
   void operator=(DEMParticleFileReader const&) = delete;     // don't implement
 };

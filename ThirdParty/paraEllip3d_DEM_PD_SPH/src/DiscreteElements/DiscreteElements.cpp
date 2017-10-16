@@ -1744,6 +1744,79 @@ DiscreteElements::openParticleProg(std::ofstream& ofs, const std::string& str)
       << std::endl;
 }
 
+void 
+DiscreteElements::updateBoundary(REAL time, REAL delT, REAL mass)
+{
+  if (s_mpiRank == 0) {
+    REAL x1, x2, y1, y2, z1, z2;
+    for (const auto& boundary : d_mergedBoundaries) {
+      switch (boundary->getId()) {
+        case Boundary::BoundaryID::XMINUS:
+          x1 = boundary->getPosition().x();
+          break;
+        case Boundary::BoundaryID::XPLUS:
+          x2 = boundary->getPosition().x();
+          break;
+        case Boundary::BoundaryID::YMINUS:
+          y1 = boundary->getPosition().y();
+          break;
+        case Boundary::BoundaryID::YPLUS:
+          y2 = boundary->getPosition().y();
+          break;
+        case Boundary::BoundaryID::ZMINUS:
+          z1 = boundary->getPosition().z();
+          break;
+        case Boundary::BoundaryID::ZPLUS:
+          z2 = boundary->getPosition().z();
+          break;
+        default:
+          break;
+      }
+    }
+    REAL areaX = (y2 - y1) * (z2 - z1);
+    REAL areaY = (z2 - z1) * (x2 - x1);
+    REAL areaZ = (x2 - x1) * (y2 - y1);
+
+    for (auto& it : d_mergedBoundaries)
+      it->updatePositionAndVelocity(time, delT, areaX, areaY, areaZ, mass);
+
+    // update d_boundaries from d_mergedBoundaries and remove b_contacts to reduce
+    // MPI transmission
+    d_boundaries = d_mergedBoundaries;
+    for (auto& it : d_boundaries)
+      it->clearBoundaryContacts();
+
+    // update d_spatialDomain
+    for (const auto& boundary : d_boundaries) {
+      switch (boundary->getId()) {
+        case Boundary::BoundaryID::XMINUS:
+          x1 = boundary->getPosition().x();
+          break;
+        case Boundary::BoundaryID::XPLUS:
+          x2 = boundary->getPosition().x();
+          break;
+        case Boundary::BoundaryID::YMINUS:
+          y1 = boundary->getPosition().y();
+          break;
+        case Boundary::BoundaryID::YPLUS:
+          y2 = boundary->getPosition().y();
+          break;
+        case Boundary::BoundaryID::ZMINUS:
+          z1 = boundary->getPosition().z();
+          break;
+        case Boundary::BoundaryID::ZPLUS:
+          z2 = boundary->getPosition().z();
+          break;
+        default:
+          break;
+      }
+    }
+    setSpatialDomain(Box(x1, y1, z1, x2, y2, z2));
+  }
+
+  broadcast(boostWorld, d_boundaries, 0);
+}
+
 void
 DiscreteElements::updateBoundary(REAL sigma, std::string type, 
                                  REAL sigmaX, REAL sigmaY)
@@ -1793,7 +1866,7 @@ DiscreteElements::updateBoundary(REAL sigma, std::string type,
     } else if (type.compare("trueTriaxial") == 0) {
       for (auto& it : d_mergedBoundaries)
         it->updateTrueTriaxial(sigma, areaX, areaY, areaZ, sigmaX, sigmaY);
-    }
+    } 
 
     // update d_boundaries from d_mergedBoundaries and remove b_contacts to reduce
     // MPI transmission

@@ -88,7 +88,7 @@ public:
 
   void updatePositionAndVelocity(double currTime, double deltaT,
                                  double areaX, double areaY, double areaZ,
-                                 double mass);
+                                 double mass) override;
 
   void updateUsingTraction(double deltaT, double mass, const Vec& traction);
 

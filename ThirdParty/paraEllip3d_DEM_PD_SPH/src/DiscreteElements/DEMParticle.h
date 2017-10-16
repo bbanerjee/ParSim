@@ -80,6 +80,7 @@ public:
   REAL getPoisson() const { return d_poisson; };
   REAL getVolume() const { return d_volume; }
   REAL getMass() const { return d_mass; }
+  REAL getTotalMass() const { return d_totalMassAllParticles; }
   REAL getDensity() const { return d_density; }
   Vec currentPosition() const { return d_currPos; }
   Vec getPreviousPosition() const { return d_prevPos; }
@@ -143,6 +144,7 @@ public:
   void setConstMoment(Vec vv) { d_constMoment = vv; }
   void setmomentJ(Vec v) { d_momentJ = v; }
   void setMass(REAL d) { d_mass = d; }
+  void setTotalMass(REAL mass) { d_totalMassAllParticles = mass; }
   void setDensity(REAL dn) { d_density = dn; }
   void setInContact(bool value) { d_inContact = value; }
   void setContactNum(std::size_t num) { d_contactNum = num; }
@@ -236,6 +238,7 @@ private:
   REAL d_density; // specific gravity
   REAL d_mass;
   REAL d_volume;
+  REAL d_totalMassAllParticles; // total mass of all particles
   Vec d_momentJ;      // moment of inertia in local body-fixed frame
   REAL d_coef[10];    // particle's coefficients in global coordinates
   REAL d_kineticEnergy; // kinetic energy
@@ -280,6 +283,7 @@ private:
     ar& d_density;
     ar& d_mass;
     ar& d_volume;
+    ar& d_totalMassAllParticles;
     ar& d_momentJ;
     ar& d_coef;
     ar& d_kineticEnergy;

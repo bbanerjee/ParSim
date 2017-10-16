@@ -28,6 +28,9 @@ DEMParticleFileReader::read(const std::string& fileName, const REAL& youngModulu
   } else {
     readParticlesText(fileName, particles, gradation);
   }
+
+  // Compute total mass and save in each particle
+  updateTotalMass(particles);
 }
 
 /**
@@ -222,6 +225,19 @@ DEMParticleFileReader::readParticlesXML(const std::string& inputFileName,
   gradation.initializeFromXMLFile(ps);
 
   return true;
+}
+
+void
+DEMParticleFileReader::updateTotalMass(DEMParticlePArray& particles)
+{
+  double totalMass = 0.0;
+  for (const auto& particle : particles) {
+    totalMass += particle->getMass();
+  }
+
+  for (auto& particle : particles) {
+    particle->setTotalMass(totalMass);
+  }
 }
 
 namespace dem {

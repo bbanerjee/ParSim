@@ -156,6 +156,10 @@ public:
   void clearStatForce();
   void clearBoundaryContacts();
 
+  virtual void updatePositionAndVelocity(double currTime, double deltaT,
+                                 double areaX, double areaY, double areaZ,
+                                 double mass) {}
+
   virtual void updateIsotropic(REAL simga, REAL areaX, REAL areaY, REAL areaZ)
   {
   }
