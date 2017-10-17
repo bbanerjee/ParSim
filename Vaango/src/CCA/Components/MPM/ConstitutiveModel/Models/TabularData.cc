@@ -387,6 +387,7 @@ TabularData::getDoubleArrayJSON(const json& object, const std::string key,
   return vec;
 }
 
+namespace Vaango {
 template <>
 void
 TabularData::translateIndepVar1ByIndepVar0<2>() 
@@ -439,6 +440,7 @@ TabularData::translateAlongNormals<1>(const std::vector<Vector>& normals,
   //std::copy(data.begin(), data.end(),
   //          std::ostream_iterator<double>(std::cout, " "));
   //std::cout << std::endl;
+}
 }
 
 template <int dim>
