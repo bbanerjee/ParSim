@@ -165,7 +165,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
                << std::endl;
 
     if (trueTriaxialType == 1) {
-      if (dem->tractionErrorTol(sigmaVarZ, "trueTriaxial", sigmaVarX,
+      if (dem->areBoundaryTractionsEquilibrated(sigmaVarZ, "trueTriaxial", sigmaVarX,
                                      sigmaVarY)) {
         if (dem->getMPIRank() == 0)
           dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
@@ -173,7 +173,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
         sigmaVarX += sigmaIncX;
         sigmaVarY += sigmaIncY;
       }
-      if (dem->tractionErrorTol(sigmaEndZ, "trueTriaxial", sigmaEndX,
+      if (dem->areBoundaryTractionsEquilibrated(sigmaEndZ, "trueTriaxial", sigmaEndX,
                                      sigmaEndY)) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
@@ -199,7 +199,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
         sigmaY = sigmaInit[1];
         sigmaZ = sigmaVar;
       }
-      if (dem->tractionErrorTol(sigmaZ, "trueTriaxial", sigmaX, sigmaY)) {
+      if (dem->areBoundaryTractionsEquilibrated(sigmaZ, "trueTriaxial", sigmaX, sigmaY)) {
         if (dem->getMPIRank() == 0)
           dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
         sigmaVar += sigmaInc;
@@ -218,7 +218,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
         sigmaY = sigmaInit[1];
         sigmaZ = sigmaEnd;
       }
-      if (dem->tractionErrorTol(sigmaZ, "trueTriaxial", sigmaX, sigmaY)) {
+      if (dem->areBoundaryTractionsEquilibrated(sigmaZ, "trueTriaxial", sigmaX, sigmaY)) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
           dem->writeParticlesToFile(iterSnap);

@@ -106,13 +106,17 @@ public:
   void deposit(const std::string& boundaryFilename,
                const std::string& particleFilename);
 
-  bool tractionErrorTol(REAL sigma, std::string type, REAL sigmaX = 0,
-                        REAL sigmaY = 0);
+  bool areBoundaryTractionsEquilibrated(REAL time);
+  bool areBoundaryTractionsEquilibrated(REAL sigma, std::string type, 
+                                        REAL sigmaX = 0, REAL sigmaY = 0);
+
   void getStartDimension(REAL& distX, REAL& distY, REAL& distZ);
 
   void setCavity(Box cav) { cavity = cav; }
 
   void readBoundary(const std::string& fileName);
+  void updateBoundaryAreas(BoundaryPArray& boundaries);
+
   void readParticles(const std::string& fileName);
 
   void scatterParticles();

@@ -285,16 +285,15 @@ PlaneBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap)
 
 void 
 PlaneBoundary::updatePositionAndVelocity(double currTime, double deltaT,
-                                         double areaX, double areaY, double areaZ,
-                                         double mass)
+                                         double area, double mass)
 {
   if (d_bcType == BCType::TRACTION) {
 
     double traction_val = d_tractionBC.getBCValue(currTime);
     Vec tractionForce = d_direction * traction_val;
-    tractionForce.setX(tractionForce.x()*areaX);
-    tractionForce.setY(tractionForce.y()*areaY);
-    tractionForce.setZ(tractionForce.z()*areaZ);
+    tractionForce.setX(tractionForce.x()*area);
+    tractionForce.setY(tractionForce.y()*area);
+    tractionForce.setZ(tractionForce.z()*area);
     updateUsingTraction(deltaT, mass, tractionForce);
 
   } else if (d_bcType == BCType::DISPLACEMENT) {

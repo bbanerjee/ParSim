@@ -34,6 +34,7 @@ public:
                 Boundary::BoundaryType tp = Boundary::BoundaryType::NONE, 
                 EdgeCount en = 0)
     : Boundary(id, tp, en)
+    , d_area(1)
     , d_direction(0)
     , d_position(0)
     , d_previousPosition(0)
@@ -49,12 +50,14 @@ public:
   PlaneBoundary(Boundary::BoundaryType type, BoundaryID id, const XMLProblemSpec& ps);
   PlaneBoundary(Boundary::BoundaryType type, BoundaryID id, const JsonProblemSpec& ps);
 
+  REAL getArea() const override { return d_area; }
   Vec getDirection() const { return d_direction; }
   Vec getPosition() const override { return d_position; }
   Vec getVelocity() const override { return d_velocity; }
   Vec getPreviousPosition() const override { return d_previousPosition; }
   Vec getPreviousVelocity() const override { return d_previousVelocity; }
 
+  void setArea(REAL area) override { d_area = area; }
   void setDirection(Vec dir) { d_direction = dir; }
   void setPosition(Vec pnt) override { d_position = pnt; }
   void setVelocity(Vec vel) override { d_velocity = vel; }
@@ -68,7 +71,7 @@ public:
     return dot(pos - pn.getPosition() , normalize(pn.getDirection()));
   }
 
-  double getTraction(double time)
+  double getTraction(double time) const
   {
     double traction = 0.0;
     if (d_bcType == BCType::TRACTION) {
@@ -77,7 +80,7 @@ public:
     return traction;
   }
 
-  double getDisplacement(double time)
+  double getDisplacement(double time) const
   {
     double disp = 0.0;
     if (d_bcType == BCType::DISPLACEMENT) {
@@ -86,9 +89,15 @@ public:
     return disp;
   }
 
+  Vec getAppliedTraction(REAL currentTime) const override
+  {
+    REAL traction_val = getTraction(currentTime);
+    Vec traction_vec = d_direction*traction_val;
+    return traction_vec;
+  }
+
   void updatePositionAndVelocity(double currTime, double deltaT,
-                                 double areaX, double areaY, double areaZ,
-                                 double mass) override;
+                                 double area, double mass) override;
 
   void updateUsingTraction(double deltaT, double mass, const Vec& traction);
 
@@ -124,6 +133,7 @@ public:
   }
 
 private:
+  REAL d_area;
   Vec d_direction;
   Vec d_position;
   Vec d_previousPosition;
@@ -139,6 +149,7 @@ private:
   void serialize(Archive& ar, const unsigned int version)
   {
     ar& boost::serialization::base_object<Boundary>(*this);
+    ar& d_area;
     ar& d_direction;
     ar& d_position;
     ar& d_previousPosition;

@@ -157,8 +157,7 @@ public:
   void clearBoundaryContacts();
 
   virtual void updatePositionAndVelocity(double currTime, double deltaT,
-                                 double areaX, double areaY, double areaZ,
-                                 double mass) {}
+                                         double area, double mass) {}
 
   virtual void updateIsotropic(REAL simga, REAL areaX, REAL areaY, REAL areaZ)
   {
@@ -172,12 +171,16 @@ public:
                                   REAL areaZ, REAL sigmaX, REAL sigmaY)
   {
   }
+  virtual REAL getArea() const {return 1.0; }
   virtual Vec getPosition() const = 0;
   virtual Vec getVelocity() const = 0;
   virtual Vec getPreviousPosition() const = 0;
   virtual Vec getPreviousVelocity() const = 0;
   virtual void setPosition(Vec pnt) = 0;
   virtual void setVelocity(Vec vel) = 0;
+  virtual void setArea(REAL area) {};
+
+  virtual Vec getAppliedTraction(REAL time) const { return Vec(0); }
 
 protected:
 

@@ -137,12 +137,12 @@ OedometerLoading::execute(DiscreteElements* dem)
                << std::endl;
 
     if (odometerType == 1) {
-      if (dem->tractionErrorTol(sigmaVar, "odometer")) {
+      if (dem->areBoundaryTractionsEquilibrated(sigmaVar, "odometer")) {
         if (dem->getMPIRank() == 0)
           dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
         sigmaVar += sigmaInc;
       }
-      if (dem->tractionErrorTol(sigmaEnd, "odometer")) {
+      if (dem->areBoundaryTractionsEquilibrated(sigmaEnd, "odometer")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
           dem->writeParticlesToFile(iterSnap);
@@ -153,7 +153,7 @@ OedometerLoading::execute(DiscreteElements* dem)
         break;
       }
     } else if (odometerType == 2) {
-      if (dem->tractionErrorTol(sigmaVar, "odometer")) {
+      if (dem->areBoundaryTractionsEquilibrated(sigmaVar, "odometer")) {
         if (dem->getMPIRank() == 0)
           dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
         sigmaVar += sigmaInc;
@@ -162,7 +162,7 @@ OedometerLoading::execute(DiscreteElements* dem)
           sigmaInc = (sigmaPath[sigma_i + 1] - sigmaPath[sigma_i]) / sigmaDiv;
         }
       }
-      if (dem->tractionErrorTol(sigmaEnd, "odometer")) {
+      if (dem->areBoundaryTractionsEquilibrated(sigmaEnd, "odometer")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
           dem->writeParticlesToFile(iterSnap);

@@ -116,7 +116,7 @@ namespace dem {
      * Linear interpolation
      * REQUIRES: time is monotonically increasing
      */
-    T getBCValue(double time) {
+    T getBCValue(double time) const {
 
       if (d_times.size() < 2 || time <= d_times.front()) return d_bcValues.front();
       if (time >= d_times.back()) return d_bcValues.back();

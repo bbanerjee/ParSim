@@ -703,7 +703,7 @@ Peridynamics::scatterPeriParticle(const Box& spatialDomain)
     Vec v2 = d_periPatchBox.getMaxCorner();
     Vec vspan = (v2 - v1) / d_mpiProcs;
 
-    boost::mpi::request reqs[d_mpiSize - 1];
+    auto reqs = new boost::mpi::request[d_mpiSize - 1];
 
     PeriParticlePArray insidePeriParticleVec;
 

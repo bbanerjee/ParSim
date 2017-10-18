@@ -54,6 +54,7 @@
 #include <string>
 #include <utility>
 #include <array>
+#include <typeinfo>
 
 //#define BINNING
 //#define TIME_PROFILE
@@ -306,6 +307,73 @@ DiscreteElements::readBoundary(const std::string& fileName)
     reader.read(fileName, d_spatialDomain, d_demPatchBox, d_boundaries);
   }
   // std::cout << "d_demPatchBox = " << d_demPatchBox << "\n";
+
+  updateBoundaryAreas(d_boundaries);
+}
+
+// Compute boundary areas assuming axis-aligned plane boundaries
+// *TODO* Generalize.  For now if any one boundary is not a 
+// axis-aligned PlaneBoundary we don't do the area calculation
+// and update
+void 
+DiscreteElements::updateBoundaryAreas(BoundaryPArray& boundaries)
+{
+  REAL xmin = 0, xmax = 0, ymin = 0, ymax = 0, zmin = 0, zmax = 0;
+  for (const auto& boundary : boundaries) {
+    Boundary::BoundaryID id = boundary->getId();
+    Vec position = boundary->getPosition();
+    switch (id) {
+      case Boundary::BoundaryID::XMINUS:
+        xmin = position.x();
+        break;
+      case Boundary::BoundaryID::XPLUS:
+        xmax = position.x();
+        break;
+      case Boundary::BoundaryID::YMINUS:
+        ymin = position.y();
+        break;
+      case Boundary::BoundaryID::YPLUS:
+        ymax = position.y();
+        break;
+      case Boundary::BoundaryID::ZMINUS:
+        zmin = position.z();
+        break;
+      case Boundary::BoundaryID::ZPLUS:
+        zmax = position.z();
+        break;
+      default:
+        break;
+    }
+  }
+  REAL areaX = (ymax - ymin) * (zmax - zmin);
+  REAL areaY = (zmax - zmin) * (xmax - xmin);
+  REAL areaZ = (xmax - xmin) * (ymax - ymin);
+
+  for (auto& boundary : boundaries) {
+    Boundary::BoundaryID id = boundary->getId();
+    switch (id) {
+      case Boundary::BoundaryID::XMINUS:
+        boundary->setArea(areaX);
+        break;
+      case Boundary::BoundaryID::XPLUS:
+        boundary->setArea(areaX);
+        break;
+      case Boundary::BoundaryID::YMINUS:
+        boundary->setArea(areaY);
+        break;
+      case Boundary::BoundaryID::YPLUS:
+        boundary->setArea(areaY);
+        break;
+      case Boundary::BoundaryID::ZMINUS:
+        boundary->setArea(areaZ);
+        break;
+      case Boundary::BoundaryID::ZPLUS:
+        boundary->setArea(areaZ);
+        break;
+      default:
+        break;
+    }
+  }
 }
 
 void
@@ -1013,42 +1081,57 @@ DiscreteElements::printParticle(const std::string& fileName,
 }
 
 bool
-DiscreteElements::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
+DiscreteElements::areBoundaryTractionsEquilibrated(REAL time) 
+{
+  REAL tol = util::getParam<REAL>("tractionErrorTol");
+  for (const auto& boundary : d_boundaries) {
+    double area = boundary->getArea();
+    Vec normalForce = boundary->getNormalForce();
+    Vec appliedForce = boundary->getAppliedTraction(time)*area;
+    REAL resultant = (normalForce - appliedForce).length();
+    if (resultant > tol) return false;
+  }
+  return true;
+}
+
+bool
+DiscreteElements::areBoundaryTractionsEquilibrated(REAL sigma, std::string type, REAL sigmaX,
                            REAL sigmaY)
 {
   // sigma implies sigmaZ
   REAL tol = util::getParam<REAL>("tractionErrorTol");
 
-  std::map<std::string, REAL> normalForce;
+  std::map<std::string, REAL> normalTraction;
   REAL x1, x2, y1, y2, z1, z2;
+
   // do not use d_mergedBoundaries because each process calls this function.
   for (const auto& boundary : d_boundaries) {
     Boundary::BoundaryID id = boundary->getId();
-    Vec normal = boundary->getNormalForce();
+    Vec force = boundary->getNormalForce();
     Vec point = boundary->getPosition();
     switch (id) {
       case Boundary::BoundaryID::XMINUS:
-        normalForce["x-"] = fabs(normal.x());
+        normalTraction["x-"] = fabs(force.x());
         x1 = point.x();
         break;
       case Boundary::BoundaryID::XPLUS:
-        normalForce["x+"] = normal.x();
+        normalTraction["x+"] = force.x();
         x2 = point.x();
         break;
       case Boundary::BoundaryID::YMINUS:
-        normalForce["y-"] = fabs(normal.y());
+        normalTraction["y-"] = fabs(force.y());
         y1 = point.y();
         break;
       case Boundary::BoundaryID::YPLUS:
-        normalForce["y+"] = normal.y();
+        normalTraction["y+"] = force.y();
         y2 = point.y();
         break;
       case Boundary::BoundaryID::ZMINUS:
-        normalForce["z-"] = fabs(normal.z());
+        normalTraction["z-"] = fabs(force.z());
         z1 = point.z();
         break;
       case Boundary::BoundaryID::ZPLUS:
-        normalForce["z+"] = normal.z();
+        normalTraction["z+"] = force.z();
         z2 = point.z();
         break;
       default:
@@ -1058,29 +1141,35 @@ DiscreteElements::tractionErrorTol(REAL sigma, std::string type, REAL sigmaX,
   REAL areaX = (y2 - y1) * (z2 - z1);
   REAL areaY = (z2 - z1) * (x2 - x1);
   REAL areaZ = (x2 - x1) * (y2 - y1);
+  normalTraction["x-"] /= areaX;
+  normalTraction["x+"] /= areaX;
+  normalTraction["y-"] /= areaY;
+  normalTraction["y+"] /= areaY;
+  normalTraction["z-"] /= areaZ;
+  normalTraction["z+"] /= areaZ;
 
   if (type.compare("isotropic") == 0)
-    return (fabs(normalForce["x-"] / areaX - sigma) / sigma <= tol &&
-            fabs(normalForce["x+"] / areaX - sigma) / sigma <= tol &&
-            fabs(normalForce["y-"] / areaY - sigma) / sigma <= tol &&
-            fabs(normalForce["y+"] / areaY - sigma) / sigma <= tol &&
-            fabs(normalForce["z-"] / areaZ - sigma) / sigma <= tol &&
-            fabs(normalForce["z+"] / areaZ - sigma) / sigma <= tol);
+    return (fabs(normalTraction["x-"]/sigma - 1) <= tol &&
+            fabs(normalTraction["x+"]/sigma - 1) <= tol &&
+            fabs(normalTraction["y-"]/sigma - 1) <= tol &&
+            fabs(normalTraction["y+"]/sigma - 1) <= tol &&
+            fabs(normalTraction["z-"]/sigma - 1) <= tol &&
+            fabs(normalTraction["z+"]/sigma - 1) <= tol);
 
   else if (type.compare("odometer") == 0)
-    return (fabs(normalForce["z-"] / areaZ - sigma) / sigma <= tol &&
-            fabs(normalForce["z+"] / areaZ - sigma) / sigma <= tol);
+    return (fabs(normalTraction["z-"]/sigma - 1) <= tol &&
+            fabs(normalTraction["z+"]/sigma - 1) <= tol);
 
   else if (type.compare("triaxial") == 0)
     return true; // always near equilibrium
 
   else if (type.compare("trueTriaxial") == 0)
-    return (fabs(normalForce["x-"] / areaX - sigmaX) / sigmaX <= tol &&
-            fabs(normalForce["x+"] / areaX - sigmaX) / sigmaX <= tol &&
-            fabs(normalForce["y-"] / areaY - sigmaY) / sigmaY <= tol &&
-            fabs(normalForce["y+"] / areaY - sigmaY) / sigmaY <= tol &&
-            fabs(normalForce["z-"] / areaZ - sigma) / sigma <= tol &&
-            fabs(normalForce["z+"] / areaZ - sigma) / sigma <= tol);
+    return (fabs(normalTraction["x-"]/sigmaX - 1) <= tol &&
+            fabs(normalTraction["x+"]/sigmaX - 1) <= tol &&
+            fabs(normalTraction["y-"]/sigmaY - 1) <= tol &&
+            fabs(normalTraction["y+"]/sigmaY - 1) <= tol &&
+            fabs(normalTraction["z-"]/sigma - 1) <= tol &&
+            fabs(normalTraction["z+"]/sigma - 1) <= tol);
 
   return false;
 }
@@ -1748,37 +1837,11 @@ void
 DiscreteElements::updateBoundary(REAL time, REAL delT, REAL mass)
 {
   if (s_mpiRank == 0) {
-    REAL x1, x2, y1, y2, z1, z2;
-    for (const auto& boundary : d_mergedBoundaries) {
-      switch (boundary->getId()) {
-        case Boundary::BoundaryID::XMINUS:
-          x1 = boundary->getPosition().x();
-          break;
-        case Boundary::BoundaryID::XPLUS:
-          x2 = boundary->getPosition().x();
-          break;
-        case Boundary::BoundaryID::YMINUS:
-          y1 = boundary->getPosition().y();
-          break;
-        case Boundary::BoundaryID::YPLUS:
-          y2 = boundary->getPosition().y();
-          break;
-        case Boundary::BoundaryID::ZMINUS:
-          z1 = boundary->getPosition().z();
-          break;
-        case Boundary::BoundaryID::ZPLUS:
-          z2 = boundary->getPosition().z();
-          break;
-        default:
-          break;
-      }
+    for (auto& boundary : d_mergedBoundaries) {
+      double area = boundary->getArea();
+      boundary->updatePositionAndVelocity(time, delT, area, mass);
     }
-    REAL areaX = (y2 - y1) * (z2 - z1);
-    REAL areaY = (z2 - z1) * (x2 - x1);
-    REAL areaZ = (x2 - x1) * (y2 - y1);
-
-    for (auto& it : d_mergedBoundaries)
-      it->updatePositionAndVelocity(time, delT, areaX, areaY, areaZ, mass);
+    updateBoundaryAreas(d_mergedBoundaries);
 
     // update d_boundaries from d_mergedBoundaries and remove b_contacts to reduce
     // MPI transmission
@@ -1787,31 +1850,32 @@ DiscreteElements::updateBoundary(REAL time, REAL delT, REAL mass)
       it->clearBoundaryContacts();
 
     // update d_spatialDomain
+    double xmin = 0, xmax = 0, ymin = 0, ymax = 0, zmin = 0, zmax = 0;
     for (const auto& boundary : d_boundaries) {
       switch (boundary->getId()) {
         case Boundary::BoundaryID::XMINUS:
-          x1 = boundary->getPosition().x();
+          xmin = boundary->getPosition().x();
           break;
         case Boundary::BoundaryID::XPLUS:
-          x2 = boundary->getPosition().x();
+          xmax = boundary->getPosition().x();
           break;
         case Boundary::BoundaryID::YMINUS:
-          y1 = boundary->getPosition().y();
+          ymin = boundary->getPosition().y();
           break;
         case Boundary::BoundaryID::YPLUS:
-          y2 = boundary->getPosition().y();
+          ymax = boundary->getPosition().y();
           break;
         case Boundary::BoundaryID::ZMINUS:
-          z1 = boundary->getPosition().z();
+          zmin = boundary->getPosition().z();
           break;
         case Boundary::BoundaryID::ZPLUS:
-          z2 = boundary->getPosition().z();
+          zmax = boundary->getPosition().z();
           break;
         default:
           break;
       }
     }
-    setSpatialDomain(Box(x1, y1, z1, x2, y2, z2));
+    setSpatialDomain(Box(xmin, ymin, zmin, xmax, ymax, zmax));
   }
 
   broadcast(boostWorld, d_boundaries, 0);

@@ -236,7 +236,7 @@ TEST(PlaneBoundaryTest, updatePositionAndVelocityInitVel) {
   zen::XmlIn xml_in(doc1);
 
   PlaneBoundary plane_xml(boundary_type, boundary_id, xml_in);
-  plane_xml.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  plane_xml.updatePositionAndVelocity(tt, delT, area, mass);
   EXPECT_DOUBLE_EQ(plane_xml.getPosition().x(), v0*delT);
 
   // With fixed speed bc -x
@@ -250,7 +250,7 @@ TEST(PlaneBoundaryTest, updatePositionAndVelocityInitVel) {
   zen::XmlIn xml2_in(doc2);
 
   PlaneBoundary plane_xml2(boundary_type, boundary_id, xml2_in);
-  plane_xml2.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  plane_xml2.updatePositionAndVelocity(tt, delT, area, mass);
   EXPECT_DOUBLE_EQ(plane_xml2.getPosition().x(), v0*delT);
 }
 
@@ -275,7 +275,7 @@ TEST(PlaneBoundaryTest, updatePositionAndVelocityTraction) {
   zen::XmlIn xml1_in(doc1);
 
   PlaneBoundary plane_xml1(boundary_type, boundary_id, xml1_in);
-  plane_xml1.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  plane_xml1.updatePositionAndVelocity(tt, delT, area, mass);
   EXPECT_DOUBLE_EQ(plane_xml1.getPosition().x(), 
                    plane_xml1.getPreviousPosition().x());
 
@@ -290,7 +290,7 @@ TEST(PlaneBoundaryTest, updatePositionAndVelocityTraction) {
   zen::XmlIn xml2_in(doc2);
 
   PlaneBoundary plane_xml2(boundary_type, boundary_id, xml2_in);
-  plane_xml2.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  plane_xml2.updatePositionAndVelocity(tt, delT, area, mass);
   EXPECT_DOUBLE_EQ(plane_xml2.getVelocity().x(), 0.2);
   EXPECT_DOUBLE_EQ(plane_xml2.getPosition().x(), 0.2*delT);
 
@@ -306,7 +306,7 @@ TEST(PlaneBoundaryTest, updatePositionAndVelocityTraction) {
   zen::XmlIn xml3_in(doc3);
 
   PlaneBoundary plane_xml3(boundary_type, boundary_id, xml3_in);
-  plane_xml3.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  plane_xml3.updatePositionAndVelocity(tt, delT, area, mass);
   EXPECT_DOUBLE_EQ(plane_xml3.getVelocity().x(), -0.2);
   EXPECT_DOUBLE_EQ(plane_xml3.getPosition().x(), -0.2*delT);
 
@@ -322,9 +322,9 @@ TEST(PlaneBoundaryTest, updatePositionAndVelocityTraction) {
   zen::XmlIn xml4_in(doc4);
 
   PlaneBoundary plane_xml4(boundary_type, boundary_id, xml4_in);
-  plane_xml4.updatePositionAndVelocity(tt, delT, area, 2*area, 3*area, mass);
-  EXPECT_DOUBLE_EQ(plane_xml4.getVelocity().y(), -0.08);
-  EXPECT_DOUBLE_EQ(plane_xml4.getPosition().y(), -0.08*delT);
+  plane_xml4.updatePositionAndVelocity(tt, delT, area, mass);
+  EXPECT_DOUBLE_EQ(plane_xml4.getVelocity().y(), -0.04);
+  EXPECT_DOUBLE_EQ(plane_xml4.getPosition().y(), -0.04*delT);
 }
 
 TEST(PlaneBoundaryTest, updatePositionAndVelocityDisp) {
@@ -349,7 +349,7 @@ TEST(PlaneBoundaryTest, updatePositionAndVelocityDisp) {
   zen::XmlIn xml1_in(doc1);
 
   PlaneBoundary plane_xml1(boundary_type, boundary_id, xml1_in);
-  plane_xml1.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  plane_xml1.updatePositionAndVelocity(tt, delT, area, mass);
   EXPECT_DOUBLE_EQ(plane_xml1.getPosition().x(), 
                    plane_xml1.getPreviousPosition().x());
 
@@ -365,7 +365,7 @@ TEST(PlaneBoundaryTest, updatePositionAndVelocityDisp) {
   zen::XmlIn xml2_in(doc2);
 
   PlaneBoundary plane_xml2(boundary_type, boundary_id, xml2_in);
-  plane_xml2.updatePositionAndVelocity(tt, delT, area, area, area, mass);
+  plane_xml2.updatePositionAndVelocity(tt, delT, area, mass);
   EXPECT_NEAR(plane_xml2.getVelocity().x(), -0.2, 1.0e-8);
   EXPECT_DOUBLE_EQ(plane_xml2.getPosition().x(), -0.3);
 }

@@ -137,7 +137,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
                << std::endl;
 
     if (isotropicType == 1) {
-      if (dem->tractionErrorTol(sigmaVar, "isotropic")) {
+      if (dem->areBoundaryTractionsEquilibrated(sigmaVar, "isotropic")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
           dem->writeParticlesToFile(iterSnap);
@@ -148,12 +148,12 @@ IsotropicLoading::execute(DiscreteElements* dem)
         break;
       }
     } else if (isotropicType == 2) {
-      if (dem->tractionErrorTol(sigmaVar, "isotropic")) {
+      if (dem->areBoundaryTractionsEquilibrated(sigmaVar, "isotropic")) {
         if (dem->getMPIRank() == 0)
           dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
         sigmaVar += sigmaInc;
       }
-      if (dem->tractionErrorTol(sigmaEnd, "isotropic")) {
+      if (dem->areBoundaryTractionsEquilibrated(sigmaEnd, "isotropic")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
           dem->writeParticlesToFile(iterSnap);
@@ -166,7 +166,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
     }
 
     if (isotropicType == 3) {
-      if (dem->tractionErrorTol(sigmaVar, "isotropic")) {
+      if (dem->areBoundaryTractionsEquilibrated(sigmaVar, "isotropic")) {
         if (dem->getMPIRank() == 0)
           dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
         sigmaVar += sigmaInc;
@@ -175,7 +175,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
           sigmaInc = (sigmaPath[sigma_i + 1] - sigmaPath[sigma_i]) / sigmaDiv;
         }
       }
-      if (dem->tractionErrorTol(sigmaEnd, "isotropic")) {
+      if (dem->areBoundaryTractionsEquilibrated(sigmaEnd, "isotropic")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
           dem->writeParticlesToFile(iterSnap);
