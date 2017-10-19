@@ -28,6 +28,7 @@ SET(COMMAND_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/CavityExpansionResume.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/DepositIntoContainer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/DepositIntoContainerResume.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/TractionLoading.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/IsotropicLoading.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/OedometerLoading.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/PlaneStrainLoading.cpp

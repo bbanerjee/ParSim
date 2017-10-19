@@ -9,33 +9,60 @@ IsotropicLoading::execute(DiscreteElements* dem)
   std::ofstream progressInf;
   std::ofstream balancedInf;
 
-  auto isotropicType = util::getParam<std::size_t>("isotropicType");
   if (dem->getMPIRank() == 0) {
-    dem->readBoundary(
-      InputParameter::get().datafile["boundaryFilename"]);
-    dem->readParticles(
-      InputParameter::get().datafile["particleFilename"]);
+    std::string boundaryFile = InputParameter::get().datafile["boundaryFilename"];
+    std::string particleFile = InputParameter::get().datafile["particleFilename"];
+    dem->readBoundary(boundaryFile);
+    dem->readParticles(particleFile);
     dem->openProgressOutputFile(progressInf, "isotropic_progress");
     dem->openProgressOutputFile(balancedInf, "isotropic_balanced");
   }
+
   dem->scatterParticles();
 
   auto startStep = util::getParam<std::size_t>("startStep");
   auto endStep = util::getParam<std::size_t>("endStep");
   auto startSnap = util::getParam<std::size_t>("startSnap");
   auto endSnap = util::getParam<std::size_t>("endSnap");
-  std::size_t netStep = endStep - startStep + 1;
-  std::size_t netSnap = endSnap - startSnap + 1;
-  timeStep = util::getParam<REAL>("timeStep");
 
-  REAL sigmaEnd, sigmaInc, sigmaVar;
-  std::size_t sigmaDiv;
+  auto netStep = endStep - startStep + 1;
+  auto netSnap = endSnap - startSnap + 1;
 
-  sigmaEnd = util::getParam<REAL>("sigmaEnd");
-  sigmaDiv = util::getParam<REAL>("sigmaDiv");
+  auto iterSnap = startSnap;
+
+  std::string outputFolder(".");
+  REAL distX = 0, distY = 0, distZ = 0;
+  if (dem->getMPIRank() == 0) {
+    // Create the output writer in the master process
+    // <outputFolder> isotropic.pe3d </outputFolder>
+    auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
+    outputFolder = util::createOutputFolder(folderName);
+    dem->createOutputWriter(outputFolder, iterSnap-1);
+
+    dem->writeBoundaryToFile();
+    dem->writePatchGridToFile();
+    dem->writeParticlesToFile(iterSnap);
+    dem->printBoundary();
+    dem->printBoundaryContacts();
+    dem->getStartDimension(distX, distY, distZ);
+
+    debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
+             << std::setw(OWID) << "migraT" << std::setw(OWID) << "totalT"
+             << std::setw(OWID) << "overhead%" << std::endl;
+  }
+
+  // Broadcast the output folder to all processes
+  broadcast(dem->getMPIWorld(), outputFolder, 0);
+
+
+
+  auto sigmaEnd = util::getParam<REAL>("sigmaEnd");
+  auto sigmaDiv = util::getParam<REAL>("sigmaDiv");
   std::vector<REAL>& sigmaPath = InputParameter::get().sigmaPath;
-  std::size_t sigma_i = 0;
 
+  auto isotropicType = util::getParam<std::size_t>("isotropicType");
+  REAL sigmaInc = 0, sigmaVar = 0;
+  auto sigma_index = 0u;
   if (isotropicType == 1)
     sigmaVar = sigmaEnd;
   else if (isotropicType == 2) {
@@ -43,69 +70,52 @@ IsotropicLoading::execute(DiscreteElements* dem)
     sigmaInc = (sigmaEnd - sigmaStart) / sigmaDiv;
     sigmaVar = sigmaStart;
   } else if (isotropicType == 3) {
-    sigmaVar = sigmaPath[sigma_i];
-    sigmaInc = (sigmaPath[sigma_i + 1] - sigmaPath[sigma_i]) / sigmaDiv;
+    sigmaVar = sigmaPath[sigma_index];
+    sigmaInc = (sigmaPath[sigma_index + 1] - sigmaPath[sigma_index]) / sigmaDiv;
     sigmaEnd = sigmaPath[sigmaPath.size() - 1];
   }
 
-  REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
-  iteration = startStep;
-  std::size_t iterSnap = startSnap;
-  REAL distX, distY, distZ;
-
-  std::string outputFolder(".");
-  if (dem->getMPIRank() == 0) {
-    // Create the output writer in the master process
-    // <outputFolder> isotropic.pe3d </outputFolder>
-    auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
-    outputFolder = util::createOutputFolder(folderName);
-    //std::cout << "Output folder = " << outputFolder << "\n";
-    dem->createOutputWriter(outputFolder, iterSnap-1);
-
-    dem->writeBoundaryToFile();
-    dem->printBoundary();
-    dem->writePatchGridToFile();
-    dem->writeParticlesToFile(iterSnap);
-    dem->printBoundaryContacts();
-    dem->getStartDimension(distX, distY, distZ);
-  }
-  if (dem->getMPIRank() == 0)
-    debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
-             << std::setw(OWID) << "migraT" << std::setw(OWID) << "totalT"
-             << std::setw(OWID) << "overhead%" << std::endl;
-
-  // Broadcast the output folder to all processes
-  broadcast(dem->getMPIWorld(), outputFolder, 0);
+  auto iteration = startStep;
+  //auto timeStep = util::getParam<REAL>("timeStep");
 
   while (iteration <= endStep) {
-    commuT = migraT = gatherT = totalT = 0;
-    time0 = MPI_Wtime();
-    dem->commuParticle();
-    time2 = MPI_Wtime();
-    commuT = time2 - time0;
 
-    dem->calcTimeStep(); // use values from last step, must call before
-                              // findConact
+    auto t0 = MPI_Wtime();
+    dem->commuParticle(iteration);
+    auto t1 = MPI_Wtime();
+    auto commuT = t1 - t0;
+
+    dem->calcTimeStep(); 
+
     dem->findContact();
-    if (dem->isBoundaryProcess())
+
+    if (dem->isBoundaryProcess()) {
       dem->findBoundaryContacts();
+    }
 
     dem->clearContactForce();
+
     dem->internalForce();
-    if (dem->isBoundaryProcess())
+
+    if (dem->isBoundaryProcess()) {
       dem->boundaryForce();
+    }
 
     dem->updateParticles();
+
     dem->gatherBoundaryContacts(); // must call before updateBoundary
+
     dem->updateBoundary(sigmaVar, "isotropic");
+
     dem->updatePatchBox();
 
     if (iteration % (netStep / netSnap) == 0) {
-      time1 = MPI_Wtime();
+
+      //auto t2 = MPI_Wtime();
       dem->gatherParticles();
       dem->gatherEnergy();
-      time2 = MPI_Wtime();
-      gatherT = time2 - time1;
+      //auto t3 = MPI_Wtime();
+      //auto gatherT = t3 - t2;
 
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
@@ -120,21 +130,20 @@ IsotropicLoading::execute(DiscreteElements* dem)
       ++iterSnap;
     }
 
-    dem
-      ->releaseReceivedParticles(); // late release because printContact refers to
-                               // received particles
-    time1 = MPI_Wtime();
+    dem ->releaseReceivedParticles();
+
+    auto t4 = MPI_Wtime();
     dem->migrateParticles();
-    time2 = MPI_Wtime();
-    migraT = time2 - time1;
-    totalT = time2 - time0;
-    if (dem->getMPIRank() == 0 &&
-        (iteration + 1) % (netStep / netSnap) ==
-          0) // ignore gather and print time at this step
+    auto t5 = MPI_Wtime();
+    auto migraT = t5 - t4;
+    auto totalT = t5 - t0;
+
+    if (dem->getMPIRank() == 0 && (iteration + 1) % (netStep / netSnap) == 0) {
       debugInf << std::setw(OWID) << iteration << std::setw(OWID) << commuT
                << std::setw(OWID) << migraT << std::setw(OWID) << totalT
                << std::setw(OWID) << (commuT + migraT) / totalT * 100
                << std::endl;
+    }
 
     if (isotropicType == 1) {
       if (dem->areBoundaryTractionsEquilibrated(sigmaVar, "isotropic")) {
@@ -163,16 +172,14 @@ IsotropicLoading::execute(DiscreteElements* dem)
         }
         break;
       }
-    }
-
-    if (isotropicType == 3) {
+    } else if (isotropicType == 3) {
       if (dem->areBoundaryTractionsEquilibrated(sigmaVar, "isotropic")) {
         if (dem->getMPIRank() == 0)
           dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
         sigmaVar += sigmaInc;
-        if (sigmaVar == sigmaPath[sigma_i + 1]) {
-          sigmaVar = sigmaPath[++sigma_i];
-          sigmaInc = (sigmaPath[sigma_i + 1] - sigmaPath[sigma_i]) / sigmaDiv;
+        if (sigmaVar == sigmaPath[sigma_index + 1]) {
+          sigmaVar = sigmaPath[++sigma_index];
+          sigmaInc = (sigmaPath[sigma_index + 1] - sigmaPath[sigma_index]) / sigmaDiv;
         }
       }
       if (dem->areBoundaryTractionsEquilibrated(sigmaEnd, "isotropic")) {

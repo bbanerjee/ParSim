@@ -570,7 +570,7 @@ DiscreteElements::commuParticle(const int& iteration)
   */
 }
 
-void
+REAL
 DiscreteElements::calcTimeStep()
 {
   calcVibraTimeStep();
@@ -589,6 +589,7 @@ DiscreteElements::calcTimeStep()
     //          << " Vibration timestep = " << d_vibrationTimeStep
     //          << " Impact timestep = " << d_impactTimeStep << "\n";
   //}
+  return timeStep;
 }
 
 void
@@ -2149,6 +2150,12 @@ void
 DiscreteElements::calcMechanicalEnergy()
 {
   d_mechanicalEnergy = d_kineticEnergy + d_gravitationalEnergy;
+}
+
+REAL 
+DiscreteElements::getTotalMassFromPatchParticleData() const
+{
+  return d_patchParticles[0]->getTotalMass();
 }
 
 REAL

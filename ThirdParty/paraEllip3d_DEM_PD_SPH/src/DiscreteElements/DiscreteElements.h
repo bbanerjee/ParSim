@@ -200,11 +200,12 @@ public:
   void updateBoundary(REAL simga, std::string type, REAL sigmaX = 0,
                       REAL sigmaY = 0);
 
+  REAL getTotalMassFromPatchParticleData() const;
   REAL getMass() const;
   REAL getAvgPenetration() const;
   REAL getVolume() const;
 
-  void calcTimeStep();
+  REAL calcTimeStep();
   void calcVibraTimeStep();
   void calcImpactTimeStep();
   void calcContactNum();

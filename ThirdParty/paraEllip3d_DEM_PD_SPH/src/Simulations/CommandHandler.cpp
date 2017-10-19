@@ -4,6 +4,7 @@
 #include <Simulations/DEM/CavityExpansionResume.h>
 #include <Simulations/DEM/DepositIntoContainer.h>
 #include <Simulations/DEM/DepositIntoContainerResume.h>
+#include <Simulations/DEM/TractionLoading.h>
 #include <Simulations/DEM/IsotropicLoading.h>
 #include <Simulations/DEM/OedometerLoading.h>
 #include <Simulations/DEM/PlaneStrainLoading.h>
@@ -43,6 +44,9 @@ CommandHandler::handleCommand(int simuType)
     case 102: // resume deposition using specified data file of particles and
               // boundaries
       return std::make_unique<DepositIntoContainerResume>();
+      break;
+    case 103: // General traction loading on plane boundaries
+      return std::make_unique<TractionLoading>();
       break;
     case 201: // isotropic type 1 - create an initial state with low confining
               // pressure
