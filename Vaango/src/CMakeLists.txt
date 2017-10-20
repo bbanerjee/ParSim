@@ -398,7 +398,7 @@ configure_file(${Vaango_SOURCE_DIR}/tools/fspec.pl.in ${FSPEC})
 #----------------------------------------------------------------------------------
 # Find the MPI package to use
 #----------------------------------------------------------------------------------
-find_package(MPI REQUIRED)
+find_package(MPIVaango REQUIRED)
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
   set(MPI_DIR "" CACHE PATH "Path to MPI")
