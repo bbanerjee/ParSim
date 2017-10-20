@@ -338,7 +338,13 @@ message(STATUS "Fortran compiler ${CMAKE_Fortran_COMPILER}")
 
 # DON'T USE find_library - many machine's paths are compiler specific.  The *right* thing would be
 #   to compile a program looking for the fortran lib, but this is probably good enough
-if(HAVE_GFORTRAN)
+if(HAVE_CRAYFTN)
+  set(F_LIBRARY ftn CACHE string "fortran library")
+  find_library(F_LIBRARY NAMES ftn)
+  set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
+  set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
+  message(STATUS "Have ftn. Setting libraries. ${F_LIBRARY}")
+elseif(HAVE_GFORTRAN)
   set(F_LIBRARY gfortran CACHE string "fortran library")
   find_library(F_LIBRARY NAMES gfortran)
   set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
