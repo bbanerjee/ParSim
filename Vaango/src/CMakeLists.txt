@@ -341,12 +341,7 @@ message(STATUS "Fortran compiler ${CMAKE_Fortran_COMPILER}")
 # DON'T USE find_library - many machine's paths are compiler specific.  The *right* thing would be
 #   to compile a program looking for the fortran lib, but this is probably good enough
 if(HAVE_CRAYFTN)
-  #set(F_LIBRARY ftn CACHE string "fortran library")
   #find_library(F_LIBRARY NAMES ftn)
-  #if(F_LIBRARY-NOTFOUND)
-  #  message(STATUS "ftn library not found")
-  #  set(F_LIBRARY gfortran)
-  #endif(F_LIBRARY-NOTFOUND)
   set(F_LIBRARY "" CACHE string "fortran library")
   set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
@@ -389,11 +384,10 @@ elseif(HAVE_F77)
   set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
   set(FORTRAN_LIBRARY "" CACHE string "fortran library")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
+else()
+  message(FATAL_ERROR "Cannot find fortran library")
 endif()
 
-#if(NOT F_LIBRARY)
-#  message(FATAL_ERROR "Cannot find fortran library")
-#endif(NOT F_LIBRARY)
 
 #--------------------------------------------------
 # Set the local module path
