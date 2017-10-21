@@ -326,6 +326,7 @@ endif ()
 #--------------------------------------------------------------------------------
 enable_language(Fortran)
 
+string(REGEX MATCH ftn HAVE_CRAYFTN ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH gfortran HAVE_GFORTRAN ${CMAKE_Fortran_COMPILER})
 #string(REGEX MATCH f95 HAVE_GFORTRAN ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH xlf HAVE_XLF ${CMAKE_Fortran_COMPILER})
@@ -339,8 +340,8 @@ message(STATUS "Fortran compiler ${CMAKE_Fortran_COMPILER}")
 # DON'T USE find_library - many machine's paths are compiler specific.  The *right* thing would be
 #   to compile a program looking for the fortran lib, but this is probably good enough
 if(HAVE_CRAYFTN)
-  set(F_LIBRARY ftn CACHE string "fortran library")
-  find_library(F_LIBRARY NAMES ftn)
+  #find_library(F_LIBRARY NAMES ftn)
+  set(F_LIBRARY "" CACHE string "fortran library")
   set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
   message(STATUS "Have ftn. Setting libraries. ${F_LIBRARY}")
@@ -382,12 +383,10 @@ elseif(HAVE_F77)
   set(FORTRAN_UNDERSCORE end CACHE string "What type of fortran underscore style - linux,end,none")
   set(FORTRAN_LIBRARY "" CACHE string "fortran library")
   set(DEF_FORTRAN_UNDERSCORE "#define FORTRAN_UNDERSCORE_END")
+else()
+  message(FATAL_ERROR "Cannot find fortran library")
 endif()
 
-# f77 on redstorm currently an exception - doesn't need it 
-if(NOT F_LIBRARY AND NOT HAVE_F77)
-  message(FATAL_ERROR "Cannot find fortran library")
-endif(NOT F_LIBRARY AND NOT HAVE_F77)
 
 #--------------------------------------------------
 # Set the local module path
