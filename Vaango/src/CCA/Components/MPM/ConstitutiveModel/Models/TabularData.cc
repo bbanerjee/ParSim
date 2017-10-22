@@ -666,7 +666,7 @@ TabularData::getIndependentVarData(const std::string& name,
 {
   auto varIter = std::find_if(
     d_indepVars.begin(), d_indepVars.end(),
-    [&name](const auto& indepVar) { return (indepVar->name == name); });
+    [&name](const IndependentVarP& indepVar) { return (indepVar->name == name); });
   if (varIter == d_indepVars.end()) {
     return DoubleVec1D();
   }
@@ -680,7 +680,7 @@ TabularData::getDependentVarData(const std::string& name,
 {
   auto varIter = std::find_if(
     d_depVars.begin(), d_depVars.end(),
-    [&name](const auto& depVar) { return (depVar->name == name); });
+    [&name](const DependentVarP& depVar) { return (depVar->name == name); });
   if (varIter == d_indepVars.end()) {
     return DoubleVec1D();
   }
@@ -695,7 +695,7 @@ TabularData::setIndependentVarData(const std::string& name,
 {
   auto varIter = std::find_if(
     d_indepVars.begin(), d_indepVars.end(),
-    [&name](const auto& indepVar) { return (indepVar->name == name); });
+    [&name](const IndependentVarP& indepVar) { return (indepVar->name == name); });
   (*varIter)->data[index] = data;
 }
 
@@ -706,7 +706,7 @@ TabularData::setDependentVarData(const std::string& name,
 {
   auto varIter = std::find_if(
     d_depVars.begin(), d_depVars.end(),
-    [&name](const auto& depVar) { return (depVar->name == name); });
+    [&name](const DependentVarP& depVar) { return (depVar->name == name); });
   (*varIter)->data[index] = data;
 }
 
