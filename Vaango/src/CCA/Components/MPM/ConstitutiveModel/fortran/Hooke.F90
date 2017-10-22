@@ -234,7 +234,7 @@ CONTAINS
 
 !
       RETURN
-      END !SUBROUTINE HOOKE_INCREMENTAL
+      END SUBROUTINE HOOKE_INCREMENTAL
 
 !---.----1----.----2----.----3----.----4----.----5----.----6----.----7--
       SUBROUTINE HOOKECHK ( UI, GC, DC) BIND(C, NAME='hookechk_')
@@ -322,7 +322,7 @@ CONTAINS
 
 
       RETURN
-      END !SUBROUTINE HOOKECHK
+      END SUBROUTINE HOOKECHK
 !
 !
 !
@@ -475,7 +475,7 @@ CONTAINS
 !
 !      CALL LOGMES(‘############# exiting HOOKERXV’)
       RETURN
-      END !SUBROUTINE HOOKERXV
+      END SUBROUTINE HOOKERXV
 !
 #ifdef MG_EOS
 !---.----1----.----2----.----3----.----4----.----5----.----6----.----7--
@@ -569,7 +569,7 @@ CONTAINS
 
 
       RETURN
-      END !SUBROUTINE HOOKE_INIT
+      END SUBROUTINE HOOKE_INIT
 
 !---.----1----.----2----.----3----.----4----.----5----.----6----.----7--
       SUBROUTINE MGEOS(PROP,SV,DEV,&
@@ -707,7 +707,7 @@ CONTAINS
 
 
       RETURN
-      END ! SUBROUTINE EOSMOD
+      END  SUBROUTINE EOSMOD
       SUBROUTINE HOOKE_INIT(PROP, SV)
 ! PUBLIC:Called by host code after GeoModel inputs have been read and
 !        checked (in routine GEOCHK).
@@ -798,7 +798,7 @@ CONTAINS
 
 
       RETURN
-      END !SUBROUTINE HOOKE_INIT
+      END SUBROUTINE HOOKE_INIT
 !  @(#)$Id: eosmgi.F,v 1.72006/03/1322:41:09 rgschmi Exp $
 !DECK EOSMGI
       SUBROUTINE EOSMGI (UI,GC,DC,&
