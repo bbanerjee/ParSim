@@ -40,8 +40,8 @@ public:
   Vec getDirection() const { return direction; }
   Vec getPosition() const override { return point; }
   Vec getVelocity() const override { return velocity; }
-  Vec getPreviousPosition() const override { return prevPoint; }
-  Vec getPreviousVelocity() const override { return prevVelocity; }
+  Vec previousPosition() const override { return prevPoint; }
+  Vec previousVelocity() const override { return prevVelocity; }
   REAL getRadius() const { return radius; }
 
   void setDirection(Vec dir) { direction = dir; }

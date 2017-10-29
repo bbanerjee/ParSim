@@ -54,8 +54,8 @@ public:
   Vec getDirection() const { return d_direction; }
   Vec getPosition() const override { return d_position; }
   Vec getVelocity() const override { return d_velocity; }
-  Vec getPreviousPosition() const override { return d_previousPosition; }
-  Vec getPreviousVelocity() const override { return d_previousVelocity; }
+  Vec previousPosition() const override { return d_previousPosition; }
+  Vec previousVelocity() const override { return d_previousVelocity; }
 
   void setArea(REAL area) override { d_area = area; }
   void setDirection(Vec dir) { d_direction = dir; }

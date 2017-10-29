@@ -174,8 +174,8 @@ public:
   virtual REAL getArea() const {return 1.0; }
   virtual Vec getPosition() const = 0;
   virtual Vec getVelocity() const = 0;
-  virtual Vec getPreviousPosition() const = 0;
-  virtual Vec getPreviousVelocity() const = 0;
+  virtual Vec previousPosition() const = 0;
+  virtual Vec previousVelocity() const = 0;
   virtual void setPosition(Vec pnt) = 0;
   virtual void setVelocity(Vec vel) = 0;
   virtual void setArea(REAL area) {};

@@ -63,7 +63,15 @@ public:
     d_data = v.d_data;
   }
 
-  bool operator==(const Vec v);
+  inline double& operator[](int idx) {
+    return d_data[idx];
+  }
+
+  inline double operator[](int idx) const {
+    return d_data[idx];
+  }
+
+  bool operator==(const Vec v) const;
   bool operator==(const REAL d);
   bool operator!=(const Vec v);
   void operator+=(const Vec v);
@@ -95,6 +103,9 @@ public:
 
   REAL lengthSq() const;
   REAL length() const;
+
+  // Normalize in place
+  void normalizeInPlace();
 
   void print(std::ostream& ofs) const;
 

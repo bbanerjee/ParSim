@@ -25,11 +25,13 @@
 SET(MATH_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/IntVec.cpp          
   ${CMAKE_CURRENT_SOURCE_DIR}/Vec.cpp          
+  ${CMAKE_CURRENT_SOURCE_DIR}/Matrix3.cpp          
   ${CMAKE_CURRENT_SOURCE_DIR}/Matrix.cpp          
   ${CMAKE_CURRENT_SOURCE_DIR}/balanc.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hqr.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/nrutil.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ran.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/CubeRoot.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/root6.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/root6_old.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/zrhqr.cpp

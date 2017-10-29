@@ -83,7 +83,7 @@ public:
   REAL getTotalMass() const { return d_totalMassAllParticles; }
   REAL getDensity() const { return d_density; }
   Vec currentPosition() const { return d_currPos; }
-  Vec getPreviousPosition() const { return d_prevPos; }
+  Vec previousPosition() const { return d_prevPos; }
   Vec getCurrDirecA() const { return d_currDirecA; }
   Vec getCurrDirecB() const { return d_currDirecB; }
   Vec getCurrDirecC() const { return d_currDirecC; }
@@ -91,9 +91,9 @@ public:
   Vec getPrevDirecB() const { return d_prevDirecB; }
   Vec getPrevDirecC() const { return d_prevDirecC; }
   Vec currentVelocity() const { return d_currentVelocity; }
-  Vec getPreviousVelocity() const { return d_previousVelocity; }
+  Vec previousVelocity() const { return d_previousVelocity; }
   Vec currentOmega() const { return d_currOmga; }
-  Vec getPrevOmga() const { return d_prevOmga; }
+  Vec previousOmega() const { return d_prevOmga; }
   Vec getForce() const { return d_force; }
   std::map<size_t, Vec> getForceIDMap() const { return d_forceIDMap; }
   Vec getMoment() const { return d_moment; }

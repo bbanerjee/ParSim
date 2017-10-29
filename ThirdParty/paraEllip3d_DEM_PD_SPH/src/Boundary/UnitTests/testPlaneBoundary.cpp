@@ -277,7 +277,7 @@ TEST(PlaneBoundaryTest, updatePositionAndVelocityTraction) {
   PlaneBoundary plane_xml1(boundary_type, boundary_id, xml1_in);
   plane_xml1.updatePositionAndVelocity(tt, delT, area, mass);
   EXPECT_DOUBLE_EQ(plane_xml1.getPosition().x(), 
-                   plane_xml1.getPreviousPosition().x());
+                   plane_xml1.previousPosition().x());
 
   // Non-zero constant traction (x-)
   zen::XmlDoc doc2;
@@ -351,7 +351,7 @@ TEST(PlaneBoundaryTest, updatePositionAndVelocityDisp) {
   PlaneBoundary plane_xml1(boundary_type, boundary_id, xml1_in);
   plane_xml1.updatePositionAndVelocity(tt, delT, area, mass);
   EXPECT_DOUBLE_EQ(plane_xml1.getPosition().x(), 
-                   plane_xml1.getPreviousPosition().x());
+                   plane_xml1.previousPosition().x());
 
   // With non-zero displacement bc
   zen::XmlDoc doc2;

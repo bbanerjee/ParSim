@@ -6,7 +6,7 @@
 namespace dem {
 
 bool
-Vec::operator==(const Vec v)
+Vec::operator==(const Vec v) const
 {
   return d_data[0] == v.d_data[0] && d_data[1] == v.d_data[1] && d_data[2] == v.d_data[2];
 }
@@ -99,6 +99,16 @@ REAL
 Vec::length() const
 {
   return std::sqrt(lengthSq());
+}
+
+void
+Vec::normalizeInPlace()
+{
+  REAL length = this->length();
+  if (length < EPS) return;
+  d_data[0] /= length;
+  d_data[1] /= length;
+  d_data[2] /= length;
 }
 
 // Divides a vector by an int vector and produces a new vector

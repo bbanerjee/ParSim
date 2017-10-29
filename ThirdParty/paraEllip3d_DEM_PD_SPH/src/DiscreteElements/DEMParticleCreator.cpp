@@ -208,6 +208,27 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
   return particles;
 }
 
+DEMParticlePArray
+DEMParticleCreator::generatePeriodicDEMParticles(const DEMParticlePArray& particles,
+                                                 const Box& spatialDomain) 
+{
+  DEMParticlePArray extraParticles;
+  /*
+  for (const auto& particle : particles) {
+    auto position = particle->currentPosition();
+  }
+  */
+  return extraParticles;
+}
+
+/*
+template <typename BoundaryFace>
+DEMParticleP createParticle()
+{
+
+}
+*/
+
 namespace dem {
 template DEMParticlePArray DEMParticleCreator::generateDEMParticles<0>(
   DEMParticleShape shape, const Box& spatialDomain, Gradation& gradation);
