@@ -8,8 +8,8 @@ namespace dem {
 void
 Box::print() const
 {
-  std::cout << v1.x() << ' ' << v1.y() << ' ' << v1.z() << ' ' << v2.x() << ' '
-            << v2.y() << ' ' << v2.z() << std::endl;
+  std::cout << d_v1.x() << ' ' << d_v1.y() << ' ' << d_v1.z() << ' ' << d_v2.x() << ' '
+            << d_v2.y() << ' ' << d_v2.z() << std::endl;
 }
 
 Vec
@@ -19,11 +19,11 @@ Box::randomPoint() const
   REAL rand2 = ran(&idum);
   REAL rand3 = ran(&idum);
   REAL x =
-    rand1 * (center.x() - dimx / 2) + (1 - rand1) * (center.x() + dimx / 2);
+    rand1 * (d_center.x() - d_dimx / 2) + (1 - rand1) * (d_center.x() + d_dimx / 2);
   REAL y =
-    rand2 * (center.y() - dimy / 2) + (1 - rand2) * (center.y() + dimy / 2);
+    rand2 * (d_center.y() - d_dimy / 2) + (1 - rand2) * (d_center.y() + d_dimy / 2);
   REAL z =
-    rand3 * (center.z() - dimz / 2) + (1 - rand3) * (center.z() + dimz / 2);
+    rand3 * (d_center.z() - d_dimz / 2) + (1 - rand3) * (d_center.z() + d_dimz / 2);
   return Vec(x, y, z);
 }
 
@@ -33,9 +33,9 @@ Box::randomPoint() const
 bool 
 Box::inside(const Vec& pt, REAL tol) const
 {
-  if (pt.x() - v1.x() >= -tol && pt.x() - v2.x() < -tol &&
-      pt.y() - v1.y() >= -tol && pt.y() - v2.y() < -tol &&
-      pt.z() - v1.z() >= -tol && pt.z() - v2.z() < -tol) {
+  if (pt.x() - d_v1.x() >= -tol && pt.x() - d_v2.x() < -tol &&
+      pt.y() - d_v1.y() >= -tol && pt.y() - d_v2.y() < -tol &&
+      pt.z() - d_v1.z() >= -tol && pt.z() - d_v2.z() < -tol) {
     return true;
   }
   return false;
@@ -44,9 +44,9 @@ Box::inside(const Vec& pt, REAL tol) const
 bool
 Box::outside(const Vec& pt) const
 {
-  if ((pt.x() < v1.x() || pt.x() > v2.x()) ||
-      (pt.y() < v1.y() || pt.y() > v2.y()) ||
-      (pt.z() < v1.z() || pt.z() > v2.z())) {
+  if ((pt.x() < d_v1.x() || pt.x() > d_v2.x()) ||
+      (pt.y() < d_v1.y() || pt.y() > d_v2.y()) ||
+      (pt.z() < d_v1.z() || pt.z() > d_v2.z())) {
     return true;
   }
   return false;
@@ -55,8 +55,8 @@ Box::outside(const Vec& pt) const
 std::ostream&
 operator<<(std::ostream& os, const Box& b)
 {
-  os << "dimx = " << b.dimx << " dimy = " << b.dimy << " dimz = " << b.dimz
-     << " center = " << b.center << " v1 = " << b.v1 << " v2 = " << b.v2
+  os << "d_dimx = " << b.d_dimx << " d_dimy = " << b.d_dimy << " d_dimz = " << b.d_dimz
+     << " d_center = " << b.d_center << " d_v1 = " << b.d_v1 << " d_v2 = " << b.d_v2
      << "\n";
   return os;
 }

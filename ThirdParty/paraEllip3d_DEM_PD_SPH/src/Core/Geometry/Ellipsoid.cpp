@@ -22,7 +22,7 @@ Ellipsoid::getOrientedBoundingBox() const
 }
 
 Matrix3 
-Ellipsoid::toSphereTransformationMatrix() const
+Ellipsoid::toUnitSphereTransformationMatrix() const
 {
   Matrix3 mat;
   mat(0,0) = d_axis_a[0]/d_radius_a;
@@ -39,7 +39,7 @@ Ellipsoid::toSphereTransformationMatrix() const
 bool 
 Ellipsoid::containsPoint(const Vec& point) const
 {
-  Matrix3 N = toSphereTransformationMatrix();
+  Matrix3 N = toUnitSphereTransformationMatrix();
   Vec pp = N*(point - d_center) ;
   if (pp.length() > 1.0) {
     return false;

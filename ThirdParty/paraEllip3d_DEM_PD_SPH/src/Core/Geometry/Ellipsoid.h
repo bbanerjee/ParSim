@@ -54,7 +54,7 @@ public:
 
   OrientedBox getOrientedBoundingBox() const;
 
-  Matrix3 toSphereTransformationMatrix() const;
+  Matrix3 toUnitSphereTransformationMatrix() const;
 
   bool containsPoint(const Vec& pt) const;
 

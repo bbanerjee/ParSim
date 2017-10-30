@@ -3,21 +3,21 @@
 
 #include <Core/Math/Vec.h>
 #include <Core/Types/RealTypes.h>
+
+#include <array>
 #include <vector>
 
 namespace dem {
+
+class Box;
 
 class OrientedBox
 {
 private:
 
   Vec d_center;
-  Vec d_axis_a;
-  Vec d_axis_b;
-  Vec d_axis_c;
-  REAL d_half_len_a;
-  REAL d_half_len_b;
-  REAL d_half_len_c;
+  std::array<Vec, 3> d_axes; // axis_a, axis_b, axis_c
+  std::array<REAL, 3> d_half_len; // len_a, len_b, len_c
 
   void normalize_axes();
 
@@ -26,12 +26,8 @@ private:
   void serialize(Archive& ar, const unsigned int version)
   {
     ar& d_center;
-    ar& d_axis_a;
-    ar& d_axis_b;
-    ar& d_axis_c;
-    ar& d_half_len_a;
-    ar& d_half_len_b;
-    ar& d_half_len_c;
+    ar& d_axes;
+    ar& d_half_len;
   }
 
 public:
@@ -40,19 +36,22 @@ public:
               const Vec& ax_a, const Vec& ax_b, const Vec& ax_c,
               REAL rad_a, REAL rad_b, REAL rad_c)
     : d_center(center)
-    , d_axis_a(ax_a)
-    , d_axis_b(ax_b)
-    , d_axis_c(ax_c)
-    , d_half_len_a(rad_a)
-    , d_half_len_b(rad_b)
-    , d_half_len_c(rad_c)
+    , d_axes({{ax_a, ax_b, ax_c}})
+    , d_half_len({{rad_a, rad_b, rad_c}})
   {
     normalize_axes();
   }
 
+  OrientedBox(const Box& box);
+
   std::vector<Vec> vertices() const;
 
   bool containsPoint(const Vec& pt) const;
+
+  bool intersects(const OrientedBox& box) const;
+
+  void rotate(REAL angle, const Vec& axis);
+  void translate(const Vec& dist);
 
   friend std::ostream& operator<<(std::ostream& os, const OrientedBox& box);
 
