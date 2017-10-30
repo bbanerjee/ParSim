@@ -1,5 +1,7 @@
 #include <Core/Geometry/OrientedBox.h>
 #include <Core/Geometry/Box.h>
+#include <Core/Math/Vec.h>
+#include <Core/Math/Matrix3.h>
 #include <gtest/gtest.h>
 
 using namespace dem;
@@ -50,4 +52,10 @@ TEST(OrientedBoxTest, intersect) {
   //          std::ostream_iterator<Vec>(std::cout, "\n"));
   //std::copy(vert2.begin(), vert2.end(),
   //          std::ostream_iterator<Vec>(std::cout, "\n"));
+
+  bool contains = obox1.containsPoint(Vec(0.5, 0.5, 0.5));
+  EXPECT_EQ(contains, true);
+  contains = obox2.containsPoint(Vec(0.5, 0.5, 0.5));
+  EXPECT_EQ(contains, false);
+  //std::cout << "Contains = " << std::boolalpha << contains << "\n";
 }

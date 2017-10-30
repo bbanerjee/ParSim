@@ -25,6 +25,7 @@
 SET(GEOMETRY_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Box.cpp          
   ${CMAKE_CURRENT_SOURCE_DIR}/Cylinder.cpp          
+  ${CMAKE_CURRENT_SOURCE_DIR}/Ellipsoid.cpp          
   ${CMAKE_CURRENT_SOURCE_DIR}/OrientedBox.cpp          
 )
 

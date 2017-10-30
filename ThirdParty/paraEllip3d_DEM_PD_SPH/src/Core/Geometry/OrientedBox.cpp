@@ -1,5 +1,4 @@
 #include <Core/Const/Constants.h>
-#include <Core/Math/Matrix3.h>
 #include <Core/Geometry/Box.h>
 #include <Core/Geometry/OrientedBox.h>
 #include <iostream>

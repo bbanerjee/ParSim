@@ -44,6 +44,10 @@ public:
 
   OrientedBox(const Box& box);
 
+  const Vec& center() const {return d_center;}
+  const Vec& axis(int idx) const {return d_axes.at(idx);}
+  REAL extent(int idx) const {return d_half_len.at(idx);}
+
   std::vector<Vec> vertices() const;
 
   bool containsPoint(const Vec& pt) const;
