@@ -51,11 +51,18 @@ Ellipsoid::intersects(const OrientedBox& box) const
   OrientedBox boundingBox = getOrientedBoundingBox();
   if (!boundingBox.intersects(box)) return false;
 
+  // Identify the visible faces
   Vec ww = d_center - box.center();
-  std::array<REAL, 3> dd = {{dot(ww, box.axis(0)),
-                             dot(ww, box.axis(1)),
-                             dot(ww, box.axis(2))}};
-
+  std::vector<std::pair<int, float>> visibleFaces;
+  for (int ii = 0; ii < 3; ++ii) {
+    REAL dd = dot(ww, box.axis(ii));
+    if (std::abs(dd) > box.extent(ii)) {
+      visibleFaces.push_back(std::make_pair(ii, std::copysign(1, dd)));
+    }
+  }
+  // No face chosen; center of ellipsoid is inside box
+  if (visibleFaces.size() < 1) return true;
+                            
   // Compute transformation matrix
   Matrix3 N = toUnitSphereTransformationMatrix();
 
@@ -82,26 +89,43 @@ Ellipsoid::intersects(const OrientedBox& box) const
     if (vertex.lengthSq() < 1.0) return true;
   }
 
-  // Set up the six faces
-  std::vector<std::array<int, 4>> faces; faces.reserve(6);
-  faces.push_back({{0, 1, 2, 3}});
-  faces.push_back({{4, 5, 6, 7}});
-  faces.push_back({{1, 2, 6, 5}});
-  faces.push_back({{0, 3, 7, 4}});
-  faces.push_back({{0, 4, 5, 1}});
-  faces.push_back({{3, 7, 6, 2}});
+  // Set up the edges
+  /*
+  constexpr std::array<std::array<int, 2>, 12> edges = {{
+    {{0, 1}}, {{1, 2}}, {{2, 3}}, {{3, 0}},
+    {{4, 5}}, {{5, 6}}, {{6, 7}}, {{7, 4}},
+    {{0, 4}}, {{1, 5}}, {{2, 6}}, {{3, 7}},
+    }};
+  */
+  
+  // Check sphere edge intersections
+  /*
+  for (const auto& edge : edges) {
+  }
+  */
 
+  // Set up the faces
+  /*
+  constexpr std::array<std::array<int, 4>, 6> faces = {{
+     {{0, 4, 7, 3}}, // x-
+     {{1, 2, 6, 5}}, // x+
+     {{0, 1, 5, 4}}, // y-
+     {{3, 7, 6, 2}}, // y+
+     {{0, 3, 2, 1}}, // z-
+     {{4, 5, 6, 7}}, // z+
+    }};
+  */
+  /*
   for (const auto& face : faces) {
     int v0 = face[0];
     int v1 = face[1];
     int v2 = face[2];
-    Vec normal = cross(vertices[v1] - vertices[v0], 
-                       vertices[v2] - vertices[v0]).normalize();
+    Vec normal = cross((vertices[v1] - vertices[v0]),(vertices[v2] - vertices[v0]))
+                 .normalizeInPlace();
     REAL dist = std::abs(dot(normal, vertices[v1]));
     if (dist > 1.0) return false;
   }
-}
-
+  */
 
   return true;
 }

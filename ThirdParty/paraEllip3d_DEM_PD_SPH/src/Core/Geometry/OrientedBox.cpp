@@ -1,6 +1,7 @@
 #include <Core/Const/Constants.h>
 #include <Core/Geometry/Box.h>
 #include <Core/Geometry/OrientedBox.h>
+#include <Core/Math/Matrix3.h>
 #include <iostream>
 
 namespace dem {
