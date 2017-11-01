@@ -1,15 +1,15 @@
 function testCircleLine
 
-%  sides();
-  corners();
+  sides();
+%  corners();
 
 end
 
 function sides()
   figure
-  %xplus();
+  xplus();
   %xminus();
-  yminus();
+  %yminus();
 end
 
 function corners()
@@ -21,11 +21,11 @@ function corners()
 end
 
 function xplus()
-  angle = 0*pi/180;
+  angle = 90*pi/180;
   cx = 2; cy = 1.5; lx = 1; ly = 2;
   mx = 0; my = 0; ex = 1; ey = 3;
   [u0, u1, N] = drawEllipse(cx, cy, lx, ly, angle);
-  [v0, v1] = drawRect(mx, my, cx, cy, ex, ey, angle, N);
+  [v0, v1] = drawRect(mx, my, cx, cy, ex, ey, 0.5*angle, N);
 end
 
 function xminus()
@@ -135,6 +135,7 @@ function [v0s, v1s] = drawRect(mx, my, cx, cy, ax, ay, angle, N)
   v1s = N*(v1*ay);
   v0c = v0s/norm(v0s) + mp;
   v1c = v1s/norm(v1s) + mp;
+
   plot(mp(1,1), mp(2,1), 'b.', 'MarkerSize', 10); hold on;
   plot([mp(1,1) v0c(1,1)], [mp(2,1) v0c(2,1)], 'b-', 'LineWidth', 2); hold on;
   plot([mp(1,1) v1c(1,1)], [mp(2,1) v1c(2,1)], 'g-', 'LineWidth', 2); hold on;
