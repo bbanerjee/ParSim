@@ -246,6 +246,9 @@ function [v0s, v1s, v2s] = drawOrientedBox(mm, cc, ee, axis, angle, N)
   ppp = createBoxVertices(mp, ee, v0s, v1s, v2s);
   drawBoxFaces(ppp, 'm');
 
+  %for i=1:length(ppp)
+  %  ppp(i).xx
+  %end
   v0c = v0s/norm(v0s) + mp;
   v1c = v1s/norm(v1s) + mp;
   v2c = v2s/norm(v2s) + mp;
@@ -275,6 +278,7 @@ function [point, dist, tt, dd] = distance(x0, x1, x2, x3, x4)
 
   normal = cross(x2 - x1, x3 - x1);
   normal = normal/norm(normal);
+  %normal
 
   dist = dot(normal, (x0 - x1));
   point = x0 - normal*dist;

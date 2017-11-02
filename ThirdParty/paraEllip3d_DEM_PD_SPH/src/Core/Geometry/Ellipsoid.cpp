@@ -85,6 +85,7 @@ Ellipsoid::intersects(const OrientedBox& box) const
   vertices.push_back(center - axes[0] + axes[1] + axes[2]);
 
   // Check if the vertices are inside the transformed ellipsoid
+  // Note that the transformed ellipsoid is now a sphere centered at (0,0,0)
   for (const auto& vertex : vertices) {
     if (vertex.lengthSq() < 1.0) return true;
   }

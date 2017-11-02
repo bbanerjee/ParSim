@@ -28,6 +28,27 @@ set(TEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
 #--------------------------------------
+# FaceEdge
+#--------------------------------------
+add_executable(testFaceEdge testFaceEdge.cpp)
+
+target_link_libraries(testFaceEdge
+  ${TEST_LIB}
+  ELLIP3D_LIB
+  ${MPI_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${VTK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+)
+
+set(UNIT_TEST testFaceEdge)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+#--------------------------------------
 # OrientedBox
 #--------------------------------------
 add_executable(testOrientedBox testOrientedBox.cpp)

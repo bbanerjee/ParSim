@@ -146,6 +146,7 @@ function [v0s, v1s] = drawRect(mx, my, cx, cy, ax, ay, angle, N)
         mp - v0s*ax + v1s*ay ...
         mp - v0s*ax - v1s*ay];
   plot(xx(1,:), xx(2,:), 'b-', 'LineWidth', 2); hold on;
+  xx
 
   [t1, d1] = distance(0, 0, xx(1,1:2), xx(2,1:2))
   [t2, d2] = distance(0, 0, xx(1,2:3), xx(2,2:3))
