@@ -160,6 +160,53 @@ Ellipsoid::intersects(const OrientedBox& box) const
   return false;
 }
 
+bool 
+Ellipsoid::intersects(const Face& face) const
+{
+  // Compute transformation matrix (ellipsoid to sphere)
+  Matrix3 N = toUnitSphereTransformationMatrix();
+
+  // Create transformed face
+  Face transformedFace(N * (face.v1 - d_center), 
+                       N * (face.v2 - d_center), 
+                       N * (face.v3 - d_center), 
+                       N * (face.v4 - d_center));
+
+  // Compute distance to face from (0, 0, 0)
+  auto face_td = transformedFace.distance(Point(0, 0, 0));
+
+  // If the distance is greater than 1 there is no intersection
+  if (std::abs(face_td.second) > 1.0) {
+    return false;
+  }
+
+  // Check sphere edge intersections
+  std::array<Edge, 4> edges = {{
+    Edge(transformedFace.v1, transformedFace.v2),
+    Edge(transformedFace.v2, transformedFace.v3),
+    Edge(transformedFace.v3, transformedFace.v4),
+    Edge(transformedFace.v4, transformedFace.v1)
+    }};
+  for (const auto& edge : edges) {
+    auto edge_td = edge.distance(Point(0, 0, 0));
+    if (edge_td.second < 1.0) {
+      if (!(edge_td.first < 0 || edge_td.first > 1)) {
+        return true;
+      }
+    }
+  }
+
+  // If none of the edges are intersected
+  if (!(face_td.first[0].first < 0 || face_td.first[0].first > 1 ||
+        face_td.first[1].first < 0 || face_td.first[1].first > 1 ||
+        face_td.first[2].first < 0 || face_td.first[2].first > 1 ||
+        face_td.first[3].first < 0 || face_td.first[3].first > 1)) {
+    return true;
+  }
+
+  return false;
+}
+
 void 
 Ellipsoid::rotate(REAL angle, const Vec& axis)
 {

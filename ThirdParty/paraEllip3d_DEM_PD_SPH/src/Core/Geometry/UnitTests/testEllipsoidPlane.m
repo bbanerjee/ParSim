@@ -21,11 +21,11 @@ end
 
 function corners()
   %figure
-  xplusyminus();
-  axis('equal');
-  %figure
-  %xplusyplus();
+  %xplusyminus();
   %axis('equal');
+  %figure
+  xplusyplus();
+  axis('equal');
   %figure
   %xminusyplus();
   %axis('equal');

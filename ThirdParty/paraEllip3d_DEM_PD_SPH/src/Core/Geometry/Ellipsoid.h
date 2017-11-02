@@ -3,6 +3,7 @@
 
 #include <Core/Math/Vec.h>
 #include <Core/Geometry/OrientedBox.h>
+#include <Core/Geometry/FaceEdge.h>
 #include <Core/Types/RealTypes.h>
 
 namespace dem {
@@ -51,6 +52,7 @@ public:
   bool containsPoint(const Vec& pt) const;
 
   bool intersects(const OrientedBox& box) const;
+  bool intersects(const Face& face) const;
 
   void rotate(REAL angle, const Vec& axis);
   void translate(const Vec& dist);

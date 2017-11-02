@@ -24,7 +24,7 @@ struct Edge
   // Distance from edge to point
   // Also returns parameter (t) locating the point of projection (p) on the edge
   // such that p = (1 - t) v1 + t v2
-  std::pair<REAL, REAL> distance(const Point& point)
+  std::pair<REAL, REAL> distance(const Point& point) const
   {
     Vertex v1v0 = v1 - point;
     Vertex v2v0 = v2 - point;
