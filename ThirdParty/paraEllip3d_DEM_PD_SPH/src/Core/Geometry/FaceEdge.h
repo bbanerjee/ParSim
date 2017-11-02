@@ -74,6 +74,9 @@ struct Face
     Vec normal = this->normal();
     REAL dist = dot(normal, (point - v1));
     Point pointOnFace = point - normal*dist;
+    //std::cout << "normal = " << normal << " point = " << point 
+    //          << " v1 = " << v1 << " point on face = " << pointOnFace
+    //          << " dist = " << dist << "\n";
 
     Edge edge1(v1, v2);
     std::pair<REAL, REAL> t1d1  = edge1.distance(pointOnFace);

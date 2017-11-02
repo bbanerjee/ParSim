@@ -40,6 +40,10 @@ public:
     normalize_axes();
   }
 
+  const Vec& center() const {return d_center;}
+  const Vec& axis(int idx) const {return d_axes.at(idx);}
+  REAL radii(int idx) const {return d_radii.at(idx);}
+
   OrientedBox getOrientedBoundingBox() const;
 
   Matrix3 toUnitSphereTransformationMatrix() const;

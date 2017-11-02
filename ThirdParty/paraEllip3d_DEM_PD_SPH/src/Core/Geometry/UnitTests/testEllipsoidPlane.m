@@ -1,15 +1,16 @@
 function testEllipsoidPlane
 
   graphics_toolkit("gnuplot");
-  sides();
-  %corners();
+  %sides();
+  corners();
+
 
 end
 
 function sides()
-  figure
-  xplus();
-  axis('equal');
+  %figure
+  %xplus();
+  %axis('equal');
   %figure
   %xminus();
   %axis('equal');
@@ -19,18 +20,18 @@ function sides()
 end
 
 function corners()
-  figure
+  %figure
   xplusyminus();
   axis('equal');
-  figure
-  xplusyplus();
-  axis('equal');
-  figure
-  xminusyplus();
-  axis('equal');
-  figure
-  xminusyminus();
-  axis('equal');
+  %figure
+  %xplusyplus();
+  %axis('equal');
+  %figure
+  %xminusyplus();
+  %axis('equal');
+  %figure
+  %xminusyminus();
+  %axis('equal');
 end
 
 function xplus()
@@ -44,8 +45,10 @@ function xplus()
   mm = [mx; my; mz];
   ll = [lx; ly; lz];
   ee = [ex; ey; ez];
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, 0.5*angle, N);
+  fig1 = figure;
+  fig2 = figure;
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, 0.5*angle, N, fig1, fig2);
 end
 
 function xminus()
@@ -59,8 +62,10 @@ function xminus()
   mm = [mx; my; mz];
   ll = [lx; ly; lz];
   ee = [ex; ey; ez];
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, angle, N);
+  fig1 = figure;
+  fig2 = figure;
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, angle, N, fig1, fig2);
 end
 
 function yminus()
@@ -74,14 +79,16 @@ function yminus()
   mm = [mx; my; mz];
   ll = [lx; ly; lz];
   ee = [ex; ey; ez];
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, angle, N);
+  fig1 = figure;
+  fig2 = figure;
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, angle, N, fig1, fig2);
 end
 
 function xplusyminus()
   axis = [0 0 1];
   angle = -40*pi/180;
-  cx = 2; cy = -2; cz = 1;
+  cx = 2.6; cy = -2; cz = 1;
   lx = 1; ly = 2; lz = 3;
   mx = 0; my = 0; mz = 0;
   ex = 1; ey = 3; ez = 2;
@@ -89,8 +96,10 @@ function xplusyminus()
   mm = [mx; my; mz];
   ll = [lx; ly; lz];
   ee = [ex; ey; ez];
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, angle, N);
+  fig1 = figure;
+  fig2 = figure;
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, 0, N, fig1, fig2);
 end
 
 function xplusyplus()
@@ -104,8 +113,10 @@ function xplusyplus()
   mm = [mx; my; mz];
   ll = [lx; ly; lz];
   ee = [ex; ey; ez];
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, angle, N);
+  fig1 = figure;
+  fig2 = figure;
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, 0, N, fig1, fig2);
 end
 
 function xminusyplus()
@@ -119,14 +130,10 @@ function xminusyplus()
   mm = [mx; my; mz];
   ll = [lx; ly; lz];
   ee = [ex; ey; ez];
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, angle, N);
-  cc = [cx; cy; cz];
-  mm = [mx; my; mz];
-  ll = [lx; ly; lz];
-  ee = [ex; ey; ez];
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, angle, N);
+  fig1 = figure;
+  fig2 = figure;
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, 0, N, fig1, fig2);
 end
 
 function xminusyminus()
@@ -140,11 +147,13 @@ function xminusyminus()
   mm = [mx; my; mz];
   ll = [lx; ly; lz];
   ee = [ex; ey; ez];
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, angle, N);
+  fig1 = figure;
+  fig2 = figure;
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, 0, N, fig1, fig2);
 end
 
-function [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle)
+function [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2)
 
   k = 5;
   n = 2^k-1;
@@ -164,6 +173,7 @@ function [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle)
   X = reshape(xp(1,:), ntheta, nphi);
   Y = reshape(xp(2,:), ntheta, nphi);
   Z = reshape(xp(3,:), ntheta, nphi);
+  figure(fig1)
   hh = surf(X, Y, Z, 'edgecolor', 'none', 'facecolor', 'r', 'facealpha', 0.1); hold on;
   set (gca (), "plotboxaspectratio", [1 1 1])
   view(2)
@@ -188,6 +198,9 @@ function [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle)
   u0 = u0/norm(u0);
   u1 = u1/norm(u1);
   u2 = u2/norm(u2);
+  [u0'; u1'; u2']
+  ppp = createBoxVertices(cc, ll, u0, u1, u2);
+  drawBoxFaces(ppp, 'b');
 
   N = [u0(1,1)/ll(1) u0(2,1)/ll(1) u0(3,1)/ll(1); ...
        u1(1,1)/ll(2) u1(2,1)/ll(2) u1(3,1)/ll(2); ...
@@ -201,12 +214,17 @@ function [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle)
   X = reshape(xxp(1,:), ntheta, nphi);
   Y = reshape(xxp(2,:), ntheta, nphi);
   Z = reshape(xxp(3,:), ntheta, nphi);
+  figure(fig2)
   hh = surf(X, Y, Z, 'edgecolor', 'none', 'facealpha', 0.5); hold on;
   plot3(0, 0, 0, 'r.', 'MarkerSize', 12);
+  set (gca (), "plotboxaspectratio", [1 1 1])
+  view(2)
+  xlabel('x');
+  ylabel('y');
 
 end
   
-function [v0s, v1s, v2s] = drawOrientedBox(mm, cc, ee, axis, angle, N)
+function [v0s, v1s, v2s] = drawOrientedBox(mm, cc, ee, axis, angle, N, fig1, fig2)
 
   ax1 = [1;0;0]; ax2 = [0;1;0]; ax3 = [0;0;1];
   p = createBoxVertices(mm, ee, ax1, ax2, ax3);
@@ -216,6 +234,7 @@ function [v0s, v1s, v2s] = drawOrientedBox(mm, cc, ee, axis, angle, N)
     pp(ii).xx = M*p(ii).xx;
   end
 
+  figure(fig1);
   drawBoxFaces(pp, 'r');
 
   plot3(mm(1,1), mm(2,1), mm(3,1), 'b.', 'MarkerSize', 10); hold on;
@@ -236,6 +255,7 @@ function [v0s, v1s, v2s] = drawOrientedBox(mm, cc, ee, axis, angle, N)
   v0 = v0/norm(v0);
   v1 = v1/norm(v1);
   v2 = v2/norm(v2);
+  [v0'; v1';  v2']
 
   ww = mm - cc;
   mp = N*ww;
@@ -243,15 +263,23 @@ function [v0s, v1s, v2s] = drawOrientedBox(mm, cc, ee, axis, angle, N)
   v1s = N*(v1*ee(2));
   v2s = N*(v2*ee(3));
 
+  figure(fig2);
+  %for i=1:8
+  % ppp(i).xx = N*(pp(i).xx - cc);
+  %end
+  ee = [1;1;1];
   ppp = createBoxVertices(mp, ee, v0s, v1s, v2s);
   drawBoxFaces(ppp, 'm');
 
   %for i=1:length(ppp)
   %  ppp(i).xx
   %end
-  v0c = v0s/norm(v0s) + mp;
-  v1c = v1s/norm(v1s) + mp;
-  v2c = v2s/norm(v2s) + mp;
+  %v0c = v0s/norm(v0s) + mp;
+  %v1c = v1s/norm(v1s) + mp;
+  %v2c = v2s/norm(v2s) + mp;
+  v0c = v0s + mp;
+  v1c = v1s + mp;
+  v2c = v2s + mp;
   plot3(mp(1,1), mp(2,1), mp(3,1), 'b.', 'MarkerSize', 10); hold on;
   plot3([mp(1,1) v0c(1,1)], [mp(2,1) v0c(2,1)], [mp(3,1) v0c(3,1)], 'g-', 'LineWidth', 2); hold on;
   plot3([mp(1,1) v1c(1,1)], [mp(2,1) v1c(2,1)], [mp(3,1) v1c(3,1)],'g-', 'LineWidth', 2); hold on;

@@ -1,6 +1,7 @@
 #include <Core/Const/Constants.h>
 #include <Core/Geometry/Ellipsoid.h>
 #include <Core/Geometry/OrientedBox.h>
+#include <Core/Geometry/FaceEdge.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/Vec.h>
 #include <iostream>
@@ -61,7 +62,10 @@ Ellipsoid::intersects(const OrientedBox& box) const
     }
   }
   // No face chosen; center of ellipsoid is inside box
-  if (visibleFaces.size() < 1) return true;
+  if (visibleFaces.size() < 1) {
+    //std::cout << "Visible faces = " << visibleFaces.size() << "\n";
+    return true;
+  }
                             
   // Compute transformation matrix
   Matrix3 N = toUnitSphereTransformationMatrix();
@@ -84,51 +88,76 @@ Ellipsoid::intersects(const OrientedBox& box) const
   vertices.push_back(center + axes[0] + axes[1] + axes[2]);
   vertices.push_back(center - axes[0] + axes[1] + axes[2]);
 
+  //std::copy(vertices.begin(), vertices.end(),
+  //          std::ostream_iterator<Vec>(std::cout, "\n"));
+
   // Check if the vertices are inside the transformed ellipsoid
   // Note that the transformed ellipsoid is now a sphere centered at (0,0,0)
   for (const auto& vertex : vertices) {
-    if (vertex.lengthSq() < 1.0) return true;
+    if (vertex.lengthSq() < 1.0) {
+      //std::cout << "Vertex distance = " << vertex.lengthSq() << "\n";
+      return true;
+    }
   }
 
   // Set up the edges
-  /*
   constexpr std::array<std::array<int, 2>, 12> edges = {{
     {{0, 1}}, {{1, 2}}, {{2, 3}}, {{3, 0}},
     {{4, 5}}, {{5, 6}}, {{6, 7}}, {{7, 4}},
     {{0, 4}}, {{1, 5}}, {{2, 6}}, {{3, 7}},
     }};
-  */
   
   // Check sphere edge intersections
-  /*
+  Point sphereCenter(0, 0, 0);
   for (const auto& edge : edges) {
+    int v1 = edge[0];
+    int v2 = edge[1];
+    Edge ee(vertices[v1], vertices[v2]);
+    auto td = ee.distance(sphereCenter);
+    if (td.second < 1.0) {
+      //std::cout << "Edge distance = " << td.second << "\n";
+      if (!(td.first < 0 || td.first > 1)) {
+        return true;
+      }
+    }
   }
-  */
 
   // Set up the faces
-  /*
   constexpr std::array<std::array<int, 4>, 6> faces = {{
      {{0, 4, 7, 3}}, // x-
      {{1, 2, 6, 5}}, // x+
      {{0, 1, 5, 4}}, // y-
-     {{3, 7, 6, 2}}, // y+
+     {{2, 3, 7, 3}}, // y+
      {{0, 3, 2, 1}}, // z-
-     {{4, 5, 6, 7}}, // z+
+     {{4, 5, 6, 7}}  // z+
     }};
-  */
-  /*
+
   for (const auto& face : faces) {
     int v0 = face[0];
     int v1 = face[1];
     int v2 = face[2];
-    Vec normal = cross((vertices[v1] - vertices[v0]),(vertices[v2] - vertices[v0]))
-                 .normalizeInPlace();
-    REAL dist = std::abs(dot(normal, vertices[v1]));
-    if (dist > 1.0) return false;
-  }
-  */
+    int v3 = face[3];
+    Face ff(vertices[v0], vertices[v1], vertices[v2], vertices[v3]);
+    auto td = ff.distance(sphereCenter);
+    if (std::abs(td.second) < 1.0) {
 
-  return true;
+      //std::cout << "Face distance = " << td.second << "\n";
+      //std::cout << "td = ";
+      //for (auto val : td.first) {
+      //  std::cout << val.first << " ";
+      //}
+      //std::cout << "\n";
+
+      if (!(td.first[0].first < 0 || td.first[0].first > 1 ||
+            td.first[1].first < 0 || td.first[1].first > 1 ||
+            td.first[2].first < 0 || td.first[2].first > 1 ||
+            td.first[3].first < 0 || td.first[3].first > 1)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 void 
