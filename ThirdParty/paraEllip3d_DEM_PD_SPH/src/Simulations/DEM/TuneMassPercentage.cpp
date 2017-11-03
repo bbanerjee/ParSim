@@ -36,8 +36,8 @@ TuneMassPercentage::execute(DiscreteElements* dem)
 
     for (const auto& particle : dem->getAllDEMParticleVec()) {
       for (int i = massPercent.size() - 1; i >= 0; --i) { 
-        if (particle->getA() <= massSize[i])
-          massPercent[i] += particle->getMass();
+        if (particle->radiusA() <= massSize[i])
+          massPercent[i] += particle->mass();
       }
     }
 

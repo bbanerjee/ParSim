@@ -21,8 +21,8 @@ public:
   DEMParticle* getP2() const;
   Vec getPoint1() const { return d_point1; }
   Vec getPoint2() const { return d_point2; }
-  REAL getRadius1() const { return d_radius1; }
-  REAL getRadius2() const { return d_radius2; }
+  REAL radius1() const { return d_radius1; }
+  REAL radius2() const { return d_radius2; }
   REAL getR0() const { return d_R0; }
   REAL getE0() const { return d_E0; }
   REAL getVibraTimeStep() const { return d_vibraTimeStep; }

@@ -23,12 +23,12 @@ class CylinderBoundary : public Boundary
 public:
   CylinderBoundary()
     : Boundary()
-    , direction(0)
-    , point(0)
-    , prevPoint(0)
-    , velocity(0)
-    , prevVelocity(0)
-    , radius(0)
+    , d_direction(0)
+    , d_point(0)
+    , d_prevPoint(0)
+    , d_velocity(0)
+    , d_prevVelocity(0)
+    , d_radius(0)
   {
   }
 
@@ -37,24 +37,24 @@ public:
   CylinderBoundary(Boundary::BoundaryType tp, BoundaryID id, const XMLProblemSpec& ps);
   CylinderBoundary(Boundary::BoundaryType tp, BoundaryID id, const JsonProblemSpec& ps);
 
-  Vec getDirection() const { return direction; }
-  Vec getPosition() const override { return point; }
-  Vec getVelocity() const override { return velocity; }
-  Vec previousPosition() const override { return prevPoint; }
-  Vec previousVelocity() const override { return prevVelocity; }
-  REAL getRadius() const { return radius; }
+  Vec getDirection() const { return d_direction; }
+  Vec getPosition() const override { return d_point; }
+  Vec getVelocity() const override { return d_velocity; }
+  Vec previousPosition() const override { return d_prevPoint; }
+  Vec previousVelocity() const override { return d_prevVelocity; }
+  REAL radius() const { return d_radius; }
 
-  void setDirection(Vec dir) { direction = dir; }
-  void setPosition(Vec pnt) override { point = pnt; }
-  void setVelocity(Vec vel) override { velocity = vel; }
+  void setDirection(Vec dir) { d_direction = dir; }
+  void setPosition(Vec pnt) override { d_point = pnt; }
+  void setVelocity(Vec vel) override { d_velocity = vel; }
 
   void print(std::ostream& os) override
   {
     Boundary::print(os);
-    os << std::setw(OWID) << direction.x() << std::setw(OWID) << direction.y()
-       << std::setw(OWID) << direction.z() << std::setw(OWID) << point.x()
-       << std::setw(OWID) << point.y() << std::setw(OWID) << point.z()
-       << std::setw(OWID) << radius << std::endl
+    os << std::setw(OWID) << d_direction.x() << std::setw(OWID) << d_direction.y()
+       << std::setw(OWID) << d_direction.z() << std::setw(OWID) << d_point.x()
+       << std::setw(OWID) << d_point.y() << std::setw(OWID) << d_point.z()
+       << std::setw(OWID) << d_radius << std::endl
        << std::endl;
   }
 
@@ -62,21 +62,21 @@ public:
   void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap) override;
 
 private:
-  Vec direction;
-  Vec point;
-  Vec prevPoint;
-  Vec velocity;
-  Vec prevVelocity;
-  REAL radius;
+  Vec d_direction;
+  Vec d_point;
+  Vec d_prevPoint;
+  Vec d_velocity;
+  Vec d_prevVelocity;
+  REAL d_radius;
 
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
     ar& boost::serialization::base_object<Boundary>(*this);
-    ar& direction;
-    ar& point;
-    ar& radius;
+    ar& d_direction;
+    ar& d_point;
+    ar& d_radius;
   }
 
 };

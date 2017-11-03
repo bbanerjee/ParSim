@@ -82,10 +82,10 @@ DEMParticleFileReader::readParticlesText(const std::string& inputParticle,
     // //std::cout << "doInitialize = " << std::boolalpha << d_doInitialize <<
     // std::endl;
     if (d_doInitialize) {
-      pt->setPrevVelocity(Vec(vx, vy, vz));
-      pt->setCurrVelocity(Vec(vx, vy, vz));
-      pt->setPrevOmega(Vec(omx, omy, omz));
-      pt->setCurrOmega(Vec(omx, omy, omz));
+      pt->setPreviousVelocity(Vec(vx, vy, vz));
+      pt->setCurrentVelocity(Vec(vx, vy, vz));
+      pt->setPreviousAngularVelocity(Vec(omx, omy, omz));
+      pt->setCurrentAngularVelocity(Vec(omx, omy, omz));
       pt->setForce(Vec(fx, fy, fz));  // initial force
       pt->setMoment(Vec(mx, my, mz)); // initial moment
     }
@@ -204,10 +204,10 @@ DEMParticleFileReader::readParticlesXML(const std::string& inputFileName,
         // std::cout << "doInitialize = " << std::boolalpha << d_doInitialize <<
         // std::endl;
         if (d_doInitialize) {
-          pt->setPrevVelocity(particleVel[ii]);
-          pt->setCurrVelocity(particleVel[ii]);
-          pt->setPrevOmega(particleRot[ii]);
-          pt->setCurrOmega(particleRot[ii]);
+          pt->setPreviousVelocity(particleVel[ii]);
+          pt->setCurrentVelocity(particleVel[ii]);
+          pt->setPreviousAngularVelocity(particleRot[ii]);
+          pt->setCurrentAngularVelocity(particleRot[ii]);
           pt->setForce(particleForce[ii]);   // initial force
           pt->setMoment(particleMoment[ii]); // initial moment
         }
@@ -232,7 +232,7 @@ DEMParticleFileReader::updateTotalMass(DEMParticlePArray& particles)
 {
   double totalMass = 0.0;
   for (const auto& particle : particles) {
-    totalMass += particle->getMass();
+    totalMass += particle->mass();
   }
 
   for (auto& particle : particles) {

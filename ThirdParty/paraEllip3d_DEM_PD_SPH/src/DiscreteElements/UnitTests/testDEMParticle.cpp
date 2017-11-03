@@ -20,15 +20,15 @@ TEST(DEMParticleTest, containsPoint1) {
 
   dem::Vec pos(0,0,0);
 
-  particle.setA(a);
-  particle.setB(b);
-  particle.setC(c);
+  particle.setRadiusA(a);
+  particle.setRadiusB(b);
+  particle.setRadiusC(c);
 
-  particle.setCurrPos(pos);
+  particle.setCurrentPosition(pos);
 
-  particle.setCurrDirecA(adir);
-  particle.setCurrDirecB(bdir);
-  particle.setCurrDirecC(cdir);
+  particle.setCurrentAnglesAxisA(adir);
+  particle.setCurrentAnglesAxisB(bdir);
+  particle.setCurrentAnglesAxisC(cdir);
 
   REAL buffer = 0;
   dem::Vec point = 0;

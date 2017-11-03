@@ -12,14 +12,14 @@ using dem::Box;
 void
 SPHParticleData::setData(const SPHParticleP& particle) {
   pos = particle->currentPosition();
-  rho = particle->getDensity();
+  rho = particle->density();
   mu = particle->getViscosity();
   press = particle->getPressure();
   R = (press >= 0) ? 0.006 : 0.6;
   p_over_rhoSq = press/(rho*rho);
   coeff = 1 + R;
 
-  mass = particle->getMass();
+  mass = particle->mass();
   vel = particle->getVelocity();
 
   isSet = true;
@@ -141,8 +141,8 @@ SPHInteractions::doGhostBoundaryVelocityCorrection(const SPHParticleP& particle)
 void 
 SPHInteractions::doDomainBoundaryVelocityCorrection(const Box& domain)
 {
-  Vec domain_min = domain.getMinCorner();
-  Vec domain_max = domain.getMaxCorner();
+  Vec domain_min = domain.minCorner();
+  Vec domain_max = domain.maxCorner();
 
   auto xmin = domain_min.x();
   auto xmax = domain_max.x();

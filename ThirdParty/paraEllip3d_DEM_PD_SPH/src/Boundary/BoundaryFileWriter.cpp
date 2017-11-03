@@ -29,9 +29,9 @@ BoundaryFileWriter::writeCSV(std::size_t boundaryNum,
   ofs.width(dem::OWID);
 
   // Get the domain limits and center
-  Vec domainMin = spatialDomain.getMinCorner();
-  Vec domainMax = spatialDomain.getMaxCorner();
-  Vec domainCen = spatialDomain.getCenter();
+  Vec domainMin = spatialDomain.minCorner();
+  Vec domainMax = spatialDomain.maxCorner();
+  Vec domainCen = spatialDomain.center();
 
   // Write the boundaryNum flag
   ofs << std::setw(OWID) << domainMin.x() 
@@ -137,9 +137,9 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
                              const Box& spatialDomain) const
 {
   // Get the domain limits and center
-  Vec domainMin = spatialDomain.getMinCorner();
-  Vec domainMax = spatialDomain.getMaxCorner();
-  Vec domainCen = spatialDomain.getCenter();
+  Vec domainMin = spatialDomain.minCorner();
+  Vec domainMax = spatialDomain.maxCorner();
+  Vec domainCen = spatialDomain.center();
 
   // Create empty document
   zen::XmlDoc doc("Ellip3D_input");
@@ -155,15 +155,15 @@ BoundaryFileWriter::writeXML(std::size_t boundaryNum,
   std::ostringstream stream;
   stream.setf(std::ios::scientific, std::ios::floatfield);
   stream.precision(dem::OPREC);
-  stream << "[" << spatialDomain.getMinCorner().x() << ", "
-                << spatialDomain.getMinCorner().y() << ", "
-                << spatialDomain.getMinCorner().z() << "]";
+  stream << "[" << spatialDomain.minCorner().x() << ", "
+                << spatialDomain.minCorner().y() << ", "
+                << spatialDomain.minCorner().z() << "]";
   xml["Boundary"]["containerMin"](stream.str());
 
   stream.str("");
-  stream << "[" << spatialDomain.getMaxCorner().x() << ", "
-                << spatialDomain.getMaxCorner().y() << ", "
-                << spatialDomain.getMaxCorner().z() << "]";
+  stream << "[" << spatialDomain.maxCorner().x() << ", "
+                << spatialDomain.maxCorner().y() << ", "
+                << spatialDomain.maxCorner().z() << "]";
   xml["Boundary"]["containerMax"](stream.str());
 
   // Get the boundary flag type

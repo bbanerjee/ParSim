@@ -34,8 +34,8 @@ private:
   void init(DEMParticle& p1, DEMParticle& p2)
   {
     length0 = vnormL2(p2.currentPosition() - p1.currentPosition());
-    REAL radius = p1.getA();
-    assert(radius == p2.getA());
+    REAL radius = p1.radiusA();
+    assert(radius == p2.radiusA());
     ks = young * 4 * radius * radius / length0;
   }
 };

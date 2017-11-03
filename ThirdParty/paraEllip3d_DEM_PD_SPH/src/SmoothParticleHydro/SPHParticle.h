@@ -53,11 +53,11 @@ public:
     d_velocityCorrection = 0;
   }
   void setInitialPos(const dem::Vec& a) { d_initialPos = a; }
-  void setCurrPosition(const dem::Vec& a) { d_currPos = a; }
-  void setCurrPositionX(REAL a) { d_currPos.setX(a); }
-  void setCurrPositionY(REAL a) { d_currPos.setY(a); }
-  void setCurrPositionInitial() { d_currPos = d_initialPos; }
-  void setCurrVelocity(const dem::Vec& a) { d_velocity = a; }
+  void setCurrentPositionition(const dem::Vec& a) { d_currPos = a; }
+  void setCurrentPositionitionX(REAL a) { d_currPos.setX(a); }
+  void setCurrentPositionitionY(REAL a) { d_currPos.setY(a); }
+  void setCurrentPositionitionInitial() { d_currPos = d_initialPos; }
+  void setCurrentVelocity(const dem::Vec& a) { d_velocity = a; }
   void setType(SPHParticleType a) { d_type = a; }
   void setDEMParticle(dem::DEMParticle* p) { d_demParticle = p; }
   void setNULLDEMParticle() { d_demParticle = nullptr; }
@@ -68,17 +68,17 @@ public:
   void setLocalPosition(const dem::Vec& pos) { d_localCoords = pos; }
 
   ParticleID getId() const { return d_id; }
-  REAL getMass() const { return d_mass; }
-  REAL getDensity() const { return d_density; }
-  REAL getDensityRate() const { return d_densityRate; }
+  REAL mass() const { return d_mass; }
+  REAL density() const { return d_density; }
+  REAL densityRate() const { return d_densityRate; }
 
-  // everytime when using getVolume(),
+  // everytime when using volume(),
   // make sure that volume, pressure, viscosity  have been calculated!!!!
-  REAL getVolume() const { return d_volume; }
+  REAL volume() const { return d_volume; }
   REAL getPressure() const { return d_pressure; }
   REAL getViscosity() const { return d_mu; }
 
-  REAL getKineticEnergy() const
+  REAL computeKineticEnergy() const
   {
     return 0.5 * d_mass * dot(d_velocity, d_velocity);
   }
@@ -88,7 +88,7 @@ public:
   dem::Vec getTrialPosition() const;
   dem::Vec getDisplacement() const { return d_currPos - d_initialPos; }
   dem::Vec getVelocity() const { return d_velocity; }
-  dem::Vec getAcceleration() const { return d_acceleration; }
+  dem::Vec accelerationeration() const { return d_acceleration; }
   SPHParticleType getType() const { return d_type; }
   dem::DEMParticle* getDEMParticle() { return d_demParticle; }
 

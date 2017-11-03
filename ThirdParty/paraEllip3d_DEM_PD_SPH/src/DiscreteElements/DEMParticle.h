@@ -73,68 +73,68 @@ public:
   std::size_t getId() const { return d_id; }
   const DEMParticleShape& getShape() const { return d_shape; }
   const DEMParticleType&  getType() const { return d_type; }
-  REAL getA() const { return d_a; }
-  REAL getB() const { return d_b; }
-  REAL getC() const { return d_c; }
-  REAL getYoung() const { return d_young; }
-  REAL getPoisson() const { return d_poisson; };
-  REAL getVolume() const { return d_volume; }
-  REAL getMass() const { return d_mass; }
+  REAL radiusA() const { return d_a; }
+  REAL radiusB() const { return d_b; }
+  REAL radiusC() const { return d_c; }
+  REAL youngsModulus() const { return d_young; }
+  REAL poissonsRatio() const { return d_poisson; };
+  REAL volume() const { return d_volume; }
+  REAL mass() const { return d_mass; }
   REAL getTotalMass() const { return d_totalMassAllParticles; }
-  REAL getDensity() const { return d_density; }
+  REAL density() const { return d_density; }
   Vec currentPosition() const { return d_currPos; }
   Vec previousPosition() const { return d_prevPos; }
-  Vec getCurrDirecA() const { return d_currDirecA; }
-  Vec getCurrDirecB() const { return d_currDirecB; }
-  Vec getCurrDirecC() const { return d_currDirecC; }
-  Vec getPrevDirecA() const { return d_prevDirecA; }
-  Vec getPrevDirecB() const { return d_prevDirecB; }
-  Vec getPrevDirecC() const { return d_prevDirecC; }
+  Vec currentAnglesAxisA() const { return d_currDirecA; }
+  Vec currentAnglesAxisB() const { return d_currDirecB; }
+  Vec currentAnglesAxisC() const { return d_currDirecC; }
+  Vec previousAnglesAxisA() const { return d_prevDirecA; }
+  Vec previousAnglesAxisB() const { return d_prevDirecB; }
+  Vec previousAnglesAxisC() const { return d_prevDirecC; }
   Vec currentVelocity() const { return d_currentVelocity; }
   Vec previousVelocity() const { return d_previousVelocity; }
-  Vec currentOmega() const { return d_currOmga; }
-  Vec previousOmega() const { return d_prevOmga; }
-  Vec getForce() const { return d_force; }
-  std::map<size_t, Vec> getForceIDMap() const { return d_forceIDMap; }
-  Vec getMoment() const { return d_moment; }
-  std::map<size_t, Vec> getMomentIDMap() const { return d_momentIDMap; }
-  Vec getAccel() const { return d_force / d_mass; }
+  Vec currentAngularVelocity() const { return d_currOmga; }
+  Vec previousAngularVelocity() const { return d_prevOmga; }
+  Vec force() const { return d_force; }
+  std::map<size_t, Vec> forceIDMap() const { return d_forceIDMap; }
+  Vec moment() const { return d_moment; }
+  std::map<size_t, Vec> momentIDMap() const { return d_momentIDMap; }
+  Vec acceleration() const { return d_force / d_mass; }
   Vec getConstForce() const { return d_constForce; }
   Vec getConstMoment() const { return d_constMoment; }
   Vec getmomentJ() const { return d_momentJ; }
   bool isInContact() const { return d_inContact; }
   std::size_t getNumBoundaryContacts() const { return d_contactNum; }
 
-  REAL getRadius(Vec v) const;
-  REAL getTranslationalEnergy() const;
-  REAL getRotationalEnergy() const;
-  REAL getKineticEnergy() const;
-  REAL getPotentialEnergy(REAL ref) const;
+  REAL computeRadius(Vec v) const;
+  REAL computeTranslationalEnergy() const;
+  REAL computeRotationalEnergy() const;
+  REAL computeKineticEnergy() const;
+  REAL computePotentialEnergy(REAL ref) const;
 
   void setId(std::size_t n) { d_id = n; }
   void setShape(std::size_t n) { d_shape = static_cast<DEMParticleShape>(n); }
   void setType(std::size_t n) { d_type = static_cast<DEMParticleType>(n); }
-  void setA(REAL dd) { d_a = dd; }
-  void setB(REAL dd) { d_b = dd; }
-  void setC(REAL dd) { d_c = dd; }
+  void setRadiusA(REAL dd) { d_a = dd; }
+  void setRadiusB(REAL dd) { d_b = dd; }
+  void setRadiusC(REAL dd) { d_c = dd; }
   void expand(REAL percent)
   {
     d_a *= (1 + percent);
     d_b *= (1 + percent);
     d_c *= (1 + percent);
   }
-  void setCurrPos(Vec vv) { d_currPos = vv; }
-  void setPrevPos(Vec vv) { d_prevPos = vv; }
-  void setCurrDirecA(Vec vv) { d_currDirecA = vv; }
-  void setCurrDirecB(Vec vv) { d_currDirecB = vv; }
-  void setCurrDirecC(Vec vv) { d_currDirecC = vv; }
-  void setPrevDirecA(Vec vv) { d_prevDirecA = vv; }
-  void setPrevDirecB(Vec vv) { d_prevDirecB = vv; }
-  void setPrevDirecC(Vec vv) { d_prevDirecC = vv; }
-  void setCurrVelocity(Vec vv) { d_currentVelocity = vv; }
-  void setPrevVelocity(Vec vv) { d_previousVelocity = vv; }
-  void setCurrOmega(Vec vv) { d_currOmga = vv; }
-  void setPrevOmega(Vec vv) { d_prevOmga = vv; }
+  void setCurrentPosition(Vec vv) { d_currPos = vv; }
+  void setPreviousPosition(Vec vv) { d_prevPos = vv; }
+  void setCurrentAnglesAxisA(Vec vv) { d_currDirecA = vv; }
+  void setCurrentAnglesAxisB(Vec vv) { d_currDirecB = vv; }
+  void setCurrentAnglesAxisC(Vec vv) { d_currDirecC = vv; }
+  void setPreviousAnglesAxisA(Vec vv) { d_prevDirecA = vv; }
+  void setPreviousAnglesAxisB(Vec vv) { d_prevDirecB = vv; }
+  void setPreviousAnglesAxisC(Vec vv) { d_prevDirecC = vv; }
+  void setCurrentVelocity(Vec vv) { d_currentVelocity = vv; }
+  void setPreviousVelocity(Vec vv) { d_previousVelocity = vv; }
+  void setCurrentAngularVelocity(Vec vv) { d_currOmga = vv; }
+  void setPreviousAngularVelocity(Vec vv) { d_prevOmga = vv; }
   void setForce(Vec vv)
   {
     d_force = vv;
@@ -173,7 +173,7 @@ public:
   // position/dimensions/orientations
   // a0 x^2 + a1 y^2 + a2 z^2 + a3 xy + a4 yz + a5 zx + a6 x + a7 y + a8 z + a9
   // = 0
-  void globalCoef();
+  void computeGlobalCoef();
   void getGlobalCoef(REAL coef[]) const; // retrieve global coeffs into coef[]
   REAL surfaceError(Vec pt) const;
 
@@ -210,40 +210,75 @@ public:
 
   void dragForce();
 
+  friend std::ostream& operator<<(std::ostream& os, const DEMParticle& pp)
+  {
+    os << "Pos: " << pp.d_currPos 
+       << " Rad: (" << pp.d_a << ", " << pp.d_b << ", " << pp.d_c << ")"
+       << " Ax_a: " << pp.d_currDirecA
+       << " Ax_b: " << pp.d_currDirecB
+       << " Ax_c: " << pp.d_currDirecC << "\n";
+    return os;
+  }
+
 private:
+  
   std::size_t d_id;
   DEMParticleShape d_shape;
   DEMParticleType d_type;
-  REAL d_a, d_b, d_c; // three semi-axle length, must satisfy a >= b >= c
-  REAL d_young; // note: a(currDirecA), b(currDirecB), c(currDirecC) corresponds
-                // to x, y, z in local frame, respectively
+
+  // three semi-axle length, must satisfy a >= b >= c
+  // note: a(currDirecA), b(currDirecB), c(currDirecC) corresponds
+  // to x, y, z in local frame, respectively
+  REAL d_a, d_b, d_c; 
+  REAL d_young; 
   REAL d_poisson;
-  Vec d_currPos; // particle center
+
+  // particle center
+  Vec d_currPos; 
   Vec d_prevPos;
-  Vec d_currDirecA, d_currDirecB,
-    d_currDirecC; // direction of the three axles, in radian
+
+  // direction angles of the three axles, in radian
+  Vec d_currDirecA, d_currDirecB, d_currDirecC; 
   Vec d_prevDirecA, d_prevDirecB, d_prevDirecC;
-  Vec d_currentVelocity; // the velocity of the mass center
+
+  // the velocity of the mass center
+  Vec d_currentVelocity; 
   Vec d_previousVelocity;
-  Vec d_currOmga; // angular velocity in global frame!
+
+  // angular velocity in global frame!
+  Vec d_currOmga; 
   Vec d_prevOmga;
   Vec d_force;
   std::map<size_t, Vec> d_forceIDMap;
+
   Vec d_prevForce;
   Vec d_moment;
   std::map<size_t, Vec> d_momentIDMap;
+
   Vec d_prevMoment;
   Vec d_constForce;
   Vec d_constMoment;
-  REAL d_density; // specific gravity
+
+  // specific gravity
+  REAL d_density; 
   REAL d_mass;
   REAL d_volume;
-  REAL d_totalMassAllParticles; // total mass of all particles
-  Vec d_momentJ;      // moment of inertia in local body-fixed frame
-  REAL d_coef[10];    // particle's coefficients in global coordinates
-  REAL d_kineticEnergy; // kinetic energy
+
+  // total mass of all particles (needs to be kept at ecah particle
+  // for traction BCs where a = f/m is solved)
+  REAL d_totalMassAllParticles; 
+
+  // moment of inertia in local body-fixed frame
+  Vec d_momentJ;      
+
+  // particle's coefficients in global coordinates
+  REAL d_coef[10];    
+
+  REAL d_kineticEnergy;
   std::size_t d_contactNum;
-  bool d_inContact; // in contact with other particle or boundary
+
+  // in contact with other particle or boundary
+  bool d_inContact; 
   std::vector<std::vector<REAL>> d_fluidGrid;
 
   void init();

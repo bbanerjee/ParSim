@@ -200,7 +200,7 @@ DEMParticle::init()
                   d_mass / 5 * (d_a * d_a + d_b * d_b));
   d_contactNum = 0;
   d_inContact = false;
-  globalCoef();
+  computeGlobalCoef();
 }
 
 DEMParticle::DEMParticle(std::size_t n, 
@@ -299,18 +299,18 @@ DEMParticle::DEMParticle(std::size_t n,
                   d_mass / 5 * (d_a * d_a + d_c * d_c),
                   d_mass / 5 * (d_a * d_a + d_b * d_b));
   d_inContact = false;
-  globalCoef();
+  computeGlobalCoef();
 }
 
 Vec
 DEMParticle::globalToLocal(Vec input) const
 {
   Vec lmn, local;
-  lmn = vcos(getCurrDirecA());
+  lmn = vcos(currentAnglesAxisA());
   local.setX(dot(lmn, input)); // l1,m1,n1
-  lmn = vcos(getCurrDirecB());
+  lmn = vcos(currentAnglesAxisB());
   local.setY(dot(lmn, input)); // l2,m2,n2
-  lmn = vcos(getCurrDirecC());
+  lmn = vcos(currentAnglesAxisC());
   local.setZ(dot(lmn, input)); // l3,m3,n3
   return local;
 }
@@ -332,11 +332,11 @@ Vec
 DEMParticle::globalToLocalPrev(Vec input) const
 {
   Vec lmn, local;
-  lmn = vcos(getPrevDirecA());
+  lmn = vcos(previousAnglesAxisA());
   local.setX(dot(lmn, input)); // l1,m1,n1
-  lmn = vcos(getPrevDirecB());
+  lmn = vcos(previousAnglesAxisB());
   local.setY(dot(lmn, input)); // l2,m2,n2
-  lmn = vcos(getPrevDirecC());
+  lmn = vcos(previousAnglesAxisC());
   local.setZ(dot(lmn, input)); // l3,m3,n3
   return local;
 }
@@ -359,13 +359,13 @@ DEMParticle::localToGlobalPrev(Vec input) const
 // 2. angular velocities in global frame needs to be converted to those in local
 // frame.
 REAL
-DEMParticle::getTranslationalEnergy() const
+DEMParticle::computeTranslationalEnergy() const
 {
   return d_mass * pow(vnormL2(d_currentVelocity), 2) / 2;
 }
 
 REAL
-DEMParticle::getRotationalEnergy() const
+DEMParticle::computeRotationalEnergy() const
 {
   Vec currLocalOmga = globalToLocal(d_currOmga);
 
@@ -375,13 +375,13 @@ DEMParticle::getRotationalEnergy() const
 }
 
 REAL
-DEMParticle::getKineticEnergy() const
+DEMParticle::computeKineticEnergy() const
 {
-  return getTranslationalEnergy() + getRotationalEnergy();
+  return computeTranslationalEnergy() + computeRotationalEnergy();
 }
 
 REAL
-DEMParticle::getPotentialEnergy(REAL ref) const
+DEMParticle::computePotentialEnergy(REAL ref) const
 {
   auto gravity = util::getParam<REAL>("gravAccel");
   //std::cout << "g = " << gravity << " m = " << d_mass 
@@ -408,7 +408,7 @@ DEMParticle::surfaceError(Vec pt) const
 }
 
 void
-DEMParticle::globalCoef()
+DEMParticle::computeGlobalCoef()
 {
   // d_coef[0]-x^2, d_coef[1]-y^2, d_coef[2]-z^2, d_coef[3]-xy, d_coef[4]-yz,
   // d_coef[5]-zx
@@ -549,7 +549,7 @@ DEMParticle::intersectWithLine(Vec v, Vec dirc, Vec rt[]) const
 // 4. When a point is close to the equator, for example, fabs(z) == 0,
 //    float exception is prone to occurring, then a switch is needed as above.
 REAL
-DEMParticle::getRadius(Vec v) const
+DEMParticle::computeRadius(Vec v) const
 {
   if (d_a == d_b && d_b == d_c)
     return d_a;
@@ -616,7 +616,7 @@ DEMParticle::getRadius(Vec v) const
     REAL A = r * t - s * s;
     if (B*B-4*A*C < 0){
     //std::cout<< "DEMParticle.cpp: iter=" << iteration
-    << " delta < 0 in getRadius()"
+    << " delta < 0 in radius()"
     << " delta=" << B*B-4*A*C
     << " -C/B=" << -C/B
     << std::endl;
@@ -684,14 +684,14 @@ DEMParticle::update()
   // First update the force and moment by summing quantities computed during
   // contact (initialize with current d_force & d_moment)
   Vec resultantForce = d_force;;
-  auto forceIDMap = getForceIDMap();
-  for (auto it = forceIDMap.cbegin(); it != forceIDMap.cend(); ++it ) {
+  auto forceMap = forceIDMap();
+  for (auto it = forceMap.cbegin(); it != forceMap.cend(); ++it ) {
     resultantForce += it->second;
   }
   setForce(resultantForce);
   Vec resultantMoment = d_moment;
-  auto momentIDMap = getMomentIDMap();
-  for (auto it = momentIDMap.cbegin(); it != momentIDMap.cend(); ++it ) {
+  auto momentMap = momentIDMap();
+  for (auto it = momentMap.cbegin(); it != momentMap.cend(); ++it ) {
     resultantMoment += it->second;
   }
   setMoment(resultantMoment);
@@ -774,7 +774,7 @@ DEMParticle::update()
     if (getId() == 2) {
       int world_rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-      auto forceIDMap = getForceIDMap();
+      auto forceIDMap = forceIDMap();
       //std::cout << std::setprecision(16) 
                 << "After update: MPI rank " << world_rank 
                 << " id = " << getId() << "\n\t"
@@ -883,7 +883,7 @@ DEMParticle::update()
   d_prevMoment = d_moment;
 
   d_contactNum = 0;
-  globalCoef(); // every time the particle is updated, the algebra expression is
+  computeGlobalCoef(); // every time the particle is updated, the algebra expression is
                 // also updated
 }
 
@@ -996,10 +996,10 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
 
   // obtain normal force
   REAL d_penetration = vnormL2(pt1 - pt2);
-  if (d_penetration / (2.0 * getRadius(pt2)) <= util::getParam<REAL>("minRelaOverlap"))
+  if (d_penetration / (2.0 * computeRadius(pt2)) <= util::getParam<REAL>("minRelaOverlap"))
     return;
 
-  REAL R0 = getRadius(pt2);
+  REAL R0 = computeRadius(pt2);
   REAL E0 =
     d_young /
     (1 - d_poisson * d_poisson); // rigid wall has infinite young's modulus
@@ -1051,9 +1051,9 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
   addMoment(cross((pt1 + pt2) / 2 - d_currPos, normalForce));
 
   // obtain normal damping force
-  Vec veloc2 = currentVelocity() + cross(currentOmega(), ((pt1 + pt2) / 2 - currentPosition()));
+  Vec veloc2 = currentVelocity() + cross(currentAngularVelocity(), ((pt1 + pt2) / 2 - currentPosition()));
   REAL kn = pow(6 * vnormL2(normalForce) * R0 * pow(E0, 2), 1.0 / 3.0);
-  REAL dampCritical = 2 * sqrt(getMass() * kn); // critical damping
+  REAL dampCritical = 2 * sqrt(mass() * kn); // critical damping
   Vec contactDampingForce = util::getParam<REAL>("contactDamp") * dampCritical *
                         dot(-veloc2, normalDirc) * normalDirc;
 
@@ -1115,7 +1115,7 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
       // obtain tangential damping force
       Vec relaVel = d_currentVelocity + cross(d_currOmga, ((pt1 + pt2) / 2 - d_currPos));
       Vec TangentVel = relaVel - dot(relaVel, normalDirc) * normalDirc;
-      REAL dampCritical = 2 * sqrt(getMass() * ks); // critical damping
+      REAL dampCritical = 2 * sqrt(mass() * ks); // critical damping
       fricDampingForce = 1.0 * dampCritical * (-TangentVel);
     }
 
@@ -1176,7 +1176,7 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
       // obtain tangential damping force
       Vec relaVel = d_currentVelocity + d_currOmga * ((pt1 + pt2) / 2 - d_currPos);
       Vec TangentVel = relaVel - (relaVel * normalDirc) * normalDirc;
-      REAL dampCritical = 2 * sqrt(getMass() * ks); // critical damping
+      REAL dampCritical = 2 * sqrt(mass() * ks); // critical damping
       fricDampingForce = 1.0 * dampCritical * (-TangentVel);
     }
 
@@ -1220,9 +1220,9 @@ DEMParticle::cylinderRBForce(std::size_t BoundaryID, const Cylinder& S, int side
 {
   // side == -1, the particles are inside the cylinder
   // side == +1, the particles are outside the cylinder
-  REAL x0 = S.getCenter().x();
-  REAL y0 = S.getCenter().y();
-  REAL r = S.getRadius();
+  REAL x0 = S.center().x();
+  REAL y0 = S.center().y();
+  REAL r = S.radius();
   REAL d_coef2[10] = { 1, 1,       0,       0, 0,
                        0, -2 * x0, -2 * y0, 0, x0 * x0 + y0 * y0 - r * r };
   Vec pt1;
@@ -1230,7 +1230,7 @@ DEMParticle::cylinderRBForce(std::size_t BoundaryID, const Cylinder& S, int side
     return 0;                       // no contact
   ++d_contactNum;
   Vec rt[2];
-  Vec cz = Vec(S.getCenter().x(), S.getCenter().y(), pt1.z());
+  Vec cz = Vec(S.center().x(), S.center().y(), pt1.z());
   Vec tmp = pt1 - cz;
   intersectWithLine(pt1, normalize(tmp), rt);
   Vec pt2;
@@ -1240,7 +1240,7 @@ DEMParticle::cylinderRBForce(std::size_t BoundaryID, const Cylinder& S, int side
   else
     pt2 = rt[1];
   // Vec pt2 = vnormL2(rt[0]-cz)>vnormL2(rt[1]-cz)?rt[0]:rt[1];
-  REAL radius = getRadius(pt2);
+  REAL radius = computeRadius(pt2);
   REAL E0 = 0.5 * d_young / (1 - d_poisson * d_poisson);
   REAL R0 = (r * radius) / (r + radius);
   REAL rou = vnormL2(pt1 - pt2);

@@ -9,262 +9,207 @@ using dem::InputParameter;
 PeriParticle::PeriParticle()
 {
   d_id = 0;
-  isAlive = true;
-  initPosition = dem::Vec(0, 0, 0);
-  mass = 0.0;
-  volume = 0.0;
-  displacement = 0.0;
-  velocity = 0.0;
-  velocityHalf = 0.0;
-  acceleration = 0.0;
-  horizonSize = -1.0e16;
+  d_isAlive = true;
+  d_initPosition = dem::Vec(0, 0, 0);
+  d_mass = 0.0;
+  d_volume = 0.0;
+  d_displacement = 0.0;
+  d_velocity = 0.0;
+  d_velocityHalf = 0.0;
+  d_acceleration = 0.0;
+  d_horizonSize = -1.0e16;
 
-  sigma = dem::zeros(3, 3);
-  deformationGradient = dem::zeros(3, 3);
-  deformationGradientHalf = dem::zeros(3, 3);
-  Kinv = dem::zeros(3, 3);
-  isv11 = 0;
-  if (util::getParam<int>("typeConstitutive") ==
-      1) { // 1---implicit, 2---explicit
-    isv11 = util::getParam<REAL>("chi");
+  d_sigma = dem::zeros(3, 3);
+  d_deformationGradient = dem::zeros(3, 3);
+  d_deformationGradientHalf = dem::zeros(3, 3);
+  d_Kinv = dem::zeros(3, 3);
+  d_isv11 = 0;
+
+  // 1---implicit, 2---explicit
+  if (util::getParam<int>("typeConstitutive") == 1) { 
+    d_isv11 = util::getParam<REAL>("chi");
   } else {
-    isv11 = util::getParam<REAL>("c");
+    d_isv11 = util::getParam<REAL>("c");
   }
 
-  tangentModulus = dem::zeros(6, 6);
-  tangentModulus(1, 1) =
-    util::getParam<REAL>("tangentModulus11");
-  tangentModulus(1, 2) =
-    util::getParam<REAL>("tangentModulus12");
-  tangentModulus(1, 3) =
-    util::getParam<REAL>("tangentModulus13");
-  tangentModulus(2, 1) =
-    util::getParam<REAL>("tangentModulus21");
-  tangentModulus(2, 2) =
-    util::getParam<REAL>("tangentModulus22");
-  tangentModulus(2, 3) =
-    util::getParam<REAL>("tangentModulus23");
-  tangentModulus(3, 1) =
-    util::getParam<REAL>("tangentModulus31");
-  tangentModulus(3, 2) =
-    util::getParam<REAL>("tangentModulus32");
-  tangentModulus(3, 3) =
-    util::getParam<REAL>("tangentModulus33");
-  tangentModulus(4, 4) =
-    util::getParam<REAL>("tangentModulus44");
-  tangentModulus(5, 5) =
-    util::getParam<REAL>("tangentModulus55");
-  tangentModulus(6, 6) =
-    util::getParam<REAL>("tangentModulus66");
+  d_tangentModulus = dem::zeros(6, 6);
+  d_tangentModulus(1, 1) = util::getParam<REAL>("tangentModulus11");
+  d_tangentModulus(1, 2) = util::getParam<REAL>("tangentModulus12");
+  d_tangentModulus(1, 3) = util::getParam<REAL>("tangentModulus13");
+  d_tangentModulus(2, 1) = util::getParam<REAL>("tangentModulus21");
+  d_tangentModulus(2, 2) = util::getParam<REAL>("tangentModulus22");
+  d_tangentModulus(2, 3) = util::getParam<REAL>("tangentModulus23");
+  d_tangentModulus(3, 1) = util::getParam<REAL>("tangentModulus31");
+  d_tangentModulus(3, 2) = util::getParam<REAL>("tangentModulus32");
+  d_tangentModulus(3, 3) = util::getParam<REAL>("tangentModulus33");
+  d_tangentModulus(4, 4) = util::getParam<REAL>("tangentModulus44");
+  d_tangentModulus(5, 5) = util::getParam<REAL>("tangentModulus55");
+  d_tangentModulus(6, 6) = util::getParam<REAL>("tangentModulus66");
 
-  sigma11 = 0;
-  sigma12 = 0;
-  sigma13 = 0;
-  sigma21 = 0;
-  sigma22 = 0;
-  sigma23 = 0;
-  sigma31 = 0;
-  sigma32 = 0;
-  sigma33 = 0;
+  d_sigma11 = 0;
+  d_sigma12 = 0;
+  d_sigma13 = 0;
+  d_sigma21 = 0;
+  d_sigma22 = 0;
+  d_sigma23 = 0;
+  d_sigma31 = 0;
+  d_sigma32 = 0;
+  d_sigma33 = 0;
 
-  Kinv11 = 0;
-  Kinv12 = 0;
-  Kinv13 = 0;
-  Kinv21 = 0;
-  Kinv22 = 0;
-  Kinv23 = 0;
-  Kinv31 = 0;
-  Kinv32 = 0;
-  Kinv33 = 0;
-  BondedDEMParticleID.clear();
+  d_Kinv11 = 0;
+  d_Kinv12 = 0;
+  d_Kinv13 = 0;
+  d_Kinv21 = 0;
+  d_Kinv22 = 0;
+  d_Kinv23 = 0;
+  d_Kinv31 = 0;
+  d_Kinv32 = 0;
+  d_Kinv33 = 0;
+  d_BondedDEMParticleID.clear();
 } // end PeriParticle()
 
 PeriParticle::PeriParticle(ParticleID id, REAL x, REAL y, REAL z)
 {
   d_id = id;
-  isAlive = true;
-  initPosition.setX(x);
-  initPosition.setY(y);
-  initPosition.setZ(z);
-  mass = 0.0;
-  volume = 0.0;
-  displacement = 0.0;
-  velocity = 0.0;
-  velocityHalf = 0.0;
-  acceleration = 0.0;
-  horizonSize = -1.0e16;
+  d_isAlive = true;
+  d_initPosition.setX(x);
+  d_initPosition.setY(y);
+  d_initPosition.setZ(z);
+  d_mass = 0.0;
+  d_volume = 0.0;
+  d_displacement = 0.0;
+  d_velocity = 0.0;
+  d_velocityHalf = 0.0;
+  d_acceleration = 0.0;
+  d_horizonSize = -1.0e16;
 
-  sigma = dem::zeros(3, 3);
-  deformationGradient = dem::zeros(3, 3);
-  deformationGradientHalf = dem::zeros(3, 3);
-  Kinv = dem::zeros(3, 3);
-  isv11 = 0;
-  if (util::getParam<int>("typeConstitutive") ==
-      1) { // 1---implicit, 2---explicit
-    isv11 = util::getParam<REAL>("chi");
+  d_sigma = dem::zeros(3, 3);
+  d_deformationGradient = dem::zeros(3, 3);
+  d_deformationGradientHalf = dem::zeros(3, 3);
+  d_Kinv = dem::zeros(3, 3);
+  d_isv11 = 0;
+  // 1---implicit, 2---explicit
+  if (util::getParam<int>("typeConstitutive") == 1) { 
+    d_isv11 = util::getParam<REAL>("chi");
   } else {
-    isv11 = util::getParam<REAL>("c");
+    d_isv11 = util::getParam<REAL>("c");
   }
 
-  tangentModulus = dem::zeros(6, 6);
-  tangentModulus(1, 1) =
-    util::getParam<REAL>("tangentModulus11");
-  tangentModulus(1, 2) =
-    util::getParam<REAL>("tangentModulus12");
-  tangentModulus(1, 3) =
-    util::getParam<REAL>("tangentModulus13");
-  tangentModulus(2, 1) =
-    util::getParam<REAL>("tangentModulus21");
-  tangentModulus(2, 2) =
-    util::getParam<REAL>("tangentModulus22");
-  tangentModulus(2, 3) =
-    util::getParam<REAL>("tangentModulus23");
-  tangentModulus(3, 1) =
-    util::getParam<REAL>("tangentModulus31");
-  tangentModulus(3, 2) =
-    util::getParam<REAL>("tangentModulus32");
-  tangentModulus(3, 3) =
-    util::getParam<REAL>("tangentModulus33");
-  tangentModulus(4, 4) =
-    util::getParam<REAL>("tangentModulus44");
-  tangentModulus(5, 5) =
-    util::getParam<REAL>("tangentModulus55");
-  tangentModulus(6, 6) =
-    util::getParam<REAL>("tangentModulus66");
+  d_tangentModulus = dem::zeros(6, 6);
+  d_tangentModulus(1, 1) = util::getParam<REAL>("tangentModulus11");
+  d_tangentModulus(1, 2) = util::getParam<REAL>("tangentModulus12");
+  d_tangentModulus(1, 3) = util::getParam<REAL>("tangentModulus13");
+  d_tangentModulus(2, 1) = util::getParam<REAL>("tangentModulus21");
+  d_tangentModulus(2, 2) = util::getParam<REAL>("tangentModulus22");
+  d_tangentModulus(2, 3) = util::getParam<REAL>("tangentModulus23");
+  d_tangentModulus(3, 1) = util::getParam<REAL>("tangentModulus31");
+  d_tangentModulus(3, 2) = util::getParam<REAL>("tangentModulus32");
+  d_tangentModulus(3, 3) = util::getParam<REAL>("tangentModulus33");
+  d_tangentModulus(4, 4) = util::getParam<REAL>("tangentModulus44");
+  d_tangentModulus(5, 5) = util::getParam<REAL>("tangentModulus55");
+  d_tangentModulus(6, 6) = util::getParam<REAL>("tangentModulus66");
 
-  sigma11 = 0;
-  sigma12 = 0;
-  sigma13 = 0;
-  sigma21 = 0;
-  sigma22 = 0;
-  sigma23 = 0;
-  sigma31 = 0;
-  sigma32 = 0;
-  sigma33 = 0;
+  d_sigma11 = 0;
+  d_sigma12 = 0;
+  d_sigma13 = 0;
+  d_sigma21 = 0;
+  d_sigma22 = 0;
+  d_sigma23 = 0;
+  d_sigma31 = 0;
+  d_sigma32 = 0;
+  d_sigma33 = 0;
 
-  Kinv11 = 0;
-  Kinv12 = 0;
-  Kinv13 = 0;
-  Kinv21 = 0;
-  Kinv22 = 0;
-  Kinv23 = 0;
-  Kinv31 = 0;
-  Kinv32 = 0;
-  Kinv33 = 0;
-  BondedDEMParticleID.clear();
+  d_Kinv11 = 0;
+  d_Kinv12 = 0;
+  d_Kinv13 = 0;
+  d_Kinv21 = 0;
+  d_Kinv22 = 0;
+  d_Kinv23 = 0;
+  d_Kinv31 = 0;
+  d_Kinv32 = 0;
+  d_Kinv33 = 0;
+  d_BondedDEMParticleID.clear();
 } // end PeriParticle()
 
 PeriParticle::PeriParticle(const PeriParticle& pt)
 {
   d_id = pt.d_id;
-  isAlive = pt.isAlive;
-  initPosition = pt.initPosition;
-  mass = pt.mass;
-  volume = pt.volume;
-  displacement = pt.displacement;
-  velocity = pt.velocity;
-  velocityHalf = pt.velocityHalf;
-  acceleration = pt.acceleration;
-  sigma = pt.sigma;
-  deformationGradient = pt.deformationGradient;
-  deformationGradientHalf = pt.deformationGradientHalf;
-  Kinv = pt.Kinv;
-  isv11 = pt.isv11;
-  tangentModulus = pt.tangentModulus;
-  horizonSize = pt.horizonSize;
+  d_isAlive = pt.d_isAlive;
+  d_initPosition = pt.d_initPosition;
+  d_mass = pt.d_mass;
+  d_volume = pt.d_volume;
+  d_displacement = pt.d_displacement;
+  d_velocity = pt.d_velocity;
+  d_velocityHalf = pt.d_velocityHalf;
+  d_acceleration = pt.d_acceleration;
+  d_sigma = pt.d_sigma;
+  d_deformationGradient = pt.d_deformationGradient;
+  d_deformationGradientHalf = pt.d_deformationGradientHalf;
+  d_Kinv = pt.d_Kinv;
+  d_isv11 = pt.d_isv11;
+  d_tangentModulus = pt.d_tangentModulus;
+  d_horizonSize = pt.d_horizonSize;
   // in order to keep stress values after gathering
-  sigma11 = pt.sigma11;
-  sigma12 = pt.sigma12;
-  sigma13 = pt.sigma13;
+  d_sigma11 = pt.d_sigma11;
+  d_sigma12 = pt.d_sigma12;
+  d_sigma13 = pt.d_sigma13;
 
-  sigma21 = pt.sigma21;
-  sigma22 = pt.sigma22;
-  sigma23 = pt.sigma23;
+  d_sigma21 = pt.d_sigma21;
+  d_sigma22 = pt.d_sigma22;
+  d_sigma23 = pt.d_sigma23;
 
-  sigma31 = pt.sigma31;
-  sigma32 = pt.sigma32;
-  sigma33 = pt.sigma33;
+  d_sigma31 = pt.d_sigma31;
+  d_sigma32 = pt.d_sigma32;
+  d_sigma33 = pt.d_sigma33;
 
-  Kinv11 = pt.Kinv11;
-  Kinv12 = pt.Kinv12;
-  Kinv13 = pt.Kinv13;
+  d_Kinv11 = pt.d_Kinv11;
+  d_Kinv12 = pt.d_Kinv12;
+  d_Kinv13 = pt.d_Kinv13;
 
-  Kinv21 = pt.Kinv21;
-  Kinv22 = pt.Kinv22;
-  Kinv23 = pt.Kinv23;
+  d_Kinv21 = pt.d_Kinv21;
+  d_Kinv22 = pt.d_Kinv22;
+  d_Kinv23 = pt.d_Kinv23;
 
-  Kinv31 = pt.Kinv31;
-  Kinv32 = pt.Kinv32;
-  Kinv33 = pt.Kinv33;
-  BondedDEMParticleID = pt.BondedDEMParticleID;
+  d_Kinv31 = pt.d_Kinv31;
+  d_Kinv32 = pt.d_Kinv32;
+  d_Kinv33 = pt.d_Kinv33;
+  d_BondedDEMParticleID = pt.d_BondedDEMParticleID;
 }
 
 PeriParticle::~PeriParticle()
 {
+  d_bondVec.clear();
 
-  // free the spaces of these pointer vector
-  //	    for(std::vector<PeriParticle*>::iterator ip=neighborVec.begin();
-  // ip!=neighborVec.end(); ip++){
-  //		delete (*ip);
-  //	    }
-  //	    for(std::vector<PeriBond*>::iterator ib=bondVec.begin();
-  // ib!=bondVec.end(); ib++) {
-  //		if( (*ib)!=NULL ){
-  //		    delete (*ib);
-  //		    (*ib)=NULL;
-  //	 	}
-  //	    }
-
-  //	    neighborVec.clear();
-  bondVec.clear();
-
-  sigma.clear();
-  deformationGradient.clear();
-  deformationGradientHalf.clear();
-  Kinv.clear();
-  tangentModulus.clear();
+  d_sigma.clear();
+  d_deformationGradient.clear();
+  d_deformationGradientHalf.clear();
+  d_Kinv.clear();
+  d_tangentModulus.clear();
 
 } // end PeriParticle()
 
 void
 PeriParticle::releaseBondVec()
 {
-
-  /*
-  for (std::vector<PeriBond *>::iterator ib = bondVec.begin();
-       ib != bondVec.end(); ib++) {
-    if ((*ib) != NULL) {
-      delete (*ib);
-      (*ib) = NULL;
-    }
-  }
-  */
-  bondVec.clear();
+  d_bondVec.clear();
 } // releaseBondVec
 
 void
 PeriParticle::constructMatrixMember()
 {
-  sigma.clear();
-  deformationGradient.clear();
-  deformationGradientHalf.clear();
-  Kinv.clear();
-  //    	    isv.clear();
-  tangentModulus.clear();
-
-  sigma = dem::zeros(3, 3);
-  deformationGradient = dem::zeros(3, 3);
-  deformationGradientHalf = dem::zeros(3, 3);
-  Kinv = dem::zeros(3, 3);
-  Kinv(1, 1) = Kinv11;
-  Kinv(1, 2) = Kinv12;
-  Kinv(1, 3) = Kinv13;
-  Kinv(2, 1) = Kinv21;
-  Kinv(2, 2) = Kinv22;
-  Kinv(2, 3) = Kinv23;
-  Kinv(3, 1) = Kinv31;
-  Kinv(3, 2) = Kinv32;
-  Kinv(3, 3) = Kinv33;
+  d_sigma = dem::zeros(3, 3);
+  d_deformationGradient = dem::zeros(3, 3);
+  d_deformationGradientHalf = dem::zeros(3, 3);
+  d_Kinv = dem::zeros(3, 3);
+  d_Kinv(1, 1) = d_Kinv11;
+  d_Kinv(1, 2) = d_Kinv12;
+  d_Kinv(1, 3) = d_Kinv13;
+  d_Kinv(2, 1) = d_Kinv21;
+  d_Kinv(2, 2) = d_Kinv22;
+  d_Kinv(2, 3) = d_Kinv23;
+  d_Kinv(3, 1) = d_Kinv31;
+  d_Kinv(3, 2) = d_Kinv32;
+  d_Kinv(3, 3) = d_Kinv33;
   //	    isv = dem::zeros(1,5);
   //	    if(util::getParam<int>("typeConstitutive") ==
   // 1){
@@ -275,37 +220,25 @@ PeriParticle::constructMatrixMember()
   //	    	isv(1,1) = util::getParam<REAL>("c");
   //	    }
 
-  tangentModulus = dem::zeros(6, 6);
-  tangentModulus(1, 1) =
-    util::getParam<REAL>("tangentModulus11");
-  tangentModulus(1, 2) =
-    util::getParam<REAL>("tangentModulus12");
-  tangentModulus(1, 3) =
-    util::getParam<REAL>("tangentModulus13");
-  tangentModulus(2, 1) =
-    util::getParam<REAL>("tangentModulus21");
-  tangentModulus(2, 2) =
-    util::getParam<REAL>("tangentModulus22");
-  tangentModulus(2, 3) =
-    util::getParam<REAL>("tangentModulus23");
-  tangentModulus(3, 1) =
-    util::getParam<REAL>("tangentModulus31");
-  tangentModulus(3, 2) =
-    util::getParam<REAL>("tangentModulus32");
-  tangentModulus(3, 3) =
-    util::getParam<REAL>("tangentModulus33");
-  tangentModulus(4, 4) =
-    util::getParam<REAL>("tangentModulus44");
-  tangentModulus(5, 5) =
-    util::getParam<REAL>("tangentModulus55");
-  tangentModulus(6, 6) =
-    util::getParam<REAL>("tangentModulus66");
+  d_tangentModulus = dem::zeros(6, 6);
+  d_tangentModulus(1, 1) = util::getParam<REAL>("tangentModulus11");
+  d_tangentModulus(1, 2) = util::getParam<REAL>("tangentModulus12");
+  d_tangentModulus(1, 3) = util::getParam<REAL>("tangentModulus13");
+  d_tangentModulus(2, 1) = util::getParam<REAL>("tangentModulus21");
+  d_tangentModulus(2, 2) = util::getParam<REAL>("tangentModulus22");
+  d_tangentModulus(2, 3) = util::getParam<REAL>("tangentModulus23");
+  d_tangentModulus(3, 1) = util::getParam<REAL>("tangentModulus31");
+  d_tangentModulus(3, 2) = util::getParam<REAL>("tangentModulus32");
+  d_tangentModulus(3, 3) = util::getParam<REAL>("tangentModulus33");
+  d_tangentModulus(4, 4) = util::getParam<REAL>("tangentModulus44");
+  d_tangentModulus(5, 5) = util::getParam<REAL>("tangentModulus55");
+  d_tangentModulus(6, 6) = util::getParam<REAL>("tangentModulus66");
 }
 
 void
 PeriParticle::replaceHorizonSizeIfLarger(REAL size)
 {
-  horizonSize = (horizonSize < size) ? size : horizonSize;
+  d_horizonSize = (d_horizonSize < size) ? size : d_horizonSize;
 } // end replaceHorizonSizeIfLarger()
 
 void
@@ -313,7 +246,7 @@ PeriParticle::calcParticleKinv()
 {
 
   dem::Matrix K(3, 3);
-  for (auto& bond : bondVec) {
+  for (auto& bond : d_bondVec) {
 
     // check which pt1 or pt2 in (*bond) is the center, namely (*pt)
     bool is_pt1 = false; // true when (*pt1) is the center
@@ -323,7 +256,7 @@ PeriParticle::calcParticleKinv()
 
     // dem::Vec xi = (*bond)->getXi(is_pt1);
     // K += dyadicProduct(xi,
-    // xi)*(*bond)->getVolume(is_pt1)*(*bond)->getWeight();
+    // xi)*(*bond)->volume(is_pt1)*(*bond)->getWeight();
     K = K + bond->getMicroK(is_pt1);
 
   } // end bond
@@ -334,7 +267,7 @@ PeriParticle::calcParticleKinv()
   //// inverse of matrix K
   // Kinv = K.getInvs()/(horizonSize*horizonSize);
 
-  Kinv = inv(K);
+  d_Kinv = inv(K);
 
   /*
   std::ostringstream out;
@@ -387,14 +320,14 @@ PeriParticle::checkParticleAlive()
 {
 
   int num_bonds = 0; // the number of alive bonds
-  for (auto& bond : bondVec) {
+  for (auto& bond : d_bondVec) {
     if (bond->getIsAlive())
       num_bonds++; // if alive
   }                // end bond
 
   // disable a particle
   if (num_bonds < 1) { // as rigid particle
-    isAlive = false;
+    d_isAlive = false;
     //std::cout << "A particle is disabled due to the lack of bond" << std::endl;
   }
 } // end checkParticleAlive()
@@ -403,8 +336,8 @@ void
 PeriParticle::calcParticleStress()
 {
 
-  if (!isAlive) { // not alive
-    sigma = dem::zeros(3, 3);
+  if (!d_isAlive) { // not alive
+    d_sigma = dem::zeros(3, 3);
   } else {
     // calculate deformation gradient tensor at current and half step
     dem::Matrix N(3, 3);      // matrix N at n+1 step
@@ -413,7 +346,7 @@ PeriParticle::calcParticleStress()
     // matrix N, corresponding to \mathbf{u}^{n+1} - \mathbf{u}^{n},
     // used to calculate \nabla (\mathbf{u}^{n+1} - \mathbf{u}^{n})
 
-    for (auto& bond : bondVec) {
+    for (auto& bond : d_bondVec) {
       
       // check which pt1 or pt2 in (*bond) is the center, namely (*pt)
       bool is_pt1 = false; // true when (*pt1) is the center
@@ -449,8 +382,8 @@ PeriParticle::calcParticleStress()
 
     } // end bond
 
-    deformationGradient = N * Kinv;
-    deformationGradientHalf = N_half * Kinv;
+    d_deformationGradient = N * d_Kinv;
+    d_deformationGradientHalf = N_half * d_Kinv;
 
     /*
     std::ostringstream out;
@@ -460,13 +393,13 @@ PeriParticle::calcParticleStress()
     */
 
     REAL eps = 1.0e-2;
-    if (det(deformationGradient) < eps || det(deformationGradientHalf) < eps) {
+    if (det(d_deformationGradient) < eps || det(d_deformationGradientHalf) < eps) {
       // calculate the determinant of deformationGraident and
       // deformationGradientHalf,
       // if the determinants are too small, then this particle is disabled,
       // isAlive = false
-      isAlive = false; // disabled particle
-      sigma = dem::zeros(3, 3);
+      d_isAlive = false; // disabled particle
+      d_sigma = dem::zeros(3, 3);
       //std::cout << "A particle is disabled because det[F] < 0.0" << std::endl;
     } else {
       if (util::getParam<int>("typeConstitutive") == 1) {
@@ -476,7 +409,7 @@ PeriParticle::calcParticleStress()
         identity3x3(2, 2) = 1;
         identity3x3(3, 3) = 1;
         dem::Matrix dudx =
-          (deformationGradient - identity3x3) * (inv(deformationGradient));
+          (d_deformationGradient - identity3x3) * (inv(d_deformationGradient));
         dem::Matrix voight_strain(6, 1);
         voight_strain(1, 1) = dudx(1, 1);
         voight_strain(2, 1) = dudx(2, 2);
@@ -484,20 +417,20 @@ PeriParticle::calcParticleStress()
         voight_strain(4, 1) = dudx(2, 3) + dudx(3, 2);
         voight_strain(5, 1) = dudx(1, 3) + dudx(3, 1);
         voight_strain(6, 1) = dudx(1, 2) + dudx(2, 1);
-        dem::Matrix voight_sigma = tangentModulus * voight_strain;
-        sigma(1, 1) = voight_sigma(1, 1);
-        sigma(2, 2) = voight_sigma(2, 1);
-        sigma(3, 3) = voight_sigma(3, 1);
-        sigma(2, 3) = voight_sigma(4, 1);
-        sigma(1, 3) = voight_sigma(5, 1);
-        sigma(1, 2) = voight_sigma(6, 1);
-        sigma(2, 1) = sigma(1, 2);
-        sigma(3, 1) = sigma(1, 3);
-        sigma(3, 2) = sigma(2, 3);
+        dem::Matrix voight_sigma = d_tangentModulus * voight_strain;
+        d_sigma(1, 1) = voight_sigma(1, 1);
+        d_sigma(2, 2) = voight_sigma(2, 1);
+        d_sigma(3, 3) = voight_sigma(3, 1);
+        d_sigma(2, 3) = voight_sigma(4, 1);
+        d_sigma(1, 3) = voight_sigma(5, 1);
+        d_sigma(1, 2) = voight_sigma(6, 1);
+        d_sigma(2, 1) = d_sigma(1, 2);
+        d_sigma(3, 1) = d_sigma(1, 3);
+        d_sigma(3, 2) = d_sigma(2, 3);
       } else if (util::getParam<int>("typeConstitutive") ==
                  2) {
         // calculate G, \nabla \Delta \bf{u}
-        dem::Matrix G = N_deltaU * Kinv * inv(deformationGradientHalf);
+        dem::Matrix G = N_deltaU * d_Kinv * inv(d_deformationGradientHalf);
         dem::Matrix Gsymm = 0.5 * (G + trans(G)); // symmetric part of G
         dem::Matrix Gskew = 0.5 * (G - trans(G)); // skew part of G
 
@@ -509,7 +442,7 @@ PeriParticle::calcParticleStress()
         voight_Gsymm(5, 1) = Gsymm(1, 3);
         voight_Gsymm(6, 1) = Gsymm(1, 2);
 
-        dem::Matrix voight_delta_sigma = tangentModulus * voight_Gsymm;
+        dem::Matrix voight_delta_sigma = d_tangentModulus * voight_Gsymm;
 
         dem::Matrix delta_sigma(3, 3);
         delta_sigma(1, 1) = voight_delta_sigma(1, 1);
@@ -528,7 +461,7 @@ PeriParticle::calcParticleStress()
         identity3x3(3, 3) = 1;
 
         dem::Matrix Q = identity3x3 + inv(identity3x3 - 0.5 * Gskew) * Gskew;
-        dem::Matrix trial_sigma = Q * sigma * trans(Q) + delta_sigma;
+        dem::Matrix trial_sigma = Q * d_sigma * trans(Q) + delta_sigma;
 
         // calculate deviatoric trial stress
         dem::Matrix deviatoric_trial_sigma = trial_sigma;
@@ -553,13 +486,13 @@ PeriParticle::calcParticleStress()
 
         REAL Aphi = util::getParam<REAL>("Aphi");
         REAL Bphi = util::getParam<REAL>("Bphi");
-        REAL cn = isv11; //?
+        REAL cn = d_isv11; //?
         REAL f_trial = L2norm_deviatoric_trial_sigma -
                        (Aphi * cn - Bphi * 1.0 / 3.0 * trace_trial_sigma);
 
         if (f_trial < 0) { // elasticity
-          sigma = trial_sigma;
-          isv11 = cn;
+          d_sigma = trial_sigma;
+          d_isv11 = cn;
         } else { // plasticity
 
           REAL Bpsi = util::getParam<REAL>("Bpsi");
@@ -568,11 +501,11 @@ PeriParticle::calcParticleStress()
           REAL mu = util::getParam<REAL>("mu");
           REAL delta_gamma =
             f_trial / (2.0 * mu + KBulk * Bphi * Bpsi + Hc * Aphi * Aphi);
-          sigma = trial_sigma -
+          d_sigma = trial_sigma -
                   delta_gamma * (KBulk * Bpsi * identity3x3 +
                                  2.0 * mu * deviatoric_trial_sigma /
                                    L2norm_deviatoric_trial_sigma);
-          isv11 = cn + delta_gamma * Hc * Aphi;
+          d_isv11 = cn + delta_gamma * Hc * Aphi;
         }
       }
 
@@ -588,13 +521,13 @@ void
 PeriParticle::calcParticleAcceleration()
 {
 
-  acceleration = 0.0;
+  d_acceleration = 0.0;
   dem::Matrix acceleration_matrix(3, 1);
   dem::Matrix xi_ik_matrix(3, 1);
   dem::Matrix PSi;
   dem::Matrix PSk;
-  if (isAlive) {
-    for (auto& bond : bondVec) {
+  if (d_isAlive) {
+    for (auto& bond : d_bondVec) {
       PeriParticle* pti;
       PeriParticle* ptk;
       if (this == bond->getPt1().get()) {
@@ -613,21 +546,21 @@ PeriParticle::calcParticleAcceleration()
       */
 
       // Piola Kirchoff stress of particle i
-      PSi = det(pti->deformationGradient) * pti->sigma *
-            inv(trans(pti->deformationGradient));
+      PSi = det(pti->d_deformationGradient) * pti->d_sigma *
+            inv(trans(pti->d_deformationGradient));
       // Piola Kirchoff stress of particle k
-      PSk = det(ptk->deformationGradient) * ptk->sigma *
-            inv(trans(ptk->deformationGradient));
+      PSk = det(ptk->d_deformationGradient) * ptk->d_sigma *
+            inv(trans(ptk->d_deformationGradient));
 
-      dem::Vec xi_ik = ptk->initPosition - pti->initPosition;
+      dem::Vec xi_ik = ptk->d_initPosition - pti->d_initPosition;
       xi_ik_matrix(1, 1) = xi_ik.x();
       xi_ik_matrix(2, 1) = xi_ik.y();
       xi_ik_matrix(3, 1) = xi_ik.z();
 
       acceleration_matrix = acceleration_matrix +
                             bond->getWeight() *
-                              (PSi * (pti->Kinv) + PSk * (ptk->Kinv)) *
-                              xi_ik_matrix * ptk->volume;
+                              (PSi * (pti->d_Kinv) + PSk * (ptk->d_Kinv)) *
+                              xi_ik_matrix * ptk->d_volume;
 
     } // end bond
     dem::Matrix grav_vec(3, 1);
@@ -655,9 +588,9 @@ PeriParticle::calcParticleAcceleration()
       acceleration_matrix /
       (util::getParam<REAL>("periDensity") *
        util::getParam<REAL>("massScale")) /*+grav_vec*/;
-    acceleration.setX(acceleration_matrix(1, 1));
-    acceleration.setY(acceleration_matrix(2, 1));
-    acceleration.setZ(acceleration_matrix(3, 1));
+    d_acceleration.setX(acceleration_matrix(1, 1));
+    d_acceleration.setY(acceleration_matrix(2, 1));
+    d_acceleration.setZ(acceleration_matrix(3, 1));
 
   } // alive particle
 
@@ -673,9 +606,9 @@ void
 PeriParticle::updateDisplacement()
 {
   REAL deltaT = util::getParam<REAL>("timeStep");
-  velocityHalf = velocity + 0.5 * acceleration * deltaT;
-  prevDisp = displacement;
-  displacement += velocityHalf * deltaT;
+  d_velocityHalf = d_velocity + 0.5 * d_acceleration * deltaT;
+  d_prevDisp = d_displacement;
+  d_displacement += d_velocityHalf * deltaT;
 
   /*
   std::ostringstream out;
@@ -698,8 +631,8 @@ PeriParticle::updateVelocity()
 
   // here acceleration is not the real a_(n+1), it is f_(n+1)/rho0
   //	    acceleration = acceleration-dem::DMP_F*velocity;
-  velocity = 2.0 * velocityHalf / atf + acceleration * deltaT / atf; 
-  acceleration = 2.0 * (velocity - velocityHalf) / deltaT;
+  d_velocity = 2.0 * d_velocityHalf / atf + d_acceleration * deltaT / atf; 
+  d_acceleration = 2.0 * (d_velocity - d_velocityHalf) / deltaT;
 
   /*
   std::ostringstream out;
@@ -714,55 +647,43 @@ PeriParticle::updateVelocity()
 void
 PeriParticle::initial()
 {
-  displacement = 0.0;
-  velocity = 0.0;
-  velocityHalf = 0.0;
-  acceleration = 0.0;
-  sigma = dem::zeros(3, 3);
-  deformationGradient = dem::zeros(3, 3);
-  deformationGradientHalf = dem::zeros(3, 3);
-  tangentModulus = dem::zeros(6, 6);
-  isv11 = 0;
-  if (util::getParam<int>("typeConstitutive") ==
-      1) { // 1---implicit, 2---explicit
-    isv11 = util::getParam<REAL>("chi");
+  d_displacement = 0.0;
+  d_velocity = 0.0;
+  d_velocityHalf = 0.0;
+  d_acceleration = 0.0;
+  d_sigma = dem::zeros(3, 3);
+  d_deformationGradient = dem::zeros(3, 3);
+  d_deformationGradientHalf = dem::zeros(3, 3);
+  d_tangentModulus = dem::zeros(6, 6);
+  d_isv11 = 0;
+  // 1---implicit, 2---explicit
+  if (util::getParam<int>("typeConstitutive") == 1) { 
+    d_isv11 = util::getParam<REAL>("chi");
   } else {
-    isv11 = util::getParam<REAL>("c");
+    d_isv11 = util::getParam<REAL>("c");
   }
-  tangentModulus = dem::zeros(6, 6);
-  tangentModulus(1, 1) =
-    util::getParam<REAL>("tangentModulus11");
-  tangentModulus(1, 2) =
-    util::getParam<REAL>("tangentModulus12");
-  tangentModulus(1, 3) =
-    util::getParam<REAL>("tangentModulus13");
-  tangentModulus(2, 1) =
-    util::getParam<REAL>("tangentModulus21");
-  tangentModulus(2, 2) =
-    util::getParam<REAL>("tangentModulus22");
-  tangentModulus(2, 3) =
-    util::getParam<REAL>("tangentModulus23");
-  tangentModulus(3, 1) =
-    util::getParam<REAL>("tangentModulus31");
-  tangentModulus(3, 2) =
-    util::getParam<REAL>("tangentModulus32");
-  tangentModulus(3, 3) =
-    util::getParam<REAL>("tangentModulus33");
-  tangentModulus(4, 4) =
-    util::getParam<REAL>("tangentModulus44");
-  tangentModulus(5, 5) =
-    util::getParam<REAL>("tangentModulus55");
-  tangentModulus(6, 6) =
-    util::getParam<REAL>("tangentModulus66");
-  sigma11 = 0;
-  sigma12 = 0;
-  sigma13 = 0;
-  sigma21 = 0;
-  sigma22 = 0;
-  sigma23 = 0;
-  sigma31 = 0;
-  sigma32 = 0;
-  sigma33 = 0;
+  d_tangentModulus = dem::zeros(6, 6);
+  d_tangentModulus(1, 1) = util::getParam<REAL>("tangentModulus11");
+  d_tangentModulus(1, 2) = util::getParam<REAL>("tangentModulus12");
+  d_tangentModulus(1, 3) = util::getParam<REAL>("tangentModulus13");
+  d_tangentModulus(2, 1) = util::getParam<REAL>("tangentModulus21");
+  d_tangentModulus(2, 2) = util::getParam<REAL>("tangentModulus22");
+  d_tangentModulus(2, 3) = util::getParam<REAL>("tangentModulus23");
+  d_tangentModulus(3, 1) = util::getParam<REAL>("tangentModulus31");
+  d_tangentModulus(3, 2) = util::getParam<REAL>("tangentModulus32");
+  d_tangentModulus(3, 3) = util::getParam<REAL>("tangentModulus33");
+  d_tangentModulus(4, 4) = util::getParam<REAL>("tangentModulus44");
+  d_tangentModulus(5, 5) = util::getParam<REAL>("tangentModulus55");
+  d_tangentModulus(6, 6) = util::getParam<REAL>("tangentModulus66");
+  d_sigma11 = 0;
+  d_sigma12 = 0;
+  d_sigma13 = 0;
+  d_sigma21 = 0;
+  d_sigma22 = 0;
+  d_sigma23 = 0;
+  d_sigma31 = 0;
+  d_sigma32 = 0;
+  d_sigma33 = 0;
 } // end initial()
 
 void
@@ -773,53 +694,43 @@ PeriParticle::eraseRecvPeriBonds()
   // Not an efficient operation
   // Better approach may be to use a list if random access of vector
   // members is not needed
-  bondVec.erase(std::remove_if(bondVec.begin(), bondVec.end(),
+  d_bondVec.erase(std::remove_if(d_bondVec.begin(), d_bondVec.end(),
                                [](PeriBondP bond) {
                                  if (bond->getIsRecv() == true) {
                                    return true;
                                  }
                                  return false;
                                }),
-                bondVec.end());
+                d_bondVec.end());
 
-  /*
-  for (auto bond = bondVec.begin(); bond != bondVec.end();) {
-    if ((*bond)->getIsRecv() == true) {
-      //		    delete (*bond);
-      //		    *bond=NULL;
-      bond = bondVec.erase(bond);
-    } else
-      bond++;
-  }
-  */
 } // eraseRecvPeriBonds()
 
 void
 PeriParticle::assignSigma()
 {
-  sigma11 = sigma(1, 1);
-  sigma12 = sigma(1, 2);
-  sigma13 = sigma(1, 3);
-  sigma21 = sigma(2, 1);
-  sigma22 = sigma(2, 2);
-  sigma23 = sigma(2, 3);
-  sigma31 = sigma(3, 1);
-  sigma32 = sigma(3, 2);
-  sigma33 = sigma(3, 3);
+  d_sigma11 = d_sigma(1, 1);
+  d_sigma12 = d_sigma(1, 2);
+  d_sigma13 = d_sigma(1, 3);
+  d_sigma21 = d_sigma(2, 1);
+  d_sigma22 = d_sigma(2, 2);
+  d_sigma23 = d_sigma(2, 3);
+  d_sigma31 = d_sigma(3, 1);
+  d_sigma32 = d_sigma(3, 2);
+  d_sigma33 = d_sigma(3, 3);
 } // assignSigma
 
 void
 PeriParticle::assignKinv()
 {
-  Kinv11 = Kinv(1, 1);
-  Kinv12 = Kinv(1, 2);
-  Kinv13 = Kinv(1, 3);
-  Kinv21 = Kinv(2, 1);
-  Kinv22 = Kinv(2, 2);
-  Kinv23 = Kinv(2, 3);
-  Kinv31 = Kinv(3, 1);
-  Kinv32 = Kinv(3, 2);
-  Kinv33 = Kinv(3, 3);
+  d_Kinv11 = d_Kinv(1, 1);
+  d_Kinv12 = d_Kinv(1, 2);
+  d_Kinv13 = d_Kinv(1, 3);
+  d_Kinv21 = d_Kinv(2, 1);
+  d_Kinv22 = d_Kinv(2, 2);
+  d_Kinv23 = d_Kinv(2, 3);
+  d_Kinv31 = d_Kinv(3, 1);
+  d_Kinv32 = d_Kinv(3, 2);
+  d_Kinv33 = d_Kinv(3, 3);
 } // assignSigma
 
 } // end pd

@@ -165,8 +165,8 @@ OutputVTK<TArray>::writePatchBoxGrid(const Box* patchBox)
   addTimeToVTKDataSet(time, dataSet);
 
   // Create the individual processor domain extents
-  Vec v1 = patchBox->getMinCorner();
-  Vec v2 = patchBox->getMaxCorner();
+  Vec v1 = patchBox->minCorner();
+  Vec v2 = patchBox->maxCorner();
   Vec vspan = v2 - v1;
   std::vector<Vec> coords((d_mpiProcX + 1) * (d_mpiProcY + 1) *
                           (d_mpiProcZ + 1));
@@ -301,12 +301,12 @@ void
 OutputVTK<TArray>::addDomainToVTKUnstructuredGrid(const Box* domain, vtkPointsP& pts,
                                                   vtkUnstructuredGridP& dataSet)
 {
-  double xmin = static_cast<double>(domain->getMinCorner().x());
-  double ymin = static_cast<double>(domain->getMinCorner().y());
-  double zmin = static_cast<double>(domain->getMinCorner().z());
-  double xmax = static_cast<double>(domain->getMaxCorner().x());
-  double ymax = static_cast<double>(domain->getMaxCorner().y());
-  double zmax = static_cast<double>(domain->getMaxCorner().z());
+  double xmin = static_cast<double>(domain->minCorner().x());
+  double ymin = static_cast<double>(domain->minCorner().y());
+  double zmin = static_cast<double>(domain->minCorner().z());
+  double xmax = static_cast<double>(domain->maxCorner().x());
+  double ymax = static_cast<double>(domain->maxCorner().y());
+  double zmax = static_cast<double>(domain->maxCorner().z());
 
   int id = 0;
   pts->SetPoint(id, xmin, ymin, zmin);
@@ -484,27 +484,27 @@ OutputVTK<DEMParticlePArray>::createVTKUnstructuredGrid(const DEMParticlePArray*
     type->InsertValue(id, static_cast<int>(particle->getType()));
 
     // Ellipsoid radii
-    vec[0] = particle->getA();
-    vec[1] = particle->getB();
-    vec[2] = particle->getC();
+    vec[0] = particle->radiusA();
+    vec[1] = particle->radiusB();
+    vec[2] = particle->radiusC();
     radii->InsertTuple(id, vec);
 
     // Current direction A
-    vObj = particle->getCurrDirecA();
+    vObj = particle->currentAnglesAxisA();
     vec[0] = vObj.x();
     vec[1] = vObj.y();
     vec[2] = vObj.z();
     axis_a->InsertTuple(id, vec);
 
     // Current direction B
-    vObj = particle->getCurrDirecB();
+    vObj = particle->currentAnglesAxisB();
     vec[0] = vObj.x();
     vec[1] = vObj.y();
     vec[2] = vObj.z();
     axis_b->InsertTuple(id, vec);
 
     // Current direction C
-    vObj = particle->getCurrDirecC();
+    vObj = particle->currentAnglesAxisC();
     vec[0] = vObj.x();
     vec[1] = vObj.y();
     vec[2] = vObj.z();
@@ -518,21 +518,21 @@ OutputVTK<DEMParticlePArray>::createVTKUnstructuredGrid(const DEMParticlePArray*
     velocity->InsertTuple(id, vec);
 
     // Omega
-    vObj = particle->currentOmega();
+    vObj = particle->currentAngularVelocity();
     vec[0] = vObj.x();
     vec[1] = vObj.y();
     vec[2] = vObj.z();
     omega->InsertTuple(id, vec);
 
     // Force
-    vObj = particle->getForce();
+    vObj = particle->force();
     vec[0] = vObj.x();
     vec[1] = vObj.y();
     vec[2] = vObj.z();
     force->InsertTuple(id, vec);
 
     // Moment
-    vObj = particle->getMoment();
+    vObj = particle->moment();
     vec[0] = vObj.x();
     vec[1] = vObj.y();
     vec[2] = vObj.z();
@@ -633,7 +633,7 @@ OutputVTK<PeriParticlePArray>::createVTKUnstructuredGrid(const PeriParticlePArra
                                    3.0*(s12Sq + s23Sq + s31Sq)));
 
     // Compute kinetic energy
-    REAL mass = particle->getMass();
+    REAL mass = particle->mass();
     REAL KE = 0.5 * mass * dot(vel, vel);
 
     // Position
@@ -752,10 +752,10 @@ OutputVTK<SPHParticlePArray>::createVTKUnstructuredGrid(const SPHParticlePArray*
     Vec pos  = particle->currentPosition();
     Vec disp = particle->getDisplacement();
     Vec vel = particle->getVelocity();
-    Vec acc = particle->getAcceleration();
+    Vec acc = particle->accelerationeration();
     REAL press = particle->getPressure();
-    REAL rhoDot = particle->getDensityRate();
-    REAL rho = particle->getDensity();
+    REAL rhoDot = particle->densityRate();
+    REAL rho = particle->density();
 
     // Position
     vec[0] = pos.x();

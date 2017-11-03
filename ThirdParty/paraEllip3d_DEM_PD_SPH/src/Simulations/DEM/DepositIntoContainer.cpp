@@ -31,9 +31,9 @@ DepositIntoContainer::execute(DiscreteElements* dem)
   // Reduce the size of the domain for further calculations
   if (dem->getMPIRank() == 0) {
     const Box spatialDomain = dem->getSpatialDomain();
-    Box trimmedContainer(spatialDomain.getMinCorner().x(), 
-      spatialDomain.getMinCorner().y(), spatialDomain.getMinCorner().z(), 
-      spatialDomain.getMaxCorner().x(), spatialDomain.getMaxCorner().y(),
+    Box trimmedContainer(spatialDomain.minCorner().x(), 
+      spatialDomain.minCorner().y(), spatialDomain.minCorner().z(), 
+      spatialDomain.maxCorner().x(), spatialDomain.maxCorner().y(),
       util::getParam<REAL>("trimHeight"));
 
     dem->setSpatialDomain(trimmedContainer);

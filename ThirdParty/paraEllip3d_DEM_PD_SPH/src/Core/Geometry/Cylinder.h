@@ -12,42 +12,42 @@ class Cylinder
 
 public:
   Cylinder()
-    : radius(0)
-    , height(0)
-    , center(0)
+    : d_radius(0)
+    , d_height(0)
+    , d_center(0)
   {
   }
 
   Cylinder(REAL r, REAL h, Vec c)
-    : radius(r)
-    , height(h)
-    , center(std::move(c))
+    : d_radius(r)
+    , d_height(h)
+    , d_center(std::move(c))
   {
   }
 
   Cylinder(const Cylinder& cy)
   {
-    radius = cy.radius;
-    height = cy.height;
-    center = cy.center;
+    d_radius = cy.d_radius;
+    d_height = cy.d_height;
+    d_center = cy.d_center;
   }
 
-  REAL getRadius() const { return radius; }
-  REAL getHeight() const { return height; }
-  REAL getVolume() const { return Pi * radius * radius * height; }
-  Vec getCenter() const { return center; }
+  REAL radius() const { return d_radius; }
+  REAL getHeight() const { return d_height; }
+  REAL volume() const { return Pi * d_radius * d_radius * d_height; }
+  Vec center() const { return d_center; }
 
-  void setRadius(REAL r) { radius = r; }
-  void setHeight(REAL h) { height = h; }
-  void setCenter(Vec v) { center = v; }
+  void setRadius(REAL r) { d_radius = r; }
+  void setHeight(REAL h) { d_height = h; }
+  void setCenter(Vec v) { d_center = v; }
 
   Vec randomPoint() const;
   void print() const;
 
 private:
-  REAL radius;
-  REAL height;
-  Vec center;
+  REAL d_radius;
+  REAL d_height;
+  Vec d_center;
 };
 }
 

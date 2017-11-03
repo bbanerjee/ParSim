@@ -393,13 +393,13 @@ DiscreteElements::scatterParticles()
 {
   // partition particles and send to each process
   if (s_mpiRank == 0) { // process 0
-    setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
-                d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
-                d_demPatchBox.getMaxCorner().y(),
+    setPatchBox(Box(d_demPatchBox.minCorner().x(), d_demPatchBox.minCorner().y(),
+                d_demPatchBox.minCorner().z(), d_demPatchBox.maxCorner().x(),
+                d_demPatchBox.maxCorner().y(),
                 getPtclMaxZ(d_allDEMParticles) + d_gradation.getPtclMaxRadius()));
 
-    Vec v1 = d_demPatchBox.getMinCorner();
-    Vec v2 = d_demPatchBox.getMaxCorner();
+    Vec v1 = d_demPatchBox.minCorner();
+    Vec v2 = d_demPatchBox.maxCorner();
     Vec vspan = (v2 - v1) / s_mpiProcs;
 
     //std::cout << "v1 = " << v1 << "\n";
@@ -462,8 +462,8 @@ void
 DiscreteElements::createPatch(int iteration, const REAL& ghostWidth) 
 {
   // determine domain of each process
-  Vec v1 = d_demPatchBox.getMinCorner();
-  Vec v2 = d_demPatchBox.getMaxCorner();
+  Vec v1 = d_demPatchBox.minCorner();
+  Vec v2 = d_demPatchBox.maxCorner();
   Vec vspan = (v2 - v1) / s_mpiProcs;
   Vec lower = v1 + vspan * s_mpiCoords;
   Vec upper = lower + vspan;
@@ -481,8 +481,8 @@ void
 DiscreteElements::updatePatch(int iteration, const REAL& ghostWidth)
 {
   // determine domain of each process
-  Vec v1 = d_demPatchBox.getMinCorner();
-  Vec v2 = d_demPatchBox.getMaxCorner();
+  Vec v1 = d_demPatchBox.minCorner();
+  Vec v2 = d_demPatchBox.maxCorner();
   Vec vspan = (v2 - v1) / s_mpiProcs;
   Vec lower = v1 + vspan * s_mpiCoords;
   Vec upper = lower + vspan;
@@ -677,14 +677,14 @@ DiscreteElements::findContactSingleThread()
     auto particle = d_patchParticles[i];
     Vec u = particle->currentPosition();
     auto particleType = particle->getType();
-    auto particleRad = particle->getA();
+    auto particleRad = particle->radiusA();
 
     for (auto j = i + 1; j < num2; ++j) {
 
       auto mergeParticle = d_mergedParticles[j];
       Vec v = mergeParticle->currentPosition();
       auto mergeParticleType = mergeParticle->getType();
-      auto mergeParticleRad = mergeParticle->getA();
+      auto mergeParticleRad = mergeParticle->radiusA();
 
       /*
       if ((particle->getId() == 2 && mergeParticle->getId() == 94) ||
@@ -764,7 +764,7 @@ DiscreteElements::findContactMultiThread(int ompThreads)
       Vec v = d_mergedParticles[j]->currentPosition();
       mergeParticleType = d_mergedParticles[j]->getType();
       if ((vnormL2(v - u) <
-           d_patchParticles[i]->getA() + d_mergedParticles[j]->getA()) &&
+           d_patchParticles[i]->radiusA() + d_mergedParticles[j]->radiusA()) &&
           // not both are fixed particles
           (particleType != DEMParticle::DEMParticleType::FIXED || 
            mergeParticleType != DEMParticle::DEMParticleType::FIXED) &&
@@ -904,9 +904,9 @@ DiscreteElements::updatePatchBoxMinX()
   REAL minX = 0;
   MPI_Allreduce(&pMinX, &minX, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
-  setPatchBox(Box(minX - d_gradation.getPtclMaxRadius(), d_demPatchBox.getMinCorner().y(),
-              d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
-              d_demPatchBox.getMaxCorner().y(), d_demPatchBox.getMaxCorner().z()));
+  setPatchBox(Box(minX - d_gradation.getPtclMaxRadius(), d_demPatchBox.minCorner().y(),
+              d_demPatchBox.minCorner().z(), d_demPatchBox.maxCorner().x(),
+              d_demPatchBox.maxCorner().y(), d_demPatchBox.maxCorner().z()));
 }
 
 void
@@ -916,9 +916,9 @@ DiscreteElements::updatePatchBoxMaxX()
   REAL maxX = 0;
   MPI_Allreduce(&pMaxX, &maxX, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
-  setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
-              d_demPatchBox.getMinCorner().z(), maxX + d_gradation.getPtclMaxRadius(),
-              d_demPatchBox.getMaxCorner().y(), d_demPatchBox.getMaxCorner().z()));
+  setPatchBox(Box(d_demPatchBox.minCorner().x(), d_demPatchBox.minCorner().y(),
+              d_demPatchBox.minCorner().z(), maxX + d_gradation.getPtclMaxRadius(),
+              d_demPatchBox.maxCorner().y(), d_demPatchBox.maxCorner().z()));
 }
 
 void
@@ -928,9 +928,9 @@ DiscreteElements::updatePatchBoxMinY()
   REAL minY = 0;
   MPI_Allreduce(&pMinY, &minY, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
-  setPatchBox(Box(d_demPatchBox.getMinCorner().x(), minY - d_gradation.getPtclMaxRadius(),
-              d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
-              d_demPatchBox.getMaxCorner().y(), d_demPatchBox.getMaxCorner().z()));
+  setPatchBox(Box(d_demPatchBox.minCorner().x(), minY - d_gradation.getPtclMaxRadius(),
+              d_demPatchBox.minCorner().z(), d_demPatchBox.maxCorner().x(),
+              d_demPatchBox.maxCorner().y(), d_demPatchBox.maxCorner().z()));
 }
 
 void
@@ -940,9 +940,9 @@ DiscreteElements::updatePatchBoxMaxY()
   REAL maxY = 0;
   MPI_Allreduce(&pMaxY, &maxY, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
-  setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
-              d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
-              maxY + d_gradation.getPtclMaxRadius(), d_demPatchBox.getMaxCorner().z()));
+  setPatchBox(Box(d_demPatchBox.minCorner().x(), d_demPatchBox.minCorner().y(),
+              d_demPatchBox.minCorner().z(), d_demPatchBox.maxCorner().x(),
+              maxY + d_gradation.getPtclMaxRadius(), d_demPatchBox.maxCorner().z()));
 }
 
 void
@@ -952,9 +952,9 @@ DiscreteElements::updatePatchBoxMinZ()
   REAL minZ = 0;
   MPI_Allreduce(&pMinZ, &minZ, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
-  setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
-              minZ - d_gradation.getPtclMaxRadius(), d_demPatchBox.getMaxCorner().x(),
-              d_demPatchBox.getMaxCorner().y(), d_demPatchBox.getMaxCorner().z()));
+  setPatchBox(Box(d_demPatchBox.minCorner().x(), d_demPatchBox.minCorner().y(),
+              minZ - d_gradation.getPtclMaxRadius(), d_demPatchBox.maxCorner().x(),
+              d_demPatchBox.maxCorner().y(), d_demPatchBox.maxCorner().z()));
 }
 
 void
@@ -966,9 +966,9 @@ DiscreteElements::updatePatchBoxMaxZ()
   MPI_Allreduce(&pMaxZ, &maxZ, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
   // no need to broadcast grid as it is updated in each process
-  setPatchBox(Box(d_demPatchBox.getMinCorner().x(), d_demPatchBox.getMinCorner().y(),
-              d_demPatchBox.getMinCorner().z(), d_demPatchBox.getMaxCorner().x(),
-              d_demPatchBox.getMaxCorner().y(), maxZ + d_gradation.getPtclMaxRadius()));
+  setPatchBox(Box(d_demPatchBox.minCorner().x(), d_demPatchBox.minCorner().y(),
+              d_demPatchBox.minCorner().z(), d_demPatchBox.maxCorner().x(),
+              d_demPatchBox.maxCorner().y(), maxZ + d_gradation.getPtclMaxRadius()));
 }
 
 void
@@ -1001,8 +1001,8 @@ DiscreteElements::printBoundary() const
   }
   ofs.setf(std::ios::scientific, std::ios::floatfield);
 
-  Vec v1 = d_spatialDomain.getMinCorner();
-  Vec v2 = d_spatialDomain.getMaxCorner();
+  Vec v1 = d_spatialDomain.minCorner();
+  Vec v2 = d_spatialDomain.maxCorner();
   REAL x1 = v1.x();
   REAL y1 = v1.y();
   REAL z1 = v1.z();
@@ -1185,8 +1185,8 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
 
   d_trimHistoryNum = d_allDEMParticles.size();
 
-  Vec v1 = d_spatialDomain.getMinCorner();
-  Vec v2 = d_spatialDomain.getMaxCorner();
+  Vec v1 = d_spatialDomain.minCorner();
+  Vec v2 = d_spatialDomain.maxCorner();
   REAL x1 = v1.x();
   REAL y1 = v1.y();
   REAL z1 = v1.z();
@@ -1230,8 +1230,8 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
 void
 DiscreteElements::removeParticleOutBox()
 {
-  Vec v1 = d_patchDomain.getMinCorner();
-  Vec v2 = d_patchDomain.getMaxCorner();
+  Vec v1 = d_patchDomain.minCorner();
+  Vec v2 = d_patchDomain.maxCorner();
   REAL x1 = v1.x();
   REAL y1 = v1.y();
   REAL z1 = v1.z();
@@ -1451,7 +1451,7 @@ DiscreteElements::migrateParticles()
   //std::ostringstream out;
   //out << "Migrate: Rank: " << s_mpiRank << ": in: " << d_patchParticles.size();
 
-  Vec vspan = d_demPatchBox.getMaxCorner() - d_demPatchBox.getMinCorner();
+  Vec vspan = d_demPatchBox.maxCorner() - d_demPatchBox.minCorner();
   Vec width = vspan / s_mpiProcs;
 
   d_sentParticles.clear();
@@ -1591,7 +1591,7 @@ DiscreteElements::gatherEnergy()
   calcTranslationalEnergy();
   calcRotationalEnergy();
   calcKineticEnergy();
-  calcGravitationalEnergy(d_spatialDomain.getMinCorner().z());
+  calcGravitationalEnergy(d_spatialDomain.minCorner().z());
   calcMechanicalEnergy();
 }
 
@@ -1731,7 +1731,7 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, REAL distX, REA
   REAL areaY = (z2 - z1) * (x2 - x1);
   REAL areaZ = (x2 - x1) * (y2 - y1);
   REAL bulkVolume = (x2 - x1) * (y2 - y1) * (z2 - z1);
-  REAL voidRatio = bulkVolume / getVolume() - 1;
+  REAL voidRatio = bulkVolume / volume() - 1;
 
   // normal traction
   std::vector<REAL> normalTraction = {{0, 0, 0, 0, 0, 0}};
@@ -1757,7 +1757,7 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, REAL distX, REA
 
   // volume
   ofs << std::setw(OWID) << bulkVolume << std::setw(OWID)
-      << getMass() / bulkVolume << std::setw(OWID) << 1 - (x2 - x1) / distX
+      << mass() / bulkVolume << std::setw(OWID) << 1 - (x2 - x1) / distX
       << std::setw(OWID) << 1 - (y2 - y1) / distY << std::setw(OWID)
       << 1 - (z2 - z1) / distZ << std::setw(OWID)
       << 3 - (x2 - x1) / distX - (y2 - y1) / distY - (z2 - z1) / distZ
@@ -1995,8 +1995,8 @@ DiscreteElements::printContact(const std::string& str) const
         << std::setw(OWID) << it.getPoint1().y() << std::setw(OWID)
         << it.getPoint1().z() << std::setw(OWID) << it.getPoint2().x()
         << std::setw(OWID) << it.getPoint2().y() << std::setw(OWID)
-        << it.getPoint2().z() << std::setw(OWID) << it.getRadius1()
-        << std::setw(OWID) << it.getRadius2() << std::setw(OWID)
+        << it.getPoint2().z() << std::setw(OWID) << it.radius1()
+        << std::setw(OWID) << it.radius2() << std::setw(OWID)
         << it.getPenetration() << std::setw(OWID) << it.getTangentDisplacement()
         << std::setw(OWID) << it.getContactRadius() << std::setw(OWID)
         << it.getR0() << std::setw(OWID) << it.getE0() << std::setw(OWID)
@@ -2073,8 +2073,8 @@ DiscreteElements::printContact(const std::string& str) const
     << std::setw(OWID) << it->getPoint2().x()
     << std::setw(OWID) << it->getPoint2().y()
     << std::setw(OWID) << it->getPoint2().z()
-    << std::setw(OWID) << it->getRadius1()
-    << std::setw(OWID) << it->getRadius2()
+    << std::setw(OWID) << it->radius1()
+    << std::setw(OWID) << it->radius2()
     << std::setw(OWID) << it->getPenetration()
     << std::setw(OWID) << it->getTangentDisplacement()
     << std::setw(OWID) << it->getContactRadius()
@@ -2104,7 +2104,7 @@ DiscreteElements::calcTranslationalEnergy()
   REAL pEnergy = 0;
   for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
-      pEnergy += particle->getTranslationalEnergy();
+      pEnergy += particle->computeTranslationalEnergy();
     }
   }
   MPI_Reduce(&pEnergy, &d_translationalEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
@@ -2116,7 +2116,7 @@ DiscreteElements::calcRotationalEnergy()
   REAL pEnergy = 0;
   for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
-      pEnergy += particle->getRotationalEnergy();
+      pEnergy += particle->computeRotationalEnergy();
     }
   }
   MPI_Reduce(&pEnergy, &d_rotationalEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
@@ -2128,7 +2128,7 @@ DiscreteElements::calcKineticEnergy()
   REAL pEnergy = 0;
   for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
-      pEnergy += particle->getKineticEnergy();
+      pEnergy += particle->computeKineticEnergy();
     }
   }
   MPI_Reduce(&pEnergy, &d_kineticEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
@@ -2140,7 +2140,7 @@ DiscreteElements::calcGravitationalEnergy(REAL ref)
   REAL pEnergy = 0;
   for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
-      pEnergy += particle->getPotentialEnergy(ref);
+      pEnergy += particle->computePotentialEnergy(ref);
     }
   }
   MPI_Reduce(&pEnergy, &d_gravitationalEnergy, 1, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
@@ -2159,21 +2159,21 @@ DiscreteElements::getTotalMassFromPatchParticleData() const
 }
 
 REAL
-DiscreteElements::getMass() const
+DiscreteElements::mass() const
 {
   REAL var = 0;
   for (const auto& particle : d_allDEMParticles)
-    var += particle->getMass();
+    var += particle->mass();
   return var;
 }
 
 REAL
-DiscreteElements::getVolume() const
+DiscreteElements::volume() const
 {
   REAL var = 0;
   for (const auto& particle : d_allDEMParticles)
     if (particle->getType() == DEMParticle::DEMParticleType::FREE)
-      var += particle->getVolume();
+      var += particle->volume();
   return var;
 }
 
@@ -2198,7 +2198,7 @@ DiscreteElements::getAvgRotationalVelocity() const
   std::size_t count = 0;
   for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
-      avgv += vnormL2(particle->currentOmega());
+      avgv += vnormL2(particle->currentAngularVelocity());
       ++count;
     }
   }
@@ -2212,7 +2212,7 @@ DiscreteElements::getAvgForce() const
   std::size_t count = 0;
   for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
-      avgv += vnormL2(particle->getForce());
+      avgv += vnormL2(particle->force());
       ++count;
     }
   }
@@ -2226,7 +2226,7 @@ DiscreteElements::getAvgMoment() const
   std::size_t count = 0;
   for (const auto& particle : d_patchParticles) {
     if (particle->getType() == DEMParticle::DEMParticleType::FREE) {
-      avgv += vnormL2(particle->getMoment());
+      avgv += vnormL2(particle->moment());
       ++count;
     }
   }

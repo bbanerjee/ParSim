@@ -107,8 +107,8 @@ DEMContact::isOverlapped()
   d_p1->getGlobalCoef(coef1); 
   d_p2->getGlobalCoef(coef2);
 
-  d_radius1 = d_p1->getRadius(d_point1);
-  d_radius2 = d_p2->getRadius(d_point2);
+  d_radius1 = d_p1->computeRadius(d_point1);
+  d_radius2 = d_p2->computeRadius(d_point2);
 
 
   Vec v[2];
@@ -227,8 +227,8 @@ DEMContact::computeContactForces()
     //std::cout << "Before DEMContact: MPI_rank = " << world_rank 
     //          << " iter = " << iteration << std::setprecision(16)
     //          << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
-    //          << " f1 = " << d_p1->getForce() << "\n\t"
-    //          << " f2 = " << d_p2->getForce() << "\n\t"
+    //          << " f1 = " << d_p1->force() << "\n\t"
+    //          << " f2 = " << d_p2->force() << "\n\t"
     //          << " d_penetration=" << d_penetration << "\n\t" << "\n";
   }
   */
@@ -280,11 +280,11 @@ DEMContact::computeContactForces()
   // obtain normal damping force
   Vec cp = (d_point1 + d_point2) / 2;
   Vec veloc1 =
-    d_p1->currentVelocity() + cross(d_p1->currentOmega(), (cp - d_p1->currentPosition()));
+    d_p1->currentVelocity() + cross(d_p1->currentAngularVelocity(), (cp - d_p1->currentPosition()));
   Vec veloc2 =
-    d_p2->currentVelocity() + cross(d_p2->currentOmega(), (cp - d_p2->currentPosition()));
-  REAL m1 = getP1()->getMass();
-  REAL m2 = getP2()->getMass();
+    d_p2->currentVelocity() + cross(d_p2->currentAngularVelocity(), (cp - d_p2->currentPosition()));
+  REAL m1 = getP1()->mass();
+  REAL m2 = getP2()->mass();
   REAL kn = pow(6 * vnormL2(d_normalForce) * d_R0 * pow(d_E0, 2), 1.0 / 3.0);
   REAL dampCritical = 2 * sqrt(m1 * m2 / (m1 + m2) * kn); // critical damping
   Vec contactDampingForce = contactDamp * dampCritical *
@@ -356,8 +356,8 @@ DEMContact::computeContactForces()
     //std::cout << "After DEMContact: MPI_rank = " << world_rank 
     //          << " iter = " << iteration << std::setprecision(16)
     //          << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
-    //          << " f1 = " << d_p1->getForce() << "\n\t"
-    //          << " f2 = " << d_p2->getForce() << "\n\t"
+    //          << " f1 = " << d_p1->force() << "\n\t"
+    //          << " f2 = " << d_p2->force() << "\n\t"
     //          << " d_penetration=" << d_penetration << "\n\t" << "\n";
   }
   */
@@ -374,8 +374,8 @@ DEMContact::computeContactForces()
               << "\n\t"
               << " V1 = " << d_p1->currentVelocity()
               << " V2 = " << d_p2->currentVelocity() << "\n\t"
-              << " W1 = " << d_p1->currentOmega()
-              << " W2 = " << d_p2->currentOmega() << "\n\t"
+              << " W1 = " << d_p1->currentAngularVelocity()
+              << " W2 = " << d_p2->currentAngularVelocity() << "\n\t"
               << " P1 = " << d_p1->currentPosition()
               << " P2 = " << d_p2->currentPosition() << "\n\t"
               << " veloc1 = " << veloc1 << " veloc2 = " << veloc2 << "\n";

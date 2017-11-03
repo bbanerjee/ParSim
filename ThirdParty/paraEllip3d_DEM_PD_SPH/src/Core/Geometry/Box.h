@@ -101,17 +101,17 @@ public:
   }
 
 
-  REAL getDimx() const { return d_dimx; }
-  REAL getDimy() const { return d_dimy; }
-  REAL getDimz() const { return d_dimz; }
-  Vec getCenter() const { return d_center; }
-  Vec getMinCorner() const { return d_v1; }
-  Vec getMaxCorner() const { return d_v2; }
-  REAL getVolume() const { return d_dimx * d_dimy * d_dimz; }
+  REAL dimX() const { return d_dimx; }
+  REAL dimY() const { return d_dimy; }
+  REAL dimZ() const { return d_dimz; }
+  Vec center() const { return d_center; }
+  Vec minCorner() const { return d_v1; }
+  Vec maxCorner() const { return d_v2; }
+  REAL volume() const { return d_dimx * d_dimy * d_dimz; }
 
-  void setDimx(REAL dx) { d_dimx = dx; }
-  void setDimy(REAL dy) { d_dimy = dy; }
-  void setDimz(REAL dz) { d_dimz = dz; }
+  void setDimX(REAL dx) { d_dimx = dx; }
+  void setDimY(REAL dy) { d_dimy = dy; }
+  void setDimZ(REAL dz) { d_dimz = dz; }
   void setCenter(Vec v) { d_center = v; }
   void setV1(Vec v) { d_v1 = v; }
   void setV2(Vec v) { d_v2 = v; }

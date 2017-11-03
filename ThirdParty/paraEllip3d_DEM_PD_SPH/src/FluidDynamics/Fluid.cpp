@@ -28,16 +28,16 @@ Fluid::initParameter(Box& domain, Gradation& gradation)
   std::size_t ptclGrid = util::getParam<std::size_t>("ptclGrid");
   volFrac = util::getParam<REAL>("volFrac");
 
-  REAL minX = domain.getMinCorner().x();
-  REAL minY = domain.getMinCorner().y();
-  REAL minZ = domain.getMinCorner().z();
+  REAL minX = domain.minCorner().x();
+  REAL minY = domain.minCorner().y();
+  REAL minZ = domain.minCorner().z();
   REAL z1Distance = util::getParam<REAL>("z1Distance");
   minZ -= z1Distance;
   z0 = minZ + z1Distance * util::getParam<REAL>("z1Percent");
 
-  REAL maxX = domain.getMaxCorner().x();
-  REAL maxY = domain.getMaxCorner().y();
-  REAL maxZ = domain.getMaxCorner().z();
+  REAL maxX = domain.maxCorner().x();
+  REAL maxY = domain.maxCorner().y();
+  REAL maxZ = domain.maxCorner().z();
   REAL minR = gradation.getPtclMinRadius();
 
   dx = (minR * 2) / ptclGrid;
@@ -881,9 +881,9 @@ Fluid::calcParticleForce(DEMParticlePArray& ptcls, std::ofstream& ofs)
         }
 
   for (const auto& ptcl : ptcls) {
-    REAL etaBx = 8.0 / 3.0 * ptcl->getA() / Cd; // local direction x (i.e. a)
-    REAL etaBy = 8.0 / 3.0 * ptcl->getB() / Cd; // local direction y (i.e. b)
-    REAL etaBz = 8.0 / 3.0 * ptcl->getC() / Cd; // local direction z (i.e. c)
+    REAL etaBx = 8.0 / 3.0 * ptcl->radiusA() / Cd; // local direction x (i.e. a)
+    REAL etaBy = 8.0 / 3.0 * ptcl->radiusB() / Cd; // local direction y (i.e. b)
+    REAL etaBz = 8.0 / 3.0 * ptcl->radiusC() / Cd; // local direction z (i.e. c)
 
     Vec penalForce = 0, presForce = 0;
     Vec penalMoment = 0, presMoment = 0;
@@ -904,7 +904,7 @@ Fluid::calcParticleForce(DEMParticlePArray& ptcls, std::ofstream& ofs)
 
       Vec dist = Vec(coord_x, coord_y, coord_z) - ptcl->currentPosition();
       // w X r = omga % dist, where % is overloaded as cross product
-      Vec omgar = cross(ptcl->currentOmega(), dist); 
+      Vec omgar = cross(ptcl->currentAngularVelocity(), dist); 
 
       REAL ux = ptcl->currentVelocity().x() + omgar.x();
       REAL uy = ptcl->currentVelocity().y() + omgar.y();
@@ -978,9 +978,9 @@ Fluid::calcParticleForce(DEMParticlePArray& ptcls, std::ofstream& ofs)
           << penalMoment.y() << std::setw(OWID) << penalMoment.z()
           << std::setw(OWID) << presMoment.x() << std::setw(OWID)
           << presMoment.y() << std::setw(OWID) << presMoment.z()
-          << std::setw(OWID) << ptcl->getAccel().x() << std::setw(OWID)
-          << ptcl->getAccel().y() << std::setw(OWID)
-          << ptcl->getAccel().z() << std::setw(OWID)
+          << std::setw(OWID) << ptcl->acceleration().x() << std::setw(OWID)
+          << ptcl->acceleration().y() << std::setw(OWID)
+          << ptcl->acceleration().z() << std::setw(OWID)
           << ptcl->currentVelocity().x() << std::setw(OWID)
           << ptcl->currentVelocity().y() << std::setw(OWID)
           << ptcl->currentVelocity().z() << std::endl;

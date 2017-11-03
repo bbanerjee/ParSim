@@ -50,8 +50,8 @@ PatchNeighborComm<TArray>::asyncSendRecv(boost::mpi::communicator& boostWorld,
 {
   //std::ostringstream out;
   //out << "myRank: " << myRank << " neighborRank: " << d_rank 
-  //    << " iteration: " << iteration << " box: " << box.getMinCorner()
-  //    << "," << box.getMaxCorner() 
+  //    << " iteration: " << iteration << " box: " << box.minCorner()
+  //    << "," << box.maxCorner() 
   //    << " boundaryFlag " << static_cast<int>(d_boundary) << "\n";
 
   d_sentParticles.clear();

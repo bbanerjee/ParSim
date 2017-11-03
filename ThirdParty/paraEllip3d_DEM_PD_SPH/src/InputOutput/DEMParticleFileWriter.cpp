@@ -71,22 +71,22 @@ DEMParticleFileWriter::writeCSV(const DEMParticlePArray& particles,
   Vec vObj;
   for (const auto& part : particles) {
     ofs << std::setw(OWID) << part->getId() << std::setw(OWID)
-        << static_cast<int>(part->getType()) << std::setw(OWID) << part->getA() << std::setw(OWID)
-        << part->getB() << std::setw(OWID) << part->getC();
+        << static_cast<int>(part->getType()) << std::setw(OWID) << part->radiusA() << std::setw(OWID)
+        << part->radiusB() << std::setw(OWID) << part->radiusC();
 
     vObj = part->currentPosition();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->getCurrDirecA();
+    vObj = part->currentAnglesAxisA();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->getCurrDirecB();
+    vObj = part->currentAnglesAxisB();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->getCurrDirecC();
+    vObj = part->currentAnglesAxisC();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
@@ -94,15 +94,15 @@ DEMParticleFileWriter::writeCSV(const DEMParticlePArray& particles,
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->currentOmega();
+    vObj = part->currentAngularVelocity();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->getForce();
+    vObj = part->force();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->getMoment();
+    vObj = part->moment();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z() << std::endl;
   }
@@ -161,16 +161,16 @@ DEMParticleFileWriter::writeXML(const DEMParticlePArray& particles,
       if (particle->getShape() == particleShape) {
         particleIDs.push_back(particle->getId());
         particleTypes.push_back(static_cast<std::size_t>(particle->getType()));
-        particleRadii.push_back(Vec(particle->getA(), particle->getB(), 
-                                    particle->getC()));
-        particleAxleA.push_back(particle->getCurrDirecA());
-        particleAxleB.push_back(particle->getCurrDirecB());
-        particleAxleC.push_back(particle->getCurrDirecC());
+        particleRadii.push_back(Vec(particle->radiusA(), particle->radiusB(), 
+                                    particle->radiusC()));
+        particleAxleA.push_back(particle->currentAnglesAxisA());
+        particleAxleB.push_back(particle->currentAnglesAxisB());
+        particleAxleC.push_back(particle->currentAnglesAxisC());
         particlePos.push_back(particle->currentPosition());
         particleVel.push_back(particle->currentVelocity());
-        particleRot.push_back(particle->currentOmega());
-        particleForce.push_back(particle->getForce());
-        particleMoment.push_back(particle->getMoment());
+        particleRot.push_back(particle->currentAngularVelocity());
+        particleForce.push_back(particle->force());
+        particleMoment.push_back(particle->moment());
       }
     }
 

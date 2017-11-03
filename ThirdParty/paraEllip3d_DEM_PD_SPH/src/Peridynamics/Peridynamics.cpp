@@ -610,9 +610,9 @@ Peridynamics::removeInsidePeriParticles(const DEMParticlePArray& allDEMParticleV
     for (auto& dem_pt : allDEMParticleVec) {
 
       // enlarged sand particle
-      REAL a = dem_pt->getA();
-      REAL b = dem_pt->getB();
-      REAL c = dem_pt->getC();
+      REAL a = dem_pt->radiusA();
+      REAL b = dem_pt->radiusB();
+      REAL c = dem_pt->radiusC();
 
       // this is important to get local coordinate
       Vec coord_peri_local = 
@@ -644,9 +644,9 @@ Peridynamics::removeInsideDEMParticles(DEMParticlePArray& allDEMParticleVec) con
 
   for (auto& dem_pt : allDEMParticleVec) {
 
-    REAL a = dem_pt->getA() + 0.5 * d_maxHorizonSize;
-    REAL b = dem_pt->getB() + 0.5 * d_maxHorizonSize;
-    REAL c = dem_pt->getC() + 0.5 * d_maxHorizonSize;
+    REAL a = dem_pt->radiusA() + 0.5 * d_maxHorizonSize;
+    REAL b = dem_pt->radiusB() + 0.5 * d_maxHorizonSize;
+    REAL c = dem_pt->radiusC() + 0.5 * d_maxHorizonSize;
     Vec coord_dem = dem_pt->currentPosition();
 
     // if this DEM object is inside Peridynamic object
@@ -699,8 +699,8 @@ Peridynamics::scatterPeriParticle(const Box& spatialDomain)
   if (d_mpiRank == 0) { // process 0
     setPatchBox(Box(spatialDomain, d_maxDistBetweenParticles*0.2));
 
-    Vec v1 = d_periPatchBox.getMinCorner();
-    Vec v2 = d_periPatchBox.getMaxCorner();
+    Vec v1 = d_periPatchBox.minCorner();
+    Vec v2 = d_periPatchBox.maxCorner();
     Vec vspan = (v2 - v1) / d_mpiProcs;
 
     auto reqs = new boost::mpi::request[d_mpiSize - 1];
@@ -804,8 +804,8 @@ Peridynamics::createPatch(int iteration,
                           const REAL& ghostWidth) 
 {
   // determine domain of each process
-  Vec v1 = d_periPatchBox.getMinCorner();
-  Vec v2 = d_periPatchBox.getMaxCorner();
+  Vec v1 = d_periPatchBox.minCorner();
+  Vec v2 = d_periPatchBox.maxCorner();
   Vec vspan = (v2 - v1) / d_mpiProcs;
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
@@ -818,8 +818,8 @@ Peridynamics::updatePatch(int iteration,
                           const REAL& ghostWidth)
 {
   // determine domain of each process
-  Vec v1 = d_periPatchBox.getMinCorner();
-  Vec v2 = d_periPatchBox.getMaxCorner();
+  Vec v1 = d_periPatchBox.minCorner();
+  Vec v2 = d_periPatchBox.maxCorner();
   Vec vspan = (v2 - v1) / d_mpiProcs;
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
@@ -1059,7 +1059,7 @@ void
 Peridynamics::migratePeriParticle(int iteration)
 {
   // Compute the (x,y,z) patch dimensions
-  Vec domainWidth = d_periPatchBox.getMaxCorner() - d_periPatchBox.getMinCorner();
+  Vec domainWidth = d_periPatchBox.maxCorner() - d_periPatchBox.minCorner();
   Vec patchWidth = domainWidth / d_mpiProcs;
 
   // Migrate particles in the x-direction
@@ -1437,9 +1437,9 @@ Peridynamics::findPeriDEMBonds(dem::DEMParticlePArray d_mergedParticles)
 
     for (auto& dem_pt : d_mergedParticles) {
       // check and construct the periDEMBondVec in this particle
-      REAL ra = dem_pt->getA();
-      REAL rb = dem_pt->getB();
-      REAL rc = dem_pt->getC();
+      REAL ra = dem_pt->radiusA();
+      REAL rb = dem_pt->radiusB();
+      REAL rc = dem_pt->radiusC();
       Vec xyz_peri_tmp = dem_pt->globalToLocal(
         xyz_peri - dem_pt->currentPosition()); // this is very important, since
                                           // all calculations below for
@@ -1624,9 +1624,9 @@ Peridynamics::constructBoundarySandPeriBonds()
           for(DEMParticlePArray::iterator dem_pt=ParticleVec.begin();
   dem_pt!=ParticleVec.end(); dem_pt++){
           // check and construct the periDEMBondVec in this particle
-          REAL ra = (*dem_pt)->getA();
-          REAL rb = (*dem_pt)->getB();
-          REAL rc = (*dem_pt)->getC();
+          REAL ra = (*dem_pt)->radiusA();
+          REAL rb = (*dem_pt)->radiusB();
+          REAL rc = (*dem_pt)->radiusC();
               xyz_peri = (*dem_pt)->localVec(xyz_peri-(*dem_pt)->currentPosition());
   // this is very important, since all calculations below for ellipsoid
               REAL x_peri = xyz_peri.x();                        // are based
@@ -1991,7 +1991,7 @@ Peridynamics::printPeriProgress(std::ofstream& ofs, const int iframe) const
         << std::setw(20) << pt->getVelocity().y() << std::setw(20)
         << pt->getVelocity().z() << std::setw(20) << vnormL2(pt->getVelocity())
         << std::setw(20) << pressure << std::setw(20) << vonMisesStress
-        << std::setw(20) << pt->getVolume() << std::setw(20)
+        << std::setw(20) << pt->volume() << std::setw(20)
         << pt->getHorizonSize() << std::endl;
     ofs.flush();
   }
@@ -2037,7 +2037,7 @@ Peridynamics::printPeriProgressHalf(std::ofstream& ofs, const int iframe) const
         << std::setw(20) << pt->getVelocity().y() << std::setw(20)
         << pt->getVelocity().z() << std::setw(20) << vnormL2(pt->getVelocity())
         << std::setw(20) << pressure << std::setw(20) << vonMisesStress
-        << std::setw(20) << pt->getVolume() << std::setw(20)
+        << std::setw(20) << pt->volume() << std::setw(20)
         << pt->getHorizonSize() << std::endl;
     ofs.flush();
   }
@@ -2134,7 +2134,7 @@ Peridynamics::writeMeshCheckVolume(const std::string& outputFile)
     ofs << std::setw(20) << particle->getInitPosition().x()
         << std::setw(20) << particle->getInitPosition().y()
         << std::setw(20) << particle->getInitPosition().z()
-        << std::setw(20) << particle->getVolume()
+        << std::setw(20) << particle->volume()
         << std::endl;
   }
   for (int iel = 0; iel < nele; iel++) {
@@ -2206,12 +2206,12 @@ Peridynamics::printPeriDomain(const std::string& str) const
         << pt->getDisplacement().y() << std::setw(20)
         << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
         << std::setw(20) << pt->getVelocity().y() << std::setw(20)
-        << pt->getVelocity().z() << std::setw(20) << pt->getAcceleration().x()
-        << std::setw(20) << pt->getAcceleration().y() << std::setw(20)
-        << pt->getAcceleration().z() << std::setw(20)
+        << pt->getVelocity().z() << std::setw(20) << pt->accelerationeration().x()
+        << std::setw(20) << pt->accelerationeration().y() << std::setw(20)
+        << pt->accelerationeration().z() << std::setw(20)
         << vnormL2(pt->getVelocity()) << std::setw(20) << pressure
         << std::setw(20) << vonMisesStress << std::setw(20)
-        << pt->getVolume() << std::setw(20) << pt->getHorizonSize()
+        << pt->volume() << std::setw(20) << pt->getHorizonSize()
         << std::setw(20) << pt->getBondsNumber() << std::setw(20)
         << dem::det(Kinv_tmp) << std::setw(20) << dem::det(deformationG)
         << std::endl;
@@ -2275,12 +2275,12 @@ Peridynamics::printRecvPeriDomain(const std::string& str) const
         << pt->getDisplacement().y() << std::setw(20)
         << pt->getDisplacement().z() << std::setw(20) << pt->getVelocity().x()
         << std::setw(20) << pt->getVelocity().y() << std::setw(20)
-        << pt->getVelocity().z() << std::setw(20) << pt->getAcceleration().x()
-        << std::setw(20) << pt->getAcceleration().y() << std::setw(20)
-        << pt->getAcceleration().z() << std::setw(20)
+        << pt->getVelocity().z() << std::setw(20) << pt->accelerationeration().x()
+        << std::setw(20) << pt->accelerationeration().y() << std::setw(20)
+        << pt->accelerationeration().z() << std::setw(20)
         << vnormL2(pt->getVelocity()) << std::setw(20) << pressure
         << std::setw(20) << vonMisesStress << std::setw(20)
-        << pt->getVolume() << std::setw(20) << pt->getHorizonSize()
+        << pt->volume() << std::setw(20) << pt->getHorizonSize()
         << std::setw(20) << pt->getBondsNumber() << std::setw(20)
         << dem::det(Kinv_tmp) << std::setw(20) << dem::det(deformationG)
         << std::endl;

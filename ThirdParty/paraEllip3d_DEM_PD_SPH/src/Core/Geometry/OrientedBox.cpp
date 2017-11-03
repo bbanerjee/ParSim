@@ -7,13 +7,13 @@
 namespace dem {
 
 OrientedBox::OrientedBox(const Box& box) {
-  d_center = box.getCenter();
+  d_center = box.center();
   d_axes[0] = Vec(1, 0, 0);
   d_axes[1] = Vec(0, 1, 0);
   d_axes[2] = Vec(0, 0, 1);
-  d_half_len[0] = box.getDimx()*0.5;
-  d_half_len[1] = box.getDimy()*0.5;
-  d_half_len[2] = box.getDimz()*0.5;
+  d_half_len[0] = box.dimX()*0.5;
+  d_half_len[1] = box.dimY()*0.5;
+  d_half_len[2] = box.dimZ()*0.5;
 }
 
 void 

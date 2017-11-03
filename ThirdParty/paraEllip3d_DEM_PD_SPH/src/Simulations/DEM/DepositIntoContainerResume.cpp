@@ -15,9 +15,9 @@ DepositIntoContainerResume::execute(DiscreteElements* dem)
   if (dem->getMPIRank() == 0) {
     const Box& spatialDomain = dem->getSpatialDomain();
     dem->setSpatialDomain(Box(
-      spatialDomain.getMinCorner().x(), spatialDomain.getMinCorner().y(),
-      spatialDomain.getMinCorner().z(), spatialDomain.getMaxCorner().x(),
-      spatialDomain.getMaxCorner().y(),
+      spatialDomain.minCorner().x(), spatialDomain.minCorner().y(),
+      spatialDomain.minCorner().z(), spatialDomain.maxCorner().x(),
+      spatialDomain.maxCorner().y(),
       util::getParam<REAL>("trimHeight")));
 
     BoundaryFileWriter boundaryWriter;

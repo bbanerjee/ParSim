@@ -11,9 +11,9 @@ TEST(SPHParticleTest, construction0)
 
   SPHParticle particle;
   EXPECT_EQ(particle.getId(), 0);
-  EXPECT_DOUBLE_EQ(particle.getMass(), 0);
-  EXPECT_DOUBLE_EQ(particle.getDensity(), 0);
-  EXPECT_DOUBLE_EQ(particle.getVolume(), 0);
+  EXPECT_DOUBLE_EQ(particle.mass(), 0);
+  EXPECT_DOUBLE_EQ(particle.density(), 0);
+  EXPECT_DOUBLE_EQ(particle.volume(), 0);
   EXPECT_DOUBLE_EQ(particle.getPressure(), 0);
   EXPECT_DOUBLE_EQ(particle.getViscosity(), 0);
   EXPECT_DOUBLE_EQ(particle.getVelocity().x(), 0);
@@ -41,9 +41,9 @@ TEST(SPHParticleTest, construction1)
   SPHParticleType type = SPHParticleType::FREE;
   SPHParticle particle(id, mass, density, x, y, z, local, type);
   EXPECT_EQ(particle.getId(), 100);
-  EXPECT_DOUBLE_EQ(particle.getMass(), 1.5);
-  EXPECT_DOUBLE_EQ(particle.getDensity(), 1200.0);
-  EXPECT_DOUBLE_EQ(particle.getVolume(), 0.00125);
+  EXPECT_DOUBLE_EQ(particle.mass(), 1.5);
+  EXPECT_DOUBLE_EQ(particle.density(), 1200.0);
+  EXPECT_DOUBLE_EQ(particle.volume(), 0.00125);
   EXPECT_NEAR(particle.getPressure(), 207.273863, 1.0e-6);
   EXPECT_DOUBLE_EQ(particle.getViscosity(), 120000);
   EXPECT_DOUBLE_EQ(particle.getVelocity().x(), 0);
@@ -71,15 +71,15 @@ TEST(SPHParticleTest, insideDEMParticle)
 
   dem::Vec pos(0, 0, 0);
 
-  dem_particle->setA(a);
-  dem_particle->setB(b);
-  dem_particle->setC(c);
+  dem_particle->setRadiusA(a);
+  dem_particle->setRadiusB(b);
+  dem_particle->setRadiusC(c);
 
-  dem_particle->setCurrPos(pos);
+  dem_particle->setCurrentPosition(pos);
 
-  dem_particle->setCurrDirecA(adir);
-  dem_particle->setCurrDirecB(bdir);
-  dem_particle->setCurrDirecC(cdir);
+  dem_particle->setCurrentAnglesAxisA(adir);
+  dem_particle->setCurrentAnglesAxisB(bdir);
+  dem_particle->setCurrentAnglesAxisC(cdir);
 
   REAL buffer = 0;
   dem::Vec localCoord = 0;

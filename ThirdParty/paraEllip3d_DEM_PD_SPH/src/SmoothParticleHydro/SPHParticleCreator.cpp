@@ -36,8 +36,8 @@ SPHParticleCreator::generateSPHParticleDam(
   auto sphMass = computeMass<dim>(sphInitialDensity, sphLength, numSPHPoint);
 
   // get the dimensions of the sph domain
-  Vec vmin = spatialDomain.getMinCorner();
-  Vec vmax = spatialDomain.getMaxCorner();
+  Vec vmin = spatialDomain.minCorner();
+  Vec vmax = spatialDomain.maxCorner();
 
   // Create an linearly spaced arrays of x/y/zcoords
   std::vector<REAL> xCoords, yCoords, zCoords;
@@ -136,8 +136,8 @@ SPHParticleCreator::generateSPHParticleNoBottom(
   const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles)
 {
   // Determine length parameter and SPH point spacing
-  REAL xMin = spatialDomain.getMinCorner().x();
-  REAL xMax = spatialDomain.getMaxCorner().x();
+  REAL xMin = spatialDomain.minCorner().x();
+  REAL xMax = spatialDomain.maxCorner().x();
   auto sphLength = xMin - xMax;
   auto spaceInterval = util::getParam<REAL>("spaceInterval");
   auto numSPHPoint = sphLength/spaceInterval + 1;
@@ -157,8 +157,8 @@ SPHParticleCreator::generateSPHParticleNoBottom(
   auto sphMass = computeMass<dim>(sphInitialDensity, sphLength, numSPHPoint);
 
   // get the dimensions of the sph domain
-  Vec vmin = spatialDomain.getMinCorner();
-  Vec vmax = spatialDomain.getMaxCorner();
+  Vec vmin = spatialDomain.minCorner();
+  Vec vmax = spatialDomain.maxCorner();
 
   // Create an linearly spaced arrays of x/y/zcoords
   std::vector<REAL> xCoords, yCoords, zCoords;
@@ -248,8 +248,8 @@ SPHParticleCreator::generateSPHParticleMiddleLayers(
   const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles)
 {
   // Determine length parameter and SPH point spacing
-  REAL xMin = spatialDomain.getMinCorner().x();
-  REAL xMax = spatialDomain.getMaxCorner().x();
+  REAL xMin = spatialDomain.minCorner().x();
+  REAL xMax = spatialDomain.maxCorner().x();
   auto sphLength = xMin - xMax;
   auto spaceInterval = util::getParam<REAL>("spaceInterval");
   auto numSPHPoint = sphLength/spaceInterval + 1;
@@ -273,8 +273,8 @@ SPHParticleCreator::generateSPHParticleMiddleLayers(
   auto sphMass = computeMass<dim>(sphInitialDensity, sphLength, numSPHPoint);
 
   // get the dimensions of the sph domain
-  Vec vmin = spatialDomain.getMinCorner();
-  Vec vmax = spatialDomain.getMaxCorner();
+  Vec vmin = spatialDomain.minCorner();
+  Vec vmax = spatialDomain.maxCorner();
 
   // Create an linearly spaced arrays of x/y/zcoords
   std::vector<REAL> xCoords, yCoords, zCoords;

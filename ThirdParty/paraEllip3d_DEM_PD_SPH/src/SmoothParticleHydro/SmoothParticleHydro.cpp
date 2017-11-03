@@ -123,8 +123,8 @@ SmoothParticleHydro::scatterSPHParticle(const Box& spatialDomain,
     }
     */
 
-    Vec v1 = d_sphPatchBox.getMinCorner();
-    Vec v2 = d_sphPatchBox.getMaxCorner();
+    Vec v1 = d_sphPatchBox.minCorner();
+    Vec v2 = d_sphPatchBox.maxCorner();
     Vec vspan = (v2 - v1) / d_mpiProcs;
 
     auto reqs = new boost::mpi::request[d_mpiSize - 1];
@@ -189,8 +189,8 @@ void
 SmoothParticleHydro::createPatch(int iteration, const REAL& ghostWidth)
 {
   // determine domain of each process
-  Vec v1 = d_sphPatchBox.getMinCorner();
-  Vec v2 = d_sphPatchBox.getMaxCorner();
+  Vec v1 = d_sphPatchBox.minCorner();
+  Vec v2 = d_sphPatchBox.maxCorner();
   Vec vspan = (v2 - v1) / d_mpiProcs;
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
@@ -202,8 +202,8 @@ void
 SmoothParticleHydro::updatePatch(int iteration, const REAL& ghostWidth)
 {
   // determine domain of each process
-  Vec v1 = d_sphPatchBox.getMinCorner();
-  Vec v2 = d_sphPatchBox.getMaxCorner();
+  Vec v1 = d_sphPatchBox.minCorner();
+  Vec v2 = d_sphPatchBox.maxCorner();
   Vec vspan = (v2 - v1) / d_mpiProcs;
   Vec lower = v1 + vspan * d_mpiCoords;
   Vec upper = lower + vspan;
@@ -266,7 +266,7 @@ SmoothParticleHydro::commuSPHParticle(int iteration, const REAL& ghostWidth)
 void
 SmoothParticleHydro::migrateSPHParticle(int iteration)
 {
-  Vec domainWidth = d_sphPatchBox.getMaxCorner() - d_sphPatchBox.getMinCorner();
+  Vec domainWidth = d_sphPatchBox.maxCorner() - d_sphPatchBox.minCorner();
   Vec patchWidth = domainWidth / d_mpiProcs;
 
   // Migrate particles in the x-direction
@@ -493,9 +493,9 @@ SmoothParticleHydro::assignParticlesToPatchGrid(const Box& domain,
   Box expandedContainer(domain, ghostBuffer);
 
   // Compute the number of cells in each dimension
-  int nx = std::round(expandedContainer.getDimx()/kernelSize) + 1;
-  int ny = std::round(expandedContainer.getDimy()/kernelSize) + 1;
-  int nz = std::round(expandedContainer.getDimz()/kernelSize) + 1;
+  int nx = std::round(expandedContainer.dimX()/kernelSize) + 1;
+  int ny = std::round(expandedContainer.dimY()/kernelSize) + 1;
+  int nz = std::round(expandedContainer.dimZ()/kernelSize) + 1;
   d_numGridCells.setX(nx);
   d_numGridCells.setY(ny); 
   d_numGridCells.setZ(nz);
@@ -513,7 +513,7 @@ SmoothParticleHydro::assignParticlesToPatchGrid(const Box& domain,
 
   d_sphPatchGrid.resize(nx*ny*nz); 
   for (const auto& particle : d_mergeSPHParticleVec) {
-    int cellIndex = getCellIndex<dim>(expandedContainer.getMinCorner(),
+    int cellIndex = getCellIndex<dim>(expandedContainer.minCorner(),
                                       kernelSize, 
                                       d_numGridCells,
                                       particle->currentPosition());
@@ -829,10 +829,10 @@ SmoothParticleHydro::updateSPHLeapFrogPositionDensity(const REAL& delT)
                            dem_pos_curr;
         Vec sph_dem_rel_pos = sph_pos_curr - dem_pos_curr;
         Vec sph_vel_curr = dem_particle->currentVelocity() +
-                           cross(dem_particle->currentOmega(),
+                           cross(dem_particle->currentAngularVelocity(),
                                  sph_dem_rel_pos);
-        particle->setCurrPosition(sph_pos_curr);
-        particle->setCurrVelocity(sph_vel_curr);
+        particle->setCurrentPositionition(sph_pos_curr);
+        particle->setCurrentVelocity(sph_vel_curr);
         particle->updateDensity(delT);
         break;
       }
@@ -923,11 +923,11 @@ SmoothParticleHydro::printSPHParticle(const char* str) const
     ofs << std::setw(20) << particle->getPressure();
 
     ofs << std::setw(20) 
-        << particle->getAcceleration().x() << std::setw(20)
-        << particle->getAcceleration().y() << std::setw(20)
-        << particle->getAcceleration().z() << std::setw(20)
-        << particle->getDensityRate() << std::setw(20)
-        << particle->getDensity() << std::endl;
+        << particle->accelerationeration().x() << std::setw(20)
+        << particle->accelerationeration().y() << std::setw(20)
+        << particle->accelerationeration().z() << std::setw(20)
+        << particle->densityRate() << std::setw(20)
+        << particle->density() << std::endl;
   }
 
   ofs.close();

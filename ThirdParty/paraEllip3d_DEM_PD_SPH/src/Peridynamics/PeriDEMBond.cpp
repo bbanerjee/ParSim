@@ -80,7 +80,7 @@ a lot of computations,
         // get current global coordinates of the initProjectorLocal
         REAL currBondL =
 vnormL2(periPoint->currentPosition()-demParticle->currentPosition())
-- demParticle->getA();
+- demParticle->radiusA();
         REAL initBondL = vnormL2(initBondVec);
 
         // (2) check if bond is alive
@@ -121,7 +121,7 @@ pointing from the projector to the peri-point
         Vec r_vec = dem_posi-peri_posi;
 
         REAL dist = vnormL2(r_vec);
-        REAL radi = demParticle->getA();
+        REAL radi = demParticle->radiusA();
         if(dist > radi)
             return;
         REAL maxRelaOverlap =
@@ -156,7 +156,7 @@ PeriDEMBond::applyBondBoundary()
   // bond created
   dem::Vec curr_posi_global =
     demParticle->localToGlobal(initProjectorLocal) + demParticle->currentPosition();
-  periPoint->setCurrPosition(curr_posi_global);
+  periPoint->setCurrentPositionition(curr_posi_global);
 
 } // end applyBondBoundary
 

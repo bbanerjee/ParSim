@@ -40,96 +40,96 @@ public:
 
   // setVolume - sets the volume of the particle
   // @param newParticleVolume - volume of the particle
-  void setVolume(REAL newParticleVolume) { volume = newParticleVolume; } 
+  void setVolume(REAL newParticleVolume) { d_volume = newParticleVolume; } 
 
   // The mass should be set at the beginning of the simulation when the
   // volume is the initial volume
-  void setMass(REAL initialVolume) {mass = util::getParam<REAL>("periDensity") * initialVolume;}
-  void setInitPosition(const dem::Vec& pos) { initPosition = pos; }
+  void setMass(REAL initialVolume) {d_mass = util::getParam<REAL>("periDensity") * initialVolume;}
+  void setInitPosition(const dem::Vec& pos) { d_initPosition = pos; }
 
-  REAL getMass() const { return mass; }
-  REAL getVolume() const { return volume; }
-  REAL getHorizonSize() const { return horizonSize; }
-  REAL getSigma11() const { return sigma11; }
-  REAL getSigma12() const { return sigma12; }
-  REAL getSigma13() const { return sigma13; }
-  REAL getSigma21() const { return sigma21; }
-  REAL getSigma22() const { return sigma22; }
-  REAL getSigma23() const { return sigma23; }
-  REAL getSigma31() const { return sigma31; }
-  REAL getSigma32() const { return sigma32; }
-  REAL getSigma33() const { return sigma33; }
-  int getBondsNumber() const { return bondVec.size(); }
-  dem::Vec getInitPosition() const { return initPosition; }
-  dem::Vec currentPosition() const { return initPosition + displacement; }
-  dem::Vec previousPosition() const { return initPosition + prevDisp; }
-  dem::Vec getDisplacement() const { return displacement; }
-  dem::Vec getVelocity() const { return velocity; }
-  bool getIsAlive() const { return isAlive; }
-  dem::Matrix getSigma() const { return sigma; }
-  dem::Matrix getDeformationGradient() const { return deformationGradient; }
-  dem::Matrix getParticleKinv() const { return Kinv; }
+  REAL mass() const { return d_mass; }
+  REAL volume() const { return d_volume; }
+  REAL getHorizonSize() const { return d_horizonSize; }
+  REAL getSigma11() const { return d_sigma11; }
+  REAL getSigma12() const { return d_sigma12; }
+  REAL getSigma13() const { return d_sigma13; }
+  REAL getSigma21() const { return d_sigma21; }
+  REAL getSigma22() const { return d_sigma22; }
+  REAL getSigma23() const { return d_sigma23; }
+  REAL getSigma31() const { return d_sigma31; }
+  REAL getSigma32() const { return d_sigma32; }
+  REAL getSigma33() const { return d_sigma33; }
+  int getBondsNumber() const { return d_bondVec.size(); }
+  dem::Vec getInitPosition() const { return d_initPosition; }
+  dem::Vec currentPosition() const { return d_initPosition + d_displacement; }
+  dem::Vec previousPosition() const { return d_initPosition + d_prevDisp; }
+  dem::Vec getDisplacement() const { return d_displacement; }
+  dem::Vec getVelocity() const { return d_velocity; }
+  bool getIsAlive() const { return d_isAlive; }
+  dem::Matrix getSigma() const { return d_sigma; }
+  dem::Matrix getDeformationGradient() const { return d_deformationGradient; }
+  dem::Matrix getParticleKinv() const { return d_Kinv; }
   //    dem::Matrix getIsv() const {return isv;}
-  REAL getIsv() const { return isv11; }
-  dem::Vec getVelocityHalf() const { return velocityHalf; }
+  REAL getIsv() const { return d_isv11; }
+  dem::Vec getVelocityHalf() const { return d_velocityHalf; }
 
-  dem::Vec getAcceleration() const { return acceleration; }
+  dem::Vec accelerationeration() const { return d_acceleration; }
 
   void checkParticleAlive();
   void replaceHorizonSizeIfLarger(
     REAL tmp); // replace this->horizonSize if tmp is larger
   void prescribeBottomDisplacement(REAL disp)
   {
-    displacement.setZ(disp);
-    velocity.setZ(0.0);
+    d_displacement.setZ(disp);
+    d_velocity.setZ(0.0);
   }
   void prescribeDisplacementX(REAL disp)
   {
-    displacement.setX(disp);
-    velocity.setX(0.0);
+    d_displacement.setX(disp);
+    d_velocity.setX(0.0);
   }
   void prescribeDisplacementY(REAL disp)
   {
-    displacement.setY(disp);
-    velocity.setY(0.0);
+    d_displacement.setY(disp);
+    d_velocity.setY(0.0);
   }
   void prescribeDisplacement(dem::Vec disp)
   {
-    displacement = disp;
-    velocity = dem::Vec(0.0);
+    d_displacement = disp;
+    d_velocity = dem::Vec(0.0);
   }
   void prescribeTopDisplacement(REAL disp)
   {
-    displacement.setZ(disp);
-    velocity.setZ(0.0);
+    d_displacement.setZ(disp);
+    d_velocity.setZ(0.0);
   }
-  void setInitVelocity(const dem::Vec& tmp) { velocity = tmp; }
-  void setInitIsv(REAL isv_tmp) { isv11 = isv_tmp; }
+  void setInitVelocity(const dem::Vec& tmp) { d_velocity = tmp; }
+  void setInitIsv(REAL isv_tmp) { d_isv11 = isv_tmp; }
   void constructMatrixMember(); // construct these Matrix members
 
   void setAcceleration(dem::Vec newAcceleration)
   {
-    acceleration = newAcceleration;
+    d_acceleration = newAcceleration;
   }
-  void setCurrPosition(dem::Vec curr_posi)
+  void setCurrentPositionition(dem::Vec curr_posi)
   {
-    displacement = curr_posi - initPosition;
+    d_displacement = curr_posi - d_initPosition;
   }
-  void addAcceleration(dem::Vec acce_add) { acceleration += acce_add; }
+  void addAcceleration(dem::Vec acce_add) { d_acceleration += acce_add; }
   void addAccelerationByForce(dem::Vec force)
   {
-    acceleration +=
-      force / (volume *
+    d_acceleration +=
+      force / (d_volume *
                util::getParam<REAL>("periDensity") *
                util::getParam<REAL>("massScale"));
   }
   // add acceleration based on force, July 15, 2014
   //    void pushBackNeighborVec(PeriParticle* pt) {neighborVec.push_back(pt);}
-  void pushBackBondVec(PeriBondP bt) { bondVec.push_back(bt); }
-  void setAliveFalse() { isAlive = false; }
-  void setStressZero() { sigma = dem::zeros(3, 3); }
-  void setAccelerationZero() { acceleration = 0; }
-  void setParticleKinv(dem::Matrix& tmp) { Kinv = tmp; }
+  void pushBackBondVec(PeriBondP bt) { d_bondVec.push_back(bt); }
+  void setAliveFalse() { d_isAlive = false; }
+  void setStressZero() { d_sigma = dem::zeros(3, 3); }
+  void setAccelerationZero() { d_acceleration = 0; }
+  void setParticleKinv(dem::Matrix& tmp) { d_Kinv = tmp; }
   void calcParticleKinv();
   void calcParticleStress();
   void calcParticleAcceleration();
@@ -140,24 +140,24 @@ public:
   void eraseRecvPeriBonds();
   void assignSigma();
   void assignKinv();
-  void clearPeriBonds() { bondVec.clear(); }
+  void clearPeriBonds() { d_bondVec.clear(); }
   void releaseBondVec();
 
-  void addDEMId(int id) { BondedDEMParticleID.push_back(id); }
+  void addDEMId(int id) { d_BondedDEMParticleID.push_back(id); }
   void eraseDEMId(int id)
   {
-    BondedDEMParticleID.erase(
-      std::remove(BondedDEMParticleID.begin(), BondedDEMParticleID.end(), id),
-      BondedDEMParticleID.end());
+    d_BondedDEMParticleID.erase(
+      std::remove(d_BondedDEMParticleID.begin(), d_BondedDEMParticleID.end(), id),
+      d_BondedDEMParticleID.end());
   }
   bool isBonded(int id)
   {
-    return (std::find(BondedDEMParticleID.begin(), BondedDEMParticleID.end(),
-                      id) != BondedDEMParticleID.end());
+    return (std::find(d_BondedDEMParticleID.begin(), d_BondedDEMParticleID.end(),
+                      id) != d_BondedDEMParticleID.end());
   }
 
 private:
-  bool isAlive; // if the peri-particle is alive
+  bool d_isAlive; // if the peri-particle is alive
 
   // REAL particleDensity;	// particle density ==> defined globally, same
   // material, usually
@@ -166,60 +166,60 @@ private:
   // need,
   // save spaces
   ParticleID d_id;       // Unique particle ID
-  dem::Vec initPosition; // initial position vector of particle
+  dem::Vec d_initPosition; // initial position vector of particle
 
-  REAL mass;             // particle mass
-  REAL volume;   // particle volume
-  dem::Vec displacement; // particle displacement
-  dem::Vec prevDisp;     // displacement at previous step
-  dem::Vec velocity;     // particle velocity
-  dem::Vec velocityHalf; // velocity at half time-step, for Velocity-Verlet
+  REAL d_mass;             // particle mass
+  REAL d_volume;   // particle volume
+  dem::Vec d_displacement; // particle displacement
+  dem::Vec d_prevDisp;     // displacement at previous step
+  dem::Vec d_velocity;     // particle velocity
+  dem::Vec d_velocityHalf; // velocity at half time-step, for Velocity-Verlet
                          // integration
-  dem::Vec acceleration; // particle acceleration
+  dem::Vec d_acceleration; // particle acceleration
 
-  dem::Matrix sigma;               // Cauchy stress
-  dem::Matrix deformationGradient; // deformation gradient tensor
-  dem::Matrix deformationGradientHalf;
-  dem::Matrix Kinv; // the inverse K Matrix
+  dem::Matrix d_sigma;               // Cauchy stress
+  dem::Matrix d_deformationGradient; // deformation gradient tensor
+  dem::Matrix d_deformationGradientHalf;
+  dem::Matrix d_Kinv; // the inverse K Matrix
                     //    dem::Matrix isv;		// a 1x5 matrix
-  REAL isv11; // actually, only isv(1,1) is used, and it may be changed from
+  REAL d_isv11; // actually, only isv(1,1) is used, and it may be changed from
               // each time step
-  dem::Matrix tangentModulus;
+  dem::Matrix d_tangentModulus;
 
-  REAL horizonSize; // used to get neighbor list
+  REAL d_horizonSize; // used to get neighbor list
 
   //    std::vector<PeriParticle*> neighborVec;	// neighbor list of this
   // particle
-  PeriBondPArray bondVec; // Bonds connected to this particle,
+  PeriBondPArray d_bondVec; // Bonds connected to this particle,
   // peri-bonds will be constructed after scattering in each cpu
 
   // in order to keep stress values after gathering
-  REAL sigma11;
-  REAL sigma12;
-  REAL sigma13;
+  REAL d_sigma11;
+  REAL d_sigma12;
+  REAL d_sigma13;
 
-  REAL sigma21;
-  REAL sigma22;
-  REAL sigma23;
+  REAL d_sigma21;
+  REAL d_sigma22;
+  REAL d_sigma23;
 
-  REAL sigma31;
-  REAL sigma32;
-  REAL sigma33;
+  REAL d_sigma31;
+  REAL d_sigma32;
+  REAL d_sigma33;
 
   // in order to keep Kinv values after commuPeriParticle
-  REAL Kinv11;
-  REAL Kinv12;
-  REAL Kinv13;
+  REAL d_Kinv11;
+  REAL d_Kinv12;
+  REAL d_Kinv13;
 
-  REAL Kinv21;
-  REAL Kinv22;
-  REAL Kinv23;
+  REAL d_Kinv21;
+  REAL d_Kinv22;
+  REAL d_Kinv23;
 
-  REAL Kinv31;
-  REAL Kinv32;
-  REAL Kinv33;
+  REAL d_Kinv31;
+  REAL d_Kinv32;
+  REAL d_Kinv33;
 
-  std::vector<int> BondedDEMParticleID; // the ID of DEM particles to which this
+  std::vector<int> d_BondedDEMParticleID; // the ID of DEM particles to which this
                                         // peri-point is bonded
 
   friend class boost::serialization::access;
@@ -227,42 +227,42 @@ private:
   void serialize(Archive& ar, const unsigned int version)
   {
     ar& d_id;
-    ar& isAlive;
-    ar& initPosition;
-    ar& mass;
-    ar& volume;
-    ar& displacement;
-    ar& prevDisp;
-    ar& velocity;
-    ar& velocityHalf;
-    ar& acceleration;
+    ar& d_isAlive;
+    ar& d_initPosition;
+    ar& d_mass;
+    ar& d_volume;
+    ar& d_displacement;
+    ar& d_prevDisp;
+    ar& d_velocity;
+    ar& d_velocityHalf;
+    ar& d_acceleration;
     //      ar & sigma;
     //      ar & deformationGradient;
     //      ar & deformationGradientHalf;
     //      ar & Kinv;
-    ar& isv11;
+    ar& d_isv11;
     //      ar & tangentModulus;
-    ar& horizonSize;
+    ar& d_horizonSize;
     //      ar & bondVec;
-    ar& sigma11;
-    ar& sigma12;
-    ar& sigma13;
-    ar& sigma21;
-    ar& sigma22;
-    ar& sigma23;
-    ar& sigma31;
-    ar& sigma32;
-    ar& sigma33;
-    ar& Kinv11;
-    ar& Kinv12;
-    ar& Kinv13;
-    ar& Kinv21;
-    ar& Kinv22;
-    ar& Kinv23;
-    ar& Kinv31;
-    ar& Kinv32;
-    ar& Kinv33;
-    ar& BondedDEMParticleID;
+    ar& d_sigma11;
+    ar& d_sigma12;
+    ar& d_sigma13;
+    ar& d_sigma21;
+    ar& d_sigma22;
+    ar& d_sigma23;
+    ar& d_sigma31;
+    ar& d_sigma32;
+    ar& d_sigma33;
+    ar& d_Kinv11;
+    ar& d_Kinv12;
+    ar& d_Kinv13;
+    ar& d_Kinv21;
+    ar& d_Kinv22;
+    ar& d_Kinv23;
+    ar& d_Kinv31;
+    ar& d_Kinv32;
+    ar& d_Kinv33;
+    ar& d_BondedDEMParticleID;
   }
 
 }; // end particle

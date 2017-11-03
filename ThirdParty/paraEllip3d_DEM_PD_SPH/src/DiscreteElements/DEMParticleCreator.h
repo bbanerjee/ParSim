@@ -45,6 +45,7 @@ private:
                                     dem::Gradation& gradation, 
                                     const ParticleParameters& params);
 
+  void removeDuplicates(DEMParticlePArray& input);
 };
 
 } // End namespace dem

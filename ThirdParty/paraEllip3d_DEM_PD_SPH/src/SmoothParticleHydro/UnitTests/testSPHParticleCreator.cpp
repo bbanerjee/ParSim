@@ -205,10 +205,10 @@ TEST(SPHParticleCreatorTest, generateSPHParticleDam)
       id, dem::DEMParticle::DEMParticleShape::ELLIPSOID, 
       dem::DEMParticle::DEMParticleType::FREE,
       radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
-    pt->setPrevVelocity(vel);
-    pt->setCurrVelocity(vel);
-    pt->setPrevOmega(omega);
-    pt->setCurrOmega(omega);
+    pt->setPreviousVelocity(vel);
+    pt->setCurrentVelocity(vel);
+    pt->setPreviousAngularVelocity(omega);
+    pt->setCurrentAngularVelocity(omega);
     pt->setForce(force);
     pt->setMoment(moment);
     allDEMParticles.push_back(pt);
@@ -391,10 +391,10 @@ TEST(SPHParticleCreatorTest, generateSPHParticleNoBottom)
       id, dem::DEMParticle::DEMParticleShape::ELLIPSOID, 
       dem::DEMParticle::DEMParticleType::FREE,
       radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
-    pt->setPrevVelocity(vel);
-    pt->setCurrVelocity(vel);
-    pt->setPrevOmega(omega);
-    pt->setCurrOmega(omega);
+    pt->setPreviousVelocity(vel);
+    pt->setCurrentVelocity(vel);
+    pt->setPreviousAngularVelocity(omega);
+    pt->setCurrentAngularVelocity(omega);
     pt->setForce(force);
     pt->setMoment(moment);
     allDEMParticles.push_back(pt);
@@ -580,10 +580,10 @@ TEST(SPHParticleCreatorTest, generateSPHParticleMiddleLayers)
       id, dem::DEMParticle::DEMParticleShape::ELLIPSOID, 
       dem::DEMParticle::DEMParticleType::FREE,
       radii, pos, axle_a, axle_b, axle_c, 1.0e9, 0.3);
-    pt->setPrevVelocity(vel);
-    pt->setCurrVelocity(vel);
-    pt->setPrevOmega(omega);
-    pt->setCurrOmega(omega);
+    pt->setPreviousVelocity(vel);
+    pt->setCurrentVelocity(vel);
+    pt->setPreviousAngularVelocity(omega);
+    pt->setCurrentAngularVelocity(omega);
     pt->setForce(force);
     pt->setMoment(moment);
     allDEMParticles.push_back(pt);

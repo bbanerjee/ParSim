@@ -1,4 +1,6 @@
 #include <DiscreteElements/DEMParticleCreator.h>
+#include <Core/Geometry/Ellipsoid.h>
+#include <Core/Geometry/OrientedBox.h>
 #include <Core/Util/Utility.h>
 #include <Core/Math/Vec.h>
 
@@ -92,7 +94,7 @@ DEMParticleCreator::createParticles<0>(DEMParticleShape particleShape,
 
   DEMParticleP particle = std::make_shared<DEMParticle>(++particleNum, 
     particleShape, DEMParticle::DEMParticleType::FREE,
-    spatialDomain.getCenter(), gradation, 
+    spatialDomain.center(), gradation, 
     params.youngModulus, params.poissonRatio);
 
   particles.push_back(particle);
@@ -111,14 +113,14 @@ DEMParticleCreator::createParticles<1>(DEMParticleShape particleShape,
                                        Gradation& gradation, 
                                        const ParticleParameters& params)
 {
-  auto z_cen = spatialDomain.getCenter().z();
+  auto z_cen = spatialDomain.center().z();
 
-  auto x_min = spatialDomain.getMinCorner().x() + params.edge;
-  auto x_max = spatialDomain.getMaxCorner().x() - params.edge;
+  auto x_min = spatialDomain.minCorner().x() + params.edge;
+  auto x_max = spatialDomain.maxCorner().x() - params.edge;
   auto xCoords = util::linspaceApprox<REAL>(x_min, x_max, params.maxDiameter);
 
-  auto y_min = spatialDomain.getMinCorner().y() + params.edge;
-  auto y_max = spatialDomain.getMaxCorner().y() - params.edge;
+  auto y_min = spatialDomain.minCorner().y() + params.edge;
+  auto y_max = spatialDomain.maxCorner().y() - params.edge;
   auto yCoords = util::linspaceApprox<REAL>(y_min, y_max, params.maxDiameter);
 
   DEMParticlePArray particles;
@@ -155,20 +157,20 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
   try {
     z_min = util::getParam<REAL>("floatMinZ");
   } catch (const std::out_of_range& err) {
-    z_min = spatialDomain.getMinCorner().z();
+    z_min = spatialDomain.minCorner().z();
   }
   REAL z_max = 0;
   try {
     z_max = util::getParam<REAL>("floatMaxZ");
   } catch (const std::out_of_range& err) {
-    z_max = spatialDomain.getMaxCorner().z();
+    z_max = spatialDomain.maxCorner().z();
   }
   z_min += params.maxDiameter;
   z_max -= params.maxDiameter;
   auto zCoords = util::linspaceApprox<REAL>(z_min, z_max, params.maxDiameter);
 
-  auto x_min = spatialDomain.getMinCorner().x() + params.edge;
-  auto x_max = spatialDomain.getMaxCorner().x() - params.edge;
+  auto x_min = spatialDomain.minCorner().x() + params.edge;
+  auto x_max = spatialDomain.maxCorner().x() - params.edge;
   auto xCoords = util::linspaceApprox<REAL>(x_min, x_max, params.maxDiameter);
 
   /*
@@ -182,8 +184,8 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
   std::cout << std::endl;
   */
 
-  auto y_min = spatialDomain.getMinCorner().y() + params.edge;
-  auto y_max = spatialDomain.getMaxCorner().y() - params.edge;
+  auto y_min = spatialDomain.minCorner().y() + params.edge;
+  auto y_max = spatialDomain.maxCorner().y() - params.edge;
   auto yCoords = util::linspaceApprox<REAL>(y_min, y_max, params.maxDiameter);
 
   DEMParticlePArray particles;
@@ -212,22 +214,109 @@ DEMParticlePArray
 DEMParticleCreator::generatePeriodicDEMParticles(const DEMParticlePArray& particles,
                                                  const Box& spatialDomain) 
 {
+  // Create an oriented box from the spatial domain
+  OrientedBox box(spatialDomain);
+  std::vector<Vec> vertices = box.vertices();
+  constexpr std::array<std::array<int, 4>, 6> faces = {{
+    {{0, 4, 7, 3}}, // x-
+    {{1, 2, 6, 5}}, // x+
+    {{0, 1, 5, 4}}, // y-
+    {{2, 3, 7, 3}}, // y+
+    {{0, 3, 2, 1}}, // z-
+    {{4, 5, 6, 7}}  // z+
+  }};
+  REAL widthX = spatialDomain.dimX();
+  REAL widthY = spatialDomain.dimY();
+  REAL widthZ = spatialDomain.dimZ();
+
+  auto particleCount = particles.size();
   DEMParticlePArray extraParticles;
-  /*
   for (const auto& particle : particles) {
+
     auto position = particle->currentPosition();
+
+    auto axis_a = vcos(particle->currentAnglesAxisA());
+    auto axis_b = vcos(particle->currentAnglesAxisB());
+    auto axis_c = vcos(particle->currentAnglesAxisC());
+
+    auto radius_a = particle->radiusA();
+    auto radius_b = particle->radiusB();
+    auto radius_c = particle->radiusC();
+
+    // Create an ellipsoid object for ellipsoid-face intersection tests
+    // *TODO* Generalize to sphere and other particle shapes.
+    Ellipsoid ellipsoid(position, axis_a, axis_b, axis_c, 
+                        radius_a, radius_b, radius_c);
+
+    int faceID = 1;
+    for (const auto& vertexIndices : faces) {
+      int v0 = vertexIndices[0]; int v1 = vertexIndices[1]; 
+      int v2 = vertexIndices[2]; int v3 = vertexIndices[3];
+      Face face(vertices[v0], vertices[v1], vertices[v2], vertices[v3]);
+      if (ellipsoid.intersects(face)) {
+        Vec translation(0, 0, 0);
+        switch (static_cast<Boundary::BoundaryID>(faceID)) {
+          case Boundary::BoundaryID::NONE:
+            break;
+          case Boundary::BoundaryID::XMINUS:
+            translation.setX(widthX);
+            break;
+          case Boundary::BoundaryID::XPLUS:
+            translation.setX(-widthX);
+            break;
+          case Boundary::BoundaryID::YMINUS:
+            translation.setY(widthY);
+            break;
+          case Boundary::BoundaryID::YPLUS:
+            translation.setY(-widthY);
+            break;
+          case Boundary::BoundaryID::ZMINUS:
+            translation.setZ(widthZ);
+            break;
+          case Boundary::BoundaryID::ZPLUS:
+            translation.setZ(-widthZ);
+            break;
+        }
+        // Create a copy
+        DEMParticleP newParticle = std::make_shared<DEMParticle>(*particle);
+        newParticle->setCurrentPosition(particle->currentPosition() + 
+                                        translation);
+        newParticle->setPreviousPosition(particle->previousPosition() + 
+                                         translation);
+        newParticle->setId(++particleCount);
+        newParticle->computeGlobalCoef();
+        extraParticles.push_back(newParticle);
+      }
+      ++faceID;
+    }
   }
-  */
+
+  // Remove duplicates
+  removeDuplicates(extraParticles);
+
   return extraParticles;
 }
 
-/*
-template <typename BoundaryFace>
-DEMParticleP createParticle()
+void
+DEMParticleCreator::removeDuplicates(DEMParticlePArray& input)
 {
-
+  std::vector<Vec> seen;
+  auto newEnd = std::remove_if(input.begin(), input.end(),
+    [&seen](const DEMParticleP& particle)
+    {
+      Vec pos = particle->currentPosition();
+      if (std::find_if(seen.begin(), seen.end(), 
+                       [&pos](const Vec& seen_pos) {return pos == seen_pos;}) 
+           != seen.end()) {
+        // std::cout << "Found : " << pos << "\n";
+        return true;
+      }
+      // std::cout << "Inserted : " << pos << "\n";
+      seen.push_back(pos);
+      return false;
+    });
+  input.erase(newEnd, input.end());
 }
-*/
 
 namespace dem {
 template DEMParticlePArray DEMParticleCreator::generateDEMParticles<0>(

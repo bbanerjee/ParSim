@@ -248,7 +248,7 @@ PlaneBoundary::findBoundaryContacts(DEMParticlePArray& particles)
         //          << std::setprecision(16) << dist << "\n";
       }
       */
-      if (dist < 0 && fabs(dist) <= particle->getA()) {
+      if (dist < 0 && fabs(dist) <= particle->radiusA()) {
         bool inside = true;
         for (auto& et : b_extraEdge) {
           REAL eDist = distanceToBdry(particle->currentPosition(), et);

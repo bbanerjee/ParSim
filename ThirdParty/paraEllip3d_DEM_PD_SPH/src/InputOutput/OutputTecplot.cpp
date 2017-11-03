@@ -98,12 +98,12 @@ OutputTecplot<TArray>::writeDomain(const Box* domain)
   ofs.precision(OPREC);
 
   REAL x1, y1, z1, x2, y2, z2;
-  x1 = domain->getMinCorner().x();
-  y1 = domain->getMinCorner().y();
-  z1 = domain->getMinCorner().z();
-  x2 = domain->getMaxCorner().x();
-  y2 = domain->getMaxCorner().y();
-  z2 = domain->getMaxCorner().z();
+  x1 = domain->minCorner().x();
+  y1 = domain->minCorner().y();
+  z1 = domain->minCorner().z();
+  x2 = domain->maxCorner().x();
+  y2 = domain->maxCorner().y();
+  z2 = domain->maxCorner().z();
 
   ofs << "ZONE N=8, E=1, DATAPACKING=POINT, ZONETYPE=FEBRICK" << std::endl;
   ofs << std::setw(OWID) << x2 << std::setw(OWID) << y1 << std::setw(OWID) << z1
@@ -147,8 +147,8 @@ OutputTecplot<TArray>::writePatchBoxGrid(const Box* patchBox)
   int mpiSize = 0;
   MPI_Comm_size(d_cartComm, &mpiSize);
 
-  Vec v1 = patchBox->getMinCorner();
-  Vec v2 = patchBox->getMaxCorner();
+  Vec v1 = patchBox->minCorner();
+  Vec v2 = patchBox->maxCorner();
   Vec vspan = v2 - v1;
 
   ofs << "ZONE N=" << (d_mpiProcX + 1) * (d_mpiProcY + 1) * (d_mpiProcZ + 1)
@@ -243,22 +243,22 @@ OutputTecplot<DEMParticlePArray>::writeParticles(const DEMParticlePArray* partic
   Vec vObj;
   for (const auto& part : *particles) {
     ofs << std::setw(OWID) << part->getId() << std::setw(OWID)
-        << static_cast<int>(part->getType()) << std::setw(OWID) << part->getA() << std::setw(OWID)
-        << part->getB() << std::setw(OWID) << part->getC();
+        << static_cast<int>(part->getType()) << std::setw(OWID) << part->radiusA() << std::setw(OWID)
+        << part->radiusB() << std::setw(OWID) << part->radiusC();
 
     vObj = part->currentPosition();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->getCurrDirecA();
+    vObj = part->currentAnglesAxisA();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->getCurrDirecB();
+    vObj = part->currentAnglesAxisB();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->getCurrDirecC();
+    vObj = part->currentAnglesAxisC();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
@@ -266,15 +266,15 @@ OutputTecplot<DEMParticlePArray>::writeParticles(const DEMParticlePArray* partic
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->currentOmega();
+    vObj = part->currentAngularVelocity();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->getForce();
+    vObj = part->force();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z();
 
-    vObj = part->getMoment();
+    vObj = part->moment();
     ofs << std::setw(OWID) << vObj.x() << std::setw(OWID) << vObj.y()
         << std::setw(OWID) << vObj.z() << std::endl;
   }
@@ -378,11 +378,11 @@ OutputTecplot<SPHParticlePArray>::writeParticles(const SPHParticlePArray* partic
 
     ofs << std::setw(20) << pt->getPressure();
 
-    ofs << std::setw(20) << pt->getAcceleration().x() << std::setw(20)
-        << pt->getAcceleration().y() << std::setw(20)
-        << pt->getAcceleration().z() << std::setw(20)
-        << pt->getDensityRate() << std::setw(20)
-        << pt->getDensity() << std::endl;
+    ofs << std::setw(20) << pt->accelerationeration().x() << std::setw(20)
+        << pt->accelerationeration().y() << std::setw(20)
+        << pt->accelerationeration().z() << std::setw(20)
+        << pt->densityRate() << std::setw(20)
+        << pt->density() << std::endl;
 
     ofs.flush();
   }

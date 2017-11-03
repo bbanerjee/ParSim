@@ -201,9 +201,9 @@ public:
                       REAL sigmaY = 0);
 
   REAL getTotalMassFromPatchParticleData() const;
-  REAL getMass() const;
+  REAL mass() const;
   REAL getAvgPenetration() const;
-  REAL getVolume() const;
+  REAL volume() const;
 
   REAL calcTimeStep();
   void calcVibraTimeStep();

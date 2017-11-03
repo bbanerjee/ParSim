@@ -15,9 +15,9 @@ CylinderBoundary::CylinderBoundary(Boundary::BoundaryType tp, std::ifstream& ifs
   b_id = Boundary::getBoundaryID(id);
 
   REAL dx, dy, dz, px, py, pz;
-  ifs >> dx >> dy >> dz >> px >> py >> pz >> radius;
-  direction = Vec(dx, dy, dz);
-  point = Vec(px, py, pz);
+  ifs >> dx >> dy >> dz >> px >> py >> pz >> d_radius;
+  d_direction = Vec(dx, dy, dz);
+  d_point = Vec(px, py, pz);
 }
 
 CylinderBoundary::CylinderBoundary(Boundary::BoundaryType tp, BoundaryID id, 
