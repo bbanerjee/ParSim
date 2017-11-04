@@ -215,21 +215,34 @@ DEMParticleCreator::generatePeriodicDEMParticles(const DEMParticlePArray& partic
                                                  const Box& spatialDomain) 
 {
   // Create an oriented box from the spatial domain
+  // and set up the faces
   OrientedBox box(spatialDomain);
   std::vector<Vec> vertices = box.vertices();
-  constexpr std::array<std::array<int, 4>, 6> faces = {{
+  constexpr std::array<std::array<int, 4>, 6> faceIndices = {{
     {{0, 4, 7, 3}}, // x-
     {{1, 2, 6, 5}}, // x+
     {{0, 1, 5, 4}}, // y-
-    {{2, 3, 7, 3}}, // y+
+    {{2, 3, 7, 6}}, // y+
     {{0, 3, 2, 1}}, // z-
     {{4, 5, 6, 7}}  // z+
   }};
+  std::vector<Face> faces;
+  for (const auto& indices : faceIndices) {
+    int v0 = indices[0]; int v1 = indices[1]; 
+    int v2 = indices[2]; int v3 = indices[3];
+    Face face(vertices[v0], vertices[v1], vertices[v2], vertices[v3]);
+    if (!face.isValid()) {
+      std::cout << "**ERROR** The face " << face << " is invalid but"
+                << " continuing anyway\n.";
+    }
+    faces.push_back(face);
+  }
+
+  // Check intersections
   REAL widthX = spatialDomain.dimX();
   REAL widthY = spatialDomain.dimY();
   REAL widthZ = spatialDomain.dimZ();
-
-  auto particleCount = particles.size();
+  auto particleID = particles.size() - 1;
   DEMParticlePArray extraParticles;
   for (const auto& particle : particles) {
 
@@ -249,47 +262,98 @@ DEMParticleCreator::generatePeriodicDEMParticles(const DEMParticlePArray& partic
                         radius_a, radius_b, radius_c);
 
     int faceID = 1;
-    for (const auto& vertexIndices : faces) {
-      int v0 = vertexIndices[0]; int v1 = vertexIndices[1]; 
-      int v2 = vertexIndices[2]; int v3 = vertexIndices[3];
-      Face face(vertices[v0], vertices[v1], vertices[v2], vertices[v3]);
-      if (ellipsoid.intersects(face)) {
-        Vec translation(0, 0, 0);
+    for (const auto& face : faces) {
+      auto status = ellipsoid.intersects(face);
+      if (status.first) {
+        std::vector<Vec> translations;
+
+        // A local lambda to clean things up a bit
+        auto addExtraTranslations = [&](const Vec& shift) {
+          if (status.second.first == Face::Location::VERTEX) {
+            int vertIndex = status.second.second;
+            for (int ii = 0; ii < 4; ++ii) {
+              if (ii % vertIndex != 0) {
+                Vec inPlane = face.vertex[ii] - face.vertex[vertIndex];
+                Vec outOfPlane = inPlane + shift;
+                translations.push_back(inPlane);
+                translations.push_back(outOfPlane);
+              }
+            }
+          } else if (status.second.first == Face::Location::EDGE) {
+            int edgeIndex = status.second.second;
+            int oppIndex = (edgeIndex+3) % 4;
+            Vec inPlane = face.vertex[oppIndex] - face.vertex[edgeIndex];
+            Vec outOfPlane = inPlane + shift;
+            translations.push_back(inPlane);
+            translations.push_back(outOfPlane);
+          }
+        };
+
         switch (static_cast<Boundary::BoundaryID>(faceID)) {
           case Boundary::BoundaryID::NONE:
             break;
           case Boundary::BoundaryID::XMINUS:
-            translation.setX(widthX);
+          {
+            Vec shift(widthX, 0, 0);
+            translations.push_back(shift);
+            addExtraTranslations(shift);
             break;
+          }
           case Boundary::BoundaryID::XPLUS:
-            translation.setX(-widthX);
+          {
+            Vec shift(-widthX, 0, 0);
+            translations.push_back(shift);
+            addExtraTranslations(shift);
             break;
+          }
           case Boundary::BoundaryID::YMINUS:
-            translation.setY(widthY);
+          {
+            Vec shift(0, widthY, 0);
+            translations.push_back(shift);
+            addExtraTranslations(shift);
             break;
+          }
           case Boundary::BoundaryID::YPLUS:
-            translation.setY(-widthY);
+          {
+            Vec shift(0, -widthY, 0);
+            translations.push_back(shift);
+            addExtraTranslations(shift);
             break;
+          }
           case Boundary::BoundaryID::ZMINUS:
-            translation.setZ(widthZ);
+          {
+            Vec shift(0, 0, widthZ);
+            translations.push_back(shift);
+            addExtraTranslations(shift);
             break;
+          }
           case Boundary::BoundaryID::ZPLUS:
-            translation.setZ(-widthZ);
+          {
+            Vec shift(0, 0, -widthZ);
+            translations.push_back(shift);
+            addExtraTranslations(shift);
             break;
+          }
         }
-        // Create a copy
-        DEMParticleP newParticle = std::make_shared<DEMParticle>(*particle);
-        newParticle->setCurrentPosition(particle->currentPosition() + 
-                                        translation);
-        newParticle->setPreviousPosition(particle->previousPosition() + 
-                                         translation);
-        newParticle->setId(++particleCount);
-        newParticle->computeGlobalCoef();
-        extraParticles.push_back(newParticle);
+        // Create copies
+        for (const auto& translation : translations) {
+          DEMParticleP newParticle = std::make_shared<DEMParticle>(*particle);
+          newParticle->setCurrentPosition(particle->currentPosition() + 
+                                          translation);
+          newParticle->setPreviousPosition(particle->previousPosition() + 
+                                           translation);
+          newParticle->setId(++particleID);
+          newParticle->computeGlobalCoef();
+          extraParticles.push_back(newParticle);
+        }
       }
       ++faceID;
     }
   }
+
+  //for (const auto particle : extraParticles) {
+  //  std::cout << *particle;
+  //}
 
   // Remove duplicates
   removeDuplicates(extraParticles);
@@ -308,10 +372,10 @@ DEMParticleCreator::removeDuplicates(DEMParticlePArray& input)
       if (std::find_if(seen.begin(), seen.end(), 
                        [&pos](const Vec& seen_pos) {return pos == seen_pos;}) 
            != seen.end()) {
-        // std::cout << "Found : " << pos << "\n";
+        //std::cout << "Found : " << pos << "\n";
         return true;
       }
-      // std::cout << "Inserted : " << pos << "\n";
+      //std::cout << "Inserted : " << pos << "\n";
       seen.push_back(pos);
       return false;
     });

@@ -121,7 +121,7 @@ TEST(EllipsoidTest, intersect) {
     {{0, 4, 7, 3}}, // x-
     {{1, 2, 6, 5}}, // x+
     {{0, 1, 5, 4}}, // y-
-    {{2, 3, 7, 3}}, // y+
+    {{2, 3, 7, 6}}, // y+
     {{0, 3, 2, 1}}, // z-
     {{4, 5, 6, 7}}  // z+
   }};
@@ -134,7 +134,7 @@ TEST(EllipsoidTest, intersect) {
     int v2 = face[2];
     int v3 = face[3];
     Face ff(vertices[v0], vertices[v1], vertices[v2], vertices[v3]);
-    faceIntersects[faceID] = ell5.intersects(ff);
+    faceIntersects[faceID] = (ell5.intersects(ff)).first;
     //std::cout << "Intersects face: " << faceID 
     //          << " = " << std::boolalpha << faceIntersects[faceID] << "\n";
     ++faceID;

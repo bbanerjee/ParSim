@@ -32,15 +32,16 @@ end
 function sides(fig1, fig2)
   xcenter(fig1, fig2);
   xplus(fig1, fig2);
-  xminus(fig1, fig2);
-  yminus(fig1, fig2);
+  %xminus(fig1, fig2);
+  %yminus(fig1, fig2);
 end
 
 function corners(fig1, fig2)
   xplusyminus(fig1, fig2);
-  xplusyplus(fig1, fig2);
-  xminusyplus(fig1, fig2);
-  xminusyminus(fig1, fig2);
+  %xplusyplus(fig1, fig2);
+  %xminusyplus(fig1, fig2);
+  %xminusyminus(fig1, fig2);
+  xplusypluszplus(fig1, fig2);
 end
 
 function periodic(fig1, fig2)
@@ -51,59 +52,68 @@ function periodic(fig1, fig2)
   Ax_c = [  1.5708 1.5708 0];
   drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
  
-  Pos = [  10 -1.5 1];
-  Ax_a = [  0 1.5708 1.5708];
-  Ax_b = [  1.5708 0 1.5708];
-  Ax_c = [  1.5708 1.5708 0];
-  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
- 
-  Pos = [  -0.5 9.5 1];
-  Ax_a = [  1.5708 0 1.5708];
-  Ax_b = [  3.14159 1.5708 1.5708];
-  Ax_c = [  1.5708 1.5708 0];
-  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
- 
   Pos = [  -9.4 -10 1];
   Ax_a = [  0.698139 2.26893 1.5708];
   Ax_b = [  0.872662 0.698139 1.5708];
   Ax_c = [  1.5708 1.5708 0];
   drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
- 
+
   Pos = [  10.6 10 1];
+  Rad = [ 1  2  3];
+  Ax_a = [  0.698139 2.26893 1.5708];
+  Ax_b = [  0.872662 0.698139 1.5708];
+  Ax_c = [  1.5708 1.5708 0]; 
+  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
+
+  Pos = [  -9.4 10 1];
+  Rad = [ 1  2  3];
   Ax_a = [  0.698139 2.26893 1.5708];
   Ax_b = [  0.872662 0.698139 1.5708];
   Ax_c = [  1.5708 1.5708 0];
   drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
  
-  Pos = [  -10 10 1];
-  Ax_a = [  0.698139 0.872662 1.5708];
-  Ax_b = [  2.26893 0.698139 1.5708];
+  Pos = [  -10 10 10];
+  Ax_a = [  0.698139 0.872662 1.5708  ];
+  Ax_b = [  2.26893 0.698139 1.5708  ];
+  Ax_c = [  1.5708 1.5708 0 ];
+  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
+
+  Pos = [  10 10 -10  ];
+  Ax_a = [  0.698139 0.872662 1.5708  ];
+  Ax_b = [  2.26893 0.698139 1.5708  ];
+  Ax_c = [  1.5708 1.5708 0 ];
+  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
+
+  Pos = [  -10 10 -10  ];
+  Ax_a = [  0.698139 0.872662 1.5708  ];
+  Ax_b = [  2.26893 0.698139 1.5708  ];
+  Ax_c = [  1.5708 1.5708 0 ];
+  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
+
+  Pos = [  10 -10 10  ];
+  Ax_a = [  0.698139 0.872662 1.5708  ];
+  Ax_b = [  2.26893 0.698139 1.5708  ];
+  Ax_c = [  1.5708 1.5708 0 ];
+  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
+
+  Pos = [  -10 -10 10  ];
+  Ax_a = [  0.698139 0.872662 1.5708  ];
+  Ax_b = [  2.26893 0.698139 1.5708  ];
+  Ax_c = [  1.5708 1.5708 0 ];
+  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
+
+  Pos = [  -10 -10 -10  ];
+  Ax_a = [  0.698139 0.872662 1.5708  ];
+  Ax_b = [  2.26893 0.698139 1.5708  ];
+  Ax_c = [  1.5708 1.5708 0 ];
+  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
+
+  Pos = [  10 -10 -10  ];
+  Ax_a = [  0.698139 0.872662 1.5708  ];
+  Ax_b = [  2.26893 0.698139 1.5708  ];
   Ax_c = [  1.5708 1.5708 0];
   drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
- 
-  Pos = [  10 10 1];
-  Ax_a = [  0.349074 1.91986 1.5708];
-  Ax_b = [  1.22173 0.349074 1.5708];
-  Ax_c = [  1.5708 1.5708 0];
-  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
- 
-  Pos = [  -10 -10 1];
-  Ax_a = [  0.349074 1.91986 1.5708];
-  Ax_b = [  1.22173 0.349074 1.5708];
-  Ax_c = [  1.5708 1.5708 0];
-  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
- 
-  Pos = [  10 -10 1];
-  Ax_a = [  0.349074 1.22173 1.5708];
-  Ax_b = [  1.91986 0.349074 1.5708];
-  Ax_c = [  1.5708 1.5708 0];
-  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig1)
- 
-  Pos = [  -10 10 1];
-  Ax_a = [  0.349074 1.22173 1.5708];
-  Ax_b = [  1.91986 0.349074 1.5708];
-  Ax_c = [  1.5708 1.5708 0];
-  drawEllipsoidAlt(Pos, Rad, Ax_a, Ax_b, Ax_c, fig2)
+  
 end
 
 function xcenter(fig1, fig2)
@@ -186,6 +196,16 @@ function xminusyminus(fig1, fig2)
   [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
 end
 
+function xplusypluszplus(fig1, fig2)
+  axis = [0 0 1];
+  angle = -40*pi/180;
+  cx = 10; cy = 10; cz = 10;
+  lx = 1; ly = 2; lz = 3;
+  cc = [cx; cy; cz];
+  ll = [lx; ly; lz];
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
+end
+
 function [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2)
 
   k = 5;
@@ -231,7 +251,7 @@ function [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2)
   u0 = u0/norm(u0);
   u1 = u1/norm(u1);
   u2 = u2/norm(u2);
-  [u0'; u1'; u2'];
+  [u0'; u1'; u2']
   %ppp = createBoxVertices(cc, ll, u0, u1, u2);
   %drawBoxFaces(ppp, 'b');
 
@@ -263,7 +283,7 @@ function drawEllipsoidAlt(cc, ll, ax1, ax2, ax3, fig1)
 
   figure(fig1)
   hh = surf(X, Y, Z, 'edgecolor', 'k', 'facecolor', 'g', 'facealpha', 0.3); hold on;
-  rotate(hh, [0 0 1], ax1(1)*180/pi, cc);
+  rotate(hh, [0 0 1], -ax1(1)*180/pi, cc);
   %hh2 = rotate(hh1, ax2, cc);
   %hh3 = rotate(hh2, ax3, cc);
   

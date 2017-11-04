@@ -52,7 +52,7 @@ public:
   bool containsPoint(const Vec& pt) const;
 
   bool intersects(const OrientedBox& box) const;
-  bool intersects(const Face& face) const;
+  std::pair<bool, std::pair<Face::Location, int> > intersects(const Face& face) const;
 
   void rotate(REAL angle, const Vec& axis);
   void translate(const Vec& dist);

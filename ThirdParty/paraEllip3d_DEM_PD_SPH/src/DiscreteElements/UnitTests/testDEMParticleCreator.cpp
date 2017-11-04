@@ -45,6 +45,7 @@ TEST(DEMParticleCreatorTest, periodic) {
   particles.push_back(std::shared_ptr<DEMParticle>(&particle2, 
                                                    [](DEMParticle*){}));
 
+  /*
   adir = Vec(1,  0,  0);
   bdir = Vec(0,  1,  0);
   cdir = Vec(0,  0,  1);
@@ -75,6 +76,8 @@ TEST(DEMParticleCreatorTest, periodic) {
   particles.push_back(std::shared_ptr<DEMParticle>(&particle4, 
                                                    [](DEMParticle*){}));
 
+  */
+
   adir = Vec(0.76604, -0.64279,  0.00000);
   bdir = Vec(0.64279,  0.76604,  0.00000);
   cdir = Vec(0.00000,  0.00000,  1.00000);
@@ -90,6 +93,7 @@ TEST(DEMParticleCreatorTest, periodic) {
   particles.push_back(std::shared_ptr<DEMParticle>(&particle5, 
                                                    [](DEMParticle*){}));
 
+  /*
   adir = Vec(0.76604,  0.64279,  0.00000);
   bdir = Vec(-0.64279,  0.76604,  0.00000);
   cdir = Vec(0.00000,  0.00000,  1.00000);
@@ -146,12 +150,39 @@ TEST(DEMParticleCreatorTest, periodic) {
   particles.push_back(std::shared_ptr<DEMParticle>(&particle9, 
                                                    [](DEMParticle*){}));
 
+  */
+
+  adir = Vec(0.76604,  0.64279,  0.00000);
+  bdir = Vec(-0.64279,  0.76604,  0.00000);
+  cdir = Vec(0.00000,  0.00000,  1.00000);
+  pos = Vec(10, 10, 10);
+  DEMParticle particle10;
+  particle10.setRadiusA(a);
+  particle10.setRadiusB(b);
+  particle10.setRadiusC(c);
+  particle10.setCurrentPosition(pos);
+  particle10.setCurrentAnglesAxisA(vacos(adir));
+  particle10.setCurrentAnglesAxisB(vacos(bdir));
+  particle10.setCurrentAnglesAxisC(vacos(cdir));
+
+  particles.push_back(std::shared_ptr<DEMParticle>(&particle10, 
+                                                   [](DEMParticle*){}));
+
+  /*
+  for (const auto particle : particles) {
+    std::cout << *particle;
+  }
+  */
+
   DEMParticleCreator creator;
   DEMParticlePArray periodic = 
     creator.generatePeriodicDEMParticles(particles, boundingBox);
   
+  EXPECT_EQ(periodic.size(), 11);
+  /*
   for (const auto particle : periodic) {
     std::cout << *particle;
   }
+  */
 }
 

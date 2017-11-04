@@ -212,7 +212,7 @@ public:
 
   friend std::ostream& operator<<(std::ostream& os, const DEMParticle& pp)
   {
-    os << "Pos: " << pp.d_currPos 
+    os << "ID = " << pp.d_id << " Pos: " << pp.d_currPos 
        << " Rad: (" << pp.d_a << ", " << pp.d_b << ", " << pp.d_c << ")"
        << " Ax_a: " << pp.d_currDirecA
        << " Ax_b: " << pp.d_currDirecB
