@@ -55,8 +55,8 @@ rotationMatrixToEulerAngles <- function(R) {
   sinthetaSq = 1 - costheta^2
   if (sinthetaSq < 1.0e-20) {
     theta = acos(costheta)
-    psi = 0
     phi = atan2(R[2,1], R[1,1])
+    psi = 0
   } else {
     theta = acos(costheta)
     phi = atan2(R[1,3], -R[2,3])
@@ -81,12 +81,31 @@ rotationMatrixToEulerAngles <- function(R) {
   D = matrix(c(cp, -sp, 0, sp, cp, 0, 0, 0, 1), nrow = 3, ncol = 3, byrow = TRUE)
   C = matrix(c(1, 0, 0, 0 , ct, -st, 0, st, ct), nrow = 3, ncol = 3, byrow = TRUE)
   B = matrix(c(cs, -ss, 0, ss, cs, 0, 0, 0, 1), nrow = 3, ncol = 3, byrow = TRUE)
-  BCD = D %*% C %*% B
-  if (!isRotationMatrix(R) || !isRotationMatrix(BCD)) {
-    diff = BCD - R 
+  DCB = D %*% C %*% B
+  if (!isRotationMatrix(R) || !isRotationMatrix(DCB)) {
+    diff = DCB - R 
     print(diff)
   }
   return(c(phi, theta, psi))
+}
+
+plotCDAEllipsoid <- function(index, pos, size, euler, dircos) {
+  va = dircos[1:3]
+  vb = dircos[4:6]
+  vc = dircos[7:9]
+  ppa = pos + size[1]*va
+  ppb = pos + size[2]*vb
+  ppc = pos + size[3]*vc
+  arrow3d(pos, ppa, type="flat", col="red")
+  arrow3d(pos, ppb, type="flat", col="green")
+  arrow3d(pos, ppc, type="flat", col="blue")
+
+  ell1 = rgl.ellipsoid(x = pos[1], y = pos[2], z = pos[3],
+                       a = size[1], b = size[2], c = size[3],
+                       phi = euler[1], theta = euler[2], psi = euler[3],
+                       subdivide = 3, smooth = TRUE, color = "gold", alpha=0.5)
+  plot3d(ell1, add = TRUE)
+  text3d(x = pos[1], y = pos[2], z = pos[3], as.character(index))
 }
 
 my.ellipsoid <- function (pos, size, euler, subdivide = 3, smooth = TRUE, ...)
@@ -135,15 +154,34 @@ my.ellipsoids <- function(positions, sizes, angles, colour = "red", ...){
   ll <- lapply(seq(1,N), function(ii)
     my.ellipsoid(positions[,ii], sizes[,ii], angles[,ii],, col = colours[ii], ...))
 
-  rgl::shapelist3d(ll)
+  a1 <- arrow3d(c(0.002, 0, 0), c(0.0025, 0, 0), s = 1/3, width = 1/3, n = 10, type="rotation", col = "red", plot = FALSE)
+  a2 <- arrow3d(c(0.002, 0, 0), c(0.002, 0.0005, 0), s = 1/3, width = 1/3, n = 10, type="rotation", plot = FALSE, col="green")
+  a3 <- arrow3d(c(0.002, 0, 0), c(0.002, 0, 0.0005), s = 1/3, width = 1/3, n = 10, type="rotation", plot = FALSE, col="blue")
+  rgl::shapelist3d(c(ll, list(a1, a2, a3)))
 
+}
+
+plotMyEllipsoid <- function(index, pos, size, euler, dircos) {
+  va = dircos[1:3]
+  vb = dircos[4:6]
+  vc = dircos[7:9]
+  ppa = pos + size[1]*va
+  ppb = pos + size[2]*vb
+  ppc = pos + size[3]*vc
+  arrow3d(pos, ppa, type="flat", col="red")
+  arrow3d(pos, ppb, type="flat", col="green")
+  arrow3d(pos, ppc, type="flat", col="blue")
+
+  ell2 = my.ellipsoid(pos, size, euler, subdivide = 3, smooth = TRUE, color = "gold", alpha=0.5)
+  plot3d(ell2, add = TRUE)
+  text3d(x = pos[1], y = pos[2], z = pos[3], as.character(index))
 }
 
 #------------------------------------------------------------------
 # 1) Read the particle data
 #------------------------------------------------------------------
-#partDistCSV <- "input_particle_file_orig"
-partDistCSV <- "input_particle_file"
+partDistCSV <- "input_particle_file_orig"
+#partDistCSV <- "input_particle_file"
 
 # Read the first line (contains the number of particles)
 df_numPart <- read.csv(partDistCSV, header = FALSE, nrows = 1, sep="",
@@ -184,53 +222,76 @@ cos_angles <- cos(angles)
 cos_mat <- data.matrix(cos_angles)
 euler_angles <- apply(cos_angles, 1, 
                  function(x) {
+                   #print(x)
                    R <- matrix(x, nrow = 3, ncol=3, byrow=TRUE)
+                   #print(R)
                    angles = rotationMatrixToEulerAngles(R)
                    return(angles)
                  })
 euler_mat <- data.matrix(euler_angles)
 
 #------------------------------------------------------------------
-# 4) Plot ellipsoids
+# 4) Plot arrows
+#------------------------------------------------------------------
+#open3d()
+#arrow3d(c(0, 0, 0), c(1, 0, 0), s = 1/7, width = 1/5, n = 10, type="rotation", col="red")
+#arrow3d(c(0, 0, 0), c(0, 1, 0), s = 1/7, width = 1/5, n = 10, type="rotation", col="green")
+#arrow3d(c(0, 0, 0), c(0, 0, 1), s = 1/7, width = 1/5, n = 10, type="rotation", col="blue")
+#axes3d()
+
+#------------------------------------------------------------------
+# 5) Plot rgl ellipsoids
 #------------------------------------------------------------------
 #open3d()
 #rgl.ellipsoids(pos_mat, size_mat, euler_angles, col="gold", add=TRUE)
 #axes3d()
+#view_matrix = matrix(c(-0.21751294, -0.53017938,  0.81950366,  0.00000000,  
+#                        0.97544736, -0.08853958,  0.20162290,  0.00000000,
+#                       -0.03433822,  0.84324223,  0.53642339,  0.00000000,
+#                        0.00000000,  0.00000000,  0.00000000,  1.00000000),
+#                     nrow = 4, ncol = 4)
+#view3d(userMatrix = view_matrix)
+#rgl.snapshot("rgl_cda_ellipsoids.png")
 
+#------------------------------------------------------------------
+# 6) Plot individual rgl ellipsoids
+#------------------------------------------------------------------
+#open3d()
+#for (i in c(2,3)) {
+  #print(euler_mat[,i])
+#  plotCDAEllipsoid(i, pos_mat[,i], size_mat[,i], euler_mat[,i], cos_angles[i,])
+#}
+#arrow3d(c(0, 0, 0), c(0.0006, 0, 0), s = 1/7, width = 1/5, n = 10, type="rotation", col="red")
+#arrow3d(c(0, 0, 0), c(0, 0.0006, 0), s = 1/7, width = 1/5, n = 10, type="rotation", col="green")
+#arrow3d(c(0, 0, 0), c(0, 0, 0.0006), s = 1/7, width = 1/5, n = 10, type="rotation", col="blue")
+#axes3d()
+#view3d(fov=0)
+
+#------------------------------------------------------------------
+# 7) Plot individual my ellipsoids
+#------------------------------------------------------------------
+#open3d()
+#for (i in c(2,3)) {
+#  #print(euler_mat[,i])
+#  plotMyEllipsoid(i, pos_mat[,i], size_mat[,i], euler_mat[,i], cos_angles[i,])
+#}
+#arrow3d(c(0, 0, 0), c(0.0006, 0, 0), s = 1/7, width = 1/5, n = 10, type="rotation", col="red")
+#arrow3d(c(0, 0, 0), c(0, 0.0006, 0), s = 1/7, width = 1/5, n = 10, type="rotation", col="green")
+#arrow3d(c(0, 0, 0), c(0, 0, 0.0006), s = 1/7, width = 1/5, n = 10, type="rotation", col="blue")
+#axes3d()
+#view3d(fov=0)
+
+#------------------------------------------------------------------
+# 8) Plot my ellipsoids
+#------------------------------------------------------------------
 open3d()
 my.ellipsoids(pos_mat, size_mat, euler_angles, col="gold", add=TRUE)
 axes3d()
-
-
-
-plotEllipsoid <- function(index, pos, size, euler, dircos) {
-  va = dircos[1:3]
-  vb = dircos[4:6]
-  vc = dircos[7:9]
-  ppa = pos + size[1]*va
-  ppb = pos + size[2]*vb
-  ppc = pos + size[3]*vc
-  #plot3d(pts, add = TRUE)
-  arrow3d(pos, ppa, type="flat", col="red")
-  arrow3d(pos, ppb, type="flat", col="green")
-  arrow3d(pos, ppc, type="flat", col="blue")
-
-  #ell1 = rgl.ellipsoid(x = pos[1], y = pos[2], z = pos[3],
-  #                     a = size[1], b = size[2], c = size[3],
-  #                     phi = euler[1], theta = euler[2], psi = euler[3],
-  #                     subdivide = 3, smooth = TRUE, color = "gold", alpha=0.5)
-  #plot3d(ell1, add = TRUE)
-  ell2 = my.ellipsoid(pos, size, euler, subdivide = 3, smooth = TRUE, color = "gold", alpha=0.5)
-  plot3d(ell2, add = TRUE)
-  text3d(x = pos[1], y = pos[2], z = pos[3], as.character(index))
-}
-
-#for (i in 1:length(euler_mat[1,])) {
-open3d()
-for (i in c(2,3)) {
-  #print(euler_mat[,i])
-  plotEllipsoid(i, pos_mat[,i], size_mat[,i], euler_mat[,i], cos_angles[i,])
-}
-axes3d()
-view3d(fov=0)
+view_matrix = matrix(c(-0.21751294, -0.53017938,  0.81950366,  0.00000000,  
+                        0.97544736, -0.08853958,  0.20162290,  0.00000000,
+                       -0.03433822,  0.84324223,  0.53642339,  0.00000000,
+                        0.00000000,  0.00000000,  0.00000000,  1.00000000),
+                     nrow = 4, ncol = 4)
+view3d(userMatrix = view_matrix)
+rgl.snapshot("rgl_my_ellipsoids.png")
 
