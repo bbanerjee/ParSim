@@ -276,7 +276,6 @@ TEST(DEMParticleCreatorTest, periodicVertex) {
 
   DEMParticlePArray particles;
 
-  /*
   DEMParticle particle9;
   particle9.setRadiusA(0.3);
   particle9.setRadiusB(0.3);
@@ -288,7 +287,6 @@ TEST(DEMParticleCreatorTest, periodicVertex) {
   particle9.setCurrentAnglesAxisC(vacos(cdir));
   particles.push_back(std::shared_ptr<DEMParticle>(&particle9, 
                                                    [](DEMParticle*){}));
-  */
 
   DEMParticle particle90;
   particle90.setRadiusA(0.5);
@@ -302,7 +300,6 @@ TEST(DEMParticleCreatorTest, periodicVertex) {
   particles.push_back(std::shared_ptr<DEMParticle>(&particle90, 
                                                    [](DEMParticle*){}));
 
-  /*
   DEMParticle particle91;
   particle91.setRadiusA(0.7);
   particle91.setRadiusB(0.7);
@@ -380,7 +377,6 @@ TEST(DEMParticleCreatorTest, periodicVertex) {
   particle10.setCurrentAnglesAxisC(vacos(cdir));
   particles.push_back(std::shared_ptr<DEMParticle>(&particle10, 
                                                    [](DEMParticle*){}));
-  */
 
   DEMParticleCreator creator;
   DEMParticlePArray periodic = 
