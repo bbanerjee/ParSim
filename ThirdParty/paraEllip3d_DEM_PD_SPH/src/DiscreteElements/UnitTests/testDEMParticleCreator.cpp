@@ -682,12 +682,18 @@ TEST(DEMParticleCreatorTest, periodicVertex) {
 
   std::cout << "num = " << particles.size() << "\n";
   for (const auto particle : particles) {
-    std::cout << particle->getId() << ":"  << particle->currentPosition() << " ";
+    std::cout << particle->getId() << ":"  
+              << static_cast<int>(particle->getType()) << ":"
+              << particle->currentPosition() << " ";
   }
   std::cout << "\n";
   */
 
   EXPECT_EQ(particles.size(), 27);
+
+  EXPECT_EQ(particles[0]->getType(), DEMParticle::DEMParticleType::FREE);
+  EXPECT_EQ(particles[1]->getType(), DEMParticle::DEMParticleType::BOUNDARY_PERIODIC);
+  EXPECT_EQ(particles[9]->getType(), DEMParticle::DEMParticleType::BOUNDARY_PERIODIC);
 
   EXPECT_EQ(particles[8]->getId(), 9);
   EXPECT_EQ(particles[8]->currentPosition().x(), 17.2);

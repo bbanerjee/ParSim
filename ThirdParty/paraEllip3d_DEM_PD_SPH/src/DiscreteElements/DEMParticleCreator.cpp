@@ -210,8 +210,12 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
   return particles;
 }
 
+/** 
+ * Non-obvious side effect: Converts particle type to BOUNDARY_PERIODIC if 
+ * it is on the boundary 
+ */
 DEMParticlePArray
-DEMParticleCreator::generatePeriodicDEMParticles(const DEMParticlePArray& particles,
+DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
                                                  const Box& spatialDomain) 
 {
   // Create an oriented box from the spatial domain
@@ -370,7 +374,9 @@ DEMParticleCreator::generatePeriodicDEMParticles(const DEMParticlePArray& partic
           case Boundary::BoundaryID::ZPLUS:
             break;
         }
+
         // Create copies
+        particle->setType(DEMParticle::DEMParticleType::BOUNDARY_PERIODIC);
         for (const auto& translation : translations) {
           DEMParticleP newParticle = std::make_shared<DEMParticle>(*particle);
           newParticle->setCurrentPosition(particle->currentPosition() + 

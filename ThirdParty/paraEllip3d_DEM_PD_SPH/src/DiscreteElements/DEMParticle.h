@@ -53,6 +53,7 @@ public:
     IMPACT_Z_ONLY = 4,
     BOUNDARY_FREE = 5,
     TRANSLATE_ONLY = 6,
+    BOUNDARY_PERIODIC = 7,
     GHOST = 10
   };
 
@@ -114,6 +115,7 @@ public:
   void setId(std::size_t n) { d_id = n; }
   void setShape(std::size_t n) { d_shape = static_cast<DEMParticleShape>(n); }
   void setType(std::size_t n) { d_type = static_cast<DEMParticleType>(n); }
+  void setType(DEMParticleType type) { d_type = type; }
   void setRadiusA(REAL dd) { d_a = dd; }
   void setRadiusB(REAL dd) { d_b = dd; }
   void setRadiusC(REAL dd) { d_c = dd; }

@@ -27,7 +27,7 @@ public:
                                          const dem::Box& spatialDomain,
                                          dem::Gradation& gradation);
 
-  DEMParticlePArray generatePeriodicDEMParticles(const DEMParticlePArray& parts,
+  DEMParticlePArray generatePeriodicDEMParticles(DEMParticlePArray& parts,
                                                  const dem::Box& spatialDomain);
 
 private:
