@@ -261,7 +261,7 @@ DEMParticleCreator::generatePeriodicDEMParticles(const DEMParticlePArray& partic
   REAL widthX = spatialDomain.dimX();
   REAL widthY = spatialDomain.dimY();
   REAL widthZ = spatialDomain.dimZ();
-  auto particleID = particles.size() - 1;
+  auto particleID = particles.size();
   DEMParticlePArray extraParticles;
   for (const auto& particle : particles) {
 

@@ -304,14 +304,19 @@ view3d(userMatrix = view_matrix)
 # 9) Plot the bounding boxes
 #------------------------------------------------------------------
 cube <- cube3d(color = "green", alpha = 0.3)
-xmin = c(-10, -10, -10)
-xmax = c(10, 10, 10)
-cube_scaled <- rgl::scale3d(cube, 10, 10, 10)
+
+#xmax = 10
+#ymax = 10
+#zmax = 10
+xmax = 10
+ymax = 12
+zmax = 14
+cube_scaled <- rgl::scale3d(cube, xmax, ymax, zmax)
 shade3d(cube_scaled)
 
 max_size = 3.6
 cube_extra <- cube3d(color = "blue", alpha = 0.1)
-cube_extra_scaled <- rgl::scale3d(cube_extra, 10 + max_size, 10 + max_size, 10 + max_size)
+cube_extra_scaled <- rgl::scale3d(cube_extra, xmax + max_size, ymax + max_size, zmax + max_size)
 cube_extra_shift <- rgl::translate3d(cube_extra_scaled, max_size, max_size, max_size)
 shade3d(cube_extra_shift)
 for (i in 1:6)
