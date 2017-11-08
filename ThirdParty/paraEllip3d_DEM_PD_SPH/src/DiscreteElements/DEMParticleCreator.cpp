@@ -218,13 +218,20 @@ DEMParticleCreator::generatePeriodicDEMParticles(const DEMParticlePArray& partic
   // and set up the faces
   OrientedBox box(spatialDomain);
   std::vector<Vec> vertices = box.vertices();
+  /*
   constexpr std::array<std::array<int, 4>, 6> faceIndices = {{
-    {{0, 4, 7, 3}}, // x-
-    {{1, 2, 6, 5}}, // x+
-    {{0, 1, 5, 4}}, // y-
-    {{2, 3, 7, 6}}, // y+
-    {{0, 3, 2, 1}}, // z-
-    {{4, 5, 6, 7}}  // z+
+      {{0, 4, 7, 3}} // x-
+    , {{1, 2, 6, 5}} // x+
+    , {{0, 1, 5, 4}} // y-
+    , {{2, 3, 7, 6}} // y+
+    , {{0, 3, 2, 1}} // z-
+    , {{4, 5, 6, 7}}  // z+
+  }};
+  */
+  constexpr std::array<std::array<int, 4>, 3> faceIndices = {{
+      {{0, 4, 7, 3}} // x-
+    , {{0, 1, 5, 4}} // y-
+    , {{0, 3, 2, 1}} // z-
   }};
   std::vector<Face> faces;
   for (const auto& indices : faceIndices) {
@@ -237,6 +244,18 @@ DEMParticleCreator::generatePeriodicDEMParticles(const DEMParticlePArray& partic
     }
     faces.push_back(face);
   }
+
+  // Find the largest radius ellipsoid in the input set and set
+  // the margin to be twice that value
+  auto maxRadiusIter = std::max_element(particles.begin(), particles.end(),
+   [](const DEMParticleP& p1, const DEMParticleP& p2){
+     auto max_p1 = std::max({p1->radiusA(), p1->radiusB(), p1->radiusC()});
+     auto max_p2 = std::max({p2->radiusA(), p2->radiusB(), p2->radiusC()});
+     return max_p1 < max_p2;
+   });
+  auto boundaryMargin = 2 * std::max({(*maxRadiusIter)->radiusA(),
+                                      (*maxRadiusIter)->radiusB(),
+                                      (*maxRadiusIter)->radiusC()});
 
   // Check intersections
   REAL widthX = spatialDomain.dimX();
@@ -268,24 +287,42 @@ DEMParticleCreator::generatePeriodicDEMParticles(const DEMParticlePArray& partic
         std::vector<Vec> translations;
 
         // A local lambda to clean things up a bit
-        auto addExtraTranslations = [&](const Vec& shift) {
+        auto addExtraTranslations = [&](const Vec& shift, 
+                                        REAL boundaryMargin,
+                                        Vec inPlaneDiag) {
           if (status.second.first == Face::Location::VERTEX) {
             int vertIndex = status.second.second;
-            for (int ii = 0; ii < 4; ++ii) {
-              if (ii % vertIndex != 0) {
+            std::cout << "is vertex " << vertIndex << "\n";
+            if (vertIndex == 0) {
+              for (int ii = 1; ii < 4; ++ii) {
                 Vec inPlane = face.vertex[ii] - face.vertex[vertIndex];
+                auto length = inPlane.length();
+                inPlane.normalizeInPlace();
+                if (ii == 2) {
+                  inPlane *= length;
+                  inPlane += (inPlaneDiag*boundaryMargin);
+                } else {
+                  inPlane *= (length + boundaryMargin);
+                }
                 Vec outOfPlane = inPlane + shift;
                 translations.push_back(inPlane);
                 translations.push_back(outOfPlane);
               }
             }
-          } else if (status.second.first == Face::Location::EDGE) {
+          } 
+          else if (status.second.first == Face::Location::EDGE) {
             int edgeIndex = status.second.second;
-            int oppIndex = (edgeIndex+3) % 4;
-            Vec inPlane = face.vertex[oppIndex] - face.vertex[edgeIndex];
-            Vec outOfPlane = inPlane + shift;
-            translations.push_back(inPlane);
-            translations.push_back(outOfPlane);
+            std::cout << "is edge " << edgeIndex << "\n";
+            if (edgeIndex == 0 || edgeIndex == 3) {
+              int oppIndex = (edgeIndex+3) % 4;
+              Vec inPlane = face.vertex[oppIndex] - face.vertex[edgeIndex];
+              auto length = inPlane.length() + boundaryMargin;
+              inPlane.normalizeInPlace();
+              inPlane *= length;
+              Vec outOfPlane = inPlane + shift;
+              translations.push_back(inPlane);
+              translations.push_back(outOfPlane);
+            }
           }
         };
 
@@ -294,46 +331,34 @@ DEMParticleCreator::generatePeriodicDEMParticles(const DEMParticlePArray& partic
             break;
           case Boundary::BoundaryID::XMINUS:
           {
-            Vec shift(widthX, 0, 0);
+            Vec shift(widthX + boundaryMargin, 0, 0);
+            std::cout << " Loc: x-: " << shift << "\n";
             translations.push_back(shift);
-            addExtraTranslations(shift);
+            addExtraTranslations(shift, boundaryMargin, Vec(0, 1, 1));
             break;
           }
           case Boundary::BoundaryID::XPLUS:
-          {
-            Vec shift(-widthX, 0, 0);
-            translations.push_back(shift);
-            addExtraTranslations(shift);
             break;
-          }
           case Boundary::BoundaryID::YMINUS:
           {
-            Vec shift(0, widthY, 0);
+            Vec shift(0, widthY + boundaryMargin, 0);
+            std::cout << " Loc: y-: " << shift << "\n";
             translations.push_back(shift);
-            addExtraTranslations(shift);
+            addExtraTranslations(shift, boundaryMargin, Vec(1, 0, 1));
             break;
           }
           case Boundary::BoundaryID::YPLUS:
-          {
-            Vec shift(0, -widthY, 0);
-            translations.push_back(shift);
-            addExtraTranslations(shift);
             break;
-          }
           case Boundary::BoundaryID::ZMINUS:
           {
-            Vec shift(0, 0, widthZ);
+            Vec shift(0, 0, widthZ + boundaryMargin);
+            std::cout << " Loc: z-: " << shift << "\n";
             translations.push_back(shift);
-            addExtraTranslations(shift);
+            addExtraTranslations(shift, boundaryMargin, Vec(1, 1, 0));
             break;
           }
           case Boundary::BoundaryID::ZPLUS:
-          {
-            Vec shift(0, 0, -widthZ);
-            translations.push_back(shift);
-            addExtraTranslations(shift);
             break;
-          }
         }
         // Create copies
         for (const auto& translation : translations) {
@@ -347,13 +372,16 @@ DEMParticleCreator::generatePeriodicDEMParticles(const DEMParticlePArray& partic
           extraParticles.push_back(newParticle);
         }
       }
-      ++faceID;
+      //++faceID;
+      faceID += 2;
     }
   }
 
-  //for (const auto particle : extraParticles) {
-  //  std::cout << *particle;
-  //}
+  /*
+  for (const auto particle : extraParticles) {
+    std::cout << *particle;
+  }
+  */
 
   // Remove duplicates
   removeDuplicates(extraParticles);

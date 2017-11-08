@@ -56,67 +56,67 @@ Output::clone(const Output& output)
 
 // Create individual file names
 void
-Output::createFileNames()
+Output::createFilenames()
 {
   std::string folderName = d_outputFolderName;
 
   std::ostringstream domainOutputFile;
   domainOutputFile << folderName << "/domain_"
     << std::setfill('0') << std::setw(5) << d_outputIteration;
-  d_domainFileName = domainOutputFile.str();
+  d_domainFilename = domainOutputFile.str();
 
   std::ostringstream boundaryOutputFile;
   boundaryOutputFile << folderName << "/boundary_"
     << std::setfill('0') << std::setw(5) << d_outputIteration;
-  d_boundaryFileName = boundaryOutputFile.str();
+  d_boundaryFilename = boundaryOutputFile.str();
 
   std::ostringstream patchOutputFile;
   patchOutputFile << folderName << "/patchGrid_"
     << std::setfill('0') << std::setw(5) << d_outputIteration;
-  d_patchBoxFileName = patchOutputFile.str();
+  d_patchBoxFilename = patchOutputFile.str();
 
   std::ostringstream particleOutputFile;
   particleOutputFile << folderName << "/particle_"
     << std::setfill('0') << std::setw(5) << d_outputIteration;
-  d_particleFileName = particleOutputFile.str();
+  d_particleFilename = particleOutputFile.str();
 
   std::ostringstream periParticleOutputFile;
   periParticleOutputFile << folderName << "/peri_particle_"
     << std::setfill('0') << std::setw(5) << d_outputIteration;
-  d_periParticleFileName = periParticleOutputFile.str();
+  d_periParticleFilename = periParticleOutputFile.str();
 
   std::ostringstream sphParticleOutputFile;
   sphParticleOutputFile << folderName << "/sph_particle_"
     << std::setfill('0') << std::setw(5) << d_outputIteration;
-  d_sphParticleFileName = sphParticleOutputFile.str();
+  d_sphParticleFilename = sphParticleOutputFile.str();
 
   std::ostringstream bdryContactOutputFile;
   bdryContactOutputFile << folderName << "/bdrycontact_"
     << std::setfill('0') << std::setw(5) << d_outputIteration;
-  d_bdryContactFileName = bdryContactOutputFile.str();
+  d_bdryContactFilename = bdryContactOutputFile.str();
 
-  //std::cout << "createFileNames: Domain file name = " << d_domainFileName << "\n";
-  //std::cout << "createFileNames: Grid file name = " << d_patchFileName << "\n";
-  //std::cout << "createFileNames: DEMParticle file name = " << d_particleFileName << "\n";
+  //std::cout << "createFilenames: Domain file name = " << d_domainFilename << "\n";
+  //std::cout << "createFilenames: Grid file name = " << d_patchFilename << "\n";
+  //std::cout << "createFilenames: DEMParticle file name = " << d_particleFilename << "\n";
 }
 
 void
-Output::updateFileNames(const int& iteration, const std::string& extension) {
+Output::updateFilenames(const int& iteration, const std::string& extension) {
   d_outputIteration = iteration;
-  createFileNames();
-  d_domainFileName += extension;
-  d_boundaryFileName += extension;
-  d_patchBoxFileName += extension;
-  d_particleFileName += extension;
-  d_periParticleFileName += extension;
-  d_sphParticleFileName += extension;
-  d_bdryContactFileName += extension;
+  createFilenames();
+  d_domainFilename += extension;
+  d_boundaryFilename += extension;
+  d_patchBoxFilename += extension;
+  d_particleFilename += extension;
+  d_periParticleFilename += extension;
+  d_sphParticleFilename += extension;
+  d_bdryContactFilename += extension;
 }
 
 void
-Output::updateFileNames(const int& iteration) {
+Output::updateFilenames(const int& iteration) {
   d_outputIteration = iteration;
-  createFileNames();
+  createFilenames();
 }
 
 void

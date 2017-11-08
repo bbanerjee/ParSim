@@ -65,19 +65,19 @@ public:
   virtual void writeParticles(const sph::SPHParticlePArray* particles, int frame) {};
   virtual void writeSieves(const Gradation* gradation) {};
 
-  void createFileNames();
-  void updateFileNames(const int& iteration, const std::string& extension);
-  void updateFileNames(const int& iteration);
-  std::string getDomainFileName() const { return d_domainFileName; }
-  std::string getBoundaryFileName() const { return d_boundaryFileName; }
-  std::string getPatchBoxFileName() const { return d_patchBoxFileName; }
-  std::string getParticleFileName() const { return d_particleFileName; }
-  std::string getPeriParticleFileName() const { return d_periParticleFileName; }
-  std::string getSPHParticleFileName() const { return d_sphParticleFileName; }
-  std::string getBdryContactFileName() const { return d_bdryContactFileName; }
-  void setParticleFileName(const std::string& name) { d_particleFileName = d_outputFolderName + "/" + name; }
-  void setPeriParticleFileName(const std::string& name) { d_periParticleFileName = d_outputFolderName + "/" + name; }
-  void setSPHParticleFileName(const std::string& name) { d_sphParticleFileName = d_outputFolderName + "/" + name; }
+  void createFilenames();
+  void updateFilenames(const int& iteration, const std::string& extension);
+  void updateFilenames(const int& iteration);
+  std::string getDomainFilename() const { return d_domainFilename; }
+  std::string getBoundaryFilename() const { return d_boundaryFilename; }
+  std::string getPatchBoxFilename() const { return d_patchBoxFilename; }
+  std::string getParticleFilename() const { return d_particleFilename; }
+  std::string getPeriParticleFilename() const { return d_periParticleFilename; }
+  std::string getSPHParticleFilename() const { return d_sphParticleFilename; }
+  std::string getBdryContactFilename() const { return d_bdryContactFilename; }
+  void setParticleFilename(const std::string& name) { d_particleFilename = d_outputFolderName + "/" + name; }
+  void setPeriParticleFilename(const std::string& name) { d_periParticleFilename = d_outputFolderName + "/" + name; }
+  void setSPHParticleFilename(const std::string& name) { d_sphParticleFilename = d_outputFolderName + "/" + name; }
   inline std::string outputFolder() const { return d_outputFolderName; }
   inline int outputIteratonInterval() const { return d_outputIteration; }
 
@@ -103,13 +103,13 @@ protected:
   std::string d_outputFolderName;
   int d_outputIteration;
 
-  std::string d_domainFileName;
-  std::string d_boundaryFileName;
-  std::string d_patchBoxFileName;
-  std::string d_particleFileName;
-  std::string d_periParticleFileName;
-  std::string d_sphParticleFileName;
-  std::string d_bdryContactFileName;
+  std::string d_domainFilename;
+  std::string d_boundaryFilename;
+  std::string d_patchBoxFilename;
+  std::string d_particleFilename;
+  std::string d_periParticleFilename;
+  std::string d_sphParticleFilename;
+  std::string d_bdryContactFilename;
 
 private:
   Output(const Output&) = delete;

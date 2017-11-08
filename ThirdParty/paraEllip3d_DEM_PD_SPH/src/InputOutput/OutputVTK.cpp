@@ -65,7 +65,7 @@ OutputVTK<TArray>::OutputVTK(const std::string& folderName, int iterInterval)
   d_cartComm = nullptr;
 
   // Create the basic file names (path + folder + name)
-  createFileNames();
+  createFilenames();
 
 }
 
@@ -105,7 +105,7 @@ OutputVTK<TArray>::writeDomain(const Box* domain)
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
 
   // Get the filename
-  std::string fileName(d_domainFileName);
+  std::string fileName(d_domainFilename);
   fileName.append(".").append(writer->GetDefaultFileExtension());
   writer->SetFileName(fileName.c_str());
 
@@ -146,7 +146,7 @@ OutputVTK<TArray>::writePatchBoxGrid(const Box* patchBox)
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
 
   // Get the filename
-  std::string fileName(d_patchBoxFileName);
+  std::string fileName(d_patchBoxFilename);
   fileName.append(".").append(writer->GetDefaultFileExtension());
   writer->SetFileName(fileName.c_str());
 
@@ -209,7 +209,7 @@ OutputVTK<DEMParticlePArray>::writeParticles(const DEMParticlePArray* particles,
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
 
   // Get the filename
-  std::string fileName(d_particleFileName);
+  std::string fileName(d_particleFilename);
   fileName.append(".").append(writer->GetDefaultFileExtension());
   writer->SetFileName(fileName.c_str());
   //std::cout << "writeParticles::DEMParticle file = " << fileName << "\n";
@@ -226,7 +226,7 @@ OutputVTK<PeriParticlePArray>::writeParticles(const PeriParticlePArray* particle
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
 
   // Get the filename
-  std::string fileName(d_periParticleFileName);
+  std::string fileName(d_periParticleFilename);
   fileName.append(".").append(writer->GetDefaultFileExtension());
   writer->SetFileName(fileName.c_str());
   //std::cout << "writeParticles::PeriParticle file = " << fileName << "\n";
@@ -243,7 +243,7 @@ OutputVTK<SPHParticlePArray>::writeParticles(const SPHParticlePArray* particles,
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
 
   // Get the filename
-  std::string fileName(d_sphParticleFileName);
+  std::string fileName(d_sphParticleFilename);
   fileName.append(".").append(writer->GetDefaultFileExtension());
   writer->SetFileName(fileName.c_str());
   //std::cout << "writeParticles::SPHParticle file = " << fileName << "\n";

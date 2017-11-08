@@ -50,7 +50,7 @@ OutputTecplot<TArray>::OutputTecplot(const std::string& folderName, int iterInte
   d_cartComm = nullptr;
 
   // Create the basic file names (path + folder + name)
-  createFileNames();
+  createFilenames();
 
 }
 
@@ -86,10 +86,10 @@ void
 OutputTecplot<TArray>::writeDomain(const Box* domain)
 {
   // Get the filename
-  std::string fileName(d_domainFileName);
-  fileName.append(".dat");
+  std::string filename(d_domainFilename);
+  filename.append(".dat");
 
-  std::ofstream ofs(fileName);
+  std::ofstream ofs(filename);
   if (!ofs) {
     debugInf << "stream error: writeBoundaryToFile" << std::endl;
     exit(-1);
@@ -132,10 +132,10 @@ void
 OutputTecplot<TArray>::writePatchBoxGrid(const Box* patchBox)
 {
   // Get the filename
-  std::string fileName(d_patchBoxFileName);
-  fileName.append(".dat");
+  std::string filename(d_patchBoxFilename);
+  filename.append(".dat");
 
-  std::ofstream ofs(fileName);
+  std::ofstream ofs(filename);
   if (!ofs) {
     debugInf << "stream error: writePatchGridToFile" << std::endl;
     exit(-1);
@@ -203,7 +203,7 @@ OutputTecplot<TArray>::writePatchBoxGrid(const Box* patchBox)
 template <typename TArray>
 void
 OutputTecplot<TArray>::writeParticles(const TArray* particles, int frame) {
-  std::cout << "**ERROR** Noting to do here. The arraty of particles is"
+  std::cout << "**ERROR** Noting to do here. The array of particles is"
             << " not of the correct type\n";
 }
 
@@ -213,11 +213,13 @@ OutputTecplot<DEMParticlePArray>::writeParticles(const DEMParticlePArray* partic
                                               int frame)
 {
   // Get the filename
-  std::string fileName(d_particleFileName);
-  fileName.append(".dat");
+  std::string filename(d_particleFilename);
+  filename.append(".dat");
 
-  std::ofstream ofs(fileName);
+  std::cout << "filename = " << filename << "\n";
+  std::ofstream ofs(filename);
   if (!ofs) {
+    std::cout << "Could not open" << std::endl;
     debugInf << "stream error: printParticle" << std::endl;
     exit(-1);
   }
@@ -287,10 +289,10 @@ OutputTecplot<PeriParticlePArray>::writeParticles(const PeriParticlePArray* part
                                                   int frame)
 {
   // Get the filename
-  std::string fileName(d_periParticleFileName);
-  fileName.append(".dat");
+  std::string filename(d_periParticleFilename);
+  filename.append(".dat");
 
-  std::ofstream ofs(fileName);
+  std::ofstream ofs(filename);
   if (!ofs) {
     debugInf << "stream error: printParticle" << std::endl;
     exit(-1);
@@ -343,10 +345,10 @@ OutputTecplot<SPHParticlePArray>::writeParticles(const SPHParticlePArray* partic
                                                  int frame)
 {
   // Get the filename
-  std::string fileName(d_sphParticleFileName);
-  fileName.append(".dat");
+  std::string filename(d_sphParticleFilename);
+  filename.append(".dat");
 
-  std::ofstream ofs(fileName);
+  std::ofstream ofs(filename);
   if (!ofs) {
     debugInf << "stream error: printParticle" << std::endl;
     exit(-1);
@@ -396,10 +398,10 @@ OutputTecplot<TArray>::writeSieves(const Gradation* gradation)
 {
 
   // Get the filename
-  std::string fileName(d_particleFileName);
-  fileName.append(".dat");
+  std::string filename(d_particleFilename);
+  filename.append(".dat");
 
-  std::ofstream ofs(fileName, std::ofstream::app);
+  std::ofstream ofs(filename, std::ofstream::app);
   if (!ofs) {
     debugInf << "stream error: printParticle" << std::endl;
     exit(-1);

@@ -219,13 +219,13 @@ public:
   void createOutputWriter(const std::string& outputFolder, const int& iter); 
 
   void updateFileNames(const int& iter, const std::string& extension) {
-    d_writer->updateFileNames(iter, extension);
+    d_writer->updateFilenames(iter, extension);
   }
   void updateFileNames(const int& iter) {
-    d_writer->updateFileNames(iter);
+    d_writer->updateFilenames(iter);
   }
   std::string getPeriParticleFileName() const {
-    return d_writer->getPeriParticleFileName();
+    return d_writer->getPeriParticleFilename();
   }
 
   // writeMesh - outputs the mesh, used for

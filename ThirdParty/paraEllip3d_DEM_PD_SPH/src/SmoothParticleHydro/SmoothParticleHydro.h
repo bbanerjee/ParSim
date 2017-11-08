@@ -105,13 +105,13 @@ public:
   void createOutputWriter(const std::string& outputFolder, const int& iter); 
 
   void updateFileNames(const int& iter, const std::string& extension) {
-    d_writer->updateFileNames(iter, extension);
+    d_writer->updateFilenames(iter, extension);
   }
   void updateFileNames(const int& iter) {
-    d_writer->updateFileNames(iter);
+    d_writer->updateFilenames(iter);
   }
   std::string getSPHParticleFileName() const {
-    return d_writer->getSPHParticleFileName();
+    return d_writer->getSPHParticleFilename();
   }
   void writeParticlesToFile(int frame) const; 
   void printSPHParticle(const char* str) const;

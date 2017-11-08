@@ -7,6 +7,7 @@
 #include <Simulations/DEM/TractionLoading.h>
 #include <Simulations/DEM/IsotropicLoading.h>
 #include <Simulations/DEM/OedometerLoading.h>
+#include <Simulations/DEM/PeriodicBCAxisymmetricStrainDriven.h>
 #include <Simulations/DEM/PlaneStrainLoading.h>
 #include <Simulations/DEM/ProceedFromPreset.h>
 #include <Simulations/DEM/TriaxialLoading.h>
@@ -110,6 +111,9 @@ CommandHandler::handleCommand(int simuType)
       break;
     case 3002: // pull out DEM particle from center of peri-domain
       return std::make_unique<PeridynamicsPullOut>();
+      break;
+    case 4001: // periodic strain BC : axisymmetric
+      return std::make_unique<PeriodicBCAxisymmetricStrainDriven>();
       break;
     default:
       return nullptr;

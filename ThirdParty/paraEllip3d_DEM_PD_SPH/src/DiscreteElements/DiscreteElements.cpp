@@ -994,7 +994,7 @@ DiscreteElements::writeBoundaryToFile() const
 void
 DiscreteElements::printBoundary() const
 {
-  std::ofstream ofs(d_writer->getBoundaryFileName());
+  std::ofstream ofs(d_writer->getBoundaryFilename());
   if (!ofs) {
     debugInf << "stream error: printBoundary" << std::endl;
     exit(-1);
@@ -1026,7 +1026,7 @@ DiscreteElements::printBoundary() const
 void
 DiscreteElements::printBoundaryContacts() const
 {
-  std::ofstream ofs(d_writer->getBdryContactFileName());
+  std::ofstream ofs(d_writer->getBdryContactFilename());
   if (!ofs) {
     debugInf << "stream error: printBoundaryContacts" << std::endl;
     exit(-1);
@@ -1067,7 +1067,7 @@ void
 DiscreteElements::printParticle(const std::string& fileName, int frame) const
 {
   OutputTecplot<DEMParticlePArray> writer(".", 0);
-  writer.setParticleFileName(fileName);
+  writer.setParticleFilename(fileName);
   writer.writeParticles(&d_allDEMParticles, frame);
 }
 
@@ -1077,7 +1077,7 @@ DiscreteElements::printParticle(const std::string& fileName,
                                 int frame) const
 {
   OutputTecplot<DEMParticlePArray> writer(".", 0);
-  writer.setParticleFileName(fileName);
+  writer.setParticleFilename(fileName);
   writer.writeParticles(&particles, frame);
 }
 

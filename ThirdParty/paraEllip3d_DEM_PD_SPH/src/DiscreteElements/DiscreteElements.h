@@ -153,13 +153,13 @@ public:
   }
 
   void updateFileNames(const int& iter, const std::string& extension) {
-    d_writer->updateFileNames(iter, extension);
+    d_writer->updateFilenames(iter, extension);
   }
   void updateFileNames(const int& iter) {
-    d_writer->updateFileNames(iter);
+    d_writer->updateFilenames(iter);
   }
   std::string getParticleFileName() const {
-    return d_writer->getParticleFileName();
+    return d_writer->getParticleFilename();
   }
 
   void openProgressOutputFile(std::ofstream& ofs, const std::string& str);
