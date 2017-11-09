@@ -28,7 +28,8 @@ public:
                                          dem::Gradation& gradation);
 
   DEMParticlePArray generatePeriodicDEMParticles(DEMParticlePArray& parts,
-                                                 const dem::Box& spatialDomain);
+                                                 const dem::Box& spatialDomain,
+                                                 REAL marginFactor = 2);
 
 private:
 

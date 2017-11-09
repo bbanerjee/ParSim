@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+<Ellip3D_input>
+  <Meta>
+    <title>Boundary file generated with convertBoundaryToXML.R</title>
+  </Meta>
+  <Boundary>
+    <containerMin>[ -0.0015 , -0.0015 , 0 ]</containerMin>
+    <containerMax>[ 0.0015 , 0.0015 , 0.003 ]</containerMax>
+    <boundary type="plane" id="x+">
+      <direction>[ 1 , 0 , 0 ]</direction>
+      <position>[ 0.0015 , 0 , 0.0015 ]</position>
+      <initial_velocity>[ 0 , 0 , 0 ]</initial_velocity>
+      <extraEdge>
+        <direction>[ 0 , -1 , 0 ]</direction>
+        <position>[ 0 , -0.0015 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , 1 , 0 ]</direction>
+        <position>[ 0 , 0.0015 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , 0 , 1 ]</direction>
+        <position>[ 0 , 0 , 0.003 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , 0 , -1 ]</direction>
+        <position>[ 0 , 0 , 0 ]</position>
+      </extraEdge>
+    </boundary>
+    <boundary type="plane" id="y+">
+      <direction>[ 0 , 1 , 0 ]</direction>
+      <position>[ 0 , 0.0015 , 0.0015 ]</position>
+      <initial_velocity>[ 0 , 0 , 0 ]</initial_velocity>
+      <extraEdge>
+        <direction>[ 1 , 0 , 0 ]</direction>
+        <position>[ 0.0015 , 0 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ -1 , 0 , 0 ]</direction>
+        <position>[ -0.0015 , 0 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , 0 , 1 ]</direction>
+        <position>[ 0 , 0 , 0.003 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , 0 , -1 ]</direction>
+        <position>[ 0 , 0 , 0 ]</position>
+      </extraEdge>
+    </boundary>
+    <boundary type="plane" id="x-">
+      <direction>[ -1 , 0 , 0 ]</direction>
+      <position>[ -0.0015 , 0 , 0.0015 ]</position>
+      <initial_velocity>[ 0 , 0 , 0 ]</initial_velocity>
+      <extraEdge>
+        <direction>[ 0 , -1 , 0 ]</direction>
+        <position>[ 0 , -0.0015 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , 1 , 0 ]</direction>
+        <position>[ 0 , 0.0015 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , 0 , 1 ]</direction>
+        <position>[ 0 , 0 , 0.003 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , 0 , -1 ]</direction>
+        <position>[ 0 , 0 , 0 ]</position>
+      </extraEdge>
+    </boundary>
+    <boundary type="plane" id="y-">
+      <direction>[ 0 , -1 , 0 ]</direction>
+      <position>[ 0 , -0.0015 , 0.0015 ]</position>
+      <initial_velocity>[ 0 , 0 , 0 ]</initial_velocity>
+      <extraEdge>
+        <direction>[ 1 , 0 , 0 ]</direction>
+        <position>[ 0.0015 , 0 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ -1 , 0 , 0 ]</direction>
+        <position>[ -0.0015 , 0 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , 0 , 1 ]</direction>
+        <position>[ 0 , 0 , 0.003 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , 0 , -1 ]</direction>
+        <position>[ 0 , 0 , 0 ]</position>
+      </extraEdge>
+    </boundary>
+    <boundary type="plane" id="z+">
+      <direction>[ 0 , 0 , 1 ]</direction>
+      <position>[ 0 , 0 , 0.003 ]</position>
+      <initial_velocity>[ 0 , 0 , 0 ]</initial_velocity>
+      <extraEdge>
+        <direction>[ 1 , 0 , 0 ]</direction>
+        <position>[ 0.0015 , 0 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ -1 , 0 , 0 ]</direction>
+        <position>[ -0.0015 , 0 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , 1 , 0 ]</direction>
+        <position>[ 0 , 0.0015 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , -1 , 0 ]</direction>
+        <position>[ 0 , -0.0015 , 0.0015 ]</position>
+      </extraEdge>
+    </boundary>
+    <boundary type="plane" id="z-">
+      <direction>[ 0 , 0 , -1 ]</direction>
+      <position>[ 0 , 0 , 0 ]</position>
+      <initial_velocity>[ 0 , 0 , 0 ]</initial_velocity>
+      <extraEdge>
+        <direction>[ 1 , 0 , 0 ]</direction>
+        <position>[ 0.0015 , 0 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ -1 , 0 , 0 ]</direction>
+        <position>[ -0.0015 , 0 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , 1 , 0 ]</direction>
+        <position>[ 0 , 0.0015 , 0.0015 ]</position>
+      </extraEdge>
+      <extraEdge>
+        <direction>[ 0 , -1 , 0 ]</direction>
+        <position>[ 0 , -0.0015 , 0.0015 ]</position>
+      </extraEdge>
+    </boundary>
+  </Boundary>
+</Ellip3D_input>

@@ -99,7 +99,7 @@ main(int argc, char* argv[])
   // Run the commands for each simulation type
   dem::CommandHandler handler;
   dem::CommandP command = handler.handleCommand(simuType);
-  if (simuType > 3000) {
+  if (std::abs(simuType - 3000) < 99) {
     command->execute(&dem, &pd);
   } else {
     command->execute(&dem);

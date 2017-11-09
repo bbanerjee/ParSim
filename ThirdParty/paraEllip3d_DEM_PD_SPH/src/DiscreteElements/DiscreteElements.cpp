@@ -1068,6 +1068,7 @@ DiscreteElements::printParticle(const std::string& fileName, int frame) const
 {
   OutputTecplot<DEMParticlePArray> writer(".", 0);
   writer.setParticleFilename(fileName);
+  std::cout << "d_allDEMParticles = " << d_allDEMParticles.size() << "\n";
   writer.writeParticles(&d_allDEMParticles, frame);
 }
 

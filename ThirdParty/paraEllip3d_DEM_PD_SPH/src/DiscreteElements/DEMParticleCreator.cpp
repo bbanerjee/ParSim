@@ -216,7 +216,8 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
  */
 DEMParticlePArray
 DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
-                                                 const Box& spatialDomain) 
+                                                 const Box& spatialDomain,
+                                                 REAL marginFactor) 
 {
   // Create an oriented box from the spatial domain
   // and set up the faces
@@ -257,9 +258,10 @@ DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
      auto max_p2 = std::max({p2->radiusA(), p2->radiusB(), p2->radiusC()});
      return max_p1 < max_p2;
    });
-  auto boundaryMargin = 2 * std::max({(*maxRadiusIter)->radiusA(),
-                                      (*maxRadiusIter)->radiusB(),
-                                      (*maxRadiusIter)->radiusC()});
+  auto boundaryMargin = marginFactor*std::max({(*maxRadiusIter)->radiusA(),
+                                               (*maxRadiusIter)->radiusB(),
+                                               (*maxRadiusIter)->radiusC()});
+  std::cout << "Extra boundary margin = " << boundaryMargin << "\n";
 
   // Check intersections
   REAL widthX = spatialDomain.dimX();

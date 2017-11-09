@@ -31,6 +31,7 @@ SET(COMMAND_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/TractionLoading.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/IsotropicLoading.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/OedometerLoading.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/PeriodicRVECreation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/PeriodicBCAxisymmetricStrainDriven.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/PlaneStrainLoading.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/ProceedFromPreset.cpp
