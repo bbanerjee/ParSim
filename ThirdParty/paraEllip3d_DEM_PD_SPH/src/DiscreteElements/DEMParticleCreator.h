@@ -29,7 +29,8 @@ public:
 
   DEMParticlePArray generatePeriodicDEMParticles(DEMParticlePArray& parts,
                                                  const dem::Box& spatialDomain,
-                                                 REAL marginFactor = 2);
+                                                 REAL marginFactor = 2,
+                                                 REAL faceShiftFactor = 0);
 
 private:
 

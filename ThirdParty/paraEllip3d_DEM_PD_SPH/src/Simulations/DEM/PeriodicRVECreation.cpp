@@ -26,7 +26,7 @@ PeriodicRVECreation::execute(DiscreteElements* dem)
     auto& particles = dem->getModifiableAllParticleVec(); 
     DEMParticleCreator creator;
     DEMParticlePArray periodic = 
-      creator.generatePeriodicDEMParticles(particles, dem->getSpatialDomain(), 1);
+      creator.generatePeriodicDEMParticles(particles, dem->getSpatialDomain(), 1, 5);
   
     particles.insert(particles.end(), periodic.begin(), periodic.end());
     std::cout << "periodic = " << periodic.size() << "\n";

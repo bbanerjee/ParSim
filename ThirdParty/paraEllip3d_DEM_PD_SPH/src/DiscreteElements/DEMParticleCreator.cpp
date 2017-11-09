@@ -217,22 +217,37 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
 DEMParticlePArray
 DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
                                                  const Box& spatialDomain,
-                                                 REAL marginFactor) 
+                                                 REAL marginFactor, 
+                                                 REAL faceShiftFactor) 
 {
+  // Find the largest radius ellipsoid in the input set and set
+  // the margin to be marginFactor times  that value
+  auto minmaxIter = std::minmax_element(particles.begin(), particles.end(),
+   [](const DEMParticleP& p1, const DEMParticleP& p2){
+     auto max_p1 = std::max({p1->radiusA(), p1->radiusB(), p1->radiusC()});
+     auto max_p2 = std::max({p2->radiusA(), p2->radiusB(), p2->radiusC()});
+     return max_p1 < max_p2;
+   });
+  auto minRadius = std::min({(*minmaxIter.first)->radiusA(),
+                             (*minmaxIter.first)->radiusB(),
+                             (*minmaxIter.first)->radiusC()});
+  auto maxRadius = std::max({(*minmaxIter.second)->radiusA(),
+                             (*minmaxIter.second)->radiusB(),
+                             (*minmaxIter.second)->radiusC()});
+  auto boundaryMargin = marginFactor*maxRadius;
+  auto faceShift = faceShiftFactor*minRadius;
+
+  std::cout << "min rad = " << minRadius << " max rad = " << maxRadius << "\n";
+  std::cout << "Extra boundary margin = " << boundaryMargin 
+            << " face shift = " << faceShift << "\n";
+  
   // Create an oriented box from the spatial domain
   // and set up the faces
-  OrientedBox box(spatialDomain);
+  Box shrunkDomain(
+    spatialDomain.minCorner() + Vec(faceShift, faceShift, faceShift),
+    spatialDomain.maxCorner() - Vec(faceShift, faceShift, faceShift));
+  OrientedBox box(shrunkDomain);
   std::vector<Vec> vertices = box.vertices();
-  /*
-  constexpr std::array<std::array<int, 4>, 6> faceIndices = {{
-      {{0, 4, 7, 3}} // x-
-    , {{1, 2, 6, 5}} // x+
-    , {{0, 1, 5, 4}} // y-
-    , {{2, 3, 7, 6}} // y+
-    , {{0, 3, 2, 1}} // z-
-    , {{4, 5, 6, 7}}  // z+
-  }};
-  */
   constexpr std::array<std::array<int, 4>, 3> faceIndices = {{
       {{0, 4, 7, 3}} // x-
     , {{0, 1, 5, 4}} // y-
@@ -240,9 +255,11 @@ DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
   }};
   std::vector<Face> faces;
   for (const auto& indices : faceIndices) {
-    int v0 = indices[0]; int v1 = indices[1]; 
-    int v2 = indices[2]; int v3 = indices[3];
-    Face face(vertices[v0], vertices[v1], vertices[v2], vertices[v3]);
+    int i0 = indices[0]; int i1 = indices[1]; 
+    int i2 = indices[2]; int i3 = indices[3];
+    Vec  v0 = vertices[i0]; Vec  v1 = vertices[i1];
+    Vec  v2 = vertices[i2]; Vec  v3 = vertices[i3];
+    Face face(v0, v1, v2, v3);
     if (!face.isValid()) {
       std::cout << "**ERROR** The face " << face << " is invalid but"
                 << " continuing anyway\n.";
@@ -250,23 +267,10 @@ DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
     faces.push_back(face);
   }
 
-  // Find the largest radius ellipsoid in the input set and set
-  // the margin to be twice that value
-  auto maxRadiusIter = std::max_element(particles.begin(), particles.end(),
-   [](const DEMParticleP& p1, const DEMParticleP& p2){
-     auto max_p1 = std::max({p1->radiusA(), p1->radiusB(), p1->radiusC()});
-     auto max_p2 = std::max({p2->radiusA(), p2->radiusB(), p2->radiusC()});
-     return max_p1 < max_p2;
-   });
-  auto boundaryMargin = marginFactor*std::max({(*maxRadiusIter)->radiusA(),
-                                               (*maxRadiusIter)->radiusB(),
-                                               (*maxRadiusIter)->radiusC()});
-  std::cout << "Extra boundary margin = " << boundaryMargin << "\n";
-
   // Check intersections
-  REAL widthX = spatialDomain.dimX();
-  REAL widthY = spatialDomain.dimY();
-  REAL widthZ = spatialDomain.dimZ();
+  REAL widthX = shrunkDomain.dimX();
+  REAL widthY = shrunkDomain.dimY();
+  REAL widthZ = shrunkDomain.dimZ();
   auto particleID = particles.size();
   DEMParticlePArray extraParticles;
   for (const auto& particle : particles) {
@@ -390,7 +394,6 @@ DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
           extraParticles.push_back(newParticle);
         }
       }
-      //++faceID;
       faceID += 2;
     }
   }
