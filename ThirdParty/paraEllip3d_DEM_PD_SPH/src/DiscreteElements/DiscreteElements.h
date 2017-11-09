@@ -81,6 +81,7 @@ public:
 
   const Gradation& getGradation() const { return d_gradation; }
   const Box& getSpatialDomain() const { return d_spatialDomain; }
+  Box& getModifiableSpatialDomain() { return d_spatialDomain; }
   Fluid& getFluid() { return fluid; }
 
   void setCommunicator(boost::mpi::communicator& comm);

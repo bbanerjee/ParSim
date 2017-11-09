@@ -159,8 +159,12 @@
       <!-- Factor of minimum particle radius: Amount to shrink the bunding box -->
       <boundaryFaceShiftFactor> 5.0 </boundaryFaceShiftFactor>
 
+      <!-- Filename to write updated boundaries to -->
+      <boundaryFilename> generated_periodic_boundary </boundaryFilename>
+
       <!-- Filename to write created particles to -->
-      <outputFilename> generated_periodic_particles </outputFilename>
+      <particleFilename> generated_periodic_particles </particleFilename>
+
     </PeriodicParticleGeneration>
 
   </DEM>

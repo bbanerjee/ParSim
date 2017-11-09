@@ -216,7 +216,7 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
  */
 DEMParticlePArray
 DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
-                                                 const Box& spatialDomain,
+                                                 Box& spatialDomain,
                                                  REAL marginFactor, 
                                                  REAL faceShiftFactor) 
 {
@@ -398,14 +398,14 @@ DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
     }
   }
 
-  /*
-  for (const auto particle : extraParticles) {
-    std::cout << *particle;
-  }
-  */
-
   // Remove duplicates
   removeDuplicates(extraParticles);
+
+  // Update the spatial domain
+  Box expandedDomain(
+    shrunkDomain.minCorner(),
+    shrunkDomain.maxCorner() + Vec(boundaryMargin, boundaryMargin, boundaryMargin));
+  spatialDomain = expandedDomain;
 
   return extraParticles;
 }

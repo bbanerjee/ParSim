@@ -280,11 +280,14 @@ InputParameter::readInXML(const std::string& inputFileName)
     periodicGen_ps["boundaryMarginFactor"](param["periodicBoundaryMarginFactor"]);
     periodicGen_ps["boundaryFaceShiftFactor"](param["periodicBoundaryFaceShiftFactor"]);
     std::string filename;
-    periodicGen_ps["outputFilename"](filename);
+    periodicGen_ps["boundaryFilename"](filename);
+    datafile["periodicBoundaryOutputFilename"] = trim(filename);
+    periodicGen_ps["particleFilename"](filename);
     datafile["periodicParticleOutputFilename"] = trim(filename);
   } else {
     param["periodicBoundaryMarginFactor"] = 2.0;
     param["periodicBoundaryFaceShiftFactor"] = 0.0;
+    datafile["periodicBoundaryOutputFilename"] = "generated_periodic_boundary";
     datafile["periodicParticleOutputFilename"] = "generated_periodic_particles";
   }
 
