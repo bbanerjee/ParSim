@@ -274,6 +274,20 @@ InputParameter::readInXML(const std::string& inputFileName)
   //          << "maxRelativeOverlap = " << param["maxRelaOverlap"] << "\n"
   //          << "measurableOverlap = " << param["measureOverlap"] << "\n";
 
+  // Read the periodic particle generation controls
+  auto periodicGen_ps = ps["DEM"]["PeriodicParticleGeneration"];
+  if (periodicGen_ps) {
+    periodicGen_ps["boundaryMarginFactor"](param["periodicBoundaryMarginFactor"]);
+    periodicGen_ps["boundaryFaceShiftFactor"](param["periodicBoundaryFaceShiftFactor"]);
+    std::string filename;
+    periodicGen_ps["outputFilename"](filename);
+    datafile["periodicParticleOutputFilename"] = trim(filename);
+  } else {
+    param["periodicBoundaryMarginFactor"] = 2.0;
+    param["periodicBoundaryFaceShiftFactor"] = 0.0;
+    datafile["periodicParticleOutputFilename"] = "generated_periodic_particles";
+  }
+
   // Check if a peridynamics section exists
   auto peri_ps = ps["Peridynamics"];
   if (peri_ps) {

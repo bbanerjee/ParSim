@@ -151,6 +151,18 @@
 
     </Contact>
 
+    <PeriodicParticleGeneration>
+
+      <!-- Factor of maximum particle radius: Locates new boundary position -->
+      <boundaryMarginFactor> 1.0 </boundaryMarginFactor>
+
+      <!-- Factor of minimum particle radius: Amount to shrink the bunding box -->
+      <boundaryFaceShiftFactor> 5.0 </boundaryFaceShiftFactor>
+
+      <!-- Filename to write created particles to -->
+      <outputFilename> generated_periodic_particles </outputFilename>
+    </PeriodicParticleGeneration>
+
   </DEM>
 
 </Ellip3D_input>

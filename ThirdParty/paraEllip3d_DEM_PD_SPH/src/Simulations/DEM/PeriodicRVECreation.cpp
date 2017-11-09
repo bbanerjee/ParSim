@@ -1,5 +1,6 @@
 #include <Simulations/DEM/PeriodicRVECreation.h>
 #include <DiscreteElements/DEMParticleCreator.h>
+#include <InputOutput/DEMParticleFileWriter.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;
@@ -23,10 +24,17 @@ PeriodicRVECreation::execute(DiscreteElements* dem)
     outputFolder = util::createOutputFolder(folderName);
     dem->createOutputWriter(outputFolder, 0);
 
+    // Get the control knobs for particle generation
+    // Good values: marginFactor = 1, faceShiftFactor = 5
+    // Default values: marginFactor = 2, faceShiftFactor = 0
+    auto marginFactor = util::getParam<REAL>("periodicBoundaryMarginFactor");
+    auto faceShiftFactor = util::getParam<REAL>("periodicBoundaryFaceShiftFactor");
+
+    // Generate periodic particles 
     auto& particles = dem->getModifiableAllParticleVec(); 
     DEMParticleCreator creator;
-    DEMParticlePArray periodic = 
-      creator.generatePeriodicDEMParticles(particles, dem->getSpatialDomain(), 1, 5);
+    DEMParticlePArray periodic = creator.generatePeriodicDEMParticles(particles, 
+      dem->getSpatialDomain(), marginFactor, faceShiftFactor);
   
     particles.insert(particles.end(), periodic.begin(), periodic.end());
     std::cout << "periodic = " << periodic.size() << "\n";
@@ -34,6 +42,11 @@ PeriodicRVECreation::execute(DiscreteElements* dem)
 
     dem->writeBoundaryToFile();
     dem->writeParticlesToFile(0);
-    dem->printParticle("generated_particles.csv", 0);
+
+    auto filename = 
+      dem::InputParameter::get().datafile["periodicParticleOutputFilename"];
+    DEMParticleFileWriter writer;
+    writer.writeCSV(particles, Gradation(), filename + ".csv");
+    writer.writeXML(particles, Gradation(), filename + ".xml");
   }
 }

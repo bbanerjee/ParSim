@@ -108,7 +108,9 @@ DEMParticleFileWriter::writeCSV(const DEMParticlePArray& particles,
   }
 
   // Write the gradation data
-  gradation.outputCSV(ofs);
+  if (gradation.getPercent().size() > 0) {
+    gradation.outputCSV(ofs);
+  }
 
   ofs.close();
 }
@@ -208,7 +210,9 @@ DEMParticleFileWriter::writeXML(const DEMParticlePArray& particles,
   }
 
   // Write the gradation data
-  gradation.outputXML(xml);
+  if (gradation.getPercent().size() > 0) {
+    gradation.outputXML(xml);
+  }
 
   try {
     zen::save(doc, outputFileName);
