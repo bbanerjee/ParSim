@@ -805,7 +805,7 @@ void printParticleVariable(DataArchive* da,
                     ParticleVariable<long64> pid;
                     da->query(pid, "p.particleID", matl, patch, t);
                     ParticleSubset* pset = value.getParticleSubset();
-                    std::cout << "numParticles = " << pset->numParticles() << std::endl;
+                    //std::cout << "numParticles = " << pset->numParticles() << std::endl;
                     if(pset->numParticles() > 0){
                       if (particleID == 0) {
                         for (const auto& pidx : *pset) {

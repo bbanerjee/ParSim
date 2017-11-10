@@ -67,6 +67,8 @@ namespace Uintah {
     inline Matrix3(const Matrix3&);
     // Create a matrix using dyadic multiplication M = v1*v2^T
     inline Matrix3(const Vector& v1, const Vector& v2);
+    // Create a skew symmetric matrix using rotation axis 
+    inline Matrix3(const Vector& axis);
     // Create a rotation matrix using rotation angle and axis 
     inline Matrix3(double angle, const Vector& axis);
 
@@ -351,6 +353,15 @@ namespace Uintah {
       mat3[0][0] = a[0]*b[0]; mat3[0][1] = a[0]*b[1]; mat3[0][2] = a[0]*b[2];
       mat3[1][0] = a[1]*b[0]; mat3[1][1] = a[1]*b[1]; mat3[1][2] = a[1]*b[2];
       mat3[2][0] = a[2]*b[0]; mat3[2][1] = a[2]*b[1]; mat3[2][2] = a[2]*b[2];
+    }
+
+  // Create a skew symmetric matrix from an axial vector
+  // Create matrix A  = [[0 -axis3 axis2];[axis3 0 -axis1];[-axis2 axis1 0]]
+  inline Matrix3::Matrix3(const Vector& axis)
+    {
+      mat3[0][0] = 0; mat3[0][1] = -axis[2]; mat3[0][2] = axis[1];
+      mat3[1][0] = axis[2]; mat3[1][1] = 0; mat3[1][2] = -axis[0];
+      mat3[2][0] = -axis[1]; mat3[2][1] = axis[0]; mat3[2][2] = 0;
     }
 
   // Create a rotation matrix using the angle of rotation and the

@@ -3255,166 +3255,152 @@ SerialMPM::setPrescribedMotion(const ProcessorGroup*,
     delt_vartype delT;
     old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
 
-
     int numMPMMatls=d_sharedState->getNumMPMMatls();
 
     for(int m = 0; m < numMPMMatls; m++){
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
-      int dwi = mpm_matl->getDWIndex();
+      int matlID = mpm_matl->getDWIndex();
       NCVariable<Vector> gvelocity_star, gacceleration;
 
-      new_dw->getModifiable(gvelocity_star,lb->gVelocityStarLabel,  dwi,patch);
-      new_dw->getModifiable(gacceleration, lb->gAccelerationLabel,  dwi,patch);
+      new_dw->getModifiable(gvelocity_star,lb->gVelocityStarLabel,  matlID,patch);
+      new_dw->getModifiable(gacceleration, lb->gAccelerationLabel,  matlID,patch);
 
       gacceleration.initialize(Vector(0.0));
-      Matrix3 Fdot(0.);
 
       // Get F and Q from file by interpolating between available times
-      int s;  // This time index will be the lower of the two we interpolate from
-      int smin = 0;
-      int smax = (int) (d_prescribedTimes.size()-1);
-      double tmin = d_prescribedTimes[smin];
-      double tmax = d_prescribedTimes[smax];
+      auto t_upper_iter = 
+        std::upper_bound(d_prescribedTimes.begin(), d_prescribedTimes.end(), time);
 
-      if(time<=tmin) {
-        s=smin;
-      } else if(time>=tmax) {
-        s=smax-1;
-      } else {
-        while (smax>smin+1) {
-          int smid = (smin+smax)/2;
-          if(d_prescribedTimes[smid]<time){
-            smin = smid;
-          } else{
-            smax = smid;
-          }
-        }
-        s = smin;
+      auto t_upper_index = t_upper_iter - d_prescribedTimes.begin();
+      if (t_upper_iter == d_prescribedTimes.end()) {
+        t_upper_index = --t_upper_iter - d_prescribedTimes.begin();
       }
 
-      Matrix3 F_high = d_prescribedF[s+1]; //next prescribed deformation gradient
-      Matrix3 F_low  = d_prescribedF[s]; //last prescribed deformation gradient
-      double t1 = d_prescribedTimes[s];    // time of last prescribed deformation
-      double t2 = d_prescribedTimes[s+1];  //time of next prescribed deformation
+      auto t_lower = *(t_upper_iter - 1);
+      auto t_upper = *t_upper_iter;
+      auto ss = (time - t_lower)/(t_upper - t_lower);
 
       //Interpolate to get the deformation gradient at the current time:
-      Matrix3 Ft = F_low*(t2-time)/(t2-t1) + F_high*(time-t1)/(t2-t1);
+      auto F_lower = d_prescribedF[t_upper_index-1];
+      auto F_upper = d_prescribedF[t_upper_index];
+      auto Ft = (1 - ss)*F_lower + ss*F_upper;
 
       // Calculate the rate of the deformation gradient without the rotation:
-      Fdot = (F_high - F_low)/(t2-t1);
-      Matrix3 Finv = Ft.Inverse();
-      Matrix3 L = Fdot*Finv;
-
-      //std::cout << "SerialMPM: t = " << time << " t2 = " << t2 << " t1 = " << t1 << " F_low = " << F_low
-      //          << " F_high = " << F_high << " F_t = " <<  Ft << " Fdot = " << Fdot << " L = " << L << endl;
+      auto Fdot = (F_upper - F_lower)/(t_upper - t_lower);
+      auto Ft_inv = Ft.Inverse();
+      auto L = Fdot*Ft_inv;
 
       // Now we need to construct the rotation matrix and its time rate:
-      // We are only interested in the rotation information at the next specified time since the rotations specified should be relative to the previously specified time.  For example if I specify Theta=90 at time=1.0, and Theta = 91 and time=2.0 the total rotation at time=2.0 will be 181 degrees.
-      //
+      // We are only interested in the rotation information at the next specified time 
+      // since the rotations specified should be relative to the previously specified time.  
+      // For example if I specify Theta=90 at time=1.0, and Theta = 91 and time=2.0 the 
+      // total rotation at time=2.0 will be 181 degrees.
       const double pi = M_PI; //3.1415926535897932384626433832795028841972;
       const double degtorad= pi/180.0;
-      double PrescribedTheta = d_prescribedAngle[s+1]; //The final angle of rotation
-      double thetat = PrescribedTheta*degtorad*(time-t1)/(t2-t1); // rotation angle at current time
-      Vector a = d_prescribedRotationAxis[s+1];  // The axis of rotation
-      Matrix3 Ident;
-      Ident.Identity();
+
+      auto theta_upper = d_prescribedAngle[t_upper_index];
+      auto thetat = ss * theta_upper * degtorad;
+
+      auto rot_axis_upper = d_prescribedRotationAxis[t_upper_index];
+      Matrix3 QQ(thetat, rot_axis_upper);
+      auto Qt = QQ.Transpose();
+
+      auto thetadot = theta_upper * degtorad / (t_upper - t_lower);
+
+      //Exact Deformation Update
+      /*
+       ** TODO ** Add computes for delT for this code to run.  
+       **
+       ** Warning: Tries to access data that is outside bounds
+       **/
+      if (flags->d_exactDeformation)
+      {
+        // Check to see we do not exceed bounds
+        int count = 0;
+        auto t_upper_iter_copy = t_upper_iter;
+        auto t_upper_index_copy = t_upper_index;
+        while (++t_upper_iter_copy != d_prescribedTimes.end()) {
+          t_upper_index_copy = t_upper_iter_copy - d_prescribedTimes.begin();
+          ++count;
+          //std::cout << "t_upper_index_copy = " << t_upper_index_copy << " count = " << count << "\n";
+          if (count > 1) break;
+        }
+
+        // If there are at least two extra data points
+        if (count > 1) {
+
+          double t3 = d_prescribedTimes[t_upper_index + 1];    
+          double t4 = d_prescribedTimes[t_upper_index + 2];  
+          if (time == 0 && t4 != 0) {
+
+            new_dw->put(delt_vartype(t3 - t_upper), d_sharedState->get_delt_label(), getLevel(patches));
+
+          } else {
+
+            F_lower = d_prescribedF[t_upper_index]; //last prescribed deformation gradient
+            F_upper = d_prescribedF[t_upper_index + 1]; //next prescribed deformation gradient
+            Ft = (1 - ss) * F_lower + ss * F_upper;
+            Ft_inv = Ft.Inverse();
+            Fdot = (F_upper - F_lower)/(t3 - t_upper);
+            thetadot = theta_upper * degtorad/(t3 - t_upper);
+
+            double tst = t4 - t3; 
+            new_dw->put(delt_vartype(tst), d_sharedState->get_delt_label(), getLevel(patches));
+
+          }
+        } 
+      }
+
+      // Construct Qdot:
       const double costhetat = cos(thetat);
       const double sinthetat = sin(thetat);
-      Matrix3 aa(a,a);
-      Matrix3 A(0.0,-a.z(),a.y(),a.z(),0.0,-a.x(),-a.y(),a.x(),0.0);
-      Matrix3 Qt;
-      Qt = (Ident-aa)*costhetat+A*sinthetat + aa;
-     
-      //calculate thetadot:
-      double thetadot = PrescribedTheta*(degtorad)/(t2-t1);
+      Matrix3 Ident; Ident.Identity();
+      Matrix3 aa(rot_axis_upper, rot_axis_upper);
+      Matrix3 AA(rot_axis_upper);
+      auto Qdot = (Ident - aa)*(-sinthetat*thetadot) + AA*costhetat*thetadot;
 
-
-      if (flags->d_exactDeformation)//Exact Deformation Update
-      {
-        double t3 = d_prescribedTimes[s+2];    
-        double t4 = d_prescribedTimes[s+3];  
-        if (time == 0 && t4 != 0)
-        {
-          new_dw->put(delt_vartype(t3 - t2), d_sharedState->get_delt_label(), getLevel(patches));
-        } 
-        else
-        {
-          F_high = d_prescribedF[s + 2]; //next prescribed deformation gradient
-          F_low  = d_prescribedF[s + 1]; //last prescribed deformation gradient
-          t3 = d_prescribedTimes[s+2];
-          t4 = d_prescribedTimes[s+3];
-          double tst = t4 - t3; 
-          Ft = F_low*(t2-time)/(t2-t1) + F_high*(time-t1)/(t2-t1);
-          Fdot = (F_high - F_low)/(t3-t2);
-          thetadot = PrescribedTheta*(degtorad)/(t3-t2);
-          new_dw->put(delt_vartype(tst), d_sharedState->get_delt_label(), getLevel(patches));
-        }
-        //std::cout << "SerialMPM: (exact): t = " << time << " t2 = " << t2 << " t1 = " << t1 << " F_low = " << F_low
-        //          << " F_high = " << F_high << " F_t = " <<  Ft << " Fdot = " << Fdot << endl;
-      }
-
-      //construct Rdot:
-      Matrix3 Qdot(0.0);
-      Qdot = (Ident-aa)*(-sinthetat*thetadot) + A*costhetat*thetadot;
-
-
-
-      Matrix3 Previous_Rotations;
-      Previous_Rotations.Identity();
-      int i;
-      //now we need to compute the total previous rotation:
-      for(i=0;i<s+1;i++){
-        Vector ai;
-        double thetai = d_prescribedAngle[i]*degtorad;
-        ai = d_prescribedRotationAxis[i];
-        const double costhetati = cos(thetai);
-        const double sinthetati = sin(thetai);
-
-        Matrix3 aai(ai,ai);
-        Matrix3 Ai(0.0,-ai.z(),ai.y(),ai.z(),0.0,-ai.x(),-ai.y(),ai.x(),0.0);
-        Matrix3 Qi;
-        Qi = (Ident-aai)*costhetati+Ai*sinthetati + aai;
-
-        Previous_Rotations = Qi*Previous_Rotations;
+      // Now we need to compute the total previous rotation:
+      Matrix3 R_previous;
+      R_previous.Identity();
+      for (auto ii = 0; ii < t_upper_index; ii++) {
+        auto thetai = d_prescribedAngle[ii] * degtorad;
+        auto ai = d_prescribedRotationAxis[ii];
+        Matrix3 Qi(thetai, ai);
+        R_previous = Qi*R_previous;
       }
      
-
-
       // Fstar is the deformation gradient with the superimposed rotations included
       // Fdotstar is the rate of the deformation gradient with superimposed rotations included
-      Matrix3 Fstar;
-      Matrix3 Fdotstar;
-      Fstar = Qt*Previous_Rotations*Ft;
-      Fdotstar = Qdot*Previous_Rotations*Ft + Qt*Previous_Rotations*Fdot;
+      auto Fstar = Qt*R_previous*Ft;
+      auto Fdotstar = Qdot*R_previous*Ft + Qt*R_previous*Fdot;
+      auto R_previous_inv = R_previous.Inverse();
       
-      
-      for(NodeIterator iter=patch->getExtraNodeIterator();!iter.done(); iter++){
+      // Update grid velocities
+      for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
         IntVector n = *iter;
+        Vector position = patch->getNodePosition(n).asVector();
 
-        Vector NodePosition = patch->getNodePosition(n).asVector();
-
-        if (flags->d_exactDeformation)//Exact Deformation Update
-        {
-          gvelocity_star[n] = (F_high*F_low.Inverse() - Ident)*Previous_Rotations.Inverse()*Qt.Transpose()*NodePosition/delT;
-        }
-        else           
-        {
-          gvelocity_star[n] = Fdotstar*Ft.Inverse()*Previous_Rotations.Inverse()*Qt.Transpose()*NodePosition;
+        //Exact Deformation Update
+        if (flags->d_exactDeformation) {
+          gvelocity_star[n] = (F_upper*F_lower.Inverse() - Ident)*R_previous_inv*QQ*position/delT;
+        } else {
+          gvelocity_star[n] = Fdotstar*Ft_inv*R_previous_inv*QQ*position;
         }
 
       } // Node Iterator
+
       if(!flags->d_doGridReset){
         NCVariable<Vector> displacement;
         constNCVariable<Vector> displacementOld;
-        new_dw->allocateAndPut(displacement,lb->gDisplacementLabel,dwi,patch);
-        old_dw->get(displacementOld,        lb->gDisplacementLabel,dwi,patch,
+        new_dw->allocateAndPut(displacement,lb->gDisplacementLabel,matlID,patch);
+        old_dw->get(displacementOld,        lb->gDisplacementLabel,matlID,patch,
                     Ghost::None,0);
-        for(NodeIterator iter=patch->getExtraNodeIterator();
-            !iter.done();iter++){
+        for(auto iter=patch->getExtraNodeIterator(); !iter.done();iter++) {
           IntVector c = *iter;
           displacement[c] = displacementOld[c] + gvelocity_star[c] * delT;
         }
       }  // d_doGridReset
+
     }   // matl loop
   }     // patch loop
 }
