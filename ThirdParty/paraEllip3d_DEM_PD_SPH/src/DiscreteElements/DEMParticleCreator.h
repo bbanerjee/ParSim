@@ -4,6 +4,7 @@
 #include <DiscreteElements/DEMContainers.h>
 #include <DiscreteElements/DEMParticle.h>
 #include <Core/Geometry/Box.h>
+#include <Core/Geometry/FaceEdge.h>
 
 namespace dem {
 
@@ -46,6 +47,15 @@ private:
                                     const dem::Box& spatialDomain, 
                                     dem::Gradation& gradation, 
                                     const ParticleParameters& params);
+
+  using IntersectionStatus = std::pair<bool, std::pair<Face::Location, int>>;
+  void addExtraTranslations(const Vec& shift, 
+                            REAL boundaryMargin,
+                            Vec inPlaneDiag,
+                            REAL widthX, REAL widthY, REAL widthZ,
+                            const Face& face,
+                            const IntersectionStatus status, 
+                            std::vector<Vec>& translations);
 
   void removeDuplicates(DEMParticlePArray& input);
 };

@@ -200,7 +200,7 @@ function [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2)
   u2 = u2/norm(u2);
   [u0'; u1'; u2']
   ppp = createBoxVertices(cc, ll, u0, u1, u2);
-  drawBoxFaces(ppp, 'b');
+  %drawBoxFaces(ppp, 'b');
 
   N = [u0(1,1)/ll(1) u0(2,1)/ll(1) u0(3,1)/ll(1); ...
        u1(1,1)/ll(2) u1(2,1)/ll(2) u1(3,1)/ll(2); ...
