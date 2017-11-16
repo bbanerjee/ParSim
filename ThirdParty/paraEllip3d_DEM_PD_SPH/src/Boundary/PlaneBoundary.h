@@ -141,8 +141,8 @@ private:
   Vec d_previousVelocity;
 
   BCType d_bcType;
-  BoundaryConditionCurve<double> d_tractionBC;
-  BoundaryConditionCurve<double> d_displacementBC;
+  BoundaryConditionCurve<double, 1> d_tractionBC;
+  BoundaryConditionCurve<double, 1> d_displacementBC;
 
   friend class boost::serialization::access;
   template <class Archive>

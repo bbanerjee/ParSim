@@ -5,6 +5,7 @@
 #include <InputOutput/json/json.hpp>
 #include <InputOutput/zenxml/xml.h>
 #include <Core/Math/Vec.h>
+#include <Core/MechanicsConcepts/Deformations.h>
 
 #include <vector>
 #include <fstream>
@@ -15,7 +16,7 @@ namespace dem {
   using XMLProblemSpec = zen::XmlIn;
   using JsonProblemSpec = nlohmann::json;
 
-  template<typename T>
+  template<typename T, int N>
   class BoundaryConditionCurve {
 
   public:
@@ -71,7 +72,7 @@ namespace dem {
         std::cerr << "  Add the <time> t1, t2 t3, ... </time> tag.";
         exit(-1);
       }
-      d_times = dem::BCUtils::convertStrToArray<double>(vecStr);
+      d_times = dem::BCUtils::convertStrToArrayOfScalars<double>(vecStr);
 
       vecStr = "";
       if (!ps["value"](vecStr)) {
@@ -80,7 +81,7 @@ namespace dem {
         std::cerr << "  Add the <value> v1, v2 v3, ... </value> tag.";
         exit(-1);
       }
-      d_bcValues = dem::BCUtils::convertStrToArray<T>(vecStr);
+      d_bcValues = dem::BCUtils::convertStrToArrayOfVectors<T, N>(vecStr);
       assert(d_times.size() == d_bcValues.size());
     }
 
@@ -96,7 +97,7 @@ namespace dem {
         std::cerr << "  Add the time: \"t1 t2 t3 ...\" tag.";
         exit(-1);
       }
-      d_times = dem::BCUtils::convertStrToArray<double>(vecStr);
+      d_times = dem::BCUtils::convertStrToArrayOfScalars<double>(vecStr);
     
       vecStr = "";
       try {
@@ -107,7 +108,7 @@ namespace dem {
         std::cerr << "  Add the value: \"v1 v2 v3 ...\" tag.";
         exit(-1);
       }
-      d_bcValues = dem::BCUtils::convertStrToArray<T>(vecStr);
+      d_bcValues = dem::BCUtils::convertStrToArrayOfVectors<T, N>(vecStr);
       assert(d_times.size() == d_bcValues.size());
     }
 
@@ -159,8 +160,9 @@ namespace dem {
 } // end namespace dem
 
 namespace dem {
-  template class BoundaryConditionCurve<double>;
-  template class BoundaryConditionCurve<Vec>;
+  template class BoundaryConditionCurve<double, 1>;
+  template class BoundaryConditionCurve<Vec, 3>;
+  template class BoundaryConditionCurve<Displacement, 3>;
 }
 
 #endif

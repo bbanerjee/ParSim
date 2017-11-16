@@ -29,7 +29,7 @@ TEST(BoundaryConditionCurveTest, test1D) {
   csv << "\n";
 
   std::istream& stream(csv);
-  BoundaryConditionCurve<double> bc_csv(stream);
+  BoundaryConditionCurve<double, 1> bc_csv(stream);
   //std::cout << "BC: 1D : CSV:" << std::endl;
   //std::cout << bc_csv;
 
@@ -45,7 +45,7 @@ TEST(BoundaryConditionCurveTest, test1D) {
   xml["time"](timeStr);
   xml["value"](valueStr);
   zen::XmlIn inxml(doc);
-  BoundaryConditionCurve<double> bc_xml(inxml);
+  BoundaryConditionCurve<double, 1> bc_xml(inxml);
   //std::cout << "BC: 1D : XML:" << std::endl;
   //std::cout << bc_xml;
 
@@ -53,7 +53,7 @@ TEST(BoundaryConditionCurveTest, test1D) {
   nlohmann::json json_data;
   json_data["time"] = timeStr;
   json_data["value"] = valueStr;
-  BoundaryConditionCurve<double> bc_json(json_data);
+  BoundaryConditionCurve<double, 1> bc_json(json_data);
   //std::cout << "BC: 1D : JSON:" << std::endl;
   //std::cout << bc_json;
 
@@ -105,7 +105,7 @@ TEST(BoundaryConditionCurveTest, test3D) {
   csv << "\n";
 
   std::istream& stream(csv);
-  BoundaryConditionCurve<Vec> bc_csv(stream);
+  BoundaryConditionCurve<Vec, 3> bc_csv(stream);
   //std::cout << "BC: 3D : CSV:" << std::endl;
   //std::cout << bc_csv;
 
@@ -123,7 +123,7 @@ TEST(BoundaryConditionCurveTest, test3D) {
   xml["time"](timeStr);
   xml["value"](valueStr);
   zen::XmlIn inxml(doc);
-  BoundaryConditionCurve<Vec> bc_xml(inxml);
+  BoundaryConditionCurve<Vec, 3> bc_xml(inxml);
   //std::cout << "BC: 3D : XML:" << std::endl;
   //std::cout << bc_xml;
 
@@ -131,7 +131,7 @@ TEST(BoundaryConditionCurveTest, test3D) {
   nlohmann::json json_data;
   json_data["time"] = timeStr;
   json_data["value"] = valueStr;
-  BoundaryConditionCurve<Vec> bc_json(json_data);
+  BoundaryConditionCurve<Vec, 3> bc_json(json_data);
   //std::cout << "BC: 3D : JSON:" << std::endl;
   //std::cout << bc_json;
 
