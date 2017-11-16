@@ -1,5 +1,6 @@
 #include <Boundary/PeriodicParticleBC.h>
 #include <Core/MechanicsConcepts/Deformations.h>
+#include <Core/MechanicsConcepts/StrainTensors.h>
 #include <gtest/gtest.h>
 
 using namespace dem;
@@ -61,6 +62,7 @@ TEST(PeriodicParticleBCTest, deformationGradientBC) {
     for (int jj = 0; jj < num_components; jj++) {
       valueStr += std::to_string(values[ii][jj]) + " ";
     }
+    valueStr += "\n";
   }
   xml["time"](timeStr);
   xml["value"](valueStr);
@@ -72,4 +74,40 @@ TEST(PeriodicParticleBCTest, deformationGradientBC) {
   DeformationGradient defgrad = defgrad_bc_xml.getBCValue(1.9);
   std::cout << defgrad_bc_xml;
   std::cout << defgrad << "\n";
+}
+
+TEST(PeriodicParticleBCTest, axisymmetricStrainBC) {
+
+  int num_points = 3;
+  constexpr int num_components = 4;
+  std::vector<double> times(num_points);
+  std::vector<std::array<double, num_components>> values(num_points);
+  for (int ii = 0; ii < num_points; ii++) {
+    times[ii] = ii+1;
+    values[ii] = {{5.0*(ii+1), 6.0*(ii+1), 7.0*(ii+1),
+                   0.1*(ii+1)}};
+  }
+
+  /* Read xml data */
+  zen::XmlDoc doc;
+  zen::XmlOut xml(doc);
+  std::string timeStr = "";
+  std::string valueStr = "";
+  for (int ii = 0; ii < num_points; ii++) {
+    timeStr += std::to_string(times[ii]) + " ";
+    for (int jj = 0; jj < num_components; jj++) {
+      valueStr += std::to_string(values[ii][jj]) + " ";
+    }
+    valueStr += "\n";
+  }
+  xml["time"](timeStr);
+  xml["value"](valueStr);
+  zen::XmlIn in_xml(doc);
+
+  std::cout << zen::serialize(doc) << std::endl;
+
+  PeriodicParticleBC<AxisymmetricStrain, 4> axistrain_bc_xml(in_xml);
+  AxisymmetricStrain axistrain = axistrain_bc_xml.getBCValue(1.9);
+  std::cout << axistrain_bc_xml;
+  std::cout << axistrain << "\n";
 }

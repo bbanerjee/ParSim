@@ -66,11 +66,12 @@ struct DeformationGradient
 
   friend std::ostream& operator<<(std::ostream& os, const DeformationGradient& F)
   {
-    os << "F11: " << F._value[0] << " F12: " << F._value[1] 
-       << " F13: " << F._value[2] << " F21: " << F._value[3] 
-       << " F22: " << F._value[4] << " F23: " << F._value[5]
-       << " F31: " << F._value[6] << " F32: " << F._value[7]
-       << " F33: " << F._value[8];
+    os << "(F11, F12, F13, F21, F22, F23, F31, F32, F33): " 
+       << F._value[0] << " " << F._value[1] 
+       << " " << F._value[2] << " " << F._value[3] 
+       << " " << F._value[4] << " " << F._value[5]
+       << " " << F._value[6] << " " << F._value[7]
+       << " " << F._value[8];
     return os;
   }
 };

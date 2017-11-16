@@ -29,7 +29,7 @@ public:
   friend std::ostream& 
   operator<<(std::ostream& os, const PeriodicParticleBC<T, N>& bc)
   {
-    os << " BCs: \n\t" << bc.d_bcCurve;
+    os << " BCs: \n" << bc.d_bcCurve;
     return os;
   }
 
