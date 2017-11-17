@@ -9,8 +9,10 @@ namespace dem {
 
 struct SmallStrain
 {
+private:
   std::array<REAL, 6> _value;
 
+public:
   SmallStrain(const Matrix3& strain)
   {
     _value[0] = strain(1,1);
@@ -43,8 +45,10 @@ struct SmallStrain
 
 struct PlaneStressStrain
 {
+private:
   std::array<REAL, 4> _value;
 
+public:
   PlaneStressStrain(const Matrix3& epsilon)
   {
     _value[0] = epsilon(1,1);
@@ -71,8 +75,10 @@ struct PlaneStressStrain
 
 struct PlaneStrain
 {
+private:
   std::array<REAL, 3> _value;
 
+public:
   PlaneStrain(const Matrix3& epsilon)
   {
     _value[0] = epsilon(1,1);
@@ -97,8 +103,10 @@ struct PlaneStrain
 
 struct AxisymmetricStrain
 {
+private:
   std::array<REAL, 4> _value;
 
+public:
   AxisymmetricStrain() = default;
 
   AxisymmetricStrain(const Matrix3& epsilon)
@@ -125,9 +133,9 @@ struct AxisymmetricStrain
   }
 
   inline
-  std::array<REAL, 4> data() const
+  const std::array<REAL, 4>& data() const
   {
-    return {{_value[0], _value[1], _value[2], _value[3]}};
+    return _value;
   }
 
   friend 

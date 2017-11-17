@@ -24,8 +24,14 @@
 set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/googletest/googletest/include")
 set(TEST_LIB gtest_main gtest)
 #set(CMAKE_VERBOSE_MAKEFILE 1)
-
 include_directories(${GTEST_INCLUDE_DIR})
+
+#--------------------------------------
+# Input files
+#--------------------------------------
+configure_file(input_dem_particle_disp_bc.xml input_dem_particle_disp_bc.xml COPYONLY)
+configure_file(input_dem_particle_defgrad_bc.xml input_dem_particle_defgrad_bc.xml COPYONLY)
+configure_file(input_dem_particle_axisymm_strain_bc.xml input_dem_particle_axisymm_strain_bc.xml COPYONLY)
 
 #--------------------------------------
 # DEMParticle
@@ -68,3 +74,46 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+
+#--------------------------------------
+# PeriodicParticleBC
+#--------------------------------------
+add_executable(testDEMPeriodicParticleBC testDEMPeriodicParticleBC.cpp)
+
+target_link_libraries(testDEMPeriodicParticleBC
+  ${TEST_LIB}
+  ELLIP3D_LIB
+  ${MPI_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${VTK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+)
+
+set(UNIT_TEST testDEMPeriodicParticleBC)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+#--------------------------------------
+# DEMBoundaryConditions
+#--------------------------------------
+add_executable(testDEMBoundaryConditions testDEMBoundaryConditions.cpp)
+
+target_link_libraries(testDEMBoundaryConditions
+  ${TEST_LIB}
+  ELLIP3D_LIB
+  ${MPI_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${VTK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+)
+
+set(UNIT_TEST testDEMBoundaryConditions)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+

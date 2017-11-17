@@ -10,8 +10,10 @@ namespace dem {
 
 struct DeformationGradient
 {
+private:
   std::array<REAL, 9> _value;
 
+public:
   DeformationGradient() = default;
 
   DeformationGradient(const Matrix3& F)
@@ -44,7 +46,7 @@ struct DeformationGradient
   }
 
   inline
-  std::array<REAL, 9> data() const
+  const std::array<REAL, 9>& data() const
   {
     return _value;
   }
@@ -79,31 +81,31 @@ struct DeformationGradient
 struct Displacement
 {
 private:
-  REAL _u, _v, _w;
+  std::array<REAL, 3> _value;
 
 public:
   Displacement() = default;
 
   Displacement(const Vec& disp)
-   : _u(disp.x()), _v(disp.y()), _w(disp.z())
   {
+   _value[0] = disp.x(); _value[1] = disp.y(); _value[2] = disp.z();
   }
 
   Displacement(REAL u1, REAL u2, REAL u3) 
-   : _u(u1), _v(u2), _w(u3)
   {
+   _value[0] = u1; _value[1] = u2; _value[2] = u3;
   }
 
   inline
   Displacement operator*(REAL scalar) const 
   {
-    return Displacement(_u*scalar, _v*scalar, _w*scalar);
+    return Displacement(_value[0]*scalar, _value[1]*scalar, _value[2]*scalar);
   }
 
   inline
-  Vec data() const
+  const std::array<REAL, 3>& data() const
   {
-    return Vec(_u, _v, _w);
+    return _value;
   }
 
   friend 
@@ -115,12 +117,14 @@ public:
   friend 
   Displacement operator+(const Displacement& u1, const Displacement& u2) 
   {
-    return Displacement(u1._u + u2._u, u1._v + u2._v, u1._w + u2._w);
+    return Displacement(u1._value[0] + u2._value[0], 
+                        u1._value[1] + u2._value[1], 
+                        u1._value[2] + u2._value[2]);
   }
 
   friend std::ostream& operator<<(std::ostream& os, const Displacement& disp)
   {
-    os << "u: (" << disp._u << " " << disp._v << " " << disp._w << ")";
+    os << "u: (" << disp._value[0] << " " << disp._value[1] << " " << disp._value[2] << ")";
     return os;
   }
 };

@@ -1,11 +1,11 @@
-#include <Boundary/PeriodicParticleBC.h>
+#include <DiscreteElements/DEMPeriodicParticleBC.h>
 #include <Core/MechanicsConcepts/Deformations.h>
 #include <Core/MechanicsConcepts/StrainTensors.h>
 #include <gtest/gtest.h>
 
 using namespace dem;
 
-TEST(PeriodicParticleBCTest, displacementBC) {
+TEST(DEMPeriodicParticleBCTest, displacementBC) {
 
   int num_points = 3;
   //int num_components = 3;
@@ -31,15 +31,18 @@ TEST(PeriodicParticleBCTest, displacementBC) {
   xml["value"](valueStr);
   zen::XmlIn in_xml(doc);
 
-  std::cout << zen::serialize(doc) << std::endl;
+  //std::cout << zen::serialize(doc) << std::endl;
 
-  PeriodicParticleBC<Displacement, 3> disp_bc_xml(in_xml);
+  DEMPeriodicParticleBC<Displacement, 3> disp_bc_xml(in_xml);
   Displacement disp = disp_bc_xml.getBCValue(1.9);
-  std::cout << disp_bc_xml;
-  std::cout << disp << "\n";
+  //std::cout << disp_bc_xml;
+  //std::cout << disp << "\n";
+  EXPECT_DOUBLE_EQ(disp.data()[0], 9.5);
+  EXPECT_DOUBLE_EQ(disp.data()[1], 11.4);
+  EXPECT_DOUBLE_EQ(disp.data()[2], 13.3);
 }
 
-TEST(PeriodicParticleBCTest, deformationGradientBC) {
+TEST(DEMPeriodicParticleBCTest, deformationGradientBC) {
 
   int num_points = 3;
   constexpr int num_components = 9;
@@ -68,15 +71,29 @@ TEST(PeriodicParticleBCTest, deformationGradientBC) {
   xml["value"](valueStr);
   zen::XmlIn in_xml(doc);
 
-  std::cout << zen::serialize(doc) << std::endl;
+  //std::cout << zen::serialize(doc) << std::endl;
 
-  PeriodicParticleBC<DeformationGradient, 9> defgrad_bc_xml(in_xml);
+  DEMPeriodicParticleBC<DeformationGradient, 9> defgrad_bc_xml(in_xml);
   DeformationGradient defgrad = defgrad_bc_xml.getBCValue(1.9);
-  std::cout << defgrad_bc_xml;
-  std::cout << defgrad << "\n";
+  //std::cout << defgrad_bc_xml;
+  //std::cout << defgrad << "\n";
+
+  DEMPeriodicParticleBC<DeformationGradient, 9> defgrad_bc_xml1;
+  defgrad_bc_xml1.read(in_xml);
+  defgrad = defgrad_bc_xml1.getBCValue(1.9);
+  //std::cout << defgrad_bc_xml1;
+  EXPECT_DOUBLE_EQ(defgrad.data()[0], 9.5);
+  EXPECT_DOUBLE_EQ(defgrad.data()[1], 11.4);
+  EXPECT_DOUBLE_EQ(defgrad.data()[2], 13.3);
+  EXPECT_DOUBLE_EQ(defgrad.data()[3], 0.19);
+  EXPECT_DOUBLE_EQ(defgrad.data()[4], 0.38);
+  EXPECT_DOUBLE_EQ(defgrad.data()[5], 0.57);
+  EXPECT_DOUBLE_EQ(defgrad.data()[6], 2.09);
+  EXPECT_DOUBLE_EQ(defgrad.data()[7], 2.28);
+  EXPECT_DOUBLE_EQ(defgrad.data()[8], 2.47);
 }
 
-TEST(PeriodicParticleBCTest, axisymmetricStrainBC) {
+TEST(DEMPeriodicParticleBCTest, axisymmetricStrainBC) {
 
   int num_points = 3;
   constexpr int num_components = 4;
@@ -104,10 +121,14 @@ TEST(PeriodicParticleBCTest, axisymmetricStrainBC) {
   xml["value"](valueStr);
   zen::XmlIn in_xml(doc);
 
-  std::cout << zen::serialize(doc) << std::endl;
+  //std::cout << zen::serialize(doc) << std::endl;
 
-  PeriodicParticleBC<AxisymmetricStrain, 4> axistrain_bc_xml(in_xml);
+  DEMPeriodicParticleBC<AxisymmetricStrain, 4> axistrain_bc_xml(in_xml);
   AxisymmetricStrain axistrain = axistrain_bc_xml.getBCValue(1.9);
-  std::cout << axistrain_bc_xml;
-  std::cout << axistrain << "\n";
+  //std::cout << axistrain_bc_xml;
+  //std::cout << axistrain << "\n";
+  EXPECT_DOUBLE_EQ(axistrain.data()[0], 9.5);
+  EXPECT_DOUBLE_EQ(axistrain.data()[1], 11.4);
+  EXPECT_DOUBLE_EQ(axistrain.data()[2], 13.3);
+  EXPECT_DOUBLE_EQ(axistrain.data()[3], 0.19);
 }

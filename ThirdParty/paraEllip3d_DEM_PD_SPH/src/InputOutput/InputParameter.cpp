@@ -3,6 +3,7 @@
 #include <InputOutput/InputParameter.h>
 #include <InputOutput/zenxml/xml.h>
 #include <InputOutput/IOUtils.h>
+#include <DiscreteElements/DEMBoundaryConditionUtils.h>
 #include <cstddef>
 #include <cstdlib>
 #include <fstream>
@@ -290,6 +291,23 @@ InputParameter::readInXML(const std::string& inputFileName)
     datafile["periodicBoundaryOutputFilename"] = "generated_periodic_boundary";
     datafile["periodicParticleOutputFilename"] = "generated_periodic_particles";
   }
+
+  // DEM BCs
+  auto dem_ps = ps["DEM"];
+  auto dem_bc_ps = dem_ps["BoundaryConditions"];
+  std::string demDomainBCType = "fixed";
+  std::string demParticleBCType = "none";
+  std::string demBCFile = "none";
+  if (dem_bc_ps) {
+    dem_bc_ps["domainBCType"](demDomainBCType);
+    dem_bc_ps["particleBCType"](demParticleBCType);
+    dem_bc_ps["inputFile"](demBCFile);
+  }
+  param["DEMDomainBCType"] = 
+    static_cast<REAL>(dem::BCUtils::getDEMDomainBCType(demDomainBCType));
+  param["DEMParticleBCType"] = 
+    static_cast<REAL>(dem::BCUtils::getDEMParticleBCType(demParticleBCType));
+  datafile["DEMBCInputFile"] = demBCFile;
 
   // Check if a peridynamics section exists
   auto peri_ps = ps["Peridynamics"];

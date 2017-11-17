@@ -6,7 +6,7 @@
 namespace dem {
 
 template <typename T, int N>
-class PeriodicParticleBC
+class DEMPeriodicParticleBC
 {
 
 private:
@@ -15,7 +15,14 @@ private:
 
 public:
 
-  PeriodicParticleBC(const XMLProblemSpec& ps)
+  DEMPeriodicParticleBC() = default;
+
+  DEMPeriodicParticleBC(const XMLProblemSpec& ps)
+  {
+    d_bcCurve.read(ps);
+  }
+
+  void read(const XMLProblemSpec& ps) 
   {
     d_bcCurve.read(ps);
   }
@@ -27,7 +34,7 @@ public:
   }
 
   friend std::ostream& 
-  operator<<(std::ostream& os, const PeriodicParticleBC<T, N>& bc)
+  operator<<(std::ostream& os, const DEMPeriodicParticleBC<T, N>& bc)
   {
     os << " BCs: \n" << bc.d_bcCurve;
     return os;

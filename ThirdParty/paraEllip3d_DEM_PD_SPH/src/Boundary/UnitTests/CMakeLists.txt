@@ -70,27 +70,6 @@ add_custom_command(
 )
 
 #--------------------------------------
-# PeriodicParticleBC
-#--------------------------------------
-add_executable(testPeriodicParticleBC testPeriodicParticleBC.cpp)
-
-target_link_libraries(testPeriodicParticleBC
-  ${TEST_LIB}
-  ELLIP3D_LIB
-  ${MPI_LIBRARY}
-  ${Boost_LIBRARIES}
-  ${VTK_LIBRARIES}
-  ${ZLIB_LIBRARIES}
-)
-
-set(UNIT_TEST testPeriodicParticleBC)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
-
-#--------------------------------------
 # PlaneBoundary
 #--------------------------------------
 add_executable(testPlaneBoundary testPlaneBoundary.cpp)
