@@ -28,6 +28,32 @@ set(TEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
 #--------------------------------------
+# Copy input files
+#--------------------------------------
+configure_file(input001_p1.xml input001_p1.xml COPYONLY)
+
+#--------------------------------------
+# InputParameter
+#--------------------------------------
+add_executable(testInputParameter testInputParameter.cpp)
+
+target_link_libraries(testInputParameter
+  ${TEST_LIB}
+  ELLIP3D_LIB
+  ${MPI_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${VTK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+)
+
+set(UNIT_TEST testInputParameter)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+#--------------------------------------
 # DEMParticleFileWriter
 #--------------------------------------
 add_executable(testDEMParticleFileWriter testDEMParticleFileWriter.cpp)

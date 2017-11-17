@@ -50,6 +50,9 @@ DEMBoundaryConditions::read(const std::string& inputFileName)
       d_particleBCType = BCUtils::DEM_ParticleBCType::AXISYMMETRIC_STRAIN;
       d_particleAxiStrainBC.read(periodic_bc_ps);
     }
+  } else {
+    d_domainBCType = BCUtils::DEM_DomainBCType::FIXED;
+    d_particleBCType = BCUtils::DEM_ParticleBCType::NONE;
   }
 
   return true;

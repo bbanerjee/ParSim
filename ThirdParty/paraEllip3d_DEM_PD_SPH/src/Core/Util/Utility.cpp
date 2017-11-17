@@ -98,6 +98,22 @@ getParam(const std::string str)
   return static_cast<T>(param[str]);
 }
 
+std::string 
+getFilename(const std::string& str)
+{
+  auto datafile = dem::InputParameter::get().datafile;
+  std::string filename;
+  try {
+    filename = datafile.at(str);
+  } catch (const std::out_of_range& err) {
+    std::ostringstream out;
+    out << "Required InputParameter [" << str << "] not found in input file";
+    std::cerr << out.str() << '\n';
+    throw std::out_of_range(out.str());
+  }
+  return filename;
+}
+
 // Create a std::vector of equally spaced ints/reals; if equality with high
 // cannot be achieved add the high value to the end
 template <typename T>

@@ -20,6 +20,8 @@ std::string combine(const std::string& folder, const std::string& str, std::size
 template <typename T>
 T getParam(const std::string str);
 
+std::string getFilename(const std::string& str);
+
 // Creates output folder and returns name
 std::string createOutputFolder(const std::string& folderName);
 

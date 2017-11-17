@@ -3,7 +3,6 @@
 #include <InputOutput/InputParameter.h>
 #include <InputOutput/zenxml/xml.h>
 #include <InputOutput/IOUtils.h>
-#include <DiscreteElements/DEMBoundaryConditionUtils.h>
 #include <cstddef>
 #include <cstdlib>
 #include <fstream>
@@ -292,21 +291,13 @@ InputParameter::readInXML(const std::string& inputFileName)
     datafile["periodicParticleOutputFilename"] = "generated_periodic_particles";
   }
 
-  // DEM BCs
+  // DEM BCs (read from input file)
   auto dem_ps = ps["DEM"];
   auto dem_bc_ps = dem_ps["BoundaryConditions"];
-  std::string demDomainBCType = "fixed";
-  std::string demParticleBCType = "none";
   std::string demBCFile = "none";
   if (dem_bc_ps) {
-    dem_bc_ps["domainBCType"](demDomainBCType);
-    dem_bc_ps["particleBCType"](demParticleBCType);
     dem_bc_ps["inputFile"](demBCFile);
   }
-  param["DEMDomainBCType"] = 
-    static_cast<REAL>(dem::BCUtils::getDEMDomainBCType(demDomainBCType));
-  param["DEMParticleBCType"] = 
-    static_cast<REAL>(dem::BCUtils::getDEMParticleBCType(demParticleBCType));
   datafile["DEMBCInputFile"] = demBCFile;
 
   // Check if a peridynamics section exists
@@ -316,7 +307,7 @@ InputParameter::readInXML(const std::string& inputFileName)
     std::string periFilename;
     peri_ps["periFilename"](periFilename);
     datafile["periFilename"] = trim(periFilename);
-    std::cout << "periFilename = " << trim(periFilename) << "\n";
+    //std::cout << "periFilename = " << trim(periFilename) << "\n";
 
     REAL fac = 1.0;
     if (!peri_ps["periGeomScaleFactor"](fac)) {
@@ -369,7 +360,7 @@ InputParameter::readInXML(const std::string& inputFileName)
 
     bool initializeFromFile = true;
     peri_ps["initializeFromFile"](initializeFromFile);
-    std::cout << "initializeFromFile = " << initializeFromFile << "\n";
+    //std::cout << "initializeFromFile = " << initializeFromFile << "\n";
     param["periToInitParticle"] = static_cast<int>(initializeFromFile);
 
     if (!peri_ps["minPeriDomain"](vecStr)) {
@@ -381,9 +372,9 @@ InputParameter::readInXML(const std::string& inputFileName)
       return false;
     }
     Vec minPeriDomain = Vec::fromString(vecStr);
-    std::cout << "minPeriX = " << minPeriDomain.x()
-              << " minPeriY = " << minPeriDomain.y()
-              << " minPeriZ = " << minPeriDomain.z() << "\n";
+    //std::cout << "minPeriX = " << minPeriDomain.x()
+    //          << " minPeriY = " << minPeriDomain.y()
+    //          << " minPeriZ = " << minPeriDomain.z() << "\n";
     param["Xmin"] = minPeriDomain.x();
     param["Ymin"] = minPeriDomain.y();
     param["Zmin"] = minPeriDomain.z();
@@ -397,9 +388,9 @@ InputParameter::readInXML(const std::string& inputFileName)
       return false;
     }
     Vec maxPeriDomain = Vec::fromString(vecStr);
-    std::cout << "maxPeriX = " << maxPeriDomain.x()
-              << " maxPeriY = " << maxPeriDomain.y()
-              << " maxPeriZ = " << maxPeriDomain.z() << "\n";
+    //std::cout << "maxPeriX = " << maxPeriDomain.x()
+    //          << " maxPeriY = " << maxPeriDomain.y()
+    //          << " maxPeriZ = " << maxPeriDomain.z() << "\n";
     param["Xmax"] = maxPeriDomain.x();
     param["Ymax"] = maxPeriDomain.y();
     param["Zmax"] = maxPeriDomain.z();
@@ -496,8 +487,8 @@ InputParameter::readInXML(const std::string& inputFileName)
       std::cerr << "**ERROR** Only linear_elastic models are allowed\n";
       return false;
     }
-    std::cout << "periPoisson = " << param["periPoisson"] << "\n"
-              << "periYoung = " << param["periYoung"] << "\n";
+    //std::cout << "periPoisson = " << param["periPoisson"] << "\n"
+    //          << "periYoung = " << param["periYoung"] << "\n";
 
     param["lambda"] =
       param["periPoisson"] * param["periYoung"] /
