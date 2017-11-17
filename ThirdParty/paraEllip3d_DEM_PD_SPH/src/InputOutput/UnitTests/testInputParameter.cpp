@@ -105,7 +105,7 @@ TEST(InputParameterTest, testInputXMLFileReader) {
   EXPECT_DOUBLE_EQ(util::getParam<REAL>("timeStep"), 1e-06);
   EXPECT_EQ(util::getParam<int>("typeConstitutive"), 1);
   EXPECT_DOUBLE_EQ(util::getParam<REAL>("young"), 4.5e+10);
-  EXPECT_EQ(util::getFilename("DEMBCInputFile"), "none");
+  EXPECT_EQ(util::getFilename("demBoundaryConditionFilename"), "none");
   EXPECT_EQ(util::getFilename("boundaryFilename"), "input001_boundary.xml");
   EXPECT_EQ(util::getFilename("outputFolder"), "deposit.pe3d");
   EXPECT_EQ(util::getFilename("particleFilename"), "input001_particles.xml");

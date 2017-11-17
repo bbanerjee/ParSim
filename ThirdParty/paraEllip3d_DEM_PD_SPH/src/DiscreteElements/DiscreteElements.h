@@ -7,6 +7,7 @@
 #include <Core/Math/Vec.h>
 #include <Core/Math/IntVec.h>
 #include <Core/Types/RealTypes.h>
+#include <DiscreteElements/DEMBoundaryConditions.h>
 #include <DiscreteElements/DEMContact.h>
 #include <DiscreteElements/DEMContainers.h>
 #include <DiscreteElements/Gradation.h>
@@ -119,6 +120,7 @@ public:
   void updateBoundaryAreas(BoundaryPArray& boundaries);
 
   void readParticles(const std::string& fileName);
+  void readBoundaryConditions(const std::string& fileName);
 
   void scatterParticles();
   void scatterDEMPeriParticle();
@@ -494,6 +496,9 @@ public:
   void dragForce();
 
 private:
+
+  // The boundary condition data
+  DEMBoundaryConditions d_bc;
 
   // The output writer pointer
   std::unique_ptr<Output> d_writer;

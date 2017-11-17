@@ -389,6 +389,12 @@ DiscreteElements::readParticles(const std::string& particleFilename)
 }
 
 void
+DiscreteElements::readBoundaryConditions(const std::string& bcFilename)
+{
+  d_bc.read(bcFilename);
+}
+
+void
 DiscreteElements::scatterParticles()
 {
   // partition particles and send to each process

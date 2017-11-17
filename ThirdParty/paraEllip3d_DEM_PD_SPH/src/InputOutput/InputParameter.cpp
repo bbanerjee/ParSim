@@ -298,7 +298,7 @@ InputParameter::readInXML(const std::string& inputFileName)
   if (dem_bc_ps) {
     dem_bc_ps["inputFile"](demBCFile);
   }
-  datafile["DEMBCInputFile"] = demBCFile;
+  datafile["demBoundaryConditionFilename"] = demBCFile;
 
   // Check if a peridynamics section exists
   auto peri_ps = ps["Peridynamics"];
