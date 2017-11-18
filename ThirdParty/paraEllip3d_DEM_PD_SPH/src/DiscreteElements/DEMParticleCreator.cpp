@@ -346,7 +346,7 @@ DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
           newParticle->setPreviousPosition(particle->previousPosition() + 
                                            translation);
           newParticle->setId(++particleID);
-          newParticle->computeGlobalCoef();
+          newParticle->computeAndSetGlobalCoef();
           extraParticles.push_back(newParticle);
         }
       }

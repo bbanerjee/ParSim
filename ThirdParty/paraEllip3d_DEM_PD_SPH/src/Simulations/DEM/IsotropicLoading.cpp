@@ -81,7 +81,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
   while (iteration <= endStep) {
 
     auto t0 = MPI_Wtime();
-    dem->commuParticle(iteration);
+    dem->communicateGhostParticles(iteration);
     auto t1 = MPI_Wtime();
     auto commuT = t1 - t0;
 

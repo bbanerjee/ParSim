@@ -200,7 +200,7 @@ DEMParticle::init()
                   d_mass / 5 * (d_a * d_a + d_b * d_b));
   d_contactNum = 0;
   d_inContact = false;
-  computeGlobalCoef();
+  computeAndSetGlobalCoef();
 }
 
 DEMParticle::DEMParticle(std::size_t n, 
@@ -299,7 +299,7 @@ DEMParticle::DEMParticle(std::size_t n,
                   d_mass / 5 * (d_a * d_a + d_c * d_c),
                   d_mass / 5 * (d_a * d_a + d_b * d_b));
   d_inContact = false;
-  computeGlobalCoef();
+  computeAndSetGlobalCoef();
 }
 
 Vec
@@ -408,7 +408,7 @@ DEMParticle::surfaceError(Vec pt) const
 }
 
 void
-DEMParticle::computeGlobalCoef()
+DEMParticle::computeAndSetGlobalCoef()
 {
   // d_coef[0]-x^2, d_coef[1]-y^2, d_coef[2]-z^2, d_coef[3]-xy, d_coef[4]-yz,
   // d_coef[5]-zx
@@ -883,7 +883,7 @@ DEMParticle::update()
   d_prevMoment = d_moment;
 
   d_contactNum = 0;
-  computeGlobalCoef(); // every time the particle is updated, the algebra expression is
+  computeAndSetGlobalCoef(); // every time the particle is updated, the algebra expression is
                 // also updated
 }
 

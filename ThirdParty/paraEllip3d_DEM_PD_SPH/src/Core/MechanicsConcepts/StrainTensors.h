@@ -101,13 +101,17 @@ public:
   }
 };
 
-struct AxisymmetricStrain
+class AxisymmetricStrain
 {
 private:
   std::array<REAL, 4> _value;
 
 public:
   AxisymmetricStrain() = default;
+  AxisymmetricStrain(REAL val)
+  {
+    _value[0] = val; _value[1] = val; _value[2] = val; _value[3] = val;
+  }
 
   AxisymmetricStrain(const Matrix3& epsilon)
   {
@@ -126,6 +130,14 @@ public:
   }
 
   inline
+  AxisymmetricStrain operator-(const AxisymmetricStrain& eps) const 
+  {
+    return AxisymmetricStrain(_value[0] - eps._value[0], 
+      _value[1] - eps._value[1], _value[2] - eps._value[2],
+      _value[3] - eps._value[3]);
+  }
+
+  inline
   AxisymmetricStrain operator*(REAL scalar) const 
   {
     return AxisymmetricStrain(_value[0]*scalar, _value[1]*scalar, 
@@ -137,6 +149,18 @@ public:
   {
     return _value;
   }
+
+  inline 
+  double operator[](int i) const
+  {
+    return _value[i];
+  }
+
+  //inline 
+  //double& operator[](int i) 
+  //{
+  //  return _value[i];
+  //}
 
   friend 
   AxisymmetricStrain operator*(REAL scalar, const AxisymmetricStrain& strain) 
@@ -162,6 +186,9 @@ public:
     return os;
   }
 };
+
+using AxisymmetricStrainRate = AxisymmetricStrain;
+
 } // end namespace dem
 
 #endif

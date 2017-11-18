@@ -89,7 +89,7 @@ Drainage::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
   broadcast(dem->getMPIWorld(), outputFolder, 0);
   std::cerr << "Proc = " << dem->getMPIRank() << " outputFolder = " << outputFolder << "\n";
 
-  dem->commuParticle();
+  dem->communicateGhostParticles();
 
   sph->commuSPHParticle(iteration, ghostWidth);
 
@@ -110,7 +110,7 @@ Drainage::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
     REAL time1 = 0, time2 = 0, time3 = 0;  
     REAL time0 = MPI_Wtime();
 
-    dem->commuParticle();
+    dem->communicateGhostParticles();
     sph->commuSPHParticle(iteration, ghostWidth);
 
     if (toCheckTime) {

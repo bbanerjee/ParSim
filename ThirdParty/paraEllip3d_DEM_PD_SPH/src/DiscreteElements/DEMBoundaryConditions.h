@@ -3,8 +3,10 @@
 
 #include <DiscreteElements/DEMPeriodicParticleBC.h>
 #include <DiscreteElements/DEMBoundaryConditionUtils.h>
+#include <DiscreteElements/DEMContainers.h>
 #include <Core/MechanicsConcepts/Deformations.h>
 #include <Core/MechanicsConcepts/StrainTensors.h>
+#include <Core/Geometry/Box.h>
 #include <string>
 
 namespace dem {
@@ -30,17 +32,63 @@ namespace dem {
 
     bool read(const std::string& fileName);
 
-    Displacement getDisplacement(double time) {
+    Displacement getDisplacement(double time) const {
       return d_particleDispBC.getBCValue(time);
     }
 
-    DeformationGradient getDeformationGradient(double time) {
+    DeformationGradient getDeformationGradient(double time) const {
       return d_particleDefGradBC.getBCValue(time);
     }
 
-    AxisymmetricStrain getAxisymmetricStrain(double time) {
+    AxisymmetricStrain getAxisymmetricStrain(double time) const {
       return d_particleAxiStrainBC.getBCValue(time);
     }
+
+    DisplacementRate getDisplacementRate(double time) const {
+      return d_particleDispBC.getBCRate(time);
+    }
+
+    DeformationGradientRate getDeformationGradientRate(double time) const {
+      return d_particleDefGradBC.getBCRate(time);
+    }
+
+    AxisymmetricStrainRate getAxisymmetricStrainRate(double time) const {
+      return d_particleAxiStrainBC.getBCRate(time);
+    }
+
+    std::pair<Displacement, DisplacementRate>
+    getDisplacementBC(double time) const
+    {
+      return std::make_pair(getDisplacement(time),
+                            getDisplacementRate(time));
+    }
+
+    std::pair<DeformationGradient, DeformationGradientRate>
+    getDeformationGradientBC(double time) const
+    {
+      return std::make_pair(getDeformationGradient(time),
+                            getDeformationGradientRate(time));
+    }
+
+    std::pair<AxisymmetricStrain, AxisymmetricStrainRate>
+    getAxisymmetricStrainBC(double time) const
+    {
+      return std::make_pair(getAxisymmetricStrain(time),
+                            getAxisymmetricStrainRate(time));
+    }
+
+    void applyParticleBC(double time, 
+                         const Box& spatialDomain,
+                         DEMParticlePArray& particles);
+    void applyDisplacementBC(double time, 
+                             const Box& spatialDomain,
+                             DEMParticlePArray& particles);
+    void applyDeformationGradientBC(double time, 
+                                    const Box& spatialDomain,
+                                    DEMParticlePArray& particles);
+    void applyAxisymmetricStrainBC(double time, 
+                                   const Box& spatialDomain,
+                                   DEMParticlePArray& particles);
   };
 
 } // end namespace dem

@@ -67,7 +67,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
 
   while (timeAccrued < timeTotal) {
     // REAL time0 = MPI_Wtime();
-    dem->commuParticle();
+    dem->communicateGhostParticles();
     // REAL time2 = MPI_Wtime();
     // REAL commuT = time2 - time0;
 

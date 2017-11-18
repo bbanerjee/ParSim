@@ -131,7 +131,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
   broadcast(dem->getMPIWorld(), outputFolder, 0);
 
   //proc0cout << "**NOTICE** Commun dem particle\n";
-  dem->commuParticle();     
+  dem->communicateGhostParticles();     
 
   //proc0cout << "**NOTICE** Commun pd particle\n";
   pd->commuPeriParticle(iteration, dem->getGradation().getPtclMaxRadius()); 
@@ -397,7 +397,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     // dem->commuT = migraT = gatherT = totalT = 0; time0 = MPI_Wtime();
 
     //proc0cout << "**NOTICE** DEM commu\n";
-    dem->commuParticle();
+    dem->communicateGhostParticles();
     // time2 = MPI_Wtime(); dem->commuT = time2 - time0;
 
     // displacement control relies on constant time step, so do not call

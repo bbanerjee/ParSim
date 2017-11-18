@@ -5,51 +5,66 @@
 #include <Core/Math/Vec.h>
 #include <iostream>
 #include <vector>
+#include <array>
 
 namespace dem {
 
-struct DeformationGradient
+class DeformationGradient
 {
 private:
-  std::array<REAL, 9> _value;
+  Matrix3 _value;
 
 public:
-  DeformationGradient() = default;
+
+  DeformationGradient()  = default;
+  DeformationGradient(REAL val) 
+  {
+    _value = val;
+  }
 
   DeformationGradient(const Matrix3& F)
   {
-    _value[0] = F(1,1); _value[1] = F(1,2); _value[2] = F(1,3);
-    _value[3] = F(2,1); _value[4] = F(2,2); _value[5] = F(2,3);
-    _value[6] = F(3,1); _value[7] = F(3,2); _value[8] = F(3,3);
+    _value = F;
   }
 
   DeformationGradient(const std::array<REAL, 9>& F)
   {
-    _value = F;
+    _value(0,0) = F[0]; _value(0,1) = F[1]; _value(0,2) = F[2];
+    _value(1,0) = F[3]; _value(1,1) = F[4]; _value(1,2) = F[5];
+    _value(2,0) = F[6]; _value(2,1) = F[7]; _value(2,2) = F[8];
   }
 
   DeformationGradient(REAL F11, REAL F12, REAL F13,
                       REAL F21, REAL F22, REAL F23,
                       REAL F31, REAL F32, REAL F33)
   {
-    _value[0] = F11; _value[1] = F12; _value[2] = F13;
-    _value[3] = F21; _value[4] = F22; _value[5] = F23;
-    _value[6] = F31; _value[7] = F32; _value[8] = F33;
+    _value(0,0) = F11; _value(0,1) = F12; _value(0,2) = F13;
+    _value(1,0) = F21; _value(1,1) = F22; _value(1,2) = F23;
+    _value(2,0) = F31; _value(2,1) = F32; _value(2,2) = F33;
+  }
+
+  inline
+  DeformationGradient operator-(const DeformationGradient& F) const 
+  {
+    return DeformationGradient(_value - F._value); 
   }
 
   inline
   DeformationGradient operator*(REAL scalar) const 
   {
-    std::array<REAL, 9> val = _value;
-    for (auto& v : val) v *= scalar;
-    return DeformationGradient(val);
+    return DeformationGradient(_value * scalar);
   }
 
   inline
-  const std::array<REAL, 9>& data() const
+  const Matrix3& data() const
   {
     return _value;
   }
+
+  DeformationGradient inverse() const
+  {
+    return _value.Inverse();
+  } 
 
   friend 
   DeformationGradient operator*(REAL scalar, const DeformationGradient& F) 
@@ -61,30 +76,46 @@ public:
   DeformationGradient operator+(const DeformationGradient& F1, 
                                 const DeformationGradient& F2) 
   {
-    std::array<REAL, 9> val;
-    for (auto ii = 0u; ii < 9; ++ii) val[ii] = F1._value[ii] + F2._value[ii];
-    return DeformationGradient(val);
+    return F1._value + F2._value;
   }
+
+  inline 
+  double operator()(int i, int j) const
+  {
+    return _value(i,j);
+  }
+
+  //inline 
+  //double& operator()(int i, int j)
+  //{
+  //  return _value(i,j);
+  //}
 
   friend std::ostream& operator<<(std::ostream& os, const DeformationGradient& F)
   {
     os << "(F11, F12, F13, F21, F22, F23, F31, F32, F33): " 
-       << F._value[0] << " " << F._value[1] 
-       << " " << F._value[2] << " " << F._value[3] 
-       << " " << F._value[4] << " " << F._value[5]
-       << " " << F._value[6] << " " << F._value[7]
-       << " " << F._value[8];
+       << " " << F._value(0,0) << " " << F._value(0,1) 
+       << " " << F._value(0,2) << " " << F._value(1,0) 
+       << " " << F._value(1,1) << " " << F._value(1,2)
+       << " " << F._value(2,0) << " " << F._value(2,1)
+       << " " << F._value(2,2);
     return os;
   }
 };
 
-struct Displacement
+using DeformationGradientRate = DeformationGradient;
+
+class Displacement
 {
 private:
   std::array<REAL, 3> _value;
 
 public:
   Displacement() = default;
+  Displacement(REAL val) 
+  {
+    _value[0] = val; _value[1] = val; _value[2] = val;
+  }
 
   Displacement(const Vec& disp)
   {
@@ -94,6 +125,14 @@ public:
   Displacement(REAL u1, REAL u2, REAL u3) 
   {
    _value[0] = u1; _value[1] = u2; _value[2] = u3;
+  }
+
+  inline
+  Displacement operator-(const Displacement& disp) const 
+  {
+    return Displacement(_value[0] - disp._value[0], 
+                        _value[1] - disp._value[1], 
+                        _value[2] - disp._value[2]);
   }
 
   inline
@@ -107,6 +146,18 @@ public:
   {
     return _value;
   }
+
+  inline 
+  double operator[](int i) const
+  {
+    return _value[i];
+  }
+
+  //inline 
+  //double& operator[](int i) 
+  //{
+  //  return _value[i];
+  //}
 
   friend 
   Displacement operator*(REAL scalar, const Displacement& disp) 
@@ -128,6 +179,8 @@ public:
     return os;
   }
 };
+
+using DisplacementRate = Displacement;
 
 struct Velocity
 {

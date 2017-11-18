@@ -7,7 +7,8 @@ using util::combine;
 void
 PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
 {
-  // Read the boundary conditions in all the nodes
+  // Read the boundary conditions in all processes
+  // The file should be small enough
   std::string bcFile = util::getFilename("demBoundaryConditionFilename");
   dem->readBoundaryConditions(bcFile);
 
@@ -57,12 +58,21 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
   auto iterSnap = startSnap;
   auto iteration = startStep;
 
-  //auto timeStep = util::getParam<REAL>("timeStep");
+  auto startTime = util::getParam<REAL>("startTime");
+  auto endTime = util::getParam<REAL>("endTime");
+  auto timeStep = util::getParam<REAL>("timeStep");
 
-  while (iteration <= endStep) {
+  auto curTime = startTime;
 
-    dem->commuParticle(iteration);
-    dem->calcTimeStep(); 
+  while (iteration <= endStep && curTime < endTime) {
+
+    // Communicate ghost particles to patches
+    dem->communicateGhostParticles(iteration);
+
+    // Apply the particle boundary conditions
+    dem->applyPatchParticleBC(curTime);
+
+    timeStep = dem->calcTimeStep(); 
     dem->findContact();
     if (dem->isBoundaryProcess()) {
       dem->findBoundaryContacts();
@@ -97,7 +107,9 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
 
     dem ->releaseReceivedParticles();
     dem->migrateParticles();
+
     ++iteration;
+    curTime += timeStep;
   }
 
   if (dem->getMPIRank() == 0) {

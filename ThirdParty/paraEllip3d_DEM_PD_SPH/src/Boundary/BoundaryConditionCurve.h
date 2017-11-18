@@ -128,6 +128,26 @@ namespace dem {
       return (1 - s)*d_bcValues[index-1] + s*d_bcValues[index];
     }
 
+    /**
+     * Time Derivative
+     * REQUIRES: time is monotonically increasing
+     */
+    T getBCRate(double time) const {
+
+      if (d_times.size() < 2 || time < d_times.front() || time > d_times.back()) {
+        return T(0);
+      }
+
+      double lo = time - 1.0e-6;
+      double hi = time + 1.0e-6;
+      if (lo < d_times.front()) lo = d_times.front();
+      if (hi > d_times.back()) hi = d_times.back();
+
+      auto lo_val = getBCValue(lo);
+      auto hi_val = getBCValue(hi);
+      return (hi_val - lo_val)*2.0e6;
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const BoundaryConditionCurve& bc)
     {
       os << "Times: ";

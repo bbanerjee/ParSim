@@ -175,7 +175,7 @@ public:
   // position/dimensions/orientations
   // a0 x^2 + a1 y^2 + a2 z^2 + a3 xy + a4 yz + a5 zx + a6 x + a7 y + a8 z + a9
   // = 0
-  void computeGlobalCoef();
+  void computeAndSetGlobalCoef();
   void getGlobalCoef(REAL coef[]) const; // retrieve global coeffs into coef[]
   REAL surfaceError(Vec pt) const;
 

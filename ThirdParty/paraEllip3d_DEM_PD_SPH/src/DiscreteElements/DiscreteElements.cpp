@@ -199,7 +199,7 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     time0 = MPI_Wtime();
 
     proc0cout << "**NOTICE** Time = " << timeAccrued << " iteration = " << iteration << "\n";
-    commuParticle(iteration);
+    communicateGhostParticles(iteration);
 
     if (toCheckTime)
       time2 = MPI_Wtime();
@@ -503,13 +503,13 @@ DiscreteElements::updatePatch(int iteration, const REAL& ghostWidth)
 }
 
 void
-DiscreteElements::commuParticle()
+DiscreteElements::communicateGhostParticles()
 {
-  commuParticle(-1);
+  communicateGhostParticles(-1);
 }
 
 void
-DiscreteElements::commuParticle(const int& iteration)
+DiscreteElements::communicateGhostParticles(const int& iteration)
 {
   // determine domain of each process
   REAL ghostWidth = d_gradation.getPtclMaxRadius() * 2;

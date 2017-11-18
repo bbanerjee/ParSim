@@ -33,6 +33,12 @@ public:
     return value;
   }
 
+  T getBCRate(double time) const
+  {
+    T value = d_bcCurve.getBCRate(time);
+    return value;
+  }
+
   friend std::ostream& 
   operator<<(std::ostream& os, const DEMPeriodicParticleBC<T, N>& bc)
   {

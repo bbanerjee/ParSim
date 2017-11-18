@@ -1,4 +1,5 @@
 #include <DiscreteElements/DEMBoundaryConditions.h>
+#include <DiscreteElements/DEMParticle.h>
 
 using namespace dem;
 
@@ -56,4 +57,61 @@ DEMBoundaryConditions::read(const std::string& inputFileName)
   }
 
   return true;
+}
+
+void 
+DEMBoundaryConditions::applyParticleBC(double time, 
+                                       const Box& spatialDomain,
+                                       DEMParticlePArray& particles)
+{
+  switch (d_particleBCType) { 
+    case BCUtils::DEM_ParticleBCType::DISPLACEMENT:
+      applyDisplacementBC(time, spatialDomain, particles);
+    case BCUtils::DEM_ParticleBCType::DEFORMATION_GRADIENT:
+      applyDeformationGradientBC(time, spatialDomain, particles);
+    case BCUtils::DEM_ParticleBCType::AXISYMMETRIC_STRAIN:
+      applyAxisymmetricStrainBC(time, spatialDomain, particles);
+    default:
+      break;
+  }
+}
+
+void 
+DEMBoundaryConditions::applyDisplacementBC(double time, 
+                                           const Box& spatialDomain,
+                                           DEMParticlePArray& particles)
+{
+}
+
+void 
+DEMBoundaryConditions::applyDeformationGradientBC(double time, 
+                                                  const Box& spatialDomain,
+                                                  DEMParticlePArray& particles)
+{
+}
+
+void 
+DEMBoundaryConditions::applyAxisymmetricStrainBC(double time, 
+                                                 const Box& spatialDomain,
+                                                 DEMParticlePArray& particles)
+{
+  const Vec referencePt = spatialDomain.minCorner();
+  auto strainBC = getAxisymmetricStrain(time);
+
+  for (auto& particle : particles) {
+    if (particle->getType() == DEMParticle::DEMParticleType::BOUNDARY_PERIODIC) {
+      auto pos = particle->currentPosition();
+      auto segment = pos - referencePt;
+      auto dx = segment.x() * strainBC[0];
+      auto dy = segment.y() * strainBC[1];
+      auto dz = segment.z() * strainBC[2];
+      auto dxz = segment.z() * strainBC[3];
+      auto dzx = segment.x() * strainBC[3];
+      particle->setCurrentPosition(Vec(pos.x() + dx + dxz,
+                                       pos.y() + dy,
+                                       pos.z() + dz + dzx));
+      particle->setPreviousPosition(particle->currentPosition());
+      particle->computeAndSetGlobalCoef();
+    }
+  }
 }

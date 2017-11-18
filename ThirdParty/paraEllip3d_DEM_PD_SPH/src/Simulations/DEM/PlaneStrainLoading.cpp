@@ -58,7 +58,7 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
   while (iteration <= endStep) {
     commuT = migraT = gatherT = totalT = 0;
     time0 = MPI_Wtime();
-    dem->commuParticle();
+    dem->communicateGhostParticles();
     time2 = MPI_Wtime();
     commuT = time2 - time0;
 

@@ -124,8 +124,8 @@ public:
 
   void scatterParticles();
   void scatterDEMPeriParticle();
-  void commuParticle();
-  void commuParticle(const int& iteration);
+  void communicateGhostParticles();
+  void communicateGhostParticles(const int& iteration);
   bool isBoundaryProcess();
   void releaseReceivedParticles();
   void releaseGatheredParticle();
@@ -494,6 +494,10 @@ public:
                          DEMParticlePArray& foundParticle);
 
   void dragForce();
+
+  void applyPatchParticleBC(double time) {
+    d_bc.applyParticleBC(time, d_spatialDomain, d_patchParticles);
+  }
 
 private:
 

@@ -37,9 +37,25 @@ TEST(DEMPeriodicParticleBCTest, displacementBC) {
   Displacement disp = disp_bc_xml.getBCValue(1.9);
   //std::cout << disp_bc_xml;
   //std::cout << disp << "\n";
-  EXPECT_DOUBLE_EQ(disp.data()[0], 9.5);
-  EXPECT_DOUBLE_EQ(disp.data()[1], 11.4);
-  EXPECT_DOUBLE_EQ(disp.data()[2], 13.3);
+  EXPECT_DOUBLE_EQ(disp[0], 9.5);
+  EXPECT_DOUBLE_EQ(disp[1], 11.4);
+  EXPECT_DOUBLE_EQ(disp[2], 13.3);
+
+  DisplacementRate vel = disp_bc_xml.getBCRate(-1.0);
+  EXPECT_DOUBLE_EQ(vel[0], 0);
+  EXPECT_DOUBLE_EQ(vel[1], 0);
+  EXPECT_DOUBLE_EQ(vel[2], 0);
+
+  vel = disp_bc_xml.getBCRate(5.0);
+  EXPECT_DOUBLE_EQ(vel[0], 0);
+  EXPECT_DOUBLE_EQ(vel[1], 0);
+  EXPECT_DOUBLE_EQ(vel[2], 0);
+
+  vel = disp_bc_xml.getBCRate(1.9);
+  EXPECT_NEAR(vel[0], 19.99999999, 1.0e-6);
+  EXPECT_NEAR(vel[1], 23.99999999, 1.0e-6);
+  EXPECT_NEAR(vel[2], 28.00000000, 1.0e-6);
+  //std::cout << vel << "\n";
 }
 
 TEST(DEMPeriodicParticleBCTest, deformationGradientBC) {
@@ -82,15 +98,31 @@ TEST(DEMPeriodicParticleBCTest, deformationGradientBC) {
   defgrad_bc_xml1.read(in_xml);
   defgrad = defgrad_bc_xml1.getBCValue(1.9);
   //std::cout << defgrad_bc_xml1;
-  EXPECT_DOUBLE_EQ(defgrad.data()[0], 9.5);
-  EXPECT_DOUBLE_EQ(defgrad.data()[1], 11.4);
-  EXPECT_DOUBLE_EQ(defgrad.data()[2], 13.3);
-  EXPECT_DOUBLE_EQ(defgrad.data()[3], 0.19);
-  EXPECT_DOUBLE_EQ(defgrad.data()[4], 0.38);
-  EXPECT_DOUBLE_EQ(defgrad.data()[5], 0.57);
-  EXPECT_DOUBLE_EQ(defgrad.data()[6], 2.09);
-  EXPECT_DOUBLE_EQ(defgrad.data()[7], 2.28);
-  EXPECT_DOUBLE_EQ(defgrad.data()[8], 2.47);
+  EXPECT_DOUBLE_EQ(defgrad(0,0), 9.5);
+  EXPECT_DOUBLE_EQ(defgrad(0,1), 11.4);
+  EXPECT_DOUBLE_EQ(defgrad(0,2), 13.3);
+  EXPECT_DOUBLE_EQ(defgrad(1,0), 0.19);
+  EXPECT_DOUBLE_EQ(defgrad(1,1), 0.38);
+  EXPECT_DOUBLE_EQ(defgrad(1,2), 0.57);
+  EXPECT_DOUBLE_EQ(defgrad(2,0), 2.09);
+  EXPECT_DOUBLE_EQ(defgrad(2,1), 2.28);
+  EXPECT_DOUBLE_EQ(defgrad(2,2), 2.47);
+
+  DeformationGradientRate Fdot = defgrad_bc_xml.getBCRate(-1.0);
+  EXPECT_DOUBLE_EQ(Fdot(0,0), 0);
+  EXPECT_DOUBLE_EQ(Fdot(0,1), 0);
+  EXPECT_DOUBLE_EQ(Fdot(0,2), 0);
+
+  Fdot = defgrad_bc_xml.getBCRate(5.0);
+  EXPECT_DOUBLE_EQ(Fdot(0,0), 0);
+  EXPECT_DOUBLE_EQ(Fdot(0,1), 0);
+  EXPECT_DOUBLE_EQ(Fdot(0,2), 0);
+
+  Fdot = defgrad_bc_xml.getBCRate(1.9);
+  EXPECT_NEAR(Fdot(0,0), 19.99999999, 1.0e-6);
+  EXPECT_NEAR(Fdot(0,1), 23.99999999, 1.0e-6);
+  EXPECT_NEAR(Fdot(0,2), 28.00000000, 1.0e-6);
+  //std::cout << Fdot << "\n";
 }
 
 TEST(DEMPeriodicParticleBCTest, axisymmetricStrainBC) {
@@ -127,8 +159,24 @@ TEST(DEMPeriodicParticleBCTest, axisymmetricStrainBC) {
   AxisymmetricStrain axistrain = axistrain_bc_xml.getBCValue(1.9);
   //std::cout << axistrain_bc_xml;
   //std::cout << axistrain << "\n";
-  EXPECT_DOUBLE_EQ(axistrain.data()[0], 9.5);
-  EXPECT_DOUBLE_EQ(axistrain.data()[1], 11.4);
-  EXPECT_DOUBLE_EQ(axistrain.data()[2], 13.3);
-  EXPECT_DOUBLE_EQ(axistrain.data()[3], 0.19);
+  EXPECT_DOUBLE_EQ(axistrain[0], 9.5);
+  EXPECT_DOUBLE_EQ(axistrain[1], 11.4);
+  EXPECT_DOUBLE_EQ(axistrain[2], 13.3);
+  EXPECT_DOUBLE_EQ(axistrain[3], 0.19);
+
+  AxisymmetricStrainRate epsdot = axistrain_bc_xml.getBCRate(-1.0);
+  EXPECT_DOUBLE_EQ(epsdot[0], 0);
+  EXPECT_DOUBLE_EQ(epsdot[1], 0);
+  EXPECT_DOUBLE_EQ(epsdot[2], 0);
+
+  epsdot = axistrain_bc_xml.getBCRate(5.0);
+  EXPECT_DOUBLE_EQ(epsdot[0], 0);
+  EXPECT_DOUBLE_EQ(epsdot[1], 0);
+  EXPECT_DOUBLE_EQ(epsdot[2], 0);
+
+  epsdot = axistrain_bc_xml.getBCRate(1.9);
+  EXPECT_NEAR(epsdot[0], 19.99999999, 1.0e-6);
+  EXPECT_NEAR(epsdot[1], 23.99999999, 1.0e-6);
+  EXPECT_NEAR(epsdot[2], 28.00000000, 1.0e-6);
+  //std::cout << epsdot << "\n";
 }

@@ -104,8 +104,8 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
 
-  // the commuPeriParticle() have to be called after  commuParticle()
-  dem->commuParticle(); 
+  // the commuPeriParticle() have to be called after  communicateGhostParticles()
+  dem->communicateGhostParticles(); 
   pd->commuPeriParticle(iteration, dem->getGradation().getPtclMaxRadius());
 
   // construct the Matrix members in recvPeriParticle
@@ -136,7 +136,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     //      findFixedPeriParticles();        // every step since some
     //      peri-points can pass from one cpu to another
     // commuT = migraT = gatherT = totalT = 0; time0 = MPI_Wtime();
-    //      commuParticle(); time2 = MPI_Wtime(); commuT = time2 - time0;
+    //      communicateGhostParticles(); time2 = MPI_Wtime(); commuT = time2 - time0;
 
     // displacement control relies on constant time step, so do not call
     // calcTimeStep().

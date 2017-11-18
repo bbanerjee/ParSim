@@ -13,9 +13,9 @@ TEST(DEMBoundaryConditionsTest, displacementBC) {
   disp_bc.read(filename);
   Displacement disp = disp_bc.getDisplacement(1.9);
   //std::cout << disp << "\n";
-  EXPECT_DOUBLE_EQ(disp.data()[0], 9.5);
-  EXPECT_DOUBLE_EQ(disp.data()[1], 11.4);
-  EXPECT_DOUBLE_EQ(disp.data()[2], 13.3);
+  EXPECT_DOUBLE_EQ(disp[0], 9.5);
+  EXPECT_DOUBLE_EQ(disp[1], 11.4);
+  EXPECT_DOUBLE_EQ(disp[2], 13.3);
 }
 
 TEST(DEMBoundaryConditionsTest, deformationGradientBC) {
@@ -26,15 +26,15 @@ TEST(DEMBoundaryConditionsTest, deformationGradientBC) {
   defgrad_bc.read(filename);
   DeformationGradient defgrad = defgrad_bc.getDeformationGradient(1.9);
   //std::cout << defgrad << "\n";
-  EXPECT_DOUBLE_EQ(defgrad.data()[0], 9.5);
-  EXPECT_DOUBLE_EQ(defgrad.data()[1], 11.4);
-  EXPECT_DOUBLE_EQ(defgrad.data()[2], 13.3);
-  EXPECT_DOUBLE_EQ(defgrad.data()[3], 0.19);
-  EXPECT_DOUBLE_EQ(defgrad.data()[4], 0.38);
-  EXPECT_DOUBLE_EQ(defgrad.data()[5], 0.57);
-  EXPECT_DOUBLE_EQ(defgrad.data()[6], 2.09);
-  EXPECT_DOUBLE_EQ(defgrad.data()[7], 2.28);
-  EXPECT_DOUBLE_EQ(defgrad.data()[8], 2.47);
+  EXPECT_DOUBLE_EQ(defgrad(0,0), 9.5);
+  EXPECT_DOUBLE_EQ(defgrad(0,1), 11.4);
+  EXPECT_DOUBLE_EQ(defgrad(0,2), 13.3);
+  EXPECT_DOUBLE_EQ(defgrad(1,0), 0.19);
+  EXPECT_DOUBLE_EQ(defgrad(1,1), 0.38);
+  EXPECT_DOUBLE_EQ(defgrad(1,2), 0.57);
+  EXPECT_DOUBLE_EQ(defgrad(2,0), 2.09);
+  EXPECT_DOUBLE_EQ(defgrad(2,1), 2.28);
+  EXPECT_DOUBLE_EQ(defgrad(2,2), 2.47);
 }
 
 TEST(DEMBoundaryConditionsTest, axisymmetricStrainBC) {
@@ -45,8 +45,8 @@ TEST(DEMBoundaryConditionsTest, axisymmetricStrainBC) {
   axisymm_bc.read(filename);
   AxisymmetricStrain axistrain = axisymm_bc.getAxisymmetricStrain(1.9);
   //std::cout << axistrain << "\n";
-  EXPECT_DOUBLE_EQ(axistrain.data()[0], 9.5);
-  EXPECT_DOUBLE_EQ(axistrain.data()[1], 11.4);
-  EXPECT_DOUBLE_EQ(axistrain.data()[2], 13.3);
-  EXPECT_DOUBLE_EQ(axistrain.data()[3], 0.19);
+  EXPECT_DOUBLE_EQ(axistrain[0], 9.5);
+  EXPECT_DOUBLE_EQ(axistrain[1], 11.4);
+  EXPECT_DOUBLE_EQ(axistrain[2], 13.3);
+  EXPECT_DOUBLE_EQ(axistrain[3], 0.19);
 }
