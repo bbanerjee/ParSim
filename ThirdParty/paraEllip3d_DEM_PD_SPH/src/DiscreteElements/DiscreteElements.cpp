@@ -386,6 +386,7 @@ DiscreteElements::readParticles(const std::string& particleFilename)
   DEMParticleFileReader reader;
   reader.read(particleFilename, young, poisson, doInitialize, d_allDEMParticles,
               d_gradation);
+  setMinMaxParticleRadius();
 }
 
 void
@@ -402,7 +403,7 @@ DiscreteElements::scatterParticles()
     setPatchBox(Box(d_demPatchBox.minCorner().x(), d_demPatchBox.minCorner().y(),
                 d_demPatchBox.minCorner().z(), d_demPatchBox.maxCorner().x(),
                 d_demPatchBox.maxCorner().y(),
-                getPtclMaxZ(d_allDEMParticles) + d_gradation.getPtclMaxRadius()));
+                getPtclMaxZ(d_allDEMParticles) + d_maxParticleRadius));
 
     Vec v1 = d_demPatchBox.minCorner();
     Vec v2 = d_demPatchBox.maxCorner();
@@ -455,12 +456,14 @@ DiscreteElements::scatterParticles()
 
   // broadcast necessary info
   broadcast(boostWorld, d_gradation, 0);
+  broadcast(boostWorld, d_minParticleRadius, 0);
+  broadcast(boostWorld, d_maxParticleRadius, 0);
   broadcast(boostWorld, d_boundaries, 0);
   broadcast(boostWorld, d_spatialDomain, 0);
   broadcast(boostWorld, d_demPatchBox, 0);
 
   // Create patch for the current process
-  REAL ghostWidth = d_gradation.getPtclMaxRadius() * 2;
+  REAL ghostWidth = d_maxParticleRadius * 2;
   createPatch(0, ghostWidth);
 }
 
@@ -512,7 +515,7 @@ void
 DiscreteElements::communicateGhostParticles(const int& iteration)
 {
   // determine domain of each process
-  REAL ghostWidth = d_gradation.getPtclMaxRadius() * 2;
+  REAL ghostWidth = d_maxParticleRadius * 2;
   updatePatch(iteration, ghostWidth);
 
   // duplicate pointers, pointing to the same memory
@@ -645,6 +648,8 @@ void
 DiscreteElements::findContact()
 { // various implementations
   int ompThreads = util::getParam<int>("ompThreads");
+  auto minOverlap = util::getParam<REAL>("minAllowableRelativeOverlap");
+  auto measOverlap = util::getParam<REAL>("minMeasurableOverlap");
 
   if (ompThreads == 1) { // non-openmp single-thread version, time complexity
                          // bigO(n x n), n is the number of particles.
@@ -652,16 +657,16 @@ DiscreteElements::findContact()
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     //std::cout << "\t FindContact: MPI Cart rank = " << s_mpiRank
     //          << " World rank = " << world_rank << "\n";
-    findContactSingleThread();
+    findContactSingleThread(minOverlap, measOverlap);
   } else if (ompThreads > 1) { // openmp implementation: various loop scheduling
                                // - (static), (static,1), (dynamic), (dynamic,1)
-    findContactMultiThread(ompThreads);
+    findContactMultiThread(ompThreads, minOverlap, measOverlap);
 
   } // end of openmp implementation
 }
 
 void
-DiscreteElements::findContactSingleThread()
+DiscreteElements::findContactSingleThread(REAL minOverlap, REAL measOverlap)
 {
 
   d_contacts.clear();
@@ -721,7 +726,7 @@ DiscreteElements::findContactSingleThread()
 #ifdef TIME_PROFILE
         startInner = Timer::now();
 #endif
-        if (tmpContact.isOverlapped()) {
+        if (tmpContact.isOverlapped(minOverlap, measOverlap)) {
           d_contacts.push_back(tmpContact); // domains use value
                                             // semantics, so a "copy" is
                                             // pushed back.
@@ -743,7 +748,8 @@ DiscreteElements::findContactSingleThread()
 }
 
 void
-DiscreteElements::findContactMultiThread(int ompThreads)
+DiscreteElements::findContactMultiThread(int ompThreads,
+                                         REAL minOverlap, REAL measOverlap)
 {
 
   d_contacts.clear();
@@ -783,7 +789,7 @@ DiscreteElements::findContactMultiThread(int ompThreads)
 
         DEMContact tmpContact(d_patchParticles[i].get(), d_mergedParticles[j].get());
 
-        if (tmpContact.isOverlapped()) {
+        if (tmpContact.isOverlapped(minOverlap, measOverlap)) {
 #pragma omp critical
           d_contacts.push_back(tmpContact); // domains use value
                                             // semantics, so a "copy" is
@@ -910,7 +916,7 @@ DiscreteElements::updatePatchBoxMinX()
   REAL minX = 0;
   MPI_Allreduce(&pMinX, &minX, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
-  setPatchBox(Box(minX - d_gradation.getPtclMaxRadius(), d_demPatchBox.minCorner().y(),
+  setPatchBox(Box(minX - d_maxParticleRadius, d_demPatchBox.minCorner().y(),
               d_demPatchBox.minCorner().z(), d_demPatchBox.maxCorner().x(),
               d_demPatchBox.maxCorner().y(), d_demPatchBox.maxCorner().z()));
 }
@@ -923,7 +929,7 @@ DiscreteElements::updatePatchBoxMaxX()
   MPI_Allreduce(&pMaxX, &maxX, 1, MPI_DOUBLE, MPI_MAX, s_mpiWorld);
 
   setPatchBox(Box(d_demPatchBox.minCorner().x(), d_demPatchBox.minCorner().y(),
-              d_demPatchBox.minCorner().z(), maxX + d_gradation.getPtclMaxRadius(),
+              d_demPatchBox.minCorner().z(), maxX + d_maxParticleRadius,
               d_demPatchBox.maxCorner().y(), d_demPatchBox.maxCorner().z()));
 }
 
@@ -934,7 +940,7 @@ DiscreteElements::updatePatchBoxMinY()
   REAL minY = 0;
   MPI_Allreduce(&pMinY, &minY, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
-  setPatchBox(Box(d_demPatchBox.minCorner().x(), minY - d_gradation.getPtclMaxRadius(),
+  setPatchBox(Box(d_demPatchBox.minCorner().x(), minY - d_maxParticleRadius,
               d_demPatchBox.minCorner().z(), d_demPatchBox.maxCorner().x(),
               d_demPatchBox.maxCorner().y(), d_demPatchBox.maxCorner().z()));
 }
@@ -948,7 +954,7 @@ DiscreteElements::updatePatchBoxMaxY()
 
   setPatchBox(Box(d_demPatchBox.minCorner().x(), d_demPatchBox.minCorner().y(),
               d_demPatchBox.minCorner().z(), d_demPatchBox.maxCorner().x(),
-              maxY + d_gradation.getPtclMaxRadius(), d_demPatchBox.maxCorner().z()));
+              maxY + d_maxParticleRadius, d_demPatchBox.maxCorner().z()));
 }
 
 void
@@ -959,7 +965,7 @@ DiscreteElements::updatePatchBoxMinZ()
   MPI_Allreduce(&pMinZ, &minZ, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 
   setPatchBox(Box(d_demPatchBox.minCorner().x(), d_demPatchBox.minCorner().y(),
-              minZ - d_gradation.getPtclMaxRadius(), d_demPatchBox.maxCorner().x(),
+              minZ - d_maxParticleRadius, d_demPatchBox.maxCorner().x(),
               d_demPatchBox.maxCorner().y(), d_demPatchBox.maxCorner().z()));
 }
 
@@ -974,7 +980,7 @@ DiscreteElements::updatePatchBoxMaxZ()
   // no need to broadcast grid as it is updated in each process
   setPatchBox(Box(d_demPatchBox.minCorner().x(), d_demPatchBox.minCorner().y(),
               d_demPatchBox.minCorner().z(), d_demPatchBox.maxCorner().x(),
-              d_demPatchBox.maxCorner().y(), maxZ + d_gradation.getPtclMaxRadius()));
+              d_demPatchBox.maxCorner().y(), maxZ + d_maxParticleRadius));
 }
 
 void
@@ -1200,7 +1206,7 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
   REAL x2 = v2.x();
   REAL y2 = v2.y();
   REAL z2 = v2.z();
-  REAL maxR = d_gradation.getPtclMaxRadius();
+  REAL maxR = d_maxParticleRadius;
 
   // BB: Feb 2, 2017:
   // Not an efficient operation

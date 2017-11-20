@@ -28,7 +28,7 @@ public:
   REAL getVibraTimeStep() const { return d_vibraTimeStep; }
   REAL getImpactTimeStep() const { return d_impactTimeStep; }
 
-  bool isOverlapped();
+  bool isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap);
   void computeContactForces(); // calculate normal and tangential force of contact
   REAL getNormalForceMagnitude() const { return vnormL2(d_normalForce); }
   REAL getTangentForceMagnitude() const { return vnormL2(d_tangentForce); }

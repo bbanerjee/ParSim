@@ -117,3 +117,24 @@ add_custom_command(
   COMMAND ${UNIT_TEST}
 )
 
+#--------------------------------------
+# DEMTiming
+#--------------------------------------
+add_executable(testDEMTiming testDEMTiming.cpp)
+
+target_link_libraries(testDEMTiming
+  ${TEST_LIB}
+  ELLIP3D_LIB
+  ${MPI_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${VTK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+)
+
+set(UNIT_TEST testDEMTiming)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+

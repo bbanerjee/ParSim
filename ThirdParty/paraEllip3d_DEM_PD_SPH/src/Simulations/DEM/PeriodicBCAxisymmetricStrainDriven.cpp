@@ -10,6 +10,11 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
   // Read the boundary conditions in all processes
   // The file should be small enough
   std::string bcFile = util::getFilename("demBoundaryConditionFilename");
+  if (bcFile == "none") {
+    std::cout << "**ERROR** Input boundary condition file " << bcFile
+              << " has not been specified in the input file\n";
+    return;
+  }
   dem->readBoundaryConditions(bcFile);
 
   std::ofstream progressInf;
@@ -58,9 +63,10 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
   auto iterSnap = startSnap;
   auto iteration = startStep;
 
-  auto startTime = util::getParam<REAL>("startTime");
-  auto endTime = util::getParam<REAL>("endTime");
+  auto startTime = util::getParam<REAL>("timeAccrued");
   auto timeStep = util::getParam<REAL>("timeStep");
+  //auto endTime = util::getParam<REAL>("endTime");
+  auto endTime = startTime + (endStep - startStep)*timeStep;
 
   auto curTime = startTime;
 
@@ -73,7 +79,9 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
     dem->applyPatchParticleBC(curTime);
 
     timeStep = dem->calcTimeStep(); 
+
     dem->findContact();
+
     if (dem->isBoundaryProcess()) {
       dem->findBoundaryContacts();
     }

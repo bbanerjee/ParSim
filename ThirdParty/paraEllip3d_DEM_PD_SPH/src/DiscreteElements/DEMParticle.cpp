@@ -559,60 +559,52 @@ DEMParticle::computeRadius(Vec v) const
   REAL rb = d_b;
   REAL rc = d_c;
 
-  // get the local coodinates of vector v, the point on the particle's surface
+  // get the local coordinates of vector v, the point on the particle's surface
   Vec v1 = vcos(d_currDirecA);
   Vec v2 = vcos(d_currDirecB);
   Vec v3 = vcos(d_currDirecC);
-  REAL X0 = d_currPos.x();
-  REAL Y0 = d_currPos.y();
-  REAL Z0 = d_currPos.z();
-  REAL x1 = v.x() - X0;
-  REAL y1 = v.y() - Y0;
-  REAL z1 = v.z() - Z0;
-  REAL l1 = v1.x();
-  REAL m1 = v1.y();
-  REAL n1 = v1.z();
-  REAL l2 = v2.x();
-  REAL m2 = v2.y();
-  REAL n2 = v2.z();
-  REAL l3 = v3.x();
-  REAL m3 = v3.y();
-  REAL n3 = v3.z();
-  REAL x = l1 * x1 + m1 * y1 + n1 * z1;
-  REAL y = l2 * x1 + m2 * y1 + n2 * z1;
-  REAL z = l3 * x1 + m3 * y1 + n3 * z1;
+
+  Vec xx = v - d_currPos;
+  REAL x = dot(v1, xx);
+  REAL y = dot(v2, xx);
+  REAL z = dot(v3, xx);
 
   REAL tmp;
   if (fabs(z) <= d_c * per) { // switch x & z, use 0 instead of infinity
-    tmp = ra;
-    ra = rc;
-    rc = tmp;
-    tmp = x;
-    x = z;
-    z = tmp;
+    tmp = ra; ra = rc; rc = tmp;
+    tmp = x; x = z; z = tmp;
     if (fabs(z) <= d_a * per) { // switch y & z, use 0 instead of infinity
-      tmp = ra;
-      ra = rb;
-      rb = tmp;
-      tmp = y;
-      y = z;
-      z = tmp;
+      tmp = ra; ra = rb; rb = tmp;
+      tmp = y; y = z; z = tmp;
     }
   }
 
-  REAL p = -rc * rc / ra / ra * x / z;
-  REAL q = -rc * rc / rb / rb * y / z;
-  REAL r = -rc * rc / ra / ra * (1 / z + rc * rc / ra / ra * x * x / pow(z, 3));
-  REAL t = -rc * rc / rb / rb * (1 / z + rc * rc / rb / rb * y * y / pow(z, 3));
-  REAL s = -pow(rc, 4) / ra / ra / rb / rb * x * y / pow(z, 3);
-  REAL n = sqrt(1 + p * p + q * q);
+  auto raSq = ra * ra;
+  auto rbSq = rb * rb;
+  auto rcSq = rc * rc;
+  auto rcSq_raSq = rcSq/raSq;
+  auto rcSq_rbSq = rcSq/rbSq;
+  auto xSq = x * x;
+  auto ySq = y * y;
+  auto zSq = z * z;
 
-  REAL B = n * (2 * p * q * s - (1 + p * p) * t - (1 + q * q) * r);
-  REAL C = n * n * n * n;
+  auto p = -(rcSq_raSq * x) / z;
+  auto q = -(rcSq_rbSq * y) / z;
+  auto r = -rcSq_raSq * (1 + rcSq_raSq * xSq / zSq) / z;
+  auto t = -rcSq_rbSq * (1 + rcSq_rbSq * ySq / zSq) / z;
+  auto s = -(rcSq * rcSq * x * y) / (raSq * rbSq * zSq * z);
 
+  auto pSq = p * p; 
+  auto qSq = q * q; 
+
+  auto n = std::sqrt( 1 + pSq + qSq);
+
+  auto B = n * ( 2 * p * q * s - (1 + pSq) * t - (1 + qSq) * r);
+  auto C = n * n * n * n;
+
+  /*
   // if delta < 0, then it is usually -1.0e-20, caused by computational
   // precision.
-  /*
     REAL A = r * t - s * s;
     if (B*B-4*A*C < 0){
     //std::cout<< "DEMParticle.cpp: iter=" << iteration
@@ -622,7 +614,8 @@ DEMParticle::computeRadius(Vec v) const
     << std::endl;
     }
   */
-  return fabs(-C / B * 2.0); // 2*r1*r2/(r1 + r2)
+
+  return std::abs(-C / B * 2.0); // 2*r1*r2/(r1 + r2)
 }
 
 void
@@ -898,7 +891,7 @@ DEMParticle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s, Vec& ptnp) const
       sqrt(p * p + q * q + r * r);
     ptnp = d_currPos - l_nm * tnm;
     if ((d_a - fabs(l_nm)) / (2.0 * d_a) >
-        util::getParam<REAL>("minRelaOverlap")) // intersect
+        util::getParam<REAL>("minAllowableRelativeOverlap")) // intersect
       return true;
     else // no intersect
       return false;
@@ -996,14 +989,14 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
 
   // obtain normal force
   REAL d_penetration = vnormL2(pt1 - pt2);
-  if (d_penetration / (2.0 * computeRadius(pt2)) <= util::getParam<REAL>("minRelaOverlap"))
+  if (d_penetration / (2.0 * computeRadius(pt2)) <= util::getParam<REAL>("minAllowableRelativeOverlap"))
     return;
 
   REAL R0 = computeRadius(pt2);
   REAL E0 =
     d_young /
     (1 - d_poisson * d_poisson); // rigid wall has infinite young's modulus
-  REAL allowedOverlap = 2.0 * R0 * util::getParam<REAL>("maxRelaOverlap");
+  REAL allowedOverlap = 2.0 * R0 * util::getParam<REAL>("maxAllowableRelativeOverlap");
   if (d_penetration > allowedOverlap) {
     std::stringstream inf;
     inf.setf(std::ios::scientific, std::ios::floatfield);
@@ -1019,8 +1012,8 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
     d_penetration = allowedOverlap;
   }
 
-  REAL measureOverlap = util::getParam<REAL>("measureOverlap");
-  d_penetration = nearbyint(d_penetration / measureOverlap) * measureOverlap;
+  REAL minMeasurableOverlap = util::getParam<REAL>("minMeasurableOverlap");
+  d_penetration = nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
   REAL contactRadius = sqrt(d_penetration * R0);
   Vec normalDirc = -dirc;
   // pow(d_penetration,1.5), a serious bug

@@ -124,10 +124,10 @@ pointing from the projector to the peri-point
         REAL radi = demParticle->radiusA();
         if(dist > radi)
             return;
-        REAL maxRelaOverlap =
-util::getParam<REAL>("maxRelaOverlap");
-        if(dist < (1-maxRelaOverlap)*radi)
-            dist = (1-maxRelaOverlap)*radi;
+        REAL maxAllowableRelativeOverlap =
+util::getParam<REAL>("maxAllowableRelativeOverlap");
+        if(dist < (1-maxAllowableRelativeOverlap)*radi)
+            dist = (1-maxAllowableRelativeOverlap)*radi;
 
         Vec f_dem =
 (radi-dist)*normalize(r_vec)*util::getParam<REAL>("periYoung")*1e-2;

@@ -100,7 +100,7 @@ DEMContact::getP2() const
 }
 
 bool
-DEMContact::isOverlapped()
+DEMContact::isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap)
 {
   // v[0] is the point on p2, v[1] is the point on p1
   REAL coef1[10], coef2[10];
@@ -109,6 +109,7 @@ DEMContact::isOverlapped()
 
   d_radius1 = d_p1->computeRadius(d_point1);
   d_radius2 = d_p2->computeRadius(d_point2);
+  auto maxRadius = std::max(d_radius1, d_radius2);
 
 
   Vec v[2];
@@ -143,18 +144,17 @@ DEMContact::isOverlapped()
     //          << " \t coef1 = [" << printCoef(coef1) << "] \n"
     //          << " \t coef2 = [" << printCoef(coef2) << "] \n"
     //          << " \t point1 = " << d_point1 << " point2 = " << d_point2 << "\n"
-              //<< " \t point1_old = " << v2_old
-              //<< " point2_old = " << v1_old
+    //          << " \t point1_old = " << v2_old
+    //          << " point2_old = " << v1_old
     //          << " radius1 = " << d_radius1 << " radius2 = " << d_radius2
     //          << "\n";
   }
   */
 
   if (b1 && b2 &&
-      d_penetration / (2.0 * fmax(d_radius1, d_radius2)) >
-        util::getParam<REAL>("minRelaOverlap") &&
-      nearbyint(d_penetration / util::getParam<REAL>("measureOverlap")) >=
-        1) { // a strict detection method
+      d_penetration / (2 * maxRadius) > minRelativeOverlap &&
+      nearbyint(d_penetration / measurableOverlap) >= 1) { 
+    // a strict detection method
     d_isInContact = true;
     return true;
   } else {
@@ -235,8 +235,8 @@ DEMContact::computeContactForces()
 
   REAL young = util::getParam<REAL>("young");
   REAL poisson = util::getParam<REAL>("poisson");
-  REAL maxRelaOverlap = util::getParam<REAL>("maxRelaOverlap");
-  REAL measureOverlap = util::getParam<REAL>("measureOverlap");
+  REAL maxAllowableRelativeOverlap = util::getParam<REAL>("maxAllowableRelativeOverlap");
+  REAL minMeasurableOverlap = util::getParam<REAL>("minMeasurableOverlap");
   REAL contactCohesion = util::getParam<REAL>("contactCohesion");
   REAL contactDamp = util::getParam<REAL>("contactDamp");
   REAL contactFric = util::getParam<REAL>("contactFric");
@@ -249,7 +249,7 @@ DEMContact::computeContactForces()
 
   d_R0 = d_radius1 * d_radius2 / (d_radius1 + d_radius2);
   d_E0 = 0.5 * young / (1 - poisson * poisson);
-  REAL allowedOverlap = 2.0 * fmin(d_radius1, d_radius2) * maxRelaOverlap;
+  REAL allowedOverlap = 2.0 * fmin(d_radius1, d_radius2) * maxAllowableRelativeOverlap;
   if (d_penetration > allowedOverlap) {
     std::stringstream inf;
     inf.setf(std::ios::scientific, std::ios::floatfield);
@@ -266,7 +266,7 @@ DEMContact::computeContactForces()
     d_penetration = allowedOverlap;
   }
 
-  d_penetration = nearbyint(d_penetration / measureOverlap) * measureOverlap;
+  d_penetration = nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
   d_contactRadius = sqrt(d_penetration * d_R0);
   // d_normalDirection points from particle 1 to particle 2
   d_normalDirection = normalize(d_point1 - d_point2);

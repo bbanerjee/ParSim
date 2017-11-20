@@ -42,7 +42,13 @@ namespace dem {
 class Gradation
 {
 public:
-  Gradation() = default;
+  Gradation() 
+    : sieveNum(0)
+    , ratioBA(1)
+    , ratioCA(1)
+  {
+  }
+
   Gradation(std::size_t sn, std::vector<REAL> v1, std::vector<REAL> v2, REAL ba,
             REAL ca)
     : sieveNum(sn)
@@ -92,8 +98,8 @@ public:
   void setPtclRatioBA(REAL ba) { ratioBA = ba; }
   void setPtclRatioCA(REAL ca) { ratioCA = ca; }
 
-  REAL getPtclMaxRadius() const { return size[0]; }
-  REAL getPtclMinRadius() const { return size[sieveNum - 1] * ratioCA; }
+  REAL getPtclMaxRadius() const { return (sieveNum > 0) ? size[0] : -1; }
+  REAL getPtclMinRadius() const { return (sieveNum > 0) ? size[sieveNum - 1] * ratioCA : -1; }
 
   friend std::ostream& operator<<(std::ostream& out, const Gradation& grad)
   {

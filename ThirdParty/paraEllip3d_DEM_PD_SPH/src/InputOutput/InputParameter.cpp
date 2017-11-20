@@ -263,16 +263,16 @@ InputParameter::readInXML(const std::string& inputFileName)
   ps["DEM"]["Contact"]["contactDamping"](param["contactDamp"]);
   ps["DEM"]["Contact"]["contactFriction"](param["contactFric"]);
   ps["DEM"]["Contact"]["contactCohesion"](param["contactCohesion"]);
-  ps["DEM"]["Contact"]["minRelativeOverlap"](param["minRelaOverlap"]);
-  ps["DEM"]["Contact"]["maxRelativeOverlap"](param["maxRelaOverlap"]);
-  ps["DEM"]["Contact"]["measurableOverlap"](param["measureOverlap"]);
+  ps["DEM"]["Contact"]["minRelativeOverlap"](param["minAllowableRelativeOverlap"]);
+  ps["DEM"]["Contact"]["maxRelativeOverlap"](param["maxAllowableRelativeOverlap"]);
+  ps["DEM"]["Contact"]["measurableOverlap"](param["minMeasurableOverlap"]);
 
   //std::cout << "contactDamping = " << param["contactDamp"] << "\n"
   //          << "contactFriction = " << param["contactFric"] << "\n"
   //          << "contactCohesion = " << param["contactCohesion"] << "\n"
-  //          << "minRelativeOverlap = " << param["minRelaOverlap"] << "\n"
-  //          << "maxRelativeOverlap = " << param["maxRelaOverlap"] << "\n"
-  //          << "measurableOverlap = " << param["measureOverlap"] << "\n";
+  //          << "minRelativeOverlap = " << param["minAllowableRelativeOverlap"] << "\n"
+  //          << "maxRelativeOverlap = " << param["maxAllowableRelativeOverlap"] << "\n"
+  //          << "measurableOverlap = " << param["minMeasurableOverlap"] << "\n";
 
   // Read the periodic particle generation controls
   auto periodicGen_ps = ps["DEM"]["PeriodicParticleGeneration"];
@@ -298,7 +298,7 @@ InputParameter::readInXML(const std::string& inputFileName)
   if (dem_bc_ps) {
     dem_bc_ps["inputFile"](demBCFile);
   }
-  datafile["demBoundaryConditionFilename"] = demBCFile;
+  datafile["demBoundaryConditionFilename"] = trim(demBCFile);
 
   // Check if a peridynamics section exists
   auto peri_ps = ps["Peridynamics"];

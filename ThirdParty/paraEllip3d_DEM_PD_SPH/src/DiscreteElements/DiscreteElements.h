@@ -39,7 +39,9 @@ class DiscreteElements
 {
 public:
   DiscreteElements()
-    : d_trimHistoryNum(0)
+    : d_minParticleRadius(1.0e20)
+    , d_maxParticleRadius(-1.0e20)
+    , d_trimHistoryNum(0)
     , d_allContactNum(0)
     , d_avgNormalForce(0)
     , d_avgShearForce(0)
@@ -91,6 +93,31 @@ public:
   void setGradation(Gradation grad) { d_gradation = grad; }
   void setAllDEMParticleVec(const DEMParticlePArray& particles) {
     d_allDEMParticles = particles;
+  }
+
+  /**
+   * Set min and max particle radius
+   */
+  void setMinMaxParticleRadius()
+  {
+    if (d_gradation.getPtclMaxRadius() == -1) {
+      auto minmaxIter = std::minmax_element(d_allDEMParticles.begin(), 
+                                            d_allDEMParticles.end(),
+      [](const DEMParticleP& p1, const DEMParticleP& p2){
+        auto max_p1 = std::max({p1->radiusA(), p1->radiusB(), p1->radiusC()});
+        auto max_p2 = std::max({p2->radiusA(), p2->radiusB(), p2->radiusC()});
+        return max_p1 < max_p2;
+      });
+      d_minParticleRadius = std::min({(*minmaxIter.first)->radiusA(),
+                                      (*minmaxIter.first)->radiusB(),
+                                      (*minmaxIter.first)->radiusC()});
+      d_maxParticleRadius = std::max({(*minmaxIter.second)->radiusA(),
+                                      (*minmaxIter.second)->radiusB(),
+                                      (*minmaxIter.second)->radiusC()});
+    } else {
+      d_minParticleRadius = d_gradation.getPtclMinRadius();
+      d_maxParticleRadius = d_gradation.getPtclMaxRadius();
+    }
   }
 
   /**
@@ -179,8 +206,8 @@ public:
   void buildCavityBoundary(std::size_t existMaxId,
                            const std::string& boundaryfile);
   void findContact(); // detect and resolve contact between particles
-  void findContactSingleThread();
-  void findContactMultiThread(int numThreads);
+  void findContactSingleThread(REAL minOverlap, REAL measOverlap);
+  void findContactMultiThread(int numThreads, REAL minOverlap, REAL measOverlap);
   void findBoundaryContacts();      // find particles on boundaries
   void findParticleOnCavity(); // find particle on cavity boundaries
 
@@ -501,14 +528,16 @@ public:
 
 private:
 
-  // The boundary condition data
-  DEMBoundaryConditions d_bc;
-
   // The output writer pointer
   std::unique_ptr<Output> d_writer;
 
+  // The boundary condition data
+  DEMBoundaryConditions d_bc;
+
   // Particle gradation; broadcast among processes for once
   Gradation d_gradation; 
+  REAL d_minParticleRadius;
+  REAL d_maxParticleRadius;
 
   // all particles, only meaningful to root process
   DEMParticlePArray d_allDEMParticles;           

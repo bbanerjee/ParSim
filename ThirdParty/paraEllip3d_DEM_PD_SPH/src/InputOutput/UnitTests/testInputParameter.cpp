@@ -49,10 +49,10 @@ TEST(InputParameterTest, testInputXMLFileReader) {
   EXPECT_DOUBLE_EQ(util::getParam<REAL>("kappa"), -50000);
   EXPECT_DOUBLE_EQ(util::getParam<REAL>("lambda"), 2e+07);
   EXPECT_DOUBLE_EQ(util::getParam<REAL>("massScale"), 1);
-  EXPECT_DOUBLE_EQ(util::getParam<REAL>("maxRelaOverlap"), 0.01);
-  EXPECT_DOUBLE_EQ(util::getParam<REAL>("measureOverlap"), 1e-08);
+  EXPECT_DOUBLE_EQ(util::getParam<REAL>("maxAllowableRelativeOverlap"), 0.01);
+  EXPECT_DOUBLE_EQ(util::getParam<REAL>("minMeasurableOverlap"), 1e-08);
   EXPECT_DOUBLE_EQ(util::getParam<REAL>("memYoung"), 1.4e+06);
-  EXPECT_DOUBLE_EQ(util::getParam<REAL>("minRelaOverlap"), 1e-06);
+  EXPECT_DOUBLE_EQ(util::getParam<REAL>("minAllowableRelativeOverlap"), 1e-06);
   EXPECT_DOUBLE_EQ(util::getParam<REAL>("mntScale"), 1);
   EXPECT_DOUBLE_EQ(util::getParam<REAL>("momentDamp"), 0);
   EXPECT_EQ(util::getParam<int>("mpiProcX"), 1);

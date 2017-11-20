@@ -88,14 +88,14 @@ specificG  2.65
 memYoung  1.4E+6
 
 #mininum relative overlap
-minRelaOverlap  1.0E-6
+minAllowableRelativeOverlap  1.0E-6
 
 #maximum relative overlap
-maxRelaOverlap  1.0E-2
+maxAllowableRelativeOverlap  1.0E-2
 
 #measurable particle overlap precision
 #0.1 micron or 0.01 micron
-measureOverlap  1.0E-8
+minMeasurableOverlap  1.0E-8
 
 ###################################################################
 # Below are additional parameters for simulation type 3001
