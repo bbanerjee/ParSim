@@ -220,7 +220,7 @@ OutputTecplot<DEMParticlePArray>::writeParticles(const DEMParticlePArray* partic
   std::ofstream ofs(filename);
   if (!ofs) {
     std::cout << "Could not open" << std::endl;
-    debugInf << "stream error: printParticle" << std::endl;
+    debugInf << "stream error: printParticlesCSV" << std::endl;
     exit(-1);
   }
   ofs.setf(std::ios::scientific, std::ios::floatfield);
@@ -294,7 +294,7 @@ OutputTecplot<PeriParticlePArray>::writeParticles(const PeriParticlePArray* part
 
   std::ofstream ofs(filename);
   if (!ofs) {
-    debugInf << "stream error: printParticle" << std::endl;
+    debugInf << "stream error: printParticlesCSV" << std::endl;
     exit(-1);
   }
 
@@ -350,7 +350,7 @@ OutputTecplot<SPHParticlePArray>::writeParticles(const SPHParticlePArray* partic
 
   std::ofstream ofs(filename);
   if (!ofs) {
-    debugInf << "stream error: printParticle" << std::endl;
+    debugInf << "stream error: printParticlesCSV" << std::endl;
     exit(-1);
   }
 
@@ -403,7 +403,7 @@ OutputTecplot<TArray>::writeSieves(const Gradation* gradation)
 
   std::ofstream ofs(filename, std::ofstream::app);
   if (!ofs) {
-    debugInf << "stream error: printParticle" << std::endl;
+    debugInf << "stream error: printParticlesCSV" << std::endl;
     exit(-1);
   }
   ofs.setf(std::ios::scientific, std::ios::floatfield);

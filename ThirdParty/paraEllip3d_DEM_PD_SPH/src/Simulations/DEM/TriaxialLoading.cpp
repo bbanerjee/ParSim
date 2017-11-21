@@ -10,9 +10,9 @@ TriaxialLoading::execute(DiscreteElements* dem)
 
   if (dem->getMPIRank() == 0) {
     dem->readBoundary(
-      InputParameter::get().datafile["boundaryFilename"]);
+      util::getFilename("boundaryFilename"));
     dem->readParticles(
-      InputParameter::get().datafile["particleFilename"]);
+      util::getFilename("particleFilename"));
     dem->openProgressOutputFile(progressInf, "triaxial_progress");
   }
   dem->scatterParticles();

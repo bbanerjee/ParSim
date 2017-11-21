@@ -5,10 +5,9 @@ void
 TrimParticles::execute(DiscreteElements* dem)
 {
   if (dem->getMPIRank() == 0) {
-    dem->readBoundary(
-      InputParameter::get().datafile["boundaryFilename"].c_str());
-    dem->trim(
-      true, InputParameter::get().datafile["particleFilename"].c_str(),
+    dem->allowPatchDomainResize(Boundary::BoundaryID::ZPLUS);
+    dem->readBoundary( util::getFilename("boundaryFilename").c_str());
+    dem->trim( true, util::getFilename("particleFilename").c_str(),
       "trim_particle_end");
   }
 }

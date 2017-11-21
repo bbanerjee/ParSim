@@ -36,6 +36,16 @@ timediffsec(const struct timeval& time1, const struct timeval& time2)
 }
 
 std::string
+combine(const std::string& str, std::size_t num, std::size_t width)
+{
+  std::string out(str);
+  std::stringstream ss;
+  ss << std::setw(width) << std::setfill('0') << std::right << num;
+  out += ss.str();
+  return out;
+}
+
+std::string
 combine(const std::string& folder, const std::string& str, std::size_t num, std::size_t width)
 {
   std::string out(folder);

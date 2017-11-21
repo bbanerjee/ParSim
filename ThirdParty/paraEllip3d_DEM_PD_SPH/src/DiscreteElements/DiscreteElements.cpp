@@ -108,7 +108,7 @@ DiscreteElements::createAndSaveParticlesAndBoundaries(
 {
   // Get the domain information
   std::string inputBoundaryFilename =
-    InputParameter::get().datafile["boundaryFilename"];
+    util::getFilename("boundaryFilename");
   readBoundary(inputBoundaryFilename);
   Box domain = getSpatialDomain();
 
@@ -396,21 +396,54 @@ DiscreteElements::readBoundaryConditions(const std::string& bcFilename)
 }
 
 void
+DiscreteElements::resizePatchBox() 
+{
+  //std::cout << "Before: PatchBox: " << d_demPatchBox << "\n";
+
+  Vec v1 = d_demPatchBox.minCorner();
+  Vec v2 = d_demPatchBox.maxCorner();
+
+  auto xminus = v1.x(); auto yminus = v1.y(); auto zminus = v1.z();
+  auto xplus = v2.x(); auto yplus = v2.y(); auto zplus = v2.z();
+
+  if (patchDomainResizeAllowed(Boundary::BoundaryID::XMINUS)) {
+    xminus = getPtclMinX(d_allDEMParticles) - d_maxParticleRadius;
+  }
+  if (patchDomainResizeAllowed(Boundary::BoundaryID::XPLUS)) {
+    xplus = getPtclMaxX(d_allDEMParticles) + d_maxParticleRadius;
+  }
+
+  if (patchDomainResizeAllowed(Boundary::BoundaryID::YMINUS)) {
+    yminus = getPtclMinY(d_allDEMParticles) - d_maxParticleRadius;
+  }
+  if (patchDomainResizeAllowed(Boundary::BoundaryID::YPLUS)) {
+    yplus = getPtclMaxY(d_allDEMParticles) + d_maxParticleRadius;
+  }
+
+  if (patchDomainResizeAllowed(Boundary::BoundaryID::ZMINUS)) {
+    zminus = getPtclMinZ(d_allDEMParticles) - d_maxParticleRadius;
+  }
+  if (patchDomainResizeAllowed(Boundary::BoundaryID::ZPLUS)) {
+    zplus = getPtclMaxZ(d_allDEMParticles) + d_maxParticleRadius;
+  }
+
+  setPatchBox(Box(xminus, yminus, zminus, xplus, yplus, zplus));
+  //std::cout << "After: PatchBox: " << d_demPatchBox << "\n";
+}
+
+// partition particles and send to each process
+void
 DiscreteElements::scatterParticles()
 {
-  // partition particles and send to each process
-  if (s_mpiRank == 0) { // process 0
-    setPatchBox(Box(d_demPatchBox.minCorner().x(), d_demPatchBox.minCorner().y(),
-                d_demPatchBox.minCorner().z(), d_demPatchBox.maxCorner().x(),
-                d_demPatchBox.maxCorner().y(),
-                getPtclMaxZ(d_allDEMParticles) + d_maxParticleRadius));
+  if (s_mpiRank == 0) { 
+
+    resizePatchBox(); 
 
     Vec v1 = d_demPatchBox.minCorner();
     Vec v2 = d_demPatchBox.maxCorner();
     Vec vspan = (v2 - v1) / s_mpiProcs;
 
-    //std::cout << "v1 = " << v1 << "\n";
-    //std::cout << "v2 = " << v2 << "\n";
+    //std::cout << "v1 = " << v1 << " v2 = " << v2 << "\n";
     //std::cout << "s_mpiProcs = " << s_mpiProcs << "\n";
     //std::cout << "vspan = " << vspan << "\n";
 
@@ -419,34 +452,39 @@ DiscreteElements::scatterParticles()
     for (int iRank = s_mpiSize - 1; iRank >= 0; --iRank) {
       tmpParticleVec.clear(); // do not release memory!
       int ndim = 3;
-      //int coords[3];
       IntVec coords;
       MPI_Cart_coords(s_cartComm, iRank, ndim, coords.data());
-      //std::cout << "iRank = " << iRank 
-      //          << " coords = " << coords << "\n";
+      //std::cout << "iRank = " << iRank << " coords = " << coords << "\n";
 
       Vec lower = v1 + vspan*coords;
       Vec upper = lower + vspan;
       Box domain(lower, upper);
-      //std::cout << "lower = " << lower 
-      //          << " upper = " << upper << "\n";
+      //std::cout << "lower = " << lower << " upper = " << upper << "\n";
 
       findParticleInBox(domain, d_allDEMParticles, tmpParticleVec);
+      //std::cout << "Orig size: " << d_allDEMParticles.size()
+      //          << " New size = " << tmpParticleVec.size() << "\n";
 
-      if (iRank != 0)
-        reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag,
-                                           tmpParticleVec); // non-blocking send
+      if (iRank != 0) {
+        // non-blocking send
+        reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, tmpParticleVec); 
+      }
+
       if (iRank == 0) {
         d_patchParticles.resize(tmpParticleVec.size());
-        for (auto i = 0u; i < d_patchParticles.size(); ++i)
-          d_patchParticles[i] = std::make_shared<DEMParticle>(
-            *tmpParticleVec[i]); // default synthesized copy constructor
+        for (auto i = 0u; i < d_patchParticles.size(); ++i) {
+          // default synthesized copy constructor
+          d_patchParticles[i] = std::make_shared<DEMParticle>(*tmpParticleVec[i]); 
+        }
       } // now d_patchParticles do not share memeory with d_allDEMParticles
     }
-    boost::mpi::wait_all(reqs, reqs + s_mpiSize - 1); // for non-blocking send
+
+    // for non-blocking send
+    boost::mpi::wait_all(reqs, reqs + s_mpiSize - 1); 
     delete[] reqs;
 
-  } else { // other processes except 0
+  } else { 
+    // other processes except 0
     boostWorld.recv(0, mpiTag, d_patchParticles);
   }
 
@@ -985,8 +1023,8 @@ DiscreteElements::updatePatchBoxMaxZ()
 
 void
 DiscreteElements::findParticleInBox(const Box& domain,
-                            const DEMParticlePArray& allParticles,
-                            DEMParticlePArray& insideParticles)
+                                    const DEMParticlePArray& allParticles,
+                                    DEMParticlePArray& insideParticles)
 {
   insideParticles.clear();
   for (const auto& particle : allParticles) {
@@ -1076,20 +1114,22 @@ DiscreteElements::writeParticlesToFile(DEMParticlePArray& particles, int frame) 
 }
 
 void
-DiscreteElements::printParticle(const std::string& fileName, int frame) const
+DiscreteElements::printParticlesCSV(const std::string& folderName,
+                                    const std::string& fileName, int frame) const
 {
-  OutputTecplot<DEMParticlePArray> writer(".", 0);
+  OutputTecplot<DEMParticlePArray> writer(folderName, 0);
   writer.setParticleFilename(fileName);
   std::cout << "d_allDEMParticles = " << d_allDEMParticles.size() << "\n";
   writer.writeParticles(&d_allDEMParticles, frame);
 }
 
 void
-DiscreteElements::printParticle(const std::string& fileName, 
-                                DEMParticlePArray& particles,
-                                int frame) const
+DiscreteElements::printParticlesCSV(const std::string& folderName,
+                                    const std::string& fileName, 
+                                    DEMParticlePArray& particles,
+                                    int frame) const
 {
-  OutputTecplot<DEMParticlePArray> writer(".", 0);
+  OutputTecplot<DEMParticlePArray> writer(folderName, 0);
   writer.setParticleFilename(fileName);
   writer.writeParticles(&particles, frame);
 }
@@ -1323,13 +1363,11 @@ DiscreteElements::getPtclMaxX(const DEMParticlePArray& inputParticle) const
   if (inputParticle.size() == 0)
     return -1 / EPS;
 
-  auto it = inputParticle.cbegin();
-  REAL x0 = (*it)->currentPosition().x();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPosition().x() > x0)
-      x0 = (*it)->currentPosition().x();
-  }
-  return x0;
+  auto maxIter = std::max_element(inputParticle.begin(), inputParticle.end(),
+      [](const DEMParticleP& p1, const DEMParticleP& p2){
+        return p1->currentPosition().x() < p2->currentPosition().x();
+      });
+  return (*maxIter)->currentPosition().x();
 }
 
 REAL
@@ -1338,13 +1376,11 @@ DiscreteElements::getPtclMinX(const DEMParticlePArray& inputParticle) const
   if (inputParticle.size() == 0)
     return 1 / EPS;
 
-  auto it = inputParticle.cbegin();
-  REAL x0 = (*it)->currentPosition().x();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPosition().x() < x0)
-      x0 = (*it)->currentPosition().x();
-  }
-  return x0;
+  auto minIter = std::min_element(inputParticle.begin(), inputParticle.end(),
+      [](const DEMParticleP& p1, const DEMParticleP& p2){
+        return p1->currentPosition().x() < p2->currentPosition().x();
+      });
+  return (*minIter)->currentPosition().x();
 }
 
 REAL
@@ -1353,13 +1389,11 @@ DiscreteElements::getPtclMaxY(const DEMParticlePArray& inputParticle) const
   if (inputParticle.size() == 0)
     return -1 / EPS;
 
-  auto it = inputParticle.cbegin();
-  REAL y0 = (*it)->currentPosition().y();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPosition().y() > y0)
-      y0 = (*it)->currentPosition().y();
-  }
-  return y0;
+  auto maxIter = std::max_element(inputParticle.begin(), inputParticle.end(),
+      [](const DEMParticleP& p1, const DEMParticleP& p2){
+        return p1->currentPosition().y() < p2->currentPosition().y();
+      });
+  return (*maxIter)->currentPosition().y();
 }
 
 REAL
@@ -1368,28 +1402,22 @@ DiscreteElements::getPtclMinY(const DEMParticlePArray& inputParticle) const
   if (inputParticle.size() == 0)
     return 1 / EPS;
 
-  auto it = inputParticle.cbegin();
-  REAL y0 = (*it)->currentPosition().y();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPosition().y() < y0)
-      y0 = (*it)->currentPosition().y();
-  }
-  return y0;
+  auto minIter = std::min_element(inputParticle.begin(), inputParticle.end(),
+      [](const DEMParticleP& p1, const DEMParticleP& p2){
+        return p1->currentPosition().y() < p2->currentPosition().y();
+      });
+  return (*minIter)->currentPosition().y();
 }
 
 REAL
 DiscreteElements::getPtclMaxZ(const DEMParticlePArray& inputParticle) const
 {
-  if (inputParticle.size() == 0)
-    return -1 / EPS;
-
-  auto it = inputParticle.cbegin();
-  REAL z0 = (*it)->currentPosition().z();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPosition().z() > z0)
-      z0 = (*it)->currentPosition().z();
-  }
-  return z0;
+  auto maxIter = std::max_element(inputParticle.begin(), inputParticle.end(),
+      [](const DEMParticleP& p1, const DEMParticleP& p2){
+        return p1->currentPosition().z() < p2->currentPosition().z();
+      });
+  return (maxIter != inputParticle.end()) ? 
+           (*maxIter)->currentPosition().z() : -1/EPS;
 }
 
 REAL
@@ -1398,13 +1426,11 @@ DiscreteElements::getPtclMinZ(const DEMParticlePArray& inputParticle) const
   if (inputParticle.size() == 0)
     return 1 / EPS;
 
-  auto it = inputParticle.cbegin();
-  REAL z0 = (*it)->currentPosition().z();
-  for (; it != inputParticle.cend(); ++it) {
-    if ((*it)->currentPosition().z() < z0)
-      z0 = (*it)->currentPosition().z();
-  }
-  return z0;
+  auto minIter = std::min_element(inputParticle.begin(), inputParticle.end(),
+      [](const DEMParticleP& p1, const DEMParticleP& p2){
+        return p1->currentPosition().z() < p2->currentPosition().z();
+      });
+  return (*minIter)->currentPosition().z();
 }
 
 void

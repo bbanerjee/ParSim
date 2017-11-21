@@ -423,7 +423,8 @@ DEMParticle::computeAndSetGlobalCoef()
     d_coef[6] = -2 * d_currPos.x();
     d_coef[7] = -2 * d_currPos.y();
     d_coef[8] = -2 * d_currPos.z();
-    d_coef[9] = pow(vnormL2(d_currPos), 2) - d_a * d_a;
+    d_coef[9] = dot(d_currPos, d_currPos) - d_a * d_a;
+    //d_coef[9] = pow(vnormL2(d_currPos), 2) - d_a * d_a;
     return;
   }
   Vec v1 = vcos(d_currDirecA);
@@ -964,7 +965,7 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
   if (!nearestPTOnPlane(p, q, r, s,
                         pt1)) // the particle and the plane does not intersect
     return;
-
+mpi file write shared newline
   // if particle and plane intersect:
   ++d_contactNum;
   d_inContact = true;
@@ -1003,11 +1004,10 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
     inf << "DEMParticle.cpp: iter=" << std::setw(8) << iteration
         << "  ptcl=" << std::setw(8) << getId() << "  bdry=" << std::setw(8)
         << static_cast<int>(plane->getId()) << " d_penetration=" << std::setw(OWID) << d_penetration
-        << " allow=" << std::setw(OWID) << allowedOverlap << std::endl;
+        << " allow=" << std::setw(OWID) << allowedOverlap << "\n";
     MPI_Status status;
-    int length = OWID * 2 + 8 * 3 + 19 + 7 * 3 + 8 + 1;
     MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
-                          length, MPI_CHAR, &status);
+                          inf.str().length(), MPI_CHAR, &status);
 
     d_penetration = allowedOverlap;
   }

@@ -14,7 +14,10 @@ DepositIntoContainer::execute(DiscreteElements* dem)
   std::string particleFile = "float_particle_ini.xml";
   std::string boundaryFile = "deposit_boundary_ini.xml";
 
+  dem->allowPatchDomainResize(Boundary::BoundaryID::ZPLUS);
+
   if (dem->getMPIRank() == 0) {
+
 
     // Set up gradation
     Gradation gradation;

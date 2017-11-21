@@ -38,6 +38,7 @@ namespace dem {
 class DiscreteElements
 {
 public:
+
   DiscreteElements()
     : d_minParticleRadius(1.0e20)
     , d_maxParticleRadius(-1.0e20)
@@ -255,8 +256,13 @@ public:
   void setTrimHistoryNum(std::size_t n) { d_trimHistoryNum = n; }
   void writeParticlesToFile(int frame) const; // print all particles
   void writeParticlesToFile(DEMParticlePArray& d_patchParticles, int frame) const; // print particles info
-  void printParticle(const std::string& fileName, int frame) const; // print all particles
-  void printParticle(const std::string& fileName, DEMParticlePArray& d_patchParticles, int frame) const; // print particles info
+  void printParticlesCSV(const std::string& folderName,
+                         const std::string& fileName, 
+                         int frame) const;
+  void printParticlesCSV(const std::string& folderName,
+                         const std::string& fileName, 
+                         DEMParticlePArray& d_patchParticles, 
+                         int frame) const;
   void printBoundaryContacts() const; // print all boundary contact info
   void printMemParticle(
     const std::string& str) const; // print membrane particles
@@ -526,7 +532,21 @@ public:
     d_bc.applyParticleBC(time, d_spatialDomain, d_patchParticles);
   }
 
+  void allowPatchDomainResize(Boundary::BoundaryID face) {
+    d_allowPatchDomainResize[face] = true;
+  }
+  bool patchDomainResizeAllowed(Boundary::BoundaryID face) const {
+    if (d_allowPatchDomainResize.find(face) != d_allowPatchDomainResize.end()) {
+      return true;
+    }
+    return false;
+  }
+
+  void resizePatchBox();
+
 private:
+
+  std::map<Boundary::BoundaryID, bool> d_allowPatchDomainResize;
 
   // The output writer pointer
   std::unique_ptr<Output> d_writer;

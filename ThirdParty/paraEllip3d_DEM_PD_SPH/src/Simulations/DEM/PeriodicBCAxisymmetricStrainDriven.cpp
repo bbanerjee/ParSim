@@ -17,10 +17,18 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
   }
   dem->readBoundaryConditions(bcFile);
 
+  dem->allowPatchDomainResize(Boundary::BoundaryID::XMINUS);
+  dem->allowPatchDomainResize(Boundary::BoundaryID::XPLUS);
+  dem->allowPatchDomainResize(Boundary::BoundaryID::YMINUS);
+  dem->allowPatchDomainResize(Boundary::BoundaryID::YPLUS);
+  dem->allowPatchDomainResize(Boundary::BoundaryID::ZMINUS);
+  dem->allowPatchDomainResize(Boundary::BoundaryID::ZPLUS);
+
   std::ofstream progressInf;
   std::ofstream balancedInf;
 
   std::string outputFolder(".");
+  std::string outputParticleCSVFile;
   REAL distX = 0, distY = 0, distZ = 0;
 
   if (dem->getMPIRank() == 0) {
@@ -31,7 +39,7 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
 
     // Create the output writer in the master process
     // <outputFolder> filename.pe3d </outputFolder>
-    auto folderName =  dem::InputParameter::get().datafile["outputFolder"];
+    auto folderName =  util::getFilename("outputFolder");
     outputFolder = util::createOutputFolder(folderName);
     dem->createOutputWriter(outputFolder, 0);
 
@@ -41,6 +49,8 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
     dem->writeBoundaryToFile();
     dem->writePatchGridToFile();
     dem->writeParticlesToFile(0);
+    outputParticleCSVFile = combine("output_particles_", 0, 3);
+    dem->printParticlesCSV(outputFolder, outputParticleCSVFile, 0);
     dem->printBoundary();
     dem->printBoundaryContacts();
     dem->getStartDimension(distX, distY, distZ);
@@ -105,6 +115,8 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
         dem->printBoundary();
         dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
+        outputParticleCSVFile = combine("output_particles_", iterSnap, 3);
+        dem->printParticlesCSV(outputFolder, outputParticleCSVFile, 0);
         dem->printBoundaryContacts();
         dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
       }

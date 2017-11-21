@@ -10,8 +10,8 @@ IsotropicLoading::execute(DiscreteElements* dem)
   std::ofstream balancedInf;
 
   if (dem->getMPIRank() == 0) {
-    std::string boundaryFile = InputParameter::get().datafile["boundaryFilename"];
-    std::string particleFile = InputParameter::get().datafile["particleFilename"];
+    std::string boundaryFile = util::getFilename("boundaryFilename");
+    std::string particleFile = util::getFilename("particleFilename");
     dem->readBoundary(boundaryFile);
     dem->readParticles(particleFile);
     dem->openProgressOutputFile(progressInf, "isotropic_progress");

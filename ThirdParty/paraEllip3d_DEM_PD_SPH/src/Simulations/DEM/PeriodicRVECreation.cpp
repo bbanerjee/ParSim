@@ -13,8 +13,8 @@ PeriodicRVECreation::execute(DiscreteElements* dem)
   if (dem->getMPIRank() == 0) {
 
     // Read the particles and boundary from file
-    std::string boundaryFile = InputParameter::get().datafile["boundaryFilename"];
-    std::string particleFile = InputParameter::get().datafile["particleFilename"];
+    std::string boundaryFile = util::getFilename("boundaryFilename");
+    std::string particleFile = util::getFilename("particleFilename");
     dem->readBoundary(boundaryFile);
     dem->readParticles(particleFile);
 

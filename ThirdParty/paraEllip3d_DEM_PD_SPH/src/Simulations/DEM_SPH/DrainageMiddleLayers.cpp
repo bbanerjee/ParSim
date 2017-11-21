@@ -14,10 +14,10 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
   REAL bufferLength = 0.0;
 
   if (dem->getMPIRank() == 0) {
-    auto boundaryFilename = InputParameter::get().datafile["boundaryFilename"];
+    auto boundaryFilename = util::getFilename("boundaryFilename");
     dem->readBoundary(boundaryFilename);
 
-    auto particleFilename = InputParameter::get().datafile["particleFilename"];
+    auto particleFilename = util::getFilename("particleFilename");
     dem->readParticles(particleFilename);
 
     Box domain = dem->getSpatialDomain();

@@ -6,8 +6,11 @@ using namespace dem;
 void
 CavityExpansion::execute(DiscreteElements* dem)
 {
+  dem->allowPatchDomainResize(Boundary::BoundaryID::ZPLUS);
+
   if (dem->getMPIRank() == 0) {
-    auto inputParticle = InputParameter::get().datafile["particleFilename"];
+
+    auto inputParticle = util::getFilename("particleFilename");
     REAL percent = util::getParam<REAL>("expandPercent");
     dem->readParticles(inputParticle);
 
@@ -30,11 +33,9 @@ CavityExpansion::execute(DiscreteElements* dem)
       }
     }
 
-    dem->printParticle("cavity_particle_ini", cavityParticleVec, 0);
-    dem->printParticle("expand_particle_ini", 0);
+    dem->printParticlesCSV(".", "cavity_particle_ini", cavityParticleVec, 0);
+    dem->printParticlesCSV(".", "expand_particle_ini", 0);
   }
 
-  dem->deposit(
-    InputParameter::get().datafile["boundaryFilename"],
-    "expand_particle_ini");
+  dem->deposit(util::getFilename("boundaryFilename"), "expand_particle_ini");
 }

@@ -12,9 +12,9 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
   auto trueTriaxialType = util::getParam<std::size_t>("trueTriaxialType");
   if (dem->getMPIRank() == 0) {
     dem->readBoundary(
-      InputParameter::get().datafile["boundaryFilename"]);
+      util::getFilename("boundaryFilename"));
     dem->readParticles(
-      InputParameter::get().datafile["particleFilename"]);
+      util::getFilename("particleFilename"));
     dem->openProgressOutputFile(progressInf, "trueTriaxial_progress");
     dem->openProgressOutputFile(balancedInf, "trueTriaxial_balanced");
   }

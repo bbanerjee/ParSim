@@ -4,7 +4,9 @@ using namespace dem;
 void
 CavityExpansionResume::execute(DiscreteElements* dem)
 {
+  dem->allowPatchDomainResize(Boundary::BoundaryID::ZPLUS);
+
   dem->deposit(
-    InputParameter::get().datafile["boundaryFilename"].c_str(),
-    InputParameter::get().datafile["particleFilename"].c_str());
+    util::getFilename("boundaryFilename").c_str(),
+    util::getFilename("particleFilename").c_str());
 }

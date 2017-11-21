@@ -15,9 +15,9 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
 
   if (dem->getMPIRank() == 0) {
     dem->readBoundary(
-      InputParameter::get().datafile["boundaryFilename"]);
+      util::getFilename("boundaryFilename"));
     dem->readParticles(
-      InputParameter::get().datafile["particleFilename"]);
+      util::getFilename("particleFilename"));
     dem->openProgressOutputFile(progressInf, "couple_progress");
     dem->openParticleProg(particleInf, "particle_progress");
     /*1*/ fluid.initParameter(spatialDomain, gradation);

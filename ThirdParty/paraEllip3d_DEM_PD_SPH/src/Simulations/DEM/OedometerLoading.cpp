@@ -13,9 +13,9 @@ OedometerLoading::execute(DiscreteElements* dem)
   auto odometerType = util::getParam<std::size_t>("odometerType");
   if (dem->getMPIRank() == 0) {
     dem->readBoundary(
-      InputParameter::get().datafile["boundaryFilename"]);
+      util::getFilename("boundaryFilename"));
     dem->readParticles(
-      InputParameter::get().datafile["particleFilename"]);
+      util::getFilename("particleFilename"));
     dem->openProgressOutputFile(progressInf, "odometer_progress");
     dem->openProgressOutputFile(balancedInf, "odometer_balanced");
   }

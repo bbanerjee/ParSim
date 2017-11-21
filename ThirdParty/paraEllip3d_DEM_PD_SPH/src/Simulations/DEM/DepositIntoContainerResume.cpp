@@ -8,9 +8,11 @@ using util::combine;
 void
 DepositIntoContainerResume::execute(DiscreteElements* dem)
 {
+  dem->allowPatchDomainResize(Boundary::BoundaryID::ZPLUS);
+
   dem->deposit(
-    InputParameter::get().datafile["boundaryFilename"],
-    InputParameter::get().datafile["particleFilename"]);
+    util::getFilename("boundaryFilename"),
+    util::getFilename("particleFilename"));
 
   if (dem->getMPIRank() == 0) {
     const Box& spatialDomain = dem->getSpatialDomain();
