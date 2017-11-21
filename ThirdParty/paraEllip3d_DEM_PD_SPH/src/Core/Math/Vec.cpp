@@ -5,74 +5,6 @@
 
 namespace dem {
 
-bool
-Vec::operator==(const Vec v) const
-{
-  return d_data[0] == v.d_data[0] && d_data[1] == v.d_data[1] && d_data[2] == v.d_data[2];
-}
-
-bool
-Vec::operator==(const REAL val)
-{
-  return d_data[0] == val && d_data[1] == val && d_data[2] == val;
-}
-
-bool
-Vec::operator!=(const Vec v)
-{
-  return d_data[0] != v.d_data[0] || d_data[1] != v.d_data[1] || d_data[2] != v.d_data[2];
-}
-
-void
-Vec::operator+=(Vec v)
-{
-  d_data[0] += v.d_data[0];
-  d_data[1] += v.d_data[1];
-  d_data[2] += v.d_data[2];
-}
-
-void
-Vec::operator-=(Vec v)
-{
-  d_data[0] -= v.d_data[0];
-  d_data[1] -= v.d_data[1];
-  d_data[2] -= v.d_data[2];
-}
-
-void
-Vec::operator*=(REAL val)
-{
-  d_data[0] *= val;
-  d_data[1] *= val;
-  d_data[2] *= val;
-}
-
-void
-Vec::operator/=(REAL val)
-{
-  d_data[0] /= val;
-  d_data[1] /= val;
-  d_data[2] /= val;
-}
-
-Vec
-Vec::operator+(Vec v) const
-{
-  return Vec(d_data[0] + v.d_data[0], d_data[1] + v.d_data[1], d_data[2] + v.d_data[2]);
-}
-
-Vec
-Vec::operator-(Vec v) const
-{
-  return Vec(d_data[0] - v.d_data[0], d_data[1] - v.d_data[1], d_data[2] - v.d_data[2]);
-}
-
-Vec 
-Vec::operator*(REAL d) const
-{
-  return Vec(d_data[0] * d, d_data[1] * d, d_data[2] * d);
-}
-
 /*
 REAL 
 Vec::operator*(Vec p) const
@@ -87,29 +19,6 @@ Vec::operator%(Vec p) const
              d_data[0] * p.d_data[1] - d_data[1] * p.d_data[0]);
 }
 */
-
-
-REAL
-Vec::lengthSq() const
-{
-  return d_data[0] * d_data[0] + d_data[1] * d_data[1] + d_data[2] * d_data[2];
-}
-
-REAL
-Vec::length() const
-{
-  return std::sqrt(lengthSq());
-}
-
-void
-Vec::normalizeInPlace()
-{
-  REAL length = this->length();
-  if (length < EPS) return;
-  d_data[0] /= length;
-  d_data[1] /= length;
-  d_data[2] /= length;
-}
 
 // Divides a vector by an int vector and produces a new vector
 Vec 
@@ -191,53 +100,6 @@ Vec::fromString(const std::string& str)
   return result;
 }
 
-Vec operator*(REAL d, Vec v)
-{
-  return Vec(v.x() * d, v.y() * d, v.z() * d);
-}
-
-Vec
-operator/(Vec v, REAL d)
-{
-  return Vec(v.x() / d, v.y() / d, v.z() / d);
-}
-
-REAL
-vnormL2(Vec v)
-{
-  REAL x = v.x();
-  REAL y = v.y();
-  REAL z = v.z();
-  return sqrt(x * x + y * y + z * z);
-}
-
-Vec
-vcos(Vec v)
-{
-  return Vec(cos(v.x()), cos(v.y()), cos(v.z()));
-}
-
-Vec
-vacos(Vec v)
-{
-  return Vec(acos(v.x()), acos(v.y()), acos(v.z()));
-}
-
-Vec
-operator-(Vec v)
-{
-  return -1.0 * v;
-}
-
-Vec
-normalize(Vec v)
-{
-  REAL alf = vnormL2(v);
-  if (alf < EPS) // important, otherwise may cause numerical instability
-    return v;
-  return v / (vnormL2(v));
-}
-
 // return what vector vec is rotated to by vector rot.
 // note: that vec rotates along x, y, z axis by rot.x, rot.y, rot.z
 // is equivalent to that vec rotates along vector rot by vnormL2(rot)
@@ -280,21 +142,6 @@ operator*=(Vec& realVec, const IntVec& intVec) {
   realVec.d_data[1] *= static_cast<REAL>(intVec.y());
   realVec.d_data[2] *= static_cast<REAL>(intVec.z());
   return realVec;
-}
-
-REAL 
-dot(const Vec& v1, const Vec& v2)
-{
-  return (v1.d_data[0] * v2.d_data[0] + v1.d_data[1] * v2.d_data[1] + 
-          v1.d_data[2] * v2.d_data[2]);
-}
-
-Vec
-cross(const Vec& v1, const Vec& v2)
-{
-  return Vec(v1.d_data[1] * v2.d_data[2] - v1.d_data[2] * v2.d_data[1], 
-             v1.d_data[2] * v2.d_data[0] - v1.d_data[0] * v2.d_data[2],
-             v1.d_data[0] * v2.d_data[1] - v1.d_data[1] * v2.d_data[0]);
 }
 
 std::ostream&

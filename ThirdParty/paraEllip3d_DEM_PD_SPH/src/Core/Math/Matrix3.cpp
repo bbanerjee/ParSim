@@ -43,6 +43,26 @@ void Matrix3::set(int i, int j, double value)
   mat3[i][j] = value;
 }
 
+// Minor 
+double Matrix3::Minor(int row, int col) const
+{
+  double minor[2][2];
+  int minor_row = 0;
+  for (int ii = 0; ii < 3; ++ii) {
+    if (ii != row) {
+      int minor_col = 0;
+      for (int jj = 0; jj < 3; ++jj) {
+        if (jj != col) {
+          minor[minor_row][minor_col] = mat3[ii][jj];
+          ++minor_col;
+        }
+      }
+      ++minor_row;
+    }
+  }
+  return minor[0][0]*minor[1][1] - minor[0][1]*minor[1][0];
+}
+
 Matrix3 Matrix3::Inverse() const
 {
   // Return the inverse of a 3x3 matrix

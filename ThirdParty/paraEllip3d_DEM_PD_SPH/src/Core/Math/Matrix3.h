@@ -105,7 +105,9 @@ namespace dem {
     //Determinant
     inline double Determinant() const;
 
-    //Determinant
+    // Minor 
+    double Minor(int row, int col) const;
+
     inline bool Orthogonal() const;
 
     // Solve using Cramer's rule

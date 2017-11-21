@@ -25,6 +25,7 @@
 SET(MATH_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/IntVec.cpp          
   ${CMAKE_CURRENT_SOURCE_DIR}/Vec.cpp          
+  ${CMAKE_CURRENT_SOURCE_DIR}/Matrix2.cpp          
   ${CMAKE_CURRENT_SOURCE_DIR}/Matrix3.cpp          
   ${CMAKE_CURRENT_SOURCE_DIR}/Matrix.cpp          
   ${CMAKE_CURRENT_SOURCE_DIR}/balanc.cpp

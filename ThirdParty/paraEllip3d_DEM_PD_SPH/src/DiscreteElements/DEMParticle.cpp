@@ -423,72 +423,78 @@ DEMParticle::computeAndSetGlobalCoef()
     d_coef[6] = -2 * d_currPos.x();
     d_coef[7] = -2 * d_currPos.y();
     d_coef[8] = -2 * d_currPos.z();
-    d_coef[9] = dot(d_currPos, d_currPos) - d_a * d_a;
-    //d_coef[9] = pow(vnormL2(d_currPos), 2) - d_a * d_a;
+    d_coef[9] = pow(vnormL2(d_currPos), 2) - d_a * d_a;
     return;
   }
+
   Vec v1 = vcos(d_currDirecA);
   Vec v2 = vcos(d_currDirecB);
   Vec v3 = vcos(d_currDirecC);
+
   REAL X0 = d_currPos.x();
   REAL Y0 = d_currPos.y();
   REAL Z0 = d_currPos.z();
-  REAL l1 = v1.x();
-  REAL m1 = v1.y();
-  REAL n1 = v1.z();
-  REAL l2 = v2.x();
-  REAL m2 = v2.y();
-  REAL n2 = v2.z();
-  REAL l3 = v3.x();
-  REAL m3 = v3.y();
-  REAL n3 = v3.z();
-  d_coef[0] = l1 * l1 / d_a / d_a + l2 * l2 / d_b / d_b + l3 * l3 / d_c / d_c;
-  d_coef[1] = m1 * m1 / d_a / d_a + m2 * m2 / d_b / d_b + m3 * m3 / d_c / d_c;
-  d_coef[2] = n1 * n1 / d_a / d_a + n2 * n2 / d_b / d_b + n3 * n3 / d_c / d_c;
-  d_coef[3] = (2 * l1 * m1) / d_a / d_a + (2 * l2 * m2) / d_b / d_b +
-              (2 * l3 * m3) / d_c / d_c;
-  d_coef[4] = (2 * m1 * n1) / d_a / d_a + (2 * m2 * n2) / d_b / d_b +
-              (2 * m3 * n3) / d_c / d_c;
-  d_coef[5] = (2 * l1 * n1) / d_a / d_a + (2 * l2 * n2) / d_b / d_b +
-              (2 * l3 * n3) / d_c / d_c;
-  d_coef[6] =
-    -2 * l1 * m1 * Y0 * pow(d_a, -2) - 2 * l1 * n1 * Z0 * pow(d_a, -2) -
-    2 * l2 * m2 * Y0 * pow(d_b, -2) - 2 * l2 * n2 * Z0 * pow(d_b, -2) -
-    2 * l3 * m3 * Y0 * pow(d_c, -2) - 2 * l3 * n3 * Z0 * pow(d_c, -2) -
-    2 * X0 * pow(d_a, -2) * pow(l1, 2) - 2 * X0 * pow(d_b, -2) * pow(l2, 2) -
-    2 * X0 * pow(d_c, -2) * pow(l3, 2);
-  d_coef[7] = (-2 * l1 * m1 * X0) / d_a / d_a - (2 * l2 * m2 * X0) / d_b / d_b -
-              (2 * l3 * m3 * X0) / d_c / d_c - (2 * m1 * m1 * Y0) / d_a / d_a -
-              (2 * m2 * m2 * Y0) / d_b / d_b - (2 * m3 * m3 * Y0) / d_c / d_c -
-              (2 * m1 * n1 * Z0) / d_a / d_a - (2 * m2 * n2 * Z0) / d_b / d_b -
-              (2 * m3 * n3 * Z0) / d_c / d_c;
-  d_coef[8] = (-2 * l1 * n1 * X0) / d_a / d_a - (2 * l2 * n2 * X0) / d_b / d_b -
-              (2 * l3 * n3 * X0) / d_c / d_c - (2 * m1 * n1 * Y0) / d_a / d_a -
-              (2 * m2 * n2 * Y0) / d_b / d_b - (2 * m3 * n3 * Y0) / d_c / d_c -
-              (2 * n1 * n1 * Z0) / d_a / d_a - (2 * n2 * n2 * Z0) / d_b / d_b -
-              (2 * n3 * n3 * Z0) / d_c / d_c;
-  d_coef[9] = -1 + 2 * l1 * m1 * X0 * Y0 * pow(d_a, -2) +
-              2 * l1 * n1 * X0 * Z0 * pow(d_a, -2) +
-              2 * m1 * n1 * Y0 * Z0 * pow(d_a, -2) +
-              2 * l2 * m2 * X0 * Y0 * pow(d_b, -2) +
-              2 * l2 * n2 * X0 * Z0 * pow(d_b, -2) +
-              2 * m2 * n2 * Y0 * Z0 * pow(d_b, -2) +
-              2 * l3 * m3 * X0 * Y0 * pow(d_c, -2) +
-              2 * l3 * n3 * X0 * Z0 * pow(d_c, -2) +
-              2 * m3 * n3 * Y0 * Z0 * pow(d_c, -2) +
-              pow(d_a, -2) * pow(l1, 2) * pow(X0, 2) +
-              pow(d_b, -2) * pow(l2, 2) * pow(X0, 2) +
-              pow(d_c, -2) * pow(l3, 2) * pow(X0, 2) +
-              pow(d_a, -2) * pow(m1, 2) * pow(Y0, 2) +
-              pow(d_b, -2) * pow(m2, 2) * pow(Y0, 2) +
-              pow(d_c, -2) * pow(m3, 2) * pow(Y0, 2) +
-              pow(d_a, -2) * pow(n1, 2) * pow(Z0, 2) +
-              pow(d_b, -2) * pow(n2, 2) * pow(Z0, 2) +
-              pow(d_c, -2) * pow(n3, 2) * pow(Z0, 2);
-  REAL divd = d_coef[0];
-  for (double& i : d_coef) // when a particle is initialized or updated, coef[0]
-                           // is set as 1.0
-    i /= divd;
+
+  REAL l1 = v1.x() / d_a;
+  REAL m1 = v1.y() / d_a;
+  REAL n1 = v1.z() / d_a;
+  REAL l2 = v2.x() / d_b;
+  REAL m2 = v2.y() / d_b;
+  REAL n2 = v2.z() / d_b;
+  REAL l3 = v3.x() / d_c;
+  REAL m3 = v3.y() / d_c;
+  REAL n3 = v3.z() / d_c;
+
+  auto xsq = l1 * l1 + l2 * l2 + l3 * l3 ;
+  auto ysq = m1 * m1 + m2 * m2 + m3 * m3 ;
+  auto zsq = n1 * n1 + n2 * n2 + n3 * n3 ;
+  auto xy = 2 * (l1 * m1 +  l2 * m2 + l3 * m3) ;
+  auto yz = 2 * (m1 * n1 +  m2 * n2 + m3 * n3) ;
+  auto zx = 2 * (l1 * n1 +  l2 * n2 + l3 * n3) ;
+  auto x = 2 * ( -l1 * m1 * Y0 - l1 * n1 * Z0 -
+                  l2 * m2 * Y0 - l2 * n2 * Z0 - 
+                  l3 * m3 * Y0 - l3 * n3 * Z0 -
+                  X0 * (l1 * l1) - X0 * (l2 * l2) - X0 * (l3 * l3) );
+  auto y = 2 * ( (-l1 * m1 * X0) - ( l2 * m2 * X0) -
+                  ( l3 * m3 * X0) - ( m1 * m1 * Y0) -
+                  ( m2 * m2 * Y0) - ( m3 * m3 * Y0) -
+                  ( m1 * n1 * Z0) - ( m2 * n2 * Z0) -
+                  ( m3 * n3 * Z0) );
+  auto z = 2 * ( (-l1 * n1 * X0) - ( l2 * n2 * X0) -
+                  ( l3 * n3 * X0) - ( m1 * n1 * Y0) -
+                  ( m2 * n2 * Y0) - ( m3 * n3 * Y0) -
+                  ( n1 * n1 * Z0) - ( n2 * n2 * Z0) -
+                  ( n3 * n3 * Z0) );
+  auto c = -1 + 2 * (l1 * m1 * X0 * Y0 +
+                      l1 * n1 * X0 * Z0 +
+                      m1 * n1 * Y0 * Z0 +
+                      l2 * m2 * X0 * Y0 +
+                      l2 * n2 * X0 * Z0 +
+                      m2 * n2 * Y0 * Z0 +
+                      l3 * m3 * X0 * Y0 +
+                      l3 * n3 * X0 * Z0 +
+                      m3 * n3 * Y0 * Z0) +
+                    (l1 * l1) * (X0 * X0) +
+                    (l2 * l2) * (X0 * X0) +
+                    (l3 * l3) * (X0 * X0) +
+                    (m1 * m1) * (Y0 * Y0) +
+                    (m2 * m2) * (Y0 * Y0) +
+                    (m3 * m3) * (Y0 * Y0) +
+                    (n1 * n1) * (Z0 * Z0) +
+                    (n2 * n2) * (Z0 * Z0) +
+                    (n3 * n3) * (Z0 * Z0);
+
+  REAL fac = 1.0/xsq;
+  d_coef[0] = 1;
+  d_coef[1] = ysq * fac;
+  d_coef[2] = zsq * fac;
+  d_coef[3] = xy * fac;
+  d_coef[4] = yz * fac;
+  d_coef[5] = zx * fac;
+  d_coef[6] = x * fac;
+  d_coef[7] = y * fac;
+  d_coef[8] = z * fac;
+  d_coef[9] = c * fac;
 }
 
 bool
@@ -965,7 +971,7 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
   if (!nearestPTOnPlane(p, q, r, s,
                         pt1)) // the particle and the plane does not intersect
     return;
-mpi file write shared newline
+
   // if particle and plane intersect:
   ++d_contactNum;
   d_inContact = true;
@@ -1006,6 +1012,8 @@ mpi file write shared newline
         << static_cast<int>(plane->getId()) << " d_penetration=" << std::setw(OWID) << d_penetration
         << " allow=" << std::setw(OWID) << allowedOverlap << "\n";
     MPI_Status status;
+    //std::cout << "inf.str().length = " << inf.str().length()
+    //          << " length = " << length << "\n";
     MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
                           inf.str().length(), MPI_CHAR, &status);
 
