@@ -85,12 +85,18 @@ public:
   REAL density() const { return d_density; }
   Vec currentPosition() const { return d_currPos; }
   Vec previousPosition() const { return d_prevPos; }
-  Vec currentAnglesAxisA() const { return d_currDirecA; }
-  Vec currentAnglesAxisB() const { return d_currDirecB; }
-  Vec currentAnglesAxisC() const { return d_currDirecC; }
-  Vec previousAnglesAxisA() const { return d_prevDirecA; }
-  Vec previousAnglesAxisB() const { return d_prevDirecB; }
-  Vec previousAnglesAxisC() const { return d_prevDirecC; }
+  Vec currentAnglesAxisA() const { return vacos(d_currDirecA); }
+  Vec currentAnglesAxisB() const { return vacos(d_currDirecB); }
+  Vec currentAnglesAxisC() const { return vacos(d_currDirecC); }
+  Vec previousAnglesAxisA() const { return vacos(d_prevDirecA); }
+  Vec previousAnglesAxisB() const { return vacos(d_prevDirecB); }
+  Vec previousAnglesAxisC() const { return vacos(d_prevDirecC); }
+  Vec currentAxisA() const { return d_currDirecA; }
+  Vec currentAxisB() const { return d_currDirecB; }
+  Vec currentAxisC() const { return d_currDirecC; }
+  Vec previousAxisA() const { return d_prevDirecA; }
+  Vec previousAxisB() const { return d_prevDirecB; }
+  Vec previousAxisC() const { return d_prevDirecC; }
   Vec currentVelocity() const { return d_currentVelocity; }
   Vec previousVelocity() const { return d_previousVelocity; }
   Vec currentAngularVelocity() const { return d_currOmga; }
@@ -127,12 +133,18 @@ public:
   }
   void setCurrentPosition(Vec vv) { d_currPos = vv; }
   void setPreviousPosition(Vec vv) { d_prevPos = vv; }
-  void setCurrentAnglesAxisA(Vec vv) { d_currDirecA = vv; }
-  void setCurrentAnglesAxisB(Vec vv) { d_currDirecB = vv; }
-  void setCurrentAnglesAxisC(Vec vv) { d_currDirecC = vv; }
-  void setPreviousAnglesAxisA(Vec vv) { d_prevDirecA = vv; }
-  void setPreviousAnglesAxisB(Vec vv) { d_prevDirecB = vv; }
-  void setPreviousAnglesAxisC(Vec vv) { d_prevDirecC = vv; }
+  void setCurrentAnglesAxisA(Vec vv) { d_currDirecA = vcos(vv); }
+  void setCurrentAnglesAxisB(Vec vv) { d_currDirecB = vcos(vv); }
+  void setCurrentAnglesAxisC(Vec vv) { d_currDirecC = vcos(vv); }
+  void setPreviousAnglesAxisA(Vec vv) { d_prevDirecA = vcos(vv); }
+  void setPreviousAnglesAxisB(Vec vv) { d_prevDirecB = vcos(vv); }
+  void setPreviousAnglesAxisC(Vec vv) { d_prevDirecC = vcos(vv); }
+  void setCurrentAxisA(Vec vv) { d_currDirecA = vv; }
+  void setCurrentAxisB(Vec vv) { d_currDirecB = vv; }
+  void setCurrentAxisC(Vec vv) { d_currDirecC = vv; }
+  void setPreviousAxisA(Vec vv) { d_prevDirecA = vv; }
+  void setPreviousAxisB(Vec vv) { d_prevDirecB = vv; }
+  void setPreviousAxisC(Vec vv) { d_prevDirecC = vv; }
   void setCurrentVelocity(Vec vv) { d_currentVelocity = vv; }
   void setPreviousVelocity(Vec vv) { d_previousVelocity = vv; }
   void setCurrentAngularVelocity(Vec vv) { d_currOmga = vv; }

@@ -178,10 +178,10 @@ DEMParticle::init()
   m3 = -s1 * c2;
   n3 = c1;
 
-  d_currDirecA = Vec(acos(l1), acos(m1), acos(n1));
-  d_currDirecB = Vec(acos(l2), acos(m2), acos(n2));
-  d_currDirecC = Vec(acos(l3), acos(m3), acos(n3));
-  // d_currDirecC = vacos(normalize(vcos(d_currDirecA) * vcos(d_currDirecB)));
+  d_currDirecA = Vec(l1, m1, n1);
+  d_currDirecB = Vec(l2, m2, n2);
+  d_currDirecC = Vec(l3, m3, n3);
+  // d_currDirecC = normalize(cross(d_currDirecA, d_currDirecB));
 
   d_prevPos = d_currPos;
   d_prevDirecA = d_currDirecA;
@@ -283,9 +283,9 @@ DEMParticle::DEMParticle(std::size_t n,
   d_b = dim.y();
   d_c = dim.z();
   d_currPos = d_prevPos = position;
-  d_currDirecA = d_prevDirecA = dirca;
-  d_currDirecB = d_prevDirecB = dircb;
-  d_currDirecC = d_prevDirecC = dircc;
+  d_currDirecA = d_prevDirecA = vcos(dirca);
+  d_currDirecB = d_prevDirecB = vcos(dircb);
+  d_currDirecC = d_prevDirecC = vcos(dircc);
   d_currentVelocity = d_previousVelocity = 0;
   d_currOmga = d_prevOmga = 0;
   d_force = d_prevForce = 0;
@@ -305,12 +305,12 @@ DEMParticle::DEMParticle(std::size_t n,
 Vec
 DEMParticle::globalToLocal(Vec input) const
 {
-  Vec lmn, local;
-  lmn = vcos(currentAnglesAxisA());
+  Vec local;
+  Vec lmn = currentAxisA();
   local.setX(dot(lmn, input)); // l1,m1,n1
-  lmn = vcos(currentAnglesAxisB());
+  lmn = currentAxisB();
   local.setY(dot(lmn, input)); // l2,m2,n2
-  lmn = vcos(currentAnglesAxisC());
+  lmn = currentAxisC();
   local.setZ(dot(lmn, input)); // l3,m3,n3
   return local;
 }
@@ -318,12 +318,12 @@ DEMParticle::globalToLocal(Vec input) const
 Vec
 DEMParticle::localToGlobal(Vec input) const
 {
-  Vec lmn, global;
-  lmn = vcos(Vec(d_currDirecA.x(), d_currDirecB.x(), d_currDirecC.x()));
+  Vec global;
+  Vec lmn = Vec(d_currDirecA.x(), d_currDirecB.x(), d_currDirecC.x());
   global.setX(dot(lmn, input)); // l1,l2,l3
-  lmn = vcos(Vec(d_currDirecA.y(), d_currDirecB.y(), d_currDirecC.y()));
+  lmn = Vec(d_currDirecA.y(), d_currDirecB.y(), d_currDirecC.y());
   global.setY(dot(lmn, input)); // m1,m2,n3
-  lmn = vcos(Vec(d_currDirecA.z(), d_currDirecB.z(), d_currDirecC.z()));
+  lmn = Vec(d_currDirecA.z(), d_currDirecB.z(), d_currDirecC.z());
   global.setZ(dot(lmn, input)); // n1,n2,n3
   return global;
 }
@@ -331,12 +331,12 @@ DEMParticle::localToGlobal(Vec input) const
 Vec
 DEMParticle::globalToLocalPrev(Vec input) const
 {
-  Vec lmn, local;
-  lmn = vcos(previousAnglesAxisA());
+  Vec local;
+  Vec lmn = previousAxisA();
   local.setX(dot(lmn, input)); // l1,m1,n1
-  lmn = vcos(previousAnglesAxisB());
+  lmn = previousAxisB();
   local.setY(dot(lmn, input)); // l2,m2,n2
-  lmn = vcos(previousAnglesAxisC());
+  lmn = previousAxisC();
   local.setZ(dot(lmn, input)); // l3,m3,n3
   return local;
 }
@@ -344,12 +344,12 @@ DEMParticle::globalToLocalPrev(Vec input) const
 Vec
 DEMParticle::localToGlobalPrev(Vec input) const
 {
-  Vec lmn, global;
-  lmn = vcos(Vec(d_prevDirecA.x(), d_prevDirecB.x(), d_prevDirecC.x()));
+  Vec global;
+  Vec lmn = Vec(d_prevDirecA.x(), d_prevDirecB.x(), d_prevDirecC.x());
   global.setX(dot(lmn, input)); // l1,l2,l3
-  lmn = vcos(Vec(d_prevDirecA.y(), d_prevDirecB.y(), d_prevDirecC.y()));
+  lmn = Vec(d_prevDirecA.y(), d_prevDirecB.y(), d_prevDirecC.y());
   global.setY(dot(lmn, input)); // m1,m2,n3
-  lmn = vcos(Vec(d_prevDirecA.z(), d_prevDirecB.z(), d_prevDirecC.z()));
+  lmn = Vec(d_prevDirecA.z(), d_prevDirecB.z(), d_prevDirecC.z());
   global.setZ(dot(lmn, input)); // n1,n2,n3
   return global;
 }
@@ -427,9 +427,9 @@ DEMParticle::computeAndSetGlobalCoef()
     return;
   }
 
-  Vec v1 = vcos(d_currDirecA);
-  Vec v2 = vcos(d_currDirecB);
-  Vec v3 = vcos(d_currDirecC);
+  Vec v1 = d_currDirecA;
+  Vec v2 = d_currDirecB;
+  Vec v3 = d_currDirecC;
 
   REAL X0 = d_currPos.x();
   REAL Y0 = d_currPos.y();
@@ -567,9 +567,9 @@ DEMParticle::computeRadius(Vec v) const
   REAL rc = d_c;
 
   // get the local coordinates of vector v, the point on the particle's surface
-  Vec v1 = vcos(d_currDirecA);
-  Vec v2 = vcos(d_currDirecB);
-  Vec v3 = vcos(d_currDirecC);
+  Vec v1 = d_currDirecA;
+  Vec v2 = d_currDirecB;
+  Vec v3 = d_currDirecC;
 
   Vec xx = v - d_currPos;
   REAL x = dot(v1, xx);
@@ -764,11 +764,11 @@ DEMParticle::update()
     d_currOmga = localToGlobal(currLocalOmga);
 
     d_currDirecA =
-      vacos(normalize(rotateVec(vcos(d_prevDirecA), d_currOmga * timeStep)));
+      normalize(rotateVec(d_prevDirecA, d_currOmga * timeStep));
     d_currDirecB =
-      vacos(normalize(rotateVec(vcos(d_prevDirecB), d_currOmga * timeStep)));
+      normalize(rotateVec(d_prevDirecB, d_currOmga * timeStep));
     d_currDirecC =
-      vacos(normalize(rotateVec(vcos(d_prevDirecC), d_currOmga * timeStep)));
+      normalize(rotateVec(d_prevDirecC, d_currOmga * timeStep));
 
     /*
     if (getId() == 2) {
@@ -825,11 +825,11 @@ DEMParticle::update()
       d_currOmga = localToGlobal(currLocalOmga);
 
       d_currDirecA =
-        vacos(normalize(rotateVec(vcos(d_prevDirecA), d_currOmga * timeStep)));
+        normalize(rotateVec(d_prevDirecA, d_currOmga * timeStep));
       d_currDirecB =
-        vacos(normalize(rotateVec(vcos(d_prevDirecB), d_currOmga * timeStep)));
+        normalize(rotateVec(d_prevDirecB, d_currOmga * timeStep));
       d_currDirecC =
-        vacos(normalize(rotateVec(vcos(d_prevDirecC), d_currOmga * timeStep)));
+        normalize(rotateVec(d_prevDirecC, d_currOmga * timeStep));
     }
   }
 #endif
@@ -867,11 +867,11 @@ DEMParticle::update()
   // Below is needed for all cases
   // ensure three axles perpendicular to each other, and being unit vector
   if (d_currDirecA == 0)
-    d_currDirecA = vacos(normalize(cross(vcos(d_currDirecB), vcos(d_currDirecC))));
+    d_currDirecA = normalize(cross(d_currDirecB, d_currDirecC));
   if (d_currDirecB == 0)
-    d_currDirecB = vacos(normalize(cross(vcos(d_currDirecC), vcos(d_currDirecA))));
+    d_currDirecB = normalize(cross(d_currDirecC, d_currDirecA));
   if (d_currDirecC == 0)
-    d_currDirecC = vacos(normalize(cross(vcos(d_currDirecA), vcos(d_currDirecB))));
+    d_currDirecC = normalize(cross(d_currDirecA, d_currDirecB));
 
   d_prevPos = d_currPos;
   d_prevDirecA = d_currDirecA;

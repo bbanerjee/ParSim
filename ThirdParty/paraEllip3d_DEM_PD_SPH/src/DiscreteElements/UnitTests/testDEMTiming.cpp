@@ -205,15 +205,17 @@ TEST(DEMParticleTimingTest, computeAndSetGlobalCoefOldNoPow)
     REAL Y0 = d_currPos.y();
     REAL Z0 = d_currPos.z();
 
-    REAL l1 = v1.x() / d_a;
-    REAL m1 = v1.y() / d_a;
-    REAL n1 = v1.z() / d_a;
-    REAL l2 = v2.x() / d_b;
-    REAL m2 = v2.y() / d_b;
-    REAL n2 = v2.z() / d_b;
-    REAL l3 = v3.x() / d_c;
-    REAL m3 = v3.y() / d_c;
-    REAL n3 = v3.z() / d_c;
+    Vec v11 = v1 / d_a; Vec v22 = v2 / d_b; Vec v33 = v3 / d_c;
+
+    REAL l1 = v11.x();
+    REAL m1 = v11.y();
+    REAL n1 = v11.z();
+    REAL l2 = v22.x();
+    REAL m2 = v22.y();
+    REAL n2 = v22.z();
+    REAL l3 = v33.x();
+    REAL m3 = v33.y();
+    REAL n3 = v33.z();
 
     auto xsq = l1 * l1 + l2 * l2 + l3 * l3 ;
     auto ysq = m1 * m1 + m2 * m2 + m3 * m3 ;

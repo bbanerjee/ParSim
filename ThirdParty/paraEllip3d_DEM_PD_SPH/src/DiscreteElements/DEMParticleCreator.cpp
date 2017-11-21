@@ -277,9 +277,9 @@ DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
 
     auto position = particle->currentPosition();
 
-    auto axis_a = vcos(particle->currentAnglesAxisA());
-    auto axis_b = vcos(particle->currentAnglesAxisB());
-    auto axis_c = vcos(particle->currentAnglesAxisC());
+    auto axis_a = particle->currentAxisA();
+    auto axis_b = particle->currentAxisB();
+    auto axis_c = particle->currentAxisC();
 
     auto radius_a = particle->radiusA();
     auto radius_b = particle->radiusB();
