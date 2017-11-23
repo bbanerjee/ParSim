@@ -116,9 +116,9 @@ Ellipsoid::intersects(const OrientedBox& box) const
     int v2 = edge[1];
     Edge ee(vertices[v1], vertices[v2]);
     auto td = ee.distance(sphereCenter);
-    if (td.second < 1.0) {
-      //std::cout << "Edge distance = " << td.second << "\n";
-      if (!(td.first < 0 || td.first > 1)) {
+    if (td.first < 1.0) {
+      //std::cout << "Edge distance = " << td.first << "\n";
+      if (!(td.second < 0 || td.second > 1)) {
         return true;
       }
     }
@@ -141,19 +141,35 @@ Ellipsoid::intersects(const OrientedBox& box) const
     int v3 = face[3];
     Face ff(vertices[v0], vertices[v1], vertices[v2], vertices[v3]);
     auto td = ff.distance(sphereCenter);
-    if (std::abs(td.second) < 1.0) {
+    if (std::abs(td.first) < 1.0) {
 
-      //std::cout << "Face distance = " << td.second << "\n";
+      //std::cout << "Face distance = " << td.first << "\n";
       //std::cout << "td = ";
-      //for (auto val : td.first) {
-      //  std::cout << val.first << " ";
+      //for (auto val : td.second) {
+      //  std::cout << val.second << " ";
       //}
       //std::cout << "\n";
 
-      if (!(td.first[0].first < 0 || td.first[0].first > 1 ||
-            td.first[1].first < 0 || td.first[1].first > 1 ||
-            td.first[2].first < 0 || td.first[2].first > 1 ||
-            td.first[3].first < 0 || td.first[3].first > 1)) {
+      if (!(td.second[0].second < 0 || td.second[0].second > 1 ||
+            td.second[1].second < 0 || td.second[1].second > 1 ||
+            td.second[2].second < 0 || td.second[2].second > 1 ||
+            td.second[3].second < 0 || td.second[3].second > 1)) {
+        return true;
+      }
+
+      auto td_bary = ff.distanceAndBarycentricCoords(sphereCenter);
+      if (!(td_bary.second[0].first < 0 || td_bary.second[0].second < 0 || 
+            td_bary.second[0].first + td_bary.second[0].second > 1)) {
+        //std::cout << "First triangle = " << td_bary.first << " "
+        //          << td_bary.second[0].first << " "
+        //          << td_bary.second[0].second << "\n";
+        return true;
+      }
+      if (!(td_bary.second[1].first < 0 || td_bary.second[1].second < 0 || 
+            td_bary.second[1].first + td_bary.second[1].second > 1)) {
+        //std::cout << "Second triangle = " << td_bary.first << " "
+        //          << td_bary.second[1].first << " "
+        //          << td_bary.second[1].second << "\n";
         return true;
       }
     }
@@ -175,13 +191,14 @@ Ellipsoid::intersects(const Face& face) const
                        N * (face.v4() - d_center));
 
   // Compute distance to face from (0, 0, 0)
-  auto face_td = transformedFace.distance(Point(0, 0, 0));
+  auto face_td = transformedFace.distanceAndBarycentricCoords(Point(0, 0, 0));
+
+  // std::cout << "Face = " << face << "\n";
+  // std::cout << "Transformed-Face = " << transformedFace << "\n";
+  // std::cout << "Distance from face = " << face_td.first << "\n";
 
   // If the distance is greater than 1 there is no intersection
-  //std::cout << "Face = " << face << "\n";
-  //std::cout << "X-Face = " << transformedFace << "\n";
-  //std::cout << "Distance from face = " << face_td.second << "\n";
-  if (std::abs(face_td.second) > 1.0) {
+  if (std::abs(face_td.first) > 1.0) {
     return std::make_pair(false, std::make_pair(Face::Location::NONE, 0));
   }
 
@@ -192,7 +209,7 @@ Ellipsoid::intersects(const Face& face) const
   }};
   int index = 0;
   for (const auto& vertex : vertices) {
-    //std::cout << "Distance from vertex: " << vertex << " = " << vertex.lengthSq() << "\n";
+    // std::cout << "Distance from vertex: " << vertex << " = " << vertex.lengthSq() << "\n";
     if (vertex.lengthSq() < 1.0) {
       return std::make_pair(true, std::make_pair(Face::Location::VERTEX, index));
     }
@@ -209,25 +226,35 @@ Ellipsoid::intersects(const Face& face) const
   index = 0;
   for (const auto& edge : edges) {
     auto edge_td = edge.distance(Point(0, 0, 0));
-    //std::cout << "Distance from Edge = " << edge_td.second << "\n";
-    if (edge_td.second < 1.0) {
-      if (!(edge_td.first < 0 || edge_td.first > 1)) {
+    // std::cout << "Distance from Edge = " << edge_td.first << "\n";
+    if (edge_td.first < 1.0) {
+      if (!(edge_td.second < 0 || edge_td.second > 1)) {
         return std::make_pair(true, std::make_pair(Face::Location::EDGE, index));
       }
     }
     ++index;
   }
 
+  // std::cout << "Distance = " << face_td.first
+  //           << " Barycentric coords of point on face  = " 
+  //           << face_td.second[0].first << " "
+  //           << face_td.second[0].second << " "
+  //           << face_td.second[1].first << " "
+  //           << face_td.second[1].second << "\n";
+
   // If none of the edges are intersected
-  //std::cout << "Edge intersect locations = " 
-  //          << face_td.first[0].first << " "
-  //          << face_td.first[1].first << " "
-  //          << face_td.first[2].first << " "
-  //          << face_td.first[3].first << "\n";
-  if (!(face_td.first[0].first < 0 || face_td.first[0].first > 1 ||
-        face_td.first[1].first < 0 || face_td.first[1].first > 1 ||
-        face_td.first[2].first < 0 || face_td.first[2].first > 1 ||
-        face_td.first[3].first < 0 || face_td.first[3].first > 1)) {
+  if (!(face_td.second[0].first < 0 || face_td.second[0].second < 0 || 
+        face_td.second[0].first + face_td.second[0].second > 1)) {
+    // std::cout << "First triangle = " 
+    //           << face_td.second[0].first << " "
+    //           << face_td.second[0].second << "\n";
+    return std::make_pair(true, std::make_pair(Face::Location::FACE, 0));
+  }
+  if (!(face_td.second[1].first < 0 || face_td.second[1].second < 0 || 
+        face_td.second[1].first + face_td.second[1].second > 1)) {
+    // std::cout << "Second triangle = " 
+    //           << face_td.second[1].first << " "
+    //           << face_td.second[1].second << "\n";
     return std::make_pair(true, std::make_pair(Face::Location::FACE, 0));
   }
 
@@ -252,7 +279,8 @@ Ellipsoid::translate(const Vec& dist)
 std::ostream&
 operator<<(std::ostream& os, const Ellipsoid& b)
 {
-  os << " center = " << b.d_center 
+  os << " id = " << b.d_id
+     << " center = " << b.d_center 
      << " axis_a = " << b.d_axes[0] 
      << " axis_b = " << b.d_axes[1] 
      << " axis_c = " << b.d_axes[2] 

@@ -1,10 +1,76 @@
 function testEllipsoidPlane
 
   graphics_toolkit("gnuplot");
+  special_cases()
   %sides();
-  corners();
+  %corners();
 
 
+end
+
+function special_cases()
+  particle_3();
+  %particle_65();
+end
+
+function particle_3()
+  pos = [2.6 -2.0 1.0]' ;
+  rad = [1 2 3];
+  box_cen = [0 0 0]';
+  box_dim = [1 3 2]'; 
+  angle = -40*pi/180;
+  fig1 = figure;
+  fig2 = figure;
+  M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+  [u0, u1, u2, N] = drawEllipsoid(pos, rad, M, fig1, fig2);
+  M = [cos(0) -sin(0) 0;sin(0) cos(0) 0; 0 0 1];
+  [v0, v1, v2] = drawOrientedBox(box_cen, pos, box_dim, M, N, fig1, fig2);
+end
+
+function particle_65()
+  rad =  [2.580000e-04   2.300000e-04   1.980000e-04]';
+  pos =  [-1.248000e-03  -1.415000e-03   2.637000e-03]';
+  ax_a = [8.392060e-01   7.841150e-01   1.339792e+00]';
+  ax_b = [2.161870e+00   8.231300e-01   2.067600e+00]';
+  ax_c = [2.086475e+00   1.378799e+00   5.571370e-01]';
+  lmn_a = cos(ax_a);
+  lmn_b = cos(ax_b);
+  lmn_c = cos(ax_c);
+
+  box_cen = [0 0 0.0015]';
+  box_dim = [0.0015 0.0015 0.0015]'; 
+
+  fig1 = figure;
+  fig2 = figure;
+  M = [lmn_a lmn_b lmn_c];
+  [u0, u1, u2, N] = drawEllipsoid(pos, rad, M, fig1, fig2);
+  M = [cos(0) -sin(0) 0;sin(0) cos(0) 0; 0 0 1];
+  [v0, v1, v2] = drawOrientedBox(box_cen, pos, box_dim, M, N, fig1, fig2);
+
+  %pos =  [-1.51000e-03  -1.415000e-03   2.637000e-03]';
+  %M = [lmn_a lmn_b lmn_c];
+  %[u0, u1, u2, N] = drawEllipsoid(pos, rad, M, fig1, fig2);
+  %M = [cos(0) -sin(0) 0;sin(0) cos(0) 0; 0 0 1];
+  %[v0, v1, v2] = drawOrientedBox(box_cen, pos, box_dim, M, N, fig1, fig2);
+
+  %pos =  [-1.4999e-03  -1.415000e-03   2.637000e-03]';
+  %M = [lmn_a lmn_b lmn_c];
+  %[u0, u1, u2, N] = drawEllipsoid(pos, rad, M, fig1, fig2);
+  %M = [cos(0) -sin(0) 0;sin(0) cos(0) 0; 0 0 1];
+  %[v0, v1, v2] = drawOrientedBox(box_cen, pos, box_dim, M, N, fig1, fig2);
+
+  %pos =  [ 1.4999e-03  -1.415000e-03   2.637000e-03]';
+  %M = [lmn_a lmn_b lmn_c];
+  %[u0, u1, u2, N] = drawEllipsoid(pos, rad, M, fig1, fig2);
+  %M = [cos(0) -sin(0) 0;sin(0) cos(0) 0; 0 0 1];
+  %[v0, v1, v2] = drawOrientedBox(box_cen, pos, box_dim, M, N, fig1, fig2);
+
+  %pos =  [ 1.5e-03  -1.5000e-03   2.637000e-03]';
+  %M = [lmn_a lmn_b lmn_c];
+  %[u0, u1, u2, N] = drawEllipsoid(pos, rad, M, fig1, fig2);
+  %M = [cos(0) -sin(0) 0;sin(0) cos(0) 0; 0 0 1];
+  %[v0, v1, v2] = drawOrientedBox(box_cen, pos, box_dim, M, N, fig1, fig2);
+  
 end
 
 function sides()
@@ -47,8 +113,10 @@ function xplus()
   ee = [ex; ey; ez];
   fig1 = figure;
   fig2 = figure;
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, 0.5*angle, N, fig1, fig2);
+  M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, M, fig1, fig2);
+  M = [cos(0.5*angle) -sin(0.5*angle) 0;sin(0.5*angle) cos(0.5*angle) 0; 0 0 1];
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, M, N, fig1, fig2);
 end
 
 function xminus()
@@ -64,8 +132,9 @@ function xminus()
   ee = [ex; ey; ez];
   fig1 = figure;
   fig2 = figure;
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, angle, N, fig1, fig2);
+  M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, M, fig1, fig2);
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, M, N, fig1, fig2);
 end
 
 function yminus()
@@ -81,8 +150,9 @@ function yminus()
   ee = [ex; ey; ez];
   fig1 = figure;
   fig2 = figure;
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, angle, N, fig1, fig2);
+  M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, M, fig1, fig2);
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, M, N, fig1, fig2);
 end
 
 function xplusyminus()
@@ -98,8 +168,10 @@ function xplusyminus()
   ee = [ex; ey; ez];
   fig1 = figure;
   fig2 = figure;
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, 0, N, fig1, fig2);
+  M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, M, fig1, fig2);
+  M = [cos(0) -sin(0) 0;sin(0) cos(0) 0; 0 0 1];
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, M, N, fig1, fig2);
 end
 
 function xplusyplus()
@@ -115,8 +187,10 @@ function xplusyplus()
   ee = [ex; ey; ez];
   fig1 = figure;
   fig2 = figure;
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, 0, N, fig1, fig2);
+  M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, M, fig1, fig2);
+  M = [cos(0) -sin(0) 0;sin(0) cos(0) 0; 0 0 1];
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, M, N, fig1, fig2);
 end
 
 function xminusyplus()
@@ -132,8 +206,10 @@ function xminusyplus()
   ee = [ex; ey; ez];
   fig1 = figure;
   fig2 = figure;
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, 0, N, fig1, fig2);
+  M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, M, fig1, fig2);
+  M = [cos(0) -sin(0) 0;sin(0) cos(0) 0; 0 0 1];
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, M, N, fig1, fig2);
 end
 
 function xminusyminus()
@@ -149,11 +225,15 @@ function xminusyminus()
   ee = [ex; ey; ez];
   fig1 = figure;
   fig2 = figure;
-  [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2);
-  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, axis, 0, N, fig1, fig2);
+  M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+  [u0, u1, u2, N] = drawEllipsoid(cc, ll, M, fig1, fig2);
+  M = [cos(0) -sin(0) 0;sin(0) cos(0) 0; 0 0 1];
+  [v0, v1, v2] = drawOrientedBox(mm, cc, ee, M, N, fig1, fig2);
 end
 
-function [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2)
+%function [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2)
+  %M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+function [u0, u1, u2, N] = drawEllipsoid(cc, ll, M, fig1, fig2)
 
   k = 5;
   n = 2^k-1;
@@ -162,13 +242,16 @@ function [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2)
   X = ll(1)*cos(phi)*cos(theta);
   Y = ll(2)*cos(phi)*sin(theta);
   Z = ll(3)*sin(phi)*ones(size(theta));
-  [ntheta, nphi] = size(X)
+  [ntheta, nphi] = size(X);
   X = reshape(X, 1, nphi*ntheta); 
   Y = reshape(Y, 1, nphi*ntheta); 
   Z = reshape(Z, 1, nphi*ntheta); 
   xx = [X; Y; Z];
 
-  M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+  %M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+  %size(M)
+  %size(xx)
+  %size(cc)
   xp = M*xx + cc;
   X = reshape(xp(1,:), ntheta, nphi);
   Y = reshape(xp(2,:), ntheta, nphi);
@@ -224,12 +307,14 @@ function [u0, u1, u2, N] = drawEllipsoid(cc, ll, axis, angle, fig1, fig2)
 
 end
   
-function [v0s, v1s, v2s] = drawOrientedBox(mm, cc, ee, axis, angle, N, fig1, fig2)
+%function [v0s, v1s, v2s] = drawOrientedBox(mm, cc, ee, axis, angle, N, fig1, fig2)
+%  M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+function [v0s, v1s, v2s] = drawOrientedBox(mm, cc, ee, M, N, fig1, fig2)
 
   ax1 = [1;0;0]; ax2 = [0;1;0]; ax3 = [0;0;1];
   p = createBoxVertices(mm, ee, ax1, ax2, ax3);
 
-  M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
+  %M = [cos(angle) -sin(angle) 0;sin(angle) cos(angle) 0; 0 0 1];
   for ii=1:8
     pp(ii).xx = M*p(ii).xx;
   end
@@ -287,22 +372,34 @@ function [v0s, v1s, v2s] = drawOrientedBox(mm, cc, ee, axis, angle, N, fig1, fig
 
 
   cc = [0;0;0];
-  [point, dist, tt, dd] = distance(cc, ppp(1).xx, ppp(4).xx, ppp(3).xx, ppp(2).xx);
+  [point, dist, tt, dd, xp1, xp2] = distance(cc, ppp(1).xx, ppp(4).xx, ppp(3).xx, ppp(2).xx);
   plot3(point(1), point(2), point(3), 'k.', 'MarkerSize', 10);
-  [point, dist, tt, dd] = distance(cc, ppp(5).xx, ppp(6).xx, ppp(7).xx, ppp(8).xx);
+  plot3(xp1(1), xp1(2), xp1(3), 'g.', 'MarkerSize', 15);
+  plot3(xp2(1), xp2(2), xp2(3), 'b.', 'MarkerSize', 15);
+  [point, dist, tt, dd, xp1, xp2] = distance(cc, ppp(5).xx, ppp(6).xx, ppp(7).xx, ppp(8).xx);
   plot3(point(1), point(2), point(3), 'k.', 'MarkerSize', 10);
-  [point, dist, tt, dd] = distance(cc, ppp(1).xx, ppp(5).xx, ppp(8).xx, ppp(4).xx);
+  plot3(xp1(1), xp1(2), xp1(3), 'g.', 'MarkerSize', 15);
+  plot3(xp2(1), xp2(2), xp2(3), 'b.', 'MarkerSize', 15);
+  [point, dist, tt, dd, xp1, xp2] = distance(cc, ppp(1).xx, ppp(5).xx, ppp(8).xx, ppp(4).xx);
   plot3(point(1), point(2), point(3), 'k.', 'MarkerSize', 10);
-  [point, dist, tt, dd] = distance(cc, ppp(2).xx, ppp(3).xx, ppp(7).xx, ppp(6).xx);
+  plot3(xp1(1), xp1(2), xp1(3), 'g.', 'MarkerSize', 15);
+  plot3(xp2(1), xp2(2), xp2(3), 'b.', 'MarkerSize', 15);
+  [point, dist, tt, dd, xp1, xp2] = distance(cc, ppp(2).xx, ppp(3).xx, ppp(7).xx, ppp(6).xx);
   plot3(point(1), point(2), point(3), 'k.', 'MarkerSize', 10);
-  [point, dist, tt, dd] = distance(cc, ppp(1).xx, ppp(2).xx, ppp(6).xx, ppp(5).xx);
+  plot3(xp1(1), xp1(2), xp1(3), 'g.', 'MarkerSize', 15);
+  plot3(xp2(1), xp2(2), xp2(3), 'b.', 'MarkerSize', 15);
+  [point, dist, tt, dd, xp1, xp2] = distance(cc, ppp(1).xx, ppp(2).xx, ppp(6).xx, ppp(5).xx);
   plot3(point(1), point(2), point(3), 'k.', 'MarkerSize', 10);
-  [point, dist, tt, dd] = distance(cc, ppp(3).xx, ppp(4).xx, ppp(8).xx, ppp(7).xx);
+  plot3(xp1(1), xp1(2), xp1(3), 'g.', 'MarkerSize', 15);
+  plot3(xp2(1), xp2(2), xp2(3), 'b.', 'MarkerSize', 15);
+  [point, dist, tt, dd, xp1, xp2] = distance(cc, ppp(3).xx, ppp(4).xx, ppp(8).xx, ppp(7).xx);
   plot3(point(1), point(2), point(3), 'k.', 'MarkerSize', 10);
+  plot3(xp1(1), xp1(2), xp1(3), 'g.', 'MarkerSize', 15);
+  plot3(xp2(1), xp2(2), xp2(3), 'b.', 'MarkerSize', 15);
   %axis('equal');
 end
 
-function [point, dist, tt, dd] = distance(x0, x1, x2, x3, x4)
+function [point, dist, tt, dd, xp1, xp2] = distance(x0, x1, x2, x3, x4)
 
   normal = cross(x2 - x1, x3 - x1);
   normal = normal/norm(normal);
@@ -310,6 +407,15 @@ function [point, dist, tt, dd] = distance(x0, x1, x2, x3, x4)
 
   dist = dot(normal, (x0 - x1));
   point = x0 - normal*dist;
+  %point = x0;
+
+  if (abs(dist) < 1) 
+    distance1 = dist
+    distance2 = dot(normal, (x0 - x2))
+    distance3 = dot(normal, (x0 - x3))
+    distance4 = dot(normal, (x0 - x4))
+    %normal_of_plane = normal
+  end
   
   x1x0 = x1 - point;
   x2x0 = x2 - point;
@@ -334,6 +440,61 @@ function [point, dist, tt, dd] = distance(x0, x1, x2, x3, x4)
   x2x1 = x1 - x4;
   tt(4) = -dot(x1x0, x2x1)/norm(x2x1)^2;
   dd(4) = norm(cross(-x1x0, -x2x0))/norm(x2x1);
+
+  %if (abs(dist) < 1) 
+  %  t_param = tt
+  %  dists = dd
+  %end
+
+  % Barycentric check
+  % Triangle 1 (x1, x2, x3)
+  vp = point - x1;
+  v1 = x2 - x1;
+  v2 = x3 - x1;
+  vp1 = dot(vp, v1);
+  vp2 = dot(vp, v2);
+  v11 = dot(v1, v1);
+  v12 = dot(v1, v2);
+  v22 = dot(v2, v2);
+  denom1 = v11 * v22 - v12 * v12;
+  %uu1 = (v22 * vp1 - v12 * vp2)/denom1;
+  vv1 = (v11 * vp2 - v12 * vp1)/denom1;
+  uu1 = (vp1 - vv1*v12)/v11; 
+  xp1 = x1 + uu1 * v1 + vv1 * v2;
+
+  % Triangle 2 (x1, x4, x3)
+  vp = point - x1;
+  v1 = x4 - x1;
+  v2 = x3 - x1;
+  vp1 = dot(vp, v1);
+  vp2 = dot(vp, v2);
+  v11 = dot(v1, v1);
+  v12 = dot(v1, v2);
+  v22 = dot(v2, v2);
+  denom2 = v11 * v22 - v12 * v12;
+  %uu2 = (v22 * vp1 - v12 * vp2)/denom2;
+  vv2 = (v11 * vp2 - v12 * vp1)/denom2;
+  uu2 = (vp1 - vv2*v12)/v11; 
+  xp2 = x1 + uu2 * v1 + vv2 * v2;
+
+  if (abs(dist) < 1) 
+    %denom = [denom1 denom2]
+    uu = [uu1 uu2]
+    vv = [vv1 vv2]
+    if (uu1 > 0 && uu1 < 1 && vv1 > 0 && vv1 < 1)
+      xp1 = xp1;
+      xp2 = xp2;
+      coords = [x1 x2 x3 point]
+    else
+      xp1 = x0;
+      xp2 = x0;
+    end
+  else
+    xp1 = x0;
+    xp2 = x0;
+  end
+
+   
 end
 
 function [verts] = createBoxVertices(mm, ee, v0, v1, v2)

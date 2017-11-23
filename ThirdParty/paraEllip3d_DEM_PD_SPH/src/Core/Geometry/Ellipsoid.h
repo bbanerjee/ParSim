@@ -15,6 +15,7 @@ class Ellipsoid
 
 private:
 
+  std::size_t d_id;
   Vec d_center;
   std::array<Vec, 3> d_axes;
   std::array<REAL, 3> d_radii;
@@ -25,6 +26,7 @@ private:
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)
   {
+    ar& d_id;
     ar& d_center;
     ar& d_axes;
     ar& d_radii;
@@ -32,9 +34,11 @@ private:
 
 public:
 
-  Ellipsoid(const Vec& center, const Vec& ax_a, const Vec& ax_b, const Vec& ax_c,
+  Ellipsoid(std::size_t id, const Vec& center, 
+            const Vec& ax_a, const Vec& ax_b, const Vec& ax_c,
             REAL rad_a, REAL rad_b, REAL rad_c)
-    : d_center(center)
+    : d_id(id)
+    , d_center(center)
     , d_axes({{ax_a, ax_b, ax_c}})
     , d_radii({{rad_a, rad_b, rad_c}})
   {

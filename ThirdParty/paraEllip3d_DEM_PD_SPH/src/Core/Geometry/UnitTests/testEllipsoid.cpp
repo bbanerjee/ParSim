@@ -9,7 +9,7 @@ TEST(EllipsoidTest, intersect) {
   REAL angle = -0.5*M_PI;
   REAL cx = 2; REAL cy = 1.5; REAL cz = 1.0;
   REAL lx = 1; REAL ly = 2; REAL lz = 3;
-  Ellipsoid ell(Vec(cx, cy, cz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
+  Ellipsoid ell(1, Vec(cx, cy, cz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
                  lx, ly, lz);
   //std::cout << "Ell: " << ell << "\n";
 
@@ -44,7 +44,7 @@ TEST(EllipsoidTest, intersect) {
   //-----------------------------------------------
   angle = 0;
   cx = -2.0000001; cy = -1.5;
-  Ellipsoid ell1(Vec(cx, cy, cz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
+  Ellipsoid ell1(2, Vec(cx, cy, cz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
                  lx, ly, lz);
   OrientedBox box1(Vec(mx, my, mz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
                   ex, ey, ez);
@@ -58,7 +58,7 @@ TEST(EllipsoidTest, intersect) {
   //-----------------------------------------------
   angle = 0.5*M_PI;
   cx = -0.5; cy = -2.5;
-  Ellipsoid ell2(Vec(cx, cy, cz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
+  Ellipsoid ell2(3, Vec(cx, cy, cz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
                  lx, ly, lz);
   OrientedBox box2(Vec(mx, my, mz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
                   ex, ey, ez);
@@ -72,7 +72,7 @@ TEST(EllipsoidTest, intersect) {
   //-----------------------------------------------
   angle = 40*M_PI/180;
   cx = 2; cy = -2;
-  Ellipsoid ell3(Vec(cx, cy, cz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
+  Ellipsoid ell3(4, Vec(cx, cy, cz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
                  lx, ly, lz);
   OrientedBox box3(Vec(mx, my, mz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
                   ex, ey, ez);
@@ -93,7 +93,7 @@ TEST(EllipsoidTest, intersect) {
   //-----------------------------------------------
   angle = 40*M_PI/180;
   cx = 2.6; cy = -2;
-  Ellipsoid ell4(Vec(cx, cy, cz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
+  Ellipsoid ell4(5, Vec(cx, cy, cz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
                  lx, ly, lz);
   OrientedBox box4(Vec(mx, my, mz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
                   ex, ey, ez);
@@ -110,7 +110,7 @@ TEST(EllipsoidTest, intersect) {
   //-----------------------------------------------
   angle = 40*M_PI/180;
   cx = 2; cy = -2;
-  Ellipsoid ell5(Vec(cx, cy, cz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
+  Ellipsoid ell5(6, Vec(cx, cy, cz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
                  lx, ly, lz);
   OrientedBox box5(Vec(mx, my, mz), Vec(1, 0, 0), Vec(0, 1, 0), Vec(0, 0, 1),
                   ex, ey, ez);

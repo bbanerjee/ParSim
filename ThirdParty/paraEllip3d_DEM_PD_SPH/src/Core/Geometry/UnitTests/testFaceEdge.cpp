@@ -18,7 +18,7 @@ TEST(FaceEdgeTest, edgeDistance) {
 
   pt = Point(-0.5, 0.5, 0);
   td = edge.distance(pt);
-  EXPECT_EQ(td.first, -0.5);
+  EXPECT_EQ(td.second, -0.5);
 
   REAL x1 = -8.57106781186548e+00;
   REAL x2 = -7.15685424949238e+00;
@@ -49,20 +49,20 @@ TEST(FaceEdgeTest, edgeDistance) {
   REAL d4 = 2.19770311628353e+00;
 
   td = e1.distance(pt);
-  EXPECT_NEAR(td.first, t1, 1.0e-10);
-  EXPECT_NEAR(td.second, d1, 1.0e-10);
+  EXPECT_NEAR(td.first, d1, 1.0e-10);
+  EXPECT_NEAR(td.second, t1, 1.0e-10);
 
   td = e2.distance(pt);
-  EXPECT_NEAR(td.first, t2, 1.0e-10);
-  EXPECT_NEAR(td.second, d2, 1.0e-10);
+  EXPECT_NEAR(td.first, d2, 1.0e-10);
+  EXPECT_NEAR(td.second, t2, 1.0e-10);
 
   td = e3.distance(pt);
-  EXPECT_NEAR(td.first, t3, 1.0e-10);
-  EXPECT_NEAR(td.second, d3, 1.0e-10);
+  EXPECT_NEAR(td.first, d3, 1.0e-10);
+  EXPECT_NEAR(td.second, t3, 1.0e-10);
 
   td = e4.distance(pt);
-  EXPECT_NEAR(td.first, t4, 1.0e-10);
-  EXPECT_NEAR(td.second, d4, 1.0e-10);
+  EXPECT_NEAR(td.first, d4, 1.0e-10);
+  EXPECT_NEAR(td.second, t4, 1.0e-10);
 }
 
 TEST(FaceEdgeTest, faceDistance) {
@@ -121,7 +121,7 @@ TEST(FaceEdgeTest, faceDistance) {
 
   Point pt(0, 0, 0);
   auto td = f1.distance(pt);
-  Point facePt = pt - f1.normal()*td.second;
+  Point facePt = pt - f1.normal()*td.first;
 
   Point point(0.00000000000000e+00, 0.00000000000000e+00, -1.66666666666667e+00);
   REAL dist = -1.66666666666667e+00;
@@ -134,18 +134,18 @@ TEST(FaceEdgeTest, faceDistance) {
   EXPECT_NEAR(facePt.x(), point.x(), 1.0e-10);
   EXPECT_NEAR(facePt.y(), point.y(), 1.0e-10);
   EXPECT_NEAR(facePt.z(), point.z(), 1.0e-10);
-  EXPECT_NEAR(td.second, dist, 1.0e-10);
-  EXPECT_NEAR(td.first[0].first, tt[0], 1.0e-10);
-  EXPECT_NEAR(td.first[1].first, tt[1], 1.0e-10);
-  EXPECT_NEAR(td.first[2].first, tt[2], 1.0e-10);
-  EXPECT_NEAR(td.first[3].first, tt[3], 1.0e-10);
-  EXPECT_NEAR(td.first[0].second, dd[0], 1.0e-10);
-  EXPECT_NEAR(td.first[1].second, dd[1], 1.0e-10);
-  EXPECT_NEAR(td.first[2].second, dd[2], 1.0e-10);
-  EXPECT_NEAR(td.first[3].second, dd[3], 1.0e-10);
+  EXPECT_NEAR(td.first, dist, 1.0e-10);
+  EXPECT_NEAR(td.second[0].first, dd[0], 1.0e-10);
+  EXPECT_NEAR(td.second[1].first, dd[1], 1.0e-10);
+  EXPECT_NEAR(td.second[2].first, dd[2], 1.0e-10);
+  EXPECT_NEAR(td.second[3].first, dd[3], 1.0e-10);
+  EXPECT_NEAR(td.second[0].second, tt[0], 1.0e-10);
+  EXPECT_NEAR(td.second[1].second, tt[1], 1.0e-10);
+  EXPECT_NEAR(td.second[2].second, tt[2], 1.0e-10);
+  EXPECT_NEAR(td.second[3].second, tt[3], 1.0e-10);
 
   td = f2.distance(pt);
-  facePt = pt - f2.normal()*td.second;
+  facePt = pt - f2.normal()*td.first;
 
   point = Point( 0.00000000000000e+00, 0.00000000000000e+00, 1.00000000000000e+00);
   dist = -1.00000000000000e+00;
@@ -156,18 +156,18 @@ TEST(FaceEdgeTest, faceDistance) {
   EXPECT_NEAR(facePt.x(), point.x(), 1.0e-10);
   EXPECT_NEAR(facePt.y(), point.y(), 1.0e-10);
   EXPECT_NEAR(facePt.z(), point.z(), 1.0e-10);
-  EXPECT_NEAR(td.second, dist, 1.0e-10);
-  EXPECT_NEAR(td.first[0].first, tt[0], 1.0e-10);
-  EXPECT_NEAR(td.first[1].first, tt[1], 1.0e-10);
-  EXPECT_NEAR(td.first[2].first, tt[2], 1.0e-10);
-  EXPECT_NEAR(td.first[3].first, tt[3], 1.0e-10);
-  EXPECT_NEAR(td.first[0].second, dd[0], 1.0e-10);
-  EXPECT_NEAR(td.first[1].second, dd[1], 1.0e-10);
-  EXPECT_NEAR(td.first[2].second, dd[2], 1.0e-10);
-  EXPECT_NEAR(td.first[3].second, dd[3], 1.0e-10);
+  EXPECT_NEAR(td.first, dist, 1.0e-10);
+  EXPECT_NEAR(td.second[0].first, dd[0], 1.0e-10);
+  EXPECT_NEAR(td.second[1].first, dd[1], 1.0e-10);
+  EXPECT_NEAR(td.second[2].first, dd[2], 1.0e-10);
+  EXPECT_NEAR(td.second[3].first, dd[3], 1.0e-10);
+  EXPECT_NEAR(td.second[0].second, tt[0], 1.0e-10);
+  EXPECT_NEAR(td.second[1].second, tt[1], 1.0e-10);
+  EXPECT_NEAR(td.second[2].second, tt[2], 1.0e-10);
+  EXPECT_NEAR(td.second[3].second, tt[3], 1.0e-10);
 
   td = f3.distance(pt);
-  facePt = pt - f3.normal()*td.second;
+  facePt = pt - f3.normal()*td.first;
 
   point = Point( -9.82842712474619e-01, 1.96568542494924e+00, 0.00000000000000e+00);
   dist = -2.19770311628353e+00;
@@ -178,18 +178,18 @@ TEST(FaceEdgeTest, faceDistance) {
   EXPECT_NEAR(facePt.x(), point.x(), 1.0e-10);
   EXPECT_NEAR(facePt.y(), point.y(), 1.0e-10);
   EXPECT_NEAR(facePt.z(), point.z(), 1.0e-10);
-  EXPECT_NEAR(td.second, dist, 1.0e-10);
-  EXPECT_NEAR(td.first[0].first, tt[0], 1.0e-10);
-  EXPECT_NEAR(td.first[1].first, tt[1], 1.0e-10);
-  EXPECT_NEAR(td.first[2].first, tt[2], 1.0e-10);
-  EXPECT_NEAR(td.first[3].first, tt[3], 1.0e-10);
-  EXPECT_NEAR(td.first[0].second, dd[0], 1.0e-10);
-  EXPECT_NEAR(td.first[1].second, dd[1], 1.0e-10);
-  EXPECT_NEAR(td.first[2].second, dd[2], 1.0e-10);
-  EXPECT_NEAR(td.first[3].second, dd[3], 1.0e-10);
+  EXPECT_NEAR(td.first, dist, 1.0e-10);
+  EXPECT_NEAR(td.second[0].first, dd[0], 1.0e-10);
+  EXPECT_NEAR(td.second[1].first, dd[1], 1.0e-10);
+  EXPECT_NEAR(td.second[2].first, dd[2], 1.0e-10);
+  EXPECT_NEAR(td.second[3].first, dd[3], 1.0e-10);
+  EXPECT_NEAR(td.second[0].second, tt[0], 1.0e-10);
+  EXPECT_NEAR(td.second[1].second, tt[1], 1.0e-10);
+  EXPECT_NEAR(td.second[2].second, tt[2], 1.0e-10);
+  EXPECT_NEAR(td.second[3].second, tt[3], 1.0e-10);
 
   td = f4.distance(pt);
-  facePt = pt - f4.normal()*td.second;
+  facePt = pt - f4.normal()*td.first;
 
   point = Point( -4.17157287525381e-01, 8.34314575050762e-01, 0.00000000000000e+00);
   dist = 9.32792052216177e-01;
@@ -200,18 +200,18 @@ TEST(FaceEdgeTest, faceDistance) {
   EXPECT_NEAR(facePt.x(), point.x(), 1.0e-10);
   EXPECT_NEAR(facePt.y(), point.y(), 1.0e-10);
   EXPECT_NEAR(facePt.z(), point.z(), 1.0e-10);
-  EXPECT_NEAR(td.second, dist, 1.0e-10);
-  EXPECT_NEAR(td.first[0].first, tt[0], 1.0e-10);
-  EXPECT_NEAR(td.first[1].first, tt[1], 1.0e-10);
-  EXPECT_NEAR(td.first[2].first, tt[2], 1.0e-10);
-  EXPECT_NEAR(td.first[3].first, tt[3], 1.0e-10);
-  EXPECT_NEAR(td.first[0].second, dd[0], 1.0e-10);
-  EXPECT_NEAR(td.first[1].second, dd[1], 1.0e-10);
-  EXPECT_NEAR(td.first[2].second, dd[2], 1.0e-10);
-  EXPECT_NEAR(td.first[3].second, dd[3], 1.0e-10);
+  EXPECT_NEAR(td.first, dist, 1.0e-10);
+  EXPECT_NEAR(td.second[0].first, dd[0], 1.0e-10);
+  EXPECT_NEAR(td.second[1].first, dd[1], 1.0e-10);
+  EXPECT_NEAR(td.second[2].first, dd[2], 1.0e-10);
+  EXPECT_NEAR(td.second[3].first, dd[3], 1.0e-10);
+  EXPECT_NEAR(td.second[0].second, tt[0], 1.0e-10);
+  EXPECT_NEAR(td.second[1].second, tt[1], 1.0e-10);
+  EXPECT_NEAR(td.second[2].second, tt[2], 1.0e-10);
+  EXPECT_NEAR(td.second[3].second, tt[3], 1.0e-10);
 
   td = f5.distance(pt);
-  facePt = pt - f5.normal()*td.second;
+  facePt = pt - f5.normal()*td.first;
 
   point = Point( -2.44558441227157e+00, -4.89116882454314e+00, 0.00000000000000e+00);
   dist = -5.46849299055311e+00;
@@ -222,18 +222,18 @@ TEST(FaceEdgeTest, faceDistance) {
   EXPECT_NEAR(facePt.x(), point.x(), 1.0e-10);
   EXPECT_NEAR(facePt.y(), point.y(), 1.0e-10);
   EXPECT_NEAR(facePt.z(), point.z(), 1.0e-10);
-  EXPECT_NEAR(td.second, dist, 1.0e-10);
-  EXPECT_NEAR(td.first[0].first, tt[0], 1.0e-10);
-  EXPECT_NEAR(td.first[1].first, tt[1], 1.0e-10);
-  EXPECT_NEAR(td.first[2].first, tt[2], 1.0e-10);
-  EXPECT_NEAR(td.first[3].first, tt[3], 1.0e-10);
-  EXPECT_NEAR(td.first[0].second, dd[0], 1.0e-10);
-  EXPECT_NEAR(td.first[1].second, dd[1], 1.0e-10);
-  EXPECT_NEAR(td.first[2].second, dd[2], 1.0e-10);
-  EXPECT_NEAR(td.first[3].second, dd[3], 1.0e-10);
+  EXPECT_NEAR(td.first, dist, 1.0e-10);
+  EXPECT_NEAR(td.second[0].first, dd[0], 1.0e-10);
+  EXPECT_NEAR(td.second[1].first, dd[1], 1.0e-10);
+  EXPECT_NEAR(td.second[2].first, dd[2], 1.0e-10);
+  EXPECT_NEAR(td.second[3].first, dd[3], 1.0e-10);
+  EXPECT_NEAR(td.second[0].second, tt[0], 1.0e-10);
+  EXPECT_NEAR(td.second[1].second, tt[1], 1.0e-10);
+  EXPECT_NEAR(td.second[2].second, tt[2], 1.0e-10);
+  EXPECT_NEAR(td.second[3].second, tt[3], 1.0e-10);
 
   td = f6.distance(pt);
-  facePt = pt - f6.normal()*td.second;
+  facePt = pt - f6.normal()*td.first;
 
   point = Point( 2.64558441227157e+00, 5.29116882454314e+00, 0.00000000000000e+00);
   dist = -5.91570658605306e+00;
@@ -244,14 +244,14 @@ TEST(FaceEdgeTest, faceDistance) {
   EXPECT_NEAR(facePt.x(), point.x(), 1.0e-10);
   EXPECT_NEAR(facePt.y(), point.y(), 1.0e-10);
   EXPECT_NEAR(facePt.z(), point.z(), 1.0e-10);
-  EXPECT_NEAR(td.second, dist, 1.0e-10);
-  EXPECT_NEAR(td.first[0].first, tt[0], 1.0e-10);
-  EXPECT_NEAR(td.first[1].first, tt[1], 1.0e-10);
-  EXPECT_NEAR(td.first[2].first, tt[2], 1.0e-10);
-  EXPECT_NEAR(td.first[3].first, tt[3], 1.0e-10);
-  EXPECT_NEAR(td.first[0].second, dd[0], 1.0e-10);
-  EXPECT_NEAR(td.first[1].second, dd[1], 1.0e-10);
-  EXPECT_NEAR(td.first[2].second, dd[2], 1.0e-10);
-  EXPECT_NEAR(td.first[3].second, dd[3], 1.0e-10);
+  EXPECT_NEAR(td.first, dist, 1.0e-10);
+  EXPECT_NEAR(td.second[0].first, dd[0], 1.0e-10);
+  EXPECT_NEAR(td.second[1].first, dd[1], 1.0e-10);
+  EXPECT_NEAR(td.second[2].first, dd[2], 1.0e-10);
+  EXPECT_NEAR(td.second[3].first, dd[3], 1.0e-10);
+  EXPECT_NEAR(td.second[0].second, tt[0], 1.0e-10);
+  EXPECT_NEAR(td.second[1].second, tt[1], 1.0e-10);
+  EXPECT_NEAR(td.second[2].second, tt[2], 1.0e-10);
+  EXPECT_NEAR(td.second[3].second, tt[3], 1.0e-10);
 
 }

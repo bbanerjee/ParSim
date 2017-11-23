@@ -237,9 +237,9 @@ DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
   auto boundaryMargin = marginFactor*maxRadius;
   auto faceShift = faceShiftFactor*minRadius;
 
-  //std::cout << "min rad = " << minRadius << " max rad = " << maxRadius << "\n";
-  //std::cout << "Extra boundary margin = " << boundaryMargin 
-  //          << " face shift = " << faceShift << "\n";
+  // std::cout << "min rad = " << minRadius << " max rad = " << maxRadius << "\n";
+  // std::cout << "Extra boundary margin = " << boundaryMargin 
+  //           << " face shift = " << faceShift << "\n";
   
   // Create an oriented box from the spatial domain
   // and set up the faces
@@ -285,14 +285,20 @@ DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
     auto radius_b = particle->radiusB();
     auto radius_c = particle->radiusC();
 
+    auto id = particle->getId();
+
     // Create an ellipsoid object for ellipsoid-face intersection tests
     // *TODO* Generalize to sphere and other particle shapes.
-    Ellipsoid ellipsoid(position, axis_a, axis_b, axis_c, 
+    Ellipsoid ellipsoid(id, position, axis_a, axis_b, axis_c, 
                         radius_a, radius_b, radius_c);
 
     int faceID = 1;
     for (const auto& face : faces) {
       auto status = ellipsoid.intersects(face);
+      // std::cout << "Face = " << face << "\n";
+      // std::cout << "status = " << std::boolalpha << status.first
+      //           << " face " << static_cast<int>(status.second.first)
+      //           << " , " << status.second.second << "\n";
       if (status.first) {
         std::vector<Vec> translations;
 
