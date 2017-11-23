@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Ellip3D_input>
+  <PeriodicParticleBC type="axisymmetric_strain">
+    <time> 0.000000 1.0e-5 </time>
+    <value>
+       0.000000  0.000000  0.000000 0.000000
+      -1.000000  0.000000  0.000000 0.000000 
+    </value>
+  </PeriodicParticleBC>
+</Ellip3D_input>

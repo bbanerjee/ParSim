@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Ellip3D_input>
+    <Meta>
+        <title>Ellip3D boundary XML file</title>
+    </Meta>
+    <Boundary>
+        <containerMin>[-1.414145e-03, -1.414145e-03, 8.585500e-05]</containerMin>
+        <containerMax>[1.954895e-03, 1.954895e-03, 3.454895e-03]</containerMax>
+        <boundary id="x-" type="plane">
+            <direction>[-1, 0, 0]</direction>
+            <position>[-1.414145e-03, 2.703750e-04, 1.770375e-03]</position>
+            <initial_velocity>[0, 0, 0]</initial_velocity>
+        </boundary>
+        <boundary id="x+" type="plane">
+            <direction>[1, 0, 0]</direction>
+            <position>[1.954895e-03, 2.703750e-04, 1.770375e-03]</position>
+            <initial_velocity>[0, 0, 0]</initial_velocity>
+        </boundary>
+        <boundary id="y-" type="plane">
+            <direction>[0, -1, 0]</direction>
+            <position>[2.703750e-04, -1.414145e-03, 1.770375e-03]</position>
+            <initial_velocity>[0, 0, 0]</initial_velocity>
+        </boundary>
+        <boundary id="y+" type="plane">
+            <direction>[0, 1, 0]</direction>
+            <position>[2.703750e-04, 1.954895e-03, 1.770375e-03]</position>
+            <initial_velocity>[0, 0, 0]</initial_velocity>
+        </boundary>
+        <boundary id="z-" type="plane">
+            <direction>[0, 0, -1]</direction>
+            <position>[2.703750e-04, 2.703750e-04, 8.585500e-05]</position>
+            <initial_velocity>[0, 0, 0]</initial_velocity>
+        </boundary>
+        <boundary id="z+" type="plane">
+            <direction>[0, 0, 1]</direction>
+            <position>[2.703750e-04, 2.703750e-04, 3.454895e-03]</position>
+            <initial_velocity>[0, 0, 0]</initial_velocity>
+        </boundary>
+    </Boundary>
+</Ellip3D_input>

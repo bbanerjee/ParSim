@@ -1,0 +1,160 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Ellip3D_input>
+
+  <Meta>  
+     <title> DEM axisymmetric strain sample input file </title>
+  </Meta>  
+
+  <!-- #simulation type -->
+  <SimulationType>  4001 </SimulationType>
+
+  <!-- Parallel setup -->
+  <Parallel>
+    <!--
+    #grids/processes in x, y, z directions for MPI parallelization, which
+    #is recommended for more than thousands of particles. By default these
+    #values are 1 for serial computing. They must satisfy equation:
+    #mpiProcX * mpiProcY * mpiProcZ = np, where np is the number of processes
+    #specified in mpirun command line.
+    -->
+    <mpiProc> [1, 1, 1] </mpiProc>
+
+    <!--
+    #threads per process for OpenMP parallelization, which is recommended 
+    #for more than thousands of particles. By default this value is 1 for 
+    #single-thread computing. If it > 1, multiple-threads computing is 
+    #invoked.
+    -->
+    <ompThreads>  1 </ompThreads>
+  </Parallel>
+
+  <!-- Time stepping -->
+  <Time>
+    <!-- #starting time step, must >= 1 -->
+    <startStep>  1 </startStep>
+
+    <!-- #ending time step, must >= 1 -->
+    <endStep>  100 </endStep>
+
+    <!-- #time accrued prior to computation -->
+    <timeAccrued>  0 </timeAccrued>
+
+    <!-- #time step size -->
+    <timeStep>  2.0E-8 </timeStep>
+
+  </Time>
+
+  <!-- Output -->
+  <Output>
+
+    <outputFolder> axisymmetric_strain_pb  </outputFolder>
+
+    <!--
+    #starting snapshot number, (endsStep - startStep +1) must be divided by 
+    #(endSnap - startSnap + 1)
+    -->
+    <startSnapshot>  1 </startSnapshot>
+
+    <!-- #ending snapshot number -->
+    <endSnapshot>  100 </endSnapshot>
+
+  </Output>
+
+  <!-- Physical constants -->
+  <PhysicalConstants>
+
+    <!-- #gravitational acceleration -->
+    <gravityAcceleration>  9.8 </gravityAcceleration>
+
+    <!-- #coefficient of gravity scaling -->
+    <gravityScaleFactor>  1000.0 </gravityScaleFactor> 
+
+  </PhysicalConstants>
+
+  <Boundary>
+
+    <!-- # file name of the input boundary file -->
+    <boundaryFilename>  input_generated_periodic_boundary.xml </boundaryFilename>
+
+    <!-- #coefficient of particle-boundary static friction -->
+    <boundaryFriction>  0.8 </boundaryFriction>
+
+  </Boundary>
+
+  <!-- Discrete elements -->
+  <DEM>
+
+    <!-- # initialize particles state (velocity, omga, force, moment) 
+           from data file or not? -->
+    <initializeFromFile>  false </initializeFromFile>
+    
+    <!-- # file name of the input particle file -->
+    <particleFilename> input_generated_periodic_particles.xml </particleFilename>
+
+    <!-- #coefficient of mass scaling -->
+    <massScaleFactor>  10.0 </massScaleFactor>
+
+    <!-- #coefficient of moment scaling -->
+    <momentScaleFactor>  10.0 </momentScaleFactor>
+
+    <!-- #Pile velocity (if any) -->
+    <pileRate> 2.5e-1 </pileRate>
+
+    <Material>
+      <!-- #particle Young's modulus 
+      #quartz sand E = 45GPa -->
+      <youngModulus>  4.5E+10 </youngModulus>
+
+      <!-- #particle Poisson's ratio 
+      #quartz sand v = 0.25 -->
+      <poissonRatio>  0.25 </poissonRatio>
+
+      <!-- #particle specific gravity 
+      #quartz sand Gs = 2.65 -->
+      <specificGravity>  2.65 </specificGravity>
+
+      <!-- #membrane Young's modulus
+      #membrane E = 1.4 MPa -->
+      <membraneYoungModulus>  1.4E+6 </membraneYoungModulus>
+
+      <!-- #damping ratio of background damping of force
+      #for dynamic simu it is 0
+      #for quasi-static simu using DR, it is fictitous -->
+      <forceDamping>  1.0e8 </forceDamping>
+
+      <!-- #damping ratio of background damping of moment -->
+      <momentDamping>  1.0e8 </momentDamping>
+
+    </Material>
+
+    <Contact>
+
+      <!-- #damping ratio of inter-particle contact -->
+      <contactDamping>  0.7 </contactDamping>
+
+      <!-- #coefficient of inter-particle static friction -->
+      <contactFriction>  0.8 </contactFriction>
+
+      <!-- #coefficient of inter-particle cohesion 
+      #5.0e+8; cohesion between particles (10kPa) -->
+      <contactCohesion>  0 </contactCohesion>
+
+      <!-- #mininum relative overlap -->
+      <minRelativeOverlap>  1.0E-6 </minRelativeOverlap>
+
+      <!-- #maximum relative overlap -->
+      <maxRelativeOverlap>  1.0E-2 </maxRelativeOverlap>
+
+      <!-- #measurable particle overlap precision
+      #0.1 micron or 0.01 micron -->
+      <measurableOverlap>  1.0E-8 </measurableOverlap>
+
+    </Contact>
+
+    <BoundaryConditions>
+      <inputFile> input_axisymm_strain_bc.xml </inputFile>
+    </BoundaryConditions>
+
+  </DEM>
+
+</Ellip3D_input>
