@@ -29,7 +29,10 @@ public:
   REAL getImpactTimeStep() const { return d_impactTimeStep; }
 
   bool isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap);
-  void computeContactForces(); // calculate normal and tangential force of contact
+
+  // calculate normal and tangential force of contact
+  void computeContactForces(std::size_t iteration); 
+
   REAL getNormalForceMagnitude() const { return vnormL2(d_normalForce); }
   REAL getTangentForceMagnitude() const { return vnormL2(d_tangentForce); }
   REAL getPenetration() const { return d_penetration; }
@@ -38,6 +41,7 @@ public:
   {
     return vnormL2(d_tangentDisplacement);
   } // total value during a process of contact
+
   void checkoutContactTangents(std::vector<DEMContactTangent>& contactTangentVec);
   void checkinPreviousContactTangents(std::vector<DEMContactTangent>& contactTangentVec);
   Vec getNormalForce() const { return d_normalForce; }

@@ -87,21 +87,21 @@ IsotropicLoading::execute(DiscreteElements* dem)
 
     dem->calcTimeStep(); 
 
-    dem->findContact();
+    dem->findContact(iteration);
 
     if (dem->isBoundaryProcess()) {
-      dem->findBoundaryContacts();
+      dem->findBoundaryContacts(iteration);
     }
 
     dem->clearContactForce();
 
-    dem->internalForce();
+    dem->internalForce(iteration);
 
     if (dem->isBoundaryProcess()) {
-      dem->boundaryForce();
+      dem->boundaryForce(iteration);
     }
 
-    dem->updateParticles();
+    dem->updateParticles(iteration);
 
     dem->gatherBoundaryContacts(); // must call before updateBoundary
 

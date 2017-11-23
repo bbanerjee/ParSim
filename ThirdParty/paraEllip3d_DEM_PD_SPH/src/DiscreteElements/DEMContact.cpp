@@ -200,7 +200,7 @@ DEMContact::checkoutContactTangents(ContactTangentArray& contactTangentVec)
 // information recorded,
 // now this function is called by internalForce() in dem.cpp.
 void
-DEMContact::computeContactForces()
+DEMContact::computeContactForces(std::size_t iteration)
 {
   if (!d_isInContact) {
     d_isInContact = false;
@@ -259,9 +259,9 @@ DEMContact::computeContactForces()
         << " d_penetration=" << std::setw(OWID) << d_penetration
         << " allow=" << std::setw(OWID) << allowedOverlap << std::endl;
     MPI_Status status;
-    int length = OWID * 2 + 8 * 3 + 19 + 7 * 3 + 8 + 1;
+    //int length = OWID * 2 + 8 * 3 + 19 + 7 * 3 + 8 + 1;
     MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
-                          length, MPI_CHAR, &status);
+                          inf.str().length(), MPI_CHAR, &status);
 
     d_penetration = allowedOverlap;
   }
@@ -362,6 +362,7 @@ DEMContact::computeContactForces()
   }
   */
   /*
+  {
     //std::cout << " cohesionForce=" << d_cohesionForce << "\n\t"
               << " normalForce=" << d_normalForce << "\n\t"
               << " tangentForce =" << d_tangentForce << "\n\t"

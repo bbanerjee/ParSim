@@ -73,9 +73,9 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
 
     dem->calcTimeStep(); // use values from last step, must call before
                               // findConact
-    dem->findContact();
+    dem->findContact(iteration);
     if (dem->isBoundaryProcess())
-      dem->findBoundaryContacts();
+      dem->findBoundaryContacts(iteration);
 
     dem->clearContactForce();
 
@@ -85,11 +85,11 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
                                   particleInf); // not allDEMParticleVec
     /*7*/ fluid.penalize();
 
-    dem->internalForce();
+    dem->internalForce(iteration);
     if (dem->isBoundaryProcess())
-      dem->boundaryForce();
+      dem->boundaryForce(iteration);
 
-    dem->updateParticles();
+    dem->updateParticles(iteration);
     dem->updatePatchBoxMaxZ();
 
     timeCount += timeStep;

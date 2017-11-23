@@ -133,12 +133,12 @@ BurstingDam2D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
 
     // use values from last step, must call before findContact (which clears data)
     dem->calcTimeStep(); 
-    dem->findContact();
-    if (dem->isBoundaryProcess()) dem->findBoundaryContacts();
+    dem->findContact(iteration);
+    if (dem->isBoundaryProcess()) dem->findBoundaryContacts(iteration);
 
     dem->clearContactForce();
-    dem->internalForce();
-    if (dem->isBoundaryProcess()) dem->boundaryForce();
+    dem->internalForce(iteration);
+    if (dem->isBoundaryProcess()) dem->boundaryForce(iteration);
 
     dem->dragForce();
 
@@ -147,7 +147,7 @@ BurstingDam2D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
                                        kernelSize, smoothLength);
                                        
 
-    dem->updateParticles();   
+    dem->updateParticles(iteration);   
 
     // update velocity of SPH particles based on equation (4.2)
     sph->updateSPHLeapFrogVelocity(timeStep);	

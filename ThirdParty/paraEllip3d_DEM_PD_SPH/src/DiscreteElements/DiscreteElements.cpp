@@ -211,22 +211,22 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
 
     //proc0cout << "**NOTICE** Before findContact\n";
 
-    findContact();
+    findContact(iteration);
     if (isBoundaryProcess())
-      findBoundaryContacts();
+      findBoundaryContacts(iteration);
 
     clearContactForce();
 
     //proc0cout << "**NOTICE** Before internalForce\n";
-    internalForce();
+    internalForce(iteration);
 
     if (isBoundaryProcess()) {
       //proc0cout << "**NOTICE** Before updateParticle\n";
-      boundaryForce();
+      boundaryForce(iteration);
     }
 
     //proc0cout << "**NOTICE** Before updateParticle\n";
-    updateParticles();
+    updateParticles(iteration);
     updatePatchBox(); // universal; updatePatchBoxMaxZ() for deposition only
 
     /**/ timeCount += timeStep;
@@ -550,7 +550,7 @@ DiscreteElements::communicateGhostParticles()
 }
 
 void
-DiscreteElements::communicateGhostParticles(const int& iteration)
+DiscreteElements::communicateGhostParticles(std::size_t iteration)
 {
   // determine domain of each process
   REAL ghostWidth = d_maxParticleRadius * 2;
@@ -683,7 +683,7 @@ DiscreteElements::calcContactNum()
 }
 
 void
-DiscreteElements::findContact()
+DiscreteElements::findContact(std::size_t iteration)
 { // various implementations
   int ompThreads = util::getParam<int>("ompThreads");
   auto minOverlap = util::getParam<REAL>("minAllowableRelativeOverlap");
@@ -695,16 +695,17 @@ DiscreteElements::findContact()
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     //std::cout << "\t FindContact: MPI Cart rank = " << s_mpiRank
     //          << " World rank = " << world_rank << "\n";
-    findContactSingleThread(minOverlap, measOverlap);
+    findContactSingleThread(minOverlap, measOverlap, iteration);
   } else if (ompThreads > 1) { // openmp implementation: various loop scheduling
                                // - (static), (static,1), (dynamic), (dynamic,1)
-    findContactMultiThread(ompThreads, minOverlap, measOverlap);
+    findContactMultiThread(ompThreads, minOverlap, measOverlap, iteration);
 
   } // end of openmp implementation
 }
 
 void
-DiscreteElements::findContactSingleThread(REAL minOverlap, REAL measOverlap)
+DiscreteElements::findContactSingleThread(REAL minOverlap, REAL measOverlap,
+                                          std::size_t iteration)
 {
 
   d_contacts.clear();
@@ -787,7 +788,8 @@ DiscreteElements::findContactSingleThread(REAL minOverlap, REAL measOverlap)
 
 void
 DiscreteElements::findContactMultiThread(int ompThreads,
-                                         REAL minOverlap, REAL measOverlap)
+                                         REAL minOverlap, REAL measOverlap,
+                                         std::size_t iteration)
 {
 
   d_contacts.clear();
@@ -845,7 +847,7 @@ DiscreteElements::findContactMultiThread(int ompThreads,
 }
 
 void
-DiscreteElements::findBoundaryContacts()
+DiscreteElements::findBoundaryContacts(std::size_t iteration)
 {
   for (auto& boundary : d_boundaries) {
     boundary->findBoundaryContacts(d_patchParticles);
@@ -861,7 +863,7 @@ DiscreteElements::clearContactForce()
 }
 
 void
-DiscreteElements::internalForce()
+DiscreteElements::internalForce(std::size_t iteration)
 {
   /*
     std::ostringstream msg;
@@ -891,7 +893,7 @@ DiscreteElements::internalForce()
   for (auto& contact : d_contacts) {
     // cannot be parallelized as it may change a
     // particle's force simultaneously.
-    contact.computeContactForces();
+    contact.computeContactForces(iteration);
 
     // checkout current tangential force and displacment
     contact.checkoutContactTangents(d_contactTangents);
@@ -921,7 +923,7 @@ DiscreteElements::internalForce()
 }
 
 void
-DiscreteElements::boundaryForce()
+DiscreteElements::boundaryForce(std::size_t iteration)
 {
   for (auto& boundary : d_boundaries) {
     boundary->boundaryForce(d_boundaryTangentMap);
@@ -929,7 +931,7 @@ DiscreteElements::boundaryForce()
 }
 
 void
-DiscreteElements::updateParticles()
+DiscreteElements::updateParticles(std::size_t iteration)
 {
   //proc0cout << "Num DEM particles = " << d_patchParticles.size() << "\n";
   for (auto& particle : d_patchParticles)

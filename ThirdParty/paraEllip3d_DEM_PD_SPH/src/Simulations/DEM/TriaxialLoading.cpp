@@ -65,16 +65,16 @@ TriaxialLoading::execute(DiscreteElements* dem)
     // displacement control relies on constant time step, so do not call
     // calcTimeStep().
     // calcTimeStep(); // use values from last step, must call before findConact
-    dem->findContact();
+    dem->findContact(iteration);
     if (dem->isBoundaryProcess())
-      dem->findBoundaryContacts();
+      dem->findBoundaryContacts(iteration);
 
     dem->clearContactForce();
-    dem->internalForce();
+    dem->internalForce(iteration);
     if (dem->isBoundaryProcess())
-      dem->boundaryForce();
+      dem->boundaryForce(iteration);
 
-    dem->updateParticles();
+    dem->updateParticles(iteration);
     dem->gatherBoundaryContacts(); // must call before updateBoundary
     dem->updateBoundary(sigmaConf, "triaxial");
     dem->updatePatchBox();

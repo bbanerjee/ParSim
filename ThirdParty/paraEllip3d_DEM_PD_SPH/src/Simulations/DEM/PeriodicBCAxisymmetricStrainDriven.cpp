@@ -90,17 +90,20 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
 
     timeStep = dem->calcTimeStep(); 
 
-    dem->findContact();
+    dem->findContact(iteration);
 
     if (dem->isBoundaryProcess()) {
-      dem->findBoundaryContacts();
+      dem->findBoundaryContacts(iteration);
     }
     dem->clearContactForce();
-    dem->internalForce();
+
+    dem->internalForce(iteration);
+
     if (dem->isBoundaryProcess()) {
-      dem->boundaryForce();
+      dem->boundaryForce(iteration);
     }
-    dem->updateParticles();
+
+    dem->updateParticles(iteration);
     dem->gatherBoundaryContacts(); 
     dem->updatePatchBox();
 
@@ -125,7 +128,7 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
       ++iterSnap;
     }
 
-    dem ->releaseReceivedParticles();
+    dem->releaseReceivedParticles();
     dem->migrateParticles();
 
     ++iteration;

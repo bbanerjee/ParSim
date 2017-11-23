@@ -405,16 +405,16 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     // dem->calcTimeStep(); // use values from last step, must call before
     // dem->findConact
     //proc0cout << "**NOTICE** DEM findContact\n";
-    dem->findContact();
+    dem->findContact(iteration);
     if (dem->isBoundaryProcess())
-      dem->findBoundaryContacts();
+      dem->findBoundaryContacts(iteration);
 
     dem->clearContactForce();
 
     //proc0cout << "**NOTICE** DEM internal force\n";
-    dem->internalForce();
+    dem->internalForce(iteration);
     if (dem->isBoundaryProcess())
-      dem->boundaryForce();
+      dem->boundaryForce(iteration);
 
     //proc0cout << "**NOTICE** PD first half step\n";
     pd->runFirstHalfStep();
@@ -436,7 +436,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     //proc0cout << "**NOTICE** PD second half step\n";
     pd->runSecondHalfStep();
 
-    dem->updateParticles();
+    dem->updateParticles(iteration);
 
     //proc0cout << "**NOTICE** DEM gather boundary contact\n";
     dem->gatherBoundaryContacts(); // must call before updateBoundary

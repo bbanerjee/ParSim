@@ -153,7 +153,7 @@ public:
   void scatterParticles();
   void scatterDEMPeriParticle();
   void communicateGhostParticles();
-  void communicateGhostParticles(const int& iteration);
+  void communicateGhostParticles(std::size_t iteration);
   bool isBoundaryProcess();
   void releaseReceivedParticles();
   void releaseGatheredParticle();
@@ -206,19 +206,22 @@ public:
   void readCavityBoundary(const std::string& boundaryfile);
   void buildCavityBoundary(std::size_t existMaxId,
                            const std::string& boundaryfile);
-  void findContact(); // detect and resolve contact between particles
-  void findContactSingleThread(REAL minOverlap, REAL measOverlap);
-  void findContactMultiThread(int numThreads, REAL minOverlap, REAL measOverlap);
-  void findBoundaryContacts();      // find particles on boundaries
+  void findContact(std::size_t iteration); // detect and resolve contact between particles
+  void findContactSingleThread(REAL minOverlap, REAL measOverlap,
+                               std::size_t iteration);
+  void findContactMultiThread(int numThreads, 
+                              REAL minOverlap, REAL measOverlap,
+                              std::size_t iteration);
+  void findBoundaryContacts(std::size_t iteration);      // find particles on boundaries
   void findParticleOnCavity(); // find particle on cavity boundaries
 
   void clearContactForce(); // clear forces and moments for all particles
-  void internalForce();     // calculate inter-particle forces
+  void internalForce(std::size_t iteration);     // calculate inter-particle forces
   void springForce();
-  void boundaryForce(); // calcualte forces between rigid boundaries and
+  void boundaryForce(std::size_t iteration); // calcualte forces between rigid boundaries and
                         // particles
   void cavityBoundaryForce();
-  void updateParticles(); // update motion of particles
+  void updateParticles(std::size_t iteration); // update motion of particles
 
   REAL ellipPileForce();  // for force pile only
   void ellipPileUpdate(); // for force pile only
