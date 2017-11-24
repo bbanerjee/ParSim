@@ -59,7 +59,8 @@ public:
   }
 
   void findBoundaryContacts(DEMParticlePArray& ptcls) override;
-  void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap) override;
+  void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap,
+                     std::size_t iteration) override;
 
 private:
   Vec d_direction;

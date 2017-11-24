@@ -27,7 +27,7 @@ OedometerLoading::execute(DiscreteElements* dem)
   auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  timeStep = util::getParam<REAL>("timeStep");
+  g_timeStep = util::getParam<REAL>("timeStep");
 
   REAL sigmaEnd, sigmaInc, sigmaVar;
   std::size_t sigmaDiv;
@@ -48,7 +48,7 @@ OedometerLoading::execute(DiscreteElements* dem)
   }
 
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
-  iteration = startStep;
+  auto iteration = startStep;
   std::size_t iterSnap = startSnap;
   REAL distX, distY, distZ;
 
@@ -90,7 +90,7 @@ OedometerLoading::execute(DiscreteElements* dem)
     if (dem->isBoundaryProcess())
       dem->findBoundaryContacts(iteration);
 
-    dem->clearContactForce();
+    dem->initializeForces();
     dem->internalForce(iteration);
     if (dem->isBoundaryProcess())
       dem->boundaryForce(iteration);
@@ -124,7 +124,7 @@ OedometerLoading::execute(DiscreteElements* dem)
       ->releaseReceivedParticles(); // late release because printContact refers to
                                // received particles
     time1 = MPI_Wtime();
-    dem->migrateParticles();
+    dem->migrateParticles(iteration);
     time2 = MPI_Wtime();
     migraT = time2 - time1;
     totalT = time2 - time0;

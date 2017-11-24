@@ -73,7 +73,7 @@ TractionLoading::execute(DiscreteElements* dem)
       dem->findBoundaryContacts(iteration);
     }
 
-    dem->clearContactForce();
+    dem->initializeForces();
 
     dem->internalForce(iteration);
 
@@ -114,7 +114,7 @@ TractionLoading::execute(DiscreteElements* dem)
     dem ->releaseReceivedParticles();
 
     auto t4 = MPI_Wtime();
-    dem->migrateParticles();
+    dem->migrateParticles(iteration);
     auto t5 = MPI_Wtime();
     auto migraT = t5 - t4;
     auto totalT = t5 - t0;

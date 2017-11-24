@@ -136,7 +136,7 @@ BurstingDam2D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
     dem->findContact(iteration);
     if (dem->isBoundaryProcess()) dem->findBoundaryContacts(iteration);
 
-    dem->clearContactForce();
+    dem->initializeForces();
     dem->internalForce(iteration);
     if (dem->isBoundaryProcess()) dem->boundaryForce(iteration);
 
@@ -193,7 +193,7 @@ BurstingDam2D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
     if (toCheckTime) {
       time1 = MPI_Wtime();
     }
-    dem->migrateParticles();
+    dem->migrateParticles(iteration);
 
     if (toCheckTime) {
       time2 = MPI_Wtime(); 

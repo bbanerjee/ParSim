@@ -23,9 +23,9 @@ extern const std::size_t OPREC;
 // other global variables
 extern std::ofstream debugInf;
 extern MPI_File overlapInf;
-extern std::size_t iteration;
-extern REAL timeStep;
-extern REAL timeAccrued;
+extern std::size_t g_iteration;
+extern REAL g_timeStep;
+extern REAL g_timeAccrued;
 extern REAL plan_gravity;
 }
 #endif

@@ -115,7 +115,8 @@ public:
   void updateTrueTriaxial(REAL simga, REAL areaX, REAL areaY, REAL areaZ,
                           REAL sigmaX, REAL sigmaY) override;
   void findBoundaryContacts(DEMParticlePArray& ptcls) override;
-  void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap) override;
+  void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap,
+                     std::size_t iteration) override;
 
   friend std::ostream& 
   operator<<(std::ostream& os, const PlaneBoundary& plane)

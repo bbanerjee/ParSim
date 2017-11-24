@@ -31,13 +31,13 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
   auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  timeStep = util::getParam<REAL>("timeStep");
+  g_timeStep = util::getParam<REAL>("timeStep");
 
-  iteration = startStep;
+  auto iteration = startStep;
   std::size_t iterSnap = startSnap;
   REAL timeCount = 0;
-  timeAccrued = util::getParam<REAL>("timeAccrued");
-  REAL timeTotal = timeAccrued + timeStep * netStep;
+  g_timeAccrued = util::getParam<REAL>("timeAccrued");
+  REAL timeTotal = g_timeAccrued + g_timeStep * netStep;
 
   std::string outputFolder(".");
   if (dem->getMPIRank() == 0) {
@@ -65,7 +65,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
 
-  while (timeAccrued < timeTotal) {
+  while (g_timeAccrued < timeTotal) {
     // REAL time0 = MPI_Wtime();
     dem->communicateGhostParticles();
     // REAL time2 = MPI_Wtime();
@@ -77,7 +77,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
     if (dem->isBoundaryProcess())
       dem->findBoundaryContacts(iteration);
 
-    dem->clearContactForce();
+    dem->initializeForces();
 
     /*4*/ fluid.getParticleInfo(particleVec); // not allDEMParticleVec
     /*5*/ fluid.runOneStep();
@@ -92,8 +92,8 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
     dem->updateParticles(iteration);
     dem->updatePatchBoxMaxZ();
 
-    timeCount += timeStep;
-    timeAccrued += timeStep;
+    timeCount += g_timeStep;
+    g_timeAccrued += g_timeStep;
     if (timeCount >= timeTotal / netSnap) {
       // REAL time1 = MPI_Wtime();
       dem->gatherParticles();
@@ -121,7 +121,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
       ->releaseReceivedParticles(); // late release because printContact refers to
                                // received particles
     // REAL time1 = MPI_Wtime();
-    dem->migrateParticles();
+    dem->migrateParticles(iteration);
     // time2 = MPI_Wtime();
     // REAL migraT = time2 - time1;
     // REAL totalT = time2 - time0;

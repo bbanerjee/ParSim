@@ -47,6 +47,7 @@ public:
     , d_avgNormalForce(0)
     , d_avgShearForce(0)
     , d_avgPenetration(0)
+    , d_overlapCount(0)
     , d_translationalEnergy(0)
     , d_rotationalEnergy(0)
     , d_kineticEnergy(0)
@@ -82,6 +83,11 @@ public:
   const DEMParticlePArray& getDEMParticleVec() const { return d_patchParticles; }
   DEMParticlePArray& getModifiableParticleVec() { return d_patchParticles; }
   DEMParticlePArray& getMergedParticleVec() { return d_mergedParticles; }
+
+  std::size_t numOverlappingParticles() const
+  {
+    return d_contacts.size();
+  }
 
   const Gradation& getGradation() const { return d_gradation; }
   const Box& getSpatialDomain() const { return d_spatialDomain; }
@@ -158,7 +164,7 @@ public:
   void releaseReceivedParticles();
   void releaseGatheredParticle();
   void releaseGatheredContact();
-  void migrateParticles();
+  void migrateParticles(std::size_t iteration);
   void removeParticleOutBox();
   void gatherParticles();
   void gatherBoundaryContacts();
@@ -215,7 +221,11 @@ public:
   void findBoundaryContacts(std::size_t iteration);      // find particles on boundaries
   void findParticleOnCavity(); // find particle on cavity boundaries
 
+  void initializeForces();
+
   void clearContactForce(); // clear forces and moments for all particles
+  void applyBodyForce(); // Apply body forces
+
   void internalForce(std::size_t iteration);     // calculate inter-particle forces
   void springForce();
   void boundaryForce(std::size_t iteration); // calcualte forces between rigid boundaries and
@@ -608,6 +618,7 @@ private:
   REAL d_avgNormalForce; // only meaningful to root process
   REAL d_avgShearForce;  // only meaningful to root process
   REAL d_avgPenetration; // only meaningful to root process
+  std::size_t d_overlapCount;
 
   // energy data
   REAL d_translationalEnergy; // only meaningful to root process

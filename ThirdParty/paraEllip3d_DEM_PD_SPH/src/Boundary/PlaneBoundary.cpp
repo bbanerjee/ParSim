@@ -265,7 +265,8 @@ PlaneBoundary::findBoundaryContacts(DEMParticlePArray& particles)
 }
 
 void
-PlaneBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap)
+PlaneBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap,
+                             std::size_t iteration)
 {
   // for each plane boundary, define a temparory variable vtmp to use,
   // better than define a member variable which needs to be cleared.
@@ -273,8 +274,12 @@ PlaneBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap)
   BoundaryTangentArray vtmp;
 
   // for each possible boundary particle
-  for (auto& it : b_probableBoundaryParticles)
-    it->planeRBForce(this, boundaryTangentMap, vtmp);
+  auto minOverlapFactor = util::getParam<REAL>("minAllowableRelativeOverlap");
+  auto maxOverlapFactor = util::getParam<REAL>("maxAllowableRelativeOverlap");
+
+  for (auto& particle : b_probableBoundaryParticles)
+    particle->planeRBForce(this, boundaryTangentMap, vtmp,
+                           minOverlapFactor, maxOverlapFactor, iteration);
 
   // checkout tangential forces and displacements after each particle is
   // processed
@@ -357,8 +362,8 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (fabs(b_normalForce.x() / areaX + sigma) / sigma > tol) {
         vel = ((b_normalForce.x() + sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.x() * (2-atf) / (2+atf) + (b_normalForce.x() + sigma *
-        // areaX) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.x() + vel * timeStep;
+        // areaX) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.x() + vel * g_timeStep;
         setVelocity(Vec(vel, getVelocity().y(), getVelocity().z()));
         setPosition(Vec(pos, getPosition().y(), getPosition().z()));
       }
@@ -367,8 +372,8 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (fabs(b_normalForce.x() / areaX - sigma) / sigma > tol) {
         vel = ((b_normalForce.x() - sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.x() * (2-atf) / (2+atf) + (b_normalForce.x() - sigma *
-        // areaX) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.x() + vel * timeStep;
+        // areaX) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.x() + vel * g_timeStep;
         setVelocity(Vec(vel, getVelocity().y(), getVelocity().z()));
         setPosition(Vec(pos, getPosition().y(), getPosition().z()));
       }
@@ -377,8 +382,8 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (fabs(b_normalForce.y() / areaY + sigma) / sigma > tol) {
         vel = ((b_normalForce.y() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.y() * (2-atf) / (2+atf) + (b_normalForce.y() + sigma *
-        // areaY) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.y() + vel * timeStep;
+        // areaY) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.y() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), vel, getVelocity().z()));
         setPosition(Vec(getPosition().x(), pos, getPosition().z()));
       }
@@ -387,8 +392,8 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (fabs(b_normalForce.y() / areaY - sigma) / sigma > tol) {
         vel = ((b_normalForce.y() - sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.y() * (2-atf) / (2+atf) + (b_normalForce.y() - sigma *
-        // areaY) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.y() + vel * timeStep;
+        // areaY) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.y() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), vel, getVelocity().z()));
         setPosition(Vec(getPosition().x(), pos, getPosition().z()));
       }
@@ -397,8 +402,8 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (fabs(b_normalForce.z() / areaZ + sigma) / sigma > tol) {
         vel = ((b_normalForce.z() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.z() * (2-atf) / (2+atf) + (b_normalForce.z() + sigma *
-        // areaZ) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.z() + vel * timeStep;
+        // areaZ) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.z() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), getVelocity().y(), vel));
         setPosition(Vec(getPosition().x(), getPosition().y(), pos));
       }
@@ -409,8 +414,8 @@ PlaneBoundary::updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         if (b_normalForce.z() == 0)
           vel = -boundaryRate * topSpeedup;
         // vel = d_previousVelocity.z() * (2-atf) / (2+atf) + (b_normalForce.z() - sigma *
-        // areaZ) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.z() + vel * timeStep;
+        // areaZ) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.z() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), getVelocity().y(), vel));
         setPosition(Vec(getPosition().x(), getPosition().y(), pos));
       }
@@ -439,8 +444,8 @@ PlaneBoundary::updateOdometer(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (fabs(b_normalForce.z() / areaZ + sigma) / sigma > tol) {
         vel = ((b_normalForce.z() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.z() * (2-atf) / (2+atf) + (b_normalForce.z() + sigma *
-        // areaZ) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.z() + vel * timeStep;
+        // areaZ) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.z() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), getVelocity().y(), vel));
         setPosition(Vec(getPosition().x(), getPosition().y(), pos));
       }
@@ -449,8 +454,8 @@ PlaneBoundary::updateOdometer(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (fabs(b_normalForce.z() / areaZ - sigma) / sigma > tol) {
         vel = ((b_normalForce.z() - sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.z() * (2-atf) / (2+atf) + (b_normalForce.z() - sigma *
-        // areaZ) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.z() + vel * timeStep;
+        // areaZ) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.z() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), getVelocity().y(), vel));
         setPosition(Vec(getPosition().x(), getPosition().y(), pos));
       }
@@ -481,8 +486,8 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (fabs(b_normalForce.x() / areaX + sigma) / sigma > tol) {
         vel = ((b_normalForce.x() + sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.x() * (2-atf) / (2+atf) + (b_normalForce.x() + sigma *
-        // areaX) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.x() + vel * timeStep;
+        // areaX) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.x() + vel * g_timeStep;
         setVelocity(Vec(vel, getVelocity().y(), getVelocity().z()));
         setPosition(Vec(pos, getPosition().y(), getPosition().z()));
       }
@@ -491,8 +496,8 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (fabs(b_normalForce.x() / areaX - sigma) / sigma > tol) {
         vel = ((b_normalForce.x() - sigma * areaX) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.x() * (2-atf) / (2+atf) + (b_normalForce.x() - sigma *
-        // areaX) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.x() + vel * timeStep;
+        // areaX) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.x() + vel * g_timeStep;
         setVelocity(Vec(vel, getVelocity().y(), getVelocity().z()));
         setPosition(Vec(pos, getPosition().y(), getPosition().z()));
       }
@@ -501,8 +506,8 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (fabs(b_normalForce.y() / areaY + sigma) / sigma > tol) {
         vel = ((b_normalForce.y() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.y() * (2-atf) / (2+atf) + (b_normalForce.y() + sigma *
-        // areaY) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.y() + vel * timeStep;
+        // areaY) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.y() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), vel, getVelocity().z()));
         setPosition(Vec(getPosition().x(), pos, getPosition().z()));
       }
@@ -511,8 +516,8 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (fabs(b_normalForce.y() / areaY - sigma) / sigma > tol) {
         vel = ((b_normalForce.y() - sigma * areaY) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.y() * (2-atf) / (2+atf) + (b_normalForce.y() - sigma *
-        // areaY) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.y() + vel * timeStep;
+        // areaY) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.y() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), vel, getVelocity().z()));
         setPosition(Vec(getPosition().x(), pos, getPosition().z()));
       }
@@ -521,13 +526,13 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (triaxialType == 1)
         vel = boundaryRate;
       else if (triaxialType == 2) {
-        if (iteration <= unloadStep) // loading
+        if (g_iteration <= unloadStep) // loading
           vel = boundaryRate;
-        else if (iteration > unloadStep &&
+        else if (g_iteration > unloadStep &&
                  fabs(b_normalForce.z() / areaZ) >= 1.5 * sigma &&
-                 iteration <= 1.5 * unloadStep) // unloading
+                 g_iteration <= 1.5 * unloadStep) // unloading
           vel = -boundaryRate;
-        else if (iteration >
+        else if (g_iteration >
                  1.5 * unloadStep) // reloading. Note there are invalid loops if
                                    // stress < and iteration <, it is OK.
           vel = boundaryRate;
@@ -535,8 +540,8 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         vel = boundaryRate;
       }
       // vel = d_previousVelocity.z() * (2-atf) / (2+atf) + (b_normalForce.z() + sigma *
-      // areaZ) / mass * timeStep * 2 / (2 + atf);
-      pos = d_previousPosition.z() + vel * timeStep;
+      // areaZ) / mass * g_timeStep * 2 / (2 + atf);
+      pos = d_previousPosition.z() + vel * g_timeStep;
       setVelocity(Vec(getVelocity().x(), getVelocity().y(), vel));
       setPosition(Vec(getPosition().x(), getPosition().y(), pos));
       break;
@@ -544,13 +549,13 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (triaxialType == 1)
         vel = -boundaryRate;
       else if (triaxialType == 2) {
-        if (iteration <= unloadStep) // loading
+        if (g_iteration <= unloadStep) // loading
           vel = -boundaryRate;
-        else if (iteration > unloadStep &&
+        else if (g_iteration > unloadStep &&
                  fabs(b_normalForce.z() / areaZ) >= 1.5 * sigma &&
-                 iteration <= 1.5 * unloadStep) // unloading
+                 g_iteration <= 1.5 * unloadStep) // unloading
           vel = boundaryRate;
-        else if (iteration >
+        else if (g_iteration >
                  1.5 * unloadStep) // reloading. Note there are invalid loops if
                                    // stress < and iteration <, it is OK.
           vel = -boundaryRate;
@@ -558,8 +563,8 @@ PlaneBoundary::updateTriaxial(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         vel = boundaryRate;
       }
       // vel = d_previousVelocity.z() * (2-atf) / (2+atf) + (b_normalForce.z() - sigma *
-      // areaZ) / mass * timeStep * 2 / (2 + atf);
-      pos = d_previousPosition.z() + vel * timeStep;
+      // areaZ) / mass * g_timeStep * 2 / (2 + atf);
+      pos = d_previousPosition.z() + vel * g_timeStep;
       setVelocity(Vec(getVelocity().x(), getVelocity().y(), vel));
       setPosition(Vec(getPosition().x(), getPosition().y(), pos));
       break;
@@ -591,8 +596,8 @@ PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         vel = ((b_normalForce.y() + sigma * areaY) > 0 ? 1 : -1) * boundaryRate *
               sideRateRatio;
         // vel = d_previousVelocity.y() * (2-atf) / (2+atf) + (b_normalForce.y() + sigma *
-        // areaY) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.y() + vel * timeStep;
+        // areaY) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.y() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), vel, getVelocity().z()));
         setPosition(Vec(getPosition().x(), pos, getPosition().z()));
       }
@@ -602,8 +607,8 @@ PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         vel = ((b_normalForce.y() - sigma * areaY) > 0 ? 1 : -1) * boundaryRate *
               sideRateRatio;
         // vel = d_previousVelocity.y() * (2-atf) / (2+atf) + (b_normalForce.y() - sigma *
-        // areaY) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.y() + vel * timeStep;
+        // areaY) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.y() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), vel, getVelocity().z()));
         setPosition(Vec(getPosition().x(), pos, getPosition().z()));
       }
@@ -613,13 +618,13 @@ PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (plnstrnType == 1)
         vel = boundaryRate;
       else if (plnstrnType == 2) {
-        if (iteration <= unloadStep) // loading
+        if (g_iteration <= unloadStep) // loading
           vel = boundaryRate;
-        else if (iteration > unloadStep &&
+        else if (g_iteration > unloadStep &&
                  fabs(b_normalForce.z() / areaZ) >= 1.5 * sigma &&
-                 iteration <= 1.5 * unloadStep) // unloading
+                 g_iteration <= 1.5 * unloadStep) // unloading
           vel = -boundaryRate;
-        else if (iteration >
+        else if (g_iteration >
                  1.5 * unloadStep) // reloading. Note there are invalid loops if
                                    // stress < and iteration <, it is OK.
           vel = boundaryRate;
@@ -630,8 +635,8 @@ PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         vel = 0.0;
       }
       // vel = d_previousVelocity.z() * (2-atf) / (2+atf) + (b_normalForce.z() + sigma *
-      // areaZ) / mass * timeStep * 2 / (2 + atf);
-      pos = d_previousPosition.z() + vel * timeStep;
+      // areaZ) / mass * g_timeStep * 2 / (2 + atf);
+      pos = d_previousPosition.z() + vel * g_timeStep;
       setVelocity(Vec(getVelocity().x(), getVelocity().y(), vel));
       setPosition(Vec(getPosition().x(), getPosition().y(), pos));
       break;
@@ -639,13 +644,13 @@ PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
       if (plnstrnType == 1)
         vel = -boundaryRate;
       else if (plnstrnType == 2) {
-        if (iteration <= unloadStep) // loading
+        if (g_iteration <= unloadStep) // loading
           vel = -boundaryRate;
-        else if (iteration > unloadStep &&
+        else if (g_iteration > unloadStep &&
                  fabs(b_normalForce.z() / areaZ) >= 1.5 * sigma &&
-                 iteration <= 1.5 * unloadStep) // unloading
+                 g_iteration <= 1.5 * unloadStep) // unloading
           vel = boundaryRate;
-        else if (iteration >
+        else if (g_iteration >
                  1.5 * unloadStep) // reloading. Note there are invalid loops if
                                    // stress < and iteration <, it is OK.
           vel = -boundaryRate;
@@ -656,8 +661,8 @@ PlaneBoundary::updatePlaneStrain(REAL sigma, REAL areaX, REAL areaY, REAL areaZ)
         vel = 0.0;
       }
       // vel = d_previousVelocity.z() * (2-atf) / (2+atf) + (b_normalForce.z() - sigma *
-      // areaZ) / mass * timeStep * 2 / (2 + atf);
-      pos = d_previousPosition.z() + vel * timeStep;
+      // areaZ) / mass * g_timeStep * 2 / (2 + atf);
+      pos = d_previousPosition.z() + vel * g_timeStep;
       setVelocity(Vec(getVelocity().x(), getVelocity().y(), vel));
       setPosition(Vec(getPosition().x(), getPosition().y(), pos));
       break;
@@ -687,8 +692,8 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
       if (fabs(b_normalForce.x() / areaX + sigmaX) / sigmaX > tol) {
         vel = ((b_normalForce.x() + sigmaX * areaX) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.x() * (2-atf) / (2+atf) + (b_normalForce.x() + sigma *
-        // areaX) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.x() + vel * timeStep;
+        // areaX) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.x() + vel * g_timeStep;
         setVelocity(Vec(vel, getVelocity().y(), getVelocity().z()));
         setPosition(Vec(pos, getPosition().y(), getPosition().z()));
       }
@@ -697,8 +702,8 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
       if (fabs(b_normalForce.x() / areaX - sigmaX) / sigmaX > tol) {
         vel = ((b_normalForce.x() - sigmaX * areaX) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.x() * (2-atf) / (2+atf) + (b_normalForce.x() - sigma *
-        // areaX) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.x() + vel * timeStep;
+        // areaX) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.x() + vel * g_timeStep;
         setVelocity(Vec(vel, getVelocity().y(), getVelocity().z()));
         setPosition(Vec(pos, getPosition().y(), getPosition().z()));
       }
@@ -707,8 +712,8 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
       if (fabs(b_normalForce.y() / areaY + sigmaY) / sigmaY > tol) {
         vel = ((b_normalForce.y() + sigmaY * areaY) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.y() * (2-atf) / (2+atf) + (b_normalForce.y() + sigma *
-        // areaY) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.y() + vel * timeStep;
+        // areaY) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.y() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), vel, getVelocity().z()));
         setPosition(Vec(getPosition().x(), pos, getPosition().z()));
       }
@@ -717,8 +722,8 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
       if (fabs(b_normalForce.y() / areaY - sigmaY) / sigmaY > tol) {
         vel = ((b_normalForce.y() - sigmaY * areaY) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.y() * (2-atf) / (2+atf) + (b_normalForce.y() - sigma *
-        // areaY) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.y() + vel * timeStep;
+        // areaY) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.y() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), vel, getVelocity().z()));
         setPosition(Vec(getPosition().x(), pos, getPosition().z()));
       }
@@ -727,8 +732,8 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
       if (fabs(b_normalForce.z() / areaZ + sigma) / sigma > tol) {
         vel = ((b_normalForce.z() + sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.z() * (2-atf) / (2+atf) + (b_normalForce.z() + sigma *
-        // areaZ) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.z() + vel * timeStep;
+        // areaZ) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.z() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), getVelocity().y(), vel));
         setPosition(Vec(getPosition().x(), getPosition().y(), pos));
       }
@@ -737,8 +742,8 @@ PlaneBoundary::updateTrueTriaxial(REAL sigma, REAL areaX, REAL areaY,
       if (fabs(b_normalForce.z() / areaZ - sigma) / sigma > tol) {
         vel = ((b_normalForce.z() - sigma * areaZ) > 0 ? 1 : -1) * boundaryRate;
         // vel = d_previousVelocity.z() * (2-atf) / (2+atf) + (b_normalForce.z() - sigma *
-        // areaZ) / mass * timeStep * 2 / (2 + atf);
-        pos = d_previousPosition.z() + vel * timeStep;
+        // areaZ) / mass * g_timeStep * 2 / (2 + atf);
+        pos = d_previousPosition.z() + vel * g_timeStep;
         setVelocity(Vec(getVelocity().x(), getVelocity().y(), vel));
         setPosition(Vec(getPosition().x(), getPosition().y(), pos));
       }

@@ -98,10 +98,10 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
   auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  timeStep = util::getParam<REAL>("timeStep");
+  g_timeStep = util::getParam<REAL>("timeStep");
 
   // REAL time0, time1, time2, migraT, gatherT, totalT;
-  iteration = startStep;
+  auto iteration = startStep;
   std::size_t iterSnap = startSnap;
   std::string outputFolder(".");
   if (dem->getMPIRank() == 0) {
@@ -409,7 +409,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     if (dem->isBoundaryProcess())
       dem->findBoundaryContacts(iteration);
 
-    dem->clearContactForce();
+    dem->initializeForces();
 
     //proc0cout << "**NOTICE** DEM internal force\n";
     dem->internalForce(iteration);
@@ -478,7 +478,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     // time1 = MPI_Wtime();
 
     //proc0cout << "**NOTICE** DEM migrate\n";
-    dem->migrateParticles();
+    dem->migrateParticles(iteration);
 
     //proc0cout << "**NOTICE** PD migrate\n";
     pd->migratePeriParticle(iteration);

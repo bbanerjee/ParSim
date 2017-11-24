@@ -14,6 +14,8 @@ TEST(DEMParticleFileWriterTest, writeSingleType) {
   dem::InputParameter::get().addParameter("young", 1.0e9);
   dem::InputParameter::get().addParameter("poisson", 0.3);
   dem::InputParameter::get().addParameter("specificG", 1.5);
+  dem::InputParameter::get().addParameter("gravAccel", 9.81);
+  dem::InputParameter::get().addParameter("gravScale", 1);
 
   // Set up gradation
   Gradation gradation;
@@ -71,6 +73,8 @@ TEST(DEMParticleFileWriterTest, writeTwoTypes) {
   dem::InputParameter::get().addParameter("young", 1.0e9);
   dem::InputParameter::get().addParameter("poisson", 0.3);
   dem::InputParameter::get().addParameter("specificG", 1.5);
+  dem::InputParameter::get().addParameter("gravAccel", 9.81);
+  dem::InputParameter::get().addParameter("gravScale", 1);
 
   // Set up gradation
   Gradation gradation;

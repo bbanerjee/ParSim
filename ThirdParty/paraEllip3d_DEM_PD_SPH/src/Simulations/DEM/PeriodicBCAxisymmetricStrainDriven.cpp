@@ -85,17 +85,20 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
     // Communicate ghost particles to patches
     dem->communicateGhostParticles(iteration);
 
-    // Apply the particle boundary conditions
-    dem->applyPatchParticleBC(curTime);
-
     timeStep = dem->calcTimeStep(); 
 
+    // Apply the particle boundary conditions to each set of patch particles
+    dem->applyPatchParticleBC(curTime);
+
     dem->findContact(iteration);
+    
+    std::cout << "Overlaps = " << dem->numOverlappingParticles() << "\n";
 
     if (dem->isBoundaryProcess()) {
       dem->findBoundaryContacts(iteration);
     }
-    dem->clearContactForce();
+
+    dem->initializeForces();
 
     dem->internalForce(iteration);
 
@@ -129,7 +132,7 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
     }
 
     dem->releaseReceivedParticles();
-    dem->migrateParticles();
+    dem->migrateParticles(iteration);
 
     ++iteration;
     curTime += timeStep;

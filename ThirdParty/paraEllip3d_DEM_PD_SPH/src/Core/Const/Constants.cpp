@@ -20,8 +20,8 @@ const std::size_t OPREC = 6;
 // other global variables
 std::ofstream debugInf; // debug info
 MPI_File overlapInf;    // contact overlap info, parallel I/O
-std::size_t iteration;  // iteration number
-REAL timeStep;          // time step
-REAL timeAccrued;       // accurued time
+std::size_t g_iteration;  // iteration number
+REAL g_timeStep;          // time step
+REAL g_timeAccrued;       // accrued time
 REAL plan_gravity;      // used in PeriDEMBond.cpp, rho*l^2*g
 }

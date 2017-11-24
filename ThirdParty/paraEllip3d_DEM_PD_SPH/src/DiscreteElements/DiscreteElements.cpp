@@ -161,7 +161,7 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
   auto netStep = endStep - startStep + 1;
   auto netSnap = endSnap - startSnap + 1;
 
-  iteration = startStep;
+  auto iteration = startStep;
   auto iterSnap = startSnap;
   if (s_mpiRank == 0) {
 
@@ -187,18 +187,18 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
 
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   REAL timeCount = 0;
-  timeStep = util::getParam<REAL>("timeStep");
-  timeAccrued = util::getParam<REAL>("timeAccrued");
-  REAL timeTotal = timeAccrued + timeStep * netStep;
+  g_timeStep = util::getParam<REAL>("timeStep");
+  g_timeAccrued = util::getParam<REAL>("timeAccrued");
+  REAL timeTotal = g_timeAccrued + g_timeStep * netStep;
 
-  while (timeAccrued < timeTotal) {
+  while (g_timeAccrued < timeTotal) {
 
     bool toCheckTime = (iteration + 1) % (netStep / netSnap) == 0;
 
     commuT = migraT = gatherT = totalT = 0;
     time0 = MPI_Wtime();
 
-    proc0cout << "**NOTICE** Time = " << timeAccrued << " iteration = " << iteration << "\n";
+    proc0cout << "**NOTICE** Time = " << g_timeAccrued << " iteration = " << iteration << "\n";
     communicateGhostParticles(iteration);
 
     if (toCheckTime)
@@ -215,7 +215,7 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     if (isBoundaryProcess())
       findBoundaryContacts(iteration);
 
-    clearContactForce();
+    initializeForces();
 
     //proc0cout << "**NOTICE** Before internalForce\n";
     internalForce(iteration);
@@ -229,8 +229,8 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     updateParticles(iteration);
     updatePatchBox(); // universal; updatePatchBoxMaxZ() for deposition only
 
-    /**/ timeCount += timeStep;
-    /**/ timeAccrued += timeStep;
+    /**/ timeCount += g_timeStep;
+    /**/ g_timeAccrued += g_timeStep;
     /**/ if (timeCount >= timeTotal / netSnap) {
       // if (iteration % (netStep / netSnap) == 0) {
       if (toCheckTime)
@@ -264,7 +264,7 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     if (toCheckTime)
       time1 = MPI_Wtime();
     //proc0cout << "**NOTICE** Before migrateParticles\n";
-    migrateParticles();
+    migrateParticles(iteration);
     if (toCheckTime)
       time2 = MPI_Wtime();
     migraT = time2 - time1;
@@ -630,13 +630,13 @@ DiscreteElements::calcTimeStep()
   dt[1] = CFL * d_vibrationTimeStep;
   dt[2] = CFL * d_impactTimeStep;
 
-  timeStep = dt.min();
+  g_timeStep = dt.min();
   //if (s_mpiRank == 0) {
-    //std::cout << "Timestep = " << timeStep
+    //std::cout << "Timestep = " << g_timeStep
     //          << " Vibration timestep = " << d_vibrationTimeStep
     //          << " Impact timestep = " << d_impactTimeStep << "\n";
   //}
-  return timeStep;
+  return g_timeStep;
 }
 
 void
@@ -749,24 +749,28 @@ DiscreteElements::findContactSingleThread(REAL minOverlap, REAL measOverlap,
       } 
       */
 
-      if ((vnormL2(v - u) < particleRad + mergeParticleRad) &&
-          // not both are fixed particles
-          (particleType != DEMParticle::DEMParticleType::FIXED || 
+      // Ignore if both particles are fixed, free boundary, periodic boundary,
+      // or ghost particles. Check separation between centers before
+      // doing penetration calculation
+      if ((particleType != DEMParticle::DEMParticleType::FIXED || 
            mergeParticleType != DEMParticle::DEMParticleType::FIXED) &&
-          // not both are free boundary particles
           (particleType != DEMParticle::DEMParticleType::BOUNDARY_FREE || 
            mergeParticleType != DEMParticle::DEMParticleType::BOUNDARY_FREE) &&
-          // not both are ghost particles
+          (particleType != DEMParticle::DEMParticleType::BOUNDARY_PERIODIC || 
+           mergeParticleType != DEMParticle::DEMParticleType::BOUNDARY_PERIODIC) &&
           (particleType != DEMParticle::DEMParticleType::GHOST || 
-           mergeParticleType != DEMParticle::DEMParticleType::GHOST)) {
+           mergeParticleType != DEMParticle::DEMParticleType::GHOST) &&
+          (vnormL2(v - u) < particleRad + mergeParticleRad)) {
 
-        DEMContact tmpContact(particle.get(), mergeParticle.get());
+        DEMContact contact(particle.get(), mergeParticle.get());
 
 #ifdef TIME_PROFILE
         startInner = Timer::now();
 #endif
-        if (tmpContact.isOverlapped(minOverlap, measOverlap)) {
-          d_contacts.push_back(tmpContact); // domains use value
+        if (contact.isOverlapped(minOverlap, measOverlap, iteration)) {
+          std::cout << "(P1, P2): " << static_cast<int>(particleType)
+                    << ", " << static_cast<int>(mergeParticleType) << "\n";
+          d_contacts.push_back(contact); // domains use value
                                             // semantics, so a "copy" is
                                             // pushed back.
         }
@@ -829,7 +833,7 @@ DiscreteElements::findContactMultiThread(int ompThreads,
 
         DEMContact tmpContact(d_patchParticles[i].get(), d_mergedParticles[j].get());
 
-        if (tmpContact.isOverlapped(minOverlap, measOverlap)) {
+        if (tmpContact.isOverlapped(minOverlap, measOverlap, iteration)) {
 #pragma omp critical
           d_contacts.push_back(tmpContact); // domains use value
                                             // semantics, so a "copy" is
@@ -855,6 +859,16 @@ DiscreteElements::findBoundaryContacts(std::size_t iteration)
 }
 
 void
+DiscreteElements::initializeForces()
+{
+  for (auto& particle : d_patchParticles) {
+    particle->clearContactForce();
+    particle->initializeForceAndMoment();
+    particle->applyBodyForce();
+  }
+}
+
+void
 DiscreteElements::clearContactForce()
 {
   for (auto& particle : d_patchParticles) {
@@ -863,8 +877,29 @@ DiscreteElements::clearContactForce()
 }
 
 void
+DiscreteElements::applyBodyForce()
+{
+  for (auto& particle : d_patchParticles) {
+    particle->applyBodyForce();
+  }
+}
+
+void
 DiscreteElements::internalForce(std::size_t iteration)
 {
+  REAL young = util::getParam<REAL>("young");
+  REAL poisson = util::getParam<REAL>("poisson");
+  REAL shearModulus = young / (2 * (1 + poisson));
+
+  // Hertzian contact stiffness, cohesion, damping, friction
+  REAL stiffness = 0.5 * young / (1 - poisson * poisson);
+  REAL cohesion = util::getParam<REAL>("contactCohesion");
+  REAL damping = util::getParam<REAL>("contactDamp");
+  REAL friction = util::getParam<REAL>("contactFric");
+
+  REAL maxOverlapFactor = util::getParam<REAL>("maxAllowableRelativeOverlap");
+  REAL minMeasurableOverlap = util::getParam<REAL>("minMeasurableOverlap");
+
   /*
     std::ostringstream msg;
     msg << "iteration = " << iteration << " proc = " << s_mpiRank;
@@ -890,10 +925,15 @@ DiscreteElements::internalForce(std::size_t iteration)
   // d_contactTangents must be cleared before filling in new values.
   d_contactTangents.clear();
 
+  std::size_t overlapCount = 0;
   for (auto& contact : d_contacts) {
     // cannot be parallelized as it may change a
     // particle's force simultaneously.
-    contact.computeContactForces(iteration);
+    int overlap = contact.computeContactForces(g_timeStep, iteration,
+                                 stiffness, shearModulus,
+                                 cohesion, damping, friction,
+                                 maxOverlapFactor, minMeasurableOverlap);
+    overlapCount += overlap;
 
     // checkout current tangential force and displacment
     contact.checkoutContactTangents(d_contactTangents);
@@ -916,17 +956,21 @@ DiscreteElements::internalForce(std::size_t iteration)
            << std::endl;
 #endif
 
+  MPI_Reduce(&overlapCount, &d_overlapCount, 1, MPI_INTEGER, MPI_SUM, 0, s_mpiWorld);
   MPI_Reduce(pAvg, sumAvg, 3, MPI_DOUBLE, MPI_SUM, 0, s_mpiWorld);
   d_avgNormalForce = sumAvg[0] / s_mpiSize;
   d_avgShearForce = sumAvg[1] / s_mpiSize;
   d_avgPenetration = sumAvg[2] / s_mpiSize;
+
+  std::cout << "Overlap count = " << d_overlapCount
+            << ", " << overlapCount << "\n";
 }
 
 void
 DiscreteElements::boundaryForce(std::size_t iteration)
 {
   for (auto& boundary : d_boundaries) {
-    boundary->boundaryForce(d_boundaryTangentMap);
+    boundary->boundaryForce(d_boundaryTangentMap, iteration);
   }
 }
 
@@ -1487,7 +1531,7 @@ DiscreteElements::releaseReceivedParticles()
 }
 
 void
-DiscreteElements::migrateParticles()
+DiscreteElements::migrateParticles(std::size_t iteration)
 {
   //std::ostringstream out;
   //out << "Migrate: Rank: " << s_mpiRank << ": in: " << d_patchParticles.size();
@@ -1784,7 +1828,7 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, REAL distX, REA
   normalTraction[5] = normalForce[5]/areaZ;
 
   // Write normal force
-  ofs << std::setw(OWID) << iteration;
+  ofs << std::setw(OWID) << g_iteration;
   for (auto force : normalForce)
     ofs << std::setw(OWID) << force;
 
@@ -1840,7 +1884,7 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, REAL distX, REA
 
   // time
   ofs << std::setw(OWID) << d_vibrationTimeStep << std::setw(OWID) << d_impactTimeStep
-      << std::setw(OWID) << timeStep;
+      << std::setw(OWID) << g_timeStep;
 
   ofs << std::endl;
 }

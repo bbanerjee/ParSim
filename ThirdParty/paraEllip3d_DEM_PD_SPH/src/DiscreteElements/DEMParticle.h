@@ -163,6 +163,42 @@ public:
   void setInContact(bool value) { d_inContact = value; }
   void setContactNum(std::size_t num) { d_contactNum = num; }
 
+  inline
+  void initializeForceAndMoment() {
+    d_force = d_constForce;
+    d_moment = d_constMoment;
+  }
+
+  inline
+  void computeBodyForce(const Vec& direction) {
+    REAL gravAccel = util::getParam<REAL>("gravAccel");
+    REAL gravScale = util::getParam<REAL>("gravScale");
+    // Unit is Newton, gravScale is for amplification.
+    d_bodyForce = direction * (gravAccel * d_mass * gravScale);
+    //d_force += Vec(0, 0, -gravAccel * d_mass * gravScale);
+    //std::cout << "d_force = " << d_force << " g = " << gravAccel
+    //          << " scale = " << gravScale << " m = " << d_mass << std::endl;
+  }
+
+  inline 
+  void addBodyForce() {
+    d_force += d_bodyForce;
+  }
+
+  inline 
+  void removeBodyForce() {
+    d_force -= d_bodyForce;
+  }
+
+  inline
+  void applyBodyForce() {
+    addBodyForce();
+
+    // ellipsoidal pile
+    if (getType() == DEMParticle::DEMParticleType::TRANSLATE_Z_ONLY) 
+      removeBodyForce();
+  }
+
   void clearContactForce();
   void addForce(Vec vv)
   {
@@ -203,7 +239,9 @@ public:
   // calculate the normal force between particle and a plane rigid boundary
   void planeRBForce(PlaneBoundary* plane,
                     BoundaryTangentArrayMap& BoundarytangentMap,
-                    BoundaryTangentArray& vtmp);
+                    BoundaryTangentArray& vtmp,
+                    REAL minOverlapFactor, REAL maxOverlapFactor,
+                    std::size_t iteration);
 
   // calculate the normal force between particle and a cylinder wall
   Vec cylinderRBForce(std::size_t BoundaryID, const Cylinder& S, int side);
@@ -262,18 +300,22 @@ private:
   // angular velocity in global frame!
   Vec d_currOmga; 
   Vec d_prevOmga;
+
+  // Forces and moments
   Vec d_force;
   std::map<size_t, Vec> d_forceIDMap;
 
-  Vec d_prevForce;
   Vec d_moment;
   std::map<size_t, Vec> d_momentIDMap;
 
+  Vec d_prevForce;
   Vec d_prevMoment;
+
+  Vec d_bodyForce;
   Vec d_constForce;
   Vec d_constMoment;
 
-  // specific gravity
+  // specific gravity, mass, volume
   REAL d_density; 
   REAL d_mass;
   REAL d_volume;
@@ -327,6 +369,7 @@ private:
     ar& d_moment;
     ar& d_momentIDMap;
     ar& d_prevMoment;
+    ar& d_bodyForce;
     ar& d_constForce;
     ar& d_constMoment;
     ar& d_density;

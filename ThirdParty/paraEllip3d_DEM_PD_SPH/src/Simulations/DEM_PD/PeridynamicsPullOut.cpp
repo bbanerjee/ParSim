@@ -75,10 +75,10 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
   auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  timeStep = util::getParam<REAL>("timeStep");
+  g_timeStep = util::getParam<REAL>("timeStep");
 
   // REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
-  iteration = startStep;
+  auto iteration = startStep;
   std::size_t iterSnap = startSnap;
   std::string outputFolder(".");
   if (dem->getMPIRank() == 0) {
@@ -145,7 +145,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     if (dem->isBoundaryProcess())
       dem->findBoundaryContacts(iteration);
 
-    dem->clearContactForce();
+    dem->initializeForces();
     dem->internalForce(iteration);
     if (dem->isBoundaryProcess())
       dem->boundaryForce(iteration);

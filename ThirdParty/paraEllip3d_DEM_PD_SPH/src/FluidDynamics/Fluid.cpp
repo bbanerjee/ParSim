@@ -303,9 +303,9 @@ Fluid::inteStep1()
 {
   addGhostPoints();
   soundSpeed();
-  timeStep = std::min(timeStep, calcTimeStep());
-  debugInf << std::setw(OWID) << iteration << std::setw(OWID) << timeStep
-           << std::setw(OWID) << timeAccrued << std::endl;
+  g_timeStep = std::min(g_timeStep, calcTimeStep());
+  debugInf << std::setw(OWID) << g_iteration << std::setw(OWID) << g_timeStep
+           << std::setw(OWID) << g_timeAccrued << std::endl;
   enthalpy();
   rotateIJK();
 
@@ -315,11 +315,11 @@ Fluid::inteStep1()
       for (std::size_t k = 1; k < nz - 1; ++k) {
         for (std::size_t m = 0; m < n_integ; ++m)
           arrayU[i][j][k][m] -=
-            (timeStep / dx *
+            (g_timeStep / dx *
                (arrayRoeFlux[i][j][k][m][0] - arrayRoeFlux[i - 1][j][k][m][0]) +
-             timeStep / dy *
+             g_timeStep / dy *
                (arrayRoeFlux[i][j][k][m][1] - arrayRoeFlux[i][j - 1][k][m][1]) +
-             timeStep / dz *
+             g_timeStep / dz *
                (arrayRoeFlux[i][j][k][m][2] - arrayRoeFlux[i][j][k - 1][m][2]));
       }
 
@@ -341,15 +341,15 @@ Fluid::inteStep2()
       for (std::size_t k = 1; k < nz - 1; ++k) {
         for (std::size_t m = 0; m < n_integ; ++m)
           arrayU[i][j][k][m] -=
-            (timeStep / (2 * RK * dx) *
+            (g_timeStep / (2 * RK * dx) *
                (arrayRoeFlux[i][j][k][m][0] - arrayRoeFlux[i - 1][j][k][m][0] +
                 (arrayRoeFluxStep2[i][j][k][m][0] -
                  arrayRoeFluxStep2[i - 1][j][k][m][0])) +
-             timeStep / (2 * RK * dy) *
+             g_timeStep / (2 * RK * dy) *
                (arrayRoeFlux[i][j][k][m][1] - arrayRoeFlux[i][j - 1][k][m][1] +
                 (arrayRoeFluxStep2[i][j][k][m][1] -
                  arrayRoeFluxStep2[i][j - 1][k][m][1])) +
-             timeStep / (2 * RK * dz) *
+             g_timeStep / (2 * RK * dz) *
                (arrayRoeFlux[i][j][k][m][2] - arrayRoeFlux[i][j][k - 1][m][2] +
                 (arrayRoeFluxStep2[i][j][k][m][2] -
                  arrayRoeFluxStep2[i][j][k - 1][m][2])));
@@ -373,19 +373,19 @@ Fluid::inteStep3()
       for (std::size_t k = 1; k < nz - 1; ++k) {
         for (std::size_t m = 0; m < n_integ; ++m)
           arrayU[i][j][k][m] -=
-            (timeStep / (6 * dx) *
+            (g_timeStep / (6 * dx) *
                (arrayRoeFlux[i][j][k][m][0] - arrayRoeFlux[i - 1][j][k][m][0] +
                 (arrayRoeFluxStep2[i][j][k][m][0] -
                  arrayRoeFluxStep2[i - 1][j][k][m][0]) +
                 4 * (arrayRoeFluxStep3[i][j][k][m][0] -
                      arrayRoeFluxStep3[i - 1][j][k][m][0])) +
-             timeStep / (6 * dy) *
+             g_timeStep / (6 * dy) *
                (arrayRoeFlux[i][j][k][m][1] - arrayRoeFlux[i][j - 1][k][m][1] +
                 (arrayRoeFluxStep2[i][j][k][m][1] -
                  arrayRoeFluxStep2[i][j - 1][k][m][1]) +
                 4 * (arrayRoeFluxStep3[i][j][k][m][1] -
                      arrayRoeFluxStep3[i][j - 1][k][m][1])) +
-             timeStep / (6 * dz) *
+             g_timeStep / (6 * dz) *
                (arrayRoeFlux[i][j][k][m][2] - arrayRoeFlux[i][j][k - 1][m][2] +
                 (arrayRoeFluxStep2[i][j][k][m][2] -
                  arrayRoeFluxStep2[i][j][k - 1][m][2]) +
@@ -468,10 +468,10 @@ Fluid::penalize()
       for (std::size_t k = 0; k < nz; ++k)
         for (std::size_t m = 0; m < n_dim; ++m) {
           arrayU[i][j][k][var_mom[m]] -=
-            arrayU[i][j][k][var_msk] * arrayPenalForce[i][j][k][m] * timeStep;
+            arrayU[i][j][k][var_msk] * arrayPenalForce[i][j][k][m] * g_timeStep;
           arrayU[i][j][k][var_eng] -= arrayU[i][j][k][var_msk] *
                                       arrayPenalForce[i][j][k][m] *
-                                      arrayU[i][j][k][var_vel[m]] * timeStep;
+                                      arrayU[i][j][k][var_vel[m]] * g_timeStep;
         }
 }
 
@@ -969,7 +969,7 @@ Fluid::calcParticleForce(DEMParticlePArray& ptcls, std::ofstream& ofs)
     ptcl->addMoment(presMoment);
 
     if (ptcl->getId() == 1) {
-      ofs << std::setw(OWID) << iteration << std::setw(OWID) << timeAccrued
+      ofs << std::setw(OWID) << g_iteration << std::setw(OWID) << g_timeAccrued
           << std::setw(OWID) << penalForce.x() << std::setw(OWID)
           << penalForce.y() << std::setw(OWID) << penalForce.z()
           << std::setw(OWID) << presForce.x() << std::setw(OWID)

@@ -100,7 +100,8 @@ DEMContact::getP2() const
 }
 
 bool
-DEMContact::isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap)
+DEMContact::isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap,
+                         std::size_t iteration)
 {
   // v[0] is the point on p2, v[1] is the point on p1
   REAL coef1[10], coef2[10];
@@ -155,6 +156,15 @@ DEMContact::isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap)
       d_penetration / (2 * maxRadius) > minRelativeOverlap &&
       nearbyint(d_penetration / measurableOverlap) >= 1) { 
     // a strict detection method
+    std::cout << "Iteration = " << iteration
+              << " p1 = (" << d_p1->getId() << "," 
+              << static_cast<int>(d_p1->getType()) << ")"
+              << " p2 = (" << d_p2->getId() << "," 
+              << static_cast<int>(d_p2->getType()) << ")"
+              << " b1 = " << std::boolalpha << b1
+              << " b2 = " << std::boolalpha << b2
+              << " penetration = " << d_penetration
+              << " maxRadius = " << maxRadius << "\n";
     d_isInContact = true;
     return true;
   } else {
@@ -199,8 +209,12 @@ DEMContact::checkoutContactTangents(ContactTangentArray& contactTangentVec)
 // isOverlapped() has been called in findContact() in dem.cpp and
 // information recorded,
 // now this function is called by internalForce() in dem.cpp.
-void
-DEMContact::computeContactForces(std::size_t iteration)
+int
+DEMContact::computeContactForces(REAL timeStep, std::size_t iteration,
+                                 REAL stiffness, REAL shearModulus,
+                                 REAL cohesion, REAL damping,
+                                 REAL friction, REAL maxOverlapFactor,
+                                 REAL minMeasurableOverlap)
 {
   if (!d_isInContact) {
     d_isInContact = false;
@@ -216,7 +230,7 @@ DEMContact::computeContactForces(std::size_t iteration)
     d_contactRadius = 0;
     d_radius1 = d_radius2 = 0;
     d_spinResist = 0;
-    return;
+    return 0;
   }
 
   /*
@@ -233,14 +247,6 @@ DEMContact::computeContactForces(std::size_t iteration)
   }
   */
 
-  REAL young = util::getParam<REAL>("young");
-  REAL poisson = util::getParam<REAL>("poisson");
-  REAL maxAllowableRelativeOverlap = util::getParam<REAL>("maxAllowableRelativeOverlap");
-  REAL minMeasurableOverlap = util::getParam<REAL>("minMeasurableOverlap");
-  REAL contactCohesion = util::getParam<REAL>("contactCohesion");
-  REAL contactDamp = util::getParam<REAL>("contactDamp");
-  REAL contactFric = util::getParam<REAL>("contactFric");
-
   // obtain normal force, using absolute equation instead of stiffness method
   d_p1->setContactNum(d_p1->getNumBoundaryContacts() + 1);
   d_p2->setContactNum(d_p2->getNumBoundaryContacts() + 1);
@@ -248,14 +254,20 @@ DEMContact::computeContactForces(std::size_t iteration)
   d_p2->setInContact(true);
 
   d_R0 = d_radius1 * d_radius2 / (d_radius1 + d_radius2);
-  d_E0 = 0.5 * young / (1 - poisson * poisson);
-  REAL allowedOverlap = 2.0 * fmin(d_radius1, d_radius2) * maxAllowableRelativeOverlap;
+  d_E0 = stiffness;
+  auto poissonRatio = 1 - shearModulus/stiffness;
+
+  REAL allowedOverlap = 2.0 * std::min(d_radius1, d_radius2) * maxOverlapFactor;
+  int excessiveOverlap = 0;
   if (d_penetration > allowedOverlap) {
     std::stringstream inf;
     inf.setf(std::ios::scientific, std::ios::floatfield);
-    inf << " DEMContact.cpp: iter=" << std::setw(8) << iteration
-        << " ptcl1=" << std::setw(8) << getP1()->getId()
-        << " ptcl2=" << std::setw(8) << getP2()->getId()
+    inf << " DEMContact.cpp: " << std::setw(4) << __LINE__ << ":"
+        << " iter=" << std::setw(8) << iteration
+        << " ptcl1=(" << std::setw(8) << getP1()->getId()
+        << ", " << std::setw(2) << static_cast<int>(getP1()->getType()) << ")"
+        << " ptcl2=(" << std::setw(8) << getP2()->getId()
+        << ", " << std::setw(2) << static_cast<int>(getP2()->getType()) << ")"
         << " d_penetration=" << std::setw(OWID) << d_penetration
         << " allow=" << std::setw(OWID) << allowedOverlap << std::endl;
     MPI_Status status;
@@ -263,125 +275,148 @@ DEMContact::computeContactForces(std::size_t iteration)
     MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
                           inf.str().length(), MPI_CHAR, &status);
 
-    d_penetration = allowedOverlap;
+    //d_penetration = allowedOverlap;
+    excessiveOverlap = 1;
   }
 
-  d_penetration = nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
-  d_contactRadius = sqrt(d_penetration * d_R0);
+  //d_penetration = 
+  //  nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
+
+  d_contactRadius = std::sqrt(d_penetration * d_R0);
   // d_normalDirection points from particle 1 to particle 2
   d_normalDirection = normalize(d_point1 - d_point2);
   // normalForce pointing to particle 1 // pow(d_penetration, 1.5)
-  d_normalForce = -sqrt(d_penetration * d_penetration * d_penetration) * sqrt(d_R0) * 4 *
-                  d_E0 / 3 * d_normalDirection;
+  d_normalForce = -std::sqrt(d_penetration * d_penetration * d_penetration) * 
+                   std::sqrt(d_R0) * 4 * d_E0 / 3 * d_normalDirection;
+  auto kn = computeNormalStiffness(d_normalForce, d_R0, d_E0);
 
-  // apply cohesion force
-  d_cohesionForce = Pi * (d_penetration * d_R0) * contactCohesion * d_normalDirection;
+  d_cohesionForce = Pi * (d_penetration * d_R0) * cohesion * d_normalDirection;
 
-  // obtain normal damping force
-  Vec cp = (d_point1 + d_point2) / 2;
-  Vec veloc1 =
-    d_p1->currentVelocity() + cross(d_p1->currentAngularVelocity(), (cp - d_p1->currentPosition()));
-  Vec veloc2 =
-    d_p2->currentVelocity() + cross(d_p2->currentAngularVelocity(), (cp - d_p2->currentPosition()));
   REAL m1 = getP1()->mass();
   REAL m2 = getP2()->mass();
-  REAL kn = pow(6 * vnormL2(d_normalForce) * d_R0 * pow(d_E0, 2), 1.0 / 3.0);
-  REAL dampCritical = 2 * sqrt(m1 * m2 / (m1 + m2) * kn); // critical damping
-  Vec contactDampingForce = contactDamp * dampCritical *
-                        dot(veloc1 - veloc2, d_normalDirection) * d_normalDirection;
 
-  d_vibraTimeStep = 2.0 * sqrt(m1 * m2 / (m1 + m2) / kn);
-  Vec relativeVel = veloc1 - veloc2;
+  Vec midPoint = (d_point1 + d_point2) / 2;
+  Vec pVelocity1 = computeVelocity(d_p1, midPoint);
+  Vec pVelocity2 = computeVelocity(d_p2, midPoint);
+  Vec relativeVel = pVelocity1 - pVelocity2;
+
+  auto contactDampingForce = computeDampingForce(m1, m2, relativeVel,
+                                                 damping, kn, d_normalDirection);
+
+  updateTimestep(m1, m2, relativeVel, kn, d_normalDirection, allowedOverlap);
+
+  if (friction != 0) {
+    computeTangentForce(timeStep, iteration, shearModulus, poissonRatio,
+                        friction, d_contactRadius, relativeVel,
+                        d_normalDirection, d_normalForce);
+  }
+
+  updateForceAndMoment(d_normalForce, d_tangentForce, d_cohesionForce, 
+                       contactDampingForce, midPoint, d_p1, d_p2);
+
+  return excessiveOverlap;
+}
+
+// Compute the damping force
+Vec
+DEMContact::computeDampingForce(REAL pMass1, REAL pMass2, 
+                                const Vec& relativeVel,
+                                REAL dampingCoeff, REAL normalStiffness,
+                                const Vec& contactNormal)
+{
+  // critical damping
+  REAL dampCritical = 
+    2 * std::sqrt(pMass1 * pMass2 / (pMass1 + pMass2) * normalStiffness); 
+  Vec contactDampingForce = dampingCoeff * dampCritical *
+    dot(relativeVel, contactNormal) * contactNormal;
+  return contactDampingForce;
+}
+
+// Update time step sizes
+void
+DEMContact::updateTimestep(REAL pMass1, REAL pMass2, 
+                           const Vec& relativeVel, 
+                           REAL normalStiffness, const Vec& contactNormal,
+                           REAL allowedOverlap)
+{
+  d_vibraTimeStep = 
+    2 * std::sqrt(pMass1 * pMass2 / ((pMass1 + pMass2) * normalStiffness));
   d_impactTimeStep =
     (relativeVel.lengthSq() < std::numeric_limits<double>::min())
       ? std::numeric_limits<double>::max()
-      : allowedOverlap / fabs(dot(relativeVel, d_normalDirection));
+      : allowedOverlap / fabs(dot(relativeVel, contactNormal));
+}
 
-  // obtain tangential force
-  if (contactFric != 0) {
-    d_G0 = young / 2 / (1 + poisson);
-    // RelaDispInc points along point1's displacement relative to point2
-    Vec RelaDispInc = (veloc1 - veloc2) * timeStep;
-    Vec tangentDispInc = RelaDispInc - dot(RelaDispInc, d_normalDirection) * d_normalDirection;
-    // prevTangentDisp read by checkinPreviousContactTangents()
-    d_tangentDisplacement = d_prevTangentDisplacement + tangentDispInc;
-    if (vnormL2(d_tangentDisplacement) == 0) {
-      d_tangentDirection = 0;
-    } else {
-      // tangentDirc points along Tangentential forces exerted on particle 1
-      d_tangentDirection = normalize(-d_tangentDisplacement);
-    }
+// Compute the tangential force
+void
+DEMContact::computeTangentForce(REAL timeStep, std::size_t iteration,
+                                REAL shearModulus, 
+                                REAL poissonRatio,
+                                REAL friction, 
+                                REAL contactRadius,
+                                const Vec& relativeVel, 
+                                const Vec& contactNormal, 
+                                const Vec& normalForce)
+{
+  // disp points along point1's displacement relative to point2
+  Vec dispInc = relativeVel * timeStep;
+  Vec tangentDispInc = dispInc - dot(dispInc, contactNormal) * contactNormal;
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // linear friction model
-    REAL fP = contactFric * vnormL2(d_normalForce);
-    REAL ks = 4 * d_G0 * d_contactRadius / (2 - poisson);
-    // d_prevTangentForce read by CheckinPreTangent()
-    d_tangentForce = d_prevTangentForce + ks * (-tangentDispInc);
-    if (vnormL2(d_tangentForce) > fP) {
-      d_tangentForce = fP * d_tangentDirection;
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifdef MINDLIN_ASSUMED
-    computeTangentForceMindlinAssumed(contactFric, poisson, tangentDispInc);
-#endif
-#ifdef MINDLIN_KNOWN
-    computeTangentForceMindlinKnown(contactFric, poisson, tangentDispInc);
-#endif
+  // prevTangentDisp read by checkinPreviousContactTangents()
+  d_tangentDisplacement = d_prevTangentDisplacement + tangentDispInc;
+  if (vnormL2(d_tangentDisplacement) == 0) {
+    d_tangentDirection = 0;
+  } else {
+    // tangentDirc points along Tangentential forces exerted on particle 1
+    d_tangentDirection = normalize(-d_tangentDisplacement);
   }
 
-  // apply forces
-  Vec totalForce = d_normalForce +  d_tangentForce + d_cohesionForce
-                   - contactDampingForce;
-  Vec momentArm = cp - d_p1->currentPosition();
-  Vec totalMoment = cross(momentArm, (d_normalForce + d_tangentForce - contactDampingForce));
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // linear friction model
+  REAL fp = friction * vnormL2(normalForce);
+  REAL ks = 4 * shearModulus * contactRadius / (2 - poissonRatio);
 
-  // Update the forces and moments
-  //d_p1->addForce(totalForce);
-  //d_p2->addForce(-totalForce);
-  //d_p1->addMoment(totalMoment);
-  //d_p2->addMoment(-totalMoment);
-  d_p1->addForceIDMap(totalForce, d_p2->getId());
-  d_p2->addForceIDMap(-totalForce, d_p1->getId());
-  d_p1->addMomentIDMap(totalMoment, d_p2->getId());
-  d_p2->addMomentIDMap(-totalMoment, d_p1->getId());
+  // d_prevTangentForce read by CheckinPreTangent()
+  d_tangentForce = d_prevTangentForce + ks * (-tangentDispInc);
+  if (vnormL2(d_tangentForce) > fp) {
+    d_tangentForce = fp * d_tangentDirection;
+  }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  /*
-  if ((d_p1->getId() == 2 && d_p2->getId() == 94) ||
-      (d_p1->getId() == 94 && d_p2->getId() == 2))  {
-    int world_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    //std::cout << "After DEMContact: MPI_rank = " << world_rank 
-    //          << " iter = " << iteration << std::setprecision(16)
-    //          << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
-    //          << " f1 = " << d_p1->force() << "\n\t"
-    //          << " f2 = " << d_p2->force() << "\n\t"
-    //          << " d_penetration=" << d_penetration << "\n\t" << "\n";
-  }
-  */
-  /*
-  {
-    //std::cout << " cohesionForce=" << d_cohesionForce << "\n\t"
-              << " normalForce=" << d_normalForce << "\n\t"
-              << " tangentForce =" << d_tangentForce << "\n\t"
-              << " dampingForce = " << contactDampingForce << "\n\t"
-              << " totalForce = " << totalForce << "\n\t"
-              << " totalMoment = " << totalMoment << "\n\t"
-              << " accumulated time=" << iteration * timeStep << "\n"
-              << "\t cp = " << cp << "\n\t"
-              << " d_point1 = " << d_point1 << " d_point2 = " << d_point2
-              << "\n\t"
-              << " V1 = " << d_p1->currentVelocity()
-              << " V2 = " << d_p2->currentVelocity() << "\n\t"
-              << " W1 = " << d_p1->currentAngularVelocity()
-              << " W2 = " << d_p2->currentAngularVelocity() << "\n\t"
-              << " P1 = " << d_p1->currentPosition()
-              << " P2 = " << d_p2->currentPosition() << "\n\t"
-              << " veloc1 = " << veloc1 << " veloc2 = " << veloc2 << "\n";
-  }
-  */
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  #ifdef MINDLIN_ASSUMED
+    computeTangentForceMindlinAssumed(friction, poissonRatio, tangentDispInc);
+  #endif
+  #ifdef MINDLIN_KNOWN
+    computeTangentForceMindlinKnown(friction, poissonRatio, tangentDispInc, iteration);
+  #endif
+}
+
+// Update the forces and moments
+void
+DEMContact::updateForceAndMoment(const Vec& normalForce, const Vec& tangentForce,
+                                 const Vec& cohesionForce, const Vec& dampingForce,
+                                 const Vec& momentCenter,
+                                 DEMParticle* p1, DEMParticle* p2) 
+{
+  Vec totalForce = normalForce + tangentForce + cohesionForce - dampingForce;
+  Vec totalMoment = cross((momentCenter - p1->currentPosition()), 
+                          (normalForce + tangentForce - dampingForce));
+
+  auto particle1 = p1->getId();
+  auto particle2 = p2->getId();
+  p1->addForceIDMap(totalForce, particle2);
+  p2->addForceIDMap(-totalForce, particle1);
+  p1->addMomentIDMap(totalMoment, particle2);
+  p2->addMomentIDMap(-totalMoment, particle1);
+
+  //std::cout << " cohesionForce=" << d_cohesionForce << "\n\t"
+  //          << " normalForce=" << d_normalForce << "\n\t"
+  //          << " tangentForce =" << d_tangentForce << "\n\t"
+  //          << " dampingForce = " << contactDampingForce << "\n\t"
+  //          << " totalForce = " << totalForce << "\n\t"
+  //          << " totalMoment = " << totalMoment << "\n\t"
+  //          << "\t cp = " << cp << "\n\t";
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -452,8 +487,9 @@ DEMContact::computeTangentForceMindlinAssumed(const REAL& contactFric,
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 void
 DEMContact::computeTangentForceMindlinKnown(const REAL& contactFric,
-                                         const REAL& poisson,
-                                         const Vec& tangentDispInc)
+                                            const REAL& poisson,
+                                            const Vec& tangentDispInc,
+                                            std::size_t iteration)
 {
   REAL val = 0, ks = 0;
   REAL fP = contactFric * vnormL2(d_normalForce);

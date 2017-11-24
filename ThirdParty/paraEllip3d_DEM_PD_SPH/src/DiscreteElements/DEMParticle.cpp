@@ -131,9 +131,10 @@ DEMParticle::DEMParticle()
   , d_currOmga(0)
   , d_prevOmga(0)
   , d_force(0)
-  , d_prevForce(0)
   , d_moment(0)
+  , d_prevForce(0)
   , d_prevMoment(0)
+  , d_bodyForce(0)
   , d_constForce(0)
   , d_constMoment(0)
   , d_density(0)
@@ -144,8 +145,7 @@ DEMParticle::DEMParticle()
   , d_contactNum(0)
   , d_inContact(false)
 {
-  for (double& i : d_coef)
-    i = 0;
+  for (double& coef : d_coef) coef = 0;
 }
 
 void
@@ -200,6 +200,10 @@ DEMParticle::init()
                   d_mass / 5 * (d_a * d_a + d_b * d_b));
   d_contactNum = 0;
   d_inContact = false;
+
+  // Assumes body force is in the z- direction **TODO** make more general
+  computeBodyForce(Vec(0, 0, -1));
+
   computeAndSetGlobalCoef();
 }
 
@@ -299,6 +303,10 @@ DEMParticle::DEMParticle(std::size_t n,
                   d_mass / 5 * (d_a * d_a + d_c * d_c),
                   d_mass / 5 * (d_a * d_a + d_b * d_b));
   d_inContact = false;
+
+  // Assumes body force is in the z- direction **TODO** make more general
+  computeBodyForce(Vec(0, 0, -1));
+
   computeAndSetGlobalCoef();
 }
 
@@ -527,7 +535,7 @@ DEMParticle::intersectWithLine(Vec v, Vec dirc, Vec rt[]) const
 
   REAL delta = B * B - 4 * A * C;
   if (delta < 0) {
-    std::cerr << "DEMParticle.cpp: iter=" << iteration
+    std::cerr << "DEMParticle.cpp: iter=" << g_iteration
               << " delta < 0 in intersectWithLine()" << std::endl;
     return false;
   } else {
@@ -625,28 +633,14 @@ DEMParticle::computeRadius(Vec v) const
   return std::abs(-C / B * 2.0); // 2*r1*r2/(r1 + r2)
 }
 
+
 void
 DEMParticle::clearContactForce()
 {
-
-  REAL gravAccel = util::getParam<REAL>("gravAccel");
-  REAL gravScale = util::getParam<REAL>("gravScale");
-
   d_forceIDMap.clear();
   d_momentIDMap.clear();
 
-  d_force = d_constForce;
-  d_moment = d_constMoment;
-
-  // Unit is Newton, gravScale is for amplification.
-  d_force += Vec(0, 0, -gravAccel * d_mass * gravScale);
-  //std::cout << "d_force = " << d_force << " g = " << gravAccel
-  //          << " scale = " << gravScale << " m = " << d_mass << std::endl;
   d_inContact = false;
-
-  // ellipsoidal pile
-  if (getType() == DEMParticle::DEMParticleType::TRANSLATE_Z_ONLY) 
-    d_force -= Vec(0, 0, -gravAccel * d_mass * gravScale);
 
 #ifdef MOMENT
   REAL m[20] = { 1,   10, 20, 30, 40, 50, 60, 70, 80, 90,
@@ -709,7 +703,7 @@ DEMParticle::update()
               << " id = " << getId() << "\n\t"
               << " mass = " << d_mass
               << " massScale = " << massScale 
-              << " timeStep = " << timeStep << "\n";
+              << " timeStep = " << g_timeStep << "\n";
     //std::cout << std::setprecision(16) 
               << "\t id:force = [";
     for (auto it = forceIDMap.cbegin(); it != forceIDMap.cend(); ++it ) {
@@ -740,8 +734,8 @@ DEMParticle::update()
 
     // force: translational kinetics equations are in global frame
     d_currentVelocity = d_previousVelocity * (2 - atf) / (2 + atf) +
-                  d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
-    d_currPos = d_prevPos + d_currentVelocity * timeStep;
+                  d_force / (d_mass * massScale) * g_timeStep * 2 / (2 + atf);
+    d_currPos = d_prevPos + d_currentVelocity * g_timeStep;
 
     // moment: angular kinetics (rotational) equations are in local frame,
     // so global values need to be converted to those in local frame when
@@ -750,13 +744,13 @@ DEMParticle::update()
     prevLocalOmga = globalToLocal(d_prevOmga);
 
     currLocalOmga.setX(prevLocalOmga.x() * (2 - atm) / (2 + atm) +
-                       localMoment.x() / (d_momentJ.x() * mntScale) * timeStep *
+                       localMoment.x() / (d_momentJ.x() * mntScale) * g_timeStep *
                          2 / (2 + atm));
     currLocalOmga.setY(prevLocalOmga.y() * (2 - atm) / (2 + atm) +
-                       localMoment.y() / (d_momentJ.y() * mntScale) * timeStep *
+                       localMoment.y() / (d_momentJ.y() * mntScale) * g_timeStep *
                          2 / (2 + atm));
     currLocalOmga.setZ(prevLocalOmga.z() * (2 - atm) / (2 + atm) +
-                       localMoment.z() / (d_momentJ.z() * mntScale) * timeStep *
+                       localMoment.z() / (d_momentJ.z() * mntScale) * g_timeStep *
                          2 / (2 + atm));
 
     // convert local angular velocities to those in global frame in order to
@@ -764,11 +758,11 @@ DEMParticle::update()
     d_currOmga = localToGlobal(currLocalOmga);
 
     d_currDirecA =
-      normalize(rotateVec(d_prevDirecA, d_currOmga * timeStep));
+      normalize(rotateVec(d_prevDirecA, d_currOmga * g_timeStep));
     d_currDirecB =
-      normalize(rotateVec(d_prevDirecB, d_currOmga * timeStep));
+      normalize(rotateVec(d_prevDirecB, d_currOmga * g_timeStep));
     d_currDirecC =
-      normalize(rotateVec(d_prevDirecC, d_currOmga * timeStep));
+      normalize(rotateVec(d_prevDirecC, d_currOmga * g_timeStep));
 
     /*
     if (getId() == 2) {
@@ -780,7 +774,7 @@ DEMParticle::update()
                 << " id = " << getId() << "\n\t"
                 << " force = " << d_force << " mass = " << d_mass
                 << " massScale = " << massScale 
-                << " timeStep = " << timeStep << "\n";
+                << " timeStep = " << g_timeStep << "\n";
       //std::cout << std::setprecision(16) 
                 << "\t id:force = [";
       for (auto it = forceIDMap.cbegin(); it != forceIDMap.cend(); ++it ) {
@@ -804,32 +798,32 @@ DEMParticle::update()
     REAL atf = forceDamp * 2;
     REAL atm = momentDamp * 2;
     d_currentVelocity = d_previousVelocity * (2 - atf) / (2 + atf) +
-                  d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
+                  d_force / (d_mass * massScale) * g_timeStep * 2 / (2 + atf);
     if (iteration < START)
-      d_currPos = d_prevPos + d_currentVelocity * timeStep;
+      d_currPos = d_prevPos + d_currentVelocity * g_timeStep;
 
     localMoment = globalToLocal(d_moment);
     prevLocalOmga = globalToLocal(d_prevOmga);
 
     currLocalOmga.setX(prevLocalOmga.x() * (2 - atm) / (2 + atm) +
-                       localMoment.x() / (d_momentJ.x() * mntScale) * timeStep *
+                       localMoment.x() / (d_momentJ.x() * mntScale) * g_timeStep *
                          2 / (2 + atm));
     currLocalOmga.setY(prevLocalOmga.y() * (2 - atm) / (2 + atm) +
-                       localMoment.y() / (d_momentJ.y() * mntScale) * timeStep *
+                       localMoment.y() / (d_momentJ.y() * mntScale) * g_timeStep *
                          2 / (2 + atm));
     currLocalOmga.setZ(prevLocalOmga.z() * (2 - atm) / (2 + atm) +
-                       localMoment.z() / (d_momentJ.z() * mntScale) * timeStep *
+                       localMoment.z() / (d_momentJ.z() * mntScale) * g_timeStep *
                          2 / (2 + atm));
 
     if (iteration >= START) {
       d_currOmga = localToGlobal(currLocalOmga);
 
       d_currDirecA =
-        normalize(rotateVec(d_prevDirecA, d_currOmga * timeStep));
+        normalize(rotateVec(d_prevDirecA, d_currOmga * g_timeStep));
       d_currDirecB =
-        normalize(rotateVec(d_prevDirecB, d_currOmga * timeStep));
+        normalize(rotateVec(d_prevDirecB, d_currOmga * g_timeStep));
       d_currDirecC =
-        normalize(rotateVec(d_prevDirecC, d_currOmga * timeStep));
+        normalize(rotateVec(d_prevDirecC, d_currOmga * g_timeStep));
     }
   }
 #endif
@@ -839,29 +833,29 @@ DEMParticle::update()
     d_currentVelocity.setX(0);
     d_currentVelocity.setY(0);
     d_currentVelocity.setZ(-pileRate);
-    d_currPos = d_prevPos + d_currentVelocity * timeStep;
+    d_currPos = d_prevPos + d_currentVelocity * g_timeStep;
   }
   // special case 4 (impacting ellipsoidal penetrator): impact
   // with inital velocity in vertical direction only
   else if (getType() == DEMParticle::DEMParticleType::IMPACT_Z_ONLY) {
     REAL atf = forceDamp * 2;
     d_currentVelocity = d_previousVelocity * (2 - atf) / (2 + atf) +
-                  d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
+                  d_force / (d_mass * massScale) * g_timeStep * 2 / (2 + atf);
     d_currentVelocity.setX(0);
     d_currentVelocity.setY(0);
-    d_currPos = d_prevPos + d_currentVelocity * timeStep;
+    d_currPos = d_prevPos + d_currentVelocity * g_timeStep;
   }
   // translation only, no rotation
   else if (getType() == DEMParticle::DEMParticleType::TRANSLATE_ONLY) {
     REAL atf = forceDamp * 2;
     d_currentVelocity = d_previousVelocity * (2 - atf) / (2 + atf) +
-                  d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
-    d_currPos = d_prevPos + d_currentVelocity * timeStep;
+                  d_force / (d_mass * massScale) * g_timeStep * 2 / (2 + atf);
+    d_currPos = d_prevPos + d_currentVelocity * g_timeStep;
   }
   // special case 10: pull out a DEM particle in
   // peri-domain, prescribed constant velocity
   else if (getType() == DEMParticle::DEMParticleType::GHOST) {
-    d_currPos = d_prevPos + d_currentVelocity * timeStep;
+    d_currPos = d_prevPos + d_currentVelocity * g_timeStep;
   }
 
   // Below is needed for all cases
@@ -953,8 +947,10 @@ DEMParticle::nearestPTOnPlane(REAL p, REAL q, REAL r, REAL s, Vec& ptnp) const
 
 void
 DEMParticle::planeRBForce(PlaneBoundary* plane,
-                       BoundaryTangentArrayMap& BdryTangentMap,
-                       BoundaryTangentArray& vtmp)
+                          BoundaryTangentArrayMap& BdryTangentMap,
+                          BoundaryTangentArray& vtmp,
+                          REAL minOverlapFactor, REAL maxOverlapFactor,
+                          std::size_t iteration)
 {
   // (p, q, r) are in the same direction as the outward normal vector,
   // hence it is not necessary to provide information about which side the
@@ -996,14 +992,14 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
 
   // obtain normal force
   REAL d_penetration = vnormL2(pt1 - pt2);
-  if (d_penetration / (2.0 * computeRadius(pt2)) <= util::getParam<REAL>("minAllowableRelativeOverlap"))
+  if (d_penetration <= 2.0 * computeRadius(pt2) * minOverlapFactor)
     return;
 
   REAL R0 = computeRadius(pt2);
   REAL E0 =
     d_young /
     (1 - d_poisson * d_poisson); // rigid wall has infinite young's modulus
-  REAL allowedOverlap = 2.0 * R0 * util::getParam<REAL>("maxAllowableRelativeOverlap");
+  REAL allowedOverlap = 2.0 * R0 * maxOverlapFactor;
   if (d_penetration > allowedOverlap) {
     std::stringstream inf;
     inf.setf(std::ios::scientific, std::ios::floatfield);
@@ -1090,7 +1086,7 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
     // frame;
     //      here global frame is used for better convenience.
     Vec relaDispInc =
-      (d_currentVelocity + cross(d_currOmga, ((pt1 + pt2) / 2 - d_currPos))) * timeStep;
+      (d_currentVelocity + cross(d_currOmga, ((pt1 + pt2) / 2 - d_currPos))) * g_timeStep;
     Vec tangentDispInc = relaDispInc - dot(relaDispInc, normalDirc) * normalDirc;
     Vec tangentDisp = prevTangentDisp + tangentDispInc; // prevTangentDisp read by checkin
     Vec TangentDirc;

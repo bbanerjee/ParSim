@@ -124,7 +124,7 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
     dem->findContact(iteration);
     if (dem->isBoundaryProcess()) dem->findBoundaryContacts(iteration);
 
-    dem->clearContactForce();
+    dem->initializeForces();
     dem->internalForce(iteration);
     if (dem->isBoundaryProcess()) dem->boundaryForce(iteration);
 
@@ -180,7 +180,7 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
     if (toCheckTime) {
       time1 = MPI_Wtime();
     }
-    dem->migrateParticles();
+    dem->migrateParticles(iteration);
 
     if (toCheckTime) {
       time2 = MPI_Wtime(); 

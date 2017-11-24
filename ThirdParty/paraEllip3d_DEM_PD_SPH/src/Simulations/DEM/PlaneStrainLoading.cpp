@@ -24,10 +24,10 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
   REAL sigmaConf = util::getParam<REAL>("sigmaConf");
-  timeStep = util::getParam<REAL>("timeStep");
+  g_timeStep = util::getParam<REAL>("timeStep");
 
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
-  iteration = startStep;
+  auto iteration = startStep;
   std::size_t iterSnap = startSnap;
   REAL distX, distY, distZ;
   std::string outputFolder(".");
@@ -69,7 +69,7 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
     if (dem->isBoundaryProcess())
       dem->findBoundaryContacts(iteration);
 
-    dem->clearContactForce();
+    dem->initializeForces();
     dem->internalForce(iteration);
     if (dem->isBoundaryProcess())
       dem->boundaryForce(iteration);
@@ -104,7 +104,7 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
                                      // dem->printContact refers to
                                      // received particles
     time1 = MPI_Wtime();
-    dem->migrateParticles();
+    dem->migrateParticles(iteration);
     time2 = MPI_Wtime();
     migraT = time2 - time1;
     totalT = time2 - time0;

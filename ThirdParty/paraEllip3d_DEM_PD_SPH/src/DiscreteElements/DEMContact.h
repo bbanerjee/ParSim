@@ -28,10 +28,48 @@ public:
   REAL getVibraTimeStep() const { return d_vibraTimeStep; }
   REAL getImpactTimeStep() const { return d_impactTimeStep; }
 
-  bool isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap);
+  bool isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap,
+                    std::size_t iteration);
 
   // calculate normal and tangential force of contact
-  void computeContactForces(std::size_t iteration); 
+  int computeContactForces(REAL timestep, std::size_t iteration,
+                           REAL stiffness, REAL shearModulus,
+                           REAL cohesion, REAL damping,
+                           REAL friction, REAL maxOverlapFactor,
+                           REAL minMeasurableOverlap);
+
+  inline
+  Vec computeVelocity(DEMParticle* particle, const Vec& midPoint) {
+    Vec velocity = particle->currentVelocity() + 
+      cross(particle->currentAngularVelocity(), 
+            midPoint - particle->currentPosition());
+    return velocity;
+  }
+
+  inline 
+  REAL computeNormalStiffness(const Vec& normalForce, REAL R, REAL E) {
+    REAL kn = std::pow(6 * vnormL2(normalForce) * R * E * E, 1.0 / 3.0);
+    return kn;
+  }
+
+  Vec computeDampingForce(REAL pMass1, REAL pMass2, const Vec& relativeVel,
+                          REAL dampingCoeff, 
+                          REAL normalStiffness, const Vec& contactNormal);
+
+  void updateTimestep(REAL pMass1, REAL pMass2, const Vec& relativeVel,
+                      REAL normalStiffness, const Vec& contactNormal,
+                      REAL allowedOverlap);
+
+  void computeTangentForce(REAL timestep, std::size_t iteration,
+                           REAL shearModulus, REAL poissonRatio, REAL friction, 
+                           REAL contactRadius, const Vec& relativeVel, 
+                           const Vec& contactNormal, const Vec& normalForce);
+
+  // Update the forces and moments
+  void updateForceAndMoment(const Vec& normalForce, const Vec& tangentForce,
+                            const Vec& cohesionForce, const Vec& dampingForce,
+                            const Vec& momentCenter,
+                            DEMParticle* p1, DEMParticle* p2);
 
   REAL getNormalForceMagnitude() const { return vnormL2(d_normalForce); }
   REAL getTangentForceMagnitude() const { return vnormL2(d_tangentForce); }
@@ -92,7 +130,8 @@ private:
                                          const Vec& tangentDispInc);
   void computeTangentForceMindlinKnown(const REAL& contactFric,
                                        const REAL& poisson,
-                                       const Vec& tangentDispInc);
+                                       const Vec& tangentDispInc,
+                                       std::size_t iteration);
 
   friend class boost::serialization::access;
   template <class Archive>
