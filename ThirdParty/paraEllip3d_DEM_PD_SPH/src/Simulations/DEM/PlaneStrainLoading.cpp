@@ -24,7 +24,7 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
   REAL sigmaConf = util::getParam<REAL>("sigmaConf");
-  g_timeStep = util::getParam<REAL>("timeStep");
+  auto timeStep = util::getParam<REAL>("timeStep");
 
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   auto iteration = startStep;
@@ -70,11 +70,11 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
       dem->findBoundaryContacts(iteration);
 
     dem->initializeForces();
-    dem->internalForce(iteration);
+    dem->internalForce(timeStep, iteration);
     if (dem->isBoundaryProcess())
-      dem->boundaryForce(iteration);
+      dem->boundaryForce(timeStep, iteration);
 
-    dem->updateParticles(iteration);
+    dem->updateParticles(timeStep, iteration);
     dem->gatherBoundaryContacts(); // must call before updateBoundary
     dem->updateBoundary(sigmaConf, "plnstrn");
     dem->updatePatchBox();
@@ -117,7 +117,7 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
                << std::endl;
 
     if (dem->getMPIRank() == 0 && iteration % 10 == 0)
-      dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
+      dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
 
     // no break condition, just through top/bottom displacement control
     ++iteration;
@@ -128,7 +128,7 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
     dem->writeParticlesToFile(iterSnap);
     dem->printBoundaryContacts();
     dem->printBoundary();
-    dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
+    dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
   }
 
   if (dem->getMPIRank() == 0)

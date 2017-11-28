@@ -98,7 +98,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
   auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  g_timeStep = util::getParam<REAL>("timeStep");
+  auto timeStep = util::getParam<REAL>("timeStep");
 
   // REAL time0, time1, time2, migraT, gatherT, totalT;
   auto iteration = startStep;
@@ -401,8 +401,8 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     // time2 = MPI_Wtime(); dem->commuT = time2 - time0;
 
     // displacement control relies on constant time step, so do not call
-    // dem->calcTimeStep().
-    // dem->calcTimeStep(); // use values from last step, must call before
+    // dem->calcTimeStep(timeStep).
+    // dem->calcTimeStep(timeStep); // use values from last step, must call before
     // dem->findConact
     //proc0cout << "**NOTICE** DEM findContact\n";
     dem->findContact(iteration);
@@ -412,9 +412,9 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     dem->initializeForces();
 
     //proc0cout << "**NOTICE** DEM internal force\n";
-    dem->internalForce(iteration);
+    dem->internalForce(timeStep, iteration);
     if (dem->isBoundaryProcess())
-      dem->boundaryForce(iteration);
+      dem->boundaryForce(timeStep, iteration);
 
     //proc0cout << "**NOTICE** PD first half step\n";
     pd->runFirstHalfStep();
@@ -436,7 +436,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     //proc0cout << "**NOTICE** PD second half step\n";
     pd->runSecondHalfStep();
 
-    dem->updateParticles(iteration);
+    dem->updateParticles(timeStep, iteration);
 
     //proc0cout << "**NOTICE** DEM gather boundary contact\n";
     dem->gatherBoundaryContacts(); // must call before updateBoundary
@@ -494,7 +494,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     //         migraT)/totalT*100 << std::endl;
 
     if (dem->getMPIRank() == 0 && iteration % 10 == 0)
-      dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
+      dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
 
     // no break condition, just through top/bottom displacement control
     ++iteration;
@@ -506,7 +506,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     pd->writeParticlesToFile(iterSnap);
     dem->printBoundaryContacts();
     dem->printBoundary();
-    dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
+    dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
     //      dem->printPeriProgress(periProgInf, iterSnap);
   }
   if (dem->getMPIRank() == 0) {

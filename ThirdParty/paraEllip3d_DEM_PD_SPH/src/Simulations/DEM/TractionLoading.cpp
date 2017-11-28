@@ -65,7 +65,7 @@ TractionLoading::execute(DiscreteElements* dem)
     auto t1 = MPI_Wtime();
     auto commuT = t1 - t0;
 
-    deltaT = dem->calcTimeStep(); 
+    deltaT = dem->calcTimeStep(deltaT); 
 
     dem->findContact(iteration);
 
@@ -75,13 +75,13 @@ TractionLoading::execute(DiscreteElements* dem)
 
     dem->initializeForces();
 
-    dem->internalForce(iteration);
+    dem->internalForce(deltaT, iteration);
 
     if (dem->isBoundaryProcess()) {
-      dem->boundaryForce(iteration);
+      dem->boundaryForce(deltaT, iteration);
     }
 
-    dem->updateParticles(iteration);
+    dem->updateParticles(deltaT, iteration);
 
     dem->gatherBoundaryContacts(); // must call before updateBoundary
 

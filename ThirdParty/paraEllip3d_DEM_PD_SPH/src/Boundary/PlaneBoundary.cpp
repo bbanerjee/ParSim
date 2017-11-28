@@ -266,6 +266,7 @@ PlaneBoundary::findBoundaryContacts(DEMParticlePArray& particles)
 
 void
 PlaneBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap,
+                             REAL timeStep,
                              std::size_t iteration)
 {
   // for each plane boundary, define a temparory variable vtmp to use,
@@ -278,7 +279,7 @@ PlaneBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap,
   auto maxOverlapFactor = util::getParam<REAL>("maxAllowableRelativeOverlap");
 
   for (auto& particle : b_probableBoundaryParticles)
-    particle->planeRBForce(this, boundaryTangentMap, vtmp,
+    particle->planeRBForce(this, boundaryTangentMap, vtmp, timeStep,
                            minOverlapFactor, maxOverlapFactor, iteration);
 
   // checkout tangential forces and displacements after each particle is

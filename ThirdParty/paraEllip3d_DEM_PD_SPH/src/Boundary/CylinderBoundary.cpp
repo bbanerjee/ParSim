@@ -47,6 +47,7 @@ CylinderBoundary::findBoundaryContacts(DEMParticlePArray& particles)
 
 void
 CylinderBoundary::boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap,
+                                REAL timeStep,
                                 std::size_t iteration)
 {
   // for each plane boundary, define a temparory variable vtmp to use,

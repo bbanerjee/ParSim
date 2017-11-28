@@ -38,6 +38,8 @@ DEMContact::DEMContact()
   d_spinResist = 0;
 
   d_E0 = d_G0 = d_R0 = 0;
+  d_vibrationTimeStep = std::numeric_limits<double>::max();
+  d_impactTimeStep = d_vibrationTimeStep;
 }
 
 DEMContact::DEMContact(DEMParticle* t1, DEMParticle* t2)
@@ -63,6 +65,9 @@ DEMContact::DEMContact(DEMParticle* t1, DEMParticle* t2)
   d_spinResist = 0;
 
   d_E0 = d_G0 = d_R0 = 0;
+
+  d_vibrationTimeStep = std::numeric_limits<double>::max();
+  d_impactTimeStep = d_vibrationTimeStep;
 }
 
 bool
@@ -112,7 +117,6 @@ DEMContact::isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap,
   d_radius2 = d_p2->computeRadius(d_point2);
   auto maxRadius = std::max(d_radius1, d_radius2);
 
-
   Vec v[2];
 #ifdef USE_ROOT6_OLD
   bool b1 = root6_old(coef1, coef2, v[0], d_radius1, d_p1->getId(), d_p2->getId());
@@ -152,25 +156,27 @@ DEMContact::isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap,
   }
   */
 
+  d_isInContact = false;
+
   if (b1 && b2 &&
       d_penetration / (2 * maxRadius) > minRelativeOverlap &&
       nearbyint(d_penetration / measurableOverlap) >= 1) { 
     // a strict detection method
-    std::cout << "Iteration = " << iteration
-              << " p1 = (" << d_p1->getId() << "," 
-              << static_cast<int>(d_p1->getType()) << ")"
-              << " p2 = (" << d_p2->getId() << "," 
-              << static_cast<int>(d_p2->getType()) << ")"
-              << " b1 = " << std::boolalpha << b1
-              << " b2 = " << std::boolalpha << b2
-              << " penetration = " << d_penetration
-              << " maxRadius = " << maxRadius << "\n";
+    //if (d_p1->getId() == 284 || d_p2->getId() == 284) {
+    //  std::cout << "Iteration = " << iteration
+    //            << " p1 = (" << d_p1->getId() << "," 
+    //            << static_cast<int>(d_p1->getType()) << ")"
+    //            << " p2 = (" << d_p2->getId() << "," 
+    //            << static_cast<int>(d_p2->getType()) << ")"
+    //            << " b1 = " << std::boolalpha << b1
+    //            << " b2 = " << std::boolalpha << b2
+    //            << " penetration = " << d_penetration
+    //            << " maxRadius = " << maxRadius << "\n";
+    //}
     d_isInContact = true;
-    return true;
-  } else {
-    d_isInContact = false;
-    return false;
-  }
+  } 
+
+  return d_isInContact;
 }
 
 void
@@ -275,12 +281,12 @@ DEMContact::computeContactForces(REAL timeStep, std::size_t iteration,
     MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
                           inf.str().length(), MPI_CHAR, &status);
 
-    //d_penetration = allowedOverlap;
+    d_penetration = allowedOverlap;
     excessiveOverlap = 1;
   }
 
-  //d_penetration = 
-  //  nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
+  d_penetration = 
+    nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
 
   d_contactRadius = std::sqrt(d_penetration * d_R0);
   // d_normalDirection points from particle 1 to particle 2
@@ -339,12 +345,15 @@ DEMContact::updateTimestep(REAL pMass1, REAL pMass2,
                            REAL normalStiffness, const Vec& contactNormal,
                            REAL allowedOverlap)
 {
-  d_vibraTimeStep = 
+  d_vibrationTimeStep = 
     2 * std::sqrt(pMass1 * pMass2 / ((pMass1 + pMass2) * normalStiffness));
   d_impactTimeStep =
     (relativeVel.lengthSq() < std::numeric_limits<double>::min())
       ? std::numeric_limits<double>::max()
-      : allowedOverlap / fabs(dot(relativeVel, contactNormal));
+      : allowedOverlap / std::abs(dot(relativeVel, contactNormal));
+  //std::cout << "normalStiffness = " << normalStiffness
+  //          << " t_v = " << d_vibrationTimeStep
+  //          << " t_i = " << d_impactTimeStep << "\n";
 }
 
 // Compute the tangential force

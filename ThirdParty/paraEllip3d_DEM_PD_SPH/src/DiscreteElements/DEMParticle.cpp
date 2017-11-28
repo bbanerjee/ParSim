@@ -666,7 +666,7 @@ DEMParticle::clearContactForce()
 
 // central difference integration method
 void
-DEMParticle::update()
+DEMParticle::update(REAL timeStep)
 {
 
   REAL forceDamp = util::getParam<REAL>("forceDamp");
@@ -690,9 +690,11 @@ DEMParticle::update()
   }
   setMoment(resultantMoment);
 
-  //std::cout << "DEMParticle::update:: id = " << d_id 
-  //          << " force = " << resultantForce
-  //          << " moment = " << resultantMoment << "\n";
+  //if (getId() == 284) {
+  //  std::cout << "DEMParticle::update:: id = " << d_id 
+  //            << " force = " << resultantForce
+  //            << " moment = " << resultantMoment << "\n";
+  //}
 
   /*
   if (getId() == 2) {
@@ -703,7 +705,7 @@ DEMParticle::update()
               << " id = " << getId() << "\n\t"
               << " mass = " << d_mass
               << " massScale = " << massScale 
-              << " timeStep = " << g_timeStep << "\n";
+              << " timeStep = " << timeStep << "\n";
     //std::cout << std::setprecision(16) 
               << "\t id:force = [";
     for (auto it = forceIDMap.cbegin(); it != forceIDMap.cend(); ++it ) {
@@ -734,8 +736,8 @@ DEMParticle::update()
 
     // force: translational kinetics equations are in global frame
     d_currentVelocity = d_previousVelocity * (2 - atf) / (2 + atf) +
-                  d_force / (d_mass * massScale) * g_timeStep * 2 / (2 + atf);
-    d_currPos = d_prevPos + d_currentVelocity * g_timeStep;
+                  d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
+    d_currPos = d_prevPos + d_currentVelocity * timeStep;
 
     // moment: angular kinetics (rotational) equations are in local frame,
     // so global values need to be converted to those in local frame when
@@ -744,13 +746,13 @@ DEMParticle::update()
     prevLocalOmga = globalToLocal(d_prevOmga);
 
     currLocalOmga.setX(prevLocalOmga.x() * (2 - atm) / (2 + atm) +
-                       localMoment.x() / (d_momentJ.x() * mntScale) * g_timeStep *
+                       localMoment.x() / (d_momentJ.x() * mntScale) * timeStep *
                          2 / (2 + atm));
     currLocalOmga.setY(prevLocalOmga.y() * (2 - atm) / (2 + atm) +
-                       localMoment.y() / (d_momentJ.y() * mntScale) * g_timeStep *
+                       localMoment.y() / (d_momentJ.y() * mntScale) * timeStep *
                          2 / (2 + atm));
     currLocalOmga.setZ(prevLocalOmga.z() * (2 - atm) / (2 + atm) +
-                       localMoment.z() / (d_momentJ.z() * mntScale) * g_timeStep *
+                       localMoment.z() / (d_momentJ.z() * mntScale) * timeStep *
                          2 / (2 + atm));
 
     // convert local angular velocities to those in global frame in order to
@@ -758,36 +760,35 @@ DEMParticle::update()
     d_currOmga = localToGlobal(currLocalOmga);
 
     d_currDirecA =
-      normalize(rotateVec(d_prevDirecA, d_currOmga * g_timeStep));
+      normalize(rotateVec(d_prevDirecA, d_currOmga * timeStep));
     d_currDirecB =
-      normalize(rotateVec(d_prevDirecB, d_currOmga * g_timeStep));
+      normalize(rotateVec(d_prevDirecB, d_currOmga * timeStep));
     d_currDirecC =
-      normalize(rotateVec(d_prevDirecC, d_currOmga * g_timeStep));
+      normalize(rotateVec(d_prevDirecC, d_currOmga * timeStep));
 
-    /*
-    if (getId() == 2) {
-      int world_rank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-      auto forceIDMap = forceIDMap();
+    //if (getId() == 284) {
+      //int world_rank;
+      //MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+      //auto forceMap = forceIDMap();
       //std::cout << std::setprecision(16) 
-                << "After update: MPI rank " << world_rank 
-                << " id = " << getId() << "\n\t"
-                << " force = " << d_force << " mass = " << d_mass
-                << " massScale = " << massScale 
-                << " timeStep = " << g_timeStep << "\n";
+      //          << "After update: MPI rank " << world_rank 
+      //          << " id = " << getId() << "\n\t"
+      //          << " force = " << d_force << " mass = " << d_mass
+      //          << " massScale = " << massScale 
+      //          << " timeStep = " << timeStep << "\n";
       //std::cout << std::setprecision(16) 
-                << "\t id:force = [";
-      for (auto it = forceIDMap.cbegin(); it != forceIDMap.cend(); ++it ) {
-        //std::cout << it->first << ":" << it->second << "\n\t ";
-      }
+      //          << "\t id:force = [";
+      //for (auto it = forceMap.cbegin(); it != forceMap.cend(); ++it ) {
+      //  std::cout << it->first << ":" << it->second << "\n\t ";
+      //}
       //std::cout << "\t]\n";
-      //std::cout << std::setprecision(16) 
-                << " currPos = " << d_currPos << "\n\t"
-                << " currVeloc = " << d_currentVelocity << "\n\t"
-                << " prevVelocity = " << d_previousVelocity << " atf = " << atf
-                << " currDirecA = " << d_currDirecA << "\n";
-    }
-    */
+    //  std::cout << std::setprecision(16) 
+    //            << "id = " << d_id
+    //            << " currPos = " << d_currPos << " "
+    //            << " currVeloc = " << d_currentVelocity << " "
+    //            << " prevVelocity = " << d_previousVelocity << " atf = " << atf
+    //            << " currDirecA = " << d_currDirecA << "\n";
+    //}
   }
 #ifdef MOMENT
   // special case 2 (moment): translate first, then rotate
@@ -798,32 +799,32 @@ DEMParticle::update()
     REAL atf = forceDamp * 2;
     REAL atm = momentDamp * 2;
     d_currentVelocity = d_previousVelocity * (2 - atf) / (2 + atf) +
-                  d_force / (d_mass * massScale) * g_timeStep * 2 / (2 + atf);
+                  d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
     if (iteration < START)
-      d_currPos = d_prevPos + d_currentVelocity * g_timeStep;
+      d_currPos = d_prevPos + d_currentVelocity * timeStep;
 
     localMoment = globalToLocal(d_moment);
     prevLocalOmga = globalToLocal(d_prevOmga);
 
     currLocalOmga.setX(prevLocalOmga.x() * (2 - atm) / (2 + atm) +
-                       localMoment.x() / (d_momentJ.x() * mntScale) * g_timeStep *
+                       localMoment.x() / (d_momentJ.x() * mntScale) * timeStep *
                          2 / (2 + atm));
     currLocalOmga.setY(prevLocalOmga.y() * (2 - atm) / (2 + atm) +
-                       localMoment.y() / (d_momentJ.y() * mntScale) * g_timeStep *
+                       localMoment.y() / (d_momentJ.y() * mntScale) * timeStep *
                          2 / (2 + atm));
     currLocalOmga.setZ(prevLocalOmga.z() * (2 - atm) / (2 + atm) +
-                       localMoment.z() / (d_momentJ.z() * mntScale) * g_timeStep *
+                       localMoment.z() / (d_momentJ.z() * mntScale) * timeStep *
                          2 / (2 + atm));
 
     if (iteration >= START) {
       d_currOmga = localToGlobal(currLocalOmga);
 
       d_currDirecA =
-        normalize(rotateVec(d_prevDirecA, d_currOmga * g_timeStep));
+        normalize(rotateVec(d_prevDirecA, d_currOmga * timeStep));
       d_currDirecB =
-        normalize(rotateVec(d_prevDirecB, d_currOmga * g_timeStep));
+        normalize(rotateVec(d_prevDirecB, d_currOmga * timeStep));
       d_currDirecC =
-        normalize(rotateVec(d_prevDirecC, d_currOmga * g_timeStep));
+        normalize(rotateVec(d_prevDirecC, d_currOmga * timeStep));
     }
   }
 #endif
@@ -833,29 +834,29 @@ DEMParticle::update()
     d_currentVelocity.setX(0);
     d_currentVelocity.setY(0);
     d_currentVelocity.setZ(-pileRate);
-    d_currPos = d_prevPos + d_currentVelocity * g_timeStep;
+    d_currPos = d_prevPos + d_currentVelocity * timeStep;
   }
   // special case 4 (impacting ellipsoidal penetrator): impact
   // with inital velocity in vertical direction only
   else if (getType() == DEMParticle::DEMParticleType::IMPACT_Z_ONLY) {
     REAL atf = forceDamp * 2;
     d_currentVelocity = d_previousVelocity * (2 - atf) / (2 + atf) +
-                  d_force / (d_mass * massScale) * g_timeStep * 2 / (2 + atf);
+                  d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
     d_currentVelocity.setX(0);
     d_currentVelocity.setY(0);
-    d_currPos = d_prevPos + d_currentVelocity * g_timeStep;
+    d_currPos = d_prevPos + d_currentVelocity * timeStep;
   }
   // translation only, no rotation
   else if (getType() == DEMParticle::DEMParticleType::TRANSLATE_ONLY) {
     REAL atf = forceDamp * 2;
     d_currentVelocity = d_previousVelocity * (2 - atf) / (2 + atf) +
-                  d_force / (d_mass * massScale) * g_timeStep * 2 / (2 + atf);
-    d_currPos = d_prevPos + d_currentVelocity * g_timeStep;
+                  d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
+    d_currPos = d_prevPos + d_currentVelocity * timeStep;
   }
   // special case 10: pull out a DEM particle in
   // peri-domain, prescribed constant velocity
   else if (getType() == DEMParticle::DEMParticleType::GHOST) {
-    d_currPos = d_prevPos + d_currentVelocity * g_timeStep;
+    d_currPos = d_prevPos + d_currentVelocity * timeStep;
   }
 
   // Below is needed for all cases
@@ -949,6 +950,7 @@ void
 DEMParticle::planeRBForce(PlaneBoundary* plane,
                           BoundaryTangentArrayMap& BdryTangentMap,
                           BoundaryTangentArray& vtmp,
+                          REAL timeStep,
                           REAL minOverlapFactor, REAL maxOverlapFactor,
                           std::size_t iteration)
 {
@@ -1086,7 +1088,7 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
     // frame;
     //      here global frame is used for better convenience.
     Vec relaDispInc =
-      (d_currentVelocity + cross(d_currOmga, ((pt1 + pt2) / 2 - d_currPos))) * g_timeStep;
+      (d_currentVelocity + cross(d_currOmga, ((pt1 + pt2) / 2 - d_currPos))) * timeStep;
     Vec tangentDispInc = relaDispInc - dot(relaDispInc, normalDirc) * normalDirc;
     Vec tangentDisp = prevTangentDisp + tangentDispInc; // prevTangentDisp read by checkin
     Vec TangentDirc;

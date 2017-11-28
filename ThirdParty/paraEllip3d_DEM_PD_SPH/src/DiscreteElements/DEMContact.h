@@ -25,7 +25,7 @@ public:
   REAL radius2() const { return d_radius2; }
   REAL getR0() const { return d_R0; }
   REAL getE0() const { return d_E0; }
-  REAL getVibraTimeStep() const { return d_vibraTimeStep; }
+  REAL getVibrationTimeStep() const { return d_vibrationTimeStep; }
   REAL getImpactTimeStep() const { return d_impactTimeStep; }
 
   bool isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap,
@@ -122,7 +122,7 @@ private:
   REAL d_E0;
   REAL d_G0;
   REAL d_R0;
-  REAL d_vibraTimeStep;
+  REAL d_vibrationTimeStep;
   REAL d_impactTimeStep;
 
   void computeTangentForceMindlinAssumed(const REAL& contactFric,
@@ -165,7 +165,7 @@ private:
     ar& d_E0;
     ar& d_G0;
     ar& d_R0;
-    ar& d_vibraTimeStep;
+    ar& d_vibrationTimeStep;
     ar& d_impactTimeStep;
   }
 

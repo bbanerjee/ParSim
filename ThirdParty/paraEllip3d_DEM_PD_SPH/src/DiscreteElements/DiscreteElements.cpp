@@ -187,18 +187,18 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
 
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   REAL timeCount = 0;
-  g_timeStep = util::getParam<REAL>("timeStep");
-  g_timeAccrued = util::getParam<REAL>("timeAccrued");
-  REAL timeTotal = g_timeAccrued + g_timeStep * netStep;
+  auto timeStep = util::getParam<REAL>("timeStep");
+  auto timeAccrued = util::getParam<REAL>("timeAccrued");
+  REAL timeTotal = timeAccrued + timeStep * netStep;
 
-  while (g_timeAccrued < timeTotal) {
+  while (timeAccrued < timeTotal) {
 
     bool toCheckTime = (iteration + 1) % (netStep / netSnap) == 0;
 
     commuT = migraT = gatherT = totalT = 0;
     time0 = MPI_Wtime();
 
-    proc0cout << "**NOTICE** Time = " << g_timeAccrued << " iteration = " << iteration << "\n";
+    proc0cout << "**NOTICE** Time = " << timeAccrued << " iteration = " << iteration << "\n";
     communicateGhostParticles(iteration);
 
     if (toCheckTime)
@@ -206,11 +206,11 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     commuT = time2 - time0;
 
     //proc0cout << "**NOTICE** Before calcTimeStep\n";
-    calcTimeStep(); // use values from last step, must call before
-                    // findContact (which clears data)
+    // use values from last step, must call before
+    // findContact (which clears data)
+    timeStep = calcTimeStep(timeStep); 
 
     //proc0cout << "**NOTICE** Before findContact\n";
-
     findContact(iteration);
     if (isBoundaryProcess())
       findBoundaryContacts(iteration);
@@ -218,19 +218,19 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     initializeForces();
 
     //proc0cout << "**NOTICE** Before internalForce\n";
-    internalForce(iteration);
+    internalForce(timeStep, iteration);
 
     if (isBoundaryProcess()) {
       //proc0cout << "**NOTICE** Before updateParticle\n";
-      boundaryForce(iteration);
+      boundaryForce(timeStep, iteration);
     }
 
     //proc0cout << "**NOTICE** Before updateParticle\n";
-    updateParticles(iteration);
+    updateParticles(timeStep, iteration);
     updatePatchBox(); // universal; updatePatchBoxMaxZ() for deposition only
 
-    /**/ timeCount += g_timeStep;
-    /**/ g_timeAccrued += g_timeStep;
+    /**/ timeCount += timeStep;
+    /**/ timeAccrued += timeStep;
     /**/ if (timeCount >= timeTotal / netSnap) {
       // if (iteration % (netStep / netSnap) == 0) {
       if (toCheckTime)
@@ -250,7 +250,7 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
         writePatchGridToFile();
         writeParticlesToFile(iterSnap);
         printBoundaryContacts();
-        appendToProgressOutputFile(progressInf);
+        appendToProgressOutputFile(progressInf, timeStep);
       }
       printContact(combine(outputFolder, "contact_", iterSnap, 5));
 
@@ -618,41 +618,40 @@ DiscreteElements::communicateGhostParticles(std::size_t iteration)
 }
 
 REAL
-DiscreteElements::calcTimeStep()
+DiscreteElements::calcTimeStep(REAL curTimeStep)
 {
-  calcVibraTimeStep();
+  calcVibrationTimeStep();
   calcImpactTimeStep();
   calcContactNum();
 
   REAL CFL = 0.5;
   std::valarray<REAL> dt(3);
-  dt[0] = util::getParam<REAL>("timeStep");
+  //dt[0] = util::getParam<REAL>("timeStep");
+  dt[0] = curTimeStep;
   dt[1] = CFL * d_vibrationTimeStep;
   dt[2] = CFL * d_impactTimeStep;
 
-  g_timeStep = dt.min();
+  auto timeStep = dt.min();
   //if (s_mpiRank == 0) {
-    //std::cout << "Timestep = " << g_timeStep
+    //std::cout << "Timestep = " << timeStep
     //          << " Vibration timestep = " << d_vibrationTimeStep
     //          << " Impact timestep = " << d_impactTimeStep << "\n";
   //}
-  return g_timeStep;
+  return timeStep;
 }
 
 void
-DiscreteElements::calcVibraTimeStep()
+DiscreteElements::calcVibrationTimeStep()
 {
   REAL pTimeStep = 1 / EPS;
-  if (d_contacts.size() == 0) {
-    pTimeStep = 1 / EPS;
-  } else {
-    auto it = d_contacts.cbegin();
-    pTimeStep = it->getVibraTimeStep();
-    for (++it; it != d_contacts.cend(); ++it) {
-      REAL val = it->getVibraTimeStep();
-      pTimeStep = val < pTimeStep ? val : pTimeStep;
-    }
+  auto minIter = std::min_element(d_contacts.begin(), d_contacts.end(),
+    [](const DEMContact& x, const DEMContact& y){
+      return x.getVibrationTimeStep() < y.getVibrationTimeStep();
+    });
+  if (minIter != d_contacts.end()) {
+    pTimeStep = (*minIter).getVibrationTimeStep();
   }
+  std::cout << "Vibra time step = " << pTimeStep << "\n";
 
   MPI_Allreduce(&pTimeStep, &d_vibrationTimeStep, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 }
@@ -661,16 +660,14 @@ void
 DiscreteElements::calcImpactTimeStep()
 {
   REAL pTimeStep = 1 / EPS;
-  if (d_contacts.size() == 0)
-    pTimeStep = 1 / EPS;
-  else {
-    auto it = d_contacts.cbegin();
-    pTimeStep = it->getImpactTimeStep();
-    for (++it; it != d_contacts.cend(); ++it) {
-      REAL val = it->getImpactTimeStep();
-      pTimeStep = val < pTimeStep ? val : pTimeStep;
-    }
+  auto minIter = std::min_element(d_contacts.begin(), d_contacts.end(),
+    [](const DEMContact& x, const DEMContact& y){
+      return x.getImpactTimeStep() < y.getImpactTimeStep();
+    });
+  if (minIter != d_contacts.end()) {
+    pTimeStep = (*minIter).getImpactTimeStep();
   }
+  std::cout << "Impact time step = " << pTimeStep << "\n";
 
   MPI_Allreduce(&pTimeStep, &d_impactTimeStep, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 }
@@ -768,8 +765,8 @@ DiscreteElements::findContactSingleThread(REAL minOverlap, REAL measOverlap,
         startInner = Timer::now();
 #endif
         if (contact.isOverlapped(minOverlap, measOverlap, iteration)) {
-          std::cout << "(P1, P2): " << static_cast<int>(particleType)
-                    << ", " << static_cast<int>(mergeParticleType) << "\n";
+          //std::cout << "(P1, P2): " << static_cast<int>(particleType)
+          //          << ", " << static_cast<int>(mergeParticleType) << "\n";
           d_contacts.push_back(contact); // domains use value
                                             // semantics, so a "copy" is
                                             // pushed back.
@@ -885,7 +882,7 @@ DiscreteElements::applyBodyForce()
 }
 
 void
-DiscreteElements::internalForce(std::size_t iteration)
+DiscreteElements::internalForce(REAL timeStep, std::size_t iteration)
 {
   REAL young = util::getParam<REAL>("young");
   REAL poisson = util::getParam<REAL>("poisson");
@@ -929,7 +926,7 @@ DiscreteElements::internalForce(std::size_t iteration)
   for (auto& contact : d_contacts) {
     // cannot be parallelized as it may change a
     // particle's force simultaneously.
-    int overlap = contact.computeContactForces(g_timeStep, iteration,
+    int overlap = contact.computeContactForces(timeStep, iteration,
                                  stiffness, shearModulus,
                                  cohesion, damping, friction,
                                  maxOverlapFactor, minMeasurableOverlap);
@@ -967,19 +964,19 @@ DiscreteElements::internalForce(std::size_t iteration)
 }
 
 void
-DiscreteElements::boundaryForce(std::size_t iteration)
+DiscreteElements::boundaryForce(REAL timeStep, std::size_t iteration)
 {
   for (auto& boundary : d_boundaries) {
-    boundary->boundaryForce(d_boundaryTangentMap, iteration);
+    boundary->boundaryForce(d_boundaryTangentMap, timeStep, iteration);
   }
 }
 
 void
-DiscreteElements::updateParticles(std::size_t iteration)
+DiscreteElements::updateParticles(REAL timeStep, std::size_t iteration)
 {
   //proc0cout << "Num DEM particles = " << d_patchParticles.size() << "\n";
   for (auto& particle : d_patchParticles)
-    particle->update();
+    particle->update(timeStep);
 }
 
 void
@@ -1767,8 +1764,9 @@ DiscreteElements::openProgressOutputFile(std::ofstream& ofs, const std::string& 
 }
 
 void
-DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, REAL distX, REAL distY,
-                            REAL distZ)
+DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, 
+                                             REAL timeStep,
+                                             REAL distX, REAL distY, REAL distZ)
 {
   REAL x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0, z1 = 0.0, z2 = 0.0;
   std::vector<REAL> normalForce = {{0, 0, 0, 0, 0, 0}};
@@ -1884,7 +1882,7 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, REAL distX, REA
 
   // time
   ofs << std::setw(OWID) << d_vibrationTimeStep << std::setw(OWID) << d_impactTimeStep
-      << std::setw(OWID) << g_timeStep;
+      << std::setw(OWID) << timeStep;
 
   ofs << std::endl;
 }
@@ -2093,7 +2091,7 @@ DiscreteElements::printContact(const std::string& str) const
         << it.getNormalForce().y() << std::setw(OWID) << it.getNormalForce().z()
         << std::setw(OWID) << it.getTangentForce().x() << std::setw(OWID)
         << it.getTangentForce().y() << std::setw(OWID) << it.getTangentForce().z()
-        << std::setw(OWID) << it.getVibraTimeStep() << std::setw(OWID)
+        << std::setw(OWID) << it.getVibrationTimeStep() << std::setw(OWID)
         << it.getImpactTimeStep() << std::endl;
 
   int length = (OWID * 28 + 1) * d_contacts.size();
@@ -2176,7 +2174,7 @@ DiscreteElements::printContact(const std::string& str) const
     << std::setw(OWID) << it->getTangentForce().x()
     << std::setw(OWID) << it->getTangentForce().y()
     << std::setw(OWID) << it->getTangentForce().z()
-    << std::setw(OWID) << it->getVibraTimeStep()
+    << std::setw(OWID) << it->getVibrationTimeStep()
     << std::setw(OWID) << it->getImpactTimeStep()
     << std::endl;
   ofs.close();

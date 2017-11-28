@@ -31,13 +31,13 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
   auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  g_timeStep = util::getParam<REAL>("timeStep");
+  auto timeStep = util::getParam<REAL>("timeStep");
 
   auto iteration = startStep;
   std::size_t iterSnap = startSnap;
   REAL timeCount = 0;
-  g_timeAccrued = util::getParam<REAL>("timeAccrued");
-  REAL timeTotal = g_timeAccrued + g_timeStep * netStep;
+  auto timeAccrued = util::getParam<REAL>("timeAccrued");
+  REAL timeTotal = timeAccrued + timeStep * netStep;
 
   std::string outputFolder(".");
   if (dem->getMPIRank() == 0) {
@@ -65,13 +65,13 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
 
-  while (g_timeAccrued < timeTotal) {
+  while (timeAccrued < timeTotal) {
     // REAL time0 = MPI_Wtime();
     dem->communicateGhostParticles();
     // REAL time2 = MPI_Wtime();
     // REAL commuT = time2 - time0;
 
-    dem->calcTimeStep(); // use values from last step, must call before
+    timeStep = dem->calcTimeStep(timeStep); // use values from last step, must call before
                               // findConact
     dem->findContact(iteration);
     if (dem->isBoundaryProcess())
@@ -85,15 +85,15 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
                                   particleInf); // not allDEMParticleVec
     /*7*/ fluid.penalize();
 
-    dem->internalForce(iteration);
+    dem->internalForce(timeStep, iteration);
     if (dem->isBoundaryProcess())
-      dem->boundaryForce(iteration);
+      dem->boundaryForce(timeStep, iteration);
 
-    dem->updateParticles(iteration);
+    dem->updateParticles(timeStep, iteration);
     dem->updatePatchBoxMaxZ();
 
-    timeCount += g_timeStep;
-    g_timeAccrued += g_timeStep;
+    timeCount += timeStep;
+    timeAccrued += timeStep;
     if (timeCount >= timeTotal / netSnap) {
       // REAL time1 = MPI_Wtime();
       dem->gatherParticles();
@@ -108,7 +108,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
         dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
         dem->printBoundaryContacts();
-        dem->appendToProgressOutputFile(progressInf);
+        dem->appendToProgressOutputFile(progressInf, timeStep);
         /*8*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap, 3) + ".dat");
       }
       dem->printContact(util::combine(".", "couple_contact_", iterSnap, 3));

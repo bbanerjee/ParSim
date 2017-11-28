@@ -80,33 +80,61 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
 
   auto curTime = startTime;
 
+  std::size_t numOverlaps = 0;
+  int numBisections = 0;
   while (iteration <= endStep && curTime < endTime) {
 
     // Communicate ghost particles to patches
     dem->communicateGhostParticles(iteration);
 
-    timeStep = dem->calcTimeStep(); 
+    // Get the particles and domain
+    auto& patchParticles = dem->getModifiableParticleVec();
+    const auto spatialDomain = dem->getSpatialDomain();
+
+    if (numOverlaps > 0 && numBisections < 5) {
+      timeStep *= 0.5;
+      ++numBisections;
+    }
+
+    //std::cout << "Before calc: timeStep = " << timeStep << "\n";
+    timeStep = dem->calcTimeStep(timeStep); 
+    std::cout << "After calc: timeStep = " << timeStep << "\n";
 
     // Apply the particle boundary conditions to each set of patch particles
-    dem->applyPatchParticleBC(curTime);
+    dem->applyParticleBC(curTime, spatialDomain, patchParticles);
 
+    // Substep until number of overlapping particles is zero
     dem->findContact(iteration);
-    
-    std::cout << "Overlaps = " << dem->numOverlappingParticles() << "\n";
+    numOverlaps = dem->numOverlappingParticles();
 
+    // Switch particle type of patch particles from periodic to fixed
+    dem->switchParticleType(DEMParticle::DEMParticleType::BOUNDARY_PERIODIC,
+                            DEMParticle::DEMParticleType::FIXED,
+                            patchParticles);
+
+    /*
     if (dem->isBoundaryProcess()) {
       dem->findBoundaryContacts(iteration);
     }
+    */
 
     dem->initializeForces();
+    dem->internalForce(timeStep, iteration);
 
-    dem->internalForce(iteration);
-
+    /*
     if (dem->isBoundaryProcess()) {
-      dem->boundaryForce(iteration);
+      dem->boundaryForce(timeStep, iteration);
     }
+    */
 
-    dem->updateParticles(iteration);
+    dem->updateParticles(timeStep, iteration);
+
+
+    // Switch back particle type of patch particles from fixed to periodic
+    dem->switchParticleType(DEMParticle::DEMParticleType::FIXED,
+                            DEMParticle::DEMParticleType::BOUNDARY_PERIODIC,
+                            patchParticles);
+
     dem->gatherBoundaryContacts(); 
     dem->updatePatchBox();
 
@@ -124,7 +152,7 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
         outputParticleCSVFile = combine("output_particles_", iterSnap, 3);
         dem->printParticlesCSV(outputFolder, outputParticleCSVFile, 0);
         dem->printBoundaryContacts();
-        dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
+        dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
       }
 
       dem->printContact(combine(outputFolder, "contact_", iterSnap, 3));

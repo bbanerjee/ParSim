@@ -211,7 +211,7 @@ public:
   void addMomentIDMap(Vec vv, size_t id) {
     d_momentIDMap[id] = vv;
   }
-  void update();
+  void update(REAL timeStep);
 
   Vec globalToLocal(Vec input) const;
   Vec localToGlobal(Vec input) const;
@@ -240,6 +240,7 @@ public:
   void planeRBForce(PlaneBoundary* plane,
                     BoundaryTangentArrayMap& BoundarytangentMap,
                     BoundaryTangentArray& vtmp,
+                    REAL timeStep,
                     REAL minOverlapFactor, REAL maxOverlapFactor,
                     std::size_t iteration);
 

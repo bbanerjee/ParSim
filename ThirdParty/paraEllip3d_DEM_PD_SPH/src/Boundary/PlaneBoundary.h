@@ -116,6 +116,7 @@ public:
                           REAL sigmaX, REAL sigmaY) override;
   void findBoundaryContacts(DEMParticlePArray& ptcls) override;
   void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap,
+                     REAL timeStep,
                      std::size_t iteration) override;
 
   friend std::ostream& 

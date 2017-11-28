@@ -75,7 +75,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
   auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  g_timeStep = util::getParam<REAL>("timeStep");
+  auto timeStep = util::getParam<REAL>("timeStep");
 
   // REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   auto iteration = startStep;
@@ -146,9 +146,9 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
       dem->findBoundaryContacts(iteration);
 
     dem->initializeForces();
-    dem->internalForce(iteration);
+    dem->internalForce(timeStep, iteration);
     if (dem->isBoundaryProcess())
-      dem->boundaryForce(iteration);
+      dem->boundaryForce(timeStep, iteration);
     pd->runFirstHalfStep();
 
     pd->applyPeriBoundaryCondition();
@@ -168,7 +168,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     pd->applyCoupledForces();
     pd->runSecondHalfStep();
 
-    dem->updateParticles(iteration);
+    dem->updateParticles(timeStep, iteration);
     dem->gatherBoundaryContacts(); // must call before updateBoundary
     //      updateBoundary(sigmaConf, "triaxial");
     //      updatePatchBox();
@@ -216,7 +216,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     //         migraT)/totalT*100 << std::endl;
 
     if (dem->getMPIRank() == 0 && iteration % 10 == 0)
-      dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
+      dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
 
     // no break condition, just through top/bottom displacement control
     ++iteration;
@@ -227,7 +227,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     dem->writeParticlesToFile(iterSnap);
     dem->printBoundaryContacts();
     dem->printBoundary();
-    dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
+    dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
     //      dem->printPeriProgress(periProgInf, iterSnap);
   }
   if (dem->getMPIRank() == 0) {

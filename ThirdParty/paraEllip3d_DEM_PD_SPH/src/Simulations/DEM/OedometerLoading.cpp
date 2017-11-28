@@ -27,7 +27,7 @@ OedometerLoading::execute(DiscreteElements* dem)
   auto endSnap = util::getParam<std::size_t>("endSnap");
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
-  g_timeStep = util::getParam<REAL>("timeStep");
+  auto timeStep = util::getParam<REAL>("timeStep");
 
   REAL sigmaEnd, sigmaInc, sigmaVar;
   std::size_t sigmaDiv;
@@ -84,18 +84,18 @@ OedometerLoading::execute(DiscreteElements* dem)
     time2 = MPI_Wtime();
     commuT = time2 - time0;
 
-    dem->calcTimeStep(); // use values from last step, must call before
+    timeStep = dem->calcTimeStep(timeStep); // use values from last step, must call before
                               // findConact
     dem->findContact(iteration);
     if (dem->isBoundaryProcess())
       dem->findBoundaryContacts(iteration);
 
     dem->initializeForces();
-    dem->internalForce(iteration);
+    dem->internalForce(timeStep, iteration);
     if (dem->isBoundaryProcess())
-      dem->boundaryForce(iteration);
+      dem->boundaryForce(timeStep, iteration);
 
-    dem->updateParticles(iteration);
+    dem->updateParticles(timeStep, iteration);
     dem->gatherBoundaryContacts(); // must call before updateBoundary
     dem->updateBoundary(sigmaVar, "odometer");
     dem->updatePatchBox();
@@ -114,7 +114,7 @@ OedometerLoading::execute(DiscreteElements* dem)
         dem->writeParticlesToFile(iterSnap);
         dem->printBoundaryContacts();
         dem->printBoundary();
-        dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
+        dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
       }
       dem->printContact(combine(outputFolder, "odometer_contact_", iterSnap, 3));
       ++iterSnap;
@@ -148,14 +148,14 @@ OedometerLoading::execute(DiscreteElements* dem)
           dem->writeParticlesToFile(iterSnap);
           dem->printBoundaryContacts();
           dem->printBoundary();
-          dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, timeStep, distX, distY, distZ);
         }
         break;
       }
     } else if (odometerType == 2) {
       if (dem->areBoundaryTractionsEquilibrated(sigmaVar, "odometer")) {
         if (dem->getMPIRank() == 0)
-          dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, timeStep, distX, distY, distZ);
         sigmaVar += sigmaInc;
         if (sigmaVar == sigmaPath[sigma_i + 1]) {
           sigmaVar = sigmaPath[++sigma_i];
@@ -168,7 +168,7 @@ OedometerLoading::execute(DiscreteElements* dem)
           dem->writeParticlesToFile(iterSnap);
           dem->printBoundaryContacts();
           dem->printBoundary();
-          dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, timeStep, distX, distY, distZ);
         }
         break;
       }

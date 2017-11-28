@@ -86,7 +86,7 @@ public:
 
   std::size_t numOverlappingParticles() const
   {
-    return d_contacts.size();
+    return d_overlapCount;
   }
 
   const Gradation& getGradation() const { return d_gradation; }
@@ -202,6 +202,7 @@ public:
   void openProgressOutputFile(std::ofstream& ofs, const std::string& str);
   void openPeriProgress(std::ofstream& ofs, const std::string& str);
   void appendToProgressOutputFile(std::ofstream& ofs, 
+                                  REAL timeStep,
                                   REAL distX = 1, REAL distY = 1,
                                   REAL distZ = 1);
   void openParticleProg(std::ofstream& ofs, const std::string& str);
@@ -212,7 +213,9 @@ public:
   void readCavityBoundary(const std::string& boundaryfile);
   void buildCavityBoundary(std::size_t existMaxId,
                            const std::string& boundaryfile);
-  void findContact(std::size_t iteration); // detect and resolve contact between particles
+
+  // detect and resolve contact between particles
+  void findContact(std::size_t iteration); 
   void findContactSingleThread(REAL minOverlap, REAL measOverlap,
                                std::size_t iteration);
   void findContactMultiThread(int numThreads, 
@@ -226,12 +229,17 @@ public:
   void clearContactForce(); // clear forces and moments for all particles
   void applyBodyForce(); // Apply body forces
 
-  void internalForce(std::size_t iteration);     // calculate inter-particle forces
+  // calculate inter-particle forces
+  void internalForce(REAL timeStep, std::size_t iteration);     
+
   void springForce();
-  void boundaryForce(std::size_t iteration); // calcualte forces between rigid boundaries and
-                        // particles
+
+  // calculate forces between rigid boundaries and // particles
+  void boundaryForce(REAL timeStep, std::size_t iteration); 
   void cavityBoundaryForce();
-  void updateParticles(std::size_t iteration); // update motion of particles
+
+  // update motion of particles
+  void updateParticles(REAL timeStep, std::size_t iteration); 
 
   REAL ellipPileForce();  // for force pile only
   void ellipPileUpdate(); // for force pile only
@@ -249,8 +257,8 @@ public:
   REAL getAvgPenetration() const;
   REAL volume() const;
 
-  REAL calcTimeStep();
-  void calcVibraTimeStep();
+  REAL calcTimeStep(REAL curTimeStep);
+  void calcVibrationTimeStep();
   void calcImpactTimeStep();
   void calcContactNum();
 
@@ -541,8 +549,13 @@ public:
 
   void dragForce();
 
+  void applyParticleBC(double time, const Box& spatialDomain,
+                       DEMParticlePArray& particles) {
+    d_bc.applyParticleBC(time, spatialDomain, particles);
+  }
+
   void applyPatchParticleBC(double time) {
-    d_bc.applyParticleBC(time, d_spatialDomain, d_patchParticles);
+    applyParticleBC(time, d_spatialDomain, d_patchParticles);
   }
 
   void allowPatchDomainResize(Boundary::BoundaryID face) {
@@ -556,6 +569,16 @@ public:
   }
 
   void resizePatchBox();
+
+  void switchParticleType(const DEMParticle::DEMParticleType& from,
+                          const DEMParticle::DEMParticleType& to,
+                          DEMParticlePArray& particles) {
+    for (auto& particle : particles) {
+      if (particle->getType() == from) {
+        particle->setType(to);
+      }
+    }
+  }
 
 private:
 

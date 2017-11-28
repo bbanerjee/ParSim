@@ -152,6 +152,7 @@ public:
   virtual void printContactInfo(std::ostream& os);
   virtual void findBoundaryContacts(DEMParticlePArray& ptcls) = 0;
   virtual void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap,
+                             REAL timeStep,
                              std::size_t iteration) = 0;
   virtual void updateStatForce();
   void clearStatForce();

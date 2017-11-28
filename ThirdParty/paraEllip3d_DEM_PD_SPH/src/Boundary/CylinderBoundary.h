@@ -59,7 +59,9 @@ public:
   }
 
   void findBoundaryContacts(DEMParticlePArray& ptcls) override;
+
   void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap,
+                     REAL timeStep,
                      std::size_t iteration) override;
 
 private:
