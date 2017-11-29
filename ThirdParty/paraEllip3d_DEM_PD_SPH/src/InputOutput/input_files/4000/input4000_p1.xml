@@ -151,13 +151,15 @@
 
     </Contact>
 
-    <PeriodicParticleGeneration>
+    <ParticleGeneration>
 
-      <!-- Factor of maximum particle radius: Locates new boundary position -->
-      <boundaryMarginFactor> 1.0 </boundaryMarginFactor>
+      <Periodic>
+        <!-- Factor of maximum particle radius: Locates new boundary position -->
+        <boundaryMarginFactor> 1.0 </boundaryMarginFactor>
 
-      <!-- Factor of minimum particle radius: Amount to shrink the bunding box -->
-      <boundaryFaceShiftFactor> 5.0 </boundaryFaceShiftFactor>
+        <!-- Factor of minimum particle radius: Amount to shrink the bunding box -->
+        <boundaryFaceShiftFactor> 2.0 </boundaryFaceShiftFactor>
+      </Periodic>
 
       <!-- Filename to write updated boundaries to -->
       <boundaryFilename> generated_periodic_boundary </boundaryFilename>
@@ -165,7 +167,7 @@
       <!-- Filename to write created particles to -->
       <particleFilename> generated_periodic_particles </particleFilename>
 
-    </PeriodicParticleGeneration>
+    </ParticleGeneration>
 
   </DEM>
 

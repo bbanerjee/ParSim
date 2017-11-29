@@ -110,7 +110,7 @@ TEST(InputParameterTest, testInputXMLFileReader) {
   EXPECT_EQ(util::getFilename("outputFolder"), "deposit.pe3d");
   EXPECT_EQ(util::getFilename("particleFilename"), "input001_particles.xml");
   EXPECT_EQ(util::getFilename("periFilename"), "peri_part.inp");
-  EXPECT_EQ(util::getFilename("periodicBoundaryOutputFilename"), "generated_periodic_boundary");
-  EXPECT_EQ(util::getFilename("periodicParticleOutputFilename"), "generated_periodic_particles");
+  EXPECT_EQ(util::getFilename("generatedBoundaryOutputFilename"), "generated_periodic_boundary");
+  EXPECT_EQ(util::getFilename("generatedParticleOutputFilename"), "generated_periodic_particles");
 }
 

@@ -2,12 +2,13 @@
 #include <Simulations/CommandHandler.h>
 #include <Simulations/DEM/CavityExpansion.h>
 #include <Simulations/DEM/CavityExpansionResume.h>
+#include <Simulations/DEM/CreateParticlesPeriodicRVE.h>
+#include <Simulations/DEM/CreateParticlesEllipsoidFromGradation.h>
 #include <Simulations/DEM/DepositIntoContainer.h>
 #include <Simulations/DEM/DepositIntoContainerResume.h>
 #include <Simulations/DEM/TractionLoading.h>
 #include <Simulations/DEM/IsotropicLoading.h>
 #include <Simulations/DEM/OedometerLoading.h>
-#include <Simulations/DEM/PeriodicRVECreation.h>
 #include <Simulations/DEM/PeriodicBCAxisymmetricStrainDriven.h>
 #include <Simulations/DEM/PlaneStrainLoading.h>
 #include <Simulations/DEM/ProceedFromPreset.h>
@@ -28,7 +29,6 @@ using namespace dem;
 CommandP
 CommandHandler::handleCommand(int simuType)
 {
-
   switch (simuType) {
     case 001: // proceed from preset state
       return std::make_unique<ProceedFromPreset>();
@@ -39,6 +39,9 @@ CommandHandler::handleCommand(int simuType)
       break;
     case 003: // trim particles
       return std::make_unique<TrimParticles>();
+      break;
+    case  10: // create spherical particles
+      return std::make_unique<CreateParticlesEllipsoidFromGradation>();
       break;
     case 101: // deposit spatially scattered particles into a rigid container
       return std::make_unique<DepositIntoContainer>();
@@ -114,12 +117,13 @@ CommandHandler::handleCommand(int simuType)
       return std::make_unique<PeridynamicsPullOut>();
       break;
     case 4000: // periodic RVE creation
-      return std::make_unique<PeriodicRVECreation>();
+      return std::make_unique<CreateParticlesPeriodicRVE>();
       break;
     case 4001: // periodic strain BC : axisymmetric
       return std::make_unique<PeriodicBCAxisymmetricStrainDriven>();
       break;
     default:
+      std::cout << "**ERROR** Simulation type " << simuType << " not found.\n";
       return nullptr;
   }
   return nullptr;

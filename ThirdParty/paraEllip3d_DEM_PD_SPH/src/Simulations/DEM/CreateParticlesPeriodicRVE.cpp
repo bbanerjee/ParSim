@@ -47,15 +47,13 @@ CreateParticlesPeriodicRVE::execute(DiscreteElements* dem)
     dem->writeParticlesToFile(0);
 
     // Write new boundary to input files
-    auto filename = 
-      dem::InputParameter::get().datafile["generatedBoundaryOutputFilename"];
+    auto filename = util::getFilename("generatedBoundaryOutputFilename");
     BoundaryFileWriter boundWriter;
     boundWriter.writeCSV(6, filename + ".csv", spatialDomain);
     boundWriter.writeXML(6, filename + ".xml", spatialDomain);
 
     // Write new particle distribution to input files
-    filename = 
-      dem::InputParameter::get().datafile["generatedParticleOutputFilename"];
+    filename = util::getFilename("generatedParticleOutputFilename");
     DEMParticleFileWriter partWriter;
     partWriter.writeCSV(particles, Gradation(), filename + ".csv");
     partWriter.writeXML(particles, Gradation(), filename + ".xml");

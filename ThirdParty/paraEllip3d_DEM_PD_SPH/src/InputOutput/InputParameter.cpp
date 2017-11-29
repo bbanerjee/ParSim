@@ -95,14 +95,16 @@ InputParameter::readInXML(const std::string& inputFileName)
   param["ompThreads"] = ompThreads;
 
   // Read time stepping info
+  auto time_ps = ps["Time"];
+  
   int startStep = 1;
   int endStep = 100;
   REAL timeAccrued = 0.0;
   REAL timeStep = 0.1;
-  ps["Time"]["startStep"](startStep);
-  ps["Time"]["endStep"](endStep);
-  ps["Time"]["timeAccrued"](timeAccrued);
-  ps["Time"]["timeStep"](timeStep);
+  time_ps["startStep"](startStep);
+  time_ps["endStep"](endStep);
+  time_ps["timeAccrued"](timeAccrued);
+  time_ps["timeStep"](timeStep);
 
   param["startStep"] = startStep;
   param["endStep"] = endStep;
@@ -114,12 +116,14 @@ InputParameter::readInXML(const std::string& inputFileName)
   //          << "timeStep = " << timeStep << "\n";
 
   // Read the output info
+  auto output_ps = ps["Output"];
+
   int startSnapshot = 1;
   int endSnapshot = 100;
   std::string outputFolderName = "deposit";
-  ps["Output"]["outputFolder"](outputFolderName);
-  ps["Output"]["startSnapshot"](startSnapshot);
-  ps["Output"]["endSnapshot"](endSnapshot);
+  output_ps["outputFolder"](outputFolderName);
+  output_ps["startSnapshot"](startSnapshot);
+  output_ps["endSnapshot"](endSnapshot);
 
   datafile["outputFolder"] = trim(outputFolderName);
   param["startSnap"] = startSnapshot;
@@ -128,10 +132,12 @@ InputParameter::readInXML(const std::string& inputFileName)
   //          << "endSnapshot = " << endSnapshot << "\n";
 
   // Read the physical constants
+  auto pc_ps = ps["PhysicalConstants"];
+
   REAL gravity = 9.8;
   REAL gravityScale = 1.0;
-  ps["PhysicalConstants"]["gravityAcceleration"](gravity);
-  ps["PhysicalConstants"]["gravityScaleFactor"](gravityScale);
+  pc_ps["gravityAcceleration"](gravity);
+  pc_ps["gravityScaleFactor"](gravityScale);
 
   param["gravAccel"] = gravity;
   param["gravScale"] = gravityScale;
@@ -139,10 +145,12 @@ InputParameter::readInXML(const std::string& inputFileName)
   //          << "gravityScale = " << gravityScale << "\n";
 
   // Read the boundary information
+  auto boundary_ps = ps["Boundary"];
+
   std::string boundaryFilename;
   REAL boundaryFriction = 0.0;
-  ps["Boundary"]["boundaryFilename"](boundaryFilename);
-  ps["Boundary"]["boundaryFriction"](boundaryFriction);
+  boundary_ps["boundaryFilename"](boundaryFilename);
+  boundary_ps["boundaryFriction"](boundaryFriction);
 
   datafile["boundaryFilename"] = trim(boundaryFilename);
   param["boundaryFric"] = boundaryFriction;
@@ -150,8 +158,10 @@ InputParameter::readInXML(const std::string& inputFileName)
   //          << "boundaryFriction = " << boundaryFriction << "\n";
 
   // Read the DEM particle file information
-  bool initializeFromFile = true;
-  ps["DEM"]["initializeFromFile"](initializeFromFile);
+  auto dem_ps = ps["DEM"];
+
+  bool initializeFromFile = false;
+  dem_ps["initializeFromFile"](initializeFromFile);
   param["demToInitParticle"] = static_cast<int>(initializeFromFile);
 
   REAL massScaleFactor = 1.0;
@@ -161,17 +171,17 @@ InputParameter::readInXML(const std::string& inputFileName)
   if (simType == 002 || simType == 101) {
 
     // Read the number of particle layers
-    ps["DEM"]["particleLayers"](param["particleLayers"]);
+    dem_ps["particleLayers"](param["particleLayers"]);
     
     // Read the minZ and maxZ for initial particle generation
-    ps["DEM"]["floatMinZ"](param["floatMinZ"]);
-    ps["DEM"]["floatMaxZ"](param["floatMaxZ"]);
+    dem_ps["floatMinZ"](param["floatMinZ"]);
+    dem_ps["floatMaxZ"](param["floatMaxZ"]);
 
     // Read the trimming height after particle deposition
-    ps["DEM"]["trimHeight"](param["trimHeight"]);
+    dem_ps["trimHeight"](param["trimHeight"]);
 
     // Read the gradation information
-    auto sieve_ps = ps["DEM"]["Sieves"];
+    auto sieve_ps = dem_ps["Sieves"];
     if (!sieve_ps) {
       std::cerr << "**ERROR** For particles to be generated you will"
                 << " have to provide gradation information in the input"
@@ -206,22 +216,22 @@ InputParameter::readInXML(const std::string& inputFileName)
 
   } else {
 
-    std::string particleFilename;
-    ps["DEM"]["particleFilename"](particleFilename);
+    std::string particleFilename = "none";
+    dem_ps["particleFilename"](particleFilename);
     datafile["particleFilename"] = trim(particleFilename);
 
     // Read the trimming height after particle deposition
     // if needed
     if (simType == 102) {
-      ps["DEM"]["trimHeight"](param["trimHeight"]);
+      dem_ps["trimHeight"](param["trimHeight"]);
     }
 
   }
 
   // Read other DEM information
-  ps["DEM"]["massScaleFactor"](massScaleFactor);
-  ps["DEM"]["momentScaleFactor"](momentScaleFactor);
-  ps["DEM"]["pileRate"](pileRate);
+  dem_ps["massScaleFactor"](massScaleFactor);
+  dem_ps["momentScaleFactor"](momentScaleFactor);
+  dem_ps["pileRate"](pileRate);
 
   param["massScale"] = massScaleFactor;
   param["mntScale"] = momentScaleFactor;
@@ -232,18 +242,19 @@ InputParameter::readInXML(const std::string& inputFileName)
   //          << "momentScaleFactor = " << momentScaleFactor << "\n";
 
   // Read the DEM material information
+  auto dem_material_ps = dem_ps["Material"];
   REAL youngModulus = 1.0e10;
   REAL poissonRatio = 0.3;
   REAL specificGravity = 1.0;
   REAL membraneYoungModulus = 1.0e6;
   REAL forceDamping = 0.0;
   REAL momentDamping = 0.0;
-  ps["DEM"]["Material"]["youngModulus"](youngModulus);
-  ps["DEM"]["Material"]["poissonRatio"](poissonRatio);
-  ps["DEM"]["Material"]["specificGravity"](specificGravity);
-  ps["DEM"]["Material"]["membraneYoungModulus"](membraneYoungModulus);
-  ps["DEM"]["Material"]["forceDamping"](forceDamping);
-  ps["DEM"]["Material"]["momentDamping"](momentDamping);
+  dem_material_ps["youngModulus"](youngModulus);
+  dem_material_ps["poissonRatio"](poissonRatio);
+  dem_material_ps["specificGravity"](specificGravity);
+  dem_material_ps["membraneYoungModulus"](membraneYoungModulus);
+  dem_material_ps["forceDamping"](forceDamping);
+  dem_material_ps["momentDamping"](momentDamping);
 
   param["young"] = youngModulus;
   param["poisson"] = poissonRatio;
@@ -260,12 +271,13 @@ InputParameter::readInXML(const std::string& inputFileName)
   //          << " momentDamping = " << momentDamping << "\n";
 
   // Read the DEM contact information
-  ps["DEM"]["Contact"]["contactDamping"](param["contactDamp"]);
-  ps["DEM"]["Contact"]["contactFriction"](param["contactFric"]);
-  ps["DEM"]["Contact"]["contactCohesion"](param["contactCohesion"]);
-  ps["DEM"]["Contact"]["minRelativeOverlap"](param["minAllowableRelativeOverlap"]);
-  ps["DEM"]["Contact"]["maxRelativeOverlap"](param["maxAllowableRelativeOverlap"]);
-  ps["DEM"]["Contact"]["measurableOverlap"](param["minMeasurableOverlap"]);
+  auto dem_contact_ps = dem_ps["Contact"];
+  dem_contact_ps["contactDamping"](param["contactDamp"]);
+  dem_contact_ps["contactFriction"](param["contactFric"]);
+  dem_contact_ps["contactCohesion"](param["contactCohesion"]);
+  dem_contact_ps["minRelativeOverlap"](param["minAllowableRelativeOverlap"]);
+  dem_contact_ps["maxRelativeOverlap"](param["maxAllowableRelativeOverlap"]);
+  dem_contact_ps["measurableOverlap"](param["minMeasurableOverlap"]);
 
   //std::cout << "contactDamping = " << param["contactDamp"] << "\n"
   //          << "contactFriction = " << param["contactFric"] << "\n"
@@ -274,31 +286,99 @@ InputParameter::readInXML(const std::string& inputFileName)
   //          << "maxRelativeOverlap = " << param["maxAllowableRelativeOverlap"] << "\n"
   //          << "measurableOverlap = " << param["minMeasurableOverlap"] << "\n";
 
+  // Read the particle generation controls
   // Read the periodic particle generation controls
-  auto periodicGen_ps = ps["DEM"]["PeriodicParticleGeneration"];
-  if (periodicGen_ps) {
-    periodicGen_ps["boundaryMarginFactor"](param["periodicBoundaryMarginFactor"]);
-    periodicGen_ps["boundaryFaceShiftFactor"](param["periodicBoundaryFaceShiftFactor"]);
+  auto particleGen_ps = dem_ps["ParticleGeneration"];
+  if (particleGen_ps) {
+
+    // Check whether the particle generation is periodic
+    auto periodicGen_ps = particleGen_ps["Periodic"];
+    if (periodicGen_ps) {
+      periodicGen_ps["boundaryMarginFactor"](param["periodicBoundaryMarginFactor"]);
+      periodicGen_ps["boundaryFaceShiftFactor"](param["periodicBoundaryFaceShiftFactor"]);
+    } 
+
+    // Check whether the particle generation is based on gradation
+    auto layeredGen_ps = particleGen_ps["Layered"];
+    if (layeredGen_ps) {
+
+      // Read the number of particle layers
+      layeredGen_ps["particleLayers"](param["particleLayers"]);
+      
+      // Read the minZ and maxZ for initial particle generation
+      layeredGen_ps["floatMinZ"](param["floatMinZ"]);
+      layeredGen_ps["floatMaxZ"](param["floatMaxZ"]);
+
+      // Read the trimming height after particle deposition
+      layeredGen_ps["trimHeight"](param["trimHeight"]);
+
+      // Read the gradation information
+      auto sieve_ps = layeredGen_ps["Sieves"];
+      if (!sieve_ps) {
+        std::cerr << "**ERROR** For particles to be generated you will"
+                  << " have to provide gradation information in the input"
+                  << " file." << std::endl;
+        exit(-1);
+      }
+
+      std::size_t numSieves;
+      sieve_ps.attribute("number", numSieves);
+      param["sieveNum"] = numSieves;
+
+      std::string percentPassingStr;
+      sieve_ps["percent_passing"](percentPassingStr);
+      std::vector<REAL> percentPassing = 
+        Ellip3D::Util::convertStrArray<REAL>(percentPassingStr);
+      assert(percentPassing.size() == numSieves);
+
+      std::string sizeStr;
+      sieve_ps["size"](sizeStr);
+      std::vector<REAL> size = Ellip3D::Util::convertStrArray<REAL>(sizeStr);
+      assert(size.size() == numSieves);
+
+      for (std::size_t i = 0; i < numSieves; ++i) {
+        gradation.push_back(std::pair<REAL,REAL>(percentPassing[i], size[i]));
+      }
+
+      REAL ratio_ba, ratio_ca;
+      sieve_ps["sieve_ratio"]["ratio_ba"](ratio_ba);
+      sieve_ps["sieve_ratio"]["ratio_ca"](ratio_ca);
+      param["ratioBA"] = ratio_ba;
+      param["ratioCA"] = ratio_ba;
+    }
+
     std::string filename;
-    periodicGen_ps["boundaryFilename"](filename);
-    datafile["periodicBoundaryOutputFilename"] = trim(filename);
-    periodicGen_ps["particleFilename"](filename);
-    datafile["periodicParticleOutputFilename"] = trim(filename);
+    particleGen_ps["boundaryFilename"](filename);
+    datafile["generatedBoundaryOutputFilename"] = trim(filename);
+    particleGen_ps["particleFilename"](filename);
+    datafile["generatedParticleOutputFilename"] = trim(filename);
+
   } else {
+
+    // default values
     param["periodicBoundaryMarginFactor"] = 2.0;
     param["periodicBoundaryFaceShiftFactor"] = 0.0;
-    datafile["periodicBoundaryOutputFilename"] = "generated_periodic_boundary";
-    datafile["periodicParticleOutputFilename"] = "generated_periodic_particles";
+    datafile["generatedBoundaryOutputFilename"] = "generated_periodic_boundary";
+    datafile["generatedParticleOutputFilename"] = "generated_periodic_particles";
   }
 
   // DEM BCs (read from input file)
-  auto dem_ps = ps["DEM"];
   auto dem_bc_ps = dem_ps["BoundaryConditions"];
   std::string demBCFile = "none";
   if (dem_bc_ps) {
     dem_bc_ps["inputFile"](demBCFile);
   }
   datafile["demBoundaryConditionFilename"] = trim(demBCFile);
+
+  if (dem_ps.errorsOccured()) {
+    auto errors = dem_ps.getErrorsAs<std::string>();
+    std::cout << "**WARNING** Input file does not contain the following"
+              << " DEM tags::\n";
+    for (const auto& error : errors) {
+        std::cout << error << "\n";
+    }
+    std::cout << "\n";
+  }
 
   // Check if a peridynamics section exists
   auto peri_ps = ps["Peridynamics"];
@@ -532,6 +612,16 @@ InputParameter::readInXML(const std::string& inputFileName)
     peri_bc_ps["periFixCentroidZ"](param["periFixCentroidZ"]);
     peri_bc_ps["periForce"](param["periForce"]);
     peri_bc_ps["rampStep"](param["rampStep"]);
+
+    if (peri_ps.errorsOccured()) {
+      auto errors = peri_ps.getErrorsAs<std::string>();
+      std::cout << "**WARNING** Input file does not contain the following"
+                << " Peridynamics tags::\n";
+      for (const auto& error : errors) {
+          std::cout << error << "\n";
+      }
+      std::cout << "\n";
+    }
   }
 
   return true;
@@ -1123,23 +1213,23 @@ InputParameter::readIn(const char* input)
 void
 InputParameter::writeOut()
 {
-  std::map<std::string, REAL>& param = InputParameter::get().param;
+  std::map<std::string, REAL>& params = InputParameter::get().param;
   std::vector<std::pair<REAL, REAL>>& grada = InputParameter::get().gradation;
-  std::map<std::string, std::string>& file = InputParameter::get().datafile;
-  std::vector<REAL>& sigma = InputParameter::get().sigmaPath;
+  std::map<std::string, std::string>& files = InputParameter::get().datafile;
+  std::vector<REAL>& sigmas = InputParameter::get().sigmaPath;
 
-  for (std::map<std::string, REAL>::const_iterator it = param.begin();
-       it != param.end(); ++it)
-    std::cout << it->first << "  " << it->second << std::endl;
+  for (const auto& param : params) {
+    std::cout << param.first << "  " << param.second << std::endl;
+  }
 
-  for (auto& i : grada)
-    std::cout << i.first << "  " << i.second << std::endl;
+  for (const auto& grad : grada)
+    std::cout << grad.first << "  " << grad.second << std::endl;
 
-  for (std::map<std::string, std::string>::const_iterator it = file.begin();
-       it != file.end(); ++it)
-    std::cout << it->first << "  " << it->second << std::endl;
+  for (const auto& file : files) {
+    std::cout << file.first << "  " << file.second << std::endl;
+  }
 
-  for (std::vector<REAL>::const_iterator it = sigma.begin(); it != sigma.end();
-       ++it)
-    std::cout << (*it) << std::endl;
+  for (const auto& sigma : sigmas) {
+    std::cout << sigma << std::endl;
+  }
 }

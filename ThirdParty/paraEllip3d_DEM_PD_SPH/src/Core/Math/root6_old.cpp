@@ -2233,7 +2233,7 @@ root6_old(REAL coef1[], REAL coef2[], Vec& point, REAL radius,
     rtc[i] /= rtc[order];
 
 #ifndef NDEBUG // tested: order == 6 whether or not in contact
-  debugInf << "root6_old.cpp: iter=" << iteration << " order=" << order
+  debugInf << "root6_old.cpp: iter=" << g_iteration << " order=" << order
            << std::endl;
 #endif
 

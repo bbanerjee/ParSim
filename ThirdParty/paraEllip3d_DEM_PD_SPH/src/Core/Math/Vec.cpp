@@ -116,7 +116,7 @@ rotateVec(Vec vec, Vec rot)
 
   REAL theta = atan(vnormL2(vy) / vnormL2(vx));
 #ifndef NDEBUG
-  debugInf << "Vec.cpp: iter=" << iteration << " alf=" << alf
+  debugInf << "Vec.cpp: " << " alf=" << alf
            << " theta=" << theta << std::endl;
 #endif
   if (theta < EPS) // important, otherwise my cause numerical instability

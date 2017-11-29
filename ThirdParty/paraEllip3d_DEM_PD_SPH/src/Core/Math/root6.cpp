@@ -516,7 +516,7 @@ root6(REAL coef1[], REAL coef2[], Vec& point, REAL radius, std::size_t partID1,
   }
 
 #ifndef NDEBUG // tested: order == 6 whether or not in contact
-  debugInf << "root6.cpp: iter=" << iteration << " order=" << order
+  debugInf << "root6.cpp: iter=" << g_iteration << " order=" << order
            << std::endl;
 #endif
 

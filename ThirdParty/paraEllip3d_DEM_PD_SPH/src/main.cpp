@@ -52,7 +52,7 @@ main(int argc, char* argv[])
     }
 
     InputParameter::get().readIn(argv[1]);
-    InputParameter::get().writeOut();
+    //InputParameter::get().writeOut();
     int mpiProcX = util::getParam<int>("mpiProcX");;
     int mpiProcY = util::getParam<int>("mpiProcY");;
     int mpiProcZ = util::getParam<int>("mpiProcZ");;
@@ -99,10 +99,12 @@ main(int argc, char* argv[])
   // Run the commands for each simulation type
   dem::CommandHandler handler;
   dem::CommandP command = handler.handleCommand(simuType);
-  if (std::abs(simuType - 3000) < 99) {
-    command->execute(&dem, &pd);
-  } else {
-    command->execute(&dem);
+  if (command != nullptr) {
+    if (simuType > 2999 && simuType < 3099) {
+      command->execute(&dem, &pd);
+    } else {
+      command->execute(&dem);
+    }
   }
 
   dem::debugInf << std::endl
