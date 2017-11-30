@@ -20,6 +20,20 @@ public:
     REAL offset;
     bool randomOrientation;
     bool randomRadiusRatio;
+    bool randomVelocity;
+
+    friend
+    std::ostream& operator<<(std::ostream& os, const ParticleParameters& p) {
+      os << "ym = " << p.youngModulus
+         << " pr = " << p.poissonRatio
+         << " dia = " << p.maxDiameter
+         << " edge = " << p.edge
+         << " offset = " << p.offset
+         << " orient = " << std::boolalpha << p.randomOrientation
+         << " ratio = " << std::boolalpha << p.randomRadiusRatio
+         << " vel = " << std::boolalpha << p.randomVelocity << "\n";
+      return os;
+    }
   };
 
   DEMParticleCreator() = default;

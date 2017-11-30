@@ -18,6 +18,7 @@ TEST(DEMParticleFileWriterTest, writeSingleType) {
   dem::InputParameter::get().addParameter("gravScale", 1);
   dem::InputParameter::get().addParameter("randomOrientation", 0);
   dem::InputParameter::get().addParameter("randomRadiusRatio", 0);
+  dem::InputParameter::get().addParameter("randomVelocity", 0);
 
   // Set up gradation
   Gradation gradation;
@@ -79,6 +80,7 @@ TEST(DEMParticleFileWriterTest, writeTwoTypes) {
   dem::InputParameter::get().addParameter("gravScale", 1);
   dem::InputParameter::get().addParameter("randomOrientation", 0);
   dem::InputParameter::get().addParameter("randomRadiusRatio", 0);
+  dem::InputParameter::get().addParameter("randomVelocity", 0);
 
   // Set up gradation
   Gradation gradation;

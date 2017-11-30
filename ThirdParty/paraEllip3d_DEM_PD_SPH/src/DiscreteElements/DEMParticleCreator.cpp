@@ -70,6 +70,8 @@ DEMParticleCreator::getParticleParameters(const Gradation& gradation)
     static_cast<bool>(util::getParam<REAL>("randomOrientation"));
   params.randomRadiusRatio = 
     static_cast<bool>(util::getParam<REAL>("randomRadiusRatio"));
+  params.randomVelocity = 
+    static_cast<bool>(util::getParam<REAL>("randomVelocity"));
 
   // Default edge and offset
   params.edge = params.maxDiameter;
@@ -102,7 +104,7 @@ DEMParticleCreator::createParticles<0>(DEMParticleShape particleShape,
     particleShape, DEMParticle::DEMParticleType::FREE,
     spatialDomain.center(), gradation, 
     params.youngModulus, params.poissonRatio,
-    params.randomOrientation, params.randomRadiusRatio);
+    params.randomOrientation, params.randomRadiusRatio, params.randomVelocity);
 
   particles.push_back(particle);
 
@@ -130,15 +132,24 @@ DEMParticleCreator::createParticles<1>(DEMParticleShape particleShape,
   auto y_max = spatialDomain.maxCorner().y() - params.edge;
   auto yCoords = util::linspaceApprox<REAL>(y_min, y_max, params.maxDiameter);
 
+  std::cout << params << "\n";
+
   DEMParticlePArray particles;
   std::size_t particleNum = 0;
+
+  std::cout << "Num (x, y) = (" << xCoords.size() << "," << yCoords.size() << ")";
+  for (auto x : xCoords) {
+    std::cout << x << " ";
+  }
+  std::cout << std::endl;
 
   for (auto xCoord : xCoords) {
     for (auto yCoord : yCoords) {
       DEMParticleP particle = std::make_shared<DEMParticle>(++particleNum, 
         particleShape, DEMParticle::DEMParticleType::FREE,
         Vec(xCoord, yCoord, z_cen), gradation, params.youngModulus,
-        params.poissonRatio, params.randomOrientation, params.randomRadiusRatio);
+        params.poissonRatio, params.randomOrientation, params.randomRadiusRatio, 
+        params.randomVelocity);
       particles.push_back(particle);
     }
   }
@@ -207,7 +218,8 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
         DEMParticleP particle = std::make_shared<DEMParticle>(++particleNum, 
           particleShape, DEMParticle::DEMParticleType::FREE,
           Vec(xCoord, yCoord, zCoord), gradation, params.youngModulus,
-          params.poissonRatio, params.randomOrientation, params.randomRadiusRatio);
+          params.poissonRatio, params.randomOrientation, params.randomRadiusRatio,
+          params.randomVelocity);
         particles.push_back(particle);
       }
     }

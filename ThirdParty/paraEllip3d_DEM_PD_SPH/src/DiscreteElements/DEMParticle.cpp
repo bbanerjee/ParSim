@@ -149,7 +149,7 @@ DEMParticle::DEMParticle()
 }
 
 void
-DEMParticle::init(bool randomOrientation)
+DEMParticle::init(bool randomOrientation, bool randomVelocity)
 {
   // generate orientation of axle a/b/c using Euler angles
 
@@ -189,7 +189,16 @@ DEMParticle::init(bool randomOrientation)
   d_prevDirecA = d_currDirecA;
   d_prevDirecB = d_currDirecB;
   d_prevDirecC = d_currDirecC;
-  d_previousVelocity = d_currentVelocity = 0;
+
+  if (randomVelocity) {
+    d_currentVelocity.setX(2 * ran(&idum) - 1);
+    d_currentVelocity.setY(2 * ran(&idum) - 1);
+    d_currentVelocity.setZ(-ran(&idum));
+    d_previousVelocity = d_currentVelocity;
+  } else {
+    d_previousVelocity = d_currentVelocity = 0;
+  }
+
   d_prevOmga = d_currOmga = 0;
   d_force = d_prevForce = 0;
   d_moment = d_prevMoment = 0;
@@ -246,8 +255,8 @@ DEMParticle::DEMParticle(std::size_t n,
                          DEMParticleShape shape, DEMParticleType type,
                          Vec center, Gradation& grad,
                          REAL yng, REAL poi,
-                         bool randomOrientation, 
-                         bool randomRadiusRatio)
+                         bool randomOrientation, bool randomRadiusRatio,
+                         bool randomVelocity)
   : d_id(n)
   , d_shape(shape)
   , d_type(type)
@@ -274,7 +283,7 @@ DEMParticle::DEMParticle(std::size_t n,
   d_b = d_a * grad.getPtclRatioBA();
   d_c = d_a * grad.getPtclRatioCA();
 
-  init(randomOrientation);
+  init(randomOrientation, randomVelocity);
 }
 
 DEMParticle::DEMParticle(std::size_t n, 

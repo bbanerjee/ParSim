@@ -67,7 +67,8 @@ public:
               Vec center, REAL a, REAL b, REAL c, REAL young, REAL poisson);
   DEMParticle(std::size_t n, DEMParticleShape shape, DEMParticleType type, 
               Vec center, Gradation& grad, REAL young, REAL poisson,
-              bool randomOrientation = true, bool randomRadiusRatio = true);
+              bool randomOrientation = true, bool randomRadiusRatio = false,
+              bool randomVelocity = false);
   DEMParticle(std::size_t n, DEMParticleShape shape, DEMParticleType type, 
               Vec dim, Vec position, Vec dirca, Vec dircb, Vec dircc, 
               REAL young, REAL poisson);
@@ -339,7 +340,7 @@ private:
   bool d_inContact; 
   std::vector<std::vector<REAL>> d_fluidGrid;
 
-  void init(bool randomOrientation = true);
+  void init(bool randomOrientation = true, bool randomVelocity = false);
 
   friend class boost::serialization::access;
   template <class Archive>

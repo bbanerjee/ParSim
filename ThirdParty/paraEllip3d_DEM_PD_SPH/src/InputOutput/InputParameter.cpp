@@ -329,6 +329,16 @@ InputParameter::readInXML(const std::string& inputFileName)
       } else {
         param["randomRadiusRatio"] = 0;
       }
+
+      // Read the random velocity flag
+      std::string randomVelocity = "false";
+      layeredGen_ps["randomVelocity"](randomVelocity);
+      if (trim(randomVelocity) == "true") {
+        param["randomVelocity"] = 1;
+      } else {
+        param["randomVelocity"] = 0;
+      }
+
       // Read the gradation information
       auto sieve_ps = layeredGen_ps["Sieves"];
       if (!sieve_ps) {
