@@ -35,7 +35,7 @@ SET(COMMAND_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/CreateParticlesEllipsoidFromGradation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/PeriodicBCAxisymmetricStrainDriven.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/PlaneStrainLoading.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/ProceedFromPreset.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/GravityDeposition.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/TriaxialLoading.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/TrimParticles.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/TrueTriaxialLoading.cpp

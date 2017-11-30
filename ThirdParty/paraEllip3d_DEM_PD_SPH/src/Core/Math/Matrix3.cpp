@@ -817,6 +817,7 @@ void Matrix3::gershgorinBounds(double &minBound, double& maxBound)
 }
 
 namespace dem {
+
   std::ostream &
   operator << (std::ostream &out_file, const Matrix3 &m3)
   {

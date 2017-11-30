@@ -1,4 +1,4 @@
-#include <Simulations/DEM/ProceedFromPreset.h>
+#include <Simulations/DEM/GravityDeposition.h>
 #include <Boundary/BoundaryReader.h>
 #include <InputOutput/InputParameter.h>
 
@@ -7,11 +7,11 @@
 
 using namespace dem;
 void
-ProceedFromPreset::execute(DiscreteElements* dem)
+GravityDeposition::execute(DiscreteElements* dem)
 {
   std::string boundaryFilename = util::getFilename("boundaryFilename");
   std::string particleFilename = util::getFilename("particleFilename");
-  //std::cout << "Called ProceedFromPresetCommand with: "
+  //std::cout << "Called GravityDepositionCommand with: "
   //          << " BoundaryFile = " << boundaryFilename << " and "
   //          << " ParticleFile = " << particleFilename << std::endl;
 

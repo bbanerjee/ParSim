@@ -141,6 +141,7 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
 {
   // The output folder (default name is .)
   std::string outputFolder(".");
+  std::string outputParticleCSVFile;
 
   // Read the input data
   if (s_mpiRank == 0) {
@@ -174,6 +175,8 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     writeBoundaryToFile();
     writePatchGridToFile();
     writeParticlesToFile(iterSnap);
+    outputParticleCSVFile = combine("output_particles_", iterSnap, 3);
+    printParticlesCSV(outputFolder, outputParticleCSVFile, 0);
     printBoundaryContacts();
     debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
              << std::setw(OWID) << "migraT" << std::setw(OWID) << "compuT"
@@ -249,6 +252,8 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
         writeBoundaryToFile();
         writePatchGridToFile();
         writeParticlesToFile(iterSnap);
+        outputParticleCSVFile = combine("output_particles_", iterSnap, 3);
+        printParticlesCSV(outputFolder, outputParticleCSVFile, 0);
         printBoundaryContacts();
         appendToProgressOutputFile(progressInf, timeStep);
       }

@@ -83,32 +83,32 @@ public:
   REAL mass() const { return d_mass; }
   REAL getTotalMass() const { return d_totalMassAllParticles; }
   REAL density() const { return d_density; }
-  Vec currentPosition() const { return d_currPos; }
-  Vec previousPosition() const { return d_prevPos; }
+  const Vec& currentPosition() const { return d_currPos; }
+  const Vec& previousPosition() const { return d_prevPos; }
   Vec currentAnglesAxisA() const { return vacos(d_currDirecA); }
   Vec currentAnglesAxisB() const { return vacos(d_currDirecB); }
   Vec currentAnglesAxisC() const { return vacos(d_currDirecC); }
   Vec previousAnglesAxisA() const { return vacos(d_prevDirecA); }
   Vec previousAnglesAxisB() const { return vacos(d_prevDirecB); }
   Vec previousAnglesAxisC() const { return vacos(d_prevDirecC); }
-  Vec currentAxisA() const { return d_currDirecA; }
-  Vec currentAxisB() const { return d_currDirecB; }
-  Vec currentAxisC() const { return d_currDirecC; }
-  Vec previousAxisA() const { return d_prevDirecA; }
-  Vec previousAxisB() const { return d_prevDirecB; }
-  Vec previousAxisC() const { return d_prevDirecC; }
-  Vec currentVelocity() const { return d_currentVelocity; }
-  Vec previousVelocity() const { return d_previousVelocity; }
-  Vec currentAngularVelocity() const { return d_currOmga; }
-  Vec previousAngularVelocity() const { return d_prevOmga; }
-  Vec force() const { return d_force; }
+  const Vec& currentAxisA() const { return d_currDirecA; }
+  const Vec& currentAxisB() const { return d_currDirecB; }
+  const Vec& currentAxisC() const { return d_currDirecC; }
+  const Vec& previousAxisA() const { return d_prevDirecA; }
+  const Vec& previousAxisB() const { return d_prevDirecB; }
+  const Vec& previousAxisC() const { return d_prevDirecC; }
+  const Vec& currentVelocity() const { return d_currentVelocity; }
+  const Vec& previousVelocity() const { return d_previousVelocity; }
+  const Vec& currentAngularVelocity() const { return d_currOmga; }
+  const Vec& previousAngularVelocity() const { return d_prevOmga; }
+  const Vec& force() const { return d_force; }
   std::map<size_t, Vec> forceIDMap() const { return d_forceIDMap; }
-  Vec moment() const { return d_moment; }
+  const Vec& moment() const { return d_moment; }
   std::map<size_t, Vec> momentIDMap() const { return d_momentIDMap; }
   Vec acceleration() const { return d_force / d_mass; }
-  Vec getConstForce() const { return d_constForce; }
-  Vec getConstMoment() const { return d_constMoment; }
-  Vec getmomentJ() const { return d_momentJ; }
+  const Vec& getConstForce() const { return d_constForce; }
+  const Vec& getConstMoment() const { return d_constMoment; }
+  const Vec& getmomentJ() const { return d_momentJ; }
   bool isInContact() const { return d_inContact; }
   std::size_t getNumBoundaryContacts() const { return d_contactNum; }
 

@@ -11,7 +11,7 @@
 #include <Simulations/DEM/OedometerLoading.h>
 #include <Simulations/DEM/PeriodicBCAxisymmetricStrainDriven.h>
 #include <Simulations/DEM/PlaneStrainLoading.h>
-#include <Simulations/DEM/ProceedFromPreset.h>
+#include <Simulations/DEM/GravityDeposition.h>
 #include <Simulations/DEM/TriaxialLoading.h>
 #include <Simulations/DEM/TrimParticles.h>
 #include <Simulations/DEM/TrueTriaxialLoading.h>
@@ -31,7 +31,7 @@ CommandHandler::handleCommand(int simuType)
 {
   switch (simuType) {
     case 001: // proceed from preset state
-      return std::make_unique<ProceedFromPreset>();
+      return std::make_unique<GravityDeposition>();
       break;
     case 002: // tune mass-percentage from number-percentage on size
               // distribution curve by trial and error

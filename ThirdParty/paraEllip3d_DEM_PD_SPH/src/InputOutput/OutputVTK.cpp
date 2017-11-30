@@ -26,6 +26,7 @@
 #include <Peridynamics/PeriParticle.h>
 #include <SmoothParticleHydro/SPHParticle.h>
 #include <InputOutput/OutputVTK.h>
+#include <Core/Math/Matrix3.h>
 
 #include <vtkDoubleArray.h>
 #include <vtkHexahedron.h>
@@ -444,6 +445,11 @@ OutputVTK<DEMParticlePArray>::createVTKUnstructuredGrid(const DEMParticlePArray*
   axis_c->SetNumberOfTuples(pts->GetNumberOfPoints());
   axis_c->SetName("Axis c");
 
+  vtkDoubleArrayP ellipsoid = vtkDoubleArrayP::New();
+  ellipsoid->SetNumberOfComponents(9);
+  ellipsoid->SetNumberOfTuples(pts->GetNumberOfPoints());
+  ellipsoid->SetName("Ellipsoid");
+
   vtkDoubleArrayP velocity = vtkDoubleArrayP::New();
   velocity->SetNumberOfComponents(3);
   velocity->SetNumberOfTuples(pts->GetNumberOfPoints());
@@ -488,6 +494,21 @@ OutputVTK<DEMParticlePArray>::createVTKUnstructuredGrid(const DEMParticlePArray*
     vec[1] = particle->radiusB();
     vec[2] = particle->radiusC();
     radii->InsertTuple(id, vec);
+
+    // Compute the orientation ellipsoid
+    Matrix3 a_x_a = Dyad(particle->currentAxisA(), particle->currentAxisA());
+    Matrix3 b_x_b = Dyad(particle->currentAxisB(), particle->currentAxisB());
+    Matrix3 c_x_c = Dyad(particle->currentAxisC(), particle->currentAxisC());
+    auto ell = vec[0] * a_x_a + vec[1] * b_x_b + vec[2] * c_x_c;
+    double mat[9];
+    int count = 0;
+    for (int ii = 0; ii < 3; ++ii) {
+      for (int jj = 0; jj < 3; ++jj) {
+        mat[count] = ell(ii, jj);
+        ++count;
+      }
+    }
+    ellipsoid->InsertTuple(id, mat);
 
     // Current direction A
     vObj = particle->currentAnglesAxisA();
@@ -548,6 +569,7 @@ OutputVTK<DEMParticlePArray>::createVTKUnstructuredGrid(const DEMParticlePArray*
   dataSet->GetPointData()->AddArray(axis_a);
   dataSet->GetPointData()->AddArray(axis_b);
   dataSet->GetPointData()->AddArray(axis_c);
+  dataSet->GetPointData()->AddArray(ellipsoid);
   dataSet->GetPointData()->AddArray(velocity);
   dataSet->GetPointData()->AddArray(omega);
   dataSet->GetPointData()->AddArray(force);

@@ -962,20 +962,22 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
   p = dirc.x();
   q = dirc.y();
   r = dirc.z();
-  s = dot(-dirc, plane->getPosition()); // plane equation: p(x-x0) + q(y-y0) + r(z-z0)
-                                 // = 0, that is, px + qy + rz + s = 0
+
+  // plane equation: p(x-x0) + q(y-y0) + r(z-z0)  = 0, 
+  // that is, px + qy + rz + s = 0
+  s = dot(-dirc, plane->getPosition()); 
 
   Vec pt1;
-  if (!nearestPTOnPlane(p, q, r, s,
-                        pt1)) // the particle and the plane does not intersect
+  // the particle and the plane does not intersect
+  if (!nearestPTOnPlane(p, q, r, s, pt1)) 
     return;
 
   // if particle and plane intersect:
   ++d_contactNum;
   d_inContact = true;
   Vec rt[2];
-  if (!intersectWithLine(
-        pt1, dirc, rt)) // the line and ellipsoid surface does not intersect
+  // the line and ellipsoid surface does not intersect
+  if (!intersectWithLine( pt1, dirc, rt)) 
     return;
 
   Vec pt2;
@@ -993,15 +995,14 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
   */
 
   // obtain normal force
+  REAL R0 = computeRadius(pt2);
+  REAL allowedOverlap = 2.0 * R0 * maxOverlapFactor;
   REAL d_penetration = vnormL2(pt1 - pt2);
-  if (d_penetration <= 2.0 * computeRadius(pt2) * minOverlapFactor)
+  if (d_penetration <= allowedOverlap)
     return;
 
-  REAL R0 = computeRadius(pt2);
-  REAL E0 =
-    d_young /
-    (1 - d_poisson * d_poisson); // rigid wall has infinite young's modulus
-  REAL allowedOverlap = 2.0 * R0 * maxOverlapFactor;
+  // rigid wall has infinite young's modulus
+  REAL E0 = d_young / (1 - d_poisson * d_poisson); 
   if (d_penetration > allowedOverlap) {
     std::stringstream inf;
     inf.setf(std::ios::scientific, std::ios::floatfield);
@@ -1015,11 +1016,11 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
     MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
                           inf.str().length(), MPI_CHAR, &status);
 
-    d_penetration = allowedOverlap;
+    //d_penetration = allowedOverlap;
   }
 
-  REAL minMeasurableOverlap = util::getParam<REAL>("minMeasurableOverlap");
-  d_penetration = nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
+  //REAL minMeasurableOverlap = util::getParam<REAL>("minMeasurableOverlap");
+  //d_penetration = nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
   REAL contactRadius = sqrt(d_penetration * R0);
   Vec normalDirc = -dirc;
   // pow(d_penetration,1.5), a serious bug
@@ -1050,16 +1051,19 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
   addMoment(cross((pt1 + pt2) / 2 - d_currPos, normalForce));
 
   // obtain normal damping force
+  auto dampingCoeff = util::getParam<REAL>("contactDamp");
   Vec veloc2 = currentVelocity() + cross(currentAngularVelocity(), ((pt1 + pt2) / 2 - currentPosition()));
   REAL kn = pow(6 * vnormL2(normalForce) * R0 * pow(E0, 2), 1.0 / 3.0);
   REAL dampCritical = 2 * sqrt(mass() * kn); // critical damping
-  Vec contactDampingForce = util::getParam<REAL>("contactDamp") * dampCritical *
+  Vec contactDampingForce = dampingCoeff * dampCritical *
                         dot(-veloc2, normalDirc) * normalDirc;
 
   // apply normal damping force
   addForce(contactDampingForce);
   addMoment(cross(((pt1 + pt2) / 2 - d_currPos), contactDampingForce));
 
+  std::cout << "Boundary-Particle:" << d_force << " f_n = " << normalForce
+            << " f_d = " << contactDampingForce << "\n";
   Vec tangentForce = 0;
   if (util::getParam<REAL>("boundaryFric") != 0) {
     // checkin previous tangential force and displacement
@@ -1085,8 +1089,7 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
     // obtain tangtential force
     REAL G0 = d_young / 2 / (1 + d_poisson);
     // Vr = Vb + w (crossdot) r, each item needs to be in either global or local
-    // frame;
-    //      here global frame is used for better convenience.
+    // frame; here global frame is used for better convenience.
     Vec relaDispInc =
       (d_currentVelocity + cross(d_currOmga, ((pt1 + pt2) / 2 - d_currPos))) * timeStep;
     Vec tangentDispInc = relaDispInc - dot(relaDispInc, normalDirc) * normalDirc;

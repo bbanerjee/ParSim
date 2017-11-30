@@ -68,7 +68,7 @@ namespace dem {
     // multiply Matrix3 by a constant: Mat * 3  
     inline Matrix3 operator * (const double value) const;
     // multiply constant by Matrix3:   3 * Mat
-     friend Matrix3 operator * (double c, const Matrix3 &m3);
+    friend Matrix3 operator * (double c, const Matrix3 &m3);
 
     // divide Matrix3 by a constant
     inline Matrix3 operator / (const double value) const;
@@ -670,6 +670,13 @@ namespace dem {
     double z = v.x()*m3(2,0)+v.y()*m3(2,1)+v.z()*m3(2,2);
 
     return Vec(x, y, z);
+  }
+
+  // Create a matrix using dyadic multiplication M = a*b^T
+  inline Matrix3 Dyad(const Vec& a, const Vec& b) {
+    // Dyadic multiplication of two vectors a and b
+    Matrix3 mat(a, b);
+    return mat;
   }
 
 } // End namespace dem
