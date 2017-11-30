@@ -18,6 +18,8 @@ public:
     REAL maxDiameter;
     REAL edge;
     REAL offset;
+    bool randomOrientation;
+    bool randomRadiusRatio;
   };
 
   DEMParticleCreator() = default;

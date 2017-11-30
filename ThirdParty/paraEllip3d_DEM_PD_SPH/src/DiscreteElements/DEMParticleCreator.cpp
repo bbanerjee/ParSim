@@ -65,6 +65,12 @@ DEMParticleCreator::getParticleParameters(const Gradation& gradation)
   // Get max particle size
   params.maxDiameter = gradation.getPtclMaxRadius()*2.0;
 
+  // Get randomization flags
+  params.randomOrientation = 
+    static_cast<bool>(util::getParam<REAL>("randomOrientation"));
+  params.randomRadiusRatio = 
+    static_cast<bool>(util::getParam<REAL>("randomRadiusRatio"));
+
   // Default edge and offset
   params.edge = params.maxDiameter;
   params.offset = 0;
@@ -95,7 +101,8 @@ DEMParticleCreator::createParticles<0>(DEMParticleShape particleShape,
   DEMParticleP particle = std::make_shared<DEMParticle>(++particleNum, 
     particleShape, DEMParticle::DEMParticleType::FREE,
     spatialDomain.center(), gradation, 
-    params.youngModulus, params.poissonRatio);
+    params.youngModulus, params.poissonRatio,
+    params.randomOrientation, params.randomRadiusRatio);
 
   particles.push_back(particle);
 
@@ -131,7 +138,7 @@ DEMParticleCreator::createParticles<1>(DEMParticleShape particleShape,
       DEMParticleP particle = std::make_shared<DEMParticle>(++particleNum, 
         particleShape, DEMParticle::DEMParticleType::FREE,
         Vec(xCoord, yCoord, z_cen), gradation, params.youngModulus,
-        params.poissonRatio);
+        params.poissonRatio, params.randomOrientation, params.randomRadiusRatio);
       particles.push_back(particle);
     }
   }
@@ -200,7 +207,7 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
         DEMParticleP particle = std::make_shared<DEMParticle>(++particleNum, 
           particleShape, DEMParticle::DEMParticleType::FREE,
           Vec(xCoord, yCoord, zCoord), gradation, params.youngModulus,
-          params.poissonRatio);
+          params.poissonRatio, params.randomOrientation, params.randomRadiusRatio);
         particles.push_back(particle);
       }
     }

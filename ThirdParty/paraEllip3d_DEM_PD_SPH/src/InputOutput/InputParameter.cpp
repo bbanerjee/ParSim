@@ -312,6 +312,23 @@ InputParameter::readInXML(const std::string& inputFileName)
       // Read the trimming height after particle deposition
       layeredGen_ps["trimHeight"](param["trimHeight"]);
 
+      // Read the random particle orientation flag
+      std::string randomOrientation = "true";
+      layeredGen_ps["randomOrientation"](randomOrientation);
+      if (trim(randomOrientation) == "false") {
+        param["randomOrientation"] = 0;
+      } else {
+        param["randomOrientation"] = 1;
+      }
+
+      // Read the random radius ratio flag
+      std::string randomRadiusRatio = "false";
+      layeredGen_ps["randomRadiusRatio"](randomRadiusRatio);
+      if (trim(randomRadiusRatio) == "true") {
+        param["randomRadiusRatio"] = 1;
+      } else {
+        param["randomRadiusRatio"] = 0;
+      }
       // Read the gradation information
       auto sieve_ps = layeredGen_ps["Sieves"];
       if (!sieve_ps) {

@@ -149,15 +149,17 @@ DEMParticle::DEMParticle()
 }
 
 void
-DEMParticle::init()
+DEMParticle::init(bool randomOrientation)
 {
   // generate orientation of axle a/b/c using Euler angles
 
-  REAL angle1, angle2,
-    angle3; // angle1=[0,Pi], angle2=[0,2*Pi), angle3=[0,2*Pi]
-  angle1 = ran(&idum) * Pi;
-  angle2 = ran(&idum) * Pi * 2;
-  angle3 = ran(&idum) * Pi * 2;
+  // angle1=[0,Pi], angle2=[0,2*Pi), angle3=[0,2*Pi]
+  REAL angle1 = Pi, angle2 = 0.99999 * Pi * 2, angle3 = Pi * 2; 
+  if (randomOrientation) {
+    angle1 *= ran(&idum);
+    angle2 *= ran(&idum);
+    angle3 *= ran(&idum);
+  } 
 
   REAL c1, c2, c3, s1, s2, s3;
   c1 = cos(angle1);
@@ -243,7 +245,9 @@ DEMParticle::DEMParticle(std::size_t n,
 DEMParticle::DEMParticle(std::size_t n, 
                          DEMParticleShape shape, DEMParticleType type,
                          Vec center, Gradation& grad,
-                         REAL yng, REAL poi)
+                         REAL yng, REAL poi,
+                         bool randomOrientation, 
+                         bool randomRadiusRatio)
   : d_id(n)
   , d_shape(shape)
   , d_type(type)
@@ -262,15 +266,15 @@ DEMParticle::DEMParticle(std::size_t n,
     }
   }
 
-#ifdef RANDOM_SHAPE
-  grad.setPtclRatioBA(ran(&idum));
-  grad.setPtclRatioCA(ran(&idum));
-#endif
+  if (randomRadiusRatio) {
+    grad.setPtclRatioBA(ran(&idum));
+    grad.setPtclRatioCA(ran(&idum));
+  }
 
   d_b = d_a * grad.getPtclRatioBA();
   d_c = d_a * grad.getPtclRatioCA();
 
-  init();
+  init(randomOrientation);
 }
 
 DEMParticle::DEMParticle(std::size_t n, 
