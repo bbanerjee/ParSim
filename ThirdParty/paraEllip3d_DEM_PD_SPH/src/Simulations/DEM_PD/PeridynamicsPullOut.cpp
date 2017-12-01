@@ -191,7 +191,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
         dem->writeParticlesToFile(iterSnap);
         dem->printBoundaryContacts();
         dem->printBoundary();
-        // appendToProgressOutputFile(progressInf, distX, distY, distZ); // redundant
+        // appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ); // redundant
         pd->printPeriProgress(periProgInf, iterSnap);
         pd->printPeriProgressHalf(periProgInfHalf, iterSnap);
       }
@@ -216,7 +216,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     //         migraT)/totalT*100 << std::endl;
 
     if (dem->getMPIRank() == 0 && iteration % 10 == 0)
-      dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
+      dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
 
     // no break condition, just through top/bottom displacement control
     ++iteration;
@@ -227,7 +227,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     dem->writeParticlesToFile(iterSnap);
     dem->printBoundaryContacts();
     dem->printBoundary();
-    dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
+    dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
     //      dem->printPeriProgress(periProgInf, iterSnap);
   }
   if (dem->getMPIRank() == 0) {

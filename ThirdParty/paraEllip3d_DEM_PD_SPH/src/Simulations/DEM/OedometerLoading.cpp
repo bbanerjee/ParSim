@@ -114,7 +114,7 @@ OedometerLoading::execute(DiscreteElements* dem)
         dem->writeParticlesToFile(iterSnap);
         dem->printBoundaryContacts();
         dem->printBoundary();
-        dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
+        dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
       }
       dem->printContact(combine(outputFolder, "odometer_contact_", iterSnap, 3));
       ++iterSnap;
@@ -139,7 +139,7 @@ OedometerLoading::execute(DiscreteElements* dem)
     if (odometerType == 1) {
       if (dem->areBoundaryTractionsEquilibrated(sigmaVar, "odometer")) {
         if (dem->getMPIRank() == 0)
-          dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, iteration, timeStep, distX, distY, distZ);
         sigmaVar += sigmaInc;
       }
       if (dem->areBoundaryTractionsEquilibrated(sigmaEnd, "odometer")) {
@@ -148,14 +148,14 @@ OedometerLoading::execute(DiscreteElements* dem)
           dem->writeParticlesToFile(iterSnap);
           dem->printBoundaryContacts();
           dem->printBoundary();
-          dem->appendToProgressOutputFile(balancedInf, timeStep, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, iteration, timeStep, distX, distY, distZ);
         }
         break;
       }
     } else if (odometerType == 2) {
       if (dem->areBoundaryTractionsEquilibrated(sigmaVar, "odometer")) {
         if (dem->getMPIRank() == 0)
-          dem->appendToProgressOutputFile(balancedInf, timeStep, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, iteration, timeStep, distX, distY, distZ);
         sigmaVar += sigmaInc;
         if (sigmaVar == sigmaPath[sigma_i + 1]) {
           sigmaVar = sigmaPath[++sigma_i];
@@ -168,7 +168,7 @@ OedometerLoading::execute(DiscreteElements* dem)
           dem->writeParticlesToFile(iterSnap);
           dem->printBoundaryContacts();
           dem->printBoundary();
-          dem->appendToProgressOutputFile(balancedInf, timeStep, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, iteration, timeStep, distX, distY, distZ);
         }
         break;
       }

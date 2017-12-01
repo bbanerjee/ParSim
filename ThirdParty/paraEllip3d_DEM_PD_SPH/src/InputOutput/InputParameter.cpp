@@ -106,14 +106,19 @@ InputParameter::readInXML(const std::string& inputFileName)
   time_ps["timeAccrued"](timeAccrued);
   time_ps["timeStep"](timeStep);
 
+  REAL CFL = 0.01;
+  time_ps["CFLFactor"](CFL);
+
   param["startStep"] = startStep;
   param["endStep"] = endStep;
   param["timeAccrued"] = timeAccrued;
   param["timeStep"] = timeStep;
+  param["CFLFactor"] = CFL;
   //std::cout << "startStep = " << startStep << "\n"
   //          << "endStep = " << endStep << "\n"
   //          << "timeAccrued = " << timeAccrued << "\n"
   //          << "timeStep = " << timeStep << "\n";
+  //          << "CFL = " << CFL << "\n";
 
   // Read the output info
   auto output_ps = ps["Output"];
@@ -303,7 +308,9 @@ InputParameter::readInXML(const std::string& inputFileName)
     if (layeredGen_ps) {
 
       // Read the number of particle layers
-      layeredGen_ps["particleLayers"](param["particleLayers"]);
+      REAL numLayers = 1;
+      layeredGen_ps["particleLayers"](numLayers);
+      param["particleLayers"] = numLayers;
       
       // Read the minZ and maxZ for initial particle generation
       layeredGen_ps["floatMinZ"](param["floatMinZ"]);

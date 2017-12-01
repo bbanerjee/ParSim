@@ -460,7 +460,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
         pd->writeParticlesToFile(iterSnap);
         dem->printBoundaryContacts();
         dem->printBoundary();
-        // dem->appendToProgressOutputFile(progressInf, distX, distY, distZ); //
+        // dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ); //
         // redundant
         pd->printPeriProgress(periProgInf, iterSnap);
       }
@@ -494,7 +494,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     //         migraT)/totalT*100 << std::endl;
 
     if (dem->getMPIRank() == 0 && iteration % 10 == 0)
-      dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
+      dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
 
     // no break condition, just through top/bottom displacement control
     ++iteration;
@@ -506,7 +506,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
     pd->writeParticlesToFile(iterSnap);
     dem->printBoundaryContacts();
     dem->printBoundary();
-    dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
+    dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
     //      dem->printPeriProgress(periProgInf, iterSnap);
   }
   if (dem->getMPIRank() == 0) {

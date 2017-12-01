@@ -216,7 +216,7 @@ OutputTecplot<DEMParticlePArray>::writeParticles(const DEMParticlePArray* partic
   std::string filename(d_particleFilename);
   filename.append(".dat");
 
-  std::cout << "filename = " << filename << "\n";
+  //std::cout << "filename = " << filename << "\n";
   std::ofstream ofs(filename);
   if (!ofs) {
     std::cout << "Could not open" << std::endl;

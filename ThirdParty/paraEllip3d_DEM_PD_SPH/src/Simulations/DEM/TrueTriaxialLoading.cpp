@@ -142,7 +142,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
         dem->writeParticlesToFile(iterSnap);
         dem->printBoundaryContacts();
         dem->printBoundary();
-        dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
+        dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
       }
       dem->printContact(combine(".", "trueTriaxial_contact_", iterSnap, 3));
       ++iterSnap;
@@ -168,7 +168,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
       if (dem->areBoundaryTractionsEquilibrated(sigmaVarZ, "trueTriaxial", sigmaVarX,
                                      sigmaVarY)) {
         if (dem->getMPIRank() == 0)
-          dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, iteration, timeStep, distX, distY, distZ);
         sigmaVarZ += sigmaIncZ;
         sigmaVarX += sigmaIncX;
         sigmaVarY += sigmaIncY;
@@ -180,7 +180,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
           dem->writeParticlesToFile(iterSnap);
           dem->printBoundaryContacts();
           dem->printBoundary();
-          dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, iteration, timeStep, distX, distY, distZ);
         }
         break;
       }
@@ -201,7 +201,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
       }
       if (dem->areBoundaryTractionsEquilibrated(sigmaZ, "trueTriaxial", sigmaX, sigmaY)) {
         if (dem->getMPIRank() == 0)
-          dem->appendToProgressOutputFile(balancedInf, timeStep, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, iteration, timeStep, distX, distY, distZ);
         sigmaVar += sigmaInc;
       }
 
@@ -224,7 +224,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
           dem->writeParticlesToFile(iterSnap);
           dem->printBoundaryContacts();
           dem->printBoundary();
-          dem->appendToProgressOutputFile(balancedInf, timeStep, distX, distY, distZ);
+          dem->appendToProgressOutputFile(balancedInf, iteration, timeStep, distX, distY, distZ);
         }
         break;
       }
@@ -238,7 +238,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
     dem->writeParticlesToFile(iterSnap);
     dem->printBoundaryContacts();
     dem->printBoundary();
-    dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
+    dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
   }
 
   if (dem->getMPIRank() == 0) {

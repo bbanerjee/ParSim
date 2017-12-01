@@ -152,7 +152,7 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
         outputParticleCSVFile = combine("output_particles_", iterSnap, 3);
         dem->printParticlesCSV(outputFolder, outputParticleCSVFile, 0);
         dem->printBoundaryContacts();
-        dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
+        dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
       }
 
       dem->printContact(combine(outputFolder, "contact_", iterSnap, 3));

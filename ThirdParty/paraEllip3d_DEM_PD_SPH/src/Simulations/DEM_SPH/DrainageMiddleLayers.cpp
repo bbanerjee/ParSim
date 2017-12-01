@@ -169,7 +169,7 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
         dem->writeParticlesToFile(iterSnap);
         dem->printBoundaryContacts();
         sph->writeParticlesToFile(iterSnap);
-        dem->appendToProgressOutputFile(demProgressInf, timeStep);
+        dem->appendToProgressOutputFile(demProgressInf, iteration, timeStep);
       }
       dem->printContact(util::combine(outputFolder, "drainage_middle_contact_", iterSnap, 3));
     

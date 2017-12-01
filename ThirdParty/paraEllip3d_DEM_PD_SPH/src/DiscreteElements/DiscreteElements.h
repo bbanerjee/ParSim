@@ -168,7 +168,7 @@ public:
   void removeParticleOutBox();
   void gatherParticles();
   void gatherBoundaryContacts();
-  void findBoundaryPeriParticles(); // for all cpus
+  std::size_t findBoundaryPeriParticles(); // for all cpus
   void applyTractionBoundary(int);
 
   void updatePatchBox();
@@ -202,7 +202,7 @@ public:
   void openProgressOutputFile(std::ofstream& ofs, const std::string& str);
   void openPeriProgress(std::ofstream& ofs, const std::string& str);
   void appendToProgressOutputFile(std::ofstream& ofs, 
-                                  REAL timeStep,
+                                  std::size_t iteration, REAL timeStep,
                                   REAL distX = 1, REAL distY = 1,
                                   REAL distZ = 1);
   void openParticleProg(std::ofstream& ofs, const std::string& str);
@@ -221,7 +221,7 @@ public:
   void findContactMultiThread(int numThreads, 
                               REAL minOverlap, REAL measOverlap,
                               std::size_t iteration);
-  void findBoundaryContacts(std::size_t iteration);      // find particles on boundaries
+  std::size_t findBoundaryContacts(std::size_t iteration);      // find particles on boundaries
   void findParticleOnCavity(); // find particle on cavity boundaries
 
   void initializeForces();
@@ -282,7 +282,14 @@ public:
                          int frame) const;
   void printParticlesCSV(const std::string& folderName,
                          const std::string& fileName, 
-                         DEMParticlePArray& d_patchParticles, 
+                         const DEMParticlePArray& particles, 
+                         int frame) const;
+  void printParticlesXML(const std::string& folderName,
+                         const std::string& fileName, 
+                         int frame) const;
+  void printParticlesXML(const std::string& folderName,
+                         const std::string& fileName, 
+                         const DEMParticlePArray& particles, 
                          int frame) const;
   void printBoundaryContacts() const; // print all boundary contact info
   void printMemParticle(

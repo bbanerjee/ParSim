@@ -142,6 +142,9 @@ public:
   DEMParticlePArray& getProbableBoundaryParticles() { 
     return b_probableBoundaryParticles; 
   }
+  std::size_t numProbableBoundaryParticles() const {
+    return b_probableBoundaryParticles.size(); 
+  }
   BoundaryContactArray& getBoundaryContacts() { return b_contacts; }
   ContactCount getNumBoundaryContacts() const { return b_numContacts; }
   Vec getNormalForce() const { return b_normalForce; }

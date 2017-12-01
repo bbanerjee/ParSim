@@ -105,7 +105,7 @@ TractionLoading::execute(DiscreteElements* dem)
         dem->writePatchGridToFile();
         dem->writeParticlesToFile(snapshot);
         dem->printBoundaryContacts();
-        dem->appendToProgressOutputFile(progressInf, distX, distY, distZ);
+        dem->appendToProgressOutputFile(progressInf, iteration, deltaT, distX, distY, distZ);
       }
       dem->printContact(combine(outputFolder, "traction", snapshot, 3));
       ++snapshot;
@@ -132,7 +132,7 @@ TractionLoading::execute(DiscreteElements* dem)
         dem->writeParticlesToFile(snapshot);
         dem->printBoundaryContacts();
         dem->printBoundary();
-        dem->appendToProgressOutputFile(balancedInf, distX, distY, distZ);
+        dem->appendToProgressOutputFile(balancedInf, iteration, deltaT, distX, distY, distZ);
       }
       break;
     }

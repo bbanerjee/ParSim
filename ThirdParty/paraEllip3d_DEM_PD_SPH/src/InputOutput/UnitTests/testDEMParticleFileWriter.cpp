@@ -20,6 +20,10 @@ TEST(DEMParticleFileWriterTest, writeSingleType) {
   dem::InputParameter::get().addParameter("randomRadiusRatio", 0);
   dem::InputParameter::get().addParameter("randomVelocity", 0);
 
+  // Set up layer flag (one layer)
+  auto layerFlag = 1u;
+  dem::InputParameter::get().addParameter("particleLayers", 1);
+
   // Set up gradation
   Gradation gradation;
   auto sieveNum = 2u;
@@ -35,8 +39,6 @@ TEST(DEMParticleFileWriterTest, writeSingleType) {
   // Set up domain
   Box spatialDomain(0, 0, 0, 1, 1, 1);
 
-  // Set up layer flag (one layer)
-  auto layerFlag = 1u;
 
   // Create particles
   DEMParticleCreator creator;
@@ -82,6 +84,10 @@ TEST(DEMParticleFileWriterTest, writeTwoTypes) {
   dem::InputParameter::get().addParameter("randomRadiusRatio", 0);
   dem::InputParameter::get().addParameter("randomVelocity", 0);
 
+  // Set up layer flag (one layer)
+  auto layerFlag = 1u;
+  dem::InputParameter::get().addParameter("particleLayers", 1);
+
   // Set up gradation
   Gradation gradation;
   auto sieveNum = 2u;
@@ -97,8 +103,6 @@ TEST(DEMParticleFileWriterTest, writeTwoTypes) {
   // Set up domain
   Box spatialDomain(0, 0, 0, 1, 1, 1);
 
-  // Set up layer flag (one layer)
-  auto layerFlag = 1u;
 
   // Create particles
   DEMParticleCreator creator;

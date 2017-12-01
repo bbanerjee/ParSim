@@ -42,6 +42,10 @@
     <!-- #time step size -->
     <timeStep>  1.0E-6 </timeStep>
 
+    <!-- #CFL factor -->
+    <CFLFactor>  0.1 </CFLFactor>
+
+
   </Time>
 
   <!-- Output -->

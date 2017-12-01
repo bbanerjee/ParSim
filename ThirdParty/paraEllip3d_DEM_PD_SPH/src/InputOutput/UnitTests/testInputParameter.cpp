@@ -16,7 +16,7 @@ TEST(InputParameterTest, testInputXMLFileReader) {
   //  std::cout << p.first << "  " << p.second << std::endl;
   //}
   //std::cout << "size = " << param.size() << "\n";
-  EXPECT_EQ(param.size(), 87);
+  EXPECT_EQ(param.size(), 88);
 
   EXPECT_NEAR(util::getParam<REAL>("Aphi"), 1.55678, 1.0e-5);
   EXPECT_NEAR(util::getParam<REAL>("Apsi"), 1.55678, 1.0e-5);

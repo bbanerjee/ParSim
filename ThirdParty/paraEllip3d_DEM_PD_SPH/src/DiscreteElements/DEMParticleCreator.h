@@ -13,6 +13,7 @@ class DEMParticleCreator
 public:
 
   struct ParticleParameters {
+    int numLayers;
     REAL youngModulus;
     REAL poissonRatio;
     REAL maxDiameter;
@@ -24,7 +25,8 @@ public:
 
     friend
     std::ostream& operator<<(std::ostream& os, const ParticleParameters& p) {
-      os << "ym = " << p.youngModulus
+      os << "layers = " << p.numLayers
+         << " ym = " << p.youngModulus
          << " pr = " << p.poissonRatio
          << " dia = " << p.maxDiameter
          << " edge = " << p.edge

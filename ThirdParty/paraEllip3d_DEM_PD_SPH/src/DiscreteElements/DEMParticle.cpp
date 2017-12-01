@@ -1029,11 +1029,13 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
     MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
                           inf.str().length(), MPI_CHAR, &status);
 
-    //d_penetration = allowedOverlap;
+    d_penetration = allowedOverlap;
   }
 
-  //REAL minMeasurableOverlap = util::getParam<REAL>("minMeasurableOverlap");
-  //d_penetration = nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
+  REAL minMeasurableOverlap = util::getParam<REAL>("minMeasurableOverlap");
+  d_penetration = 
+    nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
+
   REAL contactRadius = sqrt(d_penetration * R0);
   Vec normalDirc = -dirc;
   // pow(d_penetration,1.5), a serious bug
@@ -1075,8 +1077,8 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
   addForce(contactDampingForce);
   addMoment(cross(((pt1 + pt2) / 2 - d_currPos), contactDampingForce));
 
-  std::cout << "Boundary-Particle:" << d_force << " f_n = " << normalForce
-            << " f_d = " << contactDampingForce << "\n";
+  //std::cout << "Boundary-Particle:" << d_force << " f_n = " << normalForce
+  //          << " f_d = " << contactDampingForce << "\n";
   Vec tangentForce = 0;
   if (util::getParam<REAL>("boundaryFric") != 0) {
     // checkin previous tangential force and displacement

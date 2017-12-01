@@ -107,8 +107,7 @@ DiscreteElements::createAndSaveParticlesAndBoundaries(
   const std::string& outputParticleFilename)
 {
   // Get the domain information
-  std::string inputBoundaryFilename =
-    util::getFilename("boundaryFilename");
+  std::string inputBoundaryFilename = util::getFilename("boundaryFilename");
   readBoundary(inputBoundaryFilename);
   Box domain = getSpatialDomain();
 
@@ -175,8 +174,9 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     writeBoundaryToFile();
     writePatchGridToFile();
     writeParticlesToFile(iterSnap);
-    outputParticleCSVFile = combine("output_particles_", iterSnap, 3);
+    outputParticleCSVFile = combine("output_particles_", 0, 3);
     printParticlesCSV(outputFolder, outputParticleCSVFile, 0);
+    printParticlesXML(outputFolder, outputParticleCSVFile, 0);
     printBoundaryContacts();
     debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
              << std::setw(OWID) << "migraT" << std::setw(OWID) << "compuT"
@@ -193,15 +193,17 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
   auto timeStep = util::getParam<REAL>("timeStep");
   auto timeAccrued = util::getParam<REAL>("timeAccrued");
   REAL timeTotal = timeAccrued + timeStep * netStep;
+  REAL outputTimeInterval = (timeStep * netStep) / 1000;
 
-  while (timeAccrued < timeTotal) {
+  std::size_t numBoundaryContacts = 0;
+  bool firstPass = true;
+  while (timeAccrued < timeTotal && iteration < endStep) {
 
     bool toCheckTime = (iteration + 1) % (netStep / netSnap) == 0;
 
     commuT = migraT = gatherT = totalT = 0;
     time0 = MPI_Wtime();
 
-    proc0cout << "**NOTICE** Time = " << timeAccrued << " iteration = " << iteration << "\n";
     communicateGhostParticles(iteration);
 
     if (toCheckTime)
@@ -211,12 +213,17 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     //proc0cout << "**NOTICE** Before calcTimeStep\n";
     // use values from last step, must call before
     // findContact (which clears data)
+    if (numBoundaryContacts > 0 && firstPass) {
+      timeStep = 0.01*timeStep;
+      firstPass = false;
+    }
     timeStep = calcTimeStep(timeStep); 
 
     //proc0cout << "**NOTICE** Before findContact\n";
     findContact(iteration);
-    if (isBoundaryProcess())
-      findBoundaryContacts(iteration);
+    if (isBoundaryProcess()) {
+      numBoundaryContacts = findBoundaryContacts(iteration);
+    }
 
     initializeForces();
 
@@ -232,10 +239,16 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     updateParticles(timeStep, iteration);
     updatePatchBox(); // universal; updatePatchBoxMaxZ() for deposition only
 
-    /**/ timeCount += timeStep;
-    /**/ timeAccrued += timeStep;
-    /**/ if (timeCount >= timeTotal / netSnap) {
-      // if (iteration % (netStep / netSnap) == 0) {
+    timeCount += timeStep;
+    timeAccrued += timeStep;
+    if (timeCount >= outputTimeInterval) 
+    //if (iteration % (netStep / netSnap) == 0) 
+    {
+      proc0cout << "**NOTICE** Time = " << timeAccrued 
+                << " iteration = " << iteration 
+                << " timeStep = " << timeStep 
+                << " outputInterval = " << outputTimeInterval 
+                << "\n";
       if (toCheckTime)
         time1 = MPI_Wtime();
 
@@ -254,12 +267,13 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
         writeParticlesToFile(iterSnap);
         outputParticleCSVFile = combine("output_particles_", iterSnap, 3);
         printParticlesCSV(outputFolder, outputParticleCSVFile, 0);
+        printParticlesXML(outputFolder, outputParticleCSVFile, 0);
         printBoundaryContacts();
-        appendToProgressOutputFile(progressInf, timeStep);
+        appendToProgressOutputFile(progressInf, iteration, timeStep);
       }
       printContact(combine(outputFolder, "contact_", iterSnap, 5));
 
-      /**/ timeCount = 0;
+      timeCount = 0;
       ++iterSnap;
     }
 
@@ -629,7 +643,9 @@ DiscreteElements::calcTimeStep(REAL curTimeStep)
   calcImpactTimeStep();
   calcContactNum();
 
-  REAL CFL = 0.5;
+  REAL CFL = util::getParam<REAL>("CFLFactor");
+  //std::cout << "CFL = " << CFL << "\n";
+  //REAL CFL = 0.5;
   std::valarray<REAL> dt(3);
   //dt[0] = util::getParam<REAL>("timeStep");
   dt[0] = curTimeStep;
@@ -638,9 +654,9 @@ DiscreteElements::calcTimeStep(REAL curTimeStep)
 
   auto timeStep = dt.min();
   //if (s_mpiRank == 0) {
-    //std::cout << "Timestep = " << timeStep
-    //          << " Vibration timestep = " << d_vibrationTimeStep
-    //          << " Impact timestep = " << d_impactTimeStep << "\n";
+  //  std::cout << "Timestep = " << timeStep
+  //            << " Vibration timestep = " << d_vibrationTimeStep
+  //            << " Impact timestep = " << d_impactTimeStep << "\n";
   //}
   return timeStep;
 }
@@ -656,7 +672,7 @@ DiscreteElements::calcVibrationTimeStep()
   if (minIter != d_contacts.end()) {
     pTimeStep = (*minIter).getVibrationTimeStep();
   }
-  std::cout << "Vibra time step = " << pTimeStep << "\n";
+  //std::cout << "Vibra time step = " << pTimeStep << "\n";
 
   MPI_Allreduce(&pTimeStep, &d_vibrationTimeStep, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 }
@@ -672,7 +688,7 @@ DiscreteElements::calcImpactTimeStep()
   if (minIter != d_contacts.end()) {
     pTimeStep = (*minIter).getImpactTimeStep();
   }
-  std::cout << "Impact time step = " << pTimeStep << "\n";
+  //std::cout << "Impact time step = " << pTimeStep << "\n";
 
   MPI_Allreduce(&pTimeStep, &d_impactTimeStep, 1, MPI_DOUBLE, MPI_MIN, s_mpiWorld);
 }
@@ -852,12 +868,15 @@ DiscreteElements::findContactMultiThread(int ompThreads,
 #endif
 }
 
-void
+std::size_t
 DiscreteElements::findBoundaryContacts(std::size_t iteration)
 {
+  std::size_t count = 0;
   for (auto& boundary : d_boundaries) {
     boundary->findBoundaryContacts(d_patchParticles);
+    count += boundary->numProbableBoundaryParticles();
   }
+  return count;
 }
 
 void
@@ -964,8 +983,8 @@ DiscreteElements::internalForce(REAL timeStep, std::size_t iteration)
   d_avgShearForce = sumAvg[1] / s_mpiSize;
   d_avgPenetration = sumAvg[2] / s_mpiSize;
 
-  std::cout << "Overlap count = " << d_overlapCount
-            << ", " << overlapCount << "\n";
+  //std::cout << "Overlap count = " << d_overlapCount
+  //          << ", " << overlapCount << "\n";
 }
 
 void
@@ -1165,21 +1184,36 @@ void
 DiscreteElements::printParticlesCSV(const std::string& folderName,
                                     const std::string& fileName, int frame) const
 {
-  OutputTecplot<DEMParticlePArray> writer(folderName, 0);
-  writer.setParticleFilename(fileName);
-  std::cout << "d_allDEMParticles = " << d_allDEMParticles.size() << "\n";
-  writer.writeParticles(&d_allDEMParticles, frame);
+  printParticlesCSV(folderName, fileName, d_allDEMParticles, frame);
 }
 
 void
 DiscreteElements::printParticlesCSV(const std::string& folderName,
                                     const std::string& fileName, 
-                                    DEMParticlePArray& particles,
+                                    const DEMParticlePArray& particles,
                                     int frame) const
 {
   OutputTecplot<DEMParticlePArray> writer(folderName, 0);
   writer.setParticleFilename(fileName);
   writer.writeParticles(&particles, frame);
+}
+
+void
+DiscreteElements::printParticlesXML(const std::string& folderName,
+                                    const std::string& fileName, int frame) const
+{
+  printParticlesXML(folderName, fileName, d_allDEMParticles, frame);
+}
+
+void
+DiscreteElements::printParticlesXML(const std::string& folderName,
+                                    const std::string& fileName, 
+                                    const DEMParticlePArray& particles,
+                                    int frame) const
+{
+  DEMParticleFileWriter writer;
+  std::string xmlfile = folderName + "/" + fileName + ".xml";
+  writer.writeXML(particles, d_gradation, xmlfile);
 }
 
 bool
@@ -1727,33 +1761,33 @@ DiscreteElements::openProgressOutputFile(std::ofstream& ofs, const std::string& 
   ofs.setf(std::ios::scientific, std::ios::floatfield);
   ofs.precision(OPREC);
 
-  ofs << std::setw(OWID) << "iteration" << std::setw(OWID) << "normal_x1"
-      << std::setw(OWID) << "normal_x2" << std::setw(OWID) << "normal_y1"
-      << std::setw(OWID) << "normal_y2" << std::setw(OWID) << "normal_z1"
-      << std::setw(OWID) << "normal_z2"
+  ofs << std::setw(OWID) << "iteration" << std::setw(OWID) << "normal_x-"
+      << std::setw(OWID) << "normal_x+" << std::setw(OWID) << "normal_y-"
+      << std::setw(OWID) << "normal_y+" << std::setw(OWID) << "normal_z-"
+      << std::setw(OWID) << "normal_z+"
   
-      << std::setw(OWID) << "traction_x1"
-      << std::setw(OWID) << "traction_x2" << std::setw(OWID) << "traction_y1"
-      << std::setw(OWID) << "traction_y2" << std::setw(OWID) << "traction_z1"
-      << std::setw(OWID) << "traction_z2" << std::setw(OWID) << "mean_stress"
+      << std::setw(OWID) << "traction_x-"
+      << std::setw(OWID) << "traction_x+" << std::setw(OWID) << "traction_y-"
+      << std::setw(OWID) << "traction_y+" << std::setw(OWID) << "traction_z-"
+      << std::setw(OWID) << "traction_z+" << std::setw(OWID) << "mean_stress"
 
       << std::setw(OWID) << "bulk_volume" << std::setw(OWID) << "density"
       << std::setw(OWID) << "epsilon_x" << std::setw(OWID) << "epsilon_y"
       << std::setw(OWID) << "epsilon_z" << std::setw(OWID) << "epsilon_v"
       << std::setw(OWID) << "void_ratio" << std::setw(OWID) << "porosity"
 
-      << std::setw(OWID) << "velocity_x1" << std::setw(OWID) << "velocity_x2"
-      << std::setw(OWID) << "velocity_y1" << std::setw(OWID) << "velocity_y2"
-      << std::setw(OWID) << "velocity_z1" << std::setw(OWID) << "velocity_z2"
+      << std::setw(OWID) << "velocity_x-" << std::setw(OWID) << "velocity_x+"
+      << std::setw(OWID) << "velocity_y-" << std::setw(OWID) << "velocity_y+"
+      << std::setw(OWID) << "velocity_z-" << std::setw(OWID) << "velocity_z+"
 
-      << std::setw(OWID) << "contact_x1" << std::setw(OWID) << "contact_x2"
-      << std::setw(OWID) << "contact_y1" << std::setw(OWID) << "contact_y2"
-      << std::setw(OWID) << "contact_z1" << std::setw(OWID) << "contact_z2"
+      << std::setw(OWID) << "contact_x-" << std::setw(OWID) << "contact_x+"
+      << std::setw(OWID) << "contact_y-" << std::setw(OWID) << "contact_y+"
+      << std::setw(OWID) << "contact_z-" << std::setw(OWID) << "contact_z+"
       << std::setw(OWID) << "contact_inside"
 
-      << std::setw(OWID) << "penetr_x1" << std::setw(OWID) << "penetr_x2"
-      << std::setw(OWID) << "penetr_y1" << std::setw(OWID) << "penetr_y2"
-      << std::setw(OWID) << "penetr_z1" << std::setw(OWID) << "penetr_z2"
+      << std::setw(OWID) << "penetr_x-" << std::setw(OWID) << "penetr_x+"
+      << std::setw(OWID) << "penetr_y-" << std::setw(OWID) << "penetr_y+"
+      << std::setw(OWID) << "penetr_z-" << std::setw(OWID) << "penetr_z+"
 
       << std::setw(OWID) << "avgNormal" << std::setw(OWID) << "avgShear"
       << std::setw(OWID) << "avgPenetr"
@@ -1770,10 +1804,10 @@ DiscreteElements::openProgressOutputFile(std::ofstream& ofs, const std::string& 
 
 void
 DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs, 
-                                             REAL timeStep,
+                                             std::size_t iteration, REAL timeStep,
                                              REAL distX, REAL distY, REAL distZ)
 {
-  REAL x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0, z1 = 0.0, z2 = 0.0;
+  REAL x1 = 0.0, x2 = 1.0, y1 = 0.0, y2 = 1.0, z1 = 0.0, z2 = 1.0;
   std::vector<REAL> normalForce = {{0, 0, 0, 0, 0, 0}};
   std::vector<REAL> normalVelocity = {{0, 0, 0, 0, 0, 0}};
 
@@ -1782,7 +1816,7 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs,
     switch (id) {
       case Boundary::BoundaryID::XMINUS:
         x1 = boundary->getPosition().x();
-        normalForce[0] = fabs(boundary->getNormalForce().x());
+        normalForce[0] = std::abs(boundary->getNormalForce().x());
         normalVelocity[0] = boundary->getVelocity().x();
         break;
       case Boundary::BoundaryID::XPLUS:
@@ -1792,7 +1826,7 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs,
         break;
       case Boundary::BoundaryID::YMINUS:
         y1 = boundary->getPosition().y();
-        normalForce[2] = fabs(boundary->getNormalForce().y());
+        normalForce[2] = std::abs(boundary->getNormalForce().y());
         normalVelocity[2] = boundary->getVelocity().y();
         break;
       case Boundary::BoundaryID::YPLUS:
@@ -1802,7 +1836,7 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs,
         break;
       case Boundary::BoundaryID::ZMINUS:
         z1 = boundary->getPosition().z();
-        normalForce[4] = fabs(boundary->getNormalForce().z());
+        normalForce[4] = std::abs(boundary->getNormalForce().z());
         normalVelocity[4] = boundary->getVelocity().z();
         break;
       case Boundary::BoundaryID::ZPLUS:
@@ -1821,6 +1855,11 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs,
   REAL bulkVolume = (x2 - x1) * (y2 - y1) * (z2 - z1);
   REAL voidRatio = bulkVolume / volume() - 1;
 
+  //std::cout << "(x1,y1,z1) = " << x1 << "," << y1 << "," << z1
+  //          << "(x2,y2,z2) = " << x2 << "," << y2 << "," << z2
+  //          << "(Ax,Ay,Az) = " << areaX << "," << areaY << "," << areaZ
+  //          << "(bvol, vol) = " << bulkVolume << "," << volume() << "\n";
+
   // normal traction
   std::vector<REAL> normalTraction = {{0, 0, 0, 0, 0, 0}};
   normalTraction[0] = normalForce[0]/areaX;
@@ -1831,65 +1870,91 @@ DiscreteElements::appendToProgressOutputFile(std::ofstream& ofs,
   normalTraction[5] = normalForce[5]/areaZ;
 
   // Write normal force
-  ofs << std::setw(OWID) << g_iteration;
-  for (auto force : normalForce)
+  int count = 1;
+  ofs << std::setw(OWID) << iteration;
+  for (auto force : normalForce) {
+    ++count;
     ofs << std::setw(OWID) << force;
+  }
 
   // Write normal traction
   REAL avgTraction = 0;
-  for (double traction : normalTraction) {
+  for (auto traction : normalTraction) {
+    ++count;
     ofs << std::setw(OWID) << traction;
     avgTraction += traction;
   }
+  ++count;
   ofs << std::setw(OWID) << avgTraction / 6;
 
   // volume
-  ofs << std::setw(OWID) << bulkVolume << std::setw(OWID)
-      << mass() / bulkVolume << std::setw(OWID) << 1 - (x2 - x1) / distX
-      << std::setw(OWID) << 1 - (y2 - y1) / distY << std::setw(OWID)
-      << 1 - (z2 - z1) / distZ << std::setw(OWID)
-      << 3 - (x2 - x1) / distX - (y2 - y1) / distY - (z2 - z1) / distZ
-      << std::setw(OWID) << voidRatio << std::setw(OWID)
-      << voidRatio / (1 + voidRatio);
+  double xratio = (x2 - x1) / distX;
+  double yratio = (y2 - y1) / distY;
+  double zratio = (z2 - z1) / distZ;
+  count += 8;
+  ofs << std::setw(OWID) << bulkVolume 
+      << std::setw(OWID) << mass() / bulkVolume 
+      << std::setw(OWID) << 1 - xratio
+      << std::setw(OWID) << 1 - yratio
+      << std::setw(OWID) << 1 - zratio
+      << std::setw(OWID) << 3 - xratio - yratio - zratio 
+      << std::setw(OWID) << voidRatio 
+      << std::setw(OWID) << voidRatio / (1 + voidRatio);
 
   // velocity
-  for (double velocity : normalVelocity)
+  for (auto velocity : normalVelocity) {
+    ++count;
     ofs << std::setw(OWID) << velocity;
+  }
 
   // b_numContacts
-  std::vector<REAL> data = {{0, 0, 0, 0, 0, 0}};
+  std::vector<REAL> b_contacts = {{0, 0, 0, 0, 0, 0}};
   for (const auto& boundary : d_mergedBoundaries) {
     Boundary::BoundaryID id = boundary->getId();
-    data[static_cast<size_t>(id) - 1] = boundary->getNumBoundaryContacts();
+    b_contacts[static_cast<size_t>(id) - 1] = boundary->getNumBoundaryContacts();
   }
-  for (double datum : data)
-    ofs << std::setw(OWID) << static_cast<std::size_t>(datum);
+  for (double b_contact : b_contacts) {
+    ++count;
+    ofs << std::setw(OWID) << static_cast<std::size_t>(b_contact);
+  }
+
+  ++count;
   ofs << std::setw(OWID) << d_allContactNum;
 
-  // avgPenetr
-  data.clear();
-  data.reserve(6);
+  // boundary penetration
+  std::vector<REAL> b_penetrations = {{0, 0, 0, 0, 0, 0}};
   for (const auto& boundary : d_mergedBoundaries) {
     auto id = boundary->getId();
-    data[static_cast<size_t>(id) - 1] = boundary->getAvgPenetration();
+    b_penetrations[static_cast<size_t>(id) - 1] = boundary->getAvgPenetration();
   }
-  for (double datum : data)
-    ofs << std::setw(OWID) << datum;
+  for (double b_penetration : b_penetrations) {
+    ++count;
+    ofs << std::setw(OWID) << b_penetration;
+  }
 
   // average data
-  ofs << std::setw(OWID) << d_avgNormalForce << std::setw(OWID) << d_avgShearForce
+  count += 3;
+  ofs << std::setw(OWID) << d_avgNormalForce 
+      << std::setw(OWID) << d_avgShearForce
       << std::setw(OWID) << d_avgPenetration;
 
   // energy
-  ofs << std::setw(OWID) << d_translationalEnergy << std::setw(OWID) << d_rotationalEnergy
-      << std::setw(OWID) << d_kineticEnergy << std::setw(OWID) << d_gravitationalEnergy
+  count += 5;
+  ofs << std::setw(OWID) << d_translationalEnergy 
+      << std::setw(OWID) << d_rotationalEnergy
+      << std::setw(OWID) << d_kineticEnergy 
+      << std::setw(OWID) << d_gravitationalEnergy
       << std::setw(OWID) << d_mechanicalEnergy;
 
   // time
-  ofs << std::setw(OWID) << d_vibrationTimeStep << std::setw(OWID) << d_impactTimeStep
+  count += 3;
+  ofs << std::setw(OWID) << d_vibrationTimeStep 
+      << std::setw(OWID) << d_impactTimeStep
       << std::setw(OWID) << timeStep;
 
   ofs << std::endl;
+
+  //std::cout << " count = " << count << "\n";
 }
 
 void

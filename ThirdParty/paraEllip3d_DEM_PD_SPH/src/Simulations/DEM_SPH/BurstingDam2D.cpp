@@ -182,7 +182,7 @@ BurstingDam2D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
         dem->printBoundaryContacts();
         sph->writeParticlesToFile(iterSnap);
         //sph->printSPHTecplot(sphTecplotInf, iterSnap);
-        dem->appendToProgressOutputFile(demProgressInf, timeStep);
+        dem->appendToProgressOutputFile(demProgressInf, iteration, timeStep);
       }
       dem->printContact(util::combine(outputFolder, "bursting_contact_", iterSnap, 3));
     

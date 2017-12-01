@@ -58,6 +58,9 @@ DEMParticleCreator::getParticleParameters(const Gradation& gradation)
 {
   ParticleParameters params;
 
+  // Get number of layers
+  params.numLayers = static_cast<int>(util::getParam<REAL>("particleLayers"));
+
   // Get material parameters
   params.youngModulus = util::getParam<REAL>("young");
   params.poissonRatio = util::getParam<REAL>("poisson");
@@ -177,6 +180,11 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
   } catch (const std::out_of_range& err) {
     z_min = spatialDomain.minCorner().z();
   }
+
+  REAL z_max = z_min + params.numLayers * params.maxDiameter;
+  auto zCoords = util::linspace<REAL>(z_min, z_max, params.numLayers-1);
+
+  /*
   REAL z_max = 0;
   try {
     z_max = util::getParam<REAL>("floatMaxZ");
@@ -186,6 +194,7 @@ DEMParticleCreator::createParticles<2>(DEMParticleShape particleShape,
   z_min += params.maxDiameter;
   z_max -= params.maxDiameter;
   auto zCoords = util::linspaceApprox<REAL>(z_min, z_max, params.maxDiameter);
+  */
 
   auto x_min = spatialDomain.minCorner().x() + params.edge;
   auto x_max = spatialDomain.maxCorner().x() - params.edge;

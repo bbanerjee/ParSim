@@ -164,7 +164,7 @@ BurstingDam3D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
         dem->writeParticlesToFile(iterSnap);
         dem->printBoundaryContacts();
         sph->writeParticlesToFile(iterSnap);
-        dem->appendToProgressOutputFile(demProgressInf, timeStep);
+        dem->appendToProgressOutputFile(demProgressInf, iteration, timeStep);
       }
       dem->printContact(util::combine(outputFolder, "bursting_contact_", iterSnap, 3));
     

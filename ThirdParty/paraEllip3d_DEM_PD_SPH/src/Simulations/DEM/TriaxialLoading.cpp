@@ -93,7 +93,7 @@ TriaxialLoading::execute(DiscreteElements* dem)
         dem->writeParticlesToFile(iterSnap);
         dem->printBoundaryContacts();
         dem->printBoundary();
-        // dem->appendToProgressOutputFile(progressInf, distX, distY, distZ); //
+        // dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ); //
         // redundant
       }
       dem->printContact(combine(outputFolder, "triaxial_contact_", iterSnap, 3));
@@ -117,7 +117,7 @@ TriaxialLoading::execute(DiscreteElements* dem)
                << std::endl;
 
     if (dem->getMPIRank() == 0 && iteration % 10 == 0)
-      dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
+      dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
 
     // no break condition, just through top/bottom displacement control
     ++iteration;
@@ -128,7 +128,7 @@ TriaxialLoading::execute(DiscreteElements* dem)
     dem->writeParticlesToFile(iterSnap);
     dem->printBoundaryContacts();
     dem->printBoundary();
-    dem->appendToProgressOutputFile(progressInf, timeStep, distX, distY, distZ);
+    dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
   }
 
   if (dem->getMPIRank() == 0)
