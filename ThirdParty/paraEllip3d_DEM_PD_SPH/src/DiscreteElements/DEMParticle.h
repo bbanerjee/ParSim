@@ -87,6 +87,7 @@ public:
   REAL density() const { return d_density; }
   const Vec& currentPosition() const { return d_currPos; }
   const Vec& previousPosition() const { return d_prevPos; }
+  const Vec& initialPosition() const { return d_initialPos; }
   Vec currentAnglesAxisA() const { return vacos(d_currDirecA); }
   Vec currentAnglesAxisB() const { return vacos(d_currDirecB); }
   Vec currentAnglesAxisC() const { return vacos(d_currDirecC); }
@@ -202,16 +203,13 @@ public:
   }
 
   void clearContactForce();
-  void addForce(Vec vv)
-  {
-    d_force += vv;
+  void addForce(const Vec& force) { d_force += force; }
+  void addForceIDMap(const Vec& force, size_t id) {
+    d_forceIDMap[id] = force;
   }
-  void addForceIDMap(Vec vv, size_t id) {
-    d_forceIDMap[id] = vv;
-  }
-  void addMoment(Vec vv) { d_moment += vv; }
-  void addMomentIDMap(Vec vv, size_t id) {
-    d_momentIDMap[id] = vv;
+  void addMoment(const Vec& moment) { d_moment += moment; }
+  void addMomentIDMap(const Vec& moment, size_t id) {
+    d_momentIDMap[id] = moment;
   }
   void update(REAL timeStep);
 
@@ -291,6 +289,7 @@ private:
   // particle center
   Vec d_currPos; 
   Vec d_prevPos;
+  Vec d_initialPos;
 
   // direction angles of the three axles, in radian
   Vec d_currDirecA, d_currDirecB, d_currDirecC; 
@@ -356,6 +355,7 @@ private:
     ar& d_poisson;
     ar& d_currPos;
     ar& d_prevPos;
+    ar& d_initialPos;
     ar& d_currDirecA;
     ar& d_currDirecB;
     ar& d_currDirecC;

@@ -3,6 +3,7 @@
 
 #include <Boundary/Boundary.h>
 #include <Core/Geometry/Box.h>
+#include <Core/Geometry/OrientedBox.h>
 #include <Core/Geometry/Cylinder.h>
 #include <Core/Math/Vec.h>
 #include <Core/Math/IntVec.h>
@@ -297,6 +298,7 @@ public:
   void plotSpring(
     const std::string& str) const; // print springs in Tecplot format
   void writeBoundaryToFile() const;
+  void writeBoundaryToFile(const OrientedBox& domain) const;
   void printBoundary() const; // print rigid boundaries info
   void writePatchGridToFile() const;
   void plotCavity(const std::string& str) const;
@@ -557,12 +559,13 @@ public:
   void dragForce();
 
   void applyParticleBC(double time, const Box& spatialDomain,
+                       OrientedBox& modifiableDomain,
                        DEMParticlePArray& particles) {
-    d_bc.applyParticleBC(time, spatialDomain, particles);
+    d_bc.applyParticleBC(time, spatialDomain, modifiableDomain, particles);
   }
 
-  void applyPatchParticleBC(double time) {
-    applyParticleBC(time, d_spatialDomain, d_patchParticles);
+  void applyPatchParticleBC(double time, OrientedBox& modifiableDomain) {
+    applyParticleBC(time, d_spatialDomain, modifiableDomain, d_patchParticles);
   }
 
   void allowPatchDomainResize(Boundary::BoundaryID face) {

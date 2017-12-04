@@ -63,6 +63,7 @@ public:
   }
 
   void writeDomain(const Box* domain);
+  void writeDomain(const OrientedBox& domain);
   void writePatchBoxGrid(const Box* patchBox);
   void writeParticles(const TArray* particles, int frame);
   void writeSieves(const Gradation* gradation) {}
@@ -78,6 +79,9 @@ private:
   void addTimeToVTKDataSet(double time, vtkUnstructuredGridP& dataSet);
 
   void addDomainToVTKUnstructuredGrid(const Box* domain, vtkPointsP& pts,
+                                      vtkUnstructuredGridP& dataSet);
+
+  void addDomainToVTKUnstructuredGrid(const OrientedBox& domain, vtkPointsP& pts,
                                       vtkUnstructuredGridP& dataSet);
 
   void addProcessorsToVTKUnstructuredGrid(const std::vector<Vec>& coords,

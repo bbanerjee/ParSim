@@ -62,15 +62,16 @@ DEMBoundaryConditions::read(const std::string& inputFileName)
 void 
 DEMBoundaryConditions::applyParticleBC(double time, 
                                        const Box& spatialDomain,
+                                       OrientedBox& modifiableDomain,
                                        DEMParticlePArray& particles)
 {
   switch (d_particleBCType) { 
     case BCUtils::DEM_ParticleBCType::DISPLACEMENT:
-      applyDisplacementBC(time, spatialDomain, particles);
+      applyDisplacementBC(time, spatialDomain, modifiableDomain, particles);
     case BCUtils::DEM_ParticleBCType::DEFORMATION_GRADIENT:
-      applyDeformationGradientBC(time, spatialDomain, particles);
+      applyDeformationGradientBC(time, spatialDomain, modifiableDomain, particles);
     case BCUtils::DEM_ParticleBCType::AXISYMMETRIC_STRAIN:
-      applyAxisymmetricStrainBC(time, spatialDomain, particles);
+      applyAxisymmetricStrainBC(time, spatialDomain, modifiableDomain, particles);
     default:
       break;
   }
@@ -79,6 +80,7 @@ DEMBoundaryConditions::applyParticleBC(double time,
 void 
 DEMBoundaryConditions::applyDisplacementBC(double time, 
                                            const Box& spatialDomain,
+                                           OrientedBox& modifiableDomain,
                                            DEMParticlePArray& particles)
 {
 }
@@ -86,6 +88,7 @@ DEMBoundaryConditions::applyDisplacementBC(double time,
 void 
 DEMBoundaryConditions::applyDeformationGradientBC(double time, 
                                                   const Box& spatialDomain,
+                                                  OrientedBox& modifiableDomain,
                                                   DEMParticlePArray& particles)
 {
 }
@@ -93,6 +96,7 @@ DEMBoundaryConditions::applyDeformationGradientBC(double time,
 void 
 DEMBoundaryConditions::applyAxisymmetricStrainBC(double time, 
                                                  const Box& spatialDomain,
+                                                 OrientedBox& modifiableDomain,
                                                  DEMParticlePArray& particles)
 {
   const Vec referencePt = spatialDomain.minCorner();
@@ -100,18 +104,36 @@ DEMBoundaryConditions::applyAxisymmetricStrainBC(double time,
 
   for (auto& particle : particles) {
     if (particle->getType() == DEMParticle::DEMParticleType::BOUNDARY_PERIODIC) {
-      auto pos = particle->currentPosition();
+      auto pos = particle->initialPosition();
       auto segment = pos - referencePt;
       auto dx = segment.x() * strainBC[0];
       auto dy = segment.y() * strainBC[1];
       auto dz = segment.z() * strainBC[2];
       auto dxz = segment.z() * strainBC[3];
       auto dzx = segment.x() * strainBC[3];
+      //std::cout << "Periodic: x_old = " << pos.x() << " x_new = " << pos.x() + dx
+      //          << " dx = " << dx << " lx = " << segment.x()
+      //          << " strain = " << strainBC << "\n";
+      particle->setPreviousPosition(particle->currentPosition());
       particle->setCurrentPosition(Vec(pos.x() + dx + dxz,
                                        pos.y() + dy,
                                        pos.z() + dz + dzx));
-      particle->setPreviousPosition(particle->currentPosition());
       particle->computeAndSetGlobalCoef();
     }
   }
+
+  auto vertices = spatialDomain.vertices();
+  std::vector<Vec> updatedVertices;
+  for (auto& vertex : vertices) {
+    auto segment = vertex - referencePt;
+    auto dx = segment.x() * strainBC[0];
+    auto dy = segment.y() * strainBC[1];
+    auto dz = segment.z() * strainBC[2];
+    auto dxz = segment.z() * strainBC[3];
+    auto dzx = segment.x() * strainBC[3];
+    updatedVertices.push_back(Vec(vertex.x() + dx + dxz,
+                                  vertex.y() + dy,
+                                  vertex.z() + dz + dzx));
+  }
+  modifiableDomain.update(updatedVertices);
 }

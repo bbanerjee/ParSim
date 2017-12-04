@@ -138,6 +138,45 @@ OutputVTK<TArray>::writeDomain(const Box* domain)
 
 template <typename TArray>
 void
+OutputVTK<TArray>::writeDomain(const OrientedBox& domain)
+{
+
+  // Create a writer
+  vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
+
+  // Get the filename
+  std::string fileName(d_orientedDomainFilename);
+  fileName.append(".").append(writer->GetDefaultFileExtension());
+  writer->SetFileName(fileName.c_str());
+
+  // Create a pointer to a VTK Unstructured Grid data set
+  vtkUnstructuredGridP dataSet = vtkUnstructuredGridP::New();
+
+  // Set up pointer to point data
+  vtkPointsP pts = vtkPointsP::New();
+  pts->SetNumberOfPoints(8);
+
+  // Add the time
+  double time = 0.0;
+  addTimeToVTKDataSet(time, dataSet);
+
+  // Add the domain boundary to the unstructured grid cell data
+  addDomainToVTKUnstructuredGrid(domain, pts, dataSet);
+
+  // Set the points
+  dataSet->SetPoints(pts);
+
+  // Remove unused memory
+  dataSet->Squeeze();
+
+  // Write the data
+  writer->SetInput(dataSet);
+  writer->SetDataModeToAscii();
+  writer->Write();
+}
+
+template <typename TArray>
+void
 OutputVTK<TArray>::writePatchBoxGrid(const Box* patchBox)
 {
 
@@ -326,6 +365,26 @@ OutputVTK<TArray>::addDomainToVTKUnstructuredGrid(const Box* domain, vtkPointsP&
   ++id;
   pts->SetPoint(id, xmin, ymax, zmax);
 
+  vtkHexahedronP hex = vtkHexahedronP::New();
+  for (int ii = 0; ii < 8; ++ii) {
+    hex->GetPointIds()->SetId(ii, ii);
+  }
+  dataSet->InsertNextCell(hex->GetCellType(), hex->GetPointIds());
+}
+
+template <typename TArray>
+void
+OutputVTK<TArray>::addDomainToVTKUnstructuredGrid(const OrientedBox& domain, 
+                                                  vtkPointsP& pts,
+                                                  vtkUnstructuredGridP& dataSet)
+{
+  auto vertices = domain.vertices();
+
+  int id = 0;
+  for (const auto& vertex : vertices) {
+    pts->SetPoint(id, vertex.x(), vertex.y(), vertex.z());
+    ++id;
+  }
   vtkHexahedronP hex = vtkHexahedronP::New();
   for (int ii = 0; ii < 8; ++ii) {
     hex->GetPointIds()->SetId(ii, ii);

@@ -7,6 +7,7 @@
 #include <Core/MechanicsConcepts/Deformations.h>
 #include <Core/MechanicsConcepts/StrainTensors.h>
 #include <Core/Geometry/Box.h>
+#include <Core/Geometry/OrientedBox.h>
 #include <string>
 
 namespace dem {
@@ -79,15 +80,19 @@ namespace dem {
 
     void applyParticleBC(double time, 
                          const Box& spatialDomain,
+                         OrientedBox& modifiableDomain,
                          DEMParticlePArray& particles);
     void applyDisplacementBC(double time, 
                              const Box& spatialDomain,
+                             OrientedBox& modifiableDomain,
                              DEMParticlePArray& particles);
     void applyDeformationGradientBC(double time, 
                                     const Box& spatialDomain,
+                                    OrientedBox& modifiableDomain,
                                     DEMParticlePArray& particles);
     void applyAxisymmetricStrainBC(double time, 
                                    const Box& spatialDomain,
+                                   OrientedBox& modifiableDomain,
                                    DEMParticlePArray& particles);
   };
 

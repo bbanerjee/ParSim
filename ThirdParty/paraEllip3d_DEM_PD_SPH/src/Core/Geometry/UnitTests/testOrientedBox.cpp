@@ -58,4 +58,10 @@ TEST(OrientedBoxTest, intersect) {
   contains = obox2.containsPoint(Vec(0.5, 0.5, 0.5));
   EXPECT_EQ(contains, false);
   //std::cout << "Contains = " << std::boolalpha << contains << "\n";
+
+  // Update obox2 using obox1
+  obox2.update(vert1);
+  vert2 = obox2.vertices();
+  EXPECT_NEAR(vert2[0].x(), -0.0930199, 1.0e-7);
+  EXPECT_NEAR(vert2[0].y(), 0.1148671, 1.0e-7);
 }

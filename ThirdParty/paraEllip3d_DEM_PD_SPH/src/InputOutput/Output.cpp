@@ -65,6 +65,11 @@ Output::createFilenames()
     << std::setfill('0') << std::setw(5) << d_outputIteration;
   d_domainFilename = domainOutputFile.str();
 
+  std::ostringstream orientedDomainOutputFile;
+  orientedDomainOutputFile << folderName << "/oriented_domain_"
+    << std::setfill('0') << std::setw(5) << d_outputIteration;
+  d_orientedDomainFilename = orientedDomainOutputFile.str();
+
   std::ostringstream boundaryOutputFile;
   boundaryOutputFile << folderName << "/boundary_"
     << std::setfill('0') << std::setw(5) << d_outputIteration;
@@ -105,6 +110,7 @@ Output::updateFilenames(const int& iteration, const std::string& extension) {
   d_outputIteration = iteration;
   createFilenames();
   d_domainFilename += extension;
+  d_orientedDomainFilename += extension;
   d_boundaryFilename += extension;
   d_patchBoxFilename += extension;
   d_particleFilename += extension;

@@ -26,6 +26,7 @@
 #define __DEM_OUTPUT_H__
 
 #include <Core/Geometry/Box.h>
+#include <Core/Geometry/OrientedBox.h>
 #include <DiscreteElements/DEMContainers.h>
 #include <Peridynamics/PeriContainers.h>
 #include <SmoothParticleHydro/SPHContainers.h>
@@ -59,6 +60,7 @@ public:
   virtual void setParticles(const sph::SPHParticlePArray* particles) {};
 
   virtual void writeDomain(const Box* domain) {};
+  virtual void writeDomain(const OrientedBox& domain) {};
   virtual void writePatchBoxGrid(const Box* patchBox) {};
   virtual void writeParticles(const DEMParticlePArray* particles, int frame) {};
   virtual void writeParticles(const pd::PeriParticlePArray* particles, int frame) {};
@@ -104,6 +106,7 @@ protected:
   int d_outputIteration;
 
   std::string d_domainFilename;
+  std::string d_orientedDomainFilename;
   std::string d_boundaryFilename;
   std::string d_patchBoxFilename;
   std::string d_particleFilename;

@@ -47,6 +47,7 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
     dem->openProgressOutputFile(balancedInf, folderName + ".balanced");
 
     dem->writeBoundaryToFile();
+    dem->writeBoundaryToFile(OrientedBox(dem->getSpatialDomain()));
     dem->writePatchGridToFile();
     dem->writeParticlesToFile(0);
     outputParticleCSVFile = combine("output_particles_", 0, 3);
@@ -61,6 +62,11 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
 
   // Scatter the particles
   dem->scatterParticles();
+
+  // Create a modifiable oriented bounding box from the
+  // spatial domain that will be modified by each process
+  const auto spatialDomain = dem->getSpatialDomain();
+  OrientedBox modifiableDomain(spatialDomain);
 
   auto startStep = util::getParam<std::size_t>("startStep");
   auto endStep = util::getParam<std::size_t>("endStep");
@@ -81,7 +87,7 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
   auto curTime = startTime;
 
   std::size_t numOverlaps = 0;
-  int numBisections = 0;
+  //int numBisections = 0;
   while (iteration <= endStep && curTime < endTime) {
 
     // Communicate ghost particles to patches
@@ -89,28 +95,23 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
 
     // Get the particles and domain
     auto& patchParticles = dem->getModifiableParticleVec();
-    const auto spatialDomain = dem->getSpatialDomain();
 
-    if (numOverlaps > 0 && numBisections < 5) {
-      timeStep *= 0.5;
-      ++numBisections;
-    }
+    //if (numOverlaps > 0 && numBisections < 5) {
+    //  timeStep *= 0.5;
+    //  ++numBisections;
+    //}
 
     //std::cout << "Before calc: timeStep = " << timeStep << "\n";
     timeStep = dem->calcTimeStep(timeStep); 
-    std::cout << "After calc: timeStep = " << timeStep << "\n";
-
-    // Apply the particle boundary conditions to each set of patch particles
-    dem->applyParticleBC(curTime, spatialDomain, patchParticles);
 
     // Substep until number of overlapping particles is zero
     dem->findContact(iteration);
     numOverlaps = dem->numOverlappingParticles();
 
     // Switch particle type of patch particles from periodic to fixed
-    dem->switchParticleType(DEMParticle::DEMParticleType::BOUNDARY_PERIODIC,
-                            DEMParticle::DEMParticleType::FIXED,
-                            patchParticles);
+    //dem->switchParticleType(DEMParticle::DEMParticleType::BOUNDARY_PERIODIC,
+    //                        DEMParticle::DEMParticleType::FIXED,
+    //                        patchParticles);
 
     /*
     if (dem->isBoundaryProcess()) {
@@ -131,11 +132,14 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
 
 
     // Switch back particle type of patch particles from fixed to periodic
-    dem->switchParticleType(DEMParticle::DEMParticleType::FIXED,
-                            DEMParticle::DEMParticleType::BOUNDARY_PERIODIC,
-                            patchParticles);
+    //dem->switchParticleType(DEMParticle::DEMParticleType::FIXED,
+    //                        DEMParticle::DEMParticleType::BOUNDARY_PERIODIC,
+    //                        patchParticles);
 
-    dem->gatherBoundaryContacts(); 
+    // Apply the particle boundary conditions to each set of patch particles
+    dem->applyParticleBC(curTime, spatialDomain, modifiableDomain, patchParticles);
+
+    //dem->gatherBoundaryContacts(); 
     dem->updatePatchBox();
 
     if (iteration % (netStep / netSnap) == 0) {
@@ -146,13 +150,17 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
         dem->writeBoundaryToFile();
+        dem->writeBoundaryToFile(modifiableDomain);
         dem->printBoundary();
         dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);
         outputParticleCSVFile = combine("output_particles_", iterSnap, 3);
         dem->printParticlesCSV(outputFolder, outputParticleCSVFile, 0);
-        dem->printBoundaryContacts();
+        //dem->printBoundaryContacts();
         dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
+        std::cout << "Iteration = " << iteration 
+                  << " cur time = " << curTime
+                  << " timeStep = " << timeStep << "\n";
       }
 
       dem->printContact(combine(outputFolder, "contact_", iterSnap, 3));

@@ -141,6 +141,21 @@ public:
     d_center = (d_v1 + d_v2) / 2;
   }
 
+  std::vector<Vec> 
+  vertices() const
+  {
+    std::vector<Vec> verts;  verts.reserve(8);
+    verts.push_back(Vec(d_v1));
+    verts.push_back(Vec(d_v2.x(), d_v1.y(), d_v1.z()));
+    verts.push_back(Vec(d_v2.x(), d_v2.y(), d_v1.z()));
+    verts.push_back(Vec(d_v1.x(), d_v2.y(), d_v1.z()));
+    verts.push_back(Vec(d_v1.x(), d_v1.y(), d_v2.z()));
+    verts.push_back(Vec(d_v2.x(), d_v1.y(), d_v2.z()));
+    verts.push_back(Vec(d_v2));
+    verts.push_back(Vec(d_v1.x(), d_v2.y(), d_v2.z()));
+    return verts;                  
+  }
+
   bool inside(const Vec& pt, REAL tolerance) const;
 
   bool outside(const Vec& pt) const;

@@ -281,12 +281,12 @@ DEMContact::computeContactForces(REAL timeStep, std::size_t iteration,
     MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
                           inf.str().length(), MPI_CHAR, &status);
 
-    d_penetration = allowedOverlap;
+    //d_penetration = allowedOverlap;
     excessiveOverlap = 1;
   }
 
-  d_penetration = 
-    nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
+  //d_penetration = 
+  //  nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
 
   d_contactRadius = std::sqrt(d_penetration * d_R0);
   // d_normalDirection points from particle 1 to particle 2
@@ -412,11 +412,12 @@ DEMContact::updateForceAndMoment(const Vec& normalForce, const Vec& tangentForce
   Vec totalMoment = cross((momentCenter - p1->currentPosition()), 
                           (normalForce + tangentForce - dampingForce));
 
-  auto particle1 = p1->getId();
   auto particle2 = p2->getId();
   p1->addForceIDMap(totalForce, particle2);
-  p2->addForceIDMap(-totalForce, particle1);
   p1->addMomentIDMap(totalMoment, particle2);
+
+  auto particle1 = p1->getId();
+  p2->addForceIDMap(-totalForce, particle1);
   p2->addMomentIDMap(-totalMoment, particle1);
 
   //std::cout << " cohesionForce=" << d_cohesionForce << "\n\t"

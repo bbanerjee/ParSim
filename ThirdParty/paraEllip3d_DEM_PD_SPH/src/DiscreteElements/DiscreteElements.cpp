@@ -194,6 +194,7 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
   auto timeAccrued = util::getParam<REAL>("timeAccrued");
   REAL timeTotal = timeAccrued + timeStep * netStep;
   REAL outputTimeInterval = (timeStep * netStep) / 1000;
+  REAL CFL = util::getParam<REAL>("CFLFactor");
 
   std::size_t numBoundaryContacts = 0;
   bool firstPass = true;
@@ -214,7 +215,7 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     // use values from last step, must call before
     // findContact (which clears data)
     if (numBoundaryContacts > 0 && firstPass) {
-      timeStep = 0.01*timeStep;
+      timeStep = CFL*timeStep;
       firstPass = false;
     }
     timeStep = calcTimeStep(timeStep); 
@@ -1106,6 +1107,12 @@ void
 DiscreteElements::writeBoundaryToFile() const
 {
   d_writer->writeDomain(&d_spatialDomain);
+}
+
+void
+DiscreteElements::writeBoundaryToFile(const OrientedBox& domain) const
+{
+  d_writer->writeDomain(domain);
 }
 
 void

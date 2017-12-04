@@ -48,6 +48,8 @@ public:
   const Vec& axis(int idx) const {return d_axes.at(idx);}
   REAL extent(int idx) const {return d_half_len.at(idx);}
 
+  void update(const std::vector<Vec> vertices);
+
   std::vector<Vec> vertices() const;
 
   bool containsPoint(const Vec& pt) const;

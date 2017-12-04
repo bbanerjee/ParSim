@@ -120,6 +120,7 @@ DEMParticle::DEMParticle()
   , d_poisson(0)
   , d_currPos(0)
   , d_prevPos(0)
+  , d_initialPos(0)
   , d_currDirecA(0)
   , d_currDirecB(0)
   , d_currDirecC(0)
@@ -186,6 +187,7 @@ DEMParticle::init(bool randomOrientation, bool randomVelocity)
   // d_currDirecC = normalize(cross(d_currDirecA, d_currDirecB));
 
   d_prevPos = d_currPos;
+  d_initialPos = d_currPos;
   d_prevDirecA = d_currDirecA;
   d_prevDirecB = d_currDirecB;
   d_prevDirecC = d_currDirecC;
@@ -299,7 +301,7 @@ DEMParticle::DEMParticle(std::size_t n,
   d_a = dim.x();
   d_b = dim.y();
   d_c = dim.z();
-  d_currPos = d_prevPos = position;
+  d_currPos = d_prevPos = d_initialPos = position;
   d_currDirecA = d_prevDirecA = vcos(dirca);
   d_currDirecB = d_prevDirecB = vcos(dircb);
   d_currDirecC = d_prevDirecC = vcos(dircc);
@@ -696,6 +698,7 @@ DEMParticle::update(REAL timeStep)
     resultantForce += it->second;
   }
   setForce(resultantForce);
+
   Vec resultantMoment = d_moment;
   auto momentMap = momentIDMap();
   for (auto it = momentMap.cbegin(); it != momentMap.cend(); ++it ) {
@@ -703,44 +706,10 @@ DEMParticle::update(REAL timeStep)
   }
   setMoment(resultantMoment);
 
-  //if (getId() == 284) {
-  //  std::cout << "DEMParticle::update:: id = " << d_id 
-  //            << " force = " << resultantForce
-  //            << " moment = " << resultantMoment << "\n";
-  //}
-
-  /*
-  if (getId() == 2) {
-    int world_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    //std::cerr << std::setprecision(16) 
-              << "Before update: MPI rank " << world_rank 
-              << " id = " << getId() << "\n\t"
-              << " mass = " << d_mass
-              << " massScale = " << massScale 
-              << " timeStep = " << timeStep << "\n";
-    //std::cout << std::setprecision(16) 
-              << "\t id:force = [";
-    for (auto it = forceIDMap.cbegin(); it != forceIDMap.cend(); ++it ) {
-      //std::cout << "\t" << it->first << ":" << it->second << "\n\t ";
-    }
-    //std::cout << "\t]\n";
-    //std::cout << std::setprecision(16) 
-              << " force = " << d_force << "\n"
-              << " resultant = " << resultantForce << "\n";
-    //std::cout << std::setprecision(16) 
-              << "\t currPos = " << d_currPos << "\n\t"
-              << " currVeloc = " << d_currentVelocity << "\n\t"
-              << " prevVelocity = " << d_previousVelocity << " atf = " << forceDamp*2
-              << " currDirecA = " << d_currDirecA << "\n";
-   
-  }
-  */
-
   // 0-free, 1-fixed, 5-free bounary particle
   // It is important to distinguish global frame from local frame!
-  if (getType() == DEMParticle::DEMParticleType::FREE || 
-      getType() == DEMParticle::DEMParticleType::BOUNDARY_FREE) {
+  if (d_type == DEMParticle::DEMParticleType::FREE || 
+      d_type == DEMParticle::DEMParticleType::BOUNDARY_FREE) {
     Vec prevLocalOmga;
     Vec currLocalOmga;
     Vec localMoment;
@@ -751,6 +720,12 @@ DEMParticle::update(REAL timeStep)
     d_currentVelocity = d_previousVelocity * (2 - atf) / (2 + atf) +
                   d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
     d_currPos = d_prevPos + d_currentVelocity * timeStep;
+    //std::cout << "Particle: "  << d_id << "," << static_cast<int>(d_type)
+    //          << " force = " << d_force << "\n"
+    //          << " vel_old = " << d_previousVelocity
+    //          << " vel_new = " << d_currentVelocity << "\n"
+    //          << " pos_old = " << d_prevPos 
+    //          << " pos_new = " << d_currPos << "\n";
 
     // moment: angular kinetics (rotational) equations are in local frame,
     // so global values need to be converted to those in local frame when
@@ -780,32 +755,37 @@ DEMParticle::update(REAL timeStep)
       normalize(rotateVec(d_prevDirecC, d_currOmga * timeStep));
 
     //if (getId() == 284) {
-      //int world_rank;
-      //MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-      //auto forceMap = forceIDMap();
-      //std::cout << std::setprecision(16) 
-      //          << "After update: MPI rank " << world_rank 
-      //          << " id = " << getId() << "\n\t"
-      //          << " force = " << d_force << " mass = " << d_mass
-      //          << " massScale = " << massScale 
-      //          << " timeStep = " << timeStep << "\n";
-      //std::cout << std::setprecision(16) 
-      //          << "\t id:force = [";
-      //for (auto it = forceMap.cbegin(); it != forceMap.cend(); ++it ) {
-      //  std::cout << it->first << ":" << it->second << "\n\t ";
-      //}
-      //std::cout << "\t]\n";
-    //  std::cout << std::setprecision(16) 
-    //            << "id = " << d_id
-    //            << " currPos = " << d_currPos << " "
-    //            << " currVeloc = " << d_currentVelocity << " "
-    //            << " prevVelocity = " << d_previousVelocity << " atf = " << atf
-    //            << " currDirecA = " << d_currDirecA << "\n";
+    /*
+      int world_rank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    
+      std::cout << std::setprecision(16) 
+                << "After update: MPI rank " << world_rank 
+                << " id = " << getId() << "\n\t"
+                << " force = " << d_force << " mass = " << d_mass
+                << " massScale = " << massScale 
+                << " timeStep = " << timeStep << "\n";
+      auto forceMap = forceIDMap();
+      std::cout << std::setprecision(16) 
+                << "id:force = ";
+      for (auto it = forceMap.cbegin(); it != forceMap.cend(); ++it ) {
+        std::cout << "[" << it->first << ":" << it->second << "]";
+      }
+      std::cout << "\n";
+      std::cout << "Particle: x_old = " << d_prevPos.x()
+                << " x_new = " << d_currPos.x() << "\n";
+      std::cout << std::setprecision(16) 
+                << "id = " << d_id
+                << " currPos = " << d_currPos << " "
+                << " currVeloc = " << d_currentVelocity << " "
+                << " prevVelocity = " << d_previousVelocity << " atf = " << atf
+                << " currDirecA = " << d_currDirecA << "\n";
+    */
     //}
   }
 #ifdef MOMENT
   // special case 2 (moment): translate first, then rotate
-  else if (getType() == DEMParticle::DEMParticleType::ROTATE_ONLY) {
+  else if (d_type == DEMParticle::DEMParticleType::ROTATE_ONLY) {
     Vec prevLocalOmga;
     Vec currLocalOmga;
     Vec localMoment;
@@ -843,7 +823,7 @@ DEMParticle::update(REAL timeStep)
 #endif
   // special case 3 (displacemental ellipsoidal
   // pile): translate in vertical direction only
-  else if (getType() == DEMParticle::DEMParticleType::TRANSLATE_Z_ONLY) {
+  else if (d_type == DEMParticle::DEMParticleType::TRANSLATE_Z_ONLY) {
     d_currentVelocity.setX(0);
     d_currentVelocity.setY(0);
     d_currentVelocity.setZ(-pileRate);
@@ -851,7 +831,7 @@ DEMParticle::update(REAL timeStep)
   }
   // special case 4 (impacting ellipsoidal penetrator): impact
   // with inital velocity in vertical direction only
-  else if (getType() == DEMParticle::DEMParticleType::IMPACT_Z_ONLY) {
+  else if (d_type == DEMParticle::DEMParticleType::IMPACT_Z_ONLY) {
     REAL atf = forceDamp * 2;
     d_currentVelocity = d_previousVelocity * (2 - atf) / (2 + atf) +
                   d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
@@ -860,7 +840,7 @@ DEMParticle::update(REAL timeStep)
     d_currPos = d_prevPos + d_currentVelocity * timeStep;
   }
   // translation only, no rotation
-  else if (getType() == DEMParticle::DEMParticleType::TRANSLATE_ONLY) {
+  else if (d_type == DEMParticle::DEMParticleType::TRANSLATE_ONLY) {
     REAL atf = forceDamp * 2;
     d_currentVelocity = d_previousVelocity * (2 - atf) / (2 + atf) +
                   d_force / (d_mass * massScale) * timeStep * 2 / (2 + atf);
@@ -868,7 +848,7 @@ DEMParticle::update(REAL timeStep)
   }
   // special case 10: pull out a DEM particle in
   // peri-domain, prescribed constant velocity
-  else if (getType() == DEMParticle::DEMParticleType::GHOST) {
+  else if (d_type == DEMParticle::DEMParticleType::GHOST) {
     d_currPos = d_prevPos + d_currentVelocity * timeStep;
   }
 
@@ -889,10 +869,9 @@ DEMParticle::update(REAL timeStep)
   d_prevOmga = d_currOmga;
   d_prevForce = d_force;
   d_prevMoment = d_moment;
+  computeAndSetGlobalCoef(); 
 
   d_contactNum = 0;
-  computeAndSetGlobalCoef(); // every time the particle is updated, the algebra expression is
-                // also updated
 }
 
 bool
@@ -1029,12 +1008,12 @@ DEMParticle::planeRBForce(PlaneBoundary* plane,
     MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
                           inf.str().length(), MPI_CHAR, &status);
 
-    d_penetration = allowedOverlap;
+    //d_penetration = allowedOverlap;
   }
 
-  REAL minMeasurableOverlap = util::getParam<REAL>("minMeasurableOverlap");
-  d_penetration = 
-    nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
+  //REAL minMeasurableOverlap = util::getParam<REAL>("minMeasurableOverlap");
+  //d_penetration = 
+  //  nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
 
   REAL contactRadius = sqrt(d_penetration * R0);
   Vec normalDirc = -dirc;

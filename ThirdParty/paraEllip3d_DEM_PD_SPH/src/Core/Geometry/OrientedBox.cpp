@@ -41,6 +41,24 @@ OrientedBox::vertices() const
   return vertices;                  
 }
 
+void 
+OrientedBox::update(const std::vector<Vec> vertices)
+{
+  auto axis0 = vertices[1] - vertices[0];
+  auto axis1 = vertices[2] - vertices[1];
+  auto axis2 = vertices[4] - vertices[0];
+  d_center = (vertices[6] + vertices[0])*0.5;
+  auto l0 = axis0.length();
+  auto l1 = axis1.length();
+  auto l2 = axis2.length();
+  d_half_len[0] = l0 * 0.5;
+  d_half_len[1] = l1 * 0.5;
+  d_half_len[2] = l2 * 0.5;
+  d_axes[0] = axis0 / l0;
+  d_axes[1] = axis1 / l1;
+  d_axes[2] = axis2 / l2;
+}
+
 bool 
 OrientedBox::containsPoint(const Vec& point) const
 {
