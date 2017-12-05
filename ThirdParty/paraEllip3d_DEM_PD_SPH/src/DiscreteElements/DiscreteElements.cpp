@@ -1679,6 +1679,79 @@ DiscreteElements::releaseGatheredParticle()
   DEMParticlePArray().swap(d_allDEMParticles); // actual memory release
 }
 
+void 
+DiscreteElements::gatherAndScatterParticles(DEMParticlePArray& particles)
+{
+  DEMParticlePArray gathered;
+  gatherParticles(particles, gathered);
+  scatterParticles(d_demPatchBox, gathered);
+}
+
+// Gather a subset of the particles
+void
+DiscreteElements::gatherParticles(const DEMParticlePArray& patchParticles,
+                                  DEMParticlePArray& gathered) const
+{
+  if (s_mpiRank != 0) {
+
+    boostWorld.send(0, mpiTag, patchParticles);
+
+  } else { 
+
+    // Make a deep copy of the input particles
+    DEMParticlePArray gathered;
+    for (const auto& particle : patchParticles) {
+      gathered.push_back(std::make_shared<DEMParticle>(*particle));
+    }
+
+    DEMParticlePArray receivedParticles;
+    for (int patch = 1; patch < s_mpiSize; ++patch) {
+      receivedParticles.clear();
+      boostWorld.recv(patch, mpiTag, receivedParticles);
+      gathered.insert(gathered.end(), 
+                      receivedParticles.begin(), receivedParticles.end());
+    }
+  }
+}
+
+// Scatter a subset of the particles
+void
+DiscreteElements::scatterParticles(const Box& patchBox,
+                                   DEMParticlePArray& particles)
+{
+  DEMParticlePArray particlesInPatch;
+  if (s_mpiRank == 0) { 
+
+    auto reqs = new boost::mpi::request[s_mpiSize - 1];
+    for (int iRank = s_mpiSize - 1; iRank >= 0; --iRank) {
+      int ndim = 3;
+      IntVec coords;
+      MPI_Cart_coords(s_cartComm, iRank, ndim, coords.data());
+
+      findParticleInBox(patchBox, particles, particlesInPatch);
+
+      if (iRank != 0) {
+        reqs[iRank - 1] = boostWorld.isend(iRank, mpiTag, particlesInPatch); 
+      }
+
+      if (iRank == 0) {
+        for (auto particle : particlesInPatch) {
+          d_patchParticles.push_back(std::make_shared<DEMParticle>(*particle)); 
+        }
+      } 
+    }
+
+    boost::mpi::wait_all(reqs, reqs + s_mpiSize - 1); 
+    delete[] reqs;
+
+  } else { 
+    boostWorld.recv(0, mpiTag, particlesInPatch);
+    for (auto particle : particlesInPatch) {
+      d_patchParticles.push_back(std::make_shared<DEMParticle>(*particle)); 
+    }
+  }
+}
+
 
 void
 DiscreteElements::gatherBoundaryContacts()

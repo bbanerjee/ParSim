@@ -147,6 +147,9 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
     auto newParticles = 
       particleCreator.updatePeriodicDEMParticles(periodicDomain, patchParticles);
 
+    // Gather and scatter new particles
+    dem->gatherAndScatterParticles(newParticles);
+
     //dem->gatherBoundaryContacts(); 
     dem->updatePatchBox();
 

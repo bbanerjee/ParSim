@@ -157,7 +157,12 @@ public:
   void readParticles(const std::string& fileName);
   void readBoundaryConditions(const std::string& fileName);
 
+  // Scatter all the particles
   void scatterParticles();
+
+  // Scatter a subset of the particles
+  void scatterParticles(const Box& patchBox, DEMParticlePArray& particles);
+
   void scatterDEMPeriParticle();
   void communicateGhostParticles();
   void communicateGhostParticles(std::size_t iteration);
@@ -167,7 +172,12 @@ public:
   void releaseGatheredContact();
   void migrateParticles(std::size_t iteration);
   void removeParticleOutBox();
+  // Gather all the particles
   void gatherParticles();
+  // Gather a subset of the particles
+  void gatherParticles(const DEMParticlePArray& patchParticles,
+                       DEMParticlePArray& gathered) const;
+  void gatherAndScatterParticles(DEMParticlePArray& particles);
   void gatherBoundaryContacts();
   void applyTractionBoundary(int);
 
