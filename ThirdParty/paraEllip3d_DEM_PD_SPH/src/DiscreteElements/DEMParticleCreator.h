@@ -4,6 +4,7 @@
 #include <DiscreteElements/DEMContainers.h>
 #include <DiscreteElements/DEMParticle.h>
 #include <Core/Geometry/Box.h>
+#include <Core/Geometry/OrientedBox.h>
 #include <Core/Geometry/FaceEdge.h>
 
 namespace dem {
@@ -51,6 +52,9 @@ public:
                                                  REAL marginFactor = 2,
                                                  REAL faceShiftFactor = 0);
 
+  DEMParticlePArray updatePeriodicDEMParticles(const OrientedBox& periodicDomain, 
+                                               DEMParticlePArray& particles);
+
 private:
 
   ParticleParameters getParticleParameters(const dem::Gradation& gradation);
@@ -71,6 +75,10 @@ private:
                             REAL boundaryMargin,
                             Vec inPlaneDiag,
                             REAL widthX, REAL widthY, REAL widthZ,
+                            const Face& face,
+                            const IntersectionStatus status, 
+                            std::vector<Vec>& translations);
+  void addExtraTranslations(const Vec& shift, 
                             const Face& face,
                             const IntersectionStatus status, 
                             std::vector<Vec>& translations);

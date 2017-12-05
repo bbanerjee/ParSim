@@ -169,7 +169,6 @@ public:
   void removeParticleOutBox();
   void gatherParticles();
   void gatherBoundaryContacts();
-  std::size_t findBoundaryPeriParticles(); // for all cpus
   void applyTractionBoundary(int);
 
   void updatePatchBox();
@@ -222,20 +221,19 @@ public:
   void findContactMultiThread(int numThreads, 
                               REAL minOverlap, REAL measOverlap,
                               std::size_t iteration);
-  std::size_t findBoundaryContacts(std::size_t iteration);      // find particles on boundaries
+
+  // find particles on boundaries
+  std::size_t findBoundaryContacts(std::size_t iteration);      
   void findParticleOnCavity(); // find particle on cavity boundaries
 
-  void initializeForces();
-
-  void clearContactForce(); // clear forces and moments for all particles
-  void applyBodyForce(); // Apply body forces
-
   // calculate inter-particle forces
+  void initializeForces();
+  void clearContactForce(); // clear forces and moments for all particles
+  void applyBodyForce();    // Apply body forces
   void internalForce(REAL timeStep, std::size_t iteration);     
-
   void springForce();
 
-  // calculate forces between rigid boundaries and // particles
+  // calculate forces between rigid boundaries and particles
   void boundaryForce(REAL timeStep, std::size_t iteration); 
   void cavityBoundaryForce();
 

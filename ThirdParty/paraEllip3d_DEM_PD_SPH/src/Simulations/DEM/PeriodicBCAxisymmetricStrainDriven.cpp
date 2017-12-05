@@ -1,4 +1,5 @@
 #include <Simulations/DEM/PeriodicBCAxisymmetricStrainDriven.h>
+#include <DiscreteElements/DEMParticleCreator.h>
 #include <Core/Util/Utility.h>
 
 using namespace dem;
@@ -66,7 +67,7 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
   // Create a modifiable oriented bounding box from the
   // spatial domain that will be modified by each process
   const auto spatialDomain = dem->getSpatialDomain();
-  OrientedBox modifiableDomain(spatialDomain);
+  OrientedBox periodicDomain(spatialDomain);
 
   auto startStep = util::getParam<std::size_t>("startStep");
   auto endStep = util::getParam<std::size_t>("endStep");
@@ -137,7 +138,14 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
     //                        patchParticles);
 
     // Apply the particle boundary conditions to each set of patch particles
-    dem->applyParticleBC(curTime, spatialDomain, modifiableDomain, patchParticles);
+    // and update the periodic boundary
+    dem->applyParticleBC(curTime, spatialDomain, periodicDomain, patchParticles);
+
+    // Identify free particles that have crossed the periodic domain
+    // boundary
+    DEMParticleCreator particleCreator;
+    auto newParticles = 
+      particleCreator.updatePeriodicDEMParticles(periodicDomain, patchParticles);
 
     //dem->gatherBoundaryContacts(); 
     dem->updatePatchBox();
@@ -150,7 +158,7 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
         dem->writeBoundaryToFile();
-        dem->writeBoundaryToFile(modifiableDomain);
+        dem->writeBoundaryToFile(periodicDomain);
         dem->printBoundary();
         dem->writePatchGridToFile();
         dem->writeParticlesToFile(iterSnap);

@@ -295,11 +295,18 @@ DEMParticleCreator::generatePeriodicDEMParticles(DEMParticlePArray& particles,
     faces.push_back(face);
   }
 
+  // Compute starting ID for extra particles
+  auto maxIter = std::max_element(particles.begin(), particles.end(),
+   [](const DEMParticleP& p1, const DEMParticleP& p2){
+     return p1->getId() < p2->getId();
+   });
+  auto particleID = (*maxIter)->getId();
+  //auto particleID = particles.size();
+
   // Check intersections
   REAL widthX = shrunkDomain.dimX();
   REAL widthY = shrunkDomain.dimY();
   REAL widthZ = shrunkDomain.dimZ();
-  auto particleID = particles.size();
   DEMParticlePArray extraParticles;
   for (const auto& particle : particles) {
 
@@ -474,6 +481,172 @@ DEMParticleCreator::removeDuplicates(DEMParticlePArray& input)
       return false;
     });
   input.erase(newEnd, input.end());
+}
+
+DEMParticlePArray
+DEMParticleCreator::updatePeriodicDEMParticles(const OrientedBox& periodicDomain, 
+                                               DEMParticlePArray& particles)
+{
+  auto e0 = periodicDomain.axis(0) * (periodicDomain.extent(0) * 2);
+  auto e1 = periodicDomain.axis(1) * (periodicDomain.extent(1) * 2);
+  auto e2 = periodicDomain.axis(2) * (periodicDomain.extent(2) * 2);
+
+  std::vector<Vec> vertices = periodicDomain.vertices();
+  constexpr std::array<std::array<int, 4>, 6> faceIndices = {{
+      {{0, 4, 7, 3}} // x-
+    , {{1, 2, 6, 5}} // x+
+    , {{0, 1, 5, 4}} // y-
+    , {{2, 3, 7, 6}} // y+
+    , {{0, 3, 2, 1}} // z-
+    , {{4, 5, 6, 7}}  // z+
+
+  }};
+  std::vector<Face> faces;
+  for (const auto& indices : faceIndices) {
+    int i0 = indices[0]; int i1 = indices[1]; 
+    int i2 = indices[2]; int i3 = indices[3];
+    Face face(vertices[i0], vertices[i1], vertices[i2], vertices[i3]);
+    faces.push_back(face);
+  }
+
+  // Check intersections
+  DEMParticlePArray extraParticles;
+  for (const auto& particle : particles) {
+
+    if (particle->getType() != DEMParticle::DEMParticleType::FREE) {
+      continue;
+    }
+
+    auto position = particle->currentPosition();
+
+    auto axis_a = particle->currentAxisA();
+    auto axis_b = particle->currentAxisB();
+    auto axis_c = particle->currentAxisC();
+
+    auto radius_a = particle->radiusA();
+    auto radius_b = particle->radiusB();
+    auto radius_c = particle->radiusC();
+
+    auto id = particle->getId();
+
+    // Create an ellipsoid object for ellipsoid-face intersection tests
+    Ellipsoid ellipsoid(id, position, axis_a, axis_b, axis_c, 
+                        radius_a, radius_b, radius_c);
+
+    int faceID = 1;
+    for (const auto& face : faces) {
+      auto status = ellipsoid.intersects(face);
+      // std::cout << "Face = " << face << "\n";
+      // std::cout << "status = " << std::boolalpha << status.first
+      //           << " face " << static_cast<int>(status.second.first)
+      //           << " , " << status.second.second << "\n";
+      if (status.first) {
+        std::vector<Vec> translations;
+
+        switch (static_cast<Boundary::BoundaryID>(faceID)) {
+          case Boundary::BoundaryID::NONE:
+            break;
+          case Boundary::BoundaryID::XMINUS:
+          {
+            Vec shift = e0;
+            //std::cout << " Loc: x-: " << shift << "\n";
+            translations.push_back(shift);
+            addExtraTranslations(shift, face, status, translations);
+            break;
+          }
+          case Boundary::BoundaryID::XPLUS:
+          {
+            Vec shift = -e0;
+            //std::cout << " Loc: x-: " << shift << "\n";
+            translations.push_back(shift);
+            addExtraTranslations(shift, face, status, translations);
+            break;
+          }
+          case Boundary::BoundaryID::YMINUS:
+          {
+            Vec shift = e1;
+            //std::cout << " Loc: y-: " << shift << "\n";
+            translations.push_back(shift);
+            addExtraTranslations(shift, face, status, translations);
+            break;
+          }
+          case Boundary::BoundaryID::YPLUS:
+          {
+            Vec shift = -e1;
+            //std::cout << " Loc: y-: " << shift << "\n";
+            translations.push_back(shift);
+            addExtraTranslations(shift, face, status, translations);
+            break;
+          }
+          case Boundary::BoundaryID::ZMINUS:
+          {
+            Vec shift = e2;
+            //std::cout << " Loc: z-: " << shift << "\n";
+            translations.push_back(shift);
+            addExtraTranslations(shift, face, status, translations);
+            break;
+          }
+          case Boundary::BoundaryID::ZPLUS:
+          {
+            Vec shift = -e2;
+            //std::cout << " Loc: z-: " << shift << "\n";
+            translations.push_back(shift);
+            addExtraTranslations(shift, face, status, translations);
+            break;
+          }
+            break;
+        }
+
+        // Create copies
+        particle->setType(DEMParticle::DEMParticleType::BOUNDARY_PERIODIC);
+        for (const auto& translation : translations) {
+          DEMParticleP newParticle = std::make_shared<DEMParticle>(*particle);
+          newParticle->setCurrentPosition(particle->currentPosition() + 
+                                          translation);
+          newParticle->setPreviousPosition(particle->previousPosition() + 
+                                           translation);
+          newParticle->setId(particle->getId());
+          newParticle->computeAndSetGlobalCoef();
+          extraParticles.push_back(newParticle);
+        }
+      }
+      faceID += 1;
+    }
+  }
+
+  // Remove duplicates
+  removeDuplicates(extraParticles);
+
+  return extraParticles;
+}
+
+void
+DEMParticleCreator::addExtraTranslations(const Vec& shift, 
+                                         const Face& face,
+                                         const IntersectionStatus status, 
+                                         std::vector<Vec>& translations) 
+{
+  if (status.second.first == Face::Location::VERTEX) {
+    int vertIndex = status.second.second;
+    //std::cout << "is vertex " << vertIndex << "\n";
+    for (int ii = 1; ii < 4; ++ii) {
+      if (vertIndex != ii) {
+        Vec inPlane = face.vertex[ii] - face.vertex[vertIndex];
+        Vec outOfPlane = inPlane + shift;
+        translations.push_back(inPlane);
+        translations.push_back(outOfPlane);
+      }
+    }
+  } 
+  else if (status.second.first == Face::Location::EDGE) {
+    int edgeIndex = status.second.second;
+    //std::cout << "is edge " << edgeIndex << "\n";
+    int oppIndex = (edgeIndex+3) % 4;
+    Vec inPlane = face.vertex[oppIndex] - face.vertex[edgeIndex];
+    Vec outOfPlane = inPlane + shift;
+    translations.push_back(inPlane);
+    translations.push_back(outOfPlane);
+  }
 }
 
 namespace dem {

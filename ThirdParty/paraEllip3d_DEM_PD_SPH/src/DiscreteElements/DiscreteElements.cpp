@@ -880,6 +880,7 @@ DiscreteElements::findBoundaryContacts(std::size_t iteration)
   return count;
 }
 
+
 void
 DiscreteElements::initializeForces()
 {
