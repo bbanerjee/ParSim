@@ -11,3 +11,6 @@
 	path = Vaango/src/submodules/json
 	url = https://github.com/nlohmann/json.git
         branch = master 
+[submodule "ThirdParty/paraEllip3d_DEM_PD_SPH/src/qhull"]
+	path = ThirdParty/paraEllip3d_DEM_PD_SPH/src/qhull
+	url = https://github.com/qhull/qhull.git
