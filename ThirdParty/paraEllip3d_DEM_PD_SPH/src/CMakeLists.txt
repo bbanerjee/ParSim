@@ -37,6 +37,14 @@ set(MAJOR_VERSION "0")
 set(MINOR_VERSION "1")
 set(PATCH_VERSION "0")
 
+#---
+# Set module path
+#---
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${CMAKE_MODULE_PATH})
+
+#---
+# Build type/compiler etc.
+#---
 #set(CMAKE_VERBOSE_MAKEFILE 1)
 #set(CMAKE_BUILD_TYPE "Release")
 #set(BUILD_SHARED_LIBS ON)
@@ -134,6 +142,14 @@ message(STATUS "Eigen3 include directory is ${EIGEN3_INCLUDE_DIR}")
 if (USE_CLANG)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem ${EIGEN3_INCLUDE_DIR}")
 endif()
+
+#------------------------------------------------------------------------------
+# Find the Qhull libraries 
+# (Make sure the qhull libraries and includes are in qhull/build)
+#------------------------------------------------------------------------------
+set(QHULL_USE_STATIC ON)
+set(QHULL_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/qhull/build)
+find_package(Qhull REQUIRED)
 
 
 #----------------------------------------------------------------------------
