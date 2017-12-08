@@ -60,6 +60,9 @@ public:
   void addParameter(const std::string& key, REAL value) {
     param[key] = value;
   }
+  void addFilename(const std::string& key, const std::string& value) {
+    datafile[key] = value;
+  }
 
 private:
   // constructor must be private to avoid instantiation by others because

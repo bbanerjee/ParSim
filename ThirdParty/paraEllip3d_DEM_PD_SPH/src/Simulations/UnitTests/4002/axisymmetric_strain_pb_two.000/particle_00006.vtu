@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+  <UnstructuredGrid>
+    <FieldData>
+      <DataArray type="Float64" Name="TIME" NumberOfTuples="1" format="ascii" RangeMin="0" RangeMax="0">
+        0
+      </DataArray>
+    </FieldData>
+    <Piece NumberOfPoints="3" NumberOfCells="0">
+      <PointData>
+        <DataArray type="Float64" Name="ID" format="ascii" RangeMin="1" RangeMax="3">
+          1 2 3
+        </DataArray>
+        <DataArray type="Float64" Name="Type" format="ascii" RangeMin="0" RangeMax="7">
+          7 0 7
+        </DataArray>
+        <DataArray type="Float64" Name="Radius" NumberOfComponents="3" format="ascii" RangeMin="0.00030589213785" RangeMax="0.00049956881408">
+          0.000392 0.000233 0.000204 0.000205 0.000184 0.000133
+          0.000392 0.000233 0.000204
+        </DataArray>
+        <DataArray type="Float64" Name="Axis a" NumberOfComponents="3" format="ascii" RangeMin="2.8147547345" RangeMax="3.7681286448">
+          1.828942 0.567075 2.063066 1.8428117254 2.4878057036 2.1479434839
+          1.828942 0.567075 2.063066
+        </DataArray>
+        <DataArray type="Float64" Name="Axis b" NumberOfComponents="3" format="ascii" RangeMin="1.7970350163" RangeMax="3.1988168799">
+          1.352562 1.016575 0.605381 2.0314899599 0.92139477572 2.2927079275
+          1.352562 1.016575 0.605381
+        </DataArray>
+        <DataArray type="Float64" Name="Axis c" NumberOfComponents="3" format="ascii" RangeMin="2.4169324577" RangeMax="2.6508572584">
+          0.341324 1.462995 1.893332 0.54620614056 1.5057222359 2.1122271669
+          0.341324 1.462995 1.893332
+        </DataArray>
+        <DataArray type="Float64" Name="Ellipsoid" NumberOfComponents="9" format="ascii" RangeMin="0.00030589213785" RangeMax="0.00049956884374">
+          0.0002176115926 -3.7177626037e-05 2.7845990201e-05 -3.7177626037e-05 0.00034578498477 -6.2396319074e-05
+          2.7845990201e-05 -6.2396319074e-05 0.00026560349648 0.00014827709093 1.6447960705e-06 2.5537876623e-05
+          1.6447960705e-06 0.00019701625241 1.0804653877e-05 2.5537876623e-05 1.0804653877e-05 0.00017670665666
+          0.0002176115926 -3.7177626037e-05 2.7845990201e-05 -3.7177626037e-05 0.00034578498477 -6.2396319074e-05
+          2.7845990201e-05 -6.2396319074e-05 0.00026560349648
+        </DataArray>
+        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="5.6222193769e-07">
+          0 0 0 -1.8060600944e-143 1.1154214294e-144 -5.6222193769e-07
+          0 0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Omega" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="3.469882584e-139">
+          0 0 0 -3.0709143532e-139 -5.0449262859e-140 -1.5346196173e-139
+          0 0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Force" NumberOfComponents="3" format="ascii" RangeMin="5.4573760919e-07" RangeMax="2.0269018282e-06">
+          0 0 -2.0269018282e-06 0 0 -5.4573760919e-07
+          0 0 -2.0269018282e-06
+        </DataArray>
+        <DataArray type="Float64" Name="Moment" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="0">
+          0 0 0 0 0 0
+          0 0 0
+        </DataArray>
+      </PointData>
+      <CellData>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="Points" NumberOfComponents="3" format="ascii" RangeMin="0.00035309952688" RangeMax="0.0034439801605">
+          0.00025581687805 0.00024100000155 3.4000000596e-05 0.00015015224926 0.00020105236035 0.00041558759403
+          0.00025581687805 0.00024100000155 0.0034260000102
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int64" Name="connectivity" format="ascii" RangeMin="1e+299" RangeMax="-1e+299">
+        </DataArray>
+        <DataArray type="Int64" Name="offsets" format="ascii" RangeMin="1e+299" RangeMax="-1e+299">
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="ascii" RangeMin="1e+299" RangeMax="-1e+299">
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>

@@ -34,6 +34,7 @@ SET(COMMAND_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/CreateParticlesPeriodicRVE.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/CreateParticlesEllipsoidFromGradation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/PeriodicBCAxisymmetricStrainDriven.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEM/PeriodicBCComputeStressStrain.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/PlaneStrainLoading.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/GravityDeposition.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEM/TriaxialLoading.cpp
@@ -54,3 +55,5 @@ SET(ELLIP3D_SRCS
   ${COMMAND_SRCS}
   PARENT_SCOPE
 )
+
+add_subdirectory(UnitTests)
