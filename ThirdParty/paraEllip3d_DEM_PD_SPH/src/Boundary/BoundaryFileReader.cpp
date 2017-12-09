@@ -1,4 +1,4 @@
-#include <Boundary/BoundaryReader.h>
+#include <Boundary/BoundaryFileReader.h>
 #include <Boundary/BoundaryContainers.h>
 #include <Boundary/CylinderBoundary.h>
 #include <Boundary/PlaneBoundary.h>
@@ -6,12 +6,17 @@
 #include <Core/Math/IntVec.h>
 #include <InputOutput/json/json.hpp>
 #include <InputOutput/zenxml/xml.h>
+#include <vtkXMLUnstructuredGridReader.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkSmartPointer.h>
+#include <vtkHexahedron.h>
+#include <vtkPoints.h>
 
 using namespace dem;
 using json = nlohmann::json;
 
 void
-BoundaryReader::read(const std::string& inputFileName, Box& domain,
+BoundaryFileReader::read(const std::string& inputFileName, Box& domain,
                      Box& patchBox, BoundaryPArray& boundaries) const
 {
   std::ifstream ifs(inputFileName);
@@ -56,7 +61,7 @@ BoundaryReader::read(const std::string& inputFileName, Box& domain,
 }
 
 bool
-BoundaryReader::readXML(const std::string& inputFileName, Box& domain,
+BoundaryFileReader::readXML(const std::string& inputFileName, Box& domain,
                         Box& patchBox, BoundaryPArray& boundaries) const
 {
   // Read the input file
@@ -167,7 +172,7 @@ BoundaryReader::readXML(const std::string& inputFileName, Box& domain,
 }
 
 bool
-BoundaryReader::readJSON(const std::string& inputFileName, Box& domain,
+BoundaryFileReader::readJSON(const std::string& inputFileName, Box& domain,
                          Box& patchBox, BoundaryPArray& boundaries) const
 {
   // Create an input ifstream
@@ -287,4 +292,32 @@ BoundaryReader::readJSON(const std::string& inputFileName, Box& domain,
   }
 
   return true;
+}
+
+using vtkUnstructuredGridReaderP = vtkSmartPointer<vtkXMLUnstructuredGridReader>;
+
+void 
+BoundaryFileReader::readVTK(const std::string& filename, OrientedBox& domain) const
+{
+  // Read all the data from the file
+  vtkUnstructuredGridReaderP reader = vtkUnstructuredGridReaderP::New();
+  reader->SetFileName(filename.c_str());
+  reader->Update();
+
+  // Get a pointer to the data
+  vtkUnstructuredGrid* data = reader->GetOutput();
+
+  // Get the hexahedron
+  vtkHexahedron* hex = vtkHexahedron::SafeDownCast(data->GetCell(0));
+
+  // Get the points
+  vtkPoints* pts = hex->GetPoints();
+  std::vector<Vec> vertices;
+  for (int ii = 0; ii < 8; ii++) {
+    double* pt = pts->GetPoint(ii);
+    vertices.push_back(Vec(pt[0], pt[1], pt[2]));
+    //std::cout << "(" << pt[0] << "," << pt[1] << "," << pt[2] << ")\n";
+  }
+  domain.update(vertices);
+  //std::cout << domain << "\n";
 }

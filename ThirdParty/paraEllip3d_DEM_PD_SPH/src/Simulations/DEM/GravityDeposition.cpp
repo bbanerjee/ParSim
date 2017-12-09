@@ -1,5 +1,5 @@
 #include <Simulations/DEM/GravityDeposition.h>
-#include <Boundary/BoundaryReader.h>
+#include <Boundary/BoundaryFileReader.h>
 #include <InputOutput/InputParameter.h>
 
 #include <iostream>

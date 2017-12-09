@@ -1,18 +1,19 @@
-#ifndef ELLIP3D_BOUNDARY_READER_H_H
-#define ELLIP3D_BOUNDARY_READER_H_H
+#ifndef ELLIP3D_BOUNDARY_FILE_READER_H_H
+#define ELLIP3D_BOUNDARY_FILE_READER_H_H
 
 #include <Boundary/BoundaryContainers.h>
 #include <Core/Geometry/Box.h>
+#include <Core/Geometry/OrientedBox.h>
 #include <Core/Types/RealTypes.h>
 
 namespace dem {
 
-class BoundaryReader
+class BoundaryFileReader
 {
 
 public:
-  BoundaryReader() = default;
-  ~BoundaryReader() = default;
+  BoundaryFileReader() = default;
+  ~BoundaryFileReader() = default;
 
   void read(const std::string& inputFileName, Box& domain, Box& patchBox,
             BoundaryPArray& boundaries) const;
@@ -21,10 +22,12 @@ public:
   bool readJSON(const std::string& inputFileName, Box& domain, Box& patchBox,
                 BoundaryPArray& boundaries) const;
 
+  void readVTK(const std::string& filename, OrientedBox& domain) const;
+
 private:
 
-  BoundaryReader(BoundaryReader const&) = delete; // don't implement
-  void operator=(BoundaryReader const&) = delete; // don't implement
+  BoundaryFileReader(BoundaryFileReader const&) = delete; // don't implement
+  void operator=(BoundaryFileReader const&) = delete; // don't implement
 };
 }
 #endif

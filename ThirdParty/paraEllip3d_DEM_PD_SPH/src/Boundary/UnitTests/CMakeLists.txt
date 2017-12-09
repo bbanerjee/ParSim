@@ -28,6 +28,11 @@ set(TEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
 #--------------------------------------
+# Input files
+#--------------------------------------
+configure_file(oriented_domain_00000.vtu oriented_domain_00000.vtu COPYONLY)
+
+#--------------------------------------
 # BoundaryFileWriter
 #--------------------------------------
 add_executable(testBoundaryFileWriter testBoundaryFileWriter.cpp)
@@ -42,6 +47,27 @@ target_link_libraries(testBoundaryFileWriter
 )
 
 set(UNIT_TEST testBoundaryFileWriter)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+#--------------------------------------
+# BoundaryFileReader
+#--------------------------------------
+add_executable(testBoundaryFileReader testBoundaryFileReader.cpp)
+
+target_link_libraries(testBoundaryFileReader
+  ${TEST_LIB}
+  ELLIP3D_LIB
+  ${MPI_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${VTK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+)
+
+set(UNIT_TEST testBoundaryFileReader)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD

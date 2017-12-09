@@ -31,7 +31,7 @@
 #include <DiscreteElements/DEMParticleCreator.h>
 #include <Core/Parallel/Patch.h>
 
-#include <Boundary/BoundaryReader.h>
+#include <Boundary/BoundaryFileReader.h>
 #include <Boundary/CylinderBoundary.h>
 #include <Boundary/PlaneBoundary.h>
 #include <Boundary/BoundaryFileWriter.h>
@@ -315,15 +315,15 @@ DiscreteElements::readBoundary(const std::string& fileName)
   if (firstChar == '<') { // XML
     // Read the file
     //std::cout << "Using the XML reader\n";
-    BoundaryReader reader;
+    BoundaryFileReader reader;
     reader.readXML(fileName, d_spatialDomain, d_demPatchBox, d_boundaries);
   } else if (firstChar == '{') { // JSON
     //std::cout << "Using the JSON reader\n";
-    BoundaryReader reader;
+    BoundaryFileReader reader;
     reader.readJSON(fileName, d_spatialDomain, d_demPatchBox, d_boundaries);
   } else {
     //std::cout << "Using the default text reader\n";
-    BoundaryReader reader;
+    BoundaryFileReader reader;
     reader.read(fileName, d_spatialDomain, d_demPatchBox, d_boundaries);
   }
   // std::cout << "d_demPatchBox = " << d_demPatchBox << "\n";
