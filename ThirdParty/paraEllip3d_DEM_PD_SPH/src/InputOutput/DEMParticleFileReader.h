@@ -20,6 +20,9 @@ public:
             const REAL& poissonRatio, bool doInitialize,
             DEMParticlePArray& particles, Gradation& gradation);
 
+  void readVTK(const std::string& filename, REAL youngModulus,
+               REAL poissonRatio, DEMParticlePArray& particles);
+
 private:
   REAL d_youngModulus;
   REAL d_poissonRatio;

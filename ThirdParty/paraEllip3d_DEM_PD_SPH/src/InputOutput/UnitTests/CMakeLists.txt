@@ -31,6 +31,7 @@ include_directories(${GTEST_INCLUDE_DIR})
 # Copy input files
 #--------------------------------------
 configure_file(input001_p1.xml input001_p1.xml COPYONLY)
+configure_file(particle_00000.vtu particle_00000.vtu COPYONLY)
 
 #--------------------------------------
 # InputParameter
@@ -68,6 +69,27 @@ target_link_libraries(testDEMParticleFileWriter
 )
 
 set(UNIT_TEST testDEMParticleFileWriter)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+#--------------------------------------
+# DEMParticleFileReader
+#--------------------------------------
+add_executable(testDEMParticleFileReader testDEMParticleFileReader.cpp)
+
+target_link_libraries(testDEMParticleFileReader
+  ${TEST_LIB}
+  ELLIP3D_LIB
+  ${MPI_LIBRARY}
+  ${Boost_LIBRARIES}
+  ${VTK_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+)
+
+set(UNIT_TEST testDEMParticleFileReader)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD

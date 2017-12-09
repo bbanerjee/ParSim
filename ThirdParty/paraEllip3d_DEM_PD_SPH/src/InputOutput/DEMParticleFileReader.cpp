@@ -3,6 +3,10 @@
 #include <Core/Math/IntVec.h>
 #include <Core/Math/Vec.h>
 #include <DiscreteElements/DEMParticle.h>
+#include <vtkXMLUnstructuredGridReader.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkSmartPointer.h>
+#include <vtkPointData.h>
 #include <fstream>
 #include <sstream>
 #include <type_traits>
@@ -237,6 +241,97 @@ DEMParticleFileReader::updateTotalMass(DEMParticlePArray& particles)
 
   for (auto& particle : particles) {
     particle->setTotalMass(totalMass);
+  }
+}
+
+using vtkUnstructuredGridReaderP = vtkSmartPointer<vtkXMLUnstructuredGridReader>;
+void 
+DEMParticleFileReader::readVTK(const std::string& filename, 
+                               REAL youngModulus, REAL poissonRatio,
+                               DEMParticlePArray& particles)
+{
+  // Read all the data from the file
+  vtkUnstructuredGridReaderP reader = vtkUnstructuredGridReaderP::New();
+  reader->SetFileName(filename.c_str());
+  reader->Update();
+
+  // Get a pointer to the data
+  vtkUnstructuredGrid* data = reader->GetOutput();
+
+  // Get the point coordinates
+  std::vector<Vec> positions;
+  auto numPts = data->GetNumberOfPoints();
+  for (int ii = 0; ii < numPts; ++ii) {
+    double* pt = data->GetPoint(ii);
+    positions.push_back(Vec(pt[0], pt[1], pt[2]));
+    //std::cout << "(" << pt[0] << "," << pt[1] << "," << pt[2] << ")\n";
+  }
+
+  // Get the particle data
+  auto ptData = data->GetPointData();
+  auto ids = ptData->GetScalars("ID");
+  auto types = ptData->GetScalars("Type");
+  auto rads = ptData->GetVectors("Radius");
+  auto axas = ptData->GetVectors("Axis a");
+  auto axbs = ptData->GetVectors("Axis b");
+  auto axcs = ptData->GetVectors("Axis c");
+  auto vels = ptData->GetVectors("Velocity");
+  auto omgs = ptData->GetVectors("Omega");
+  auto fors = ptData->GetVectors("Force");
+  auto moms = ptData->GetVectors("Moment");
+  double scalar;
+  double vector[3];
+  for (int ii = 0; ii < numPts; ++ii) {
+    ids->GetTuple(ii, &scalar);
+    std::size_t id = static_cast<std::size_t>(scalar);
+
+    types->GetTuple(ii, &scalar);
+    int type = static_cast<int>(scalar);
+
+    rads->GetTuple(ii, vector);
+    Vec radius(vector[0], vector[1], vector[2]);
+
+    axas->GetTuple(ii, vector);
+    Vec axis_a(vector[0], vector[1], vector[2]);
+
+    axbs->GetTuple(ii, vector);
+    Vec axis_b(vector[0], vector[1], vector[2]);
+
+    axcs->GetTuple(ii, vector);
+    Vec axis_c(vector[0], vector[1], vector[2]);
+
+    vels->GetTuple(ii, vector);
+    Vec velocity(vector[0], vector[1], vector[2]);
+
+    omgs->GetTuple(ii, vector);
+    Vec omega(vector[0], vector[1], vector[2]);
+
+    fors->GetTuple(ii, vector);
+    Vec force(vector[0], vector[1], vector[2]);
+
+    moms->GetTuple(ii, vector);
+    Vec moment(vector[0], vector[1], vector[2]);
+
+    //std::cout << id << ", ";
+    //std::cout << type << ",";
+    //std::cout << radius << ",";
+    //std::cout << axis_a << "\n";
+    //std::cout << force << "\n";
+
+    DEMParticleP particle = std::make_shared<DEMParticle>(
+      id, DEMParticle::DEMParticleShape::ELLIPSOID, 
+      static_cast<DEMParticle::DEMParticleType>(type),
+      radius, positions[ii], axis_a, axis_b, axis_c, 
+      youngModulus, poissonRatio);
+
+    particle->setPreviousVelocity(velocity);
+    particle->setCurrentVelocity(velocity);
+    particle->setPreviousAngularVelocity(omega);
+    particle->setCurrentAngularVelocity(omega);
+    particle->setForce(force);
+    particle->setMoment(moment);
+
+    particles.push_back(particle);
   }
 }
 
