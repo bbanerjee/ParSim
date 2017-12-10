@@ -75,6 +75,7 @@ BurstingDam2D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
   REAL timeCount = 0;
   REAL timeIncr  = timeStep * netStep;
   REAL timeTotal = timeAccrued + timeStep * netStep;
+  auto currentTime = timeAccrued;
 
   auto iteration = startStep;
   auto iterSnap = startSnap;
@@ -89,12 +90,12 @@ BurstingDam2D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
     dem->createOutputWriter(outputFolder, iterSnap-1);
     sph->createOutputWriter(outputFolder, iterSnap-1);
 
-    dem->writeBoundaryToFile();
-    dem->writePatchGridToFile();
-    dem->writeParticlesToFile(iterSnap);
+    dem->writeBoundaryToFile(currentTime);
+    dem->writePatchGridToFile(currentTime);
+    dem->writeParticlesToFile(iterSnap, currentTime);
     dem->printBoundaryContacts();
     //sph->printSPHTecplot(sphTecplotInf, iterSnap-1);
-    sph->writeParticlesToFile(iterSnap);
+    sph->writeParticlesToFile(iterSnap, currentTime);
     //sph->printSPHProgress(sphProgressInf, 0);
   }
 
@@ -176,12 +177,12 @@ BurstingDam2D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
       }
 
       if (dem->getMPIRank() == 0) {
-        dem->writeBoundaryToFile();
-        dem->writePatchGridToFile();
-        dem->writeParticlesToFile(iterSnap);
+        dem->writeBoundaryToFile(currentTime);
+        dem->writePatchGridToFile(currentTime);
+        dem->writeParticlesToFile(iterSnap, currentTime);
         dem->printBoundaryContacts();
-        sph->writeParticlesToFile(iterSnap);
-        //sph->printSPHTecplot(sphTecplotInf, iterSnap);
+        sph->writeParticlesToFile(iterSnap, currentTime);
+        //sph->printSPHTecplot(sphTecplotInf, iterSnap, currentTime);
         dem->appendToProgressOutputFile(demProgressInf, iteration, timeStep);
       }
       dem->printContact(util::combine(outputFolder, "bursting_contact_", iterSnap, 3));
@@ -210,6 +211,7 @@ BurstingDam2D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
     }
 
     ++iteration;
+    currentTime += timeStep;
   } 
 
   if (dem->getMPIRank() == 0) {

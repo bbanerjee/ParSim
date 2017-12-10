@@ -241,9 +241,9 @@ public:
   void writeMeshCheckVolume(const std::string&); 
 
   // print all particles
-  void writeParticlesToFile(int frame) const; 
+  void writeParticlesToFile(int frame, REAL time) const; 
   // print a subset of particles
-  void writeParticlesToFile(PeriParticlePArray& particleVec, int frame) const; 
+  void writeParticlesToFile(PeriParticlePArray& particleVec, int frame, REAL time) const; 
 
   void printPeriDomain(const std::string&) const;
   void printRecvPeriDomain(const std::string&) const;

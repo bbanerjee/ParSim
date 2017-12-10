@@ -876,9 +876,9 @@ SmoothParticleHydro::createOutputWriter(const std::string& outputFolder,
 }
 
 void
-SmoothParticleHydro::writeParticlesToFile(int frame) const
+SmoothParticleHydro::writeParticlesToFile(int frame, REAL time) const
 {
-  d_writer->writeParticles(&d_allSPHParticleVec, frame);
+  d_writer->writeParticles(&d_allSPHParticleVec, frame, time);
 }
 
 void

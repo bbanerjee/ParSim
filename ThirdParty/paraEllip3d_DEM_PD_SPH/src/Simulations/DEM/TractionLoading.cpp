@@ -28,6 +28,10 @@ TractionLoading::execute(DiscreteElements* dem)
   auto numSteps = endStep - startStep + 1;
   auto numSnapshots = endSnapshot - startSnapshot + 1;
 
+  auto currentTime = util::getParam<REAL>("timeAccrued");
+  auto deltaT = util::getParam<REAL>("timeStep");
+  auto maxTime = currentTime + deltaT * numSteps;
+
   auto snapshot = startSnapshot;
 
   std::string outputFolder(".");
@@ -39,9 +43,9 @@ TractionLoading::execute(DiscreteElements* dem)
     outputFolder = util::createOutputFolder(folderName);
     dem->createOutputWriter(outputFolder, snapshot-1);
 
-    dem->writeBoundaryToFile();
-    dem->writePatchGridToFile();
-    dem->writeParticlesToFile(snapshot);
+    dem->writeBoundaryToFile(currentTime);
+    dem->writePatchGridToFile(currentTime);
+    dem->writeParticlesToFile(snapshot, currentTime);
     dem->printBoundary();
     dem->printBoundaryContacts();
     dem->getStartDimension(distX, distY, distZ);
@@ -54,9 +58,6 @@ TractionLoading::execute(DiscreteElements* dem)
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
 
-  auto currentTime = util::getParam<REAL>("timeAccrued");
-  auto deltaT = util::getParam<REAL>("timeStep");
-  auto maxTime = currentTime + deltaT * numSteps;
   auto iteration = startStep;
   while (currentTime < maxTime) {
 
@@ -100,10 +101,10 @@ TractionLoading::execute(DiscreteElements* dem)
 
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(snapshot);
-        dem->writeBoundaryToFile();
+        dem->writeBoundaryToFile(currentTime);
         dem->printBoundary();
-        dem->writePatchGridToFile();
-        dem->writeParticlesToFile(snapshot);
+        dem->writePatchGridToFile(currentTime);
+        dem->writeParticlesToFile(snapshot, currentTime);
         dem->printBoundaryContacts();
         dem->appendToProgressOutputFile(progressInf, iteration, deltaT, distX, distY, distZ);
       }
@@ -129,7 +130,7 @@ TractionLoading::execute(DiscreteElements* dem)
     if (dem->areBoundaryTractionsEquilibrated(currentTime)) {
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(snapshot, ".end");
-        dem->writeParticlesToFile(snapshot);
+        dem->writeParticlesToFile(snapshot, currentTime);
         dem->printBoundaryContacts();
         dem->printBoundary();
         dem->appendToProgressOutputFile(balancedInf, iteration, deltaT, distX, distY, distZ);

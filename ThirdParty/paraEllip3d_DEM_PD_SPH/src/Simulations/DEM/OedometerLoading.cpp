@@ -28,6 +28,7 @@ OedometerLoading::execute(DiscreteElements* dem)
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
   auto timeStep = util::getParam<REAL>("timeStep");
+  auto currentTime = startStep * timeStep;
 
   REAL sigmaEnd, sigmaInc, sigmaVar;
   std::size_t sigmaDiv;
@@ -62,9 +63,9 @@ OedometerLoading::execute(DiscreteElements* dem)
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);
 
-    dem->writeBoundaryToFile();
-    dem->writePatchGridToFile();
-    dem->writeParticlesToFile(iterSnap);
+    dem->writeBoundaryToFile(currentTime);
+    dem->writePatchGridToFile(currentTime);
+    dem->writeParticlesToFile(iterSnap, currentTime);
     dem->printBoundaryContacts();
     dem->printBoundary();
     dem->getStartDimension(distX, distY, distZ);
@@ -84,8 +85,10 @@ OedometerLoading::execute(DiscreteElements* dem)
     time2 = MPI_Wtime();
     commuT = time2 - time0;
 
-    timeStep = dem->calcTimeStep(timeStep); // use values from last step, must call before
-                              // findConact
+    // use values from last step, must call before findConact
+    timeStep = dem->calcTimeStep(timeStep); 
+    currentTime += timeStep;
+
     dem->findContact(iteration);
     if (dem->isBoundaryProcess())
       dem->findBoundaryContacts(iteration);
@@ -109,9 +112,9 @@ OedometerLoading::execute(DiscreteElements* dem)
 
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
-        dem->writeBoundaryToFile();
-        dem->writePatchGridToFile();
-        dem->writeParticlesToFile(iterSnap);
+        dem->writeBoundaryToFile(currentTime);
+        dem->writePatchGridToFile(currentTime);
+        dem->writeParticlesToFile(iterSnap, currentTime);
         dem->printBoundaryContacts();
         dem->printBoundary();
         dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
@@ -145,7 +148,7 @@ OedometerLoading::execute(DiscreteElements* dem)
       if (dem->areBoundaryTractionsEquilibrated(sigmaEnd, "odometer")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
-          dem->writeParticlesToFile(iterSnap);
+          dem->writeParticlesToFile(iterSnap, currentTime);
           dem->printBoundaryContacts();
           dem->printBoundary();
           dem->appendToProgressOutputFile(balancedInf, iteration, timeStep, distX, distY, distZ);
@@ -165,7 +168,7 @@ OedometerLoading::execute(DiscreteElements* dem)
       if (dem->areBoundaryTractionsEquilibrated(sigmaEnd, "odometer")) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
-          dem->writeParticlesToFile(iterSnap);
+          dem->writeParticlesToFile(iterSnap, currentTime);
           dem->printBoundaryContacts();
           dem->printBoundary();
           dem->appendToProgressOutputFile(balancedInf, iteration, timeStep, distX, distY, distZ);

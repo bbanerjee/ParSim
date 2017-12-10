@@ -59,7 +59,7 @@ OutputTecplot<TArray>::~OutputTecplot() = default;
 
 template <typename TArray>
 void
-OutputTecplot<TArray>::write(int frame)
+OutputTecplot<TArray>::write(int frame, REAL time)
 {
 
   // The domain and the patchGrid have to be set before a write is
@@ -72,18 +72,18 @@ OutputTecplot<TArray>::write(int frame)
   }
 
   // Write files for the domain extents at each timestep
-  writeDomain(d_domain);
+  writeDomain(d_domain, time);
 
   // Write files for the patchGrid representing each processor at each timestep
-  writePatchBoxGrid(d_patchBox);
+  writePatchBoxGrid(d_patchBox, time);
 
   // Write files for the particle list each timestep
-  writeParticles(d_particles, frame);
+  writeParticles(d_particles, frame, time);
 }
 
 template <typename TArray>
 void
-OutputTecplot<TArray>::writeDomain(const Box* domain)
+OutputTecplot<TArray>::writeDomain(const Box* domain, REAL time)
 {
   // Get the filename
   std::string filename(d_domainFilename);
@@ -129,7 +129,7 @@ OutputTecplot<TArray>::writeDomain(const Box* domain)
 
 template <typename TArray>
 void
-OutputTecplot<TArray>::writePatchBoxGrid(const Box* patchBox)
+OutputTecplot<TArray>::writePatchBoxGrid(const Box* patchBox, REAL time)
 {
   // Get the filename
   std::string filename(d_patchBoxFilename);
@@ -202,7 +202,8 @@ OutputTecplot<TArray>::writePatchBoxGrid(const Box* patchBox)
 
 template <typename TArray>
 void
-OutputTecplot<TArray>::writeParticles(const TArray* particles, int frame) {
+OutputTecplot<TArray>::writeParticles(const TArray* particles, int frame,
+                                      REAL time) {
   std::cout << "**ERROR** Noting to do here. The array of particles is"
             << " not of the correct type\n";
 }
@@ -210,7 +211,7 @@ OutputTecplot<TArray>::writeParticles(const TArray* particles, int frame) {
 template <>
 void
 OutputTecplot<DEMParticlePArray>::writeParticles(const DEMParticlePArray* particles, 
-                                              int frame)
+                                                 int frame, REAL time)
 {
   // Get the filename
   std::string filename(d_particleFilename);
@@ -286,7 +287,7 @@ OutputTecplot<DEMParticlePArray>::writeParticles(const DEMParticlePArray* partic
 template <>
 void
 OutputTecplot<PeriParticlePArray>::writeParticles(const PeriParticlePArray* particles, 
-                                                  int frame)
+                                                  int frame, REAL time)
 {
   // Get the filename
   std::string filename(d_periParticleFilename);
@@ -342,7 +343,7 @@ OutputTecplot<PeriParticlePArray>::writeParticles(const PeriParticlePArray* part
 template <>
 void
 OutputTecplot<SPHParticlePArray>::writeParticles(const SPHParticlePArray* particles, 
-                                                 int frame)
+                                                 int frame, REAL time)
 {
   // Get the filename
   std::string filename(d_sphParticleFilename);

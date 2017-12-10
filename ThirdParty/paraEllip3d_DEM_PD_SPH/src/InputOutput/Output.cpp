@@ -126,7 +126,7 @@ Output::updateFilenames(const int& iteration) {
 }
 
 void
-Output::write(int frame)
+Output::write(int frame, REAL time)
 {
   //std::cout << "Please call the writer routine from the correct derived class.\n";
 }

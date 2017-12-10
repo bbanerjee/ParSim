@@ -33,8 +33,8 @@ CavityExpansion::execute(DiscreteElements* dem)
       }
     }
 
-    dem->printParticlesCSV(".", "cavity_particle_ini", cavityParticleVec, 0);
-    dem->printParticlesCSV(".", "expand_particle_ini", 0);
+    dem->printParticlesCSV(".", "cavity_particle_ini", cavityParticleVec, 0, 0);
+    dem->printParticlesCSV(".", "expand_particle_ini", 0, 0);
   }
 
   dem->deposit(util::getFilename("boundaryFilename"), "expand_particle_ini");

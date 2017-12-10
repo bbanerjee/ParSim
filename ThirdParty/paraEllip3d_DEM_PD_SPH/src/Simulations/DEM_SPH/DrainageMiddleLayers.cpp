@@ -56,6 +56,7 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
   auto endSnap = util::getParam<std::size_t>("endSnap");
   auto timeStep = util::getParam<REAL>("timeStep");
   auto timeAccrued = util::getParam<REAL>("timeAccrued");
+  auto currentTime = timeAccrued;
 
   auto netStep = endStep - startStep + 1;
   auto netSnap = endSnap - startSnap + 1;
@@ -77,12 +78,12 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
     dem->createOutputWriter(outputFolder, iterSnap-1);
     sph->createOutputWriter(outputFolder, iterSnap-1);
 
-    dem->writeBoundaryToFile();
-    dem->writePatchGridToFile();
-    dem->writeParticlesToFile(iterSnap);
+    dem->writeBoundaryToFile(currentTime);
+    dem->writePatchGridToFile(currentTime);
+    dem->writeParticlesToFile(iterSnap, currentTime);
     dem->printBoundaryContacts();
     //sph->printSPHTecplot(sphTecplotInf, iterSnap-1);
-    sph->writeParticlesToFile(iterSnap);
+    sph->writeParticlesToFile(iterSnap, currentTime);
     //sph->printSPHProgress(sphProgressInf, 0);
   }
 
@@ -164,11 +165,11 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
       }
 
       if (dem->getMPIRank() == 0) {
-        dem->writeBoundaryToFile();
-        dem->writePatchGridToFile();
-        dem->writeParticlesToFile(iterSnap);
+        dem->writeBoundaryToFile(currentTime);
+        dem->writePatchGridToFile(currentTime);
+        dem->writeParticlesToFile(iterSnap, currentTime);
         dem->printBoundaryContacts();
-        sph->writeParticlesToFile(iterSnap);
+        sph->writeParticlesToFile(iterSnap, currentTime);
         dem->appendToProgressOutputFile(demProgressInf, iteration, timeStep);
       }
       dem->printContact(util::combine(outputFolder, "drainage_middle_contact_", iterSnap, 3));
@@ -197,6 +198,7 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
     }
 
     ++iteration;
+    currentTime += timeStep;
   } 
 
   if (dem->getMPIRank() == 0) {

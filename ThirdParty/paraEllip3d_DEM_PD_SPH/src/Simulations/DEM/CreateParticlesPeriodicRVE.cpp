@@ -43,8 +43,8 @@ CreateParticlesPeriodicRVE::execute(DiscreteElements* dem)
     std::cout << "total particles = " << particles.size() << "\n";
 
     // Write VTK files for visualization
-    dem->writeBoundaryToFile();
-    dem->writeParticlesToFile(0);
+    dem->writeBoundaryToFile(0);
+    dem->writeParticlesToFile(0, 0);
 
     // Write new boundary to input files
     auto filename = util::getFilename("generatedBoundaryOutputFilename");

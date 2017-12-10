@@ -51,7 +51,7 @@ public:
 
   void clone(const Output& output);
 
-  virtual void write(int frame);
+  virtual void write(int frame, REAL time);
 
   virtual void setDomain(const Box* domain) {};
   virtual void setPatchBox(const Box* patchBox) {};
@@ -59,12 +59,15 @@ public:
   virtual void setParticles(const pd::PeriParticlePArray* particles) {};
   virtual void setParticles(const sph::SPHParticlePArray* particles) {};
 
-  virtual void writeDomain(const Box* domain) {};
-  virtual void writeDomain(const OrientedBox& domain) {};
-  virtual void writePatchBoxGrid(const Box* patchBox) {};
-  virtual void writeParticles(const DEMParticlePArray* particles, int frame) {};
-  virtual void writeParticles(const pd::PeriParticlePArray* particles, int frame) {};
-  virtual void writeParticles(const sph::SPHParticlePArray* particles, int frame) {};
+  virtual void writeDomain(const Box* domain, REAL time) {};
+  virtual void writeDomain(const OrientedBox& domain, REAL time) {};
+  virtual void writePatchBoxGrid(const Box* patchBox, REAL time) {};
+  virtual void writeParticles(const DEMParticlePArray* particles, 
+                              int frame, REAL time) {};
+  virtual void writeParticles(const pd::PeriParticlePArray* particles, 
+                              int frame, REAL time) {};
+  virtual void writeParticles(const sph::SPHParticlePArray* particles, 
+                              int frame, REAL time) {};
   virtual void writeSieves(const Gradation* gradation) {};
 
   void createFilenames();

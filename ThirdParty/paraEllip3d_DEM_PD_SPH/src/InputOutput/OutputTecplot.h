@@ -46,7 +46,7 @@ public:
   OutputTecplot(const std::string& folderName, int iterInterval);
   virtual ~OutputTecplot();
 
-  void write(int frame);
+  void write(int frame, REAL time = 0.0);
 
   void setDomain(const Box* domain) { d_domain = domain; }
   void setPatchBox(const Box* patchBox) { d_patchBox = patchBox; }
@@ -55,9 +55,9 @@ public:
     d_particles = particles;
   }
 
-  void writeDomain(const Box* domain);
-  void writePatchBoxGrid(const Box* patchBox);
-  void writeParticles(const TArray* particles, int frame);
+  void writeDomain(const Box* domain, REAL time = 0.0);
+  void writePatchBoxGrid(const Box* patchBox, REAL time = 0.0);
+  void writeParticles(const TArray* particles, int frame, REAL time = 0.0);
   void writeSieves(const Gradation* gradation);
 
 private:

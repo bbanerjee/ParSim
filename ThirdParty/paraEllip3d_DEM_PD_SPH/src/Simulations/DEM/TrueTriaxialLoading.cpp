@@ -27,6 +27,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
   auto timeStep = util::getParam<REAL>("timeStep");
+  auto currentTime = startStep * timeStep;
 
   REAL sigmaStart, sigmaEndZ, sigmaEndX, sigmaEndY;
   REAL sigmaDiv, sigmaIncZ, sigmaIncX, sigmaIncY, sigmaVarZ, sigmaVarX,
@@ -70,9 +71,9 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);
 
-    dem->writeBoundaryToFile();
-    dem->writePatchGridToFile();
-    dem->writeParticlesToFile(iterSnap);
+    dem->writeBoundaryToFile(currentTime);
+    dem->writePatchGridToFile(currentTime);
+    dem->writeParticlesToFile(iterSnap, currentTime);
     dem->printBoundaryContacts();
     dem->printBoundary();
     dem->getStartDimension(distX, distY, distZ);
@@ -94,6 +95,8 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
 
     timeStep = dem->calcTimeStep(timeStep); // use values from last step, must call before
                               // findConact
+    currentTime += timeStep;
+
     dem->findContact(iteration);
     if (dem->isBoundaryProcess())
       dem->findBoundaryContacts(iteration);
@@ -137,9 +140,9 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
 
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
-        dem->writeBoundaryToFile();
-        dem->writePatchGridToFile();
-        dem->writeParticlesToFile(iterSnap);
+        dem->writeBoundaryToFile(currentTime);
+        dem->writePatchGridToFile(currentTime);
+        dem->writeParticlesToFile(iterSnap, currentTime);
         dem->printBoundaryContacts();
         dem->printBoundary();
         dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
@@ -177,7 +180,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
                                      sigmaEndY)) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
-          dem->writeParticlesToFile(iterSnap);
+          dem->writeParticlesToFile(iterSnap, currentTime);
           dem->printBoundaryContacts();
           dem->printBoundary();
           dem->appendToProgressOutputFile(balancedInf, iteration, timeStep, distX, distY, distZ);
@@ -221,7 +224,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
       if (dem->areBoundaryTractionsEquilibrated(sigmaZ, "trueTriaxial", sigmaX, sigmaY)) {
         if (dem->getMPIRank() == 0) {
           dem->updateFileNames(iterSnap, ".end");
-          dem->writeParticlesToFile(iterSnap);
+          dem->writeParticlesToFile(iterSnap, currentTime);
           dem->printBoundaryContacts();
           dem->printBoundary();
           dem->appendToProgressOutputFile(balancedInf, iteration, timeStep, distX, distY, distZ);
@@ -235,7 +238,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
 
   if (dem->getMPIRank() == 0) {
     dem->updateFileNames(iterSnap, ".end");
-    dem->writeParticlesToFile(iterSnap);
+    dem->writeParticlesToFile(iterSnap, currentTime);
     dem->printBoundaryContacts();
     dem->printBoundary();
     dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);

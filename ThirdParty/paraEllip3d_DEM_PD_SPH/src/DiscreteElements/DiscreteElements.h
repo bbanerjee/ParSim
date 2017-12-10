@@ -284,31 +284,40 @@ public:
   void gatherEnergy();
 
   void setTrimHistoryNum(std::size_t n) { d_trimHistoryNum = n; }
-  void writeParticlesToFile(int frame) const; // print all particles
-  void writeParticlesToFile(DEMParticlePArray& d_patchParticles, int frame) const; // print particles info
+
+  // Output particle, boundary, patch data
+  void writeParticlesToFile(int frame, REAL time) const; 
+  void writeParticlesToFile(DEMParticlePArray& d_patchParticles, 
+                            int frame, REAL time) const; 
+  void writeBoundaryToFile(REAL time) const;
+  void writeBoundaryToFile(const OrientedBox& domain, REAL time) const;
+  void writePatchGridToFile(REAL time) const;
+
   void printParticlesCSV(const std::string& folderName,
                          const std::string& fileName, 
-                         int frame) const;
+                         int frame, REAL time) const;
   void printParticlesCSV(const std::string& folderName,
                          const std::string& fileName, 
                          const DEMParticlePArray& particles, 
-                         int frame) const;
+                         int frame, REAL time) const;
   void printParticlesXML(const std::string& folderName,
                          const std::string& fileName, 
-                         int frame) const;
+                         int frame, REAL time) const;
   void printParticlesXML(const std::string& folderName,
                          const std::string& fileName, 
                          const DEMParticlePArray& particles, 
-                         int frame) const;
-  void printBoundaryContacts() const; // print all boundary contact info
-  void printMemParticle(
-    const std::string& str) const; // print membrane particles
-  void plotSpring(
-    const std::string& str) const; // print springs in Tecplot format
-  void writeBoundaryToFile() const;
-  void writeBoundaryToFile(const OrientedBox& domain) const;
-  void printBoundary() const; // print rigid boundaries info
-  void writePatchGridToFile() const;
+                         int frame, REAL time) const;
+
+  // print all boundary contact info
+  void printBoundaryContacts() const; 
+  // print membrane particles
+  void printMemParticle(const std::string& str) const; 
+  // print springs in Tecplot format
+  void plotSpring(const std::string& str) const; 
+
+  // print rigid boundaries info
+  void printBoundary() const; 
+
   void plotCavity(const std::string& str) const;
   void checkMembrane(std::vector<REAL>& vx) const;
   void printContact(const std::string& str) const; // print contacts information

@@ -113,7 +113,7 @@ public:
   std::string getSPHParticleFileName() const {
     return d_writer->getSPHParticleFilename();
   }
-  void writeParticlesToFile(int frame) const; 
+  void writeParticlesToFile(int frame, REAL time) const; 
   void printSPHParticle(const char* str) const;
 
 private:

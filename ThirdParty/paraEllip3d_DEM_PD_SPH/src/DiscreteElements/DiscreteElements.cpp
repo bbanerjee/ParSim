@@ -161,6 +161,12 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
   auto netStep = endStep - startStep + 1;
   auto netSnap = endSnap - startSnap + 1;
 
+  auto timeStep = util::getParam<REAL>("timeStep");
+  auto timeAccrued = util::getParam<REAL>("timeAccrued");
+  REAL timeTotal = timeAccrued + timeStep * netStep;
+  REAL outputTimeInterval = (timeStep * netStep) / 1000;
+  REAL CFL = util::getParam<REAL>("CFLFactor");
+
   auto iteration = startStep;
   auto iterSnap = startSnap;
   if (s_mpiRank == 0) {
@@ -171,12 +177,12 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     //std::cout << "Output folder = " << outputFolder << "\n";
     createOutputWriter(outputFolder, iterSnap-1);
 
-    writeBoundaryToFile();
-    writePatchGridToFile();
-    writeParticlesToFile(iterSnap);
+    writeBoundaryToFile(timeAccrued);
+    writePatchGridToFile(timeAccrued);
+    writeParticlesToFile(iterSnap, timeAccrued);
     outputParticleCSVFile = combine("output_particles_", 0, 3);
-    printParticlesCSV(outputFolder, outputParticleCSVFile, 0);
-    printParticlesXML(outputFolder, outputParticleCSVFile, 0);
+    printParticlesCSV(outputFolder, outputParticleCSVFile, 0, timeAccrued);
+    printParticlesXML(outputFolder, outputParticleCSVFile, 0, timeAccrued);
     printBoundaryContacts();
     debugInf << std::setw(OWID) << "iter" << std::setw(OWID) << "commuT"
              << std::setw(OWID) << "migraT" << std::setw(OWID) << "compuT"
@@ -190,11 +196,6 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
 
   REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   REAL timeCount = 0;
-  auto timeStep = util::getParam<REAL>("timeStep");
-  auto timeAccrued = util::getParam<REAL>("timeAccrued");
-  REAL timeTotal = timeAccrued + timeStep * netStep;
-  REAL outputTimeInterval = (timeStep * netStep) / 1000;
-  REAL CFL = util::getParam<REAL>("CFLFactor");
 
   std::size_t numBoundaryContacts = 0;
   bool firstPass = true;
@@ -263,12 +264,12 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
 
       if (s_mpiRank == 0) {
         updateFileNames(iterSnap);
-        writeBoundaryToFile();
-        writePatchGridToFile();
-        writeParticlesToFile(iterSnap);
+        writeBoundaryToFile(timeAccrued);
+        writePatchGridToFile(timeAccrued);
+        writeParticlesToFile(iterSnap, timeAccrued);
         outputParticleCSVFile = combine("output_particles_", iterSnap, 3);
-        printParticlesCSV(outputFolder, outputParticleCSVFile, 0);
-        printParticlesXML(outputFolder, outputParticleCSVFile, 0);
+        printParticlesCSV(outputFolder, outputParticleCSVFile, 0, timeAccrued);
+        printParticlesXML(outputFolder, outputParticleCSVFile, 0, timeAccrued);
         printBoundaryContacts();
         appendToProgressOutputFile(progressInf, iteration, timeStep);
       }
@@ -1105,15 +1106,15 @@ DiscreteElements::findParticleInBox(const Box& domain,
 }
 
 void
-DiscreteElements::writeBoundaryToFile() const
+DiscreteElements::writeBoundaryToFile(REAL time) const
 {
-  d_writer->writeDomain(&d_spatialDomain);
+  d_writer->writeDomain(&d_spatialDomain, time);
 }
 
 void
-DiscreteElements::writeBoundaryToFile(const OrientedBox& domain) const
+DiscreteElements::writeBoundaryToFile(const OrientedBox& domain, REAL time) const
 {
-  d_writer->writeDomain(domain);
+  d_writer->writeDomain(domain, time);
 }
 
 void
@@ -1167,57 +1168,60 @@ DiscreteElements::printBoundaryContacts() const
 }
 
 void
-DiscreteElements::writePatchGridToFile() const
+DiscreteElements::writePatchGridToFile(REAL time) const
 {
   d_writer->setMPIComm(s_cartComm);
   d_writer->setMPIProc(s_mpiProcs.x(), s_mpiProcs.y(), s_mpiProcs.z());
   //std::cout << "d_demPatchBox = " << d_demPatchBox << "\n";
-  d_writer->writePatchBoxGrid(&d_demPatchBox);
+  d_writer->writePatchBoxGrid(&d_demPatchBox, time);
 }
 
 void
-DiscreteElements::writeParticlesToFile(int frame) const
+DiscreteElements::writeParticlesToFile(int frame, REAL time) const
 {
-  d_writer->writeParticles(&d_allDEMParticles, frame);
+  d_writer->writeParticles(&d_allDEMParticles, frame, time);
   d_writer->writeSieves(&d_gradation);
 }
 
 void
-DiscreteElements::writeParticlesToFile(DEMParticlePArray& particles, int frame) const
+DiscreteElements::writeParticlesToFile(DEMParticlePArray& particles, int frame, 
+                                       REAL time) const
 {
-  d_writer->writeParticles(&particles, frame);
+  d_writer->writeParticles(&particles, frame, time);
 }
 
 void
 DiscreteElements::printParticlesCSV(const std::string& folderName,
-                                    const std::string& fileName, int frame) const
+                                    const std::string& fileName, 
+                                    int frame, REAL time) const
 {
-  printParticlesCSV(folderName, fileName, d_allDEMParticles, frame);
+  printParticlesCSV(folderName, fileName, d_allDEMParticles, frame, time);
 }
 
 void
 DiscreteElements::printParticlesCSV(const std::string& folderName,
                                     const std::string& fileName, 
                                     const DEMParticlePArray& particles,
-                                    int frame) const
+                                    int frame, REAL time) const
 {
   OutputTecplot<DEMParticlePArray> writer(folderName, 0);
   writer.setParticleFilename(fileName);
-  writer.writeParticles(&particles, frame);
+  writer.writeParticles(&particles, frame, time);
 }
 
 void
 DiscreteElements::printParticlesXML(const std::string& folderName,
-                                    const std::string& fileName, int frame) const
+                                    const std::string& fileName, 
+                                    int frame, REAL time) const
 {
-  printParticlesXML(folderName, fileName, d_allDEMParticles, frame);
+  printParticlesXML(folderName, fileName, d_allDEMParticles, frame, time);
 }
 
 void
 DiscreteElements::printParticlesXML(const std::string& folderName,
                                     const std::string& fileName, 
                                     const DEMParticlePArray& particles,
-                                    int frame) const
+                                    int frame, REAL time) const
 {
   DEMParticleFileWriter writer;
   std::string xmlfile = folderName + "/" + fileName + ".xml";
@@ -1366,8 +1370,8 @@ DiscreteElements::trim(bool toRebuild, const std::string& inputParticle,
   //std::cout << "Output folder = " << outputFolder << "\n";
   createOutputWriter(outputFolder, 0);
 
-  writeBoundaryToFile();
-  writeParticlesToFile(0);
+  writeBoundaryToFile(0.0);
+  writeParticlesToFile(0, 0.0);
 }
 
 void

@@ -53,7 +53,7 @@ public:
   OutputVTK(const std::string& folderName, int iterInterval);
   virtual ~OutputVTK();
 
-  void write(int frame);
+  void write(int frame, REAL time);
 
   void setDomain(const Box* domain) { d_domain = domain; }
   void setPatchBox(const Box* patchBox) { d_patchBox = patchBox; }
@@ -62,14 +62,15 @@ public:
     d_particles = particles;
   }
 
-  void writeDomain(const Box* domain);
-  void writeDomain(const OrientedBox& domain);
-  void writePatchBoxGrid(const Box* patchBox);
-  void writeParticles(const TArray* particles, int frame);
+  void writeDomain(const Box* domain, REAL time);
+  void writeDomain(const OrientedBox& domain, REAL time);
+  void writePatchBoxGrid(const Box* patchBox, REAL time);
+  void writeParticles(const TArray* particles, int frame, REAL time);
   void writeSieves(const Gradation* gradation) {}
 
 private:
   void actuallyWriteParticles(const TArray* particles, int frame,
+                              REAL time,
                               vtkXMLUnstructuredGridWriterP& writer); 
 
   void createVTKUnstructuredGrid(const TArray* particles,

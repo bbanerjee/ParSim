@@ -75,7 +75,7 @@ OutputVTK<TArray>::~OutputVTK() = default;
 
 template <typename TArray>
 void
-OutputVTK<TArray>::write(int frame)
+OutputVTK<TArray>::write(int frame, REAL time)
 {
 
   // The domain and the patchGrid have to be set before a write is
@@ -88,18 +88,18 @@ OutputVTK<TArray>::write(int frame)
   }
 
   // Write files for the domain extents at each timestep
-  writeDomain(d_domain);
+  writeDomain(d_domain, time);
 
   // Write files for the patchGrid representing each processor at each timestep
-  writePatchBoxGrid(d_patchBox);
+  writePatchBoxGrid(d_patchBox, time);
 
   // Write files for the particle list each timestep
-  writeParticles(d_particles, frame);
+  writeParticles(d_particles, frame, time);
 }
 
 template <typename TArray>
 void
-OutputVTK<TArray>::writeDomain(const Box* domain)
+OutputVTK<TArray>::writeDomain(const Box* domain, REAL time)
 {
 
   // Create a writer
@@ -118,7 +118,6 @@ OutputVTK<TArray>::writeDomain(const Box* domain)
   pts->SetNumberOfPoints(8);
 
   // Add the time
-  double time = 0.0;
   addTimeToVTKDataSet(time, dataSet);
 
   // Add the domain boundary to the unstructured grid cell data
@@ -138,7 +137,7 @@ OutputVTK<TArray>::writeDomain(const Box* domain)
 
 template <typename TArray>
 void
-OutputVTK<TArray>::writeDomain(const OrientedBox& domain)
+OutputVTK<TArray>::writeDomain(const OrientedBox& domain, REAL time)
 {
 
   // Create a writer
@@ -157,7 +156,6 @@ OutputVTK<TArray>::writeDomain(const OrientedBox& domain)
   pts->SetNumberOfPoints(8);
 
   // Add the time
-  double time = 0.0;
   addTimeToVTKDataSet(time, dataSet);
 
   // Add the domain boundary to the unstructured grid cell data
@@ -177,7 +175,7 @@ OutputVTK<TArray>::writeDomain(const OrientedBox& domain)
 
 template <typename TArray>
 void
-OutputVTK<TArray>::writePatchBoxGrid(const Box* patchBox)
+OutputVTK<TArray>::writePatchBoxGrid(const Box* patchBox, REAL time)
 {
 
   //std::cout << "patchBox = " << *patchBox << "\n";
@@ -201,7 +199,6 @@ OutputVTK<TArray>::writePatchBoxGrid(const Box* patchBox)
   pts->SetNumberOfPoints(num_pts);
 
   // Add the time
-  double time = 0.0;
   addTimeToVTKDataSet(time, dataSet);
 
   // Create the individual processor domain extents
@@ -235,7 +232,7 @@ OutputVTK<TArray>::writePatchBoxGrid(const Box* patchBox)
 
 template <typename TArray>
 void
-OutputVTK<TArray>::writeParticles(const TArray* particles, int frame) 
+OutputVTK<TArray>::writeParticles(const TArray* particles, int frame, REAL time) 
 {
   std::cout << "**ERROR** Noting to do here. The array of particles is"
             << " not of the correct type\n";
@@ -243,7 +240,8 @@ OutputVTK<TArray>::writeParticles(const TArray* particles, int frame)
 
 template <>
 void
-OutputVTK<DEMParticlePArray>::writeParticles(const DEMParticlePArray* particles, int frame) 
+OutputVTK<DEMParticlePArray>::writeParticles(const DEMParticlePArray* particles, 
+                                             int frame, REAL time)
 {
   // Create a writer
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
@@ -254,13 +252,13 @@ OutputVTK<DEMParticlePArray>::writeParticles(const DEMParticlePArray* particles,
   writer->SetFileName(fileName.c_str());
   //std::cout << "writeParticles::DEMParticle file = " << fileName << "\n";
 
-  actuallyWriteParticles(particles, frame, writer);
+  actuallyWriteParticles(particles, frame, time, writer);
 }
 
 template <>
 void
 OutputVTK<PeriParticlePArray>::writeParticles(const PeriParticlePArray* particles, 
-                                              int frame) 
+                                              int frame, REAL time) 
 {
   // Create a writer
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
@@ -271,13 +269,13 @@ OutputVTK<PeriParticlePArray>::writeParticles(const PeriParticlePArray* particle
   writer->SetFileName(fileName.c_str());
   //std::cout << "writeParticles::PeriParticle file = " << fileName << "\n";
 
-  actuallyWriteParticles(particles, frame, writer);
+  actuallyWriteParticles(particles, frame, time, writer);
 }
 
 template <>
 void
 OutputVTK<SPHParticlePArray>::writeParticles(const SPHParticlePArray* particles, 
-                                             int frame) 
+                                             int frame, REAL time) 
 {
   // Create a writer
   vtkXMLUnstructuredGridWriterP writer = vtkXMLUnstructuredGridWriterP::New();
@@ -288,12 +286,13 @@ OutputVTK<SPHParticlePArray>::writeParticles(const SPHParticlePArray* particles,
   writer->SetFileName(fileName.c_str());
   //std::cout << "writeParticles::SPHParticle file = " << fileName << "\n";
 
-  actuallyWriteParticles(particles, frame, writer);
+  actuallyWriteParticles(particles, frame, time, writer);
 }
 
 template <typename TArray>
 void
 OutputVTK<TArray>::actuallyWriteParticles(const TArray* particles, int frame,
+                                          REAL time,
                                           vtkXMLUnstructuredGridWriterP& writer) 
 {
   // Create a pointer to a VTK Unstructured Grid data set
@@ -307,7 +306,6 @@ OutputVTK<TArray>::actuallyWriteParticles(const TArray* particles, int frame,
   pts->SetNumberOfPoints(num_pts);
 
   // Add the time
-  double time = 0.0;
   addTimeToVTKDataSet(time, dataSet);
 
   // Add the particle data to the unstructured grid

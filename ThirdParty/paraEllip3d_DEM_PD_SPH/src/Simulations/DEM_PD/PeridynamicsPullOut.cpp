@@ -76,6 +76,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
   std::size_t netStep = endStep - startStep + 1;
   std::size_t netSnap = endSnap - startSnap + 1;
   auto timeStep = util::getParam<REAL>("timeStep");
+  auto currentTime = startStep * timeStep;
 
   // REAL time0, time1, time2, commuT, migraT, gatherT, totalT;
   auto iteration = startStep;
@@ -90,8 +91,8 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);
 
-    dem->writePatchGridToFile();
-    dem->writeParticlesToFile(iterSnap);
+    dem->writePatchGridToFile(currentTime);
+    dem->writeParticlesToFile(iterSnap, currentTime);
     pd->printPeriProgress(periProgInf, 0);
     pd->printPeriProgressHalf(periProgInfHalf, 0);
   }
@@ -141,6 +142,8 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
     // displacement control relies on constant time step, so do not call
     // calcTimeStep().
     // calcTimeStep(); // use values from last step, must call before findConact
+    currentTime += timeStep;
+
     dem->findContact(iteration);
     if (dem->isBoundaryProcess())
       dem->findBoundaryContacts(iteration);
@@ -186,9 +189,9 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
 
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
-        dem->writeBoundaryToFile();
-        dem->writePatchGridToFile();
-        dem->writeParticlesToFile(iterSnap);
+        dem->writeBoundaryToFile(currentTime);
+        dem->writePatchGridToFile(currentTime);
+        dem->writeParticlesToFile(iterSnap, currentTime);
         dem->printBoundaryContacts();
         dem->printBoundary();
         // appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ); // redundant
@@ -224,7 +227,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
 
   if (dem->getMPIRank() == 0) {
     dem->updateFileNames(iterSnap, ".end");
-    dem->writeParticlesToFile(iterSnap);
+    dem->writeParticlesToFile(iterSnap, currentTime);
     dem->printBoundaryContacts();
     dem->printBoundary();
     dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);

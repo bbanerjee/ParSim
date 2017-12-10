@@ -1205,8 +1205,10 @@ Peridynamics::solvePurePeridynamics(int printInterval)
   //std::cout << "Start of the time loop " << std::endl;
   //std::cout << std::string(72, '-') << std::endl;
 
+  REAL deltaT = util::getParam<REAL>("timeStep");
+
   int iframe = 0;
-  writeParticlesToFile(iframe);
+  writeParticlesToFile(iframe, 0);
 
   int nsteps = 10000;    // is not true
   for (int istep = 1; istep <= nsteps; istep++) {
@@ -1223,7 +1225,7 @@ Peridynamics::solvePurePeridynamics(int printInterval)
       //std::cout << "*** current time step is    " << istep << std::endl;
       iframe++;
       updateFileNames(iframe);
-      writeParticlesToFile(iframe);
+      writeParticlesToFile(iframe, istep*deltaT);
     }
 
   } // time loop
@@ -2148,15 +2150,15 @@ Peridynamics::writeMeshCheckVolume(const std::string& outputFile)
 
 
 void
-Peridynamics::writeParticlesToFile(int frame) const
+Peridynamics::writeParticlesToFile(int frame, REAL time) const
 {
-  d_writer->writeParticles(&allPeriParticleVec, frame);
+  d_writer->writeParticles(&allPeriParticleVec, frame, time);
 }
 
 void
-Peridynamics::writeParticlesToFile(PeriParticlePArray& particles, int frame) const
+Peridynamics::writeParticlesToFile(PeriParticlePArray& particles, int frame, REAL time) const
 {
-  d_writer->writeParticles(&particles, frame);
+  d_writer->writeParticles(&particles, frame, time);
 }
 
 // this function has some problems, d_allPeriParticlesInitial does not exist

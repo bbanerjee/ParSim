@@ -37,6 +37,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
   std::size_t iterSnap = startSnap;
   REAL timeCount = 0;
   auto timeAccrued = util::getParam<REAL>("timeAccrued");
+  auto currentTime = timeAccrued;
   REAL timeTotal = timeAccrued + timeStep * netStep;
 
   std::string outputFolder(".");
@@ -48,9 +49,9 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
     outputFolder = util::createOutputFolder(folderName);
     //std::cout << "Output folder = " << outputFolder << "\n";
     dem->createOutputWriter(outputFolder, iterSnap-1);
-    dem->writeBoundaryToFile();
-    dem->writePatchGridToFile();
-    dem->writeParticlesToFile(iterSnap);
+    dem->writeBoundaryToFile(currentTime);
+    dem->writePatchGridToFile(currentTime);
+    dem->writeParticlesToFile(iterSnap, currentTime);
     dem->printBoundaryContacts();
     /*3*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap - 1, 3) + ".dat");
   }
@@ -104,9 +105,9 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
 
       if (dem->getMPIRank() == 0) {
         dem->updateFileNames(iterSnap);
-        dem->writeBoundaryToFile();
-        dem->writePatchGridToFile();
-        dem->writeParticlesToFile(iterSnap);
+        dem->writeBoundaryToFile(currentTime);
+        dem->writePatchGridToFile(currentTime);
+        dem->writeParticlesToFile(iterSnap, currentTime);
         dem->printBoundaryContacts();
         dem->appendToProgressOutputFile(progressInf, iteration, timeStep);
         /*8*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap, 3) + ".dat");
@@ -135,6 +136,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
     */
 
     ++iteration;
+    currentTime += timeStep;
   }
 
   if (dem->getMPIRank() == 0) {
