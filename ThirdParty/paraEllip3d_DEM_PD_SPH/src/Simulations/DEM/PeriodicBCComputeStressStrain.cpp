@@ -1,5 +1,7 @@
 #include <Simulations/DEM/PeriodicBCComputeStressStrain.h>
 #include <DiscreteElements/DEMParticleCreator.h>
+#include <InputOutput/DEMParticleFileReader.h>
+#include <Boundary/BoundaryFileReader.h>
 #include <Core/Util/Utility.h>
 
 #include <experimental/filesystem>
@@ -25,11 +27,11 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
   for (auto& filename : filenames) {
     auto found = filename.find(domain_filename);
     if (found != std::string::npos) {
-      domain_files.push_back(filename);
+      domain_files.push_back(directory + "/" + filename);
     }
     found = filename.find(particle_filename);
     if (found != std::string::npos) {
-      particle_files.push_back(filename);
+      particle_files.push_back(directory + "/" + filename);
     }
   }
   for (auto& filename : domain_files) {
@@ -41,6 +43,22 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
 
   // 2) For each file
   //  a) Read the output particle data from a periodic BC simulation
-  //for (auto & particle_file : particle_files) {
-  //}
+  REAL youngModulus = util::getParam<REAL>("young");
+  REAL poissonRatio = util::getParam<REAL>("poisson");
+
+  BoundaryFileReader boundaryReader;
+  DEMParticleFileReader particleReader;
+  int iteration = 0;
+  for (auto& particle_file : particle_files) {
+    OrientedBox spatialDomain(Box(Vec(0,0,0), Vec(1,1,1)));
+    boundaryReader.readVTK(domain_files[iteration], spatialDomain);
+    std::cout << "Domain:" << spatialDomain << "\n";
+
+    DEMParticlePArray particles;
+    particleReader.readVTK(particle_file, youngModulus, poissonRatio, particles);
+    for (auto& particle :particles) {
+      std::cout << "Particles:" << *particle << "\n";
+    }
+
+  }
 }
