@@ -84,7 +84,7 @@ DEMTetrahedron::basisFunctions(const Vec& point) const
 }
 
 std::vector<Vec> 
-DEMTetrahedron::basisDerivatives(const Vec& point) const
+DEMTetrahedron::basisDerivatives() const
 {
   Vec p0 = d_particles[0]->currentPosition();
   Vec p1 = d_particles[1]->currentPosition();
@@ -92,8 +92,7 @@ DEMTetrahedron::basisDerivatives(const Vec& point) const
   Vec p3 = d_particles[3]->currentPosition();
   Matrix3 A = transformationMatrix(p0, p1, p2, p3);
   Matrix3 Ainv = A.Inverse();
-  Vec rst = transformToRST(point, p0, Ainv);
-  std::vector<Vec> refDerivs = referenceBasisDerivatives(rst[0], rst[1], rst[2]);
+  std::vector<Vec> refDerivs = referenceBasisDerivatives();
   Vec dN1_dx = Ainv * refDerivs[0];
   Vec dN2_dx = Ainv * refDerivs[1];
   Vec dN3_dx = Ainv * refDerivs[2];
@@ -112,7 +111,7 @@ DEMTetrahedron::basisFunctionsAndDerivatives(const Vec& point) const
   Matrix3 Ainv = A.Inverse();
   Vec rst = transformToRST(point, p0, Ainv);
   auto basis = referenceBasisFunctions(rst[0], rst[1], rst[2]);
-  std::vector<Vec> refDerivs = referenceBasisDerivatives(rst[0], rst[1], rst[2]);
+  std::vector<Vec> refDerivs = referenceBasisDerivatives();
   Vec dN1_dx = Ainv * refDerivs[0];
   Vec dN2_dx = Ainv * refDerivs[1];
   Vec dN3_dx = Ainv * refDerivs[2];
@@ -123,15 +122,30 @@ DEMTetrahedron::basisFunctionsAndDerivatives(const Vec& point) const
 
 void DEMTetrahedron::updateBMatrix()
 {
-  //Vec p0 = d_particles[0]->currentPosition();
-  //Vec p1 = d_particles[1]->currentPosition();
-  //Vec p2 = d_particles[2]->currentPosition();
-  //Vec p3 = d_particles[3]->currentPosition();
+  auto derivs = basisDerivatives();
+  d_B(0,0) = derivs[0][0]; d_B(0,1) = derivs[0][1]; d_B(0,2) = derivs[0][2];
+  d_B(1,0) = derivs[1][0]; d_B(1,1) = derivs[1][1]; d_B(1,2) = derivs[1][2];
+  d_B(2,0) = derivs[2][0]; d_B(2,1) = derivs[2][1]; d_B(2,2) = derivs[2][2];
+  d_B(3,0) = derivs[3][0]; d_B(3,1) = derivs[3][1]; d_B(3,2) = derivs[3][2];
 }
 
 void DEMTetrahedron::updateVelGrad()
 {
+  Vec v0 = d_particles[0]->currentVelocity();
+  Vec v1 = d_particles[1]->currentVelocity();
+  Vec v2 = d_particles[2]->currentVelocity();
+  Vec v3 = d_particles[3]->currentVelocity();
+  Matrix3x4 vel;
+  vel(0,0) = v0[0]; vel(1,0) = v0[1]; vel(2,0) = v0[2];
+  vel(0,1) = v1[0]; vel(1,1) = v1[1]; vel(2,1) = v1[2];
+  vel(0,2) = v2[0]; vel(1,2) = v2[1]; vel(2,2) = v2[2];
+  vel(0,3) = v3[0]; vel(1,3) = v3[1]; vel(2,3) = v3[2];
+  auto L = vel * d_B;
+  d_velGrad(0,0) = L(0,0); d_velGrad(0,1) = L(0,1); d_velGrad(0,2) = L(0,2);
+  d_velGrad(1,0) = L(1,0); d_velGrad(1,1) = L(1,1); d_velGrad(1,2) = L(1,2);
+  d_velGrad(2,0) = L(2,0); d_velGrad(2,1) = L(2,1); d_velGrad(2,2) = L(2,2);
 }
+
 void DEMTetrahedron::updateDefGrad()
 {
 }

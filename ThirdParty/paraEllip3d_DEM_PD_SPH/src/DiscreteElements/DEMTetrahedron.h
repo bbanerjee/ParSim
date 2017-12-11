@@ -9,6 +9,7 @@
 #include <vector>
 
 using Matrix4x3 = Eigen::Matrix<double, 4, 3>;
+using Matrix3x4 = Eigen::Matrix<double, 3, 4>;
 using NodeID = std::size_t;
 
 namespace dem {
@@ -37,7 +38,7 @@ private:
   }
 
   inline
-  std::vector<Vec> referenceBasisDerivatives(double r, double s, double t) const {
+  std::vector<Vec> referenceBasisDerivatives() const {
     Vec dN1_dr(-1, -1, -1);
     Vec dN2_dr( 1,  0,  0);
     Vec dN3_dr( 0,  1,  0);
@@ -110,7 +111,7 @@ public:
   std::vector<double> basisFunctions(const Vec& point) const;
 
   inline
-  std::vector<Vec> basisDerivatives(const Vec& point) const;
+  std::vector<Vec> basisDerivatives() const;
 
   inline std::pair<std::vector<double>, std::vector<Vec>> 
   basisFunctionsAndDerivatives(const Vec& point) const;
