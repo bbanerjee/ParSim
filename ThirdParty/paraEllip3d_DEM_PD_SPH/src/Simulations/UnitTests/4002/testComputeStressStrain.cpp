@@ -9,7 +9,7 @@ using namespace dem;
 TEST(DEM4002Test, computeStressStrain) {
   DiscreteElements dem;
   dem::InputParameter::get().addFilename("inputDataDirectory", 
-                                         "axisymmetric_strain_pb_two.000");
+                                         "axisymmetric_strain_pb_five.000");
 
   dem::InputParameter::get().addParameter("young", 1.0e9);
   dem::InputParameter::get().addParameter("poisson", 0.3);

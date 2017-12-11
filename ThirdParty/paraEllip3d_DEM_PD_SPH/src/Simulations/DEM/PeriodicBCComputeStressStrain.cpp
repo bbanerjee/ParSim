@@ -4,6 +4,16 @@
 #include <Boundary/BoundaryFileReader.h>
 #include <Core/Util/Utility.h>
 
+#include "libqhullcpp/RboxPoints.h"
+#include "libqhullcpp/QhullError.h"
+#include "libqhullcpp/QhullQh.h"
+#include "libqhullcpp/QhullFacet.h"
+#include "libqhullcpp/QhullFacetList.h"
+#include "libqhullcpp/QhullLinkedList.h"
+#include "libqhullcpp/QhullVertex.h"
+#include "libqhullcpp/Qhull.h"
+
+
 #include <experimental/filesystem>
 
 using namespace dem;
@@ -19,7 +29,11 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
   std::string particle_filename = "particle";
   std::vector<std::string> filenames;
   for (auto& file : fs::directory_iterator(directory)) {
-    filenames.push_back(fs::path(file).filename());
+    std::string filename = fs::path(file).filename();
+    auto found = filename.find(".vtu");
+    if (found != std::string::npos) {
+      filenames.push_back(filename);
+    }
   }
   std::sort(filenames.begin(), filenames.end());
   std::vector<std::string> domain_files;
@@ -42,7 +56,8 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
   }
 
   // 2) For each file
-  //  a) Read the output particle data from a periodic BC simulation
+  //  a) Read the output boundary data from a periodic BC simulation
+  //  b) Read the output particle data from a periodic BC simulation
   REAL youngModulus = util::getParam<REAL>("young");
   REAL poissonRatio = util::getParam<REAL>("poisson");
 
@@ -56,9 +71,36 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
 
     DEMParticlePArray particles;
     particleReader.readVTK(particle_file, youngModulus, poissonRatio, particles);
-    for (auto& particle :particles) {
-      std::cout << "Particles:" << *particle << "\n";
-    }
+    //for (auto& particle :particles) {
+    //  std::cout << "Particles:" << *particle << "\n";
+    //}
+
+    createTessellation(particles);
 
   }
+}
+
+void
+PeriodicBCComputeStressStrain::createTessellation(
+  const DEMParticlePArray& particles) 
+{
+  std::stringstream coords;
+  coords << 3 << " " << particles.size() << " ";
+  for (const auto& particle : particles) {
+    coords << particle->currentPosition().x() << " "
+           << particle->currentPosition().y() << " "
+           << particle->currentPosition().z() << " ";
+  }
+  std::cout << "Coords: \n" << coords.str() << "\n";
+
+  orgQhull::RboxPoints box;
+  box.appendPoints(coords);
+
+  orgQhull::Qhull hull;
+  hull.runQhull(box, "d Qbb Qt i");
+
+  std::stringstream elements;
+  hull.setOutputStream(&elements);
+  hull.outputQhull();
+  std::cout << "Elements: \n" << elements.str() << "\n";
 }

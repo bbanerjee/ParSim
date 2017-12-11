@@ -19,6 +19,11 @@ public:
     std::cout << "**ERROR** Execute with DEM + SPH. "
               << "Should not be called in PeriodicBCComputeStressStrain.\n";
   }
+
+private:
+
+  void createTessellation(const DEMParticlePArray& particles);
+
 };
 }
 

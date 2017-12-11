@@ -29,7 +29,7 @@ include_directories(${GTEST_INCLUDE_DIR})
 #--------------------------------------
 # Input files
 #--------------------------------------
-file(COPY ./4002/axisymmetric_strain_pb_two.000 DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ./4002/axisymmetric_strain_pb_five.000 DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 #--------------------------------------
 # DEMComputeStressStrain

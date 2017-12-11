@@ -23,11 +23,12 @@
 #
 
 SET(DEM_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/DiscreteElements.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEMBoundaryConditions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMContact.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticle.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticleCreator.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DEMBoundaryConditions.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEMTetrahedron.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DiscreteElements.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Gradation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Spring.cpp
 )

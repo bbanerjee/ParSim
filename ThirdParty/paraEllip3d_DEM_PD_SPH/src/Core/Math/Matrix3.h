@@ -679,6 +679,21 @@ namespace dem {
     return mat;
   }
 
+  // Create a column matrix
+  inline Matrix3 columnMatrix3(const Vec& a, const Vec& b, const Vec& c) {
+    Matrix3 mat;
+    mat(0,0) = a[0]; mat(1,0) = a[1]; mat(2,0) = a[2];
+    mat(0,1) = b[0]; mat(1,1) = b[1]; mat(2,1) = b[2];
+    mat(0,2) = c[0]; mat(1,2) = c[1]; mat(2,2) = c[2];
+    return mat;
+  }
+
+  // Create a row matrix
+  inline Matrix3 rowMatrix3(const Vec& a, const Vec& b, const Vec& c) {
+    Matrix3 mat = columnMatrix3(a, b, c);
+    return mat.Transpose();
+  }
+
 } // End namespace dem
 
 
