@@ -6,7 +6,7 @@ using namespace dem;
 
 DEMTetrahedron::DEMTetrahedron()
 {
-  d_nodeIDs.reserve(4);
+  d_nodeIDs.resize(4);
   d_particles.reserve(4);
   for (auto& nodeID : d_nodeIDs) nodeID = -1;
   d_B.setZero();
@@ -27,6 +27,10 @@ DEMTetrahedron::DEMTetrahedron(NodeID n1, NodeID n2, NodeID n3, NodeID n4,
     DEMParticleP particle = particles[nodeID];
     d_particles.push_back(std::move(particle));
   }
+
+  if (signedVolume() < 0) {
+    updateNodeOrder();
+  }
 }
 
 REAL 
@@ -42,7 +46,7 @@ DEMTetrahedron::signedVolume() const
   Vec p1 = d_particles[1]->currentPosition();
   Vec p2 = d_particles[2]->currentPosition();
   Vec p3 = d_particles[3]->currentPosition();
-  return volume(p0, p1, p2, p3);
+  return signedVolume(p0, p1, p2, p3);
 }
 
 REAL 
@@ -58,11 +62,11 @@ DEMTetrahedron::signedInitialVolume() const
   Vec p1 = d_particles[1]->initialPosition();
   Vec p2 = d_particles[2]->initialPosition();
   Vec p3 = d_particles[3]->initialPosition();
-  return volume(p0, p1, p2, p3);
+  return signedVolume(p0, p1, p2, p3);
 }
 
 REAL 
-DEMTetrahedron::volume(const Vec& p0, const Vec& p1, 
+DEMTetrahedron::signedVolume(const Vec& p0, const Vec& p1, 
                        const Vec& p2, const Vec& p3) const
 {
   Vec vec01 = p1 - p0;
@@ -70,6 +74,13 @@ DEMTetrahedron::volume(const Vec& p0, const Vec& p1,
   Vec vec03 = p3 - p0;
   Vec vec01x02 = cross(vec01, vec02);
   return 1.0/6.0*dot(vec01x02, vec03);
+}
+
+void
+DEMTetrahedron::updateNodeOrder()
+{
+  std::swap(d_nodeIDs[1], d_nodeIDs[2]);
+  std::swap(d_particles[1], d_particles[2]);
 }
 
 std::vector<double> 
@@ -146,6 +157,37 @@ void DEMTetrahedron::updateVelGrad()
   d_velGrad(2,0) = L(2,0); d_velGrad(2,1) = L(2,1); d_velGrad(2,2) = L(2,2);
 }
 
+void DEMTetrahedron::updateDispGrad()
+{
+  Vec u0 = d_particles[0]->currentPosition() - d_particles[0]->initialPosition();
+  Vec u1 = d_particles[1]->currentPosition() - d_particles[1]->initialPosition();
+  Vec u2 = d_particles[2]->currentPosition() - d_particles[2]->initialPosition();
+  Vec u3 = d_particles[3]->currentPosition() - d_particles[3]->initialPosition();
+  Matrix3x4 disp;
+  disp(0,0) = u0[0]; disp(1,0) = u0[1]; disp(2,0) = u0[2];
+  disp(0,1) = u1[0]; disp(1,1) = u1[1]; disp(2,1) = u1[2];
+  disp(0,2) = u2[0]; disp(1,2) = u2[1]; disp(2,2) = u2[2];
+  disp(0,3) = u3[0]; disp(1,3) = u3[1]; disp(2,3) = u3[2];
+  auto gradu = disp * d_B;
+  d_dispGrad(0,0) = gradu(0,0); d_dispGrad(0,1) = gradu(0,1); 
+  d_dispGrad(0,2) = gradu(0,2);
+  d_dispGrad(1,0) = gradu(1,0); d_dispGrad(1,1) = gradu(1,1); 
+  d_dispGrad(1,2) = gradu(1,2);
+  d_dispGrad(2,0) = gradu(2,0); d_dispGrad(2,1) = gradu(2,1); 
+  d_dispGrad(2,2) = gradu(2,2);
+}
+
 void DEMTetrahedron::updateDefGrad()
 {
+  Matrix3 I; I.Identity();
+  d_defGrad = (I - d_dispGrad).Inverse();
+  d_defGradRate = d_velGrad * d_defGrad;
+}
+
+void DEMTetrahedron::updateGradients()
+{
+  updateBMatrix();
+  updateVelGrad();
+  updateDispGrad();
+  updateDefGrad();
 }

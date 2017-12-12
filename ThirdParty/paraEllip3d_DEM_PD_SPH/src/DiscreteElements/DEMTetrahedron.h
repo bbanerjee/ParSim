@@ -23,13 +23,16 @@ private:
 
   Matrix4x3 d_B;
   Matrix3 d_velGrad;
+  Matrix3 d_dispGrad;
   Matrix3 d_defGrad;
   Matrix3 d_defGradRate;
 
-  REAL volume(const Vec& p0, const Vec& p1, 
-              const Vec& p2, const Vec& p3) const;
+  REAL signedVolume(const Vec& p0, const Vec& p1, 
+                    const Vec& p2, const Vec& p3) const;
   REAL signedVolume() const;
   REAL signedInitialVolume() const;
+
+  void updateNodeOrder();
 
   inline
   std::vector<double> referenceBasisFunctions(double r, double s, double t) const {
@@ -84,6 +87,11 @@ private:
     return Ainv * (xyz - p0);
   }
 
+  void updateBMatrix();
+  void updateVelGrad();
+  void updateDispGrad();
+  void updateDefGrad();
+
 public:
 
   DEMTetrahedron();
@@ -100,12 +108,15 @@ public:
   inline
   Matrix3 getVelGrad() const { return d_velGrad; }
   inline
+  Matrix3 getDispGrad() const { return d_dispGrad; }
+  inline
   Matrix3 getDefGrad() const { return d_defGrad; }
   inline
   Matrix3 getDefGradRate() const { return d_defGradRate; }
 
   REAL volume() const;
   REAL initialVolume() const;
+
 
   inline
   std::vector<double> basisFunctions(const Vec& point) const;
@@ -116,9 +127,7 @@ public:
   inline std::pair<std::vector<double>, std::vector<Vec>> 
   basisFunctionsAndDerivatives(const Vec& point) const;
 
-  void updateBMatrix();
-  void updateVelGrad();
-  void updateDefGrad();
+  void updateGradients();
 
 };
 

@@ -1,5 +1,6 @@
 #include <Simulations/DEM/PeriodicBCComputeStressStrain.h>
 #include <DiscreteElements/DEMParticleCreator.h>
+#include <DiscreteElements/DEMTetrahedron.h>
 #include <InputOutput/DEMParticleFileReader.h>
 #include <Boundary/BoundaryFileReader.h>
 #include <Core/Util/Utility.h>
@@ -75,12 +76,15 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
     //  std::cout << "Particles:" << *particle << "\n";
     //}
 
-    createTessellation(particles);
+    auto elementArray = createTessellation(particles);
+    for (auto& element : elementArray) {
+      element->updateGradients();
+    }
 
   }
 }
 
-void
+DEMTetrahedronPArray
 PeriodicBCComputeStressStrain::createTessellation(
   const DEMParticlePArray& particles) 
 {
@@ -103,4 +107,23 @@ PeriodicBCComputeStressStrain::createTessellation(
   hull.setOutputStream(&elements);
   hull.outputQhull();
   std::cout << "Elements: \n" << elements.str() << "\n";
+
+  std::size_t numElements = 0;
+  elements >> numElements;
+
+  std::cout << "num elements = " << numElements << "\n";
+  NodeID n1 = 0, n2 = 0, n3 = 0, n4 = 0;
+  DEMTetrahedronPArray elementArray;
+  elementArray.reserve(numElements);
+  for (std::size_t elem = 0; elem < numElements; ++elem) {
+    elements >> n1 >> n2 >> n3 >> n4;
+    std::cout << "n1,n2,n3,n4 = " << n1 << "," << n2 << "," << n3 << "," << n4 << "\n";
+    DEMTetrahedronP tet = 
+      std::make_shared<DEMTetrahedron>(n1, n2, n3, n4, particles);
+    if (tet->volume() > 1.0e-12) {
+      elementArray.push_back(tet);
+    }
+  }
+
+  return elementArray;
 }

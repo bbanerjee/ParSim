@@ -2,6 +2,8 @@
 #define ELLIP3D_PERIODIC_BC_COMPUTE_STRESS_STRAIN_H
 
 #include <Simulations/Command.h>
+#include <DiscreteElements/DEMContainers.h>
+#include <vector>
 #include <ostream>
 
 namespace dem {
@@ -22,7 +24,7 @@ public:
 
 private:
 
-  void createTessellation(const DEMParticlePArray& particles);
+  DEMTetrahedronPArray createTessellation(const DEMParticlePArray& particles);
 
 };
 }
