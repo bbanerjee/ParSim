@@ -1,9 +1,9 @@
 #include <SmoothParticleHydro/SPHKernels.h>
 #include <Core/Const/Constants.h>
 
-using namespace sph;
-
 using dem::Vec;
+
+namespace sph {
 
 template <int dim>
 REAL 
@@ -136,7 +136,6 @@ SPHKernels::computeGradientQuinticSplineKernel(const REAL& qval,
   return gradient;
 }
 
-namespace sph {
 
 template REAL 
 SPHKernels::minQuinticSplineKernel<1>(const REAL& smoothLength) const;
@@ -184,4 +183,5 @@ SPHKernels::gradientQuinticSplineKernel<2>(const dem::Vec& vec_ab,
 template dem::Vec 
 SPHKernels::gradientQuinticSplineKernel<3>(const dem::Vec& vec_ab,
   const REAL& dist_ab, const REAL& smoothLength) const;
-}
+
+} // end namespace sph 

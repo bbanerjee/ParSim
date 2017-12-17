@@ -13,9 +13,12 @@
 using IntVec = dem::IntVec;
 using Vec = dem::Vec;
 
+namespace Ellip3D {
+namespace Util {
+
 template <typename T>
 bool
-Ellip3D::Util::decodeAndUncompress(const std::string& inputStr,
+decodeAndUncompress(const std::string& inputStr,
                                    const int& numComponents,
                                    std::vector<T>& output)
 {
@@ -76,7 +79,7 @@ Ellip3D::Util::decodeAndUncompress(const std::string& inputStr,
       str += " ";
       str += *(iter + ii);
     }
-    output.push_back(Ellip3D::Util::convert<T>(str));
+    output.push_back(convert<T>(str));
   }
 
   return true;
@@ -84,7 +87,7 @@ Ellip3D::Util::decodeAndUncompress(const std::string& inputStr,
 
 template <typename T>
 bool
-Ellip3D::Util::compressAndEncode(const std::vector<T>& inputVec,
+compressAndEncode(const std::vector<T>& inputVec,
                                  const int& numComponents,
                                  std::string& outputStr)
 {
@@ -92,7 +95,7 @@ Ellip3D::Util::compressAndEncode(const std::vector<T>& inputVec,
   std::string inputStr;
   for (const auto& val : inputVec) {
     inputStr += " ";
-    inputStr += Ellip3D::Util::convert<T>(val);
+    inputStr += convert<T>(val);
   }
 
   // Compress the string
@@ -141,28 +144,28 @@ Ellip3D::Util::compressAndEncode(const std::vector<T>& inputVec,
 
 template <>
 int
-Ellip3D::Util::convert<int>(const std::string& str)
+convert<int>(const std::string& str)
 {
   return std::stoi(str);
 }
 
 template <>
 size_t
-Ellip3D::Util::convert<size_t>(const std::string& str)
+convert<size_t>(const std::string& str)
 {
   return std::stoul(str);
 }
 
 template <>
 REAL
-Ellip3D::Util::convert<REAL>(const std::string& str)
+convert<REAL>(const std::string& str)
 {
   return std::stod(str);
 }
 
 template <>
 Vec
-Ellip3D::Util::convert<Vec>(const std::string& str)
+convert<Vec>(const std::string& str)
 {
   std::istringstream iss(std::string(str.begin(), str.end()));
   std::vector<std::string> split = { std::istream_iterator<std::string>{ iss },
@@ -172,7 +175,7 @@ Ellip3D::Util::convert<Vec>(const std::string& str)
 
 template <>
 IntVec
-Ellip3D::Util::convert<IntVec>(const std::string& str)
+convert<IntVec>(const std::string& str)
 {
   std::istringstream iss(std::string(str.begin(), str.end()));
   std::vector<std::string> split = { std::istream_iterator<std::string>{ iss },
@@ -182,7 +185,7 @@ Ellip3D::Util::convert<IntVec>(const std::string& str)
 
 template <>
 std::vector<REAL>
-Ellip3D::Util::convert<std::vector<REAL>>(const std::string& str)
+convert<std::vector<REAL>>(const std::string& str)
 {
   std::istringstream iss(std::string(str.begin(), str.end()));
   std::vector<std::string> split = { std::istream_iterator<std::string>{ iss },
@@ -196,28 +199,28 @@ Ellip3D::Util::convert<std::vector<REAL>>(const std::string& str)
 
 template <>
 std::string 
-Ellip3D::Util::convert<std::size_t>(const std::size_t& value)
+convert<std::size_t>(const std::size_t& value)
 {
   return std::to_string(value);
 }
 
 template <>
 std::string 
-Ellip3D::Util::convert<int>(const int& value)
+convert<int>(const int& value)
 {
   return std::to_string(value);
 }
 
 template <>
 std::string 
-Ellip3D::Util::convert<REAL>(const REAL& value)
+convert<REAL>(const REAL& value)
 {
   return std::to_string(value);
 }
 
 template <>
 std::string 
-Ellip3D::Util::convert<Vec>(const Vec& value)
+convert<Vec>(const Vec& value)
 {
   return std::to_string(value.x()) + " " +
          std::to_string(value.y()) + " " + 
@@ -226,7 +229,7 @@ Ellip3D::Util::convert<Vec>(const Vec& value)
 
 template <>
 std::string 
-Ellip3D::Util::convert<IntVec>(const IntVec& value)
+convert<IntVec>(const IntVec& value)
 {
   return std::to_string(value.x()) + " " +
          std::to_string(value.y()) + " " + 
@@ -235,7 +238,7 @@ Ellip3D::Util::convert<IntVec>(const IntVec& value)
 
 template <>
 std::string 
-Ellip3D::Util::convert<std::vector<REAL>>(const std::vector<REAL>& value)
+convert<std::vector<REAL>>(const std::vector<REAL>& value)
 {
   std::string out;
   for (const auto& val : value) {
@@ -246,7 +249,7 @@ Ellip3D::Util::convert<std::vector<REAL>>(const std::vector<REAL>& value)
 
 template <typename T>
 std::vector<T>
-Ellip3D::Util::convertStrArray(const std::string& str)
+convertStrArray(const std::string& str)
 {
   std::istringstream iss(std::string(str.begin(), str.end()));
   std::vector<std::string> split = { std::istream_iterator<std::string>{ iss },
@@ -269,53 +272,56 @@ Ellip3D::Util::convertStrArray(const std::string& str)
 }
 
 template bool
-Ellip3D::Util::decodeAndUncompress<int>(const std::string& inputStr,
+decodeAndUncompress<int>(const std::string& inputStr,
   const int& numComponents, std::vector<int>& output);
 
 template bool
-Ellip3D::Util::decodeAndUncompress<std::size_t>(const std::string& inputStr,
+decodeAndUncompress<std::size_t>(const std::string& inputStr,
   const int& numComponents, std::vector<std::size_t>& output);
 
 template bool
-Ellip3D::Util::decodeAndUncompress<REAL>(const std::string& inputStr,
+decodeAndUncompress<REAL>(const std::string& inputStr,
   const int& numComponents, std::vector<REAL>& output);
 
 template bool
-Ellip3D::Util::decodeAndUncompress<dem::IntVec>(const std::string& inputStr,
+decodeAndUncompress<dem::IntVec>(const std::string& inputStr,
   const int& numComponents, std::vector<dem::IntVec>& output);
 
 template bool
-Ellip3D::Util::decodeAndUncompress<dem::Vec>(const std::string& inputStr,
+decodeAndUncompress<dem::Vec>(const std::string& inputStr,
   const int& numComponents, std::vector<dem::Vec>& output);
 
 template bool
-Ellip3D::Util::decodeAndUncompress<std::vector<REAL>>(const std::string& inputStr,
+decodeAndUncompress<std::vector<REAL>>(const std::string& inputStr,
   const int& numComponents, std::vector<std::vector<REAL>>& output);
 
 template bool
-Ellip3D::Util::compressAndEncode<std::size_t>(const std::vector<std::size_t>& inputVec,
+compressAndEncode<std::size_t>(const std::vector<std::size_t>& inputVec,
   const int& numComponents, std::string& outputStr);
 
 template bool
-Ellip3D::Util::compressAndEncode<int>(const std::vector<int>& inputVec,
+compressAndEncode<int>(const std::vector<int>& inputVec,
   const int& numComponents, std::string& outputStr);
 
 template bool
-Ellip3D::Util::compressAndEncode<REAL>(const std::vector<REAL>& inputVec,
+compressAndEncode<REAL>(const std::vector<REAL>& inputVec,
   const int& numComponents, std::string& outputStr);
 
 template bool
-Ellip3D::Util::compressAndEncode<IntVec>(const std::vector<IntVec>& inputVec,
+compressAndEncode<IntVec>(const std::vector<IntVec>& inputVec,
   const int& numComponents, std::string& outputStr);
 
 template bool
-Ellip3D::Util::compressAndEncode<Vec>(const std::vector<Vec>& inputVec,
+compressAndEncode<Vec>(const std::vector<Vec>& inputVec,
   const int& numComponents, std::string& outputStr);
 
 template bool
-Ellip3D::Util::compressAndEncode<std::vector<REAL>>(const std::vector<std::vector<REAL>>& inputVec,
+compressAndEncode<std::vector<REAL>>(const std::vector<std::vector<REAL>>& inputVec,
   const int& numComponents, std::string& outputStr);
 
 template 
 std::vector<REAL>
-Ellip3D::Util::convertStrArray<REAL>(const std::string& str);
+convertStrArray<REAL>(const std::string& str);
+
+} // end namespace Util
+} // end namespace Ellip3D

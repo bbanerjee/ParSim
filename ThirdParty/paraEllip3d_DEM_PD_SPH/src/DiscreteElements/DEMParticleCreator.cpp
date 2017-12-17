@@ -4,11 +4,10 @@
 #include <Core/Util/Utility.h>
 #include <Core/Math/Vec.h>
 
-using namespace dem;
+namespace dem {
 
 using DEMParticleShape = DEMParticle::DEMParticleShape;
 using ParticleParameters = DEMParticleCreator::ParticleParameters;
-
 
 DEMParticlePArray
 DEMParticleCreator::generateDEMParticles(std::size_t layerFlag,
@@ -649,11 +648,11 @@ DEMParticleCreator::addExtraTranslations(const Vec& shift,
   }
 }
 
-namespace dem {
 template DEMParticlePArray DEMParticleCreator::generateDEMParticles<0>(
   DEMParticleShape shape, const Box& spatialDomain, Gradation& gradation);
 template DEMParticlePArray DEMParticleCreator::generateDEMParticles<1>(
   DEMParticleShape shape, const Box& spatialDomain, Gradation& gradation);
 template DEMParticlePArray DEMParticleCreator::generateDEMParticles<2>(
   DEMParticleShape shape, const Box& spatialDomain, Gradation& gradation);
-}
+
+} // end namespace dem

@@ -4,7 +4,7 @@
 
 using Vec = dem::Vec;
 
-using namespace sph;
+namespace sph {
 
 // here the free particles, ghost particles and boundary particles
 // will all stored in the same vector
@@ -498,7 +498,6 @@ SPHParticleCreator::removeRedundantSPHParticles(SPHParticlePArray& allSPHParticl
 }
 
 
-namespace sph {
 template SPHParticlePArray SPHParticleCreator::generateSPHParticleDam<2>(
   const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles);
 template SPHParticlePArray SPHParticleCreator::generateSPHParticleDam<3>(
@@ -511,4 +510,5 @@ template SPHParticlePArray SPHParticleCreator::generateSPHParticleMiddleLayers<2
   const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles);
 template SPHParticlePArray SPHParticleCreator::generateSPHParticleMiddleLayers<3>(
   const dem::Box& spatialDomain, const dem::DEMParticlePArray& allDEMParticles);
-}
+
+} // end namespace sph

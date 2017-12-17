@@ -79,6 +79,10 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
     auto elementArray = createTessellation(particles);
     for (auto& element : elementArray) {
       element->updateGradients();
+      std::cout << "VelGrad: \n" << element->getVelGrad() << "\n";
+      std::cout << "DispGrad: \n" << element->getDispGrad() << "\n";
+      std::cout << "DefGrad: \n" << element->getDefGrad() << "\n";
+      std::cout << "DefGradRate: \n" << element->getDefGradRate() << "\n";
     }
 
   }

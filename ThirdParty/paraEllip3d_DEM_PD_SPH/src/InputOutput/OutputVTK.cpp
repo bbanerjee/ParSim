@@ -46,7 +46,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-using namespace dem;
 
 using PeriParticlePArray = pd::PeriParticlePArray;
 using SPHParticlePArray = sph::SPHParticlePArray;
@@ -56,6 +55,7 @@ using vtkXMLUnstructuredGridWriterP =
   vtkSmartPointer<vtkXMLUnstructuredGridWriter>;
 using vtkDoubleArrayP = vtkSmartPointer<vtkDoubleArray>;
 
+namespace dem {
 template <typename TArray>
 OutputVTK<TArray>::OutputVTK(const std::string& folderName, int iterInterval)
   : Output(folderName, iterInterval)
@@ -899,7 +899,6 @@ OutputVTK<SPHParticlePArray>::createVTKUnstructuredGrid(const SPHParticlePArray*
   */
 }
 
-namespace dem {
   template class OutputVTK<DEMParticlePArray>;
   template class OutputVTK<pd::PeriParticlePArray>;
   template class OutputVTK<sph::SPHParticlePArray>;

@@ -35,10 +35,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-using namespace dem;
-
 using pd::PeriParticlePArray;
 using sph::SPHParticlePArray;
+
+namespace dem {
 
 template <typename TArray>
 OutputTecplot<TArray>::OutputTecplot(const std::string& folderName, int iterInterval)
@@ -158,14 +158,14 @@ OutputTecplot<TArray>::writePatchBoxGrid(const Box* patchBox, REAL time)
   std::vector<Vec> coords((d_mpiProcX + 1) * (d_mpiProcY + 1) *
                           (d_mpiProcZ + 1));
   std::size_t index = 0;
-  for (auto i = 0; i < d_mpiProcX + 1; ++i)
-    for (auto j = 0; j < d_mpiProcY + 1; ++j)
-      for (auto k = 0; k < d_mpiProcZ + 1; ++k)
+  for (auto i = 0u; i < d_mpiProcX + 1; ++i)
+    for (auto j = 0u; j < d_mpiProcY + 1; ++j)
+      for (auto k = 0u; k < d_mpiProcZ + 1; ++k)
         coords[index++] = Vec(v1.x() + vspan.x() / d_mpiProcX * i,
                               v1.y() + vspan.y() / d_mpiProcY * j,
                               v1.z() + vspan.z() / d_mpiProcZ * k);
 
-  for (auto i = 0; i < (d_mpiProcX + 1) * (d_mpiProcY + 1) * (d_mpiProcZ + 1);
+  for (auto i = 0u; i < (d_mpiProcX + 1) * (d_mpiProcY + 1) * (d_mpiProcZ + 1);
        ++i)
     ofs << std::setw(OWID) << coords[i].x() << std::setw(OWID) << coords[i].y()
         << std::setw(OWID) << coords[i].z() << std::endl;
@@ -424,7 +424,6 @@ OutputTecplot<TArray>::writeSieves(const Gradation* gradation)
   ofs.close();
 }
 
-namespace dem {
   template class OutputTecplot<DEMParticlePArray>;
   template class OutputTecplot<pd::PeriParticlePArray>;
   template class OutputTecplot<sph::SPHParticlePArray>;

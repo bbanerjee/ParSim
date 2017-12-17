@@ -145,6 +145,8 @@ SPHParticle::initialVelocityLeapFrog(const REAL& delT)
   updateVelocity(delT * 0.5);
 }
 
+namespace sph {
+
 template <>
 bool
 SPHParticle::isInsideDEMParticle<2>(const REAL& kernelSize,
@@ -283,6 +285,8 @@ SPHParticle::isOutsideDomainWithoutZTop<3>(const REAL& bufferLength,
     return true;
   return false;
 }
+
+} // end namespace sph
 
 bool 
 SPHParticle::isOutsideInfluenceZone(const SPHParticle& particle,

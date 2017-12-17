@@ -742,14 +742,14 @@ DiscreteElements::findContactSingleThread(REAL minOverlap, REAL measOverlap,
                                        // neighboring blocks (at end)
   // NOT (num1 - 1), in parallel situation where one particle
   // could contact received particles!
-  for (auto i = 0; i < num1; ++i) {
+  for (auto i = 0u; i < num1; ++i) {
 
     auto particle = d_patchParticles[i];
     Vec u = particle->currentPosition();
     auto particleType = particle->getType();
     auto particleRad = particle->radiusA();
 
-    for (auto j = i + 1; j < num2; ++j) {
+    for (auto j = i + 1u; j < num2; ++j) {
 
       auto mergeParticle = d_mergedParticles[j];
       Vec v = mergeParticle->currentPosition();

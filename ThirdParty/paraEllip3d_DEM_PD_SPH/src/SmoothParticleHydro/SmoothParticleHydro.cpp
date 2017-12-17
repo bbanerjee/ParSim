@@ -10,7 +10,6 @@
 #include <InputOutput/OutputVTK.h>
 #include <chrono>
 
-using namespace sph;
 
 using Timer = std::chrono::steady_clock;
 using Seconds = std::chrono::seconds;
@@ -19,9 +18,12 @@ using Vec = dem::Vec;
 using Matrix = dem::Matrix;
 using Box = dem::Box;
 using DEMParticlePArray = dem::DEMParticlePArray;
+using communicator = boost::mpi::communicator;
+
+namespace sph {
+
 using OutputVTK = dem::OutputVTK<SPHParticlePArray>;
 using OutputTecplot = dem::OutputTecplot<SPHParticlePArray>;
-using communicator = boost::mpi::communicator;
 
 SmoothParticleHydro::SmoothParticleHydro()
 {
@@ -408,7 +410,7 @@ SmoothParticleHydro::updateParticleInteractions(const Box& spatialDomain,
   // particles within it
   assignParticlesToPatchGrid<dim>(spatialDomain, bufferWidth, ghostWidth, kernelSize);
 
-  for (int cellIndex=0; cellIndex < d_sphPatchGrid.size(); ++cellIndex) {
+  for (auto cellIndex = 0u; cellIndex < d_sphPatchGrid.size(); ++cellIndex) {
 
     SPHParticlePArray cellParticles = d_sphPatchGrid[cellIndex];
     SPHParticlePArray neighborParticles = 
@@ -933,7 +935,6 @@ SmoothParticleHydro::printSPHParticle(const char* str) const
   ofs.close();
 }
 
-namespace sph {
 
 template void
 SmoothParticleHydro::updateParticleInteractions<2>(const Box& spatialDomain,
@@ -952,4 +953,5 @@ SmoothParticleHydro::assignParticlesToPatchGrid<2>(const Box& domain,
 template void
 SmoothParticleHydro::assignParticlesToPatchGrid<3>(const Box& domain,
   const REAL& bufferWidth, const REAL& ghostWidth, const REAL& kernelSize);
-}
+
+} // end namespace sph
