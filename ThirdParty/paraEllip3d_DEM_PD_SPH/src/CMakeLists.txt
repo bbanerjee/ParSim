@@ -40,6 +40,7 @@ set(PATCH_VERSION "0")
 #---
 # Set module path
 #---
+set(ParSim_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${CMAKE_MODULE_PATH})
 
 #---
@@ -80,17 +81,18 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 #----------------------------------------------------------------------------
 # Find the MPI package to use
 #----------------------------------------------------------------------------
-find_package(MPI REQUIRED)
+#find_package(MPI REQUIRED)
+find_package(MPIParSim REQUIRED)
 message(STATUS "MPI_C_FOUND = ${MPI_C_FOUND}")
 message(STATUS "MPI_CXX_FOUND = ${MPI_CXX_FOUND}")
 message(STATUS "MPI_FOUND = ${MPI_FOUND}")
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
   # Take the MPI include path and split it into -I's
-  SET(MPI_INCLUDE_PATH_CONV "")
-  FOREACH(I ${MPI_INCLUDE_PATH})
-    SET(MPI_INCLUDE_PATH_CONV "${MPI_INCLUDE_PATH_CONV} -I${I}")
-  ENDFOREACH(I)
+  #SET(MPI_INCLUDE_PATH_CONV "")
+  #FOREACH(I ${MPI_INCLUDE_PATH})
+  #  SET(MPI_INCLUDE_PATH_CONV "${MPI_INCLUDE_PATH_CONV} -I${I}")
+  #ENDFOREACH(I)
   set(MPI_DIR "" CACHE PATH "Path to MPI")
   set(MPI_LIBRARY ${MPI_LIBRARIES})
 else()
