@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <InputOutput/DEMContactFileWriterCSV.h>
+#include <InputOutput/DEMBoundaryContactFileWriterCSV.h>
 #include <Boundary/Boundary.h>
 #include <DiscreteElements/DEMParticle.h>
 #include <Core/Const/Constants.h>
@@ -30,7 +30,7 @@
 
 using namespace dem;
 
-DEMContactFileWriterCSV::DEMContactFileWriterCSV(const std::string& outputFileName) 
+DEMBoundaryContactFileWriterCSV::DEMBoundaryContactFileWriterCSV(const std::string& outputFileName) 
     : d_outputStream(outputFileName+".csv")
 {
   if (!d_outputStream) {
@@ -42,7 +42,7 @@ DEMContactFileWriterCSV::DEMContactFileWriterCSV(const std::string& outputFileNa
   d_outputStream.precision(OPREC);
 }
 
-DEMContactFileWriterCSV::~DEMContactFileWriterCSV() 
+DEMBoundaryContactFileWriterCSV::~DEMBoundaryContactFileWriterCSV() 
 {
   d_outputStream.close();
 }
@@ -51,7 +51,7 @@ DEMContactFileWriterCSV::~DEMContactFileWriterCSV()
  * Write the boundary contacts in CSV format
  */
 void
-DEMContactFileWriterCSV::writeBoundaryContacts(const BoundaryPArray& boundaries)
+DEMBoundaryContactFileWriterCSV::write(const BoundaryPArray& boundaries)
 {
   for (const auto& boundary : boundaries) {
 
@@ -70,15 +70,4 @@ DEMContactFileWriterCSV::writeBoundaryContacts(const BoundaryPArray& boundaries)
       contact.write(d_outputStream);
     }
   }
-}
-
-/**
- * Write the particle contacts in CSV format
- */
-void
-DEMContactFileWriterCSV::writeParticleContacts(const DEMParticlePArray& particles)
-{
-  //for (const auto& particle : particles) {
-  //  particle->writeContactsCSV(d_outputStream);
-  //}
 }

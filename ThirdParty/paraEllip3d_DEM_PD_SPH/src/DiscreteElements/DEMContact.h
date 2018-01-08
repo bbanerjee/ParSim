@@ -87,6 +87,9 @@ public:
   bool isRedundant(const DEMContact& other) const;
   bool operator==(const DEMContact& other) const;
 
+  void write(std::stringstream& str) const;
+  void write(zen::XmlOut& xml) const;
+
 private:
   DEMParticle* d_p1;       // particle 1
   DEMParticle* d_p2;       // particle 2
@@ -132,6 +135,14 @@ private:
                                        const REAL& poisson,
                                        const Vec& tangentDispInc,
                                        std::size_t iteration);
+
+  void writeScalar(const std::string& label,
+                   double variable,
+                   zen::XmlOut& xml) const;
+
+  void writeVector(const std::string& label,
+                   const Vec& variable,
+                   zen::XmlOut& xml) const;
 
   friend class boost::serialization::access;
   template <class Archive>

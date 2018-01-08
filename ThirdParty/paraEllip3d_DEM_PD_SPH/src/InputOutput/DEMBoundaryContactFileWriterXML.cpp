@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <InputOutput/DEMContactFileWriterXML.h>
+#include <InputOutput/DEMBoundaryContactFileWriterXML.h>
 #include <DiscreteElements/DEMParticle.h>
 #include <Core/Const/Constants.h>
 #include <Core/Math/Vec.h>
@@ -30,30 +30,21 @@
 
 using namespace dem;
 
-DEMContactFileWriterXML::DEMContactFileWriterXML(const std::string& outputFileName) 
+DEMBoundaryContactFileWriterXML::DEMBoundaryContactFileWriterXML(const std::string& outputFileName) 
   : d_doc("Ellip3D_input"),
     d_outputFileName(outputFileName+".xml")
 {
 }
 
-DEMContactFileWriterXML::~DEMContactFileWriterXML() 
+DEMBoundaryContactFileWriterXML::~DEMBoundaryContactFileWriterXML() 
 {
-  try {
-    zen::save(d_doc, d_outputFileName);
-  } catch (const zen::XmlFileError& err) {
-    std::cerr << "**ERROR**: Could not write XML boundary file "
-              << d_outputFileName << " for writing : in "
-              << __FILE__ << ":" << __LINE__
-              << std::endl;
-    exit(-1);
-  }
 }
 
 /**
  * Write the boundary contacts in XML format
  */
 void
-DEMContactFileWriterXML::writeBoundaryContacts(const BoundaryPArray& boundaries)
+DEMBoundaryContactFileWriterXML::write(const BoundaryPArray& boundaries)
 {
   // Create a proxy output
   zen::XmlOut xml(d_doc);
@@ -80,13 +71,15 @@ DEMContactFileWriterXML::writeBoundaryContacts(const BoundaryPArray& boundaries)
       contact.write(xml_child_contact);
     }
   }
-}
 
-/**
- * Write the particle contacts in XML format
- */
-void
-DEMContactFileWriterXML::writeParticleContacts(const DEMParticlePArray& particles)
-{
-
+  // Save the data
+  try {
+    zen::save(d_doc, d_outputFileName);
+  } catch (const zen::XmlFileError& err) {
+    std::cerr << "**ERROR**: Could not write XML boundary file "
+              << d_outputFileName << " for writing : in "
+              << __FILE__ << ":" << __LINE__
+              << std::endl;
+    exit(-1);
+  }
 }

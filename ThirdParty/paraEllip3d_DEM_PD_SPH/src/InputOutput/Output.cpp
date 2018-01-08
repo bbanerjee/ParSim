@@ -100,6 +100,11 @@ Output::createFilenames()
     << std::setfill('0') << std::setw(5) << d_outputIteration;
   d_bdryContactFilename = bdryContactOutputFile.str();
 
+  std::ostringstream contactOutputFile;
+  contactOutputFile << folderName << "/contact_"
+    << std::setfill('0') << std::setw(5) << d_outputIteration;
+  d_contactFilename = contactOutputFile.str();
+
   //std::cout << "createFilenames: Domain file name = " << d_domainFilename << "\n";
   //std::cout << "createFilenames: Grid file name = " << d_patchFilename << "\n";
   //std::cout << "createFilenames: DEMParticle file name = " << d_particleFilename << "\n";
@@ -117,6 +122,7 @@ Output::updateFilenames(const int& iteration, const std::string& extension) {
   d_periParticleFilename += extension;
   d_sphParticleFilename += extension;
   d_bdryContactFilename += extension;
+  d_contactFilename += extension;
 }
 
 void

@@ -22,36 +22,31 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef ELLIP3D_DEM_CONTACT_FILE_WRITER_XML_H
-#define ELLIP3D_DEM_CONTACT_FILE_WRITER_XML_H
+#ifndef ELLIP3D_DEM_BOUNDARY_CONTACT_FILE_WRITER_CSV_H
+#define ELLIP3D_DEM_BOUNDARY_CONTACT_FILE_WRITER_CSV_H
 
 #include <Boundary/BoundaryContainers.h>
-#include <DiscreteElements/DEMContainers.h>
-#include <Core/Types/RealTypes.h>
-#include <InputOutput/zenxml/xml.h>
+#include <fstream>
 
 namespace dem {
 
-class DEMContactFileWriterXML
+class DEMBoundaryContactFileWriterCSV
 {
 
 public:
 
-  DEMContactFileWriterXML(const std::string& outputFileName);
-  ~DEMContactFileWriterXML(); 
+  DEMBoundaryContactFileWriterCSV(const std::string& outputFileName);
+  ~DEMBoundaryContactFileWriterCSV();
 
-  void writeBoundaryContacts(const BoundaryPArray& boundaries);
-  void writeParticleContacts(const DEMParticlePArray& particles);
+  void write(const BoundaryPArray& boundaries);
 
 private:
 
-  zen::XmlDoc d_doc;
-  std::string d_outputFileName;
+  std::ofstream d_outputStream;
 
-  DEMContactFileWriterXML() = delete;
-  DEMContactFileWriterXML(DEMContactFileWriterXML const&) = delete;
-  void operator=(DEMContactFileWriterXML const&) = delete;
+  DEMBoundaryContactFileWriterCSV() = delete;
+  DEMBoundaryContactFileWriterCSV(DEMBoundaryContactFileWriterCSV const&) = delete;
+  void operator=(DEMBoundaryContactFileWriterCSV const&) = delete;
 };
 }
-
 #endif

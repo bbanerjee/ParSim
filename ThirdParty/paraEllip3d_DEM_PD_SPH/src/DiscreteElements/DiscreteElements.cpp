@@ -41,6 +41,10 @@
 #include <InputOutput/DEMParticleFileReader.h>
 #include <InputOutput/DEMParticleFileWriter.h>
 #include <InputOutput/PeriParticleFileReader.h>
+#include <InputOutput/DEMBoundaryContactFileWriterCSV.h>
+#include <InputOutput/DEMBoundaryContactFileWriterXML.h>
+#include <InputOutput/DEMParticleContactFileWriterCSV.h>
+#include <InputOutput/DEMParticleContactFileWriterXML.h>
 
 #include <algorithm>
 #include <cassert>
@@ -180,7 +184,7 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
     writeBoundaryToFile(timeAccrued);
     writePatchGridToFile(timeAccrued);
     writeParticlesToFile(iterSnap, timeAccrued);
-    outputParticleCSVFile = combine("output_particles_", 0, 3);
+    outputParticleCSVFile = combine("output_particles_", 0, 5);
     printParticlesCSV(outputFolder, outputParticleCSVFile, 0, timeAccrued);
     printParticlesXML(outputFolder, outputParticleCSVFile, 0, timeAccrued);
     printBoundaryContacts();
@@ -267,7 +271,7 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
         writeBoundaryToFile(timeAccrued);
         writePatchGridToFile(timeAccrued);
         writeParticlesToFile(iterSnap, timeAccrued);
-        outputParticleCSVFile = combine("output_particles_", iterSnap, 3);
+        outputParticleCSVFile = combine("output_particles_", iterSnap, 5);
         printParticlesCSV(outputFolder, outputParticleCSVFile, 0, timeAccrued);
         printParticlesXML(outputFolder, outputParticleCSVFile, 0, timeAccrued);
         printBoundaryContacts();
@@ -1152,11 +1156,11 @@ DiscreteElements::printBoundary() const
 void
 DiscreteElements::printBoundaryContacts() const
 {
-  DEMContactFileWriterCSV csv_writer(d_writer->getBdryContactFilename());
-  csv_writer.writeBoundaryContacts(d_mergedBoundaries);
+  DEMBoundaryContactFileWriterCSV csv_writer(d_writer->getBdryContactFilename());
+  csv_writer.write(d_mergedBoundaries);
 
-  DEMContactFileWriterXML xml_writer(d_writer->getBdryContactFilename());
-  xml_writer.writeBoundaryContacts(d_mergedBoundaries);
+  DEMBoundaryContactFileWriterXML xml_writer(d_writer->getBdryContactFilename());
+  xml_writer.write(d_mergedBoundaries);
 }
 
 void
@@ -2203,129 +2207,13 @@ DiscreteElements::updateBoundary(REAL sigma, std::string type,
 void
 DiscreteElements::printContact(const std::string& str) const
 {
-  // There are two implementions of printContact
-  // implementation 1: parallel IO, each process prints to a data file using a
-  // shared pointer.
-  //                   and use post-processing tool to remove redundant info.
-  MPI_Status status;
-  MPI_File contactFile;
-  MPI_File_open(s_mpiWorld, str.c_str(), MPI_MODE_CREATE | MPI_MODE_WRONLY,
-                MPI_INFO_NULL, &contactFile);
-  if (boostWorld.rank() == 0 && !contactFile) {
-    std::cerr << "stream error: printContact" << std::endl;
-    exit(-1);
-  }
+  DEMParticleContactFileWriterCSV csv_writer(s_mpiWorld,
+                                             d_writer->getContactFilename());
+  csv_writer.write(d_contacts);
 
-  std::stringstream inf;
-  inf.setf(std::ios::scientific, std::ios::floatfield);
-
-  for (const auto& it : d_contacts)
-    inf << std::setw(OWID) << it.getP1()->getId() << std::setw(OWID)
-        << it.getP2()->getId() << std::setw(OWID) << it.getPoint1().x()
-        << std::setw(OWID) << it.getPoint1().y() << std::setw(OWID)
-        << it.getPoint1().z() << std::setw(OWID) << it.getPoint2().x()
-        << std::setw(OWID) << it.getPoint2().y() << std::setw(OWID)
-        << it.getPoint2().z() << std::setw(OWID) << it.radius1()
-        << std::setw(OWID) << it.radius2() << std::setw(OWID)
-        << it.getPenetration() << std::setw(OWID) << it.getTangentDisplacement()
-        << std::setw(OWID) << it.getContactRadius() << std::setw(OWID)
-        << it.getR0() << std::setw(OWID) << it.getE0() << std::setw(OWID)
-        << it.getNormalForceMagnitude() << std::setw(OWID) << it.getTangentForceMagnitude()
-        << std::setw(OWID) << (it.getPoint1().x() + it.getPoint2().x()) / 2
-        << std::setw(OWID) << (it.getPoint1().y() + it.getPoint2().y()) / 2
-        << std::setw(OWID) << (it.getPoint1().z() + it.getPoint2().z()) / 2
-        << std::setw(OWID) << it.getNormalForce().x() << std::setw(OWID)
-        << it.getNormalForce().y() << std::setw(OWID) << it.getNormalForce().z()
-        << std::setw(OWID) << it.getTangentForce().x() << std::setw(OWID)
-        << it.getTangentForce().y() << std::setw(OWID) << it.getTangentForce().z()
-        << std::setw(OWID) << it.getVibrationTimeStep() << std::setw(OWID)
-        << it.getImpactTimeStep() << std::endl;
-
-  int length = (OWID * 28 + 1) * d_contacts.size();
-  // write a file at a location specified by a shared file pointer (blocking,
-  // collective)
-  // note MPI_File_write_shared is non-collective
-  MPI_File_write_ordered(contactFile, const_cast<char*>(inf.str().c_str()),
-                         length, MPI_CHAR, &status);
-  MPI_File_close(&contactFile);
-
-  // implementation 2: each process prints to an individual file.
-  //                   use post-processing tool to merge files and remove
-  //                   redundance.
-  /*
-  char csuf[10];
-  combine(csuf, ".p", s_mpiRank, 5);
-  strcat(str, csuf);
-
-  std::ofstream ofs(str);
-  if(!ofs) { debugInf << "stream error: printContact" << std::endl; exit(-1); }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
-
-  ofs << std::setw(OWID) << d_contacts.size() << std::endl;
-  ofs << std::setw(OWID) << "ptcl_1"
-  << std::setw(OWID) << "ptcl_2"
-  << std::setw(OWID) << "point1_x"
-  << std::setw(OWID) << "point1_y"
-  << std::setw(OWID) << "point1_z"
-  << std::setw(OWID) << "point2_x"
-  << std::setw(OWID) << "point2_y"
-  << std::setw(OWID) << "point2_z"
-  << std::setw(OWID) << "radius_1"
-  << std::setw(OWID) << "radius_2"
-  << std::setw(OWID) << "penetration"
-  << std::setw(OWID) << "tangt_disp"
-  << std::setw(OWID) << "contact_radius"
-  << std::setw(OWID) << "R0"
-  << std::setw(OWID) << "E0"
-  << std::setw(OWID) << "normal_force"
-  << std::setw(OWID) << "tangt_force"
-  << std::setw(OWID) << "contact_x"
-  << std::setw(OWID) << "contact_y"
-  << std::setw(OWID) << "contact_z"
-  << std::setw(OWID) << "normal_x"
-  << std::setw(OWID) << "normal_y"
-  << std::setw(OWID) << "normal_z"
-  << std::setw(OWID) << "tangt_x"
-  << std::setw(OWID) << "tangt_y"
-  << std::setw(OWID) << "tangt_z"
-  << std::setw(OWID) << "vibra_t_step"
-  << std::setw(OWID) << "impact_t_step"
-  << std::endl;
-
-  ContactArray::const_iterator it;
-  for (it = d_contacts.begin(); it != d_contacts.end(); ++it)
-    ofs << std::setw(OWID) << it->getP1()->getId()
-    << std::setw(OWID) << it->getP2()->getId()
-    << std::setw(OWID) << it->getPoint1().x()
-    << std::setw(OWID) << it->getPoint1().y()
-    << std::setw(OWID) << it->getPoint1().z()
-    << std::setw(OWID) << it->getPoint2().x()
-    << std::setw(OWID) << it->getPoint2().y()
-    << std::setw(OWID) << it->getPoint2().z()
-    << std::setw(OWID) << it->radius1()
-    << std::setw(OWID) << it->radius2()
-    << std::setw(OWID) << it->getPenetration()
-    << std::setw(OWID) << it->getTangentDisplacement()
-    << std::setw(OWID) << it->getContactRadius()
-    << std::setw(OWID) << it->getR0()
-    << std::setw(OWID) << it->getE0()
-    << std::setw(OWID) << it->getNormalForceMagnitude()
-    << std::setw(OWID) << it->getTangentForceMagnitude()
-    << std::setw(OWID) << ( it->getPoint1().x() + it->getPoint2().x() )/2
-    << std::setw(OWID) << ( it->getPoint1().y() + it->getPoint2().y() )/2
-    << std::setw(OWID) << ( it->getPoint1().z() + it->getPoint2().z() )/2
-    << std::setw(OWID) << it->getNormalForce().x()
-    << std::setw(OWID) << it->getNormalForce().y()
-    << std::setw(OWID) << it->getNormalForce().z()
-    << std::setw(OWID) << it->getTangentForce().x()
-    << std::setw(OWID) << it->getTangentForce().y()
-    << std::setw(OWID) << it->getTangentForce().z()
-    << std::setw(OWID) << it->getVibrationTimeStep()
-    << std::setw(OWID) << it->getImpactTimeStep()
-    << std::endl;
-  ofs.close();
-  */
+  DEMParticleContactFileWriterXML xml_writer(s_mpiWorld,
+                                             d_writer->getContactFilename());
+  xml_writer.write(d_contacts);
 }
 
 void

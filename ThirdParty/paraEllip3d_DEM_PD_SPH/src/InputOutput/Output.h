@@ -80,6 +80,7 @@ public:
   std::string getPeriParticleFilename() const { return d_periParticleFilename; }
   std::string getSPHParticleFilename() const { return d_sphParticleFilename; }
   std::string getBdryContactFilename() const { return d_bdryContactFilename; }
+  std::string getContactFilename() const { return d_contactFilename; }
   void setParticleFilename(const std::string& name) { d_particleFilename = d_outputFolderName + "/" + name; }
   void setPeriParticleFilename(const std::string& name) { d_periParticleFilename = d_outputFolderName + "/" + name; }
   void setSPHParticleFilename(const std::string& name) { d_sphParticleFilename = d_outputFolderName + "/" + name; }
@@ -116,6 +117,7 @@ protected:
   std::string d_periParticleFilename;
   std::string d_sphParticleFilename;
   std::string d_bdryContactFilename;
+  std::string d_contactFilename;
 
 private:
   Output(const Output&) = delete;

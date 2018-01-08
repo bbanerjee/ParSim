@@ -180,7 +180,7 @@ DEMContact::isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap,
 }
 
 void
-DEMContact::checkinPreviousContactTangents(ContactTangentArray& contactTangentVec)
+DEMContact::checkinPreviousContactTangents(DEMContactTangentArray& contactTangentVec)
 {
   for (auto& tangent : contactTangentVec) {
     if (tangent.ct_particle1 == d_p1->getId() && 
@@ -205,7 +205,7 @@ DEMContact::checkinPreviousContactTangents(ContactTangentArray& contactTangentVe
 }
 
 void
-DEMContact::checkoutContactTangents(ContactTangentArray& contactTangentVec)
+DEMContact::checkoutContactTangents(DEMContactTangentArray& contactTangentVec)
 {
   contactTangentVec.push_back(DEMContactTangent(d_p1->getId(), d_p2->getId(), d_tangentForce,
                                      d_tangentDisplacement, d_tangentLoadingActive, d_tangentDisplacementStart,
@@ -565,6 +565,94 @@ DEMContact::computeTangentForceMindlinKnown(const REAL& contactFric,
 
   if (vnormL2(d_tangentForce) > fP)
     d_tangentForce = fP * d_tangentDirection;
+}
+
+void 
+DEMContact::write(std::stringstream& dataStream) const
+{
+  auto point1 = getPoint1();
+  auto point2 = getPoint2();
+  auto center = (point1 + point2)/2;
+  dataStream << std::setw(OWID) << getP1()->getId() 
+             << std::setw(OWID) << getP2()->getId() 
+             << std::setw(OWID) << point1.x() 
+             << std::setw(OWID) << point1.y() 
+             << std::setw(OWID) << point1.z() 
+             << std::setw(OWID) << point2.x() 
+             << std::setw(OWID) << point2.y() 
+             << std::setw(OWID) << point2.z() 
+             << std::setw(OWID) << radius1()
+             << std::setw(OWID) << radius2() 
+             << std::setw(OWID) << getPenetration() 
+             << std::setw(OWID) << getTangentDisplacement()
+             << std::setw(OWID) << getContactRadius() 
+             << std::setw(OWID) << getR0() 
+             << std::setw(OWID) << getE0() 
+             << std::setw(OWID) << getNormalForceMagnitude() 
+             << std::setw(OWID) << getTangentForceMagnitude()
+             << std::setw(OWID) << center.x() 
+             << std::setw(OWID) << center.y() 
+             << std::setw(OWID) << center.z() 
+             << std::setw(OWID) << getNormalForce().x() 
+             << std::setw(OWID) << getNormalForce().y() 
+             << std::setw(OWID) << getNormalForce().z()
+             << std::setw(OWID) << getTangentForce().x() 
+             << std::setw(OWID) << getTangentForce().y() 
+             << std::setw(OWID) << getTangentForce().z() 
+             << std::setw(OWID) << getVibrationTimeStep() 
+             << std::setw(OWID) << getImpactTimeStep() << std::endl;
+}
+
+void 
+DEMContact::write(zen::XmlOut& xml) const
+{
+  zen::XmlElement& root = xml.ref();
+  zen::XmlElement& child = root.addChild("contact");
+  zen::XmlOut xml_child(child);
+  xml_child.attribute("particle1", getP1()->getId());
+  xml_child.attribute("particle2", getP2()->getId());
+
+  auto point1 = getPoint1();
+  auto point2 = getPoint2();
+  auto center = (point1 + point2)/2;
+  writeVector("point1", point1, xml_child);
+  writeVector("point2", point2, xml_child);
+  writeScalar("radius1", radius1(), xml_child);
+  writeScalar("radius2", radius2(), xml_child);
+  writeScalar("penetration", getPenetration(), xml_child);
+  writeScalar("tangent_displacement", getTangentDisplacement(), xml_child);
+  writeScalar("contact_radius", getContactRadius() , xml_child);
+  writeScalar("R0", getR0() , xml_child);
+  writeScalar("E0", getE0() , xml_child);
+  writeScalar("normal_force_magnitude", getNormalForceMagnitude() , xml_child);
+  writeScalar("tangent_force_magnitude", getTangentForceMagnitude(), xml_child);
+  writeVector("center", center, xml_child);
+  writeVector("normal_force", getNormalForce(), xml_child);
+  writeVector("tangent_force", getTangentForce(), xml_child);
+  writeScalar("vibration_timestep", getVibrationTimeStep(), xml_child); 
+  writeScalar("impact_timestep", getImpactTimeStep(), xml_child);
+}
+
+void 
+DEMContact::writeScalar(const std::string& label,
+                        double variable,
+                        zen::XmlOut& xml) const
+{
+  xml[label](variable);
+}
+
+void 
+DEMContact::writeVector(const std::string& label,
+                        const Vec& variable,
+                        zen::XmlOut& xml) const
+{
+  std::ostringstream stream;
+  stream.setf(std::ios::scientific, std::ios::floatfield);
+  stream.precision(dem::OPREC);
+  stream << "["
+        << variable.x() << ", " << variable.y() << ", " << variable.z()
+        << "]";
+  xml[label](stream.str());
 }
 
 } // namespace dem ends

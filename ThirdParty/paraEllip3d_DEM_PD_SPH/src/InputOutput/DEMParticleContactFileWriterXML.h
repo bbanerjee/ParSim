@@ -22,36 +22,37 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef ELLIP3D_DEM_CONTACT_FILE_WRITER_CSV_H
-#define ELLIP3D_DEM_CONTACT_FILE_WRITER_CSV_H
+#ifndef ELLIP3D_DEM_PARTICLE_CONTACT_FILE_WRITER_XML_H
+#define ELLIP3D_DEM_PARTICLE_CONTACT_FILE_WRITER_XML_H
 
-#include <Boundary/BoundaryContainers.h>
 #include <DiscreteElements/DEMContainers.h>
 #include <Core/Const/Constants.h>
-#include <Core/Types/RealTypes.h>
-
-#include <fstream>
+#include <InputOutput/zenxml/xml.h>
 
 namespace dem {
 
-class DEMContactFileWriterCSV
+class DEMParticleContactFileWriterXML
 {
 
 public:
 
-  DEMContactFileWriterCSV(const std::string& outputFileName);
-  ~DEMContactFileWriterCSV();
+  DEMParticleContactFileWriterXML(MPI_Comm world,
+                                  const std::string& outputFileName);
+  ~DEMParticleContactFileWriterXML(); 
 
-  void writeBoundaryContacts(const BoundaryPArray& boundaries);
-  void writeParticleContacts(const DEMParticlePArray& particles);
+  void write(const DEMContactArray& contacts);
 
 private:
 
-  std::ofstream d_outputStream;
+  MPI_File d_contactFile;
 
-  DEMContactFileWriterCSV() = delete;
-  DEMContactFileWriterCSV(DEMContactFileWriterCSV const&) = delete;
-  void operator=(DEMContactFileWriterCSV const&) = delete;
+  zen::XmlDoc d_doc;
+  std::string d_outputFileName;
+
+  DEMParticleContactFileWriterXML() = delete;
+  DEMParticleContactFileWriterXML(DEMParticleContactFileWriterXML const&) = delete;
+  void operator=(DEMParticleContactFileWriterXML const&) = delete;
 };
 }
+
 #endif

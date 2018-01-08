@@ -20,8 +20,6 @@
 #include <InputOutput/Output.h>
 #include <InputOutput/OutputTecplot.h>
 #include <InputOutput/OutputVTK.h>
-#include <InputOutput/DEMContactFileWriterCSV.h>
-#include <InputOutput/DEMContactFileWriterXML.h>
 #include <boost/mpi.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/unique_ptr.hpp>
@@ -632,10 +630,10 @@ private:
   // only meaningful to root process
   std::size_t d_trimHistoryNum; 
 
-  ContactArray d_contacts; // contacts per process
+  DEMContactArray d_contacts; // contacts per process
 
   // tangential contact force and displacement per process
-  ContactTangentArray d_contactTangents; 
+  DEMContactTangentArray d_contactTangents; 
 
   // estimated total contact number, only meaningful to root process
   std::size_t d_allContactNum; 
