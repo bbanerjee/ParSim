@@ -219,19 +219,6 @@ PlaneBoundary::print(std::ostream& os)
 }
 
 void
-PlaneBoundary::printContactInfo(std::ostream& os)
-{
-  Boundary::printContactInfo(os);
-  os << std::setw(OWID) << " " << std::setw(OWID) << " " << std::setw(OWID)
-     << " " << std::setw(OWID) << b_normalForce.x() << std::setw(OWID) << b_normalForce.y()
-     << std::setw(OWID) << b_normalForce.z() << std::setw(OWID) << b_tangentForce.x()
-     << std::setw(OWID) << b_tangentForce.y() << std::setw(OWID) << b_tangentForce.z()
-     << std::setw(OWID) << b_penetration << std::endl
-     << std::endl;
-  ;
-}
-
-void
 PlaneBoundary::findBoundaryContacts(DEMParticlePArray& particles)
 {
   b_probableBoundaryParticles.clear();

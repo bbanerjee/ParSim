@@ -21,20 +21,6 @@ Boundary::print(std::ostream& os)
      << std::setw(OWID) << static_cast<int>(b_id);
 }
 
-void
-Boundary::printContactInfo(std::ostream& os)
-{
-  os << std::setw(OWID) << static_cast<int>(b_id) << std::endl
-     << std::setw(OWID) << b_contacts.size() << std::endl
-     << std::setw(OWID) << "pos_x" << std::setw(OWID) << "pos_y"
-     << std::setw(OWID) << "pos_z" << std::setw(OWID) << "normal_x"
-     << std::setw(OWID) << "normal_y" << std::setw(OWID) << "normal_z"
-     << std::setw(OWID) << "tangt_x" << std::setw(OWID) << "tangt_y"
-     << std::setw(OWID) << "tangt_z" << std::setw(OWID) << "pentr" << std::endl;
-
-  for (auto& it : b_contacts)
-    it.print(os);
-}
 
 void
 Boundary::clearStatForce()

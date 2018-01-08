@@ -26,6 +26,8 @@ private:
 
   DEMTetrahedronPArray createTessellation(const DEMParticlePArray& particles);
 
+  void computeBoundaryTractions();
+
 };
 }
 

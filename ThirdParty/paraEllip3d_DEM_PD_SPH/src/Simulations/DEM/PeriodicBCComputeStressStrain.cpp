@@ -85,6 +85,7 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
       std::cout << "DefGradRate: \n" << element->getDefGradRate() << "\n";
     }
 
+    computeBoundaryTractions();
   }
 }
 
@@ -130,4 +131,9 @@ PeriodicBCComputeStressStrain::createTessellation(
   }
 
   return elementArray;
+}
+
+void
+PeriodicBCComputeStressStrain::computeBoundaryTractions()
+{
 }

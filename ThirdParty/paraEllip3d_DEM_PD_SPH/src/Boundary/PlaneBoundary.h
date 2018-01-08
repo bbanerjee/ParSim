@@ -105,7 +105,6 @@ public:
                                const Vec& dispRate);
 
   void print(std::ostream& os) override;
-  void printContactInfo(std::ostream& os) override;
 
   void updateIsotropic(REAL sigma, REAL areaX, REAL areaY, REAL areaZ) override;
   void updateOdometer(REAL simga, REAL areaX, REAL areaY, REAL areaZ) override;

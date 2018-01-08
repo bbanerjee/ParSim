@@ -5,6 +5,7 @@
 #include <Core/Math/Vec.h>
 #include <Core/Types/RealTypes.h>
 #include <boost/serialization/base_object.hpp>
+#include <InputOutput/zenxml/xml.h>
 #include <iostream>
 #include <utility>
 
@@ -41,17 +42,21 @@ public:
   {
   }
 
-  void print(std::ostream& os)
-  {
-    os << std::setw(OWID) << bc_point.x() << std::setw(OWID) << bc_point.y()
-       << std::setw(OWID) << bc_point.z() << std::setw(OWID) << bc_normalForce.x()
-       << std::setw(OWID) << bc_normalForce.y() << std::setw(OWID) << bc_normalForce.z()
-       << std::setw(OWID) << bc_tangentForce.x() << std::setw(OWID) << bc_tangentForce.y()
-       << std::setw(OWID) << bc_tangentForce.z() << std::setw(OWID) << bc_penetration
-       << std::endl;
-  }
+  void write(std::ostream& os) const;
+  void write(zen::XmlOut& xml) const;
 
 private:
+
+  inline void writePosition(std::ostream& os) const;
+  inline void writeNormalForce(std::ostream& os) const;
+  inline void writeTangentForce(std::ostream& os) const;
+  inline void writePenetration(std::ostream& os) const;
+
+  void writePosition(zen::XmlOut& xml) const;
+  void writeNormalForce(zen::XmlOut& xml) const;
+  void writeTangentForce(zen::XmlOut& xml) const;
+  void writePenetration(zen::XmlOut& xml) const;
+
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive& ar, const unsigned int version)

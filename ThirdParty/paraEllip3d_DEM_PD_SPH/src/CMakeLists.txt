@@ -26,9 +26,13 @@
 #----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
 
+option(CLANG_ROOT_DIR "Clang root directory" "/usr/local")
+option(USE_CLANG "Use Clang compiler" OFF)
 if (USE_CLANG)
-  set(CMAKE_C_COMPILER "/usr/local/bin/clang")
-  set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
+  set(CMAKE_C_COMPILER "${CLANG_ROOT_DIR}/bin/clang")
+  set(CMAKE_CXX_COMPILER "${CLANG_ROOT_DIR}/bin/clang++")
+  #set(CMAKE_C_COMPILER "/usr/local/bin/clang")
+  #set(CMAKE_CXX_COMPILER "/usr/local/bin/clang++")
 endif ()
 
 project(PARAELLIP3D_DEM_PD_SPH CXX)
@@ -150,7 +154,11 @@ endif()
 # (Make sure the qhull libraries and includes are in qhull/build)
 #------------------------------------------------------------------------------
 set(QHULL_USE_STATIC ON)
-set(QHULL_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/qhull/build)
+if (USE_CLANG)
+  set(QHULL_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/qhull/build_clang)
+else (USE_CLANG)
+  set(QHULL_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/qhull/build)
+endif (USE_CLANG)
 find_package(Qhull REQUIRED)
 
 

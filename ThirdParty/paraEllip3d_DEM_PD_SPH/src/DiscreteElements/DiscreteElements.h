@@ -20,6 +20,8 @@
 #include <InputOutput/Output.h>
 #include <InputOutput/OutputTecplot.h>
 #include <InputOutput/OutputVTK.h>
+#include <InputOutput/DEMContactFileWriterCSV.h>
+#include <InputOutput/DEMContactFileWriterXML.h>
 #include <boost/mpi.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/unique_ptr.hpp>

@@ -24,11 +24,12 @@
 
 SET(DEM_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Boundary.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/PlaneBoundary.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/CylinderBoundary.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/BoundaryContact.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BoundaryFileReader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BoundaryFileWriter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BoundaryUtils.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/CylinderBoundary.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/PlaneBoundary.cpp
 )
 
 SET(ELLIP3D_SRCS

@@ -55,7 +55,7 @@ BoundaryFileReader::read(const std::string& inputFileName, Box& domain,
   //std::cout << " Boundaries = \n";
   for (auto boundary : boundaries) {
     boundary->print(//std::cout);
-    boundary->printContactInfo(//std::cout);
+    boundary->writeContactsCSV(//std::cout);
   }
   */
 }
@@ -164,7 +164,7 @@ BoundaryFileReader::readXML(const std::string& inputFileName, Box& domain,
   //std::cout << " Boundaries = \n";
   for (auto boundary : boundaries) {
     boundary->print(//std::cout);
-    boundary->printContactInfo(//std::cout);
+    boundary->writeContactsCSV(//std::cout);
   }
   */
 

@@ -1152,19 +1152,11 @@ DiscreteElements::printBoundary() const
 void
 DiscreteElements::printBoundaryContacts() const
 {
-  std::ofstream ofs(d_writer->getBdryContactFilename());
-  if (!ofs) {
-    debugInf << "stream error: printBoundaryContacts" << std::endl;
-    exit(-1);
-  }
-  ofs.setf(std::ios::scientific, std::ios::floatfield);
-  ofs.precision(OPREC);
+  DEMContactFileWriterCSV csv_writer(d_writer->getBdryContactFilename());
+  csv_writer.writeBoundaryContacts(d_mergedBoundaries);
 
-  for (const auto& it : d_mergedBoundaries) {
-    it->printContactInfo(ofs);
-  }
-
-  ofs.close();
+  DEMContactFileWriterXML xml_writer(d_writer->getBdryContactFilename());
+  xml_writer.writeBoundaryContacts(d_mergedBoundaries);
 }
 
 void

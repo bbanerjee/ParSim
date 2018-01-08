@@ -152,7 +152,6 @@ public:
   REAL getAvgPenetration() const { return b_penetration; }
 
   virtual void print(std::ostream& os);
-  virtual void printContactInfo(std::ostream& os);
   virtual void findBoundaryContacts(DEMParticlePArray& ptcls) = 0;
   virtual void boundaryForce(BoundaryTangentArrayMap& boundaryTangentMap,
                              REAL timeStep,
