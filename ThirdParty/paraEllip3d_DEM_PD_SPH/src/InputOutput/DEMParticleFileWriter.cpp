@@ -238,7 +238,7 @@ DEMParticleFileWriter::writeParticleValues(zen::XmlElement& element,
   xml_child.attribute("numComponents", numComponents);
 
   std::string str;
-  if (!Ellip3D::Util::compressAndEncode<T>(particleData, numComponents, str)) {
+  if (!Ellip3D::IOUtil::compressAndEncode<T>(particleData, numComponents, str)) {
     std::cerr << "**ERROR**: Could compresse and encode particle data for "
               << name << " in " 
               << __FILE__ << ":" << __LINE__

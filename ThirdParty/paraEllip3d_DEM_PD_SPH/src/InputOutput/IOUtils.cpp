@@ -14,7 +14,7 @@ using IntVec = dem::IntVec;
 using Vec = dem::Vec;
 
 namespace Ellip3D {
-namespace Util {
+namespace IOUtil {
 
 template <typename T>
 bool
@@ -140,6 +140,15 @@ compressAndEncode(const std::vector<T>& inputVec,
   outputStr = base64::encode(compressedStr);
 
   return true;
+}
+
+template <>
+bool
+convert<bool>(const std::string& str)
+{
+  bool val;
+  std::istringstream(str) >> std::boolalpha >> val;
+  return val;
 }
 
 template <>
@@ -323,5 +332,5 @@ template
 std::vector<REAL>
 convertStrArray<REAL>(const std::string& str);
 
-} // end namespace Util
+} // end namespace IOUtil
 } // end namespace Ellip3D

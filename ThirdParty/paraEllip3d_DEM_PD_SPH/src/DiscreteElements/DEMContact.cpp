@@ -19,55 +19,20 @@ DEMContact::DEMContact()
 {
   d_p1 = nullptr;
   d_p2 = nullptr;
-  d_penetration = 0;
-  d_contactRadius = 0;
-  d_point1 = d_point2 = 0;
-  d_radius1 = d_radius2 = 0;
-  d_normalDirection = d_tangentDirection = 0;
-
-  d_isInContact = false;
-  d_tangentLoadingActive = d_prevTangentLoadingActive = true;
-  d_normalForce = d_prevNormalForce = 0;
-  d_tangentForce = d_prevTangentForce = 0;
-  d_tangentDisplacement = d_prevTangentDisplacement = 0;
-  d_tangentDisplacementStart = 0;
-  d_tangentSlidingActive = d_prevTangentSlidingActive = false;
-  d_tangentForcePeak = 0;
-
-  d_cohesionForce = 0;
-  d_spinResist = 0;
-
-  d_E0 = d_G0 = d_R0 = 0;
-  d_vibrationTimeStep = std::numeric_limits<double>::max();
-  d_impactTimeStep = d_vibrationTimeStep;
 }
 
 DEMContact::DEMContact(DEMParticle* t1, DEMParticle* t2)
 {
   d_p1 = t1;
   d_p2 = t2;
-  d_penetration = 0;
-  d_contactRadius = 0;
-  d_point1 = d_point2 = 0;
-  d_radius1 = d_radius2 = 0;
-  d_normalDirection = d_tangentDirection = 0;
+}
 
-  d_isInContact = false;
-  d_tangentLoadingActive = d_prevTangentLoadingActive = true;
-  d_normalForce = d_prevNormalForce = 0;
-  d_tangentForce = d_prevTangentForce = 0;
-  d_tangentDisplacement = d_prevTangentDisplacement = 0;
-  d_tangentDisplacementStart = 0;
-  d_tangentSlidingActive = d_prevTangentSlidingActive = false;
-  d_tangentForcePeak = 0;
-
-  d_cohesionForce = 0;
-  d_spinResist = 0;
-
-  d_E0 = d_G0 = d_R0 = 0;
-
-  d_vibrationTimeStep = std::numeric_limits<double>::max();
-  d_impactTimeStep = d_vibrationTimeStep;
+DEMContact::DEMContact(DEMParticle* t1, DEMParticle* t2,
+                       const DEMContactData& data)
+{
+  d_p1 = t1;
+  d_p2 = t2;
+  d_data = data;
 }
 
 bool
@@ -113,21 +78,21 @@ DEMContact::isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap,
   d_p1->getGlobalCoef(coef1); 
   d_p2->getGlobalCoef(coef2);
 
-  d_radius1 = d_p1->computeRadius(d_point1);
-  d_radius2 = d_p2->computeRadius(d_point2);
-  auto maxRadius = std::max(d_radius1, d_radius2);
+  d_data.radius1 = d_p1->computeRadius(d_data.point1);
+  d_data.radius2 = d_p2->computeRadius(d_data.point2);
+  auto maxRadius = std::max(d_data.radius1, d_data.radius2);
 
   Vec v[2];
 #ifdef USE_ROOT6_OLD
-  bool b1 = root6_old(coef1, coef2, v[0], d_radius1, d_p1->getId(), d_p2->getId());
-  bool b2 = root6_old(coef2, coef1, v[1], d_radius2, d_p2->getId(), d_p1->getId());
+  bool b1 = root6_old(coef1, coef2, v[0], d_data.radius1, d_p1->getId(), d_p2->getId());
+  bool b2 = root6_old(coef2, coef1, v[1], d_data.radius2, d_p2->getId(), d_p1->getId());
 #else
-  bool b1 = root6(coef1, coef2, v[0], d_radius1, d_p1->getId(), d_p2->getId());
-  bool b2 = root6(coef2, coef1, v[1], d_radius2, d_p2->getId(), d_p1->getId());
+  bool b1 = root6(coef1, coef2, v[0], d_data.radius1, d_p1->getId(), d_p2->getId());
+  bool b2 = root6(coef2, coef1, v[1], d_data.radius2, d_p2->getId(), d_p1->getId());
 #endif
-  d_point1 = v[1];
-  d_point2 = v[0];
-  d_penetration = vnormL2(d_point1 - d_point2);
+  d_data.point1 = v[1];
+  d_data.point2 = v[0];
+  d_data.penetration = vnormL2(d_data.point1 - d_data.point2);
   /*
   if ((d_p1->getId() == 2 && d_p2->getId() == 94) ||
       (d_p1->getId() == 94 && d_p2->getId() == 2)) {
@@ -142,25 +107,25 @@ DEMContact::isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap,
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     //std::cout << " MPI_Rank = " << world_rank << " Particles "
     //          << " p1 = " << d_p1->getId() << " p2 = " << d_p2->getId()
-    //          << " d_penetration = " << d_penetration << "\n"
+    //          << " d_penetration = " << d_data.penetration << "\n"
     //          << " \t Pos1 = " << d_p1->currentPosition()
     //          << " \t Pos2 = " << d_p2->currentPosition() << "\n"
     //          << " \t b1 = " << b1 << " b2 = " << b2 << "\n"
     //          << " \t coef1 = [" << printCoef(coef1) << "] \n"
     //          << " \t coef2 = [" << printCoef(coef2) << "] \n"
-    //          << " \t point1 = " << d_point1 << " point2 = " << d_point2 << "\n"
+    //          << " \t point1 = " << d_data.point1 << " point2 = " << d_data.point2 << "\n"
     //          << " \t point1_old = " << v2_old
     //          << " point2_old = " << v1_old
-    //          << " radius1 = " << d_radius1 << " radius2 = " << d_radius2
+    //          << " radius1 = " << d_data.radius1 << " radius2 = " << d_data.radius2
     //          << "\n";
   }
   */
 
-  d_isInContact = false;
+  d_data.isInContact = false;
 
   if (b1 && b2 &&
-      d_penetration / (2 * maxRadius) > minRelativeOverlap &&
-      nearbyint(d_penetration / measurableOverlap) >= 1) { 
+      d_data.penetration / (2 * maxRadius) > minRelativeOverlap &&
+      nearbyint(d_data.penetration / measurableOverlap) >= 1) { 
     // a strict detection method
     //if (d_p1->getId() == 284 || d_p2->getId() == 284) {
     //  std::cout << "Iteration = " << iteration
@@ -170,13 +135,13 @@ DEMContact::isOverlapped(REAL minRelativeOverlap, REAL measurableOverlap,
     //            << static_cast<int>(d_p2->getType()) << ")"
     //            << " b1 = " << std::boolalpha << b1
     //            << " b2 = " << std::boolalpha << b2
-    //            << " penetration = " << d_penetration
+    //            << " penetration = " << d_data.penetration
     //            << " maxRadius = " << maxRadius << "\n";
     //}
-    d_isInContact = true;
+    d_data.isInContact = true;
   } 
 
-  return d_isInContact;
+  return d_data.isInContact;
 }
 
 void
@@ -185,18 +150,18 @@ DEMContact::checkinPreviousContactTangents(DEMContactTangentArray& contactTangen
   for (auto& tangent : contactTangentVec) {
     if (tangent.ct_particle1 == d_p1->getId() && 
         tangent.ct_particle2 == d_p2->getId()) {
-      d_prevTangentForce = tangent.ct_tangentForce;
-      d_prevTangentDisplacement = tangent.ct_tangentDisplacement;
-      d_prevTangentLoadingActive = tangent.ct_tangentLoadingActive;
-      d_tangentDisplacementStart = tangent.ct_tangentDispStart;
-      d_tangentForcePeak = tangent.ct_tangentForcePeak;
-      d_prevTangentSlidingActive = tangent.ct_tangentSlidingActive;
+      d_data.prevTangentForce = tangent.ct_tangentForce;
+      d_data.prevTangentDisplacement = tangent.ct_tangentDisplacement;
+      d_data.prevTangentLoadingActive = tangent.ct_tangentLoadingActive;
+      d_data.tangentDisplacementStart = tangent.ct_tangentDispStart;
+      d_data.tangentForcePeak = tangent.ct_tangentForcePeak;
+      d_data.prevTangentSlidingActive = tangent.ct_tangentSlidingActive;
       /*
       if ((it.d_particle1 == 2 && it.d_particle2 == 94) ||
           (it.d_particle1 == 94 && it.d_particle2 == 2)) {
         //std::cout << "DEMContact tangents: " << std::setprecision(16)
-        //          << " TangentForce =  " << d_prevTangentForce
-        //          << " TangentDisp =  " << d_prevTangentDisplacement << "\n";
+        //          << " TangentForce =  " << d_data.prevTangentForce
+        //          << " TangentDisp =  " << d_data.prevTangentDisplacement << "\n";
       }
       */
       break;
@@ -207,9 +172,10 @@ DEMContact::checkinPreviousContactTangents(DEMContactTangentArray& contactTangen
 void
 DEMContact::checkoutContactTangents(DEMContactTangentArray& contactTangentVec)
 {
-  contactTangentVec.push_back(DEMContactTangent(d_p1->getId(), d_p2->getId(), d_tangentForce,
-                                     d_tangentDisplacement, d_tangentLoadingActive, d_tangentDisplacementStart,
-                                     d_tangentForcePeak, d_tangentSlidingActive));
+  contactTangentVec.push_back(DEMContactTangent(d_p1->getId(), d_p2->getId(), 
+    d_data.tangentForce, d_data.tangentDisplacement, d_data.tangentLoadingActive, 
+    d_data.tangentDisplacementStart, d_data.tangentForcePeak, 
+    d_data.tangentSlidingActive));
 }
 
 // isOverlapped() has been called in findContact() in dem.cpp and
@@ -222,20 +188,20 @@ DEMContact::computeContactForces(REAL timeStep, std::size_t iteration,
                                  REAL friction, REAL maxOverlapFactor,
                                  REAL minMeasurableOverlap)
 {
-  if (!d_isInContact) {
-    d_isInContact = false;
-    d_tangentLoadingActive = false;
-    d_tangentForcePeak = 0;
-    d_normalForce = 0;
-    d_tangentForce = 0;
-    d_tangentDisplacement = 0; // total value
-    d_normalDirection = 0;
-    d_tangentDirection = 0;
+  if (!d_data.isInContact) {
+    d_data.isInContact = false;
+    d_data.tangentLoadingActive = false;
+    d_data.tangentForcePeak = 0;
+    d_data.normalForce = 0;
+    d_data.tangentForce = 0;
+    d_data.tangentDisplacement = 0; // total value
+    d_data.normalDirection = 0;
+    d_data.tangentDirection = 0;
 
-    d_penetration = 0;
-    d_contactRadius = 0;
-    d_radius1 = d_radius2 = 0;
-    d_spinResist = 0;
+    d_data.penetration = 0;
+    d_data.contactRadius = 0;
+    d_data.radius1 = d_data.radius2 = 0;
+    d_data.spinResist = 0;
     return 0;
   }
 
@@ -249,7 +215,7 @@ DEMContact::computeContactForces(REAL timeStep, std::size_t iteration,
     //          << " id = " << d_p1->getId() << " " << d_p2->getId() << "\n\t"
     //          << " f1 = " << d_p1->force() << "\n\t"
     //          << " f2 = " << d_p2->force() << "\n\t"
-    //          << " d_penetration=" << d_penetration << "\n\t" << "\n";
+    //          << " d_penetration=" << d_data.penetration << "\n\t" << "\n";
   }
   */
 
@@ -259,13 +225,13 @@ DEMContact::computeContactForces(REAL timeStep, std::size_t iteration,
   d_p1->setInContact(true);
   d_p2->setInContact(true);
 
-  d_R0 = d_radius1 * d_radius2 / (d_radius1 + d_radius2);
-  d_E0 = stiffness;
+  d_data.R0 = d_data.radius1 * d_data.radius2 / (d_data.radius1 + d_data.radius2);
+  d_data.E0 = stiffness;
   auto poissonRatio = 1 - shearModulus/stiffness;
 
-  REAL allowedOverlap = 2.0 * std::min(d_radius1, d_radius2) * maxOverlapFactor;
+  REAL allowedOverlap = 2.0 * std::min(d_data.radius1, d_data.radius2) * maxOverlapFactor;
   int excessiveOverlap = 0;
-  if (d_penetration > allowedOverlap) {
+  if (d_data.penetration > allowedOverlap) {
     std::stringstream inf;
     inf.setf(std::ios::scientific, std::ios::floatfield);
     inf << " DEMContact.cpp: " << std::setw(4) << __LINE__ << ":"
@@ -274,50 +240,50 @@ DEMContact::computeContactForces(REAL timeStep, std::size_t iteration,
         << ", " << std::setw(2) << static_cast<int>(getP1()->getType()) << ")"
         << " ptcl2=(" << std::setw(8) << getP2()->getId()
         << ", " << std::setw(2) << static_cast<int>(getP2()->getType()) << ")"
-        << " d_penetration=" << std::setw(OWID) << d_penetration
+        << " d_penetration=" << std::setw(OWID) << d_data.penetration
         << " allow=" << std::setw(OWID) << allowedOverlap << std::endl;
     MPI_Status status;
     //int length = OWID * 2 + 8 * 3 + 19 + 7 * 3 + 8 + 1;
     MPI_File_write_shared(overlapInf, const_cast<char*>(inf.str().c_str()),
                           inf.str().length(), MPI_CHAR, &status);
 
-    //d_penetration = allowedOverlap;
+    //d_data.penetration = allowedOverlap;
     excessiveOverlap = 1;
   }
 
-  //d_penetration = 
-  //  nearbyint(d_penetration / minMeasurableOverlap) * minMeasurableOverlap;
+  //d_data.penetration = 
+  //  nearbyint(d_data.penetration / minMeasurableOverlap) * minMeasurableOverlap;
 
-  d_contactRadius = std::sqrt(d_penetration * d_R0);
+  d_data.contactRadius = std::sqrt(d_data.penetration * d_data.R0);
   // d_normalDirection points from particle 1 to particle 2
-  d_normalDirection = normalize(d_point1 - d_point2);
-  // normalForce pointing to particle 1 // pow(d_penetration, 1.5)
-  d_normalForce = -std::sqrt(d_penetration * d_penetration * d_penetration) * 
-                   std::sqrt(d_R0) * 4 * d_E0 / 3 * d_normalDirection;
-  auto kn = computeNormalStiffness(d_normalForce, d_R0, d_E0);
+  d_data.normalDirection = normalize(d_data.point1 - d_data.point2);
+  // normalForce pointing to particle 1 // pow(d_data.penetration, 1.5)
+  d_data.normalForce = -std::sqrt(d_data.penetration * d_data.penetration * d_data.penetration) * 
+                   std::sqrt(d_data.R0) * 4 * d_data.E0 / 3 * d_data.normalDirection;
+  auto kn = computeNormalStiffness(d_data.normalForce, d_data.R0, d_data.E0);
 
-  d_cohesionForce = Pi * (d_penetration * d_R0) * cohesion * d_normalDirection;
+  d_data.cohesionForce = Pi * (d_data.penetration * d_data.R0) * cohesion * d_data.normalDirection;
 
   REAL m1 = getP1()->mass();
   REAL m2 = getP2()->mass();
 
-  Vec midPoint = (d_point1 + d_point2) / 2;
+  Vec midPoint = (d_data.point1 + d_data.point2) / 2;
   Vec pVelocity1 = computeVelocity(d_p1, midPoint);
   Vec pVelocity2 = computeVelocity(d_p2, midPoint);
   Vec relativeVel = pVelocity1 - pVelocity2;
 
   auto contactDampingForce = computeDampingForce(m1, m2, relativeVel,
-                                                 damping, kn, d_normalDirection);
+                                                 damping, kn, d_data.normalDirection);
 
-  updateTimestep(m1, m2, relativeVel, kn, d_normalDirection, allowedOverlap);
+  updateTimestep(m1, m2, relativeVel, kn, d_data.normalDirection, allowedOverlap);
 
   if (friction != 0) {
     computeTangentForce(timeStep, iteration, shearModulus, poissonRatio,
-                        friction, d_contactRadius, relativeVel,
-                        d_normalDirection, d_normalForce);
+                        friction, d_data.contactRadius, relativeVel,
+                        d_data.normalDirection, d_data.normalForce);
   }
 
-  updateForceAndMoment(d_normalForce, d_tangentForce, d_cohesionForce, 
+  updateForceAndMoment(d_data.normalForce, d_data.tangentForce, d_data.cohesionForce, 
                        contactDampingForce, midPoint, d_p1, d_p2);
 
   return excessiveOverlap;
@@ -345,15 +311,15 @@ DEMContact::updateTimestep(REAL pMass1, REAL pMass2,
                            REAL normalStiffness, const Vec& contactNormal,
                            REAL allowedOverlap)
 {
-  d_vibrationTimeStep = 
+  d_data.vibrationTimeStep = 
     2 * std::sqrt(pMass1 * pMass2 / ((pMass1 + pMass2) * normalStiffness));
-  d_impactTimeStep =
+  d_data.impactTimeStep =
     (relativeVel.lengthSq() < std::numeric_limits<double>::min())
       ? std::numeric_limits<double>::max()
       : allowedOverlap / std::abs(dot(relativeVel, contactNormal));
   //std::cout << "normalStiffness = " << normalStiffness
-  //          << " t_v = " << d_vibrationTimeStep
-  //          << " t_i = " << d_impactTimeStep << "\n";
+  //          << " t_v = " << d_data.vibrationTimeStep
+  //          << " t_i = " << d_data.impactTimeStep << "\n";
 }
 
 // Compute the tangential force
@@ -372,12 +338,12 @@ DEMContact::computeTangentForce(REAL timeStep, std::size_t iteration,
   Vec tangentDispInc = dispInc - dot(dispInc, contactNormal) * contactNormal;
 
   // prevTangentDisp read by checkinPreviousContactTangents()
-  d_tangentDisplacement = d_prevTangentDisplacement + tangentDispInc;
-  if (vnormL2(d_tangentDisplacement) == 0) {
-    d_tangentDirection = 0;
+  d_data.tangentDisplacement = d_data.prevTangentDisplacement + tangentDispInc;
+  if (vnormL2(d_data.tangentDisplacement) == 0) {
+    d_data.tangentDirection = 0;
   } else {
     // tangentDirc points along Tangentential forces exerted on particle 1
-    d_tangentDirection = normalize(-d_tangentDisplacement);
+    d_data.tangentDirection = normalize(-d_data.tangentDisplacement);
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -386,9 +352,9 @@ DEMContact::computeTangentForce(REAL timeStep, std::size_t iteration,
   REAL ks = 4 * shearModulus * contactRadius / (2 - poissonRatio);
 
   // d_prevTangentForce read by CheckinPreTangent()
-  d_tangentForce = d_prevTangentForce + ks * (-tangentDispInc);
-  if (vnormL2(d_tangentForce) > fp) {
-    d_tangentForce = fp * d_tangentDirection;
+  d_data.tangentForce = d_data.prevTangentForce + ks * (-tangentDispInc);
+  if (vnormL2(d_data.tangentForce) > fp) {
+    d_data.tangentForce = fp * d_data.tangentDirection;
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -420,9 +386,9 @@ DEMContact::updateForceAndMoment(const Vec& normalForce, const Vec& tangentForce
   p2->addForceIDMap(-totalForce, particle1);
   p2->addMomentIDMap(-totalMoment, particle1);
 
-  //std::cout << " cohesionForce=" << d_cohesionForce << "\n\t"
-  //          << " normalForce=" << d_normalForce << "\n\t"
-  //          << " tangentForce =" << d_tangentForce << "\n\t"
+  //std::cout << " cohesionForce=" << d_data.cohesionForce << "\n\t"
+  //          << " normalForce=" << d_data.normalForce << "\n\t"
+  //          << " tangentForce =" << d_data.tangentForce << "\n\t"
   //          << " dampingForce = " << contactDampingForce << "\n\t"
   //          << " totalForce = " << totalForce << "\n\t"
   //          << " totalMoment = " << totalMoment << "\n\t"
@@ -441,51 +407,55 @@ DEMContact::computeTangentForceMindlinAssumed(const REAL& contactFric,
                                            const Vec& tangentDispInc)
 {
   REAL val = 0, ks = 0;
-  REAL fP = contactFric * vnormL2(d_normalForce);
-  d_tangentLoadingActive = (dot(d_prevTangentDisplacement, tangentDispInc) >= 0);
+  REAL fP = contactFric * vnormL2(d_data.normalForce);
+  d_data.tangentLoadingActive = (dot(d_data.prevTangentDisplacement, tangentDispInc) >= 0);
 
-  if (d_tangentLoadingActive) {        // loading
-    if (!d_prevTangentLoadingActive) { // pre-step is unloading
-      val = 8 * d_G0 * d_contactRadius * vnormL2(tangentDispInc) /
-            (3 * (2 - poisson) * fP);
-      d_tangentDisplacementStart = d_prevTangentDisplacement;
-    } else // pre-step is loading
-      val = 8 * d_G0 * d_contactRadius * vnormL2(d_tangentDisplacement - d_tangentDisplacementStart) /
-            (3 * (2 - poisson) * fP);
+  if (d_data.tangentLoadingActive) {        // loading
+    if (!d_data.prevTangentLoadingActive) { // pre-step is unloading
+      val = 8 * d_data.G0 * d_data.contactRadius * vnormL2(tangentDispInc) /
+        (3 * (2 - poisson) * fP);
+      d_data.tangentDisplacementStart = d_data.prevTangentDisplacement;
+    } else { // pre-step is loading
+      val = 8 * d_data.G0 * d_data.contactRadius * 
+        vnormL2(d_data.tangentDisplacement - d_data.tangentDisplacementStart) /
+        (3 * (2 - poisson) * fP);
+    }
 
     if (val > 1.0)
-      d_tangentForce = fP * d_tangentDirection;
+      d_data.tangentForce = fP * d_data.tangentDirection;
     else {
-      ks = 4 * d_G0 * d_contactRadius / (2 - poisson) * sqrt(1 - val);
+      ks = 4 * d_data.G0 * d_data.contactRadius / (2 - poisson) * sqrt(1 - val);
       // incremental method
-      d_tangentForce =
-        d_prevTangentForce + ks * (-tangentDispInc); // tangentDispInc determines signs
-      // total value method: tangentForce = fP*(1-pow(1-val, 1.5))*d_tangentDirection;
+      // tangentDispInc determines signs
+      d_data.tangentForce = d_data.prevTangentForce + ks * (-tangentDispInc); 
+      // total value method: tangentForce = fP*(1-pow(1-val, 1.5))*d_data.tangentDirection;
     }
   } else {                  // unloading
-    if (d_prevTangentLoadingActive) { // pre-step is loading
-      val = 8 * d_G0 * d_contactRadius * vnormL2(d_tangentDisplacement - d_tangentDisplacementStart) /
-            (3 * (2 - poisson) * fP);
-      d_tangentForcePeak = vnormL2(d_prevTangentForce);
+    if (d_data.prevTangentLoadingActive) { // pre-step is loading
+      val = 8 * d_data.G0 * d_data.contactRadius * 
+        vnormL2(d_data.tangentDisplacement - d_data.tangentDisplacementStart) /
+        (3 * (2 - poisson) * fP);
+      d_data.tangentForcePeak = vnormL2(d_data.prevTangentForce);
     } else // pre-step is unloading
-      val = 8 * d_G0 * d_contactRadius * vnormL2(d_tangentDisplacement - d_tangentDisplacementStart) /
-            (3 * (2 - poisson) * fP);
+      val = 8 * d_data.G0 * d_data.contactRadius * 
+        vnormL2(d_data.tangentDisplacement - d_data.tangentDisplacementStart) /
+        (3 * (2 - poisson) * fP);
 
-    if (val > 1.0 || d_tangentForcePeak > fP)
-      d_tangentForce = fP * d_tangentDirection;
+    if (val > 1.0 || d_data.tangentForcePeak > fP)
+      d_data.tangentForce = fP * d_data.tangentDirection;
     else {
-      ks = 2 * sqrt(2) * d_G0 * d_contactRadius / (2 - poisson) *
-           sqrt(1 + pow(1 - d_tangentForcePeak / fP, 2.0 / 3.0) + val);
+      ks = 2 * sqrt(2) * d_data.G0 * d_data.contactRadius / (2 - poisson) *
+           sqrt(1 + pow(1 - d_data.tangentForcePeak / fP, 2.0 / 3.0) + val);
       // incremental method
-      d_tangentForce =
-        d_prevTangentForce + ks * (-tangentDispInc); // tangentDispInc determines signs
-      // total value method: d_tangentForce = (d_tangentForcePeak-2*fP*(1-sqrt(2)/4*pow(1+
-      // pow(1-d_tangentForcePeak/fP,2.0/3.0) + val,1.5)))*d_tangentDirection;
+      d_data.tangentForce =
+        d_data.prevTangentForce + ks * (-tangentDispInc); // tangentDispInc determines signs
+      // total value method: d_data.tangentForce = (d_data.tangentForcePeak-2*fP*(1-sqrt(2)/4*pow(1+
+      // pow(1-d_data.tangentForcePeak/fP,2.0/3.0) + val,1.5)))*d_data.tangentDirection;
     }
   }
 
-  if (vnormL2(d_tangentForce) > fP)
-    d_tangentForce = fP * d_tangentDirection;
+  if (vnormL2(d_data.tangentForce) > fP)
+    d_data.tangentForce = fP * d_data.tangentDirection;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -502,50 +472,52 @@ DEMContact::computeTangentForceMindlinKnown(const REAL& contactFric,
                                             std::size_t iteration)
 {
   REAL val = 0, ks = 0;
-  REAL fP = contactFric * vnormL2(d_normalForce);
-  if (d_prevTangentSlidingActive)
-    val =
-      8 * d_G0 * d_contactRadius * vnormL2(tangentDispInc) / (3 * (2 - poisson) * fP);
-  else
-    val = 8 * d_G0 * d_contactRadius * vnormL2(d_tangentDisplacement - d_tangentDisplacementStart) /
-          (3 * (2 - poisson) * fP);
+  REAL fP = contactFric * vnormL2(d_data.normalForce);
+  if (d_data.prevTangentSlidingActive) {
+    val = 8 * d_data.G0 * d_data.contactRadius * 
+      vnormL2(tangentDispInc) / (3 * (2 - poisson) * fP);
+  } else {
+    val = 8 * d_data.G0 * d_data.contactRadius * 
+      vnormL2(d_data.tangentDisplacement - d_data.tangentDisplacementStart) /
+      (3 * (2 - poisson) * fP);
+  }
 
   if (iteration > 10000 &&
       iteration < 11000) { // loading (and possible sliding)
     if (val > 1.0) {
-      d_tangentForce = fP * d_tangentDirection;
-      d_tangentSlidingActive = true;
+      d_data.tangentForce = fP * d_data.tangentDirection;
+      d_data.tangentSlidingActive = true;
     } else {
-      if (!d_prevTangentSlidingActive) {
-        ks = 4 * d_G0 * d_contactRadius / (2 - poisson) * sqrt(1 - val);
-        d_tangentForce =
-          d_prevTangentForce + ks * (-tangentDispInc); // tangentDispInc determines signs
-        d_tangentSlidingActive = false;
+      if (!d_data.prevTangentSlidingActive) {
+        ks = 4 * d_data.G0 * d_data.contactRadius / (2 - poisson) * sqrt(1 - val);
+        d_data.tangentForce =
+          d_data.prevTangentForce + ks * (-tangentDispInc); // tangentDispInc determines signs
+        d_data.tangentSlidingActive = false;
       } else {
-        if (vnormL2(d_tangentForce) > vnormL2(d_prevTangentForce))
-          d_tangentSlidingActive = true;
+        if (vnormL2(d_data.tangentForce) > vnormL2(d_data.prevTangentForce))
+          d_data.tangentSlidingActive = true;
         else
-          d_tangentSlidingActive = false;
+          d_data.tangentSlidingActive = false;
       }
     }
-    d_tangentForcePeak = vnormL2(d_tangentForce);
+    d_data.tangentForcePeak = vnormL2(d_data.tangentForce);
   } else { // (possible sliding and) unloading
-    if (val > 1.0 || d_tangentForcePeak > fP) {
-      d_tangentForce = fP * d_tangentDirection;
-      d_tangentSlidingActive = true;
+    if (val > 1.0 || d_data.tangentForcePeak > fP) {
+      d_data.tangentForce = fP * d_data.tangentDirection;
+      d_data.tangentSlidingActive = true;
     } else {
-      if (!d_prevTangentSlidingActive) {
-        ks = 2 * sqrt(2) * d_G0 * d_contactRadius / (2 - poisson) *
-             sqrt(1 + pow(1 - d_tangentForcePeak / fP, 2.0 / 3.0) + val);
-        d_tangentForce =
-          d_prevTangentForce + ks * (-tangentDispInc); // tangentDispInc determines signs
-        d_tangentSlidingActive = false;
+      if (!d_data.prevTangentSlidingActive) {
+        ks = 2 * sqrt(2) * d_data.G0 * d_data.contactRadius / (2 - poisson) *
+             sqrt(1 + pow(1 - d_data.tangentForcePeak / fP, 2.0 / 3.0) + val);
+        d_data.tangentForce =
+          d_data.prevTangentForce + ks * (-tangentDispInc); // tangentDispInc determines signs
+        d_data.tangentSlidingActive = false;
       } else {
-        if (vnormL2(d_tangentForce) > vnormL2(d_prevTangentForce))
-          d_tangentSlidingActive = true;
+        if (vnormL2(d_data.tangentForce) > vnormL2(d_data.prevTangentForce))
+          d_data.tangentSlidingActive = true;
         else {
-          d_tangentSlidingActive = false;
-          d_tangentDisplacementStart = d_tangentDisplacement;
+          d_data.tangentSlidingActive = false;
+          d_data.tangentDisplacementStart = d_data.tangentDisplacement;
         }
       }
     }
@@ -553,18 +525,18 @@ DEMContact::computeTangentForceMindlinKnown(const REAL& contactFric,
 
   /*
         //std::cout<< "DEMContact.h: iter="<iteration
-                 << " prevTangentSlide=" << d_prevTangentSlidingActive
-                 << " tangentSlide=" << d_tangentSlidingActive
+                 << " prevTangentSlide=" << d_data.prevTangentSlidingActive
+                 << " tangentSlide=" << d_data.tangentSlidingActive
                  << " val=" << val
                  << " ks=" << ks
                  << " tangentDispInc.x=" << tangentDispInc.x()
-                 << " d_prevTangentForce=" << vnormL2(d_prevTangentForce)
-                 << " d_tangentForce" << vnormL2(d_tangentForce)
+                 << " d_data.prevTangentForce=" << vnormL2(d_data.prevTangentForce)
+                 << " d_data.tangentForce" << vnormL2(d_data.tangentForce)
                  << std::endl;
         */
 
-  if (vnormL2(d_tangentForce) > fP)
-    d_tangentForce = fP * d_tangentDirection;
+  if (vnormL2(d_data.tangentForce) > fP)
+    d_data.tangentForce = fP * d_data.tangentDirection;
 }
 
 void 
@@ -612,39 +584,89 @@ DEMContact::write(zen::XmlOut& xml) const
   xml_child.attribute("particle1", getP1()->getId());
   xml_child.attribute("particle2", getP2()->getId());
 
-  auto point1 = getPoint1();
-  auto point2 = getPoint2();
-  auto center = (point1 + point2)/2;
-  writeVector("point1", point1, xml_child);
-  writeVector("point2", point2, xml_child);
-  writeScalar("radius1", radius1(), xml_child);
-  writeScalar("radius2", radius2(), xml_child);
-  writeScalar("penetration", getPenetration(), xml_child);
-  writeScalar("tangent_displacement", getTangentDisplacement(), xml_child);
-  writeScalar("contact_radius", getContactRadius() , xml_child);
-  writeScalar("R0", getR0() , xml_child);
-  writeScalar("E0", getE0() , xml_child);
-  writeScalar("normal_force_magnitude", getNormalForceMagnitude() , xml_child);
-  writeScalar("tangent_force_magnitude", getTangentForceMagnitude(), xml_child);
-  writeVector("center", center, xml_child);
-  writeVector("normal_force", getNormalForce(), xml_child);
-  writeVector("tangent_force", getTangentForce(), xml_child);
-  writeScalar("vibration_timestep", getVibrationTimeStep(), xml_child); 
-  writeScalar("impact_timestep", getImpactTimeStep(), xml_child);
+  d_data.write(xml_child);
+}
+
+DEMContactData::DEMContactData()
+{
+  penetration = 0;
+  contactRadius = 0;
+  point1 = point2 = 0;
+  radius1 = radius2 = 0;
+  normalDirection = tangentDirection = 0;
+
+  isInContact = false;
+  tangentLoadingActive = prevTangentLoadingActive = true;
+  normalForce = prevNormalForce = 0;
+  tangentForce = prevTangentForce = 0;
+  tangentDisplacement = prevTangentDisplacement = 0;
+  tangentDisplacementStart = 0;
+  tangentSlidingActive = prevTangentSlidingActive = false;
+  tangentForcePeak = 0;
+
+  cohesionForce = 0;
+  spinResist = 0;
+
+  E0 = G0 = R0 = 0;
+  vibrationTimeStep = std::numeric_limits<double>::max();
+  impactTimeStep = vibrationTimeStep;
+}
+
+void
+DEMContactData::write(zen::XmlOut& xml) const
+{
+  writeVector("point1", point1, xml);
+  writeVector("point2", point2, xml);
+  writeVector("normal_force", normalForce, xml);
+  writeVector("normal_force_prev", prevNormalForce, xml);
+  writeVector("tangent_force", tangentForce, xml);
+  writeVector("tangent_force_prev", prevTangentForce, xml);
+  writeVector("tangent_displacement", tangentDisplacement, xml);
+  writeVector("tangent_displacement_start", tangentDisplacementStart, xml);
+  writeVector("tangent_displacement_prev", prevTangentDisplacement, xml);
+  writeVector("normal_direction", normalDirection, xml);
+  writeVector("tangent_direction", tangentDirection, xml);
+  writeVector("cohesion_force", cohesionForce, xml);
+  writeVector("spin_resistance", spinResist, xml);
+
+  writeScalar("radius1", radius1, xml);
+  writeScalar("radius2", radius2, xml);
+  writeScalar("penetration", penetration, xml);
+  writeScalar("contact_radius", contactRadius , xml);
+  writeScalar("R0", R0 , xml);
+  writeScalar("E0", E0 , xml);
+  writeScalar("G0", G0 , xml);
+  writeScalar("tangent_force_peak", tangentForcePeak, xml);
+  writeScalar("vibration_timestep", vibrationTimeStep, xml); 
+  writeScalar("impact_timestep", impactTimeStep, xml);
+
+  writeBoolean("is_in_contact", isInContact, xml);
+  writeBoolean("tangent_loading_active", tangentLoadingActive, xml);
+  writeBoolean("tangent_sliding_active", tangentSlidingActive, xml);
+  writeBoolean("tangent_loading_active_prev", prevTangentLoadingActive, xml);
+  writeBoolean("tangent_sliding_active_prev", prevTangentSlidingActive, xml);
 }
 
 void 
-DEMContact::writeScalar(const std::string& label,
-                        double variable,
-                        zen::XmlOut& xml) const
+DEMContactData::writeBoolean(const std::string& label,
+                             bool variable,
+                             zen::XmlOut& xml) const
 {
   xml[label](variable);
 }
 
 void 
-DEMContact::writeVector(const std::string& label,
-                        const Vec& variable,
-                        zen::XmlOut& xml) const
+DEMContactData::writeScalar(const std::string& label,
+                            double variable,
+                            zen::XmlOut& xml) const
+{
+  xml[label](variable);
+}
+
+void 
+DEMContactData::writeVector(const std::string& label,
+                            const Vec& variable,
+                            zen::XmlOut& xml) const
 {
   std::ostringstream stream;
   stream.setf(std::ios::scientific, std::ios::floatfield);
@@ -653,6 +675,64 @@ DEMContact::writeVector(const std::string& label,
         << variable.x() << ", " << variable.y() << ", " << variable.z()
         << "]";
   xml[label](stream.str());
+}
+
+void
+DEMContactData::read(const zen::XmlIn& xml) 
+{
+  readValue<Vec>(xml, "point1", point1);
+  readValue<Vec>(xml, "point2", point2);
+  readValue<Vec>(xml, "normal_force", normalForce);
+  readValue<Vec>(xml, "normal_force_prev", prevNormalForce);
+  readValue<Vec>(xml, "tangent_force", tangentForce);
+  readValue<Vec>(xml, "tangent_force_prev", prevTangentForce);
+  readValue<Vec>(xml, "tangent_displacement", tangentDisplacement);
+  readValue<Vec>(xml, "tangent_displacement_start", tangentDisplacementStart);
+  readValue<Vec>(xml, "tangent_displacement_prev", prevTangentDisplacement);
+  readValue<Vec>(xml, "normal_direction", normalDirection);
+  readValue<Vec>(xml, "tangent_direction", tangentDirection);
+  readValue<Vec>(xml, "cohesion_force", cohesionForce);
+  readValue<Vec>(xml, "spin_resistance", spinResist);
+
+  readValue<REAL>(xml, "radius1", radius1);
+  readValue<REAL>(xml, "radius2", radius2);
+  readValue<REAL>(xml, "penetration", penetration);
+  readValue<REAL>(xml, "contact_radius", contactRadius);
+  readValue<REAL>(xml, "R0", R0);
+  readValue<REAL>(xml, "E0", E0);
+  readValue<REAL>(xml, "G0", G0);
+  readValue<REAL>(xml, "tangent_force_peak", tangentForcePeak);
+  readValue<REAL>(xml, "vibration_timestep", vibrationTimeStep);
+  readValue<REAL>(xml, "impact_timestep", impactTimeStep);
+
+  readValue<bool>(xml, "is_in_contact", isInContact);
+  readValue<bool>(xml, "tangent_loading_active", tangentLoadingActive);
+  readValue<bool>(xml, "tangent_sliding_active", tangentSlidingActive);
+  readValue<bool>(xml, "tangent_loading_active_prev", prevTangentLoadingActive);
+  readValue<bool>(xml, "tangent_sliding_active_prev", prevTangentSlidingActive);
+}
+
+template <typename T>
+bool
+DEMContactData::readValue(const zen::XmlIn& ps, 
+                          const std::string& label,
+                          T& value)
+{
+  // Check the label exists
+  auto prop_ps = ps[label];
+  if (!prop_ps) {
+    std::cerr << "**ERROR** DEMContactData reader: " 
+              << label << " not found \n";
+    return false;
+  }
+
+  // Get the data into a string
+  std::string data;
+  prop_ps(data);
+
+  // Convert string to correct type
+  value = Ellip3D::IOUtil::convert<T>(data);
+  return true;
 }
 
 } // namespace dem ends

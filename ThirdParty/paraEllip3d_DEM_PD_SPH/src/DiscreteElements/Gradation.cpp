@@ -52,11 +52,11 @@ Gradation::initializeFromXMLFile(zen::XmlIn& ps)
 
     std::string percentPassingStr;
     sieve_ps["percent_passing"](percentPassingStr);
-    std::vector<REAL> percentPassing = Ellip3D::Util::convertStrArray<REAL>(percentPassingStr);
+    std::vector<REAL> percentPassing = Ellip3D::IOUtil::convertStrArray<REAL>(percentPassingStr);
 
     std::string sizeStr;
     sieve_ps["size"](sizeStr);
-    std::vector<REAL> size = Ellip3D::Util::convertStrArray<REAL>(sizeStr);
+    std::vector<REAL> size = Ellip3D::IOUtil::convertStrArray<REAL>(sizeStr);
 
     REAL ratio_ba, ratio_ca;
     sieve_ps["sieve_ratio"]["ratio_ba"](ratio_ba);

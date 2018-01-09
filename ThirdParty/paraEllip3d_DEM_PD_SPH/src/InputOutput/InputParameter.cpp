@@ -201,12 +201,12 @@ InputParameter::readInXML(const std::string& inputFileName)
     std::string percentPassingStr;
     sieve_ps["percent_passing"](percentPassingStr);
     std::vector<REAL> percentPassing = 
-      Ellip3D::Util::convertStrArray<REAL>(percentPassingStr);
+      Ellip3D::IOUtil::convertStrArray<REAL>(percentPassingStr);
     assert(percentPassing.size() == numSieves);
 
     std::string sizeStr;
     sieve_ps["size"](sizeStr);
-    std::vector<REAL> size = Ellip3D::Util::convertStrArray<REAL>(sizeStr);
+    std::vector<REAL> size = Ellip3D::IOUtil::convertStrArray<REAL>(sizeStr);
     assert(size.size() == numSieves);
 
     for (std::size_t i = 0; i < numSieves; ++i) {
@@ -362,12 +362,12 @@ InputParameter::readInXML(const std::string& inputFileName)
       std::string percentPassingStr;
       sieve_ps["percent_passing"](percentPassingStr);
       std::vector<REAL> percentPassing = 
-        Ellip3D::Util::convertStrArray<REAL>(percentPassingStr);
+        Ellip3D::IOUtil::convertStrArray<REAL>(percentPassingStr);
       assert(percentPassing.size() == numSieves);
 
       std::string sizeStr;
       sieve_ps["size"](sizeStr);
-      std::vector<REAL> size = Ellip3D::Util::convertStrArray<REAL>(sizeStr);
+      std::vector<REAL> size = Ellip3D::IOUtil::convertStrArray<REAL>(sizeStr);
       assert(size.size() == numSieves);
 
       for (std::size_t i = 0; i < numSieves; ++i) {

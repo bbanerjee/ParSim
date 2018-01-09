@@ -6,7 +6,7 @@
 
 namespace Ellip3D {
 
-namespace Util {
+namespace IOUtil {
 
   /* A reverse range iterator 
     std::vector<int> v = {1, 2, 3, 4, 5};
@@ -68,7 +68,7 @@ namespace Util {
   template <typename T>
   std::vector<T> convertStrArray(const std::string& str);
 
-} // end namespace Util
+} // end namespace IOUtil
 } // end namespace Ellip3D
 
 #endif // ELLIP3D_INPUTOUTPUT_IO_UTIL_H

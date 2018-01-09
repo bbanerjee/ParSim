@@ -355,7 +355,7 @@ DEMParticleFileReader::readParticleValues(zen::XmlIn& ps, const std::string& nam
   int numComp = 0;
   prop_ps.attribute("numComponents", numComp);
   bool success = 
-    Ellip3D::Util::decodeAndUncompress<T>(particleDataStr, numComp, output);
+    Ellip3D::IOUtil::decodeAndUncompress<T>(particleDataStr, numComp, output);
   if (!success) {
     std::cerr << "**ERROR** Could not decode and uncompress particle " << name
               << "\n";
