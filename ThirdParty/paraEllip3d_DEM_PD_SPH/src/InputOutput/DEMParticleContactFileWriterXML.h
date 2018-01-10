@@ -45,6 +45,7 @@ public:
 private:
 
   MPI_File d_contactFile;
+  int d_rank;
 
   zen::XmlDoc d_doc;
   std::string d_outputFileName;

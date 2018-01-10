@@ -231,6 +231,14 @@ serialize(const XmlDoc& doc, const std::string& lineBreak,
 }
 }
 
+inline void
+serialize(const XmlElement& element, std::string& stream,
+          const std::string& lineBreak, const std::string& indent,
+          size_t indentLevel)
+{
+  return implementation::serialize(element, stream, lineBreak, indent, indentLevel);
+}
+
 inline std::string
 serialize(const XmlDoc& doc, const std::string& lineBreak,
           const std::string& indent)

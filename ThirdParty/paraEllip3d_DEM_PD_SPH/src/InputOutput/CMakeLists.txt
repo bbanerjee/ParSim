@@ -31,6 +31,7 @@ SET(IO_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMBoundaryContactFileWriterXML.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticleContactFileWriterCSV.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticleContactFileWriterXML.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticleContactFileReaderXML.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticleFileReader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DEMParticleFileWriter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/PeriParticleFileReader.cpp

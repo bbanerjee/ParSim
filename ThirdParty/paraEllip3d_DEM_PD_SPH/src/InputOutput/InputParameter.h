@@ -79,6 +79,8 @@ private:
   void serialize(ArchiveType& ar, const unsigned int version)
   {
     ar& param;
+    ar& gradation;
+    ar& datafile;
     ar& sigmaPath;
   }
 };

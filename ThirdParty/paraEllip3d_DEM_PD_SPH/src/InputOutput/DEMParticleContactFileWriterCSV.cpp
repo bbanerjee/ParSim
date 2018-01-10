@@ -33,15 +33,19 @@ DEMParticleContactFileWriterCSV::DEMParticleContactFileWriterCSV(MPI_Comm world,
                                                                  const std::string& outputFileName) 
 {
   std::string fileName = outputFileName + ".csv";
-  MPI_File_open(world, fileName.c_str(), 
-                MPI_MODE_CREATE | MPI_MODE_WRONLY,
-                MPI_INFO_NULL, &d_contactFile);
-  int rank = 0;
-  MPI_Comm_rank(world, &rank);
-  if (rank == 0 && !d_contactFile) {
-    std::cerr << "Could not open file " << fileName
-              << " for writing particle contact information." << std::endl;
-    exit(-1);
+  int err = MPI_File_open(world, fileName.c_str(), 
+                          MPI_MODE_CREATE | MPI_MODE_WRONLY,
+                          MPI_INFO_NULL, &d_contactFile);
+  MPI_Comm_rank(world, &d_rank);
+  if (err) {
+    char err_string[MPI_MAX_ERROR_STRING];
+    int resultlen;
+    MPI_Error_string(err, err_string, &resultlen);
+    std::cerr << "Process: " << d_rank 
+              << " Could not open file " << fileName
+              << " for writing particle contact information." << std::endl
+              << " : MPI Error: = " << err_string << std::endl;
+    throw false;            
   }
 }
 
@@ -60,6 +64,8 @@ DEMParticleContactFileWriterCSV::write(const DEMContactArray& contacts)
   dataStream.setf(std::ios::scientific, std::ios::floatfield);
   for (const auto& contact : contacts) {
     contact.write(dataStream);
+    std::cout << "Rank = " << d_rank 
+              << " data = " << dataStream.str() << "\n";
   }
 
   //int length = (OWID * 28 + 1) * d_contacts.size();
@@ -68,7 +74,13 @@ DEMParticleContactFileWriterCSV::write(const DEMContactArray& contacts)
   // write a file at a location specified by a shared file pointer (blocking,
   // collective) // note MPI_File_write_shared is non-collective
   MPI_Status status;
-  MPI_File_write_ordered(d_contactFile, 
-                         const_cast<char*>(dataStream.str().c_str()),
-                         length, MPI_CHAR, &status);
+  int err = MPI_File_write_ordered(d_contactFile, 
+                                   const_cast<char*>(dataStream.str().c_str()),
+                                   length, MPI_CHAR, &status);
+  if (err) {
+    char err_string[MPI_MAX_ERROR_STRING];
+    int resultlen;
+    MPI_Error_string(err, err_string, &resultlen);
+    std::cerr << "Rank: " << d_rank << " err = " << err_string << "\n";
+  }
 }

@@ -277,7 +277,7 @@ DiscreteElements::deposit(const std::string& boundaryFilename,
         printBoundaryContacts();
         appendToProgressOutputFile(progressInf, iteration, timeStep);
       }
-      printContact(combine(outputFolder, "contact_", iterSnap, 5));
+      printContact("dummy_string");
 
       timeCount = 0;
       ++iterSnap;
@@ -2207,12 +2207,22 @@ DiscreteElements::updateBoundary(REAL sigma, std::string type,
 void
 DiscreteElements::printContact(const std::string& str) const
 {
-  DEMParticleContactFileWriterCSV csv_writer(s_mpiWorld,
-                                             d_writer->getContactFilename());
-  csv_writer.write(d_contacts);
+  // Get the output file name and send it to the processes
+  std::string filename;
+  if (s_mpiRank == 0) {
+    filename = d_writer->getContactFilename();
+  }
+  broadcast(boostWorld, filename, 0);
+  std::cerr << "Process: " << s_mpiRank << " filename = " << filename << std::endl;
 
-  DEMParticleContactFileWriterXML xml_writer(s_mpiWorld,
-                                             d_writer->getContactFilename());
+  try {
+    DEMParticleContactFileWriterCSV csv_writer(s_mpiWorld, filename);
+    csv_writer.write(d_contacts);
+  } catch (bool err) {
+    exit(-1);
+  }
+
+  DEMParticleContactFileWriterXML xml_writer(s_mpiWorld, filename);
   xml_writer.write(d_contacts);
 }
 

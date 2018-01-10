@@ -28,6 +28,7 @@
 #include <Core/Const/Constants.h>
 #include <Core/Types/IntegerTypes.h>
 #include <iomanip>
+#include <exception>
 
 using namespace dem;
 
@@ -40,19 +41,19 @@ DEMParticleContactFileReaderXML::DEMParticleContactFileReaderXML(const std::stri
   } catch (const zen::XmlFileError& err) {
     std::cerr << "*ERROR** Could not read input file " << inputFileName << "\n";
     std::cerr << "    Error # = " << err.lastError << "\n";
-    return false;
+    throw false;
   } catch (const zen::XmlParsingError& err) {
     std::cerr << "*ERROR** Could not read input file " << inputFileName << "\n";
     std::cerr << "    Parse Error in line: " << err.row + 1
               << " col: " << err.col << "\n";
-    return false;
+    throw false;
   }
 
   // Check whether this is the right type of input file
   if (d_doc.root().getNameAs<std::string>() != "Ellip3D_input") {
     std::cerr << "*ERROR** Could not find tag <Ellip3D_input> in input file "
               << inputFileName << "\n";
-    return false;
+    throw false;
   }
 }
 
@@ -90,11 +91,7 @@ DEMParticleContactFileReaderXML::read(const DEMParticlePArray& particles,
     data.read(contact_ps);
     
     // Create a DEMContact object
-    contacts.push_back(
-      std::make_shared<DEMContact>(particleRP[particleID1],
-                                   particleRP[particleID2],
-                                   data);
-    ));
-
+    contacts.push_back(DEMContact(particleRP[particleID1], particleRP[particleID2],
+                                  data));
   }
 }

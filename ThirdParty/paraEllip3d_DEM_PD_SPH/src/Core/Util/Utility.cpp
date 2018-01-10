@@ -63,6 +63,9 @@ createOutputFolder(const std::string& folderName)
   std::string currentWorkingDir(".");
   char buffer[2000];
   char* str = getcwd(buffer, 2000);
+  //std::cout << "createOutputFolder: " << std::endl;
+  //std::cout << "str = " << str << " buffer = " << buffer << std::endl;
+
   if (str == nullptr) {
     std::cerr << "**ERROR** Current working directory not returned by getcwd()" << __FILE__
               << __LINE__ << "\n";
@@ -76,18 +79,21 @@ createOutputFolder(const std::string& folderName)
   folderNameStream << "." << std::setfill('0') << std::setw(3) << dircount;
 
 #if defined(_WIN32)
-    _mkdir((folderNameStream.str()).c_str());
+  _mkdir((folderNameStream.str()).c_str());
 #else
-    while (opendir((folderNameStream.str()).c_str())) {
-      ++dircount;
-      folderNameStream.clear();
-      folderNameStream.str("");
-      folderNameStream << folderName;
-      folderNameStream << "." << std::setfill('0') << std::setw(3) << dircount;
-    }
-    mkdir((folderNameStream.str()).c_str(), 0777);
+  while (opendir((folderNameStream.str()).c_str())) {
+    ++dircount;
+
+    // Note:  The full path name is removed and only the new folder name is returned
+    folderNameStream.clear();
+    folderNameStream.str("");
+    folderNameStream << folderName;
+    folderNameStream << "." << std::setfill('0') << std::setw(3) << dircount;
+  }
+  mkdir((folderNameStream.str()).c_str(), 0777);
 #endif
 
+  //std::cout << "output folder name : " << folderNameStream.str() << std::endl;
   return folderNameStream.str();
 }
 
@@ -117,7 +123,7 @@ getFilename(const std::string& str)
     filename = datafile.at(str);
   } catch (const std::out_of_range& err) {
     std::ostringstream out;
-    out << "Required InputParameter [" << str << "] not found in input file";
+    out << "Required Filename [" << str << "] not found in input file";
     std::cerr << out.str() << '\n';
     throw std::out_of_range(out.str());
   }

@@ -32,18 +32,22 @@ using namespace dem;
 
 DEMParticleContactFileWriterXML::DEMParticleContactFileWriterXML(MPI_Comm world,
                                                                  const std::string& outputFileName) 
-  : d_doc("Ellip3D_input"),
+  : d_doc("Ellip3D_contact"),
     d_outputFileName(outputFileName+".xml")
 {
-  MPI_File_open(world, d_outputFileName.c_str(), 
-                MPI_MODE_CREATE | MPI_MODE_WRONLY,
-                MPI_INFO_NULL, &d_contactFile);
-  int rank = 0;
-  MPI_Comm_rank(world, &rank);
-  if (rank == 0 && !d_contactFile) {
-    std::cerr << "Could not open file " << d_outputFileName
-              << " for writing particle contact information." << std::endl;
-    exit(-1);
+  int err = MPI_File_open(world, d_outputFileName.c_str(), 
+                          MPI_MODE_CREATE | MPI_MODE_WRONLY,
+                          MPI_INFO_NULL, &d_contactFile);
+  MPI_Comm_rank(world, &d_rank);
+  if (err) {
+    char err_string[MPI_MAX_ERROR_STRING];
+    int resultlen;
+    MPI_Error_string(err, err_string, &resultlen);
+    std::cerr << "Process: " << d_rank 
+              << " Could not open file " << d_outputFileName
+              << " for writing particle contact information." << std::endl
+              << " : MPI Error: = " << err_string << std::endl;
+    throw false;            
   }
 }
 
@@ -62,8 +66,8 @@ DEMParticleContactFileWriterXML::write(const DEMContactArray& contacts)
   zen::XmlOut xml(d_doc);
 
   // Write the title
-  std::string title = "Ellip3D particle contact XML file";
-  xml["Meta"]["title"](title);
+  //std::string title = "Ellip3D particle contact XML file";
+  //xml["Meta"]["title"](title);
 
   // Write particle contacts
   for (const auto& contact : contacts) {
@@ -72,7 +76,8 @@ DEMParticleContactFileWriterXML::write(const DEMContactArray& contacts)
   }
 
   // Serialize the xml document
-  std::string dataString = zen::serialize(d_doc);
+  std::string dataString; 
+  zen::serialize(d_doc.root(), dataString, "\r\n", "  ", 0);
 
   //int length = (OWID * 28 + 1) * d_contacts.size();
   int length = dataString.length();
