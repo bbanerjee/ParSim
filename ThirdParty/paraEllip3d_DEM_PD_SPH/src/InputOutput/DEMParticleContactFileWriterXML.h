@@ -37,6 +37,7 @@ class DEMParticleContactFileWriterXML
 public:
 
   DEMParticleContactFileWriterXML(MPI_Comm world,
+                                  int rank,
                                   const std::string& outputFileName);
   ~DEMParticleContactFileWriterXML(); 
 
@@ -46,6 +47,7 @@ private:
 
   MPI_File d_contactFile;
   int d_rank;
+  int d_size;
 
   zen::XmlDoc d_doc;
   std::string d_outputFileName;

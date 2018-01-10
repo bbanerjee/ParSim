@@ -30,13 +30,15 @@
 using namespace dem;
 
 DEMParticleContactFileWriterCSV::DEMParticleContactFileWriterCSV(MPI_Comm world,
+                                                                 int rank,
                                                                  const std::string& outputFileName) 
+  : d_rank(rank)
 {
   std::string fileName = outputFileName + ".csv";
   int err = MPI_File_open(world, fileName.c_str(), 
                           MPI_MODE_CREATE | MPI_MODE_WRONLY,
                           MPI_INFO_NULL, &d_contactFile);
-  MPI_Comm_rank(world, &d_rank);
+  //MPI_Comm_rank(world, &d_rank);
   if (err) {
     char err_string[MPI_MAX_ERROR_STRING];
     int resultlen;
@@ -64,8 +66,8 @@ DEMParticleContactFileWriterCSV::write(const DEMContactArray& contacts)
   dataStream.setf(std::ios::scientific, std::ios::floatfield);
   for (const auto& contact : contacts) {
     contact.write(dataStream);
-    std::cout << "Rank = " << d_rank 
-              << " data = " << dataStream.str() << "\n";
+    //std::cout << "Rank = " << d_rank 
+    //          << " data = " << dataStream.str() << "\n";
   }
 
   //int length = (OWID * 28 + 1) * d_contacts.size();

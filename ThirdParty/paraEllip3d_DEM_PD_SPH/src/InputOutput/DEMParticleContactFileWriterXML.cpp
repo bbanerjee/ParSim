@@ -31,14 +31,17 @@
 using namespace dem;
 
 DEMParticleContactFileWriterXML::DEMParticleContactFileWriterXML(MPI_Comm world,
+                                                                 int rank,
                                                                  const std::string& outputFileName) 
-  : d_doc("Ellip3D_contact"),
-    d_outputFileName(outputFileName+".xml")
+  : d_rank(rank)
+  , d_doc("Process")
+  , d_outputFileName(outputFileName+".xml")
 {
+  MPI_Comm_size(world, &d_size);
   int err = MPI_File_open(world, d_outputFileName.c_str(), 
                           MPI_MODE_CREATE | MPI_MODE_WRONLY,
                           MPI_INFO_NULL, &d_contactFile);
-  MPI_Comm_rank(world, &d_rank);
+  //MPI_Comm_rank(world, &d_rank);
   if (err) {
     char err_string[MPI_MAX_ERROR_STRING];
     int resultlen;
@@ -64,6 +67,7 @@ DEMParticleContactFileWriterXML::write(const DEMContactArray& contacts)
 {
   // Create a proxy output
   zen::XmlOut xml(d_doc);
+  xml.attribute("id", d_rank);
 
   // Write the title
   //std::string title = "Ellip3D particle contact XML file";
@@ -78,6 +82,19 @@ DEMParticleContactFileWriterXML::write(const DEMContactArray& contacts)
   // Serialize the xml document
   std::string dataString; 
   zen::serialize(d_doc.root(), dataString, "\r\n", "  ", 0);
+
+  // Write the header in the first process
+  if (d_rank == 0) {
+    std::string header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
+    std::string ellip3d = "<Ellip3D_input>\r\n";
+    dataString = header + ellip3d + dataString;
+  }
+
+  // Write the footer in the last process
+  if (d_rank == d_size - 1) {
+    std::string ellip3d = "</Ellip3D_input>\r\n";
+    dataString += ellip3d;
+  }
 
   //int length = (OWID * 28 + 1) * d_contacts.size();
   int length = dataString.length();

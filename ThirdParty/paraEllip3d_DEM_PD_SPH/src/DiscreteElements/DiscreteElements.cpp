@@ -2216,14 +2216,18 @@ DiscreteElements::printContact(const std::string& str) const
   std::cerr << "Process: " << s_mpiRank << " filename = " << filename << std::endl;
 
   try {
-    DEMParticleContactFileWriterCSV csv_writer(s_mpiWorld, filename);
+    DEMParticleContactFileWriterCSV csv_writer(s_mpiWorld, s_mpiRank, filename);
     csv_writer.write(d_contacts);
   } catch (bool err) {
     exit(-1);
   }
 
-  DEMParticleContactFileWriterXML xml_writer(s_mpiWorld, filename);
-  xml_writer.write(d_contacts);
+  try {
+    DEMParticleContactFileWriterXML xml_writer(s_mpiWorld, s_mpiRank, filename);
+    xml_writer.write(d_contacts);
+  } catch (bool err) {
+    exit(-1);
+  }
 }
 
 void

@@ -37,6 +37,7 @@ class DEMParticleContactFileWriterCSV
 public:
 
   DEMParticleContactFileWriterCSV(MPI_Comm world,
+                                  int rank,
                                   const std::string& outputFileName);
   ~DEMParticleContactFileWriterCSV();
 
