@@ -89,6 +89,7 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
 
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
+  dem->printContact();
   std::cerr << "Proc = " << dem->getMPIRank() << " outputFolder = " << outputFolder << "\n";
 
   dem->communicateGhostParticles();
@@ -172,7 +173,7 @@ DrainageMiddleLayers::execute(DiscreteElements* dem, sph::SmoothParticleHydro* s
         sph->writeParticlesToFile(iterSnap, currentTime);
         dem->appendToProgressOutputFile(demProgressInf, iteration, timeStep);
       }
-      dem->printContact(util::combine(outputFolder, "drainage_middle_contact_", iterSnap, 3));
+      dem->printContact();
     
       timeCount = 0;
       ++iterSnap;

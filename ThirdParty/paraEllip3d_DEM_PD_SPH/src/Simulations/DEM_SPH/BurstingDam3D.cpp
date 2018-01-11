@@ -89,6 +89,7 @@ BurstingDam3D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
 
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
+  dem->printContact();
   std::cerr << "Proc = " << dem->getMPIRank() << " outputFolder = " << outputFolder << "\n";
 
   dem->communicateGhostParticles();
@@ -167,7 +168,7 @@ BurstingDam3D::execute(DiscreteElements* dem, sph::SmoothParticleHydro* sph)
         sph->writeParticlesToFile(iterSnap, currentTime);
         dem->appendToProgressOutputFile(demProgressInf, iteration, timeStep);
       }
-      dem->printContact(util::combine(outputFolder, "bursting_contact_", iterSnap, 3));
+      dem->printContact();
     
       timeCount = 0;
       ++iterSnap;

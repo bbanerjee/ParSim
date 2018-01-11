@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Ellip3D_input>
+<Process id="0">
+  <contact particle1="6" particle2="7">
+    <point1>[1.881915e-04, 1.719566e-04, 2.652170e-04]</point1>
+    <point2>[1.882055e-04, 1.719559e-04, 2.651726e-04]</point2>
+    <normal_force>[1.365987e-03, -7.681284e-05, -4.335712e-03]</normal_force>
+    <normal_force_prev>[0.000000e+00, 0.000000e+00, 0.000000e+00]</normal_force_prev>
+    <tangent_force>[4.727085e-06, -4.516011e-05, 2.289372e-06]</tangent_force>
+    <tangent_force_prev>[3.893838e-06, -3.726321e-05, 1.886952e-06]</tangent_force_prev>
+    <tangent_displacement>[-6.043950e-11, 5.774075e-10, -2.927142e-11]</tangent_displacement>
+    <tangent_displacement_start>[0.000000e+00, 0.000000e+00, 0.000000e+00]</tangent_displacement_start>
+    <tangent_displacement_prev>[-4.166805e-11, 3.987544e-10, -2.019232e-11]</tangent_displacement_prev>
+    <normal_direction>[-3.004512e-01, 1.689512e-02, 9.536475e-01]</normal_direction>
+    <tangent_direction>[1.039731e-01, -9.933046e-01, 5.035515e-02]</tangent_direction>
+    <cohesion_force>[-0.000000e+00, 0.000000e+00, 0.000000e+00]</cohesion_force>
+    <spin_resistance>[0.000000e+00, 0.000000e+00, 0.000000e+00]</spin_resistance>
+    <radius1>0.000546177</radius1>
+    <radius2>0.000313831</radius2>
+    <penetration>4.66129e-08</penetration>
+    <contact_radius>3.04801e-06</contact_radius>
+    <R0>0.000199309</R0>
+    <E0>2.4e+10</E0>
+    <G0>0</G0>
+    <tangent_force_peak>0</tangent_force_peak>
+    <vibration_timestep>1.09523e-06</vibration_timestep>
+    <impact_timestep>0.00158289</impact_timestep>
+    <is_in_contact>true</is_in_contact>
+    <tangent_loading_active>true</tangent_loading_active>
+    <tangent_sliding_active>false</tangent_sliding_active>
+    <tangent_loading_active_prev>true</tangent_loading_active_prev>
+    <tangent_sliding_active_prev>false</tangent_sliding_active_prev>
+  </contact>
+</Process>
+</Ellip3D_input>

@@ -2,6 +2,7 @@
 #include <DiscreteElements/DEMParticleCreator.h>
 #include <DiscreteElements/DEMTetrahedron.h>
 #include <InputOutput/DEMParticleFileReader.h>
+#include <InputOutput/DEMParticleContactFileReaderXML.h>
 #include <Boundary/BoundaryFileReader.h>
 #include <Core/Util/Utility.h>
 
@@ -28,17 +29,21 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
   std::string directory = util::getFilename("inputDataDirectory");
   std::string domain_filename = "oriented_domain";
   std::string particle_filename = "particle";
+  std::string contact_filename = "contact";
   std::vector<std::string> filenames;
   for (auto& file : fs::directory_iterator(directory)) {
     std::string filename = fs::path(file).filename();
-    auto found = filename.find(".vtu");
-    if (found != std::string::npos) {
+    auto foundVTU = filename.find(".vtu");
+    auto foundXML = filename.find(".xml");
+    if (foundVTU != std::string::npos ||
+        foundXML != std::string::npos) {
       filenames.push_back(filename);
     }
   }
   std::sort(filenames.begin(), filenames.end());
   std::vector<std::string> domain_files;
   std::vector<std::string> particle_files;
+  std::vector<std::string> contact_files;
   for (auto& filename : filenames) {
     auto found = filename.find(domain_filename);
     if (found != std::string::npos) {
@@ -48,12 +53,27 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
     if (found != std::string::npos) {
       particle_files.push_back(directory + "/" + filename);
     }
+    found = filename.find(contact_filename);
+    if (found != std::string::npos) {
+      contact_files.push_back(directory + "/" + filename);
+    }
   }
   for (auto& filename : domain_files) {
     std::cout << filename << "\n";
   }
   for (auto& filename : particle_files) {
     std::cout << filename << "\n";
+  }
+  for (auto& filename : contact_files) {
+    std::cout << filename << "\n";
+  }
+
+  if (particle_files.size() != contact_files.size()) {
+    std::cerr << "**ERROR** Particle information and contact information "
+              << " do not match.  Check the input directory "
+              << directory << " to see whether the number of particle_* files "
+              << "is equal to the number of contact_* files.\n";
+    exit(-1);
   }
 
   // 2) For each file
@@ -65,6 +85,7 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
   BoundaryFileReader boundaryReader;
   DEMParticleFileReader particleReader;
   int iteration = 0;
+  int contactFileID = 0;
   for (auto& particle_file : particle_files) {
     OrientedBox spatialDomain(Box(Vec(0,0,0), Vec(1,1,1)));
     boundaryReader.readVTK(domain_files[iteration], spatialDomain);
@@ -85,7 +106,14 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
       std::cout << "DefGradRate: \n" << element->getDefGradRate() << "\n";
     }
 
+    // Read the contact data
+    DEMParticleContactFileReaderXML contactReader(contact_files[contactFileID]);
+    DEMContactArray contacts;
+    contactReader.read(particles, contacts);
+
     computeBoundaryTractions();
+
+    ++contactFileID;
   }
 }
 

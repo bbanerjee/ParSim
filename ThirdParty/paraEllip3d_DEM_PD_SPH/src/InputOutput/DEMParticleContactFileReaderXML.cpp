@@ -77,21 +77,25 @@ DEMParticleContactFileReaderXML::read(const DEMParticlePArray& particles,
   // Load the document into input proxy for easier element access
   zen::XmlIn xml(d_doc);
 
-  // Loop thru contacts in the input file
-  for (auto contact_ps = xml["contact"]; contact_ps; contact_ps.next()) {
+  // Loop thru processes in the input file
+  for (auto process_ps = xml["Process"]; process_ps; process_ps.next()) {
 
-    // Get the attributes
-    ParticleID particleID1 = 0;
-    ParticleID particleID2 = 0;
-    contact_ps.attribute("particle1", particleID1);
-    contact_ps.attribute("particle2", particleID2);
+    // Loop thru contacts in each process
+    for (auto contact_ps = process_ps["contact"]; contact_ps; contact_ps.next()) {
 
-    // Read the contact data
-    DEMContactData data;
-    data.read(contact_ps);
-    
-    // Create a DEMContact object
-    contacts.push_back(DEMContact(particleRP[particleID1], particleRP[particleID2],
-                                  data));
+      // Get the attributes
+      ParticleID particleID1 = 0;
+      ParticleID particleID2 = 0;
+      contact_ps.attribute("particle1", particleID1);
+      contact_ps.attribute("particle2", particleID2);
+
+      // Read the contact data
+      DEMContactData data;
+      data.read(contact_ps);
+      
+      // Create a DEMContact object
+      contacts.push_back(DEMContact(particleRP[particleID1], particleRP[particleID2],
+                                    data));
+    }
   }
 }

@@ -55,6 +55,7 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
 
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
+  dem->printContact();
 
   while (iteration <= endStep) {
     commuT = migraT = gatherT = totalT = 0;
@@ -98,7 +99,7 @@ PlaneStrainLoading::execute(DiscreteElements* dem)
         // dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ); //
         // redundant
       }
-      dem->printContact(combine(".", "plnstrn_contact_", iterSnap, 3));
+      dem->printContact();
       ++iterSnap;
     }
 

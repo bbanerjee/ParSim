@@ -104,6 +104,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
 
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
+  dem->printContact();
 
   // the commuPeriParticle() have to be called after  communicateGhostParticles()
   dem->communicateGhostParticles(); 
@@ -198,7 +199,7 @@ PeridynamicsPullOut::execute(DiscreteElements* dem, Peridynamics* pd)
         pd->printPeriProgress(periProgInf, iterSnap);
         pd->printPeriProgressHalf(periProgInfHalf, iterSnap);
       }
-      dem->printContact(combine(".", "rigidInc_contact_", iterSnap, 3));
+      dem->printContact();
       ++iterSnap;
     }
     //      releaseReceivedParticles(); // late release because printContact refers

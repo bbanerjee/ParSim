@@ -78,6 +78,7 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
 
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
+  dem->printContact();
 
   // Scatter the particles
   dem->scatterParticles();
@@ -168,14 +169,14 @@ PeriodicBCAxisymmetricStrainDriven::execute(DiscreteElements* dem)
         dem->writeParticlesToFile(iterSnap, curTime);
         outputParticleCSVFile = combine("output_particles_", iterSnap, 3);
         dem->printParticlesCSV(outputFolder, outputParticleCSVFile, iterSnap, curTime);
-        //dem->printBoundaryContacts();
+        dem->printBoundaryContacts();
         dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
         std::cout << "Iteration = " << iteration 
                   << " cur time = " << curTime
                   << " timeStep = " << timeStep << "\n";
       }
 
-      dem->printContact(combine(outputFolder, "contact_", iterSnap, 3));
+      dem->printContact();
       ++iterSnap;
     }
 

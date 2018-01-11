@@ -85,6 +85,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
 
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
+  dem->printContact();
 
   while (iteration <= endStep) {
     commuT = migraT = gatherT = totalT = 0;
@@ -147,7 +148,7 @@ TrueTriaxialLoading::execute(DiscreteElements* dem)
         dem->printBoundary();
         dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
       }
-      dem->printContact(combine(".", "trueTriaxial_contact_", iterSnap, 3));
+      dem->printContact();
       ++iterSnap;
     }
 

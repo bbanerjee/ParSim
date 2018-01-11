@@ -81,7 +81,9 @@ DEMParticleContactFileWriterXML::write(const DEMContactArray& contacts)
 
   // Serialize the xml document
   std::string dataString; 
-  zen::serialize(d_doc.root(), dataString, "\r\n", "  ", 0);
+  if (contacts.size() > 0) {
+    zen::serialize(d_doc.root(), dataString, "\r\n", "  ", 0);
+  }
 
   // Write the header in the first process
   if (d_rank == 0) {

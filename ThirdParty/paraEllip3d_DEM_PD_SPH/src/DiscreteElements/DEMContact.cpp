@@ -726,12 +726,16 @@ DEMContactData::readValue(const zen::XmlIn& ps,
     return false;
   }
 
-  // Get the data into a string
+  // Get the data into a string and remove "[" and "]"
   std::string data;
   prop_ps(data);
+  data.erase(std::remove(data.begin(), data.end(), '['), data.end());
+  data.erase(std::remove(data.begin(), data.end(), ']'), data.end());
 
   // Convert string to correct type
+  //std::cout << "data str = " << data << std::endl;
   value = Ellip3D::IOUtil::convert<T>(data);
+  //std::cout << "data value = " << value << std::endl;
   return true;
 }
 

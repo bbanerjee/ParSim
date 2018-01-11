@@ -57,6 +57,7 @@ TractionLoading::execute(DiscreteElements* dem)
 
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
+  dem->printContact();
 
   auto iteration = startStep;
   while (currentTime < maxTime) {
@@ -108,7 +109,7 @@ TractionLoading::execute(DiscreteElements* dem)
         dem->printBoundaryContacts();
         dem->appendToProgressOutputFile(progressInf, iteration, deltaT, distX, distY, distZ);
       }
-      dem->printContact(combine(outputFolder, "traction", snapshot, 3));
+      dem->printContact();
       ++snapshot;
     }
 

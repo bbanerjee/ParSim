@@ -56,8 +56,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
 
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
-
-
+  dem->printContact();
 
   auto sigmaEnd = util::getParam<REAL>("sigmaEnd");
   auto sigmaDiv = util::getParam<REAL>("sigmaDiv");
@@ -129,7 +128,7 @@ IsotropicLoading::execute(DiscreteElements* dem)
         dem->printBoundaryContacts();
         dem->appendToProgressOutputFile(progressInf, iteration, timeStep, distX, distY, distZ);
       }
-      dem->printContact(combine(outputFolder, "isotropic_contact_", iterSnap, 3));
+      dem->printContact();
       ++iterSnap;
     }
 

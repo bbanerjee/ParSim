@@ -130,6 +130,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
 
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
+  dem->printContact();
 
   //proc0cout << "**NOTICE** Commun dem particle\n";
   dem->communicateGhostParticles();     
@@ -465,7 +466,7 @@ PeridynamicsRigidInclusion::execute(DiscreteElements* dem, Peridynamics* pd)
         // redundant
         pd->printPeriProgress(periProgInf, iterSnap);
       }
-      dem->printContact(combine(".", "rigidInc_contact_", iterSnap, 3));
+      dem->printContact();
       ++iterSnap;
     }
     dem->releaseReceivedParticles();     // late dem->release because

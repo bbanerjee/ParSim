@@ -320,7 +320,7 @@ public:
 
   void plotCavity(const std::string& str) const;
   void checkMembrane(std::vector<REAL>& vx) const;
-  void printContact(const std::string& str) const; // print contacts information
+  void printContact() const; // print contacts information
   void printCavityBoundary(
     const std::string& str) const; // print cavity boundaries
   void printCavityParticle(std::size_t total, const std::string& str) const;

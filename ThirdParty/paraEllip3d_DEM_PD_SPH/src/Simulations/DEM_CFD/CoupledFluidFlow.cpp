@@ -65,6 +65,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
 
   // Broadcast the output folder to all processes
   broadcast(dem->getMPIWorld(), outputFolder, 0);
+  dem->printContact();
 
   while (timeAccrued < timeTotal) {
     // REAL time0 = MPI_Wtime();
@@ -112,7 +113,7 @@ CoupledFluidFlow::execute(DiscreteElements* dem)
         dem->appendToProgressOutputFile(progressInf, iteration, timeStep);
         /*8*/ fluid.plot(util::combine(".", "couple_fluidplot_", iterSnap, 3) + ".dat");
       }
-      dem->printContact(util::combine(".", "couple_contact_", iterSnap, 3));
+      dem->printContact();
 
       timeCount = 0;
       ++iterSnap;
