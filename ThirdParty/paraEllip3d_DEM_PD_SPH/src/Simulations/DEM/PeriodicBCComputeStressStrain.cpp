@@ -110,16 +110,19 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
     DEMParticleContactFileReaderXML contactReader(contact_files[contactFileID]);
     DEMContactArray contacts;
     contactReader.read(particles, contacts);
-
-    computeBoundaryTractions();
-
     ++contactFileID;
+
+    // Compute the internal "stress"
+    Matrix3 stress = calcGranularStress(particles, contacts, spatialDomain);
+    std::cout << "Stress = " << stress << std::endl;
+
+    // Compute the boundary tractions
+    computeBoundaryTractions();
   }
 }
 
 DEMTetrahedronPArray
-PeriodicBCComputeStressStrain::createTessellation(
-  const DEMParticlePArray& particles) 
+PeriodicBCComputeStressStrain::createTessellation(const DEMParticlePArray& particles) 
 {
   std::stringstream coords;
   coords << 3 << " " << particles.size() << " ";
@@ -159,6 +162,61 @@ PeriodicBCComputeStressStrain::createTessellation(
   }
 
   return elementArray;
+}
+
+// Compute the internal "stress"
+Matrix3 
+PeriodicBCComputeStressStrain::calcGranularStress(const DEMParticlePArray& particles,
+                                                  const DEMContactArray& contacts,
+                                                  const OrientedBox& spatialDomain)
+{
+  Matrix3 stress(0.0);
+
+  // Basic component (Love-Weber)
+  for (const auto& contact : contacts) {
+    auto p1Center = contact.getP1()->currentPosition();
+    auto p2Center = contact.getP2()->currentPosition();
+    auto direction = -(p1Center - p2Center);
+    auto force = contact.getNormalForce() + contact.getTangentForce();
+    stress += Dyad(force, direction);
+  }
+
+  // Component needed if # of particles in RVE is small
+  // **TODO**
+
+  // Inertial component (Nicot, 2013)
+  Matrix3 inertial(0.0);
+  for (const auto& particle : particles) {
+    Vec momentJ = particle->getMomentJ();
+    Matrix3 localInertialTensor(momentJ.x(), 0.0, 0.0,
+                               0.0, momentJ.y(), 0.0,
+                               0.0, 0.0, momentJ.z());
+    Vec ax_a = particle->currentAxisA();
+    Vec ax_b = particle->currentAxisB();
+    Vec ax_c = particle->currentAxisC();
+    Matrix3 Q(ax_a.x(), ax_b.x(), ax_c.x(),
+              ax_a.y(), ax_b.y(), ax_c.y(),
+              ax_a.z(), ax_b.z(), ax_c.z());
+    Matrix3 chi = Q.Transpose() * localInertialTensor * Q;
+
+    Vec omega = particle->currentAngularVelocity();
+    Vec localOmegaDot = particle->angularAcceleration();
+    Vec omegaDot = Q.Transpose() * localOmegaDot;
+
+    inertial -= (chi * dot(omega, omega));
+    inertial += (Dyad(omega, omega) * chi);
+
+    Matrix3 permu(0.0);
+    for (int j = 0; j < 3; ++j) {
+      permu(0,j) = omegaDot[1] * chi(j,2) - omega[2] * chi(j,1);
+      permu(1,j) = omegaDot[2] * chi(j,0) - omega[0] * chi(j,2);
+      permu(2,j) = omegaDot[0] * chi(j,1) - omega[1] * chi(j,0);
+    }
+    inertial += permu;
+  }
+  stress -= inertial;
+  stress /= spatialDomain.volume();
+  return stress;
 }
 
 void

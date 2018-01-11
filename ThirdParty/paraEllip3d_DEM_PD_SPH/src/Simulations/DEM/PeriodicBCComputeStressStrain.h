@@ -26,6 +26,11 @@ private:
 
   DEMTetrahedronPArray createTessellation(const DEMParticlePArray& particles);
 
+  // Compute the internal "stress"
+  Matrix3 calcGranularStress(const DEMParticlePArray& particles,
+                             const DEMContactArray& contacts,
+                             const OrientedBox& spatialDomain);
+
   void computeBoundaryTractions();
 
 };

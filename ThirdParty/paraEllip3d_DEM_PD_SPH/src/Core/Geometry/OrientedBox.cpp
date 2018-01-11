@@ -16,6 +16,16 @@ OrientedBox::OrientedBox(const Box& box) {
   d_half_len[2] = box.dimZ()*0.5;
 }
 
+REAL
+OrientedBox::volume() const
+{
+  Vec a = d_axes[0]*d_half_len[0];
+  Vec b = d_axes[1]*d_half_len[1];
+  Vec c = d_axes[2]*d_half_len[2];
+  REAL vol = 8*dot(cross(a, b), c);
+  return vol;
+}
+
 void 
 OrientedBox::normalize_axes() {
   for (auto& axis: d_axes) {

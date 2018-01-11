@@ -109,9 +109,13 @@ public:
   const Vec& moment() const { return d_moment; }
   std::map<size_t, Vec> momentIDMap() const { return d_momentIDMap; }
   Vec acceleration() const { return d_force / d_mass; }
+  Vec angularAcceleration() const { 
+    Vec local = globalToLocal(d_moment);
+    return Vec(local.x()/d_momentJ.x(), local.y()/d_momentJ.y(), local.z()/d_momentJ.z());
+  }
   const Vec& getConstForce() const { return d_constForce; }
   const Vec& getConstMoment() const { return d_constMoment; }
-  const Vec& getmomentJ() const { return d_momentJ; }
+  const Vec& getMomentJ() const { return d_momentJ; }
   bool isInContact() const { return d_inContact; }
   std::size_t getNumBoundaryContacts() const { return d_contactNum; }
 
@@ -159,7 +163,7 @@ public:
   void setMoment(Vec vv) { d_moment = vv; }
   void setConstForce(Vec vv) { d_constForce = vv; }
   void setConstMoment(Vec vv) { d_constMoment = vv; }
-  void setmomentJ(Vec v) { d_momentJ = v; }
+  void setMomentJ(Vec v) { d_momentJ = v; }
   void setMass(REAL d) { d_mass = d; }
   void setTotalMass(REAL mass) { d_totalMassAllParticles = mass; }
   void setDensity(REAL dn) { d_density = dn; }

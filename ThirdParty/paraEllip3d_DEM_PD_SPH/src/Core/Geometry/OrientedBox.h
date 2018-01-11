@@ -47,6 +47,7 @@ public:
   const Vec& center() const {return d_center;}
   const Vec& axis(int idx) const {return d_axes.at(idx);}
   REAL extent(int idx) const {return d_half_len.at(idx);}
+  REAL volume() const;
 
   void update(const std::vector<Vec> vertices);
 
