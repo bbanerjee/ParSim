@@ -1,0 +1,396 @@
+%--------------------------------------------------------------------------
+% Document geometry % Page margins
+%--------------------------------------------------------------------------
+\usepackage[margin=1in,headsep=10pt,a4paper]{geometry}
+
+%--------------------------------------------------------------------------
+% MinionPro fonts
+%--------------------------------------------------------------------------
+\IfFileExists{MinionPro.sty}{%
+  \usepackage{MnSymbol}
+  \usepackage{MinionPro}
+  \usepackage{MyriadPro}
+}{%
+  \usepackage[T1]{fontenc}
+  \usepackage{newtxtext}
+  %\usepackage{eulervm}
+  \usepackage{amssymb}%needed for \mathbb
+}
+
+%--------------------------------------------------------------------------
+% Color scheme used in this book
+%--------------------------------------------------------------------------
+\usepackage{xcolor} % Required for specifying colors by name
+\definecolor{ocre}{RGB}{243,102,25} % Define the orange color used for highlighting throughout the book
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{delim}{RGB}{20,105,176}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{Red}{rgb}{0.8666,0.03137,0.02352}
+\definecolor{Blue}{rgb}{0.00784,0.67059,0.91764}
+\definecolor{Darkgreen}{rgb}{0,0.68235,0}
+\definecolor{Green}{rgb}{0,0.8,0}
+\definecolor{Royalblue}{rgb}{0,0.2,0.91764}
+\definecolor{Brickred}{rgb}{0.644541,0.164065,0.164065}
+\definecolor{Brown}{rgb}{0.6,0.4,0.4}
+\definecolor{Orange}{rgb}{1,0.647059,0}
+\definecolor{Indigo}{rgb}{0.746105,0,0.996109}
+\definecolor{Violet}{rgb}{0.308598,0.183597,0.308598}
+\definecolor{Lightgrey}{rgb}{0.762951,0.762951,0.762951}
+\definecolor{Darkgrey}{rgb}{0.503548,0.503548,0.503548}
+\definecolor{Pink}{rgb}{1,0.6,0.6}
+\definecolor{DarkBlue}{rgb}{0,0.08,0.45}
+\definecolor{OliveDrab}{rgb}{0.41961,0.55686,0.13725}
+\definecolor{LightMagenta}{cmyk}{0.1,0.8,0,0.1}
+\definecolor{OliveD}{HTML}{6B8E23}
+\definecolor{authorNoteColor}{rgb}{.8,0,0}
+\newcommand{\Ochre}{\color{ocre}}
+\newcommand{\Red}{\color{Brickred}}
+\newcommand{\Blue}{\color{Royalblue}}
+\newcommand{\Green}{\color{Darkgreen}}
+\newcommand{\DarkGreen}{\color{Darkgreen}}
+\newcommand{\Violet}{\color{Violet}}
+\newcommand{\Indigo}{\color{Indigo}}
+\newcommand{\Orange}{\color{Orange}}
+\newcommand{\Brown}{\color{Brown}}
+\newcommand{\OliveD}{\color{OliveD}}
+\newcommand{\Pink}{\color{Pink}}
+
+
+%--------------------------------------------------------------------------
+% Bibliography : biblatex does not work with tufte-book
+%--------------------------------------------------------------------------
+\usepackage[style=numeric,
+            citestyle=numeric-comp,
+            sorting=none,
+            sortcites=true,
+            autopunct=true,
+            babel=hyphen,
+            hyperref=true,
+            abbreviate=false,
+            backref=true,
+            backend=biber]{biblatex}
+\addbibresource{../Bibliography.bib} % BibTeX bibliography file
+\defbibheading{bibempty}{}
+
+%--------------------------------------------------------------------------
+% Graphics
+%--------------------------------------------------------------------------
+\usepackage[pdftex]{graphicx}
+\DeclareGraphicsExtensions{{.png},{.pdf},{.jpg},{jpeg}}
+\graphicspath{ {../figures/}}
+\setkeys{Gin}{width=\linewidth,totalheight=\textheight,keepaspectratio}
+
+%--------------------------------------------------------------------------
+% Links
+%--------------------------------------------------------------------------
+\usepackage{hyperref}
+\hypersetup{pdftex, colorlinks=true, linkcolor=blue, citecolor=blue, filecolor=blue, urlcolor=blue, pdftitle=, pdfauthor= , pdfsubject=, pdfkeywords=}
+
+%--------------------------------------------------------------------------
+% Code listing
+%--------------------------------------------------------------------------
+\usepackage{listings}
+
+\lstset{ %
+  basicstyle=\scriptsize\ttfamily,           % the size of the fonts that are used for the code
+  backgroundcolor=\color{white},      % choose the background color. You must add \usepackage{color}
+  showspaces=false,               % show spaces adding particular underscores
+  showstringspaces=false,         % underline spaces within strings
+  showtabs=false,                 % show tabs within strings adding particular underscores
+  tabsize=2,                      % sets default tabsize to 2 spaces
+  captionpos=b,                   % sets the caption-position to bottom
+  breaklines=true,                % sets automatic line breaking
+  breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+  commentstyle=\color{dkgreen}\upshape,       % comment style
+  escapeinside={\%*}{*)},            % if you want to add LaTeX within your code
+  morekeywords={*,MPM,ICE,MPMICE}               % if you want to add more keywords to the set
+}
+
+\colorlet{punct}{red!60!black}
+\colorlet{numb}{magenta!60!black}
+
+\lstdefinelanguage{XML}
+{
+  morestring=[b]",
+  morestring=[s]{>}{<},
+  morecomment=[s]{<?}{?>},
+  morestring=[s]{"}{"},
+  morecomment=[s]{?}{?},
+  morecomment=[s]{!--}{--},
+  stringstyle=\color{black},
+  identifierstyle=\color{DarkBlue},
+  keywordstyle=\color{Brickred},
+  backgroundcolor=\color{background},
+  frame=lines,
+  morekeywords={xmlns,version,type}% list your attributes here
+}
+
+\lstdefinelanguage{C++}
+{
+  keywordstyle=\color{Brickred},
+  stringstyle=\color{red},
+  identifierstyle=\color{DarkBlue},
+  backgroundcolor=\color{background},
+  frame=lines,
+  morecomment=[l][\color{magenta}]{\#}
+}
+
+\lstdefinelanguage{Cpp}
+{
+  language=C++,
+  commentstyle=\color{dkgreen}\upshape,   
+  stringstyle=\color{red},
+  identifierstyle=\color{DarkBlue},
+  backgroundcolor=\color{background},
+  frame=lines,
+  deletekeywords={...},
+  escapeinside={\%*}{*)},
+  keywordstyle=\color{Brickred},
+  morekeywords={ProblemSpecP, ProcessorGroup, SimulationController,%
+                AMRSimulationController, RegridderCommon, SolverInterface,%
+                SolverFactory, UintahParallelComponent, SimulationInterface,%
+                ComponentFactory, LoadBalancerCommon, LoadBalancerFactory,%
+                DataArchiver, Output, SchedulerCommon, SchedulerFactory,%
+                ProblemSetupException, Exception,%
+                Task, Level, Patch, Ghost, Example,%
+                GridP, SimulationStateP, LevelP, SchedulerP,%
+                PatchSubset, MaterialSubset, DataWarehouse,% 
+                SFCXVariable, PerPatch, IntVector, NodeIterator,%
+                VarLabel, MPMMaterial, PatchSet, ParticleSubset,%
+                MPMFlags, FlowModel, ConstitutiveModel, MyModel, MyFlow, PlasticityState,%
+                particleIndex, TangentModulusTensor, Matrix3, Vector,
+                ElasticModuli, TabularPlasticity, ModelState_Tabular, ParticleVariable,
+                constParticleVariable, delt_vartype, ElasticModuliModelFactory,%
+                YieldConditionFactory, ElasticModuliModel, YieldCondition, CMData,
+                ParticleLabelVariableMap, ParameterDict, TabularData, IndependentVar,
+                DependentVar, IndexKey, json, DoubleVec1D, DoubleVec2D,
+                int,char,double,float,unsigned, size_t,%
+                string, istringstream, cerr, exit}, 
+  morecomment=[l][\color{magenta}]{\#}
+}
+
+
+\lstdefinelanguage{JSON}{
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\color{background},
+    literate=
+     *{0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      {:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+      {[}{{{\color{delim}{[}}}}{1}
+      {]}{{{\color{delim}{]}}}}{1},
+}
+
+
+%--------------------------------------------------------------------------
+% Colored boxes:  Must come after graphicx and verbatim
+% and Tikz
+%--------------------------------------------------------------------------
+\RequirePackage{tikz}
+\usetikzlibrary{shadings,shadows}
+\usetikzlibrary{decorations.pathmorphing}
+\usetikzlibrary{patterns}
+\usetikzlibrary{intersections}
+\usetikzlibrary{calc}
+
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+\newtcolorbox{NoteBox}[1][]{%
+  colback=yellow!50,
+  colframe=yellow!20!black,
+  before skip=2mm,after skip=3mm,
+  boxrule=0.4pt,left=5mm,right=2mm,top=1mm,bottom=1mm,
+  sharp corners,
+  rounded corners=southeast,arc is angular,arc=3mm,
+  underlay={%
+    \path[fill=tcbcol@back!80!black] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[draw=tcbcol@frame,shorten <=-0.05mm,shorten >=-0.05mm] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[fill=yellow!50!black,draw=none] (interior.south west) rectangle node[white]{\Huge\bfseries !} ([xshift=4mm]interior.north west);
+    },
+  drop fuzzy shadow,%
+  #1}
+
+\newtcolorbox{WarningBox}[1][]{%
+  colback=pink!50,
+  colframe=pink!20!black,
+  before skip=2mm,after skip=3mm,
+  boxrule=0.4pt,left=5mm,right=2mm,top=1mm,bottom=1mm,
+  sharp corners,
+  rounded corners=southeast,arc is angular,arc=3mm,
+  underlay={%
+    \path[fill=tcbcol@back!80!black] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[draw=tcbcol@frame,shorten <=-0.05mm,shorten >=-0.05mm] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+    \path[fill=pink!50!black,draw=none] (interior.south west) rectangle node[white]{\Huge\bfseries !} ([xshift=4mm]interior.north west);
+    },
+  drop fuzzy shadow,%
+  #1}
+
+\tcbuselibrary{skins}
+\newtcolorbox[auto counter,number within=chapter]{ExampleBox}[1][]{%
+  enhanced,
+  colback=white,
+  colframe=green!65!black,
+  enlarge top by=10mm,
+  overlay={%
+    \path[fill=blue!65,line width=.4mm] (frame.north west)--++(17mm,0)coordinate(n2)--++(0,8mm)--++(-20mm,0) arc (-90:90:-4mm)--cycle;
+    \node at ([shift={(5mm,4mm)}]frame.north west){\color{white}{\textbf{\sffamily EXAMPLE}}};
+    \path[fill=green!65!blue] ([xshift=.4mm]n2)--++(0,8mm)--++(7mm,0)--++(0,-8mm)--cycle;
+    \node at ([shift={(4mm,4mm)}]n2){\color{white}{\textbf{\sffamily \thetcbcounter}}};
+    %\node at ([shift={(18mm,4mm)}]n2){\itshape\textbf{\sffamily Solution}};
+  },
+  #1}
+
+\usetikzlibrary{calc}
+\usetikzlibrary{positioning}
+\tcbuselibrary{skins}
+\newtcolorbox[auto counter,number within=section]{SummaryBox}[2][]{%
+  enhanced,
+  colback=white,
+  colframe=ocre,
+  enlarge top by=10mm,
+  overlay={%
+    \path[fill=ocre!65,line width=.4mm] (frame.north west)--++(17mm,0)coordinate(n2)--++(0,8mm)--++(-20mm,0) arc (-90:90:-4mm)--cycle;
+    \node at ([shift={(5mm,4mm)}]frame.north west){\color{white}{\textbf{\sffamily Summary}}};
+    \path[fill=ocre] ([xshift=.4mm]n2)--++(0,8mm)--++(10mm,0)--++(0,-8mm)--cycle;
+    \node (A) at ([shift={(5mm,4mm)}]n2){\color{white}{\textbf{\sffamily \thetcbcounter}}};
+    \node [right=0.5cm of A] {\itshape\textbf{\sffamily #2}};
+  },
+  #1}
+
+
+%--------------------------------------------------------------------------
+% Structure of the document
+%--------------------------------------------------------------------------
+%\input{00LayoutStructure}
+
+%--------------------------------------------------------------------------
+% Other packges
+%--------------------------------------------------------------------------
+%\usepackage{bm}%to get bold math symbols
+%\usepackage[pdftex]{graphicx}
+%\usepackage{verbatim}
+%\usepackage[tt]{titlepic}%package i downloaded to put a pic in the titlepage
+%\usepackage{helvet}
+%\usepackage[usenames,dvipsnames]{xcolor}%options to use names like redviolet and others
+%\usepackage{xspace}
+%\usepackage[mathscr]{eucal}%Defines which font to use with \mathscr
+%\usepackage{enumerate}
+%\usepackage{comment}
+%\usepackage{mathrsfs}
+%\usepackage{floatrow}%automatically centers graphics without needing a \center command on each and every figure.
+
+% Index
+%\usepackage{calc} % For simpler calculation - used for spacing the index letter headings correctly
+%\usepackage{makeidx} % Required to make an index
+
+%-------------------------------------------------------
+% For appendix
+%-------------------------------------------------------
+%\usepackage{esint}
+\usepackage[toc,page,title,titletoc]{appendix}
+
+%\usepackage{makeidx} % Used to generate the index
+
+%\usepackage{xspace} % Used for printing a trailing space better than using a tilde (~) using the \xspace command
+
+%\usepackage{epsf}
+%\usepackage{epsfig}
+%\usepackage{boxedminipage}
+%\usepackage{stmaryrd}
+%\usepackage{cancel}
+
+%-------------------------------------------------------
+% For text wrap around figures and captions for subfigures
+%-------------------------------------------------------
+\usepackage{wrapfig}
+\usepackage{subcaption}
+
+%-------------------------------------------------------
+% For underlines
+%-------------------------------------------------------
+\usepackage[normalem]{ulem}
+
+%-------------------------------------------------------
+% For algorithms
+%-------------------------------------------------------
+\usepackage{algorithm, algpseudocode, float}
+%\usepackage{algorithmic}
+
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\ALG@name~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
+\renewcommand{\algorithmiccomment}[1]{\hfill{\color{ocre}$\triangleright$\textit{#1}}}
+
+
+
+%\input{00LatexMacros.tex}
+
+%-------------------------------------------------------
+% For index
+%-------------------------------------------------------
+\makeindex 
+
+%-------------------------------------------------------
+% Background picture
+%-------------------------------------------------------
+\newcommand\BackgroundPic{%
+\put(0,0){%
+\parbox[b][\paperheight]{\paperwidth}{%
+\vfill
+\centering
+\includegraphics[width=0.5\paperwidth,height=0.5\paperheight,%
+keepaspectratio]{periodic_ellipsoids_tighter_fit.png}%
+\vfill
+}}}
+
+%-------------------------------------------------------
+% Versioning
+%-------------------------------------------------------
+\makeatletter
+\def\MyYear#1{%
+  \def\yy@##1##2##3##4;{##3##4}%
+  \expandafter\yy@#1;
+}
+\def\MyMonth#1{%
+  \def\yy@##1;{0##1}%
+  \def\yy@##1##2;{##1##2}%
+  \expandafter\yy@#1;
+}
+\makeatother
+\newcommand{\version}{Version \MyYear{\the\year}.\MyMonth{\the\month}}
+
+

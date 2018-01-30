@@ -97,8 +97,8 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
     //  std::cout << "Particles:" << *particle << "\n";
     //}
 
-    auto elementArray = createTessellation(particles);
-    for (auto& element : elementArray) {
+    auto elements = createTessellation(particles);
+    for (auto& element : elements) {
       element->updateGradients();
       std::cout << "VelGrad: \n" << element->getVelGrad() << "\n";
       std::cout << "DispGrad: \n" << element->getDispGrad() << "\n";
@@ -117,6 +117,7 @@ PeriodicBCComputeStressStrain::execute(DiscreteElements* dem)
     std::cout << "Stress = " << stress << std::endl;
 
     // Compute the boundary tractions
+    // *TODO*
     computeBoundaryTractions();
   }
 }
@@ -164,7 +165,33 @@ PeriodicBCComputeStressStrain::createTessellation(const DEMParticlePArray& parti
   return elementArray;
 }
 
-// Compute the internal "stress"
+// Compute the granular "stress"
+Matrix3 
+PeriodicBCComputeStressStrain::calcGranularStrain(const DEMParticlePArray& particles,
+                                                  const DEMTetrahedronArray& elements,
+                                                  const OrientedBox& spatialDomain)
+{
+  Matrix3 defGrad(0.0), defGradRate(0.0), velGrad(0.0), Zero(0.0);
+  REAL totalVolume = 0;
+  for (const auto& element : elements) {
+    REAL volume = element->volume();
+    defGrad += element.getDefGrad() * volume;
+    defGradRate += element.getDefGradRate() * volume;
+    velGrad += element.getVelGrad() * volume;
+    totalVolume += volume;
+  }
+  if (totalVolume > 0) {
+    defGrad /= totalVolume;
+    defGradRate /= totalVolume;
+    velGrad /= totalVolume;
+  } else {
+    defGrad = Zero;
+    defGradRate = Zero;
+    velGrad = Zero;
+  }
+}
+
+// Compute the granular "stress"
 Matrix3 
 PeriodicBCComputeStressStrain::calcGranularStress(const DEMParticlePArray& particles,
                                                   const DEMContactArray& contacts,
@@ -222,4 +249,20 @@ PeriodicBCComputeStressStrain::calcGranularStress(const DEMParticlePArray& parti
 void
 PeriodicBCComputeStressStrain::computeBoundaryTractions()
 {
+}
+
+Matrix3
+PeriodicBCComputeStressStrain::computeFabricTensor(const DEMContactArray& contacts)
+{
+  Matrix3 fabricTensor(0.0);
+  int numContacts = 0;
+  for (const auto& contact : contacts) {
+    Vec p1 = contact.getP1()->currentPosition();
+    Vec p2 = contact.getP2()->currentPosition();
+    Vec n = (p2 - p1).normalizeInPlace();
+    fabricTensor += Dyad(n, n);
+    ++numContacts;
+  }
+  fabricTensor /= numContacts;
+  return fabricTensor;
 }
