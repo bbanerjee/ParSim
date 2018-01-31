@@ -1,8 +1,8 @@
-[submodule "ThirdParty/paraEllip3d_DEM_PD_SPH/src/googletest"]
-	path = ThirdParty/paraEllip3d_DEM_PD_SPH/src/googletest
+[submodule "GranularSim/src/googletest"]
+	path = GranularSim/src/googletest
 	url = https://github.com/google/googletest.git
-[submodule "ThirdParty/paraEllip3d_DEM_PD_SPH/src/cppcodec"]
-	path = ThirdParty/paraEllip3d_DEM_PD_SPH/src/cppcodec
+[submodule "GranularSim/src/cppcodec"]
+	path = GranularSim/src/cppcodec
 	url = https://github.com/tplgy/cppcodec.git
 [submodule "Vaango/src/submodules/googletest"]
 	path = Vaango/src/submodules/googletest
@@ -11,6 +11,6 @@
 	path = Vaango/src/submodules/json
 	url = https://github.com/nlohmann/json.git
         branch = master 
-[submodule "ThirdParty/paraEllip3d_DEM_PD_SPH/src/qhull"]
-	path = ThirdParty/paraEllip3d_DEM_PD_SPH/src/qhull
+[submodule "GranularSim/src/qhull"]
+	path = GranularSim/src/qhull
 	url = https://github.com/qhull/qhull.git
