@@ -165,7 +165,8 @@ PeriodicBCComputeStressStrain::createTessellation(const DEMParticlePArray& parti
   return elementArray;
 }
 
-// Compute the granular "stress"
+// Compute the granular "strain"
+/*
 Matrix3 
 PeriodicBCComputeStressStrain::calcGranularStrain(const DEMParticlePArray& particles,
                                                   const DEMTetrahedronArray& elements,
@@ -174,7 +175,7 @@ PeriodicBCComputeStressStrain::calcGranularStrain(const DEMParticlePArray& parti
   Matrix3 defGrad(0.0), defGradRate(0.0), velGrad(0.0), Zero(0.0);
   REAL totalVolume = 0;
   for (const auto& element : elements) {
-    REAL volume = element->volume();
+    REAL volume = element.volume();
     defGrad += element.getDefGrad() * volume;
     defGradRate += element.getDefGradRate() * volume;
     velGrad += element.getVelGrad() * volume;
@@ -190,6 +191,7 @@ PeriodicBCComputeStressStrain::calcGranularStrain(const DEMParticlePArray& parti
     velGrad = Zero;
   }
 }
+*/
 
 // Compute the granular "stress"
 Matrix3 
@@ -251,6 +253,7 @@ PeriodicBCComputeStressStrain::computeBoundaryTractions()
 {
 }
 
+/*
 Matrix3
 PeriodicBCComputeStressStrain::computeFabricTensor(const DEMContactArray& contacts)
 {
@@ -266,3 +269,4 @@ PeriodicBCComputeStressStrain::computeFabricTensor(const DEMContactArray& contac
   fabricTensor /= numContacts;
   return fabricTensor;
 }
+*/
