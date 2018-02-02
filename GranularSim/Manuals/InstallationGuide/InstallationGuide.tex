@@ -68,7 +68,7 @@ sudo apt-get install git-core
 
 \begin{WarningBox}
 The \Textsfc{--recursive} flag is needed in order to make sure that the
-submodules \Textsfc{googletest}, \Textsfc{json}, and \Red{Others?} are also populated
+submodules \Textsfc{googletest}, \Textsfc{cppcodec}, and \Textsfc{qhull} are also populated
 during the download process.
 \end{WarningBox}
 
@@ -254,12 +254,183 @@ sudo apt-get install python-vtk tcl-vtk libvtk-java libvtk5-qt4-dev
 \end{lstlisting}
 
 \subsection{Qhull library}
-The \Textsfc{Qhull} source code is part of the repository. {\Red Add instructions for Qhull.}
+\begin{WarningBox}
+You will have to compile \Textsfc{Qhull} before you can compile \Textsfc{GranularSim}.
+\end{WarningBox}
+
+The \Textsfc{Qhull} source code is a submodule of the repository.  For \Textsfc{gcc} builds,
+do the following to compile \Textsfc{Qhull}:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+cd ParSim/GranularSim/src/qhull/build
+cmake ..
+make
+\end{lstlisting}
+If you want to compile with \Textsfc{clang}, use
+\begin{lstlisting}[backgroundcolor=\color{background}]
+cd ParSim/GranularSim/src/qhull
+mkdir build_clang
+cd build_clang
+CC=/usr/local/bin/clang CXX=/usr/local/bin/clang++ cmake ..
+make
+\end{lstlisting}
+The actual paths to the \Textsfc{clang} compilers may vary depending on your system setup.
 
 \section{Building from source} \label{sec:build_from_src}
-Building on desktop is easier if you use a pacakage manager.  However, in some situations you may have to 
-build from source.  {\Red See \url{http://www.parresianz.com/dem/compiling-paraellip3d-for-a-cluster/}} for
-an example.
+Building on desktop is easier if you use a package manager.  However, in some situations you may have to 
+build from source.  We will discuss an example of building the code on a Cray machine below.
+
+\begin{WarningBox}
+We have been successful in building on a Cray with the \Textsfc{gcc} compiler but failed with
+\Textsfc{clang} because the C++11 headers were not available on that machine.  Our experience is 
+discussed below but yours may differ.
+\end{WarningBox}
+
+\subsection{Check what is already installed}
+
+\begin{WarningBox}
+Sometimes the head node and the compile node may have different versions of the \Textsfc{gcc} libraries.  
+\end{WarningBox}
+
+To check the modules that are available on the compilation node, log into that node using a command such as
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  ssh scompile@machine.domain
+\end{lstlisting}
+and then run
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  module avail
+\end{lstlisting}
+
+In this example we will assume that \Textsfc{gcc 6.1.0}, \Textsfc{cmake}, \Textsfc{git},
+and \Textsfc{zlib} are already installed and available as the
+default option.  We will load those modules using
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  module load gcc/6.1.0
+  module load cmake/3.6.2
+  module load git
+  module load zlib
+\end{lstlisting}
+
+\subsection{Building VTK}
+
+Typically, you will not find \Textsfc{VTK} installed on the machine and will have to build the
+associated libraries.  We have found that \Textsfc{VTK-7.1.1} can be built with \Textsfc{gcc-6.1.0} while
+older versions do not build properly.
+
+To download the \Textsfc{VTK} source code use
+\begin{lstlisting}[backgroundcolor=\color{background}]
+mkdir VTK-7.1.1
+cd VTK-7.1.1
+wget https://gitlab.kitware.com/vtk/vtk/repository/v7.1.1/archive.tar.gz
+tar xvfz archive.tar.gz
+\end{lstlisting}
+
+To build the code, created a \Textsfc{build} directory and run
+\begin{lstlisting}[backgroundcolor=\color{background}]
+mkdir build
+cd build
+ccmake ../vtk-v7.1.1-b86da7eef93f75c4a7f524b3644523ae6b651bc4/
+\end{lstlisting}
+
+We suggest that you adjust the build flags in the \Textsfc{ccmake} graphical interface so that
+the build script downloads all the necessary libraries. Also specify that the build be an optimized build 
+and that no tests are to be run.  You will also need to specify the install prefix to be a local 
+\Textsfc{vtk} directory.
+
+To run the build script use:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+make -j8
+make install
+\end{lstlisting}
+
+\subsection{Building Boost}
+
+We have been able to successfully build \Textsfc{boost-1.65.1}.  
+\begin{WarningBox}
+To build the Boost \Textsfc{mpi} libraries, you may have to create the file
+\Textsfc{/home/user/user-config.jam} containing the single line \Textsfc{using mpi ;} 
+before you do the bootstrap procedure.
+\end{WarningBox}
+
+The process is quite straightfoward:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz
+tar xvfz boost_1_65_1.tar.gz
+cd boost_1_65_1/
+./bootstrap.sh --prefix=../boost --with-libraries=mpi,serialization --show-libraries
+./b2  link=shared install
+\end{lstlisting}
+
+One problem that we ran into with modern compilers is that some preprocessor directives are 
+not understand by the compiler.  If you run into that problem, locate the file
+\begin{lstlisting}[backgroundcolor=\color{background}]
+boost/include/boost/archive/detail/iserializer.hpp
+\end{lstlisting}
+
+and replace
+\begin{lstlisting}[backgroundcolor=\color{background}]
+#ifndef BOOST_MSVC
+    #define DONT_USE_HAS_NEW_OPERATOR (                    \
+           BOOST_WORKAROUND(__IBMCPP__, < 1210)            \
+        || defined(__SUNPRO_CC) && (__SUNPRO_CC < 0x590)   \
+    )
+#else
+    #define DONT_USE_HAS_NEW_OPERATOR 0
+#endif
+\end{lstlisting}
+with
+\begin{lstlisting}[backgroundcolor=\color{background}]
+#ifndef BOOST_MSVC
+        #if BOOST_WORKAROUND(__IBMCPP__, < 1210)               \
+            || defined(__SUNPRO_CC) && (__SUNPRO_CC < 0x590)
+                #define DONT_USE_HAS_NEW_OPERATOR 1
+        #else
+                #define DONT_USE_HAS_NEW_OPERATOR 0
+        #endif
+#else
+    #define DONT_USE_HAS_NEW_OPERATOR 0
+#endif
+\end{lstlisting}
+
+\subsection{Building libxml2}
+Building \Textsfc{libxml2} is straightforward.  Just follow the sequence of steps below:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+wget ftp://xmlsoft.org/libxml2/libxml2-2.9.7.tar.gz
+tar xvfz libxml2-2.9.7.tar.gz
+module load zlib
+module unload python
+./configure --prefix=<home-directory>/libxml2 --enable-shared --without-python
+make -j4
+make install
+\end{lstlisting}
+
+\subsection{Building eigen3}
+The \Textsfc{eigen3} build is also straightforward:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+wget http://bitbucket.org/eigen/eigen/get/3.3.4.tar.gz
+tar xvfz 3.3.4.tar.gz
+mkdir eigen-build
+cd eigen-build
+cmake ../eigen-eigen-5a0156e40feb/ -DCMAKE_INSTALL_PREFIX=../eigen3
+make install
+\end{lstlisting}
+
+\subsection{Building qhull}
+The \Textsfc{qhull} source is downloaded as a submodule of the \Textsfc{ParSim} source code.
+Building \Textsfc{qhull} is done in-source:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+cd ParSim/GranularSim/src/qhull
+cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=.
+make
+make install
+\end{lstlisting}
+
+\subsection{Building googletests and zenxml}
+Googletests are built automatically while building \Textsfc{GranularSim} while \Textsfc{zenxml}
+is a header-only file that requires C++14 capabilities in the compiler.  Both are downloaded when the
+\Textsfc{ParSim} repository is cloned.
 
 \chapter{Configuring and Building GranularSim}
 
@@ -331,6 +502,27 @@ make -j4
 
 After this compilation you have all the executable files in your \Textsfc{opt} directory.
 The same process can  be used for the debug build.
+
+\section{Building GranularSim with compiled libraries}
+When you have built your own libraries the build procedure for \Textsfc{GranularSim} is slightly different. 
+For example, for the optimized build, do the following:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+module load gcc
+module load zlib
+module load openmpi
+git clone --recursive https://github.com/bbanerjee/ParSim.git
+cd ParSim/GranularSim/
+mkdir opt
+cd opt
+CC=gcc CXX=g++ \
+cmake -DCMAKE_BUILD_TYPE=Release \
+      -DBOOST_ROOT=/projects/user_name/boost \
+      -DVTK_DIR=/projects/user_name/vtk/lib/cmake/vtk-7.1/ -DWITH_VTK7=1 \
+      -DEIGEN3_INCLUDE_DIR=/projects/user_name/eigen3/include/eigen3 \
+      ../src
+make -j4
+\end{lstlisting}
 
 \chapter{Installing VisIt}
 Visualization of \GranularSim data is currently possible using
