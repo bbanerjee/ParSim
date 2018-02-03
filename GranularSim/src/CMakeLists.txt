@@ -185,8 +185,8 @@ add_library(ELLIP3D_LIB
 #----------------------------------------------------------------------------
 # Create executable
 #----------------------------------------------------------------------------
-add_executable(paraEllip3D main.cpp)
-target_link_libraries(paraEllip3D 
+add_executable(granularsim main.cpp)
+target_link_libraries(granularsim 
   ELLIP3D_LIB
   ${MPI_LIBRARY}
   ${Boost_LIBRARIES}

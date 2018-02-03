@@ -1,0 +1,159 @@
+\documentclass[11pt,fleqn]{book} % Default font size and left-justified equations
+
+\input{../00Preamble.tex}
+\input{../00LayoutStructure.tex}
+\input{../00LatexMacros.tex}
+
+
+\begin{document}
+
+  %----------------------------------------------------------------------------------------
+  %       TITLE PAGE
+  %----------------------------------------------------------------------------------------
+  \begingroup
+    \thispagestyle{empty}
+    \AddToShipoutPicture*{\BackgroundPic} % Image background
+    \centering
+    \vspace*{1cm}
+    \par\normalfont\fontsize{35}{35}\sffamily\selectfont
+    \textcolor{black}{GranularSim User Guide}\par % Book title
+    \vspace*{0.5cm}
+    {\Large \textcolor{black}{Version \version}}\par
+    {\Large \textcolor{black}{\today}}\par
+    \vspace*{13cm}
+    {\Large \textcolor{black}{Biswajit Banerjee}}\par % Author name
+  \endgroup
+
+  \input{../00FrontMatter.tex}
+
+\chapter{Overview of GranularSim} \label{sec:overview} 
+\GranularSim is a rewritten and updated version of the parallel discrete element code \ParaEllip
+developed at the University of Colorado at Boulder, with the intent of having a more general
+code that can be improved and appended to more easily.  The primary use case is the simulation
+of soils and other granular materials.
+
+The main components of \GranularSim include a discrete element (DEM) code that can handle
+ellipsoidal particles, a peridynamics (PD) code that couples to DEM particles, and
+a smoothed particle hydrodynamics (SPH) code that also couples to DEM particles.
+In addition, the code is able to handle special boundary conditions that are needed
+for hierarchical upscaling.
+
+\GranularSim provides outputs in VTK format and results can be visualized either
+with \ParaView (\url{https://www.paraview.org/})
+or with \Visit (\url{https://wci.llnl.gov/simulation/computer-codes/visit/}).
+
+\section{Downloading and compiling the Code}
+For instructions on downloading and compiling \GranularSim see the \Textbfc{Installation Guide}
+which can be downloaded from 
+\url{https://github.com/bbanerjee/ParSim/tree/master/GranularSim/Manuals/InstallationGuide}.
+
+\section{Running the code}
+\begin{WarningBox}
+We will assume that you have compiled \GranularSim inside a directory called \Textsfc{opt}.
+\end{WarningBox}
+
+In the \Textsfc{opt} directory you will find the executable \Textsfc{granularsim}.  This is the
+entry point for the simulation code.
+
+A typical simulation can be run either on one processor or on multiple processors.  For
+a single processor run, use
+
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+cd opt
+./granularsim <input_file.xml>
+\end{lstlisting}
+
+For a multiprocessor run, use 
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+cd opt
+mpirun -np <num_processors> ./granularsim <input_file.xml>
+\end{lstlisting}
+
+On Cray machines, you may have to use a PBS script to runs jobs.  For jobs on
+distributed computing machines, a common replacement for \Textsfc{mpirun} is \Textsfc{aprun}.
+For interactive jobs on such machines you will need to use the alternative command
+\begin{lstlisting}[language=sh, backgroundcolor=\color{background}]
+cd opt
+aprun -n <num_processors> ./granularsim <input_file.xml>
+\end{lstlisting}
+
+\section{Input files}
+\GranularSim does not have a user interface that you can use to generate input files.
+Instead, you will have to create these files yourself.  The input files are is \Textsfc{XML}
+format.  A snippet from such a file is given below.
+\begin{lstlisting}[language=XML]
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Ellip3D_input>
+
+  <Meta>
+     <title> DEM-PD simulation sample input file </title>
+  </Meta>
+
+  <!-- #simulation type -->
+  <SimulationType>  001 </SimulationType>
+
+  <!-- Parallel setup -->
+  <Parallel>
+    <!--
+    #grids/processes in x, y, z directions for MPI parallelization, which
+    #is recommended for more than thousands of particles. By default these
+    #values are 1 for serial computing. They must satisfy equation:
+    #mpiProcX * mpiProcY * mpiProcZ = np, where np is the number of processes
+    #specified in mpirun command line.
+    -->
+    <mpiProc> [2, 1, 2] </mpiProc>
+
+    <!--
+    #threads per process for OpenMP parallelization, which is recommended 
+    #for more than thousands of particles. By default this value is 1 for 
+    #single-thread computing. If it > 1, multiple-threads computing is 
+    #invoked.
+    -->
+    <ompThreads>  1 </ompThreads>
+  </Parallel>
+  .......
+</Ellip3D_input>
+\end{lstlisting}
+Further details can be found in the chapter on input files {\Red Add link to chapter}.
+
+\section{Output files}
+\GranularSim simulations produce a number of output files for each timestep that is
+saved.   Each simulation produces a new directory that contains a set of files that
+are numbered sequentially. 
+\begin{WarningBox}
+At present, all important variables are saved and selective saves are not allowed.
+\end{WarningBox}
+
+The files that are generated are:
+\begin{enumerate}
+  \item \Textsfc{bdry\_contact\_nnnnn.csv} and \Textsfc{bdry\_contact\_nnnnn.xml} : Information about
+        boundary contacts.
+  \item \Textsfc{boundary\_nnnnn} : Information about the positions of the domain boundaries.
+  \item \Textsfc{contact\_nnnnn.csv} and \Textsfc{contact\_nnnnn.xml} : Information about
+        inter-particle contacts.
+  \item \Textsfc{domain\_nnnnn.vtu} : VTK format files containing the positions of domain boundaries.
+  \item \Textsfc{oriented\_domain\_nnnnn.vtu} : VTK format files containing the positions of domain 
+        boundaries for domains (including those that are not axis-aligned).
+  \item \Textsfc{output\_particles\_nnn.dat} : CSV format files containing the particle information.
+  \item \Textsfc{particle\_nnnnn.vtu} : VTK format files containing the particle information.
+  \item \Textsfc{patchGrid\_nnnnn.vtu} : VTK format files containing the domain decomposition
+        information (patches).
+\end{enumerate}
+
+Further details can be found in the chapter on output files {\Red Add link to chapter}.
+
+\section{Visualization}
+The output generated by \GranularSim can be visualized in three ways:
+
+\begin{enumerate}
+  \item Using a \Textsfc{R} script.
+  \item Using \ParaView to read and visualize the \Textsfc{VTK} output files.
+  \item Using \Visit to read and visualize the \Textsfc{VTK} output files.
+\end{enumerate}
+
+Details can be found in the chapter on visualization {\Red Add link to chapter}.
+
+
+%\input{../00EndMatter.tex}
+
+\end{document}
