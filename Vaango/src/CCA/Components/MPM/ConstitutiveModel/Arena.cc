@@ -1406,11 +1406,11 @@ Arena::rateIndependentPlasticUpdate(const Matrix3& D, const double& delT,
                                     const ModelState_Arena& state_old,
                                     ModelState_Arena& state_new)
 {
-#ifdef CHECK_FOR_NAN_EXTRA
-  std::cout << "Rate independent update:" << std::endl;
-  std::cout << " D = " << D << " delT = " << delT << std::endl;
-  std::cout << "\t State old:" << state_old << std::endl;
-#endif
+  #ifdef CHECK_FOR_NAN_EXTRA
+    std::cout << "Rate independent update:" << std::endl;
+    std::cout << " D = " << D << " delT = " << delT << std::endl;
+    std::cout << "\t State old:" << state_old << std::endl;
+  #endif
 
   // Compute the strain increment
   Matrix3 strain_inc = D * delT;
@@ -1428,10 +1428,10 @@ Arena::rateIndependentPlasticUpdate(const Matrix3& D, const double& delT,
   state_trial.stressTensor = stress_trial;
   computeElasticProperties(state_trial);
 
-#ifdef CHECK_FOR_NAN_EXTRA
-  std::cout << "\t strain_inc = " << strain_inc << std::endl;
-  std::cout << "\t State trial:" << state_trial << std::endl;
-#endif
+  #ifdef CHECK_FOR_NAN_EXTRA
+    std::cout << "\t strain_inc = " << strain_inc << std::endl;
+    std::cout << "\t State trial:" << state_trial << std::endl;
+  #endif
 
   // Determine the number of substeps (nsub) based on the magnitude of
   // the trial stress increment relative to the characteristic dimensions
@@ -1464,38 +1464,34 @@ Arena::rateIndependentPlasticUpdate(const Matrix3& D, const double& delT,
   double tlocal = 0.0;
   bool isSuccess = false;
 
-  // Set up the initial states for the substeps
+  // Iterate over substeps
   ModelState_Arena state_k_old(state_old);
   ModelState_Arena state_k_new(state_old);
   do {
 
-    //  Call substep function {sigma_new, ep_new, X_new, Zeta_new}
-    //    = computeSubstep(D, dt, sigma_substep, ep_substep, X_substep,
-    //    Zeta_substep)
-    //  Repeat while substeps continue to be successful
     isSuccess = computeSubstep(D, dt, state_k_old, state_k_new);
     if (isSuccess) {
 
       tlocal += dt;
 
-#ifdef WRITE_YIELD_SURF
-      std::cout << "K = " << state_k_old.bulkModulus << std::endl;
-      std::cout << "G = " << state_k_old.shearModulus << std::endl;
-      std::cout << "capX = " << state_k_new.capX << std::endl;
-      std::cout << "pbar_w = " << state_k_new.pbar_w << std::endl;
-#endif
+      #ifdef WRITE_YIELD_SURF
+        std::cout << "K = " << state_k_old.bulkModulus << std::endl;
+        std::cout << "G = " << state_k_old.shearModulus << std::endl;
+        std::cout << "capX = " << state_k_new.capX << std::endl;
+        std::cout << "pbar_w = " << state_k_new.pbar_w << std::endl;
+      #endif
 
       state_k_old = state_k_new;
 
-#ifdef WRITE_YIELD_SURF
-      Matrix3 sig = state_k_new.stressTensor;
-      std::cout << "sigma_new = np.array([[" << sig(0, 0) << "," << sig(0, 1)
-                << "," << sig(0, 2) << "],[" << sig(1, 0) << "," << sig(1, 1)
-                << "," << sig(1, 2) << "],[" << sig(2, 0) << "," << sig(2, 1)
-                << "," << sig(2, 2) << "]])" << std::endl;
-      std::cout << "plot_stress_state(K, G, sigma_trial, sigma_new, 'b')"
-                << std::endl;
-#endif
+      #ifdef WRITE_YIELD_SURF
+        Matrix3 sig = state_k_new.stressTensor;
+        std::cout << "sigma_new = np.array([[" << sig(0, 0) << "," << sig(0, 1)
+                  << "," << sig(0, 2) << "],[" << sig(1, 0) << "," << sig(1, 1)
+                  << "," << sig(1, 2) << "],[" << sig(2, 0) << "," << sig(2, 1)
+                  << "," << sig(2, 2) << "]])" << std::endl;
+        std::cout << "plot_stress_state(K, G, sigma_trial, sigma_new, 'b')"
+                  << std::endl;
+      #endif
 
     } else {
 
@@ -1515,29 +1511,29 @@ Arena::rateIndependentPlasticUpdate(const Matrix3& D, const double& delT,
       proc0cout << "**WARNING** Decreasing substep time increment to " << dt
                 << " because computeSubstep failed." << std::endl;
     }
-#ifdef CHECK_SUBSTEP
-    if (tlocal < delT) {
-      std::cout << "tlocal = " << tlocal << " delT = " << delT
-                << " nsub = " << nsub << std::endl;
-    }
-#endif
+
+    #ifdef CHECK_SUBSTEP
+      if (tlocal < delT) {
+        std::cout << "tlocal = " << tlocal << " delT = " << delT
+                  << " nsub = " << nsub << std::endl;
+      }
+    #endif
+
   } while (tlocal < delT);
 
   state_new = state_k_new;
 
-#ifdef CHECK_INTERNAL_VAR_EVOLUTION
-  // if (state_old.particleID == 3377699720593411) {
-  std::cout << "rateIndependentPlasticUpdate: "
-            << " pbar_w_old = " << state_old.pbar_w
-            << " pbar_w_new = " << state_new.pbar_w
-            << " Xbar_old = " << -state_old.capX
-            << " Xbar_new = " << -state_new.capX
-            << " Xeff_old = " << -state_old.capX - state_old.pbar_w
-            << " Xeff_new = " << -state_new.capX - state_new.pbar_w
-            << " ep_v_old = " << state_old.ep_v
-            << " ep_v_new = " << state_new.ep_v << std::endl;
-//}
-#endif
+  #ifdef CHECK_INTERNAL_VAR_EVOLUTION
+    std::cout << "rateIndependentPlasticUpdate: "
+              << " pbar_w_old = " << state_old.pbar_w
+              << " pbar_w_new = " << state_new.pbar_w
+              << " Xbar_old = " << -state_old.capX
+              << " Xbar_new = " << -state_new.capX
+              << " Xeff_old = " << -state_old.capX - state_old.pbar_w
+              << " Xeff_new = " << -state_new.capX - state_new.pbar_w
+              << " ep_v_old = " << state_old.ep_v
+              << " ep_v_new = " << state_new.ep_v << std::endl;
+  #endif
 
   return isSuccess;
 }
@@ -1565,10 +1561,12 @@ Arena::computeElasticProperties(ModelState_Arena& state)
   state.shearModulus *= d_modulus_scale_fac;
 
   // Modify the moduli if damage is being used
+  /*
   if (d_cm.do_damage) {
     state.bulkModulus *= (state.coherence + 1.0e-16);
     state.shearModulus *= (state.coherence + 1.0e-16);
   }
+  */
 
   // Modify the moduli if disaggregation is being used
   if (d_cm.use_disaggregation_algorithm) {
@@ -1577,11 +1575,6 @@ Arena::computeElasticProperties(ModelState_Arena& state)
     double scale = (phi > d_fluidParam.phi0)
                      ? std::max((1.0 - phi) / (1.0 + phi), 0.00001)
                      : 1.0;
-    /*
-    if (state.particleID == 3659178992271360) {
-      std::cout << "bulk modulus scale factor = " << scale << std::endl;
-    }
-    */
     state.bulkModulus *= scale;
     state.shearModulus *= scale;
   }
@@ -1604,20 +1597,19 @@ Arena::computeTrialStress(const ModelState_Arena& state_old,
   Matrix3 deps_dev = strain_inc - deps_iso;
   Matrix3 stress_trial = stress_old + deps_iso * (3.0 * state_old.bulkModulus) +
                          deps_dev * (2.0 * state_old.shearModulus);
-//#ifdef CHECK_TRIAL_STRESS
-#ifdef CHECK_FOR_NAN
-  if (std::isnan(stress_trial(0, 0))) {
-    std::cout << " stress_old = " << stress_old
-              << " stress_trial = " << stress_trial
-              << " p_trial = " << stress_trial.Trace() / 3.0
-              << " strain_inc = " << strain_inc << " deps_iso = " << deps_iso
-              << " deps_dev = " << deps_dev << " K = " << state_old.bulkModulus
-              << " G = " << state_old.shearModulus << std::endl;
-    throw InternalError("**ERROR** Nan in compute trial stress.", __FILE__,
-                        __LINE__);
-  }
-#endif
-  //#endif
+
+  #ifdef CHECK_FOR_NAN
+    if (std::isnan(stress_trial(0, 0))) {
+      std::cout << " stress_old = " << stress_old
+                << " stress_trial = " << stress_trial
+                << " p_trial = " << stress_trial.Trace() / 3.0
+                << " strain_inc = " << strain_inc << " deps_iso = " << deps_iso
+                << " deps_dev = " << deps_dev << " K = " << state_old.bulkModulus
+                << " G = " << state_old.shearModulus << std::endl;
+      throw InternalError("**ERROR** Nan in compute trial stress.", __FILE__,
+                          __LINE__);
+    }
+  #endif
 
   return stress_trial;
 }
@@ -1659,10 +1651,11 @@ Arena::computeStepDivisions(particleIndex idx, long64 particleID,
 
   int n_bulk =
     std::max(std::ceil(std::abs(bulk_old - bulk_trial) / bulk_old), 1.0);
-#ifdef CHECK_FOR_NAN_EXTRA
-  std::cout << "bulk_old = " << bulk_old << " bulk_trial = " << bulk_trial
-            << " n_bulk = " << n_bulk << std::endl;
-#endif
+
+  #ifdef CHECK_FOR_NAN_EXTRA
+    std::cout << "bulk_old = " << bulk_old << " bulk_trial = " << bulk_trial
+              << " n_bulk = " << n_bulk << std::endl;
+  #endif
 
   // Compute trial stress increment relative to yield surface size:
   Matrix3 d_sigma = state_trial.stressTensor - state_old.stressTensor;
@@ -1670,22 +1663,17 @@ Arena::computeStepDivisions(particleIndex idx, long64 particleID,
   double I1_size = 0.5 * (PEAKI1 - X_eff);
   double J2_size = d_yield->evalYieldConditionMax(&state_old);
   double size = std::max(I1_size, J2_size);
-  // if (STREN > 0.0){
-  //  size = std::min(I1_size, STREN);
-  //}
   size *= d_cm.yield_scale_fac;
   int n_yield = ceil(d_sigma.Norm() / size);
 
-#ifdef CHECK_FOR_NAN_EXTRA
-  // if (state_old.particleID == 3377699720593411) {
-  proc0cout << "bulk_old = " << bulk_old << " bulk_trial = " << bulk_trial
-            << " n_bulk = " << n_bulk << std::endl;
-  proc0cout << "PEAKI1 = " << PEAKI1 << " capX_old = " << state_old.capX
-            << " pbar_w_old = " << state_old.pbar_w << " size = " << size
-            << " |dsigma| = " << d_sigma.Norm() << " n_yield = " << n_yield
-            << std::endl;
-//}
-#endif
+  #ifdef CHECK_FOR_NAN_EXTRA
+    proc0cout << "bulk_old = " << bulk_old << " bulk_trial = " << bulk_trial
+              << " n_bulk = " << n_bulk << std::endl;
+    proc0cout << "PEAKI1 = " << PEAKI1 << " capX_old = " << state_old.capX
+              << " pbar_w_old = " << state_old.pbar_w << " size = " << size
+              << " |dsigma| = " << d_sigma.Norm() << " n_yield = " << n_yield
+              << std::endl;
+  #endif
 
   // nsub is the maximum of the two values.above.  If this exceeds allowable,
   // throw warning and delete particle.
@@ -1720,6 +1708,7 @@ Arena::computeStepDivisions(particleIndex idx, long64 particleID,
               << " : Probably too much tension in the particle." << std::endl;
     nsub = -1;
   }
+
   return nsub;
 }
 
@@ -1735,38 +1724,53 @@ Arena::computeSubstep(const Matrix3& D, const double& dt,
                       const ModelState_Arena& state_k_old,
                       ModelState_Arena& state_k_new)
 {
-#ifdef CHECK_FOR_NAN_EXTRA
-  std::cout << "\t D = " << D << std::endl;
-  std::cout << "\t dt:" << dt << std::endl;
-#endif
+  #ifdef CHECK_FOR_NAN_EXTRA
+    std::cout << "\t D = " << D << std::endl;
+    std::cout << "\t dt:" << dt << std::endl;
+  #endif
 
   // Compute the trial stress
   Matrix3 deltaEps = D * dt;
   Matrix3 stress_k_trial = computeTrialStress(state_k_old, deltaEps);
 
-#ifdef CHECK_FOR_NAN_EXTRA
-  std::cout << "\t deltaEps = " << deltaEps << std::endl;
-  std::cout << "\t Stress k trial:" << stress_k_trial << std::endl;
-#endif
+  #ifdef CHECK_FOR_NAN_EXTRA
+    std::cout << "\t deltaEps = " << deltaEps << std::endl;
+    std::cout << "\t Stress k trial:" << stress_k_trial << std::endl;
+  #endif
 
-#ifdef WRITE_YIELD_SURF
-  // std::cout << "Inside computeSubstep:" << std::endl;
-  std::cout << "K = " << state_k_old.bulkModulus << std::endl;
-  std::cout << "G = " << state_k_old.shearModulus << std::endl;
-  std::cout << "capX = " << state_k_old.capX << std::endl;
-  std::cout << "pbar_w = " << state_k_old.pbar_w << std::endl;
-  Matrix3 sig = stress_k_trial;
-  std::cout << "sigma_trial = np.array([[" << sig(0, 0) << "," << sig(0, 1)
-            << "," << sig(0, 2) << "],[" << sig(1, 0) << "," << sig(1, 1) << ","
-            << sig(1, 2) << "],[" << sig(2, 0) << "," << sig(2, 1) << ","
-            << sig(2, 2) << "]])" << std::endl;
-  std::cout << "plot_stress_state(K, G, sigma_new, sigma_trial, 'r')"
-            << std::endl;
-// std::cout << "\t computeSubstep: sigma_old = " << state_k_old.stressTensor
-//         << " sigma_trial = " << stress_trial
-//         << " D = " << D << " dt = " << dt
-//         << " deltaEps = " << deltaEps << std::endl;
-#endif
+  #ifdef WRITE_YIELD_SURF
+    std::cout << "Inside computeSubstep:" << std::endl;
+    std::cout << "K = " << state_k_old.bulkModulus << std::endl;
+    std::cout << "G = " << state_k_old.shearModulus << std::endl;
+    std::cout << "capX = " << state_k_old.capX << std::endl;
+    std::cout << "pbar_w = " << state_k_old.pbar_w << std::endl;
+    Matrix3 sig = stress_k_trial;
+    std::cout << "sigma_trial = np.array([[" << sig(0, 0) << "," << sig(0, 1)
+              << "," << sig(0, 2) << "],[" << sig(1, 0) << "," << sig(1, 1) << ","
+              << sig(1, 2) << "],[" << sig(2, 0) << "," << sig(2, 1) << ","
+              << sig(2, 2) << "]])" << std::endl;
+    std::cout << "plot_stress_state(K, G, sigma_new, sigma_trial, 'r')"
+              << std::endl;
+    std::cout << "\t computeSubstep: sigma_old = " << state_k_old.stressTensor
+              << " sigma_trial = " << stress_k_trial
+              << " D = " << D << " dt = " << dt
+              << " deltaEps = " << deltaEps << std::endl;
+  #endif
+
+  /*
+  if (state_k_old.particleID == 3096267694276610) 
+  {
+    std::cout << "Inside computeSubstep: ID = " << state_k_old.particleID << std::endl;
+    std::cout << "K = " << state_k_old.bulkModulus << std::endl;
+    std::cout << "G = " << state_k_old.shearModulus << std::endl;
+    std::cout << "capX = " << state_k_old.capX << std::endl;
+    std::cout << "pbar_w = " << state_k_old.pbar_w << std::endl;
+    std::cout << "\t computeSubstep: sigma_old = " << state_k_old.stressTensor
+              << " sigma_trial = " << stress_k_trial
+              << " D = " << D << " dt = " << dt
+              << " deltaEps = " << deltaEps << std::endl;
+  }
+  */
 
   // Set up a trial state, update the stress invariants
   ModelState_Arena state_k_trial(state_k_old);
@@ -1776,53 +1780,56 @@ Arena::computeSubstep(const Matrix3& D, const double& dt,
   // and update stress invariants
   computeElasticProperties(state_k_trial);
 
+  /*
+  if (state_k_old.particleID == 3096267694276610) 
+  {
+    std::cout << "K_trial = " << state_k_trial.bulkModulus << std::endl;
+    std::cout << "G_trial = " << state_k_trial.shearModulus << std::endl;
+    std::cout << "stress_trial = " << state_k_trial.stressTensor << "\n"; 
+    std::cout << "I1_eff = " << state_k_trial.I1_eff << "\n"; 
+    std::cout << "pbar_w = " << state_k_trial.pbar_w << "\n"; 
+  }
+  */
+
   // Evaluate the yield function at the trial stress:
   int yield = (int)d_yield->evalYieldCondition(&state_k_trial);
-
-  // std::cout << "Has yielded ? 1 = Yes, -1 = No." << yield << std::endl;
-  // std::cout << "computeSubstep:Elastic:sigma_new = " <<
-  // state_k_new.stressTensor
-  //          << " pbar_w_trial = " << state_k_trial.pbar_w
-  //          << " Xbar_trial = " << -state_k_trial.capX
-  //          << " Xeff_trial = " << -state_k_trial.capX - state_k_trial.pbar_w
-  //          << " ep_v_trial = " << state_k_trial.ep_v
-  //          << std::endl;
 
   // Elastic substep
   if (!(yield == 1)) {
     state_k_new = state_k_trial;
     state_k_new.elasticStrainTensor += deltaEps;
 
-#ifdef CHECK_INTERNAL_VAR_EVOLUTION
-    std::cout << "computeSubstep:Elastic:sigma_new = "
-              << state_k_new.stressTensor
-              << " pbar_w_trial = " << state_k_trial.pbar_w
-              << " Xbar_trial = " << -state_k_trial.capX
-              << " Xeff_trial = " << -state_k_trial.capX - state_k_trial.pbar_w
-              << " ep_v_trial = " << state_k_trial.ep_v << std::endl;
-#endif
+    #ifdef CHECK_INTERNAL_VAR_EVOLUTION
+      std::cout << "computeSubstep:Elastic:sigma_new = "
+                << state_k_new.stressTensor
+                << " pbar_w_trial = " << state_k_trial.pbar_w
+                << " Xbar_trial = " << -state_k_trial.capX
+                << " Xeff_trial = " << -state_k_trial.capX - state_k_trial.pbar_w
+                << " ep_v_trial = " << state_k_trial.ep_v << std::endl;
+    #endif
 
     return true; // bool isSuccess = true;
   }
 
-#ifdef DEBUG_YIELD_BISECTION_R
-  std::cout << "before_non_hardening_return  = 1" << std::endl;
-  std::cout << "I1_eff = " << state_k_old.I1_eff << std::endl;
-  std::cout << "sqrt_J2 = " << state_k_old.sqrt_J2 << std::endl;
-#endif
+  #ifdef DEBUG_YIELD_BISECTION_R
+    std::cout << "before_non_hardening_return  = 1" << std::endl;
+    std::cout << "I1_eff = " << state_k_old.I1_eff << std::endl;
+    std::cout << "sqrt_J2 = " << state_k_old.sqrt_J2 << std::endl;
+  #endif
+
   // Elastic-plastic or fully-plastic substep
   // Compute non-hardening return to initial yield surface:
+  // Final stress state for non-hardening return
+  Matrix3 sig_fixed(0.0); 
+  Matrix3 deltaEps_e_fixed(0.0); 
+  Matrix3 deltaEps_p_fixed(0.0); 
+
   // std::cout << "\t Doing nonHardeningReturn\n";
-  Matrix3 sig_fixed(0.0); // final stress state for non-hardening return
-  Matrix3 deltaEps_e_fixed(
-    0.0); // increment in elastic strain for non-hardening return
-  Matrix3 deltaEps_p_fixed(
-    0.0); // increment in plastic strain for non-hardening return
   bool isSuccess =
     nonHardeningReturn(deltaEps, state_k_old, state_k_trial, sig_fixed,
                        deltaEps_e_fixed, deltaEps_p_fixed);
   if (!isSuccess) {
-    proc0cout << "**WARNING** nonHardeningReturn has failed." << std::endl;
+    proc0cout << "**WARNING** nonHardeningReturn in computeSubstep has failed." << std::endl;
     return isSuccess;
   }
 
@@ -1833,23 +1840,23 @@ Arena::computeSubstep(const Matrix3& D, const double& dt,
     deltaEps, state_k_old, state_k_trial, deltaEps_e_fixed, deltaEps_p_fixed,
     sig_fixed, state_k_new);
 
-#ifdef DEBUG_INTERNAL_VAR_EVOLUTION
-  std::cout << "computeSubstep: "
-            << " pbar_w_old = " << state_k_old.pbar_w
-            << " pbar_w_new = " << state_k_new.pbar_w
-            << " Xbar_old = " << -state_k_old.capX
-            << " Xbar_new = " << -state_k_new.capX
-            << " Xeff_old = " << -state_k_old.capX - state_k_old.pbar_w
-            << " Xeff_new = " << -state_k_new.capX - state_k_new.pbar_w
-            << " ep_v_old = " << state_k_old.ep_v
-            << " ep_v_new = " << state_k_new.ep_v << std::endl;
-#endif
+  #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
+    std::cout << "computeSubstep: "
+              << " pbar_w_old = " << state_k_old.pbar_w
+              << " pbar_w_new = " << state_k_new.pbar_w
+              << " Xbar_old = " << -state_k_old.capX
+              << " Xbar_new = " << -state_k_new.capX
+              << " Xeff_old = " << -state_k_old.capX - state_k_old.pbar_w
+              << " Xeff_new = " << -state_k_new.capX - state_k_new.pbar_w
+              << " ep_v_old = " << state_k_old.ep_v
+              << " ep_v_new = " << state_k_new.ep_v << std::endl;
+  #endif
 
-#ifdef DEBUG_YIELD_BISECTION_R
-  std::cout << "after_consistency_bisection  = 1" << std::endl;
-  std::cout << "I1_eff = " << state_k_new.I1_eff << std::endl;
-  std::cout << "sqrt_J2 = " << state_k_new.sqrt_J2 << std::endl;
-#endif
+  #ifdef DEBUG_YIELD_BISECTION_R
+    std::cout << "after_consistency_bisection  = 1" << std::endl;
+    std::cout << "I1_eff = " << state_k_new.I1_eff << std::endl;
+    std::cout << "sqrt_J2 = " << state_k_new.sqrt_J2 << std::endl;
+  #endif
 
   // Update damage parameters
   if (isSuccess) {
@@ -1867,12 +1874,10 @@ Arena::computeSubstep(const Matrix3& D, const double& dt,
  * Method: nonHardeningReturn
  * Purpose:
  *   Computes a non-hardening return to the yield surface in the meridional
- * profile
- *   (constant Lode angle) based on the current values of the internal state
- * variables
- *   and elastic properties.  Returns the updated stress and  the increment in
- * plastic
- *   strain corresponding to this return.
+ *   profile (constant Lode angle) based on the current values of the 
+ *   internal state variables and elastic properties.  Returns the updated 
+ *   stress and  the increment in plastic strain corresponding 
+ *   to this return.
  *
  *   NOTE: all values of r and z in this function are transformed!
  */
@@ -1904,67 +1909,51 @@ Arena::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   double K_old = state_k_old.bulkModulus;
   double G_old = state_k_old.shearModulus;
   const double sqrt_K_over_G_old = std::sqrt(1.5 * K_old / G_old);
-#ifdef CHECK_FOR_NAN_EXTRA
-  std::cout << " K_old = " << K_old << " G_old = " << G_old << std::endl;
-#endif
 
   // Save the r and z Lode coordinates for the trial stress state
   double r_trial = BETA * state_k_trial.rr;
   double z_eff_trial = state_k_trial.zz_eff;
-#ifdef CHECK_FOR_NAN_EXTRA
-  std::cout << " state_k_trial " << state_k_trial << std::endl;
-#endif
 
   // Compute transformed r coordinates
   double rprime_trial = r_trial * sqrt_K_over_G_old;
-#ifdef CHECK_FOR_NAN_EXTRA
-  std::cout << " z_trial = " << z_eff_trial
-            << " r_trial = " << rprime_trial / sqrt_K_over_G_old << std::endl;
-#endif
 
   // Find closest point
   double z_eff_closest = 0.0, rprime_closest = 0.0;
   d_yield->getClosestPoint(&state_k_old, z_eff_trial, rprime_trial,
                            z_eff_closest, rprime_closest);
-#ifdef CHECK_FOR_NAN_EXTRA
-  std::cout << " z_eff_closest = " << z_eff_closest
-            << " r_closest = " << rprime_closest / sqrt_K_over_G_old
-            << std::endl;
-#endif
 
   // Compute updated invariants of total stress
   double I1_closest = std::sqrt(3.0) * z_eff_closest - 3.0 * state_k_old.pbar_w;
   double sqrtJ2_closest =
     1.0 / (sqrt_K_over_G_old * BETA * sqrt_two) * rprime_closest;
 
-#ifdef CHECK_FOR_NAN_EXTRA
-  std::cout << "I1_eff_closest = " << I1_closest + 3.0 * state_k_old.pbar_w
-            << " sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
-  std::cout << "Trial state = " << state_k_trial << std::endl;
-#endif
-#ifdef CHECK_HYDROSTATIC_TENSION
-  if (I1_closest < 0) {
+  #ifdef CHECK_FOR_NAN_EXTRA
+    std::cout << " K_old = " << K_old << " G_old = " << G_old << std::endl;
+    std::cout << " state_k_trial " << state_k_trial << std::endl;
+    std::cout << " z_trial = " << z_eff_trial
+              << " r_trial = " << rprime_trial / sqrt_K_over_G_old << std::endl;
+    std::cout << " z_eff_closest = " << z_eff_closest
+              << " r_closest = " << rprime_closest / sqrt_K_over_G_old
+              << std::endl;
     std::cout << "I1_eff_closest = " << I1_closest + 3.0 * state_k_old.pbar_w
               << " sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
     std::cout << "Trial state = " << state_k_trial << std::endl;
-  }
-#endif
+  #endif
+
+  #ifdef CHECK_HYDROSTATIC_TENSION
+    if (I1_closest < 0) {
+      std::cout << "I1_eff_closest = " << I1_closest + 3.0 * state_k_old.pbar_w
+                << " sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
+      std::cout << "Trial state = " << state_k_trial << std::endl;
+    }
+  #endif
 
   // Compute new stress
   Matrix3 sig_dev = state_k_trial.deviatoricStressTensor;
   if (state_k_trial.sqrt_J2 > 0.0) {
-    // double z_close = I1_closest*one_sqrt_three;
-    // double r_close = sqrtJ2_closest*sqrt_two;
-    // double norm_Identity = sqrt_three;
-    // double norm_s_trial = sig_dev.Norm();
-    // sig_fixed = Identity*(z_close/norm_Identity) +
-    // sig_dev*(r_close/norm_s_trial);
     sig_fixed = one_third * I1_closest * Identity +
                 (sqrtJ2_closest / state_k_trial.sqrt_J2) * sig_dev;
   } else {
-    // double z_close = I1_closest*one_sqrt_three;
-    // double norm_Identity = sqrt_three;
-    // sig_fixed = Identity*(z_close/norm_Identity) + sig_dev;
     sig_fixed = one_third * I1_closest * Identity + sig_dev;
   }
 
@@ -1977,15 +1966,35 @@ Arena::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
     sig_inc_iso * (one_third / K_old) + sig_inc_dev * (0.5 / G_old);
   plasticStrain_inc_fixed = strain_inc - elasticStrain_inc_fixed;
 
-#ifdef CHECK_ELASTIC_STRAIN
-  // std::cout << "Non-hardening:\n"
-  //          << "\t Delta sig = " << sig_inc << std::endl
-  //          << "\t Delta Eps_e = " << elasticStrain_inc_fixed << std::endl;
-  std::cout
-    << "press = " << sig_fixed.Trace() / 3.0 << " K = " << K_old << " ev_e = "
-    << (state_k_old.elasticStrainTensor + elasticStrain_inc_fixed).Trace()
-    << std::endl;
-#endif
+  #ifdef CHECK_ELASTIC_STRAIN
+    std::cout << "Non-hardening return:\n"
+              << "\t Particle ID = " << state_k_old.particleID
+              << "\t sig_new = " << sig_fixed
+              << "\t sig_old = " << state_k_old.stressTensor
+              << "\t Delta sig = " << sig_inc << std::endl
+              << "\t Delta Eps_e = " << elasticStrain_inc_fixed << std::endl;
+    std::cout
+      << "press = " << sig_fixed.Trace() / 3.0 << " K = " << K_old << " ev_e = "
+      << (state_k_old.elasticStrainTensor + elasticStrain_inc_fixed).Trace()
+      << std::endl;
+  #endif
+
+  /*
+  if (state_k_old.particleID == 3096267694276610) {
+    std::cout << "Non-hardening return:\n"
+              << "\t Particle ID = " << state_k_old.particleID
+              << "\n\t sig_new = " << sig_fixed
+              << "\n\t sig_old = " << state_k_old.stressTensor
+              << "\n\t Delta sig = " << sig_inc << std::endl
+              << "\n\t Delta Eps = " << strain_inc 
+              << "\n\t Delta Eps_e = " << elasticStrain_inc_fixed 
+              << "\n\t Delta Eps_p = " << plasticStrain_inc_fixed << std::endl;
+    std::cout
+      << "\t press = " << sig_fixed.Trace() / 3.0 << " K = " << K_old << " ev_e = "
+      << (state_k_old.elasticStrainTensor + elasticStrain_inc_fixed).Trace()
+      << std::endl;
+  }
+  */
 
   // Compute volumetric plastic strain and compare with p3
   Matrix3 eps_p = state_k_old.plasticStrainTensor + plasticStrain_inc_fixed;
@@ -2025,107 +2034,105 @@ Arena::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
     }
   }
 
-#ifdef CHECK_YIELD_SURFACE_NORMAL
-  // if (state_k_old.particleID == 3377699720593411) {
-  std::cout << "Delta eps = " << strain_inc << std::endl;
-  std::cout << "Trial state = " << state_k_trial << std::endl;
-  std::cout << "Delta sig = " << sig_inc << std::endl;
-  std::cout << "Delta sig_iso = " << sig_inc_iso << std::endl;
-  std::cout << "Delta sig_dev = " << sig_inc_dev << std::endl;
-  std::cout << "Delta eps_e = " << elasticStrain_inc_fixed << std::endl;
-  std::cout << "Delta eps_p = " << plasticStrain_inc_fixed << std::endl;
-
-  // Test normal to yield surface
-  ModelState_Arena state_test(state_k_old);
-  state_test.stressTensor = sig_fixed;
-  state_test.updateStressInvariants();
-
-  Matrix3 df_dsigma;
-  d_yield->eval_df_dsigma(Identity, &state_test, df_dsigma);
-  std::cout << "df_dsigma = " << df_dsigma << std::endl;
-  std::cout << "ratio = [" << plasticStrain_inc_fixed(0, 0) / df_dsigma(0, 0)
-            << "," << plasticStrain_inc_fixed(1, 1) / df_dsigma(1, 1) << ","
-            << plasticStrain_inc_fixed(2, 2) / df_dsigma(2, 2) << std::endl;
-
-  // Compute CN = C:df_dsigma
-  double lambda = state_test.bulkModulus - 2.0 / 3.0 * state_test.shearModulus;
-  double mu = state_test.shearModulus;
-  Matrix3 CN = Identity * (lambda * df_dsigma.Trace()) + df_dsigma * (2.0 * mu);
-  Matrix3 sig_diff = state_k_trial.stressTensor - sig_fixed;
-  std::cout << "sig_trial = [" << state_k_trial.stressTensor << "];"
-            << std::endl;
-  std::cout << "sig_n+1 = [" << sig_fixed << "];" << std::endl;
-  std::cout << "sig_trial - sig_n+1 = [" << sig_diff << "];" << std::endl;
-  std::cout << "C_df_dsigma = [" << CN << "];" << std::endl;
-  std::cout << "sig ratio = [" << sig_diff(0, 0) / CN(0, 0) << " "
-            << sig_diff(1, 1) / CN(1, 1) << " " << sig_diff(2, 2) / CN(2, 2)
-            << "];" << std::endl;
-
-  // Compute a test stress to check normal
-  Matrix3 sig_test = sig_fixed + df_dsigma * sig_diff(0, 0);
-  ModelState_Arena state_sig_test(state_k_old);
-  state_sig_test.stressTensor = sig_test;
-  state_sig_test.updateStressInvariants();
-  std::cout << "I1 = " << state_sig_test.I1_eff << ";" << std::endl;
-  std::cout << "sqrtJ2 = " << state_sig_test.sqrt_J2 << ";" << std::endl;
-  std::cout << "I1_J2_trial = [" << state_k_trial.I1_eff << " "
-            << state_k_trial.sqrt_J2 << "];" << std::endl;
-  std::cout << "I1_J2_closest = [" << I1_closest + 3.0 * state_k_old.pbar_w
-            << " " << sqrtJ2_closest << "];" << std::endl;
-  std::cout << "plot([I1 I1_J2_closest(1)],[sqrtJ2 I1_J2_closest(2)],'gx-')"
-            << ";" << std::endl;
-  std::cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) "
-               "I1_J2_closest(2)],'r-')"
-            << ";" << std::endl;
-
-  // Check actual location of projected point
-  Matrix3 sig_test_actual =
-    state_k_trial.stressTensor - CN * (std::abs(sig_diff(0, 0) / CN(0, 0)));
-  state_sig_test.stressTensor = sig_test_actual;
-  state_sig_test.updateStressInvariants();
-  std::cout << "I1 = " << state_sig_test.I1_eff << ";" << std::endl;
-  std::cout << "sqrtJ2 = " << state_sig_test.sqrt_J2 << ";" << std::endl;
-  std::cout << "plot([I1 I1_J2_trial(1)],[sqrtJ2 I1_J2_trial(2)],'rx')"
-            << ";" << std::endl;
-//}
-#endif
-
-#ifdef CHECK_FOR_NAN
-  if (std::isnan(sig_fixed(0, 0))) {
-    std::cout << " K_old = " << K_old << " G_old = " << G_old << std::endl;
-    std::cout << " z_trial = " << z_eff_trial
-              << " r_trial = " << rprime_trial / sqrt_K_over_G_old << std::endl;
-    std::cout << " z_eff_closest = " << z_eff_closest
-              << " r_closest = " << rprime_closest / sqrt_K_over_G_old
-              << std::endl;
-    std::cout << "I1_eff_closest = " << I1_closest + 3.0 * state_k_old.pbar_w
-              << " sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
+  #ifdef CHECK_YIELD_SURFACE_NORMAL
+    std::cout << "Delta eps = " << strain_inc << std::endl;
     std::cout << "Trial state = " << state_k_trial << std::endl;
-    std::cout << "\t\t\t sig_fixed = " << sig_fixed << std::endl;
-    std::cout << "\t\t\t I1_closest = " << I1_closest << std::endl;
-    std::cout << "\t\t\t sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
-    std::cout << "\t\t\t state_k_trial.sqrt_J2 = " << state_k_trial.sqrt_J2
-              << std::endl;
-    std::cout << "\t\t\t sig_dev = " << sig_dev << std::endl;
-    std::cout << "\t\t\t sig_inc = " << sig_inc << std::endl;
-    std::cout << "\t\t\t strain_inc = " << strain_inc << std::endl;
-    std::cout << "\t\t\t sig_inc_iso = " << sig_inc_iso << std::endl;
-    std::cout << "\t\t\t sig_inc_dev = " << sig_inc_dev << std::endl;
-    std::cout << "\t\t\t plasticStrain_inc_fixed = " << plasticStrain_inc_fixed
-              << std::endl;
-  }
-#endif
+    std::cout << "Delta sig = " << sig_inc << std::endl;
+    std::cout << "Delta sig_iso = " << sig_inc_iso << std::endl;
+    std::cout << "Delta sig_dev = " << sig_inc_dev << std::endl;
+    std::cout << "Delta eps_e = " << elasticStrain_inc_fixed << std::endl;
+    std::cout << "Delta eps_p = " << plasticStrain_inc_fixed << std::endl;
 
-#ifdef CHECK_HYDROSTATIC_TENSION
-  if (I1_closest < 0) {
-    std::cout << "\t\t\t sig_inc = " << sig_inc << std::endl;
-    std::cout << "\t\t\t strain_inc = " << strain_inc << std::endl;
-    std::cout << "\t\t\t sig_inc_iso = " << sig_inc_iso << std::endl;
-    std::cout << "\t\t\t sig_inc_dev = " << sig_inc_dev << std::endl;
-    std::cout << "\t\t\t plasticStrain_inc_fixed = " << plasticStrain_inc_fixed
+    // Test normal to yield surface
+    ModelState_Arena state_test(state_k_old);
+    state_test.stressTensor = sig_fixed;
+    state_test.updateStressInvariants();
+
+    Matrix3 df_dsigma;
+    d_yield->eval_df_dsigma(Identity, &state_test, df_dsigma);
+    std::cout << "df_dsigma = " << df_dsigma << std::endl;
+    std::cout << "ratio = [" << plasticStrain_inc_fixed(0, 0) / df_dsigma(0, 0)
+              << "," << plasticStrain_inc_fixed(1, 1) / df_dsigma(1, 1) << ","
+              << plasticStrain_inc_fixed(2, 2) / df_dsigma(2, 2) << std::endl;
+
+    // Compute CN = C:df_dsigma
+    double lambda = state_test.bulkModulus - 2.0 / 3.0 * state_test.shearModulus;
+    double mu = state_test.shearModulus;
+    Matrix3 CN = Identity * (lambda * df_dsigma.Trace()) + df_dsigma * (2.0 * mu);
+    Matrix3 sig_diff = state_k_trial.stressTensor - sig_fixed;
+    std::cout << "sig_trial = [" << state_k_trial.stressTensor << "];"
               << std::endl;
-  }
-#endif
+    std::cout << "sig_n+1 = [" << sig_fixed << "];" << std::endl;
+    std::cout << "sig_trial - sig_n+1 = [" << sig_diff << "];" << std::endl;
+    std::cout << "C_df_dsigma = [" << CN << "];" << std::endl;
+    std::cout << "sig ratio = [" << sig_diff(0, 0) / CN(0, 0) << " "
+              << sig_diff(1, 1) / CN(1, 1) << " " << sig_diff(2, 2) / CN(2, 2)
+              << "];" << std::endl;
+
+    // Compute a test stress to check normal
+    Matrix3 sig_test = sig_fixed + df_dsigma * sig_diff(0, 0);
+    ModelState_Arena state_sig_test(state_k_old);
+    state_sig_test.stressTensor = sig_test;
+    state_sig_test.updateStressInvariants();
+    std::cout << "I1 = " << state_sig_test.I1_eff << ";" << std::endl;
+    std::cout << "sqrtJ2 = " << state_sig_test.sqrt_J2 << ";" << std::endl;
+    std::cout << "I1_J2_trial = [" << state_k_trial.I1_eff << " "
+              << state_k_trial.sqrt_J2 << "];" << std::endl;
+    std::cout << "I1_J2_closest = [" << I1_closest + 3.0 * state_k_old.pbar_w
+              << " " << sqrtJ2_closest << "];" << std::endl;
+    std::cout << "plot([I1 I1_J2_closest(1)],[sqrtJ2 I1_J2_closest(2)],'gx-')"
+              << ";" << std::endl;
+    std::cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) "
+                 "I1_J2_closest(2)],'r-')"
+              << ";" << std::endl;
+
+    // Check actual location of projected point
+    Matrix3 sig_test_actual =
+      state_k_trial.stressTensor - CN * (std::abs(sig_diff(0, 0) / CN(0, 0)));
+    state_sig_test.stressTensor = sig_test_actual;
+    state_sig_test.updateStressInvariants();
+    std::cout << "I1 = " << state_sig_test.I1_eff << ";" << std::endl;
+    std::cout << "sqrtJ2 = " << state_sig_test.sqrt_J2 << ";" << std::endl;
+    std::cout << "plot([I1 I1_J2_trial(1)],[sqrtJ2 I1_J2_trial(2)],'rx')"
+              << ";" << std::endl;
+  #endif
+
+  #ifdef CHECK_FOR_NAN
+    if (std::isnan(sig_fixed(0, 0))) {
+      std::cout << " K_old = " << K_old << " G_old = " << G_old << std::endl;
+      std::cout << " z_trial = " << z_eff_trial
+                << " r_trial = " << rprime_trial / sqrt_K_over_G_old << std::endl;
+      std::cout << " z_eff_closest = " << z_eff_closest
+                << " r_closest = " << rprime_closest / sqrt_K_over_G_old
+                << std::endl;
+      std::cout << "I1_eff_closest = " << I1_closest + 3.0 * state_k_old.pbar_w
+                << " sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
+      std::cout << "Trial state = " << state_k_trial << std::endl;
+      std::cout << "\t\t\t sig_fixed = " << sig_fixed << std::endl;
+      std::cout << "\t\t\t I1_closest = " << I1_closest << std::endl;
+      std::cout << "\t\t\t sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
+      std::cout << "\t\t\t state_k_trial.sqrt_J2 = " << state_k_trial.sqrt_J2
+                << std::endl;
+      std::cout << "\t\t\t sig_dev = " << sig_dev << std::endl;
+      std::cout << "\t\t\t sig_inc = " << sig_inc << std::endl;
+      std::cout << "\t\t\t strain_inc = " << strain_inc << std::endl;
+      std::cout << "\t\t\t sig_inc_iso = " << sig_inc_iso << std::endl;
+      std::cout << "\t\t\t sig_inc_dev = " << sig_inc_dev << std::endl;
+      std::cout << "\t\t\t plasticStrain_inc_fixed = " << plasticStrain_inc_fixed
+                << std::endl;
+    }
+  #endif
+
+  #ifdef CHECK_HYDROSTATIC_TENSION
+    if (I1_closest < 0) {
+      std::cout << "\t\t\t sig_inc = " << sig_inc << std::endl;
+      std::cout << "\t\t\t strain_inc = " << strain_inc << std::endl;
+      std::cout << "\t\t\t sig_inc_iso = " << sig_inc_iso << std::endl;
+      std::cout << "\t\t\t sig_inc_dev = " << sig_inc_dev << std::endl;
+      std::cout << "\t\t\t plasticStrain_inc_fixed = " << plasticStrain_inc_fixed
+                << std::endl;
+    }
+  #endif
 
   return true; // isSuccess = true
 
@@ -2135,8 +2142,7 @@ Arena::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
  * Method: consistencyBisectionSimplified
  * Purpose:
  *   Find the updated stress for hardening plasticity using the consistency
- * bisection
- *   algorithm
+ *   bisection algorithm
  *   Returns whether the procedure is sucessful or has failed
  */
 bool
@@ -2186,11 +2192,11 @@ Arena::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
 
   while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
 
-#ifdef DEBUG_YIELD_BISECTION_R
-    std::cout << "consistency_iter = " << ii << std::endl;
-    std::cout << "eta_hi = " << eta_hi << std::endl;
-    std::cout << "eta_lo = " << eta_lo << std::endl;
-#endif
+    #ifdef DEBUG_YIELD_BISECTION_R
+      std::cout << "consistency_iter = " << ii << std::endl;
+      std::cout << "eta_hi = " << eta_hi << std::endl;
+      std::cout << "eta_lo = " << eta_lo << std::endl;
+    #endif
 
     // Reset the local trial state
     state_trial_local = state_k_trial;
@@ -2267,18 +2273,18 @@ Arena::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
     deltaEps_p_v_fixed_new = deltaEps_p_fixed_new.Trace();
     deltaEps_p_v_fixed = eta_mid * deltaEps_p_fixed.Trace();
 
-#ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
-    std::cout << "eta_mid = " << eta_mid << " eta_mid*||deltaEps_p_fixed|| = "
-              << eta_mid * norm_deltaEps_p_fixed
-              << " ||deltaEps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new
-              << " ratio = "
-              << eta_mid * norm_deltaEps_p_fixed / norm_deltaEps_p_fixed_new
-              << std::endl;
-    std::cout << " delta_eps_p_v_mid = " << deltaEps_p_v_mid
-              << " delta_eps_p_v_fixed_new = " << deltaEps_p_v_fixed_new
-              << " ratio = " << deltaEps_p_v_mid / deltaEps_p_fixed_new.Trace()
-              << std::endl;
-#endif
+    #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
+      std::cout << "eta_mid = " << eta_mid << " eta_mid*||deltaEps_p_fixed|| = "
+                << eta_mid * norm_deltaEps_p_fixed
+                << " ||deltaEps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new
+                << " ratio = "
+                << eta_mid * norm_deltaEps_p_fixed / norm_deltaEps_p_fixed_new
+                << std::endl;
+      std::cout << " delta_eps_p_v_mid = " << deltaEps_p_v_mid
+                << " delta_eps_p_v_fixed_new = " << deltaEps_p_v_fixed_new
+                << " ratio = " << deltaEps_p_v_mid / deltaEps_p_fixed_new.Trace()
+                << std::endl;
+    #endif
 
     // if (norm_deltaEps_p_fixed_new > eta_mid*norm_deltaEps_p_fixed) {
     if (std::abs(deltaEps_p_v_fixed_new) >
@@ -2316,22 +2322,22 @@ Arena::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
   state_k_new.plasticStrainTensor = eps_p_old + deltaEps_p_fixed_new;
   computeElasticProperties(state_k_new);
 
-#ifdef DEBUG_YIELD_BISECTION_R
-  std::cout << "pbar_w_before_consistency_3 = " << 3.0 * state_k_old.pbar_w
-            << std::endl;
-  std::cout << "pbar_w_after_consistency_3 = " << 3.0 * state_k_new.pbar_w
-            << std::endl;
-  std::cout << "K_before_consistency = " << state_k_old.bulkModulus
-            << std::endl;
-  std::cout << "K_after_consistency = " << state_k_new.bulkModulus << std::endl;
-  std::cout << "I1_before_consistency = " << state_k_old.stressTensor.Trace()
-            << std::endl;
-  std::cout << "I1_after_consistency = " << state_k_new.stressTensor.Trace()
-            << std::endl;
-  std::cout << "I1_eff_before_consistency = " << state_k_old.I1_eff
-            << std::endl;
-  std::cout << "I1_eff_after_consistency = " << state_k_new.I1_eff << std::endl;
-#endif
+  #ifdef DEBUG_YIELD_BISECTION_R
+    std::cout << "pbar_w_before_consistency_3 = " << 3.0 * state_k_old.pbar_w
+              << std::endl;
+    std::cout << "pbar_w_after_consistency_3 = " << 3.0 * state_k_new.pbar_w
+              << std::endl;
+    std::cout << "K_before_consistency = " << state_k_old.bulkModulus
+              << std::endl;
+    std::cout << "K_after_consistency = " << state_k_new.bulkModulus << std::endl;
+    std::cout << "I1_before_consistency = " << state_k_old.stressTensor.Trace()
+              << std::endl;
+    std::cout << "I1_after_consistency = " << state_k_new.stressTensor.Trace()
+              << std::endl;
+    std::cout << "I1_eff_before_consistency = " << state_k_old.I1_eff
+              << std::endl;
+    std::cout << "I1_eff_after_consistency = " << state_k_new.I1_eff << std::endl;
+  #endif
 
   // Update the cumulative equivalent plastic strain
   double deltaEps_p_v = deltaEps_p_fixed_new.Trace();
@@ -2341,11 +2347,11 @@ Arena::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
     state_k_old.ep_cum_eq +
     std::sqrt(2.0 / 3.0 * deltaEps_p_dev.Contract(deltaEps_p_dev));
 
-#ifdef DEBUG_INTERNAL_VAR_EVOLUTION
-  std::cout << "consistencyBisection: " << std::endl
-            << "\t state_old = " << state_k_old << std::endl
-            << "\t state_new = " << state_k_new << std::endl;
-#endif
+  #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
+    std::cout << "consistencyBisection: " << std::endl
+              << "\t state_old = " << state_k_old << std::endl
+              << "\t state_new = " << state_k_new << std::endl;
+  #endif
 
   // Return success = true
   return true; // bool isSuccess = true;
@@ -2530,14 +2536,6 @@ Arena::computeInternalVariables(ModelState_Arena& state,
   double p1_sat = d_crushParam.p1_sat;
   double Xbar_new =
     p0 + (1.0 - Sw0 + p1_sat * Sw0) * (Xbar_d - p0) + 3.0 * pbar_w_new;
-/*
-if (state.particleID == 3377699720593411) {
-  std::cout << "pbar_w_old = " << pbar_w_old
-            << "pbar_w_new = " << pbar_w_new
-            << "Xbar_d = " << Xbar_d
-            << "Xbar_new = " << Xbar_new << std::endl;
-}
-*/
 
 #ifdef CHECK_FOR_NAN
   if (std::isnan(Xbar_new)) {

@@ -821,7 +821,7 @@ YieldCond_Arena::getClosestPoint(const ModelStateBase* state_input,
   cpx = closest.x();
   cpy = closest.y();
 // end = std::chrono::system_clock::now();
-// std::cout << "Geomeric Bisection : Time taken = " <<
+// std::cout << "Geometric Bisection : Time taken = " <<
 //    std::chrono::duration<double>(end-start).count() << std::endl;
 #else
   // std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -965,30 +965,31 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
     }
 #endif
 
-#ifdef DEBUG_YIELD_BISECTION
-    // if (state->particleID == 3377699720593411) {
-    std::cout << "Iteration = " << iters << std::endl;
-    std::cout << "State = " << *state << std::endl;
-    std::cout << "z_r_pt = " << z_r_pt << ";" << std::endl;
-    std::cout << "z_r_closest = " << z_r_closest << ";" << std::endl;
-    std::cout << "z_r_yield_z = [";
-    for (auto& pt : z_r_points) {
-      std::cout << pt.x() << " ";
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "z_r_yield_r = [";
-    for (auto& pt : z_r_points) {
-      std::cout << pt.y() << " ";
-    }
-    std::cout << "];" << std::endl;
-    std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
-    std::cout << "plot(z_r_pt(1), z_r_pt(2));" << std::endl;
-    std::cout << "plot(z_r_closest(1), z_r_closest(2));" << std::endl;
-    std::cout
-      << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');"
-      << std::endl;
-//}
-#endif
+    #ifdef DEBUG_YIELD_BISECTION
+      //if (state->particleID == 3096267694276610) 
+      {
+        std::cout << "Iteration = " << iters << std::endl;
+        std::cout << "State = " << *state << std::endl;
+        std::cout << "z_r_pt = " << z_r_pt << ";" << std::endl;
+        std::cout << "z_r_closest = " << z_r_closest << ";" << std::endl;
+        std::cout << "z_r_yield_z = [";
+        for (auto& pt : z_r_points) {
+          std::cout << pt.x() << " ";
+        }
+        std::cout << "];" << std::endl;
+        std::cout << "z_r_yield_r = [";
+        for (auto& pt : z_r_points) {
+          std::cout << pt.y() << " ";
+        }
+        std::cout << "];" << std::endl;
+        std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
+        std::cout << "plot(z_r_pt(1), z_r_pt(2));" << std::endl;
+        std::cout << "plot(z_r_closest(1), z_r_closest(2));" << std::endl;
+        std::cout
+          << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');"
+          << std::endl;
+      }
+    #endif
 #ifdef DEBUG_YIELD_BISECTION_I1_J2
     // if (state->particleID == 3377699720593411) {
     double fac_z = std::sqrt(3.0);
@@ -1020,12 +1021,13 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
     // Compute I1 for the closest point
     double I1eff_closest = sqrt_three * z_r_closest.x();
 
-    // If (I1_closest < I1_mid)
     if (I1eff_closest < I1eff_mid) {
-      I1eff_max = I1eff_mid;
+      //I1eff_max = I1eff_mid;
+      I1eff_max = (1 - 0.51)*I1eff_min + 0.51*I1eff_max;
       eta_hi = eta_mid;
     } else {
-      I1eff_min = I1eff_mid;
+      //I1eff_min = I1eff_mid;
+      I1eff_min = (1 - 0.49)*I1eff_min + 0.49*I1eff_max;
       eta_lo = eta_mid;
     }
 
