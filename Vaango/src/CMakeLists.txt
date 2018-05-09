@@ -329,6 +329,7 @@ enable_language(Fortran)
 
 string(REGEX MATCH ftn HAVE_CRAYFTN ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH gfortran HAVE_GFORTRAN ${CMAKE_Fortran_COMPILER})
+string(REGEX MATCH f90 HAVE_GFORTRAN ${CMAKE_Fortran_COMPILER})
 #string(REGEX MATCH f95 HAVE_GFORTRAN ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH xlf HAVE_XLF ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH pg77 HAVE_PG77 ${CMAKE_Fortran_COMPILER})
@@ -336,7 +337,20 @@ string(REGEX MATCH g77 HAVE_G77 ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH ifort HAVE_ifort ${CMAKE_Fortran_COMPILER})
 string(REGEX MATCH f77 HAVE_F77 ${CMAKE_Fortran_COMPILER})
 
+# In case regex match fails
+if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+  set(HAVE_GFORTRAN 1)
+endif()
+if(CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
+  set(HAVE_ifort 1)
+endif()
+if(CMAKE_Fortran_COMPILER_ID MATCHES "PGI")
+  set(HAVE_PG77 1)
+endif()
+
 message(STATUS "Fortran compiler ${CMAKE_Fortran_COMPILER}")
+message(STATUS "Fortran compiler ID ${CMAKE_Fortran_COMPILER_ID}")
+message(STATUS "HAVE_GFORTRAN ${HAVE_GFORTRAN}")
 
 # DON'T USE find_library - many machine's paths are compiler specific.  The *right* thing would be
 #   to compile a program looking for the fortran lib, but this is probably good enough
