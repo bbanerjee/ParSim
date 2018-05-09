@@ -89,4 +89,5 @@ ModelState_Tabular::updatePlasticStrainInvariants()
   Uintah::Matrix3 devPlasticStrain =
     plasticStrainTensor - Identity * (ep_v / 3.0);
   ep_eq = std::sqrt(2.0 / 3.0 * devPlasticStrain.Contract(devPlasticStrain));
+  ep_cum_eq = ep_eq;
 }

@@ -445,6 +445,121 @@ TabularData::translateAlongNormals<1>(const std::vector<Vector>& normals,
 
 template <int dim>
 DoubleVec1D
+TabularData::findLimits(const std::array<double, dim>& indepValues) const
+{
+  return findLimitValues<dim>(indepValues, d_indepVars, d_depVars);
+}
+
+namespace Vaango {
+template <>
+DoubleVec1D
+TabularData::findLimitValues<1>(
+  const std::array<double, 1>& indepValues, const IndepVarPArray& indepVars,
+  const DepVarPArray& depVars) const
+{
+  // First find the segment containing the first independent variable value
+  // and the value of parameter s
+  auto indepVarData0 =
+    getIndependentVarData(indepVars[0]->name, IndexKey(0, 0, 0, 0));
+  auto segLowIndex0 = findLocationNoThrow(indepValues[0], indepVarData0);
+  auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
+  sval = (sval < 0) ? 0 : sval;
+  sval = (sval > 1) ? 1 : sval;
+
+  DoubleVec1D indepVals;
+  auto indepval = computeInterpolated(sval, segLowIndex0, indepVarData0);
+  indepVals.push_back(indepval);
+
+  return indepVals;
+}
+
+template <>
+DoubleVec1D
+TabularData::findLimitValues<2>(
+  const std::array<double, 2>& indepValues, const IndepVarPArray& indepVars,
+  const DepVarPArray& depVars) const
+{
+  // First find the segment containing the first independent variable value
+  // and the value of parameter s
+  auto indepVarData0 =
+    getIndependentVarData(indepVars[0]->name, IndexKey(0, 0, 0, 0));
+  auto segLowIndex0 = findLocationNoThrow(indepValues[0], indepVarData0);
+  auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
+  sval = (sval < 0) ? 0 : sval;
+  sval = (sval > 1) ? 1 : sval;
+
+  DoubleVec1D indepVals;
+  auto indepval = computeInterpolated(sval, segLowIndex0, indepVarData0);
+  indepVals.push_back(indepval);
+
+  // Choose the two vectors containing the relevant independent variable data
+  // and find the segments containing the data
+  DoubleVec1D depValsT;
+  for (auto ii = segLowIndex0; ii <= segLowIndex0 + 1; ii++) {
+    auto indepVarData1 =
+      getIndependentVarData(indepVars[1]->name, IndexKey(ii, 0, 0, 0));
+    indepVals.push_back(indepVarData1.front());
+    indepVals.push_back(indepVarData1.back());
+    auto segLowIndex1 = findLocationNoThrow(indepValues[1], indepVarData1);
+    auto tval = computeParameter(indepValues[1], segLowIndex1, indepVarData1);
+    tval = (tval < 0) ? 0 : tval;
+    tval = (tval > 1) ? 1 : tval;
+    auto indepval = computeInterpolated(tval, segLowIndex1, indepVarData1);
+    indepVals.push_back(indepval);
+  }
+
+  return indepVals;
+}
+
+template <>
+DoubleVec1D
+TabularData::findLimitValues<3>(
+  const std::array<double, 3>& indepValues, const IndepVarPArray& indepVars,
+  const DepVarPArray& depVars) const
+{
+  // First find the segment containing the first independent variable value
+  // and the value of parameter s
+  auto indepVarData0 =
+    getIndependentVarData(indepVars[0]->name, IndexKey(0, 0, 0, 0));
+  auto segLowIndex0 = findLocationNoThrow(indepValues[0], indepVarData0);
+  auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
+  sval = (sval < 0) ? 0 : sval;
+  sval = (sval > 1) ? 1 : sval;
+
+  DoubleVec1D indepVals;
+  auto indepval = computeInterpolated(sval, segLowIndex0, indepVarData0);
+  indepVals.push_back(indepval);
+
+  // Choose the two vectors containing the relevant independent variable data
+  // and find the segments containing the data
+  for (auto ii = segLowIndex0; ii <= segLowIndex0 + 1; ii++) {
+    auto indepVarData1 =
+      getIndependentVarData(indepVars[1]->name, IndexKey(ii, 0, 0, 0));
+    auto segLowIndex1 = findLocationNoThrow(indepValues[1], indepVarData1);
+    auto tval = computeParameter(indepValues[1], segLowIndex1, indepVarData1);
+    tval = (tval < 0) ? 0 : tval;
+    tval = (tval > 1) ? 1 : tval;
+
+    auto indepval = computeInterpolated(tval, segLowIndex1, indepVarData1);
+    indepVals.push_back(indepval);
+
+    // Choose the last two vectors containing the relevant independent variable
+    // data
+    // and find the segments containing the data
+    for (auto jj = segLowIndex1; jj <= segLowIndex1 + 1; jj++) {
+      auto indepVarData2 =
+        getIndependentVarData(indepVars[2]->name, IndexKey(ii, jj, 0, 0));
+      indepVals.push_back(indepVarData2.front());
+      indepVals.push_back(indepVarData2.back());
+    }
+  }
+
+  return indepVals;
+}
+} // end namespace for template specialization (needed by gcc)
+
+template <int dim>
+DoubleVec1D
 TabularData::interpolate(const std::array<double, dim>& indepValues) const
 {
   return interpolateLinearSpline<dim>(indepValues, d_indepVars, d_depVars);
@@ -465,7 +580,7 @@ TabularData::interpolateLinearSpline<1>(
   // and the value of parameter s
   auto indepVarData0 =
     getIndependentVarData(indepVars[0]->name, IndexKey(0, 0, 0, 0));
-  auto segLowIndex0 = findLocation(indepValues[0], indepVarData0);
+  auto segLowIndex0 = findLocationNoThrow(indepValues[0], indepVarData0);
   auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
   // std::cout << "Lo Index 0 = " << segLowIndex0 << " s = " << sval <<
   // std::endl;
@@ -499,10 +614,14 @@ TabularData::interpolateLinearSpline<2>(
   //std::copy(indepVarData0.begin(), indepVarData0.end(),
   //          std::ostream_iterator<double>(std::cout, " "));
   //std::cout << std::endl;
-  auto segLowIndex0 = findLocation(indepValues[0], indepVarData0);
+  auto segLowIndex0 = findLocationNoThrow(indepValues[0], indepVarData0);
   auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
-  //std::cout << "Lo Index 0 = " << segLowIndex0 << " s = " << sval <<
-  //std::endl;
+  // if (sval < 0 || sval > 1) {
+  //   std::cout << "Lo Index 0 = [" << segLowIndex0 << "," << (segLowIndex0+1) << "]"
+  //             << " s = " << sval << " value = " << indepValues[0] 
+  //             << " data = [" << indepVarData0[segLowIndex0]
+  //             << "," << indepVarData0[segLowIndex0+1] << "]" << std::endl;
+  // }
 
   // Choose the two vectors containing the relevant independent variable data
   // and find the segments containing the data
@@ -514,18 +633,29 @@ TabularData::interpolateLinearSpline<2>(
     //std::copy(indepVarData1.begin(), indepVarData1.end(),
     //          std::ostream_iterator<double>(std::cout, " "));
     //std::cout << std::endl;
-    auto segLowIndex1 = findLocation(indepValues[1], indepVarData1);
+    auto segLowIndex1 = findLocationNoThrow(indepValues[1], indepVarData1);
     auto tval = computeParameter(indepValues[1], segLowIndex1, indepVarData1);
-    //std::cout << "Lo Index 1 = " << segLowIndex1 << " t = " << tval <<
-    //std::endl;
+    // if (sval < 0 || sval > 1) {
+    //   if (tval < 0 || tval > 1) {
+    //     std::cout << "Lo Index 1 = [" << segLowIndex1 << "," << (segLowIndex1+1) << "]"
+    //               << " t = " << tval << " value = " << indepValues[1] 
+    //               << " data = [" << indepVarData1[segLowIndex1]
+    //               << "," << indepVarData1[segLowIndex1+1] << "]" << std::endl;
+    //   }
+    // }
 
     for (const auto& depVar : depVars) {
       auto depVarData =
         getDependentVarData(depVar->name, IndexKey(ii, 0, 0, 0));
       auto depvalT = computeInterpolated(tval, segLowIndex1, depVarData);
       depValsT.push_back(depvalT);
-      //std::cout << "Lo Index 1 = " << segLowIndex1 << " p = " << depvalT <<
-      //std::endl;
+      // if (sval < 0 || sval > 1) {
+      //   if (tval < 0 || tval > 1) {
+      //     std::cout << "Lo Index 1 = " << segLowIndex1 << " p = " << depvalT 
+      //               << " data = [" << depVarData[segLowIndex1]
+      //               << "," << depVarData[segLowIndex1+1] << "]" << std::endl;
+      //   }
+      // }
     }
   }
 
@@ -535,8 +665,11 @@ TabularData::interpolateLinearSpline<2>(
     auto depval =
       (1 - sval) * depValsT[index] + sval * depValsT[index + numDepVars];
     depVals.push_back(depval);
-    //std::cout << "Lo Index 0 = " << segLowIndex0 << " q = " << depval <<
-    //std::endl;
+    // if (sval < 0 || sval > 1) {
+    //   std::cout << "Lo Index 0 = " << segLowIndex0 << " q = " << depval 
+    //             << " data = [" << depValsT[index]
+    //             << "," << depValsT[index+numDepVars] << "]" << std::endl;
+    // }
   }
 
   return depVals;
@@ -556,7 +689,7 @@ TabularData::interpolateLinearSpline<3>(
   // and the value of parameter s
   auto indepVarData0 =
     getIndependentVarData(indepVars[0]->name, IndexKey(0, 0, 0, 0));
-  auto segLowIndex0 = findLocation(indepValues[0], indepVarData0);
+  auto segLowIndex0 = findLocationNoThrow(indepValues[0], indepVarData0);
   auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
 
   // Choose the two vectors containing the relevant independent variable data
@@ -565,7 +698,7 @@ TabularData::interpolateLinearSpline<3>(
   for (auto ii = segLowIndex0; ii <= segLowIndex0 + 1; ii++) {
     auto indepVarData1 =
       getIndependentVarData(indepVars[1]->name, IndexKey(ii, 0, 0, 0));
-    auto segLowIndex1 = findLocation(indepValues[1], indepVarData1);
+    auto segLowIndex1 = findLocationNoThrow(indepValues[1], indepVarData1);
     auto tval = computeParameter(indepValues[1], segLowIndex1, indepVarData1);
 
     // Choose the last two vectors containing the relevant independent variable
@@ -575,7 +708,7 @@ TabularData::interpolateLinearSpline<3>(
     for (auto jj = segLowIndex1; jj <= segLowIndex1 + 1; jj++) {
       auto indepVarData2 =
         getIndependentVarData(indepVars[2]->name, IndexKey(ii, jj, 0, 0));
-      auto segLowIndex2 = findLocation(indepValues[2], indepVarData2);
+      auto segLowIndex2 = findLocationNoThrow(indepValues[2], indepVarData2);
       auto uval = computeParameter(indepValues[2], segLowIndex2, indepVarData2);
 
       for (const auto& depVar : depVars) {
@@ -609,13 +742,26 @@ TabularData::findLocation(const double& value, const DoubleVec1D& varData) const
 {
   if (value < varData.front() || value > varData.back()) {
     std::ostringstream out;
-    out << "**ERROR**"
+    out << "**WARNING**"
         << " The independent variable value \"" 
         << std::setprecision(10) << std::scientific << value
         << "\" is outside the range of known data ["
         << varData.front() << "," << varData.back() << "]";
     throw InvalidValue(out.str(), __FILE__, __LINE__);
   }
+
+  auto lower = std::lower_bound(varData.begin(), varData.end(), value);
+  auto index = (lower == varData.begin()) 
+               ? lower - varData.begin() 
+               : lower - varData.begin() - 1;
+  return index;
+}
+
+std::size_t
+TabularData::findLocationNoThrow(const double& value, const DoubleVec1D& varData) const
+{
+  if (value < varData.front()) return 0;
+  if (value > varData.back()) return (varData.size() - 2);
 
   auto lower = std::lower_bound(varData.begin(), varData.end(), value);
   auto index = (lower == varData.begin()) 
@@ -717,4 +863,10 @@ template DoubleVec1D
 TabularData::interpolate<2>(const std::array<double, 2>& indepValues) const;
 template DoubleVec1D
 TabularData::interpolate<3>(const std::array<double, 3>& indepValues) const;
+template DoubleVec1D
+TabularData::findLimits<1>(const std::array<double, 1>& indepValues) const;
+template DoubleVec1D
+TabularData::findLimits<2>(const std::array<double, 2>& indepValues) const;
+template DoubleVec1D
+TabularData::findLimits<3>(const std::array<double, 3>& indepValues) const;
 }

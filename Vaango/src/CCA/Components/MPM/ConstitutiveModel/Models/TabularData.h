@@ -51,6 +51,9 @@ public:
   void translateIndepVar1ByIndepVar0();
 
   template <int dim>
+  DoubleVec1D findLimits(const std::array<double, dim>& indepValues) const;
+
+  template <int dim>
   DoubleVec1D interpolate(const std::array<double, dim>& indepValues) const;
 
   template <int dim>
@@ -58,6 +61,11 @@ public:
 
   template <int dim>
   void readJSONTable(const nlohmann::json& doc, const std::string& tableFile);
+
+  template <int dim>
+  DoubleVec1D findLimitValues(
+    const std::array<double, dim>& indepValues, const IndepVarPArray& indepVars,
+    const DepVarPArray& depVars) const;
 
   template <int dim>
   DoubleVec1D interpolateLinearSpline(
@@ -109,6 +117,8 @@ private:
                                  const std::string& tableFile);
   std::size_t findLocation(const double& value,
                            const DoubleVec1D& varData) const;
+  std::size_t findLocationNoThrow(const double& value,
+                                  const DoubleVec1D& varData) const;
   double computeParameter(const double& input, const std::size_t& startIndex,
                           const DoubleVec1D& data) const;
   double computeInterpolated(const double& tval, const std::size_t& startIndex,

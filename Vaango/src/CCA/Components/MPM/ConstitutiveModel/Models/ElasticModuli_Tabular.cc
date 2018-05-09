@@ -100,10 +100,14 @@ ElasticModuli_Tabular::getCurrentElasticModuli(const ModelStateBase* state_input
   double ev_p_bar = -(state->plasticStrainTensor).Trace();
 
   // Compute the elastic moduli
-  //std::cout << "ev_e = " << ev_e_bar << " ev_p = " << ev_p_bar;
+  //if (ev_p_bar != 0) {
+  //  std::cout << "ev_e = " << ev_e_bar << " ev_p = " << ev_p_bar;
+  //}
   double K = computeBulkModulus(ev_e_bar, ev_p_bar);
   double G = computeShearModulus(K);
-  //std::cout << " K = " << K << " G = " << G << std::endl;
+  //if (ev_p_bar != 0) {
+  //  std::cout << " K = " << K << " G = " << G << std::endl;
+  //}
 
   return ElasticModuli(K, G);
 }
@@ -114,20 +118,31 @@ ElasticModuli_Tabular::computeBulkModulus(const double& elasticVolStrain,
 {
   double epsilon = 1.0e-6;
   DoubleVec1D pressure_lo;
-  DoubleVec1D pressure_hi;
   try {
     pressure_lo = 
       d_bulk.table.interpolate<2>({{plasticVolStrain, elasticVolStrain-epsilon}});
-    pressure_hi = 
-      d_bulk.table.interpolate<2>({{plasticVolStrain, elasticVolStrain+epsilon}});
   } catch (Uintah::InvalidValue& e) {
     std::ostringstream out;
-    out << "**ERROR** In computeBulkModulus:"
-        << " elasticVolStrain = " << elasticVolStrain
+    out << "**WARNING** In computeBulkModulus (Low):"
+        << " elasticVolStrain = " << elasticVolStrain-epsilon
         << " plasticVolStrain = " << plasticVolStrain << "\n"
         << e.message();
     throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
   }
+
+  DoubleVec1D pressure_hi;
+  try {
+    pressure_hi = 
+      d_bulk.table.interpolate<2>({{plasticVolStrain, elasticVolStrain+epsilon}});
+  } catch (Uintah::InvalidValue& e) {
+    std::ostringstream out;
+    out << "**WARNING** In computeBulkModulus (High):"
+        << " elasticVolStrain = " << elasticVolStrain+epsilon
+        << " plasticVolStrain = " << plasticVolStrain << "\n"
+        << e.message();
+    throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
+  }
+
   double K = (pressure_hi[0] - pressure_lo[0])/(2*epsilon);
   return K;
 }

@@ -592,7 +592,7 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
 
       // Compute the elastic moduli at t = t_n
       computeElasticProperties(state_old);
-      // std::cout << "State old: " << state_old << std::endl;
+      //std::cout << "State old: " << state_old << std::endl;
 
       //---------------------------------------------------------
       // Rate-independent plastic step
