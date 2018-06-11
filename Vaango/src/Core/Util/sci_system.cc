@@ -124,6 +124,12 @@
 #  define __environ environ
 #endif
 
+#if defined(__GNUC__)
+  #if (__GNUC__ > 6)
+    #  define __sigemptyset sigemptyset
+  #endif
+#endif
+
 /* added by mc trying to fix hang bug on dual cpu machines */
 #define WAITPID_CANNOT_BLOCK_SIGCHLD
 #define NO_WAITPID

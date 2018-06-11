@@ -285,7 +285,7 @@ public:
   iterator begin() const
   { return iterator(groups_.begin(), 0); }
 
-  iterator end() const throw(InternalError)
+  iterator end() const // throw(InternalError)
   {
     if (!isFinalized())
       throw InternalError("You cannot iterate through RunLengthEncoder items until the RunLengthEncoder has been finalized.", __FILE__, __LINE__);
@@ -296,10 +296,10 @@ public:
   { return size_; }
 
   // these return the number of bytes written/read
-  long write(std::ostream& out) throw(ErrnoException);
+  long write(std::ostream& out); // throw(ErrnoException);
 
   long read(std::istream& in, bool swapBytes = false,
-	    int nByteMode = sizeof(unsigned long)) throw(InternalError)
+	    int nByteMode = sizeof(unsigned long)) // throw(InternalError)
   {
     if (swapBytes || nByteMode != sizeof(unsigned long))
       return readPriv<true>(in, swapBytes, nByteMode);
@@ -310,7 +310,7 @@ public:
   // seek for and read a single item from a file
   static T seek(int fd /* file descriptor */, unsigned long index,
 		bool swapBytes = false, int nByteMode = sizeof(unsigned long))
-    throw(InternalError)
+    // throw(InternalError)
   {
     if (swapBytes || nByteMode != sizeof(unsigned long))
       return seekPriv<true>(fd, index, swapBytes, nByteMode);
@@ -324,13 +324,13 @@ private:
 
   // should optimize itself when no conversion is needed
   template <bool needConversion>
-  long readPriv(std::istream& in, bool swapBytes, int nByteMode)
-    throw(InternalError);
+  long readPriv(std::istream& in, bool swapBytes, int nByteMode);
+    // throw(InternalError);
 
   template <bool needConversion>
   static T seekPriv(int fd /* file descriptor */, unsigned long index,
-		    bool swapBytes, int nByteMode)
-    throw(InternalError);
+		    bool swapBytes, int nByteMode);
+    // throw(InternalError);
 
   template<class SIZE_T>
   static inline void readSizeType(std::istream& in, bool needConversion, bool swapBytes,
@@ -344,7 +344,7 @@ private:
   inline void pReadSizeType(int fd, bool needConversion, bool swapBytes,
 			    int nByteMode, off_t offset, SIZE_T& s);
 
-  void write(int fd, void* data, ssize_t size) throw(ErrnoException)
+  void write(int fd, void* data, ssize_t size) // throw(ErrnoException)
   {
     if (::write(fd, data, size) != size)
       throw ErrnoException("RunLengthEncoder::write", errno, __FILE__, __LINE__);
@@ -657,7 +657,7 @@ void RunLengthEncoder<T, Sequencer>::finalize()
  */
 
 template<class T, class Sequencer>
-long RunLengthEncoder<T, Sequencer>::write(std::ostream& out) throw(ErrnoException)
+long RunLengthEncoder<T, Sequencer>::write(std::ostream& out) // throw(ErrnoException)
 {
   finalize();
   ssize_t header_size = (ssize_t)(groups_.size() + 1) * header_item_size;
@@ -757,7 +757,7 @@ template<class T, class Sequencer>
 template<bool needConversion>
 long RunLengthEncoder<T, Sequencer>::readPriv(std::istream& in, bool swapBytes,
 					      int nByteMode)
-  throw(InternalError)
+  // throw(InternalError)
 {
   // assume the header item's are composed of unsigned longs and ssize_t's
   ASSERT((RunLengthEncoder<T, Sequencer>::header_item_size %
@@ -848,7 +848,7 @@ template<class T, class Sequencer>
 template<bool needConversion>
 T RunLengthEncoder<T, Sequencer>::seekPriv(int fd, unsigned long index,
 					   bool swapBytes, int nByteMode)
-  throw(InternalError)
+  // throw(InternalError)
 {
   ssize_t header_item_size = RunLengthEncoder<T, Sequencer>::header_item_size
     / sizeof(unsigned long) * nByteMode;

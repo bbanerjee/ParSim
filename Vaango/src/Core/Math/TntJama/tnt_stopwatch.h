@@ -63,81 +63,79 @@
 *
 */
 
-
-
 #ifndef STOPWATCH_H
 #define STOPWATCH_H
 
 // for clock() and CLOCKS_PER_SEC
 #include <time.h>
 
+namespace TNT {
 
-namespace TNT
+inline static double
+seconds(void)
 {
-
-inline static double seconds(void)
-{
-    const double secs_per_tick = 1.0 / CLOCKS_PER_SEC;
-    return ( (double) clock() ) * secs_per_tick;
+  const double secs_per_tick = 1.0 / CLOCKS_PER_SEC;
+  return ((double)clock()) * secs_per_tick;
 }
 
-class Stopwatch {
-    private:
-        int running_;
-        double start_time_;
-        double total_;
+class Stopwatch
+{
+private:
+  int running_;
+  double start_time_;
+  double total_;
 
-    public:
-        Stopwatch();
-        inline void start();
-        inline double stop();
-		inline double read();
-		inline void resume();
-		inline int running();
+public:
+  Stopwatch();
+  inline void start();
+  inline double stop();
+  inline double read();
+  inline void resume();
+  inline int running();
 };
 
-Stopwatch::Stopwatch() : running_(0), start_time_(0.0), total_(0.0) {}
-
-void Stopwatch::start() 
+Stopwatch::Stopwatch()
+  : running_(0)
+  , start_time_(0.0)
+  , total_(0.0)
 {
-	running_ = 1;
-	total_ = 0.0;
-	start_time_ = seconds();
 }
 
-double Stopwatch::stop()  
+void
+Stopwatch::start()
 {
-	if (running_) 
-	{
-         total_ += (seconds() - start_time_); 
-         running_ = 0;
-    }
-    return total_; 
+  running_ = 1;
+  total_ = 0.0;
+  start_time_ = seconds();
 }
 
-inline void Stopwatch::resume()
+double
+Stopwatch::stop()
 {
-	if (!running_)
-	{
-		start_time_ = seconds();
-		running_ = 1;
-	}
-}
-		
-
-inline double Stopwatch::read()   
-{
-	if (running_)
-	{
-		stop();
-		resume();
-	}
-	return total_;
+  if (running_) {
+    total_ += (seconds() - start_time_);
+    running_ = 0;
+  }
+  return total_;
 }
 
+inline void
+Stopwatch::resume()
+{
+  if (!running_) {
+    start_time_ = seconds();
+    running_ = 1;
+  }
+}
 
+inline double
+Stopwatch::read()
+{
+  if (running_) {
+    stop();
+    resume();
+  }
+  return total_;
+}
 }
 #endif
-    
-
-            

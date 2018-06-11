@@ -31,6 +31,7 @@
 #include <cmath>
 
 #define USE_GEOMETRIC_BISECTION
+#define BISECT_LOW_ACCURACY
 //#define USE_ALGEBRAIC_BISECTION
 //#define DEBUG_YIELD_BISECTION
 //#define DEBUG_YIELD_BISECTION_I1_J2
@@ -1022,12 +1023,18 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
     double I1eff_closest = sqrt_three * z_r_closest.x();
 
     if (I1eff_closest < I1eff_mid) {
-      //I1eff_max = I1eff_mid;
-      I1eff_max = (1 - 0.51)*I1eff_min + 0.51*I1eff_max;
+      #ifdef BISECT_LOW_ACCURACY
+        I1eff_max = I1eff_mid;
+      #else
+        I1eff_max = (1 - 0.51)*I1eff_min + 0.51*I1eff_max;
+      #endif
       eta_hi = eta_mid;
     } else {
-      //I1eff_min = I1eff_mid;
-      I1eff_min = (1 - 0.49)*I1eff_min + 0.49*I1eff_max;
+      #ifdef BISECT_LOW_ACCURACY
+        I1eff_min = I1eff_mid;
+      #else
+        I1eff_min = (1 - 0.49)*I1eff_min + 0.49*I1eff_max;
+      #endif
       eta_lo = eta_mid;
     }
 
@@ -1035,9 +1042,15 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
     eta_mid = 0.5 * (eta_lo + eta_hi);
 
     // Distance to old closest point
-    if (iters > 10 && (z_r_closest - z_r_closest_old).length2() < 1.0e-16) {
-      break;
-    }
+    #ifdef BISECT_LOW_ACCURACY
+      if (iters > 10 && (z_r_closest - z_r_closest_old).length2() < 1.0e-4) {
+        break;
+      }
+    #else
+      if ((z_r_closest - z_r_closest_old).length2() < 1.0e-8) {
+        break;
+      }
+    #endif
     z_r_closest_old = z_r_closest;
 
     ++iters;

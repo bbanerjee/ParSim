@@ -64,6 +64,7 @@
 #include <limits>
 
 #define CHECK_FOR_NAN
+#define CHECK_PLASTIC_RATE
 //#define CHECK_FOR_NAN_EXTRA
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
@@ -1302,6 +1303,29 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
       return false; // The plastic volume strain is too large, try again
     }
   }
+
+#ifdef CHECK_PLASTIC_RATE
+  ModelState_Tabular state_plastic_rate(state_k_old);
+  state_plastic_rate.stressTensor = sig_fixed;
+  state_plastic_rate.updateStressInvariants();
+  Matrix3 df_dsigma;
+  d_yield->eval_df_dsigma(Identity, &state_plastic_rate, df_dsigma);
+  double lhs = plasticStrain_inc_fixed.Contract(df_dsigma);
+  double rhs = df_dsigma.Contract(df_dsigma);
+  double plastic_rate = lhs/rhs;
+  if (plastic_rate < 0) {
+    std::cout << "Particle = " << state_k_old.particleID << "\n";
+    std::cout << "Delta eps = " << strain_inc << std::endl;
+    std::cout << "Trial state = " << state_k_trial << std::endl;
+    std::cout << "Delta sig = " << sig_inc << std::endl;
+    std::cout << "Delta sig_iso = " << sig_inc_iso << std::endl;
+    std::cout << "Delta sig_dev = " << sig_inc_dev << std::endl;
+    std::cout << "Delta eps_e = " << elasticStrain_inc_fixed << std::endl;
+    std::cout << "Delta eps_p = " << plasticStrain_inc_fixed << std::endl;
+    std::cout << "df_dsigma = " << df_dsigma << std::endl;
+    std::cout << "plastic rate = " << plastic_rate << "\n";
+  }
+#endif
 
 #ifdef CHECK_YIELD_SURFACE_NORMAL
   std::cout << "Delta eps = " << strain_inc << std::endl;
