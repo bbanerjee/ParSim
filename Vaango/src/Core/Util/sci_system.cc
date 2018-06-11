@@ -130,6 +130,12 @@
   #endif
 #endif
 
+#if defined(__clang__)
+  #if ((__clang_major__ > 2) && (__clang_minor__ > 8))
+    #  define __sigemptyset sigemptyset
+  #endif
+#endif
+
 /* added by mc trying to fix hang bug on dual cpu machines */
 #define WAITPID_CANNOT_BLOCK_SIGCHLD
 #define NO_WAITPID
