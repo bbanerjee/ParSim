@@ -50,6 +50,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arena.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_ArenaMixture.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Tabular.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_NeuralNet.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuliModel.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuliModelFactory.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/PressureModel.cc 
