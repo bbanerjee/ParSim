@@ -116,14 +116,16 @@ double
 ElasticModuli_NeuralNet::computeBulkModulus(const double& elasticVolStrain,
                                             const double& plasticVolStrain) const
 {
-  double epsilon = 1.0e-6;
-  double totalVolStrain = elasticVolStrain + plasticVolStrain;
+  float epsilon = 1.0e-6;
+  auto eps_v_e = static_cast<float>(elasticVolStrain);
+  auto eps_v_p = static_cast<float>(plasticVolStrain);
+  auto eps_v = (eps_v_e + eps_v_p);
   const auto pressure_lo = d_bulk.model.predict(
     {fdeep::tensor3(fdeep::shape3(2, 1, 1), 
-                    {plasticVolStrain, totalVolStrain - epsilon})});
+                    {eps_v_p, eps_v - epsilon})});
   const auto pressure_hi = d_bulk.model.predict(
     {fdeep::tensor3(fdeep::shape3(2, 1, 1), 
-                    {plasticVolStrain, totalVolStrain + epsilon})});
+                    {eps_v_p, eps_v + epsilon})});
 
   double K = (pressure_hi[0].get(0,0,0) - pressure_lo[0].get(0,0,0))/(2*epsilon);
   return K;

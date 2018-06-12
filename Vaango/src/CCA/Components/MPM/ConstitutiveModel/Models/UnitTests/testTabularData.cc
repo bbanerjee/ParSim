@@ -140,10 +140,22 @@ TEST(TabularDataTest, readJSONTableFromStream1D)
         eos.getIndependentVars(), eos.getDependentVars());
   EXPECT_DOUBLE_EQ(val[0], 62.5);
   EXPECT_DOUBLE_EQ(val[1], 6.35);
-  EXPECT_THROW(eos.interpolateLinearSpline<1>({{-0.1}}, 
-        eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
-  EXPECT_THROW(eos.interpolateLinearSpline<1>({{0.9}}, 
-        eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+
+  val = eos.interpolateLinearSpline<1>({{-0.1}}, 
+        eos.getIndependentVars(), eos.getDependentVars());
+  EXPECT_DOUBLE_EQ(val[0], -10);
+  EXPECT_NEAR(val[1], -0.8999, 1.0e-4);
+
+  //EXPECT_THROW(eos.interpolateLinearSpline<1>({{-0.1}}, 
+  //      eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+
+  val = eos.interpolateLinearSpline<1>({{0.9}}, 
+        eos.getIndependentVars(), eos.getDependentVars());
+  EXPECT_NEAR(val[0], 89.9999, 1.0e-4);
+  EXPECT_NEAR(val[1], 9.0999, 1.0e-4);
+
+  //EXPECT_THROW(eos.interpolateLinearSpline<1>({{0.9}}, 
+  //      eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
 
   //---------------------------------------------------
   // Translation test
@@ -277,20 +289,32 @@ TEST(TabularDataTest, readJSONTableFromStream2D)
              eos.getIndependentVars(), eos.getDependentVars());
   EXPECT_DOUBLE_EQ(val[0], 112.5);
   indepVals = {{20, 0.25}};
-  EXPECT_THROW(eos.interpolateLinearSpline<2>(indepVals, 
-               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+  val = eos.interpolateLinearSpline<2>(indepVals, 
+               eos.getIndependentVars(), eos.getDependentVars());
+  EXPECT_DOUBLE_EQ(val[0], -115);
+  //ASSERT_THROW(eos.interpolateLinearSpline<2>(indepVals, 
+  //             eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
   indepVals = {{500, 0.25}};
-  EXPECT_THROW(eos.interpolateLinearSpline<2>(indepVals, 
-               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+  val = eos.interpolateLinearSpline<2>(indepVals, 
+               eos.getIndependentVars(), eos.getDependentVars());
+  EXPECT_DOUBLE_EQ(val[0], 4100);
+  //EXPECT_THROW(eos.interpolateLinearSpline<2>(indepVals, 
+  //             eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
   indepVals = {{220, 0.01}};
-  EXPECT_THROW(eos.interpolateLinearSpline<2>(indepVals, 
-               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+  val = eos.interpolateLinearSpline<2>(indepVals, 
+               eos.getIndependentVars(), eos.getDependentVars());
+  EXPECT_DOUBLE_EQ(val[0], 148);
+  //EXPECT_THROW(eos.interpolateLinearSpline<2>(indepVals, 
+  //             eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
   indepVals = {{220, 0.4}};
-  EXPECT_THROW(eos.interpolateLinearSpline<2>(indepVals, 
-               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+  val = eos.interpolateLinearSpline<2>(indepVals, 
+               eos.getIndependentVars(), eos.getDependentVars());
+  EXPECT_DOUBLE_EQ(val[0], 655);
+  //EXPECT_THROW(eos.interpolateLinearSpline<2>(indepVals, 
+  //             eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
   indepVals = {{220, 0.349}};
   val = eos.interpolateLinearSpline<2>(indepVals, 
-             eos.getIndependentVars(), eos.getDependentVars());
+               eos.getIndependentVars(), eos.getDependentVars());
   EXPECT_DOUBLE_EQ(val[0], 588.7);
 
   //---------------------------------------------------
@@ -477,7 +501,7 @@ TEST(TabularDataTest, readJSONTableFromStream3D)
                                             eos.getDependentVars());
   EXPECT_EQ(val.size(), eos.getNumDependents());
   EXPECT_NEAR(val[0], 1.08214285714286e+02, 1.0e-10);
-  EXPECT_NEAR(val[1], 2.30696428571429e+00, 1.0e-10);
+  ASSERT_NEAR(val[1], 2.30696428571429e+00, 1.0e-10);
 
   //std::cout << "vals = " << val[0] << " " << val[1] << std::endl;
 
@@ -486,30 +510,60 @@ TEST(TabularDataTest, readJSONTableFromStream3D)
                                        eos.getIndependentVars(),
                                        eos.getDependentVars());
   EXPECT_NEAR(val[0], 6.81225714285714e+02, 1.0e-10);
-  EXPECT_NEAR(val[1], 3.11120357142857e+00, 1.0e-10);
+  ASSERT_NEAR(val[1], 3.11120357142857e+00, 1.0e-10);
   //std::cout << "vals = " << val[0] << " " << val[1] << std::endl;
 
   indepVals = {{0.05, 230, 0.5}};
-  EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
-               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+  val = eos.interpolateLinearSpline<3>(indepVals, 
+                                       eos.getIndependentVars(),
+                                       eos.getDependentVars());
+  EXPECT_NEAR(val[0], 1124.4357142857143, 1.0e-10);
+  ASSERT_NEAR(val[1], 1.5469910714285704, 1.0e-10);
+  //EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
+  //             eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
 
   indepVals = {{0.3, 230, 0.5}};
-  EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
-               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+  val = eos.interpolateLinearSpline<3>(indepVals, 
+                                       eos.getIndependentVars(),
+                                       eos.getDependentVars());
+  EXPECT_NEAR(val[0], -458.45714285714263, 1.0e-10);
+  ASSERT_NEAR(val[1], 7.133464285714286, 1.0e-10);
+  //EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
+  //             eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
 
   indepVals = {{0.12, 301, 0.5}};
-  EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
-               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+  val = eos.interpolateLinearSpline<3>(indepVals, 
+                                       eos.getIndependentVars(),
+                                       eos.getDependentVars());
+  EXPECT_NEAR(val[0], 1367.1465714285714, 1.0e-10);
+  ASSERT_NEAR(val[1], 3.5483353571428569, 1.0e-10);
+  //EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
+  //             eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
 
   indepVals = {{0.12, 0, 0.5}};
-  EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
-               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+  val = eos.interpolateLinearSpline<3>(indepVals, 
+                                       eos.getIndependentVars(),
+                                       eos.getDependentVars());
+  EXPECT_NEAR(val[0], -272.19999999999993, 1.0e-10);
+  ASSERT_NEAR(val[1], 1.3179999999999998, 1.0e-10);
+  //EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
+  //             eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
 
   indepVals = {{0.12, 230, 0.6}};
-  EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
-               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+  val = eos.interpolateLinearSpline<3>(indepVals, 
+                                       eos.getIndependentVars(),
+                                       eos.getDependentVars());
+  EXPECT_NEAR(val[0], 777.43142857142846, 1.0e-10);
+  ASSERT_NEAR(val[1], 3.1780821428571424, 1.0e-10);
+  //EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
+  //             eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
 
   indepVals = {{0.12, 230, 0.05}};
-  EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
-               eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+  val = eos.interpolateLinearSpline<3>(indepVals, 
+                                       eos.getIndependentVars(),
+                                       eos.getDependentVars());
+  EXPECT_NEAR(val[0], 256.45714285714286, 1.0e-10);
+  ASSERT_NEAR(val[1], 2.8031071428571428, 1.0e-10);
+  //EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
+  //             eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
 }
