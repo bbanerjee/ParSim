@@ -88,6 +88,7 @@ private:
     BulkModulusParameters(Uintah::ProblemSpecP& ps) {
       ps->require("filename", d_filename);
       model = fdeep::load_model(d_filename);
+      std::cout << "Read model\n";
     }
     BulkModulusParameters(const BulkModulusParameters& bulk) {
       model = bulk.model;

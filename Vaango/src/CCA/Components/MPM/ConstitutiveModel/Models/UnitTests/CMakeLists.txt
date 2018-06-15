@@ -25,6 +25,8 @@
 
 message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+message(STATUS "HDF5 library dir = ${HDF5_LIBRARY_DIRS}")
+message(STATUS "HDF5 library = ${HDF5_LIBRARY}")
 
 #------------------------
 # Copy input files
@@ -32,6 +34,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 configure_file(table_elastic.json table_elastic.json COPYONLY)
 configure_file(table_yield.json table_yield.json COPYONLY)
 configure_file(table_yield_circle.json table_yield_circle.json COPYONLY)
+configure_file(mlp_regression_keras_total_scaled.json mlp_regression_keras_total_scaled.json COPYONLY)
+configure_file(mlp_regression_keras_total_scaled.h5 mlp_regression_keras_total_scaled.h5 COPYONLY)
 
 #------------------------
 # CTest tests
@@ -116,6 +120,18 @@ add_custom_command(
   COMMAND ${UNIT_TEST}
 )
 
+add_executable(testElasticModuli_NeuralNet testElasticModuli_NeuralNet.cc)
+target_link_libraries(testElasticModuli_NeuralNet
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testElasticModuli_NeuralNet)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
 add_executable(testYieldCond_Tabular testYieldCond_Tabular.cc)
 target_link_libraries(testYieldCond_Tabular
   ${GTEST_LIB}
@@ -134,6 +150,19 @@ target_link_libraries(testYieldCondUtils
   ${VAANGO_LIBS}
 )
 set(UNIT_TEST testYieldCondUtils)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+add_executable(testHDF5Reader testHDF5Reader.cc)
+target_link_libraries(testHDF5Reader
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+  ${HDF5_LIBRARY}
+)
+set(UNIT_TEST testHDF5Reader)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD

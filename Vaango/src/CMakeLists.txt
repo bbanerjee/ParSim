@@ -57,7 +57,7 @@ set(MAJOR_VERSION "1")
 set(MINOR_VERSION "1")
 set(PATCH_VERSION "0")
 
-set(CMAKE_VERBOSE_MAKEFILE 1)
+#set(CMAKE_VERBOSE_MAKEFILE 1)
 
 # Check that the binaries are not being built in the source dir
 IF("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
@@ -585,6 +585,19 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 message(STATUS "Eigen3 include directory is ${EIGEN3_INCLUDE_DIR}")
 if (USE_CLANG)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem ${EIGEN3_INCLUDE_DIR}")
+endif()
+
+#------------------------------------------------------------------------------
+# Find the HDF5 libraries 
+#------------------------------------------------------------------------------
+find_package(HDF5 REQUIRED COMPONENTS CXX)
+if (HDF5_FOUND)
+  include_directories(${HDF5_INCLUDE_DIRS})
+  message(STATUS "HDF5 include directory is ${HDF5_INCLUDE_DIRS}")
+  set(HDF5_LIBRARY ${HDF5_CXX_LIBRARIES})
+else()
+  message(STATUS "No HDF5 found")
+  set(HDF5_LIBRARY "")
 endif()
 
 #-----------------------------------------------------------------------------
