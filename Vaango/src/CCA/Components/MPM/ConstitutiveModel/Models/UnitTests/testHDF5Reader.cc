@@ -2,6 +2,7 @@
 #include <string>
 
 #include "H5Cpp.h"
+#include <submodules/json/src/json.hpp>
 
 #include <gtest/gtest.h>
 
@@ -21,7 +22,31 @@ TEST(HDF5Tests, readTest)
     auto datatype = attribute.getDataType();
     attribute.read(datatype, test);
 
-    std::cout << test << std::endl;
+    //std::cout << test << std::endl;
+    std::stringstream ss;
+    ss.str(test);
+    nlohmann::json doc;
+    doc << ss;
+    //std::cout << doc;
+
+    if (doc["class_name"] != "Sequential") {
+      std::cout << "Not sequential!\n";
+    }
+
+    auto config = doc["config"];
+    //std::cout << config << "\n";
+    std::cout << config.size() << "\n";
+    for (auto it = config.begin(); it != config.end(); ++it) {
+      //std::cout << *it << "\n";
+      //std::cout << (*it).size() << "\n";
+      auto layer_class_name = (*it)["class_name"];
+      std::cout << "layer type = " << layer_class_name << "\n";
+      auto layer_config = (*it)["config"];
+      std::cout << "layer_config = " << layer_config.size() << "\n";
+      for (auto l_it = layer_config.begin(); l_it != layer_config.end(); ++l_it) {
+        std::cout << "\t" << l_it.key() << " = " << l_it.value() << "\n";
+      }
+    }
 
     group = file.openGroup("/model_weights");
     attribute = group.openAttribute("layer_names");
