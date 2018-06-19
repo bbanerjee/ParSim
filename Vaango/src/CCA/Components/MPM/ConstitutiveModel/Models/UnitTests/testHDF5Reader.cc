@@ -3,11 +3,25 @@
 
 #include "H5Cpp.h"
 #include <submodules/json/src/json.hpp>
+#include <Eigen/Core>
 
 #include <gtest/gtest.h>
 
+using EigenMatrixF = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
+struct Layer {
+  std::string name;
+  std::string activation;
+  int units;
+  int input_size;
+  EigenMatrixF weights;
+  EigenMatrixF bias;
+};
+
 TEST(HDF5Tests, readTest)
 {
+  std::vector<Layer> layers;
+
   const H5std_string FILE_NAME("mlp_regression_keras_total_scaled.h5");
   const H5std_string DATASET_NAME("");
   try {
@@ -35,17 +49,41 @@ TEST(HDF5Tests, readTest)
 
     auto config = doc["config"];
     //std::cout << config << "\n";
-    std::cout << config.size() << "\n";
+    //std::cout << config.size() << "\n";
+    
+    Layer prev_layer, current_layer;
     for (auto it = config.begin(); it != config.end(); ++it) {
       //std::cout << *it << "\n";
       //std::cout << (*it).size() << "\n";
       auto layer_class_name = (*it)["class_name"];
-      std::cout << "layer type = " << layer_class_name << "\n";
+      //std::cout << "layer type = " << layer_class_name << "\n";
       auto layer_config = (*it)["config"];
-      std::cout << "layer_config = " << layer_config.size() << "\n";
+      //std::cout << "layer_config = " << layer_config.size() << "\n";
       for (auto l_it = layer_config.begin(); l_it != layer_config.end(); ++l_it) {
-        std::cout << "\t" << l_it.key() << " = " << l_it.value() << "\n";
+        if (it == config.begin()) {
+          std::cout << "\t" << l_it.key() << " = " << l_it.value() << "\n";
+          if (l_it.key() == "batch_input_shape") {
+            EXPECT_TRUE(l_it.value().is_array());
+            EXPECT_TRUE(l_it.value().size() > 0);
+            const std::size_t offset = l_it.value().front().is_null() ? 1 : 0;
+            std::cout << "offset = " << offset << "\n";
+            current_layer.input_size = l_it.value()[0 + offset];
+          }
+        } else {
+          current_layer.input_size = prev_layer.units;
+        }
+        if (l_it.key() == "name") {
+          current_layer.name = l_it.value();
+        }
+        if (l_it.key() == "activation") {
+          current_layer.activation = l_it.value();
+        }
+        if (l_it.key() == "units") {
+          current_layer.units = l_it.value();
+        }
       }
+      layers.push_back(current_layer);
+      prev_layer = current_layer;
     }
 
     group = file.openGroup("/model_weights");
@@ -94,21 +132,41 @@ TEST(HDF5Tests, readTest)
         }
         
         if (rank == 2) {
-          float test3[dims_data[0]][dims_data[1]];
-          dataset.read((void *)test3, datatype);
+          //float test3[dims_data[0]][dims_data[1]];
+          //dataset.read((void *)test3, datatype);
+          //std::cout << "test3 = " ;
+          //for (auto kk=0u; kk < dims_data[0]; ++kk) {
+          //  for (auto ll=0u; ll < dims_data[1]; ++ll) {
+          //    std::cout << test3[kk][ll] << " ";
+          //  }
+          //}
+          //std::cout << "\n";
+          EigenMatrixF mat(dims_data[0], dims_data[1]);
+          dataset.read((void *)mat.data(), datatype);
+          std::cout << "mat = " ;
           for (auto kk=0u; kk < dims_data[0]; ++kk) {
             for (auto ll=0u; ll < dims_data[1]; ++ll) {
-              std::cout << test3[kk][ll] << " ";
+              std::cout << mat(kk, ll) << " ";
             }
           }
           std::cout << "\n";
+          layers[ii].weights = mat.transpose();
         } else {
-          float test3[dims_data[0]];
-          dataset.read((void *)test3, datatype);
+          //float test3[dims_data[0]];
+          //dataset.read((void *)test3, datatype);
+          //std::cout << "test3 = " ;
+          //for (auto kk=0u; kk < dims_data[0]; ++kk) {
+          //  std::cout << test3[kk] << " ";
+          //}
+          //std::cout << "\n";
+          EigenMatrixF mat(dims_data[0], 1);
+          dataset.read((void *)mat.data(), datatype);
+          std::cout << "mat = " ;
           for (auto kk=0u; kk < dims_data[0]; ++kk) {
-            std::cout << test3[kk] << " ";
+            std::cout << mat(kk, 0) << " ";
           }
           std::cout << "\n";
+          layers[ii].bias = mat;
         }
       }
 
@@ -125,4 +183,37 @@ TEST(HDF5Tests, readTest)
   } catch (H5::AttributeIException error) {
     error.printError();
   }
+
+  EigenMatrixF input(layers[0].input_size, 1);
+  input(0, 0) = 0;
+  input(1, 0) = 0.1;
+  for (const auto& layer : layers) {
+    std::cout << "name = " << layer.name << " activation = " << layer.activation
+              << " input_size = " << layer.input_size << " units = " << layer.units << std::endl;
+    //std::cout << "weights = " << layer.weights << "\n";
+    //std::cout << "bias = " << layer.bias << "\n";
+
+    EigenMatrixF output = layer.weights * input + layer.bias;
+    std::cout << "output =" << output << "\n";
+    if (layer.activation == "sigmoid") { 
+      EigenMatrixF transformed = output.unaryExpr([](float x) -> float {
+        float divisor = 1 + std::exp(-x);
+        if (divisor == 0)
+        {
+            divisor = std::numeric_limits<float>::min();
+        }
+        return 1 / divisor;
+      });
+      input = transformed;
+    } else if (layer.activation == "relu") {
+      EigenMatrixF transformed = output.unaryExpr([](float x) -> float {
+        return std::max<float>(x, 0);
+      });
+      input = transformed;
+    } else if (layer.activation == "linear") {
+      input = output;
+    }
+    std::cout << "input =" << input << "\n";
+  }
+
 }
