@@ -184,9 +184,20 @@ TEST(HDF5Tests, readTest)
     error.printError();
   }
 
-  EigenMatrixF input(layers[0].input_size, 1);
-  input(0, 0) = 0;
-  input(1, 0) = 0.1;
+
+  float total_strain_min = 0.0;
+  float total_strain_max = 0.452;
+  float pressure_min = 0.0;
+  float pressure_max = 1.0e6;
+  
+  EigenMatrixF input_orig(layers[0].input_size, 1);
+  input_orig(0, 0) = -10;
+  input_orig(1, 0) = 0;
+  EigenMatrixF input = input_orig.unaryExpr([&total_strain_min, &total_strain_max](float x) -> float 
+    {
+      return (x - total_strain_min)/(total_strain_max - total_strain_min);
+    });
+
   for (const auto& layer : layers) {
     std::cout << "name = " << layer.name << " activation = " << layer.activation
               << " input_size = " << layer.input_size << " units = " << layer.units << std::endl;
@@ -215,5 +226,11 @@ TEST(HDF5Tests, readTest)
     }
     std::cout << "input =" << input << "\n";
   }
+
+  EigenMatrixF output = input.unaryExpr([&pressure_min, &pressure_max](float x) -> float 
+    {
+      return pressure_min + x * (pressure_max - pressure_min);
+    });
+  std::cout << "Prediction = " << output << std::endl;
 
 }
