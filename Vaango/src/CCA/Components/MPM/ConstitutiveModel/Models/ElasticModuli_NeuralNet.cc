@@ -48,7 +48,7 @@ ElasticModuli_NeuralNet::checkInputParameters()
 {
   std::ostringstream warn;
 
-  /* TODO : Add checks for table parameters */
+  /* TODO : Add checks for neural network parameters */
   if (d_shear.G0 <= 0.0) {
     warn << "G0 must be positive. G0 = " << d_shear.G0 << std::endl;
     throw Uintah::ProblemSetupException(warn.str(), __FILE__, __LINE__);
@@ -78,7 +78,7 @@ ElasticModuli_NeuralNet::outputProblemSpec(Uintah::ProblemSpecP& ps)
 ElasticModuli
 ElasticModuli_NeuralNet::getInitialElasticModuli() const
 {
-  double K = computeBulkModulus(1.0e-6, 0);
+  double K = computeBulkModulus(0, 0);
   double G = computeShearModulus(K);
   return ElasticModuli(K, G);
 }
@@ -116,18 +116,14 @@ double
 ElasticModuli_NeuralNet::computeBulkModulus(const double& elasticVolStrain,
                                             const double& plasticVolStrain) const
 {
-  float epsilon = 1.0e-6;
-  auto eps_v_e = static_cast<float>(elasticVolStrain);
-  auto eps_v_p = static_cast<float>(plasticVolStrain);
-  auto eps_v = (eps_v_e + eps_v_p);
-  const auto pressure_lo = d_bulk.model.predict(
-    {fdeep::tensor3(fdeep::shape3(2, 1, 1), 
-                    {eps_v_p, eps_v - epsilon})});
-  const auto pressure_hi = d_bulk.model.predict(
-    {fdeep::tensor3(fdeep::shape3(2, 1, 1), 
-                    {eps_v_p, eps_v + epsilon})});
+  double epsilon = 1.0e-6;
+  double totalVolStrain = elasticVolStrain + plasticVolStrain;
+  double pressure_lo = d_bulk.d_model.predict(totalVolStrain - epsilon, plasticVolStrain);
+  double pressure_hi = d_bulk.d_model.predict(totalVolStrain + epsilon, plasticVolStrain);
 
-  double K = (pressure_hi[0].get(0,0,0) - pressure_lo[0].get(0,0,0))/(2*epsilon);
+  double K = (pressure_hi - pressure_lo)/(2*epsilon);
+  std::cout << "p_lo = " << pressure_lo << " p_hi = " << pressure_hi
+            << " K = " << K << std::endl;
   return K;
 }
 
@@ -139,4 +135,167 @@ ElasticModuli_NeuralNet::computeShearModulus(const double& K) const
              ? 1.5*K*(1.0 - 2.0*nu)/(1.0 + nu) 
              : d_shear.G0;
   return G;
+}
+
+void 
+ElasticModuli_NeuralNet::NeuralNetworkModel::readNeuralNetworkHDF5(const std::string& filename)
+{
+  const H5std_string FILE_NAME(filename);
+  const H5std_string DATASET_NAME("");
+  try {
+
+    H5::Exception::dontPrint();
+
+    H5::H5File file(FILE_NAME, H5F_ACC_RDONLY);
+
+    // Read the configuration from the HDF5 file 
+    H5std_string model_config_json;
+    auto group = file.openGroup("/");
+    auto attribute = group.openAttribute("model_config");
+    auto datatype = attribute.getDataType();
+    attribute.read(datatype, model_config_json);
+
+    // Parse the JSON configuration and store layer information
+    std::stringstream ss;
+    ss.str(model_config_json);
+    nlohmann::json doc;
+    doc << ss;
+
+    if (doc["class_name"] != "Sequential") {
+      std::ostringstream out;
+      out << "**ERROR** The input Keras neural network model is required to be Sequential";
+      throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+    }
+
+    NeuralNetworkLayer prev_layer, current_layer;
+    auto config = doc["config"];
+    for (auto it = config.begin(); it != config.end(); ++it) {
+      auto layer_class_name = (*it)["class_name"];
+      auto layer_config = (*it)["config"];
+      for (auto l_it = layer_config.begin(); l_it != layer_config.end(); ++l_it) {
+        if (it == config.begin()) {
+          if (l_it.key() == "batch_input_shape") {
+            const std::size_t offset = l_it.value().front().is_null() ? 1 : 0;
+            current_layer.input_size = l_it.value()[0 + offset];
+          }
+        } else {
+          current_layer.input_size = prev_layer.units;
+        }
+        if (l_it.key() == "name") {
+          current_layer.name = l_it.value();
+        }
+        if (l_it.key() == "activation") {
+          current_layer.activation = l_it.value();
+        }
+        if (l_it.key() == "units") {
+          current_layer.units = l_it.value();
+        }
+      }
+      d_layers.push_back(current_layer);
+      prev_layer = current_layer;
+    }
+
+    // Reads the weights and biases (HDF5)
+    group = file.openGroup("/model_weights");
+    attribute = group.openAttribute("layer_names");
+    datatype = attribute.getDataType();
+    auto dataspace = attribute.getSpace();
+    auto size = datatype.getSize();
+    int rank = dataspace.getSimpleExtentNdims();
+    hsize_t dims;
+    dataspace.getSimpleExtentDims(&dims, nullptr);
+
+    char layer_names[dims][size];
+    attribute.read(datatype, (void *)layer_names);
+
+    for (auto ii = 0u; ii < dims; ++ii) {
+      std::string layer_name(layer_names[ii], size);
+      group = file.openGroup("/model_weights/"+layer_name);
+      attribute = group.openAttribute("weight_names");
+      datatype = attribute.getDataType();
+      dataspace = attribute.getSpace();
+      auto size_weights_bias = datatype.getSize();
+      hsize_t dims_weights_bias;
+      dataspace.getSimpleExtentDims(&dims_weights_bias, nullptr);
+
+      char data_labels[dims_weights_bias][size_weights_bias];
+      attribute.read(datatype, (void *)data_labels);
+
+      for (auto jj=0u; jj < dims_weights_bias; ++jj) {
+        std::string weights_name(data_labels[jj], size_weights_bias);
+        auto dataset = group.openDataSet(weights_name);
+        datatype = dataset.getDataType();
+        dataspace = dataset.getSpace();
+        rank = dataspace.getSimpleExtentNdims();
+        hsize_t dims_data[rank];
+        dataspace.getSimpleExtentDims(dims_data, nullptr);
+        
+        if (rank == 2) {
+          EigenMatrixRowMajor_f mat(dims_data[0], dims_data[1]);
+          dataset.read((void *)mat.data(), datatype);
+          d_layers[ii].weights = mat.transpose();
+        } else {
+          EigenMatrixRowMajor_f mat(dims_data[0], 1);
+          dataset.read((void *)mat.data(), datatype);
+          d_layers[ii].bias = mat;
+        }
+      }
+    }
+    
+  } catch (H5::FileIException error) {
+    error.printError();
+  } catch (H5::DataSetIException error) {
+    error.printError();
+  } catch (H5::DataSpaceIException error) {
+    error.printError();
+  } catch (H5::DataTypeIException error) {
+    error.printError();
+  } catch (H5::AttributeIException error) {
+    error.printError();
+  }
+}
+
+double 
+ElasticModuli_NeuralNet::NeuralNetworkModel::predict(double totalVolStrain, double plasticVolStrain) const
+{
+  float total_strain_min = static_cast<float>(d_minStrain);
+  float total_strain_max = static_cast<float>(d_maxStrain);
+  float pressure_min = static_cast<float>(d_minPressure);
+  float pressure_max = static_cast<float>(d_maxPressure);
+
+  EigenMatrixRowMajor_f input(2, 1);
+  input(0, 0) = totalVolStrain;
+  input(1, 0) = plasticVolStrain;
+  
+  input = input.unaryExpr([&total_strain_min, &total_strain_max](float x) -> float 
+    {
+      return (x - total_strain_min)/(total_strain_max - total_strain_min);
+    });
+
+  for (const auto& layer : d_layers) {
+    EigenMatrixRowMajor_f output = layer.weights * input + layer.bias;
+    if (layer.activation == "sigmoid") { 
+      input = output.unaryExpr([](float x) -> float 
+        {
+          float divisor = 1 + std::exp(-x);
+          if (divisor == 0) {
+            divisor = std::numeric_limits<float>::min();
+          }
+          return 1 / divisor;
+        });
+    } else if (layer.activation == "relu") {
+      input = output.unaryExpr([](float x) -> float 
+        {
+          return std::max<float>(x, 0);
+        });
+    } else if (layer.activation == "linear") {
+      input = output;
+    }
+  }
+
+  input = input.unaryExpr([&pressure_min, &pressure_max](float x) -> float 
+    {
+      return pressure_min + x * (pressure_max - pressure_min);
+    });
+  return static_cast<double>(input(0, 0));
 }

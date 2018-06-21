@@ -70,6 +70,7 @@ SET(VAANGO_LIBS
         Vaango_CCA_Components_Schedulers           
         Vaango_CCA_Components_ProblemSpecification 
         Vaango_CCA_Components_Solvers
+        ${HDF5_LIBRARY}
 )
 
 TARGET_LINK_LIBRARIES(testPressure_Air ${VAANGO_LIBS})
@@ -160,7 +161,6 @@ add_executable(testHDF5Reader testHDF5Reader.cc)
 target_link_libraries(testHDF5Reader
   ${GTEST_LIB}
   ${VAANGO_LIBS}
-  ${HDF5_LIBRARY}
 )
 set(UNIT_TEST testHDF5Reader)
 add_custom_command(

@@ -105,6 +105,7 @@ SET(LIBS
   ${VT_LIBRARY}
   ${M_LIBRARY}
   ${MPI_LIBRARY}
+  ${HDF5_LIBRARY}
 )
 
 ADD_LIBRARY(MPM_ConstitutiveModel ${MPM_ConstitutiveModel_SRCS})

@@ -30,7 +30,7 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
   if (!getcwd(currPath, sizeof(currPath))) {
     std::cout << "Current path not found\n";
   }
-  std::string json_file = std::string(currPath) + "/" + "mlp_regression_keras_total_scaled.json";
+  std::string json_file = std::string(currPath) + "/" + "mlp_regression_keras_total_scaled.h5";
 
   // Create a new document
   xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
@@ -42,7 +42,15 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
 
   // Create a child node
   xmlNewChild(rootNode, nullptr, BAD_CAST "filename", 
-              BAD_CAST "mlp_regression_keras_total_scaled.json");
+              BAD_CAST "mlp_regression_keras_total_scaled.h5");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "min_strain", 
+              BAD_CAST "0.0");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "max_strain", 
+              BAD_CAST "0.452");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "min_pressure", 
+              BAD_CAST "0.0");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "max_pressure", 
+              BAD_CAST "1.0e6");
   xmlNewChild(rootNode, nullptr, BAD_CAST "G0", 
               BAD_CAST "1.0e4");
   xmlNewChild(rootNode, nullptr, BAD_CAST "nu", 

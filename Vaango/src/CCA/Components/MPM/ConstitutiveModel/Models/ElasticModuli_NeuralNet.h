@@ -29,14 +29,16 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-#include <submodules/fdeep/fdeep.hpp>
+#include <Eigen/Core>
+#include <submodules/json/src/json.hpp>
+#include "H5Cpp.h"
 
 #include <limits>
 
 namespace Vaango {
 
 /*! \class ElasticModuli_NeuralNet
- *  \brief A multilayer perceptron neural net elasticity model
+ *  \brief A fully connected multilayer perceptron neural net elasticity model
  *  \author Biswajit Banerjee,
  */
 class ElasticModuli_NeuralNet : public ElasticModuliModel
@@ -79,30 +81,70 @@ public:
 
 private:
 
+  using EigenMatrixRowMajor_f = 
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+  using EigenMatrixRowMajor_d = 
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
+  struct NeuralNetworkLayer {
+    std::string name;
+    std::string activation;
+    int units;
+    int input_size;
+    EigenMatrixRowMajor_f weights;
+    EigenMatrixRowMajor_f bias; 
+  };
+
+  struct NeuralNetworkModel {
+    std::vector<NeuralNetworkLayer> d_layers;
+    double d_minStrain;
+    double d_maxStrain;
+    double d_minPressure;
+    double d_maxPressure;
+
+    int inputLayerSize() const { return d_layers[0].input_size; } 
+    void readNeuralNetworkHDF5(const std::string& filename);
+    double predict(double totalVolStrain, double plasticVolStrain) const;
+  };
+
   /* Tangent bulk modulus parameters */
   struct BulkModulusParameters
   {
-    fdeep::model model;
     std::string d_filename;
+    NeuralNetworkModel d_model;
+
     BulkModulusParameters() = default;
     BulkModulusParameters(Uintah::ProblemSpecP& ps) {
       ps->require("filename", d_filename);
-      model = fdeep::load_model(d_filename);
-      std::cout << "Read model\n";
+      ps->require("min_strain", d_model.d_minStrain);
+      ps->require("max_strain", d_model.d_maxStrain);
+      ps->require("min_pressure", d_model.d_minPressure);
+      ps->require("max_pressure", d_model.d_maxPressure);
+      d_model.readNeuralNetworkHDF5(d_filename);
+      std::cout << "Completed reading model\n";
     }
+
     BulkModulusParameters(const BulkModulusParameters& bulk) {
-      model = bulk.model;
+      d_filename = bulk.d_filename;
+      d_model = bulk.d_model;
     }
+
     BulkModulusParameters&
     operator=(const BulkModulusParameters& bulk) {
       if (this != &bulk) {
-        model = bulk.model;
+        d_filename = bulk.d_filename;
+        d_model = bulk.d_model;
       }
       return *this;
     }
+
     void
     outputProblemSpec(Uintah::ProblemSpecP& ps) {
       ps->appendElement("filename", d_filename);
+      ps->appendElement("min_strain", d_model.d_minStrain);
+      ps->appendElement("max_strain", d_model.d_maxStrain);
+      ps->appendElement("min_pressure", d_model.d_minPressure);
+      ps->appendElement("max_pressure", d_model.d_maxPressure);
     }
   };
 
