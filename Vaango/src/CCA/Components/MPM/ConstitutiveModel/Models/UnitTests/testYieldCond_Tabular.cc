@@ -142,7 +142,8 @@ TEST_F(YieldCondTabularTest, evalYieldCondition)
 
   state.I1 = -7000*3;  // Compression
   state.sqrt_J2 = 1000;
-  EXPECT_THROW(model.evalYieldCondition(&state), Uintah::InvalidValue);
+  EXPECT_EQ(model.evalYieldCondition(&state), 1);
+  //EXPECT_THROW(model.evalYieldCondition(&state), Uintah::InvalidValue);
 
   EXPECT_EQ(model.evalYieldConditionMax(&state), 900);
 }
