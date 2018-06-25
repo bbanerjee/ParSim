@@ -57,7 +57,7 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
               BAD_CAST "0.2");
 
   // Print the document to stdout
-  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -71,7 +71,7 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
   ElasticModuli_NeuralNet model(ps);
   try {
     ElasticModuli moduli = model.getInitialElasticModuli();
-    ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1.0e4);
+    ASSERT_NEAR(moduli.bulkModulus, 3.395e8, 1);
   } catch (Uintah::InvalidValue e) {
     std::cout << e.message() << std::endl;
   }
@@ -80,8 +80,8 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
   ElasticModuli_NeuralNet modelCopy(&model);
   try {
     ElasticModuli moduli = modelCopy.getInitialElasticModuli();
-    ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1.0e4);
-    ASSERT_DOUBLE_EQ(moduli.shearModulus, 7500);
+    ASSERT_NEAR(moduli.bulkModulus, 3.395e8, 1);
+    ASSERT_NEAR(moduli.shearModulus, 2.54625e8, 1);
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
   } catch (Uintah::InvalidValue e) {
@@ -94,8 +94,8 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
   state.plasticStrainTensor = Uintah::Matrix3(-0.02, 0, 0, 0, -0.02, 0, 0, 0, -0.02);
   try {
     ElasticModuli moduli = model.getCurrentElasticModuli(&state);
-    ASSERT_NEAR(moduli.bulkModulus, 9040, 1.0e-7);
-    ASSERT_NEAR(moduli.shearModulus, 6780, 1.0e-7);
+    ASSERT_NEAR(moduli.bulkModulus, 7.20800e9, 1.0);
+    ASSERT_NEAR(moduli.shearModulus, 5.406e9, 1.0);
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
   } catch (Uintah::InvalidValue e) {
