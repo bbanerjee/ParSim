@@ -38,6 +38,9 @@ configure_file(tabular_von_mises.json tabular_von_mises.json COPYONLY)
 configure_file(UniaxialStrainRotate_PrescribedDeformation.inp 
                UniaxialStrainRotate_PrescribedDeformation.inp COPYONLY)
 
+configure_file(mlp_regression_keras_total_scaled.h5 
+               mlp_regression_keras_total_scaled.h5 COPYONLY)
+
 #------------------------
 # Libraries needed
 #------------------------
@@ -90,6 +93,18 @@ target_link_libraries(testTabularPlasticity
   ${VAANGO_LIBS}
 )
 set(UNIT_TEST testTabularPlasticity)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+add_executable(testNeuralNetTabularPlasticity testNeuralNetTabularPlasticity.cc)
+target_link_libraries(testNeuralNetTabularPlasticity
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testNeuralNetTabularPlasticity)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD

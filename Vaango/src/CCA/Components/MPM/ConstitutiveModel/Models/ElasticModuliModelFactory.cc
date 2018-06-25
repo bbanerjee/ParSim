@@ -30,6 +30,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Arenisca.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Constant.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_NeuralNet.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -67,6 +68,8 @@ ElasticModuliModelFactory::create(Uintah::ProblemSpecP& ps)
     return (scinew ElasticModuli_ArenaMixture(child));
   else if (mat_type == "tabular")
     return (scinew ElasticModuli_Tabular(child));
+  else if (mat_type == "neural_net")
+    return (scinew ElasticModuli_NeuralNet(child));
   else {
     std::cerr << "**WARNING** No elasticity model provided. "
               << "Creating default (constant elasticity) model" << std::endl;
@@ -75,27 +78,30 @@ ElasticModuliModelFactory::create(Uintah::ProblemSpecP& ps)
 }
 
 ElasticModuliModel*
-ElasticModuliModelFactory::createCopy(const ElasticModuliModel* smm)
+ElasticModuliModelFactory::createCopy(const ElasticModuliModel* model)
 {
-  if (dynamic_cast<const ElasticModuli_Constant*>(smm))
+  if (dynamic_cast<const ElasticModuli_Constant*>(model))
     return (scinew ElasticModuli_Constant(
-      dynamic_cast<const ElasticModuli_Constant*>(smm)));
-  else if (dynamic_cast<const ElasticModuli_Arenisca*>(smm))
+      dynamic_cast<const ElasticModuli_Constant*>(model)));
+  else if (dynamic_cast<const ElasticModuli_Arenisca*>(model))
     return (scinew ElasticModuli_Arenisca(
-      dynamic_cast<const ElasticModuli_Arenisca*>(smm)));
-  else if (dynamic_cast<const ElasticModuli_Arena*>(smm))
+      dynamic_cast<const ElasticModuli_Arenisca*>(model)));
+  else if (dynamic_cast<const ElasticModuli_Arena*>(model))
     return (scinew ElasticModuli_Arena(
-      dynamic_cast<const ElasticModuli_Arena*>(smm)));
-  else if (dynamic_cast<const ElasticModuli_ArenaMixture*>(smm))
+      dynamic_cast<const ElasticModuli_Arena*>(model)));
+  else if (dynamic_cast<const ElasticModuli_ArenaMixture*>(model))
     return (scinew ElasticModuli_ArenaMixture(
-      dynamic_cast<const ElasticModuli_ArenaMixture*>(smm)));
-  else if (dynamic_cast<const ElasticModuli_Tabular*>(smm))
+      dynamic_cast<const ElasticModuli_ArenaMixture*>(model)));
+  else if (dynamic_cast<const ElasticModuli_Tabular*>(model))
     return (scinew ElasticModuli_Tabular(
-      dynamic_cast<const ElasticModuli_Tabular*>(smm)));
+      dynamic_cast<const ElasticModuli_Tabular*>(model)));
+  else if (dynamic_cast<const ElasticModuli_NeuralNet*>(model))
+    return (scinew ElasticModuli_NeuralNet(
+      dynamic_cast<const ElasticModuli_NeuralNet*>(model)));
   else {
     std::cerr << "**WARNING** No elasticity model provided. "
               << "Creating default (constant elasticity) model" << std::endl;
     return (scinew ElasticModuli_Constant(
-      dynamic_cast<const ElasticModuli_Constant*>(smm)));
+      dynamic_cast<const ElasticModuli_Constant*>(model)));
   }
 }
