@@ -122,8 +122,8 @@ ElasticModuli_NeuralNet::computeBulkModulus(const double& elasticVolStrain,
   double pressure_hi = d_bulk.d_model.predict(totalVolStrain + epsilon, plasticVolStrain);
 
   double K = (pressure_hi - pressure_lo)/(2*epsilon);
-  std::cout << "p_lo = " << pressure_lo << " p_hi = " << pressure_hi
-            << " K = " << K << std::endl;
+  //std::cout << "p_lo = " << pressure_lo << " p_hi = " << pressure_hi
+  //          << " K = " << K << std::endl;
   return K;
 }
 
