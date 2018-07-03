@@ -113,17 +113,26 @@ ElasticModuli_NeuralNet::getCurrentElasticModuli(const ModelStateBase* state_inp
 }
 
 double 
-ElasticModuli_NeuralNet::computeBulkModulus(const double& elasticVolStrain,
-                                            const double& plasticVolStrain) const
+ElasticModuli_NeuralNet::computeBulkModulus(const double& eps_v_e,
+                                            const double& eps_v_p) const
 {
   double epsilon = 1.0e-6;
-  double totalVolStrain = elasticVolStrain + plasticVolStrain;
-  double pressure_lo = d_bulk.d_model.predict(totalVolStrain - epsilon, plasticVolStrain);
-  double pressure_hi = d_bulk.d_model.predict(totalVolStrain + epsilon, plasticVolStrain);
+  //double eps_v_e = static_cast<float>(elasticVolStrain);
+  //double eps_v_p = static_cast<float>(plasticVolStrain);
+  double eps_v = eps_v_e + eps_v_p;
+
+  double pressure_lo = d_bulk.d_model.predict(eps_v - epsilon, eps_v_p);
+  double pressure_hi = d_bulk.d_model.predict(eps_v + epsilon, eps_v_p);
 
   double K = (pressure_hi - pressure_lo)/(2*epsilon);
-  //std::cout << "p_lo = " << pressure_lo << " p_hi = " << pressure_hi
-  //          << " K = " << K << std::endl;
+  if (K < 1.0e-6) {
+    std::cout << std::setprecision(16) << "ev_e = " << eps_v_e
+              << " ev_p = " << eps_v_p
+              << " ev- = " << eps_v - epsilon
+              << " ev+ = " << eps_v + epsilon
+              << " p_lo = " << pressure_lo << " p_hi = " << pressure_hi
+              << " K = " << K << std::endl;
+  }
   return K;
 }
 
@@ -258,44 +267,44 @@ ElasticModuli_NeuralNet::NeuralNetworkModel::readNeuralNetworkHDF5(const std::st
 double 
 ElasticModuli_NeuralNet::NeuralNetworkModel::predict(double totalVolStrain, double plasticVolStrain) const
 {
-  float total_strain_min = static_cast<float>(d_minStrain);
-  float total_strain_max = static_cast<float>(d_maxStrain);
-  float pressure_min = static_cast<float>(d_minPressure);
-  float pressure_max = static_cast<float>(d_maxPressure);
+  double minStrain = d_minStrain;
+  double maxStrain = d_maxStrain;
+  double minPressure = d_minPressure;
+  double maxPressure = d_maxPressure;
 
-  EigenMatrixRowMajor_f input(2, 1);
+  EigenMatrixRowMajor_d input(2, 1);
   input(0, 0) = totalVolStrain;
   input(1, 0) = plasticVolStrain;
   
-  input = input.unaryExpr([&total_strain_min, &total_strain_max](float x) -> float 
+  input = input.unaryExpr([&minStrain, &maxStrain](double x) -> double 
     {
-      return (x - total_strain_min)/(total_strain_max - total_strain_min);
+      return (x - minStrain)/(maxStrain - minStrain);
     });
 
   for (const auto& layer : d_layers) {
-    EigenMatrixRowMajor_f output = layer.weights * input + layer.bias;
+    EigenMatrixRowMajor_d output = layer.weights.cast<double>() * input + layer.bias.cast<double>();
     if (layer.activation == "sigmoid") { 
-      input = output.unaryExpr([](float x) -> float 
+      input = output.unaryExpr([](double x) -> double 
         {
-          float divisor = 1 + std::exp(-x);
+          double divisor = 1 + std::exp(-x);
           if (divisor == 0) {
-            divisor = std::numeric_limits<float>::min();
+            divisor = std::numeric_limits<double>::min();
           }
           return 1 / divisor;
         });
     } else if (layer.activation == "relu") {
-      input = output.unaryExpr([](float x) -> float 
+      input = output.unaryExpr([](double x) -> double 
         {
-          return std::max<float>(x, 0);
+          return std::max<double>(x, 0);
         });
     } else if (layer.activation == "linear") {
       input = output;
     }
   }
 
-  input = input.unaryExpr([&pressure_min, &pressure_max](float x) -> float 
+  input = input.unaryExpr([&minPressure, &maxPressure](double x) -> double 
     {
-      return pressure_min + x * (pressure_max - pressure_min);
+      return minPressure + x * (maxPressure - minPressure);
     });
-  return static_cast<double>(input(0, 0));
+  return input(0, 0);
 }
