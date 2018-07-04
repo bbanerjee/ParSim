@@ -81,22 +81,21 @@ public:
 
 private:
 
-  using EigenMatrixRowMajor_f = 
-    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-  using EigenMatrixRowMajor_d = 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-
+  template <typename T>
   struct NeuralNetworkLayer {
+    using EigenMatrixRowMajor = 
+      Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
     std::string name;
     std::string activation;
     int units;
     int input_size;
-    EigenMatrixRowMajor_f weights;
-    EigenMatrixRowMajor_f bias; 
+    EigenMatrixRowMajor weights;
+    EigenMatrixRowMajor bias; 
   };
 
+  template <typename T>
   struct NeuralNetworkModel {
-    std::vector<NeuralNetworkLayer> d_layers;
+    std::vector<NeuralNetworkLayer<T>> d_layers;
     double d_minStrain;
     double d_maxStrain;
     double d_minPressure;
@@ -108,10 +107,11 @@ private:
   };
 
   /* Tangent bulk modulus parameters */
+  template <typename T>
   struct BulkModulusParameters
   {
     std::string d_filename;
-    NeuralNetworkModel d_model;
+    NeuralNetworkModel<T> d_model;
 
     BulkModulusParameters() = default;
     BulkModulusParameters(Uintah::ProblemSpecP& ps) {
@@ -155,7 +155,7 @@ private:
     double nu;
   };
 
-  BulkModulusParameters d_bulk;
+  BulkModulusParameters<double> d_bulk;
   ShearModulusParameters d_shear;
 
   void checkInputParameters();

@@ -67,11 +67,12 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
     exit(-1);
   }
 
+
   // Create a model
   ElasticModuli_NeuralNet model(ps);
   try {
     ElasticModuli moduli = model.getInitialElasticModuli();
-    ASSERT_NEAR(moduli.bulkModulus, 3.395e8, 1);
+    ASSERT_NEAR(moduli.bulkModulus, 4.44376499e+08, 1);
   } catch (Uintah::InvalidValue e) {
     std::cout << e.message() << std::endl;
   }
@@ -80,8 +81,8 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
   ElasticModuli_NeuralNet modelCopy(&model);
   try {
     ElasticModuli moduli = modelCopy.getInitialElasticModuli();
-    ASSERT_NEAR(moduli.bulkModulus, 3.395e8, 1);
-    ASSERT_NEAR(moduli.shearModulus, 2.54625e8, 1);
+    ASSERT_NEAR(moduli.bulkModulus, 4.44376499e+08, 1);
+    ASSERT_NEAR(moduli.shearModulus, 3.33282374e8, 1);
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
   } catch (Uintah::InvalidValue e) {
@@ -94,10 +95,22 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
   state.plasticStrainTensor = Uintah::Matrix3(-0.02, 0, 0, 0, -0.02, 0, 0, 0, -0.02);
   try {
     ElasticModuli moduli = model.getCurrentElasticModuli(&state);
-    ASSERT_NEAR(moduli.bulkModulus, 7.20800e9, 1.0);
-    ASSERT_NEAR(moduli.shearModulus, 5.406e9, 1.0);
+    ASSERT_NEAR(moduli.bulkModulus,  5.71826722e+09, 2.0);
+    ASSERT_NEAR(moduli.shearModulus, 4.288700413e+09, 1.0);
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
+  } catch (Uintah::InvalidValue e) {
+    std::cout << e.message() << std::endl;
+  }
+
+  state.elasticStrainTensor = Uintah::Matrix3(0.03, 0, 0, 0, 0.03, 0, 0, 0, 0.03);
+  state.plasticStrainTensor = Uintah::Matrix3(0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02);
+  try {
+    ElasticModuli moduli = model.getCurrentElasticModuli(&state);
+    std::cout << "K,G = " << moduli.bulkModulus << "," 
+                << moduli.shearModulus << std::endl;
+    ASSERT_NEAR(moduli.bulkModulus,  93178465.39, 1.0);
+    ASSERT_NEAR(moduli.shearModulus, 69883849.037, 1.0);
   } catch (Uintah::InvalidValue e) {
     std::cout << e.message() << std::endl;
   }

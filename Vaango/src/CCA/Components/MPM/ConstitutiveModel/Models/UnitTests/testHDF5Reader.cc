@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-using EigenMatrixF = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+using EigenMatrixF = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
 struct Layer {
   std::string name;
@@ -218,21 +218,21 @@ TEST(HDF5Tests, readTest)
           //std::cout << "\n";
 
           switch(ii) {
-            case 0: ASSERT_NEAR(weights(0, 0), 2.93526, 1.0e-5);
-                    ASSERT_NEAR(weights(1, 31), 2.58096, 1.0e-5);
-                    ASSERT_NEAR(weights(1, 63), -0.357476, 1.0e-5);
+            case 0: ASSERT_NEAR(weights(0, 0), 2.66871, 1.0e-5);
+                    ASSERT_NEAR(weights(1, 31), 2.26223, 1.0e-5);
+                    ASSERT_NEAR(weights(1, 63), -0.207627, 1.0e-5);
                     break;
-            case 1: ASSERT_NEAR(weights(0, 0), 0.915178, 1.0e-5);
-                    ASSERT_NEAR(weights(31, 15), -1.12838, 1.0e-5);
-                    ASSERT_NEAR(weights(63, 31), 1.08655, 1.0e-5);
+            case 1: ASSERT_NEAR(weights(0, 0), 1.24319, 1.0e-5);
+                    ASSERT_NEAR(weights(31, 15), -1.25566, 1.0e-5);
+                    ASSERT_NEAR(weights(63, 31), 0.718625, 1.0e-5);
                     break;
-            case 2: EXPECT_NEAR(weights(0, 0), -8.95587, 1.0e-5);
-                    EXPECT_NEAR(weights(15, 15), -10.352586, 1.0e-5);
-                    ASSERT_NEAR(weights(31, 31), -0.056907, 1.0e-5);
+            case 2: EXPECT_NEAR(weights(0, 0), 5.0301, 1.0e-5);
+                    EXPECT_NEAR(weights(15, 15), 8.63985, 1.0e-5);
+                    ASSERT_NEAR(weights(31, 31), 0.0212148, 1.0e-5);
                     break;
-            case 3: EXPECT_NEAR(weights(0, 0), -4.41087, 1.0e-5);
-                    EXPECT_NEAR(weights(15, 0), -7.43057, 1.0e-5);
-                    ASSERT_NEAR(weights(31, 0), -0.01294, 1.0e-5);
+            case 3: EXPECT_NEAR(weights(0, 0), 5.0117, 1.0e-5);
+                    EXPECT_NEAR(weights(15, 0), -29.7871, 1.0e-4);
+                    ASSERT_NEAR(weights(31, 0), 0.0211935, 1.0e-5);
                     break;
           };
 
@@ -248,19 +248,19 @@ TEST(HDF5Tests, readTest)
           //std::cout << "\n\n";
 
           switch(ii) {
-            case 0: ASSERT_NEAR(bias(0, 0), -3.04455, 1.0e-5);
-                    ASSERT_NEAR(bias(31, 0), -1.833757, 1.0e-5);
-                    ASSERT_NEAR(bias(63, 0), -3.00222, 1.0e-5);
+            case 0: ASSERT_NEAR(bias(0, 0), -2.86732, 1.0e-5);
+                    ASSERT_NEAR(bias(31, 0), -0.493266, 1.0e-5);
+                    ASSERT_NEAR(bias(63, 0), -2.86736, 1.0e-5);
                     break;
-            case 1: EXPECT_NEAR(bias(0, 0), -2.38528, 1.0e-5);
-                    EXPECT_NEAR(bias(15, 0), -2.47038, 1.0e-5);
-                    ASSERT_NEAR(bias(31, 0), -2.41679, 1.0e-5);
+            case 1: EXPECT_NEAR(bias(0, 0), -2.97205, 1.0e-5);
+                    EXPECT_NEAR(bias(15, 0), -3.25083, 1.0e-5);
+                    ASSERT_NEAR(bias(31, 0), -2.20559, 1.0e-5);
                     break;
-            case 2: EXPECT_NEAR(bias(0, 0), 2.69647, 1.0e-5);
-                    EXPECT_NEAR(bias(15, 0), 3.03744, 1.0e-5);
-                    ASSERT_NEAR(bias(31, 0), -0.015684, 1.0e-5);
+            case 2: EXPECT_NEAR(bias(0, 0), 4.68216, 1.0e-5);
+                    EXPECT_NEAR(bias(15, 0), 0.633401, 1.0e-5);
+                    ASSERT_NEAR(bias(31, 0), -0.0314119, 1.0e-5);
                     break;
-            case 3: ASSERT_NEAR(bias(0, 0), 2.44017, 1.0e-5);
+            case 3: ASSERT_NEAR(bias(0, 0), 3.10022, 1.0e-5);
                     break;
           };
         }
@@ -281,17 +281,17 @@ TEST(HDF5Tests, readTest)
   }
 
 
-  float total_strain_min = 0.0;
-  float total_strain_max = 0.452;
-  float pressure_min = 0.0;
-  float pressure_max = 1.0e6;
+  double total_strain_min = 0.0;
+  double total_strain_max = 0.452;
+  double pressure_min = 0.0;
+  double pressure_max = 1.0e6;
   
   EigenMatrixF input_orig(layers[0].input_size, 1);
   //input_orig(0, 0) = -10;
   //input_orig(1, 0) = 0;
   input_orig(0, 0) = 1.0e-6;
   input_orig(1, 0) = 0;
-  EigenMatrixF input = input_orig.unaryExpr([&total_strain_min, &total_strain_max](float x) -> float 
+  EigenMatrixF input = input_orig.unaryExpr([&total_strain_min, &total_strain_max](double x) -> double 
     {
       return (x - total_strain_min)/(total_strain_max - total_strain_min);
     });
@@ -308,43 +308,43 @@ TEST(HDF5Tests, readTest)
                EXPECT_EQ(layer.activation, "sigmoid");
                EXPECT_EQ(layer.input_size, 2);
                ASSERT_EQ(layer.units, 64);
-               EXPECT_NEAR(layer.weights(0, 0), 2.93526, 1.0e-5);
-               EXPECT_NEAR(layer.weights(31, 1), 2.58096, 1.0e-5);
-               ASSERT_NEAR(layer.weights(63, 1), -0.357476, 1.0e-5);
-               EXPECT_NEAR(layer.bias(0, 0), -3.04455, 1.0e-5);
-               EXPECT_NEAR(layer.bias(31, 0), -1.833757, 1.0e-5);
-               ASSERT_NEAR(layer.bias(63, 0), -3.00222, 1.0e-5);
+               EXPECT_NEAR(layer.weights(0, 0), 2.66871, 1.0e-5);
+               EXPECT_NEAR(layer.weights(31, 1), 2.26223, 1.0e-5);
+               ASSERT_NEAR(layer.weights(63, 1), -0.207627, 1.0e-5);
+               EXPECT_NEAR(layer.bias(0, 0), -2.86732, 1.0e-5);
+               EXPECT_NEAR(layer.bias(31, 0), -0.493266, 1.0e-5);
+               ASSERT_NEAR(layer.bias(63, 0), -2.86736, 1.0e-5);
                break;
       case 1:  EXPECT_EQ(layer.name, "dense_2");
                EXPECT_EQ(layer.activation, "sigmoid");
                EXPECT_EQ(layer.input_size, 64);
                ASSERT_EQ(layer.units, 32);
-               EXPECT_NEAR(layer.weights(0, 0), 0.915178, 1.0e-5);
-               EXPECT_NEAR(layer.weights(15, 31), -1.12838, 1.0e-5);
-               ASSERT_NEAR(layer.weights(31, 63), 1.08655, 1.0e-5);
-               EXPECT_NEAR(layer.bias(0, 0), -2.38528, 1.0e-5);
-               EXPECT_NEAR(layer.bias(15, 0), -2.47038, 1.0e-5);
-               ASSERT_NEAR(layer.bias(31, 0), -2.41679, 1.0e-5);
+               EXPECT_NEAR(layer.weights(0, 0), 1.24319, 1.0e-5);
+               EXPECT_NEAR(layer.weights(15, 31), -1.25566, 1.0e-5);
+               ASSERT_NEAR(layer.weights(31, 63), 0.718625, 1.0e-5);
+               EXPECT_NEAR(layer.bias(0, 0), -2.97205, 1.0e-5);
+               EXPECT_NEAR(layer.bias(15, 0), -3.25083, 1.0e-5);
+               ASSERT_NEAR(layer.bias(31, 0), -2.20559, 1.0e-5);
                break;
       case 2:  EXPECT_EQ(layer.name, "dense_3");
                EXPECT_EQ(layer.activation, "relu");
                EXPECT_EQ(layer.input_size, 32);
                ASSERT_EQ(layer.units, 32);
-               EXPECT_NEAR(layer.weights(0, 0), -8.95587, 1.0e-5);
-               EXPECT_NEAR(layer.weights(15, 15), -10.352586, 1.0e-5);
-               ASSERT_NEAR(layer.weights(31, 31), -0.056907, 1.0e-5);
-               EXPECT_NEAR(layer.bias(0, 0), 2.69647, 1.0e-5);
-               EXPECT_NEAR(layer.bias(15, 0), 3.03744, 1.0e-5);
-               ASSERT_NEAR(layer.bias(31, 0), -0.015684, 1.0e-5);
+               EXPECT_NEAR(layer.weights(0, 0), 5.0301, 1.0e-5);
+               EXPECT_NEAR(layer.weights(15, 15), 8.63985, 1.0e-5);
+               ASSERT_NEAR(layer.weights(31, 31), 0.0212148, 1.0e-5);
+               EXPECT_NEAR(layer.bias(0, 0), 4.68216, 1.0e-5);
+               EXPECT_NEAR(layer.bias(15, 0), 0.633401, 1.0e-5);
+               ASSERT_NEAR(layer.bias(31, 0), -0.0314119, 1.0e-5);
                break;
       case 3:  EXPECT_EQ(layer.name, "dense_4");
                EXPECT_EQ(layer.activation, "linear");
                EXPECT_EQ(layer.input_size, 32);
                ASSERT_EQ(layer.units, 1);
-               EXPECT_NEAR(layer.weights(0, 0), -4.41087, 1.0e-5);
-               EXPECT_NEAR(layer.weights(0, 15), -7.43057, 1.0e-5);
-               ASSERT_NEAR(layer.weights(0, 31), -0.01294, 1.0e-5);
-               ASSERT_NEAR(layer.bias(0, 0), 2.44017, 1.0e-5);
+               EXPECT_NEAR(layer.weights(0, 0), 5.0117, 1.0e-5);
+               EXPECT_NEAR(layer.weights(0, 15), -29.7871, 1.0e-4);
+               ASSERT_NEAR(layer.weights(0, 31), 0.0211935, 1.0e-5);
+               ASSERT_NEAR(layer.bias(0, 0), 3.10022, 1.0e-5);
                break;
     };
 
@@ -360,51 +360,51 @@ TEST(HDF5Tests, readTest)
               ASSERT_EQ(input(1, 0), 0);
               EXPECT_EQ(output.rows(), 64);
               EXPECT_EQ(output.cols(), 1);
-              EXPECT_NEAR(output(0, 0), -3.04454, 1.0e-5);
-              EXPECT_NEAR(output(31, 0), -1.83375, 1.0e-5);
-              ASSERT_NEAR(output(63, 0), -3.00222, 1.0e-5);
+              EXPECT_NEAR(output(0, 0), -2.867314, 1.0e-5);
+              EXPECT_NEAR(output(31, 0), -0.493263, 1.0e-5);
+              ASSERT_NEAR(output(63, 0), -2.867358, 1.0e-5);
               break;
       case 1: EXPECT_EQ(input.rows(), 64);
               EXPECT_EQ(input.cols(), 1);
-              EXPECT_NEAR(input(0, 0), 0.0454537, 1.0e-6);
-              ASSERT_NEAR(input(63, 0), 0.0473257, 1.0e-6);
+              EXPECT_NEAR(input(0, 0), 0.0537932, 1.0e-6);
+              ASSERT_NEAR(input(63, 0), 0.05379095, 1.0e-6);
               EXPECT_EQ(output.rows(), 32);
               ASSERT_EQ(output.cols(), 1);
-              EXPECT_NEAR(output(0, 0), -9.95303, 1.0e-5);
-              ASSERT_NEAR(output(31, 0), -9.94701, 1.0e-5);
+              EXPECT_NEAR(output(0, 0), -11.326995, 1.0e-5);
+              ASSERT_NEAR(output(31, 0), -8.612443, 1.0e-5);
               break;
       case 2: EXPECT_EQ(input.rows(), 32);
               EXPECT_EQ(input.cols(), 1);
-              EXPECT_NEAR(input(0, 0), 4.75808e-5, 1.0e-8);
-              ASSERT_NEAR(input(31, 0), 4.78684e-5, 1.0e-8);
+              EXPECT_NEAR(input(0, 0), 1.2043238e-5, 1.0e-8);
+              ASSERT_NEAR(input(31, 0), 0.000181796, 1.0e-8);
               EXPECT_EQ(output.rows(), 32);
               ASSERT_EQ(output.cols(), 1);
-              EXPECT_NEAR(output(0, 0), 2.69267, 1.0e-5);
-              ASSERT_NEAR(output(31, 0), -0.0171661, 1.0e-5);
+              EXPECT_NEAR(output(0, 0), 4.776572, 1.0e-5);
+              ASSERT_NEAR(output(31, 0), -0.0325998, 1.0e-5);
               break;
       case 3: EXPECT_EQ(input.rows(), 32);
               EXPECT_EQ(input.cols(), 1);
-              EXPECT_NEAR(input(0, 0), 2.69267, 1.0e-5);
-              ASSERT_NEAR(input(30, 0), 4.42327, 1.0e-5);
+              EXPECT_NEAR(input(0, 0), 4.7765725, 1.0e-5);
+              ASSERT_NEAR(input(30, 0), 0, 1.0e-5);
               EXPECT_EQ(output.rows(), 1);
               ASSERT_EQ(output.cols(), 1);
-              ASSERT_NEAR(output(0, 0), -1.45476, 1.0e-5);
+              ASSERT_NEAR(output(0, 0), -2.1679472, 1.0e-5);
               break;
     };
 
     if (layer.activation == "sigmoid") { 
-      EigenMatrixF transformed = output.unaryExpr([](float x) -> float {
-        float divisor = 1 + std::exp(-x);
+      EigenMatrixF transformed = output.unaryExpr([](double x) -> double {
+        double divisor = 1 + std::exp(-x);
         if (divisor == 0)
         {
-            divisor = std::numeric_limits<float>::min();
+            divisor = std::numeric_limits<double>::min();
         }
         return 1 / divisor;
       });
       input = transformed;
     } else if (layer.activation == "relu") {
-      EigenMatrixF transformed = output.unaryExpr([](float x) -> float {
-        return std::max<float>(x, 0);
+      EigenMatrixF transformed = output.unaryExpr([](double x) -> double {
+        return std::max<double>(x, 0);
       });
       input = transformed;
     } else if (layer.activation == "linear") {
@@ -414,11 +414,11 @@ TEST(HDF5Tests, readTest)
     ++layer_num;
   }
 
-  EigenMatrixF output = input.unaryExpr([&pressure_min, &pressure_max](float x) -> float 
+  EigenMatrixF output = input.unaryExpr([&pressure_min, &pressure_max](double x) -> double 
     {
       return pressure_min + x * (pressure_max - pressure_min);
     });
   //std::cout << "Prediction = " << output << std::endl;
-  ASSERT_NEAR(output(0, 0), -1.45476e6, 1.0);
+  ASSERT_NEAR(output(0, 0), -2167947.2, 1.0);
 
 }

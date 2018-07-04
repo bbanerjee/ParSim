@@ -125,14 +125,14 @@ ElasticModuli_NeuralNet::computeBulkModulus(const double& eps_v_e,
   double pressure_hi = d_bulk.d_model.predict(eps_v + epsilon, eps_v_p);
 
   double K = (pressure_hi - pressure_lo)/(2*epsilon);
-  if (K < 1.0e-6) {
+  //if (K < 1.0e-6) {
     std::cout << std::setprecision(16) << "ev_e = " << eps_v_e
               << " ev_p = " << eps_v_p
               << " ev- = " << eps_v - epsilon
               << " ev+ = " << eps_v + epsilon
               << " p_lo = " << pressure_lo << " p_hi = " << pressure_hi
               << " K = " << K << std::endl;
-  }
+  //}
   return K;
 }
 
@@ -146,9 +146,13 @@ ElasticModuli_NeuralNet::computeShearModulus(const double& K) const
   return G;
 }
 
+template<typename T>
 void 
-ElasticModuli_NeuralNet::NeuralNetworkModel::readNeuralNetworkHDF5(const std::string& filename)
+ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std::string& filename)
 {
+  using EigenMatrixRowMajor = 
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
   const H5std_string FILE_NAME(filename);
   const H5std_string DATASET_NAME("");
   try {
@@ -176,7 +180,7 @@ ElasticModuli_NeuralNet::NeuralNetworkModel::readNeuralNetworkHDF5(const std::st
       throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
     }
 
-    NeuralNetworkLayer prev_layer, current_layer;
+    NeuralNetworkLayer<T> prev_layer, current_layer;
     auto config = doc["config"];
     for (auto it = config.begin(); it != config.end(); ++it) {
       auto layer_class_name = (*it)["class_name"];
@@ -240,13 +244,15 @@ ElasticModuli_NeuralNet::NeuralNetworkModel::readNeuralNetworkHDF5(const std::st
         dataspace.getSimpleExtentDims(dims_data, nullptr);
         
         if (rank == 2) {
-          EigenMatrixRowMajor_f mat(dims_data[0], dims_data[1]);
+          EigenMatrixRowMajor mat(dims_data[0], dims_data[1]);
           dataset.read((void *)mat.data(), datatype);
           d_layers[ii].weights = mat.transpose();
+          //std::cout << "weights = \n" << mat << std::endl;
         } else {
-          EigenMatrixRowMajor_f mat(dims_data[0], 1);
+          EigenMatrixRowMajor mat(dims_data[0], 1);
           dataset.read((void *)mat.data(), datatype);
           d_layers[ii].bias = mat;
+          //std::cout << "biases = \n" << mat << std::endl;
         }
       }
     }
@@ -264,45 +270,52 @@ ElasticModuli_NeuralNet::NeuralNetworkModel::readNeuralNetworkHDF5(const std::st
   }
 }
 
+template<typename T>
 double 
-ElasticModuli_NeuralNet::NeuralNetworkModel::predict(double totalVolStrain, double plasticVolStrain) const
+ElasticModuli_NeuralNet::NeuralNetworkModel<T>::predict(double totalVolStrain, double plasticVolStrain) const
 {
-  double minStrain = d_minStrain;
-  double maxStrain = d_maxStrain;
-  double minPressure = d_minPressure;
-  double maxPressure = d_maxPressure;
+  using EigenMatrixRowMajor = 
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
-  EigenMatrixRowMajor_d input(2, 1);
-  input(0, 0) = totalVolStrain;
-  input(1, 0) = plasticVolStrain;
+  T minStrain = static_cast<T>(d_minStrain);
+  T maxStrain = static_cast<T>(d_maxStrain);
+  T minPressure = static_cast<T>(d_minPressure);
+  T maxPressure = static_cast<T>(d_maxPressure);
+
+  EigenMatrixRowMajor input(2, 1);
+  input(0, 0) = static_cast<T>(totalVolStrain);
+  input(1, 0) = static_cast<T>(plasticVolStrain);
   
-  input = input.unaryExpr([&minStrain, &maxStrain](double x) -> double 
+  input = input.unaryExpr([&minStrain, &maxStrain](T x) -> T 
     {
       return (x - minStrain)/(maxStrain - minStrain);
     });
 
   for (const auto& layer : d_layers) {
-    EigenMatrixRowMajor_d output = layer.weights.cast<double>() * input + layer.bias.cast<double>();
+    EigenMatrixRowMajor output = layer.weights * input + layer.bias;
     if (layer.activation == "sigmoid") { 
-      input = output.unaryExpr([](double x) -> double 
+      EigenMatrixRowMajor layer_output = output.unaryExpr([](T x) -> T 
         {
-          double divisor = 1 + std::exp(-x);
+          T divisor = 1 + std::exp(-x);
           if (divisor == 0) {
-            divisor = std::numeric_limits<double>::min();
+            divisor = std::numeric_limits<T>::min();
           }
           return 1 / divisor;
         });
+      input = layer_output;
     } else if (layer.activation == "relu") {
-      input = output.unaryExpr([](double x) -> double 
+      EigenMatrixRowMajor layer_output = output.unaryExpr([](T x) -> T 
         {
-          return std::max<double>(x, 0);
+          return std::max<T>(x, 0);
         });
+      input = layer_output;
     } else if (layer.activation == "linear") {
-      input = output;
+      EigenMatrixRowMajor layer_output = output;
+      input = layer_output;
     }
   }
 
-  input = input.unaryExpr([&minPressure, &maxPressure](double x) -> double 
+  input = input.unaryExpr([&minPressure, &maxPressure](T x) -> T 
     {
       return minPressure + x * (maxPressure - minPressure);
     });
