@@ -59,6 +59,7 @@ public:
                     // plastic strain (This quantity can decrease)
   double ep_cum_eq; // The cumulative equivalent plastic strain
                     // (This quantity increases monotonically)
+  double capX;      // Hydrostatic strength in I1 space
 
   Uintah::Matrix3 stressTensor; 
   Uintah::Matrix3 deviatoricStressTensor; 
@@ -92,6 +93,7 @@ public:
        << "\t evp = " << state.ep_v << " ep_eq = " << state.ep_eq 
        << "\t ep_cum_eq = " << state.ep_cum_eq << "\n"
        << "\t K = " << state.bulkModulus << ", G = " << state.shearModulus
+       << ", X = " << state.capX
        << "\n";
     return os;
   }

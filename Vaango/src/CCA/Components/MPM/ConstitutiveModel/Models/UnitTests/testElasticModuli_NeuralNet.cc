@@ -109,8 +109,10 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
     ElasticModuli moduli = model.getCurrentElasticModuli(&state);
     std::cout << "K,G = " << moduli.bulkModulus << "," 
                 << moduli.shearModulus << std::endl;
-    ASSERT_NEAR(moduli.bulkModulus,  93178465.39, 1.0);
-    ASSERT_NEAR(moduli.shearModulus, 69883849.037, 1.0);
+    //ASSERT_NEAR(moduli.bulkModulus,  93178465.39, 1.0);
+    //ASSERT_NEAR(moduli.shearModulus, 69883849.037, 1.0);
+    ASSERT_NEAR(moduli.bulkModulus,  35461413.9, 1.0);
+    ASSERT_NEAR(moduli.shearModulus, 26596060.4, 1.0);
   } catch (Uintah::InvalidValue e) {
     std::cout << e.message() << std::endl;
   }
