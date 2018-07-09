@@ -73,9 +73,10 @@ void
 YieldCond_TabularCap::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
-  yield_ps->setAttribute("type", "tabular");
+  yield_ps->setAttribute("type", "tabular_cap");
 
   d_yield.table.outputProblemSpec(yield_ps);
+  ps->appendElement("cap_ellipcity_ratio", d_yield.capEllipticityRatio);
 }
 
 void
@@ -661,7 +662,40 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
   // Copy the relevant points
   std::copy(d_polyline.begin(), end_iter, std::back_inserter(p_q_all));
 
-  // Compute sqrtJ2 at that value of kappa
+  // Set up theta vector
+  std::vector<double> theta_vec;
+  Vaango::Util::linspace(0.0, M_PI/2, 100, theta_vec);
+  std::reverse(std::begin(theta_vec), std::end(theta_vec));
+
+  // Set up ellipse axes
+  double a = p_bar_max - kappa_bar;
+
+  // Compute ellipse points 
+  Polyline p_q_cap;
+  for (auto theta : theta_vec) {
+    auto x = kappa_bar + a * cos(theta);
+    auto b = computeEllipseHeight(d_polyline, x);
+    auto y = b * sin(theta);
+    p_q_cap.push_back(Uintah::Point(x, y, 0));
+  }
+
+  // Concatenate the two vectors
+  p_q_all.insert(p_q_all.end(), p_q_cap.begin(), p_q_cap.end());
+
+}
+
+double
+YieldCond_TabularCap::computeEllipseHeight(const Polyline& p_q_points,
+                                           double p_cap)
+{
+  // Find the location of the p_bar_start, p_bar_end on table polyline
+  auto end_iter = std::find_if(d_polyline.begin(), d_polyline.end(),
+                                [&p_cap](const auto& point) 
+                                {
+                                    return p_cap < point.x();
+                                });
+
+  // Compute sqrtJ2 at that value of p_cap
   auto start_iter = end_iter - 1;
   if (end_iter == d_polyline.end()) {
     start_iter--;
@@ -669,37 +703,10 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
   }
   auto start = *start_iter;
   auto end = *end_iter;
-  double t = (end.x() - kappa_bar)/(end.x() - start.x());
-  double sqrtJ2_kappa = (1 - t)*start.y() + t*end.y();
+  double t = (p_cap - start.x())/(end.x() - start.x());
+  double sqrtJ2 = (1 - t)*start.y() + t*end.y();
 
-  // Set up theta vector
-  std::vector<double> theta_vec;
-  Vaango::Util::linspace(0.0, M_PI/2, 100, theta_vec);
-
-  // Set up ellipse axes
-  double a = p_bar_max - kappa_bar;
-  double b = sqrtJ2_kappa;
-
-  // Compute ellipse points (**WARNING** may not return in order)
-  Polyline p_q_cap;
-  std::transform(theta_vec.begin(), theta_vec.end(), p_q_cap.begin(),
-                 [&a, &b, &kappa_bar](const auto& theta) 
-                 {
-                   auto x = kappa_bar + a * cos(theta);
-                   auto y = b * sin(theta);
-                   return Uintah::Point(x, y, 0);
-                 });
-  
-  // Sort cap points in increasing x
-  std::sort(p_q_cap.begin(), p_q_cap.end(), 
-            [](const Point& pt1, const Point& pt2) 
-            {
-              return pt1.x() < pt2.x();
-            });
-
-  // Concatenate the two vectors
-  p_q_all.insert(p_q_all.end(), p_q_cap.begin(), p_q_cap.end());
-
+  return sqrtJ2;
 }
 
 /* Convert yield function data to z_rprime coordinates */

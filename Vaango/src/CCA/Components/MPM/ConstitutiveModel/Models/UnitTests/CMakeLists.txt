@@ -145,6 +145,18 @@ add_custom_command(
   COMMAND ${UNIT_TEST}
 )
 
+add_executable(testYieldCond_TabularCap testYieldCond_TabularCap.cc)
+target_link_libraries(testYieldCond_TabularCap
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testYieldCond_TabularCap)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
 add_executable(testYieldCondUtils testYieldCondUtils.cc)
 target_link_libraries(testYieldCondUtils
   ${GTEST_LIB}

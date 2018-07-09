@@ -72,6 +72,7 @@ public:
     params["I1_min"] = -d_I1bar_max;
     params["I1_max"] = -d_I1bar_min;
     params["sqrtJ2_max"] = d_sqrtJ2_max;
+    params["R"] = d_yield.capEllipticityRatio;
     return params;
   }
 
@@ -302,7 +303,7 @@ private:
       : table(ps)
     {
       table.setup();
-      ps->require("capEllipticityRatio", capEllipticityRatio);
+      ps->require("cap_ellipticity_ratio", capEllipticityRatio);
     }
     YieldFunctionParameters(const YieldFunctionParameters& yf)
     {
@@ -340,6 +341,9 @@ private:
 
   /* Compute points on the cap */
   void computeCapPoints(double X_bar, Polyline& p_q_all);
+
+  /* Compute the height of the elliptical cap */
+  double computeEllipseHeight(const Polyline& p_q_points, double p_cap);
 
   /* Convert yield function data to z_rprime coordinates */
   void convertToZRprime(const double& sqrtKG, const Polyline& p_q_points, 
