@@ -174,7 +174,7 @@ YieldCond_TabularCap::checkInputParameters()
 
 }
 
-/* Yield surface does not change over time.  So we can caculate the
+/* If the yield surface does not change over time we can calculate the
    max sqrt(J2) at the beginning */
 void 
 YieldCond_TabularCap::setYieldConditionRange() {
@@ -191,6 +191,24 @@ YieldCond_TabularCap::setYieldConditionRange() {
     d_I1bar_max = std::max(d_I1bar_max, 3.0*p_bar);
     d_sqrtJ2_max = std::max(d_sqrtJ2_max, gg[0]);
   }
+}
+
+/* Yield surface changes over time.  So we need to update the range. */
+void 
+YieldCond_TabularCap::updateYieldConditionRange(const Polyline& yield_surface) {
+
+  auto min_max_p = std::minmax_element(yield_surface.begin(), yield_surface.end(),
+                                       [](const auto& pt1, const auto& p2) {
+                                         return pt1.x() < p2.x();
+                                       });
+  d_I1bar_min = min_max_p.first->x()*3.0;
+  d_I1bar_max = min_max_p.second->x()*3.0;
+
+  auto max_q = std::max_element(yield_surface.begin(), yield_surface.end(),
+                                [](const auto& pt1, const auto& p2) {
+                                  return pt1.y() < p2.y();
+                                });
+  d_sqrtJ2_max = max_q->y();
 }
 
 /* Save the yield surface points as a polyline for future computations */
@@ -325,7 +343,7 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
 
     double ratio = (p_bar - kappa_bar)/(p_bar_max - kappa_bar);
     double Fc_sq = 1.0 - ratio*ratio;
-    if (state->sqrt_J2 * state->sqrt_J2 > gg[0] * gg[0] * Fc_sq) {
+    if ((state->sqrt_J2 * state->sqrt_J2 - gg[0] * gg[0] * Fc_sq) > 1.0e-10) {
       return 1.0;
     }
   } else {
@@ -349,7 +367,6 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
 double
 YieldCond_TabularCap::evalYieldConditionMax(const ModelStateBase* )
 {
-  setYieldConditionRange();
   return d_sqrtJ2_max;
 }
 
@@ -664,8 +681,9 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
 
   // Set up theta vector
   std::vector<double> theta_vec;
-  Vaango::Util::linspace(0.0, M_PI/2, 100, theta_vec);
+  Vaango::Util::linspace(0, M_PI/2, 18, theta_vec);
   std::reverse(std::begin(theta_vec), std::end(theta_vec));
+  theta_vec.push_back(-5*M_PI/180.0);
 
   // Set up ellipse axes
   double a = p_bar_max - kappa_bar;
@@ -681,6 +699,9 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
 
   // Concatenate the two vectors
   p_q_all.insert(p_q_all.end(), p_q_cap.begin(), p_q_cap.end());
+
+  // Update yield condition range
+  updateYieldConditionRange(p_q_all);
 
 }
 

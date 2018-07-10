@@ -1,20 +1,33 @@
 function table_yield_cap()
-  p = [-10   10  200  300  400  800  1600  3200 6400];
-  q = [  0  100  200  300  500  600   700   800   900];
-  plot(p, q, 'k.', 'Markersize', 10); hold on;
+
+  close all;
+
+  fig = figure()
+
+  p_orig = [-10   10  200  300  400  800  1600  3200 6400 6720 6752];
+  q_orig = [  0  100  200  300  500  600   700   800   900 910 911];
+  plot(p_orig, q_orig, 'k.', 'Markersize', 10); hold on;
 
   R = 0.7;
+  %X = 3*2000;
+  %X = 3*6400;
   X = 3*10000;
 
-  [p, q] = compute_cap(p, q, R, X);
+  [p, q] = compute_cap(p_orig, q_orig, R, X);
+  %p_q = [p' q']
+  plot(p, q, '-', 'Color', [116,179,101]/255, 'LineWidth', 2);
   
   [p, q] = hull(p, q);
   plot(p, q, '-', 'Color', [216,179,101]/255, 'LineWidth', 2);
-  axis equal
-  [p' q']
-  print -dpdf tabular_yield_hull.pdf
+  %axis equal
+  %p_q = [p' q']
+  %print -dpdf tabular_yield_hull.pdf
 
-  plot_table_yield(p, q);
+  plot_stress_states(p_orig, q_orig, R, X, fig)
+
+  q_max = [max(q_orig) max(q)]
+
+  %plot_table_yield(p, q);
 end
 
 function [p_cap, q_cap] = compute_cap(p, q, R, X)
@@ -31,17 +44,17 @@ function [p_cap, q_cap] = compute_cap(p, q, R, X)
   pp = p(1:startp);
   qq = q(1:startp);
 
-  theta = linspace(0, pi/2, 10);
-  theta = fliplr(theta)
+  theta = linspace(0, pi/2, 19);
+  theta = fliplr(theta);
 
-  a = p_max - kappa
+  a = p_max - kappa;
 
-  p_cap = kappa + a*cos(theta)
+  p_cap = kappa + a*cos(theta);
   for i=1:length(theta)
     b(i) = computeEllipseHeight(p, q, p_cap(i));
   end
   q_cap = b.*sin(theta);
-  bb = b
+  bb = b;
 
   p_cap = [pp p_cap];
   q_cap = [qq q_cap];
@@ -53,17 +66,52 @@ function [q_cap] = computeEllipseHeight(p, q, p_cap)
   endp = 2;
   for i = 1:length(p)
     if (p_cap > p(i)) 
-      startp = i
-      endp = i+1
+      startp = i;
+      endp = i+1;
     endif 
   end
   if (startp == length(p))
     startp = startp - 1;
     endp = endp - 1;
   endif
-  t = (p_cap - p(startp))/(p(endp) - p(startp))
+  t = (p_cap - p(startp))/(p(endp) - p(startp));
   q_cap = (1 - t)*q(startp) + t*q(endp);
+  %tt = [startp endp p(startp) p(endp) t]
 end 
+
+function plot_stress_states(plist, qlist, R, X, fig)
+
+  p_min = min(plist)
+  p_max = X/3;
+  kappa = p_min + R*(p_max - p_min)
+  a = p_max - kappa;
+
+  p = -300; q = 1000;
+  plot(p, q, 'ro');
+
+  p = -2; q = 39;
+  plot(p, q, 'go');
+
+  p = 1000; q = 605;
+  plot(p, q, 'bo');
+
+  p = 1000; q = 635;
+  plot(p, q, 'co');
+
+  p = 7000; q = 1000;
+  plot(p, q, 'mo');
+
+  p = 2000; q = 0;
+  plot(p, q, 'yo');
+
+  %p = 1700; % for p_max = 2000
+  p = 9700; % for p_max = 2000
+  [q_val] = computeEllipseHeight(plist, qlist, p)
+  theta = acos((p - kappa)/a);
+  q = q_val*sin(theta);
+  [p, q]
+  plot(p, q, 'ko');
+end
 
 function plot_table_yield(p, q)
 
@@ -76,14 +124,14 @@ function plot_table_yield(p, q)
 
   p_scale = p_cen + 1.5*(p_closed - p_cen);
   q_scale = q_cen + 1.5*(q_closed - q_cen);
-  plot(p_scale, q_scale,'g-');
+  %plot(p_scale, q_scale,'g-');
 
   p_trans = p_scale;
   q_trans = q_scale - min(q_scale);
-  plot(p_trans, q_trans, 'r-');
+  %plot(p_trans, q_trans, 'r-');
 
   [xnormal, ynormal, p_ext, q_ext] = calcNormals(p, q);
-  plot(p_ext, q_ext, 'r-', 'Linewidth', 3);
+  %plot(p_ext, q_ext, 'r-', 'Linewidth', 3);
 
   p_normal = p + xnormal*900;
   q_normal = q + ynormal*900;
@@ -102,7 +150,7 @@ function plot_table_yield(p, q)
 
   p_new = p + xnormal*r;
   q_new = q + ynormal*r;
-  plot(p_new, q_new,'g-', 'LineWidth', 2);
+  %plot(p_new, q_new,'g-', 'LineWidth', 2);
 
   point = [-2000, 4000];
   plot(point(1), point(2), 'mx', 'LineWidth', 3, 'Markersize', 7);
@@ -112,7 +160,7 @@ function plot_table_yield(p, q)
 
   p_new = p + xnormal*r;
   q_new = q + ynormal*r;
-  plot(p_new, q_new,'m-', 'LineWidth', 2);
+  %plot(p_new, q_new,'m-', 'LineWidth', 2);
 
   point = [2000, 4000];
   plot(point(1), point(2), 'kx', 'LineWidth', 3, 'Markersize', 7);
@@ -122,7 +170,7 @@ function plot_table_yield(p, q)
 
   p_new = p + xnormal*r;
   q_new = q + ynormal*r;
-  plot(p_new, q_new,'k-', 'LineWidth', 2);
+  %plot(p_new, q_new,'k-', 'LineWidth', 2);
 
   point = [-3000, 0];
   plot(point(1), point(2), 'bx', 'LineWidth', 3, 'Markersize', 7);
@@ -132,7 +180,7 @@ function plot_table_yield(p, q)
 
   p_new = p + xnormal*r;
   q_new = q + ynormal*r;
-  plot(p_new, q_new,'b-', 'LineWidth', 2);
+  %plot(p_new, q_new,'b-', 'LineWidth', 2);
 
   point = [300 1000];
   plot(point(1), point(2), 'rx', 'LineWidth', 3, 'Markersize', 7);
@@ -142,7 +190,7 @@ function plot_table_yield(p, q)
 
   p_new = p + xnormal*r;
   q_new = q + ynormal*r;
-  plot(p_new, q_new,'r-', 'LineWidth', 2);
+  %plot(p_new, q_new,'r-', 'LineWidth', 2);
 end
 
 function [x_cen, y_cen] = calcCentroid(x, y) 
@@ -246,7 +294,7 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
  
   xnormal = -xnormal;
   ynormal = -ynormal;
-  [xnormal' ynormal']
+  [xnormal' ynormal'];
 end
 
 function [val] = ccw(p1x, p1y, p2x, p2y, p3x, p3y)

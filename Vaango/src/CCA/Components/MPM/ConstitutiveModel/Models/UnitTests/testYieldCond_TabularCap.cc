@@ -118,14 +118,152 @@ TEST_F(YieldCondTabularCapTest, constructorTest)
   ASSERT_DOUBLE_EQ(params.at("R"), 0.7);
 }
 
+TEST_F(YieldCondTabularCapTest, computeCapPoints)
+{
+  YieldCond_TabularCap model(ps);
+  ModelState_Tabular state;
+
+  Polyline p_q_2000 = {
+                       Uintah::Point(10,-100, 0),
+                       Uintah::Point(-9.800000000000001,-1, 0),
+                       Uintah::Point(-10,0,0),
+                       Uintah::Point(-9.800000000000001,1, 0),
+                       Uintah::Point(1.00000000000000e+01, 1.00000000000000e+02, 0),
+                       Uintah::Point(4.00000000000000e+02, 5.00000000000000e+02, 0),
+                       Uintah::Point(8.00000000000000e+02, 6.00000000000000e+02, 0),
+                       Uintah::Point(1.39700000000000e+03, 6.74625000000000e+02, 0),
+                       Uintah::Point(1.44955491287684e+03, 6.78602213895966e+02, 0),
+                       Uintah::Point(1.50170985113316e+03, 6.77265814527447e+02, 0),
+                       Uintah::Point(1.55306788419682e+03, 6.70481460560263e+02, 0),
+                       Uintah::Point(1.60323814642538e+03, 6.57975013443945e+02, 0),
+                       Uintah::Point(1.65183881182964e+03, 6.37351820852651e+02, 0),
+                       Uintah::Point(1.69850000000000e+03, 6.11549251541155e+02, 0),
+                       Uintah::Point(1.74286659111968e+03, 5.80720772263312e+02, 0),
+                       Uintah::Point(1.78460092864098e+03, 5.45069392407036e+02, 0),
+                       Uintah::Point(1.82338538905549e+03, 5.04847079544279e+02, 0),
+                       Uintah::Point(1.85892479920074e+03, 4.60353430078503e+02, 0),
+                       Uintah::Point(1.89094868270626e+03, 4.11933587232463e+02, 0),
+                       Uintah::Point(1.91921331848202e+03, 3.59975416202563e+02, 0),
+                       Uintah::Point(1.94350359558310e+03, 3.04905963997678e+02, 0),
+                       Uintah::Point(1.96363465033390e+03, 2.47187248779554e+02, 0),
+                       Uintah::Point(1.97945327325231e+03, 1.87311439937026e+02, 0),
+                       Uintah::Point(1.99083907506636e+03, 1.25795505188495e+02, 0),
+                       Uintah::Point(1.99770540294932e+03, 6.31754142851610e+01, 0),
+                       Uintah::Point(2.00000000000000e+03, 0.00000000000000e+00, 0),
+                       Uintah::Point(1.99770540294932e+03, -6.31754142851610e+01, 0)
+                      };
+  /*
+  Polyline p_q_2000_all;
+  model.computeCapPoints(3.0*2000, p_q_2000_all);
+
+  int index = 0;
+  for (const auto& p_q : p_q_2000_all) {
+    ASSERT_NEAR(p_q.x(), p_q_2000[index].x(), 1.0e-8);
+    ASSERT_NEAR(p_q.y(), p_q_2000[index].y(), 1.0e-8);
+    ++index;
+  }
+  */
+
+  Polyline p_q_6400 = {
+                       Uintah::Point(10,-100, 0),
+                       Uintah::Point(-9.800000000000001,-1, 0),
+                       Uintah::Point(-10,0,0),
+                       Uintah::Point(-9.800000000000001,1, 0),
+                       Uintah::Point(1.00000000000000e+01, 1.00000000000000e+02, 0),
+                       Uintah::Point(4.00000000000000e+02, 5.00000000000000e+02, 0),
+                       Uintah::Point(8.00000000000000e+02, 6.00000000000000e+02, 0),
+                       Uintah::Point(1.60000000000000e+03, 7.00000000000000e+02, 0),
+                       Uintah::Point(3.20000000000000e+03, 8.00000000000000e+02, 0),
+                       Uintah::Point(4.47700000000000e+03, 8.39906250000000e+02, 0),
+                       Uintah::Point(4.64460049330375e+03, 8.41927738232456e+02, 0),
+                       Uintah::Point(4.81092544565351e+03, 8.37422823297398e+02, 0),
+                       Uintah::Point(4.97470902373215e+03, 8.26310576036603e+02, 0),
+                       Uintah::Point(5.13470473561526e+03, 8.08567464236765e+02, 0),
+                       Uintah::Point(5.28969491732737e+03, 7.84230816382592e+02, 0),
+                       Uintah::Point(5.43850000000000e+03, 7.53401506351659e+02, 0),
+                       Uintah::Point(5.57998748710306e+03, 7.16245748413778e+02, 0),
+                       Uintah::Point(5.71308057342722e+03, 6.72995911007188e+02, 0),
+                       Uintah::Point(5.83676634022173e+03, 6.23950279935964e+02, 0),
+                       Uintah::Point(5.95010346411779e+03, 5.69471726252073e+02, 0),
+                       Uintah::Point(6.05222938116773e+03, 5.09985260459147e+02, 0),
+                       Uintah::Point(6.14236685147748e+03, 4.45974482054336e+02, 0),
+                       Uintah::Point(6.21982987447148e+03, 3.77976961026990e+02, 0),
+                       Uintah::Point(6.28402890977130e+03, 3.06578614964925e+02, 0),
+                       Uintah::Point(6.33447536395388e+03, 2.32407171100639e+02, 0),
+                       Uintah::Point(6.37078530904248e+03, 1.56124826217554e+02, 0),
+                       Uintah::Point(6.39268240443043e+03, 7.84202381454863e+01, 0),
+                       Uintah::Point(6.40000000000000e+03, 0.00000000000000e+00, 0),
+                       Uintah::Point(6.39268240443043e+03, -7.84202381454863e+01, 0)
+                       };
+
+  /*
+  Polyline p_q_6400_all;
+  model.computeCapPoints(3.0*6400, p_q_6400_all);
+  index = 0;
+  for (const auto& p_q : p_q_6400_all) {
+    ASSERT_NEAR(p_q.x(), p_q_6400[index].x(), 1.0e-8);
+    ASSERT_NEAR(p_q.y(), p_q_6400[index].y(), 1.0e-8);
+    ++index;
+  }
+  */
+
+  Polyline p_q_10000 = {
+                       Uintah::Point(10,-100, 0),
+                       Uintah::Point(-9.800000000000001,-1, 0),
+                       Uintah::Point(-10,0,0),
+                       Uintah::Point(-9.800000000000001,1, 0),
+                       Uintah::Point(1.00000000000000e+01, 1.00000000000000e+02, 0),
+                       Uintah::Point(4.00000000000000e+02, 5.00000000000000e+02, 0),
+                       Uintah::Point(8.00000000000000e+02, 6.00000000000000e+02, 0),
+                       Uintah::Point(1.60000000000000e+03, 7.00000000000000e+02, 0),
+                       Uintah::Point(3.20000000000000e+03, 8.00000000000000e+02, 0),
+                       Uintah::Point(6.40000000000000e+03, 9.00000000000000e+02, 0),
+                       Uintah::Point(6.72000000000000e+03, 9.10000000000000e+02, 0),
+                       Uintah::Point(6.75200000000000e+03, 9.11000000000000e+02, 0),
+                       Uintah::Point(6.99700000000000e+03, 9.18656250000000e+02, 0),
+                       Uintah::Point(7.25872869547122e+03, 9.23308383705311e+02, 0),
+                       Uintah::Point(7.51846547753379e+03, 9.20748023765733e+02, 0),
+                       Uintah::Point(7.77423359244287e+03, 9.10814734856869e+02, 0),
+                       Uintah::Point(8.02408649040698e+03, 8.93415299037112e+02, 0),
+                       Uintah::Point(8.26612264000732e+03, 8.68529554589357e+02, 0),
+                       Uintah::Point(8.49850000000000e+03, 8.36215185588546e+02, 0),
+                       Uintah::Point(8.71945003836219e+03, 7.96611284877295e+02, 0),
+                       Uintah::Point(8.92729119188868e+03, 7.49940541734890e+02, 0),
+                       Uintah::Point(9.12044166390320e+03, 6.96509938954404e+02, 0),
+                       Uintah::Point(9.29743146268629e+03, 6.36709881346974e+02, 0),
+                       Uintah::Point(9.45691358899984e+03, 5.71011717797553e+02, 0),
+                       Uintah::Point(9.59767428756467e+03, 4.99963660743197e+02, 0),
+                       Uintah::Point(9.71864228447106e+03, 4.24185149116703e+02, 0),
+                       Uintah::Point(9.81889694022008e+03, 3.44359742165283e+02, 0),
+                       Uintah::Point(9.89767525634607e+03, 2.61226670902461e+02, 0),
+                       Uintah::Point(9.95437768229566e+03, 1.75571210127445e+02, 0),
+                       Uintah::Point(9.98857267836951e+03, 8.82140658849937e+01, 0),
+                       Uintah::Point(1.00000000000000e+04, 0.00000000000000e+00, 0),
+                       Uintah::Point(9.98857267836951e+03, -8.82140658849937e+01, 0)
+                       };
+  Polyline p_q_10000_all;
+  model.computeCapPoints(3.0*10000, p_q_10000_all);
+  int index = 0;
+  for (const auto& p_q : p_q_10000_all) {
+    //std::cout << std::setprecision(16) << "(" << p_q.x() << "," << p_q.y() << "),";
+    ASSERT_NEAR(p_q.x(), p_q_10000[index].x(), 1.0e-8);
+    ASSERT_NEAR(p_q.y(), p_q_10000[index].y(), 1.0e-8);
+    ++index;
+  }
+  //std::cout << std::endl;
+
+  EXPECT_NEAR(model.evalYieldConditionMax(&state), 9.23308383705311e+02, 1.0e-8);
+}
+
 TEST_F(YieldCondTabularCapTest, evalYieldCondition)
 {
   YieldCond_TabularCap model(ps);
   ModelState_Tabular state;
 
+  state.capX = -2000*3;
+
   state.I1 = 300*3; // Tension
   state.sqrt_J2 = 1000;
-  state.capX = -2000*3;
   EXPECT_EQ(model.evalYieldCondition(&state), 1);
 
   state.I1 = 2*3;  // Tension
@@ -149,7 +287,26 @@ TEST_F(YieldCondTabularCapTest, evalYieldCondition)
   EXPECT_EQ(model.evalYieldCondition(&state), 1);
   //EXPECT_THROW(model.evalYieldCondition(&state), Uintah::InvalidValue);
 
+  state.I1 = -1700*3;  // Compression
+  state.sqrt_J2 = 6.10612759097964e+02;
+  EXPECT_EQ(model.evalYieldCondition(&state), -1);
+
+  state.I1 = -1700.1*3;  // Compression
+  state.sqrt_J2 = 6.10612759097964e+02;
+  EXPECT_EQ(model.evalYieldCondition(&state), 1);
+
   EXPECT_EQ(model.evalYieldConditionMax(&state), 900);
+
+  state.capX = -10000*3;
+
+  state.I1 = -9700*3;  // Compression
+  state.sqrt_J2 = 4.37045077325265e+02;
+  EXPECT_EQ(model.evalYieldCondition(&state), -1);
+
+  state.I1 = -9700.1*3;  // Compression
+  state.sqrt_J2 = 4.37045077325265e+02;
+  EXPECT_EQ(model.evalYieldCondition(&state), 1);
+
 }
 
 TEST_F(YieldCondTabularCapTest, eval_df_dsigma)
@@ -160,6 +317,8 @@ TEST_F(YieldCondTabularCapTest, eval_df_dsigma)
   Matrix3 df_dsigma(0.0);
   //std::cout << model;
 
+  state.capX = -2000*3;
+
   // Zero everything (elastic)
   model.eval_df_dsigma(zero, &state, df_dsigma);
   EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
@@ -167,7 +326,6 @@ TEST_F(YieldCondTabularCapTest, eval_df_dsigma)
   // Tension (zero stress)
   state.I1 = 300*3; 
   state.sqrt_J2 = 1000;
-  state.capX = -2000*3;
   model.eval_df_dsigma(zero, &state, df_dsigma);
   EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
