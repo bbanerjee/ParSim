@@ -8,26 +8,27 @@ function table_yield_cap()
   q_orig = [  0  100  200  300  500  600   700   800   900 910 911];
   plot(p_orig, q_orig, 'k.', 'Markersize', 10); hold on;
 
-  R = 0.7;
-  %X = 3*2000;
-  %X = 3*6400;
-  X = 3*10000;
-
-  [p, q] = compute_cap(p_orig, q_orig, R, X);
-  %p_q = [p' q']
-  plot(p, q, '-', 'Color', [116,179,101]/255, 'LineWidth', 2);
-  
-  [p, q] = hull(p, q);
+  [p, q] = hull(p_orig, q_orig);
   plot(p, q, '-', 'Color', [216,179,101]/255, 'LineWidth', 2);
+
+  R = 0.7;
+  X = 3*2000;
+  %X = 3*6400;
+  %X = 3*10000;
+
+  [p, q] = compute_cap(p, q, R, X);
+  %p_q = [p' q']
+  %plot(p, q, '-', 'Color', [116,179,101]/255, 'LineWidth', 2);
+  
   %axis equal
   %p_q = [p' q']
   %print -dpdf tabular_yield_hull.pdf
 
-  plot_stress_states(p_orig, q_orig, R, X, fig)
+  %plot_stress_states(p_orig, q_orig, R, X, fig)
 
   q_max = [max(q_orig) max(q)]
 
-  %plot_table_yield(p, q);
+  plot_table_yield(p, q);
 end
 
 function [p_cap, q_cap] = compute_cap(p, q, R, X)
@@ -44,7 +45,7 @@ function [p_cap, q_cap] = compute_cap(p, q, R, X)
   pp = p(1:startp);
   qq = q(1:startp);
 
-  theta = linspace(0, pi/2, 19);
+  theta = linspace(-5*pi/180, pi/2, 20);
   theta = fliplr(theta);
 
   a = p_max - kappa;
@@ -115,20 +116,14 @@ end
 
 function plot_table_yield(p, q)
 
-  p_closed = [p p(length(p)) p(1)];
-  q_closed = [q q(1) q(1)];
-  plot(p_closed, q_closed,'m-');
+  grid minor
+
+  p_closed = [p p(1)];
+  q_closed = [q q(1)];
+  plot(p_closed, q_closed,'g--');
 
   [p_cen, q_cen] = calcCentroid(p_closed, q_closed);
   plot(p_cen, q_cen, 'x');
-
-  p_scale = p_cen + 1.5*(p_closed - p_cen);
-  q_scale = q_cen + 1.5*(q_closed - q_cen);
-  %plot(p_scale, q_scale,'g-');
-
-  p_trans = p_scale;
-  q_trans = q_scale - min(q_scale);
-  %plot(p_trans, q_trans, 'r-');
 
   [xnormal, ynormal, p_ext, q_ext] = calcNormals(p, q);
   %plot(p_ext, q_ext, 'r-', 'Linewidth', 3);
@@ -142,24 +137,36 @@ function plot_table_yield(p, q)
   plot(p_normal, q_normal,'b-', 'LineWidth', 2);
   axis equal
 
-  point = [-2000, 1000];
+  point = [0, 0];
+  plot(point(1), point(2), 'x', 'Color', [116,179,101]/255, 'LineWidth', 3, 'Markersize', 7);
+
+  [xc, yc, r] = closestPoint(point(1), point(2), p, q);
+  plot(xc, yc, 'o', 'Color', [116,179,101]/255, 'LineWidth', 3, 'Markersize', 7);
+
+  point = [-2000, 0];
   plot(point(1), point(2), 'gx', 'LineWidth', 3, 'Markersize', 7);
 
   [xc, yc, r] = closestPoint(point(1), point(2), p, q);
   plot(xc, yc, 'go', 'LineWidth', 3, 'Markersize', 7);
 
-  p_new = p + xnormal*r;
-  q_new = q + ynormal*r;
-  %plot(p_new, q_new,'g-', 'LineWidth', 2);
-
-  point = [-2000, 4000];
+  point = [-300, 1000];
   plot(point(1), point(2), 'mx', 'LineWidth', 3, 'Markersize', 7);
 
   [xc, yc, r] = closestPoint(point(1), point(2), p, q);
   plot(xc, yc, 'mo', 'LineWidth', 3, 'Markersize', 7);
 
-  p_new = p + xnormal*r;
-  q_new = q + ynormal*r;
+  %p_new = p + xnormal*r;
+  %q_new = q + ynormal*r;
+  %plot(p_new, q_new,'m-', 'LineWidth', 2);
+
+  point = [-2000, 4000];
+  plot(point(1), point(2), 'cx', 'LineWidth', 3, 'Markersize', 7);
+
+  [xc, yc, r] = closestPoint(point(1), point(2), p, q);
+  plot(xc, yc, 'co', 'LineWidth', 3, 'Markersize', 7);
+
+  %p_new = p + xnormal*r;
+  %q_new = q + ynormal*r;
   %plot(p_new, q_new,'m-', 'LineWidth', 2);
 
   point = [2000, 4000];
@@ -168,28 +175,29 @@ function plot_table_yield(p, q)
   [xc, yc, r] = closestPoint(point(1), point(2), p, q);
   plot(xc, yc, 'ko', 'LineWidth', 3, 'Markersize', 7);
 
-  p_new = p + xnormal*r;
-  q_new = q + ynormal*r;
+  %p_new = p + xnormal*r;
+  %q_new = q + ynormal*r;
   %plot(p_new, q_new,'k-', 'LineWidth', 2);
 
-  point = [-3000, 0];
+  point = [3000, 0];
   plot(point(1), point(2), 'bx', 'LineWidth', 3, 'Markersize', 7);
 
   [xc, yc, r] = closestPoint(point(1), point(2), p, q);
   plot(xc, yc, 'bo', 'LineWidth', 3, 'Markersize', 7);
 
-  p_new = p + xnormal*r;
-  q_new = q + ynormal*r;
+  %p_new = p + xnormal*r;
+  %q_new = q + ynormal*r;
   %plot(p_new, q_new,'b-', 'LineWidth', 2);
 
-  point = [300 1000];
+  point = [3000 1000];
   plot(point(1), point(2), 'rx', 'LineWidth', 3, 'Markersize', 7);
 
   [xc, yc, r] = closestPoint(point(1), point(2), p, q);
   plot(xc, yc, 'ro', 'LineWidth', 3, 'Markersize', 7);
+  closest = [xc, yc, r]
 
-  p_new = p + xnormal*r;
-  q_new = q + ynormal*r;
+  %p_new = p + xnormal*r;
+  %q_new = q + ynormal*r;
   %plot(p_new, q_new,'r-', 'LineWidth', 2);
 end
 
@@ -222,7 +230,7 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
   yyn2 = (1 - t)*y(n) + t*yyn1;
   xx = [xx0 xx1 x xxn1 xxn2];
   yy = [yy0 yy1 y yyn1 yyn2];
-  [xx' yy']
+  %[xx' yy']
 
   xgrad = [];
   ygrad = [];
@@ -243,7 +251,7 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
     xgrad(i) = xgrad(i)/len;
     ygrad(i) = ygrad(i)/len;
   end
-  [xgrad' ygrad']
+  %[xgrad' ygrad']
 
   gradx = gradient(xx(:));
   grady = gradient(yy(:));
@@ -253,7 +261,7 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
   for i=1:size(dr)(1)
    T(i,:) = dr(i,:)/(sqrt(dr(i,1)^2 + dr(i,2)^2));
   end
-  T
+  %T
 
   %xnormal = xgrad(2:length(xgrad)-1)
   %ynormal = ygrad(2:length(ygrad)-1)
@@ -290,11 +298,11 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
   for i=1:size(ddr)(1)
    N(i,:) = ddr(i,:)/(sqrt(ddr(i,1)^2 + ddr(i,2)^2));
   end
-  N
+  %N
  
   xnormal = -xnormal;
   ynormal = -ynormal;
-  [xnormal' ynormal'];
+  normals = [xnormal' ynormal'];
 end
 
 function [val] = ccw(p1x, p1y, p2x, p2y, p3x, p3y)

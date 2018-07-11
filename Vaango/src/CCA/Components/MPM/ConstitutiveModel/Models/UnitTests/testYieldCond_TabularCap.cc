@@ -1,5 +1,5 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_TabularCap.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_TabularCap.h>
 
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -68,35 +68,14 @@ protected:
       std::cout << __FILE__ << ":" << __LINE__ << std::endl;
       exit(-1);
     }
-
-    // Update the json file and create a circular yield function
-    auto doc1 = xmlCopyDoc(doc, 1);
-    auto node = xmlDocGetRootElement(doc1);
-    auto xpathCtx = xmlXPathNewContext(doc1);
-    const xmlChar* xpathExpr = xmlStrncatNew(BAD_CAST ".//", BAD_CAST "filename", -1);
-    auto xpathObj = xmlXPathNodeEval(node, xpathExpr, xpathCtx);
-    xmlXPathFreeContext(xpathCtx);
-    auto jsonNode = xpathObj->nodesetval->nodeTab[0];
-
-    xmlNodeSetContent(jsonNode, BAD_CAST "table_yield_circle.json");
-    xmlSaveFormatFileEnc("-", doc1, "ISO-8859-1", 1);
-
-    ps_circle = scinew ProblemSpec(xmlDocGetRootElement(doc1), false);
-    if (!ps_circle) {
-      std::cout << "**Error** Could not create ProblemSpec." << std::endl;
-      std::cout << __FILE__ << ":" << __LINE__ << std::endl;
-      exit(-1);
-    }
   }
 
   static void TearDownTestCase() {}
 
   static ProblemSpecP ps;
-  static ProblemSpecP ps_circle;
 };
 
 ProblemSpecP YieldCondTabularCapTest::ps = nullptr;
-ProblemSpecP YieldCondTabularCapTest::ps_circle = nullptr;
 
 TEST_F(YieldCondTabularCapTest, constructorTest)
 {
@@ -108,9 +87,6 @@ TEST_F(YieldCondTabularCapTest, constructorTest)
   YieldCond_TabularCap modelCopy(&model);
   //std::cout << modelCopy;
 
-  YieldCond_TabularCap model_circle(ps_circle);
-  //std::cout << model_circle;
-
   auto params = model.getParameters();
   ASSERT_DOUBLE_EQ(params.at("I1_min"), -19200);
   ASSERT_DOUBLE_EQ(params.at("I1_max"), 30);
@@ -121,7 +97,7 @@ TEST_F(YieldCondTabularCapTest, constructorTest)
 TEST_F(YieldCondTabularCapTest, computeCapPoints)
 {
   YieldCond_TabularCap model(ps);
-  ModelState_Tabular state;
+  ModelState_TabularCap state;
 
   Polyline p_q_2000 = {
                        Uintah::Point(10,-100, 0),
@@ -152,9 +128,9 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
                        Uintah::Point(2.00000000000000e+03, 0.00000000000000e+00, 0),
                        Uintah::Point(1.99770540294932e+03, -6.31754142851610e+01, 0)
                       };
-  /*
   Polyline p_q_2000_all;
   model.computeCapPoints(3.0*2000, p_q_2000_all);
+  state.yield_f_pts = p_q_2000_all;
 
   int index = 0;
   for (const auto& p_q : p_q_2000_all) {
@@ -162,7 +138,7 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
     ASSERT_NEAR(p_q.y(), p_q_2000[index].y(), 1.0e-8);
     ++index;
   }
-  */
+  EXPECT_NEAR(model.evalYieldConditionMax(&state), 6.78602213895966e+02, 1.0e-8);
 
   Polyline p_q_6400 = {
                        Uintah::Point(10,-100, 0),
@@ -196,16 +172,17 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
                        Uintah::Point(6.39268240443043e+03, -7.84202381454863e+01, 0)
                        };
 
-  /*
   Polyline p_q_6400_all;
   model.computeCapPoints(3.0*6400, p_q_6400_all);
+  state.yield_f_pts = p_q_6400_all;
+
   index = 0;
   for (const auto& p_q : p_q_6400_all) {
     ASSERT_NEAR(p_q.x(), p_q_6400[index].x(), 1.0e-8);
     ASSERT_NEAR(p_q.y(), p_q_6400[index].y(), 1.0e-8);
     ++index;
   }
-  */
+  EXPECT_NEAR(model.evalYieldConditionMax(&state), 8.41927738232456e+02, 1.0e-8);
 
   Polyline p_q_10000 = {
                        Uintah::Point(10,-100, 0),
@@ -241,9 +218,12 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
                        Uintah::Point(1.00000000000000e+04, 0.00000000000000e+00, 0),
                        Uintah::Point(9.98857267836951e+03, -8.82140658849937e+01, 0)
                        };
+
   Polyline p_q_10000_all;
   model.computeCapPoints(3.0*10000, p_q_10000_all);
-  int index = 0;
+  state.yield_f_pts = p_q_10000_all;
+
+  index = 0;
   for (const auto& p_q : p_q_10000_all) {
     //std::cout << std::setprecision(16) << "(" << p_q.x() << "," << p_q.y() << "),";
     ASSERT_NEAR(p_q.x(), p_q_10000[index].x(), 1.0e-8);
@@ -258,7 +238,7 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
 TEST_F(YieldCondTabularCapTest, evalYieldCondition)
 {
   YieldCond_TabularCap model(ps);
-  ModelState_Tabular state;
+  ModelState_TabularCap state;
 
   state.capX = -2000*3;
 
@@ -295,8 +275,6 @@ TEST_F(YieldCondTabularCapTest, evalYieldCondition)
   state.sqrt_J2 = 6.10612759097964e+02;
   EXPECT_EQ(model.evalYieldCondition(&state), 1);
 
-  EXPECT_EQ(model.evalYieldConditionMax(&state), 900);
-
   state.capX = -10000*3;
 
   state.I1 = -9700*3;  // Compression
@@ -312,70 +290,108 @@ TEST_F(YieldCondTabularCapTest, evalYieldCondition)
 TEST_F(YieldCondTabularCapTest, eval_df_dsigma)
 {
   YieldCond_TabularCap model(ps);
-  ModelState_Tabular state;
+  ModelState_TabularCap state;
   Matrix3 zero(0.0);
+  Matrix3 one(0.0); one.Identity();
   Matrix3 df_dsigma(0.0);
   //std::cout << model;
 
   state.capX = -2000*3;
+  Polyline p_q_2000_all;
+  model.computeCapPoints(-state.capX, p_q_2000_all);
+  state.yield_f_pts = p_q_2000_all;
 
   // Zero everything (elastic)
   model.eval_df_dsigma(zero, &state, df_dsigma);
   EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
-  // Tension (zero stress)
-  state.I1 = 300*3; 
-  state.sqrt_J2 = 1000;
+  // Tension (p = 2000, J2 = 0)
+  double p = 2000; 
+  double sqrt_J2 = 0;
+  Matrix3 s(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  Matrix3 sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
+  EXPECT_NEAR(state.I1, 3*p, 1.0e-8);
+  EXPECT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
+  
   model.eval_df_dsigma(zero, &state, df_dsigma);
   EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
-  // Circular yield function
-  YieldCond_TabularCap model_circle(ps_circle);
-  ModelState_Tabular state_circle;
+  // Tension (p = 300, J2 = 1000)
+  p = 300; 
+  sqrt_J2 = 1000;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
+  EXPECT_NEAR(state.I1, 3*p, 1.0e-8);
+  EXPECT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
-  state_circle.stressTensor = Matrix3(2, 4, 0, 4, 2, 0, 0, 0, 2);
-  state_circle.updateStressInvariants();
-  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
-  EXPECT_NEAR(df_dsigma(0,0), 0.22177, 1.0e-5); // Exact value = 0.20569
-  EXPECT_NEAR(df_dsigma(0,1), 0.65286, 1.0e-5); // Exact value = 0.66071
+  model.eval_df_dsigma(zero, &state, df_dsigma);
+  EXPECT_NEAR(df_dsigma(0,0), 0.37068, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,1), 0.54212, 1.0e-5);
 
-  state_circle.stressTensor = Matrix3(-2, 4, 0, 4, -2, 0, 0, 0, -2);
-  state_circle.updateStressInvariants();
-  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
-  EXPECT_NEAR(df_dsigma(0,0), -0.22177, 1.0e-5); // Exact value = -0.20569
-  EXPECT_NEAR(df_dsigma(0,1), 0.65286, 1.0e-5); // Exact value = 0.66071
+  // Tension (p = 2000, J2 = 4000)
+  p = 2000; 
+  sqrt_J2 = 4000;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
+  EXPECT_NEAR(state.I1, 3*p, 1.0e-8);
+  EXPECT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
-  state_circle.stressTensor = Matrix3(3, 0, 0, 0, 3, 0, 0, 0, 3);
-  state_circle.updateStressInvariants();
-  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
+  model.eval_df_dsigma(zero, &state, df_dsigma);
+  EXPECT_NEAR(df_dsigma(0,0), 0.266676, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,1), 0.627157, 1.0e-5);
+
+  // Compression (p = -2000, J2 = 4000)
+  p = -2000; 
+  sqrt_J2 = 4000;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
+  EXPECT_NEAR(state.I1, 3*p, 1.0e-8);
+  EXPECT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
+
+  model.eval_df_dsigma(zero, &state, df_dsigma);
+  EXPECT_NEAR(df_dsigma(0,0), -0.0874635, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,1), 0.698946, 1.0e-5);
+
+  // Compression (p = -3000, J2 = 0)
+  p = -3000; 
+  sqrt_J2 = 0;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
+  EXPECT_NEAR(state.I1, 3*p, 1.0e-8);
+  EXPECT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
+
+  model.eval_df_dsigma(zero, &state, df_dsigma);
   EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
-  state_circle.stressTensor = Matrix3(3, 1, 0, 1, 3, 0, 0, 0, 3);
-  state_circle.updateStressInvariants();
-  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
-  EXPECT_NEAR(df_dsigma(0,0), 0.53852, 1.0e-5); // Exact value = 0.53644
-  EXPECT_NEAR(df_dsigma(0,1), 0.25494, 1.0e-5); // Exact value = 0.26145
+  // Compression (p = -3000, J2 = 1000)
+  p = -3000; 
+  sqrt_J2 = 1000;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
+  EXPECT_NEAR(state.I1, 3*p, 1.0e-8);
+  EXPECT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
-  state_circle.stressTensor = Matrix3(-3, 1, 0, 1, -3, 0, 0, 0, -3);
-  state_circle.updateStressInvariants();
-  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
-  EXPECT_NEAR(df_dsigma(0,0), -0.53852, 1.0e-5); // Exact value = -0.53644
-  EXPECT_NEAR(df_dsigma(0,1), 0.25494, 1.0e-5); // Exact value = 0.26145
-
-  /*
-  try {
-    state_circle.stressTensor = Matrix3(3, 0, 0, 0, 3, 0, 0, 0, 3);
-    std::cout << "df_dsigma = " << df_dsigma << std::endl;
-  } catch (Uintah::InvalidValue e)  {
-    std::cout <<  e.message() << std::endl;
-  }
-  */
+  model.eval_df_dsigma(zero, &state, df_dsigma);
+  EXPECT_NEAR(df_dsigma(0,0), -0.471837, 1.0e-5);
+  EXPECT_NEAR(df_dsigma(0,1), 0.407499, 1.0e-5);
 }
 
 TEST_F(YieldCondTabularCapTest, getClosestPoint)
 {
   YieldCond_TabularCap model(ps);
-  ModelState_Tabular state;
+  ModelState_TabularCap state;
   Matrix3 zero(0.0);
   Matrix3 df_dsigma(0.0);
   state.bulkModulus = 1.0e5;
@@ -383,6 +399,10 @@ TEST_F(YieldCondTabularCapTest, getClosestPoint)
   state.capX = -2000*3;
   double sqrtKG = std::sqrt(1.5 * state.bulkModulus / state.shearModulus);
   //std::cout << model;
+
+  Polyline p_q_2000_all;
+  model.computeCapPoints(-state.capX, p_q_2000_all);
+  state.yield_f_pts = p_q_2000_all;
 
   state.stressTensor = Matrix3(2000, 4000, 0, 4000, 2000, 0, 0, 0, 2000);
   state.updateStressInvariants();

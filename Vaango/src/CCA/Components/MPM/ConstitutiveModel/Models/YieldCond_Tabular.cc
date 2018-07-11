@@ -448,7 +448,7 @@ YieldCond_Tabular::computeDevStressDerivOfYieldFunction(
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  double df_dJ2 = (state->sqrt_J2 == 0) ? large_number : 1/(2*state->sqrt_J2);
+  double df_dJ2 = (state->sqrt_J2 == 0) ? 0.0 : 1/(2*state->sqrt_J2);
 
   return df_dJ2;
 }

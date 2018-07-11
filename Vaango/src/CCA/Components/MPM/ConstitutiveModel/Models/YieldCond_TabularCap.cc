@@ -194,21 +194,28 @@ YieldCond_TabularCap::setYieldConditionRange() {
 }
 
 /* Yield surface changes over time.  So we need to update the range. */
-void 
-YieldCond_TabularCap::updateYieldConditionRange(const Polyline& yield_surface) {
+std::vector<double> 
+YieldCond_TabularCap::getUpdatedYieldConditionRange(const Polyline& yield_surface) {
+
+  if (yield_surface.empty()) {
+    std::ostringstream out;
+    out << "**ERROR** The yield surface with cap polyline has not been initialized.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
 
   auto min_max_p = std::minmax_element(yield_surface.begin(), yield_surface.end(),
                                        [](const auto& pt1, const auto& p2) {
                                          return pt1.x() < p2.x();
                                        });
-  d_I1bar_min = min_max_p.first->x()*3.0;
-  d_I1bar_max = min_max_p.second->x()*3.0;
+  double I1bar_min = min_max_p.first->x()*3.0;
+  double I1bar_max = min_max_p.second->x()*3.0;
 
   auto max_q = std::max_element(yield_surface.begin(), yield_surface.end(),
                                 [](const auto& pt1, const auto& p2) {
                                   return pt1.y() < p2.y();
                                 });
-  d_sqrtJ2_max = max_q->y();
+  double sqrtJ2_max = max_q->y();
+  return std::vector<double>({I1bar_min, I1bar_max, sqrtJ2_max});
 }
 
 /* Save the yield surface points as a polyline for future computations */
@@ -273,11 +280,12 @@ YieldCond_TabularCap::computeNormals()
 }
 
 Point 
-YieldCond_TabularCap::getClosestPoint(const double& p_bar, const double& sqrtJ2)
+YieldCond_TabularCap::getClosestPoint(const Polyline& polyline,
+                                      const double& p_bar, const double& sqrtJ2)
 {
   Point curr(p_bar, sqrtJ2, 0.0);
   Point closest;
-  Vaango::Util::findClosestPoint(curr, d_polyline, closest);
+  Vaango::Util::findClosestPoint(curr, polyline, closest);
   //double distSq = Vaango::Util::findClosestPoint(curr, d_polyline, closest);
   //std::cout << "closest = " << closest << " distSq = " << distSq << "\n";
   return closest;
@@ -301,12 +309,12 @@ YieldCond_TabularCap::getClosestPoint(const double& p_bar, const double& sqrtJ2)
 double
 YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
 {
-  const ModelState_Tabular* state =
-    dynamic_cast<const ModelState_Tabular*>(state_input);
+  const ModelState_TabularCap* state =
+    dynamic_cast<const ModelState_TabularCap*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Tabular.";
+        << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -358,17 +366,92 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
   return -1.0;
 }
 
-//--------------------------------------------------------------
-// Derivatives needed by return algorithms and Newton iterations
+/* Add cap points to yield function table */
+void
+YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
+{
+  // Set up limits
+  double p_bar_min = d_I1bar_min/3.0;
+  double p_bar_max = X_bar/3.0; 
+  double kappa_bar = p_bar_min + d_yield.capEllipticityRatio * (p_bar_max - p_bar_min);
+
+  // Find the location of the p_bar_start, p_bar_end on table polyline
+  auto end_iter = std::find_if(d_polyline.begin(), d_polyline.end(),
+                                [&kappa_bar](const auto& point) 
+                                {
+                                    return kappa_bar < point.x();
+                                });
+  // Copy the relevant points
+  std::copy(d_polyline.begin(), end_iter, std::back_inserter(p_q_all));
+
+  // Set up theta vector
+  std::vector<double> theta_vec;
+  Vaango::Util::linspace(0, M_PI/2, 18, theta_vec);
+  std::reverse(std::begin(theta_vec), std::end(theta_vec));
+  theta_vec.push_back(-5*M_PI/180.0);
+
+  // Set up ellipse axes
+  double a = p_bar_max - kappa_bar;
+
+  // Compute ellipse points 
+  Polyline p_q_cap;
+  for (auto theta : theta_vec) {
+    auto x = kappa_bar + a * cos(theta);
+    auto b = computeEllipseHeight(d_polyline, x);
+    auto y = b * sin(theta);
+    p_q_cap.push_back(Uintah::Point(x, y, 0));
+  }
+
+  // Concatenate the two vectors
+  p_q_all.insert(p_q_all.end(), p_q_cap.begin(), p_q_cap.end());
+}
+
+double
+YieldCond_TabularCap::computeEllipseHeight(const Polyline& p_q_points,
+                                           double p_cap)
+{
+  // Find the location of the p_bar_start, p_bar_end on table polyline
+  auto end_iter = std::find_if(d_polyline.begin(), d_polyline.end(),
+                                [&p_cap](const auto& point) 
+                                {
+                                    return p_cap < point.x();
+                                });
+
+  // Compute sqrtJ2 at that value of p_cap
+  auto start_iter = end_iter - 1;
+  if (end_iter == d_polyline.end()) {
+    start_iter--;
+    end_iter--;
+  }
+  auto start = *start_iter;
+  auto end = *end_iter;
+  double t = (p_cap - start.x())/(end.x() - start.x());
+  double sqrtJ2 = (1 - t)*start.y() + t*end.y();
+
+  return sqrtJ2;
+}
 
 //--------------------------------------------------------------
 // Evaluate yield condition max value of sqrtJ2
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::evalYieldConditionMax(const ModelStateBase* )
+YieldCond_TabularCap::evalYieldConditionMax(const ModelStateBase* state_input)
 {
-  return d_sqrtJ2_max;
+  const ModelState_TabularCap* state =
+    dynamic_cast<const ModelState_TabularCap*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_TabularCap.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  std::vector<double> vals = getUpdatedYieldConditionRange(state->yield_f_pts);
+  return vals[2];
 }
+
+//--------------------------------------------------------------
+// Derivatives needed by return algorithms and Newton iterations
 
 //--------------------------------------------------------------
 /*! Compute Derivative with respect to the Cauchy stress (\f$\sigma \f$)
@@ -400,12 +483,18 @@ YieldCond_TabularCap::eval_df_dsigma(const Matrix3&,
                                   const ModelStateBase* state_input,
                                   Matrix3& df_dsigma)
 {
-  const ModelState_Tabular* state =
-    dynamic_cast<const ModelState_Tabular*>(state_input);
+  const ModelState_TabularCap* state =
+    dynamic_cast<const ModelState_TabularCap*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Tabular.";
+        << " Need ModelState_TabularCap.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  if (state->yield_f_pts.empty()) {
+    std::ostringstream out;
+    out << "**ERROR** The yield surface with cap polyline has not been initialized.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -422,6 +511,8 @@ YieldCond_TabularCap::eval_df_dsigma(const Matrix3&,
   df_dsigma = p_term + s_term;
 
   df_dsigma /= df_dsigma.Norm();
+
+  //std::cout << "df_dsigma = " << df_dsigma << "\n";
 
   return;
 }
@@ -448,12 +539,12 @@ double
 YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
   const ModelStateBase* state_input)
 {
-  const ModelState_Tabular* state =
-    dynamic_cast<const ModelState_Tabular*>(state_input);
+  const ModelState_TabularCap* state =
+    dynamic_cast<const ModelState_TabularCap*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Tabular.";
+        << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -467,10 +558,11 @@ YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
   // Check that the closest point is not at the vertex
   double p_bar = -state->I1/3;
   double epsilon = 1.0e-6;
-  Point closest = getClosestPoint(p_bar, state->sqrt_J2);
+  Point closest = getClosestPoint(state->yield_f_pts, p_bar, state->sqrt_J2);
   if (closest.x() - epsilon < p_bar_min) {
     return large_number;
   }
+  // std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2 << " closest = " << closest << "\n";
 
   // Compute dg/dp
   DoubleVec1D gg, g_lo, g_hi;
@@ -487,13 +579,22 @@ YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
   }
   double dg_dpbar = (g_hi[0] - g_lo[0])/(2*epsilon);
 
-  // Compute dFc/dp
-  double ratio = (closest.x() - kappa_bar)/(p_bar_max - kappa_bar);
-  double Fc = std::sqrt(1.0 - ratio * ratio);
-  double dFc_dp = ratio/(Fc*(p_bar_max - kappa_bar));
-
-  // Compute df_dp
-  double df_dp = dg_dpbar * Fc - gg[0] * dFc_dp ;
+  // Compute dFc/dp and df_dp
+  double dFc_dp = 0.0;
+  double Fc = 1.0;
+  double df_dp = dg_dpbar;
+  if (p_bar > kappa_bar) {
+    double ratio = (closest.x() - kappa_bar)/(p_bar_max - kappa_bar);
+    if (ratio < 1.0) {
+      Fc = std::sqrt(1.0 - ratio * ratio);
+      dFc_dp = ratio/(Fc*(p_bar_max - kappa_bar));
+      df_dp = dg_dpbar * Fc - gg[0] * dFc_dp ;
+    } else {
+      //Fc = std::numeric_limits<double>::min();
+      //dFc_dp = std::numeric_limits<double>::max();
+      df_dp = large_number;
+    }
+  }
 
   return df_dp;
 }
@@ -518,16 +619,16 @@ double
 YieldCond_TabularCap::computeDevStressDerivOfYieldFunction(
   const ModelStateBase* state_input)
 {
-  const ModelState_Tabular* state =
-    dynamic_cast<const ModelState_Tabular*>(state_input);
+  const ModelState_TabularCap* state =
+    dynamic_cast<const ModelState_TabularCap*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Tabular.";
+        << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  double df_dJ2 = (state->sqrt_J2 == 0) ? large_number : 1/(2*state->sqrt_J2);
+  double df_dJ2 = (state->sqrt_J2 == 0) ? 0.0 : 1/(2*state->sqrt_J2);
 
   return df_dJ2;
 }
@@ -549,12 +650,18 @@ YieldCond_TabularCap::getClosestPoint(const ModelStateBase* state_input,
                                    const double& z, const double& rprime,
                                    double& cz, double& crprime)
 {
-  const ModelState_Tabular* state =
-    dynamic_cast<const ModelState_Tabular*>(state_input);
+  const ModelState_TabularCap* state =
+    dynamic_cast<const ModelState_TabularCap*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Tabular.";
+        << " Need ModelState_TabularCap.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  if (state->yield_f_pts.empty()) {
+    std::ostringstream out;
+    out << "**ERROR** The yield surface with cap polyline has not been initialized.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
@@ -562,7 +669,7 @@ YieldCond_TabularCap::getClosestPoint(const ModelStateBase* state_input,
   //start = std::chrono::system_clock::now();
   Point pt(z, rprime, 0.0);
   Point closest(0.0, 0.0, 0.0);
-  if (d_polyline.size() < 5) {
+  if (state->yield_f_pts.size() < 5) {
     closest = getClosestPointTable(state, pt);
   } else {
     closest = getClosestPointSpline(state, pt);
@@ -578,19 +685,19 @@ YieldCond_TabularCap::getClosestPoint(const ModelStateBase* state_input,
 }
 
 Point
-YieldCond_TabularCap::getClosestPointTable(const ModelState_Tabular* state, 
+YieldCond_TabularCap::getClosestPointTable(const ModelState_TabularCap* state, 
                                         const Point& z_r_pt)
 {
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
 
   // Add cap points to tabular data
-  Polyline p_q_table;
-  computeCapPoints(-state->capX, p_q_table);
+  //Polyline p_q_table;
+  //computeCapPoints(-state->capX, p_q_table);
 
   // Convert tabular data to z-rprime coordinates
   Polyline z_r_table;
-  convertToZRprime(sqrtKG, p_q_table, z_r_table);
+  convertToZRprime(sqrtKG, state->yield_f_pts, z_r_table);
 
   // Find the closest point
   Point z_r_closest;
@@ -600,19 +707,19 @@ YieldCond_TabularCap::getClosestPointTable(const ModelState_Tabular* state,
 }
 
 Point
-YieldCond_TabularCap::getClosestPointSpline(const ModelState_Tabular* state, 
+YieldCond_TabularCap::getClosestPointSpline(const ModelState_TabularCap* state, 
                                             const Point& z_r_pt)
 {
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
 
   // Add cap points to tabular data
-  Polyline p_q_table;
-  computeCapPoints(-state->capX, p_q_table);
+  //Polyline p_q_table;
+  //computeCapPoints(-state->capX, p_q_table);
 
   // Convert tabular data to z-rprime coordinates
   Polyline z_r_table;
-  convertToZRprime(sqrtKG, p_q_table, z_r_table);
+  convertToZRprime(sqrtKG, state->yield_f_pts, z_r_table);
 
   // Find the closest segments
   Polyline z_r_segments;
@@ -659,75 +766,6 @@ YieldCond_TabularCap::getClosestPointSpline(const ModelState_Tabular* state,
   #endif
 
   return z_r_closest;
-}
-
-/* Add cap points to yield function table */
-void
-YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
-{
-  // Set up limits
-  double p_bar_min = d_I1bar_min/3.0;
-  double p_bar_max = X_bar/3.0; 
-  double kappa_bar = p_bar_min + d_yield.capEllipticityRatio * (p_bar_max - p_bar_min);
-
-  // Find the location of the p_bar_start, p_bar_end on table polyline
-  auto end_iter = std::find_if(d_polyline.begin(), d_polyline.end(),
-                                [&kappa_bar](const auto& point) 
-                                {
-                                    return kappa_bar < point.x();
-                                });
-  // Copy the relevant points
-  std::copy(d_polyline.begin(), end_iter, std::back_inserter(p_q_all));
-
-  // Set up theta vector
-  std::vector<double> theta_vec;
-  Vaango::Util::linspace(0, M_PI/2, 18, theta_vec);
-  std::reverse(std::begin(theta_vec), std::end(theta_vec));
-  theta_vec.push_back(-5*M_PI/180.0);
-
-  // Set up ellipse axes
-  double a = p_bar_max - kappa_bar;
-
-  // Compute ellipse points 
-  Polyline p_q_cap;
-  for (auto theta : theta_vec) {
-    auto x = kappa_bar + a * cos(theta);
-    auto b = computeEllipseHeight(d_polyline, x);
-    auto y = b * sin(theta);
-    p_q_cap.push_back(Uintah::Point(x, y, 0));
-  }
-
-  // Concatenate the two vectors
-  p_q_all.insert(p_q_all.end(), p_q_cap.begin(), p_q_cap.end());
-
-  // Update yield condition range
-  updateYieldConditionRange(p_q_all);
-
-}
-
-double
-YieldCond_TabularCap::computeEllipseHeight(const Polyline& p_q_points,
-                                           double p_cap)
-{
-  // Find the location of the p_bar_start, p_bar_end on table polyline
-  auto end_iter = std::find_if(d_polyline.begin(), d_polyline.end(),
-                                [&p_cap](const auto& point) 
-                                {
-                                    return p_cap < point.x();
-                                });
-
-  // Compute sqrtJ2 at that value of p_cap
-  auto start_iter = end_iter - 1;
-  if (end_iter == d_polyline.end()) {
-    start_iter--;
-    end_iter--;
-  }
-  auto start = *start_iter;
-  auto end = *end_iter;
-  double t = (p_cap - start.x())/(end.x() - start.x());
-  double sqrtJ2 = (1 - t)*start.y() + t*end.y();
-
-  return sqrtJ2;
 }
 
 /* Convert yield function data to z_rprime coordinates */

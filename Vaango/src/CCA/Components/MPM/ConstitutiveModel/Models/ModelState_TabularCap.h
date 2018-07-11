@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,64 +22,47 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __MODEL_STATE_TABULAR_H__
-#define __MODEL_STATE_TABULAR_H__
+#ifndef __MODEL_STATE_TABULAR_CAP_H__
+#define __MODEL_STATE_TABULAR_CAP_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Tabular.h>
+#include <vector>
+#include <iterator>
 
 namespace Vaango {
 
+  using Polyline = std::vector<Uintah::Point>;
+
 /////////////////////////////////////////////////////////////////////////////
 /*!
-  \class ModelState_Tabular
+  \class ModelState_TabularCap
   \brief A structure that stores the state data that is specialized for
-         the Tabular plasticity model.
+         the Tabular plasticity model with cap.
          ** Derived from PlasticityState:ModelState
   \author Biswajit Banerjee \n
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class ModelState_Tabular : public ModelState_Default
+class ModelState_TabularCap : public ModelState_Tabular
 {
 
 public:
-  static const Uintah::Matrix3 Identity;
-  static const double sqrtTwo;
-  static const double sqrtThree;
+  double capX;             // Hydrostatic strength in I1 space
+  Polyline yield_f_pts;    // Polyline representing yield function with cap
+                           // in pbar-q space
 
-  Uintah::long64 particleID;
+  ModelState_TabularCap();
 
-  double I1;      // I1= Tr(sigma)
-  double J2;
-  double sqrt_J2; // sqrt(J2)
-  double zz;      // Lode coordinate 'z'
-  double rr;      // Lode coordinate 'r'
-  double ep_v;      // ep_v = Tr(ep) : Volumetric part of the plastic strain
-  double ep_eq;     // The equivalent plastic strain computed from the current
-                    // plastic strain (This quantity can decrease)
-  double ep_cum_eq; // The cumulative equivalent plastic strain
-                    // (This quantity increases monotonically)
+  ModelState_TabularCap(const ModelState_TabularCap& state) = default;
+  ModelState_TabularCap(const ModelState_TabularCap* state);
 
-  Uintah::Matrix3 stressTensor; 
-  Uintah::Matrix3 deviatoricStressTensor; 
-  Uintah::Matrix3 elasticStrainTensor; 
-  Uintah::Matrix3 plasticStrainTensor;
+  ~ModelState_TabularCap() = default;
 
-  ModelState_Tabular();
-
-  ModelState_Tabular(const ModelState_Tabular& state) = default;
-  ModelState_Tabular(const ModelState_Tabular* state);
-
-  ~ModelState_Tabular() = default;
-
-  ModelState_Tabular& operator=(const ModelState_Tabular& state) = default;
-  ModelState_Tabular* operator=(const ModelState_Tabular* state);
-
-  void updateStressInvariants();
-  void updatePlasticStrainInvariants();
+  ModelState_TabularCap& operator=(const ModelState_TabularCap& state) = default;
+  ModelState_TabularCap* operator=(const ModelState_TabularCap* state);
 
   friend std::ostream& operator<<(std::ostream& os,
-                                  const ModelState_Tabular& state)
+                                  const ModelState_TabularCap& state)
   {
     os << "ParticleID = " << state.particleID << "\n"
        << "\t sigma = " << state.stressTensor << "\n"
@@ -92,11 +75,15 @@ public:
        << "\t evp = " << state.ep_v << " ep_eq = " << state.ep_eq 
        << "\t ep_cum_eq = " << state.ep_cum_eq << "\n"
        << "\t K = " << state.bulkModulus << ", G = " << state.shearModulus
-       << "\n";
+       << ", X = " << state.capX << "\n"
+       << "\t Points = " ;
+    std::copy(state.yield_f_pts.begin(), state.yield_f_pts.end(),
+              std::ostream_iterator<Uintah::Point>(os, " "));
+    os << "\n";
     return os;
   }
 };
 
 } // End namespace Uintah
 
-#endif // __MODEL_STATE_TABULAR_H__
+#endif // __MODEL_STATE_TABULAR_CAP_H__

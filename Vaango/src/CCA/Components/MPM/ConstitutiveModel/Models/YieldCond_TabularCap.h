@@ -25,7 +25,7 @@
 #ifndef __TABULAR_CAP_YIELD_CONDITION_MODEL_H__
 #define __TABULAR_CAP_YIELD_CONDITION_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
 #include <CCA/Components/MPM/ConstitutiveModel/WeibParameters.h>
@@ -290,6 +290,13 @@ public:
                              const Uintah::Matrix3& f_sigma, double f_q1,
                              double h_q1, Uintah::TangentModulusTensor& Cep);
 
+
+  /* Compute points on the cap */
+  void computeCapPoints(double X_bar, Polyline& p_q_all);
+
+  /* Compute the height of the elliptical cap */
+  double computeEllipseHeight(const Polyline& p_q_points, double p_cap);
+
 private:
   /**
    *  These are the parameters that are read from the input file
@@ -327,23 +334,20 @@ private:
   Polyline  d_polyline;
   std::vector<Uintah::Vector> d_normals;
 
+  /* Some helpers and checks */
   void checkInputParameters();
   void setYieldConditionRange();
+  std::vector<double> getUpdatedYieldConditionRange(const Polyline& yield_surface);
   void saveAsPolyline();
   void computeNormals();
 
   /* Find the closest point */
-  Uintah::Point getClosestPoint(const double& p_bar, const double& sqrtJ2);
-  Uintah::Point getClosestPointTable(const ModelState_Tabular* state,
+  Uintah::Point getClosestPoint(const Polyline& polyline,
+                                const double& p_bar, const double& sqrtJ2);
+  Uintah::Point getClosestPointTable(const ModelState_TabularCap* state,
                                      const Uintah::Point& z_r_pt);
-  Uintah::Point getClosestPointSpline(const ModelState_Tabular* state,
+  Uintah::Point getClosestPointSpline(const ModelState_TabularCap* state,
                                       const Uintah::Point& z_r_pt);
-
-  /* Compute points on the cap */
-  void computeCapPoints(double X_bar, Polyline& p_q_all);
-
-  /* Compute the height of the elliptical cap */
-  double computeEllipseHeight(const Polyline& p_q_points, double p_cap);
 
   /* Convert yield function data to z_rprime coordinates */
   void convertToZRprime(const double& sqrtKG, const Polyline& p_q_points, 
