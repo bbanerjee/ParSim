@@ -389,6 +389,7 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
   Vaango::Util::linspace(0, M_PI/2, 18, theta_vec);
   std::reverse(std::begin(theta_vec), std::end(theta_vec));
   theta_vec.push_back(-5*M_PI/180.0);
+  theta_vec.push_back(-10*M_PI/180.0);
 
   // Set up ellipse axes
   double a = p_bar_max - kappa_bar;
@@ -731,26 +732,26 @@ YieldCond_TabularCap::getClosestPointSpline(const ModelState_TabularCap* state,
   std::size_t numPts = z_r_table.size();
   std::size_t ptsPerSegment = 30;
   Polyline z_r_spline;
-  if (closest_index == 0) {
-    Vaango::Util::computeOpenUniformQuadraticBSpline(z_r_table, 
-                                                     0, 1, ptsPerSegment,
-                                                     z_r_spline);
-  } else if (closest_index == numPts-2) {
-    Vaango::Util::computeOpenUniformQuadraticBSpline(z_r_table, 
-                                                     numPts-2, numPts-1,
-                                                     ptsPerSegment,
-                                                     z_r_spline);
-  } else {
-    Vaango::Util::computeOpenUniformQuadraticBSpline(z_r_table, 
-                                                     closest_index-1,
-                                                     closest_index+1,
-                                                     ptsPerSegment,
-                                                     z_r_spline);
+  auto seg_start = closest_index - 1;
+  auto seg_end = closest_index + 1;
+  if (closest_index < 1) {
+    seg_start = 0;
+    seg_end = 1;
+  } else if (closest_index > numPts-3) {
+    seg_start = numPts-2;
+    seg_end = numPts-1;
   }
 
-  // Find the closest point
-  Point z_r_closest;
-  Vaango::Util::findClosestPoint(z_r_pt, z_r_spline, z_r_closest);
+  #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "closest_index = " << closest_index << "\n";
+    std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
+              << "(0," << numPts-1 << ")\n";
+  #endif
+
+  Vaango::Util::computeOpenUniformQuadraticBSpline(z_r_table, 
+                                                   seg_start, seg_end,
+                                                   ptsPerSegment,
+                                                   z_r_spline);
 
   #ifdef DEBUG_CLOSEST_POINT
     std::cout << "ZRPoint = " << z_r_pt << std::endl;
@@ -762,7 +763,22 @@ YieldCond_TabularCap::getClosestPointSpline(const ModelState_TabularCap* state,
     std::copy(z_r_spline.begin(), z_r_spline.end(),
               std::ostream_iterator<Point>(std::cout, " "));
     std::cout << std::endl;
-    std::cout << "ZRClose = " << z_r_closest << "\n";
+
+    if (z_r_spline.empty()) {
+      std::ostringstream out;
+      out << "**ERROR** Could not fit spline to input yield surface segment: "
+          << "indices are (" << seg_start << "," << seg_end << ") from"
+          << "(0," << numPts-1 << ")";
+      throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+    }
+  #endif
+
+  // Find the closest point
+  Point z_r_closest;
+  Vaango::Util::findClosestPoint(z_r_pt, z_r_spline, z_r_closest);
+
+  #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "ZRClose = " << std::setprecision(16) << z_r_closest << "\n";
   #endif
 
   return z_r_closest;

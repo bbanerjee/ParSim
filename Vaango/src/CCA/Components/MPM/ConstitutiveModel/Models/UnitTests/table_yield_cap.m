@@ -17,14 +17,14 @@ function table_yield_cap()
   %X = 3*10000;
 
   [p, q] = compute_cap(p, q, R, X);
-  %p_q = [p' q']
+  p_q = [p' q']
   %plot(p, q, '-', 'Color', [116,179,101]/255, 'LineWidth', 2);
   
   %axis equal
   %p_q = [p' q']
   %print -dpdf tabular_yield_hull.pdf
 
-  %plot_stress_states(p_orig, q_orig, R, X, fig)
+  plot_stress_states(p_orig, q_orig, R, X, fig)
 
   q_max = [max(q_orig) max(q)]
 
@@ -45,7 +45,7 @@ function [p_cap, q_cap] = compute_cap(p, q, R, X)
   pp = p(1:startp);
   qq = q(1:startp);
 
-  theta = linspace(-5*pi/180, pi/2, 20);
+  theta = linspace(-10*pi/180, pi/2, 21);
   theta = fliplr(theta);
 
   a = p_max - kappa;

@@ -126,7 +126,8 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
                        Uintah::Point(1.99083907506636e+03, 1.25795505188495e+02, 0),
                        Uintah::Point(1.99770540294932e+03, 6.31754142851610e+01, 0),
                        Uintah::Point(2.00000000000000e+03, 0.00000000000000e+00, 0),
-                       Uintah::Point(1.99770540294932e+03, -6.31754142851610e+01, 0)
+                       Uintah::Point(1.99770540294932e+03, -6.31754142851610e+01, 0),
+                       Uintah::Point(1.99083907506636e+03, -1.25795505188495e+02, 0)
                       };
   Polyline p_q_2000_all;
   model.computeCapPoints(3.0*2000, p_q_2000_all);
@@ -138,7 +139,7 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
     ASSERT_NEAR(p_q.y(), p_q_2000[index].y(), 1.0e-8);
     ++index;
   }
-  EXPECT_NEAR(model.evalYieldConditionMax(&state), 6.78602213895966e+02, 1.0e-8);
+  ASSERT_NEAR(model.evalYieldConditionMax(&state), 6.78602213895966e+02, 1.0e-8);
 
   Polyline p_q_6400 = {
                        Uintah::Point(10,-100, 0),
@@ -169,7 +170,8 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
                        Uintah::Point(6.37078530904248e+03, 1.56124826217554e+02, 0),
                        Uintah::Point(6.39268240443043e+03, 7.84202381454863e+01, 0),
                        Uintah::Point(6.40000000000000e+03, 0.00000000000000e+00, 0),
-                       Uintah::Point(6.39268240443043e+03, -7.84202381454863e+01, 0)
+                       Uintah::Point(6.39268240443043e+03, -7.84202381454863e+01, 0),
+                       Uintah::Point(6.37078530904248e+03, -1.56124826217554e+02, 0)
                        };
 
   Polyline p_q_6400_all;
@@ -182,7 +184,7 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
     ASSERT_NEAR(p_q.y(), p_q_6400[index].y(), 1.0e-8);
     ++index;
   }
-  EXPECT_NEAR(model.evalYieldConditionMax(&state), 8.41927738232456e+02, 1.0e-8);
+  ASSERT_NEAR(model.evalYieldConditionMax(&state), 8.41927738232456e+02, 1.0e-8);
 
   Polyline p_q_10000 = {
                        Uintah::Point(10,-100, 0),
@@ -216,7 +218,8 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
                        Uintah::Point(9.95437768229566e+03, 1.75571210127445e+02, 0),
                        Uintah::Point(9.98857267836951e+03, 8.82140658849937e+01, 0),
                        Uintah::Point(1.00000000000000e+04, 0.00000000000000e+00, 0),
-                       Uintah::Point(9.98857267836951e+03, -8.82140658849937e+01, 0)
+                       Uintah::Point(9.98857267836951e+03, -8.82140658849937e+01, 0),
+                       Uintah::Point(9.95437768229566e+03, -1.75571210127445e+02, 0)
                        };
 
   Polyline p_q_10000_all;
@@ -232,7 +235,7 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
   }
   //std::cout << std::endl;
 
-  EXPECT_NEAR(model.evalYieldConditionMax(&state), 9.23308383705311e+02, 1.0e-8);
+  ASSERT_NEAR(model.evalYieldConditionMax(&state), 9.23308383705311e+02, 1.0e-8);
 }
 
 TEST_F(YieldCondTabularCapTest, evalYieldCondition)
@@ -303,7 +306,7 @@ TEST_F(YieldCondTabularCapTest, eval_df_dsigma)
 
   // Zero everything (elastic)
   model.eval_df_dsigma(zero, &state, df_dsigma);
-  EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
   // Tension (p = 2000, J2 = 0)
   double p = 2000; 
@@ -312,11 +315,11 @@ TEST_F(YieldCondTabularCapTest, eval_df_dsigma)
   Matrix3 sigma = s + one * p;
   state.stressTensor = sigma;
   state.updateStressInvariants();
-  EXPECT_NEAR(state.I1, 3*p, 1.0e-8);
-  EXPECT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
+  ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
   
   model.eval_df_dsigma(zero, &state, df_dsigma);
-  EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
   // Tension (p = 300, J2 = 1000)
   p = 300; 
@@ -325,12 +328,12 @@ TEST_F(YieldCondTabularCapTest, eval_df_dsigma)
   sigma = s + one * p;
   state.stressTensor = sigma;
   state.updateStressInvariants();
-  EXPECT_NEAR(state.I1, 3*p, 1.0e-8);
-  EXPECT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
+  ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
   model.eval_df_dsigma(zero, &state, df_dsigma);
-  EXPECT_NEAR(df_dsigma(0,0), 0.37068, 1.0e-5);
-  EXPECT_NEAR(df_dsigma(0,1), 0.54212, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), 0.37068, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,1), 0.54212, 1.0e-5);
 
   // Tension (p = 2000, J2 = 4000)
   p = 2000; 
@@ -339,12 +342,12 @@ TEST_F(YieldCondTabularCapTest, eval_df_dsigma)
   sigma = s + one * p;
   state.stressTensor = sigma;
   state.updateStressInvariants();
-  EXPECT_NEAR(state.I1, 3*p, 1.0e-8);
-  EXPECT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
+  ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
   model.eval_df_dsigma(zero, &state, df_dsigma);
-  EXPECT_NEAR(df_dsigma(0,0), 0.266676, 1.0e-5);
-  EXPECT_NEAR(df_dsigma(0,1), 0.627157, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), 0.266676, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,1), 0.627157, 1.0e-5);
 
   // Compression (p = -2000, J2 = 4000)
   p = -2000; 
@@ -353,12 +356,12 @@ TEST_F(YieldCondTabularCapTest, eval_df_dsigma)
   sigma = s + one * p;
   state.stressTensor = sigma;
   state.updateStressInvariants();
-  EXPECT_NEAR(state.I1, 3*p, 1.0e-8);
-  EXPECT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
+  ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
   model.eval_df_dsigma(zero, &state, df_dsigma);
-  EXPECT_NEAR(df_dsigma(0,0), -0.0874635, 1.0e-5);
-  EXPECT_NEAR(df_dsigma(0,1), 0.698946, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), -0.0874635, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,1), 0.698946, 1.0e-5);
 
   // Compression (p = -3000, J2 = 0)
   p = -3000; 
@@ -367,11 +370,11 @@ TEST_F(YieldCondTabularCapTest, eval_df_dsigma)
   sigma = s + one * p;
   state.stressTensor = sigma;
   state.updateStressInvariants();
-  EXPECT_NEAR(state.I1, 3*p, 1.0e-8);
-  EXPECT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
+  ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
   model.eval_df_dsigma(zero, &state, df_dsigma);
-  EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
   // Compression (p = -3000, J2 = 1000)
   p = -3000; 
@@ -380,12 +383,12 @@ TEST_F(YieldCondTabularCapTest, eval_df_dsigma)
   sigma = s + one * p;
   state.stressTensor = sigma;
   state.updateStressInvariants();
-  EXPECT_NEAR(state.I1, 3*p, 1.0e-8);
-  EXPECT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
+  ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
 
   model.eval_df_dsigma(zero, &state, df_dsigma);
-  EXPECT_NEAR(df_dsigma(0,0), -0.471837, 1.0e-5);
-  EXPECT_NEAR(df_dsigma(0,1), 0.407499, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,0), -0.471837, 1.0e-5);
+  ASSERT_NEAR(df_dsigma(0,1), 0.407499, 1.0e-5);
 }
 
 TEST_F(YieldCondTabularCapTest, getClosestPoint)
@@ -406,42 +409,68 @@ TEST_F(YieldCondTabularCapTest, getClosestPoint)
 
   state.stressTensor = Matrix3(2000, 4000, 0, 4000, 2000, 0, 0, 0, 2000);
   state.updateStressInvariants();
+  ASSERT_NEAR(state.I1, 3*2000, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, 4000, 1.0e-8);
+
   double z = state.zz;
   double rprime = state.rr*sqrtKG;
   double z_close = 0.0, rprime_close = 0.0;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  EXPECT_NEAR(z_close, -664.8953, 1.0e-4);
-  EXPECT_NEAR(rprime_close, 781.4511, 1.0e-4);
+  ASSERT_NEAR(z_close, -664.8953223052488, 1.0e-8);
+  ASSERT_NEAR(rprime_close, 781.451185667034, 1.0e-8);
 
   state.stressTensor = Matrix3(-2000, 4000, 0, 4000, -2000, 0, 0, 0, -2000);
   state.updateStressInvariants();
+  ASSERT_NEAR(state.I1, -3*2000, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, 4000, 1.0e-8);
+
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  EXPECT_NEAR(z_close, -3839.0782, 1.0e-4);
-  EXPECT_NEAR(rprime_close, 1278.5554, 1.0e-4);
+  ASSERT_NEAR(z_close, -2651.440864821653, 1.0e-8);
+  ASSERT_NEAR(rprime_close, 1166.377964042565, 1.0e-8);
 
   state.stressTensor = Matrix3(3000, 0, 0, 0, 3000, 0, 0, 0, 3000);
   state.updateStressInvariants();
+  ASSERT_NEAR(state.I1, 3*3000, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, 0, 1.0e-8);
+
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  EXPECT_NEAR(z_close, 17.2339, 1.0e-4);
-  EXPECT_NEAR(rprime_close, 0, 1.0e-10);
+  ASSERT_NEAR(z_close, 17.23390553531033, 1.0e-8);
+  ASSERT_NEAR(rprime_close, 0, 1.0e-10);
 
   state.stressTensor = Matrix3(3000, 1000, 0, 1000, 3000, 0, 0, 0, 3000);
   state.updateStressInvariants();
+  ASSERT_NEAR(state.I1, 3*3000, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, 1000, 1.0e-8);
+
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  EXPECT_NEAR(z_close, -1.67258, 1.0e-4);
-  EXPECT_NEAR(rprime_close, 93.47397, 1.0e-4);
+  ASSERT_NEAR(z_close, -1.672583729842345, 1.0e-8);
+  ASSERT_NEAR(rprime_close, 93.47397083224905, 1.0e-8);
 
   state.stressTensor = Matrix3(-3000, 1000, 0, 1000, -3000, 0, 0, 0, -3000);
   state.updateStressInvariants();
+  ASSERT_NEAR(state.I1, -3*3000, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, 1000, 1.0e-8);
+
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  EXPECT_NEAR(z_close, -5214.01272, 1.0e-4);
-  EXPECT_NEAR(rprime_close, 1355.79387, 1.0e-4);
+  ASSERT_NEAR(z_close, -3294.768951000769, 1.0e-8);
+  ASSERT_NEAR(rprime_close, 677.4615827729342, 1.0e-8);
+
+  state.stressTensor = Matrix3(-3000, 0, 0, 0, -3000, 0, 0, 0, -3000);
+  state.updateStressInvariants();
+  ASSERT_NEAR(state.I1, -3*3000, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, 0, 1.0e-8);
+
+  z = state.zz;
+  rprime = state.rr*sqrtKG;
+  model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
+  ASSERT_NEAR(z_close, -3463.108025469086, 1.0e-8);
+  ASSERT_NEAR(rprime_close, 0, 1.0e-8);
 }
