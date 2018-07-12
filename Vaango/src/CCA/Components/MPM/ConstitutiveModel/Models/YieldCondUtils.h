@@ -99,6 +99,34 @@ computeOpenUniformQuadraticBSpline(const double& t,
                                    const Uintah::Point& point_k,
                                    const Uintah::Point& point_k1,
                                    const Uintah::Point& point_k2);
+
+/* Find closest point to open quadratic uniform B-spline approximating a 
+   segment of a polyline */
+Uintah::Point
+computeClosestPointQuadraticBSpline(const Uintah::Point pt,
+                                    const std::vector<Uintah::Point>& polyline,
+                                    size_t segmentStartIndex,
+                                    size_t segmentEndIndex);
+
+/* Find closest point on a quadratic B-spline using Newton iterations */
+Uintah::Point
+findClosestPointToQuadraticBSplineNewton(const Uintah::Point pt, 
+                                         const Uintah::Matrix3& splineMatrix,
+                                         const Uintah::Point& point_k,
+                                         const Uintah::Point& point_k1,
+                                         const Uintah::Point& point_k2);
+
+/* Get a point, tangent, and second derivative of open quadratic uniform B-spline 
+   between three points */
+void
+computeOpenUniformQuadraticBSpline(const double& t,
+                                   const Uintah::Matrix3& splineMatrix,
+                                   const Uintah::Point& point_k,
+                                   const Uintah::Point& point_k1,
+                                   const Uintah::Point& point_k2,
+                                   Uintah::Point& B,
+                                   Uintah::Vector& T,
+                                   Uintah::Vector& N);
 }
 }
 

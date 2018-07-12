@@ -282,6 +282,103 @@ computeOpenUniformQuadraticBSpline(const double& t,
   return Uintah::Point(sx, sy, 0.0);
 }
 
+/* Find closest point to open quadratic uniform B-spline approximating a 
+   segment of a polyline */
+Uintah::Point
+computeClosestPointQuadraticBSpline(const Uintah::Point pt,
+                                    const std::vector<Uintah::Point>& polyline,
+                                    size_t segmentStartIndex,
+                                    size_t segmentEndIndex)
+{
+  Uintah::Point closest(0, 0, 0);
+
+  auto n = polyline.size() - 1;
+  if (n < 2) {
+    if (n == 0) {
+      closest = polyline[0];
+    } else {
+      findClosestPoint(pt, polyline, closest);
+    }
+    return closest;
+  }
+
+  auto k = 2u;
+  for (auto jj = segmentStartIndex; jj < segmentEndIndex - k + 1; jj++) {
+    if (jj == 0) {
+      closest = 
+        findClosestPointToQuadraticBSplineNewton(pt, quadBSplineLo, polyline[jj],
+                                                 polyline[jj+1], polyline[jj+2]);
+    } else if (jj == n-2) {
+      closest = 
+        findClosestPointToQuadraticBSplineNewton(pt, quadBSplineHi, polyline[jj],
+                                                 polyline[jj+1], polyline[jj+2]);
+    } else {
+      closest = 
+        findClosestPointToQuadraticBSplineNewton(pt, quadBSpline, polyline[jj],
+                                                 polyline[jj+1], polyline[jj+2]);
+    }
+  }
+
+  return closest;
+}
+
+/* Find closest point on a quadratic B-spline using Newton iterations */
+Uintah::Point
+findClosestPointToQuadraticBSplineNewton(const Uintah::Point pt, 
+                                         const Uintah::Matrix3& splineMatrix,
+                                         const Uintah::Point& point_k,
+                                         const Uintah::Point& point_k1,
+                                         const Uintah::Point& point_k2)
+{
+  double t = 0.5;
+  double f = 1.0;
+  int n = 0;
+
+  Uintah::Point B(0, 0, 0);
+  Uintah::Vector T(0, 0, 0);
+  Uintah::Vector N(0, 0, 0);
+
+  while (std::abs(f) > 1.0e-10) {
+    computeOpenUniformQuadraticBSpline(t, splineMatrix, point_k, point_k1,
+                                       point_k2, B, T, N);
+    f = Uintah::Dot(pt - B, T);
+    double fp = -Uintah::Dot(T, T) + Uintah::Dot(pt - B, N);
+    t -= f/fp;
+    ++n;
+    if (n > 20) break;
+  }
+
+  return B;
+}
+
+/* Get a point, tangent, and second derivative of open quadratic uniform B-spline 
+   between three points */
+void
+computeOpenUniformQuadraticBSpline(const double& t,
+                                   const Uintah::Matrix3& splineMatrix,
+                                   const Uintah::Point& point_k,
+                                   const Uintah::Point& point_k1,
+                                   const Uintah::Point& point_k2,
+                                   Uintah::Point& B,
+                                   Uintah::Vector& T,
+                                   Uintah::Vector& N)
+{
+  Uintah::Vector A(1, t, t*t);
+  Uintah::Vector dA(0, 1, 2*t);
+  Uintah::Vector ddA(0, 0, 2);
+  Uintah::Vector Px(point_k.x(), point_k1.x(), point_k2.x());
+  Uintah::Vector Py(point_k.y(), point_k1.y(), point_k2.y());
+  double bx = Uintah::Dot(A, (splineMatrix*Px*0.5));
+  double by = Uintah::Dot(A, (splineMatrix*Py*0.5));
+  double tx = Uintah::Dot(dA, (splineMatrix*Px*0.5));
+  double ty = Uintah::Dot(dA, (splineMatrix*Py*0.5));
+  double nx = Uintah::Dot(ddA, (splineMatrix*Px*0.5));
+  double ny = Uintah::Dot(ddA, (splineMatrix*Py*0.5));
+  B.x(bx); B.y(by);
+  T.x(tx); T.y(ty);
+  N.x(nx); N.y(ny);
+}
+
 } // End namespace Util
 
 } // end namespace Vaango

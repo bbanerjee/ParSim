@@ -673,7 +673,7 @@ YieldCond_TabularCap::getClosestPoint(const ModelStateBase* state_input,
   if (state->yield_f_pts.size() < 5) {
     closest = getClosestPointTable(state, pt);
   } else {
-    closest = getClosestPointSpline(state, pt);
+    closest = getClosestPointSplineNewton(state, pt);
   }
 
   cz = closest.x();
@@ -734,11 +734,18 @@ YieldCond_TabularCap::getClosestPointSpline(const ModelState_TabularCap* state,
   Polyline z_r_spline;
   auto seg_start = closest_index - 1;
   auto seg_end = closest_index + 1;
-  if (closest_index < 1) {
+  //if (closest_index < 1) {
+  //  seg_start = 0;
+  //  seg_end = 1;
+  //} else if (closest_index > numPts-3) {
+  //  seg_start = numPts-2;
+  //  seg_end = numPts-1;
+  //}
+  if (closest_index < 2) {
     seg_start = 0;
-    seg_end = 1;
+    seg_end = 2;
   } else if (closest_index > numPts-3) {
-    seg_start = numPts-2;
+    seg_start = numPts-3;
     seg_end = numPts-1;
   }
 
@@ -776,6 +783,56 @@ YieldCond_TabularCap::getClosestPointSpline(const ModelState_TabularCap* state,
   // Find the closest point
   Point z_r_closest;
   Vaango::Util::findClosestPoint(z_r_pt, z_r_spline, z_r_closest);
+
+  #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "ZRClose = " << std::setprecision(16) << z_r_closest << "\n";
+  #endif
+
+  return z_r_closest;
+}
+
+Point
+YieldCond_TabularCap::getClosestPointSplineNewton(const ModelState_TabularCap* state, 
+                                                  const Point& z_r_pt)
+{
+  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
+  double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
+
+  // Add cap points to tabular data
+  //Polyline p_q_table;
+  //computeCapPoints(-state->capX, p_q_table);
+
+  // Convert tabular data to z-rprime coordinates
+  Polyline z_r_table;
+  convertToZRprime(sqrtKG, state->yield_f_pts, z_r_table);
+
+  // Find the closest segments
+  Polyline z_r_segments;
+  std::size_t closest_index = 
+    Vaango::Util::getClosestSegments(z_r_pt, z_r_table, z_r_segments);
+
+  // Get the yield surface points for the closest segments
+  // (Fit quadratic B_spline)
+  std::size_t numPts = z_r_table.size();
+  auto seg_start = closest_index - 1;
+  auto seg_end = closest_index + 1;
+  if (closest_index < 2) {
+    seg_start = 0;
+    seg_end = 2;
+  } else if (closest_index > numPts-3) {
+    seg_start = numPts-3;
+    seg_end = numPts-1;
+  }
+
+  #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "closest_index = " << closest_index << "\n";
+    std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
+              << "(0," << numPts-1 << ")\n";
+  #endif
+
+  Point z_r_closest = 
+    Vaango::Util::computeClosestPointQuadraticBSpline(z_r_pt, z_r_table, 
+                                                      seg_start, seg_end);
 
   #ifdef DEBUG_CLOSEST_POINT
     std::cout << "ZRClose = " << std::setprecision(16) << z_r_closest << "\n";

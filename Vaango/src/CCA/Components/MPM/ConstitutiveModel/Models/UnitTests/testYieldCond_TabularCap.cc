@@ -416,8 +416,8 @@ TEST_F(YieldCondTabularCapTest, getClosestPoint)
   double rprime = state.rr*sqrtKG;
   double z_close = 0.0, rprime_close = 0.0;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  ASSERT_NEAR(z_close, -664.8953223052488, 1.0e-8);
-  ASSERT_NEAR(rprime_close, 781.451185667034, 1.0e-8);
+  EXPECT_NEAR(z_close, -661.49690352285734, 1.0e-8);
+  ASSERT_NEAR(rprime_close, 779.2418518119598, 1.0e-8);
 
   state.stressTensor = Matrix3(-2000, 4000, 0, 4000, -2000, 0, 0, 0, -2000);
   state.updateStressInvariants();
@@ -427,8 +427,8 @@ TEST_F(YieldCondTabularCapTest, getClosestPoint)
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  ASSERT_NEAR(z_close, -2651.440864821653, 1.0e-8);
-  ASSERT_NEAR(rprime_close, 1166.377964042565, 1.0e-8);
+  EXPECT_NEAR(z_close, -2652.3249941689264, 1.0e-8);
+  ASSERT_NEAR(rprime_close, 1166.2539083254812, 1.0e-8);
 
   state.stressTensor = Matrix3(3000, 0, 0, 0, 3000, 0, 0, 0, 3000);
   state.updateStressInvariants();
@@ -438,7 +438,7 @@ TEST_F(YieldCondTabularCapTest, getClosestPoint)
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  ASSERT_NEAR(z_close, 17.23390553531033, 1.0e-8);
+  EXPECT_NEAR(z_close, 17.23390553531033, 1.0e-8);
   ASSERT_NEAR(rprime_close, 0, 1.0e-10);
 
   state.stressTensor = Matrix3(3000, 1000, 0, 1000, 3000, 0, 0, 0, 3000);
@@ -449,8 +449,8 @@ TEST_F(YieldCondTabularCapTest, getClosestPoint)
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  ASSERT_NEAR(z_close, -1.672583729842345, 1.0e-8);
-  ASSERT_NEAR(rprime_close, 93.47397083224905, 1.0e-8);
+  EXPECT_NEAR(z_close, -2.1370534740033125, 1.0e-8);
+  ASSERT_NEAR(rprime_close, 94.997038899484579, 1.0e-8);
 
   state.stressTensor = Matrix3(-3000, 1000, 0, 1000, -3000, 0, 0, 0, -3000);
   state.updateStressInvariants();
@@ -460,8 +460,8 @@ TEST_F(YieldCondTabularCapTest, getClosestPoint)
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  ASSERT_NEAR(z_close, -3294.768951000769, 1.0e-8);
-  ASSERT_NEAR(rprime_close, 677.4615827729342, 1.0e-8);
+  EXPECT_NEAR(z_close, -3294.8725022226445, 1.0e-8);
+  ASSERT_NEAR(rprime_close, 677.2749660674408, 1.0e-8);
 
   state.stressTensor = Matrix3(-3000, 0, 0, 0, -3000, 0, 0, 0, -3000);
   state.updateStressInvariants();
@@ -471,6 +471,6 @@ TEST_F(YieldCondTabularCapTest, getClosestPoint)
   z = state.zz;
   rprime = state.rr*sqrtKG;
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
-  ASSERT_NEAR(z_close, -3463.108025469086, 1.0e-8);
+  EXPECT_NEAR(z_close, -3463.108025469086, 1.0e-8);
   ASSERT_NEAR(rprime_close, 0, 1.0e-8);
 }

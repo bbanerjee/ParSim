@@ -1,6 +1,6 @@
 function table_yield_closest_cap()
  table_yield_closest_matlab();
- %table_yield_closest_computed();
+ table_yield_closest_computed();
 end
 
 function table_yield_closest_computed()
@@ -142,6 +142,15 @@ function table_yield_closest_matlab()
   plot(xc, yc, 's', 'Color', [0.2 0.5 0.1], 'LineWidth', 3, 'Markersize', 7);
   [xc, yc, t] = closestPointNewtonSpline(point(1), point(2), z, rprime, [0.2 0.5 0.1])
   plot(xc, yc, 'x', 'Color', [0.2 0.5 0.1], 'LineWidth', 3, 'Markersize', 7);
+
+  point = [-2.65232499416893e+03 1.16625390832548e+03]
+  plot(point(1), point(2), 'x', 'Color', [0.5 0.2 0.1], 'LineWidth', 3, 'Markersize', 7);
+
+  [xc, yc, r] = closestPoint(point(1), point(2), z, rprime)
+  plot(xc, yc, 's', 'Color', [0.5 0.2 0.1], 'LineWidth', 3, 'Markersize', 7);
+  [xc, yc, t] = closestPointNewtonSpline(point(1), point(2), z, rprime, [0.2 0.5 0.1])
+  plot(xc, yc, 'x', 'Color', [0.5 0.2 0.1], 'LineWidth', 3, 'Markersize', 7);
+
 end
 
 function [xc, yc, mindist] = closestPoint(xp, yp, xpoly, ypoly)
@@ -282,7 +291,7 @@ end
 
 function [xc, yc, t] = closestPointNewtonSpline(px, py, z, rprime, color)
 
-  [index] = closestSegment(px, py, z, rprime)
+  [index] = closestSegment(px, py, z, rprime);
   %plot([z(index) z(index+1)], [rprime(index) rprime(index+1)], '-', 'Color', color, 'LineWidth', 4, 'Markersize', 7);
   if (index < 3)
     loc = 'stt';
@@ -325,7 +334,7 @@ function [xc, yc, t] = closestPointNewton(xp, yp, loc, p1, p2, p3)
     f = dot(p - B, T);
     fp = -dot(T, T) + dot(p - B, N);
     t = t - f/fp;
-    [nn f fp t]
+    %[nn f fp t]
     if (nn > 20) 
       [f t fp]
       break;
