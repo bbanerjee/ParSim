@@ -1,6 +1,6 @@
 function table_yield_closest_cap()
- %table_yield_closest_matlab();
- table_yield_closest_computed();
+ table_yield_closest_matlab();
+ %table_yield_closest_computed();
 end
 
 function table_yield_closest_computed()
@@ -78,7 +78,7 @@ function table_yield_closest_matlab()
   rprime =  q*rfac;
   nn = length(z)-1;
   for i=1:length(z)-1
-    plot(z(i:i+1),rprime(i:i+1), '-s', 'Color', [i/nn 0 (1 - i/nn)], 'LineWidth', 3); hold on;
+    plot(z(i:i+1),rprime(i:i+1), '-.', 'Color', [i/nn 0 (1 - i/nn)], 'LineWidth', 3); hold on;
   end
   axis equal
 
@@ -88,7 +88,9 @@ function table_yield_closest_matlab()
   plot(point(1), point(2), 'rx', 'LineWidth', 3, 'Markersize', 7);
 
   [xc, yc, r] = closestPoint(point(1), point(2), z, rprime)
-  plot(xc, yc, 'ro', 'LineWidth', 3, 'Markersize', 7);
+  plot(xc, yc, 'rs', 'LineWidth', 3, 'Markersize', 7);
+  [xc, yc, t] = closestPointNewtonSpline(point(1), point(2), z, rprime, [1 0 0])
+  plot(xc, yc, 'rx', 'LineWidth', 3, 'Markersize', 7);
 
   point = [2000, 4000]
   point(1) = point(1)*zfac;
@@ -96,7 +98,9 @@ function table_yield_closest_matlab()
   plot(point(1), point(2), 'gx', 'LineWidth', 3, 'Markersize', 7);
 
   [xc, yc, r] = closestPoint(point(1), point(2), z, rprime)
-  plot(xc, yc, 'go', 'LineWidth', 3, 'Markersize', 7);
+  plot(xc, yc, 'gs', 'LineWidth', 3, 'Markersize', 7);
+  [xc, yc, t] = closestPointNewtonSpline(point(1), point(2), z, rprime, [0 1 0])
+  plot(xc, yc, 'gx', 'LineWidth', 3, 'Markersize', 7);
 
   point = [-3000, 0]
   point(1) = point(1)*zfac;
@@ -104,7 +108,9 @@ function table_yield_closest_matlab()
   plot(point(1), point(2), 'bx', 'LineWidth', 3, 'Markersize', 7);
 
   [xc, yc, r] = closestPoint(point(1), point(2), z, rprime)
-  plot(xc, yc, 'bo', 'LineWidth', 3, 'Markersize', 7);
+  plot(xc, yc, 'bs', 'LineWidth', 3, 'Markersize', 7);
+  [xc, yc, t] = closestPointNewtonSpline(point(1), point(2), z, rprime, [0 0 1])
+  plot(xc, yc, 'bx', 'LineWidth', 3, 'Markersize', 7);
 
   point = [-3000 1000]
   point(1) = point(1)*zfac;
@@ -112,7 +118,10 @@ function table_yield_closest_matlab()
   plot(point(1), point(2), 'mx', 'LineWidth', 3, 'Markersize', 7);
 
   [xc, yc, r] = closestPoint(point(1), point(2), z, rprime)
-  plot(xc, yc, 'mo', 'LineWidth', 3, 'Markersize', 7);
+  plot(xc, yc, 'ms', 'LineWidth', 3, 'Markersize', 7);
+  [xc, yc, t] = closestPointNewtonSpline(point(1), point(2), z, rprime, [0.75 0 0.25])
+  plot(xc, yc, 'mx', 'LineWidth', 3, 'Markersize', 7);
+
 
   point = [3000 1000]
   point(1) = point(1)*zfac;
@@ -120,7 +129,9 @@ function table_yield_closest_matlab()
   plot(point(1), point(2), 'kx', 'LineWidth', 3, 'Markersize', 7);
 
   [xc, yc, r] = closestPoint(point(1), point(2), z, rprime)
-  plot(xc, yc, 'ko', 'LineWidth', 3, 'Markersize', 7);
+  plot(xc, yc, 'ks', 'LineWidth', 3, 'Markersize', 7);
+  [xc, yc, t] = closestPointNewtonSpline(point(1), point(2), z, rprime, [0 0 0])
+  plot(xc, yc, 'kx', 'LineWidth', 3, 'Markersize', 7);
 
   point = [3000 0]
   point(1) = point(1)*zfac;
@@ -128,13 +139,15 @@ function table_yield_closest_matlab()
   plot(point(1), point(2), 'x', 'Color', [0.2 0.5 0.1], 'LineWidth', 3, 'Markersize', 7);
 
   [xc, yc, r] = closestPoint(point(1), point(2), z, rprime)
-  plot(xc, yc, 'o', 'Color', [0.2 0.5 0.1], 'LineWidth', 3, 'Markersize', 7);
+  plot(xc, yc, 's', 'Color', [0.2 0.5 0.1], 'LineWidth', 3, 'Markersize', 7);
+  [xc, yc, t] = closestPointNewtonSpline(point(1), point(2), z, rprime, [0.2 0.5 0.1])
+  plot(xc, yc, 'x', 'Color', [0.2 0.5 0.1], 'LineWidth', 3, 'Markersize', 7);
 end
 
 function [xc, yc, mindist] = closestPoint(xp, yp, xpoly, ypoly)
 
   xclose = [];
-  xclose = [];
+  yclose = [];
   npts = 0;
   for i = 2:length(xpoly)
     xstart = xpoly(i-1);
@@ -178,6 +191,19 @@ function [xc, yc, mindist] = closestPoint(xp, yp, xpoly, ypoly)
    endif
   end
   mindist = sqrt(mindSq);
+end
+
+function [index] = closestSegment(xp, yp, xpoly, ypoly)
+
+  index = 1;
+  mindSq = 1.0e20;
+  for i=1:length(xpoly)-1
+   dSq = (xp - xpoly(i))^2 + (yp - ypoly(i))^2;
+   if (dSq < mindSq) 
+     mindSq = dSq;
+     index = i;
+   endif
+  end
 end
 
 function [p_cap, q_cap] = compute_cap(p, q, R, X)
@@ -229,3 +255,85 @@ function [q_cap] = computeEllipseHeight(p, q, p_cap)
   %tt = [startp endp p(startp) p(endp) t]
 end 
 
+function [B, T, N] = computeBSpline(loc, p1, p2, p3, t)
+
+  spline_mat = [[1  1  0];[ -2  2  0];[ 1  -2  1]];
+  if (loc == 'stt')
+    spline_mat = [[2  0  0];[ -4  4  0];[ 2  -3  1]];
+  elseif (loc == 'end')
+    spline_mat = [[1  1  0];[ -2  2  0];[ 1  -3  2]];
+  endif 
+
+  A = [1 t t^2];
+  dA = [0 1 2*t];
+  ddA = [0 0 2];
+  Px = [p1(1) p2(1) p3(1)];
+  Py = [p1(2) p2(2) p3(2)];
+  bx = dot(A, spline_mat * Px' * 0.5);
+  by = dot(A, spline_mat * Py' * 0.5);
+  tx = dot(dA, spline_mat * Px' * 0.5);
+  ty = dot(dA, spline_mat * Py' * 0.5);
+  nx = dot(ddA, spline_mat * Px' * 0.5);
+  ny = dot(ddA, spline_mat * Py' * 0.5);
+  B = [bx by];
+  T = [tx ty];
+  N = [nx ny];
+end
+
+function [xc, yc, t] = closestPointNewtonSpline(px, py, z, rprime, color)
+
+  [index] = closestSegment(px, py, z, rprime)
+  %plot([z(index) z(index+1)], [rprime(index) rprime(index+1)], '-', 'Color', color, 'LineWidth', 4, 'Markersize', 7);
+  if (index < 3)
+    loc = 'stt';
+    p1 = [z(1) rprime(1)];
+    p2 = [z(2) rprime(2)];
+    p3 = [z(3) rprime(3)];
+  elseif (index > length(z)-2)
+    loc = 'end';
+    p1 = [z(length(z)-2) rprime(length(z)-2)];
+    p2 = [z(length(z)-1) rprime(length(z)-1)];
+    p3 = [z(length(z)) rprime(length(z))];
+  else
+    loc = 'mid';
+    p1 = [z(index-1) rprime(index-1)];
+    p2 = [z(index) rprime(index)];
+    p3 = [z(index+1) rprime(index+1)];
+  endif
+  %plot([p1(1) p2(1) p3(1)],[p1(2) p2(2) p3(2)], 'g-');
+  t = linspace(0, 1, 20);
+  for i=1:length(t)
+    [B, T, N] = computeBSpline(loc, p1, p2, p3, t(i));
+    T_hat = T/norm(T);
+    N_hat = N/norm(N);
+    plot(B(1), B(2), 'r.');
+    %plot([B(1) B(1) + T_hat(1)*10], [B(2) B(2) + T_hat(2)*10], 'b-');
+    %plot([B(1) B(1) + N_hat(1)*10], [B(2) B(2) + N_hat(2)*10], 'g-');
+  end
+  [xc, yc, t] = closestPointNewton(px, py, loc, p1, p2, p3);
+end
+
+function [xc, yc, t] = closestPointNewton(xp, yp, loc, p1, p2, p3)
+
+  p = [xp yp];
+  t = 0.5;
+  f = 1;
+  nn = 0;
+  while (abs(f) > 1.0e-10) 
+    nn = nn+1;
+    [B, T, N] = computeBSpline(loc, p1, p2, p3, t);
+    f = dot(p - B, T);
+    fp = -dot(T, T) + dot(p - B, N);
+    t = t - f/fp;
+    [nn f fp t]
+    if (nn > 20) 
+      [f t fp]
+      break;
+    end
+  endwhile
+
+  [B, T, N] = computeBSpline(loc, p1, p2, p3, t);
+  xc = B(1);
+  yc = B(2);
+  
+end
