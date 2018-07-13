@@ -221,14 +221,13 @@ namespace Uintah {
   }
 
   inline Vector::Vector()
+    : x_(0), y_(0), z_(0)
   {
   }
 
   inline Vector::Vector(const Vector& p)
+    : x_(p.x_), y_(p.y_), z_(p.z_)
   {
-    x_=p.x_;
-    y_=p.y_;
-    z_=p.z_;
   }
 
   inline double Vector::length2() const

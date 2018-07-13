@@ -40,6 +40,7 @@
 namespace Vaango {
 
 using ParameterDict = std::map<std::string, double>;
+using Polyline = std::vector<Uintah::Point>;
 
 class InternalVariableModel;
 
@@ -244,6 +245,43 @@ public:
   virtual double computeDevStrainDerivOfYieldFunction(
     const ModelStateBase* state, const PressureModel* eos,
     const ShearModulusModel* shear, const InternalVariableModel* intvar) = 0;
+
+  /**
+   * Function: computeYieldSurfacePolylinePbarSqrtJ2
+   *
+   * Purpose: Compute a sequence of points representing the yield surface
+   *          in pbar-sqrtJ2 space
+   *
+   * Inputs:
+   *  state_old = old state
+   *
+   * Returns:
+   *   std::vector<Point> 
+   */
+  virtual Polyline
+    computeYieldSurfacePolylinePbarSqrtJ2(const ModelStateBase* state_old) 
+  {
+    Polyline dummy;
+    return dummy;
+  }
+
+  /**
+   * Function: getUpdatedYieldConditionRange
+   *
+   * Purpose: Compute range of the yield surface in pbar-sqrtJ2 space
+   *
+   * Inputs:
+   *  std::vector<Point> 
+   *
+   * Returns:
+   *   std::array<double, 3>  = pbar_min, pbar_max, sqrtJ2_max
+   */
+  virtual std::array<double, 3> 
+    getYieldConditionRange(const Polyline& yield_surface) 
+  {
+    std::array<double, 3> dummy;
+    return dummy;
+  }
 
   /**
    * Function: getInternalPoint

@@ -1,30 +1,6 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -148,7 +124,7 @@ public:
       return *this;
     }
     
-    inline int operator*() throw(ConsecutiveRangeSetException);
+    inline int operator*();
 
     bool operator==(const iterator& it2) const
     { return range_ == it2.range_ && offset_ == it2.offset_; }
@@ -199,7 +175,7 @@ public:
   SCISHARE ConsecutiveRangeSet() : size_(0) {} // empty set
   
   // initialize a range set with a string formatted like: "1, 2-8, 10, 15-30"
-  SCISHARE ConsecutiveRangeSet(const std::string& setstr) throw(ConsecutiveRangeSetException);
+  SCISHARE ConsecutiveRangeSet(const std::string& setstr);
 
   SCISHARE ConsecutiveRangeSet(const ConsecutiveRangeSet& set2)
     : rangeSet_(set2.rangeSet_), size_(set2.size_) { }
@@ -212,7 +188,7 @@ public:
   // Add to the range set, asserting that value is greater or equal
   // to anything already in the set (if it is equal to something already
   // in teh set then the value is simply discarded).
-  SCISHARE void addInOrder(int value) throw(ConsecutiveRangeSetException);
+  SCISHARE void addInOrder(int value);
   
   template <class AnyIterator>
   void addInOrder(const AnyIterator& begin, const AnyIterator& end)
@@ -266,7 +242,6 @@ private:
 };
 
 inline int ConsecutiveRangeSet::iterator::operator*()
-  throw(ConsecutiveRangeSetException)
 {
   CHECKARRAYBOUNDS(range_, 0, (long)set_->rangeSet_.size());
   return set_->rangeSet_[range_].low_ + offset_;

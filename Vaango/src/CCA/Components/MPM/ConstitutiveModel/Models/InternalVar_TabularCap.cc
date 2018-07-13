@@ -102,10 +102,9 @@ InternalVar_TabularCap::addInitialComputesAndRequires(Task* task,
 }
 
 /*!-----------------------------------------------------*/
-void
-InternalVar_TabularCap::initializeInternalVariable(
-  const Patch* patch, const MPMMaterial* matl, ParticleSubset* pset,
-  DataWarehouse* new_dw, MPMLabel* lb, ParameterDict& params)
+void 
+InternalVar_TabularCap::initializeInternalVariable(Uintah::ParticleSubset* pset,
+                                                   Uintah::DataWarehouse* new_dw)
 {
   Uintah::ParticleVariable<double> pCapX;
   new_dw->allocateAndPut(pCapX, pCapXLabel, pset);
@@ -164,7 +163,7 @@ InternalVar_TabularCap::computeInternalVariable(
 
   double X_new = -X_bar_new;
 
-  return -X_new;
+  return X_new;
 }
 
 /**

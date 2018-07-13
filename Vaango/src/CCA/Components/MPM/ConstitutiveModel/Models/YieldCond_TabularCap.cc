@@ -193,31 +193,6 @@ YieldCond_TabularCap::setYieldConditionRange() {
   }
 }
 
-/* Yield surface changes over time.  So we need to update the range. */
-std::vector<double> 
-YieldCond_TabularCap::getUpdatedYieldConditionRange(const Polyline& yield_surface) {
-
-  if (yield_surface.empty()) {
-    std::ostringstream out;
-    out << "**ERROR** The yield surface with cap polyline has not been initialized.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-
-  auto min_max_p = std::minmax_element(yield_surface.begin(), yield_surface.end(),
-                                       [](const auto& pt1, const auto& p2) {
-                                         return pt1.x() < p2.x();
-                                       });
-  double I1bar_min = min_max_p.first->x()*3.0;
-  double I1bar_max = min_max_p.second->x()*3.0;
-
-  auto max_q = std::max_element(yield_surface.begin(), yield_surface.end(),
-                                [](const auto& pt1, const auto& p2) {
-                                  return pt1.y() < p2.y();
-                                });
-  double sqrtJ2_max = max_q->y();
-  return std::vector<double>({I1bar_min, I1bar_max, sqrtJ2_max});
-}
-
 /* Save the yield surface points as a polyline for future computations */
 void 
 YieldCond_TabularCap::saveAsPolyline()
@@ -447,7 +422,7 @@ YieldCond_TabularCap::evalYieldConditionMax(const ModelStateBase* state_input)
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  std::vector<double> vals = getUpdatedYieldConditionRange(state->yield_f_pts);
+  std::array<double,3> vals = getYieldConditionRange(state->yield_f_pts);
   return vals[2];
 }
 
@@ -633,6 +608,73 @@ YieldCond_TabularCap::computeDevStressDerivOfYieldFunction(
 
   return df_dJ2;
 }
+
+/**
+ * Function: computeYieldSurfacePolylinePbarSqrtJ2
+ *
+ * Purpose: Compute a sequence of points representing the yield surface
+ *          in pbar-sqrtJ2 space
+ *
+ * Inputs:
+ *  state_old = old state
+ *
+ * Returns:
+ *   std::vector<Point> 
+ */
+Polyline
+YieldCond_TabularCap::computeYieldSurfacePolylinePbarSqrtJ2(const ModelStateBase* state_input)
+{
+  const ModelState_TabularCap* state =
+    dynamic_cast<const ModelState_TabularCap*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_TabularCap.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  Polyline yield_f_pts;
+  computeCapPoints(-state->capX, yield_f_pts);
+  return yield_f_pts;
+}
+
+/**
+ * Function: getUpdatedYieldConditionRange
+ *
+ * Purpose: Compute range of the yield surface in pbar-sqrtJ2 space
+ *          Yield surface changes over time.  So we need to update the range./
+ *
+ * Inputs:
+ *  std::vector<Point> 
+ *
+ * Returns:
+ *   std::array<double, 3>  = pbar_min, pbar_max, sqrtJ2_max
+ */
+std::array<double, 3>
+YieldCond_TabularCap::getYieldConditionRange(const Polyline& yield_surface)
+{
+
+  if (yield_surface.empty()) {
+    std::ostringstream out;
+    out << "**ERROR** The yield surface with cap polyline has not been initialized.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  auto min_max_p = std::minmax_element(yield_surface.begin(), yield_surface.end(),
+                                       [](const auto& pt1, const auto& p2) {
+                                         return pt1.x() < p2.x();
+                                       });
+  double I1bar_min = min_max_p.first->x()*3.0;
+  double I1bar_max = min_max_p.second->x()*3.0;
+
+  auto max_q = std::max_element(yield_surface.begin(), yield_surface.end(),
+                                [](const auto& pt1, const auto& p2) {
+                                  return pt1.y() < p2.y();
+                                });
+  double sqrtJ2_max = max_q->y();
+  return std::array<double,3>({{I1bar_min/3.0, I1bar_max/3.0, sqrtJ2_max}});
+}
+
 
 /**
  * Function: getClosestPoint

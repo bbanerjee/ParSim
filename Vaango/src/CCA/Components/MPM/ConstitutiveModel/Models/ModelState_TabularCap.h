@@ -50,6 +50,9 @@ public:
   double capX;             // Hydrostatic strength in I1 space
   Polyline yield_f_pts;    // Polyline representing yield function with cap
                            // in pbar-q space
+  double I1_min;
+  double I1_max;
+  double sqrtJ2_max;
 
   ModelState_TabularCap();
 
@@ -80,10 +83,12 @@ public:
     std::copy(state.yield_f_pts.begin(), state.yield_f_pts.end(),
               std::ostream_iterator<Uintah::Point>(os, " "));
     os << "\n";
+    os << "\t I1_min = " << state.I1_min << " I1_max = " << state.I1_max
+       << " sqrtJ2_max = " << state.sqrtJ2_max << "\n";
     return os;
   }
 };
 
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __MODEL_STATE_TABULAR_CAP_H__

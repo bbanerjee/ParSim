@@ -142,6 +142,35 @@ public:
     const ShearModulusModel* shear,
     const InternalVariableModel* intvar) override;
 
+ /**
+   * Function: computeYieldSurfacePolylinePbarSqrtJ2
+   *
+   * Purpose: Compute a sequence of points representing the yield surface
+   *          in pbar-sqrtJ2 space
+   *
+   * Inputs:
+   *  state_old = old state
+   *
+   * Returns:
+   *   std::vector<Point> 
+   */
+  Polyline
+    computeYieldSurfacePolylinePbarSqrtJ2(const ModelStateBase* state) override;
+
+  /**
+   * Function: getUpdatedYieldConditionRange
+   *
+   * Purpose: Compute range of the yield surface in pbar-sqrtJ2 space
+   *
+   * Inputs:
+   *  std::vector<Point> 
+   *
+   * Returns:
+   *   std::array<double, 3>  = pbar_min, pbar_max, sqrtJ2_max
+   */
+  std::array<double, 3>
+    getYieldConditionRange(const Polyline& yield_surface) override;
+
   /**
    * Function: getInternalPoint
    *
@@ -294,9 +323,6 @@ public:
   /* Compute points on the cap */
   void computeCapPoints(double X_bar, Polyline& p_q_all);
 
-  /* Compute the height of the elliptical cap */
-  double computeEllipseHeight(const Polyline& p_q_points, double p_cap);
-
 private:
   /**
    *  These are the parameters that are read from the input file
@@ -337,7 +363,6 @@ private:
   /* Some helpers and checks */
   void checkInputParameters();
   void setYieldConditionRange();
-  std::vector<double> getUpdatedYieldConditionRange(const Polyline& yield_surface);
   void saveAsPolyline();
   void computeNormals();
 
@@ -350,6 +375,9 @@ private:
                                       const Uintah::Point& z_r_pt);
   Uintah::Point getClosestPointSplineNewton(const ModelState_TabularCap* state, 
                                             const Uintah::Point& z_r_pt);
+
+  /* Compute the height of the elliptical cap */
+  double computeEllipseHeight(const Polyline& p_q_points, double p_cap);
 
   /* Convert yield function data to z_rprime coordinates */
   void convertToZRprime(const double& sqrtKG, const Polyline& p_q_points, 

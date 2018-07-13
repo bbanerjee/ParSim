@@ -71,16 +71,16 @@ public:
                                      const Uintah::PatchSet* patches) override;
 
   void initializeInternalVariable(Uintah::ParticleSubset* pset,
-                                  Uintah::DataWarehouse* new_dw) override
-  {
-  }
+                                  Uintah::DataWarehouse* new_dw) override;
 
   void initializeInternalVariable(const Uintah::Patch* patch,
                                   const Uintah::MPMMaterial* matl,
                                   Uintah::ParticleSubset* pset,
                                   Uintah::DataWarehouse* new_dw,
                                   Uintah::MPMLabel* lb,
-                                  ParameterDict& params) override;
+                                  ParameterDict& params) override
+  {
+  }
 
   void addComputesAndRequires(Uintah::Task* task,
                               const Uintah::MPMMaterial* matl,
@@ -117,17 +117,26 @@ public:
     return 0.0;
   }
 
+  void getInternalVariable(Uintah::ParticleSubset* pset,
+                           Uintah::DataWarehouse* old_dw,
+                           Uintah::constParticleVariableBase& pCapX) override
+  {
+    old_dw->get(pCapX, pCapXLabel, pset);
+  }
+
+  void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset, 
+                                      Uintah::DataWarehouse* new_dw,
+                                      Uintah::ParticleVariableBase& pCapX_new) override
+  {
+    new_dw->allocateAndPut(pCapX_new, pCapXLabel_preReloc, pset);
+  }
+
   // Get the internal variables
   std::vector<Uintah::constParticleVariable<double>> getInternalVariables(
     Uintah::ParticleSubset* pset, Uintah::DataWarehouse* old_dw,
     const double& dummy) override
   {
-    Uintah::constParticleVariable<double> pCapX;
-    old_dw->get(pCapX, pCapXLabel, pset);
-
     std::vector<Uintah::constParticleVariable<double>> pIntVars;
-    pIntVars.emplace_back(pCapX);
-
     return pIntVars;
   }
 
@@ -145,7 +154,6 @@ public:
                                       Uintah::DataWarehouse* new_dw,
                                       vectorParticleDoubleP& pVars) override
   {
-    new_dw->allocateAndPut(*pVars[0], pCapXLabel_preReloc, pset);
   }
 
   // Allocate and put the local <Matrix3> particle variables

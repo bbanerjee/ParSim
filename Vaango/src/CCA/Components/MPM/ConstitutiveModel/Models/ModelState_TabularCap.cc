@@ -31,6 +31,9 @@ using namespace Vaango;
 ModelState_TabularCap::ModelState_TabularCap() 
  : ModelState_Tabular()
  , capX(0)
+ , I1_min(0)
+ , I1_max(0)
+ , sqrtJ2_max(0)
 {
 }
 
