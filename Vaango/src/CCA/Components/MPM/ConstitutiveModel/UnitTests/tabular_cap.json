@@ -1,0 +1,9 @@
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test tabular hydrostatic strength data"
+  },
+  "Data" : {
+    "PlasticStrainVol" : [   0,  0.1,  0.2,  0.3],
+    "Pressure" :         [1000, 2000, 3000, 4000]
+  }
+}}

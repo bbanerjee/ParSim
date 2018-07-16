@@ -91,8 +91,8 @@ using std::endl;
 TabularPlasticityCap::TabularPlasticityCap(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* mpmFlags)
   : TabularPlasticity(ps, mpmFlags)
 {
-  d_intvar = Vaango::InternalVariableModelFactory::create(ps);
-  if (!d_intvar) {
+  d_capX = Vaango::InternalVariableModelFactory::create(ps);
+  if (!d_capX) {
     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating InternalVariableModel."
          << std::endl;
@@ -117,7 +117,7 @@ TabularPlasticityCap::TabularPlasticityCap(Uintah::ProblemSpecP& ps, Uintah::MPM
 TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap& cm)
   : TabularPlasticity(cm)
 {
-  d_intvar = Vaango::InternalVariableModelFactory::createCopy(d_intvar);
+  d_capX = Vaango::InternalVariableModelFactory::createCopy(d_capX);
 
   // Consistency bisection
   d_consistency_bisection_tolerance = cm.d_consistency_bisection_tolerance;
@@ -128,7 +128,7 @@ TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap& cm)
 TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap* cm)
   : TabularPlasticity(*cm)
 {
-  d_intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
+  d_capX = Vaango::InternalVariableModelFactory::createCopy(cm->d_capX);
 
   // Consistency bisection
   d_consistency_bisection_tolerance = cm->d_consistency_bisection_tolerance;
@@ -137,7 +137,7 @@ TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap* cm)
 
 TabularPlasticityCap::~TabularPlasticityCap()
 {
-  delete d_intvar;
+  delete d_capX;
 }
 
 // adds problem specification values to checkpoint data for restart
@@ -152,7 +152,7 @@ TabularPlasticityCap::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 
   d_elastic->outputProblemSpec(cm_ps);
   d_yield->outputProblemSpec(cm_ps);
-  d_intvar->outputProblemSpec(cm_ps);
+  d_capX->outputProblemSpec(cm_ps);
 
   cm_ps->appendElement("yield_surface_radius_scaling_factor",
                        d_cm.yield_scale_fac);
@@ -175,7 +175,7 @@ TabularPlasticityCap::addParticleState(std::vector<const VarLabel*>& from,
                         std::vector<const VarLabel*>& to)
 {
   TabularPlasticity::addParticleState(from, to);
-  d_intvar->addParticleState(from, to);
+  d_capX->addParticleState(from, to);
 }
 
 /*!------------------------------------------------------------------------*/
@@ -184,7 +184,7 @@ TabularPlasticityCap::addInitialComputesAndRequires(Task* task, const MPMMateria
                                      const PatchSet* patch) const
 {
   TabularPlasticity::addInitialComputesAndRequires(task, matl, patch);
-  d_intvar->addInitialComputesAndRequires(task, matl, patch);
+  d_capX->addInitialComputesAndRequires(task, matl, patch);
 }
 
 /*!------------------------------------------------------------------------*/
@@ -193,7 +193,7 @@ TabularPlasticityCap::initializeCMData(const Patch* patch, const MPMMaterial* ma
                         DataWarehouse* new_dw)
 {
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
-  d_intvar->initializeInternalVariable(pset, new_dw);
+  d_capX->initializeInternalVariable(pset, new_dw);
   TabularPlasticity::initializeCMData(patch, matl, new_dw);
 }
 
@@ -214,7 +214,7 @@ TabularPlasticityCap::addComputesAndRequires(Task* task, const MPMMaterial* matl
                               const PatchSet* patches) const
 {
   TabularPlasticity::addComputesAndRequires(task, matl, patches);
-  d_intvar->addComputesAndRequires(task, matl, patches);
+  d_capX->addComputesAndRequires(task, matl, patches);
 }
 
 /**
@@ -268,8 +268,8 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
     // Get and allocate the hydrostatic strength
     constParticleVariable<double> pCapX;
     ParticleVariable<double> pCapX_new;
-    d_intvar->getInternalVariable(pset, old_dw, pCapX);
-    d_intvar->allocateAndPutInternalVariable(pset, new_dw, pCapX_new);
+    d_capX->getInternalVariable(pset, old_dw, pCapX);
+    d_capX->allocateAndPutInternalVariable(pset, new_dw, pCapX_new);
 
     // Set up global particle variables to be read and written
     delt_vartype delT;
@@ -1431,7 +1431,7 @@ TabularPlasticityCap::computeInternalVariables(ModelState_TabularCap& state,
   tempState.ep_v += delta_eps_p_v;
 
   // Update the hydrostatic compressive strength
-  double X_new = d_intvar->computeInternalVariable(&tempState);
+  double X_new = d_capX->computeInternalVariable(&tempState);
 
   // Update the state with new values of the internal variables
   state.capX = X_new;

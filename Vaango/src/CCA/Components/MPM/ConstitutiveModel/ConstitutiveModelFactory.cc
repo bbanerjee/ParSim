@@ -70,6 +70,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/SoilModelBrannon.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticity.h>
+#include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticityCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/UCNH.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticFortran.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoPlastic.h>
@@ -148,6 +149,9 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
 
   else if (mat_type == "tabular_plasticity")
     return (scinew Vaango::TabularPlasticity(child, flags));
+
+  else if (mat_type == "tabular_plasticity_cap")
+    return (scinew Vaango::TabularPlasticityCap(child, flags));
 
   else if (mat_type == "comp_neo_hook") {
     if (flags->d_integrator_type == "explicit" ||

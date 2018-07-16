@@ -171,6 +171,7 @@ Dir::forceRemove(bool throwOnError)
 void
 Dir::remove(const string& filename, bool throwOnError)
 {
+   if (!exists()) return;
    string filepath = name_ + "/" + filename;
    int code = system((string("rm -f ") + filepath).c_str());
    if (code != 0) {

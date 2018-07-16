@@ -1,7 +1,7 @@
 #
 # The MIT License
 #
-# Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+# Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -35,6 +35,8 @@ configure_file(HydrostaticCompression_PrescribedDeformation.inp
 
 configure_file(tabular_linear_elastic.json tabular_linear_elastic.json COPYONLY)
 configure_file(tabular_von_mises.json tabular_von_mises.json COPYONLY)
+configure_file(tabular_drucker_prager.json tabular_drucker_prager.json COPYONLY)
+configure_file(tabular_cap.json tabular_cap.json COPYONLY)
 configure_file(UniaxialStrainRotate_PrescribedDeformation.inp 
                UniaxialStrainRotate_PrescribedDeformation.inp COPYONLY)
 
@@ -110,3 +112,16 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+
+add_executable(testTabularPlasticityCap testTabularPlasticityCap.cc)
+target_link_libraries(testTabularPlasticityCap
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testTabularPlasticityCap)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+

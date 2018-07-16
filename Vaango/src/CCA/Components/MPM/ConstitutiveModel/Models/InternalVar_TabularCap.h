@@ -27,6 +27,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -50,7 +51,7 @@ public:
   const Uintah::VarLabel* pCapXLabel_preReloc;
 
   // constructors
-  InternalVar_TabularCap(Uintah::ProblemSpecP& ps, ElasticModuliModel* elastic);
+  explicit InternalVar_TabularCap(Uintah::ProblemSpecP& ps);
   InternalVar_TabularCap(const InternalVar_TabularCap* cm);
 
   // destructor

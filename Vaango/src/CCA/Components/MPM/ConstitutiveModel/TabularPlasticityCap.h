@@ -148,7 +148,7 @@ public:
 
 private:
 
-  InternalVariableModel* d_intvar;
+  InternalVariableModel* d_capX;
   double d_consistency_bisection_tolerance;
   double d_max_bisection_iterations;
 

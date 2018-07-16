@@ -28,6 +28,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_BorjaPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_SoilModelBrannonKappa.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
 
@@ -58,6 +59,8 @@ InternalVariableModelFactory::create(ProblemSpecP& ps)
                                 __LINE__);
   if (mat_type == "soil_model_brannon_kappa") {
     return (scinew InternalVar_SoilModelBrannonKappa(child));
+  } else if (mat_type == "tabular_cap") {
+    return (scinew InternalVar_TabularCap(child));
   } else {
     throw ProblemSetupException(
       "Unknown InternalVariable Model (" + mat_type + ")", __FILE__, __LINE__);
@@ -117,6 +120,11 @@ InternalVariableModelFactory::createCopy(const InternalVariableModel* pm)
   else if (dynamic_cast<const InternalVar_Arena*>(pm))
     return (
       scinew InternalVar_Arena(dynamic_cast<const InternalVar_Arena*>(pm)));
+
+  else if (dynamic_cast<const InternalVar_TabularCap*>(pm))
+    return (
+      scinew InternalVar_TabularCap(dynamic_cast<const InternalVar_TabularCap*>(pm)));
+
   else {
     throw Uintah::ProblemSetupException(
       "Cannot create copy of unknown internal var model", __FILE__, __LINE__);

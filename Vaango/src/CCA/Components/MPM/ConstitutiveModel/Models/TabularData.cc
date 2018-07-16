@@ -91,6 +91,9 @@ TabularData::outputProblemSpec(ProblemSpecP& ps)
   ps->appendElement("independent_variables", d_indepVarNames);
   ps->appendElement("dependent_variables", d_depVarNames);
   ps->appendElement("filename", d_filename);
+  auto interp_ps = ps->appendChild("interpolation");
+  interp_ps->setAttribute("type", d_interpType);
+ 
 }
 
 std::vector<std::string>

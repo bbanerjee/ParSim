@@ -53,13 +53,9 @@ using constParticleLabelVariableMap = Uintah::constParticleLabelVariableMap;
 
 
 /*!-----------------------------------------------------*/
-InternalVar_TabularCap::InternalVar_TabularCap(Uintah::ProblemSpecP& ps,
-                                     ElasticModuliModel* elastic)
+InternalVar_TabularCap::InternalVar_TabularCap(Uintah::ProblemSpecP& ps)
   : d_capX_fn(ps)
 {
-  d_elastic = elastic;
-  d_shear = nullptr;
-
   // Initialize internal variable labels for evolution
   initializeLocalMPMLabels();
 }
@@ -67,8 +63,6 @@ InternalVar_TabularCap::InternalVar_TabularCap(Uintah::ProblemSpecP& ps,
 /*!-----------------------------------------------------*/
 InternalVar_TabularCap::InternalVar_TabularCap(const InternalVar_TabularCap* cm)
 {
-  d_elastic = cm->d_elastic;
-  d_shear = cm->d_shear;
   d_capX_fn = cm->d_capX_fn;
 
   // Initialize internal variable labels for evolution
