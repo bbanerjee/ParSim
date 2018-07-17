@@ -40,6 +40,7 @@
                                       soil_model_brannon, 
                                       tabular_eos, 
                                       tabular_plasticity, 
+                                      tabular_plasticity_cap, 
                                       camclay,
                                       polar_orthotropic_hypoelastic,
                                       viscoelastic_fortran'">
@@ -713,7 +714,7 @@
     <fluid_pressure_initial           spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 Arenisca4 soil_model_brannon" />
     <p4_fluid_effect                  spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca soil_model_brannon" />
     <gruneisen_parameter              spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca soil_model_brannon" />
-    <subcycling_characteristic_number spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 arena arena_mixture Arenisca4 soil_model_brannon" />
+    <subcycling_characteristic_number spec="OPTIONAL DOUBLE" need_applies_to="type Arenisca Arenisca3 arena arena_mixture Arenisca4 soil_model_brannon tabular_plasticity tabular_plasticity_cap" />
     <J3_type                          spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />
 	<J3_psi                           spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />
 	<principal_stress_cutoff          spec="OPTIONAL INTEGER" need_applies_to="type Arenisca4" />			
@@ -735,8 +736,8 @@
     <fspeed                       spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture" />
     <time_at_failure              spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture" />
     <eq_plastic_strain_at_failure spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture" />
-    <yield_surface_radius_scaling_factor spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture tabular_plasticity" />
-    <consistency_bisection_tolerance spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture tabular_plasticity" />
+    <yield_surface_radius_scaling_factor spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture tabular_plasticity tabular_plasticity_cap" />
+    <consistency_bisection_tolerance spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture tabular_plasticity tabular_plasticity_cap" />
 
     <initialize_with_body_force spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3 arena arena_mixture"/>
     <surface_reference_point    spec="OPTIONAL VECTOR"  need_applies_to="type Arenisca3 arena arena_mixture"/>
@@ -821,7 +822,7 @@
     <!-- For CamClay and related models developed by Biswajit for ONR_MURI -->
     <elastic_moduli_model  spec="OPTIONAL NO_DATA"
                      attribute1="type REQUIRED STRING 'constant  arenisca3  soil_model_brannon  arena  arena_mixture  tabular neural_net'"
-                     need_applies_to="type arena Arenisca3 camclay soil_model_brannon arena  arena_mixture  tabular_plasticity">
+                     need_applies_to="type arena Arenisca3 camclay soil_model_brannon arena  arena_mixture  tabular_plasticity tabular_plasticity_cap">
       
       <!-- type = constant -->
       <bulk_modulus spec="REQUIRED DOUBLE" need_applies_to="type constant" />
@@ -897,8 +898,8 @@
       <mu0 spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_shear_modulus"/>
     </elastic_shear_modulus_model>
     <plastic_yield_condition  spec="REQUIRED NO_DATA"
-                              attribute1="type REQUIRED STRING 'camclay arena arena_mixture tabular'"
-                              need_applies_to="type camclay arena arena_mixture tabular_plasticity">
+                              attribute1="type REQUIRED STRING 'camclay arena arena_mixture tabular tabular_cap'"
+                              need_applies_to="type camclay arena arena_mixture tabular_plasticity tabular_plasticity_cap">
       <!-- type = camclay -->
       <M spec="REQUIRED DOUBLE 'positive'" need_applies_to="type camclay"/>
 
@@ -952,15 +953,16 @@
       <T2.phase2     spec="REQUIRED DOUBLE" need_applies_to="type arena_mixture" />
 
       <!-- type = tabular -->
-      <filename              spec="REQUIRED STRING" need_applies_to="type tabular"/>
-      <independent_variables spec="REQUIRED STRING" need_applies_to="type tabular"/>
-      <dependent_variables   spec="REQUIRED STRING" need_applies_to="type tabular"/>
+      <filename              spec="REQUIRED STRING" need_applies_to="type tabular tabular_cap"/>
+      <independent_variables spec="REQUIRED STRING" need_applies_to="type tabular tabular_cap"/>
+      <dependent_variables   spec="REQUIRED STRING" need_applies_to="type tabular tabular_cap"/>
       <interpolation         spec="REQUIRED NO_DATA" attribute1="type REQUIRED STRING 'linear, cubic'"
-                             need_applies_to="type tabular"/>
+                             need_applies_to="type tabular tabular_cap"/>
+      <cap_ellipticity_ratio spec="REQUIRED DOUBLE"  need_applies_to="type tabular_cap"/>
     </plastic_yield_condition>
     <internal_variable_model  spec="REQUIRED NO_DATA"
-                              attribute1="type REQUIRED STRING 'borja_consolidation_pressure,soil_model_brannon_kappa, arena'"
-                              need_applies_to="type camclay soil_model_brannon">
+                              attribute1="type REQUIRED STRING 'borja_consolidation_pressure,soil_model_brannon_kappa, arena, tabular_cap'"
+                              need_applies_to="type camclay soil_model_brannon tabular_plasticity_cap">
       <pc0 spec="REQUIRED DOUBLE 'negative'" need_applies_to="type borja_consolidation_pressure"/>
       <lambdatilde spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_consolidation_pressure"/>
       <soil_model_brannon_fSlope spec="REQUIRED DOUBLE" need_applies_to="type soil_model_brannon_kappa" />
@@ -976,6 +978,14 @@
       <p2 spec="REQUIRED DOUBLE" need_applies_to="type arena" />
       <p3 spec="REQUIRED DOUBLE" need_applies_to="type arena" />
       <use_disaggregation_algorithm spec="OPTIONAL BOOLEAN" need_applies_to="type arena" />
+
+      <!-- type = tabular_cap -->
+      <filename              spec="REQUIRED STRING" need_applies_to="type tabular_cap"/>
+      <independent_variables spec="REQUIRED STRING" need_applies_to="type tabular_cap"/>
+      <dependent_variables   spec="REQUIRED STRING" need_applies_to="type tabular_cap"/>
+      <interpolation         spec="REQUIRED NO_DATA" attribute1="type REQUIRED STRING 'linear, cubic'"
+                             need_applies_to="type tabular_cap"/>
+
     </internal_variable_model>
     <kinematic_hardening_model  spec="OPTIONAL NO_DATA"
                      attribute1="type REQUIRED STRING 'none, prager, armstrong_frederick, arena'"

@@ -213,7 +213,7 @@ public:
       std::string(currPath) + "/" + "tabular_drucker_prager.json";
     auto yield = xmlNewChild(cm, nullptr, BAD_CAST "plastic_yield_condition", 
                              BAD_CAST "");
-    xmlNewProp(yield, BAD_CAST "type", BAD_CAST "tabular");
+    xmlNewProp(yield, BAD_CAST "type", BAD_CAST "tabular_cap");
     xmlNewChild(yield, nullptr, BAD_CAST "filename", 
                 BAD_CAST table_yield.c_str());
     xmlNewChild(yield, nullptr, BAD_CAST "independent_variables", 
@@ -223,6 +223,8 @@ public:
     auto yield_interp = xmlNewChild(yield, nullptr, BAD_CAST "interpolation",
                               BAD_CAST "");
     xmlNewProp(yield_interp, BAD_CAST "type", BAD_CAST "linear");
+    xmlNewChild(yield, nullptr, BAD_CAST "cap_ellipticity_ratio", 
+                BAD_CAST "0.7");
 
     // Cap evolution
     std::string table_cap = 

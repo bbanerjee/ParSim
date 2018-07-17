@@ -31,6 +31,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Gurson.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_vonMises.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -67,6 +68,8 @@ YieldConditionFactory::create(Uintah::ProblemSpecP& ps)
     return (scinew YieldCond_ArenaMixture(child));
   else if (mat_type == "tabular")
     return (scinew YieldCond_Tabular(child));
+  else if (mat_type == "tabular_cap")
+    return (scinew YieldCond_TabularCap(child));
   else
     throw ProblemSetupException(
       "MPM::ConstitutiveModel:Unknown Yield Condition (" + mat_type + ")",
@@ -127,6 +130,10 @@ YieldConditionFactory::createCopy(const YieldCondition* yc)
   else if (dynamic_cast<const YieldCond_Tabular*>(yc))
     return (scinew YieldCond_Tabular(
       dynamic_cast<const YieldCond_Tabular*>(yc)));
+
+  else if (dynamic_cast<const YieldCond_TabularCap*>(yc))
+    return (scinew YieldCond_TabularCap(
+      dynamic_cast<const YieldCond_TabularCap*>(yc)));
 
   else
     throw ProblemSetupException("Cannot create copy of unknown yield condition",
