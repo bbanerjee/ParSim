@@ -103,8 +103,9 @@ InternalVar_TabularCap::initializeInternalVariable(Uintah::ParticleSubset* pset,
   Uintah::ParticleVariable<double> pCapX;
   new_dw->allocateAndPut(pCapX, pCapXLabel, pset);
 
+  // The table is of the form x -> ev_p_bar, y -> X_bar
   DoubleVec1D gg = d_capX_fn.table.interpolate<1>({{0.0}}); 
-  double capX = gg[0];
+  double capX = -gg[0];
 
   for (auto particle : *pset) {
     pCapX[particle] = capX;

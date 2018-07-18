@@ -8,17 +8,20 @@ function table_yield_cap()
   q_orig = [  0  100  200  300  500  600   700   800   900 910 911];
   plot(p_orig, q_orig, 'k.', 'Markersize', 10); hold on;
 
-  [p, q] = hull(p_orig, q_orig);
-  plot(p, q, '-', 'Color', [216,179,101]/255, 'LineWidth', 2);
+  [p_hull, q_hull] = hull(p_orig, q_orig);
+  plot(p_hull, q_hull, '-', 'Color', [216,179,101]/255, 'LineWidth', 2);
+
+  [p, q] = push_to_hull(p_orig, q_orig, p_hull, q_hull);
+  %plot(p, q, '-o', 'Color', [216,179,101]/255, 'LineWidth', 2);
 
   R = 0.7;
-  X = 3*2000;
+  %X = 3*2000;
   %X = 3*6400;
-  %X = 3*10000;
+  X = 3*10000;
 
   [p, q] = compute_cap(p, q, R, X);
   p_q = [p' q']
-  %plot(p, q, '-', 'Color', [116,179,101]/255, 'LineWidth', 2);
+  plot(p, q, '-', 'Color', [116,179,101]/255, 'LineWidth', 2);
   
   %axis equal
   %p_q = [p' q']
@@ -29,6 +32,18 @@ function table_yield_cap()
   q_max = [max(q_orig) max(q)]
 
   plot_table_yield(p, q);
+end
+
+function [p, q] = push_to_hull(p_orig, q_orig, p_hull, q_hull)
+  p = zeros(1,length(p_orig));
+  q = zeros(1,length(p_orig));
+  for i = 1:length(p_orig)
+    x_orig = p_orig(i);
+    y_orig = q_orig(i);
+    [xc, yc, r] = closestPoint(x_orig, y_orig, p_hull, q_hull);
+    p(i) = xc;
+    q(i) = yc;
+  end
 end
 
 function [p_cap, q_cap] = compute_cap(p, q, R, X)

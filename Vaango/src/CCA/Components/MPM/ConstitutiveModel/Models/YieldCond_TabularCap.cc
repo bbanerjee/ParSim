@@ -31,7 +31,9 @@
 #include <chrono>
 #include <cmath>
 
+//#define DEBUG_EVAL_YIELD
 //#define DEBUG_CLOSEST_POINT
+#define USE_NEWTON_CLOSEST_POINT
 
 using namespace Vaango;
 using Point = Uintah::Point;
@@ -131,22 +133,50 @@ YieldCond_TabularCap::checkInputParameters()
   for (auto ii = 0u; ii < xvals.size(); ii++) {
     points.push_back(Point(xvals[ii], yvals[ii], 0));
   }
-  std::vector<Point> hull = Vaango::Util::convexHull2D(points);
-  //std::copy(hull.begin(), hull.end(),
+  //std::cout << "Orig = ";
+  //std::copy(points.begin(), points.end(),
   //          std::ostream_iterator<Point>(std::cout, " "));
   //std::cout << std::endl;
+
+  std::vector<Point> hull = Vaango::Util::convexHull2D(points);
 
   if (points.size() != hull.size()) {
     std::sort(hull.begin(), hull.end(),
               [](const Point& a, const Point& b) {
                 return a.x() < b.x();
               });
+    //std::cout << "Hull = ";
     //std::copy(hull.begin(), hull.end(),
     //          std::ostream_iterator<Point>(std::cout, " "));
     //std::cout << std::endl;
+
+    // Interpolate points.y() to hull
+    /*
+    for (auto& point : points) {
+      auto xval = point.x();
+      auto end_iter = std::find_if(hull.begin(), hull.end(),
+                                  [&xval](const auto& hull_pt) 
+                                  {
+                                    return xval < hull_pt.x();
+                                  });
+      auto start = *(end_iter-1);
+      auto end = *end_iter;
+      auto t = (xval - start.x())/(end.x() - start.x());
+      point.y((1- t)*start.y() + t*end.y());
+    }
+    */
+
+    // Project points to hull
+    for (auto& point : points) {
+      auto xval = point.x();
+      auto yval = point.y();
+      point = getClosestPoint(hull, xval, yval);
+    }
+
     xvals.clear();
     yvals.clear();
-    for (const auto& point : hull) {
+    //for (const auto& point : hull) {
+    for (const auto& point : points) {
       xvals.push_back(point.x());
       yvals.push_back(point.y());
     }
@@ -297,12 +327,18 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
   double p_bar_min = d_I1bar_min/3.0;
   double p_bar = -state->I1/3;
   if (p_bar < p_bar_min) {
+    #ifdef DEBUG_EVAL_YIELD
+    std::cout << "Tensile state: [" << p_bar << " < " << p_bar_min << "]\n";
+    #endif
     return 1.0;
   }
 
   // Next check if the state is outside the compression cap
   double p_bar_max = -state->capX/3.0; 
   if (p_bar > p_bar_max) {
+    #ifdef DEBUG_EVAL_YIELD
+    std::cout << "Compressive state: [" << p_bar << " > " << p_bar_max << "]\n";
+    #endif
     return 1.0;
   }
 
@@ -335,8 +371,10 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
     }
   }
   
-  //std::cout << "p_bar = " << p_bar << " gg = " << gg[0] 
-  //          << " sqrtJ2 = " << state->sqrt_J2 << std::endl;
+  #ifdef DEBUG_EVAL_YIELD
+  std::cout << "p_bar = " << p_bar << " gg = " << gg[0] 
+            << " sqrtJ2 = " << state->sqrt_J2 << std::endl;
+  #endif
 
   return -1.0;
 }
@@ -351,13 +389,18 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
   double kappa_bar = p_bar_min + d_yield.capEllipticityRatio * (p_bar_max - p_bar_min);
 
   // Find the location of the p_bar_start, p_bar_end on table polyline
-  auto end_iter = std::find_if(d_polyline.begin(), d_polyline.end(),
+  // (ignore first two points)
+  auto end_iter = std::find_if(d_polyline.begin()+2, d_polyline.end(),
                                 [&kappa_bar](const auto& point) 
                                 {
                                     return kappa_bar < point.x();
                                 });
   // Copy the relevant points
   std::copy(d_polyline.begin(), end_iter, std::back_inserter(p_q_all));
+  //std::cout << "p_q_cone = ";
+  //std::copy(p_q_all.begin(), p_q_all.end(),
+  //            std::ostream_iterator<Point>(std::cout, " "));
+  //std::cout << std::endl;
 
   // Set up theta vector
   std::vector<double> theta_vec;
@@ -380,6 +423,10 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
 
   // Concatenate the two vectors
   p_q_all.insert(p_q_all.end(), p_q_cap.begin(), p_q_cap.end());
+  //std::cout << "p_q_all = ";
+  //std::copy(p_q_all.begin(), p_q_all.end(),
+  //            std::ostream_iterator<Point>(std::cout, " "));
+  //std::cout << std::endl;
 }
 
 double
@@ -387,7 +434,8 @@ YieldCond_TabularCap::computeEllipseHeight(const Polyline& p_q_points,
                                            double p_cap)
 {
   // Find the location of the p_bar_start, p_bar_end on table polyline
-  auto end_iter = std::find_if(d_polyline.begin(), d_polyline.end(),
+  // (ignore first two points)
+  auto end_iter = std::find_if(d_polyline.begin()+2, d_polyline.end(),
                                 [&p_cap](const auto& point) 
                                 {
                                     return p_cap < point.x();
@@ -715,7 +763,11 @@ YieldCond_TabularCap::getClosestPoint(const ModelStateBase* state_input,
   if (state->yield_f_pts.size() < 5) {
     closest = getClosestPointTable(state, pt);
   } else {
+    #ifdef USE_NEWTON_CLOSEST_POINT
     closest = getClosestPointSplineNewton(state, pt);
+    #else
+    closest = getClosestPointSpline(state, pt);
+    #endif
   }
 
   cz = closest.x();
