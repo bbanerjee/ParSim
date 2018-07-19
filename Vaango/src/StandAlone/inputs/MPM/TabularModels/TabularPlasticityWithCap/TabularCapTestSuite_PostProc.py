@@ -1,6 +1,7 @@
 from TabularCapTest_01_HydrostaticCompression import *
 from TabularCapTest_01_HydrostaticCompressionNN import *
 from TabularCapTest_02_HydrostaticLoadUnload import *
+from TabularCapTest_02_HydrostaticLoadUnloadNN import *
 from TabularCapTest_03_UniaxialStrainCompresson import *
 from TabularCapTest_04_UniaxialStrainTension import *
 from TabularCapTest_05_UniaxialStrainRotate import *
@@ -16,8 +17,10 @@ def post_proc(test, uda_path, save_path, POST_PROCESS_LIST):
       hydrostaticCompressionNN(uda_path, save_path)
     elif test_name == 'TabularCapTest_02_HydrostaticLoadUnload.ups':
       hydrostaticLoadUnload(uda_path, save_path)
+    elif test_name == 'TabularCapTest_02_HydrostaticLoadUnloadNN.ups':
+      hydrostaticLoadUnloadNN(uda_path, save_path)
     elif test_name == 'TabularCapTest_03_UniaxialStrainCompresson.ups':
-      uniaxialStrainCompresson(uda_path, save_path)
+      uniaxialStrainCompression(uda_path, save_path)
     elif test_name == 'TabularCapTest_04_UniaxialStrainTension.ups':
       uniaxialStrainTension(uda_path, save_path)
     elif test_name == 'TabularCapTest_05_UniaxialStrainRotate.ups':

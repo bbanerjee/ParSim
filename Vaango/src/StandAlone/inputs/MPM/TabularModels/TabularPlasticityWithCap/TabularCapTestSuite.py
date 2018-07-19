@@ -15,6 +15,7 @@ POST_PROCESS_LIST = [
   'TabularCapTest_01_HydrostaticCompression.ups',
   'TabularCapTest_01_HydrostaticCompressionNN.ups',
   'TabularCapTest_02_HydrostaticLoadUnload.ups',
+  'TabularCapTest_02_HydrostaticLoadUnloadNN.ups',
   'TabularCapTest_03_UniaxialStrainCompresson.ups',
   'TabularCapTest_04_UniaxialStrainTension.ups',
   'TabularCapTest_05_UniaxialStrainRotate.ups',
@@ -55,13 +56,14 @@ for test in POST_PROCESS_LIST:
 
 TEST_LIST = [
 #  TEST_LIST[0], #Test 01
-  TEST_LIST[1], #Test 01 (NN)
+#  TEST_LIST[1], #Test 01 (NN)
 #  TEST_LIST[2], #Test 02
-#  TEST_LIST[3], #Test 03
-#  TEST_LIST[4], #Test 04
-#  TEST_LIST[5], #Test 05
-#  TEST_LIST[6], #Test 06
-#  TEST_LIST[7], #Test 07
+#  TEST_LIST[3], #Test 02 (NN)
+  TEST_LIST[4], #Test 03
+#  TEST_LIST[5], #Test 04
+#  TEST_LIST[6], #Test 05
+#  TEST_LIST[7], #Test 06
+#  TEST_LIST[8], #Test 07
   ]
 ### --------------------- ###
 

@@ -1,8 +1,8 @@
 from TabularCapTestSuite_PostProcUtils import *
 from TabularCapYieldSurfaceUtils import *
 
-def hydrostaticCompression(uda_path, save_path,**kwargs):
-  print("Post Processing Test: 01 - Hydrostatic Compression")
+def hydrostaticLoadUnloadNN(uda_path, save_path,**kwargs):
+  print("Post Processing Test: 02 - hydrostatic Compression With Loading and Unloading (NN)")
 
   # Read the stress simulation data
   times, sigmas, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim = readSimStressData(uda_path, matID = 0)
@@ -17,7 +17,6 @@ def hydrostaticCompression(uda_path, save_path,**kwargs):
   # Get the model parameters
   material_dict = get_yield_surface_data(uda_path)
   param_text = material_dict['material string']
-  elastic_table = getJSONTable(material_dict['elastic_filename'])
   yield_table = getJSONTable(material_dict['yield_filename'])
   cap_table = getJSONTable(material_dict['cap_filename'])
   hydrostat_table = getJSONTable('DrySand_HydrostatData.json')
@@ -79,7 +78,7 @@ def hydrostaticCompression(uda_path, save_path,**kwargs):
                           ev_e_list, ev_p_list, times_list,
                           pmin, pmax, qmax) 
 
-  savePNG(save_path+'/HydrostaticCompression_yield_surface','1280x960')
+  savePNG(save_path+'/HydrostaticLoadUnloadNN_yield_surface','1280x960')
   #plt.show()
 
   #---------------------------------------------------------------------------------
@@ -99,8 +98,7 @@ def hydrostaticCompression(uda_path, save_path,**kwargs):
   plt.ylabel(str_to_mathbf('Stress (Pa)')) 
   plt.grid(True)
   plt.legend(loc='best', prop={'size':10}) 
-  savePNG(save_path+'/HydrostaticCompression_sigma_time','1280x960')
-  #plt.show()
+  savePNG(save_path+'/HydrostaticLoadUnloadNN_sigma_time','1280x960')
 
   fig3 = plt.figure(3)
   plt.clf()
@@ -119,10 +117,10 @@ def hydrostaticCompression(uda_path, save_path,**kwargs):
   plt.ylabel(str_to_mathbf('Stress (Pa)')) 
   plt.grid(True)
   plt.legend(loc='best', prop={'size':10}) 
-  savePNG(save_path+'/HydrostaticCompression_pbar_evbar','1280x960')
+  savePNG(save_path+'/HydrostaticLoadUnloadNN_pbar_evbar','1280x960')
   plt.show()
 
-  #fig4 = plt.figure(4)
+  #fig3 = plt.figure(3)
   #plt.clf()
   ##plt.subplots_adjust(right=0.75)
   ##plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
@@ -134,7 +132,7 @@ def hydrostaticCompression(uda_path, save_path,**kwargs):
   #plt.ylabel(str_to_mathbf('Stress (Pa)')) 
   #plt.grid(True)
   #plt.legend(loc='best', prop={'size':8}) 
-  #savePNG(save_path+'/HydrostaticCompression_pq_time','1280x960')
+  #savePNG(save_path+'/HydrostaticLoadUnload_pq_time','1280x960')
 
   #plt.show()
 

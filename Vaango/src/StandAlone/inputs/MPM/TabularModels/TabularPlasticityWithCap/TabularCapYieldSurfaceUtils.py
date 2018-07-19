@@ -3,6 +3,9 @@ import xml.etree.ElementTree as ET
 import json
 import matplotlib.cm as cm
 import numpy as np
+from scipy.spatial import ConvexHull
+from scipy.misc import comb
+from shapely.geometry import LineString, Point
 
 #-----------------------------------------------------------------------------
 # Read the input xml file and save relevant data to a dictionary
@@ -109,6 +112,42 @@ def str_to_mathbf(string):
 #-----------------------------------------------------------------------------
 # Compute points on the cap
 #-----------------------------------------------------------------------------
+def bernstein_poly(i, n, t):
+  return comb(n, i) * ( t**(n-i) ) * (1 - t)**i
+
+def bezier_curve(xPoints, yPoints, nTimes=1000):
+  nPoints = len(xPoints)
+  t = np.linspace(0.0, 1.0, nTimes)
+  polynomial_array = np.array([ bernstein_poly(i, nPoints-1, t) for i in range(0, nPoints)   ])
+  xvals = np.dot(xPoints, polynomial_array)
+  yvals = np.dot(yPoints, polynomial_array)
+  return xvals, yvals
+
+def computeConvexHull(pbars, sqrtJ2s):
+
+  points = np.ndarray(shape = (len(pbars),2))
+  points[:,0] = pbars
+  points[:,1] = sqrtJ2s
+  hull = ConvexHull(points)
+
+  hull_points = points[hull.vertices]
+  hull_points.sort(axis=0)
+
+  return hull_points
+
+def computeClosestPoints(pbars, sqrtJ2s, pbars_hull, sqrtJ2s_hull):
+
+  hull = list(zip(pbars_hull, sqrtJ2s_hull))
+  polyline = LineString(hull)
+
+  closest_polyline = []
+  for pbar, sqrtJ2 in zip(pbars, sqrtJ2s):
+    pt = Point(pbar, sqrtJ2)
+    closest = polyline.interpolate(polyline.project(pt))
+    closest_polyline.append((closest.x, closest.y))
+
+  return np.array(closest_polyline)
+  
 def computeEllipseHeight(pbars, sqrtJ2s, p_cap):
   startp = 0;
   endp = 1;
@@ -129,6 +168,16 @@ def computeEllipseHeight(pbars, sqrtJ2s, p_cap):
 
 
 def computeCapYieldSurfacePoints(pbars, sqrtJ2s, R, capX):
+
+  # Compute convex hull of tabular data
+  hull = computeConvexHull(pbars, sqrtJ2s)
+  pbars_hull = list(hull[:,0])
+  sqrtJ2s_hull = list(hull[:,1])
+
+  # Find closest point projections of input data to convex hull
+  closest = computeClosestPoints(pbars, sqrtJ2s, pbars_hull, sqrtJ2s_hull)
+  pbars = list(closest[:,0])
+  sqrtJ2s = list(closest[:,1])
 
   print("capX = ", capX)
 
@@ -174,6 +223,9 @@ def computeCapYieldSurfacePoints(pbars, sqrtJ2s, R, capX):
 
   #print("pbar_yield = ", pbar_yield)
   #print("sqrtJ2_yield = ", sqrtJ2_yield)
+
+  # Fit quadratic Bezier curves to the yield polyline
+  pbar_yield, sqrtJ2_yield = bezier_curve(pbar_yield, sqrtJ2_yield, 200)
 
   return pbar_yield, sqrtJ2_yield
   
