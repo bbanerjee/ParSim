@@ -1,8 +1,8 @@
 from TabularCapTestSuite_PostProcUtils import *
 from TabularCapYieldSurfaceUtils import *
 
-def uniaxialStrainCompression(uda_path, save_path,**kwargs):
-  print("Post Processing Test: 03 - Uniaxial Compression")
+def triaxialStrainTension(uda_path, save_path,**kwargs):
+  print("Post Processing Test: 06 - Triaxial strain tension")
 
   # Read the stress simulation data
   times, sigmas, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim = readSimStressData(uda_path, matID = 0)
@@ -42,30 +42,29 @@ def uniaxialStrainCompression(uda_path, save_path,**kwargs):
   Syy_min = min(Syy)
   Sxx_max = max(Sxx)
   Syy_max = max(Syy)
-  print("Sxx_min = ", Sxx_min)
-  print("Sxx_max = ", Sxx_max)
-  print("Syy_min = ", Syy_min)
-  print("Syy_max = ", Syy_max)
+  #print("Sxx_min = ", Sxx_min)
+  #print("Sxx_max = ", Sxx_max)
+  #print("Syy_min = ", Syy_min)
+  #print("Syy_max = ", Syy_max)
 
   ###PLOTTING
   formatter = ticker.FormatStrFormatter('$\mathbf{%g}$') 
   param_text = material_dict['material string']
   compression = 'positive'
-  
+
   #----------------------------------------------------------------
   # Plot the yield surface 
   #----------------------------------------------------------------
   # Set up figure
-  fig1 = plt.figure(1)
+  fig2 = plt.figure(2)
   plt.clf()
   #plt.subplots_adjust(right=0.75)
   #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
 
   # Plot p vs. q simulation results
-  eqShear_vs_meanStress(pp_sim, qq_sim, compression)  
+  eqShear_vs_meanStress(pp_sim, qq_sim, compression)
 
   # Plot filled circles at time snapshots
-  compression = 'negative'
   for ii in range(0, len(t_sim_snap)):
 
     # Choose the Paired colormap
@@ -84,16 +83,16 @@ def uniaxialStrainCompression(uda_path, save_path,**kwargs):
                           ev_e_list, ev_p_list, times_list,
                           pbarmin, pbarmax, qmax, compression)
 
-  savePNG(save_path+'/UniaxialStrainCompression_yield_surface','1280x960')
+  savePNG(save_path+'/TriaxialStrainTension_yield_surface','1280x960')
   #plt.show()
 
   #---------------------------------------------------------------------------------
   # Plot experimental and simulation data as a function of time
-  fig2 = plt.figure(2)
+  fig3 = plt.figure(3)
   plt.clf()
   #plt.subplots_adjust(right=0.75)
   #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
-  plotSimDataSigmaTime(fig2, analytical_times, times, sigma_a_sim, sigma_r_sim, sigma_ar_sim,
+  plotSimDataSigmaTime(fig3, analytical_times, times, sigma_a_sim, sigma_r_sim, sigma_ar_sim,
                        '$\sigma_{xx}$ (sim)', '$\sigma_{yy}$ (sim)',
                        '$\sigma_{xy}$ (sim)', compression)
 
@@ -104,7 +103,7 @@ def uniaxialStrainCompression(uda_path, save_path,**kwargs):
   plt.ylabel(str_to_mathbf('Stress (Pa)')) 
   plt.grid(True)
   plt.legend(loc='best', prop={'size':10}) 
-  savePNG(save_path+'/UniaxialStrainCompression_sigma_time','1280x960')
+  savePNG(save_path+'/TriaxialStrainTension_sigma_time','1280x960')
 
   fig3 = plt.figure(3)
   plt.clf()
@@ -123,7 +122,7 @@ def uniaxialStrainCompression(uda_path, save_path,**kwargs):
   plt.ylabel(str_to_mathbf('Stress (Pa)')) 
   plt.grid(True)
   plt.legend(loc='best', prop={'size':10}) 
-  savePNG(save_path+'/UniaxialStrainCompression_pbar_evbar','1280x960')
+  savePNG(save_path+'/TriaxialStrainTension_pbar_evbar','1280x960')
   #plt.show()
 
   fig4 = plt.figure(4)
@@ -138,7 +137,7 @@ def uniaxialStrainCompression(uda_path, save_path,**kwargs):
   plt.ylabel(str_to_mathbf('Stress (Pa)')) 
   plt.grid(True)
   plt.legend(loc='best', prop={'size':8}) 
-  savePNG(save_path+'/UniaxialStrainCompression_pq_time','1280x960')
+  savePNG(save_path+'/TriaxialStrainTension_pq_time','1280x960')
 
   plt.show()
 

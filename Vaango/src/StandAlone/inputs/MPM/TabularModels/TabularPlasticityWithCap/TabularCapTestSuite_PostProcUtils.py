@@ -170,8 +170,8 @@ def getInternalVariables(uda_path, analytical_times, matID = 0):
   ev_p_list = []
   capX_list = []
   time_list = []
-  print(analytical_times)
-  print(times)
+  #print(analytical_times)
+  #print(times)
   an_times_add = list(analytical_times)
   an_times_add.append(times[len(times)-1])
   #print("Analytical times = ", an_times_add)
@@ -203,6 +203,40 @@ def getInternalVariables(uda_path, analytical_times, matID = 0):
   #print("capX = ", capX_list)
 
   return ev_e_list, ev_p_list, capX_list, time_list, ev_e, ev_p, capX
+
+#---------------------------------------------------------------------------------
+# Read the internal state variables from the UDA file for a set of times
+# using closest point interpolation
+#---------------------------------------------------------------------------------
+def find_nearest(times, time):
+  idx = np.searchsorted(times, time, side='left')
+  if idx > 0 and \
+      (idx == len(times) or \
+      math.fabs(time - times[idx-1]) < math.fabs(time - times[idx])):
+    return idx-1, times[idx-1]
+  else:
+    return idx, times[idx]
+
+def getInternalVariableSnapshots(uda_path, analytical_times, matID = 0):
+
+  # Get the internal variables
+  ev_e, ev_p, capX, times = getAllInternalVariables(uda_path, matID)
+
+  # Create a clean list containing the data as functions of time
+  idx_list = []
+  time_list = []
+  ev_e_list = []
+  ev_p_list = []
+  capX_list = []
+  for ta in analytical_times:
+    idx, time = find_nearest(times, ta)
+    idx_list.append(idx)
+    time_list.append(time)
+    ev_e_list.append(ev_e[idx]) 
+    ev_p_list.append(ev_p[idx]) 
+    capX_list.append(capX[idx]) 
+
+  return idx_list, time_list, ev_e_list, ev_p_list, capX_list, ev_e, ev_p, capX
 
 #---------------------------------------------------------------------------------
 # Read the internal state variables from the UDA file:
@@ -446,6 +480,60 @@ def exp_fmt(x,loc):
     elif int(exp)>10:
       exp = '+'+exp
     return r'$\mathbf{'+lead+r'\cdot{}10^{'+exp+'}}$' 
+
+#------------------------------------------------------------------------
+# Plot x vs y
+#------------------------------------------------------------------------
+def plotEqShearMeanStress(xs, ys, idx_list, color_list, ev_p_list,
+                          compression = 'negative', 
+                          Xlims = False, Ylims = False, GRID = True):
+
+  ax1 = plt.subplot(111)
+  if (compression == 'positive'):
+    xs = list(map(lambda x : -x, xs))
+    ys = list(map(lambda y : -y, ys))
+
+  x_data = np.array(xs)
+  y_data = np.array(ys)
+
+  max_idx = max(idx_list)
+  for jj, color in enumerate(color_list):
+    ev_p_str = str(ev_p_list[jj])
+    label_str = 'Plastic vol. strain = ' + ev_p_str
+    start_idx = idx_list[jj]
+    if (start_idx < max_idx):
+      end_idx = idx_list[jj+1]
+      x_arrow = x_data[start_idx:end_idx-1]
+      y_arrow = y_data[start_idx:end_idx-1]
+      u_arrow = x_data[start_idx+1:end_idx] - x_arrow
+      v_arrow = y_data[start_idx+1:end_idx] - y_arrow
+      plt.quiver(x_arrow, y_arrow,
+                 u_arrow, v_arrow,
+                 scale_units='xy', angles='xy', scale=1.5, width=0.001,
+                 headwidth=7, headlength=10,
+                 linewidth=0.5, edgecolor='b', color='k')
+      plt.plot(x_data[start_idx:end_idx], y_data[start_idx:end_idx], '-', \
+        color=color,label=label_str)
+  
+  plt.xlabel(str_to_mathbf('Mean Stress, p (Pa)'))
+  plt.ylabel(str_to_mathbf('Equivalent Shear Stress, q, (Pa)'))
+  
+  formatter_int = ticker.FormatStrFormatter('$\mathbf{%g}$')
+  formatter_exp = ticker.FuncFormatter(exp_fmt)
+  
+  #ax1.xaxis.set_major_formatter(formatter_exp)
+  #ax1.yaxis.set_major_formatter(formatter_exp)    
+  ax1.xaxis.set_major_formatter(formatter_int)
+  ax1.yaxis.set_major_formatter(formatter_int)    
+
+  if Xlims:
+    ax1.set_xlim(Xlims[0],Xlims[1])
+  if Ylims:
+    ax1.set_ylim(Ylims[0],Ylims[1])
+  if GRID:    
+    plt.grid(True)  
+
+  return ax1
 
 def eqShear_vs_meanStress(xs, ys, compression = 'negative', 
                           Xlims = False, Ylims = False, 
@@ -894,26 +982,17 @@ def readSimStressData(uda_path, matID = 0):
   return time_sim, sigma_sim, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim
 
 #---------------------------------------------------------------------------------
-# Interpolate the data at a set of given time points
+# Get the closest data at a set of given time points
 #---------------------------------------------------------------------------------
-def getDataTimeSnapshots(time_snapshots, time, data):
+def getDataTimeSnapshots(time_snapshots, times, data):
 
   # Create a clean list containing the data as functions of time
   time_list = []
   val_list = []
-  time_list.append(time_snapshots[0])
-  val_list.append(data[0]) 
-  for ii in range(1, len(time)):
-    tt_0 = time[ii-1]
-    tt_1 = time[ii]
-    for jj, ta in enumerate(time_snapshots):
-      ss = (ta - tt_0)/(tt_1 - tt_0)
-      if (ss >= 0.0 and ss < 1.0):
-        #print("ii = " , ii, " tt_0 = " , tt_0, " tt_1 = ", tt_1, " jj = " , jj, " ta = " , ta )
-        time_list.append(ta)
-        val_list.append((1-ss)*data[ii-1]+ss*data[ii]) 
-  time_list.append(time_snapshots[-1])
-  val_list.append(data[-1]) 
+  for ta in time_snapshots:
+    idx, time = find_nearest(times, ta)
+    time_list.append(time)
+    val_list.append(data[idx]) 
    
   return time_list, val_list
 

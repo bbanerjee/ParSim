@@ -17,10 +17,17 @@ POST_PROCESS_LIST = [
   'TabularCapTest_02_HydrostaticLoadUnload.ups',
   'TabularCapTest_02_HydrostaticLoadUnloadNN.ups',
   'TabularCapTest_03_UniaxialStrainCompresson.ups',
+  'TabularCapTest_03_UniaxialStrainCompressonNN.ups',
   'TabularCapTest_04_UniaxialStrainTension.ups',
+  'TabularCapTest_04_UniaxialStrainTensionNN.ups',
   'TabularCapTest_05_UniaxialStrainRotate.ups',
+  'TabularCapTest_05_UniaxialStrainRotateNN.ups',
   'TabularCapTest_06_TriaxialStrainTension.ups',
-  'TabularCapTest_07_MultiaxialStrainLoadUnload.ups',
+  'TabularCapTest_06_TriaxialStrainTensionNN.ups',
+  'TabularCapTest_07_UniaxialStrainLoadUnload.ups',
+  'TabularCapTest_07_UniaxialStrainLoadUnloadNN.ups',
+  'TabularCapTest_08_MultiaxialStrainLoadUnload.ups',
+  'TabularCapTest_08_MultiaxialStrainLoadUnloadNN.ups',
 ]
 
 #get uintah/src path as enviornmental variable
@@ -59,11 +66,18 @@ TEST_LIST = [
 #  TEST_LIST[1], #Test 01 (NN)
 #  TEST_LIST[2], #Test 02
 #  TEST_LIST[3], #Test 02 (NN)
-  TEST_LIST[4], #Test 03
-#  TEST_LIST[5], #Test 04
-#  TEST_LIST[6], #Test 05
-#  TEST_LIST[7], #Test 06
-#  TEST_LIST[8], #Test 07
+#  TEST_LIST[4], #Test 03
+#  TEST_LIST[5], #Test 03 (NN)
+#  TEST_LIST[6], #Test 04
+#  TEST_LIST[7], #Test 04 (NN)
+#  TEST_LIST[8], #Test 05
+#  TEST_LIST[9], #Test 05 (NN)
+#  TEST_LIST[10], #Test 06
+#  TEST_LIST[11], #Test 06 (NN)
+#  TEST_LIST[12], #Test 07
+  TEST_LIST[13], #Test 07 (NN)
+#  TEST_LIST[14], #Test 08
+#  TEST_LIST[15], #Test 08 (NN)
   ]
 ### --------------------- ###
 
@@ -268,8 +282,8 @@ if __name__ == "__main__":
         run_all_tests()      
   
   TEST_METHODS = False
-  #POST_PROC_ONLY = True
-  POST_PROC_ONLY = False
+  POST_PROC_ONLY = True
+  #POST_PROC_ONLY = False
   #CLEAR_UDA = True
   CLEAR_UDA = False
   run_all_tests(TEST_METHODS, CLEAR_UDA, POST_PROC_ONLY)

@@ -225,7 +225,7 @@ def computeCapYieldSurfacePoints(pbars, sqrtJ2s, R, capX):
   #print("sqrtJ2_yield = ", sqrtJ2_yield)
 
   # Fit quadratic Bezier curves to the yield polyline
-  pbar_yield, sqrtJ2_yield = bezier_curve(pbar_yield, sqrtJ2_yield, 200)
+  #pbar_yield, sqrtJ2_yield = bezier_curve(pbar_yield, sqrtJ2_yield, 500)
 
   return pbar_yield, sqrtJ2_yield
   
@@ -234,7 +234,7 @@ def computeCapYieldSurfacePoints(pbars, sqrtJ2s, R, capX):
 #-----------------------------------------------------------------------------
 def plotPQYieldSurfaceSim(plt, material_dict, yield_table, capX,
                           ev_e_list, ev_p_list, time_list, pmin, pmax, qmax,
-                          compression = 'negative'):
+                          compression = 'negative', plt_color = 'b'):
 
   # Extract the data from the yield table
   pbars   = yield_table['Pressure']
@@ -244,11 +244,8 @@ def plotPQYieldSurfaceSim(plt, material_dict, yield_table, capX,
   R = material_dict["R"]
   pbar_yield, sqrtJ2_yield = computeCapYieldSurfacePoints(pbars, sqrtJ2s, R, capX)
 
-  # Choose the Paired colormap
-  plt_color = cm.Paired(float(1)/len(ev_p_list))
-
   # Plot
-  #print('Compression = ', compression)
+  print('Compression = ', compression)
   if (compression == 'negative'):
     ps = list(map(lambda pbar: -pbar, pbar_yield))
     qs = list(map(lambda sqrtJ2 : np.sqrt(3)*sqrtJ2, sqrtJ2_yield))

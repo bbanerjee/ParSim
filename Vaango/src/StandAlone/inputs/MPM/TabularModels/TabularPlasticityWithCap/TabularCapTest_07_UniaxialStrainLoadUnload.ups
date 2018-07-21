@@ -1,0 +1,135 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+
+<Uintah_specification>
+
+  <Meta>
+      <title>TabularPlasticityCap verification test 07: Uniaxial strain loading/unloading</title>
+  </Meta>
+
+  <SimulationComponent type="mpm" />
+
+  <Time>
+      <maxTime> 8.0 </maxTime>
+      <initTime> 0.0 </initTime>
+      <delt_min> 1.0e-8 </delt_min>
+      <delt_max> 0.001 </delt_max>
+      <timestep_multiplier> 0.3 </timestep_multiplier>
+  </Time>
+
+  <DataArchiver>
+      <filebase>TabularCapTest_07_UniaxialStrainLoadUnload.uda</filebase>
+      <outputInitTimestep/>
+      <outputTimestepInterval>1</outputTimestepInterval>
+      <save label = "p.x"/>
+      <save label = "p.color"/>
+      <save label = "p.temperature"/>
+      <save label = "p.velocity"/>
+      <save label = "p.particleID"/>
+      <save label = "p.stress"/>
+      <save label = "g.mass"/>
+      <save label = "p.deformationGradient"/>
+      <save label = "g.acceleration"/>
+      <save label = "p.capX"/>
+      <save label = "p.elasticVolStrain"/>
+      <save label = "p.plasticVolStrain"/>
+      <checkpoint cycle = "2" timestepInterval = "4000"/>
+  </DataArchiver>
+
+  <MPM>
+    <time_integrator>              explicit   </time_integrator>
+    <interpolator>                 linear     </interpolator>
+    <use_load_curves>              false      </use_load_curves>
+    <minimum_particle_mass>        1.0e-15    </minimum_particle_mass>
+    <minimum_mass_for_acc>         1.0e-15    </minimum_mass_for_acc>
+    <maximum_particle_velocity>    1.0e5      </maximum_particle_velocity>
+    <artificial_damping_coeff>     0.0        </artificial_damping_coeff>
+    <artificial_viscosity>         true       </artificial_viscosity>
+    <artificial_viscosity_heating> false      </artificial_viscosity_heating>
+    <do_contact_friction_heating>  false      </do_contact_friction_heating>
+    <create_new_particles>         false      </create_new_particles>
+    <use_momentum_form>            false      </use_momentum_form>
+    <with_color>                   true       </with_color>
+    <use_prescribed_deformation>   true       </use_prescribed_deformation>
+    <prescribed_deformation_file>  TabularCapTest_07_PrescribedDeformation.inp   </prescribed_deformation_file>
+    <minimum_subcycles_for_F>       -2        </minimum_subcycles_for_F>
+    <erosion algorithm = "none"/>
+  </MPM>
+
+  <PhysicalConstants>
+      <gravity>[0,0,0]</gravity>
+  </PhysicalConstants>
+
+  <MaterialProperties>
+    <MPM>
+      <material name="TabularPlasticCap">
+        <density>1050</density>
+        <melt_temp>3695.0</melt_temp>
+        <room_temp>294.0</room_temp>
+        <thermal_conductivity>174.0e-7</thermal_conductivity>
+        <specific_heat>134.0e-8</specific_heat>
+
+        <constitutive_model type="tabular_plasticity_cap">
+
+          <elastic_moduli_model type="tabular">
+            <filename>DrySand_ElasticData.json</filename>
+            <independent_variables>PlasticStrainVol, TotalStrainVol</independent_variables>
+            <dependent_variables>Pressure</dependent_variables>
+            <interpolation type="linear"/>
+            <G0>3500</G0>
+            <nu>0.189</nu>
+          </elastic_moduli_model>
+
+          <plastic_yield_condition type="tabular_cap">
+            <filename>DrySand_YieldData.json</filename>
+            <independent_variables>Pressure</independent_variables>
+            <dependent_variables>SqrtJ2</dependent_variables>
+            <interpolation type="linear"/>
+            <cap_ellipticity_ratio> 0.7 </cap_ellipticity_ratio> 
+          </plastic_yield_condition>
+
+          <internal_variable_model type="tabular_cap">
+            <filename>DrySand_HydrostaticCapData.json</filename>
+            <independent_variables>PlasticStrainVol</independent_variables>
+            <dependent_variables>Pressure</dependent_variables>
+            <interpolation type="linear"/>
+          </internal_variable_model>
+
+          <consistency_bisection_tolerance>1.0e-10</consistency_bisection_tolerance>
+          <yield_surface_radius_scaling_factor> 1000.0 </yield_surface_radius_scaling_factor>
+	      <subcycling_characteristic_number>256</subcycling_characteristic_number>
+        </constitutive_model> 
+
+        <geom_object>
+          <box label = "Plate1">
+            <min>[0.0,0.0,0.0]</min>
+            <max>[1.0,1.0,1.0]</max>
+          </box>
+          <res>[1,1,1]</res>
+          <velocity>[0.0,0.0,0.0]</velocity>
+          <temperature>294</temperature>
+          <color>0</color>
+        </geom_object>
+      </material>
+      <contact>
+        <type>null</type>
+        <materials>[0]</materials>
+        <mu>0.1</mu>
+      </contact>
+    </MPM>
+  </MaterialProperties>
+
+  <Grid>
+      <BoundaryConditions>                      
+      </BoundaryConditions>
+      <Level>
+        <Box label = "1">
+            <lower>[-2.0, -2.0, -2.0]</lower>
+            <upper>[3.0, 3.0, 3.0]</upper>
+            <resolution>[5,5,5]</resolution>
+            <extraCells>[0,0,0]</extraCells>
+            <patches>[1,1,1]</patches>
+        </Box>
+      </Level>
+  </Grid>
+
+</Uintah_specification>
