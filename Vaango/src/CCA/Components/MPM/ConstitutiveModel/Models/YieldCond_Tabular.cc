@@ -486,7 +486,8 @@ YieldCond_Tabular::getClosestPoint(const ModelStateBase* state_input,
   if (d_polyline.size() < 5) {
     closest = getClosestPointTable(state, pt);
   } else {
-    closest = getClosestPointSpline(state, pt);
+    //closest = getClosestPointSpline(state, pt);
+    closest = getClosestPointSplineNewton(state, pt);
   }
 
   cz = closest.x();
@@ -569,6 +570,52 @@ YieldCond_Tabular::getClosestPointSpline(const ModelState_Tabular* state,
               std::ostream_iterator<Point>(std::cout, " "));
     std::cout << std::endl;
     std::cout << "ZRClose = " << z_r_closest << "\n";
+  #endif
+
+  return z_r_closest;
+}
+
+Point
+YieldCond_Tabular::getClosestPointSplineNewton(const ModelState_Tabular* state, 
+                                               const Point& z_r_pt)
+{
+  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
+  double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
+
+  // Convert tabular data to z-rprime coordinates
+  Polyline z_r_table;
+  convertToZRprime(sqrtKG, z_r_table);
+
+  // Find the closest segments
+  Polyline z_r_segments;
+  std::size_t closest_index = 
+    Vaango::Util::getClosestSegments(z_r_pt, z_r_table, z_r_segments);
+
+  // Get the yield surface points for the closest segments
+  // (Fit quadratic B_spline)
+  std::size_t numPts = z_r_table.size();
+  auto seg_start = closest_index - 1;
+  auto seg_end = closest_index + 1;
+  if (closest_index < 2) {
+    seg_start = 0;
+    seg_end = 2;
+  } else if (closest_index > numPts-3) {
+    seg_start = numPts-3;
+    seg_end = numPts-1;
+  }
+
+  #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "closest_index = " << closest_index << "\n";
+    std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
+              << "(0," << numPts-1 << ")\n";
+  #endif
+
+  Point z_r_closest = 
+    Vaango::Util::computeClosestPointQuadraticBSpline(z_r_pt, z_r_table, 
+                                                      seg_start, seg_end);
+
+  #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "ZRClose = " << std::setprecision(16) << z_r_closest << "\n";
   #endif
 
   return z_r_closest;

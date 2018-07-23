@@ -336,6 +336,8 @@ private:
                                      const Uintah::Point& z_r_pt);
   Uintah::Point getClosestPointSpline(const ModelState_Tabular* state,
                                       const Uintah::Point& z_r_pt);
+  Uintah::Point getClosestPointSplineNewton(const ModelState_Tabular* state, 
+                                            const Uintah::Point& z_r_pt);
 
   /* Convert yield function data to z_rprime coordinates */
   void convertToZRprime(const double& sqrtKG, Polyline& z_r_points) const;
