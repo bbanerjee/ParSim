@@ -73,6 +73,18 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
   try {
     ElasticModuli moduli = model.getInitialElasticModuli();
     ASSERT_NEAR(moduli.bulkModulus, 4.44376499e+08, 1);
+
+    ModelState_Tabular state_init;
+    state_init.elasticStrainTensor = Uintah::Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0);
+    state_init.plasticStrainTensor = Uintah::Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0);
+    auto moduli_derivs = model.getElasticModuliAndDerivatives(&state_init);
+    auto KG = moduli_derivs.first;
+    auto dKdG = moduli_derivs.second;
+    EXPECT_NEAR(KG.bulkModulus, 4.44376499e+08, 1);
+    EXPECT_NEAR(KG.shearModulus, 3.33282374e8, 1);
+    EXPECT_NEAR(dKdG.bulkModulus, -5398166832, 1);
+    ASSERT_NEAR(dKdG.shearModulus, -4048625123, 1);
+
   } catch (Uintah::InvalidValue e) {
     std::cout << e.message() << std::endl;
   }
@@ -99,6 +111,14 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
     ASSERT_NEAR(moduli.shearModulus, 4.288700413e+09, 1.0);
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
+
+    auto moduli_derivs = model.getElasticModuliAndDerivatives(&state);
+    auto KG = moduli_derivs.first;
+    auto dKdG = moduli_derivs.second;
+    EXPECT_NEAR(KG.bulkModulus,  5.71826722e+09, 2.0);
+    EXPECT_NEAR(KG.shearModulus, 4.288700413e+09, 1.0);
+    EXPECT_NEAR(dKdG.bulkModulus, -72637200355, 1.0);
+    ASSERT_NEAR(dKdG.shearModulus, -54477900266, 1.0);
   } catch (Uintah::InvalidValue e) {
     std::cout << e.message() << std::endl;
   }
@@ -107,12 +127,20 @@ TEST(ElasticModuliNeuralNetTest, constructorTest)
   state.plasticStrainTensor = Uintah::Matrix3(0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02);
   try {
     ElasticModuli moduli = model.getCurrentElasticModuli(&state);
-    std::cout << "K,G = " << moduli.bulkModulus << "," 
-                << moduli.shearModulus << std::endl;
+    //std::cout << "K,G = " << moduli.bulkModulus << "," 
+    //            << moduli.shearModulus << std::endl;
     //ASSERT_NEAR(moduli.bulkModulus,  93178465.39, 1.0);
     //ASSERT_NEAR(moduli.shearModulus, 69883849.037, 1.0);
     ASSERT_NEAR(moduli.bulkModulus,  35461413.9, 1.0);
     ASSERT_NEAR(moduli.shearModulus, 26596060.4, 1.0);
+
+    auto moduli_derivs = model.getElasticModuliAndDerivatives(&state);
+    auto KG = moduli_derivs.first;
+    auto dKdG = moduli_derivs.second;
+    EXPECT_NEAR(KG.bulkModulus,  35461413.9, 1.0);
+    EXPECT_NEAR(KG.shearModulus, 26596060.4, 1.0);
+    EXPECT_NEAR(dKdG.bulkModulus, -548735260, 1.0);
+    ASSERT_NEAR(dKdG.shearModulus, -411551445, 1.0);
   } catch (Uintah::InvalidValue e) {
     std::cout << e.message() << std::endl;
   }

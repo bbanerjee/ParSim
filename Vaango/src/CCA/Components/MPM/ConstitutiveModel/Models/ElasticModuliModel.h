@@ -85,11 +85,25 @@ public:
   */
   /////////////////////////////////////////////////////////////////////////
   virtual ElasticModuli getInitialElasticModuli() const = 0;
-  virtual ElasticModuli getCurrentElasticModuli(
-    const ModelStateBase* state) = 0; // not const
-                                      // modifies d_bulk
+
+  // not const modifies d_bulk
+  virtual 
+  ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) = 0; 
+
   virtual ElasticModuli getElasticModuliLowerBound() const = 0;
   virtual ElasticModuli getElasticModuliUpperBound() const = 0;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Get the elastic moduli and their derivatives with respect to a single
+           plastic internal variable
+  */
+  /////////////////////////////////////////////////////////////////////////
+  virtual std::pair<ElasticModuli, ElasticModuli>
+    getElasticModuliAndDerivatives(const ModelStateBase* state_input) const 
+  {
+    return std::make_pair(ElasticModuli(0, 0), ElasticModuli(0, 0));
+  }
 
   /////////////////////////////////////////////////////////////////////////
   /*!

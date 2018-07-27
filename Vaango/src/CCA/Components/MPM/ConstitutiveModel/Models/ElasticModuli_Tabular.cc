@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -155,4 +155,39 @@ ElasticModuli_Tabular::computeShearModulus(const double& K) const
              ? 1.5*K*(1.0 - 2.0*nu)/(1.0 + nu) 
              : d_shear.G0;
   return G;
+}
+
+/* Get the elastic moduli and their derivatives with respect to a single
+   plastic internal variable */
+std::pair<ElasticModuli, ElasticModuli>
+ElasticModuli_Tabular::getElasticModuliAndDerivatives(const ModelStateBase* state_input) const
+{
+  const ModelState_Tabular* state =
+    dynamic_cast<const ModelState_Tabular*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_Tabular.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  // Make sure the quantities are positive in compression
+  double ev_e_bar = -(state->elasticStrainTensor).Trace();
+  double ev_p_bar = -(state->plasticStrainTensor).Trace();
+
+  // Compute the elastic moduli
+  double epsilon = 1.0e-8;
+  double K = computeBulkModulus(ev_e_bar, ev_p_bar);
+  double K_min = computeBulkModulus(ev_e_bar, ev_p_bar-epsilon);
+  double K_max = computeBulkModulus(ev_e_bar, ev_p_bar+epsilon);
+  double G = computeShearModulus(K);
+  double G_min = computeShearModulus(K_min);
+  double G_max = computeShearModulus(K_max);
+
+  // Compute derivatives
+  double dK_deps_p = -(K_max - K_min)/(2*epsilon);
+  double dG_deps_p = -(G_max - G_min)/(2*epsilon);
+
+  return std::make_pair(ElasticModuli(K, G),
+                        ElasticModuli(dK_deps_p, dG_deps_p));
 }

@@ -24,6 +24,28 @@ using Uintah::ProblemSetupException;
 using Uintah::InvalidValue;
 using nlohmann::json;
 
+/*
+Data:
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test elastic data"
+  },
+  "Data" : {
+    "PlasticStrainVol" : [0, 0.5, 1.0],
+    "Data" : [{
+      "TotalStrainVol" : [0, 0.1],
+      "Pressure" : [0, 1000]
+    }, {
+      "TotalStrainVol" : [0.5, 0.55, 0.75, 0.85 ],
+      "Pressure" : [0, 1100, 1500, 2000]
+    }, {
+      "TotalStrainVol" : [1.0, 1.45, 1.75],
+      "Pressure" : [0, 2000, 3000]
+    }]
+  }
+}}
+*/
+
 TEST(ElasticModuliTabularTest, constructorTest)
 {
   char currPath[2000];
@@ -71,6 +93,17 @@ TEST(ElasticModuliTabularTest, constructorTest)
   try {
     ElasticModuli moduli = model.getInitialElasticModuli();
     EXPECT_DOUBLE_EQ(moduli.bulkModulus, 1.0e4);
+
+    ModelState_Tabular state_init;
+    state_init.elasticStrainTensor = Uintah::Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0);
+    state_init.plasticStrainTensor = Uintah::Matrix3(0, 0, 0, 0, 0, 0, 0, 0, 0);
+    auto moduli_derivs = model.getElasticModuliAndDerivatives(&state_init);
+    auto KG = moduli_derivs.first;
+    auto dKdG = moduli_derivs.second;
+    EXPECT_DOUBLE_EQ(KG.bulkModulus, 1.0e4);
+    EXPECT_DOUBLE_EQ(KG.shearModulus, 7500);
+    EXPECT_NEAR(dKdG.bulkModulus, -24000, 1.0e-3);
+    ASSERT_NEAR(dKdG.shearModulus, -18000, 1.0e-3);
   } catch (Uintah::InvalidValue e) {
     std::cout << e.message() << std::endl;
   }
@@ -97,7 +130,16 @@ TEST(ElasticModuliTabularTest, constructorTest)
     EXPECT_NEAR(moduli.shearModulus, 6780, 1.0e-7);
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
+    auto moduli_derivs = model.getElasticModuliAndDerivatives(&state);
+    auto KG = moduli_derivs.first;
+    auto dKdG = moduli_derivs.second;
+    EXPECT_NEAR(KG.bulkModulus, 9040, 1.0e-7);
+    EXPECT_NEAR(KG.shearModulus, 6780, 1.0e-7);
+    EXPECT_NEAR(dKdG.bulkModulus, 16001, 1.0);
+    ASSERT_NEAR(dKdG.shearModulus, 12001, 1.0);
   } catch (Uintah::InvalidValue e) {
     std::cout << e.message() << std::endl;
   }
+
+  
 }

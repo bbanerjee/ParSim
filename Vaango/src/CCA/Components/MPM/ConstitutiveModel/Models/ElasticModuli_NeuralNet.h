@@ -79,6 +79,11 @@ public:
                          std::numeric_limits<double>::max());
   }
 
+  /* Get the elastic moduli and their derivatives with respect to a single
+     plastic internal variable */
+  std::pair<ElasticModuli, ElasticModuli>
+    getElasticModuliAndDerivatives(const ModelStateBase* state_input) const override;
+
 private:
 
   template <typename T>
