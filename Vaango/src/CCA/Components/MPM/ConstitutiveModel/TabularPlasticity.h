@@ -219,6 +219,25 @@ protected:
   Uintah::Matrix3 computeTrialStress(const ModelState_Tabular& state_old,
                                      const Uintah::Matrix3& strain_inc);
 
+protected:
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: computeZMatrix
+   * Purpose:
+   *   Compute the elastic-plastic coupling Z matrix
+   * Inputs:
+   *   state 
+   * Returns
+   *   Z matrix
+   */
+  //////////////////////////////////////////////////////////////////////////
+  Matrix3 computeZMatrix(const ElasticModuli& moduli,
+                         const ElasticModuli& derivs,
+                         double p,
+                         const Matrix3& s,
+                         const Matrix3& M) const;
+
 private:
 
   void initializeLocalMPMLabels();
@@ -376,9 +395,7 @@ private:
   bool computeInternalVariables(ModelState_Tabular& state,
                                 const double& delta_eps_p_v);
 
-
-public:
 };
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __MPM_CONSTITUTIVEMODEL_TABULAR_PLASTICITY_H__

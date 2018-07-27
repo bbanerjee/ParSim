@@ -80,6 +80,7 @@
 //#define CHECK_FLOATING_POINT_OVERFLOW
 //#define DEBUG_YIELD_BISECTION_R
 //#define CHECK_ELASTIC_STRAIN
+#define CHECK_RETURN_ALIGNMENT
 
 using namespace Vaango;
 using Uintah::VarLabel;
@@ -1203,18 +1204,9 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   // Compute new stress
   Matrix3 sig_dev = state_k_trial.deviatoricStressTensor;
   if (state_k_trial.sqrt_J2 > 0.0) {
-    // double z_close = I1_closest*one_sqrt_three;
-    // double r_close = sqrtJ2_closest*sqrt_two;
-    // double norm_Identity = sqrt_three;
-    // double norm_s_trial = sig_dev.Norm();
-    // sig_fixed = Identity*(z_close/norm_Identity) +
-    // sig_dev*(r_close/norm_s_trial);
     sig_fixed = one_third * I1_closest * Identity +
                 (sqrtJ2_closest / state_k_trial.sqrt_J2) * sig_dev;
   } else {
-    // double z_close = I1_closest*one_sqrt_three;
-    // double norm_Identity = sqrt_three;
-    // sig_fixed = Identity*(z_close/norm_Identity) + sig_dev;
     sig_fixed = one_third * I1_closest * Identity + sig_dev;
   }
 
@@ -1240,34 +1232,6 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   // Compute volumetric plastic strain and compare with p3
   Matrix3 eps_p = state_k_old.plasticStrainTensor + plasticStrain_inc_fixed;
   double ep_v = eps_p.Trace();
-
-      /*
-      proc0cout << " K_old = " << K_old << " G_old = " << G_old << std::endl;
-      proc0cout << " state_k_trial " << state_k_trial << std::endl;
-      proc0cout << " z_trial = " << z_trial
-                << " r_trial = " << rprime_trial / sqrt_K_over_G_old
-                << std::endl;
-      proc0cout << " z_closest = " << z_closest
-                << " r_closest = " << rprime_closest / sqrt_K_over_G_old
-                << std::endl;
-      proc0cout << "Delta eps = " << strain_inc << std::endl;
-      proc0cout << "sig_n = " << state_k_old.stressTensor << std::endl;
-      proc0cout << "sig_n+1 = " << sig_fixed << std::endl;
-      proc0cout << "Delta sig = " << sig_inc << std::endl;
-      proc0cout << "Delta sig_iso = " << sig_inc_iso << std::endl;
-      proc0cout << "Delta sig_dev = " << sig_inc_dev << std::endl;
-      proc0cout << "Delta eps_e = " << elasticStrain_inc_fixed << std::endl;
-      proc0cout << "Delta eps_p = " << plasticStrain_inc_fixed << std::endl;
-      proc0cout << "I1_J2_trial = [" << state_k_trial.I1 << " "
-                << state_k_trial.sqrt_J2 << "];" << std::endl;
-      proc0cout << "I1_J2_closest = [" << I1_closest
-                << " " << sqrtJ2_closest << "];" << std::endl;
-      proc0cout << "plot([I1 I1_J2_closest(1)],[sqrtJ2 I1_J2_closest(2)],'gx')"
-                << ";" << std::endl;
-      proc0cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) "
-                   "I1_J2_closest(2)],'r-')"
-                << ";" << std::endl;
-      */
 
   if (ep_v < 0.0) {
     if (-ep_v > 10) {
@@ -1427,11 +1391,88 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   }
 #endif
 
+#ifdef CHECK_RETURN_ALIGNMENT
+  ModelState_Tabular state_n(state_k_old);
+  ModelState_Tabular state_np1(state_k_old);
+  state_np1.stressTensor = sig_fixed;
+  state_np1.updateStressInvariants();
+
+  Matrix3 M_n, M_np1;
+  d_yield->eval_df_dsigma(Identity, &state_n, M_n);
+  d_yield->eval_df_dsigma(Identity, &state_np1, M_np1);
+  std::cout << "M_n = " << M_n << std::endl;
+  std::cout << "M_np1 = " << M_np1 << std::endl;
+
+  auto KG_dKdG_n = d_elastic->getElasticModuliAndDerivatives(&state_n);
+  auto KG_dKdG_np1 = d_elastic->getElasticModuliAndDerivatives(&state_np1);
+  auto KG_n = KG_dKdG_n.first;
+  auto KG_np1 = KG_dKdG_np1.first;
+  auto dKdG_n = KG_dKdG_n.second;
+  auto dKdG_np1 = KG_dKdG_np1.second;
+  auto p_n = state_n.I1/3.0;
+  auto p_np1 = state_np1.I1/3.0;
+  auto S_n = state_n.deviatoricStressTensor;
+  auto S_np1 = state_np1.deviatoricStressTensor;
+  Matrix3 Z_n = computeZMatrix(KG_n, dKdG_n, p_n, S_n, M_n);
+  Matrix3 Z_np1 = computeZMatrix(KG_np1, dKdG_np1, p_np1, S_np1, M_np1);
+  std::cout << "Z_n = " << Z_n << std::endl;
+  std::cout << "Z_np1 = " << Z_np1 << std::endl;
+
+  // Compute CM = C:M
+  double mu_n = KG_n.shearModulus;
+  double mu_np1 = KG_np1.shearModulus;
+  double lambda_n = KG_n.bulkModulus - 2.0 / 3.0 * mu_n;
+  double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
+  Matrix3 CM_n = Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
+  Matrix3 CM_np1 = Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
+  std::cout << "CM_n = " << CM_n << std::endl;
+  std::cout << "CM_np1 = " << CM_np1 << std::endl;
+
+  // Compute P = CM + Z;
+  Matrix3 P_n = CM_n + Z_n;
+  Matrix3 P_np1 = CM_np1 + Z_np1;
+  std::cout << "P_n = " << P_n << std::endl;
+  std::cout << "P_np1 = " << P_np1 << std::endl;
+
+  // Compute Gamma
+  Matrix3 sig_trial = state_k_trial.stressTensor;
+  Matrix3 sig_new = sig_fixed;
+  double Gamma_n = (sig_trial - sig_new).Contract(P_n)/P_n.Contract(P_n);
+  double Gamma_np1 = (sig_trial - sig_new).Contract(P_np1)/P_n.Contract(P_np1);
+  std::cout << "Gamma_n = " << Gamma_n << " Gamma_np1 = " << Gamma_np1 << "\n";
+#endif
+
   return true; // isSuccess = true
 
 } //===================================================================
 
 
+/** computeZMatrix 
+  *
+  *  Z = -[1/K dK/dev^p p I + 1/G dG/dev^p S] tr(M)
+  *
+  *  where K = bulk modulus
+  *        G = shear modulus
+  *        ev^p = volumetric plastic strain
+  *        S = deviatoric stress
+  *        M = unit normal to yield surface (associated)
+  *        I = Identity tensor
+  */
+Matrix3 
+TabularPlasticity::computeZMatrix(const ElasticModuli& moduli,
+                                  const ElasticModuli& derivs,
+                                  double p,
+                                  const Matrix3& S,
+                                  const Matrix3& M) const
+{
+  //auto moduli_and_derivs = d_elastic->getElasticModuliAndDerivatives(&state);
+  //auto moduli = moduli_and_derivs.first;
+  //auto derivs = moduli_and_derivs.second;
+  auto K_term = Identity * (-derivs.bulkModulus/moduli.bulkModulus) * p;
+  auto G_term = S * (-derivs.shearModulus/moduli.shearModulus);
+  auto Z = (K_term + G_term) * M.Trace();
+  return Z;
+}
 
 void
 TabularPlasticity::addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
