@@ -32,6 +32,7 @@
 #include <cmath>
 
 //#define DEBUG_CLOSEST_POINT
+#define USE_NEWTON_CLOSEST_POINT
 
 using namespace Vaango;
 using Point = Uintah::Point;
@@ -130,22 +131,50 @@ YieldCond_Tabular::checkInputParameters()
   for (auto ii = 0u; ii < xvals.size(); ii++) {
     points.push_back(Point(xvals[ii], yvals[ii], 0));
   }
-  std::vector<Point> hull = Vaango::Util::convexHull2D(points);
-  //std::copy(hull.begin(), hull.end(),
+  //std::cout << "Orig = ";
+  //std::copy(points.begin(), points.end(),
   //          std::ostream_iterator<Point>(std::cout, " "));
   //std::cout << std::endl;
+
+  std::vector<Point> hull = Vaango::Util::convexHull2D(points);
 
   if (points.size() != hull.size()) {
     std::sort(hull.begin(), hull.end(),
               [](const Point& a, const Point& b) {
                 return a.x() < b.x();
               });
+    //std::cout << "Hull = ";
     //std::copy(hull.begin(), hull.end(),
     //          std::ostream_iterator<Point>(std::cout, " "));
     //std::cout << std::endl;
+
+    // Interpolate points.y() to hull
+    /*
+    for (auto& point : points) {
+      auto xval = point.x();
+      auto end_iter = std::find_if(hull.begin(), hull.end(),
+                                  [&xval](const auto& hull_pt) 
+                                  {
+                                    return xval < hull_pt.x();
+                                  });
+      auto start = *(end_iter-1);
+      auto end = *end_iter;
+      auto t = (xval - start.x())/(end.x() - start.x());
+      point.y((1- t)*start.y() + t*end.y());
+    }
+    */
+
+    // Project points to hull
+    for (auto& point : points) {
+      auto xval = point.x();
+      auto yval = point.y();
+      point = getClosestPoint(hull, xval, yval);
+    }
+
     xvals.clear();
     yvals.clear();
-    for (const auto& point : hull) {
+    //for (const auto& point : hull) {
+    for (const auto& point : points) {
       xvals.push_back(point.x());
       yvals.push_back(point.y());
     }
@@ -251,6 +280,18 @@ YieldCond_Tabular::getClosestPoint(const double& p_bar, const double& sqrtJ2)
   Point curr(p_bar, sqrtJ2, 0.0);
   Point closest;
   Vaango::Util::findClosestPoint(curr, d_polyline, closest);
+  //double distSq = Vaango::Util::findClosestPoint(curr, d_polyline, closest);
+  //std::cout << "closest = " << closest << " distSq = " << distSq << "\n";
+  return closest;
+}
+
+Point 
+YieldCond_Tabular::getClosestPoint(const Polyline& polyline,
+                                   const double& p_bar, const double& sqrtJ2)
+{
+  Point curr(p_bar, sqrtJ2, 0.0);
+  Point closest;
+  Vaango::Util::findClosestPoint(curr, polyline, closest);
   //double distSq = Vaango::Util::findClosestPoint(curr, d_polyline, closest);
   //std::cout << "closest = " << closest << " distSq = " << distSq << "\n";
   return closest;
@@ -486,8 +527,11 @@ YieldCond_Tabular::getClosestPoint(const ModelStateBase* state_input,
   if (d_polyline.size() < 5) {
     closest = getClosestPointTable(state, pt);
   } else {
-    //closest = getClosestPointSpline(state, pt);
+    #ifdef USE_NEWTON_CLOSEST_POINT
     closest = getClosestPointSplineNewton(state, pt);
+    #else
+    closest = getClosestPointSpline(state, pt);
+    #endif
   }
 
   cz = closest.x();

@@ -332,6 +332,8 @@ private:
 
   /* Find the closest point */
   Uintah::Point getClosestPoint(const double& p_bar, const double& sqrtJ2);
+  Uintah::Point getClosestPoint(const Polyline& polyline,
+                                const double& p_bar, const double& sqrtJ2);
   Uintah::Point getClosestPointTable(const ModelState_Tabular* state,
                                      const Uintah::Point& z_r_pt);
   Uintah::Point getClosestPointSpline(const ModelState_Tabular* state,

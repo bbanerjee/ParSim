@@ -1434,11 +1434,11 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   std::cout << "P_n = " << P_n << std::endl;
   std::cout << "P_np1 = " << P_np1 << std::endl;
 
-  // Compute Gamma
+  // Compute Gamma (sig_trial - sig_n+1):M_n+1/(P_n:M_n+1)
   Matrix3 sig_trial = state_k_trial.stressTensor;
   Matrix3 sig_new = sig_fixed;
-  double Gamma_n = (sig_trial - sig_new).Contract(P_n)/P_n.Contract(P_n);
-  double Gamma_np1 = (sig_trial - sig_new).Contract(P_np1)/P_n.Contract(P_np1);
+  double Gamma_n = (sig_trial - sig_new).Contract(M_np1)/P_n.Contract(M_np1);
+  double Gamma_np1 = (sig_trial - sig_new).Contract(M_np1)/P_n.Contract(M_np1);
   std::cout << "Gamma_n = " << Gamma_n << " Gamma_np1 = " << Gamma_np1 << "\n";
 #endif
 

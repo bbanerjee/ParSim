@@ -228,8 +228,10 @@ TEST_F(YieldCondTabularTest, getClosestPoint)
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
   //EXPECT_NEAR(z_close, -664.8953, 1.0e-4);
   //EXPECT_NEAR(rprime_close, 781.4511, 1.0e-4);
-  EXPECT_NEAR(z_close, -661.49690352285734, 1.0e-4);
-  EXPECT_NEAR(rprime_close, 779.2418518119598, 1.0e-4);
+  //EXPECT_NEAR(z_close, -661.49690352285734, 1.0e-4);
+  //EXPECT_NEAR(rprime_close, 779.2418518119598, 1.0e-4);
+  EXPECT_NEAR(z_close, -638.55547416470529, 1.0e-4);
+  EXPECT_NEAR(rprime_close, 794.83369595956685, 1.0e-4);
 
   state.stressTensor = Matrix3(-2000, 4000, 0, 4000, -2000, 0, 0, 0, -2000);
   state.updateStressInvariants();
@@ -256,8 +258,10 @@ TEST_F(YieldCondTabularTest, getClosestPoint)
   model.getClosestPoint(&state, z, rprime, z_close, rprime_close);
   //EXPECT_NEAR(z_close, -1.67258, 1.0e-4);
   //EXPECT_NEAR(rprime_close, 93.47397, 1.0e-4);
-  EXPECT_NEAR(z_close, -2.1370534740033125, 1.0e-4);
-  EXPECT_NEAR(rprime_close, 94.997038899484579, 1.0e-4);
+  //EXPECT_NEAR(z_close, -2.1370534740033125, 1.0e-4);
+  //EXPECT_NEAR(rprime_close, 94.997038899484579, 1.0e-4);
+  EXPECT_NEAR(z_close, -4.8512584455542367, 1.0e-4);
+  EXPECT_NEAR(rprime_close, 105.62075244805428, 1.0e-4);
 
   state.stressTensor = Matrix3(-3000, 1000, 0, 1000, -3000, 0, 0, 0, -3000);
   state.updateStressInvariants();
