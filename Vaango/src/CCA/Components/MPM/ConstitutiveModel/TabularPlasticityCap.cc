@@ -81,6 +81,7 @@
 //#define CHECK_FLOATING_POINT_OVERFLOW
 //#define DEBUG_YIELD_BISECTION_R
 //#define CHECK_ELASTIC_STRAIN
+#define CHECK_RETURN_ALIGNMENT
 
 using namespace Vaango;
 using Uintah::VarLabel;
@@ -360,10 +361,10 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
       // Rate-independent plastic step
       // Divides the strain increment into substeps, and calls substep function
       ModelState_TabularCap state_new;
-      bool isSuccess = rateIndependentPlasticUpdate(
+      Status status = rateIndependentPlasticUpdate(
         DD, delT, idx, pParticleID[idx], state_old, state_new);
 
-      if (isSuccess) {
+      if (status == Status::SUCCESS) {
         pStress_new[idx] =
           state_new.stressTensor; // unrotated stress at end of step
         pEe_new[idx] =
@@ -506,7 +507,7 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
 *   Divides the strain increment into substeps, and calls substep function
 *   All stress values within computeStep are quasistatic.
 */
-bool
+TabularPlasticity::Status
 TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const double& delT,
                                     particleIndex idx, long64 pParticleID,
                                     const ModelState_TabularCap& state_old,
@@ -522,7 +523,7 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
   Matrix3 strain_inc = D * delT;
   if (strain_inc.Norm() < 1.0e-30) {
     state_new = state_old;
-    return true;
+    return Status::SUCCESS;
   }
 
   // Compute the trial stress
@@ -557,7 +558,7 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
               << " ID = " << pParticleID << " because nsub = " << nsub
               << std::endl;
     // bool success  = false;
-    return false;
+    return Status::UNREASONABLE_SUBSTEPS;
   }
 
   // Compute a subdivided time step:
@@ -568,19 +569,23 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
 
   int chi = 1; // subcycle multiplier
   double tlocal = 0.0;
-  bool isSuccess = false;
+  Status status = Status::SUCCESS;
 
   // Set up the initial states for the substeps
   ModelState_TabularCap state_k_old(state_old);
   ModelState_TabularCap state_k_new(state_old);
   do {
 
+    #ifdef CHECK_RETURN_ALIGNMENT
+      std::cout << "nsub = " << nsub << " tlocal = " << tlocal << " dt = " << dt << "\n";
+    #endif
+
     //  Call substep function {sigma_new, ep_new, X_new, Zeta_new}
     //    = computeSubstep(D, dt, sigma_substep, ep_substep, X_substep,
     //    Zeta_substep)
     //  Repeat while substeps continue to be successful
-    isSuccess = computeSubstep(D, dt, state_k_old, state_k_new);
-    if (isSuccess) {
+    status = computeSubstep(D, dt, state_k_old, state_k_new);
+    if (status == Status::SUCCESS) {
 
       tlocal += dt;
 
@@ -604,6 +609,10 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
 
     } else {
 
+      #ifdef CHECK_RETURN_ALIGNMENT
+        std::cout << "dt = " << dt << " chi = " << chi << "\n";
+      #endif
+
       // Substepping has failed. Take tenth the timestep.
       dt /= 10.0;
 
@@ -614,7 +623,7 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
         state_new = state_k_old;
         proc0cout << "Substep failed because chi = " << chi << " > " << CHI_MAX
                   << std::endl;
-        return isSuccess; // isSuccess = false;
+        return status; // isSuccess = false;
       }
 
       proc0cout << "**WARNING** Decreasing substep time increment to " << dt
@@ -641,7 +650,7 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
 //}
 #endif
 
-  return isSuccess;
+  return status;
 }
 
 /**
@@ -777,7 +786,7 @@ TabularPlasticityCap::computeStepDivisions(particleIndex idx, long64 particleID,
  *   Computes the updated stress state for a substep that may be either
  *   elastic, plastic, or partially elastic.
  */
-bool
+TabularPlasticity::Status
 TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
                       const ModelState_TabularCap& state_k_old,
                       ModelState_TabularCap& state_k_new)
@@ -841,7 +850,7 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
               << " ep_v_trial = " << state_k_trial.ep_v << std::endl;
 #endif
 
-    return true; // bool isSuccess = true;
+    return Status::SUCCESS; // bool isSuccess = true;
   }
 
 #ifdef DEBUG_YIELD_BISECTION_R
@@ -857,10 +866,10 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
     0.0); // increment in elastic strain for non-hardening return
   Matrix3 deltaEps_p_fixed(
     0.0); // increment in plastic strain for non-hardening return
-  bool isSuccess =
+  Status isSuccess =
     nonHardeningReturn(deltaEps, state_k_old, state_k_trial, sig_fixed,
                        deltaEps_e_fixed, deltaEps_p_fixed);
-  if (!isSuccess) {
+  if (isSuccess != Status::SUCCESS) {
     proc0cout << "**WARNING** nonHardeningReturn has failed." << std::endl;
     return isSuccess;
   }
@@ -904,7 +913,7 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
  *
  *   NOTE: all values of r and z in this function are transformed!
  */
-bool
+TabularPlasticity::Status
 TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                           const ModelState_TabularCap& state_k_old,
                           const ModelState_TabularCap& state_k_trial,
@@ -1062,7 +1071,7 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                    "I1_J2_closest(2)],'r-')"
                 << ";" << std::endl;
 
-      return false; // The plastic volume strain is too large, try again
+      return Status::TOO_LARGE_PLASTIC_STRAIN; // The plastic volume strain is too large, try again
     }
   }
 
@@ -1189,7 +1198,81 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   }
 #endif
 
-  return true; // isSuccess = true
+#ifdef CHECK_RETURN_ALIGNMENT
+  ModelState_TabularCap state_n(state_k_old);
+  ModelState_TabularCap state_np1(state_k_old);
+  state_np1.stressTensor = sig_fixed;
+  state_np1.updateStressInvariants();
+
+  Matrix3 M_n, M_np1;
+  d_yield->eval_df_dsigma(Identity, &state_n, M_n);
+  d_yield->eval_df_dsigma(Identity, &state_np1, M_np1);
+  double angle_M_n_np1 = std::abs(M_n.Contract(M_np1) - 1.0);
+
+  if (angle_M_n_np1 > 1.0e-6) {
+    std::cout << "M_n = " << M_n << std::endl;
+    std::cout << "M_np1 = " << M_np1 << std::endl;
+
+    auto KG_dKdG_n = d_elastic->getElasticModuliAndDerivatives(&state_n);
+    auto KG_dKdG_np1 = d_elastic->getElasticModuliAndDerivatives(&state_np1);
+    auto KG_n = KG_dKdG_n.first;
+    auto KG_np1 = KG_dKdG_np1.first;
+    auto dKdG_n = KG_dKdG_n.second;
+    auto dKdG_np1 = KG_dKdG_np1.second;
+    auto p_n = state_n.I1/3.0;
+    auto p_np1 = state_np1.I1/3.0;
+    auto S_n = state_n.deviatoricStressTensor;
+    auto S_np1 = state_np1.deviatoricStressTensor;
+    Matrix3 Z_n = computeZMatrix(KG_n, dKdG_n, p_n, S_n, M_n);
+    Matrix3 Z_np1 = computeZMatrix(KG_np1, dKdG_np1, p_np1, S_np1, M_np1);
+    std::cout << "Z_n = " << Z_n << std::endl;
+    std::cout << "Z_np1 = " << Z_np1 << std::endl;
+
+    // Compute CM = C:M
+    double mu_n = KG_n.shearModulus;
+    double mu_np1 = KG_np1.shearModulus;
+    double lambda_n = KG_n.bulkModulus - 2.0 / 3.0 * mu_n;
+    double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
+    Matrix3 CM_n = Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
+    Matrix3 CM_np1 = Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
+    std::cout << "CM_n = " << CM_n << std::endl;
+    std::cout << "CM_np1 = " << CM_np1 << std::endl;
+
+    // Compute P = CM + Z;
+    Matrix3 P_n = CM_n + Z_n;
+    Matrix3 P_np1 = CM_np1 + Z_np1;
+    std::cout << "P_n = " << P_n << std::endl;
+    std::cout << "P_np1 = " << P_np1 << std::endl;
+
+    // Compute Gamma (sig_trial - sig_n+1):M_n+1/(P_n:M_n+1)
+    Matrix3 sig_trial = state_k_trial.stressTensor;
+    Matrix3 sig_new = sig_fixed;
+    double Gamma_n = (sig_trial - sig_new).Contract(M_np1)/P_n.Contract(M_np1);
+    double Gamma_np1 = (sig_trial - sig_new).Contract(M_np1)/P_np1.Contract(M_np1);
+    std::cout << "Gamma_n = " << Gamma_n << " Gamma_np1 = " << Gamma_np1 << "\n";
+
+    // Compute sigma
+    Matrix3 sig_np1 = sig_trial - P_n * Gamma_n;
+    std::cout << "sig_np1 = " << sig_np1 << std::endl;
+    std::cout << "sig_fixed = " << sig_fixed << std::endl;
+
+    // Compute eps_p and ev_v^p
+    Matrix3 Eps_p_n = state_n.plasticStrainTensor + M_n * Gamma_n ;
+    double Eps_p_v_n = state_n.ep_v + M_n.Trace() * Gamma_n;
+    Matrix3 Eps_e_n = strain_inc - Eps_p_n; 
+    Matrix3 Eps_p_np1 = state_n.plasticStrainTensor + M_np1 * Gamma_np1 ;
+    double Eps_p_v_np1 = state_n.ep_v + M_np1.Trace() * Gamma_np1;
+    Matrix3 Eps_e_np1 = strain_inc - Eps_p_np1; 
+    std::cout << "Eps_p_n = " << Eps_p_n << "\n"; 
+    std::cout << "eps_p = " << eps_p << "\n"; 
+    std::cout << "Eps_e_n = " << Eps_e_n << "\n"; 
+    std::cout << "Eps_p_np1 = " << Eps_p_np1 << "\n"; 
+    std::cout << "Eps_e_np1 = " << Eps_e_np1 << "\n"; 
+    std::cout << "Eps_p_v_n = " << Eps_p_v_n 
+              << " Eps_p_v_np1 = " << Eps_p_v_np1 << " ep_v = " << ep_v << "\n";
+  }
+#endif
+  return Status::SUCCESS; // isSuccess = true
 
 } //===================================================================
 
@@ -1201,7 +1284,7 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
  *   bisection algorithm
  *   Returns whether the procedure is sucessful or has failed
  */
-bool
+TabularPlasticity::Status
 TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
                                       const ModelState_TabularCap& state_k_old,
                                       const ModelState_TabularCap& state_k_trial,
@@ -1247,7 +1330,7 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
   // Start loop
   int ii = 1;
   double eta_lo = 0.0, eta_hi = 1.0, eta_mid = 0.5;
-  bool isSuccess = false;
+  Status status = Status::SUCCESS;
 
   while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
 
@@ -1269,11 +1352,11 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
     computeElasticProperties(state_trial_local, deltaEps_p_v_mid);
 
     // Update the internal variables at eta = eta_mid in the local trial state
-    isSuccess = computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
-    if (!isSuccess) {
+    status = computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
+    if (status != Status::SUCCESS) {
       state_k_new = state_k_old;
       proc0cout << "computeInternalVariables has failed." << std::endl;
-      return false;
+      return status;
     }
 
     // Test the yield condition to check whether the yield surface moves beyond
@@ -1291,6 +1374,12 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
       continue;
     }
 
+    #ifdef CHECK_RETURN_ALIGNMENT
+      std::cout << "consistency_iter = " << ii << std::endl;
+      std::cout << "eta_hi = " << eta_hi << std::endl;
+      std::cout << "eta_lo = " << eta_lo << std::endl;
+    #endif
+
     // At this point, state_trial_local contains the trial stress, the plastic
     // strain at the beginning of the timestep, the updated elastic moduli,
     // and the updated values of the internal  variables
@@ -1302,13 +1391,13 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
     state_k_updated.shearModulus = state_trial_local.shearModulus;
     state_k_updated.capX = state_trial_local.capX;
     state_k_updated.updateStressInvariants();
-    isSuccess = nonHardeningReturn(deltaEps_new, state_k_updated,
+    status = nonHardeningReturn(deltaEps_new, state_k_updated,
                                    state_trial_local, sig_fixed_new,
                                    deltaEps_e_fixed_new, deltaEps_p_fixed_new);
-    if (!isSuccess) {
+    if (status != Status::SUCCESS) {
       proc0cout << "nonHardeningReturn inside consistencyBisection failed."
                 << std::endl;
-      return isSuccess;
+      return status;
     }
 
     // Check whether the isotropic component of the return has changed sign, as
@@ -1359,7 +1448,7 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
       state_k_new = state_k_old;
       proc0cout << "Consistency bisection has failed because ii > IMAX." << ii
                 << " > " << IMAX << std::endl;
-      return false; // bool isSuccess = false;
+      return Status::TOO_MANY_CONSISTENCY_ITERATIONS; // bool isSuccess = false;
     }
 
   } // end  while (std::abs(eta_hi - eta_lo) > TOLERANCE);
@@ -1369,11 +1458,11 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
   // variables
   state_k_new = state_k_trial;
   computeElasticProperties(state_k_new, deltaEps_p_v_fixed_new);
-  isSuccess = computeInternalVariables(state_k_new, deltaEps_p_v_fixed_new);
-  if (!isSuccess) {
+  status = computeInternalVariables(state_k_new, deltaEps_p_v_fixed_new);
+  if (status != Status::SUCCESS) {
     state_k_new = state_k_old;
     proc0cout << "computeInternalVariables has failed." << std::endl;
-    return false;
+    return status;
   }
 
   // Update the stress and plastic strain of the new state +  the elastic moduli
@@ -1414,7 +1503,7 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
   #endif
 
   // Return success = true
-  return true; // bool isSuccess = true;
+  return Status::SUCCESS; // bool isSuccess = true;
 }
 
 /**
@@ -1423,7 +1512,7 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
  *   Update an old state with new values of internal variables given the old
  *   state and an increment in volumetric plastic strain
  */
-bool
+TabularPlasticity::Status
 TabularPlasticityCap::computeInternalVariables(ModelState_TabularCap& state,
                                                const double& delta_eps_p_v)
 {
@@ -1436,7 +1525,7 @@ TabularPlasticityCap::computeInternalVariables(ModelState_TabularCap& state,
   // Update the state with new values of the internal variables
   state.capX = X_new;
 
-  return true;
+  return Status::SUCCESS;
 }
 
 void

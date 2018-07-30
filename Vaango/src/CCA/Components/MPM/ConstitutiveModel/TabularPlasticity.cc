@@ -600,10 +600,10 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
       // Rate-independent plastic step
       // Divides the strain increment into substeps, and calls substep function
       ModelState_Tabular state_new;
-      bool isSuccess = rateIndependentPlasticUpdate(
+      Status status = rateIndependentPlasticUpdate(
         DD, delT, idx, pParticleID[idx], state_old, state_new);
 
-      if (isSuccess) {
+      if (status == Status::SUCCESS) {
         pStress_new[idx] =
           state_new.stressTensor; // unrotated stress at end of step
         pEe_new[idx] =
@@ -743,7 +743,7 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
 *   Divides the strain increment into substeps, and calls substep function
 *   All stress values within computeStep are quasistatic.
 */
-bool
+TabularPlasticity::Status
 TabularPlasticity::rateIndependentPlasticUpdate(const Matrix3& D, const double& delT,
                                     particleIndex idx, long64 pParticleID,
                                     const ModelState_Tabular& state_old,
@@ -759,7 +759,7 @@ TabularPlasticity::rateIndependentPlasticUpdate(const Matrix3& D, const double& 
   Matrix3 strain_inc = D * delT;
   if (strain_inc.Norm() < 1.0e-30) {
     state_new = state_old;
-    return true;
+    return Status::SUCCESS;
   }
 
   // Compute the trial stress
@@ -794,7 +794,7 @@ TabularPlasticity::rateIndependentPlasticUpdate(const Matrix3& D, const double& 
               << " ID = " << pParticleID << " because nsub = " << nsub
               << std::endl;
     // bool success  = false;
-    return false;
+    return Status::UNREASONABLE_SUBSTEPS;
   }
 
   // Compute a subdivided time step:
@@ -805,7 +805,7 @@ TabularPlasticity::rateIndependentPlasticUpdate(const Matrix3& D, const double& 
 
   int chi = 1; // subcycle multiplier
   double tlocal = 0.0;
-  bool isSuccess = false;
+  Status isSuccess = Status::SUCCESS;
 
   // Set up the initial states for the substeps
   ModelState_Tabular state_k_old(state_old);
@@ -817,7 +817,7 @@ TabularPlasticity::rateIndependentPlasticUpdate(const Matrix3& D, const double& 
     //    Zeta_substep)
     //  Repeat while substeps continue to be successful
     isSuccess = computeSubstep(D, dt, state_k_old, state_k_new);
-    if (isSuccess) {
+    if (isSuccess == Status::SUCCESS) {
 
       tlocal += dt;
 
@@ -850,7 +850,7 @@ TabularPlasticity::rateIndependentPlasticUpdate(const Matrix3& D, const double& 
         state_new = state_k_old;
         proc0cout << "Substep failed because chi = " << chi << " > " << CHI_MAX
                   << std::endl;
-        return isSuccess; // isSuccess = false;
+        return Status::TOO_SMALL_TIMESTEP; // isSuccess = false;
       }
 
       proc0cout << "**WARNING** Decreasing substep time increment to " << dt
@@ -1019,7 +1019,7 @@ TabularPlasticity::computeStepDivisions(particleIndex idx, long64 particleID,
  *   Computes the updated stress state for a substep that may be either
  *   elastic, plastic, or partially elastic.
  */
-bool
+TabularPlasticity::Status
 TabularPlasticity::computeSubstep(const Matrix3& D, const double& dt,
                       const ModelState_Tabular& state_k_old,
                       ModelState_Tabular& state_k_new)
@@ -1083,7 +1083,7 @@ TabularPlasticity::computeSubstep(const Matrix3& D, const double& dt,
               << " ep_v_trial = " << state_k_trial.ep_v << std::endl;
 #endif
 
-    return true; // bool isSuccess = true;
+    return Status::SUCCESS; // bool isSuccess = true;
   }
 
 #ifdef DEBUG_YIELD_BISECTION_R
@@ -1099,10 +1099,10 @@ TabularPlasticity::computeSubstep(const Matrix3& D, const double& dt,
     0.0); // increment in elastic strain for non-hardening return
   Matrix3 deltaEps_p_fixed(
     0.0); // increment in plastic strain for non-hardening return
-  bool isSuccess =
+  Status isSuccess =
     nonHardeningReturn(deltaEps, state_k_old, state_k_trial, sig_fixed,
                        deltaEps_e_fixed, deltaEps_p_fixed);
-  if (!isSuccess) {
+  if (isSuccess != Status::SUCCESS) {
     proc0cout << "**WARNING** nonHardeningReturn has failed." << std::endl;
     return isSuccess;
   }
@@ -1143,7 +1143,7 @@ TabularPlasticity::computeSubstep(const Matrix3& D, const double& dt,
  *
  *   NOTE: all values of r and z in this function are transformed!
  */
-bool
+TabularPlasticity::Status
 TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                           const ModelState_Tabular& state_k_old,
                           const ModelState_Tabular& state_k_trial,
@@ -1264,7 +1264,7 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                    "I1_J2_closest(2)],'r-')"
                 << ";" << std::endl;
 
-      return false; // The plastic volume strain is too large, try again
+      return Status::TOO_LARGE_PLASTIC_STRAIN; // The plastic volume strain is too large, try again
     }
   }
 
@@ -1400,49 +1400,73 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   Matrix3 M_n, M_np1;
   d_yield->eval_df_dsigma(Identity, &state_n, M_n);
   d_yield->eval_df_dsigma(Identity, &state_np1, M_np1);
-  std::cout << "M_n = " << M_n << std::endl;
-  std::cout << "M_np1 = " << M_np1 << std::endl;
 
-  auto KG_dKdG_n = d_elastic->getElasticModuliAndDerivatives(&state_n);
-  auto KG_dKdG_np1 = d_elastic->getElasticModuliAndDerivatives(&state_np1);
-  auto KG_n = KG_dKdG_n.first;
-  auto KG_np1 = KG_dKdG_np1.first;
-  auto dKdG_n = KG_dKdG_n.second;
-  auto dKdG_np1 = KG_dKdG_np1.second;
-  auto p_n = state_n.I1/3.0;
-  auto p_np1 = state_np1.I1/3.0;
-  auto S_n = state_n.deviatoricStressTensor;
-  auto S_np1 = state_np1.deviatoricStressTensor;
-  Matrix3 Z_n = computeZMatrix(KG_n, dKdG_n, p_n, S_n, M_n);
-  Matrix3 Z_np1 = computeZMatrix(KG_np1, dKdG_np1, p_np1, S_np1, M_np1);
-  std::cout << "Z_n = " << Z_n << std::endl;
-  std::cout << "Z_np1 = " << Z_np1 << std::endl;
+  double angle_M_n_np1 = std::abs(M_n.Contract(M_np1) - 1.0);
+  if (angle_M_n_np1 > 1.0e-6) {
+    std::cout << "M_n = " << M_n << std::endl;
+    std::cout << "M_np1 = " << M_np1 << std::endl;
 
-  // Compute CM = C:M
-  double mu_n = KG_n.shearModulus;
-  double mu_np1 = KG_np1.shearModulus;
-  double lambda_n = KG_n.bulkModulus - 2.0 / 3.0 * mu_n;
-  double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
-  Matrix3 CM_n = Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
-  Matrix3 CM_np1 = Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
-  std::cout << "CM_n = " << CM_n << std::endl;
-  std::cout << "CM_np1 = " << CM_np1 << std::endl;
+    auto KG_dKdG_n = d_elastic->getElasticModuliAndDerivatives(&state_n);
+    auto KG_dKdG_np1 = d_elastic->getElasticModuliAndDerivatives(&state_np1);
+    auto KG_n = KG_dKdG_n.first;
+    auto KG_np1 = KG_dKdG_np1.first;
+    auto dKdG_n = KG_dKdG_n.second;
+    auto dKdG_np1 = KG_dKdG_np1.second;
+    auto p_n = state_n.I1/3.0;
+    auto p_np1 = state_np1.I1/3.0;
+    auto S_n = state_n.deviatoricStressTensor;
+    auto S_np1 = state_np1.deviatoricStressTensor;
+    Matrix3 Z_n = computeZMatrix(KG_n, dKdG_n, p_n, S_n, M_n);
+    Matrix3 Z_np1 = computeZMatrix(KG_np1, dKdG_np1, p_np1, S_np1, M_np1);
+    std::cout << "Z_n = " << Z_n << std::endl;
+    std::cout << "Z_np1 = " << Z_np1 << std::endl;
 
-  // Compute P = CM + Z;
-  Matrix3 P_n = CM_n + Z_n;
-  Matrix3 P_np1 = CM_np1 + Z_np1;
-  std::cout << "P_n = " << P_n << std::endl;
-  std::cout << "P_np1 = " << P_np1 << std::endl;
+    // Compute CM = C:M
+    double mu_n = KG_n.shearModulus;
+    double mu_np1 = KG_np1.shearModulus;
+    double lambda_n = KG_n.bulkModulus - 2.0 / 3.0 * mu_n;
+    double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
+    Matrix3 CM_n = Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
+    Matrix3 CM_np1 = Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
+    std::cout << "CM_n = " << CM_n << std::endl;
+    std::cout << "CM_np1 = " << CM_np1 << std::endl;
 
-  // Compute Gamma (sig_trial - sig_n+1):M_n+1/(P_n:M_n+1)
-  Matrix3 sig_trial = state_k_trial.stressTensor;
-  Matrix3 sig_new = sig_fixed;
-  double Gamma_n = (sig_trial - sig_new).Contract(M_np1)/P_n.Contract(M_np1);
-  double Gamma_np1 = (sig_trial - sig_new).Contract(M_np1)/P_n.Contract(M_np1);
-  std::cout << "Gamma_n = " << Gamma_n << " Gamma_np1 = " << Gamma_np1 << "\n";
+    // Compute P = CM + Z;
+    Matrix3 P_n = CM_n + Z_n;
+    Matrix3 P_np1 = CM_np1 + Z_np1;
+    std::cout << "P_n = " << P_n << std::endl;
+    std::cout << "P_np1 = " << P_np1 << std::endl;
+
+    // Compute Gamma (sig_trial - sig_n+1):M_n+1/(P_n:M_n+1)
+    Matrix3 sig_trial = state_k_trial.stressTensor;
+    Matrix3 sig_new = sig_fixed;
+    double Gamma_n = (sig_trial - sig_new).Contract(M_np1)/P_n.Contract(M_np1);
+    double Gamma_np1 = (sig_trial - sig_new).Contract(M_np1)/P_np1.Contract(M_np1);
+    std::cout << "Gamma_n = " << Gamma_n << " Gamma_np1 = " << Gamma_np1 << "\n";
+
+    // Compute sigma
+    Matrix3 sig_np1 = sig_trial - P_n * Gamma_n;
+    std::cout << "sig_np1 = " << sig_np1 << std::endl;
+    std::cout << "sig_fixed = " << sig_fixed << std::endl;
+
+    // Compute eps_p and ev_v^p
+    Matrix3 Eps_p_n = state_n.plasticStrainTensor + M_n * Gamma_n ;
+    double Eps_p_v_n = state_n.ep_v + M_n.Trace() * Gamma_n;
+    Matrix3 Eps_e_n = strain_inc - Eps_p_n; 
+    Matrix3 Eps_p_np1 = state_n.plasticStrainTensor + M_np1 * Gamma_np1 ;
+    double Eps_p_v_np1 = state_n.ep_v + M_np1.Trace() * Gamma_np1;
+    Matrix3 Eps_e_np1 = strain_inc - Eps_p_np1; 
+    std::cout << "Eps_p_n = " << Eps_p_n << "\n"; 
+    std::cout << "eps_p = " << eps_p << "\n"; 
+    std::cout << "Eps_e_n = " << Eps_e_n << "\n"; 
+    std::cout << "Eps_p_np1 = " << Eps_p_np1 << "\n"; 
+    std::cout << "Eps_e_np1 = " << Eps_e_np1 << "\n"; 
+    std::cout << "Eps_p_v_n = " << Eps_p_v_n 
+              << " Eps_p_v_np1 = " << Eps_p_v_np1 << " ep_v = " << ep_v << "\n";
+  }
 #endif
 
-  return true; // isSuccess = true
+  return Status::SUCCESS; // isSuccess = true
 
 } //===================================================================
 

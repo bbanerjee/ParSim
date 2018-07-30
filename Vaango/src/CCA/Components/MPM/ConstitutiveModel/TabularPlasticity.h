@@ -65,6 +65,23 @@ public:
   static const Uintah::Matrix3 Identity;
   static const Uintah::Matrix3 Zero;
 
+  enum class Status 
+  {
+    SUCCESS,
+    UNREASONABLE_SUBSTEPS,
+    TOO_SMALL_TIMESTEP,
+    TOO_LARGE_PLASTIC_STRAIN,
+    TOO_LARGE_YIELD_NORMAL_CHANGE,
+    TOO_MANY_CONSISTENCY_ITERATIONS,
+    UNREASONABLE_INTERNAL_VARIABLE_VALUE
+  };
+
+  enum class YieldStatus 
+  {
+    IS_ELASTIC,
+    HAS_YIELDED
+  };
+
   // Create datatype for storing model parameters
   struct CMData
   {
@@ -266,7 +283,7 @@ private:
    * Returns: True for success; False for failure
    */
   //////////////////////////////////////////////////////////////////////////
-  bool rateIndependentPlasticUpdate(const Uintah::Matrix3& D,
+  Status rateIndependentPlasticUpdate(const Uintah::Matrix3& D,
                                     const double& delT,
                                     Uintah::particleIndex idx,
                                     Uintah::long64 pParticleID,
@@ -309,7 +326,7 @@ private:
    *   True for success; false for failure
    */
   //////////////////////////////////////////////////////////////////////////
-  bool computeSubstep(const Uintah::Matrix3& D, const double& dt,
+  Status computeSubstep(const Uintah::Matrix3& D, const double& dt,
                       const ModelState_Tabular& state_old,
                       ModelState_Tabular& state_new);
 
@@ -341,7 +358,7 @@ private:
    *   false = failure
    */
   //////////////////////////////////////////////////////////////////////////
-  bool nonHardeningReturn(const Uintah::Matrix3& strain_inc,
+  Status nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                           const ModelState_Tabular& state_old,
                           const ModelState_Tabular& state_trial,
                           Uintah::Matrix3& sig_new,
@@ -369,7 +386,7 @@ private:
    *   isSuccess    = true if success, else false
    */
   //////////////////////////////////////////////////////////////////////////
-  bool consistencyBisectionSimplified(const Matrix3& deltaEps_new,
+  Status consistencyBisectionSimplified(const Matrix3& deltaEps_new,
                                       const ModelState_Tabular& state_old,
                                       const ModelState_Tabular& state_trial,
                                       const Matrix3& deltaEps_e_0,
@@ -392,7 +409,7 @@ private:
    *           false if failure
    */
   //////////////////////////////////////////////////////////////////////////
-  bool computeInternalVariables(ModelState_Tabular& state,
+  Status computeInternalVariables(ModelState_Tabular& state,
                                 const double& delta_eps_p_v);
 
 };

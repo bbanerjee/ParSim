@@ -175,7 +175,7 @@ private:
    * Returns: True for success; False for failure
    */
   //////////////////////////////////////////////////////////////////////////
-  bool rateIndependentPlasticUpdate(const Uintah::Matrix3& D,
+  Status rateIndependentPlasticUpdate(const Uintah::Matrix3& D,
                                     const double& delT,
                                     Uintah::particleIndex idx,
                                     Uintah::long64 pParticleID,
@@ -252,7 +252,7 @@ private:
    *   True for success; false for failure
    */
   //////////////////////////////////////////////////////////////////////////
-  bool computeSubstep(const Uintah::Matrix3& D, const double& dt,
+  Status computeSubstep(const Uintah::Matrix3& D, const double& dt,
                       const ModelState_TabularCap& state_old,
                       ModelState_TabularCap& state_new);
 
@@ -284,7 +284,7 @@ private:
    *   false = failure
    */
   //////////////////////////////////////////////////////////////////////////
-  bool nonHardeningReturn(const Uintah::Matrix3& strain_inc,
+  Status nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                           const ModelState_TabularCap& state_old,
                           const ModelState_TabularCap& state_trial,
                           Uintah::Matrix3& sig_new,
@@ -312,7 +312,7 @@ private:
    *   isSuccess    = true if success, else false
    */
   //////////////////////////////////////////////////////////////////////////
-  bool consistencyBisectionSimplified(const Matrix3& deltaEps_new,
+  Status consistencyBisectionSimplified(const Matrix3& deltaEps_new,
                                       const ModelState_TabularCap& state_old,
                                       const ModelState_TabularCap& state_trial,
                                       const Matrix3& deltaEps_e_0,
@@ -335,7 +335,7 @@ private:
    *           false if failure
    */
   //////////////////////////////////////////////////////////////////////////
-  bool computeInternalVariables(ModelState_TabularCap& state,
+  Status computeInternalVariables(ModelState_TabularCap& state,
                                 const double& delta_eps_p_v);
 
 };

@@ -78,7 +78,7 @@ YieldCond_TabularCap::outputProblemSpec(Uintah::ProblemSpecP& ps)
   yield_ps->setAttribute("type", "tabular_cap");
 
   d_yield.table.outputProblemSpec(yield_ps);
-  ps->appendElement("cap_ellipticity_ratio", d_yield.capEllipticityRatio);
+  yield_ps->appendElement("cap_ellipticity_ratio", d_yield.capEllipticityRatio);
 }
 
 void
