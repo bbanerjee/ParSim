@@ -233,7 +233,14 @@ TEST(YieldCondUtilsTest, linspace)
   EXPECT_EQ(array1.front(), 10);
   EXPECT_EQ(array1.back(), -1);
   EXPECT_NEAR(array1[4], 2.6666667, 1.0e-6);
-  //std::copy(array1.begin(), array1.end(),
+
+  auto array2 = Vaango::Util::linspace(0, 0.5, 1);
+  //std::copy(array2.begin(), array2.end(),
+  //          std::ostream_iterator<double>(std::cout, " "));
+  //std::cout << std::endl;
+
+  array2 = Vaango::Util::linspace(0, 0.5, 5);
+  //std::copy(array2.begin(), array2.end(),
   //          std::ostream_iterator<double>(std::cout, " "));
   //std::cout << std::endl;
 }

@@ -561,94 +561,78 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
     return Status::UNREASONABLE_SUBSTEPS;
   }
 
-  // Compute a subdivided time step:
-  // Loop at least once or until substepping is successful
-  const int CHI_MAX = 5; // max allowed subcycle multiplier
-
-  double dt = delT / nsub; // substep time increment
-
-  int chi = 1; // subcycle multiplier
-  double tlocal = 0.0;
-  Status status = Status::SUCCESS;
-
   // Set up the initial states for the substeps
-  ModelState_TabularCap state_k_old(state_old);
-  ModelState_TabularCap state_k_new(state_old);
+  Status status = Status::SUCCESS;
+  ModelState_TabularCap state_k_old;
+  ModelState_TabularCap state_k_new;
+
+  const int CHI_MAX = 10; // max allowed number of timestep reductions
+  int chi = 0;            // subcycle timestep reduction count
   do {
+    // Compute the substep time increment list 
+    std::vector<double> substeps(nsub, delT/ static_cast<double>(nsub));
 
-    #ifdef CHECK_RETURN_ALIGNMENT
-      std::cout << "nsub = " << nsub << " tlocal = " << tlocal << " dt = " << dt << "\n";
-    #endif
+    // Loop through the substeps
+    state_k_old = state_old;
+    state_k_new = state_old;
+    double tlocal = 0.0;
+    for (const auto dt : substeps) {
 
-    //  Call substep function {sigma_new, ep_new, X_new, Zeta_new}
-    //    = computeSubstep(D, dt, sigma_substep, ep_substep, X_substep,
-    //    Zeta_substep)
-    //  Repeat while substeps continue to be successful
-    status = computeSubstep(D, dt, state_k_old, state_k_new);
-    if (status == Status::SUCCESS) {
-
-      tlocal += dt;
-
-#ifdef WRITE_YIELD_SURF
-      std::cout << "K = " << state_k_new.bulkModulus << std::endl;
-      std::cout << "G = " << state_k_new.shearModulus << std::endl;
-      std::cout << "capX = " << state_k_new.capX << std::endl;
-#endif
-
-      state_k_old = state_k_new;
-
-#ifdef WRITE_YIELD_SURF
-      Matrix3 sig = state_k_new.stressTensor;
-      std::cout << "sigma_new = np.array([[" << sig(0, 0) << "," << sig(0, 1)
-                << "," << sig(0, 2) << "],[" << sig(1, 0) << "," << sig(1, 1)
-                << "," << sig(1, 2) << "],[" << sig(2, 0) << "," << sig(2, 1)
-                << "," << sig(2, 2) << "]])" << std::endl;
-      std::cout << "plot_stress_state(K, G, sigma_trial, sigma_new, 'b')"
-                << std::endl;
-#endif
-
-    } else {
-
-      #ifdef CHECK_RETURN_ALIGNMENT
-        std::cout << "dt = " << dt << " chi = " << chi << "\n";
-      #endif
-
-      // Substepping has failed. Take tenth the timestep.
-      dt /= 10.0;
-
-      // Increase chi to keep track of the number of times the timstep has
-      // been reduced
-      chi += 1;
-      if (chi > CHI_MAX) {
-        state_new = state_k_old;
-        proc0cout << "Substep failed because chi = " << chi << " > " << CHI_MAX
-                  << std::endl;
-        return status; // isSuccess = false;
+      // Compute the substep
+      status = computeSubstep(D, dt, state_k_old, state_k_new);
+      if (status != Status::SUCCESS) {
+         #ifdef CHECK_RETURN_ALIGNMENT
+           std::cout << "dt = " << dt << " chi = " << chi << "\n";
+         #endif
+         nsub *= 2; // Double the number of substeps
+         ++chi;     // Increment the number of dt decreases
+         proc0cout << "**WARNING** Decreasing substep time increment to " << dt
+                   << " because computeSubstep failed." << std::endl;
+         break;
       }
 
-      proc0cout << "**WARNING** Decreasing substep time increment to " << dt
-                << " because computeSubstep failed." << std::endl;
-    }
-#ifdef CHECK_SUBSTEP
-    if (tlocal < delT) {
-      std::cout << "tlocal = " << tlocal << " delT = " << delT
-                << " nsub = " << nsub << std::endl;
-    }
-#endif
-  } while (tlocal < delT);
+      state_k_old = state_k_new;
+      tlocal += dt;
 
-  state_new = state_k_new;
+      #ifdef WRITE_YIELD_SURF
+        std::cout << "K = " << state_k_new.bulkModulus << std::endl;
+        std::cout << "G = " << state_k_new.shearModulus << std::endl;
+        std::cout << "capX = " << state_k_new.capX << std::endl;
+        Matrix3 sig = state_k_new.stressTensor;
+        std::cout << "sigma_new = np.array([[" << sig(0, 0) << "," << sig(0, 1)
+                  << "," << sig(0, 2) << "],[" << sig(1, 0) << "," << sig(1, 1)
+                  << "," << sig(1, 2) << "],[" << sig(2, 0) << "," << sig(2, 1)
+                  << "," << sig(2, 2) << "]])" << std::endl;
+        std::cout << "plot_stress_state(K, G, sigma_trial, sigma_new, 'b')"
+                  << std::endl;
+      #endif
 
-#ifdef CHECK_INTERNAL_VAR_EVOLUTION
-  // if (state_old.particleID == 3377699720593411) {
-  std::cout << "rateIndependentPlasticUpdate: "
-            << " ep_v_old = " << state_old.ep_v
-            << " ep_v_new = " << state_new.ep_v 
-            << " Xbar_old = " << -state_old.capX
-            << " Xbar_new = " << -state_new.capX
-            << std::endl;
-//}
-#endif
+      #ifdef CHECK_SUBSTEP
+        std::cout << "tlocal = " << tlocal << " delT = " << delT
+                  << " nsub = " << nsub << std::endl;
+      #endif
+    } // End substep range for loop
+
+  } while (status != Status::SUCCESS && chi < CHI_MAX);
+
+  if (status == Status::SUCCESS) {
+    state_new = state_k_new;
+
+    #ifdef CHECK_INTERNAL_VAR_EVOLUTION
+      // if (state_old.particleID == 3377699720593411) {
+      std::cout << "rateIndependentPlasticUpdate: "
+                << " ep_v_old = " << state_old.ep_v
+                << " ep_v_new = " << state_new.ep_v 
+                << " Xbar_old = " << -state_old.capX
+                << " Xbar_new = " << -state_new.capX
+                << std::endl;
+      //}
+    #endif
+  } else {
+    state_new = state_k_old;
+    proc0cout << "Substep failed because chi = " << chi << " > " << CHI_MAX
+               << std::endl;
+  }
 
   return status;
 }
@@ -866,18 +850,18 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
     0.0); // increment in elastic strain for non-hardening return
   Matrix3 deltaEps_p_fixed(
     0.0); // increment in plastic strain for non-hardening return
-  Status isSuccess =
+  Status status =
     nonHardeningReturn(deltaEps, state_k_old, state_k_trial, sig_fixed,
                        deltaEps_e_fixed, deltaEps_p_fixed);
-  if (isSuccess != Status::SUCCESS) {
+  if (status != Status::SUCCESS) {
     proc0cout << "**WARNING** nonHardeningReturn has failed." << std::endl;
-    return isSuccess;
+    return status;
   }
 
   // Do "consistency bisection"
   // std::cout << "\t Doing consistencyBisection\n";
   state_k_new = state_k_old;
-  isSuccess = consistencyBisectionSimplified(
+  status = consistencyBisectionSimplified(
     deltaEps, state_k_old, state_k_trial, deltaEps_e_fixed, deltaEps_p_fixed,
     sig_fixed, state_k_new);
 
@@ -896,7 +880,7 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
   std::cout << "sqrt_J2 = " << state_k_new.sqrt_J2 << std::endl;
 #endif
 
-  return isSuccess;
+  return status;
 
 } //===================================================================
 
@@ -921,6 +905,9 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                           Uintah::Matrix3& elasticStrain_inc_fixed,
                           Uintah::Matrix3& plasticStrain_inc_fixed)
 {
+
+  Status status = Status::SUCCESS;
+
   // Compute ratio of bulk and shear moduli
   double K_old = state_k_old.bulkModulus;
   double G_old = state_k_old.shearModulus;
@@ -1012,34 +999,6 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   Matrix3 eps_p = state_k_old.plasticStrainTensor + plasticStrain_inc_fixed;
   double ep_v = eps_p.Trace();
 
-      /*
-      proc0cout << " K_old = " << K_old << " G_old = " << G_old << std::endl;
-      proc0cout << " state_k_trial " << state_k_trial << std::endl;
-      proc0cout << " z_trial = " << z_trial
-                << " r_trial = " << rprime_trial / sqrt_K_over_G_old
-                << std::endl;
-      proc0cout << " z_closest = " << z_closest
-                << " r_closest = " << rprime_closest / sqrt_K_over_G_old
-                << std::endl;
-      proc0cout << "Delta eps = " << strain_inc << std::endl;
-      proc0cout << "sig_n = " << state_k_old.stressTensor << std::endl;
-      proc0cout << "sig_n+1 = " << sig_fixed << std::endl;
-      proc0cout << "Delta sig = " << sig_inc << std::endl;
-      proc0cout << "Delta sig_iso = " << sig_inc_iso << std::endl;
-      proc0cout << "Delta sig_dev = " << sig_inc_dev << std::endl;
-      proc0cout << "Delta eps_e = " << elasticStrain_inc_fixed << std::endl;
-      proc0cout << "Delta eps_p = " << plasticStrain_inc_fixed << std::endl;
-      proc0cout << "I1_J2_trial = [" << state_k_trial.I1 << " "
-                << state_k_trial.sqrt_J2 << "];" << std::endl;
-      proc0cout << "I1_J2_closest = [" << I1_closest
-                << " " << sqrtJ2_closest << "];" << std::endl;
-      proc0cout << "plot([I1 I1_J2_closest(1)],[sqrtJ2 I1_J2_closest(2)],'gx')"
-                << ";" << std::endl;
-      proc0cout << "plot([I1_J2_trial(1) I1_J2_closest(1)],[I1_J2_trial(2) "
-                   "I1_J2_closest(2)],'r-')"
-                << ";" << std::endl;
-      */
-
   if (ep_v < 0.0) {
     if (-ep_v > 10) {
       proc0cout << "**WARNING** Nonhardening return has failed because "
@@ -1071,7 +1030,7 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
                    "I1_J2_closest(2)],'r-')"
                 << ";" << std::endl;
 
-      return Status::TOO_LARGE_PLASTIC_STRAIN; // The plastic volume strain is too large, try again
+      status = Status::TOO_LARGE_PLASTIC_STRAIN; // The plastic volume strain is too large, try again
     }
   }
 
@@ -1210,6 +1169,8 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   double angle_M_n_np1 = std::abs(M_n.Contract(M_np1) - 1.0);
 
   if (angle_M_n_np1 > 1.0e-6) {
+    status = Status::TOO_LARGE_YIELD_NORMAL_CHANGE;
+
     std::cout << "M_n = " << M_n << std::endl;
     std::cout << "M_np1 = " << M_np1 << std::endl;
 
@@ -1272,7 +1233,8 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
               << " Eps_p_v_np1 = " << Eps_p_v_np1 << " ep_v = " << ep_v << "\n";
   }
 #endif
-  return Status::SUCCESS; // isSuccess = true
+
+  return status; // isSuccess = true
 
 } //===================================================================
 
@@ -1375,9 +1337,9 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
     }
 
     #ifdef CHECK_RETURN_ALIGNMENT
-      std::cout << "consistency_iter = " << ii << std::endl;
-      std::cout << "eta_hi = " << eta_hi << std::endl;
-      std::cout << "eta_lo = " << eta_lo << std::endl;
+     // std::cout << "consistency_iter = " << ii << std::endl;
+     // std::cout << "eta_hi = " << eta_hi << std::endl;
+     // std::cout << "eta_lo = " << eta_lo << std::endl;
     #endif
 
     // At this point, state_trial_local contains the trial stress, the plastic

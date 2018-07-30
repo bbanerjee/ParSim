@@ -206,6 +206,8 @@ void
 linspace(const double& start, const double& end, const int& num,
          std::vector<double>& linspaced)
 {
+  linspaced = linspace(start, end, num);
+  /*
   linspaced.clear();
   if (num > 0) {
     double delta = (end - start) / (double)num;
@@ -213,6 +215,7 @@ linspace(const double& start, const double& end, const int& num,
       linspaced.push_back(start + delta * (double)i);
     }
   }
+  */
   return;
 }
 
