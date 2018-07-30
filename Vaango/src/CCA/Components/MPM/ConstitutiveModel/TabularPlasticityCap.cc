@@ -629,9 +629,13 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
       //}
     #endif
   } else {
-    state_new = state_k_old;
-    proc0cout << "Substep failed because chi = " << chi << " > " << CHI_MAX
-               << std::endl;
+    //state_new = state_k_old;
+    state_new = state_k_new;
+    status = Status::SUCCESS;
+    proc0cout << "Substep failed because chi = " << chi << " > " << CHI_MAX << "."
+              << " Proceeding with unconverged solution."
+              << std::endl;
+   
   }
 
   return status;
@@ -1173,6 +1177,7 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
 
     std::cout << "M_n = " << M_n << std::endl;
     std::cout << "M_np1 = " << M_np1 << std::endl;
+    std::cout << "angle =" << angle_M_n_np1 << "\n";
 
     auto KG_dKdG_n = d_elastic->getElasticModuliAndDerivatives(&state_n);
     auto KG_dKdG_np1 = d_elastic->getElasticModuliAndDerivatives(&state_np1);
