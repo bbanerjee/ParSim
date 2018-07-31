@@ -102,14 +102,14 @@ computeOpenUniformQuadraticBSpline(const double& t,
 
 /* Find closest point to open quadratic uniform B-spline approximating a 
    segment of a polyline */
-Uintah::Point
+std::tuple<Uintah::Point, Uintah::Vector>
 computeClosestPointQuadraticBSpline(const Uintah::Point pt,
                                     const std::vector<Uintah::Point>& polyline,
                                     size_t segmentStartIndex,
                                     size_t segmentEndIndex);
 
 /* Find closest point on a quadratic B-spline using Newton iterations */
-Uintah::Point
+std::tuple<double, Uintah::Point, Uintah::Vector, Uintah::Vector>
 findClosestPointToQuadraticBSplineNewton(const Uintah::Point pt, 
                                          const Uintah::Matrix3& splineMatrix,
                                          const Uintah::Point& point_k,

@@ -299,7 +299,7 @@ public:
                                   const ModelStateBase* state_new) = 0;
 
   /**
-   * Function: getClosestPoint
+   * Functions: getClosestPoint and getClosestPointAndTangent
    *
    * Purpose: Get the point on the yield surface that is closest to a given
    * point (2D)
@@ -312,13 +312,23 @@ public:
    * Outputs:
    *  cpx = x-coordinate of closest point on yield surface
    *  cpy = y-coordinate of closest point
+   *  If Tangent:
+   *  tx = x-component of tangent vector
+   *  ty = y-component of tangent vector
    *
    * Returns:
    *   true - if the closest point can be found
    *   false - otherwise
    */
   virtual bool getClosestPoint(const ModelStateBase* state, const double& px,
-                               const double& py, double& cpx, double& cpy)
+                       const double& py, double& cpx, double& cpy) 
+  {
+    return false;
+  }
+  virtual bool getClosestPointAndTangent(const ModelStateBase* state, 
+                                 const double& px, const double& py, 
+                                 double& cpx, double& cpy,
+                                 double& tx, double& ty) 
   {
     return false;
   }

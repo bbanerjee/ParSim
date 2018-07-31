@@ -189,7 +189,7 @@ public:
   }
 
   /**
-   * Function: getClosestPoint
+   * Functions: getClosestPoint and getClosestPointAndTangent
    *
    * Purpose: Get the point on the yield surface that is closest to a given
    * point (2D)
@@ -202,6 +202,9 @@ public:
    * Outputs:
    *  cpx = x-coordinate of closest point on yield surface
    *  cpy = y-coordinate of closest point
+   *  If Tangent:
+   *  tx = x-component of tangent vector
+   *  ty = y-component of tangent vector
    *
    * Returns:
    *   true - if the closest point can be found
@@ -209,6 +212,10 @@ public:
    */
   bool getClosestPoint(const ModelStateBase* state, const double& px,
                        const double& py, double& cpx, double& cpy) override;
+  bool getClosestPointAndTangent(const ModelStateBase* state, 
+                                 const double& px, const double& py, 
+                                 double& cpx, double& cpy,
+                                 double& tx, double& ty) override;
 
   //================================================================================
   // Other options below.
@@ -373,8 +380,9 @@ private:
                                      const Uintah::Point& z_r_pt);
   Uintah::Point getClosestPointSpline(const ModelState_TabularCap* state,
                                       const Uintah::Point& z_r_pt);
-  Uintah::Point getClosestPointSplineNewton(const ModelState_TabularCap* state, 
-                                            const Uintah::Point& z_r_pt);
+  std::tuple<Uintah::Point, Uintah::Vector>
+    getClosestPointSplineNewton(const ModelState_TabularCap* state, 
+                                const Uintah::Point& z_r_pt);
 
   /* Compute the height of the elliptical cap */
   double computeEllipseHeight(const Polyline& p_q_points, double p_cap);
@@ -383,6 +391,15 @@ private:
   void convertToZRprime(const double& sqrtKG, const Polyline& p_q_points, 
                         Polyline& z_r_points) const;
 
+  /* Convert a pbar-sqrtJ2 point to z-rprime coordinates and vice-versa */
+  inline
+  void convertToZRprime(const double& sqrtKG, 
+                        const double& pbar, const double& sqrt_J2,
+                        double& z, double& r_prime) const;
+  inline
+  void revertFromZRprime(const double& sqrtKG, 
+                         const double& z, const double& r_prime,
+                         double& pbar, double& sqrt_J2) const;
 };
 
 } // End namespace Uintah

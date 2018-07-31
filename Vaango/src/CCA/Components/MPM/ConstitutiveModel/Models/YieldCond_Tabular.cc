@@ -654,7 +654,9 @@ YieldCond_Tabular::getClosestPointSplineNewton(const ModelState_Tabular* state,
               << "(0," << numPts-1 << ")\n";
   #endif
 
-  Point z_r_closest = 
+  Point z_r_closest(0, 0, 0);
+  Vector z_r_tangent(0, 0, 0);
+  std::tie(z_r_closest, z_r_tangent) = 
     Vaango::Util::computeClosestPointQuadraticBSpline(z_r_pt, z_r_table, 
                                                       seg_start, seg_end);
 

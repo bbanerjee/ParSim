@@ -287,13 +287,16 @@ computeOpenUniformQuadraticBSpline(const double& t,
 
 /* Find closest point to open quadratic uniform B-spline approximating a 
    segment of a polyline */
-Uintah::Point
+std::tuple<Uintah::Point, Uintah::Vector>
 computeClosestPointQuadraticBSpline(const Uintah::Point pt,
                                     const std::vector<Uintah::Point>& polyline,
                                     size_t segmentStartIndex,
                                     size_t segmentEndIndex)
 {
+  double t;
   Uintah::Point closest(0, 0, 0);
+  Uintah::Vector T(0, 0, 0);
+  Uintah::Vector N(0, 0, 0);
 
   auto n = polyline.size() - 1;
   if (n < 2) {
@@ -301,32 +304,34 @@ computeClosestPointQuadraticBSpline(const Uintah::Point pt,
       closest = polyline[0];
     } else {
       findClosestPoint(pt, polyline, closest);
+      T.x(polyline[1].x() - polyline[0].x());
+      T.y(polyline[1].y() - polyline[0].y());
     }
-    return closest;
+    return std::make_tuple(closest, T);
   }
 
   auto k = 2u;
   for (auto jj = segmentStartIndex; jj < segmentEndIndex - k + 1; jj++) {
     if (jj == 0) {
-      closest = 
+      std::tie(t, closest, T, N) = 
         findClosestPointToQuadraticBSplineNewton(pt, quadBSplineLo, polyline[jj],
                                                  polyline[jj+1], polyline[jj+2]);
     } else if (jj == n-2) {
-      closest = 
+      std::tie(t, closest, T, N) = 
         findClosestPointToQuadraticBSplineNewton(pt, quadBSplineHi, polyline[jj],
                                                  polyline[jj+1], polyline[jj+2]);
     } else {
-      closest = 
+      std::tie(t, closest, T, N) = 
         findClosestPointToQuadraticBSplineNewton(pt, quadBSpline, polyline[jj],
                                                  polyline[jj+1], polyline[jj+2]);
     }
   }
 
-  return closest;
+  return std::make_tuple(closest, T);
 }
 
 /* Find closest point on a quadratic B-spline using Newton iterations */
-Uintah::Point
+std::tuple<double, Uintah::Point, Uintah::Vector, Uintah::Vector>
 findClosestPointToQuadraticBSplineNewton(const Uintah::Point pt, 
                                          const Uintah::Matrix3& splineMatrix,
                                          const Uintah::Point& point_k,
@@ -351,7 +356,7 @@ findClosestPointToQuadraticBSplineNewton(const Uintah::Point pt,
     if (n > 20) break;
   }
 
-  return B;
+  return std::make_tuple(t, B, T, N);
 }
 
 /* Get a point, tangent, and second derivative of open quadratic uniform B-spline 

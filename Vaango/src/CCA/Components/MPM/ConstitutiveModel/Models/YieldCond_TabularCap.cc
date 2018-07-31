@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2018-2018 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -555,7 +555,7 @@ YieldCond_TabularCap::eval_df_dsigma(const Matrix3&,
 //
 // the derivative is
 //     df/dp = -dg/dp * F_c(p, X_p) - g(p) * dF_c/dp 
-//     dg/dp = -dg/dpbar dpbar/dp  = dg/dpbar
+//     dg/dp = dg/dpbar dpbar/dp  = -dg/dpbar
 //     dFc/dp = (1/F_c)*(kappa - p)/(kappa - X_p)^2
 
 //--------------------------------------------------------------
@@ -572,6 +572,45 @@ YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
+#ifdef USE_NEWTON_CLOSEST_POINT
+
+  // Set up limits
+  double p_bar_min = d_I1bar_min/3.0;
+
+  // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
+  double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
+
+  // Compute dg/dp
+  double p_bar = -state->I1/3;
+  double sqrt_J2 = state->sqrt_J2;
+  double z = 0.0, rprime = 0.0;
+  convertToZRprime(sqrtKG, p_bar, sqrt_J2, z, rprime);
+
+  double closest_z = 0.0, closest_rprime = 0.0;
+  double tangent_z = 0.0, tangent_rprime = 0.0;
+  getClosestPointAndTangent(state, z, rprime, closest_z, closest_rprime, 
+                            tangent_z, tangent_rprime);
+
+  double closest_p_bar = 0.0, closest_sqrt_J2 = 0.0;
+  double tangent_p_bar = 0.0, tangent_sqrt_J2 = 0.0;
+  revertFromZRprime(sqrtKG, closest_z, closest_rprime, closest_p_bar, closest_sqrt_J2);
+  revertFromZRprime(sqrtKG, tangent_z, tangent_rprime, tangent_p_bar, tangent_sqrt_J2);
+  //std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2 
+  //          << " closest = " << closest_p_bar << "," << closest_sqrt_J2 
+  //          << " tangent = " << tangent_p_bar << "," << tangent_sqrt_J2 << "\n";
+
+  // Check that the closest point is not at the vertex
+  double epsilon = 1.0e-6;
+  if (closest_p_bar - epsilon < p_bar_min) {
+    return large_number;
+  }
+
+  // Compute df_dp
+  double dg_dpbar = (tangent_p_bar == 0) ? large_number : tangent_sqrt_J2/tangent_p_bar;
+  double df_dp = dg_dpbar;
+
+#else
+
   // Set up limits
   double p_bar_min = d_I1bar_min/3.0;
   double p_bar_max = -state->capX/3.0; 
@@ -586,7 +625,8 @@ YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
   if (closest.x() - epsilon < p_bar_min) {
     return large_number;
   }
-  // std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2 << " closest = " << closest << "\n";
+  // std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2 
+  //           << " closest = " << closest << "\n";
 
   // Compute dg/dp
   DoubleVec1D gg, g_lo, g_hi;
@@ -619,6 +659,7 @@ YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
       df_dp = large_number;
     }
   }
+#endif
 
   return df_dp;
 }
@@ -652,7 +693,7 @@ YieldCond_TabularCap::computeDevStressDerivOfYieldFunction(
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  double df_dJ2 = (state->sqrt_J2 == 0) ? 0.0 : 1/(2*state->sqrt_J2);
+  double df_dJ2 = (state->sqrt_J2 == 0) ? large_number : 1/(2*state->sqrt_J2);
 
   return df_dJ2;
 }
@@ -730,11 +771,11 @@ YieldCond_TabularCap::getYieldConditionRange(const Polyline& yield_surface)
  * (2D)
  * Inputs:
  *  state = current state
- *  z = x-coordinate of point
- *  rprime = y-coordinate of point
+ *  z = z-coordinate of point
+ *  rprime = r'-coordinate of point
  * Outputs:
- *  cz = x-coordinate of closest point on yield surface
- *  crprime = y-coordinate of closest point
+ *  cz = z-coordinate of closest point on yield surface
+ *  crprime = r'-coordinate of closest point
  */
 bool
 YieldCond_TabularCap::getClosestPoint(const ModelStateBase* state_input,
@@ -764,7 +805,8 @@ YieldCond_TabularCap::getClosestPoint(const ModelStateBase* state_input,
     closest = getClosestPointTable(state, pt);
   } else {
     #ifdef USE_NEWTON_CLOSEST_POINT
-    closest = getClosestPointSplineNewton(state, pt);
+    Vector tangent(0.0, 0.0, 0.0);
+    std::tie(closest, tangent) = getClosestPointSplineNewton(state, pt);
     #else
     closest = getClosestPointSpline(state, pt);
     #endif
@@ -779,16 +821,48 @@ YieldCond_TabularCap::getClosestPoint(const ModelStateBase* state_input,
   return true;
 }
 
+bool 
+YieldCond_TabularCap::getClosestPointAndTangent(const ModelStateBase* state_input, 
+                                                const double& z, const double& rprime, 
+                                                double& cz, double& crprime,
+                                                double& tz, double& trprime)
+{
+  const ModelState_TabularCap* state =
+    dynamic_cast<const ModelState_TabularCap*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_TabularCap.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  if (state->yield_f_pts.empty()) {
+    std::ostringstream out;
+    out << "**ERROR** The yield surface with cap polyline has not been initialized.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  Point pt(z, rprime, 0.0);
+  Point closest(0.0, 0.0, 0.0);
+  Vector tangent(0.0, 0.0, 0.0);
+
+  std::tie(closest, tangent) = getClosestPointSplineNewton(state, pt);
+
+  cz = closest.x();
+  crprime = closest.y();
+  
+  tz = tangent.x();
+  trprime = tangent.y();
+
+  return true;
+}
+
 Point
 YieldCond_TabularCap::getClosestPointTable(const ModelState_TabularCap* state, 
                                         const Point& z_r_pt)
 {
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
-
-  // Add cap points to tabular data
-  //Polyline p_q_table;
-  //computeCapPoints(-state->capX, p_q_table);
 
   // Convert tabular data to z-rprime coordinates
   Polyline z_r_table;
@@ -807,10 +881,6 @@ YieldCond_TabularCap::getClosestPointSpline(const ModelState_TabularCap* state,
 {
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
-
-  // Add cap points to tabular data
-  //Polyline p_q_table;
-  //computeCapPoints(-state->capX, p_q_table);
 
   // Convert tabular data to z-rprime coordinates
   Polyline z_r_table;
@@ -885,16 +955,12 @@ YieldCond_TabularCap::getClosestPointSpline(const ModelState_TabularCap* state,
   return z_r_closest;
 }
 
-Point
+std::tuple<Point, Vector>
 YieldCond_TabularCap::getClosestPointSplineNewton(const ModelState_TabularCap* state, 
                                                   const Point& z_r_pt)
 {
   // Get the bulk and shear moduli and compute sqrt(3/2 K/G)
   double sqrtKG = std::sqrt(1.5 * state->bulkModulus / state->shearModulus);
-
-  // Add cap points to tabular data
-  //Polyline p_q_table;
-  //computeCapPoints(-state->capX, p_q_table);
 
   // Convert tabular data to z-rprime coordinates
   Polyline z_r_table;
@@ -924,15 +990,18 @@ YieldCond_TabularCap::getClosestPointSplineNewton(const ModelState_TabularCap* s
               << "(0," << numPts-1 << ")\n";
   #endif
 
-  Point z_r_closest = 
+  Point z_r_closest(0, 0, 0);
+  Vector z_r_tangent(0, 0, 0);
+  std::tie(z_r_closest, z_r_tangent) = 
     Vaango::Util::computeClosestPointQuadraticBSpline(z_r_pt, z_r_table, 
                                                       seg_start, seg_end);
 
   #ifdef DEBUG_CLOSEST_POINT
     std::cout << "ZRClose = " << std::setprecision(16) << z_r_closest << "\n";
+    std::cout << "ZRTangent = " << std::setprecision(16) << z_r_tangent << "\n";
   #endif
 
-  return z_r_closest;
+  return std::make_tuple(z_r_closest, z_r_tangent);
 }
 
 /* Convert yield function data to z_rprime coordinates */
@@ -950,7 +1019,29 @@ YieldCond_TabularCap::convertToZRprime(const double& sqrtKG,
     z_r_points.push_back(Point(z, rprime, 0));
   }
 }
+
+/* Convert a pbar-sqrtJ2 point to z-rprime coordinates */
+inline
+void 
+YieldCond_TabularCap::convertToZRprime(const double& sqrtKG, 
+  const double& p_bar, const double& sqrt_J2,
+  double& z, double& r_prime) const
+{
+  z = -sqrt_three * p_bar;
+  r_prime = sqrt_two * sqrt_J2 * sqrtKG;
+}
                    
+/* Revert a z-prime point to pbar-sqrtJ2 coordinates */
+inline
+void 
+YieldCond_TabularCap::revertFromZRprime(const double& sqrtKG, 
+  const double& z, const double& r_prime,
+  double& p_bar, double& sqrt_J2) const
+{
+  p_bar = -z / sqrt_three;
+  sqrt_J2 = r_prime /( sqrt_two * sqrtKG);
+}
+
 //--------------------------------------------------------------
 // Other yield condition functions (not used)
 
