@@ -20,6 +20,22 @@ POST_PROCESS_LIST = [
   'TabularTest_03a_UniaxialStrainLoadUnloadDPLin.ups',
   'TabularTest_04_UniaxialStrainLoadUnloadDPNonLin.ups',
   'TabularTest_05_UniaxialStrainLoadUnloadNonLinDPNonLin.ups',
+  'TabularTest_06_HydrostaticCompression.ups',
+  'TabularTest_06_HydrostaticCompressionNN.ups',
+  'TabularTest_07_HydrostaticLoadUnload.ups',
+  'TabularTest_07_HydrostaticLoadUnloadNN.ups',
+  'TabularTest_08_UniaxialStrainCompresson.ups',
+  'TabularTest_08_UniaxialStrainCompressonNN.ups',
+  'TabularTest_09_UniaxialStrainTension.ups',
+  'TabularTest_09_UniaxialStrainTensionNN.ups',
+  'TabularTest_10_UniaxialStrainRotate.ups',
+  'TabularTest_10_UniaxialStrainRotateNN.ups',
+  'TabularTest_11_TriaxialStrainTension.ups',
+  'TabularTest_11_TriaxialStrainTensionNN.ups',
+  'TabularTest_12_UniaxialStrainLoadUnload.ups',
+  'TabularTest_12_UniaxialStrainLoadUnloadNN.ups',
+  'TabularTest_13_MultiaxialStrainLoadUnload.ups',
+  'TabularTest_13_MultiaxialStrainLoadUnloadNN.ups',
 ]
 
 #get uintah/src path as enviornmental variable
@@ -34,7 +50,7 @@ uintah_src_path = os.path.abspath(".")
 # A link to partextract is also kept at the same place
 #uintah_exe = os.path.abspath(os.environ['UINTAH_EXE'])
 #partextract_exe = os.path.abspath(os.environ['PARTEXTRACT_EXE'])
-uintah_exe = os.path.abspath("../../vaango_dbg")
+uintah_exe = os.path.abspath("../../vaango_opt")
 partextract_exe = os.path.abspath("../../partextract")
 
 #construct default paths based on location of uintah_src_path
@@ -54,14 +70,31 @@ for test in POST_PROCESS_LIST:
   TEST_LIST.append(default_inputs_path + '/' + test)
 
 TEST_LIST = [
-  TEST_LIST[0], #Test 01
-  TEST_LIST[1], #Test 01a
-  TEST_LIST[2], #Test 01b
-  TEST_LIST[3], #Test 02
-  TEST_LIST[4], #Test 03
-  TEST_LIST[5], #Test 03a
-  TEST_LIST[6], #Test 04
-  TEST_LIST[7], #Test 05
+#  TEST_LIST[0], #Test 01
+#  TEST_LIST[1], #Test 01a
+#  TEST_LIST[2], #Test 01b
+#  TEST_LIST[3], #Test 02
+#  TEST_LIST[4], #Test 03
+#  TEST_LIST[5], #Test 03a
+#  TEST_LIST[6], #Test 04
+#  TEST_LIST[7], #Test 05
+#  TEST_LIST[8], #Test 06
+#  TEST_LIST[9], #Test 06 (NN)
+#  TEST_LIST[10], #Test 07
+#  TEST_LIST[11], #Test 07 (NN)
+#  TEST_LIST[12], #Test 08
+#  TEST_LIST[13], #Test 08 (NN)
+#  TEST_LIST[14], #Test 09
+#  TEST_LIST[15], #Test 09 (NN)
+#  TEST_LIST[16], #Test 10
+#  TEST_LIST[17], #Test 10 (NN)
+#  TEST_LIST[18], #Test 11
+#  TEST_LIST[19], #Test 11 (NN)
+#  TEST_LIST[20], #Test 12
+#  TEST_LIST[21], #Test 12 (NN)
+  TEST_LIST[22], #Test 13
+#  TEST_LIST[23], #Test 13 (NN)
+
   ]
 ### --------------------- ###
 
@@ -147,19 +180,19 @@ def run_test(ups_path,WITH_MPI=False,NUM_PROCS=1,RESTART=False,DAMPING_OFF_NEW_E
   F_ups.close()    
   print("UDA path = ", uda_path)
   
-  #Change current working directory to root path
-  os.chdir(root_path)
-  #Open runlog
-  F_log = open(root_path+'/TEST_RUNLOG_'+os.path.split(ups_path)[1],"w")
-  #Construct the argument list for subprocess to use.
-  if not(WITH_MPI) or int(NUM_PROCS)<=1:
-    args = [uintah_exe,os.path.split(ups_path)[1]]
-  else:
-    args = ['mpirun','-np',str(int(NUM_PROCS)), uintah_exe,'-mpi',os.path.split(ups_path)[1]]
-
   if POST_PROC_ONLY:
     uda_path = uda_path+'.000'
   else:
+    #Change current working directory to root path
+    os.chdir(root_path)
+    #Open runlog
+    F_log = open(root_path+'/TEST_RUNLOG_'+os.path.split(ups_path)[1],"w")
+    #Construct the argument list for subprocess to use.
+    if not(WITH_MPI) or int(NUM_PROCS)<=1:
+      args = [uintah_exe,os.path.split(ups_path)[1]]
+    else:
+      args = ['mpirun','-np',str(int(NUM_PROCS)), uintah_exe,'-mpi',os.path.split(ups_path)[1]]
+
     #Run the test and wait for it to complete
     tmp = sub_proc.Popen(args,stdout=F_log,stderr=sub_proc.PIPE)
     dummy = tmp.wait()
@@ -266,9 +299,9 @@ if __name__ == "__main__":
         run_all_tests()      
   
   TEST_METHODS = False
-  #POST_PROC_ONLY = True
-  POST_PROC_ONLY = False
-  CLEAR_UDA = True
-  #CLEAR_UDA = False
+  POST_PROC_ONLY = True
+  #POST_PROC_ONLY = False
+  #CLEAR_UDA = True
+  CLEAR_UDA = False
   run_all_tests(TEST_METHODS, CLEAR_UDA, POST_PROC_ONLY)
 

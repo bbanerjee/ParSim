@@ -3,7 +3,7 @@
 <Uintah_specification>
 
   <Meta>
-      <title>TabularPlasticityCap verification test 08: Triaxial strain tension (NN)</title>
+      <title>TabularPlasticityCap verification test 08: Triaxial strain tension</title>
   </Meta>
 
   <SimulationComponent type="mpm" />
@@ -11,13 +11,13 @@
   <Time>
       <maxTime>5</maxTime>
       <initTime>0.0</initTime>
-      <delt_min>1.0e-6</delt_min>
-      <delt_max>1.0e-4</delt_max>
+      <delt_min>1.0e-9</delt_min>
+      <delt_max>1.0e-3</delt_max>
       <timestep_multiplier>0.3</timestep_multiplier>
   </Time>
 
   <DataArchiver>
-      <filebase>TabularCapTest_08_MultiaxialStrainLoadUnloadNN.uda</filebase>
+      <filebase>TabularCapTest_08_MultiaxialStrainLoadUnload.uda</filebase>
       <outputInitTimestep/>
       <outputTimestepInterval>1</outputTimestepInterval>
       <save label = "p.x"/>
@@ -70,12 +70,11 @@
 
         <constitutive_model type="tabular_plasticity_cap">
 
-          <elastic_moduli_model type="neural_net">
-            <filename>mlp_regression_keras_total_tension_scaled.h5</filename>
-            <min_strain>0.0</min_strain>
-            <max_strain>0.5</max_strain>
-            <min_pressure>0.0</min_pressure>
-            <max_pressure>1.0e6</max_pressure>
+          <elastic_moduli_model type="tabular">
+            <filename>DrySand_ElasticData.json</filename>
+            <independent_variables>PlasticStrainVol, TotalStrainVol</independent_variables>
+            <dependent_variables>Pressure</dependent_variables>
+            <interpolation type="linear"/>
             <G0>3500</G0>
             <nu>0.189</nu>
           </elastic_moduli_model>

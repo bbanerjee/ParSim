@@ -3,21 +3,21 @@
 <Uintah_specification>
 
   <Meta>
-      <title>TabularPlasticityCap verification test 08: Triaxial strain tension (NN)</title>
+      <title>TabularPlasticity verification test 10: Uniaxial strain with rotation (NN)</title>
   </Meta>
 
   <SimulationComponent type="mpm" />
 
   <Time>
-      <maxTime>5</maxTime>
-      <initTime>0.0</initTime>
-      <delt_min>1.0e-6</delt_min>
-      <delt_max>1.0e-4</delt_max>
-      <timestep_multiplier>0.3</timestep_multiplier>
+      <maxTime> 1.1 </maxTime>
+      <initTime> 0.0 </initTime>
+      <delt_min> 1.0e-6 </delt_min>
+      <delt_max> 1.0e-4 </delt_max>
+      <timestep_multiplier> 0.3 </timestep_multiplier>
   </Time>
 
   <DataArchiver>
-      <filebase>TabularCapTest_08_MultiaxialStrainLoadUnloadNN.uda</filebase>
+      <filebase>TabularTest_10_UniaxialStrainRotateNN.uda</filebase>
       <outputInitTimestep/>
       <outputTimestepInterval>1</outputTimestepInterval>
       <save label = "p.x"/>
@@ -29,7 +29,6 @@
       <save label = "g.mass"/>
       <save label = "p.deformationGradient"/>
       <save label = "g.acceleration"/>
-      <save label = "p.capX"/>
       <save label = "p.elasticVolStrain"/>
       <save label = "p.plasticVolStrain"/>
       <checkpoint cycle = "2" timestepInterval = "4000"/>
@@ -50,7 +49,7 @@
     <use_momentum_form>            false      </use_momentum_form>
     <with_color>                   true       </with_color>
     <use_prescribed_deformation>   true       </use_prescribed_deformation>
-    <prescribed_deformation_file>  TabularCapTest_08_PrescribedDeformation.inp   </prescribed_deformation_file>
+    <prescribed_deformation_file>  TabularTest_10_PrescribedDeformation.inp   </prescribed_deformation_file>
     <minimum_subcycles_for_F>       -2        </minimum_subcycles_for_F>
     <erosion algorithm = "none"/>
   </MPM>
@@ -61,14 +60,14 @@
 
   <MaterialProperties>
     <MPM>
-      <material name="TabularPlasticCap">
+      <material name="TabularPlastic">
         <density>1050</density>
         <melt_temp>3695.0</melt_temp>
         <room_temp>294.0</room_temp>
         <thermal_conductivity>174.0e-7</thermal_conductivity>
         <specific_heat>134.0e-8</specific_heat>
 
-        <constitutive_model type="tabular_plasticity_cap">
+        <constitutive_model type="tabular_plasticity">
 
           <elastic_moduli_model type="neural_net">
             <filename>mlp_regression_keras_total_tension_scaled.h5</filename>
@@ -80,20 +79,12 @@
             <nu>0.189</nu>
           </elastic_moduli_model>
 
-          <plastic_yield_condition type="tabular_cap">
+          <plastic_yield_condition type="tabular">
             <filename>DrySand_YieldData.json</filename>
             <independent_variables>Pressure</independent_variables>
             <dependent_variables>SqrtJ2</dependent_variables>
             <interpolation type="linear"/>
-            <cap_ellipticity_ratio> 0.7 </cap_ellipticity_ratio> 
           </plastic_yield_condition>
-
-          <internal_variable_model type="tabular_cap">
-            <filename>DrySand_HydrostaticCapData.json</filename>
-            <independent_variables>PlasticStrainVol</independent_variables>
-            <dependent_variables>Pressure</dependent_variables>
-            <interpolation type="linear"/>
-          </internal_variable_model>
 
           <consistency_bisection_tolerance>1.0e-10</consistency_bisection_tolerance>
           <yield_surface_radius_scaling_factor> 1000.0 </yield_surface_radius_scaling_factor>
@@ -120,7 +111,7 @@
   </MaterialProperties>
 
   <Grid>
-      <BoundaryConditions>
+      <BoundaryConditions>                      
       </BoundaryConditions>
       <Level>
         <Box label = "1">

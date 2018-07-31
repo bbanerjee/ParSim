@@ -163,19 +163,19 @@ def run_test(ups_path,WITH_MPI=False,NUM_PROCS=1,RESTART=False,DAMPING_OFF_NEW_E
   F_ups.close()    
   print("UDA path = ", uda_path)
   
-  #Change current working directory to root path
-  os.chdir(root_path)
-  #Open runlog
-  F_log = open(root_path+'/TEST_RUNLOG_'+os.path.split(ups_path)[1],"w")
-  #Construct the argument list for subprocess to use.
-  if not(WITH_MPI) or int(NUM_PROCS)<=1:
-    args = [uintah_exe,os.path.split(ups_path)[1]]
-  else:
-    args = ['mpirun','-np',str(int(NUM_PROCS)), uintah_exe,'-mpi',os.path.split(ups_path)[1]]
-
   if POST_PROC_ONLY:
     uda_path = uda_path+'.000'
   else:
+    #Change current working directory to root path
+    os.chdir(root_path)
+    #Open runlog
+    F_log = open(root_path+'/TEST_RUNLOG_'+os.path.split(ups_path)[1],"w")
+    #Construct the argument list for subprocess to use.
+    if not(WITH_MPI) or int(NUM_PROCS)<=1:
+      args = [uintah_exe,os.path.split(ups_path)[1]]
+    else:
+      args = ['mpirun','-np',str(int(NUM_PROCS)), uintah_exe,'-mpi',os.path.split(ups_path)[1]]
+
     #Run the test and wait for it to complete
     tmp = sub_proc.Popen(args,stdout=F_log,stderr=sub_proc.PIPE)
     dummy = tmp.wait()
@@ -282,8 +282,8 @@ if __name__ == "__main__":
         run_all_tests()      
   
   TEST_METHODS = False
-  POST_PROC_ONLY = True
-  #POST_PROC_ONLY = False
+  #POST_PROC_ONLY = True
+  POST_PROC_ONLY = False
   #CLEAR_UDA = True
   CLEAR_UDA = False
   run_all_tests(TEST_METHODS, CLEAR_UDA, POST_PROC_ONLY)
