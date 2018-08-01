@@ -20,11 +20,12 @@ function table_yield_cap()
   X = 3*10000;
 
   [p, q] = compute_cap(p, q, R, X);
-  p_q = [p' q']
-  plot(p, q, '-', 'Color', [116,179,101]/255, 'LineWidth', 2);
+  p_q = [p' q'];
+  plot(p, q, '-', 'Color', [116,179,101]/255, 'LineWidth', 2, 'Markersize', 8); hold on;
+  plot(p, q, '.', 'Color', [0, 0, 0], 'LineWidth', 2, 'Markersize', 8);
   
   %axis equal
-  %p_q = [p' q']
+  p_q = [p' q']
   %print -dpdf tabular_yield_hull.pdf
 
   plot_stress_states(p_orig, q_orig, R, X, fig)
@@ -51,6 +52,32 @@ function [p_cap, q_cap] = compute_cap(p, q, R, X)
   p_max = X/3
   kappa = p_min + R*(p_max - p_min)
   
+  count = 0;
+  p_end = p(length(p));
+  if (p_max > p(length(p)))
+    p_start = p(length(p)-1);
+    q_start = q(length(p)-1);
+    q_end = q(length(p));
+    dp = p_end - p_start;
+    curr_p = p_end + dp;
+    t = (curr_p - p_start)/dp;
+    curr_q = (1 - t)*q_start + t*q_end;
+    count = count+1;
+    p_ext(count) = curr_p;
+    q_ext(count) = curr_q;
+    while (curr_p < p_max)
+      curr_p = curr_p + dp;
+      t = (curr_p - p_start)/dp;
+      curr_q = (1 - t)*q_start + t*q_end;
+      count = count+1;
+      p_ext(count) = curr_p;
+      q_ext(count) = curr_q;
+    endwhile
+    p = [p p_ext];
+    q = [q q_ext];
+  endif
+  plot(p_ext, q_ext, '-', 'Color', [216,179,101]/255, 'LineWidth', 2); hold on;
+
   startp = 1;
   for i = 1:length(p)
     if (kappa > p(i)) 
@@ -259,14 +286,14 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
     xgrad(i-1) = (xplus - xminus)/0.02;
     ygrad(i-1) = (yplus - yminus)/0.02;
   end
-  %[xgrad' ygrad']
+  %x_y_grad = [xgrad' ygrad']
 
   for i=1:length(xgrad)
     len = sqrt(xgrad(i)^2 + ygrad(i)^2);
     xgrad(i) = xgrad(i)/len;
     ygrad(i) = ygrad(i)/len;
   end
-  %[xgrad' ygrad']
+  %x_y_grad = [xgrad' ygrad']
 
   gradx = gradient(xx(:));
   grady = gradient(yy(:));
@@ -293,12 +320,14 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
     xnormal(i-1) = (xplus - xminus)/0.02;
     ynormal(i-1) = (yplus - yminus)/0.02;
   end
-  %[xnormal' ynormal']
+  %x_y_normal = [xnormal' ynormal']
 
   for i=1:length(xnormal)
     len = sqrt(xnormal(i)^2 + ynormal(i)^2);
-    xnormal(i) = xnormal(i)/len;
-    ynormal(i) = ynormal(i)/len;
+    if (len > 0) 
+      xnormal(i) = xnormal(i)/len;
+      ynormal(i) = ynormal(i)/len;
+    endif
   end
 
   ggradx = gradient(gradx);
@@ -309,10 +338,10 @@ function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
   ddr = [Tgradx Tgrady];
 
   %size(ddr);
-  N = [];
-  for i=1:size(ddr)(1)
-   N(i,:) = ddr(i,:)/(sqrt(ddr(i,1)^2 + ddr(i,2)^2));
-  end
+  %N = [];
+  %for i=1:size(ddr)(1)
+   %N(i,:) = ddr(i,:)/(sqrt(ddr(i,1)^2 + ddr(i,2)^2));
+  %end
   %N
  
   xnormal = -xnormal;

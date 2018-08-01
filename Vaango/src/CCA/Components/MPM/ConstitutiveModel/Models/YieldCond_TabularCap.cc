@@ -336,6 +336,8 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
     return 1.0;
   }
 
+//#ifdef USE_NEWTON_CLOSEST_POINT
+//#else
   // Compute the value of the yield function for the yield function without cap
   DoubleVec1D gg;
   try {
@@ -370,6 +372,8 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
             << " sqrtJ2 = " << state->sqrt_J2 << std::endl;
   #endif
 
+//#endif
+
   return -1.0;
 }
 
@@ -382,15 +386,41 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
   double p_bar_max = X_bar/3.0; 
   double kappa_bar = p_bar_min + d_yield.capEllipticityRatio * (p_bar_max - p_bar_min);
 
+  // Create a working copy of the polyline
+  Polyline polyline_copy;
+  std::copy(d_polyline.begin(), d_polyline.end(), std::back_inserter(polyline_copy));
+
+  // Add further points beyond available data using linear interpolation if needed
+  auto end = polyline_copy.end() - 1;
+  double p_bar_end = (*end).x();
+  if (p_bar_max > p_bar_end) {
+    auto start = end - 1;
+    double p_bar_start = (*start).x();
+    double sqrtJ2_start = (*start).y();
+    double sqrtJ2_end = (*end).y();
+    double dp_bar = p_bar_end - p_bar_start;
+    double curr_p_bar = p_bar_end + dp_bar;
+    double t = (curr_p_bar - p_bar_start)/dp_bar;
+    double curr_sqrt_J2 = (1 - t)*sqrtJ2_start + t *sqrtJ2_end;
+    polyline_copy.emplace_back(Point(curr_p_bar, curr_sqrt_J2, 0.0));
+    while (curr_p_bar < p_bar_max) {
+      curr_p_bar += dp_bar;
+      t = (curr_p_bar - p_bar_start)/dp_bar;
+      curr_sqrt_J2 = (1 - t)*sqrtJ2_start + t *sqrtJ2_end;
+      polyline_copy.emplace_back(Point(curr_p_bar, curr_sqrt_J2, 0.0));
+    }
+  }
+
   // Find the location of the p_bar_start, p_bar_end on table polyline
   // (ignore first two points)
-  auto end_iter = std::find_if(d_polyline.begin()+2, d_polyline.end(),
+  auto end_iter = std::find_if(polyline_copy.begin()+2, polyline_copy.end(),
                                 [&kappa_bar](const auto& point) 
                                 {
                                     return kappa_bar < point.x();
                                 });
+
   // Copy the relevant points
-  std::copy(d_polyline.begin(), end_iter, std::back_inserter(p_q_all));
+  std::copy(polyline_copy.begin(), end_iter, std::back_inserter(p_q_all));
   //std::cout << "p_q_cone = ";
   //std::copy(p_q_all.begin(), p_q_all.end(),
   //            std::ostream_iterator<Point>(std::cout, " "));
@@ -400,8 +430,8 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
   std::vector<double> theta_vec;
   Vaango::Util::linspace(0, M_PI/2, 18, theta_vec);
   std::reverse(std::begin(theta_vec), std::end(theta_vec));
-  theta_vec.push_back(-5*M_PI/180.0);
-  theta_vec.push_back(-10*M_PI/180.0);
+  theta_vec.emplace_back(-5*M_PI/180.0);
+  theta_vec.emplace_back(-10*M_PI/180.0);
 
   // Set up ellipse axes
   double a = p_bar_max - kappa_bar;
@@ -412,7 +442,7 @@ YieldCond_TabularCap::computeCapPoints(double X_bar, Polyline& p_q_all)
     auto x = kappa_bar + a * cos(theta);
     auto b = computeEllipseHeight(d_polyline, x);
     auto y = b * sin(theta);
-    p_q_cap.push_back(Uintah::Point(x, y, 0));
+    p_q_cap.emplace_back(Uintah::Point(x, y, 0));
   }
 
   // Concatenate the two vectors
@@ -1067,7 +1097,8 @@ YieldCond_TabularCap::getClosestPointSplineNewton(const ModelState_TabularCap* s
 
   Point z_r_closest(0, 0, 0);
   Vector z_r_tangent(0, 0, 0);
-  std::tie(z_r_closest, z_r_tangent) = 
+  Vector z_r_dtangent(0, 0, 0);
+  std::tie(z_r_closest, z_r_tangent, z_r_dtangent) = 
     Vaango::Util::computeClosestPointQuadraticBSpline(z_r_pt, z_r_table, 
                                                       seg_start, seg_end);
 

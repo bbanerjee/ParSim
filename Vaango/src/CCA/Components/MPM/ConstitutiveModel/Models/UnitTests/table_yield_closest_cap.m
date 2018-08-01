@@ -224,6 +224,31 @@ function [p_cap, q_cap] = compute_cap(p, q, R, X)
   p_max = X/3
   kappa = p_min + R*(p_max - p_min)
   
+  count = 0;
+  p_end = p(length(p));
+  if (p_max > p(length(p)))
+    p_start = p(length(p)-1);
+    q_start = q(length(p)-1);
+    q_end = q(length(p));
+    dp = p_end - p_start;
+    curr_p = p_end + dp;
+    t = (curr_p - p_start)/dp;
+    curr_q = (1 - t)*q_start + t*q_end;
+    count = count+1;
+    p_ext(count) = curr_p;
+    q_ext(count) = curr_q;
+    while (curr_p < p_max)
+      curr_p = curr_p + dp;
+      t = (curr_p - p_start)/dp;
+      curr_q = (1 - t)*q_start + t*q_end;
+      count = count+1;
+      p_ext(count) = curr_p;
+      q_ext(count) = curr_q;
+    endwhile
+    p = [p p_ext];
+    q = [q q_ext];
+  endif
+
   startp = 1;
   for i = 1:length(p)
     if (kappa > p(i)) 
@@ -232,6 +257,31 @@ function [p_cap, q_cap] = compute_cap(p, q, R, X)
   end
   pp = p(1:startp);
   qq = q(1:startp);
+
+  count = 0;
+  if (p_max > p(length(p)))
+    p_start = p(length(p)-1);
+    p_end = p(length(p));
+    q_start = q(length(p)-1);
+    q_end = q(length(p));
+    dp = p_end - p_start;
+    curr_p = p_start + dp;
+    t = (curr_p - p_start)/dp;
+    curr_q = (1 - t)*q_start + t*q_end;
+    count = count+1;
+    p_ext(count) = curr_p;
+    q_ext(count) = curr_q;
+    while (curr_p < p_max)
+      curr_p = curr_p + dp;
+      t = (curr_p - p_start)/dp;
+      curr_q = (1 - t)*q_start + t*q_end;
+      count = count+1;
+      p_ext(count) = curr_p;
+      q_ext(count) = curr_q;
+    endwhile
+    pp = [pp p_ext];
+    qq = [qq q_ext];
+  endif
 
   theta = linspace(-5*pi/180, pi/2, 20);
   theta = fliplr(theta);
