@@ -26,6 +26,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticity.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
 
 // Namespace Uintah::
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
@@ -88,20 +89,6 @@ using Uintah::Matrix3;
 using std::ostringstream;
 using std::endl;
 
-const double TabularPlasticity::one_third(1.0 / 3.0);
-const double TabularPlasticity::two_third(2.0 / 3.0);
-const double TabularPlasticity::four_third = 4.0 / 3.0;
-const double TabularPlasticity::sqrt_two = std::sqrt(2.0);
-const double TabularPlasticity::one_sqrt_two = 1.0 / sqrt_two;
-const double TabularPlasticity::sqrt_three = std::sqrt(3.0);
-const double TabularPlasticity::one_sqrt_three = 1.0 / sqrt_three;
-const double TabularPlasticity::one_sixth = 1.0 / 6.0;
-const double TabularPlasticity::one_ninth = 1.0 / 9.0;
-const double TabularPlasticity::pi = M_PI;
-const double TabularPlasticity::pi_fourth = 0.25 * pi;
-const double TabularPlasticity::pi_half = 0.5 * pi;
-const Matrix3 TabularPlasticity::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-const Matrix3 TabularPlasticity::Zero(0.0);
 
 // MPM needs three functions to interact with ICE in MPMICE
 // 1) p = f(rho) 2) rho = g(p) 3) C = 1/K(rho)
@@ -373,7 +360,7 @@ TabularPlasticity::initializeCMData(const Patch* patch, const MPMMaterial* matl,
   for (const particleIndex& pidx : *pset) {
     pRemove[pidx] = 0;
     pdTdt[pidx] = 0.0;
-    pStress[pidx] = Identity;
+    pStress[pidx] = Util::Identity;
     pElasticStrain[pidx].set(0.0);
     pElasticVolStrain[pidx] = 0.0;
     pPlasticStrain[pidx].set(0.0);
@@ -422,7 +409,7 @@ TabularPlasticity::computeStableTimestep(const Patch* patch, const MPMMaterial* 
     // Compute wave speed + particle velocity at each particle,
     // store the maximum
     c_dil =
-      std::sqrt((bulk + four_third * shear) * (pVolume[idx] / pMass[idx]));
+      std::sqrt((bulk + Util::four_third * shear) * (pVolume[idx] / pMass[idx]));
 
     // std::cout << "K = " << bulk << " G = " << shear << " c_dil = " << c_dil
     // << std::endl;
@@ -666,7 +653,7 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
         proc0cout << "Resetting [F]=[I] for this step and deleting particle"
                   << " idx = " << idx << " particleID = " << pParticleID[idx]
                   << std::endl;
-        Identity.polarDecompositionRMB(UU, RR);
+        Util::Identity.polarDecompositionRMB(UU, RR);
       } else {
         FF_new.polarDecompositionRMB(UU, RR);
       }
@@ -684,7 +671,7 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
       double bulk = state_new.bulkModulus;
       double shear = state_new.shearModulus;
       double rho_cur = pMass[idx] / pVolume[idx];
-      c_dil = sqrt((bulk + four_third * shear) / rho_cur);
+      c_dil = sqrt((bulk + Util::four_third * shear) / rho_cur);
       // std::cout << "K = " << bulk << " G = " << shear << " c_dil = " << c_dil
       // << std::endl;
       WaveSpeed =
@@ -694,7 +681,7 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
 
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
-        double dx_ave = (dx.x() + dx.y() + dx.z()) * one_third;
+        double dx_ave = (dx.x() + dx.y() + dx.z()) * Util::one_third;
         double c_bulk = sqrt(bulk / rho_cur);
         p_q[idx] = artificialBulkViscosity(DD.Trace(), c_bulk, rho_cur, dx_ave);
       } else {
@@ -909,7 +896,7 @@ TabularPlasticity::computeTrialStress(const ModelState_Tabular& state_old,
 {
   // Compute the trial stress
   Matrix3 stress_old = state_old.stressTensor;
-  Matrix3 deps_iso = Identity * (one_third * strain_inc.Trace());
+  Matrix3 deps_iso = Util::Identity * (Util::one_third * strain_inc.Trace());
   Matrix3 deps_dev = strain_inc - deps_iso;
   Matrix3 stress_trial = stress_old + deps_iso * (3.0 * state_old.bulkModulus) +
                          deps_dev * (2.0 * state_old.shearModulus);
@@ -1186,7 +1173,7 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   // Compute updated invariants of total stress
   double I1_closest = std::sqrt(3.0) * z_closest;
   double sqrtJ2_closest =
-    1.0 / (sqrt_K_over_G_old * sqrt_two) * rprime_closest;
+    1.0 / (sqrt_K_over_G_old * Util::sqrt_two) * rprime_closest;
 
 #ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "I1_closest = " << I1_closest 
@@ -1204,19 +1191,19 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   // Compute new stress
   Matrix3 sig_dev = state_k_trial.deviatoricStressTensor;
   if (state_k_trial.sqrt_J2 > 0.0) {
-    sig_fixed = one_third * I1_closest * Identity +
+    sig_fixed = Util::one_third * I1_closest * Util::Identity +
                 (sqrtJ2_closest / state_k_trial.sqrt_J2) * sig_dev;
   } else {
-    sig_fixed = one_third * I1_closest * Identity + sig_dev;
+    sig_fixed = Util::one_third * I1_closest * Util::Identity + sig_dev;
   }
 
   // Compute new plastic strain increment
   //  d_ep = d_e - [C]^-1:(sigma_new-sigma_old)
   Matrix3 sig_inc = sig_fixed - state_k_old.stressTensor;
-  Matrix3 sig_inc_iso = one_third * sig_inc.Trace() * Identity;
+  Matrix3 sig_inc_iso = Util::one_third * sig_inc.Trace() * Util::Identity;
   Matrix3 sig_inc_dev = sig_inc - sig_inc_iso;
   elasticStrain_inc_fixed =
-    sig_inc_iso * (one_third / K_old) + sig_inc_dev * (0.5 / G_old);
+    sig_inc_iso * (Util::one_third / K_old) + sig_inc_dev * (0.5 / G_old);
   plasticStrain_inc_fixed = strain_inc - elasticStrain_inc_fixed;
 
 #ifdef CHECK_ELASTIC_STRAIN
@@ -1273,7 +1260,7 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   state_plastic_rate.stressTensor = sig_fixed;
   state_plastic_rate.updateStressInvariants();
   Matrix3 df_dsigma;
-  d_yield->eval_df_dsigma(Identity, &state_plastic_rate, df_dsigma);
+  d_yield->eval_df_dsigma(Util::Identity, &state_plastic_rate, df_dsigma);
   double lhs = plasticStrain_inc_fixed.Contract(df_dsigma);
   double rhs = df_dsigma.Contract(df_dsigma);
   double plastic_rate = lhs/rhs;
@@ -1398,8 +1385,8 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   state_np1.updateStressInvariants();
 
   Matrix3 M_n, M_np1;
-  d_yield->eval_df_dsigma(Identity, &state_n, M_n);
-  d_yield->eval_df_dsigma(Identity, &state_np1, M_np1);
+  d_yield->eval_df_dsigma(Util::Identity, &state_n, M_n);
+  d_yield->eval_df_dsigma(Util::Identity, &state_np1, M_np1);
 
   double angle_M_n_np1 = std::abs(M_n.Contract(M_np1) - 1.0);
   if (angle_M_n_np1 > 1.0e-6) {
@@ -1426,8 +1413,8 @@ TabularPlasticity::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
     double mu_np1 = KG_np1.shearModulus;
     double lambda_n = KG_n.bulkModulus - 2.0 / 3.0 * mu_n;
     double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
-    Matrix3 CM_n = Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
-    Matrix3 CM_np1 = Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
+    Matrix3 CM_n = Util::Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
+    Matrix3 CM_np1 = Util::Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
     std::cout << "CM_n = " << CM_n << std::endl;
     std::cout << "CM_np1 = " << CM_np1 << std::endl;
 
@@ -1492,7 +1479,7 @@ TabularPlasticity::computeZMatrix(const ElasticModuli& moduli,
   //auto moduli_and_derivs = d_elastic->getElasticModuliAndDerivatives(&state);
   //auto moduli = moduli_and_derivs.first;
   //auto derivs = moduli_and_derivs.second;
-  auto K_term = Identity * (-derivs.bulkModulus/moduli.bulkModulus) * p;
+  auto K_term = Util::Identity * (-derivs.bulkModulus/moduli.bulkModulus) * p;
   auto G_term = S * (-derivs.shearModulus/moduli.shearModulus);
   auto Z = (K_term + G_term) * M.Trace();
   return Z;

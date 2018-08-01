@@ -293,6 +293,24 @@ private:
 
   //////////////////////////////////////////////////////////////////////////
   /**
+   * Method: firstOrderHardeningUpdate
+   * Purpose:
+   *   Find the updated stress for hardening plasticity using a first-order
+   *   update based on the velocity of the yield surface
+   *
+   *   Returns whether the procedure is sucessful or has failed
+   */
+  //////////////////////////////////////////////////////////////////////////
+  Status firstOrderHardeningUpdate(const Matrix3& deltaEps_new,
+                                   const ModelState_TabularCap& state_k_old,
+                                   const ModelState_TabularCap& state_k_trial,
+                                   const Matrix3& deltaEps_e_fixed,
+                                   const Matrix3& deltaEps_p_fixed,
+                                   const Matrix3& sig_fixed,
+                                   ModelState_TabularCap& state_k_new);
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
    * Method: consistencyBisectionSimplified
    * Purpose:
    *   Find the updated stress for hardening plasticity using the consistency

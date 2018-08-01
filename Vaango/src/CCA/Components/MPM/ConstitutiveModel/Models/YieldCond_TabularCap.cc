@@ -40,12 +40,6 @@ using Point = Uintah::Point;
 using Vector = Uintah::Vector;
 using Matrix3 = Uintah::Matrix3;
 
-const double YieldCond_TabularCap::sqrt_two = std::sqrt(2.0);
-const double YieldCond_TabularCap::sqrt_three = std::sqrt(3.0);
-const double YieldCond_TabularCap::one_sqrt_three = 1.0 / sqrt_three;
-const double YieldCond_TabularCap::large_number = 1.0e100;
-const Matrix3 YieldCond_TabularCap::One(1,0,0,0,1,0,0,0,1);
-
 YieldCond_TabularCap::YieldCond_TabularCap(Uintah::ProblemSpecP& ps)
   : d_yield(ps)
 {
@@ -529,12 +523,12 @@ YieldCond_TabularCap::eval_df_dsigma(const Matrix3&,
 
   //std::cout << "df_dp = " << df_dp << " df_dJ2 = " << df_dJ2 << "\n";
 
-  Matrix3 p_term = One * (df_dp / 3.0);
+  Matrix3 p_term = Util::Identity * (df_dp / 3.0);
   Matrix3 s_term = state->deviatoricStressTensor * (df_dJ2);
 
   df_dsigma = p_term + s_term;
 
-  df_dsigma /= df_dsigma.Norm();
+  //df_dsigma /= df_dsigma.Norm();
 
   //std::cout << "df_dsigma = " << df_dsigma << "\n";
 
@@ -557,7 +551,6 @@ YieldCond_TabularCap::eval_df_dsigma(const Matrix3&,
 //     df/dp = -dg/dp * F_c(p, X_p) - g(p) * dF_c/dp 
 //     dg/dp = dg/dpbar dpbar/dp  = -dg/dpbar
 //     dFc/dp = (1/F_c)*(kappa - p)/(kappa - X_p)^2
-
 //--------------------------------------------------------------
 double
 YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
@@ -584,7 +577,7 @@ YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
   double p_bar = -state->I1/3;
   double sqrt_J2 = state->sqrt_J2;
   double z = 0.0, rprime = 0.0;
-  convertToZRprime(sqrtKG, p_bar, sqrt_J2, z, rprime);
+  Vaango::Util::convertToZRprime(sqrtKG, p_bar, sqrt_J2, z, rprime);
 
   double closest_z = 0.0, closest_rprime = 0.0;
   double tangent_z = 0.0, tangent_rprime = 0.0;
@@ -593,8 +586,10 @@ YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
 
   double closest_p_bar = 0.0, closest_sqrt_J2 = 0.0;
   double tangent_p_bar = 0.0, tangent_sqrt_J2 = 0.0;
-  revertFromZRprime(sqrtKG, closest_z, closest_rprime, closest_p_bar, closest_sqrt_J2);
-  revertFromZRprime(sqrtKG, tangent_z, tangent_rprime, tangent_p_bar, tangent_sqrt_J2);
+  Vaango::Util::revertFromZRprime(sqrtKG, closest_z, closest_rprime, 
+    closest_p_bar, closest_sqrt_J2);
+  Vaango::Util::revertFromZRprime(sqrtKG, tangent_z, tangent_rprime, 
+    tangent_p_bar, tangent_sqrt_J2);
   //std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2 
   //          << " closest = " << closest_p_bar << "," << closest_sqrt_J2 
   //          << " tangent = " << tangent_p_bar << "," << tangent_sqrt_J2 << "\n";
@@ -602,11 +597,12 @@ YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
   // Check that the closest point is not at the vertex
   double epsilon = 1.0e-6;
   if (closest_p_bar - epsilon < p_bar_min) {
-    return large_number;
+    return Util::large_number;
   }
 
   // Compute df_dp
-  double dg_dpbar = (tangent_p_bar == 0) ? large_number : tangent_sqrt_J2/tangent_p_bar;
+  double dg_dpbar = (tangent_p_bar == 0) ? 
+    Util::large_number : tangent_sqrt_J2/tangent_p_bar;
   double df_dp = dg_dpbar;
 
 #else
@@ -623,7 +619,7 @@ YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
   double epsilon = 1.0e-6;
   Point closest = getClosestPoint(state->yield_f_pts, p_bar, state->sqrt_J2);
   if (closest.x() - epsilon < p_bar_min) {
-    return large_number;
+    return Util::large_number;
   }
   // std::cout << "p_bar = " << p_bar << " sqrtJ2 = " << state->sqrt_J2 
   //           << " closest = " << closest << "\n";
@@ -656,7 +652,7 @@ YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
     } else {
       //Fc = std::numeric_limits<double>::min();
       //dFc_dp = std::numeric_limits<double>::max();
-      df_dp = large_number;
+      df_dp = Util::large_number;
     }
   }
 #endif
@@ -693,9 +689,46 @@ YieldCond_TabularCap::computeDevStressDerivOfYieldFunction(
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  double df_dJ2 = (state->sqrt_J2 == 0) ? large_number : 1/(2*state->sqrt_J2);
+  double df_dJ2 = (state->sqrt_J2 == 0) ? 
+    Util::large_number : 1/(2*state->sqrt_J2);
 
   return df_dJ2;
+}
+
+//--------------------------------------------------------------
+// Compute df/deps^p_v
+//
+//   for the yield function
+//     f := sqrt(J2) - g(p)*Fc(p, X_p) = 0
+//   where
+//     J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
+//     g(pbar) := table,  pbar = -p
+//     Fc^2 = 1 - (kappa - p)^2/(kappa - X_p)^2
+//     kappa = p_tension - R*(p_tension - X_p)
+//
+//   the derivative is
+//     df/deps^p_v = df/dX_p*dX_p/deps^p_v
+//
+//     df/dX_p = -g(p)*dFc/dX_p
+//     dX_p/deps^p_v = table interpolation
+//
+// Requires:  internal variable model
+//--------------------------------------------------------------
+double
+YieldCond_TabularCap::computeVolStrainDerivOfYieldFunction(
+  const ModelStateBase* state_input, const PressureModel*,
+  const ShearModulusModel*, const InternalVariableModel* capX)
+{
+  const ModelState_TabularCap* state =
+    dynamic_cast<const ModelState_TabularCap*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_TabularCap.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  return 0.0;
 }
 
 /**
@@ -1014,32 +1047,10 @@ YieldCond_TabularCap::convertToZRprime(const double& sqrtKG,
   for (const auto& pt : p_q_points) {
     double p_bar = pt.x();
     double sqrt_J2 = pt.y();
-    double z = -sqrt_three * p_bar;
-    double rprime = sqrt_two * sqrt_J2 * sqrtKG;
+    double z = 0.0, rprime = 0.0;
+    Vaango::Util::convertToZRprime(sqrtKG, p_bar, sqrt_J2, z, rprime);
     z_r_points.push_back(Point(z, rprime, 0));
   }
-}
-
-/* Convert a pbar-sqrtJ2 point to z-rprime coordinates */
-inline
-void 
-YieldCond_TabularCap::convertToZRprime(const double& sqrtKG, 
-  const double& p_bar, const double& sqrt_J2,
-  double& z, double& r_prime) const
-{
-  z = -sqrt_three * p_bar;
-  r_prime = sqrt_two * sqrt_J2 * sqrtKG;
-}
-                   
-/* Revert a z-prime point to pbar-sqrtJ2 coordinates */
-inline
-void 
-YieldCond_TabularCap::revertFromZRprime(const double& sqrtKG, 
-  const double& z, const double& r_prime,
-  double& p_bar, double& sqrt_J2) const
-{
-  p_bar = -z / sqrt_three;
-  sqrt_J2 = r_prime /( sqrt_two * sqrtKG);
 }
 
 //--------------------------------------------------------------
@@ -1121,26 +1132,6 @@ YieldCond_TabularCap::computeDevStrainDerivOfDfDq(
   std::ostringstream out;
   out << "**ERROR** computeDevStrainDerivOfDfDq should not be called by "
       << " models that use the Tabular yield criterion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-
-  return 0.0;
-}
-
-//--------------------------------------------------------------
-// Compute df/depse_v
-//   df/depse_v =
-//
-// Requires:  Equation of state, shear modulus model, internal variable model
-//--------------------------------------------------------------
-double
-YieldCond_TabularCap::computeVolStrainDerivOfYieldFunction(
-  const ModelStateBase* state_input, const PressureModel* eos,
-  const ShearModulusModel* shear, const InternalVariableModel*)
-{
-  std::ostringstream out;
-  out
-    << "**ERROR** computeVolStrainDerivOfYieldFunction should not be called by "
-    << " models that use the Tabular yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return 0.0;
@@ -1283,7 +1274,7 @@ YieldCond_TabularCap::eval_df_dphi(const Matrix3&, const ModelStateBase*)
   return 0.0;
 }
 
-/*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
+/*! Compute h_alpha  where d/dt(ep) = d/dt(gamma) h_{\alpha} */
 double
 YieldCond_TabularCap::eval_h_alpha(const Matrix3&, const ModelStateBase*)
 {

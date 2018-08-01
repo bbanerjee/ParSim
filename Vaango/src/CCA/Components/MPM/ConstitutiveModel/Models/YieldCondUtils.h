@@ -9,6 +9,29 @@ namespace Vaango {
 
 namespace Util {
 
+/* Constants */
+static const double sqrt_two = std::sqrt(2.0);
+static const double one_sqrt_two = 1.0 / sqrt_two;
+static const double sqrt_three = std::sqrt(3.0);
+static const double one_sqrt_three = 1.0 / sqrt_three;
+static const double sqrt_two_third = std::sqrt(2.0/3.0);
+static const double one_third(1.0 / 3.0);
+static const double two_third(2.0 / 3.0);
+static const double four_third = 4.0 / 3.0;
+static const double one_sixth = 1.0 / 6.0;
+static const double one_ninth = 1.0 / 9.0;
+static const double pi = M_PI;
+static const double pi_fourth = 0.25 * pi;
+static const double pi_half = 0.5 * pi;
+static const double large_number = 1.0e100;
+static const Uintah::Matrix3 Identity(1,0,0,0,1,0,0,0,1);
+static const Uintah::Matrix3 Zero(0.0);
+
+/* Quadratic B-spline matrices */
+static Uintah::Matrix3 quadBSplineLo(2, 0, 0, -4, 4, 0, 2, -3, 1);
+static Uintah::Matrix3 quadBSplineHi(1, 1, 0, -2, 2, 0, 1, -3, 2);
+static Uintah::Matrix3 quadBSpline(1, 1, 0, -2, 2, 0, 1, -2, 1);
+
 /* Type trait for static asserts in class methods that should not be called */
 template <typename T>
 struct DoNotUse : std::false_type
@@ -73,11 +96,6 @@ linspace(const double& start, const double& end, const int& num,
 std::vector<double> 
 linspace(double start, double end, int num);
 
-/* Quadratic B-spline matrices */
-static Uintah::Matrix3 quadBSplineLo(2, 0, 0, -4, 4, 0, 2, -3, 1);
-static Uintah::Matrix3 quadBSplineHi(1, 1, 0, -2, 2, 0, 1, -3, 2);
-static Uintah::Matrix3 quadBSpline(1, 1, 0, -2, 2, 0, 1, -2, 1);
-
 /* Create open quadratic uniform B-spline approximating a polyline */
 void
 computeOpenUniformQuadraticBSpline(const std::vector<Uintah::Point>& polyline,
@@ -127,7 +145,27 @@ computeOpenUniformQuadraticBSpline(const double& t,
                                    Uintah::Point& B,
                                    Uintah::Vector& T,
                                    Uintah::Vector& N);
+
+/* Convert a pbar-sqrtJ2 point to z-rprime coordinates and vice-versa */
+inline
+void convertToZRprime(const double& sqrtKG, 
+                      const double& p_bar, const double& sqrt_J2,
+                      double& z, double& r_prime)
+{
+  z = -sqrt_three * p_bar;
+  r_prime = sqrt_two * sqrt_J2 * sqrtKG;
 }
+
+inline
+void revertFromZRprime(const double& sqrtKG, 
+                       const double& z, const double& r_prime,
+                       double& p_bar, double& sqrt_J2)
+{
+  p_bar = -z / sqrt_three;
+  sqrt_J2 = r_prime /( sqrt_two * sqrtKG);
 }
+
+} // End namespace Util
+} // End namespace Vaango
 
 #endif // VAANGO_MPM_CONSTITUTIVE_MODEL_YIELDCOND_UTIL_H

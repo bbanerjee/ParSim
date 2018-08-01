@@ -27,6 +27,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
 
 // Namespace Uintah::
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
@@ -81,7 +82,7 @@
 //#define CHECK_FLOATING_POINT_OVERFLOW
 //#define DEBUG_YIELD_BISECTION_R
 //#define CHECK_ELASTIC_STRAIN
-#define CHECK_RETURN_ALIGNMENT
+//#define CHECK_RETURN_ALIGNMENT
 
 using namespace Vaango;
 using Uintah::VarLabel;
@@ -430,7 +431,7 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
         proc0cout << "Resetting [F]=[I] for this step and deleting particle"
                   << " idx = " << idx << " particleID = " << pParticleID[idx]
                   << std::endl;
-        Identity.polarDecompositionRMB(UU, RR);
+        Util::Identity.polarDecompositionRMB(UU, RR);
       } else {
         FF_new.polarDecompositionRMB(UU, RR);
       }
@@ -448,7 +449,7 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
       double bulk = state_new.bulkModulus;
       double shear = state_new.shearModulus;
       double rho_cur = pMass[idx] / pVolume[idx];
-      c_dil = sqrt((bulk + four_third * shear) / rho_cur);
+      c_dil = sqrt((bulk + Util::four_third * shear) / rho_cur);
       // std::cout << "K = " << bulk << " G = " << shear << " c_dil = " << c_dil
       // << std::endl;
       WaveSpeed =
@@ -458,7 +459,7 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
 
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
-        double dx_ave = (dx.x() + dx.y() + dx.z()) * one_third;
+        double dx_ave = (dx.x() + dx.y() + dx.z()) * Util::one_third;
         double c_bulk = sqrt(bulk / rho_cur);
         p_q[idx] = artificialBulkViscosity(DD.Trace(), c_bulk, rho_cur, dx_ave);
       } else {
@@ -586,7 +587,7 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
          #endif
          nsub *= 2; // Double the number of substeps
          ++chi;     // Increment the number of dt decreases
-         proc0cout << "**WARNING** Decreasing substep time increment to " << dt
+         proc0cout << "**WARNING** Decreasing substep time increment to " << dt/2
                    << " because computeSubstep failed." << std::endl;
          break;
       }
@@ -629,12 +630,18 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
       //}
     #endif
   } else {
-    //state_new = state_k_old;
-    state_new = state_k_new;
-    status = Status::SUCCESS;
-    proc0cout << "Substep failed because chi = " << chi << " > " << CHI_MAX << "."
-              << " Proceeding with unconverged solution."
-              << std::endl;
+    if (status == Status::TOO_LARGE_YIELD_NORMAL_CHANGE) {
+      state_new = state_k_new;
+      status = Status::SUCCESS;
+      proc0cout << "Substep failed because chi = " << chi << " > " << CHI_MAX << "."
+                << " Continuing with unconverged solution."
+                << std::endl;
+    } else {
+      state_new = state_k_old;
+      proc0cout << "Substep failed because chi = " << chi << " > " << CHI_MAX << "."
+                << " Proceeding to delete particle."
+                << std::endl;
+    }
    
   }
 
@@ -862,12 +869,20 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
     return status;
   }
 
+  // Do first-order hardening update
+  state_k_new = state_k_old;
+  status = firstOrderHardeningUpdate(
+    deltaEps, state_k_old, state_k_trial, deltaEps_e_fixed, deltaEps_p_fixed,
+    sig_fixed, state_k_new);
+
   // Do "consistency bisection"
   // std::cout << "\t Doing consistencyBisection\n";
+  /*
   state_k_new = state_k_old;
   status = consistencyBisectionSimplified(
     deltaEps, state_k_old, state_k_trial, deltaEps_e_fixed, deltaEps_p_fixed,
     sig_fixed, state_k_new);
+  */
 
   #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
     std::cout << "computeSubstep: "
@@ -947,7 +962,7 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   // Compute updated invariants of total stress
   double I1_closest = std::sqrt(3.0) * z_closest;
   double sqrtJ2_closest =
-    1.0 / (sqrt_K_over_G_old * sqrt_two) * rprime_closest;
+    1.0 / (sqrt_K_over_G_old * Util::sqrt_two) * rprime_closest;
 
 #ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "I1_closest = " << I1_closest 
@@ -965,28 +980,19 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   // Compute new stress
   Matrix3 sig_dev = state_k_trial.deviatoricStressTensor;
   if (state_k_trial.sqrt_J2 > 0.0) {
-    // double z_close = I1_closest*one_sqrt_three;
-    // double r_close = sqrtJ2_closest*sqrt_two;
-    // double norm_Identity = sqrt_three;
-    // double norm_s_trial = sig_dev.Norm();
-    // sig_fixed = Identity*(z_close/norm_Identity) +
-    // sig_dev*(r_close/norm_s_trial);
-    sig_fixed = one_third * I1_closest * Identity +
+    sig_fixed = Util::one_third * I1_closest * Util::Identity +
                 (sqrtJ2_closest / state_k_trial.sqrt_J2) * sig_dev;
   } else {
-    // double z_close = I1_closest*one_sqrt_three;
-    // double norm_Identity = sqrt_three;
-    // sig_fixed = Identity*(z_close/norm_Identity) + sig_dev;
-    sig_fixed = one_third * I1_closest * Identity + sig_dev;
+    sig_fixed = Util::one_third * I1_closest * Util::Identity + sig_dev;
   }
 
   // Compute new plastic strain increment
   //  d_ep = d_e - [C]^-1:(sigma_new-sigma_old)
   Matrix3 sig_inc = sig_fixed - state_k_old.stressTensor;
-  Matrix3 sig_inc_iso = one_third * sig_inc.Trace() * Identity;
+  Matrix3 sig_inc_iso = Util::one_third * sig_inc.Trace() * Util::Identity;
   Matrix3 sig_inc_dev = sig_inc - sig_inc_iso;
   elasticStrain_inc_fixed =
-    sig_inc_iso * (one_third / K_old) + sig_inc_dev * (0.5 / G_old);
+    sig_inc_iso * (Util::one_third / K_old) + sig_inc_dev * (0.5 / G_old);
   plasticStrain_inc_fixed = strain_inc - elasticStrain_inc_fixed;
 
 #ifdef CHECK_ELASTIC_STRAIN
@@ -1043,7 +1049,8 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   state_plastic_rate.stressTensor = sig_fixed;
   state_plastic_rate.updateStressInvariants();
   Matrix3 df_dsigma;
-  d_yield->eval_df_dsigma(Identity, &state_plastic_rate, df_dsigma);
+  d_yield->eval_df_dsigma(Util::Identity, &state_plastic_rate, df_dsigma);
+  df_dsigma /= df_dsigma.Norm();
   double lhs = plasticStrain_inc_fixed.Contract(df_dsigma);
   double rhs = df_dsigma.Contract(df_dsigma);
   double plastic_rate = lhs/rhs;
@@ -1076,7 +1083,8 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   state_test.updateStressInvariants();
 
   Matrix3 df_dsigma;
-  d_yield->eval_df_dsigma(Identity, &state_test, df_dsigma);
+  d_yield->eval_df_dsigma(Util::Identity, &state_test, df_dsigma);
+  df_dsigma /= df_dsigma.Norm();
   std::cout << "df_dsigma = " << df_dsigma << std::endl;
   std::cout << "ratio = [" << plasticStrain_inc_fixed(0, 0) / df_dsigma(0, 0)
             << "," << plasticStrain_inc_fixed(1, 1) / df_dsigma(1, 1) << ","
@@ -1085,7 +1093,7 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   // Compute CN = C:df_dsigma
   double lambda = state_test.bulkModulus - 2.0 / 3.0 * state_test.shearModulus;
   double mu = state_test.shearModulus;
-  Matrix3 CN = Identity * (lambda * df_dsigma.Trace()) + df_dsigma * (2.0 * mu);
+  Matrix3 CN = Util::Identity * (lambda * df_dsigma.Trace()) + df_dsigma * (2.0 * mu);
   Matrix3 sig_diff = state_k_trial.stressTensor - sig_fixed;
   std::cout << "sig_trial = [" << state_k_trial.stressTensor << "];"
             << std::endl;
@@ -1168,8 +1176,10 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
   state_np1.updateStressInvariants();
 
   Matrix3 M_n, M_np1;
-  d_yield->eval_df_dsigma(Identity, &state_n, M_n);
-  d_yield->eval_df_dsigma(Identity, &state_np1, M_np1);
+  d_yield->eval_df_dsigma(Util::Identity, &state_n, M_n);
+  d_yield->eval_df_dsigma(Util::Identity, &state_np1, M_np1);
+  M_n /= M_n.Norm();
+  M_np1 /= M_np1.Norm();
   double angle_M_n_np1 = std::abs(M_n.Contract(M_np1) - 1.0);
 
   if (angle_M_n_np1 > 1.0e-6) {
@@ -1199,8 +1209,8 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
     double mu_np1 = KG_np1.shearModulus;
     double lambda_n = KG_n.bulkModulus - 2.0 / 3.0 * mu_n;
     double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
-    Matrix3 CM_n = Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
-    Matrix3 CM_np1 = Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
+    Matrix3 CM_n = Util::Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
+    Matrix3 CM_np1 = Util::Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
     std::cout << "CM_n = " << CM_n << std::endl;
     std::cout << "CM_np1 = " << CM_np1 << std::endl;
 
@@ -1243,6 +1253,187 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
 
 } //===================================================================
 
+
+/**
+ * Method: firstOrderHardeningUpdate
+ * Purpose:
+ *   Find the updated stress for hardening plasticity using a first-order
+ *   update based on the velocity of the yield surface
+ *
+ *   Returns whether the procedure is sucessful or has failed
+ */
+TabularPlasticity::Status
+TabularPlasticityCap::firstOrderHardeningUpdate(const Matrix3& deltaEps_new,
+                                                const ModelState_TabularCap& state_k_old,
+                                                const ModelState_TabularCap& state_k_trial,
+                                                const Matrix3& deltaEps_e_fixed,
+                                                const Matrix3& deltaEps_p_fixed,
+                                                const Matrix3& sig_fixed,
+                                                ModelState_TabularCap& state_k_new)
+{
+  Status status = Status::SUCCESS;
+
+  ModelState_TabularCap state_n(state_k_old);
+  ModelState_TabularCap state_np1(state_k_old);
+  state_np1.stressTensor = sig_fixed;
+  state_np1.updateStressInvariants();
+
+  Matrix3 M_n, M_np1;
+  d_yield->eval_df_dsigma(Util::Identity, &state_n, M_n);
+  d_yield->eval_df_dsigma(Util::Identity, &state_np1, M_np1);
+  M_n /= M_n.Norm();
+  double norm_M_np1 = M_np1.Norm();
+  M_np1 /= norm_M_np1;
+  double angle_M_n_np1 = std::abs(M_n.Contract(M_np1) - 1.0);
+
+  if (angle_M_n_np1 > 1.0e-6) {
+    status = Status::TOO_LARGE_YIELD_NORMAL_CHANGE;
+
+    std::cout << "M_n = " << M_n << std::endl;
+    std::cout << "M_np1 = " << M_np1 << std::endl;
+    std::cout << "angle =" << angle_M_n_np1 << "\n";
+
+    auto KG_dKdG_n = d_elastic->getElasticModuliAndDerivatives(&state_n);
+    auto KG_dKdG_np1 = d_elastic->getElasticModuliAndDerivatives(&state_np1);
+    auto KG_n = KG_dKdG_n.first;
+    auto KG_np1 = KG_dKdG_np1.first;
+    auto dKdG_n = KG_dKdG_n.second;
+    auto dKdG_np1 = KG_dKdG_np1.second;
+    auto p_n = state_n.I1/3.0;
+    auto p_np1 = state_np1.I1/3.0;
+    auto S_n = state_n.deviatoricStressTensor;
+    auto S_np1 = state_np1.deviatoricStressTensor;
+    Matrix3 Z_n = computeZMatrix(KG_n, dKdG_n, p_n, S_n, M_n);
+    Matrix3 Z_np1 = computeZMatrix(KG_np1, dKdG_np1, p_np1, S_np1, M_np1);
+    std::cout << "Z_n = " << Z_n << std::endl;
+    std::cout << "Z_np1 = " << Z_np1 << std::endl;
+
+    // Compute CM = C:M
+    double mu_n = KG_n.shearModulus;
+    double mu_np1 = KG_np1.shearModulus;
+    double lambda_n = KG_n.bulkModulus - 2.0 / 3.0 * mu_n;
+    double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
+    Matrix3 CM_n = Util::Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
+    Matrix3 CM_np1 = Util::Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
+    std::cout << "CM_n = " << CM_n << std::endl;
+    std::cout << "CM_np1 = " << CM_np1 << std::endl;
+
+    // Compute P = CM + Z;
+    Matrix3 P_n = CM_n + Z_n;
+    Matrix3 P_np1 = CM_np1 + Z_np1;
+    std::cout << "P_n = " << P_n << std::endl;
+    std::cout << "P_np1 = " << P_np1 << std::endl;
+
+    // Compute Gamma (sig_trial - sig_n+1):M_n+1/(P_n:M_n+1)
+    Matrix3 sig_trial = state_k_trial.stressTensor;
+    Matrix3 sig_new = sig_fixed;
+    double Gamma_n = (sig_trial - sig_new).Contract(M_np1)/P_n.Contract(M_np1);
+    double Gamma_np1 = (sig_trial - sig_new).Contract(M_np1)/P_np1.Contract(M_np1);
+    std::cout << "Gamma_n = " << Gamma_n << " Gamma_np1 = " << Gamma_np1 << "\n";
+
+    // Compute sigma
+    Matrix3 sig_np1 = sig_trial - P_n * Gamma_n;
+    std::cout << "sig_np1 = " << sig_np1 << std::endl;
+    std::cout << "sig_fixed = " << sig_fixed << std::endl;
+
+    // Compute volumetric plastic strain
+    Matrix3 eps_p = state_n.plasticStrainTensor + deltaEps_p_fixed;
+    double ep_v = eps_p.Trace();
+
+    // Compute eps_p and ev_v^p
+    Matrix3 Eps_p_n = state_n.plasticStrainTensor + M_n * Gamma_n ;
+    double Eps_p_v_n = state_n.ep_v + M_n.Trace() * Gamma_n;
+    Matrix3 Eps_e_n = deltaEps_new - Eps_p_n; 
+    Matrix3 Eps_p_np1 = state_n.plasticStrainTensor + M_np1 * Gamma_np1 ;
+    double Eps_p_v_np1 = state_n.ep_v + M_np1.Trace() * Gamma_np1;
+    Matrix3 Eps_e_np1 = deltaEps_new - Eps_p_np1; 
+    std::cout << "Eps_p_n = " << Eps_p_n << "\n"; 
+    std::cout << "eps_p = " << eps_p << "\n"; 
+    std::cout << "Eps_e_n = " << Eps_e_n << "\n"; 
+    std::cout << "Eps_p_np1 = " << Eps_p_np1 << "\n"; 
+    std::cout << "Eps_e_np1 = " << Eps_e_np1 << "\n"; 
+    std::cout << "Eps_p_v_n = " << Eps_p_v_n 
+              << " Eps_p_v_np1 = " << Eps_p_v_np1 << " ep_v = " << ep_v << "\n";
+  } else {
+
+    // Compute elastic moduli at sigma^F
+    auto KG_dKdG_np1 = d_elastic->getElasticModuliAndDerivatives(&state_np1);
+    auto KG_np1 = KG_dKdG_np1.first;
+    auto dKdG_np1 = KG_dKdG_np1.second;
+    auto p_np1 = state_np1.I1/3.0;
+    auto S_np1 = state_np1.deviatoricStressTensor;
+    Matrix3 Z_np1 = computeZMatrix(KG_np1, dKdG_np1, p_np1, S_np1, M_np1);
+    std::cout << "Z_np1 = " << Z_np1 << std::endl;
+
+    // Compute CM = C:M
+    double mu_np1 = KG_np1.shearModulus;
+    double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
+    Matrix3 CM_np1 = Util::Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
+    std::cout << "CM_np1 = " << CM_np1 << std::endl;
+
+    // Compute P = CM + Z;
+    Matrix3 P_np1 = CM_np1 + Z_np1;
+    std::cout << "P_np1 = " << P_np1 << std::endl;
+
+    // Compute Gamma (sig_trial - sig_n+1):M_n+1/(P_n:M_n+1)
+    Matrix3 sig_trial = state_k_trial.stressTensor;
+    double Gamma_np1 = (sig_trial - sig_fixed).Contract(M_np1)/P_np1.Contract(M_np1);
+    std::cout << " Gamma_np1 = " << Gamma_np1 << "\n";
+
+    // Compute PN = P:N (note that we are using associated plasticity)
+    double PN_np1 = P_np1.Contract(M_np1);
+
+    // Compute unscaled hardening modulus
+    double df_dep_v = d_yield->computeVolStrainDerivOfYieldFunction(&state_np1,
+      nullptr, nullptr, d_capX);
+    double H = -(df_dep_v * M_np1.Trace())/norm_M_np1;
+
+    // Compute Gamma^H
+    double Gamma_H = (Gamma_np1*PN_np1)/(PN_np1 + H);
+
+    // Compute updated stress
+    Matrix3 sig_new = sig_trial - P_np1 * Gamma_H;
+    std::cout << "sig_new = " << sig_new << std::endl;
+
+    // Compute plastic strain increments
+    Matrix3 delta_eps_p = M_np1 * Gamma_H;
+    double delta_eps_p_v = delta_eps_p.Trace();
+
+    // Compute the elastic strain increment
+    Matrix3 delta_eps_e = deltaEps_new - delta_eps_p; 
+
+    // Recompute internal variables
+    status = computeInternalVariables(state_np1, delta_eps_p_v);
+    if (status != Status::SUCCESS) {
+      state_k_new = state_k_old;
+      proc0cout << "computeInternalVariables has failed." << std::endl;
+      return status;
+    }
+
+    // Update the new state
+    state_k_new = state_np1;
+    state_k_new.stressTensor = sig_new;
+    state_k_new.elasticStrainTensor += delta_eps_e;
+    state_k_new.plasticStrainTensor += delta_eps_p;
+    state_k_new.ep_v += delta_eps_p_v;
+    computeElasticProperties(state_k_new);
+
+    // Update the cumulative equivalent plastic strain
+    Uintah::Matrix3 delta_eps_p_dev =
+      delta_eps_p - Util::Identity * (delta_eps_p_v / 3.0);
+    state_k_new.ep_cum_eq += 
+      Util::sqrt_two_third * std::sqrt(delta_eps_p_dev.Contract(delta_eps_p_dev));
+
+    #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
+      std::cout << "consistencyBisection: " << std::endl
+                << "\t state_old = " << state_k_old << std::endl
+                << "\t state_new = " << state_k_new << std::endl;
+    #endif
+
+    status = Status::SUCCESS;
+  }
+  return status;
+}
 
 /**
  * Method: consistencyBisectionSimplified
@@ -1458,7 +1649,7 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
   // Update the cumulative equivalent plastic strain
   double deltaEps_p_v = deltaEps_p_fixed_new.Trace();
   Uintah::Matrix3 deltaEps_p_dev =
-    deltaEps_p_fixed_new - Identity * (deltaEps_p_v / 3.0);
+    deltaEps_p_fixed_new - Util::Identity * (deltaEps_p_v / 3.0);
   state_k_new.ep_cum_eq =
     state_k_old.ep_cum_eq +
     std::sqrt(2.0 / 3.0 * deltaEps_p_dev.Contract(deltaEps_p_dev));

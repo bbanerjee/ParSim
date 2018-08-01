@@ -50,20 +50,6 @@ class TabularPlasticity : public Uintah::ConstitutiveModel
 {
 
 public:
-  static const double one_third;
-  static const double two_third;
-  static const double four_third;
-  static const double sqrt_two;
-  static const double one_sqrt_two;
-  static const double sqrt_three;
-  static const double one_sqrt_three;
-  static const double one_sixth;
-  static const double one_ninth;
-  static const double pi;
-  static const double pi_fourth;
-  static const double pi_half;
-  static const Uintah::Matrix3 Identity;
-  static const Uintah::Matrix3 Zero;
 
   enum class Status 
   {

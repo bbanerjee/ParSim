@@ -48,12 +48,6 @@ class YieldCond_TabularCap : public YieldCondition
 {
 friend std::ostream& operator<<(std::ostream& out, const YieldCond_TabularCap& yc);
 public:
-  // Constants
-  static const double sqrt_two;
-  static const double sqrt_three;
-  static const double one_sqrt_three;
-  static const double large_number;
-  static const Uintah::Matrix3 One;
 
   YieldCond_TabularCap() = delete;
   YieldCond_TabularCap(const YieldCond_TabularCap&) = delete;
@@ -83,6 +77,12 @@ public:
   double evalYieldConditionMax(const ModelStateBase* state) override;
 
   //--------------------------------------------------------------
+  // Derivative with respect to the Cauchy stress (\f$\sigma \f$)
+  //--------------------------------------------------------------
+  void eval_df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state,
+                      Uintah::Matrix3& df_dsigma) override;
+
+  //--------------------------------------------------------------
   // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
   //--------------------------------------------------------------
   double computeVolStressDerivOfYieldFunction(
@@ -95,54 +95,16 @@ public:
     const ModelStateBase* state) override;
 
   //--------------------------------------------------------------
-  // Compute d/depse_v(df/dp)
-  //--------------------------------------------------------------
-  double computeVolStrainDerivOfDfDp(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
-
-  //--------------------------------------------------------------
-  // Compute d/depse_s(df/dp)
-  //--------------------------------------------------------------
-  double computeDevStrainDerivOfDfDp(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
-
-  //--------------------------------------------------------------
-  // Compute d/depse_v(df/dq)
-  //--------------------------------------------------------------
-  double computeVolStrainDerivOfDfDq(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
-
-  //--------------------------------------------------------------
-  // Compute d/depse_s(df/dq)
-  //--------------------------------------------------------------
-  double computeDevStrainDerivOfDfDq(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
-
-  //--------------------------------------------------------------
-  // Compute df/depse_v
+  // Compute df/deps^p_v 
   //--------------------------------------------------------------
   double computeVolStrainDerivOfYieldFunction(
-    const ModelStateBase* state, const PressureModel* eos,
+    const ModelStateBase* state, 
+    const PressureModel* eos,
     const ShearModulusModel* shear,
     const InternalVariableModel* intvar) override;
 
-  //--------------------------------------------------------------
-  // Compute df/depse_s
-  //--------------------------------------------------------------
-  double computeDevStrainDerivOfYieldFunction(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear,
-    const InternalVariableModel* intvar) override;
 
- /**
+  /**
    * Function: computeYieldSurfacePolylinePbarSqrtJ2
    *
    * Purpose: Compute a sequence of points representing the yield surface
@@ -221,6 +183,45 @@ public:
   // Other options below.
   //================================================================================
 
+  //--------------------------------------------------------------
+  // Compute d/depse_v(df/dp)
+  //--------------------------------------------------------------
+  double computeVolStrainDerivOfDfDp(
+    const ModelStateBase* state, const PressureModel* eos,
+    const ShearModulusModel* shear,
+    const InternalVariableModel* intvar) override;
+
+  //--------------------------------------------------------------
+  // Compute d/depse_s(df/dp)
+  //--------------------------------------------------------------
+  double computeDevStrainDerivOfDfDp(
+    const ModelStateBase* state, const PressureModel* eos,
+    const ShearModulusModel* shear,
+    const InternalVariableModel* intvar) override;
+
+  //--------------------------------------------------------------
+  // Compute d/depse_v(df/dq)
+  //--------------------------------------------------------------
+  double computeVolStrainDerivOfDfDq(
+    const ModelStateBase* state, const PressureModel* eos,
+    const ShearModulusModel* shear,
+    const InternalVariableModel* intvar) override;
+
+  //--------------------------------------------------------------
+  // Compute d/depse_s(df/dq)
+  //--------------------------------------------------------------
+  double computeDevStrainDerivOfDfDq(
+    const ModelStateBase* state, const PressureModel* eos,
+    const ShearModulusModel* shear,
+    const InternalVariableModel* intvar) override;
+
+  //--------------------------------------------------------------
+  // Compute df/depse_s
+  //--------------------------------------------------------------
+  double computeDevStrainDerivOfYieldFunction(
+    const ModelStateBase* state, const PressureModel* eos,
+    const ShearModulusModel* shear,
+    const InternalVariableModel* intvar) override;
   // Evaluate the yield function.
   double evalYieldCondition(const double p, const double q, const double dummy0,
                             const double dummy1, double& dummy2) override;
@@ -253,10 +254,6 @@ public:
   void evalDevDerivOfYieldFunction(const Uintah::Matrix3& stress,
                                    const double dummy1, const double dummy2,
                                    Uintah::Matrix3& derivative) override;
-
-  /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
-  void eval_df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state,
-                      Uintah::Matrix3& df_dsigma) override;
 
   /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
     where \f$s\f$ is deviatoric part of Cauchy stress and
@@ -390,16 +387,6 @@ private:
   /* Convert yield function data to z_rprime coordinates */
   void convertToZRprime(const double& sqrtKG, const Polyline& p_q_points, 
                         Polyline& z_r_points) const;
-
-  /* Convert a pbar-sqrtJ2 point to z-rprime coordinates and vice-versa */
-  inline
-  void convertToZRprime(const double& sqrtKG, 
-                        const double& pbar, const double& sqrt_J2,
-                        double& z, double& r_prime) const;
-  inline
-  void revertFromZRprime(const double& sqrtKG, 
-                         const double& z, const double& r_prime,
-                         double& pbar, double& sqrt_J2) const;
 };
 
 } // End namespace Uintah
