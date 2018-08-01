@@ -103,9 +103,9 @@ InternalVar_TabularCap::initializeInternalVariable(Uintah::ParticleSubset* pset,
   Uintah::ParticleVariable<double> pCapX;
   new_dw->allocateAndPut(pCapX, pCapXLabel, pset);
 
-  // The table is of the form x -> ev_p_bar, y -> X_bar
+  // The table is of the form x -> ev_p_bar, y -> X_p_bar = X_bar/3
   DoubleVec1D gg = d_capX_fn.table.interpolate<1>({{0.0}}); 
-  double capX = -gg[0];
+  double capX = -gg[0] * 3.0;
 
   for (auto particle : *pset) {
     pCapX[particle] = capX;
@@ -168,11 +168,37 @@ double
 InternalVar_TabularCap::computeDrainedHydrostaticStrength(const double& ep_v_bar) const
 {
   DoubleVec1D gg = d_capX_fn.table.interpolate<1>({{ep_v_bar}}); 
-  double X_bar_drained = gg[0];
+  double X_bar_drained = gg[0] * 3.0;
 
   return X_bar_drained;
 }
 
+/**
+ *  Compute derivative of internal variable with respect to volumetric
+ *  plastic strain
+ */
+double 
+InternalVar_TabularCap::computeVolStrainDerivOfInternalVariable(
+  const ModelStateBase* state_input) const 
+{
+  const ModelState_TabularCap* state =
+    dynamic_cast<const ModelState_TabularCap*>(state_input);
+  if (!state) {
+    std::ostringstream out;
+    out << "**ERROR** The correct ModelState object has not been passed."
+        << " Need ModelState_TabularCap.";
+    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
+  }
+
+  double epsilon = 1.0e-6;
+  double ep_v_bar = -state->ep_v;
+  double ep_v_bar_lo = ep_v_bar - epsilon;
+  double ep_v_bar_hi = ep_v_bar + epsilon;
+  double X_p_bar_lo = computeDrainedHydrostaticStrength(ep_v_bar_lo);
+  double X_p_bar_hi = computeDrainedHydrostaticStrength(ep_v_bar_hi);
+  double dX_p_bar_dep_v_bar = (X_p_bar_hi - X_p_bar_lo)/(2*epsilon);
+  return dX_p_bar_dep_v_bar;
+}
 
 /*!-----------------------------------------------------*/
 void

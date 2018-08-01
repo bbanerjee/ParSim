@@ -111,12 +111,9 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////
   // Compute derivative of internal variable with respect to volumetric
-  // elastic strain
+  // plastic strain
   double computeVolStrainDerivOfInternalVariable(const ModelStateBase*) const 
-    override
-  {
-    return 0.0;
-  }
+    override;
 
   void getInternalVariable(Uintah::ParticleSubset* pset,
                            Uintah::DataWarehouse* old_dw,

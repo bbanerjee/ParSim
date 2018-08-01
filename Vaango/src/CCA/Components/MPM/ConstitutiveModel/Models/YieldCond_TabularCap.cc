@@ -299,7 +299,7 @@ YieldCond_TabularCap::getClosestPoint(const Polyline& polyline,
 //     g(pbar) = table,  pbar = -p
 //     Fc^2 = 1 - (kappa - p)^2/(kappa - X_p)^2
 //     kappa = p_tension - R*(p_tension - X_p)
-//     X_p = hydrostatic strength
+//     X_p = hydrostatic strength = X/3
 //
 // Returns:
 //   hasYielded = -1.0 (if elastic)
@@ -480,6 +480,7 @@ YieldCond_TabularCap::evalYieldConditionMax(const ModelStateBase* state_input)
  *  where
  *      J2 = 1/2 s:s,  s = sigma - p I,  p = 1/3 Tr(sigma)
  *      g(pbar) = table, pbar = -p
+ *      X_p = 1/3 X
  *
  *  The derivative is
  *      df/dsigma = df/dp dp/dsigma + df/ds : ds/dsigma
@@ -546,6 +547,7 @@ YieldCond_TabularCap::eval_df_dsigma(const Matrix3&,
 //     g(pbar) := table,  pbar = -p
 //     Fc^2 = 1 - (kappa - p)^2/(kappa - X_p)^2
 //     kappa = p_tension - R*(p_tension - X_p)
+//     X_p = 1/3 X
 //
 // the derivative is
 //     df/dp = -dg/dp * F_c(p, X_p) - g(p) * dF_c/dp 
@@ -705,6 +707,7 @@ YieldCond_TabularCap::computeDevStressDerivOfYieldFunction(
 //     g(pbar) := table,  pbar = -p
 //     Fc^2 = 1 - (kappa - p)^2/(kappa - X_p)^2
 //     kappa = p_tension - R*(p_tension - X_p)
+//     X_p = 1/3 X
 //
 //   the derivative is
 //     df/deps^p_v = df/dX_p*dX_p/deps^p_v
@@ -728,7 +731,46 @@ YieldCond_TabularCap::computeVolStrainDerivOfYieldFunction(
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  return 0.0;
+  // Set up limits
+  double p_bar_min = d_I1bar_min/3.0;
+  double X_bar_p = -state->capX/3.0; 
+
+  // Find location of the center of the cap ellipse
+  double kappa_bar = p_bar_min + d_yield.capEllipticityRatio * (X_bar_p - p_bar_min);
+
+  // Compute g(p)
+  double p_bar = -state->I1/3.0;
+  DoubleVec1D gg;
+  try {
+    gg = d_yield.table.interpolate<1>({{p_bar}});
+  } catch (Uintah::InvalidValue& e) {
+    std::ostringstream out;
+    out << "**ERROR** In compute g(p):"
+        << " p_bar = " << p_bar << "\n"
+        << e.message() ;
+    throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
+  }
+
+  // Compute df_dX_p
+  double Fc = 1.0;
+  double df_dX_p = 0.0;
+  if (p_bar > kappa_bar) {
+    double denom = X_bar_p - p_bar_min;
+    if (denom == 0.0) {
+      df_dX_p = Util::large_number;
+    } else {
+      double numer = p_bar - kappa_bar;
+      double inv_denom = 1.0 / denom;
+      double ratio = numer * inv_denom;
+      Fc = std::sqrt(1.0 - ratio * ratio);
+      double dFc_dX_p = ratio / (1 + ratio) * 
+                        d_yield.capEllipticityRatio * inv_denom;
+      df_dX_p =  - gg[0] * dFc_dX_p ;
+    }
+  }
+  double dX_p_dep_v = capX->computeVolStrainDerivOfInternalVariable(state);
+  double df_dep_v = df_dX_p * dX_p_dep_v;
+  return df_dep_v;
 }
 
 /**
