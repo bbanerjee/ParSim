@@ -1,8 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 1997-2012 The University of Utah
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 1997-2018 The University of Utah
+ * Copyright (c) 2018-2018 Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,77 +23,106 @@
  * IN THE SOFTWARE.
  */
 
-
 #include <Core/Grid/Variables/VarLabel.h>
-#include <Core/Grid/Patch.h>
+
 #include <Core/Exceptions/InternalError.h>
-#include <Core/Thread/Mutex.h>
+#include <Core/Grid/Patch.h>
+#include <Core/Parallel/MasterLock.h>
 #include <Core/Util/DebugStream.h>
-#include <map>
+
 #include <iostream>
+#include <map>
 #include <sstream>
+#include <memory>
 
 using namespace Uintah;
-using namespace Uintah;
+
+namespace {
+MasterLock g_label_mutex{};
+}
 
 static DebugStream dbg("VarLabel", false);
 
-static map<string, VarLabel*> allLabels;
-string VarLabel::d_particlePositionName = "p.x";
+//______________________________________________________________________
+// Initialize class static variables:
 
-string VarLabel::d_defaultCompressionMode = "none";
-static Mutex lock("VarLabel create/destroy lock");
+std::string VarLabel::s_particle_position_name = "p.x";
+std::string VarLabel::s_default_compression_mode = "none";
+
+std::map<std::string, VarLabel*> VarLabel::g_all_labels;
+
+//______________________________________________________________________
+//
 
 VarLabel*
-VarLabel::create( const string                  & name,
-                  const Uintah::TypeDescription * td,
-                  const IntVector               & boundaryLayer /* = IntVector(0,0,0) */,
-                        VarType                   vartype       /* = Normal */ )
+VarLabel::create(const std::string& name, const TypeDescription* td,
+                 const IntVector& boundaryLayer, /* = IntVector(0,0,0) */
+                 VarType vartype /* = Normal */
+                 )
 {
-  VarLabel* label = 0;
-  lock.lock();
-  map<string, VarLabel*>::iterator iter = allLabels.find(name);
-  if(iter != allLabels.end()){
-    // two labels with the same name -- make sure they are the same type
-    VarLabel* dup = iter->second;
-    if(boundaryLayer != dup->d_boundaryLayer)
-      SCI_THROW(InternalError(string("Multiple VarLabels for " + dup->getName() + " defined with different # of boundary layers"), __FILE__, __LINE__));
-    
+  VarLabel* label;
+
+  g_label_mutex.lock();
+  {
+    auto iter = g_all_labels.find(name);
+    if (iter != g_all_labels.end()) {
+      // two labels with the same name -- make sure they are the same type
+      VarLabel* dup = iter->second;
+      if (boundaryLayer != dup->m_boundary_layer) {
+        std::ostringstream out;
+        out << "Multiple VarLabels for " << dup->getName()
+            << " defined with different # of boundary layers";
+        SCI_THROW(InternalError(out.str(), __FILE__, __LINE__));
+      }
+
 #if !defined(_AIX) && !defined(__APPLE__)
-    // AIX uses lib.a's, therefore the "same" var labels are different...
-    // Need to look into fixing this in a better way...
-    // And I am not sure why we have to do this on the mac or windows...
-    if (td != dup->d_td || vartype != dup->d_vartype)
-      SCI_THROW(InternalError(string("VarLabel with same name exists, '"
-                          + name + "', but with different type"), __FILE__, __LINE__));
+      // AIX uses lib.a's, therefore the "same" var labels are different...
+      // Need to look into fixing this in a better way...
+      // And I am not sure why we have to do this on the mac or windows...
+      if (td != dup->m_td || vartype != dup->m_var_type) {
+        std::ostringstream out;
+        out << "VarLabel with same name exists, '" << name
+            << "', but with different type";
+        SCI_THROW(InternalError(out.str(), __FILE__, __LINE__));
+      }
 #endif
-    label = dup;
+
+      label = dup;
+    } else {
+      //auto label_sh = std::make_shared<VarLabel>(name, td, boundaryLayer, vartype);
+      //label = label_sh.get();
+      label = scinew VarLabel(name, td, boundaryLayer, vartype);
+      g_all_labels[name] = label;
+      dbg << "Created VarLabel: " << label->m_name << " [address = " << label
+          << "\n";
+    }
+    label->addReference();
   }
-  else {
-    label = scinew VarLabel(name, td, boundaryLayer, vartype);
-    allLabels[name]=label;
-    dbg << "Created VarLabel: " << label->d_name << " [address = " << label << "\n";
-  }
-  label->addReference();
-  lock.unlock(); 
-  
+  g_label_mutex.unlock();
+
   return label;
 }
 
 bool
 VarLabel::destroy(const VarLabel* label)
 {
-  if (label == 0) return false;
+  if (label == nullptr) {
+    return false;
+  }
+
   if (label->removeReference()) {
-    lock.lock();    
-    map<string, VarLabel*>::iterator iter = allLabels.find(label->d_name);
-    if(iter != allLabels.end() && iter->second == label)
-      allLabels.erase(iter); 
-      
-    dbg << "Deleted VarLabel: " << label->d_name << std::endl;  
-    lock.unlock();
+    g_label_mutex.lock();
+    {
+      auto iter = g_all_labels.find(label->m_name);
+      if (iter != g_all_labels.end() && iter->second == label) {
+        g_all_labels.erase(iter);
+      }
+      dbg << "Deleted VarLabel: " << label->m_name << std::endl;
+    }
+    g_label_mutex.unlock();
+
     delete label;
-    
+
     return true;
   }
 
@@ -102,70 +131,74 @@ VarLabel::destroy(const VarLabel* label)
 
 VarLabel::VarLabel(const std::string& name, const Uintah::TypeDescription* td,
                    const IntVector& boundaryLayer, VarType vartype)
-  : d_name(name), d_td(td), d_boundaryLayer(boundaryLayer),
-    d_vartype(vartype), d_compressionMode("default"),
-    d_allowMultipleComputes(false)
-{
-}
-
-VarLabel::~VarLabel()
+  : m_name(name)
+  , m_td(td)
+  , m_boundary_layer(boundaryLayer)
+  , m_var_type(vartype)
 {
 }
 
 void
 VarLabel::printAll()
 {
-  map<string, VarLabel*>::iterator iter = allLabels.begin();
-  for (; iter != allLabels.end(); iter++)
-    std::cerr << (*iter).second->d_name << std::endl;
+  auto iter = g_all_labels.begin();
+
+  for (; iter != g_all_labels.end(); iter++) {
+    std::cout << (*iter).second->m_name << std::endl;
+  }
 }
 
 VarLabel*
-VarLabel::find( const string &  name )
+VarLabel::find(const std::string& name)
 {
-   map<string, VarLabel*>::iterator found = allLabels.find( name );
+  auto found = g_all_labels.find(name);
 
-   if( found == allLabels.end() ) {
-      return NULL;
-   }
-   else {
-      return found->second;
-   }
+  if (found == g_all_labels.end()) {
+    return nullptr;
+  } else {
+    return found->second;
+  }
 }
 
 VarLabel*
 VarLabel::particlePositionLabel()
 {
-  return find(d_particlePositionName);
+  return find(s_particle_position_name);
 }
 
-string
+std::string
 VarLabel::getFullName(int matlIndex, const Patch* patch) const
 {
-   ostringstream out;
-        out << d_name << "(matl=" << matlIndex;
-   if(patch)
-        out << ", patch=" << patch->getID();
-   else
-        out << ", no patch";
-   out << ")";
-        return out.str();
-}                             
+  std::ostringstream out;
+  out << m_name << "(matl=" << matlIndex;
+
+  if (patch) {
+    out << ", patch=" << patch->getID();
+  } else {
+    out << ", no patch";
+  }
+  out << ")";
+
+  return out.str();
+}
 
 void
 VarLabel::allowMultipleComputes()
 {
-   if (!d_td->isReductionVariable())
-     SCI_THROW(InternalError(string("Only reduction variables may allow multiple computes.\n'" + d_name + "' is not a reduction variable."), __FILE__, __LINE__));
-   d_allowMultipleComputes = true;
+  if (!m_td->isReductionVariable()) {
+    SCI_THROW(InternalError(
+      std::string("Only reduction variables may allow multiple computes.\n'" +
+                  m_name + "' is not a reduction variable."),
+      __FILE__, __LINE__));
+  }
+  m_allow_multiple_computes = true;
 }
 
 namespace Uintah {
-  ostream & 
-  operator<<( ostream & out, const Uintah::VarLabel & vl )
-  {
-    out << vl.getName();
-    return out;
-  }
+std::ostream&
+operator<<(std::ostream& out, const Uintah::VarLabel& vl)
+{
+  out << vl.getName();
+  return out;
 }
-
+}

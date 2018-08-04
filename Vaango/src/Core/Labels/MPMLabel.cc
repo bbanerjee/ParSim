@@ -799,6 +799,7 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pScaleFactorLabel);
   VarLabel::destroy(pScaleFactorLabel_preReloc);
   VarLabel::destroy(pLocalizedMPMLabel);
+  VarLabel::destroy(pLocalizedMPMLabel_preReloc);
   VarLabel::destroy(pScratchLabel);
   VarLabel::destroy(pSizeLabel);
   VarLabel::destroy(pSizeLabel_preReloc);
@@ -1009,4 +1010,10 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pLastLevelLabel_preReloc);
 
   VarLabel::destroy(MPMRefineCellLabel);
+
+  VarLabel::destroy(pFluxLabel);
+
+  VarLabel::destroy(pCoriolisImportanceLabel);
+  VarLabel::destroy(pCoriolisImportanceLabel_preReloc);
+
 }
