@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -60,9 +60,10 @@ cpdiInterpolator::~cpdiInterpolator()
 {
 }
 
-cpdiInterpolator* cpdiInterpolator::clone(const Patch* patch)
+std::unique_ptr<ParticleInterpolator> 
+cpdiInterpolator::clone(const Patch* patch)
 {
-  return scinew cpdiInterpolator(patch, d_lcrit);
+  return std::make_unique<cpdiInterpolator>(patch, d_lcrit);
 }
     
 void cpdiInterpolator::findCellAndWeights(const Point& pos,

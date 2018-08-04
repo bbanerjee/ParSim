@@ -363,7 +363,7 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
     // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
     // Declare the interpolator variables
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
@@ -1911,7 +1911,7 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
     // Delete the ModelState pointer (don't need it any more)
     // delete state;
 
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

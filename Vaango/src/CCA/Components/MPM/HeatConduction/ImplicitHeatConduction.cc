@@ -642,7 +642,7 @@ void ImplicitHeatConduction::formHCStiffnessMatrix(const ProcessorGroup*,
         d_HC_solver->fillMatrix(8,dof,8,dof,v);
       }                                                                                
     }    // matls
-    delete interpolator;
+    //delete interpolator;
 
   }
 
@@ -740,7 +740,7 @@ void ImplicitHeatConduction::formHCQ(const ProcessorGroup*,
         }
       }
     }  // matls
-    delete interpolator;
+    //delete interpolator;
   }    // patches
 }
 

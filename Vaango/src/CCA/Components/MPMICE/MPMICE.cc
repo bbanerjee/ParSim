@@ -1375,7 +1375,7 @@ void MPMICE::interpolatePAndGradP(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches,patch,cout_doing,"Doing interpolatePressureToParticles");
 
-    ParticleInterpolator* interpolator = d_mpm->flags->d_interpolator->clone(patch);
+    auto interpolator = d_mpm->flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
 
@@ -1414,7 +1414,7 @@ void MPMICE::interpolatePAndGradP(const ProcessorGroup*,
         pPressure[idx] = press-p_ref;
       }
     }  // numMPMMatls
-    delete interpolator;
+    //delete interpolator;
   } //patches
 }
 

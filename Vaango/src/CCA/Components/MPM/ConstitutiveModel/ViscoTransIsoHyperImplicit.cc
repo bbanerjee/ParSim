@@ -407,7 +407,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     Matrix3 shear;
     Vector deformed_fiber_vector;
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -886,7 +886,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
         solver->fillMatrix(24, dof, 24, dof, v);
       } // end of loop over particles
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 
@@ -907,7 +907,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
     double dWdI4tilde;
     Vector deformed_fiber_vector;
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -1142,7 +1142,7 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
         // pvolume_deformed[idx] = pvolumeold[idx]*Jinc;
       } // end loop over particles
     }   // isn't rigid
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

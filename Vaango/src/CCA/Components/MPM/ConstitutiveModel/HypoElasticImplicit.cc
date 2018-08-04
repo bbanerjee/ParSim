@@ -158,7 +158,7 @@ HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
   for (int pp = 0; pp < patches->size(); pp++) {
     const Patch* patch = patches->get(pp);
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -302,7 +302,7 @@ HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         solver->fillMatrix(24, dof, 24, dof, v);
       }
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 
@@ -320,7 +320,7 @@ HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     // double Jinc;
     double onethird = (1.0 / 3.0);
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -396,7 +396,7 @@ HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
       }
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

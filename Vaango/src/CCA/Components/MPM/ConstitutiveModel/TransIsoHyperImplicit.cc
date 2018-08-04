@@ -274,7 +274,7 @@ TransIsoHyperImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     Matrix3 Shear;
     Vector deformed_fiber_vector;
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -940,7 +940,7 @@ TransIsoHyperImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         solver->fillMatrix(24, dof, 24, dof, v);
       } // end of loop over particles
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 
@@ -962,7 +962,7 @@ TransIsoHyperImplicit::computeStressTensorImplicit(const PatchSubset* patches,
     double dWdI4tilde;
     Vector deformed_fiber_vector;
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -1165,7 +1165,7 @@ TransIsoHyperImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         }
       } // end loop over particles
     }   // isn't rigid
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

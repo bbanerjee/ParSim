@@ -572,7 +572,7 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -1016,7 +1016,7 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
     new_dw->put(sumlong_vartype(totalLocalizedParticle),
                 lb->TotalLocalizedParticleLabel);
 
-    delete interpolator;
+    //delete interpolator;
   } // end patch
 
   // cout_CST << getpid() << "... Out" << endl;
@@ -1094,7 +1094,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     const Patch* patch = patches->get(p);
 
     //     LinearInterpolator* interpolator = new LinearInterpolator(patch);
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -1189,7 +1189,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
           flag->d_reductionVars->strainEnergy) {
         new_dw->put(sum_vartype(totalStrainEnergy), lb->StrainEnergyLabel);
       }
-      delete interpolator;
+      //delete interpolator;
       continue;
     }
 
@@ -1389,7 +1389,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(totalStrainEnergy), lb->StrainEnergyLabel);
     }
-    delete interpolator;
+    //delete interpolator;
   } // end patch
 } // end method
 
@@ -1495,7 +1495,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
 
     // Get interpolation functions
     //     LinearInterpolator* interpolator = new LinearInterpolator(patch);
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -1558,7 +1558,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
         pDeformGrad_new[idx] = One;
         pVolume_deformed[idx] = pMass[idx] / rho_0;
       }
-      delete interpolator;
+      //delete interpolator;
       continue;
     }
 
@@ -1709,7 +1709,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
 
       delete state;
     }
-    delete interpolator;
+    //delete interpolator;
   }
   //  solver->flushMatrix();
 }

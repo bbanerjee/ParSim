@@ -1273,7 +1273,7 @@ HyperelasticPlastic::computeStressTensor(const PatchSubset* patches,
     double time = d_sharedState->getElapsedTime();
 
     // Get Interpolator
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
@@ -1508,7 +1508,7 @@ HyperelasticPlastic::computeStressTensor(const PatchSubset* patches,
                   lb->TotalLocalizedParticleLabel);
     };
 
-    delete interpolator;
+    //delete interpolator;
     // cout << "End compute stress." << endl;
   }
 }
@@ -1587,7 +1587,7 @@ HyperelasticPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     new_dw->allocateTemporary(pBeBar_new, pset);
 
     DisplacementGradientComputer gradComp(flag);
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -1721,7 +1721,7 @@ HyperelasticPlastic::computeStressTensorImplicit(const PatchSubset* patches,
           solver->fillMatrix(nDOF, dof, nDOF, dof, v);
         }
       }
-      delete interpolator;
+      //delete interpolator;
     } // end rigid
   }   // end of loop over particles
 

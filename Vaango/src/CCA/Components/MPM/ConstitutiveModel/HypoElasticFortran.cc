@@ -208,7 +208,7 @@ HypoElasticFortran::computeStressTensor(const PatchSubset* patches,
     double se = 0.0;
     const Patch* patch = patches->get(p);
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
@@ -390,7 +390,7 @@ HypoElasticFortran::computeStressTensor(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

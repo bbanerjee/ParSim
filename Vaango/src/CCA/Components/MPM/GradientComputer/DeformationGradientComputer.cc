@@ -431,7 +431,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
   double rho_orig = mpm_matl->getInitialDensity();
 
   // Get Interpolator
-  ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+  auto interpolator = flag->d_interpolator->clone(patch);
 
   // Set up variables to store old particle and grid data 
   // for vel grad and def grad calculation
@@ -491,7 +491,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
       if (flag->d_fracture) {
         for(int k=0; k<27; k++) pgFld[k]=pgCode[idx][k];
       }
-      gradComp.computeVelGrad(interpolator, oodx, pgFld, px[idx], pSize[idx], pDefGrad_old[idx], 
+      gradComp.computeVelGrad(interpolator.get(), oodx, pgFld, px[idx], pSize[idx], pDefGrad_old[idx], 
                               gVelocityStar, GVelocityStar, velGrad_new);
       //std::cout << "Six . After compute vel grad." << std::endl;
 
@@ -511,7 +511,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
       // Compute displacement gradient
       DisplacementGradientComputer gradComp(flag);
       Matrix3 dispGrad_new(0.0);
-      gradComp.computeDispGrad(interpolator, oodx, px[idx], pSize[idx], 
+      gradComp.computeDispGrad(interpolator.get(), oodx, px[idx], pSize[idx], 
                                pDefGrad_old[idx], gDisp, dispGrad_new);
 
       // Compute the deformation gradient from displacement
@@ -652,7 +652,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
   double rho_orig = mpm_matl->getInitialDensity();
 
   // Get Interpolator
-  ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+  auto interpolator = flag->d_interpolator->clone(patch);
 
   // Set up variables to store old particle and grid data 
   // for disp grad and def grad calculation
@@ -699,7 +699,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
       // Compute incremental displacement gradient
       DisplacementGradientComputer gradComp(flag);
       Matrix3 dispGrad_new(0.0);
-      gradComp.computeDispGrad(interpolator, oodx, px[idx], pSize[idx], 
+      gradComp.computeDispGrad(interpolator.get(), oodx, px[idx], pSize[idx], 
                                pDefGrad_old[idx], gDisp, dispGrad_new);
 
       // Compute the deformation gradient from displacement
@@ -724,7 +724,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
       // Compute total displacement gradient
       DisplacementGradientComputer gradComp(flag);
       Matrix3 dispGrad_new(0.0);
-      gradComp.computeDispGrad(interpolator, oodx, px[idx], pSize[idx], 
+      gradComp.computeDispGrad(interpolator.get(), oodx, px[idx], pSize[idx], 
                                pDefGrad_old[idx], gDisp, dispGrad_new);
 
       // Compute the deformation gradient from displacement
@@ -766,7 +766,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
   double rho_orig = mpm_matl->getInitialDensity();
 
   // Get Interpolator
-  ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+  auto interpolator = flag->d_interpolator->clone(patch);
 
   // Set up variables to store old particle and grid data 
   // for disp grad and def grad calculation
@@ -813,7 +813,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
       // Compute incremental displacement gradient
       DisplacementGradientComputer gradComp(flag);
       Matrix3 dispGrad_new(0.0);
-      gradComp.computeDispGrad(interpolator, oodx, px[idx], pSize[idx], 
+      gradComp.computeDispGrad(interpolator.get(), oodx, px[idx], pSize[idx], 
                                pDefGrad_old[idx], gDisp, dispGrad_new);
 
       // Compute the deformation gradient from displacement
@@ -838,7 +838,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
       // Compute total displacement gradient
       DisplacementGradientComputer gradComp(flag);
       Matrix3 dispGrad_new(0.0);
-      gradComp.computeDispGrad(interpolator, oodx, px[idx], pSize[idx], 
+      gradComp.computeDispGrad(interpolator.get(), oodx, px[idx], pSize[idx], 
                                pDefGrad_old[idx], gDisp, dispGrad_new);
 
       // Compute the deformation gradient from displacement

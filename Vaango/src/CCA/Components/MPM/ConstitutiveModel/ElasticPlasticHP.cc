@@ -752,7 +752,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
   for (int patchIndex = 0; patchIndex < patches->size(); patchIndex++) {
     const Patch* patch = patches->get(patchIndex);
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
@@ -1390,7 +1390,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(totalStrainEnergy), lb->StrainEnergyLabel);
     }
-    delete interpolator;
+    //delete interpolator;
   }
 
   if (cout_EP.active())
@@ -1689,7 +1689,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -1774,7 +1774,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
           flag->d_reductionVars->strainEnergy) {
         new_dw->put(sum_vartype(totalStrainEnergy), lb->StrainEnergyLabel);
       }
-      delete interpolator;
+      //delete interpolator;
       continue;
     }
 
@@ -2004,7 +2004,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(totalStrainEnergy), lb->StrainEnergyLabel);
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 //______________________________________________________________________
@@ -2113,7 +2113,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
     const Patch* patch = patches->get(p);
 
     // Get interpolation functions
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -2172,7 +2172,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         pDeformGrad_new[idx] = One;
         pVolume_deformed[idx] = pMass[idx] / rho_0;
       }
-      delete interpolator;
+      //delete interpolator;
       continue;
     }
 
@@ -2357,7 +2357,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
       delete state;
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2018-2018 Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -38,7 +39,7 @@ namespace Uintah {
     fastAxiCpdiInterpolator(const Patch* patch);
     virtual ~fastAxiCpdiInterpolator();
     
-    virtual fastAxiCpdiInterpolator* clone(const Patch*);
+    virtual std::unique_ptr<ParticleInterpolator> clone(const Patch*);
     
     virtual void findCellAndWeights(const Point& p,vector<IntVector>& ni, 
                                     vector<double>& S, const Matrix3& size,

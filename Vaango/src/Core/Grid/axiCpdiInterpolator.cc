@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2018-2018 Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -48,9 +49,10 @@ axiCpdiInterpolator::~axiCpdiInterpolator()
 {
 }
 
-axiCpdiInterpolator* axiCpdiInterpolator::clone(const Patch* patch)
+std::unique_ptr<ParticleInterpolator> 
+axiCpdiInterpolator::clone(const Patch* patch)
 {
-  return scinew axiCpdiInterpolator(patch);
+  return std::make_unique<axiCpdiInterpolator>(patch);
 }
     
 void axiCpdiInterpolator::findCellAndWeights(const Point& pos,

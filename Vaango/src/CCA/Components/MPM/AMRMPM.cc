@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -1676,7 +1676,7 @@ void AMRMPM::partitionOfUnity(const ProcessorGroup*,
     refineCell.initialize(0.0);
 
     int numMatls = d_sharedState->getNumMPMMatls();
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
     const Matrix3 notUsed;
@@ -1731,7 +1731,6 @@ void AMRMPM::partitionOfUnity(const ProcessorGroup*,
         }
       }
     }  // loop over materials
-    delete interpolator;
   }  // loop over patches
 }
 //______________________________________________________________________
@@ -1749,7 +1748,7 @@ void AMRMPM::interpolateParticlesToGrid(const ProcessorGroup*,
               "Doing AMRMPM::interpolateParticlesToGrid");
 
     int numMatls = d_sharedState->getNumMPMMatls();
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
 
@@ -1925,7 +1924,6 @@ void AMRMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       // AMRMPM::NormalizeNodalVelTempConc() task
       
     }  // End loop over materials
-    delete interpolator;
   }  // End loop over patches
 }
 
@@ -1947,7 +1945,7 @@ void AMRMPM::interpolateParticlesToGrid_CFI(const ProcessorGroup*,
               "Doing AMRMPM::interpolateParticlesToGrid_CFI");
 
     int numMatls = d_sharedState->getNumMPMMatls();
-    ParticleInterpolator* interpolator =flags->d_interpolator->clone(finePatch);
+    auto interpolator =flags->d_interpolator->clone(finePatch);
 
     constNCVariable<Stencil7> zoi_fine;
     new_dw->get(zoi_fine, lb->gZOILabel, 0, finePatch, Ghost::None, 0 );
@@ -2088,7 +2086,6 @@ void AMRMPM::interpolateParticlesToGrid_CFI(const ProcessorGroup*,
         }  // End of particle loop
       }  // loop over coarse patches
     }  // End loop over materials  
-    delete interpolator;
   }  // End loop over fine patches
 }
 
@@ -2517,7 +2514,7 @@ void AMRMPM::computeInternalForce(const ProcessorGroup*,
     Matrix3 Id;
     Id.Identity();
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
 
     
     string interp_type = flags->d_interpolator_type;
@@ -2625,7 +2622,6 @@ void AMRMPM::computeInternalForce(const ProcessorGroup*,
       MPMBoundCond bc;
       bc.setBoundaryCondition(patch,dwi,"Symmetric",internalforce,interp_type);
     }  // End matl loop
-    delete interpolator;
   }  // End patch loop
 }
 
@@ -2646,7 +2642,7 @@ void AMRMPM::computeInternalForce_CFI(const ProcessorGroup*,
     printTask(finePatches, finePatch,cout_doing,
               "Doing AMRMPM::computeInternalForce_CFI");
 
-    ParticleInterpolator* interpolator =flags->d_interpolator->clone(finePatch);
+    auto interpolator =flags->d_interpolator->clone(finePatch);
 
     //__________________________________
     //          AT CFI
@@ -2808,7 +2804,6 @@ void AMRMPM::computeInternalForce_CFI(const ProcessorGroup*,
               
       }  // End matl loop 
     }  // patch has CFI faces
-    delete interpolator;
   }  // End fine patch loop
 }
 
@@ -3174,7 +3169,7 @@ void AMRMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     printTask(patches, patch,cout_doing,
               "Doing AMRMPM::interpolateToParticlesAndUpdate");
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
     vector<Vector> d_S(interpolator->size());
@@ -3403,7 +3398,6 @@ void AMRMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         pRefinedNew.copyData(pRefinedOld);
       }
     }
-    delete interpolator;
   }
 }
 
@@ -4224,7 +4218,7 @@ void AMRMPM::debug_CFI(const ProcessorGroup*,
     old_dw->get(pDefGrad,  lb->pDefGradLabel, pset);
     new_dw->allocateAndPut(pColor,    lb->pColorLabel_preReloc,     pset);
     
-    ParticleInterpolator* interpolatorCoarse = flags->d_interpolator->clone(patch);
+    auto interpolatorCoarse = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolatorCoarse->size());
     vector<double> S(interpolatorCoarse->size());
 
@@ -4286,7 +4280,7 @@ void AMRMPM::debug_CFI(const ProcessorGroup*,
         old_dw->get(px_CFI, lb->pXLabel,  pset2);
         new_dw->get(zoi,    lb->gZOILabel, 0, finePatch, Ghost::None, 0 );
 
-        ParticleInterpolator* interpolatorFine = flags->d_interpolator->clone(finePatch);
+        auto interpolatorFine = flags->d_interpolator->clone(finePatch);
 
         for (ParticleSubset::iterator iter = pset->begin();iter != pset->end(); iter++){
           particleIndex idx = *iter;
@@ -4305,10 +4299,8 @@ void AMRMPM::debug_CFI(const ProcessorGroup*,
             }
           }  // pset2 loop
         }  // pset loop
-        delete interpolatorFine;
       }  // loop over fine patches
     }  //// hasFinerLevel
-    delete interpolatorCoarse;
   }  // End loop over coarse patches
 }
 
@@ -4410,7 +4402,7 @@ void AMRMPM::interpolateToParticlesAndUpdate_CFI(const ProcessorGroup*,
       
       if(finePatch->hasCoarseFaces()){
 
-        ParticleInterpolator* interpolator = flags->d_interpolator->clone(finePatch);
+        auto interpolator = flags->d_interpolator->clone(finePatch);
         
         constNCVariable<Stencil7> zoi_fine;
         new_dw->get(zoi_fine, lb->gZOILabel, 0, finePatch, Ghost::None, 0 );
@@ -4498,7 +4490,6 @@ void AMRMPM::interpolateToParticlesAndUpdate_CFI(const ProcessorGroup*,
           } // End of particle loop
         } // End loop over materials 
       
-        delete interpolator;
       }  // if has coarse face
     }  // End loop over fine patches 
   }  // End loop over patches

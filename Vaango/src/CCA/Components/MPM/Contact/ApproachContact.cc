@@ -120,7 +120,7 @@ void ApproachContact::exMomInterpolated(const ProcessorGroup*,
     constNCVariable<double> NC_CCweight;
     old_dw->get(NC_CCweight,         lb->NC_CCweightLabel,  0, patch, gnone, 0);
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
     vector<Vector> d_S(interpolator->size());
@@ -334,7 +334,7 @@ void ApproachContact::exMomInterpolated(const ProcessorGroup*,
       }        // if(!compare(centerOfMassMass,0.0))
     }          // NodeIterator
 #endif
-    delete interpolator;
+    //delete interpolator;
   }  // patches
 
 }

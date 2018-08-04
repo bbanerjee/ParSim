@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2018-2018 Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -2133,7 +2134,7 @@ void ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch,cout_doing,"Doing interpolateParticlesToGrid");
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     int i_size = interpolator->size();
     vector<IntVector> ni(i_size);
     vector<double> S(i_size);
@@ -2558,7 +2559,6 @@ void ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       }
     }  // End loop over materials
 
-    delete interpolator;
   }  // End loop over patches
   timestep++;
 }
@@ -3006,7 +3006,7 @@ void ImpMPM::computeInternalForce(const ProcessorGroup*,
     
     printTask(patches, patch,cout_doing,"Doing ImpMPM::computeInternalForce");
     
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -3089,7 +3089,6 @@ void ImpMPM::computeInternalForce(const ProcessorGroup*,
       }
      }
     }  // matls
-    delete interpolator;
   }    // patches
 }
 
@@ -3525,7 +3524,7 @@ void ImpMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
     Ghost::GhostType  gac = Ghost::AroundCells;
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
     vector<Vector> d_S(interpolator->size());
@@ -3689,7 +3688,6 @@ void ImpMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     new_dw->put(sumvec_vartype(totalMom),    lb->TotalMomentumLabel);
     new_dw->put(sum_vartype(thermal_energy), lb->ThermalEnergyLabel);
 
-    delete interpolator;
   }
 }
 
@@ -3710,7 +3708,7 @@ void ImpMPM::interpolateStressToGrid(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch,cout_doing,"Doing ImpMPM::interpolateStressToGrid");
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
     vector<Vector> d_S(interpolator->size());
@@ -3855,7 +3853,6 @@ void ImpMPM::interpolateStressToGrid(const ProcessorGroup*,
       } // faces
      } // if
    }  // matls
-    delete interpolator;
   }
 
   // be careful only to put the fields that we have built

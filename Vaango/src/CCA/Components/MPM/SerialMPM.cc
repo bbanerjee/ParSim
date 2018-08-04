@@ -1924,8 +1924,8 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     printTask(patches,patch,cout_doing,"Doing interpolateParticlesToGrid");
 
     int numMatls = d_sharedState->getNumMPMMatls();
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch); 
-    ParticleInterpolator* linear_interpolator=scinew LinearInterpolator(patch);
+    auto interpolator = flags->d_interpolator->clone(patch); 
+    auto linear_interpolator = std::make_unique<LinearInterpolator>(patch);
 
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
@@ -2129,8 +2129,8 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       gtempglobal[c] /= gmassglobal[c];
       gvelglobal[c] /= gmassglobal[c];
     }
-    delete interpolator;
-    delete linear_interpolator;
+    //delete interpolator;
+    //delete linear_interpolator;
   }  // End loop over patches
 }
 
@@ -2222,7 +2222,7 @@ SerialMPM::updateCohesiveZones(const ProcessorGroup*,
     printTask(patches, patch,cout_doing,
               "Doing updateCohesiveZones");
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
 
@@ -2468,7 +2468,7 @@ SerialMPM::updateCohesiveZones(const ProcessorGroup*,
       }
     }
 
-    delete interpolator;
+    //delete interpolator;
   }
 }
 /*!----------------------------------------------------------------------
@@ -2517,7 +2517,7 @@ SerialMPM::addCohesiveZoneForces(const ProcessorGroup*,
 
     printTask(patches,patch,cout_doing,"Doing addCohesiveZoneForces");
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
 
@@ -2580,7 +2580,7 @@ SerialMPM::addCohesiveZoneForces(const ProcessorGroup*,
         }
       }
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 
@@ -2784,7 +2784,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
     Matrix3 Id;
     Id.Identity();
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch); 
+    auto interpolator = flags->d_interpolator->clone(patch); 
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
     vector<Vector> d_S(interpolator->size());
@@ -2968,7 +2968,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
       IntVector c = *iter;
       gstressglobal[c] /= gvolumeglobal[c];
     }
-    delete interpolator;
+    //delete interpolator;
   }
   
   // be careful only to put the fields that we have built
@@ -4515,7 +4515,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     printTask(patches, patch,cout_doing,
               "Doing interpolateToParticlesAndUpdate");
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
 
@@ -4836,7 +4836,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
     // cout << "THERMAL ENERGY " << thermal_energy << endl;
 
-    delete interpolator;
+    //delete interpolator;
   }
   
 }
@@ -4910,7 +4910,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
     printTask(patches, patch,cout_doing,
               "Doing interpolateToParticlesAndUpdateMom1");
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
 
@@ -5028,7 +5028,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
       new_dw->put(sumvec_vartype(CMX),         lb->CenterOfMassPositionLabel);
     }    
 
-    delete interpolator;
+    //delete interpolator;
   }
 
 }
@@ -5078,7 +5078,7 @@ SerialMPM::interpolateParticleVelToGridMom(const ProcessorGroup*,
     printTask(patches,patch,cout_doing,"Doing interpolateParticleVelToGridMom");
 
     int numMatls = d_sharedState->getNumMPMMatls();
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
 
@@ -5141,7 +5141,7 @@ SerialMPM::interpolateParticleVelToGridMom(const ProcessorGroup*,
       //    setGridBoundaryConditions handles the BCs for gvelocity_star
     }  // end of materials loop
 
-    delete interpolator;
+    //delete interpolator;
 
   }  // End loop over patches
 }
@@ -5238,7 +5238,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
     printTask(patches, patch,cout_doing,
               "Doing interpolateToParticlesAndUpdateMom2");
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
 
@@ -5438,7 +5438,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
       new_dw->put(sum_vartype(thermal_energy), lb->ThermalEnergyLabel);
     }
     
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

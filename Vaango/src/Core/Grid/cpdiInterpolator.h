@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2018-2018 Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -49,7 +50,7 @@ namespace Uintah {
     cpdiInterpolator(const Patch* patch, const double& lcrit);
     virtual ~cpdiInterpolator();
     
-    virtual cpdiInterpolator* clone(const Patch*);
+    virtual std::unique_ptr<ParticleInterpolator> clone(const Patch*);
     
     virtual void findCellAndWeights(const Point& p,
                                     std::vector<IntVector>& ni, 

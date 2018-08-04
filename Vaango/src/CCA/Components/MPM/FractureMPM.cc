@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2018-2018 Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -1316,7 +1317,7 @@ void FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       cout_doing <<"Doing interpolateParticlesToGrid on patch " << patch->getID()<<"\t\t MPM"<< endl;
 
     int numMatls = d_sharedState->getNumMPMMatls();
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
 
@@ -1542,7 +1543,6 @@ void FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       gtempglobal[c] /= gmassglobal[c];
       gvelglobal[c]  /= gmassglobal[c];
     }
-    delete interpolator;
   }  // End loop over patches
 }
 
@@ -1604,7 +1604,7 @@ void FractureMPM::computeArtificialViscosity(const ProcessorGroup*,
     Ghost::GhostType  gac   = Ghost::AroundCells;
 
     int numMatls = d_sharedState->getNumMPMMatls();
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -1680,7 +1680,6 @@ void FractureMPM::computeArtificialViscosity(const ProcessorGroup*,
 
       }
     }
-    delete interpolator;
   }
 
 }
@@ -1791,7 +1790,7 @@ void FractureMPM::computeInternalForce(const ProcessorGroup*,
     Matrix3 Id;
     Id.Identity();
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
     vector<Vector> d_S(interpolator->size());
@@ -1977,7 +1976,6 @@ void FractureMPM::computeInternalForce(const ProcessorGroup*,
       IntVector c = *iter;
       gstressglobal[c] /= gmassglobal[c];
     }
-    delete interpolator;
   }
   new_dw->put(sum_vartype(partvoldef), lb->TotalVolumeDeformedLabel);
 
@@ -2562,7 +2560,7 @@ void FractureMPM::computeParticleTempFromGrid(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
     vector<Vector> d_S(interpolator->size());
@@ -2616,7 +2614,6 @@ void FractureMPM::computeParticleTempFromGrid(const ProcessorGroup*,
         pTempCur[idx]=pTemp;
       } // End of loop over iter        
     } // End of loop over m
-    delete interpolator;
   } // End of loop over p 
 }       
         
@@ -2635,7 +2632,7 @@ void FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     }
     
 
-    ParticleInterpolator* interpolator = flags->d_interpolator->clone(patch);
+    auto interpolator = flags->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
     vector<Vector> d_S(interpolator->size());
@@ -2873,7 +2870,6 @@ void FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     
     // cout << "THERMAL ENERGY " << thermal_energy << endl;
     
-    delete interpolator;
   }
 }    
       

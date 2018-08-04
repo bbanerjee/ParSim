@@ -300,7 +300,7 @@ SpecifiedBodyContact::exMomIntegrated(const ProcessorGroup*,
       old_dw->get(psize,               lb->pSizeLabel,               pset);
       old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
 
-      ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+      auto interpolator = flag->d_interpolator->clone(patch);
       vector<IntVector> ni(interpolator->size());
       vector<double> S(interpolator->size());
       vector<Vector> d_S(interpolator->size());

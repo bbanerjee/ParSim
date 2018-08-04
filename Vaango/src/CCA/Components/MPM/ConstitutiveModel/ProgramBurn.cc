@@ -288,7 +288,7 @@ ProgramBurn::computeStressTensor(const PatchSubset* patches,
     Vector dx = patch->dCell();
     // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
@@ -470,7 +470,7 @@ ProgramBurn::computeStressTensor(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

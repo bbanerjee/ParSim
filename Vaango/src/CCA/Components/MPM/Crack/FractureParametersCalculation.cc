@@ -131,7 +131,7 @@ void Crack::GetNodalSolutions(const ProcessorGroup*,
   for(int p=0;p<patches->size();p++){
     const Patch* patch = patches->get(p);
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
 
@@ -258,7 +258,7 @@ void Crack::GetNodalSolutions(const ProcessorGroup*,
         }
       } // End if(calFractParameters || doCrackPropagation)
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 
@@ -305,7 +305,7 @@ void Crack::CalculateFractureParameters(const ProcessorGroup*,
     Vector dx = patch->dCell();
     double dx_max=Max(dx.x(),dx.y(),dx.z());
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
     
@@ -838,7 +838,7 @@ void Crack::CalculateFractureParameters(const ProcessorGroup*,
         if(pid==0) OutputCrackFrontResults(m);
       } // End if(calFractParameters || doCrackPropagation)
     } // End of loop over matls
-    delete interpolator;
+    //delete interpolator;
   } 
 }
 

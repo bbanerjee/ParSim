@@ -826,7 +826,7 @@ UCNH::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
     // double time = d_sharedState->getElapsedTime();
 
     // Get Interpolator
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
@@ -1029,7 +1029,7 @@ UCNH::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
       new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
     }
 
-    delete interpolator;
+    //delete interpolator;
     // cout << "End compute stress." << endl;
   }
 }
@@ -1114,7 +1114,7 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
         pStress[idx] = Matrix3(0.0);
       }
     } else {
-      ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+      auto interpolator = flag->d_interpolator->clone(patch);
       vector<IntVector> ni(interpolator->size());
       vector<Vector> d_S(interpolator->size());
 
@@ -1239,7 +1239,7 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
           solver->fillMatrix(nDOF, dof, nDOF, dof, v);
         }
       }
-      delete interpolator;
+      //delete interpolator;
     } // end rigid
   }   // end of loop over particles
 
@@ -1366,7 +1366,7 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
       }
     } else { /*if(!matl->getIsRigid()) */
       // Compute the displacement gradient and the deformation gradient
-      ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+      auto interpolator = flag->d_interpolator->clone(patch);
       vector<IntVector> ni(interpolator->size());
       vector<Vector> d_S(interpolator->size());
 
@@ -1459,7 +1459,7 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
           flag->d_reductionVars->strainEnergy) {
         new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
       }
-      delete interpolator;
+      //delete interpolator;
     } // End rigid else
   }   // End Patch For Loop
 }

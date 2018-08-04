@@ -77,7 +77,7 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
   d_artificialDampCoeff = 0.0;
   d_forceIncrementFactor = 1.0;
   d_canAddMPMMaterial = false;
-  d_interpolator = scinew LinearInterpolator(); 
+  d_interpolator = std::make_unique<LinearInterpolator>(); 
   d_do_contact_friction = false;
   d_addFrictionWork = 0.0;  // don't do frictional heating by default
 
@@ -151,7 +151,7 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
 
 MPMFlags::~MPMFlags()
 {
-  delete d_interpolator;
+  //delete d_interpolator;
   delete d_reductionVars;
 }
 
@@ -317,23 +317,23 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   mpm_flag_ps->get("computeNodalHeatFlux",d_computeNodalHeatFlux);
   mpm_flag_ps->get("computeScaleFactor",  d_computeScaleFactor);
   
-  delete d_interpolator;
+  //delete d_interpolator;
 
   if(d_interpolator_type=="linear"){
     if(d_axisymmetric){
-      d_interpolator = scinew AxiLinearInterpolator();
+      d_interpolator = std::make_unique<AxiLinearInterpolator>();
     } else{
-      d_interpolator = scinew LinearInterpolator();
+      d_interpolator = std::make_unique<LinearInterpolator>();
     }
   } else if(d_interpolator_type=="gimp"){
     if(d_axisymmetric){
-      d_interpolator = scinew AxiGIMPInterpolator();
+      d_interpolator = std::make_unique<AxiGIMPInterpolator>();
     } else{
-      d_interpolator = scinew GIMPInterpolator();
+      d_interpolator = std::make_unique<GIMPInterpolator>();
     }
   } else if(d_interpolator_type=="3rdorderBS"){
     if(!d_axisymmetric){
-      d_interpolator = scinew TOBSplineInterpolator();
+      d_interpolator = std::make_unique<TOBSplineInterpolator>();
     } else{
       ostringstream warn;
       warn << "ERROR:MPM: invalid interpolation type ("<<d_interpolator_type << ")"
@@ -342,7 +342,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     }
   } else if(d_interpolator_type=="4thorderBS"){
     if(!d_axisymmetric){
-      d_interpolator = scinew BSplineInterpolator();
+      d_interpolator = std::make_unique<BSplineInterpolator>();
     } else{
       ostringstream warn;
       warn << "ERROR:MPM: invalid interpolation type ("<<d_interpolator_type << ")"
@@ -351,23 +351,23 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     }
   } else if(d_interpolator_type=="cpdi"){
     if(d_axisymmetric){
-      d_interpolator = scinew axiCpdiInterpolator();
+      d_interpolator = std::make_unique<axiCpdiInterpolator>();
     } else{
-      d_interpolator = scinew cpdiInterpolator();
+      d_interpolator = std::make_unique<cpdiInterpolator>();
       d_interpolator->setLcrit(d_cpdi_lcrit);
     }
   } else if(d_interpolator_type=="cpti"){
     if (!d_axisymmetric) {
-      d_interpolator = scinew cptiInterpolator();
+      d_interpolator = std::make_unique<cptiInterpolator>();
       d_interpolator->setLcrit(d_cpdi_lcrit);
     }
   }
 #if 0
  else if(d_interpolator_type=="fastcpdi"){
     if(d_axisymmetric){
-      d_interpolator = scinew fastAxiCpdiInterpolator();
+      d_interpolator = std::make_unique<fastAxiCpdiInterpolator>();
     } else{
-      d_interpolator = scinew fastCpdiInterpolator();
+      d_interpolator = std::make_unique<fastCpdiInterpolator>();
     }
   }
 #endif

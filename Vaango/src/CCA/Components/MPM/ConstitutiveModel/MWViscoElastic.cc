@@ -301,7 +301,7 @@ MWViscoElastic::computeStressTensor(const PatchSubset* patches,
     Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
     double onethird = (1.0 / 3.0);
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
@@ -449,7 +449,7 @@ MWViscoElastic::computeStressTensor(const PatchSubset* patches,
       new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
     }
 
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

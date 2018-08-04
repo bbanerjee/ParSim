@@ -341,7 +341,7 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
     double se = 0.0;
     const Patch* patch = patches->get(p);
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
@@ -563,7 +563,7 @@ Diamm::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
       new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
     }
 
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

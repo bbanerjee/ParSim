@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 1997-2015 The University of Utah
+ * Copyright (c) 2018-2018 Parresia Research Limited, NZ
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -58,9 +59,10 @@ cptiInterpolator::~cptiInterpolator()
 {
 }
 
-cptiInterpolator* cptiInterpolator::clone(const Patch* patch)
+std::unique_ptr<ParticleInterpolator> 
+cptiInterpolator::clone(const Patch* patch)
 {
-  return scinew cptiInterpolator(patch, d_lcrit);
+  return std::make_unique<cptiInterpolator>(patch, d_lcrit);
 }
     
 void cptiInterpolator::findCellAndWeights(const Point& pos,           //input: physical coordinates of a particle

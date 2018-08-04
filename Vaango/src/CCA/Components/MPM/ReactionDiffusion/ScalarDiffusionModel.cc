@@ -125,7 +125,7 @@ void ScalarDiffusionModel::computeDivergence(const Patch* patch,
   Ghost::GhostType  gan   = Ghost::AroundNodes;
   int dwi = matl->getDWIndex();
 
-  ParticleInterpolator* interpolator = d_Mflag->d_interpolator->clone(patch); 
+  auto interpolator = d_Mflag->d_interpolator->clone(patch); 
   vector<IntVector> ni(interpolator->size());
   vector<Vector> d_S(interpolator->size());
 
@@ -229,7 +229,7 @@ void ScalarDiffusionModel::computeDivergence_CFI(const PatchSubset* finePatches,
     printTask(finePatches, finePatch,cout_doing,
                         "Doing ScalarDiffusionModel::computeInternalForce_CFI");
 
-    ParticleInterpolator* interpolator =
+    auto interpolator =
                                       d_Mflag->d_interpolator->clone(finePatch);
 
     //__________________________________
@@ -319,7 +319,7 @@ void ScalarDiffusionModel::computeDivergence_CFI(const PatchSubset* finePatches,
         }  // pset loop
       }  // coarse Patch loop
     }  // patch has CFI faces
-    delete interpolator;
+    //delete interpolator;
   }  // End fine patch loop
 }
 

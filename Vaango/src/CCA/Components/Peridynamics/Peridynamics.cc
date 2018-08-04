@@ -1039,7 +1039,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     // Create a copy of the LinearInterpolator
-    Uintah::ParticleInterpolator* interpolator = d_interpolator->clone(patch);
+    auto interpolator = d_interpolator->clone(patch);
     std::vector<IntVector> nodeIndices(interpolator->size());
     std::vector<double> shapeFunction(interpolator->size());
 
@@ -1164,7 +1164,7 @@ Peridynamics::interpolateParticlesToGrid(const ProcessorGroup*,
     }
 
     // remove the interpolator clone
-    delete interpolator;
+    //delete interpolator;
 
   }  // End loop over patches
 }
@@ -1390,7 +1390,7 @@ Peridynamics::computeGridInternalForce(const ProcessorGroup*,
     Matrix3 Id;
     Id.Identity();
 
-    Uintah::ParticleInterpolator* interpolator = d_interpolator->clone(patch); 
+    auto interpolator = d_interpolator->clone(patch); 
     std::vector<IntVector> nodeIndices(interpolator->size());
     std::vector<double> shapeFunction(interpolator->size());
     std::vector<Vector> shapeGradient(interpolator->size());
@@ -1475,7 +1475,7 @@ Peridynamics::computeGridInternalForce(const ProcessorGroup*,
       gStressGlobal[c] /= gVolumeGlobal[c];
     }
 
-    delete interpolator;
+    //delete interpolator;
   }
   
 }
@@ -1832,7 +1832,7 @@ Peridynamics::projectParticleAccelerationToGrid(const ProcessorGroup*,
     int numBodies = d_sharedState->getNumPeridynamicsMatls();
 
     // Create a copy of the LinearInterpolator
-    Uintah::ParticleInterpolator* interpolator = d_interpolator->clone(patch);
+    auto interpolator = d_interpolator->clone(patch);
     std::vector<IntVector> nodeIndices(interpolator->size());
     std::vector<double> shapeFunction(interpolator->size());
 
@@ -1892,7 +1892,7 @@ Peridynamics::projectParticleAccelerationToGrid(const ProcessorGroup*,
     } // end matl loop
 
     // remove the interpolator clone
-    delete interpolator;
+    //delete interpolator;
 
   }  //end  patch loop
 }
@@ -2069,7 +2069,7 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
 
     // Create a copy of the LinearInterpolator
-    Uintah::ParticleInterpolator* interpolator = d_interpolator->clone(patch);
+    auto interpolator = d_interpolator->clone(patch);
     std::vector<IntVector> nodeIndices(interpolator->size());
     std::vector<double> shapeFunctions(interpolator->size());
 
@@ -2160,7 +2160,7 @@ Peridynamics::updateParticleKinematics(const ProcessorGroup*,
     }  // end of matl loop
 
     // remove the interpolator clone
-    delete interpolator;
+    //delete interpolator;
 
   } // end of patch loop
   

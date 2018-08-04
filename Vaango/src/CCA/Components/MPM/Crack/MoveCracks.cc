@@ -167,7 +167,7 @@ Crack::MoveCracks(const ProcessorGroup*,
   for(int p=0; p<patches->size(); p++){
     const Patch* patch = patches->get(p);
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
 
@@ -298,7 +298,7 @@ Crack::MoveCracks(const ProcessorGroup*,
       } 
 
     } // End of loop over matls
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

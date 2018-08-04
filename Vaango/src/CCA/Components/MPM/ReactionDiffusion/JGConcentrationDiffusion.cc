@@ -59,7 +59,7 @@ void JGConcentrationDiffusion::computeFlux(const Patch* patch,
                                            DataWarehouse* old_dw,
                                            DataWarehouse* new_dw)
 {
-  ParticleInterpolator* interpolator = d_Mflag->d_interpolator->clone(patch);
+  auto interpolator = d_Mflag->d_interpolator->clone(patch);
   vector<IntVector> ni(interpolator->size());
   vector<Vector> d_S(interpolator->size());
 
@@ -84,5 +84,5 @@ void JGConcentrationDiffusion::computeFlux(const Patch* patch,
   //cout << "Time Step: " << timestep << endl;
 
   //new_dw->put(delt_vartype(timestep), d_lb->delTLabel, patch->getLevel());
-  delete interpolator;
+  //delete interpolator;
 }

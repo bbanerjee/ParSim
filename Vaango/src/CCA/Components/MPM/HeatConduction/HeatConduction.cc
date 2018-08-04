@@ -221,7 +221,7 @@ void HeatConduction::computeInternalHeatRate(const ProcessorGroup*,
     if (cout_heat.active())
       cout_heat << " Patch = " << patch->getID() << endl;
 
-    ParticleInterpolator* interpolator = d_flag->d_interpolator->clone(patch);
+    auto interpolator = d_flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
@@ -386,7 +386,7 @@ void HeatConduction::computeInternalHeatRate(const ProcessorGroup*,
 
       } // Loop over particles 
     }  // End of loop over materials
-    delete interpolator;
+    //delete interpolator;
   }  // End of loop over patches
 }
 //______________________________________________________________________
@@ -408,7 +408,7 @@ void HeatConduction::computeNodalHeatFlux(const ProcessorGroup*,
     if (cout_heat.active())
       cout_heat << " Patch = " << patch->getID() << endl;
       
-    ParticleInterpolator* interpolator = d_flag->d_interpolator->clone(patch);
+    auto interpolator = d_flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<double> S(interpolator->size());
     vector<Vector> d_S(interpolator->size());
@@ -501,7 +501,7 @@ void HeatConduction::computeNodalHeatFlux(const ProcessorGroup*,
         gHeatFlux[n] = -kappa * gpdTdx[n]/gMass[n];
       }
     }  // End of loop over materials
-    delete interpolator;
+    //delete interpolator;
   }  // End of loop over patches
 }
 

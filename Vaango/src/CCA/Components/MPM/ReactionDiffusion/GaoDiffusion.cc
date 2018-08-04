@@ -77,7 +77,7 @@ void GaoDiffusion::computeFlux(const Patch* patch, const MPMMaterial* matl,
   Ghost::GhostType  gac   = Ghost::AroundCells;
   Ghost::GhostType  gnone = Ghost::None;
 
-  ParticleInterpolator* interpolator = d_Mflag->d_interpolator->clone(patch);
+  auto interpolator = d_Mflag->d_interpolator->clone(patch);
   vector<IntVector> ni(interpolator->size());
   vector<Vector> d_S(interpolator->size());
 
@@ -145,5 +145,5 @@ void GaoDiffusion::computeFlux(const Patch* patch, const MPMMaterial* matl,
     //cout << "id: " << idx << " CG: " << pConcentrationGradient[idx] << ", PF: " << pPotentialFlux[idx] << endl;
   } //End of Particle Loop
 
-  delete interpolator;
+  //delete interpolator;
 }

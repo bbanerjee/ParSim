@@ -384,7 +384,7 @@ JWLppMPM::computeStressTensor(const PatchSubset* patches,
     // double time = d_sharedState->getElapsedTime();
 
     // Get interpolator
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
@@ -561,7 +561,7 @@ JWLppMPM::computeStressTensor(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

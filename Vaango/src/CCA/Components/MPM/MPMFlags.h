@@ -154,7 +154,7 @@ namespace Uintah {
 
     std::vector<std::string> d_bndy_face_txt_list; 
 
-    ParticleInterpolator* d_interpolator;
+    std::unique_ptr<ParticleInterpolator> d_interpolator;
 
     MPMFlags(const ProcessorGroup* myworld);
 

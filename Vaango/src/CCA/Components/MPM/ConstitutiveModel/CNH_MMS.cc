@@ -227,7 +227,7 @@ CNH_MMS::computeStressTensor(const PatchSubset* patches,
     Matrix3 Identity;
     Identity.Identity();
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
 
     Vector dx = patch->dCell();
 
@@ -311,7 +311,7 @@ CNH_MMS::computeStressTensor(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
     }
-    delete interpolator;
+    //delete interpolator;
   }
 }
 

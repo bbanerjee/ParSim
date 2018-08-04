@@ -677,7 +677,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
   for (int patchIndex = 0; patchIndex < patches->size(); patchIndex++) {
     const Patch* patch = patches->get(patchIndex);
 
-    ParticleInterpolator* interpolator = flag->d_interpolator->clone(patch);
+    auto interpolator = flag->d_interpolator->clone(patch);
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
@@ -1329,7 +1329,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(totalStrainEnergy), lb->StrainEnergyLabel);
     }
-    delete interpolator;
+    //delete interpolator;
   }
 
   if (cout_EP.active())
