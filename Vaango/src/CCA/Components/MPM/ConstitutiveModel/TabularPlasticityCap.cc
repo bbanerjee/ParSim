@@ -366,6 +366,7 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
         DD, delT, idx, pParticleID[idx], state_old, state_new);
 
       if (status == Status::SUCCESS) {
+        pRemove_new[idx] = 0;
         pStress_new[idx] =
           state_new.stressTensor; // unrotated stress at end of step
         pEe_new[idx] =
