@@ -309,7 +309,7 @@ YieldCond_Tabular::getClosestPoint(const Polyline& polyline,
 //   hasYielded = -1.0 (if elastic)
 //              =  1.0 (otherwise)
 //--------------------------------------------------------------
-double
+std::pair<double, Util::YieldStatus>
 YieldCond_Tabular::evalYieldCondition(const ModelStateBase* state_input)
 {
   const ModelState_Tabular* state =
@@ -323,7 +323,7 @@ YieldCond_Tabular::evalYieldCondition(const ModelStateBase* state_input)
 
   double p_bar = -state->I1/3;
   if (p_bar < d_I1bar_min/3) {
-    return 1.0;
+    return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
   }
 
   DoubleVec1D gg;
@@ -339,10 +339,10 @@ YieldCond_Tabular::evalYieldCondition(const ModelStateBase* state_input)
   //std::cout << "p_bar = " << p_bar << " gg = " << gg[0] 
   //          << " sqrtJ2 = " << state->sqrt_J2 << std::endl;
   if (state->sqrt_J2 > gg[0]) {
-    return 1.0;
+    return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
   }
 
-  return -1.0;
+  return std::make_pair(-1.0, Util::YieldStatus::IS_ELASTIC);
 }
 
 //--------------------------------------------------------------

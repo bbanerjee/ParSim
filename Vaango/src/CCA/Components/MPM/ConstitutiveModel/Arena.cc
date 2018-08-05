@@ -1792,10 +1792,10 @@ Arena::computeSubstep(const Matrix3& D, const double& dt,
   */
 
   // Evaluate the yield function at the trial stress:
-  int yield = (int)d_yield->evalYieldCondition(&state_k_trial);
+  auto yield = d_yield->evalYieldCondition(&state_k_trial);
 
   // Elastic substep
-  if (!(yield == 1)) {
+  if (yield.second == Util::YieldStatus::IS_ELASTIC) {
     state_k_new = state_k_trial;
     state_k_new.elasticStrainTensor += deltaEps;
 
@@ -2218,12 +2218,12 @@ Arena::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
     // trial stress state when the internal variables are changed.
     // If the yield surface is too big, the plastic strain is reduced
     // by bisecting <eta> and the loop is repeated.
-    int yield = (int)d_yield->evalYieldCondition(&state_trial_local);
+    auto yield = d_yield->evalYieldCondition(&state_trial_local);
 
     // If the local trial state is inside the updated yield surface the yield
     // condition evaluates to "elastic".  We need to reduce the size of the
     // yield surface by decreasing the plastic strain increment.
-    if (yield != 1) { // Elastic or on yield surface
+    if (yield.second == Util::YieldStatus::IS_ELASTIC) {
       eta_hi = eta_mid;
       ii++;
       continue;

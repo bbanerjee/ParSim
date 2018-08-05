@@ -1753,7 +1753,7 @@ ArenaMixture::computeSubstep(const Matrix3& D, const double& dt,
   computeElasticProperties(state_k_trial);
 
   // Evaluate the yield function at the trial stress:
-  int yield = (int)d_yield->evalYieldCondition(&state_k_trial);
+  auto yield = d_yield->evalYieldCondition(&state_k_trial);
 
   // std::cout << "Has yielded ? 1 = Yes, -1 = No." << yield << std::endl;
   // std::cout << "computeSubstep:Elastic:sigma_new = " <<
@@ -1765,7 +1765,7 @@ ArenaMixture::computeSubstep(const Matrix3& D, const double& dt,
   //          << std::endl;
 
   // Elastic substep
-  if (!(yield == 1)) {
+  if (yield.second == Util::YieldStatus::IS_ELASTIC) {
     state_k_new = state_k_trial;
 
 #ifdef CHECK_INTERNAL_VAR_EVOLUTION
@@ -2159,12 +2159,13 @@ ArenaMixture::consistencyBisectionSimplified(
     // trial stress state when the internal variables are changed.
     // If the yield surface is too big, the plastic strain is reduced
     // by bisecting <eta> and the loop is repeated.
-    int yield = (int)d_yield->evalYieldCondition(&state_trial_local);
+    auto yield = d_yield->evalYieldCondition(&state_trial_local);
 
     // If the local trial state is inside the updated yield surface the yield
     // condition evaluates to "elastic".  We need to reduce the size of the
     // yield surface by decreasing the plastic strain increment.
-    if (yield != 1) { // Elastic or on yield surface
+    // Elastic or on yield surface
+    if (yield.second == Util::YieldStatus::IS_ELASTIC) {
       eta_hi = eta_mid;
       ii++;
       continue;
@@ -2387,13 +2388,13 @@ ArenaMixture::consistencyBisection(const Matrix3& deltaEps_new,
 #endif
 
       // Test the yield condition
-      int yield = (int)d_yield->evalYieldCondition(&state_trial_local);
+      auto yield = d_yield->evalYieldCondition(&state_trial_local);
 
       // If the local trial state is inside the updated yield surface the yield
       // condition evaluates to "elastic".  We need to reduce the size of the
       // yield surface by decreasing the plastic strain increment.
       isElastic = false;
-      if (yield != 1) {
+      if (yield.second == Util::YieldStatus::IS_ELASTIC) {
         isElastic = true; // Elastic or on yield surface
         eta_hi = eta_mid;
         jj++;

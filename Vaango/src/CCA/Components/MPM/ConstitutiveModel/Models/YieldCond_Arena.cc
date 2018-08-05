@@ -355,7 +355,7 @@ YieldCond_Arena::computeModelParameters(const double& PEAKI1,
 //   hasYielded = -1.0 (if elastic)
 //              =  1.0 (otherwise)
 //--------------------------------------------------------------
-double
+std::pair<double, Util::YieldStatus>
 YieldCond_Arena::evalYieldCondition(const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
@@ -384,9 +384,6 @@ YieldCond_Arena::evalYieldCondition(const ModelStateBase* state_input)
   // Get the local vars from the model state
   double X_eff = state->capX + 3.0 * state->pbar_w;
 
-  // Initialize hasYielded to -1
-  double hasYielded = -1.0;
-
   // Cauchy stress invariants: I1_eff = 3*(p + pbar_w), J2 = q^2/3
   double I1_eff = state->I1_eff;
   double sqrt_J2 = state->sqrt_J2;
@@ -407,11 +404,10 @@ YieldCond_Arena::evalYieldCondition(const ModelStateBase* state_input)
   // Evaluate Composite Yield Function F(I1) = Ff(I1)*fc(I1) in each region.
   // The elseif statements have nested if statements, which is not equivalent
   // to them having a single elseif(A&&B&&C)
-  if (I1_eff <
-      X_eff) { //---------------------------------------------------(I1<X)
-    hasYielded = 1.0;
+  //---------------------------------------------------(I1<X)
+  if (I1_eff < X_eff) { 
     // std::cout << " I1_eff < X_eff " << I1_eff << "," << X_eff << std::endl;
-    return hasYielded;
+    return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
   }
 
   // **Elliptical Cap Function: (fc)**
@@ -430,7 +426,7 @@ YieldCond_Arena::evalYieldCondition(const ModelStateBase* state_input)
       // std::cout << " I1_eff < kappa " << I1_eff << "," << kappa << std::endl;
       // std::cout << " J2 < Ff^2*Fc^2 " << sqrt_J2 << "," << Ff << ", " << fc2
       // << std::endl;
-      hasYielded = 1.0;
+      return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
     }
   } else { // --------- X >= I1 or kappa <= I1
 
@@ -439,16 +435,16 @@ YieldCond_Arena::evalYieldCondition(const ModelStateBase* state_input)
         // std::cout << " I1_eff < PEAKI1 " << I1_eff << "," << PEAKI1 <<
         // std::endl;
         // std::cout << " sqrt(J2) > Ff " << sqrt_J2 << "," << Ff << std::endl;
-        hasYielded = 1.0;
+        return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
       }
     } else { // I1 > PEAKI1
       // std::cout << " I1_eff > PEAKI1 " << I1_eff << "," << PEAKI1 <<
       // std::endl;
-      hasYielded = 1.0;
+      return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
     }
   }
 
-  return hasYielded;
+  return std::make_pair(-1.0, Util::YieldStatus::IS_ELASTIC);
 }
 
 //--------------------------------------------------------------

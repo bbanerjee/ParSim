@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -31,6 +31,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
 #include <Core/Math/TangentModulusTensor.h>
@@ -125,7 +126,7 @@ public:
 
   /*! Evaluate the yield condition - \f$ sigma \f$ is the Cauchy stress
   and \f$ \beta \f$ is the back stress */
-  virtual double evalYieldCondition(const Uintah::Matrix3& xi,
+  virtual double evalYieldCondition(const Uintah::Matrix3& xi, 
                                     const ModelStateBase* state) = 0;
 
   /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
@@ -185,7 +186,8 @@ public:
   //--------------------------------------------------------------
   // Compute value of yield function
   //--------------------------------------------------------------
-  virtual double evalYieldCondition(const ModelStateBase* state) = 0;
+  virtual std::pair<double, Util::YieldStatus>
+    evalYieldCondition(const ModelStateBase* state) = 0;
 
   //--------------------------------------------------------------
   // Compute max value of yield function for convergence tolerance check

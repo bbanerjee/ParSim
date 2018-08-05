@@ -76,11 +76,13 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <chrono>
 
 
 //#define USL
 #undef USL
 #define CHECK_PARTICLE_DELETION
+//#define TIME_COMPUTE_STRESS
 
 using namespace Uintah;
 
@@ -3528,7 +3530,16 @@ SerialMPM::computeStressTensor(const ProcessorGroup*,
     if (cout_dbg.active()) cout_dbg << " CM = " << cm;
 
     cm->setWorld(UintahParallelComponent::d_myworld);
+    #ifdef TIME_COMPUTE_STRESS
+      std::chrono::time_point<std::chrono::system_clock> start, end;
+      start = std::chrono::system_clock::now();
+    #endif
     cm->computeStressTensor(patches, mpm_matl, old_dw, new_dw);
+    #ifdef TIME_COMPUTE_STRESS
+      end = std::chrono::system_clock::now();
+      std::cout << "Compute stress : Time taken = " 
+                << std::chrono::duration<double>(end-start).count() << std::endl;
+    #endif
 
     if (cout_dbg.active()) cout_dbg << " Exit\n" ;
 

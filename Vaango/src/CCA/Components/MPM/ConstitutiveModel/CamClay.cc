@@ -579,7 +579,8 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       Matrix3 nn = strain_elast_devtr * (sqrtTwoThird * oo_strain_elast_s_tr);
 
       // Calculate yield function
-      double ftrial = d_yield->evalYieldCondition(&state);
+      auto ftrial_a = d_yield->evalYieldCondition(&state);
+      double ftrial = ftrial_a.first;
       double p_old = p;
       double q_old = q;
       double pc_old = pc_n;
@@ -749,10 +750,11 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             dfdq = d_yield->computeDevStressDerivOfYieldFunction(&state);
 
             // compute updated yield condition
-            fyield = d_yield->evalYieldCondition(&state);
+            auto fyield_a = d_yield->evalYieldCondition(&state);
+            fyield = fyield_a.first;
 
             // Calculate max value of f
-            fmax = d_yield->evalYieldConditionMax(&state);
+            auto fmax = d_yield->evalYieldConditionMax(&state);
 
             // save old residuals
             double rf_old = rf;

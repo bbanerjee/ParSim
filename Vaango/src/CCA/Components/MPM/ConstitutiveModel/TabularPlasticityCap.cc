@@ -83,6 +83,9 @@
 //#define DEBUG_YIELD_BISECTION_R
 //#define CHECK_ELASTIC_STRAIN
 //#define CHECK_RETURN_ALIGNMENT
+//#define TIME_TABLE_LOOKUP
+//#define TIME_SUBSTEP
+//#define TIME_YIELD_PTS
 
 using namespace Vaango;
 using Uintah::VarLabel;
@@ -347,7 +350,16 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
       // std::endl;
 
       // Update yield surface
+      #ifdef TIME_YIELD_PTS
+        std::chrono::time_point<std::chrono::system_clock> start, end;
+        start = std::chrono::system_clock::now();
+      #endif
       Polyline yield_f_pts = d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_old);
+      #ifdef TIME_YIELD_PTS
+        end = std::chrono::system_clock::now();
+        std::cout << "Compute yield pts. : Time taken = " 
+                  << std::chrono::duration<double>(end-start).count() << std::endl;
+      #endif
       std::array<double,3> range = d_yield->getYieldConditionRange(yield_f_pts);
       state_old.yield_f_pts = yield_f_pts;
       state_old.I1_max = -range[0]*3.0;
@@ -362,8 +374,17 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
       // Rate-independent plastic step
       // Divides the strain increment into substeps, and calls substep function
       ModelState_TabularCap state_new;
+      #ifdef TIME_SUBSTEP
+        std::chrono::time_point<std::chrono::system_clock> start, end;
+        start = std::chrono::system_clock::now();
+      #endif
       Status status = rateIndependentPlasticUpdate(
         DD, delT, idx, pParticleID[idx], state_old, state_new);
+      #ifdef TIME_SUBSTEP
+        end = std::chrono::system_clock::now();
+        std::cout << "Substep : Time taken = " 
+                  << std::chrono::duration<double>(end-start).count() << std::endl;
+      #endif
 
       if (status == Status::SUCCESS) {
         pRemove_new[idx] = 0;
@@ -661,7 +682,16 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
 void
 TabularPlasticityCap::computeElasticProperties(ModelState_TabularCap& state)
 {
+  #ifdef TIME_TABLE_LOOKUP
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+  #endif
   TabularPlasticity::computeElasticProperties(state);
+  #ifdef TIME_TABLE_LOOKUP
+    end = std::chrono::system_clock::now();
+    std::cout << "Compute elastic properties : Time taken = " 
+              << std::chrono::duration<double>(end-start).count() << std::endl;
+  #endif
 }
 
 /**
@@ -827,7 +857,7 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
   computeElasticProperties(state_k_trial);
 
   // Evaluate the yield function at the trial stress:
-  int yield = (int)d_yield->evalYieldCondition(&state_k_trial);
+  auto yield = d_yield->evalYieldCondition(&state_k_trial);
 
   // std::cout << "Has yielded ? 1 = Yes, -1 = No." << yield << std::endl;
   // std::cout << "computeSubstep:Elastic:sigma_new = " <<
@@ -836,7 +866,7 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
   //          << std::endl;
 
   // Elastic substep
-  if (!(yield == 1)) {
+  if (yield.second == Util::YieldStatus::IS_ELASTIC) {
     state_k_new = state_k_trial;
     state_k_new.elasticStrainTensor += deltaEps;
 
@@ -1443,12 +1473,13 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
     // the trial stress state when the internal variables are changed.
     // If the yield surface is too big, the plastic strain is reduced
     // by bisecting <eta> and the loop is repeated.
-    int yield = (int)d_yield->evalYieldCondition(&state_trial_local);
+    auto yield = d_yield->evalYieldCondition(&state_trial_local);
 
     // If the local trial state is inside the updated yield surface the yield
     // condition evaluates to "elastic".  We need to reduce the size of the
     // yield surface by decreasing the plastic strain increment.
-    if (yield != 1) { // Elastic or on yield surface
+    // Elastic or on yield surface
+    if (yield.second == Util::YieldStatus::IS_ELASTIC) {
       eta_hi = eta_mid;
       ii++;
       continue;

@@ -62,7 +62,7 @@ YieldCond_CamClay::outputProblemSpec(Uintah::ProblemSpecP& ps)
 //                           p = state->p
 //                           p_c = state->p_c)
 //--------------------------------------------------------------
-double
+std::pair<double, Util::YieldStatus>
 YieldCond_CamClay::evalYieldCondition(const ModelStateBase* state_input)
 {
   const ModelState_CamClay* state =
@@ -77,7 +77,11 @@ YieldCond_CamClay::evalYieldCondition(const ModelStateBase* state_input)
   double p = state->p;
   double q = state->q;
   double p_c = state->p_c;
-  return q * q / (d_M * d_M) + p * (p - p_c);
+  double f = q * q / (d_M * d_M) + p * (p - p_c);
+  if (f > 0.0) {
+    return std::make_pair(f, Util::YieldStatus::HAS_YIELDED);
+  }
+  return std::make_pair(f, Util::YieldStatus::IS_ELASTIC);
 }
 
 //--------------------------------------------------------------

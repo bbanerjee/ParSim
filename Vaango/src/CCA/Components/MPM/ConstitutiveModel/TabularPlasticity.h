@@ -62,12 +62,6 @@ public:
     UNREASONABLE_INTERNAL_VARIABLE_VALUE
   };
 
-  enum class YieldStatus 
-  {
-    IS_ELASTIC,
-    HAS_YIELDED
-  };
-
   // Create datatype for storing model parameters
   struct CMData
   {

@@ -1051,7 +1051,7 @@ TabularPlasticity::computeSubstep(const Matrix3& D, const double& dt,
   computeElasticProperties(state_k_trial);
 
   // Evaluate the yield function at the trial stress:
-  int yield = (int)d_yield->evalYieldCondition(&state_k_trial);
+  auto yield = d_yield->evalYieldCondition(&state_k_trial);
 
   // std::cout << "Has yielded ? 1 = Yes, -1 = No." << yield << std::endl;
   // std::cout << "computeSubstep:Elastic:sigma_new = " <<
@@ -1060,7 +1060,7 @@ TabularPlasticity::computeSubstep(const Matrix3& D, const double& dt,
   //          << std::endl;
 
   // Elastic substep
-  if (!(yield == 1)) {
+  if (yield.second == Util::YieldStatus::IS_ELASTIC) {
     state_k_new = state_k_trial;
     state_k_new.elasticStrainTensor += deltaEps;
 

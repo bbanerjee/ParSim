@@ -305,7 +305,7 @@ YieldCond_TabularCap::getClosestPoint(const Polyline& polyline,
 //   hasYielded = -1.0 (if elastic)
 //              =  1.0 (otherwise)
 //--------------------------------------------------------------
-double
+std::pair<double, Util::YieldStatus>
 YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
 {
   const ModelState_TabularCap* state =
@@ -324,7 +324,7 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
     #ifdef DEBUG_EVAL_YIELD
     std::cout << "Tensile state: [" << p_bar << " < " << p_bar_min << "]\n";
     #endif
-    return 1.0;
+    return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
   }
 
   // Next check if the state is outside the compression cap
@@ -333,7 +333,7 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
     #ifdef DEBUG_EVAL_YIELD
     std::cout << "Compressive state: [" << p_bar << " > " << p_bar_max << "]\n";
     #endif
-    return 1.0;
+    return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
   }
 
 //#ifdef USE_NEWTON_CLOSEST_POINT
@@ -359,11 +359,11 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
     double ratio = (p_bar - kappa_bar)/(p_bar_max - kappa_bar);
     double Fc_sq = 1.0 - ratio*ratio;
     if ((state->sqrt_J2 * state->sqrt_J2 - gg[0] * gg[0] * Fc_sq) > 1.0e-10) {
-      return 1.0;
+      return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
     }
   } else {
     if (state->sqrt_J2 > gg[0]) {
-      return 1.0;
+      return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
     }
   }
   
@@ -374,7 +374,7 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
 
 //#endif
 
-  return -1.0;
+  return std::make_pair(-1.0, Util::YieldStatus::IS_ELASTIC);
 }
 
 /* Add cap points to yield function table */

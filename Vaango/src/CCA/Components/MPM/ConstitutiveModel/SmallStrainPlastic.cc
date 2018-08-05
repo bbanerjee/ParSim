@@ -905,7 +905,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
         Matrix3 xi_trial = sigma_dev_trial - backStress_dev_old;
 
         // Check whether the step is elastic or plastic
-        double f_0 = d_yield->evalYieldCondition(xi_trial, &state);
+        auto f_0 = d_yield->evalYieldCondition(xi_trial, &state);
         if (std::isnan(f_0)) {
           cout << "idx = " << idx << " epdot = " << state.plasticStrainRate
                << " ep = " << state.plasticStrain

@@ -122,28 +122,28 @@ TEST_F(YieldCondTabularTest, evalYieldCondition)
 
   state.I1 = 300*3; // Tension
   state.sqrt_J2 = 1000;
-  EXPECT_EQ(model.evalYieldCondition(&state), 1);
+  EXPECT_EQ(model.evalYieldCondition(&state).first, 1);
 
   state.I1 = 2*3;  // Tension
   state.sqrt_J2 = 39;
-  EXPECT_EQ(model.evalYieldCondition(&state), -1);
+  EXPECT_EQ(model.evalYieldCondition(&state).first, -1);
 
   state.I1 = -1000*3;  // Compression
   state.sqrt_J2 = 625;
-  EXPECT_EQ(model.evalYieldCondition(&state), -1);
+  EXPECT_EQ(model.evalYieldCondition(&state).first, -1);
 
   state.I1 = -1000*3;  // Compression
   state.sqrt_J2 = 605;
-  EXPECT_EQ(model.evalYieldCondition(&state), -1);
+  EXPECT_EQ(model.evalYieldCondition(&state).first, -1);
 
   state.I1 = -1000*3;  // Compression
   state.sqrt_J2 = 635;
-  EXPECT_EQ(model.evalYieldCondition(&state), 1);
+  EXPECT_EQ(model.evalYieldCondition(&state).first, 1);
 
   state.I1 = -7000*3;  // Compression
   state.sqrt_J2 = 1000;
-  EXPECT_EQ(model.evalYieldCondition(&state), 1);
-  //EXPECT_THROW(model.evalYieldCondition(&state), Uintah::InvalidValue);
+  EXPECT_EQ(model.evalYieldCondition(&state).first, 1);
+  //EXPECT_THROW(model.evalYieldCondition(&state).first, Uintah::InvalidValue);
 
   EXPECT_EQ(model.evalYieldConditionMax(&state), 900);
 }

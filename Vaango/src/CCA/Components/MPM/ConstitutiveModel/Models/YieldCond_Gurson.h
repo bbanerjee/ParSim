@@ -285,9 +285,10 @@ public:
   //--------------------------------------------------------------
   // Compute value of yield function
   //--------------------------------------------------------------
-  double evalYieldCondition(const ModelStateBase* state) override
+  std::pair<double, Util::YieldStatus>
+    evalYieldCondition(const ModelStateBase* state) override
   {
-    return 0.0;
+    return std::make_pair(0.0, Util::YieldStatus::IS_ELASTIC);
   };
   double evalYieldConditionMax(const ModelStateBase* state) override
   {

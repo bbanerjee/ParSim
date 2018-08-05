@@ -32,6 +32,13 @@ static Uintah::Matrix3 quadBSplineLo(2, 0, 0, -4, 4, 0, 2, -3, 1);
 static Uintah::Matrix3 quadBSplineHi(1, 1, 0, -2, 2, 0, 1, -3, 2);
 static Uintah::Matrix3 quadBSpline(1, 1, 0, -2, 2, 0, 1, -2, 1);
 
+/* Return codes */
+enum class YieldStatus 
+{
+  IS_ELASTIC,
+  HAS_YIELDED
+};
+
 /* Type trait for static asserts in class methods that should not be called */
 template <typename T>
 struct DoNotUse : std::false_type

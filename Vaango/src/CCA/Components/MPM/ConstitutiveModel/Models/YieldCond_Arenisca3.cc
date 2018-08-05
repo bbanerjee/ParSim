@@ -190,7 +190,7 @@ YieldCond_Arenisca3::computeModelParameters(double factor)
 //     Fc^2 := 1 - (kappa - 3*p)^2/(kappa - X)^2
 //     kappa = I1_0 - CR*(I1_0 - X)
 //--------------------------------------------------------------
-double
+std::pair<double, Util::YieldStatus>
 YieldCond_Arenisca3::evalYieldCondition(const ModelStateBase* state_input)
 {
   const ModelState_Arenisca3* state =
@@ -237,10 +237,10 @@ YieldCond_Arenisca3::evalYieldCondition(const ModelStateBase* state_input)
   // Evaluate Composite Yield Function F(I1) = Ff(I1)*fc(I1) in each region.
   // The elseif statements have nested if statements, which is not equivalent
   // to them having a single elseif(A&&B&&C)
-  if (I1_eff <
-      capX) { //---------------------------------------------------(I1<X)
+  //---------------------------------------------------(I1<X)
+  if (I1_eff < capX) { 
     hasYielded = 1.0;
-    return hasYielded;
+    return std::make_pair(hasYielded, Util::YieldStatus::HAS_YIELDED);
   }
 
   // **Elliptical Cap Function: (fc)**
@@ -256,19 +256,22 @@ YieldCond_Arenisca3::evalYieldCondition(const ModelStateBase* state_input)
     double fc2 = 1.0 - kappaRatio * kappaRatio;
     if (sqrt_J2 * sqrt_J2 > Ff * Ff * fc2) {
       hasYielded = 1.0;
+      return std::make_pair(hasYielded, Util::YieldStatus::HAS_YIELDED);
     }
   } else { // --------- X >= I1 or kappa <= I1
 
     if (I1_eff <= d_inputParam.PEAKI1) { // ----- (kappa <= I1 <= PEAKI1)
       if (sqrt_J2 > Ff) {
         hasYielded = 1.0;
+        return std::make_pair(hasYielded, Util::YieldStatus::HAS_YIELDED);
       }
     } else { // I1 > PEAKI1
       hasYielded = 1.0;
+      return std::make_pair(hasYielded, Util::YieldStatus::HAS_YIELDED);
     }
   }
 
-  return hasYielded;
+  return std::make_pair(hasYielded, Util::YieldStatus::IS_ELASTIC);
 }
 
 //--------------------------------------------------------------
