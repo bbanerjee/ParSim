@@ -388,6 +388,9 @@ private:
   /* Convert yield function data to z_rprime coordinates */
   void convertToZRprime(const double& sqrtKG, const Polyline& p_q_points, 
                         Polyline& z_r_points) const;
+
+  /* Check the location of the trial point by computing distances */
+  Util::YieldStatus checkClosestPointDistance(const ModelState_TabularCap* state);
 };
 
 } // End namespace Uintah

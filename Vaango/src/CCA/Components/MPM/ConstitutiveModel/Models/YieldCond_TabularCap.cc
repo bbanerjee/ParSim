@@ -336,8 +336,6 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
     return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
   }
 
-//#ifdef USE_NEWTON_CLOSEST_POINT
-//#else
   // Compute the value of the yield function for the yield function without cap
   DoubleVec1D gg;
   try {
@@ -372,7 +370,10 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
             << " sqrtJ2 = " << state->sqrt_J2 << std::endl;
   #endif
 
-//#endif
+  auto status = checkClosestPointDistance(state);
+  if (status == Util::YieldStatus::HAS_YIELDED) {
+    return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
+  }
 
   return std::make_pair(-1.0, Util::YieldStatus::IS_ELASTIC);
 }
@@ -477,6 +478,83 @@ YieldCond_TabularCap::computeEllipseHeight(const Polyline& p_q_points,
   double sqrtJ2 = (1 - t)*start.y() + t*end.y();
 
   return sqrtJ2;
+}
+
+Util::YieldStatus 
+YieldCond_TabularCap::checkClosestPointDistance(const ModelState_TabularCap* state)
+{
+  double p = state->I1/3;
+  double sqrt_J2 = state->sqrt_J2;
+  Point trial_pt(p, sqrt_J2, 0.0);
+
+  // Convert the yield surface points into p-sqrtJ2 form
+  Polyline yield_f_pts = state->yield_f_pts;
+  for (auto& pt : yield_f_pts) {
+    pt.x(-pt.x());
+  }
+
+  // Find the closest segments
+  Polyline p_J2_segments;
+  std::size_t closest_index = 
+    Vaango::Util::getClosestSegments(trial_pt, yield_f_pts, p_J2_segments);
+
+  // Get the yield surface points for the closest segments
+  // (Fit quadratic B_spline)
+  std::size_t numPts = yield_f_pts.size();
+  auto seg_start = closest_index - 1;
+  auto seg_end = closest_index + 1;
+  if (closest_index < 2) {
+    seg_start = 0;
+    seg_end = 2;
+  } else if (closest_index > numPts-3) {
+    seg_start = numPts-3;
+    seg_end = numPts-1;
+  }
+
+  #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "closest_index = " << closest_index << "\n";
+    std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
+              << "(0," << numPts-1 << ")\n";
+  #endif
+
+  Point closest_to_spline(0, 0, 0);
+  Vector tangent(0, 0, 0);
+  Vector dtangent(0, 0, 0);
+  std::tie(closest_to_spline, tangent, dtangent) = 
+    Vaango::Util::computeClosestPointQuadraticBSpline(trial_pt, yield_f_pts, 
+                                                      seg_start, seg_end);
+
+  Polyline line;
+  line.emplace_back(yield_f_pts[seg_start]);
+  line.emplace_back(yield_f_pts[seg_end]);
+  #ifdef DEBUG_CLOSEST_POINT
+    for (const auto& pt: line) {
+      std::cout << pt << " ";
+    }
+    std::cout << "\n";
+  #endif
+
+  Point closest_to_line;
+  double distSq = Vaango::Util::findClosestPoint(trial_pt, line, closest_to_line);
+
+  #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "seg-points = " << yield_f_pts[seg_start] << ","
+              << yield_f_pts[seg_start+1] << ","
+              << yield_f_pts[seg_start+2] << "\n";
+    std::cout << "p-spline = " << (closest_to_spline-trial_pt).length2() 
+              << "p-line = " <<  distSq << "\n";
+    std::cout << "pt = " << trial_pt 
+              << " closest-spline = " << closest_to_spline
+              << " closest-line = " << closest_to_line << "\n";
+  #endif
+
+  double distSq_spline = (closest_to_spline-trial_pt).length2();
+
+  if (distSq_spline < distSq && std::abs(distSq_spline - distSq) > 1.0e-6) {
+    return Util::YieldStatus::HAS_YIELDED;
+  }
+
+  return Util::YieldStatus::IS_ELASTIC;
 }
 
 //--------------------------------------------------------------

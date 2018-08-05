@@ -253,52 +253,105 @@ TEST_F(YieldCondTabularCapTest, computeCapPoints)
 
 TEST_F(YieldCondTabularCapTest, evalYieldCondition)
 {
+  Matrix3 one(0.0); one.Identity();
+
   YieldCond_TabularCap model(ps);
   ModelState_TabularCap state;
 
+  state.bulkModulus = 1.0e5;
+  state.shearModulus = 1.0e5;
+
   state.capX = -2000*3;
+  Polyline p_q_2000_all;
+  model.computeCapPoints(-state.capX, p_q_2000_all);
+  state.yield_f_pts = p_q_2000_all;
 
-  state.I1 = 300*3; // Tension
-  state.sqrt_J2 = 1000;
+  double p = 300; // Tension
+  double sqrt_J2 = 1000;
+  Matrix3 s(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  Matrix3 sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
+  ASSERT_NEAR(state.I1, 3*p, 1.0e-8);
+  ASSERT_NEAR(state.sqrt_J2, sqrt_J2, 1.0e-8);
   EXPECT_EQ(model.evalYieldCondition(&state).first, 1);
 
-  state.I1 = 2*3;  // Tension
-  state.sqrt_J2 = 39;
+  p = 2;  // Tension
+  sqrt_J2 = 39;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
   EXPECT_EQ(model.evalYieldCondition(&state).first, -1);
 
-  state.I1 = -1000*3;  // Compression
-  state.sqrt_J2 = 625;
-  EXPECT_EQ(model.evalYieldCondition(&state).first, -1);
-
-  state.I1 = -1000*3;  // Compression
-  state.sqrt_J2 = 605;
-  EXPECT_EQ(model.evalYieldCondition(&state).first, -1);
-
-  state.I1 = -1000*3;  // Compression
-  state.sqrt_J2 = 635;
+  p = -1000;  // Compression
+  sqrt_J2 = 625;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
   EXPECT_EQ(model.evalYieldCondition(&state).first, 1);
 
-  state.I1 = -7000*3;  // Compression
-  state.sqrt_J2 = 1000;
+  p = -1000;  // Compression
+  sqrt_J2 = 605;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
+  EXPECT_EQ(model.evalYieldCondition(&state).first, -1);
+
+  p = -1000;  // Compression
+  sqrt_J2 = 635;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
+  EXPECT_EQ(model.evalYieldCondition(&state).first, 1);
+
+  p = -7000;  // Compression
+  sqrt_J2 = 1000;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
   EXPECT_EQ(model.evalYieldCondition(&state).first, 1);
   //EXPECT_THROW(model.evalYieldCondition(&state), Uintah::InvalidValue);
 
-  state.I1 = -1700*3;  // Compression
-  state.sqrt_J2 = 6.10612759097964e+02;
-  EXPECT_EQ(model.evalYieldCondition(&state).first, -1);
+  p = -1700;  // Compression
+  sqrt_J2 = 6.10612759097964e+02;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
+  EXPECT_EQ(model.evalYieldCondition(&state).first, 1);
 
-  state.I1 = -1700.1*3;  // Compression
-  state.sqrt_J2 = 6.10612759097964e+02;
+  p = -1700.1;  // Compression
+  sqrt_J2 = 6.10612759097964e+02;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
   EXPECT_EQ(model.evalYieldCondition(&state).first, 1);
 
   state.capX = -10000*3;
+  Polyline p_q_10000_all;
+  model.computeCapPoints(-state.capX, p_q_10000_all);
+  state.yield_f_pts = p_q_10000_all;
 
-  state.I1 = -9700*3;  // Compression
-  state.sqrt_J2 = 4.37045077325265e+02;
-  EXPECT_EQ(model.evalYieldCondition(&state).first, -1);
+  p = -9700;  // Compression
+  sqrt_J2 = 4.37045077325265e+02;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
+  EXPECT_EQ(model.evalYieldCondition(&state).first, 1);
 
-  state.I1 = -9700.1*3;  // Compression
-  state.sqrt_J2 = 4.37045077325265e+02;
+  p = -9700.1;  // Compression
+  sqrt_J2 = 4.37045077325265e+02;
+  s = Matrix3(0, sqrt_J2, 0, sqrt_J2, 0, 0, 0, 0, 0);
+  sigma = s + one * p;
+  state.stressTensor = sigma;
+  state.updateStressInvariants();
   EXPECT_EQ(model.evalYieldCondition(&state).first, 1);
 
 }
