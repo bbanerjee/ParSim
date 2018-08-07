@@ -65,8 +65,13 @@
 #include <iostream>
 #include <limits>
 
+#define DO_CONSISTENCY_BISECTION
+//#define CHECK_CONSISTENCY_BISECTION_CONVERGENCE
+//#define CHECK_CONSISTENCY_BISECTION_K
+//#define CHECK_CONSISTENCY_BISECTION_FIXED
+//#ifdef DEBUG_FIRST_ORDER_HARDENING
 #define CHECK_FOR_NAN
-#define CHECK_PLASTIC_RATE
+//#define CHECK_PLASTIC_RATE
 //#define CHECK_FOR_NAN_EXTRA
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
@@ -702,10 +707,13 @@ TabularPlasticityCap::computeElasticProperties(ModelState_TabularCap& state)
  */
 void
 TabularPlasticityCap::computeElasticProperties(ModelState_TabularCap& state,
+                                               double elasticVolStrainInc,
                                                double plasticVolStrainInc)
 {
   ModelState_TabularCap tempState = state;
-  tempState.ep_v += plasticVolStrainInc;
+  tempState.elasticStrainTensor += (Util::Identity*elasticVolStrainInc);
+  tempState.plasticStrainTensor += (Util::Identity*plasticVolStrainInc);
+  tempState.updatePlasticStrainInvariants();
   TabularPlasticity::computeElasticProperties(tempState);
   state.bulkModulus = tempState.bulkModulus;
   state.shearModulus = tempState.shearModulus;
@@ -900,20 +908,20 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
     return status;
   }
 
-  // Do first-order hardening update
-  state_k_new = state_k_old;
-  status = firstOrderHardeningUpdate(
-    deltaEps, state_k_old, state_k_trial, deltaEps_e_fixed, deltaEps_p_fixed,
-    sig_fixed, state_k_new);
-
-  // Do "consistency bisection"
-  // std::cout << "\t Doing consistencyBisection\n";
-  /*
-  state_k_new = state_k_old;
-  status = consistencyBisectionSimplified(
-    deltaEps, state_k_old, state_k_trial, deltaEps_e_fixed, deltaEps_p_fixed,
-    sig_fixed, state_k_new);
-  */
+  #ifdef DO_CONSISTENCY_BISECTION
+    // Do "consistency bisection"
+    // std::cout << "\t Doing consistencyBisection\n";
+    state_k_new = state_k_old;
+    status = consistencyBisectionSimplified(
+      deltaEps, state_k_old, state_k_trial, deltaEps_e_fixed, deltaEps_p_fixed,
+      sig_fixed, state_k_new);
+  #else
+    // Do first-order hardening update
+    state_k_new = state_k_old;
+    status = firstOrderHardeningUpdate(
+      deltaEps, state_k_old, state_k_trial, deltaEps_e_fixed, deltaEps_p_fixed,
+      sig_fixed, state_k_new);
+  #endif
 
   #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
     std::cout << "computeSubstep: "
@@ -1314,25 +1322,36 @@ TabularPlasticityCap::firstOrderHardeningUpdate(const Matrix3& deltaEps_new,
     auto p_np1 = state_np1.I1/3.0;
     auto S_np1 = state_np1.deviatoricStressTensor;
     Matrix3 Z_np1 = computeZMatrix(KG_np1, dKdG_np1, p_np1, S_np1, M_np1);
-    //std::cout << "Z_np1 = " << Z_np1 << std::endl;
+    #ifdef DEBUG_FIRST_ORDER_HARDENING
+      std::cout << "Z_np1 = " << Z_np1 << std::endl;
+    #endif
 
     // Compute CM = C:M
     double mu_np1 = KG_np1.shearModulus;
     double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
     Matrix3 CM_np1 = Util::Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
-    //std::cout << "CM_np1 = " << CM_np1 << std::endl;
+    #ifdef DEBUG_FIRST_ORDER_HARDENING
+      std::cout << "CM_np1 = " << CM_np1 << std::endl;
+    #endif
 
     // Compute P = CM + Z;
     Matrix3 P_np1 = CM_np1 + Z_np1;
-    //std::cout << "P_np1 = " << P_np1 << std::endl;
+    #ifdef DEBUG_FIRST_ORDER_HARDENING
+      std::cout << "P_np1 = " << P_np1 << std::endl;
+    #endif
+
+    // Compute PN = P:N (note that we are using associated plasticity)
+    double PN_np1 = P_np1.Contract(M_np1);
 
     // Compute Gamma (sig_trial - sig_n+1):M_n+1/(P_n:M_n+1)
     Matrix3 sig_trial = state_k_trial.stressTensor;
     double Gamma_np1 = (sig_trial - sig_fixed).Contract(M_np1)/P_np1.Contract(M_np1);
-    //std::cout << " Gamma_np1 = " << Gamma_np1 << "\n";
-
-    // Compute PN = P:N (note that we are using associated plasticity)
-    double PN_np1 = P_np1.Contract(M_np1);
+    #ifdef DEBUG_FIRST_ORDER_HARDENING
+      std::cout << " Gamma_np1 = " << Gamma_np1 << "\n";
+      std::cout << " sig_trial = " << sig_trial << "\n";
+      std::cout << " sig_fixed = " << sig_fixed << "\n";
+      std::cout << " M_np1 = " << M_np1 << "\n";
+    #endif
 
     // Compute unscaled hardening modulus
     double df_dep_v = d_yield->computeVolStrainDerivOfYieldFunction(&state_np1,
@@ -1344,7 +1363,9 @@ TabularPlasticityCap::firstOrderHardeningUpdate(const Matrix3& deltaEps_new,
 
     // Compute updated stress
     Matrix3 sig_new = sig_trial - P_np1 * Gamma_H;
-    //std::cout << "sig_new = " << sig_new << std::endl;
+    #ifdef DEBUG_FIRST_ORDER_HARDENING
+      std::cout << "sig_new = " << sig_new << std::endl;
+    #endif
 
     // Compute plastic strain increments
     Matrix3 delta_eps_p = M_np1 * Gamma_H;
@@ -1376,7 +1397,7 @@ TabularPlasticityCap::firstOrderHardeningUpdate(const Matrix3& deltaEps_new,
       Util::sqrt_two_third * std::sqrt(delta_eps_p_dev.Contract(delta_eps_p_dev));
 
     #ifdef DEBUG_INTERNAL_VAR_EVOLUTION
-      std::cout << "consistencyBisection: " << std::endl
+      std::cout << "firstOrderHardening: " << std::endl
                 << "\t state_old = " << state_k_old << std::endl
                 << "\t state_new = " << state_k_new << std::endl;
     #endif
@@ -1403,6 +1424,93 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
                                       const Matrix3& sig_fixed,
                                       ModelState_TabularCap& state_k_new)
 {
+  Status status = Status::SUCCESS;
+
+  ModelState_TabularCap state_n(state_k_old);
+  ModelState_TabularCap state_np1(state_k_old);
+  state_np1.stressTensor = sig_fixed;
+  state_np1.updateStressInvariants();
+
+  Matrix3 M_n, M_np1;
+  d_yield->eval_df_dsigma(Util::Identity, &state_n, M_n);
+  d_yield->eval_df_dsigma(Util::Identity, &state_np1, M_np1);
+  M_n /= M_n.Norm();
+  double norm_M_np1 = M_np1.Norm();
+  M_np1 /= norm_M_np1;
+  double angle_M_n_np1 = std::abs(M_n.Contract(M_np1) - 1.0);
+
+  if (angle_M_n_np1 > 1.0e-6) {
+    status = Status::TOO_LARGE_YIELD_NORMAL_CHANGE;
+
+    std::cout << "M_n = " << M_n << std::endl;
+    std::cout << "M_np1 = " << M_np1 << std::endl;
+    std::cout << "angle =" << angle_M_n_np1 << "\n";
+
+    auto KG_dKdG_n = d_elastic->getElasticModuliAndDerivatives(&state_n);
+    auto KG_dKdG_np1 = d_elastic->getElasticModuliAndDerivatives(&state_np1);
+    auto KG_n = KG_dKdG_n.first;
+    auto KG_np1 = KG_dKdG_np1.first;
+    auto dKdG_n = KG_dKdG_n.second;
+    auto dKdG_np1 = KG_dKdG_np1.second;
+    auto p_n = state_n.I1/3.0;
+    auto p_np1 = state_np1.I1/3.0;
+    auto S_n = state_n.deviatoricStressTensor;
+    auto S_np1 = state_np1.deviatoricStressTensor;
+    Matrix3 Z_n = computeZMatrix(KG_n, dKdG_n, p_n, S_n, M_n);
+    Matrix3 Z_np1 = computeZMatrix(KG_np1, dKdG_np1, p_np1, S_np1, M_np1);
+    std::cout << "Z_n = " << Z_n << std::endl;
+    std::cout << "Z_np1 = " << Z_np1 << std::endl;
+
+    // Compute CM = C:M
+    double mu_n = KG_n.shearModulus;
+    double mu_np1 = KG_np1.shearModulus;
+    double lambda_n = KG_n.bulkModulus - 2.0 / 3.0 * mu_n;
+    double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
+    Matrix3 CM_n = Util::Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
+    Matrix3 CM_np1 = Util::Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
+    std::cout << "CM_n = " << CM_n << std::endl;
+    std::cout << "CM_np1 = " << CM_np1 << std::endl;
+
+    // Compute P = CM + Z;
+    Matrix3 P_n = CM_n + Z_n;
+    Matrix3 P_np1 = CM_np1 + Z_np1;
+    std::cout << "P_n = " << P_n << std::endl;
+    std::cout << "P_np1 = " << P_np1 << std::endl;
+
+    // Compute Gamma (sig_trial - sig_n+1):M_n+1/(P_n:M_n+1)
+    Matrix3 sig_trial = state_k_trial.stressTensor;
+    Matrix3 sig_new = sig_fixed;
+    double Gamma_n = (sig_trial - sig_new).Contract(M_np1)/P_n.Contract(M_np1);
+    double Gamma_np1 = (sig_trial - sig_new).Contract(M_np1)/P_np1.Contract(M_np1);
+    std::cout << "Gamma_n = " << Gamma_n << " Gamma_np1 = " << Gamma_np1 << "\n";
+
+    // Compute sigma
+    Matrix3 sig_np1 = sig_trial - P_n * Gamma_n;
+    std::cout << "sig_np1 = " << sig_np1 << std::endl;
+    std::cout << "sig_fixed = " << sig_fixed << std::endl;
+
+    // Compute volumetric plastic strain
+    Matrix3 eps_p = state_n.plasticStrainTensor + deltaEps_p_fixed;
+    double ep_v = eps_p.Trace();
+
+    // Compute eps_p and ev_v^p
+    Matrix3 Eps_p_n = state_n.plasticStrainTensor + M_n * Gamma_n ;
+    double Eps_p_v_n = state_n.ep_v + M_n.Trace() * Gamma_n;
+    Matrix3 Eps_e_n = deltaEps_new - Eps_p_n; 
+    Matrix3 Eps_p_np1 = state_n.plasticStrainTensor + M_np1 * Gamma_np1 ;
+    double Eps_p_v_np1 = state_n.ep_v + M_np1.Trace() * Gamma_np1;
+    Matrix3 Eps_e_np1 = deltaEps_new - Eps_p_np1; 
+    std::cout << "Eps_p_n = " << Eps_p_n << "\n"; 
+    std::cout << "eps_p = " << eps_p << "\n"; 
+    std::cout << "Eps_e_n = " << Eps_e_n << "\n"; 
+    std::cout << "Eps_p_np1 = " << Eps_p_np1 << "\n"; 
+    std::cout << "Eps_e_np1 = " << Eps_e_np1 << "\n"; 
+    std::cout << "Eps_p_v_n = " << Eps_p_v_n 
+              << " Eps_p_v_np1 = " << Eps_p_v_np1 << " ep_v = " << ep_v << "\n";
+
+    return status;
+  } 
+
   // bisection convergence tolerance on eta (if changed, change imax)
   const double TOLERANCE = d_consistency_bisection_tolerance;
   // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
@@ -1419,19 +1527,20 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
   // Create a state for the fixed non-hardening yield surface state
   // and update only the stress and plastic strain
   ModelState_TabularCap state_k_fixed(state_k_old);
-  state_k_fixed.stressTensor = sig_fixed;
-  state_k_fixed.elasticStrainTensor = eps_e_old + deltaEps_e_fixed;
-  state_k_fixed.plasticStrainTensor = eps_p_old + deltaEps_p_fixed;
+  //state_k_fixed.stressTensor = sig_fixed;
+  //state_k_fixed.elasticStrainTensor = eps_e_old + deltaEps_e_fixed;
+  //state_k_fixed.plasticStrainTensor = eps_p_old + deltaEps_p_fixed;
 
   // Initialize the new consistently updated state
-  Matrix3 sig_fixed_new = sig_fixed;
-  Matrix3 deltaEps_e_fixed_new = deltaEps_e_fixed;
-  Matrix3 deltaEps_p_fixed_new = deltaEps_p_fixed;
-  double deltaEps_p_v_fixed_new = deltaEps_p_v_fixed;
+  Matrix3 sig_fixed_mid = sig_fixed;
+  Matrix3 deltaEps_e_mid = deltaEps_e_fixed;
+  Matrix3 deltaEps_p_mid = deltaEps_p_fixed;
+  double deltaEps_p_v_mid_new = 0.5*deltaEps_p_v_fixed;
+  double deltaEps_p_v_mid_old = deltaEps_p_v_fixed;
 
   #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
     double norm_deltaEps_p_fixed = deltaEps_p_fixed.Norm();
-    double norm_deltaEps_p_fixed_new = norm_deltaEps_p_fixed;
+    double norm_deltaEps_p_mid = norm_deltaEps_p_fixed;
   #endif
 
   // Set up a local trial state
@@ -1440,26 +1549,41 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
   // Start loop
   int ii = 1;
   double eta_lo = 0.0, eta_hi = 1.0, eta_mid = 0.5;
-  Status status = Status::SUCCESS;
 
-  while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
+  //while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
+  while (std::abs(deltaEps_p_v_mid_new/deltaEps_p_v_mid_old - 1.0) > TOLERANCE) {
 
-    #ifdef DEBUG_YIELD_BISECTION_R
-      std::cout << "consistency_iter = " << ii << std::endl;
-      std::cout << "eta_hi = " << eta_hi << std::endl;
-      std::cout << "eta_lo = " << eta_lo << std::endl;
+    #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
+      std::cout << "Enter: consistency_iter = " << ii 
+                << " eta_hi = " << eta_hi << " eta_lo = " << eta_lo 
+                << " eta_mid = " << eta_mid << "\n";
+      std::cout << " delta_eps_p_v_fixed = " << deltaEps_p_v_fixed
+                << " delta_eps_p_v_mid_old = " << deltaEps_p_v_mid_old
+                << " delta_eps_p_v_mid_new = " << deltaEps_p_v_mid_new
+                << " ratio - 1 = " << (deltaEps_p_v_mid_new / deltaEps_p_v_mid_old - 1.0)
+                << std::endl;
     #endif
 
     // Reset the local trial state
     state_trial_local = state_k_trial;
 
     // Compute the volumetric plastic strain at eta = eta_mid
-    eta_mid = 0.5 * (eta_lo + eta_hi);
     double deltaEps_p_v_mid = eta_mid * deltaEps_p_v_fixed;
+    double deltaEps_e_v_mid = deltaEps_new.Trace() - deltaEps_p_v_mid;
+
+    #ifdef CHECK_CONSISTENCY_BISECTION_K
+      std::cout << "Before: K = " << state_trial_local.bulkModulus 
+                << " G = " << state_trial_local.shearModulus 
+                << " X = " << state_trial_local.capX 
+                << " del eps_e_v = " << deltaEps_e_v_mid 
+                << " del eps_p_v = " << deltaEps_p_v_mid << "\n";
+    #endif
 
     // Update the elastic moduli at eta = eta_mid in the local trial state
     // and update stress invariants
-    computeElasticProperties(state_trial_local, deltaEps_p_v_mid);
+    computeElasticProperties(state_trial_local, deltaEps_e_v_mid, deltaEps_p_v_mid);
+    state_trial_local.bulkModulus = 0.5*(state_trial_local.bulkModulus + state_k_old.bulkModulus);
+    state_trial_local.shearModulus = 0.5*(state_trial_local.shearModulus + state_k_old.shearModulus);
 
     // Update the internal variables at eta = eta_mid in the local trial state
     status = computeInternalVariables(state_trial_local, deltaEps_p_v_mid);
@@ -1468,6 +1592,12 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
       proc0cout << "computeInternalVariables has failed." << std::endl;
       return status;
     }
+
+    #ifdef CHECK_CONSISTENCY_BISECTION_K
+      std::cout << "After: K = " << state_trial_local.bulkModulus 
+                << " G = " << state_trial_local.shearModulus 
+                << " X = " << state_trial_local.capX << "\n";
+    #endif
 
     // Test the yield condition to check whether the yield surface moves beyond
     // the trial stress state when the internal variables are changed.
@@ -1481,15 +1611,24 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
     // Elastic or on yield surface
     if (yield.second == Util::YieldStatus::IS_ELASTIC) {
       eta_hi = eta_mid;
+      eta_mid = 0.5 * (eta_lo + eta_hi);
+
+      deltaEps_p_v_mid_old = deltaEps_p_v_mid;
+      deltaEps_p_v_mid_new = eta_mid * deltaEps_p_v_fixed;
+
+      #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
+        std::cout << "Elastic: consistency_iter = " << ii 
+                  << " eta_hi = " << eta_hi << " eta_lo = " << eta_lo 
+                  << " eta_mid = " << eta_mid << "\n";
+        std::cout << " delta_eps_p_v_mid_old = " << deltaEps_p_v_mid_old
+                  << " delta_eps_p_v_mid_new = " << deltaEps_p_v_mid_new
+                  << " ratio - 1 = " << (deltaEps_p_v_mid_new / deltaEps_p_v_mid_old - 1)
+                  << std::endl;
+      #endif
       ii++;
       continue;
     }
 
-    #ifdef CHECK_RETURN_ALIGNMENT
-     // std::cout << "consistency_iter = " << ii << std::endl;
-     // std::cout << "eta_hi = " << eta_hi << std::endl;
-     // std::cout << "eta_lo = " << eta_lo << std::endl;
-    #endif
 
     // At this point, state_trial_local contains the trial stress, the plastic
     // strain at the beginning of the timestep, the updated elastic moduli,
@@ -1503,55 +1642,61 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
     state_k_updated.capX = state_trial_local.capX;
     state_k_updated.updateStressInvariants();
     status = nonHardeningReturn(deltaEps_new, state_k_updated,
-                                   state_trial_local, sig_fixed_new,
-                                   deltaEps_e_fixed_new, deltaEps_p_fixed_new);
+                                   state_trial_local, sig_fixed_mid,
+                                   deltaEps_e_mid, deltaEps_p_mid);
     if (status != Status::SUCCESS) {
       proc0cout << "nonHardeningReturn inside consistencyBisection failed."
                 << std::endl;
       return status;
     }
 
+    #ifdef CHECK_CONSISTENCY_BISECTION_FIXED
+     std::cout << "Fixed: \n" 
+               << " sig_fixed_diff =  " << sig_fixed_mid  - sig_fixed << "\n"
+               << " deltaEps_e_diff = " << deltaEps_e_mid - deltaEps_e_fixed << "\n"
+               << " deltaEps_p_diff = " << deltaEps_p_mid - deltaEps_p_fixed << "\n";
+    #endif
+
+    // Update volumetric plastic strain
+    deltaEps_p_v_mid_old = deltaEps_p_v_mid_new;
+    deltaEps_p_v_mid_new = deltaEps_p_mid.Trace();
+
     // Check whether the isotropic component of the return has changed sign, as
     // this would indicate that the cap apex has moved past the trial stress,
     // indicating too much plastic strain in the return.
     Matrix3 sig_trial = state_trial_local.stressTensor;
-    double diff_trial_fixed_new = (sig_trial - sig_fixed_new).Trace();
+    double diff_trial_fixed_new = (sig_trial - sig_fixed_mid).Trace();
     double diff_trial_fixed = (sig_trial - sig_fixed).Trace();
     if (std::signbit(diff_trial_fixed_new) != std::signbit(diff_trial_fixed)) {
       eta_hi = eta_mid;
-      ii++;
-      continue;
+      eta_mid = 0.5 * (eta_lo + eta_hi);
+    } else {
+      // if (norm_deltaEps_p_fixed_new > eta_mid*norm_deltaEps_p_fixed) {
+      if (std::abs(deltaEps_p_v_mid_new) > std::abs(deltaEps_p_v_mid_old)) {
+        eta_lo = eta_mid;
+        eta_mid = 0.5 * (eta_lo + eta_hi);
+      } else {
+        eta_hi = eta_mid;
+        eta_mid = 0.5 * (eta_lo + eta_hi);
+      }
     }
 
     // Compare magnitude of plastic strain with prior update
     #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
-      norm_deltaEps_p_fixed_new = deltaEps_p_fixed_new.Norm();
+      norm_deltaEps_p_mid = deltaEps_p_mid.Norm();
       norm_deltaEps_p_fixed = eta_mid * deltaEps_p_fixed.Norm();
-    #endif
-
-    deltaEps_p_v_fixed_new = deltaEps_p_fixed_new.Trace();
-    deltaEps_p_v_fixed = eta_mid * deltaEps_p_fixed.Trace();
-
-    #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
-      std::cout << "eta_mid = " << eta_mid << " eta_mid*||deltaEps_p_fixed|| = "
+      std::cout << "Exit: \n"
+                << " eta_mid = " << eta_mid << " eta_mid*||deltaEps_p_fixed|| = "
                 << eta_mid * norm_deltaEps_p_fixed
-                << " ||deltaEps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new
+                << " ||deltaEps_p_mid_new|| = " << norm_deltaEps_p_mid
                 << " ratio = "
-                << eta_mid * norm_deltaEps_p_fixed / norm_deltaEps_p_fixed_new
+                << eta_mid * norm_deltaEps_p_fixed / norm_deltaEps_p_mid
                 << std::endl;
-      std::cout << " delta_eps_p_v_mid = " << deltaEps_p_v_mid
-                << " delta_eps_p_v_fixed_new = " << deltaEps_p_v_fixed_new
-                << " ratio = " << deltaEps_p_v_mid / deltaEps_p_fixed_new.Trace()
+      std::cout << " delta_eps_p_v_mid_old = " << deltaEps_p_v_mid_old
+                << " delta_eps_p_v_mid_new = " << deltaEps_p_v_mid_new
+                << " ratio - 1 = " << (deltaEps_p_v_mid_new / deltaEps_p_v_mid_old - 1)
                 << std::endl;
     #endif
-
-    // if (norm_deltaEps_p_fixed_new > eta_mid*norm_deltaEps_p_fixed) {
-    if (std::abs(deltaEps_p_v_fixed_new) >
-        eta_mid * std::abs(deltaEps_p_v_fixed)) {
-      eta_lo = eta_mid;
-    } else {
-      eta_hi = eta_mid;
-    }
 
     // Increment i and check
     ii++;
@@ -1568,25 +1713,27 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
   // The volumetric strain may not have converged so recompute internal
   // variables
   state_k_new = state_k_trial;
-  computeElasticProperties(state_k_new, deltaEps_p_v_fixed_new);
-  status = computeInternalVariables(state_k_new, deltaEps_p_v_fixed_new);
+  computeElasticProperties(state_k_new, deltaEps_new.Trace() - deltaEps_p_v_mid_new, deltaEps_p_v_mid_new);
+  status = computeInternalVariables(state_k_new, deltaEps_p_v_mid_new);
   if (status != Status::SUCCESS) {
     state_k_new = state_k_old;
     proc0cout << "computeInternalVariables has failed." << std::endl;
     return status;
   }
 
+  #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
+    std::cout << "Final: K = " << state_k_new.bulkModulus 
+                << " G = " << state_k_new.shearModulus 
+                << " X = " << state_k_new.capX << "\n";
+  #endif
+
   // Update the stress and plastic strain of the new state +  the elastic moduli
-  state_k_new.stressTensor = sig_fixed_new;
-  state_k_new.elasticStrainTensor = eps_e_old + deltaEps_e_fixed_new;
-  state_k_new.plasticStrainTensor = eps_p_old + deltaEps_p_fixed_new;
+  state_k_new.stressTensor = sig_fixed_mid;
+  state_k_new.elasticStrainTensor = eps_e_old + deltaEps_e_mid;
+  state_k_new.plasticStrainTensor = eps_p_old + deltaEps_p_mid;
   computeElasticProperties(state_k_new);
 
   #ifdef DEBUG_YIELD_BISECTION_R
-    std::cout << "pbar_w_before_consistency_3 = " << 3.0 * state_k_old.pbar_w
-              << std::endl;
-    std::cout << "pbar_w_after_consistency_3 = " << 3.0 * state_k_new.pbar_w
-              << std::endl;
     std::cout << "K_before_consistency = " << state_k_old.bulkModulus
               << std::endl;
     std::cout << "K_after_consistency = " << state_k_new.bulkModulus << std::endl;
@@ -1600,9 +1747,9 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
   #endif
 
   // Update the cumulative equivalent plastic strain
-  double deltaEps_p_v = deltaEps_p_fixed_new.Trace();
+  double deltaEps_p_v = deltaEps_p_mid.Trace();
   Uintah::Matrix3 deltaEps_p_dev =
-    deltaEps_p_fixed_new - Util::Identity * (deltaEps_p_v / 3.0);
+    deltaEps_p_mid - Util::Identity * (deltaEps_p_v / 3.0);
   state_k_new.ep_cum_eq =
     state_k_old.ep_cum_eq +
     std::sqrt(2.0 / 3.0 * deltaEps_p_dev.Contract(deltaEps_p_dev));
@@ -1628,7 +1775,8 @@ TabularPlasticityCap::computeInternalVariables(ModelState_TabularCap& state,
                                                const double& delta_eps_p_v)
 {
   ModelState_TabularCap tempState = state;
-  tempState.ep_v += delta_eps_p_v;
+  tempState.plasticStrainTensor += (Util::Identity*delta_eps_p_v);
+  tempState.updatePlasticStrainInvariants();
 
   // Update the hydrostatic compressive strength
   double X_new = d_capX->computeInternalVariable(&tempState);

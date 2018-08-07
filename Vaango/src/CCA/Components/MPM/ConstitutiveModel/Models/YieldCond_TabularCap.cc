@@ -31,9 +31,11 @@
 #include <chrono>
 #include <cmath>
 
-//#define DEBUG_EVAL_YIELD
-//#define DEBUG_CLOSEST_POINT
+#define DO_CLOSEST_POINT_ELASTIC_CHECK
+//#define DEBUG_CLOSEST_POINT_ELASTIC
 #define USE_NEWTON_CLOSEST_POINT
+//#define DEBUG_CLOSEST_POINT
+//#define DEBUG_EVAL_YIELD
 
 using namespace Vaango;
 using Point = Uintah::Point;
@@ -366,14 +368,16 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
   }
   
   #ifdef DEBUG_EVAL_YIELD
-  std::cout << "p_bar = " << p_bar << " gg = " << gg[0] 
-            << " sqrtJ2 = " << state->sqrt_J2 << std::endl;
+    std::cout << "p_bar = " << p_bar << " gg = " << gg[0] 
+              << " sqrtJ2 = " << state->sqrt_J2 << std::endl;
   #endif
 
-  auto status = checkClosestPointDistance(state);
-  if (status == Util::YieldStatus::HAS_YIELDED) {
-    return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
-  }
+  #ifdef DO_CLOSEST_POINT_ELASTIC_CHECK
+    auto status = checkClosestPointDistance(state);
+    if (status == Util::YieldStatus::HAS_YIELDED) {
+      return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
+    }
+  #endif
 
   return std::make_pair(-1.0, Util::YieldStatus::IS_ELASTIC);
 }
@@ -511,12 +515,6 @@ YieldCond_TabularCap::checkClosestPointDistance(const ModelState_TabularCap* sta
     seg_end = numPts-1;
   }
 
-  #ifdef DEBUG_CLOSEST_POINT
-    std::cout << "closest_index = " << closest_index << "\n";
-    std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
-              << "(0," << numPts-1 << ")\n";
-  #endif
-
   Point closest_to_spline(0, 0, 0);
   Vector tangent(0, 0, 0);
   Vector dtangent(0, 0, 0);
@@ -527,30 +525,35 @@ YieldCond_TabularCap::checkClosestPointDistance(const ModelState_TabularCap* sta
   Polyline line;
   line.emplace_back(yield_f_pts[seg_start]);
   line.emplace_back(yield_f_pts[seg_end]);
-  #ifdef DEBUG_CLOSEST_POINT
-    for (const auto& pt: line) {
-      std::cout << pt << " ";
-    }
-    std::cout << "\n";
-  #endif
 
   Point closest_to_line;
   double distSq = Vaango::Util::findClosestPoint(trial_pt, line, closest_to_line);
+  double distSq_spline = (closest_to_spline-trial_pt).length2();
+  double diff_dist = (distSq > 0) ? distSq_spline/distSq - 1 : distSq_spline - distSq;
+  
 
-  #ifdef DEBUG_CLOSEST_POINT
-    std::cout << "seg-points = " << yield_f_pts[seg_start] << ","
-              << yield_f_pts[seg_start+1] << ","
-              << yield_f_pts[seg_start+2] << "\n";
-    std::cout << "p-spline = " << (closest_to_spline-trial_pt).length2() 
-              << "p-line = " <<  distSq << "\n";
-    std::cout << "pt = " << trial_pt 
-              << " closest-spline = " << closest_to_spline
-              << " closest-line = " << closest_to_line << "\n";
+  #ifdef DEBUG_CLOSEST_POINT_ELASTIC
+    std::cout << "closest_index = " << closest_index << "\n";
+    std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
+              << "(0," << numPts-1 << ")\n";
+    std::cout << "line = [";
+    for (const auto& pt: line) {
+      std::cout << pt << ";";
+    }
+    std::cout << "]\n";
+    std::cout << "seg = [" << yield_f_pts[seg_start] << ";"
+              << yield_f_pts[seg_start+1] << ";"
+              << yield_f_pts[seg_start+2] << "]\n";
+    std::cout << "pt = " << trial_pt << ";"
+              << " cspline = " << closest_to_spline<< ";"
+              << " cline = " << closest_to_line << ";\n";
+    std::cout << std::setprecision(10) << "p-spline = " << distSq_spline 
+              << " p-line = " <<  distSq 
+              << " diff = " << diff_dist << "\n";
   #endif
 
-  double distSq_spline = (closest_to_spline-trial_pt).length2();
 
-  if (distSq_spline < distSq && std::abs(distSq_spline - distSq) > 1.0e-6) {
+  if (diff_dist < 0.0 && std::abs(diff_dist) > 1.0e-6) {
     return Util::YieldStatus::HAS_YIELDED;
   }
 

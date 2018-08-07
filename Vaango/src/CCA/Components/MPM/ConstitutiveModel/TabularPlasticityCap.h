@@ -196,6 +196,7 @@ private:
   //////////////////////////////////////////////////////////////////////////
   void computeElasticProperties(ModelState_TabularCap& state);
   void computeElasticProperties(ModelState_TabularCap& state,
+                                double elasticVolStrainInc,
                                 double plasticVolStrainInc);
 
   //////////////////////////////////////////////////////////////////////////
