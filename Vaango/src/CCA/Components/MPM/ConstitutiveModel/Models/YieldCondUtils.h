@@ -45,6 +45,12 @@ struct DoNotUse : std::false_type
 {
 };
 
+/* Check whether a value is within bounds : value in [low, high] */
+template <typename T>
+bool isInBounds(const T& value, const T& low, const T& high) {
+  return !(value < low) && !(high < value);
+}
+
 /* A reverse range iterator 
    std::vector<int> v = {1, 2, 3, 4, 5};
    for (auto x : reverse(v)) {}

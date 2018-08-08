@@ -324,7 +324,7 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
   double p_bar = -state->I1/3;
   if (p_bar < p_bar_min) {
     #ifdef DEBUG_EVAL_YIELD
-    std::cout << "Tensile state: [" << p_bar << " < " << p_bar_min << "]\n";
+      std::cout << "Tensile state: [" << p_bar << " < " << p_bar_min << "]\n";
     #endif
     return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
   }
@@ -333,7 +333,7 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
   double p_bar_max = -state->capX/3.0; 
   if (p_bar > p_bar_max) {
     #ifdef DEBUG_EVAL_YIELD
-    std::cout << "Compressive state: [" << p_bar << " > " << p_bar_max << "]\n";
+      std::cout << "Compressive state: [" << p_bar << " > " << p_bar_max << "]\n";
     #endif
     return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
   }
@@ -359,10 +359,23 @@ YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
     double ratio = (p_bar - kappa_bar)/(p_bar_max - kappa_bar);
     double Fc_sq = 1.0 - ratio*ratio;
     if ((state->sqrt_J2 * state->sqrt_J2 - gg[0] * gg[0] * Fc_sq) > 1.0e-10) {
+      #ifdef DEBUG_EVAL_YIELD
+        double J2 = state->sqrt_J2 * state->sqrt_J2;
+        double Fc2_g2 = gg[0] * gg[0] * Fc_sq;
+        std::cout << "Yielded: [" << p_bar << " > " << kappa_bar << "] " 
+                  << " J2 = " << J2
+                  << " Fc^2 g^2 = " << Fc2_g2
+                  << " diff = " << J2 - Fc2_g2 << "\n";
+      #endif
       return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
     }
   } else {
     if (state->sqrt_J2 > gg[0]) {
+      #ifdef DEBUG_EVAL_YIELD
+        std::cout << "Yielded: [" << p_bar << " <= " << kappa_bar << "] " 
+                  << " sqrt_J2 = " << state->sqrt_J2
+                  << " g = " << gg[0] << "\n";
+      #endif
       return std::make_pair(1.0, Util::YieldStatus::HAS_YIELDED);
     }
   }
@@ -536,14 +549,10 @@ YieldCond_TabularCap::checkClosestPointDistance(const ModelState_TabularCap* sta
     std::cout << "closest_index = " << closest_index << "\n";
     std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
               << "(0," << numPts-1 << ")\n";
-    std::cout << "line = [";
-    for (const auto& pt: line) {
-      std::cout << pt << ";";
-    }
-    std::cout << "]\n";
+    std::cout << "line = [" << line[0] << ";" << line[1] << "];\n";
     std::cout << "seg = [" << yield_f_pts[seg_start] << ";"
               << yield_f_pts[seg_start+1] << ";"
-              << yield_f_pts[seg_start+2] << "]\n";
+              << yield_f_pts[seg_start+2] << "];\n";
     std::cout << "pt = " << trial_pt << ";"
               << " cspline = " << closest_to_spline<< ";"
               << " cline = " << closest_to_line << ";\n";
@@ -554,7 +563,14 @@ YieldCond_TabularCap::checkClosestPointDistance(const ModelState_TabularCap* sta
 
 
   if (diff_dist < 0.0 && std::abs(diff_dist) > 1.0e-6) {
-    return Util::YieldStatus::HAS_YIELDED;
+    double tx = (closest_to_spline.x() != closest_to_line.x()) ? (trial_pt.x() - closest_to_line.x())/(closest_to_spline.x() - closest_to_line.x()) : 0.0;
+    double ty = (closest_to_spline.y() != closest_to_line.y()) ? (trial_pt.y() - closest_to_line.y())/(closest_to_spline.y() - closest_to_line.y()) : 0.0;
+    #ifdef DEBUG_CLOSEST_POINT_ELASTIC
+      std::cout << "tx = " << tx << " ty = " << ty << "\n";
+    #endif
+    if (!(Util::isInBounds<double>(tx, 0, 1) && Util::isInBounds<double>(ty, 0, 1))) {
+      return Util::YieldStatus::HAS_YIELDED;
+    }
   }
 
   return Util::YieldStatus::IS_ELASTIC;
