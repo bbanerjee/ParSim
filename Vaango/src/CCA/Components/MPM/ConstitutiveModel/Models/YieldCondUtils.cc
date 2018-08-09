@@ -358,6 +358,14 @@ findClosestPointToQuadraticBSplineNewton(const Uintah::Point pt,
     if (n > 20) break;
   }
 
+  if (!isInBounds<double>(t, 0, 1)) {
+    std::vector<Uintah::Point> poly = {{point_k, point_k1, point_k2}};
+    findClosestPoint(pt, poly, B);
+    T.x(poly[2].x() - poly[0].x());
+    T.y(poly[2].y() - poly[0].y());
+    T.z(poly[2].z() - poly[0].z());
+  }
+
   return std::make_tuple(t, B, T, N);
 }
 

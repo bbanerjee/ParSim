@@ -542,34 +542,33 @@ YieldCond_TabularCap::checkClosestPointDistance(const ModelState_TabularCap* sta
   Point closest_to_line;
   double distSq = Vaango::Util::findClosestPoint(trial_pt, line, closest_to_line);
   double distSq_spline = (closest_to_spline-trial_pt).length2();
-  double diff_dist = (distSq > 0) ? distSq_spline/distSq - 1 : distSq_spline - distSq;
-  
+  double diff_dist = (distSq > 0) ? std::sqrt(distSq_spline/distSq) - 1 : distSq_spline - distSq;
 
-  #ifdef DEBUG_CLOSEST_POINT_ELASTIC
-    std::cout << "closest_index = " << closest_index << "\n";
-    std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
-              << "(0," << numPts-1 << ")\n";
-    std::cout << "line = [" << line[0] << ";" << line[1] << "];\n";
-    std::cout << "seg = [" << yield_f_pts[seg_start] << ";"
-              << yield_f_pts[seg_start+1] << ";"
-              << yield_f_pts[seg_start+2] << "];\n";
-    std::cout << "pt = " << trial_pt << ";"
-              << " cspline = " << closest_to_spline<< ";"
-              << " cline = " << closest_to_line << ";\n";
-    std::cout << std::setprecision(10) << "p-spline = " << distSq_spline 
-              << " p-line = " <<  distSq 
-              << " diff = " << diff_dist << "\n";
-  #endif
-
-
-  if (diff_dist < 0.0 && std::abs(diff_dist) > 1.0e-6) {
-    double tx = (closest_to_spline.x() != closest_to_line.x()) ? (trial_pt.x() - closest_to_line.x())/(closest_to_spline.x() - closest_to_line.x()) : 0.0;
-    double ty = (closest_to_spline.y() != closest_to_line.y()) ? (trial_pt.y() - closest_to_line.y())/(closest_to_spline.y() - closest_to_line.y()) : 0.0;
-    #ifdef DEBUG_CLOSEST_POINT_ELASTIC
-      std::cout << "tx = " << tx << " ty = " << ty << "\n";
-    #endif
-    if (!(Util::isInBounds<double>(tx, 0, 1) && Util::isInBounds<double>(ty, 0, 1))) {
-      return Util::YieldStatus::HAS_YIELDED;
+  if (std::abs(diff_dist) > 1.0e-6) {
+    if (diff_dist < 0.0) {
+      double dx = closest_to_spline.x() - closest_to_line.x();
+      double dy = closest_to_spline.y() - closest_to_line.y();
+      double tx = (dx != 0) ? (trial_pt.x() - closest_to_line.x())/dx : 0.0;
+      double ty = (dy != 0) ? (trial_pt.y() - closest_to_line.y())/dy : 0.0;
+      if (!(Util::isInBounds<double>(tx, 0, 1) && Util::isInBounds<double>(ty, 0, 1))) {
+        #ifdef DEBUG_CLOSEST_POINT_ELASTIC
+          std::cout << "tx = " << tx << " ty = " << ty << "\n";
+          std::cout << "closest_index = " << closest_index << "\n";
+          std::cout << "indices are (" << seg_start << "," << seg_end << ") from"
+                    << "(0," << numPts-1 << ")\n";
+          std::cout << "line = [" << line[0] << ";" << line[1] << "];\n";
+          std::cout << "seg = [" << yield_f_pts[seg_start] << ";"
+                    << yield_f_pts[seg_start+1] << ";"
+                    << yield_f_pts[seg_start+2] << "];\n";
+          std::cout << "pt = " << trial_pt << ";"
+                    << " cspline = " << closest_to_spline<< ";"
+                    << " cline = " << closest_to_line << ";\n";
+          std::cout << std::setprecision(10) << "p-spline = " << distSq_spline 
+                    << " p-line = " <<  distSq 
+                    << " diff = " << diff_dist << "\n";
+        #endif
+        return Util::YieldStatus::HAS_YIELDED;
+      }
     }
   }
 
