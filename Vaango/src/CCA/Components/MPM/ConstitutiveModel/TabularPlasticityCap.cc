@@ -65,6 +65,16 @@
 #include <iostream>
 #include <limits>
 
+//#define TEST_K_VARIATION
+#ifdef TEST_K_VARIATION
+constexpr double K_scale_factor = 1.7;
+#endif
+
+//#define TEST_CAP_VARIATION
+#ifdef TEST_CAP_VARIATION
+constexpr double X_scale_factor = 0.8;
+#endif
+
 #define DO_CONSISTENCY_BISECTION
 //#define CHECK_CONSISTENCY_BISECTION_CONVERGENCE
 //#define CHECK_CONSISTENCY_BISECTION_K
@@ -555,14 +565,18 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
     return Status::SUCCESS;
   }
 
-  // Compute the trial stress
-  Matrix3 stress_trial = computeTrialStress(state_old, strain_inc);
-
   // Set up a trial state, update the stress invariants, and compute elastic
   // properties
   ModelState_TabularCap state_trial(state_old);
+  computeElasticProperties(state_trial, strain_inc.Trace(), 0.0);
+  state_trial.updatePlasticStrainInvariants();
+  state_trial.bulkModulus = 0.5*(state_old.bulkModulus+state_trial.bulkModulus);
+  state_trial.shearModulus = 0.5*(state_old.shearModulus+state_trial.shearModulus);
+
+  // Compute the trial stress
+  Matrix3 stress_trial = computeTrialStress(state_trial, strain_inc);
   state_trial.stressTensor = stress_trial;
-  computeElasticProperties(state_trial);
+  state_trial.updateStressInvariants();
 
 #ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "\t strain_inc = " << strain_inc << std::endl;
@@ -698,6 +712,10 @@ TabularPlasticityCap::computeElasticProperties(ModelState_TabularCap& state)
     std::cout << "Compute elastic properties : Time taken = " 
               << std::chrono::duration<double>(end-start).count() << std::endl;
   #endif
+  #ifdef TEST_K_VARIATION
+    state.bulkModulus *= K_scale_factor;
+    state.shearModulus *= K_scale_factor;
+  #endif
 }
 
 /**
@@ -715,7 +733,7 @@ TabularPlasticityCap::computeElasticProperties(ModelState_TabularCap& state,
   tempState.elasticStrainTensor += (Util::Identity*elasticVolStrainInc);
   tempState.plasticStrainTensor += (Util::Identity*plasticVolStrainInc);
   tempState.updatePlasticStrainInvariants();
-  TabularPlasticity::computeElasticProperties(tempState);
+  computeElasticProperties(tempState);
   state.bulkModulus = tempState.bulkModulus;
   state.shearModulus = tempState.shearModulus;
 }
@@ -833,7 +851,20 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
 
   // Compute the trial stress
   Matrix3 deltaEps = D * dt;
-  Matrix3 stress_k_trial = computeTrialStress(state_k_old, deltaEps);
+
+  // Set up a trial state, update the stress invariants, and compute elastic
+  // properties
+  ModelState_TabularCap state_k_trial(state_k_old);
+  computeElasticProperties(state_k_trial, deltaEps.Trace(), 0.0);
+  state_k_trial.bulkModulus = 0.5*(state_k_old.bulkModulus+state_k_trial.bulkModulus);
+  state_k_trial.shearModulus = 0.5*(state_k_old.shearModulus+state_k_trial.shearModulus);
+  state_k_trial.updatePlasticStrainInvariants();
+
+  Matrix3 stress_k_trial = computeTrialStress(state_k_trial, deltaEps);
+
+  // Update the trial stress and compute invariants
+  state_k_trial.stressTensor = stress_k_trial;
+  state_k_trial.updateStressInvariants();
 
 #ifdef CHECK_FOR_NAN_EXTRA
   std::cout << "\t deltaEps = " << deltaEps << std::endl;
@@ -857,17 +888,6 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
 //         << " D = " << D << " dt = " << dt
 //         << " deltaEps = " << deltaEps << std::endl;
 #endif
-
-  // Set up a trial state
-  ModelState_TabularCap state_k_trial(state_k_old);
-  state_k_trial.updatePlasticStrainInvariants();
-
-  // Recompute elastic moduli at t_n stress and plastic strain
-  computeElasticProperties(state_k_trial);
-
-  // Update the trial stress and compute invariants
-  state_k_trial.stressTensor = stress_k_trial;
-  state_k_trial.updateStressInvariants();
 
   #ifdef CHECK_MODULUS_EVOLUTION
     std::cout << "K = " << state_k_trial.bulkModulus 
@@ -1800,6 +1820,9 @@ TabularPlasticityCap::computeInternalVariables(ModelState_TabularCap& state,
 
   // Update the state with new values of the internal variables
   state.capX = X_new;
+  #ifdef TEST_CAP_VARIATION
+    state.capX *= X_scale_factor;
+  #endif
 
   return Status::SUCCESS;
 }
