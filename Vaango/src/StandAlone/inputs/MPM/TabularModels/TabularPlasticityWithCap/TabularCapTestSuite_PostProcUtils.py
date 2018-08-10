@@ -13,6 +13,7 @@ from matplotlib import rc
 from matplotlib import ticker 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import scipy.interpolate
 
 from TabularCapYieldSurfaceUtils import *
 
@@ -232,6 +233,11 @@ def getInternalVariableSnapshots(uda_path, analytical_times, matID = 0):
     idx, time = find_nearest(times, ta)
     idx_list.append(idx)
     time_list.append(time)
+
+  idx_list = np.unique(idx_list)
+  time_list = np.unique(time_list)
+
+  for idx in idx_list:
     ev_e_list.append(ev_e[idx]) 
     ev_p_list.append(ev_p[idx]) 
     capX_list.append(capX[idx]) 
@@ -498,22 +504,20 @@ def plotEqShearMeanStress(xs, ys, idx_list, color_list, ev_p_list,
 
   max_idx = max(idx_list)
   for jj, color in enumerate(color_list):
-    ev_p_str = str(ev_p_list[jj])
-    label_str = 'Plastic vol. strain = ' + ev_p_str
     start_idx = idx_list[jj]
     if (start_idx < max_idx):
       end_idx = idx_list[jj+1]
-      x_arrow = x_data[start_idx:end_idx-1]
-      y_arrow = y_data[start_idx:end_idx-1]
-      u_arrow = x_data[start_idx+1:end_idx] - x_arrow
-      v_arrow = y_data[start_idx+1:end_idx] - y_arrow
+      x_arrow = x_data[start_idx:end_idx]
+      y_arrow = y_data[start_idx:end_idx]
+      u_arrow = x_data[start_idx+1:end_idx+1] - x_arrow
+      v_arrow = y_data[start_idx+1:end_idx+1] - y_arrow
       plt.quiver(x_arrow, y_arrow,
                  u_arrow, v_arrow,
                  scale_units='xy', angles='xy', scale=1.5, width=0.001,
                  headwidth=7, headlength=10,
                  linewidth=0.5, edgecolor='b', color='k')
-      plt.plot(x_data[start_idx:end_idx], y_data[start_idx:end_idx], '-', \
-        color=color,label=label_str)
+      plt.plot(x_data[start_idx:end_idx+1], y_data[start_idx:end_idx+1], '-', \
+               color=color)
   
   plt.xlabel(str_to_mathbf('Mean Stress, p (Pa)'))
   plt.ylabel(str_to_mathbf('Equivalent Shear Stress, q, (Pa)'))
@@ -1008,15 +1012,30 @@ def plotSimDataSigmaEps(fig, time_snapshots, time_sim, pp_sim, ev_e_sim, ev_p_si
   # Activate the figure
   plt.figure(fig.number)
 
-  ev_sim = list(map(lambda ev_e, ev_p : ev_e + ev_p, ev_e_sim ,ev_p_sim))
+  ev_sim = list(map(lambda ev_e, ev_p : ev_e + ev_p, ev_e_sim, ev_p_sim))
 
   # Plot sigma_a vs. time
   if (compression == 'positive'):
     ev_data = list(map(lambda p : -p, ev_sim))
     pp_data = list(map(lambda p : -p, pp_sim))
-    plt.plot(ev_data, pp_data, '--r', label='Simulation')
+    ev_e_data = list(map(lambda p : -p, ev_e_sim))
+    ev_p_data = list(map(lambda p : -p, ev_p_sim))
+    plt.plot(ev_data, pp_data, '--', color='C0', label='Total strain (Simulation)')
+    #plt.plot(ev_e_data, pp_data, '--', color='C1', label='Elastic strain (Simulation)')
+    #plt.plot(ev_p_data, pp_data, '--', color='C2', label='Plastic strain (Simulation)')
+    x_arrow = np.array(ev_data[:-1])
+    y_arrow = np.array(pp_data[:-1])
+    u_arrow = np.array(ev_data[1:]) - x_arrow
+    v_arrow = np.array(pp_data[1:]) - y_arrow
+    plt.quiver(x_arrow, y_arrow,
+               u_arrow, v_arrow,
+               scale_units='xy', angles='xy', scale=1.5, width=0.001,
+               headwidth=7, headlength=10,
+               linewidth=0.5, edgecolor='b', color='k')
   else:
-    plt.plot(ev_sim, pp_sim, '--r', label='Simulation')
+    plt.plot(ev_sim, pp_sim, '--', color='C0', label='(Total strain) Simulation')
+    #plt.plot(ev_e_sim, pp_data, '--', color='C1', label='Elastic strain (Simulation)')
+    #plt.plot(ev_p_sim, pp_data, '--', color='C2', label='Plastic strain (Simulation)')
 
   return time_snap, pp_snap
 
@@ -1100,3 +1119,116 @@ def plotSimDataPQTime(fig, time_snapshots, time_sim, p_sim, q_sim, compression='
 
   return time_snap, p_snap, q_snap
 
+#---------------------------------------------------------------------
+# Check elastic modulus interpolation
+#---------------------------------------------------------------------
+def checkModulusInterpolation(elastic_table, ee_sample, ep_sample):
+
+  # Extract the data from the elastic loading tables
+  ep_elastic = elastic_table['PlasticStrainVol'] 
+  p_data = elastic_table['Data']
+  ev_elastic = []
+  ee_elastic = []
+  pbar_elastic = []
+  for ii, ep in enumerate(ep_elastic):
+    ev_elastic.append(p_data[ii]['TotalStrainVol'])
+    pbar_elastic.append(p_data[ii]['Pressure'])
+    ee_elastic.append(list(map(lambda ev: ev - ep_elastic[ii], ev_elastic[ii])))
+
+  first, second =  find_if_greater_than(ep_elastic, ep_sample)
+
+  t = (ep_sample - ep_elastic[first])/(ep_elastic[second] - ep_elastic[first])
+  print('t = ', t, 'ep_sample = ', ep_sample, ' first = ', ep_elastic[first], \
+        'second = ', ep_elastic[second])
+
+  num_pts = 500
+  ev_first_list = np.linspace(ev_elastic[first][0], ev_elastic[first][-1], num_pts, endpoint = True)
+  interp = scipy.interpolate.interp1d(ev_elastic[first], pbar_elastic[first])
+  pbar_first_list = interp(ev_first_list)
+
+  ev_second_list = np.linspace(ev_elastic[second][0], ev_elastic[second][-1], num_pts, endpoint = True)
+  interp = scipy.interpolate.interp1d(ev_elastic[second], pbar_elastic[second])
+  pbar_second_list = interp(ev_second_list)
+
+  fig5 = plt.figure(5)
+  plt.clf()
+  plt.plot(ev_elastic[first], pbar_elastic[first], '-r')
+  plt.plot(ev_first_list, pbar_first_list, 'b--')
+  plt.plot(ev_elastic[second], pbar_elastic[second], '-r')
+  plt.plot(ev_second_list, pbar_second_list, 'b--')
+
+  ev_interp = []
+  for ev_first, ev_second in zip(ev_first_list, ev_second_list):
+    ev_interp.append((1-t)*ev_first + t*ev_second)
+
+  pbar_interp = []
+  for pbar_first, pbar_second in zip(pbar_first_list, pbar_second_list):
+    pbar_interp.append((1-t)*pbar_first + t*pbar_second)
+
+  plt.plot(ev_interp, pbar_interp, '-.', color='C0')
+
+  ev_sample = ee_sample + ep_sample
+  first_s, second_s =  find_if_greater_than(ev_interp, ev_sample)
+
+  s = (ev_sample - ev_interp[first_s])/(ev_interp[second_s] - ev_interp[first_s])
+  pbar_sample = (1 - s)*pbar_interp[first_s] + s*pbar_interp[second_s];
+  plt.plot(ev_sample, pbar_sample, 'x', color='C1')
+
+  epsilon = 1.0e-6
+  s_lo = (ev_sample-epsilon - ev_interp[first_s])/(ev_interp[second_s] - ev_interp[first_s])
+  s_hi = (ev_sample+epsilon - ev_interp[first_s])/(ev_interp[second_s] - ev_interp[first_s])
+  pbar_lo = (1 - s_lo)*pbar_interp[first_s] + s_lo*pbar_interp[second_s];
+  pbar_hi = (1 - s_hi)*pbar_interp[first_s] + s_hi*pbar_interp[second_s];
+  K = (pbar_hi - pbar_lo)/(2*epsilon)
+  print('K=', K)
+
+  first_s1, second_s1 =  find_if_greater_than(ev_elastic[first], ev_sample)
+  s1 = (ev_sample - ev_elastic[first][first_s1])/(ev_elastic[first][second_s1] - ev_elastic[first][first_s1])
+  pbar_s1 = (1 - s1)*pbar_elastic[first][first_s1] + s1*pbar_elastic[first][second_s1]
+  plt.plot(ev_sample, pbar_s1, 'x', color='C2')
+
+  first_s2, second_s2 =  find_if_greater_than(ev_elastic[second], ev_sample)
+  s2 = (ev_sample - ev_elastic[second][first_s2])/(ev_elastic[second][second_s2] - ev_elastic[second][first_s2])
+  pbar_s2 = (1 - s2)*pbar_elastic[second][first_s2] + s2*pbar_elastic[second][second_s2]
+  plt.plot(ev_sample, pbar_s2, 'x', color='C3')
+  
+  pbar_t = (1 - t)*pbar_s1 + t*pbar_s2
+  plt.plot(ev_sample, pbar_t, 'o', color='C4')
+  
+  pbar_t_lo = compute_pbar_t(ev_elastic, pbar_elastic, first, second, ev_sample-epsilon, t)
+  pbar_t_hi = compute_pbar_t(ev_elastic, pbar_elastic, first, second, ev_sample+epsilon, t)
+  K_t = (pbar_t_hi - pbar_t_lo)/(2*epsilon)
+  print('t = ', t)
+  print('s1 = ', s1, 'start = ', first_s1, 'end = ', second_s1, 'p = ', pbar_s1)
+  print('ev_sample = ', ev_sample, 'start_val = ', ev_elastic[first][first_s1], \
+        'end_val = ', ev_elastic[first][second_s1])
+  print('s2 = ', s2, 'start = ', first_s2, 'end = ', second_s2, 'p = ', pbar_s2, 'pbar=', pbar_t)
+  print('ev_sample = ', ev_sample, 'start_val = ', ev_elastic[second][first_s2], \
+        'end_val = ', ev_elastic[second][second_s2])
+  print('K_t=', K_t)
+  
+def find_if_greater_than(val_list, val_sample):
+  second = next((ii for ii, val in enumerate(val_list) if val > val_sample), None)
+  if second == None:
+    first = len(val_list)-2 
+    second = len(val_list)-1 
+  else:
+    first = second-1
+
+  return first, second
+
+def compute_pbar_t(ev_elastic, pbar_elastic, first, second, ev_sample, t):
+  first_s1, second_s1 =  find_if_greater_than(ev_elastic[first], ev_sample)
+  s1 = (ev_sample - ev_elastic[first][first_s1])/(ev_elastic[first][second_s1] - ev_elastic[first][first_s1])
+  pbar_s1 = (1 - s1)*pbar_elastic[first][first_s1] + s1*pbar_elastic[first][second_s1]
+
+  first_s2, second_s2 =  find_if_greater_than(ev_elastic[second], ev_sample)
+  s2 = (ev_sample - ev_elastic[second][first_s2])/(ev_elastic[second][second_s2] - ev_elastic[second][first_s2])
+  pbar_s2 = (1 - s2)*pbar_elastic[second][first_s2] + s2*pbar_elastic[second][second_s2]
+  
+  pbar_t = (1 - t)*pbar_s1 + t*pbar_s2
+
+  return pbar_t
+
+
+  

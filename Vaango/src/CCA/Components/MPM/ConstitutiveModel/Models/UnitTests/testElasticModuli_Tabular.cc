@@ -126,20 +126,19 @@ TEST(ElasticModuliTabularTest, constructorTest)
   state.plasticStrainTensor = Uintah::Matrix3(-0.02, 0, 0, 0, -0.02, 0, 0, 0, -0.02);
   try {
     ElasticModuli moduli = model.getCurrentElasticModuli(&state);
-    EXPECT_NEAR(moduli.bulkModulus, 9040, 1.0e-7);
-    EXPECT_NEAR(moduli.shearModulus, 6780, 1.0e-7);
+    EXPECT_NEAR(moduli.bulkModulus, 11440, 1.0e-7);
+    EXPECT_NEAR(moduli.shearModulus, 8580, 1.0e-7);
     //std::cout << "K,G = " << moduli.bulkModulus << "," 
     //            << moduli.shearModulus << std::endl;
     auto moduli_derivs = model.getElasticModuliAndDerivatives(&state);
     auto KG = moduli_derivs.first;
     auto dKdG = moduli_derivs.second;
-    EXPECT_NEAR(KG.bulkModulus, 9040, 1.0e-7);
-    EXPECT_NEAR(KG.shearModulus, 6780, 1.0e-7);
-    EXPECT_NEAR(dKdG.bulkModulus, 16001, 1.0);
-    ASSERT_NEAR(dKdG.shearModulus, 12001, 1.0);
+    EXPECT_NEAR(KG.bulkModulus, 11440, 1.0e-7);
+    EXPECT_NEAR(KG.shearModulus, 8580, 1.0e-7);
+    EXPECT_NEAR(dKdG.bulkModulus, -24000, 1.0);
+    ASSERT_NEAR(dKdG.shearModulus, -18000, 1.0);
   } catch (Uintah::InvalidValue e) {
     std::cout << e.message() << std::endl;
   }
-
   
 }

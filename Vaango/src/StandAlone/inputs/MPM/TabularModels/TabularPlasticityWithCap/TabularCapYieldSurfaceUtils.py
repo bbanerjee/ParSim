@@ -232,52 +232,47 @@ def computeCapYieldSurfacePoints(pbars, sqrtJ2s, R, capX):
 #-----------------------------------------------------------------------------
 # Plot the yield surface (compression positive)
 #-----------------------------------------------------------------------------
-def plotPQYieldSurfaceSim(plt, material_dict, yield_table, capX,
-                          ev_e_list, ev_p_list, time_list, pmin, pmax, qmax,
-                          compression = 'negative', plt_color = 'b'):
+def plotPQYieldSurfaceSim(plt, material_dict, yield_table, 
+                          capX_list, ev_e_list, ev_p_list, time_list, color_list,
+                          pmin, pmax, qmax,
+                          compression = 'negative', ):
 
   # Extract the data from the yield table
   pbars   = yield_table['Pressure']
   sqrtJ2s = yield_table['SqrtJ2']
 
-  # Compute the yield surface with cap
-  R = material_dict["R"]
-  pbar_yield, sqrtJ2_yield = computeCapYieldSurfacePoints(pbars, sqrtJ2s, R, capX)
+  for jj, capX in enumerate(capX_list):
 
-  # Plot
-  print('Compression = ', compression)
-  if (compression == 'negative'):
-    ps = list(map(lambda pbar: -pbar, pbar_yield))
-    qs = list(map(lambda sqrtJ2 : np.sqrt(3)*sqrtJ2, sqrtJ2_yield))
+    # Compute the yield surface with cap
+    R = material_dict["R"]
+    pbar_yield, sqrtJ2_yield = computeCapYieldSurfacePoints(pbars, sqrtJ2s, R, capX)
+
+    # Get the plastic strain and set up label
+    ev_p_str = str(ev_p_list[jj])
+    label_str = 'Plastic vol. strain = ' + ev_p_str
+
+    # Plot
+    print('Compression = ', compression)
+    if (compression == 'negative'):
+      ps = list(map(lambda pbar: -pbar, pbar_yield))
+      qs = list(map(lambda sqrtJ2 : np.sqrt(3)*sqrtJ2, sqrtJ2_yield))
+    else:
+      ps = list(map(lambda pbar: pbar, pbar_yield))
+      qs = list(map(lambda sqrtJ2 : np.sqrt(3)*sqrtJ2, sqrtJ2_yield))
+
     #print("yield surface: pmin = ", pmin, "pmax = ", pmax, "p = ", ps)
     #print("yield surface: qmax = ", qmax, "q = ", qs)
- 
-    line1 = plt.plot(ps,  qs, '-b',linewidth=1)
+   
+    line1 = plt.plot(ps,  qs, '-b',linewidth=1, label = label_str)
     line2 = plt.plot(ps, list(map(lambda q : -q,  qs)), '-b',linewidth=1)  
-    plt.setp(line1, color=plt_color)
-    plt.setp(line2, color=plt_color)
+    plt.setp(line1, color=color_list[jj])
+    plt.setp(line2, color=color_list[jj])
     plt.legend(loc=2, prop={'size':8}) 
     #plt.axis('equal')
 
     axes = plt.gca()
     #axes.set_xlim([1.3*pmin, 1.3*pmax])
     #axes.set_ylim([-1.3*qmax, 1.3*qmax])
-  else:
-    ps = list(map(lambda pbar: pbar, pbar_yield))
-    qs = list(map(lambda sqrtJ2 : np.sqrt(3)*sqrtJ2, sqrtJ2_yield))
-    #print("yield surface: pmin = ", pmin, "pmax = ", pmax, "p = ", ps)
-    #print("yield surface: qmax = ", qmax, "q = ", qs)
-    line1 = plt.plot(ps,  qs, '-b',linewidth=1)
-    line2 = plt.plot(ps, list(map(lambda q : -q,  qs)), '-b',linewidth=1)  
-    plt.setp(line1, color=plt_color)
-    plt.setp(line2, color=plt_color)
-    plt.legend(loc=2, prop={'size':8}) 
-    plt.axis('equal')
-
-    axes = plt.gca()
-    #axes.set_xlim([1.3*pmin, 1.3*pmax])
-    #axes.set_ylim([-1.3*qmax, 1.3*qmax])
- 
 
   return pmin, qmax
    

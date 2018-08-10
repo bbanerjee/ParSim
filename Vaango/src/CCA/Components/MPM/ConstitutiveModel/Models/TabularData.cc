@@ -619,6 +619,7 @@ TabularData::interpolateLinearSpline<2>(
   //std::cout << std::endl;
   auto segLowIndex0 = findLocationNoThrow(indepValues[0], indepVarData0);
   auto sval = computeParameter(indepValues[0], segLowIndex0, indepVarData0);
+  //std::cout << "t = " << sval << "\n";
   // if (sval < 0 || sval > 1) {
   //   std::cout << "Lo Index 0 = [" << segLowIndex0 << "," << (segLowIndex0+1) << "]"
   //             << " s = " << sval << " value = " << indepValues[0] 
@@ -638,6 +639,8 @@ TabularData::interpolateLinearSpline<2>(
     //std::cout << std::endl;
     auto segLowIndex1 = findLocationNoThrow(indepValues[1], indepVarData1);
     auto tval = computeParameter(indepValues[1], segLowIndex1, indepVarData1);
+    //std::cout << "s [" << ii << "]= " << tval << " start = " << segLowIndex1
+    //          << " end = " << segLowIndex1 + 1 << "\n";
     // if (sval < 0 || sval > 1) {
     //   if (tval < 0 || tval > 1) {
     //     std::cout << "Lo Index 1 = [" << segLowIndex1 << "," << (segLowIndex1+1) << "]"
@@ -652,6 +655,7 @@ TabularData::interpolateLinearSpline<2>(
         getDependentVarData(depVar->name, IndexKey(ii, 0, 0, 0));
       auto depvalT = computeInterpolated(tval, segLowIndex1, depVarData);
       depValsT.push_back(depvalT);
+      //std::cout << "p = " << depvalT << "\n";
       // if (sval < 0 || sval > 1) {
       //   if (tval < 0 || tval > 1) {
       //     std::cout << "Lo Index 1 = " << segLowIndex1 << " p = " << depvalT 
@@ -763,13 +767,17 @@ TabularData::findLocation(const double& value, const DoubleVec1D& varData) const
 std::size_t
 TabularData::findLocationNoThrow(const double& value, const DoubleVec1D& varData) const
 {
-  if (value < varData.front()) return 0;
-  if (value > varData.back()) return (varData.size() - 2);
+  auto second = std::lower_bound(varData.begin(), varData.end(), value);
+  auto first = second-1;
+  if (second == varData.end()) {
+    first = varData.end() - 2;
+    second = varData.end() - 1;
+  } else if (second == varData.begin()) {
+    first = second;
+    second = first+1;
+  }
 
-  auto lower = std::lower_bound(varData.begin(), varData.end(), value);
-  auto index = (lower == varData.begin()) 
-               ? lower - varData.begin() 
-               : lower - varData.begin() - 1;
+  auto index = first - varData.begin();
   return index;
 }
 
@@ -782,6 +790,8 @@ TabularData::computeParameter(const double& input,
     return 0.0;
   auto t =
     (input - data[startIndex]) / (data[startIndex + 1] - data[startIndex]);
+  //std::cout << "input = " << input << " start_val = " << data[startIndex]
+  //          << " end_val = " << data[startIndex+1] << "\n";
   return t;
 }
 

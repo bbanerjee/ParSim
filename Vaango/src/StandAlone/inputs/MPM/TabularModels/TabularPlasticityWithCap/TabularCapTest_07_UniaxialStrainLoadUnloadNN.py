@@ -8,7 +8,9 @@ def uniaxialStrainLoadUnloadNN(uda_path, save_path,**kwargs):
   times, sigmas, sigma_a_sim, sigma_r_sim, sigma_ar_sim, pp_sim, qq_sim = readSimStressData(uda_path, matID = 0)
 
   # Set up time points
+  print(max(times))
   analytical_times = [0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.5,8.0]
+  #analytical_times = [0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0]
   #analytical_times = np.linspace(0.0, times[-1], 15)
 
   # Read the interval variable simulation data

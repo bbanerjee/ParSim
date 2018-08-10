@@ -122,7 +122,7 @@ ElasticModuli_Tabular::computeBulkModulus(const double& elasticVolStrain,
   DoubleVec1D pressure_lo;
   try {
     pressure_lo = 
-      d_bulk.table.interpolate<2>({{plasticVolStrain, elasticVolStrain-epsilon}});
+      d_bulk.table.interpolate<2>({{plasticVolStrain, plasticVolStrain+elasticVolStrain-epsilon}});
   } catch (Uintah::InvalidValue& e) {
     std::ostringstream out;
     out << "**WARNING** In computeBulkModulus (Low):"
@@ -141,7 +141,7 @@ ElasticModuli_Tabular::computeBulkModulus(const double& elasticVolStrain,
   DoubleVec1D pressure_hi;
   try {
     pressure_hi = 
-      d_bulk.table.interpolate<2>({{plasticVolStrain, elasticVolStrain+epsilon}});
+      d_bulk.table.interpolate<2>({{plasticVolStrain, plasticVolStrain+elasticVolStrain+epsilon}});
   } catch (Uintah::InvalidValue& e) {
     std::ostringstream out;
     out << "**WARNING** In computeBulkModulus (High):"

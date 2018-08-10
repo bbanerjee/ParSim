@@ -12,13 +12,14 @@
       <maxTime> 1.0 </maxTime>
       <initTime> 0.0 </initTime>
       <delt_min> 1.0e-6 </delt_min>
-      <delt_max> 0.001 </delt_max>
+      <delt_max> 0.0001 </delt_max>
       <timestep_multiplier> 0.3 </timestep_multiplier>
   </Time>
 
   <DataArchiver>
       <filebase>TabularCapTest_02_HydrostaticLoadUnloadNN.uda</filebase>
-      <outputInterval>0.01</outputInterval>
+      <!-- <outputInterval>0.01</outputInterval> -->
+      <outputTimestepInterval>1</outputTimestepInterval>
       <save label = "p.x"/>
       <save label = "p.color"/>
       <save label = "p.temperature"/>
@@ -94,7 +95,7 @@
             <interpolation type="linear"/>
           </internal_variable_model>
 
-          <consistency_bisection_tolerance>1.0e-10</consistency_bisection_tolerance>
+          <consistency_bisection_tolerance>1.0e-4</consistency_bisection_tolerance>
           <yield_surface_radius_scaling_factor> 1000.0 </yield_surface_radius_scaling_factor>
  	  <subcycling_characteristic_number>256</subcycling_characteristic_number>
         </constitutive_model>
