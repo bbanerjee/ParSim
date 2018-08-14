@@ -1,0 +1,282 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Uintah_specification> 
+<!--Please use a consistent set of units, (mks, cgs,...)-->
+
+   <Meta>
+       <title>UXO in Centrifuge 20g, 0% w/w Arena Mason sand </title>
+   </Meta>
+
+   <SimulationComponent type="mpm" />
+
+
+    <!--____________________________________________________________________-->
+    <!--   T  I  M  E     V  A  R  I  A  B  L  E  S                         -->
+    <!--____________________________________________________________________-->
+   <Time>
+       <maxTime>            2.00e-2     </maxTime>
+       <initTime>           0.0         </initTime>
+       <delt_min>           1.0e-12     </delt_min>
+       <delt_max>           1.0         </delt_max>
+       <delt_init>          2.0e-9      </delt_init>
+       <max_Timesteps>      99999       </max_Timesteps>
+       <timestep_multiplier>0.05        </timestep_multiplier>
+   </Time>    
+    <!--____________________________________________________________________-->
+    <!--   G  R  I  D     V  A  R  I  A  B  L  E  S                         -->
+    <!--____________________________________________________________________-->
+    <Grid>
+    <BoundaryConditions>
+      <Face side = "x-">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>
+      <Face side = "x+">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>
+      <Face side = "y-">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>                  
+      <Face side = "y+">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>
+      <Face side = "z-">
+        <BCType id = "all" label = "Symmetric" var = "symmetry">
+        </BCType>
+      </Face>                  
+      <Face side = "z+">
+        <BCType id = "0"   label = "Pressure"   var = "Neumann">
+                              <value> 0.0   </value>
+        </BCType>
+        <BCType id = "all" label = "Velocity"   var = "Neumann">
+                              <value> [0.,0.,0.] </value>
+        </BCType>
+        <BCType id = "all" label = "Temperature" var = "Neumann">
+                              <value> 0.0  </value>
+        </BCType>
+        <BCType id = "all" label = "Density"      var = "Neumann">
+                              <value> 0.0  </value>
+        </BCType>
+        <BCType id = "all" label = "SpecificVol"  var = "computeFromDensity">
+                              <value> 0.0  </value>
+        </BCType>
+      </Face>
+    </BoundaryConditions>
+    <Level>
+      <Box label = "1">
+        <lower> [ 0.00,  0.00, 0.224 ] </lower>
+        <upper> [ 0.15,  0.10, 0.424 ] </upper>
+        <extraCells>   [1,1,1]    </extraCells>
+        <patches>      [1,1,4]    </patches>
+        <resolution> [30, 20, 40] </resolution>
+      </Box>
+      <!-- <spacing> [0.014815, 0.014815, 0.014815] </spacing> -->
+    </Level>
+    </Grid>
+   
+    <!--____________________________________________________________________-->
+    <!--   O  U  P  U  T     V  A  R  I  A  B  L  E  S                      -->
+    <!--____________________________________________________________________-->
+   <DataArchiver>
+      <filebase>Centrifuge_UXO_ArenaMasonSand_20g.uda</filebase>
+      <outputInterval> 1.0e-5 </outputInterval>
+      <!-- <outputTimestepInterval> 1 </outputTimestepInterval> -->
+      <save label = "p.x"/>
+      <save label = "p.particleID"/>
+      <save label = "p.deformationGradient"/>
+      <save label = "p.stress"/>
+      <save label = "p.velocity"/>
+      <save label = "g.acceleration"/>
+      <save label = "p.mass"/>
+      <save label = "p.externalforce"/>
+      <save label = "p.volume"/>
+      <save label = "p.elasticStrain"/>
+      <save label = "p.plasticStrain"/>
+      <save label = "p.plasticCumEqStrain"/>
+      <save label = "p.plasticVolStrain"/>
+      <save label = "p.elasticVolStrain"/>
+      <save label = "p.porePressure"/>
+      <save label = "p.COHER"/>
+      <save label = "p.TGROW"/>
+      <save label = "p.deformationGradient"/>
+      <save label = "p.porosity"/>
+      <save label = "p.saturation"/>
+      <checkpoint cycle = "2" timestepInterval = "100"/>
+   </DataArchiver>
+
+    <!--____________________________________________________________________-->
+    <!--     P  H  Y  S  I  C  A  L     C  O  N  S  T  A  N  T  S           -->
+    <!--____________________________________________________________________-->   
+    <PhysicalConstants>
+       <gravity>            [9.81, 0, 0]   </gravity>
+       <reference_pressure> 101325.0  </reference_pressure>
+    </PhysicalConstants>
+
+    <MPM>
+        <time_integrator>explicit</time_integrator>
+        <interpolator>                   gimp       </interpolator>
+        <minimum_particle_mass>1.0e-16</minimum_particle_mass>
+        <maximum_particle_velocity>3.e4</maximum_particle_velocity>
+        <artificial_damping_coeff>       0.0        </artificial_damping_coeff>
+        <artificial_viscosity>           true       </artificial_viscosity>
+        <artificial_viscosity_coeff1>    0.2        </artificial_viscosity_coeff1>
+        <artificial_viscosity_coeff2>    10         </artificial_viscosity_coeff2>
+        <use_load_curves>                true       </use_load_curves>
+        <erosion algorithm = "none"/>
+        <deformation_gradient algorithm="taylor_series"> 
+          <num_terms> 3 </num_terms>
+        </deformation_gradient>
+        <!-- Assume: Boom length = 5.5 m, Bucket surface is vertical, Distance
+                     from end of boom to bottom of bucket = 1.5 m, bucket
+                     is rotating clockwsie around y-axis -->
+        <rotating_coordinate_system>
+          <rotation_center> [0.0, 0.0, 7.0] </rotation_center>
+          <rotation_axis> [-1.0, 0.0, 0.0] </rotation_axis>
+          <!-- based on 10g @ R = 5.5 m, a = R omega^2 -->
+          <!-- <rotation_speed> 4.2 </rotation_speed>  -->
+          <!-- based on 20g @ R = 5.5 m, a = R omega^2 -->
+          <rotation_speed> 6.0 </rotation_speed>  
+          <!-- based on 30g @ R = 5.5 m, a = R omega^2 -->
+          <!-- <rotation_speed> 7.3 </rotation_speed> --> 
+          <body_reference_point> [0.0, 0.0, 0.0] </body_reference_point>
+        </rotating_coordinate_system>
+        <initialize_stress_using_body_force> true </initialize_stress_using_body_force>
+    </MPM>
+
+    <!--____________________________________________________________________-->
+    <!--    MATERIAL PROPERTIES INITIAL CONDITIONS                          -->
+    <!--____________________________________________________________________-->
+    <MaterialProperties>
+       <MPM>
+         
+         <material name = "Aluminum_Plate">
+           <density>1800.0</density>
+           <thermal_conductivity>0.25</thermal_conductivity>
+           <specific_heat>890</specific_heat>
+           <room_temp>294.0</room_temp>
+           <melt_temp>2000.0</melt_temp>
+           <constitutive_model type = "comp_neo_hook">
+             <shear_modulus>42.0e9</shear_modulus>
+             <bulk_modulus>70.0e9</bulk_modulus>
+           </constitutive_model>
+           <geom_object>
+             <box label = "plate">
+               <min> [-0.60, -0.50, 0.124 ] </min>
+               <max> [0.60, 0.50, 0.162 ] </max>
+             </box>
+             <res> [2,2,2] </res>
+             <velocity> [0.0,0.0,0.0] </velocity>
+             <temperature> 300 </temperature>
+           </geom_object>
+         </material>
+
+         <material name = "Arena dry Mason sand">
+           <density> 1624 </density>
+           <melt_temp>3695.0</melt_temp>
+           <room_temp>294.0</room_temp>
+           <thermal_conductivity>1.3</thermal_conductivity>
+           <specific_heat>1366.0</specific_heat>
+
+           <constitutive_model type="arena">
+
+             <reference_porosity> 0.42 </reference_porosity>
+             <initial_porosity> 0.358 </initial_porosity>
+             <initial_saturation> 0.0 </initial_saturation>
+             <initial_fluid_pressure> 0.0 </initial_fluid_pressure>
+
+             <p0>      0.0       </p0>
+             <p1>      482.68e6  </p1>
+             <p1_sat>  1.5       </p1_sat>
+             <p1_density_scale_fac> 4.0 </p1_density_scale_fac>
+             <p2>      0.719     </p2>
+             <p3>      0.448     </p3>
+
+             <elastic_moduli_model type="arena">
+               <b0>   0.0029  </b0>
+               <b1>   0.4731  </b1>
+               <b2>   1.5057  </b2>
+               <b3>   2.5728  </b3>
+               <b4>   2.0799  </b4>
+               <G0>   1.0e8   </G0>
+               <nu1>  0.35 </nu1>
+               <nu2> -0.35 </nu2>
+             </elastic_moduli_model>
+
+             <plastic_yield_condition type="arena">
+               <PEAKI1> 1.0e3   </PEAKI1>
+               <FSLOPE> 0.453   </FSLOPE>
+               <STREN>  1.0e7   </STREN>
+               <YSLOPE> 0.31    </YSLOPE>
+               <BETA>   2.0     </BETA>
+               <CR>     0.5     </CR>
+               <T1> 5.0e-5 </T1>
+               <T2> 0.5    </T2>
+             </plastic_yield_condition>
+
+             <consistency_bisection_tolerance>0.001</consistency_bisection_tolerance>
+             <yield_surface_radius_scaling_factor> 10000.0 </yield_surface_radius_scaling_factor>
+             <subcycling_characteristic_number>512</subcycling_characteristic_number>
+
+             <use_disaggregation_algorithm> false </use_disaggregation_algorithm>
+
+             <do_damage> true </do_damage>
+             <fspeed> 7 </fspeed>
+             <time_at_failure> 800.0e-6 </time_at_failure>
+
+             <initialize_with_body_force> true </initialize_with_body_force>
+             <surface_reference_point> [-0.60, 0.0, 0.352] </surface_reference_point>
+
+           </constitutive_model>
+
+           <geom_object>
+             <difference>
+               <box label = "soil">
+                 <min> [-0.60, -0.50, 0.162 ] </min>
+                 <max> [0.60, 0.50, 0.352 ] </max>
+               </box>
+               <sphere label = "hole">
+                 <origin> [0.0, 0.00, 0.301] </origin>
+                 <radius> 0.02 </radius>
+               </sphere>
+             </difference>
+             <res> [2,2,2] </res>
+             <velocity> [0.0,0.0,0.0] </velocity>
+             <temperature> 300 </temperature>
+           </geom_object>
+         </material>
+
+         <material name = "UXO">
+           <density>5000.0</density>
+           <thermal_conductivity>0.25</thermal_conductivity>
+           <specific_heat>890</specific_heat>
+           <room_temp>294.0</room_temp>
+           <melt_temp>2000.0</melt_temp>
+           <constitutive_model type = "comp_neo_hook">
+             <shear_modulus>80.0e9</shear_modulus>
+             <bulk_modulus>140.0e9</bulk_modulus>
+           </constitutive_model>
+           <geom_object>
+             <abaqus_mesh label = "extruded_circle">
+               <file_name> extrude_circle.inp </file_name>
+               <scaling_factor> 0.001 </scaling_factor>
+               <translation_vector> [0.04, 0, 0.390] </translation_vector>
+               <reflection_vector> [1, 1, -1] </reflection_vector>
+               <axis_sequence> [1, 2, 3] </axis_sequence>
+             </abaqus_mesh>
+             <res> [2,2,2] </res>
+             <velocity> [0.0,0.0, -200.0] </velocity>
+             <temperature> 300 </temperature>
+           </geom_object>
+         </material>
+         <contact>
+           <type> single_velocity </type>
+           <materials> [0,1,2] </materials>
+         </contact>
+       </MPM>
+    </MaterialProperties>
+
+
+</Uintah_specification>
+
