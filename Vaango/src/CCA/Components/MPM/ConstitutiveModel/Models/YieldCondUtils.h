@@ -178,6 +178,67 @@ void revertFromZRprime(const double& sqrtKG,
   sqrt_J2 = r_prime /( sqrt_two * sqrtKG);
 }
 
+/* 
+ * Find point of intersection between two line segments 
+ * Returns:
+ *  bool  = true  if the point of intersection is inside the two line segments
+ *        = false otherwise
+ *  double = value of interpolation parameter t1 at the point of intersection
+ *  double = value of interpolation parameter t2 at the point of intersection
+ *  Point = point of intersection of the two straight lines
+ */
+std::tuple<bool, double, double, Uintah::Point> 
+  intersectionPoint(const Uintah::Point& start_pt_1,
+                    const Uintah::Point& end_pt_1,
+                    const Uintah::Point& start_pt_2,
+                    const Uintah::Point& end_pt_2);
+
+/* 
+ * Find point of intersection between a polyline and a line segment 
+ * Returns:
+ *  bool   = true  if the point of intersection is inside the 
+ *                 polyline and the line segment
+ *         = false otherwise
+ *  size_t = index of first point of intersecting segment in polyline
+ *  double = value of interpolation parameter t at the point of intersection
+ *  Point  = point of intersection of the polyline and the line segment
+ */
+std::tuple<bool, std::size_t, double, Uintah::Point> 
+  intersectionPoint(const std::vector<Uintah::Point>& poly,
+                    const Uintah::Point& start_pt,
+                    const Uintah::Point& end_pt);
+
+/* 
+ * Find point of intersection between a quadratic B-spline and a line segment 
+ * Returns:
+ *  bool   = true  if the point of intersection is inside the 
+ *                 polyline and the line segment
+ *         = false otherwise
+ *  double = value of segment interpolation parameter t at the point of intersection
+ *  Point  = point of intersection of the B-spline and the line segment
+ */
+std::tuple<bool, Uintah::Vector, Uintah::Point> 
+  intersectionPointBSpline(const Uintah::Point& bezier_p0,
+                           const Uintah::Point& bezier_p1, 
+                           const Uintah::Point& bezier_p2, 
+                           const Uintah::Point& seg_p0,
+                           const Uintah::Point& seg_p1);
+
+/* 
+ * Compute function and jacobian inverse for Newton method
+ * to find intersection between a quadratic B-spline and a line segment 
+ * Returns:
+ *  Vector = value of function
+ *  Matrix3 = value of jacobian inverse
+ */
+std::pair<Uintah::Vector, Uintah::Matrix3> 
+  evalFunctionJacobianInverse(const Uintah::Point& bezier_p0,
+                              const Uintah::Point& bezier_p1, 
+                              const Uintah::Point& bezier_p2, 
+                              const Uintah::Point& seg_p0,
+                              const Uintah::Point& seg_p1,
+                              const Uintah::Vector& t);
+
 } // End namespace Util
 } // End namespace Vaango
 

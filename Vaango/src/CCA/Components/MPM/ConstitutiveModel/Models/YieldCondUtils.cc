@@ -55,6 +55,13 @@ std::vector<Uintah::Point>
 convexHull2D(const std::vector<Uintah::Point>& points)
 {
   std::vector<Uintah::Point> lower;
+  if (points.size() < 3) {
+    for (const auto& point : points) {
+      lower.push_back(point);
+    }
+    return lower;
+  }
+
   for (const auto& point : points) {
     auto k = lower.size();
     while (k > 1 && 
@@ -395,6 +402,184 @@ computeOpenUniformQuadraticBSpline(const double& t,
   B.x(bx); B.y(by);
   T.x(tx); T.y(ty);
   N.x(nx); N.y(ny);
+}
+
+/* 
+ * Find point of intersection between two line segments 
+ * Returns:
+ *  bool  = true  if the point of intersection is inside the two line segments
+ *        = false otherwise
+ *  double = value of interpolation parameter t1 at the point of intersection
+ *  double = value of interpolation parameter t2 at the point of intersection
+ *  Point = point of intersection of the two straight lines
+ */
+std::tuple<bool, double, double, Uintah::Point> 
+intersectionPoint(const Uintah::Point& start_pt_1,
+                  const Uintah::Point& end_pt_1,
+                  const Uintah::Point& start_pt_2,
+                  const Uintah::Point& end_pt_2)
+{
+  auto x11 = start_pt_1.x();
+  auto y11 = start_pt_1.y();
+  auto x12 = end_pt_1.x();
+  auto y12 = end_pt_1.y();
+
+  auto x21 = start_pt_2.x();
+  auto y21 = start_pt_2.y();
+  auto x22 = end_pt_2.x();
+  auto y22 = end_pt_2.y();
+
+  auto a11 = x12 - x11;
+  auto a12 = -(x22 - x21);
+  auto a21 = y12 - y11;
+  auto a22 = -(y22 - y21);
+
+  auto b1 = x21 - x11;
+  auto b2 = y21 - y11;
+
+  auto detA = a11 * a22 - a12 * a21;
+
+  // If the segments are parallel or collinear
+  if (detA == 0.0) {
+    return std::make_tuple(false, 0.0, 0.0, start_pt_1);
+  }
+
+  auto t1 = (a22*b1 - a12*b2)/detA;
+  auto t2 = (-a21*b1 + a11*b2)/detA;
+
+  auto x1 = (1 - t1) * x11 + t1 * x12;
+  auto y1 = (1 - t1) * y11 + t1 * y12;
+
+  // Point of intersection is outside segments
+  if (t1 < 0 || t1 > 1 || t2 < 0 || t2 > 1) {
+    return std::make_tuple(false, t1, t2, Uintah::Point(x1, y1, 0));
+  }
+
+  return std::make_tuple(true, t1, t2, Uintah::Point(x1, y1, 0));
+}
+
+/* 
+ * Find point of intersection between a polyline and a line segment 
+ * Returns:
+ *  bool   = true  if the point of intersection is inside the 
+ *                 polyline and the line segment
+ *         = false otherwise
+ *  size_t = index of first point on polyline segment
+ *  double = value of interpolation parameter t at the point of intersection
+ *  Point  = point of intersection of the polyline and the line segment
+ */
+std::tuple<bool, std::size_t, double, Uintah::Point> 
+intersectionPoint(const std::vector<Uintah::Point>& polyline,
+                  const Uintah::Point& start_pt,
+                  const Uintah::Point& end_pt)
+{
+  bool status = false;
+  double t1, t2;
+  Uintah::Point intersect;
+
+  std::size_t index = 0;
+  for (auto iter = polyline.begin(); iter < polyline.end()-1; ++iter) {
+    auto start_seg = *iter;
+    auto end_seg = *(iter+1);
+
+    //std::cout << start_seg << " " << end_seg << " ";
+    std::tie(status, t1, t2, intersect) = 
+      intersectionPoint(start_seg, end_seg, start_pt, end_pt);
+    //std::cout << status << " " << t1 << " " << t2 << " " << intersect << "\n";
+    if (status) {
+      return std::make_tuple(true, index, t2, intersect);
+    }
+    ++index;
+  }
+
+  return std::make_tuple(false, index, t2, intersect);
+}
+
+/* 
+ * Find point of intersection between a quadratic B-spline and a line segment 
+ * Returns:
+ *  bool   = true  if the point of intersection is inside the 
+ *                 polyline and the line segment
+ *         = false otherwise
+ *  double = value of segment interpolation parameter t at the point of intersection
+ *  Point  = point of intersection of the B-spline and the line segment
+ */
+std::tuple<bool, Uintah::Vector, Uintah::Point> 
+intersectionPointBSpline(const Uintah::Point& bezier_p0,
+                         const Uintah::Point& bezier_p1, 
+                         const Uintah::Point& bezier_p2, 
+                         const Uintah::Point& seg_p0,
+                         const Uintah::Point& seg_p1)
+{
+  Uintah::Vector t_old(0.5, 0.5, 0);
+  Uintah::Vector t_new(-1, -1, 0);
+  double dist = 1.0;
+  int k = 0;
+  constexpr double KMAX = 20;
+  constexpr double TOLERANCE = 1.0e-10;
+  while (dist > TOLERANCE && k < KMAX) {
+
+    auto F_Jinv = evalFunctionJacobianInverse(bezier_p0, bezier_p1, bezier_p2, 
+                                              seg_p0, seg_p1, t_old);
+    auto F = F_Jinv.first;
+    auto Jinv = F_Jinv.second;
+
+    t_new = t_old - Jinv * F;
+    std::cout << "t_old = " << t_old << " t_new = " << t_new << "\n";
+    dist = (t_new - t_old).length();
+    t_old = t_new;
+    ++k;
+  }
+
+  auto intersection = seg_p0 * (1 - t_new.y()) + seg_p1 * t_new.y();
+
+  if (!(isInBounds<double>(t_new.x(), 0, 1) && isInBounds<double>(t_new.y(), 0, 1))) {
+    return std::make_tuple(false, t_new, intersection.asPoint());
+  }
+
+  return std::make_tuple(true, t_new, intersection.asPoint());
+}
+
+/* 
+ * Compute function and jacobian inverse for Newton method
+ * to find intersection between a quadratic B-spline and a line segment 
+ * Returns:
+ *  Vector = value of function
+ *  Matrix3 = value of jacobian inverse
+ */
+std::pair<Uintah::Vector, Uintah::Matrix3> 
+evalFunctionJacobianInverse(const Uintah::Point& bezier_p0,
+                            const Uintah::Point& bezier_p1, 
+                            const Uintah::Point& bezier_p2, 
+                            const Uintah::Point& seg_p0,
+                            const Uintah::Point& seg_p1,
+                            const Uintah::Vector& t)
+{
+  Uintah::Point B(0, 0, 0);
+  Uintah::Vector T(0, 0, 0);
+  Uintah::Vector N(0, 0, 0);
+  computeOpenUniformQuadraticBSpline(t.x(), quadBSpline, bezier_p0, bezier_p1,
+                                     bezier_p2, B, T, N);
+
+  auto L = seg_p0 * (1 - t.y()) + seg_p1 * t.y();
+  auto F = B.asVector() - L;
+  //std::cout << "B = " << B << " T = " << T << " L = " << L << " F = " << F ;
+
+  Uintah::Matrix3 J(0.0);
+  J(0,0) = T.x();
+  J(1,0) = T.y();
+  J(0,1) = (seg_p0 - seg_p1).x();
+  J(1,1) = (seg_p0 - seg_p1).y();
+  J(2,2) = 1.0;
+  //std::cout << " J = " << J << "\n";
+
+  Uintah::Matrix3 Jinv;
+  if (J.Determinant() == 0) {
+    Jinv = Uintah::Matrix3(1.0e100);
+  } else {
+    Jinv = J.Inverse();
+  }
+  return std::make_pair(F, Jinv);
 }
 
 } // End namespace Util
