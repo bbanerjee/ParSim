@@ -48,7 +48,8 @@ struct DoNotUse : std::false_type
 /* Check whether a value is within bounds : value in [low, high] */
 template <typename T>
 bool isInBounds(const T& value, const T& low, const T& high) {
-  return !(value < low) && !(high < value);
+  constexpr double epsilon = 1.0e-12;
+  return !(value < low - epsilon) && !(high + epsilon < value);
 }
 
 /* A reverse range iterator 
@@ -238,6 +239,27 @@ std::pair<Uintah::Vector, Uintah::Matrix3>
                               const Uintah::Point& seg_p0,
                               const Uintah::Point& seg_p1,
                               const Uintah::Vector& t);
+
+/* 
+ * Find point of intersection between a quadratic B-spline fit to a polyline
+ * and a line segment using Newton's method
+ * Returns:
+ *  bool   = true  if the point of intersection is inside the 
+ *                 polyline and the line segment
+ *         = false otherwise
+ *  double = value of segment interpolation parameter t at the point of intersection
+ *  Point  = point of intersection of the B-spline and the line segment
+ */
+std::tuple<bool, double, Uintah::Point> 
+  intersectionPointBSpline(const std::vector<Uintah::Point>& polyline,
+                           const Uintah::Point& seg_p0,
+                           const Uintah::Point& seg_p1);
+
+/* 
+ * Check if three points are collinear
+ */
+bool isCollinear(const Uintah::Point& p0, const Uintah::Point& p1,
+                 const Uintah::Point& p2);
 
 } // End namespace Util
 } // End namespace Vaango

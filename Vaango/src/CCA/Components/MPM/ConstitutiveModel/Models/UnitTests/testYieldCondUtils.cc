@@ -412,6 +412,46 @@ TEST(YieldCondUtilsTest, intersectPolylineSegment)
   ASSERT_EQ(status, true);
   ASSERT_EQ(index, 2);
   ASSERT_EQ(t, 0.5);
+
+  // Perpendicular segment
+  seg_start = Point(2, 1, 0);
+  seg_end = Point(0, 3, 0);
+  std::tie(status, index, t, intersect) = 
+    Vaango::Util::intersectionPoint(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, true);
+  ASSERT_EQ(index, 0);
+  ASSERT_EQ(t, 0.5);
+
+  // Short segment
+  seg_start = Point(2, 0, 0);
+  seg_end = Point(1, 1, 0);
+  std::tie(status, index, t, intersect) = 
+    Vaango::Util::intersectionPoint(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, false);
+  ASSERT_EQ(index, 5);
+  ASSERT_EQ(t, -4.5);
+
+  // Secant segment
+  seg_start = Point(4.33081187259450e-01, 9.95411511939463e-01, 0);
+  seg_end = Point(1.37170358414487e+00, 2.44102702831043e+00, 0);
+  std::tie(status, index, t, intersect) = 
+    Vaango::Util::intersectionPoint(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, true);
+  ASSERT_EQ(index, 0);
+  ASSERT_NEAR(t, 0.299445, 1.0e-6);
+  ASSERT_NEAR(intersect.x(), 0.714147, 1.0e-6);
+  ASSERT_NEAR(intersect.y(), 1.42829, 1.0e-5);
+
+  // Horizontal Secant segment
+  seg_start = Point(1.5, 2.5, 0);
+  seg_end = Point(2.5, 2.5, 0);
+  std::tie(status, index, t, intersect) = 
+    Vaango::Util::intersectionPoint(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, true);
+  ASSERT_EQ(index, 1);
+  ASSERT_NEAR(t, 0, 1.0e-6);
+  ASSERT_NEAR(intersect.x(), 1.5, 1.0e-6);
+  ASSERT_NEAR(intersect.y(), 2.5, 1.0e-6);
   //std::cout << status << " " << index << " " << t << " " << intersect << "\n";
 }
 
@@ -517,5 +557,66 @@ TEST(YieldCondUtilsTest, intersectionPointBSpline)
     Vaango::Util::intersectionPointBSpline(bezier_p0, bezier_p1, bezier_p2, 
                                            seg_start, seg_end);
   ASSERT_EQ(status, false);
+  //std::cout << "Status = " << status << " t = " << t << " intersection = " << intersection << "\n";
+}
+
+TEST(YieldCondUtilsTest, intersectionPointPolyBSpline)
+{
+  bool status;
+  double t;
+  Point intersection;
+  std::vector<Point> polyline = 
+    {{Point(0, 0 ,0), Point(1, 2, 0), Point(2, 3, 0), Point(3, 2, 0),
+      Point(4, 3, 0), Point(5, 0, 0), Point(6, 0, 0), Point(7, 0, 0)}};
+
+  // Parallel segment
+  Point seg_start(1, 1, 0);
+  Point seg_end(2, 2, 0);
+  std::tie(status, t, intersection) = 
+    Vaango::Util::intersectionPointBSpline(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, false);
+  ASSERT_NEAR(t, -1, 1.0e-6);
+  ASSERT_NEAR(intersection.x(), 0, 1.0e-6);
+  ASSERT_NEAR(intersection.y(), 0, 1.0e-6);
+
+  // Perpendicular segment
+  seg_start = Point(2, 1, 0);
+  seg_end = Point(0, 3, 0);
+  std::tie(status, t, intersection) = 
+    Vaango::Util::intersectionPointBSpline(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, true);
+  ASSERT_NEAR(t, 0.474745, 1.0e-5);
+  ASSERT_NEAR(intersection.x(), 1.05051, 1.0e-6);
+  ASSERT_NEAR(intersection.y(), 1.94949, 1.0e-6);
+
+  // Short perpendicular segment
+  seg_start = Point(2, 0, 0);
+  seg_end = Point(1, 1, 0);
+  std::tie(status, t, intersection) = 
+    Vaango::Util::intersectionPointBSpline(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, false);
+  ASSERT_NEAR(t, 0, 1.0e-6);
+  ASSERT_NEAR(intersection.x(), 2, 1.0e-6);
+  ASSERT_NEAR(intersection.y(), 0, 1.0e-6);
+
+  // Secant segment
+  seg_start = Point(4.33081187259450e-01, 9.95411511939463e-01, 0);
+  seg_end = Point(1.37170358414487e+00, 2.44102702831043e+00, 0);
+  std::tie(status, t, intersection) = 
+    Vaango::Util::intersectionPointBSpline(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, true);
+  ASSERT_NEAR(t, 0.689568, 1.0e-6);
+  ASSERT_NEAR(intersection.x(), 1.08032, 1.0e-5);
+  ASSERT_NEAR(intersection.y(), 1.99226, 1.0e-5);
+
+  // Horizontal Secant segment
+  seg_start = Point(1.5, 2.5, 0);
+  seg_end = Point(2.5, 2.5, 0);
+  std::tie(status, t, intersection) = 
+    Vaango::Util::intersectionPointBSpline(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, true);
+  ASSERT_NEAR(t, 0, 1.0e-6);
+  ASSERT_NEAR(intersection.x(), 1.5, 1.0e-6);
+  ASSERT_NEAR(intersection.y(), 2.5, 1.0e-6);
   //std::cout << "Status = " << status << " t = " << t << " intersection = " << intersection << "\n";
 }

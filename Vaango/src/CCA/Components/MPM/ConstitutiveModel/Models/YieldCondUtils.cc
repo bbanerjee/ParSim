@@ -497,9 +497,10 @@ intersectionPoint(const std::vector<Uintah::Point>& polyline,
 
 /* 
  * Find point of intersection between a quadratic B-spline and a line segment 
+ * using Newton's method
  * Returns:
  *  bool   = true  if the point of intersection is inside the 
- *                 polyline and the line segment
+ *                 B-spline and the line segment
  *         = false otherwise
  *  double = value of segment interpolation parameter t at the point of intersection
  *  Point  = point of intersection of the B-spline and the line segment
@@ -525,7 +526,7 @@ intersectionPointBSpline(const Uintah::Point& bezier_p0,
     auto Jinv = F_Jinv.second;
 
     t_new = t_old - Jinv * F;
-    std::cout << "t_old = " << t_old << " t_new = " << t_new << "\n";
+    //std::cout << "t_old = " << t_old << " t_new = " << t_new << "\n";
     dist = (t_new - t_old).length();
     t_old = t_new;
     ++k;
@@ -580,6 +581,100 @@ evalFunctionJacobianInverse(const Uintah::Point& bezier_p0,
     Jinv = J.Inverse();
   }
   return std::make_pair(F, Jinv);
+}
+
+/* 
+ * Find point of intersection between a quadratic B-spline fit to a polyline
+ * and a line segment using Newton's method
+ * Returns:
+ *  bool   = true  if the point of intersection is inside the 
+ *                 polyline and the line segment
+ *         = false otherwise
+ *  double = value of segment interpolation parameter t at the point of intersection
+ *  Point  = point of intersection of the B-spline and the line segment
+ */
+std::tuple<bool, double, Uintah::Point> 
+intersectionPointBSpline(const std::vector<Uintah::Point>& polyline,
+                         const Uintah::Point& seg_p0,
+                         const Uintah::Point& seg_p1)
+{
+  bool status;
+  std::size_t index;
+  double t;
+  Uintah::Point intersection;
+
+  std::tie(status, index, t, intersection) = intersectionPoint(polyline, seg_p0, seg_p1);
+
+  // The segment does not intersect the polyline
+  if (!status) {
+    return std::make_tuple(false, t, intersection);
+  }
+
+  // Identify the three Bezier control points
+  Uintah::Point bezier_p0, bezier_p1, bezier_p2;
+  if (index == 0) {
+    bezier_p0 = polyline[index];
+    bezier_p1 = polyline[index+1];
+    bezier_p2 = polyline[index+2];
+  } else if (index == polyline.size() - 1) {
+    bezier_p0 = polyline[index-2];
+    bezier_p1 = polyline[index-1];
+    bezier_p2 = polyline[index];
+  } else {
+    bezier_p0 = polyline[index-1];
+    bezier_p1 = polyline[index];
+    bezier_p2 = polyline[index+1];
+  }
+
+  // If the three control points are collinear just return the
+  // intersection point already computed
+  if (isCollinear(bezier_p0, bezier_p1, bezier_p2)) {
+    return std::make_tuple(true, t, intersection);
+  }
+  
+  // Compute the intersection of the Bezier with segment 
+  Uintah::Vector t1t2;
+  std::tie(status, t1t2, intersection) = 
+    intersectionPointBSpline(bezier_p0, bezier_p1, bezier_p2, seg_p0, seg_p1);
+
+  // The segment does not intersect the Bezier curve in t \in [0, 1]
+  // Look for the next three control points
+  if (!status) {
+    if (!(isInBounds<double>(t1t2.x(), 0, 1))) {
+      if (index > 0 && index < polyline.size() - 2) {
+        bezier_p0 = polyline[index];
+        bezier_p1 = polyline[index+1];
+        bezier_p2 = polyline[index+2];
+        std::tie(status, t1t2, intersection) = 
+          intersectionPointBSpline(bezier_p0, bezier_p1, bezier_p2, 
+                                   seg_p0, seg_p1);
+        if (!status) {
+          return std::make_tuple(false, t1t2.y(), intersection);
+        }
+      }
+    } else {
+      return std::make_tuple(false, t1t2.y(), intersection);
+    }
+  }
+
+  return std::make_tuple(true, t1t2.y(), intersection);
+}
+
+/* 
+ * Check if three points are collinear
+ */
+bool isCollinear(const Uintah::Point& p0, const Uintah::Point& p1,
+                 const Uintah::Point& p2)
+{
+  Uintah::Vector vec_01 = (p1 - p0);
+  Uintah::Vector vec_02 = (p2 - p0);
+  vec_01.normalize();
+  vec_02.normalize();
+  double dot_product_minus_one = Uintah::Dot(vec_01, vec_02) - 1.0;  
+  if (std::abs(dot_product_minus_one) < 1.0e-4) {
+    return true;
+  }
+  return false; 
 }
 
 } // End namespace Util
