@@ -180,3 +180,16 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+
+add_executable(testTensorUtils testTensorUtils.cc)
+target_link_libraries(testTensorUtils
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testTensorUtils)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
