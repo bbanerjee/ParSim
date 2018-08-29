@@ -623,4 +623,32 @@ TEST(YieldCondUtilsTest, intersectionPointPolyBSpline)
 
 TEST(YieldCondUtilsTest, integrateDeviatoricStressDirection)
 {
+  Uintah::Matrix3 D(2.00025,      1.57736e-19,  3.17416e-20, 
+                    1.57736e-19, -1.00014,      1.66872e-39, 
+                    3.17416e-20,  1.66872e-39, -1.00014);
+  double dt = 6.06801e-05;
+  double G_elastic = 8e+09;
+  //double I1_closest = -2.37822e+08;
+  double sqrtJ2_closest = 4.15214e+07;
+  Uintah::Matrix3 Sigma_e(-3.13291e+07,  8.02346e-11, 5.35359e-11, 
+                           8.02346e-11, -1.03246e+08, 4.24809e-30,
+                           5.35359e-11,  4.24809e-30, -1.03246e+08);
+  Uintah::Matrix3 Sigma_i(-2.93871e+07,  8.03878e-11,  5.35667e-11, 
+                           8.03878e-11, -1.04217e+08,  4.24971e-30, 
+                           5.35667e-11,  4.24971e-30, -1.04217e+08);
+
+  double sigma_s = std::sqrt(2)*sqrtJ2_closest;
+  auto s_hat = Vaango::Util::integrateNormalizedDeviatoricStressRate(sigma_s, G_elastic, dt,
+                                                                     Sigma_e, D, Sigma_i);
+  //std::cout << "s_hat = " << s_hat << "\n";
+  Uintah::Matrix3 I; I.Identity();
+  auto s_hat_orig = Sigma_i - I*Sigma_i.Trace()/3.0;
+  s_hat_orig /= (std::sqrt(s_hat_orig.Contract(s_hat_orig)));
+  //std::cout << "s_hat_orig = " << s_hat_orig << "\n";
+
+  for (auto ii = 0u; ii < 3; ++ii) {
+    for (auto jj = 0u; jj < 3; ++jj) {
+      ASSERT_NEAR(s_hat(ii, jj), s_hat_orig(ii,jj), 1.0e-6);
+    }
+  }
 }

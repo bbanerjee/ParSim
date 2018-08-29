@@ -738,6 +738,10 @@ Uintah::Matrix3
     auto J = (sigma_s + 2.0 * G * S_eta_inner(0,0)) * I6x6 + 2.0 * G * S_eta_outer;
     auto J_inv = J.inverse();
     auto S_new = S_old - J_inv * f;
+    //std::cout << "S_new = " << S_new.transpose() << "\n"
+    //          << " S_old = " << S_old.transpose() << "\n"
+    //          << " J_inv = \n" << J_inv << "\n"
+    //          << " f = " << f.transpose() << "\n";
     dist = (S_new - S_old).norm();
     S_old = S_new;
     ++k;

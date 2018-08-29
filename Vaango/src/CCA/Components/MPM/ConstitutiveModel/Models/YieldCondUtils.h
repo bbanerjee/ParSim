@@ -261,6 +261,31 @@ std::tuple<bool, double, Uintah::Point>
 bool isCollinear(const Uintah::Point& p0, const Uintah::Point& p1,
                  const Uintah::Point& p2);
 
+/*
+ * Integrate the normalized deviatoric stress rate
+ *
+ *  sigma_s \dot(s_hat) = 2 G [eta - s_hat (s_hat : eta)]
+ *
+ * where
+ *
+ *  sigma_s = closest point on yield surface
+ *  G = shear modulus
+ *  dt = time increment
+ *  sigma_elastic = stress at the start of the elastic-plastic step
+ *  D = rate of deformation 
+ *  sigma_init = initial value for Newton iterations
+ *
+ * Returns:
+ *  s_hat
+ */
+Uintah::Matrix3 
+  integrateNormalizedDeviatoricStressRate(double sigma_s,
+                                          double G,
+                                          double dt,
+                                          const Uintah::Matrix3& sigma_elastic,
+                                          const Uintah::Matrix3& D,
+                                          const Uintah::Matrix3& sigma_init);
+
 } // End namespace Util
 } // End namespace Vaango
 
