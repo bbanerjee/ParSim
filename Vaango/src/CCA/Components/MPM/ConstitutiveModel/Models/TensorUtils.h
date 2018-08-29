@@ -10,20 +10,23 @@ namespace Vaango {
 
 namespace Tensor {
 
-/* Constants */
-static const double sqrt_two = std::sqrt(2.0);
-static const double one_sqrt_two = 1.0 / sqrt_two;
-static const double half = 0.5;
-static const double pi = M_PI;
-static const double large_number = 1.0e100;
-static const Uintah::Matrix3 Identity(1,0,0,0,1,0,0,0,1);
-static const Uintah::Matrix3 Zero(0.0);
-
 /* Types */
 using Vector6Mandel = Eigen::Matrix<double, 6, 1>;
 using Matrix6Mandel = Eigen::Matrix<double, 6, 6>;
 using Vector9Mandel = Eigen::Matrix<double, 9, 1>;
 using Matrix9Mandel = Eigen::Matrix<double, 9, 9>;
+
+/* Constants */
+static const double sqrt_two = std::sqrt(2.0);
+static const double one_sqrt_two = 1.0 / sqrt_two;
+static const double sqrt_three = std::sqrt(3.0);
+static const double one_sqrt_three = 1.0 / sqrt_three;
+static const double half = 0.5;
+static const double third = 1.0/3.0;
+static const double pi = M_PI;
+static const double large_number = 1.0e100;
+static const Uintah::Matrix3 Identity(1,0,0,0,1,0,0,0,1);
+static const Uintah::Matrix3 Zero(0.0);
 
 /**
  * Convert a symmetric rank-2 tensor (3 x 3 symmetric matrix) into a 6x1 vector 
@@ -35,6 +38,18 @@ constructVector6Mandel(const Uintah::Matrix3& A) {
   vec << A(0,0), A(1,1), A(2,2), 
          sqrt_two * A(1,2), sqrt_two * A(2,0), sqrt_two * A(0,1);
   return vec;
+}
+
+/**
+ * Convert a 6x1 vector in Mandel notation to a 3x3 symmetric matrix
+ * using Mandel notation (11, 22, 33, 23, 31, 12)
+ */
+inline Uintah::Matrix3
+constructMatrix3(const Vector6Mandel& a) {
+  Uintah::Matrix3 mat(a(0), one_sqrt_two * a(5), one_sqrt_two * a(4),
+       one_sqrt_two * a(5),                a(1), one_sqrt_two * a(3),
+       one_sqrt_two * a(4), one_sqrt_two * a(3),                a(2));
+  return mat;
 }
 
 /**
@@ -266,6 +281,39 @@ constructMatrix9Mandel(const Vector9Mandel& a, const Vector9Mandel& b) {
  */
 inline Matrix6Mandel IdentityMatrix6Mandel() {
   return Matrix6Mandel::Identity();
+}
+
+/**
+ * Compute volumetric-deviatoric decomposition of rank-2 matrix in Mandel form
+ */
+inline std::tuple<double, double, Vector6Mandel, Vector6Mandel>
+  computeVolDevDecomposition(const Uintah::Matrix3& tensor2)
+{
+  Vector6Mandel tensor2_mandel = constructVector6Mandel(tensor2);
+  double I1 = tensor2_mandel(0,0) + tensor2_mandel(1,0) + tensor2_mandel(2,0);
+  Vector6Mandel I_mandel = constructVector6Mandel(Identity);
+  Vector6Mandel dev_mandel = tensor2_mandel - I_mandel * (third * I1);
+  double sqrt_J2 = std::sqrt(0.5 * dev_mandel.transpose() * dev_mandel);
+  return std::make_tuple(I1, sqrt_J2, I_mandel, dev_mandel);
+}
+
+/**
+ * Compute isomorphic decomposition of stress matrix in Mandel form
+ */
+inline std::tuple<double, double, Vector6Mandel, Vector6Mandel>
+  computeIsomorphicDecomposition(const Uintah::Matrix3& stress)
+{
+  Vector6Mandel sigma_mandel = constructVector6Mandel(stress);
+  double I1 = sigma_mandel(0,0) + sigma_mandel(1,0) + sigma_mandel(2,0);
+  Vector6Mandel I_mandel = constructVector6Mandel(Identity);
+  Vector6Mandel s_mandel = sigma_mandel - I_mandel * (third * I1);
+
+  double sigma_m = one_sqrt_three * I1;
+  double sigma_s = std::sqrt(s_mandel.transpose() * s_mandel);
+  I_mandel *= one_sqrt_three;
+  s_mandel /= (sigma_s + 1.0e-16);
+
+  return std::make_tuple(sigma_m, sigma_s, I_mandel, s_mandel);
 }
 
 } // End namespace Tensor

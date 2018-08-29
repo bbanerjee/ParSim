@@ -47,8 +47,8 @@ struct DoNotUse : std::false_type
 
 /* Check whether a value is within bounds : value in [low, high] */
 template <typename T>
-bool isInBounds(const T& value, const T& low, const T& high) {
-  constexpr double epsilon = 1.0e-12;
+bool isInBounds(const T& value, const T& low, const T& high, double epsilon=1.0e-4) {
+  //constexpr double epsilon = 1.0e-4;
   return !(value < low - epsilon) && !(high + epsilon < value);
 }
 

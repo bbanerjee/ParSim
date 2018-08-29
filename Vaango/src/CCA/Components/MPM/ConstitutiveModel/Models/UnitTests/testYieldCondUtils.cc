@@ -620,3 +620,7 @@ TEST(YieldCondUtilsTest, intersectionPointPolyBSpline)
   ASSERT_NEAR(intersection.y(), 2.5, 1.0e-6);
   //std::cout << "Status = " << status << " t = " << t << " intersection = " << intersection << "\n";
 }
+
+TEST(YieldCondUtilsTest, integrateDeviatoricStressDirection)
+{
+}

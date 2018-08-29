@@ -1,9 +1,12 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TensorUtils.h>
 #include <Core/Geometry/Vector.h>
 #include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <iterator>
+
+#include <Eigen/Dense>
 
 namespace Vaango {
 
@@ -414,48 +417,35 @@ computeOpenUniformQuadraticBSpline(const double& t,
  *  Point = point of intersection of the two straight lines
  */
 std::tuple<bool, double, double, Uintah::Point> 
-intersectionPoint(const Uintah::Point& start_pt_1,
-                  const Uintah::Point& end_pt_1,
-                  const Uintah::Point& start_pt_2,
-                  const Uintah::Point& end_pt_2)
+intersectionPoint(const Uintah::Point& P0,
+                  const Uintah::Point& P1,
+                  const Uintah::Point& Q0,
+                  const Uintah::Point& Q1)
 {
-  auto x11 = start_pt_1.x();
-  auto y11 = start_pt_1.y();
-  auto x12 = end_pt_1.x();
-  auto y12 = end_pt_1.y();
+  auto P10 = P1 - P0;
+  auto Q10 = Q1 - Q0;
+  auto QP0 = Q0 - P0;
 
-  auto x21 = start_pt_2.x();
-  auto y21 = start_pt_2.y();
-  auto x22 = end_pt_2.x();
-  auto y22 = end_pt_2.y();
-
-  auto a11 = x12 - x11;
-  auto a12 = -(x22 - x21);
-  auto a21 = y12 - y11;
-  auto a22 = -(y22 - y21);
-
-  auto b1 = x21 - x11;
-  auto b2 = y21 - y11;
-
-  auto detA = a11 * a22 - a12 * a21;
+  Uintah::Matrix3 A(P10.x(), -Q10.x(), 0, P10.y(), -Q10.y(), 0, 0, 0, 1);
 
   // If the segments are parallel or collinear
+  auto detA = A.Determinant();
   if (detA == 0.0) {
-    return std::make_tuple(false, 0.0, 0.0, start_pt_1);
+    return std::make_tuple(false, 0.0, 0.0, P0);
   }
 
-  auto t1 = (a22*b1 - a12*b2)/detA;
-  auto t2 = (-a21*b1 + a11*b2)/detA;
+  auto Ainv = A.Inverse();
+  auto t = Ainv * QP0;
 
-  auto x1 = (1 - t1) * x11 + t1 * x12;
-  auto y1 = (1 - t1) * y11 + t1 * y12;
+  auto intersect = P0 * (1 - t.x()) + P1 * t.x();
 
   // Point of intersection is outside segments
-  if (t1 < 0 || t1 > 1 || t2 < 0 || t2 > 1) {
-    return std::make_tuple(false, t1, t2, Uintah::Point(x1, y1, 0));
+  if (!(isInBounds<double>(t.x(), 0, 1) && isInBounds<double>(t.y(), 0, 1))) {
+    //std::cout << "No line line intersection " << t.x() << " " << t.y() << "\n";
+    return std::make_tuple(false, t.x(), t.y(), intersect.asPoint());
   }
 
-  return std::make_tuple(true, t1, t2, Uintah::Point(x1, y1, 0));
+  return std::make_tuple(true, t.x(), t.y(), intersect.asPoint());
 }
 
 /* 
@@ -470,21 +460,35 @@ intersectionPoint(const Uintah::Point& start_pt_1,
  */
 std::tuple<bool, std::size_t, double, Uintah::Point> 
 intersectionPoint(const std::vector<Uintah::Point>& polyline,
-                  const Uintah::Point& start_pt,
-                  const Uintah::Point& end_pt)
+                  const Uintah::Point& start_seg,
+                  const Uintah::Point& end_seg)
 {
   bool status = false;
   double t1, t2;
   Uintah::Point intersect;
 
+  std::vector<Uintah::Point> segments;
+  auto id =  getClosestSegments(start_seg, polyline, segments);
+  std::cout << "Closest segs = " << id << " ";
+  for (const auto& seg : segments) {
+    std::cout << seg << " ";
+  }
+  std::cout << "\n";
+  id =  getClosestSegments(end_seg, polyline, segments);
+  for (const auto& seg : segments) {
+    std::cout << seg << " ";
+  }
+  std::cout << "\n";
+  std::cout << start_seg << " " << end_seg << " ";
+
   std::size_t index = 0;
   for (auto iter = polyline.begin(); iter < polyline.end()-1; ++iter) {
-    auto start_seg = *iter;
-    auto end_seg = *(iter+1);
+    auto start_poly = *iter;
+    auto end_poly = *(iter+1);
 
-    //std::cout << start_seg << " " << end_seg << " ";
+    //std::cout << start_poly << " " << end_poly << " ";
     std::tie(status, t1, t2, intersect) = 
-      intersectionPoint(start_seg, end_seg, start_pt, end_pt);
+      intersectionPoint(start_poly, end_poly, start_seg, end_seg);
     //std::cout << status << " " << t1 << " " << t2 << " " << intersect << "\n";
     if (status) {
       return std::make_tuple(true, index, t2, intersect);
@@ -535,6 +539,7 @@ intersectionPointBSpline(const Uintah::Point& bezier_p0,
   auto intersection = seg_p0 * (1 - t_new.y()) + seg_p1 * t_new.y();
 
   if (!(isInBounds<double>(t_new.x(), 0, 1) && isInBounds<double>(t_new.y(), 0, 1))) {
+    std::cout << "Bezier segment failed " << t_new << " " << intersection << "\n";
     return std::make_tuple(false, t_new, intersection.asPoint());
   }
 
@@ -607,6 +612,7 @@ intersectionPointBSpline(const std::vector<Uintah::Point>& polyline,
 
   // The segment does not intersect the polyline
   if (!status) {
+    std::cout << "Does not intersect polyline" << t << " " << intersection << "\n";
     return std::make_tuple(false, t, intersection);
   }
 
@@ -629,6 +635,7 @@ intersectionPointBSpline(const std::vector<Uintah::Point>& polyline,
   // If the three control points are collinear just return the
   // intersection point already computed
   if (isCollinear(bezier_p0, bezier_p1, bezier_p2)) {
+    std::cout << "Collinear " << t << " " << intersection << "\n";
     return std::make_tuple(true, t, intersection);
   }
   
@@ -649,10 +656,12 @@ intersectionPointBSpline(const std::vector<Uintah::Point>& polyline,
           intersectionPointBSpline(bezier_p0, bezier_p1, bezier_p2, 
                                    seg_p0, seg_p1);
         if (!status) {
+          std::cout << "Second segment failed " << t << " " << intersection << "\n";
           return std::make_tuple(false, t1t2.y(), intersection);
         }
       }
     } else {
+      std::cout << "First segment failed " << t << " " << intersection << "\n";
       return std::make_tuple(false, t1t2.y(), intersection);
     }
   }
@@ -676,6 +685,69 @@ bool isCollinear(const Uintah::Point& p0, const Uintah::Point& p1,
   }
   return false; 
 }
+
+/*
+ * Integrate the normalized deviatoric stress rate
+ *
+ *  sigma_s \dot(s_hat) = 2 G [eta - s_hat (s_hat : eta)]
+ *
+ * where
+ *
+ *  sigma_s = closest point on yield surface
+ *  G = shear modulus
+ *  dt = time increment
+ *  sigma_elastic = stress at the start of the elastic-plastic step
+ *  D = rate of deformation 
+ *  sigma_init = initial value for Newton iterations
+ *
+ * Returns:
+ *  s_hat
+ */
+Uintah::Matrix3 
+  integrateNormalizedDeviatoricStressRate(double sigma_s,
+                                          double G,
+                                          double dt,
+                                          const Uintah::Matrix3& sigma_elastic,
+                                          const Uintah::Matrix3& D,
+                                          const Uintah::Matrix3& sigma_init)
+{
+  double sig_e_m, sig_e_s, sig_i_m, sig_i_s;
+  Tensor::Vector6Mandel I_hat, S_e_hat, S_i_hat;
+  std::tie(sig_e_m, sig_e_s, I_hat, S_e_hat) = 
+    Tensor::computeIsomorphicDecomposition(sigma_elastic);
+  std::tie(sig_i_m, sig_i_s, I_hat, S_i_hat) = 
+    Tensor::computeIsomorphicDecomposition(sigma_init);
+
+  double d_m, d_s;
+  Tensor::Vector6Mandel I, delta_eta;
+  std::tie(d_m, d_s, I, delta_eta) = Tensor::computeVolDevDecomposition(D*dt);
+
+  auto I6x6 = Tensor::IdentityMatrix6Mandel();
+  auto S_old = S_i_hat;
+  auto S_new = S_old;
+  double dist = 1.0;
+  int k = 0;
+  constexpr double KMAX = 20;
+  constexpr double TOLERANCE = 1.0e-10;
+  while (dist > TOLERANCE && k < KMAX) {
+
+    auto S_eta_inner = S_old.transpose() * delta_eta;
+    auto S_eta_outer = Tensor::constructMatrix6Mandel(S_old, delta_eta);
+    auto f = sigma_s * (S_old - S_e_hat) - 
+                              2.0 * G * (delta_eta - S_old * S_eta_inner);
+    auto J = (sigma_s + 2.0 * G * S_eta_inner(0,0)) * I6x6 + 2.0 * G * S_eta_outer;
+    auto J_inv = J.inverse();
+    auto S_new = S_old - J_inv * f;
+    dist = (S_new - S_old).norm();
+    S_old = S_new;
+    ++k;
+  }
+
+  S_new /= S_new.norm();
+  auto s_hat = Tensor::constructMatrix3(S_new);
+  return s_hat; 
+}
+                                       
 
 } // End namespace Util
 
