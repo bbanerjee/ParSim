@@ -194,8 +194,44 @@ std::tuple<bool, double, double, Uintah::Point>
                     const Uintah::Point& start_pt_2,
                     const Uintah::Point& end_pt_2);
 
+/*
+ * Find side of line Q0-Q1 that a point P falls on 
+ * 
+ * Returns:
+ *   0  if P is on the line through Q0-Q1
+ *   1  if P is to the left of Q0-Q1
+ *  -1  if P is to the right of Q0-Q1
+ */
+double findSide(const Uintah::Point& P,
+                const Uintah::Point& Q0,
+                const Uintah::Point& Q1);
+
+/* 
+ * Find point of intersection between a line segment P0-P1 and a segment Q0-Q1 
+ * of a polyline
+ * and the side/s of the polyline segment that the two points of the line segment
+ * fall on
+ *
+ * Returns:
+ *  bool  = true  if the point of intersection is inside the two line segments
+ *        = false otherwise
+ *  double = s0 : side of Q0-Q1 that P0 falls on
+ *  double = s1 : side of Q0-Q1 that P1 falls on
+ *  double = value of interpolation parameter t_p at the point of intersection
+ *           where P = (1 - t_p) P0 + t_p P1
+ *  double = value of interpolation parameter t_q at the point of intersection
+ *           where Q = (1 - t_q) Q0 + t_p Q1
+ *  Point = point of intersection (Q)
+ */
+std::tuple<bool, double, double, double, double, Uintah::Point> 
+intersectionPointAndSide(const Uintah::Point& P0,
+                         const Uintah::Point& P1,
+                         const Uintah::Point& Q0,
+                         const Uintah::Point& Q1);
+
 /* 
  * Find point of intersection between a polyline and a line segment 
+ * using linear search
  * Returns:
  *  bool   = true  if the point of intersection is inside the 
  *                 polyline and the line segment
@@ -205,9 +241,33 @@ std::tuple<bool, double, double, Uintah::Point>
  *  Point  = point of intersection of the polyline and the line segment
  */
 std::tuple<bool, std::size_t, double, Uintah::Point> 
-  intersectionPoint(const std::vector<Uintah::Point>& poly,
-                    const Uintah::Point& start_pt,
-                    const Uintah::Point& end_pt);
+  intersectionPointLinearSearch(const std::vector<Uintah::Point>& poly,
+                                const Uintah::Point& start_pt,
+                                const Uintah::Point& end_pt);
+
+/* 
+ * Find point of intersection between a polyline and a line segment 
+ * using a binary search 
+ * Returns:
+ *  bool   = true  if the point of intersection is inside the 
+ *                 polyline and the line segment
+ *         = false otherwise
+ *  size_t = index of first point on polyline segment
+ *  double = value of interpolation parameter t_p at the point of intersection
+ *  double = value of interpolation parameter t_q at the point of intersection
+ *  Point  = point of intersection of the polyline and the line segment
+ */
+std::tuple<bool, std::size_t, double, double, Uintah::Point> 
+  intersectionPointBinarySearch(const std::vector<Uintah::Point>& polyline,
+                                const Uintah::Point& start_seg,
+                                const Uintah::Point& end_seg);
+std::tuple<bool, std::size_t, double, double, Uintah::Point, 
+           bool, std::size_t, double, double, Uintah::Point>
+  intersectionLinePolyBinary(const Uintah::Point& P0,
+                             const Uintah::Point& P1,
+                             std::vector<Uintah::Point>::const_iterator poly_begin,
+                             std::vector<Uintah::Point>::const_iterator poly_end,
+                             const std::vector<Uintah::Point>& poly_orig);
 
 /* 
  * Find point of intersection between a quadratic B-spline and a line segment 

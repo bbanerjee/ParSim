@@ -448,8 +448,124 @@ intersectionPoint(const Uintah::Point& P0,
   return std::make_tuple(true, t.x(), t.y(), intersect.asPoint());
 }
 
+/*
+ * Find side of line Q0-Q1 that a point P falls on 
+ * 
+ * Returns:
+ *   0  if P is on the line through Q0-Q1
+ *   1  if P is to the left of Q0-Q1
+ *  -1  if P is to the right of Q0-Q1
+ */
+double findSide(const Uintah::Point& P,
+                const Uintah::Point& Q0,
+                const Uintah::Point& Q1)
+{
+  auto q0 = Q0 - P;
+  auto q1 = Q1 - P;
+  auto det = q0.x() * q1.y() - q1.x() * q0.y();
+  if (det == 0) {
+    return 0.0;
+  }
+  return std::copysign(1.0, det);
+}
+
+/* 
+ * Find point of intersection between a line segment P0-P1 and a segment Q0-Q1 
+ * of a polyline
+ * and the side/s of the polyline segment that the two points of the line segment
+ * fall on
+ *
+ * Returns:
+ *  bool  = true  if the point of intersection is inside the two line segments
+ *        = false otherwise
+ *  double = s0 : side of Q0-Q1 that P0 falls on
+ *  double = s1 : side of Q0-Q1 that P1 falls on
+ *  double = value of interpolation parameter t_p at the point of intersection
+ *           where P = (1 - t_p) P0 + t_p P1
+ *  double = value of interpolation parameter t_q at the point of intersection
+ *           where Q = (1 - t_q) Q0 + t_p Q1
+ *  Point = point of intersection (Q)
+ */
+std::tuple<bool, double, double, double, double, Uintah::Point> 
+intersectionPointAndSide(const Uintah::Point& P0,
+                         const Uintah::Point& P1,
+                         const Uintah::Point& Q0,
+                         const Uintah::Point& Q1)
+{
+  // Find the position of the ends of the line segment relative to the polyline
+  // segment
+  auto s0 = findSide(P0, Q0, Q1);
+  auto s1 = findSide(P1, Q0, Q1);
+
+  // Find the intersection point
+  auto P1P0 = P1 - P0;
+  auto Q1Q0 = Q1 - Q0;
+  auto Q0P0 = Q0 - P0;
+
+  Uintah::Matrix3 J(P1P0.x(), -Q1Q0.x(), 0, P1P0.y(), -Q1Q0.y(), 0, 0, 0, 1);
+
+  // If the segments are parallel or collinear
+  auto detJ = J.Determinant();
+  if (detJ == 0.0) {
+    auto P0Q0 = P0 - Q0;
+    auto P1Q0 = P1 - Q0;
+    double cos_angle = 0.0;
+    if (P0Q0.length() == 0.0) {
+      cos_angle = Uintah::Dot(P1Q0/P1Q0.length(), Q1Q0/Q1Q0.length());
+    } else {
+      cos_angle = Uintah::Dot(P0Q0/P0Q0.length(), Q1Q0/Q1Q0.length());
+    }
+    if (std::abs(std::abs(cos_angle)-1) < 1.0e-6) {
+      // Collinear
+      auto t_q_p0 = P0Q0.x()/Q1Q0.x();
+      auto t_q_p1 = P1Q0.x()/Q1Q0.x();
+      //std::cout << "cos_angle = " << cos_angle << " t_q_p0 = " << t_q_p0 << " t_q_p1 = " << t_q_p1 << "\n";
+      if (!(isInBounds<double>(t_q_p0, 0, 1)) && !(isInBounds<double>(t_q_p1, 0, 1))) {
+        // No overlap between segments
+        auto t_p = -1.0;
+        auto t_q = -1.0;
+        auto Q = Q0 * (1 - t_q) + Q1 * t_q;
+        return std::make_tuple(false, s0, s1, t_p, t_q, Q.asPoint());
+      } else {
+        // Segments overlap (take midpoint of overlap)
+        t_q_p0 = std::max(0.0, t_q_p0);
+        t_q_p0 = std::min(1.0, t_q_p0);
+        t_q_p1 = std::max(0.0, t_q_p1);
+        t_q_p1 = std::min(1.0, t_q_p1);
+        auto t_q = 0.5 * (t_q_p0 + t_q_p1);
+        auto Q = Q0 * (1 - t_q) + Q1 * t_q;
+        auto t_p = (Q.x() - P0.x())/(P1.x() - P0.x());
+        return std::make_tuple(false, s0, s1, t_p, t_q, Q.asPoint());
+      }
+    } else {
+      // Parallel but not collinear
+      auto t_p = -1.0;
+      auto t_q = -1.0;
+      auto Q = Q0 * (1 - t_q) + Q1 * t_q;
+      return std::make_tuple(false, s0, s1, t_p, t_q, Q.asPoint());
+    }
+  }
+
+  // Normal case
+  auto Jinv = J.Inverse();
+  auto t = Jinv * Q0P0;
+  auto t_p = t.x();
+  auto t_q = t.y();
+
+  auto Q = Q0 * (1 - t_q) + Q1 * t_q;
+
+  // Point of intersection is outside segments
+  if (!(isInBounds<double>(t_p, 0, 1) && isInBounds<double>(t_q, 0, 1))) {
+    //std::cout << "No line line intersection " << t_p << " " << t_q << "\n";
+    return std::make_tuple(false, s0, s1, t_p, t_q, Q.asPoint());
+  }
+
+  return std::make_tuple(true, s0, s1, t_p, t_q, Q.asPoint());
+}
+
 /* 
  * Find point of intersection between a polyline and a line segment 
+ * using a linear search 
  * Returns:
  *  bool   = true  if the point of intersection is inside the 
  *                 polyline and the line segment
@@ -459,10 +575,12 @@ intersectionPoint(const Uintah::Point& P0,
  *  Point  = point of intersection of the polyline and the line segment
  */
 std::tuple<bool, std::size_t, double, Uintah::Point> 
-intersectionPoint(const std::vector<Uintah::Point>& polyline,
-                  const Uintah::Point& start_seg,
-                  const Uintah::Point& end_seg)
+intersectionPointLinearSearch(const std::vector<Uintah::Point>& polyline,
+                              const Uintah::Point& start_seg,
+                              const Uintah::Point& end_seg)
 {
+
+  // Find intersection of a box containing the line segment with the polyline
   bool status = false;
   double t1, t2;
   Uintah::Point intersect;
@@ -498,6 +616,110 @@ intersectionPoint(const std::vector<Uintah::Point>& polyline,
 
   return std::make_tuple(false, index, t2, intersect);
 }
+
+/* 
+ * Find point of intersection between a polyline and a line segment 
+ * using a binary search 
+ * Returns:
+ *  bool   = true  if the point of intersection is inside the 
+ *                 polyline and the line segment
+ *         = false otherwise
+ *  size_t = index of first point on polyline segment
+ *  double = value of interpolation parameter t_p at the point of intersection
+ *  double = value of interpolation parameter t_q at the point of intersection
+ *  Point  = point of intersection of the polyline and the line segment
+ */
+std::tuple<bool, std::size_t, double, double, Uintah::Point> 
+intersectionPointBinarySearch(const std::vector<Uintah::Point>& polyline,
+                              const Uintah::Point& start_seg,
+                              const Uintah::Point& end_seg)
+{
+  bool status_left, status_right;
+  double t_p_left, t_p_right;
+  double t_q_left, t_q_right;
+  Uintah::Point intersection_left, intersection_right;
+  std::size_t index_left, index_right;
+
+  std::tie(status_left, index_left, t_p_left, t_q_left, intersection_left,
+           status_right, index_right, t_p_right, t_q_right, intersection_right) =
+   Vaango::Util::intersectionLinePolyBinary(start_seg, end_seg, polyline.begin(), polyline.end(),
+                                            polyline);
+
+  if (status_left) {
+    if (isInBounds<double>(t_p_left, 0, 1) && isInBounds<double>(t_q_left, 0, 1)) {
+      return std::make_tuple(true, index_left, t_p_left, t_q_left, 
+                             intersection_left);
+    }
+  }
+
+  return std::make_tuple(false, index_left, t_p_left, t_q_left,
+                         intersection_left);
+}
+
+std::tuple<bool, std::size_t, double, double, Uintah::Point, 
+           bool, std::size_t, double, double, Uintah::Point>
+intersectionLinePolyBinary(const Uintah::Point& P0,
+                           const Uintah::Point& P1,
+                           std::vector<Uintah::Point>::const_iterator poly_begin,
+                           std::vector<Uintah::Point>::const_iterator poly_end,
+                           const std::vector<Uintah::Point>& poly_orig)
+{
+  bool status_left, status_right;
+  double side_p0_left, side_p0_right;
+  double side_p1_left, side_p1_right;
+  double t_p_left, t_p_right;
+  double t_q_left, t_q_right;
+  Uintah::Point intersection_left, intersection_right;
+
+  auto num_pts = poly_end - poly_begin;
+  auto mid_index = std::round(num_pts/2);
+
+  auto index_left = poly_begin - poly_orig.begin();
+  auto index_right = poly_begin + mid_index - poly_orig.begin();
+
+  if (num_pts == 2) {
+    std::tie(status_left, side_p0_left, side_p1_left, t_p_left, t_q_left, intersection_left) = 
+      intersectionPointAndSide(P0, P1, *poly_begin, *(poly_end-1));
+
+    return std::make_tuple(
+      status_left, index_left, t_p_left, t_q_left, intersection_left,
+      status_left, index_right, t_p_left, t_q_left, intersection_left);
+  }
+
+  std::tie(status_left, side_p0_left, side_p1_left, t_p_left, t_q_left, intersection_left) = 
+      intersectionPointAndSide(P0, P1, *poly_begin, *(poly_begin+mid_index));
+
+  std::tie(status_right, side_p0_right, side_p1_right, t_p_right, t_q_right, intersection_right) = 
+      intersectionPointAndSide(P0, P1, *(poly_begin+mid_index), *(poly_end-1));
+
+  if ((side_p0_left  > 0 && side_p1_left  > 0) || 
+      (side_p0_right < 0 && side_p1_right < 0)) {
+   
+    std::tie(status_left,  index_left,  t_p_left,  t_q_left,  intersection_left,
+             status_right, index_right, t_p_right, t_q_right, intersection_right) = 
+      intersectionLinePolyBinary(P0, P1, poly_begin, poly_begin+mid_index+1, poly_orig);
+  } else if ((side_p0_left  < 0 && side_p1_left  < 0) || 
+             (side_p0_right > 0 && side_p1_right > 0)) {
+    std::tie(status_left,  index_left,  t_p_left,  t_q_left,  intersection_left,
+             status_right, index_right, t_p_right, t_q_right, intersection_right) = 
+      intersectionLinePolyBinary(P0, P1, poly_begin+mid_index, poly_end, poly_orig);
+  } else {
+    if (t_q_left < 1.0) {
+      std::tie(status_left,  index_left,  t_p_left,  t_q_left,  intersection_left,
+               status_right, index_right, t_p_right, t_q_right, intersection_right) = 
+        intersectionLinePolyBinary(P0, P1, poly_begin, poly_begin+mid_index+1, poly_orig);
+    } else {
+      std::tie(status_left,  index_left, t_p_left,  t_q_left,  intersection_left,
+               status_right, index_right, t_p_right, t_q_right, intersection_right) = 
+        intersectionLinePolyBinary(P0, P1, poly_begin+mid_index, poly_end, poly_orig);
+    }
+  }
+
+  return std::make_tuple(
+      status_left,  index_left,  t_p_left,  t_q_left,  intersection_left,
+      status_right, index_right, t_p_right, t_q_right, intersection_right);
+}
+
 
 /* 
  * Find point of intersection between a quadratic B-spline and a line segment 
@@ -539,7 +761,7 @@ intersectionPointBSpline(const Uintah::Point& bezier_p0,
   auto intersection = seg_p0 * (1 - t_new.y()) + seg_p1 * t_new.y();
 
   if (!(isInBounds<double>(t_new.x(), 0, 1) && isInBounds<double>(t_new.y(), 0, 1))) {
-    std::cout << "Bezier segment failed " << t_new << " " << intersection << "\n";
+    //std::cout << "Bezier segment failed " << t_new << " " << intersection << "\n";
     return std::make_tuple(false, t_new, intersection.asPoint());
   }
 
@@ -605,15 +827,15 @@ intersectionPointBSpline(const std::vector<Uintah::Point>& polyline,
 {
   bool status;
   std::size_t index;
-  double t;
+  double t_p, t_q;
   Uintah::Point intersection;
 
-  std::tie(status, index, t, intersection) = intersectionPoint(polyline, seg_p0, seg_p1);
+  std::tie(status, index, t_p, t_q, intersection) = intersectionPointBinarySearch(polyline, seg_p0, seg_p1);
 
   // The segment does not intersect the polyline
   if (!status) {
-    std::cout << "Does not intersect polyline" << t << " " << intersection << "\n";
-    return std::make_tuple(false, t, intersection);
+    //std::cout << "Does not intersect polyline " << t_p << " " << intersection << "\n";
+    return std::make_tuple(false, t_p, intersection);
   }
 
   // Identify the three Bezier control points
@@ -635,8 +857,8 @@ intersectionPointBSpline(const std::vector<Uintah::Point>& polyline,
   // If the three control points are collinear just return the
   // intersection point already computed
   if (isCollinear(bezier_p0, bezier_p1, bezier_p2)) {
-    std::cout << "Collinear " << t << " " << intersection << "\n";
-    return std::make_tuple(true, t, intersection);
+    std::cout << "Collinear " << t_p << " " << intersection << "\n";
+    return std::make_tuple(true, t_p, intersection);
   }
   
   // Compute the intersection of the Bezier with segment 
@@ -656,12 +878,12 @@ intersectionPointBSpline(const std::vector<Uintah::Point>& polyline,
           intersectionPointBSpline(bezier_p0, bezier_p1, bezier_p2, 
                                    seg_p0, seg_p1);
         if (!status) {
-          std::cout << "Second segment failed " << t << " " << intersection << "\n";
+          std::cout << "Second segment failed " << t1t2 << " " << intersection << "\n";
           return std::make_tuple(false, t1t2.y(), intersection);
         }
       }
     } else {
-      std::cout << "First segment failed " << t << " " << intersection << "\n";
+      std::cout << "First segment failed " << t1t2 << " " << intersection << "\n";
       return std::make_tuple(false, t1t2.y(), intersection);
     }
   }

@@ -368,7 +368,184 @@ TEST(YieldCondUtilsTest, intersectSegments)
   //std::cout << status << " " << t1 << " " << t2 << " " << intersect << "\n";
 }
 
-TEST(YieldCondUtilsTest, intersectPolylineSegment)
+TEST(YieldCondUtilsTest, findSide)
+{
+  double s1, s2;
+
+  // Parallel segments
+  Point seg_1_start(0, 0, 0);
+  Point seg_1_end(1, 1, 0);
+  Point seg_2_start(1, 0, 0);
+  Point seg_2_end(2, 1, 0);
+  s1 = Vaango::Util::findSide(seg_1_start, seg_2_start, seg_2_end);
+  s2 = Vaango::Util::findSide(seg_1_end, seg_2_start, seg_2_end);
+  ASSERT_EQ(s1, 1.0);
+  ASSERT_EQ(s2, 1.0);
+
+  // Collinear segments
+  seg_2_start = Point(2, 2, 0);
+  seg_2_end = Point(3, 3, 0);
+  s1 = Vaango::Util::findSide(seg_1_start, seg_2_start, seg_2_end);
+  s2 = Vaango::Util::findSide(seg_1_end, seg_2_start, seg_2_end);
+  ASSERT_EQ(s1, 0.0);
+  ASSERT_EQ(s2, 0.0);
+
+  // Segments that don't intersect within start and end
+  seg_2_start = Point(1, 2, 0);
+  seg_2_end = Point(3, 0, 0);
+  s1 = Vaango::Util::findSide(seg_1_start, seg_2_start, seg_2_end);
+  s2 = Vaango::Util::findSide(seg_1_end, seg_2_start, seg_2_end);
+  ASSERT_EQ(s1, -1.0);
+  ASSERT_EQ(s2, -1.0);
+
+  // Segments that intersect within start and end
+  seg_2_start = Point(0, 1.5, 0);
+  seg_2_end = Point(2.5, 0, 0);
+  s1 = Vaango::Util::findSide(seg_1_start, seg_2_start, seg_2_end);
+  s2 = Vaango::Util::findSide(seg_1_end, seg_2_start, seg_2_end);
+  ASSERT_EQ(s1, -1.0);
+  ASSERT_EQ(s2, 1.0);
+
+  // Segments that intersect at start pt
+  seg_2_start = Point(0, 0, 0);
+  seg_2_end = Point(2.5, 0, 0);
+  s1 = Vaango::Util::findSide(seg_1_start, seg_2_start, seg_2_end);
+  s2 = Vaango::Util::findSide(seg_1_end, seg_2_start, seg_2_end);
+  ASSERT_EQ(s1, 0.0);
+  ASSERT_EQ(s2, 1.0);
+
+  // Segments that intersect at end pt
+  seg_2_start = Point(1, 1, 0);
+  seg_2_end = Point(2.5, 0, 0);
+  s1 = Vaango::Util::findSide(seg_1_start, seg_2_start, seg_2_end);
+  s2 = Vaango::Util::findSide(seg_1_end, seg_2_start, seg_2_end);
+  ASSERT_EQ(s1, -1.0);
+  ASSERT_EQ(s2, 0.0);
+
+  // Segments that graze at end pt
+  seg_1_start = Point(1, 0, 0);
+  seg_1_end = Point(2, 0, 0);
+  seg_2_start = Point(2, -1, 0);
+  seg_2_end = Point(2, 1, 0);
+  s1 = Vaango::Util::findSide(seg_1_start, seg_2_start, seg_2_end);
+  s2 = Vaango::Util::findSide(seg_1_end, seg_2_start, seg_2_end);
+  ASSERT_EQ(s1, 1.0);
+  ASSERT_EQ(s2, 0.0);
+
+  // Segments that graze at end pt
+  seg_1_start = Point(0, 0, 0);
+  seg_1_end = Point(1, 2, 0);
+  seg_2_start = Point(1, 1, 0);
+  seg_2_end = Point(1, 3, 0);
+  s1 = Vaango::Util::findSide(seg_1_start, seg_2_start, seg_2_end);
+  s2 = Vaango::Util::findSide(seg_1_end, seg_2_start, seg_2_end);
+  ASSERT_EQ(s1, 1.0);
+  ASSERT_EQ(s2, 0.0);
+}
+
+TEST(YieldCondUtilsTest, intersectionPointAndSide)
+{
+  bool status;
+  double s1, s2;
+  double t1, t2;
+  Point intersect;
+
+  // Parallel segments
+  Point seg_1_start(0, 0, 0);
+  Point seg_1_end(1, 1, 0);
+  Point seg_2_start(1, 0, 0);
+  Point seg_2_end(2, 1, 0);
+  std::tie(status, s1, s2, t1, t2, intersect) = 
+    Vaango::Util::intersectionPointAndSide(seg_2_start, seg_2_end, seg_1_start, seg_1_end);
+  ASSERT_EQ(status, false);
+  ASSERT_EQ(t1, -1);
+  ASSERT_EQ(t2, -1);
+  ASSERT_EQ(intersect.x(), (1 - t1)*seg_1_start.x() + t1*seg_1_end.x());
+  ASSERT_EQ(intersect.y(), (1 - t1)*seg_1_start.y() + t1*seg_1_end.y());
+
+  // Collinear non-overlapping segments
+  seg_2_start = Point(2, 2, 0);
+  seg_2_end = Point(3, 3, 0);
+  std::tie(status, s1, s2, t1, t2, intersect) = 
+    Vaango::Util::intersectionPointAndSide(seg_1_start, seg_1_end, seg_2_start, seg_2_end);
+  ASSERT_EQ(status, false);
+  ASSERT_EQ(t1, -1);
+  ASSERT_EQ(t2, -1);
+  ASSERT_EQ(intersect.x(), (1- t1)*seg_2_start.x() + t1*seg_2_end.x());
+  ASSERT_EQ(intersect.y(), (1- t1)*seg_2_start.y() + t1*seg_2_end.y());
+
+  // Collinear overlapping segments
+  seg_2_start = Point(0.5, 0.5, 0);
+  seg_2_end = Point(1.5, 1.5, 0);
+  std::tie(status, s1, s2, t1, t2, intersect) = 
+    Vaango::Util::intersectionPointAndSide(seg_1_start, seg_1_end, seg_2_start, seg_2_end);
+  ASSERT_EQ(status, false);
+  ASSERT_EQ(t1, 0.75);
+  ASSERT_EQ(t2, 0.25);
+  ASSERT_EQ(intersect.x(), (1- t2)*seg_2_start.x() + t2*seg_2_end.x());
+  ASSERT_EQ(intersect.y(), (1- t2)*seg_2_start.y() + t2*seg_2_end.y());
+
+  // Segments that don't intersect within start and end
+  seg_2_start = Point(1, 2, 0);
+  seg_2_end = Point(3, 0, 0);
+  std::tie(status, s1, s2, t1, t2, intersect) = 
+    Vaango::Util::intersectionPointAndSide(seg_2_start, seg_2_end, seg_1_start, seg_1_end);
+  ASSERT_EQ(status, false);
+  ASSERT_EQ(t1, 0.25);
+  ASSERT_EQ(t2, 1.5);
+  ASSERT_EQ(intersect.x(), 1.5);
+  ASSERT_EQ(intersect.y(), 1.5);
+
+  // Segments that intersect within start and end
+  seg_2_start = Point(0, 1.5, 0);
+  seg_2_end = Point(2.5, 0, 0);
+  std::tie(status, s1, s2, t1, t2, intersect) = 
+    Vaango::Util::intersectionPointAndSide(seg_2_start, seg_2_end, seg_1_start, seg_1_end);
+  ASSERT_EQ(status, true);
+  ASSERT_EQ(t1, 0.375);
+  ASSERT_EQ(t2, 0.9375);
+  ASSERT_EQ(intersect.x(), 0.9375);
+  ASSERT_EQ(intersect.y(), 0.9375);
+
+  // Segments that intersect at start pt
+  seg_2_start = Point(0, 0, 0);
+  seg_2_end = Point(2.5, 0, 0);
+  std::tie(status, s1, s2, t1, t2, intersect) = 
+    Vaango::Util::intersectionPointAndSide(seg_2_start, seg_2_end, seg_1_start, seg_1_end);
+  ASSERT_EQ(t2, 0);
+  ASSERT_EQ(status, true);
+
+  // Segments that intersect at end pt
+  seg_2_start = Point(1, 1, 0);
+  seg_2_end = Point(2.5, 0, 0);
+  std::tie(status, s1, s2, t1, t2, intersect) = 
+    Vaango::Util::intersectionPointAndSide(seg_2_start, seg_2_end, seg_1_start, seg_1_end);
+  ASSERT_EQ(status, true);
+  ASSERT_EQ(t2, 1);
+
+  // Segments that graze at end pt
+  seg_1_start = Point(1, 0, 0);
+  seg_1_end = Point(2, 0, 0);
+  seg_2_start = Point(2, -1, 0);
+  seg_2_end = Point(2, 1, 0);
+  std::tie(status, s1, s2, t1, t2, intersect) = 
+    Vaango::Util::intersectionPointAndSide(seg_2_start, seg_2_end, seg_1_start, seg_1_end);
+  ASSERT_EQ(status, true);
+  ASSERT_EQ(t2, 1);
+
+  // Segments that graze at end pt
+  seg_1_start = Point(0, 0, 0);
+  seg_1_end = Point(1, 2, 0);
+  seg_2_start = Point(1, 1, 0);
+  seg_2_end = Point(1, 3, 0);
+  std::tie(status, s1, s2, t1, t2, intersect) = 
+    Vaango::Util::intersectionPointAndSide(seg_2_start, seg_2_end, seg_1_start, seg_1_end);
+  ASSERT_EQ(status, true);
+  ASSERT_EQ(t2, 1);
+  //std::cout << status << " " << t1 << " " << t2 << " " << intersect << "\n";
+}
+
+TEST(YieldCondUtilsTest, intersectPolylineSegmentLinearSearch)
 {
   std::vector<Point> polyline = 
     {{Point(0, 0 ,0), Point(1, 2, 0), Point(2, 3, 0), Point(3, 2, 0),
@@ -383,7 +560,7 @@ TEST(YieldCondUtilsTest, intersectPolylineSegment)
   Point seg_start(-1, 1, 0);
   Point seg_end(-1, 2, 0);
   std::tie(status, index, t, intersect) = 
-    Vaango::Util::intersectionPoint(polyline, seg_start, seg_end);
+    Vaango::Util::intersectionPointLinearSearch(polyline, seg_start, seg_end);
   ASSERT_EQ(status, false);
   ASSERT_EQ(index, 5);
 
@@ -391,7 +568,7 @@ TEST(YieldCondUtilsTest, intersectPolylineSegment)
   seg_start = Point(1, 1, 0);
   seg_end = Point(2, 2, 0);
   std::tie(status, index, t, intersect) = 
-    Vaango::Util::intersectionPoint(polyline, seg_start, seg_end);
+    Vaango::Util::intersectionPointLinearSearch(polyline, seg_start, seg_end);
   ASSERT_EQ(status, false);
   ASSERT_EQ(index, 5);
 
@@ -399,7 +576,7 @@ TEST(YieldCondUtilsTest, intersectPolylineSegment)
   seg_start = Point(1, 1, 0);
   seg_end = Point(1, 3, 0);
   std::tie(status, index, t, intersect) = 
-    Vaango::Util::intersectionPoint(polyline, seg_start, seg_end);
+    Vaango::Util::intersectionPointLinearSearch(polyline, seg_start, seg_end);
   ASSERT_EQ(status, true);
   ASSERT_EQ(index, 0);
   ASSERT_EQ(t, 0.5);
@@ -408,7 +585,7 @@ TEST(YieldCondUtilsTest, intersectPolylineSegment)
   seg_start = Point(2.5, 2, 0);
   seg_end = Point(2.5, 3, 0);
   std::tie(status, index, t, intersect) = 
-    Vaango::Util::intersectionPoint(polyline, seg_start, seg_end);
+    Vaango::Util::intersectionPointLinearSearch(polyline, seg_start, seg_end);
   ASSERT_EQ(status, true);
   ASSERT_EQ(index, 2);
   ASSERT_EQ(t, 0.5);
@@ -417,7 +594,7 @@ TEST(YieldCondUtilsTest, intersectPolylineSegment)
   seg_start = Point(2, 1, 0);
   seg_end = Point(0, 3, 0);
   std::tie(status, index, t, intersect) = 
-    Vaango::Util::intersectionPoint(polyline, seg_start, seg_end);
+    Vaango::Util::intersectionPointLinearSearch(polyline, seg_start, seg_end);
   ASSERT_EQ(status, true);
   ASSERT_EQ(index, 0);
   ASSERT_EQ(t, 0.5);
@@ -426,7 +603,7 @@ TEST(YieldCondUtilsTest, intersectPolylineSegment)
   seg_start = Point(2, 0, 0);
   seg_end = Point(1, 1, 0);
   std::tie(status, index, t, intersect) = 
-    Vaango::Util::intersectionPoint(polyline, seg_start, seg_end);
+    Vaango::Util::intersectionPointLinearSearch(polyline, seg_start, seg_end);
   ASSERT_EQ(status, false);
   ASSERT_EQ(index, 5);
   ASSERT_EQ(t, -4.5);
@@ -435,7 +612,7 @@ TEST(YieldCondUtilsTest, intersectPolylineSegment)
   seg_start = Point(4.33081187259450e-01, 9.95411511939463e-01, 0);
   seg_end = Point(1.37170358414487e+00, 2.44102702831043e+00, 0);
   std::tie(status, index, t, intersect) = 
-    Vaango::Util::intersectionPoint(polyline, seg_start, seg_end);
+    Vaango::Util::intersectionPointLinearSearch(polyline, seg_start, seg_end);
   ASSERT_EQ(status, true);
   ASSERT_EQ(index, 0);
   ASSERT_NEAR(t, 0.299445, 1.0e-6);
@@ -446,7 +623,7 @@ TEST(YieldCondUtilsTest, intersectPolylineSegment)
   seg_start = Point(1.5, 2.5, 0);
   seg_end = Point(2.5, 2.5, 0);
   std::tie(status, index, t, intersect) = 
-    Vaango::Util::intersectionPoint(polyline, seg_start, seg_end);
+    Vaango::Util::intersectionPointLinearSearch(polyline, seg_start, seg_end);
   ASSERT_EQ(status, true);
   ASSERT_EQ(index, 1);
   ASSERT_NEAR(t, 0, 1.0e-6);
@@ -455,7 +632,102 @@ TEST(YieldCondUtilsTest, intersectPolylineSegment)
   //std::cout << status << " " << index << " " << t << " " << intersect << "\n";
 }
 
-TEST(YieldCondUtilsTest, evalFunctinJacobianInverse)
+TEST(YieldCondUtilsTest, intersectPolylineSegmentBinarySearch)
+{
+  std::vector<Point> polyline = 
+    {{Point(0, 0 ,0), Point(1, 2, 0), Point(2, 3, 0), Point(3, 2, 0),
+      Point(4, 3, 0), Point(5, 0, 0)}};
+
+  bool status;
+  std::size_t index;
+  double t_p, t_q;
+  Point intersect;
+
+  // Outside segment
+  Point seg_start(-1, 1, 0);
+  Point seg_end(-1, 2, 0);
+  std::tie(status, index, t_p, t_q, intersect) = 
+    Vaango::Util::intersectionPointBinarySearch(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, false);
+  ASSERT_EQ(index, 0);
+  ASSERT_EQ(t_p, -3.0);
+  ASSERT_EQ(t_q, -1.0);
+
+  // Parallel segment
+  seg_start = Point(1, 1, 0);
+  seg_end = Point(2, 2, 0);
+  std::tie(status, index, t_p, t_q, intersect) = 
+    Vaango::Util::intersectionPointBinarySearch(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, false);
+  ASSERT_EQ(index, 0);
+  ASSERT_EQ(t_p, -1.0);
+  ASSERT_EQ(t_q, 0.0);
+
+  // Vertical end pt intersection segment
+  seg_start = Point(1, 1, 0);
+  seg_end = Point(1, 3, 0);
+  std::tie(status, index, t_p, t_q, intersect) = 
+    Vaango::Util::intersectionPointBinarySearch(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, true);
+  ASSERT_EQ(index, 1);
+  ASSERT_EQ(t_p, 0.5);
+  ASSERT_EQ(t_q, 0);
+
+  // Interior intersection
+  seg_start = Point(2.5, 2, 0);
+  seg_end = Point(2.5, 3, 0);
+  std::tie(status, index, t_p, t_q, intersect) = 
+    Vaango::Util::intersectionPointBinarySearch(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, true);
+  ASSERT_EQ(index, 2);
+  ASSERT_EQ(t_p, 0.5);
+  ASSERT_EQ(t_q, 0.5);
+
+  // Perpendicular segment
+  seg_start = Point(2, 1, 0);
+  seg_end = Point(0, 3, 0);
+  std::tie(status, index, t_p, t_q, intersect) = 
+    Vaango::Util::intersectionPointBinarySearch(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, true);
+  ASSERT_EQ(index, 1);
+  ASSERT_EQ(t_p, 0.5);
+  ASSERT_EQ(t_q, 0.0);
+
+  // Short segment
+  seg_start = Point(2, 0, 0);
+  seg_end = Point(1, 1, 0);
+  std::tie(status, index, t_p, t_q, intersect) = 
+    Vaango::Util::intersectionPointBinarySearch(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, false);
+  ASSERT_EQ(index, 0);
+  ASSERT_NEAR(t_p, 1.33333, 1.0e-5);
+  ASSERT_NEAR(t_q, 0.66667, 1.0e-5);
+
+  // Secant segment
+  seg_start = Point(4.33081187259450e-01, 9.95411511939463e-01, 0);
+  seg_end = Point(1.37170358414487e+00, 2.44102702831043e+00, 0);
+  std::tie(status, index, t_p, t_q, intersect) = 
+    Vaango::Util::intersectionPointBinarySearch(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, true);
+  ASSERT_EQ(index, 0);
+  ASSERT_NEAR(t_p, 0.299445, 1.0e-6);
+  ASSERT_NEAR(intersect.x(), 0.714147, 1.0e-6);
+  ASSERT_NEAR(intersect.y(), 1.42829, 1.0e-5);
+
+  // Horizontal Secant segment
+  seg_start = Point(1.5, 2.5, 0);
+  seg_end = Point(2.5, 2.5, 0);
+  std::tie(status, index, t_p, t_q, intersect) = 
+    Vaango::Util::intersectionPointBinarySearch(polyline, seg_start, seg_end);
+  ASSERT_EQ(status, true);
+  ASSERT_EQ(index, 1);
+  ASSERT_NEAR(t_p, 0, 1.0e-6);
+  ASSERT_NEAR(intersect.x(), 1.5, 1.0e-6);
+  ASSERT_NEAR(intersect.y(), 2.5, 1.0e-6);
+  //std::cout << status << " " << index << " " << t_p << " " << t_q  << " " << intersect << "\n";
+}
+
+TEST(YieldCondUtilsTest, evalFunctionJacobianInverse)
 {
   std::vector<Point> polyline = 
     {{Point(0, 0 ,0), Point(1, 2, 0), Point(2, 3, 0), Point(3, 2, 0),
@@ -595,9 +867,9 @@ TEST(YieldCondUtilsTest, intersectionPointPolyBSpline)
   std::tie(status, t, intersection) = 
     Vaango::Util::intersectionPointBSpline(polyline, seg_start, seg_end);
   ASSERT_EQ(status, false);
-  ASSERT_NEAR(t, 0, 1.0e-6);
-  ASSERT_NEAR(intersection.x(), 2, 1.0e-6);
-  ASSERT_NEAR(intersection.y(), 0, 1.0e-6);
+  ASSERT_NEAR(t, 1.333333, 1.0e-6);
+  ASSERT_NEAR(intersection.x(), 0.666667, 1.0e-6);
+  ASSERT_NEAR(intersection.y(), 1.333333, 1.0e-6);
 
   // Secant segment
   seg_start = Point(4.33081187259450e-01, 9.95411511939463e-01, 0);
