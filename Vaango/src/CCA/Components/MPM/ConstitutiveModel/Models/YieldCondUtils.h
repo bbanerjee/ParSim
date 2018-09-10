@@ -103,6 +103,29 @@ getClosestSegments(const Uintah::Point& pt,
                    const std::vector<Uintah::Point>& poly,
                    std::vector<Uintah::Point>& segments);
 
+/**
+ *  Find three sequential points (two sequential yield surface segments) 
+ *  that are closest to an input point (using a binary search)
+ *
+ *  Modifies:
+ *   vector<Point> : 
+ *      Point  : first_point
+ *      Point  : second_point
+ *      Point  : third_point
+ *
+ *  Returns:
+ *   size_t : index of the closest point in the sequence
+ */
+std::size_t
+getClosestSegmentsBinarySearch(const Uintah::Point& pt,
+                               const std::vector<Uintah::Point>& polyline,
+                               std::vector<Uintah::Point>& segments);
+std::tuple<Uintah::Point, std::size_t, double>
+closestPointBinarySearch(const Uintah::Point P0,
+                         std::vector<Uintah::Point>::const_iterator poly_begin,
+                         std::vector<Uintah::Point>::const_iterator poly_end,
+                         const std::vector<Uintah::Point>& poly_orig);
+
 /* linspace functions */
 void 
 linspace(const double& start, const double& end, const int& num,

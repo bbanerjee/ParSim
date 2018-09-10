@@ -197,6 +197,84 @@ TEST(YieldCondUtilsTest, findClosestSegments)
   }
 }
 
+TEST(YieldCondUtilsTest, findClosestSegmentsBinarySearch)
+{
+  std::vector<Point> poly = {{
+    Point(17.3205, 0, 0),        Point(-17.3205, 173.205, 0), 
+    Point(-692.82, 866.025, 0),  Point(-1385.64, 1039.23, 0), 
+    Point(-2771.28, 1212.44, 0), Point(-5542.56, 1385.64, 0), 
+    Point(-11085.1, 1558.85, 0)
+  }};
+  {
+    std::vector<Point> min_seg;
+    Point pt(3464.1, 6928.2, 0);
+    auto index = Vaango::Util::getClosestSegments(pt, poly, min_seg);
+    //std::cout << "index = " << index;
+    //std::copy(min_seg.begin(), min_seg.end(),
+    //          std::ostream_iterator<Point>(std::cout, " "));
+    //std::cout << std::endl;
+    min_seg.clear();
+    index = Vaango::Util::getClosestSegmentsBinarySearch(pt, poly, min_seg);
+    //std::cout << "index = " << index;
+    //std::copy(min_seg.begin(), min_seg.end(),
+    //          std::ostream_iterator<Point>(std::cout, " "));
+    //std::cout << std::endl;
+    EXPECT_EQ(index, 2);
+  }
+  {
+    std::vector<Point> min_seg;
+    Point pt(-3464.1, 6928.2, 0);
+    auto index = Vaango::Util::getClosestSegments(pt, poly, min_seg);
+    //std::cout << "index = " << index;
+    //std::copy(min_seg.begin(), min_seg.end(),
+    //          std::ostream_iterator<Point>(std::cout, " "));
+    //std::cout << std::endl;
+    min_seg.clear();
+    index = Vaango::Util::getClosestSegmentsBinarySearch(pt, poly, min_seg);
+    //std::cout << "index = " << index;
+    //std::copy(min_seg.begin(), min_seg.end(),
+    //          std::ostream_iterator<Point>(std::cout, " "));
+    //std::cout << std::endl;
+    EXPECT_EQ(index, 4);
+  }
+  {
+    std::vector<Point> min_seg;
+    Point pt(5196.15, 0, 0);
+    auto index = Vaango::Util::getClosestSegments(pt, poly, min_seg);
+    //std::cout << "index = " << index;
+    //std::copy(min_seg.begin(), min_seg.end(),
+    //          std::ostream_iterator<Point>(std::cout, " "));
+    //std::cout << std::endl;
+    min_seg.clear();
+    index = Vaango::Util::getClosestSegmentsBinarySearch(pt, poly, min_seg);
+    //std::cout << "index = " << index;
+    //std::copy(min_seg.begin(), min_seg.end(),
+    //          std::ostream_iterator<Point>(std::cout, " "));
+    //std::cout << std::endl;
+    ASSERT_EQ(index, 0);
+  }
+  {
+    std::vector<Point> min_seg;
+    Point pt(5196.15, 1732.05, 0);
+    auto index = Vaango::Util::getClosestSegmentsBinarySearch(pt, poly, min_seg);
+    //std::cout << "index = " << index;
+    //std::copy(min_seg.begin(), min_seg.end(),
+    //          std::ostream_iterator<Point>(std::cout, " "));
+    //std::cout << std::endl;
+    EXPECT_EQ(index, 1);
+  }
+  {
+    std::vector<Point> min_seg;
+    Point pt(-5196.15, 1732.05, 0);
+    auto index = Vaango::Util::getClosestSegmentsBinarySearch(pt, poly, min_seg);
+    EXPECT_EQ(index, 5);
+    //std::cout << "index = " << index;
+    //std::copy(min_seg.begin(), min_seg.end(),
+    //          std::ostream_iterator<Point>(std::cout, " "));
+    //std::cout << std::endl;
+  }
+}
+
 TEST(YieldCondUtilsTest, linspace)
 {
   std::vector<double> array;

@@ -147,7 +147,7 @@ findClosestPoint(const Uintah::Point& p, const std::vector<Uintah::Point>& poly,
   return min_d;
 }
 
-/* Find two yield surface segment that is closest to input point */
+/* Find two yield surface segments that are closest to an input point */
 std::size_t
 getClosestSegments(const Uintah::Point& pt,
                    const std::vector<Uintah::Point>& poly,
@@ -195,6 +195,136 @@ getClosestSegments(const Uintah::Point& pt,
   }
 
   return close_index;
+}
+
+/**
+ *  Find three sequential points (two sequential yield surface segments) 
+ *  that are closest to an input point (using a binary search)
+ *
+ *  Modifies:
+ *   vector<Point> : 
+ *      Point  : first_point
+ *      Point  : second_point
+ *      Point  : third_point
+ *
+ *  Returns:
+ *   size_t : index of the closest point in the sequence
+ */
+std::size_t
+getClosestSegmentsBinarySearch(const Uintah::Point& pt,
+                               const std::vector<Uintah::Point>& polyline,
+                               std::vector<Uintah::Point>& segments)
+{
+  if (polyline.size() < 4) {
+    segments = polyline;
+    return 0;
+  }
+
+  Uintah::Point closest_pt;
+  std::size_t closest_index;
+  double closest_dist;
+
+  std::tie(closest_pt, closest_index, closest_dist) = 
+    Vaango::Util::closestPointBinarySearch(pt, polyline.begin(), polyline.end(),
+                                           polyline);
+
+  if (closest_index == 0) {
+    segments.push_back(polyline[closest_index]);
+    segments.push_back(polyline[closest_index+1]);
+    segments.push_back(polyline[closest_index+2]);
+  } else if (closest_index == polyline.size()-1) {
+    segments.push_back(polyline[closest_index-2]);
+    segments.push_back(polyline[closest_index-1]);
+    segments.push_back(polyline[closest_index]);
+  } else {
+    segments.push_back(polyline[closest_index-1]);
+    segments.push_back(polyline[closest_index]);
+    segments.push_back(polyline[closest_index+1]);
+  }
+
+  return closest_index;
+}
+
+std::tuple<Uintah::Point, std::size_t, double>
+closestPointBinarySearch(const Uintah::Point P0,
+                         std::vector<Uintah::Point>::const_iterator poly_begin,
+                         std::vector<Uintah::Point>::const_iterator poly_end,
+                         const std::vector<Uintah::Point>& poly_orig)
+{
+  auto num_pts = poly_end - poly_begin;
+  auto mid_index = std::round(num_pts/2);
+
+  auto P_left  = *poly_begin;
+  auto P_right = *(poly_end-1);
+  auto P_mid = *(poly_begin + mid_index);
+
+  auto dist_left = (P_left - P0).length2();
+  auto dist_right = (P_right - P0).length2();
+  auto dist_mid = (P_mid - P0).length2();
+
+  //std::cout << "P0 = " << P0 << " P_left = " << P_left << " P_right = " << P_right
+  //          << " P_mid = " << P_mid << "\n";
+  //std::cout << "d_left = " << dist_left << " d_right = " << dist_right
+  //          << " d_mid = " << dist_mid << "\n";
+
+  Uintah::Point P_near;
+  std::size_t index_near;
+  double dist_near = dist_mid;
+
+  if (num_pts == 2) {
+    if (dist_left < dist_right) {
+      P_near = P_left;
+      dist_near = dist_left;
+      index_near = poly_begin - poly_orig.begin();
+    } else {
+      P_near = P_right;
+      dist_near = dist_right;
+      index_near = poly_end - poly_orig.begin() - 1;
+    }
+    //std::cout << "final: near = " << P_near << " index = " << index_near 
+    //          << " dist = " << dist_near << "\n";
+    return std::make_tuple(P_near, index_near, dist_near);
+  }
+
+  if (dist_left < dist_mid) {
+    std::tie(P_near, index_near, dist_near) =
+      closestPointBinarySearch(P0, poly_begin, poly_begin+mid_index+1, poly_orig);
+    //std::cout << "left < right: near = " << P_near << " index = " << index_near 
+    //          << " dist = " << dist_near << "\n";
+  } else if (dist_right < dist_mid) {
+    std::tie(P_near, index_near, dist_near) =
+      closestPointBinarySearch(P0, poly_begin+mid_index, poly_end, poly_orig);
+    //std::cout << "right < left: near = " << P_near << " index = " << index_near 
+    //          << " dist = " << dist_near << "\n";
+  } else {
+    Uintah::Point P_near_left;
+    std::size_t index_near_left;
+    double dist_near_left;
+    std::tie(P_near_left, index_near_left, dist_near_left) =
+      closestPointBinarySearch(P0, poly_begin, poly_begin+mid_index+1, poly_orig);
+
+    Uintah::Point P_near_right;
+    std::size_t index_near_right;
+    double dist_near_right;
+    std::tie(P_near_right, index_near_right, dist_near_right) =
+      closestPointBinarySearch(P0, poly_begin+mid_index, poly_end, poly_orig);
+
+    if (dist_near_left < dist_near_right) {
+      P_near = P_near_left;
+      dist_near = dist_near_left;
+      index_near = index_near_left;
+      //std::cout << "mid right > left: near = " << P_near << " index = " << index_near 
+      //        << " dist = " << dist_near << "\n";
+    } else {
+      P_near = P_near_right;
+      dist_near = dist_near_right;
+      index_near = index_near_right;
+      //std::cout << "mid right <= left: near = " << P_near << " index = " << index_near 
+      //        << " dist = " << dist_near << "\n";
+    }
+  }
+
+  return std::make_tuple(P_near, index_near, dist_near);
 }
 
 /* linspace function */
@@ -584,20 +714,6 @@ intersectionPointLinearSearch(const std::vector<Uintah::Point>& polyline,
   bool status = false;
   double t1, t2;
   Uintah::Point intersect;
-
-  std::vector<Uintah::Point> segments;
-  auto id =  getClosestSegments(start_seg, polyline, segments);
-  std::cout << "Closest segs = " << id << " ";
-  for (const auto& seg : segments) {
-    std::cout << seg << " ";
-  }
-  std::cout << "\n";
-  id =  getClosestSegments(end_seg, polyline, segments);
-  for (const auto& seg : segments) {
-    std::cout << seg << " ";
-  }
-  std::cout << "\n";
-  std::cout << start_seg << " " << end_seg << " ";
 
   std::size_t index = 0;
   for (auto iter = polyline.begin(); iter < polyline.end()-1; ++iter) {
