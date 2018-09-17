@@ -127,17 +127,6 @@ public:
   void addParticleState(std::vector<const Uintah::VarLabel*>& from,
                         std::vector<const Uintah::VarLabel*>& to) override;
 
-  double computeRhoMicroCM(double pressure, const double p_ref,
-                           const Uintah::MPMMaterial* matl, double temperature,
-                           double rho_guess) override;
-
-  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
-                         double& dp_drho, double& ss_new,
-                         const Uintah::MPMMaterial* matl,
-                         double temperature) override;
-
-  double getCompressibility() override;
-
   /*! This is for adding/deleting particles when a particle is switched
       from one material to another */
   void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
@@ -194,10 +183,16 @@ private:
    *   state.shearModulus
    */
   //////////////////////////////////////////////////////////////////////////
-  void computeElasticProperties(ModelState_TabularCap& state);
+  void computeElasticProperties(ModelState_TabularCap& state) const;
   void computeElasticProperties(ModelState_TabularCap& state,
                                 double elasticVolStrainInc,
-                                double plasticVolStrainInc);
+                                double plasticVolStrainInc) const;
+  std::tuple<double, double>
+    computeElasticProperties(const ModelState_TabularCap& state,
+                             const Matrix3& elasticStrain,
+                             const Matrix3& plasticStrain) const;
+  std::tuple<double, double>
+    computeElasticProperties(const ModelState_TabularCap& state) const;
 
   //////////////////////////////////////////////////////////////////////////
   /**
@@ -259,6 +254,71 @@ private:
 
   //////////////////////////////////////////////////////////////////////////
   /**
+   * Method: Compute the stress state at the end of a purely elastic
+   *         substep.
+   * Purpose:
+   *   Find the updated stress before an elastic-plastic non-hardening
+   *   stress update step
+   *
+   * Returns:
+   *   Status  :  whether the procedure is sucessful or has failed
+   *   double  :  elastic delta T
+   *    
+   */
+  //////////////////////////////////////////////////////////////////////////
+  std::tuple<Status, double>
+  computePurelyElasticSubstep(double deltaT, const Matrix3& D,
+                              const ModelState_TabularCap& state_k_old,
+                              const ModelState_TabularCap& state_k_trial,
+                              ModelState_TabularCap& state_k_new);
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: nonHardeningReturnElasticPlastic
+   * Purpose:
+   *   Computes a non-hardening return to the yield surface in the meridional
+   *   profile (constant Lode angle) based on the current values of the 
+   *   internal state variables and elastic properties.  Returns the updated 
+   *   stress.
+   *   NOTE: all values of r and z in this function are transformed!
+   * Inputs:
+   *   elasticplastic_dt = timestep size after purely elastic update
+   *   D                 = rate of deformation 
+   *   state_k_elastic   = state at the end of the purely elastic substep
+   * Outputs:
+   *   state_k_nonhardening = state at the end of the non-hardening 
+   *                          elastic-plastic substep
+   * Returns:
+   *   Status: true  = success
+   *           false = failure
+   *   Matrix3: plastic strain increment
+   */
+  //////////////////////////////////////////////////////////////////////////
+  std::tuple<Status, Matrix3>
+  nonHardeningReturnElasticPlastic(double elasticplastic_dt,
+                          const Matrix3& D,
+                          const ModelState_TabularCap& state_k_elastic,
+                          ModelState_TabularCap& state_k_nonhardening);
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: consistencyBisectionHardeningSoftening
+   * Purpose:
+   *   Find the updated stress for hardening/softening plasticity using the consistency
+   *   bisection algorithm
+   *
+   *   Returns - whether the procedure is sucessful or has failed
+   */
+  //////////////////////////////////////////////////////////////////////////
+  Status consistencyBisectionHardeningSoftening(double elastic_plastic_dt, 
+                                      const Matrix3& D,              
+                                      const ModelState_TabularCap& state_k_elastic,
+                                      const ModelState_TabularCap& state_k_nonhardening,
+                                      const Matrix3& deltaEps_p_nonhardening,
+                                      ModelState_TabularCap& state_new);
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
    * Method: nonHardeningReturn
    * Purpose:
    *   Computes a non-hardening return to the yield surface in the meridional
@@ -269,17 +329,14 @@ private:
    *   NOTE: all values of r and z in this function are transformed!
    * Inputs:
    *   strain_inc     = total strain icremenet = D*dt
-   *     D              = rate of deformation tensor
-   *     dt             = substep time increment
    *   state_old      = state at start of substep
    *   state_trial    = trial state at start of substep
-   *   params         = yield condition parameters
    * Outputs:
    *   sig_new                 = updated stress at end of substep
    *   elasticStrain_inc_new   = updated elastic strain increment at end of
-   * substep
+   *                             substep
    *   plasticStrain_inc_new   = updated plastic strain increment at end of
-   * substep
+   *                             substep
    * Returns:
    *   true  = success
    *   false = failure
@@ -347,7 +404,8 @@ private:
    *   state and an increment in volumetric plastic strain
    * Inputs:
    *   state         - Old state
-   *   delta_eps_p_v - negative in comression volumetruc plastic strain
+   *   delta_eps_e_v - negative in comression volumetric elastic strain
+   *   delta_eps_p_v - negative in comression volumetric plastic strain
    * Outputs:
    *   state         - Modified state
    * Returns:  true if success
@@ -355,8 +413,37 @@ private:
    */
   //////////////////////////////////////////////////////////////////////////
   Status computeInternalVariables(ModelState_TabularCap& state,
+                                const double& delta_eps_e_v,
                                 const double& delta_eps_p_v);
 
+  double computeInternalVariable(const ModelState_TabularCap& state,
+                                 const Matrix3& elasticStrain,
+                                 const Matrix3& plasticStrain) const;
+  double computeInternalVariable(const ModelState_TabularCap& state) const;
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: computeElasticDeltaT
+   * Purpose:
+   *   Compute the fraction of the time step that is elastic
+   * Inputs:
+   *   double       - Total delta t
+   *   ModelState   - Old state
+   *   ModelState   - Trial state
+   * Returns:
+   *   bool         - true if success
+   *                  false if failure
+   *   double       - t value of intersection of line segment joining
+   *                  old state and trial state with yield surface
+   *                  in pbar-sqrtJ2 space
+   *   double       - elastic delta t
+   *   Point        - point of intersection in pbar-sqrtJ2 space
+   */
+  //////////////////////////////////////////////////////////////////////////
+  std::tuple<bool, double, double, Uintah::Point>
+    computeElasticDeltaT(double dt,
+                         const ModelState_TabularCap& state_old,
+                         const ModelState_TabularCap& state_trial);
 };
 } // End namespace Uintah
 

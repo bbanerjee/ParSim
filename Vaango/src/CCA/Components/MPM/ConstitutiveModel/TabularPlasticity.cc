@@ -97,7 +97,8 @@ using std::endl;
 
 // Requires the necessary input parameters CONSTRUCTORS
 TabularPlasticity::TabularPlasticity(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* mpmFlags)
-  : Uintah::ConstitutiveModel(mpmFlags)
+  : Uintah::ConstitutiveModel(mpmFlags),
+    d_hydrostat(ps)
 {
   // Bulk and shear modulus models
   d_elastic = Vaango::ElasticModuliModelFactory::create(ps);
@@ -116,6 +117,10 @@ TabularPlasticity::TabularPlasticity(Uintah::ProblemSpecP& ps, Uintah::MPMFlags*
          << std::endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
+
+  // Read the hydrostat for MPMICE calculations
+  // (hydrostat is pressure vs total volumetric strain)
+  d_hydrostat.setup();
 
   // Algorithmic parameters
   ps->getWithDefault("yield_surface_radius_scaling_factor",
@@ -152,6 +157,7 @@ TabularPlasticity::TabularPlasticity(const TabularPlasticity& cm)
 {
   d_elastic = Vaango::ElasticModuliModelFactory::createCopy(cm.d_elastic);
   d_yield = Vaango::YieldConditionFactory::createCopy(cm.d_yield);
+  d_hydrostat = cm.d_hydrostat;
 
   // Yield surface scaling
   d_cm.yield_scale_fac = cm.d_cm.yield_scale_fac;
@@ -159,6 +165,7 @@ TabularPlasticity::TabularPlasticity(const TabularPlasticity& cm)
   // Subcycling
   d_cm.subcycling_characteristic_number =
     cm.d_cm.subcycling_characteristic_number;
+
 
   initializeLocalMPMLabels();
 }
@@ -225,6 +232,14 @@ TabularPlasticity::initializeLocalMPMLabels()
   pRemoveLabel_preReloc = Uintah::VarLabel::create(
     "p.remove+",
     Uintah::ParticleVariable<int>::getTypeDescription());
+
+  pBulkModulusLabel = Uintah::VarLabel::create(
+    "p.bulkModulus",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+  pBulkModulusLabel_preReloc = Uintah::VarLabel::create(
+    "p.bulkModulus+",
+    Uintah::ParticleVariable<double>::getTypeDescription());
+
 }
 
 // DESTRUCTOR
@@ -242,6 +257,8 @@ TabularPlasticity::~TabularPlasticity()
   VarLabel::destroy(pPlasticVolStrainLabel_preReloc);
   VarLabel::destroy(pRemoveLabel);
   VarLabel::destroy(pRemoveLabel_preReloc);
+  VarLabel::destroy(pBulkModulusLabel);
+  VarLabel::destroy(pBulkModulusLabel_preReloc);
 
   delete d_yield;
   delete d_elastic;
@@ -264,6 +281,8 @@ TabularPlasticity::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
                        d_cm.yield_scale_fac);
   cm_ps->appendElement("subcycling_characteristic_number",
                        d_cm.subcycling_characteristic_number);
+
+  d_hydrostat.outputProblemSpec(cm_ps);
 }
 
 TabularPlasticity*
@@ -296,6 +315,9 @@ TabularPlasticity::addParticleState(std::vector<const VarLabel*>& from,
   from.push_back(pRemoveLabel);
   to.push_back(pRemoveLabel_preReloc);
 
+  from.push_back(pBulkModulusLabel);
+  to.push_back(pBulkModulusLabel_preReloc);
+
   // Add the particle state for the yield condition model
   d_yield->addParticleState(from, to);
 }
@@ -317,6 +339,7 @@ TabularPlasticity::addInitialComputesAndRequires(Task* task, const MPMMaterial* 
   task->computes(pPlasticCumEqStrainLabel, matlset);
   task->computes(pPlasticVolStrainLabel, matlset);
   task->computes(pRemoveLabel, matlset);
+  task->computes(pBulkModulusLabel, matlset);
 
   // Add yield function variablity computes
   d_yield->addInitialComputesAndRequires(task, matl, patch);
@@ -343,6 +366,7 @@ TabularPlasticity::initializeCMData(const Patch* patch, const MPMMaterial* matl,
   ParticleVariable<double> pdTdt;
   ParticleVariable<double> pElasticVolStrain;
   ParticleVariable<double> pPlasticCumEqStrain, pPlasticVolStrain;
+  ParticleVariable<double> pBulkModulus;
   ParticleVariable<Matrix3> pStress;
   ParticleVariable<Matrix3> pElasticStrain;
   ParticleVariable<Matrix3> pPlasticStrain;
@@ -356,7 +380,9 @@ TabularPlasticity::initializeCMData(const Patch* patch, const MPMMaterial* matl,
   new_dw->allocateAndPut(pPlasticStrain, pPlasticStrainLabel, pset);
   new_dw->allocateAndPut(pPlasticCumEqStrain, pPlasticCumEqStrainLabel, pset);
   new_dw->allocateAndPut(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
+  new_dw->allocateAndPut(pBulkModulus, pBulkModulusLabel, pset);
 
+  ElasticModuli moduli = d_elastic->getInitialElasticModuli();
   for (const particleIndex& pidx : *pset) {
     pRemove[pidx] = 0;
     pdTdt[pidx] = 0.0;
@@ -366,6 +392,7 @@ TabularPlasticity::initializeCMData(const Patch* patch, const MPMMaterial* matl,
     pPlasticStrain[pidx].set(0.0);
     pPlasticCumEqStrain[pidx] = 0.0;
     pPlasticVolStrain[pidx] = 0.0;
+    pBulkModulus[pidx] = moduli.bulkModulus;
   }
 
   // Compute timestep
@@ -450,6 +477,7 @@ TabularPlasticity::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   task->requires(Task::OldDW, pPlasticCumEqStrainLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pRemoveLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pBulkModulusLabel, matlset, Ghost::None);
 
   task->computes(pElasticStrainLabel_preReloc, matlset);
   task->computes(pElasticVolStrainLabel_preReloc, matlset);
@@ -457,6 +485,7 @@ TabularPlasticity::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   task->computes(pPlasticCumEqStrainLabel_preReloc, matlset);
   task->computes(pPlasticVolStrainLabel_preReloc, matlset);
   task->computes(pRemoveLabel_preReloc, matlset);
+  task->computes(pBulkModulusLabel_preReloc, matlset);
 }
 
 /**
@@ -489,7 +518,7 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
 
     // Set up local particle variables to be read and written
     constParticleVariable<int> pRemove;
-    constParticleVariable<double> pEev, pEpv, pEpeq_old;
+    constParticleVariable<double> pEev, pEpv, pEpeq_old, pBulkModulus_old;
     constParticleVariable<Matrix3> pEe, pEp;
     old_dw->get(pEe,       pElasticStrainLabel, pset);
     old_dw->get(pEev,      pElasticVolStrainLabel, pset);
@@ -497,9 +526,10 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
     old_dw->get(pEpv,      pPlasticVolStrainLabel, pset);
     old_dw->get(pEpeq_old, pPlasticCumEqStrainLabel, pset);
     old_dw->get(pRemove,   pRemoveLabel, pset);
+    old_dw->get(pBulkModulus_old,   pBulkModulusLabel, pset);
 
     ParticleVariable<int>    pRemove_new;
-    ParticleVariable<double> pEev_new, pEpv_new, pEpeq_new;
+    ParticleVariable<double> pEev_new, pEpv_new, pEpeq_new, pBulkModulus_new;
     ParticleVariable<Matrix3> pEe_new, pEp_new;
     new_dw->allocateAndPut(pEe_new,     pElasticStrainLabel_preReloc, pset);
     new_dw->allocateAndPut(pEev_new,    pElasticVolStrainLabel_preReloc, pset);
@@ -507,6 +537,7 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
     new_dw->allocateAndPut(pEpv_new,    pPlasticVolStrainLabel_preReloc, pset);
     new_dw->allocateAndPut(pEpeq_new,   pPlasticCumEqStrainLabel_preReloc, pset);
     new_dw->allocateAndPut(pRemove_new, pRemoveLabel_preReloc, pset);
+    new_dw->allocateAndPut(pBulkModulus_new, pBulkModulusLabel_preReloc, pset);
 
     // Set up global particle variables to be read and written
     delt_vartype delT;
@@ -608,6 +639,8 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
         // det(F))) = ln J
         pEev_new[idx] =
           log(pDefGrad_new[idx].Determinant()) - pEpv_new[idx];
+
+        pBulkModulus_new[idx] = state_new.bulkModulus;
 #ifdef CHECK_ELASTIC_STRAIN
         double pEev_integrated = pEe_new[idx].Trace();
         std::cout << "Elastic volume strain error = "
@@ -636,6 +669,7 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
         pEpv_new[idx] = pEp_new[idx].Trace();
         pEpeq_new[idx] = pEpeq_old[idx];
         pEev_new[idx] = pEe_new[idx].Trace();
+        pBulkModulus_new[idx] = pBulkModulus_old[idx];
       }
 
       //---------------------------------------------------------
@@ -1541,9 +1575,10 @@ void
 TabularPlasticity::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
                               const bool, const bool) const
 {
-  std::cout
-    << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR TabularPlasticity"
-    << endl;
+  std::ostringstream out;
+  out << "**ERROR** NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR TabularPlasticity"
+      << std::endl;
+  throw ProblemSetupException(out.str(), __FILE__, __LINE__);
 }
 
 /*!
@@ -1559,7 +1594,7 @@ TabularPlasticity::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* adds
                          ParticleSubset* delset, DataWarehouse* old_dw)
 {
   std::ostringstream out;
-  out << "Material conversion after failure not implemented for Arenisca.";
+  out << "**ERROR** Material conversion after failure DOES NOT EXIST YET for tabular plasticity.";
   throw ProblemSetupException(out.str(), __FILE__, __LINE__);
 }
 
@@ -1571,15 +1606,14 @@ TabularPlasticity::computeRhoMicroCM(double pressure, const double p_ref,
                          const MPMMaterial* matl, double temperature,
                          double rho_guess)
 {
-  //double rho_0 = matl->getInitialDensity();
-  //double p_gauge = pressure - p_ref;
+  double rho_0 = matl->getInitialDensity();
+  double p_gauge = pressure - p_ref;
 
-  double rho_cur = 0.0;
-  if (rho_cur < 1.0) {
-    std::ostringstream out;
-    out << "MPMICE hooks not implemented for Tabular_plasticity.";
-    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
-  }
+  bool status;
+  double eps_v_bar, p_bar;
+  std::tie(status, eps_v_bar, p_bar) = d_hydrostat.intersect1D(-10, 10, p_gauge, p_gauge);
+  double J = std::exp(-eps_v_bar);
+  double rho_cur = rho_0 / J;
 
   return rho_cur;
 }
@@ -1589,20 +1623,26 @@ TabularPlasticity::computePressEOSCM(double rho_cur, double& pressure, double p_
                          double& dp_drho, double& soundSpeedSq,
                          const MPMMaterial* matl, double temperature)
 {
-  //double rho_0 = matl->getInitialDensity();
-  //double eta = rho_cur / rho_0;
-  //double p_gauge = 0.0;
+  double rho_0 = matl->getInitialDensity();
+  double J = rho_0 / rho_cur;
+  double eps_v = std::log(J);
 
-  //double bulk = 0.0;
-  //double shear = 0.0;
+  bool status;
+  double eps_v_bar, p_bar;
+  std::tie(status, eps_v_bar, p_bar) = d_hydrostat.intersect1D(-eps_v, -eps_v, -1.0e6, 1.0e10);
+  double p_gauge = p_bar;
+  pressure = p_ref + p_gauge;
 
-  //pressure = p_ref + p_gauge;
-  //dp_drho = 0.0;
-  //soundSpeedSq = 0.0;
+  double eps_v_bar_hi, p_bar_hi;
+  p_bar += 1.0;
+  std::tie(status, eps_v_bar_hi, p_bar_hi) = d_hydrostat.intersect1D(-10, 10, p_bar, p_bar);
 
-  std::ostringstream out;
-  out << "MPMICE hooks not implemented for Tabular_plasticity.";
-  throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+  double K = (p_bar_hi - p_bar)/(eps_v_bar_hi - eps_v_bar);
+  double dJ_deps_v = J;
+  double drho_dJ = -rho_0/(J * J);
+  dp_drho = K/(drho_dJ * dJ_deps_v);
+  
+  soundSpeedSq = K / rho_cur;
 }
 
 double
@@ -1611,8 +1651,8 @@ TabularPlasticity::getCompressibility()
   double comp = 0.0;
   if (comp < 1.0) {
     std::ostringstream out;
-    out << "MPMICE hooks not implemented for Tabular_plasticity.";
-    throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+    out << "The getCompressibility MPMICE hook has not been implemented for Tabular plasticity.";
+    throw InvalidValue(out.str(), __FILE__, __LINE__);
   }
   return comp;
 }

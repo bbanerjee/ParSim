@@ -28,6 +28,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -69,9 +70,9 @@ public:
     double subcycling_characteristic_number;
   };
 
-  const Uintah::VarLabel* pElasticStrainLabel; // Elastic Strain
+  const Uintah::VarLabel* pElasticStrainLabel;
   const Uintah::VarLabel* pElasticStrainLabel_preReloc;
-  const Uintah::VarLabel* pPlasticStrainLabel; // Plastic Strain
+  const Uintah::VarLabel* pPlasticStrainLabel;
   const Uintah::VarLabel* pPlasticStrainLabel_preReloc;
   const Uintah::VarLabel* pPlasticCumEqStrainLabel; // Equivalent plastic strain
   const Uintah::VarLabel* pPlasticCumEqStrainLabel_preReloc; 
@@ -81,6 +82,8 @@ public:
   const Uintah::VarLabel* pPlasticVolStrainLabel_preReloc;
   const Uintah::VarLabel* pRemoveLabel; // Flag for removal
   const Uintah::VarLabel* pRemoveLabel_preReloc;
+  const Uintah::VarLabel* pBulkModulusLabel; 
+  const Uintah::VarLabel* pBulkModulusLabel_preReloc;
 
   TabularPlasticity(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
   TabularPlasticity(const TabularPlasticity* cm);
@@ -181,6 +184,7 @@ protected:
 
   ElasticModuliModel* d_elastic;
   YieldCondition* d_yield;
+  TabularData d_hydrostat;
 
   CMData d_cm;
 
@@ -215,8 +219,6 @@ protected:
   //////////////////////////////////////////////////////////////////////////
   Uintah::Matrix3 computeTrialStress(const ModelState_Tabular& state_old,
                                      const Uintah::Matrix3& strain_inc);
-
-protected:
 
   //////////////////////////////////////////////////////////////////////////
   /**

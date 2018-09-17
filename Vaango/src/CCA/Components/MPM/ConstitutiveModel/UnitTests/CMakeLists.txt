@@ -37,6 +37,7 @@ configure_file(tabular_linear_elastic.json tabular_linear_elastic.json COPYONLY)
 configure_file(tabular_von_mises.json tabular_von_mises.json COPYONLY)
 configure_file(tabular_drucker_prager.json tabular_drucker_prager.json COPYONLY)
 configure_file(tabular_cap.json tabular_cap.json COPYONLY)
+configure_file(DrySand_HydrostatData.json DrySand_HydrostatData.json COPYONLY)
 configure_file(UniaxialStrainRotate_PrescribedDeformation.inp 
                UniaxialStrainRotate_PrescribedDeformation.inp COPYONLY)
 

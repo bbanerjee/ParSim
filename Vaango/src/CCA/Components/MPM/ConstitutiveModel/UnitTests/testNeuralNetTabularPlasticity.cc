@@ -225,6 +225,19 @@ public:
                               BAD_CAST "");
     xmlNewProp(yield_interp, BAD_CAST "type", BAD_CAST "linear");
 
+    // Hydrostat
+    std::string table_hydrostat = 
+      std::string(currPath) + "/" + "DrySand_HydrostatData.json";
+    xmlNewChild(cm, nullptr, BAD_CAST "filename", 
+                BAD_CAST table_hydrostat.c_str());
+    xmlNewChild(cm, nullptr, BAD_CAST "independent_variables", 
+                BAD_CAST "TotalStrainVol");
+    xmlNewChild(cm, nullptr, BAD_CAST "dependent_variables", 
+                BAD_CAST "Pressure");
+    auto cm_interp = xmlNewChild(cm, nullptr, BAD_CAST "interpolation",
+                              BAD_CAST "");
+    xmlNewProp(cm_interp, BAD_CAST "type", BAD_CAST "linear");
+    
     // Geometry
     auto geom = xmlNewChild(mat, nullptr, BAD_CAST "geom_object", BAD_CAST "");
     auto box = xmlNewChild(geom, nullptr, BAD_CAST "box", BAD_CAST "");
