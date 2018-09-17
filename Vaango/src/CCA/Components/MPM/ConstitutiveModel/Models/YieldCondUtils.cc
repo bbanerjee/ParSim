@@ -8,6 +8,8 @@
 
 #include <Eigen/Dense>
 
+//#define DEBUG_INTERSECTION
+
 namespace Vaango {
 
 namespace Util {
@@ -710,7 +712,6 @@ intersectionPointLinearSearch(const std::vector<Uintah::Point>& polyline,
                               const Uintah::Point& end_seg)
 {
 
-  // Find intersection of a box containing the line segment with the polyline
   bool status = false;
   double t1, t2;
   Uintah::Point intersect;
@@ -793,6 +794,12 @@ intersectionLinePolyBinary(const Uintah::Point& P0,
   auto index_left = poly_begin - poly_orig.begin();
   auto index_right = poly_begin + mid_index - poly_orig.begin();
 
+  #ifdef DEBUG_INTERSECTION
+    std::cout << "final = [" << num_pts << " " << mid_index << " "
+              << *poly_begin << " " << *(poly_begin+mid_index) << " " 
+              << *(poly_end-1) << "]\n";
+  #endif
+
   if (num_pts == 2) {
     std::tie(status_left, side_p0_left, side_p1_left, t_p_left, t_q_left, intersection_left) = 
       intersectionPointAndSide(P0, P1, *poly_begin, *(poly_end-1));
@@ -801,6 +808,12 @@ intersectionLinePolyBinary(const Uintah::Point& P0,
       status_left, index_left, t_p_left, t_q_left, intersection_left,
       status_left, index_right, t_p_left, t_q_left, intersection_left);
   }
+
+  #ifdef DEBUG_INTERSECTION
+    std::cout << "Q0 = " << *poly_begin << "\n";
+    std::cout << "Q1 = " << *(poly_begin+mid_index) << "\n";
+    std::cout << "Q2 = " << *(poly_end-1) << "\n";
+  #endif
 
   std::tie(status_left, side_p0_left, side_p1_left, t_p_left, t_q_left, intersection_left) = 
       intersectionPointAndSide(P0, P1, *poly_begin, *(poly_begin+mid_index));
@@ -811,15 +824,37 @@ intersectionLinePolyBinary(const Uintah::Point& P0,
   if ((side_p0_left  > 0 && side_p1_left  > 0) || 
       (side_p0_right < 0 && side_p1_right < 0)) {
    
+    #ifdef DEBUG_INTERSECTION
+      std::cout << "lo1(" << num_pts << ", " << mid_index << ") = [" 
+                << side_p0_left << " " << side_p1_left << " "
+                << side_p0_right << " " << side_p1_right << "]\n";
+    #endif
+
     std::tie(status_left,  index_left,  t_p_left,  t_q_left,  intersection_left,
              status_right, index_right, t_p_right, t_q_right, intersection_right) = 
       intersectionLinePolyBinary(P0, P1, poly_begin, poly_begin+mid_index+1, poly_orig);
+
   } else if ((side_p0_left  < 0 && side_p1_left  < 0) || 
              (side_p0_right > 0 && side_p1_right > 0)) {
+
+    #ifdef DEBUG_INTERSECTION
+      std::cout << "lo2(" << num_pts << ", " << mid_index << ") = [" 
+                << side_p0_left << " " << side_p1_left << " "
+                << side_p0_right << " " << side_p1_right << "]\n";
+    #endif
+
     std::tie(status_left,  index_left,  t_p_left,  t_q_left,  intersection_left,
              status_right, index_right, t_p_right, t_q_right, intersection_right) = 
       intersectionLinePolyBinary(P0, P1, poly_begin+mid_index, poly_end, poly_orig);
+
   } else {
+
+    #ifdef DEBUG_INTERSECTION
+      std::cout << "mid(" << num_pts << ", " << mid_index << ") = [" 
+                << side_p0_left << " " << side_p1_left << " "
+                << side_p0_right << " " << side_p1_right << "]\n";
+    #endif
+
     if (t_q_left < 1.0) {
       std::tie(status_left,  index_left,  t_p_left,  t_q_left,  intersection_left,
                status_right, index_right, t_p_right, t_q_right, intersection_right) = 
@@ -950,7 +985,10 @@ intersectionPointBSpline(const std::vector<Uintah::Point>& polyline,
 
   // The segment does not intersect the polyline
   if (!status) {
-    //std::cout << "Does not intersect polyline " << t_p << " " << intersection << "\n";
+    #ifdef DEBUG_INTERSECTION
+      std::cout << "Segment does not intersect polyline " 
+                << t_p << " " << intersection << "\n";
+    #endif
     return std::make_tuple(false, t_p, intersection);
   }
 
@@ -973,7 +1011,10 @@ intersectionPointBSpline(const std::vector<Uintah::Point>& polyline,
   // If the three control points are collinear just return the
   // intersection point already computed
   if (isCollinear(bezier_p0, bezier_p1, bezier_p2)) {
-    std::cout << "Collinear " << t_p << " " << intersection << "\n";
+    #ifdef DEBUG_INTERSECTION
+      std::cout << "Bezier control points are collinear " 
+                << t_p << " " << intersection << "\n";
+    #endif
     return std::make_tuple(true, t_p, intersection);
   }
   
@@ -994,12 +1035,18 @@ intersectionPointBSpline(const std::vector<Uintah::Point>& polyline,
           intersectionPointBSpline(bezier_p0, bezier_p1, bezier_p2, 
                                    seg_p0, seg_p1);
         if (!status) {
-          std::cout << "Second segment failed " << t1t2 << " " << intersection << "\n";
+          #ifdef DEBUG_INTERSECTION
+            std::cout << "B-spline intersection: Second segment failed " 
+                      << t1t2 << " " << intersection << "\n";
+          #endif
           return std::make_tuple(false, t1t2.y(), intersection);
         }
       }
     } else {
-      std::cout << "First segment failed " << t1t2 << " " << intersection << "\n";
+      #ifdef DEBUG_INTERSECTION
+        std::cout << "B-spline intersection: First segment failed " 
+                  << t1t2 << " " << intersection << "\n";
+      #endif
       return std::make_tuple(false, t1t2.y(), intersection);
     }
   }

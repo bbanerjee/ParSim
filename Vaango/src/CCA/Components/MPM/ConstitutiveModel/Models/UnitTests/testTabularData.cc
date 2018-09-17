@@ -1,4 +1,5 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TableUtils.h>
 
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -566,4 +567,137 @@ TEST(TabularDataTest, readJSONTableFromStream3D)
   ASSERT_NEAR(val[1], 2.8031071428571428, 1.0e-10);
   //EXPECT_THROW(eos.interpolateLinearSpline<3>(indepVals, 
   //             eos.getIndependentVars(), eos.getDependentVars()), InvalidValue);
+}
+
+TEST(TabularDataTest, findIntersectionTable)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "constitutive_model");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "tabular_hydrostat");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // Create a child node
+  xmlNewChild(rootNode, nullptr, BAD_CAST "filename", BAD_CAST "DrySand_HydrostatData.json");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "independent_variables", 
+              BAD_CAST "TotalStrainVol");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "dependent_variables", 
+              BAD_CAST "Pressure");
+  auto interp = xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation",
+                            BAD_CAST "");
+  xmlNewProp(interp, BAD_CAST "type", BAD_CAST "linear");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Create a table hydrostat
+  TabularData hydrostat(ps);
+  hydrostat.setup();
+
+  auto x_coords = hydrostat.getIndependentVarData("TotalStrainVol", IndexKey(0, 0, 0, 0));
+  auto y_coords = hydrostat.getDependentVarData("Pressure", IndexKey(0, 0, 0, 0));
+
+  bool status;
+  std::size_t index;
+  double t_p, t_q, x_q, y_q;
+  std::tie(status, index, t_p, t_q, x_q, y_q) = 
+    Vaango::Util::findIntersectionTableLinearSearch(x_coords, y_coords,
+                                                    -1, 100, 1, 100);
+  //std::cout << "status = " << status << " index = " << index
+  //          << " t_p = " << t_p << " t_q = " << t_q 
+  //          << " x_q = " << x_q << " y_q = " << y_q << "\n";
+  ASSERT_NEAR(t_q, 0.00241924, 1.0e-8);
+
+  std::tie(status, index, t_p, t_q, x_q, y_q) = 
+    Vaango::Util::findIntersectionTableLinearSearch(x_coords, y_coords,
+                                                    -1, -1.0e6, 1, -1.0e6);
+  ASSERT_NEAR(t_q, -24.1924, 1.0e-4);
+  //std::cout << "status = " << status << " index = " << index
+  //          << " t_p = " << t_p << " t_q = " << t_q 
+  //          << " x_q = " << x_q << " y_q = " << y_q << "\n";
+
+  std::tie(status, index, t_p, t_q, x_q, y_q) = 
+    Vaango::Util::findIntersectionTableLinearSearch(x_coords, y_coords,
+                                                    -1, 1.0e8, 1, 1.0e8);
+  ASSERT_NEAR(t_q, 0.504185, 1.0e-6);
+  //std::cout << "status = " << status << " index = " << index
+  //          << " t_p = " << t_p << " t_q = " << t_q 
+  //          << " x_q = " << x_q << " y_q = " << y_q << "\n";
+
+  std::tie(status, index, t_p, t_q, x_q, y_q) = 
+    Vaango::Util::findIntersectionTableLinearSearch(x_coords, y_coords,
+                                                    -1, 6.0e9, 1, 6.0e9);
+  ASSERT_NEAR(t_q, 15.0588, 1.0e-4);
+  //std::cout << "status = " << status << " index = " << index
+  //          << " t_p = " << t_p << " t_q = " << t_q 
+  //          << " x_q = " << x_q << " y_q = " << y_q << "\n";
+}
+
+TEST(TabularDataTest, intersect1D)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "constitutive_model");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "tabular_hydrostat");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // Create a child node
+  xmlNewChild(rootNode, nullptr, BAD_CAST "filename", BAD_CAST "DrySand_HydrostatData.json");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "independent_variables", 
+              BAD_CAST "TotalStrainVol");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "dependent_variables", 
+              BAD_CAST "Pressure");
+  auto interp = xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation",
+                            BAD_CAST "");
+  xmlNewProp(interp, BAD_CAST "type", BAD_CAST "linear");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Create a table hydrostat
+  TabularData hydrostat(ps);
+  hydrostat.setup();
+
+  bool status;
+  double x_p, y_p;
+
+  std::tie(status, x_p, y_p) = hydrostat.intersect1D(1, -1, 100, 100);
+  //std::cout << "status = " << status 
+  //          << " x_p = " << x_p << " y_p = " << y_p << "\n";
+  ASSERT_NEAR(x_p, 4.83848e-07, 1.0e-10);
+
+  std::tie(status, x_p, y_p) = hydrostat.intersect1D(1, -1, -1.0e6, -1.0e6);
+  //std::cout << "status = " << status 
+  //          << " x_p = " << x_p << " y_p = " << y_p << "\n";
+  ASSERT_NEAR(x_p, -4.83848e-03, 1.0e-8);
+
+  std::tie(status, x_p, y_p) = hydrostat.intersect1D(1, -1, 1.0e8, 1.0e8);
+  //std::cout << "status = " << status 
+  //          << " x_p = " << x_p << " y_p = " << y_p << "\n";
+  ASSERT_NEAR(x_p, 0.210452, 1.0e-6);
+
+  std::tie(status, x_p, y_p) = hydrostat.intersect1D(1, -1, 6.0e9, 6.0e9);
+  //std::cout << "status = " << status 
+  //          << " x_p = " << x_p << " y_p = " << y_p << "\n";
+  ASSERT_NEAR(x_p, 0.466059, 1.0e-6);
 }

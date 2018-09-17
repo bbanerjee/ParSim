@@ -35,6 +35,8 @@
 #include <errno.h>
 #include <fenv.h>
 
+//#define USE_TOTAL_STRAIN
+
 using namespace Vaango;
 
 using VarLabel       = Uintah::VarLabel;
@@ -103,9 +105,14 @@ InternalVar_TabularCap::initializeInternalVariable(Uintah::ParticleSubset* pset,
   Uintah::ParticleVariable<double> pCapX;
   new_dw->allocateAndPut(pCapX, pCapXLabel, pset);
 
-  // The table is of the form x -> ev_p_bar, y -> X_p_bar = X_bar/3
-  DoubleVec1D gg = d_capX_fn.table.interpolate<1>({{0.0}}); 
-  double capX = -gg[0] * 3.0;
+  #ifdef USE_TOTAL_STRAIN
+    // The table is of the form x -> ev_bar, y -> X_p_bar = X_bar/3
+    double capX = -1000;
+  #else
+    // The table is of the form x -> ev_p_bar, y -> X_p_bar = X_bar/3
+    DoubleVec1D gg = d_capX_fn.table.interpolate<1>({{0.0}}); 
+    double capX = -gg[0] * 3.0;
+  #endif
 
   for (auto particle : *pset) {
     pCapX[particle] = capX;
@@ -152,8 +159,15 @@ InternalVar_TabularCap::computeInternalVariable(
   if (ep_v > 0.0) { // tension
     X_bar_new = computeDrainedHydrostaticStrength(0.0);
   } else {
-    double ep_v_bar = -ep_v;
-    X_bar_new = computeDrainedHydrostaticStrength(ep_v_bar);
+    #ifdef USE_TOTAL_STRAIN
+      // The table is of the form x -> ev_bar, y -> X_p_bar = X_bar/3
+      double ev_bar = -ep_v - state->elasticStrainTensor.Trace();
+      X_bar_new = computeDrainedHydrostaticStrength(ev_bar);
+    #else
+      // The table is of the form x -> ep_v_bar, y -> X_p_bar = X_bar/3
+      double ep_v_bar = -ep_v;
+      X_bar_new = computeDrainedHydrostaticStrength(ep_v_bar);
+    #endif
   }
 
   double X_new = -X_bar_new;
@@ -191,11 +205,22 @@ InternalVar_TabularCap::computeVolStrainDerivOfInternalVariable(
   }
 
   double epsilon = 1.0e-6;
-  double ep_v_bar = -state->ep_v;
-  double ep_v_bar_lo = ep_v_bar - epsilon;
-  double ep_v_bar_hi = ep_v_bar + epsilon;
-  double X_p_bar_lo = computeDrainedHydrostaticStrength(ep_v_bar_lo);
-  double X_p_bar_hi = computeDrainedHydrostaticStrength(ep_v_bar_hi);
+  #ifdef USE_TOTAL_STRAIN
+    // The table is of the form x -> ev_bar, y -> X_p_bar = X_bar/3
+    double ev_bar = -state->elasticStrainTensor.Trace() - state->ep_v;
+    double ev_bar_lo = ev_bar - epsilon;
+    double ev_bar_hi = ev_bar + epsilon;
+    double X_p_bar_lo = computeDrainedHydrostaticStrength(ev_bar_lo);
+    double X_p_bar_hi = computeDrainedHydrostaticStrength(ev_bar_hi);
+  #else
+    // The table is of the form x -> ev_p_bar, y -> X_p_bar = X_bar/3
+    double ep_v_bar = -state->ep_v;
+    double ep_v_bar_lo = ep_v_bar - epsilon;
+    double ep_v_bar_hi = ep_v_bar + epsilon;
+    double X_p_bar_lo = computeDrainedHydrostaticStrength(ep_v_bar_lo);
+    double X_p_bar_hi = computeDrainedHydrostaticStrength(ep_v_bar_hi);
+  #endif
+
   double dX_p_bar_dep_v_bar = (X_p_bar_hi - X_p_bar_lo)/(2*epsilon);
   return dX_p_bar_dep_v_bar;
 }

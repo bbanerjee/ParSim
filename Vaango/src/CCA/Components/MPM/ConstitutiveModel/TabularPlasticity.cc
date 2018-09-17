@@ -874,7 +874,7 @@ TabularPlasticity::rateIndependentPlasticUpdate(const Matrix3& D, const double& 
  *   **WARNING** Also computes stress invariants and plastic strain invariants
  */
 void
-TabularPlasticity::computeElasticProperties(ModelState_Tabular& state)
+TabularPlasticity::computeElasticProperties(ModelState_Tabular& state) const
 {
   state.updateStressInvariants();
   state.updatePlasticStrainInvariants();

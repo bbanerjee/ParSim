@@ -3,6 +3,7 @@
 #include <Core/Geometry/Point.h>
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -803,6 +804,34 @@ TEST(YieldCondUtilsTest, intersectPolylineSegmentBinarySearch)
   ASSERT_NEAR(intersect.x(), 1.5, 1.0e-6);
   ASSERT_NEAR(intersect.y(), 2.5, 1.0e-6);
   //std::cout << status << " " << index << " " << t_p << " " << t_q  << " " << intersect << "\n";
+
+  seg_start = Point(7.37325e+07,4.05945e+07,0);
+  seg_end = Point(7.37325e+07,4.06011e+07,0);
+  std::vector<Point> polyline_sim;
+  std::ifstream polyline_data("polyline_sim_data.csv");
+
+  std::size_t num_pts = 0;
+  double x = 0.0, y = 0.0, z = 0.0;
+  std::string line;
+  if (polyline_data.is_open()) {
+    getline(polyline_data, line);
+    //std::cout << "line = " << line << "\n";
+    std::istringstream line_stream(line);
+    line_stream >> num_pts;
+    //std::cout << "num_pts = " << num_pts << "\n";
+    polyline_sim.reserve(num_pts);
+    while (getline(polyline_data, line)) {
+      std::istringstream line_stream1(line);
+      line_stream1 >> x >> y >> z;
+      //std::cout << "x = " << x << " y = " << y << " z = " << z << "\n";
+      polyline_sim.push_back(Point(x, y, z));
+    }
+    polyline_data.close();
+  }
+  std::tie(status, index, t_p, t_q, intersect) = 
+    Vaango::Util::intersectionPointBinarySearch(polyline_sim, seg_start, seg_end);
+  std::cout << status << " " << index << " " << t_p << " " << t_q  << " " << intersect << "\n";
+
 }
 
 TEST(YieldCondUtilsTest, evalFunctionJacobianInverse)

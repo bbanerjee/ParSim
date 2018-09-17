@@ -74,6 +74,23 @@ public:
 
   // double interpolateCubicSpline1D(const double& t);
 
+  /*
+   * Find the intersection of 1D tabular data with a line segment
+   *  assuming x = independent variable
+   *           y = dependent variable
+   *  indepLo = x_lo of line segment
+   *  indepHi = x_hi of line sgement
+   *  depLo = y_lo of line segment
+   *  depHi = y_hi of line sgement
+   *
+   * Returns:
+   *  bool : status indicating if there is an intersection or not
+   *  double: x - location of intersection
+   *  double: y - location of intersection
+   */
+  std::tuple<bool, double, double> intersect1D(double indepLo, double indepHi,
+                                               double depHi, double depLo);
+
   std::size_t getNumIndependents() const { return d_indepVars.size(); }
   std::size_t getNumDependents() const { return d_depVars.size(); }
 

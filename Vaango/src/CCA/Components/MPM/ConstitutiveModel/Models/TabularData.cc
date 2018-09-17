@@ -819,6 +819,49 @@ TabularData::interpolateCubicSpline1D(const double& t) {
 }
 */
 
+/*
+ * Find the intersection of 1D tabular data with a line segment
+ *  assuming x = independent variable
+ *           y = dependent variable
+ *  indepLo = x_lo of line segment
+ *  indepHi = x_hi of line sgement
+ *  depLo = y_lo of line segment
+ *  depHi = y_hi of line sgement
+ *
+ * Returns:
+ *  bool : status indicating if there is an intersection or not
+ *  double: x - location of intersection
+ *  double: y - location of intersection
+ */
+std::tuple<bool, double, double>
+TabularData::intersect1D(double indepLo, double indepHi,
+                         double depHi, double depLo)
+{
+  // Check that the table contains 1D data
+  if (getNumIndependents() + getNumDependents() > 2) {
+    std::ostringstream out;
+    out << "**ERROR**"
+        << " Intersection of a line with tabular data no allowed"
+        << " if there is more than one independent and one dependent variable";
+    throw InvalidValue(out.str(), __FILE__, __LINE__);
+  }
+
+  // Get the data 
+  auto x_coords = (*d_indepVars.begin())->data.begin()->second;
+  auto y_coords = (*d_depVars.begin())->data.begin()->second;
+
+  // Find the intersection point
+  bool status;
+  std::size_t index;
+  double t_p, t_q, indepVal, depVal;
+  std::tie(status, index, t_p, t_q, indepVal, depVal) = 
+   Vaango::Util::findIntersectionTableLinearSearch(x_coords, y_coords,
+                                                   indepLo, depLo,
+                                                   indepHi, depHi);
+  return std::make_tuple(status, indepVal, depVal);
+}
+
+
 DoubleVec1D
 TabularData::getIndependentVarData(const std::string& name,
                                    const IndexKey& index) const

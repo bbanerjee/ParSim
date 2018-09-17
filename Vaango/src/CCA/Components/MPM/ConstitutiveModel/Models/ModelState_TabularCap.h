@@ -49,7 +49,7 @@ class ModelState_TabularCap : public ModelState_Tabular
 public:
   double capX;             // Hydrostatic strength in I1 space
   Polyline yield_f_pts;    // Polyline representing yield function with cap
-                           // in pbar-q space
+                           // in pbar-sqrtJ2 space
   double I1_min;
   double I1_max;
   double sqrtJ2_max;

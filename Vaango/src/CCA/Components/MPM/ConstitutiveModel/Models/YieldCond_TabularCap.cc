@@ -124,16 +124,34 @@ YieldCond_TabularCap::checkInputParameters()
     throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
-  // Check convexity; If not convex, make convex
+  // Copy the data and increse sampling if necessary
   std::vector<Point> points;
-  for (auto ii = 0u; ii < xvals.size(); ii++) {
-    points.push_back(Point(xvals[ii], yvals[ii], 0));
+  auto num_pts = xvals.size();
+  if (num_pts < 6) {
+    for (auto ii = 0u; ii < num_pts-1; ii++) {
+      auto x_start = xvals[ii];
+      auto x_end = xvals[ii+1];
+      auto y_start = yvals[ii];
+      auto y_end = yvals[ii+1];
+      std::vector<double> x_vec;
+      Vaango::Util::linspace(x_start, x_end, 100, x_vec);
+      for (const auto& x : x_vec) {
+        auto t = (x - x_start)/(x_end - x_start);
+        auto y = (1 - t)*y_start + t*y_end;
+        points.push_back(Point(x, y, 0));
+      }
+    }
+  } else {
+    for (auto ii = 0u; ii < xvals.size(); ii++) {
+      points.push_back(Point(xvals[ii], yvals[ii], 0));
+    }
   }
   //std::cout << "Orig = ";
   //std::copy(points.begin(), points.end(),
   //          std::ostream_iterator<Point>(std::cout, " "));
   //std::cout << std::endl;
 
+  // Check convexity; If not convex, make convex
   std::vector<Point> hull = Vaango::Util::convexHull2D(points);
 
   if (points.size() != hull.size()) {
