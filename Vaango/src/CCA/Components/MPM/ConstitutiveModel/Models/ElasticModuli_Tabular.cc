@@ -28,6 +28,7 @@
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
+#define COMPUTE_BULK_MODULUS_FROM_PRESSURE
 //#define DEBUG_INTERPOLATION
 
 using namespace Vaango;
@@ -97,17 +98,21 @@ ElasticModuli_Tabular::getCurrentElasticModuli(const ModelStateBase* state_input
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
 
-  // Make sure the quantities are positive in compression
-  double ev_e_bar = -(state->elasticStrainTensor).Trace();
-  double ev_p_bar = -(state->plasticStrainTensor).Trace();
-
   // Compute the elastic moduli
+  #ifdef COMPUTE_BULK_MODULUS_FROM_PRESSURE
+    double p_bar = -state->I1/3.0;
+    double ev_p_bar = -(state->plasticStrainTensor).Trace();
+    double K = computeBulkModulusPressure(p_bar, ev_p_bar);
+  #else
+    // Make sure the quantities are positive in compression
+    double ev_e_bar = -(state->elasticStrainTensor).Trace();
+    double ev_p_bar = -(state->plasticStrainTensor).Trace();
+    double K = computeBulkModulus(ev_e_bar, ev_p_bar);
+  #endif
+  double G = computeShearModulus(K);
+
   #ifdef DEBUG_INTERPOLATION
     std::cout << "ev_e = " << ev_e_bar << " ev_p = " << ev_p_bar << "\n";
-  #endif
-  double K = computeBulkModulus(ev_e_bar, ev_p_bar);
-  double G = computeShearModulus(K);
-  #ifdef DEBUG_INTERPOLATION
     std::cout << " K = " << K << " G = " << G << std::endl;
   #endif
 
@@ -161,6 +166,24 @@ ElasticModuli_Tabular::computeBulkModulus(const double& elasticVolStrain,
   #endif
 
   double K = (pressure_hi[0] - pressure_lo[0])/(2*epsilon);
+  return K;
+}
+
+double 
+ElasticModuli_Tabular::computeBulkModulusPressure(double pressure,
+                                                  double plasticVolStrain) const
+{
+  double K;
+  try {
+    K = d_bulk.table.computeDerivative(plasticVolStrain, pressure);
+  } catch (Uintah::InvalidValue& e) {
+    std::ostringstream out;
+    out << "**WARNING** In computeBulkModulusPressure :"
+        << " pressure = " << pressure
+        << " plasticVolStrain = " << plasticVolStrain << "\n"
+        << e.message();
+    throw Uintah::InvalidValue(out.str(), __FILE__, __LINE__);
+  }
   return K;
 }
 

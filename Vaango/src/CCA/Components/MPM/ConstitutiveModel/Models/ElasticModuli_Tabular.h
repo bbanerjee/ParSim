@@ -115,8 +115,10 @@ private:
 
   void checkInputParameters();
 
-  double computeBulkModulus(const double& elasticStrain,
-                            const double& plasticStrain) const;
+  double computeBulkModulus(const double& elasticVolStrain,
+                            const double& plasticVolStrain) const;
+  double computeBulkModulusPressure(double pressure,
+                                    double plasticVolStrain) const;
   double computeShearModulus(const double& bulkModulus) const;
 
 };

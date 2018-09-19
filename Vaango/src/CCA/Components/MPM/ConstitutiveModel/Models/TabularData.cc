@@ -744,6 +744,94 @@ TabularData::interpolateLinearSpline<3>(
 }
 } // end namespace for template specialization (needed by gcc)
 
+
+double
+TabularData::computeDerivative(double indepValue, double depValue) const
+{
+  // First find the segment containing the first independent variable value
+  // and the value of parameter s
+  auto indepVarData =
+    getIndependentVarData(d_indepVars[0]->name, IndexKey(0, 0, 0, 0));
+  auto index = findLocationNoThrow(indepValue, indepVarData);
+  auto sval = computeParameter(indepValue, index, indepVarData);
+
+  // Choose the two dependent variable vectors that will be used for interpolation
+  auto depVarData0 = getDependentVarData(d_depVars[0]->name, IndexKey(index, 0, 0, 0));
+  auto depVarData1 = getDependentVarData(d_depVars[0]->name, IndexKey(index+1, 0, 0, 0));
+
+  // Choose the two independent variable vectors that will be used for interpolation
+  auto indepVarData0 = getIndependentVarData(d_indepVars[1]->name, IndexKey(index, 0, 0, 0));
+  auto indepVarData1 = getIndependentVarData(d_indepVars[1]->name, IndexKey(index+1, 0, 0, 0));
+  auto minmax_indep0 = std::minmax_element(indepVarData0.begin(), indepVarData0.end());
+  auto minmax_indep1 = std::minmax_element(indepVarData1.begin(), indepVarData1.end());
+
+  // Set up line segments for intersection
+  auto indepLo = std::min(*(minmax_indep0.first), *(minmax_indep1.first));
+  auto indepHi = std::max(*(minmax_indep0.second), *(minmax_indep1.second));
+  auto depLo = depValue - 1.0e-6*depValue;
+  auto depHi = depValue + 1.0e-6*depValue;
+  depLo = (depLo == 0) ? -1.0e-6 : depLo;
+  depHi = (depHi == 0) ?  1.0e-6 : depHi;
+
+  // Find the intersection points
+  bool status;
+  double t_p, t_q;
+
+  double indepValLo0, depValLo0;
+  std::tie(status, index, t_p, t_q, indepValLo0, depValLo0) = 
+   Vaango::Util::findIntersectionTableLinearSearch(indepVarData0, depVarData0,
+                                                   indepLo, depLo, indepHi, depLo);
+  //std::cout << "status = " << status << " index = " << index 
+  //          << " t_p = " << t_p << " t_q = " << t_q
+  //          << " x0 = " << indepValLo0 << " y0 = " << depValLo0 
+  //          << " seg = [[" << indepLo << "," << depLo << "],["
+  //                         << indepHi << "," << depLo << "]\n";
+  
+  double indepValLo1, depValLo1;
+  std::tie(status, index, t_p, t_q, indepValLo1, depValLo1) = 
+   Vaango::Util::findIntersectionTableLinearSearch(indepVarData1, depVarData1,
+                                                   indepLo, depLo, indepHi, depLo);
+  //std::cout << "status = " << status << " index = " << index 
+  //          << " t_p = " << t_p << " t_q = " << t_q
+  //          << " x0 = " << indepValLo1 << " y0 = " << depValLo1 
+  //          << " seg = [[" << indepLo << "," << depLo << "],["
+  //                         << indepHi << "," << depLo << "]\n";
+
+  double indepValHi0, depValHi0;
+  std::tie(status, index, t_p, t_q, indepValHi0, depValHi0) = 
+   Vaango::Util::findIntersectionTableLinearSearch(indepVarData0, depVarData0,
+                                                   indepLo, depHi, indepHi, depHi);
+  //std::cout << "status = " << status << " index = " << index 
+  //          << " t_p = " << t_p << " t_q = " << t_q
+  //          << " x0 = " << indepValHi0 << " y0 = " << depValHi0 
+  //          << " seg = [[" << indepLo << "," << depHi << "],["
+  //                         << indepHi << "," << depHi << "]\n";
+
+  double indepValHi1, depValHi1;
+  std::tie(status, index, t_p, t_q, indepValHi1, depValHi1) = 
+   Vaango::Util::findIntersectionTableLinearSearch(indepVarData1, depVarData1,
+                                                   indepLo, depHi, indepHi, depHi);
+  //std::cout << "status = " << status << " index = " << index 
+  //          << " t_p = " << t_p << " t_q = " << t_q
+  //          << " x0 = " << indepValHi1 << " y0 = " << depValHi1 
+  //          << " seg = [[" << indepLo << "," << depHi << "],["
+  //                         << indepHi << "," << depHi << "]\n";
+
+
+  // Interpolate between the high and low values
+  //std::cout << "ep_v(0,0) = " << indepValLo0 << " ep_v(1,0) = " << indepValLo1
+  //          << "ep_v(0,1) = " << indepValHi0 << " ep_v(1,1) = " << indepValHi1 << "\n";
+  auto indepValLo = (1 - sval)*indepValLo0 + sval*indepValLo1;
+  auto indepValHi = (1 - sval)*indepValHi0 + sval*indepValHi1;
+
+  // Compute derivative
+  auto d_dep = depHi - depLo;
+  auto d_indep = indepValHi - indepValLo;
+  auto deriv = d_dep/d_indep;
+
+  return deriv;
+}
+
 std::size_t
 TabularData::findLocation(const double& value, const DoubleVec1D& varData) const
 {

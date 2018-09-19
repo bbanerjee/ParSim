@@ -38,6 +38,7 @@ configure_file(mlp_regression_keras_total_scaled.json mlp_regression_keras_total
 configure_file(mlp_regression_keras_total_scaled.h5 mlp_regression_keras_total_scaled.h5 COPYONLY)
 configure_file(polyline_sim_data.csv polyline_sim_data.csv COPYONLY)
 configure_file(DrySand_HydrostatData.json DrySand_HydrostatData.json COPYONLY)
+configure_file(DrySand_ElasticData.json DrySand_ElasticData.json COPYONLY)
 
 #------------------------
 # CTest tests

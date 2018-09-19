@@ -763,6 +763,10 @@ TabularPlasticityCap::computeElasticProperties(const ModelState_TabularCap& stat
   temp.plasticStrainTensor = plasticStrain;
   temp.updatePlasticStrainInvariants();
   ElasticModuli moduli = d_elastic->getCurrentElasticModuli(&temp);
+  #ifdef TEST_K_VARIATION
+    moduli.bulkModulus *= K_scale_factor;
+    moduli.shearModulus *= K_scale_factor;
+  #endif
   return std::make_tuple(moduli.bulkModulus, moduli.shearModulus);
 }
 
@@ -770,6 +774,10 @@ std::tuple<double, double>
 TabularPlasticityCap::computeElasticProperties(const ModelState_TabularCap& state) const
 {
   ElasticModuli moduli = d_elastic->getCurrentElasticModuli(&state);
+  #ifdef TEST_K_VARIATION
+    moduli.bulkModulus *= K_scale_factor;
+    moduli.shearModulus *= K_scale_factor;
+  #endif
   return std::make_tuple(moduli.bulkModulus, moduli.shearModulus);
 }
 

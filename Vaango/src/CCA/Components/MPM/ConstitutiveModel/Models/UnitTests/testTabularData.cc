@@ -701,3 +701,64 @@ TEST(TabularDataTest, intersect1D)
   //          << " x_p = " << x_p << " y_p = " << y_p << "\n";
   ASSERT_NEAR(x_p, 0.466059, 1.0e-6);
 }
+
+TEST(TabularDataTest, computeDerivative)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "constitutive_model");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "tabular_elastic");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // Create a child node
+  xmlNewChild(rootNode, nullptr, BAD_CAST "filename", BAD_CAST "DrySand_ElasticData.json");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "independent_variables", 
+              BAD_CAST "PlasticStrainVol, TotalStrainVol");
+  xmlNewChild(rootNode, nullptr, BAD_CAST "dependent_variables", 
+              BAD_CAST "Pressure");
+  auto interp = xmlNewChild(rootNode, nullptr, BAD_CAST "interpolation",
+                            BAD_CAST "");
+  xmlNewProp(interp, BAD_CAST "type", BAD_CAST "linear");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Create a table hydrostat
+  TabularData elastic(ps);
+  elastic.setup();
+
+  double deriv = elastic.computeDerivative(0, 0); 
+  //std::cout << "deriv = " << deriv << "\n";
+
+  deriv = elastic.computeDerivative(-0.5, 0); 
+  //std::cout << "deriv = " << deriv << "\n";
+
+  deriv = elastic.computeDerivative(0.1, 1.0e6); 
+  //std::cout << "deriv = " << deriv << "\n";
+
+  deriv = elastic.computeDerivative(0.1, -1.0e6); 
+  //std::cout << "deriv = " << deriv << "\n";
+
+  deriv = elastic.computeDerivative(0.2, 1.0e8); 
+  //std::cout << "deriv = " << deriv << "\n";
+
+  deriv = elastic.computeDerivative(0.3, 5.0e8); 
+  //std::cout << "deriv = " << deriv << "\n";
+
+  deriv = elastic.computeDerivative(0.5, 5.0e8); 
+  //std::cout << "deriv = " << deriv << "\n";
+
+  deriv = elastic.computeDerivative(0.4, 1.5e9); 
+  //std::cout << "deriv = " << deriv << "\n";
+
+}

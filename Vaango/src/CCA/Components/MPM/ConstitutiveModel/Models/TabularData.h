@@ -75,13 +75,20 @@ public:
   // double interpolateCubicSpline1D(const double& t);
 
   /*
+   *  Compute the derivative of two-dimensional data set (two independent variables)
+   *  d_dependent_var/d_independent_var[1]
+   *  at a given value of independent_var[0]
+   */
+  double computeDerivative(double indepValue, double depValue) const; 
+
+  /*
    * Find the intersection of 1D tabular data with a line segment
    *  assuming x = independent variable
    *           y = dependent variable
    *  indepLo = x_lo of line segment
-   *  indepHi = x_hi of line sgement
+   *  indepHi = x_hi of line segment
    *  depLo = y_lo of line segment
-   *  depHi = y_hi of line sgement
+   *  depHi = y_hi of line segment
    *
    * Returns:
    *  bool : status indicating if there is an intersection or not
