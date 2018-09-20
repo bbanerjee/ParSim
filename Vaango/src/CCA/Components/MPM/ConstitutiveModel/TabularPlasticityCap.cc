@@ -75,8 +75,13 @@ constexpr double K_scale_factor = 5;
 constexpr double X_scale_factor = 0.1;
 #endif
 
-#define DO_CONSISTENCY_BISECTION_ELASTIC
-//#define DO_CONSISTENCY_BISECTION_SIMPLIFIED
+//#define TEST_CAP_TRANSLATION
+#ifdef TEST_CAP_TRANSLATION
+constexpr double X_trans_factor = 0.05;
+#endif
+
+//#define DO_CONSISTENCY_BISECTION_ELASTIC
+#define DO_CONSISTENCY_BISECTION_SIMPLIFIED
 //#define DO_FIRST_ORDER_HARDENING
 //#define CHECK_CONSISTENCY_BISECTION_CONVERGENCE
 //#define CHECK_CONSISTENCY_BISECTION_K
@@ -99,7 +104,7 @@ constexpr double X_scale_factor = 0.1;
 //#define CHECK_YIELD_SURFACE_NORMAL
 //#define CHECK_FLOATING_POINT_OVERFLOW
 //#define DEBUG_YIELD_BISECTION_R
-#define CHECK_ELASTIC_STRAIN
+//#define CHECK_ELASTIC_STRAIN
 //#define CHECK_RETURN_ALIGNMENT
 //#define TIME_TABLE_LOOKUP
 //#define TIME_SUBSTEP
@@ -2194,6 +2199,9 @@ TabularPlasticityCap::computeInternalVariables(ModelState_TabularCap& state,
   tempState.elasticStrainTensor += (Util::Identity*delta_eps_e_v);
   tempState.plasticStrainTensor += (Util::Identity*delta_eps_p_v);
   tempState.updatePlasticStrainInvariants();
+  #ifdef TEST_CAP_TRANSLATION
+    tempState.ep_v -= X_trans_factor;
+  #endif
 
   // Update the hydrostatic compressive strength
   double X_new = d_capX->computeInternalVariable(&tempState);

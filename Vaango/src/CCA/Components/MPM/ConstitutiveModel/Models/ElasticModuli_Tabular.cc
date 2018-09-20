@@ -28,7 +28,7 @@
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
-#define COMPUTE_BULK_MODULUS_FROM_PRESSURE
+//#define COMPUTE_BULK_MODULUS_FROM_PRESSURE
 //#define DEBUG_INTERPOLATION
 
 using namespace Vaango;
