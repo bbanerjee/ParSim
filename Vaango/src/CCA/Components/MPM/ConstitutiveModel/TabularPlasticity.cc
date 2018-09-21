@@ -65,7 +65,7 @@
 #include <limits>
 
 #define CHECK_FOR_NAN
-#define CHECK_PLASTIC_RATE
+//#define CHECK_PLASTIC_RATE
 //#define CHECK_FOR_NAN_EXTRA
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
@@ -81,7 +81,7 @@
 //#define CHECK_FLOATING_POINT_OVERFLOW
 //#define DEBUG_YIELD_BISECTION_R
 //#define CHECK_ELASTIC_STRAIN
-#define CHECK_RETURN_ALIGNMENT
+//#define CHECK_RETURN_ALIGNMENT
 
 using namespace Vaango;
 using Uintah::VarLabel;

@@ -635,6 +635,8 @@ ParticleCreator::initializeParticle(const Patch* patch,
       // assume unit radian extent in the circumferential direction
       pvars.pvolume[i] = p.x()*
                    (size(0,0)*size(1,1)-size(0,1)*size(1,0))*dxcc.x()*dxcc.y();
+      //std::cout << "dx_cc = " << dxcc << " size = " << size 
+      //          << " x = " << p.x() << " vol = " << pvars.pvolume[i] << "\n";
      } else {
      // standard voxel volume
      pvars.pvolume[i]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();

@@ -1517,7 +1517,7 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
 
     //__________________________________
     if (pg->size() > 1) {
-      proc0cout << "Exchanging particles " << __FILE__ << __LINE__ << std::endl;
+      //proc0cout << "Exchanging particles " << __FILE__ << __LINE__ << std::endl;
       // send the particles where they need to go
       exchangeParticles(pg, patches, matls, old_dw, new_dw,
                         &scatter_records, total_reloc);

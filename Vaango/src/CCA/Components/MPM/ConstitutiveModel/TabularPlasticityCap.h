@@ -140,6 +140,7 @@ private:
   InternalVariableModel* d_capX;
   double d_consistency_bisection_tolerance;
   double d_max_bisection_iterations;
+  bool d_decrease_substep;
 
   void initializeInternalVariables(const Patch* patch, const MPMMaterial* matl,
                                    ParticleSubset* pset, DataWarehouse* new_dw,

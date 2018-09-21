@@ -140,6 +140,9 @@ TabularPlasticityCap::TabularPlasticityCap(Uintah::ProblemSpecP& ps, Uintah::MPM
          << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
+
+  ps->getWithDefault("decrease_substep_at_high_curvature",
+                     d_decrease_substep, false);
 }
 
 TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap& cm)
@@ -150,6 +153,7 @@ TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap& cm)
   // Consistency bisection
   d_consistency_bisection_tolerance = cm.d_consistency_bisection_tolerance;
   d_max_bisection_iterations = cm.d_max_bisection_iterations;
+  d_decrease_substep = cm.d_decrease_substep;
 
 }
 
@@ -161,6 +165,7 @@ TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap* cm)
   // Consistency bisection
   d_consistency_bisection_tolerance = cm->d_consistency_bisection_tolerance;
   d_max_bisection_iterations = cm->d_max_bisection_iterations;
+  d_decrease_substep = cm->d_decrease_substep;
 }
 
 TabularPlasticityCap::~TabularPlasticityCap()
@@ -185,10 +190,12 @@ TabularPlasticityCap::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 
   cm_ps->appendElement("yield_surface_radius_scaling_factor",
                        d_cm.yield_scale_fac);
-  cm_ps->appendElement("consistency_bisection_tolerance",
-                       d_consistency_bisection_tolerance);
   cm_ps->appendElement("subcycling_characteristic_number",
                        d_cm.subcycling_characteristic_number);
+  cm_ps->appendElement("consistency_bisection_tolerance",
+                       d_consistency_bisection_tolerance);
+  cm_ps->appendElement("decrease_substep_at_high_curvature",
+                       d_decrease_substep);
 }
 
 TabularPlasticityCap*
@@ -1663,71 +1670,73 @@ TabularPlasticityCap::firstOrderHardeningUpdate(const Matrix3& deltaEps_new,
   if (angle_M_n_np1 > 1.0e-6) {
     status = Status::TOO_LARGE_YIELD_NORMAL_CHANGE;
 
-    std::cout << "M_n = " << M_n << std::endl;
-    std::cout << "M_np1 = " << M_np1 << std::endl;
-    std::cout << "angle =" << angle_M_n_np1 << "\n";
+    #ifdef CHECK_RETURN_ALIGNMENT
+      std::cout << "M_n = " << M_n << std::endl;
+      std::cout << "M_np1 = " << M_np1 << std::endl;
+      std::cout << "angle =" << angle_M_n_np1 << "\n";
 
-    auto KG_dKdG_n = d_elastic->getElasticModuliAndDerivatives(&state_n);
-    auto KG_dKdG_np1 = d_elastic->getElasticModuliAndDerivatives(&state_np1);
-    auto KG_n = KG_dKdG_n.first;
-    auto KG_np1 = KG_dKdG_np1.first;
-    auto dKdG_n = KG_dKdG_n.second;
-    auto dKdG_np1 = KG_dKdG_np1.second;
-    auto p_n = state_n.I1/3.0;
-    auto p_np1 = state_np1.I1/3.0;
-    auto S_n = state_n.deviatoricStressTensor;
-    auto S_np1 = state_np1.deviatoricStressTensor;
-    Matrix3 Z_n = computeZMatrix(KG_n, dKdG_n, p_n, S_n, M_n);
-    Matrix3 Z_np1 = computeZMatrix(KG_np1, dKdG_np1, p_np1, S_np1, M_np1);
-    std::cout << "Z_n = " << Z_n << std::endl;
-    std::cout << "Z_np1 = " << Z_np1 << std::endl;
+      auto KG_dKdG_n = d_elastic->getElasticModuliAndDerivatives(&state_n);
+      auto KG_dKdG_np1 = d_elastic->getElasticModuliAndDerivatives(&state_np1);
+      auto KG_n = KG_dKdG_n.first;
+      auto KG_np1 = KG_dKdG_np1.first;
+      auto dKdG_n = KG_dKdG_n.second;
+      auto dKdG_np1 = KG_dKdG_np1.second;
+      auto p_n = state_n.I1/3.0;
+      auto p_np1 = state_np1.I1/3.0;
+      auto S_n = state_n.deviatoricStressTensor;
+      auto S_np1 = state_np1.deviatoricStressTensor;
+      Matrix3 Z_n = computeZMatrix(KG_n, dKdG_n, p_n, S_n, M_n);
+      Matrix3 Z_np1 = computeZMatrix(KG_np1, dKdG_np1, p_np1, S_np1, M_np1);
+      std::cout << "Z_n = " << Z_n << std::endl;
+      std::cout << "Z_np1 = " << Z_np1 << std::endl;
 
-    // Compute CM = C:M
-    double mu_n = KG_n.shearModulus;
-    double mu_np1 = KG_np1.shearModulus;
-    double lambda_n = KG_n.bulkModulus - 2.0 / 3.0 * mu_n;
-    double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
-    Matrix3 CM_n = Util::Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
-    Matrix3 CM_np1 = Util::Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
-    std::cout << "CM_n = " << CM_n << std::endl;
-    std::cout << "CM_np1 = " << CM_np1 << std::endl;
+      // Compute CM = C:M
+      double mu_n = KG_n.shearModulus;
+      double mu_np1 = KG_np1.shearModulus;
+      double lambda_n = KG_n.bulkModulus - 2.0 / 3.0 * mu_n;
+      double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
+      Matrix3 CM_n = Util::Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
+      Matrix3 CM_np1 = Util::Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
+      std::cout << "CM_n = " << CM_n << std::endl;
+      std::cout << "CM_np1 = " << CM_np1 << std::endl;
 
-    // Compute P = CM + Z;
-    Matrix3 P_n = CM_n + Z_n;
-    Matrix3 P_np1 = CM_np1 + Z_np1;
-    std::cout << "P_n = " << P_n << std::endl;
-    std::cout << "P_np1 = " << P_np1 << std::endl;
+      // Compute P = CM + Z;
+      Matrix3 P_n = CM_n + Z_n;
+      Matrix3 P_np1 = CM_np1 + Z_np1;
+      std::cout << "P_n = " << P_n << std::endl;
+      std::cout << "P_np1 = " << P_np1 << std::endl;
 
-    // Compute Gamma (sig_trial - sig_n+1):M_n+1/(P_n:M_n+1)
-    Matrix3 sig_trial = state_k_trial.stressTensor;
-    Matrix3 sig_new = sig_fixed;
-    double Gamma_n = (sig_trial - sig_new).Contract(M_np1)/P_n.Contract(M_np1);
-    double Gamma_np1 = (sig_trial - sig_new).Contract(M_np1)/P_np1.Contract(M_np1);
-    std::cout << "Gamma_n = " << Gamma_n << " Gamma_np1 = " << Gamma_np1 << "\n";
+      // Compute Gamma (sig_trial - sig_n+1):M_n+1/(P_n:M_n+1)
+      Matrix3 sig_trial = state_k_trial.stressTensor;
+      Matrix3 sig_new = sig_fixed;
+      double Gamma_n = (sig_trial - sig_new).Contract(M_np1)/P_n.Contract(M_np1);
+      double Gamma_np1 = (sig_trial - sig_new).Contract(M_np1)/P_np1.Contract(M_np1);
+      std::cout << "Gamma_n = " << Gamma_n << " Gamma_np1 = " << Gamma_np1 << "\n";
 
-    // Compute sigma
-    Matrix3 sig_np1 = sig_trial - P_n * Gamma_n;
-    std::cout << "sig_np1 = " << sig_np1 << std::endl;
-    std::cout << "sig_fixed = " << sig_fixed << std::endl;
+      // Compute sigma
+      Matrix3 sig_np1 = sig_trial - P_n * Gamma_n;
+      std::cout << "sig_np1 = " << sig_np1 << std::endl;
+      std::cout << "sig_fixed = " << sig_fixed << std::endl;
 
-    // Compute volumetric plastic strain
-    Matrix3 eps_p = state_n.plasticStrainTensor + deltaEps_p_fixed;
-    double ep_v = eps_p.Trace();
+      // Compute volumetric plastic strain
+      Matrix3 eps_p = state_n.plasticStrainTensor + deltaEps_p_fixed;
+      double ep_v = eps_p.Trace();
 
-    // Compute eps_p and ev_v^p
-    Matrix3 Eps_p_n = state_n.plasticStrainTensor + M_n * Gamma_n ;
-    double Eps_p_v_n = state_n.ep_v + M_n.Trace() * Gamma_n;
-    Matrix3 Eps_e_n = deltaEps_new - Eps_p_n; 
-    Matrix3 Eps_p_np1 = state_n.plasticStrainTensor + M_np1 * Gamma_np1 ;
-    double Eps_p_v_np1 = state_n.ep_v + M_np1.Trace() * Gamma_np1;
-    Matrix3 Eps_e_np1 = deltaEps_new - Eps_p_np1; 
-    std::cout << "Eps_p_n = " << Eps_p_n << "\n"; 
-    std::cout << "eps_p = " << eps_p << "\n"; 
-    std::cout << "Eps_e_n = " << Eps_e_n << "\n"; 
-    std::cout << "Eps_p_np1 = " << Eps_p_np1 << "\n"; 
-    std::cout << "Eps_e_np1 = " << Eps_e_np1 << "\n"; 
-    std::cout << "Eps_p_v_n = " << Eps_p_v_n 
-              << " Eps_p_v_np1 = " << Eps_p_v_np1 << " ep_v = " << ep_v << "\n";
+      // Compute eps_p and ev_v^p
+      Matrix3 Eps_p_n = state_n.plasticStrainTensor + M_n * Gamma_n ;
+      double Eps_p_v_n = state_n.ep_v + M_n.Trace() * Gamma_n;
+      Matrix3 Eps_e_n = deltaEps_new - Eps_p_n; 
+      Matrix3 Eps_p_np1 = state_n.plasticStrainTensor + M_np1 * Gamma_np1 ;
+      double Eps_p_v_np1 = state_n.ep_v + M_np1.Trace() * Gamma_np1;
+      Matrix3 Eps_e_np1 = deltaEps_new - Eps_p_np1; 
+      std::cout << "Eps_p_n = " << Eps_p_n << "\n"; 
+      std::cout << "eps_p = " << eps_p << "\n"; 
+      std::cout << "Eps_e_n = " << Eps_e_n << "\n"; 
+      std::cout << "Eps_p_np1 = " << Eps_p_np1 << "\n"; 
+      std::cout << "Eps_e_np1 = " << Eps_e_np1 << "\n"; 
+      std::cout << "Eps_p_v_n = " << Eps_p_v_n 
+                << " Eps_p_v_np1 = " << Eps_p_v_np1 << " ep_v = " << ep_v << "\n";
+    #endif
   } else {
 
     // Compute elastic moduli at sigma^F
@@ -1849,85 +1858,89 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
   state_np1.stressTensor = sig_fixed;
   state_np1.updateStressInvariants();
 
-  Matrix3 M_n, M_np1;
-  d_yield->eval_df_dsigma(Util::Identity, &state_n, M_n);
-  d_yield->eval_df_dsigma(Util::Identity, &state_np1, M_np1);
-  M_n /= M_n.Norm();
-  double norm_M_np1 = M_np1.Norm();
-  M_np1 /= norm_M_np1;
-  double angle_M_n_np1 = std::abs(M_n.Contract(M_np1) - 1.0);
+  if (d_decrease_substep) {
+    Matrix3 M_n, M_np1;
+    d_yield->eval_df_dsigma(Util::Identity, &state_n, M_n);
+    d_yield->eval_df_dsigma(Util::Identity, &state_np1, M_np1);
+    M_n /= M_n.Norm();
+    double norm_M_np1 = M_np1.Norm();
+    M_np1 /= norm_M_np1;
+    double angle_M_n_np1 = std::abs(M_n.Contract(M_np1) - 1.0);
 
-  if (angle_M_n_np1 > 1.0e-6) {
-    status = Status::TOO_LARGE_YIELD_NORMAL_CHANGE;
+    if (angle_M_n_np1 > 1.0e-6) {
+      status = Status::TOO_LARGE_YIELD_NORMAL_CHANGE;
 
-    std::cout << "M_n = " << M_n << std::endl;
-    std::cout << "M_np1 = " << M_np1 << std::endl;
-    std::cout << "angle =" << angle_M_n_np1 << "\n";
+      #ifdef CHECK_RETURN_ALIGNMENT
+        std::cout << "M_n = " << M_n << std::endl;
+        std::cout << "M_np1 = " << M_np1 << std::endl;
+        std::cout << "angle =" << angle_M_n_np1 << "\n";
 
-    auto KG_dKdG_n = d_elastic->getElasticModuliAndDerivatives(&state_n);
-    auto KG_dKdG_np1 = d_elastic->getElasticModuliAndDerivatives(&state_np1);
-    auto KG_n = KG_dKdG_n.first;
-    auto KG_np1 = KG_dKdG_np1.first;
-    auto dKdG_n = KG_dKdG_n.second;
-    auto dKdG_np1 = KG_dKdG_np1.second;
-    auto p_n = state_n.I1/3.0;
-    auto p_np1 = state_np1.I1/3.0;
-    auto S_n = state_n.deviatoricStressTensor;
-    auto S_np1 = state_np1.deviatoricStressTensor;
-    Matrix3 Z_n = computeZMatrix(KG_n, dKdG_n, p_n, S_n, M_n);
-    Matrix3 Z_np1 = computeZMatrix(KG_np1, dKdG_np1, p_np1, S_np1, M_np1);
-    std::cout << "Z_n = " << Z_n << std::endl;
-    std::cout << "Z_np1 = " << Z_np1 << std::endl;
+        auto KG_dKdG_n = d_elastic->getElasticModuliAndDerivatives(&state_n);
+        auto KG_dKdG_np1 = d_elastic->getElasticModuliAndDerivatives(&state_np1);
+        auto KG_n = KG_dKdG_n.first;
+        auto KG_np1 = KG_dKdG_np1.first;
+        auto dKdG_n = KG_dKdG_n.second;
+        auto dKdG_np1 = KG_dKdG_np1.second;
+        auto p_n = state_n.I1/3.0;
+        auto p_np1 = state_np1.I1/3.0;
+        auto S_n = state_n.deviatoricStressTensor;
+        auto S_np1 = state_np1.deviatoricStressTensor;
+        Matrix3 Z_n = computeZMatrix(KG_n, dKdG_n, p_n, S_n, M_n);
+        Matrix3 Z_np1 = computeZMatrix(KG_np1, dKdG_np1, p_np1, S_np1, M_np1);
+        std::cout << "Z_n = " << Z_n << std::endl;
+        std::cout << "Z_np1 = " << Z_np1 << std::endl;
 
-    // Compute CM = C:M
-    double mu_n = KG_n.shearModulus;
-    double mu_np1 = KG_np1.shearModulus;
-    double lambda_n = KG_n.bulkModulus - 2.0 / 3.0 * mu_n;
-    double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
-    Matrix3 CM_n = Util::Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
-    Matrix3 CM_np1 = Util::Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
-    std::cout << "CM_n = " << CM_n << std::endl;
-    std::cout << "CM_np1 = " << CM_np1 << std::endl;
+        // Compute CM = C:M
+        double mu_n = KG_n.shearModulus;
+        double mu_np1 = KG_np1.shearModulus;
+        double lambda_n = KG_n.bulkModulus - 2.0 / 3.0 * mu_n;
+        double lambda_np1 = KG_np1.bulkModulus - 2.0 / 3.0 * mu_np1;
+        Matrix3 CM_n = Util::Identity * (lambda_n * M_n.Trace()) + M_n * (2.0 * mu_n);
+        Matrix3 CM_np1 = Util::Identity * (lambda_np1 * M_np1.Trace()) + M_np1 * (2.0 * mu_np1);
+        std::cout << "CM_n = " << CM_n << std::endl;
+        std::cout << "CM_np1 = " << CM_np1 << std::endl;
 
-    // Compute P = CM + Z;
-    Matrix3 P_n = CM_n + Z_n;
-    Matrix3 P_np1 = CM_np1 + Z_np1;
-    std::cout << "P_n = " << P_n << std::endl;
-    std::cout << "P_np1 = " << P_np1 << std::endl;
+        // Compute P = CM + Z;
+        Matrix3 P_n = CM_n + Z_n;
+        Matrix3 P_np1 = CM_np1 + Z_np1;
+        std::cout << "P_n = " << P_n << std::endl;
+        std::cout << "P_np1 = " << P_np1 << std::endl;
 
-    // Compute Gamma (sig_trial - sig_n+1):M_n+1/(P_n:M_n+1)
-    Matrix3 sig_trial = state_k_trial.stressTensor;
-    Matrix3 sig_new = sig_fixed;
-    double Gamma_n = (sig_trial - sig_new).Contract(M_np1)/P_n.Contract(M_np1);
-    double Gamma_np1 = (sig_trial - sig_new).Contract(M_np1)/P_np1.Contract(M_np1);
-    std::cout << "Gamma_n = " << Gamma_n << " Gamma_np1 = " << Gamma_np1 << "\n";
+        // Compute Gamma (sig_trial - sig_n+1):M_n+1/(P_n:M_n+1)
+        Matrix3 sig_trial = state_k_trial.stressTensor;
+        Matrix3 sig_new = sig_fixed;
+        double Gamma_n = (sig_trial - sig_new).Contract(M_np1)/P_n.Contract(M_np1);
+        double Gamma_np1 = (sig_trial - sig_new).Contract(M_np1)/P_np1.Contract(M_np1);
+        std::cout << "Gamma_n = " << Gamma_n << " Gamma_np1 = " << Gamma_np1 << "\n";
 
-    // Compute sigma
-    Matrix3 sig_np1 = sig_trial - P_n * Gamma_n;
-    std::cout << "sig_np1 = " << sig_np1 << std::endl;
-    std::cout << "sig_fixed = " << sig_fixed << std::endl;
+        // Compute sigma
+        Matrix3 sig_np1 = sig_trial - P_n * Gamma_n;
+        std::cout << "sig_np1 = " << sig_np1 << std::endl;
+        std::cout << "sig_fixed = " << sig_fixed << std::endl;
 
-    // Compute volumetric plastic strain
-    Matrix3 eps_p = state_n.plasticStrainTensor + deltaEps_p_fixed;
-    double ep_v = eps_p.Trace();
+        // Compute volumetric plastic strain
+        Matrix3 eps_p = state_n.plasticStrainTensor + deltaEps_p_fixed;
+        double ep_v = eps_p.Trace();
 
-    // Compute eps_p and ev_v^p
-    Matrix3 Eps_p_n = state_n.plasticStrainTensor + M_n * Gamma_n ;
-    double Eps_p_v_n = state_n.ep_v + M_n.Trace() * Gamma_n;
-    Matrix3 Eps_e_n = deltaEps_new - Eps_p_n; 
-    Matrix3 Eps_p_np1 = state_n.plasticStrainTensor + M_np1 * Gamma_np1 ;
-    double Eps_p_v_np1 = state_n.ep_v + M_np1.Trace() * Gamma_np1;
-    Matrix3 Eps_e_np1 = deltaEps_new - Eps_p_np1; 
-    std::cout << "Eps_p_n = " << Eps_p_n << "\n"; 
-    std::cout << "eps_p = " << eps_p << "\n"; 
-    std::cout << "Eps_e_n = " << Eps_e_n << "\n"; 
-    std::cout << "Eps_p_np1 = " << Eps_p_np1 << "\n"; 
-    std::cout << "Eps_e_np1 = " << Eps_e_np1 << "\n"; 
-    std::cout << "Eps_p_v_n = " << Eps_p_v_n 
-              << " Eps_p_v_np1 = " << Eps_p_v_np1 << " ep_v = " << ep_v << "\n";
+        // Compute eps_p and ev_v^p
+        Matrix3 Eps_p_n = state_n.plasticStrainTensor + M_n * Gamma_n ;
+        double Eps_p_v_n = state_n.ep_v + M_n.Trace() * Gamma_n;
+        Matrix3 Eps_e_n = deltaEps_new - Eps_p_n; 
+        Matrix3 Eps_p_np1 = state_n.plasticStrainTensor + M_np1 * Gamma_np1 ;
+        double Eps_p_v_np1 = state_n.ep_v + M_np1.Trace() * Gamma_np1;
+        Matrix3 Eps_e_np1 = deltaEps_new - Eps_p_np1; 
+        std::cout << "Eps_p_n = " << Eps_p_n << "\n"; 
+        std::cout << "eps_p = " << eps_p << "\n"; 
+        std::cout << "Eps_e_n = " << Eps_e_n << "\n"; 
+        std::cout << "Eps_p_np1 = " << Eps_p_np1 << "\n"; 
+        std::cout << "Eps_e_np1 = " << Eps_e_np1 << "\n"; 
+        std::cout << "Eps_p_v_n = " << Eps_p_v_n 
+                  << " Eps_p_v_np1 = " << Eps_p_v_np1 << " ep_v = " << ep_v << "\n";
+      #endif
 
-    return status;
-  } 
+      return status;
+    } 
+  }
 
   // bisection convergence tolerance on eta (if changed, change imax)
   const double TOLERANCE = d_consistency_bisection_tolerance;

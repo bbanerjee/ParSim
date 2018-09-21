@@ -31,6 +31,7 @@
 #include <chrono>
 #include <cmath>
 
+#define DO_BINARY_CLOSEST_SEGMENT
 #define DO_CLOSEST_POINT_ELASTIC_CHECK
 //#define DEBUG_CLOSEST_POINT_ELASTIC
 #define USE_NEWTON_CLOSEST_POINT
@@ -530,8 +531,13 @@ YieldCond_TabularCap::checkClosestPointDistance(const ModelState_TabularCap* sta
 
   // Find the closest segments
   Polyline p_J2_segments;
-  std::size_t closest_index = 
-    Vaango::Util::getClosestSegments(trial_pt, yield_f_pts, p_J2_segments);
+  #ifdef DO_BINARY_CLOSEST_SEGMENT
+    std::size_t closest_index = 
+      Vaango::Util::getClosestSegmentsBinarySearch(trial_pt, yield_f_pts, p_J2_segments);
+  #else
+    std::size_t closest_index = 
+      Vaango::Util::getClosestSegments(trial_pt, yield_f_pts, p_J2_segments);
+  #endif
 
   // Get the yield surface points for the closest segments
   // (Fit quadratic B_spline)
@@ -1107,8 +1113,13 @@ YieldCond_TabularCap::getClosestPointSpline(const ModelState_TabularCap* state,
 
   // Find the closest segments
   Polyline z_r_segments;
-  std::size_t closest_index = 
-    Vaango::Util::getClosestSegments(z_r_pt, z_r_table, z_r_segments);
+  #ifdef DO_BINARY_CLOSEST_SEGMENT
+    std::size_t closest_index = 
+      Vaango::Util::getClosestSegmentsBinarySearch(z_r_pt, z_r_table, z_r_segments);
+  #else
+    std::size_t closest_index = 
+      Vaango::Util::getClosestSegments(z_r_pt, z_r_table, z_r_segments);
+  #endif
 
   // Get the yield surface points for the closest segments
   // (Fit quadratic B_spline)
@@ -1187,8 +1198,13 @@ YieldCond_TabularCap::getClosestPointSplineNewton(const ModelState_TabularCap* s
 
   // Find the closest segments
   Polyline z_r_segments;
-  std::size_t closest_index = 
-    Vaango::Util::getClosestSegments(z_r_pt, z_r_table, z_r_segments);
+  #ifdef DO_BINARY_CLOSEST_SEGMENT
+    std::size_t closest_index = 
+      Vaango::Util::getClosestSegmentsBinarySearch(z_r_pt, z_r_table, z_r_segments);
+  #else
+    std::size_t closest_index = 
+      Vaango::Util::getClosestSegments(z_r_pt, z_r_table, z_r_segments);
+  #endif
 
   // Get the yield surface points for the closest segments
   // (Fit quadratic B_spline)

@@ -1122,9 +1122,12 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
         d_eos->computePressure(matl, state, tensorF_new, tensorD, delT);
 
       double Dkk = tensorD.Trace();
+      /*
+       // **WARNING** Produces negative Tdot
       double dTdt_isentropic = d_eos->computeIsentropicTemperatureRate(
         temperature, rho_0, rho_cur, Dkk);
       pdTdt[idx] += dTdt_isentropic;
+      */
 
       // Calculate Tdot from viscoelasticity
       double taylorQuinney = d_initialData.Chi;
@@ -1146,6 +1149,13 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       // Calculate Tdot due to artificial viscosity
       double Tdot_AV = de_s / state->specificHeat;
       pdTdt[idx] += Tdot_AV * include_AV_heating;
+
+      if (pdTdt[idx] < 0.0) {
+        std::cout << "dTdt = " << pdTdt[idx] 
+                  //<< " dTdT_isen = " << dTdt_isentropic
+                  << " dTdT_plas = " << Tdot_VW
+                  << " dTdT_visc = " << Tdot_AV << "\n";
+      }
 
       Matrix3 tensorHy = one * p;
 

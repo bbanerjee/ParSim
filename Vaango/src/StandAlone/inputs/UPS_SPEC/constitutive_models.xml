@@ -738,6 +738,7 @@
     <eq_plastic_strain_at_failure spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture" />
     <yield_surface_radius_scaling_factor spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture tabular_plasticity tabular_plasticity_cap" />
     <consistency_bisection_tolerance spec="OPTIONAL DOUBLE" need_applies_to="type arena arena_mixture tabular_plasticity tabular_plasticity_cap" />
+    <decrease_substep_at_high_curvature spec="OPTIONAL BOOLEAN" need_applies_to="type tabular_plasticity_cap" />
 
     <initialize_with_body_force spec="OPTIONAL BOOLEAN" need_applies_to="type Arenisca3 arena arena_mixture"/>
     <surface_reference_point    spec="OPTIONAL VECTOR"  need_applies_to="type Arenisca3 arena arena_mixture"/>
