@@ -604,7 +604,10 @@ MPMICE::scheduleTimeAdvance(const LevelP& inlevel, SchedulerP& sched)
 
   d_mpm->scheduleExMomIntegrated(             sched, mpm_patches, mpm_matls);
   d_mpm->scheduleSetGridBoundaryConditions(   sched, mpm_patches, mpm_matls);
+  d_mpm->scheduleComputeDeformationGradient(  sched, mpm_patches, mpm_matls);
   d_mpm->scheduleComputeStressTensor(         sched, mpm_patches, mpm_matls);
+  d_mpm->scheduleComputeBasicDamage(          sched, mpm_patches, mpm_matls);
+  d_mpm->scheduleUpdateErosionParameter(      sched, mpm_patches, mpm_matls);
   d_mpm->scheduleAddNewParticles(             sched, mpm_patches, mpm_matls);
   d_mpm->scheduleConvertLocalizedParticles(   sched, mpm_patches, mpm_matls);
   d_mpm->scheduleInterpolateToParticlesAndUpdate(sched, mpm_patches, mpm_matls);

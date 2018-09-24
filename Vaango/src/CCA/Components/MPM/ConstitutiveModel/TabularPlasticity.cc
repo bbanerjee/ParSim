@@ -1614,6 +1614,13 @@ TabularPlasticity::computeRhoMicroCM(double pressure, const double p_ref,
   std::tie(status, eps_v_bar, p_bar) = d_hydrostat.intersect1D(-10, 10, p_gauge, p_gauge);
   double J = std::exp(-eps_v_bar);
   double rho_cur = rho_0 / J;
+  if (std::isinf(rho_cur) || rho_cur < 0) {
+    std::ostringstream out;
+    out << "rho_0 = " << rho_0 << " rho_cur = " << rho_cur << " J = " << J << "\n";
+    out << "status = " << status << " eps_v_bar = " << eps_v_bar 
+        << " p_bar = " << p_bar << " p_gauge  = " << p_gauge << "\n";
+    throw InvalidValue(out.str(), __FILE__, __LINE__);
+  }
 
   return rho_cur;
 }
@@ -1634,15 +1641,27 @@ TabularPlasticity::computePressEOSCM(double rho_cur, double& pressure, double p_
   pressure = p_ref + p_gauge;
 
   double eps_v_bar_hi, p_bar_hi;
-  p_bar += 1.0;
-  std::tie(status, eps_v_bar_hi, p_bar_hi) = d_hydrostat.intersect1D(-10, 10, p_bar, p_bar);
+  p_bar_hi = p_bar + 1.0;
+  std::tie(status, eps_v_bar_hi, p_bar_hi) = d_hydrostat.intersect1D(-10, 10, p_bar_hi, p_bar_hi);
 
   double K = (p_bar_hi - p_bar)/(eps_v_bar_hi - eps_v_bar);
   double dJ_deps_v = J;
   double drho_dJ = -rho_0/(J * J);
   dp_drho = K/(drho_dJ * dJ_deps_v);
+
   
   soundSpeedSq = K / rho_cur;
+  if (std::isnan(dp_drho)) {
+    std::ostringstream out;
+    out << "rho_0 = " << rho_0 << " rho_cur = " << rho_cur << "\n";
+    out << "status = " << status << " eps_v_bar = " << eps_v_bar 
+        << " p_bar = " << p_bar << " eps_v  = " << eps_v << "\n";
+    out << "status = " << status << " eps_v_bar_hi = " << eps_v_bar_hi 
+              << " p_bar_hi = " << p_bar_hi << " p_bar  = " << p_bar << "\n";
+    out << " K = " << K << " drho_dJ = " << drho_dJ << " dp_drho = " << dp_drho
+        << " c2 = " << soundSpeedSq << "\n";
+    throw InvalidValue(out.str(), __FILE__, __LINE__);
+  }
 }
 
 double
