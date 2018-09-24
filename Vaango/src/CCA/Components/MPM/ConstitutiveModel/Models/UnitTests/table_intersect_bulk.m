@@ -1,7 +1,7 @@
 function table_intersect_bulk()
 
-  testdata()
-  %drysand()
+  %testdata()
+  drysand()
 
 end
 
@@ -145,6 +145,8 @@ function drysand()
   dp = 2 * dp;
   deps_v = eps_hi(2) - eps_lo(2);
   K = dp/deps_v
+
+  ee_v_lo = 0.1863605342573266; ep_v_lo = -0.2366592067829422;
   
 
 end

@@ -65,6 +65,7 @@
 #include <limits>
 
 #define CHECK_FOR_NAN
+//#define CHECK_ISFINITE
 //#define CHECK_PLASTIC_RATE
 //#define CHECK_FOR_NAN_EXTRA
 //#define WRITE_YIELD_SURF
@@ -718,6 +719,15 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
         double dx_ave = (dx.x() + dx.y() + dx.z()) * Util::one_third;
         double c_bulk = sqrt(bulk / rho_cur);
         p_q[idx] = artificialBulkViscosity(DD.Trace(), c_bulk, rho_cur, dx_ave);
+
+        #ifdef CHECK_ISFINITE
+          if (!std::isfinite(p_q[idx])) {
+            std::cout << "bulk = " << bulk << " rho_cur = " << rho_cur 
+                      << " c_bulk = " << c_bulk 
+                      << " D = " << DD << "\n";
+          }
+        #endif
+
       } else {
         p_q[idx] = 0.;
       }

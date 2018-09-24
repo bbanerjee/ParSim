@@ -46,6 +46,8 @@
 #include <iomanip>
 #include <iostream>
 
+#define CHECK_ISFINITE
+
 using namespace std;
 using namespace Uintah;
 using namespace Uintah;
@@ -548,6 +550,14 @@ JWLppMPM::computeStressTensor(const PatchSubset* patches,
         double c_bulk = sqrt(1.0 / (d_K * rho_cur));
         Matrix3 D = (pVelGrad_new[idx] + pVelGrad_new[idx].Transpose()) * 0.5;
         p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
+
+        #ifdef CHECK_ISFINITE
+          if (!std::isfinite(p_q[idx])) {
+            std::cout << "K = " << d_K << " rho_cur = " << rho_cur 
+                      << " c_bulk = " << c_bulk 
+                      << " D = " << D << "\n";
+          }
+        #endif
       } else {
         p_q[idx] = 0.;
       }
