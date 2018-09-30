@@ -31,7 +31,7 @@
 #include <chrono>
 #include <cmath>
 
-#define DO_BINARY_CLOSEST_SEGMENT
+//#define DO_BINARY_CLOSEST_SEGMENT
 #define DO_CLOSEST_POINT_ELASTIC_CHECK
 //#define DEBUG_CLOSEST_POINT_ELASTIC
 #define USE_NEWTON_CLOSEST_POINT
