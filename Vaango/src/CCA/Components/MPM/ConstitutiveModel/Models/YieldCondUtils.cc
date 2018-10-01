@@ -454,6 +454,22 @@ computeClosestPointQuadraticBSpline(const Uintah::Point pt,
     return std::make_tuple(closest, T, N);
   }
 
+  // If the three control points are collinear just return the
+  // closest point to the line
+  if (isCollinear(polyline[segmentStartIndex], 
+                  polyline[segmentStartIndex+1], 
+                  polyline[segmentStartIndex+2])) {
+    std::vector<Uintah::Point> segment_polyline = {{polyline[segmentStartIndex], 
+                                                    polyline[segmentStartIndex+1], 
+                                                    polyline[segmentStartIndex+2]}};
+    findClosestPoint(pt, segment_polyline, closest);
+    T.x(segment_polyline[1].x() - segment_polyline[0].x());
+    T.y(segment_polyline[1].y() - segment_polyline[0].y());
+    N.x(0);
+    N.y(0);
+    return std::make_tuple(closest, T, N);
+  }
+
   auto k = 2u;
   for (auto jj = segmentStartIndex; jj < segmentEndIndex - k + 1; jj++) {
     if (jj == 0) {

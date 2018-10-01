@@ -1233,6 +1233,10 @@ YieldCond_TabularCap::getClosestPointSplineNewton(const ModelState_TabularCap* s
                                                       seg_start, seg_end);
 
   #ifdef DEBUG_CLOSEST_POINT
+    std::cout << "ZRSeg0 = " << std::setprecision(16) << z_r_table[seg_start] << "\n";
+    std::cout << "ZRSeg1 = " << std::setprecision(16) << z_r_table[seg_start+1] << "\n";
+    std::cout << "ZRSeg2 = " << std::setprecision(16) << z_r_table[seg_start+2] << "\n";
+    std::cout << "ZRPoint = " << std::setprecision(16) << z_r_pt << "\n";
     std::cout << "ZRClose = " << std::setprecision(16) << z_r_closest << "\n";
     std::cout << "ZRTangent = " << std::setprecision(16) << z_r_tangent << "\n";
   #endif
