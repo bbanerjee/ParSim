@@ -71,7 +71,7 @@
         <constitutive_model type="tabular_plasticity_cap">
 
           <elastic_moduli_model type="tabular">
-            <filename>DrySand_ElasticData.json</filename>
+            <filename>DrySand_ElasticDataLinear.json</filename>
             <independent_variables>PlasticStrainVol, TotalStrainVol</independent_variables>
             <dependent_variables>Pressure</dependent_variables>
             <interpolation type="linear"/>
@@ -93,6 +93,12 @@
             <dependent_variables>Pressure</dependent_variables>
             <interpolation type="linear"/>
           </internal_variable_model>
+
+          <!-- Hydrostat -->
+          <filename>DrySand_HydrostatData.json</filename>
+          <independent_variables>TotalStrainVol</independent_variables>
+          <dependent_variables>Pressure</dependent_variables>
+          <interpolation type="linear"/>
 
           <consistency_bisection_tolerance>1.0e-4</consistency_bisection_tolerance>
           <yield_surface_radius_scaling_factor> 1000.0 </yield_surface_radius_scaling_factor>

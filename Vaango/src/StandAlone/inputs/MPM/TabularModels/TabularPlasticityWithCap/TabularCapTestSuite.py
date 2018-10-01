@@ -56,16 +56,22 @@ POST_PROCESS_LIST = [
   'TabularCapTest_07_UniaxialStrainLoadUnloadNN.ups',
   'TabularCapTest_08_MultiaxialStrainLoadUnload.ups',
   'TabularCapTest_08_MultiaxialStrainLoadUnloadNN.ups',
+  'TabularCapTest_09_VertexTreatment.ups',
+  'TabularCapTest_10_VertexTreatment.ups',
+  'TabularCapTest_11_ElasticPlasticCoupling.ups',
 ]
 
 TEST_LIST = []
 for test in POST_PROCESS_LIST:
   TEST_LIST.append(default_inputs_path + '/' + test)
 
+#
+# Uncomment the tests you wish to run
+#
 TEST_LIST = [
 #  TEST_LIST[0], #Test 01
 #  TEST_LIST[1], #Test 01 (NN)
-  TEST_LIST[2], #Test 02
+#  TEST_LIST[2], #Test 02
 #  TEST_LIST[3], #Test 02 (NN)
 #  TEST_LIST[4], #Test 03
 #  TEST_LIST[5], #Test 03 (NN)
@@ -79,6 +85,9 @@ TEST_LIST = [
 #  TEST_LIST[13], #Test 07 (NN)
 #  TEST_LIST[14], #Test 08
 #  TEST_LIST[15], #Test 08 (NN)
+#  TEST_LIST[16], #Test 09
+#  TEST_LIST[17], #Test 10
+#  TEST_LIST[18], #Test 11
   ]
 ### --------------------- ###
 

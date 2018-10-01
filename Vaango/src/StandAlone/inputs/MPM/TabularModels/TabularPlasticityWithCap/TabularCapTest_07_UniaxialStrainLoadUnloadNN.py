@@ -49,7 +49,7 @@ def uniaxialStrainLoadUnloadNN(uda_path, save_path,**kwargs):
   param_text = material_dict['material string']
   compression = 'positive'
   color_snap = []
-  for ii in range(0, len(t_sim_snap)):
+  for ii in range(0, len(times_snap)):
     # Choose the tab20 colormap
     plt_color = cm.tab20(ii)
     color_snap.append(plt_color)
@@ -82,10 +82,9 @@ def uniaxialStrainLoadUnloadNN(uda_path, save_path,**kwargs):
       plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color) 
 
   # Plot yield surface
-    plotPQYieldSurfaceSim(plt, material_dict, yield_table, capX_snap[ii],
-                          ev_e_snap, ev_p_snap, times_snap,
-                          pbarmin, pbarmax, qmax, 
-                          compression, plt_color=plt_color)
+  plotPQYieldSurfaceSim(plt, material_dict, yield_table, capX_snap,
+                        ev_e_snap, ev_p_snap, times_snap, color_snap,
+                          pbarmin, pbarmax, qmax, compression)
 
   savePNG(save_path+'/UniaxialStrainLoadUnloadNN_yield_surface','1280x960')
   #plt.show()

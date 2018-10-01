@@ -84,6 +84,13 @@
             <interpolation type="linear"/>
           </plastic_yield_condition>
 
+          <!-- Hydrostat -->
+          <filename>DrySand_HydrostatData.json</filename>
+          <independent_variables>TotalStrainVol</independent_variables>
+          <dependent_variables>Pressure</dependent_variables>
+          <interpolation type="linear"/>
+
+
           <consistency_bisection_tolerance>1.0e-10</consistency_bisection_tolerance>
           <yield_surface_radius_scaling_factor> 1000.0 </yield_surface_radius_scaling_factor>
  	      <subcycling_characteristic_number>256</subcycling_characteristic_number>

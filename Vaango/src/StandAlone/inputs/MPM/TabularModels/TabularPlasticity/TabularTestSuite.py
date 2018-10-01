@@ -69,6 +69,9 @@ TEST_LIST = []
 for test in POST_PROCESS_LIST:
   TEST_LIST.append(default_inputs_path + '/' + test)
 
+#
+# Uncomment tests yo wish to run
+#
 TEST_LIST = [
 #  TEST_LIST[0], #Test 01
 #  TEST_LIST[1], #Test 01a
@@ -92,9 +95,8 @@ TEST_LIST = [
 #  TEST_LIST[19], #Test 11 (NN)
 #  TEST_LIST[20], #Test 12
 #  TEST_LIST[21], #Test 12 (NN)
-  TEST_LIST[22], #Test 13
+#  TEST_LIST[22], #Test 13
 #  TEST_LIST[23], #Test 13 (NN)
-
   ]
 ### --------------------- ###
 
@@ -181,7 +183,7 @@ def run_test(ups_path,WITH_MPI=False,NUM_PROCS=1,RESTART=False,DAMPING_OFF_NEW_E
   print("UDA path = ", uda_path)
   
   if POST_PROC_ONLY:
-    uda_path = uda_path+'.000'
+    uda_path = uda_path
   else:
     #Change current working directory to root path
     os.chdir(root_path)
@@ -218,7 +220,8 @@ def run_test(ups_path,WITH_MPI=False,NUM_PROCS=1,RESTART=False,DAMPING_OFF_NEW_E
         F_log.close()
         uda_path = uda_path+'.001'
     else:
-      uda_path = uda_path+'.000'
+      #uda_path = uda_path+'.000'
+      uda_path = uda_path
 
   print('Test done.')  
   print(os.path.dirname(os.path.dirname(uda_path)))
@@ -252,55 +255,15 @@ def run_all_tests(TEST_METHODS=False, CLEAR_UDA=False, POST_PROC_ONLY=False):
     
     
 if __name__ == "__main__":
-  #Determine number of CPU cores
-  NUM_CPUS = multiprocessing.cpu_count()
-  #Set MPI Flag intially to false
-  MPI_FLAG = False  
 
-  #Not setup yet. Need to scan ups to determine # patches
-  if False:
-    ABORT = False  
-    if len(sys.argv) ==3:
-      if sys.argcv[1] == '-mpirun':
-        MPI_FLAG = True
-        try:
-          NUM_CPUS = int(sys.argv[2])
-        except:
-          NUM_CPUS = 1
-          print('\nError: invalid number of processors entered with -mpirun flag')
-      else:
-        print('\nInvalid Arguments entered!\n\tuse: TabularTestSuite.py -mpirun <# processor cores>')
-        ABORT = True
-    else:
-      not_done = True
-      while not_done:
-        mpi_check = raw_input("Would you like to run using mpirun? (Y/N/(A)bort)\n").lower()
-        if mpi_check == 'y':
-          not_done_2 = True
-          MPI_FLAG = True
-          while not_done_2:
-            try:
-              num_cores = int(raw_input("Enter the number of cores to run on:\n"))
-              NUM_CPUS = num_cores
-              not_done_2 = False
-              not_done = False
-            except:
-              print('Invalid entry. Please try again.')
-        elif mpi_check == 'n':
-          not_done = False
-        elif mpi_check == 'a':
-          not_done = False
-          ABORT = True
-        if not(ABORT):
-          if multiprocessing.cpu_count()<NUM_CPUS:
-            NUM_CPUS=multiprocessing.cpu_count()
-            print('\nWarning: number of cores requested more than are available locally.\n\t# cores set to: ',NUM_CPUS)
-        print(' ')
-        run_all_tests()      
-  
+  MPI_FLAG = False
+  NUM_CPUS = 1
   TEST_METHODS = False
-  POST_PROC_ONLY = True
-  #POST_PROC_ONLY = False
+  POST_PROC_ONLY = False
+  if len(sys.argv) == 2:
+    if sys.argv[1] == '-post':
+      POST_PROC_ONLY = True
+  
   #CLEAR_UDA = True
   CLEAR_UDA = False
   run_all_tests(TEST_METHODS, CLEAR_UDA, POST_PROC_ONLY)

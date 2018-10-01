@@ -1,0 +1,9 @@
+{"Vaango_tabular_data": {
+  "Meta" : {
+    "title" : "Test linear Drucker-Prager elastic-plastic coupling yield data"
+  },
+  "Data" : {
+    "Pressure" : [-3.46410161513775e+06,  0.0],
+    "SqrtJ2" :   [  0,  1.84554869889689e+06]
+  }
+}}

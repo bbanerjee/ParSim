@@ -80,6 +80,13 @@
             <dependent_variables>SqrtJ2</dependent_variables>
             <interpolation type="linear"/>
           </plastic_yield_condition>
+
+          <!-- Hydrostat -->
+          <filename>DrySand_HydrostatData.json</filename>
+          <independent_variables>TotalStrainVol</independent_variables>
+          <dependent_variables>Pressure</dependent_variables>
+          <interpolation type="linear"/>
+
         </constitutive_model> 
         <geom_object>
           <box label = "Plate1">

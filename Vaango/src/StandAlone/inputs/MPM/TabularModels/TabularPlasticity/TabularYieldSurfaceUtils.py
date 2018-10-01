@@ -134,9 +134,13 @@ def computeClosestPoints(pbars, sqrtJ2s, pbars_hull, sqrtJ2s_hull):
 def computeYieldSurfacePoints(pbars, sqrtJ2s):
 
   # Compute convex hull of tabular data
-  hull = computeConvexHull(pbars, sqrtJ2s)
-  pbars_hull = list(hull[:,0])
-  sqrtJ2s_hull = list(hull[:,1])
+  if len(pbars) > 3:
+    hull = computeConvexHull(pbars, sqrtJ2s)
+    pbars_hull = list(hull[:,0])
+    sqrtJ2s_hull = list(hull[:,1])
+  else:
+    pbars_hull = pbars
+    sqrtJ2s_hull = sqrtJ2s
 
   # Find closest point projections of input data to convex hull
   closest = computeClosestPoints(pbars, sqrtJ2s, pbars_hull, sqrtJ2s_hull)

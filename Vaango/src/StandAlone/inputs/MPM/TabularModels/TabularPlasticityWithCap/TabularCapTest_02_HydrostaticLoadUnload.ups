@@ -9,7 +9,7 @@
   <SimulationComponent type="mpm" />
 
   <Time>
-      <maxTime> 0.2 </maxTime>
+      <maxTime> 1.1 </maxTime>
       <initTime> 0.0 </initTime>
       <delt_min> 1.0e-6 </delt_min>
       <delt_max> 0.001 </delt_max>
@@ -93,6 +93,12 @@
             <dependent_variables>Pressure</dependent_variables>
             <interpolation type="linear"/>
           </internal_variable_model>
+
+          <!-- Hydrostat -->
+          <filename>DrySand_HydrostatData.json</filename>
+          <independent_variables>TotalStrainVol</independent_variables>
+          <dependent_variables>Pressure</dependent_variables>
+          <interpolation type="linear"/>
 
           <consistency_bisection_tolerance>1.0e-4</consistency_bisection_tolerance>
           <yield_surface_radius_scaling_factor> 1000.0 </yield_surface_radius_scaling_factor>

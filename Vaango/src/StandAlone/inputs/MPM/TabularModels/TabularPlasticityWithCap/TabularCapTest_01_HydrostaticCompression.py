@@ -125,7 +125,7 @@ def hydrostaticCompression(uda_path, save_path,**kwargs):
   plt.grid(True)
   plt.legend(loc='best', prop={'size':10}) 
   savePNG(save_path+'/HydrostaticCompression_pbar_evbar','1280x960')
-  plt.show()
+  #plt.show()
 
   #fig4 = plt.figure(4)
   #plt.clf()
@@ -143,5 +143,35 @@ def hydrostaticCompression(uda_path, save_path,**kwargs):
 
   #plt.show()
 
+  # Read the bulk modulus data
+  ev_e_times, ev_e_s = get_pElasticStrainVol(uda_path, matID = 0)
+  ev_p_times, ev_p_s = get_pPlasticStrainVol(uda_path, matID = 0)
+  ev_s = list(map(lambda ev_e, ev_p: ev_e + ev_p, ev_e_s, ev_p_s))
+  K_times, K_s = get_pBulkModulus(uda_path, matID = 0)
 
+  # Compute bulk modulus
+  def computeBulkModulus(p_sim_snap, ev_e_snap, ev_p_snap):
 
+    ev_snap = list(map(lambda ev_e, ev_p: ev_e + ev_p, ev_e_snap, ev_p_snap))
+    K_elastic = np.diff(p_sim_snap)/np.diff(ev_e_snap)
+    K_total = np.diff(p_sim_snap)/np.diff(ev_snap)
+
+    ev_bar_snap = list(map(lambda ev: -ev, ev_snap))
+    ev_e_bar_snap = list(map(lambda ev_e: -ev_e, ev_e_snap))
+
+    return K_elastic, K_total, ev_bar_snap, ev_e_bar_snap
+
+  K_elastic, K_total, ev_bar_snap, ev_e_bar_snap = \
+    computeBulkModulus(p_sim_snap, ev_e_snap, ev_p_snap)
+
+  fig5 = plt.figure(5)
+  plt.clf()
+  plt.plot(ev_e_bar_snap[1:], K_elastic, 'C0', label='Elastic')
+  plt.plot(ev_bar_snap[1:], K_total, 'C1', label='Total')
+  plt.plot(ev_e_s, K_s, 'C2', label='Elastic (sim)')
+  plt.plot(ev_s, K_s, 'C3', label='Total (sim)')
+  plt.xlabel('Volumetric strain') 
+  plt.ylabel('Bulk modulus (Pa)') 
+  plt.grid(True)
+  plt.legend(loc='best', prop={'size':8}) 
+  plt.show()

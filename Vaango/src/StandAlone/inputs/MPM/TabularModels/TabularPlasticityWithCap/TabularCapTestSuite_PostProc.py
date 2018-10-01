@@ -14,6 +14,9 @@ from TabularCapTest_07_UniaxialStrainLoadUnload import *
 from TabularCapTest_07_UniaxialStrainLoadUnloadNN import *
 from TabularCapTest_08_MultiaxialStrainLoadUnload import *
 from TabularCapTest_08_MultiaxialStrainLoadUnloadNN import *
+from TabularCapTest_09_VertexTreatment import *
+from TabularCapTest_10_VertexTreatment import *
+from TabularCapTest_11_ElasticPlasticCoupling import *
 
 def post_proc(test, uda_path, save_path, POST_PROCESS_LIST):
   test_name = os.path.split(test)[1]
@@ -50,6 +53,12 @@ def post_proc(test, uda_path, save_path, POST_PROCESS_LIST):
       multiaxialStrainLoadUnload(uda_path, save_path)
     elif test_name == 'TabularCapTest_08_MultiaxialStrainLoadUnloadNN.ups':
       multiaxialStrainLoadUnloadNN(uda_path, save_path)
+    elif test_name == 'TabularCapTest_09_VertexTreatment.ups':
+      vertexTreatment(uda_path, save_path)
+    elif test_name == 'TabularCapTest_10_VertexTreatment.ups':
+      vertexTreatmentHomel(uda_path, save_path)
+    elif test_name == 'TabularCapTest_11_ElasticPlasticCoupling.ups':
+      elasticPlasticCouplingHomel(uda_path, save_path)
     else:
       print('\nERROR: test: ',test,'\n\tNot on post processing list.\n')
   else:

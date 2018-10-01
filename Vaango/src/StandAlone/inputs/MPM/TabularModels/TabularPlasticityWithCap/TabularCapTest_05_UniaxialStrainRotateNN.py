@@ -23,8 +23,8 @@ def uniaxialStrainRotateNN(uda_path, save_path,**kwargs):
   analytical_times = np.linspace(0.0, times[-1], 15)
 
   # Read the interval variable simulation data
-  ev_e_list, ev_p_list, capX_list, times_list, ev_e_sim, ev_p_sim, capX_sim = \
-    getInternalVariables(uda_path, analytical_times, matID = 0)
+  idx_snap, times_snap, ev_e_snap, ev_p_snap, capX_snap, ev_e_sim, ev_p_sim, capX_sim = \
+    getInternalVariableSnapshots(uda_path, analytical_times, matID = 0)
 
   # Get the model parameters
   material_dict = get_yield_surface_data(uda_path)
@@ -67,56 +67,33 @@ def uniaxialStrainRotateNN(uda_path, save_path,**kwargs):
   ###PLOTTING
   formatter = ticker.FormatStrFormatter('$\mathbf{%g}$') 
   param_text = material_dict['material string']
+  compression = 'positive'
+  color_snap = []
+  for ii in range(0, len(times_snap)):
+    # Choose the tab20 colormap
+    plt_color = cm.tab20(ii)
+    color_snap.append(plt_color)
 
-  #---------------------------------------------------------------------------------
-  # Plot rotated stress as a function of time
+  #----------------------------------------------------------------
+  # Plot the yield surface 
+  #----------------------------------------------------------------
+  # Set up figure
   fig1 = plt.figure(1)
   plt.clf()
   #plt.subplots_adjust(right=0.75)
   #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
-  plotSimDataSigmaTime(fig1, analytical_times, times, Sxx_rot, Syy_rot, Sxy_rot,
-                       '$\sigma_{a}$ (sim)', '$\sigma_{r}$ (sim)',
-                       '$\sigma_{ar}$ (sim)')
 
-  axes = plt.gca()
-  axes.xaxis.set_major_formatter(formatter)
-  axes.yaxis.set_major_formatter(formatter)
-  plt.xlabel(str_to_mathbf('Time (sec)')) 
-  plt.ylabel(str_to_mathbf('Rotated Stress (Pa)')) 
-  plt.grid(True)
-  plt.legend(loc='best', prop={'size':10}) 
-  savePNG(save_path+'/UniaxialStrainRotateNN_sigma_rot_time','1280x960')
-
-  #----------------------------------------------------------------
-  # Plot the yield surface for test1
-  #----------------------------------------------------------------
-  # Set up figure
-  fig2 = plt.figure(2)
-  plt.clf()
-  #plt.subplots_adjust(right=0.75)
-  #plt.figtext(0.77,0.70,param_text,ha='left',va='top',size='xx-small')  
-
-  # Plot p vs. q simulation results
-  eqShear_vs_meanStress(pp_sim, qq_sim)  
-
-  # Plot filled circles at time snapshots
-  compression = 'negative'
-  for ii in range(0, len(t_sim_snap)):
-
-    # Choose the Paired colormap
-    plt_color = cm.Paired(float(ii)/len(t_sim_snap))
-    if (compression == 'positive'):
-      plt.plot(-p_sim_snap[ii], -q_sim_snap[ii], 'o', color=plt_color) 
-    else:
-      plt.plot(p_sim_snap[ii], q_sim_snap[ii], 'o', color=plt_color) 
-
-  # Plot yield surface
+  # Set up limits
   pbarmin = min(yield_table['Pressure'])
   pbarmax = max(map(lambda p: abs(p), pp_sim))
   qmax = max(map(lambda q: abs(q), qq_sim))
-  for capX in capX_list:
-    plotPQYieldSurfaceSim(plt, material_dict, yield_table, capX,
-                          ev_e_list, ev_p_list, times_list,
+
+  # Plot p vs. q simulation results
+  plotEqShearMeanStress(pp_sim, qq_sim, idx_snap, color_snap, ev_p_snap, compression)  
+
+  # Plot yield surface
+  plotPQYieldSurfaceSim(plt, material_dict, yield_table, capX_snap,
+                        ev_e_snap, ev_p_snap, times_snap, color_snap,
                           pbarmin, pbarmax, qmax, compression)
 
   savePNG(save_path+'/UniaxialStrainRotateNN_yield_surface','1280x960')

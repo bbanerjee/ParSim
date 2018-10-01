@@ -1,0 +1,17 @@
+{
+  "Vaango_tabular_data": {
+    "Data": {
+      "PlasticStrainVol": [
+        0.0,
+        10.0
+      ],
+      "Pressure": [
+        1.0e8,
+        1.0e8
+      ]
+    },
+    "Meta": {
+      "title": "Constant hydrostatic strength cap data"
+    }
+  }
+}

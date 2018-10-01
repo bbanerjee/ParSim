@@ -19,7 +19,7 @@
   <DataArchiver>
       <filebase>TabularTest_13_MultiaxialStrainLoadUnloadNN.uda</filebase>
       <outputInitTimestep/>
-      <outputTimestepInterval>1</outputTimestepInterval>
+      <outputTimestepInterval>200</outputTimestepInterval>
       <save label = "p.x"/>
       <save label = "p.color"/>
       <save label = "p.temperature"/>
@@ -85,6 +85,13 @@
             <dependent_variables>SqrtJ2</dependent_variables>
             <interpolation type="linear"/>
           </plastic_yield_condition>
+
+          <!-- Hydrostat -->
+          <filename>DrySand_HydrostatData.json</filename>
+          <independent_variables>TotalStrainVol</independent_variables>
+          <dependent_variables>Pressure</dependent_variables>
+          <interpolation type="linear"/>
+
 
           <consistency_bisection_tolerance>1.0e-10</consistency_bisection_tolerance>
           <yield_surface_radius_scaling_factor> 1000.0 </yield_surface_radius_scaling_factor>

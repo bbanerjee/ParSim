@@ -73,8 +73,8 @@ def multiaxialStrainLoadUnloadNN(uda_path, save_path,**kwargs):
   qmax = max(map(lambda q: abs(q), qq_sim))
 
   plotPQYieldSurfaceSim(plt, material_dict, yield_table,
-                          ev_e_list, ev_p_list, times_list,
-                          pbarmin, pbarmax, qmax, compression)
+                        ev_e_snap, ev_p_snap, times_snap,
+                        pbarmin, pbarmax, qmax, compression)
 
   savePNG(save_path+'/MultiaxialStrainLoadUnloadNN_yield_surface','1280x960')
   #plt.show()

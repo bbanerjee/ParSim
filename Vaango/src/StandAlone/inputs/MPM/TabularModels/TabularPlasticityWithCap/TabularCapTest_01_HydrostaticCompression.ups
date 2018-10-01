@@ -12,7 +12,7 @@
       <maxTime> 0.32 </maxTime>
       <initTime> 0.0 </initTime>
       <delt_min> 1.0e-6 </delt_min>
-      <delt_max> 0.01 </delt_max>
+      <delt_max> 0.00001 </delt_max>
       <timestep_multiplier> 0.3 </timestep_multiplier>
   </Time>
 
@@ -32,6 +32,7 @@
       <save label = "p.capX"/>
       <save label = "p.elasticVolStrain"/>
       <save label = "p.plasticVolStrain"/>
+      <save label = "p.bulkModulus"/>
       <checkpoint cycle = "2" timestepInterval = "4000"/>
   </DataArchiver>
 
@@ -71,7 +72,7 @@
         <constitutive_model type="tabular_plasticity_cap">
 
           <elastic_moduli_model type="tabular">
-            <filename>DrySand_ElasticData.json</filename>
+            <filename>DrySand_ElasticDataLinearTop.json</filename>
             <independent_variables>PlasticStrainVol, TotalStrainVol</independent_variables>
             <dependent_variables>Pressure</dependent_variables>
             <interpolation type="linear"/>
@@ -88,11 +89,17 @@
           </plastic_yield_condition>
 
           <internal_variable_model type="tabular_cap">
-            <filename>DrySand_HydrostaticCapData.json</filename>
+            <filename>DrySand_HydrostaticCapDataIntegrated.json</filename>
             <independent_variables>PlasticStrainVol</independent_variables>
             <dependent_variables>Pressure</dependent_variables>
             <interpolation type="linear"/>
           </internal_variable_model>
+
+          <!-- Hydrostat -->
+          <filename>DrySand_HydrostatData.json</filename>
+          <independent_variables>TotalStrainVol</independent_variables>
+          <dependent_variables>Pressure</dependent_variables>
+          <interpolation type="linear"/>
 
           <consistency_bisection_tolerance>1.0e-4</consistency_bisection_tolerance>
           <yield_surface_radius_scaling_factor> 1000.0 </yield_surface_radius_scaling_factor>

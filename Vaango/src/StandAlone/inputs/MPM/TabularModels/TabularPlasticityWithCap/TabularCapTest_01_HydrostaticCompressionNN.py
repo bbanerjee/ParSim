@@ -82,7 +82,7 @@ def hydrostaticCompressionNN(uda_path, save_path,**kwargs):
                         ev_e_snap, ev_p_snap, times_snap, color_snap,
                         pbarmin, pbarmax, qmax, compression)
 
-  savePNG(save_path+'/HydrostaticCompression_yield_surface','1280x960')
+  savePNG(save_path+'/HydrostaticCompressionNN_yield_surface','1280x960')
   #plt.show()
 
   #---------------------------------------------------------------------------------
@@ -102,7 +102,7 @@ def hydrostaticCompressionNN(uda_path, save_path,**kwargs):
   plt.ylabel(str_to_mathbf('Stress (Pa)')) 
   plt.grid(True)
   plt.legend(loc='best', prop={'size':10}) 
-  savePNG(save_path+'/HydrostaticCompression_sigma_time','1280x960')
+  savePNG(save_path+'/HydrostaticCompressionNN_sigma_time','1280x960')
   #plt.show()
 
   fig3 = plt.figure(3)
@@ -123,7 +123,7 @@ def hydrostaticCompressionNN(uda_path, save_path,**kwargs):
   plt.ylabel(str_to_mathbf('Stress (Pa)')) 
   plt.grid(True)
   plt.legend(loc='best', prop={'size':10}) 
-  savePNG(save_path+'/HydrostaticCompression_pbar_evbar','1280x960')
+  savePNG(save_path+'/HydrostaticCompressionNN_pbar_evbar','1280x960')
   plt.show()
 
   #fig4 = plt.figure(4)

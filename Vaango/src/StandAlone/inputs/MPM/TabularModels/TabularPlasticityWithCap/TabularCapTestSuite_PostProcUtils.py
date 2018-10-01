@@ -472,6 +472,33 @@ def get_defTable(uda_path,working_dir):
   F.close()
   return times,Fs 
 
+#---------------------------------------------------------------------
+# Extract bulkmodulus history
+#---------------------------------------------------------------------
+def get_pBulkModulus(uda_path, matID = 0):
+  FAIL_NAN = False
+  print("Extracting bulk modulus history...")
+  args = [partextract_exe, "-mat", str(matID), "-partvar","p.bulkModulus", uda_path]
+  F_bulkModulus = tempfile.TemporaryFile()
+  #open(os.path.split(uda_path)[0]+'/elasticStrainVolHistory.dat',"w+")
+  tmp = sub_proc.Popen(args, stdout=F_bulkModulus, stderr=sub_proc.PIPE)
+  dummy = tmp.wait()
+  print('Done.')
+  #Read file back in
+  F_bulkModulus.seek(0)
+  times = []
+  bulkModulus = []
+  for line in F_bulkModulus:
+    line = line.strip().split()
+    times.append(float(line[0]))
+    bulkModulus.append(np.float64(line[4]))
+    if np.isnan(bulkModulus[-1]):
+      FAIL_NAN = True
+  F_bulkModulus.close()
+  if FAIL_NAN:
+    print("\ERROR: 'nan' encountered while retrieving p.bulkModulus, will not plot correctly.")
+  return times, bulkModulus  
+
 def exp_fmt(x,loc):
   tmp = format(x,'1.2e').split('e')
   lead = tmp[0]
@@ -515,7 +542,7 @@ def plotEqShearMeanStress(xs, ys, idx_list, color_list, ev_p_list,
                  u_arrow, v_arrow,
                  scale_units='xy', angles='xy', scale=1.5, width=0.001,
                  headwidth=7, headlength=10,
-                 linewidth=0.5, edgecolor='b', color='k')
+                 linewidth=0.5, edgecolor=color, color='k')
       plt.plot(x_data[start_idx:end_idx+1], y_data[start_idx:end_idx+1], '-', \
                color=color)
   
@@ -1021,8 +1048,8 @@ def plotSimDataSigmaEps(fig, time_snapshots, time_sim, pp_sim, ev_e_sim, ev_p_si
     ev_e_data = list(map(lambda p : -p, ev_e_sim))
     ev_p_data = list(map(lambda p : -p, ev_p_sim))
     plt.plot(ev_data, pp_data, '--', color='C0', label='Total strain (Simulation)')
-    #plt.plot(ev_e_data, pp_data, '--', color='C1', label='Elastic strain (Simulation)')
-    #plt.plot(ev_p_data, pp_data, '--', color='C2', label='Plastic strain (Simulation)')
+    plt.plot(ev_e_data, pp_data, '--', color='C1', label='Elastic strain (Simulation)')
+    plt.plot(ev_p_data, pp_data, '--', color='C2', label='Plastic strain (Simulation)')
     x_arrow = np.array(ev_data[:-1])
     y_arrow = np.array(pp_data[:-1])
     u_arrow = np.array(ev_data[1:]) - x_arrow

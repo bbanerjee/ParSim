@@ -128,9 +128,12 @@ def computeConvexHull(pbars, sqrtJ2s):
   points = np.ndarray(shape = (len(pbars),2))
   points[:,0] = pbars
   points[:,1] = sqrtJ2s
-  hull = ConvexHull(points)
+  if (len(points) < 3):
+    hull_points = points
+  else:
+    hull = ConvexHull(points)
+    hull_points = points[hull.vertices]
 
-  hull_points = points[hull.vertices]
   hull_points.sort(axis=0)
 
   return hull_points
@@ -174,12 +177,44 @@ def computeCapYieldSurfacePoints(pbars, sqrtJ2s, R, capX):
   pbars_hull = list(hull[:,0])
   sqrtJ2s_hull = list(hull[:,1])
 
+  #print("pbar_hull = ", pbars_hull)
+  #print("sqrtJ2_hull = ", sqrtJ2s_hull)
+
   # Find closest point projections of input data to convex hull
   closest = computeClosestPoints(pbars, sqrtJ2s, pbars_hull, sqrtJ2s_hull)
   pbars = list(closest[:,0])
   sqrtJ2s = list(closest[:,1])
 
-  print("capX = ", capX)
+  #print("pbar_closest = ", pbars)
+  #print("sqrtJ2_closest = ", sqrtJ2s)
+
+  #print("capX = ", capX)
+
+  # Increase density of points
+  num_pts = len(pbars)
+  
+  if (num_pts < 6):
+    pbars_new = []
+    sqrtJ2s_new = []
+    for ii in range(0, num_pts-1):
+      x_start = pbars[ii]
+      x_end = pbars[ii+1]
+      y_start = sqrtJ2s[ii]
+      y_end = sqrtJ2s[ii+1]
+      dx = (x_end - x_start)/100
+      x_vec = np.linspace(x_start, x_end - dx, 100)
+      for x in x_vec:
+        t = (x - x_start)/(x_end - x_start)
+        y = (1 - t)*y_start + t*y_end
+        pbars_new.append(x)
+        sqrtJ2s_new.append(y)
+    pbars_new.append(pbars[num_pts-1])
+    sqrtJ2s_new.append(sqrtJ2s[num_pts-1])
+    pbars = pbars_new
+    sqrtJ2s = sqrtJ2s_new
+
+  #print("pbar_dense = ", pbars)
+  #print("sqrtJ2_dense = ", sqrtJ2s)
 
   # Convert capX to capXbar
   capXbar = -capX
@@ -194,10 +229,13 @@ def computeCapYieldSurfacePoints(pbars, sqrtJ2s, R, capX):
   for i in range(0, len(pbars)):
     if (kappa > pbars[i]):
       startp = i
+  if startp == 0:
+    startp = 1
 
   pbar_cone = pbars[0:startp];
   sqrtJ2_cone = sqrtJ2s[0:startp];
 
+  #print("kappa = ", kappa)
   #print("pbar_cone = ", pbar_cone)
   #print("sqrtJ2_cone = ", sqrtJ2_cone)
 
