@@ -103,6 +103,22 @@ namespace Uintah {
           {
           }
 
+        auto begin() {
+          return items.begin();
+        }
+
+        auto end() {
+          return items.end();
+        }
+
+        const auto begin() const {
+          return items.begin();
+        }
+
+        const auto end() const {
+          return items.end();
+        }
+        
         int size() const {
           return (int)items.size();
         }

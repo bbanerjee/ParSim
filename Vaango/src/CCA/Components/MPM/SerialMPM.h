@@ -54,8 +54,6 @@
 
 namespace Uintah {
 
-  using namespace Uintah;
-
   class ThermalContact;
   class HeatConduction;
   class AnalysisModule;
@@ -97,8 +95,6 @@ WARNING
     ThermalContact*  thermalContactModel;
     HeatConduction* heatConductionModel;
  
-    //////////
-    // Insert Documentation Here:
     virtual void problemSetup(const ProblemSpecP& params, 
                               const ProblemSpecP& restart_prob_spec, GridP&,
                               SimulationStateP&);
@@ -150,12 +146,8 @@ WARNING
                                                  const MaterialSubset*,
                                                  DataWarehouse*,
                                                  DataWarehouse* new_dw);
-    //////////
-    // Insert Documentation Here:
     virtual void scheduleComputeStableTimestep(const LevelP& level, SchedulerP&);
 
-    //////////
-    // Insert Documentation Here:
     virtual void scheduleTimeAdvance(const LevelP& level, SchedulerP&);
 
     virtual void scheduleRefine(const PatchSet* patches, SchedulerP& scheduler);
@@ -197,10 +189,7 @@ WARNING
 
 
   protected:
-    //////////
-    // Insert Documentation Here:
     friend class MPMICE;
-    friend class MPMArches;
  
     virtual void actuallyInitialize(const ProcessorGroup*,
                                     const PatchSubset* patches,
@@ -270,32 +259,24 @@ WARNING
                             DataWarehouse* old_dw,
                             DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:
     void actuallyComputeStableTimestep(const ProcessorGroup*,
                                        const PatchSubset* patches,
                                        const MaterialSubset* matls,
                                        DataWarehouse* old_dw,
                                        DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:
     virtual void interpolateParticlesToGrid(const ProcessorGroup*,
                                             const PatchSubset* patches,
                                             const MaterialSubset* matls,
                                             DataWarehouse* old_dw,
                                             DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:
     virtual void addCohesiveZoneForces(const ProcessorGroup*,
                                        const PatchSubset* patches,
                                        const MaterialSubset* matls,
                                        DataWarehouse* old_dw,
                                        DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:
     virtual void computeStressTensor(const ProcessorGroup*,
                                      const PatchSubset* patches,
                                      const MaterialSubset* matls,
@@ -338,8 +319,6 @@ WARNING
                                 DataWarehouse* old_dw,
                                 DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:
     virtual void computeContactArea(const ProcessorGroup*,
                                     const PatchSubset* patches,
                                     const MaterialSubset* matls,
@@ -352,16 +331,12 @@ WARNING
                                       DataWarehouse* old_dw,
                                       DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:
     virtual void computeAndIntegrateAcceleration(const ProcessorGroup*,
                                                  const PatchSubset* patches,
                                                  const MaterialSubset* matls,
                                                  DataWarehouse* old_dw,
                                                  DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:                            
     void setGridBoundaryConditions(const ProcessorGroup*,
                                    const PatchSubset* patches,
                                    const MaterialSubset* ,
@@ -402,8 +377,6 @@ WARNING
                                    DataWarehouse* old_dw,
                                    DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:
     virtual void interpolateToParticlesAndUpdate(const ProcessorGroup*,
                                                  const PatchSubset* patches,
                                                  const MaterialSubset* matls,
@@ -421,16 +394,12 @@ WARNING
                                      DataWarehouse* old_dw,
                                      DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:
     virtual void updateCohesiveZones(const ProcessorGroup*,
                                      const PatchSubset* patches,
                                      const MaterialSubset* matls,
                                      DataWarehouse* old_dw,
                                      DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:
     virtual void setPrescribedMotion(const ProcessorGroup*,
                                      const PatchSubset* patches,
                                      const MaterialSubset* matls,
@@ -499,6 +468,29 @@ WARNING
     virtual void scheduleComputeStressTensor(SchedulerP&, const PatchSet*,
                                              const MaterialSet*);
   
+    /*!----------------------------------------------------------------------
+     * scheduleComputeXPICVelocities
+     *-----------------------------------------------------------------------*/
+    void scheduleComputeXPICVelocities(SchedulerP& sched,
+                                       const PatchSet* patches,
+                                       const MaterialSet* matls);
+    /*!----------------------------------------------------------------------
+     * computeParticleVelocityXPIC
+     *-----------------------------------------------------------------------*/
+    void computeParticleVelocityXPIC(const ProcessorGroup*,
+                                     const PatchSubset* patches,
+                                     const MaterialSubset* ,
+                                     DataWarehouse* old_dw,
+                                     DataWarehouse* new_dw);
+    /*!----------------------------------------------------------------------
+     * computeGridVelocityXPIC
+     *-----------------------------------------------------------------------*/
+    void computeGridVelocityXPIC(const ProcessorGroup*,
+                                 const PatchSubset* patches,
+                                 const MaterialSubset* ,
+                                 DataWarehouse* old_dw,
+                                 DataWarehouse* new_dw);
+
     void scheduleComputeDeformationGradient(SchedulerP&, const PatchSet*,
                                             const MaterialSet*);
   
@@ -593,32 +585,24 @@ WARNING
                                                     const PatchSet*,
                                                     const MaterialSet*);
 
-    //////////
-    // Insert Documentation Here:
     virtual void interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
                                                      const PatchSubset* patches,
                                                      const MaterialSubset* matls,
                                                      DataWarehouse* old_dw,
                                                      DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:
     virtual void interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
                                                      const PatchSubset* patches,
                                                      const MaterialSubset* matls,
                                                      DataWarehouse* old_dw,
                                                      DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:
     virtual void interpolateParticleVelToGridMom(const ProcessorGroup*,
                                                  const PatchSubset* patches,
                                                  const MaterialSubset* matls,
                                                  DataWarehouse* old_dw,
                                                  DataWarehouse* new_dw);
 
-    //////////
-    // Insert Documentation Here:
     void checkNeedAddMPMMaterial(const ProcessorGroup*,
                                  const PatchSubset* patches,
                                  const MaterialSubset* matls,

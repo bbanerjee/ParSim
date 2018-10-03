@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -98,7 +99,6 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
   d_max_vel = 3.e105;
   d_with_ice = false;
   d_with_arches = false;
-  d_use_momentum_form = false;
   d_myworld = myworld;
   
   d_reductionVars = scinew reductionVars();
@@ -390,8 +390,6 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
 
   mpm_flag_ps->get("boundary_traction_faces", d_bndy_face_txt_list);
 
-  mpm_flag_ps->get("use_momentum_form", d_use_momentum_form);
-
   // Deformation gradient computer options
   // Options other than "first_order"/"subcycling" should be defined in DeformationGradientComputer
   // e.g. "constant_velgrad", "linear_velgrad", "constant_velgrad_subcycling", etc.
@@ -531,8 +529,6 @@ MPMFlags::outputProblemSpec(ProblemSpecP& ps)
   ps->appendElement("extra_solver_flushes", d_extraSolverFlushes);
 
   ps->appendElement("boundary_traction_faces", d_bndy_face_txt_list);
-
-  ps->appendElement("use_momentum_form", d_use_momentum_form);
 
   // Deformation gradient computer options
   ProblemSpecP defgrad_ps = ps->appendChild("deformation_gradient");

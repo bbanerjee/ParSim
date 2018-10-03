@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -43,6 +43,7 @@
 #include <CCA/Components/MPM/ImpMPM.h>
 #include <CCA/Components/MPM/RigidMPM.h>
 #include <CCA/Components/MPM/SerialMPM.h>
+#include <CCA/Components/MPM/MPM_UpdateStressLast.h>
 #include <CCA/Components/MPM/ShellMPM.h>
 #include <CCA/Components/MPMICE/MPMICE.h>
 #include <CCA/Components/Peridynamics/Peridynamics.h>
@@ -101,6 +102,9 @@ ComponentFactory::create( ProblemSpecP& ps, const ProcessorGroup* world,
 #ifndef NO_MPM
   if (sim_comp == "mpm" || sim_comp == "MPM") {
     return scinew SerialMPM(world);
+  } 
+  if (sim_comp == "mpm_usl" || sim_comp == "MPM_USL") {
+    return scinew MPM_UpdateStressLast(world);
   } 
   if (sim_comp == "mpmf" || sim_comp == "fracturempm" || sim_comp == "FRACTUREMPM") {
     return scinew FractureMPM(world);
@@ -205,7 +209,7 @@ ComponentFactory::create( ProblemSpecP& ps, const ProcessorGroup* world,
   if (sim_comp == "reduce_uda") {
     return scinew UdaReducer(world, uda);
   } 
-  throw ProblemSetupException("Unknown simulationComponent ('" + sim_comp + "'). Must specify -ice, -mpm, "
+  throw ProblemSetupException("Unknown simulationComponent ('" + sim_comp + "'). Must specify -ice, -mpm, -mpm_usl"
                               "-impm, -mpmice, -burger, -wave, -poisson1, -poisson2, -poisson3 or -benchmark.\n"
                               "Note: the following components were turned off at configure time: " + turned_off_options + "\n"
                               "Make sure that the requested component is supported in this build.", __FILE__, __LINE__);

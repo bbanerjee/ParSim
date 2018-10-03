@@ -380,7 +380,7 @@
     </geom_object>
 
     <SimulationComponent          spec="REQUIRED NO_DATA"
-                                    attribute1="type REQUIRED STRING 'burger, ice, impm, mpm, 
+                                    attribute1="type REQUIRED STRING 'burger, ice, impm, mpm, mpm_usl,
                                                                       mpmf, mpmice, amrmpm,
                                                                       peridynamics,
                                                                       reduce_uda,
@@ -393,7 +393,7 @@
                                   attribute2="matls OPTIONAL INTEGER"
                                   attribute3="level OPTIONAL STRING 'finest'" />
         <subcomponent               spec="MULTIPLE NO_DATA"
-                                  attribute1="type OPTIONAL STRING 'burger, ice, impm, mpm, mpmf, mpmice,
+                                  attribute1="type OPTIONAL STRING 'burger, ice, impm, mpm, mpm_usl, mpmf, mpmice,
                                                                     poisson1, poisson2, poisson3, poisson4, benchmark, rigidmpmice, smpmice, smpm, switcher, wave'" >
                                   <!-- The 'type' above is used in CCA/Components/Parent/ComponentFactory.cc -->
           <input_file               spec="REQUIRED STRING" />

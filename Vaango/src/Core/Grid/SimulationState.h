@@ -151,6 +151,10 @@ namespace Uintah {
       return allInOneMatl;
     }
 
+    const auto mpm_materials() const {
+      return mpm_matls;
+    }
+
     Material* getMaterial(int idx) const {
       return matls[idx];
     }

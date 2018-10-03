@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -124,6 +125,9 @@ MPMLabel::MPMLabel()
   pVelocityLabel = VarLabel::create( "p.velocity", 
 			ParticleVariable<Vector>::getTypeDescription() );
   
+  pVelocityXPICLabel = VarLabel::create( "p.velocityXPIC", 
+			ParticleVariable<Vector>::getTypeDescription() );
+  
   pCoriolisImportanceLabel = VarLabel::create( "p.coriolisImportance",
 			ParticleVariable<double>::getTypeDescription() );
 
@@ -207,6 +211,9 @@ MPMLabel::MPMLabel()
   
   pVelocityLabel_preReloc = VarLabel::create( "p.velocity+", 
 			ParticleVariable<Vector>::getTypeDescription() );
+
+  pVelocityXPICLabel_preReloc = VarLabel::create( "p.velocityXPIC+", 
+			ParticleVariable<Vector>::getTypeDescription() );
   
   pCoriolisImportanceLabel_preReloc = VarLabel::create( "p.coriolisImportance+",
 			ParticleVariable<double>::getTypeDescription() );
@@ -256,6 +263,9 @@ MPMLabel::MPMLabel()
 			NCVariable<double>::getTypeDescription() );
   
   gVelocityLabel = VarLabel::create( "g.velocity",
+			NCVariable<Vector>::getTypeDescription() );
+  
+  gVelocityXPICLabel = VarLabel::create( "g.velocityXPIC",
 			NCVariable<Vector>::getTypeDescription() );
   
   gVelocityBCLabel = VarLabel::create( "g.velocityBC",
@@ -768,6 +778,8 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pMassLabel_preReloc);
   VarLabel::destroy(pVelocityLabel);
   VarLabel::destroy(pVelocityLabel_preReloc);
+  VarLabel::destroy(pVelocityXPICLabel);
+  VarLabel::destroy(pVelocityXPICLabel_preReloc);
   VarLabel::destroy(pBodyForceAccLabel);
   VarLabel::destroy(pExternalForceLabel);
   VarLabel::destroy(pExternalForceCorner1Label);
@@ -813,6 +825,7 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(gMassLabel);
   VarLabel::destroy(gMassAllLabel);
   VarLabel::destroy(gVelocityLabel);
+  VarLabel::destroy(gVelocityXPICLabel);
   VarLabel::destroy(gVelocityBCLabel);
   VarLabel::destroy(gInternalForceLabel);
   VarLabel::destroy(gBodyForceLabel);

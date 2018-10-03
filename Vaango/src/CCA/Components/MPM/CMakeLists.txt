@@ -23,6 +23,7 @@
 #
 SET(Vaango_CCA_Components_MPM_SRCS
   SerialMPM.cc    
+  MPM_UpdateStressLast.cc    
   RigidMPM.cc     
   MPMCommon.cc    
   FractureMPM.cc  

@@ -54,7 +54,6 @@
       <InsertParticles                    spec="OPTIONAL BOOLEAN" /> 
       <InsertParticlesFile                spec="OPTIONAL STRING" /> 
       <with_color                          spec="OPTIONAL BOOLEAN" />
-      <use_momentum_form                    spec="OPTIONAL BOOLEAN" />
       
       <!-- FIXME:  THE FOLLOW APPLY ONLY TO THE IMPLICIT MPM CODE -->
       <dynamic                            spec="OPTIONAL BOOLEAN" />
