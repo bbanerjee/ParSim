@@ -263,6 +263,14 @@ void
 TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
                            DataWarehouse* old_dw, DataWarehouse* new_dw)
 {
+  #ifdef TIME_YIELD_PTS
+    std::chrono::time_point<std::chrono::system_clock> start_yp, end_yp;
+  #endif
+
+  #ifdef TIME_SUBSTEP
+    std::chrono::time_point<std::chrono::system_clock> start_ss, end_ss;
+  #endif
+
   // Global loop over each patch
   for (int p = 0; p < patches->size(); p++) {
 
@@ -339,7 +347,7 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
     new_dw->allocateAndPut(pStress_new,    lb->pStressLabel_preReloc, pset);
 
     // Loop over particles
-    for (particleIndex& idx : *pset) {
+    for (particleIndex idx : *pset) {
 
       // No thermal effects
       pdTdt[idx] = 0.0;
@@ -388,14 +396,11 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
 
       // Update yield surface
       #ifdef TIME_YIELD_PTS
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-        start = std::chrono::system_clock::now();
+        start_yp = std::chrono::system_clock::now();
       #endif
       Polyline yield_f_pts = d_yield->computeYieldSurfacePolylinePbarSqrtJ2(&state_old);
       #ifdef TIME_YIELD_PTS
-        end = std::chrono::system_clock::now();
-        std::cout << "Compute yield pts. : Time taken = " 
-                  << std::chrono::duration<double>(end-start).count() << std::endl;
+        end_yp = std::chrono::system_clock::now();
       #endif
       std::array<double,3> range = d_yield->getYieldConditionRange(yield_f_pts);
       state_old.yield_f_pts = yield_f_pts;
@@ -414,15 +419,25 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
       // Divides the strain increment into substeps, and calls substep function
       ModelState_TabularCap state_new;
       #ifdef TIME_SUBSTEP
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-        start = std::chrono::system_clock::now();
+        start_ss = std::chrono::system_clock::now();
       #endif
       Status status = rateIndependentPlasticUpdate(
         DD, delT, idx, pParticleID[idx], state_old, state_new);
       #ifdef TIME_SUBSTEP
-        end = std::chrono::system_clock::now();
-        std::cout << "Substep : Time taken = " 
-                  << std::chrono::duration<double>(end-start).count() << std::endl;
+        end_ss = std::chrono::system_clock::now();
+      #endif
+      
+      #ifdef TIME_SUBSTEP
+        auto duration = std::chrono::duration<double>(end_ss-start_ss).count();
+        if (duration > 0.1) {
+          std::cout << "Substep : Particle = " << pParticleID[idx]
+                    << " Time taken = " << duration << "\n";
+          #ifdef TIME_YIELD_PTS
+          std::cout << "Compute yield pts. : Particle = " << pParticleID[idx]
+                    << " Time taken = " 
+                    << std::chrono::duration<double>(end_yp-start_yp).count() << std::endl;
+          #endif
+        }
       #endif
 
       if (status == Status::SUCCESS) {
@@ -1983,18 +1998,21 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
   int ii = 1;
   double eta_lo = 0.0, eta_hi = 1.0, eta_mid = 0.5;
 
-  //while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
-  while (std::abs(deltaEps_p_v_mid_new/deltaEps_p_v_mid_old - 1.0) > TOLERANCE) {
+  while (std::abs(eta_hi - eta_lo) > TOLERANCE) {
 
     #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
+      if (state_k_fixed.particleID == 124554051588) {
       std::cout << "Enter: consistency_iter = " << ii 
+                << std::setprecision(16)
                 << " eta_hi = " << eta_hi << " eta_lo = " << eta_lo 
                 << " eta_mid = " << eta_mid << "\n";
-      std::cout << " delta_eps_p_v_fixed = " << deltaEps_p_v_fixed
+      std::cout << std::setprecision(16)
+                << " delta_eps_p_v_fixed = " << deltaEps_p_v_fixed
                 << " delta_eps_p_v_mid_old = " << deltaEps_p_v_mid_old
                 << " delta_eps_p_v_mid_new = " << deltaEps_p_v_mid_new
                 << " ratio - 1 = " << (deltaEps_p_v_mid_new / deltaEps_p_v_mid_old - 1.0)
                 << std::endl;
+      }
     #endif
 
     // Reset the local trial state
@@ -2058,6 +2076,7 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
       deltaEps_p_v_mid_new = eta_mid * deltaEps_p_v_fixed;
 
       #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
+      if (state_k_fixed.particleID == 124554051588) {
         std::cout << "Elastic: consistency_iter = " << ii 
                   << " eta_hi = " << eta_hi << " eta_lo = " << eta_lo 
                   << " eta_mid = " << eta_mid << "\n";
@@ -2065,6 +2084,7 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
                   << " delta_eps_p_v_mid_new = " << deltaEps_p_v_mid_new
                   << " ratio - 1 = " << (deltaEps_p_v_mid_new / deltaEps_p_v_mid_old - 1)
                   << std::endl;
+      }
       #endif
       ii++;
       continue;
@@ -2129,6 +2149,7 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
     #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
       norm_deltaEps_p_mid = deltaEps_p_mid.Norm();
       norm_deltaEps_p_fixed = eta_mid * deltaEps_p_fixed.Norm();
+      if (state_k_fixed.particleID == 124554051588) {
       std::cout << "Exit: \n"
                 << " eta_mid = " << eta_mid << " eta_mid*||deltaEps_p_fixed|| = "
                 << eta_mid * norm_deltaEps_p_fixed
@@ -2140,6 +2161,7 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
                 << " delta_eps_p_v_mid_new = " << deltaEps_p_v_mid_new
                 << " ratio - 1 = " << (deltaEps_p_v_mid_new / deltaEps_p_v_mid_old - 1)
                 << std::endl;
+      }
     #endif
 
     // Increment i and check
@@ -2164,6 +2186,7 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
   state_k_new.capX = state_trial_mid.capX;
 
   #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
+  if (state_k_fixed.particleID == 124554051588) {
     std::cout << "Final: K = " << state_k_new.bulkModulus 
                 << " G = " << state_k_new.shearModulus 
                 << " X = " << state_k_new.capX << "\n";
@@ -2174,9 +2197,7 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
               << std::endl;
     std::cout << "I1_after_consistency = " << state_k_new.stressTensor.Trace()
               << std::endl;
-    std::cout << "I1_eff_before_consistency = " << state_k_old.I1_eff
-              << std::endl;
-    std::cout << "I1_eff_after_consistency = " << state_k_new.I1_eff << std::endl;
+  }
   #endif
 
   // Update the cumulative equivalent plastic strain

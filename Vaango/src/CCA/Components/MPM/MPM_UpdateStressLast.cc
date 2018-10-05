@@ -27,7 +27,7 @@
 #include <CCA/Components/MPM/PhysicalBC/VelocityBC.h>
 #include <Core/Grid/Variables/VarTypes.h>
 
-#define FLIP_UPDATE
+//#define XPIC2_UPDATE
 
 using namespace Uintah;
 
@@ -79,7 +79,9 @@ MPM_UpdateStressLast::scheduleTimeAdvance(const LevelP& level,
   if (flags->d_prescribeDeformation) {
     scheduleSetPrescribedMotion(sched, patches, matls);
   }
-  scheduleComputeXPICVelocities(sched, patches, matls);
+  #ifdef XPIC2_UPDATE
+    scheduleComputeXPICVelocities(sched, patches, matls);
+  #endif
   if (flags->d_doExplicitHeatConduction) {
     scheduleComputeHeatExchange(sched, patches, matls);
     scheduleComputeInternalHeatRate(sched, patches, matls);
@@ -133,7 +135,9 @@ MPM_UpdateStressLast::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   Ghost::GhostType gnone = Ghost::None;
   t->requires(Task::NewDW, lb->gAccelerationLabel,      gac,  NGN);
   t->requires(Task::NewDW, lb->gVelocityStarLabel,      gac,  NGN);
-  t->requires(Task::NewDW, lb->gVelocityXPICLabel,      gac,  NGN);
+  #ifdef XPIC2_UPDATE
+    t->requires(Task::NewDW, lb->gVelocityXPICLabel,      gac,  NGN);
+  #endif
   t->requires(Task::NewDW, lb->gTemperatureRateLabel,   gac,  NGN);
   t->requires(Task::NewDW, lb->frictionalWorkLabel,     gac,  NGN);
   t->requires(Task::OldDW, lb->pXLabel,                 gnone);
@@ -141,7 +145,9 @@ MPM_UpdateStressLast::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->requires(Task::OldDW, lb->pParticleIDLabel,        gnone);
   t->requires(Task::OldDW, lb->pTemperatureLabel,       gnone);
   t->requires(Task::OldDW, lb->pVelocityLabel,          gnone);
-  t->requires(Task::OldDW, lb->pVelocityXPICLabel,      gnone);
+  #ifdef XPIC2_UPDATE
+    t->requires(Task::OldDW, lb->pVelocityXPICLabel,      gnone);
+  #endif
   t->requires(Task::OldDW, lb->pDispLabel,              gnone);
   t->requires(Task::OldDW, lb->pSizeLabel,              gnone);
   t->requires(Task::OldDW, lb->pVolumeLabel,            gnone);
@@ -294,10 +300,14 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       constParticleVariable<Point>   pX;
       old_dw->get(pX,                lb->pXLabel,                   pset);
 
-      constParticleVariable<Vector>  pVelocity, pVelocityXPIC, pDisp;
+      constParticleVariable<Vector>  pVelocity, pDisp;
       old_dw->get(pVelocity,         lb->pVelocityLabel,            pset);
-      new_dw->get(pVelocityXPIC,     lb->pVelocityXPICLabel,        pset);
       old_dw->get(pDisp,             lb->pDispLabel,                pset);
+
+      #ifdef XPIC2_UPDATE
+        constParticleVariable<Vector>  pVelocityXPIC;
+        new_dw->get(pVelocityXPIC,     lb->pVelocityXPICLabel,        pset);
+      #endif
 
       constParticleVariable<Matrix3> pDefGrad, pSize;
       old_dw->get(pDefGrad,          lb->pDefGradLabel,             pset);
@@ -339,10 +349,14 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         massBurnFrac = massBurnFrac_create;         // reference created data
       }
 
-      constNCVariable<Vector> gVelocityStar, gVelocityXPIC, gAcceleration;
+      constNCVariable<Vector> gVelocityStar, gAcceleration;
       new_dw->get(gVelocityStar,  lb->gVelocityStarLabel, dwi, patch, gac, NGP);
-      new_dw->get(gVelocityXPIC,  lb->gVelocityXPICLabel, dwi, patch, gac, NGP);
       new_dw->get(gAcceleration,  lb->gAccelerationLabel, dwi, patch, gac, NGP);
+
+      #ifdef XPIC2_UPDATE
+        constNCVariable<Vector> gVelocityXPIC;
+        new_dw->get(gVelocityXPIC,  lb->gVelocityXPICLabel, dwi, patch, gac, NGP);
+      #endif
 
       ParticleSubset* delset = scinew ParticleSubset(0, dwi, patch);
 
@@ -357,8 +371,11 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
         interpolator->findCellAndWeights(pX[idx], ni, S, pSize[idx], pDefGrad[idx]);
 
-        Vector velocity(0.0,0.0,0.0), velocityXPIC(0.0, 0.0, 0.0);
+        Vector velocity(0.0,0.0,0.0);
         Vector acceleration(0.0,0.0,0.0);
+        #ifdef XPIC2_UPDATE
+          Vector velocityXPIC(0.0, 0.0, 0.0);
+        #endif
         double fricTempRate = 0.0;
         double tempRate = 0.0;
         double burnFraction = 0.0;
@@ -367,8 +384,10 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         for (int k = 0; k < num_influence_nodes; k++) {
           IntVector node = ni[k];
           velocity      += gVelocityStar[node] * S[k];
-          velocityXPIC  += gVelocityXPIC[node] * S[k];
           acceleration  += gAcceleration[node] * S[k];
+          #ifdef XPIC2_UPDATE
+            velocityXPIC  += gVelocityXPIC[node] * S[k];
+          #endif
           fricTempRate = frictionTempRate[node] * flags->d_addFrictionWork;
           tempRate += (gTemperatureRate[node] + dTdt[node] +
                        fricTempRate) * S[k];
@@ -376,11 +395,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         }
 
         // Update the particle's position and velocity
-        #ifdef FLIP_UPDATE
-          pX_new[idx]        = pX[idx]        + velocity * delT * move_particles;
-          pDisp_new[idx]     = pDisp[idx]     + velocity * delT;
-          pVelocity_new[idx] = pVelocity[idx] + acceleration * delT;
-        #else
+        #ifdef XPIC2_UPDATE
           pX_new[idx] = pX[idx] + velocity * delT
                         - 0.5 * (acceleration * delT  
                                  + pVelocity[idx] - 2.0 * pVelocityXPIC[idx]
@@ -388,6 +403,10 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           pVelocity_new[idx]  = 2.0*pVelocityXPIC[idx] - velocityXPIC + 
                                 acceleration*delT;
           pDisp_new[idx] = pDisp[idx] + (pX_new[idx] - pX[idx]);
+        #else
+          pX_new[idx]        = pX[idx]        + velocity * delT * move_particles;
+          pDisp_new[idx]     = pDisp[idx]     + velocity * delT;
+          pVelocity_new[idx] = pVelocity[idx] + acceleration * delT;
         #endif
 
         pTemp_new[idx]     = pTemperature[idx] + tempRate * delT;

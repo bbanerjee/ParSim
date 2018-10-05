@@ -79,10 +79,7 @@
 #include <chrono>
 
 
-#define FLIP_UPDATE
 //#define XPIC2_UPDATE
-//#define USL
-#undef USL
 #define CHECK_PARTICLE_DELETION
 //#define TIME_COMPUTE_STRESS
 //#define CHECK_ISFINITE
@@ -1299,7 +1296,9 @@ SerialMPM::scheduleTimeAdvance(const LevelP & level,
   scheduleSetPrescribedMotion(            sched, patches, matls);
 
   // For XPIC(2) computations
-  scheduleComputeXPICVelocities(          sched, patches, matls);
+  #ifdef XPIC2_UPDATE
+    scheduleComputeXPICVelocities(          sched, patches, matls);
+  #endif
 
   // Schedule compute of the deformation gradient
   scheduleComputeDeformationGradient(   sched, patches, matls);
@@ -4608,7 +4607,9 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   Ghost::GhostType gnone = Ghost::None;
   t->requires(Task::NewDW, lb->gAccelerationLabel,      gac,  NGN);
   t->requires(Task::NewDW, lb->gVelocityStarLabel,      gac,  NGN);
-  t->requires(Task::NewDW, lb->gVelocityXPICLabel,      gac,  NGN);
+  #ifdef XPIC2_UPDATE
+    t->requires(Task::NewDW, lb->gVelocityXPICLabel,      gac,  NGN);
+  #endif
   t->requires(Task::NewDW, lb->gTemperatureRateLabel,   gac,  NGN);
   t->requires(Task::NewDW, lb->frictionalWorkLabel,     gac,  NGN);
   t->requires(Task::OldDW, lb->pXLabel,                 gnone);
@@ -4616,7 +4617,9 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->requires(Task::OldDW, lb->pParticleIDLabel,        gnone);
   t->requires(Task::OldDW, lb->pTemperatureLabel,       gnone);
   t->requires(Task::OldDW, lb->pVelocityLabel,          gnone);
-  t->requires(Task::OldDW, lb->pVelocityXPICLabel,      gnone);
+  #ifdef XPIC2_UPDATE
+    t->requires(Task::OldDW, lb->pVelocityXPICLabel,      gnone);
+  #endif
   t->requires(Task::OldDW, lb->pDispLabel,              gnone);
   t->requires(Task::OldDW, lb->pSizeLabel,              gnone);
   t->requires(Task::NewDW, lb->pdTdtLabel_preReloc,     gnone);
@@ -4776,10 +4779,14 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       constParticleVariable<Point>   pX;
       old_dw->get(pX,                lb->pXLabel,                   pset);
 
-      constParticleVariable<Vector>  pVelocity, pVelocityXPIC, pDisp;
+      constParticleVariable<Vector>  pVelocity, pDisp;
       old_dw->get(pVelocity,         lb->pVelocityLabel,            pset);
-      new_dw->get(pVelocityXPIC,     lb->pVelocityXPICLabel,        pset);
       old_dw->get(pDisp,             lb->pDispLabel,                pset);
+
+      #ifdef XPIC2_UPDATE
+        constParticleVariable<Vector>  pVelocityXPIC;
+        new_dw->get(pVelocityXPIC,     lb->pVelocityXPICLabel,        pset);
+      #endif
 
       constParticleVariable<Matrix3> pDefGrad_new;
       new_dw->get(pDefGrad_new,      lb->pDefGradLabel_preReloc,    pset);
@@ -4819,10 +4826,14 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         massBurnFrac = massBurnFrac_create;         // reference created data
       }
 
-      constNCVariable<Vector> gVelocityStar, gVelocityXPIC, gAcceleration;
+      constNCVariable<Vector> gVelocityStar, gAcceleration;
       new_dw->get(gVelocityStar,  lb->gVelocityStarLabel, dwi, patch, gac, NGP);
-      new_dw->get(gVelocityXPIC,  lb->gVelocityXPICLabel, dwi, patch, gac, NGP);
       new_dw->get(gAcceleration,  lb->gAccelerationLabel, dwi, patch, gac, NGP);
+
+      #ifdef XPIC2_UPDATE
+        constNCVariable<Vector> gVelocityXPIC;
+        new_dw->get(gVelocityXPIC,  lb->gVelocityXPICLabel, dwi, patch, gac, NGP);
+      #endif
 
       ParticleSubset* delset = scinew ParticleSubset(0, dwi, patch);
 
@@ -4839,8 +4850,11 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
         interpolator->findCellAndWeights(pX[idx], ni, S, pSize[idx], pDefGrad_new[idx]);
 
-        Vector velocity(0.0,0.0,0.0), velocityXPIC(0.0, 0.0, 0.0);
+        Vector velocity(0.0,0.0,0.0); 
         Vector acceleration(0.0,0.0,0.0);
+        #ifdef XPIC2_UPDATE
+          Vector velocityXPIC(0.0, 0.0, 0.0);
+        #endif
         double fricTempRate = 0.0;
         double tempRate = 0.0;
         double burnFraction = 0.0;
@@ -4849,8 +4863,11 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         for (int k = 0; k < num_influence_nodes; k++) {
           IntVector node = ni[k];
           velocity      += gVelocityStar[node]  * S[k];
-          velocityXPIC  += gVelocityXPIC[node]  * S[k];
           acceleration  += gAcceleration[node]  * S[k];
+
+          #ifdef XPIC2_UPDATE
+            velocityXPIC  += gVelocityXPIC[node]  * S[k];
+          #endif
 
           #ifdef CHECK_ISFINITE
             if (!std::isfinite(vel.x()) || !std::isfinite(vel.y()) ||
@@ -4872,11 +4889,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         }
 
         // Update the particle's position and velocity
-        #ifdef FLIP_UPDATE
-          pX_new[idx]        = pX[idx]        + velocity * delT * move_particles;
-          pDisp_new[idx]     = pDisp[idx]     + velocity * delT;
-          pVelocity_new[idx] = pVelocity[idx] + acceleration * delT;
-        #else
+        #ifdef XPIC2_UPDATE
           pX_new[idx] = pX[idx] + velocity * delT
                         - 0.5 * (acceleration * delT  
                                  + pVelocity[idx] - 2.0 * pVelocityXPIC[idx]
@@ -4884,6 +4897,10 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           pVelocity_new[idx]  = 2.0*pVelocityXPIC[idx] - velocityXPIC + 
                                 acceleration*delT;
           pDisp_new[idx] = pDisp[idx] + (pX_new[idx] - pX[idx]);
+        #else
+          pX_new[idx]        = pX[idx]        + velocity * delT * move_particles;
+          pDisp_new[idx]     = pDisp[idx]     + velocity * delT;
+          pVelocity_new[idx] = pVelocity[idx] + acceleration * delT;
         #endif
 
         #ifdef CHECK_ISFINITE
