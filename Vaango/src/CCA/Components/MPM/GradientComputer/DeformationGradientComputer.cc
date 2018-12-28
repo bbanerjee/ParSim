@@ -39,6 +39,7 @@
 #include <iostream>
 
 //#define IGNORE_NEGATIVE_JACOBIANS
+//#define DEBUG_WITH_PARTICLE_ID
 
 using namespace Uintah;
 
@@ -437,7 +438,6 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
   // for vel grad and def grad calculation
   constParticleVariable<Short27> pgCode; // For fracture MPM
   constParticleVariable<double>  pMass;
-  constParticleVariable<long64>  pParticleID;
   constParticleVariable<Point>   px;
   constParticleVariable<Matrix3> pDefGrad_old, pVelGrad_old, pDispGrad_old;
   constParticleVariable<Matrix3> pSize;
@@ -465,6 +465,9 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
   old_dw->get(pSize,             lb->pSizeLabel,               pset);
   old_dw->get(pDefGrad_old,      lb->pDefGradLabel,            pset);
   old_dw->get(pVelGrad_old,      lb->pVelGradLabel,            pset);
+
+  constParticleVariable<long64> pParticleID;
+  old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
 
   // Allocate new data
   //std::cout << "Two . Before allocate and put" << std::endl;
@@ -498,6 +501,44 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
       // Compute the deformation gradient from velocity
       computeDeformationGradientFromVelocity(pVelGrad_old[idx], velGrad_new, pDefGrad_old[idx], delT, defGrad_new,
                                              defGrad_inc);
+
+      #ifdef DEBUG_WITH_PARTICLE_ID
+        if (pParticleID[idx] == 158913855488) {
+          std::vector<IntVector> ni(interpolator->size());
+          std::vector<Vector>    d_S(interpolator->size());
+          std::vector<double>    S(interpolator->size());
+          interpolator->findCellAndWeightsAndShapeDerivatives(px[idx], ni, S, d_S,
+                                                              pSize[idx],
+                                                              pDefGrad_old[idx]);
+          Matrix3 velGrad(0.0);
+          for(int k = 0; k < d_S.size(); k++) {
+            auto node = ni[k];
+            Vector gvel = gVelocityStar[node];
+            for (int j = 0; j<2; j++){
+              for (int i = 0; i<2; i++) {
+                velGrad(i,j) += gvel[i] * d_S[k][j] * oodx[j];
+                if (node == IntVector(3,38,0)) {
+                std::cout << pParticleID[idx]
+                          << " node = " << node
+                          << " gvel = " << gvel
+                          << " velgrad(" << i << "," << j << ")="
+                          << velGrad(i,j) << " gvel(i) = " << gvel[i]
+                          << "d_S[k][j] = " << d_S[k][j]
+                          << "oodx[j] = " << oodx[j] << "\n";
+                }
+              }
+            }
+            velGrad(2,2) += gvel.x()*d_S[k].z();
+          }
+
+          std::cout << pParticleID[idx]
+                    << " L_old = " << pVelGrad_old[idx]
+                    << " L_new = " << velGrad_new
+                    << " F_old = " << pDefGrad_old[idx]
+                    << " F_new = " << defGrad_new
+                    << " F_inc = " << defGrad_inc << "\n";
+        }
+      #endif
 
       //std::cout << "Seven . After compute def grad." << std::endl;
       // Update velocity gradient
@@ -534,8 +575,6 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
     // Check 1: Look at Jacobian
     double J = defGrad_new.Determinant();
     if (!(J > 0.0)) {
-      constParticleVariable<long64> pParticleID;
-      old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
       std::cerr << "matl = "  << mpm_matl << " dwi = " << dwi << " particle = " << idx
            << " particleID = " << pParticleID[idx] << endl;
       std::cerr << "velGrad = " << pVelGrad_new[idx] << endl;

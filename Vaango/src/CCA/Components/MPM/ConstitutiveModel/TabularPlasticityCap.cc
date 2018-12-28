@@ -90,6 +90,7 @@ constexpr double X_trans_factor = 0.05;
 //#ifdef DEBUG_FIRST_ORDER_HARDENING
 #define CHECK_FOR_NAN
 //#define CHECK_PLASTIC_RATE
+//#define DEBUG_WITH_PARTICLE_ID
 //#define CHECK_FOR_NAN_EXTRA
 //#define WRITE_YIELD_SURF
 //#define CHECK_INTERNAL_VAR_EVOLUTION
@@ -528,8 +529,6 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
       double shear = state_new.shearModulus;
       double rho_cur = pMass[idx] / pVolume[idx];
       c_dil = sqrt((bulk + Util::four_third * shear) / rho_cur);
-      // std::cout << "K = " << bulk << " G = " << shear << " c_dil = " << c_dil
-      // << std::endl;
       WaveSpeed =
         Vector(Max(c_dil + std::abs(pVelocity[idx].x()), WaveSpeed.x()),
                Max(c_dil + std::abs(pVelocity[idx].y()), WaveSpeed.y()),
@@ -540,6 +539,15 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
         double dx_ave = (dx.x() + dx.y() + dx.z()) * Util::one_third;
         double c_bulk = sqrt(bulk / rho_cur);
         p_q[idx] = artificialBulkViscosity(DD.Trace(), c_bulk, rho_cur, dx_ave);
+        #ifdef DEBUG_WITH_PARTICLE_ID
+          if (state_new.particleID == 158913855488) {
+          std::cout << "K = " << bulk << " G = " << shear << " c_bulk = " << c_bulk
+                    << std::endl;
+          std::cout << "mass = " << pMass[idx] << " vol = " << pVolume[idx]
+                    << " dx_ave = " << dx_ave << " rho_cur = " << rho_cur
+                    << " tr(D) = " << DD.Trace() << "\n";
+          }
+        #endif
       } else {
         p_q[idx] = 0.;
       }
@@ -593,9 +601,15 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
                                     ModelState_TabularCap& state_new)
 {
 #ifdef CHECK_FOR_NAN_EXTRA
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  if (state_old.particleID == 158913855488) {
+  #endif
   std::cout << "Rate independent update:" << std::endl;
   std::cout << " D = " << D << " delT = " << delT << std::endl;
   std::cout << "\t State old:" << state_old << std::endl;
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  }
+  #endif
 #endif
 
   // Compute the strain increment
@@ -621,8 +635,14 @@ TabularPlasticityCap::rateIndependentPlasticUpdate(const Matrix3& D, const doubl
   state_trial.updateStressInvariants();
 
 #ifdef CHECK_FOR_NAN_EXTRA
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  if (state_old.particleID == 158913855488) {
+  #endif
   std::cout << "\t strain_inc = " << strain_inc << std::endl;
   std::cout << "\t State trial:" << state_trial << std::endl;
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  }
+  #endif
 #endif
 
   // Determine the number of substeps (nsub) based on the magnitude of
@@ -843,8 +863,14 @@ TabularPlasticityCap::computeStepDivisions(particleIndex idx, long64 particleID,
   int n_bulk =
     std::max(std::ceil(std::abs(bulk_old - bulk_trial) / bulk_old), 1.0);
 #ifdef CHECK_FOR_NAN_EXTRA
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  if (state_old.particleID == 158913855488) {
+  #endif
   std::cout << "bulk_old = " << bulk_old << " bulk_trial = " << bulk_trial
             << " n_bulk = " << n_bulk << std::endl;
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  }
+  #endif
 #endif
 
   // Compute trial stress increment relative to yield surface size:
@@ -856,14 +882,20 @@ TabularPlasticityCap::computeStepDivisions(particleIndex idx, long64 particleID,
   int n_yield = ceil(d_sigma.Norm() / size);
 
 #ifdef CHECK_FOR_NAN_EXTRA
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  if (state_old.particleID == 158913855488) {
+  #endif
   proc0cout << "bulk_old = " << bulk_old << " bulk_trial = " << bulk_trial
             << " n_bulk = " << n_bulk << std::endl;
-  proc0cout << "I1_max = " << params.at("I1_max") 
-            << " I1_min = " << params.at("I1_min") 
-            << " sqrtJ2_max = " << params.at("sqrtJ2_max") 
+  proc0cout << "I1_max = " << state_old.I1_max 
+            << " I1_min = " << state_old.I1_min 
+            << " sqrtJ2_max = " << state_old.sqrtJ2_max 
             << " size = " << size
             << " |dsigma| = " << d_sigma.Norm() << " n_yield = " << n_yield
             << std::endl;
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  }
+  #endif
 #endif
 
   // nsub is the maximum of the two values.above.  If this exceeds allowable,
@@ -929,10 +961,16 @@ TabularPlasticityCap::computeSubstep(const Matrix3& D, const double& dt,
   //std::cout << "\t deltaEps = " << deltaEps << std::endl;
 
   #ifdef CHECK_FOR_NAN_EXTRA
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  if (state_k_old.particleID == 158913855488) {
+  #endif
     std::cout << "\t D = " << D << std::endl;
     std::cout << "\t dt:" << dt << std::endl;
     std::cout << "\t deltaEps = " << deltaEps << std::endl;
     std::cout << "\t Stress k trial:" << stress_k_trial << std::endl;
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  }
+  #endif
   #endif
 
   #ifdef WRITE_YIELD_SURF
@@ -1224,8 +1262,10 @@ TabularPlasticityCap::nonHardeningReturnElasticPlastic(double elasticplastic_dt,
     1.0 / (sqrt_K_over_G_elastic * Util::sqrt_two) * rprime_closest;
 
   #ifdef CHECK_FOR_NAN_EXTRA
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  if (state_k_elastic.particleID == 158913855488) {
+  #endif
     std::cout << " K_elastic = " << K_elastic << " G_elastic = " << G_elastic << std::endl;
-    std::cout << " state_k_trial " << state_k_trial << std::endl;
     std::cout << " z_trial = " << z_trial
               << " r_trial = " << rprime_trial / sqrt_K_over_G_elastic << std::endl;
     std::cout << " z_closest = " << z_closest
@@ -1233,7 +1273,10 @@ TabularPlasticityCap::nonHardeningReturnElasticPlastic(double elasticplastic_dt,
               << std::endl;
     std::cout << "I1_closest = " << I1_closest 
               << " sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
-    std::cout << "Trial state = " << state_k_trial << std::endl;
+    std::cout << "Trial state = " << state_k_elastic << std::endl;
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  }
+  #endif
   #endif
 
   #ifdef CHECK_HYDROSTATIC_TENSION
@@ -1252,6 +1295,12 @@ TabularPlasticityCap::nonHardeningReturnElasticPlastic(double elasticplastic_dt,
   } else {
     sig_fixed = Util::one_third * I1_closest * Util::Identity + dev_stress_trial;
   }
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  if (state_k_elastic.particleID == 158913855488) {
+    std::cout << "sig_n = " << state_k_elastic.stressTensor
+              << " sig_n+1 = " << sig_fixed << "\n";
+  }
+  #endif
 
   //std::cout << "G_elastic = " << G_elastic << "\n";
   //std::cout << "I1_closest = " << I1_closest 
@@ -1432,8 +1481,11 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
     1.0 / (sqrt_K_over_G_old * Util::sqrt_two) * rprime_closest;
 
   #ifdef CHECK_FOR_NAN_EXTRA
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  if (state_k_trial.particleID == 158913855488) {
+  #endif
     std::cout << " K_old = " << K_old << " G_old = " << G_old << std::endl;
-    std::cout << " state_k_trial " << state_k_trial << std::endl;
+    std::cout << " state_k_old " << state_k_old << std::endl;
     std::cout << " z_trial = " << z_trial
               << " r_trial = " << rprime_trial / sqrt_K_over_G_old << std::endl;
     std::cout << " z_closest = " << z_closest
@@ -1442,6 +1494,9 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
     std::cout << "I1_closest = " << I1_closest 
               << " sqrtJ2_closest = " << sqrtJ2_closest << std::endl;
     std::cout << "Trial state = " << state_k_trial << std::endl;
+  #ifdef DEBUG_WITH_PARTICLE_ID
+  }
+  #endif
   #endif
 
   #ifdef CHECK_HYDROSTATIC_TENSION

@@ -508,7 +508,7 @@ void FractureMPM::scheduleExMomInterpolated(SchedulerP& sched,
                                           const PatchSet* patches,
                                           const MaterialSet* matls)
 {
-  contactModel->addComputesAndRequiresInterpolated(sched, patches, matls);
+  contactModel->addComputesAndRequires(sched, patches, matls, lb->gVelocityLabel);
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -755,7 +755,7 @@ void FractureMPM::scheduleExMomIntegrated(SchedulerP& sched,
                                         const PatchSet* patches,
                                         const MaterialSet* matls)
 {
-  contactModel->addComputesAndRequiresIntegrated(sched, patches, matls);
+  contactModel->addComputesAndRequires(sched, patches, matls, lb->gVelocityStarLabel);
 }
 
 void FractureMPM::scheduleSetGridBoundaryConditions(SchedulerP& sched,

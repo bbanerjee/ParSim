@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -29,116 +30,72 @@
 #define __FRICTION_H__
 
 #include <CCA/Components/MPM/Contact/Contact.h>
-#include <CCA/Components/MPM/Contact/ContactMaterialSpec.h> 
+#include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
 #include <CCA/Components/MPM/MPMFlags.h>
 #include <CCA/Ports/DataWarehouseP.h>
-#include <Core/Parallel/UintahParallelComponent.h>
-#include <Core/ProblemSpec/ProblemSpecP.h>
-#include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/Grid/GridP.h>
 #include <Core/Grid/LevelP.h>
 #include <Core/Grid/SimulationStateP.h>
+#include <Core/Parallel/UintahParallelComponent.h>
+#include <Core/ProblemSpec/ProblemSpec.h>
+#include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <vector>
 
 namespace Uintah {
-/**************************************
 
-CLASS
-   FrictionContact
-   
-   Short description...
+class FrictionContact : public Contact
+{
+private:
+  // Prevent copying of this class
+  // copy constructor
+  FrictionContact(const FrictionContact& con);
+  FrictionContact& operator=(const FrictionContact& con);
 
-GENERAL INFORMATION
+  SimulationStateP d_sharedState;
 
-   FrictionContact.h
+  // Coefficient of friction
+  double d_mu;
+  // Nodal volume fraction that must occur before contact is applied
+  double d_vol_const;
+  int NGP;
+  int NGN;
 
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
+  // For hardcoded normals
+  enum class NormalCoordSystem
+  {
+    NONE = 0,
+    CYLINDRICAL = 1,
+    SPHERICAL = 2,
+    CARTESIAN = 3
+  };
+  bool d_hardcodedNormals;
+  std::vector<int> d_matIndex;
 
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
+  // **TODO** Use map (key, value) instead
+  std::vector<std::string> d_type;
+  std::vector<NormalCoordSystem> d_coordType;
+  std::vector<Point> d_center;
+  std::vector<Vector> d_axisDir;
 
-KEYWORDS
-   Contact_Model_Friction
+public:
+  // Constructor
+  FrictionContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
+                  SimulationStateP& d_sS, MPMLabel* lb, MPMFlags* MFlag);
 
-DESCRIPTION
-  One of the derived Contact classes.  This particular
-  version is used to apply Coulombic frictional contact.
-  
-WARNING
-  
-****************************************/
+  // Destructor
+  virtual ~FrictionContact();
 
-      class FrictionContact : public Contact {
-      private:
-         
-         // Prevent copying of this class
-         // copy constructor
-         FrictionContact(const FrictionContact &con);
-         FrictionContact& operator=(const FrictionContact &con);
-         
-         SimulationStateP    d_sharedState;
-         
-         // Coefficient of friction
-         double d_mu;
-         // Nodal volume fraction that must occur before contact is applied
-         double d_vol_const;
-         int NGP;
-         int NGN;
+  void outputProblemSpec(ProblemSpecP& ps) override;
 
-         // For hardcoded normals
-         enum class NormalCoordSystem {
-           NONE        = 0,
-           CYLINDRICAL = 1,
-           SPHERICAL   = 2,
-           CARTESIAN   = 3
-         };
-         bool d_hardcodedNormals;
-         std::vector<int> d_matIndex;
+  void exchangeMomentum(const ProcessorGroup*, const PatchSubset* patches,
+                        const MaterialSubset* matls, DataWarehouse* old_dw,
+                        DataWarehouse* new_dw, const VarLabel* label) override;
 
-         // **TODO** Use map (key, value) instead 
-         std::vector<std::string> d_type;
-         std::vector<NormalCoordSystem> d_coordType; 
-         std::vector<Point> d_center;
-         std::vector<Vector> d_axisDir;
-         
-
-      public:
-         // Constructor
-         FrictionContact(const ProcessorGroup* myworld,
-                         ProblemSpecP& ps, SimulationStateP& d_sS,MPMLabel* lb,
-                         MPMFlags* MFlag);
-         
-         // Destructor
-         virtual ~FrictionContact();
-
-         virtual void outputProblemSpec(ProblemSpecP& ps);
-
-         // Basic contact methods
-         virtual void exMomInterpolated(const ProcessorGroup*,
-                                        const PatchSubset* patches,
-                                        const MaterialSubset* matls,
-                                        DataWarehouse* old_dw,
-                                        DataWarehouse* new_dw);
-         
-         virtual void exMomIntegrated(const ProcessorGroup*,
-                                      const PatchSubset* patches,
-                                      const MaterialSubset* matls,
-                                      DataWarehouse* old_dw,
-                                      DataWarehouse* new_dw);
-         
-         virtual void addComputesAndRequiresInterpolated(SchedulerP & sched,
-                                             const PatchSet* patches,
-                                             const MaterialSet* matls);
-
-         virtual void addComputesAndRequiresIntegrated(SchedulerP & sched,
-                                             const PatchSet* patches,
-                                             const MaterialSet* matls);
-      };
+  void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
+                              const MaterialSet* matls,
+                              const VarLabel* label) override;
+};
 } // End namespace Uintah
-      
 
 #endif /* __FRICTION_H__ */
-

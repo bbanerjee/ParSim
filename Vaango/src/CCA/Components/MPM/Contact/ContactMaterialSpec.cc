@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,59 +27,57 @@
 #include <CCA/Components/MPM/Contact/ContactMaterialSpec.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
-using namespace std;
 using namespace Uintah;
 
-ContactMaterialSpec::ContactMaterialSpec(ProblemSpecP & ps)
+ContactMaterialSpec::ContactMaterialSpec(ProblemSpecP& ps)
 {
-  if(ps) {
+  if (ps) {
     vector<int> materials;
-    if(ps->get("materials", materials)) {
-      for(vector<int>::const_iterator mit(materials.begin());
-          mit!=materials.end();mit++) {
-        if(*mit<0)
-          throw ProblemSetupException(" Invalid material index in contact block", __FILE__, __LINE__);
+    if (ps->get("materials", materials)) {
+      for (vector<int>::const_iterator mit(materials.begin());
+           mit != materials.end(); mit++) {
+        if (*mit < 0)
+          throw ProblemSetupException(
+            " Invalid material index in contact block", __FILE__, __LINE__);
         this->add(*mit);
       }
     }
   }
-  
 }
 
-void ContactMaterialSpec::outputProblemSpec(ProblemSpecP& ps)
+void
+ContactMaterialSpec::outputProblemSpec(ProblemSpecP& ps)
 {
   std::vector<int> matls;
   int i = 0;
-  for (std::vector<bool>::const_iterator it = d_matls.begin(); 
-       it != d_matls.end(); it++,i++) {
+  for (std::vector<bool>::const_iterator it = d_matls.begin();
+       it != d_matls.end(); it++, i++) {
     if (*it)
       matls.push_back(i);
   }
-  
-  ps->appendElement("materials",matls);
 
+  ps->appendElement("materials", matls);
 }
 
 void
 ContactMaterialSpec::add(unsigned int matlIndex)
 {
-  // we only add things once at the start, but want 
+  // we only add things once at the start, but want
   // quick lookup, so keep logical for each material
   // rather than searching a list every time
-  if(d_matls.size()==0)
-    {
-      d_matls.resize(matlIndex+1);
-      for(size_t i=0;i<matlIndex+1;i++) d_matls[i] = false;
-        
-    }
-  if(matlIndex>=d_matls.size())
-    {
-      vector<bool> copy(d_matls);
-      d_matls.resize(matlIndex+1);
-      for(size_t i=0;i<copy.size();i++) d_matls[i] = copy[i];
-      for(size_t i=copy.size();i<matlIndex+1;i++) d_matls[i] = false;
-    }
-  
+  if (d_matls.size() == 0) {
+    d_matls.resize(matlIndex + 1);
+    for (size_t i = 0; i < matlIndex + 1; i++)
+      d_matls[i] = false;
+  }
+  if (matlIndex >= d_matls.size()) {
+    vector<bool> copy(d_matls);
+    d_matls.resize(matlIndex + 1);
+    for (size_t i = 0; i < copy.size(); i++)
+      d_matls[i] = copy[i];
+    for (size_t i = copy.size(); i < matlIndex + 1; i++)
+      d_matls[i] = false;
+  }
+
   d_matls[matlIndex] = true;
 }
-

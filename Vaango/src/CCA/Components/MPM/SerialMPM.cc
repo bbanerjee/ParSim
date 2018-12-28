@@ -83,6 +83,7 @@
 #define CHECK_PARTICLE_DELETION
 //#define TIME_COMPUTE_STRESS
 //#define CHECK_ISFINITE
+//#define DEBUG_WITH_PARTICLE_ID
 
 using namespace Uintah;
 
@@ -1849,13 +1850,19 @@ SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   t->requires(Task::OldDW, lb->pTemperatureLabel,      gan,NGP);
   t->requires(Task::OldDW, lb->pSizeLabel,             gan,NGP);
   t->requires(Task::OldDW, lb->pDefGradLabel,gan,NGP);
-  if (flags->d_useCBDI) {
-    t->requires(Task::NewDW,  lb->pExternalForceCorner1Label,gan,NGP);
-    t->requires(Task::NewDW,  lb->pExternalForceCorner2Label,gan,NGP);
-    t->requires(Task::NewDW,  lb->pExternalForceCorner3Label,gan,NGP);
-    t->requires(Task::NewDW,  lb->pExternalForceCorner4Label,gan,NGP);
+  if (flags->d_useLoadCurves) {
     t->requires(Task::OldDW,  lb->pLoadCurveIDLabel,gan,NGP);
+    if (flags->d_useCBDI) {
+      t->requires(Task::NewDW,  lb->pExternalForceCorner1Label,gan,NGP);
+      t->requires(Task::NewDW,  lb->pExternalForceCorner2Label,gan,NGP);
+      t->requires(Task::NewDW,  lb->pExternalForceCorner3Label,gan,NGP);
+      t->requires(Task::NewDW,  lb->pExternalForceCorner4Label,gan,NGP);
+    }
   }
+
+  #ifdef DEBUG_WITH_PARTICLE_ID
+   t->requires(Task::OldDW, lb->pParticleIDLabel, gan, NGP);
+  #endif
 
   t->computes(lb->gMassLabel);
   t->computes(lb->gMassLabel,        d_sharedState->getAllInOneMatl(),
@@ -1928,7 +1935,7 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       // Create arrays for the particle data
       constParticleVariable<Point>  pX;
       constParticleVariable<double> pMass, pVolume, pTemperature;
-      constParticleVariable<Vector> pVelocity, pBodyForceAcc, pExternalforce;
+      constParticleVariable<Vector> pVelocity, pBodyForceAcc, pExternalForce;
       constParticleVariable<Point> pExternalForceCorner1, pExternalForceCorner2,
         pExternalForceCorner3, pExternalForceCorner4;
       constParticleVariable<Matrix3> pSize;
@@ -1946,25 +1953,33 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       old_dw->get(pDefGrad_old,          lb->pDefGradLabel,       pset);
       //new_dw->get(pBodyForceAcc,  lb->pBodyForceAccLabel,  pset);
       new_dw->get(pBodyForceAcc,  lb->pBodyForceAccLabel_preReloc,  pset);
-      new_dw->get(pExternalforce, lb->pExtForceLabel_preReloc, pset);
+      new_dw->get(pExternalForce, lb->pExtForceLabel_preReloc, pset);
       constParticleVariable<int> pLoadCurveID;
-      if (flags->d_useCBDI) {
-        new_dw->get(pExternalForceCorner1,
-                    lb->pExternalForceCorner1Label, pset);
-        new_dw->get(pExternalForceCorner2,
-                    lb->pExternalForceCorner2Label, pset);
-        new_dw->get(pExternalForceCorner3,
-                    lb->pExternalForceCorner3Label, pset);
-        new_dw->get(pExternalForceCorner4,
-                    lb->pExternalForceCorner4Label, pset);
+      if (flags->d_useLoadCurves) {
         old_dw->get(pLoadCurveID, lb->pLoadCurveIDLabel, pset);
+        if (flags->d_useCBDI) {
+          new_dw->get(pExternalForceCorner1,
+                      lb->pExternalForceCorner1Label, pset);
+          new_dw->get(pExternalForceCorner2,
+                      lb->pExternalForceCorner2Label, pset);
+          new_dw->get(pExternalForceCorner3,
+                      lb->pExternalForceCorner3Label, pset);
+          new_dw->get(pExternalForceCorner4,
+                      lb->pExternalForceCorner4Label, pset);
+        }
       }
+
+      #ifdef DEBUG_WITH_PARTICLE_ID
+        constParticleVariable<long64> pParticleID;
+        old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
+      #endif
+
       // Create arrays for the grid data
       NCVariable<double> gMass;
       NCVariable<double> gVolume;
       NCVariable<Vector> gVelocity;
       NCVariable<Vector> gBodyForce;
-      NCVariable<Vector> gExternalforce;
+      NCVariable<Vector> gExternalForce;
       NCVariable<double> gExternalheatrate;
       NCVariable<double> gTemperature;
       NCVariable<double> gSp_vol;
@@ -1980,14 +1995,14 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       new_dw->allocateAndPut(gTemperatureNoBC, lb->gTemperatureNoBCLabel,  dwi,patch);
       new_dw->allocateAndPut(gTemperatureRate, lb->gTemperatureRateLabel,  dwi,patch);
       new_dw->allocateAndPut(gBodyForce,       lb->gBodyForceLabel,        dwi,patch);
-      new_dw->allocateAndPut(gExternalforce,   lb->gExternalForceLabel,    dwi,patch);
+      new_dw->allocateAndPut(gExternalForce,   lb->gExternalForceLabel,    dwi,patch);
       new_dw->allocateAndPut(gExternalheatrate,lb->gExternalHeatRateLabel, dwi,patch);
 
       gMass.initialize(d_SMALL_NUM_MPM);
       gVolume.initialize(d_SMALL_NUM_MPM);
       gVelocity.initialize(Vector(0,0,0));
       gBodyForce.initialize(Vector(0,0,0));
-      gExternalforce.initialize(Vector(0,0,0));
+      gExternalForce.initialize(Vector(0,0,0));
       gTemperature.initialize(0);
       gTemperatureNoBC.initialize(0);
       gTemperatureRate.initialize(0);
@@ -2024,16 +2039,26 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
             gVelocity[node]      += pMom                           * S[k];
             gVolume[node]        += pVolume[idx]                   * S[k];
             if (!flags->d_useCBDI) {
-              gExternalforce[node] += pExternalforce[idx]          * S[k];
+              gExternalForce[node] += pExternalForce[idx]          * S[k];
             }
             gBodyForce[node]     += pBodyForceAcc[idx] * pMass[idx] * S[k];
             gTemperature[node]   += pTemperature[idx]  * pMass[idx] * S[k];
             gSp_vol[node]        += pSp_vol            * pMass[idx] * S[k];
             //gnumnearparticles[node] += 1.0;
             //gExternalheatrate[node] += pExternalheatrate[idx]      * S[k];
+            #ifdef DEBUG_WITH_PARTICLE_ID
+              if (pParticleID[idx] == 158913855488) {
+                proc0cout << pParticleID[idx]
+                          << pExternalForce[idx]
+                          << " pMom = " << pMom
+                          << " pVelocity = " << pVelocity[idx]
+                          << " node = " << node
+                          << " gVelocity = " << gVelocity[node] << "\n";
+              }
+            #endif
           }
         }
-        if (flags->d_useCBDI && pLoadCurveID[idx]>0) {
+        if (flags->d_useLoadCurves && flags->d_useCBDI) {
           vector<IntVector> niCorner1(linear_interpolator->size());
           vector<IntVector> niCorner2(linear_interpolator->size());
           vector<IntVector> niCorner3(linear_interpolator->size());
@@ -2053,19 +2078,19 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
           for(int k = 0; k < 8; k++) { // Iterates through the nodes which receive information from the current particle
             node = niCorner1[k];
             if(patch->containsNode(node)) {
-              gExternalforce[node] += pExternalforce[idx] * SCorner1[k];
+              gExternalForce[node] += pExternalForce[idx] * SCorner1[k];
             }
             node = niCorner2[k];
             if(patch->containsNode(node)) {
-              gExternalforce[node] += pExternalforce[idx] * SCorner2[k];
+              gExternalForce[node] += pExternalForce[idx] * SCorner2[k];
             }
             node = niCorner3[k];
             if(patch->containsNode(node)) {
-              gExternalforce[node] += pExternalforce[idx] * SCorner3[k];
+              gExternalForce[node] += pExternalForce[idx] * SCorner3[k];
             }
             node = niCorner4[k];
             if(patch->containsNode(node)) {
-              gExternalforce[node] += pExternalforce[idx] * SCorner4[k];
+              gExternalForce[node] += pExternalForce[idx] * SCorner4[k];
             }
           }
         }
@@ -2122,7 +2147,7 @@ SerialMPM::scheduleExMomInterpolated(SchedulerP& sched,
     return;
   printSchedule(patches,cout_doing,"MPM::scheduleExMomInterpolated");
   
-  contactModel->addComputesAndRequiresInterpolated(sched, patches, matls);
+  contactModel->addComputesAndRequires(sched, patches, matls, lb->gVelocityLabel);
 }
 
 /*!----------------------------------------------------------------------
@@ -2694,21 +2719,24 @@ SerialMPM::scheduleComputeInternalForce(SchedulerP& sched,
  
   Ghost::GhostType  gan   = Ghost::AroundNodes;
   Ghost::GhostType  gnone = Ghost::None;
-  t->requires(Task::NewDW,lb->gVolumeLabel, gnone);
-  t->requires(Task::NewDW,lb->gVolumeLabel, d_sharedState->getAllInOneMatl(),
+  t->requires(Task::NewDW, lb->gVolumeLabel, gnone);
+  t->requires(Task::NewDW, lb->gVolumeLabel, d_sharedState->getAllInOneMatl(),
               Task::OutOfDomain, gnone);
-  t->requires(Task::OldDW,lb->pStressLabel,               gan,NGP);
-  t->requires(Task::OldDW,lb->pVolumeLabel,               gan,NGP);
-  t->requires(Task::OldDW,lb->pXLabel,                    gan,NGP);
-  t->requires(Task::OldDW,lb->pSizeLabel,                 gan,NGP);
-  t->requires(Task::OldDW, lb->pDefGradLabel,  gan,NGP);
+  t->requires(Task::OldDW, lb->pStressLabel,               gan, NGP);
+  t->requires(Task::OldDW, lb->pVolumeLabel,               gan, NGP);
+  t->requires(Task::OldDW, lb->pXLabel,                    gan, NGP);
+  t->requires(Task::OldDW, lb->pSizeLabel,                 gan, NGP);
+  t->requires(Task::OldDW, lb->pDefGradLabel,              gan, NGP);
+  #ifdef DEBUG_WITH_PARTICLE_ID
+    t->requires(Task::OldDW, lb->pParticleIDLabel,        gan, NGP);
+  #endif
 
   if(flags->d_with_ice){
-    t->requires(Task::NewDW, lb->pPressureLabel,          gan,NGP);
+    t->requires(Task::NewDW, lb->pPressureLabel,          gan, NGP);
   }
 
   if(flags->d_artificial_viscosity){
-    t->requires(Task::OldDW, lb->p_qLabel,                gan,NGP);
+    t->requires(Task::OldDW, lb->p_qLabel,                gan, NGP);
   }
 
   t->computes(lb->gInternalForceLabel);
@@ -2794,11 +2822,16 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
                                                        Ghost::AroundNodes, NGP,
                                                        lb->pXLabel);
 
-      old_dw->get(pX,      lb->pXLabel,                      pset);
-      old_dw->get(pVol,    lb->pVolumeLabel,                 pset);
-      old_dw->get(pStress, lb->pStressLabel,                 pset);
-      old_dw->get(pSize,   lb->pSizeLabel,                   pset);
-      old_dw->get(pDefGrad_old,   lb->pDefGradLabel,     pset);
+      old_dw->get(pX,           lb->pXLabel,       pset);
+      old_dw->get(pVol,         lb->pVolumeLabel,  pset);
+      old_dw->get(pStress,      lb->pStressLabel,  pset);
+      old_dw->get(pSize,        lb->pSizeLabel,    pset);
+      old_dw->get(pDefGrad_old, lb->pDefGradLabel, pset);
+
+      #ifdef DEBUG_WITH_PARTICLE_ID
+        constParticleVariable<long64>   pParticleID;
+        old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
+      #endif
 
       new_dw->get(gVolume, lb->gVolumeLabel, dwi, patch, Ghost::None, 0);
 
@@ -2847,19 +2880,36 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
           //cerr << " idx = " << idx << " pStress = " << pStress[idx] << endl;
 
           for (int k = 0; k < n8or27; k++){
-            if(patch->containsNode(ni[k])){
+            auto node = ni[k];
+            if (patch->containsNode(node)) {
               Vector div(d_S[k].x()*oodx[0],d_S[k].y()*oodx[1],
                          d_S[k].z()*oodx[2]);
-              gInternalForce[ni[k]] -= (div * stresspress)  * pVol[idx];
-              gStress[ni[k]]       += stressvol * S[k];
+              gInternalForce[node] -= (div * stresspress)  * pVol[idx];
+              gStress[node]       += stressvol * S[k];
+              
+              #ifdef DEBUG_WITH_PARTICLE_ID
+                if (pParticleID[idx] == 158913855488) {
+                if (node == IntVector(3,38,0)) {
+                proc0cout << "Particle ID = " << pParticleID[idx]
+                          << " node = " << node
+                          << " dS = " << d_S[k]
+                          << " div = " << div
+                          << " stress = " << pStress[idx]
+                          << " damp = " << p_q[idx]
+                          << " stresspress = " << stresspress
+                          << " vol = " << pVol[idx]
+                          << " fint_g = " << gInternalForce[node] << "\n";
+                }
+                }
+              #endif
               #ifdef CHECK_ISFINITE
-                if (!std::isfinite(gInternalForce[ni[k]].x()) || 
-                    !std::isfinite(gInternalForce[ni[k]].y()) ||
-                    !std::isfinite(gInternalForce[ni[k]].z())) {
+                if (!std::isfinite(gInternalForce[node].x()) || 
+                    !std::isfinite(gInternalForce[node].y()) ||
+                    !std::isfinite(gInternalForce[node].z())) {
                   std::cout << "vol = " << pVol[idx]
-                            << " node = " << ni[k]
-                            << " f_i = " << gInternalForce[ni[k]]
-                            << " sig_g = " << gStress[ni[k]]
+                            << " node = " << node
+                            << " f_i = " << gInternalForce[node]
+                            << " sig_g = " << gStress[node]
                             << " sig_p = " << stresspress << "\n";
                 }
               #endif
@@ -2893,26 +2943,43 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
           // r is the x direction, z (axial) is the y direction
           double IFr=0.,IFz=0.;
           for (int k = 0; k < n8or27; k++){
-            if(patch->containsNode(ni[k])){
+             auto node = ni[k];
+            if(patch->containsNode(node)){
               IFr = d_S[k].x()*oodx[0]*stresspress(0,0) +
                 d_S[k].y()*oodx[1]*stresspress(0,1) +
                 d_S[k].z()*stresspress(2,2);
               IFz = d_S[k].x()*oodx[0]*stresspress(0,1)
                 + d_S[k].y()*oodx[1]*stresspress(1,1);
-              gInternalForce[ni[k]] -=  Vector(IFr,IFz,0.0) * pVol[part];
-              gStress[ni[k]]       += stressvol * S[k];
+              gInternalForce[node] -=  Vector(IFr,IFz,0.0) * pVol[part];
+              gStress[node]       += stressvol * S[k];
               #ifdef CHECK_ISFINITE
-                if (!std::isfinite(gInternalForce[ni[k]].x()) || 
-                    !std::isfinite(gInternalForce[ni[k]].y()) ||
-                    !std::isfinite(gInternalForce[ni[k]].z())) {
+                if (!std::isfinite(gInternalForce[node].x()) || 
+                    !std::isfinite(gInternalForce[node].y()) ||
+                    !std::isfinite(gInternalForce[node].z())) {
                   std::cout << "vol = " << pVol[part]
                             << " node = " << ni[k]
-                            << " f_i = " << gInternalForce[ni[k]]
-                            << " sig_g = " << gStress[ni[k]]
+                            << " f_i = " << gInternalForce[node]
+                            << " sig_g = " << gStress[node]
                             << " sig_p = " << stresspress
                             << " IFr = " << IFr
                             << " IFz = " << IFz << "\n";
                 }
+              #endif
+              #ifdef DEBUG_WITH_PARTICLE_ID
+                //if (pParticleID[part] == 158913855488) {
+                if (node == IntVector(3,38,0)) {
+                proc0cout << "Particle ID = " << pParticleID[part]
+                          << " node = " << node
+                          << " dS = " << d_S[k]
+                          << " IFr = " << IFr
+                          << " IFz = " << IFz
+                          << " stress = " << pStress[part]
+                          << " damp = " << p_q[part]
+                          << " stresspress = " << stresspress
+                          << " vol = " << pVol[part]
+                          << " fint_g = " << gInternalForce[node] << "\n";
+                }
+                //}
               #endif
             }
           }
@@ -2965,8 +3032,22 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
         }
       } // faces
       
+      #ifdef DEBUG_WITH_PARTICLE_ID
+        IntVector node(3,38,0);
+        if(patch->containsNode(node)){
+        proc0cout << "Before BC: Material = " << m << " Node = " << node
+                  << " fint_g = " << gInternalForce[node] << "\n";
+        }
+      #endif
       MPMBoundCond bc;
       bc.setBoundaryCondition(patch,dwi,"Symmetric",gInternalForce,interp_type);
+      #ifdef DEBUG_WITH_PARTICLE_ID
+        //IntVector node(3,38,0);
+        if(patch->containsNode(node)){
+        proc0cout << "After BC: Material = " << m << " Node = " << node
+                  << " fint_g = " << gInternalForce[node] << "\n";
+        }
+      #endif
     }
 
     for(NodeIterator iter = patch->getNodeIterator();!iter.done();iter++){
@@ -3101,6 +3182,17 @@ SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
                       << " v = " << gVelocity[c] << "\n";
           }
         #endif
+      #ifdef DEBUG_WITH_PARTICLE_ID
+        IntVector node(3,38,0);
+        if (c == node) {
+          proc0cout << "Node = " << node
+                    << " fint_g = " << gInternalForce[node] 
+                    << " fext_g = " << gExternalForce[node] 
+                    << " fbod_g = " << gBodyForce[node] 
+                    << " acc = " << gAcceleration[node]
+                    << "\n";
+        }
+      #endif
       }
     }    // matls
   }
@@ -3125,7 +3217,7 @@ SerialMPM::scheduleExMomIntegrated(SchedulerP& sched,
    *              the others according to specific rules)
    *   out(G.VELOCITY_STAR, G.ACCELERATION) */
   printSchedule(patches,cout_doing,"MPM::scheduleExMomIntegrated");
-  contactModel->addComputesAndRequiresIntegrated(sched, patches, matls);
+  contactModel->addComputesAndRequires(sched, patches, matls, lb->gVelocityStarLabel);
 }
 
 /*!----------------------------------------------------------------------
@@ -6393,7 +6485,7 @@ SerialMPM::refine(const ProcessorGroup*,
         // Create arrays for the particle data
         ParticleVariable<Point>  pX;
         ParticleVariable<double> pMass, pVolume, pTemperature;
-        ParticleVariable<Vector> pVelocity, pExternalforce, pDisp;
+        ParticleVariable<Vector> pVelocity, pExternalForce, pDisp;
         ParticleVariable<Matrix3> pSize;
         ParticleVariable<double> pTempPrev,p_q;
         ParticleVariable<int>    pLoadCurve;
@@ -6407,7 +6499,7 @@ SerialMPM::refine(const ProcessorGroup*,
         new_dw->allocateAndPut(pVelocity,      lb->pVelocityLabel,      pset);
         new_dw->allocateAndPut(pTemperature,   lb->pTemperatureLabel,   pset);
         new_dw->allocateAndPut(pTempPrev,      lb->pTempPreviousLabel,  pset);
-        new_dw->allocateAndPut(pExternalforce, lb->pExternalForceLabel, pset);
+        new_dw->allocateAndPut(pExternalForce, lb->pExternalForceLabel, pset);
         new_dw->allocateAndPut(pID,            lb->pParticleIDLabel,    pset);
         new_dw->allocateAndPut(pDisp,          lb->pDispLabel,          pset);
         if (flags->d_useLoadCurves){

@@ -28,6 +28,7 @@
 #include <Core/Grid/Variables/VarTypes.h>
 
 //#define XPIC2_UPDATE
+#define DEBUG_WITH_PARTICLE_ID
 
 using namespace Uintah;
 
@@ -493,7 +494,6 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                       << " massold = " << pMass[idx] << " massnew = " << pMass_new[idx]
                       << " tempold = " << pTemperature[idx] 
                       << " tempnew = " << pTemp_new[idx]
-                      << " pLocalized = " << pLocalized_new[idx]
                       << " volnew = " << pVolume[idx] << endl;
           #endif
         }
@@ -501,19 +501,27 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         if (pVelocity_new[idx].length() > flags->d_max_vel) {
           if (flags->d_deleteRogueParticles) {
             delset->addParticle(idx);
-            std::cout << "\n Warning: particle " << pParticleID[idx] 
+            proc0cout << "\n Warning: particle " << pParticleID[idx] 
                       << " hit speed ceiling #1. Deleting particle." 
                       << std::endl;
           } else {
             if (pVelocity_new[idx].length() >= pVelocity[idx].length()) {
               pVelocity_new[idx] = 
                 (pVelocity_new[idx]/pVelocity_new[idx].length())*(flags->d_max_vel*.9);      
-              std::cout << "\n Warning: particle "<< pParticleID[idx] 
+              proc0cout << "\n Warning: particle "<< pParticleID[idx] 
                         << " hit speed ceiling #1. Modifying particle velocity accordingly."
                         << std::endl;
               //pVelocity_new[idx]=pVelocity[idx];
             }
           }
+          proc0cout << "In " << __FILE__ << ":" << __LINE__ << std::endl;
+          proc0cout << "Material = " << m << " Deleted Particle = " << pParticleID_new[idx] 
+                    << " xold = " << pX[idx] << " xnew = " << pX_new[idx]
+                    << " vold = " << pVelocity[idx] << " vnew = "<< pVelocity_new[idx]
+                    << " massold = " << pMass[idx] << " massnew = " << pMass_new[idx]
+                    << " tempold = " << pTemperature[idx] << " tempnew = " << pTemp_new[idx]
+                    << " vol = " << pVolume[idx] << "\n";
+          proc0cout << " F_old = " << pDefGrad[idx] << "\n";
         }
       }
 
