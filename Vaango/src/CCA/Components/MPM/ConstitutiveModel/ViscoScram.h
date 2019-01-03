@@ -153,17 +153,20 @@ protected:
   MurnaghanEOS d_murnahanEOSData;
   JWLEOS d_JWLEOSData;
 
-private:
-  // Prevent assignment of this class
-  ViscoScram& operator=(const ViscoScram& cm) = delete;
 
 public:
   // constructors
   ViscoScram(ProblemSpecP& ps, MPMFlags* flag);
   ViscoScram(const ViscoScram* cm);
+  ViscoScram& operator=(const ViscoScram& cm) = delete;
 
   // destructor
   ~ViscoScram() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

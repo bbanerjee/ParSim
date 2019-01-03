@@ -160,23 +160,23 @@ protected:
   DamageModel* d_damage;
   StabilityCheck* d_stable;
 
-private:
-  // Prevent copying of this class
-  // copy constructor
-  // SmallStrainPlastic(const SmallStrainPlastic &cm);
-  SmallStrainPlastic& operator=(const SmallStrainPlastic& cm);
-
 public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief constructors */
   ////////////////////////////////////////////////////////////////////////
   SmallStrainPlastic(ProblemSpecP& ps, MPMFlags* flag);
   SmallStrainPlastic(const SmallStrainPlastic* cm);
+  SmallStrainPlastic& operator=(const SmallStrainPlastic& cm) = delete;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief destructor  */
   ////////////////////////////////////////////////////////////////////////
   ~SmallStrainPlastic() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

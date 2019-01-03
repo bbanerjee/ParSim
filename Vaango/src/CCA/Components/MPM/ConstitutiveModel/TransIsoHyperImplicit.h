@@ -73,18 +73,19 @@ public:
 private:
   CMData d_initialData;
 
-  // Prevent copying of this class
-  // copy constructor
-  // TransIsoHyperImplicit(const TransIsoHyperImplicit &cm);
-  TransIsoHyperImplicit& operator=(const TransIsoHyperImplicit& cm);
-
 public:
   // constructors
   TransIsoHyperImplicit(ProblemSpecP& ps, MPMFlags* flag);
   TransIsoHyperImplicit(const TransIsoHyperImplicit* cm);
+  TransIsoHyperImplicit& operator=(const TransIsoHyperImplicit& cm) = delete;
 
   // destructor
   ~TransIsoHyperImplicit() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::TOTAL_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

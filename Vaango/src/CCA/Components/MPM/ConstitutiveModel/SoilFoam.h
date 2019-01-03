@@ -77,18 +77,20 @@ private:
   CMData d_initialData;
   double slope[9];
 
-  // Prevent copying of this class
-  // copy constructor
-  // SoilFoam(const SoilFoam &cm);
-  SoilFoam& operator=(const SoilFoam& cm);
 
 public:
   // constructor
   SoilFoam(ProblemSpecP& ps, MPMFlags* flag);
   SoilFoam(const SoilFoam* cm);
+  SoilFoam& operator=(const SoilFoam& cm) = delete;
 
   // destructor
   ~SoilFoam() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

@@ -133,25 +133,19 @@ protected:
   // bool d_useEOSFactory;
   MPMEquationOfState* d_eos;
 
-  ///////////////
-  // Functions //
-  ///////////////
-private:
-  // Prevent copying of this class
-  // copy constructor
-  // UCNH(const UCNH &cm);
-  UCNH& operator=(const UCNH& cm);
-
-  // Plasticity requirements
-  // friend const TypeDescription* fun_getTypeDescriptiont(StateData*);
-
 public:
   // constructors
   UCNH(ProblemSpecP& ps, MPMFlags* flag);
   UCNH(ProblemSpecP& ps, MPMFlags* flag, bool plas, bool dam);
   UCNH(const UCNH* cm);
+  UCNH& operator=(const UCNH& cm) = delete;
 
-  // specifcy what to output from the constitutive model to an .xml file
+  ModelType modelType() const override
+  {
+    return ModelType::TOTAL_FORM;
+  }
+
+  // specify what to output from the constitutive model to an .xml file
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone

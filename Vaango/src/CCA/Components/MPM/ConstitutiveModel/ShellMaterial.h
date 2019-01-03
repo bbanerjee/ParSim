@@ -83,19 +83,19 @@ protected:
   CMData d_initialData;
   bool d_includeFlowWork;
 
-private:
-  // Prevent copying of this class
-  // copy constructor
-  // ShellMaterial(const ShellMaterial &cm);
-  ShellMaterial& operator=(const ShellMaterial& cm);
-
 public:
   // constructors
   ShellMaterial(ProblemSpecP& ps, MPMFlags* flag);
   ShellMaterial(const ShellMaterial* cm);
+  ShellMaterial& operator=(const ShellMaterial& cm) = delete;
 
   // destructor
   ~ShellMaterial() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::TOTAL_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

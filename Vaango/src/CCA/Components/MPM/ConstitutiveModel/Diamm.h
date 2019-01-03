@@ -53,9 +53,6 @@ public:
   int d_NINSV;
 
 private:
-  // Prevent copying of this class
-  // copy constructor
-  Diamm& operator=(const Diamm& cm);
 
   void getInputParameters(ProblemSpecP& ps);
 
@@ -65,9 +62,15 @@ public:
   // constructors
   Diamm(ProblemSpecP& ps, MPMFlags* flag);
   Diamm(const Diamm* cm);
+  Diamm& operator=(const Diamm& cm) = delete;
 
   // destructor
   ~Diamm() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

@@ -163,18 +163,21 @@ public:
 private:
   MatConstData d_matConst;
 
-  /*! Prevent assignment of this class */
-  ViscoSCRAMHotSpot& operator=(const ViscoSCRAMHotSpot& cm);
-
 public:
   // constructors
   ViscoSCRAMHotSpot(ProblemSpecP& ps, MPMFlags* flag);
   ViscoSCRAMHotSpot(const ViscoSCRAMHotSpot* cm);
+  ViscoSCRAMHotSpot& operator=(const ViscoSCRAMHotSpot& cm) = delete;
 
   // destructor
   ~ViscoSCRAMHotSpot() override;
 
   ViscoSCRAMHotSpot* clone() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   /*! Computes and requires for initialization of history variables */
   void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,

@@ -73,18 +73,19 @@ public:
 private:
   CMData d_initialData;
 
-  // Prevent copying of this class
-  // copy constructor
-  // P_Alpha(const P_Alpha &cm);
-  P_Alpha& operator=(const P_Alpha& cm);
-
 public:
   // constructors
   P_Alpha(ProblemSpecP& ps, MPMFlags* flag);
   P_Alpha(const P_Alpha* cm);
+  P_Alpha& operator=(const P_Alpha& cm) = delete;
 
   // destructor
   ~P_Alpha() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::TOTAL_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

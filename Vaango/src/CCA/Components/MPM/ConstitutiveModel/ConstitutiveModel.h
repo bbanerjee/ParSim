@@ -75,10 +75,19 @@ class ParticleVariableBase;
 class ConstitutiveModel
 {
 public:
+
+  enum class ModelType
+  {
+    TOTAL_FORM,
+    RATE_FORM,
+    INCREMENTAL
+  };
+
   ConstitutiveModel(MPMFlags* MFlag);
   ConstitutiveModel(const ConstitutiveModel* cm);
   virtual ~ConstitutiveModel();
 
+  virtual ModelType modelType() const = 0;
   virtual void outputProblemSpec(ProblemSpecP& ps,
                                  bool output_cm_tag = true) = 0;
 
@@ -445,6 +454,7 @@ protected:
 
   MPMLabel* lb;
   MPMFlags* flag;
+  ModelType d_modelType;
 
   int NGP;
   int NGN;

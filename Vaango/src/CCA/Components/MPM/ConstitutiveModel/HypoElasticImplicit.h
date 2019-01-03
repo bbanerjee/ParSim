@@ -59,18 +59,20 @@ public:
 private:
   CMData d_initialData;
 
-  // Prevent copying of this class
-  // copy constructor
-  // HypoElasticImplicit(const HypoElasticImplicit &cm);
-  HypoElasticImplicit& operator=(const HypoElasticImplicit& cm);
 
 public:
   // constructors
   HypoElasticImplicit(ProblemSpecP& ps, MPMFlags* flag);
   HypoElasticImplicit(const HypoElasticImplicit* cm);
+  HypoElasticImplicit& operator=(const HypoElasticImplicit& cm) = delete;
 
   // destructor
   ~HypoElasticImplicit() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

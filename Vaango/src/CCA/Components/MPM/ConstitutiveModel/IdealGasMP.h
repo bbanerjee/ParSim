@@ -56,18 +56,20 @@ public:
 private:
   CMData d_initialData;
 
-  // Prevent copying of this class
-  // copy constructor
-  // IdealGasMP(const IdealGasMP &cm);
-  IdealGasMP& operator=(const IdealGasMP& cm);
 
 public:
   // constructors
   IdealGasMP(ProblemSpecP& ps, MPMFlags* flag);
   IdealGasMP(const IdealGasMP* cm);
+  IdealGasMP& operator=(const IdealGasMP& cm) = delete;
 
   // destructor
   ~IdealGasMP() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::TOTAL_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

@@ -71,18 +71,19 @@ private:
   const VarLabel* pStress_e_vLabel_preReloc;
   const VarLabel* pStress_e_dLabel_preReloc;
 
-  // Prevent copying of this class
-  // copy constructor
-  // MWViscoElastic(const MWViscoElastic &cm);
-  MWViscoElastic& operator=(const MWViscoElastic& cm);
-
 public:
   // constructors
   MWViscoElastic(ProblemSpecP& ps, MPMFlags* flag);
   MWViscoElastic(const MWViscoElastic* cm);
+  MWViscoElastic& operator=(const MWViscoElastic& cm) = delete;
 
   // destructor
   ~MWViscoElastic() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

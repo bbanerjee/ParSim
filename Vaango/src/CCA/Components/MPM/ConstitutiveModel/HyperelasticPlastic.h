@@ -189,21 +189,20 @@ protected:
   // Functions //
   ///////////////
 private:
-  // Prevent copying of this class
-  // copy constructor
-  // HyperelasticPlastic(const HyperelasticPlastic &cm);
-  HyperelasticPlastic& operator=(const HyperelasticPlastic& cm);
-
-  // Plasticity requirements
-  // friend const TypeDescription* fun_getTypeDescriptiont(StateData*);
 
 public:
   // constructors
   HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* flag);
   HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* flag, bool plas, bool dam);
   HyperelasticPlastic(const HyperelasticPlastic* cm);
+  HyperelasticPlastic& operator=(const HyperelasticPlastic& cm) = delete;
 
-  // specifcy what to output from the constitutive model to an .xml file
+  ModelType modelType() const override
+  {
+    return ModelType::TOTAL_FORM;
+  }
+
+  // specify what to output from the constitutive model to an .xml file
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone

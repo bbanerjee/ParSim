@@ -108,18 +108,20 @@ public:
 private:
   CMData d_initialData;
 
-  // Prevent copying of this class
-  // copy constructor
-  // ViscoTransIsoHyperImplicit(const ViscoTransIsoHyperImplicit &cm);
-  ViscoTransIsoHyperImplicit& operator=(const ViscoTransIsoHyperImplicit& cm);
 
 public:
   // constructors
   ViscoTransIsoHyperImplicit(ProblemSpecP& ps, MPMFlags* flag);
   ViscoTransIsoHyperImplicit(const ViscoTransIsoHyperImplicit* cm);
+  ViscoTransIsoHyperImplicit& operator=(const ViscoTransIsoHyperImplicit& cm) = delete;
 
   // destructor
   ~ViscoTransIsoHyperImplicit() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::TOTAL_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

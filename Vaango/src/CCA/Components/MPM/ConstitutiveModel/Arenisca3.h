@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -153,20 +153,21 @@ private:
   bool d_initializeWithBodyForce;
   Point d_surfaceRefPoint;
 
-  // Prevent copying of this class
-  // copy constructor
-
-  Arenisca3& operator=(const Arenisca3& cm);
-
   void initializeLocalMPMLabels();
 
 public:
   // constructor
   Arenisca3(ProblemSpecP& ps, MPMFlags* flag);
   Arenisca3(const Arenisca3* cm);
+  Arenisca3& operator=(const Arenisca3& cm) = delete;
 
   // destructor
   ~Arenisca3() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

@@ -132,10 +132,6 @@ private:
 
   CMData d_cm;
 
-  // Prevent copying of this class
-  // copy constructor
-
-  Arenisca4& operator=(const Arenisca4& cm);
 
   void initializeLocalMPMLabels();
 
@@ -143,9 +139,15 @@ public:
   // constructor
   Arenisca4(ProblemSpecP& ps, MPMFlags* flag);
   Arenisca4(const Arenisca4* cm);
+  Arenisca4& operator=(const Arenisca4& cm) = delete;
 
   // destructor
   ~Arenisca4() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

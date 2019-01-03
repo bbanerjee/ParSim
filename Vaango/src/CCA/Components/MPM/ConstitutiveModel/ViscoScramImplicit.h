@@ -102,18 +102,20 @@ private:
   CMData d_initialData;
   TimeTemperatureData d_tt;
 
-  // Prevent copying of this class
-  // copy constructor
-  // ViscoScramImplicit(const ViscoScramImplicit &cm);
-  ViscoScramImplicit& operator=(const ViscoScramImplicit& cm);
 
 public:
   // constructors
   ViscoScramImplicit(ProblemSpecP& ps, MPMFlags* flag);
   ViscoScramImplicit(const ViscoScramImplicit* cm);
+  ViscoScramImplicit& operator=(const ViscoScramImplicit& cm) = delete;
 
   // destructor
   ~ViscoScramImplicit() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

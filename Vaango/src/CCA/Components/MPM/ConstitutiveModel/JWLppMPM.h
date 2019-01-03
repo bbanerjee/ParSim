@@ -96,19 +96,19 @@ protected:
                           // to stop iterations
   int d_newtonIterMax;    // Maximum number of Newton iterations
 
-private:
-  // Prevent copying of this class
-  // copy constructor
-  // JWLppMPM(const JWLppMPM &cm);
-  JWLppMPM& operator=(const JWLppMPM& cm);
-
 public:
   // constructors
   JWLppMPM(ProblemSpecP& ps, MPMFlags* flag);
   JWLppMPM(const JWLppMPM* cm);
+  JWLppMPM& operator=(const JWLppMPM& cm) = delete;
 
   // destructor
   ~JWLppMPM() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::TOTAL_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

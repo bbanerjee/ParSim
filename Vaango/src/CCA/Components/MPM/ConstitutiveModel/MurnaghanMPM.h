@@ -69,19 +69,20 @@ protected:
   bool d_useModifiedEOS;
   int d_8or27;
 
-private:
-  // Prevent copying of this class
-  // copy constructor
-  // MurnaghanMPM(const Murnaghan &cm);
-  MurnaghanMPM& operator=(const MurnaghanMPM& cm);
 
 public:
   // constructors
   MurnaghanMPM(ProblemSpecP& ps, MPMFlags* flag);
   MurnaghanMPM(const MurnaghanMPM* cm);
+  MurnaghanMPM& operator=(const MurnaghanMPM& cm) = delete;
 
   // destructor
   ~MurnaghanMPM() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::TOTAL_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

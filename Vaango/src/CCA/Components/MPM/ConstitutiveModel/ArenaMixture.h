@@ -178,10 +178,6 @@ private:
   double d_modulus_scale_fac;  // density based modulus scaling
   double d_strength_scale_fac; // density based strength scaling
 
-  // Prevent copying of this class
-  // copy constructor
-  ArenaMixture& operator=(const ArenaMixture& cm);
-
   void initializeLocalMPMLabels();
   void checkInputParameters();
 
@@ -189,9 +185,15 @@ public:
   // constructor
   ArenaMixture(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
   ArenaMixture(const ArenaMixture* cm);
+  ArenaMixture& operator=(const ArenaMixture& cm) = delete;
 
   // destructor
   ~ArenaMixture() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps,
                          bool output_cm_tag = true) override;

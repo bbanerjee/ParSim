@@ -88,10 +88,6 @@ protected:
   bool d_removeMass;
 
 private:
-  // Prevent copying of this class
-  // copy constructor
-  Kayenta& operator=(const Kayenta& cm);
-
   void getInputParameters(ProblemSpecP& ps);
 
   void initializeLocalMPMLabels();
@@ -100,9 +96,15 @@ public:
   // constructors
   Kayenta(ProblemSpecP& ps, MPMFlags* flag);
   Kayenta(const Kayenta* cm);
+  Kayenta& operator=(const Kayenta& cm) = delete;
 
   // destructor
   ~Kayenta() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

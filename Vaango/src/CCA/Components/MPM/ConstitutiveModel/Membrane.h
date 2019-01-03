@@ -54,18 +54,20 @@ public:
 private:
   CMData d_initialData;
 
-  // Prevent copying of this class
-  // copy constructor
-  // Membrane(const Membrane &cm);
-  Membrane& operator=(const Membrane& cm);
 
 public:
   // constructors
   Membrane(ProblemSpecP& ps, MPMFlags* flag);
   Membrane(const Membrane* cm);
+  Membrane& operator=(const Membrane& cm) = delete;
 
   // destructor
   ~Membrane() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::TOTAL_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

@@ -65,8 +65,6 @@ public:
 private:
   CMData d_cm; // Constitutive model data
 
-  // Prevent assignment
-  PolarOrthotropicHypoElastic& operator=(const PolarOrthotropicHypoElastic& cm);
 
 public:
   // Default constructor
@@ -75,11 +73,19 @@ public:
   // Copy constructor
   PolarOrthotropicHypoElastic(const PolarOrthotropicHypoElastic* cm);
 
+  // Prevent assignment
+  PolarOrthotropicHypoElastic& operator=(const PolarOrthotropicHypoElastic& cm) = delete;
+
   // Make a clone of the constitutive model
   PolarOrthotropicHypoElastic* clone() override;
 
   // Destroy
   ~PolarOrthotropicHypoElastic() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   /*!  Output the problem spec for restart */
   void outputProblemSpec(Uintah::ProblemSpecP& ps,

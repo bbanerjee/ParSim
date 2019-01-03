@@ -174,10 +174,6 @@ protected:
   SpecificHeatModel* d_Cp;
   DevStressModel* d_devStress;
 
-private:
-  // Prevent copying of this class
-  // copy constructor
-  ElasticPlasticHP& operator=(const ElasticPlasticHP& cm);
 
 public:
   ////////////////////////////////////////////////////////////////////////
@@ -185,11 +181,17 @@ public:
   ////////////////////////////////////////////////////////////////////////
   ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* flag);
   ElasticPlasticHP(const ElasticPlasticHP* cm);
+  ElasticPlasticHP& operator=(const ElasticPlasticHP& cm) = delete;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief destructor  */
   ////////////////////////////////////////////////////////////////////////
   ~ElasticPlasticHP() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

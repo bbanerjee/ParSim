@@ -58,6 +58,11 @@ public:
   TabularPlasticityCap& operator=(const TabularPlasticityCap& cm) = delete;
 
 
+  ModelType modelType() const override
+  {
+    return ModelType::INCREMENTAL;
+  }
+
   void outputProblemSpec(Uintah::ProblemSpecP& ps,
                          bool output_cm_tag = true) override;
 

@@ -93,10 +93,6 @@ public:
 private:
   CMData d_cm;
 
-  // Prevent copying of this class
-  // copy constructor
-
-  SoilModelBrannon& operator=(const SoilModelBrannon& cm);
 
   void initializeLocalMPMLabels();
 
@@ -104,9 +100,15 @@ public:
   // constructor
   SoilModelBrannon(ProblemSpecP& ps, MPMFlags* flag);
   SoilModelBrannon(const SoilModelBrannon* cm);
+  SoilModelBrannon& operator=(const SoilModelBrannon& cm) = delete;
 
   // destructor
   ~SoilModelBrannon() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

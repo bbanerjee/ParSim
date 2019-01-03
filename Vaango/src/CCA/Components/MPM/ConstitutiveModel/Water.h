@@ -59,19 +59,20 @@ protected:
   bool d_useModifiedEOS;
   int d_8or27;
 
-private:
-  // Prevent copying of this class
-  // copy constructor
-  // Water(const Water &cm);
-  Water& operator=(const Water& cm);
 
 public:
   // constructors
   Water(ProblemSpecP& ps, MPMFlags* flag);
   Water(const Water* cm);
+  Water& operator=(const Water& cm) = delete;
 
   // destructor
   ~Water() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::TOTAL_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

@@ -43,10 +43,6 @@
 namespace Uintah {
 class TransIsoHyper : public ConstitutiveModel
 {
-private:
-  // Create datatype for storing model parameters
-  bool d_useModifiedEOS;
-
 public:
   struct CMData
   { //_________________________________________modified here
@@ -70,20 +66,22 @@ public:
   const VarLabel* pFailureLabel_preReloc;
 
 private:
+  bool d_useModifiedEOS;
   CMData d_initialData;
-
-  // Prevent copying of this class
-  // copy constructor
-  // TransIsoHyper(const TransIsoHyper &cm);
-  TransIsoHyper& operator=(const TransIsoHyper& cm);
 
 public:
   // constructors
   TransIsoHyper(ProblemSpecP& ps, MPMFlags* flag);
   TransIsoHyper(const TransIsoHyper* cm);
+  TransIsoHyper& operator=(const TransIsoHyper& cm) = delete;
 
   // destructor
   ~TransIsoHyper() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::TOTAL_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

@@ -86,16 +86,19 @@ private:
   std::vector<const Uintah::VarLabel*> stateVLabels;
   std::vector<const Uintah::VarLabel*> stateVLabels_preReloc;
 
-  // Prevent copying of this class
-  ViscoElasticFortran& operator=(const ViscoElasticFortran& cm);
-
 public:
   // constructors
   ViscoElasticFortran(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
   ViscoElasticFortran(const ViscoElasticFortran* cm);
+  ViscoElasticFortran& operator=(const ViscoElasticFortran& cm) = delete;
 
   // destructor
   ~ViscoElasticFortran() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps,
                          bool output_cm_tag = true) override;

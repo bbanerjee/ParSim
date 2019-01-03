@@ -84,6 +84,11 @@ public:
   ////////////////////////////////////////////////////////////////////////
   ~CamClay() override;
 
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
+
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone

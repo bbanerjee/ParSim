@@ -56,17 +56,20 @@ private:
   friend const TypeDescription* fun_getTypeDescription(CMData*);
 
   CMData d_initialData;
-  // Prevent copying of this class
-  // copy constructor
-  HypoElasticFortran& operator=(const HypoElasticFortran& cm);
 
 public:
   // constructors
   HypoElasticFortran(ProblemSpecP& ps, MPMFlags* flag);
   HypoElasticFortran(const HypoElasticFortran* cm);
+  HypoElasticFortran& operator=(const HypoElasticFortran& cm) = delete;
 
   // destructor
   ~HypoElasticFortran() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

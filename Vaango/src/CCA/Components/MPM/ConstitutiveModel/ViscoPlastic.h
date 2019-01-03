@@ -138,10 +138,6 @@ protected:
   MPMEquationOfState* d_eos;
 
 private:
-  // Prevent copying of this class
-  // copy constructor
-  // ViscoPlastic(const ViscoPlastic &cm);
-  ViscoPlastic& operator=(const ViscoPlastic& cm);
 
   void getFailureVariableData(ProblemSpecP& ps);
 
@@ -153,11 +149,17 @@ public:
   ////////////////////////////////////////////////////////////////////////
   ViscoPlastic(ProblemSpecP& ps, MPMFlags* flag);
   ViscoPlastic(const ViscoPlastic* cm);
+  ViscoPlastic& operator=(const ViscoPlastic& cm) = delete;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief destructor  */
   ////////////////////////////////////////////////////////////////////////
   ~ViscoPlastic() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 

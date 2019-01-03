@@ -132,10 +132,6 @@ private:
     small_number, big_number;
   CMData d_cm;
 
-  // Prevent copying of this class
-  // copy constructor
-
-  Arenisca& operator=(const Arenisca& cm);
 
   void initializeLocalMPMLabels();
 
@@ -143,9 +139,15 @@ public:
   // constructor
   Arenisca(ProblemSpecP& ps, MPMFlags* flag);
   Arenisca(const Arenisca* cm);
+  Arenisca& operator=(const Arenisca& cm) = delete;
 
   // destructor
   ~Arenisca() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
