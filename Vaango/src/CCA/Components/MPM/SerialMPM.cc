@@ -483,12 +483,12 @@ SerialMPM::scheduleInitialize(const LevelP& level,
   int numMPM = d_sharedState->getNumMPMMatls();
   for(int m = 0; m < numMPM; m++){
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
-    // Add vel grad/def grad computes
+    // For velocity gradinet and deformation gradient
     d_defGradComputer->addInitialComputesAndRequires(t, mpm_matl, patches);
 
     // Add constitutive model computes
-    ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
 
     // Add damage model computes
@@ -604,11 +604,13 @@ void SerialMPM::actuallyInitialize(const ProcessorGroup*,
       particleIndex numParticles = mpm_matl->createParticles(cellNAPID, patch, new_dw);
       totalParticles+=numParticles;
 
+      ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+
       // Initialize deformation gradient
       d_defGradComputer->initializeGradient(patch, mpm_matl, new_dw);
 
       // Initialize constitutive models
-      mpm_matl->getConstitutiveModel()->initializeCMData(patch,mpm_matl,new_dw);
+      cm->initializeCMData(patch,mpm_matl,new_dw);
 
       // Initialize basic damage model
       if (mpm_matl->d_doBasicDamage) {
@@ -1305,6 +1307,7 @@ SerialMPM::scheduleTimeAdvance(const LevelP & level,
   scheduleComputeDeformationGradient(   sched, patches, matls);
   // Schedule compute of the stress tensor
   scheduleComputeStressTensor(          sched, patches, matls);
+
   // Create a task for computing damage and updating stress
   scheduleComputeBasicDamage(           sched, patches, matls);
   // Schedule update of the erosion parameter
@@ -3721,14 +3724,8 @@ SerialMPM::computeDeformationGradient(const ProcessorGroup*,
   printTask(patches, patches->get(0),cout_doing,
             "Doing computeDeformationGradient");
 
-  if (cout_dbg.active()) {
-    cout_dbg << " Patch = " << (patches->get(0))->getID();
-  }
-
   // Compute deformation gradient
   d_defGradComputer->computeDeformationGradient(patches, old_dw, new_dw);
-
-  if (cout_dbg.active()) cout_dbg << " Exit\n" ;
 
 }
 
@@ -3746,6 +3743,8 @@ SerialMPM::scheduleComputeStressTensor(SchedulerP& sched,
                            getLevel(patches)->getGrid()->numLevels()))
     return;
   
+  scheduleUnrotateStressAndDeformationRate(sched, patches, matls);
+
   /* Create a task for computing the stress tensor */
   printSchedule(patches,cout_doing,"MPM::scheduleComputeStressTensor");
   
@@ -3770,6 +3769,94 @@ SerialMPM::scheduleComputeStressTensor(SchedulerP& sched,
   }
   
   sched->addTask(t, patches, matls);
+
+  scheduleRotateStress(sched, patches, matls);
+}
+
+/*!----------------------------------------------------------------------
+ * scheduleUnrotateStressAndDeformationRate
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
+                                                   const PatchSet* patches,
+                                                   const MaterialSet* matls)
+{
+  if (!flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                             getLevel(patches)->getGrid()->numLevels()))
+    return;
+
+  printSchedule(patches, cout_doing, 
+                "MPM::scheduleUnrotateStressAndDeformationRate");
+
+  int numMatls = d_sharedState->getNumMPMMatls();
+  Task* t = scinew Task("MPM::computeUnrotatedStressAndDeformationRate", this,
+                        &SerialMPM::computeUnrotatedStressAndDeformationRate);
+  for (int m = 0; m < numMatls; m++) {
+    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+
+    if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+
+      const MaterialSubset* matlset = mpm_matl->thisMaterial();
+
+      t->requires(Task::OldDW, lb->pPolarDecompRLabel,    matlset, Ghost::None);
+      t->requires(Task::NewDW, lb->pPolarDecompRMidLabel, matlset, Ghost::None);
+      t->requires(Task::OldDW, lb->pStressLabel,          matlset, Ghost::None);
+      t->requires(Task::NewDW, lb->pVelGradLabel_preReloc, matlset, Ghost::None);
+
+      t->computes(lb->pDeformRateMidLabel,   matlset);
+      t->computes(lb->pStressUnrotatedLabel, matlset);
+    }
+  }
+
+  sched->addTask(t, patches, matls);
+}
+
+/*!----------------------------------------------------------------------
+ * computeUnrotatedStressAndDeformationRate
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::computeUnrotatedStressAndDeformationRate(const ProcessorGroup*, 
+                                                   const PatchSubset* patches,
+                                                   const MaterialSubset*, 
+                                                   DataWarehouse* old_dw,
+                                                   DataWarehouse* new_dw)
+{
+  printTask(patches, patches->get(0), cout_doing, "Doing computeUnrotate");
+
+  int numMatls = d_sharedState->getNumMPMMatls();
+  for (int m = 0; m < numMatls; m++) {
+    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+
+    ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+    if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+
+      int matID = mpm_matl->getDWIndex();
+      for (int p = 0; p < patches->size(); p++) {
+        const Patch* patch = patches->get(p);
+        ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+
+        constParticleVariable<long64> pParticleID;
+        constParticleVariable<Matrix3> pStress_old, pR_old, pR_mid, pVelGrad_mid;
+        old_dw->get(pParticleID,  lb->pParticleIDLabel,      pset);
+        old_dw->get(pR_old,       lb->pPolarDecompRLabel,    pset);
+        new_dw->get(pR_mid,       lb->pPolarDecompRMidLabel, pset);
+        old_dw->get(pStress_old,  lb->pStressLabel,          pset);
+        new_dw->get(pVelGrad_mid, lb->pVelGradLabel_preReloc, pset);
+
+        ParticleVariable<Matrix3> pDeformRate_mid, pStress_old_unrotated;
+        new_dw->allocateAndPut(pDeformRate_mid,       lb->pDeformRateMidLabel,   pset);
+        new_dw->allocateAndPut(pStress_old_unrotated, lb->pStressUnrotatedLabel, pset);
+
+        for (auto particle : *pset) {
+          pStress_old_unrotated[particle] = (pR_old[particle].Transpose()) * (pStress_old[particle] *
+                                             pR_old[particle]);
+          Matrix3 DD = (pVelGrad_mid[particle] + pVelGrad_mid[particle].Transpose()) * 0.5;
+          pDeformRate_mid[particle] = (pR_mid[particle].Transpose()) * (DD * pR_mid[particle]);
+        }
+      }
+    }
+  }
 }
 
 /*!----------------------------------------------------------------------
@@ -3816,6 +3903,82 @@ SerialMPM::computeStressTensor(const ProcessorGroup*,
 
     if (cout_dbg.active()) cout_dbg << " Exit\n" ;
 
+  }
+}
+
+/*!----------------------------------------------------------------------
+ * scheduleRotateStress
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::scheduleRotateStress(SchedulerP& sched,
+                               const PatchSet* patches,
+                               const MaterialSet* matls)
+{
+  if (!flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                             getLevel(patches)->getGrid()->numLevels()))
+    return;
+
+  printSchedule(patches, cout_doing, 
+                "MPM::scheduleRotateStress");
+
+  int numMatls = d_sharedState->getNumMPMMatls();
+  Task* t = scinew Task("MPM::computeRotatedStress", this,
+                        &SerialMPM::computeRotatedStress);
+  for (int m = 0; m < numMatls; m++) {
+    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+
+    if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+
+      const MaterialSubset* matlset = mpm_matl->thisMaterial();
+
+      t->requires(Task::OldDW, lb->pParticleIDLabel,      matlset, Ghost::None);
+      t->requires(Task::NewDW, lb->pPolarDecompRLabel_preReloc, matlset, Ghost::None);
+
+      t->modifies(lb->pStressLabel_preReloc, matlset);
+    }
+  }
+
+  sched->addTask(t, patches, matls);
+}
+
+/*!----------------------------------------------------------------------
+ * computeRotatedStress
+ *-----------------------------------------------------------------------*/
+void
+SerialMPM::computeRotatedStress(const ProcessorGroup*, 
+                               const PatchSubset* patches,
+                               const MaterialSubset*, 
+                               DataWarehouse* old_dw,
+                               DataWarehouse* new_dw)
+{
+  printTask(patches, patches->get(0), cout_doing, "Doing computeRotate");
+
+  int numMatls = d_sharedState->getNumMPMMatls();
+  for (int m = 0; m < numMatls; m++) {
+    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+
+    ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+    if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+
+      int matID = mpm_matl->getDWIndex();
+      for (int p = 0; p < patches->size(); p++) {
+        const Patch* patch = patches->get(p);
+        ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+
+        constParticleVariable<long64> pParticleID;
+        constParticleVariable<Matrix3> pR_new;
+        ParticleVariable<Matrix3> pStress_new;
+        old_dw->get(pParticleID,           lb->pParticleIDLabel,            pset);
+        new_dw->get(pR_new,                lb->pPolarDecompRLabel_preReloc, pset);
+        new_dw->getModifiable(pStress_new, lb->pStressLabel_preReloc,       pset);
+
+        for (auto particle : *pset) {
+          pStress_new[particle] = (pR_new[particle] * pStress_new[particle]) *
+                                             (pR_new[particle].Transpose());
+        }
+      }
+    }
   }
 }
 

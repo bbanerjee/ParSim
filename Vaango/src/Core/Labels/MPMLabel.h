@@ -55,6 +55,8 @@ using std::vector;
       const VarLabel* pScratchLabel;
       const VarLabel* pLocalizedMPMLabel;
       const VarLabel* pLocalizedMPMLabel_preReloc;
+      const VarLabel* pRemoveLabel;
+      const VarLabel* pRemoveLabel_preReloc;
       const VarLabel* pVolumeDeformedLabel;
       const VarLabel* TotalVolumeDeformedLabel;
       const VarLabel* pXXLabel;
@@ -68,14 +70,19 @@ using std::vector;
       const VarLabel* pVelGradLabel_preReloc;
       const VarLabel* pDispGradLabel;
       const VarLabel* pDispGradLabel_preReloc;
+      const VarLabel* pDeformRateMidLabel;
       const VarLabel* pDefGradLabel;
       const VarLabel* pDefGradLabel_preReloc;
+      const VarLabel* pPolarDecompRLabel;
+      const VarLabel* pPolarDecompRLabel_preReloc;
+      const VarLabel* pPolarDecompRMidLabel;
 
       //PermanentParticleState
       //const VarLabel* pDeformationMeasureLabel;
       //const VarLabel* pDeformationMeasureLabel_preReloc;
       const VarLabel* pStressLabel;
       const VarLabel* pStressLabel_preReloc;
+      const VarLabel* pStressUnrotatedLabel;
       const VarLabel* pVolumeLabel;
       const VarLabel* pVolumeLabel_preReloc;
       const VarLabel* pMassLabel;

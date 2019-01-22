@@ -227,13 +227,6 @@ TabularPlasticity::initializeLocalMPMLabels()
     "p.plasticVolStrain+",
     Uintah::ParticleVariable<double>::getTypeDescription());
 
-  pRemoveLabel = Uintah::VarLabel::create(
-    "p.remove",
-    Uintah::ParticleVariable<int>::getTypeDescription());
-  pRemoveLabel_preReloc = Uintah::VarLabel::create(
-    "p.remove+",
-    Uintah::ParticleVariable<int>::getTypeDescription());
-
   pBulkModulusLabel = Uintah::VarLabel::create(
     "p.bulkModulus",
     Uintah::ParticleVariable<double>::getTypeDescription());
@@ -256,8 +249,6 @@ TabularPlasticity::~TabularPlasticity()
   VarLabel::destroy(pPlasticCumEqStrainLabel_preReloc);
   VarLabel::destroy(pPlasticVolStrainLabel);
   VarLabel::destroy(pPlasticVolStrainLabel_preReloc);
-  VarLabel::destroy(pRemoveLabel);
-  VarLabel::destroy(pRemoveLabel_preReloc);
   VarLabel::destroy(pBulkModulusLabel);
   VarLabel::destroy(pBulkModulusLabel_preReloc);
 
@@ -313,14 +304,14 @@ TabularPlasticity::addParticleState(std::vector<const VarLabel*>& from,
   from.push_back(pPlasticVolStrainLabel);
   to.push_back(pPlasticVolStrainLabel_preReloc);
 
-  from.push_back(pRemoveLabel);
-  to.push_back(pRemoveLabel_preReloc);
-
   from.push_back(pBulkModulusLabel);
   to.push_back(pBulkModulusLabel_preReloc);
 
   // Add the particle state for the yield condition model
   d_yield->addParticleState(from, to);
+
+  from.push_back(lb->pPolarDecompRLabel);
+  to.push_back(lb->pPolarDecompRLabel_preReloc);
 }
 
 /*!------------------------------------------------------------------------*/
@@ -339,7 +330,6 @@ TabularPlasticity::addInitialComputesAndRequires(Task* task, const MPMMaterial* 
   task->computes(pPlasticStrainLabel, matlset);
   task->computes(pPlasticCumEqStrainLabel, matlset);
   task->computes(pPlasticVolStrainLabel, matlset);
-  task->computes(pRemoveLabel, matlset);
   task->computes(pBulkModulusLabel, matlset);
 
   // Add yield function variablity computes
@@ -363,7 +353,6 @@ TabularPlasticity::initializeCMData(const Patch* patch, const MPMMaterial* matl,
   d_yield->initializeLocalVariables(patch, pset, new_dw, pVolume);
 
   // Now initialize the other variables
-  ParticleVariable<int> pRemove;
   ParticleVariable<double> pdTdt;
   ParticleVariable<double> pElasticVolStrain;
   ParticleVariable<double> pPlasticCumEqStrain, pPlasticVolStrain;
@@ -375,7 +364,6 @@ TabularPlasticity::initializeCMData(const Patch* patch, const MPMMaterial* matl,
   new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel, pset);
   new_dw->allocateAndPut(pStress, lb->pStressLabel, pset);
 
-  new_dw->allocateAndPut(pRemove, pRemoveLabel, pset);
   new_dw->allocateAndPut(pElasticStrain, pElasticStrainLabel, pset);
   new_dw->allocateAndPut(pElasticVolStrain, pElasticVolStrainLabel, pset);
   new_dw->allocateAndPut(pPlasticStrain, pPlasticStrainLabel, pset);
@@ -385,7 +373,6 @@ TabularPlasticity::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
   ElasticModuli moduli = d_elastic->getInitialElasticModuli();
   for (const particleIndex& pidx : *pset) {
-    pRemove[pidx] = 0;
     pdTdt[pidx] = 0.0;
     pStress[pidx] = Util::Identity;
     pElasticStrain[pidx].set(0.0);
@@ -461,12 +448,20 @@ void
 TabularPlasticity::addComputesAndRequires(Task* task, const MPMMaterial* matl,
                               const PatchSet* patches) const
 {
-  // Add the computes and requires that are common to all explicit
-  // constitutive models.  The method is defined in the ConstitutiveModel
-  // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
-  addSharedCRForHypoExplicit(task, matlset, patches);
+  task->requires(Task::OldDW, lb->delTLabel);
   task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, lb->pXLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, lb->pMassLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, lb->pVolumeLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, lb->pTemperatureLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, Ghost::None);
+  task->requires(Task::NewDW, lb->pDeformRateMidLabel, matlset, Ghost::None);
+  task->requires(Task::NewDW, lb->pStressUnrotatedLabel, matlset, Ghost::None);
+
+  task->computes(lb->pStressLabel_preReloc, matlset);
+  task->computes(lb->pdTdtLabel_preReloc, matlset);
+  task->modifies(lb->pRemoveLabel_preReloc, matlset);
 
   // Add yield Function computes and requires
   d_yield->addComputesAndRequires(task, matl, patches);
@@ -477,7 +472,6 @@ TabularPlasticity::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   task->requires(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pPlasticCumEqStrainLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pPlasticVolStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pRemoveLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pBulkModulusLabel, matlset, Ghost::None);
 
   task->computes(pElasticStrainLabel_preReloc, matlset);
@@ -485,7 +479,6 @@ TabularPlasticity::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   task->computes(pPlasticStrainLabel_preReloc, matlset);
   task->computes(pPlasticCumEqStrainLabel_preReloc, matlset);
   task->computes(pPlasticVolStrainLabel_preReloc, matlset);
-  task->computes(pRemoveLabel_preReloc, matlset);
   task->computes(pBulkModulusLabel_preReloc, matlset);
 }
 
@@ -518,18 +511,18 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
     ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
     // Set up local particle variables to be read and written
-    constParticleVariable<int> pRemove;
     constParticleVariable<double> pEev, pEpv, pEpeq_old, pBulkModulus_old;
     constParticleVariable<Matrix3> pEe, pEp;
-    old_dw->get(pEe,       pElasticStrainLabel, pset);
-    old_dw->get(pEev,      pElasticVolStrainLabel, pset);
-    old_dw->get(pEp,       pPlasticStrainLabel, pset);
-    old_dw->get(pEpv,      pPlasticVolStrainLabel, pset);
-    old_dw->get(pEpeq_old, pPlasticCumEqStrainLabel, pset);
-    old_dw->get(pRemove,   pRemoveLabel, pset);
-    old_dw->get(pBulkModulus_old,   pBulkModulusLabel, pset);
+    old_dw->get(pEe,               pElasticStrainLabel,      pset);
+    old_dw->get(pEev,              pElasticVolStrainLabel,   pset);
+    old_dw->get(pEp,               pPlasticStrainLabel,      pset);
+    old_dw->get(pEpv,              pPlasticVolStrainLabel,   pset);
+    old_dw->get(pEpeq_old,         pPlasticCumEqStrainLabel, pset);
+    old_dw->get(pBulkModulus_old,  pBulkModulusLabel,        pset);
 
-    ParticleVariable<int>    pRemove_new;
+    ParticleVariable<int> pRemove_new;
+    new_dw->getModifiable(pRemove_new, lb->pRemoveLabel_preReloc, pset);
+
     ParticleVariable<double> pEev_new, pEpv_new, pEpeq_new, pBulkModulus_new;
     ParticleVariable<Matrix3> pEe_new, pEp_new;
     new_dw->allocateAndPut(pEe_new,     pElasticStrainLabel_preReloc, pset);
@@ -537,28 +530,25 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
     new_dw->allocateAndPut(pEp_new,     pPlasticStrainLabel_preReloc, pset);
     new_dw->allocateAndPut(pEpv_new,    pPlasticVolStrainLabel_preReloc, pset);
     new_dw->allocateAndPut(pEpeq_new,   pPlasticCumEqStrainLabel_preReloc, pset);
-    new_dw->allocateAndPut(pRemove_new, pRemoveLabel_preReloc, pset);
     new_dw->allocateAndPut(pBulkModulus_new, pBulkModulusLabel_preReloc, pset);
 
     // Set up global particle variables to be read and written
     delt_vartype delT;
     constParticleVariable<long64> pParticleID;
-    constParticleVariable<double> pMass;
+    constParticleVariable<double> pMass, pVolume;
     constParticleVariable<Vector> pVelocity;
-    constParticleVariable<Matrix3> pDefGrad, pStress_old;
+    constParticleVariable<Matrix3> pStress_old;
 
     old_dw->get(delT,           lb->delTLabel, getLevel(patches));
-    old_dw->get(pMass,          lb->pMassLabel, pset);
     old_dw->get(pParticleID,    lb->pParticleIDLabel, pset);
+    old_dw->get(pMass,          lb->pMassLabel, pset);
+    new_dw->get(pVolume,        lb->pVolumeLabel_preReloc,  pset);
     old_dw->get(pVelocity,      lb->pVelocityLabel, pset);
-    old_dw->get(pDefGrad,       lb->pDefGradLabel, pset);
-    old_dw->get(pStress_old,    lb->pStressLabel, pset);
+    new_dw->get(pStress_old,    lb->pStressUnrotatedLabel, pset);
 
     // Get the particle variables computed in interpolateToParticlesAndUpdate()
-    constParticleVariable<double> pVolume;
-    constParticleVariable<Matrix3> pVelGrad_new, pDefGrad_new;
-    new_dw->get(pVolume,      lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(pVelGrad_new, lb->pVelGradLabel_preReloc, pset);
+    constParticleVariable<Matrix3> pDefRate_mid, pDefGrad_new;
+    new_dw->get(pDefRate_mid, lb->pDeformRateMidLabel,    pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
     ParticleVariable<double> p_q, pdTdt;
@@ -573,33 +563,8 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
       // No thermal effects
       pdTdt[idx] = 0.0;
 
-      // Compute the symmetric part of the velocity gradient
-      // std::cout << "DefGrad = " << pDefGrad_new[idx] << std::endl;
-      // std::cout << "VelGrad = " << pVelGrad_new[idx] << std::endl;
-      Matrix3 DD = (pVelGrad_new[idx] + pVelGrad_new[idx].Transpose()) * .5;
-
-      // Use polar decomposition to compute the rotation and stretch tensors
-      Matrix3 FF = pDefGrad[idx];
-      Matrix3 RR, UU;
-      FF.polarDecompositionRMB(UU, RR);
-
-      // Compute the unrotated symmetric part of the velocity gradient
-      DD = (RR.Transpose()) * (DD * RR);
-#ifdef CHECK_FOR_NAN
-      if (std::isnan(DD(0, 0))) {
-        std::cout << " L_new = " << pVelGrad_new[idx]
-                  << " F_new = " << pDefGrad_new[idx] << " F = " << FF
-                  << " R = " << RR << " U = " << UU << " D = " << DD
-                  << " delT = " << delT << std::endl;
-        // throw InternalError("**ERROR** Zero or Nan in rate of deformation",
-        // __FILE__, __LINE__);
-      }
-#endif
-
-      // Compute the unrotated stress at the start of the current timestep
-      Matrix3 sigma_old = (RR.Transpose()) * (pStress_old[idx] * RR);
-      // std::cout << "pStress_old = " << pStress_old[idx] << std::endl
-      //           << "sigma_old = " << sigma_old << std::endl;
+      Matrix3 DD = pDefRate_mid[idx];
+      Matrix3 sigma_old = pStress_old[idx];
 
       // Set up model state
       ModelState_Tabular state_old;
@@ -672,32 +637,6 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
         pEev_new[idx] = pEe_new[idx].Trace();
         pBulkModulus_new[idx] = pBulkModulus_old[idx];
       }
-
-      //---------------------------------------------------------
-      // Use polar decomposition to compute the rotation and stretch tensors.
-      // These checks prevent
-      // failure of the polar decomposition algorithm if [F_new] has some
-      // extreme values.
-      Matrix3 FF_new = pDefGrad_new[idx];
-      double Fmax_new = FF_new.MaxAbsElem();
-      double JJ_new = FF_new.Determinant();
-      if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
-        pRemove_new[idx] = -999;
-        proc0cout << "Deformation gradient component unphysical: [F] = " << FF
-                  << std::endl;
-        proc0cout << "Resetting [F]=[I] for this step and deleting particle"
-                  << " idx = " << idx << " particleID = " << pParticleID[idx]
-                  << std::endl;
-        Util::Identity.polarDecompositionRMB(UU, RR);
-      } else {
-        FF_new.polarDecompositionRMB(UU, RR);
-      }
-
-      // Compute the rotated dynamic and quasistatic stress at the end of the
-      // current timestep
-      pStress_new[idx] = (RR * pStress_new[idx]) * (RR.Transpose());
-      // std::cout << "pStress_new = " << pStress_new[idx]
-      //          << "pStressQS_new = " << pStressQS_new[idx] << std::endl;
 
       // Compute wave speed + particle velocity at each particle, store the
       // maximum
@@ -1535,7 +1474,7 @@ TabularPlasticity::addRequiresDamageParameter(Task* task, const MPMMaterial* mat
 {
   // Require the damage parameter
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pRemoveLabel_preReloc, matlset,
+  task->requires(Task::NewDW, lb->pRemoveLabel_preReloc, matlset,
                  Ghost::None);
 }
 
@@ -1547,7 +1486,7 @@ TabularPlasticity::getDamageParameter(const Patch* patch, ParticleVariable<int>&
   // Get the damage parameter
   ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
   constParticleVariable<int> pLocalized;
-  new_dw->get(pLocalized, pRemoveLabel_preReloc, pset);
+  new_dw->get(pLocalized, lb->pRemoveLabel_preReloc, pset);
 
   // Loop over the particle in the current patch.
   for (int& iter : *pset) {

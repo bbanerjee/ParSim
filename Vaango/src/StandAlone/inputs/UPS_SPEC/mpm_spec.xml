@@ -86,6 +86,9 @@
       <!-- For stress initialization with body force -->
       <initialize_stress_using_body_force spec="OPTIONAL BOOLEAN"/>
 
+      <!-- For backward compatibility (not used) -->
+      <use_momentum_form spec="OPTIONAL BOOLEAN"/>
+
     </MPM>
     <PhysicalBC                   spec="OPTIONAL NO_DATA" >
       <MPM                        spec="REQUIRED NO_DATA" >

@@ -277,11 +277,23 @@ WARNING
                                        DataWarehouse* old_dw,
                                        DataWarehouse* new_dw);
 
+    void computeUnrotatedStressAndDeformationRate(const ProcessorGroup*, 
+                                                  const PatchSubset* patches,
+                                                  const MaterialSubset*, 
+                                                  DataWarehouse* old_dw,
+                                                  DataWarehouse* new_dw);
+
     virtual void computeStressTensor(const ProcessorGroup*,
                                      const PatchSubset* patches,
                                      const MaterialSubset* matls,
                                      DataWarehouse* old_dw,
                                      DataWarehouse* new_dw);
+
+    void computeRotatedStress(const ProcessorGroup*, 
+                              const PatchSubset* patches,
+                              const MaterialSubset*, 
+                              DataWarehouse* old_dw,
+                              DataWarehouse* new_dw);
 
     /*! Compute the velocity gradient ad deformation gradient */
     void computeDeformationGradient(const ProcessorGroup*,
@@ -465,8 +477,16 @@ WARNING
     virtual void scheduleExMomInterpolated(SchedulerP&, const PatchSet*,
                                            const MaterialSet*);
 
+    void scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
+                                                  const PatchSet* patches,
+                                                  const MaterialSet* matls);
+
     virtual void scheduleComputeStressTensor(SchedulerP&, const PatchSet*,
                                              const MaterialSet*);
+
+    void scheduleRotateStress(SchedulerP& sched,
+                              const PatchSet* patches,
+                              const MaterialSet* matls);
   
     /*!----------------------------------------------------------------------
      * scheduleComputeXPICVelocities

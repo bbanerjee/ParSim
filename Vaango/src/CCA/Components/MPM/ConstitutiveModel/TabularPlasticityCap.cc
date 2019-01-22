@@ -290,7 +290,6 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
     ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
     // Set up local particle variables to be read and written
-    constParticleVariable<int> pRemove;
     constParticleVariable<double> pEev, pEpv, pEpeq_old;
     constParticleVariable<double> pBulkModulus_old;
     constParticleVariable<Matrix3> pEe, pEp;
@@ -299,10 +298,11 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
     old_dw->get(pEp,       pPlasticStrainLabel, pset);
     old_dw->get(pEpv,      pPlasticVolStrainLabel, pset);
     old_dw->get(pEpeq_old, pPlasticCumEqStrainLabel, pset);
-    old_dw->get(pRemove,   pRemoveLabel, pset);
     old_dw->get(pBulkModulus_old,   pBulkModulusLabel, pset);
 
     ParticleVariable<int>    pRemove_new;
+    new_dw->getModifiable(pRemove_new, lb->pRemoveLabel_preReloc, pset);
+
     ParticleVariable<double> pEev_new, pEpv_new, pEpeq_new;
     ParticleVariable<double> pBulkModulus_new;
     ParticleVariable<Matrix3> pEe_new, pEp_new;
@@ -311,7 +311,6 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
     new_dw->allocateAndPut(pEp_new,     pPlasticStrainLabel_preReloc, pset);
     new_dw->allocateAndPut(pEpv_new,    pPlasticVolStrainLabel_preReloc, pset);
     new_dw->allocateAndPut(pEpeq_new,   pPlasticCumEqStrainLabel_preReloc, pset);
-    new_dw->allocateAndPut(pRemove_new, pRemoveLabel_preReloc, pset);
     new_dw->allocateAndPut(pBulkModulus_new, pBulkModulusLabel_preReloc, pset);
 
     // Get and allocate the hydrostatic strength
@@ -323,22 +322,20 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
     // Set up global particle variables to be read and written
     delt_vartype delT;
     constParticleVariable<long64> pParticleID;
-    constParticleVariable<double> pMass;
+    constParticleVariable<double> pMass, pVolume;
     constParticleVariable<Vector> pVelocity;
-    constParticleVariable<Matrix3> pDefGrad, pStress_old;
+    constParticleVariable<Matrix3> pStress_old;
 
     old_dw->get(delT,           lb->delTLabel, getLevel(patches));
-    old_dw->get(pMass,          lb->pMassLabel, pset);
     old_dw->get(pParticleID,    lb->pParticleIDLabel, pset);
+    old_dw->get(pMass,          lb->pMassLabel, pset);
+    new_dw->get(pVolume,        lb->pVolumeLabel_preReloc, pset);
     old_dw->get(pVelocity,      lb->pVelocityLabel, pset);
-    old_dw->get(pDefGrad,       lb->pDefGradLabel, pset);
-    old_dw->get(pStress_old,    lb->pStressLabel, pset);
+    new_dw->get(pStress_old,    lb->pStressUnrotatedLabel, pset);
 
     // Get the particle variables computed in interpolateToParticlesAndUpdate()
-    constParticleVariable<double> pVolume;
-    constParticleVariable<Matrix3> pVelGrad_new, pDefGrad_new;
-    new_dw->get(pVolume,      lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(pVelGrad_new, lb->pVelGradLabel_preReloc, pset);
+    constParticleVariable<Matrix3> pDefRate_mid, pDefGrad_new;
+    new_dw->get(pDefRate_mid, lb->pDeformRateMidLabel, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
     ParticleVariable<double> p_q, pdTdt;
@@ -353,34 +350,8 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
       // No thermal effects
       pdTdt[idx] = 0.0;
 
-      // Compute the symmetric part of the velocity gradient
-      //std::cout << "DefGrad = " << pDefGrad_new[idx] << std::endl;
-      //std::cout << "VelGrad = " << pVelGrad_new[idx] << std::endl;
-      Matrix3 DD = (pVelGrad_new[idx] + pVelGrad_new[idx].Transpose()) * .5;
-
-      // Use polar decomposition to compute the rotation and stretch tensors
-      Matrix3 FF = pDefGrad[idx];
-      Matrix3 RR, UU;
-      FF.polarDecompositionRMB(UU, RR);
-
-      // Compute the unrotated symmetric part of the velocity gradient
-      DD = (RR.Transpose()) * (DD * RR);
-
-#ifdef CHECK_FOR_NAN
-      if (std::isnan(DD(0, 0))) {
-        std::cout << " L_new = " << pVelGrad_new[idx]
-                  << " F_new = " << pDefGrad_new[idx] << " F = " << FF
-                  << " R = " << RR << " U = " << UU << " D = " << DD
-                  << " delT = " << delT << std::endl;
-        throw InternalError("**ERROR** Zero or Nan in rate of deformation",
-                             __FILE__, __LINE__);
-      }
-#endif
-
-      // Compute the unrotated stress at the start of the current timestep
-      Matrix3 sigma_old = (RR.Transpose()) * (pStress_old[idx] * RR);
-      // std::cout << "pStress_old = " << pStress_old[idx] << std::endl
-      //           << "sigma_old = " << sigma_old << std::endl;
+      Matrix3 DD = pDefRate_mid[idx];
+      Matrix3 sigma_old = pStress_old[idx];
 
       // Set up model state
       ModelState_TabularCap state_old;
@@ -494,32 +465,6 @@ TabularPlasticityCap::computeStressTensor(const PatchSubset* patches, const MPMM
         pCapX_new[idx] = state_old.capX;
         pBulkModulus_new[idx] = pBulkModulus_old[idx];
       }
-
-      //---------------------------------------------------------
-      // Use polar decomposition to compute the rotation and stretch tensors.
-      // These checks prevent
-      // failure of the polar decomposition algorithm if [F_new] has some
-      // extreme values.
-      Matrix3 FF_new = pDefGrad_new[idx];
-      double Fmax_new = FF_new.MaxAbsElem();
-      double JJ_new = FF_new.Determinant();
-      if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
-        pRemove_new[idx] = -999;
-        proc0cout << "Deformation gradient component unphysical: [F] = " << FF
-                  << std::endl;
-        proc0cout << "Resetting [F]=[I] for this step and deleting particle"
-                  << " idx = " << idx << " particleID = " << pParticleID[idx]
-                  << std::endl;
-        Util::Identity.polarDecompositionRMB(UU, RR);
-      } else {
-        FF_new.polarDecompositionRMB(UU, RR);
-      }
-
-      // Compute the rotated dynamic and quasistatic stress at the end of the
-      // current timestep
-      pStress_new[idx] = (RR * pStress_new[idx]) * (RR.Transpose());
-      // std::cout << "pStress_new = " << pStress_new[idx]
-      //          << "pStressQS_new = " << pStressQS_new[idx] << std::endl;
 
       // Compute wave speed + particle velocity at each particle, store the
       // maximum
@@ -2397,7 +2342,7 @@ TabularPlasticityCap::addRequiresDamageParameter(Task* task, const MPMMaterial* 
 {
   // Require the damage parameter
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pRemoveLabel_preReloc, matlset,
+  task->requires(Task::NewDW, lb->pRemoveLabel_preReloc, matlset,
                  Ghost::None);
 }
 
@@ -2409,7 +2354,7 @@ TabularPlasticityCap::getDamageParameter(const Patch* patch, ParticleVariable<in
   // Get the damage parameter
   ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
   constParticleVariable<int> pLocalized;
-  new_dw->get(pLocalized, pRemoveLabel_preReloc, pset);
+  new_dw->get(pLocalized, lb->pRemoveLabel_preReloc, pset);
 
   // Loop over the particle in the current patch.
   for (int& iter : *pset) {
