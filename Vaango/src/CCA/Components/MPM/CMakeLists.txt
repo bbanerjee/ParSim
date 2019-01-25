@@ -35,6 +35,7 @@ SET(Vaango_CCA_Components_MPM_SRCS
   MPMBoundCond.cc 
   MPMFlags.cc	  
   ImpMPMFlags.cc
+  UofU_MPM.cc    
 )
 
 add_subdirectory(ConstitutiveModel)
