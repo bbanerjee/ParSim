@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2019 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -44,6 +44,7 @@
 #include <CCA/Components/MPM/RigidMPM.h>
 #include <CCA/Components/MPM/SerialMPM.h>
 #include <CCA/Components/MPM/MPM_UpdateStressLast.h>
+#include <CCA/Components/MPM/UofU_MPM.h>
 #include <CCA/Components/MPM/ShellMPM.h>
 #include <CCA/Components/MPMICE/MPMICE.h>
 #include <CCA/Components/Peridynamics/Peridynamics.h>
@@ -106,6 +107,9 @@ ComponentFactory::create( ProblemSpecP& ps, const ProcessorGroup* world,
   if (sim_comp == "mpm_usl" || sim_comp == "MPM_USL") {
     return scinew MPM_UpdateStressLast(world);
   } 
+  if (sim_comp == "uofu_mpm" || sim_comp == "UofU_MPM") {
+    return scinew UofU_MPM(world);
+  }
   if (sim_comp == "mpmf" || sim_comp == "fracturempm" || sim_comp == "FRACTUREMPM") {
     return scinew FractureMPM(world);
   } 

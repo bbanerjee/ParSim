@@ -380,7 +380,7 @@
     </geom_object>
 
     <SimulationComponent          spec="REQUIRED NO_DATA"
-                                    attribute1="type REQUIRED STRING 'burger, ice, impm, mpm, mpm_usl,
+                                    attribute1="type REQUIRED STRING 'burger, ice, impm, mpm, mpm_usl, uofu_mpm,
                                                                       mpmf, mpmice, amrmpm,
                                                                       peridynamics,
                                                                       reduce_uda,

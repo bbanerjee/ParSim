@@ -352,9 +352,11 @@ UofU_MPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
     const MaterialSubset* matlset = mpm_matl->thisMaterial();
 
     // Add vel grad/def grad computes
-    t->computes(d_labels->pVelGradLabel,  matlset);
-    t->computes(d_labels->pDefGradLabel,  matlset);
-    t->computes(d_labels->pDefGradMidLabel,  matlset);
+    t->computes(d_labels->pVelGradLabel,      matlset);
+    t->computes(d_labels->pDefGradLabel,      matlset);
+    t->computes(d_labels->pDefGradMidLabel,   matlset);
+    t->computes(d_labels->pRemoveLabel,       matlset);
+    t->computes(d_labels->pPolarDecompRLabel, matlset);
 
     // Add constitutive model computes
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
@@ -440,11 +442,14 @@ UofU_MPM::actuallyInitialize(const ProcessorGroup*, const PatchSubset* patches,
 
       // Initialize deformation gradient and its polar decomposition
       ParticleSubset* pset = new_dw->getParticleSubset(mpm_matl->getDWIndex(), patch);
+      ParticleVariable<int>     pRemove;
       ParticleVariable<Matrix3> pDefGrad, pPolarDecompR;
-      new_dw->allocateAndPut(pDefGrad,       d_labels->pDefGradLabel,     pset);
-      new_dw->allocateAndPut(pPolarDecompR,  d_labels->pPolarDecompRLabel,  pset);
+      new_dw->allocateAndPut(pRemove,        d_labels->pRemoveLabel,       pset);
+      new_dw->allocateAndPut(pDefGrad,       d_labels->pDefGradLabel,      pset);
+      new_dw->allocateAndPut(pPolarDecompR,  d_labels->pPolarDecompRLabel, pset);
 
       for (auto particle : *pset) {
+        pRemove[particle] = 0;
         pDefGrad[particle] = Identity;
         pPolarDecompR[particle] = Identity;
       }
@@ -958,6 +963,9 @@ UofU_MPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
   scheduleComputeStressTensor(sched, patches, matls);
   scheduleRotateStress(sched, patches, matls);
 
+  scheduleComputeBasicDamage(sched, patches, matls);
+  scheduleUpdateErosionParameter(sched, patches, matls);
+  
   scheduleFindRogueParticles(sched, patches, matls);
   if (d_flags->d_reductionVars->accStrainEnergy) {
     scheduleComputeAccStrainEnergy(sched, patches, matls);
@@ -1390,11 +1398,9 @@ UofU_MPM::interpolateParticlesToGrid(const ProcessorGroup*,
     vector<double> S_ip_av(num_influence_nodes);
     string interp_type = d_flags->d_interpolator_type;
 
-    NCVariable<double> gMassglobal, gTempglobal, gVolumeglobal;
+    NCVariable<double> gMassglobal, gVolumeglobal;
     NCVariable<Vector> gVelglobal;
     new_dw->allocateAndPut(gMassglobal, d_labels->gMassLabel,
-                           d_sharedState->getAllInOneMatl()->get(0), patch);
-    new_dw->allocateAndPut(gTempglobal, d_labels->gTemperatureLabel,
                            d_sharedState->getAllInOneMatl()->get(0), patch);
     new_dw->allocateAndPut(gVolumeglobal, d_labels->gVolumeLabel,
                            d_sharedState->getAllInOneMatl()->get(0), patch);
@@ -1402,7 +1408,6 @@ UofU_MPM::interpolateParticlesToGrid(const ProcessorGroup*,
                            d_sharedState->getAllInOneMatl()->get(0), patch);
     gMassglobal.initialize(SMALL_NUM_MPM);
     gVolumeglobal.initialize(SMALL_NUM_MPM);
-    gTempglobal.initialize(0.0);
     gVelglobal.initialize(Vector(0.0));
 
     for (int m = 0; m < numMatls; m++) {
@@ -1557,7 +1562,6 @@ UofU_MPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
     for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
       IntVector c = *iter;
-      gTempglobal[c] /= gMassglobal[c];
       gVelglobal[c] /= gMassglobal[c];
     }
   } // End loop over patches
@@ -2407,6 +2411,7 @@ UofU_MPM::scheduleComputeVelocityAndDeformationGradient(SchedulerP& sched,
     t->requires(Task::OldDW, d_labels->pXLabel,            matlset, Ghost::None);
     t->requires(Task::OldDW, d_labels->pMassLabel,         matlset, Ghost::None);
     t->requires(Task::OldDW, d_labels->pVolumeLabel,       matlset, Ghost::None);
+    t->requires(Task::OldDW, d_labels->pRemoveLabel,       matlset, Ghost::None);
     t->requires(Task::OldDW, d_labels->pSizeLabel,         matlset, Ghost::None);
     t->requires(Task::OldDW, d_labels->pDefGradLabel,      matlset, Ghost::None);
     t->requires(Task::NewDW, d_labels->gVelocityLabel,     matlset, Ghost::AroundCells, d_numGhostNodes);
@@ -2419,6 +2424,7 @@ UofU_MPM::scheduleComputeVelocityAndDeformationGradient(SchedulerP& sched,
     t->computes(d_labels->pPolarDecompRLabel_preReloc, matlset);
     t->computes(d_labels->pVolumeMidLabel, matlset);
     t->computes(d_labels->pVolumeLabel_preReloc, matlset);
+    t->computes(d_labels->pRemoveLabel_preReloc, matlset);
   }
 
   sched->addTask(t, patches, matls);
@@ -2470,13 +2476,15 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
       new_dw->get(gVelocity,     d_labels->gVelocityLabel,     matID, patch, Ghost::AroundNodes, d_numGhostNodes);
       new_dw->get(gAcceleration, d_labels->gAccelerationLabel, matID, patch, Ghost::AroundNodes, d_numGhostNodes);
 
+      ParticleVariable<int>        pRemove_new;
       ParticleVariable<double>     pVolume_mid, pVolume_new;
       ParticleVariable<Matrix3>    pVelGrad_mid, pDefGrad_mid, pPolarDecompR_mid;
       ParticleVariable<Matrix3>    pDefGrad_new, pPolarDecompR_new;
 
+      new_dw->allocateAndPut(pRemove_new,       d_labels->pRemoveLabel_preReloc,       pset);
       new_dw->allocateAndPut(pVolume_mid,       d_labels->pVolumeMidLabel,             pset);
       new_dw->allocateAndPut(pVolume_new,       d_labels->pVolumeLabel_preReloc,       pset);
-      new_dw->allocateAndPut(pVelGrad_mid,      d_labels->pVelGradLabel,            pset);
+      new_dw->allocateAndPut(pVelGrad_mid,      d_labels->pVelGradLabel,               pset);
       new_dw->allocateAndPut(pDefGrad_mid,      d_labels->pDefGradMidLabel,            pset);
       new_dw->allocateAndPut(pPolarDecompR_mid, d_labels->pPolarDecompRMidLabel,       pset);
       new_dw->allocateAndPut(pDefGrad_new,      d_labels->pDefGradLabel_preReloc,      pset);
@@ -2553,10 +2561,27 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
 
         if (!d_flags->d_doPressureStabilization) {
           Matrix3 RR, UU;
+          Matrix3 FF_new = pDefGrad_new[particle];
+          double Fmax_new = FF_new.MaxAbsElem();
+          double JJ_new = FF_new.Determinant();
+          // These checks prevent failure of the polar decomposition algorithm 
+          // if [F_new] has some extreme values.
+          if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
+            pRemove_new[particle] = -999;
+            proc0cout << "Deformation gradient component unphysical: [F] = " << FF_new
+                      << std::endl;
+            proc0cout << "Resetting [F]=[I] for this step and deleting particle"
+                      << " idx = " << particle << " particleID = " << pParticleID[particle]
+                      << std::endl;
+            Identity.polarDecompositionRMB(UU, RR);
+          } else {
+            pRemove_new[particle] = 0;
+            FF_new.polarDecompositionRMB(UU, RR);
+          }
+          pPolarDecompR_new[particle] = RR;
+
           pDefGrad_mid[particle].polarDecompositionRMB(UU, RR);
           pPolarDecompR_mid[particle] = RR;
-          pDefGrad_new[particle].polarDecompositionRMB(UU, RR);
-          pPolarDecompR_new[particle] = RR;
         }
 
       } // End of loop over particles
@@ -2636,10 +2661,28 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
           }
 
           Matrix3 RR, UU;
+          Matrix3 FF_new = pDefGrad_new[particle];
+          double Fmax_new = FF_new.MaxAbsElem();
+          double JJ_new = FF_new.Determinant();
+
+          // These checks prevent failure of the polar decomposition algorithm 
+          // if [F_new] has some extreme values.
+          if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
+            pRemove_new[particle] = -999;
+            proc0cout << "Deformation gradient component unphysical: [F] = " << FF_new
+                      << std::endl;
+            proc0cout << "Resetting [F]=[I] for this step and deleting particle"
+                      << " idx = " << particle << " particleID = " << pParticleID[particle]
+                      << std::endl;
+            Identity.polarDecompositionRMB(UU, RR);
+          } else {
+            pRemove_new[particle] = 0;
+            FF_new.polarDecompositionRMB(UU, RR);
+          }
+          pPolarDecompR_new[particle] = RR;
+
           pDefGrad_mid[particle].polarDecompositionRMB(UU, RR);
           pPolarDecompR_mid[particle] = RR;
-          pDefGrad_new[particle].polarDecompositionRMB(UU, RR);
-          pPolarDecompR_new[particle] = RR;
 
         }
 
@@ -2698,7 +2741,7 @@ UofU_MPM::computeUnrotatedStressAndDeformationRate(const ProcessorGroup*,
                                                    DataWarehouse* old_dw,
                                                    DataWarehouse* new_dw)
 {
-  printTask(patches, patches->get(0), cout_doing, "Doing computeStressTensor");
+  printTask(patches, patches->get(0), cout_doing, "Doing computeUnrotated");
 
   int numMatls = d_sharedState->getNumMPMMatls();
   for (int m = 0; m < numMatls; m++) {
@@ -2759,25 +2802,8 @@ UofU_MPM::scheduleComputeStressTensor(SchedulerP& sched,
 
     // Add requires and computes for constitutive model
     ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
-    if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
-      t->requires(Task::OldDW, d_labels->delTLabel);
-      t->requires(Task::OldDW, d_labels->pXLabel, matlset, Ghost::None);
-      t->requires(Task::OldDW, d_labels->pMassLabel, matlset, Ghost::None);
-      t->requires(Task::OldDW, d_labels->pVolumeLabel, matlset, Ghost::None);
-      t->requires(Task::OldDW, d_labels->pVelocityLabel, matlset, Ghost::None);
-      t->requires(Task::NewDW, d_labels->pDeformRateMidLabel, matlset, Ghost::None);
-      t->requires(Task::NewDW, d_labels->pStressUnrotatedLabel, matlset, Ghost::None);
-
-      t->computes(d_labels->pStressLabel_preReloc, matlset);
-      t->computes(d_labels->p_qLabel_preReloc, matlset);
-
-      cm->addComputesAndRequires(t, mpm_matl, patches);
-
-    } else {
-
-      cm->addComputesAndRequires(t, mpm_matl, patches);
-      t->computes(d_labels->p_qLabel_preReloc, matlset);
-    }
+    cm->addComputesAndRequires(t, mpm_matl, patches);
+    t->computes(d_labels->p_qLabel_preReloc, matlset);
   }
 
   t->computes(d_sharedState->get_delt_label(), getLevel(patches));
@@ -2892,6 +2918,67 @@ UofU_MPM::computeRotatedStress(const ProcessorGroup*,
   }
 }
 
+/*!----------------------------------------------------------------------
+ * scheduleComputeBasicDamage
+ *-----------------------------------------------------------------------*/
+void 
+UofU_MPM::scheduleComputeBasicDamage(SchedulerP& sched,
+                                      const PatchSet* patches,
+                                      const MaterialSet* matls)
+{
+  if (!d_flags->doMPMOnLevel(getLevel(patches)->getIndex(), 
+                           getLevel(patches)->getGrid()->numLevels()))
+    return;
+  
+  /* Create a task for computing the damage variables */
+  printSchedule(patches,cout_doing,"MPM::scheduleComputeBasicDamage");
+  
+  int numMatls = d_sharedState->getNumMPMMatls();
+  Task* t = scinew Task("MPM::computeBasicDamage",
+                        this, &UofU_MPM::computeBasicDamage);
+  for(int m = 0; m < numMatls; m++){
+    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+
+    // Add requires and computes for vel grad/def grad
+    if (mpm_matl->d_doBasicDamage) {    
+      Vaango::BasicDamageModel* d_basicDamageModel = mpm_matl->getBasicDamageModel();
+      d_basicDamageModel->addComputesAndRequires(t, mpm_matl, patches, d_labels);
+    }
+  }
+
+  sched->addTask(t, patches, matls);
+}
+
+/*!----------------------------------------------------------------------
+ * computeBasicDamage
+ *-----------------------------------------------------------------------*/
+void 
+UofU_MPM::computeBasicDamage(const ProcessorGroup*,
+                              const PatchSubset* patches,
+                              const MaterialSubset* ,
+                              DataWarehouse* old_dw,
+                              DataWarehouse* new_dw)
+{
+
+  printTask(patches, patches->get(0), cout_doing, "Doing computeBasicDamage");
+
+  for(int m = 0; m < d_sharedState->getNumMPMMatls(); m++){
+
+    if (cout_dbg.active()) cout_dbg << " Patch = " << (patches->get(0))->getID() << " Mat = " << m;
+
+    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    if (cout_dbg.active()) cout_dbg << " MPM_Mat = " << mpm_matl;
+
+    // Compute basic damage
+    if (mpm_matl->d_doBasicDamage) { 
+      Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
+      basicDamageModel->computeBasicDamage(patches, mpm_matl, old_dw, new_dw, d_labels);
+      if (cout_dbg.active()) cout_dbg << " Damage model = " << basicDamageModel;
+    }
+
+    if (cout_dbg.active()) cout_dbg << " Exit\n" ;
+  }
+}
 
 /*!----------------------------------------------------------------------
  * scheduleUpdateErosionParameter
