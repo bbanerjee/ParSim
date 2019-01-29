@@ -403,6 +403,9 @@ SpecifiedBodyContact::exchangeMomentum(const ProcessorGroup*,
           // reaction_force += gMass[n][c]*(new_vel-old_vel)/delT;
           // reaction_force -= ginternalForce[n][c];
         } // if
+        
+        std::cout << "After rigid contact: Node = " << c << " material = " << n
+                  << " gVel = " << gVelocity_star[n][c] << "\n";
       }   // for matls
     }     // for Node Iterator
     // new_dw->put(sumvec_vartype(reaction_force), lb->RigidReactionForceLabel);

@@ -374,7 +374,7 @@ TabularPlasticity::initializeCMData(const Patch* patch, const MPMMaterial* matl,
   ElasticModuli moduli = d_elastic->getInitialElasticModuli();
   for (const particleIndex& pidx : *pset) {
     pdTdt[pidx] = 0.0;
-    pStress[pidx] = Util::Identity;
+    pStress[pidx].set(0.0);
     pElasticStrain[pidx].set(0.0);
     pElasticVolStrain[pidx] = 0.0;
     pPlasticStrain[pidx].set(0.0);
@@ -673,6 +673,9 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
 
       // Compute the averaged stress
       Matrix3 AvgStress = (pStress_new[idx] + pStress_old[idx]) * 0.5;
+
+      std::cout << "After compute stress : particle = " << idx << "\n"
+                << " stress = " << pStress_new[idx] << "\n";
 
       // Compute the strain energy increment associated with the particle
       double e =
