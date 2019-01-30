@@ -1122,11 +1122,16 @@ OnDemandDataWarehouse::queryPSetDB(psetDBType &subsetDB,
   d_plock.readUnlock();
 
   if(exact && best_volume!=target_volume) {
+    //std::cout << "queryPSetDB: exact = " << exact << " best_volume = " << best_volume
+    //          << " target volume = " << target_volume << "\n";
     return 0;
   }
 
   //if we don't need to filter or we already have an exact match just return this subset
   if(pos_var==0 || best_volume==target_volume) {
+    //std::cout << "queryPSetDB: pos_var = " << pos_var << " best_volume = " << best_volume
+    //          << " target volume = " << target_volume << "\n";
+    //std::cout << "queryPSetDB: particle subset size = " << subset->numParticles() << "\n";
     return subset;
   }
 
@@ -1141,6 +1146,11 @@ OnDemandDataWarehouse::queryPSetDB(psetDBType &subsetDB,
   for(ParticleSubset::iterator iter = subset->begin();iter != subset->end(); iter++){
     particleIndex idx = *iter;
     if(Patch::containsIndex(low,high,patch->getCellIndex(pos[idx]))) {
+      //std::cout << "queryPSetDB: particle = " << idx
+      //          << " pos = " << pos[idx]
+      //          << " low = " << low << " high = " << high
+      //          << " cell = " << patch->getCellIndex(pos[idx]) << "\n";
+
       newsubset->addParticle(idx);
     }
   }

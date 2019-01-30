@@ -310,6 +310,9 @@ TabularPlasticity::addParticleState(std::vector<const VarLabel*>& from,
   // Add the particle state for the yield condition model
   d_yield->addParticleState(from, to);
 
+  from.push_back(lb->pRemoveLabel);
+  to.push_back(lb->pRemoveLabel_preReloc);
+
   from.push_back(lb->pPolarDecompRLabel);
   to.push_back(lb->pPolarDecompRLabel_preReloc);
 }
@@ -674,8 +677,8 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
       // Compute the averaged stress
       Matrix3 AvgStress = (pStress_new[idx] + pStress_old[idx]) * 0.5;
 
-      std::cout << "After compute stress : particle = " << idx << "\n"
-                << " stress = " << pStress_new[idx] << "\n";
+      //std::cout << "After compute stress : particle = " << idx << "\n"
+      //          << " stress = " << pStress_new[idx] << "\n";
 
       // Compute the strain energy increment associated with the particle
       double e =

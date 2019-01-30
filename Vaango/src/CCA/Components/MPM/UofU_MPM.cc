@@ -1049,6 +1049,7 @@ UofU_MPM::computeParticleBodyForce(const ProcessorGroup*,
 
       // Get the particle subset
       ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+      //std::cout << "Material " << m << " Starting num particles = " << pset->numParticles() << "\n";
 
       // Create space for particle body force
       ParticleVariable<Vector> pBodyForceAcc;
@@ -1120,9 +1121,9 @@ UofU_MPM::computeParticleBodyForce(const ProcessorGroup*,
             coriolis_accel.length() /
             (centrifugal_accel.length() + coriolis_accel.length());
 
-          std::cout << "After compute body force: material = " << m
-                    << " particle = " << particle
-                    << " pVel = " << pVelocity[particle] << "\n";
+          //std::cout << "After compute body force: material = " << m
+          //          << " particle = " << particle
+          //          << " pVel = " << pVelocity[particle] << "\n";
 
         } // particle loop
       }   // end if coordinate rotation
@@ -1491,9 +1492,9 @@ UofU_MPM::interpolateParticlesToGrid(const ProcessorGroup*,
         auto pMom = pVelocity[particle] * pMass[particle];
         total_mom += pMom;
 
-        std::cout << "In interpolateToGrid:  material = " << m << " particle = " << particle
-                  << " pVel = " << pVelocity[particle]
-                  << " pMass = " << pMass[particle] << "\n";
+        //std::cout << "In interpolateToGrid:  material = " << m << " particle = " << particle
+        //          << " pVel = " << pVelocity[particle]
+        //          << " pMass = " << pMass[particle] << "\n";
 
         // Add each particles contribution to the local mass & velocity
         // Must use the node indices
@@ -1576,10 +1577,10 @@ UofU_MPM::interpolateParticlesToGrid(const ProcessorGroup*,
       bc.setBoundaryCondition(patch, matID, "Velocity", gVelocity, interp_type);
       bc.setBoundaryCondition(patch, matID, "Symmetric", gVelocity, interp_type);
 
-      for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
-        std::cout << " after BC: node = " << *iter 
-                  << " gVel = " << gVelocity[*iter] << "\n";
-      }
+      //for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+      //  std::cout << " after BC: node = " << *iter 
+      //            << " gVel = " << gVelocity[*iter] << "\n";
+      //}
 
     } // End loop over materials
 
@@ -2004,10 +2005,10 @@ UofU_MPM::computeInternalForce(const ProcessorGroup*,
       }
 #endif
 
-      for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
-        std::cout << "After internal force: node = " << *iter
-                  << " gInternalForce = " << gInternalForce[*iter] << "\n";
-      }
+      //for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
+      //  std::cout << "After internal force: node = " << *iter
+      //            << " gInternalForce = " << gInternalForce[*iter] << "\n";
+      //}
     }
 
     for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
@@ -2132,9 +2133,9 @@ UofU_MPM::computeAcceleration(const ProcessorGroup*,
         }
 
         gAcceleration[c] = acc;
-        std::cout << "After acceleration: node = " << c
-                  << " gMass = " << gMass[c] 
-                  << " gAcceleration = " << gAcceleration[c] << "\n";
+        //std::cout << "After acceleration: node = " << c
+        //          << " gMass = " << gMass[c] 
+        //          << " gAcceleration = " << gAcceleration[c] << "\n";
       }
     } // matls
   }
@@ -2215,11 +2216,11 @@ UofU_MPM::setGridBoundaryConditions(const ProcessorGroup*,
       bc.setBoundaryCondition(patch, matID, "Symmetric", gVelocity,
                               interp_type);
 
-      for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
-           iter++) {
-        std::cout << "After grid BC: node = " << *iter
-                  << " gVelocity = " << gVelocity[*iter] << "\n";
-      }
+      //for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
+      //     iter++) {
+      //  std::cout << "After grid BC: node = " << *iter
+      //            << " gVelocity = " << gVelocity[*iter] << "\n";
+      //}
     }   // matl loop
   }     // patch loop
 }
@@ -2633,14 +2634,14 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
           pPolarDecompR_mid[particle] = RR;
         }
 
-        std::cout << "After compute vel/def gradients: material = " << m
-                  << " particle = " << particle << "\n"
-                  << " L_mid = " << pVelGrad_mid[particle] << "\n"
-                  << " F_old = " << pDefGrad_old[particle] << "\n"
-                  << " F_mid = " << pDefGrad_mid[particle] << "\n"
-                  << " F_new = " << pDefGrad_new[particle] << "\n"
-                  << " R_mid = " << pPolarDecompR_mid[particle] << "\n"
-                  << " R_new = " << pPolarDecompR_new[particle] << "\n";
+        //std::cout << "After compute vel/def gradients: material = " << m
+        //          << " particle = " << particle << "\n"
+        //          << " L_mid = " << pVelGrad_mid[particle] << "\n"
+        //          << " F_old = " << pDefGrad_old[particle] << "\n"
+        //          << " F_mid = " << pDefGrad_mid[particle] << "\n"
+        //          << " F_new = " << pDefGrad_new[particle] << "\n"
+        //          << " R_mid = " << pPolarDecompR_mid[particle] << "\n"
+        //          << " R_new = " << pPolarDecompR_new[particle] << "\n";
 
       } // End of loop over particles
 
@@ -2830,10 +2831,10 @@ UofU_MPM::computeUnrotatedStressAndDeformationRate(const ProcessorGroup*,
                                              pR_old[particle]);
           Matrix3 DD = (pVelGrad_mid[particle] + pVelGrad_mid[particle].Transpose()) * 0.5;
           pDeformRate_mid[particle] = (pR_mid[particle].Transpose()) * (DD * pR_mid[particle]);
-          std::cout << "After unrotate: material = " << m
-                  << " particle = " << particle << "\n"
-                  << " sig_old = " << pStress_old_unrotated[particle] << "\n"
-                  << " D_mid = " << pDeformRate_mid[particle] << "\n";
+          //std::cout << "After unrotate: material = " << m
+          //        << " particle = " << particle << "\n"
+          //        << " sig_old = " << pStress_old_unrotated[particle] << "\n"
+          //        << " D_mid = " << pDeformRate_mid[particle] << "\n";
         }
       }
     }
@@ -2974,9 +2975,9 @@ UofU_MPM::computeRotatedStress(const ProcessorGroup*,
         for (auto particle : *pset) {
           pStress_new[particle] = (pR_new[particle] * pStress_new[particle]) *
                                              (pR_new[particle].Transpose());
-          std::cout << "After rotate stress: material = " << m
-                  << " particle = " << particle << "\n"
-                  << " pStress_new = " << pStress_new[particle] << "\n";
+          //std::cout << "After rotate stress: material = " << m
+          //        << " particle = " << particle << "\n"
+          //        << " pStress_new = " << pStress_new[particle] << "\n";
         }
       }
     }
@@ -3128,10 +3129,10 @@ UofU_MPM::updateErosionParameter(const ProcessorGroup*,
         mpm_matl->getConstitutiveModel()->getDamageParameter(
           patch, isLocalized, matID, old_dw, new_dw);
       }
-      for (auto particle : *pset) {
-        std::cout << "After isLocalized: material = " << m << " particle = " << particle
-                  << " localized = " << isLocalized[particle] << "\n";
-      }
+      //for (auto particle : *pset) {
+      //  std::cout << "After isLocalized: material = " << m << " particle = " << particle
+      //            << " localized = " << isLocalized[particle] << "\n";
+      //}
 
       if (cout_dbg.active())
         cout_dbg << "updateErosionParameter:: Got Damage Parameter" << endl;
@@ -3248,8 +3249,8 @@ UofU_MPM::findRogueParticles(const ProcessorGroup*, const PatchSubset* patches,
             isLocalized[particle] = -999;
           }
         } // if localized
-        std::cout << "After findRogue: material = " << m << " particle = " << particle
-                  << " localized = " << isLocalized[particle] << "\n";
+        //std::cout << "After findRogue: material = " << m << " particle = " << particle
+        //          << " localized = " << isLocalized[particle] << "\n";
       }   // particles
     }     // matls
   }       // patches
@@ -3489,8 +3490,9 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->allocateAndPut(pTemperature_new, d_labels->pTemperatureLabel_preReloc, pset);
       new_dw->allocateAndPut(pTempPrevious, d_labels->pTempPreviousLabel_preReloc, pset);
 
-      ParticleVariable<Point> pX_new;
+      ParticleVariable<Point> pX_new, pXX;
       new_dw->allocateAndPut(pX_new, d_labels->pXLabel_preReloc, pset);
+      new_dw->allocateAndPut(pXX, d_labels->pXXLabel, pset);
 
       ParticleVariable<Vector> pVelocity_new, pDisp_new;
       new_dw->allocateAndPut(pVelocity_new, d_labels->pVelocityLabel_preReloc,
@@ -3525,11 +3527,14 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                            + pAcceleration_old * (0.5 * delT * delT);
         pDisp_new[particle] = pDisp[particle] + (pX_new[particle] - pX[particle]);
         pVelocity_new[particle] = pVelocity[particle] + pAcceleration_old * delT;
+        pXX[particle] = pX[particle] + pDisp_new[particle];
+        pMass_new[particle] = pMass[particle];
 
-        std::cout << "After interpolateToParticles: " 
-                  << " material = " << m << " particle = " << particle
-                  << " pX_new = " << pX_new[particle]
-                  << " pVel_new = " << pVelocity_new[particle] << "\n";
+        //std::cout << "After interpolateToParticles: " 
+        //          << " material = " << m << " particle = " << particle
+        //          << " pX_old = " << pX[particle]
+        //          << " pX_new = " << pX_new[particle]
+        //          << " pVel_new = " << pVelocity_new[particle] << "\n";
 
         ke += .5 * pMass[particle] * pVelocity_new[particle].length2();
         centerOfMass = centerOfMass + (pX_new[particle] * pMass[particle]).asVector();
@@ -3541,6 +3546,9 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         if ((pMass_new[particle] <= d_flags->d_min_part_mass) ||
             (pLocalized_new[particle] == -999)) {
           delset->addParticle(particle);
+          std::cout << "\n Warning: Added to delset: material = " << m << " particle = " << particle
+                    << " pMass_new = " << pMass_new[particle]
+                    << " pLocalized_new = " << pLocalized_new[particle] << "\n";
         }
         if (pVelocity_new[particle].length() > d_flags->d_max_vel) {
           if (d_flags->d_deleteRogueParticles) {

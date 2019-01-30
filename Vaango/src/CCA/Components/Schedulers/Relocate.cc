@@ -1413,6 +1413,8 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
         ParticleSubset* keep_pset    = scinew ParticleSubset(0, -1, 0);
         ParticleSubset* delete_pset  = new_dw->getDeleteSubset(matl, patch);
 
+        //std::cout << "Relocate: particles in delete_pset = " << delete_pset->numParticles() << "\n";
+
         keep_pset->expand(numParticles);
 
         // Look for particles that left the patch, 
@@ -1442,12 +1444,16 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
             // relocate it.  So just go to the next deleted particle
             // and wait for a match
             delete_iter++;
+            // std::cout << "Relocate: material = " << m << " particle = " << idx
+            //           << " add to delete_iter \n";
           }
 
           //__________________________________
           //  Has particle moved to a finer level?
           else if (fineLevel && (toPatch = findFinePatch(px[idx], PP_ToPatch_FL, fineLevel) ) ) {
             PP_ToPatch_FL = toPatch;
+            // std::cout << "Relocate: material = " << m << " particle = " << idx
+            //           << " add to fineLevel \n";
           } 
 
           //__________________________________
@@ -1456,6 +1462,8 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
             // is particle going to a finer patch?  Note, a particle does not have to leave 
             // the current patch // to go to a finer patch
             keep_pset->addParticle(idx);
+            // std::cout << "Relocate: material = " << m << " particle = " << idx
+            //           << " add to keep_pset \n";
           }
           
           //__________________________________
@@ -1487,6 +1495,10 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
                   warn.invoke();
                 }
 #endif
+                // if(!toPatch && level->containsPoint(px[idx])){
+                //   std::cout << "Relocate: material = " << m << " particle = " << idx
+                //             << " particle moved too much. \n";
+                // }
               }
             }  // search for new patch that particle belongs to
           }  // not on current patch
@@ -1500,11 +1512,15 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
             ScatterRecord* record = scatter_records.findOrInsertRecord(patch, toPatch, matl, 
                                                                        toLevelIndex, pset);
             record->send_pset->addParticle(idx);
+            // std::cout << "Relocate: material = " << m << " particle = " << idx
+            //            << " add to send_pset. \n";
           }
         }  // pset loop
         
         //__________________________________
         //  No particles have left the patch
+        // std::cout << "Relocate: material = " << m 
+        //           << " keep_pset->numParticles = " << keep_pset->numParticles() << "\n";
         if(keep_pset->numParticles() == numParticles){
           delete keep_pset;
           keep_pset=pset;
