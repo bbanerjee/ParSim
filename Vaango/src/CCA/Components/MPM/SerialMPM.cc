@@ -3051,6 +3051,11 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
                   << " fint_g = " << gInternalForce[node] << "\n";
         }
       #endif
+
+      //for (NodeIterator iter = patch->getNodeIterator(); !iter.done(); iter++) {
+      //  std::cout << "After internal force: node = " << *iter
+      //            << " gInternalForce = " << gInternalForce[*iter] << "\n";
+      //}
     }
 
     for(NodeIterator iter = patch->getNodeIterator();!iter.done();iter++){
@@ -3173,6 +3178,9 @@ SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
         //gAcceleration[c] = acc +  gravity;
         gAcceleration[c] = acc;
         gVelocity_star[c] = gVelocity[c] + gAcceleration[c] * delT;
+        //std::cout << "After acceleration: material = " << m << " node = " << c
+        //          << " gMass = " << gMass[c] 
+        //          << " gAcceleration = " << gAcceleration[c] << "\n";
         #ifdef CHECK_ISFINITE
           if (!std::isfinite(gAcceleration[c].x()) || 
               !std::isfinite(gAcceleration[c].y()) ||
@@ -3727,6 +3735,27 @@ SerialMPM::computeDeformationGradient(const ProcessorGroup*,
   // Compute deformation gradient
   d_defGradComputer->computeDeformationGradient(patches, old_dw, new_dw);
 
+  /*
+  int numMatls = d_sharedState->getNumMPMMatls();
+  for (int m = 0; m < numMatls; m++) {
+    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    int matID = mpm_matl->getDWIndex();
+    for (int p = 0; p < patches->size(); p++) {
+      const Patch* patch = patches->get(p);
+      ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+
+      constParticleVariable<Matrix3> pVelGrad_mid, pDefGrad_mid;
+      new_dw->get(pVelGrad_mid,  lb->pVelGradLabel_preReloc, pset);
+      new_dw->get(pDefGrad_mid,  lb->pDefGradLabel_preReloc, pset);
+      for (auto particle : *pset) {
+      std::cout << "After compute vel/def gradients: material = " << m
+                << " particle = " << particle << "\n"
+                << " L_mid = " << pVelGrad_mid[particle] << "\n"
+                << " F_mid = " << pDefGrad_mid[particle] << "\n";
+      }
+    }
+  }
+  */
 }
 
 /////////////////////////////////////////////////////////////////////////

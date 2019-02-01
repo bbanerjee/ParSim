@@ -2133,7 +2133,7 @@ UofU_MPM::computeAcceleration(const ProcessorGroup*,
         }
 
         gAcceleration[c] = acc;
-        //std::cout << "After acceleration: node = " << c
+        //std::cout << "After acceleration: material = " << m << " node = " << c
         //          << " gMass = " << gMass[c] 
         //          << " gAcceleration = " << gAcceleration[c] << "\n";
       }
@@ -2545,9 +2545,12 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
           auto x_i_old = patch->getNodePosition(node);
           auto v_i_old = gVelocity[node];
           auto a_i_old = gAcceleration[node];
-          auto x_i_mid = x_i_old + v_i_old * (0.5 * delT) + a_i_old * (0.125 * delT * delT);
-          auto x_i_new = x_i_old + v_i_old * delT + a_i_old * (0.5 * delT * delT);
+          //auto x_i_mid = x_i_old + v_i_old * (0.5 * delT) + a_i_old * (0.125 * delT * delT);
+          auto v_i_quart = v_i_old + a_i_old * (0.25 * delT);
+          auto x_i_mid = x_i_old + v_i_quart * (0.25 * delT);
+          //auto x_i_new = x_i_old + v_i_old * delT + a_i_old * (0.5 * delT * delT);
           auto v_i_mid = v_i_old + a_i_old * (0.5 * delT);
+          auto x_i_new = x_i_old + v_i_mid * delT;
 
           Vector G_ip_av = dS_ip_av[k] * oodx;
           Matrix3 xG_old(x_i_old.asVector(), G_ip_av);
@@ -3512,9 +3515,11 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         interpolator->findCellAndWeights(pX[particle], influenceNodes, S_ip_av,
                                          pSize[particle], pDefGrad_new[particle]);
 
+        Vector pVelocity_old(0.0, 0.0, 0.0);
         Vector pAcceleration_old(0.0, 0.0, 0.0);
         for (int k = 0; k < num_influence_nodes; k++) {
           IntVector node = influenceNodes[k];
+          pVelocity_old += gVelocity[node] * S_ip_av[k];
           pAcceleration_old += gAcceleration[node] * S_ip_av[k];
         }
 
@@ -3523,12 +3528,20 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         pTempPrevious[particle] = pTemperature[particle];
 
         // Update the particle's position and velocity
-        pX_new[particle] = pX[particle] + pVelocity[particle] * delT
-                           + pAcceleration_old * (0.5 * delT * delT);
+        pMass_new[particle] = pMass[particle];
+        auto v_p_mid = pVelocity_old + pAcceleration_old * (0.5 * delT);
+        pX_new[particle] = pX[particle] + v_p_mid * delT;
+        pDisp_new[particle] = pDisp[particle] + (pX_new[particle] - pX[particle]);
+        pXX[particle] = pX[particle] + pDisp_new[particle];
+        pVelocity_new[particle] = pVelocity_old + pAcceleration_old * delT;
+        /*
+        auto v_p_mid = pVelocity[particle] + pAcceleration_old * (0.5 * delT);
+        pX_new[particle] = pX[particle] + v_p_mid * delT;
         pDisp_new[particle] = pDisp[particle] + (pX_new[particle] - pX[particle]);
         pVelocity_new[particle] = pVelocity[particle] + pAcceleration_old * delT;
         pXX[particle] = pX[particle] + pDisp_new[particle];
         pMass_new[particle] = pMass[particle];
+        */
 
         //std::cout << "After interpolateToParticles: " 
         //          << " material = " << m << " particle = " << particle
