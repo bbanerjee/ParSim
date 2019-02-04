@@ -92,6 +92,7 @@ extern Mutex cerrLock;
 // Constants and static functions
 constexpr double SMALL_NUM_MPM = 1.0e-200;
 const Uintah::Matrix3 UofU_MPM::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+const Uintah::Matrix3 UofU_MPM::Zero(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
 static Vector
 face_norm(Patch::FaceType f)
@@ -356,7 +357,6 @@ UofU_MPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
     // Add vel grad/def grad computes
     t->computes(d_labels->pVelGradLabel,      matlset);
     t->computes(d_labels->pDefGradLabel,      matlset);
-    t->computes(d_labels->pDefGradMidLabel,   matlset);
     t->computes(d_labels->pRemoveLabel,       matlset);
     t->computes(d_labels->pPolarDecompRLabel, matlset);
 
@@ -445,13 +445,15 @@ UofU_MPM::actuallyInitialize(const ProcessorGroup*, const PatchSubset* patches,
       // Initialize deformation gradient and its polar decomposition
       ParticleSubset* pset = new_dw->getParticleSubset(mpm_matl->getDWIndex(), patch);
       ParticleVariable<int>     pRemove;
-      ParticleVariable<Matrix3> pDefGrad, pPolarDecompR;
+      ParticleVariable<Matrix3> pVelGrad, pDefGrad, pPolarDecompR;
       new_dw->allocateAndPut(pRemove,        d_labels->pRemoveLabel,       pset);
+      new_dw->allocateAndPut(pVelGrad,       d_labels->pVelGradLabel,      pset);
       new_dw->allocateAndPut(pDefGrad,       d_labels->pDefGradLabel,      pset);
       new_dw->allocateAndPut(pPolarDecompR,  d_labels->pPolarDecompRLabel, pset);
 
       for (auto particle : *pset) {
         pRemove[particle] = 0;
+        pVelGrad[particle] = Zero;
         pDefGrad[particle] = Identity;
         pPolarDecompR[particle] = Identity;
       }
@@ -2454,7 +2456,7 @@ UofU_MPM::scheduleComputeVelocityAndDeformationGradient(SchedulerP& sched,
     t->requires(Task::NewDW, d_labels->gVelocityLabel,     matlset, Ghost::AroundCells, d_numGhostNodes);
     t->requires(Task::NewDW, d_labels->gAccelerationLabel, matlset, Ghost::AroundCells, d_numGhostNodes);
 
-    t->computes(d_labels->pVelGradLabel, matlset);
+    t->computes(d_labels->pVelGradLabel_preReloc, matlset);
     t->computes(d_labels->pDefGradMidLabel, matlset);
     t->computes(d_labels->pPolarDecompRMidLabel, matlset);
     t->computes(d_labels->pDefGradLabel_preReloc, matlset);
@@ -2521,7 +2523,7 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
       new_dw->allocateAndPut(pRemove_new,       d_labels->pRemoveLabel_preReloc,       pset);
       new_dw->allocateAndPut(pVolume_mid,       d_labels->pVolumeMidLabel,             pset);
       new_dw->allocateAndPut(pVolume_new,       d_labels->pVolumeLabel_preReloc,       pset);
-      new_dw->allocateAndPut(pVelGrad_mid,      d_labels->pVelGradLabel,               pset);
+      new_dw->allocateAndPut(pVelGrad_mid,      d_labels->pVelGradLabel_preReloc,      pset);
       new_dw->allocateAndPut(pDefGrad_mid,      d_labels->pDefGradMidLabel,            pset);
       new_dw->allocateAndPut(pPolarDecompR_mid, d_labels->pPolarDecompRMidLabel,       pset);
       new_dw->allocateAndPut(pDefGrad_new,      d_labels->pDefGradLabel_preReloc,      pset);
@@ -2782,7 +2784,7 @@ UofU_MPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
       t->requires(Task::OldDW, d_labels->pParticleIDLabel,      matlset, Ghost::None);
       t->requires(Task::OldDW, d_labels->pPolarDecompRLabel,    matlset, Ghost::None);
       t->requires(Task::OldDW, d_labels->pStressLabel,          matlset, Ghost::None);
-      t->requires(Task::NewDW, d_labels->pVelGradLabel,      matlset, Ghost::None);
+      t->requires(Task::NewDW, d_labels->pVelGradLabel_preReloc, matlset, Ghost::None);
       t->requires(Task::NewDW, d_labels->pPolarDecompRMidLabel, matlset, Ghost::None);
 
       t->computes(d_labels->pDeformRateMidLabel,   matlset);
@@ -2822,7 +2824,7 @@ UofU_MPM::computeUnrotatedStressAndDeformationRate(const ProcessorGroup*,
         old_dw->get(pParticleID,  d_labels->pParticleIDLabel,      pset);
         old_dw->get(pStress_old,  d_labels->pStressLabel,          pset);
         old_dw->get(pR_old,       d_labels->pPolarDecompRLabel,    pset);
-        new_dw->get(pVelGrad_mid, d_labels->pVelGradLabel,      pset);
+        new_dw->get(pVelGrad_mid, d_labels->pVelGradLabel_preReloc, pset);
         new_dw->get(pR_mid,       d_labels->pPolarDecompRMidLabel, pset);
 
         ParticleVariable<Matrix3> pDeformRate_mid, pStress_old_unrotated;
@@ -3351,7 +3353,6 @@ UofU_MPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->requires(Task::OldDW, d_labels->pSizeLabel, Ghost::None);
   t->requires(Task::NewDW, d_labels->pLocalizedMPMLabel, Ghost::None);
   t->requires(Task::NewDW, d_labels->pDefGradLabel_preReloc, Ghost::None);
-  t->requires(Task::NewDW, d_labels->pVelGradLabel, Ghost::None);
   t->modifies(d_labels->pVolumeLabel_preReloc);
 
   if (d_flags->d_useLoadCurves) {
@@ -3366,7 +3367,6 @@ UofU_MPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->computes(d_labels->pVelocityLabel_preReloc);
   t->computes(d_labels->pParticleIDLabel_preReloc);
   t->computes(d_labels->pSizeLabel_preReloc);
-  t->computes(d_labels->pVelGradLabel_preReloc);
   t->computes(d_labels->pXXLabel);
 
   //__________________________________
@@ -3461,12 +3461,6 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       old_dw->get(pSize, d_labels->pSizeLabel, pset);
       new_dw->allocateAndPut(pSize_new, d_labels->pSizeLabel_preReloc, pset);
       pSize_new.copyData(pSize);
-
-      constParticleVariable<Matrix3> pVelGrad;
-      ParticleVariable<Matrix3> pVelGrad_new;
-      new_dw->get(pVelGrad, d_labels->pVelGradLabel, pset);
-      new_dw->allocateAndPut(pVelGrad_new, d_labels->pVelGradLabel_preReloc, pset);
-      pVelGrad_new.copyData(pVelGrad);
 
       // Get particle variables
       constParticleVariable<int> pLocalized_new;

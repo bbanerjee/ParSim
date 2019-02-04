@@ -311,7 +311,11 @@ ApproachContact::addComputesAndRequires(SchedulerP& sched,
   t->requires(Task::NewDW, lb->gMassLabel, Ghost::None);
   t->requires(Task::NewDW, lb->gVolumeLabel, Ghost::None);
   t->modifies(gVelocity_label, mss);
-  t->modifies(lb->frictionalWorkLabel, mss);
+  if (gVelocity_label == lb->gVelocityLabel) {
+    t->computes(lb->frictionalWorkLabel, mss);
+  } else {
+    t->modifies(lb->frictionalWorkLabel, mss);
+  }
 
   sched->addTask(t, patches, matls);
 

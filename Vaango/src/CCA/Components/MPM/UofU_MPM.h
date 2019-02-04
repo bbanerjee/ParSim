@@ -55,7 +55,7 @@ namespace Uintah {
   class UofU_MPM : public MPMCommon, public SimulationInterface, public UintahParallelComponent {
   public:
 
-    static const Matrix3 Identity;
+    static const Matrix3 Identity, Zero;
 
     UofU_MPM(const ProcessorGroup* myworld);
     UofU_MPM(const UofU_MPM&) = delete;

@@ -73,10 +73,12 @@ CompositeContact::addComputesAndRequires(SchedulerP& sched,
                                          const MaterialSet* matls,
                                          const VarLabel* gVelocity_label)
 {
-  Task* t =
-    scinew Task("Contact::initFriction", this, &CompositeContact::initFriction);
-  t->computes(lb->frictionalWorkLabel);
-  sched->addTask(t, patches, matls);
+  if (gVelocity_label == lb->gVelocityLabel) {
+    Task* t =
+      scinew Task("Contact::initFriction", this, &CompositeContact::initFriction);
+    t->computes(lb->frictionalWorkLabel);
+    sched->addTask(t, patches, matls);
+  }
 
   for (auto contactModel : d_m) {
     contactModel->addComputesAndRequires(sched, patches, matls,
