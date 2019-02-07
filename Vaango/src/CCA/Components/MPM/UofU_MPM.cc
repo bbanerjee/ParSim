@@ -954,13 +954,16 @@ UofU_MPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
   scheduleApplyExternalLoads(sched, patches, matls);
   scheduleInterpolateParticlesToGrid(sched, patches, matls);
 
-  scheduleContactMomentumExchange(sched, patches, matls);
+  scheduleContactMomentumExchange(sched, patches, matls, d_labels->gVelocityLabel);
   scheduleComputeContactArea(sched, patches, matls);
-  scheduleComputeInternalForce(sched, patches, matls);
 
+  scheduleComputeInternalForce(sched, patches, matls);
   scheduleComputeAcceleration(sched, patches, matls);
+
   scheduleSetGridBoundaryConditions(sched, patches, matls);
   scheduleSetPrescribedMotion(sched, patches, matls);
+
+  //scheduleCheckGridVelocity(sched, patches, matls);
 
   scheduleComputeVelocityAndDeformationGradient(sched, patches, matls);
   scheduleUnrotateStressAndDeformationRate(sched, patches, matls);
@@ -1570,7 +1573,7 @@ UofU_MPM::interpolateParticlesToGrid(const ProcessorGroup*,
         gVolumeglobal[c] += gVolume[c];
         gVelglobal[c] += gVelocity[c];
         gVelocity[c] /= gMass[c];
-        //std::cout << " node = " << c 
+        //std::cout << " patch = " << patch << " node = " << c 
         //          << " gVel = " << gVelocity[c] << "\n";
       }
 
@@ -2063,7 +2066,7 @@ UofU_MPM::scheduleComputeAcceleration(SchedulerP& sched,
     return;
 
   printSchedule(patches, cout_doing,
-                "MPM::scheduleComputeAcceleration");
+                "UofU_MPM::scheduleComputeAcceleration");
 
   Task* t = scinew Task("UofU_MPM::computeAcceleration", this,
                         &UofU_MPM::computeAcceleration);
@@ -2085,9 +2088,9 @@ UofU_MPM::scheduleComputeAcceleration(SchedulerP& sched,
  * computeAcceleration
  *-----------------------------------------------------------------------*/
 void
-UofU_MPM::computeAcceleration(const ProcessorGroup*,
+UofU_MPM::computeAcceleration(const ProcessorGroup* pg,
                               const PatchSubset* patches,
-                              const MaterialSubset*,
+                              const MaterialSubset* ms,
                               DataWarehouse* old_dw,
                               DataWarehouse* new_dw)
 {
@@ -2101,26 +2104,28 @@ UofU_MPM::computeAcceleration(const ProcessorGroup*,
       int matID = mpm_matl->getDWIndex();
 
       // Get required variables for this patch
-      constNCVariable<Vector> gInternalForce, gBodyForce, gExternalForce,
-        gVelocity;
+      constNCVariable<Vector> gVelocity;
+      constNCVariable<Vector> gInternalForce, gBodyForce, gExternalForce;
       constNCVariable<double> gMass;
 
       delt_vartype delT;
       old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches));
 
+      new_dw->get(gVelocity, d_labels->gVelocityLabel, matID, patch,
+                  Ghost::None, 0);
       new_dw->get(gInternalForce, d_labels->gInternalForceLabel, matID, patch,
                   Ghost::None, 0);
       new_dw->get(gBodyForce, d_labels->gBodyForceLabel, matID, patch, Ghost::None, 0);
       new_dw->get(gExternalForce, d_labels->gExternalForceLabel, matID, patch,
                   Ghost::None, 0);
       new_dw->get(gMass, d_labels->gMassLabel, matID, patch, Ghost::None, 0);
-      new_dw->get(gVelocity, d_labels->gVelocityLabel, matID, patch, Ghost::None, 0);
 
       NCVariable<Vector> gAcceleration;
       new_dw->allocateAndPut(gAcceleration, d_labels->gAccelerationLabel, matID,
                              patch);
 
       gAcceleration.initialize(Vector(0., 0., 0.));
+
       double damp_coef = d_flags->d_artificialDampCoeff;
 
       for (NodeIterator iter = patch->getExtraNodeIterator(); !iter.done();
@@ -2148,14 +2153,15 @@ UofU_MPM::computeAcceleration(const ProcessorGroup*,
  *-----------------------------------------------------------------------*/
 void
 UofU_MPM::scheduleContactMomentumExchange(SchedulerP& sched, const PatchSet* patches,
-                                          const MaterialSet* matls)
+                                          const MaterialSet* matls, 
+                                          const VarLabel* gVelLabel)
 {
   if (!d_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
                              getLevel(patches)->getGrid()->numLevels()))
     return;
 
   printSchedule(patches, cout_doing, "MPM::scheduleContactMomentumExchange");
-  d_contactModel->addComputesAndRequires(sched, patches, matls, d_labels->gVelocityLabel);
+  d_contactModel->addComputesAndRequires(sched, patches, matls, gVelLabel);
 }
 
 /*!----------------------------------------------------------------------
@@ -2421,6 +2427,102 @@ UofU_MPM::setPrescribedMotion(const ProcessorGroup*, const PatchSubset* patches,
 }
 
 /*!----------------------------------------------------------------------
+ * scheduleCheckGridVelocity
+ *-----------------------------------------------------------------------*/
+void
+UofU_MPM::scheduleCheckGridVelocity(SchedulerP& sched,
+                                    const PatchSet* patches,
+                                    const MaterialSet* matls)
+{
+  if (!d_flags->doMPMOnLevel(getLevel(patches)->getIndex(),
+                             getLevel(patches)->getGrid()->numLevels()))
+    return;
+
+  printSchedule(patches, cout_doing, 
+                "MPM::scheduleCheckGridVelocity");
+
+  Task* t = scinew Task("UofU_MPM::checkGridVelocity", this,
+                        &UofU_MPM::checkGridVelocity);
+
+  t->requires(Task::OldDW, d_labels->pParticleIDLabel,   Ghost::None);
+  t->requires(Task::OldDW, d_labels->pXLabel,            Ghost::None);
+  t->requires(Task::OldDW, d_labels->pSizeLabel,         Ghost::None);
+  t->requires(Task::OldDW, d_labels->pDefGradLabel,      Ghost::None);
+  t->requires(Task::NewDW, d_labels->gVelocityLabel, Ghost::AroundCells, d_numGhostNodes);
+  t->requires(Task::NewDW, d_labels->gAccelerationLabel, Ghost::AroundCells, d_numGhostNodes);
+
+  sched->addTask(t, patches, matls);
+}
+
+/*!----------------------------------------------------------------------
+ * checkGridVelocity
+ *-----------------------------------------------------------------------*/
+void
+UofU_MPM::checkGridVelocity(const ProcessorGroup*,
+                            const PatchSubset* patches,
+                            const MaterialSubset*,
+                            DataWarehouse* old_dw,
+                            DataWarehouse* new_dw)
+{
+  printTask(patches, patches->get(0), cout_doing,
+            "Doing checkGridVelocity");
+
+  for (auto patch : *patches) {
+
+    Vector dx = patch->dCell();
+    Vector oodx = {1./dx.x(), 1./dx.y(), 1./dx.z()};
+
+    auto interpolator = d_flags->d_interpolator->clone(patch);
+    auto num_influence_nodes = interpolator->size();
+    std::vector<IntVector> influenceNodes(num_influence_nodes);
+    std::vector<double> S_ip_av(num_influence_nodes);
+    std::vector<Vector> dS_ip_av(num_influence_nodes);
+
+    int numMPMMatls = d_sharedState->getNumMPMMatls();
+    for(int m = 0; m < numMPMMatls; m++){
+
+      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+
+      int matID = mpm_matl->getDWIndex();
+      ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+
+      constParticleVariable<long64>  pParticleID;
+      constParticleVariable<Point>   pX;
+      constParticleVariable<Matrix3> pDefGrad_old, pSize;
+      constNCVariable<Vector>        gVelocity, gAcceleration;
+
+      old_dw->get(pParticleID,   d_labels->pParticleIDLabel,   pset);
+      old_dw->get(pX,            d_labels->pXLabel,            pset);
+      old_dw->get(pSize,         d_labels->pSizeLabel,         pset);
+      old_dw->get(pDefGrad_old,  d_labels->pDefGradLabel,      pset);
+      new_dw->get(gAcceleration, d_labels->gAccelerationLabel, matID, patch, 
+                  Ghost::AroundCells, d_numGhostNodes);
+      new_dw->get(gVelocity, d_labels->gVelocityLabel, matID, patch, 
+                  Ghost::AroundCells, d_numGhostNodes);
+
+      for (auto particle : *pset) {
+
+        interpolator->findCellAndWeightsAndShapeDerivatives(pX[particle], 
+                                                            influenceNodes,
+                                                            S_ip_av, dS_ip_av,
+                                                            pSize[particle],
+                                                            pDefGrad_old[particle]);
+        for (int k = 0; k < num_influence_nodes; k++) {
+          IntVector node = influenceNodes[k];
+          auto v_i_old = gVelocity[node];
+          auto a_i_old = gAcceleration[node];
+          std::cout << " patch = " << patch << " node = " << node 
+                    << " gAcc = " << a_i_old 
+                    << " gVel = " << v_i_old << "\n";
+        }
+
+      } // End of loop over particles
+
+    } // end of materials loop
+  } // end of patch loop
+}
+
+/*!----------------------------------------------------------------------
  * scheduleComputeVelocityAndDeformationGradient
  *-----------------------------------------------------------------------*/
 void
@@ -2436,35 +2538,29 @@ UofU_MPM::scheduleComputeVelocityAndDeformationGradient(SchedulerP& sched,
   printSchedule(patches, cout_doing, 
                 "MPM::scheduleComputeVelocityAndDeformationGradient");
 
-  int numMatls = d_sharedState->getNumMPMMatls();
   Task* t = scinew Task("UofU_MPM::computeVelocityAndDeformationGradient", this,
                         &UofU_MPM::computeVelocityAndDeformationGradient);
-  for (int m = 0; m < numMatls; m++) {
-    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
 
-    // Add requires and computes for vel grad/def grad
-    const MaterialSubset* matlset = mpm_matl->thisMaterial();
+  t->requires(Task::OldDW, d_labels->delTLabel);
+  t->requires(Task::NewDW, d_labels->gVelocityLabel, Ghost::AroundCells, d_numGhostNodes);
+  t->requires(Task::NewDW, d_labels->gAccelerationLabel, Ghost::AroundCells, d_numGhostNodes);
 
-    t->requires(Task::OldDW, d_labels->delTLabel);
-    t->requires(Task::OldDW, d_labels->pParticleIDLabel,   matlset, Ghost::None);
-    t->requires(Task::OldDW, d_labels->pXLabel,            matlset, Ghost::None);
-    t->requires(Task::OldDW, d_labels->pMassLabel,         matlset, Ghost::None);
-    t->requires(Task::OldDW, d_labels->pVolumeLabel,       matlset, Ghost::None);
-    t->requires(Task::OldDW, d_labels->pRemoveLabel,       matlset, Ghost::None);
-    t->requires(Task::OldDW, d_labels->pSizeLabel,         matlset, Ghost::None);
-    t->requires(Task::OldDW, d_labels->pDefGradLabel,      matlset, Ghost::None);
-    t->requires(Task::NewDW, d_labels->gVelocityLabel,     matlset, Ghost::AroundCells, d_numGhostNodes);
-    t->requires(Task::NewDW, d_labels->gAccelerationLabel, matlset, Ghost::AroundCells, d_numGhostNodes);
+  t->requires(Task::OldDW, d_labels->pParticleIDLabel,   Ghost::None);
+  t->requires(Task::OldDW, d_labels->pXLabel,            Ghost::None);
+  t->requires(Task::OldDW, d_labels->pMassLabel,         Ghost::None);
+  t->requires(Task::OldDW, d_labels->pVolumeLabel,       Ghost::None);
+  t->requires(Task::OldDW, d_labels->pRemoveLabel,       Ghost::None);
+  t->requires(Task::OldDW, d_labels->pSizeLabel,         Ghost::None);
+  t->requires(Task::OldDW, d_labels->pDefGradLabel,      Ghost::None);
 
-    t->computes(d_labels->pVelGradLabel_preReloc, matlset);
-    t->computes(d_labels->pDefGradMidLabel, matlset);
-    t->computes(d_labels->pPolarDecompRMidLabel, matlset);
-    t->computes(d_labels->pDefGradLabel_preReloc, matlset);
-    t->computes(d_labels->pPolarDecompRLabel_preReloc, matlset);
-    t->computes(d_labels->pVolumeMidLabel, matlset);
-    t->computes(d_labels->pVolumeLabel_preReloc, matlset);
-    t->computes(d_labels->pRemoveLabel_preReloc, matlset);
-  }
+  t->computes(d_labels->pVelGradLabel_preReloc);
+  t->computes(d_labels->pDefGradMidLabel);
+  t->computes(d_labels->pPolarDecompRMidLabel);
+  t->computes(d_labels->pDefGradLabel_preReloc);
+  t->computes(d_labels->pPolarDecompRLabel_preReloc);
+  t->computes(d_labels->pVolumeMidLabel);
+  t->computes(d_labels->pVolumeLabel_preReloc);
+  t->computes(d_labels->pRemoveLabel_preReloc);
 
   sched->addTask(t, patches, matls);
 }
@@ -2512,8 +2608,10 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
       old_dw->get(pVolume_old,   d_labels->pVolumeLabel,       pset);
       old_dw->get(pSize,         d_labels->pSizeLabel,         pset);
       old_dw->get(pDefGrad_old,  d_labels->pDefGradLabel,      pset);
-      new_dw->get(gVelocity,     d_labels->gVelocityLabel,     matID, patch, Ghost::AroundNodes, d_numGhostNodes);
-      new_dw->get(gAcceleration, d_labels->gAccelerationLabel, matID, patch, Ghost::AroundNodes, d_numGhostNodes);
+      new_dw->get(gAcceleration, d_labels->gAccelerationLabel, matID, patch, 
+                  Ghost::AroundCells, d_numGhostNodes);
+      new_dw->get(gVelocity, d_labels->gVelocityLabel, matID, patch, 
+                  Ghost::AroundCells, d_numGhostNodes);
 
       ParticleVariable<int>        pRemove_new;
       ParticleVariable<double>     pVolume_mid, pVolume_new;

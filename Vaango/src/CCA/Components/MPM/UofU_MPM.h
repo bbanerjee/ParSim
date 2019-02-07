@@ -193,6 +193,12 @@ namespace Uintah {
                                             DataWarehouse* old_dw,
                                             DataWarehouse* new_dw);
 
+    void checkGridVelocity(const ProcessorGroup*,
+                           const PatchSubset* patches,
+                           const MaterialSubset* matls,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw);
+
     void computeVelocityAndDeformationGradient(const ProcessorGroup*,
                                     const PatchSubset* patches,
                                     const MaterialSubset* matls,
@@ -320,8 +326,10 @@ namespace Uintah {
     virtual void scheduleInterpolateParticlesToGrid(SchedulerP&, const PatchSet*,
                                                     const MaterialSet*);
 
+    void scheduleCheckGridVelocity(SchedulerP&, const PatchSet*, const MaterialSet*);
+
     void scheduleContactMomentumExchange(SchedulerP& sched, const PatchSet* patches,
-                                         const MaterialSet* matls);
+                                         const MaterialSet* matls, const VarLabel* label);
 
     void scheduleComputeVelocityAndDeformationGradient(SchedulerP&, const PatchSet*,
                                             const MaterialSet*);
