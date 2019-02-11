@@ -357,11 +357,14 @@ UofU_MPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
     // Add vel grad/def grad computes
     t->computes(d_labels->pVelGradLabel,      matlset);
     t->computes(d_labels->pDefGradLabel,      matlset);
-    t->computes(d_labels->pRemoveLabel,       matlset);
-    t->computes(d_labels->pPolarDecompRLabel, matlset);
+
+    ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+    if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+      t->computes(d_labels->pRemoveLabel,       matlset);
+      t->computes(d_labels->pPolarDecompRLabel, matlset);
+    }
 
     // Add constitutive model computes
-    ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
   }
 
@@ -437,6 +440,8 @@ UofU_MPM::actuallyInitialize(const ProcessorGroup*, const PatchSubset* patches,
 
     for (int m = 0; m < matls->size(); m++) {
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+      ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+
 
       particleIndex numParticles =
         mpm_matl->createParticles(cellNAPID, patch, new_dw);
@@ -444,18 +449,27 @@ UofU_MPM::actuallyInitialize(const ProcessorGroup*, const PatchSubset* patches,
 
       // Initialize deformation gradient and its polar decomposition
       ParticleSubset* pset = new_dw->getParticleSubset(mpm_matl->getDWIndex(), patch);
+      ParticleVariable<Matrix3> pVelGrad, pDefGrad;
+
       ParticleVariable<int>     pRemove;
-      ParticleVariable<Matrix3> pVelGrad, pDefGrad, pPolarDecompR;
-      new_dw->allocateAndPut(pRemove,        d_labels->pRemoveLabel,       pset);
+      ParticleVariable<Matrix3> pPolarDecompR;
       new_dw->allocateAndPut(pVelGrad,       d_labels->pVelGradLabel,      pset);
       new_dw->allocateAndPut(pDefGrad,       d_labels->pDefGradLabel,      pset);
-      new_dw->allocateAndPut(pPolarDecompR,  d_labels->pPolarDecompRLabel, pset);
 
-      for (auto particle : *pset) {
-        pRemove[particle] = 0;
-        pVelGrad[particle] = Zero;
-        pDefGrad[particle] = Identity;
-        pPolarDecompR[particle] = Identity;
+      if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+        new_dw->allocateAndPut(pRemove,        d_labels->pRemoveLabel,       pset);
+        new_dw->allocateAndPut(pPolarDecompR,  d_labels->pPolarDecompRLabel, pset);
+        for (auto particle : *pset) {
+          pRemove[particle] = 0;
+          pVelGrad[particle] = Zero;
+          pDefGrad[particle] = Identity;
+          pPolarDecompR[particle] = Identity;
+        }
+      } else {
+        for (auto particle : *pset) {
+          pVelGrad[particle] = Zero;
+          pDefGrad[particle] = Identity;
+        }
       }
 
       // Initialize constitutive models
@@ -2549,18 +2563,27 @@ UofU_MPM::scheduleComputeVelocityAndDeformationGradient(SchedulerP& sched,
   t->requires(Task::OldDW, d_labels->pXLabel,            Ghost::None);
   t->requires(Task::OldDW, d_labels->pMassLabel,         Ghost::None);
   t->requires(Task::OldDW, d_labels->pVolumeLabel,       Ghost::None);
-  t->requires(Task::OldDW, d_labels->pRemoveLabel,       Ghost::None);
   t->requires(Task::OldDW, d_labels->pSizeLabel,         Ghost::None);
   t->requires(Task::OldDW, d_labels->pDefGradLabel,      Ghost::None);
 
   t->computes(d_labels->pVelGradLabel_preReloc);
   t->computes(d_labels->pDefGradMidLabel);
-  t->computes(d_labels->pPolarDecompRMidLabel);
   t->computes(d_labels->pDefGradLabel_preReloc);
-  t->computes(d_labels->pPolarDecompRLabel_preReloc);
   t->computes(d_labels->pVolumeMidLabel);
   t->computes(d_labels->pVolumeLabel_preReloc);
-  t->computes(d_labels->pRemoveLabel_preReloc);
+
+  int numMPMMatls = d_sharedState->getNumMPMMatls();
+  for (int m = 0; m < numMPMMatls; m++) {
+    MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
+    ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+    const MaterialSubset* matlset = mpm_matl->thisMaterial();
+    if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+      t->requires(Task::OldDW, d_labels->pRemoveLabel, matlset, Ghost::None);
+      t->computes(d_labels->pRemoveLabel_preReloc, matlset);
+      t->computes(d_labels->pPolarDecompRMidLabel, matlset);
+      t->computes(d_labels->pPolarDecompRLabel_preReloc, matlset);
+    }
+  }
 
   sched->addTask(t, patches, matls);
 }
@@ -2593,6 +2616,7 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
     for(int m = 0; m < numMPMMatls; m++){
 
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
 
       int matID = mpm_matl->getDWIndex();
       ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
@@ -2618,14 +2642,16 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
       ParticleVariable<Matrix3>    pVelGrad_mid, pDefGrad_mid, pPolarDecompR_mid;
       ParticleVariable<Matrix3>    pDefGrad_new, pPolarDecompR_new;
 
-      new_dw->allocateAndPut(pRemove_new,       d_labels->pRemoveLabel_preReloc,       pset);
       new_dw->allocateAndPut(pVolume_mid,       d_labels->pVolumeMidLabel,             pset);
       new_dw->allocateAndPut(pVolume_new,       d_labels->pVolumeLabel_preReloc,       pset);
       new_dw->allocateAndPut(pVelGrad_mid,      d_labels->pVelGradLabel_preReloc,      pset);
       new_dw->allocateAndPut(pDefGrad_mid,      d_labels->pDefGradMidLabel,            pset);
-      new_dw->allocateAndPut(pPolarDecompR_mid, d_labels->pPolarDecompRMidLabel,       pset);
       new_dw->allocateAndPut(pDefGrad_new,      d_labels->pDefGradLabel_preReloc,      pset);
-      new_dw->allocateAndPut(pPolarDecompR_new, d_labels->pPolarDecompRLabel_preReloc, pset);
+      if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+        new_dw->allocateAndPut(pRemove_new,       d_labels->pRemoveLabel_preReloc,       pset);
+        new_dw->allocateAndPut(pPolarDecompR_new, d_labels->pPolarDecompRLabel_preReloc, pset);
+        new_dw->allocateAndPut(pPolarDecompR_mid, d_labels->pPolarDecompRMidLabel,       pset);
+      }
       
       for (auto particle : *pset) {
 
@@ -2713,28 +2739,30 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
         }
 
         if (!d_flags->d_doPressureStabilization) {
-          Matrix3 RR, UU;
-          Matrix3 FF_new = pDefGrad_new[particle];
-          double Fmax_new = FF_new.MaxAbsElem();
-          double JJ_new = FF_new.Determinant();
-          // These checks prevent failure of the polar decomposition algorithm 
-          // if [F_new] has some extreme values.
-          if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
-            pRemove_new[particle] = -999;
-            proc0cout << "Deformation gradient component unphysical: [F] = " << FF_new
-                      << std::endl;
-            proc0cout << "Resetting [F]=[I] for this step and deleting particle"
-                      << " idx = " << particle << " particleID = " << pParticleID[particle]
-                      << std::endl;
-            Identity.polarDecompositionRMB(UU, RR);
-          } else {
-            pRemove_new[particle] = 0;
-            FF_new.polarDecompositionRMB(UU, RR);
-          }
-          pPolarDecompR_new[particle] = RR;
+          if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+            Matrix3 RR, UU;
+            Matrix3 FF_new = pDefGrad_new[particle];
+            double Fmax_new = FF_new.MaxAbsElem();
+            double JJ_new = FF_new.Determinant();
+            // These checks prevent failure of the polar decomposition algorithm 
+            // if [F_new] has some extreme values.
+            if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
+              pRemove_new[particle] = -999;
+              proc0cout << "Deformation gradient component unphysical: [F] = " << FF_new
+                        << std::endl;
+              proc0cout << "Resetting [F]=[I] for this step and deleting particle"
+                        << " idx = " << particle << " particleID = " << pParticleID[particle]
+                        << std::endl;
+              Identity.polarDecompositionRMB(UU, RR);
+            } else {
+              pRemove_new[particle] = 0;
+              FF_new.polarDecompositionRMB(UU, RR);
+            }
+            pPolarDecompR_new[particle] = RR;
 
-          pDefGrad_mid[particle].polarDecompositionRMB(UU, RR);
-          pPolarDecompR_mid[particle] = RR;
+            pDefGrad_mid[particle].polarDecompositionRMB(UU, RR);
+            pPolarDecompR_mid[particle] = RR;
+          }
         }
 
         //std::cout << "After compute vel/def gradients: material = " << m
@@ -2822,29 +2850,31 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
             throw InvalidValue(msg.str(), __FILE__, __LINE__);
           }
 
-          Matrix3 RR, UU;
-          Matrix3 FF_new = pDefGrad_new[particle];
-          double Fmax_new = FF_new.MaxAbsElem();
-          double JJ_new = FF_new.Determinant();
+          if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+            Matrix3 RR, UU;
+            Matrix3 FF_new = pDefGrad_new[particle];
+            double Fmax_new = FF_new.MaxAbsElem();
+            double JJ_new = FF_new.Determinant();
 
-          // These checks prevent failure of the polar decomposition algorithm 
-          // if [F_new] has some extreme values.
-          if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
-            pRemove_new[particle] = -999;
-            proc0cout << "Deformation gradient component unphysical: [F] = " << FF_new
-                      << std::endl;
-            proc0cout << "Resetting [F]=[I] for this step and deleting particle"
-                      << " idx = " << particle << " particleID = " << pParticleID[particle]
-                      << std::endl;
-            Identity.polarDecompositionRMB(UU, RR);
-          } else {
-            pRemove_new[particle] = 0;
-            FF_new.polarDecompositionRMB(UU, RR);
+            // These checks prevent failure of the polar decomposition algorithm 
+            // if [F_new] has some extreme values.
+            if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
+              pRemove_new[particle] = -999;
+              proc0cout << "Deformation gradient component unphysical: [F] = " << FF_new
+                        << std::endl;
+              proc0cout << "Resetting [F]=[I] for this step and deleting particle"
+                        << " idx = " << particle << " particleID = " << pParticleID[particle]
+                        << std::endl;
+              Identity.polarDecompositionRMB(UU, RR);
+            } else {
+              pRemove_new[particle] = 0;
+              FF_new.polarDecompositionRMB(UU, RR);
+            }
+            pPolarDecompR_new[particle] = RR;
+
+            pDefGrad_mid[particle].polarDecompositionRMB(UU, RR);
+            pPolarDecompR_mid[particle] = RR;
           }
-          pPolarDecompR_new[particle] = RR;
-
-          pDefGrad_mid[particle].polarDecompositionRMB(UU, RR);
-          pPolarDecompR_mid[particle] = RR;
 
         }
 
