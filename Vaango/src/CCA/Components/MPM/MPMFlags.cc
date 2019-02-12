@@ -247,7 +247,8 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   mpm_flag_ps->get("DoThermalExpansion", d_doThermalExpansion);
   mpm_flag_ps->get("do_grid_reset",      d_doGridReset);
   mpm_flag_ps->get("minimum_particle_mass",    d_min_part_mass);
-  mpm_flag_ps->get("minimum_mass_for_acc",     d_min_mass_for_acceleration);
+  mpm_flag_ps->getWithDefault("minimum_mass_for_acc", d_min_mass_for_acceleration,
+                              1.0e-199);
   mpm_flag_ps->get("maximum_particle_velocity",d_max_vel);
   mpm_flag_ps->get("use_prescribed_deformation",d_prescribeDeformation);
   if(d_prescribeDeformation){

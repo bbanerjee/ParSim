@@ -21,6 +21,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
+#include <CCA/Components/MPM/UofU_MPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/BasicDamageModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
@@ -33,7 +34,7 @@
 #include <CCA/Components/MPM/PhysicalBC/MomentBC.h>
 #include <CCA/Components/MPM/PhysicalBC/PressureBC.h>
 #include <CCA/Components/MPM/PhysicalBC/VelocityBC.h>
-#include <CCA/Components/MPM/UofU_MPM.h>
+#include <CCA/Components/MPM/MMS/MMS.h>
 #include <CCA/Components/Regridder/PerPatchVars.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <CCA/Ports/LoadBalancer.h>
@@ -1318,12 +1319,48 @@ UofU_MPM::applyExternalLoads(const ProcessorGroup*, const PatchSubset* patches,
                   pbc->getForceVector(pX[particle], pDisp[particle], force,
                                       time, pDefGrad[particle]);
               }
+            } // end if (loadCurveID < 0)
+          } // end particle loop
+        } // end if (doPressureBCs)
+
+        // MMS (compute body force)
+        if (!d_flags->d_mms_type.empty()) {
+
+          MMS MMSObject;
+          MMSObject.computeBodyForceForMMS(old_dw, new_dw, time, pset, d_labels, d_flags,
+                                           pExternalForce_new);
+          /*
+          for (auto particle : *pset) {
+            if (!std::isfinite(pExternalForce_new[particle].length())) {
+              std::cout << "MMS: pExt = " << pExternalForce_new[particle] << "\n";
             }
+          }
+          */
+        } 
+
+      } else { // if (!d_useLoadCurves)
+
+        // MMS
+        if (!d_flags->d_mms_type.empty()) {
+
+          MMS MMSObject;
+          MMSObject.computeExternalForceForMMS(old_dw, new_dw, time, pset, d_labels, d_flags,
+                                               pExternalForce_new);
+        } else {
+
+          // Get the external force data and allocate new space for
+          // external force and copy the data
+          constParticleVariable<Vector> pExternalForce;
+          old_dw->get(pExternalForce, d_labels->pExternalForceLabel, pset);
+
+          for (auto particle : *pset) {
+            pExternalForce_new[particle] = pExternalForce[particle] * d_flags->d_forceIncrementFactor;
           }
         }
       } // end if (d_useLoadCurves)
-    }   // matl loop
-  }     // patch loop
+
+    } // end matl loop
+  } // end patch loop
 }
 
 /*!----------------------------------------------------------------------
@@ -2154,9 +2191,13 @@ UofU_MPM::computeAcceleration(const ProcessorGroup* pg,
         }
 
         gAcceleration[c] = acc;
-        //std::cout << "After acceleration: material = " << m << " node = " << c
-        //          << " gMass = " << gMass[c] 
-        //          << " gAcceleration = " << gAcceleration[c] << "\n";
+        /*
+        std::cout << "After acceleration: material = " << m << " node = " << c
+                  << " gMass = " << gMass[c] << " minMass = " << d_flags->d_min_mass_for_acceleration << "\n"
+                  << " gInt = " << gInternalForce[c] 
+                  << " gExt = " << gExternalForce[c] << "\n"
+                  << " gAcceleration = " << gAcceleration[c] << "\n";
+        */
       }
     } // matls
   }
@@ -2684,11 +2725,17 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
           Matrix3 xG_new(x_i_new.asVector(), G_ip_av);
           Matrix3 vG_mid(v_i_mid, G_ip_av);
 
-          //std::cout << "k = " << k << " node = " << node 
-          //          << " x = " << x_i_old << " G = " << G_ip_av << "\n"
-          //          << " xG_n " << xG_old << "\n"
-          //          << " xG_mid " << xG_mid << "\n"
-          //          << " xG_new " << xG_new << "\n";
+          /*
+          if (!std::isfinite(gAcceleration[node].length())) {
+            std::cout << "k = " << k << " node = " << node 
+                      << " v_i " << v_i_old
+                      << " a_i " << a_i_old << "\n"
+                      << " x_ = " << x_i_old << " G = " << G_ip_av << "\n"
+                      << " xG_n " << xG_old << "\n"
+                      << " xG_mid " << xG_mid << "\n"
+                      << " xG_new " << xG_new << "\n";
+          }
+          */
 
           if (d_flags->d_axisymmetric) {
             // x -> r, y -> z, z -> theta
@@ -3643,6 +3690,16 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           IntVector node = influenceNodes[k];
           pVelocity_old += gVelocity[node] * S_ip_av[k];
           pAcceleration_old += gAcceleration[node] * S_ip_av[k];
+         
+          /*
+          if (!std::isfinite(pAcceleration_old.length())) {
+            std::cout << k << " of " << num_influence_nodes
+                      << ": node = " << node <<  " gvel = " << gVelocity[node] 
+                      << " gacc = " << gAcceleration[node] 
+                      << " \n pvel = " << pVelocity_old
+                      << " pacc = " << pAcceleration_old << "\n";
+          }
+          */
         }
 
         // Copy temperature
@@ -3663,13 +3720,16 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         pVelocity_new[particle] = pVelocity[particle] + pAcceleration_old * delT;
         pXX[particle] = pX[particle] + pDisp_new[particle];
         pMass_new[particle] = pMass[particle];
-        */
 
-        //std::cout << "After interpolateToParticles: " 
-        //          << " material = " << m << " particle = " << particle
-        //          << " pX_old = " << pX[particle]
-        //          << " pX_new = " << pX_new[particle]
-        //          << " pVel_new = " << pVelocity_new[particle] << "\n";
+        if (!std::isfinite(pVelocity_new[particle].length())) {
+          std::cout << "After interpolateToParticles: " 
+                    << " material = " << m << " particle = " << particle
+                    << " pX_old = " << pX[particle]
+                    << " pX_new = " << pX_new[particle]
+                    << " pAcc_old = " << pAcceleration_old
+                    << " pVel_new = " << pVelocity_new[particle] << "\n";
+        }
+        */
 
         ke += .5 * pMass[particle] * pVelocity_new[particle].length2();
         centerOfMass = centerOfMass + (pX_new[particle] * pMass[particle]).asVector();
@@ -3685,18 +3745,22 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                     << " pMass_new = " << pMass_new[particle]
                     << " pLocalized_new = " << pLocalized_new[particle] << "\n";
         }
-        if (pVelocity_new[particle].length() > d_flags->d_max_vel) {
+
+        double vel_new = pVelocity_new[particle].length();
+        if (vel_new > d_flags->d_max_vel) {
+          double vel_old = pVelocity[particle].length();
           if (d_flags->d_deleteRogueParticles) {
             delset->addParticle(particle);
             std::cout << "\n Warning: particle " << pParticleID[particle]
-                 << " hit speed ceiling #1. Deleting particle.\n";
+                 << " hit speed ceiling #1 (" << vel_new << ">" << d_flags->d_max_vel
+                 << "). Deleting particle.\n";
           } else {
-            if (pVelocity_new[particle].length() >= pVelocity[particle].length()) {
-              pVelocity_new[particle] =
-                (pVelocity_new[particle] / pVelocity_new[particle].length()) *
-                (d_flags->d_max_vel * 0.9);
+            if (vel_new >= vel_old) {
+              double scale_factor =  (d_flags->d_max_vel * 0.9) / vel_new;
+              pVelocity_new[particle] *= scale_factor;
               std::cout << "\n Warning: particle " << pParticleID[particle]
-                   << " hit speed ceiling #1. Modifying particle velocity "
+                   << " hit speed ceiling #1 (" << vel_new << ">" << d_flags->d_max_vel
+                   << ") vel_old = " << vel_old << ". Modifying particle velocity "
                       "accordingly.\n";
             }
           }
