@@ -2727,10 +2727,14 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
 
           /*
           if (!std::isfinite(gAcceleration[node].length())) {
+          }
+          */
+          /*
+          if (f_p_new.Determinant() < 0.0) {
             std::cout << "k = " << k << " node = " << node 
                       << " v_i " << v_i_old
                       << " a_i " << a_i_old << "\n"
-                      << " x_ = " << x_i_old << " G = " << G_ip_av << "\n"
+                      << " x_i = " << x_i_old << " G = " << G_ip_av << "\n"
                       << " xG_n " << xG_old << "\n"
                       << " xG_mid " << xG_mid << "\n"
                       << " xG_new " << xG_new << "\n";
@@ -2750,9 +2754,16 @@ UofU_MPM::computeVelocityAndDeformationGradient(const ProcessorGroup*,
           fdot_p_mid += vG_mid;
         }
 
-        //std::cout <<  "xG_n = " << f_p_old << "\n"
-        //          <<  "xG_mid = " << f_p_mid << "\n"
-        //          <<  "xG_new = " << f_p_new << "\n";
+        //if (f_p_new.Determinant() < 0.0) {
+        //}
+        
+        /*
+        if (f_p_old.Determinant() != 1.0) {
+          std::cout <<  "xG_n = " << f_p_old << "\n"
+                    <<  "xG_mid = " << f_p_mid << "\n"
+                    <<  "xG_new = " << f_p_new << "\n";
+        }
+        */
 
         pVelGrad_mid[particle] = fdot_p_mid * f_p_mid.Inverse();
         pDefGrad_mid[particle] = f_p_mid * pDefGrad_old[particle];
@@ -3685,21 +3696,14 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                                          pSize[particle], pDefGrad_new[particle]);
 
         Vector pVelocity_old(0.0, 0.0, 0.0);
+        Vector pVel_new(0.0, 0.0, 0.0);
         Vector pAcceleration_old(0.0, 0.0, 0.0);
         for (int k = 0; k < num_influence_nodes; k++) {
           IntVector node = influenceNodes[k];
+          Vector gVelocity_new = gVelocity[node] + gAcceleration[node] * delT;
           pVelocity_old += gVelocity[node] * S_ip_av[k];
+          pVel_new += gVelocity_new * S_ip_av[k];
           pAcceleration_old += gAcceleration[node] * S_ip_av[k];
-         
-          /*
-          if (!std::isfinite(pAcceleration_old.length())) {
-            std::cout << k << " of " << num_influence_nodes
-                      << ": node = " << node <<  " gvel = " << gVelocity[node] 
-                      << " gacc = " << gAcceleration[node] 
-                      << " \n pvel = " << pVelocity_old
-                      << " pacc = " << pAcceleration_old << "\n";
-          }
-          */
         }
 
         // Copy temperature
@@ -3708,19 +3712,16 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
         // Update the particle's position and velocity
         pMass_new[particle] = pMass[particle];
-        auto v_p_mid = pVelocity_old + pAcceleration_old * (0.5 * delT);
-        pX_new[particle] = pX[particle] + v_p_mid * delT;
-        pDisp_new[particle] = pDisp[particle] + (pX_new[particle] - pX[particle]);
-        pXX[particle] = pX[particle] + pDisp_new[particle];
-        pVelocity_new[particle] = pVelocity_old + pAcceleration_old * delT;
-        /*
         auto v_p_mid = pVelocity[particle] + pAcceleration_old * (0.5 * delT);
-        pX_new[particle] = pX[particle] + v_p_mid * delT;
+        //auto v_p_mid = pVelocity_old + pAcceleration_old * (0.5 * delT);
+        pX_new[particle] = pX[particle] + pVel_new * delT;
+        //pX_new[particle] = pX[particle] + v_p_mid * delT;
         pDisp_new[particle] = pDisp[particle] + (pX_new[particle] - pX[particle]);
-        pVelocity_new[particle] = pVelocity[particle] + pAcceleration_old * delT;
         pXX[particle] = pX[particle] + pDisp_new[particle];
-        pMass_new[particle] = pMass[particle];
+        pVelocity_new[particle] = pVelocity[particle] + pAcceleration_old * delT;
+        //pVelocity_new[particle] = pVelocity_old + pAcceleration_old * delT;
 
+        /*
         if (!std::isfinite(pVelocity_new[particle].length())) {
           std::cout << "After interpolateToParticles: " 
                     << " material = " << m << " particle = " << particle
@@ -3730,6 +3731,12 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                     << " pVel_new = " << pVelocity_new[particle] << "\n";
         }
         */
+
+        if (pParticleID[particle] == 30066212865) {
+          std::cout << "v_p = " << pVelocity[particle]
+                    << " v_p (interp) = " << pVelocity_old
+                    << " diff = " << pVelocity[particle] - pVelocity_old << "\n";
+        }
 
         ke += .5 * pMass[particle] * pVelocity_new[particle].length2();
         centerOfMass = centerOfMass + (pX_new[particle] * pMass[particle]).asVector();

@@ -44,6 +44,7 @@ SET(Vaango_Core_Grid_SRCS
   LinearInterpolator.cc
   AxiLinearInterpolator.cc
   Material.cc
+  ParticleInterpolator.cc
   Patch.cc
   PatchRangeTree.cc
   Region.cc
