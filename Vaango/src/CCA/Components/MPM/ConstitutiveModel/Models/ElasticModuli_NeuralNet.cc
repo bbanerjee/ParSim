@@ -185,6 +185,7 @@ template<typename T>
 void 
 ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std::string& filename)
 {
+  //std::cout << "Reading hdf5\n";
   using EigenMatrixRowMajor = 
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
@@ -196,6 +197,7 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std:
 
     H5::H5File file(FILE_NAME, H5F_ACC_RDONLY);
 
+    //std::cout << "Reading configuration from hdf5\n";
     // Read the configuration from the HDF5 file 
     H5std_string model_config_json;
     auto group = file.openGroup("/");
@@ -209,18 +211,27 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std:
     nlohmann::json doc;
     doc << ss;
 
+    //std::cout << doc.dump() << "\n";
+
+    //std::cout << "Storing layer info from hdf5\n";
     if (doc["class_name"] != "Sequential") {
       std::ostringstream out;
       out << "**ERROR** The input Keras neural network model is required to be Sequential";
       throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
     }
+    //std::cout << "Read class name info from hdf5\n";
 
     NeuralNetworkLayer<T> prev_layer, current_layer;
-    auto config = doc["config"];
+    auto config = doc["config"]["layers"];
+    //std::cout << config.dump(2) << "\n";
+    //std::cout << "Read config info from hdf5\n";
     for (auto it = config.begin(); it != config.end(); ++it) {
       auto layer_class_name = (*it)["class_name"];
+      //std::cout << "Read config class name info from hdf5\n";
       auto layer_config = (*it)["config"];
+      //std::cout << "Config info from hdf5 " << layer_class_name << "\n";
       for (auto l_it = layer_config.begin(); l_it != layer_config.end(); ++l_it) {
+        //std::cout << "Config layer info from hdf5 " << l_it.value() << "\n";
         if (it == config.begin()) {
           if (l_it.key() == "batch_input_shape") {
             const std::size_t offset = l_it.value().front().is_null() ? 1 : 0;
@@ -231,18 +242,22 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std:
         }
         if (l_it.key() == "name") {
           current_layer.name = l_it.value();
+          //std::cout << "layer name from hdf5 " << l_it.value() << "\n";
         }
         if (l_it.key() == "activation") {
           current_layer.activation = l_it.value();
+          //std::cout << "layer activation from hdf5 " << l_it.value() << "\n";
         }
         if (l_it.key() == "units") {
           current_layer.units = l_it.value();
+          //std::cout << "layer units from hdf5 " << l_it.value() << "\n";
         }
       }
       d_layers.push_back(current_layer);
       prev_layer = current_layer;
     }
 
+    //std::cout << "Read weights and biases from hdf5 \n";
     // Reads the weights and biases (HDF5)
     group = file.openGroup("/model_weights");
     attribute = group.openAttribute("layer_names");
@@ -256,6 +271,7 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std:
     char layer_names[dims][size];
     attribute.read(datatype, (void *)layer_names);
 
+    //std::cout << "Dims from hdf5 = " << dims << "\n";
     for (auto ii = 0u; ii < dims; ++ii) {
       std::string layer_name(layer_names[ii], size);
       group = file.openGroup("/model_weights/"+layer_name);
@@ -268,7 +284,9 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std:
 
       char data_labels[dims_weights_bias][size_weights_bias];
       attribute.read(datatype, (void *)data_labels);
+      //std::cout << "Read attribute from hdf5 = " << ii << "\n";
 
+      //std::cout << "Dims weights/bias from hdf5 = " << dims_weights_bias << "\n";
       for (auto jj=0u; jj < dims_weights_bias; ++jj) {
         std::string weights_name(data_labels[jj], size_weights_bias);
         auto dataset = group.openDataSet(weights_name);
@@ -278,6 +296,7 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std:
         hsize_t dims_data[rank];
         dataspace.getSimpleExtentDims(dims_data, nullptr);
         
+        //std::cout << "Read dims/weights from hdf5 = " << jj << "\n";
         if (rank == 2) {
           EigenMatrixRowMajor mat(dims_data[0], dims_data[1]);
           dataset.read((void *)mat.data(), datatype);
@@ -293,16 +312,23 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std:
     }
     
   } catch (H5::FileIException error) {
+    std::cout << "File Input Exception Reading hdf5\n";
     error.printError();
   } catch (H5::DataSetIException error) {
+    std::cout << "Data set input Exception Reading hdf5\n";
     error.printError();
   } catch (H5::DataSpaceIException error) {
+    std::cout << "Data space input Exception Reading hdf5\n";
     error.printError();
   } catch (H5::DataTypeIException error) {
+    std::cout << "Data type input Exception Reading hdf5\n";
     error.printError();
   } catch (H5::AttributeIException error) {
+    std::cout << "Attribute input Exception Reading hdf5\n";
     error.printError();
   }
+
+  //std::cout << "Done reading hdf5\n";
 }
 
 template<typename T>

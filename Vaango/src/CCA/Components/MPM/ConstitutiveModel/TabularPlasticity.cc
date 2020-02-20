@@ -101,6 +101,8 @@ TabularPlasticity::TabularPlasticity(Uintah::ProblemSpecP& ps, Uintah::MPMFlags*
   : Uintah::ConstitutiveModel(mpmFlags),
     d_hydrostat(ps)
 {
+  //std::cout << "Creating tabular plasticity model\n";
+
   // Bulk and shear modulus models
   d_elastic = Vaango::ElasticModuliModelFactory::create(ps);
   if (!d_elastic) {
