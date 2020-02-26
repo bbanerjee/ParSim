@@ -222,7 +222,11 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::readNeuralNetworkHDF5(const std:
     //std::cout << "Read class name info from hdf5\n";
 
     NeuralNetworkLayer<T> prev_layer, current_layer;
+#ifndef TENSORFLOW_2_0
+    auto config = doc["config"];
+#else
     auto config = doc["config"]["layers"];
+#endif
     //std::cout << config.dump(2) << "\n";
     //std::cout << "Read config info from hdf5\n";
     for (auto it = config.begin(); it != config.end(); ++it) {

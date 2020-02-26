@@ -3828,6 +3828,7 @@ SerialMPM::scheduleUnrotateStressAndDeformationRate(SchedulerP& sched,
 
       const MaterialSubset* matlset = mpm_matl->thisMaterial();
 
+      t->requires(Task::OldDW, lb->pParticleIDLabel,      matlset, Ghost::None);
       t->requires(Task::OldDW, lb->pPolarDecompRLabel,    matlset, Ghost::None);
       t->requires(Task::NewDW, lb->pPolarDecompRMidLabel, matlset, Ghost::None);
       t->requires(Task::OldDW, lb->pStressLabel,          matlset, Ghost::None);

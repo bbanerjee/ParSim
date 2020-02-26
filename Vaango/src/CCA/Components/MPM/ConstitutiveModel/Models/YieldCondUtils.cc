@@ -29,16 +29,18 @@ computeNormals(const std::vector<Uintah::Point>& polyline)
     tangent.normalize();
     tangents.push_back(tangent);
   }
-  //std::cout << "Tangents:";
-  //std::copy(tangents.begin(), tangents.end(),
-  //          std::ostream_iterator<Uintah::Vector>(std::cout, " "));
-  //std::cout << std::endl;
+  std::cout << "Tangents:";
+  std::copy(tangents.begin(), tangents.end(),
+            std::ostream_iterator<Uintah::Vector>(std::cout, " "));
+  std::cout << std::endl;
 
   std::vector<Uintah::Vector> normals;
   for (auto ii = 1u; ii < tangents.size()-1; ii++) {
-    Uintah::Vector minus = tangents[ii-1]*(1 - tminus) + tangents[ii]*tminus;
-    Uintah::Vector plus = tangents[ii]*(1 - tplus) + tangents[ii+1]*tplus;
-    Uintah::Vector normal = -(plus - minus)/2.0;
+    //Uintah::Vector minus = tangents[ii-1]*(1 - tminus) + tangents[ii]*tminus;
+    //Uintah::Vector plus = tangents[ii]*(1 - tplus) + tangents[ii+1]*tplus;
+    //Uintah::Vector normal = -(plus - minus)/2.0;
+    Uintah::Vector normal(-tangents[ii].y(), tangents[ii].x(), 0.0);
+    std::cout << "normal = " << normal << "\n";
     normal.normalize();
     normals.push_back(normal);
   }

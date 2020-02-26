@@ -125,7 +125,7 @@ YieldCond_TabularCap::checkInputParameters()
     throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
-  // Copy the data and increse sampling if necessary
+  // Copy the data and increase sampling if necessary
   std::vector<Point> points;
   auto num_pts = xvals.size();
   if (num_pts < 6) {
@@ -276,9 +276,9 @@ YieldCond_TabularCap::saveAsPolyline()
     d_polyline.push_back(Point(extra1));
     d_polyline.push_back(Point(extra2));
   }
-  //std::copy(d_polyline.begin(), d_polyline.end(),
-  //          std::ostream_iterator<Point>(std::cout, " "));
-  //std::cout << std::endl;
+  std::copy(d_polyline.begin(), d_polyline.end(),
+            std::ostream_iterator<Point>(std::cout, " "));
+  std::cout << std::endl;
 }
 
 /* Compute normal at each point on the yield surface */

@@ -461,8 +461,11 @@ TabularPlasticity::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   task->requires(Task::OldDW, lb->pVolumeLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, lb->pTemperatureLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, lb->pVelocityLabel, matlset, Ghost::None);
+  task->requires(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, Ghost::None);
   task->requires(Task::NewDW, lb->pDeformRateMidLabel, matlset, Ghost::None);
   task->requires(Task::NewDW, lb->pStressUnrotatedLabel, matlset, Ghost::None);
+  task->requires(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, Ghost::None);
 
   task->computes(lb->pStressLabel_preReloc, matlset);
   task->computes(lb->pdTdtLabel_preReloc, matlset);
