@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='ISO-8859-1' ?>
 <Uintah_Include>
 
-  <failure_criteria                    spec="OPTIONAL STRING" /> <!-- Options are: MaximumPrincipalStress, MaximumPrincipalStrain and MohrColoumb -->
+  <failure_criterion                    spec="OPTIONAL STRING 'MaximumPrincipalStress, MaximumPrincipalStrain, MohrCoulomb'" /> 
 
   <!-- The following three are for UCNH with failureCriteria of MohrColoumb-->
   <tensile_cutoff_fraction_of_cohesion spec="OPTIONAL DOUBLE" /> <!-- Range from 0 to infinity -->
@@ -9,6 +9,7 @@
   <failure_mean                        spec="OPTIONAL DOUBLE" />
   <failure_std                         spec="OPTIONAL DOUBLE" />
   <failure_distrib                     spec="OPTIONAL STRING 'constant, gauss, weibull, uniform'" />
+  <scaling                             spec="OPTIONAL STRING 'none, kayenta'"/>
   <exponent                            spec="OPTIONAL DOUBLE" />
   <failure_seed                        spec="OPTIONAL INTEGER" />
   <char_time                           spec="OPTIONAL DOUBLE" />

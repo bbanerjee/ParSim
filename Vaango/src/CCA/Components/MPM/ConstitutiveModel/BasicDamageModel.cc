@@ -104,7 +104,7 @@ BasicDamageModel::getDamageModelData(ProblemSpecP& ps)
   if (flag->d_erosionAlgorithm == "BrittleDamage") {
     getBrittleDamageData(ps);
   } else {
-    ps->require("failure_criteria", d_failure_criteria);
+    ps->require("failure_criterion", d_failure_criterion);
 
     // Get the failure stress/strain data
     getFailureStressOrStrainData(ps);
@@ -155,19 +155,19 @@ BasicDamageModel::getFailureStressOrStrainData(ProblemSpecP& ps)
   d_epsf.refVol = 1.0;     // Reference volume for scaling failure criteria
   d_epsf.t_char = 1.0e-99; // Characteristic time of damage evolution
 
-  ps->require("failure_criteria", d_failure_criteria);
+  ps->require("failure_criterion", d_failure_criterion);
 
-  if (d_failure_criteria != "MaximumPrincipalStress" &&
-      d_failure_criteria != "MaximumPrincipalStrain" &&
-      d_failure_criteria != "MohrColoumb") {
+  if (d_failure_criterion != "MaximumPrincipalStress" &&
+      d_failure_criterion != "MaximumPrincipalStrain" &&
+      d_failure_criterion != "MohrCoulomb") {
     // The above are the only acceptable options.  If not one of them, bail.
-    throw ProblemSetupException("<failure_criteria> must be either "
+    throw ProblemSetupException("<failure_criterion> must be either "
                                 "MaximumPrincipalStress, "
-                                "MaximumPrincipalStrain or MohrColoumb",
+                                "MaximumPrincipalStrain or MohrCoulomb",
                                 __FILE__, __LINE__);
   }
 
-  if (d_failure_criteria == "MohrColoumb") {
+  if (d_failure_criterion == "MohrCoulomb") {
     // The cohesion value that MC needs is the "mean" value in the
     // FailureStressOrStrainData struct
     ps->require("friction_angle", d_friction_angle);
@@ -226,7 +226,7 @@ BasicDamageModel::initializeDamageVarLabels()
   pFailureStressOrStrainLabel =
     VarLabel::create("p.epsf", ParticleVariable<double>::getTypeDescription());
   pLocalizedLabel = VarLabel::create(
-    "p.localized", ParticleVariable<int>::getTypeDescription());
+    "p.localizedDamage", ParticleVariable<int>::getTypeDescription());
   pDamageLabel = VarLabel::create(
     "p.damage", ParticleVariable<double>::getTypeDescription());
   pTimeOfLocLabel = VarLabel::create(
@@ -234,7 +234,7 @@ BasicDamageModel::initializeDamageVarLabels()
   pFailureStressOrStrainLabel_preReloc =
     VarLabel::create("p.epsf+", ParticleVariable<double>::getTypeDescription());
   pLocalizedLabel_preReloc = VarLabel::create(
-    "p.localized+", ParticleVariable<int>::getTypeDescription());
+    "p.localizedDamage+", ParticleVariable<int>::getTypeDescription());
   pDamageLabel_preReloc = VarLabel::create(
     "p.damage+", ParticleVariable<double>::getTypeDescription());
   pTimeOfLocLabel_preReloc = VarLabel::create(
@@ -268,8 +268,8 @@ BasicDamageModel::setDamageModelData(const BasicDamageModel* bdm)
   } else {
     // Set the failure strain data
     setFailureStressOrStrainData(bdm);
-    d_failure_criteria = bdm->d_failure_criteria;
-    if (d_failure_criteria == "MohrColoumb") {
+    d_failure_criterion = bdm->d_failure_criterion;
+    if (d_failure_criterion == "MohrCoulomb") {
       d_tensile_cutoff = bdm->d_tensile_cutoff;
       d_friction_angle = bdm->d_friction_angle;
     }
@@ -362,13 +362,13 @@ BasicDamageModel::outputProblemSpecDamage(ProblemSpecP& cm_ps)
     cm_ps->appendElement("failure_exponent", d_epsf.exponent);
     cm_ps->appendElement("failure_seed", d_epsf.seed);
     cm_ps->appendElement("failure_distrib", d_epsf.dist);
-    cm_ps->appendElement("failure_criteria", d_failure_criteria);
+    cm_ps->appendElement("failure_criterion", d_failure_criterion);
     cm_ps->appendElement("scaling", d_epsf.scaling);
     cm_ps->appendElement("exponent", d_epsf.exponent);
     cm_ps->appendElement("reference_volume", d_epsf.refVol);
     cm_ps->appendElement("char_time", d_epsf.t_char);
 
-    if (d_failure_criteria == "MohrColoumb") {
+    if (d_failure_criterion == "MohrCoulomb") {
       cm_ps->appendElement("friction_angle", d_friction_angle);
       cm_ps->appendElement("tensile_cutoff_fraction_of_cohesion",
                            d_tensile_cutoff);
@@ -433,15 +433,12 @@ BasicDamageModel::initializeDamageData(const Patch* patch,
   new_dw->allocateAndPut(pTimeOfLoc, pTimeOfLocLabel, pset);
   new_dw->allocateAndPut(pDamage, pDamageLabel, pset);
 
-  ParticleSubset::iterator iter = pset->begin();
-
   if (d_brittleDamage) {
-    for (; iter != pset->end(); iter++) {
-      pFailureStrain[*iter] = d_brittle_damage.r0b;
-      pLocalized[*iter] = 0;
-      pTimeOfLoc[*iter] = 1.e99;
-      ;
-      pDamage[*iter] = 0.0;
+    for (auto particle : *pset) {
+      pFailureStrain[particle] = d_brittle_damage.r0b;
+      pLocalized[particle] = 0;
+      pTimeOfLoc[particle] = 1.e99;
+      pDamage[particle] = 0.0;
     }
   } else if (d_epsf.dist == "gauss") {
     // Initialize a gaussian random number generator
@@ -456,12 +453,11 @@ BasicDamageModel::initializeDamageData(const Patch* patch,
     Uintah::Gaussian gaussGen(d_epsf.mean, d_epsf.std, unique_seed,
                               d_epsf.refVol, d_epsf.exponent);
 
-    for (; iter != pset->end(); iter++) {
-      pFailureStrain[*iter] = fabs(gaussGen.rand(pVolume[*iter]));
-      pLocalized[*iter] = 0;
-      pTimeOfLoc[*iter] = -1.e99;
-      ;
-      pDamage[*iter] = 0.0;
+    for (auto particle : *pset) {
+      pFailureStrain[particle] = fabs(gaussGen.rand(pVolume[particle]));
+      pLocalized[particle] = 0;
+      pTimeOfLoc[particle] = -1.e99;
+      pDamage[particle] = 0.0;
     }
   } else if (d_epsf.dist == "weibull") {
     // Initialize a weibull random number generator
@@ -476,12 +472,11 @@ BasicDamageModel::initializeDamageData(const Patch* patch,
     Uintah::Weibull weibGen(d_epsf.mean, d_epsf.std, d_epsf.refVol, unique_seed,
                             d_epsf.exponent);
 
-    for (; iter != pset->end(); iter++) {
-      pFailureStrain[*iter] = weibGen.rand(pVolume[*iter]);
-      pLocalized[*iter] = 0;
-      pTimeOfLoc[*iter] = -1.e99;
-      ;
-      pDamage[*iter] = 0.0;
+    for (auto particle : *pset) {
+      pFailureStrain[particle] = weibGen.rand(pVolume[particle]);
+      pLocalized[particle] = 0;
+      pTimeOfLoc[particle] = -1.e99;
+      pDamage[particle] = 0.0;
     }
   } else if (d_epsf.dist == "uniform") {
 
@@ -492,27 +487,25 @@ BasicDamageModel::initializeDamageData(const Patch* patch,
     patchID = patchID % 32;
     unsigned int unique_seed = ((d_epsf.seed + patch_div_32 + 1) << patchID);
     auto randGen = scinew MusilRNG(unique_seed);
-    for (; iter != pset->end(); iter++) {
-      pLocalized[*iter] = 0;
-      pTimeOfLoc[*iter] = -1.e99;
-      ;
+    for (auto particle : *pset) {
+      pLocalized[particle] = 0;
+      pTimeOfLoc[particle] = -1.e99;
 
       double rand = (*randGen)();
       double range = (2 * rand - 1) * d_epsf.std;
-      double cc = pow(d_epsf.refVol / pVolume[*iter], 1.0 / d_epsf.exponent);
+      double cc = pow(d_epsf.refVol / pVolume[particle], 1.0 / d_epsf.exponent);
       double fail_eps = cc * (d_epsf.mean + range);
-      pFailureStrain[*iter] = fail_eps;
-      pDamage[*iter] = 0.0;
+      pFailureStrain[particle] = fail_eps;
+      pDamage[particle] = 0.0;
     }
     delete randGen;
 
   } else {
-    for (; iter != pset->end(); iter++) {
-      pFailureStrain[*iter] = d_epsf.mean;
-      pLocalized[*iter] = 0;
-      pTimeOfLoc[*iter] = -1.e99;
-      ;
-      pDamage[*iter] = 0.0;
+    for (auto particle : *pset) {
+      pFailureStrain[particle] = d_epsf.mean;
+      pLocalized[particle] = 0;
+      pTimeOfLoc[particle] = -1.e99;
+      pDamage[particle] = 0.0;
     }
   }
 }
@@ -843,7 +836,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(
   pLocalized_new = pLocalized;
   pTimeOfLoc_new = pTimeOfLoc;
   if (pLocalized == 0) {
-    if (d_failure_criteria == "MaximumPrincipalStress") {
+    if (d_failure_criterion == "MaximumPrincipalStress") {
       double maxEigen = 0., medEigen = 0., minEigen = 0.;
       pStress.getEigenValues(maxEigen, medEigen, minEigen);
       // The first eigenvalue returned by "eigen" is always the largest
@@ -856,7 +849,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(
                     << " eps_f = " << pFailureStr << endl;
         pTimeOfLoc_new = time;
       }
-    } else if (d_failure_criteria == "MaximumPrincipalStrain") {
+    } else if (d_failure_criterion == "MaximumPrincipalStrain") {
       // Compute Finger tensor (left Cauchy-Green)
       Matrix3 bb = defGrad * defGrad.Transpose();
       // Compute Eulerian strain tensor
@@ -873,7 +866,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(
                     << " eps_f = " << pFailureStr << endl;
         pTimeOfLoc_new = time;
       }
-    } else if (d_failure_criteria == "MohrColoumb") {
+    } else if (d_failure_criterion == "MohrCoulomb") {
       double maxEigen = 0., medEigen = 0., minEigen = 0.;
       pStress.getEigenValues(maxEigen, medEigen, minEigen);
 
@@ -901,7 +894,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(
                     << " cohesion = " << cohesion << endl;
         pTimeOfLoc_new = time;
       }
-    } // Mohr-Coloumb
+    } // MohrCoulomb
   }   // pLocalized==0
 
   // If the particle has failed, apply various erosion algorithms

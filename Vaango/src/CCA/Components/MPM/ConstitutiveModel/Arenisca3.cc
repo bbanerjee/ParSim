@@ -736,8 +736,6 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
     // required data such plastic strain, elastic strain, cap position, etc.
 
     for (int idx : *pset) {
-      // patch index
-      // cout<<"pID="<<pParticleID[idx]<<endl;
 
       // A parameter to consider the thermal effects of the plastic work which
       // is not coded in the current source code. Further development of
@@ -778,6 +776,17 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
 #else
       FF.polarDecompositionRMB(tensorU, tensorR);
 #endif
+
+      /*
+      if (pParticleID[idx] == 111670263811) {
+       std::cout << "pID=" << pParticleID[idx] << " ";
+       std::cout << "\t Vel grad = " << pVelGrad_new[idx]
+                 << "\n\t Def grad = " << pDefGrad[idx] 
+                 << "\n\t Def grad new = " << pDefGrad_new[idx]
+                 << "\n\t R = " << tensorR
+                 << "\n\t U = " << tensorU << std::endl;
+      }
+      */
 
       // Compute the unrotated symmetric part of the velocity gradient
       D = (tensorR.Transpose()) * (D * tensorR);
@@ -994,6 +1003,18 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
 
       double rho_cur = pmass[idx] / pvolume[idx];
       c_dil = sqrt((bulk + four_third * shear) / rho_cur);
+
+      /*
+      if (pParticleID[idx] == 111670263811) {
+       std::cout << "pID=" << pParticleID[idx] << " ";
+       std::cout << "\t pStress = " << pStress_new[idx]
+                 << "\n\t D = " << D
+                 << "\n\t ev_p = " << pevp_new[idx] 
+                 << " ev_e = " << peve_new[idx] << " e_p = " << pep_new[idx] 
+                 << "\n\t rho = " << rho_cur << " bulk = " << bulk << " shear = " << shear 
+                 << " c_dil = " << c_dil << std::endl;
+      }
+      */
 
       WaveSpeed =
         Vector(Max(c_dil + std::abs(pvelocity[idx].x()), WaveSpeed.x()),

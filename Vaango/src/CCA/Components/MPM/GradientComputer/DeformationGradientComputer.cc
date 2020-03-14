@@ -591,8 +591,10 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
     // Update deformation gradient
     pDefGrad_new[particle] = defGrad_new;
 
+    //if (pParticleID[particle] == 111670263811) {
     // std::cout << "Vel grad = " << pVelGrad_new[particle]
     //           << " Def grad = " << pDefGrad_new[particle] << std::endl;
+    //}
 
     //std::cout << "Nine . Before jacobian check" << std::endl;
     // Check 1: Look at Jacobian
@@ -619,6 +621,10 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
   
     //  Compute updated volume
     pVolume_new[particle]=(pMass[particle]/rho_orig)*J;
+    //if (pParticleID[particle] == 111670263811) {
+    //  std::cout << "mass = " << pMass[particle] << " vol = " << pVolume_new[particle]
+    //            << " J = " << J << "\n";
+    //}
 
     if (!flag->d_doPressureStabilization) {
       if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
@@ -696,6 +702,15 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
       // Update the deformed volume
       J = pDefGrad_new[particle].Determinant();
       pVolume_new[particle]= (pMass[particle]/rho_orig)*J;
+
+      //if (pParticleID[particle] == 111670263811) {
+      // std::cout << "Vel grad = " << pVelGrad_new[particle]
+      //           << " Def grad = " << pDefGrad_new[particle] << std::endl;
+      //}
+      //if (pParticleID[particle] == 111670263811) {
+      //  std::cout << "mass = " << pMass[particle] << " vol = " << pVolume_new[particle]
+      //            << " J = " << J << "\n";
+      //}
 
       // Check 1: Look at Jacobian
       if (!(J > 0.0)) {

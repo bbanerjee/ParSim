@@ -203,7 +203,7 @@ protected:
   /* i.e., no deviatoric stress */
   bool d_brittleDamage; /* use brittle damage with mesh size control*/
 
-  std::string d_failure_criteria; /* Options are:  "MaximumPrincipalStrain" */
+  std::string d_failure_criterion; /* Options are:  "MaximumPrincipalStrain" */
                                   /* "MaximumPrincipalStress", "MohrColoumb"*/
 
   // These three are for the MohrColoumb option

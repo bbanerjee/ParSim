@@ -4217,6 +4217,7 @@ SerialMPM::scheduleFindRogueParticles(SchedulerP& sched,
     t->requires(Task::NewDW, lb->numLocInCellLabel,       gac, 1);
     t->requires(Task::NewDW, lb->numInCellLabel,          gac, 1);
     t->requires(Task::OldDW, lb->pXLabel,                 Ghost::None);
+    t->requires(Task::OldDW, lb->pParticleIDLabel,        Ghost::None);
     t->modifies(lb->pLocalizedMPMLabel);
 
     sched->addTask(t, patches, matls);
@@ -4252,19 +4253,20 @@ SerialMPM::findRogueParticles(const ProcessorGroup*,
       constParticleVariable<Point> pX;
 
       ParticleVariable<int> isLocalized;
+      constParticleVariable<long64> pParticleID;
 
       new_dw->get(numLocInCell, lb->numLocInCellLabel, dwi, patch, gac, 1);
       new_dw->get(numInCell,    lb->numInCellLabel,    dwi, patch, gac, 1);
       old_dw->get(pX, lb->pXLabel, pset);
+      old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
       new_dw->getModifiable(isLocalized, lb->pLocalizedMPMLabel, pset);
 
       // Look at the number of localized particles in the current and
       // surrounding cells
-      for (ParticleSubset::iterator iter = pset->begin(); 
-           iter != pset->end(); iter++) {
-        if(isLocalized[*iter]==1){
+      for (auto idx : *pset) {
+        if(isLocalized[idx]==1){
           IntVector c;
-          patch->findCell(pX[*iter],c);
+          patch->findCell(pX[idx],c);
           int totalInCells = 0;
           for(int i=-1;i<2;i++){
             for(int j=-1;j<2;j++){
@@ -4277,9 +4279,13 @@ SerialMPM::findRogueParticles(const ProcessorGroup*,
           // If the localized particles are sufficiently isolated, set
           // a flag for deletion in interpolateToParticlesAndUpdate
           if (numLocInCell[c]<=3 && totalInCells<=3) {
-            isLocalized[*iter]=-999;
+            isLocalized[idx]=-999;
           }
+
         }  // if localized
+        if (pParticleID[idx] == 111670263811) {
+          std::cout << "pID=" << pParticleID[idx] << " " << isLocalized[idx] << "\n";
+        }
       }  // particles
     }  // matls
   }  // patches
@@ -5130,8 +5136,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       }
 
       // Loop over particles
-      for(auto iter = pset->begin(); iter != pset->end(); iter++){
-        particleIndex idx = *iter;
+      for (auto idx : *pset) {
 
         interpolator->findCellAndWeights(pX[idx], ni, S, pSize[idx], pDefGrad_new[idx]);
 
@@ -5283,13 +5288,20 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       // For particles whose new velocity exceeds a maximum set in the input
       // file, set their velocity back to the velocity that it came into
       // this step with
-      for(ParticleSubset::iterator iter  = pset->begin();
-          iter != pset->end(); iter++){
-        particleIndex idx = *iter;
+      //int count = 0;
+      for (auto idx : *pset) {
+        // ++count;
         if ( (pMass_new[idx] <= flags->d_min_part_mass) || 
              (pTemp_new[idx] < 0.0) ||
              (pLocalized_new[idx]==-999) ) {
-          delset->addParticle(idx);
+          if (flags->d_erosionAlgorithm != "none") {
+            delset->addParticle(idx);
+          }
+          proc0cout << "\n Warning: particle " << pParticleID[idx] 
+                    << " being deleted: low mass or low temperature or localized\n";
+          proc0cout << "\t mass = " << pMass_new[idx]
+                    << " temperature = " << pTemp_new[idx]
+                    << " localized = " << pLocalized_new[idx] << "\n";
           #ifdef CHECK_PARTICLE_DELETION
             proc0cout << "In " << __FILE__ << ":" << __LINE__ << std::endl;
             proc0cout << "Material = " << m << " Deleted Particle = " << pParticleID_new[idx] 
@@ -5305,7 +5317,9 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         
         if (pVelocity_new[idx].length() > flags->d_max_vel) {
           if (flags->d_deleteRogueParticles) {
-            delset->addParticle(idx);
+            if (flags->d_erosionAlgorithm != "none") {
+              delset->addParticle(idx);
+            }
             cout << "\n Warning: particle " << pParticleID[idx] 
                  << " hit speed ceiling #1. Deleting particle." << endl;
           } else {
@@ -5319,8 +5333,19 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           }
         }
       }
+      
+
+      /*
+      std::cout << "particles in domain = " << count << "\n";
+      count = 0;
+      for (auto idx : *delset) {
+        ++count;
+      }
+      std::cout << "Particles to be deleted = " << count << "\n";
+      */
 
       new_dw->deleteParticles(delset);    
+
       //__________________________________
       //  particle debugging label-- carry forward
       if (flags->d_with_color) {
@@ -5925,7 +5950,9 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
         particleIndex idx = *iter;
         if ((pMass_new[idx] <= flags->d_min_part_mass) || pTemp_new[idx] < 0. ||
             (pLocalized[idx]==-999)){
-          delset->addParticle(idx);
+          if (flags->d_erosionAlgorithm != "none") {
+            delset->addParticle(idx);
+          }
         //        cout << "Material = " << m << " Deleted Particle = " << idx 
         //             << " xold = " << pX[idx] << " xnew = " << pX_new[idx]
         //             << " vold = " << pVelocity[idx] << " vnew = "<< pVelocity_new[idx]
@@ -5937,6 +5964,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
       }
 
       new_dw->deleteParticles(delset);
+
       //__________________________________
       //  particle debugging label-- carry forward
       if (flags->d_with_color) {
@@ -6547,11 +6575,15 @@ SerialMPM::finalParticleUpdate(const ProcessorGroup*,
         // whose pLocalized flag has been set to -999 or who have a negative temperature
         if ((pMass_new[idx] <= flags->d_min_part_mass) || pTemp_new[idx] < 0. ||
             (pLocalized[idx]==-999)){
-          delset->addParticle(idx);
+          if (flags->d_erosionAlgorithm != "none") {
+            delset->addParticle(idx);
+          }
         }
 
       } // particles
+
       new_dw->deleteParticles(delset);    
+
     } // materials
   } // patches
 }
