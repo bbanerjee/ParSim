@@ -1499,9 +1499,12 @@ TabularPlasticity::getDamageParameter(const Patch* patch, ParticleVariable<int>&
   constParticleVariable<int> pLocalized;
   new_dw->get(pLocalized, lb->pRemoveLabel_preReloc, pset);
 
-  // Loop over the particle in the current patch.
-  for (int& iter : *pset) {
-    damage[iter] = pLocalized[iter];
+  // Only update the damage variable if it hasn't been modified by a damage
+  // model earlier
+  for (auto particle : *pset) {
+    if (damage[particle] == 0) {
+      damage[particle] = pLocalized[particle];
+    }
   }
 }
 

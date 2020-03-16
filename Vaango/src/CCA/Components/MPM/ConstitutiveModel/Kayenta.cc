@@ -515,9 +515,12 @@ Kayenta::getDamageParameter(const Patch* patch, ParticleVariable<int>& damage,
   constParticleVariable<int> pLocalized;
   new_dw->get(pLocalized, pLocalizedLabel_preReloc, pset);
 
-  ParticleSubset::iterator iter;
-  for (iter = pset->begin(); iter != pset->end(); iter++) {
-    damage[*iter] = pLocalized[*iter];
+  // Only update the damage variable if it hasn't been modified by a damage
+  // model earlier
+  for (auto particle : *pset) {
+    if (damage[particle] == 0) {
+      damage[particle] = pLocalized[particle];
+    }
   }
 }
 

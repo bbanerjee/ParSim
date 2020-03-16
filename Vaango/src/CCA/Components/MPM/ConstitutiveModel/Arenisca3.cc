@@ -765,9 +765,11 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
       if ((Fmax > 1.0e2) || (JJ < 1.0e-3) || (JJ > 1.0e5)) {
         pLocalized_new[idx] = -999;
         std::cout << "Deformation gradient component unphysical: [F] = " << FF
-                  << std::endl;
+                  << " Fmax = " << Fmax << " > 100 "
+                  << " J = " << JJ << " outside [0.001, 100000]" << std::endl;
         std::cout << "Resetting [F]=[I] for this step and deleting particle "
                   << " idx = " << idx << " particleID = " << pParticleID[idx]
+                  << " pLocalized = " << pLocalized_new[idx]
                   << std::endl;
         Identity.polarDecompositionRMB(tensorU, tensorR);
       } else {
@@ -961,10 +963,11 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
       if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
         pLocalized_new[idx] = -999;
         std::cout << "Deformation gradient component unphysical: [F] = " << FF
-                  << std::endl;
-        std::cout << "Resetting [F]=[I] for this step and deleting particle"
+                  << " Fmax_new = " << Fmax_new << " > 1.0e16 "
+                  << " J = " << JJ << " outside [1.0e-16, 1.0e16]" << std::endl;
+        std::cout << "Resetting [F]=[I] for this step and deleting particle "
                   << " idx = " << idx << " particleID = " << pParticleID[idx]
-                  << std::endl;
+                  << " pLocalized = " << pLocalized_new[idx] << "\n";
         Identity.polarDecompositionRMB(tensorU, tensorR);
       } else {
         FF_new.polarDecompositionRMB(tensorU, tensorR);
@@ -2524,9 +2527,12 @@ Arenisca3::getDamageParameter(const Patch* patch, ParticleVariable<int>& damage,
   constParticleVariable<int> pLocalized;
   new_dw->get(pLocalized, pLocalizedLabel_preReloc, pset);
 
-  // Loop over the particle in the current patch.
-  for (int& iter : *pset) {
-    damage[iter] = pLocalized[iter];
+  // Update the pLocalizedMPM (called damage here) parameter only
+  // if the value has not been changed by the damage model
+  for (auto particle : *pset) {
+    if (damage[particle] == 0 || pLocalized[particle] == -999) {
+      damage[particle] = pLocalized[particle];
+    }
   }
 }
 

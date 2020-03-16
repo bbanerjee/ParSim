@@ -4102,10 +4102,13 @@ SerialMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
       cm->addRequiresDamageParameter(t, mpm_matl, patches);
     }
   }
+  /*
+  t->requires(Task::OldDW, lb->pParticleIDLabel, Ghost::None);
+  */
   t->computes(lb->pLocalizedMPMLabel);
 
   if(flags->d_deleteRogueParticles){
-    t->requires(Task::OldDW, lb->pXLabel,                Ghost::None);
+    t->requires(Task::OldDW, lb->pXLabel, Ghost::None);
     t->computes(lb->numLocInCellLabel);
     t->computes(lb->numInCellLabel);
   }
@@ -4146,17 +4149,30 @@ SerialMPM::updateErosionParameter(const ProcessorGroup*,
       // Get the localization info
       ParticleVariable<int> isLocalized;
       new_dw->allocateAndPut(isLocalized, lb->pLocalizedMPMLabel, pset);
-      ParticleSubset::iterator iter = pset->begin(); 
-      for (; iter != pset->end(); iter++){
-        isLocalized[*iter] = 0;
+      for (auto particle : *pset) {
+        isLocalized[particle] = 0;
       }
+
+      // Update the localization info from basic damage model
       if (mpm_matl->d_doBasicDamage) { 
         Vaango::BasicDamageModel* basicDamageModel = mpm_matl->getBasicDamageModel();
         basicDamageModel->getLocalizationParameter(patch, isLocalized, dwi, old_dw, new_dw);
-      } else {
-        mpm_matl->getConstitutiveModel()->getDamageParameter(patch, isLocalized,
-                                                             dwi, old_dw,new_dw);
+      } 
+
+      // Update the localization info from constitutive model
+      mpm_matl->getConstitutiveModel()->getDamageParameter(patch, isLocalized,
+                                                           dwi, old_dw,new_dw);
+
+      /*
+      constParticleVariable<long64> pParticleID;;
+      old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
+      for (auto particle : *pset) {
+        if (pParticleID[particle] == 562644844544) {
+          std::cout << "pID=" << pParticleID[particle] 
+                    << " pLocalized_mpm = " << isLocalized[particle] << "\n";
+        }
       }
+      */
 
       if (cout_dbg.active())
         cout_dbg << "updateErosionParameter:: Got Damage Parameter" << endl;
@@ -4175,11 +4191,11 @@ SerialMPM::updateErosionParameter(const ProcessorGroup*,
         old_dw->get(pX, lb->pXLabel, pset);
 
         // Count the number of localized particles in each cell
-        for (iter = pset->begin(); iter != pset->end(); iter++) {
+        for (auto particle : *pset) {
           IntVector c;
-          patch->findCell(pX[*iter],c);
+          patch->findCell(pX[particle],c);
           numInCell[c]++;
-          if (isLocalized[*iter]) {
+          if (isLocalized[particle]) {
             numLocInCell[c]++;
           }
         }
@@ -4263,10 +4279,10 @@ SerialMPM::findRogueParticles(const ProcessorGroup*,
 
       // Look at the number of localized particles in the current and
       // surrounding cells
-      for (auto idx : *pset) {
-        if(isLocalized[idx]==1){
+      for (auto particle : *pset) {
+        if(isLocalized[particle]==1){
           IntVector c;
-          patch->findCell(pX[idx],c);
+          patch->findCell(pX[particle],c);
           int totalInCells = 0;
           for(int i=-1;i<2;i++){
             for(int j=-1;j<2;j++){
@@ -4279,13 +4295,16 @@ SerialMPM::findRogueParticles(const ProcessorGroup*,
           // If the localized particles are sufficiently isolated, set
           // a flag for deletion in interpolateToParticlesAndUpdate
           if (numLocInCell[c]<=3 && totalInCells<=3) {
-            isLocalized[idx]=-999;
+            isLocalized[particle]=-999;
           }
 
         }  // if localized
-        if (pParticleID[idx] == 111670263811) {
-          std::cout << "pID=" << pParticleID[idx] << " " << isLocalized[idx] << "\n";
+
+        /*
+        if (pParticleID[particle] == 111670263811) {
+          std::cout << "pID=" << pParticleID[particle] << " " << isLocalized[particle] << "\n";
         }
+        */
       }  // particles
     }  // matls
   }  // patches
@@ -5288,9 +5307,14 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       // For particles whose new velocity exceeds a maximum set in the input
       // file, set their velocity back to the velocity that it came into
       // this step with
-      //int count = 0;
       for (auto idx : *pset) {
-        // ++count;
+   
+        /*
+        if (pParticleID[idx] == 562644844544) {
+          std::cout << "pID=" << pParticleID[idx] << " pLocalized_new = " << pLocalized_new[idx] << "\n";
+        }
+        */
+
         if ( (pMass_new[idx] <= flags->d_min_part_mass) || 
              (pTemp_new[idx] < 0.0) ||
              (pLocalized_new[idx]==-999) ) {
@@ -5336,12 +5360,8 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       
 
       /*
-      std::cout << "particles in domain = " << count << "\n";
-      count = 0;
-      for (auto idx : *delset) {
-        ++count;
-      }
-      std::cout << "Particles to be deleted = " << count << "\n";
+      std::cout << "Particles in domain = " << pset->numParticles() << "\n";
+      std::cout << "Particles to be deleted = " << delset->numParticles() << "\n";
       */
 
       new_dw->deleteParticles(delset);    
