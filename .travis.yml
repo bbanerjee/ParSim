@@ -1,0 +1,29 @@
+language: cpp
+
+env:
+  global:
+    - LINUX_DIST=bionic
+
+matrix:
+  include:
+    - os: linux
+      dist: bionic
+      sudo: require
+      compiler: gcc
+      addons:
+        apt:
+          packages: 
+            - cmake
+            - gfortran
+            - libopenmpi-dev
+            - libxml2-dev
+            - libboost-dev
+            - libeigen3-dev
+            - libhdf5-dev
+
+script:
+  - cd Vaango
+  - mkdir -p opt
+  - cd opt
+  - cmake ../src
+  - make
