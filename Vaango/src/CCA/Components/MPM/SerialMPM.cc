@@ -4097,10 +4097,9 @@ SerialMPM::scheduleUpdateErosionParameter(SchedulerP& sched,
     if (mpm_matl->d_doBasicDamage) {    
       Vaango::BasicDamageModel* d_basicDamageModel = mpm_matl->getBasicDamageModel();
       d_basicDamageModel->addRequiresLocalizationParameter(t, mpm_matl, patches);
-    } else {
-      ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
-      cm->addRequiresDamageParameter(t, mpm_matl, patches);
     }
+    ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+    cm->addRequiresDamageParameter(t, mpm_matl, patches);
   }
   /*
   t->requires(Task::OldDW, lb->pParticleIDLabel, Ghost::None);
