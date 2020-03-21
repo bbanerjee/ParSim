@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -2252,12 +2252,14 @@ void ICE::actuallyInitialize(const ProcessorGroup*,
       new_dw->allocateAndPut(vel_CC[indx],     lb->vel_CCLabel,       indx,patch);
     }
 
-
     double p_ref = getRefPress();
     press_CC.initialize(p_ref);
     for (int m = 0; m < numMatls; m++ ) {
       ICEMaterial* ice_matl = d_sharedState->getICEMaterial(m);
       int indx = ice_matl->getDWIndex();
+      /*
+      std::cout << "material = " << m << " matID = " << indx << "\n";
+      */
       ice_matl->initializeCells(rho_micro[indx],  rho_CC[indx],
                                 Temp_CC[indx],    speedSound[indx], 
                                 vol_frac_CC[indx], vel_CC[indx], 
@@ -2267,13 +2269,54 @@ void ICE::actuallyInitialize(const ProcessorGroup*,
       customInitialization( patch,rho_CC[indx], Temp_CC[indx],vel_CC[indx], press_CC,
                             ice_matl, d_customInitialize_basket);
 
+      /*
+      for (CellIterator iter = patch->getExtraCellIterator();!iter.done();iter++){
+        if (*iter == IntVector(8,21,0) || *iter == IntVector(0,0,0) ) {
+          std::cout << "Before BC matID = " << indx << " cell = " << *iter 
+                    << " press_CC = " << press_CC[*iter] 
+                    << " vol_frac_CC = " << vol_frac_CC[indx][*iter] 
+                    << " vol_frac_sum = " << vol_frac_sum[*iter] 
+                    << "\n";
+        }
+      }
+      */
+
       setBC(rho_CC[indx],     "Density",     patch, d_sharedState, indx, new_dw);
       setBC(rho_micro[indx],  "Density",     patch, d_sharedState, indx, new_dw);
       setBC(Temp_CC[indx],    "Temperature", patch, d_sharedState, indx, new_dw);
       setBC(speedSound[indx], "zeroNeumann", patch, d_sharedState, indx, new_dw); 
       setBC(vel_CC[indx],     "Velocity",    patch, d_sharedState, indx, new_dw); 
+
+      /*
+      for (CellIterator iter = patch->getExtraCellIterator();!iter.done();iter++){
+        if (*iter == IntVector(8,21,0) || *iter == IntVector(0,0,0) ) {
+          std::cout << "Before setPressBC matID = " << indx << " cell = " << *iter 
+                    << " press_CC = " << press_CC[*iter] 
+                    << " rho_micro = " << rho_micro[indx][*iter] 
+                    << " rho = " << rho_CC[indx][*iter] 
+                    << " vol_frac_CC = " << vol_frac_CC[indx][*iter] 
+                    << " vol_frac_sum = " << vol_frac_sum[*iter] 
+                    << "\n";
+        }
+      }
+      */
+
       setBC(press_CC, rho_micro, placeHolder, d_surroundingMatl_indx, 
             "rho_micro","Pressure", patch, d_sharedState, 0, new_dw);
+
+      /*
+      for (CellIterator iter = patch->getExtraCellIterator();!iter.done();iter++){
+        if (*iter == IntVector(8,21,0) || *iter == IntVector(0,0,0) ) {
+          std::cout << "After setPressBC matID = " << indx << " cell = " << *iter 
+                    << " press_CC = " << press_CC[*iter] 
+                    << " rho_micro = " << rho_micro[indx][*iter] 
+                    << " rho = " << rho_CC[indx][*iter] 
+                    << " vol_frac_CC = " << vol_frac_CC[indx][*iter] 
+                    << " vol_frac_sum = " << vol_frac_sum[*iter] 
+                    << "\n";
+        }
+      }
+      */
 
       SpecificHeat *cvModel = ice_matl->getSpecificHeatModel();
       if(cvModel != 0) {
@@ -2303,6 +2346,20 @@ void ICE::actuallyInitialize(const ProcessorGroup*,
 
         c_2 = dp_drho + dp_de * press_CC[c]/(rho_micro[indx][c] * rho_micro[indx][c]);
         speedSound[indx][c] = sqrt(c_2);
+
+        /*
+        if (*iter == IntVector(8,21,0) || *iter == IntVector(0,0,0) ) {
+          std::cout << "After EOS matID = " << indx << " cell = " << *iter 
+                    << " press_CC = " << press_CC[*iter] 
+                    << " rho_micro = " << rho_micro[indx][*iter] 
+                    << " rho = " << rho_CC[indx][*iter] 
+                    << " sp_vol = " << sp_vol_CC[indx][*iter] 
+                    << " vol_frac_CC = " << vol_frac_CC[indx][*iter] 
+                    << " vol_frac_sum = " << vol_frac_sum[*iter] 
+                    << "\n";
+        }
+        */
+
       }
       //____ B U L L E T   P R O O F I N G----
       IntVector neg_cell;

@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -238,8 +239,8 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
                                   const Patch* patch,
                                   DataWarehouse* new_dw)
 {
-  CCVariable<int> IveBeenHere;
-  new_dw->allocateTemporary(IveBeenHere, patch);
+  CCVariable<int> cellVisited;
+  new_dw->allocateTemporary(cellVisited, patch);
   
   // Zero the arrays so they don't get wacky values
   vel_CC.initialize(Vector(0.,0.,0.));
@@ -248,7 +249,7 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
   temp.initialize(0.);
   vol_frac_CC.initialize(0.);
   speedSound.initialize(0.);
-  IveBeenHere.initialize(-9);
+  cellVisited.initialize(-9);
 
   for(int obj=0; obj<(int)d_geom_objs.size(); obj++){
    GeometryPieceP piece = d_geom_objs[obj]->getPiece();
@@ -277,7 +278,7 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
       rho_micro[*iter]  = d_geom_objs[obj]->getInitialData_double("density");
       rho_CC[*iter]     = rho_micro[*iter] + d_tiny_rho*rho_micro[*iter];
       temp[*iter]       = d_geom_objs[obj]->getInitialData_double("temperature");
-      IveBeenHere[*iter]= 1;
+      cellVisited[*iter]= 1;
     }
 
     IntVector ppc = d_geom_objs[obj]->getInitialData_IntVector("res");
@@ -289,7 +290,7 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
       Point p = points->at(ii);
       patch->findCell(p,cell_idx);
       vol_frac_CC[cell_idx] -= 1./ppc_tot;
-      IveBeenHere[cell_idx]= obj;
+      cellVisited[cell_idx]= obj;
     }
 
     for(CellIterator iter = patch->getExtraCellIterator();!iter.done();iter++){
@@ -327,7 +328,7 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
           rho_micro[*iter]  = d_geom_objs[obj]->getInitialData_double("density");
           rho_CC[*iter]     = rho_micro[*iter] + d_tiny_rho*rho_micro[*iter];
           temp[*iter]       = d_geom_objs[obj]->getInitialData_double("temperature");
-          IveBeenHere[*iter]= 1;
+          cellVisited[*iter]= 1;
         }
       }   
       
@@ -335,6 +336,12 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
       //  Multiple matls
       if (numMatls > 1 ) {
       
+        /*
+        if (*iter == IntVector(8,21,0)) {
+          std::cout << "ice_matl obj = " << obj << " cell = " << *iter << " count = " << count << " visited = " << cellVisited[*iter] << "\n";
+        }
+        */
+
         double ups_volFrac = d_geom_objs[obj]->getInitialData_double("volumeFraction");
         if( ups_volFrac == -1.0 ) {    
           vol_frac_CC[*iter] += count/totalppc;  // there can be contributions from multiple objects 
@@ -342,7 +349,7 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
           vol_frac_CC[*iter] = ups_volFrac * count/(totalppc);
         }
                   
-        if(IveBeenHere[*iter] == -9){
+        if(cellVisited[*iter] == -9){
           // This cell hasn't been hit for this matl yet so set values
           // to ensure that everything is set to something everywhere
           vel_CC[*iter]     = d_geom_objs[obj]->getInitialData_Vector("velocity");
@@ -350,9 +357,15 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
           rho_CC[*iter]     = rho_micro[*iter] * vol_frac_CC[*iter] +
                             d_tiny_rho*rho_micro[*iter];
           temp[*iter]       = d_geom_objs[obj]->getInitialData_double("temperature");
-          IveBeenHere[*iter]= obj; 
+          cellVisited[*iter]= obj; 
+
+          /*
+          if (*iter == IntVector(8,21,0)) {
+            std::cout << "first if: ice_matl obj = " << obj << " cell = " << *iter << " count = " << count << " visited = " << cellVisited[*iter] << " press_CC = " << press_CC[*iter] << "\n";
+          }
+          */
         }
-        if(IveBeenHere[*iter] != -9 && count > 0){
+        if(cellVisited[*iter] != -9 && count > 0){
           // This cell HAS been hit but another object has values to
           // override it, possibly in a cell that was just set by default
           // in the above section.
@@ -362,13 +375,27 @@ void ICEMaterial::initializeCells(CCVariable<double>& rho_micro,
           rho_CC[*iter]     = rho_micro[*iter] * vol_frac_CC[*iter] +
                             d_tiny_rho*rho_micro[*iter];
           temp[*iter]       = d_geom_objs[obj]->getInitialData_double("temperature");
-          IveBeenHere[*iter]= obj; 
+          cellVisited[*iter]= obj; 
+
+          /*
+          if (*iter == IntVector(8,21,0)) {
+            std::cout << "second if: ice_matl obj = " << obj << " cell = " << *iter << " count = " << count << " visited = " << cellVisited[*iter] << " press_CC = " << press_CC[*iter] << "\n";
+          }
+          */
         }
-        if(IveBeenHere[*iter] != -9 && count == 0){
+        if(cellVisited[*iter] != -9 && count == 0){
           // This cell has been initialized, the current object doesn't
           // occupy this cell, so don't screw with it.  All bases are
           // covered.
         }
+
+        /*
+        if (*iter == IntVector(8,21,0) || *iter == IntVector(0,0,0)) {
+          std::cout << "updated obj = " << obj << " cell = " << *iter << " press_CC = " << press_CC[*iter]
+                    << " vol_frac = " << vol_frac_CC[*iter] 
+                    << " box = " <<  piece->getBoundingBox() << "\n";
+        }
+        */
       }    
     }  // Loop over domain
    }

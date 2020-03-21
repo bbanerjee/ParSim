@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -1127,31 +1127,25 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
       /*`==========TESTING==========*/
 #if 0
       09/09/11  Jim is going to check with BB to see if we can delete the particle addition
-							     // Ignore the dummy materials that are used when particles are
-							     // localized
-							     if (d_mpm->flags->d_createNewParticles) {
-							       if (m%2 == 0) // The actual materials
-								 mpm_matl->initializeCCVariables(rho_micro,   rho_CC,
-												 Temp_CC,     vel_CC,
-												 vol_frac_CC, patch);  
-							       else // The dummy materials
-								 mpm_matl->initializeDummyCCVariables(rho_micro,   rho_CC,
-												      Temp_CC,     vel_CC,  
-												      vol_frac_CC, patch);  
-							     } else {
-							       mpm_matl->initializeCCVariables(rho_micro,   rho_CC,
-											       Temp_CC,     vel_CC,  
-											       vol_frac_CC, patch);  
-							     }
+      // Ignore the dummy materials that are used when particles are localized
+      if (d_mpm->flags->d_createNewParticles) {
+        if (m%2 == 0) { // The actual materials
+          mpm_matl->initializeCCVariables(rho_micro, rho_CC, Temp_CC, vel_CC,
+                                          vol_frac_CC, patch);  
+        } else { // The dummy materials
+          mpm_matl->initializeDummyCCVariables(rho_micro, rho_CC, Temp_CC, vel_CC,  
+                                               vol_frac_CC, patch);  
+        }
+      } else {
+        mpm_matl->initializeCCVariables(rho_micro, rho_CC, Temp_CC, vel_CC,  
+                                        vol_frac_CC, patch);  
+      }
 #endif 
       /*===========TESTING==========`*/      
 
       mpm_matl->initializeCCVariables(rho_micro,   rho_CC,
 				      Temp_CC,     vel_CC,  
 				      vol_frac_CC, patch);
-
-
-
 
       setBC(rho_CC,    "Density",      patch, d_sharedState, indx, new_dw);    
       setBC(rho_micro, "Density",      patch, d_sharedState, indx, new_dw);    
@@ -1169,15 +1163,15 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
         // sum volume fraction
         vol_frac_sum_mpm[c] += vol_frac_CC[c];
 
-        //if (c == IntVector(3, 24, 0)) {
         /*
-	  if (m == 2) {
+        if (c == IntVector(0, 0, 0) || c == IntVector(8, 21, 0)) {
           std::cout << "cell = " << c << "MPM vol_frac = " 
-	  << vol_frac_CC[c] << " tot_vol_frac = " 
-	  << vol_frac_sum_mpm[c] << " sp.vol = " << sp_vol_CC[c] << std::endl;
-	  }
+	            << vol_frac_CC[c] << " tot_vol_frac = " 
+	            << vol_frac_sum_mpm[c] << " sp.vol = " 
+                    << sp_vol_CC[c] << std::endl;
+        }
         */
-        //}
+
       }
 
       //__________________________________
@@ -1236,6 +1230,14 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
       for (CellIterator iter = patch->getCellIterator(); !iter.done();iter++){
         IntVector c = *iter;
         vol_frac_sum_ice[c] += vol_frac[c];
+
+        /*
+        if (c == IntVector(0, 0, 0) || c == IntVector(8, 21, 0)) {
+          std::cout << "cell = " << c << "ICE vol_frac = " 
+	            << vol_frac[c] << " tot_vol_frac = " 
+	            << vol_frac_sum_ice[c] << "\n";
+        }
+        */
       }
     }  // num_ICE_matls loop
 
@@ -1264,6 +1266,7 @@ void MPMICE::actuallyInitialize(const ProcessorGroup*,
           new_dw->get(vol_frac, Ilb->vol_frac_CCLabel, materialIndex, patch, Ghost::None, 0);
           iceMaterialVolFrac.push_back(vol_frac[c]);
         }
+        
         for (unsigned int ii = 0; ii < iceMaterialVolFrac.size(); ++ii) {
           std::cout << "ICE material " << ii << " vol frac = " << iceMaterialVolFrac[ii] << std::endl;
         }

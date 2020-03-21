@@ -118,14 +118,18 @@ void Murnaghan::computePressEOS(double rhoM, double, double, double,
   if(rhoM>=rho0){
     press   = P0 + (1./(n*K))*(pow(rhoM/rho0,n)-1.);
     dp_drho = (1./(K*rho0))*pow((rhoM/rho0),n-1.);
-    //std::cout << "rho = " << rhoM << " > rho0 = " << rho0 << " P = " << press 
-    //          << " dP/drho = " << dp_drho << std::endl;
+    /*
+    std::cout << "Murnaghan if: rho = " << rhoM << " > rho0 = " << rho0 << " P = " << press 
+              << " dP/drho = " << dp_drho << std::endl;
+    */
   }
   else{
     press   = P0*pow(rhoM/rho0,(1./(K*P0)));
     dp_drho = (1./(K*rho0))*pow(rhoM/rho0,(1./(K*P0)-1.));
-    //std::cout << "rho = " << rhoM << " < rho0 = " << rho0 << " P = " << press 
-    //          << " dP/drho = " << dp_drho << std::endl;
+    /*
+    std::cout << "Murnaghan else: rho = " << rhoM << " < rho0 = " << rho0 << " P = " << press 
+              << " dP/drho = " << dp_drho << std::endl;
+    */
   }
   dp_de   = 0.0;
 }

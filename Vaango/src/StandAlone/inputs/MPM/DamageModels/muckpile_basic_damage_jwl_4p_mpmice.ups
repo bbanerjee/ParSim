@@ -1,0 +1,378 @@
+<Uintah_specification>
+
+   <Meta>
+       <title>Mineral Wall Blasting</title>
+   </Meta>    
+
+   <SimulationComponent type="mpmice" />
+    <!--____________________________________________________________________-->
+    <!--      T  I  M  E     V  A  R  I  A  B  L  E  S                      -->
+    <!--____________________________________________________________________-->
+   <Time>
+       <maxTime>            3.00       </maxTime>
+       <initTime>           0.0        </initTime>
+       <delt_min>           2.4e-09    </delt_min>
+       <delt_max>           1.0e-05    </delt_max>
+       <delt_init>          1.8e-09    </delt_init>
+       <max_delt_increase>  1.2        </max_delt_increase>
+       <timestep_multiplier>0.2        </timestep_multiplier>
+   </Time>
+    
+       
+    <!--____________________________________________________________________-->
+    <!--      O  U  P  U  T     V  A  R  I  A  B  L  E  S                   -->
+    <!--____________________________________________________________________-->
+   <DataArchiver>
+      <filebase>muckPile_Arenisca3_basic_damage_jwl_4p_mpmice.uda</filebase>
+      <outputInterval>5.0e-5</outputInterval>
+      <!-- <outputTimestepInterval>1</outputTimestepInterval> -->
+      <save label = "p.particleID"/>
+      <save label = "p.x"/>
+      <save label = "p.velocity"/>
+      <save label = "p.displacement"/>
+      <save label = "p.mass"/>
+      <save label = "p.externalforce"/>
+      <save label = "p.localized"/>
+      <save label = "p.localizedMPM"/>
+      <save label = "p.localizedDamage"/>
+      <save label = "p.stress"/>
+      <save label = "p.deformationGradient"/>
+      <save label = "p.epsf"/>
+      <save label = "p.damage"/>
+      <save label = "p.timeofloc"/>
+      <save label = "rho_CC"/>
+      <save label = "press_CC"/>
+      <save label = "temp_CC"/>
+      <save label = "vol_frac_CC"/>
+      <save label = "sp_vol_CC"/>
+      <save label = "vel_CC"/>
+      <save label = "g.mass"/>
+      <save label = "g.acceleration"/>
+      <save label = "g.velocity"/>
+      <checkpoint cycle = "2" timestepInterval = "200"/>
+   </DataArchiver>
+   
+   
+    <!--____________________________________________________________________-->
+    <!--     P  H  Y  S  I  C  A  L     C  O  N  S  T  A  N  T  S           -->
+    <!--____________________________________________________________________-->   
+    <PhysicalConstants>
+       <gravity>            [0,-9.8,0]   </gravity>
+       <reference_pressure> 101325.0  </reference_pressure>
+    </PhysicalConstants>
+    
+    <MPMICE>
+      <use_simple_equilibration_algorithm> true </use_simple_equilibration_algorithm>
+    </MPMICE>
+    
+    <CFD>
+      <cfl> 0.3 </cfl>
+      <ICE>
+        <advection type = "SecondOrder"/>
+        <ClampSpecificVolume> true </ClampSpecificVolume>
+      </ICE>
+    </CFD>
+
+    <!--____________________________________________________________________-->
+    <!--    MPM     P  A  R  A  M  E  T  E  R  S                        -->
+    <!--____________________________________________________________________-->    
+    <MPM>
+       <time_integrator> explicit </time_integrator>
+       <interpolator> gimp </interpolator>
+       <use_load_curves> false </use_load_curves>
+       <minimum_particle_mass> 1.0e-15 </minimum_particle_mass>
+       <minimum_mass_for_acc> 1.0e-15 </minimum_mass_for_acc>
+       <maximum_particle_velocity> 1.0e8 </maximum_particle_velocity>
+       <artificial_damping_coeff> 0.0 </artificial_damping_coeff>
+       <artificial_viscosity> true </artificial_viscosity>
+       <artificial_viscosity_heating> false </artificial_viscosity_heating>
+       <do_contact_friction_heating> false </do_contact_friction_heating>
+       <create_new_particles> false </create_new_particles>
+       <use_momentum_form> false </use_momentum_form>
+       <use_prescribed_deformation> false </use_prescribed_deformation>
+       <erosion algorithm="BrittleDamage"></erosion>
+       <delete_rogue_particles> false </delete_rogue_particles>
+       <deformation_gradient algorithm="taylor_series">
+          <num_terms> 3 </num_terms>
+       </deformation_gradient>
+    </MPM>
+   
+    <!--____________________________________________________________________-->
+    <!--     Material Properties and Initial Conditions                     -->
+    <!--____________________________________________________________________-->
+    <MaterialProperties>
+      <MPM>
+        <material name = "Mineral">
+          <density>              2700.0 </density>
+          <thermal_conductivity> 1.60  </thermal_conductivity>
+          <specific_heat>        0.790  </specific_heat>
+          <room_temp>            298.15  </room_temp>
+            
+          <do_basic_damage> true </do_basic_damage>
+          <brittle_damage_initial_threshold>57.0 </brittle_damage_initial_threshold>
+          <brittle_damage_fracture_energy>11.2</brittle_damage_fracture_energy>
+          <brittle_damage_constant_D>0.1</brittle_damage_constant_D>
+          <brittle_damage_max_damage_increment>0.1</brittle_damage_max_damage_increment>
+            
+          <constitutive_model type="Arenisca3">
+            <PEAKI1>150</PEAKI1>
+            <FSLOPE>0.235702260395516</FSLOPE>
+            <STREN>0.0</STREN>
+            <YSLOPE>0.0</YSLOPE>
+            <BETA_nonassociativity>0.707107</BETA_nonassociativity>
+            <B0>50e9</B0>
+            <B1>0.0</B1>
+            <B2>0.0</B2>
+            <B3>0.0</B3>
+            <B4>0.0</B4>
+            <G0>30e9</G0>
+            <G1>0.0</G1>
+            <G2>0.0</G2>
+            <G3>0.0</G3>
+            <G4>0.0</G4>
+            <p0_crush_curve>-2.0e7</p0_crush_curve>
+            <p1_crush_curve>7.0e-4</p1_crush_curve>
+            <p2_crush_curve>0.0</p2_crush_curve>
+            <p3_crush_curve>0.5</p3_crush_curve>
+            <CR>0.5</CR>
+            <fluid_B0>0.0</fluid_B0>
+            <fluid_pressure_initial>0.0</fluid_pressure_initial>
+            <T1_rate_dependence> 0.0 </T1_rate_dependence>
+            <T2_rate_dependence> 0.0 </T2_rate_dependence>
+            <subcycling_characteristic_number>256</subcycling_characteristic_number>
+          </constitutive_model>
+            
+          <geom_object>
+            <difference>
+              <union>
+                <box label = "Rock step">
+                  <min>[0.501, 5.0, 0.0]</min>
+                  <max>[15.0, 15.0, 0.5]</max>
+                </box>
+                <box label = "Rock bed">
+                  <min>[0.501, 0.3, 0.0]</min>
+                  <max>[30.0, 5.0, 0.5]</max>
+                </box>
+              </union>
+              <box label = "Blasting hole">
+                <min>[10.0, 4.0, 0.0]</min>
+                <max>[10.2, 15.0, 0.5]</max>
+              </box>
+            </difference>
+              
+            <res>[2,2,2]</res>
+            <velocity>[0.0,0.0,0.0]</velocity>
+            <temperature>300.0</temperature>
+          </geom_object>
+            
+        </material>
+
+        <contact>
+          <type> null </type>
+          <materials> [0] </materials>
+        </contact>
+      
+      </MPM>
+          
+      <ICE>
+
+        <material name = "reactant">
+          <EOS type="Murnaghan">
+            <!-- ANFO parameters -->
+            <!-- This bulk modulus is from Souer's paper on JWL++ -->
+            <!-- It corresponds to a K=2.56 GPa  -->
+            <K>        39e-11 </K>
+            <n>         7.4   </n>
+            <P0>   101325.0   </P0>
+            <rho0>   1160.0   </rho0>
+          </EOS>
+          <dynamic_viscosity>      0.0                 </dynamic_viscosity>
+          <thermal_conductivity>   0.0                 </thermal_conductivity>
+          <specific_heat>          1515.31             </specific_heat>
+          <gamma>                  1.4                 </gamma>
+          <geom_object>
+            <box label = "Explosive">
+              <min>[10.0, 4.0,  0.0]</min>
+              <max>[10.2, 13.0, 0.5]</max>
+            </box>
+            <res>            [2,2,2]                 </res>
+            <velocity>       [0.0,0.0,0.0]           </velocity>
+            <temperature>    300.0                   </temperature>
+            <density>        1161.0                  </density>
+            <pressure>       101325.0                </pressure>
+          </geom_object>
+        </material>
+
+        <material name = "product">
+          <isSurroundingMatl> true </isSurroundingMatl>
+          <EOS type="JWLC">
+            <!-- ANFO parameters -->
+            <!-- From Souer's paper on JWL++ -->
+            <A>2.9867e11</A>
+            <B>4.11706e9</B>
+            <C>7.206147e8</C>
+            <R1>4.95</R1>
+            <R2>1.15</R2>
+            <om>0.35</om>
+            <rho0>1160.0</rho0>
+          </EOS>
+          <dynamic_viscosity>      0.0                 </dynamic_viscosity>
+          <thermal_conductivity>   0.0                 </thermal_conductivity>
+          <specific_heat>          544.96               </specific_heat>
+          <gamma>                  1.4                 </gamma>
+          <geom_object>
+            <box label="out_of_domain">
+              <min>       [ 99.0,  99.0,  99.0 ]   </min>
+              <max>       [100.0, 100.0, 100.0 ]   </max>
+            </box>
+            <res>            [2,2,2]                 </res>
+            <velocity>       [0.0,0.0,0.0]           </velocity>
+            <temperature>    300.0                   </temperature>
+            <density>        1.62605283294106        </density>
+            <pressure>       101325.0                </pressure>
+          </geom_object>
+        </material>
+
+        <material name="air_above_surface">
+          <EOS type = "ideal_gas"> </EOS>
+          <dynamic_viscosity> 0.0 </dynamic_viscosity>
+          <thermal_conductivity> 0.0 </thermal_conductivity>
+          <specific_heat> 716.0 </specific_heat>
+          <gamma> 1.4 </gamma>
+          <geom_object>
+            <union>
+              <difference>
+                <box label="Computational domain">
+                  <min> [0.501, 0.3,  0.0] </min>
+                  <max> [30.0,  25.0, 0.5] </max>
+                </box>
+                <union>
+                  <box label = "Rock step"/>
+                  <box label = "Rock bed"/>
+                </union>
+              </difference>
+              <box label = "Blasting hole top">
+                <min>[10.0, 13.0, 0.0]</min>
+                <max>[10.2, 15.0, 0.5]</max>
+              </box>
+            </union>
+            <res> [2,2,2] </res>
+            <velocity> [0.0,0.0,0.0] </velocity>
+            <temperature> 300.0 </temperature>
+            <density> 1.1792946927374306000e+00 </density>
+            <pressure> 101325.0 </pressure>
+          </geom_object>
+        </material>
+
+      </ICE>
+
+      <exchange_properties>
+         <exchange_coefficients>
+           <momentum>  [1e15, 1e15, 1e15,
+                              1e15, 1e15,
+                                    1e15]     </momentum>
+           <heat>      [1e15, 1.e10, 1e10, 
+                              1.e10, 1e10,
+                                     1e10]     </heat>
+        </exchange_coefficients>
+      </exchange_properties>
+         
+    </MaterialProperties>
+
+    <Models>
+      <Model type="JWLpp">
+        <fromMaterial> reactant   </fromMaterial>
+        <toMaterial>   product    </toMaterial>
+        <G>        3.5083e-7   </G>
+        <b>        1.3         </b>
+        <rho0>     1160.0      </rho0>
+        <E0>       5.558e6     </E0>
+        <ThresholdPressure>  200000000.  </ThresholdPressure>
+      </Model>
+    </Models>
+      
+    <!--____________________________________________________________________-->
+    <!--      G  R  I  D     V  A  R  I  A  B  L  E  S                      -->
+    <!--____________________________________________________________________-->
+    <Grid>
+    <BoundaryConditions>
+      
+       
+      <Face side = "x-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>   
+      </Face>
+       
+      <Face side = "x+">
+        <BCType id = "0"   label = "Pressure"   var = "Neumann">
+                              <value> 0.0   </value>
+        </BCType>
+        <BCType id = "all" label = "Velocity"   var = "Neumann">
+                              <value> [0.,0.,0.] </value>
+        </BCType>
+        <BCType id = "all" label = "Temperature" var = "Neumann">
+                              <value> 0.0  </value>
+        </BCType>
+        <BCType id = "all" label = "Density"      var = "Neumann">
+                              <value> 0.0  </value>
+        </BCType>
+        <BCType id = "all" label = "SpecificVol"  var = "computeFromDensity">
+                              <value> 0.0  </value>
+        </BCType>
+      </Face>
+      
+      <Face side = "y-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>   
+      </Face>
+  
+      <Face side = "y+">
+        <BCType id = "0"   label = "Pressure"   var = "Neumann">
+                              <value> 0.0   </value>
+        </BCType>
+        <BCType id = "all" label = "Velocity"   var = "Neumann">
+                              <value> [0.,0.,0.] </value>
+        </BCType>
+        <BCType id = "all" label = "Temperature" var = "Neumann">
+                              <value> 0.0  </value>
+        </BCType>
+        <BCType id = "all" label = "Density"      var = "Neumann">
+                              <value> 0.0  </value>
+        </BCType>
+        <BCType id = "all" label = "SpecificVol"  var = "computeFromDensity">
+                              <value> 0.0  </value>
+        </BCType>
+      </Face>
+      
+      <Face side = "z+">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>   
+      </Face>
+      
+      <Face side = "z-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>   
+      </Face>
+      
+      
+    </BoundaryConditions>
+       <Level>
+           <Box label="1">
+              <lower>        [0.501, 0.3, 0.0] </lower>
+              <upper>        [30.0,25.0,0.3] </upper>
+              <extraCells>   [1,1,1]        </extraCells>
+              <patches>         [1,1,1]        </patches>
+              <resolution>   [128, 128, 1]    </resolution>
+           </Box>
+       </Level>
+    </Grid>     
+    
+</Uintah_specification>
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   

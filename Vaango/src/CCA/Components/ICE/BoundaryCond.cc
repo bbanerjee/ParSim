@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -100,10 +78,9 @@ void ImplicitMatrixBC( CCVariable<Stencil7>& A,
 { 
   cout_BC_CC << "ImplicitMatrixBC Patch: "<< patch->getID()<< endl;
   
-  vector<Patch::FaceType> bf;
-  patch->getBoundaryFaces(bf);
-  for( vector<Patch::FaceType>::const_iterator itr = bf.begin(); itr != bf.end(); ++itr ){
-    Patch::FaceType face = *itr;
+  vector<Patch::FaceType> boundaryFaces;
+  patch->getBoundaryFaces(boundaryFaces);
+  for (auto face : boundaryFaces) {
     string bc_kind  = "NotSet";
     int nCells = 0;
     
@@ -288,10 +265,9 @@ void set_imp_DelP_BC( CCVariable<double>& imp_delP,
                       DataWarehouse* new_dw)        
 { 
   cout_BC_CC << "set_imp_DelP_BC, Patch: "<< patch->getID()<< endl;
-  vector<Patch::FaceType> bf;
-  patch->getBoundaryFaces(bf);
-  for( vector<Patch::FaceType>::const_iterator itr = bf.begin(); itr != bf.end(); ++itr ){
-    Patch::FaceType face = *itr;
+  vector<Patch::FaceType> boundaryFaces;
+  patch->getBoundaryFaces(boundaryFaces);
+  for (auto face : boundaryFaces) {
     
     int mat_id = 0; // hard coded for pressure
     IntVector oneCell = patch->faceDirection(face);
@@ -451,11 +427,10 @@ void get_rho_micro(std::vector<CCVariable<double> >& rho_micro,
       
   //__________________________________
   // Iterate over the faces encompassing the domain
-  vector<Patch::FaceType> bf;
-  patch->getBoundaryFaces(bf);
+  vector<Patch::FaceType> boundaryFaces;
+  patch->getBoundaryFaces(boundaryFaces);
   
-  for( vector<Patch::FaceType>::const_iterator iter = bf.begin(); iter != bf.end(); ++iter ){
-    Patch::FaceType face = *iter;
+  for (auto face : boundaryFaces) {
     
     if(is_LODI_face(patch, face, sharedState) || gravity.length() > 0) {
       
@@ -619,12 +594,10 @@ void setBC(CCVariable<double>& press_CC,
     nCells_LODI[f] = 0;  // bulletproofing
   }
   
-  vector<Patch::FaceType> bf;
-  patch->getBoundaryFaces(bf);
+  vector<Patch::FaceType> boundaryFaces;
+  patch->getBoundaryFaces(boundaryFaces);
   // Iterate over the faces encompassing the domain  
-  for( vector<Patch::FaceType>::const_iterator iter = bf.begin(); iter != bf.end(); ++iter ) {
-    Patch::FaceType face = *iter;
-    
+  for (auto face : boundaryFaces) {
     bool is_lodi_pressBC = patch->haveBC(face,mat_id,"LODI","Pressure");
     
     if(kind == "Pressure"       && is_lodi_pressBC 
@@ -640,8 +613,7 @@ void setBC(CCVariable<double>& press_CC,
   //  N O N  -  L O D I
   //__________________________________
   // Iterate over the faces encompassing the domain
-  for( vector<Patch::FaceType>::const_iterator iter = bf.begin(); iter != bf.end(); ++iter ){
-    Patch::FaceType face = *iter;
+  for (auto face : boundaryFaces) {
     string bc_kind = "NotSet";
     int nCells     = 0;
    
@@ -758,10 +730,9 @@ void setBC(CCVariable<double>& var_CC,
   }
   
   // Iterate over the faces encompassing the domain
-  vector<Patch::FaceType> bf;
-  patch->getBoundaryFaces(bf);
-  for( vector<Patch::FaceType>::const_iterator iter = bf.begin(); iter != bf.end(); ++iter ){
-    Patch::FaceType face = *iter;
+  vector<Patch::FaceType> boundaryFaces;
+  patch->getBoundaryFaces(boundaryFaces);
+  for (auto face : boundaryFaces) {
 
     bool is_tempBC_lodi=  patch->haveBC(face,mat_id,"LODI","Temperature");  
     bool is_rhoBC_lodi =  patch->haveBC(face,mat_id,"LODI","Density");
@@ -780,8 +751,7 @@ void setBC(CCVariable<double>& var_CC,
   //  N O N  -  L O D I
   //__________________________________
   // Iterate over the faces encompassing the domain
-  for( vector<Patch::FaceType>::const_iterator iter = bf.begin(); iter != bf.end(); ++iter ){
-    Patch::FaceType face = *iter;
+  for (auto face : boundaryFaces) {
     string bc_kind = "NotSet";      
     int nCells = 0;
 
@@ -917,10 +887,9 @@ void setBC(CCVariable<Vector>& var_CC,
   }
   
   // Iterate over the faces encompassing the domain
-  vector<Patch::FaceType> bf;
-  patch->getBoundaryFaces(bf);
-  for( vector<Patch::FaceType>::const_iterator iter  = bf.begin(); iter != bf.end(); ++iter ){
-    Patch::FaceType face = *iter;
+  vector<Patch::FaceType> boundaryFaces;
+  patch->getBoundaryFaces(boundaryFaces);
+  for (auto face : boundaryFaces) {
     bool is_velBC_lodi   = patch->haveBC(face,mat_id,"LODI","Velocity");
     
     Lodi_vars* lv = custom_BC_basket->lv;
@@ -935,8 +904,7 @@ void setBC(CCVariable<Vector>& var_CC,
   //  N O N  -  L O D I
   //__________________________________
   // Iterate over the faces encompassing the domain
-  for( vector<Patch::FaceType>::const_iterator iter = bf.begin(); iter != bf.end(); ++iter ){
-    Patch::FaceType face = *iter;
+  for (auto face : boundaryFaces) {
     int nCells = 0;
     string bc_kind = "NotSet";
 
@@ -1046,11 +1014,10 @@ void setSpecificVolBC(CCVariable<double>& sp_vol_CC,
   double cellVol = dx.x() * dx.y() * dx.z();
                 
   // Iterate over the faces encompassing the domain
-  vector<Patch::FaceType> bf;
-  patch->getBoundaryFaces(bf);
+  vector<Patch::FaceType> boundaryFaces;
+  patch->getBoundaryFaces(boundaryFaces);
   
-  for( vector<Patch::FaceType>::const_iterator iter = bf.begin(); iter != bf.end(); ++iter ){
-    Patch::FaceType face = *iter;
+  for (auto face : boundaryFaces) {
     int nCells = 0;
     string bc_kind = "NotSet";
        

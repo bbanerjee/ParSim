@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -839,7 +839,7 @@ HypoElastic::computeRhoMicroCM(double pressure, const double p_ref,
   // double G = d_initialData.G;
   double bulk = d_initialData.K;
 
-  rho_cur = rho_orig / (1 - p_gauge / bulk);
+  rho_cur = rho_orig / std::max(1.0e-12, (1 - p_gauge / bulk));
 
   return rho_cur;
 
@@ -851,7 +851,7 @@ HypoElastic::computeRhoMicroCM(double pressure, const double p_ref,
 
 void
 HypoElastic::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
-                               double& dp_drho, double& tmp,
+                               double& dp_drho, double& csquared,
                                const MPMMaterial* matl, double temperature)
 {
 
@@ -862,7 +862,7 @@ HypoElastic::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
   double p_g = bulk * (1.0 - rho_orig / rho_cur);
   pressure = p_ref + p_g;
   dp_drho = bulk * rho_orig / (rho_cur * rho_cur);
-  tmp = bulk / rho_cur; // speed of sound squared
+  csquared = bulk / rho_cur; // speed of sound squared
 
 #if 0
   cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR HypoElastic"
