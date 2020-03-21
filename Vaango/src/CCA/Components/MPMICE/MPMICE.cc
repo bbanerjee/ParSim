@@ -304,6 +304,8 @@ void MPMICE::outputProblemSpec(ProblemSpecP& root_ps)
   ProblemSpecP mpmice_ps = root->appendChild("MPMICE");
   mpmice_ps->appendElement("use_simple_equilibration_algorithm", 
 			   d_useSimpleEquilibrationPressure);
+  mpmice_ps->appendElement("vol_frac_convergence_tolerance",
+                           d_convergence_tolerance);
 }
 
 //______________________________________________________________________
