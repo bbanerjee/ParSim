@@ -245,6 +245,10 @@ void MPMICE::problemSetup(const ProblemSpecP& prob_spec,
   if (mpmice_ps) {
     mpmice_ps->get("use_simple_equilibration_algorithm", 
 		   d_useSimpleEquilibrationPressure);
+    double converg_coeff = 100.;
+    double convergence_crit = converg_coeff * DBL_EPSILON;
+    mpmice_ps->getWithDefault("vol_frac_convergence_tolerance",
+                              d_convergence_tolerance, convergence_crit);
   }
 
 
@@ -1962,8 +1966,9 @@ void MPMICE::computeEquilibrationPressure(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches,patch,cout_doing,"Doing computeEquilibrationPressure");
 
-    double    converg_coeff = 100.;
-    double    convergence_crit = converg_coeff * DBL_EPSILON;
+    //double    converg_coeff = 100.;
+    //double    convergence_crit = converg_coeff * DBL_EPSILON;
+    double convergence_crit = d_convergence_tolerance;
     double    c_2;
     double press_ref= d_ice->getRefPress();
     int numICEMatls = d_sharedState->getNumICEMatls();

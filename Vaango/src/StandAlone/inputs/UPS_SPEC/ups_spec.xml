@@ -634,6 +634,7 @@
  
   <MPMICE spec="OPTIONAL NO_DATA" >
     <use_simple_equilibration_algorithm spec="OPTIONAL BOOLEAN" />
+    <vol_frac_convergence_tolerance spec="OPTIONAL DOUBLE" />
   </MPMICE>
 
   <CFD                                  spec="OPTIONAL NO_DATA" >

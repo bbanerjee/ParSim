@@ -452,6 +452,7 @@ protected:
 
   // MPMICE flags
   bool d_useSimpleEquilibrationPressure;
+  double d_convergence_tolerance;
 };
 
 } // End namespace Uintah
