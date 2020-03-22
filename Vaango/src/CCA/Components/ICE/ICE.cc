@@ -5039,6 +5039,9 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
       }
     }
 
+    Eigen::MatrixXd A_matrix(numALLMatls, numALLMatls);
+    Eigen::MatrixXd b_matrix(numALLMatls, 3);
+
     for(CellIterator iter = patch->getCellIterator(); !iter.done();iter++){
       IntVector c = *iter;
       //---------- M O M E N T U M   E X C H A N G E
@@ -5068,6 +5071,17 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
         bb[m] = sum;
       }
 
+      for(int m = 0; m < numALLMatls; m++) {
+        for(int n = 0; n < numALLMatls; n++) {
+          A_matrix(m,n) = a(m,n);
+        }
+      }
+      for(int m = 0; m < numALLMatls; m++) {
+        b_matrix(m, 0) = bb[m].x();
+        b_matrix(m, 1) = bb[m].y();
+        b_matrix(m, 2) = bb[m].z();
+      }
+
       a.destructiveSolve(bb);
 
       bool bb_has_nan = false;
@@ -5079,32 +5093,29 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
       }
       
       if (bb_has_nan) {
-        Eigen::MatrixXd A_matrix(numALLMatls, numALLMatls);
-        Eigen::MatrixXd b_matrix(numALLMatls, 3);
 
-        for(int m = 0; m < numALLMatls; m++) {
-          for(int n = 0; n < numALLMatls; n++) {
-            A_matrix(m,n) +=  a(m,n);
-          }
-        }
-        for(int m = 0; m < numALLMatls; m++) {
-          b_matrix(m, 0) = bb[m].x();
-          b_matrix(m, 1) = bb[m].y();
-          b_matrix(m, 2) = bb[m].z();
-        }
         Eigen::MatrixXd sol_matrix = A_matrix.colPivHouseholderQr().solve(b_matrix);
-        /*
-        if (c == IntVector(38,27,0)) {
-          std::cout << "A = " << A_matrix << "\n";
-          std::cout << "Eigen3: b_matrix = " << b_matrix << "\n";
-          std::cout << "Eigen3: sol_mat = " << sol_matrix << "\n";
-        }
-        */
         for(int m = 0; m < numALLMatls; m++) {
           bb[m].x(sol_matrix(m, 0));
           bb[m].y(sol_matrix(m, 1));
           bb[m].z(sol_matrix(m, 2));
         }
+        /*
+        if (c == IntVector(38,27,0)) {
+       
+          for(int m = 0; m < numALLMatls; m++) {
+            std::cout << "m = " << m << " sp_vol = " << sp_vol_CC[m][c];
+            for(int n = 0; n < numALLMatls; n++) {
+              std::cout << " n = " << n << " vol_frac = " << vol_frac_CC[n][c] 
+                        << " K = " <<  K(n,m) ;
+            }
+            std::cout << "\n";
+          }
+          std::cout << "A = " << A_matrix << "\n";
+          std::cout << "Eigen3: b_matrix = " << b_matrix << "\n";
+          std::cout << "Eigen3: sol_mat = " << sol_matrix << "\n";
+        }
+        */
       }
 
       for(int m = 0; m < numALLMatls; m++) {
