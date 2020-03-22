@@ -4963,7 +4963,7 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
     std::vector<constCCVariable<double> > old_temp(numALLMatls);
 
     double b[MAX_MATLS];
-    //Vector bb[MAX_MATLS];
+    Vector bb[MAX_MATLS];
     vector<double> sp_vol(numALLMatls);
 
     double tmp;
@@ -5039,9 +5039,6 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
       }
     }
 
-    Eigen::MatrixXd A_matrix(numALLMatls, numALLMatls);
-    Eigen::MatrixXd b_matrix(numALLMatls, 3);
-
     for(CellIterator iter = patch->getCellIterator(); !iter.done();iter++){
       IntVector c = *iter;
       //---------- M O M E N T U M   E X C H A N G E
@@ -5051,17 +5048,14 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
         tmp = delT*sp_vol_CC[m][c];
         for(int n = 0; n < numALLMatls; n++) {
           beta(m,n) = vol_frac_CC[n][c]  * K(n,m) * tmp;
-          A_matrix(m,n) = -beta(m,n);
-          //a(m,n) = -beta(m,n);
+          a(m,n) = -beta(m,n);
         }
       }
       //   Form matrix (a) diagonal terms
       for(int m = 0; m < numALLMatls; m++) {
-        A_matrix(m,m) = 1.0;
         a(m,m) = 1.0;
         for(int n = 0; n < numALLMatls; n++) {
-          A_matrix(m,m) +=  beta(m,n);
-          //a(m,m) +=  beta(m,n);
+          a(m,m) +=  beta(m,n);
         }
       }
 
@@ -5071,33 +5065,54 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
         for(int n = 0; n < numALLMatls; n++) {
           sum += beta(m,n) *(vel_CC[n][c] - vel_m);
         }
-        b_matrix(m, 0) = sum.x();
-        b_matrix(m, 1) = sum.y();
-        b_matrix(m, 2) = sum.z();
-        //bb[m] = sum;
+        bb[m] = sum;
       }
 
-      Eigen::MatrixXd sol_matrix = A_matrix.colPivHouseholderQr().solve(b_matrix);
+      a.destructiveSolve(bb);
 
-      /*
-      if (c == IntVector(38,27,0)) {
-        std::cout << "A = " << A_matrix << "\n";
-        std::cout << "Eigen3: b_matrix = " << b_matrix << "\n";
-        std::cout << "Eigen3: sol_mat = " << sol_matrix << "\n";
+      bool bb_has_nan = false;
+      for(int m = 0; m < numALLMatls; m++) {
+        if (std::isnan(bb[m][0]) || std::isnan(bb[m][1]) || std::isnan(bb[m][2])) {
+          bb_has_nan = true;
+          break;
+        }
       }
-      */
+      
+      if (bb_has_nan) {
+        Eigen::MatrixXd A_matrix(numALLMatls, numALLMatls);
+        Eigen::MatrixXd b_matrix(numALLMatls, 3);
 
-      //a.destructiveSolve(bb);
+        for(int m = 0; m < numALLMatls; m++) {
+          for(int n = 0; n < numALLMatls; n++) {
+            A_matrix(m,n) +=  a(m,n);
+          }
+        }
+        for(int m = 0; m < numALLMatls; m++) {
+          b_matrix(m, 0) = bb[m].x();
+          b_matrix(m, 1) = bb[m].y();
+          b_matrix(m, 2) = bb[m].z();
+        }
+        Eigen::MatrixXd sol_matrix = A_matrix.colPivHouseholderQr().solve(b_matrix);
+        /*
+        if (c == IntVector(38,27,0)) {
+          std::cout << "A = " << A_matrix << "\n";
+          std::cout << "Eigen3: b_matrix = " << b_matrix << "\n";
+          std::cout << "Eigen3: sol_mat = " << sol_matrix << "\n";
+        }
+        */
+        for(int m = 0; m < numALLMatls; m++) {
+          bb[m].x(sol_matrix(m, 0));
+          bb[m].y(sol_matrix(m, 1));
+          bb[m].z(sol_matrix(m, 2));
+        }
+      }
 
       for(int m = 0; m < numALLMatls; m++) {
-        Vector x_vec(sol_matrix(m, 0), sol_matrix(m, 1), sol_matrix(m, 2));
-        vel_CC[m][c] += x_vec;
-        //vel_CC[m][c] += bb[m];
+        vel_CC[m][c] += bb[m];
         /*
         if (c == IntVector(38,27,0)) {
           std::cout << " cell = " << c << " m = " << m
                     << " vel_CC = " << vel_CC[m][c]
-                    << " x_vec = " << x_vec 
                     << " bb = " << bb[m] << "\n";
         }
         */
