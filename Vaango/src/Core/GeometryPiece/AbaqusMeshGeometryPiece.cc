@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -126,9 +127,9 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
   bool surf_elem_flag = false;
   bool line_elem_flag = false;
   bool vol_elem_flag = false;
-  while (std::getline(file, line)) {
+  while (getline_safer(file, line)) {
 
-    // std::cout << "line = " << line << std::endl;
+    //std::cout << "line = " << line << std::endl;
 
     // Ignore empty lines
     if (line.empty()) continue;
@@ -421,10 +422,8 @@ void
 AbaqusMeshGeometryPiece::computeElementVolumes(std::vector<MeshNode>& nodes,
                                                std::vector<VolumeElement>& elements)
 {
-
   // Loop thru elements
-  for (auto iter = elements.begin(); iter != elements.end(); iter++) {
-    VolumeElement elem = *iter;
+  for (auto& elem : elements) {
     MeshNode node1 = nodes[elem.node1_-1];
     MeshNode node2 = nodes[elem.node2_-1];
     MeshNode node3 = nodes[elem.node3_-1];
@@ -438,7 +437,7 @@ AbaqusMeshGeometryPiece::computeElementVolumes(std::vector<MeshNode>& nodes,
     Vector vec03 = p3 - p0;
     Vector vec1x2 = Cross(vec01, vec02);
     double volume = 1.0/6.0*std::abs(Dot(vec1x2,vec03));
-    (*iter).volume_ = volume; 
+    elem.volume_ = volume; 
   }
 }
 
@@ -540,3 +539,40 @@ AbaqusMeshGeometryPiece::createPoints()
 {
   return d_points.size();
 }
+
+// Read a line without end of line characters messing things up
+// From: https://stackoverflow.com/questions/6089231/getting-std-ifstream-to-handle-lf-cr-and-crlf/6089413#6089413
+std::istream& 
+AbaqusMeshGeometryPiece::getline_safer(std::istream& is, std::string& t)
+{
+    t.clear();
+
+    // The characters in the stream are read one-by-one using a std::streambuf.
+    // That is faster than reading them one-by-one using the std::istream.
+    // Code that uses streambuf this way must be guarded by a sentry object.
+    // The sentry object performs various tasks,
+    // such as thread synchronization and updating the stream state.
+
+    std::istream::sentry se(is, true);
+    std::streambuf* sb = is.rdbuf();
+
+    for(;;) {
+        int c = sb->sbumpc();
+        switch (c) {
+        case '\n':
+            return is;
+        case '\r':
+            if(sb->sgetc() == '\n')
+                sb->sbumpc();
+            return is;
+        case std::streambuf::traits_type::eof():
+            // Also handle the case when the last line has no line ending
+            if(t.empty())
+                is.setstate(std::ios::eofbit);
+            return is;
+        default:
+            t += (char)c;
+        }
+    }
+}
+

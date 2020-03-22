@@ -33,6 +33,7 @@
 #include   <vector>
 #include   <list>
 #include   <string>
+#include   <iostream>
 
 namespace Uintah {
 
@@ -168,6 +169,8 @@ namespace Uintah {
     bool read_line(std::istream & is, Point & xmin, Point & xmax);
     void read_bbox(std::istream & source, Point & lowpt, Point & highpt) const;
     virtual void outputHelper( ProblemSpecP & ps ) const;
+
+    std::istream& getline_safer(std::istream& is, std::string& t);
   };
   
 } // End namespace Uintah
