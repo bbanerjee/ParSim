@@ -5226,6 +5226,11 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         pTemp_new[idx]       = pTemperature[idx] + (tempRate + pdTdt_new[idx])*delT;
         pTempPrev_new[idx]   = pTemperature[idx]; // for thermal stress
 
+        // Clamp negative temperatures
+        if (pTemp_new[idx] < 0) {
+          pTemp_new[idx] = pTemperature[idx];
+        }
+
         if (cout_heat.active()) {
           cout_heat << "MPM::Particle = " << pParticleID[idx]
                     << " T_old = " << pTemperature[idx]

@@ -66,6 +66,8 @@
 #include <Core/Math/Expon.h>
 #include <Core/Util/DebugStream.h>
 
+#include <Eigen/Dense>
+
 #include   <vector>
 #include   <sstream>
 #include   <iostream>
@@ -4961,7 +4963,7 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
     std::vector<constCCVariable<double> > old_temp(numALLMatls);
 
     double b[MAX_MATLS];
-    Vector bb[MAX_MATLS];
+    //Vector bb[MAX_MATLS];
     vector<double> sp_vol(numALLMatls);
 
     double tmp;
@@ -5037,6 +5039,9 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
       }
     }
 
+    Eigen::MatrixXd A_matrix(numALLMatls, numALLMatls);
+    Eigen::MatrixXd b_matrix(numALLMatls, 3);
+
     for(CellIterator iter = patch->getCellIterator(); !iter.done();iter++){
       IntVector c = *iter;
       //---------- M O M E N T U M   E X C H A N G E
@@ -5046,14 +5051,17 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
         tmp = delT*sp_vol_CC[m][c];
         for(int n = 0; n < numALLMatls; n++) {
           beta(m,n) = vol_frac_CC[n][c]  * K(n,m) * tmp;
-          a(m,n) = -beta(m,n);
+          A_matrix(m,n) = -beta(m,n);
+          //a(m,n) = -beta(m,n);
         }
       }
       //   Form matrix (a) diagonal terms
       for(int m = 0; m < numALLMatls; m++) {
+        A_matrix(m,m) = 1.0;
         a(m,m) = 1.0;
         for(int n = 0; n < numALLMatls; n++) {
-          a(m,m) +=  beta(m,n);
+          A_matrix(m,m) +=  beta(m,n);
+          //a(m,m) +=  beta(m,n);
         }
       }
 
@@ -5063,13 +5071,36 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
         for(int n = 0; n < numALLMatls; n++) {
           sum += beta(m,n) *(vel_CC[n][c] - vel_m);
         }
-        bb[m] = sum;
+        b_matrix(m, 0) = sum.x();
+        b_matrix(m, 1) = sum.y();
+        b_matrix(m, 2) = sum.z();
+        //bb[m] = sum;
       }
 
-      a.destructiveSolve(bb);
+      Eigen::MatrixXd sol_matrix = A_matrix.colPivHouseholderQr().solve(b_matrix);
+
+      /*
+      if (c == IntVector(38,27,0)) {
+        std::cout << "A = " << A_matrix << "\n";
+        std::cout << "Eigen3: b_matrix = " << b_matrix << "\n";
+        std::cout << "Eigen3: sol_mat = " << sol_matrix << "\n";
+      }
+      */
+
+      //a.destructiveSolve(bb);
 
       for(int m = 0; m < numALLMatls; m++) {
-        vel_CC[m][c] += bb[m];
+        Vector x_vec(sol_matrix(m, 0), sol_matrix(m, 1), sol_matrix(m, 2));
+        vel_CC[m][c] += x_vec;
+        //vel_CC[m][c] += bb[m];
+        /*
+        if (c == IntVector(38,27,0)) {
+          std::cout << " cell = " << c << " m = " << m
+                    << " vel_CC = " << vel_CC[m][c]
+                    << " x_vec = " << x_vec 
+                    << " bb = " << bb[m] << "\n";
+        }
+        */
       }
 
       //---------- E N E R G Y   E X C H A N G E   
@@ -5266,6 +5297,14 @@ void ICE::addExchangeToMomentumAndEnergy(const ProcessorGroup*,
         int_eng_L_ME[m][c] = Temp_CC[m][c]*cv[m][c] * mass_L[m][c];
         mom_L_ME[m][c]     = vel_CC[m][c]           * mass_L[m][c];
         Tdot[m][c]         = (Temp_CC[m][c] - old_temp[m][c])/delT;
+        /*
+        if (c == IntVector(38,27,0)) {
+          std::cout << " cell = " << c << " m = " << m
+                    << " mom_L_ME = " << mom_L_ME[m][c] 
+                    << " vel_CC = " << vel_CC[m][c]
+                    << " mass_L = " << mass_L[m][c] << "\n";
+        }
+        */
       }
     }
 

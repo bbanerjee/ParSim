@@ -1842,18 +1842,28 @@ void MPMICE::computeCCVelAndTempRates(const ProcessorGroup*,
         if(!d_rigidMPM){
           dVdt_CC[c] = (mom_L_ME_CC[c] - (old_mom_L_CC[c]-mom_source[c]))
             /(mass_L_CC[c]*delT);
+          /*
+	  if (c == IntVector(38,27,0)) {
+	    std::cout << " cell = " << c 
+                      << " dVdt_CC = " << dVdt_CC[c]
+	              << " mom_L_ME_CC = " << mom_L_ME_CC[c] 
+	              << " old_mom_L_CC = " << old_mom_L_CC[c]
+	              << " mom_source = " << mom_source[c]
+	              << " mass_L_CC = " << mass_L_CC[c] 
+	              << " delT = " <<  delT << std::endl;
+	  }
+          */
         }
         dTdt_CC[c]   = (eng_L_ME_CC[c] - (old_int_eng_L_CC[c]-int_eng_src[c]))
           /(mass_L_CC[c] * cv * delT);
           /*
 	  if (c == IntVector(38,27,0)) {
-	  std::cout << " cell = " << c << " dtTdt_CC = " << dTdt_CC[c]
-          << " dVdt_CC = " << dVdt_CC[c]
-	  << " eng_L_ME_CC = " << eng_L_ME_CC[c] 
-	  << " old_int_end_L_CC = " << old_int_eng_L_CC[c]
-	  << " int_eng_src = " << int_eng_src[c]
-	  << " mass_L_CC = " << mass_L_CC[c] 
-	  << " cv = " <<  cv << " delT = " <<  delT << std::endl;
+	    std::cout << " cell = " << c << " dtTdt_CC = " << dTdt_CC[c]
+	              << " eng_L_ME_CC = " << eng_L_ME_CC[c] 
+	              << " old_int_end_L_CC = " << old_int_eng_L_CC[c]
+	              << " int_eng_src = " << int_eng_src[c]
+	              << " mass_L_CC = " << mass_L_CC[c] 
+	              << " cv = " <<  cv << " delT = " <<  delT << std::endl;
 	  }
           */
         double heatRte  = (eng_L_ME_CC[c] - old_int_eng_L_CC[c])/delT;
