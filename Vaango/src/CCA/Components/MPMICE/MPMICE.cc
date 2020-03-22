@@ -241,14 +241,23 @@ void MPMICE::problemSetup(const ProblemSpecP& prob_spec,
 
   // Flags specific to MPMICE
   d_useSimpleEquilibrationPressure = false;
+  double converg_coeff = 100.;
+  double convergence_crit = converg_coeff * DBL_EPSILON;
+  d_convergence_tolerance = convergence_crit;
   ProblemSpecP mpmice_ps =  prob_spec->findBlock("MPMICE");
   if (mpmice_ps) {
     mpmice_ps->get("use_simple_equilibration_algorithm", 
 		   d_useSimpleEquilibrationPressure);
-    double converg_coeff = 100.;
-    double convergence_crit = converg_coeff * DBL_EPSILON;
     mpmice_ps->getWithDefault("vol_frac_convergence_tolerance",
                               d_convergence_tolerance, convergence_crit);
+  } else {
+    mpmice_ps = restart_prob_spec->findBlock("MPMICE");
+    if (mpmice_ps) {
+      mpmice_ps->get("use_simple_equilibration_algorithm", 
+    		     d_useSimpleEquilibrationPressure);
+      mpmice_ps->get("vol_frac_convergence_tolerance",
+                     d_convergence_tolerance);
+    }
   }
 
 
@@ -1836,16 +1845,17 @@ void MPMICE::computeCCVelAndTempRates(const ProcessorGroup*,
         }
         dTdt_CC[c]   = (eng_L_ME_CC[c] - (old_int_eng_L_CC[c]-int_eng_src[c]))
           /(mass_L_CC[c] * cv * delT);
-        /*
-	  if (c == IntVector(23,46,27)) {
+          /*
+	  if (c == IntVector(38,27,0)) {
 	  std::cout << " cell = " << c << " dtTdt_CC = " << dTdt_CC[c]
+          << " dVdt_CC = " << dVdt_CC[c]
 	  << " eng_L_ME_CC = " << eng_L_ME_CC[c] 
 	  << " old_int_end_L_CC = " << old_int_eng_L_CC[c]
 	  << " int_eng_src = " << int_eng_src[c]
 	  << " mass_L_CC = " << mass_L_CC[c] 
 	  << " cv = " <<  cv << " delT = " <<  delT << std::endl;
 	  }
-	*/
+          */
         double heatRte  = (eng_L_ME_CC[c] - old_int_eng_L_CC[c])/delT;
         heatRate[c] = .05*heatRte + .95*old_heatRate[c];
       }
