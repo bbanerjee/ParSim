@@ -763,10 +763,19 @@ Arenisca3::computeStressTensor(const PatchSubset* patches,
       double Fmax = FF.MaxAbsElem();
       double JJ = FF.Determinant();
       if ((Fmax > 1.0e2) || (JJ < 1.0e-3) || (JJ > 1.0e5)) {
+        Matrix3 U2 = FF.Transpose() * FF;
+        double maxEigen = 0., medEigen = 0., minEigen = 0.;
+        U2.getEigenValues(maxEigen, medEigen, minEigen);
+        maxEigen = std::log(std::sqrt(maxEigen));
+        minEigen = std::log(std::sqrt(minEigen));
+        medEigen = std::log(std::sqrt(medEigen));
         pLocalized_new[idx] = -999;
         std::cout << "Deformation gradient component unphysical: [F] = " << FF
                   << " Fmax = " << Fmax << " > 100 "
                   << " J = " << JJ << " outside [0.001, 100000]" << std::endl;
+        std::cout << " log(lambda_1) = " << maxEigen 
+                  << " log(lambda_2) = " << medEigen 
+                  << " log(lambda_3) = " << minEigen << "\n";
         std::cout << "Resetting [F]=[I] for this step and deleting particle "
                   << " idx = " << idx << " particleID = " << pParticleID[idx]
                   << " pLocalized = " << pLocalized_new[idx]

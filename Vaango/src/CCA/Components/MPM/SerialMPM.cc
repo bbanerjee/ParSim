@@ -5356,7 +5356,6 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
                 (pVelocity_new[idx]/pVelocity_new[idx].length())*(flags->d_max_vel*.9);      
               cout << "\n Warning: particle "<< pParticleID[idx] 
                    << " hit speed ceiling #1. Modifying particle velocity accordingly."<<endl;
-              //pVelocity_new[idx]=pVelocity[idx];
             }
           }
         }

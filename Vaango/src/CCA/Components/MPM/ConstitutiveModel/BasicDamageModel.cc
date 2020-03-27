@@ -867,6 +867,7 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(
         pTimeOfLoc_new = time;
       }
     } else if (d_failure_criterion == "MohrCoulomb") {
+
       double maxEigen = 0., medEigen = 0., minEigen = 0.;
       pStress.getEigenValues(maxEigen, medEigen, minEigen);
 
@@ -894,6 +895,21 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(
                     << " cohesion = " << cohesion << endl;
         pTimeOfLoc_new = time;
       }
+
+      if (pLocalized == 0) {
+        // Next check for strain-based failure using Hencky strain
+        Matrix3 bb = defGrad * defGrad.Transpose();
+        double maxEigen = 0., medEigen = 0., minEigen = 0.;
+        bb.getEigenValues(maxEigen, medEigen, minEigen);
+        maxEigen = std::log(std::sqrt(maxEigen));
+        if (std::abs(maxEigen) > 2.0) {
+          pLocalized_new = 3;
+          pTimeOfLoc_new = time;
+          cout_damage << "Particle " << particleID
+                      << " has failed : eps = " << maxEigen
+                      << " eps_f = 2.0" << endl;
+        }
+      }
     } // MohrCoulomb
   }   // pLocalized==0
 
@@ -913,6 +929,8 @@ BasicDamageModel::updateFailedParticlesAndModifyStress(
       } else if (d_allowNoShear) {
         pStress = Identity * pressure;
       } else if (d_setStressToZero) {
+        pStress = Matrix3(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+      } else {
         pStress *= D;
       }
     }
