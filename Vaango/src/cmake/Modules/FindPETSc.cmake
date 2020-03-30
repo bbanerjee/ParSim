@@ -53,7 +53,7 @@ set(PETSC_VALID_COMPONENTS
   C
   CXX)
 
-find_package(MPIVaango QUIET)
+#find_package(MPIVaango QUIET)
 message(STATUS "MPI_INCLUDE = ${MPI_INCLUDE_PATH}")
 message(STATUS "MPI_LIB = ${MPI_LIBRARY}")
 
