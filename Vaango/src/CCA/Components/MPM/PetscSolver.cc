@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -51,7 +29,7 @@
 #include <sci_defs/mpi_defs.h>
 #include <sci_defs/petsc_defs.h>
 
-#include <TauProfilerForUintah.h>
+//#include <TauProfilerForUintah.h>
 #include <CCA/Components/MPM/PetscSolver.h>
 #include <Core/Exceptions/UintahPetscError.h>
 #include <Core/Parallel/ProcessorGroup.h>
@@ -186,7 +164,7 @@ MPMPetscSolver::createLocalToGlobalMapping(const ProcessorGroup* d_myworld,
                                            const int DOFsPerNode,
                                            const int n8or27)
 {
-  TAU_PROFILE("MPMPetscSolver::createLocalToGlobalMapping", " ", TAU_USER);
+  //TAU_PROFILE("MPMPetscSolver::createLocalToGlobalMapping", " ", TAU_USER);
   int numProcessors = d_myworld->size();
   d_numNodes.resize(numProcessors, 0);
   d_startIndex.resize(numProcessors);
@@ -289,7 +267,7 @@ MPMPetscSolver::createLocalToGlobalMapping(const ProcessorGroup* d_myworld,
 
 void MPMPetscSolver::solve(vector<double>& guess)
 {
-  TAU_PROFILE("MPMPetscSolver::solve", " ", TAU_USER);
+  //TAU_PROFILE("MPMPetscSolver::solve", " ", TAU_USER);
   PC          precond;           
   KSP         solver;
 #if 0
@@ -300,7 +278,11 @@ void MPMPetscSolver::solve(vector<double>& guess)
 #endif
 
   KSPCreate(PETSC_COMM_WORLD,&solver);
+#if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 6))
+  KSPSetOperators(solver,d_A,d_A);
+#else
   KSPSetOperators(solver,d_A,d_A,DIFFERENT_NONZERO_PATTERN);
+#endif
   KSPGetPC(solver,&precond);
 
 #if defined(USE_SPOOLES) || defined(USE_SUPERLU)
@@ -322,10 +304,10 @@ void MPMPetscSolver::solve(vector<double>& guess)
     }
 
   }
-  TAU_PROFILE_TIMER(solve, "Petsc:KPSolve()", "", TAU_USER);
-  TAU_PROFILE_START(solve);
+  //TAU_PROFILE_TIMER(solve, "Petsc:KPSolve()", "", TAU_USER);
+  //TAU_PROFILE_START(solve);
   KSPSolve(solver,d_B,d_x);
-  TAU_PROFILE_STOP(solve);
+  //TAU_PROFILE_STOP(solve);
 #ifdef LOG
   KSPView(solver,PETSC_VIEWER_STDOUT_WORLD);
   int its;
@@ -343,7 +325,7 @@ void MPMPetscSolver::solve(vector<double>& guess)
 void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
                                   const map<int,int>& dof_diag)
 {
-  TAU_PROFILE("MPMPetscSolver::createMatrix", " ", TAU_USER);
+  //TAU_PROFILE("MPMPetscSolver::createMatrix", " ", TAU_USER);
   int me = d_myworld->myrank();
   int numlrows = d_numNodes[me];
   
@@ -446,7 +428,7 @@ void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
 #endif
     ierr = MatMPIAIJSetPreallocation(d_A,PETSC_DEFAULT,diag,PETSC_DEFAULT,onnz);
 #else
-#if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR == 3))
+#if ((PETSC_VERSION_MAJOR == 3) && ((PETSC_VERSION_MINOR >= 3) ) )
     MatCreateAIJ(PETSC_COMM_WORLD, numlrows, numlcolumns, globalrows,
                     globalcolumns, PETSC_DEFAULT, diag,
                     PETSC_DEFAULT, onnz, &d_A);
@@ -513,7 +495,7 @@ void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
 
 void MPMPetscSolver::destroyMatrix(bool recursion)
 {
-  TAU_PROFILE("MPMPetscSolver::destroyMatrix", " ", TAU_USER);
+  //TAU_PROFILE("MPMPetscSolver::destroyMatrix", " ", TAU_USER);
   if (recursion) {
     MatZeroEntries(d_A);
     PetscScalar zero = 0.;
@@ -659,7 +641,7 @@ MPMPetscSolver::copyL2G(Array3<int>& mapping,const Patch* patch)
 void
 MPMPetscSolver::removeFixedDOF()
 {
-  TAU_PROFILE("MPMPetscSolver::removeFixedDOF", " ", TAU_USER);
+  //TAU_PROFILE("MPMPetscSolver::removeFixedDOF", " ", TAU_USER);
   flushMatrix();
   IS is;
   int* indices;
@@ -757,7 +739,7 @@ MPMPetscSolver::removeFixedDOF()
 
 void MPMPetscSolver::removeFixedDOFHeat()
 {
-  TAU_PROFILE("MPMPetscSolver::removeFixedDOFHEAT", " ", TAU_USER);
+  //TAU_PROFILE("MPMPetscSolver::removeFixedDOFHEAT", " ", TAU_USER);
 
   //do matrix modifications first 
  
