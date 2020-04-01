@@ -53,7 +53,6 @@
 
 namespace Uintah {
 
-using namespace Uintah;
  class DataWarehouse;
  class MPMLabel;
  class ProcessorGroup;
@@ -89,6 +88,14 @@ DESCRIPTION
 WARNING
   
 ****************************************/
+
+class ParticleTempShape {
+public:
+  double                 pTemperature;
+  std::vector<IntVector> cellNodes;
+  std::vector<double>    shapeFnValues;
+};
+ 
 
 class ImpMPM : public MPMCommon, public UintahParallelComponent, 
   public SimulationInterface {
@@ -579,14 +586,6 @@ private:
 
 };
       
-
- struct particleTempShape {
-   double particleTemps;
-   vector<IntVector> cellNodes;
-   vector<double> shapeValues;
- };
- 
- typedef struct particleTempShape particleTempShape;
  
 } // end namespace Uintah
 
