@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -217,9 +217,11 @@ namespace Uintah {
   template<class DomainType>
   void DWDatabase<DomainType>::clear()
   {
-    for(auto iter = vars.begin(); iter != vars.end(); iter++){
-      if (*iter) delete *iter;
-      *iter=0;
+    for (auto& var : vars) {
+      if (var) {
+        delete var;
+      }
+      var = nullptr;
     }
     vars.clear();
   }

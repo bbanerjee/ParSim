@@ -161,8 +161,7 @@ public:
   };
 
 private:
-  //////////
-  // Insert Documentation Here:
+
   MaterialSubset* one_matl;
 
   friend class MPMICE;
@@ -286,11 +285,18 @@ private:
                                        DataWarehouse* old_dw,
                                        DataWarehouse* new_dw);
 
-  void computeDeformationGradient( const ProcessorGroup*,
-                                   const PatchSubset* patches,
-                                   const MaterialSubset* ,
-                                   DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw);
+  void computeDeformationGradient(     const ProcessorGroup*,
+                                       const PatchSubset* patches,
+                                       const MaterialSubset* ,
+                                       DataWarehouse* old_dw,
+                                       DataWarehouse* new_dw,
+                                       bool recursion);
+
+  void computeDeformationGradient(     const ProcessorGroup*,
+                                       const PatchSubset* patches,
+                                       const MaterialSubset* ,
+                                       DataWarehouse* old_dw,
+                                       DataWarehouse* new_dw);
 
   // This is for the computation with the 24 x 24 matrix
   void computeStressTensorImplicit(    const ProcessorGroup*,
@@ -422,13 +428,24 @@ private:
                                        DataWarehouse* old_dw,
                                        DataWarehouse* new_dw);
 
-  void scheduleComputeDeformationGradient(SchedulerP& sched,
-                                          const PatchSet* patches,
-                                          const MaterialSet* matls,
-                                          const bool recursion);
+  void scheduleComputeDeformationGradient( SchedulerP& sched,
+                                           const PatchSet* patches,
+                                           const MaterialSet* matls,
+                                           const bool recursion);
 
-  void scheduleComputeStressTensor( SchedulerP&, const PatchSet*,
-                                    const MaterialSet*, const bool recursion);
+  void scheduleComputeStressTensor(        SchedulerP&, 
+                                           const PatchSet*,
+                                           const MaterialSet*, 
+                                           const bool recursion);
+
+  void scheduleComputeDeformationGradient( SchedulerP& sched,
+                                           const PatchSet* patches,
+                                           const MaterialSet* matls);
+
+  void scheduleComputeStressTensor(        SchedulerP&, 
+                                           const PatchSet*,
+                                           const MaterialSet*);
+
 
   void scheduleFormStiffnessMatrix( SchedulerP&, const PatchSet*,
                                     const MaterialSet*);
@@ -503,9 +520,6 @@ private:
   void scheduleFindFixedHCDOF(                 SchedulerP&, const PatchSet*, 
                                                const MaterialSet*);
 
-  void scheduleComputeStressTensorImplicit(    SchedulerP&, const PatchSet*,
-                                               const MaterialSet*);
-
   void scheduleComputeInternalHeatRate(        SchedulerP&, const PatchSet*,
                                                const MaterialSet*);
 
@@ -545,6 +559,9 @@ private:
   void scheduleCheckConvergence(    SchedulerP&, const LevelP&, const PatchSet*,
                                     const MaterialSet*);
 
+
+  std::pair<IntVector, IntVector> getPatchLoHiNodes(const Patch* patch,
+                                                    int n8or27) const;
 
   ImpMPM(const ImpMPM&);
   ImpMPM& operator=(const ImpMPM&);

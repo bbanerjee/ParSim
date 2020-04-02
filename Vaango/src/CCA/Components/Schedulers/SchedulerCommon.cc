@@ -67,8 +67,6 @@
 #include <time.h>
 
 using namespace Uintah;
-using namespace Uintah;
-using namespace std;
 
 // Debug: Used to sync cerr so it is readable (when output by
 // multiple threads at the same time)  From sus.cc:
@@ -254,11 +252,11 @@ SchedulerCommon::finalizeNodes(int process /* = 0*/)
     return;
 
   if (m_outPort->isOutputTimestep()) {
-    string timestep_dir(m_outPort->getLastTimestepOutputLocation());
+    std::string timestep_dir(m_outPort->getLastTimestepOutputLocation());
       
-    ostringstream fname;
-    fname << "/taskgraph_" << setw(5) << setfill('0') << process << ".xml";
-    string file_name(timestep_dir + fname.str());
+    std::ostringstream fname;
+    fname << "/taskgraph_" << std::setw(5) << std::setfill('0') << process << ".xml";
+    std::string file_name(timestep_dir + fname.str());
     m_graphDoc->output(file_name.c_str());
   }
     
@@ -296,17 +294,17 @@ SchedulerCommon::problemSetup(const ProblemSpecP& prob_spec,
       track->getWithDefault("patchid", d_trackingPatchID, -1);
 
       if( d_myworld->myrank() == 0 ) {
-        cout << "\n";
-        cout << "-----------------------------------------------------------\n";
-        cout << "-- Initializing VarTracker...\n";
-        cout << "--  Running from time " << d_trackingStartTime  << " to " << d_trackingEndTime << "\n";
-        cout << "--  for indices: " << d_trackingStartIndex << " to " << d_trackingEndIndex << "\n";
+        std::cout << "\n";
+        std::cout << "-----------------------------------------------------------\n";
+        std::cout << "-- Initializing VarTracker...\n";
+        std::cout << "--  Running from time " << d_trackingStartTime  << " to " << d_trackingEndTime << "\n";
+        std::cout << "--  for indices: " << d_trackingStartIndex << " to " << d_trackingEndIndex << "\n";
       }
 
       ProblemSpecP location = track->findBlock("locations");
       if (location) {
         d_trackingVarsPrintLocation = 0;
-        map<string,string> attributes;
+        std::map<std::string,std::string> attributes;
         location->getAttributes(attributes);
         if (attributes["before_comm"] == "true") {
           d_trackingVarsPrintLocation |= PRINT_BEFORE_COMM;
@@ -327,11 +325,11 @@ SchedulerCommon::problemSetup(const ProblemSpecP& prob_spec,
       }
 
       for (ProblemSpecP var=track->findBlock("var"); var != 0; var = var->findNextBlock("var")) {
-        map<string,string> attributes;
+        std::map<std::string,std::string> attributes;
         var->getAttributes(attributes);
-        string name = attributes["label"];
+        std::string name = attributes["label"];
         d_trackingVars.push_back(name);
-        string dw = attributes["dw"];
+        std::string dw = attributes["dw"];
 
         if (dw == "OldDW") {
           d_trackingDWs.push_back(Task::OldDW);
@@ -361,9 +359,9 @@ SchedulerCommon::problemSetup(const ProblemSpecP& prob_spec,
       }
 
       for (ProblemSpecP task=track->findBlock("task"); task != 0; task = task->findNextBlock("task")) {
-        map<string,string> attributes;
+        std::map<std::string,std::string> attributes;
         task->getAttributes(attributes);
-        string name = attributes["name"];
+        std::string name = attributes["name"];
         d_trackingTasks.push_back(name);
         proc0cout << "--  Tracking variables for specific task: " << name << "\n"; 
       }      
@@ -397,21 +395,21 @@ SchedulerCommon::problemSetup(const ProblemSpecP& prob_spec,
 // Returns true if the error message is displayed.
 //
 bool
-handleError( int errorPosition, const string & errorMessage, const string & variableName ) 
+handleError( int errorPosition, const std::string & errorMessage, const std::string & variableName ) 
 {
-  static vector< map<string,bool> * > errorsReported( 8 );
+  static std::vector< std::map<std::string,bool> * > errorsReported( 8 );
 
-  map<string, bool> * varToReportedMap = errorsReported[ errorPosition ];
+  std::map<std::string, bool> * varToReportedMap = errorsReported[ errorPosition ];
 
   if( varToReportedMap == NULL ) {
-    varToReportedMap = new map<string, bool>;
+    varToReportedMap = new std::map<std::string, bool>;
     errorsReported[ errorPosition ] = varToReportedMap;
   }
 
   bool reported = (*varToReportedMap)[ variableName ];
   if( !reported ) {
     (*varToReportedMap)[ variableName ] = true;
-    cout << errorMessage << "\n";
+    std::cout << errorMessage << "\n";
     return true;
   }
   return false;
@@ -434,7 +432,7 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
 
   // Print for all tasks unless one is specified (but disclude DataArchiver tasks)
   if ((taskNum == d_trackingTasks.size() && d_trackingTasks.size() != 0) || 
-      ((string(dt->getTask()->getName())).substr(0,12) == "DataArchiver"))
+      ((std::string(dt->getTask()->getName())).substr(0,12) == "DataArchiver"))
     return;
 
   if( d_sharedState && ( d_trackingStartTime > d_sharedState->getElapsedTime() ||
@@ -448,7 +446,7 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
     // that DW may not have been mapped....
     if (dt->getTask()->mapDataWarehouse(d_trackingDWs[i]) < 0 || 
         dt->getTask()->mapDataWarehouse(d_trackingDWs[i]) >= static_cast<int>(d_dws.size())) {
-      ostringstream mesg;
+      std::ostringstream mesg;
       mesg << "WARNING: VarTracker: Not printing requested variable (" << d_trackingVars[i]
            << ") DW is out of range.\n";
       handleError( 0, mesg.str(), d_trackingVars[i] );
@@ -459,7 +457,7 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
     OnDemandDataWarehouseP dw = d_dws[dt->getTask()->mapDataWarehouse(d_trackingDWs[i])];
 
     if (dw == 0) { // old on initialization timestep
-      ostringstream mesg;
+      std::ostringstream mesg;
       mesg << "WARNING: VarTracker: Not printing requested variable (" << d_trackingVars[i] 
            << ") because DW is NULL.  Requested DW was: " 
            << dt->getTask()->mapDataWarehouse(d_trackingDWs[i]) << "\n";
@@ -485,10 +483,10 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
     const LevelP level = grid->getLevel(levelnum);
     const VarLabel* label = VarLabel::find(d_trackingVars[i]);
 
-    cout.precision(16);
+    std::cout.precision(16);
 
     if (!label) {
-      ostringstream mesg;
+      std::ostringstream mesg;
       mesg << "WARNING: VarTracker: Not printing requested variable (" << d_trackingVars[i]
            << ") because label is NULL.\n";
       handleError( 2, mesg.str(), d_trackingVars[i] );
@@ -499,7 +497,7 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
     
     // a once-per-proc task is liable to have multiple levels, and thus calls to getLevel(patches) will fail
     if( dt->getTask()->getType() != Task::OncePerProc && (!patches || getLevel(patches)->getIndex() != levelnum) ) {
-      ostringstream mesg;
+      std::ostringstream mesg;
       mesg << "WARNING: VarTracker: Not printing requested variable (" << d_trackingVars[i]
            << ") because patch is non-standard.\n";
       handleError( 3, mesg.str(), d_trackingVars[i] );
@@ -510,7 +508,7 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
 
       const Patch* patch = patches->get(p);
       if (d_trackingPatchID != -1 && d_trackingPatchID != patch->getID()) {
-        ostringstream mesg;
+        std::ostringstream mesg;
         mesg << "WARNING: VarTracker: Not printing requested variable (" << d_trackingVars[i]
              << ") because patch ID does not match.\n" 
              << "            (Error only printed once.)\n"
@@ -536,18 +534,18 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
       for (int m = 0; m < d_sharedState->getNumMatls(); m++) {
 
         if (!dw->exists(label, m, patch)) {
-          ostringstream mesg;
+          std::ostringstream mesg;
           mesg << "WARNING: VarTracker: Not printing requested variable (" << d_trackingVars[i] 
                << ") because it does not exist in DW.\n"
                << "            Patch is: " << *patch << "\n";
           if( handleError( 5, mesg.str(), d_trackingVars[i] ) ) {
-            cout << "         DW contains (material: " << m << ")\n";
+            std::cout << "         DW contains (material: " << m << ")\n";
             dw->print();
           }
           continue;
         }
         if (!(start.x() < end.x() && start.y() < end.y() && start.z() < end.z())) {
-          ostringstream mesg;
+          std::ostringstream mesg;
           mesg << "WARNING: VarTracker: Not printing requested variable (" << d_trackingVars[i] 
                << ") because the start is greater than the end location:\n"
                << "start: " << start << "\n"
@@ -558,7 +556,7 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
         if (td->getSubType()->getType() != TypeDescription::double_type &&
             td->getSubType()->getType() != TypeDescription::Vector) {
           // only allow *Variable<double> and *Variable<Vector> for now
-          ostringstream mesg;
+          std::ostringstream mesg;
           mesg << "WARNING: VarTracker: Not printing requested variable (" << d_trackingVars[i]
                << ") because its type is not supported:\n"
                << "             " << td->getName() << "\n";
@@ -586,20 +584,20 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
           continue;
 
         if (!printedHeader) {
-          string location;
+          std::string location;
           switch (when) {
           case PRINT_BEFORE_COMM: location = " before communication of "; break;
           case PRINT_BEFORE_EXEC: location = " before execution of "; break;
           case PRINT_AFTER_EXEC: location = " after execution of "; break;
           }
-          cout << d_myworld->myrank() << location << *dt << endl;
+          std::cout << d_myworld->myrank() << location << *dt << endl;
           printedHeader = true;
         }
         
         if (!printedVarName) {
-          cout << d_myworld->myrank() << "  Variable: " << d_trackingVars[i] << ", DW " << dw->getID() << ", Patch " << patch->getID() << ", Matl " << m << endl;
+          std::cout << d_myworld->myrank() << "  Variable: " << d_trackingVars[i] << ", DW " << dw->getID() << ", Patch " << patch->getID() << ", Matl " << m << endl;
           if (d_trackingVars[i] == "rho_CC")
-            cout << "  RHO: " << dw->getID() << " original input " << d_trackingDWs[i] << endl;
+            std::cout << "  RHO: " << dw->getID() << " original input " << d_trackingDWs[i] << endl;
         }
             
 
@@ -610,14 +608,14 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
           
           for (int z = start.z(); z < end.z(); z++) {
             for (int y = start.y(); y < end.y(); y++) {
-              cout << d_myworld->myrank() << "  ";
+              std::cout << d_myworld->myrank() << "  ";
               for (int x = start.x(); x < end.x(); x++) {
                 IntVector c(x,y,z);
-                cout << " " << c << ": " << (*var)[c];
+                std::cout << " " << c << ": " << (*var)[c];
               }
-              cout << endl;
+              std::cout << endl;
             }
-            cout << endl;
+            std::cout << endl;
           }
         }
         break;
@@ -627,14 +625,14 @@ SchedulerCommon::printTrackedVars( DetailedTask* dt, int when )
           
           for (int z = start.z(); z < end.z(); z++) {
             for (int y = start.y(); y < end.y(); y++) {
-              cout << d_myworld->myrank() << "  ";
+              std::cout << d_myworld->myrank() << "  ";
               for (int x = start.x(); x < end.x(); x++) {
                 IntVector c(x,y,z);
-                cout << " " << c << ": " << (*var)[c];
+                std::cout << " " << c << ": " << (*var)[c];
               }
-              cout << endl;
+              std::cout << endl;
             }
-            cout << endl;
+            std::cout << endl;
           }
         }
         break;
@@ -733,7 +731,7 @@ SchedulerCommon::addTask(Task* task, const PatchSet* patches,
             << " on level " << levelidx << ", DW " << dw << '\n';
       }
 
-      ostringstream taskname;
+      std::ostringstream taskname;
       taskname << "Reduction: " << dep->var->getName() << ", level " << levelidx << ", dw " << dw;
 
       Task* newtask = scinew Task(taskname.str(), Task::Reduction);
@@ -918,7 +916,7 @@ void SchedulerCommon::setRestartable(bool restartable)
   this->d_restartable = restartable;
 }
 
-const vector<const Patch*>* SchedulerCommon::
+const std::vector<const Patch*>* SchedulerCommon::
 getSuperPatchExtents(const VarLabel* label, int matlIndex, const Patch* patch,
                      Ghost::GhostType requestedGType, int requestedNumGCells,
                      IntVector& requiredLow, IntVector& requiredHigh,
@@ -985,11 +983,11 @@ void
 SchedulerCommon::logMemoryUse()
 {
   if(!d_memlogfile){
-    ostringstream fname;
-    fname << "uintah_memuse.log.p" << setw(5) << setfill('0') << d_myworld->myrank() << "." << d_myworld->size();
-    d_memlogfile = scinew ofstream(fname.str().c_str());
+    std::ostringstream fname;
+    fname << "uintah_memuse.log.p" << std::setw(5) << std::setfill('0') << d_myworld->myrank() << "." << d_myworld->size();
+    d_memlogfile = scinew std::ofstream(fname.str().c_str());
     if(!*d_memlogfile){
-      cerr << "Error opening file: " << fname.str() << '\n';
+      std::cerr << "Error opening file: " << fname.str() << '\n';
     }
   }
   *d_memlogfile << '\n';
@@ -1237,9 +1235,9 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
   oldDataWarehouse->setScrubbing(DataWarehouse::ScrubNone);
   newDataWarehouse->setScrubbing(DataWarehouse::ScrubNone);
   const Grid* oldGrid = oldDataWarehouse->getGrid();
-  vector<Task*> dataTasks;
-  vector<Handle<PatchSet> > refinePatchSets(grid->numLevels(), (PatchSet*)0);
-  vector<Handle<PatchSet> > copyPatchSets(grid->numLevels(), (PatchSet*)0);
+  std::vector<Task*> dataTasks;
+  std::vector<Handle<PatchSet> > refinePatchSets(grid->numLevels(), (PatchSet*)0);
+  std::vector<Handle<PatchSet> > copyPatchSets(grid->numLevels(), (PatchSet*)0);
   SchedulerP sched(dynamic_cast<Scheduler*>(this));
 
   d_sharedState->setCopyDataTimestep(true);
@@ -1313,11 +1311,11 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
 
           //Gather size from all processors
           int mycount = myPatchIDs.size();
-          vector<int> counts(d_myworld->size());
+          std::vector<int> counts(d_myworld->size());
           MPI_Allgather(&mycount, 1, MPI_INT, &counts[0], 1, MPI_INT, d_myworld->getComm());
 
           //compute recieve array offset and size
-          vector<int> displs(d_myworld->size());
+          std::vector<int> displs(d_myworld->size());
           int pos = 0;
 
           for (int p = 0; p < d_myworld->size(); p++) {
@@ -1325,12 +1323,12 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
             pos += counts[p];
           }
 
-          vector<int> allPatchIDs(pos);  //receive array;
+          std::vector<int> allPatchIDs(pos);  //receive array;
           MPI_Allgatherv(&myPatchIDs[0], counts[d_myworld->myrank()], 
                          MPI_INT, &allPatchIDs[0], &counts[0], &displs[0], MPI_INT,
                          d_myworld->getComm());
           //make refinePatchSets from patch ids
-          set<int> allPatchIDset(allPatchIDs.begin(), allPatchIDs.end());
+          std::set<int> allPatchIDset(allPatchIDs.begin(), allPatchIDs.end());
 
           for (auto iter = newLevel->patchesBegin(); iter != newLevel->patchesEnd(); ++iter) {
             Patch* newPatch = *iter;
@@ -1416,7 +1414,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
 #endif
 
   // copy reduction variables to the new dw
-  vector<VarLabelMatl<Level> > levelVariableInfo;
+  std::vector<VarLabelMatl<Level> > levelVariableInfo;
   oldDataWarehouse->getVarLabelMatlLevelTriples(levelVariableInfo);
   
   newDataWarehouse->unfinalize();
@@ -1425,7 +1423,7 @@ SchedulerCommon::scheduleAndDoDataCopy(const GridP& grid, SimulationInterface* s
 
     if (currentReductionVar.label_->typeDescription()->isReductionVariable()) {
 
-      // cout << "REDUNCTION:  Label(" << setw(15) << currentReductionVar.label_->getName() << "): Patch(" << reinterpret_cast<int>(currentReductionVar.level_) << "): Material(" << currentReductionVar.matlIndex_ << ")" << endl; 
+      // std::cout << "REDUNCTION:  Label(" << std::setw(15) << currentReductionVar.label_->getName() << "): Patch(" << reinterpret_cast<int>(currentReductionVar.level_) << "): Material(" << currentReductionVar.matlIndex_ << ")" << endl; 
       const Level* oldLevel = currentReductionVar.domain_;
       const Level* newLevel = NULL;
       if (oldLevel && oldLevel->getIndex() < grid->numLevels() ) {
@@ -1472,7 +1470,7 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
     const Level* newLevel = newPatch->getLevel();
 
     // to create once per matl instead of once per matl-var
-    vector<ParticleSubset*> oldsubsets(d_sharedState->getNumMatls()), newsubsets(d_sharedState->getNumMatls());
+    std::vector<ParticleSubset*> oldsubsets(d_sharedState->getNumMatls()), newsubsets(d_sharedState->getNumMatls());
 
     // If there is a level that didn't exist, we don't need to copy it
     if ( newLevel->getIndex() >= oldDataWarehouse->getGrid()->numLevels() ) {
@@ -1499,7 +1497,7 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
         int matl = var_matls->get(m);
 
         if (!matls->contains(matl)) {
-          //cout << "We are skipping material " << currentVar.matlIndex_ << endl;
+          //std::cout << "We are skipping material " << currentVar.matlIndex_ << endl;
           continue;
         }
 
@@ -1544,7 +1542,7 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
               if(!oldDataWarehouse->exists(label, matl, oldPatch))
                 SCI_THROW(UnknownVariable(label->getName(), oldDataWarehouse->getID(), oldPatch, matl,
                                           "in copyDataTo GridVariableBase", __FILE__, __LINE__));
-              vector<Variable *> varlist;
+              std::vector<Variable *> varlist;
               oldDataWarehouse->d_varDB.getlist(label, matl, oldPatch, varlist);
               GridVariableBase* v=NULL;
 
@@ -1658,9 +1656,9 @@ SchedulerCommon::copyDataToNewGrid(const ProcessorGroup*, const PatchSubset* pat
 void
 SchedulerCommon::scheduleParticleRelocation(const LevelP& level,
                                             const VarLabel* old_posLabel,
-                                            const vector<vector<const VarLabel*> >& old_labels,
+                                            const std::vector<std::vector<const VarLabel*> >& old_labels,
                                             const VarLabel* new_posLabel,
-                                            const vector<vector<const VarLabel*> >& new_labels,
+                                            const std::vector<std::vector<const VarLabel*> >& new_labels,
                                             const VarLabel* particleIDLabel,
                                             const MaterialSet* matls, int which)
 {
@@ -1701,9 +1699,9 @@ SchedulerCommon::scheduleParticleRelocation(const LevelP& level,
 void
 SchedulerCommon::scheduleParticleRelocation(const LevelP& coarsestLevelwithParticles,
                                             const VarLabel* old_posLabel,
-                                            const vector<vector<const VarLabel*> >& old_labels,
+                                            const std::vector<std::vector<const VarLabel*> >& old_labels,
                                             const VarLabel* new_posLabel,
-                                            const vector<vector<const VarLabel*> >& new_labels,
+                                            const std::vector<std::vector<const VarLabel*> >& new_labels,
                                             const VarLabel* particleIDLabel,
                                             const MaterialSet* matls)
 {
@@ -1724,7 +1722,7 @@ SchedulerCommon::scheduleParticleRelocation(const LevelP& coarsestLevelwithParti
 void
 SchedulerCommon::scheduleParticleRelocation( const LevelP&                           coarsestLevelwithParticles,
                                              const VarLabel*                         posLabel,
-                                             const vector<vector<const VarLabel*> >& otherLabels,
+                                             const std::vector<std::vector<const VarLabel*> >& otherLabels,
                                              const MaterialSet*                      matls )
 {
   d_reloc_new_posLabel = posLabel;
@@ -1734,7 +1732,7 @@ SchedulerCommon::scheduleParticleRelocation( const LevelP&                      
   releasePort("load balancer");
 }
 
-void SchedulerCommon::overrideVariableBehavior(const string& var, bool treatAsOld, 
+void SchedulerCommon::overrideVariableBehavior(const std::string& var, bool treatAsOld, 
                                                bool copyData, bool noScrub,
                                                bool notCopyData, bool noCheckpoint)
 {
@@ -1773,7 +1771,7 @@ void SchedulerCommon::overrideVariableBehavior(const string& var, bool treatAsOl
 void
 SchedulerCommon::printTask( ostream& out, DetailedTask* task )
 {
-  out << left;
+  out << std::left;
   out.width(70);
   out << task->getTask()->getName();
   if(task->getPatches()){
@@ -1815,7 +1813,7 @@ SchedulerCommon::printTaskLevels( const ProcessorGroup* d_myworld,
         if(taskPatches->contains(firstPatch)){
         
           out << d_myworld->myrank() << "   ";
-          out << left;
+          out << std::left;
           out.width(70);
           out << task->getTask()->getName();
           out << " \t  Patch " << firstPatch->getGridIndex() << "\t L-"<< level->getIndex() << "\n";

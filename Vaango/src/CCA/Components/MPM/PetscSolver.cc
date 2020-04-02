@@ -113,7 +113,7 @@ void MPMPetscSolver::initialize()
       argv[i] = args[i];
     }
   }
-  PetscInitialize(&argc,&argv, PETSC_NULL, PETSC_NULL);
+  PetscInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
 #ifdef USE_SPOOLES
   PetscOptionsSetValue("-mat_spooles_ordering","BestOfNDandMS");
   PetscOptionsSetValue("-mat_spooles_symmetryflag","0");
@@ -347,7 +347,7 @@ void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
   }
 
 #if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2))
-  PetscBool exists;
+  PetscBool exists = PETSC_FALSE;
 #else
   PetscTruth exists;
 #endif
@@ -363,9 +363,9 @@ void MPMPetscSolver::createMatrix(const ProcessorGroup* d_myworld,
 #endif
 
 #if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2))
-  PetscClassId id;
+  PetscClassId id = 0;
   if (d_A) {
-    PetscObjectGetClassId((PetscObject)d_A,&id);
+    PetscObjectGetClassId((PetscObject)d_A, &id);
   }
   if (id) {
     exists = PETSC_TRUE;
@@ -514,20 +514,19 @@ void MPMPetscSolver::destroyMatrix(bool recursion)
 #endif
   } else {
 #if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2))
-  PetscBool exists;
+  PetscBool exists = PETSC_FALSE;
 #else
   PetscTruth exists;
 #endif
 
 #if ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2))
-  PetscClassId id;
+  PetscClassId id = 0;
   if (d_A) {
-    PetscObjectGetClassId((PetscObject)d_A,&id);
+    PetscObjectGetClassId((PetscObject)d_A, &id);
   }
   if (id) {
     exists = PETSC_TRUE;
-  }
-  else {
+  } else {
     exists = PETSC_FALSE;
   }
 #elif ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR == 1))

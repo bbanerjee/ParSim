@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -48,35 +48,6 @@ namespace Uintah {
   class Task;
   class SimulationInterface;
 
-/**************************************
-
-CLASS
-   Scheduler
-   
-   Short description...
-
-GENERAL INFORMATION
-
-   Scheduler.h
-
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
-
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-   
-KEYWORDS
-   Scheduler
-
-
-DESCRIPTION
-
-  
-WARNING
-  
-****************************************/
-
   class Scheduler : public UintahParallelPort {
   public:
 
@@ -106,6 +77,7 @@ WARNING
 
     virtual void setParentDWs(DataWarehouse* parent_old_dw, 
                               DataWarehouse* parent_new_dw) = 0;
+    virtual void setSimulationState(SimulationStateP sharedState)  = 0;
 
     virtual void clearMappings() = 0;
     virtual void mapDataWarehouse(Task::WhichDW, int dwTag) = 0;

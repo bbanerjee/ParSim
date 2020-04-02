@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -42,40 +42,11 @@
 
 namespace Uintah {
 
-
   class Output;
   class DetailedTask;
   class DetailedTasks;
   class TaskGraph;
   class LocallyComputedPatchVarMap;
-
-/**************************************
-
-CLASS
-   SchedulerCommon
-   
-   Short description...
-
-GENERAL INFORMATION
-
-   SchedulerCommon.h
-
-   Steven G. Parker
-   Department of Computer Science
-   University of Utah
-
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-
-KEYWORDS
-   SchedulerCommon
-
-DESCRIPTION
-   Long description...
-  
-WARNING
-  
-****************************************/
 
   class SchedulerCommon : public Scheduler, public UintahParallelComponent {
   public:
@@ -97,12 +68,14 @@ WARNING
     // For calculating memory usage when sci-malloc is disabled...
     static char* d_start_addr;
 
-    //////////
-    // Insert Documentation Here:
     virtual void initialize(int numOldDW = 1, int numNewDW = 1);
 
     virtual void setParentDWs(DataWarehouse* parent_old_dw,
                               DataWarehouse* parent_new_dw);
+
+    void setSimulationState(SimulationStateP sharedState) {
+      d_sharedState = sharedState;
+    }
 
     virtual void clearMappings();
 
@@ -250,7 +223,10 @@ WARNING
     
     int getMaxLevelOffset() {return d_maxLevelOffset;}
 
-    bool isCopyDataTimestep() { return d_sharedState->isCopyDataTimestep() || d_isInitTimestep; }
+    bool isCopyDataTimestep() { 
+      //std::cout << "d_sharedState = " << d_sharedState << "\n";
+      return d_sharedState->isCopyDataTimestep() || d_isInitTimestep; 
+    }
 
     void setInitTimestep( bool isInitTimestep ) { d_isInitTimestep = isInitTimestep; }
 

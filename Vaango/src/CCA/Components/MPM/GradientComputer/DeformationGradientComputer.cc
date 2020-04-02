@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -409,6 +409,7 @@ DeformationGradientComputer::computeDeformationGradient(const PatchSubset* patch
   // deformation gradient.  The implicit code uses displacements.
   if (flag->d_integrator == MPMFlags::Implicit) {
 
+    std::cout << "Compute def grad .. Implicit ..\n";
     // Loop thru patches
     for (int pp = 0; pp < patches->size(); pp++) {
       const Patch* patch = patches->get(pp);
