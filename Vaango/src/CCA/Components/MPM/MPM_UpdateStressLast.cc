@@ -241,13 +241,16 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
 
     Material* reactant;
-    int RMI = -99;
     reactant = d_sharedState->getMaterialByName("reactant");
+
+    /*
     bool combustion_problem=false;
+    int RMI = -99;
     if(reactant != 0){
       RMI = reactant->getDWIndex();
       combustion_problem=true;
     }
+    */
 
     double move_particles=1.;
     if(!flags->d_doGridReset){
@@ -362,10 +365,12 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       ParticleSubset* delset = scinew ParticleSubset(0, dwi, patch);
 
       double Cp = mpm_matl->getSpecificHeat();
+      /*
       double rho_frac_min = 0.;
-      if(m == RMI){
-        rho_frac_min = .1;
+      if (m == RMI) {
+        rho_frac_min = 0.1;
       }
+      */
 
       // Loop over particles
       for(auto idx : *pset) {

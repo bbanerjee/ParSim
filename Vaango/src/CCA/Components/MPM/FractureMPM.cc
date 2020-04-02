@@ -2650,19 +2650,24 @@ void FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     int numMPMMatls=d_sharedState->getNumMPMMatls();
     delt_vartype delT;
     old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
-    bool combustion_problem=false;
 
     Material* reactant;
-    int RMI = -99;
     reactant = d_sharedState->getMaterialByName("reactant");
+
+    /*
+    bool combustion_problem=false;
+    int RMI = -99;
     if(reactant != 0){
       RMI = reactant->getDWIndex();
       combustion_problem=true;
     }
+    */
+
     double move_particles=1.;
     if(!flags->d_doGridReset){
       move_particles=0.;
     }    
+
     for(int m = 0; m < numMPMMatls; m++){
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
       int dwi = mpm_matl->getDWIndex();
@@ -2759,10 +2764,13 @@ void FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
       double Cp=mpm_matl->getSpecificHeat();
       double rho_init=mpm_matl->getInitialDensity();
+
+      /*
       double rho_frac_min = 0.;
       if(m == RMI){
         rho_frac_min = .1;
       }
+      */
 
       // Loop over particles
       for(ParticleSubset::iterator iter = pset->begin();

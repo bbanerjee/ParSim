@@ -1050,7 +1050,7 @@ UofU_MPM::computeParticleBodyForce(const ProcessorGroup*,
   Uintah::Point rotation_center = d_flags->d_coord_rotation_center;
   Uintah::Vector rotation_axis = d_flags->d_coord_rotation_axis;
   double rotation_speed = d_flags->d_coord_rotation_speed;
-  Uintah::Point body_ref_point = d_flags->d_coord_rotation_body_ref_point;
+  //Uintah::Point body_ref_point = d_flags->d_coord_rotation_body_ref_point;
 
   // Compute angular velocity vector (omega)
   Uintah::Vector omega = rotation_axis * rotation_speed;
@@ -2400,10 +2400,10 @@ UofU_MPM::setPrescribedMotion(const ProcessorGroup*, const PatchSubset* patches,
         // Check to see we do not exceed bounds
         int count = 0;
         auto t_upper_iter_copy = t_upper_iter;
-        auto t_upper_index_copy = t_upper_index;
+        //auto t_upper_index_copy = t_upper_index;
         while (++t_upper_iter_copy != d_prescribedTimes.end()) {
-          t_upper_index_copy = t_upper_iter_copy - d_prescribedTimes.begin();
           ++count;
+          // t_upper_index_copy = t_upper_iter_copy - d_prescribedTimes.begin();
           // std::cout << "t_upper_index_copy = " << t_upper_index_copy << "
           // count = " << count << "\n";
           if (count > 1)
@@ -2525,7 +2525,7 @@ UofU_MPM::checkGridVelocity(const ProcessorGroup*,
   for (auto patch : *patches) {
 
     Vector dx = patch->dCell();
-    Vector oodx = {1./dx.x(), 1./dx.y(), 1./dx.z()};
+    //Vector oodx = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
     auto interpolator = d_flags->d_interpolator->clone(patch);
     auto num_influence_nodes = interpolator->size();
