@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -137,9 +137,6 @@ MPMLabel::MPMLabel()
   pVolumeMidLabel = VarLabel::create( "p.volumeMid",
 			ParticleVariable<double>::getTypeDescription());
 
-  pVolumeDeformedLabel = VarLabel::create( "p.volumedeformed",
-			ParticleVariable<double>::getTypeDescription());
-  
   pMassLabel = VarLabel::create( "p.mass",
 			ParticleVariable<double>::getTypeDescription() );
   
@@ -776,7 +773,6 @@ MPMLabel::~MPMLabel()
 {
   VarLabel::destroy(heatRate_CCLabel);
   //non PermanentParticleState
-  VarLabel::destroy(pVolumeDeformedLabel);
   VarLabel::destroy(pTemperatureGradientLabel);
   VarLabel::destroy(pTempCurrentLabel); // for thermal stress
   VarLabel::destroy(pXXLabel);

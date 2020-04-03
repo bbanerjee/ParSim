@@ -246,7 +246,6 @@ DeformationGradientComputer::addComputesAndRequiresImplicit(Task* task,
   task->computes(lb->pDispGradLabel_preReloc,           matlset);
   task->computes(lb->pDefGradLabel_preReloc,            matlset);
   task->computes(lb->pVolumeLabel_preReloc,             matlset);
-
 }
 
 void
