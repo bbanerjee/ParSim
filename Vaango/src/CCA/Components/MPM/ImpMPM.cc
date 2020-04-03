@@ -164,7 +164,6 @@ ImpMPM::problemSetup(const ProblemSpecP& prob_spec,
 {
   cout_doing << " Doing ImpMPM::problemSetup " << endl;
   d_sharedState = sharedState;
-  std::cout << "problemSetup: Shared state = " << d_sharedState << "\n";
   dynamic_cast<Scheduler*>(getPort("scheduler"))->setPositionVar(lb->pXLabel);
   
   Output* dataArchiver = dynamic_cast<Output*>(getPort("output"));
@@ -2418,8 +2417,6 @@ ImpMPM::scheduleIterate(SchedulerP& sched,
 
   task->setType(Task::OncePerProc);
   sched->addTask(task, patches, d_sharedState->allMaterials());
-
-  std::cout << "scheduleIterate: Shared state = " << d_sharedState << "\n";
 }
 
 void 
@@ -2437,8 +2434,6 @@ ImpMPM::iterate(const ProcessorGroup*,
 
   GridP grid = level->getGrid();
 
-  std::cout << "Updating sub scheduler: " << d_subsched << "\n";
-  std::cout << "Iterate: Shared state = " << d_sharedState << "\n";
   d_subsched->setParentDWs(old_dw, new_dw);
   d_subsched->setSimulationState(d_sharedState);
   d_subsched->advanceDataWarehouse(grid);
@@ -2450,7 +2445,7 @@ ImpMPM::iterate(const ProcessorGroup*,
     d_subsched->initialize(numOldDW, numNewDW);
     
     // This task only zeros out the stiffness matrix it doesn't free any memory.
-    scheduleDestroyMatrix(           d_subsched,d_perproc_patches,matls,true);
+    scheduleDestroyMatrix(           d_subsched, d_perproc_patches, matls, true);
     
     if (flags->d_doMechanics) {
       scheduleComputeDeformationGradient(d_subsched, d_perproc_patches, matls, true);
@@ -2461,9 +2456,9 @@ ImpMPM::iterate(const ProcessorGroup*,
       scheduleSolveForDuCG(              d_subsched, d_perproc_patches, matls);
     }
     
-    scheduleGetDisplacementIncrement(d_subsched,      d_perproc_patches,matls);
-    scheduleUpdateGridKinematics(    d_subsched,      d_perproc_patches,matls);
-    scheduleCheckConvergence(        d_subsched,level,d_perproc_patches,matls);
+    scheduleGetDisplacementIncrement(d_subsched,        d_perproc_patches, matls);
+    scheduleUpdateGridKinematics(    d_subsched,        d_perproc_patches, matls);
+    scheduleCheckConvergence(        d_subsched, level, d_perproc_patches, matls);
     
     d_subsched->compile();
     d_recompileSubsched = false;  
@@ -2495,7 +2490,6 @@ ImpMPM::iterate(const ProcessorGroup*,
       delt_vartype dt;
       old_dw->get(dt, d_sharedState->get_delt_label(), patch->getLevel());
 
-      std::cout << "Material: " << m << " Shared state = " << d_sharedState << "\n";
       subsched_new_dw->put(sum_vartype(0.0), lb->dispIncQNorm0);
       subsched_new_dw->put(sum_vartype(0.0), lb->dispIncNormMax);
 
@@ -2645,6 +2639,9 @@ ImpMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
   Task* t = scinew Task("ImpMPM::computeDeformationGradient",
                         this, &ImpMPM::computeDeformationGradient, recursion);
 
+  std::cout << "OldDW = " << Task::OldDW << __FILE__ << __LINE__ << "\n";
+  std::cout << "ParentOldDW = " << Task::ParentOldDW << __FILE__ << __LINE__ << "\n";
+  //t->requires(Task::ParentOldDW, d_sharedState->get_delt_label());
   int numMatls = d_sharedState->getNumMPMMatls();
   for(int m = 0; m < numMatls; m++){
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
@@ -2678,7 +2675,7 @@ ImpMPM::scheduleComputeStressTensor(SchedulerP& sched,
   Task* t = scinew Task("ImpMPM::computeStressTensor",
                     this, &ImpMPM::computeStressTensorImplicit, recursion);
 
-  t->requires(Task::ParentOldDW,d_sharedState->get_delt_label());
+  t->requires(Task::ParentOldDW, d_sharedState->get_delt_label());
   int numMatls = d_sharedState->getNumMPMMatls();
   for(int m = 0; m < numMatls; m++){
     MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);

@@ -1099,18 +1099,16 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
     parent_old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
     parent_old_dw->get(pBeBar, bElBarLabel, pset);
 
-    new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVolume_new,  lb->pVolumeLabel_preReloc,  pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
     new_dw->allocateAndPut(pStress, lb->pStressLabel_preReloc, pset);
     new_dw->allocateTemporary(pBeBar_new, pset);
 
-    ParticleSubset::iterator iter = pset->begin();
 
     double volold = 0.0, volnew = 0.0;
-
     if (matl->getIsRigid()) { // Rigid test
-      for (int idx : *pset) {
+      for (auto idx : *pset) {
         pStress[idx] = Matrix3(0.0);
       }
     } else {
@@ -1118,8 +1116,7 @@ UCNH::computeStressTensorImplicit(const PatchSubset* patches,
       vector<IntVector> ni(interpolator->size());
       vector<Vector> d_S(interpolator->size());
 
-      for (iter = pset->begin(); iter != pset->end(); iter++) {
-        particleIndex idx = *iter;
+      for (auto idx : *pset) {
 
         // Compute the displacement gradient and B matrices
         if (d_usePlasticity) {

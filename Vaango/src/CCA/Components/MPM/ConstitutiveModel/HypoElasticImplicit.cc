@@ -98,8 +98,8 @@ HypoElasticImplicit::initializeCMData(const Patch* patch,
   ParticleVariable<Matrix3> pstress;
   new_dw->allocateAndPut(pstress, lb->pStressLabel, pset);
 
-  for (int& iter : *pset) {
-    pstress[iter] = zero;
+  for (auto idx : *pset) {
+    pstress[idx] = zero;
   }
 }
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -70,7 +70,7 @@ using namespace Uintah;
 
 // Debug: Used to sync cerr so it is readable (when output by
 // multiple threads at the same time)  From sus.cc:
-extern Uintah::Mutex       cerrLock;
+extern Uintah::Mutex cerrLock;
 extern DebugStream mixedDebug;
 
 static DebugStream dbg("SchedulerCommon", false);
@@ -114,11 +114,14 @@ SchedulerCommon::~SchedulerCommon()
     delete d_memlogfile;
 
   // list of vars used for AMR regridding
-  for (unsigned i = 0; i < d_label_matls.size(); i++)
-    for ( label_matl_map::iterator iter = d_label_matls[i].begin(); iter != d_label_matls[i].end(); iter++)
-      if (iter->second->removeReference())
-        delete iter->second;
-  
+  for (auto label_matl_maps : d_label_matls) {
+    for (auto& map : label_matl_maps) {
+      if (map.second->removeReference()) {
+        delete map.second;
+      }
+    }
+  }
+
   for (unsigned i = 0; i < d_graphs.size(); i++) {
     delete d_graphs[i];
   }
