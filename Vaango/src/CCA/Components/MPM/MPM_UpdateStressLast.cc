@@ -240,10 +240,9 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     delt_vartype delT;
     old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
 
+    /*
     Material* reactant;
     reactant = d_sharedState->getMaterialByName("reactant");
-
-    /*
     bool combustion_problem=false;
     int RMI = -99;
     if(reactant != 0){

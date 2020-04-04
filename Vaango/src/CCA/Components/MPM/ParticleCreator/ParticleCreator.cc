@@ -849,6 +849,9 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
     particle_state_preReloc.push_back(d_lb->pLoadCurveIDLabel_preReloc);
   }
 
+  particle_state.push_back(d_lb->pDispGradLabel);
+  particle_state_preReloc.push_back(d_lb->pDispGradLabel_preReloc);
+
   particle_state.push_back(d_lb->pVelGradLabel);
   particle_state_preReloc.push_back(d_lb->pVelGradLabel_preReloc);
 

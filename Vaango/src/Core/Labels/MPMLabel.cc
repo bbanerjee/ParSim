@@ -791,8 +791,6 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pDispGradLabel_preReloc);
 
   //PermanentParticleState
-  //VarLabel::destroy(pDeformationMeasureLabel);
-  //VarLabel::destroy(pDeformationMeasureLabel_preReloc);
   VarLabel::destroy(pStressLabel);
   VarLabel::destroy(pStressUnrotatedLabel);
   VarLabel::destroy(pStressLabel_preReloc);

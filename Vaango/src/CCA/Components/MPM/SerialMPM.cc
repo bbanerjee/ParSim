@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2019 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -1433,7 +1433,7 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
   Uintah::Point rotation_center = flags->d_coord_rotation_center;
   Uintah::Vector rotation_axis = flags->d_coord_rotation_axis;
   double rotation_speed = flags->d_coord_rotation_speed;
-  Uintah::Point body_ref_point = flags->d_coord_rotation_body_ref_point;
+  //Uintah::Point body_ref_point = flags->d_coord_rotation_body_ref_point;
 
   // Compute angular velocity vector (omega)
   Uintah::Vector omega = rotation_axis*rotation_speed;
@@ -5038,15 +5038,15 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     int numMPMMatls=d_sharedState->getNumMPMMatls();
     delt_vartype delT;
     old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
-    bool combustion_problem=false;
+    //bool combustion_problem=false;
 
-    Material* reactant;
-    int RMI = -99;
-    reactant = d_sharedState->getMaterialByName("reactant");
-    if(reactant != 0){
-      RMI = reactant->getDWIndex();
-      combustion_problem=true;
-    }
+    //Material* reactant;
+    //int RMI = -99;
+    //reactant = d_sharedState->getMaterialByName("reactant");
+    //if(reactant != 0){
+    //  RMI = reactant->getDWIndex();
+    //  combustion_problem=true;
+    //}
     double move_particles=1.;
     if(!flags->d_doGridReset){
       move_particles=0.;
@@ -5148,10 +5148,13 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
       double Cp = mpm_matl->getSpecificHeat();
       double rho_init = mpm_matl->getInitialDensity();
+
       double rho_frac_min = 0.;
+      /*
       if(m == RMI){
         rho_frac_min = .1;
       }
+      */
 
       // Loop over particles
       for (auto idx : *pset) {
@@ -5824,15 +5827,15 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
     int numMPMMatls=d_sharedState->getNumMPMMatls();
     delt_vartype delT;
     old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
-    bool combustion_problem=false;
+    //bool combustion_problem=false;
 
-    Material* reactant;
-    int RMI = -99;
-    reactant = d_sharedState->getMaterialByName("reactant");
-    if(reactant != 0){
-      RMI = reactant->getDWIndex();
-      combustion_problem=true;
-    }
+    //Material* reactant;
+    //int RMI = -99;
+    //reactant = d_sharedState->getMaterialByName("reactant");
+    //if(reactant != 0){
+      //RMI = reactant->getDWIndex();
+      //combustion_problem=true;
+    //}
 
     for(int m = 0; m < numMPMMatls; m++){
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
@@ -5908,10 +5911,13 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
 
       double Cp=mpm_matl->getSpecificHeat();
       double rho_init=mpm_matl->getInitialDensity();
+
       double rho_frac_min = 0.;
+      /*
       if(m == RMI){
         rho_frac_min = .1;
       }
+      */
 
       // Loop over particles
       for(ParticleSubset::iterator iter = pset->begin();

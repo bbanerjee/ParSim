@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2018-2020 Parresia Research Limited, NZ
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -366,6 +366,7 @@ ImpMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   t->computes(lb->pSizeLabel);
   t->computes(lb->pParticleIDLabel);
   t->computes(lb->pDefGradLabel);
+  t->computes(lb->pDispGradLabel);
   t->computes(lb->pStressLabel);
   t->computes(lb->pRefinedLabel);
   t->computes(lb->pCellNAPIDLabel);
@@ -2520,16 +2521,18 @@ ImpMPM::iterate(const ProcessorGroup*,
 
   subsched_new_dw->finalize();
   d_subsched->advanceDataWarehouse(grid);
-
-  auto subsched_old_dw = d_subsched->get_dw(2);
-  subsched_new_dw = d_subsched->get_dw(3);
-  std::cout << "after advance: subsched: old_dw = " << subsched_old_dw << "\n";
-  std::cout << "after advance: subsched: new_dw = " << subsched_new_dw << "\n";
+  d_subsched->setInitTimestep(false);
 
   d_numIterations = 0;
   while (!(dispInc && dispIncQ)) {
     proc0cout << "    Beginning Iteration = " << count << "\n";
     
+    auto subsched_old_dw = d_subsched->get_dw(2);
+    subsched_new_dw = d_subsched->get_dw(3);
+    //std::cout << "subsched: parent_old_dw = " << d_subsched->get_dw(0) << "\n";
+    //std::cout << "subsched: parent_new_dw = " << d_subsched->get_dw(1) << "\n";
+    //std::cout << "subsched: old_dw = " << d_subsched->get_dw(2) << "\n";
+    //std::cout << "subsched: new_dw = " << d_subsched->get_dw(3) << "\n";
     count++;
     subsched_old_dw->setScrubbing(DataWarehouse::ScrubComplete);
     subsched_new_dw->setScrubbing(DataWarehouse::ScrubNone);
@@ -2596,6 +2599,7 @@ ImpMPM::iterate(const ProcessorGroup*,
   d_numIterations = count;
 
   // Move the particle data from subscheduler to scheduler.
+  auto subsched_old_dw = d_subsched->get_dw(2);
   for (int p = 0; p < patches->size();p++) {
     const Patch* patch = patches->get(p);
     if (cout_doing.active()) {
@@ -2663,7 +2667,7 @@ ImpMPM::computeDeformationGradient(const ProcessorGroup*,
 {
   printTask(patches, patches->get(0), cout_doing,
             "Doing ImpMPM::computeDeformationGradient with recursion");
-  d_defGradComputer->computeDeformationGradient(patches, old_dw, new_dw);
+  d_defGradComputer->computeDeformationGradient(patches, old_dw, new_dw, recursion);
 }
 
 void 
@@ -3524,10 +3528,11 @@ ImpMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->requires(Task::OldDW, lb->pSizeLabel,             Ghost::None);
 
   t->requires(Task::NewDW, lb->pVolumeLabel_preReloc,  Ghost::None);
+  t->requires(Task::NewDW, lb->pDefGradLabel_preReloc, Ghost::None);
+
   t->requires(Task::NewDW, lb->gAccelerationLabel,     Ghost::AroundCells,1);
   t->requires(Task::NewDW, lb->dispNewLabel,           Ghost::AroundCells,1);
   t->requires(Task::NewDW, lb->gTemperatureRateLabel, one_matl, Ghost::AroundCells, 1);
-  t->requires(Task::NewDW, lb->pDefGradLabel_preReloc, Ghost::None);
 
   t->computes(lb->pVelocityLabel_preReloc);
   t->computes(lb->pAccelerationLabel_preReloc);
@@ -3535,7 +3540,6 @@ ImpMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->computes(lb->pXXLabel);
   t->computes(lb->pParticleIDLabel_preReloc);
   t->computes(lb->pMassLabel_preReloc);
-  t->computes(lb->pVolumeLabel_preReloc);
   t->computes(lb->pTemperatureLabel_preReloc);
   t->computes(lb->pDispLabel_preReloc);
   t->computes(lb->pSizeLabel_preReloc);
@@ -3604,11 +3608,11 @@ ImpMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       double Cp = mpm_matl->getSpecificHeat();
 
       constParticleVariable<Point>   pX;
-      constParticleVariable<double>  pMass, pVolume, pTemp, pq;
+      constParticleVariable<double>  pMass, pVolume_new, pTemp, pq;
       constParticleVariable<Vector>  pVelocity, pAcceleration, pDisp;
       constParticleVariable<Matrix3> pSize, pDefGrad;
 
-      ParticleVariable<double>  pMass_new, pVolume_new, pTemp_new, pq_new;
+      ParticleVariable<double>  pMass_new, pTemp_new, pq_new;
       ParticleVariable<double>  pTempPre_new;
       ParticleVariable<Point>   pX_new, pXx;
       ParticleVariable<Vector>  pVelocity_new, pAcceleration_new, pDisp_new;
@@ -3621,16 +3625,15 @@ ImpMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     
       old_dw->get(pX,                    lb->pXLabel,                    pset);
       old_dw->get(pMass,                 lb->pMassLabel,                 pset);
-      new_dw->get(pVolume,               lb->pVolumeLabel_preReloc,      pset);
       old_dw->get(pVelocity,             lb->pVelocityLabel,             pset);
       old_dw->get(pAcceleration,         lb->pAccelerationLabel,         pset);
       old_dw->get(pTemp,                 lb->pTemperatureLabel,          pset);
       old_dw->get(pDisp,                 lb->pDispLabel,                 pset);
       old_dw->get(pSize,                 lb->pSizeLabel,                 pset);
+      new_dw->get(pVolume_new,           lb->pVolumeLabel_preReloc,      pset);
       new_dw->get(pDefGrad,              lb->pDefGradLabel_preReloc,     pset);
 
       new_dw->allocateAndPut(pMass_new,         lb->pMassLabel_preReloc,         pset);
-      new_dw->allocateAndPut(pVolume_new,       lb->pVolumeLabel_preReloc,       pset);
       new_dw->allocateAndPut(pTemp_new,         lb->pTemperatureLabel_preReloc,  pset);
       new_dw->allocateAndPut(pTempPre_new,      lb->pTempPreviousLabel_preReloc, pset);
       new_dw->allocateAndPut(pVelocity_new,     lb->pVelocityLabel_preReloc,     pset);
@@ -3678,7 +3681,6 @@ ImpMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
         pAcceleration_new[idx] = acc;
         pMass_new[idx]         = pMass[idx];
-        pVolume_new[idx]       = pVolume[idx];
         pTemp_new[idx]         = pTemp[idx] + tempRate*delT;
 
         if (pMass_new[idx] <= 0.0) {
@@ -3689,7 +3691,7 @@ ImpMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
         thermal_energy += pTemp_new[idx] * pMass[idx] * Cp;
         // Thermal energy due to temperature flux (spatially varying part).
-        //thermal_energy2 += potential_energy* pVolume[idx];
+        //thermal_energy2 += potential_energy* pVolume_new[idx];
         ke += .5*pMass[idx] * pVelocity_new[idx].length2();
         CMX = CMX + (pX_new[idx] * pMass[idx]).asVector();
         totalMom += pVelocity_new[idx] * pMass[idx];
