@@ -365,9 +365,9 @@ ImpMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   t->computes(lb->pTempPreviousLabel);
   t->computes(lb->pSizeLabel);
   t->computes(lb->pParticleIDLabel);
-  t->computes(lb->pVelGradLabel);
-  t->computes(lb->pDefGradLabel);
-  t->computes(lb->pDispGradLabel);
+  //t->computes(lb->pDefGradLabel);
+  //t->computes(lb->pVelGradLabel);
+  //t->computes(lb->pDispGradLabel);
   t->computes(lb->pStressLabel);
   t->computes(lb->pRefinedLabel);
   t->computes(lb->pCellNAPIDLabel);
