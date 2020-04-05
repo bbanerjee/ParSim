@@ -68,9 +68,6 @@ ImplicitParticleCreator::initializeParticle(const Patch* patch,
   ParticleCreator::initializeParticle(patch,obj,matl,p,cell_idx,i,cellNAPI, pvars);
 
   pvars.pacceleration[i] = Vector(0.,0.,0.);
-#ifdef HEAT
-  pvars.pExternalHeatFlux[i] = 0.;
-#endif
 }
 
 
@@ -86,10 +83,6 @@ ImplicitParticleCreator::allocateVariables(particleIndex numParticles,
                                                               new_dw, pvars);
 
   new_dw->allocateAndPut(pvars.pacceleration, d_lb->pAccelerationLabel, subset);
-#ifdef HEAT
-  new_dw->allocateAndPut(pvars.pExternalHeatFlux, d_lb->pExternalHeatFluxLabel, 
-                         subset);
-#endif
 
   return subset;
 
@@ -101,11 +94,6 @@ ImplicitParticleCreator::registerPermanentParticleState(MPMMaterial* /*matl*/)
 {
   particle_state.push_back(d_lb->pAccelerationLabel);
   particle_state_preReloc.push_back(d_lb->pAccelerationLabel_preReloc);
-
-#ifdef HEAT
-  particle_state.push_back(d_lb->pExternalHeatFluxLabel);
-  particle_state_preReloc.push_back(d_lb->pExternalHeatFluxLabel_preReloc);
-#endif
 
 #if 0
   vector<const VarLabel*>::iterator r3,r4;

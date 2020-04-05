@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -117,15 +118,15 @@ MembraneParticleCreator::createParticles(MPMMaterial* matl,
     SphereMembraneGeometryPiece* SMGP =
       dynamic_cast<SphereMembraneGeometryPiece*>(piece.get_rep());
     if(SMGP){
-      int numP = SMGP->createParticles(patch, pvars.position, pvars.pvolume,
-                                       pvars.pTang1, pvars.pTang2, pvars.pNorm, pvars.psize, start); // CPTI
+      int numP = SMGP->createParticles(patch, pvars.position, pvars.pVolume,
+                                       pvars.pTang1, pvars.pTang2, pvars.pNorm, pvars.pSize, start); // CPTI
       for(int idx=0;idx<(start+numP);idx++){
-        pvars.pvelocity[start+idx]=(*obj)->getInitialData_Vector("velocity");
-        pvars.ptemperature[start+idx]=(*obj)->getInitialData_double("temperature");
-        pvars.psp_vol[start+idx]=1.0/matl->getInitialDensity();
-        pvars.pmass[start+idx]=matl->getInitialDensity() * pvars.pvolume[start+idx];
+        pvars.pVelocity[start+idx]=(*obj)->getInitialData_Vector("velocity");
+        pvars.pTemperature[start+idx]=(*obj)->getInitialData_double("temperature");
+        pvars.pSpecificVolume[start+idx]=1.0/matl->getInitialDensity();
+        pvars.pMass[start+idx]=matl->getInitialDensity() * pvars.pVolume[start+idx];
         // Determine if particle is on the surface
-        pvars.pexternalforce[start+idx]=Vector(0,0,0); // for now
+        pvars.pExternalForce[start+idx]=Vector(0,0,0); // for now
         IntVector cell_idx;
         if(patch->findCell(pvars.position[start+idx],cell_idx)){
           long64 cellID = ((long64)cell_idx.x() << 16) |
@@ -134,7 +135,7 @@ MembraneParticleCreator::createParticles(MPMMaterial* matl,
           short int& myCellNAPID = cellNAPID[cell_idx];
           ASSERT(myCellNAPID < 0x7fff);
           myCellNAPID++;
-          pvars.pparticleID[start+idx] = cellID | (long64)myCellNAPID;
+          pvars.pParticleID[start+idx] = cellID | (long64)myCellNAPID;
         }
         else{
           cerr << "cellID is not right" << endl;
@@ -160,26 +161,26 @@ MembraneParticleCreator::createParticles(MPMMaterial* matl,
                 ((long64)cell_idx.z() << 48);
               if(piece->inside(p)){
                 pvars.position[start+count]=p;
-                pvars.pvolume[start+count]=dxpp.x()*dxpp.y()*dxpp.z();
-                pvars.pvelocity[start+count]=(*obj)->getInitialData_Vector("velocity");
-                pvars.ptemperature[start+count]=(*obj)->getInitialData_double("temperature");
-                pvars.psp_vol[start+count]     =1.0/matl->getInitialDensity();
+                pvars.pVolume[start+count]=dxpp.x()*dxpp.y()*dxpp.z();
+                pvars.pVelocity[start+count]=(*obj)->getInitialData_Vector("velocity");
+                pvars.pTemperature[start+count]=(*obj)->getInitialData_double("temperature");
+                pvars.pSpecificVolume[start+count]     =1.0/matl->getInitialDensity();
                 // Calculate particle mass
-                double partMass = matl->getInitialDensity()*pvars.pvolume[start+count];
-                pvars.pmass[start+count] = partMass;
+                double partMass = matl->getInitialDensity()*pvars.pVolume[start+count];
+                pvars.pMass[start+count] = partMass;
 
                 // Apply the force BC if applicable
                 Vector pExtForce(0,0,0);
                 ParticleCreator::applyForceBC(dxpp, p, partMass, pExtForce);
-                pvars.pexternalforce[start+count] = pExtForce;
+                pvars.pExternalForce[start+count] = pExtForce;
 
                 // Determine if particle is on the surface
-                pvars.psize[start+count] = size;
+                pvars.pSize[start+count] = size;
                 pvars.pTang1[start+count] = Vector(1,0,0);
                 pvars.pTang2[start+count] = Vector(0,0,1);
                 pvars.pNorm[start+count]  = Vector(0,1,0);
                 short int& myCellNAPID = cellNAPID[cell_idx];
-                pvars.pparticleID[start+count] = cellID | (long64)myCellNAPID;
+                pvars.pParticleID[start+count] = cellID | (long64)myCellNAPID;
                 ASSERT(myCellNAPID < 0x7fff);
                 myCellNAPID++;
                 

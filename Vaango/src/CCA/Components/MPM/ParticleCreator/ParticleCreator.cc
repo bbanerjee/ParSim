@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -41,7 +42,6 @@
 #include <CCA/Components/MPM/PhysicalBC/VelocityBC.h>
 #include <CCA/Components/MPM/PhysicalBC/MomentBC.h>
 #include <CCA/Components/MPM/PhysicalBC/HeatFluxBC.h>
-#include <CCA/Components/MPM/PhysicalBC/ArchesHeatFluxBC.h>
 #include <CCA/Components/MPM/PhysicalBC/CrackBC.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
@@ -115,18 +115,18 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     vector<double>* temperatures  = 0;
     vector<double>* colors        = 0;
     vector<Vector>* pforces       = 0;
-    vector<Vector>* pfiberdirs    = 0;
+    vector<Vector>* pFiberDirs    = 0;
     vector<Vector>* pvelocities   = 0;    // gcd adds and new change name
-    vector<Matrix3>* psizes       = 0;
+    vector<Matrix3>* pSizes       = 0;
     if (sgp){
 
       proc0cout << "This is a SmoothGeomPiece with #particles = " << numParticles << std::endl;
       volumes      = sgp->getVolume();
       temperatures = sgp->getTemperature();
       pforces      = sgp->getForces();
-      pfiberdirs   = sgp->getFiberDirs();
+      pFiberDirs   = sgp->getFiberDirs();
       pvelocities  = sgp->getVelocity();  // gcd adds and new change name
-      psizes       = sgp->getSize();
+      pSizes       = sgp->getSize();
 
       if(d_with_color){
         colors      = sgp->getColors();
@@ -155,8 +155,8 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 
     // For getting particle fiber directions (if they exist)
     vector<Vector>::const_iterator fiberiter;
-    if (pfiberdirs) {
-      if (!pfiberdirs->empty()) fiberiter = vars.d_object_fibers[*obj].begin();
+    if (pFiberDirs) {
+      if (!pFiberDirs->empty()) fiberiter = vars.d_object_fibers[*obj].begin();
     }
     
     // For getting particle velocities (if they exist)   // gcd adds
@@ -168,8 +168,8 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     
     // For getting particle sizes (if they exist)
     vector<Matrix3>::const_iterator sizeiter;
-    if (psizes) {
-      if (!psizes->empty()) sizeiter = vars.d_object_size[*obj].begin();
+    if (pSizes) {
+      if (!pSizes->empty()) sizeiter = vars.d_object_size[*obj].begin();
       if (d_flags->d_AMR) {
         cerr << "WARNING:  The particle size when using smooth or file\n"; 
         cerr << "geom pieces needs some work when used with AMR" << endl;
@@ -201,89 +201,89 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 
       if (temperatures) {
         if (!temperatures->empty()) {
-          pvars.ptemperature[pidx] = *tempiter;
+          pvars.pTemperature[pidx] = *tempiter;
           ++tempiter;
         }
       }
 
       if (pforces) {                           
         if (!pforces->empty()) {
-          pvars.pexternalforce[pidx] = *forceiter;
+          pvars.pExternalForce[pidx] = *forceiter;
           ++forceiter;
         }
       }
 
       if (pvelocities) {                           // gcd adds and change name 
         if (!pvelocities->empty()) {               // and change name
-          pvars.pvelocity[pidx] = *velocityiter;
+          pvars.pVelocity[pidx] = *velocityiter;
           ++velocityiter;
         }
       }                                         // end gcd adds
 
-      if (pfiberdirs) {
-        if (!pfiberdirs->empty()) {
-          pvars.pfiberdir[pidx] = *fiberiter;
+      if (pFiberDirs) {
+        if (!pFiberDirs->empty()) {
+          pvars.pFiberDir[pidx] = *fiberiter;
           ++fiberiter;
         }
       }
       
       if (volumes) {
         if (!volumes->empty()) {
-          pvars.pvolume[pidx] = *voliter;
-          pvars.pmass[pidx] = matl->getInitialDensity()*pvars.pvolume[pidx];
+          pvars.pVolume[pidx] = *voliter;
+          pvars.pMass[pidx] = matl->getInitialDensity()*pvars.pVolume[pidx];
           ++voliter;
         }
       }
 
       // CPDI
-      if (psizes && (d_flags->d_interpolator_type=="cpdi")) {
+      if (pSizes && (d_flags->d_interpolator_type=="cpdi")) {
 
-        // Read psize from file
-        if (!psizes->empty()) {
+        // Read pSize from file
+        if (!pSizes->empty()) {
           Vector dxcc = patch->dCell(); 
-          pvars.psize[pidx] = *sizeiter;
+          pvars.pSize[pidx] = *sizeiter;
           if (volumes->empty()) {
-            // Calculate CPDI hexahedron volume from psize 
+            // Calculate CPDI hexahedron volume from pSize 
             // (if volume not passed from FileGeometryPiece)
-            pvars.pvolume[pidx] = std::abs(pvars.psize[pidx].Determinant());
-            pvars.pmass[pidx] = matl->getInitialDensity()*pvars.pvolume[pidx];
+            pvars.pVolume[pidx] = std::abs(pvars.pSize[pidx].Determinant());
+            pvars.pMass[pidx] = matl->getInitialDensity()*pvars.pVolume[pidx];
           }
 
-          // Modify psize (CPDI R-vectors) to be normalized by cell spacing
+          // Modify pSize (CPDI R-vectors) to be normalized by cell spacing
           Matrix3 size(1./((double) dxcc.x()),0.,0.,
                        0.,1./((double) dxcc.y()),0.,
                        0.,0.,1./((double) dxcc.z()));
-          pvars.psize[pidx]= pvars.psize[pidx]*size;
+          pvars.pSize[pidx]= pvars.pSize[pidx]*size;
           ++sizeiter;
         }
       }
 
       // CPTI
-      if (psizes && d_useCPTI) {
+      if (pSizes && d_useCPTI) {
 
-        // Read psize from file
-        if (!psizes->empty()) {
+        // Read pSize from file
+        if (!pSizes->empty()) {
           Vector dxcc = patch->dCell(); 
-          pvars.psize[pidx] = *sizeiter;
+          pvars.pSize[pidx] = *sizeiter;
           if (volumes->empty()) {
-            // Calculate CPTI tetrahedron volume from psize 
+            // Calculate CPTI tetrahedron volume from pSize 
             // (if volume not passed from FileGeometryPiece)
-            pvars.pvolume[pidx] = std::abs(pvars.psize[pidx].Determinant()/6.0);
-            pvars.pmass[pidx] = matl->getInitialDensity()*pvars.pvolume[pidx];
+            pvars.pVolume[pidx] = std::abs(pvars.pSize[pidx].Determinant()/6.0);
+            pvars.pMass[pidx] = matl->getInitialDensity()*pvars.pVolume[pidx];
           }
 
-          // Modify psize (CPTI R-vectors) to be normalized by cell spacing
+          // Modify pSize (CPTI R-vectors) to be normalized by cell spacing
           Matrix3 size(1./((double) dxcc.x()),0.,0.,
                        0.,1./((double) dxcc.y()),0.,
                        0.,0.,1./((double) dxcc.z()));
-          pvars.psize[pidx]= pvars.psize[pidx]*size;
+          pvars.pSize[pidx]= pvars.pSize[pidx]*size;
           ++sizeiter;
         }
       }
 
       if (colors) {
         if (!colors->empty()) {
-          pvars.pcolor[pidx] = *coloriter;
+          pvars.pColor[pidx] = *coloriter;
           ++coloriter;
         }
       }
@@ -347,13 +347,6 @@ int ParticleCreator::getLoadCurveID(const Point& pp, const Vector& dxpp)
         ret = hfbc->loadCurveID(); 
       }
     }
-    else if (bcs_type == "ArchesHeatFlux") {      
-      ArchesHeatFluxBC* hfbc = 
-        dynamic_cast<ArchesHeatFluxBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
-      if (hfbc->flagMaterialPoint(pp, dxpp)) {
-        ret = hfbc->loadCurveID(); 
-      }
-    }
   }
   return ret;
 }
@@ -381,11 +374,6 @@ void ParticleCreator::printPhysicalBCs()
     if (bcs_type == "HeatFlux") {
       HeatFluxBC* hfbc = 
         dynamic_cast<HeatFluxBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
-      cerr << *hfbc << endl;
-    }
-    if (bcs_type == "ArchesHeatFlux") {
-      ArchesHeatFluxBC* hfbc = 
-        dynamic_cast<ArchesHeatFluxBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
       cerr << *hfbc << endl;
     }
   }
@@ -429,30 +417,30 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   ParticleSubset* subset = new_dw->createParticleSubset(numParticles,dwi,
                                                         patch);
   new_dw->allocateAndPut(pvars.position,       d_lb->pXLabel,             subset);
-  new_dw->allocateAndPut(pvars.pvelocity,      d_lb->pVelocityLabel,      subset); 
-  new_dw->allocateAndPut(pvars.pexternalforce, d_lb->pExternalForceLabel, subset);
-  new_dw->allocateAndPut(pvars.pmass,          d_lb->pMassLabel,          subset);
-  new_dw->allocateAndPut(pvars.pvolume,        d_lb->pVolumeLabel,        subset);
-  new_dw->allocateAndPut(pvars.ptemperature,   d_lb->pTemperatureLabel,   subset);
-  new_dw->allocateAndPut(pvars.pparticleID,    d_lb->pParticleIDLabel,    subset);
-  new_dw->allocateAndPut(pvars.psize,          d_lb->pSizeLabel,          subset);
-  new_dw->allocateAndPut(pvars.pfiberdir,      d_lb->pFiberDirLabel,      subset); 
+  new_dw->allocateAndPut(pvars.pVelocity,      d_lb->pVelocityLabel,      subset); 
+  new_dw->allocateAndPut(pvars.pExternalForce, d_lb->pExternalForceLabel, subset);
+  new_dw->allocateAndPut(pvars.pMass,          d_lb->pMassLabel,          subset);
+  new_dw->allocateAndPut(pvars.pVolume,        d_lb->pVolumeLabel,        subset);
+  new_dw->allocateAndPut(pvars.pTemperature,   d_lb->pTemperatureLabel,   subset);
+  new_dw->allocateAndPut(pvars.pParticleID,    d_lb->pParticleIDLabel,    subset);
+  new_dw->allocateAndPut(pvars.pSize,          d_lb->pSizeLabel,          subset);
+  new_dw->allocateAndPut(pvars.pFiberDir,      d_lb->pFiberDirLabel,      subset); 
   // for thermal stress
-  new_dw->allocateAndPut(pvars.ptempPrevious,  d_lb->pTempPreviousLabel,  subset); 
-  new_dw->allocateAndPut(pvars.pdisp,          d_lb->pDispLabel,          subset);
+  new_dw->allocateAndPut(pvars.pTempPrevious,  d_lb->pTempPreviousLabel,  subset); 
+  new_dw->allocateAndPut(pvars.pDisp,          d_lb->pDispLabel,          subset);
   
   if (d_useLoadCurves) {
     new_dw->allocateAndPut(pvars.pLoadCurveID, d_lb->pLoadCurveIDLabel,   subset); 
   }
   if(d_with_color){
-     new_dw->allocateAndPut(pvars.pcolor,      d_lb->pColorLabel,         subset);
+     new_dw->allocateAndPut(pvars.pColor,      d_lb->pColorLabel,         subset);
   }
   if(d_artificial_viscosity){
      new_dw->allocateAndPut(pvars.p_q,      d_lb->p_qLabel,            subset);
   }
 
   // For AMR
-  new_dw->allocateAndPut(pvars.prefined,      d_lb->pRefinedLabel,      subset);
+  new_dw->allocateAndPut(pvars.pRefined,      d_lb->pRefinedLabel,      subset);
   if (d_flags->d_AMR) {
      new_dw->allocateAndPut(pvars.pLastLevel, d_lb->pLastLevelLabel,    subset);
   }
@@ -461,9 +449,8 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   new_dw->allocateAndPut(pvars.pBodyForceAcc, d_lb->pBodyForceAccLabel, subset);
   new_dw->allocateAndPut(pvars.pCoriolisImportance, d_lb->pCoriolisImportanceLabel, subset);
 
-  // In Vaango but not in Uintah
-  //new_dw->allocateAndPut(pvars.pDispGrad, d_lb->pDispGradLabel, subset);
-  //new_dw->allocateAndPut(pvars.pdTdt,     d_lb->pdTdtLabel,     subset);
+  // For switching between implicit and explicit
+  new_dw->allocateAndPut(pvars.pExternalHeatFlux, d_lb->pExternalHeatFluxLabel, subset);
 
   return subset;
 }
@@ -615,54 +602,54 @@ ParticleCreator::initializeParticle(const Patch* patch,
                                       0.,                               0.,1.);
 */
 
-  pvars.ptemperature[i] = (*obj)->getInitialData_double("temperature");
+  pvars.pTemperature[i] = (*obj)->getInitialData_double("temperature");
 
 
   // For AMR
   const Level* curLevel = patch->getLevel();
-  pvars.prefined[i]     = curLevel->getIndex();
+  pvars.pRefined[i]     = curLevel->getIndex();
 
   //MMS
   string mms_type = d_flags->d_mms_type;
   if(!mms_type.empty()) {
     MMS MMSObject;
-    MMSObject.initializeParticleForMMS(pvars.position, pvars.pvelocity, pvars.psize,
-                                       pvars.pdisp, pvars.pmass, pvars.pvolume,
+    MMSObject.initializeParticleForMMS(pvars.position, pvars.pVelocity, pvars.pSize,
+                                       pvars.pDisp, pvars.pMass, pvars.pVolume,
                                        p, dxcc, size, patch, d_flags, i);
   }  else {
     pvars.position[i] = p;
      if(d_flags->d_axisymmetric){
       // assume unit radian extent in the circumferential direction
-      pvars.pvolume[i] = p.x()*
+      pvars.pVolume[i] = p.x()*
                    (size(0,0)*size(1,1)-size(0,1)*size(1,0))*dxcc.x()*dxcc.y();
       //std::cout << "dx_cc = " << dxcc << " size = " << size 
-      //          << " x = " << p.x() << " vol = " << pvars.pvolume[i] << "\n";
+      //          << " x = " << p.x() << " vol = " << pvars.pVolume[i] << "\n";
      } else {
      // standard voxel volume
-     pvars.pvolume[i]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
+     pvars.pVolume[i]  = size.Determinant()*dxcc.x()*dxcc.y()*dxcc.z();
     }
 
-    pvars.psize[i]      = size;
-    pvars.pvelocity[i]  = (*obj)->getInitialData_Vector("velocity");
+    pvars.pSize[i]      = size;
+    pvars.pVelocity[i]  = (*obj)->getInitialData_Vector("velocity");
 
     double vol_frac_CC = 1.0;
     try {
      if((*obj)->getInitialData_double("volumeFraction") == -1.0) {    
       vol_frac_CC = 1.0;
-      pvars.pmass[i]      = matl->getInitialDensity()*pvars.pvolume[i];
+      pvars.pMass[i]      = matl->getInitialDensity()*pvars.pVolume[i];
      } else {
       vol_frac_CC = (*obj)->getInitialData_double("volumeFraction");
-      pvars.pmass[i]      = matl->getInitialDensity()*pvars.pvolume[i]*vol_frac_CC;
+      pvars.pMass[i]      = matl->getInitialDensity()*pvars.pVolume[i]*vol_frac_CC;
      }
     } catch (...) {
       vol_frac_CC = 1.0;       
-      pvars.pmass[i]      = matl->getInitialDensity()*pvars.pvolume[i];
+      pvars.pMass[i]      = matl->getInitialDensity()*pvars.pVolume[i];
     }
-    pvars.pdisp[i]        = Vector(0.,0.,0.);
+    pvars.pDisp[i]        = Vector(0.,0.,0.);
   }
   
   if(d_with_color){
-    pvars.pcolor[i] = (*obj)->getInitialData_double("color");
+    pvars.pColor[i] = (*obj)->getInitialData_double("color");
   }
   if(d_artificial_viscosity){
     pvars.p_q[i] = 0.;
@@ -671,13 +658,13 @@ ParticleCreator::initializeParticle(const Patch* patch,
     pvars.pLastLevel[i] = curLevel->getID();
   }
   
-  pvars.ptempPrevious[i]  = pvars.ptemperature[i];
+  pvars.pTempPrevious[i]  = pvars.pTemperature[i];
 
   Vector pExtForce(0,0,0);
-  applyForceBC(dxpp, p, pvars.pmass[i], pExtForce);
+  applyForceBC(dxpp, p, pvars.pMass[i], pExtForce);
   
-  pvars.pexternalforce[i] = pExtForce;
-  pvars.pfiberdir[i]      = matl->getConstitutiveModel()->getInitialFiberDir();
+  pvars.pExternalForce[i] = pExtForce;
+  pvars.pFiberDir[i]      = matl->getConstitutiveModel()->getInitialFiberDir();
 
   // AMR
   if (d_flags->d_AMR) {
@@ -688,9 +675,8 @@ ParticleCreator::initializeParticle(const Patch* patch,
   pvars.pBodyForceAcc[i] = Vector(0.0, 0.0, 0.0); // Init to zero
   pvars.pCoriolisImportance[i] = 0.0;
 
-  // In Vaango but not in Uintah
-  //pvars.pDispGrad[i] = Matrix3(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-  //pvars.pdTdt[i] = 0.0;
+  // For switching between explicit and implicit MPM
+  pvars.pExternalHeatFlux[i] = 0.0;
 
   // Cell ids
   ASSERT(cell_idx.x() <= 0xffff && 
@@ -702,7 +688,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
                   ((long64)cell_idx.z() << 48);
                   
   short int& myCellNAPID = cellNAPID[cell_idx];
-  pvars.pparticleID[i] = (cellID | (long64) myCellNAPID);
+  pvars.pParticleID[i] = (cellID | (long64) myCellNAPID);
   ASSERT(myCellNAPID < 0x7fff);
   myCellNAPID++;
 }
@@ -745,9 +731,9 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
     vector<double>* temps      = sgp->getTemperature();
     vector<double>* colors     = sgp->getColors();
     vector<Vector>* pforces    = sgp->getForces();
-    vector<Vector>* pfiberdirs = sgp->getFiberDirs();
+    vector<Vector>* pFiberDirs = sgp->getFiberDirs();
     vector<Vector>* pvelocities= sgp->getVelocity();
-    vector<Matrix3>* psizes    = sgp->getSize();
+    vector<Matrix3>* pSizes    = sgp->getSize();
     Point p;
     IntVector cell_idx;
     
@@ -769,16 +755,16 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
             Vector pforce = pforces->at(ii); 
             vars.d_object_forces[obj].push_back(pforce);
           }
-          if (!pfiberdirs->empty()) {
-            Vector pfiber = pfiberdirs->at(ii); 
+          if (!pFiberDirs->empty()) {
+            Vector pfiber = pFiberDirs->at(ii); 
             vars.d_object_fibers[obj].push_back(pfiber);
           }
           if (!pvelocities->empty()) {
             Vector pvel = pvelocities->at(ii); 
             vars.d_object_velocity[obj].push_back(pvel);
           }
-          if (!psizes->empty()) {
-            Matrix3 psz = psizes->at(ii); 
+          if (!pSizes->empty()) {
+            Matrix3 psz = pSizes->at(ii); 
             vars.d_object_size[obj].push_back(psz);
           }
           if (!colors->empty()) {
@@ -852,9 +838,6 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
   particle_state.push_back(d_lb->pDispGradLabel);
   particle_state_preReloc.push_back(d_lb->pDispGradLabel_preReloc);
 
-  particle_state.push_back(d_lb->pVelGradLabel);
-  particle_state_preReloc.push_back(d_lb->pVelGradLabel_preReloc);
-
   particle_state.push_back(d_lb->pDefGradLabel);
   particle_state_preReloc.push_back(d_lb->pDefGradLabel_preReloc);
 
@@ -897,13 +880,12 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
   particle_state.push_back(d_lb->pCoriolisImportanceLabel);
   particle_state_preReloc.push_back(d_lb->pCoriolisImportanceLabel_preReloc);
 
-  // In Vaango but not in Uintah
-  //particle_state.push_back(d_lb->pDispGradLabel);
-  //particle_state_preReloc.push_back(d_lb->pDispGradLabel_preReloc);
+  // For switching between implicit and explicit MPM
+  particle_state.push_back(d_lb->pExternalHeatFluxLabel);
+  particle_state.push_back(d_lb->pVelGradLabel);
 
-  //particle_state.push_back(d_lb->pdTdtLabel);
-  //particle_state_preReloc.push_back(d_lb->pdTdtLabel_preReloc);
-
+  particle_state_preReloc.push_back(d_lb->pExternalHeatFluxLabel_preReloc);
+  particle_state_preReloc.push_back(d_lb->pVelGradLabel_preReloc);
 }
 
 int
@@ -983,9 +965,8 @@ void ParticleCreator::allocateVariablesAddRequires(Task* task,
   task->requires(Task::OldDW, d_lb->pBodyForceAccLabel, gn);
   task->requires(Task::OldDW, d_lb->pCoriolisImportanceLabel, gn);
 
-  // In Vaango but not in Uintah
-  //task->requires(Task::OldDW, d_lb->pDispGradLabel, gn);
-  //task->requires(Task::OldDW, d_lb->pdTdtLabel,     gn);
+  // For switching between explicit and implicit MPM
+  task->requires(Task::OldDW, d_lb->pExternalHeatFluxLabel, gn);
 
   d_lock.writeUnlock();
 }
@@ -1021,26 +1002,28 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   constParticleVariable<Vector> o_BodyForceAcc;
   constParticleVariable<double> o_CoriolisImportance;
 
+  constParticleVariable<double>  o_ExternalHeatFlux;
+  constParticleVariable<Matrix3> o_VelGrad;
+
   constParticleVariable<Matrix3> o_DispGrad;
   constParticleVariable<double>  o_dTdt;
   
-  new_dw->allocateTemporary(pvars.pdisp,          addset);
+  new_dw->allocateTemporary(pvars.pDisp,          addset);
   new_dw->allocateTemporary(pvars.position,       addset);
-  new_dw->allocateTemporary(pvars.pvelocity,      addset); 
-  new_dw->allocateTemporary(pvars.pexternalforce, addset);
-  new_dw->allocateTemporary(pvars.pmass,          addset);
-  new_dw->allocateTemporary(pvars.pvolume,        addset);
-  new_dw->allocateTemporary(pvars.ptemperature,   addset);
-  new_dw->allocateTemporary(pvars.pparticleID,    addset);
-  new_dw->allocateTemporary(pvars.psize,          addset);
+  new_dw->allocateTemporary(pvars.pVelocity,      addset); 
+  new_dw->allocateTemporary(pvars.pExternalForce, addset);
+  new_dw->allocateTemporary(pvars.pMass,          addset);
+  new_dw->allocateTemporary(pvars.pVolume,        addset);
+  new_dw->allocateTemporary(pvars.pTemperature,   addset);
+  new_dw->allocateTemporary(pvars.pParticleID,    addset);
+  new_dw->allocateTemporary(pvars.pSize,          addset);
   new_dw->allocateTemporary(pvars.pLoadCurveID,   addset); 
-  new_dw->allocateTemporary(pvars.ptempPrevious,  addset);
+  new_dw->allocateTemporary(pvars.pTempPrevious,  addset);
 
-  new_dw->allocateTemporary(pvars.pBodyForceAcc,  addset);
+  new_dw->allocateTemporary(pvars.pBodyForceAcc,        addset);
   new_dw->allocateTemporary(pvars.pCoriolisImportance,  addset);
 
-  //new_dw->allocateTemporary(pvars.pDispGrad,  addset);
-  //new_dw->allocateTemporary(pvars.pdTdt,     addset);
+  new_dw->allocateTemporary(pvars.pExternalHeatFlux,    addset);
 
   old_dw->get(o_disp,           d_lb->pDispLabel,             delset);
   old_dw->get(o_position,       d_lb->pXLabel,                delset);
@@ -1059,7 +1042,7 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
     old_dw->get(o_loadcurve,    d_lb->pLoadCurveIDLabel,      delset);
   }
   if(d_with_color){
-    new_dw->allocateTemporary(pvars.pcolor,         addset); 
+    new_dw->allocateTemporary(pvars.pColor,         addset); 
     old_dw->get(o_color,        d_lb->pColorLabel,            delset);
   }
   if(d_artificial_viscosity){
@@ -1073,29 +1056,27 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   new_dw->allocateTemporary(pvars.pBodyForceAcc, addset);
   new_dw->allocateTemporary(pvars.pCoriolisImportance, addset);
 
-  // In Vaango but not in Uintah
-  //old_dw->get(o_DispGrad, d_lb->pDispGradLabel, delset);
-  //old_dw->get(o_dTdt,     d_lb->pdTdtLabel,     delset);
-  //new_dw->allocateTemporary(pvars.pDispGrad, addset);
-  //new_dw->allocateTemporary(pvars.pdTdt,     addset);
+  // For switching between explicit and implicit MPM
+  old_dw->get(o_ExternalHeatFlux, d_lb->pExternalHeatFluxLabel, delset);
+  new_dw->allocateTemporary(pvars.pExternalHeatFlux, addset);
 
   n = addset->begin();
   for (o=delset->begin(); o != delset->end(); o++, n++) {
-    pvars.pdisp[*n]         = o_disp[*o];
+    pvars.pDisp[*n]         = o_disp[*o];
     pvars.position[*n]      = o_position[*o];
-    pvars.pvelocity[*n]     = o_velocity[*o];
-    pvars.pexternalforce[*n]= o_external_force[*o];
-    pvars.pmass[*n]         = o_mass[*o];
-    pvars.pvolume[*n]       = o_volume[*o];
-    pvars.ptemperature[*n]  = o_temperature[*o];
-    pvars.pparticleID[*n]   = o_particleID[*o];
-    pvars.psize[*n]         = o_size[*o];
-    pvars.ptempPrevious[*n] = o_tempPrevious[*o];  // for thermal stress
+    pvars.pVelocity[*n]     = o_velocity[*o];
+    pvars.pExternalForce[*n]= o_external_force[*o];
+    pvars.pMass[*n]         = o_mass[*o];
+    pvars.pVolume[*n]       = o_volume[*o];
+    pvars.pTemperature[*n]  = o_temperature[*o];
+    pvars.pParticleID[*n]   = o_particleID[*o];
+    pvars.pSize[*n]         = o_size[*o];
+    pvars.pTempPrevious[*n] = o_tempPrevious[*o];  // for thermal stress
     if (d_useLoadCurves){ 
       pvars.pLoadCurveID[*n]= o_loadcurve[*o];
     }
     if (d_with_color){
-      pvars.pcolor[*n]      = o_color[*o];
+      pvars.pColor[*n]      = o_color[*o];
     }
     if(d_artificial_viscosity){
       pvars.p_q[*n]      = o_q[*o];
@@ -1105,27 +1086,26 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
     pvars.pBodyForceAcc[*n] = o_BodyForceAcc[*o];
     pvars.pCoriolisImportance[*n] = o_CoriolisImportance[*o];
 
-    // In Vaango but not in Uintah
-    //pvars.pDispGrad[*n] = o_DispGrad[*o];
-    //pvars.pdTdt[*n] = o_dTdt[*o];
+    // For switching between explicit and implicit MPM
+    pvars.pExternalHeatFlux[*n] = o_ExternalHeatFlux[*o];
   }
 
-  (*newState)[d_lb->pDispLabel]           = pvars.pdisp.clone();
+  (*newState)[d_lb->pDispLabel]           = pvars.pDisp.clone();
   (*newState)[d_lb->pXLabel]              = pvars.position.clone();
-  (*newState)[d_lb->pVelocityLabel]       = pvars.pvelocity.clone();
-  (*newState)[d_lb->pExternalForceLabel]  = pvars.pexternalforce.clone();
-  (*newState)[d_lb->pMassLabel]           = pvars.pmass.clone();
-  (*newState)[d_lb->pVolumeLabel]         = pvars.pvolume.clone();
-  (*newState)[d_lb->pTemperatureLabel]    = pvars.ptemperature.clone();
-  (*newState)[d_lb->pParticleIDLabel]     = pvars.pparticleID.clone();
-  (*newState)[d_lb->pSizeLabel]           = pvars.psize.clone();
-  (*newState)[d_lb->pTempPreviousLabel]   = pvars.ptempPrevious.clone(); // for thermal stress
+  (*newState)[d_lb->pVelocityLabel]       = pvars.pVelocity.clone();
+  (*newState)[d_lb->pExternalForceLabel]  = pvars.pExternalForce.clone();
+  (*newState)[d_lb->pMassLabel]           = pvars.pMass.clone();
+  (*newState)[d_lb->pVolumeLabel]         = pvars.pVolume.clone();
+  (*newState)[d_lb->pTemperatureLabel]    = pvars.pTemperature.clone();
+  (*newState)[d_lb->pParticleIDLabel]     = pvars.pParticleID.clone();
+  (*newState)[d_lb->pSizeLabel]           = pvars.pSize.clone();
+  (*newState)[d_lb->pTempPreviousLabel]   = pvars.pTempPrevious.clone(); // for thermal stress
   
   if (d_useLoadCurves){ 
     (*newState)[d_lb->pLoadCurveIDLabel]= pvars.pLoadCurveID.clone();
   }
   if(d_with_color){
-    (*newState)[d_lb->pColorLabel]      = pvars.pcolor.clone();
+    (*newState)[d_lb->pColorLabel]      = pvars.pColor.clone();
   }
   if(d_artificial_viscosity){
     (*newState)[d_lb->p_qLabel]         = pvars.p_q.clone();
@@ -1135,9 +1115,8 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   (*newState)[d_lb->pBodyForceAccLabel] = pvars.pBodyForceAcc.clone();
   (*newState)[d_lb->pCoriolisImportanceLabel] = pvars.pCoriolisImportance.clone();
 
-  // In Vaango but not in Uintah
-  //(*newState)[d_lb->pDispGradLabel] = pvars.pDispGrad.clone();
-  //(*newState)[d_lb->pdTdtLabel] = pvars.pdTdt.clone();
+  // For switching between explicit and implicit MPM
+  (*newState)[d_lb->pExternalHeatFluxLabel] = pvars.pExternalHeatFlux.clone();
 
   d_lock.writeUnlock();
 }

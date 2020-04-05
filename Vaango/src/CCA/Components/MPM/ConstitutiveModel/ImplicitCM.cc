@@ -108,6 +108,7 @@ ImplicitCM::addSharedCRForImplicit(Task* task, const MaterialSubset* matlset,
   task->requires(Task::OldDW, d_lb->pStressLabel, matlset, gnone);
 
   task->requires(Task::NewDW, d_lb->pDefGradLabel_preReloc, matlset, gnone);
+  task->requires(Task::NewDW, d_lb->pVelGradLabel_preReloc, matlset, gnone);
   task->requires(Task::NewDW, d_lb->pDispGradLabel_preReloc, matlset, gnone);
   task->requires(Task::NewDW, d_lb->pVolumeLabel_preReloc, matlset, gnone);
 
@@ -143,6 +144,7 @@ ImplicitCM::addSharedCRForImplicit(Task* task, const MaterialSubset* matlset,
     task->requires(Task::ParentOldDW, d_lb->pDefGradLabel, matlset, gnone);
 
     task->requires(Task::NewDW, d_lb->pDefGradLabel_preReloc, matlset, gnone);
+    task->requires(Task::NewDW, d_lb->pVelGradLabel_preReloc, matlset, gnone);
     task->requires(Task::NewDW, d_lb->pDispGradLabel_preReloc, matlset, gnone);
     task->requires(Task::NewDW, d_lb->pVolumeLabel_preReloc, matlset, gnone);
 
@@ -156,6 +158,7 @@ ImplicitCM::addSharedCRForImplicit(Task* task, const MaterialSubset* matlset,
     task->requires(Task::OldDW, d_lb->pVolumeLabel, matlset, gnone);
     task->requires(Task::OldDW, d_lb->pTemperatureLabel, matlset, gnone);
     task->requires(Task::OldDW, d_lb->pDefGradLabel, matlset, gnone);
+    task->requires(Task::OldDW, d_lb->pVelGradLabel, matlset, gnone);
     task->requires(Task::OldDW, d_lb->pDispGradLabel, matlset, gnone);
   }
 }

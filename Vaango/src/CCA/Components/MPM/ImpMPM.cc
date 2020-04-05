@@ -365,6 +365,7 @@ ImpMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   t->computes(lb->pTempPreviousLabel);
   t->computes(lb->pSizeLabel);
   t->computes(lb->pParticleIDLabel);
+  t->computes(lb->pVelGradLabel);
   t->computes(lb->pDefGradLabel);
   t->computes(lb->pDispGradLabel);
   t->computes(lb->pStressLabel);
@@ -2644,8 +2645,8 @@ ImpMPM::scheduleComputeDeformationGradient(SchedulerP& sched,
   Task* t = scinew Task("ImpMPM::computeDeformationGradient",
                         this, &ImpMPM::computeDeformationGradient, recursion);
 
-  std::cout << "OldDW = " << Task::OldDW << __FILE__ << __LINE__ << "\n";
-  std::cout << "ParentOldDW = " << Task::ParentOldDW << __FILE__ << __LINE__ << "\n";
+  //std::cout << "OldDW = " << Task::OldDW << __FILE__ << __LINE__ << "\n";
+  //std::cout << "ParentOldDW = " << Task::ParentOldDW << __FILE__ << __LINE__ << "\n";
   //t->requires(Task::ParentOldDW, d_sharedState->get_delt_label());
   int numMatls = d_sharedState->getNumMPMMatls();
   for(int m = 0; m < numMatls; m++){

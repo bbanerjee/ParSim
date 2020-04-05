@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -311,9 +312,9 @@ Relocate::scheduleParticleRelocation(Scheduler* sched,
 {
   coutdbg << "Scheduling particle relocation:" << __FILE__ << ":" << __LINE__ <<std::endl;
 
-// Only allow particles at the finest level for now
-//  if(level->getIndex() != level->getGrid()->numLevels()-1)
-//    return;
+  // Only allow particles at the finest level for now
+  //  if(level->getIndex() != level->getGrid()->numLevels()-1)
+  //    return;
   reloc_old_posLabel = old_posLabel;
   reloc_old_labels   = old_labels;
   reloc_new_posLabel = new_posLabel;
@@ -1834,5 +1835,12 @@ Relocate::relocateParticles(const ProcessorGroup* pg,
   if (pg->size() > 1){
     finalizeCommunication();
   }
+
+  /*
+  // Print variables contained in the data warehouses
+  std::cout << __FILE__ << ":" << __LINE__ << "\n"; 
+  old_dw->print();
+  new_dw->print();
+  */
 
 } // end relocateParticles()

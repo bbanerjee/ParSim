@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -89,29 +90,30 @@ namespace Uintah {
 
     typedef struct {
       ParticleVariable<Point> position;
-      ParticleVariable<Vector> pvelocity, pexternalforce;
-      ParticleVariable<Matrix3> psize, pVelGrad;
-      ParticleVariable<double> pmass, pvolume, ptemperature, psp_vol,perosion;
-      ParticleVariable<double> pcolor,ptempPrevious,p_q;
-      ParticleVariable<long64> pparticleID;
-      ParticleVariable<Vector> pdisp;
-      ParticleVariable<Vector> pfiberdir; 
+      ParticleVariable<Vector> pVelocity, pExternalForce;
+      ParticleVariable<Matrix3> pSize;
+      ParticleVariable<double> pMass, pVolume, pTemperature, 
+                               pSpecificVolume, pErosion;
+      ParticleVariable<double> pColor,pTempPrevious,p_q;
+      ParticleVariable<long64> pParticleID;
+      ParticleVariable<Vector> pDisp;
+      ParticleVariable<Vector> pFiberDir; 
       ParticleVariable<int> pLoadCurveID;
       // Body forces
       ParticleVariable<Vector> pBodyForceAcc;
       ParticleVariable<double> pCoriolisImportance;
       // ImplicitParticleCreator
       ParticleVariable<Vector> pacceleration;
-      ParticleVariable<double> pvolumeold;
-      ParticleVariable<double> pExternalHeatFlux;
+      ParticleVariable<double> pVolumeold;
       //MembraneParticleCreator
       ParticleVariable<Vector> pTang1, pTang2, pNorm;
       // AMR
-      ParticleVariable<int> prefined;
+      ParticleVariable<int> pRefined;
       ParticleVariable<int> pLastLevel;
-      // In Vaango but not in Uintah
-      //ParticleVariable<Matrix3> pDispGrad;    
-      //ParticleVariable<double>  pdTdt;    
+
+      // Switch between explicit and implicit MPM
+      ParticleVariable<double>  pExternalHeatFlux;
+
     } ParticleVars;
 
   protected:

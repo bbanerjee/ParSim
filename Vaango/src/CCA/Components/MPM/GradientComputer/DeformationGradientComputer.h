@@ -137,6 +137,7 @@ namespace Uintah {
 
     void computeDeformationGradientImplicit(const Patch* patch,
                                             const MPMMaterial* mpm_matl,
+                                            const double& delT,
                                             DataWarehouse* old_dw,
                                             DataWarehouse* parent_old_dw,
                                             DataWarehouse* new_dw);

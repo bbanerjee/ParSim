@@ -507,6 +507,9 @@ SerialMPM::scheduleInitialize(const LevelP& level,
   t->computes(lb->pCoriolisImportanceLabel);
   t->computes(lb->pBodyForceAccLabel);
 
+  // Needed for switch from explicit to implicit MPM
+  t->computes(lb->pExternalHeatFluxLabel);
+
   // Add task to scheduler
   sched->addTask(t, patches, d_sharedState->allMPMMaterials());
 
@@ -4988,6 +4991,11 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
     t->computes(             lb->pRefinedLabel_preReloc);
   }
 
+  // Carry forward external heat flux for switch from explicit to implicit
+  t->requires(Task::OldDW, lb->pExternalHeatFluxLabel, Ghost::None);
+  t->computes(             lb->pExternalHeatFluxLabel_preReloc);
+  
+
   MaterialSubset* z_matl = scinew MaterialSubset();
   z_matl->add(0);
   z_matl->addReference();
@@ -5075,6 +5083,13 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->allocateAndPut(pSize_new,       lb->pSizeLabel_preReloc,       pset);
       pParticleID_new.copyData(pParticleID);
       pSize_new.copyData(pSize);
+
+      // Copy needed for switch from explicit to implicit MPM
+      constParticleVariable<double> pExtHeatFlux;
+      ParticleVariable<double> pExtHeatFlux_new;
+      old_dw->get(pExtHeatFlux,                lb->pExternalHeatFluxLabel,          pset);
+      new_dw->allocateAndPut(pExtHeatFlux_new, lb->pExternalHeatFluxLabel_preReloc, pset);
+      pExtHeatFlux_new.copyData(pExtHeatFlux);
 
       // Get particle variables
       constParticleVariable<int>     pLocalized_new;

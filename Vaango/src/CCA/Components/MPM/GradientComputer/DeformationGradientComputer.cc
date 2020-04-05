@@ -147,6 +147,7 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
     // For subscheduler
     //std::cout << "ParentOldDW = " << Task::ParentOldDW << __FILE__ << __LINE__ << "\n";
 
+    task->requires(Task::ParentOldDW, lb->delTLabel);
     task->requires(Task::ParentOldDW, lb->pXLabel,           matlset, gnone);
     task->requires(Task::ParentOldDW, lb->pSizeLabel,        matlset, gnone);
     task->requires(Task::ParentOldDW, lb->pMassLabel,        matlset, gnone);
@@ -154,6 +155,7 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
     task->requires(Task::ParentOldDW, lb->pDefGradLabel,     matlset, gnone);
     task->requires(Task::ParentOldDW, lb->pParticleIDLabel,  matlset, gnone);
 
+    task->computes(lb->pVelGradLabel_preReloc,     matlset);
     task->computes(lb->pDefGradLabel_preReloc,     matlset);
     task->computes(lb->pVolumeLabel_preReloc,       matlset);
     if (flag->d_doGridReset) {
@@ -170,6 +172,7 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
     }
 
   } else {
+    task->requires(Task::OldDW, lb->delTLabel);
     task->requires(Task::OldDW, lb->pXLabel,            matlset, gnone);
     task->requires(Task::OldDW, lb->pSizeLabel,         matlset, gnone);
     task->requires(Task::OldDW, lb->pMassLabel,         matlset, gnone);
@@ -265,14 +268,15 @@ DeformationGradientComputer::addRequiresForConvert(Task* task,
   if (flag->d_integrator == MPMFlags::Implicit) {
     // Requires (for implicit)
     task->requires(Task::NewDW, lb->pVolumeLabel,   matlset, gnone);
-    task->requires(Task::NewDW, lb->pDefGradLabel,  matlset, gnone);
+    task->requires(Task::NewDW, lb->pVelGradLabel,  matlset, gnone);
     task->requires(Task::NewDW, lb->pDispGradLabel, matlset, gnone);
+    task->requires(Task::NewDW, lb->pDefGradLabel,  matlset, gnone);
   } else {
     // Requires (for explicit)
     task->requires(Task::NewDW, lb->pVolumeLabel,   matlset, gnone);
     task->requires(Task::NewDW, lb->pVelGradLabel,  matlset, gnone);
-    task->requires(Task::NewDW, lb->pDefGradLabel,  matlset, gnone);
     task->requires(Task::NewDW, lb->pDispGradLabel, matlset, gnone);
+    task->requires(Task::NewDW, lb->pDefGradLabel,  matlset, gnone);
   }
 
   // **WARNING and TODO** Will not work for INCREMENTAL models unless we
@@ -304,40 +308,33 @@ void DeformationGradientComputer::copyAndDeleteForConvert(DataWarehouse* new_dw,
 
   // Copy the data common to all constitutive models from the particle to be 
   // deleted to the particle to be added. 
-  if(flag->d_integrator != MPMFlags::Implicit){
-    constParticleVariable<Matrix3>     o_pVelGrad;
-    ParticleVariable<Matrix3>     pVelGrad;
-    new_dw->get(o_pVelGrad, lb->pVelGradLabel_preReloc, delset);
-    new_dw->allocateTemporary(pVelGrad,   addset);
-    ParticleSubset::iterator o,n = addset->begin();
-    for (o=delset->begin(); o != delset->end(); o++, n++) {
-      pVelGrad[*n]  = o_pVelGrad[*o];
-    }
-    (*newState)[lb->pVelGradLabel]  = pVelGrad.clone();
-  }
 
   constParticleVariable<double>      o_pVolume;
-  constParticleVariable<Matrix3>     o_pDispGrad, o_pDefGrad;
-  new_dw->get(o_pVolume,   lb->pVolumeLabel_preReloc,          delset);
-  new_dw->get(o_pDefGrad,  lb->pDefGradLabel_preReloc,        delset);
-  new_dw->get(o_pDispGrad, lb->pDispGradLabel_preReloc,       delset);
+  constParticleVariable<Matrix3>     o_pVelGrad, o_pDispGrad, o_pDefGrad;
+  new_dw->get(o_pVolume,   lb->pVolumeLabel_preReloc,   delset);
+  new_dw->get(o_pVelGrad,  lb->pVelGradLabel_preReloc,  delset);
+  new_dw->get(o_pDispGrad, lb->pDispGradLabel_preReloc, delset);
+  new_dw->get(o_pDefGrad,  lb->pDefGradLabel_preReloc,  delset);
 
   ParticleVariable<double>      pVolume;
-  ParticleVariable<Matrix3>     pDispGrad, pDefGrad;
+  ParticleVariable<Matrix3>     pVelGrad, pDispGrad, pDefGrad;
   new_dw->allocateTemporary(pVolume,   addset);
+  new_dw->allocateTemporary(pVelGrad,  addset);
   new_dw->allocateTemporary(pDispGrad, addset);
-  new_dw->allocateTemporary(pDefGrad,   addset);
+  new_dw->allocateTemporary(pDefGrad,  addset);
 
   ParticleSubset::iterator o,n = addset->begin();
   for (o=delset->begin(); o != delset->end(); o++, n++) {
     pVolume[*n]   = o_pVolume[*o];
+    pVelGrad[*n]  = o_pVelGrad[*o];
     pDispGrad[*n] = o_pDispGrad[*o];
     pDefGrad[*n]  = o_pDefGrad[*o];
   }
 
   (*newState)[lb->pVolumeLabel]   = pVolume.clone();
-  (*newState)[lb->pDefGradLabel]  = pDefGrad.clone();
+  (*newState)[lb->pVelGradLabel]  = pVelGrad.clone();
   (*newState)[lb->pDispGradLabel] = pDispGrad.clone();
+  (*newState)[lb->pDefGradLabel]  = pDefGrad.clone();
 }
 
 // Initial velocity/displacement/deformation gradients
@@ -378,7 +375,7 @@ DeformationGradientComputer::initializeGradientExplicit(const Patch* patch,
   new_dw->allocateAndPut(pDefGrad,  lb->pDefGradLabel,  pset);
 
   for (auto particle : *pset) {
-    pVelGrad[particle] = Zero;
+    pVelGrad[particle]  = Zero;
     pDispGrad[particle] = Zero;
     pDefGrad[particle] = Identity;
   }
@@ -396,7 +393,7 @@ DeformationGradientComputer::initializeGradientImplicit(const Patch* patch,
   new_dw->allocateAndPut(pDefGrad,  lb->pDefGradLabel,  pset);
 
   for (auto particle : *pset) {
-    pVelGrad[particle] = Zero;
+    pVelGrad[particle]  = Zero;
     pDispGrad[particle] = Zero;
     pDefGrad[particle] = Identity;
   }
@@ -479,12 +476,16 @@ DeformationGradientComputer::computeDeformationGradient(const PatchSubset* patch
   DataWarehouse* parent_old_dw = new_dw->getOtherDataWarehouse(Task::ParentOldDW);
   //std::cout << "parent_old_dw = " << parent_old_dw << " old_dw = " << old_dw 
   //          << " new_dw = " << new_dw << "\n";
+  // Get delT
+  delt_vartype delT;
+  parent_old_dw->get(delT, lb->delTLabel, getLevel(patches));
+
   for (int pp = 0; pp < patches->size(); pp++) {
     const Patch* patch = patches->get(pp);
     int numMPMMatls = d_sharedState->getNumMPMMatls();
     for(int m = 0; m < numMPMMatls; m++){
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
-      computeDeformationGradientImplicit(patch, mpm_matl, old_dw, parent_old_dw, new_dw);
+      computeDeformationGradientImplicit(patch, mpm_matl, delT, old_dw, parent_old_dw, new_dw);
     }
   }
 }
@@ -856,8 +857,8 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
     for (auto particle : *pset) {
       pVolume_new[particle] = pVolume_old[particle];
       pDefGrad_new[particle] = pDefGrad_old[particle];
-      pVelGrad_new[particle] = Matrix3(0.0);
-      pDispGrad_new[particle] = Matrix3(0.0);
+      pVelGrad_new[particle] = Zero;
+      pDispGrad_new[particle] = Zero;
       if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
         pPolarDecompR_new[particle] = pPolarDecompR_old[particle];
       }
@@ -888,8 +889,8 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
       pDefGrad_new[particle] = defGrad_new;
 
       // Update velocity gradient
-      Matrix3 Fdot = (pDefGrad_new[particle] - pDefGrad_old[particle])/delT;
-      Matrix3 Finv = pDefGrad_new[particle].Inverse();
+      Matrix3 Fdot = (defGrad_new - pDefGrad_old[particle])/delT;
+      Matrix3 Finv = defGrad_new.Inverse();
       pVelGrad_new[particle] = Fdot * Finv;
 
       //  Compute updated volume
@@ -924,6 +925,11 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
       // Update deformation gradient
       pDefGrad_new[particle] = defGrad_new;
 
+      // Update velocity gradient
+      Matrix3 Fdot = (defGrad_new - pDefGrad_old[particle])/delT;
+      Matrix3 Finv = defGrad_new.Inverse();
+      pVelGrad_new[particle] = Fdot * Finv;
+
       //  Compute updated volume
       double J = defGrad_new.Determinant();
       pVolume_new[particle]=(pMass[particle]/rho_orig)*J;
@@ -943,6 +949,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
 void
 DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* patch,
                                                                 const MPMMaterial* mpm_matl,
+                                                                const double& delT,
                                                                 DataWarehouse* old_dw,
                                                                 DataWarehouse* parent_old_dw,
                                                                 DataWarehouse* new_dw)
@@ -976,6 +983,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
   // for disp grad and def grad calculation
   ParticleVariable<double>     pVolume_new;
   ParticleVariable<Matrix3>    pDefGrad_new;
+  ParticleVariable<Matrix3>    pVelGrad_new;
 
   // Get data from parent data warehouse
   parent_old_dw->get(pMass,        lb->pMassLabel,    pset);
@@ -987,6 +995,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
   // Allocate data to new data warehouse
   new_dw->allocateAndPut(pVolume_new,   lb->pVolumeLabel_preReloc,  pset);
   new_dw->allocateAndPut(pDefGrad_new,   lb->pDefGradLabel_preReloc, pset);
+  new_dw->allocateAndPut(pVelGrad_new,   lb->pVelGradLabel_preReloc, pset);
 
   constParticleVariable<Matrix3>   pPolarDecompR_old;
   ParticleVariable<Matrix3>   pPolarDecompR_new;
@@ -1027,6 +1036,11 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
       // Update deformation gradient
       pDefGrad_new[particle] = defGrad_new;
 
+      // Update velocity gradient
+      Matrix3 Fdot = (defGrad_new - pDefGrad_old[particle])/delT;
+      Matrix3 Finv = defGrad_new.Inverse();
+      pVelGrad_new[particle] = Fdot * Finv;
+
       //  Compute updated volume
       double J = defGrad_new.Determinant();
       pVolume_new[particle]=(pMass[particle]/rho_orig)*J;
@@ -1055,6 +1069,11 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
 
       // Update deformation gradient
       pDefGrad_new[particle] = defGrad_new;
+
+      // Update velocity gradient
+      Matrix3 Fdot = (defGrad_new - pDefGrad_old[particle])/delT;
+      Matrix3 Finv = defGrad_new.Inverse();
+      pVelGrad_new[particle] = Fdot * Finv;
 
       //  Compute updated volume
       double J = defGrad_new.Determinant();
