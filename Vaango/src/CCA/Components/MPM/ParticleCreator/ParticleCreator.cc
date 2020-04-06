@@ -417,7 +417,9 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   ParticleSubset* subset = new_dw->createParticleSubset(numParticles,dwi,
                                                         patch);
   new_dw->allocateAndPut(pvars.position,       d_lb->pXLabel,             subset);
+  new_dw->allocateAndPut(pvars.pDisp,          d_lb->pDispLabel,          subset);
   new_dw->allocateAndPut(pvars.pVelocity,      d_lb->pVelocityLabel,      subset); 
+  new_dw->allocateAndPut(pvars.pAcc,           d_lb->pAccelerationLabel,  subset);
   new_dw->allocateAndPut(pvars.pExternalForce, d_lb->pExternalForceLabel, subset);
   new_dw->allocateAndPut(pvars.pMass,          d_lb->pMassLabel,          subset);
   new_dw->allocateAndPut(pvars.pVolume,        d_lb->pVolumeLabel,        subset);
@@ -427,7 +429,6 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   new_dw->allocateAndPut(pvars.pFiberDir,      d_lb->pFiberDirLabel,      subset); 
   // for thermal stress
   new_dw->allocateAndPut(pvars.pTempPrevious,  d_lb->pTempPreviousLabel,  subset); 
-  new_dw->allocateAndPut(pvars.pDisp,          d_lb->pDispLabel,          subset);
   
   if (d_useLoadCurves) {
     new_dw->allocateAndPut(pvars.pLoadCurveID, d_lb->pLoadCurveIDLabel,   subset); 
@@ -630,7 +631,9 @@ ParticleCreator::initializeParticle(const Patch* patch,
     }
 
     pvars.pSize[i]      = size;
+    pvars.pDisp[i]      = Vector(0.,0.,0.);
     pvars.pVelocity[i]  = (*obj)->getInitialData_Vector("velocity");
+    pvars.pAcc[i]       = Vector(0.,0.,0.);
 
     double vol_frac_CC = 1.0;
     try {
@@ -645,7 +648,6 @@ ParticleCreator::initializeParticle(const Patch* patch,
       vol_frac_CC = 1.0;       
       pvars.pMass[i]      = matl->getInitialDensity()*pvars.pVolume[i];
     }
-    pvars.pDisp[i]        = Vector(0.,0.,0.);
   }
   
   if(d_with_color){
@@ -802,6 +804,9 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
   particle_state.push_back(d_lb->pVelocityLabel);
   particle_state_preReloc.push_back(d_lb->pVelocityLabel_preReloc);
 
+  particle_state.push_back(d_lb->pAccelerationLabel);
+  particle_state_preReloc.push_back(d_lb->pAccelerationLabel_preReloc);
+
   particle_state.push_back(d_lb->pExternalForceLabel);
   particle_state_preReloc.push_back(d_lb->pExtForceLabel_preReloc);
 
@@ -936,18 +941,18 @@ void ParticleCreator::allocateVariablesAddRequires(Task* task,
 {
   d_lock.writeLock();
   Ghost::GhostType  gn = Ghost::None;
-  //const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW,d_lb->pDispLabel,        gn);
-  task->requires(Task::OldDW,d_lb->pXLabel,           gn);
-  task->requires(Task::OldDW,d_lb->pMassLabel,        gn);
-  task->requires(Task::OldDW,d_lb->pParticleIDLabel,  gn);
-  task->requires(Task::OldDW,d_lb->pTemperatureLabel, gn);
-  task->requires(Task::OldDW,d_lb->pVelocityLabel,    gn);
+  task->requires(Task::OldDW,d_lb->pParticleIDLabel,        gn);
+  task->requires(Task::OldDW,d_lb->pXLabel,                 gn);
+  task->requires(Task::OldDW,d_lb->pMassLabel,              gn);
+  //task->requires(Task::OldDW,d_lb->pVolumeLabel,          gn);
+  task->requires(Task::OldDW,d_lb->pTemperatureLabel,       gn);
+  task->requires(Task::OldDW,d_lb->pDispLabel,              gn);
+  task->requires(Task::OldDW,d_lb->pVelocityLabel,          gn);
+  task->requires(Task::OldDW,d_lb->pAccelerationLabel,      gn);
   task->requires(Task::NewDW,d_lb->pExtForceLabel_preReloc, gn);
   //task->requires(Task::OldDW,d_lb->pExternalForceLabel,   gn);
   task->requires(Task::NewDW,d_lb->pVolumeLabel_preReloc,   gn);
-  //task->requires(Task::OldDW,d_lb->pVolumeLabel,    gn);
-  task->requires(Task::OldDW,d_lb->pSizeLabel,        gn);
+  task->requires(Task::OldDW,d_lb->pSizeLabel,              gn);
   // for thermal stress
   task->requires(Task::OldDW,d_lb->pTempPreviousLabel, gn); 
 
@@ -984,9 +989,8 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   ParticleVars pvars;
   ParticleSubset::iterator n,o;
 
-  constParticleVariable<Vector> o_disp;
   constParticleVariable<Point>  o_position;
-  constParticleVariable<Vector> o_velocity;
+  constParticleVariable<Vector> o_disp, o_velocity, o_acc;
   constParticleVariable<Vector> o_external_force;
   constParticleVariable<double> o_mass;
   constParticleVariable<double> o_volume;
@@ -1008,9 +1012,10 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   constParticleVariable<Matrix3> o_DispGrad;
   constParticleVariable<double>  o_dTdt;
   
-  new_dw->allocateTemporary(pvars.pDisp,          addset);
   new_dw->allocateTemporary(pvars.position,       addset);
+  new_dw->allocateTemporary(pvars.pDisp,          addset);
   new_dw->allocateTemporary(pvars.pVelocity,      addset); 
+  new_dw->allocateTemporary(pvars.pAcc,           addset);
   new_dw->allocateTemporary(pvars.pExternalForce, addset);
   new_dw->allocateTemporary(pvars.pMass,          addset);
   new_dw->allocateTemporary(pvars.pVolume,        addset);
@@ -1025,12 +1030,13 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
 
   new_dw->allocateTemporary(pvars.pExternalHeatFlux,    addset);
 
-  old_dw->get(o_disp,           d_lb->pDispLabel,             delset);
   old_dw->get(o_position,       d_lb->pXLabel,                delset);
   old_dw->get(o_mass,           d_lb->pMassLabel,             delset);
   old_dw->get(o_particleID,     d_lb->pParticleIDLabel,       delset);
   old_dw->get(o_temperature,    d_lb->pTemperatureLabel,      delset);
+  old_dw->get(o_disp,           d_lb->pDispLabel,             delset);
   old_dw->get(o_velocity,       d_lb->pVelocityLabel,         delset);
+  old_dw->get(o_acc,            d_lb->pAccelerationLabel,     delset);
   new_dw->get(o_external_force, d_lb->pExtForceLabel_preReloc,delset);
   //old_dw->get(o_external_force,d_lb->pExternalForceLabel,   delset);
   new_dw->get(o_volume,         d_lb->pVolumeLabel_preReloc,  delset);
@@ -1062,9 +1068,10 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
 
   n = addset->begin();
   for (o=delset->begin(); o != delset->end(); o++, n++) {
-    pvars.pDisp[*n]         = o_disp[*o];
     pvars.position[*n]      = o_position[*o];
+    pvars.pDisp[*n]         = o_disp[*o];
     pvars.pVelocity[*n]     = o_velocity[*o];
+    pvars.pAcc[*n]          = o_acc[*o];
     pvars.pExternalForce[*n]= o_external_force[*o];
     pvars.pMass[*n]         = o_mass[*o];
     pvars.pVolume[*n]       = o_volume[*o];
@@ -1090,9 +1097,10 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
     pvars.pExternalHeatFlux[*n] = o_ExternalHeatFlux[*o];
   }
 
-  (*newState)[d_lb->pDispLabel]           = pvars.pDisp.clone();
   (*newState)[d_lb->pXLabel]              = pvars.position.clone();
+  (*newState)[d_lb->pDispLabel]           = pvars.pDisp.clone();
   (*newState)[d_lb->pVelocityLabel]       = pvars.pVelocity.clone();
+  (*newState)[d_lb->pAccelerationLabel]   = pvars.pAcc.clone();
   (*newState)[d_lb->pExternalForceLabel]  = pvars.pExternalForce.clone();
   (*newState)[d_lb->pMassLabel]           = pvars.pMass.clone();
   (*newState)[d_lb->pVolumeLabel]         = pvars.pVolume.clone();

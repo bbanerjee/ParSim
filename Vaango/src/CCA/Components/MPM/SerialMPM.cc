@@ -435,14 +435,15 @@ SerialMPM::scheduleInitialize(const LevelP& level,
 
   t->computes(lb->partCountLabel);
   t->computes(lb->pXLabel);
-  t->computes(lb->pDispLabel);
   t->computes(lb->pFiberDirLabel);
   t->computes(lb->pMassLabel);
   t->computes(lb->pVolumeLabel);
   t->computes(lb->pTemperatureLabel);
   t->computes(lb->pTempPreviousLabel); // for thermal stress analysis
   t->computes(lb->pdTdtLabel);
+  t->computes(lb->pDispLabel);
   t->computes(lb->pVelocityLabel);
+  t->computes(lb->pAccelerationLabel);
   t->computes(lb->pExternalForceLabel);
   t->computes(lb->pParticleIDLabel);
   t->computes(lb->pStressLabel);
@@ -4950,6 +4951,7 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
 
   t->computes(lb->pDispLabel_preReloc);
   t->computes(lb->pVelocityLabel_preReloc);
+  t->computes(lb->pAccelerationLabel_preReloc);
   t->computes(lb->pXLabel_preReloc);
   t->computes(lb->pParticleIDLabel_preReloc);
   t->computes(lb->pTemperatureLabel_preReloc);
@@ -5126,9 +5128,10 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->allocateAndPut(pX_new,        lb->pXLabel_preReloc,            pset);
       new_dw->allocateAndPut(pxx,           lb->pXXLabel,                    pset);
 
-      ParticleVariable<Vector>  pVelocity_new, pDisp_new;
+      ParticleVariable<Vector>  pVelocity_new, pDisp_new, pAcc_new;
       new_dw->allocateAndPut(pVelocity_new, lb->pVelocityLabel_preReloc,     pset);
       new_dw->allocateAndPut(pDisp_new,     lb->pDispLabel_preReloc,         pset);
+      new_dw->allocateAndPut(pAcc_new,      lb->pAccelerationLabel_preReloc, pset);
 
       // Get grid variables
       constNCVariable<double> gTemperatureRate, frictionTempRate;
@@ -5228,6 +5231,8 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           pDisp_new[idx]     = pDisp[idx]     + velocity * delT;
           pVelocity_new[idx] = pVelocity[idx] + acceleration * delT;
         #endif
+
+        pAcc_new[idx] = acceleration;
 
         #ifdef CHECK_ISFINITE
           if (!std::isfinite(pVelocity_new[idx].x()) || 

@@ -587,7 +587,6 @@ void Switcher::initNewVars(const ProcessorGroup*,
   max_vartype switch_condition;
   new_dw->get(switch_condition, d_sharedState->get_switch_label(), 0);
 
-
   /*
   // Print out labels contained in the data warehouses
   std::cout << __FILE__ << ":" << __LINE__ << "\n";

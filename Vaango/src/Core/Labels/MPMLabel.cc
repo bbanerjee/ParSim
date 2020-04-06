@@ -140,9 +140,15 @@ MPMLabel::MPMLabel()
   pMassLabel = VarLabel::create( "p.mass",
 			ParticleVariable<double>::getTypeDescription() );
   
+  pDispLabel = VarLabel::create("p.displacement",
+	                ParticleVariable<Vector>::getTypeDescription());
+
   pVelocityLabel = VarLabel::create( "p.velocity", 
 			ParticleVariable<Vector>::getTypeDescription() );
   
+  pAccelerationLabel = VarLabel::create("p.acceleration",
+			ParticleVariable<Vector>::getTypeDescription()); 
+
   pVelocityXPICLabel = VarLabel::create( "p.velocityXPIC", 
 			ParticleVariable<Vector>::getTypeDescription() );
   
@@ -228,8 +234,14 @@ MPMLabel::MPMLabel()
   pMassLabel_preReloc = VarLabel::create( "p.mass+",
 			ParticleVariable<double>::getTypeDescription() );
   
+  pDispLabel_preReloc = VarLabel::create( "p.displacement+",
+                        ParticleVariable<Vector>::getTypeDescription());
+
   pVelocityLabel_preReloc = VarLabel::create( "p.velocity+", 
 			ParticleVariable<Vector>::getTypeDescription() );
+
+  pAccelerationLabel_preReloc = VarLabel::create("p.acceleration+",
+		        ParticleVariable<Vector>::getTypeDescription()); 
 
   pVelocityXPICLabel_preReloc = VarLabel::create( "p.velocityXPIC+", 
 			ParticleVariable<Vector>::getTypeDescription() );
@@ -480,18 +492,7 @@ MPMLabel::MPMLabel()
   dispIncNorm = VarLabel::create("dispIncNorm",
 				 sum_vartype::getTypeDescription());
   
-  pAccelerationLabel = VarLabel::create("p.acceleration",
-				   ParticleVariable<Vector>::getTypeDescription()); 
-
-  pAccelerationLabel_preReloc = VarLabel::create("p.acceleration+",
-				   ParticleVariable<Vector>::getTypeDescription()); 
-
   // for Fracture ----------------------------
-  pDispLabel = VarLabel::create("p.displacement",
-	          ParticleVariable<Vector>::getTypeDescription());
-  pDispLabel_preReloc = VarLabel::create( "p.displacement+",
-                  ParticleVariable<Vector>::getTypeDescription());
-
   pDispGradsLabel = VarLabel::create("p.dispGrads",
                   ParticleVariable<Matrix3>::getTypeDescription());
   pDispGradsLabel_preReloc = VarLabel::create( "p.dispGrads+",
@@ -799,8 +800,12 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pVolumeLabel_preReloc);
   VarLabel::destroy(pMassLabel);
   VarLabel::destroy(pMassLabel_preReloc);
+  VarLabel::destroy(pDispLabel);
+  VarLabel::destroy(pDispLabel_preReloc);
   VarLabel::destroy(pVelocityLabel);
   VarLabel::destroy(pVelocityLabel_preReloc);
+  VarLabel::destroy(pAccelerationLabel);
+  VarLabel::destroy(pAccelerationLabel_preReloc);
   VarLabel::destroy(pVelocityXPICLabel);
   VarLabel::destroy(pVelocityXPICLabel_preReloc);
   VarLabel::destroy(pBodyForceAccLabel);
@@ -913,16 +918,12 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(gVelocityOldLabel);
   VarLabel::destroy(dispNewLabel);
   VarLabel::destroy(dispIncLabel);
-  VarLabel::destroy(pAccelerationLabel);
   VarLabel::destroy(dispIncQNorm0);
   VarLabel::destroy(dispIncNormMax);
   VarLabel::destroy(dispIncQNorm);
   VarLabel::destroy(dispIncNorm);
-  VarLabel::destroy(pAccelerationLabel_preReloc);
 
  // for Fracture --------------
-  VarLabel::destroy(pDispLabel);
-  VarLabel::destroy(pDispLabel_preReloc);
   VarLabel::destroy(pDispGradsLabel);
   VarLabel::destroy(pDispGradsLabel_preReloc);
   VarLabel::destroy(pStrainEnergyDensityLabel);

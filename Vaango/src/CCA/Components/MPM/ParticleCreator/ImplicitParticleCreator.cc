@@ -66,8 +66,6 @@ ImplicitParticleCreator::initializeParticle(const Patch* patch,
 {
 
   ParticleCreator::initializeParticle(patch,obj,matl,p,cell_idx,i,cellNAPI, pvars);
-
-  pvars.pacceleration[i] = Vector(0.,0.,0.);
 }
 
 
@@ -82,8 +80,6 @@ ImplicitParticleCreator::allocateVariables(particleIndex numParticles,
                                                               dwi,patch,
                                                               new_dw, pvars);
 
-  new_dw->allocateAndPut(pvars.pacceleration, d_lb->pAccelerationLabel, subset);
-
   return subset;
 
 }
@@ -92,9 +88,6 @@ void
 ImplicitParticleCreator::registerPermanentParticleState(MPMMaterial* /*matl*/)
 
 {
-  particle_state.push_back(d_lb->pAccelerationLabel);
-  particle_state_preReloc.push_back(d_lb->pAccelerationLabel_preReloc);
-
 #if 0
   vector<const VarLabel*>::iterator r3,r4;
 

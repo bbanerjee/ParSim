@@ -90,20 +90,18 @@ namespace Uintah {
 
     typedef struct {
       ParticleVariable<Point> position;
-      ParticleVariable<Vector> pVelocity, pExternalForce;
+      ParticleVariable<Vector> pDisp, pVelocity, pAcc, pExternalForce;
       ParticleVariable<Matrix3> pSize;
       ParticleVariable<double> pMass, pVolume, pTemperature, 
                                pSpecificVolume, pErosion;
       ParticleVariable<double> pColor,pTempPrevious,p_q;
       ParticleVariable<long64> pParticleID;
-      ParticleVariable<Vector> pDisp;
       ParticleVariable<Vector> pFiberDir; 
       ParticleVariable<int> pLoadCurveID;
       // Body forces
       ParticleVariable<Vector> pBodyForceAcc;
       ParticleVariable<double> pCoriolisImportance;
       // ImplicitParticleCreator
-      ParticleVariable<Vector> pacceleration;
       ParticleVariable<double> pVolumeold;
       //MembraneParticleCreator
       ParticleVariable<Vector> pTang1, pTang2, pNorm;

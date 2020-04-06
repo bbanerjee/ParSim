@@ -87,8 +87,12 @@ using std::vector;
       const VarLabel* pVolumeLabel_preReloc;
       const VarLabel* pMassLabel;
       const VarLabel* pMassLabel_preReloc;
+      const VarLabel* pDispLabel;
+      const VarLabel* pDispLabel_preReloc;
       const VarLabel* pVelocityLabel;
       const VarLabel* pVelocityLabel_preReloc;
+      const VarLabel* pAccelerationLabel;
+      const VarLabel* pAccelerationLabel_preReloc;
       const VarLabel* pVelocityXPICLabel;
       const VarLabel* pVelocityXPICLabel_preReloc;
       const VarLabel* pCoriolisImportanceLabel;
@@ -194,13 +198,10 @@ using std::vector;
       const VarLabel* gVelocityOldLabel;
       const VarLabel* dispNewLabel;
       const VarLabel* dispIncLabel;
-      const VarLabel* pAccelerationLabel;
       const VarLabel* dispIncQNorm0;
       const VarLabel* dispIncNormMax;
       const VarLabel* dispIncQNorm;
       const VarLabel* dispIncNorm;
-
-      const VarLabel* pAccelerationLabel_preReloc;
 
       // Labels for particle erosion
       const VarLabel* pErosionLabel;
@@ -215,8 +216,6 @@ using std::vector;
       const VarLabel* p_qLabel_preReloc;
 
       // for Fracture ----------
-      const VarLabel* pDispLabel;
-      const VarLabel* pDispLabel_preReloc;
       const VarLabel* pDispGradsLabel;
       const VarLabel* pDispGradsLabel_preReloc;
       const VarLabel* pStrainEnergyDensityLabel;

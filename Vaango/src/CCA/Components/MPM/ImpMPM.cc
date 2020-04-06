@@ -403,7 +403,7 @@ ImpMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   }
 
   t->computes(lb->NC_CCweightLabel, one_matl);
-  if (flags->d_temp_solve == false) {
+  if (!flags->d_temp_solve) {
     t->computes(lb->gTemperatureLabel, one_matl);
   }
 
@@ -518,7 +518,7 @@ ImpMPM::actuallyInitialize(const ProcessorGroup*,
         }
       }
     }
-    if (flags->d_temp_solve == false) {
+    if (!flags->d_temp_solve) {
       NCVariable<double> gTemperature;
       new_dw->allocateAndPut(gTemperature, lb->gTemperatureLabel,    0, patch);
       gTemperature.initialize(0.);
@@ -1299,6 +1299,7 @@ ImpMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   if (!flags->d_temp_solve) {
     t->requires(Task::OldDW, lb->gTemperatureLabel, one_matl, Ghost::None, 0);
   }
+
   t->computes(lb->gMassLabel,        d_sharedState->getAllInOneMatl(),
               Task::OutOfDomain);
   t->computes(lb->gVolumeLabel,      d_sharedState->getAllInOneMatl(),
@@ -1378,8 +1379,13 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
     constNCVariable<double> gTemperature_old;
     NCVariable<double>      gTemperature;
+    bool switching_to_implicit_from_explicit = false;
+
     if (!flags->d_temp_solve) {
-      old_dw->get(gTemperature_old, lb->gTemperatureLabel, 0, patch, gnone, 0);
+      if (old_dw->exists(lb->gTemperatureLabel, 0, patch)) {
+        old_dw->get(gTemperature_old, lb->gTemperatureLabel, 0, patch, gnone, 0);
+        switching_to_implicit_from_explicit = true;
+      }
     }
     new_dw->allocateAndPut(gTemperature, lb->gTemperatureLabel, 0, patch);
     gTemperature.initialize(0.0);
@@ -1707,9 +1713,11 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     }
     if (!flags->d_interpolateParticleTempToGridEveryStep) {
       if (timestep > 0) {
-        for(auto iter = patch->getNodeIterator(); !iter.done(); iter++){
-          IntVector c = *iter;
-          gTemperature[c] = gTemperature_old[c];
+        if (!switching_to_implicit_from_explicit) {
+          for(auto iter = patch->getNodeIterator(); !iter.done(); iter++){
+            IntVector c = *iter;
+            gTemperature[c] = gTemperature_old[c];
+          }
         }
       }
     }
