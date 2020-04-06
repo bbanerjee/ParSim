@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2013-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,14 +23,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-
-//  HypoElasticImplicit.h
-//  class ConstitutiveModel ConstitutiveModel data type -- 3D -
-//  holds ConstitutiveModel
-//  information for the FLIP technique:
-//    This is for Compressible NeoHookean materials
-//    Features:
-//      Usage:
 
 #ifndef __HYPOELASTIC_IMPLICIT_CONSTITUTIVE_MODEL_H__
 #define __HYPOELASTIC_IMPLICIT_CONSTITUTIVE_MODEL_H__
@@ -58,6 +51,7 @@ public:
 
 private:
   CMData d_initialData;
+  int d_8or27;
 
 
 public:

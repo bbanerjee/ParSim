@@ -26,6 +26,7 @@
 
 #include <CCA/Components/MPM/ImpMPM.h> 
 #include <CCA/Components/MPM/ImpMPMFlags.h> 
+#include <CCA/Components/MPM/MPMUtils.h> 
 #include <Core/Math/Matrix3.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
@@ -1934,7 +1935,7 @@ ImpMPM::createMatrix(const ProcessorGroup*,
     const Patch* patch = patches->get(pp);
     printTask(patches, patch, cout_doing, "Doing ImpMPM::createMatrix");
 
-    auto lohiNodes = getPatchLoHiNodes(patch, n8or27);
+    auto lohiNodes = Util::getPatchLoHiNodes(patch, n8or27);
     auto lowIndex = lohiNodes.first;
     auto highIndex = lohiNodes.second;
 
@@ -2034,7 +2035,7 @@ ImpMPM::applyBoundaryConditions(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing applyBoundaryConditions");
 
-    auto lohiNodes = getPatchLoHiNodes(patch, flags->d_8or27);
+    auto lohiNodes = Util::getPatchLoHiNodes(patch, flags->d_8or27);
     auto lowIndex = lohiNodes.first;
     auto highIndex = lohiNodes.second;
 
@@ -2284,7 +2285,7 @@ ImpMPM::findFixedDOF(const ProcessorGroup*,
     
     printTask(patches, patch,cout_doing,"Doing ImpMPM::findFixedDOF");
 
-    auto lohiNodes = getPatchLoHiNodes(patch, flags->d_8or27);
+    auto lohiNodes = Util::getPatchLoHiNodes(patch, flags->d_8or27);
     auto lowIndex = lohiNodes.first;
     auto highIndex = lohiNodes.second;
     Array3<int> l2g(lowIndex,highIndex);
@@ -2820,7 +2821,7 @@ ImpMPM::formStiffnessMatrix(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing ImpMPM::formStiffnessMatrix");
 
-    auto lohiNodes = getPatchLoHiNodes(patch, flags->d_8or27);
+    auto lohiNodes = Util::getPatchLoHiNodes(patch, flags->d_8or27);
     auto lowIndex = lohiNodes.first;
     auto highIndex = lohiNodes.second;
     Array3<int> l2g(lowIndex, highIndex);
@@ -3014,7 +3015,7 @@ ImpMPM::formQ(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing ImpMPM::formQ");
 
-    auto lohiNodes = getPatchLoHiNodes(patch, flags->d_8or27);
+    auto lohiNodes = Util::getPatchLoHiNodes(patch, flags->d_8or27);
     auto lowIndex = lohiNodes.first;
     auto highIndex = lohiNodes.second;
     Array3<int> l2g(lowIndex,highIndex);
@@ -3153,7 +3154,7 @@ ImpMPM::getDisplacementIncrement(const ProcessorGroup* /*pg*/,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing ImpMPM::getDisplacementIncrement");
 
-    auto lohiNodes = getPatchLoHiNodes(patch, flags->d_8or27);
+    auto lohiNodes = Util::getPatchLoHiNodes(patch, flags->d_8or27);
     auto lowIndex = lohiNodes.first;
     auto highIndex = lohiNodes.second;
     Array3<int> l2g(lowIndex,highIndex);
@@ -3336,7 +3337,7 @@ ImpMPM::checkConvergence(const ProcessorGroup*,
     const Patch* patch = patches->get(p);
     printTask(patches, patch, cout_doing, "Doing ImpMPM::checkConvergence");
 
-    auto lohiNodes = getPatchLoHiNodes(patch, flags->d_8or27);
+    auto lohiNodes = Util::getPatchLoHiNodes(patch, flags->d_8or27);
     auto lowIndex = lohiNodes.first;
     auto highIndex = lohiNodes.second;
     Array3<int> l2g(lowIndex,highIndex);
@@ -4267,16 +4268,3 @@ void ImpMPM::refine(const ProcessorGroup*,
   }
 } // end refine()
 
-std::pair<IntVector, IntVector> 
-ImpMPM::getPatchLoHiNodes(const Patch* patch, int n8or27) const
-{
-   IntVector lowIndex(0,0,0), highIndex(0,0,0);
-   if (n8or27 == 8) {
-     lowIndex = patch->getNodeLowIndex();
-     highIndex = patch->getNodeHighIndex()+IntVector(1,1,1);
-   } else if (n8or27 == 27) {
-     lowIndex = patch->getExtraNodeLowIndex();
-     highIndex = patch->getExtraNodeHighIndex()+IntVector(1,1,1);
-   }
-   return std::make_pair(lowIndex, highIndex);
-}

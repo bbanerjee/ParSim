@@ -560,9 +560,6 @@ private:
                                     const MaterialSet*);
 
 
-  std::pair<IntVector, IntVector> getPatchLoHiNodes(const Patch* patch,
-                                                    int n8or27) const;
-
   ImpMPM(const ImpMPM&);
   ImpMPM& operator=(const ImpMPM&);
 
