@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -39,13 +40,11 @@
 #include <Core/Thread/Mutex.h>
 #include <Core/Math/MiscMath.h>
 
-#include <iostream>
+#include <ostream>
 #include <sstream>
 #include <cstdio>
 #include <map>
 
-using namespace std;
-using namespace Uintah;
 using namespace Uintah;
 
 
@@ -162,7 +161,7 @@ void Patch::findCellNodes(const Point& pos, IntVector ni[8]) const
 void Patch::findCellNodes27(const Point& pos, IntVector ni[27]) const
 {
 
-  cerr << "findCellNodes27 appears to be incorrect.  You are using it at your own risk" << endl;
+  std::cerr << "findCellNodes27 appears to be incorrect.  You are using it at your own risk" << "\n";
   Point cellpos = getLevel()->positionToIndex(pos);
   int ix = Floor(cellpos.x());
   int iy = Floor(cellpos.y());
@@ -254,22 +253,22 @@ void Patch::findNodesFromCell( const IntVector& cellIndex,
 }
 
 namespace Uintah {
-  ostream&
-  operator<<(ostream& out, const Patch & r)
+  std::ostream&
+  operator<<(std::ostream& out, const Patch & r)
   {
     coutLock.lock();  // needed to eliminate threadsanitizer warnings
-    out.setf(ios::scientific,ios::floatfield);
+    out.setf(std::ios::scientific,std::ios::floatfield);
     out.precision(4);
     out << "(Patch " << r.getID() 
         << ", lowIndex=" << r.getExtraCellLowIndex() << ", highIndex=" 
         << r.getExtraCellHighIndex() << ")";
-    out.setf(ios::scientific ,ios::floatfield);
+    out.setf(std::ios::scientific ,std::ios::floatfield);
     coutLock.unlock();
     return out;
   }
     
-  ostream&
-  operator<<(ostream& out, const Patch::FaceType& face)
+  std::ostream&
+  operator<<(std::ostream& out, const Patch::FaceType& face)
   {
     out << Patch::getFaceName(face);
     return out;
@@ -319,11 +318,11 @@ Patch::setBCType(Patch::FaceType face, BCType newbc)
 }
 
 void
-Patch::printPatchBCs(ostream& out) const
+Patch::printPatchBCs(std::ostream& out) const
 {
    out << " BC types: x- " << getBCType(xminus) << ", x+ "<<getBCType(xplus)
                  << ", y- "<< getBCType(yminus) << ", y+ "<< getBCType(yplus)
-                 << ", z- "<< getBCType(zminus) << ", z+ "<< getBCType(zplus)<< endl;
+                 << ", z- "<< getBCType(zminus) << ", z+ "<< getBCType(zplus)<< "\n";
 }
 
 void 
@@ -344,7 +343,7 @@ const BCDataArray* Patch::getBCDataArray(Patch::FaceType face) const
       return (*d_arrayBCS)[face];
     } else {
       ostringstream msg;
-      msg << "face = " << face << endl;
+      msg << "face = " << face << "\n";
       SCI_THROW(InternalError("d_arrayBCS[face] has not been allocated",
                               __FILE__, __LINE__));
     }
@@ -382,11 +381,15 @@ bool
 Patch::haveBC(FaceType face,int mat_id,const string& bc_type,
               const string& bc_variable) const
 {
+  if (d_arrayBCS == nullptr) {
+    return false;
+  }
+
   BCDataArray* itr = (*d_arrayBCS)[face];
 
   if ( itr ) {
 #if 0
-    cout << "Inside haveBC" << endl;
+    std::cout << "Inside haveBC" << "\n";
     ubc->print();
 #endif
     BCDataArray::bcDataArrayType::const_iterator v_itr;
@@ -1272,7 +1275,7 @@ void Patch::getOtherLevelPatches(int levelOffset,
     low = low - IntVector(2,2,2);
   }
 
-  //cout << "  Patch:Golp: " << low-pc << " " << high+pc << endl;
+  //std::cout << "  Patch:Golp: " << low-pc << " " << high+pc << "\n";
   Level::selectType patches;
   otherLevel->selectPatches(low-pc, high+pc, patches); 
   
@@ -1333,7 +1336,7 @@ void Patch::getOtherLevelPatchesNB(int levelOffset,
     low = low - IntVector(2,2,2);
   }
 
-  //cout << "  Patch:Golp: " << low-pc << " " << high+pc << endl;
+  //std::cout << "  Patch:Golp: " << low-pc << " " << high+pc << "\n";
   Level::selectType patches;
   otherLevel->selectPatches(low-pc, high+pc, patches); 
   
