@@ -127,6 +127,7 @@ using std::vector;
       const VarLabel* pParticleIDLabel;
       const VarLabel* pParticleIDLabel_preReloc;
       const VarLabel* pSizeLabel;
+      const VarLabel* pCurSizeLabel;
       const VarLabel* pSizeLabel_preReloc;
 
       const VarLabel* pFiberDirLabel;
@@ -138,8 +139,9 @@ using std::vector;
       const VarLabel* gLambdaDotLabel;
       const VarLabel* gMassLabel;
       const VarLabel* gMassAllLabel;
-      const VarLabel* gAccelerationLabel;
+      const VarLabel* gPositionLabel;
       const VarLabel* gVelocityLabel;
+      const VarLabel* gAccelerationLabel;
       const VarLabel* gVelocityXPICLabel;
       const VarLabel* gVelocityBCLabel;
       const VarLabel* gVelocityStarLabel;

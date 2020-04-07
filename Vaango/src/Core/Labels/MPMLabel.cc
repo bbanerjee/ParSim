@@ -202,6 +202,9 @@ MPMLabel::MPMLabel()
   pSizeLabel = VarLabel::create( "p.size",
 			ParticleVariable<Matrix3>::getTypeDescription());
   
+  pCurSizeLabel = VarLabel::create( "p.cursize",
+			ParticleVariable<Matrix3>::getTypeDescription());
+  
   pSizeLabel_preReloc = VarLabel::create( "p.size+",
 			ParticleVariable<Matrix3>::getTypeDescription());
   
@@ -284,16 +287,19 @@ MPMLabel::MPMLabel()
 
   // Node Centered Variables
   
-  gAccelerationLabel = VarLabel::create( "g.acceleration",
-			NCVariable<Vector>::getTypeDescription() );
-  
   gMassLabel = VarLabel::create( "g.mass",
 			NCVariable<double>::getTypeDescription() );
   
   gMassAllLabel = VarLabel::create( "g.massall",
 			NCVariable<double>::getTypeDescription() );
   
+  gPositionLabel = VarLabel::create( "g.position",
+			NCVariable<Vector>::getTypeDescription() );
+
   gVelocityLabel = VarLabel::create( "g.velocity",
+			NCVariable<Vector>::getTypeDescription() );
+  
+  gAccelerationLabel = VarLabel::create( "g.acceleration",
 			NCVariable<Vector>::getTypeDescription() );
   
   gVelocityXPICLabel = VarLabel::create( "g.velocityXPIC",
@@ -844,6 +850,7 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pRemoveLabel_preReloc);
   VarLabel::destroy(pScratchLabel);
   VarLabel::destroy(pSizeLabel);
+  VarLabel::destroy(pCurSizeLabel);
   VarLabel::destroy(pSizeLabel_preReloc);
   VarLabel::destroy(pFiberDirLabel_preReloc);
   VarLabel::destroy(pFiberDirLabel);
@@ -851,10 +858,11 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(p_qLabel_preReloc);
   VarLabel::destroy(pPartitionUnityLabel);
 
-  VarLabel::destroy(gAccelerationLabel);
   VarLabel::destroy(gMassLabel);
   VarLabel::destroy(gMassAllLabel);
+  VarLabel::destroy(gPositionLabel);
   VarLabel::destroy(gVelocityLabel);
+  VarLabel::destroy(gAccelerationLabel);
   VarLabel::destroy(gVelocityXPICLabel);
   VarLabel::destroy(gVelocityBCLabel);
   VarLabel::destroy(gInternalForceLabel);

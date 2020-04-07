@@ -120,7 +120,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     vector<Matrix3>* pSizes       = 0;
     if (sgp){
 
-      proc0cout << "This is a SmoothGeomPiece with #particles = " << numParticles << std::endl;
+      proc0cout << "Created a SmoothGeomPiece with #particles = " << numParticles << std::endl;
       volumes      = sgp->getVolume();
       temperatures = sgp->getTemperature();
       pforces      = sgp->getForces();
@@ -132,7 +132,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
         colors      = sgp->getColors();
       }
     } else {
-      proc0cout << "This is NOT a SmoothGeomPiece with #particles = " << numParticles << std::endl;
+      proc0cout << "Created a geometry with #particles = " << numParticles << std::endl;
     }
 
     // For getting particle volumes (if they exist)

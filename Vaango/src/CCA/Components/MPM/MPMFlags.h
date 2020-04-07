@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -95,6 +96,7 @@ namespace Uintah {
     bool        d_canAddMPMMaterial;
     bool        d_do_contact_friction;
     double      d_addFrictionWork;     // 1 == add , 0 == do not add
+    bool        d_computeCollinearNormals;
 
     int         d_extraSolverFlushes;  // Have PETSc do more flushes to save memory
     bool        d_doImplicitHeatConduction;

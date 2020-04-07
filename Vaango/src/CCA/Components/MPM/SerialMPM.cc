@@ -1282,6 +1282,7 @@ SerialMPM::scheduleTimeAdvance(const LevelP & level,
   scheduleApplyExternalLoads(             sched, patches, matls);
   scheduleInterpolateParticlesToGrid(     sched, patches, matls);
 
+  scheduleComputeNormals(                 sched, patches, matls);
   scheduleExMomInterpolated(              sched, patches, matls);
   if(flags->d_useCohesiveZones){
 
@@ -2140,6 +2141,202 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     //delete linear_interpolator;
   }  // End loop over patches
 }
+
+
+/*!----------------------------------------------------------------------
+ * scheduleComputeNormals: For contact
+ *-----------------------------------------------------------------------*/
+void 
+SerialMPM::scheduleComputeNormals(SchedulerP& sched,
+                                  const PatchSet* patches,
+                                  const MaterialSet* matls )
+{
+  printSchedule(patches, cout_doing, "MPM::scheduleComputeNormals");
+  
+  Task* t = scinew Task("MPM::computeNormals", this, 
+                        &SerialMPM::computeNormals);
+
+  MaterialSubset* z_matl = scinew MaterialSubset();
+  z_matl->add(0);
+  z_matl->addReference();
+
+  t->requires(Task::OldDW, lb->pXLabel,       Ghost::None, 0);
+  t->requires(Task::OldDW, lb->pMassLabel,    Ghost::None, 0);
+  t->requires(Task::OldDW, lb->pVolumeLabel,  Ghost::None, 0);
+  t->requires(Task::OldDW, lb->pSizeLabel,    Ghost::None, 0);
+  t->requires(Task::OldDW, lb->pStressLabel,  Ghost::None, 0);
+  t->requires(Task::OldDW, lb->pDefGradLabel, Ghost::None, 0);
+  t->requires(Task::NewDW, lb->gMassLabel,    Ghost::AroundNodes, 1);
+  t->requires(Task::OldDW, lb->NC_CCweightLabel, z_matl, Ghost::None);
+
+  t->computes(lb->gSurfNormLabel);
+  t->computes(lb->gStressLabel);
+  t->computes(lb->gNormTractionLabel);
+  t->computes(lb->gPositionLabel);
+
+  sched->addTask(t, patches, matls);
+
+  if (z_matl->removeReference()) {
+    delete z_matl; // shouldn't happen, but...
+  }
+}
+
+//______________________________________________________________________
+//
+void 
+SerialMPM::computeNormals(const ProcessorGroup*,
+                          const PatchSubset* patches,
+                          const MaterialSubset* ,
+                          DataWarehouse* old_dw,
+                          DataWarehouse* new_dw)
+{
+  Ghost::GhostType  gan   = Ghost::AroundNodes;
+  Ghost::GhostType  gnone = Ghost::None;
+
+  auto numMPMMatls = d_sharedState->getNumMPMMatls();
+  std::vector<constNCVariable<double> >  gMass(numMPMMatls);
+  std::vector<NCVariable<Point> >        gPosition(numMPMMatls);
+  std::vector<NCVariable<Vector> >       gvelocity(numMPMMatls);
+  std::vector<NCVariable<Vector> >       gSurfNorm(numMPMMatls);
+  std::vector<NCVariable<double> >       gNormTraction(numMPMMatls);
+  std::vector<NCVariable<Matrix3> >      gStress(numMPMMatls);
+
+  for (int p = 0; p<patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+
+    printTask(patches, patch, cout_doing, "Doing MPM::computeNormals");
+
+    Vector dx = patch->dCell();
+    double oodx[3];
+    oodx[0] = 1.0/dx.x();
+    oodx[1] = 1.0/dx.y();
+    oodx[2] = 1.0/dx.z();
+
+    constNCVariable<double>    NC_CCweight;
+    old_dw->get(NC_CCweight,   lb->NC_CCweightLabel,  0, patch, gnone, 0);
+
+    auto interpolator = flags->d_interpolator->clone(patch);
+    vector<IntVector> ni(interpolator->size());
+    vector<double> S(interpolator->size());
+    vector<Vector> d_S(interpolator->size());
+    string interp_type = flags->d_interpolator_type;
+
+    // Find surface normal at each material based on a gradient of nodal mass
+    for (auto m = 0; m < numMPMMatls; m++){
+      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      int matID = mpm_matl->getDWIndex();
+      new_dw->get(gMass[m], lb->gMassLabel, matID, patch, gan, 1);
+
+      new_dw->allocateAndPut(gSurfNorm[m],     lb->gSurfNormLabel,     matID, patch);
+      new_dw->allocateAndPut(gPosition[m],     lb->gPositionLabel,     matID, patch);
+      new_dw->allocateAndPut(gStress[m],       lb->gStressLabel,       matID, patch);
+      new_dw->allocateAndPut(gNormTraction[m], lb->gNormTractionLabel, matID, patch);
+
+      ParticleSubset* pset = old_dw->getParticleSubset(matID, patch,
+                                                       gan, NGP, lb->pXLabel);
+
+      constParticleVariable<Point> pX;
+      constParticleVariable<double> pMass, pVolume;
+      constParticleVariable<Matrix3> pSize, pStress;
+      constParticleVariable<Matrix3> pDefGrad_old;
+
+      old_dw->get(pX,                  lb->pXLabel,                  pset);
+      old_dw->get(pMass,               lb->pMassLabel,               pset);
+      old_dw->get(pVolume,             lb->pVolumeLabel,             pset);
+      old_dw->get(pSize,               lb->pSizeLabel,               pset);
+      old_dw->get(pStress,             lb->pStressLabel,             pset);
+      old_dw->get(pDefGrad_old,        lb->pDefGradLabel,            pset);
+
+      gSurfNorm[m].initialize(Vector(0.0,0.0,0.0));
+      gPosition[m].initialize(Point(0.0,0.0,0.0));
+      gNormTraction[m].initialize(0.0);
+      gStress[m].initialize(Matrix3(0.0));
+
+      if(flags->d_axisymmetric){
+        for (auto idx : *pset) {
+          interpolator->findCellAndWeightsAndShapeDerivatives(pX[idx], ni, S, d_S,
+                                                              pSize[idx],
+                                                              pDefGrad_old[idx]);
+          double rho = pMass[idx]/pVolume[idx];
+          for (int k = 0; k < interpolator->size(); k++) {
+            auto node = ni[k];
+            if (patch->containsNode(node)) {
+              Vector G(d_S[k].x(),d_S[k].y(),0.0);
+              gSurfNorm[m][node] += rho * G;
+              gPosition[m][node] += pX[idx].asVector()*pMass[idx] * S[k];
+              gStress[m][node]   += pStress[idx] * S[k];
+            }
+          }
+        }
+      } else {
+        for (auto idx : *pset) {
+          interpolator->findCellAndWeightsAndShapeDerivatives(pX[idx], ni, S, d_S,
+                                                              pSize[idx],
+                                                              pDefGrad_old[idx]);
+          for (int k = 0; k < interpolator->size(); k++) {
+            auto node = ni[k];
+            if (patch->containsNode(node)){
+              Vector grad(d_S[k].x()*oodx[0],d_S[k].y()*oodx[1],
+                          d_S[k].z()*oodx[2]);
+              gSurfNorm[m][node] += pMass[idx] * grad;
+              gPosition[m][node] += pX[idx].asVector()*pMass[idx] * S[k];
+              gStress[m][node]   += pStress[idx] * S[k];
+            }
+          }
+        }
+      } // axisymmetric conditional
+    }   // matl loop
+
+    // Make normal vectors colinear by taking an average with the
+    // other materials at a node
+    if (flags->d_computeCollinearNormals) {
+      for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+        IntVector node = *iter;
+        std::vector<Vector> norm_temp(numMPMMatls);
+        for (auto m = 0; m < numMPMMatls; m++) {
+          norm_temp[m] = Vector(0.,0.,0);
+          if (gMass[m][node] > 1.e-200) {
+            Vector mWON(0.,0.,0.);
+            double mON=0.0;
+            for (auto n = 0; n < numMPMMatls; n++) {
+              if (n != m) {
+                mWON += gMass[n][node]*gSurfNorm[n][node];
+                mON  += gMass[n][node];
+              }
+            }  // loop over other matls
+            mWON /= (mON+1.e-100);
+            norm_temp[m] = 0.5*(gSurfNorm[m][node] - mWON);
+          } // If node has mass
+        }  // Outer loop over materials
+
+        // Now put temporary norm into main array
+        for (auto m = 0; m < numMPMMatls; m++) {
+          gSurfNorm[m][node] = norm_temp[m];
+        }  // Outer loop over materials
+      }   // Loop over nodes
+    }    // if(flags..)
+
+    // Make traditional norms unit length, compute gNormTraction
+    for (auto m = 0; m < numMPMMatls; m++) {
+      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
+      int matID = mpm_matl->getDWIndex();
+      MPMBoundCond bc;
+      bc.setBoundaryCondition(patch, matID, "Symmetric",  gSurfNorm[m], interp_type);
+
+      for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
+        IntVector node = *iter;
+        double length = gSurfNorm[m][node].length();
+        if (length > 1.0e-15) {
+          gSurfNorm[m][node] = gSurfNorm[m][node]/length;
+        }
+        Vector norm = gSurfNorm[m][node];
+        gNormTraction[m][node] = Dot((norm*gStress[m][node]), norm);
+        gPosition[m][node] /= gMass[m][node];
+      }
+    }
+  } // patches
+}
+
 
 /*!----------------------------------------------------------------------
  * scheduleExMomInterpolated
@@ -5124,9 +5321,9 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->allocateAndPut(pTemp_new,     lb->pTemperatureLabel_preReloc,  pset);
       new_dw->allocateAndPut(pTempPrev_new, lb->pTempPreviousLabel_preReloc, pset);
 
-      ParticleVariable<Point>   pX_new, pxx;
+      ParticleVariable<Point>   pX_new, pXx;
       new_dw->allocateAndPut(pX_new,        lb->pXLabel_preReloc,            pset);
-      new_dw->allocateAndPut(pxx,           lb->pXXLabel,                    pset);
+      new_dw->allocateAndPut(pXx,           lb->pXXLabel,                    pset);
 
       ParticleVariable<Vector>  pVelocity_new, pDisp_new, pAcc_new;
       new_dw->allocateAndPut(pVelocity_new, lb->pVelocityLabel_preReloc,     pset);
@@ -5244,8 +5441,8 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           }
         #endif
 
-        // pxx is only useful if we're not in normal grid resetting mode.
-        pxx[idx]             = pX[idx]    + pDisp_new[idx];
+        // pXx is only useful if we're not in normal grid resetting mode.
+        pXx[idx]             = pX[idx]    + pDisp_new[idx];
         pTemp_new[idx]       = pTemperature[idx] + (tempRate + pdTdt_new[idx])*delT;
         pTempPrev_new[idx]   = pTemperature[idx]; // for thermal stress
 
@@ -5530,7 +5727,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
       int dwi = mpm_matl->getDWIndex();
       // Get the arrays of particle values to be changed
       constParticleVariable<Point> pX;
-      ParticleVariable<Point> pX_new,pxx;
+      ParticleVariable<Point> pX_new,pXx;
       constParticleVariable<Vector> pVelocity;
       constParticleVariable<Matrix3> pSize;
       ParticleVariable<Vector> pVelocity_new;
@@ -5555,7 +5752,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
       
       new_dw->allocateAndPut(pVelocity_new, lb->pVelocityLabel_preReloc,   pset);
       new_dw->allocateAndPut(pX_new,        lb->pXLabel_preReloc,          pset);
-      new_dw->allocateAndPut(pxx,          lb->pXXLabel,                  pset);
+      new_dw->allocateAndPut(pXx,          lb->pXXLabel,                  pset);
       new_dw->allocateAndPut(pDisp_new,     lb->pDispLabel_preReloc,       pset);
       
       Ghost::GhostType  gac = Ghost::AroundCells;
@@ -5584,8 +5781,8 @@ SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
         pX_new[idx]           = pX[idx]    + vel*delT*move_particles;
         pDisp_new[idx]        = pDisp[idx] + vel*delT;
         pVelocity_new[idx]    = pVelocity[idx]    + acc*delT;
-        // pxx is only useful if we're not in normal grid resetting mode.
-        pxx[idx]             = pX[idx]    + pDisp_new[idx];
+        // pXx is only useful if we're not in normal grid resetting mode.
+        pXx[idx]             = pX[idx]    + pDisp_new[idx];
 
         ke += .5*pMass[idx]*pVelocity_new[idx].length2();
         CMX = CMX + (pX_new[idx]*pMass[idx]).asVector();

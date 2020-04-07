@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -81,6 +81,7 @@ MPMFlags::MPMFlags(const ProcessorGroup* myworld)
   d_interpolator = std::make_unique<LinearInterpolator>(); 
   d_do_contact_friction = false;
   d_addFrictionWork = 0.0;  // don't do frictional heating by default
+  d_computeCollinearNormals = false;
 
   d_extraSolverFlushes = 0;  // Have PETSc do more flushes to save memory
   d_doImplicitHeatConduction = false;
@@ -268,6 +269,8 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
 
   mpm_flag_ps->get("do_contact_friction_heating", d_do_contact_friction);
   if (!d_do_contact_friction) d_addFrictionWork = 0.0;
+
+  mpm_flag_ps->getWithDefault("collinear_bimaterial_contact_normals", d_computeCollinearNormals, false);
 
    ProblemSpecP erosion_ps = mpm_flag_ps->findBlock("erosion");
    if (erosion_ps) {
@@ -521,6 +524,7 @@ MPMFlags::outputProblemSpec(ProblemSpecP& ps)
   }
 
   ps->appendElement("do_contact_friction_heating", d_do_contact_friction);
+  ps->appendElement("collinear_bimaterial_contact_normals", d_computeCollinearNormals);
 
   ps->appendElement("delete_rogue_particles",d_deleteRogueParticles);
 
