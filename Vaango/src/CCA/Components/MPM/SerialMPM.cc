@@ -1917,8 +1917,9 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     auto interpolator = flags->d_interpolator->clone(patch); 
     auto linear_interpolator = std::make_unique<LinearInterpolator>(patch);
 
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    auto numInfluenceNodes = interpolator->size();
+    vector<IntVector> ni(numInfluenceNodes);
+    vector<double> S(numInfluenceNodes);
     string interp_type = flags->d_interpolator_type;
 
     NCVariable<double> gMassglobal,gTempglobal,gVolumeglobal;
@@ -2026,7 +2027,6 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
       Vector total_mom(0.0,0.0,0.0);
       Vector pMom;
-      int n8or27=flags->d_8or27;
       double pSp_vol = 1./mpm_matl->getInitialDensity();
 
       //loop over all particles in the patch:
@@ -2039,7 +2039,7 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
         // Add each particles contribution to the local mass & velocity 
         // Must use the node indices
         IntVector node;
-        for(int k = 0; k < n8or27; k++) { // Iterates through the nodes which 
+        for(int k = 0; k < numInfluenceNodes; k++) { // Iterates through the nodes which 
                                           // receive information from the current particle
           node = ni[k];
           if(patch->containsNode(node)) {
@@ -2160,12 +2160,12 @@ SerialMPM::scheduleComputeNormals(SchedulerP& sched,
   z_matl->add(0);
   z_matl->addReference();
 
-  t->requires(Task::OldDW, lb->pXLabel,       Ghost::None, 0);
-  t->requires(Task::OldDW, lb->pMassLabel,    Ghost::None, 0);
-  t->requires(Task::OldDW, lb->pVolumeLabel,  Ghost::None, 0);
-  t->requires(Task::OldDW, lb->pSizeLabel,    Ghost::None, 0);
-  t->requires(Task::OldDW, lb->pStressLabel,  Ghost::None, 0);
-  t->requires(Task::OldDW, lb->pDefGradLabel, Ghost::None, 0);
+  t->requires(Task::OldDW, lb->pXLabel,       Ghost::AroundNodes, NGP);
+  t->requires(Task::OldDW, lb->pMassLabel,    Ghost::AroundNodes, NGP);
+  t->requires(Task::OldDW, lb->pVolumeLabel,  Ghost::AroundNodes, NGP);
+  t->requires(Task::OldDW, lb->pSizeLabel,    Ghost::AroundNodes, NGP);
+  t->requires(Task::OldDW, lb->pStressLabel,  Ghost::AroundNodes, NGP);
+  t->requires(Task::OldDW, lb->pDefGradLabel, Ghost::AroundNodes, NGP);
   t->requires(Task::NewDW, lb->gMassLabel,    Ghost::AroundNodes, 1);
   t->requires(Task::OldDW, lb->NC_CCweightLabel, z_matl, Ghost::None);
 
@@ -2201,7 +2201,7 @@ SerialMPM::computeNormals(const ProcessorGroup*,
   std::vector<NCVariable<double> >       gNormTraction(numMPMMatls);
   std::vector<NCVariable<Matrix3> >      gStress(numMPMMatls);
 
-  for (int p = 0; p<patches->size(); p++) {
+  for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
     printTask(patches, patch, cout_doing, "Doing MPM::computeNormals");
@@ -2216,9 +2216,10 @@ SerialMPM::computeNormals(const ProcessorGroup*,
     old_dw->get(NC_CCweight,   lb->NC_CCweightLabel,  0, patch, gnone, 0);
 
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    auto numInfluenceNodes = interpolator->size();
+    vector<IntVector> ni(numInfluenceNodes);
+    vector<double> S(numInfluenceNodes);
+    vector<Vector> d_S(numInfluenceNodes);
     string interp_type = flags->d_interpolator_type;
 
     // Find surface normal at each material based on a gradient of nodal mass
@@ -2258,7 +2259,7 @@ SerialMPM::computeNormals(const ProcessorGroup*,
                                                               pSize[idx],
                                                               pDefGrad_old[idx]);
           double rho = pMass[idx]/pVolume[idx];
-          for (int k = 0; k < interpolator->size(); k++) {
+          for (int k = 0; k < numInfluenceNodes; k++) {
             auto node = ni[k];
             if (patch->containsNode(node)) {
               Vector G(d_S[k].x(),d_S[k].y(),0.0);
@@ -2273,7 +2274,7 @@ SerialMPM::computeNormals(const ProcessorGroup*,
           interpolator->findCellAndWeightsAndShapeDerivatives(pX[idx], ni, S, d_S,
                                                               pSize[idx],
                                                               pDefGrad_old[idx]);
-          for (int k = 0; k < interpolator->size(); k++) {
+          for (int k = 0; k < numInfluenceNodes; k++) {
             auto node = ni[k];
             if (patch->containsNode(node)){
               Vector grad(d_S[k].x()*oodx[0],d_S[k].y()*oodx[1],
@@ -2427,8 +2428,9 @@ SerialMPM::updateCohesiveZones(const ProcessorGroup*,
               "Doing updateCohesiveZones");
 
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    auto numInfluenceNodes = interpolator->size();
+    vector<IntVector> ni(numInfluenceNodes);
+    vector<double> S(numInfluenceNodes);
 
     delt_vartype delT;
     old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
@@ -2563,7 +2565,7 @@ SerialMPM::updateCohesiveZones(const ProcessorGroup*,
 
         //double density_ratio = denseTop/denseBot;
         // Accumulate the contribution from each surrounding vertex
-        for (int k = 0; k < flags->d_8or27; k++) {
+        for (int k = 0; k < numInfluenceNodes; k++) {
           IntVector node = ni[k];
           velTop      += gVelocity[TopMat][node] * S[k];
           velBot      += gVelocity[BotMat][node] * S[k];
@@ -2722,8 +2724,9 @@ SerialMPM::addCohesiveZoneForces(const ProcessorGroup*,
     printTask(patches,patch,cout_doing,"Doing addCohesiveZoneForces");
 
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    auto numInfluenceNodes = interpolator->size();
+    vector<IntVector> ni(numInfluenceNodes);
+    vector<double> S(numInfluenceNodes);
 
     int numMPMMatls=d_sharedState->getNumMPMMatls();
     std::vector<NCVariable<Vector> > gext_force(numMPMMatls);
@@ -2773,7 +2776,7 @@ SerialMPM::addCohesiveZoneForces(const ProcessorGroup*,
         int BotMat = czBotMat[idx];
 
         // Accumulate the contribution from each surrounding vertex
-        for (int k = 0; k < flags->d_8or27; k++) {
+        for (int k = 0; k < numInfluenceNodes; k++) {
           IntVector node = ni[k];
           if(patch->containsNode(node)) {
             gext_force[BotMat][node] = gext_force[BotMat][node] 
@@ -2992,9 +2995,10 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
     Id.Identity();
 
     auto interpolator = flags->d_interpolator->clone(patch); 
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
+    auto numInfluenceNodes = interpolator->size();
+    vector<IntVector> ni(numInfluenceNodes);
+    vector<double> S(numInfluenceNodes);
+    vector<Vector> d_S(numInfluenceNodes);
     string interp_type = flags->d_interpolator_type;
 
     int numMPMMatls = d_sharedState->getNumMPMMatls();
@@ -3070,7 +3074,6 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
 
       Matrix3 stressvol;
       Matrix3 stresspress;
-      int n8or27 = flags->d_8or27;
 
       // for the non axisymmetric case:
       if(!flags->d_axisymmetric){
@@ -3083,7 +3086,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
           stresspress = pStress[idx] + Id*(p_pressure[idx] - p_q[idx]);
           //cerr << " idx = " << idx << " pStress = " << pStress[idx] << endl;
 
-          for (int k = 0; k < n8or27; k++){
+          for (int k = 0; k < numInfluenceNodes; k++){
             auto node = ni[k];
             if (patch->containsNode(node)) {
               Vector div(d_S[k].x()*oodx[0],d_S[k].y()*oodx[1],
@@ -3146,7 +3149,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
   
           // r is the x direction, z (axial) is the y direction
           double IFr=0.,IFz=0.;
-          for (int k = 0; k < n8or27; k++){
+          for (int k = 0; k < numInfluenceNodes; k++){
              auto node = ni[k];
             if(patch->containsNode(node)){
               IFr = d_S[k].x()*oodx[0]*stresspress(0,0) +
@@ -3787,9 +3790,9 @@ SerialMPM::computeParticleVelocityXPIC(const ProcessorGroup*,
     printTask(patches, patch, cout_doing, "Doing computeParticleVelocityXPIC");
 
     auto interpolator = flags->d_interpolator->clone(patch); 
-    auto num_influence_nodes = interpolator->size();
-    std::vector<IntVector>  ni(num_influence_nodes);
-    std::vector<double>     S(num_influence_nodes);
+    auto numInfluenceNodes = interpolator->size();
+    vector<IntVector> ni(numInfluenceNodes);
+    vector<double> S(numInfluenceNodes);
 
     auto materials = d_sharedState->mpm_materials();
     for (const auto& material : materials) {
@@ -3816,7 +3819,7 @@ SerialMPM::computeParticleVelocityXPIC(const ProcessorGroup*,
         interpolator->findCellAndWeights(pX[particle], ni, S,
                                          pSize[particle], pDefGrad[particle]);
         Vector pVelocity(0.0, 0.0, 0.0);
-        for (int k = 0; k < num_influence_nodes; k++) {
+        for (int k = 0; k < numInfluenceNodes; k++) {
           pVelocity += gVelocity[ni[k]]  * S[k];
         }
         pVelocityXPIC[particle] = pVelocity;
@@ -3839,9 +3842,9 @@ SerialMPM::computeGridVelocityXPIC(const ProcessorGroup*,
     printTask(patches, patch, cout_doing, "Doing computeGridVelocityXPIC");
 
     auto interpolator = flags->d_interpolator->clone(patch); 
-    auto num_influence_nodes = interpolator->size();
-    std::vector<IntVector>  ni(num_influence_nodes);
-    std::vector<double>      S(num_influence_nodes);
+    auto numInfluenceNodes = interpolator->size();
+    vector<IntVector> ni(numInfluenceNodes);
+    vector<double> S(numInfluenceNodes);
 
     auto materials = d_sharedState->mpm_materials();
     for (const auto& material : materials) {
@@ -3876,7 +3879,7 @@ SerialMPM::computeGridVelocityXPIC(const ProcessorGroup*,
         interpolator->findCellAndWeights(pX[particle], ni, S,
                                          pSize[particle], pDefGrad[particle]);
         Vector pMomentum = pVelocityXPIC[particle] * pMass[particle];
-        for (int k = 0; k < num_influence_nodes; k++) {
+        for (int k = 0; k < numInfluenceNodes; k++) {
           node = ni[k];
           if (patch->containsNode(node)) {
             gVelocityXPIC[node] += pMomentum  * S[k];
@@ -5227,9 +5230,9 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
               "Doing interpolateToParticlesAndUpdate");
 
     auto interpolator = flags->d_interpolator->clone(patch);
-    auto num_influence_nodes = interpolator->size();
-    vector<IntVector> ni(num_influence_nodes);
-    vector<double> S(num_influence_nodes);
+    auto numInfluenceNodes = interpolator->size();
+    vector<IntVector> ni(numInfluenceNodes);
+    vector<double> S(numInfluenceNodes);
 
     // Performs the interpolation from the cell vertices of the grid
     // acceleration and velocity to the particles to update their
@@ -5386,7 +5389,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         double burnFraction = 0.0;
 
         // Accumulate the contribution from each surrounding vertex
-        for (int k = 0; k < num_influence_nodes; k++) {
+        for (int k = 0; k < numInfluenceNodes; k++) {
           IntVector node = ni[k];
           velocity      += gVelocityStar[node]  * S[k];
           acceleration  += gAcceleration[node]  * S[k];
@@ -5702,8 +5705,9 @@ SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
               "Doing interpolateToParticlesAndUpdateMom1");
 
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    auto numInfluenceNodes = interpolator->size();
+    vector<IntVector> ni(numInfluenceNodes);
+    vector<double> S(numInfluenceNodes);
 
     // Performs the interpolation from the cell vertices of the grid
     // acceleration and velocity to the particles to update their
@@ -5771,7 +5775,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
         Vector acc(0.0,0.0,0.0);
 
         // Accumulate the contribution from each surrounding vertex
-        for (int k = 0; k < flags->d_8or27; k++) {
+        for (int k = 0; k < numInfluenceNodes; k++) {
           IntVector node = ni[k];
           vel      += gVelocity_star[node]  * S[k];
           acc      += gAcceleration[node]   * S[k];
@@ -5870,8 +5874,9 @@ SerialMPM::interpolateParticleVelToGridMom(const ProcessorGroup*,
 
     int numMatls = d_sharedState->getNumMPMMatls();
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    auto numInfluenceNodes = interpolator->size();
+    vector<IntVector> ni(numInfluenceNodes);
+    vector<double> S(numInfluenceNodes);
 
     Ghost::GhostType  gan = Ghost::AroundNodes;
     Ghost::GhostType  gnone = Ghost::None;
@@ -5902,7 +5907,6 @@ SerialMPM::interpolateParticleVelToGridMom(const ProcessorGroup*,
       new_dw->getModifiable(gVelocity_star, lb->gVelocityStarLabel,  dwi,patch);
       gVelocity_star.initialize(Vector(0,0,0));
 
-      int n8or27=flags->d_8or27;
       for (ParticleSubset::iterator iter = pset->begin();
            iter != pset->end();
            iter++){
@@ -5915,7 +5919,7 @@ SerialMPM::interpolateParticleVelToGridMom(const ProcessorGroup*,
 
         // Add each particles contribution to the local mass & velocity 
         // Must use the node indices
-        for(int k = 0; k < n8or27; k++) {
+        for(int k = 0; k < numInfluenceNodes; k++) {
           IntVector node = ni[k];
           if(patch->containsNode(node)) {
             gVelocity_star[node]      += pMom   * S[k];
@@ -6030,8 +6034,9 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
               "Doing interpolateToParticlesAndUpdateMom2");
 
     auto interpolator = flags->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<double> S(interpolator->size());
+    auto numInfluenceNodes = interpolator->size();
+    vector<IntVector> ni(numInfluenceNodes);
+    vector<double> S(numInfluenceNodes);
 
     // Performs the interpolation from the cell vertices of the grid
     // acceleration and velocity to the particles to update their
@@ -6151,7 +6156,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
         double burnFraction = 0.0;
 
         // Accumulate the contribution from each surrounding vertex
-        for (int k = 0; k < flags->d_8or27; k++) {
+        for (int k = 0; k < numInfluenceNodes; k++) {
           IntVector node = ni[k];
 
           fricTempRate = frictionTempRate[node]*flags->d_addFrictionWork;
