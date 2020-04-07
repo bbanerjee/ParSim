@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2018-2019 Parresia Research Limited, New Zealand
+ * Copyright (c) 2018-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -826,7 +826,7 @@ UofU_MPM::initializePressureBC(const ProcessorGroup*,
 
     // Save the material points per load curve in the PressureBC object
     PressureBC* pbc =
-      dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+      dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii].get());
     pbc->numMaterialPoints(numPart);
 
     if (cout_dbg.active())
@@ -1217,7 +1217,7 @@ UofU_MPM::applyExternalLoads(const ProcessorGroup*, const PatchSubset* patches,
       string bcs_type = physicalBC->getType();
       if (bcs_type != "Pressure")
         continue;
-      PressureBC* pbc = dynamic_cast<PressureBC*>(physicalBC);
+      PressureBC* pbc = dynamic_cast<PressureBC*>(physicalBC.get());
       pbcP.push_back(pbc);
 
       // Calculate the force per particle at current time

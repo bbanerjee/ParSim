@@ -315,34 +315,30 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 int ParticleCreator::getLoadCurveID(const Point& pp, const Vector& dxpp)
 {
   int ret=0;
-  for (int ii = 0; ii<(int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++){
-    string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
+  for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
+    string bcType = bc->getType();
         
-    //cerr << " BC Type = " << bcs_type << endl;
-    if (bcs_type == "Pressure") {
-      PressureBC* pbc = 
-        dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+    //cerr << " BC Type = " << bcType << endl;
+    if (bcType == "Pressure") {
+      PressureBC* pbc = dynamic_cast<PressureBC*>(bc.get());
       if (pbc->flagMaterialPoint(pp, dxpp)) {
          //std::cout << "\t surface particle; flagged material pt" << std::endl;
          ret = pbc->loadCurveID(); 
       } 
-    } else if (bcs_type == "Velocity") {
-      VelocityBC* vbc = 
-        dynamic_cast<VelocityBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+    } else if (bcType == "Velocity") {
+      VelocityBC* vbc = dynamic_cast<VelocityBC*>(bc.get());
       if (vbc->flagMaterialPoint(pp, dxpp)) {
          //std::cout << "\t surface particle; flagged material pt" << std::endl;
          ret = vbc->loadCurveID(); 
       } 
-    } else if (bcs_type == "Moment") {
-      MomentBC* pbc = 
-        dynamic_cast<MomentBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+    } else if (bcType == "Moment") {
+      MomentBC* pbc = dynamic_cast<MomentBC*>(bc.get());
       if (pbc->flagMaterialPoint(pp, dxpp)) {
          ret = pbc->loadCurveID(); 
       }
     }
-    else if (bcs_type == "HeatFlux") {      
-      HeatFluxBC* hfbc = 
-        dynamic_cast<HeatFluxBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+    else if (bcType == "HeatFlux") {      
+      HeatFluxBC* hfbc = dynamic_cast<HeatFluxBC*>(bc.get());
       if (hfbc->flagMaterialPoint(pp, dxpp)) {
         ret = hfbc->loadCurveID(); 
       }
@@ -354,26 +350,22 @@ int ParticleCreator::getLoadCurveID(const Point& pp, const Vector& dxpp)
 // Print MPM physical boundary condition information
 void ParticleCreator::printPhysicalBCs()
 {
-  for (int ii = 0; ii<(int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++){
-    string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-    if (bcs_type == "Pressure") {
-      PressureBC* pbc = 
-        dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+  for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
+    string bcType = bc->getType();
+    if (bcType == "Pressure") {
+      PressureBC* pbc = dynamic_cast<PressureBC*>(bc.get());
       cerr << *pbc << endl;
     }
-    if (bcs_type == "Velocity") {
-      VelocityBC* vbc = 
-        dynamic_cast<VelocityBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+    if (bcType == "Velocity") {
+      VelocityBC* vbc = dynamic_cast<VelocityBC*>(bc.get());
       cerr << *vbc << endl;
     }
-    if (bcs_type == "Moment") {
-      MomentBC* pbc = 
-        dynamic_cast<MomentBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+    if (bcType == "Moment") {
+      MomentBC* pbc = dynamic_cast<MomentBC*>(bc.get());
       cerr << *pbc << endl;
     }
-    if (bcs_type == "HeatFlux") {
-      HeatFluxBC* hfbc = 
-        dynamic_cast<HeatFluxBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+    if (bcType == "HeatFlux") {
+      HeatFluxBC* hfbc = dynamic_cast<HeatFluxBC*>(bc.get());
       cerr << *hfbc << endl;
     }
   }
@@ -385,20 +377,18 @@ ParticleCreator::applyForceBC(const Vector& dxpp,
                               const double& pMass, 
                               Vector& pExtForce)
 {
-  for (int i = 0; i<(int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); i++){
-    string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[i]->getType();
+  for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
+    string bcType = bc->getType();
         
-    //cerr << " BC Type = " << bcs_type << endl;
-    if (bcs_type == "Force") {
-      ForceBC* bc = dynamic_cast<ForceBC*>
-        (MPMPhysicalBCFactory::mpmPhysicalBCs[i]);
+    //cerr << " BC Type = " << bcType << endl;
+    if (bcType == "Force") {
+      ForceBC* fbc = dynamic_cast<ForceBC*>(bc.get());
 
-      Box bcBox;
-      bcBox = Box(bc->getLowerRange()-dxpp,bc->getUpperRange()+dxpp);
+      Box fbcBox(fbc->getLowerRange()-dxpp,fbc->getUpperRange()+dxpp);
 
       //cerr << "BC Box = " << bcBox << " Point = " << pp << endl;
-      if(bcBox.contains(pp)) {
-        pExtForce = bc->getForceDensity() * pMass;
+      if(fbcBox.contains(pp)) {
+        pExtForce = fbc->getForceDensity() * pMass;
         //cerr << "External Force on Particle = " << pExtForce 
         //     << " Force Density = " << bc->getForceDensity() 
         //     << " Particle Mass = " << pMass << endl;

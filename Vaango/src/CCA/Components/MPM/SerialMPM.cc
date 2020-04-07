@@ -409,8 +409,8 @@ SerialMPM::outputProblemSpec(ProblemSpecP& root_ps)
   
   ProblemSpecP physical_bc_ps = root->appendChild("PhysicalBC");
   ProblemSpecP mpm_ph_bc_ps = physical_bc_ps->appendChild("MPM");
-  for (int ii = 0; ii<(int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++) {
-    MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->outputProblemSpec(mpm_ph_bc_ps);
+  for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
+    bc->outputProblemSpec(mpm_ph_bc_ps);
   }
 
 }
@@ -530,10 +530,10 @@ SerialMPM::scheduleInitialize(const LevelP& level,
   // Schedule the initialization of pressure BCs per particle
   if (flags->d_useLoadCurves) {
     if (MPMPhysicalBCFactory::mpmPhysicalBCs.size() > 0) {
-      string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[0]->getType();
-      if (bcs_type == "Pressure")
+      string bcType = MPMPhysicalBCFactory::mpmPhysicalBCs[0]->getType();
+      if (bcType == "Pressure")
         scheduleInitializePressureBCs(level, sched);
-      else if (bcs_type == "Moment")
+      else if (bcType == "Moment")
         scheduleInitializeMomentBCs(level, sched);
     }
   }
@@ -857,9 +857,9 @@ SerialMPM::scheduleInitializePressureBCs(const LevelP& level,
   d_loadCurveIndex->addReference();
 
   int pressureBCId = 0;
-  for (int ii = 0; ii<(int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++){
-    string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-    if (bcs_type == "Pressure"){
+  for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
+    string bcType = bc->getType();
+    if (bcType == "Pressure"){
       d_loadCurveIndex->add(pressureBCId++);
     }
   }
@@ -914,9 +914,9 @@ SerialMPM::countMaterialPointsPerLoadCurve(const ProcessorGroup*,
   printTask(patches, patches->get(0) ,cout_doing,"countMaterialPointsPerLoadCurve");
   // Find the number of pressure BCs in the problem
   int nofPressureBCs = 0;
-  for (int ii = 0; ii<(int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++){
-    string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-    if (bcs_type == "Pressure" || bcs_type == "Moment") {
+  for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
+    string bcType = bc->getType();
+    if (bcType == "Pressure" || bcType == "Moment") {
       nofPressureBCs++;
 
       // Loop through the patches and count
@@ -963,19 +963,19 @@ SerialMPM::initializePressureBC(const ProcessorGroup*,
 
   // Calculate the force vector at each particle
   int pressureBCId = 0;
-  for (int ii = 0; ii<(int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++) {
+  int ii = 0;
+  for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
 
-    string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
+    string bcType = bc->getType();
 
-    if (bcs_type == "Pressure") {
+    if (bcType == "Pressure") {
 
       // Get the material points per load curve
       sumlong_vartype numPart = 0;
       new_dw->get(numPart, lb->materialPointsPerLoadCurveLabel, 0, pressureBCId++);
 
       // Save the material points per load curve in the PressureBC object
-      PressureBC* pbc =
-        dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+      PressureBC* pbc = dynamic_cast<PressureBC*>(bc.get());
       pbc->numMaterialPoints(numPart);
 
       if (cout_dbg.active())
@@ -1057,7 +1057,8 @@ SerialMPM::initializePressureBC(const ProcessorGroup*,
         } // matl loop
       }  // patch loop
     }
-  }
+    ++ii;
+  } // bc loop
 }
 
 /*!---------------------------------------------------------------------------
@@ -1075,9 +1076,9 @@ SerialMPM::scheduleInitializeMomentBCs(const LevelP& level,
   d_loadCurveIndex->addReference();
 
   int nofMomentBCs = 0;
-  for (int ii = 0; ii<(int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++){
-    string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-    if (bcs_type == "Moment"){
+  for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
+    string bcType = bc->getType();
+    if (bcType == "Moment"){
       d_loadCurveIndex->add(nofMomentBCs++);
     }
   }
@@ -1136,9 +1137,9 @@ SerialMPM::initializeMomentBC(const ProcessorGroup*,
 
   // Calculate the force vector at each particle
   int nofMomentBCs = 0;
-  for (int ii = 0; ii<(int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++) {
-    string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-    if (bcs_type == "Moment") {
+  for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
+    string bcType = bc->getType();
+    if (bcType == "Moment") {
 
       // Get the material points per load curve
       sumlong_vartype numPart = 0;
@@ -1146,8 +1147,7 @@ SerialMPM::initializeMomentBC(const ProcessorGroup*,
                   0, nofMomentBCs++);
 
       // Save the material points per load curve in the MomentBC object
-      MomentBC* pbc =
-        dynamic_cast<MomentBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+      MomentBC* pbc = dynamic_cast<MomentBC*>(bc.get());
       pbc->numMaterialPoints(numPart);
 
       if (cout_dbg.active())
@@ -1620,19 +1620,19 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
   std::vector<PressureBC*> pbcP;
   std::vector<MomentBC*> pbcM;
   if (flags->d_useLoadCurves) {
-    for (int ii = 0;ii < (int)MPMPhysicalBCFactory::mpmPhysicalBCs.size();ii++){
-      string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-      if (bcs_type == "Pressure") {
+    for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
+      string bcType = bc->getType();
+      if (bcType == "Pressure") {
         PressureBC* pbc =
-          dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+          dynamic_cast<PressureBC*>(bc.get());
         pbcP.push_back(pbc);
 
         // Calculate the force per particle at current time
         forcePerPart.push_back(pbc->forcePerParticle(time));
       }
-      else if (bcs_type == "Moment") {
+      else if (bcType == "Moment") {
         MomentBC* pbc =
-          dynamic_cast<MomentBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+          dynamic_cast<MomentBC*>(bc.get());
         pbcM.push_back(pbc);
 
         // Calculate the moment at current time.
@@ -1684,14 +1684,12 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
         // Check whether it's a presure or moment bc
         bool do_PressureBCs=false;
         bool do_MomentBCs = false;
-        for (int ii = 0;
-             ii < (int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++) {
-          string bcs_type =
-            MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-          if (bcs_type == "Pressure") {
+        for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
+          string bcType = bc->getType();
+          if (bcType == "Pressure") {
             do_PressureBCs=true;
           }
-          else if (bcs_type == "Moment") {
+          else if (bcType == "Moment") {
             do_MomentBCs = true;
           }
         }
@@ -5489,12 +5487,11 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
         std::vector<VelocityBC*> vbcP;
         bool do_VelocityBCs = false;
-        for (int ii = 0; ii < (int)MPMPhysicalBCFactory::mpmPhysicalBCs.size(); ii++) {
-          string bcs_type = MPMPhysicalBCFactory::mpmPhysicalBCs[ii]->getType();
-          if (bcs_type == "Velocity") {
+        for (auto bc : MPMPhysicalBCFactory::mpmPhysicalBCs) {
+          string bcType = bc->getType();
+          if (bcType == "Velocity") {
             do_VelocityBCs = true;
-            VelocityBC* vbc =
-              dynamic_cast<VelocityBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+            VelocityBC* vbc = dynamic_cast<VelocityBC*>(bc.get());
             vbcP.push_back(vbc);
           }
         }

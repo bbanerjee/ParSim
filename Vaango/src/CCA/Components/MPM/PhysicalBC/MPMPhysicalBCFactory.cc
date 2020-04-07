@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -37,10 +38,9 @@
 #include <Core/Malloc/Allocator.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
-using namespace std;
 using namespace Uintah;
 
-std::vector<MPMPhysicalBC*> MPMPhysicalBCFactory::mpmPhysicalBCs;
+std::vector<MPMPhysicalBC_SP> MPMPhysicalBCFactory::mpmPhysicalBCs;
 
 void 
 MPMPhysicalBCFactory::create(const ProblemSpecP& ps, 
@@ -54,37 +54,32 @@ MPMPhysicalBCFactory::create(const ProblemSpecP& ps,
 
     for(ProblemSpecP child = current_ps->findBlock("force"); child != 0;
         child = child->findNextBlock("force") ) {
-      mpmPhysicalBCs.push_back(scinew ForceBC(child));
+      mpmPhysicalBCs.push_back(std::make_unique<ForceBC>(child));
     }
 
     for(ProblemSpecP child = current_ps->findBlock("moment"); child != 0;
         child = child->findNextBlock("moment") ) {
-      mpmPhysicalBCs.push_back(scinew MomentBC(child, grid, flags));
+      mpmPhysicalBCs.push_back(std::make_unique<MomentBC>(child, grid, flags));
     }
 
     for(ProblemSpecP child = current_ps->findBlock("velocity"); child != 0;
         child = child->findNextBlock("velocity") ) {
-      mpmPhysicalBCs.push_back(scinew VelocityBC(child, grid, flags));
+      mpmPhysicalBCs.push_back(std::make_unique<VelocityBC>(child, grid, flags));
     }
 
     for(ProblemSpecP child = current_ps->findBlock("pressure"); child != 0;
         child = child->findNextBlock("pressure") ) {
-      mpmPhysicalBCs.push_back(scinew PressureBC(child, grid, flags));
+      mpmPhysicalBCs.push_back(std::make_unique<PressureBC>(child, grid, flags));
     }
 
     for(ProblemSpecP child = current_ps->findBlock("crack"); child != 0;
         child = child->findNextBlock("crack") ) {
-      mpmPhysicalBCs.push_back(scinew CrackBC(child));
+      mpmPhysicalBCs.push_back(std::make_unique<CrackBC>(child));
     }
 
     for(ProblemSpecP child = current_ps->findBlock("heat_flux"); child != 0;
         child = child->findNextBlock("heat_flux") ) {
-      mpmPhysicalBCs.push_back(scinew HeatFluxBC(child, grid));
-    }
-
-    for(ProblemSpecP child = current_ps->findBlock("arches_heat_flux");
-        child != 0; child = child->findNextBlock("arches_heat_flux") ) {
-      mpmPhysicalBCs.push_back(scinew ArchesHeatFluxBC(child,grid));
+      mpmPhysicalBCs.push_back(std::make_unique<HeatFluxBC>(child, grid));
     }
 
   }
@@ -93,7 +88,5 @@ MPMPhysicalBCFactory::create(const ProblemSpecP& ps,
 void 
 MPMPhysicalBCFactory::clean()
 {
-  for (unsigned int i = 0; i < mpmPhysicalBCs.size(); i++)
-    delete mpmPhysicalBCs[i];
   mpmPhysicalBCs.clear();
 }

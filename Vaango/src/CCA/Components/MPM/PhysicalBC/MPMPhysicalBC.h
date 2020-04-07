@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -32,31 +32,6 @@
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {
-/**************************************
-
-CLASS
-   MPMPhysicalBC
-   
-GENERAL INFORMATION
-
-   MPMPhysicalBC
-
-   Honglai Tan
-   Department of Materials Science and Engineering
-   University of Utah
-
-   Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
-  
-
-KEYWORDS
-   MPMPhysicalBC
-
-DESCRIPTION
-   Long description...
-  
-WARNING
-  
-****************************************/
 
    class MPMPhysicalBC  {
    public:
@@ -66,8 +41,8 @@ WARNING
       virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
         
    private:
-      MPMPhysicalBC(const MPMPhysicalBC&);
-      MPMPhysicalBC& operator=(const MPMPhysicalBC&);
+      MPMPhysicalBC(const MPMPhysicalBC&) = delete;
+      MPMPhysicalBC& operator=(const MPMPhysicalBC&) = delete;
    };
 } // End namespace Uintah
    

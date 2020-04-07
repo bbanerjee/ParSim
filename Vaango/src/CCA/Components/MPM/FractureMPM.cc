@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2018-2018 Parresia Research Limited, NZ
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -1175,7 +1175,7 @@ void FractureMPM::initializePressureBC(const ProcessorGroup*,
 
       // Save the material points per load curve in the PressureBC object
       PressureBC* pbc =
-        dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+        dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii].get());
       pbc->numMaterialPoints(numPart);
 
       if (cout_dbg.active())
@@ -2159,7 +2159,7 @@ void FractureMPM::applyExternalLoads(const ProcessorGroup* ,
 
         // Get the material points per load curve
         PressureBC* pbc = 
-          dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+          dynamic_cast<PressureBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii].get());
         pbcP.push_back(pbc);
 
         // Calculate the force per particle at current time

@@ -736,7 +736,7 @@ ImpMPM::initializeHeatFluxBC(const ProcessorGroup*,
       double fluxPerPart = 0.;
       HeatFluxBC* phf = nullptr;
       if (bcType == "HeatFlux") {
-        phf = dynamic_cast<HeatFluxBC*>(particleBC);
+        phf = dynamic_cast<HeatFluxBC*>(particleBC.get());
         phf->numMaterialPoints(numPart);
         fluxPerPart = phf->fluxPerParticle(time);
         //std::cout << "numPart = " << numPart << endl;
@@ -801,7 +801,7 @@ ImpMPM::initializePressureBC(const ProcessorGroup*,
                   0, nofPressureBCs++);
 
       // Save the material points per load curve in the PressureBC object
-      PressureBC* pbc = dynamic_cast<PressureBC*>(particleBC);
+      PressureBC* pbc = dynamic_cast<PressureBC*>(particleBC.get());
       pbc->numMaterialPoints(numPart);
 
       if (cout_dbg.active()) {
@@ -1140,13 +1140,13 @@ ImpMPM::applyExternalLoads(const ProcessorGroup* ,
       if (bcType == "Pressure") {
 
         // std::cerr << "Pressure BCs is being supported in ImpMPM" << endl;
-        PressureBC* pbc = dynamic_cast<PressureBC*>(particleBC);
+        PressureBC* pbc = dynamic_cast<PressureBC*>(particleBC.get());
         pbcP.push_back(pbc);
         forceMagPerPart.push_back(pbc->forcePerParticle(time));
 
       } else if (bcType == "HeatFlux") {
 
-        HeatFluxBC* hfbc = dynamic_cast<HeatFluxBC*>(particleBC);
+        HeatFluxBC* hfbc = dynamic_cast<HeatFluxBC*>(particleBC.get());
         #if 0
         std::cout << *hfbc << endl;
         std::cout << "hfbc type = " << hfbc->getType() << endl;

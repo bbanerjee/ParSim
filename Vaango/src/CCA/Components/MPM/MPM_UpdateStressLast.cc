@@ -447,7 +447,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           if (bcs_type == "Velocity") {
             do_VelocityBCs = true;
             VelocityBC* vbc =
-              dynamic_cast<VelocityBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii]);
+              dynamic_cast<VelocityBC*>(MPMPhysicalBCFactory::mpmPhysicalBCs[ii].get());
             vbcP.push_back(vbc);
           }
         }
