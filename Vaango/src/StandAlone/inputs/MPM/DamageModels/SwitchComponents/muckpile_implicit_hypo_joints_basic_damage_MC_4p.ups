@@ -1,0 +1,214 @@
+<?xml version="1.0"?>
+<Uintah_specification>
+  <Meta>
+    <title>Mineral Wall Blasting</title>
+  </Meta>
+  <SimulationComponent type="impm"/>
+  <!--____________________________________________________________________-->
+  <!--      T  I  M  E     V  A  R  I  A  B  L  E  S                      -->
+  <!--____________________________________________________________________-->
+  <Time>
+    <maxTime>            3.00       </maxTime>
+    <initTime>           0.0        </initTime>
+    <delt_min>           1.0e-06    </delt_min>
+    <delt_max>           1.0e-04    </delt_max>
+    <delt_init>          1.8e-06    </delt_init>
+    <max_delt_increase>  1.2        </max_delt_increase>
+    <timestep_multiplier>0.2        </timestep_multiplier>
+  </Time>
+  <!--____________________________________________________________________-->
+  <!--      O  U  P  U  T     V  A  R  I  A  B  L  E  S                   -->
+  <!--____________________________________________________________________-->
+  <DataArchiver>
+    <filebase>muckPile_Implicit_Hypoelastic_joints_basic_damage_MC_4p.uda</filebase>
+    <outputInterval>5.0e-5</outputInterval>
+    <!-- <outputTimestepInterval>1</outputTimestepInterval> -->
+    <save label="p.particleID"/>
+    <save label="p.x"/>
+    <save label="p.velocity"/>
+    <save label="p.displacement"/>
+    <save label="p.mass"/>
+    <save label="p.stress"/>
+    <save label="p.deformationGradient"/>
+    <save label="g.velocity"/>
+    <checkpoint cycle="2" timestepInterval="200"/>
+  </DataArchiver>
+  <!--____________________________________________________________________-->
+  <!--     P  H  Y  S  I  C  A  L     C  O  N  S  T  A  N  T  S           -->
+  <!--____________________________________________________________________-->
+  <PhysicalConstants>
+    <gravity>            [0,-9.8,0]   </gravity>
+  </PhysicalConstants>
+  <!--____________________________________________________________________-->
+  <!--    MPM     P  A  R  A  M  E  T  E  R  S                        -->
+  <!--____________________________________________________________________-->
+  <MPM>
+    <time_integrator> implicit </time_integrator>
+    <!-- <interpolator> gimp </interpolator> -->
+    <dynamic> true </dynamic>
+    <solver>petsc</solver>
+    <convergence_criteria_disp>1.e-10</convergence_criteria_disp>
+    <convergence_criteria_energy>4.e-10</convergence_criteria_energy>
+    <DoImplicitHeatConduction>false</DoImplicitHeatConduction>
+  </MPM>
+  <!--____________________________________________________________________-->
+  <!--     Material Properties and Initial Conditions                     -->
+  <!--____________________________________________________________________-->
+  <MaterialProperties>
+    <MPM>
+      <material name="Joints">
+        <density>2000</density>
+        <thermal_conductivity>1.0</thermal_conductivity>
+        <specific_heat>5</specific_heat>
+        <do_basic_damage> false </do_basic_damage>
+        <constitutive_model type="hypo_elastic">
+          <K>32.e7</K>
+          <G>12.e7</G>
+        </constitutive_model>
+        <geom_object>
+          <intersection label="joints_inside">
+            <difference>
+              <union label="Intact_rock">
+                <box label="Rock step">
+                  <min>[0.501, 5.0, 0.0]</min>
+                  <max>[15.0, 15.0, 0.5]</max>
+                </box>
+                <box label="Rock bed">
+                  <min>[0.501, 0.3, 0.0]</min>
+                  <max>[30.0, 5.0, 0.5]</max>
+                </box>
+              </union>
+              <box label="Blasting hole">
+                <min>[10.0, 4.0, 0.0]</min>
+                <max>[10.2, 15.0, 0.5]</max>
+              </box>
+            </difference>
+            <union label="Joints_all">
+              <cylinder label="Joint_1">
+                <bottom>[3.9614, 9.5804, 0.0]</bottom>
+                <top>[4.1054,   9.6524, 0.0]</top>
+                <radius> 10 </radius>
+              </cylinder>
+              <cylinder label="Joint_2">
+                <bottom>[3.1582,   7.0823, 0.0]</bottom>
+                <top>[3.2794,   6.9611, 0.0]</top>
+                <radius> 10 </radius>
+              </cylinder>
+              <cylinder label="Joint_3">
+                <bottom>[11.1153,    7.5048, 0.0]</bottom>
+                <top>[11.2395,    7.3392, 0.0]</top>
+                <radius> 10 </radius>
+              </cylinder>
+              <cylinder label="Joint_4">
+                <bottom>[11.819,   11.974, 0.0]</bottom>
+                <top>[11.612,   12.388, 0.0]</top>
+                <radius> 10 </radius>
+              </cylinder>
+              <cylinder label="Joint_5">
+                <bottom>[11.9844,    9.8908, 0.0]</bottom>
+                <top>[12.1500,   10.0978, 0.0]</top>
+                <radius> 10 </radius>
+              </cylinder>
+            </union>
+          </intersection>
+          <res>[2,2,2]</res>
+          <velocity>[0.0,0.0,0.0]</velocity>
+          <temperature>300</temperature>
+        </geom_object>
+      </material>
+      <material name="Mineral">
+        <density>              2700.0 </density>
+        <thermal_conductivity> 1.60  </thermal_conductivity>
+        <specific_heat>        0.790  </specific_heat>
+        <room_temp>            298.15  </room_temp>
+        <do_basic_damage> false </do_basic_damage>
+        <constitutive_model type="hypo_elastic">
+          <K>50.e9</K>
+          <G>30.e9</G>
+        </constitutive_model>
+        <geom_object>
+          <difference>
+            <union>
+              <box label="Rock step"/>
+              <box label="Rock bed"/>
+            </union>
+            <union>
+              <box label="Blasting hole"/>
+              <intersection label="joints_inside"/>
+            </union>
+          </difference>
+          <res>[2,2,2]</res>
+          <velocity>[0.0,0.0,0.0]</velocity>
+          <temperature>300.0</temperature>
+        </geom_object>
+      </material>
+      <contact>
+        <type>single_velocity</type>
+        <materials>[0, 1]</materials>
+      </contact>
+    </MPM>
+  </MaterialProperties>
+  <!--____________________________________________________________________-->
+  <!--      G  R  I  D     V  A  R  I  A  B  L  E  S                      -->
+  <!--____________________________________________________________________-->
+  <Grid>
+    <BoundaryConditions>
+      <Face side="x-">
+        <BCType id="all" var="symmetry" label="Symmetric"> </BCType>
+      </Face>
+      <Face side="x+">
+        <BCType id="0" label="Pressure" var="Neumann">
+          <value> 0.0   </value>
+        </BCType>
+        <BCType id="all" label="Velocity" var="Neumann">
+          <value> [0.,0.,0.] </value>
+        </BCType>
+        <BCType id="all" label="Temperature" var="Neumann">
+          <value> 0.0  </value>
+        </BCType>
+        <BCType id="all" label="Density" var="Neumann">
+          <value> 0.0  </value>
+        </BCType>
+        <BCType id="all" label="SpecificVol" var="computeFromDensity">
+          <value> 0.0  </value>
+        </BCType>
+      </Face>
+      <Face side="y-">
+        <BCType id="all" var="symmetry" label="Symmetric"> </BCType>
+      </Face>
+      <Face side="y+">
+        <BCType id="0" label="Pressure" var="Neumann">
+          <value> 0.0   </value>
+        </BCType>
+        <BCType id="all" label="Velocity" var="Neumann">
+          <value> [0.,0.,0.] </value>
+        </BCType>
+        <BCType id="all" label="Temperature" var="Neumann">
+          <value> 0.0  </value>
+        </BCType>
+        <BCType id="all" label="Density" var="Neumann">
+          <value> 0.0  </value>
+        </BCType>
+        <BCType id="all" label="SpecificVol" var="computeFromDensity">
+          <value> 0.0  </value>
+        </BCType>
+      </Face>
+      <Face side="z+">
+        <BCType id="all" var="symmetry" label="Symmetric"> </BCType>
+      </Face>
+      <Face side="z-">
+        <BCType id="all" var="symmetry" label="Symmetric"> </BCType>
+      </Face>
+    </BoundaryConditions>
+    <Level>
+      <Box label="1">
+        <lower>        [0.501, 0.3, 0.0] </lower>
+        <upper>        [30.0,25.0,0.3] </upper>
+        <extraCells>   [0,0,0]        </extraCells>
+        <!-- <extraCells>   [1,1,1]        </extraCells> -->
+        <patches>         [2,2,1]        </patches>
+        <resolution>   [128, 128, 1]    </resolution>
+      </Box>
+    </Level>
+  </Grid>
+</Uintah_specification>

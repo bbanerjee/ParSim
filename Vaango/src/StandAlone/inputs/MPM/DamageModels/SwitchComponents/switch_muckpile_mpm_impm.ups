@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- @version: -->
+<Uintah_specification>
+
+  <Meta>
+    <title>none</title>
+  </Meta>
+  <!--____________________________________________________________________-->
+  <!--         C O M P O N E N T   S W I T C H E R                        -->
+  <!--____________________________________________________________________-->
+  <SimulationComponent type="switcher" >
+  
+        <subcomponent>
+          <SimulationComponent type="mpm" />
+          <input_file>muckpile_explicit_hypo_joints_basic_damage_MC_4p.ups</input_file>
+
+          <SwitchCriteria type = "Timestep">
+            <timestep> 100 </timestep>
+          </SwitchCriteria>
+        </subcomponent>
+        
+        <subcomponent>
+          <SimulationComponent type="impm" />
+          <input_file>muckpile_implicit_hypo_joints_basic_damage_MC_4p.ups</input_file>
+        </subcomponent>
+        
+  </SimulationComponent>
+   
+    <!--____________________________________________________________________-->
+    <!--      T  I  M  E     V  A  R  I  A  B  L  E  S                      -->
+    <!--____________________________________________________________________-->
+    <Time>
+       <maxTime>3.00</maxTime>      <!-- persistent across all subcomponents -->
+       <initTime>0.0</initTime>      <!-- ignored -->
+       <delt_min>0</delt_min>        <!-- ignored -->
+       <delt_max>0</delt_max>        <!-- ignored -->
+       <timestep_multiplier>0.0</timestep_multiplier>
+   </Time>
+
+  <!--____________________________________________________________________-->
+  <!--   O  U  P  U  T     V  A  R  I  A  B  L  E  S                      -->
+  <!--____________________________________________________________________-->
+  <DataArchiver>  
+    <filebase>switch_muckpile_mpm_impm.uda</filebase>
+    <outputInterval> 0.0 </outputInterval> <!-- (Explicitly) don't save any data... -->
+  </DataArchiver>
+
+  <!--____________________________________________________________________-->
+  <!--      G  R  I  D     V  A  R  I  A  B  L  E  S                      -->
+  <!--  This is the grid used by the first sub-component                  -->
+  <!--____________________________________________________________________-->
+  <Grid>
+    <BoundaryConditions>
+      <Face side="x-">
+        <BCType id="all" var="symmetry" label="Symmetric"> </BCType>
+      </Face>
+      <Face side="x+">
+        <BCType id="0" label="Pressure" var="Neumann">
+          <value> 0.0   </value>
+        </BCType>
+        <BCType id="all" label="Velocity" var="Neumann">
+          <value> [0.,0.,0.] </value>
+        </BCType>
+        <BCType id="all" label="Temperature" var="Neumann">
+          <value> 0.0  </value>
+        </BCType>
+        <BCType id="all" label="Density" var="Neumann">
+          <value> 0.0  </value>
+        </BCType>
+        <BCType id="all" label="SpecificVol" var="computeFromDensity">
+          <value> 0.0  </value>
+        </BCType>
+      </Face>
+      <Face side="y-">
+        <BCType id="all" var="symmetry" label="Symmetric"> </BCType>
+      </Face>
+      <Face side="y+">
+        <BCType id="0" label="Pressure" var="Neumann">
+          <value> 0.0   </value>
+        </BCType>
+        <BCType id="all" label="Velocity" var="Neumann">
+          <value> [0.,0.,0.] </value>
+        </BCType>
+        <BCType id="all" label="Temperature" var="Neumann">
+          <value> 0.0  </value>
+        </BCType>
+        <BCType id="all" label="Density" var="Neumann">
+          <value> 0.0  </value>
+        </BCType>
+        <BCType id="all" label="SpecificVol" var="computeFromDensity">
+          <value> 0.0  </value>
+        </BCType>
+      </Face>
+      <Face side="z+">
+        <BCType id="all" var="symmetry" label="Symmetric"> </BCType>
+      </Face>
+      <Face side="z-">
+        <BCType id="all" var="symmetry" label="Symmetric"> </BCType>
+      </Face>
+    </BoundaryConditions>
+    <Level>
+      <Box label="1">
+        <lower>        [0.501, 0.3, 0.0] </lower>
+        <upper>        [30.0,25.0,0.3] </upper>
+        <extraCells>   [1,1,1]        </extraCells>
+        <patches>         [2,2,1]        </patches>
+        <resolution>   [128, 128, 1]    </resolution>
+      </Box>
+    </Level>
+  </Grid>
+</Uintah_specification>
