@@ -379,6 +379,11 @@ OnDemandDataWarehouse::sendMPI(DependencyBatch* batch,
     //buffer.add(0, 0, MPI_INT, false);
     return;
   }
+
+  /*
+  std::cout << __FILE__ << ":" << __LINE__ << "\n";
+  print();
+  */
   
   const VarLabel* label = dep->req->var;
   const Patch* patch = dep->fromPatch;
@@ -455,8 +460,8 @@ OnDemandDataWarehouse::sendMPI(DependencyBatch* batch,
   case TypeDescription::SFCZVariable:
   {
     if (!d_varDB.exists(label, matlIndex, patch)) {
-      std::cout << d_myworld->myrank() << "  Needed by " << *dep 
-           << " on task " << *dep->toTasks.front() << endl;
+      std::cout << d_myworld->myrank() << "The unknown grid variable " << *dep 
+           << " is needed by task " << *dep->toTasks.front() << endl;
       SCI_THROW(UnknownVariable(label->getName(), getID(), patch, matlIndex,
                                 "in sendMPI", __FILE__, __LINE__));
     }

@@ -155,11 +155,11 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
     task->requires(Task::ParentOldDW, lb->pParticleIDLabel,  matlset, gnone);
 
     task->computes(lb->pVelGradLabel_preReloc,     matlset);
-    task->computes(lb->pDispGradLabel_preReloc,     matlset);
+    task->computes(lb->pDispGradLabel_preReloc,    matlset);
     task->computes(lb->pDefGradLabel_preReloc,     matlset);
-    task->computes(lb->pVolumeLabel_preReloc,       matlset);
+    task->computes(lb->pVolumeLabel_preReloc,      matlset);
     if (flag->d_doGridReset) {
-      task->requires(Task::OldDW, lb->dispNewLabel,       matlset, gac,1);
+      task->requires(Task::OldDW, lb->dispNewLabel,       matlset, gac, 1);
     } else {
       task->requires(Task::OldDW, lb->gDisplacementLabel, matlset, gac,1);
     }
@@ -181,9 +181,9 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
     task->requires(Task::OldDW, lb->pParticleIDLabel,   matlset, gnone);
 
     if (flag->d_doGridReset) {
-      task->requires(Task::OldDW, lb->dispNewLabel,       matlset, gac,1);
+      task->requires(Task::OldDW, lb->dispNewLabel,       matlset, gac, 1);
     } else {
-      task->requires(Task::OldDW, lb->gDisplacementLabel, matlset, gac,1);
+      task->requires(Task::OldDW, lb->gDisplacementLabel, matlset, gac, 1);
     }
 
     if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
@@ -957,6 +957,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
   // Constants
   //Ghost::GhostType  gnone = Ghost::None;
   Ghost::GhostType  gac   = Ghost::AroundCells;
+  DataWarehouse* parent_new_dw = new_dw->getOtherDataWarehouse(Task::ParentNewDW);
 
   // Get particle info and patch info
   int dwi = mpm_matl->getDWIndex();
