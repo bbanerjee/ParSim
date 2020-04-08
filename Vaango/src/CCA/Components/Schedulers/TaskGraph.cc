@@ -776,9 +776,9 @@ TaskGraph::createDetailedTasks(       bool           useInternalDeps,
   }
   
   
-// this can happen if a processor has no patches (which may happen at the beginning of some AMR runs)
-//  if(dts_->numTasks() == 0)
-//    cerr << "WARNING: Compiling scheduler with no tasks\n";
+  // this can happen if a processor has no patches (which may happen at the beginning of some AMR runs)
+  //if(dts_->numTasks() == 0)
+  //  cerr << "WARNING: Compiling scheduler with no tasks\n";
 
   lb->assignResources(*dts_);
 
@@ -983,6 +983,11 @@ CompTable::findcomp(       Task::Dependency*  req,
     if (compdbg.active()) {
       compdbg << pg->myrank() << "          Examining comp from: " << p->comp->task->getName() << ", order="
               << p->comp->task->getSortedOrder() << "\n";
+      if (result) {
+        compdbg << "\t\t , result_order = " << result->comp->task->getSortedOrder() << "\n";
+      } else {
+        compdbg << "\t\t result = " << result << "\n";
+      }
     }
 
     ASSERT(!result || p->comp->task->getSortedOrder() != result->comp->task->getSortedOrder());

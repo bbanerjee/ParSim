@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -390,7 +391,7 @@ BasicDamageModel::addInitialComputesAndRequires(Task* task,
   task->computes(pLocalizedLabel, matlset);
   task->computes(pTimeOfLocLabel, matlset);
   task->computes(pDamageLabel, matlset);
-  task->computes(lb->TotalLocalizedParticleLabel);
+  //task->computes(lb->TotalLocalizedParticleLabel);
 }
 
 //-----------------------------------------------------------------------------------
@@ -623,13 +624,13 @@ BasicDamageModel::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   task->requires(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, Ghost::None);
   task->requires(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, Ghost::None);
 
-  task->modifies(lb->pStressLabel_preReloc);
+  task->modifies(lb->pStressLabel_preReloc, matlset);
 
   task->computes(pFailureStressOrStrainLabel_preReloc, matlset);
   task->computes(pLocalizedLabel_preReloc, matlset);
   task->computes(pTimeOfLocLabel_preReloc, matlset);
   task->computes(pDamageLabel_preReloc, matlset);
-  task->computes(lb->TotalLocalizedParticleLabel);
+  //task->computes(lb->TotalLocalizedParticleLabel);
 }
 
 //-----------------------------------------------------------------------------------
@@ -641,11 +642,10 @@ BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
                                      DataWarehouse* old_dw,
                                      DataWarehouse* new_dw, MPMLabel* lb)
 {
-  // Normal patch loop
+  long64 totalLocalizedParticle = 0;
+
   for (int pp = 0; pp < patches->size(); pp++) {
     const Patch* patch = patches->get(pp);
-
-    long64 totalLocalizedParticle = 0;
 
     // Get particle info and patch info
     int dwi = matl->getDWIndex();
@@ -718,9 +718,11 @@ BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
       }
     } // end loop over particles
 
+    /*
     new_dw->put(sumlong_vartype(totalLocalizedParticle),
                 lb->TotalLocalizedParticleLabel);
-  }
+    */
+  } // end patch loop
 }
 
 // Modify the stress for brittle damage
