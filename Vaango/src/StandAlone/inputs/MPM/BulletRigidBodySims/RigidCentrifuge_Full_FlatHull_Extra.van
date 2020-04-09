@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- <!DOCTYPE Vaango SYSTEM "input.dtd"> -->
+
+<!-- @version: -->
+
+<Vaango>
+
+  <Meta>
+    <title> Rigid body dynamics centrifuge boulder clay and flat hull </title>
+  </Meta>
+
+  <Time> 
+    <max_time> 0.02 </max_time>
+    <max_iterations> 100000 </max_iterations>
+    <delt> 0.001 </delt>
+  </Time> 
+
+  <Output>
+    <output_file> RigidCentrifuge_Full_FlatHull_Extra.dat </output_file>
+    <output_iteration_interval> 1 </output_iteration_interval>   
+  </Output>
+
+  <Domain>
+    <min> [ -0.65,  -0.65,  0.0] </min>
+    <max> [  0.65,   0.65, 1.25] </max>
+    <num_cells> [70, 50, 30] </num_cells>
+    <BoundaryConditions>
+      <VelocityBC>
+        <face> x- </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> x+ </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> y- </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> y+ </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> z- </face>
+        <bc> wall </bc>
+      </VelocityBC>
+      <VelocityBC>
+        <face> z+ </face>
+        <bc> wall </bc>
+      </VelocityBC>
+    </BoundaryConditions>
+  </Domain>
+
+  <!-- Wall at x = -0.65 -->
+  <Wall>
+    <wall_min> [-0.70, -0.65, 0.00] </wall_min>
+    <wall_max> [-0.65,  0.65, 1.25] </wall_max>
+  </Wall>
+
+  <!-- Wall at x = 0.65 -->
+  <Wall>
+    <wall_min> [ 0.65, -0.65, 0.00] </wall_min>
+    <wall_max> [ 0.70,  0.65, 1.25] </wall_max>
+  </Wall>
+
+  <!-- Wall at y = -0.65 -->
+  <Wall>
+    <wall_min> [-0.65, -0.70, 0.00] </wall_min>
+    <wall_max> [ 0.65, -0.65, 1.25] </wall_max>
+  </Wall>
+
+  <!-- Wall at y = 0.65-->
+  <Wall>
+    <wall_min> [-0.65,  0.65, 0.00] </wall_min>
+    <wall_max> [ 0.65,  0.70, 1.25] </wall_max>
+  </Wall>
+
+  <RigidBodyFile>
+    <rigid_body_file>Centrifuge_FlatHull_BoulderClay_20g_13ww_midPBC.uda.000.full.pos_1</rigid_body_file> 
+    <particle_stride> 5 </particle_stride>
+    <ground_min> [-5.0, -5.0,  -0.01] </ground_min>
+    <ground_max> [ 5.0,  5.0,   0.00] </ground_max>
+    <velocity_scale_factor> 0.1 </velocity_scale_factor>
+    <body_force> [0.0, 0.0, 0.0] </body_force>
+    <center_of_rotation> [0.0, 0.0, 7.0] </center_of_rotation>
+    <angular_velocity_of_rotation> [-6.0, 0.0, 0.0] </angular_velocity_of_rotation>
+  </RigidBodyFile>
+
+  <ConvexHullRigidBody>
+    <rigid_body_file>Centrifuge_FlatHull_BoulderClay_20g_13ww_midPBC.uda.000.pos_2</rigid_body_file> 
+    <velocity_scale_factor> 0.0 </velocity_scale_factor>
+    <body_force> [0.0, 0.0, 0.0] </body_force>
+    <center_of_rotation> [0.0, 0.0, 7.0] </center_of_rotation>
+    <angular_velocity_of_rotation> [-6.0, 0.0, 0.0] </angular_velocity_of_rotation>
+  </ConvexHullRigidBody>
+
+  <ConvexHullRigidBody>
+    <rigid_body_file>Centrifuge_FlatHull_BoulderClay_20g_13ww_midPBC.uda.000.pos_1_extra1.0</rigid_body_file> 
+    <velocity_scale_factor> 0.0 </velocity_scale_factor>
+    <body_force> [0.0, 0.0, 0.0] </body_force>
+    <center_of_rotation> [0.0, 0.0, 0.0] </center_of_rotation>
+    <angular_velocity_of_rotation> [0.0, 0.0, 0.0] </angular_velocity_of_rotation>
+  </ConvexHullRigidBody>
+
+  <ConvexHullRigidBody>
+    <rigid_body_file>Centrifuge_FlatHull_BoulderClay_20g_13ww_midPBC.uda.000.pos_1_extra1.1</rigid_body_file> 
+    <velocity_scale_factor> 0.0 </velocity_scale_factor>
+    <body_force> [0.0, 0.0, 0.0] </body_force>
+    <center_of_rotation> [0.0, 0.0, 0.0] </center_of_rotation>
+    <angular_velocity_of_rotation> [0.0, 0.0, 0.0] </angular_velocity_of_rotation>
+  </ConvexHullRigidBody>
+
+  <ConvexHullRigidBody>
+    <rigid_body_file>Centrifuge_FlatHull_BoulderClay_20g_13ww_midPBC.uda.000.pos_1_extra1.2</rigid_body_file> 
+    <velocity_scale_factor> 0.0 </velocity_scale_factor>
+    <body_force> [0.0, 0.0, 0.0] </body_force>
+    <center_of_rotation> [0.0, 0.0, 0.0] </center_of_rotation>
+    <angular_velocity_of_rotation> [0.0, 0.0, 0.0] </angular_velocity_of_rotation>
+  </ConvexHullRigidBody>
+
+  <ConvexHullRigidBody>
+    <rigid_body_file>Centrifuge_FlatHull_BoulderClay_20g_13ww_midPBC.uda.000.pos_1_extra1.3</rigid_body_file> 
+    <velocity_scale_factor> 0.0 </velocity_scale_factor>
+    <body_force> [0.0, 0.0, 0.0] </body_force>
+    <center_of_rotation> [0.0, 0.0, 0.0] </center_of_rotation>
+    <angular_velocity_of_rotation> [0.0, 0.0, 0.0] </angular_velocity_of_rotation>
+  </ConvexHullRigidBody>
+
+  <ConvexHullRigidBody>
+    <rigid_body_file>Centrifuge_FlatHull_BoulderClay_20g_13ww_midPBC.uda.000.pos_1_extra2.0</rigid_body_file> 
+    <velocity_scale_factor> 0.0 </velocity_scale_factor>
+    <body_force> [0.0, 0.0, 0.0] </body_force>
+    <center_of_rotation> [0.0, 0.0, 0.0] </center_of_rotation>
+    <angular_velocity_of_rotation> [0.0, 0.0, 0.0] </angular_velocity_of_rotation>
+  </ConvexHullRigidBody>
+
+  <ConvexHullRigidBody>
+    <rigid_body_file>Centrifuge_FlatHull_BoulderClay_20g_13ww_midPBC.uda.000.pos_1_extra2.1</rigid_body_file> 
+    <velocity_scale_factor> 0.0 </velocity_scale_factor>
+    <body_force> [0.0, 0.0, 0.0] </body_force>
+    <center_of_rotation> [0.0, 0.0, 0.0] </center_of_rotation>
+    <angular_velocity_of_rotation> [0.0, 0.0, 0.0] </angular_velocity_of_rotation>
+  </ConvexHullRigidBody>
+
+  <ConvexHullRigidBody>
+    <rigid_body_file>Centrifuge_FlatHull_BoulderClay_20g_13ww_midPBC.uda.000.pos_1_extra2.2</rigid_body_file> 
+    <velocity_scale_factor> 0.0 </velocity_scale_factor>
+    <body_force> [0.0, 0.0, 0.0] </body_force>
+    <center_of_rotation> [0.0, 0.0, 0.0] </center_of_rotation>
+    <angular_velocity_of_rotation> [0.0, 0.0, 0.0] </angular_velocity_of_rotation>
+  </ConvexHullRigidBody>
+
+  <ConvexHullRigidBody>
+    <rigid_body_file>Centrifuge_FlatHull_BoulderClay_20g_13ww_midPBC.uda.000.pos_1_extra2.3</rigid_body_file> 
+    <velocity_scale_factor> 0.0 </velocity_scale_factor>
+    <body_force> [0.0, 0.0, 0.0] </body_force>
+    <center_of_rotation> [0.0, 0.0, 0.0] </center_of_rotation>
+    <angular_velocity_of_rotation> [0.0, 0.0, 0.0] </angular_velocity_of_rotation>
+  </ConvexHullRigidBody>
+
+</Vaango>
