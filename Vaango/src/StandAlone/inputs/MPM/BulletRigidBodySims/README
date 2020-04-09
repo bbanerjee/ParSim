@@ -1,0 +1,102 @@
+For rigid body simulations using bullet physics:
+
+1) Run a vaango simulation.
+
+   In this example, we use the input file:
+
+     Centrifuge_Hull_BoulderClay_20g_13ww_midPBC.ups
+
+   together with the geometry file:
+
+     flat_hull.inp  (created from Abaqus using flat_geom.py)
+
+   and the load curve file:
+
+     CentrifugeLoadCurve_midPBC.xml
+
+
+   The simulation produces an output directory:
+
+     Centrifuge_Hull_BoulderClay_20g_13ww_midPBC.uda.000
+
+2) Extract the position and velocity data from the simulation output using:
+
+     extract_centrifuge.sh
+
+   which calls 
+
+     extract_centrifuge_pos_data.py
+
+   and needs
+
+     export WORKING_DIR=.
+     export TIMEXTRACT_EXE=..../ParSim/Vaango/opt/StandAlone/timeextract
+     export SELECTPART_EXE=..../ParSim/Vaango/opt/StandAlone/selectpart
+     export EXTRACTPOS_EXE=..../ParSim/Vaango/opt/StandAlone/extractPos
+     export EXTRACTPSCA_EXE=..../ParSim/Vaango/opt/StandAlone/extractPscalar
+     export EXTRACTPVEC_EXE=..../ParSim/Vaango/opt/StandAlone/extractPvec
+     export EXTRACTPMAT_EXE=..../ParSim/Vaango/opt/StandAlone/extractPmat
+     export PARTEXTRACT_EXE=..../ParSim/Vaango/opt/StandAlone/partextract
+     export EXTRACTPOSVEL_EXE=..../ParSim/Vaango/opt/StandAlone/extractPosVelMasVol
+
+   The correct paths have to entered in extract_centrifuge.sh
+
+   The data extractor requires a box containing the particles to be extracted, the 
+   material id of the material, and the timestep for which the data are to be extracted:
+
+     extract_centrifuge_pos_data --box xmin ymin zmin xmax ymax zmax --mat <mat id> --timestep <int> --uda <uda name>
+
+   The extraction process produces files with names:
+
+     Centrifuge_FlatHull_BoulderClay_20g_13ww_midPBC.uda.000.pos_1
+     Centrifuge_FlatHull_BoulderClay_20g_13ww_midPBC.uda.000.pos_2 
+
+3) If only a quarter of the model has been simulated in Vaango, we can create a full model
+   using the R script:
+
+     createFullModel.R
+
+4) Now that the input data files have been created, we will need to create input files
+   for the Matiti rigid body simulations with Bullet Physics.
+
+   Some sample input file are:
+
+     RigidCentrifuge_FlatHull_Extra.van
+     RigidCentrifuge_FlatHull_NoWalls_Big.van
+     RigidCentrifuge_FlatHull_NoWalls.van
+     RigidCentrifuge_FlatHull.van
+     RigidCentrifuge_Full_FlatHull_Extra.van
+     RigidCentrifuge_Full_FlatHull_NoWalls.van
+     RigidCentrifuge_Full_FlatHull.van
+     RigidCentrifuge_Full_RoundHull_NoWalls.van
+     RigidCentrifuge_Full_RoundHull.van
+     RigidCentrifuge_Full_VHull_NoWalls.van
+     RigidCentrifuge_Full_VHull.van
+     RigidCentrifuge_RoundHull.van
+     RigidCentrifuge_VHull.van
+
+5) These rigid body simulations can be run using the test_bullet script from Matiti.  A
+   sample shell script is:
+
+     runRigidSims.sh
+
+   The simulations produce output directories of the form:
+
+     RigidCentrifuge_Full_VHull_NoWalls.vtk.000
+
+   which contain .vtu files that can be visualized with VisIt. You can make images
+   using the VisIt python scripts:
+
+     vflathull_make_images.py  
+     vhull_make_images.py  
+     vroundhull_make_images.py
+
+  Alternatively, you can make movies using the script:
+
+    make_vhull_movie.sh
+
+  which requires VisIt session file such as:
+
+    vflathull_local_upd.session  
+    vhull_local_upd.session  
+    vroundhull_local_upd.session

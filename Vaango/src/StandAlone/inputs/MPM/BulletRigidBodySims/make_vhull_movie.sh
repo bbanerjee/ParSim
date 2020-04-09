@@ -1,0 +1,1 @@
+/home/banerjee/VisIt/visit2.9/build/bin/visit -movie -format png -geometry 914x842 -output /home/banerjee/ParSim/Vaango/runs/Centrifuge/RigidHullSims/vhull_rbm -fps 10 -start 0 -end 20 -frame 0 -sessionfile /home/banerjee/ParSim/Vaango/runs/Centrifuge/RigidHullSims/vhull_rbm.session -dv 

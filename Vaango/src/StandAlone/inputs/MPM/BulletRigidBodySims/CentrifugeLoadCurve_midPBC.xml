@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<Uintah_Include>
+          <load_curve>
+            <id>1</id>
+            <time_point>
+              <time> 0 </time>
+              <load> 0 </load>
+            </time_point>
+            <time_point>
+              <time> 0.000013192 </time>
+              <load> 2.2400e+03 </load>
+            </time_point>
+            <time_point>
+              <time> 0.00011019 </time>
+              <load> 1.8710e+06 </load>
+            </time_point>
+            <time_point>
+              <time> 0.00015319 </time>
+              <load> 3.5e+08 </load>
+            </time_point>
+            <time_point>
+              <time> 0.00022919 </time>
+              <load> 5.0e+07 </load>
+            </time_point>
+            <time_point>
+              <time> 0.00042519 </time>
+              <load> 1.4820e+07 </load>
+            </time_point>
+            <time_point>
+              <time> 0.00057019 </time>
+              <load> 1.1720e+06 </load>
+            </time_point>
+            <time_point>
+              <time> 0.00071519 </time>
+              <load> 1.0770e+05 </load>
+            </time_point>
+            <time_point>
+              <time> 0.00090519 </time>
+              <load> 0.6810e+05 </load>
+            </time_point>
+            <time_point>
+              <time> 0.0015212 </time>
+              <load> 4.3150e+04 </load>
+            </time_point>
+            <time_point>
+              <time> 0.0024712 </time>
+              <load> 2.4540e+04 </load>
+            </time_point>
+            <time_point>
+              <time> 0.0031662 </time>
+              <load> 0.8100e+04 </load>
+            </time_point>
+            <time_point>
+              <time> 0.0035572 </time>
+              <load> 3.2800e+03 </load>
+            </time_point>
+            <time_point>
+              <time> 0.0049152 </time>
+              <load> 1.7260e+03 </load>
+            </time_point>
+            <time_point>
+              <time> 0.01 </time>
+              <load> 0.0 </load>
+            </time_point>
+            <time_point>
+              <time> 0.03 </time>
+              <load> 0.0 </load>
+            </time_point>
+          </load_curve>
+</Uintah_Include>
+
