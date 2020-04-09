@@ -1045,7 +1045,8 @@ AMRSimulationController::executeTimestep(double t, double& delt, GridP& currentG
         ostringstream warn;
         warn << "The new delT (" << new_delt << ") is either less than delT_min (" << d_timeinfo->delt_min
              << ") or equal to 0";
-        throw InternalError(warn.str(), __FILE__, __LINE__);
+        proc0cout << warn.str() << "\n";
+        //throw InternalError(warn.str(), __FILE__, __LINE__);
       }
       
       
