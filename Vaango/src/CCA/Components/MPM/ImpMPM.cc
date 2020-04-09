@@ -1262,6 +1262,9 @@ ImpMPM::applyExternalLoads(const ProcessorGroup* ,
         }
       }
     } // matl loop
+
+    printTask(patches, patch, cout_doing, "Completed applyExternalLoads");
+
   }  // patch loop
 }
 
@@ -1271,7 +1274,7 @@ ImpMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
                                            const MaterialSubset* one_matl,
                                            const MaterialSet* matls)
 {
-  printSchedule(patches,cout_doing,"IMPM::scheduleInterpolateParticlesToGrid");
+  printSchedule(patches, cout_doing, "IMPM::scheduleInterpolateParticlesToGrid");
   Task* t = scinew Task("ImpMPM::interpolateParticlesToGrid",
                         this, &ImpMPM::interpolateParticlesToGrid);
 
@@ -2447,6 +2450,12 @@ ImpMPM::iterate(const ProcessorGroup*,
 
   GridP grid = level->getGrid();
 
+  /*
+  std::cout << __FILE__ << ":" << __LINE__ << "\n";
+  std::cout << "old_dw = " << old_dw << "\n";
+  old_dw->print();
+  */
+
   d_subsched->setParentDWs(old_dw, new_dw);
   d_subsched->setSimulationState(d_sharedState);
   d_subsched->advanceDataWarehouse(grid);
@@ -2539,13 +2548,21 @@ ImpMPM::iterate(const ProcessorGroup*,
     
     auto subsched_old_dw = d_subsched->get_dw(2);
     subsched_new_dw = d_subsched->get_dw(3);
-    //std::cout << "subsched: parent_old_dw = " << d_subsched->get_dw(0) << "\n";
-    //std::cout << "subsched: parent_new_dw = " << d_subsched->get_dw(1) << "\n";
-    //std::cout << "subsched: old_dw = " << d_subsched->get_dw(2) << "\n";
-    //std::cout << "subsched: new_dw = " << d_subsched->get_dw(3) << "\n";
+    
+    /*
+    std::cout << __FILE__ << ":" << __LINE__ << "\n";
+    std::cout << "Before scrub\n";
+    subsched_old_dw->print();
+    std::cout << "subsched: parent_old_dw = " << d_subsched->get_dw(0) << "\n";
+    std::cout << "subsched: parent_new_dw = " << d_subsched->get_dw(1) << "\n";
+    std::cout << "subsched: old_dw = " << d_subsched->get_dw(2) << "\n";
+    std::cout << "subsched: new_dw = " << d_subsched->get_dw(3) << "\n";
+    */
+
     count++;
     subsched_old_dw->setScrubbing(DataWarehouse::ScrubComplete);
     subsched_new_dw->setScrubbing(DataWarehouse::ScrubNone);
+
     d_subsched->execute();  // THIS ACTUALLY GETS THE WORK DONE
     subsched_new_dw->get(dispIncNorm,    lb->dispIncNorm);
     subsched_new_dw->get(dispIncQNorm,   lb->dispIncQNorm); 

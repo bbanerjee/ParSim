@@ -39,12 +39,18 @@
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Malloc/Allocator.h>
+#include <Core/Util/DebugStream.h>
+#include <Core/Grid/DbgOutput.h>
+
 #include <iostream>
 
 //#define IGNORE_NEGATIVE_JACOBIANS
 //#define DEBUG_WITH_PARTICLE_ID
 
 using namespace Uintah;
+
+static DebugStream dbg_doing("DefGrad_doing", false);
+static DebugStream dbg("DefGrad", false);
 
 const Matrix3 DeformationGradientComputer::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 const Matrix3 DeformationGradientComputer::Zero(0.0);
@@ -80,6 +86,7 @@ DeformationGradientComputer::~DeformationGradientComputer()
   delete lb;
 }
 
+// Initial velocity/displacement/deformation gradients
 void
 DeformationGradientComputer::addInitialComputesAndRequires(Task* task,
                                                            const MPMMaterial* mpm_matl,
@@ -98,6 +105,68 @@ DeformationGradientComputer::addInitialComputesAndRequires(Task* task,
   }
 }
 
+void 
+DeformationGradientComputer::initializeGradient(const Patch* patch,
+                                                const MPMMaterial* mpm_matl,
+                                                DataWarehouse* new_dw)
+{
+  if (flag->d_integrator == MPMFlags::Implicit) {
+    initializeGradientImplicit(patch, mpm_matl, new_dw);
+  } else {
+    initializeGradientExplicit(patch, mpm_matl, new_dw);
+  }
+
+  ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+  if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+    ParticleSubset* pset = new_dw->getParticleSubset(mpm_matl->getDWIndex(), patch);
+    ParticleVariable<int>     pRemove;
+    ParticleVariable<Matrix3> pPolarDecompR;
+    new_dw->allocateAndPut(pRemove,        lb->pRemoveLabel,        pset);
+    new_dw->allocateAndPut(pPolarDecompR,  lb->pPolarDecompRLabel,  pset);
+    for (auto particle : *pset) {
+      pRemove[particle]       = 0;
+      pPolarDecompR[particle] = Identity;
+    }
+  }
+}
+
+void 
+DeformationGradientComputer::initializeGradientExplicit(const Patch* patch,
+                                                        const MPMMaterial* mpm_matl,
+                                                        DataWarehouse* new_dw)
+{
+  ParticleSubset* pset = new_dw->getParticleSubset(mpm_matl->getDWIndex(), patch);
+  ParticleVariable<Matrix3> pVelGrad, pDispGrad, pDefGrad;
+  new_dw->allocateAndPut(pVelGrad,  lb->pVelGradLabel,  pset);
+  new_dw->allocateAndPut(pDispGrad, lb->pDispGradLabel, pset);
+  new_dw->allocateAndPut(pDefGrad,  lb->pDefGradLabel,  pset);
+
+  for (auto particle : *pset) {
+    pVelGrad[particle]  = Zero;
+    pDispGrad[particle] = Zero;
+    pDefGrad[particle] = Identity;
+  }
+}
+
+void 
+DeformationGradientComputer::initializeGradientImplicit(const Patch* patch,
+                                                        const MPMMaterial* mpm_matl,
+                                                        DataWarehouse* new_dw)
+{
+  ParticleSubset* pset = new_dw->getParticleSubset(mpm_matl->getDWIndex(), patch);
+  ParticleVariable<Matrix3> pVelGrad, pDispGrad, pDefGrad;
+  new_dw->allocateAndPut(pVelGrad,  lb->pVelGradLabel,  pset);
+  new_dw->allocateAndPut(pDispGrad, lb->pDispGradLabel, pset);
+  new_dw->allocateAndPut(pDefGrad,  lb->pDefGradLabel,  pset);
+
+  for (auto particle : *pset) {
+    pVelGrad[particle]  = Zero;
+    pDispGrad[particle] = Zero;
+    pDefGrad[particle] = Identity;
+  }
+}
+
+// Task scheduling for general case
 void
 DeformationGradientComputer::addComputesAndRequires(Task* task,
                                                     const MPMMaterial* mpm_matl,
@@ -127,69 +196,6 @@ DeformationGradientComputer::addComputesOnly(Task* task,
   std::ostringstream out;
   out << "**ERROR**: addComputesOnly Not implemented " << std::endl;
   throw InvalidValue(out.str(), __FILE__, __LINE__);
-}
-
-void 
-DeformationGradientComputer::addComputesAndRequires(Task* task,
-                                                    const MPMMaterial* matl,
-                                                    const PatchSet* patches,
-                                                    const bool /*recurse*/,
-                                                    const bool SchedParent) const
-{
-  ConstitutiveModel* cm = matl->getConstitutiveModel();
-  const MaterialSubset* matlset = matl->thisMaterial();
-
-  Ghost::GhostType  gnone = Ghost::None;
-  Ghost::GhostType  gac   = Ghost::AroundCells;
-
-  if (SchedParent) {
-    // For subscheduler
-    //std::cout << "ParentOldDW = " << Task::ParentOldDW << __FILE__ << __LINE__ << "\n";
-
-    task->requires(Task::ParentOldDW, lb->delTLabel);
-    task->requires(Task::ParentOldDW, lb->pXLabel,           matlset, gnone);
-    task->requires(Task::ParentOldDW, lb->pSizeLabel,        matlset, gnone);
-    task->requires(Task::ParentOldDW, lb->pMassLabel,        matlset, gnone);
-    task->requires(Task::ParentOldDW, lb->pVolumeLabel,      matlset, gnone);
-    task->requires(Task::ParentOldDW, lb->pDefGradLabel,     matlset, gnone);
-    task->requires(Task::ParentOldDW, lb->pParticleIDLabel,  matlset, gnone);
-
-    task->computes(lb->pVelGradLabel_preReloc,     matlset);
-    task->computes(lb->pDispGradLabel_preReloc,    matlset);
-    task->computes(lb->pDefGradLabel_preReloc,     matlset);
-    task->computes(lb->pVolumeLabel_preReloc,      matlset);
-    if (flag->d_doGridReset) {
-      task->requires(Task::OldDW, lb->dispNewLabel,       matlset, gac, 1);
-    } else {
-      task->requires(Task::OldDW, lb->gDisplacementLabel, matlset, gac,1);
-    }
-
-    if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
-      task->requires(Task::ParentOldDW, lb->pPolarDecompRLabel, matlset, gnone);
-      task->computes(lb->pRemoveLabel_preReloc,       matlset);
-      task->computes(lb->pPolarDecompRLabel_preReloc, matlset);
-      task->computes(lb->pPolarDecompRMidLabel,       matlset);
-    }
-
-  } else {
-    task->requires(Task::OldDW, lb->delTLabel);
-    task->requires(Task::OldDW, lb->pXLabel,            matlset, gnone);
-    task->requires(Task::OldDW, lb->pSizeLabel,         matlset, gnone);
-    task->requires(Task::OldDW, lb->pMassLabel,         matlset, gnone);
-    task->requires(Task::OldDW, lb->pVolumeLabel,       matlset, gnone);
-    task->requires(Task::OldDW, lb->pDefGradLabel,      matlset, gnone);
-    task->requires(Task::OldDW, lb->pParticleIDLabel,   matlset, gnone);
-
-    if (flag->d_doGridReset) {
-      task->requires(Task::OldDW, lb->dispNewLabel,       matlset, gac, 1);
-    } else {
-      task->requires(Task::OldDW, lb->gDisplacementLabel, matlset, gac, 1);
-    }
-
-    if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
-      task->requires(Task::OldDW, lb->pPolarDecompRLabel, matlset, gnone);
-    }
-  }
 }
 
 void
@@ -256,147 +262,6 @@ DeformationGradientComputer::addComputesAndRequiresImplicit(Task* task,
   task->computes(lb->pDispGradLabel_preReloc,           matlset);
   task->computes(lb->pDefGradLabel_preReloc,            matlset);
   task->computes(lb->pVolumeLabel_preReloc,             matlset);
-}
-
-void
-DeformationGradientComputer::addRequiresForConvert(Task* task,
-                                                   const MPMMaterial* mpm_matl)
-{
-  Ghost::GhostType  gnone = Ghost::None;
-  const MaterialSubset* matlset = mpm_matl->thisMaterial();
-
-  if (flag->d_integrator == MPMFlags::Implicit) {
-    // Requires (for implicit)
-    task->requires(Task::NewDW, lb->pVolumeLabel,   matlset, gnone);
-    task->requires(Task::NewDW, lb->pVelGradLabel,  matlset, gnone);
-    task->requires(Task::NewDW, lb->pDispGradLabel, matlset, gnone);
-    task->requires(Task::NewDW, lb->pDefGradLabel,  matlset, gnone);
-  } else {
-    // Requires (for explicit)
-    task->requires(Task::NewDW, lb->pVolumeLabel,   matlset, gnone);
-    task->requires(Task::NewDW, lb->pVelGradLabel,  matlset, gnone);
-    task->requires(Task::NewDW, lb->pDispGradLabel, matlset, gnone);
-    task->requires(Task::NewDW, lb->pDefGradLabel,  matlset, gnone);
-  }
-
-  // **WARNING and TODO** Will not work for INCREMENTAL models unless we
-  // figure out a way of determining the constitutive models for the addset and
-  // delset.  Needs the sharedState to be passed.
-  //ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
-  //if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
-  //  task->requires(Task::NewDW, lb->pRemoveLabel,                matlset, gnone);
-  //  task->requires(Task::NewDW, lb->pPolarDecompRLabel_preReloc, matlset, gnone);
-  //}
-}
-
-void DeformationGradientComputer::copyAndDeleteForConvert(DataWarehouse* new_dw,
-                                                          ParticleSubset* addset,
-                                                          map<const VarLabel*,
-                                                          ParticleVariableBase*>* newState,
-                                                          ParticleSubset* delset,
-                                                          DataWarehouse* old_dw )
-{
-  // **WARNING and TODO** Will not work for INCREMENTAL models unless we
-  // figure out a way of determining the constitutive models for the addset and
-  // delset.  Needs the sharedState to be passed.
-  // For example:
-  //    auto matID_add = addset->getMatlIndex();
-  //    auto matID_del = delset->getMatlIndex();
-  //    MPMMaterial* mpm_matl_add = d_sharedState->getMPMMaterial(matID_add);
-  //    ConstitutiveModel* cm_add = mpm_matl_add->getConstitutiveModel();
-  //    .....
-
-  // Copy the data common to all constitutive models from the particle to be 
-  // deleted to the particle to be added. 
-
-  constParticleVariable<double>      o_pVolume;
-  constParticleVariable<Matrix3>     o_pVelGrad, o_pDispGrad, o_pDefGrad;
-  new_dw->get(o_pVolume,   lb->pVolumeLabel_preReloc,   delset);
-  new_dw->get(o_pVelGrad,  lb->pVelGradLabel_preReloc,  delset);
-  new_dw->get(o_pDispGrad, lb->pDispGradLabel_preReloc, delset);
-  new_dw->get(o_pDefGrad,  lb->pDefGradLabel_preReloc,  delset);
-
-  ParticleVariable<double>      pVolume;
-  ParticleVariable<Matrix3>     pVelGrad, pDispGrad, pDefGrad;
-  new_dw->allocateTemporary(pVolume,   addset);
-  new_dw->allocateTemporary(pVelGrad,  addset);
-  new_dw->allocateTemporary(pDispGrad, addset);
-  new_dw->allocateTemporary(pDefGrad,  addset);
-
-  ParticleSubset::iterator o,n = addset->begin();
-  for (o=delset->begin(); o != delset->end(); o++, n++) {
-    pVolume[*n]   = o_pVolume[*o];
-    pVelGrad[*n]  = o_pVelGrad[*o];
-    pDispGrad[*n] = o_pDispGrad[*o];
-    pDefGrad[*n]  = o_pDefGrad[*o];
-  }
-
-  (*newState)[lb->pVolumeLabel]   = pVolume.clone();
-  (*newState)[lb->pVelGradLabel]  = pVelGrad.clone();
-  (*newState)[lb->pDispGradLabel] = pDispGrad.clone();
-  (*newState)[lb->pDefGradLabel]  = pDefGrad.clone();
-}
-
-// Initial velocity/displacement/deformation gradients
-void 
-DeformationGradientComputer::initializeGradient(const Patch* patch,
-                                                const MPMMaterial* mpm_matl,
-                                                DataWarehouse* new_dw)
-{
-  if (flag->d_integrator == MPMFlags::Implicit) {
-    initializeGradientImplicit(patch, mpm_matl, new_dw);
-  } else {
-    initializeGradientExplicit(patch, mpm_matl, new_dw);
-  }
-
-  ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
-  if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
-    ParticleSubset* pset = new_dw->getParticleSubset(mpm_matl->getDWIndex(), patch);
-    ParticleVariable<int>     pRemove;
-    ParticleVariable<Matrix3> pPolarDecompR;
-    new_dw->allocateAndPut(pRemove,        lb->pRemoveLabel,        pset);
-    new_dw->allocateAndPut(pPolarDecompR,  lb->pPolarDecompRLabel,  pset);
-    for (auto particle : *pset) {
-      pRemove[particle]       = 0;
-      pPolarDecompR[particle] = Identity;
-    }
-  }
-}
-
-void 
-DeformationGradientComputer::initializeGradientExplicit(const Patch* patch,
-                                                        const MPMMaterial* mpm_matl,
-                                                        DataWarehouse* new_dw)
-{
-  ParticleSubset* pset = new_dw->getParticleSubset(mpm_matl->getDWIndex(), patch);
-  ParticleVariable<Matrix3> pVelGrad, pDispGrad, pDefGrad;
-  new_dw->allocateAndPut(pVelGrad,  lb->pVelGradLabel,  pset);
-  new_dw->allocateAndPut(pDispGrad, lb->pDispGradLabel, pset);
-  new_dw->allocateAndPut(pDefGrad,  lb->pDefGradLabel,  pset);
-
-  for (auto particle : *pset) {
-    pVelGrad[particle]  = Zero;
-    pDispGrad[particle] = Zero;
-    pDefGrad[particle] = Identity;
-  }
-}
-
-void 
-DeformationGradientComputer::initializeGradientImplicit(const Patch* patch,
-                                                        const MPMMaterial* mpm_matl,
-                                                        DataWarehouse* new_dw)
-{
-  ParticleSubset* pset = new_dw->getParticleSubset(mpm_matl->getDWIndex(), patch);
-  ParticleVariable<Matrix3> pVelGrad, pDispGrad, pDefGrad;
-  new_dw->allocateAndPut(pVelGrad,  lb->pVelGradLabel,  pset);
-  new_dw->allocateAndPut(pDispGrad, lb->pDispGradLabel, pset);
-  new_dw->allocateAndPut(pDefGrad,  lb->pDefGradLabel,  pset);
-
-  for (auto particle : *pset) {
-    pVelGrad[particle]  = Zero;
-    pDispGrad[particle] = Zero;
-    pDefGrad[particle] = Identity;
-  }
 }
 
 //-----------------------------------------------------------------------
@@ -868,8 +733,8 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
 
   // Deformable material
   if (flag->d_doGridReset) {
-    constNCVariable<Vector> gDisp;
-    new_dw->get(gDisp, lb->dispNewLabel, dwi, patch, gac, 1);
+    constNCVariable<Vector> dispNew;
+    new_dw->get(dispNew, lb->dispNewLabel, dwi, patch, gac, 1);
 
     for (auto particle : *pset) {
 
@@ -877,7 +742,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
       DisplacementGradientComputer gradComp(flag);
       Matrix3 dispGrad_new(0.0);
       gradComp.computeDispGrad(interpolator.get(), oodx, px[particle], pSize[particle], 
-                               pDefGrad_old[particle], gDisp, dispGrad_new);
+                               pDefGrad_old[particle], dispNew, dispGrad_new);
       pDispGrad_new[particle] = dispGrad_new;
 
       // Compute the deformation gradient from displacement
@@ -945,6 +810,73 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
   return;
 }
 
+// Task scheduling for implicit only
+void 
+DeformationGradientComputer::addComputesAndRequires(Task* task,
+                                                    const MPMMaterial* matl,
+                                                    const PatchSet* patches,
+                                                    const bool /*recurse*/,
+                                                    const bool SchedParent) const
+{
+  ConstitutiveModel* cm = matl->getConstitutiveModel();
+  const MaterialSubset* matlset = matl->thisMaterial();
+
+  Ghost::GhostType  gnone = Ghost::None;
+  Ghost::GhostType  gac   = Ghost::AroundCells;
+
+  if (SchedParent) {
+    // For subscheduler
+
+    printSchedule(patches, dbg_doing, "SchedParent::DefGrad::scheduleComputeDeformationGradient");
+
+    task->requires(Task::ParentOldDW, lb->delTLabel);
+    task->requires(Task::ParentOldDW, lb->pXLabel,           matlset, gnone);
+    task->requires(Task::ParentOldDW, lb->pSizeLabel,        matlset, gnone);
+    task->requires(Task::ParentOldDW, lb->pMassLabel,        matlset, gnone);
+    task->requires(Task::ParentOldDW, lb->pVolumeLabel,      matlset, gnone);
+    task->requires(Task::ParentOldDW, lb->pDefGradLabel,     matlset, gnone);
+    task->requires(Task::ParentOldDW, lb->pParticleIDLabel,  matlset, gnone);
+
+    task->computes(lb->pVelGradLabel_preReloc,     matlset);
+    task->computes(lb->pDispGradLabel_preReloc,    matlset);
+    task->computes(lb->pDefGradLabel_preReloc,     matlset);
+    task->computes(lb->pVolumeLabel_preReloc,      matlset);
+    if (flag->d_doGridReset) {
+      task->requires(Task::OldDW, lb->dispNewLabel,       matlset, gac, 1);
+    } else {
+      task->requires(Task::OldDW, lb->gDisplacementLabel, matlset, gac,1);
+    }
+
+    if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+      task->requires(Task::ParentOldDW, lb->pPolarDecompRLabel, matlset, gnone);
+      task->computes(lb->pRemoveLabel_preReloc,       matlset);
+      task->computes(lb->pPolarDecompRLabel_preReloc, matlset);
+      task->computes(lb->pPolarDecompRMidLabel,       matlset);
+    }
+
+  } else {
+    printSchedule(patches, dbg_doing, "Recurse::DefGrad::scheduleComputeDeformationGradient");
+
+    task->requires(Task::OldDW, lb->delTLabel);
+    task->requires(Task::OldDW, lb->pXLabel,            matlset, gnone);
+    task->requires(Task::OldDW, lb->pSizeLabel,         matlset, gnone);
+    task->requires(Task::OldDW, lb->pMassLabel,         matlset, gnone);
+    task->requires(Task::OldDW, lb->pVolumeLabel,       matlset, gnone);
+    task->requires(Task::OldDW, lb->pDefGradLabel,      matlset, gnone);
+    task->requires(Task::OldDW, lb->pParticleIDLabel,   matlset, gnone);
+
+    if (flag->d_doGridReset) {
+      task->requires(Task::NewDW, lb->dispNewLabel,       matlset, gac, 1);
+    } else {
+      task->requires(Task::OldDW, lb->gDisplacementLabel, matlset, gac, 1);
+    }
+
+    if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+      task->requires(Task::OldDW, lb->pPolarDecompRLabel, matlset, gnone);
+    }
+  }
+}
+
 // Compute deformation gradient for implicit computations from velocity gradient
 void
 DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* patch,
@@ -957,7 +889,7 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
   // Constants
   //Ghost::GhostType  gnone = Ghost::None;
   Ghost::GhostType  gac   = Ghost::AroundCells;
-  DataWarehouse* parent_new_dw = new_dw->getOtherDataWarehouse(Task::ParentNewDW);
+  //DataWarehouse* parent_new_dw = new_dw->getOtherDataWarehouse(Task::ParentNewDW);
 
   // Get particle info and patch info
   int dwi = mpm_matl->getDWIndex();
@@ -1100,6 +1032,85 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
   return;
 }
 
+void
+DeformationGradientComputer::addRequiresForConvert(Task* task,
+                                                   const MPMMaterial* mpm_matl)
+{
+  Ghost::GhostType  gnone = Ghost::None;
+  const MaterialSubset* matlset = mpm_matl->thisMaterial();
+
+  if (flag->d_integrator == MPMFlags::Implicit) {
+    // Requires (for implicit)
+    task->requires(Task::NewDW, lb->pVolumeLabel,   matlset, gnone);
+    task->requires(Task::NewDW, lb->pVelGradLabel,  matlset, gnone);
+    task->requires(Task::NewDW, lb->pDispGradLabel, matlset, gnone);
+    task->requires(Task::NewDW, lb->pDefGradLabel,  matlset, gnone);
+  } else {
+    // Requires (for explicit)
+    task->requires(Task::NewDW, lb->pVolumeLabel,   matlset, gnone);
+    task->requires(Task::NewDW, lb->pVelGradLabel,  matlset, gnone);
+    task->requires(Task::NewDW, lb->pDispGradLabel, matlset, gnone);
+    task->requires(Task::NewDW, lb->pDefGradLabel,  matlset, gnone);
+  }
+
+  // **WARNING and TODO** Will not work for INCREMENTAL models unless we
+  // figure out a way of determining the constitutive models for the addset and
+  // delset.  Needs the sharedState to be passed.
+  //ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+  //if (cm->modelType() == ConstitutiveModel::ModelType::INCREMENTAL) {
+  //  task->requires(Task::NewDW, lb->pRemoveLabel,                matlset, gnone);
+  //  task->requires(Task::NewDW, lb->pPolarDecompRLabel_preReloc, matlset, gnone);
+  //}
+}
+
+void DeformationGradientComputer::copyAndDeleteForConvert(DataWarehouse* new_dw,
+                                                          ParticleSubset* addset,
+                                                          map<const VarLabel*,
+                                                          ParticleVariableBase*>* newState,
+                                                          ParticleSubset* delset,
+                                                          DataWarehouse* old_dw )
+{
+  // **WARNING and TODO** Will not work for INCREMENTAL models unless we
+  // figure out a way of determining the constitutive models for the addset and
+  // delset.  Needs the sharedState to be passed.
+  // For example:
+  //    auto matID_add = addset->getMatlIndex();
+  //    auto matID_del = delset->getMatlIndex();
+  //    MPMMaterial* mpm_matl_add = d_sharedState->getMPMMaterial(matID_add);
+  //    ConstitutiveModel* cm_add = mpm_matl_add->getConstitutiveModel();
+  //    .....
+
+  // Copy the data common to all constitutive models from the particle to be 
+  // deleted to the particle to be added. 
+
+  constParticleVariable<double>      o_pVolume;
+  constParticleVariable<Matrix3>     o_pVelGrad, o_pDispGrad, o_pDefGrad;
+  new_dw->get(o_pVolume,   lb->pVolumeLabel_preReloc,   delset);
+  new_dw->get(o_pVelGrad,  lb->pVelGradLabel_preReloc,  delset);
+  new_dw->get(o_pDispGrad, lb->pDispGradLabel_preReloc, delset);
+  new_dw->get(o_pDefGrad,  lb->pDefGradLabel_preReloc,  delset);
+
+  ParticleVariable<double>      pVolume;
+  ParticleVariable<Matrix3>     pVelGrad, pDispGrad, pDefGrad;
+  new_dw->allocateTemporary(pVolume,   addset);
+  new_dw->allocateTemporary(pVelGrad,  addset);
+  new_dw->allocateTemporary(pDispGrad, addset);
+  new_dw->allocateTemporary(pDefGrad,  addset);
+
+  ParticleSubset::iterator o,n = addset->begin();
+  for (o=delset->begin(); o != delset->end(); o++, n++) {
+    pVolume[*n]   = o_pVolume[*o];
+    pVelGrad[*n]  = o_pVelGrad[*o];
+    pDispGrad[*n] = o_pDispGrad[*o];
+    pDefGrad[*n]  = o_pDefGrad[*o];
+  }
+
+  (*newState)[lb->pVolumeLabel]   = pVolume.clone();
+  (*newState)[lb->pVelGradLabel]  = pVelGrad.clone();
+  (*newState)[lb->pDispGradLabel] = pDispGrad.clone();
+  (*newState)[lb->pDefGradLabel]  = pDefGrad.clone();
+}
+
 void 
 DeformationGradientComputer::computeDeformationGradientFromVelocity(const Matrix3& velGrad_old,
                                                                     const Matrix3& velGrad_new,
@@ -1180,7 +1191,7 @@ DeformationGradientComputer::cayleyUpdateConstantVelGrad(const Matrix3& velGrad_
   double alpha1 = 1.0;
   double alpha2 = 0.5;
   double factorial = 1.0;
-  double beta0 = 0.0;
+  //double beta0 = 0.0;
   double beta1 = 0.0;
   double beta2 = 1.0;
   for (int kk = 2; kk < flag->d_numTermsSeriesDefGrad; kk++) {
@@ -1191,7 +1202,7 @@ DeformationGradientComputer::cayleyUpdateConstantVelGrad(const Matrix3& velGrad_
     alpha0 += beta0_new*factorial;
     alpha1 += beta1_new*factorial;
     alpha2 += beta2_new*factorial;
-    beta0 = beta0_new;
+    //beta0 = beta0_new;
     beta1 = beta1_new;
     beta2 = beta2_new;
   }
