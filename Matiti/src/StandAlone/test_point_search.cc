@@ -92,7 +92,7 @@ void test_point_search_raw_pointer()
   // inputs
   double xmin = 0.0, ymin = 0.0, zmin = 0.0;
   double xmax = 3.0, ymax = 2.0, zmax = 1.0;
-  SCIRun::Vector cell_spacing(0.5, 0.5, 0.5);
+  Uintah::Vector cell_spacing(0.5, 0.5, 0.5);
   double num_points = 100;
 
   // set up a box domain with horizon
@@ -205,7 +205,7 @@ void test_point_search_shared_pointer()
   // inputs
   double xmin = 0.0, ymin = 0.0, zmin = 0.0;
   double xmax = 3.0, ymax = 2.0, zmax = 1.0;
-  SCIRun::Vector cell_spacing(0.5, 0.5, 0.5);
+  Uintah::Vector cell_spacing(0.5, 0.5, 0.5);
   double horizon = std::max(std::max(cell_spacing[0], cell_spacing[1]), cell_spacing[2]);
   double num_points = 100;
 
@@ -314,7 +314,7 @@ void test_point_search_FamilyComputer()
   // inputs
   double xmin = 0.0, ymin = 0.0, zmin = 0.0;
   double xmax = 3.0, ymax = 2.0, zmax = 1.0;
-  SCIRun::Vector cell_spacing(0.5, 0.5, 0.5);
+  Uintah::Vector cell_spacing(0.5, 0.5, 0.5);
   //double horizon = std::max(std::max(cell_spacing[0], cell_spacing[1]), cell_spacing[2]);
   double num_points = 100;
 

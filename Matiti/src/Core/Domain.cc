@@ -63,7 +63,7 @@ Domain::Domain(const Point3D& lower, const Point3D& upper, const IntArray3& numC
   d_cell_size.z(d_zrange/(double)d_num_cells[2]);
 }
     
-Domain::Domain(const Point3D& lower, const Point3D& upper, const SCIRun::Vector& cellSize)
+Domain::Domain(const Point3D& lower, const Point3D& upper, const Uintah::Vector& cellSize)
   : d_lower(lower), d_upper(upper), d_cell_size(cellSize)
 {
   d_xrange = std::abs(d_upper.x() - d_lower.x());
@@ -138,7 +138,7 @@ const Point3D& Domain::upper() const
   return d_upper;
 }
 
-const SCIRun::Vector& Domain::cellSize() const
+const Uintah::Vector& Domain::cellSize() const
 {
   return d_cell_size;
 }

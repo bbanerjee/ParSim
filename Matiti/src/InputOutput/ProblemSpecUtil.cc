@@ -57,7 +57,7 @@ namespace Matiti_ProblemSpecUtil
   readBoundary(Uintah::ProblemSpecP& ps, Matiti::Polygon3D& boundary)
   {
     // Read points from the input file
-    SCIRun::Vector point(0.0, 0.0, 0.0); 
+    Uintah::Vector point(0.0, 0.0, 0.0); 
     Matiti_ProblemSpecUtil::parseVector(ps->getNodeValue(), point);
 
     // Counter for area boundary points
@@ -81,7 +81,7 @@ namespace Matiti_ProblemSpecUtil
 
   // Bit of code to parse a Uintah::Vector input
   void 
-  parseVector(const std::string& stringValue, SCIRun::Vector& value)
+  parseVector(const std::string& stringValue, Uintah::Vector& value)
   {
     // Parse out the [num,num,num]
     // Now pull apart the stringValue

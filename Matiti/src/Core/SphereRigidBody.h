@@ -52,11 +52,11 @@ namespace Matiti {
     void initialize(Uintah::ProblemSpecP& ps);
     void initialize(const double& mass,
                     const double& volume,
-                    const SCIRun::Vector& centerOfMass,
-                    const SCIRun::Vector& velocity,
-                    const SCIRun::Vector& bodyForce,
-                    const SCIRun::Vector& centerOfRotation,
-                    const SCIRun::Vector& angularVelocityOfRotation);
+                    const Uintah::Vector& centerOfMass,
+                    const Uintah::Vector& velocity,
+                    const Uintah::Vector& bodyForce,
+                    const Uintah::Vector& centerOfRotation,
+                    const Uintah::Vector& angularVelocityOfRotation);
 
     /**
      * Get methods 

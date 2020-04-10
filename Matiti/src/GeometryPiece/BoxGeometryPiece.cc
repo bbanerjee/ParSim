@@ -68,7 +68,7 @@ BoxGeometryPiece::BoxGeometryPiece(Uintah::ProblemSpecP& ps,
 
 BoxGeometryPiece::BoxGeometryPiece(const Point3D& lower,
                                    const Point3D& upper,
-                                   const SCIRun::IntVector& numElem,
+                                   const Uintah::IntVector& numElem,
                                    NodePArray& nodes,
                                    ElementPArray& elements, 
                                    Vector3D& gridSize)

@@ -40,7 +40,7 @@ namespace Matiti {
 
   protected:
 
-    void computeExtForceDensity(const SCIRun::Vector& extForce,
+    void computeExtForceDensity(const Uintah::Vector& extForce,
                                 NodePArray& surfaceNodes, 
                                 ElementPArray& elems);
 

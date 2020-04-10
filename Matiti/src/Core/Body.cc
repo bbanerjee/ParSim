@@ -38,7 +38,7 @@
 #include <MaterialModels/Density.h>
 #include <MaterialModels/Material.h>
 
-//#include <random>
+#include <random>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -78,7 +78,7 @@ Body::initialize(Uintah::ProblemSpecP& ps,
 //  std::cout << "grid size= " << "(" << d_grid_size.x() << ", " << d_grid_size.y() << ", " << d_grid_size.z() << ")" << std::endl;
 
   // Set initial horizon.  This is recomputed correctly later.
-  SCIRun::Vector cell_size = domain.cellSize();
+  Uintah::Vector cell_size = domain.cellSize();
   setInitialNodeHorizon(std::max(std::max(cell_size[0], cell_size[1]), cell_size[2]));
 
   // Assign nodal materials  (each node starts of with the same material but material properties 
@@ -150,7 +150,7 @@ Body::initialize(int materialId,
   d_grid_size = gridSize;
 
   // Set initial horizon.  This is recomputed correctly later.
-  SCIRun::Vector cell_size = domain.cellSize();
+  Uintah::Vector cell_size = domain.cellSize();
   setInitialNodeHorizon(std::max(std::max(cell_size[0], cell_size[1]), cell_size[2]));
 
   // Assign nodal materials  (each node starts of with the same material but material properties 

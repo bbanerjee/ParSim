@@ -46,9 +46,9 @@ set(PATCH_VERSION "0")
 set(BUILD_SHARED_LIBS ON)
 
 if (USE_CLANG)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall")
 else ()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wall")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall")
 endif ()
 message("ENV_FLAGS = $ENV{FFLAGS}")
 message("CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
@@ -98,7 +98,7 @@ include_directories(${TRIANGLE_INCLUDE_DIR})
 #----------------------------------------------------------------------------
 # Add requirements for Output in VTK format
 #----------------------------------------------------------------------------
-find_package(VTK 5.8 REQUIRED)
+find_package(VTK 6.3 REQUIRED)
 # message(STATUS "VTK header directory = ${VTK_INCLUDE_DIRS}")
 # message(STATUS "VTK libraries directory = ${VTK_LIBRARIES}")
 include_directories(${VTK_INCLUDE_DIRS})

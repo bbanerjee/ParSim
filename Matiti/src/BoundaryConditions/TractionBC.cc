@@ -52,11 +52,11 @@ TractionBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes, ElementPArra
   if (!(ps)) return;
 
   // Read the force vector
-  SCIRun::Vector ext_traction(0.0, 0.0, 0.0);
+  Uintah::Vector ext_traction(0.0, 0.0, 0.0);
   ps->require("traction", ext_traction);
 
   // Read the region of application of the force
-  SCIRun::Vector box_min(0.0, 0.0, 0.0), box_max(0.0, 0.0, 0.0);
+  Uintah::Vector box_min(0.0, 0.0, 0.0), box_max(0.0, 0.0, 0.0);
   ps->require("box_min", box_min);
   ps->require("box_max", box_max);
 
@@ -226,7 +226,7 @@ TractionBC::findSurfaceNodeAreas(NodePArray& surfaceNodes,
 // Purpose : set the external force density array
 //********************************************************************
 void 
-TractionBC::computeExtForceDensity(const SCIRun::Vector& extTraction,
+TractionBC::computeExtForceDensity(const Uintah::Vector& extTraction,
                                    NodePArray& surfaceNodes, 
                                    ElementPArray& elems)
 {

@@ -51,11 +51,11 @@ ForceBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes, ElementPArray&)
   if (!(ps)) return;
 
   // Read the force vector
-  SCIRun::Vector ext_force(0.0, 0.0, 0.0);
+  Uintah::Vector ext_force(0.0, 0.0, 0.0);
   ps->require("force", ext_force);
 
   // Read the region of application of the force
-  SCIRun::Vector box_min(0.0, 0.0, 0.0), box_max(0.0, 0.0, 0.0);
+  Uintah::Vector box_min(0.0, 0.0, 0.0), box_max(0.0, 0.0, 0.0);
   ps->require("box_min", box_min);
   ps->require("box_max", box_max);
 
@@ -91,7 +91,7 @@ ForceBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes, ElementPArray&)
 // Purpose : set the external force density array
 //********************************************************************
 void 
-ForceBC::computeExtForceDensity(const SCIRun::Vector& extForce,
+ForceBC::computeExtForceDensity(const Uintah::Vector& extForce,
                                 NodePArray& surfaceNodes, double& maxVol)
 {
   std::cerr << "ComputeExtForceDensity may not be implemented correctly yet. " << std::endl;

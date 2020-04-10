@@ -45,8 +45,8 @@ namespace Matiti {
 
   private:
 
-    void initializeDispBCSurfaceNodes(const SCIRun::Vector& boxMin, 
-                                      const SCIRun::Vector& boxMax,
+    void initializeDispBCSurfaceNodes(const Uintah::Vector& boxMin, 
+                                      const Uintah::Vector& boxMax,
                                       NodePArray& nodes);
   private:
 

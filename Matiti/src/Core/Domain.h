@@ -53,7 +53,7 @@ namespace Matiti {
 
     Domain(const Point3D& lower, const Point3D& upper, const IntArray3& numCells);
     
-    Domain(const Point3D& lower, const Point3D& upper, const SCIRun::Vector& cellSize);
+    Domain(const Point3D& lower, const Point3D& upper, const Uintah::Vector& cellSize);
 
     virtual void initialize(const Uintah::ProblemSpecP& ps);
 
@@ -63,7 +63,7 @@ namespace Matiti {
     const double& yrange() const;
     const double& zrange() const;
     const IntArray3& numCells() const;
-    const SCIRun::Vector& cellSize() const;
+    const Uintah::Vector& cellSize() const;
     const double totalCells() const;
 
     void findCellIndex(const Point3D& point,
@@ -88,7 +88,7 @@ namespace Matiti {
     double d_zrange;
 
     IntArray3 d_num_cells;
-    SCIRun::Vector d_cell_size;
+    Uintah::Vector d_cell_size;
 
     VelocityBCSPArray d_vel_BC;
 

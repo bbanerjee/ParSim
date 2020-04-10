@@ -186,7 +186,7 @@ int Delaunay::vertexId(vIterator const &vit){
 
 
 Delaunay::vIterator::vIterator(Delaunay* adel) {
-     typedef piyush::vertex vertex;
+     //typedef piyush::vertex vertex;
      MyDelaunay = adel;
 
      piyush::__pmesh     * tpmesh     = (piyush::__pmesh *) adel->pmesh;

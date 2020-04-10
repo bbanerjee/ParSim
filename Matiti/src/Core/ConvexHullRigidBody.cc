@@ -49,12 +49,12 @@ void
 ConvexHullRigidBody::initialize(const int&                         id,
                                 const std::vector<double>&         masses,
                                 const std::vector<double>&         volumes,
-                                const std::vector<SCIRun::Vector>& positions,
-                                const std::vector<SCIRun::Vector>& velocities,
+                                const std::vector<Uintah::Vector>& positions,
+                                const std::vector<Uintah::Vector>& velocities,
                                 const double&                      velScaleFactor, 
-                                const SCIRun::Vector&              bodyForce,
-                                const SCIRun::Vector&              centerOfRotation,
-                                const SCIRun::Vector&              angularVelOfRotation)
+                                const Uintah::Vector&              bodyForce,
+                                const Uintah::Vector&              centerOfRotation,
+                                const Uintah::Vector&              angularVelOfRotation)
 {
   // Save the id
   d_id = id;

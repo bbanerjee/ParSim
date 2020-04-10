@@ -79,7 +79,7 @@ DisplacementBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes)
   }
 
   // Read the region of application of the displaceemnt BC
-  SCIRun::Vector box_min(0.0, 0.0, 0.0), box_max(0.0, 0.0, 0.0);
+  Uintah::Vector box_min(0.0, 0.0, 0.0), box_max(0.0, 0.0, 0.0);
   ps->require("box_min", box_min);
   ps->require("box_max", box_max);
 
@@ -103,8 +103,8 @@ DisplacementBC::initialize(Uintah::ProblemSpecP& ps, NodePArray& nodes)
 }
 
 void 
-DisplacementBC::initializeDispBCSurfaceNodes(const SCIRun::Vector& boxMin, 
-                                             const SCIRun::Vector& boxMax,
+DisplacementBC::initializeDispBCSurfaceNodes(const Uintah::Vector& boxMin, 
+                                             const Uintah::Vector& boxMax,
                                              NodePArray& nodes)
 {
   std::cout << "Finding diplacement BC nodes" << std::endl;

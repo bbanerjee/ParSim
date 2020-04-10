@@ -44,8 +44,8 @@ LoadBC::~LoadBC()
 
 
 void
-LoadBC::findSurfaceNodesInBox(const SCIRun::Vector& boxMin, 
-                              const SCIRun::Vector& boxMax,
+LoadBC::findSurfaceNodesInBox(const Uintah::Vector& boxMin, 
+                              const Uintah::Vector& boxMax,
                               const NodePArray& nodes, 
                               NodePArray& surfaceNodes)
 {

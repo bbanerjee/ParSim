@@ -52,30 +52,30 @@ namespace Matiti {
     void initialize(const int& id,
                     const std::vector<double>& mass,
                     const std::vector<double>& volume,
-                    const std::vector<SCIRun::Vector>& position,
-                    const std::vector<SCIRun::Vector>& velocity,
+                    const std::vector<Uintah::Vector>& position,
+                    const std::vector<Uintah::Vector>& velocity,
                     const double& vel_scale_fac,
-                    const SCIRun::Vector& bodyForce,
-                    const SCIRun::Vector& centerOfRotation,
-                    const SCIRun::Vector& angularVelocityOfRotation);
+                    const Uintah::Vector& bodyForce,
+                    const Uintah::Vector& centerOfRotation,
+                    const Uintah::Vector& angularVelocityOfRotation);
 
     /**
      * Get methods 
      */
     inline int id() const {return d_id;}
 
-    const SCIRun::Vector& centerOfMass() const {return d_com;}     
+    const Uintah::Vector& centerOfMass() const {return d_com;}     
     inline double volume() const {return d_volume;}
     inline double mass()  const {return d_mass;}
 
-    const SCIRun::Vector& velocity() const {return d_vel;}
+    const Uintah::Vector& velocity() const {return d_vel;}
 
-    const SCIRun::Vector& bodyForce() const {return d_body_force;} 
+    const Uintah::Vector& bodyForce() const {return d_body_force;} 
 
-    const SCIRun::Vector& rotatingCoordCenter() const {return d_rot_center;} 
-    const SCIRun::Vector& rotatingCoordAngularVelocity() const {return d_rot_vel;}    
+    const Uintah::Vector& rotatingCoordCenter() const {return d_rot_center;} 
+    const Uintah::Vector& rotatingCoordAngularVelocity() const {return d_rot_vel;}    
 
-    const std::vector<SCIRun::Vector>& getPositions() const
+    const std::vector<Uintah::Vector>& getPositions() const
     {
       return d_positions;
     }
@@ -87,15 +87,15 @@ namespace Matiti {
     /**
      * Set methods 
      */
-    void setCenterOfMass(const SCIRun::Vector& pos) 
+    void setCenterOfMass(const Uintah::Vector& pos) 
     {
       d_com = pos;
     }
-    void setPositions(const std::vector<SCIRun::Vector>& positions) 
+    void setPositions(const std::vector<Uintah::Vector>& positions) 
     {
       d_positions = positions;
     }
-    void setVelocity(const SCIRun::Vector& vel) {
+    void setVelocity(const Uintah::Vector& vel) {
       d_vel = vel;
     }
 
@@ -106,14 +106,14 @@ namespace Matiti {
     double         d_mass;
     double         d_volume;
 
-    SCIRun::Vector d_com;     // Center of mass
-    SCIRun::Vector d_vel;     // Velocity
+    Uintah::Vector d_com;     // Center of mass
+    Uintah::Vector d_vel;     // Velocity
 
-    SCIRun::Vector d_body_force; // Gravity
-    SCIRun::Vector d_rot_center; // Rotating coord center
-    SCIRun::Vector d_rot_vel;    // Rotating coord angular velocity
+    Uintah::Vector d_body_force; // Gravity
+    Uintah::Vector d_rot_center; // Rotating coord center
+    Uintah::Vector d_rot_vel;    // Rotating coord angular velocity
 
-    std::vector<SCIRun::Vector> d_positions;  // Point positions
+    std::vector<Uintah::Vector> d_positions;  // Point positions
   };
 } // end namespace
 

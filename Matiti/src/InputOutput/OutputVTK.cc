@@ -139,7 +139,11 @@ OutputVTK::writeDomain(const Time& time, const Domain& domain,
   data_set->Squeeze();
 
   // Write the data
+  #if VTK_MAJOR_VERSION <= 5
   writer->SetInput(data_set);
+  #else
+  writer->SetInputData(data_set);
+  #endif
   writer->SetDataModeToAscii();
   writer->Write();
 }
@@ -185,7 +189,11 @@ OutputVTK::writeRigidBodies(const Time& time,
   data_set->Squeeze();
 
   // Write the data
+  #if VTK_MAJOR_VERSION <= 5
   writer->SetInput(data_set);
+  #else
+  writer->SetInputData(data_set);
+  #endif
   writer->SetDataModeToAscii();
   writer->Write();
 }
@@ -233,7 +241,11 @@ OutputVTK::writeNodes(const Time& time, const BodySPArray& bodyList,
   data_set->Squeeze();
 
   // Write the data
+  #if VTK_MAJOR_VERSION <= 5
   writer->SetInput(data_set);
+  #else
+  writer->SetInputData(data_set);
+  #endif
   writer->SetDataModeToAscii();
   writer->Write();
 }
@@ -287,7 +299,11 @@ OutputVTK::writeMB(const Time& time, const Domain& domain, const BodySPArray& bo
   }
 
   // Write the data
+  #if VTK_MAJOR_VERSION <= 5
   writer->SetInput(data_set);
+  #else
+  writer->SetInputData(data_set);
+  #endif
   writer->SetDataModeToAscii();
   writer->Write();
 

@@ -47,8 +47,8 @@ namespace Matiti {
 
   protected:
 
-    void findSurfaceNodesInBox(const SCIRun::Vector& boxMin, 
-                               const SCIRun::Vector& boxMax,
+    void findSurfaceNodesInBox(const Uintah::Vector& boxMin, 
+                               const Uintah::Vector& boxMax,
                                const NodePArray& nodes, 
                                NodePArray& surfaceNodes);
 

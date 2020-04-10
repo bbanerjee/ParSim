@@ -78,12 +78,12 @@ namespace Matiti {
     RigidBodySPArray d_body_list;
     ConvexHullRigidBodySPArray d_convex_body_list;
 
-    SCIRun::Vector d_ground_min;
-    SCIRun::Vector d_ground_max;
+    Uintah::Vector d_ground_min;
+    Uintah::Vector d_ground_max;
 
     struct Wall {
-      SCIRun::Vector box_min;
-      SCIRun::Vector box_max;
+      Uintah::Vector box_min;
+      Uintah::Vector box_max;
     }; 
     std::vector<Wall> d_walls;
 
@@ -101,8 +101,8 @@ namespace Matiti {
   private:
 
     void readPointsFromFile(const std::string& fileName,
-                            std::vector<SCIRun::Vector>& positions,
-                            std::vector<SCIRun::Vector>& velocities,
+                            std::vector<Uintah::Vector>& positions,
+                            std::vector<Uintah::Vector>& velocities,
                             std::vector<double>& masses,
                             std::vector<double>& volumes);
     void initializeBullet();

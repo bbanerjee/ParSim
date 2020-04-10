@@ -115,7 +115,7 @@ RigidBodyDynamics::problemSetup(Uintah::ProblemSpecP& ps)
        wall_ps = wall_ps->findNextBlock("Wall")) {
 
     // Get the wall box
-    SCIRun::Vector wall_min, wall_max;
+    Uintah::Vector wall_min, wall_max;
     wall_ps->require("wall_min", wall_min);
     wall_ps->require("wall_max", wall_max);
     Wall wall;
@@ -125,9 +125,9 @@ RigidBodyDynamics::problemSetup(Uintah::ProblemSpecP& ps)
   }
 
   // Set up the ground for bullet
-  d_ground_min = SCIRun::Vector(d_domain.lower().x(), d_domain.lower().y(), 
+  d_ground_min = Uintah::Vector(d_domain.lower().x(), d_domain.lower().y(), 
                                 d_domain.lower().z()); 
-  d_ground_max = SCIRun::Vector(d_domain.upper().x(), d_domain.upper().y(), 
+  d_ground_max = Uintah::Vector(d_domain.upper().x(), d_domain.upper().y(), 
                                 d_domain.lower().z()+0.01*d_domain.zrange());
 
   // Set up the body information
@@ -255,8 +255,8 @@ RigidBodyDynamics::problemSetup(Uintah::ProblemSpecP& ps)
 
 void 
 RigidBodyDynamics::readPointsFromFile(const std::string& fileName,
-                                      std::vector<SCIRun::Vector>& positions,
-                                      std::vector<SCIRun::Vector>& velocities,
+                                      std::vector<Uintah::Vector>& positions,
+                                      std::vector<Uintah::Vector>& velocities,
                                       std::vector<double>& masses,
                                       std::vector<double>& volumes)
 {
@@ -325,9 +325,9 @@ RigidBodyDynamics::problemSetup(Time& time,
   d_convex_body_list = convexBodyList;
 
   // Set up the ground for bullet
-  d_ground_min = SCIRun::Vector(d_domain.lower().x(), d_domain.lower().y(), 
+  d_ground_min = Uintah::Vector(d_domain.lower().x(), d_domain.lower().y(), 
                                 d_domain.lower().z()); 
-  d_ground_max = SCIRun::Vector(d_domain.upper().x(), d_domain.upper().y(), 
+  d_ground_max = Uintah::Vector(d_domain.upper().x(), d_domain.upper().y(), 
                                 d_domain.lower().z()+0.01*d_domain.zrange());
 
   // Set up bullet
@@ -358,8 +358,8 @@ void
 RigidBodyDynamics::createWalls()
 {
   for (auto iter = d_walls.begin(); iter != d_walls.end(); iter++) {
-    SCIRun::Vector wall_min = (*iter).box_min;  
-    SCIRun::Vector wall_max = (*iter).box_max;  
+    Uintah::Vector wall_min = (*iter).box_min;  
+    Uintah::Vector wall_max = (*iter).box_max;  
 
     // Get box dimensions
     double xLen = std::abs(wall_max[0] - wall_min[0]);
@@ -653,7 +653,7 @@ RigidBodyDynamics::run()
               // Update positions of vertices
               std::vector<Uintah::Vector> positions;
               std::vector<Uintah::Vector> old_positions = d_convex_body_list[index]->getPositions();
-              Uintah::Vector old_com = d_convex_body_list[index]->centerOfMass();
+              //Uintah::Vector old_com = d_convex_body_list[index]->centerOfMass();
               for (auto position : old_positions) {
 
                 // Rotate and translate the points

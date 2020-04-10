@@ -39,7 +39,7 @@ namespace Matiti {
 	std::runtime_error("")
     {
       std::ostringstream s;
-      s << "Exception thrown: " << file << ", line: " << line << "\n" << msg;
+      s << "Exception thrown: " << file << ", line: " << std::to_string(line) << "\n" << msg;
       static_cast<std::runtime_error&>(*this) = std::runtime_error(s.str());
     }
 
@@ -47,7 +47,11 @@ namespace Matiti {
 	std::runtime_error("")
     {
       std::ostringstream s;
-      s << "Exception thrown: " << file << ", line: " << line << "\n" << msg;
+      s << "Exception thrown: ";
+      s << file << ", line: ";
+      s << std::to_string(line);
+      s << "\n";
+      s << msg.str();
       static_cast<std::runtime_error&>(*this) = std::runtime_error(s.str());
     }
   };

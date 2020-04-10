@@ -38,7 +38,7 @@ namespace Matiti {
 
   // New definition
   // Forward declaration.  Make sure <Node.h> is included before using NodeP.
-  // using stdlib shared_ptr instead of SCIRun::Handle
+  // using stdlib shared_ptr instead of Uintah::Handle
   class Node;
   typedef std::shared_ptr<Node> NodeP;
 }

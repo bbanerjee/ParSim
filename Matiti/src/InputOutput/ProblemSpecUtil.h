@@ -35,7 +35,7 @@ namespace Matiti_ProblemSpecUtil
   // A routine to read in the boundary of a two-dimensional region
   void readVector(Uintah::ProblemSpecP& ps, std::vector<double>& coeffVector);
   void readBoundary(Uintah::ProblemSpecP& ps, Matiti::Polygon3D& boundary);
-  void parseVector(const std::string& stringValue, SCIRun::Vector& value);
+  void parseVector(const std::string& stringValue, Uintah::Vector& value);
   void checkForInputError(const std::string & stringValue);
 }
 
