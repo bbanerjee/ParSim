@@ -1,5 +1,9 @@
 For rigid body simulations using bullet physics:
 
+0) Needs an optimized Vaango build in Vaango/opt.
+
+   Needs an optimized Matiti build in Matiti/opt.
+
 1) Run a vaango simulation.
 
    In this example, we use the input file:
