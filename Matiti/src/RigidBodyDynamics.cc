@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -554,7 +554,8 @@ RigidBodyDynamics::createConvexHullRigidBodies()
 void
 RigidBodyDynamics::run()
 {
-  std::cout << "....Begin Solver...." << std::endl;
+  double bullet_version = 2.8;
+  std::cout << "....Begin Solver.... with bullet " << bullet_version << std::endl;
 
   // Write the output at the beginning of the simulation
   d_output.write(d_time, d_domain, d_body_list, d_convex_body_list);
@@ -584,6 +585,7 @@ RigidBodyDynamics::run()
                                                   // contact detetion of small objects
 
     // Loop through the rigid bodies
+    //bool firstBody = true;
     for (int jj = d_world->getNumCollisionObjects()-1; jj > 0; jj--) {
 
       // For sphere rigid bodies
@@ -603,6 +605,13 @@ RigidBodyDynamics::run()
                        trans.getOrigin().getZ());
           Vector3D vel(body->getLinearVelocity().getX(), body->getLinearVelocity().getY(),
                        body->getLinearVelocity().getZ());
+
+          /*
+          if (firstBody) {
+            std::cout << "Position = " << pos << " velocity = " << vel << "\n";
+            firstBody = false;
+          }
+          */
 
           int index = jj - static_bodies;
 
@@ -732,7 +741,7 @@ RigidBodyDynamics::run()
     int output_freq = d_output.outputIteratonInterval();
     if (cur_iter%output_freq == 0) {
       d_output.write(d_time, d_domain, d_body_list, d_convex_body_list);
-      //std::cout << "Wrote out data at time " << d_time << std::endl;
+      std::cout << "Wrote out data at time " << d_time << std::endl;
     }
 
     // Print position, mass, volume

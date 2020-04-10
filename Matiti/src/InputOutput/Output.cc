@@ -114,7 +114,7 @@ Output::write(const Time& time, const Domain& , const BodySPArray& bodyList)
 
   // Write the output to individual files
   std::ostringstream of_name;
-  of_name.setf(std::ios::basefield);
+  //of_name.setf(std::ios::basefield);
   of_name.precision(5);
   of_name << outputFile() << outputFileCount() << ".vtu"; 
   std::ofstream output_file(of_name.str());
@@ -158,13 +158,15 @@ Output::write(const Time& time, const Domain& , const BodySPArray& bodyList)
  
   // Increment the output file count
   incrementOutputFileCount();
+
+  //of_name.setf(std::ios::floatfield, std::ios::basefield);
 }
 
 namespace Matiti {
 
   std::ostream& operator<<(std::ostream& out, const Output& output)
   {
-    out.setf(std::ios::floatfield);
+    //out.setf(std::ios::floatfield);
     out.precision(6);
     out << "Output dir = " << output.d_output_folder_name << " Output file = " << output.d_output_file_name
         << std::endl;

@@ -89,7 +89,7 @@ namespace Matiti {
 
   std::ostream& operator<<(std::ostream& out, const ConvexHullRigidBody& body)
   {
-    out.setf(std::ios::floatfield);
+    //out.setf(std::ios::floatfield);
     out.precision(6);
     out << "ConvexHullRigidBody: ID" << body.d_id << std::endl;
     return out;

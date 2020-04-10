@@ -96,7 +96,7 @@ Polygon3D::operator[](const int& index) const
 
 std::ostream& operator<<(std::ostream& out, const Polygon3D& poly)
 {
-  out.setf(std::ios::floatfield);
+  //out.setf(std::ios::floatfield);
   out.precision(6);
   for (auto iter = poly.begin(); iter != poly.end(); ++iter) {
       out << *iter ;

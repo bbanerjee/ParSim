@@ -140,7 +140,7 @@ namespace Matiti {
 
   std::ostream& operator<<(std::ostream& out, const DamageModelSimple& dam)
   {
-    out.setf(std::ios::floatfield);
+    //out.setf(std::ios::floatfield);
     out.precision(6);
     out << "Damage model:" << std::endl;
     out << "  Viscosity = [" << dam.d_damage_viscosity[0] << ", " << dam.d_damage_viscosity[1] 

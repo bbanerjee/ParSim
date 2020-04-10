@@ -265,14 +265,14 @@ namespace Matiti {
 
   std::ostream& operator<<(std::ostream& out, const Domain& domain)
   {
-    out.setf(std::ios::floatfield);
+    //out.setf(std::ios::floatfield);
     out.precision(6);
     out << "Computational domain:" << std::endl;
     out << "  Lower = [" << domain.d_lower.x() << ", " << domain.d_lower.y() << ", " << domain.d_lower.z() << "]";
     out << "  Upper = [" << domain.d_upper.x() << ", " << domain.d_upper.y() << ", " << domain.d_upper.z() << "]" << std::endl;
     out << "  Range = [" << domain.d_xrange << ", " << domain.d_yrange << ", " << domain.d_zrange << "]" << std::endl;
     out << "  Cells = [" << domain.d_num_cells[0] << ", " << domain.d_num_cells[1] << ", " << domain.d_num_cells[2] << "]" << std::endl;
-    out << "  Cell size [= " << domain.d_cell_size[0] << "," << domain.d_cell_size[1] << "," << domain.d_cell_size[2] << "]" << std::endl;
+    out << "  Cell size = [ " << domain.d_cell_size[0] << "," << domain.d_cell_size[1] << "," << domain.d_cell_size[2] << "]" << std::endl;
     return out;
   }
 }

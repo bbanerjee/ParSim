@@ -296,7 +296,7 @@ namespace Matiti {
 
   std::ostream& operator<<(std::ostream& out, const Crack& crack)
   {
-    out.setf(std::ios::floatfield);
+    //out.setf(std::ios::floatfield);
     out.precision(6);
     out << "Crack geometry points:" << std::endl;
     for (auto iter = crack.d_boundary.begin(); iter != crack.d_boundary.end(); ++iter) {

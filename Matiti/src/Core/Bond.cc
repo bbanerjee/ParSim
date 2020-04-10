@@ -379,7 +379,7 @@ namespace Matiti {
 
   std::ostream& operator<<(std::ostream& out, const Bond& bond)
   {
-    out.setf(std::ios::floatfield);
+    //out.setf(std::ios::floatfield);
 //    out.precision(3);
     out.precision(20);
     out << "Bond: [" << (bond.d_node1)->getID() << " - " << (bond.d_node2)->getID() 

@@ -160,7 +160,7 @@ namespace Matiti {
 
   std::ostream& operator<<(std::ostream& out, const Element2D& elem)
   {
-    out.setf(std::ios::floatfield);
+    //out.setf(std::ios::floatfield);
     out.precision(6);
     out << "Element2D " << " = [";
     for (auto iter = (elem.d_nodes).begin(); iter != (elem.d_nodes).end(); ++iter) {

@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -361,8 +361,17 @@ OutputVTK::createVTKUnstructuredGridRigidBody(const Domain& domain,
 {
   // Remove points that are outside the domain
   int numPts = 0;
+  bool firstBody = true;
   for (auto cur_body : bodyList) {
     Vector3D com = cur_body->position();
+   
+    /*
+    if (firstBody) {
+      std::cout << "Position = " << com << " domain = " << domain << "\n";
+      firstBody = false;
+    }
+    */
+
     if (domain.inside(Point3D(com.x(), com.y(), com.z()))) {
       ++numPts;
     } 
@@ -422,6 +431,10 @@ OutputVTK::createVTKUnstructuredGridRigidBody(const Domain& domain,
     
     RigidBodySP cur_body = *body_iter;
     Vector3D com = cur_body->position();
+      if (firstBody) {
+        std::cout << "Position = " << com << " velocity = " << cur_body->velocity() << "\n";
+        firstBody = false;
+      }
     if (domain.inside(Point3D(com.x(), com.y(), com.z()))) {
       for (int ii = 0; ii < 3; ++ii) {
         position[ii] = cur_body->position()[ii];

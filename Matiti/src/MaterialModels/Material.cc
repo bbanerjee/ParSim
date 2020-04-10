@@ -463,7 +463,7 @@ namespace Matiti {
 
   std::ostream& operator<<(std::ostream& out, const Material& mat)
   {
-    out.setf(std::ios::floatfield);
+    //out.setf(std::ios::floatfield);
     out.precision(6);
     out << "Material model: id = " << mat.d_id << std::endl;
     out << "  Have name = " << mat.d_have_name << " Name = " << mat.d_name << std::endl;

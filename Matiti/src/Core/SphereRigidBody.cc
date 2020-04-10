@@ -161,7 +161,7 @@ namespace Matiti {
 
   std::ostream& operator<<(std::ostream& out, const SphereRigidBody& body)
   {
-    out.setf(std::ios::floatfield);
+    //out.setf(std::ios::floatfield);
     out.precision(6);
     out << "SphereRigidBody: ID" << body.d_id << std::endl;
     return out;

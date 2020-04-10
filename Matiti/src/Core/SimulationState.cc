@@ -95,7 +95,7 @@ namespace Matiti {
 
   std::ostream& operator<<(std::ostream& out, const SimulationState& state)
   {
-    out.setf(std::ios::floatfield);
+    //out.setf(std::ios::floatfield);
     out.precision(6);
     out << "Dynamic = " << state.d_is_dynamic << " Modulus type = " << (int) (state.d_modulus_type) 
         << " Horizon factor = " << state.d_horizon_factor << std::endl;

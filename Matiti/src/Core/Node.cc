@@ -233,7 +233,7 @@ namespace Matiti {
 
   std::ostream& operator<<(std::ostream& out, const Node& node)
   {
-    out.setf(std::ios::floatfield);
+    //out.setf(std::ios::floatfield);
     out.precision(6);
 
     // Print node position

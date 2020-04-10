@@ -121,7 +121,7 @@ namespace Matiti {
 
   std::ostream& operator<<(std::ostream& out, const InitialConditions& ic)
   {
-    out.setf(std::ios::floatfield);
+    //out.setf(std::ios::floatfield);
     out.precision(6);
     out << "Initial Conditions: " ;
     out << "Initial velocity = " << ic.d_initial_velocity
