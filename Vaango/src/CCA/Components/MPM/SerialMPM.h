@@ -218,21 +218,12 @@ WARNING
     //////////
     // Initialize particle data with a default values in the
     // new datawarehouse
-    void setParticleDefault(ParticleVariable<double>& pvar,
+    template<typename T>
+    void setParticleDefault(ParticleVariable<T>& pvar,
                             const VarLabel* label,
                             ParticleSubset* pset,
                             DataWarehouse* new_dw,
-                            double val);
-    void setParticleDefault(ParticleVariable<Vector>& pvar,
-                            const VarLabel* label, 
-                            ParticleSubset* pset,
-                            DataWarehouse* new_dw,
-                            const Vector& val);
-    void setParticleDefault(ParticleVariable<Matrix3>& pvar,
-                            const VarLabel* label, 
-                            ParticleSubset* pset,
-                            DataWarehouse* new_dw,
-                            const Matrix3& val);
+                            const T& val);
 
     void printParticleLabels(vector<const VarLabel*> label,DataWarehouse* dw,
                              int dwi, const Patch* patch);
@@ -276,6 +267,18 @@ WARNING
                                 const MaterialSubset* ,
                                 DataWarehouse* old_dw,
                                 DataWarehouse* new_dw);
+
+    void findSurfaceParticles(const ProcessorGroup*,
+                              const PatchSubset* patches,
+                              const MaterialSubset* ,
+                              DataWarehouse* old_dw,
+                              DataWarehouse* new_dw);
+
+    void computeLogisticRegression(const ProcessorGroup*,
+                                   const PatchSubset* patches,
+                                   const MaterialSubset* ,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw);
 
     virtual void addCohesiveZoneForces(const ProcessorGroup*,
                                        const PatchSubset* patches,
@@ -474,6 +477,14 @@ WARNING
     virtual void scheduleComputeNormals(SchedulerP& sched,
                                         const PatchSet* patches,
                                         const MaterialSet* matls );
+
+    virtual void scheduleFindSurfaceParticles(SchedulerP& sched,
+                                              const PatchSet* patches,
+                                              const MaterialSet* matls );
+
+    virtual void scheduleComputeLogisticRegression(SchedulerP& sched,
+                                                   const PatchSet* patches,
+                                                   const MaterialSet* matls );
 
     virtual void scheduleAddCohesiveZoneForces(SchedulerP&, 
                                                const PatchSet*,

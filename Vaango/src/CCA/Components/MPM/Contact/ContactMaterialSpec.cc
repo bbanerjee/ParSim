@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -34,12 +34,12 @@ ContactMaterialSpec::ContactMaterialSpec(ProblemSpecP& ps)
   if (ps) {
     vector<int> materials;
     if (ps->get("materials", materials)) {
-      for (vector<int>::const_iterator mit(materials.begin());
-           mit != materials.end(); mit++) {
-        if (*mit < 0)
+      for (const auto material : materials) {
+        if (material < 0) {
           throw ProblemSetupException(
             " Invalid material index in contact block", __FILE__, __LINE__);
-        this->add(*mit);
+        }
+        this->add(material);
       }
     }
   }
@@ -50,10 +50,11 @@ ContactMaterialSpec::outputProblemSpec(ProblemSpecP& ps)
 {
   std::vector<int> matls;
   int i = 0;
-  for (std::vector<bool>::const_iterator it = d_matls.begin();
-       it != d_matls.end(); it++, i++) {
-    if (*it)
+  for (const auto material : d_matls) {
+    if (material) {
       matls.push_back(i);
+    }
+    ++i;
   }
 
   ps->appendElement("materials", matls);

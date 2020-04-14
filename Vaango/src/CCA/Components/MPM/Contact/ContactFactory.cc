@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,6 +28,8 @@
 #include <CCA/Components/MPM/Contact/CompositeContact.h>
 #include <CCA/Components/MPM/Contact/ContactFactory.h>
 #include <CCA/Components/MPM/Contact/FrictionContact.h>
+#include <CCA/Components/MPM/Contact/FrictionContactBard.h>
+#include <CCA/Components/MPM/Contact/FrictionContactLR.h>
 #include <CCA/Components/MPM/Contact/NodalSVFContact.h>
 #include <CCA/Components/MPM/Contact/NullContact.h>
 #include <CCA/Components/MPM/Contact/SingleVelContact.h>
@@ -39,7 +41,6 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <string>
 
-using namespace std;
 using namespace Uintah;
 
 Contact*
@@ -76,6 +77,12 @@ ContactFactory::create(const ProcessorGroup* myworld, const ProblemSpecP& ps,
     else if (con_type == "friction")
       contact_list->add(scinew FrictionContact(myworld, child, ss, lb, flag));
 
+    else if (con_type == "friction_bard")
+      contact_list->add(scinew FrictionContactBard(myworld, child, ss, lb, flag));
+
+    else if (con_type == "friction_LR")
+      contact_list->add(scinew FrictionContactLR(myworld, child, ss, lb, flag));
+    
     else if (con_type == "approach")
       contact_list->add(scinew ApproachContact(myworld, child, ss, lb, flag));
 
@@ -85,16 +92,14 @@ ContactFactory::create(const ProcessorGroup* myworld, const ProblemSpecP& ps,
         scinew SpecifiedBodyContact(myworld, child, ss, lb, flag));
 
     else {
-      cerr << "Unknown Contact Type R (" << con_type << ")" << std::endl;
-      ;
+      std::cerr << "Unknown Contact Type R (" << con_type << ")\n";
       throw ProblemSetupException(" E R R O R----->MPM:Unknown Contact type",
                                   __FILE__, __LINE__);
     }
   }
 
-  //
   if (contact_list->size() == 0) {
-    cout << "no contact - using null" << endl;
+    std::cout << "no contact - using null\n";
     contact_list->add(scinew NullContact(myworld, ss, lb, flag));
   }
 

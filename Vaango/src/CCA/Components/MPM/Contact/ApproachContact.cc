@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -50,20 +50,18 @@ using namespace Uintah;
 using std::vector;
 using std::string;
 
-using namespace std;
-
 ApproachContact::ApproachContact(const ProcessorGroup* myworld,
                                  ProblemSpecP& ps, SimulationStateP& d_sS,
                                  MPMLabel* Mlb, MPMFlags* MFlag)
   : Contact(myworld, Mlb, MFlag, ps)
 {
-  // Constructor
   d_vol_const = 0.;
 
   ps->require("mu", d_mu);
   ps->get("volume_constraint", d_vol_const);
 
   d_sharedState = d_sS;
+  d_needNormals = true;
 
   if (flag->d_8or27 == 8) {
     NGP = 1;
@@ -76,7 +74,6 @@ ApproachContact::ApproachContact(const ProcessorGroup* myworld,
 
 ApproachContact::~ApproachContact()
 {
-  // Destructor
 }
 
 void
@@ -248,7 +245,7 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
                 Vector epsilon = (Dv / dx) * delT;
                 double epsilon_max =
                   Max(fabs(epsilon.x()), fabs(epsilon.y()), fabs(epsilon.z()));
-                epsilon_max_max = max(epsilon_max, epsilon_max_max);
+                epsilon_max_max = std::max(epsilon_max, epsilon_max_max);
                 if (!compare(epsilon_max, 0.0)) {
                   epsilon_max *= Max(1.0, mass / (centerOfMassMass - mass));
 
@@ -270,7 +267,7 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
     //  static int ts=0;
     //  static ofstream tmpout("max_strain.dat");
 
-    //  tmpout << ts << " " << epsilon_max_max << endl;
+    //  tmpout << ts << " " << epsilon_max_max << "\n";
     //  ts++;
 
     // This converts frictional work into a temperature rate
@@ -283,7 +280,7 @@ ApproachContact::exchangeMomentum(const ProcessorGroup*,
         IntVector c = *iter;
         frictionWork[m][c] /= (c_v * gmass[m][c] * delT);
         if (frictionWork[m][c] < 0.0) {
-          cout << "dT/dt is negative: " << frictionWork[m][c] << endl;
+          std::cout << "dT/dt is negative: " << frictionWork[m][c] << "\n";
         }
       }
     }

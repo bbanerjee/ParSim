@@ -112,6 +112,10 @@ namespace Uintah {
       // Switch between explicit and implicit MPM
       ParticleVariable<double>  pExternalHeatFlux;
 
+      // For friction contact
+      ParticleVariable<double> pSurface;
+
+
     } ParticleVars;
 
   protected:
@@ -156,6 +160,8 @@ namespace Uintah {
     
     int checkForSurface(const GeometryPieceP piece, const Point p,
                         const Vector dxpp);
+    double checkForSurface2(const GeometryPieceP piece, const Point p,
+                            const Vector dxpp);
     
 
 

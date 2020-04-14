@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -35,7 +35,18 @@
 #include <cmath>
 
 namespace Uintah {
+
 using namespace Uintah;
+
+using constNCint    = constNCVariable<int>;
+using NCint         = NCVariable<int>;
+using constNCdouble = constNCVariable<double>;
+using NCdouble      = NCVariable<double>;
+using constNCPoint  = constNCVariable<Point>;
+using NCPoint       = NCVariable<Point>;
+using constNCVector = constNCVariable<Vector>;
+using NCVector      = NCVariable<Vector>;
+
 class DataWarehouse;
 class MPMLabel;
 class MPMFlags;
@@ -66,11 +77,19 @@ public:
                                       const MaterialSet* matls,
                                       const VarLabel* label) = 0;
 
+  inline bool needNormals() const { return d_needNormals;}
+  inline bool useLogisticRegression() const { return d_useLogisticRegression;}
+  inline int  oneOrTwoStep() const {return d_oneOrTwoStep;}
+    
 protected:
   MPMLabel* lb;
   MPMFlags* flag;
 
   ContactMaterialSpec d_matls;
+
+  bool d_needNormals;
+  bool d_useLogisticRegression;
+  int  d_oneOrTwoStep;
 };
 
 inline bool

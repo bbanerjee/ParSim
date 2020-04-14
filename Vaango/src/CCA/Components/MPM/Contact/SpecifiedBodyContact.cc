@@ -52,7 +52,6 @@
 #include <vector>
 using std::cerr;
 
-using namespace std;
 using namespace Uintah;
 
 SpecifiedBodyContact::SpecifiedBodyContact(const ProcessorGroup* myworld,
@@ -61,6 +60,8 @@ SpecifiedBodyContact::SpecifiedBodyContact(const ProcessorGroup* myworld,
                                            MPMLabel* Mlb, MPMFlags* MFlag)
   : Contact(myworld, Mlb, MFlag, ps)
 {
+  d_needNormals = true;
+
   // Constructor
   // read a list of values from a file
   ps->get("filename", d_filename);

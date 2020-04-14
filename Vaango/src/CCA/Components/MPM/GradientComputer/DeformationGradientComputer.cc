@@ -751,6 +751,11 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
       computeDeformationGradientFromIncrementalDisplacement(dispGrad_new, pDefGrad_old[particle], defGrad_new, defGrad_inc);
 
       // Update deformation gradient
+      /*
+      std::cout << "pDefGrad_old = " << pDefGrad_old[particle] << "\n"
+                << "pDefGrad_new = " << defGrad_new << "\n"
+                << "pDispGrad_new = " << dispGrad_new << "\n";
+      */
       pDefGrad_new[particle] = defGrad_new;
 
       // Update velocity gradient

@@ -427,21 +427,26 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
      new_dw->allocateAndPut(pvars.pColor,      d_lb->pColorLabel,         subset);
   }
   if(d_artificial_viscosity){
-     new_dw->allocateAndPut(pvars.p_q,      d_lb->p_qLabel,            subset);
+     new_dw->allocateAndPut(pvars.p_q,         d_lb->p_qLabel,            subset);
   }
 
   // For AMR
-  new_dw->allocateAndPut(pvars.pRefined,      d_lb->pRefinedLabel,      subset);
+  new_dw->allocateAndPut(pvars.pRefined,       d_lb->pRefinedLabel,       subset);
   if (d_flags->d_AMR) {
-     new_dw->allocateAndPut(pvars.pLastLevel, d_lb->pLastLevelLabel,    subset);
+     new_dw->allocateAndPut(pvars.pLastLevel,  d_lb->pLastLevelLabel,     subset);
   }
 
   // For body force calculation
-  new_dw->allocateAndPut(pvars.pBodyForceAcc, d_lb->pBodyForceAccLabel, subset);
+  new_dw->allocateAndPut(pvars.pBodyForceAcc,       d_lb->pBodyForceAccLabel,       subset);
   new_dw->allocateAndPut(pvars.pCoriolisImportance, d_lb->pCoriolisImportanceLabel, subset);
 
   // For switching between implicit and explicit
   new_dw->allocateAndPut(pvars.pExternalHeatFlux, d_lb->pExternalHeatFluxLabel, subset);
+
+  // For friction contact
+  if (d_flags->d_integrator_type == "explicit") {
+    new_dw->allocateAndPut(pvars.pSurface,       d_lb->pSurfLabel,         subset);
+  }
 
   return subset;
 }
@@ -670,6 +675,12 @@ ParticleCreator::initializeParticle(const Patch* patch,
   // For switching between explicit and implicit MPM
   pvars.pExternalHeatFlux[i] = 0.0;
 
+  // For friction contact
+  if (d_flags->d_integrator_type == "explicit") {
+    GeometryPieceP piece = (*obj)->getPiece();
+    pvars.pSurface[i] = checkForSurface2(piece, p, dxpp);
+  }
+
   // Cell ids
   ASSERT(cell_idx.x() <= 0xffff && 
          cell_idx.y() <= 0xffff && 
@@ -881,6 +892,12 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
 
   particle_state_preReloc.push_back(d_lb->pExternalHeatFluxLabel_preReloc);
   particle_state_preReloc.push_back(d_lb->pVelGradLabel_preReloc);
+
+  // For friction contact
+  if (d_flags->d_integrator_type == "explicit") {
+    particle_state.push_back(d_lb->pSurfLabel);
+    particle_state_preReloc.push_back(d_lb->pSurfLabel_preReloc);
+  }
 }
 
 int
@@ -921,6 +938,44 @@ ParticleCreator::checkForSurface( const GeometryPieceP piece, const Point p,
   }
   else {
     return 0;
+  }
+}
+
+double
+ParticleCreator::checkForSurface2(const GeometryPieceP piece, const Point p,
+                                  const Vector dxpp )
+{
+
+  //  Check the candidate points which surround the point just passed
+  //   in.  If any of those points are not also inside the object
+  //  the current point is on the surface
+
+  int ss = 0;
+  // Check to the left (-x)
+  if(!piece->inside(p-Vector(dxpp.x(),0.,0.)))
+    ss++;
+  // Check to the right (+x)
+  if(!piece->inside(p+Vector(dxpp.x(),0.,0.)))
+    ss++;
+  // Check behind (-y)
+  if(!piece->inside(p-Vector(0.,dxpp.y(),0.)))
+    ss++;
+  // Check in front (+y)
+  if(!piece->inside(p+Vector(0.,dxpp.y(),0.)))
+    ss++;
+  //if (d_flags->d_ndim==3) {
+    // Check below (-z)
+    if(!piece->inside(p-Vector(0.,0.,dxpp.z())))
+      ss++;
+    // Check above (+z)
+    if(!piece->inside(p+Vector(0.,0.,dxpp.z())))
+      ss++;
+  //}
+
+  if(ss>0){
+    return 1.0;
+  } else {
+    return 0.0;
   }
 }
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -51,8 +51,6 @@
 using namespace Uintah;
 using std::vector;
 using std::string;
-
-using namespace std;
 
 FrictionContact::FrictionContact(const ProcessorGroup* myworld,
                                  ProblemSpecP& ps, SimulationStateP& d_sS,
@@ -227,7 +225,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
         if (flag->d_axisymmetric) {
           // Nodal volume isn't constant for axisymmetry
           // volume = r*dr*dtheta*dy  (dtheta = 1 radian)
-          double r = min((patch->getNodePosition(c)).x(), .5 * dx.x());
+          double r = std::min((patch->getNodePosition(c)).x(), .5 * dx.x());
           cell_vol = r * dx.x() * dx.y();
         }
 
@@ -327,7 +325,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
                 Vector epsilon = (Dv / dx) * delT;
                 double epsilon_max =
                   Max(fabs(epsilon.x()), fabs(epsilon.y()), fabs(epsilon.z()));
-                epsilon_max_max = max(epsilon_max, epsilon_max_max);
+                epsilon_max_max = std::max(epsilon_max, epsilon_max_max);
                 if (!compare(epsilon_max, 0.0)) {
                   epsilon_max *= Max(1.0, mass / (centerOfMassMass - mass));
 
@@ -368,7 +366,7 @@ FrictionContact::exchangeMomentum(const ProcessorGroup*,
           IntVector c = *iter;
           frictionWork[m][c] /= (c_v * gmass[m][c] * delT);
           if (frictionWork[m][c] < 0.0) {
-            cout << "dT/dt is negative: " << frictionWork[m][c] << endl;
+            std::cout << "dT/dt is negative: " << frictionWork[m][c] << endl;
           }
         }
       }
