@@ -236,6 +236,12 @@ private:
                                        DataWarehouse* old_dw,
                                        DataWarehouse* new_dw);
 
+  void findSurfaceParticles(           const ProcessorGroup*,
+                                       const PatchSubset* patches,
+                                       const MaterialSubset* ,
+                                       DataWarehouse* old_dw,
+                                       DataWarehouse* new_dw);
+
   void projectCCHeatSourceToNodes(     const ProcessorGroup*,
                                        const PatchSubset* patches,
                                        const MaterialSubset* matls,
@@ -478,6 +484,10 @@ private:
   void scheduleInterpolateParticlesToGrid(     SchedulerP&, const PatchSet*,
                                                const MaterialSubset*,
                                                const MaterialSet*);
+
+  void scheduleFindSurfaceParticles(           SchedulerP& sched,
+                                               const PatchSet* patches,
+                                               const MaterialSet* matls );
 
   void scheduleProjectCCHeatSourceToNodes(     SchedulerP&, const PatchSet*,
                                                const MaterialSubset*,

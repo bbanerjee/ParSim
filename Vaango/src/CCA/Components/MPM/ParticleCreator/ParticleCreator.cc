@@ -444,9 +444,7 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   new_dw->allocateAndPut(pvars.pExternalHeatFlux, d_lb->pExternalHeatFluxLabel, subset);
 
   // For friction contact
-  if (d_flags->d_integrator_type == "explicit") {
-    new_dw->allocateAndPut(pvars.pSurface,       d_lb->pSurfLabel,         subset);
-  }
+  new_dw->allocateAndPut(pvars.pSurface,       d_lb->pSurfLabel,         subset);
 
   return subset;
 }
@@ -676,10 +674,8 @@ ParticleCreator::initializeParticle(const Patch* patch,
   pvars.pExternalHeatFlux[i] = 0.0;
 
   // For friction contact
-  if (d_flags->d_integrator_type == "explicit") {
-    GeometryPieceP piece = (*obj)->getPiece();
-    pvars.pSurface[i] = checkForSurface2(piece, p, dxpp);
-  }
+  GeometryPieceP piece = (*obj)->getPiece();
+  pvars.pSurface[i] = checkForSurface2(piece, p, dxpp);
 
   // Cell ids
   ASSERT(cell_idx.x() <= 0xffff && 
@@ -894,10 +890,8 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
   particle_state_preReloc.push_back(d_lb->pVelGradLabel_preReloc);
 
   // For friction contact
-  if (d_flags->d_integrator_type == "explicit") {
-    particle_state.push_back(d_lb->pSurfLabel);
-    particle_state_preReloc.push_back(d_lb->pSurfLabel_preReloc);
-  }
+  particle_state.push_back(d_lb->pSurfLabel);
+  particle_state_preReloc.push_back(d_lb->pSurfLabel_preReloc);
 }
 
 int

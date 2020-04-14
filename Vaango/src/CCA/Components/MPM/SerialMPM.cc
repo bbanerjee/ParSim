@@ -510,11 +510,7 @@ SerialMPM::scheduleInitialize(const LevelP& level,
   t->computes(lb->pExternalHeatFluxLabel);
 
   // For friction contact
-  std::cout << "use logistic regression = " << std::boolalpha
-            << contactModel->useLogisticRegression() << "\n";
-  if (contactModel->useLogisticRegression()) {
-    t->computes(lb->pSurfLabel);
-  }
+  t->computes(lb->pSurfLabel);
 
   // Add task to scheduler
   sched->addTask(t, patches, d_sharedState->allMPMMaterials());
@@ -2352,23 +2348,18 @@ SerialMPM::scheduleFindSurfaceParticles(SchedulerP& sched,
                                         const PatchSet* patches,
                                         const MaterialSet* matls)
 {
-  std::cout << "use logistic regression = " << std::boolalpha
-            << contactModel->useLogisticRegression() << "\n";
-            
-  if (contactModel->useLogisticRegression()) {
-    printSchedule(patches, cout_doing, "SerialMPM::scheduleFindSurfaceParticles");
+  printSchedule(patches, cout_doing, "SerialMPM::scheduleFindSurfaceParticles");
 
-    Task* t = scinew Task("MPM::findSurfaceParticles", this,
-                          &SerialMPM::findSurfaceParticles);
+  Task* t = scinew Task("MPM::findSurfaceParticles", this,
+                        &SerialMPM::findSurfaceParticles);
 
-    Ghost::GhostType gp = Ghost::AroundNodes;
-    int ngc_p = NGP;
+  Ghost::GhostType gp = Ghost::AroundNodes;
+  int ngc_p = NGP;
 
-    t->requires(Task::OldDW, lb->pSurfLabel, gp, ngc_p);
-    t->computes(lb->pSurfLabel_preReloc);
+  t->requires(Task::OldDW, lb->pSurfLabel, gp, ngc_p);
+  t->computes(lb->pSurfLabel_preReloc);
 
-    sched->addTask(t, patches, matls);
-  }
+  sched->addTask(t, patches, matls);
 }
 
 void 

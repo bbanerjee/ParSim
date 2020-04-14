@@ -110,11 +110,10 @@ namespace Uintah {
       ParticleVariable<int> pLastLevel;
 
       // Switch between explicit and implicit MPM
-      ParticleVariable<double>  pExternalHeatFlux;
+      ParticleVariable<double> pExternalHeatFlux;
 
       // For friction contact
       ParticleVariable<double> pSurface;
-
 
     } ParticleVars;
 

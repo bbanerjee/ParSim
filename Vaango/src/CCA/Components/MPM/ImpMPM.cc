@@ -399,6 +399,9 @@ ImpMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
     t->computes(lb->pLoadCurveIDLabel);
   }
 
+  // For friction contact
+  t->computes(lb->pSurfLabel);
+
   if (!flags->d_doGridReset) {
     t->computes(lb->gDisplacementLabel);
   }
@@ -945,6 +948,8 @@ ImpMPM::scheduleTimeAdvance(const LevelP& level, SchedulerP& sched)
   scheduleComputeParticleBodyForce(    sched, d_perproc_patches,           matls);
   scheduleApplyExternalLoads(          sched, d_perproc_patches,           matls);
   scheduleInterpolateParticlesToGrid(  sched, d_perproc_patches, one_matl, matls);
+
+  scheduleFindSurfaceParticles(           sched, d_perproc_patches,        matls);
 
   scheduleDestroyMatrix(                  sched, d_perproc_patches, matls, false);
   scheduleCreateMatrix(                   sched, d_perproc_patches, matls);
@@ -1742,6 +1747,59 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     }  // End loop over materials
   }  // End loop over patches
   timestep++;
+}
+
+/*!----------------------------------------------------------------------
+ * scheduleFindSurfaceParticles
+ *-----------------------------------------------------------------------*/
+void 
+ImpMPM::scheduleFindSurfaceParticles(SchedulerP& sched,
+                                     const PatchSet* patches,
+                                     const MaterialSet* matls)
+{
+  printSchedule(patches, cout_doing, "IMPM::scheduleFindSurfaceParticles");
+
+  Task* t = scinew Task("ImpMPM::findSurfaceParticles", this,
+                        &ImpMPM::findSurfaceParticles);
+
+  t->requires(Task::OldDW, lb->pSurfLabel, Ghost::AroundNodes, NGP);
+  t->computes(lb->pSurfLabel_preReloc);
+
+  sched->addTask(t, patches, matls);
+}
+
+void 
+ImpMPM::findSurfaceParticles(const ProcessorGroup*,
+                             const PatchSubset* patches,
+                             const MaterialSubset* ,
+                             DataWarehouse* old_dw,
+                             DataWarehouse* new_dw)
+{
+  auto numMPMMatls = d_sharedState->getNumMPMMatls();
+
+  for (int p = 0; p<patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+
+    printTask(patches, patch, cout_doing, "Doing findSurfaceParticles");
+
+    for(int mat = 0; mat < numMPMMatls; mat++){
+      MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(mat);
+      int matID = mpm_matl->getDWIndex();
+
+      ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+
+      constParticleVariable<double> pSurf_old;
+      ParticleVariable<double> pSurf;
+
+      old_dw->get(pSurf_old,        lb->pSurfLabel,          pset);
+      new_dw->allocateAndPut(pSurf, lb->pSurfLabel_preReloc, pset);
+
+      // For now carry forward the particle surface data
+      for (auto particle : *pset) {
+        pSurf[particle] = pSurf_old[particle];
+      }
+    }   // matl loop
+  }    // patches
 }
 
 void 
