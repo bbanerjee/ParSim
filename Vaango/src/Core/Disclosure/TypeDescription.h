@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -89,6 +89,7 @@ public:
     long_type,
     long64_type,
     Short27,   // for Fracture
+    Int130,
     Stencil4,
     Stencil7,
     NeighborList, // for Peridynamics

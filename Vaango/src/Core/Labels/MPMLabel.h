@@ -337,6 +337,11 @@ using std::vector;
 
       const VarLabel* MPMRefineCellLabel;
 
+      // For friction contact
+      const VarLabel* gMatlProminenceLabel;
+      const VarLabel* gAlphaMaterialLabel;
+      const VarLabel* gNormAlphaToBetaLabel;
+
     };
 } // End namespace Uintah
 

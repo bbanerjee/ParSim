@@ -774,6 +774,14 @@ MPMLabel::MPMLabel()
   MPMRefineCellLabel = 
     VarLabel::create( "MPMRefineCell", CCVariable<double>::getTypeDescription() );
 
+  // For friction contact
+  gMatlProminenceLabel = 
+    VarLabel::create( "g.matlProminence", NCVariable<double>::getTypeDescription() );
+  gAlphaMaterialLabel = 
+    VarLabel::create( "g.alphaMaterial", NCVariable<int>::getTypeDescription() );
+  gNormAlphaToBetaLabel = 
+    VarLabel::create( "g.normAlphaToBeta", NCVariable<Vector>::getTypeDescription() );
+
 } 
 
 MPMLabel::~MPMLabel()
@@ -1063,4 +1071,8 @@ MPMLabel::~MPMLabel()
   VarLabel::destroy(pCoriolisImportanceLabel);
   VarLabel::destroy(pCoriolisImportanceLabel_preReloc);
 
+  // For friction contact
+  VarLabel::destroy(gMatlProminenceLabel);
+  VarLabel::destroy(gAlphaMaterialLabel);
+  VarLabel::destroy(gNormAlphaToBetaLabel);
 }
