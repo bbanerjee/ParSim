@@ -2,7 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,13 +22,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-
-#ifdef __APPLE__
-// This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
-// make the isnan function not work.  This define makes the cmath header
-// not get included since we do not need it anyway.
-#define _CPP_CMATH
-#endif
 
 #include <CCA/Components/MPM/ConstitutiveModel/CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
