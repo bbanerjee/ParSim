@@ -1,0 +1,158 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<!-- <!DOCTYPE Uintah_specification SYSTEM "input.dtd"> -->
+<!-- @version: Updated 7/31/00-->
+<Uintah_specification>
+
+   <Meta>
+       <title>Colliding Disks</title>
+   </Meta>
+
+   <SimulationComponent type="mpm" />
+
+   <Time>
+       <maxTime>0.05</maxTime>
+       <initTime>0.0</initTime>
+       <delt_min>1.0e-9</delt_min>
+       <delt_max>0.001</delt_max>
+       <timestep_multiplier>0.5</timestep_multiplier>
+   </Time>
+   <DataArchiver>
+       <filebase>shpb_fric_LR.uda</filebase>
+       <!-- <outputInterval>.01</outputInterval> -->
+       <outputTimestepInterval>50</outputTimestepInterval>
+       <save label = "KineticEnergy"/>
+       <save label = "TotalMass"/>
+       <save label = "CenterOfMassPosition"/>
+       <save label = "TotalMomentum"/>
+       <save label = "p.particleID"/>
+       <save label = "p.x"/>
+       <save label = "p.volume"/>
+       <save label = "p.stress"/>
+       <save label = "p.velocity"/>
+       <save label = "p.deformationGradient"/>
+       <save label = "g.mass"/>
+       <save label = "g.stressFS"/>
+
+       <checkpoint cycle = "2" interval = "0.01"/>
+   </DataArchiver>
+
+    <MPM>
+       <time_integrator>explicit</time_integrator>
+       <interpolator> gimp </interpolator>
+    </MPM>
+
+    <PhysicalConstants>
+       <gravity>[0,0,0]</gravity>
+    </PhysicalConstants>
+
+    <MaterialProperties>
+       <MPM>
+           <material name="mat 1">
+              <density>1000.0</density>
+              <thermal_conductivity>1.0</thermal_conductivity>
+              <specific_heat>5</specific_heat>
+              <constitutive_model type="hypo_elastic"> 
+                 <G>7.2e6</G>
+                 <K>10.2e6</K>
+              </constitutive_model>
+              <geom_object>
+                  <cylinder label = "impactor">
+                     <bottom> [0.05, 0.5, 0.05]</bottom>
+                     <top>    [0.35, 0.5, 0.05]</top>
+                     <radius> 0.298 </radius>
+                  </cylinder>
+                  <res>[2,2,2]</res>
+                  <velocity>[20.0,0.0,0]</velocity>
+                  <temperature>12</temperature>
+                  <color>             0               </color>
+              </geom_object>
+              <geom_object>
+                  <cylinder label = "impactee">
+                     <bottom> [0.45, 0.5, 0.05]</bottom>
+                     <top>    [0.65, 0.5, 0.05]</top>
+                     <radius> 0.298 </radius>
+                  </cylinder>
+                  <res>[2,2,2]</res>
+                  <velocity>[0.0,0.0,0]</velocity>
+                  <temperature>12</temperature>
+                  <color>             1               </color>
+              </geom_object>
+           </material>
+           <material name="mat 2">
+              <density>1500.0</density>
+              <thermal_conductivity>1.0</thermal_conductivity>
+              <specific_heat>5</specific_heat>
+              <constitutive_model type="hypo_elastic"> 
+                 <G>7.2e8</G>
+                 <K>10.2e8</K>
+              </constitutive_model>
+              <geom_object>
+                <union> 
+                <difference>
+                  <cylinder label = "outer">
+                     <bottom>[0.2, 0.5, 0.05]</bottom>
+                     <top>   [1.0, 0.5, 0.05]</top>
+                     <radius> 0.4</radius>
+                  </cylinder>
+                  <cylinder label = "inner">
+                     <bottom>[0.0, 0.5, 0.05]</bottom>
+                     <top>   [1.0, 0.5, 0.05]</top>
+                     <radius> 0.3</radius>
+                  </cylinder>
+                </difference>
+                  <cylinder label = "end cap">
+                     <bottom> [0.85, 0.5, 0.05]</bottom>
+                     <top>    [1.005, 0.5, 0.05]</top>
+                     <radius> 0.3 </radius>
+                  </cylinder>
+                </union> 
+                <res>[2,2,2]</res>
+                <velocity>[0.0,0.0,0]</velocity>
+                <temperature>12</temperature>
+                <color>             2               </color>
+              </geom_object>
+           </material>
+
+           <contact>
+             <type>friction_LR</type>
+             <mu> 0.25 </mu>
+             <materials> [0,1] </materials>
+           </contact>
+       </MPM>
+
+    </MaterialProperties>
+       
+    <Grid>
+       <BoundaryConditions>
+          <Face side = "x-">
+             <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+           </Face>
+           <Face side = "x+">
+             <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+           </Face>
+           <Face side = "y-">
+             <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+           </Face>                  
+          <Face side = "y+">
+             <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+           </Face>
+           <Face side = "z-">
+             <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+           </Face>
+           <Face side = "z+">
+             <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+           </Face>                           
+       </BoundaryConditions>
+       <Level>
+           <Box label = "1">
+              <lower>[0,0,0]</lower>
+              <upper>[1.0,1.0,.15]</upper>
+              <resolution>[40,40,3]</resolution>
+              <patches>[2,2,1]</patches>
+              <extraCells> [1,1,1]            </extraCells>
+           </Box>
+       </Level>
+    </Grid>
+    
+</Uintah_specification>
+
