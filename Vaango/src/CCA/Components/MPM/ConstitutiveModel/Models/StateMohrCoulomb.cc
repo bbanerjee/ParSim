@@ -1,5 +1,7 @@
 #include "StateMohrCoulomb.h"
 
+using namespace Uintah;
+
 StateMohrCoulomb::StateMohrCoulomb()
 {
   stress = Vector6::Zero(); 
@@ -10,63 +12,120 @@ StateMohrCoulomb::StateMohrCoulomb()
   microPlasticStrain = Vector6::Zero();
   state = Vector3::Zero();
   microState = Vector3::Zero();
-  state(0) = 1e6; // PStar, unused
+  state(0) = 1e6; // p0Star, unused
   state(1) = 1e8; // Yield suction, unused
   state(2) = 1.5; // Specific Volume, unused
 }
 
-double
-StateMohrCoulomb::getPStar()
-{
-  return state[0];
-}
-
 void
-StateMohrCoulomb::updatePStar(double value)
+StateMohrCoulomb::update(const Vector6& plasticStrainInc, 
+                         const Vector7& strainInc,
+                         const Vector6& stressInc, 
+                         double p0StarInc)
 {
-  state[0] = value;
-}
+  double microcheck;
+  for (int i = 0; i < 7; i++) {
+    microcheck = strain(i);
+    microStrain(i) += strainInc(i);
+    strain(i) += microStrain(i);
+    microStrain(i) -= (strain(i) - microcheck);
+  }
 
-void
-StateMohrCoulomb::setSuction(double value)
-{
-  strain[6] = value;
-}
+  for (int i = 0; i < 6; i++) {
+    microcheck = stress(i);
+    microStress(i) += stressInc(i);
+    stress(i) += microStress(i);
+    microStress(i) -= (stress(i) - microcheck);
+  }
 
-void
-StateMohrCoulomb::setSpecificVolume(double value)
-{
-  state[2] = value;
-}
+  for (int i = 0; i < 6; i++) {
+    microcheck = plasticStrain(i);
+    microPlasticStrain(i) += plasticStrainInc(i);
+    plasticStrain(i) += microPlasticStrain(i);
+    microPlasticStrain(i) -= (plasticStrain(i) - microcheck);
+  }
 
-void StateMohrCoulomb::setPStar(
-  double value) // does same as updatePStar, used for making code more clear
-{
-  state[0] = value;
-}
+  microcheck = state(0);
+  microState(0) += p0StarInc;
+  state(0) += microState(0);
+  microState(0) -= (state(0) - microcheck);
 
-void
-StateMohrCoulomb::setYieldSuction(double value)
-{
-  state[1] = value;
-}
-
-double
-StateMohrCoulomb::getYieldSuction()
-{
-  return state[1];
+  microcheck = state(2);
+  microState(2) += state(2) * (exp(-(strainInc(0) + strainInc(1) + strainInc(2))) - 1);
+  // microState(2) -= (strainInc(0)+strainInc(1)+strainInc(2))*state(2);
+  state(2) += microState(2); // updated specific volume
+  microState(2) -= (state(2) - microcheck);
 }
 
 double
-StateMohrCoulomb::getSpecVol()
+StateMohrCoulomb::meanStress() const
 {
-  return state[2];
+  return firstInvariant() / 3.0;
 }
 
 double
-StateMohrCoulomb::getSuction()
+StateMohrCoulomb::shearStress() const
 {
-  return strain[6];
+  double J2 = secondDevInvariant();
+  double shearStress = 0.0;
+  if (J2 > 1.0-14) {
+    shearStress = std::sqrt(3.0 * J2); 
+  }
+  return shearStress;
+}
+
+double
+StateMohrCoulomb::firstInvariant() const
+{
+  double I1 =  (stress(0) + stress(1) + stress(2));
+  return I1;
+}
+
+double
+StateMohrCoulomb::secondInvariant() const
+{
+  double I2 = stress(0) * stress(1) + stress(1) * stress(2) +
+              stress(2) * stress(0) - stress(3) * stress(3) -
+              stress(4) * stress(4) - stress(5) * stress(5);
+  return I2;
+}
+
+double
+StateMohrCoulomb::thirdInvariant() const
+{
+  double I3 =
+    stress(0) * stress(1) * stress(2) + 2 * stress(3) * stress(4) * stress(5) -
+    stress(0) * stress(5) * stress(5) -     stress(1) * stress(4) * stress(4) -
+    stress(2) * stress(3) * stress(3);
+  return I3;
+}
+
+double
+StateMohrCoulomb::firstDevInvariant() const
+{
+  return 0.0;
+}
+
+double
+StateMohrCoulomb::secondDevInvariant() const
+{
+  double J2 = ((stress(0) - stress(1)) * (stress(0) - stress(1)) +
+               (stress(0) - stress(2)) * (stress(0) - stress(2)) +
+               (stress(1) - stress(2)) * (stress(1) - stress(2))) / 6.0 +
+               (stress(3) * stress(3) + stress(4) * stress(4) + 
+                stress(5) * stress(5));
+  return J2;
+}
+
+double
+StateMohrCoulomb::thirdDevInvariant() const
+{
+  double I1 = firstInvariant();
+  double I2 = secondInvariant();
+  double I3 = thirdInvariant();
+  double J3 = I1 * I1 * I1 * 2.0 / 27.0 - I1 * I2 / 3.0 + I3;
+
+  return J3;
 }
 
 double
@@ -74,8 +133,8 @@ StateMohrCoulomb::getTheta()
 {
   double Theta;
   double Sin3Theta;
-  double Third = getThirdDevInvariant();
-  double Second = getSecondDevInvariant();
+  double Third = thirdDevInvariant();
+  double Second = secondDevInvariant();
   if (Second != 0)
     Sin3Theta = sqrt(3.0) * (-1.5) * Third / pow(Second, 1.5);
   else
@@ -116,51 +175,6 @@ StateMohrCoulomb::getThetaDeg_0()
     ThetaDeg += 360;
 
   return ThetaDeg;
-}
-
-void
-StateMohrCoulomb::update(double* PlasticStrainInc, double* Strain_Incr,
-                         double* Stress_Incr, double dPZeroStar)
-{
-  // double dplasticStrain [7];
-  // for (int i=0; i<7; i++) dplasticStrain[i]=0  ;  //Lambda is not used
-  //***** LINE ABOVE INCORRECT !!!! ************
-  double microcheck;
-
-  for (int i = 0; i < 7; i++) {
-    microcheck = strain[i];
-    microStrain[i] = microStrain[i] + Strain_Incr[i];
-    strain[i] = strain[i] + microStrain[i];
-    microStrain[i] = microStrain[i] - (strain[i] - microcheck);
-  }
-
-  for (int i = 0; i < 6; i++) {
-    microcheck = stress[i];
-    microStress[i] = microStress[i] + Stress_Incr[i];
-    stress[i] = stress[i] + microStress[i];
-    microStress[i] = microStress[i] - (stress[i] - microcheck);
-  }
-
-  for (int i = 0; i < 6; i++) {
-    microcheck = plasticStrain[i];
-    microPlasticStrain[i] = microPlasticStrain[i] + PlasticStrainInc[i];
-    plasticStrain[i] = plasticStrain[i] + microPlasticStrain[i];
-    microPlasticStrain[i] =
-      microPlasticStrain[i] - (plasticStrain[i] - microcheck);
-  }
-
-  microcheck = state[0];
-  microState[0] = microState[0] + dPZeroStar;
-  state[0] = state[0] + microState[0];
-  microState[0] = microState[0] - (state[0] - microcheck);
-
-  microcheck = state[2];
-  microState[2] =
-    microState[2] +
-    state[2] * (exp(-(Strain_Incr[0] + Strain_Incr[1] + Strain_Incr[2])) - 1);
-  // microState[2]=microState[2]-(Strain_Incr[0]+Strain_Incr[1]+Strain_Incr[2])*state[2];
-  state[2] = state[2] + microState[2]; // updated specific volume
-  microState[2] = microState[2] - (state[2] - microcheck);
 }
 
 void
@@ -231,85 +245,8 @@ StateMohrCoulomb::read()
   // all done
 }
 
-double
-StateMohrCoulomb::getMeanStress()
-{
-  return (stress[0] + stress[1] + stress[2]) / 3;
-}
-
-double
-StateMohrCoulomb::getShearStress()
-{
-  double ShearStress;
-  ShearStress = (stress[0] - stress[1]) * (stress[0] - stress[1]) +
-                (stress[0] - stress[2]) * (stress[0] - stress[2]) +
-                (stress[1] - stress[2]) * (stress[1] - stress[2]);
-  ShearStress =
-    ShearStress +
-    6 * (stress[3] * stress[3] + stress[4] * stress[4] + stress[5] * stress[5]);
-  ShearStress = ShearStress / 2;
-  if (ShearStress < 10E-14)
-    ShearStress = 0;
-  else
-    ShearStress = sqrt(ShearStress); // Naylor Pande
-  return ShearStress;
-}
 
 void StateMohrCoulomb::write(){};
-
-double
-StateMohrCoulomb::getFirstInvariant()
-{
-  return (stress[0] + stress[1] + stress[2]);
-}
-
-double
-StateMohrCoulomb::getSecondInvariant()
-{
-  double I2 = stress[0] * stress[1] + stress[1] * stress[2] +
-              stress[2] * stress[0] - stress[3] * stress[3] -
-              stress[4] * stress[4] - stress[5] * stress[5];
-  return I2;
-}
-
-double
-StateMohrCoulomb::getThirdInvariant()
-{
-  double I3 =
-    stress[0] * stress[1] * stress[2] + 2 * stress[3] * stress[4] * stress[5] -
-    stress[0] * stress[5] * stress[5] - stress[1] * stress[4] * stress[4] -
-    stress[2] * stress[3] * stress[3];
-  return I3;
-}
-
-double
-StateMohrCoulomb::getFirstDevInvariant()
-{
-  return (stress[0] + stress[1] + stress[2]) / 3.0;
-}
-
-double
-StateMohrCoulomb::getSecondDevInvariant()
-{
-  double J2;
-  J2 = (stress[0] - stress[1]) * (stress[0] - stress[1]) +
-       (stress[0] - stress[2]) * (stress[0] - stress[2]) +
-       (stress[1] - stress[2]) * (stress[1] - stress[2]);
-  J2 = J2 / 6.0 +
-       (stress[3] * stress[3] + stress[4] * stress[4] + stress[5] * stress[5]);
-  return J2;
-}
-
-double
-StateMohrCoulomb::getThirdDevInvariant()
-{
-  double I1 = getFirstInvariant();
-  double I2 = getSecondInvariant();
-  double I3 = getThirdInvariant();
-  double J3 = I1 * I1 * I1 * 2.0 / 27.0 - I1 * I2 / 3.0 + I3;
-
-  return J3;
-}
 
 void
 StateMohrCoulomb::getEigen(double Eigen[3])

@@ -28,15 +28,24 @@
 
 #include "ShengMohrCoulomb.h"
 
+#include <Core/Exceptions/InvalidValue.h>
+#include <Core/Util/DebugStream.h>
+
 #include <cmath>
 
 using namespace Uintah;
+
+static DebugStream dbg("Sheng", false);
+static DebugStream dbg_unloading("Sheng_unloading", false);
 
 extern double USE_ERROR;
 extern double STEP_MAX, STEP_MIN, ERROR_DEF, USE_ERROR_STEP, MIN_DIVISION_SIZE;
 extern double ADDTOLYIELD, CHGEPSINTOL;
 extern int    ALGORITHM_TYPE, USE_NICE_SCHEME;
 
+/**
+ * Constructors
+ */
 ShengMohrCoulomb::ShengMohrCoulomb()
 {
   double G = 10000.0;                                   
@@ -54,6 +63,9 @@ ShengMohrCoulomb::ShengMohrCoulomb(double G, double K, double cohesion, double p
   d_integration.setDefaults(d_yield);
 }
 
+/**
+ * Initialization methods
+ */
 void
 ShengMohrCoulomb::setModelParameters(double G, double K, double cohesion, double phi,
                                      double psi)
@@ -87,151 +99,889 @@ ShengMohrCoulomb::setIntegrationParameters(int maxIterPegasus,
   d_int.d_driftCorrection   = driftCorrection;
 }
 
+/**
+ * Integration
+ */
 void
-ShengMohrCoulomb::integrate(Vector6& strainIncrement, BBMPoint* initialPoint)
+ShengMohrCoulomb::integrate(const Vector6& strainIncrement, 
+                            const StateMohrCoulomb& initialState)
 {
-  BBMPoint finalPoint;
-  bool purelyElastic;
-  bool onTheYieldLocus;
-  bool unloading;
-  double purelyElasticStrain[7], purelyPlasticStrain[7];
+  Vector7 purelyElasticStrain, purelyPlasticStrain;
 
-  // cout<<'Strains:'<<strainIncrement[0]<<' '<<strainIncrement[1]<<'
-  // '<<strainIncrement[2]<<' '<<strainIncrement[3]<<' '<<strainIncrement[4]<<'
-  // '<<strainIncrement[5]<<endl;
+  if (dbg.active()) {
+    dbg << "Strain increment:" << strainIncrement << "\n";
+  }
 
-  onTheYieldLocus = checkYieldNormalised(initialPoint); // checking if on the YL
-                                                        // (Returns true if on
-                                                        // the YL or outside, in
-                                                        // the plastic part)
-  calcElastic(strainIncrement, initialPoint,
-              &finalPoint); // Initial point copied to the final point, later
-                            // Final point updated with the elastic stress
-  purelyElastic = !(checkIfPlastic(&finalPoint)); // checkIfPlastic returns true
-                                                  // if in the plastic part of
-                                                  // the YL. If on the YL
-                                                  // (within Tolerance INT_TOL
-                                                  // returns false)
-  // cout<<"p="<<finalPoint.getmeanStress()<<"
-  // q="<<finalPoint.getShearStress()<<"  Yield? "<<purelyElastic<<endl;
-  // getchar();
-  // purelyElastic=TRUE;
+  // checking if on the YL (Returns true if on the YL or outside, in
+  // the plastic part)
+  bool onTheYieldLocus = checkYieldNormalized(initialState); 
 
-  if (purelyElastic) {
-    // finalPoint.Copy(initialPoint);
-    // update with what we have - all updated after the procedure
-    // cout<<"Purely Elastic Step"<<endl;
-  } else // we have elasto-plastic step
-  {
+  // Initial point copied to the final point, later
+  // Final point updated with the elastic stress
+  StateMohrCoulomb finalState;
+  calcElastic(strainIncrement, initialState, finalState); 
+
+  // checkYieldNormalized returns true  if in the plastic part of the YL. If on the YL
+  // (within Tolerance INT_TOL returns false)
+  bool elasticPlastic = checkYieldNormalized(finalState); 
+
+  if (dbg.active()) {
+    dbg << "p = " << finalState.meanStress() << " q = "<< finalState.shearStress()
+        << "  Yield? " << std::boolalpha << purelyElastic << "\n";
+  }
+
+  bool unloading = false;
+  if (elasticPlastic) {
     if (onTheYieldLocus) {
-      // unloading=checkGradient(initialPoint, &finalPoint); //checking if there
-      // is any unloading part; in finalPoint purely elastic values; we care
-      // only for correct change of suction
-      // cout<<endl<<endl<<"unloading="<<unloading<<endl;
-      // TEMPORARY HACK TESTING
-      unloading = false;
-      // getchar();
-      if (unloading) {
-        cout << endl
-             << endl
-             << "Elasto-Plastic unloading=" << unloading << endl;
-        findIntersectionUnloading(strainIncrement, initialPoint,
-                                  purelyElasticStrain,
-                                  purelyPlasticStrain); // finding elastic part
-        calcElastic(purelyElasticStrain, initialPoint,
-                    &finalPoint); // calculating elastic part, updated in the
-                                  // same point.
-        finalPoint.setSpecificVolume(ComputeNu(
-          finalPoint.stress, finalPoint.state, finalPoint.getSuction()));
-        calculatePlastic(purelyPlasticStrain,
-                         &finalPoint); // and subsequently plastic part
-        // finalPoint.Copy(initialPoint);
-      } else {
-        calculatePlastic(strainIncrement, &finalPoint);
+
+      if (dbg_unloading.active()) {
+        // checking if there is any unloading part; in finalState purely elastic values; 
+        // we care only for correct change of suction
+        unloading = checkGradient(initialState, finalState); 
       }
+
+      if (unloading) {
+
+        if (dbg_unloading.active()) {
+          dbg_unloading << "\n\n Elasto-Plastic unloading=" << unloading << "\n";
+        }
+
+        // find elastic part
+        findIntersectionUnloading(strainIncrement, initialState,
+                                  purelyElasticStrain,
+                                  purelyPlasticStrain); 
+
+        // calculating elastic part, updated in the same point.
+        calcElastic(purelyElasticStrain, initialState, finalState); 
+
+        // Update specific volume
+        double spVol = computeNu(finalState.stress, finalState.state, finalState.suction());
+        finalState.specificVolume(spVol);
+
+        calculatePlastic(purelyPlasticStrain, finalState); 
+
+      } else {
+
+        calculatePlastic(strainIncrement, finalState);
+
+      }
+
     } else {
-      findIntersection(strainIncrement, initialPoint, purelyElasticStrain,
-                       purelyPlasticStrain); // not on the yield locus, finding
-                                             // intersection and subsequently
-                                             // calculate elastic and plastic
-                                             // stress increment
-      calcElastic(purelyElasticStrain, initialPoint, &finalPoint);
-      finalPoint.setSpecificVolume(ComputeNu(
-        finalPoint.stress, finalPoint.state, finalPoint.getSuction()));
-      calculatePlastic(purelyPlasticStrain, &finalPoint);
-      // finalPoint.Copy(initialPoint);
+      // not on the yield locus, finding intersection and subsequently
+      // calculate elastic and plastic stress increment
+      findIntersection(strainIncrement, initialState, 
+                       purelyElasticStrain,
+                       purelyPlasticStrain); 
+
+      calcElastic(purelyElasticStrain, initialState, finalState);
+
+      double spVol = computeNu(finalState.stress, finalState.state, finalState.suction());
+      finalState.specificVolume(spVol);
+
+      calculatePlastic(purelyPlasticStrain, &finalState);
     }
   }
-  // for (int i=0; i<3; i++) cout<<strainIncrement[i]<<"  "<<endl;
-  // for (int i=0; i<3; i++) cout<<finalPoint.stress[i]<<"  "<<endl;
+  // for (int i=0; i<3; i++) cout<<strainIncrement[i]<<"  "<<"\n";
+  // for (int i=0; i<3; i++) cout<<finalState.stress[i]<<"  "<<"\n";
 
-  finalPoint.setSpecificVolume(
-    ComputeNu(finalPoint.stress, finalPoint.state, finalPoint.getSuction()));
-  finalPoint.Copy(initialPoint);
+  double spVol = computeNu(finalState.stress, finalState.state, finalState.suction());
+  finalState.setSpecificVolume(spVol);
+  finalState.Copy(initialState);
   // getchar();
 }
 
-double
-ShengMohrCoulomb::calcStressElast(double nu0, double* s0, double* eps0,
-                                  double* deps, double* ds)
+/**
+ * Check yield
+ *  check of the standard yield surface
+ *  Note: value of function is normalised by the mean stress+2*cohesion!
+ */
+bool
+ShengMohrCoulomb::checkYieldNormalized(const StateMohrCoulomb& state) const
 {
-  double K43G = K + 4.0 * G / 3.0;
-  double K23G = K - 2.0 * G / 3.0;
-
-  ds[0] = K43G * deps[0] + K23G * (deps[1] + deps[2]);
-  ds[1] = K43G * deps[1] + K23G * (deps[0] + deps[2]);
-  ds[2] = K43G * deps[2] + K23G * (deps[0] + deps[1]);
-  ds[3] = 2 * G * deps[3];
-  ds[4] = 2 * G * deps[4];
-  ds[5] = 2 * G * deps[5];
-
-  return (0); // it is helpful not to calculate it each time...
-  // That's all...
+  double yieldFnValue = computeYieldNormalized(state.stress);
+  if (yieldFnValue > (-d_int.d_yieldTol)) {
+    return true;
+  }
+  return false;
 }
 
 double
-ShengMohrCoulomb::calcElastic(double* Strain, BBMPoint* initialPoint,
-                              BBMPoint* finalPoint)
+ShengMohrCoulomb::computeYieldNormalized(const Vector6& stress) const
 {
-  double Stress[6], Zeros[6]; // , InitialSuction;
-
-  for (int i = 0; i < 6; i++) {
-    Zeros[i] = 0;
+  double meanStress = firstInvariant(stress) / 3.0;
+  double shearStress = std::sqrt(3.0 * secondDevInvariant(stress));
+  double J3 = thirdDevInvariant(stress);
+  double M = (6.0 * d_yield.d_sin_phi) / (3.0 - d_yield.d_sin_phi);
+  if (shearStress > TINY) {
+    double factor = -27.0 * J3 / (2.0 * shearStress * shearStress * shearStress);
+    if (!std::isfinite(factor)) {
+      factor = 1.0;
+      std::cout << "**WARNING** Factor in checkYield Normalised not finite. set to 1\n"
+                   "  alpha4 = " << d_yield.d_alpha4 << " J3 = " << J3
+                   " shearStress = " << shearStress << "\n";
+    } else if (factor > 1) {
+      factor = 1;
+    } else if (factor < -1) {
+      factor = -1;
+    } else {
+      factor = 1 + d_yield.d_alpha4 - (1 - d_yield.d_alpha4) * factor;
+    }
+    double scaledAlpha = d_yield.d_alpha / std::pow(0.5 * factor, 0.25);
+    if (scaledAlpha > -1.0 && scaledAlpha < 1.0) {
+      M *= M * scaledAlpha;
+    } 
+  } else {
+    M *= d_yield.d_alpha / std::pow(0.5 * (1 + d_yield.d_alpha4), 0.25);
   }
 
-  // InitialSuction=initialPoint->getSuction();
+  double cohesion = d_yield.d_cohesion;
+  double yieldFnValue = shearStress / M - 2.0 * d_yield.d_cohesion / M - meanStress;
 
-  calcStressElast(initialPoint->getSpecVol(), initialPoint->stress,
-                  initialPoint->strain, Strain, Stress);
-  // for (int i=0; i<6; i++) cout<<"Stress increment is:"<<Stress[i]<<endl;
-  initialPoint->Copy(finalPoint);
-  finalPoint->Update(Zeros, Strain, Stress, 0);
-  return 0;
+  // normalisation
+  yieldFnValue /= (std::abs(meanStress) + 2.0 * d_yield.d_cohesion);
+
+  if (dbg.active()) {
+    std::cout << "Check Yield: Mean Stress = " << meanStress 
+              << " Shear Stress=" << shearStress 
+              << " cohesion = "<< d_yield.d_cohesion
+              << " M = "<< M
+              << " Yield Function = " << yieldFnValue << "\n";
+  }
+  return yieldFnValue;
+}
+
+/**
+ * Calc elastic state 
+ */
+void
+ShengMohrCoulomb::calcElastic(const Vector7& strainInc, 
+                              const StateMohrCoulomb& initialState,
+                              StateMohrCoulomb& finalState) const
+{
+  finalState = initialState;
+
+  Vector6 stressInc = calcStressIncElast(initialState.specificVolume(), 
+                                         initialState.stress, 
+                                         initialState.strain, 
+                                         strainInc); 
+
+  std::cout << "Stress increment is: " << stressInc << "\n";
+
+  Vector6 plasticStrainInc = Vector6::Zero();
+  double p0StarInc = 0.0;
+  finalState.update(plasticStrainInc, strainInc, stressInc, p0StarInc);
+}
+
+Vector6
+ShengMohrCoulomb::calcStressIncElast(double nu0, 
+                                     const Vector6& s0, 
+                                     const Vector7& eps0,
+                                     const Vector7& deps) 
+{
+  double K = d_elastic.d_K;
+  double G = d_elastic.d_G;
+
+  double K43G = K + 4.0 * G / 3.0;
+  double K23G = K - 2.0 * G / 3.0;
+
+  Vector6 ds;
+  ds(0) =  K43G * deps(0) + K23G * (deps(1) + deps(2));
+  ds(1) =  K43G * deps(1) + K23G * (deps(0) + deps(2));
+  ds(2) =  K43G * deps(2) + K23G * (deps(0) + deps(1));
+  ds(3) = 2 * G * deps(3);
+  ds(4) = 2 * G * deps(4);
+  ds(5) = 2 * G * deps(5);
+
+  return ds;
+}
+
+/*
+ *  Check the gradient between initial and final state
+ */
+bool
+ShengMohrCoulomb::checkGradient(const StateMohrCoulomb& initialState, 
+                                const StateMohrCoulomb& finalState) const
+{
+  Vector7 strainInc = finalState->strain - initialState->strain;
+
+  double max = 0.0;
+  for (int i = 0; i < 6; i++) {
+    if (std::abs(strainInc(i)) > max) {
+      max = std::abs(strainInc(i));
+    }
+  }
+  for (int i = 0; i < 6; i++) {
+    strainInc(i) /= (max * 10E-10);
+  }
+  strainInc(6) = finalState->suction() - initialState->suction();
+
+  // The normalisation is important to catch the unloading due to shear stress
+  // 12 13 23. As the q is always positive, large unloading - loading values 
+  // of 12 13 or 23 component lead to larger q, the shear stress change is 
+  // taken as positive and there is no unloading. This fix, though not the 
+  // most elegant, should work.
+  Matrix67 tangentElastic = calculateElasticTangentMatrix(initialState);
+
+  Vector6 stressInc = tangentElastic * strainInc;
+
+  if (dbg.active()) {
+    dbg << "Strain inc = " << strainInc << "\n";
+    dbg << "TangentElastic: "<< tangentElastic << "\n";
+    dbg << "Stress inc = " << stressInc << "\n";
+    dbg << "Suction Increment = " << strainInc(7) << "\n";
+  }
+
+  Vector6 df; // not initialised; will contain values of derivatives of the
+              // yield locus function
+  double cosinus = findGradient(initialState->state, initialState->stress, 
+                                stressInc, df, 0, 0);
+
+  if (cosinus > -d_int.d_yieldTol) {
+    return false;
+  } 
+
+  if (dbg.active()) {
+    dbg << "Unloading occuring... cosinus = " << cosinus << "\n";
+  }
+
+  return true; //(negative cosinus means unloading occurs)
+}
+
+/*
+ *  Compute elastic tangent stiffness
+ */
+Matrix67
+ShengMohrCoulomb::calculateElasticTangentMatrix(const StateMohrCoulomb& state) const
+{
+  double K = d_elastic.d_K;
+  double G = d_elastic.d_G;
+  double K43G = K + 4.0 * G / 3.0;
+  double K23G = K - 2.0 * G / 3.0;
+
+  Matrix67 DEP = Matrix67::Zeros();
+  DEP(0, 0) =  K43G;
+  DEP(0, 1) =  K23G;
+  DEP(0, 2) =  K23G; 
+  DEP(1, 0) =  K23G;
+  DEP(1, 1) =  K43G;
+  DEP(1, 2) =  K23G; 
+  DEP(2, 0) =  K23G;
+  DEP(2, 1) =  K23G;
+  DEP(2, 2) =  K43G;
+  DEP(3, 3) =  2.0 * G;
+  DEP(4, 4) =  2.0 * G;
+  DEP(5, 5) =  2.0 * G;
+  return DEP;
+}
+
+/**
+  This procedure finds a gradient to the yield locus at given point.
+  It is used later to determine whether we have partly elastic unloading or only
+  plastic step
+  The gradient may be found only when we are on "main" plastic yield locus;
+  Otherwise results may be erroneous.
+
+  Parameters: state[], s[] (stress), ds[] (stress increment), suction,
+
+  Gradient = gradient[1], gradient[2] etc - there the result will be stored
+
+  First the C(s) part must be calculated, then the gradient.
+
+  returns cosinus of the angle...
+ */
+double
+ShengMohrCoulomb::findGradient(const Vector3& state, const Vector6& s, const Vector6& ds, 
+                               Vector6s& df_dSigma, double suction, double dsuction) const
+{
+  double I1 = firstInvariant(s);
+  double I2 = secondInvariant(s);
+  double I3 = thirdInvariant(s);
+  double J2 = secondDevInvariant(s);
+  double J3 = thirdDevInvariant(s);
+
+  double shearStress = sqrt(3.0 * J2);
+  double factor = -27.0 * J3 / (2.0 * shearStress * shearStress * shearStress);
+  if (!std::isfinite(factor)) {
+    factor = 1.0;
+    std::cout << "**WARNING** Factor in findGradient not finite. set to 1\n"
+                 "  alpha4 = " << alpha4 << " J3 = " << J3
+                 " shearStress = " << shearStress << "\n";
+  } else if (factor > 1) {
+    factor = 1;
+  } else if (factor < -1) {
+    factor = -1;
+  } 
+  factor = 1 + alpha4 - (1 - alpha4) * factor;
+
+  double factor025 = std::pow(factor, 0.25);
+  double factor075 = std::pow(factor, -0.75);
+  double M = (3 - d_yield.d_sin_phi) / (6 * d_yield.d_alpha * d_yield.d_sin_phi);
+
+  Vector6 dI1_dSig = Vector6::Zeros();
+  dI1_dSig(0) =  1.0;
+  dI1_dSig(1) =  1.0;
+  dI1_dSig(2) =  1.0; //{1,1,1,0,0,0}
+
+  Vector6 dI2_dSig = Vector6::Zeros();
+  dI2_dSig(0) =  s(1) + s(2);
+  dI2_dSig(1) =  s(0) + s(2);
+  dI2_dSig(2) =  s(0) + s(1);
+  dI2_dSig(3) =  -2 * s(3);
+  dI2_dSig(4) =  -2 * s(4);
+  dI2_dSig(5) =  -2 * s(5);
+
+  if (dbg.active()) {
+    dbg << setprecision(15) << dI2_dSig << "\n";
+  }
+
+  Vector6 dI3_dSig = Vector6::Zeros(); 
+  dI3_dSig(0) =  s(1) * s(2) - s(5) * s(5);
+  dI3_dSig(1) =  s(0) * s(2) - s(4) * s(4);
+  dI3_dSig(2) =  s(0) * s(1) - s(3) * s(3);
+  dI3_dSig(3) =  2 * s(5) * s(4) - 2 * s(2) * s(3);
+  dI3_dSig(4) =  2 * s(3) * s(5) - 2 * s(1) * s(4);
+  dI3_dSig(5) =  2 * s(3) * s(4) - 2 * s(0) * s(5);
+
+  if (dbg.active()) {
+    dbg << setprecision(15) << dI3_dSig << "\n";
+  }
+
+  Vector6 dJ2_dSig = Vector6::Zeros();
+  dJ2_dSig(0) =  (2 * s(0) - s(1) - s(2)) / 3.0;
+  dJ2_dSig(1) =  (2 * s(1) - s(0) - s(2)) / 3.0;
+  dJ2_dSig(2) =  (2 * s(2) - s(0) - s(1)) / 3.0;
+  dJ2_dSig(3) =  2 * s(3);
+  dJ2_dSig(4) =  2 * s(4);
+  dJ2_dSig(5) =  2 * s(5);
+
+  Vector6 dq_dSig = dJ2_dSig;
+  dq_dSig *= std::sqrt(3.0) * 0.5 / std::sqrt(J2);
+
+  Vector6 dJ3_dSig = dI1_dSig;
+  dJ3_dSig *= (2.0 / 9.0 * I1 * I1 - I2 / 3.0);
+
+  if (dbg.active()) {
+    dbg << setprecision(15) << dJ3_dSig << "\n";
+  }
+
+  dJ3_dSig += (dI2_dSig * (-I1 / 3.0) + dI3_dSig);
+
+  if (dbg.active()) {
+    dbg << setprecision(15) << dJ3_dSig << "\n";
+  }
+
+  df_dSigma = dJ2_dSig;
+  df_dSigma *= (0.21022410391343 * M * factor025 / shearStress);
+
+  for (int i = 0; i < 6; i++) {
+    if (!std::isfinite(df_dSigma(i))) {
+      df_dSigma(i) =  0.0;
+    }
+  }
+
+  if (dbg.active()) {
+    dbg << "dF/dJ2 part\n";
+    dbg << setprecision(15) << df_dSigma << "\n";
+  }
+
+  Vector6 temp = dJ3_dSig;
+  temp *= (-1.419012700740643 * (d_yield.alpha4 - 1) * M * sqrt(J2) * factor075 /
+             (std::sqrt(3.0) * shearStress * shearStress * shearStress) +
+           0.94600846716043 * (d_yield.alpha4 - 1) * d_yield.cohesion * M * factor075 /
+             (shearStress * shearStress * shearStress));
+
+  if (dbg.active()) {
+    dbg << "dF/dJ3 part\n";
+    dbg << setprecision(15) << temp << "\n";
+  }
+
+  df_dSigma += temp;;
+
+  for (int i = 0; i < 6; i++) {
+    if (!std::isfinite(df_dSigma(i))) {
+      df_dSigma(i) =  0.0;
+    }
+  }
+
+  temp = dq_dSig;
+  temp *= (-2.838025401481287 * (d_yield.alpha4 - 1) * d_yield.cohesion * M * J3 * factor075 /
+             (shearStress * shearStress * shearStress * shearStress) +
+           4.257038102221929 * (d_yield.alpha4 - 1) * M * std::sqrt(J2) * J3 * factor075 /
+             (std::sqrt(3.0) * shearStress * shearStress * shearStress * shearStress));
+
+  if (dbg.active()) {
+    dbg << "dF/dq part\n";
+    dbg << setprecision(15) << temp << "\n";
+  }
+
+  df_dSigma += temp;
+
+  df_dsigma += dI1_dSig * (-1.0 / 3.0);
+
+  for (int i = 0; i < 6; i++) {
+    if (!std::isfinite(df_dSigma(i))) {
+      df_dSigma(i) =  0.0;
+    }
+  }
+
+  if (dbg.active()) {
+    dbg << "df_dSigma = " << df_dSigma << "\n";
+  }
+
+  // calculate length - gradient - total length of vector ==1#
+  double dFlength = 0, dslength = 0;
+  for (int i = 0; i < 6; i++) {
+    dFlength += df_dSigma(i) * df_dSigma(i); // calculated length
+    dslength += ds(i) * ds(i);
+  }
+  dslength = std::sqrt(dslength);
+  dFlength = std::sqrt(dFlength);
+
+  // calculate cosinus of the theta angle...
+  double cosin = 0;
+  for (int i = 0; i < 6; i++) {
+    cosin += df_dsigma(i) * ds(i) / (dslength * dFlength); 
+  }
+
+  if (dbg.active()) {
+    if (cosin < -d_int.d_yieldTol) {
+      dbg << "Check if no problem in the findGradient\n";
+      dbg << "cosin = " << cosin << "\n";
+    }
+  }
+
+  return cosin; 
+}
+
+/**
+ Find intersection with yield surface during unloading
+ */
+void
+ShengMohrCoulomb::findIntersectionUnloading(const Vector7& strainIncrement,
+                                            const StateMohrCoulomb& initialState,
+                                            Vector7& elasticStrainInc,
+                                            Vector7& plasticStrainInc) const
+{
+  double alpha = findYieldAlpha(initialState.state, initialState.stress,
+                                initialState.strain, strainIncrement);
+  
+  elasticStrainInc = strainIncrement * alpha;
+  plasticStrainInc = strainIncrement - elasticStrainInc;
 }
 
 void
-ShengMohrCoulomb::calcStressElastM(double* deps, double* ds)
+ShengMohrCoulomb::findIntersection(const Vector7& strainIncrement,
+                                   const StateMohrCoulomb& initialState,
+                                   Vector7& elasticStrainInc,
+                                   Vector7& plasticStrainInc)
 {
-  /*
-  This procedure is just to check how whether the stress increment was
-  calculated properly.
-  Detailed algorithm is in file with all descriptions.
-  */
-  // used in final calculation K+4/3G, K-2/3G...
+  double alpha = findYieldModified(initialState.state, initialState.stress,
+                                   initialState.strain, strainIncrement);
+  elasticStrainInc = strainIncrement[i] * alpha;
+  plasticStrainInc = strainIncrement - elasticStrainInc;
+}
 
-  // calculate helpful variables:
-  double K43G = K + 4.0 * G / 3.0;
-  double K23G = K - 2.0 * G / 3.0;
+/**
+  Main purpose of this procedure is to find the intersection between yield
+  surface and the stress vector. This is a special version of the procedure 
+  used in case of elastic-plastic unloading - when we have plastic state
+  at the beginning of the step and then elastic unloading and plastic again. We
+  need to know at what value of epsilon (strain) we are on the surface - where 
+  plastic yielding will begin.
 
-  // calculate stress state:
-  ds[0] = K43G * deps[0] + K23G * (deps[1] + deps[2]);
-  ds[1] = K43G * deps[1] + K23G * (deps[0] + deps[2]);
-  ds[2] = K43G * deps[2] + K23G * (deps[0] + deps[1]);
-  ds[3] = 2 * G * deps[3];
-  ds[4] = 2 * G * deps[4];
-  ds[5] = 2 * G * deps[5];
+  Parameters: state vector, initial stress s0, initial strain eps0, strain
+  increment deps, a- to which value of alfa will be written
 
-  // for (int i=0; i<6; i++) cout<<"Delta stress i="<<ds[i]<<endl;
+  Changed - a
+
+  Algorithm - this is a Pegasus algorithm; we are looking for alfa such, that
+  value of yield function F==0.
+  This alfa is found and written to a.
+*/
+double
+ShengMohrCoulomb::findYieldAlpha(const Vector3& state, 
+                                 const Vector6& s0, 
+                                 const Vector7& eps0,
+                                 const Vector7& deps) const 
+{
+  double f0 = computeYieldNormalized(s0);
+  double yieldTol_old = d_int.d_yieldTol;
+  double delta = 0.0;
+  if (f0 < 0) {
+    delta = 0;
+    d_int.d_yieldTol = -0.9 * f0;
+  } else {
+    if (dbg.active()) {
+      dbg << "findYieldAlpha : case not coded for yet\n";
+    }
+    delta = (f0 + d_yield.d_yieldTol) / 2;
+    d_yield.d_yieldTol = 0.9 * (d_yield.d_yieldTol - f0) / 2;
+  }
+
+  if (dbg.active()) {
+    dbg << "Procedure Find Yield Yield ... s = " << s0 << "\n";
+    dbg << "Procedure Find Yield Yield ... dEps = " << dep << "\n";
+    dbg << "Initial normalised Yield Locus... f0 =" << f0 << "\n";
+    dbg << "Procedure Find Yield Yield ... delta =" << delta << "\n";
+    dbg << "Call of this procedure is generally rare and most likely improper\n";
+    dbg << "Parameters are set to:\n";
+    dbg << "Maximum number of iteration d_maxIter: "<< d_int.d_maxIter << "\n";;
+    dbg << "Value of d_alfaCheck - when the additional iter. is to "
+           "enter: " << d_int.d_alfaCheck << "\n";
+    dbg << "Value of change of alfa in the step: "<< d_int.d_alfaChange << "\n";;
+    dbg << "alfa old/alfa ratio: " << d_int.d_alfaRatio << "\n";
+  }
+
+  double alfa0 = 0;
+  double alfa1 = 1;
+  Vector7 epsIni = deps * alfa0;
+  Vector7 epsFin = deps * alfa1;
+
+  Vector6 sIni = s0;
+  Vector6 sFin = calcStressIncElast(state(2), s0, eps0, epsFin);
+  sFin += s0;
+
+  f0 = computeYieldNormalized(sIni);
+  f0 -= delta;
+
+  double f1 = computeYieldNormalized(sFin);
+  f1 -= delta;
+
+  if (dbg.active()) {
+    dbg << "Procedure findYieldAlpha. Initial values of f0 = " << f0 
+        << " f1 = " << f1 << "\n";
+    dbg << "f0 should lie on the yield locus within tolerance: "
+        << yieldTol_old << "\n";
+  }
+
+  double alphaYield = 0.0;
+  double alfa = 0.5;
+  double alfa_old = 0;
+  for (int iter = 0; iter < d_maxIter; iter++) {
+    bool problems = false;
+    alfa_old = alfa;
+
+    alfa = f0 / (f0 - f1);
+    Vector7 epsAlfa = deps * (alfa0 + alfa * (alfa1 - alfa0));
+
+    // calculate stress increment for current alfa
+    Vector6 sAlfa = calcStressIncElast(state(2), s0, eps0, epsAlfa); 
+
+    // update stress
+    sAlfa += s0;
+
+    // calculate yield function for current alfa
+    double fAlfa = computeYieldNormalized(sAlfa);
+    fAlfa -= delta;
+
+    if (dbg.active()) {
+      dbg << "In iteration " << iter << " alfa = " << alfa << " and f = "<< fAlfa << "\n";
+    }
+
+    // if fAlfa within tolerance, we have the solution
+    if (std::abs(fAlfa) < d_int.d_yieldTol) {
+
+      alphaYield = alfa0 + alfa * (alfa1 - alfa0); 
+
+      if (dbg.active()) {
+        dbg << "Solution in findYieldAlpha procedure was found after "<< iter 
+            << " iterations." << "\n";
+        dbg << "Value of the yield function is equal to: "<< fAlfa << "\n";
+        dbg << "Modified value of tolerance is: " << d_int.d_yieldTol << "\n";
+        dbg << "Value of delta is: " << delta << "\n";
+        dbg << "Alfa is equal to: " << alphaYield << "\n";
+      }
+
+      if (iter > 50) {
+        std::cout << "**WARNING** Large number of iterations!!! Solution is however correct... "
+             << "\n";
+      }
+
+      d_yieldTol = yieldTol_old;
+
+      if (dbg.active()) {
+        dbg << "Yield tolerance is set back to: " << d_int.d_yieldTol << "\n";
+      }
+
+      return alphaYield;
+    }
+
+    if (fAlfa > 0) {
+
+      // if fAlfa > 0 - we are yielding - max alfa set to current alfa
+
+      if (((1.0 - alfa) < d_int.d_alfaCheck) && 
+          ((1.0 - alfa_old) / (1.0 - alfa)) < d_int.d_alfaRatio) {
+        problems = true;
+      }
+
+      alfa1 = alfa0 + alfa * (alfa1 - alfa0);
+      f1 = fAlfa; 
+
+      if (problems) {
+        if (dbg.active()) {
+          dbg << "Problematic iteration entered !!!"<<"\n";
+        }
+
+        alfa = alfa1 - d_int.d_alfaChange * (alfa1 - alfa0);
+        epsAlfa = deps * (alfa0 + alpfa * (alfa1 - alfa0));
+
+        sAlpha = calcStressIncElast(state(2), s0, eps0, epsAlfa);
+        sAlpha += s0;
+
+        fAlfa = computeYieldNormalized(sAlfa);
+        fAlfa -= delta;
+
+        if (fAlfa > 0) {
+          // if fAlfa > 0 - we are yielding - max alfa set to current alfa
+          alfa1 = alfa0 + alfa * (alfa1 - alfa0);
+          f1 = fAlfa; 
+        } else {
+          // if fAlfa < 0 - we are elastic - minimum alfa is set to current alfa
+          alfa0 += alfa * (alfa1 - alfa0);
+          f0 = fAlfa; 
+        }
+      }
+
+    } else {
+
+      // if fAlfa < 0 - we are elastic - minimum alfa is set to current alfa
+
+      if ((alfa < d_alfaCheck) && (alfa_old / alfa) < d_alfaRatio) {
+        problems = true;
+      }
+      alfa0 = alfa0 + alfa * (alfa1 - alfa0);
+      f0 = fAlfa; 
+
+      if (problems) {
+        if (dbg.active()) {
+          dbg << "Problematic iteration entered !!!"<<"\n";
+        }
+
+        alfa = alfa0 + d_int.d_alfaChange * (alfa1 - alfa0);
+        epsAlfa = deps * (alfa0 + alpfa * (alfa1 - alfa0));
+
+        sAlpha = calcStressIncElast(state(2), s0, eps0, epsAlfa);
+        sAlpha += s0;
+
+        fAlfa = computeYieldNormalized(sAlfa);
+        fAlfa -= delta;
+
+        if (fAlfa > 0) {
+          // if fAlfa > 0 - we are yielding - max alfa set to current alfa
+          alfa1 = alfa0 + alfa * (alfa1 - alfa0);
+          f1 = fAlfa; 
+        } else {
+          // if fAlfa < 0 - we are elastic - minimum alfa is set to current alfa
+          alfa0 += alfa * (alfa1 - alfa0);
+          f0 = fAlfa; 
+        }
+      }
+    }
+  }
+
+  d_yieldTol = yieldTol_old;
+
+  // if we are here, we must have perforemed to many iterations...
+  std::ostringstream err;
+  err << "**ERROR** in procedure findYieldAlpha" << "\n";
+  err << "  After " << d_maxIter << " iterations crossing point not found" << "\n";
+  err << "  This is likely to cause incorrect results... Results obtained "
+         "  should not be taken too seriously..." << "\n";
+  throw InvalidValue(err.str(), __FILE__, __LINE__);
+
+  return -999.0;
+}
+
+/**
+  Main purpose of this procedure is to find the intersection between yield
+  surface and the stress vector. We need to know at what value of epsilon 
+  (strain) we are on the surface - where plastic yielding will begin.
+
+  Parameters: state vector, initial stress s0, initial strain eps0, strain
+  increment deps, a- to which value of alfa will be written
+
+  Changed - a
+
+  Algorithm - this is a Pegasus algorithm; we are looking for alfa such, that
+  value of yield function F==0.
+  This alfa is found and written to a.
+*/
+
+double
+ShengMohrCoulomb::findYieldModified(const Vector3& state, 
+                                    const Vector6& s0, 
+                                    const Vector7& eps0,
+                                    const Vector7& deps) const
+{
+
+  if (dbg.active()) {
+    dbg << "Parameters are set to:\n";
+    dbg << "Maximum number of iteration d_maxIter: "<< d_int.d_maxIter << "\n";;
+    dbg << "Value of d_alfaCheck - when the additional iter. is to "
+           "enter: " << d_int.d_alfaCheck << "\n";
+    dbg << "Value of change of alfa in the step: "<< d_int.d_alfaChange << "\n";;
+    dbg << "alfa old/alfa ratio: " << d_int.d_alfaRatio << "\n";
+  }
+
+  double alfa0 = 0;
+  double alfa1 = 1;
+  Vector7 epsIni = deps * alfa0;
+  Vector7 epsFin = deps * alfa1;
+
+  Vector6 sIni = s0;
+  Vector6 sFin = calcStressIncElast(state(2), s0, eps0, epsFin);
+  sFin += s0;
+
+  double f0 = computeYieldNormalized(s0);
+  double f1 = computeYieldNormalized(sFin);
+
+  if (dbg.active()) {
+    dbg << "Procedure findYieldModified. Initial values of f0 = " << f0 
+        << " f1 = " << f1 << "\n";
+    dbg << "Value of f0 should be negative, and value of f1 should be positive.\n";
+    dbg << "Values should be larger than tolerance for yield: "
+        << d_int.d_yieldTol << "\n";
+  }
+
+  double alfa = 0.5;
+  double alfa_old = 0;
+
+  for (int iter = 0; iter < d_maxIter; iter++) {
+
+    bool problems = false;
+    alfa_old = alfa;
+    alfa = f0 / (f0 - f1);
+
+    Vector7 epsAlfa = deps * (alfa0 + alfa * (alfa1 - alfa0));
+    Vector6 sAlfa = calcStressIncElast(state(2), s0, eps0, epsAlfa);
+    sAlfa += s0;
+
+    double fAlfa = computeYieldNormalized(sAlfa);
+
+    if (dbg.active()) {
+      dbg << "In iteration " << iter << " alfa = " << alfa << " and f = " << fAlfa;
+      dbg << " alfa0 = " << alfa0 << "\n";
+    }
+
+    // if the difference is below numerical the accuracy, we have the solution
+    if ((alfa1 - alfa0) < TINY) {
+      fAlfa = 0.0; 
+    }
+
+    if (std::abs(fAlfa) < d_yieldTol) {
+
+      // if fAlfa within tolerance, we have the solution
+      double alphaYield = alfa0 + alfa * (alfa1 - alfa0);
+
+      if (iter > 50) {
+        std::cout << "**WARNING** Large number of iterations in findYieldModified procedure!!! "
+                     "Solution is however correct..." << "\n";
+      }
+      if (dbg.active()) {
+        dbg << "Solution in findYieldModified procedure was found after " 
+            << iter << " iterations."<<"\n";
+        dbg << "solution is: " << alphaYield << "\n";
+      }
+      return alphaYield;
+    }
+
+    if (fAlfa > 0) {
+
+      // if fAlfa >0 - we are yielding - max alfa set to current alfa
+      fAlfa = computeYieldNormalized(sAlfa);
+      if (((1 - alfa) < d_int.d_alfaCheck) && 
+          ((1 - alfa_old) / (1 - alfa)) < d_int.d_alfaRatio) {
+        problems = true;
+      }
+
+      alfa1 = alfa0 + alfa * (alfa1 - alfa0);
+      f1 = fAlfa; 
+
+      if (problems) {
+
+        if (dbg.active()) {
+          dbg << "Problematic iteration entered !!!"<<"\n";
+        }
+        alfa = alfa1 - d_int.d_alfaChange * (alfa1 - alfa0);
+        epsAlfa = deps * (alfa0 + alfa * (alfa1 - alfa0));
+
+        sAlfa = calcStressIncElast(state(2), s0, eps0, epsAlfa);
+        sAlfa += s0;
+
+        falfa = computeYieldNormalized(sAlfa);
+
+        if (fAlfa > 0) {
+          // if fAlfa > 0 - we are yielding - max alfa set to current alfa
+          alfa1 = alfa0 + alfa * (alfa1 - alfa0);
+          f1 = fAlfa; 
+        } else {
+          // if fAlfa < 0 - we are elastic - minimum alfa is set to current alfa
+          alfa0 = alfa0 + alfa * (alfa1 - alfa0);
+          f0 = fAlfa; 
+        }
+      }
+
+    } else {
+
+      // if fAlfa <0 - we are elastic - minimum alfa is set to current alfa
+      fAlfa = computeYieldNormalized(sAlfa);
+      if ((alfa < d_int.d_alfaCheck) && (alfa_old / alfa) < d_int.d_alfaRatio) {
+        problems = true;
+      }
+      alfa0 = alfa0 + alfa * (alfa1 - alfa0);
+      f0 = fAlfa; 
+
+      if (problems) {
+
+        if (dbg.active()) {
+          dbg << "Problematic iteration entered !!!"<<"\n";
+        }
+
+        alfa = alfa0 + d_alfaChange * (alfa1 - alfa0);
+        epsAlfa = deps * (alfa0 + alfa * (alfa1 - alfa0));
+
+        sAlfa = calcStressIncElast(state(2), s0, eps0, epsAlfa);
+        sAlfa += s0;
+
+        fAlfa = computeYieldNormalized(sAlfa);
+        if (fAlfa > 0) {
+          // if fAlfa > 0 - we are yielding - max alfa set to current alfa
+          alfa1 = alfa0 + alfa * (alfa1 - alfa0);
+          f1 = fAlfa; 
+        } else {
+          // if fAlfa < 0 - we are elastic - minimum alfa is set to current alfa
+          alfa0 = alfa0 + alfa * (alfa1 - alfa0);
+          f0 = fAlfa; 
+        }
+      }
+    }
+  }
+
+  // if we are here, we must have perforemed to many iterations...
+  std::ostringstream err;
+  err << "Error in procedure findYieldModified" << "\n";
+  err << "After " << d_maxIter << " iterations crossing point not found" << "\n";
+  err << "alphamin = " << alfa0 << " alphamax = " << alfa1
+       << " dalpha = " << alfa1 - alfa0;
+  err << "Yield Function value Min=" << f0 << " Max=" << f1 << "\n";
+  err << "Stress:" << s0 << "\n";
+  err << "Strain:" << deps << "\n";
+  err << "G: " << G << " K: " << K << " cohesion: " << cohesion << " phi: " << phi
+       << "\n";
+  err << "This is likely to cause incorrect results... Results obtained "
+          "should not be taken too seriously..."
+       << "\n";
+  throw InvalidValue(err.str(), __FILE__, __LINE__);
+
+  return -999.0;
+}
+
+double
+ShengMohrCoulomb::computeNu(const Matrix6& s, const Matrix3& state, double suction)
+{
+  // does nothing for SMC
+  return 1.0;
 }
 
 void
@@ -249,18 +999,18 @@ ShengMohrCoulomb::findElStrGrad(double nu0, double* s0, double* eps0,
   ds[4] = 2 * G * deps[4];
   ds[5] = 2 * G * deps[5];
 
-  // for (int i=0; i<6; i++) cout<<"Delta stress i="<<ds[i]<<endl;
+  // for (int i=0; i<6; i++) cout<<"Delta stress i="<<ds[i]<<"\n";
 }
 
 bool
-ShengMohrCoulomb::checkYield(BBMPoint* point)
+ShengMohrCoulomb::computeYieldNormalized(StateMohrCoulomb* point)
 {
   // check of the standard yield surface
   // Note: value of function is not normalised by the mean stress
 
   double meanStress = Point->getmeanStress();
-  double shearStress = Point->getShearStress();
-  double J3 = Point->getThirdDevInvariant();
+  double shearStress = Point->shearStress();
+  double J3 = Point->thirdDevInvariant();
   double M = (6 * sin_phi) / (3 - sin_phi);
   if (shearStress > TINY) {
     double Factor = -27 * J3 / (2 * shearStress * shearStress * shearStress);
@@ -270,9 +1020,9 @@ ShengMohrCoulomb::checkYield(BBMPoint* point)
       Factor = -1;
     if (!finite(Factor)) {
       Factor = 1.0;
-      cout << "Factor in checkYield not finite. set to 1" << endl;
+      cout << "Factor in checkYield not finite. set to 1" << "\n";
       cout << "alpha4=" << alpha4 << " J3=" << J3
-           << " shearStress=" << shearStress << endl;
+           << " shearStress=" << shearStress << "\n";
     }
     Factor = 1 + alpha4 - (1 - alpha4) * Factor;
 
@@ -288,155 +1038,22 @@ ShengMohrCoulomb::checkYield(BBMPoint* point)
           cout<<" Shear Stress="<<shearStress;
           cout<<" cohesion="<<cohesion;
           cout<<" M="<<M;
-          cout<<" Yield Function="<<Value<<endl;
+          cout<<" Yield Function="<<Value<<"\n";
   */
   if (Value > (-d_yieldTol))
     return true;
   else
     return false;
-}
-
-bool
-ShengMohrCoulomb::checkYieldNormalised(BBMPoint* point)
-{
-  // check of the standard yield surface
-  // Note: value of function is not normalised by the mean stress
-
-  double meanStress = Point->getmeanStress();
-  double shearStress = Point->getShearStress();
-  double J3 = Point->getThirdDevInvariant();
-  double M = (6 * sin_phi) / (3 - sin_phi);
-  if (shearStress > TINY) {
-    double Factor = -27 * J3 / (2 * shearStress * shearStress * shearStress);
-    if (Factor > 1)
-      Factor = 1;
-    if (Factor < -1)
-      Factor = -1;
-    if (!finite(Factor)) {
-      Factor = 1.0;
-      cout << "Factor in checkYield Normalised not finite. set to 1" << endl;
-      cout << "alpha4=" << alpha4 << " J3=" << J3
-           << " shearStress=" << shearStress << endl;
-    }
-
-    Factor = 1 + alpha4 - (1 - alpha4) * Factor;
-
-    if ((alpha / pow(0.5 * Factor, 0.25) < 1.0) &&
-        (alpha / pow(0.5 * Factor, 0.25) > -1.0))
-      M = M * alpha / pow(0.5 * Factor, 0.25);
-  } else
-    M = M * alpha / pow(0.5 * (1 + alpha4), 0.25);
-
-  double Value = shearStress / M - 2 * cohesion / M - meanStress;
-
-  // normalisation
-  Value = Value / (fabs(meanStress) + 2 * cohesion);
-  /*
-      cout<<"check Yield: Mean Stress="<<meanStress;
-          cout<<" Shear Stress="<<shearStress;
-          cout<<" cohesion="<<cohesion;
-          cout<<" M="<<M;
-          cout<<" Yield Function="<<Value<<endl;
-  */
-  if (Value > (-d_yieldTol))
-    return true;
-  else
-    return false;
-}
-
-void
-ShengMohrCoulomb::checkYieldNormalised(double* state, double* s, double suction,
-                                       double* fValue)
-{
-  // check of the standard yield surface
-  // Note: value of function is normalised by the mean stress+2*cohesion
-
-  /*
-          Purpose of this routine is to calculate value of yield function to
-     determine, whether we have yielding
-          or not.
-
-          Arguments: *state - table of state parameters; in fact we need only
-     p*.
-                                  s- stress state
-                                  suction - suction
-          Returns: none;  value of normalized function is saved in fValue
-          */
-
-  double meanStress, shearStress, Factor;
-
-  double I1 = s[0] + s[1] + s[2];
-  double I2 = s[0] * s[1] + s[1] * s[2] + s[2] * s[0] - s[3] * s[3] -
-              s[4] * s[4] - s[5] * s[5];
-  double I3 = s[0] * s[1] * s[2] + 2 * s[3] * s[4] * s[5] - s[0] * s[5] * s[5] -
-              s[1] * s[4] * s[4] - s[2] * s[3] * s[3];
-  double J3 = I1 * I1 * I1 * 2.0 / 27.0 - I1 * I2 / 3.0 + I3;
-
-  meanStress = (s[0] + s[1] + s[2]) / 3;
-  shearStress = (s[0] - s[1]) * (s[0] - s[1]) + (s[0] - s[2]) * (s[0] - s[2]) +
-                (s[1] - s[2]) * (s[1] - s[2]);
-  shearStress = shearStress + 6 * (s[3] * s[3] + s[4] * s[4] + s[5] * s[5]);
-  shearStress = shearStress / 2;
-  if (shearStress * shearStress * shearStress < TINY)
-    shearStress = 0;
-  else
-    shearStress = sqrt(shearStress); // Naylor Pande
-
-  double M = (6 * sin_phi) / (3 - sin_phi);
-  if (shearStress < TINY)
-    M = M * alpha / pow(0.5 * (1 + alpha4), 0.25);
-  else {
-    Factor = -27 * J3 / (2 * shearStress * shearStress * shearStress);
-    if (Factor > 1)
-      Factor = 1;
-    if (Factor < -1)
-      Factor = -1;
-    if (!finite(Factor)) {
-      Factor = 1.0;
-      cout << "Factor in checkYieldNormalised [parameters s etc] is not "
-              "finite. set to 1"
-           << endl;
-      cout << "alpha4=" << alpha4 << " J3=" << J3
-           << " shearStress=" << shearStress << endl;
-    }
-    Factor = 1 + alpha4 - (1 - alpha4) * Factor;
-
-    if ((alpha / pow(0.5 * Factor, 0.25) < 1.0) &&
-        (alpha / pow(0.5 * Factor, 0.25) > -1.0))
-      M = M * alpha / pow(0.5 * Factor, 0.25);
-  }
-  *fValue = shearStress / M - 2 * cohesion / M - meanStress;
-  //	cout<<*fValue<<"  mean stress + cohesion "<<meanStress+2*cohesion<<endl;
-  if (!finite(*fValue)) {
-    cout << "Yield locus value is not finite" << endl;
-    cout << "s=" << s[0] << ' ' << s[1] << ' ' << s[2] << ' ' << s[3] << ' '
-         << s[4] << ' ' << s[5] << ' ' << endl;
-    cout << "I1=" << I1 << " I2=" << I2 << " I3=" << I3 << " J3=" << J3 << endl;
-    cout << "shearStress=" << shearStress << " meanStress=" << meanStress
-         << " cohesion=" << cohesion << endl;
-    cout << "M=" << M << " Factor=" << Factor << "alpha=" << alpha << endl;
-  }
-
-  // normalisation
-  *fValue = *fValue / (fabs(meanStress) + 2 * cohesion);
-  //	cout<<*fValue<<endl;
-  /*
-      cout<<"check Yield: Mean Stress="<<meanStress;
-          cout<<" Shear Stress="<<shearStress;
-          cout<<" cohesion="<<cohesion;
-          cout<<" M="<<M;
-          cout<<" Yield Function="<<Value<<endl;
-  */
 }
 
 double
-ShengMohrCoulomb::computeYieldFunction(BBMPoint* point)
+ShengMohrCoulomb::computeYieldFunction(StateMohrCoulomb* point)
 {
   // Note: value of function is not normalised by the mean stress+2*cohesion!
 
   double meanStress = Point->getmeanStress();
-  double shearStress = Point->getShearStress();
-  double J3 = Point->getThirdDevInvariant();
+  double shearStress = Point->shearStress();
+  double J3 = Point->thirdDevInvariant();
   double M = (6 * sin_phi) / (3 - sin_phi);
   if (shearStress > TINY) {
     double Factor = -27 * J3 / (2 * shearStress * shearStress * shearStress);
@@ -448,9 +1065,9 @@ ShengMohrCoulomb::computeYieldFunction(BBMPoint* point)
       Factor = 1.0;
       cout << "Factor in computeYieldFunction [parameters *Point] is not "
               "finite. set to 1"
-           << endl;
+           << "\n";
       cout << "alpha4=" << alpha4 << " J3=" << J3
-           << " shearStress=" << shearStress << endl;
+           << " shearStress=" << shearStress << "\n";
     }
     Factor = 1 + alpha4 - (1 - alpha4) * Factor;
     if ((alpha / pow(0.5 * Factor, 0.25) < 1.0) &&
@@ -468,13 +1085,13 @@ ShengMohrCoulomb::computeYieldFunction(BBMPoint* point)
 }
 
 double
-ShengMohrCoulomb::computeYieldFunctionNN(BBMPoint* point)
+ShengMohrCoulomb::computeYieldFunctionNN(StateMohrCoulomb* point)
 {
   // Note: value of function is normalised by the mean stress+2*cohesion!
 
   double meanStress = Point->getmeanStress();
-  double shearStress = Point->getShearStress();
-  double J3 = Point->getThirdDevInvariant();
+  double shearStress = Point->shearStress();
+  double J3 = Point->thirdDevInvariant();
   double M = (6 * sin_phi) / (3 - sin_phi);
   if (shearStress > TINY) {
     double Factor = -27 * J3 / (2 * shearStress * shearStress * shearStress);
@@ -486,9 +1103,9 @@ ShengMohrCoulomb::computeYieldFunctionNN(BBMPoint* point)
       Factor = 1.0;
       cout << "Factor in computeYieldFunctionNN [parameters *Point] is not "
               "finite. set to 1"
-           << endl;
+           << "\n";
       cout << "alpha4=" << alpha4 << " J3=" << J3
-           << " shearStress=" << shearStress << endl;
+           << " shearStress=" << shearStress << "\n";
     }
     Factor = 1 + alpha4 - (1 - alpha4) * Factor;
     if ((alpha / pow(0.5 * Factor, 0.25) < 1.0) &&
@@ -502,123 +1119,9 @@ ShengMohrCoulomb::computeYieldFunctionNN(BBMPoint* point)
   return Value;
 }
 
-bool
-ShengMohrCoulomb::checkIfPlastic(BBMPoint* point)
-{
-  // Note: value of function is normalised by the mean stress+2*cohesion!
-
-  double meanStress = Point->getmeanStress();
-  double shearStress = Point->getShearStress();
-  double J3 = Point->getThirdDevInvariant();
-  double M = (6 * sin_phi) / (3 - sin_phi);
-  if (shearStress > TINY) {
-    double Factor = -27 * J3 / (2 * shearStress * shearStress * shearStress);
-    if (Factor > 1)
-      Factor = 1;
-    if (Factor < -1)
-      Factor = -1;
-    if (!finite(Factor)) {
-      Factor = 1.0;
-      cout << "Factor in checkIfPlastic [parameters *Point] is not finite. set "
-              "to 1"
-           << endl;
-      cout << "alpha4=" << alpha4 << " J3=" << J3
-           << " shearStress=" << shearStress << endl;
-    }
-    Factor = 1 + alpha4 - (1 - alpha4) * Factor;
-    if ((alpha / pow(0.5 * Factor, 0.25) < 1.0) &&
-        (alpha / pow(0.5 * Factor, 0.25) > -1.0))
-      M = M * alpha / pow(0.5 * Factor, 0.25);
-  } else
-    M = M * alpha / pow(0.5 * (1 + alpha4), 0.25);
-
-  double Value = shearStress / M - 2 * cohesion / M - meanStress;
-
-  // normalisation
-  Value = Value / (fabs(meanStress) + 2 * cohesion);
-
-  if (Value > (-d_yieldTol))
-    return true;
-  else
-    return false;
-}
-
-void
-ShengMohrCoulomb::checkYield(double* state, double* s, double suction,
-                             double* fValue)
-{
-  /*
-  Purpose of this routine is to calculate value of yield function to determine,
-  whether we have yielding
-  or not.
-
-  Arguments: *state - table of state parameters; in fact we need only p*.
-                          s- stress state
-                          suction - suction
-  Returns: none;  value of normalized function is saved in fValue
-  */
-
-  double meanStress, shearStress;
-
-  double I1 = s[0] + s[1] + s[2];
-  double I2 = s[0] * s[1] + s[1] * s[2] + s[2] * s[0] - s[3] * s[3] -
-              s[4] * s[4] - s[5] * s[5];
-  double I3 = s[0] * s[1] * s[2] + 2 * s[3] * s[4] * s[5] - s[0] * s[5] * s[5] -
-              s[1] * s[4] * s[4] - s[2] * s[3] * s[3];
-  double J3 = I1 * I1 * I1 * 2.0 / 27.0 - I1 * I2 / 3.0 + I3;
-
-  meanStress = (s[0] + s[1] + s[2]) / 3;
-  shearStress = (s[0] - s[1]) * (s[0] - s[1]) + (s[0] - s[2]) * (s[0] - s[2]) +
-                (s[1] - s[2]) * (s[1] - s[2]);
-  shearStress = shearStress + 6 * (s[3] * s[3] + s[4] * s[4] + s[5] * s[5]);
-  shearStress = shearStress / 2;
-  if (shearStress < TINY)
-    shearStress = 0;
-  else
-    shearStress = sqrt(shearStress); // Naylor Pande
-
-  double M = (6 * sin_phi) / (3 - sin_phi);
-  if (shearStress < TINY)
-    M = M * alpha / pow(0.5 * (1 + alpha4), 0.25);
-  else {
-    double Factor = -27 * J3 / (2 * shearStress * shearStress * shearStress);
-    if (Factor > 1)
-      Factor = 1;
-    if (Factor < -1)
-      Factor = -1;
-    if (!finite(Factor)) {
-      Factor = 1.0;
-      cout << "Factor in checkYield [parameters s etc] is not finite. set to 1"
-           << endl;
-      cout << "s=" << s[0] << " " << s[1] << " " << s[2] << " " << s[3] << " "
-           << s[4] << " " << s[5] << endl;
-      cout << "alpha4=" << alpha4 << " J3=" << J3
-           << " shearStress=" << shearStress << endl;
-    }
-    Factor = 1 + alpha4 - (1 - alpha4) * Factor;
-    if ((alpha / pow(0.5 * Factor, 0.25) < 1.0) &&
-        (alpha / pow(0.5 * Factor, 0.25) > -1.0))
-      M = M * alpha / pow(0.5 * Factor, 0.25);
-  }
-  *fValue = shearStress / M - 2 * cohesion / M - meanStress;
-  //	cout<<*fValue<<"  mean stress + cohesion "<<meanStress+2*cohesion<<endl;
-  if (!finite(*fValue)) {
-    cout << "Yield locus value is not finite" << endl;
-  }
-  // normalisation
-  *fValue = *fValue / (fabs(meanStress) + 2 * cohesion);
-  //	cout<<*fValue<<endl;
-}
-
-double
-ShengMohrCoulomb::ComputeNu(double* s, double* state, double suction)
-{
-  // does nothing for SMC
-  return 1;
-}
 
 int
-ShengMohrCoulomb::calcPlasticFaster(BBMPoint point, double* epStrain,
+ShengMohrCoulomb::calcPlasticFaster(StateMohrCoulomb point, double* epStrain,
                                     BBMMatrix* dSigma, double* plasticStrain,
                                     double* dpZeroStar, double fValue,
                                     double* dS, double* dLambda)
@@ -631,7 +1134,7 @@ ShengMohrCoulomb::calcPlasticFaster(BBMPoint point, double* epStrain,
 }
 
 int
-ShengMohrCoulomb::calcPlasticPQ(BBMPoint point, double* epStrain,
+ShengMohrCoulomb::calcPlasticPQ(StateMohrCoulomb point, double* epStrain,
                                 BBMMatrix* dSigma, double* plasticStrain,
                                 double* dpZeroStar, double fValue, double* dS,
                                 double* dLambda)
@@ -644,7 +1147,7 @@ ShengMohrCoulomb::calcPlasticPQ(BBMPoint point, double* epStrain,
 }
 
 int
-ShengMohrCoulomb::calcPlastic(BBMPoint point, double* epStrain,
+ShengMohrCoulomb::calcPlastic(StateMohrCoulomb point, double* epStrain,
                               BBMMatrix* dSigma, double* plasticStrain,
                               double* dpZeroStar, double fValue, double* dS,
                               double* dLambda)
@@ -665,17 +1168,17 @@ ShengMohrCoulomb::calcPlastic(BBMPoint point, double* epStrain,
   if (!Point.checkIfFinite()) {
     cout << "Error in the calcPlastic Procedure. point internal values are not "
             "finite. Press any key."
-         << endl;
+         << "\n";
     getchar();
   }
 
-  double I1 = Point.getFirstInvariant();
-  double I2 = Point.getSecondInvariant();
-  double J2 = Point.getSecondDevInvariant();
+  double I1 = Point.firstInvariant();
+  double I2 = Point.secondInvariant();
+  double J2 = Point.secondDevInvariant();
   if (fabs(J2) < TINY)
     J2 = TINY;
-  double J3 = Point.getThirdDevInvariant();
-  double shearStress = Point.getShearStress();
+  double J3 = Point.thirdDevInvariant();
+  double shearStress = Point.shearStress();
   if (fabs(shearStress) < TINY)
     shearStress = TINY;
   double Factor = -27 * J3 / (2 * shearStress * shearStress * shearStress);
@@ -685,9 +1188,9 @@ ShengMohrCoulomb::calcPlastic(BBMPoint point, double* epStrain,
     Factor = -1;
   if (!finite(Factor)) {
     Factor = 1.0;
-    cout << "Factor in calcPlastic is not finite. set to 1" << endl;
+    cout << "Factor in calcPlastic is not finite. set to 1" << "\n";
     cout << "alpha4=" << alpha4 << " J3=" << J3
-         << " shearStress=" << shearStress << endl;
+         << " shearStress=" << shearStress << "\n";
   }
   Factor = 1 + alpha4 - (1 - alpha4) * Factor;
   double Factor025 = pow(Factor, 0.25);
@@ -696,109 +1199,109 @@ ShengMohrCoulomb::calcPlastic(BBMPoint point, double* epStrain,
              (alpha * sin_phi); // not M but useful in derivatives, see file
   double Mpsi = (3 - sin_psi) / (alpha * sin_psi);
 
-  BBMMatrix dJ2dSIG(6, 1), dJ3dSIG(6, 1), dqdSIG(6, 1), dI1dSIG(6, 1),
-    dI2dSIG(6, 1), dI3dSIG(6, 1), TEMP(6, 1), NUMERATOR(6, 1);
+  BBMMatrix dJ2_dSig(6, 1), dJ3_dSig(6, 1), dq_dSig(6, 1), dI1_dSig(6, 1),
+    dI2_dSig(6, 1), dI3_dSig(6, 1), TEMP(6, 1), NUMERATOR(6, 1);
 
   // derivatives of the invariants
   double s[6] = { Point.stress[0], Point.stress[1], Point.stress[2],
                   Point.stress[3], Point.stress[4], Point.stress[5] };
 
-  dI1dSIG.PutElement(1, 1, 1.0);
-  dI1dSIG.PutElement(2, 1, 1.0);
-  dI1dSIG.PutElement(3, 1, 1.0); //{1,1,1,0,0,0}
+  dI1_dSig(0, 0) =  1.0);
+  dI1_dSig(1, 0) =  1.0);
+  dI1_dSig(2, 0) =  1.0); //{1,1,1,0,0,0}
 
-  dI2dSIG.PutElement(1, 1, s[1] + s[2]);
-  dI2dSIG.PutElement(2, 1, s[0] + s[2]);
-  dI2dSIG.PutElement(3, 1, s[0] + s[1]);
-  dI2dSIG.PutElement(4, 1, -2 * s[3]);
-  dI2dSIG.PutElement(5, 1, -2 * s[4]);
-  dI2dSIG.PutElement(6, 1, -2 * s[5]);
+  dI2_dSig(0, 0) =  s[1] + s[2]);
+  dI2_dSig(1, 0) =  s[0] + s[2]);
+  dI2_dSig(2, 0) =  s[0] + s[1]);
+  dI2_dSig(3, 0) =  -2 * s[3]);
+  dI2_dSig(4, 0) =  -2 * s[4]);
+  dI2_dSig(5, 0) =  -2 * s[5]);
 
-  // dI2dSIG.PrintPrecise();
+  // dI2_dSig.PrintPrecise();
 
-  dI3dSIG.PutElement(1, 1, s[1] * s[2] - s[5] * s[5]);
-  dI3dSIG.PutElement(2, 1, s[0] * s[2] - s[4] * s[4]);
-  dI3dSIG.PutElement(3, 1, s[0] * s[1] - s[3] * s[3]);
-  dI3dSIG.PutElement(4, 1, 2 * s[5] * s[4] - 2 * s[2] * s[3]);
-  dI3dSIG.PutElement(5, 1, 2 * s[3] * s[5] - 2 * s[1] * s[4]);
-  dI3dSIG.PutElement(6, 1, 2 * s[3] * s[4] - 2 * s[0] * s[5]);
+  dI3_dSig(0, 0) =  s[1] * s[2] - s[5] * s[5]);
+  dI3_dSig(1, 0) =  s[0] * s[2] - s[4] * s[4]);
+  dI3_dSig(2, 0) =  s[0] * s[1] - s[3] * s[3]);
+  dI3_dSig(3, 0) =  2 * s[5] * s[4] - 2 * s[2] * s[3]);
+  dI3_dSig(4, 0) =  2 * s[3] * s[5] - 2 * s[1] * s[4]);
+  dI3_dSig(5, 0) =  2 * s[3] * s[4] - 2 * s[0] * s[5]);
 
-  // dI3dSIG.PrintPrecise();
+  // dI3_dSig.PrintPrecise();
 
-  dJ2dSIG.PutElement(1, 1, (2 * s[0] - s[1] - s[2]) / 3.0);
-  dJ2dSIG.PutElement(2, 1, (2 * s[1] - s[0] - s[2]) / 3.0);
-  dJ2dSIG.PutElement(3, 1, (2 * s[2] - s[0] - s[1]) / 3.0);
-  dJ2dSIG.PutElement(4, 1, 2 * s[3]);
-  dJ2dSIG.PutElement(5, 1, 2 * s[4]);
-  dJ2dSIG.PutElement(6, 1, 2 * s[5]);
+  dJ2_dSig(0, 0) =  (2 * s[0] - s[1] - s[2]) / 3.0);
+  dJ2_dSig(1, 0) =  (2 * s[1] - s[0] - s[2]) / 3.0);
+  dJ2_dSig(2, 0) =  (2 * s[2] - s[0] - s[1]) / 3.0);
+  dJ2_dSig(3, 0) =  2 * s[3]);
+  dJ2_dSig(4, 0) =  2 * s[4]);
+  dJ2_dSig(5, 0) =  2 * s[5]);
 
-  dJ2dSIG.Copy(&dqdSIG);
-  dqdSIG.Multiply(sqrt(3.0) * 0.5 / sqrt(J2), &dqdSIG);
+  dJ2_dSig.Copy(&dq_dSig);
+  dq_dSig.Multiply(sqrt(3.0) * 0.5 / sqrt(J2), &dq_dSig);
 
-  dI1dSIG.Copy(&dJ3dSIG);
-  dJ3dSIG.Multiply(2.0 / 9.0 * I1 * I1 - I2 / 3.0, &dJ3dSIG);
-  // dJ3dSIG.PrintPrecise();
-  dI2dSIG.Copy(&TEMP);
+  dI1_dSig.Copy(&dJ3_dSig);
+  dJ3_dSig.Multiply(2.0 / 9.0 * I1 * I1 - I2 / 3.0, &dJ3_dSig);
+  // dJ3_dSig.PrintPrecise();
+  dI2_dSig.Copy(&TEMP);
   TEMP.Multiply(-I1 / 3.0, &TEMP);
-  dJ3dSIG.Add(&TEMP, &dJ3dSIG);
-  dJ3dSIG.Add(&dI3dSIG, &dJ3dSIG);
-  // dJ3dSIG.PrintPrecise();
-  // finished dJ3dSIG
+  dJ3_dSig.Add(&TEMP, &dJ3_dSig);
+  dJ3_dSig.Add(&dI3_dSig, &dJ3_dSig);
+  // dJ3_dSig.PrintPrecise();
+  // finished dJ3_dSig
 
   // above needs to be *CORRECTED* as some errors in ij i!=j components is
   // likely (2x too big)
 
-  dJ2dSIG.Copy(&A);
+  dJ2_dSig.Copy(&A);
   A.Multiply(0.21022410391343 * M * Factor025 / shearStress, &A);
 
   for (int i = 1; i < 7; i++) {
     if (!finite(A.getElement(i, 1))) {
       cout << "calcPlastic(1) DF/dSigma not finite at A(" << i
-           << "). set to 1.0. Results may be incorrect. Press any key." << endl;
+           << "). set to 1.0. Results may be incorrect. Press any key." << "\n";
       getchar();
       A.PutElement(i, 1, 0.0);
     }
   }
 
-  // cout<<"dF/dJ2 part"<<endl;
+  // cout<<"dF/dJ2 part"<<"\n";
   // A.PrintPrecise();
-  dJ3dSIG.Copy(&TEMP);
+  dJ3_dSig.Copy(&TEMP);
   TEMP.Multiply(-1.419012700740643 * (alpha4 - 1) * M * sqrt(J2) * Factor075 /
                     (sqrt(3.0) * shearStress * shearStress * shearStress) +
                   0.94600846716043 * (alpha4 - 1) * cohesion * M * Factor075 /
                     (shearStress * shearStress * shearStress),
                 &TEMP);
-  // cout<<"dF/dJ3 part"<<endl;
+  // cout<<"dF/dJ3 part"<<"\n";
   // TEMP.PrintPrecise();
   A.Add(&TEMP, &A);
 
   for (int i = 1; i < 7; i++) {
     if (!finite(A.getElement(i, 1))) {
       cout << "calcPlastic(2) DF/dSigma not finite at A(" << i
-           << "). set to 1.0. Results may be incorrect. Press any key." << endl;
+           << "). set to 1.0. Results may be incorrect. Press any key." << "\n";
       getchar();
       A.PutElement(i, 1, 0.0);
     }
   }
 
-  dqdSIG.Copy(&TEMP);
+  dq_dSig.Copy(&TEMP);
   TEMP.Multiply(
     -2.838025401481287 * (alpha4 - 1) * cohesion * M * J3 * Factor075 /
         (shearStress * shearStress * shearStress * shearStress) +
       4.257038102221929 * (alpha4 - 1) * M * sqrt(J2) * J3 * Factor075 /
         (sqrt(3.0) * shearStress * shearStress * shearStress * shearStress),
     &TEMP);
-  // cout<<"dF/dq part"<<endl;
+  // cout<<"dF/dq part"<<"\n";
   // TEMP.PrintPrecise();
   A.Add(&TEMP, &A);
-  dI1dSIG.Copy(&TEMP);
+  dI1_dSig.Copy(&TEMP);
   TEMP.Multiply(-1 / 3.0, &TEMP);
   A.Add(&TEMP, &A);
 
   for (int i = 1; i < 7; i++) {
     if (!finite(A.getElement(i, 1))) {
       cout << "calcPlastic(3) DF/dSigma not finite at A(" << i
-           << "). set to 1.0. Results may be incorrect. Press any key." << endl;
+           << "). set to 1.0. Results may be incorrect. Press any key." << "\n";
       getchar();
       A.PutElement(i, 1, 0.0);
     }
@@ -807,115 +1310,115 @@ ShengMohrCoulomb::calcPlastic(BBMPoint point, double* epStrain,
   /*A.PrintPrecise ();
   //FINISHED dF/dSigma
 
-  BBMPoint CopyPoint;
+  StateMohrCoulomb CopyPoint;
   Point.Copy(&CopyPoint);
   double Yield1,Yield2,dSs=0.0001;
   Yield1=computeYieldFunction(&CopyPoint);
   CopyPoint.stress[0]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"DSigma="<<dSs<<endl;
-  cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"DSigma="<<dSs<<"\n";
+  cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[0]-=dSs;
 
   CopyPoint.stress[1]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[1]-=dSs;
 
   CopyPoint.stress[2]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[2]-=dSs;
 
   dSs=10*dSs;
   CopyPoint.stress[0]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"DSigma="<<dSs<<endl;
-  cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"DSigma="<<dSs<<"\n";
+  cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[0]-=dSs;
 
   CopyPoint.stress[1]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[1]-=dSs;
 
   CopyPoint.stress[2]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[2]-=dSs;
 
   dSs=10*dSs;
   CopyPoint.stress[0]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"DSigma="<<dSs<<endl;
-  cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"DSigma="<<dSs<<"\n";
+  cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[0]-=dSs;
 
   CopyPoint.stress[1]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[1]-=dSs;
 
   CopyPoint.stress[2]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[2]-=dSs;
 
   dSs=10*dSs;
   CopyPoint.stress[0]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"DSigma="<<dSs<<endl;
-  cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"DSigma="<<dSs<<"\n";
+  cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[0]-=dSs;
 
   CopyPoint.stress[1]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[1]-=dSs;
 
   CopyPoint.stress[2]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[2]-=dSs;
 
   dSs=10*dSs;
   CopyPoint.stress[0]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"DSigma="<<dSs<<endl;
-  cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"DSigma="<<dSs<<"\n";
+  cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[0]-=dSs;
 
   CopyPoint.stress[1]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[1]-=dSs;
 
   CopyPoint.stress[2]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[2]-=dSs;
 
   dSs=10*dSs;
   CopyPoint.stress[0]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"DSigma="<<dSs<<endl;
-  cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"DSigma="<<dSs<<"\n";
+  cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[0]-=dSs;
 
   CopyPoint.stress[1]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[1]-=dSs;
 
   CopyPoint.stress[2]+=dSs;
   Yield2=computeYieldFunctionNN(&CopyPoint);
-  cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<endl;
+  cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<"\n";
   CopyPoint.stress[2]-=dSs;
   */
 
-  dJ2dSIG.Copy(&GG);
+  dJ2_dSig.Copy(&GG);
   GG.Multiply(0.21022410391343 * Mpsi * Factor025 / shearStress, &GG);
-  dJ3dSIG.Copy(&TEMP);
+  dJ3_dSig.Copy(&TEMP);
   TEMP.Multiply(-1.419012700740643 * (alpha4 - 1) * Mpsi * sqrt(J2) *
                     Factor075 /
                     (sqrt(3.0) * shearStress * shearStress * shearStress) +
@@ -923,7 +1426,7 @@ ShengMohrCoulomb::calcPlastic(BBMPoint point, double* epStrain,
                     Factor075 / (shearStress * shearStress * shearStress),
                 &TEMP);
   GG.Add(&TEMP, &GG);
-  dqdSIG.Copy(&TEMP);
+  dq_dSig.Copy(&TEMP);
   TEMP.Multiply(
     -2.838025401481287 * (alpha4 - 1) * cohesion * Mpsi * J3 * Factor075 /
         (shearStress * shearStress * shearStress * shearStress) +
@@ -931,7 +1434,7 @@ ShengMohrCoulomb::calcPlastic(BBMPoint point, double* epStrain,
         (sqrt(3.0) * shearStress * shearStress * shearStress * shearStress),
     &TEMP);
   GG.Add(&TEMP, &GG);
-  dI1dSIG.Copy(&TEMP);
+  dI1_dSig.Copy(&TEMP);
   TEMP.Multiply(
     -1 / 3.0,
     &TEMP); // First correction: sign here, but most likely not enough!!!
@@ -942,12 +1445,12 @@ ShengMohrCoulomb::calcPlastic(BBMPoint point, double* epStrain,
   double K43G = K + 4.0 * G / 3.0;
   double K23G = K - 2.0 * G / 3.0;
 
-  DEL.PutElement(1, 1, K43G);
-  DEL.PutElement(1, 2, K23G);
-  DEL.PutElement(1, 3, K23G); // rest of the line are zeros and rightly so
-  DEL.PutElement(2, 1, K23G);
-  DEL.PutElement(2, 2, K43G);
-  DEL.PutElement(2, 3, K23G); // yes, the matrix is symmetrical, but it is
+  DEL(0, 0) =  K43G);
+  DEL(0, 1) =  K23G);
+  DEL(0, 2) =  K23G); // rest of the line are zeros and rightly so
+  DEL(1, 0) =  K23G);
+  DEL(1, 1) =  K43G);
+  DEL(1, 2) =  K23G); // yes, the matrix is symmetrical, but it is
                               // faster to put this 3 additional elements
   DEL.PutElement(
     3, 1,
@@ -971,8 +1474,8 @@ ShengMohrCoulomb::calcPlastic(BBMPoint point, double* epStrain,
 
   if (USE_NICE_SCHEME > 0) {
     // NUMERATOR.PutElement(1,1,NUMERATOR.getElement(1,1)+computeYieldFunction(&Point));
-    NUMERATOR.PutElement(1, 1, NUMERATOR.getElement(1, 1) + fValue);
-    NUMERATOR.PutElement(1, 1, NUMERATOR.getElement(1, 1) +
+    NUMERATOR(0, 0) =  NUMERATOR.getElement(1, 1) + fValue);
+    NUMERATOR(0, 0) =  NUMERATOR.getElement(1, 1) +
                                  (*dLambda) * DENOMINATOR.getElement(1, 1));
     *dLambda = fValue / DENOMINATOR.getElement(1, 1);
     DEL.Multiply(&GG, &TEMP);
@@ -990,7 +1493,7 @@ ShengMohrCoulomb::calcPlastic(BBMPoint point, double* epStrain,
   if (DENOMINATOR.getElement(1, 1) < TINY)
     cout << "Denominator of plastic multiplier is very small. Some error may "
             "arise and results may be incorrect"
-         << endl;
+         << "\n";
 
   TEMP.Multiply(1 / DENOMINATOR.getElement(1, 1), &TEMP);
   DEL.Multiply(&DEPS, dSigma);
@@ -999,7 +1502,7 @@ ShengMohrCoulomb::calcPlastic(BBMPoint point, double* epStrain,
     if (!finite(dSigma->getElement(i, 1))) {
       cout << "calcPlastic: dSigma not finite: set to zero. Results may be "
               "erronous."
-           << endl;
+           << "\n";
       dSigma->PutElement(i, 1, 0.0);
     }
   }
@@ -1012,7 +1515,7 @@ ShengMohrCoulomb::calcPlastic(BBMPoint point, double* epStrain,
 }
 
 void
-ShengMohrCoulomb::getTangentMatrix(BBMPoint* point, BBMMatrix* DEP)
+ShengMohrCoulomb::getTangentMatrix(StateMohrCoulomb* point, BBMMatrix* DEP)
 {
   /*
   This procedure returns tangent matrix. If given point lies on the yield locus,
@@ -1029,13 +1532,13 @@ ShengMohrCoulomb::getTangentMatrix(BBMPoint* point, BBMMatrix* DEP)
 
   DEP->Resize(6, 7);
 
-  if (checkYield(Point)) {
+  if (computeYieldNormalized(Point)) {
     // calculate elasto-plastic matrix
     calculateElastoPlasticTangentMatrix(Point, DEP);
     // DEP->Print();
 
     // calculateElasticTangentMatrix (Point, DEP);
-    // cout<<"Elasto-Plastic Matrix used"<<endl;
+    // cout<<"Elasto-Plastic Matrix used"<<"\n";
   } else {
     // calculate elastic matrix
     calculateElasticTangentMatrix(Point, DEP);
@@ -1043,26 +1546,26 @@ ShengMohrCoulomb::getTangentMatrix(BBMPoint* point, BBMMatrix* DEP)
 }
 
 void
-ShengMohrCoulomb::getTangentMatrixPQ(BBMPoint* point, BBMMatrix* DEP)
+ShengMohrCoulomb::getTangentMatrixPQ(StateMohrCoulomb* point, BBMMatrix* DEP)
 {
-  cout << "getTangentMatrixPQ is unsupported for Mohr-Coulomb Model" << endl;
+  cout << "getTangentMatrixPQ is unsupported for Mohr-Coulomb Model" << "\n";
   getchar();
   // calculateElastoPlasticTangentMatrix (Point,DEP);
 }
 
 void
-ShengMohrCoulomb::calculateElasticTangentMatrixPQ(BBMPoint* point,
+ShengMohrCoulomb::calculateElasticTangentMatrixPQ(StateMohrCoulomb* point,
                                                   BBMMatrix* DEP)
 {
   cout
     << "calculateElasticTangentMatrixPQ is unsupported for Mohr-Coulomb Model"
-    << endl;
+    << "\n";
   getchar();
   // calculateElasticTangentMatrix (Point, DEP);
 }
 
 void
-ShengMohrCoulomb::calculateElastoPlasticTangentMatrix(BBMPoint* point,
+ShengMohrCoulomb::calculateElastoPlasticTangentMatrix(StateMohrCoulomb* point,
                                                       BBMMatrix* DEP)
 {
   /*************************************
@@ -1090,11 +1593,11 @@ ShengMohrCoulomb::calculateElastoPlasticTangentMatrix(BBMPoint* point,
 
   // we do not have g, as a == g in associated flow rule.
 
-  double I1=Point->getFirstInvariant();
-  double I2=Point->getSecondInvariant();
-  double J2=Point->getSecondDevInvariant ();
-  double J3=Point->getThirdDevInvariant ();
-  double shearStress=Point->getShearStress ();
+  double I1=Point->firstInvariant();
+  double I2=Point->secondInvariant();
+  double J2=Point->secondDevInvariant ();
+  double J3=Point->thirdDevInvariant ();
+  double shearStress=Point->shearStress ();
   double Factor=-27*J3/(2*shearStress*shearStress*shearStress);
   if (Factor>1) Factor=1;
   if (Factor<-1) Factor=-1;
@@ -1102,9 +1605,9 @@ ShengMohrCoulomb::calculateElastoPlasticTangentMatrix(BBMPoint* point,
                   {
                        Factor=1.0;
                        cout<<"Factor in calculate Elasto-Plastic Tangent Matrix
-  is not finite. set to 1"<<endl;
+  is not finite. set to 1"<<"\n";
                        cout<<"alpha4="<<alpha4<<" J3="<<J3<<"
-  shearStress="<<shearStress<<endl;
+  shearStress="<<shearStress<<"\n";
                   }
   Factor=1+alpha4-(1-alpha4)*Factor;
   double Factor025=pow(Factor,0.25);
@@ -1114,59 +1617,59 @@ ShengMohrCoulomb::calculateElastoPlasticTangentMatrix(BBMPoint* point,
 
 
 
-  BBMMatrix dJ2dSIG (6,1), dJ3dSIG (6,1), dqdSIG (6,1), dI1dSIG (6,1), dI2dSIG
-  (6,1), dI3dSIG (6,1), TEMP(6,1), NUMERATOR(6,1);
+  BBMMatrix dJ2_dSig (6,1), dJ3_dSig (6,1), dq_dSig (6,1), dI1_dSig (6,1), dI2_dSig
+  (6,1), dI3_dSig (6,1), TEMP(6,1), NUMERATOR(6,1);
 
   //derivatives of the invariants
   double
   s[6]={Point->stress[0],Point->stress[1],Point->stress[2],Point->stress[3],Point->stress[4],Point->stress[5]};
 
-  dI1dSIG.PutElement (1,1,1.0); dI1dSIG.PutElement (2,1,1.0);dI1dSIG.PutElement
+  dI1_dSig.PutElement (1,1,1.0); dI1_dSig.PutElement (2,1,1.0);dI1_dSig.PutElement
   (3,1,1.0); //{1,1,1,0,0,0}
 
-  dI2dSIG.PutElement (1,1,s[1]+s[2]);dI2dSIG.PutElement
-  (2,1,s[0]+s[2]);dI2dSIG.PutElement (3,1,s[0]+s[1]);
-  dI2dSIG.PutElement (4,1,-2*s[3]);dI2dSIG.PutElement
-  (5,1,-2*s[4]);dI2dSIG.PutElement (6,1,-2*s[5]);
+  dI2_dSig.PutElement (1,1,s[1]+s[2]);dI2_dSig.PutElement
+  (2,1,s[0]+s[2]);dI2_dSig.PutElement (3,1,s[0]+s[1]);
+  dI2_dSig.PutElement (4,1,-2*s[3]);dI2_dSig.PutElement
+  (5,1,-2*s[4]);dI2_dSig.PutElement (6,1,-2*s[5]);
 
-  dI3dSIG.PutElement (1,1,s[1]*s[2]-s[5]*s[5]);dI3dSIG.PutElement
-  (2,1,s[0]*s[2]-s[4]*s[4]);dI3dSIG.PutElement (3,1,s[0]*s[1]-s[3]*s[3]);
-  dI3dSIG.PutElement (4,1,2*s[5]*s[4]-2*s[2]*s[3]);dI3dSIG.PutElement
-  (5,1,2*s[3]*s[5]-2*s[1]*s[4]);dI3dSIG.PutElement
+  dI3_dSig.PutElement (1,1,s[1]*s[2]-s[5]*s[5]);dI3_dSig.PutElement
+  (2,1,s[0]*s[2]-s[4]*s[4]);dI3_dSig.PutElement (3,1,s[0]*s[1]-s[3]*s[3]);
+  dI3_dSig.PutElement (4,1,2*s[5]*s[4]-2*s[2]*s[3]);dI3_dSig.PutElement
+  (5,1,2*s[3]*s[5]-2*s[1]*s[4]);dI3_dSig.PutElement
   (6,1,2*s[3]*s[4]-2*s[0]*s[5]);
 
-  dJ2dSIG.PutElement (1,1,(2*s[0]-s[1]-s[2])/3.0);dJ2dSIG.PutElement
-  (2,1,(2*s[1]-s[0]-s[2])/3.0);dJ2dSIG.PutElement (3,1,(2*s[2]-s[0]-s[1])/3.0);
-  dJ2dSIG.PutElement (4,1,2*s[3]);dJ2dSIG.PutElement
-  (5,1,2*s[4]);dJ2dSIG.PutElement (6,1,2*s[5]);
+  dJ2_dSig.PutElement (1,1,(2*s[0]-s[1]-s[2])/3.0);dJ2_dSig.PutElement
+  (2,1,(2*s[1]-s[0]-s[2])/3.0);dJ2_dSig.PutElement (3,1,(2*s[2]-s[0]-s[1])/3.0);
+  dJ2_dSig.PutElement (4,1,2*s[3]);dJ2_dSig.PutElement
+  (5,1,2*s[4]);dJ2_dSig.PutElement (6,1,2*s[5]);
 
-  dJ2dSIG.Copy(&dqdSIG);
-  dqdSIG.Multiply(sqrt(3.0)*0.5/sqrt(J2),&dqdSIG);
+  dJ2_dSig.Copy(&dq_dSig);
+  dq_dSig.Multiply(sqrt(3.0)*0.5/sqrt(J2),&dq_dSig);
 
-  dI1dSIG.Copy(&dJ3dSIG);
-  dJ3dSIG.Multiply(6.0/27.0*I1*I1-I2/3.0,&dJ3dSIG);
-  dI2dSIG.Copy(&TEMP);
+  dI1_dSig.Copy(&dJ3_dSig);
+  dJ3_dSig.Multiply(6.0/27.0*I1*I1-I2/3.0,&dJ3_dSig);
+  dI2_dSig.Copy(&TEMP);
   TEMP.Multiply(-I1/3.0,&TEMP);
-  dJ3dSIG.Add(&TEMP,&dJ3dSIG);
-  dJ3dSIG.Add(&dI3dSIG,&dJ3dSIG);
-  //finished dJ3dSIG
+  dJ3_dSig.Add(&TEMP,&dJ3_dSig);
+  dJ3_dSig.Add(&dI3_dSig,&dJ3_dSig);
+  //finished dJ3_dSig
 
   //above needs to be *CORRECTED* as some errors in ij i!=j components is likely
   (2x too big)
 
-  dJ2dSIG.Copy(&A);
+  dJ2_dSig.Copy(&A);
   A.Multiply (0.21022410391343*M*Factor025/shearStress,&A);
-  dJ3dSIG.Copy(&TEMP);
+  dJ3_dSig.Copy(&TEMP);
   TEMP.Multiply
   (1.419012700740643*(alpha4-1)*M*sqrt(J2)*Factor075/(sqrt(3.0)*shearStress*shearStress*shearStress)-
                              0.94600846716043*(alpha4-1)*cohesion*M*Factor075/(shearStress*shearStress*shearStress),&TEMP);
   A.Add (&TEMP,&A);
-  dqdSIG.Copy(&TEMP);
+  dq_dSig.Copy(&TEMP);
   TEMP.Multiply
   (2.838025401481287*(alpha4-1)*cohesion*M*J3*Factor075/(shearStress*shearStress*shearStress*shearStress)-
                              4.257038102221929*(alpha4-1)*M*sqrt(J2)*J3*Factor075/(sqrt(3.0)*shearStress*shearStress*shearStress*shearStress),&TEMP);
   A.Add (&TEMP,&A);
-  dI1dSIG.Copy(&TEMP);
+  dI1_dSig.Copy(&TEMP);
   TEMP.Multiply(-1/3.0, &TEMP);
   A.Add (&TEMP,&A);
 
@@ -1174,19 +1677,19 @@ ShengMohrCoulomb::calculateElastoPlasticTangentMatrix(BBMPoint* point,
 
   //FINISHED dF/dSigma
 
-  dJ2dSIG.Copy(&GG);
+  dJ2_dSig.Copy(&GG);
   GG.Multiply (0.21022410391343*Mpsi*Factor025/shearStress,&GG);
-  dJ3dSIG.Copy(&TEMP);
+  dJ3_dSig.Copy(&TEMP);
   TEMP.Multiply
   (1.419012700740643*(alpha4-1)*Mpsi*sqrt(J2)*Factor075/(sqrt(3.0)*shearStress*shearStress*shearStress)-
                              0.94600846716043*(alpha4-1)*cohesion*Mpsi*Factor075/(shearStress*shearStress*shearStress),&TEMP);
   GG.Add (&TEMP,&GG);
-  dqdSIG.Copy(&TEMP);
+  dq_dSig.Copy(&TEMP);
   TEMP.Multiply
   (2.838025401481287*(alpha4-1)*cohesion*Mpsi*J3*Factor075/(shearStress*shearStress*shearStress*shearStress)-
                              4.257038102221929*(alpha4-1)*Mpsi*sqrt(J2)*J3*Factor075/(sqrt(3.0)*shearStress*shearStress*shearStress*shearStress),&TEMP);
   GG.Add (&TEMP,&GG);
-  dI1dSIG.Copy(&TEMP);
+  dI1_dSig.Copy(&TEMP);
   TEMP.Multiply(-1/3.0, &TEMP);  //First correction: sign here, but most likely
   not enough!!!
   GG.Add (&TEMP,&GG);
@@ -1233,393 +1736,14 @@ ShengMohrCoulomb::calculateElastoPlasticTangentMatrix(BBMPoint* point,
   // FINAL MATRIX PUT TOGETHER, 6 rows, 7 columns
 }
 
-void
-ShengMohrCoulomb::calculateElasticTangentMatrix(BBMPoint* point, BBMMatrix* DEP)
-{
 
-  double K43G = K + 4.0 * G / 3.0;
-  double K23G = K - 2.0 * G / 3.0;
-
-  DEP->PutElement(1, 1, K43G);
-  DEP->PutElement(1, 2, K23G);
-  DEP->PutElement(1, 3, K23G); // rest of the line are zeros and rightly so
-  DEP->PutElement(2, 1, K23G);
-  DEP->PutElement(2, 2, K43G);
-  DEP->PutElement(2, 3, K23G); // yes, the matrix is symmetrical, but it is
-                               // faster to put this 3 additional elements
-  DEP->PutElement(
-    3, 1,
-    K23G); // than just mirror all, including zeros, which are there already
-  DEP->PutElement(3, 2, K23G);
-  DEP->PutElement(3, 3, K43G);
-  DEP->PutElement(4, 4, 2.0 * G);
-  DEP->PutElement(5, 5, 2.0 * G);
-  DEP->PutElement(6, 6, 2.0 * G); // rest of the matrix is filled with zeros...
-}
-
-double
-ShengMohrCoulomb::findGradient(double* state, double* s, double* ds, double* dF,
-                               double suction, double dsuction)
-{
-
-  /*
-
-  //to be amended later on
-  // HACK HACK HACK
-  This procedure finds a gradient to the yield locus at given point.
-  It is used later to determine whether we have partly elastic unloading or only
-  plastic step
-  The gradient may be found only when we are on "main" plastic yield locus;
-  Otherwise results may be erroneous.
-
-  Parameters: state[], s[] (stress), ds[] (stress increment), suction,
-
-  Gradient = gradient[1], gradient[2] etc - there the result will be stored
-
-  Firs the C(s) part must be calculated, then the gradient.
-
-  returns cosinus of the angle...
-
-  */
-
-  BBMMatrix A(6, 1); // dF/dsigma
-
-  double I1 = s[0] + s[1] + s[2];
-
-  double I2 = s[0] * s[1] + s[1] * s[2] + s[2] * s[0] - s[3] * s[3] -
-              s[4] * s[4] - s[5] * s[5];
-
-  double I3 = s[0] * s[1] * s[2] + 2 * s[3] * s[4] * s[5] - s[0] * s[5] * s[5] -
-              s[1] * s[4] * s[4] - s[2] * s[3] * s[3];
-
-  double J2 = (s[0] - s[1]) * (s[0] - s[1]) + (s[0] - s[2]) * (s[0] - s[2]) +
-              (s[1] - s[2]) * (s[1] - s[2]);
-  J2 = J2 / 6.0 + (s[3] * s[3] + s[4] * s[4] + s[5] * s[5]);
-
-  double J3 = I1 * I1 * I1 * 2.0 / 27.0 - I1 * I2 / 3.0 + I3;
-
-  double shearStress = sqrt(3.0 * J2);
-  double Factor = -27 * J3 / (2 * shearStress * shearStress * shearStress);
-  if (Factor > 1)
-    Factor = 1;
-  if (Factor < -1)
-    Factor = -1;
-  if (!finite(Factor)) {
-    Factor = 1.0;
-    cout << "Factor in findGradient [parameters *Point] is not finite. set to 1"
-         << endl;
-    cout << "alpha4=" << alpha4 << " J3=" << J3
-         << " shearStress=" << shearStress << endl;
-  }
-  Factor = 1 + alpha4 - (1 - alpha4) * Factor;
-  double Factor025 = pow(Factor, 0.25);
-  double Factor075 = pow(Factor, -0.75);
-  double M = (3 - sin_phi) / (6 * alpha * sin_phi);
-  // double Mpsi=(3-sin_psi)/(6*alpha*sin_psi);
-
-  BBMMatrix dJ2dSIG(6, 1), dJ3dSIG(6, 1), dqdSIG(6, 1), dI1dSIG(6, 1),
-    dI2dSIG(6, 1), dI3dSIG(6, 1), TEMP(6, 1);
-
-  dI1dSIG.PutElement(1, 1, 1.0);
-  dI1dSIG.PutElement(2, 1, 1.0);
-  dI1dSIG.PutElement(3, 1, 1.0); //{1,1,1,0,0,0}
-
-  dI2dSIG.PutElement(1, 1, s[1] + s[2]);
-  dI2dSIG.PutElement(2, 1, s[0] + s[2]);
-  dI2dSIG.PutElement(3, 1, s[0] + s[1]);
-  dI2dSIG.PutElement(4, 1, -2 * s[3]);
-  dI2dSIG.PutElement(5, 1, -2 * s[4]);
-  dI2dSIG.PutElement(6, 1, -2 * s[5]);
-
-  // dI2dSIG.PrintPrecise();
-
-  dI3dSIG.PutElement(1, 1, s[1] * s[2] - s[5] * s[5]);
-  dI3dSIG.PutElement(2, 1, s[0] * s[2] - s[4] * s[4]);
-  dI3dSIG.PutElement(3, 1, s[0] * s[1] - s[3] * s[3]);
-  dI3dSIG.PutElement(4, 1, 2 * s[5] * s[4] - 2 * s[2] * s[3]);
-  dI3dSIG.PutElement(5, 1, 2 * s[3] * s[5] - 2 * s[1] * s[4]);
-  dI3dSIG.PutElement(6, 1, 2 * s[3] * s[4] - 2 * s[0] * s[5]);
-
-  // dI3dSIG.PrintPrecise();
-
-  dJ2dSIG.PutElement(1, 1, (2 * s[0] - s[1] - s[2]) / 3.0);
-  dJ2dSIG.PutElement(2, 1, (2 * s[1] - s[0] - s[2]) / 3.0);
-  dJ2dSIG.PutElement(3, 1, (2 * s[2] - s[0] - s[1]) / 3.0);
-  dJ2dSIG.PutElement(4, 1, 2 * s[3]);
-  dJ2dSIG.PutElement(5, 1, 2 * s[4]);
-  dJ2dSIG.PutElement(6, 1, 2 * s[5]);
-
-  dJ2dSIG.Copy(&dqdSIG);
-  dqdSIG.Multiply(sqrt(3.0) * 0.5 / sqrt(J2), &dqdSIG);
-
-  dI1dSIG.Copy(&dJ3dSIG);
-  dJ3dSIG.Multiply(2.0 / 9.0 * I1 * I1 - I2 / 3.0, &dJ3dSIG);
-  // dJ3dSIG.PrintPrecise();
-  dI2dSIG.Copy(&TEMP);
-  TEMP.Multiply(-I1 / 3.0, &TEMP);
-  dJ3dSIG.Add(&TEMP, &dJ3dSIG);
-  dJ3dSIG.Add(&dI3dSIG, &dJ3dSIG);
-  // dJ3dSIG.PrintPrecise();
-  // finished dJ3dSIG
-
-  // above needs to be *CORRECTED* as some errors in ij i!=j components is
-  // likely (2x too big)
-
-  dJ2dSIG.Copy(&A);
-  A.Multiply(0.21022410391343 * M * Factor025 / shearStress, &A);
-
-  for (int i = 1; i < 7; i++) {
-    if (!finite(A.getElement(i, 1))) {
-      A.PutElement(i, 1, 0.0);
-    }
-  }
-
-  // cout<<"dF/dJ2 part"<<endl;
-  // A.PrintPrecise();
-  dJ3dSIG.Copy(&TEMP);
-  TEMP.Multiply(-1.419012700740643 * (alpha4 - 1) * M * sqrt(J2) * Factor075 /
-                    (sqrt(3.0) * shearStress * shearStress * shearStress) +
-                  0.94600846716043 * (alpha4 - 1) * cohesion * M * Factor075 /
-                    (shearStress * shearStress * shearStress),
-                &TEMP);
-  // cout<<"dF/dJ3 part"<<endl;
-  // TEMP.PrintPrecise();
-  A.Add(&TEMP, &A);
-
-  for (int i = 1; i < 7; i++) {
-    if (!finite(A.getElement(i, 1))) {
-      A.PutElement(i, 1, 0.0);
-    }
-  }
-
-  dqdSIG.Copy(&TEMP);
-  TEMP.Multiply(
-    -2.838025401481287 * (alpha4 - 1) * cohesion * M * J3 * Factor075 /
-        (shearStress * shearStress * shearStress * shearStress) +
-      4.257038102221929 * (alpha4 - 1) * M * sqrt(J2) * J3 * Factor075 /
-        (sqrt(3.0) * shearStress * shearStress * shearStress * shearStress),
-    &TEMP);
-  // cout<<"dF/dq part"<<endl;
-  // TEMP.PrintPrecise();
-  A.Add(&TEMP, &A);
-  dI1dSIG.Copy(&TEMP);
-  TEMP.Multiply(-1 / 3.0, &TEMP);
-  A.Add(&TEMP, &A);
-
-  for (int i = 1; i < 7; i++) {
-    if (!finite(A.getElement(i, 1))) {
-      A.PutElement(i, 1, 0.0);
-    }
-  }
-
-  for (int i = 0; i < 6; i++)
-    dF[i] = A.getElementZ(i, 1);
-
-  double dFlength = 0, dslength = 0, cosin = 0;
-
-  for (int i = 0; i < 6; i++) {
-    dFlength = dFlength + dF[i] * dF[i]; // calculated length
-    dslength = dslength + ds[i] * ds[i];
-  }
-
-  dslength = sqrt(dslength);
-  dFlength = sqrt(dFlength);
-
-  for (int i = 0; i < 6; i++) {
-
-    // calculated lenght - gradient - total length of vector ==1#
-    // cout<<"dF["<<i<<"]="<<dF[i]<<endl;
-    cosin =
-      cosin +
-      dF[i] * ds[i] /
-        (dslength * dFlength); // calculated cosinus of the thetha angle...
-  }
-  if (cosin < -d_yieldTol) {
-    // cout<<"check if no problem in the findGradient"<<endl;
-    // cout<<"cosin="<<cosin<<endl;
-    // getchar();
-  }
-
-  return cosin; // cosin returned...
-
-  // derivatives of the invariants
-
-  /*
-
-  dI1dSIG.PutElement (1,1,1.0); dI1dSIG.PutElement (1,2,1.0);dI1dSIG.PutElement
-  (1,3,1.0); //{1,1,1,0,0,0}
-
-  dI2dSIG.PutElement (1,1,s[1]+s[2]);dI2dSIG.PutElement
-  (1,2,s[0]+s[2]);dI2dSIG.PutElement (1,3,s[0]+s[1]);
-  dI2dSIG.PutElement (1,4,-2*s[3]);dI2dSIG.PutElement
-  (1,5,-2*s[4]);dI2dSIG.PutElement (1,6,-2*s[5]);
-
-  dI3dSIG.PutElement (1,1,s[1]*s[2]-s[5]*s[5]);dI3dSIG.PutElement
-  (1,2,s[0]*s[2]-s[4]*s[4]);dI3dSIG.PutElement (1,3,s[0]*s[1]-s[3]*s[3]);
-  dI3dSIG.PutElement (1,4,2*s[5]*s[4]-2*s[2]*s[3]);dI3dSIG.PutElement
-  (1,5,2*s[3]*s[5]-2*s[1]*s[4]);dI3dSIG.PutElement
-  (1,6,2*s[3]*s[4]-2*s[0]*s[5]);
-
-  dJ2dSIG.PutElement (1,1,(2*s[0]-s[1]-s[2])/3.0);dJ2dSIG.PutElement
-  (1,2,(2*s[1]-s[0]-s[2])/3.0);dJ2dSIG.PutElement (1,3,(2*s[2]-s[0]-s[1])/3.0);
-  dJ2dSIG.PutElement (1,4,2*s[3]);dJ2dSIG.PutElement
-  (1,5,2*s[4]);dJ2dSIG.PutElement (1,6,2*s[5]);
-
-  dJ2dSIG.Copy(&dqdSIG);
-  dqdSIG.Multiply(sqrt(3.0)*0.5/sqrt(J2),&dqdSIG);
-
-  dI1dSIG.Copy(&dJ3dSIG);
-  dJ3dSIG.Multiply(6.0/27.0*I1*I1-I2/3.0,&dJ3dSIG);
-  dI2dSIG.Copy(&TEMP);
-  TEMP.Multiply(-I1/3.0,&TEMP);
-  dJ3dSIG.Add(&TEMP,&dJ3dSIG);
-  dJ3dSIG.Add(&dI3dSIG,&dJ3dSIG);
-  //finished dJ3dSIG
-
-  //above needs to be *CORRECTED* as some errors in ij i!=j components is likely
-  (2x too big)
-
-  dJ2dSIG.Copy(&A);
-  A.Multiply (0.21022410391343*M*Factor025/shearStress,&A);
-  dJ3dSIG.Copy(&TEMP);
-  TEMP.Multiply
-  (1.419012700740643*(alpha4-1)*M*sqrt(J2)*Factor075/(sqrt(3.0)*shearStress*shearStress*shearStress)-
-                             0.94600846716043*(alpha4-1)*cohesion*M*Factor075/(shearStress*shearStress*shearStress),&TEMP);
-  A.Add (&TEMP,&A);
-  dqdSIG.Copy(&TEMP);
-  TEMP.Multiply
-  (2.838025401481287*(alpha4-1)*cohesion*M*J3*Factor075/(shearStress*shearStress*shearStress*shearStress)-
-                             4.257038102221929*(alpha4-1)*M*sqrt(J2)*J3*Factor075/(sqrt(3.0)*shearStress*shearStress*shearStress*shearStress),&TEMP);
-  A.Add (&TEMP,&A);
-  dI1dSIG.Copy(&TEMP);
-  TEMP.Multiply(-1/3.0, &TEMP);
-  A.Add (&TEMP,&A);
-
-  for (int i=0; i<6; i++) dF[i]=A.getElementZ(i,1);
-
-  double dFlength=0, dslength=0, cosin=0;
-
-  for (int i=0; i<6; i++)
-          {
-                  dFlength=dFlength+dF[i]*dF[i]; //calculated length
-                  dslength=dslength+ds[i]*ds[i];
-          }
-
-          dslength=sqrt(dslength);
-          dFlength=sqrt(dFlength);
-
-          for (int i=0; i<6; i++)
-          {
-
-           //calculated lenght - gradient - total length of vector ==1#
-                  //cout<<"dF["<<i<<"]="<<dF[i]<<endl;
-                  cosin=cosin+dF[i]*ds[i]/(dslength*dFlength); //calculated
-  cosinus of the thetha angle...
-          }
-          cout<<"check if no problem in the findGradient"<<endl;
-          getchar();
-          return cosin; //cosin returned... */
-
-  // in A is dF/dSigma
-
-  /*
-
-
-  double PZero, SuctionPressure, meanStress, shearStress, fValue, dFlength,
-  dslength, cosin;
-
-  //check of the second yield surface:
-          if (state[1]-suction<-d_suctionTol)
-          {
-                  cout<<"yield of the suction surface occurred"<<endl;
-                  if (dsuction>0)
-                  {
-                          cout <<"Unable to find gradient; Whole step
-  plastic"<<endl;
-                          return -2;
-                  //this check may be unused...
-                  }
-          }
-  //check of the standard yield surface
-          meanStress=(s[0]+s[1]+s[2])/3;
-          shearStress=(s[0]-s[1])*(s[0]-s[1])+(s[0]-s[2])*(s[0]-s[2])+(s[1]-s[2])*(s[1]-s[2]);
-          shearStress=shearStress+6*(s[3]*s[3]+s[4]*s[4]+s[5]*s[5]);
-          shearStress=shearStress/2;
-          //shearStress=sqrt (shearStress);  //Naylor Pande
-
-          PZero=LambdaZero*((1-r)*exp(-1*Beta*suction)+r);
-          PZero=(LambdaZero-KappaP)/(PZero-KappaP);
-          PZero=pc*pow((state[0]/pc),PZero);
-          SuctionPressure=k*suction;
-          fValue=shearStress-M*M*(meanStress+SuctionPressure)*(PZero-meanStress);
-          fValue=fValue/((PZero+SuctionPressure)*(PZero+SuctionPressure));
-  //value of Yield function calculated and normalized
-          if (fValue<-d_yieldTol)
-          {
-                  cout<<"there is no yield at the beginning !!!"<<endl;
-                  cout<<"find gradient procedure terminated!!!"<<endl;
-                  return -3;
-                  // this check may be disabled later
-                  //THIS CHECK LEADS TO ERROR AS WE ARE PLAYING WITH THE
-  TOLERANCES...
-          }
-          dF[0]=2*s[0]-s[1]-s[2]-M*M/3*(PZero-SuctionPressure-2/3*meanStress);
-          dF[1]=2*s[1]-s[0]-s[2]-M*M/3*(PZero-SuctionPressure-2/3*meanStress);
-          dF[2]=2*s[2]-s[0]-s[1]-M*M/3*(PZero-SuctionPressure-2/3*meanStress);
-          dF[3]=6*s[3];
-          dF[4]=6*s[4];
-          dF[5]=6*s[5];
-          dFlength=0;
-          dslength=0;
-          cosin=0;
-
-          double P0Star=state[0];
-          double denominator=LambdaZero*((1-r)*exp(-1*Beta*suction)+r);
-          double numerator=LambdaZero-KappaP;
-
-          dF[6]=-1*Beta*(1-r)*exp(-1*Beta*suction);
-          dF[6]=dF[6]*-1*numerator/(denominator*denominator);
-          dF[6]=dF[6]*pc*log(P0Star/pc);
-          dF[6]=dF[6]*pow((P0Star/pc),numerator/denominator); //it's finished
-  with dp0/ds
-          dF[6]=M*M*(meanStress+SuctionPressure)*dF[6];
-          dF[6]=-1*M*M*k*(PZero-meanStress)-dF[6];
-
-
-
-          for (int i=0; i<6; i++)
-          {
-                  dFlength=dFlength+dF[i]*dF[i]; //calculated length
-                  dslength=dslength+ds[i]*ds[i];
-          }
-          dFlength=dFlength+dF[6]*dF[6];
-          dslength=dslength+dsuction*dsuction;
-          dslength=sqrt(dslength);
-          dFlength=sqrt(dFlength);
-          //cout<<"dFlength="<<dFlength<<endl;
-          //cout<<"dslength="<<dslength<<endl;
-          //cout<<"Mean Stress="<<meanStress<<"  Shear
-  Stress="<<sqrt(shearStress)<<endl;
-
-          for (int i=0; i<6; i++)
-          {
-
-           //calculated lenght - gradient - total length of vector ==1#
-                  //cout<<"dF["<<i<<"]="<<dF[i]<<endl;
-                  cosin=cosin+dF[i]*ds[i]/(dslength*dFlength); //calculated
-  cosinus of the thetha angle...
-          }
-          cosin=cosin-dF[6]*dsuction/(dslength*dFlength);
-          return cosin; //cosin returned... */
-  // return 0;
-}
 
 void
 ShengMohrCoulomb::getDerivative(double meanStress, double shearStress,
                                 double suction, double PZero, double* state,
                                 double* deriv)
 {
-  cout << "getDerivative is not implemented for Mohr-Coulomb model." << endl;
+  cout << "getDerivative is not implemented for Mohr-Coulomb model." << "\n";
   getchar();
   /*	double SuctionPressure=k*suction;
           deriv[0]=M*M*(2*meanStress+SuctionPressure-PZero);  // dF/dp
@@ -1632,16 +1756,16 @@ ShengMohrCoulomb::getDerivative(double meanStress, double shearStress,
           double denominator=LambdaZero*((1-r)*exp(-1*Beta*suction)+r);
           double numerator=LambdaZero-KappaP;
           deriv[2]=-1*Beta*(1-r)*exp(-1*Beta*suction);
-          //cout<<"1:"<<deriv[2]<<endl;
+          //cout<<"1:"<<deriv[2]<<"\n";
           deriv[2]=deriv[2]*-1*numerator/(denominator*denominator);
-          //cout<<"2:"<<deriv[2]<<endl;
+          //cout<<"2:"<<deriv[2]<<"\n";
           deriv[2]=deriv[2]*pc*log(P0Star/pc);
-          //cout<<"3:"<<deriv[2]<<endl;
+          //cout<<"3:"<<deriv[2]<<"\n";
           deriv[2]=deriv[2]*pow((P0Star/pc),numerator/denominator); //it's
      finished with dp0/ds
-          //cout<<"4:"<<deriv[2]<<endl;
+          //cout<<"4:"<<deriv[2]<<"\n";
           deriv[2]=M*M*(meanStress+SuctionPressure)*deriv[2];
-          //cout<<"5:"<<deriv[2]<<endl;
+          //cout<<"5:"<<deriv[2]<<"\n";
           deriv[2]=-1*M*M*k*(PZero-meanStress)-deriv[2];	//final result
 
   */
@@ -1649,106 +1773,51 @@ ShengMohrCoulomb::getDerivative(double meanStress, double shearStress,
   // *ds, double * dF, double suction, double dsuction)
 }
 
-bool
-ShengMohrCoulomb::checkGradient(BBMPoint* initialPoint, BBMPoint* finalPoint)
-{
-  double df[6]; // not initialised; will contain values of derivatives of the
-                // yield locus function
-  double ds[6]; // must be initialised with tangent value of stress
-  double strainIncrement[6];
-
-  BBMMatrix STRAIN_INC(7, 1), DEL(6, 7), STRESS_INC(6, 1);
-  for (int i = 0; i < 6; i++)
-    strainIncrement[i] = finalPoint->strain[i] - initialPoint->strain[i];
-  // HACK normalising strain to 10E-10 value
-  double max = 0;
-  for (int i = 0; i < 6; i++)
-    if (fabs(strainIncrement[i]) > max)
-      max = fabs(strainIncrement[i]);
-  for (int i = 0; i < 6; i++)
-    strainIncrement[i] = (strainIncrement[i] / max) * 10E-10;
-  // The normalisation is important to catch the unloading due to shear stress
-  // 12 13 23. As the q is always positive, large
-  // unloading - loading values of 12 13 or 23 component lead to larger q, the
-  // shear stress change is taken as positive
-  // and there is no unloading. This fix, though not the most elegant, should
-  // work.
-
-  for (int i = 0; i < 6; i++)
-    STRAIN_INC.PutElement(i + 1, 1, strainIncrement[i]);
-  STRAIN_INC.PutElement(7, 1,
-                        finalPoint->getSuction() - initialPoint->getSuction());
-  calculateElasticTangentMatrix(initialPoint, &DEL);
-  DEL.Multiply(&STRAIN_INC, &STRESS_INC);
-
-  /*STRAIN_INC.Print();
-  cout<<endl<<"DEL:"<<endl;
-  DEL.Print();
-  STRESS_INC.Print();*/
-
-  for (int i = 0; i < 6; i++)
-    ds[i] = STRESS_INC.getElement(
-      i + 1,
-      1);         // in ds values of stress increment calculated using tangent D
-  double cosinus; // , suctionIncrement;
-  // suctionIncrement=STRAIN_INC.getElement(7,1);
-  // cout<<"Suction Increment="<<suctionIncrement<<endl;
-  cosinus =
-    findGradient(initialPoint->state, initialPoint->stress, ds, df, 0, 0);
-
-  if (cosinus > -d_yieldTol)
-    return false;
-  else {
-    // cout<<"unloading occuring... cosinus="<<cosinus<<endl;
-    return true; //(negative cosinus means unloading occurs)
-  }
-}
-
 double
-ShengMohrCoulomb::findGradientPQ(BBMPoint* point, double* ds, double* dF,
+ShengMohrCoulomb::findGradientPQ(StateMohrCoulomb* point, double* ds, double* dF,
                                  double dsuction)
 {
-  cout << "findGradientPQ is unsupported for Mohr-Coulomb Model" << endl;
+  cout << "findGradientPQ is unsupported for Mohr-Coulomb Model" << "\n";
   /*
   double PZero, SuctionPressure, dmeanStress, dshearStress, fValue, dFlength,
   dslength, cosin;
-  double P0Star=Point->getPStar();
+  double P0Star=Point->p0Star();
   double meanStress=Point->getmeanStress();
-  double shearStress=Point->getShearStress();
-  double Suction=Point->getSuction();
+  double shearStress=Point->shearStress();
+  double Suction=Point->suction();
 
           //check of the second yield surface:
-  if (Point->getYieldSuction()-Suction<-d_suctionTol)
+  if (Point->yieldSuction()-Suction<-d_suctionTol)
           {
-                  cout<<"yield of the suction surface occurred"<<endl;
+                  cout<<"yield of the suction surface occurred"<<"\n";
                   if (dsuction>0)
                   {
                           cout <<"Unable to find gradient; Whole step
-  plastic"<<endl;
+  plastic"<<"\n";
                           return -2;
                   //this check may be unused...
                   }
           }
   //check of the standard yield surface
 
-          //cout<<"meanStress="<<meanStress<<endl;
-          //cout<<"shearStress="<<shearStress<<endl;
+          //cout<<"meanStress="<<meanStress<<"\n";
+          //cout<<"shearStress="<<shearStress<<"\n";
 
           PZero=LambdaZero*((1-r)*exp(-1*Beta*Suction)+r);
       PZero=(LambdaZero-KappaP)/(PZero-KappaP);
           PZero=pc*pow((P0Star/pc),PZero);
           SuctionPressure=k*Suction;
-  //	cout<<"suction="<<suction<<endl;
-  //	cout<<"PZero="<<PZero<<endl;
+  //	cout<<"suction="<<suction<<"\n";
+  //	cout<<"PZero="<<PZero<<"\n";
           fValue=shearStress*shearStress-M*M*(meanStress+SuctionPressure)*(PZero-meanStress);
           fValue=fValue/((PZero+SuctionPressure)*(PZero+SuctionPressure));
   //value of Yield function calculated and normalized
           if (fValue<-d_yieldTol)
           {
-                  cout<<"!!!there is no yield at the beginning !!!"<<endl;
-                  cout<<"fValue is="<<fValue<<endl;
+                  cout<<"!!!there is no yield at the beginning !!!"<<"\n";
+                  cout<<"fValue is="<<fValue<<"\n";
                   cout<<"!!!find gradient procedure
-  terminated!!!"<<endl<<endl<<endl<<endl;
+  terminated!!!"<<"\n"<<"\n"<<"\n"<<"\n";
                   return -3;
                   // this check may be disabled later
           }
@@ -1763,18 +1832,18 @@ ShengMohrCoulomb::findGradientPQ(BBMPoint* point, double* ds, double* dF,
           double denominator=LambdaZero*((1-r)*exp(-1*Beta*Suction)+r);
           double numerator=LambdaZero-KappaP;
           dF[2]=-1*Beta*(1-r)*exp(-1*Beta*Suction);
-          //cout<<"1:"<<dF[2]<<endl;
+          //cout<<"1:"<<dF[2]<<"\n";
           dF[2]=dF[2]*-1*numerator/(denominator*denominator);
-          //cout<<"2:"<<dF[2]<<endl;
+          //cout<<"2:"<<dF[2]<<"\n";
           dF[2]=dF[2]*pc*log(P0Star/pc);
-          //cout<<"3:"<<dF[2]<<endl;
+          //cout<<"3:"<<dF[2]<<"\n";
           dF[2]=dF[2]*pow((P0Star/pc),numerator/denominator); //it's finished
   with dp0/ds
-          //cout<<"4:"<<dF[2]<<endl;
+          //cout<<"4:"<<dF[2]<<"\n";
           dF[2]=M*M*(meanStress+SuctionPressure)*dF[2];
-          //cout<<"5:"<<dF[2]<<endl;
+          //cout<<"5:"<<dF[2]<<"\n";
           dF[2]=-1*M*M*k*(PZero-meanStress)-dF[2];	//final result
-          //cout<<dF[2]<<endl;
+          //cout<<dF[2]<<"\n";
           //calculate changes in p and q...;
 
           dmeanStress=(ds[0]+ds[1]+ds[2])/3;
@@ -1806,19 +1875,19 @@ ShengMohrCoulomb::findGradientPQ(BBMPoint* point, double* ds, double* dF,
           cosin=(dF[0]*dmeanStress+dF[1]*dshearStress+dF[2]*dsuction)/dslength;
   //it should be d vector multiplied by gradient
           cout<<"Mean Stress="<<meanStress<<"  Shear Stress="<<shearStress<< "
-  Suction="<<Suction<<endl;
+  Suction="<<Suction<<"\n";
           cout<<"dMean Stress="<<dmeanStress<<"  dShear
-  Stress="<<dshearStress<<" dSuction="<<dsuction<<endl;
-          for (int i=0; i<3; i++) cout<<"value of F["<<i<<"] is:"<<dF[i]<<endl;
-          cout<<"df length is:"<<dFlength<<endl;
-          cout<<"cosinus is:"<<cosin<<endl;
+  Stress="<<dshearStress<<" dSuction="<<dsuction<<"\n";
+          for (int i=0; i<3; i++) cout<<"value of F["<<i<<"] is:"<<dF[i]<<"\n";
+          cout<<"df length is:"<<dFlength<<"\n";
+          cout<<"cosinus is:"<<cosin<<"\n";
           getchar (); */
   //	return cosin;
   return 0;
 }
 
 void
-ShengMohrCoulomb::correctDrift(BBMPoint* Point)
+ShengMohrCoulomb::correctDrift(StateMohrCoulomb* Point)
 {
 
   /*
@@ -1838,7 +1907,7 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
   // Need dF/Ds, D, dF/dP0*, dP0*/DEpsPl, m, dF/dS
   // at the beginning we need to calculate the derivatives a, b, c, d, g, p...)
 
-  // cout<<"Correct Drift Procedure entered!"<<endl;
+  // cout<<"Correct Drift Procedure entered!"<<"\n";
 
   BBMMatrix A(6, 1); // dF/dsigma
   BBMMatrix DENOMINATOR(1, 1);
@@ -1860,13 +1929,13 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
 
   bool correct;
 
-  double I1 = Point->getFirstInvariant();
-  double I2 = Point->getSecondInvariant();
-  double J2 = Point->getSecondDevInvariant();
+  double I1 = Point->firstInvariant();
+  double I2 = Point->secondInvariant();
+  double J2 = Point->secondDevInvariant();
   if (fabs(J2) < TINY)
     J2 = TINY;
-  double J3 = Point->getThirdDevInvariant();
-  double shearStress = Point->getShearStress();
+  double J3 = Point->thirdDevInvariant();
+  double shearStress = Point->shearStress();
   if (fabs(shearStress) < TINY)
     shearStress = TINY;
   double Factor = -27 * J3 / (2 * shearStress * shearStress * shearStress);
@@ -1876,9 +1945,9 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
     Factor = -1;
   if (!finite(Factor)) {
     Factor = 1.0;
-    cout << "Factor in Correct Drift is not finite. set to 1" << endl;
+    cout << "Factor in Correct Drift is not finite. set to 1" << "\n";
     cout << "alpha4=" << alpha4 << " J3=" << J3
-         << " shearStress=" << shearStress << endl;
+         << " shearStress=" << shearStress << "\n";
   }
   Factor = 1 + alpha4 - (1 - alpha4) * Factor;
   double Factor025 = pow(Factor, 0.25);
@@ -1890,7 +1959,7 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
   int numberIter = 0;
 
   do {
-    checkYield(Point->state, point->stress, point->getSuction(),
+    computeYieldNormalized(Point->state, point->stress, point->suction(),
                &fValue); // 20 Feb 2006, preparations for the drift correction
 
     if ((fValue / (Point->getmeanStress() + 2 * cohesion) < -d_yieldTol) ||
@@ -1901,66 +1970,66 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
     if (correct == TRUE) {
       numberIter++;
       // cout<<"Drift Correction, Iteration="<<numberIter<<" Function
-      // Value="<<fValue<<endl;
+      // Value="<<fValue<<"\n";
       // CORRECT FOR DRIFT
       // HERE THE DRIFT WILL BE CORRECTED BY USING THE D MATRIX FROM THE
       // FORBIDDEN SPACE
       // ALTHOUGH BECAUSE THE DRIFT WILL BE CHECKED AGAIN, IT SHOULDN'T POSE
       // MUCH PROBLEM.
 
-      BBMMatrix dJ2dSIG(6, 1), dJ3dSIG(6, 1), dqdSIG(6, 1), dI1dSIG(6, 1),
-        dI2dSIG(6, 1), dI3dSIG(6, 1), TEMP(6, 1), NUMERATOR(6, 1);
+      BBMMatrix dJ2_dSig(6, 1), dJ3_dSig(6, 1), dq_dSig(6, 1), dI1_dSig(6, 1),
+        dI2_dSig(6, 1), dI3_dSig(6, 1), TEMP(6, 1), NUMERATOR(6, 1);
 
       // derivatives of the invariants
       double s[6] = { Point->stress[0], Point->stress[1], Point->stress[2],
                       Point->stress[3], Point->stress[4], Point->stress[5] };
 
-      dI1dSIG.PutElement(1, 1, 1.0);
-      dI1dSIG.PutElement(2, 1, 1.0);
-      dI1dSIG.PutElement(3, 1, 1.0); //{1,1,1,0,0,0}
+      dI1_dSig(0, 0) =  1.0);
+      dI1_dSig(1, 0) =  1.0);
+      dI1_dSig(2, 0) =  1.0); //{1,1,1,0,0,0}
 
-      dI2dSIG.PutElement(1, 1, s[1] + s[2]);
-      dI2dSIG.PutElement(2, 1, s[0] + s[2]);
-      dI2dSIG.PutElement(3, 1, s[0] + s[1]);
-      dI2dSIG.PutElement(4, 1, -2 * s[3]);
-      dI2dSIG.PutElement(5, 1, -2 * s[4]);
-      dI2dSIG.PutElement(6, 1, -2 * s[5]);
+      dI2_dSig(0, 0) =  s[1] + s[2]);
+      dI2_dSig(1, 0) =  s[0] + s[2]);
+      dI2_dSig(2, 0) =  s[0] + s[1]);
+      dI2_dSig(3, 0) =  -2 * s[3]);
+      dI2_dSig(4, 0) =  -2 * s[4]);
+      dI2_dSig(5, 0) =  -2 * s[5]);
 
-      // dI2dSIG.PrintPrecise();
+      // dI2_dSig.PrintPrecise();
 
-      dI3dSIG.PutElement(1, 1, s[1] * s[2] - s[5] * s[5]);
-      dI3dSIG.PutElement(2, 1, s[0] * s[2] - s[4] * s[4]);
-      dI3dSIG.PutElement(3, 1, s[0] * s[1] - s[3] * s[3]);
-      dI3dSIG.PutElement(4, 1, 2 * s[5] * s[4] - 2 * s[2] * s[3]);
-      dI3dSIG.PutElement(5, 1, 2 * s[3] * s[5] - 2 * s[1] * s[4]);
-      dI3dSIG.PutElement(6, 1, 2 * s[3] * s[4] - 2 * s[0] * s[5]);
+      dI3_dSig(0, 0) =  s[1] * s[2] - s[5] * s[5]);
+      dI3_dSig(1, 0) =  s[0] * s[2] - s[4] * s[4]);
+      dI3_dSig(2, 0) =  s[0] * s[1] - s[3] * s[3]);
+      dI3_dSig(3, 0) =  2 * s[5] * s[4] - 2 * s[2] * s[3]);
+      dI3_dSig(4, 0) =  2 * s[3] * s[5] - 2 * s[1] * s[4]);
+      dI3_dSig(5, 0) =  2 * s[3] * s[4] - 2 * s[0] * s[5]);
 
-      // dI3dSIG.PrintPrecise();
+      // dI3_dSig.PrintPrecise();
 
-      dJ2dSIG.PutElement(1, 1, (2 * s[0] - s[1] - s[2]) / 3.0);
-      dJ2dSIG.PutElement(2, 1, (2 * s[1] - s[0] - s[2]) / 3.0);
-      dJ2dSIG.PutElement(3, 1, (2 * s[2] - s[0] - s[1]) / 3.0);
-      dJ2dSIG.PutElement(4, 1, 2 * s[3]);
-      dJ2dSIG.PutElement(5, 1, 2 * s[4]);
-      dJ2dSIG.PutElement(6, 1, 2 * s[5]);
+      dJ2_dSig(0, 0) =  (2 * s[0] - s[1] - s[2]) / 3.0);
+      dJ2_dSig(1, 0) =  (2 * s[1] - s[0] - s[2]) / 3.0);
+      dJ2_dSig(2, 0) =  (2 * s[2] - s[0] - s[1]) / 3.0);
+      dJ2_dSig(3, 0) =  2 * s[3]);
+      dJ2_dSig(4, 0) =  2 * s[4]);
+      dJ2_dSig(5, 0) =  2 * s[5]);
 
-      dJ2dSIG.Copy(&dqdSIG);
-      dqdSIG.Multiply(sqrt(3.0) * 0.5 / sqrt(J2), &dqdSIG);
+      dJ2_dSig.Copy(&dq_dSig);
+      dq_dSig.Multiply(sqrt(3.0) * 0.5 / sqrt(J2), &dq_dSig);
 
-      dI1dSIG.Copy(&dJ3dSIG);
-      dJ3dSIG.Multiply(2.0 / 9.0 * I1 * I1 - I2 / 3.0, &dJ3dSIG);
-      // dJ3dSIG.PrintPrecise();
-      dI2dSIG.Copy(&TEMP);
+      dI1_dSig.Copy(&dJ3_dSig);
+      dJ3_dSig.Multiply(2.0 / 9.0 * I1 * I1 - I2 / 3.0, &dJ3_dSig);
+      // dJ3_dSig.PrintPrecise();
+      dI2_dSig.Copy(&TEMP);
       TEMP.Multiply(-I1 / 3.0, &TEMP);
-      dJ3dSIG.Add(&TEMP, &dJ3dSIG);
-      dJ3dSIG.Add(&dI3dSIG, &dJ3dSIG);
-      // dJ3dSIG.PrintPrecise();
-      // finished dJ3dSIG
+      dJ3_dSig.Add(&TEMP, &dJ3_dSig);
+      dJ3_dSig.Add(&dI3_dSig, &dJ3_dSig);
+      // dJ3_dSig.PrintPrecise();
+      // finished dJ3_dSig
 
       // above needs to be *CORRECTED* as some errors in ij i!=j components is
       // likely (2x too big)
 
-      dJ2dSIG.Copy(&A);
+      dJ2_dSig.Copy(&A);
       A.Multiply(0.21022410391343 * M * Factor025 / shearStress, &A);
 
       for (int i = 1; i < 7; i++) {
@@ -1969,16 +2038,16 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
         }
       }
 
-      // cout<<"dF/dJ2 part"<<endl;
+      // cout<<"dF/dJ2 part"<<"\n";
       // A.PrintPrecise();
-      dJ3dSIG.Copy(&TEMP);
+      dJ3_dSig.Copy(&TEMP);
       TEMP.Multiply(-1.419012700740643 * (alpha4 - 1) * M * sqrt(J2) *
                         Factor075 /
                         (sqrt(3.0) * shearStress * shearStress * shearStress) +
                       0.94600846716043 * (alpha4 - 1) * cohesion * M *
                         Factor075 / (shearStress * shearStress * shearStress),
                     &TEMP);
-      // cout<<"dF/dJ3 part"<<endl;
+      // cout<<"dF/dJ3 part"<<"\n";
       // TEMP.PrintPrecise();
       A.Add(&TEMP, &A);
 
@@ -1988,17 +2057,17 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
         }
       }
 
-      dqdSIG.Copy(&TEMP);
+      dq_dSig.Copy(&TEMP);
       TEMP.Multiply(
         -2.838025401481287 * (alpha4 - 1) * cohesion * M * J3 * Factor075 /
             (shearStress * shearStress * shearStress * shearStress) +
           4.257038102221929 * (alpha4 - 1) * M * sqrt(J2) * J3 * Factor075 /
             (sqrt(3.0) * shearStress * shearStress * shearStress * shearStress),
         &TEMP);
-      // cout<<"dF/dq part"<<endl;
+      // cout<<"dF/dq part"<<"\n";
       // TEMP.PrintPrecise();
       A.Add(&TEMP, &A);
-      dI1dSIG.Copy(&TEMP);
+      dI1_dSig.Copy(&TEMP);
       TEMP.Multiply(-1 / 3.0, &TEMP);
       A.Add(&TEMP, &A);
 
@@ -2011,125 +2080,125 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
       double meanStress = Point->getmeanStress();
       if (meanStress < -cohesion * M) {
         // tension cut-off plane
-        A.PutElement(1, 1, 1.0 / 3.0);
-        A.PutElement(2, 1, 1.0 / 3.0);
-        A.PutElement(3, 1, 1.0 / 3.0);
-        A.PutElement(4, 1, 0.0);
-        A.PutElement(5, 1, 0.0);
-        A.PutElement(6, 1, 0.0);
+        A(0, 0) =  1.0 / 3.0);
+        A(1, 0) =  1.0 / 3.0);
+        A(2, 0) =  1.0 / 3.0);
+        A(3, 0) =  0.0);
+        A(4, 0) =  0.0);
+        A(5, 0) =  0.0);
       }
 
       /*A.PrintPrecise ();
       //FINISHED dF/dSigma
 
-      BBMPoint CopyPoint;
+      StateMohrCoulomb CopyPoint;
       Point->Copy(&CopyPoint);
       double Yield1,Yield2,dSs=0.0001;
       Yield1=computeYieldFunction(&CopyPoint);
       CopyPoint.stress[0]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"DSigma="<<dSs<<endl;
-      cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"DSigma="<<dSs<<"\n";
+      cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[0]-=dSs;
 
       CopyPoint.stress[1]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[1]-=dSs;
 
       CopyPoint.stress[2]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[2]-=dSs;
 
       dSs=10*dSs;
       CopyPoint.stress[0]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"DSigma="<<dSs<<endl;
-      cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"DSigma="<<dSs<<"\n";
+      cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[0]-=dSs;
 
       CopyPoint.stress[1]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[1]-=dSs;
 
       CopyPoint.stress[2]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[2]-=dSs;
 
       dSs=10*dSs;
       CopyPoint.stress[0]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"DSigma="<<dSs<<endl;
-      cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"DSigma="<<dSs<<"\n";
+      cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[0]-=dSs;
 
       CopyPoint.stress[1]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[1]-=dSs;
 
       CopyPoint.stress[2]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[2]-=dSs;
 
       dSs=10*dSs;
       CopyPoint.stress[0]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"DSigma="<<dSs<<endl;
-      cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"DSigma="<<dSs<<"\n";
+      cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[0]-=dSs;
 
       CopyPoint.stress[1]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[1]-=dSs;
 
       CopyPoint.stress[2]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[2]-=dSs;
 
       dSs=10*dSs;
       CopyPoint.stress[0]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"DSigma="<<dSs<<endl;
-      cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"DSigma="<<dSs<<"\n";
+      cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[0]-=dSs;
 
       CopyPoint.stress[1]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[1]-=dSs;
 
       CopyPoint.stress[2]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[2]-=dSs;
 
       dSs=10*dSs;
       CopyPoint.stress[0]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"DSigma="<<dSs<<endl;
-      cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"DSigma="<<dSs<<"\n";
+      cout<<"dF/dSigma11="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[0]-=dSs;
 
       CopyPoint.stress[1]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"dF/dSigma22="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[1]-=dSs;
 
       CopyPoint.stress[2]+=dSs;
       Yield2=computeYieldFunctionNN(&CopyPoint);
-      cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<endl;
+      cout<<"dF/dSigma33="<<(Yield2-Yield1)/dSs<<"\n";
       CopyPoint.stress[2]-=dSs;
       */
-      dJ2dSIG.Copy(&GG);
+      dJ2_dSig.Copy(&GG);
       GG.Multiply(0.21022410391343 * Mpsi * Factor025 / shearStress, &GG);
-      dJ3dSIG.Copy(&TEMP);
+      dJ3_dSig.Copy(&TEMP);
       TEMP.Multiply(-1.419012700740643 * (alpha4 - 1) * Mpsi * sqrt(J2) *
                         Factor075 /
                         (sqrt(3.0) * shearStress * shearStress * shearStress) +
@@ -2137,7 +2206,7 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
                         Factor075 / (shearStress * shearStress * shearStress),
                     &TEMP);
       GG.Add(&TEMP, &GG);
-      dqdSIG.Copy(&TEMP);
+      dq_dSig.Copy(&TEMP);
       TEMP.Multiply(
         -2.838025401481287 * (alpha4 - 1) * cohesion * Mpsi * J3 * Factor075 /
             (shearStress * shearStress * shearStress * shearStress) +
@@ -2145,7 +2214,7 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
             (sqrt(3.0) * shearStress * shearStress * shearStress * shearStress),
         &TEMP);
       GG.Add(&TEMP, &GG);
-      dI1dSIG.Copy(&TEMP);
+      dI1_dSig.Copy(&TEMP);
       TEMP.Multiply(
         -1 / 3.0,
         &TEMP); // First correction: sign here, but most likely not enough!!!
@@ -2155,25 +2224,25 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
 
       if (meanStress < -cohesion * M) {
         // tension cut-off plane
-        GG.PutElement(1, 1, 1.0 / 3.0);
-        GG.PutElement(2, 1, 1.0 / 3.0);
-        GG.PutElement(3, 1, 1.0 / 3.0);
-        GG.PutElement(4, 1, 0.0);
-        GG.PutElement(5, 1, 0.0);
-        GG.PutElement(6, 1, 0.0);
+        GG(0, 0) =  1.0 / 3.0);
+        GG(1, 0) =  1.0 / 3.0);
+        GG(2, 0) =  1.0 / 3.0);
+        GG(3, 0) =  0.0);
+        GG(4, 0) =  0.0);
+        GG(5, 0) =  0.0);
       }
 
       double K43G = K + 4.0 * G / 3.0;
       double K23G = K - 2.0 * G / 3.0;
 
-      DEL.PutElement(1, 1, K43G);
-      DEL.PutElement(1, 2, K23G);
-      DEL.PutElement(1, 3, K23G); // rest of the line are zeros and rightly so
-      DEL.PutElement(2, 1, K23G);
-      DEL.PutElement(2, 2, K43G);
-      DEL.PutElement(2, 3, K23G); // yes, the matrix is symmetrical, but it is
+      DEL(0, 0) =  K43G);
+      DEL(0, 1) =  K23G);
+      DEL(0, 2) =  K23G); // rest of the line are zeros and rightly so
+      DEL(1, 0) =  K23G);
+      DEL(1, 1) =  K43G);
+      DEL(1, 2) =  K23G); // yes, the matrix is symmetrical, but it is
                                   // faster to put this 3 additional elements
-      DEL.PutElement(3, 1, K23G); // than just mirror all, including zeros,
+      DEL(2, 0) =  K23G); // than just mirror all, including zeros,
                                   // which are there already
       DEL.PutElement(3, 2, K23G);
       DEL.PutElement(3, 3, K43G);
@@ -2195,7 +2264,7 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
       A.Multiply(Lambda, &TEMP); // delta epsilon plastic= -delta epsilon
                                  // elastic
 
-      // cout<<"Delta Epsilon Plastic:"<<endl;
+      // cout<<"Delta Epsilon Plastic:"<<"\n";
       // TEMP.Print();
 
       for (int i = 1; i < 7; i++)
@@ -2211,7 +2280,7 @@ ShengMohrCoulomb::correctDrift(BBMPoint* Point)
       Point->Update(epStrain, zeros, DSigma, 0);
     }
     if (numberIter > 10) {
-      // cout<<"Drift Correction Procedure failed"<<endl;
+      // cout<<"Drift Correction Procedure failed"<<"\n";
       correct = FALSE;
     }
   } while (correct == TRUE);
@@ -2227,7 +2296,7 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
 // we do not have g, as a == g in associated flow rule.
 	do
 	{
-	checkYield (PointCopy.state, pointCopy.stress, pointCopy.getSuction(), &fValue); //20 Feb 2006, preparations for the drift correction
+	checkYield (PointCopy.state, pointCopy.stress, pointCopy.suction(), &fValue); //20 Feb 2006, preparations for the drift correction
 
 		if ((fValue<-d_yieldTol)||(fValue>d_yieldTol)) correct=TRUE; else correct=FALSE;
 		if (correct==TRUE)
@@ -2250,26 +2319,26 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
 
 
 				SpecificVolume=PointCopy.getSpecVol();  //specific volume need to be used the right one
-				//cout<<"Specific Volume:"<<SpecificVolume<<endl;
-				PZeroStar=PointCopy.getPStar ();
+				//cout<<"Specific Volume:"<<SpecificVolume<<"\n";
+				PZeroStar=PointCopy.p0Star ();
 
 				//convention - matrices names are made from CAPITALIZED letters
 
 
 				meanStress=PointCopy.getmeanStress();
-				shearStress=PointCopy.getShearStress();
-				Suction=PointCopy.getSuction();
+				shearStress=PointCopy.shearStress();
+				Suction=PointCopy.suction();
 
 				LambdaS=(1-r)*exp(-Beta*Suction)+r;
 				LambdaS=LambdaS*LambdaZero;
 				Fraction=(LambdaZero-KappaP)/(LambdaS- KappaP);
 				PZero=pc*pow(PZeroStar/pc,Fraction);  //get.calculated.pzero;
 
-				//cout<<"PZero = "<<PZero<<endl;
-				//cout<<"PZeroStar = "<<PZeroStar<<endl;
-				//cout<<"p = "<<meanStress<<endl;
-				//cout<<"q = "<<shearStress<<endl;
-				//cout<<"s = "<<Suction<<endl;
+				//cout<<"PZero = "<<PZero<<"\n";
+				//cout<<"PZeroStar = "<<PZeroStar<<"\n";
+				//cout<<"p = "<<meanStress<<"\n";
+				//cout<<"q = "<<shearStress<<"\n";
+				//cout<<"s = "<<Suction<<"\n";
 
 				temp=2*PointCopy.stress[0]-PointCopy.stress[1]-PointCopy.stress[2]+M*M/3*(2*meanStress+k*Suction-PZero);
 				A.PutElement(1,1,temp);
@@ -2283,7 +2352,7 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
 				A.PutElement(5,1,temp);
 				temp=6*PointCopy.stress[5];
 				A.PutElement(6,1,temp);
-				//cout<<"A:"<<endl; A.Print();
+				//cout<<"A:"<<"\n"; A.Print();
 				//dF/dsigma - inserted into A
 
 				if (nonAssociated)
@@ -2312,11 +2381,11 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
 
                                 P.PutElement (1,1,temp);
 
-                                //cout<<"P:"<<endl; P.Print();
+                                //cout<<"P:"<<"\n"; P.Print();
 
                                 temp=PZeroStar*SpecificVolume/(LambdaZero-KappaP);
                                 PEP.PutElement (1,1,temp); //dP0* /depsplv
-                                //cout<<"dpZeroStar/Depsvpl:"<<temp<<endl;
+                                //cout<<"dpZeroStar/Depsvpl:"<<temp<<"\n";
                                 //DEL... elastic matrix... values of K. Here we
                                 need values of K at the point...
                                 We need to have the K - bulk modulus of the soil
@@ -2335,13 +2404,13 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
                                   if ((meanStress<d_minMeanStress)&&(meanStress>(-d_minMeanStress)))
                                   {
                                           cout<<"WARNING !!! Mean stress too
-  low. Mean stress is adjusted to d_minMeanStress value!!!"<<endl;
+  low. Mean stress is adjusted to d_minMeanStress value!!!"<<"\n";
                                           meanStress=d_minMeanStress;
                                   }
 
                                   K=meanStress*SpecificVolume/KappaP;  //tangent
   bulk modulus K=p*specificVol/KappaP, from eq dSpecVol=-KappaP*ln(p/pzero);
-                                  //cout<<"K="<<K<<endl;
+                                  //cout<<"K="<<K<<"\n";
 
                                   // ****************************** K need
   correcting, but with const. suction seems to be ok
@@ -2379,7 +2448,7 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
                                   temp=TEMP.getElement (1,1);  //first part of
   the denominator
                                   //cout<<"First Part of Denominator done...
-  temp="<<temp<<endl;
+  temp="<<temp<<"\n";
 
 
                                   P.Multiply (&PEP,&TEMP);
@@ -2391,17 +2460,17 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
                                   temp=temp+TEMP.getElement (1,1); //'end of the
   denominator
 
-                                  //cout<<"Denominator="<<temp<<endl;
+                                  //cout<<"Denominator="<<temp<<"\n";
 
                                   Lambda=fValue*(PZero+Suction*k)*(PZero+Suction*k)/temp;
   //because we need the value, not the reduced value...
 
-                                  //cout<<"Lambda="<<Lambda<<endl;
+                                  //cout<<"Lambda="<<Lambda<<"\n";
 
                                   A.Multiply (Lambda, &TEMP); //delta epsilon
   plastic= -delta epsilon elastic
 
-                                  //cout<<"Delta Epsilon Plastic:"<<endl;
+                                  //cout<<"Delta Epsilon Plastic:"<<"\n";
                                   //TEMP.Print();
 
                                   for (int i=1; i<7; i++) epStrain
@@ -2409,7 +2478,7 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
                                   temp=epStrain[0]+epStrain[1]+epStrain[2];
   //DepsilonV
                                   dpZeroStar=PEP.getElement(1,1)*temp;
-                                  //cout<<"dpZeroStar="<<*dpZeroStar<<endl;
+                                  //cout<<"dpZeroStar="<<*dpZeroStar<<"\n";
 
                                   DEL.Multiply (&GG, &TEMP);
                                   TEMP.Multiply (-Lambda, &dSigma);
@@ -2418,12 +2487,12 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
                           //be ADDED to get the right result of corrected
   stresses.
 
-                          //cout<<"Delta Sigma="<<endl;
+                          //cout<<"Delta Sigma="<<"\n";
                           //dSigma->Print();
 
 
                           //cout<<"Press any key (end of Correct Drift
-  Procedure)"<<endl;
+  Procedure)"<<"\n";
                           //getchar();
                           for (int i=0; i<6; i++) DSigma[i]=dSigma.getElement
   (i+1,1);
@@ -2439,7 +2508,7 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
 }
 
 void
-ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
+ShengMohrCoulomb::correctDriftBeg(StateMohrCoulomb* Point, StateMohrCoulomb* PointOld)
 {
 
   /*
@@ -2459,7 +2528,7 @@ ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
   // Need dF/Ds, D, dF/dP0*, dP0*/DEpsPl, m, dF/dS
   // at the beginning we need to calculate the derivatives a, b, c, d, g, p...)
 
-  // cout<<"Correct Drift Procedure entered!"<<endl;
+  // cout<<"Correct Drift Procedure entered!"<<"\n";
 
   BBMMatrix A(6, 1); // dF/dsigma
   BBMMatrix DENOMINATOR(1, 1);
@@ -2481,13 +2550,13 @@ ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
 
   bool correct;
 
-  double I1 = PointOld->getFirstInvariant();
-  double I2 = PointOld->getSecondInvariant();
-  double J2 = PointOld->getSecondDevInvariant();
+  double I1 = PointOld->firstInvariant();
+  double I2 = PointOld->secondInvariant();
+  double J2 = PointOld->secondDevInvariant();
   if (fabs(J2) < TINY)
     J2 = TINY;
-  double J3 = PointOld->getThirdDevInvariant();
-  double shearStress = PointOld->getShearStress();
+  double J3 = PointOld->thirdDevInvariant();
+  double shearStress = PointOld->shearStress();
   if (fabs(shearStress) < TINY)
     shearStress = TINY;
   double Factor = -27 * J3 / (2 * shearStress * shearStress * shearStress);
@@ -2499,9 +2568,9 @@ ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
     Factor = 1.0;
     cout << "Factor in Correct Drift Beg [parameters *Point] is not finite. "
             "set to 1"
-         << endl;
+         << "\n";
     cout << "alpha4=" << alpha4 << " J3=" << J3
-         << " shearStress=" << shearStress << endl;
+         << " shearStress=" << shearStress << "\n";
   }
   Factor = 1 + alpha4 - (1 - alpha4) * Factor;
   double Factor025 = pow(Factor, 0.25);
@@ -2510,8 +2579,8 @@ ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
   double Mpsi = (3 - sin_psi) / (6 * alpha * sin_psi);
   double fValue;
 
-  BBMMatrix dJ2dSIG(6, 1), dJ3dSIG(6, 1), dqdSIG(6, 1), dI1dSIG(6, 1),
-    dI2dSIG(6, 1), dI3dSIG(6, 1), TEMP(6, 1), NUMERATOR(6, 1);
+  BBMMatrix dJ2_dSig(6, 1), dJ3_dSig(6, 1), dq_dSig(6, 1), dI1_dSig(6, 1),
+    dI2_dSig(6, 1), dI3_dSig(6, 1), TEMP(6, 1), NUMERATOR(6, 1);
 
   // derivatives of the invariants
   double s[6] = {
@@ -2519,59 +2588,59 @@ ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
     PointOld->stress[3], PointOld->stress[4], PointOld->stress[5]
   };
 
-  dI1dSIG.PutElement(1, 1, 1.0);
-  dI1dSIG.PutElement(2, 1, 1.0);
-  dI1dSIG.PutElement(3, 1, 1.0); //{1,1,1,0,0,0}
+  dI1_dSig(0, 0) =  1.0);
+  dI1_dSig(1, 0) =  1.0);
+  dI1_dSig(2, 0) =  1.0); //{1,1,1,0,0,0}
 
-  dI2dSIG.PutElement(1, 1, s[1] + s[2]);
-  dI2dSIG.PutElement(2, 1, s[0] + s[2]);
-  dI2dSIG.PutElement(3, 1, s[0] + s[1]);
-  dI2dSIG.PutElement(4, 1, -2 * s[3]);
-  dI2dSIG.PutElement(5, 1, -2 * s[4]);
-  dI2dSIG.PutElement(6, 1, -2 * s[5]);
+  dI2_dSig(0, 0) =  s[1] + s[2]);
+  dI2_dSig(1, 0) =  s[0] + s[2]);
+  dI2_dSig(2, 0) =  s[0] + s[1]);
+  dI2_dSig(3, 0) =  -2 * s[3]);
+  dI2_dSig(4, 0) =  -2 * s[4]);
+  dI2_dSig(5, 0) =  -2 * s[5]);
 
-  // dI2dSIG.PrintPrecise();
+  // dI2_dSig.PrintPrecise();
 
-  dI3dSIG.PutElement(1, 1, s[1] * s[2] - s[5] * s[5]);
-  dI3dSIG.PutElement(2, 1, s[0] * s[2] - s[4] * s[4]);
-  dI3dSIG.PutElement(3, 1, s[0] * s[1] - s[3] * s[3]);
-  dI3dSIG.PutElement(4, 1, 2 * s[5] * s[4] - 2 * s[2] * s[3]);
-  dI3dSIG.PutElement(5, 1, 2 * s[3] * s[5] - 2 * s[1] * s[4]);
-  dI3dSIG.PutElement(6, 1, 2 * s[3] * s[4] - 2 * s[0] * s[5]);
+  dI3_dSig(0, 0) =  s[1] * s[2] - s[5] * s[5]);
+  dI3_dSig(1, 0) =  s[0] * s[2] - s[4] * s[4]);
+  dI3_dSig(2, 0) =  s[0] * s[1] - s[3] * s[3]);
+  dI3_dSig(3, 0) =  2 * s[5] * s[4] - 2 * s[2] * s[3]);
+  dI3_dSig(4, 0) =  2 * s[3] * s[5] - 2 * s[1] * s[4]);
+  dI3_dSig(5, 0) =  2 * s[3] * s[4] - 2 * s[0] * s[5]);
 
-  // dI3dSIG.PrintPrecise();
+  // dI3_dSig.PrintPrecise();
 
-  dJ2dSIG.PutElement(1, 1, (2 * s[0] - s[1] - s[2]) / 3.0);
-  dJ2dSIG.PutElement(2, 1, (2 * s[1] - s[0] - s[2]) / 3.0);
-  dJ2dSIG.PutElement(3, 1, (2 * s[2] - s[0] - s[1]) / 3.0);
-  dJ2dSIG.PutElement(4, 1, 2 * s[3]);
-  dJ2dSIG.PutElement(5, 1, 2 * s[4]);
-  dJ2dSIG.PutElement(6, 1, 2 * s[5]);
+  dJ2_dSig(0, 0) =  (2 * s[0] - s[1] - s[2]) / 3.0);
+  dJ2_dSig(1, 0) =  (2 * s[1] - s[0] - s[2]) / 3.0);
+  dJ2_dSig(2, 0) =  (2 * s[2] - s[0] - s[1]) / 3.0);
+  dJ2_dSig(3, 0) =  2 * s[3]);
+  dJ2_dSig(4, 0) =  2 * s[4]);
+  dJ2_dSig(5, 0) =  2 * s[5]);
 
-  dJ2dSIG.Copy(&dqdSIG);
-  dqdSIG.Multiply(sqrt(3.0) * 0.5 / sqrt(J2), &dqdSIG);
+  dJ2_dSig.Copy(&dq_dSig);
+  dq_dSig.Multiply(sqrt(3.0) * 0.5 / sqrt(J2), &dq_dSig);
 
-  dI1dSIG.Copy(&dJ3dSIG);
-  dJ3dSIG.Multiply(6.0 / 27.0 * I1 * I1 - I2 / 3.0, &dJ3dSIG);
-  dI2dSIG.Copy(&TEMP);
+  dI1_dSig.Copy(&dJ3_dSig);
+  dJ3_dSig.Multiply(6.0 / 27.0 * I1 * I1 - I2 / 3.0, &dJ3_dSig);
+  dI2_dSig.Copy(&TEMP);
   TEMP.Multiply(-I1 / 3.0, &TEMP);
-  dJ3dSIG.Add(&TEMP, &dJ3dSIG);
-  dJ3dSIG.Add(&dI3dSIG, &dJ3dSIG);
-  // finished dJ3dSIG
+  dJ3_dSig.Add(&TEMP, &dJ3_dSig);
+  dJ3_dSig.Add(&dI3_dSig, &dJ3_dSig);
+  // finished dJ3_dSig
 
   // above needs to be *CORRECTED* as some errors in ij i!=j components is
   // likely (2x too big)
 
-  dJ2dSIG.Copy(&A);
+  dJ2_dSig.Copy(&A);
   A.Multiply(0.21022410391343 * M * Factor025 / shearStress, &A);
-  dJ3dSIG.Copy(&TEMP);
+  dJ3_dSig.Copy(&TEMP);
   TEMP.Multiply(-1.419012700740643 * (alpha4 - 1) * M * sqrt(J2) * Factor075 /
                     (sqrt(3.0) * shearStress * shearStress * shearStress) +
                   0.94600846716043 * (alpha4 - 1) * cohesion * M * Factor075 /
                     (shearStress * shearStress * shearStress),
                 &TEMP);
   A.Add(&TEMP, &A);
-  dqdSIG.Copy(&TEMP);
+  dq_dSig.Copy(&TEMP);
   TEMP.Multiply(
     -2.838025401481287 * (alpha4 - 1) * cohesion * M * J3 * Factor075 /
         (shearStress * shearStress * shearStress * shearStress) +
@@ -2579,15 +2648,15 @@ ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
         (sqrt(3.0) * shearStress * shearStress * shearStress * shearStress),
     &TEMP);
   A.Add(&TEMP, &A);
-  dI1dSIG.Copy(&TEMP);
+  dI1_dSig.Copy(&TEMP);
   TEMP.Multiply(-1 / 3.0, &TEMP);
   A.Add(&TEMP, &A);
 
   // FINISHED dF/dSigma
 
-  dJ2dSIG.Copy(&GG);
+  dJ2_dSig.Copy(&GG);
   GG.Multiply(0.21022410391343 * Mpsi * Factor025 / shearStress, &GG);
-  dJ3dSIG.Copy(&TEMP);
+  dJ3_dSig.Copy(&TEMP);
   TEMP.Multiply(-1.419012700740643 * (alpha4 - 1) * Mpsi * sqrt(J2) *
                     Factor075 /
                     (sqrt(3.0) * shearStress * shearStress * shearStress) +
@@ -2595,7 +2664,7 @@ ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
                     Factor075 / (shearStress * shearStress * shearStress),
                 &TEMP);
   GG.Add(&TEMP, &GG);
-  dqdSIG.Copy(&TEMP);
+  dq_dSig.Copy(&TEMP);
   TEMP.Multiply(
     -2.838025401481287 * (alpha4 - 1) * cohesion * Mpsi * J3 * Factor075 /
         (shearStress * shearStress * shearStress * shearStress) +
@@ -2603,7 +2672,7 @@ ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
         (sqrt(3.0) * shearStress * shearStress * shearStress * shearStress),
     &TEMP);
   GG.Add(&TEMP, &GG);
-  dI1dSIG.Copy(&TEMP);
+  dI1_dSig.Copy(&TEMP);
   TEMP.Multiply(
     -1 / 3.0,
     &TEMP); // First correction: sign here, but most likely not enough!!!
@@ -2614,12 +2683,12 @@ ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
   double K43G = K + 4.0 * G / 3.0;
   double K23G = K - 2.0 * G / 3.0;
 
-  DEL.PutElement(1, 1, K43G);
-  DEL.PutElement(1, 2, K23G);
-  DEL.PutElement(1, 3, K23G); // rest of the line are zeros and rightly so
-  DEL.PutElement(2, 1, K23G);
-  DEL.PutElement(2, 2, K43G);
-  DEL.PutElement(2, 3, K23G); // yes, the matrix is symmetrical, but it is
+  DEL(0, 0) =  K43G);
+  DEL(0, 1) =  K23G);
+  DEL(0, 2) =  K23G); // rest of the line are zeros and rightly so
+  DEL(1, 0) =  K23G);
+  DEL(1, 1) =  K43G);
+  DEL(1, 2) =  K23G); // yes, the matrix is symmetrical, but it is
                               // faster to put this 3 additional elements
   DEL.PutElement(
     3, 1,
@@ -2642,7 +2711,7 @@ ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
 
   do {
     numberIter++;
-    checkYield(Point->state, point->stress, point->getSuction(),
+    computeYieldNormalized(Point->state, point->stress, point->suction(),
                &fValue); // 20 Feb 2006, preparations for the drift correction
 
     if ((fValue / (Point->getmeanStress() + 2 * cohesion) < -d_yieldTol) ||
@@ -2657,7 +2726,7 @@ ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
       A.Multiply(Lambda, &TEMP); // delta epsilon plastic= -delta epsilon
                                  // elastic
 
-      // cout<<"Delta Epsilon Plastic:"<<endl;
+      // cout<<"Delta Epsilon Plastic:"<<"\n";
       // TEMP.Print();
 
       for (int i = 1; i < 7; i++)
@@ -2672,13 +2741,13 @@ ShengMohrCoulomb::correctDriftBeg(BBMPoint* Point, BBMPoint* PointOld)
       Point->Update(epStrain, zeros, DSigma, 0);
     }
     if (numberIter > 10) {
-      // cout<<"Drift Correction Procedure failed"<<endl;
+      // cout<<"Drift Correction Procedure failed"<<"\n";
       correct = FALSE;
     }
   } while (correct == TRUE);
 
   /*
-BBMPoint pointCopy, pointEnd;
+StateMohrCoulomb pointCopy, pointEnd;
 PointOld->Copy(&PointCopy);
 Point->Copy(&PointEnd);
 
@@ -2690,7 +2759,7 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
 // we do not have g, as a == g in associated flow rule.
 	do
 	{
-	checkYield (PointEnd.state, pointEnd.stress, pointEnd.getSuction(), &fValue); //20 Feb 2006, preparations for the drift correction
+	checkYield (PointEnd.state, pointEnd.stress, pointEnd.suction(), &fValue); //20 Feb 2006, preparations for the drift correction
 
 	if (fabs(fValue)>d_yieldTol) correct=TRUE; else correct=FALSE;
 		if (correct==TRUE)
@@ -2714,26 +2783,26 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
 
 
 				SpecificVolume=PointCopy.getSpecVol();  //specific volume need to be used the right one
-				//cout<<"Specific Volume:"<<SpecificVolume<<endl;
-				PZeroStar=PointCopy.getPStar ();
+				//cout<<"Specific Volume:"<<SpecificVolume<<"\n";
+				PZeroStar=PointCopy.p0Star ();
 
 				//convention - matrices names are made from CAPITALIZED letters
 
 
 				meanStress=PointCopy.getmeanStress();
-				shearStress=PointCopy.getShearStress();
-				Suction=PointCopy.getSuction();
+				shearStress=PointCopy.shearStress();
+				Suction=PointCopy.suction();
 
 				LambdaS=(1-r)*exp(-Beta*Suction)+r;
 				LambdaS=LambdaS*LambdaZero;
 				Fraction=(LambdaZero-KappaP)/(LambdaS- KappaP);
 				PZero=pc*pow(PZeroStar/pc,Fraction);  //get.calculated.pzero;
 
-				//cout<<"PZero = "<<PZero<<endl;
-				//cout<<"PZeroStar = "<<PZeroStar<<endl;
-				//cout<<"p = "<<meanStress<<endl;
-				//cout<<"q = "<<shearStress<<endl;
-				//cout<<"s = "<<Suction<<endl;
+				//cout<<"PZero = "<<PZero<<"\n";
+				//cout<<"PZeroStar = "<<PZeroStar<<"\n";
+				//cout<<"p = "<<meanStress<<"\n";
+				//cout<<"q = "<<shearStress<<"\n";
+				//cout<<"s = "<<Suction<<"\n";
 
 				temp=2*PointCopy.stress[0]-PointCopy.stress[1]-PointCopy.stress[2]+M*M/3*(2*meanStress+k*Suction-PZero);
 				A.PutElement(1,1,temp);
@@ -2747,7 +2816,7 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
 				A.PutElement(5,1,temp);
 				temp=6*PointCopy.stress[5];
 				A.PutElement(6,1,temp);
-				//cout<<"A:"<<endl; A.Print();
+				//cout<<"A:"<<"\n"; A.Print();
 				//dF/dsigma - inserted into A
 
 				if (nonAssociated)
@@ -2775,11 +2844,11 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
 
                                 P.PutElement (1,1,temp);
 
-                                //cout<<"P:"<<endl; P.Print();
+                                //cout<<"P:"<<"\n"; P.Print();
 
                                 temp=PZeroStar*SpecificVolume/(LambdaZero-KappaP);
                                 PEP.PutElement (1,1,temp); //dP0* /depsplv
-                                //cout<<"dpZeroStar/Depsvpl:"<<temp<<endl;
+                                //cout<<"dpZeroStar/Depsvpl:"<<temp<<"\n";
                                 //DEL... elastic matrix... values of K. Here we
                                 need values of K at the point...
                                 We need to have the K - bulk modulus of the soil
@@ -2798,13 +2867,13 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
                                   if ((meanStress<d_minMeanStress)&&(meanStress>(-d_minMeanStress)))
                                   {
                                           cout<<"WARNING !!! Mean stress too
-  low. Mean stress is adjusted to d_minMeanStress value!!!"<<endl;
+  low. Mean stress is adjusted to d_minMeanStress value!!!"<<"\n";
                                           meanStress=d_minMeanStress;
                                   }
 
                                   K=meanStress*SpecificVolume/KappaP;  //tangent
   bulk modulus K=p*specificVol/KappaP, from eq dSpecVol=-KappaP*ln(p/pzero);
-                                  //cout<<"K="<<K<<endl;
+                                  //cout<<"K="<<K<<"\n";
 
                                   // ****************************** K need
   correcting, but with const. suction seems to be ok
@@ -2842,7 +2911,7 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
                                   temp=TEMP.getElement (1,1);  //first part of
   the denominator
                                   //cout<<"First Part of Denominator done...
-  temp="<<temp<<endl;
+  temp="<<temp<<"\n";
 
 
                                   P.Multiply (&PEP,&TEMP);
@@ -2854,17 +2923,17 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
                                   temp=temp+TEMP.getElement (1,1); //'end of the
   denominator
 
-                                  //cout<<"Denominator="<<temp<<endl;
+                                  //cout<<"Denominator="<<temp<<"\n";
 
                                   Lambda=fValue*(PZero+Suction*k)*(PZero+Suction*k)/temp;
   //because we need the value, not the reduced value...
 
-                                  //cout<<"Lambda="<<Lambda<<endl;
+                                  //cout<<"Lambda="<<Lambda<<"\n";
 
                                   A.Multiply (Lambda, &TEMP); //delta epsilon
   plastic= -delta epsilon elastic
 
-                                  //cout<<"Delta Epsilon Plastic:"<<endl;
+                                  //cout<<"Delta Epsilon Plastic:"<<"\n";
                                   //TEMP.Print();
 
                                   for (int i=1; i<7; i++) epStrain
@@ -2872,7 +2941,7 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
                                   temp=epStrain[0]+epStrain[1]+epStrain[2];
   //DepsilonV
                                   dpZeroStar=PEP.getElement(1,1)*temp;
-                                  //cout<<"dpZeroStar="<<*dpZeroStar<<endl;
+                                  //cout<<"dpZeroStar="<<*dpZeroStar<<"\n";
 
                                   DEL.Multiply (&GG, &TEMP);
                                   TEMP.Multiply (-Lambda, &dSigma);
@@ -2881,12 +2950,12 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
                           //be ADDED to get the right result of corrected
   stresses.
 
-                          //cout<<"Delta Sigma="<<endl;
+                          //cout<<"Delta Sigma="<<"\n";
                           //dSigma->Print();
 
 
                           //cout<<"Press any key (end of Correct Drift
-  Procedure)"<<endl;
+  Procedure)"<<"\n";
                           //getchar();
                           for (int i=0; i<6; i++) DSigma[i]=dSigma.getElement
   (i+1,1);
@@ -2904,7 +2973,7 @@ double temp, PZero, meanStress, shearStress, Suction, PZeroStar, SpecificVolume,
 
 void
 ShengMohrCoulomb::integrate(double* strainIncrement, double suctionIncrement,
-                            BBMPoint* initialPoint, double* stressIncrement,
+                            StateMohrCoulomb* initialState, double* stressIncrement,
                             double P0StarIncrement,
                             double* plasticStrainIncrement)
 {
@@ -2912,76 +2981,76 @@ ShengMohrCoulomb::integrate(double* strainIncrement, double suctionIncrement,
 
 void
 ShengMohrCoulomb::integrateConst(double* strainIncrement,
-                                 BBMPoint* initialPoint, int stepNo, int method)
+                                 StateMohrCoulomb* initialState, int stepNo, int method)
 
 // method does not work at the moment
 {
-  BBMPoint finalPoint;
+  StateMohrCoulomb finalState;
   bool purelyElastic;
   bool onTheYieldLocus;
   bool unloading;
   double purelyElasticStrain[7], purelyPlasticStrain[7];
 
-  onTheYieldLocus = checkYield(initialPoint); // checking if on the YL (Returns
+  onTheYieldLocus = computeYieldNormalized(initialState); // checking if on the YL (Returns
                                               // true if on the YL or outside,
                                               // in the plastic part)
-  calcElastic(strainIncrement, initialPoint,
-              &finalPoint); // Initial point copied to the final point, later
+  calcElastic(strainIncrement, initialState,
+              &finalState); // Initial point copied to the final point, later
                             // Final point updated with the elastic stress
-  purelyElastic = !(checkIfPlastic(&finalPoint)); // checkIfPlastic returns true
+  purelyElastic = !(checkYieldNormalized(&finalState)); // checkYieldNormalized returns true
                                                   // if in the plastic part of
                                                   // the YL. If on the YL
                                                   // (within Tolerance INT_TOL
                                                   // returns false)
-  // cout<<purelyElastic<<endl;
+  // cout<<purelyElastic<<"\n";
 
   if (purelyElastic) {
-    // finalPoint.Copy(initialPoint);
+    // finalState.Copy(initialState);
     // update with what we have - all updated after the procedure
-    // cout<<"Purely Elastic Step"<<endl;
+    // cout<<"Purely Elastic Step"<<"\n";
   } else // we have elasto-plastic step
   {
     if (onTheYieldLocus) {
       unloading =
-        checkGradient(initialPoint, &finalPoint); // checking if there is any
+        checkGradient(initialState, &finalState); // checking if there is any
                                                   // unloading part; in
-                                                  // finalPoint purely elastic
+                                                  // finalState purely elastic
                                                   // values; we care only for
                                                   // correct change of suction
-      // cout<<endl<<endl<<"unloading="<<unloading<<endl;
+      // cout<<"\n"<<"\n"<<"unloading="<<unloading<<"\n";
       // getchar();
       if (unloading) {
-        cout << endl
-             << endl
-             << "Elasto-Plastic unloading=" << unloading << endl;
-        findIntersectionUnloading(strainIncrement, initialPoint,
+        cout << "\n"
+             << "\n"
+             << "Elasto-Plastic unloading=" << unloading << "\n";
+        findIntersectionUnloading(strainIncrement, initialState,
                                   purelyElasticStrain,
                                   purelyPlasticStrain); // finding elastic part
-        calcElastic(purelyElasticStrain, initialPoint,
-                    &finalPoint); // calculating elastic part, updated in the
+        calcElastic(purelyElasticStrain, initialState,
+                    &finalState); // calculating elastic part, updated in the
                                   // same point.
-        calculatePlasticConst(purelyPlasticStrain, &finalPoint,
+        calculatePlasticConst(purelyPlasticStrain, &finalState,
                               stepNo); // and subsequently plastic part
-        // finalPoint.Copy(initialPoint);
+        // finalState.Copy(initialState);
       } else {
-        calculatePlasticConst(strainIncrement, &finalPoint, stepNo);
+        calculatePlasticConst(strainIncrement, &finalState, stepNo);
       }
     } else {
-      findIntersection(strainIncrement, initialPoint, purelyElasticStrain,
+      findIntersection(strainIncrement, initialState, purelyElasticStrain,
                        purelyPlasticStrain); // not on the yield locus, finding
                                              // intersection and subsequently
                                              // calculate elastic and plastic
                                              // stress increment
-      calcElastic(purelyElasticStrain, initialPoint, &finalPoint);
-      calculatePlasticConst(purelyPlasticStrain, &finalPoint, stepNo);
-      // finalPoint.Copy(initialPoint);
+      calcElastic(purelyElasticStrain, initialState, &finalState);
+      calculatePlasticConst(purelyPlasticStrain, &finalState, stepNo);
+      // finalState.Copy(initialState);
     }
   }
-  // for (int i=0; i<3; i++) cout<<strainIncrement[i]<<"  "<<endl;
-  // for (int i=0; i<3; i++) cout<<finalPoint.stress[i]<<"  "<<endl;
-  finalPoint.setSpecificVolume(
-    ComputeNu(finalPoint.stress, finalPoint.state, finalPoint.getSuction()));
-  finalPoint.Copy(initialPoint);
+  // for (int i=0; i<3; i++) cout<<strainIncrement[i]<<"  "<<"\n";
+  // for (int i=0; i<3; i++) cout<<finalState.stress[i]<<"  "<<"\n";
+  finalState.setSpecificVolume(
+    computeNu(finalState.stress, finalState.state, finalState.suction()));
+  finalState.Copy(initialState);
 }
 
 void
@@ -3013,11 +3082,11 @@ ShengMohrCoulomb::findElStrGradPQ(double nu0, double* s0, double* eps0,
 }
 
 double
-ShengMohrCoulomb::calculatePZero(BBMPoint* point)
+ShengMohrCoulomb::calculatePZero(StateMohrCoulomb* point)
 {
-  /*	double PZero=LambdaZero*((1-r)*exp(-1*Beta*Point->getSuction())+r);
+  /*	double PZero=LambdaZero*((1-r)*exp(-1*Beta*Point->suction())+r);
           PZero=(LambdaZero-KappaP)/(PZero-KappaP);
-          PZero=pc*pow((Point->getPStar()/pc),PZero);
+          PZero=pc*pow((Point->p0Star()/pc),PZero);
           return PZero;*/
   return 0;
 }
@@ -3081,8 +3150,8 @@ ShengMohrCoulomb::findYieldOriginal(double* state, double* s0, double* eps0,
 
   */
 
-  double F0, F1, Falfa, epsini[7], epsfini[7], epsalfa[7], sini[6], sfini[6],
-    salfa[6], alfa0, alfa1, alfa;
+  double F0, F1, fAlfa, epsini[7], epsfini[7], epsAlfa[7], sini[6], sfini[6],
+    sAlfa[6], alfa0, alfa1, alfa;
   alfa0 = 0;
   alfa1 = 1;
 
@@ -3101,10 +3170,10 @@ ShengMohrCoulomb::findYieldOriginal(double* state, double* s0, double* eps0,
     for (int i = 0; i < 7; i++) {
       epsini[i] = deps[i] * alfa0;
     }
-    calcStressElast(state[2], s0, eps0, epsini, sini);
+    calcStressIncElast(state[2], s0, eps0, epsini, sini);
     for (int i = 0; i < 6; i++)
       sini[i] = sini[i] + s0[i];
-    checkYield(state, sini, eps0[6] + epsini[6], &F0);
+    computeYieldNormalized(state, sini, eps0[6] + epsini[6], &F0);
     // main F checked
     if (F0 < d_yieldTol) {
       *a = alfa0; // so we have elastic state in other case,
@@ -3126,307 +3195,65 @@ ShengMohrCoulomb::findYieldOriginal(double* state, double* s0, double* eps0,
     epsfini[i] = deps[i] * alfa1;
   }
 
-  calcStressElast(state[2], s0, eps0, epsfini, sfini);
+  calcStressIncElast(state[2], s0, eps0, epsfini, sfini);
 
   for (int i = 0; i < 6; i++) {
     sfini[i] = sfini[i] + s0[i]; // otherwise we have sfini already calculated
     sini[i] = s0[i];
   }
-  checkYield(state, sini, eps0[6] + epsini[6], &F0);
-  checkYield(state, sfini, eps0[6] + epsfini[6], &F1);
+  computeYieldNormalized(state, sini, eps0[6] + epsini[6], &F0);
+  computeYieldNormalized(state, sfini, eps0[6] + epsfini[6], &F1);
 
-  // cout <<"F0="<<F0<<endl<<"F1="<<F1<<endl;
+  // cout <<"F0="<<F0<<"\n"<<"F1="<<F1<<"\n";
 
   for (int iter = 0; iter < d_maxIter; iter++) {
     alfa = F0 / (F0 - F1);
     for (int i = 0; i < 7; i++) {
-      epsalfa[i] = alfa0 * deps[i] + alfa * (alfa1 - alfa0) * deps[i];
+      epsAlfa[i] = alfa0 * deps[i] + alfa * (alfa1 - alfa0) * deps[i];
     }
 
-    calcStressElast(state[2], s0, eps0, epsalfa,
-                    salfa); // calculated stress increment for current alfa
-    // state[2]=ComputeNu (salfa, state, eps0[6]+epsalfa[6]);
+    calcStressIncElast(state[2], s0, eps0, epsAlfa,
+                    sAlfa); // calculated stress increment for current alfa
+    // state[2]=computeNu (sAlfa, state, eps0[6]+epsAlfa[6]);
     for (int i = 0; i < 6; i++)
-      salfa[i] = salfa[i] + s0[i]; // update stress
-    checkYield(state, salfa, eps0[6] + epsalfa[6],
-               &Falfa); // calculated yield function for current alfa
-    // cout<<"In iteration "<<iter<<" alfa="<<alfa<<" and F="<<Falfa<<endl;
+      sAlfa[i] = sAlfa[i] + s0[i]; // update stress
+    computeYieldNormalized(state, sAlfa, eps0[6] + epsAlfa[6],
+               &fAlfa); // calculated yield function for current alfa
+    // cout<<"In iteration "<<iter<<" alfa="<<alfa<<" and F="<<fAlfa<<"\n";
 
-    if ((Falfa > -d_yieldTol) && (Falfa < d_yieldTol)) {
+    if ((fAlfa > -d_yieldTol) && (fAlfa < d_yieldTol)) {
       *a = alfa0 +
            alfa *
-             (alfa1 - alfa0); // if Falfa within tolerance, we have the solution
+             (alfa1 - alfa0); // if fAlfa within tolerance, we have the solution
       cout << "Solution in findYieldOriginal procedure was found after " << iter
-           << " iterations." << endl;
+           << " iterations." << "\n";
       if (iter > 50) {
         getchar();
         cout << "Large number of iterations!!! Solution is however correct... "
                 "Press any key..."
-             << endl;
+             << "\n";
       }
       return;
     }
-    if (Falfa > 0) {
+    if (fAlfa > 0) {
       alfa1 = alfa0 + alfa * (alfa1 - alfa0);
-      F1 = Falfa; // if Falfa >0 - we are yielding - max alfa set to current
+      F1 = fAlfa; // if fAlfa >0 - we are yielding - max alfa set to current
                   // alfa
     } else {
       alfa0 = alfa0 + alfa * (alfa1 - alfa0);
-      F0 = Falfa; // if Falfa <0 - we are elastic - minimum alfa is set to
+      F0 = fAlfa; // if fAlfa <0 - we are elastic - minimum alfa is set to
                   // current alfa
     }
   }
   *a = -1;
   // if we are here, we must have perforemed to many iterations...
-  // cout<<"Error in procedure findYieldOriginal"<<endl;
-  // cout<<"After "<<d_maxIter<<" iterations crossing point not found"<<endl;
+  // cout<<"Error in procedure findYieldOriginal"<<"\n";
+  // cout<<"After "<<d_maxIter<<" iterations crossing point not found"<<"\n";
   // cout<<"This is likely to cause incorrect results... Results obtained should
-  // not be taken too seriously..."<<endl;
+  // not be taken too seriously..."<<"\n";
   *a = -1; // set value to error...
 }
 
-void
-ShengMohrCoulomb::findYieldModified(double* state, double* s0, double* eps0,
-                                    double* deps, double* a)
-{
-
-  /*
-  Main purpose of this procedure is to find the intersection between yield
-  surface and the stress vector. We need to know
-  at what value of epsilon (strain) we are on the surface - where plastic
-  yielding will begin.
-
-  Parameters: state vector, initial stress s0, initial strain eps0, strain
-  increment deps, a- to which value of alfa will be written
-
-  Changed - a
-
-  Algorithm - this is a Pegasus algorithm; we are looking for alfa such, that
-  value of yield function F==0.
-  This alfa is found and written to a.
-
-  */
-
-  double F0, F1, Falfa, epsini[7], epsfini[7], epsalfa[7], sini[6], sfini[6],
-    salfa[6], alfa0, alfa1, alfa, alfaold;
-  alfa0 = 0;
-  alfa1 = 1;
-  alfa = 0.5;
-  alfaold = 0;
-  bool problems = false;
-  /*
-	cout<<"Parameters are set to:"<<endl;
-	cout<<"Maximum number of iteration d_maxIter:"<<d_maxIter<<endl;
-	cout<<"Value of d_alfaCheck - when the additional iter. is to enter:"<<d_alfaCheck<<endl;
-	cout<<"Value of change of alfa in the step:"<<d_alfaChange<<endl;
-	cout<<"alfa old/alfa ratio:"<<d_alfaRatio<<endl;
-*/ for (int i = 0; i < 6; i++)
-    sini[i] = 0;
-  for (int i = 0; i < 7; i++) {
-    epsini[i] = deps[i] * alfa0;
-    epsfini[i] = deps[i] * alfa1;
-  }
-
-  // check of the second yield surface:
-  /*
-          if ((eps0[6]+deps[6])>state[1])  //so suction is larger then maximum
-     experienced suction
-          {
-          cout<<"WARNING SUCTION GREATER THAN S0!!!"<<endl;
-
-                  alfa0=(state[1]-eps0[6])/deps[6];
-                  for (int i=0; i<7; i++)
-                  {
-                          epsini[i]=deps[i]*alfa0;
-                  }
-                  calcStressElast (state[2], s0, eps0, epsini, sini);
-                  for (int i=0; i<6;i++) sini[i]=sini[i]+s0[i];
-                  checkYieldNormalised (state, sini, eps0[6]+epsini[6],&F0);
-                  // main F checked
-                  if (F0<d_yieldTol) //we may finish when there is no yield at
-     this strain at F0. so..
-                  {
-                          *a=alfa0; // so we have elastic state in other case,
-                          return;
-                  }
-                  else
-                  {
-                          alfa1=alfa0; // although we have the upper limit of
-     yield, better start at zero...
-                          alfa0=0;
-                  }
-                  //the second surface is the most important - and it is
-     violated...
-                  //we have to find alfa depending on first surface - which is
-     violated first
-          }
-  */
-  // now because the Main yield surface is valid, the whole check is made...
-  // however we start with alfa0 different if the suction was greater than
-  // maksimum suction...
-
-  for (int i = 0; i < 7; i++) {
-    epsini[i] = deps[i] * alfa0;
-    epsfini[i] = deps[i] * alfa1;
-  }
-
-  calcStressElast(state[2], s0, eps0, epsfini, sfini);
-
-  for (int i = 0; i < 6; i++) {
-    sini[i] = s0[i];
-    sfini[i] = sfini[i] + s0[i];
-  }
-  checkYield(state, sini, eps0[6] + epsini[6], &F0);
-  checkYield(state, sfini, eps0[6] + epsfini[6], &F1);
-
-  // cout <<"Find Yield Modified Procedure"<<"  F0="<<F0<<endl<<"
-  // F1="<<F1<<endl;
-  // cout <<"Value of F0 should be negative, and value of F1 should be
-  // positive."<<endl;
-  // cout <<"Values should be larger than tolerance for yield:"<<d_yieldTol<<endl;
-
-  for (int iter = 0; iter < d_maxIter; iter++) {
-    problems = false;
-    alfaold = alfa;
-    alfa = F0 / (F0 - F1);
-    // cout<<"Alfa="<<alfa0<<endl;
-    for (int i = 0; i < 7; i++) {
-      epsalfa[i] = alfa0 * deps[i] + alfa * (alfa1 - alfa0) * deps[i];
-    }
-    // here we need to update specific volume
-
-    calcStressElast(state[2], s0, eps0, epsalfa,
-                    salfa); // calculated stress increment for current alfa
-    // state[2]=ComputeNu (salfa, state, eps0[6]+epsalfa[6]);
-    for (int i = 0; i < 6; i++)
-      salfa[i] = salfa[i] + s0[i]; // update stress
-    checkYieldNormalised(state, salfa, eps0[6] + epsalfa[6],
-                         &Falfa); // calculated yield function for current alfa
-    // cout<<"In iteration "<<iter<<" alfa="<<alfa<<" and F="<<Falfa<<endl;
-
-    if ((alfa1 - alfa0) < TINY)
-      Falfa = 0.0; // if the difference is below numerical the accuracy, we have
-                   // the solution
-
-    if ((Falfa > -d_yieldTol) && (Falfa < d_yieldTol)) {
-      *a = alfa0 +
-           alfa *
-             (alfa1 - alfa0); // if Falfa within tolerance, we have the solution
-      // cout<<"Solution in findYieldModified procedure was found after
-      // "<<iter<<" iterations."<<endl;
-      if (iter > 50) {
-        cout << "Large number of iterations in findYieldModified procedure!!! "
-                "Solution is however correct..."
-             << endl;
-      }
-      // cout<<"solution is:"<<*a<<endl;
-      return;
-    }
-    if (Falfa > 0) {
-      checkYield(state, salfa, eps0[6] + epsalfa[6], &Falfa);
-      if (((1 - alfa) < d_alfaCheck) && ((1 - alfaold) / (1 - alfa)) < d_alfaRatio)
-        problems = true;
-      // alfa1=alfa1-(1-alfa)*(alfa1-alfa0); the line below is the same but
-      // faster
-      alfa1 = alfa0 + alfa * (alfa1 - alfa0);
-      F1 = Falfa; // if Falfa >0 - we are yielding - max alfa set to current
-                  // alfa
-
-      if (problems) {
-        // cout<<"Problematic iteration entered !!!"<<endl;
-        alfa = alfa1 - d_alfaChange * (alfa1 - alfa0);
-        for (int i = 0; i < 7; i++) {
-          epsalfa[i] = alfa0 * deps[i] + alfa * (alfa1 - alfa0) * deps[i];
-        }
-
-        // here to update specific volume
-
-        calcStressElast(state[2], s0, eps0, epsalfa,
-                        salfa); // calculated stress increment for current alfa
-        // state[2]=ComputeNu (salfa, state, eps0[6]+epsalfa[6]);
-        for (int i = 0; i < 6; i++)
-          salfa[i] = salfa[i] + s0[i]; // update stress
-        checkYield(state, salfa, eps0[6] + epsalfa[6],
-                   &Falfa); // calculated yield function for current alfa
-
-        if (Falfa > 0) {
-          alfa1 = alfa0 + alfa * (alfa1 - alfa0);
-          F1 = Falfa; // if Falfa >0 - we are yielding - max alfa set to current
-                      // alfa
-        } else {
-          alfa0 = alfa0 + alfa * (alfa1 - alfa0);
-          F0 = Falfa; // if Falfa <0 - we are elastic - minimum alfa is set to
-                      // current alfa
-        }
-      }
-
-    } else {
-      checkYield(state, salfa, eps0[6] + epsalfa[6], &Falfa);
-      if ((alfa < d_alfaCheck) && (alfaold / alfa) < d_alfaRatio)
-        problems = true;
-      alfa0 = alfa0 + alfa * (alfa1 - alfa0);
-      F0 = Falfa; // if Falfa <0 - we are elastic - minimum alfa is set to
-                  // current alfa
-
-      if (problems) {
-        // cout<<"Problematic iteration entered !!!"<<endl;
-        alfa = alfa0 + d_alfaChange * (alfa1 - alfa0);
-        for (int i = 0; i < 7; i++) {
-          epsalfa[i] = alfa0 * deps[i] + alfa * (alfa1 - alfa0) * deps[i];
-        }
-        // here to update specific volume
-
-        calcStressElast(state[2], s0, eps0, epsalfa,
-                        salfa); // calculated stress increment for current alfa
-        // state[2]=ComputeNu (salfa, state, eps0[6]+epsalfa[6]);
-        for (int i = 0; i < 6; i++)
-          salfa[i] = salfa[i] + s0[i]; // update stress
-        checkYield(state, salfa, eps0[6] + epsalfa[6],
-                   &Falfa); // calculated yield function for current alfa
-        if (Falfa > 0) {
-          alfa1 = alfa0 + alfa * (alfa1 - alfa0);
-          F1 = Falfa; // if Falfa >0 - we are yielding - max alfa set to current
-                      // alfa
-        } else {
-          alfa0 = alfa0 + alfa * (alfa1 - alfa0);
-          F0 = Falfa; // if Falfa <0 - we are elastic - minimum alfa is set to
-                      // current alfa
-        }
-      }
-    }
-  }
-  // if we are here, we must have perforemed to many iterations...
-  cout << "Error in procedure findYieldModified" << endl;
-  cout << "After " << d_maxIter << " iterations crossing point not found" << endl;
-  cout << "alphamin=" << alfa0 << " alphamax=" << alfa1
-       << " dalpha=" << alfa1 - alfa0;
-  cout << "Yield Function value Min=" << F0 << " Max=" << F1 << endl;
-  cout << "Stress:" << s0[0] << ' ' << s0[1] << ' ' << s0[2] << ' ' << ' '
-       << s0[3] << ' ' << s0[4] << ' ' << s0[5] << endl;
-  cout << "Strain:" << deps[0] << ' ' << deps[1] << ' ' << deps[2] << ' ' << ' '
-       << deps[3] << ' ' << deps[4] << ' ' << deps[5] << endl;
-  cout << "G:" << G << " K:" << K << " cohesion:" << cohesion << " phi:" << phi
-       << endl;
-  cout << "This is likely to cause incorrect results... Results obtained "
-          "should not be taken too seriously..."
-       << endl;
-  getchar();
-}
-
-void
-ShengMohrCoulomb::findIntersection(double* strainIncrement,
-                                   BBMPoint* initialPoint,
-                                   double* purelyElasticStrain,
-                                   double* purelyPlasticStrain)
-{
-  double alfa;
-  findYieldModified(initialPoint->state, initialPoint->stress,
-                    initialPoint->strain, strainIncrement, &alfa);
-  for (int i = 0; i < 7; i++) {
-    purelyElasticStrain[i] = alfa * strainIncrement[i];
-    purelyPlasticStrain[i] = strainIncrement[i] - purelyElasticStrain[i];
-  }
-}
 
 void
 ShengMohrCoulomb::moveYieldaBit(double* state, double* s0, double* ds,
@@ -3449,19 +3276,19 @@ Algorithm is modified to what it was originally thought.
   F0 = F0 + ADDTOLYIELD * d_yieldTol;
   for (int i = 0; i < 7; i++)
     ddeps[i] = -CHGEPSINTOL * eps0[i];
-  calcStressElast(state[2], s0, eps0, ddeps, dds);
+  calcStressIncElast(state[2], s0, eps0, ddeps, dds);
   for (int i = 0; i < 6; i++)
     dds[i] = dds[i] + s0[i];
-  checkYield(state, dds, eps0[6] + ddeps[6], &ddF);
+  computeYieldNormalized(state, dds, eps0[6] + ddeps[6], &ddF);
   ddF = ddF + ADDTOLYIELD * d_yieldTol; // so we added the same to both values...
   // now x from doc file is calculated
   x = (F0 * CHGEPSINTOL) / (F0 - ddF);
   for (int i = 0; i < 7; i++)
     ddeps[i] = -x * eps0[i];
-  calcStressElast(state[2], s0, eps0, ddeps, dds);
+  calcStressIncElast(state[2], s0, eps0, ddeps, dds);
   for (int i = 0; i < 6; i++)
     dds[i] = dds[i] + s0[i];
-  checkYield(state, dds, eps0[6] + ddeps[6], &ddF);
+  computeYieldNormalized(state, dds, eps0[6] + ddeps[6], &ddF);
   if (ddF > 0)
     cout << "Error in procedure moveYieldaBit; Yield Function ddF is greater "
             "then zero...";
@@ -3479,230 +3306,6 @@ Algorithm is modified to what it was originally thought.
 }
 
 void
-ShengMohrCoulomb::findIntersectionUnloading(double* strainIncrement,
-                                            BBMPoint* initialPoint,
-                                            double* purelyElastic,
-                                            double* purelyPlastic)
-{
-  double alfa;
-  findYieldYield(initialPoint->state, initialPoint->stress,
-                 initialPoint->strain, strainIncrement, &alfa);
-  for (int i = 0; i < 7; i++) {
-    purelyElastic[i] = alfa * strainIncrement[i];
-    purelyPlastic[i] = strainIncrement[i] - purelyElastic[i];
-  }
-}
-
-void
-ShengMohrCoulomb::findYieldYield(double* state, double* s0, double* eps0,
-                                 double* deps, double* a)
-{
-
-  /*
-  Main purpose of this procedure is to find the intersection between yield
-  surface and the stress vector. This is a
-  special version of the procedure used in case of elastic-plastic unloading -
-  when we have plastic state
-  at the beginning of the stei and then elastic unloading and plastic again. We
-  need to know
-  at what value of epsilon (strain) we are on the surface - where plastic
-  yielding will begin.
-
-  Parameters: state vector, initial stress s0, initial strain eps0, strain
-  increment deps, a- to which value of alfa will be written
-
-  Changed - a
-
-  Algorithm - this is a Pegasus algorithm; we are looking for alfa such, that
-  value of yield function F==0.
-  This alfa is found and written to a.
-
-  */
-
-  double F0, F1, Falfa, epsini[7], epsfini[7], epsalfa[7], sini[6], sfini[6],
-    salfa[6], alfa0, alfa1, alfa, alfaold;
-  double oldyieldtol, delta;
-  alfa0 = 0;
-  alfa1 = 1;
-  alfa = 0.5;
-  alfaold = 0;
-  bool problems = false;
-  checkYieldNormalised(state, s0, eps0[6],
-                       &F0); // possibly the function value will be given...
-  oldyieldtol = d_yieldTol;
-  if (F0 < 0) {
-    delta = 0;
-    d_yieldTol = -0.9 * F0;
-  } else {
-    // cout<<"findYieldYield : case not coded for yet"<<endl;
-    delta = (F0 + d_yieldTol) / 2;
-    d_yieldTol = 0.9 * (d_yieldTol - F0) / 2;
-  }
-  // cout<<"Procedure Find Yield Yield ... s="<<s0[0]<<' '<<s0[1]<<' '<<s0[2]<<'
-  // '<<s0[3]<<' '<<s0[4]<<' '<<s0[5]<<' '<<endl;
-  // cout<<"Procedure Find Yield Yield ... dEps="<<deps[0]<<' '<<deps[1]<<'
-  // '<<deps[2]<<' '<<deps[3]<<' '<<deps[4]<<' '<<deps[5]<<' '<<endl;
-  // cout<<"Initial normalised Yield Locus... F0="<<F0<<endl;
-
-  // findYieldModified(state, s0, eps0, deps, a);
-  // d_yieldTol=oldyieldtol;
-
-  //	cout<<"Delta="<<delta<<endl;
-  //	cout<<"F0="<<F0<<endl;
-  cout << "Procedure Find Yield Yield ... Delta=" << *a << endl;
-  cout << "Call of this procedure is generally rare and most likely improper "
-          "... Delta="
-       << *a << endl;
-
-  /*
-      cout<<"Parameters are set to:"<<endl;
-      cout<<"Maximum number of iteration d_maxIter:"<<d_maxIter<<endl;
-      cout<<"Value of d_alfaCheck - when the additional iter. is to
-     enter:"<<d_alfaCheck<<endl;
-      cout<<"Value of change of alfa in the step:"<<d_alfaChange<<endl;
-      cout<<"alfa old/alfa ratio:"<<d_alfaRatio<<endl;
-  */
-
-  for (int i = 0; i < 6; i++)
-    sini[i] = 0;
-  for (int i = 0; i < 7; i++) {
-    epsini[i] = deps[i] * alfa0;
-    epsfini[i] = deps[i] * alfa1;
-  }
-
-  for (int i = 0; i < 7; i++) {
-    epsini[i] = deps[i] * alfa0;
-    epsfini[i] = deps[i] * alfa1;
-  }
-
-  calcStressElast(state[2], s0, eps0, epsfini, sfini);
-
-  for (int i = 0; i < 6; i++) {
-    sini[i] = s0[i];
-    sfini[i] = sfini[i] + s0[i];
-  }
-  checkYieldNormalised(state, sini, eps0[6] + epsini[6], &F0);
-  checkYieldNormalised(state, sfini, eps0[6] + epsfini[6], &F1);
-  F0 = F0 - delta;
-  F1 = F1 - delta;
-  //	cout <<"Procedure findYieldYield. Initial values of F0="<<F0<<endl<<"
-  // F1="<<F1<<endl;
-  //	cout <<"F0 should lie on the yield locus within
-  // tolerance:"<<oldyieldtol<<endl;
-
-  for (int iter = 0; iter < d_maxIter; iter++) {
-    problems = false;
-    alfaold = alfa;
-
-    alfa = F0 / (F0 - F1);
-    for (int i = 0; i < 7; i++) {
-      epsalfa[i] = alfa0 * deps[i] + alfa * (alfa1 - alfa0) * deps[i];
-    }
-    calcStressElast(state[2], s0, eps0, epsalfa,
-                    salfa); // calculated stress increment for current alfa
-    for (int i = 0; i < 6; i++)
-      salfa[i] = salfa[i] + s0[i]; // update stress
-    checkYieldNormalised(state, salfa, eps0[6] + epsalfa[6],
-                         &Falfa); // calculated yield function for current alfa
-    Falfa = Falfa - delta;
-    // cout<<"In iteration "<<iter<<" alfa="<<alfa<<" and F="<<Falfa<<endl;
-
-    if ((Falfa > -d_yieldTol) && (Falfa < d_yieldTol)) {
-      *a = alfa0 +
-           alfa *
-             (alfa1 - alfa0); // if Falfa within tolerance, we have the solution
-      //		cout<<"Solution in findYieldYield procedure was found
-      // after "<<iter<<" iterations."<<endl;
-      if (iter > 50) {
-        getchar();
-        cout << "Large number of iterations!!! Solution is however correct... "
-                "Press any key..."
-             << endl;
-      }
-      //		cout<<"Value of the yield function is equal
-      // to:"<<Falfa<<endl;
-      //		cout<<"Modified value of tolerance is:"<<d_yieldTol<<endl;
-      //		cout<<"Value of delta is:"<<delta<<endl;
-      // cout<<"Alfa is equal to: "<<*a<<endl;
-      d_yieldTol = oldyieldtol;
-      //		cout<<"Yield tolerance is set back to:"<<d_yieldTol<<endl;
-      return;
-    }
-    if (Falfa > 0) {
-      if (((1 - alfa) < d_alfaCheck) && ((1 - alfaold) / (1 - alfa)) < d_alfaRatio)
-        problems = true;
-      // alfa1=alfa1-(1-alfa)*(alfa1-alfa0); the line below is the same but
-      // faster
-      alfa1 = alfa0 + alfa * (alfa1 - alfa0);
-      F1 = Falfa; // if Falfa >0 - we are yielding - max alfa set to current
-                  // alfa
-
-      if (problems) {
-        // cout<<"Problematic iteration entered !!!"<<endl;
-        alfa = alfa1 - d_alfaChange * (alfa1 - alfa0);
-        for (int i = 0; i < 7; i++) {
-          epsalfa[i] = alfa0 * deps[i] + alfa * (alfa1 - alfa0) * deps[i];
-        }
-        calcStressElast(state[2], s0, eps0, epsalfa,
-                        salfa); // calculated stress increment for current alfa
-        for (int i = 0; i < 6; i++)
-          salfa[i] = salfa[i] + s0[i]; // update stress
-        checkYield(state, salfa, eps0[6] + epsalfa[6],
-                   &Falfa); // calculated yield function for current alfa
-        Falfa = Falfa - delta;
-        if (Falfa > 0) {
-          alfa1 = alfa0 + alfa * (alfa1 - alfa0);
-          F1 = Falfa; // if Falfa >0 - we are yielding - max alfa set to current
-                      // alfa
-        } else {
-          alfa0 = alfa0 + alfa * (alfa1 - alfa0);
-          F0 = Falfa; // if Falfa <0 - we are elastic - minimum alfa is set to
-                      // current alfa
-        }
-      }
-
-    } else {
-      if ((alfa < d_alfaCheck) && (alfaold / alfa) < d_alfaRatio)
-        problems = true;
-      alfa0 = alfa0 + alfa * (alfa1 - alfa0);
-      F0 = Falfa; // if Falfa <0 - we are elastic - minimum alfa is set to
-                  // current alfa
-
-      if (problems) {
-        // cout<<"Problematic iteration entered !!!"<<endl;
-        alfa = alfa0 + d_alfaChange * (alfa1 - alfa0);
-        for (int i = 0; i < 7; i++) {
-          epsalfa[i] = alfa0 * deps[i] + alfa * (alfa1 - alfa0) * deps[i];
-        }
-        calcStressElast(state[2], s0, eps0, epsalfa,
-                        salfa); // calculated stress increment for current alfa
-        for (int i = 0; i < 6; i++)
-          salfa[i] = salfa[i] + s0[i]; // update stress
-        checkYield(state, salfa, eps0[6] + epsalfa[6],
-                   &Falfa); // calculated yield function for current alfa
-        Falfa = Falfa - delta;
-        if (Falfa > 0) {
-          alfa1 = alfa0 + alfa * (alfa1 - alfa0);
-          F1 = Falfa; // if Falfa >0 - we are yielding - max alfa set to current
-                      // alfa
-        } else {
-          alfa0 = alfa0 + alfa * (alfa1 - alfa0);
-          F0 = Falfa; // if Falfa <0 - we are elastic - minimum alfa is set to
-                      // current alfa
-        }
-      }
-    }
-  }
-  d_yieldTol = oldyieldtol;
-  // if we are here, we must have perforemed to many iterations...
-  cout << "Error in procedure findYieldYield" << endl;
-  cout << "After " << d_maxIter << " iterations crossing point not found" << endl;
-  cout << "This is likely to cause incorrect results... Results obtained "
-          "should not be taken too seriously..."
-       << endl;
-}
-
-void
 ShengMohrCoulomb::read()
 {
   // reads data from file "ShengMohrCoulomb.dta"
@@ -3717,7 +3320,7 @@ ShengMohrCoulomb::read()
 
     getline(infile, s, '\n');
     line++;
-    // cout << s <<" Prep: In line no:"<<line<<endl;
+    // cout << s <<" Prep: In line no:"<<line<<"\n";
     // getchar ();
     if (!infile.good()) {
       cout << "Wrong Data File";
@@ -3732,7 +3335,7 @@ ShengMohrCoulomb::read()
 
     getline(infile, s, '\n'); // read whole line
     line++;
-    // cout << s <<"In line no:"<<line<<endl;
+    // cout << s <<"In line no:"<<line<<"\n";
     // getchar ();
     bool notcomment = true;
     if (s == "")
@@ -3748,7 +3351,7 @@ ShengMohrCoulomb::read()
         storage[j] = atof(s.c_str());    // converse to double
       } else
         cout << "No ; in line:" << line << " May cause errors."
-             << endl; // warn about lack of ; in line
+             << "\n"; // warn about lack of ; in line
     } else
       j--;
     if (!infile.good())
@@ -3775,7 +3378,7 @@ ShengMohrCoulomb::read()
           {
                   alfa=(M*(M-9)*(M-3))/(9*(6-M)*(1-KappaP/LambdaZero));
                   cout<<"Non associated flow rule used. Value of
-  alfa:"<<alfa<<endl;
+  alfa:"<<alfa<<"\n";
           }
   else {
           alfa=1;
@@ -3790,22 +3393,22 @@ void
 ShengMohrCoulomb::write()
 {
   /*
-          cout<<"Model Parameters:"<<endl;
-          cout<<"Shear Modulus G="<<G<<endl;
-          cout<<"Kappa p="<<KappaP<<endl;
-          cout<<"Kappa s="<<KappaS<<endl;
-          cout<<"Pc="<<pc<<endl;
-          cout<<"k="<<k<<endl;
-          cout<<"r="<<r<<endl;
-          cout<<"Beta="<<Beta<<endl;
-          cout<<"Lambda (0)="<<LambdaZero<<endl;
-          cout<<"N (0)="<<NZero<<endl;
-          cout<<"M="<<M<<" deg"<<endl;
+          cout<<"Model Parameters:"<<"\n";
+          cout<<"Shear Modulus G="<<G<<"\n";
+          cout<<"Kappa p="<<KappaP<<"\n";
+          cout<<"Kappa s="<<KappaS<<"\n";
+          cout<<"Pc="<<pc<<"\n";
+          cout<<"k="<<k<<"\n";
+          cout<<"r="<<r<<"\n";
+          cout<<"Beta="<<Beta<<"\n";
+          cout<<"Lambda (0)="<<LambdaZero<<"\n";
+          cout<<"N (0)="<<NZero<<"\n";
+          cout<<"M="<<M<<" deg"<<"\n";
 
-          cout<<"Computed parameters:"<<endl;
-          cout<<"K="<<K<<endl;
-          cout<<"Ks="<<Ks<<endl;
-          cout<<"Kp="<<Kp<<endl;*/
+          cout<<"Computed parameters:"<<"\n";
+          cout<<"K="<<K<<"\n";
+          cout<<"Ks="<<Ks<<"\n";
+          cout<<"Kp="<<Kp<<"\n";*/
 }
 
 void
@@ -3818,19 +3421,19 @@ ShengMohrCoulomb::paintLocus(double* state, double suction, int Max)
   // locus starts from -s0 and finishes at P0.
   // double minP, maxP, PZero, difference;
   /*
-  //cout<<Max<<endl; // in first line we put how many points we have...
+  //cout<<Max<<"\n"; // in first line we put how many points we have...
   fprintf( stream, "%d\n", Max );
   minP=-k*suction;
   PZero=LambdaZero*((1-r)*exp(-1*Beta*suction)+r);
   PZero=(LambdaZero-KappaP)/(PZero-KappaP);
   PZero=pc*pow((state[0]/pc),PZero);
   maxP=PZero;
-  //cout<<minP<<endl;	//minimum
-  //cout<<maxP<<endl;	//maximum, used to set the view...
+  //cout<<minP<<"\n";	//minimum
+  //cout<<maxP<<"\n";	//maximum, used to set the view...
   fprintf( stream, "%f\n",minP );
   fprintf( stream, "%f\n",maxP );
   difference=maxP-minP;	//this is the max difference...
-  //cout<<difference<<endl;
+  //cout<<difference<<"\n";
   double p,q;
 
   for (int i=0; i<Max; i++)
@@ -3848,7 +3451,7 @@ ShengMohrCoulomb::paintLocus(double* state, double suction, int Max)
 
 double
 ShengMohrCoulomb::calculatePlasticConst(double* purelyPlasticStrain,
-                                        BBMPoint* point, int stepNo)
+                                        StateMohrCoulomb* point, int stepNo)
 {
   double time, stressIncrAbs[7], RelativeError;
   int numberIter = stepNo;
@@ -3897,7 +3500,7 @@ ShengMohrCoulomb::calculatePlasticConst(double* purelyPlasticStrain,
 }
 
 double
-ShengMohrCoulomb::calculatePlastic(double* purelyPlasticStrain, BBMPoint* point)
+ShengMohrCoulomb::calculatePlastic(double* purelyPlasticStrain, StateMohrCoulomb* point)
 {
   double time = 0, stressIncrAbs[7];
   int numberIter;
@@ -3952,12 +3555,12 @@ ShengMohrCoulomb::calculatePlastic(double* purelyPlasticStrain, BBMPoint* point)
       cout
         << "Unknown Solution Algorithm. Value of d_solutionAlgorithm variable "
            "is set to:"
-        << d_solutionAlgorithm << endl;
+        << d_solutionAlgorithm << "\n";
       cout
         << "Acceptable values are ints from 1 to 9. Procedure calculate "
            "Plastic exits without any calculations done. Please press any key "
            "to continue"
-        << endl;
+        << "\n";
       getchar();
     } break;
   }
@@ -3966,7 +3569,7 @@ ShengMohrCoulomb::calculatePlastic(double* purelyPlasticStrain, BBMPoint* point)
 }
 
 double
-ShengMohrCoulomb::plasticEuler(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticEuler(StateMohrCoulomb* point, double* epStrain,
                                double* absStress, int numberIterations)
 {
 
@@ -3976,7 +3579,7 @@ ShengMohrCoulomb::plasticEuler(BBMPoint* point, double* epStrain,
   double CurrentStrain[7], plasticStrain[6];
   double PZeroStarTot = 0;
   double dSigmaDrift[6], dLambdaDrift;
-  BBMPoint OldPoint;
+  StateMohrCoulomb OldPoint;
   Point->Copy(&OldPoint);
 
   vector<double> stressInc;
@@ -3984,8 +3587,8 @@ ShengMohrCoulomb::plasticEuler(BBMPoint* point, double* epStrain,
   vector<double> PZeroLambda;
   vector<double>::iterator Iter;
 
-  // cout<<"Euler Procedure Entered"<<endl;
-  // cout<<"Number of iterations in Euler Algorithm:"<<numberIterations<<endl;
+  // cout<<"Euler Procedure Entered"<<"\n";
+  // cout<<"Number of iterations in Euler Algorithm:"<<numberIterations<<"\n";
 
   clock_t StartTime, EndTime;
   StartTime = clock();
@@ -4024,28 +3627,28 @@ ShengMohrCoulomb::plasticEuler(BBMPoint* point, double* epStrain,
 
   /*
   cout<<"calculation took:"<<double(EndTime-StartTime)/CLOCKS_PER_SEC<<"
-  s."<<endl;
-  cout<<"The d_integrationTol parameter is equal to:"<<d_integrationTol<<endl;
-  cout<<"Total number of steps done:"<<numberIterations<<endl;
+  s."<<"\n";
+  cout<<"The d_integrationTol parameter is equal to:"<<d_integrationTol<<"\n";
+  cout<<"Total number of steps done:"<<numberIterations<<"\n";
 
-  cout<<"Total PZeroStar change: "<<PZeroStarTot<<endl;
+  cout<<"Total PZeroStar change: "<<PZeroStarTot<<"\n";
   checkYield (Point->state, point->stress, point->strain[6],&fValue);
-  cout<<"Yield Function value is:"<<fValue<<endl;
+  cout<<"Yield Function value is:"<<fValue<<"\n";
 
-  cout<<"Over the whole step change of stress is:"<<endl;
+  cout<<"Over the whole step change of stress is:"<<"\n";
   for (int i=0; i<6; i++)
   {
-          cout<<"s["<<i<<"]="<<Point->stress[i]-OldPoint.stress[i]<<endl;
+          cout<<"s["<<i<<"]="<<Point->stress[i]-OldPoint.stress[i]<<"\n";
   }
 
-  cout<<"Initial specific volume="<<OldPoint.getSpecVol()<<endl;
-  cout<<"Final specific volume="<<Point->getSpecVol()<<endl;
+  cout<<"Initial specific volume="<<OldPoint.getSpecVol()<<"\n";
+  cout<<"Final specific volume="<<Point->getSpecVol()<<"\n";
   cout<<"Change of specific volume is equal
-  to="<<(OldPoint.getSpecVol()-Point->getSpecVol())<<endl;
+  to="<<(OldPoint.getSpecVol()-Point->getSpecVol())<<"\n";
   cout<<"Change of mean stress p is equal
-  to:"<<Point->getmeanStress()-OldPoint.getmeanStress()<<endl;
+  to:"<<Point->getmeanStress()-OldPoint.getmeanStress()<<"\n";
   cout<<"Change of shear stress q is equal
-  to:"<<Point->getShearStress()-OldPoint.getShearStress()<<endl;
+  to:"<<Point->shearStress()-OldPoint.shearStress()<<"\n";
 
 
 
@@ -4093,7 +3696,7 @@ ShengMohrCoulomb::plasticEuler(BBMPoint* point, double* epStrain,
 
 
 
-  cout<<"Press any key..."<<endl;
+  cout<<"Press any key..."<<"\n";
   getchar();
   */
 
@@ -4102,7 +3705,7 @@ ShengMohrCoulomb::plasticEuler(BBMPoint* point, double* epStrain,
 
 double
 ShengMohrCoulomb::doRungeutta(double A[][8], double* B, double* BRes, double* C,
-                             BBMPoint* point, double* epStrain,
+                             StateMohrCoulomb* point, double* epStrain,
                              double* absStress, int* numberIter,
                              double methodOrder, int methodSteps,
                              bool errorEstimate)
@@ -4120,7 +3723,7 @@ contains 4th order solution
 */
 {
   BBMMatrix dSigma(6, 1);
-  BBMPoint MidPoint[8], OldPoint, TrialPoint;
+  StateMohrCoulomb MidPoint[8], OldPoint, TrialPoint;
 
   double CriticalStepSize = 1E-4; // HACK HACK HACK - prevents algorithm to have
                                   // more than 1e4 steps; cost: accuracy
@@ -4172,7 +3775,7 @@ contains 4th order solution
   for (int i = 0; i < 6; i++)
     NewStepSize = NewStepSize + fabs(SubstepStrain[i]);
   NewStepSize = 0.01 / (NewStepSize * methodOrder);
-  // cout<<"NewStepSize="<<NewStepSize<<endl;
+  // cout<<"NewStepSize="<<NewStepSize<<"\n";
   if (NewStepSize > 1)
     NewStepSize = 1;
 
@@ -4201,8 +3804,8 @@ contains 4th order solution
     }
     RError = 0;
 
-    // cout<<"Step Length="<<StepLength<<endl;
-    // cout<<"Current strain [0]="<<CurrentStrain[0]<<endl;
+    // cout<<"Step Length="<<StepLength<<"\n";
+    // cout<<"Current strain [0]="<<CurrentStrain[0]<<"\n";
 
     for (int i = 0; i < methodSteps; i++)
       point->Copy(&MidPoint[i]); // point is unchanged in  procedure
@@ -4246,11 +3849,11 @@ contains 4th order solution
                         &dpZeroStar[0], computeYieldFunctionNN(Point),
                         dSigmaDrift, &dLambdaDrift);
           /*dSigma.Print();
-          cout<<"dpZeroStar="<<dpZeroStar[0]<<endl;
+          cout<<"dpZeroStar="<<dpZeroStar[0]<<"\n";
           calcPlastic (MidPoint[0], SubstepStrain, &dSigma, plasticStrainTemp,
           &dpZeroStar[0]);
           dSigma.Print();
-          cout<<"dpZeroStar="<<dpZeroStar[0]<<endl; */
+          cout<<"dpZeroStar="<<dpZeroStar[0]<<"\n"; */
 
           break;
 
@@ -4301,7 +3904,7 @@ contains 4th order solution
       MidPoint[rkloop].Update(plasticStrainTemp, CurrentStrain, DSigmaTemp,
                               dpZeroStarTemp);
       // double dummy;
-      // BBMPoint TempPoint;
+      // StateMohrCoulomb TempPoint;
       // BBMMatrix TEMPMATRIX (6,7), TEMPEPSILON(7,1);
       // SubstepStrain[6]=0;
       // for (int i=1; i<8; i++) TEMPEPSILON.PutElement(i,1,SubstepStrain[i-1]);
@@ -4334,7 +3937,7 @@ contains 4th order solution
           cout
             << "WARNING: Predictive NICE scheme is not accurate and may lead "
                "to large errors. Please use for debug purposes only"
-            << endl;
+            << "\n";
           YieldFunctionValue = 0;
           dLambdaDrift = 0;
         } break;
@@ -4383,9 +3986,9 @@ contains 4th order solution
                       if (dummy>0.01)
                       {
                               cout<<"Problems with the alternative
-         matrix."<<i<<" Change of stress is:"<<dSigma.getElement(i,1)<<endl;
+         matrix."<<i<<" Change of stress is:"<<dSigma.getElement(i,1)<<"\n";
                               cout<<"calculated change of stress with the DEP
-         matrix is:"<<TEMPMATRIX.getElement(i,1)<<endl;
+         matrix is:"<<TEMPMATRIX.getElement(i,1)<<"\n";
                               getchar();
                       }
                       else cout<<"*";
@@ -4444,7 +4047,7 @@ contains 4th order solution
                                                                   // RError
       } break;
       default: {
-        cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << endl;
+        cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << "\n";
         getchar();
       }
     }
@@ -4453,7 +4056,7 @@ contains 4th order solution
       if (!finite(Result[i])) {
         cout << "Results not a number. Correcting issue, but results may be "
                 "incorrect..."
-             << endl;
+             << "\n";
         Result[i] = 0;
         RError = TINY;
         // if (RError<methodPower) RError=methodPower;
@@ -4461,7 +4064,7 @@ contains 4th order solution
 
     // if ((Point->getmeanStress()+(Result[0]+Result[1]+Result[2]))/3<0) if
     // (RError<methodPower) RError=methodPower;
-    // if ((Point->getPStar()+Result[6])<0) if (RError<methodPower)
+    // if ((Point->p0Star()+Result[6])<0) if (RError<methodPower)
     // RError=methodPower;
 
     if (RError < d_integrationTol) {
@@ -4486,7 +4089,7 @@ contains 4th order solution
         d_betaFactor * pow(d_integrationTol / RError, (1 / methodOrder));
 
     // cout<<d_betaFactor;
-    // cout<<"What is going on????"<<endl;
+    // cout<<"What is going on????"<<"\n";
 
     if (!StepAccepted) {
       // here we should take care about correct re - usage of the first
@@ -4517,7 +4120,7 @@ contains 4th order solution
       for (int i = 0; i < 6; i++) {
         Error[i] = Error[i] + Point->stress[i] - TrialPoint.stress[i];
       }
-      Error[6] = Error[6] + Point->getPStar() - TrialPoint.getPStar();
+      Error[6] = Error[6] + Point->p0Star() - TrialPoint.p0Star();
       // error vector updated, norm should be re-evaluated:
 
       switch (int(d_tolMethod)) {
@@ -4536,7 +4139,7 @@ contains 4th order solution
           // if (Temp>RError) RError=Temp;
         } break;
         default: {
-          cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << endl;
+          cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << "\n";
           getchar();
         }
       }
@@ -4553,7 +4156,7 @@ contains 4th order solution
 
       for (int i = 0; i < 6; i++)
         dSigmaDriftOldConst[i] = dSigmaDriftOldConst[i] * NewStepSize;
-      // cout<<dSigmaDriftOldConst[0]<<endl; getchar();
+      // cout<<dSigmaDriftOldConst[0]<<"\n"; getchar();
 
       if (RError < d_integrationTol)
         StepAccepted = true;
@@ -4576,12 +4179,12 @@ contains 4th order solution
         OldPoint.Copy(Point);
         Temp = double(stepNo) / Frequency;
         if (modf(Temp, &Temp) == 0) {
-          cout << "Step number:" << stepNo << endl;
+          cout << "Step number:" << stepNo << "\n";
           cout << "Total size done is: " << TotalSize
-               << " of whole step. Current StepLength=" << StepLength << endl;
+               << " of whole step. Current StepLength=" << StepLength << "\n";
           cout << "Stress state" << Point->stress[0] << ' ' << Point->stress[1]
                << ' ' << Point->stress[2] << ' ' << Point->stress[3] << ' '
-               << Point->stress[4] << ' ' << Point->stress[5] << ' ' << endl;
+               << Point->stress[4] << ' ' << Point->stress[5] << ' ' << "\n";
         }
       } else {
         // this may be done only after successful re-evaluation of the substep
@@ -4589,7 +4192,7 @@ contains 4th order solution
           absStress[i] =
             absStress[i] + fabs(Point->stress[i] - OldPoint.stress[i]);
         absStress[6] =
-          absStress[6] + fabs(Point->getPStar() - OldPoint.getPStar());
+          absStress[6] + fabs(Point->p0Star() - OldPoint.p0Star());
         ReUseStep = false;
         StepAccuracycheck = TotalSize;
         MicroStep = MicroStep + StepLength;
@@ -4599,18 +4202,18 @@ contains 4th order solution
           Finished = true;
         Temp = double(stepNo) / Frequency;
         if (modf(Temp, &Temp) == 0) {
-          cout << "Step number:" << stepNo << endl;
+          cout << "Step number:" << stepNo << "\n";
           cout << "Total size done is: " << TotalSize
-               << " of whole step. Current StepLength=" << StepLength << endl;
+               << " of whole step. Current StepLength=" << StepLength << "\n";
           cout << "Stress state" << Point->stress[0] << ' ' << Point->stress[1]
                << ' ' << Point->stress[2] << ' ' << Point->stress[3] << ' '
-               << Point->stress[4] << ' ' << Point->stress[5] << ' ' << endl;
+               << Point->stress[4] << ' ' << Point->stress[5] << ' ' << "\n";
         }
         /*
                 //Debug
                 strainInc.push_back (StepLength);
                 for (int i=0; i<6; i++) stressInc.push_back (Point->stress[i]);
-                stressInc.push_back (Point->getPStar());
+                stressInc.push_back (Point->p0Star());
                 //End Debug */
       }
     }
@@ -4648,7 +4251,7 @@ contains 4th order solution
 
 double
 ShengMohrCoulomb::doRungeuttaEqualStep(double A[][8], double* B, double* BRes,
-                                      double* C, BBMPoint* point,
+                                      double* C, StateMohrCoulomb* point,
                                       double* epStrain, double* absStress,
                                       double* RelError, int numberIter,
                                       double methodOrder, int methodSteps,
@@ -4668,7 +4271,7 @@ contains 4th order solution
 
 {
   BBMMatrix dSigma(6, 1);
-  BBMPoint MidPoint[8], OldPoint, TrialPoint;
+  StateMohrCoulomb MidPoint[8], OldPoint, TrialPoint;
 
   double DSigma[8][6], DSigmaTemp[7], Result[7];
   double dpZeroStar[8], dpZeroStarTemp, plasticStrain[8][6],
@@ -4719,8 +4322,8 @@ contains 4th order solution
 }*/ // limiting step increase/decrease does not improve results/ enables faster
     // convergence...
 
-    // cout<<"Step Length="<<StepLength<<endl;
-    // cout<<"Current strain [0]="<<CurrentStrain[0]<<endl;
+    // cout<<"Step Length="<<StepLength<<"\n";
+    // cout<<"Current strain [0]="<<CurrentStrain[0]<<"\n";
 
     for (int i = 0; i < methodSteps; i++)
       point->Copy(&MidPoint[i]); // point is unchanged in calcPlastic procedure
@@ -4797,16 +4400,16 @@ contains 4th order solution
         // SLOAN NORM
         RError = checkNormSloan(Result, Result[6], point, Error); // returns
                                                                   // RError
-        // cout<<"Runge - Kutta constant size procedure. RError="<<RError<<endl;
-        // cout<<"Error[0]="<<Error[0]<<"  Result[0]="<<Result[0]<<endl;
+        // cout<<"Runge - Kutta constant size procedure. RError="<<RError<<"\n";
+        // cout<<"Error[0]="<<Error[0]<<"  Result[0]="<<Result[0]<<"\n";
       } break;
       default: {
-        cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << endl;
+        cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << "\n";
         getchar();
       }
     }
 
-    // cout<<"Procedure R-K constant. RError="<<RError<<endl;
+    // cout<<"Procedure R-K constant. RError="<<RError<<"\n";
 
     for (int i = 0; i < 7; i++)
       if (!finite(Result[i])) {
@@ -4819,13 +4422,13 @@ contains 4th order solution
         0) {
       // cout<<"Mean Stress less then 0!!!
       // Result:"<<((Result[0]+Result[1]+Result[2])/3)<<"  Mean
-      // stress:"<<Point->getmeanStress()<<endl;
+      // stress:"<<Point->getmeanStress()<<"\n";
 
       if (RError < methodPower)
         RError = methodPower;
     }
-    if ((Point->getPStar() + Result[6]) < 0) {
-      // cout<<"P Zero Star less then 0!!!"<<endl;
+    if ((Point->p0Star() + Result[6]) < 0) {
+      // cout<<"P Zero Star less then 0!!!"<<"\n";
       if (RError < methodPower)
         RError = methodPower;
     }
@@ -4836,7 +4439,7 @@ contains 4th order solution
     // this value is not used in any calculations, it is just to show at the end
     // of the step the p0* increase
 
-    // cout<<"Procedure R-K constant. RError="<<RError<<endl;
+    // cout<<"Procedure R-K constant. RError="<<RError<<"\n";
 
     if (d_driftCorrection == 3)
       correctDrift(Point);
@@ -4850,7 +4453,7 @@ contains 4th order solution
     for (int i = 0; i < 6; i++) {
       Error[i] = Error[i] + Point->stress[i] - TrialPoint.stress[i];
     }
-    Error[6] = Error[6] + Point->getPStar() - TrialPoint.getPStar();
+    Error[6] = Error[6] + Point->p0Star() - TrialPoint.p0Star();
     // error vector updated, norm should be re-evaluated:
 
     switch (int(d_tolMethod)) {
@@ -4867,7 +4470,7 @@ contains 4th order solution
           RError = Temp;
       } break;
       default: {
-        cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << endl;
+        cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << "\n";
         getchar();
       }
     }
@@ -4875,14 +4478,14 @@ contains 4th order solution
       if (RError < methodPower)
         RError = methodPower;
 
-    // cout<<"Procedure R-K constant. RError="<<RError<<endl;
+    // cout<<"Procedure R-K constant. RError="<<RError<<"\n";
     TotRError = TotRError + RError;
-    // cout<<"Procedure R-K constant. Total RError="<<TotRError<<endl;
+    // cout<<"Procedure R-K constant. Total RError="<<TotRError<<"\n";
 
     // this is done anyway
     for (int i = 0; i < 6; i++)
       absStress[i] = absStress[i] + fabs(Point->stress[i] - OldPoint.stress[i]);
-    absStress[6] = absStress[6] + fabs(Point->getPStar() - OldPoint.getPStar());
+    absStress[6] = absStress[6] + fabs(Point->p0Star() - OldPoint.p0Star());
     StepAccuracycheck = TotalSize;
     MicroStep = MicroStep + StepLength;
     TotalSize = TotalSize + MicroStep; // total part of step done updated
@@ -4891,15 +4494,15 @@ contains 4th order solution
     Temp = double(stepNo) / Frequency;
     /*if (modf(Temp,&Temp)==0)
             {
-                    cout<<"Step number:"<<stepNo<<endl;
+                    cout<<"Step number:"<<stepNo<<"\n";
                     cout<<"Total size done is: "<<TotalSize<<" of whole step.
-       Current StepLength="<<StepLength<<endl;
+       Current StepLength="<<StepLength<<"\n";
              }*/
     /*
             //Debug
             strainInc.push_back (StepLength);
             for (int i=0; i<6; i++) stressInc.push_back (Point->stress[i]);
-            stressInc.push_back (Point->getPStar());
+            stressInc.push_back (Point->p0Star());
             //End Debug */
   }
 
@@ -4935,7 +4538,7 @@ contains 4th order solution
 
 double
 ShengMohrCoulomb::doRungeuttaExtrapol(double A[][8], double* B, double* BRes,
-                                     double* C, BBMPoint* point,
+                                     double* C, StateMohrCoulomb* point,
                                      double* epStrain, double* absStress,
                                      int* numberIter, double methodOrder,
                                      int methodSteps, bool errorEstimate)
@@ -4948,7 +4551,7 @@ ShengMohrCoulomb::doRungeuttaExtrapol(double A[][8], double* B, double* BRes,
   */
 
   BBMMatrix dSigma(6, 1);
-  BBMPoint TrialPoint, OldPoint;
+  StateMohrCoulomb TrialPoint, OldPoint;
   double WORTH_EXTRAPOL = 3;
 
   // double DSigma[8][6];
@@ -4990,7 +4593,7 @@ ShengMohrCoulomb::doRungeuttaExtrapol(double A[][8], double* B, double* BRes,
   for (int i = 0; i < 6; i++)
     NewStepSize = NewStepSize + fabs(SubstepStrain[i]);
   NewStepSize = 0.01 / (NewStepSize * methodOrder);
-  // cout<<"NewStepSize="<<NewStepSize<<endl;
+  // cout<<"NewStepSize="<<NewStepSize<<"\n";
   if (NewStepSize > 1)
     NewStepSize = 1;
   // getchar(); */
@@ -5023,9 +4626,9 @@ ShengMohrCoulomb::doRungeuttaExtrapol(double A[][8], double* B, double* BRes,
                         &RError, 2, methodOrder, methodSteps, errorEstimate);
 
     stepNo = stepNo + 2;
-    // cout<<"Step Length="<<StepLength<<endl;
-    // cout<<"Current strain [0]="<<SubstepStrain[0]<<endl;
-    // cout<<"RError="<<RError<<endl;
+    // cout<<"Step Length="<<StepLength<<"\n";
+    // cout<<"Current strain [0]="<<SubstepStrain[0]<<"\n";
+    // cout<<"RError="<<RError<<"\n";
     // getchar();
 
     if (RError < d_integrationTol) {
@@ -5051,7 +4654,7 @@ ShengMohrCoulomb::doRungeuttaExtrapol(double A[][8], double* B, double* BRes,
         int TempNumber = 0;
         // for (int i=0; i<6; i++)
         // Result[i]=TrialPoint.stress[i]-OldPoint.stress[i];
-        // Result[6]=TrialPoint.getPStar()-OldPoint.getPStar();
+        // Result[6]=TrialPoint.p0Star()-OldPoint.p0Star();
         TrialPoint.Copy(&OldPoint);
         Point->Copy(&TrialPoint);
         doRKExtrapolation(
@@ -5076,9 +4679,9 @@ ShengMohrCoulomb::doRungeuttaExtrapol(double A[][8], double* B, double* BRes,
         absStress[i] =
           absStress[i] + fabs(OldPoint.stress[i] - TrialPoint.stress[i]);
       absStress[6] =
-        absStress[6] + fabs(Point->getPStar() - TrialPoint.getPStar());
+        absStress[6] + fabs(Point->p0Star() - TrialPoint.p0Star());
       TrialPoint.Copy(Point);
-      // Point->Update(0,SubstepStrain,DSigmaTemp,OldPoint.getPStar()-TrialPoint.getPStar());
+      // Point->Update(0,SubstepStrain,DSigmaTemp,OldPoint.p0Star()-TrialPoint.p0Star());
       // drift is already corrected
       // ReUseStep=false;
       StepAccuracycheck = TotalSize;
@@ -5089,15 +4692,15 @@ ShengMohrCoulomb::doRungeuttaExtrapol(double A[][8], double* B, double* BRes,
         Finished = true;
       Temp = double(stepNo) / Frequency;
       if (modf(Temp, &Temp) == 0) {
-        cout << "Step number:" << stepNo << endl;
+        cout << "Step number:" << stepNo << "\n";
         cout << "Total size done is: " << TotalSize
-             << " of whole step. Current StepLength=" << StepLength << endl;
+             << " of whole step. Current StepLength=" << StepLength << "\n";
       }
       /*
               //Debug
               strainInc.push_back (StepLength);
               for (int i=0; i<6; i++) stressInc.push_back (Point->stress[i]);
-              stressInc.push_back (Point->getPStar());
+              stressInc.push_back (Point->p0Star());
               //End Debug */
     }
 
@@ -5132,7 +4735,7 @@ ShengMohrCoulomb::doRungeuttaExtrapol(double A[][8], double* B, double* BRes,
 }
 
 double
-ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticRKErr8544(StateMohrCoulomb* point, double* epStrain,
                                    double* absStress, int* numberIter)
 {
   /* the procedure uses the embedded Runge - Kutta integration scheme with
@@ -5224,7 +4827,7 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
   // All the RK matrices are put from the Fortran code, the indices are reduced
   // by 1 and C notation is used
   // BBMMatrix dSigma (6,1);
-  // BBMPoint MidPoint[8], OldPoint, TrialPoint;
+  // StateMohrCoulomb MidPoint[8], OldPoint, TrialPoint;
 
   int methodSteps = 8;
   double methodOrder = 5.0;
@@ -5236,7 +4839,7 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
   // return time;
 
   BBMMatrix dSigma(6, 1);
-  BBMPoint MidPoint[8], OldPoint, TrialPoint;
+  StateMohrCoulomb MidPoint[8], OldPoint, TrialPoint;
 
   double DSigma[8][6], DSigmaTemp[7], Result[7];
   double dpZeroStar[8], dpZeroStarTemp, plasticStrainTemp[6],
@@ -5281,7 +4884,7 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
   for (int i = 0; i < 6; i++)
     NewStepSize = NewStepSize + fabs(SubstepStrain[i]);
   NewStepSize = 0.01 / (NewStepSize * methodOrder);
-  // cout<<"NewStepSize="<<NewStepSize<<endl;
+  // cout<<"NewStepSize="<<NewStepSize<<"\n";
   if (NewStepSize > 1)
     NewStepSize = 1;
 
@@ -5308,8 +4911,8 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
     }
     RError = 0;
 
-    // cout<<"Step Length="<<StepLength<<endl;
-    // cout<<"Current strain [0]="<<CurrentStrain[0]<<endl;
+    // cout<<"Step Length="<<StepLength<<"\n";
+    // cout<<"Current strain [0]="<<CurrentStrain[0]<<"\n";
 
     for (int i = 0; i < methodSteps; i++)
       point->Copy(&MidPoint[i]); // point is unchanged in  procedure
@@ -5355,7 +4958,7 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
       MidPoint[rkloop].Update(plasticStrainTemp, CurrentStrain, DSigmaTemp,
                               dpZeroStarTemp);
       // double dummy;
-      // BBMPoint TempPoint;
+      // StateMohrCoulomb TempPoint;
       // BBMMatrix TEMPMATRIX (6,7), TEMPEPSILON(7,1);
       // SubstepStrain[6]=0;
       // for (int i=1; i<8; i++) TEMPEPSILON.PutElement(i,1,SubstepStrain[i-1]);
@@ -5373,9 +4976,9 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
                       if (dummy>0.01)
                       {
                               cout<<"Problems with the alternative
-         matrix."<<i<<" Change of stress is:"<<dSigma.getElement(i,1)<<endl;
+         matrix."<<i<<" Change of stress is:"<<dSigma.getElement(i,1)<<"\n";
                               cout<<"calculated change of stress with the DEP
-         matrix is:"<<TEMPMATRIX.getElement(i,1)<<endl;
+         matrix is:"<<TEMPMATRIX.getElement(i,1)<<"\n";
                               getchar();
                       }
                       else cout<<"*";
@@ -5449,7 +5052,7 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
           RError = RErrorOther;
       } break;
       default: {
-        cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << endl;
+        cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << "\n";
         getchar();
       }
     }
@@ -5464,7 +5067,7 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
     if ((Point->getmeanStress() + (Result[0] + Result[1] + Result[2])) / 3 < 0)
       if (RError < methodPower)
         RError = methodPower;
-    if ((Point->getPStar() + Result[6]) < 0)
+    if ((Point->p0Star() + Result[6]) < 0)
       if (RError < methodPower)
         RError = methodPower;
 
@@ -5514,8 +5117,8 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
         Error[i] = Error[i] + Point->stress[i] - TrialPoint.stress[i];
         ErrorOther[i] = ErrorOther[i] + Point->stress[i] - TrialPoint.stress[i];
       }
-      Error[6] = Error[6] + Point->getPStar() - TrialPoint.getPStar();
-      ErrorOther[6] = ErrorOther[6] + Point->getPStar() - TrialPoint.getPStar();
+      Error[6] = Error[6] + Point->p0Star() - TrialPoint.p0Star();
+      ErrorOther[6] = ErrorOther[6] + Point->p0Star() - TrialPoint.p0Star();
       // error vector updated, norm should be re-evaluated:
 
       switch (int(d_tolMethod)) {
@@ -5544,7 +5147,7 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
             RError = RErrorOther;
         } break;
         default: {
-          cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << endl;
+          cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << "\n";
           getchar();
         }
       }
@@ -5581,7 +5184,7 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
           absStress[i] =
             absStress[i] + fabs(Point->stress[i] - OldPoint.stress[i]);
         absStress[6] =
-          absStress[6] + fabs(Point->getPStar() - OldPoint.getPStar());
+          absStress[6] + fabs(Point->p0Star() - OldPoint.p0Star());
         ReUseStep = false;
         StepAccuracycheck = TotalSize;
         MicroStep = MicroStep + StepLength;
@@ -5591,15 +5194,15 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
           Finished = true;
         Temp = double(stepNo) / Frequency;
         if (modf(Temp, &Temp) == 0) {
-          cout << "Step number:" << stepNo << endl;
+          cout << "Step number:" << stepNo << "\n";
           cout << "Total size done is: " << TotalSize
-               << " of whole step. Current StepLength=" << StepLength << endl;
+               << " of whole step. Current StepLength=" << StepLength << "\n";
         }
         /*
                 //Debug
                 strainInc.push_back (StepLength);
                 for (int i=0; i<6; i++) stressInc.push_back (Point->stress[i]);
-                stressInc.push_back (Point->getPStar());
+                stressInc.push_back (Point->p0Star());
                 //End Debug */
       }
     }
@@ -5636,7 +5239,7 @@ ShengMohrCoulomb::plasticRKErr8544(BBMPoint* point, double* epStrain,
 }
 
 double
-ShengMohrCoulomb::plasticRKNoExTry(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticRKNoExTry(StateMohrCoulomb* point, double* epStrain,
                                    double* absStress, int* numberIter)
 /* It is a non - extrapolation procedure !!! */
 
@@ -5689,7 +5292,7 @@ efficient than the RKErr8544 that uses Bogacki - Shimpine pair.
 }
 
 double
-ShengMohrCoulomb::plasticRKDP754(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticRKDP754(StateMohrCoulomb* point, double* epStrain,
                                  double* absStress, int* numberIter)
 /*
 This procedure calculate stress increment using Runge - Kutta pair as given by
@@ -5759,7 +5362,7 @@ efficient than the RKErr8544 that uses Bogacki - Shimpine pair.
 }
 
 double
-ShengMohrCoulomb::plasticRKCK654(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticRKCK654(StateMohrCoulomb* point, double* epStrain,
                                  double* absStress, int* numberIter)
 /*
 This procedure calculate stress increment using Runge - Kutta pair as given by
@@ -5819,7 +5422,7 @@ efficient than the RKErr8544 that uses Bogacki - Shimpine pair.
 }
 
 double
-ShengMohrCoulomb::plasticRKEng654(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticRKEng654(StateMohrCoulomb* point, double* epStrain,
                                   double* absStress, int* numberIter)
 /*
 This procedure calculate stress increment using Runge - Kutta pair as given by
@@ -5881,7 +5484,7 @@ efficient from all the R-K pairs presented
 }
 
 double
-ShengMohrCoulomb::plasticRK543(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticRK543(StateMohrCoulomb* point, double* epStrain,
                                double* absStress, int* numberIter)
 /*
 This procedure calculate stress increment using 4-3 Runge - Kutta pair. The
@@ -5957,7 +5560,7 @@ The procedure consists of 5 stages and is 4th order accurate.
 }
 
 double
-ShengMohrCoulomb::plasticRK332(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticRK332(StateMohrCoulomb* point, double* epStrain,
                                double* absStress, int* numberIter)
 /*
 This procedure calculate stress increment using 3-2 Runge - Kutta pair. The
@@ -5998,7 +5601,7 @@ The procedure consists of 3 stages and is 3th order accurate.
 }
 
 double
-ShengMohrCoulomb::plasticRKBog432(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticRKBog432(StateMohrCoulomb* point, double* epStrain,
                                   double* absStress, int* numberIter)
 /*
 This procedure calculate stress increment using 3-2 Runge - Kutta pair. The
@@ -6043,7 +5646,7 @@ The procedure consists of 3 stages and is 3th order accurate.
 }
 
 double
-ShengMohrCoulomb::plasticRKME221(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticRKME221(StateMohrCoulomb* point, double* epStrain,
                                  double* absStress, int* numberIter)
 /*
 This procedure calculate stress increment using Modified Euler method
@@ -6078,11 +5681,11 @@ This procedure calculate stress increment using Modified Euler method
 
   // time=doRungeuttaEqualStep (A, B,BRes, C, point, epStrain, absStress,
   // &RError, *numberIter, methodOrder, methodSteps, errorEstimate);
-  // cout<<"RKME221. Error="<<RError<<endl;
+  // cout<<"RKME221. Error="<<RError<<"\n";
   // time=doRungeuttaExtrapol (A, B,BRes, C, point, epStrain, absStress,
   // numberIter, methodOrder, methodSteps, errorEstimate);
   // cout<<"Runge Kutta Extrapol Finished. Number of
-  // iterations:"<<*numberIter<<endl;
+  // iterations:"<<*numberIter<<"\n";
   time = doRungeutta(A, B, BRes, C, point, epStrain, absStress, numberIter,
                     methodOrder, methodSteps, errorEstimate);
   // time=doRungeuttaExtrapol (A, B,BRes, C, point, epStrain, absStress,
@@ -6092,7 +5695,7 @@ This procedure calculate stress increment using Modified Euler method
 }
 
 double
-ShengMohrCoulomb::plasticMidpointGallipoli(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticMidpointGallipoli(StateMohrCoulomb* point, double* epStrain,
                                            double* absStress, int* numberIter)
 {
   /*this procedure is to calculate the stress increase using the midpoint method
@@ -6105,7 +5708,7 @@ ShengMohrCoulomb::plasticMidpointGallipoli(BBMPoint* point, double* epStrain,
   // clock_t StartTime, EndTime;
   // StartTime=clock();
 
-  BBMPoint NewPoint, MidPoint;
+  StateMohrCoulomb NewPoint, MidPoint;
   BBMMatrix SIGMA(6, 1);
   // vector <double> Result;
   vector<double>::iterator Iter;
@@ -6122,13 +5725,13 @@ ShengMohrCoulomb::plasticMidpointGallipoli(BBMPoint* point, double* epStrain,
     CurrentStrain[i] = epStrain[i] * h; // strain increment in current step
     HalfCurrentStrain[i] = 0.5 * CurrentStrain[i];
   }
-  // cout<<"Step Length="<<StepLength<<endl;
-  // cout<<"Current strain [0]="<<CurrentStrain[0]<<endl;
+  // cout<<"Step Length="<<StepLength<<"\n";
+  // cout<<"Current strain [0]="<<CurrentStrain[0]<<"\n";
   /*
   for (int i=0; i<6; i++) Result.push_back(Point->stress[i]);
-  Result.push_back(Point->getPStar());
+  Result.push_back(Point->p0Star());
   Result.push_back(Point->getmeanStress());
-  Result.push_back(Point->getShearStress());
+  Result.push_back(Point->shearStress());
   */
 
   Point->Copy(&NewPoint); // point is unchanged in calcPlastic procedure
@@ -6155,9 +5758,9 @@ ShengMohrCoulomb::plasticMidpointGallipoli(BBMPoint* point, double* epStrain,
       DSigma[i] = SIGMA.getElement(i + 1, 1);
 
     /*for (int i=0; i<6; i++) Result.push_back(Point->stress[i]);
-    Result.push_back(Point->getPStar());
+    Result.push_back(Point->p0Star());
     Result.push_back(Point->getmeanStress());
-    Result.push_back(Point->getShearStress());*/
+    Result.push_back(Point->shearStress());*/
   }
   MidPoint.Copy(Point);
   // EndTime=clock();
@@ -6182,7 +5785,7 @@ ShengMohrCoulomb::plasticMidpointGallipoli(BBMPoint* point, double* epStrain,
 }
 
 double
-ShengMohrCoulomb::plasticMidpoint(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticMidpoint(StateMohrCoulomb* point, double* epStrain,
                                   double* absStress, int* numberIter)
 {
   /*this procedure is to calculate the stress increase using the midpoint method
@@ -6195,7 +5798,7 @@ ShengMohrCoulomb::plasticMidpoint(BBMPoint* point, double* epStrain,
   // clock_t StartTime, EndTime;
   // StartTime=clock();
 
-  BBMPoint NewPoint, MidPoint;
+  StateMohrCoulomb NewPoint, MidPoint;
   BBMMatrix SIGMA(6, 1);
   // vector <double> Result;
   vector<double>::iterator Iter;
@@ -6212,13 +5815,13 @@ ShengMohrCoulomb::plasticMidpoint(BBMPoint* point, double* epStrain,
     CurrentStrain[i] = epStrain[i] * h; // strain increment in current step
     HalfCurrentStrain[i] = 0.5 * CurrentStrain[i];
   }
-  // cout<<"Step Length="<<StepLength<<endl;
-  // cout<<"Current strain [0]="<<CurrentStrain[0]<<endl;
+  // cout<<"Step Length="<<StepLength<<"\n";
+  // cout<<"Current strain [0]="<<CurrentStrain[0]<<"\n";
   /*
   for (int i=0; i<6; i++) Result.push_back(Point->stress[i]);
-  Result.push_back(Point->getPStar());
+  Result.push_back(Point->p0Star());
   Result.push_back(Point->getmeanStress());
-  Result.push_back(Point->getShearStress());
+  Result.push_back(Point->shearStress());
   */
   for (int loop = 0; loop < *numberIter; loop++) {
     Point->Copy(&NewPoint); // point is unchanged in calcPlastic procedure
@@ -6243,9 +5846,9 @@ ShengMohrCoulomb::plasticMidpoint(BBMPoint* point, double* epStrain,
     absStress[6] = absStress[6] + fabs(dpZeroStar);
     Point->Update(plasticStrain, CurrentStrain, DSigma, dpZeroStar);
     /*for (int i=0; i<6; i++) Result.push_back(Point->stress[i]);
-    Result.push_back(Point->getPStar());
+    Result.push_back(Point->p0Star());
     Result.push_back(Point->getmeanStress());
-    Result.push_back(Point->getShearStress());*/
+    Result.push_back(Point->shearStress());*/
   }
   // EndTime=clock();
   // return (EndTime-StartTime);
@@ -6269,7 +5872,7 @@ ShengMohrCoulomb::plasticMidpoint(BBMPoint* point, double* epStrain,
 }
 
 double
-ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
+ShengMohrCoulomb::plasticExtrapol(StateMohrCoulomb* point, double* epStrain,
                                   double* absStress, int* numberIter)
 {
   // Here the d_driftCorrection parameter is used. 0=no correction, 1 -
@@ -6281,20 +5884,20 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
   case 1 :
           {
                   cout<<"Procedure proceed with standard algorithm and no drift
-  correction."<<endl;
+  correction."<<"\n";
                   break;
           }
   case 2 :
           {
                   cout<<"Procedure proceed with standard algorithm and drift
-  correction at the beginning (point A)."<<endl;
+  correction at the beginning (point A)."<<"\n";
                   break;
           }
 
   default :
           {
                   cout<<"Unknown d_driftCorrection parameter. Parameter read
-  is:"<<d_driftCorrection<<endl;
+  is:"<<d_driftCorrection<<"\n";
                   break;
           }
   }
@@ -6359,7 +5962,7 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
   }
   */
 
-  BBMPoint NewPoint, CopyPoint, OldPoint;
+  StateMohrCoulomb NewPoint, CopyPoint, OldPoint;
   Point->Copy(&CopyPoint);
   Point->Copy(&OldPoint);
 
@@ -6377,15 +5980,15 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
       hSquareTable[i][j] =
         (Divisions[i] / Divisions[j]) * (Divisions[i] / Divisions[j]);
       // cout<<"Divisions["<<i<<"]="<<Divisions[i]<<"
-      // Divisions["<<j<<"]="<<Divisions[j]<<endl;
-      // cout<<"hSquareTable["<<i<<"]["<<j<<"]="<<hSquareTable[i][j]<<endl;
+      // Divisions["<<j<<"]="<<Divisions[j]<<"\n";
+      // cout<<"hSquareTable["<<i<<"]["<<j<<"]="<<hSquareTable[i][j]<<"\n";
     }
   }
   for (int i = 0; i < 6; i++) {
     InitialStress[i] = Point->stress[i];
     InitialplasticStrain[i] = Point->plastic_strain[i];
   }
-  InitialStress[6] = Point->getPStar();
+  InitialStress[6] = Point->p0Star();
 
   int loop = 0;
   for (; loop < STEPMAX; loop++) {
@@ -6404,7 +6007,7 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
       ApproximationTable[0][i + 14] =
         NewPoint.plastic_strain[i] - InitialplasticStrain[i];
     }
-    ApproximationTable[0][6] = NewPoint.getPStar() - InitialStress[6];
+    ApproximationTable[0][6] = NewPoint.p0Star() - InitialStress[6];
     ApproximationTable[0][13] = absStress[6];
 
     // all data from the Midpoint Rule saved in the ResultsTable.
@@ -6420,7 +6023,7 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
     }
 
     // for (i=0; i<loop+1; i++) cout<<ApproximationTable[i][0]<<"  ";
-    // cout<<endl<<endl;
+    // cout<<"\n"<<"\n";
 
     // approximations are calculated
     // two possibilities of error control. In literature rather the second one;
@@ -6450,13 +6053,13 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
         } break;
         case 1: {
           // SLOAN NORM
-          // cout<<"SLOAN NORM"<<endl;
+          // cout<<"SLOAN NORM"<<"\n";
           RError =
             checkNormSloan(DSigma, ApproximationTable[loop][6], &CopyPoint,
                            DError); // returns RError
         } break;
         default: {
-          cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << endl;
+          cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << "\n";
           getchar();
         }
       } // end switch
@@ -6464,12 +6067,12 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
       RError = 2 * d_integrationTol;
 
     // cout<<"Relative error after iteration "<<loop<<" is equal
-    // to:"<<RError<<endl;
+    // to:"<<RError<<"\n";
     for (int i = 0; i < loop + 1; i++)
       for (int j = 0; j < 20; j++)
         ApproximationTableOld[i][j] = ApproximationTable[i][j];
     // for (int i=0; i<loop+1; i++) cout<<ApproximationTable[i][0]<<"  ";
-    // cout<<endl;
+    // cout<<"\n";
     if (RError < d_integrationTol) {
       // error less then requested...check for drift and add the error
       CopyPoint.Copy(&OldPoint);
@@ -6483,7 +6086,7 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
           &CopyPoint); // value of OldPoint copied before updating the point
       for (int i = 0; i < 6; i++)
         DError[i] = DError[i] + (NewPoint.stress[i] - OldPoint.stress[i]);
-      DError[6] = DError[6] + NewPoint.getPStar() - OldPoint.getPStar();
+      DError[6] = DError[6] + NewPoint.p0Star() - OldPoint.p0Star();
       switch (int(d_tolMethod)) {
         case 0: {
           RError = checkNorm(DSigma, ApproximationTable[loop][6], &CopyPoint,
@@ -6491,13 +6094,13 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
         } break;
         case 1: {
           // SLOAN NORM
-          // cout<<"SLOAN NORM"<<endl;
+          // cout<<"SLOAN NORM"<<"\n";
           RError =
             checkNormSloan(DSigma, ApproximationTable[loop][6], &CopyPoint,
                            DError); // returns RError
         } break;
         default: {
-          cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << endl;
+          cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << "\n";
           getchar();
         }
       } // end switch
@@ -6518,16 +6121,16 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
     for (int i = 0; i < 6; i++) {
       absStress[i] = ApproximationTable[loop][i + 7];
       plasticStrain[i] = ApproximationTable[loop][i + 14];
-      // cout<<"DSigma="<<DSigma[i]<<"   absStress="<<absStress[i]<<endl;
+      // cout<<"DSigma="<<DSigma[i]<<"   absStress="<<absStress[i]<<"\n";
     }
     absStress[6] = ApproximationTable[loop][13];
-    // cout<<absStress[6]<<endl;
+    // cout<<absStress[6]<<"\n";
     Point->Update(plasticStrain, epStrain, DSigma, ApproximationTable[loop][6]);
     EndTime = clock();
     *numberIter = 0;
     for (int i = 0; i < loop + 1; i++)
       *numberIter = *numberIter + Divisions[i];
-    // cout<<"Procedure has coverged after"<<*numberIter<<" iterations."<<endl;
+    // cout<<"Procedure has coverged after"<<*numberIter<<" iterations."<<"\n";
     // getchar();
   } else {
     loop--;
@@ -6536,7 +6139,7 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
       DSigma[i] = ApproximationTable[loop][i];
       absStress[i] = ApproximationTable[loop][i + 7];
       plasticStrain[i] = ApproximationTable[loop][i + 14];
-      // cout<<DSigma[i]<<endl;
+      // cout<<DSigma[i]<<"\n";
     }
     absStress[6] = ApproximationTable[loop][13];
     Point->Update(plasticStrain, epStrain, DSigma, ApproximationTable[loop][6]);
@@ -6545,53 +6148,53 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
     for (int i = 0; i < loop + 1; i++)
       *numberIter = *numberIter + Divisions[i];
     // cout<<"Procedure has NOT CONVERGED after"<<*numberIter<<"
-    // iterations."<<endl;
+    // iterations."<<"\n";
     // getchar();
   }
   // cout<<"calculation took:"<<double(EndTime-StartTime)/CLOCKS_PER_SEC<<"
-  // s."<<endl;
+  // s."<<"\n";
 
   /*
   switch (int(d_driftCorrection))
   {case 1 :{cout<<"Values calculated with standard algorithm and no drift
-  correction."<<endl;break;}
+  correction."<<"\n";break;}
   case 2 :{cout<<"Values calculated with standard algorithm and drift correction
-  at the beginning (point A)."<<endl;break;}
+  at the beginning (point A)."<<"\n";break;}
   case 3 :{cout<<"Values calculated with standard algorithm and drift correction
-  at the end (point B)."<<endl;break;}
-  case 4 :{cout<<"Values calculated with zero drift algorithm."<<endl;break;}
+  at the end (point B)."<<"\n";break;}
+  case 4 :{cout<<"Values calculated with zero drift algorithm."<<"\n";break;}
   default :{cout<<"Unknown d_driftCorrection parameter. Parameter read
-  is:"<<d_driftCorrection<<endl;break;}
+  is:"<<d_driftCorrection<<"\n";break;}
   }
 
-  cout<<"The d_integrationTol parameter is equal to:"<<d_integrationTol<<endl;
-  cout<<"Total number of steps done:"<<stepNo<<endl;
-  cout<<"Total parameter lambda change: "<<LambdaTot<<endl;
-  cout<<"Total PZeroStar change: "<<PZeroStarTot<<endl;
+  cout<<"The d_integrationTol parameter is equal to:"<<d_integrationTol<<"\n";
+  cout<<"Total number of steps done:"<<stepNo<<"\n";
+  cout<<"Total parameter lambda change: "<<LambdaTot<<"\n";
+  cout<<"Total PZeroStar change: "<<PZeroStarTot<<"\n";
   checkYield (Point->state, point->stress, point->strain[6],&fValue);
-  cout<<"Yield Function value is:"<<fValue<<endl;
-  cout<<"Number of drift correction performed:"<<correctdriftCount<<endl;
-  cout<<"Over the whole step change of stress is:"<<endl;
+  cout<<"Yield Function value is:"<<fValue<<"\n";
+  cout<<"Number of drift correction performed:"<<correctdriftCount<<"\n";
+  cout<<"Over the whole step change of stress is:"<<"\n";
   for (int i=0; i<6; i++)
   {
-          cout<<"s["<<i<<"]="<<Point->stress[i]-OldPoint.stress[i]<<endl;
+          cout<<"s["<<i<<"]="<<Point->stress[i]-OldPoint.stress[i]<<"\n";
   }
 
   //double DEpsV=0, dNu, SpecificVolume;
 
   //SpecificVolume=OldPoint.getSpecVol();
-  //LambdaS=LambdaZero*(r+(1-r)*exp(-Beta*OldPoint.getSuction()));
+  //LambdaS=LambdaZero*(r+(1-r)*exp(-Beta*OldPoint.suction()));
 
 
 
-  cout<<"Initial specific volume="<<OldPoint.getSpecVol()<<endl;
-  cout<<"Final specific volume="<<Point->getSpecVol()<<endl;
+  cout<<"Initial specific volume="<<OldPoint.getSpecVol()<<"\n";
+  cout<<"Final specific volume="<<Point->getSpecVol()<<"\n";
   cout<<"Change of specific volume is equal
-  to="<<(OldPoint.getSpecVol()-Point->getSpecVol())<<endl;
+  to="<<(OldPoint.getSpecVol()-Point->getSpecVol())<<"\n";
   cout<<"Change of mean stress p is equal
-  to:"<<Point->getmeanStress()-OldPoint.getmeanStress()<<endl;
+  to:"<<Point->getmeanStress()-OldPoint.getmeanStress()<<"\n";
   cout<<"Change of shear stress q is equal
-  to:"<<Point->getShearStress()-OldPoint.getShearStress()<<endl;
+  to:"<<Point->shearStress()-OldPoint.shearStress()<<"\n";
 
 
 
@@ -6638,7 +6241,7 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
   fclose (PZeroFile);
   */
 
-  // cout<<"Press any key..."<<endl;
+  // cout<<"Press any key..."<<"\n";
   // getchar();
   //*numberIter=stepNo;
   /*
@@ -6664,8 +6267,8 @@ ShengMohrCoulomb::plasticExtrapol(BBMPoint* point, double* epStrain,
 
 double
 ShengMohrCoulomb::doRKExtrapolation(double A[][8], double* B, double* BRes,
-                                  double* C, BBMPoint* point, double* epStrain,
-                                  double* absStress, BBMPoint* OldPoint,
+                                  double* C, StateMohrCoulomb* point, double* epStrain,
+                                  double* absStress, StateMohrCoulomb* OldPoint,
                                   double* RelError, int* numberIter,
                                   double methodOrder, int methodSteps,
                                   bool errorEstimate)
@@ -6679,20 +6282,20 @@ ShengMohrCoulomb::doRKExtrapolation(double A[][8], double* B, double* BRes,
   case 1 :
           {
                   cout<<"Procedure proceed with standard algorithm and no drift
-  correction."<<endl;
+  correction."<<"\n";
                   break;
           }
   case 2 :
           {
                   cout<<"Procedure proceed with standard algorithm and drift
-  correction at the beginning (point A)."<<endl;
+  correction at the beginning (point A)."<<"\n";
                   break;
           }
 
   default :
           {
                   cout<<"Unknown d_driftCorrection parameter. Parameter read
-  is:"<<d_driftCorrection<<endl;
+  is:"<<d_driftCorrection<<"\n";
                   break;
           }
   }
@@ -6753,7 +6356,7 @@ ShengMohrCoulomb::doRKExtrapolation(double A[][8], double* B, double* BRes,
   }
   */
 
-  BBMPoint NewPoint, CopyPoint;
+  StateMohrCoulomb NewPoint, CopyPoint;
   Point->Copy(&CopyPoint);
   // Point->Copy(&OldPoint);
 
@@ -6771,15 +6374,15 @@ ShengMohrCoulomb::doRKExtrapolation(double A[][8], double* B, double* BRes,
       hSquareTable[i][j] =
         (Divisions[i] / Divisions[j]) * (Divisions[i] / Divisions[j]);
       // cout<<"Divisions["<<i<<"]="<<Divisions[i]<<"
-      // Divisions["<<j<<"]="<<Divisions[j]<<endl;
-      // cout<<"hSquareTable["<<i<<"]["<<j<<"]="<<hSquareTable[i][j]<<endl;
+      // Divisions["<<j<<"]="<<Divisions[j]<<"\n";
+      // cout<<"hSquareTable["<<i<<"]["<<j<<"]="<<hSquareTable[i][j]<<"\n";
     }
   }
   for (int i = 0; i < 6; i++) {
     InitialStress[i] = Point->stress[i];
     InitialplasticStrain[i] = Point->plastic_strain[i];
   }
-  InitialStress[6] = Point->getPStar();
+  InitialStress[6] = Point->p0Star();
 
   for (int i = 0; i < 6; i++) {
     ApproximationTable[0][i] = OldPoint->stress[i] - InitialStress[i];
@@ -6787,13 +6390,13 @@ ShengMohrCoulomb::doRKExtrapolation(double A[][8], double* B, double* BRes,
     ApproximationTable[0][i + 14] =
       OldPoint->plastic_strain[i] - InitialplasticStrain[i];
   }
-  ApproximationTable[0][6] = OldPoint->getPStar() - InitialStress[6];
+  ApproximationTable[0][6] = OldPoint->p0Star() - InitialStress[6];
   ApproximationTable[0][13] = absStress[6];
 
   int loop = 1;
 
   // for (int i=0; i<loop+1; i++) cout<<ApproximationTable[i][0]<<"  ";
-  // cout<<endl;
+  // cout<<"\n";
 
   for (int i = 0; i < loop; i++) {
 
@@ -6808,9 +6411,9 @@ ShengMohrCoulomb::doRKExtrapolation(double A[][8], double* B, double* BRes,
     for (int j = 0; j < 20; j++)
       ApproximationTableOld[i][j] = ApproximationTable[i][j];
 
-  // cout<<"Initial"<<endl;
+  // cout<<"Initial"<<"\n";
   // for (int i=0; i<loop; i++) cout<<ApproximationTable[i][0]<<"  ";
-  // cout<<endl<<endl;
+  // cout<<"\n"<<"\n";
   // loop=0;
 
   for (; loop < STEPMAX; loop++) {
@@ -6830,7 +6433,7 @@ ShengMohrCoulomb::doRKExtrapolation(double A[][8], double* B, double* BRes,
       ApproximationTable[0][i + 14] =
         NewPoint.plastic_strain[i] - InitialplasticStrain[i];
     }
-    ApproximationTable[0][6] = NewPoint.getPStar() - InitialStress[6];
+    ApproximationTable[0][6] = NewPoint.p0Star() - InitialStress[6];
     ApproximationTable[0][13] = absStress[6];
 
     // all data from the Midpoint Rule saved in the ResultsTable.
@@ -6846,7 +6449,7 @@ ShengMohrCoulomb::doRKExtrapolation(double A[][8], double* B, double* BRes,
     }
 
     // for (i=0; i<loop+1; i++) cout<<ApproximationTable[i][0]<<"  ";
-    // cout<<endl;
+    // cout<<"\n";
     // getchar();
 
     // approximations are calculated
@@ -6875,23 +6478,23 @@ ShengMohrCoulomb::doRKExtrapolation(double A[][8], double* B, double* BRes,
       } break;
       case 1: {
         // SLOAN NORM
-        // cout<<"SLOAN NORM"<<endl;
+        // cout<<"SLOAN NORM"<<"\n";
         RError = checkNormSloan(DSigma, ApproximationTable[loop][6], OldPoint,
                                 DError); // returns RError
       } break;
       default: {
-        cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << endl;
+        cout << "ERROR !!!! Improper d_tolMethod in increment.dta" << "\n";
         getchar();
       }
     } // end switch
 
     // cout<<"Relative error after iteration "<<loop<<" is equal
-    // to:"<<RError<<endl;
+    // to:"<<RError<<"\n";
     for (int i = 0; i < loop + 1; i++)
       for (int j = 0; j < 20; j++)
         ApproximationTableOld[i][j] = ApproximationTable[i][j];
     // for (int i=0; i<loop+1; i++) cout<<ApproximationTable[i][0]<<"  ";
-    // cout<<endl;
+    // cout<<"\n";
     if (RError < d_integrationTol)
       StepAccepted = true;
     if (StepAccepted)
@@ -6907,16 +6510,16 @@ ShengMohrCoulomb::doRKExtrapolation(double A[][8], double* B, double* BRes,
     for (int i = 0; i < 6; i++) {
       absStress[i] = ApproximationTable[loop][i + 7];
       plasticStrain[i] = ApproximationTable[loop][i + 14];
-      // cout<<"DSigma="<<DSigma[i]<<"   absStress="<<absStress[i]<<endl;
+      // cout<<"DSigma="<<DSigma[i]<<"   absStress="<<absStress[i]<<"\n";
     }
     absStress[6] = ApproximationTable[loop][13];
-    // cout<<absStress[6]<<endl;
+    // cout<<absStress[6]<<"\n";
     Point->Update(plasticStrain, epStrain, DSigma, ApproximationTable[loop][6]);
     EndTime = clock();
     *numberIter = 0;
     for (int i = 0; i < loop + 1; i++)
       *numberIter = *numberIter + Divisions[i];
-    // cout<<"Procedure has coverged after"<<*numberIter<<" iterations."<<endl;
+    // cout<<"Procedure has coverged after"<<*numberIter<<" iterations."<<"\n";
     // getchar();
     return (EndTime - StartTime);
   } else {
@@ -6926,7 +6529,7 @@ ShengMohrCoulomb::doRKExtrapolation(double A[][8], double* B, double* BRes,
       DSigma[i] = ApproximationTable[loop][i];
       absStress[i] = ApproximationTable[loop][i + 7];
       plasticStrain[i] = ApproximationTable[loop][i + 14];
-      // cout<<DSigma[i]<<endl;
+      // cout<<DSigma[i]<<"\n";
     }
     absStress[6] = ApproximationTable[loop][13];
     Point->Update(plasticStrain, epStrain, DSigma, ApproximationTable[loop][6]);
@@ -6935,14 +6538,14 @@ ShengMohrCoulomb::doRKExtrapolation(double A[][8], double* B, double* BRes,
     for (int i = 0; i < loop + 1; i++)
       *numberIter = *numberIter + Divisions[i];
     cout << "Procedure has NOT CONVERGED after" << *numberIter << " iterations."
-         << endl;
+         << "\n";
     // getchar();
   }
   return (EndTime - StartTime);
 }
 
 double ShengMohrCoulomb::checkNorm(double* DSigma, double dpZeroStar,
-                                   BBMPoint* initialPoint,
+                                   StateMohrCoulomb* initialState,
                                    double* DError) // returns RError
 {
   /*
@@ -6957,7 +6560,7 @@ double ShengMohrCoulomb::checkNorm(double* DSigma, double dpZeroStar,
   INPUT: DSigma [6] - values of stress increment (min 6, but may be more; values
   over six ignored)
                   dpZeroStar - value of the p0* increment
-                  initialPoint - point used to calculate the values of the step
+                  initialState - point used to calculate the values of the step
                   DError [7] - error estimates for all values of DSigma
   DError[i]  - error estimate for DSigma[i];
   */
@@ -6994,10 +6597,10 @@ double ShengMohrCoulomb::checkNorm(double* DSigma, double dpZeroStar,
   double ShearError, DShear;
   double SigmaTemp[6], InitialSigma[6];
 
-  InitialShear = initialPoint->getShearStress();
+  InitialShear = initialState->shearStress();
 
   for (int i = 0; i < 6; i++) {
-    InitialSigma[i] = initialPoint->stress[i];
+    InitialSigma[i] = initialState->stress[i];
     SigmaTemp[i] = InitialSigma[i] + DSigma[i];
   }
 
@@ -7060,7 +6663,7 @@ double ShengMohrCoulomb::checkNorm(double* DSigma, double dpZeroStar,
 }
 
 double ShengMohrCoulomb::checkNormSloan(double* DSigma, double dpZeroStar,
-                                        BBMPoint* initialPoint,
+                                        StateMohrCoulomb* initialState,
                                         double* DError) // returns RError
 {
   /*
@@ -7075,7 +6678,7 @@ double ShengMohrCoulomb::checkNormSloan(double* DSigma, double dpZeroStar,
   INPUT: DSigma [6] - values of stress increment (min 6, but may be more; values
   over six ignored)
                   dpZeroStar - value of the p0* increment
-                  initialPoint - point used to calculate the values of the step
+                  initialState - point used to calculate the values of the step
                   DError [7] - error estimates for all values of DSigma
   DError[i]  - error estimate for DSigma[i];
   */
@@ -7085,10 +6688,10 @@ double ShengMohrCoulomb::checkNormSloan(double* DSigma, double dpZeroStar,
   double InitialSigma[6], SigmaTemp[6], dpZeroStarEnd;
 
   for (int i = 0; i < 6; i++) {
-    InitialSigma[i] = initialPoint->stress[i];
+    InitialSigma[i] = initialState->stress[i];
     SigmaTemp[i] = InitialSigma[i] + DSigma[i];
   }
-  dpZeroStarEnd = initialPoint->getPStar() + dpZeroStar;
+  dpZeroStarEnd = initialState->p0Star() + dpZeroStar;
 
   // standard norm:
   for (int i = 0; i < 6; i++) {
@@ -7120,7 +6723,7 @@ double ShengMohrCoulomb::checkNormSloan(double* DSigma, double dpZeroStar,
   double FinalShearMin, FinalShearMax, FinalShear; // InitialShear;
   double ShearError;
 
-  // InitialShear=initialPoint->getShearStress();
+  // InitialShear=initialState->shearStress();
 
   // computing shear stress like this is much more effective than calling the
   // point to give the shear stress
@@ -7180,7 +6783,7 @@ double ShengMohrCoulomb::checkNormSloan(double* DSigma, double dpZeroStar,
 }
 
 void
-ShengMohrCoulomb::computeG1(BBMPoint* initialPoint, int retentionModel,
+ShengMohrCoulomb::computeG1(StateMohrCoulomb* initialState, int retentionModel,
                             double* retentionParameters, double* G1)
 {
   /*
@@ -7204,7 +6807,7 @@ ShengMohrCoulomb::computeG1(BBMPoint* initialPoint, int retentionModel,
       double a, b, s;
       a = retentionParameters[0];
       b = retentionParameters[1];
-      s = initialPoint->getSuction();
+      s = initialState->suction();
       G1[0] = (1 - exp(b * s)) * a / 3;
       G1[1] = G1[0];
       G1[2] = G1[0];
@@ -7221,20 +6824,20 @@ ShengMohrCoulomb::computeG1(BBMPoint* initialPoint, int retentionModel,
     {
       cout << "calculation of G1 Matrix for Gallipoli Wheeler Karstunen model "
               "not implemented yet..."
-           << endl;
+           << "\n";
       for (int i = 0; i < 6; i++)
         G1[i] = 0;
     } break;
     default: {
       cout << "Procedure Compute G1. Unknown Retention Model... No matrix G1 "
               "calculated. Please press any key to continue..."
-           << endl;
+           << "\n";
       getchar();
     }
   }
 }
 void
-ShengMohrCoulomb::computeG2(BBMPoint* initialPoint, int retentionModel,
+ShengMohrCoulomb::computeG2(StateMohrCoulomb* initialState, int retentionModel,
                             double* retentionParameters, double* G2)
 {
   /*
@@ -7259,8 +6862,8 @@ ShengMohrCoulomb::computeG2(BBMPoint* initialPoint, int retentionModel,
       double a, b, s;
       a = retentionParameters[0];
       b = retentionParameters[1];
-      s = initialPoint->getSuction();
-      *G2 = b * exp(b * s) * (0.5 - a * initialPoint->getmeanStress());
+      s = initialState->suction();
+      *G2 = b * exp(b * s) * (0.5 - a * initialState->getmeanStress());
     } break;
     case 2: // Van Genuchten Model
     {
@@ -7269,7 +6872,7 @@ ShengMohrCoulomb::computeG2(BBMPoint* initialPoint, int retentionModel,
       Fw = retentionParameters[1];
       Ssn = retentionParameters[2];
       Sir = retentionParameters[3];
-      s = initialPoint->getSuction();
+      s = initialState->suction();
       Numerator = (Ssn - Sir) * (1 - Fw) * Ew * pow(Ew * s, Fw - 1);
       Denominator = 1 + pow(Ew * s, Fw);
       Denominator = Fw * pow(Denominator, 1 - 1 / Fw);
@@ -7282,8 +6885,8 @@ ShengMohrCoulomb::computeG2(BBMPoint* initialPoint, int retentionModel,
       psi = retentionParameters[1];
       n = retentionParameters[2];
       m = retentionParameters[3];
-      s = initialPoint->getSuction();
-      nu = initialPoint->getSpecVol();
+      s = initialState->suction();
+      nu = initialState->getSpecVol();
       Numerator = Fi * (1 - nu) * psi * s;
       Numerator = Fi * (1 - nu) * psi * pow(Numerator, n - 1);
       Denominator = Numerator * s + 1;
@@ -7293,7 +6896,7 @@ ShengMohrCoulomb::computeG2(BBMPoint* initialPoint, int retentionModel,
     default: {
       cout << "Procedure Compute G1. Unknown Retention Model... No matrix G1 "
               "calculated. Please press any key to continue..."
-           << endl;
+           << "\n";
       getchar();
     }
   }

@@ -37,8 +37,9 @@ using Vector3 = Eigen::Matrix<double, 3, 1, Eigen::DontAlign>;
 using Vector6 = Eigen::Matrix<double, 6, 1, Eigen::DontAlign>;
 using Vector7 = Eigen::Matrix<double, 7, 1, Eigen::DontAlign>;
 
-using Matrix6 = Eigen::Matrix<double, 6, 6, Eigen::DontAlign>;
-using Matrix7 = Eigen::Matrix<double, 7, 7, Eigen::DontAlign>;
+using Matrix66 = Eigen::Matrix<double, 6, 6, Eigen::DontAlign>;
+using Matrix67 = Eigen::Matrix<double, 6, 7, Eigen::DontAlign>;
+using Matrix77 = Eigen::Matrix<double, 7, 7, Eigen::DontAlign>;
 
 class StateMohrCoulomb
 {
@@ -65,31 +66,37 @@ public:
 
   void read ();
   void write ();
-  void update (double* PlasticStrainInc, double* Strain_Incr, double *Stress_Incr, double dPZeroStar);
+  void update(const Vector6& plasticStrainInc, 
+              const Vector7& strainInc,
+              const Vector6& stressInc, 
+              double p0StarInc);
 
-  double getMeanStress ();
-  double getShearStress ();
-  double getPStar ();
-  double getSpecVol ();
-  double getSuction ();
-  double getYieldSuction ();
+  inline double meanStress() const;
+  inline double shearStress() const;
+  inline double firstInvariant() const;
+  inline double secondInvariant() const;
+  inline double thirdInvariant() const;
+  inline double firstDevInvariant() const;
+  inline double secondDevInvariant() const;
+  inline double thirdDevInvariant() const;
+
+  double suction() const { return strain(6); }
+  void   suction(double value) { strain(6) = value; }
+
+  double p0Star() const { return state(0); }
+  void   p0Star(double value) { state(0) = value; }
+
+  double specificVolume() const {return state(2); }
+  void   specificVolume(double value) { state(2) = value; }
+
+  double yieldSuction() const {return state(1); }
+  void   yieldSuction (double value) { state(1) = value; }
+
   double getTheta ();
   double getThetaDeg ();
   double getThetaDeg_0 ();
-  void updatePStar (double value); //sets P0Star parameter
-  void setSuction (double value); //sets suction
-  void setSpecificVolume (double value); //sets specific volume
-  void setPStar (double value);
-  void setYieldSuction (double value);
 
 
-  //Invariants functions
-  double getFirstInvariant ();
-  double getSecondInvariant ();
-  double getThirdInvariant ();
-  double getFirstDevInvariant();
-  double getSecondDevInvariant();
-  double getThirdDevInvariant();
 
   //Eigenvalues
   void getEigen(double Eigen[3]);

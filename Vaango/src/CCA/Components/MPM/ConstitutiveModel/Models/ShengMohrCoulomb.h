@@ -29,9 +29,7 @@
 #ifndef __MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
 #define __MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
 
-#include "BBMMatrix.h"
-#include "BBMPoint.h"
-
+#include "StateMohrCoulomb.h"
 
 #include <cmath>
 
@@ -86,59 +84,35 @@ public:
                                 double yieldLocTolerance,
                                 SolutionAlgorithm solutionAlgorithm,
                                 ToleranceMethod toleranceMethod,
-                                DriftCorrection driftCorrection) ;
+                                DriftCorrection driftCorrection);
 
-  void integrate(double *strainIncrement, BBMPoint *initialPoint);
+  void integrate(const Vector6& strainIncrement, 
+                 const StateMohrCoulomb& initialState);
+
+
   void integrate(double *strainIncrement, double suctionIncrement,
-                 BBMPoint *initialPoint, double *stressIncrement,
+                 StateMohrCoulomb *initialPoint, double *stressIncrement,
                  double P0StarIncrement, double *plasticStrainIncrement);
-  void integrateConst(double *strainIncrement, BBMPoint *initialPoint,
+  void integrateConst(double *strainIncrement, StateMohrCoulomb *initialPoint,
                       int stepNo, int method);
-  double calcStressElast(double nu0, double *s0, double *eps0, double *deps,
-                         double *ds);
-  double calcElastic(double *strain, BBMPoint *initialPoint,
-                     BBMPoint *finalPoint);
-  void calcStressElastM(double *deps, double *ds);
   void findElStrGradPQ(double nu0, double *s0, double *eps0, double *deps,
                        double *ds);
-  bool checkGradient(BBMPoint *initialPoint, BBMPoint *finalPoint);
   void findElStrGrad(double nu0, double *s0, double *eps0, double *deps,
                      double *ds);
-  double calculatepZero(BBMPoint *point);
-  bool checkYield(BBMPoint *point);
-  bool checkYieldNormalised(BBMPoint *point);
-  void checkYield(double *state, double *s, double suction, double *fValue);
-  void checkYieldNormalised(double *state, double *s, double suction,
-                            double *fValue);
-  bool checkIfPlastic(BBMPoint *point);
-  double computeYieldFunction(BBMPoint *point);
-  double computeYieldFunctionNN(BBMPoint *point);
-  // bool checkYield (double *state, double* s, double suction);
+  double calculatepZero(StateMohrCoulomb *state);
+  bool checkYield(StateMohrCoulomb *state);
+  double computeYieldFunction(StateMohrCoulomb *state);
+  double computeYieldFunctionNN(StateMohrCoulomb *state);
   void findYieldOriginal(double *state, double *s0, double *eps0, double *deps,
                          double *a);
-  // double findYieldOriginal (double *state, double*s0, double* eps0, double*
-  // deps);
-  void findYieldModified(double *state, double *s0, double *eps0, double *deps,
-                         double *a);
-  double ComputeNu(double *s, double *state, double suction);
-  double findGradient(double *state, double *s, double *ds, double *dF,
-                      double suction, double dsuction);
-  double findGradientPQ(BBMPoint *point, double *ds, double *dF,
+  double findGradientPQ(StateMohrCoulomb *state, double *ds, double *dF,
                         double dsuction);
   void moveYieldaBit(double *state, double *s, double *ds, double *eps0,
                      double *deps, double *gradient, double F0);
-  void findYieldYield(double *state, double *s0, double *eps0, double *deps,
-                      double *a);
-  void findIntersectionUnloading(double *strainIncrement,
-                                 BBMPoint *initialPoint, double *purelyElastic,
-                                 double *purelyPlastic);
-  void findIntersection(double *strainIncrement, BBMPoint *initialPoint,
-                        double *purelyElasticStrain,
-                        double *purelyPlasticStrain);
   void paintLocus(double *state, double suction, int Max);
-  void computeG1(BBMPoint *initialPoint, int retentionModel,
+  void computeG1(StateMohrCoulomb *initialPoint, int retentionModel,
                  double *retentionParameters, double *G1);
-  void computeG2(BBMPoint *initialPoint, int retentionModel,
+  void computeG2(StateMohrCoulomb *initialPoint, int retentionModel,
                  double *retentionParameters, double *G2);
 
   double getk();
@@ -153,110 +127,109 @@ public:
   // *********************************** Plastic Procedures below
   // ******************************************************
 
-  void getTangentMatrixPQ(BBMPoint *point, BBMMatrix *DEP);
-  void calculateElastoPlasticTangentMatrixPQ(BBMPoint *point, BBMMatrix *DEP);
-  void calculateElasticTangentMatrixPQ(BBMPoint *point, BBMMatrix *DEP);
-  void getTangentMatrix(BBMPoint *point, BBMMatrix *DEP);
-  void calculateElastoPlasticTangentMatrix(BBMPoint *point, BBMMatrix *DEP);
-  void calculateElasticTangentMatrix(BBMPoint *point, BBMMatrix *DEP);
+  void getTangentMatrixPQ(StateMohrCoulomb *state, BBMMatrix *DEP);
+  void calculateElastoPlasticTangentMatrixPQ(StateMohrCoulomb *state, BBMMatrix *DEP);
+  void calculateElasticTangentMatrixPQ(StateMohrCoulomb *state, BBMMatrix *DEP);
+  void getTangentMatrix(StateMohrCoulomb *state, BBMMatrix *DEP);
+  void calculateElastoPlasticTangentMatrix(StateMohrCoulomb *state, BBMMatrix *DEP);
   void getDerivative(double meanStress, double shearStress, double suction,
                      double pZero, double *state, double *deriv);
   double getLambda(double *deriv, double stresspq[3], double strainpq[3]);
   double
-  plasticEuler(BBMPoint *point, double *epStrain, double *absStress,
+  plasticEuler(StateMohrCoulomb *state, double *epStrain, double *absStress,
                int numberIterations); // returns elapsed time of computations
   double doRungeutta(double A[][8], double *B, double *BRes, double *C,
-                    BBMPoint *point, double *epStrain, double *absStress,
+                    StateMohrCoulomb *state, double *epStrain, double *absStress,
                     int *numberIter, double methodOrder, int methodSteps,
                     bool errorEstimate);
   double doRungeuttaEqualStep(double A[][8], double *B, double *BRes, double *C,
-                             BBMPoint *point, double *epStrain,
+                             StateMohrCoulomb *state, double *epStrain,
                              double *absStress, double *RelError,
                              int numberIter, double methodOrder,
                              int methodSteps, bool errorEstimate);
   double doRungeuttaExtrapol(double A[][8], double *B, double *BRes, double *C,
-                            BBMPoint *point, double *epStrain,
+                            StateMohrCoulomb *state, double *epStrain,
                             double *absStress, int *numberIter,
                             double methodOrder, int methodSteps,
                             bool errorEstimate);
   // Runge Kutta schemes
-  double calculatePlastic(double *purelyPlasticStrain, BBMPoint *point);
-  double calculatePlasticConst(double *purelyPlasticStrain, BBMPoint *point,
+  double calculatePlastic(double *purelyPlasticStrain, StateMohrCoulomb *state);
+  double calculatePlasticConst(double *purelyPlasticStrain, StateMohrCoulomb *state,
                                int stepNo);
-  double plasticRKErr8544(BBMPoint *point, double *epStrain, double *absStress,
+  double plasticRKErr8544(StateMohrCoulomb *state, double *epStrain, double *absStress,
                           int *numberIter); // Bogacki - Shimpine
-  double plasticRKDP754(BBMPoint *point, double *epStrain, double *absStress,
+  double plasticRKDP754(StateMohrCoulomb *state, double *epStrain, double *absStress,
                         int *numberIter); // Dormand Prince
-  double plasticRKCK654(BBMPoint *point, double *epStrain, double *absStress,
+  double plasticRKCK654(StateMohrCoulomb *state, double *epStrain, double *absStress,
                         int *numberIter); // Cash - Karp
-  double plasticRKEng654(BBMPoint *point, double *epStrain, double *absStress,
+  double plasticRKEng654(StateMohrCoulomb *state, double *epStrain, double *absStress,
                          int *numberIter); // England as given by Sloan
-  double plasticRK543(BBMPoint *point, double *epStrain, double *absStress,
+  double plasticRK543(StateMohrCoulomb *state, double *epStrain, double *absStress,
                       int *numberIter); // 4th order with 3rd ord estimate
-  double plasticRK332(BBMPoint *point, double *epStrain, double *absStress,
+  double plasticRK332(StateMohrCoulomb *state, double *epStrain, double *absStress,
                       int *numberIter); // 3rd order R-K scheme
   double plasticRKBog432(
-      BBMPoint *point, double *epStrain, double *absStress,
+      StateMohrCoulomb *state, double *epStrain, double *absStress,
       int *numberIter); // Bogacki - Shimpine 3rd order Runge Kutta scheme
-  double plasticRKME221(BBMPoint *point, double *epStrain, double *absStress,
+  double plasticRKME221(StateMohrCoulomb *state, double *epStrain, double *absStress,
                         int *numberIter); // Modified Euler
-  double plasticRKNoExTry(BBMPoint *point, double *epStrain, double *absStress,
+  double plasticRKNoExTry(StateMohrCoulomb *state, double *epStrain, double *absStress,
                           int *numberIter); // using not in an extrapolation way
   // Extrapolation Schemes
-  double plasticExtrapol(BBMPoint *point, double *epStrain, double *absStress,
+  double plasticExtrapol(StateMohrCoulomb *state, double *epStrain, double *absStress,
                          int *numberIter);
   double doRKExtrapolation(double A[][8], double *B, double *BRes, double *C,
-                         BBMPoint *point, double *epStrain, double *absStress,
-                         BBMPoint *OldPoint, double *RelError, int *numberIter,
+                         StateMohrCoulomb *state, double *epStrain, double *absStress,
+                         StateMohrCoulomb *OldPoint, double *RelError, int *numberIter,
                          double methodOrder, int methodSteps,
                          bool errorEstimate);
-  double plasticMidpoint(BBMPoint *point, double *epStrain, double *absStress,
+  double plasticMidpoint(StateMohrCoulomb *state, double *epStrain, double *absStress,
                          int *numberIter);
-  double plasticMidpointGallipoli(BBMPoint *point, double *epStrain,
+  double plasticMidpointGallipoli(StateMohrCoulomb *state, double *epStrain,
                                   double *absStress, int *numberIter);
-  double checkNorm(double *DSigma, double dpZeroStar, BBMPoint *initialPoint,
+  double checkNorm(double *DSigma, double dpZeroStar, StateMohrCoulomb *initialPoint,
                    double *DError); // returns RError
   double checkNormSloan(double *DSigma, double dpZeroStar,
-                        BBMPoint *initialPoint,
+                        StateMohrCoulomb *initialPoint,
                         double *DError); // returns RError
-  void correctDrift(BBMPoint *point);
-  void correctDriftBeg(BBMPoint *endPoint, BBMPoint *pointOld);
+  void correctDrift(StateMohrCoulomb *state);
+  void correctDriftBeg(StateMohrCoulomb *endPoint, StateMohrCoulomb *stateOld);
 
   // Used Procedures before, not updated anymore, though, mostly, working.
-  // void driftCorrect (BBMPoint point, double* epStrain, BBMMatrix* dSigma,
+  // void driftCorrect (StateMohrCoulomb state, double* epStrain, BBMMatrix* dSigma,
   // double* Lambda, double* dpZeroStar, double* fValue);
-  // void correctDriftBeg (BBMPoint point, double* epStrain, BBMMatrix* dSigma,
+  // void correctDriftBeg (StateMohrCoulomb state, double* epStrain, BBMMatrix* dSigma,
   // double* Lambda, double* dpZeroStar, double* fValue);
-  // double Plastic (BBMPoint* point, double* epStrain, double* absStress, int*
+  // double Plastic (StateMohrCoulomb* state, double* epStrain, double* absStress, int*
   // numberIter);		//returns elapsed time of computations
-  // double PlasticNewSlow (BBMPoint* point, double* epStrain, double*
+  // double PlasticNewSlow (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIterations);	//returns elapsed time of computations
-  // double plasticRKErr6 (BBMPoint* point, double* epStrain, double* absStress,
+  // double plasticRKErr6 (StateMohrCoulomb* state, double* epStrain, double* absStress,
   // int* numberIterations);	//returns elapsed time of computations
-  // double plasticRKErr75 (BBMPoint* point, double* epStrain, double*
+  // double plasticRKErr75 (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIter);
 
-  // double plasticRK5Err4_2 (BBMPoint* point, double* epStrain, double*
+  // double plasticRK5Err4_2 (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIter);
-  // double plasticRK4Err3  (BBMPoint* point, double* epStrain, double*
+  // double plasticRK4Err3  (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIter);
-  // double plasticRK4Err3v2  (BBMPoint* point, double* epStrain, double*
+  // double plasticRK4Err3v2  (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIter);
-  // double plasticRK3Err2  (BBMPoint* point, double* epStrain, double*
+  // double plasticRK3Err2  (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIter);
-  // double plasticRK3Err2v2  (BBMPoint* point, double* epStrain, double*
+  // double plasticRK3Err2v2  (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIter);
-  // double plasticRK3Err2v3  (BBMPoint* point, double* epStrain, double*
+  // double plasticRK3Err2v3  (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIter);
-  // double plasticRKSloan (BBMPoint* point, double* epStrain, double*
+  // double plasticRKSloan (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIterations);	//returns elapsed time of computations
-  // double plasticMidpointC (BBMPoint* point, double* epStrain, double*
+  // double plasticMidpointC (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIter);
-  // double plasticMidpointCN (BBMPoint* point, double* epStrain, double*
+  // double plasticMidpointCN (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIter);
-  // double plasticMidpointC4 (BBMPoint* point, double* epStrain, double*
+  // double plasticMidpointC4 (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIter);
-  // double plasticMidpointC6 (BBMPoint* point, double* epStrain, double*
+  // double plasticMidpointC6 (StateMohrCoulomb* state, double* epStrain, double*
   // absStress, int* numberIter);
 
 private:
@@ -363,13 +336,94 @@ private:
   // Integration parameters
   IntegrationParameters d_integration;
 
-  int calcPlastic(BBMPoint point, double *epStrain, BBMMatrix *dSigma,
+  bool checkYieldNormalized(const StateMohrCoulomb& state) const;
+
+  double computeYieldNormalized(const Vector6& stress) const;
+
+  void calcElastic(const Vector7& strain, const StateMohrCoulomb& initialPoint,
+                   StateMohrCoulomb& finalPoint) const;
+
+  Vector6 calcStressIncElast(double nu0, const Vector6& s0, const Vector7& eps0,
+                             const Vector7& deps);
+
+  bool checkGradient(const StateMohrCoulomb& initialState, 
+                     const StateMohrCoulomb& finalState) const;
+
+  Matrix67 calculateElasticTangentMatrix(const StateMohrCoulomb& state) const;
+
+  double findGradient(const Vector3& state, const Vector6& s, const Vector6& ds, 
+                      Vector6s& dF, double suction, double dsuction) const;
+
+  inline double firstInvariant(const Vector6& s) const {
+    double I1 =  s(0) + s(1) + s(2);
+    return I1;
+  }
+
+  inline double secondInvariant(const Vector6& s) const {
+    double I2 = s(0) * s(1) + s(1) * s(2) +
+                s(2) * s(0) - s(3) * s(3) -
+                s(4) * s(4) - s(5) * s(5);
+    return I2;
+  }
+
+  inline double thirdInvariant(const Vector6& s) const {
+    double I3 =
+      s(0) * s(1) * s(2) + 2 * s(3) * s(4) * s(5) -
+      s(0) * s(5) * s(5) -     s(1) * s(4) * s(4) -
+      s(2) * s(3) * s(3);
+    return I3;
+  }
+
+  inline double firstDevInvariant(const Vector6& s) const {
+    return 0.0;
+  }
+
+  inline double secondDevInvariant(const Vector6& s) const {
+    double J2 = ((s(0) - s(1)) * (s(0) - s(1)) +
+                 (s(0) - s(2)) * (s(0) - s(2)) +
+                 (s(1) - s(2)) * (s(1) - s(2))) / 6.0 +
+                 (s(3) * s(3) + s(4) * s(4) + s(5) * s(5));
+    return J2;
+  }
+
+  inline double thirdDevInvariant(const Vector6& s) const {
+    double I1 = firstInvariant(s);
+    double I2 = secondInvariant(s);
+    double I3 = thirdInvariant(s);
+    double J3 = I1 * I1 * I1 * 2.0 / 27.0 - I1 * I2 / 3.0 + I3;
+
+    return J3;
+  }
+
+  void findIntersectionUnloading(const Vector7& strainIncrement,
+                                 const StateMohrCoulomb& initialState,
+                                 Vector7& purelyElastic,
+                                 Vector7& purelyPlastic) const;
+
+  void findIntersection(const Vector7& strainIncrement,
+                        const StateMohrCoulomb& initialState,
+                        Vector7& elasticStrainInc,
+                        Vector7& plasticStrainInc);
+
+  double findYieldAlpha(const Vector3& state, 
+                        const Vector6& s0, 
+                        const Vector7& eps0,
+                        const Vector7& deps) const;
+
+  double findYieldModified(const Vector3& state, 
+                           const Vector6& s0, 
+                           const Vector7& eps0,
+                           const Vector7& deps) const;
+
+  double computeNu(const Matrix6& s, const Matrix3& state, double suction) const;
+
+  int calcPlastic(StateMohrCoulomb state, double *epStrain, BBMMatrix *dSigma,
                   double *plasticStrain, double *dpZeroStar, double fValue,
                   double *dS, double *dLambda);
-  int calcPlasticPQ(BBMPoint point, double *epStrain, BBMMatrix *dSigma,
+  int calcPlasticPQ(StateMohrCoulomb state, double *epStrain, BBMMatrix *dSigma,
                     double *plasticStrain, double *dpZeroStar, double fValue,
                     double *dS, double *dLambda);
-  int calcPlasticFaster(BBMPoint point, double *epStrain, BBMMatrix *dSigma,
+  int calcPlasticFaster(StateMohrCoulomb state, double *epStrain, BBMMatrix *dSigma,
                         double *plasticStrain, double *dpZeroStar,
                         double fValue, double *dS, double *dLambda);
 };
