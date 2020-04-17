@@ -63,9 +63,15 @@ public:
 
   enum class SolutionAlgorithm
   {
-    MODIFIED_EULER = 1,
-    RUNGE_KUTTA_332 = 2,
-    NYSTROM = 3
+    RUNGE_KUTTA_SECOND_ORDER_MODIFIED_EULER = 1,
+    RUNGE_KUTTA_THIRD_ORDER_NYSTROM = 2,
+    RUNGE_KUTTA_THIRD_ORDER_BOGACKI = 3,
+    RUNGE_KUTTA_FOURTH_ORDER = 4,
+    RUNGE_KUTTA_FIFTH_ORDER_ENGLAND = 5,
+    RUNGE_KUTTA_FIFTH_ORDER_CASH = 6,
+    RUNGE_KUTTA_FIFTH_ORDER_DORMAND = 7,
+    RUNGE_KUTTA_FIFTH_ORDER_BOGACKI = 8,
+    EXTRAPOLATION_BULIRSCH = 9
   };
 
   ShengMohrCoulomb();
@@ -138,22 +144,21 @@ public:
   double
   plasticEuler(StateMohrCoulomb *state, double *epStrain, double *absStress,
                int numberIterations); // returns elapsed time of computations
-  double doRungeutta(double A[][8], double *B, double *BRes, double *C,
+  double doRungeKutta(double A[][8], double *B, double *BRes, double *C,
                     StateMohrCoulomb *state, double *epStrain, double *absStress,
                     int *numberIter, double methodOrder, int methodSteps,
                     bool errorEstimate);
-  double doRungeuttaEqualStep(double A[][8], double *B, double *BRes, double *C,
+  double doRungeKuttaEqualStep(double A[][8], double *B, double *BRes, double *C,
                              StateMohrCoulomb *state, double *epStrain,
                              double *absStress, double *RelError,
                              int numberIter, double methodOrder,
                              int methodSteps, bool errorEstimate);
-  double doRungeuttaExtrapol(double A[][8], double *B, double *BRes, double *C,
+  double doRungeKuttaExtrapol(double A[][8], double *B, double *BRes, double *C,
                             StateMohrCoulomb *state, double *epStrain,
                             double *absStress, int *numberIter,
                             double methodOrder, int methodSteps,
                             bool errorEstimate);
   // Runge Kutta schemes
-  double calculatePlastic(double *purelyPlasticStrain, StateMohrCoulomb *state);
   double calculatePlasticConst(double *purelyPlasticStrain, StateMohrCoulomb *state,
                                int stepNo);
   double plasticRKErr8544(StateMohrCoulomb *state, double *epStrain, double *absStress,
@@ -298,8 +303,8 @@ private:
     double d_suctionTol;    // used in checking suction yield locus. advisible not to modify...
 
     // Algorithms
-    DriftCorrection d_driftCorrection;
-    ToleranceMethod d_tolMethod;
+    DriftCorrection   d_driftCorrection;
+    ToleranceMethod   d_tolMethod;
     SolutionAlgorithm d_solutionAlgorithm;
 
     void setDefaults() {
@@ -316,7 +321,7 @@ private:
 
       d_driftCorrection   = DriftCorrection::CORRECTION_AT_END;
       d_tolMethod         = ToleranceMethod::SLOAN; 
-      d_solutionAlgorithm = SolutionAlgorithm::MODIFIED_EULER;
+      d_solutionAlgorithm = SolutionAlgorithm::RUNGE_KUTTA_SECOND_ORDER_MODIFIED_EULER;
     }
 
     void setDefaults(const Yield& yield) {
@@ -350,9 +355,12 @@ private:
                      const StateMohrCoulomb& finalState) const;
 
   Matrix67 calculateElasticTangentMatrix(const StateMohrCoulomb& state) const;
+  Matrix66 calculateElasticTangentMatrix(double K, double G) const;
 
-  double findGradient(const Vector3& state, const Vector6& s, const Vector6& ds, 
+  double findGradient(const Vector6& s, const Vector6& ds, 
                       Vector6s& dF, double suction, double dsuction) const;
+
+  Vector6 computeDfDsigma(const Vector6& stress) const;
 
   inline double firstInvariant(const Vector6& s) const {
     double I1 =  s(0) + s(1) + s(2);
@@ -383,6 +391,9 @@ private:
                  (s(0) - s(2)) * (s(0) - s(2)) +
                  (s(1) - s(2)) * (s(1) - s(2))) / 6.0 +
                  (s(3) * s(3) + s(4) * s(4) + s(5) * s(5));
+    if (std::abs(J2) < TINY) {
+      J2 = TINY;
+    }
     return J2;
   }
 
@@ -393,6 +404,15 @@ private:
     double J3 = I1 * I1 * I1 * 2.0 / 27.0 - I1 * I2 / 3.0 + I3;
 
     return J3;
+  }
+
+  inline std::tuple<double, double> vonMisesStress(const Vector6& s) const {
+    double J2 = secondDevInvariant(s);
+    double vmStress = std::sqrt(3.0 * J2);
+    if (std::abs(vmStress) < TINY) {
+      vmStress = TINY;
+    }
+    return std::make_tuple(J2, vmStress);
   }
 
   void findIntersectionUnloading(const Vector7& strainIncrement,
@@ -417,15 +437,11 @@ private:
 
   double computeNu(const Matrix6& s, const Matrix3& state, double suction) const;
 
-  int calcPlastic(StateMohrCoulomb state, double *epStrain, BBMMatrix *dSigma,
-                  double *plasticStrain, double *dpZeroStar, double fValue,
-                  double *dS, double *dLambda);
-  int calcPlasticPQ(StateMohrCoulomb state, double *epStrain, BBMMatrix *dSigma,
-                    double *plasticStrain, double *dpZeroStar, double fValue,
-                    double *dS, double *dLambda);
-  int calcPlasticFaster(StateMohrCoulomb state, double *epStrain, BBMMatrix *dSigma,
-                        double *plasticStrain, double *dpZeroStar,
-                        double fValue, double *dS, double *dLambda);
+  double calculatePlastic(const Vector7& purelyPlasticStrain, 
+                          const StateMohrCoulomb& state) const;
+
+  int calcPlastic(const StateMohrCoulomb& state, const Vector7& epStrainInc,
+                  Vector6& dSigma, Vector& dEps_p, double& dP0Star) const;
 };
 
 } // end namespace Uintah

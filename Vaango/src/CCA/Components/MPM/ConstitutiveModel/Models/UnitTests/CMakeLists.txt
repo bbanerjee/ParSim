@@ -196,3 +196,14 @@ add_custom_command(
   COMMAND ${UNIT_TEST}
 )
 
+add_executable(testEigen testEigen.cc)
+target_link_libraries(testEigen
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testEigen)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)

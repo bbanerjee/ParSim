@@ -33,13 +33,15 @@
 
 namespace Uintah {
 
-using Vector3 = Eigen::Matrix<double, 3, 1, Eigen::DontAlign>;
-using Vector6 = Eigen::Matrix<double, 6, 1, Eigen::DontAlign>;
-using Vector7 = Eigen::Matrix<double, 7, 1, Eigen::DontAlign>;
+using Vector3 = Eigen::Matrix<double, 3, 1>;
+using Vector6 = Eigen::Matrix<double, 6, 1>;
+using Vector7 = Eigen::Matrix<double, 7, 1>;
+using Vector8 = Eigen::Matrix<double, 8, 1>;
 
-using Matrix66 = Eigen::Matrix<double, 6, 6, Eigen::DontAlign>;
-using Matrix67 = Eigen::Matrix<double, 6, 7, Eigen::DontAlign>;
-using Matrix77 = Eigen::Matrix<double, 7, 7, Eigen::DontAlign>;
+using Matrix66 = Eigen::Matrix<double, 6, 6>;
+using Matrix67 = Eigen::Matrix<double, 6, 7>;
+using Matrix77 = Eigen::Matrix<double, 7, 7>;
+using Matrix88 = Eigen::Matrix<double, 8, 8>;
 
 class StateMohrCoulomb
 {
