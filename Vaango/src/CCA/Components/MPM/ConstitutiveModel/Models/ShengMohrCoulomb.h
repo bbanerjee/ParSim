@@ -52,6 +52,7 @@ public:
   enum class DriftCorrection
   {
     NO_CORRECTION = 1,
+    CORRECTION_AT_BEGIN = 2;
     CORRECTION_AT_END = 3;
   };
 
@@ -192,11 +193,6 @@ public:
                          int *numberIter);
   double plasticMidpointGallipoli(StateMohrCoulomb *state, double *epStrain,
                                   double *absStress, int *numberIter);
-  double checkNorm(double *DSigma, double dpZeroStar, StateMohrCoulomb *initialPoint,
-                   double *DError); // returns RError
-  double checkNormSloan(double *DSigma, double dpZeroStar,
-                        StateMohrCoulomb *initialPoint,
-                        double *DError); // returns RError
   void correctDrift(StateMohrCoulomb *state);
   void correctDriftBeg(StateMohrCoulomb *endPoint, StateMohrCoulomb *stateOld);
 
@@ -442,6 +438,26 @@ private:
 
   int calcPlastic(const StateMohrCoulomb& state, const Vector7& epStrainInc,
                   Vector6& dSigma, Vector& dEps_p, double& dP0Star) const;
+
+  std::tuple<double, int> plasticRKME221(StateMohrCoulomb& state, 
+                                         const Vector7& epStrain);
+
+  template<int Order, int Steps>
+  std::tuple<double, int> doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA, 
+                                       const Eigen::Matrix<double, Steps, 1>&     BB, 
+                                       const Eigen::Matrix<double, Steps, 1>&     BRes, 
+                                       const Eigen::Matrix<double, Steps, 1>&     CC,
+                                       StateMohrCoulomb&       state, 
+                                       const Vector7&          epStrain,
+                                       bool                    errorEstimate);
+
+  double checkNorm(const Vector7& dSigma, double dP0Star,
+                   const StateMohrCoulomb& initialState,
+                   const Vector7& dError) const;
+
+  double checkNormSloan(const Vector7& dSigma, double dP0Star,
+                        const StateMohrCoulomb& initialState,
+                        const Vector7& dError) const;
 };
 
 } // end namespace Uintah
