@@ -191,10 +191,6 @@ public:
                          bool errorEstimate);
   double plasticMidpoint(StateMohrCoulomb *state, double *epStrain, double *absStress,
                          int *numberIter);
-  double plasticMidpointGallipoli(StateMohrCoulomb *state, double *epStrain,
-                                  double *absStress, int *numberIter);
-  void correctDrift(StateMohrCoulomb *state);
-  void correctDriftBeg(StateMohrCoulomb *endPoint, StateMohrCoulomb *stateOld);
 
   // Used Procedures before, not updated anymore, though, mostly, working.
   // void driftCorrect (StateMohrCoulomb state, double* epStrain, BBMMatrix* dSigma,
@@ -440,7 +436,28 @@ private:
                   Vector6& dSigma, Vector& dEps_p, double& dP0Star) const;
 
   std::tuple<double, int> plasticRKME221(StateMohrCoulomb& state, 
-                                         const Vector7& epStrain);
+                                         const Vector7& epStrain) const;
+
+  std::tuple<double, int> plasticRK332(StateMohrCoulomb& state,
+                                       const Vector7& epStrain) const;
+
+  std::tuple<double, int> plasticRKBog432(StateMohrCoulomb& point, 
+                                          const Vector7& epStrain) const;
+
+  std::tuple<double, int> plasticRK543(StateMohrCoulomb& state,
+                                       const Vector7& epStrain) const;
+
+  std::tuple<double, int> plasticRKEng654(StateMohrCoulomb& state,
+                                          const Vector7& epStrain) const;
+
+  std::tuple<double, int> plasticRKCK654(StateMohrCoulomb& state,
+                                         const Vector7& epStrain) const;
+
+  std::tuple<double, int> plasticRKDP754(StateMohrCoulomb& state,
+                                         const Vector7& epStrain) const;
+
+  std::tuple<double, int> plasticRKErr8544(StateMohrCoulomb& state,
+                                           const Vector7& epStrain) const;
 
   template<int Order, int Steps>
   std::tuple<double, int> doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA, 
@@ -449,7 +466,17 @@ private:
                                        const Eigen::Matrix<double, Steps, 1>&     CC,
                                        StateMohrCoulomb&       state, 
                                        const Vector7&          epStrain,
-                                       bool                    errorEstimate);
+                                       bool                    errorEstimate) const;
+
+  template<int Order, int Steps>
+  std::tuple<double, int> doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA, 
+                                          const Eigen::Matrix<double, Steps, 1>&     BB, 
+                                          const Eigen::Matrix<double, Steps, 1>&     BRes, 
+                                          const Eigen::Matrix<double, Steps, 1>&     CC,
+                                          const Eigen::Matrix<double, Steps - 1, 1>& ErrCoef,
+                                          StateMohrCoulomb&       state, 
+                                          const Vector7&          epStrain,
+                                          bool                    errorEstimate) const;
 
   double checkNorm(const Vector7& dSigma, double dP0Star,
                    const StateMohrCoulomb& initialState,
@@ -458,6 +485,19 @@ private:
   double checkNormSloan(const Vector7& dSigma, double dP0Star,
                         const StateMohrCoulomb& initialState,
                         const Vector7& dError) const;
+
+  void correctDriftBeg(StateMohrCoulomb& state, 
+                       const StateMohrCoulomb* stateOld) const;
+
+  void correctDriftEnd(StateMohrCoulomb& state) const;
+
+  double plasticMidpoint(StateMohrCoulomb& state, 
+                              const Vector7& epStrain,
+                              Vector7& absStress,
+                              int numIter);
+
+  std::tuple<double, int> plasticExtrapol(StateMohrCoulomb& state,
+                                          const Vector7& epStrain) const;
 };
 
 } // end namespace Uintah
