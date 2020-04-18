@@ -75,6 +75,13 @@ public:
     EXTRAPOLATION_BULIRSCH = 9
   };
 
+  enum class RetentionModel
+  {
+    STATE_SURFACE = 1,
+    VAN_GENUCHTEN = 2, 
+    GALLIPOLI    = 3
+  }
+
   ShengMohrCoulomb();
   ShengMohrCoulomb(double G, double K, double cohesion, double phi, double psi);
 
@@ -93,141 +100,19 @@ public:
                                 ToleranceMethod toleranceMethod,
                                 DriftCorrection driftCorrection);
 
-  void integrate(const Vector6& strainIncrement, 
-                 const StateMohrCoulomb& initialState);
+  StateMohrCoulomb integrate(const Vector6& strainIncrement, 
+                             const StateMohrCoulomb& initialState) const;
+
+  Matrix67 getTangentMatrix(const StateMohrCoulomb& state) const;
 
 
-  void integrate(double *strainIncrement, double suctionIncrement,
-                 StateMohrCoulomb *initialPoint, double *stressIncrement,
-                 double P0StarIncrement, double *plasticStrainIncrement);
-  void integrateConst(double *strainIncrement, StateMohrCoulomb *initialPoint,
-                      int stepNo, int method);
-  void findElStrGradPQ(double nu0, double *s0, double *eps0, double *deps,
-                       double *ds);
-  void findElStrGrad(double nu0, double *s0, double *eps0, double *deps,
-                     double *ds);
-  double calculatepZero(StateMohrCoulomb *state);
-  bool checkYield(StateMohrCoulomb *state);
-  double computeYieldFunction(StateMohrCoulomb *state);
-  double computeYieldFunctionNN(StateMohrCoulomb *state);
-  void findYieldOriginal(double *state, double *s0, double *eps0, double *deps,
-                         double *a);
-  double findGradientPQ(StateMohrCoulomb *state, double *ds, double *dF,
-                        double dsuction);
-  void moveYieldaBit(double *state, double *s, double *ds, double *eps0,
-                     double *deps, double *gradient, double F0);
-  void paintLocus(double *state, double suction, int Max);
-  void computeG1(StateMohrCoulomb *initialPoint, int retentionModel,
-                 double *retentionParameters, double *G1);
-  void computeG2(StateMohrCoulomb *initialPoint, int retentionModel,
-                 double *retentionParameters, double *G2);
+  Vector7 computeG1(const StateMohrCoulomb& initialState, 
+                    RetentionModel retentionModel,
+                    const std::vector<double>& retentionParameters) const;
 
-  double getk();
-  double getLambdaZero();
-  double getr();
-  double getBeta();
-  double getKappaP();
-  double getpc();
-  void read();
-  void write();
-
-  // *********************************** Plastic Procedures below
-  // ******************************************************
-
-  void getTangentMatrixPQ(StateMohrCoulomb *state, BBMMatrix *DEP);
-  void calculateElastoPlasticTangentMatrixPQ(StateMohrCoulomb *state, BBMMatrix *DEP);
-  void calculateElasticTangentMatrixPQ(StateMohrCoulomb *state, BBMMatrix *DEP);
-  void getTangentMatrix(StateMohrCoulomb *state, BBMMatrix *DEP);
-  void calculateElastoPlasticTangentMatrix(StateMohrCoulomb *state, BBMMatrix *DEP);
-  void getDerivative(double meanStress, double shearStress, double suction,
-                     double pZero, double *state, double *deriv);
-  double getLambda(double *deriv, double stresspq[3], double strainpq[3]);
-  double
-  plasticEuler(StateMohrCoulomb *state, double *epStrain, double *absStress,
-               int numberIterations); // returns elapsed time of computations
-  double doRungeKutta(double A[][8], double *B, double *BRes, double *C,
-                    StateMohrCoulomb *state, double *epStrain, double *absStress,
-                    int *numberIter, double methodOrder, int methodSteps,
-                    bool errorEstimate);
-  double doRungeKuttaEqualStep(double A[][8], double *B, double *BRes, double *C,
-                             StateMohrCoulomb *state, double *epStrain,
-                             double *absStress, double *RelError,
-                             int numberIter, double methodOrder,
-                             int methodSteps, bool errorEstimate);
-  double doRungeKuttaExtrapol(double A[][8], double *B, double *BRes, double *C,
-                            StateMohrCoulomb *state, double *epStrain,
-                            double *absStress, int *numberIter,
-                            double methodOrder, int methodSteps,
-                            bool errorEstimate);
-  // Runge Kutta schemes
-  double calculatePlasticConst(double *purelyPlasticStrain, StateMohrCoulomb *state,
-                               int stepNo);
-  double plasticRKErr8544(StateMohrCoulomb *state, double *epStrain, double *absStress,
-                          int *numberIter); // Bogacki - Shimpine
-  double plasticRKDP754(StateMohrCoulomb *state, double *epStrain, double *absStress,
-                        int *numberIter); // Dormand Prince
-  double plasticRKCK654(StateMohrCoulomb *state, double *epStrain, double *absStress,
-                        int *numberIter); // Cash - Karp
-  double plasticRKEng654(StateMohrCoulomb *state, double *epStrain, double *absStress,
-                         int *numberIter); // England as given by Sloan
-  double plasticRK543(StateMohrCoulomb *state, double *epStrain, double *absStress,
-                      int *numberIter); // 4th order with 3rd ord estimate
-  double plasticRK332(StateMohrCoulomb *state, double *epStrain, double *absStress,
-                      int *numberIter); // 3rd order R-K scheme
-  double plasticRKBog432(
-      StateMohrCoulomb *state, double *epStrain, double *absStress,
-      int *numberIter); // Bogacki - Shimpine 3rd order Runge Kutta scheme
-  double plasticRKME221(StateMohrCoulomb *state, double *epStrain, double *absStress,
-                        int *numberIter); // Modified Euler
-  double plasticRKNoExTry(StateMohrCoulomb *state, double *epStrain, double *absStress,
-                          int *numberIter); // using not in an extrapolation way
-  // Extrapolation Schemes
-  double plasticExtrapol(StateMohrCoulomb *state, double *epStrain, double *absStress,
-                         int *numberIter);
-  double doRKExtrapolation(double A[][8], double *B, double *BRes, double *C,
-                         StateMohrCoulomb *state, double *epStrain, double *absStress,
-                         StateMohrCoulomb *OldPoint, double *RelError, int *numberIter,
-                         double methodOrder, int methodSteps,
-                         bool errorEstimate);
-  double plasticMidpoint(StateMohrCoulomb *state, double *epStrain, double *absStress,
-                         int *numberIter);
-
-  // Used Procedures before, not updated anymore, though, mostly, working.
-  // void driftCorrect (StateMohrCoulomb state, double* epStrain, BBMMatrix* dSigma,
-  // double* Lambda, double* dpZeroStar, double* fValue);
-  // void correctDriftBeg (StateMohrCoulomb state, double* epStrain, BBMMatrix* dSigma,
-  // double* Lambda, double* dpZeroStar, double* fValue);
-  // double Plastic (StateMohrCoulomb* state, double* epStrain, double* absStress, int*
-  // numberIter);		//returns elapsed time of computations
-  // double PlasticNewSlow (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIterations);	//returns elapsed time of computations
-  // double plasticRKErr6 (StateMohrCoulomb* state, double* epStrain, double* absStress,
-  // int* numberIterations);	//returns elapsed time of computations
-  // double plasticRKErr75 (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIter);
-
-  // double plasticRK5Err4_2 (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIter);
-  // double plasticRK4Err3  (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIter);
-  // double plasticRK4Err3v2  (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIter);
-  // double plasticRK3Err2  (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIter);
-  // double plasticRK3Err2v2  (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIter);
-  // double plasticRK3Err2v3  (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIter);
-  // double plasticRKSloan (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIterations);	//returns elapsed time of computations
-  // double plasticMidpointC (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIter);
-  // double plasticMidpointCN (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIter);
-  // double plasticMidpointC4 (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIter);
-  // double plasticMidpointC6 (StateMohrCoulomb* state, double* epStrain, double*
-  // absStress, int* numberIter);
+  double computeG2(const StateMohrCoulomb& initialState, 
+                   RetentionModel retentionModel,
+                   const std::vector<double>& retentionParameters) const;
 
 private:
 
@@ -348,6 +233,8 @@ private:
 
   Matrix67 calculateElasticTangentMatrix(const StateMohrCoulomb& state) const;
   Matrix66 calculateElasticTangentMatrix(double K, double G) const;
+
+  Matrix67 calculateElastoPlasticTangentMatrix(const StateMohrCoulomb& state) const;
 
   double findGradient(const Vector6& s, const Vector6& ds, 
                       Vector6s& dF, double suction, double dsuction) const;
