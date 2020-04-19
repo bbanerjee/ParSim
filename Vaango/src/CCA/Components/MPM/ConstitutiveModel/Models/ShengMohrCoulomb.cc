@@ -33,16 +33,12 @@
 
 #include <cmath>
 #include <chrono>
+#include <iomanip>
 
 using namespace Uintah;
 
 static DebugStream dbg("Sheng", false);
 static DebugStream dbg_unloading("Sheng_unloading", false);
-
-extern double USE_ERROR;
-extern double STEP_MAX, STEP_MIN, ERROR_DEF, USE_ERROR_STEP, MIN_DIVISION_SIZE;
-extern double ADDTOLYIELD, CHGEPSINTOL;
-extern int    ALGORITHM_TYPE, USE_NICE_SCHEME;
 
 /**
  * Constructors
@@ -54,14 +50,14 @@ ShengMohrCoulomb::ShengMohrCoulomb()
   double cohesion = 0;
   double phi = 30;
   setModelParameters(G, K, cohesion, phi, phi);
-  d_integration.setDefaults(d_yield);
+  d_int.setDefaults(d_yield);
 }
 
 ShengMohrCoulomb::ShengMohrCoulomb(double G, double K, double cohesion, double phi,
                                    double psi)
 {
   setModelParameters(G, K, cohesion, phi, psi);
-  d_integration.setDefaults(d_yield);
+  d_int.setDefaults(d_yield);
 }
 
 /**
@@ -104,8 +100,8 @@ ShengMohrCoulomb::setIntegrationParameters(int maxIterPegasus,
  * Integration
  */
 StateMohrCoulomb
-ShengMohrCoulomb::integrate(const Vector6& strainIncrement, 
-                            const StateMohrCoulomb& initialState) const
+ShengMohrCoulomb::integrate(const Vector7& strainIncrement, 
+                            const StateMohrCoulomb& initialState)
 {
   Vector7 purelyElasticStrain, purelyPlasticStrain;
 
@@ -128,7 +124,7 @@ ShengMohrCoulomb::integrate(const Vector6& strainIncrement,
 
   if (dbg.active()) {
     dbg << "p = " << finalState.meanStress() << " q = "<< finalState.shearStress()
-        << "  Yield? " << std::boolalpha << purelyElastic << "\n";
+        << "  Yield? " << std::boolalpha << elasticPlastic << "\n";
   }
 
   bool unloading = false;
@@ -179,7 +175,7 @@ ShengMohrCoulomb::integrate(const Vector6& strainIncrement,
       double spVol = computeNu(finalState.stress, finalState.state, finalState.suction());
       finalState.specificVolume(spVol);
 
-      calculatePlastic(purelyPlasticStrain, &finalState);
+      calculatePlastic(purelyPlasticStrain, finalState);
     }
   }
   
@@ -189,7 +185,7 @@ ShengMohrCoulomb::integrate(const Vector6& strainIncrement,
   }
 
   double spVol = computeNu(finalState.stress, finalState.state, finalState.suction());
-  finalState.setSpecificVolume(spVol);
+  finalState.specificVolume(spVol);
    
   return finalState;
 }
@@ -222,7 +218,7 @@ ShengMohrCoulomb::computeYieldNormalized(const Vector6& stress) const
       factor = 1.0;
       std::cout << "**WARNING** Factor in checkYield Normalised not finite. set to 1\n"
                    "  alpha4 = " << d_yield.d_alpha4 << " J3 = " << J3
-                   " shearStress = " << shearStress << "\n";
+                << " shearStress = " << shearStress << "\n";
     } else if (factor > 1) {
       factor = 1;
     } else if (factor < -1) {
@@ -239,15 +235,15 @@ ShengMohrCoulomb::computeYieldNormalized(const Vector6& stress) const
   }
 
   double cohesion = d_yield.d_cohesion;
-  double yieldFnValue = shearStress / M - 2.0 * d_yield.d_cohesion / M - meanStress;
+  double yieldFnValue = shearStress / M - 2.0 * cohesion / M - meanStress;
 
   // normalisation
-  yieldFnValue /= (std::abs(meanStress) + 2.0 * d_yield.d_cohesion);
+  yieldFnValue /= (std::abs(meanStress) + 2.0 * cohesion);
 
   if (dbg.active()) {
     std::cout << "Check Yield: Mean Stress = " << meanStress 
               << " Shear Stress=" << shearStress 
-              << " cohesion = "<< d_yield.d_cohesion
+              << " cohesion = "<< cohesion
               << " M = "<< M
               << " Yield Function = " << yieldFnValue << "\n";
   }
@@ -280,7 +276,7 @@ Vector6
 ShengMohrCoulomb::calcStressIncElast(double nu0, 
                                      const Vector6& s0, 
                                      const Vector7& eps0,
-                                     const Vector7& deps) 
+                                     const Vector7& deps) const
 {
   double K = d_elastic.d_K;
   double G = d_elastic.d_G;
@@ -306,7 +302,7 @@ bool
 ShengMohrCoulomb::checkGradient(const StateMohrCoulomb& initialState, 
                                 const StateMohrCoulomb& finalState) const
 {
-  Vector7 strainInc = finalState->strain - initialState->strain;
+  Vector7 strainInc = finalState.strain - initialState.strain;
 
   double max = 0.0;
   for (int i = 0; i < 6; i++) {
@@ -317,7 +313,7 @@ ShengMohrCoulomb::checkGradient(const StateMohrCoulomb& initialState,
   for (int i = 0; i < 6; i++) {
     strainInc(i) /= (max * 10E-10);
   }
-  strainInc(6) = finalState->suction() - initialState->suction();
+  strainInc(6) = finalState.suction() - initialState.suction();
 
   // The normalisation is important to catch the unloading due to shear stress
   // 12 13 23. As the q is always positive, large unloading - loading values 
@@ -337,7 +333,7 @@ ShengMohrCoulomb::checkGradient(const StateMohrCoulomb& initialState,
 
   Vector6 df; // not initialised; will contain values of derivatives of the
               // yield locus function
-  double cosinus = findGradient(initialState->stress, stressInc, df, 0, 0);
+  double cosinus = findGradient(initialState.stress, stressInc, df, 0, 0);
 
   if (cosinus > -d_int.d_yieldTol) {
     return false;
@@ -404,7 +400,7 @@ ShengMohrCoulomb::calculateElasticTangentMatrix(double K, double G) const
  */
 double
 ShengMohrCoulomb::findGradient(const Vector6& s, const Vector6& ds, 
-                               Vector6s& df_dSigma, 
+                               Vector6& df_dSigma, 
                                double /*suction*/, double /*dsuction*/) const
 {
   // compute gradient
@@ -452,27 +448,27 @@ ShengMohrCoulomb::computeDfDsigma(const Vector6& stress) const
   if (!std::isfinite(factor)) {
     factor = 1.0;
     std::cout << "**WARNING** Factor in findGradient not finite. set to 1\n"
-                 "  alpha4 = " << alpha4 << " J3 = " << J3
-                 " shearStress = " << shearStress << "\n";
+                 "  alpha4 = " << d_yield.d_alpha4 << " J3 = " << J3
+              << " shearStress = " << shearStress << "\n";
   } else if (factor > 1) {
     factor = 1;
   } else if (factor < -1) {
     factor = -1;
   } 
-  factor = 1 + alpha4 - (1 - alpha4) * factor;
+  factor = 1 + d_yield.d_alpha4 - (1 - d_yield.d_alpha4) * factor;
 
   double factor025 = std::pow(factor, 0.25);
   double factor075 = std::pow(factor, -0.75);
   double M    = (3 - d_yield.d_sin_phi) / (6 * d_yield.d_alpha * d_yield.d_sin_phi);
-  double Mpsi = (3 - d_yield.d_sin_psi) / (6 * d_yield.d_alpha * d_yield.d_sin_psi);
+  double Mpsi = (3 - d_potential.d_sin_psi) / (6 * d_yield.d_alpha * d_potential.d_sin_psi);
 
   Vector6 dJ2_dSig = Vector6::Zero();
-  dJ2_dSig(0) =  (2 * s(0) - s(1) - s(2)) / 3.0;
-  dJ2_dSig(1) =  (2 * s(1) - s(0) - s(2)) / 3.0;
-  dJ2_dSig(2) =  (2 * s(2) - s(0) - s(1)) / 3.0;
-  dJ2_dSig(3) =  2 * s(3);
-  dJ2_dSig(4) =  2 * s(4);
-  dJ2_dSig(5) =  2 * s(5);
+  dJ2_dSig(0) =  (2 * stress(0) - stress(1) - stress(2)) / 3.0;
+  dJ2_dSig(1) =  (2 * stress(1) - stress(0) - stress(2)) / 3.0;
+  dJ2_dSig(2) =  (2 * stress(2) - stress(0) - stress(1)) / 3.0;
+  dJ2_dSig(3) =  2 * stress(3);
+  dJ2_dSig(4) =  2 * stress(4);
+  dJ2_dSig(5) =  2 * stress(5);
 
   Vector6 df_dSigma = dJ2_dSig;
   Vector6 dg_dSigma = dJ2_dSig;
@@ -490,26 +486,26 @@ ShengMohrCoulomb::computeDfDsigma(const Vector6& stress) const
 
   if (dbg.active()) {
     dbg << "dF/dJ2 part\n";
-    dbg << setprecision(15) << df_dSigma << "\n";
+    dbg << std::setprecision(15) << df_dSigma << "\n";
   }
 
   Vector6 dq_dSig = dJ2_dSig;
   dq_dSig *= std::sqrt(3.0) * 0.5 / std::sqrt(J2);
 
   Vector6 dq_dSig_g = dq_dSig;
-  dq_dSig *= (-2.838025401481287 * (d_yield.alpha4 - 1) * d_yield.cohesion * M * J3 * factor075 /
+  dq_dSig *= (-2.838025401481287 * (d_yield.d_alpha4 - 1) * d_yield.d_cohesion * M * J3 * factor075 /
                (shearStress * shearStress * shearStress * shearStress) +
-              4.257038102221929 * (d_yield.alpha4 - 1) * M * std::sqrt(J2) * J3 * factor075 /
+              4.257038102221929 * (d_yield.d_alpha4 - 1) * M * std::sqrt(J2) * J3 * factor075 /
                (std::sqrt(3.0) * shearStress * shearStress * shearStress * shearStress));
-  dq_dSig_g *= (-2.838025401481287 * (d_yield.alpha4 - 1) * d_yield.cohesion * Mpsi * J3 * factor075 /
+  dq_dSig_g *= (-2.838025401481287 * (d_yield.d_alpha4 - 1) * d_yield.d_cohesion * Mpsi * J3 * factor075 /
                  (shearStress * shearStress * shearStress * shearStress) +
-                4.257038102221929 * (d_yield.alpha4 - 1) * Mpsi * std::sqrt(J2) * J3 * factor075 /
+                4.257038102221929 * (d_yield.d_alpha4 - 1) * Mpsi * std::sqrt(J2) * J3 * factor075 /
                  (std::sqrt(3.0) * shearStress * shearStress * shearStress * shearStress));
 
 
   if (dbg.active()) {
     dbg << "dF/dq part\n";
-    dbg << setprecision(15) << dq_dSig << "\n";
+    dbg << std::setprecision(15) << dq_dSig << "\n";
   }
 
   df_dSigma += dq_dSig;
@@ -524,52 +520,52 @@ ShengMohrCoulomb::computeDfDsigma(const Vector6& stress) const
   dJ3_dSig *= (2.0 / 9.0 * I1 * I1 - I2 / 3.0);
 
   if (dbg.active()) {
-    dbg << setprecision(15) << dJ3_dSig << "\n";
+    dbg << std::setprecision(15) << dJ3_dSig << "\n";
   }
 
   Vector6 dI2_dSig = Vector6::Zero();
-  dI2_dSig(0) =  s(1) + s(2);
-  dI2_dSig(1) =  s(0) + s(2);
-  dI2_dSig(2) =  s(0) + s(1);
-  dI2_dSig(3) =  -2 * s(3);
-  dI2_dSig(4) =  -2 * s(4);
-  dI2_dSig(5) =  -2 * s(5);
+  dI2_dSig(0) =  stress(1) + stress(2);
+  dI2_dSig(1) =  stress(0) + stress(2);
+  dI2_dSig(2) =  stress(0) + stress(1);
+  dI2_dSig(3) =  -2 * stress(3);
+  dI2_dSig(4) =  -2 * stress(4);
+  dI2_dSig(5) =  -2 * stress(5);
 
   if (dbg.active()) {
-    dbg << setprecision(15) << dI2_dSig << "\n";
+    dbg << std::setprecision(15) << dI2_dSig << "\n";
   }
 
   Vector6 dI3_dSig = Vector6::Zero(); 
-  dI3_dSig(0) =  s(1) * s(2) - s(5) * s(5);
-  dI3_dSig(1) =  s(0) * s(2) - s(4) * s(4);
-  dI3_dSig(2) =  s(0) * s(1) - s(3) * s(3);
-  dI3_dSig(3) =  2 * s(5) * s(4) - 2 * s(2) * s(3);
-  dI3_dSig(4) =  2 * s(3) * s(5) - 2 * s(1) * s(4);
-  dI3_dSig(5) =  2 * s(3) * s(4) - 2 * s(0) * s(5);
+  dI3_dSig(0) =  stress(1) * stress(2) - stress(5) * stress(5);
+  dI3_dSig(1) =  stress(0) * stress(2) - stress(4) * stress(4);
+  dI3_dSig(2) =  stress(0) * stress(1) - stress(3) * stress(3);
+  dI3_dSig(3) =  2 * stress(5) * stress(4) - 2 * stress(2) * stress(3);
+  dI3_dSig(4) =  2 * stress(3) * stress(5) - 2 * stress(1) * stress(4);
+  dI3_dSig(5) =  2 * stress(3) * stress(4) - 2 * stress(0) * stress(5);
 
   if (dbg.active()) {
-    dbg << setprecision(15) << dI3_dSig << "\n";
+    dbg << std::setprecision(15) << dI3_dSig << "\n";
   }
 
   dJ3_dSig += (dI2_dSig * (-I1 / 3.0) + dI3_dSig);
 
   if (dbg.active()) {
-    dbg << setprecision(15) << dJ3_dSig << "\n";
+    dbg << std::setprecision(15) << dJ3_dSig << "\n";
   }
 
   Vector6 dJ3_dSig_g = dJ3_dSig;
-  dJ3_dSig *= (-1.419012700740643 * (d_yield.alpha4 - 1) * M * sqrt(J2) * factor075 /
+  dJ3_dSig *= (-1.419012700740643 * (d_yield.d_alpha4 - 1) * M * sqrt(J2) * factor075 /
                 (std::sqrt(3.0) * shearStress * shearStress * shearStress) +
-               0.94600846716043 * (d_yield.alpha4 - 1) * d_yield.cohesion * M * factor075 /
+               0.94600846716043 * (d_yield.d_alpha4 - 1) * d_yield.d_cohesion * M * factor075 /
                 (shearStress * shearStress * shearStress));
-  dJ3_dSig_g *= (-1.419012700740643 * (d_yield.alpha4 - 1) * Mpsi * sqrt(J2) * factor075 /
+  dJ3_dSig_g *= (-1.419012700740643 * (d_yield.d_alpha4 - 1) * Mpsi * sqrt(J2) * factor075 /
                   (std::sqrt(3.0) * shearStress * shearStress * shearStress) +
-                 0.94600846716043 * (d_yield.alpha4 - 1) * d_yield.cohesion * Mpsi * factor075 /
+                 0.94600846716043 * (d_yield.d_alpha4 - 1) * d_yield.d_cohesion * Mpsi * factor075 /
                   (shearStress * shearStress * shearStress));
 
   if (dbg.active()) {
     dbg << "dF/dJ3 part\n";
-    dbg << setprecision(15) << dJ3_dSig << "\n";
+    dbg << std::setprecision(15) << dJ3_dSig << "\n";
   }
 
   df_dSigma += dJ3_dSig;
@@ -584,8 +580,8 @@ ShengMohrCoulomb::computeDfDsigma(const Vector6& stress) const
     }
   }
 
-  df_dsigma += dI1_dSig * (-1.0 / 3.0);
-  dg_dsigma += dI1_dSig * (-1.0 / 3.0);
+  df_dSigma += dI1_dSig * (-1.0 / 3.0);
+  dg_dSigma += dI1_dSig * (-1.0 / 3.0);
 
   for (int i = 0; i < 6; i++) {
     if (!std::isfinite(df_dSigma(i))) {
@@ -598,13 +594,13 @@ ShengMohrCoulomb::computeDfDsigma(const Vector6& stress) const
 
   // tension cut-off plane
   double meanStress = I1 / 3.0;
-  if (meanStress < -d_yield.cohesion * M) {
-    df_dsigma(0) =  1.0 / 3.0; dg_dsigma(0) =  1.0 / 3.0;
-    df_dsigma(1) =  1.0 / 3.0; dg_dsigma(1) =  1.0 / 3.0;
-    df_dsigma(2) =  1.0 / 3.0; dg_dsigma(2) =  1.0 / 3.0;
-    df_dsigma(3) =  0.0; dg_dsigma(3) =  0.0;
-    df_dsigma(4) =  0.0; dg_dsigma(4) =  0.0;
-    df_dsigma(5) =  0.0; dg_dsigma(5) =  0.0;
+  if (meanStress < -d_yield.d_cohesion * M) {
+    df_dSigma(0) =  1.0 / 3.0; dg_dSigma(0) =  1.0 / 3.0;
+    df_dSigma(1) =  1.0 / 3.0; dg_dSigma(1) =  1.0 / 3.0;
+    df_dSigma(2) =  1.0 / 3.0; dg_dSigma(2) =  1.0 / 3.0;
+    df_dSigma(3) =  0.0; dg_dSigma(3) =  0.0;
+    df_dSigma(4) =  0.0; dg_dSigma(4) =  0.0;
+    df_dSigma(5) =  0.0; dg_dSigma(5) =  0.0;
   }
 
   if (dbg.active()) {
@@ -612,7 +608,7 @@ ShengMohrCoulomb::computeDfDsigma(const Vector6& stress) const
         << "dg_dsigma = \n" << dg_dSigma.transpose() << "\n";
   }
 
-  return std::make_tuple(df_dsigma, dg_dsigma);
+  return std::make_tuple(df_dSigma, dg_dSigma);
 }
 
 /**
@@ -622,7 +618,7 @@ void
 ShengMohrCoulomb::findIntersectionUnloading(const Vector7& strainIncrement,
                                             const StateMohrCoulomb& initialState,
                                             Vector7& elasticStrainInc,
-                                            Vector7& plasticStrainInc) const
+                                            Vector7& plasticStrainInc)
 {
   double alpha = findYieldAlpha(initialState.state, initialState.stress,
                                 initialState.strain, strainIncrement);
@@ -635,11 +631,11 @@ void
 ShengMohrCoulomb::findIntersection(const Vector7& strainIncrement,
                                    const StateMohrCoulomb& initialState,
                                    Vector7& elasticStrainInc,
-                                   Vector7& plasticStrainInc)
+                                   Vector7& plasticStrainInc) const
 {
   double alpha = findYieldModified(initialState.state, initialState.stress,
                                    initialState.strain, strainIncrement);
-  elasticStrainInc = strainIncrement[i] * alpha;
+  elasticStrainInc = strainIncrement * alpha;
   plasticStrainInc = strainIncrement - elasticStrainInc;
 }
 
@@ -664,7 +660,7 @@ double
 ShengMohrCoulomb::findYieldAlpha(const Vector3& state, 
                                  const Vector6& s0, 
                                  const Vector7& eps0,
-                                 const Vector7& deps) const 
+                                 const Vector7& dep)
 {
   double f0 = computeYieldNormalized(s0);
   double yieldTol_old = d_int.d_yieldTol;
@@ -676,8 +672,8 @@ ShengMohrCoulomb::findYieldAlpha(const Vector3& state,
     if (dbg.active()) {
       dbg << "findYieldAlpha : case not coded for yet\n";
     }
-    delta = (f0 + d_yield.d_yieldTol) / 2;
-    d_yield.d_yieldTol = 0.9 * (d_yield.d_yieldTol - f0) / 2;
+    delta = (f0 + d_int.d_yieldTol) / 2;
+    d_int.d_yieldTol = 0.9 * (d_int.d_yieldTol - f0) / 2;
   }
 
   if (dbg.active()) {
@@ -696,8 +692,8 @@ ShengMohrCoulomb::findYieldAlpha(const Vector3& state,
 
   double alfa0 = 0;
   double alfa1 = 1;
-  Vector7 epsIni = deps * alfa0;
-  Vector7 epsFin = deps * alfa1;
+  //Vector7 epsIni = dep * alfa0;
+  Vector7 epsFin = dep * alfa1;
 
   Vector6 sIni = s0;
   Vector6 sFin = calcStressIncElast(state(2), s0, eps0, epsFin);
@@ -719,12 +715,12 @@ ShengMohrCoulomb::findYieldAlpha(const Vector3& state,
   double alphaYield = 0.0;
   double alfa = 0.5;
   double alfa_old = 0;
-  for (int iter = 0; iter < d_maxIter; iter++) {
+  for (int iter = 0; iter < d_int.d_maxIter; iter++) {
     bool problems = false;
     alfa_old = alfa;
 
     alfa = f0 / (f0 - f1);
-    Vector7 epsAlfa = deps * (alfa0 + alfa * (alfa1 - alfa0));
+    Vector7 epsAlfa = dep * (alfa0 + alfa * (alfa1 - alfa0));
 
     // calculate stress increment for current alfa
     Vector6 sAlfa = calcStressIncElast(state(2), s0, eps0, epsAlfa); 
@@ -759,7 +755,7 @@ ShengMohrCoulomb::findYieldAlpha(const Vector3& state,
              << "\n";
       }
 
-      d_yieldTol = yieldTol_old;
+      d_int.d_yieldTol = yieldTol_old;
 
       if (dbg.active()) {
         dbg << "Yield tolerance is set back to: " << d_int.d_yieldTol << "\n";
@@ -786,10 +782,10 @@ ShengMohrCoulomb::findYieldAlpha(const Vector3& state,
         }
 
         alfa = alfa1 - d_int.d_alfaChange * (alfa1 - alfa0);
-        epsAlfa = deps * (alfa0 + alpfa * (alfa1 - alfa0));
+        epsAlfa = dep * (alfa0 + alfa * (alfa1 - alfa0));
 
-        sAlpha = calcStressIncElast(state(2), s0, eps0, epsAlfa);
-        sAlpha += s0;
+        sAlfa = calcStressIncElast(state(2), s0, eps0, epsAlfa);
+        sAlfa += s0;
 
         fAlfa = computeYieldNormalized(sAlfa);
         fAlfa -= delta;
@@ -809,7 +805,7 @@ ShengMohrCoulomb::findYieldAlpha(const Vector3& state,
 
       // if fAlfa < 0 - we are elastic - minimum alfa is set to current alfa
 
-      if ((alfa < d_alfaCheck) && (alfa_old / alfa) < d_alfaRatio) {
+      if ((alfa < d_int.d_alfaCheck) && (alfa_old / alfa) < d_int.d_alfaRatio) {
         problems = true;
       }
       alfa0 = alfa0 + alfa * (alfa1 - alfa0);
@@ -821,10 +817,10 @@ ShengMohrCoulomb::findYieldAlpha(const Vector3& state,
         }
 
         alfa = alfa0 + d_int.d_alfaChange * (alfa1 - alfa0);
-        epsAlfa = deps * (alfa0 + alpfa * (alfa1 - alfa0));
+        epsAlfa = dep * (alfa0 + alfa * (alfa1 - alfa0));
 
-        sAlpha = calcStressIncElast(state(2), s0, eps0, epsAlfa);
-        sAlpha += s0;
+        sAlfa = calcStressIncElast(state(2), s0, eps0, epsAlfa);
+        sAlfa += s0;
 
         fAlfa = computeYieldNormalized(sAlfa);
         fAlfa -= delta;
@@ -842,12 +838,12 @@ ShengMohrCoulomb::findYieldAlpha(const Vector3& state,
     }
   }
 
-  d_yieldTol = yieldTol_old;
+  d_int.d_yieldTol = yieldTol_old;
 
   // if we are here, we must have perforemed to many iterations...
   std::ostringstream err;
   err << "**ERROR** in procedure findYieldAlpha" << "\n";
-  err << "  After " << d_maxIter << " iterations crossing point not found" << "\n";
+  err << "  After " << d_int.d_maxIter << " iterations crossing point not found" << "\n";
   err << "  This is likely to cause incorrect results... Results obtained "
          "  should not be taken too seriously..." << "\n";
   throw InvalidValue(err.str(), __FILE__, __LINE__);
@@ -888,7 +884,7 @@ ShengMohrCoulomb::findYieldModified(const Vector3& state,
 
   double alfa0 = 0;
   double alfa1 = 1;
-  Vector7 epsIni = deps * alfa0;
+  //Vector7 epsIni = deps * alfa0;
   Vector7 epsFin = deps * alfa1;
 
   Vector6 sIni = s0;
@@ -909,7 +905,7 @@ ShengMohrCoulomb::findYieldModified(const Vector3& state,
   double alfa = 0.5;
   double alfa_old = 0;
 
-  for (int iter = 0; iter < d_maxIter; iter++) {
+  for (int iter = 0; iter < d_int.d_maxIter; iter++) {
 
     bool problems = false;
     alfa_old = alfa;
@@ -931,7 +927,7 @@ ShengMohrCoulomb::findYieldModified(const Vector3& state,
       fAlfa = 0.0; 
     }
 
-    if (std::abs(fAlfa) < d_yieldTol) {
+    if (std::abs(fAlfa) < d_int.d_yieldTol) {
 
       // if fAlfa within tolerance, we have the solution
       double alphaYield = alfa0 + alfa * (alfa1 - alfa0);
@@ -971,7 +967,7 @@ ShengMohrCoulomb::findYieldModified(const Vector3& state,
         sAlfa = calcStressIncElast(state(2), s0, eps0, epsAlfa);
         sAlfa += s0;
 
-        falfa = computeYieldNormalized(sAlfa);
+        fAlfa = computeYieldNormalized(sAlfa);
 
         if (fAlfa > 0) {
           // if fAlfa > 0 - we are yielding - max alfa set to current alfa
@@ -1000,7 +996,7 @@ ShengMohrCoulomb::findYieldModified(const Vector3& state,
           dbg << "Problematic iteration entered !!!"<<"\n";
         }
 
-        alfa = alfa0 + d_alfaChange * (alfa1 - alfa0);
+        alfa = alfa0 + d_int.d_alfaChange * (alfa1 - alfa0);
         epsAlfa = deps * (alfa0 + alfa * (alfa1 - alfa0));
 
         sAlfa = calcStressIncElast(state(2), s0, eps0, epsAlfa);
@@ -1023,24 +1019,23 @@ ShengMohrCoulomb::findYieldModified(const Vector3& state,
   // if we are here, we must have perforemed to many iterations...
   std::ostringstream err;
   err << "Error in procedure findYieldModified" << "\n";
-  err << "After " << d_maxIter << " iterations crossing point not found" << "\n";
+  err << "After " << d_int.d_maxIter << " iterations crossing point not found" << "\n";
   err << "alphamin = " << alfa0 << " alphamax = " << alfa1
        << " dalpha = " << alfa1 - alfa0;
   err << "Yield Function value Min=" << f0 << " Max=" << f1 << "\n";
   err << "Stress:" << s0 << "\n";
   err << "Strain:" << deps << "\n";
-  err << "G: " << G << " K: " << K << " cohesion: " << cohesion << " phi: " << phi
-       << "\n";
+  err << "G: " << d_elastic.d_G << " K: " << d_elastic.d_K 
+      << " cohesion: " << d_yield.d_cohesion << " phi: " << d_yield.d_phi << "\n";
   err << "This is likely to cause incorrect results... Results obtained "
-          "should not be taken too seriously..."
-       << "\n";
+          "should not be taken too seriously..." << "\n";
   throw InvalidValue(err.str(), __FILE__, __LINE__);
 
   return -999.0;
 }
 
 double
-ShengMohrCoulomb::computeNu(const Matrix6& s, const Matrix3& state, double suction)
+ShengMohrCoulomb::computeNu(const Vector6& s, const Vector3& state, double suction) const
 {
   // does nothing for SMC
   return 1.0;
@@ -1051,7 +1046,7 @@ ShengMohrCoulomb::computeNu(const Matrix6& s, const Matrix3& state, double sucti
  */
 double
 ShengMohrCoulomb::calculatePlastic(const Vector7& purelyPlasticStrain, 
-                                   const StateMohrCoulomb& state) const
+                                   StateMohrCoulomb& state) const
 {
   double time; 
   int    numIter;
@@ -1105,7 +1100,7 @@ ShengMohrCoulomb::calculatePlastic(const Vector7& purelyPlasticStrain,
     default: {
       std::ostringstream err;
       err << "**ERROR** Unknown Solution Algorithm. Value of d_solutionAlgorithm variable "
-             "is set to:" << d_solutionAlgorithm << "\n";
+             "is set to:" << d_int.d_solutionAlgorithm << "\n";
       err << "Acceptable values are ints from 1 to 9. Procedure calculate "
              "Plastic exits without any calculations done.\n";
       throw InvalidValue(err.str(), __FILE__, __LINE__);
@@ -1207,7 +1202,7 @@ ShengMohrCoulomb::plasticRK332(StateMohrCoulomb& state,
   coefficients, C - x coefficients. 
  */
 std::tuple<double, int>
-ShengMohrCoulomb::plasticRKBog432(StateMohrCoulomb& point, 
+ShengMohrCoulomb::plasticRKBog432(StateMohrCoulomb& state, 
                                   const Vector7& epStrain) const
 {
   constexpr int Steps = 4;
@@ -1526,7 +1521,7 @@ ShengMohrCoulomb::plasticRKErr8544(StateMohrCoulomb& state,
   B(6) = 79937.0 / 1113912.0;
   B(7) = 3293.0 / 556956.0;
 
-  RKVectorErr ErrorCoef = RKVector::Zero();
+  RKVectorErr ErrorCoef = RKVectorErr::Zero();
   ErrorCoef(0) = -3.0 / 1280.0;
   ErrorCoef(1) = 0.0;
   ErrorCoef(2) = 6561.0 / 632320.0;
@@ -1547,27 +1542,27 @@ ShengMohrCoulomb::plasticRKErr8544(StateMohrCoulomb& state,
  */
 namespace Uintah {
 
-constexpr int DivInt00[15] = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
-constexpr int DivInt01[15] = {2,4,6,8,10,12,14,16,18,20,22,24,26,28,30};
-constexpr int DivInt02[15] = {2,4,6,8,12,16,24,32,48,64,96,128,192,256,384};
-constexpr int DivInt03[15] = {2,4,6,8,12,16,24,32,48,64,96,128,192,256,384};
-constexpr int DivInt04[15] = {12,16,24,32,48,64,96,128,160,192,256,320,384,448,512};
+//constexpr int DivInt00[15] = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+//constexpr int DivInt01[15] = {2,4,6,8,10,12,14,16,18,20,22,24,26,28,30};
+//constexpr int DivInt02[15] = {2,4,6,8,12,16,24,32,48,64,96,128,192,256,384};
+//constexpr int DivInt03[15] = {2,4,6,8,12,16,24,32,48,64,96,128,192,256,384};
+//constexpr int DivInt04[15] = {12,16,24,32,48,64,96,128,160,192,256,320,384,448,512};
 
-//fastests so far
+//fastest so far
 constexpr int DivInt[15] = {32,48,64,96,128,160,192,256,320,384,448,512,608,736,992}; 
 
 //N+N-4
-constexpr int DivInt06[15] = {2,4,6,8,10,14,20,28,38,52,72,100,138,190,262,362,500,690,952};
+//constexpr int DivInt06[19] = {2,4,6,8,10,14,20,28,38,52,72,100,138,190,262,362,500,690,952};
 //N+N-5
-constexpr int DivInt07[15] = {2,4,6,8,10,12,16,22,30,40,52,68,90,120,170,222,290,380,500,670,892};
-constexpr int DivInt08[15] = {28,32,40,52,64,78,94,120,154,200,240,290,330,380,440};
-constexpr int DivInt09[15] = {32,40,52,64,78,94,120,154,200,240,290,330,380,440,520};
-constexpr int DivInt10[15] = {32,36,40,46,52,60,70,82,96,112,130,150,176,220,380};
-constexpr int DivInt11[15] = {32,36,40,52,68,92,114,154,200,240,290,330,380,440,520};
+//constexpr int DivInt07[21] = {2,4,6,8,10,12,16,22,30,40,52,68,90,120,170,222,290,380,500,670,892};
+//constexpr int DivInt08[15] = {28,32,40,52,64,78,94,120,154,200,240,290,330,380,440};
+//constexpr int DivInt09[15] = {32,40,52,64,78,94,120,154,200,240,290,330,380,440,520};
+//constexpr int DivInt10[15] = {32,36,40,46,52,60,70,82,96,112,130,150,176,220,380};
+//constexpr int DivInt11[15] = {32,36,40,52,68,92,114,154,200,240,290,330,380,440,520};
 //n=n-1*1.1, doesn't converge too often
-constexpr int DivInt12[15] = {32,36,40,44,50,56,62,68,76,84,92,102,112,124,136};
+//constexpr int DivInt12[15] = {32,36,40,44,50,56,62,68,76,84,92,102,112,124,136};
 //n=n-1*1.2
-constexpr int DivInt13[15] = {32,38,46,56,66,80,96,114,138,166,198,238,286,344,412};
+//constexpr int DivInt13[15] = {32,38,46,56,66,80,96,114,138,166,198,238,286,344,412};
 
 } // end namespace Uintah
 
@@ -1584,9 +1579,8 @@ ShengMohrCoulomb::plasticExtrapol(StateMohrCoulomb& state,
   constexpr int StepMax   = 15;
   using ApproxTableMatrix = Eigen::Matrix<double, TableRows, StepMax + 1>;
   using HTableMatrix      = Eigen::Matrix<double, StepMax, StepMax + 1>;
-  using TableVector       = Eigen::Matrix<double, StepMax, 1>;
 
-  constexpr Vector6 Zero = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  Vector6 Zero = Vector6::Zero();
 
   std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
   startTime = std::chrono::system_clock::now();
@@ -1594,7 +1588,7 @@ ShengMohrCoulomb::plasticExtrapol(StateMohrCoulomb& state,
   HTableMatrix hSquareTable = HTableMatrix::Zero();
   for (int i = 1; i < StepMax+1; i++) {
     for (int j = 0; j < i; j++) {
-      hSquareTable(i, j) = (DivInt(i) / DivInt(j)) * (DivInt(i) / DivInt(j));
+      hSquareTable(i, j) = (DivInt[i] / DivInt[j]) * (DivInt[i] / DivInt[j]);
       if (dbg.active()) {
         dbg << "DivInt[" << i << "] = " << DivInt[i] 
             <<" DivInt[" << j << "] = " << DivInt[j] <<"\n";
@@ -1605,7 +1599,7 @@ ShengMohrCoulomb::plasticExtrapol(StateMohrCoulomb& state,
 
   StateMohrCoulomb state_new  = state; 
   StateMohrCoulomb state_copy = state;
-  StateMohrCoulmb  state_old  = state;
+  StateMohrCoulomb state_old  = state;
 
   Vector6 initPlasticStrain     = state.plasticStrain;
   Vector7 initStress            = Vector7::Zero();
@@ -1615,9 +1609,11 @@ ShengMohrCoulomb::plasticExtrapol(StateMohrCoulomb& state,
   ApproxTableMatrix approxTable    = ApproxTableMatrix::Zero();
   ApproxTableMatrix approxTableOld = ApproxTableMatrix::Zero();
 
-  TableVector       dError                = TableVector::Zero();
-  Vector6           plasticStrain         = Vector6::Zero();
-  Vector6           dSigma                = Vector6::Zero();
+  double  dP0Star       = 0.0;
+  Vector6 plasticStrain = Vector6::Zero();
+  Vector7 dSigma        = Vector7::Zero();
+  Vector7 absStress     = Vector7::Zero();
+  Vector7 dError        = Vector7::Zero();
 
   // calculating stress increment using midpoint rule
   int loop = 0;
@@ -1628,16 +1624,17 @@ ShengMohrCoulomb::plasticExtrapol(StateMohrCoulomb& state,
     plasticMidpoint(state_new, epStrain, absStress, DivInt[loop]); 
 
     // saving data using midpoint rule
-    approxTable.col(0).block<6,1>(0,0)  = state_new.stress - initSress;
-    approxTable.col(0).block<1,1>(6,0)  = state_new.p0Star() - initStress(6);
-    approxTable.col(0).block<6,1>(7,0)  = absStress;
-    approxTable.col(0).block<1,1>(13,0) = absStress(6);
-    approxTable.col(0).block<6,1>(14,0) = state_new.plasticStrain - initPlasticStrain;
+    auto curCol = approxTable.col(0);
+    curCol.block<6,1>(0,0)  = state_new.stress - initStress.block<6,1>(0,0);
+    curCol(6)  = state_new.p0Star() - initStress(6);
+    curCol.block<7,1>(7,0)  = absStress;
+    curCol.block<6,1>(14,0) = state_new.plasticStrain - initPlasticStrain;
+    approxTable.col(0) = curCol;
    
     for (int i = 0; i < loop; i++) {
       for (int j = 0; j < TableRows; j++) {
         approxTable(j, i + 1) = approxTable(j, i) +
-          (approxTable(j, i) - approxTableOld(j, i) / 
+          (approxTable(j, i) - approxTableOld(j, i)) / 
             (hSquareTable(loop - i - 1, loop) - 1);
       }
     }
@@ -1659,15 +1656,15 @@ ShengMohrCoulomb::plasticExtrapol(StateMohrCoulomb& state,
     if (loop > 0) {
       auto prevData = approxTable.col(loop - 1);
       auto currData = approxTable.col(loop);
-      dSigma  = currData.block<6,1>(0,0);
+      dSigma  = currData.block<7,1>(0,0);
       dP0Star = currData(6);
       dError  = currData.block<7,1>(0,0) - prevData.block<7,1>(0,0);
 
-      switch (d_int.d_tolMethod)) {
-        case EPUS_RELATIVE_ERROR:
+      switch (d_int.d_tolMethod) {
+        case ToleranceMethod::EPUS_RELATIVE_ERROR:
           rError = checkNorm(dSigma, dP0Star, state_copy, dError); 
          break;
-        case SLOAN:
+        case ToleranceMethod::SLOAN:
           rError = checkNormSloan(dSigma, dP0Star, state_copy, dError);
          break;
         default: 
@@ -1690,33 +1687,33 @@ ShengMohrCoulomb::plasticExtrapol(StateMohrCoulomb& state,
     // error less then requested...check for drift and add the error
     if (rError < d_int.d_integrationTol) {
       auto currData = approxTable.col(loop);
-      dSigma  = currData.block<6,1>(0,0);
+      dSigma  = currData.block<7,1>(0,0);
       dP0Star = currData(6);
 
       state_copy = state_old;
-      state_old.update(Zero, epStrain, dSigma, dP0Star);
+      state_old.update(Zero, epStrain, dSigma.block<6,1>(0,0), dP0Star);
       state_old = state_new;
 
       switch (d_int.d_driftCorrection) {
-        case NO_CORRECTION:
+        case DriftCorrection::NO_CORRECTION:
           break;
-        case CORRECTION_AT_BEGIN:
+        case DriftCorrection::CORRECTION_AT_BEGIN:
           correctDriftBeg(state_new, state_copy);
           break;
-        case CORRECTION_AT_END:
-          correctDrift(state_new);
+        case DriftCorrection::CORRECTION_AT_END:
+          correctDriftEnd(state_new);
           break;
         default:
           break;
       }
 
       dError.block<6,1>(0,0) = state_new.stress - state_old.stress;
-      dError.block<1,1>(6,0) = state_new.p0Star() - state_old.p0Star();
-      switch (d_int.d_tolMethod)) {
-        case EPUS_RELATIVE_ERROR:
+      dError(6) = state_new.p0Star() - state_old.p0Star();
+      switch (d_int.d_tolMethod) {
+        case ToleranceMethod::EPUS_RELATIVE_ERROR:
           rError = checkNorm(dSigma, dP0Star, state_copy, dError); 
          break;
-        case SLOAN:
+        case ToleranceMethod::SLOAN:
           rError = checkNormSloan(dSigma, dP0Star, state_copy, dError);
          break;
         default: 
@@ -1732,19 +1729,18 @@ ShengMohrCoulomb::plasticExtrapol(StateMohrCoulomb& state,
   }
 
   // done - time to update everything and sent time and no of iterations...
+  int numIter = 0.0;
   if (loop > 100) {
     loop = loop - 101;
 
     auto currData = approxTable.col(loop);
-    absStress = currData.block<6,1>(7,0);
-    absStress(6) = currData.block<1,1>(13,0);
+    absStress = currData.block<7,1>(7,0);
     plasticStrain = currData.block<6,1>(14,0);
     dP0Star = currData(6);
-    state.update(plasticStrain, epStrain, dSigma, dP0Star);
+    state.update(plasticStrain, epStrain, dSigma.block<6,1>(0,0), dP0Star);
 
     endTime = std::chrono::system_clock::now();
 
-    numIter = 0;
     for (int i = 0; i < loop + 1; i++)
       numIter += numIter + DivInt[i];
       if (dbg.active()) {
@@ -1754,18 +1750,15 @@ ShengMohrCoulomb::plasticExtrapol(StateMohrCoulomb& state,
     loop--;
 
     auto currData = approxTable.col(loop);
-    
-    dSigma = currData.block<6,1>(0,0);
-    absStress = currData.block<6,1>(7,0);
-    absStress(6) = currData.block<1,1>(13,0);
+    dSigma = currData.block<7,1>(0,0);
+    absStress = currData.block<7,1>(7,0);
     plasticStrain = currData.block<6,1>(14,0);
     dP0Star = currData(6);
 
-    state.update(plasticStrain, epStrain, dSigma, dP0Star);
+    state.update(plasticStrain, epStrain, dSigma.block<6,1>(0,0), dP0Star);
 
     endTime = std::chrono::system_clock::now();
 
-    numIter = 0;
     for (int i = 0; i < loop + 1; i++) {
       numIter +=  DivInt[i];
       if (dbg.active()) {
@@ -1807,6 +1800,7 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
   // *WARNING** prevents algorithm to have more than 1e4 steps; cost: accuracy
   // reduction in some unusual cases, but the whole thing will keep on going
   constexpr double criticalStepSize = 1.0e-4; 
+  Vector7 substepStrain = epStrain;
   double newStepSize = 0;
   for (int i = 0; i < 6; i++) {
     newStepSize += std::abs(substepStrain[i]);
@@ -1878,7 +1872,7 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
 
       dSigma.col(0)        = reuseRes.block<6,1>(0,0);
       plasticStrain.col(0) = plasticStrainInc.block<6,1>(0,0);
-      dP0Star.col(0)       = reuseRes(6);
+      dP0Star(0,0)         = reuseRes(6);
 
     } else {
 
@@ -1891,7 +1885,7 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
       // plasticStrainInc = Vector6::Zero();
       dSigma.col(0)        = stressInc;
       plasticStrain.col(0) = plasticStrainInc;
-      dP0Star.col(0)       = p0StarInc;
+      dP0Star(0,0)         = p0StarInc;
 
     }
 
@@ -1907,7 +1901,7 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
 
         stressInc        += (dSigma.col(i) * AA(rkloop, i));
         plasticStrainInc += (plasticStrain.col(i) * AA(rkloop, i));
-        p0StarInc        += (dP0Star.col(i) * AA(rkloop, i);
+        p0StarInc        += (dP0Star(0, i) * AA(rkloop, i));
 
       }
 
@@ -1921,12 +1915,12 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
       // plasticStrainInc = Vector6::Zero();
       dSigma.col(rkloop)        = stressInc;
       plasticStrain.col(rkloop) = plasticStrainInc;
-      dP0Star.col(rkloop)       = p0StarInc;
+      dP0Star(0, rkloop)        = p0StarInc;
     }
 
     Vector6 sigBRes  = dSigma        * BRes;
-    Vector6 epsPBres = plasticStrain * BRes;
-    double  p0Bres   = dP0Star       * BRes;
+    //Vector6 epsPBRes = plasticStrain * BRes;
+    double  p0BRes   = dP0Star       * BRes;
     Vector6 sigB     = dSigma        * BB;
     double  p0B      = dP0Star       * BB;
     
@@ -1945,11 +1939,11 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
 
     // check the error norm
     switch (d_int.d_tolMethod) {
-      case EPUS_RELATIVE_ERROR:
-        rError = checkNorm(result, result(6), point, error); 
+      case ToleranceMethod::EPUS_RELATIVE_ERROR:
+        rError = checkNorm(result, result(6), state, error); 
         break;
-      case SLOAN:
-        rError = checkNormSloan(result, result(6), point, error);
+      case ToleranceMethod::SLOAN:
+        rError = checkNormSloan(result, result(6), state, error);
         break;
       default: 
         std::ostringstream err;
@@ -1980,7 +1974,7 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
       rError = TINY;
     }
     
-    if (d_int.d_tolMethod == EPUS_RELATIVE_ERROR) {
+    if (d_int.d_tolMethod == ToleranceMethod::EPUS_RELATIVE_ERROR) {
       newStepSize = d_int.d_betaFactor * 
         std::pow(d_int.d_integrationTol / rError, (1 / (Order - 1.0)));
     } else {
@@ -1994,7 +1988,7 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
       // evaluation of derivative
       reuseStep = true;
       reuseRes.block<6,1>(0,0)         = dSigma.col(0)        * newStepSize;
-      reuseRes(6)                      = dP0Star.col(0)       * newStepSize;
+      reuseRes(6)                      = dP0Star(0,0)         * newStepSize;
       plasticStrainInc.block<6,1>(0,0) = plasticStrain.col(0) * newStepSize;
 
     } else {
@@ -2004,7 +1998,7 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
       //******
       //******
       // here we update all the state data.
-      state.update(plasticStrainInc, substepStrain, result, result(6));
+      state.update(plasticStrainInc, substepStrain, result.block<6,1>(0,0), result(6));
       //******
       //******
 
@@ -2012,29 +2006,28 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
       StateMohrCoulomb trialState = state;
 
       switch (d_int.d_driftCorrection) {
-        case NO_CORRECTION:
-          break;
-        case CORRECTION_AT_BEGIN:
+        case DriftCorrection::CORRECTION_AT_BEGIN:
           correctDriftBeg(state, state_old);
           break;
-        case CORRECTION_AT_END:
-          correctDrift(state);
+        case DriftCorrection::CORRECTION_AT_END:
+          correctDriftEnd(state);
           break;
+        case DriftCorrection::NO_CORRECTION:
         default:
           break;
       }
 
       // reevaluate the error in the point:
       error.block<6,1>(0,0) += (state.stress - trialState.stress);
-      error(6) += state->p0Star() - trialState.p0Star();
+      error(6) += state.p0Star() - trialState.p0Star();
 
       // error vector updated, norm should be re-evaluated:
       switch (d_int.d_tolMethod) {
-        case EPUS_RELATIVE_ERROR:
-          rError = checkNorm(result, result(6), point, error); 
+        case ToleranceMethod::EPUS_RELATIVE_ERROR:
+          rError = checkNorm(result, result(6), state, error); 
           break;
-        case SLOAN:
-          rError = checkNormSloan(result, result(6), point, error); 
+        case ToleranceMethod::SLOAN:
+          rError = checkNormSloan(result, result(6), state, error); 
           break;
         default: 
           std::ostringstream err;
@@ -2048,7 +2041,7 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
         }
       }
     
-      if (d_int.d_tolMethod == EPUS_RELATIVE_ERROR) {
+      if (d_int.d_tolMethod == ToleranceMethod::EPUS_RELATIVE_ERROR) {
         newStepSize = d_int.d_betaFactor * 
           std::pow(d_int.d_integrationTol / rError, (1 / (Order - 1.0)));
       } else {
@@ -2069,7 +2062,7 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
 
         reuseStep = true;
         reuseRes.block<6,1>(0,0)         = dSigma.col(0)        * newStepSize;
-        reuseRes(6)                      = dP0Star.col(0)       * newStepSize;
+        reuseRes(6)                      = dP0Star(0,0)         * newStepSize;
         plasticStrainInc.block<6,1>(0,0) = plasticStrain.col(0) * newStepSize;
 
         state_old = state;
@@ -2125,6 +2118,7 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
                                   bool                    errorEstimate) const
 {
   constexpr double criticalStepSize = 1.0e-4; 
+  Vector7 substepStrain = epStrain;
   double newStepSize = 0;
   for (int i = 0; i < 6; i++) {
     newStepSize += std::abs(substepStrain[i]);
@@ -2196,7 +2190,7 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
 
       dSigma.col(0)        = reuseRes.block<6,1>(0,0);
       plasticStrain.col(0) = plasticStrainInc.block<6,1>(0,0);
-      dP0Star.col(0)       = reuseRes(6);
+      dP0Star(0,0)         = reuseRes(6);
 
     } else {
 
@@ -2209,7 +2203,7 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
       // plasticStrainInc = Vector6::Zero();
       dSigma.col(0)        = stressInc;
       plasticStrain.col(0) = plasticStrainInc;
-      dP0Star.col(0)       = p0StarInc;
+      dP0Star(0,0)         = p0StarInc;
 
     }
 
@@ -2225,7 +2219,7 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
 
         stressInc        += (dSigma.col(i) * AA(rkloop, i));
         plasticStrainInc += (plasticStrain.col(i) * AA(rkloop, i));
-        p0StarInc        += (dP0Star.col(i) * AA(rkloop, i);
+        p0StarInc        += (dP0Star(0,i) * AA(rkloop, i));
 
       }
 
@@ -2239,12 +2233,12 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
       // plasticStrainInc = Vector6::Zero();
       dSigma.col(rkloop)        = stressInc;
       plasticStrain.col(rkloop) = plasticStrainInc;
-      dP0Star.col(rkloop)       = p0StarInc;
+      dP0Star(0,rkloop)         = p0StarInc;
     }
 
     Vector6 sigBRes  = dSigma        * BRes;
-    Vector6 epsPBres = plasticStrain * BRes;
-    double  p0Bres   = dP0Star       * BRes;
+    //Vector6 epsPBRes = plasticStrain * BRes;
+    double  p0BRes   = dP0Star       * BRes;
     Vector6 sigB     = dSigma        * BB;
     double  p0B      = dP0Star       * BB;
     
@@ -2272,13 +2266,13 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
 
     // check the error norm
     switch (d_int.d_tolMethod) {
-      case EPUS_RELATIVE_ERROR:
-        rError      = checkNorm(result, result(6), point, error); 
-        rErrorOther = checkNorm(result, result(6), point, errorOther); 
+      case ToleranceMethod::EPUS_RELATIVE_ERROR:
+        rError      = checkNorm(result, result(6), state, error); 
+        rErrorOther = checkNorm(result, result(6), state, errorOther); 
         break;
-      case SLOAN:
-        rError      = checkNormSloan(result, result(6), point, error);
-        rErrorOther = checkNormSloan(result, result(6), point, errorOther);
+      case ToleranceMethod::SLOAN:
+        rError      = checkNormSloan(result, result(6), state, error);
+        rErrorOther = checkNormSloan(result, result(6), state, errorOther);
         break;
       default: 
         std::ostringstream err;
@@ -2291,7 +2285,7 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
         std::cout << "**ERROR** Results not a number. Try correcting issue, results may be "
                      "incorrect. Results = \n" << result << "\n";
         result(i) = 0;
-        if (rError < d_int.d_methodPower) {
+        if (rError < methodPower) {
           rError = methodPower;
         }
       }
@@ -2306,7 +2300,7 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
       }
     }
 
-    if (d_int.d_tolMethod == EPUS_RELATIVE_ERROR) {
+    if (d_int.d_tolMethod == ToleranceMethod::EPUS_RELATIVE_ERROR) {
       newStepSize = d_int.d_betaFactor * 
         std::pow(d_int.d_integrationTol / rError, (1 / (Order - 1.0)));
     } else {
@@ -2320,7 +2314,7 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
       // evaluation of derivative
       reuseStep = true;
       reuseRes.block<6,1>(0,0)         = dSigma.col(0)        * newStepSize;
-      reuseRes(6)                      = dP0Star.col(0)       * newStepSize;
+      reuseRes(6)                      = dP0Star(0,0)         * newStepSize;
       plasticStrainInc.block<6,1>(0,0) = plasticStrain.col(0) * newStepSize;
 
     } else {
@@ -2330,7 +2324,7 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
       //******
       //******
       // here we update all the state data.
-      state.update(plasticStrainInc, substepStrain, result, result(6));
+      state.update(plasticStrainInc, substepStrain, result.block<6,1>(0,0), result(6));
       //******
       //******
 
@@ -2338,45 +2332,44 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
       StateMohrCoulomb trialState = state;
 
       switch (d_int.d_driftCorrection) {
-        case NO_CORRECTION:
-          break;
-        case CORRECTION_AT_BEGIN:
+        case DriftCorrection::CORRECTION_AT_BEGIN:
           correctDriftBeg(state, state_old);
           break;
-        case CORRECTION_AT_END:
-          correctDrift(state);
+        case DriftCorrection::CORRECTION_AT_END:
+          correctDriftEnd(state);
           break;
+        case DriftCorrection::NO_CORRECTION:
         default:
           break;
       }
 
       // reevaluate the error in the point:
       error.block<6,1>(0,0) += (state.stress - trialState.stress);
-      error(6) += state->p0Star() - trialState.p0Star();
+      error(6) += state.p0Star() - trialState.p0Star();
       errorOther.block<6,1>(0,0) += (state.stress - trialState.stress);
-      errorOther(6) += state->p0Star() - trialState.p0Star();
+      errorOther(6) += state.p0Star() - trialState.p0Star();
 
       // error vector updated, norm should be re-evaluated:
       double temp = 0;
       switch (d_int.d_tolMethod) {
-        case EPUS_RELATIVE_ERROR:
-          temp        = checkNorm(result, result(6), point, error); 
-          rErrorOther = checkNorm(result, result(6), point, errorOther); 
+        case ToleranceMethod::EPUS_RELATIVE_ERROR:
+          temp        = checkNorm(result, result(6), state, error); 
+          rErrorOther = checkNorm(result, result(6), state, errorOther); 
           if (temp > rError) {
             rError = temp;
           }
           if (rErrorOther > rError) {
-            rError = rErrOther;
+            rError = rErrorOther;
           }
           break;
-        case SLOAN:
-          temp        = checkNormSloan(result, result(6), point, error); 
-          rErrorOther = checkNormSloan(result, result(6), point, errorOther); 
+        case ToleranceMethod::SLOAN:
+          temp        = checkNormSloan(result, result(6), state, error); 
+          rErrorOther = checkNormSloan(result, result(6), state, errorOther); 
           if (temp > rError) {
             rError = temp;
           }
           if (rErrorOther > rError) {
-            rError = rErrOther;
+            rError = rErrorOther;
           }
           break;
         default: 
@@ -2391,7 +2384,7 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
         }
       }
     
-      if (d_int.d_tolMethod == EPUS_RELATIVE_ERROR) {
+      if (d_int.d_tolMethod == ToleranceMethod::EPUS_RELATIVE_ERROR) {
         newStepSize = d_int.d_betaFactor * 
           std::pow(d_int.d_integrationTol / rError, (1 / (Order - 1.0)));
       } else {
@@ -2412,7 +2405,7 @@ ShengMohrCoulomb::doRungeKuttaErr(const Eigen::Matrix<double, Steps, Steps>& AA,
 
         reuseStep = true;
         reuseRes.block<6,1>(0,0)         = dSigma.col(0)        * newStepSize;
-        reuseRes(6)                      = dP0Star.col(0)       * newStepSize;
+        reuseRes(6)                      = dP0Star(0,0)         * newStepSize;
         plasticStrainInc.block<6,1>(0,0) = plasticStrain.col(0) * newStepSize;
 
         state_old = state;
@@ -2460,12 +2453,12 @@ ShengMohrCoulomb::calcPlastic(const StateMohrCoulomb& state,
                               const Vector7&          epStrainInc,
                               Vector6&                dSigma, 
                               Vector6&                dEps_p, 
-                              double&                 dP0Star)
+                              double&                 dP0Star) const
 {
   if (!state.checkIfFinite()) {
     std::ostringstream err;
     err << "**Error** in the calcPlastic Procedure. "
-        << "Point internal values are not finite.\n";.
+        << "Point internal values are not finite.\n";
     throw InvalidValue(err.str(), __FILE__, __LINE__);
   }
 
@@ -2475,8 +2468,8 @@ ShengMohrCoulomb::calcPlastic(const StateMohrCoulomb& state,
   Vector6 dg_dsigma = Vector6::Zero();
   std::tie(df_dsigma, dg_dsigma) = computeDfDsigma(stress);
 
-  double K = d_elastic.K;
-  double G = d_elastic.G;
+  double K = d_elastic.d_K;
+  double G = d_elastic.d_G;
   Matrix66 elasticTangent = calculateElasticTangentMatrix(K, G);
 
   Vector6 dEps = epStrainInc.block<6,1>(0,0);
@@ -2490,7 +2483,7 @@ ShengMohrCoulomb::calcPlastic(const StateMohrCoulomb& state,
 
   double ratio = numerator/denominator;
   dEps_p = dg_dsigma * ratio;
-  auto dSigma = elasticTangent * (dEps - dEps_p);
+  dSigma = elasticTangent * (dEps - dEps_p);
 
   for (int i = 0; i < 6; i++) {
     if (!std::isfinite(dSigma(i))) {
@@ -2498,7 +2491,6 @@ ShengMohrCoulomb::calcPlastic(const StateMohrCoulomb& state,
       err << "calcPlastic: dSigma not finite. dSigma = \n"
           << dSigma << "\n";
       throw InvalidValue(err.str(), __FILE__, __LINE__);
-           << "\n";
     }
   }
 
@@ -2526,7 +2518,7 @@ ShengMohrCoulomb::calcPlastic(const StateMohrCoulomb& state,
 double 
 ShengMohrCoulomb::checkNorm(const Vector7& dSigma, double dP0Star,
                             const StateMohrCoulomb& initialState,
-                            const Vector7& dError) 
+                            const Vector7& dError) const
 {
   using Vector9 = Eigen::Matrix<double, 9, 1>;
 
@@ -2551,7 +2543,7 @@ ShengMohrCoulomb::checkNorm(const Vector7& dSigma, double dP0Star,
   double p = std::abs(dSigma(0) + dSigma(1) + dSigma(2)) / 3;
   double errorP = std::abs(dError(0) + dError(1) + dError(2)) / 3;
   if (p > TINY) {
-    drError(7) = errorP / P;
+    drError(7) = errorP / p;
   } else {
     drError(7) = errorP / TINY;
   }
@@ -2593,7 +2585,7 @@ ShengMohrCoulomb::checkNorm(const Vector7& dSigma, double dP0Star,
 
   double dShear = std::abs(finalShear - initialShear);
   if (dShear > TINY) {
-    drError(8) = shearError / DShear;
+    drError(8) = shearError / dShear;
   } else {
     drError(8) = shearError / TINY;
   }
@@ -2611,14 +2603,12 @@ ShengMohrCoulomb::checkNorm(const Vector7& dSigma, double dP0Star,
 double 
 ShengMohrCoulomb::checkNormSloan(const Vector7& dSigma, double dP0Star,
                                  const StateMohrCoulomb& initialState,
-                                 const Vector7& dError) 
+                                 const Vector7& dError) const
 {
   using Vector9 = Eigen::Matrix<double, 9, 1>;
 
   Vector9 drError = Vector9::Zero();
   double rError   = 0;
-
-  double InitialSigma[6], finalSigma[6], dP0StarEnd;
 
   Vector6 initialSigma  = initialState.stress;
   Vector6 finalSigma    = initialSigma + dSigma.block<6,1>(0,0);
@@ -2642,13 +2632,13 @@ ShengMohrCoulomb::checkNormSloan(const Vector7& dSigma, double dP0Star,
   double p = std::abs(finalSigma(0) + finalSigma(1) + finalSigma(2)) / 3;
   double errorP = std::abs(dError(0) + dError(1) + dError(2)) / 3;
   if (p > TINY) {
-    drError(7) = errorP / P;
+    drError(7) = errorP / p;
   } else {
     drError(7) = errorP / TINY;
   }
 
   // norm of q...
-  double  initialShear  = initialState.shearStress();
+  //double  initialShear  = initialState.shearStress();
   double  finalShear    = 
     (finalSigma(0) - finalSigma(1)) * (finalSigma(0) - finalSigma(1)) +
     (finalSigma(0) - finalSigma(2)) * (finalSigma(0) - finalSigma(2)) +
@@ -2710,7 +2700,7 @@ ShengMohrCoulomb::checkNormSloan(const Vector7& dSigma, double dP0Star,
  */
 void
 ShengMohrCoulomb::correctDriftBeg(StateMohrCoulomb& state, 
-                                  const StateMohrCoulomb* stateOld) const
+                                  const StateMohrCoulomb& stateOld) const
 {
   if (dbg.active()) {
     dbg << "Correct Drift Procedure entered!"<<"\n";
@@ -2720,8 +2710,8 @@ ShengMohrCoulomb::correctDriftBeg(StateMohrCoulomb& state,
   Vector6 dg_dsigma = Vector6::Zero();
   std::tie(df_dsigma, dg_dsigma) = computeDfDsigma(stateOld.stress);
 
-  double K = d_elastic.K;
-  double G = d_elastic.G;
+  double K = d_elastic.d_K;
+  double G = d_elastic.d_G;
   Matrix66 elasticTangent = calculateElasticTangentMatrix(K, G);
 
   auto numerator     = df_dsigma.transpose() * elasticTangent;
@@ -2732,7 +2722,7 @@ ShengMohrCoulomb::correctDriftBeg(StateMohrCoulomb& state,
   do {
     ++numIter;
     double fValue = computeYieldNormalized(state.stress);
-    if (std.abs(fValue) > d_int.d_yieldTol) {
+    if (std::abs(fValue) > d_int.d_yieldTol) {
       correctDrift = true;
     } else {
       correctDrift = false;
@@ -2743,12 +2733,12 @@ ShengMohrCoulomb::correctDriftBeg(StateMohrCoulomb& state,
       Vector6 dEps_p = df_dsigma * lambda;
 
       if (dbg.active()) {
-        dbg << "Delta Epsilon Plastic:\n" << dEps_p << "\n;
+        dbg << "Delta Epsilon Plastic:\n" << dEps_p << "\n";
       }
 
       auto dSigma = (elasticTangent * dg_dsigma) * (-lambda) ;
 
-      Vector7 zeros = Vector7::zeros();
+      Vector7 zeros = Vector7::Zero();
       state.update(dEps_p, zeros, dSigma, 0);
     }
 
@@ -2775,15 +2765,15 @@ ShengMohrCoulomb::correctDriftEnd(StateMohrCoulomb& state) const
 
   Vector6 df_dsigma = Vector6::Zero();
   Vector6 dg_dsigma = Vector6::Zero();
-  double K = d_elastic.K;
-  double G = d_elastic.G;
+  double K = d_elastic.d_K;
+  double G = d_elastic.d_G;
 
   bool correctDrift = true;
   int numIter  = 0;
   do {
     double fValue = computeYieldNormalized(state.stress);
 
-    if (std.abs(fValue) > d_int.d_yieldTol) {
+    if (std::abs(fValue) > d_int.d_yieldTol) {
       correctDrift = true;
     } else {
       correctDrift = false;
@@ -2812,12 +2802,12 @@ ShengMohrCoulomb::correctDriftEnd(StateMohrCoulomb& state) const
       Vector6 dEps_p = df_dsigma * lambda;
 
       if (dbg.active()) {
-        dbg << "Delta Epsilon Plastic:\n" << dEps_p << "\n;
+        dbg << "Delta Epsilon Plastic:\n" << dEps_p << "\n";
       }
 
       auto dSigma = (elasticTangent * dg_dsigma) * (-lambda) ;
 
-      Vector7 zeros = Vector7::zeros();
+      Vector7 zeros = Vector7::Zero();
       state.update(dEps_p, zeros, dSigma, 0);
     }
     if (numIter > 10) {
@@ -2841,7 +2831,7 @@ double
 ShengMohrCoulomb::plasticMidpoint(StateMohrCoulomb& state, 
                                   const Vector7& epStrain,
                                   Vector7& absStress,
-                                  int numIter)
+                                  int numIter) const
 {
   double h = 1.0/ (double) numIter;
 
@@ -2850,7 +2840,7 @@ ShengMohrCoulomb::plasticMidpoint(StateMohrCoulomb& state,
   Vector7 halfCurrentStrain = currentStrain * 0.5;
 
   if (dbg.active()) {
-    dbg << "Step Length = " << stepLength << "\n";
+    dbg << "Step Length = " << h << "\n";
     dbg << "Current strain [0] = " << currentStrain[0] << "\n";
   }
 
@@ -2863,7 +2853,7 @@ ShengMohrCoulomb::plasticMidpoint(StateMohrCoulomb& state,
     state_mid = state;
 
     calcPlastic(state_new, halfCurrentStrain, dSigma, plasticStrain, dP0Star);
-    state_mid.update(plasticStrain, halfCurentStrain, dSigma, dP0Star);
+    state_mid.update(plasticStrain, halfCurrentStrain, dSigma, dP0Star);
 
     calcPlastic(state_mid, halfCurrentStrain, dSigma, plasticStrain, dP0Star);
     dSigma        *= 2.0;
@@ -2871,7 +2861,7 @@ ShengMohrCoulomb::plasticMidpoint(StateMohrCoulomb& state,
     dP0Star       *= 2.0;
     state.update(plasticStrain, currentStrain, dSigma, dP0Star);
 
-    absStress.block<6, 1>(0, 0) += dSigma.abs();
+    absStress.block<6, 1>(0, 0) += dSigma.cwiseAbs();
     absStress(6)                += std::abs(dP0Star);
   }
   return 0;
@@ -2917,11 +2907,11 @@ Matrix67
 ShengMohrCoulomb::calculateElastoPlasticTangentMatrix(const StateMohrCoulomb& state) const
 {
   Vector6 df_dsigma, dg_dsigma;
-  std::tie(df_dsigma, dg_dsigma) = computeDfDsigma(stateOld.stress);
+  std::tie(df_dsigma, dg_dsigma) = computeDfDsigma(state.stress);
 
-  Matrix66 tangent = calculateElasticTangentMatrix(K, G);
+  Matrix66 tangent = calculateElasticTangentMatrix(d_elastic.d_K, d_elastic.d_G);
 
-  auto numerator     = df_dsigma.transpose() * elasticTangent;
+  auto numerator     = df_dsigma.transpose() * tangent;
   double denominator = numerator * dg_dsigma;
 
   tangent -= (tangent * dg_dsigma * numerator) / denominator;
@@ -2953,7 +2943,7 @@ ShengMohrCoulomb::computeG1(const StateMohrCoulomb& initialState,
   Vector7 G1 = Vector7::Zero();
 
   switch (retentionModel) {
-    case STATE_SURFACE: 
+    case RetentionModel::STATE_SURFACE: 
       double a, b, s;
       a = retentionParameters[0];
       b = retentionParameters[1];
@@ -2965,8 +2955,8 @@ ShengMohrCoulomb::computeG1(const StateMohrCoulomb& initialState,
       G1(4) = 0;
       G1(5) = 0;
       break;
-    case VAN_GENUCHTEN:
-    case GALLIPOLI:
+    case RetentionModel::VAN_GENUCHTEN:
+    case RetentionModel::GALLIPOLI:
     default:
       break;
   }
@@ -2995,14 +2985,16 @@ ShengMohrCoulomb::computeG2(const StateMohrCoulomb& initialState,
   double G2 = 0.0;
 
   switch (retentionModel) {
-    case STATE_SURFACE: 
+    case RetentionModel::STATE_SURFACE: 
+    {
       double a = retentionParameters[0];
       double b = retentionParameters[1];
       double s = initialState.suction();
       G2 = b * std::exp(b * s) * (0.5 - a * initialState.meanStress());
       break;
-
-    case VAN_GENUCHTEN:
+    }
+    case RetentionModel::VAN_GENUCHTEN:
+    {
       double Ew = retentionParameters[0];
       double Fw = retentionParameters[1];
       double Ssn = retentionParameters[2];
@@ -3013,8 +3005,9 @@ ShengMohrCoulomb::computeG2(const StateMohrCoulomb& initialState,
       denominator = Fw * std::pow(denominator, 1 - 1 / Fw);
       G2 = numerator / denominator;
       break;
-
-    case 3: // Gallipoli, Wheeler, Karstunen
+    }
+    case RetentionModel::GALLIPOLI:
+    {
       double Fi = retentionParameters[0];
       double psi = retentionParameters[1];
       double n = retentionParameters[2];
@@ -3027,9 +3020,9 @@ ShengMohrCoulomb::computeG2(const StateMohrCoulomb& initialState,
       denominator = std::pow(denominator, m + 1);
       G2 = numerator / denominator;
       break;
-
+    }
     default: 
-      cout << "Procedure Compute G2. Unknown Retention Model... No G2 "
+      std::cout << "Procedure Compute G2. Unknown Retention Model... No G2 "
               "calculated.\n";
       break;
   }

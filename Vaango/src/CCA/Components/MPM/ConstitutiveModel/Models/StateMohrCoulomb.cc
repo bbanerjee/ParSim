@@ -1,5 +1,8 @@
 #include "StateMohrCoulomb.h"
 
+#include <iostream>
+#include <cmath>
+
 using namespace Uintah;
 
 StateMohrCoulomb::StateMohrCoulomb()
@@ -131,251 +134,93 @@ StateMohrCoulomb::thirdDevInvariant() const
 double
 StateMohrCoulomb::getTheta()
 {
-  double Theta;
-  double Sin3Theta;
-  double Third = thirdDevInvariant();
-  double Second = secondDevInvariant();
-  if (Second != 0)
-    Sin3Theta = sqrt(3.0) * (-1.5) * Third / pow(Second, 1.5);
-  else
-    Sin3Theta = 0;
-  if (Sin3Theta > 1)
-    Sin3Theta = 1;
-  if (Sin3Theta < -1)
-    Sin3Theta = -1;
-  Theta = (asin(Sin3Theta)) / 3.0;
+  double J2 = secondDevInvariant();
+  double J3 = thirdDevInvariant();
+  double sin3Theta = 0.0;
+  if (J2 != 0) {
+    sin3Theta = std::sqrt(3.0) * (-1.5) * J3 / std::pow(J2, 1.5);
+  }
+  if (sin3Theta > 1) {
+    sin3Theta = 1.0;
+  } else if (sin3Theta < -1) {
+    sin3Theta = -1.0;
+  }
+  double theta = (std::asin(sin3Theta)) / 3.0;
 
-  return Theta;
+  return theta;
 }
 
 double
 StateMohrCoulomb::getThetaDeg()
 {
-  double ThetaDeg;
-  ThetaDeg = getTheta();
-  ThetaDeg = ThetaDeg * 45.0 / atan(1.0);
-  if (ThetaDeg < 0)
-    ThetaDeg += 360;
-  if (ThetaDeg > 360)
-    ThetaDeg -= 360;
+  double thetaDeg = getTheta();
+  thetaDeg *= (45.0 / std::atan(1.0));
+  if (thetaDeg < 0) {
+    thetaDeg += 360.0;
+  } else if (thetaDeg > 360) {
+    thetaDeg -= 360.0;
+  }
 
-  return ThetaDeg;
+  return thetaDeg;
 }
 
 double
 StateMohrCoulomb::getThetaDeg_0()
 {
-  double ThetaDeg;
-  ThetaDeg = getTheta();
-  ThetaDeg = ThetaDeg * 45.0 / atan(1.0);
-  ThetaDeg -= 30;
-  if (ThetaDeg > 360)
-    ThetaDeg -= 360;
-  if (ThetaDeg < -360)
-    ThetaDeg += 360;
-
-  return ThetaDeg;
-}
-
-void
-StateMohrCoulomb::read()
-{
-  // data will be read from file point.dta
-  // algorithm to read will be analogical as in bbmmodel.read
-  ifstream infile("point.dta", ios_base::in);
-
-  // file opened
-  string s;
-  int slength = 0, index = 0, line = 0;
-  // double temp=0;
-
-  do {
-
-    getline(infile, s, '\n');
-    line++;
-    // cout << s <<" Prep: In line no:"<<line<<endl;
-    // getch ();
-    if (!infile.good()) {
-      cout << "Wrong Data File";
-      break;
-    }
-  } while (s != "***Start of data***");
-  // I ignore file until "Start of data";
-
-  // Reading data - 6 stress+7 strain+ 2 state parameters =15
-  double storage[15];
-  for (int j = 0; j < 15; j++) {
-
-    getline(infile, s, '\n'); // read whole line
-    line++;
-    // cout << s <<"In line no:"<<line<<endl;
-    // getch ();
-    bool notcomment = true;
-    if (s == "")
-      notcomment = false;
-    if ((s[0] == '/') && (s[1] == '/'))
-      notcomment = false; // check whether not a comment line or empty line
-
-    if (notcomment) {
-      slength = s.length(); // get length of line
-      index = s.find(";");  // find where is a ; char
-      if (index != 0) {
-        s.erase(index, slength - index); // delete all after ;
-        storage[j] = atof(s.c_str());    // converse to double
-      } else
-        cout << "No ; in line:" << line << " May cause errors."
-             << endl; // warn about lack of ; in line
-    } else
-      j--;
-    if (!infile.good())
-      break;
+  double thetaDeg = getTheta();
+  thetaDeg *= (45.0 / std::atan(1.0));
+  thetaDeg -= 30;
+  if (thetaDeg < 0) {
+    thetaDeg += 360.0;
+  } else if (thetaDeg > 360) {
+    thetaDeg -= 360.0;
   }
 
-  // Moving data from storage to object variables
-
-  for (int i = 0; i < 6; i++) {
-    stress[i] = storage[i];
-    strain[i] = storage[i + 6];
-  }
-  strain[6] = storage[12];
-  state[0] = storage[13];
-  state[1] = storage[14];
-  // finished
-  infile.close(); // close file
-  // all done
-}
-
-
-void StateMohrCoulomb::write(){};
-
-void
-StateMohrCoulomb::getEigen(double Eigen[3])
-{
-
-  BBMMatrix Stress(3, 3), EigenValues(3, 3), EigenVect(3, 3);
-
-  Stress.PutElement(1, 1, stress[0]);
-  Stress.PutElement(1, 2, stress[3]);
-  Stress.PutElement(1, 3, stress[4]);
-
-  Stress.PutElement(2, 1, stress[3]);
-  Stress.PutElement(2, 2, stress[1]);
-  Stress.PutElement(2, 3, stress[5]);
-
-  Stress.PutElement(3, 1, stress[4]);
-  Stress.PutElement(3, 2, stress[5]);
-  Stress.PutElement(3, 3, stress[2]);
-
-  Stress.Eigen(&EigenVect, &EigenValues);
-  Eigen[0] = EigenValues.getElement(1, 1);
-  Eigen[1] = EigenValues.getElement(2, 2);
-  Eigen[2] = EigenValues.getElement(3, 3);
-}
-
-void
-StateMohrCoulomb::getEigen(double Eigen[3], BBMMatrix* EigenVectors)
-{
-
-  BBMMatrix Stress(3, 3), EigenValues(3, 3);
-
-  Stress.PutElement(1, 1, stress[0]);
-  Stress.PutElement(1, 2, stress[3]);
-  Stress.PutElement(1, 3, stress[4]);
-
-  Stress.PutElement(2, 1, stress[3]);
-  Stress.PutElement(2, 2, stress[1]);
-  Stress.PutElement(2, 3, stress[5]);
-
-  Stress.PutElement(3, 1, stress[4]);
-  Stress.PutElement(3, 2, stress[5]);
-  Stress.PutElement(3, 3, stress[2]);
-
-  // cout<<"getEigen: Stress matrix:"<<endl;
-  // Stress.Print();
-
-  Stress.Eigen(EigenVectors, &EigenValues);
-  // cout<<"getEigen: Stress matrix after Eigen procedure:"<<endl;
-  // Stress.Print();
-
-  Eigen[0] = EigenValues.getElement(1, 1);
-  Eigen[1] = EigenValues.getElement(2, 2);
-  Eigen[2] = EigenValues.getElement(3, 3);
-}
-
-void
-StateMohrCoulomb::getEigen(BBMMatrix* EigenValues, BBMMatrix* EigenVectors)
-{
-
-  BBMMatrix Stress(3, 3);
-
-  Stress.PutElement(1, 1, stress[0]);
-  Stress.PutElement(1, 2, stress[3]);
-  Stress.PutElement(1, 3, stress[4]);
-
-  Stress.PutElement(2, 1, stress[3]);
-  Stress.PutElement(2, 2, stress[1]);
-  Stress.PutElement(2, 3, stress[5]);
-
-  Stress.PutElement(3, 1, stress[4]);
-  Stress.PutElement(3, 2, stress[5]);
-  Stress.PutElement(3, 3, stress[2]);
-
-  Stress.Eigen(EigenVectors, EigenValues);
-}
-
-void
-StateMohrCoulomb::setStressEigen(double Eigen[3])
-{
-  stress[0] = Eigen[0];
-  stress[1] = Eigen[1];
-  stress[2] = Eigen[2];
-  stress[3] = 0.0;
-  stress[4] = 0.0;
-  stress[5] = 0.0;
+  return thetaDeg;
 }
 
 bool
-StateMohrCoulomb::checkIfFinite()
+StateMohrCoulomb::checkIfFinite() const
 {
   bool F = true;
   for (int i = 0; i < 6; i++)
-    if (!isfinite(stress[i])) {
+    if (!std::isfinite(stress(i))) {
       F = false;
-      cout << "Stress[" << i << "]=" << stress[i] << endl;
-      cout << "_finite(Stress[" << i << "])=" << isfinite(stress[i]) << endl;
+      std::cout << "Stress[" << i << "]=" << stress(i) << "\n";
+      std::cout << "_finite(Stress[" << i << "])=" << std::isfinite(stress(i)) << "\n";
     }
   for (int i = 0; i < 7; i++)
-    if (!isfinite(strain[i])) {
+    if (!std::isfinite(strain(i))) {
       F = false;
-      cout << "Strain[" << i << "]=" << strain[i] << endl;
-      cout << "_finite(Strain[" << i << "])=" << isfinite(strain[i]) << endl;
+      std::cout << "Strain[" << i << "]=" << strain(i) << "\n";
+      std::cout << "_finite(Strain[" << i << "])=" << std::isfinite(strain(i)) << "\n";
     }
   for (int i = 0; i < 3; i++)
-    if (!isfinite(state[i])) {
+    if (!std::isfinite(state(i))) {
       F = false;
-      cout << "State[" << i << "]=" << state[i] << endl;
-      cout << "_finite(State[" << i << "])=" << isfinite(state[i]) << endl;
+      std::cout << "State[" << i << "]=" << state(i) << "\n";
+      std::cout << "_finite(State[" << i << "])=" << std::isfinite(state(i)) << "\n";
     }
   if (!F) {
-    cout << "Point internal values incorrect." << endl;
-    cout << "Stress:" << stress[0] << " " << stress[1] << " " << stress[2]
-         << " " << stress[3] << " " << stress[4] << " " << stress[5] << " "
-         << endl;
-    cout << "Strain:" << strain[0] << " " << strain[1] << " " << strain[2]
-         << " " << strain[3] << " " << strain[4] << " " << strain[5] << " "
-         << strain[6] << endl;
-    cout << "State variables:" << state[0] << " " << state[1] << " " << state[2]
-         << endl;
-    cout << "Stress finite:" << isfinite(stress[0]) << " "
-         << isfinite(stress[1]) << " " << isfinite(stress[2]) << " "
-         << isfinite(stress[3]) << " " << isfinite(stress[4]) << " "
-         << isfinite(stress[5]) << " " << endl;
-    cout << "strain finite:" << isfinite(strain[0]) << " "
-         << isfinite(strain[1]) << " " << isfinite(strain[2]) << " "
-         << isfinite(strain[3]) << " " << isfinite(strain[4]) << " "
-         << isfinite(strain[5]) << " " << endl;
-    cout << "State variables finite:" << isfinite(state[0]) << " "
-         << isfinite(state[1]) << " " << isfinite(state[2]) << endl;
+    std::cout << "Point internal values incorrect." << "\n";
+    std::cout << "Stress:" << stress(0) << " " << stress(1) << " " << stress(2)
+         << " " << stress(3) << " " << stress(4) << " " << stress(5) << " "
+         << "\n";
+    std::cout << "Strain:" << strain(0) << " " << strain(1) << " " << strain(2)
+         << " " << strain(3) << " " << strain(4) << " " << strain(5) << " "
+         << strain(6) << "\n";
+    std::cout << "State variables:" << state(0) << " " << state(1) << " " << state(2)
+         << "\n";
+    std::cout << "Stress finite:" << std::isfinite(stress(0)) << " "
+         << std::isfinite(stress(1)) << " " << std::isfinite(stress(2)) << " "
+         << std::isfinite(stress(3)) << " " << std::isfinite(stress(4)) << " "
+         << std::isfinite(stress(5)) << " " << "\n";
+    std::cout << "strain finite:" << std::isfinite(strain(0)) << " "
+         << std::isfinite(strain(1)) << " " << std::isfinite(strain(2)) << " "
+         << std::isfinite(strain(3)) << " " << std::isfinite(strain(4)) << " "
+         << std::isfinite(strain(5)) << " " << "\n";
+    std::cout << "State variables finite:" << std::isfinite(state(0)) << " "
+         << std::isfinite(state(1)) << " " << std::isfinite(state(2)) << "\n";
   }
 
   return F;

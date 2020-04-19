@@ -31,6 +31,7 @@
 
 #include "StateMohrCoulomb.h"
 
+#include <vector>
 #include <cmath>
 
 /* this Mohr-Coulomb like model uses a rounded Mohr-Coulomb surface, see
@@ -40,47 +41,69 @@
 
 namespace Uintah {
 
+// used to check for accuracies below machine accuracy, and to accept anything
+// less as ok
+constexpr double TINY = 1.0e-14;
+
+enum class DriftCorrection
+{
+  NO_CORRECTION = 1,
+  CORRECTION_AT_BEGIN = 2,
+  CORRECTION_AT_END = 3
+};
+
+std::ostream& operator<<(std::ostream& out, const DriftCorrection& dc) {
+  static std::array<const char*, 3> names = 
+   {{"NO_CORRECTION", "CORRECTION_AT_BEGIN", "CORRECTION_AT_END"}};
+  out << names[static_cast<int>(dc)];
+  return out;
+}
+
+enum class ToleranceMethod
+{
+  EPUS_RELATIVE_ERROR = 0,
+  SLOAN = 1
+};
+
+enum class SolutionAlgorithm
+{
+  RUNGE_KUTTA_SECOND_ORDER_MODIFIED_EULER = 1,
+  RUNGE_KUTTA_THIRD_ORDER_NYSTROM = 2,
+  RUNGE_KUTTA_THIRD_ORDER_BOGACKI = 3,
+  RUNGE_KUTTA_FOURTH_ORDER = 4,
+  RUNGE_KUTTA_FIFTH_ORDER_ENGLAND = 5,
+  RUNGE_KUTTA_FIFTH_ORDER_CASH = 6,
+  RUNGE_KUTTA_FIFTH_ORDER_DORMAND = 7,
+  RUNGE_KUTTA_FIFTH_ORDER_BOGACKI = 8,
+  EXTRAPOLATION_BULIRSCH = 9
+};
+
+std::ostream& operator<<(std::ostream& out, const SolutionAlgorithm& sa) {
+  static std::array<const char*, 9> names = {{
+    "RUNGE_KUTTA_SECOND_ORDER_MODIFIED_EULER",
+    "RUNGE_KUTTA_THIRD_ORDER_NYSTROM",
+    "RUNGE_KUTTA_THIRD_ORDER_BOGACKI",
+    "RUNGE_KUTTA_FOURTH_ORDER",
+    "RUNGE_KUTTA_FIFTH_ORDER_ENGLAND",
+    "RUNGE_KUTTA_FIFTH_ORDER_CASH",
+    "RUNGE_KUTTA_FIFTH_ORDER_DORMAND",
+    "RUNGE_KUTTA_FIFTH_ORDER_BOGACKI",
+    "EXTRAPOLATION_BULIRSCH"}};
+  out << names[static_cast<int>(sa)];
+  return out;
+}
+
+enum class RetentionModel
+{
+  STATE_SURFACE = 1,
+  VAN_GENUCHTEN = 2, 
+  GALLIPOLI     = 3
+};
+
 
 class ShengMohrCoulomb {
 
 public:
-
-  // used to check for accuracies below machine accuracy, and to accept anything
-  // less as ok
-  constexpr double TINY = 1.0e-14;
-
-  enum class DriftCorrection
-  {
-    NO_CORRECTION = 1,
-    CORRECTION_AT_BEGIN = 2;
-    CORRECTION_AT_END = 3;
-  };
-
-  enum class ToleranceMethod
-  {
-    EPUS_RELATIVE_ERROR = 0,
-    SLOAN = 1
-  };
-
-  enum class SolutionAlgorithm
-  {
-    RUNGE_KUTTA_SECOND_ORDER_MODIFIED_EULER = 1,
-    RUNGE_KUTTA_THIRD_ORDER_NYSTROM = 2,
-    RUNGE_KUTTA_THIRD_ORDER_BOGACKI = 3,
-    RUNGE_KUTTA_FOURTH_ORDER = 4,
-    RUNGE_KUTTA_FIFTH_ORDER_ENGLAND = 5,
-    RUNGE_KUTTA_FIFTH_ORDER_CASH = 6,
-    RUNGE_KUTTA_FIFTH_ORDER_DORMAND = 7,
-    RUNGE_KUTTA_FIFTH_ORDER_BOGACKI = 8,
-    EXTRAPOLATION_BULIRSCH = 9
-  };
-
-  enum class RetentionModel
-  {
-    STATE_SURFACE = 1,
-    VAN_GENUCHTEN = 2, 
-    GALLIPOLI    = 3
-  }
 
   ShengMohrCoulomb();
   ShengMohrCoulomb(double G, double K, double cohesion, double phi, double psi);
@@ -100,8 +123,8 @@ public:
                                 ToleranceMethod toleranceMethod,
                                 DriftCorrection driftCorrection);
 
-  StateMohrCoulomb integrate(const Vector6& strainIncrement, 
-                             const StateMohrCoulomb& initialState) const;
+  StateMohrCoulomb integrate(const Vector7& strainIncrement, 
+                             const StateMohrCoulomb& initialState);
 
   Matrix67 getTangentMatrix(const StateMohrCoulomb& state) const;
 
@@ -146,7 +169,7 @@ private:
       d_phi = phi * M_PI / 180.0; 
       d_sin_phi = std::sin(phi); d_cos_phi = std::cos(phi);
       d_alpha = (3.0 - d_sin_phi) / (3.0 + d_sin_phi);
-      d_alpha4 = alpha * alpha * alpha * alpha;
+      d_alpha4 = d_alpha * d_alpha * d_alpha * d_alpha;
     }
   };
 
@@ -203,11 +226,11 @@ private:
 
     void setDefaults(const Yield& yield) {
       setDefaults();
-      if (yield.sin_phi > 0) {
-        d_minMeanStress = yield.cohesion * yield.cos_phi / yield.sin_phi;
+      if (yield.d_sin_phi > 0) {
+        d_minMeanStress = yield.d_cohesion * yield.d_cos_phi / yield.d_sin_phi;
       } 
     }
-  }
+  };
 
   // Model parameters
   bool        d_nonAssociated;
@@ -216,7 +239,7 @@ private:
   PotentialFn d_potential;
 
   // Integration parameters
-  IntegrationParameters d_integration;
+  IntegrationParameters d_int;
 
   bool checkYieldNormalized(const StateMohrCoulomb& state) const;
 
@@ -226,7 +249,7 @@ private:
                    StateMohrCoulomb& finalPoint) const;
 
   Vector6 calcStressIncElast(double nu0, const Vector6& s0, const Vector7& eps0,
-                             const Vector7& deps);
+                             const Vector7& deps) const;
 
   bool checkGradient(const StateMohrCoulomb& initialState, 
                      const StateMohrCoulomb& finalState) const;
@@ -237,9 +260,9 @@ private:
   Matrix67 calculateElastoPlasticTangentMatrix(const StateMohrCoulomb& state) const;
 
   double findGradient(const Vector6& s, const Vector6& ds, 
-                      Vector6s& dF, double suction, double dsuction) const;
+                      Vector6& dF, double suction, double dsuction) const;
 
-  Vector6 computeDfDsigma(const Vector6& stress) const;
+  std::tuple<Vector6, Vector6> computeDfDsigma(const Vector6& stress) const;
 
   inline double firstInvariant(const Vector6& s) const {
     double I1 =  s(0) + s(1) + s(2);
@@ -297,30 +320,30 @@ private:
   void findIntersectionUnloading(const Vector7& strainIncrement,
                                  const StateMohrCoulomb& initialState,
                                  Vector7& purelyElastic,
-                                 Vector7& purelyPlastic) const;
+                                 Vector7& purelyPlastic);
 
   void findIntersection(const Vector7& strainIncrement,
                         const StateMohrCoulomb& initialState,
                         Vector7& elasticStrainInc,
-                        Vector7& plasticStrainInc);
+                        Vector7& plasticStrainInc) const;
 
   double findYieldAlpha(const Vector3& state, 
                         const Vector6& s0, 
                         const Vector7& eps0,
-                        const Vector7& deps) const;
+                        const Vector7& deps);
 
   double findYieldModified(const Vector3& state, 
                            const Vector6& s0, 
                            const Vector7& eps0,
                            const Vector7& deps) const;
 
-  double computeNu(const Matrix6& s, const Matrix3& state, double suction) const;
+  double computeNu(const Vector6& s, const Vector3& state, double suction) const;
 
   double calculatePlastic(const Vector7& purelyPlasticStrain, 
-                          const StateMohrCoulomb& state) const;
+                          StateMohrCoulomb& state) const;
 
   int calcPlastic(const StateMohrCoulomb& state, const Vector7& epStrainInc,
-                  Vector6& dSigma, Vector& dEps_p, double& dP0Star) const;
+                  Vector6& dSigma, Vector6& dEps_p, double& dP0Star) const;
 
   std::tuple<double, int> plasticRKME221(StateMohrCoulomb& state, 
                                          const Vector7& epStrain) const;
@@ -374,14 +397,14 @@ private:
                         const Vector7& dError) const;
 
   void correctDriftBeg(StateMohrCoulomb& state, 
-                       const StateMohrCoulomb* stateOld) const;
+                       const StateMohrCoulomb& stateOld) const;
 
   void correctDriftEnd(StateMohrCoulomb& state) const;
 
   double plasticMidpoint(StateMohrCoulomb& state, 
                               const Vector7& epStrain,
                               Vector7& absStress,
-                              int numIter);
+                              int numIter) const;
 
   std::tuple<double, int> plasticExtrapol(StateMohrCoulomb& state,
                                           const Vector7& epStrain) const;

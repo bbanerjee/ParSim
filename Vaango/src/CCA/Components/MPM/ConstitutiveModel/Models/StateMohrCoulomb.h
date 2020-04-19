@@ -66,21 +66,19 @@ public:
   StateMohrCoulomb& operator=(const StateMohrCoulomb& state) = default;
   ~StateMohrCoulomb() = default;
 
-  void read ();
-  void write ();
   void update(const Vector6& plasticStrainInc, 
               const Vector7& strainInc,
               const Vector6& stressInc, 
               double p0StarInc);
 
-  inline double meanStress() const;
-  inline double shearStress() const;
-  inline double firstInvariant() const;
-  inline double secondInvariant() const;
-  inline double thirdInvariant() const;
-  inline double firstDevInvariant() const;
-  inline double secondDevInvariant() const;
-  inline double thirdDevInvariant() const;
+  double meanStress() const;
+  double shearStress() const;
+  double firstInvariant() const;
+  double secondInvariant() const;
+  double thirdInvariant() const;
+  double firstDevInvariant() const;
+  double secondDevInvariant() const;
+  double thirdDevInvariant() const;
 
   double suction() const { return strain(6); }
   void   suction(double value) { strain(6) = value; }
@@ -98,15 +96,7 @@ public:
   double getThetaDeg ();
   double getThetaDeg_0 ();
 
-
-
-  //Eigenvalues
-  void getEigen(double Eigen[3]);
-  void getEigen(double Eigen[3],BBMMatrix* EigenVectors);
-  void getEigen(BBMMatrix* EigenValues, BBMMatrix* EigenVectors);
-  void setStressEigen (double Eigen[3]);
-
-  bool checkIfFinite ();
+  bool checkIfFinite () const;
 };
 
 } // end namespace Uintah
