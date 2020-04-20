@@ -113,7 +113,7 @@ public:
   ShengMohrCoulomb& operator=(const ShengMohrCoulomb&) = delete;
   ~ShengMohrCoulomb() = default;
 
-  void setModelParameters(double G, double K, double cohesion, double phi,
+  virtual void setModelParameters(double G, double K, double cohesion, double phi,
                           double psi);
 
   void setIntegrationParameters(int maxIterPegasus, double integrationTolerance,
@@ -135,7 +135,8 @@ public:
                    RetentionModel retentionModel,
                    const std::vector<double>& retentionParameters) const;
 
-private:
+protected:
+
   // Elastic parameters
   struct Elastic
   {
@@ -156,6 +157,7 @@ private:
   // Mohr - Coulomb parameters
   struct Yield
   {
+    double d_pMin;
     double d_cohesion;
     double d_phi;
     double d_sin_phi;
@@ -173,6 +175,7 @@ private:
       d_cos_phi = std::cos(phi);
       d_alpha = (3.0 - d_sin_phi) / (3.0 + d_sin_phi);
       d_alpha4 = d_alpha * d_alpha * d_alpha * d_alpha;
+      d_pMin = c * d_cos_phi / d_sin_phi;
     }
   };
 
@@ -253,9 +256,9 @@ private:
   // Integration parameters
   IntegrationParameters d_int;
 
-  bool checkYieldNormalized(const StateMohrCoulomb& state) const;
+  virtual bool checkYieldNormalized(const StateMohrCoulomb& state) const;
 
-  double computeYieldNormalized(const Vector6& stress) const;
+  virtual double computeYieldNormalized(const Vector6& stress) const;
 
   void calcElastic(const Vector7& strain, const StateMohrCoulomb& initialPoint,
                    StateMohrCoulomb& finalPoint) const;
@@ -275,7 +278,7 @@ private:
   double findGradient(const Vector6& s, const Vector6& ds, Vector6& dF,
                       double suction, double dsuction) const;
 
-  std::tuple<Vector6, Vector6> computeDfDsigma(const Vector6& stress) const;
+  virtual std::tuple<Vector6, Vector6> computeDfDsigma(const Vector6& stress) const;
 
   inline double firstInvariant(const Vector6& s) const
   {
@@ -356,29 +359,82 @@ private:
   int calcPlastic(const StateMohrCoulomb& state, const Vector7& epStrainInc,
                   Vector6& dSigma, Vector6& dEps_p, double& dP0Star) const;
 
+  virtual 
   std::tuple<double, int> plasticRKME221(StateMohrCoulomb& state,
                                          const Vector7& epStrain) const;
 
+  virtual 
   std::tuple<double, int> plasticRK332(StateMohrCoulomb& state,
                                        const Vector7& epStrain) const;
 
+  virtual 
   std::tuple<double, int> plasticRKBog432(StateMohrCoulomb& point,
                                           const Vector7& epStrain) const;
 
+  virtual 
   std::tuple<double, int> plasticRK543(StateMohrCoulomb& state,
                                        const Vector7& epStrain) const;
 
+  virtual 
   std::tuple<double, int> plasticRKEng654(StateMohrCoulomb& state,
                                           const Vector7& epStrain) const;
 
+  virtual 
   std::tuple<double, int> plasticRKCK654(StateMohrCoulomb& state,
                                          const Vector7& epStrain) const;
 
+  virtual 
   std::tuple<double, int> plasticRKDP754(StateMohrCoulomb& state,
                                          const Vector7& epStrain) const;
 
+  virtual 
   std::tuple<double, int> plasticRKErr8544(StateMohrCoulomb& state,
                                            const Vector7& epStrain) const;
+
+  virtual 
+  std::tuple<double, int> plasticExtrapol(StateMohrCoulomb& state,
+                                          const Vector7& epStrain) const;
+
+  void getParamRKME221(Eigen::Matrix<double, 2, 2>& A,
+                       Eigen::Matrix<double, 2, 1>& B,
+                       Eigen::Matrix<double, 2, 1>& BRes,
+                       Eigen::Matrix<double, 2, 1>& C) const;
+
+  void getParamRK332(Eigen::Matrix<double, 3, 3>& A,
+                     Eigen::Matrix<double, 3, 1>& B,
+                     Eigen::Matrix<double, 3, 1>& BRes,
+                     Eigen::Matrix<double, 3, 1>& C) const;
+
+  void getParamRKBog432(Eigen::Matrix<double, 4, 4>& A,
+                        Eigen::Matrix<double, 4, 1>& B,
+                        Eigen::Matrix<double, 4, 1>& BRes,
+                        Eigen::Matrix<double, 4, 1>& C) const;
+
+  void getParamRK543(Eigen::Matrix<double, 5, 5>& A,
+                     Eigen::Matrix<double, 5, 1>& B,
+                     Eigen::Matrix<double, 5, 1>& BRes,
+                     Eigen::Matrix<double, 5, 1>& C) const;
+
+  void getParamRKEng654(Eigen::Matrix<double, 6, 6>& A,
+                        Eigen::Matrix<double, 6, 1>& B,
+                        Eigen::Matrix<double, 6, 1>& BRes,
+                        Eigen::Matrix<double, 6, 1>& C) const;
+
+  void getParamRKCK654(Eigen::Matrix<double, 6, 6>& A,
+                       Eigen::Matrix<double, 6, 1>& B,
+                       Eigen::Matrix<double, 6, 1>& BRes,
+                       Eigen::Matrix<double, 6, 1>& C) const;
+
+  void getParamRKDP754(Eigen::Matrix<double, 7, 7>& A,
+                       Eigen::Matrix<double, 7, 1>& B,
+                       Eigen::Matrix<double, 7, 1>& BRes,
+                       Eigen::Matrix<double, 7, 1>& C) const;
+
+  void getParamRKErr8544(Eigen::Matrix<double, 8, 8>& A,
+                         Eigen::Matrix<double, 8, 1>& B,
+                         Eigen::Matrix<double, 8, 1>& BRes,
+                         Eigen::Matrix<double, 8, 1>& C,
+                         Eigen::Matrix<double, 7, 1>& ErrorCoef) const;
 
   template <int Order, int Steps>
   std::tuple<double, int> doRungeKutta(
@@ -410,11 +466,13 @@ private:
 
   void correctDriftEnd(StateMohrCoulomb& state) const;
 
+  virtual
   double plasticMidpoint(StateMohrCoulomb& state, const Vector7& epStrain,
                          Vector7& absStress, int numIter) const;
 
-  std::tuple<double, int> plasticExtrapol(StateMohrCoulomb& state,
-                                          const Vector7& epStrain) const;
+
+
+
 };
 
 } // end namespace Uintah

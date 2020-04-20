@@ -1173,25 +1173,35 @@ ShengMohrCoulomb::plasticRKME221(StateMohrCoulomb& state,
   using RKVector = Eigen::Matrix<double, Steps, 1>;
 
   RKMatrix A = RKMatrix::Zero();
-  A(0, 0) = 0.0;
-  A(1, 0) = 1.0;
-
   RKVector C = RKVector::Zero();
-  C(0) = 0.0;
-  C(1) = 1.0;
-
   RKVector BRes = RKVector::Zero();
-  BRes(0) = 0.5;
-  BRes(1) = 0.5;
-
   RKVector B = RKVector::Zero();
-  B(0) = 1.0;
-  B(1) = 0.0;
+
+  getParamRKME221(A, B, BRes, C);
 
   bool errorEstimate = false;
   auto result =
     doRungeKutta<Order, Steps>(A, B, BRes, C, state, epStrain, errorEstimate);
   return result;
+}
+
+void
+ShengMohrCoulomb::getParamRKME221(Eigen::Matrix<double, 2, 2>& A,
+                                  Eigen::Matrix<double, 2, 1>& B,
+                                  Eigen::Matrix<double, 2, 1>& BRes,
+                                  Eigen::Matrix<double, 2, 1>& C) const
+{
+  A(0, 0) = 0.0;
+  A(1, 0) = 1.0;
+
+  C(0) = 0.0;
+  C(1) = 1.0;
+
+  BRes(0) = 0.5;
+  BRes(1) = 0.5;
+
+  B(0) = 1.0;
+  B(1) = 0.0;
 }
 
 /**
@@ -1214,24 +1224,34 @@ ShengMohrCoulomb::plasticRK332(StateMohrCoulomb& state,
   using RKVector = Eigen::Matrix<double, Steps, 1>;
 
   RKMatrix A = RKMatrix::Zero();
-  A(0, 0) = 0;
-  A(1, 0) = 2.0 / 3.0;
-  A(2, 0) = 0;
-  A(2, 1) = 2.0 / 3.0;
-
   RKVector C = RKVector::Zero();
-  C << 0.0, 2.0 / 3.0, 2.0 / 3.0;
-
   RKVector BRes = RKVector::Zero();
-  BRes << 0.25, 0.375, 0.375;
-
   RKVector B = RKVector::Zero();
-  B << 0.25, 0.75, 0;
+
+  getParamRK332(A, B, BRes, C);
 
   bool errorEstimate = false;
   auto result =
     doRungeKutta<Order, Steps>(A, B, BRes, C, state, epStrain, errorEstimate);
   return result;
+}
+
+void
+ShengMohrCoulomb::getParamRK332(Eigen::Matrix<double, 3, 3>& A,
+                                Eigen::Matrix<double, 3, 1>& B,
+                                Eigen::Matrix<double, 3, 1>& BRes,
+                                Eigen::Matrix<double, 3, 1>& C) const
+{
+  A(0, 0) = 0;
+  A(1, 0) = 2.0 / 3.0;
+  A(2, 0) = 0;
+  A(2, 1) = 2.0 / 3.0;
+
+  C << 0.0, 2.0 / 3.0, 2.0 / 3.0;
+
+  BRes << 0.25, 0.375, 0.375;
+
+  B << 0.25, 0.75, 0;
 }
 
 /**
@@ -1254,6 +1274,24 @@ ShengMohrCoulomb::plasticRKBog432(StateMohrCoulomb& state,
   using RKVector = Eigen::Matrix<double, Steps, 1>;
 
   RKMatrix A = RKMatrix::Zero();
+  RKVector C = RKVector::Zero();
+  RKVector BRes = RKVector::Zero();
+  RKVector B = RKVector::Zero();
+
+  getParamRKBog432(A, B, BRes, C);
+
+  bool errorEstimate = false;
+  auto result =
+    doRungeKutta<Order, Steps>(A, B, BRes, C, state, epStrain, errorEstimate);
+  return result;
+}
+
+void
+ShengMohrCoulomb::getParamRKBog432(Eigen::Matrix<double, 4, 4>& A,
+                                   Eigen::Matrix<double, 4, 1>& B,
+                                   Eigen::Matrix<double, 4, 1>& BRes,
+                                   Eigen::Matrix<double, 4, 1>& C) const
+{
   A(0, 0) = 0;
   A(1, 0) = 0.5;
   A(2, 0) = 0;
@@ -1262,19 +1300,11 @@ ShengMohrCoulomb::plasticRKBog432(StateMohrCoulomb& state,
   A(3, 1) = 1.0 / 3.0;
   A(3, 2) = 4.0 / 9.0;
 
-  RKVector C = RKVector::Zero();
   C << 0.0, 0.5, 0.75, 1.0;
 
-  RKVector BRes = RKVector::Zero();
   BRes << 2.0 / 9.0, 1.0 / 3.0, 4.0 / 9.0, 0;
 
-  RKVector B = RKVector::Zero();
   B << 7.0 / 24.0, 0.25, 1 / 3.0, 0.125;
-
-  bool errorEstimate = false;
-  auto result =
-    doRungeKutta<Order, Steps>(A, B, BRes, C, state, epStrain, errorEstimate);
-  return result;
 }
 
 /**
@@ -1294,6 +1324,24 @@ ShengMohrCoulomb::plasticRK543(StateMohrCoulomb& state,
   using RKVector = Eigen::Matrix<double, Steps, 1>;
 
   RKMatrix A = RKMatrix::Zero();
+  RKVector C = RKVector::Zero();
+  RKVector BRes = RKVector::Zero();
+  RKVector B = RKVector::Zero();
+
+  getParamRK543(A, B, BRes, C);
+
+  bool errorEstimate = false;
+  auto result =
+    doRungeKutta<Order, Steps>(A, B, BRes, C, state, epStrain, errorEstimate);
+  return result;
+}
+
+void
+ShengMohrCoulomb::getParamRK543(Eigen::Matrix<double, 5, 5>& A,
+                                Eigen::Matrix<double, 5, 1>& B,
+                                Eigen::Matrix<double, 5, 1>& BRes,
+                                Eigen::Matrix<double, 5, 1>& C) const
+{
   A(0, 0) = 0;
   A(1, 0) = 1.0 / 3.0;
   A(2, 0) = 0.5 / 3.0;
@@ -1306,19 +1354,11 @@ ShengMohrCoulomb::plasticRK543(StateMohrCoulomb& state,
   A(4, 2) = -1.5;
   A(4, 3) = 2.0;
 
-  RKVector C = RKVector::Zero();
   C << 0.0, 1.0 / 3.0, 1.0 / 3.0, 0.5, 1;
 
-  RKVector BRes = RKVector::Zero();
   BRes << 0.1, 0, 0.3, 0.4, 0.2;
 
-  RKVector B = RKVector::Zero();
   B << -1.0 / 15.0, 0, 0.3, -4.0 / 15.0, 1.0 / 30.0;
-
-  bool errorEstimate = false;
-  auto result =
-    doRungeKutta<Order, Steps>(A, B, BRes, C, state, epStrain, errorEstimate);
-  return result;
 }
 
 /**
@@ -1342,6 +1382,24 @@ ShengMohrCoulomb::plasticRKEng654(StateMohrCoulomb& state,
   using RKVector = Eigen::Matrix<double, Steps, 1>;
 
   RKMatrix A = RKMatrix::Zero();
+  RKVector C = RKVector::Zero();
+  RKVector BRes = RKVector::Zero();
+  RKVector B = RKVector::Zero();
+
+  getParamRKEng654(A, B, BRes, C);
+
+  bool errorEstimate = false;
+  auto result =
+    doRungeKutta<Order, Steps>(A, B, BRes, C, state, epStrain, errorEstimate);
+  return result;
+}
+
+void
+ShengMohrCoulomb::getParamRKEng654(Eigen::Matrix<double, 6, 6>& A,
+                                   Eigen::Matrix<double, 6, 1>& B,
+                                   Eigen::Matrix<double, 6, 1>& BRes,
+                                   Eigen::Matrix<double, 6, 1>& C) const
+{
   A(0, 0) = 0;
   A(1, 0) = 0.5;
   A(2, 0) = 0.25;
@@ -1359,20 +1417,12 @@ ShengMohrCoulomb::plasticRKEng654(StateMohrCoulomb& state,
   A(5, 3) = 54.0 / 625.0;
   A(5, 4) = -378.0 / 625.0;
 
-  RKVector C = RKVector::Zero();
   C << 0.0, 0.5, 0.5, 1, 2.0 / 3.0, 0.2;
 
-  RKVector BRes = RKVector::Zero();
   BRes << 14.0 / 336.0, 0, 0, 35.0 / 336.0, 162.0 / 336.0, 125.0 / 336.0;
 
-  RKVector B = RKVector::Zero();
   B << -42.0 / 336.0, 0, -224.0 / 336.0, -21.0 / 336.0, 162.0 / 336.0,
     125.0 / 336.0;
-
-  bool errorEstimate = false;
-  auto result =
-    doRungeKutta<Order, Steps>(A, B, BRes, C, state, epStrain, errorEstimate);
-  return result;
 }
 
 /**
@@ -1395,6 +1445,24 @@ ShengMohrCoulomb::plasticRKCK654(StateMohrCoulomb& state,
   using RKVector = Eigen::Matrix<double, Steps, 1>;
 
   RKMatrix A = RKMatrix::Zero();
+  RKVector C = RKVector::Zero();
+  RKVector BRes = RKVector::Zero();
+  RKVector B = RKVector::Zero();
+
+  getParamRKCK654(A, B, BRes, C);
+
+  bool errorEstimate = false;
+  auto result =
+    doRungeKutta<Order, Steps>(A, B, BRes, C, state, epStrain, errorEstimate);
+  return result;
+}
+
+void
+ShengMohrCoulomb::getParamRKCK654(Eigen::Matrix<double, 6, 6>& A,
+                                  Eigen::Matrix<double, 6, 1>& B,
+                                  Eigen::Matrix<double, 6, 1>& BRes,
+                                  Eigen::Matrix<double, 6, 1>& C) const
+{
   A(0, 0) = 0;
   A(1, 0) = 0.2;
   A(2, 0) = 0.075;
@@ -1412,20 +1480,12 @@ ShengMohrCoulomb::plasticRKCK654(StateMohrCoulomb& state,
   A(5, 3) = 44275.0 / 110592.0;
   A(5, 4) = 253.0 / 4096.0;
 
-  RKVector C = RKVector::Zero();
   C << 0.0, 0.2, 0.3, 0.6, 1, 0.875;
 
-  RKVector BRes = RKVector::Zero();
   BRes << 37.0 / 378.0, 0, 250.0 / 621.0, 125.0 / 594.0, 0, 512.0 / 1771.0;
 
-  RKVector B = RKVector::Zero();
   B << 2825.0 / 27648.0, 0, 18575.0 / 48384.0, 13525.0 / 55296.0,
     277.0 / 14336.0, 0.25;
-
-  bool errorEstimate = false;
-  auto result =
-    doRungeKutta<Order, Steps>(A, B, BRes, C, state, epStrain, errorEstimate);
-  return result;
 }
 
 /**
@@ -1445,6 +1505,24 @@ ShengMohrCoulomb::plasticRKDP754(StateMohrCoulomb& state,
   using RKVector = Eigen::Matrix<double, Steps, 1>;
 
   RKMatrix A = RKMatrix::Zero();
+  RKVector C = RKVector::Zero();
+  RKVector BRes = RKVector::Zero();
+  RKVector B = RKVector::Zero();
+
+  getParamRKDP754(A, B, BRes, C);
+
+  bool errorEstimate = false;
+  auto result =
+    doRungeKutta<Order, Steps>(A, B, BRes, C, state, epStrain, errorEstimate);
+  return result;
+}
+
+void
+ShengMohrCoulomb::getParamRKDP754(Eigen::Matrix<double, 7, 7>& A,
+                                  Eigen::Matrix<double, 7, 1>& B,
+                                  Eigen::Matrix<double, 7, 1>& BRes,
+                                  Eigen::Matrix<double, 7, 1>& C) const
+{
   A(0, 0) = 0;
   A(1, 0) = 0.2;
   A(2, 0) = 0.075;
@@ -1468,21 +1546,13 @@ ShengMohrCoulomb::plasticRKDP754(StateMohrCoulomb& state,
   A(6, 4) = -2187.0 / 6784.0;
   A(6, 5) = 11.0 / 84.0;
 
-  RKVector C = RKVector::Zero();
   C << 0.0, 0.2, 0.3, 0.8, 8.0 / 9.0, 1, 1;
 
-  RKVector BRes = RKVector::Zero();
   BRes << 35.0 / 384.0, 0, 500.0 / 1113.0, 125.0 / 192.0, -2187.0 / 6784.0,
     11.0 / 84.0, 0;
 
-  RKVector B = RKVector::Zero();
   B << 5179.0 / 57600.0, 0, 7571.0 / 16695.0, 393.0 / 640.0,
     -92097.0 / 339200.0, 187.0 / 2100.0, 0.025;
-
-  bool errorEstimate = false;
-  auto result =
-    doRungeKutta<Order, Steps>(A, B, BRes, C, state, epStrain, errorEstimate);
-  return result;
 }
 
 /**
@@ -1511,6 +1581,26 @@ ShengMohrCoulomb::plasticRKErr8544(StateMohrCoulomb& state,
   using RKVectorErr = Eigen::Matrix<double, Steps - 1, 1>;
 
   RKMatrix A = RKMatrix::Zero();
+  RKVector C = RKVector::Zero();
+  RKVector BRes = RKVector::Zero();
+  RKVector B = RKVector::Zero();
+  RKVectorErr ErrorCoef = RKVectorErr::Zero();
+
+  getParamRKErr8544(A, B, BRes, C, ErrorCoef);
+
+  bool errorEstimate = false;
+  auto result = doRungeKuttaErr<Order, Steps>(A, B, BRes, C, ErrorCoef, state,
+                                              epStrain, errorEstimate);
+  return result;
+}
+
+void
+ShengMohrCoulomb::getParamRKErr8544(Eigen::Matrix<double, 8, 8>& A,
+                                    Eigen::Matrix<double, 8, 1>& B,
+                                    Eigen::Matrix<double, 8, 1>& BRes,
+                                    Eigen::Matrix<double, 8, 1>& C,
+                                    Eigen::Matrix<double, 7, 1>& ErrorCoef) const
+{
   A(0, 0) = 0;
   A(1, 0) = 1.0 / 6.0;
   A(2, 0) = 2.0 / 27.0;
@@ -1541,7 +1631,6 @@ ShengMohrCoulomb::plasticRKErr8544(StateMohrCoulomb& state,
   A(7, 5) = 2152.0 / 5985.0;
   A(7, 6) = 7267.0 / 94080.0;
 
-  RKVector C = RKVector::Zero();
   C(0) = 0.0;
   C(1) = 1.0 / 6.0;
   C(2) = 2.0 / 9.0;
@@ -1551,10 +1640,9 @@ ShengMohrCoulomb::plasticRKErr8544(StateMohrCoulomb& state,
   C(6) = 1.0;
   C(7) = 1.0;
 
-  RKVector BRes = A.row(7);
+  BRes = A.row(7);
   BRes(7) = 0; // as this scheme is the FSAL scheme
 
-  RKVector B = RKVector::Zero();
   B(0) = 2479.0 / 34992.0;
   B(1) = 0.0;
   B(2) = 123.0 / 416.0;
@@ -1564,7 +1652,6 @@ ShengMohrCoulomb::plasticRKErr8544(StateMohrCoulomb& state,
   B(6) = 79937.0 / 1113912.0;
   B(7) = 3293.0 / 556956.0;
 
-  RKVectorErr ErrorCoef = RKVectorErr::Zero();
   ErrorCoef(0) = -3.0 / 1280.0;
   ErrorCoef(1) = 0.0;
   ErrorCoef(2) = 6561.0 / 632320.0;
@@ -1572,11 +1659,6 @@ ShengMohrCoulomb::plasticRKErr8544(StateMohrCoulomb& state,
   ErrorCoef(4) = 243.0 / 12800.0;
   ErrorCoef(5) = -1.0 / 95.0;
   ErrorCoef(6) = 0.0;
-
-  bool errorEstimate = false;
-  auto result = doRungeKuttaErr<Order, Steps>(A, B, BRes, C, ErrorCoef, state,
-                                              epStrain, errorEstimate);
-  return result;
 }
 
 /**
@@ -2523,6 +2605,7 @@ ShengMohrCoulomb::doRungeKuttaErr(
   double time = std::chrono::duration<double>(endTime - startTime).count();
   return std::make_tuple(time, stepNo);
 }
+
 /**
  * Compute the stress and p0star increment,
  */
@@ -2549,17 +2632,15 @@ ShengMohrCoulomb::calcPlastic(const StateMohrCoulomb& state,
   Matrix66 elasticTangent = calculateElasticTangentMatrix(K, G);
 
   Vector6 dEps = epStrainInc.block<6, 1>(0, 0);
-  auto df_dsigma_x_D = df_dsigma.transpose() * elasticTangent;
-  double numerator = df_dsigma_x_D * dEps;
-  double denominator = df_dsigma_x_D * dg_dsigma;
+  auto numerator = df_dsigma.transpose() * elasticTangent;
+  double denominator = numerator * dg_dsigma;
   if (denominator < TINY) {
     std::cout << "**WARNING** denominator of plastic multiplier is very small."
                  " Some error may arise and results may be incorrect"
               << "\n";
   }
 
-  double ratio = numerator / denominator;
-  dEps_p = dg_dsigma * ratio;
+  dEps_p = (dg_dsigma * numerator * dEps) / denominator;
   dSigma = elasticTangent * (dEps - dEps_p);
 
   for (int i = 0; i < 6; i++) {

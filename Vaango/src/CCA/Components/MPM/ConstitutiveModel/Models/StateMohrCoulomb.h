@@ -38,6 +38,7 @@ using Vector6 = Eigen::Matrix<double, 6, 1>;
 using Vector7 = Eigen::Matrix<double, 7, 1>;
 using Vector8 = Eigen::Matrix<double, 8, 1>;
 
+using Matrix33 = Eigen::Matrix<double, 3, 3>;
 using Matrix66 = Eigen::Matrix<double, 6, 6>;
 using Matrix67 = Eigen::Matrix<double, 6, 7>;
 using Matrix77 = Eigen::Matrix<double, 7, 7>;
@@ -97,6 +98,8 @@ public:
   double getThetaDeg_0 ();
 
   bool checkIfFinite () const;
+
+  void setStressEigen(const Vector3& eigenvals);
 };
 
 } // end namespace Uintah
