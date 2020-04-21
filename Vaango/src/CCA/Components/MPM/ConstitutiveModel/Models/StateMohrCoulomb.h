@@ -29,20 +29,9 @@
 #ifndef __MPM_CONSTITUTIVEMODEL_MODELS_STATE_MOHRCOULOMB__
 #define __MPM_CONSTITUTIVEMODEL_MODELS_STATE_MOHRCOULOMB__
 
-#include <Eigen/Dense>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TypesMohrCoulomb.h>
 
 namespace Uintah {
-
-using Vector3 = Eigen::Matrix<double, 3, 1>;
-using Vector6 = Eigen::Matrix<double, 6, 1>;
-using Vector7 = Eigen::Matrix<double, 7, 1>;
-using Vector8 = Eigen::Matrix<double, 8, 1>;
-
-using Matrix33 = Eigen::Matrix<double, 3, 3>;
-using Matrix66 = Eigen::Matrix<double, 6, 6>;
-using Matrix67 = Eigen::Matrix<double, 6, 7>;
-using Matrix77 = Eigen::Matrix<double, 7, 7>;
-using Matrix88 = Eigen::Matrix<double, 8, 8>;
 
 class StateMohrCoulomb
 {

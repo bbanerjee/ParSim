@@ -86,16 +86,87 @@ TEST(EigenTest, constructors)
   //std::cout << "num = " << num << " den = " << den << "\n";
 
   
-  /*
-  for (auto ii = 0u; ii < 6; ++ii) {
+  Vector6 stress;
+  stress << 1100, 2200, 3300, 700, 500, 600;
 
-    //ASSERT_DOUBLE_EQ(I_vec(ii), I_vec_test(ii));
+  using Vector3 = Eigen::Matrix<double, 3, 1>;
+  using Matrix33 = Eigen::Matrix<double, 3, 3>;
+  Matrix33 stressMat;
+  stressMat(0, 0) = stress(0);
+  stressMat(0, 1) = stress(3);
+  stressMat(0, 2) = stress(4);
+  stressMat(1, 0) = stressMat(0, 1); 
+  stressMat(1, 1) = stress(1);
+  stressMat(1, 2) = stress(5);
+  stressMat(2, 0) = stressMat(0, 2); 
+  stressMat(2, 1) = stressMat(1, 2);
+  stressMat(2, 2) = stress(2);
+  
+  Eigen::SelfAdjointEigenSolver<Matrix33> solver(stressMat);
+  Vector3 eigenval = solver.eigenvalues();
+  Matrix33 eigenvec = solver.eigenvectors();
+
+  //std::cout << "eigenvals = " << eigenval << "\n";
+  //std::cout << "eigenvecs = " << eigenvec << "\n";
+  
+  double temp_val = eigenval(0);
+  eigenval(0) = eigenval(2);
+  eigenval(2) = temp_val;
+  //std::cout << "eigenvals = " << eigenval << "\n";
+
+  auto temp_vec = eigenvec.col(0).eval();
+  eigenvec.col(0) = eigenvec.col(2);
+  eigenvec.col(2) = temp_vec;
+  //std::cout << "eigenvecs = " << eigenvec << "\n";
+
+  Vector6 principal = Vector6::Zero();
+  principal(0) = eigenval(0);
+  principal(1) = eigenval(1);
+  principal(2) = eigenval(2);
+  //std::cout << "principal = " << principal << "\n";
+
+  Matrix33 prinMat;
+  prinMat(0, 0) = principal(0);
+  prinMat(0, 1) = principal(3);
+  prinMat(0, 2) = principal(4);
+  prinMat(1, 0) = prinMat(0, 1); 
+  prinMat(1, 1) = principal(1);
+  prinMat(1, 2) = principal(5);
+  prinMat(2, 0) = prinMat(0, 2); 
+  prinMat(2, 1) = prinMat(1, 2);
+  prinMat(2, 2) = principal(2);
+  //std::cout << "prinMat = " << prinMat << "\n";
+
+  auto rotMat = eigenvec * prinMat * eigenvec.transpose();
+  //std::cout << rotMat << "\n";
+
+  auto errMat = rotMat - stressMat;
+    
+  for (auto ii = 0u; ii < 3; ++ii) {
+    for (auto jj = 0u; jj < 3; ++jj) {
+      ASSERT_NEAR(errMat(ii, jj), 0.0, 1.0e-10);
+    }
   }
 
-  for (auto ii = 0u; ii < 9; ++ii) {
-    //ASSERT_NEAR(ab(ii), test_ab(ii), 1.0e-6);
-  }
-  */
+  Vector3 one = Vector3::Ones();
+  //std::cout << one << "\n";
 
+  Vector3 a, b;
+  a << 1, 2, 3;
+  b << 4, 5, 6;
+
+  auto axb = a.cross(b);
+  //std::cout << "axb = " << axb.transpose() << "\n";
+
+  Vector3 cross_prod;
+  cross_prod << a(1) * b(2) - b(1) * a(2),
+                -a(0) * b(2) + b(0) * a(2),
+                a(0) * b(1) - b(0) * a(1);
+  //std::cout << "cross_prod = " << cross_prod.transpose() << "\n";
+
+  for (auto ii = 0u; ii < 3; ++ii) {
+    ASSERT_DOUBLE_EQ(axb(ii), cross_prod(ii));
+  }
+  
 }
 

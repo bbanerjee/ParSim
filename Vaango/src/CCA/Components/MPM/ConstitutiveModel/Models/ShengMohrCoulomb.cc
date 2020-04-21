@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "ShengMohrCoulomb.h"
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ShengMohrCoulomb.h>
 
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Util/DebugStream.h>
@@ -1661,45 +1661,6 @@ ShengMohrCoulomb::getParamRKErr8544(Eigen::Matrix<double, 8, 8>& A,
   ErrorCoef(6) = 0.0;
 }
 
-/**
- * Integration intervals
- */
-namespace Uintah {
-
-// constexpr int DivInt00[15] =
-// {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
-// constexpr int DivInt01[15] = {2,4,6,8,10,12,14,16,18,20,22,24,26,28,30};
-// constexpr int DivInt02[15] = {2,4,6,8,12,16,24,32,48,64,96,128,192,256,384};
-// constexpr int DivInt03[15] = {2,4,6,8,12,16,24,32,48,64,96,128,192,256,384};
-// constexpr int DivInt04[15] =
-// {12,16,24,32,48,64,96,128,160,192,256,320,384,448,512};
-
-// fastest so far
-constexpr int DivInt[15] = { 32,  48,  64,  96,  128, 160, 192, 256,
-                             320, 384, 448, 512, 608, 736, 992 };
-
-// N+N-4
-// constexpr int DivInt06[19] =
-// {2,4,6,8,10,14,20,28,38,52,72,100,138,190,262,362,500,690,952};
-// N+N-5
-// constexpr int DivInt07[21] =
-// {2,4,6,8,10,12,16,22,30,40,52,68,90,120,170,222,290,380,500,670,892};
-// constexpr int DivInt08[15] =
-// {28,32,40,52,64,78,94,120,154,200,240,290,330,380,440};
-// constexpr int DivInt09[15] =
-// {32,40,52,64,78,94,120,154,200,240,290,330,380,440,520};
-// constexpr int DivInt10[15] =
-// {32,36,40,46,52,60,70,82,96,112,130,150,176,220,380};
-// constexpr int DivInt11[15] =
-// {32,36,40,52,68,92,114,154,200,240,290,330,380,440,520};
-// n=n-1*1.1, doesn't converge too often
-// constexpr int DivInt12[15] =
-// {32,36,40,44,50,56,62,68,76,84,92,102,112,124,136};
-// n=n-1*1.2
-// constexpr int DivInt13[15] =
-// {32,38,46,56,66,80,96,114,138,166,198,238,286,344,412};
-
-} // end namespace Uintah
 
 /**
  * Use table to integrate
@@ -1937,9 +1898,6 @@ ShengMohrCoulomb::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
                                StateMohrCoulomb& state, const Vector7& epStrain,
                                bool errorEstimate) const
 {
-  // *WARNING** prevents algorithm to have more than 1e4 steps; cost: accuracy
-  // reduction in some unusual cases, but the whole thing will keep on going
-  constexpr double criticalStepSize = 1.0e-4;
   Vector7 substepStrain = epStrain;
   double newStepSize = 0;
   for (int i = 0; i < 6; i++) {

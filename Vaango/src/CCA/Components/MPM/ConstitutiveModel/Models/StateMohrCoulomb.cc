@@ -229,11 +229,10 @@ StateMohrCoulomb::checkIfFinite() const
 void 
 StateMohrCoulomb::setStressEigen(const Vector3& eigenvals)
 {
-  stress(0) = eigenvals[2];
+  stress(0) = eigenvals[0];
   stress(1) = eigenvals[1];
-  stress(2) = eigenvals[0];
+  stress(2) = eigenvals[2];
   stress(3) = 0.0;
   stress(4) = 0.0;
   stress(5) = 0.0;
-
 }

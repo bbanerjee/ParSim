@@ -29,7 +29,7 @@
 #ifndef __MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
 #define __MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
 
-#include "StateMohrCoulomb.h"
+#include <CCA/Components/MPM/ConstitutiveModel/Models/StateMohrCoulomb.h>
 
 #include <cmath>
 #include <vector>
@@ -45,62 +45,47 @@ namespace Uintah {
 // less as ok
 constexpr double TINY = 1.0e-14;
 
-enum class DriftCorrection
-{
-  NO_CORRECTION = 1,
-  CORRECTION_AT_BEGIN = 2,
-  CORRECTION_AT_END = 3
-};
+// *WARNING** prevents algorithm to have more than 1e4 steps; cost: accuracy
+// reduction in some unusual cases, but the whole thing will keep on going
+constexpr double criticalStepSize = 1.0e-4;
 
-std::ostream&
-operator<<(std::ostream& out, const DriftCorrection& dc)
-{
-  static std::array<const char*, 3> names = {
-    { "NO_CORRECTION", "CORRECTION_AT_BEGIN", "CORRECTION_AT_END" }
-  };
-  out << names[static_cast<int>(dc)];
-  return out;
-}
+/**
+ * Integration intervals
+ */
 
-enum class ToleranceMethod
-{
-  EPUS_RELATIVE_ERROR = 0,
-  SLOAN = 1
-};
+// constexpr int DivInt00[15] =
+// {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+// constexpr int DivInt01[15] = {2,4,6,8,10,12,14,16,18,20,22,24,26,28,30};
+// constexpr int DivInt02[15] = {2,4,6,8,12,16,24,32,48,64,96,128,192,256,384};
+// constexpr int DivInt03[15] = {2,4,6,8,12,16,24,32,48,64,96,128,192,256,384};
+// constexpr int DivInt04[15] =
+// {12,16,24,32,48,64,96,128,160,192,256,320,384,448,512};
 
-enum class SolutionAlgorithm
-{
-  RUNGE_KUTTA_SECOND_ORDER_MODIFIED_EULER = 1,
-  RUNGE_KUTTA_THIRD_ORDER_NYSTROM = 2,
-  RUNGE_KUTTA_THIRD_ORDER_BOGACKI = 3,
-  RUNGE_KUTTA_FOURTH_ORDER = 4,
-  RUNGE_KUTTA_FIFTH_ORDER_ENGLAND = 5,
-  RUNGE_KUTTA_FIFTH_ORDER_CASH = 6,
-  RUNGE_KUTTA_FIFTH_ORDER_DORMAND = 7,
-  RUNGE_KUTTA_FIFTH_ORDER_BOGACKI = 8,
-  EXTRAPOLATION_BULIRSCH = 9
-};
+// fastest so far
+constexpr int DivInt[15] = { 32,  48,  64,  96,  128, 160, 192, 256,
+                             320, 384, 448, 512, 608, 736, 992 };
 
-std::ostream&
-operator<<(std::ostream& out, const SolutionAlgorithm& sa)
-{
-  static std::array<const char*, 9> names = {
-    { "RUNGE_KUTTA_SECOND_ORDER_MODIFIED_EULER",
-      "RUNGE_KUTTA_THIRD_ORDER_NYSTROM", "RUNGE_KUTTA_THIRD_ORDER_BOGACKI",
-      "RUNGE_KUTTA_FOURTH_ORDER", "RUNGE_KUTTA_FIFTH_ORDER_ENGLAND",
-      "RUNGE_KUTTA_FIFTH_ORDER_CASH", "RUNGE_KUTTA_FIFTH_ORDER_DORMAND",
-      "RUNGE_KUTTA_FIFTH_ORDER_BOGACKI", "EXTRAPOLATION_BULIRSCH" }
-  };
-  out << names[static_cast<int>(sa)];
-  return out;
-}
+// N+N-4
+// constexpr int DivInt06[19] =
+// {2,4,6,8,10,14,20,28,38,52,72,100,138,190,262,362,500,690,952};
+// N+N-5
+// constexpr int DivInt07[21] =
+// {2,4,6,8,10,12,16,22,30,40,52,68,90,120,170,222,290,380,500,670,892};
+// constexpr int DivInt08[15] =
+// {28,32,40,52,64,78,94,120,154,200,240,290,330,380,440};
+// constexpr int DivInt09[15] =
+// {32,40,52,64,78,94,120,154,200,240,290,330,380,440,520};
+// constexpr int DivInt10[15] =
+// {32,36,40,46,52,60,70,82,96,112,130,150,176,220,380};
+// constexpr int DivInt11[15] =
+// {32,36,40,52,68,92,114,154,200,240,290,330,380,440,520};
+// n=n-1*1.1, doesn't converge too often
+// constexpr int DivInt12[15] =
+// {32,36,40,44,50,56,62,68,76,84,92,102,112,124,136};
+// n=n-1*1.2
+// constexpr int DivInt13[15] =
+// {32,38,46,56,66,80,96,114,138,166,198,238,286,344,412};
 
-enum class RetentionModel
-{
-  STATE_SURFACE = 1,
-  VAN_GENUCHTEN = 2,
-  GALLIPOLI = 3
-};
 
 class ShengMohrCoulomb
 {

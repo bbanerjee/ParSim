@@ -25,12 +25,14 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#ifndef __MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
-#define __MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
+#ifndef __MPM_CONSTITUTIVEMODEL_MODELS_CLASSIC_MOHRCOULOMB__
+#define __MPM_CONSTITUTIVEMODEL_MODELS_CLASSIC_MOHRCOULOMB__
 
-#include "StateMohrCoulomb.h"
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ShengMohrCoulomb.h>
 
+#include <array>
 #include <cmath>
+#include <iostream>
 #include <vector>
 
 namespace Uintah {
@@ -54,18 +56,12 @@ public:
 
   ~ClassicMohrCoulomb() = default;
 
-  void setModelParameters(double G, double K, double cohesion, double phi,
-                          double psi);
-
-  void setIntegrationParameters(int maxIterPegasus, double integrationTolerance,
-                                double betaFactor, double yieldLocTolerance,
-                                SolutionAlgorithm solutionAlgorithm,
-                                ToleranceMethod toleranceMethod,
-                                DriftCorrection driftCorrection);
-
   StateMohrCoulomb integrate(const Vector7& strainIncrement,
                              const StateMohrCoulomb& initialState);
 
+  StateMohrCoulomb integrateMCIClassic(const Vector7& strainIncrement,
+                                       const StateMohrCoulomb& initialState, 
+                                       RegionType& region);
 protected:
 
   bool checkYieldNormalized(const StateMohrCoulomb& state) const override;
@@ -127,13 +123,16 @@ private:
   double plasticMidpoint(StateMohrCoulomb& state, const Vector7& epStrain,
                          Vector7& absStress, int numIter) const override;
 
+  StateMohrCoulomb doReturnImplicit(const StateMohrCoulomb& state, 
+                                    RegionType& region) const;
+
   std::tuple<Vector3, Matrix33> getEigen(const Vector6& stress) const;
-  Vector6 rotateToOrigin(const Vector6& vec, const Matrix33& eigenVecs);
-  Vector6 rotateToEigen(const Vector6& vec, const Matrix33& eigenVecs);
-  Matrix33 toMatrix33(const Vector6& vec);
-  Vector6 toVector6(const Matrix33& mat);
+  Vector6 rotateToOrigin(const Vector6& vec, const Matrix33& eigenVecs) const;
+  Vector6 rotateToEigen(const Vector6& vec, const Matrix33& eigenVecs) const;
+  Matrix33 toMatrix33(const Vector6& vec) const;
+  Vector6 toVector6(const Matrix33& mat) const;
 };
 
 } // end namespace Uintah
 
-#endif //__MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
+#endif //__MPM_CONSTITUTIVEMODEL_MODELS_CLASSIC_MOHRCOULOMB__
