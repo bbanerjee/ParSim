@@ -23,7 +23,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TypesMohrCoulomb.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombTypes.h>
 
 #include <array>
 #include <iostream>

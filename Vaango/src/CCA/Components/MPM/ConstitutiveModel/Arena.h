@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,8 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __ARENA_H__
-#define __ARENA_H__
+#ifndef __MPM_CONSTITUTIVEMODEL_ARENA_H__
+#define __MPM_CONSTITUTIVEMODEL_ARENA_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
@@ -599,4 +599,4 @@ public: // Uintah MPM constitutive model specific functions
 };
 } // End namespace Uintah
 
-#endif // __ARENA_H__
+#endif // __MPM_CONSTITUTIVEMODEL_ARENA_H__

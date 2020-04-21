@@ -28,7 +28,7 @@
 #ifndef __MPM_CONSTITUTIVEMODEL_MODELS_CLASSIC_MOHRCOULOMB__
 #define __MPM_CONSTITUTIVEMODEL_MODELS_CLASSIC_MOHRCOULOMB__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShengMohrCoulomb.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombBase.h>
 
 #include <array>
 #include <cmath>
@@ -44,27 +44,27 @@ namespace Uintah {
  * stress
 */
 
-class ClassicMohrCoulomb : public ShengMohrCoulomb
+class MohrCoulombClassic : public MohrCoulombBase
 {
 
 public:
-  ClassicMohrCoulomb();
-  ClassicMohrCoulomb(double G, double K, double cohesion, double phi, double psi);
+  MohrCoulombClassic();
+  MohrCoulombClassic(double G, double K, double cohesion, double phi, double psi);
 
-  ClassicMohrCoulomb(const ClassicMohrCoulomb&) = delete;
-  ClassicMohrCoulomb& operator=(const ClassicMohrCoulomb&) = delete;
+  MohrCoulombClassic(const MohrCoulombClassic&) = delete;
+  MohrCoulombClassic& operator=(const MohrCoulombClassic&) = delete;
 
-  ~ClassicMohrCoulomb() = default;
+  ~MohrCoulombClassic() = default;
 
-  StateMohrCoulomb integrate(const Vector7& strainIncrement,
-                             const StateMohrCoulomb& initialState);
+  MohrCoulombState integrate(const Vector7& strainIncrement,
+                             const MohrCoulombState& initialState) override;
 
-  StateMohrCoulomb integrateMCIClassic(const Vector7& strainIncrement,
-                                       const StateMohrCoulomb& initialState, 
-                                       RegionType& region);
+  MohrCoulombState integrate(const Vector7& strainIncrement,
+                             const MohrCoulombState& initialState, 
+                             RegionType& region) override;
 protected:
 
-  bool checkYieldNormalized(const StateMohrCoulomb& state) const override;
+  bool checkYieldNormalized(const MohrCoulombState& state) const override;
 
   double computeYieldNormalized(const Vector6& stress) const override;
 
@@ -72,35 +72,35 @@ private:
 
 
   Matrix67 calculateElastoPlasticTangentMatrix(
-    const StateMohrCoulomb& state) const;
+    const MohrCoulombState& state) const;
 
   std::tuple<Vector6, Vector6> computeDfDsigma(const Vector6& stress) const override;
 
-  std::tuple<double, int> plasticRKME221(StateMohrCoulomb& state,
+  std::tuple<double, int> plasticRKME221(MohrCoulombState& state,
                                          const Vector7& epStrain) const override;
 
-  std::tuple<double, int> plasticRK332(StateMohrCoulomb& state,
+  std::tuple<double, int> plasticRK332(MohrCoulombState& state,
                                        const Vector7& epStrain) const override;
 
-  std::tuple<double, int> plasticRKBog432(StateMohrCoulomb& point,
+  std::tuple<double, int> plasticRKBog432(MohrCoulombState& point,
                                           const Vector7& epStrain) const override;
 
-  std::tuple<double, int> plasticRK543(StateMohrCoulomb& state,
+  std::tuple<double, int> plasticRK543(MohrCoulombState& state,
                                        const Vector7& epStrain) const override;
 
-  std::tuple<double, int> plasticRKEng654(StateMohrCoulomb& state,
+  std::tuple<double, int> plasticRKEng654(MohrCoulombState& state,
                                           const Vector7& epStrain) const override;
 
-  std::tuple<double, int> plasticRKCK654(StateMohrCoulomb& state,
+  std::tuple<double, int> plasticRKCK654(MohrCoulombState& state,
                                          const Vector7& epStrain) const override;
 
-  std::tuple<double, int> plasticRKDP754(StateMohrCoulomb& state,
+  std::tuple<double, int> plasticRKDP754(MohrCoulombState& state,
                                          const Vector7& epStrain) const override;
 
-  std::tuple<double, int> plasticRKErr8544(StateMohrCoulomb& state,
+  std::tuple<double, int> plasticRKErr8544(MohrCoulombState& state,
                                            const Vector7& epStrain) const override;
 
-  std::tuple<double, int> plasticExtrapol(StateMohrCoulomb& state,
+  std::tuple<double, int> plasticExtrapol(MohrCoulombState& state,
                                           const Vector7& epStrain) const override;
 
   template <int Order, int Steps>
@@ -108,7 +108,7 @@ private:
                                           const Eigen::Matrix<double, Steps, 1>& BB,
                                           const Eigen::Matrix<double, Steps, 1>& BRes,
                                           const Eigen::Matrix<double, Steps, 1>& CC,
-                                          StateMohrCoulomb& state, const Vector7& epStrain,
+                                          MohrCoulombState& state, const Vector7& epStrain,
                                           bool errorEstimate) const;
 
   template <int Order, int Steps>
@@ -117,13 +117,13 @@ private:
     const Eigen::Matrix<double, Steps, 1>& BB,
     const Eigen::Matrix<double, Steps, 1>& BRes,
     const Eigen::Matrix<double, Steps, 1>& CC,
-    const Eigen::Matrix<double, Steps - 1, 1>& ErrCoef, StateMohrCoulomb& state,
+    const Eigen::Matrix<double, Steps - 1, 1>& ErrCoef, MohrCoulombState& state,
     const Vector7& epStrain, bool errorEstimate) const;
 
-  double plasticMidpoint(StateMohrCoulomb& state, const Vector7& epStrain,
+  double plasticMidpoint(MohrCoulombState& state, const Vector7& epStrain,
                          Vector7& absStress, int numIter) const override;
 
-  StateMohrCoulomb doReturnImplicit(const StateMohrCoulomb& state, 
+  MohrCoulombState doReturnImplicit(const MohrCoulombState& state, 
                                     RegionType& region) const;
 
   std::tuple<Vector3, Matrix33> getEigen(const Vector6& stress) const;

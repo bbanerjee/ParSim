@@ -29,11 +29,11 @@
 #ifndef __MPM_CONSTITUTIVEMODEL_MODELS_STATE_MOHRCOULOMB__
 #define __MPM_CONSTITUTIVEMODEL_MODELS_STATE_MOHRCOULOMB__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TypesMohrCoulomb.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombTypes.h>
 
 namespace Uintah {
 
-class StateMohrCoulomb
+class MohrCoulombState
 {
 
 public:
@@ -51,10 +51,10 @@ public:
   Vector6 microPlasticStrain;
   Vector3 microState;
 
-  StateMohrCoulomb();
-  StateMohrCoulomb(const StateMohrCoulomb& state) = default;
-  StateMohrCoulomb& operator=(const StateMohrCoulomb& state) = default;
-  ~StateMohrCoulomb() = default;
+  MohrCoulombState();
+  MohrCoulombState(const MohrCoulombState& state) = default;
+  MohrCoulombState& operator=(const MohrCoulombState& state) = default;
+  ~MohrCoulombState() = default;
 
   void update(const Vector6& plasticStrainInc, 
               const Vector7& strainInc,

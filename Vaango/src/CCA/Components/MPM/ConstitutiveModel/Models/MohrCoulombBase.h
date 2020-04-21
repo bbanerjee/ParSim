@@ -26,18 +26,13 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
-#define __MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
+#ifndef __MPM_CONSTITUTIVEMODEL_MODELS_BASE_MOHRCOULOMB__
+#define __MPM_CONSTITUTIVEMODEL_MODELS_BASE_MOHRCOULOMB__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/StateMohrCoulomb.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombState.h>
 
 #include <cmath>
 #include <vector>
-
-/* this Mohr-Coulomb like model uses a rounded Mohr-Coulomb surface, see
-   eq 13 in Sheng D, Sloan SW & Yu HS Computational Mechanics 26:185-196 (2000)
-   Springer
-*/
 
 namespace Uintah {
 
@@ -87,18 +82,18 @@ constexpr int DivInt[15] = { 32,  48,  64,  96,  128, 160, 192, 256,
 // {32,38,46,56,66,80,96,114,138,166,198,238,286,344,412};
 
 
-class ShengMohrCoulomb
+class MohrCoulombBase
 {
 
 public:
-  ShengMohrCoulomb();
-  ShengMohrCoulomb(double G, double K, double cohesion, double phi, double psi);
+  MohrCoulombBase();
+  MohrCoulombBase(double G, double K, double cohesion, double phi, double psi);
 
-  ShengMohrCoulomb(const ShengMohrCoulomb&) = delete;
-  ShengMohrCoulomb& operator=(const ShengMohrCoulomb&) = delete;
-  ~ShengMohrCoulomb() = default;
+  MohrCoulombBase(const MohrCoulombBase&) = delete;
+  MohrCoulombBase& operator=(const MohrCoulombBase&) = delete;
+  ~MohrCoulombBase() = default;
 
-  virtual void setModelParameters(double G, double K, double cohesion, double phi,
+  void setModelParameters(double G, double K, double cohesion, double phi,
                           double psi);
 
   void setIntegrationParameters(int maxIterPegasus, double integrationTolerance,
@@ -107,20 +102,71 @@ public:
                                 ToleranceMethod toleranceMethod,
                                 DriftCorrection driftCorrection);
 
-  StateMohrCoulomb integrate(const Vector7& strainIncrement,
-                             const StateMohrCoulomb& initialState);
+  virtual MohrCoulombState integrate(const Vector7& strainIncrement,
+                                     const MohrCoulombState& initialState) = 0;
 
-  Matrix67 getTangentMatrix(const StateMohrCoulomb& state) const;
+  virtual MohrCoulombState integrate(const Vector7& strainIncrement,
+                             const MohrCoulombState& initialState, 
+                             RegionType& region) = 0;
 
-  Vector7 computeG1(const StateMohrCoulomb& initialState,
+  Matrix67 getTangentMatrix(const MohrCoulombState& state) const;
+
+  Vector7 computeG1(const MohrCoulombState& initialState,
                     RetentionModel retentionModel,
                     const std::vector<double>& retentionParameters) const;
 
-  double computeG2(const StateMohrCoulomb& initialState,
+  double computeG2(const MohrCoulombState& initialState,
                    RetentionModel retentionModel,
                    const std::vector<double>& retentionParameters) const;
 
 protected:
+
+  virtual bool checkYieldNormalized(const MohrCoulombState& state) const = 0;
+
+  virtual double computeYieldNormalized(const Vector6& stress) const = 0;
+
+  virtual std::tuple<Vector6, Vector6> computeDfDsigma(const Vector6& stress) const = 0;
+
+  virtual 
+  std::tuple<double, int> plasticRKME221(MohrCoulombState& state,
+                                         const Vector7& epStrain) const = 0;
+
+  virtual 
+  std::tuple<double, int> plasticRK332(MohrCoulombState& state,
+                                       const Vector7& epStrain) const = 0;
+
+  virtual 
+  std::tuple<double, int> plasticRKBog432(MohrCoulombState& point,
+                                          const Vector7& epStrain) const = 0;
+
+  virtual 
+  std::tuple<double, int> plasticRK543(MohrCoulombState& state,
+                                       const Vector7& epStrain) const = 0;
+
+  virtual 
+  std::tuple<double, int> plasticRKEng654(MohrCoulombState& state,
+                                          const Vector7& epStrain) const = 0;
+
+  virtual 
+  std::tuple<double, int> plasticRKCK654(MohrCoulombState& state,
+                                         const Vector7& epStrain) const = 0;
+
+  virtual 
+  std::tuple<double, int> plasticRKDP754(MohrCoulombState& state,
+                                         const Vector7& epStrain) const = 0;
+
+  virtual 
+  std::tuple<double, int> plasticRKErr8544(MohrCoulombState& state,
+                                           const Vector7& epStrain) const = 0;
+
+  virtual 
+  std::tuple<double, int> plasticExtrapol(MohrCoulombState& state,
+                                          const Vector7& epStrain) const = 0;
+
+  virtual
+  double plasticMidpoint(MohrCoulombState& state, const Vector7& epStrain,
+                         Vector7& absStress, int numIter) const = 0;
+
 
   // Elastic parameters
   struct Elastic
@@ -241,29 +287,24 @@ protected:
   // Integration parameters
   IntegrationParameters d_int;
 
-  virtual bool checkYieldNormalized(const StateMohrCoulomb& state) const;
-
-  virtual double computeYieldNormalized(const Vector6& stress) const;
-
-  void calcElastic(const Vector7& strain, const StateMohrCoulomb& initialPoint,
-                   StateMohrCoulomb& finalPoint) const;
+  void calcElastic(const Vector7& strain, const MohrCoulombState& initialPoint,
+                   MohrCoulombState& finalPoint) const;
 
   Vector6 calcStressIncElast(double nu0, const Vector6& s0, const Vector7& eps0,
                              const Vector7& deps) const;
 
-  bool checkGradient(const StateMohrCoulomb& initialState,
-                     const StateMohrCoulomb& finalState) const;
+  bool checkGradient(const MohrCoulombState& initialState,
+                     const MohrCoulombState& finalState) const;
 
-  Matrix67 calculateElasticTangentMatrix(const StateMohrCoulomb& state) const;
+  Matrix67 calculateElasticTangentMatrix(const MohrCoulombState& state) const;
   Matrix66 calculateElasticTangentMatrix(double K, double G) const;
 
   Matrix67 calculateElastoPlasticTangentMatrix(
-    const StateMohrCoulomb& state) const;
+    const MohrCoulombState& state) const;
 
   double findGradient(const Vector6& s, const Vector6& ds, Vector6& dF,
                       double suction, double dsuction) const;
 
-  virtual std::tuple<Vector6, Vector6> computeDfDsigma(const Vector6& stress) const;
 
   inline double firstInvariant(const Vector6& s) const
   {
@@ -320,12 +361,12 @@ protected:
   }
 
   void findIntersectionUnloading(const Vector7& strainIncrement,
-                                 const StateMohrCoulomb& initialState,
+                                 const MohrCoulombState& initialState,
                                  Vector7& purelyElastic,
                                  Vector7& purelyPlastic);
 
   void findIntersection(const Vector7& strainIncrement,
-                        const StateMohrCoulomb& initialState,
+                        const MohrCoulombState& initialState,
                         Vector7& elasticStrainInc,
                         Vector7& plasticStrainInc) const;
 
@@ -339,46 +380,10 @@ protected:
                    double suction) const;
 
   double calculatePlastic(const Vector7& purelyPlasticStrain,
-                          StateMohrCoulomb& state) const;
+                          MohrCoulombState& state) const;
 
-  int calcPlastic(const StateMohrCoulomb& state, const Vector7& epStrainInc,
+  int calcPlastic(const MohrCoulombState& state, const Vector7& epStrainInc,
                   Vector6& dSigma, Vector6& dEps_p, double& dP0Star) const;
-
-  virtual 
-  std::tuple<double, int> plasticRKME221(StateMohrCoulomb& state,
-                                         const Vector7& epStrain) const;
-
-  virtual 
-  std::tuple<double, int> plasticRK332(StateMohrCoulomb& state,
-                                       const Vector7& epStrain) const;
-
-  virtual 
-  std::tuple<double, int> plasticRKBog432(StateMohrCoulomb& point,
-                                          const Vector7& epStrain) const;
-
-  virtual 
-  std::tuple<double, int> plasticRK543(StateMohrCoulomb& state,
-                                       const Vector7& epStrain) const;
-
-  virtual 
-  std::tuple<double, int> plasticRKEng654(StateMohrCoulomb& state,
-                                          const Vector7& epStrain) const;
-
-  virtual 
-  std::tuple<double, int> plasticRKCK654(StateMohrCoulomb& state,
-                                         const Vector7& epStrain) const;
-
-  virtual 
-  std::tuple<double, int> plasticRKDP754(StateMohrCoulomb& state,
-                                         const Vector7& epStrain) const;
-
-  virtual 
-  std::tuple<double, int> plasticRKErr8544(StateMohrCoulomb& state,
-                                           const Vector7& epStrain) const;
-
-  virtual 
-  std::tuple<double, int> plasticExtrapol(StateMohrCoulomb& state,
-                                          const Vector7& epStrain) const;
 
   void getParamRKME221(Eigen::Matrix<double, 2, 2>& A,
                        Eigen::Matrix<double, 2, 1>& B,
@@ -421,45 +426,21 @@ protected:
                          Eigen::Matrix<double, 8, 1>& C,
                          Eigen::Matrix<double, 7, 1>& ErrorCoef) const;
 
-  template <int Order, int Steps>
-  std::tuple<double, int> doRungeKutta(
-    const Eigen::Matrix<double, Steps, Steps>& AA,
-    const Eigen::Matrix<double, Steps, 1>& BB,
-    const Eigen::Matrix<double, Steps, 1>& BRes,
-    const Eigen::Matrix<double, Steps, 1>& CC, StateMohrCoulomb& state,
-    const Vector7& epStrain, bool errorEstimate) const;
-
-  template <int Order, int Steps>
-  std::tuple<double, int> doRungeKuttaErr(
-    const Eigen::Matrix<double, Steps, Steps>& AA,
-    const Eigen::Matrix<double, Steps, 1>& BB,
-    const Eigen::Matrix<double, Steps, 1>& BRes,
-    const Eigen::Matrix<double, Steps, 1>& CC,
-    const Eigen::Matrix<double, Steps - 1, 1>& ErrCoef, StateMohrCoulomb& state,
-    const Vector7& epStrain, bool errorEstimate) const;
-
   double checkNorm(const Vector7& dSigma, double dP0Star,
-                   const StateMohrCoulomb& initialState,
+                   const MohrCoulombState& initialState,
                    const Vector7& dError) const;
 
   double checkNormSloan(const Vector7& dSigma, double dP0Star,
-                        const StateMohrCoulomb& initialState,
+                        const MohrCoulombState& initialState,
                         const Vector7& dError) const;
 
-  void correctDriftBeg(StateMohrCoulomb& state,
-                       const StateMohrCoulomb& stateOld) const;
+  void correctDriftBeg(MohrCoulombState& state,
+                       const MohrCoulombState& stateOld) const;
 
-  void correctDriftEnd(StateMohrCoulomb& state) const;
-
-  virtual
-  double plasticMidpoint(StateMohrCoulomb& state, const Vector7& epStrain,
-                         Vector7& absStress, int numIter) const;
-
-
-
+  void correctDriftEnd(MohrCoulombState& state) const;
 
 };
 
 } // end namespace Uintah
 
-#endif //__MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
+#endif //__MPM_CONSTITUTIVEMODEL_MODELS_BASE_MOHRCOULOMB__

@@ -1,11 +1,39 @@
-#include "StateMohrCoulomb.h"
+/*
+ * The MIT License
+ *
+ * copyright (c) 1997-2019 Center for the Simulation of Accidental Fires and
+ * Explosions (CSAFE), and  Scientific Computing and Imaging Institute (SCI),
+ * University of Utah.
+ * copyright (c) 2015-2020 Parresia Research Limited, New Zealand
+ *
+ * License for the specific language governing rights and limitations under
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombState.h>
 
 #include <iostream>
 #include <cmath>
 
 using namespace Uintah;
 
-StateMohrCoulomb::StateMohrCoulomb()
+MohrCoulombState::MohrCoulombState()
 {
   stress = Vector6::Zero(); 
   strain = Vector7::Zero(); 
@@ -21,7 +49,7 @@ StateMohrCoulomb::StateMohrCoulomb()
 }
 
 void
-StateMohrCoulomb::update(const Vector6& plasticStrainInc, 
+MohrCoulombState::update(const Vector6& plasticStrainInc, 
                          const Vector7& strainInc,
                          const Vector6& stressInc, 
                          double p0StarInc)
@@ -61,13 +89,13 @@ StateMohrCoulomb::update(const Vector6& plasticStrainInc,
 }
 
 double
-StateMohrCoulomb::meanStress() const
+MohrCoulombState::meanStress() const
 {
   return firstInvariant() / 3.0;
 }
 
 double
-StateMohrCoulomb::shearStress() const
+MohrCoulombState::shearStress() const
 {
   double J2 = secondDevInvariant();
   double shearStress = 0.0;
@@ -78,14 +106,14 @@ StateMohrCoulomb::shearStress() const
 }
 
 double
-StateMohrCoulomb::firstInvariant() const
+MohrCoulombState::firstInvariant() const
 {
   double I1 =  (stress(0) + stress(1) + stress(2));
   return I1;
 }
 
 double
-StateMohrCoulomb::secondInvariant() const
+MohrCoulombState::secondInvariant() const
 {
   double I2 = stress(0) * stress(1) + stress(1) * stress(2) +
               stress(2) * stress(0) - stress(3) * stress(3) -
@@ -94,7 +122,7 @@ StateMohrCoulomb::secondInvariant() const
 }
 
 double
-StateMohrCoulomb::thirdInvariant() const
+MohrCoulombState::thirdInvariant() const
 {
   double I3 =
     stress(0) * stress(1) * stress(2) + 2 * stress(3) * stress(4) * stress(5) -
@@ -104,13 +132,13 @@ StateMohrCoulomb::thirdInvariant() const
 }
 
 double
-StateMohrCoulomb::firstDevInvariant() const
+MohrCoulombState::firstDevInvariant() const
 {
   return 0.0;
 }
 
 double
-StateMohrCoulomb::secondDevInvariant() const
+MohrCoulombState::secondDevInvariant() const
 {
   double J2 = ((stress(0) - stress(1)) * (stress(0) - stress(1)) +
                (stress(0) - stress(2)) * (stress(0) - stress(2)) +
@@ -121,7 +149,7 @@ StateMohrCoulomb::secondDevInvariant() const
 }
 
 double
-StateMohrCoulomb::thirdDevInvariant() const
+MohrCoulombState::thirdDevInvariant() const
 {
   double I1 = firstInvariant();
   double I2 = secondInvariant();
@@ -132,7 +160,7 @@ StateMohrCoulomb::thirdDevInvariant() const
 }
 
 double
-StateMohrCoulomb::getTheta()
+MohrCoulombState::getTheta()
 {
   double J2 = secondDevInvariant();
   double J3 = thirdDevInvariant();
@@ -151,7 +179,7 @@ StateMohrCoulomb::getTheta()
 }
 
 double
-StateMohrCoulomb::getThetaDeg()
+MohrCoulombState::getThetaDeg()
 {
   double thetaDeg = getTheta();
   thetaDeg *= (45.0 / std::atan(1.0));
@@ -165,7 +193,7 @@ StateMohrCoulomb::getThetaDeg()
 }
 
 double
-StateMohrCoulomb::getThetaDeg_0()
+MohrCoulombState::getThetaDeg_0()
 {
   double thetaDeg = getTheta();
   thetaDeg *= (45.0 / std::atan(1.0));
@@ -180,7 +208,7 @@ StateMohrCoulomb::getThetaDeg_0()
 }
 
 bool
-StateMohrCoulomb::checkIfFinite() const
+MohrCoulombState::checkIfFinite() const
 {
   bool F = true;
   for (int i = 0; i < 6; i++)
@@ -227,7 +255,7 @@ StateMohrCoulomb::checkIfFinite() const
 }
 
 void 
-StateMohrCoulomb::setStressEigen(const Vector3& eigenvals)
+MohrCoulombState::setStressEigen(const Vector3& eigenvals)
 {
   stress(0) = eigenvals[0];
   stress(1) = eigenvals[1];

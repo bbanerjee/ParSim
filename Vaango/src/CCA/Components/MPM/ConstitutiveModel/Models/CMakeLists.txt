@@ -94,10 +94,11 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/TensorUtils.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/TableUtils.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/TabularData.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/StateMohrCoulomb.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/TypesMohrCoulomb.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShengMohrCoulomb.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ClassicMohrCoulomb.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombState.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombTypes.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombBase.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombSheng.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombClassic.cc 
   PARENT_SCOPE
 )
 
