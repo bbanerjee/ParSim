@@ -27,8 +27,8 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/MohrCoulomb.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ClassicMohrCoulomb.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShengMohrCoulomb.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombClassic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombSheng.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 
 #include <CCA/Ports/DataWarehouse.h>
@@ -49,6 +49,7 @@
 
 #include <Core/Malloc/Allocator.h>
 #include <Core/Math/MinMax.h>
+#include <Core/Util/DebugStream.h>
 
 #include <sci_defs/uintah_defs.h>
 
@@ -58,13 +59,11 @@
 // sets of external variables for the Sheng Mohr Coulomb algorithm by WTS. Some
 // are redundant.
 
-double ALFACHECK, ALFACHANGE, ALFARATIO, MAXITER, YIELDTOL, TOL_METHOD,
-  INCREMENT_TYPE, BETA_FACT;
-double DRIFT_CORRECTION, EULER_ITERATIONS, CRITICAL_STEP_SIZE;
+double INCREMENT_TYPE;
+double EULER_ITERATIONS;
 double STEP_MAX, STEP_MIN, ERROR_DEF, USE_ERROR_STEP, MIN_DIVISION_SIZE;
-double INTEGRATION_TOL = 0.0001;
 double LINES_SEC_NO = 50;
-int MAX_LOOP, SOLUTION_ALGORITHM,
+int MAX_LOOP, 
   ALGORITHM_TYPE; // MAX_LOOP - number of steps to solve, SOLUTION_ALGORITHM -
                   // algorithm to use
 double USE_ERROR = 0.5,
@@ -74,16 +73,15 @@ double USE_ERROR = 0.5,
 // change. 0.5 means 50% greater accuracy. (tol * 0.5) etc
 double CHGEPSINTOL = 10e-9;
 double ADDTOLYIELD = 0.8;
-double SUCTIONTOL = 0.00000001;
-double TINY = 1e-14; // value used for example in checking whether we are not
-                     // dividing by zero in CalcStressElast, volumetric strain
-                     // must be also larger then tiny
-double PMIN =
-  0.0001; // value of minimum mean stress to calculate K in CalcStressElast
 int USE_NICE_SCHEME = 0;
 
 using namespace Uintah;
 
+static DebugStream cout_doing("MohrCoulomb", false);
+
+/**
+ * Constructors
+ */
 MohrCoulomb::MohrCoulomb(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
@@ -95,13 +93,43 @@ MohrCoulomb::MohrCoulomb(ProblemSpecP& ps, MPMFlags* Mflag)
     
     d_modelP = std::make_unique<MohrCoulombClassic>(d_params.G, d_params.K,
                                                     d_params.cohesion, 
-                                                    d_params.phi, d_params.psi);
-
+                                                    d_params.phi, d_params.psi,
+                                                    d_params.pMin);
   } else if (d_modelType == "sheng") {
 
     d_modelP = std::make_unique<MohrCoulombSheng>(d_params.G, d_params.K,
                                                   d_params.cohesion, 
-                                                  d_params.phi, d_params.psi);
+                                                  d_params.phi, d_params.psi,
+                                                  d_params.pMin);
+  } else {
+    std::ostringstream err;
+    err << "Version of the Mohr-Coulomb Model is set to: " << d_modelType
+        << " This will cause the code to malfuncion. Any results obtained are "
+           "invalid.\n";
+    throw ProblemSetupException(err.str(), __FILE__, __LINE__);
+  }
+
+  // Set the integration parameters
+  setIntegrationParameters();
+
+  // Set up internal variables that can vary with each particle
+  initializeLocalMPMLabels();
+}
+
+/**
+ * Copy constructor
+ */
+MohrCoulomb::MohrCoulomb(const MohrCoulomb* cm)
+  : ConstitutiveModel(cm)
+{
+  d_modelType = cm->d_modelType;
+  if (d_modelType == "classic") {
+
+    d_modelP = std::make_unique<MohrCoulombClassic>(cm->d_modelP.get());
+
+  } else if (d_modelType == "sheng") {
+
+    d_modelP = std::make_unique<MohrCoulombSheng>(cm->d_modelP.get());
 
   } else {
     std::ostringstream err;
@@ -111,20 +139,17 @@ MohrCoulomb::MohrCoulomb(ProblemSpecP& ps, MPMFlags* Mflag)
     throw ProblemSetupException(err.str(), __FILE__, __LINE__);
   }
 
-  // Create VarLabels for GeoModel internal state variables (ISVs)
-  int nx;
-  nx = d_NBASICINPUTS;
+  d_flags = cm->d_flags;
+  d_params = cm->d_params;
+  d_int = cm->d_int;
 
-  for (int i = 0; i < nx; i++) {
-    rinit[i] = UI[i];
-    // cerr<<" UI["<<i<<"]="<<UI[i];
-  }
-  d_NINSV = nx;
-  //  cout << "d_NINSV = " << d_NINSV <<l endl;
-
+  // Set up internal variables that can vary with each particle
   initializeLocalMPMLabels();
 }
 
+/**
+ * Get parameters
+ */
 void
 MohrCoulomb::getInputParameters(ProblemSpecP& ps)
 {
@@ -150,10 +175,11 @@ MohrCoulomb::getModelParameters(ProblemSpecP& cm_ps)
   ps->require("shear_modulus", d_params.G);
   ps->require("bulk_modulus",  d_params.K);
 
-  d_params.c = 0.0; d_params.phi = 30.0; d_params.psi = 30.0;
+  d_params.c = 0.0; d_params.phi = 30.0; d_params.psi = 30.0; d_params.pMin = -1;
   ps->require("cohesion", d_params.c);
   ps->require("angle_internal_friction", d_params.phi);
   ps->require("angle_dilation", d_params.psi);
+  ps->getWithDefault("max_hydrostatic_tension", d_params.pMin, 0.0);
 
   d_params.initialSuction = 0.0; d_params.phi_b = 0.0;;
   ps->getWithDefault("initial_suction", d_params.initialSuction, 0.0);
@@ -229,7 +255,18 @@ MohrCoulomb::getModelParameters(ProblemSpecP& cm_ps)
   ps->getWithDefault("nonlocal_n", d_params.nonlocalN, 0.0);
   ps->getWithDefault("nonlocal_l", d_params.nonlocalL, 0.0);
 
-  // Check that model parameters are valid and allow model to change if needed
+  // retention model
+  std::string retentionModel = "gallipoli"; // "state_surface", "van_genuchten", "gallipoli"
+  ps->getWithDefault("retention_model", retentionModel, "gallipoli");
+  if (retentionModel == "state_surface") {
+    d_params.retentionModel = RetentionModel::STATE_SURFACE;
+  } else if (retentionModel == "van_genuchten") {
+    d_params.retentionModel = RetentionModel::VAN_GENUCHTEN;
+  } else {
+    d_params.retentionModel = RetentionModel::GALLIPOLI;
+  }
+
+  // Check that model parameters are valid
   checkModelParameters();
 }
 
@@ -297,14 +334,71 @@ MohrCoulomb::getIntegrationParameters(ProblemSpecP& cm_ps)
   ps->getWithDefault("minimum_mean_stress", d_int.minMeanStress, -1.0e8);
   ps->getWithDefault("suction_tolerance", d_int.suctionTol, 1.0e-8); 
 
-  d_int.driftCorrection = "at_end";
-  d_int.tolMethod = "sloan";
-  d_int.solutionAlgorithm = "modified_euler";
+  d_int.driftCorrection = "at_end"; // "none", "at_begin", "at_end"
+  d_int.tolMethod = "sloan";        // "relative", "sloan";
+  d_int.solutionAlgorithm = "modified_Euler"; // "RK3", "RK3_Bogacki", "RK4", "RK5_England",
+                                              // "RK5_Cash", "RK5_Dormand", "RK5_Bogacki",
+                                              // "extrapolation"
   ps->getWithDefault("drift_correction_algorithm", d_int.driftCorrection, "at_end");
   ps->getWithDefault("tolerance_algorithm", d_int.tolMethod, "sloan");
   ps->getWithDefault("solution_algorithm", d_int.solutionAlgorithm, "modified_euler");
 }
 
+/**
+ * Set parameters
+ */
+void 
+MohrCoulomb::setIntegrationParameters()
+{
+  DriftCorrection drift;
+  if (d_int.driftCorrection == "none") {
+    drift = DriftCorrection::NO_CORRECTION;
+  } else if (d_int.driftCorrection == "at_begin") {
+    drift = DriftCorrection::CORRECTION_AT_BEGIN;
+  } else {
+    drift = DriftCorrection::CORRECTION_AT_BEGIN;
+  }
+
+  ToleranceMethod tol;
+  if (d_int.tolMethod == "relative") {
+    tol = ToleranceMethod::EPUS_RELATIVE_ERROR;
+  } else {
+    tol = ToleranceMethod::SLOAN;
+  }
+
+  SolutionAlgorithm sol;
+  if (d_int.solutionALgorithm == "modified_Euler") {
+    sol = SolutionAlgorithm::RUNGE_KUTTA_SECOND_ORDER_MODIFIED_EULER;
+  } else if (d_int.solutionALgorithm == "RK3") {
+    sol = SolutionAlgorithm::RUNGE_KUTTA_THIRD_ORDER_NYSTROM;
+  } else if (d_int.solutionALgorithm == "RK3_Bogacki") {
+    sol = SolutionAlgorithm::RUNGE_KUTTA_THIRD_ORDER_BOGACKI;
+  } else if (d_int.solutionALgorithm == "RK4") {
+    sol = SolutionAlgorithm::RUNGE_KUTTA_FOURTH_ORDER;
+  } else if (d_int.solutionALgorithm == "RK5_England") {
+    sol = SolutionAlgorithm::RUNGE_KUTTA_FIFTH_ORDER_ENGLAND;
+  } else if (d_int.solutionALgorithm == "RK5_Cash") {
+    sol = SolutionAlgorithm::RUNGE_KUTTA_FIFTH_ORDER_CASH;
+  } else if (d_int.solutionALgorithm == "RK5_Dormand") {
+    sol = SolutionAlgorithm::RUNGE_KUTTA_FIFTH_ORDER_DORMAND;
+  } else if (d_int.solutionALgorithm == "RK5_Bogacki") {
+    sol = SolutionAlgorithm::RUNGE_KUTTA_FIFTH_ORDER_BOGACKI;
+  } else if (d_int.solutionALgorithm == "extrapolation") {
+    sol = SolutionAlgorithm::EXTRAPOLATION_BULIRSCH;
+  } else {
+    sol = SolutionAlgorithm::RUNGE_KUTTA_SECOND_ORDER_MODIFIED_EULER;
+  }
+ 
+  d_modelP->setIntegrationParameters(d_int.maxIter, d_int.alfaCheck,
+                                     d_int.alfaChange, d_int.alfaRatio, 
+                                     d_int.yieldTol, d_int.integrationTol,
+                                     d_int.betaFactor, d_int.minMeanStress,
+                                     d_int.suctionTol, drift, tol, sol);
+}
+
+/**
+ * Set up internal state variables
+ */
 void
 MohrCoulomb::initializeLocalMPMLabels()
 {
@@ -373,25 +467,20 @@ MohrCoulomb::initializeLocalMPMLabels()
       ISVNames[i] + "+", ParticleVariable<double>::getTypeDescription()));
   }
 }
-#if 0
-MohrCoulomb::MohrCoulomb(const MohrCoulomb* cm) : ConstitutiveModel(cm)
-{
-  for(int i=0;i<d_NDMMPROP;i++){
-    UI[i] = cm->UI[i];
-  }
 
-  //Create VarLabels for Diamm internal state variables (ISVs)
-  initializeLocalMPMLabels();
-}
-#endif
-
+/**
+ * Destructor
+ */
 MohrCoulomb::~MohrCoulomb()
 {
-  for (unsigned int i = 0; i < ISVLabels.size(); i++) {
-    VarLabel::destroy(ISVLabels[i]);
+  for (auto label : ISVLabels) {
+    VarLabel::destroy(label);
   }
 }
 
+/**
+ * For restart files
+ */
 void
 MohrCoulomb::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 {
@@ -418,6 +507,7 @@ MohrCoulomb::outputModelProblemSpec(ProblemSpecP& ps) const
   cm_ps->appendElement("cohesion", d_params.c);
   cm_ps->appendElement("angle_internal_friction", d_params.phi);
   cm_ps->appendElement("angle_dilation", d_params.psi);
+  cm_ps->appendElement("max_hydrostatic_tension", d_params.pMin);
 
   cm_ps->appendElement("initial_suction", d_params.initialSuction);
   cm_ps->appendElement("phi_b", d_params.phi_b);
@@ -464,53 +554,107 @@ MohrCoulomb::outputModelProblemSpec(ProblemSpecP& ps) const
 
   cm_ps->appendElement("nonlocal_n", d_params.nonlocalN);
   cm_ps->appendElement("nonlocal_l", d_params.nonlocalL);
+
+  switch (d_params.retentionModel) 
+  {
+    case RetentionModel::STATE_SURFACE:
+      cm_ps->appendElement("retention_model", "state_surface");
+      break;
+    case RetentionModel::VAN_GENUCHTEN;
+      cm_ps->appendElement("retention_model", "van_genuchten");
+      break;
+    case RetentionModel::GALLIPOLI:
+      cm_ps->appendElement("retention_model", "gallipoli");
+      break;
+    default:
+      break;
+  }
 }
 
 void
 MohrCoulomb::outputIntegrationProblemSpec(ProblemSpecP& ps) const
 {
   ProblemSpecP cm_ps = ps->appendChild("integration_parameters");
+
+  cm_ps->appendElement("max_iterations_pegasus", d_int.maxIter);
+  cm_ps->appendElement("alpha_check_pegasus", d_int.alfaCheck);
+  cm_ps->appendElement("alpha_change_pegasus", d_int.alfaChange);
+  cm_ps->appendElement("alpha_ratio_pegasus", d_int.alfaRatio);
+
+  cm_ps->appendElement("yield_tolerance", d_int.yieldTol);
+  cm_ps->appendElement("integration_tolerance", d_int.integrationTol);
+  cm_ps->appendElement("beta_safety_factor", d_int.betaFactor);
+  cm_ps->appendElement("minimum_mean_stress", d_int.minMeanStress);
+  cm_ps->appendElement("suction_tolerance", d_int.suctionTol);
+
+  cm_ps->appendElement("drift_correction_algorithm", d_int.driftCorrection);
+  cm_ps->appendElement("tolerance_algorithm", d_int.tolMethod);
+  cm_ps->appendElement("solution_algorithm", d_int.solutionAlgorithm);
 }
 
+/*
+ * Create clone
+ */
 MohrCoulomb*
 MohrCoulomb::clone()
 {
   return scinew MohrCoulomb(*this);
 }
 
+/**
+ * Add the internal state variables to the particle state 
+ * for relocation
+ */
+void
+MohrCoulomb::addParticleState(std::vector<const VarLabel*>& from,
+                              std::vector<const VarLabel*>& to)
+{
+  // Add the local particle state data for this constitutive model.
+  for (auto i = 0u; i < ISVLabels.size(); i++) {
+    from.push_back(ISVLabels[i]);
+    to.push_back(ISVLabels_preReloc[i]);
+  }
+}
+
+/**
+ * Initialization of explicit time step
+ */
+void
+MohrCoulomb::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                           const PatchSet*) const
+{
+  cout_doing << "Doing MohrCoulomb::addInitialComputesAndRequires\n";
+
+  const MaterialSubset* matlset = matl->thisMaterial();
+  for (auto label : ISVLabels) {
+    task->computes(label, matlset);
+  }
+}
+
 void
 MohrCoulomb::initializeCMData(const Patch* patch, const MPMMaterial* matl,
                               DataWarehouse* new_dw)
 {
+  cout_doing << "Doing MohrCoulomb::initializeCMData\n";
+
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
   initSharedDataForExplicit(patch, matl, new_dw);
 
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
-  std::vector<ParticleVariable<double>> ISVs(d_NINSV + 1);
-
-  cout << "In initializeCMData" << endl;
-  for (int i = 0; i < d_NINSV; i++) {
-    new_dw->allocateAndPut(ISVs[i], ISVLabels[i], pset);
-    ParticleSubset::iterator iter = pset->begin();
-    for (; iter != pset->end(); iter++) {
-      ISVs[i][*iter] = rinit[i];
+  std::vector<double> ISVInitVal(ISVLabels.size());
+  std::vector<ParticleVariable<double> > ISVs(ISVLabels.size());
+  int i = 0;
+  for (auto label : ISVLabels) {
+    new_dw->allocateAndPut(ISVs[i], label, pset);
+    for (auto idx : *pset) {
+      ISVs[i][idx] = ISVInitVals[i];
     }
+    ++i;
   }
 
   computeStableTimestep(patch, matl, new_dw);
-}
-
-void
-MohrCoulomb::addParticleState(std::vector<const VarLabel*>& from,
-                              std::vector<const VarLabel*>& to)
-{
-  // Add the local particle state data for this constitutive model.
-  for (int i = 0; i < d_NINSV; i++) {
-    from.push_back(ISVLabels[i]);
-    to.push_back(ISVLabels_preReloc[i]);
-  }
 }
 
 void
@@ -985,23 +1129,6 @@ MohrCoulomb::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(0.), lb->StrainEnergyLabel);
     }
-  }
-}
-
-void
-MohrCoulomb::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                           const PatchSet*) const
-{
-  // Add the computes and requires that are common to all explicit
-  // constitutive models.  The method is defined in the ConstitutiveModel
-  // base class.
-  const MaterialSubset* matlset = matl->thisMaterial();
-
-  cout << "In add InitialComputesAnd" << endl;
-
-  // Other constitutive model and input dependent computes and requires
-  for (int i = 0; i < d_NINSV; i++) {
-    task->computes(ISVLabels[i], matlset);
   }
 }
 

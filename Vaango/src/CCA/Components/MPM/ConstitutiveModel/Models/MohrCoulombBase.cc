@@ -49,15 +49,23 @@ MohrCoulombBase::MohrCoulombBase()
   double K = 20000.0;
   double cohesion = 0;
   double phi = 30;
-  setModelParameters(G, K, cohesion, phi, phi);
+  setModelParameters(G, K, cohesion, phi, phi, -1);
   d_int.setDefaults(d_yield);
 }
 
 MohrCoulombBase::MohrCoulombBase(double G, double K, double cohesion,
-                                   double phi, double psi)
+                                 double phi, double psi, double pMin)
 {
-  setModelParameters(G, K, cohesion, phi, psi);
+  setModelParameters(G, K, cohesion, phi, psi, pMin);
   d_int.setDefaults(d_yield);
+}
+
+MohrCoulombBase::MohrCoulombBase(const MohrCoulombBase* cm)
+{
+  d_elastic = cm->d_elastic;
+  d_yield = cm->d_yield;
+  d_potential = cm->d_potential;
+  d_nonAssociated = cm->d_nonAssociated;
 }
 
 /**
@@ -65,10 +73,10 @@ MohrCoulombBase::MohrCoulombBase(double G, double K, double cohesion,
  */
 void
 MohrCoulombBase::setModelParameters(double G, double K, double cohesion,
-                                     double phi, double psi)
+                                     double phi, double psi, double pMin)
 {
   d_elastic.set(G, K);
-  d_yield.set(cohesion, phi);
+  d_yield.set(cohesion, phi, pMin);
   d_potential.set(psi);
   if (phi != psi) {
     d_nonAssociated = true;
@@ -78,15 +86,24 @@ MohrCoulombBase::setModelParameters(double G, double K, double cohesion,
 }
 
 void
-MohrCoulombBase::setIntegrationParameters(
-  int maxIterPegasus, double integrationTolerance, double betaFactor,
-  double yieldLocTolerance, SolutionAlgorithm solutionAlgorithm,
-  ToleranceMethod toleranceMethod, DriftCorrection driftCorrection)
+MohrCoulombBase::setIntegrationParameters(int maxIterPegasus, double alfaCheck,
+                                double alfaChange, double alfaRatio,
+                                double yieldTol, double integrationTolerance,
+                                double betaFactor, double minMeanStress,
+                                double suctionTol,
+                                SolutionAlgorithm solutionAlgorithm,
+                                ToleranceMethod toleranceMethod,
+                                DriftCorrection driftCorrection)
 {
   d_int.d_maxIter = maxIterPegasus;
+  d_int.d_alfaCheck = alfaCheck;
+  d_int.d_alfaChange = alfaChange;
+  d_int.d_alfaRatio = alfaRatio;
+  d_int.d_yieldTol = yieldTol;
   d_int.d_integrationTol = integrationTolerance;
-  d_int.d_yieldTol = yieldLocTolerance;
   d_int.d_betaFactor = betaFactor;
+  d_int.d_minMeanStress = minMeanStress;
+  d_int.d_suctionTol = suctionTol;
 
   d_int.d_solutionAlgorithm = solutionAlgorithm;
   d_int.d_tolMethod = toleranceMethod;

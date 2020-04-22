@@ -54,6 +54,11 @@ MohrCoulombClassic::MohrCoulombClassic(double G, double K, double cohesion,
 {
 }
 
+MohrCoulombClassic::MohrCoulombClassic(const MohrCoulombClassic* cm)
+  : MohrCoulombBase(cm)
+{
+}
+
 /**
  Integrate
  */

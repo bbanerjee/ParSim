@@ -47,6 +47,7 @@ class MohrCoulombSheng : public MohrCoulombBase
 public:
   MohrCoulombSheng();
   MohrCoulombSheng(double G, double K, double cohesion, double phi, double psi);
+  MohrCoulombSheng(const MohrCoulombSheng* cm);
 
   MohrCoulombSheng(const MohrCoulombSheng&) = delete;
   MohrCoulombSheng& operator=(const MohrCoulombSheng&) = delete;

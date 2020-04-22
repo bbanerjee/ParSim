@@ -50,6 +50,7 @@ class MohrCoulombClassic : public MohrCoulombBase
 public:
   MohrCoulombClassic();
   MohrCoulombClassic(double G, double K, double cohesion, double phi, double psi);
+  MohrCoulombClassic(const MohrCoulombClassic* cm);
 
   MohrCoulombClassic(const MohrCoulombClassic&) = delete;
   MohrCoulombClassic& operator=(const MohrCoulombClassic&) = delete;

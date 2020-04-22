@@ -87,17 +87,21 @@ class MohrCoulombBase
 
 public:
   MohrCoulombBase();
-  MohrCoulombBase(double G, double K, double cohesion, double phi, double psi);
+  MohrCoulombBase(double G, double K, double cohesion, double phi, double psi, double pMin = -1.0);
+  MohrCoulombBase(const MohrCoulombBase* cm);
 
   MohrCoulombBase(const MohrCoulombBase&) = delete;
   MohrCoulombBase& operator=(const MohrCoulombBase&) = delete;
   ~MohrCoulombBase() = default;
 
   void setModelParameters(double G, double K, double cohesion, double phi,
-                          double psi);
+                          double psi, double pMin = -1.0);
 
-  void setIntegrationParameters(int maxIterPegasus, double integrationTolerance,
-                                double betaFactor, double yieldLocTolerance,
+  void setIntegrationParameters(int maxIterPegasus, double alfaCheck,
+                                double alfaChange, double alfaRatio,
+                                double yieldTol, double integrationTolerance,
+                                double betaFactor, double minMeanStress,
+                                double yieldLocTolerance,
                                 SolutionAlgorithm solutionAlgorithm,
                                 ToleranceMethod toleranceMethod,
                                 DriftCorrection driftCorrection);
@@ -198,7 +202,7 @@ protected:
     double d_alpha;  // For the M parameter
     double d_alpha4; // alpha^4;
 
-    void set(double c, double phi)
+    void set(double c, double phi, double pMin = -1)
     {
       d_cohesion = c;
       d_phi = phi * M_PI / 180.0;
@@ -206,7 +210,11 @@ protected:
       d_cos_phi = std::cos(phi);
       d_alpha = (3.0 - d_sin_phi) / (3.0 + d_sin_phi);
       d_alpha4 = d_alpha * d_alpha * d_alpha * d_alpha;
-      d_pMin = c * d_cos_phi / d_sin_phi;
+      if (pMin != -1) {
+        d_pMin = pMin;
+      } else {
+        d_pMin = c * d_cos_phi / d_sin_phi;
+      }
     }
   };
 

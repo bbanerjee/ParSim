@@ -54,6 +54,11 @@ MohrCoulombSheng::MohrCoulombSheng(double G, double K, double cohesion,
 {
 }
 
+MohrCoulombSheng::MohrCoulombSheng(const MohrCoulombSheng* cm)
+  : MohrCoulombBase(cm)
+{
+}
+
 /**
  * Integration
  */
