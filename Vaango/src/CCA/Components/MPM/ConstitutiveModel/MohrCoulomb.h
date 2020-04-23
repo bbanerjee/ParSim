@@ -43,8 +43,14 @@ class MohrCoulomb : public ConstitutiveModel
 {
 public:
 
-  std::vector<const VarLabel*> ISVLabels;
-  std::vector<const VarLabel*> ISVLabels_preReloc;
+  const VarLabel* pStrainLabel, pStrainLabel_preReloc;
+  const VarLabel* pShearModulusLabel, pShearModulusLabel_preReloc;
+  const VarLabel* pBulkModulusLabel, pBulkModulusLabel_preReloc;
+  const VarLabel* pCohesionLabel, pCohesionLabel_preReloc;
+  const VarLabel* pSuctionLabel, pSuctionLabel_preReloc;
+  const VarLabel* pSpVolLabel, pSpVolLabel_preReloc;
+  const VarLabel* pShearStrainLabel, pShearStrainLabel_preReloc;
+  const VarLabel* pShearStrainRateLabel, pShearStrainRateLabel_preReloc;
 
   MohrCoulomb(ProblemSpecP& ps, MPMFlags* flag);
   MohrCoulomb(const MohrCoulomb* cm);
@@ -52,6 +58,11 @@ public:
   MohrCoulomb& operator=(const MohrCoulomb& cm) = delete;
 
   virtual ~MohrCoulomb() override;
+
+  ModelType modelType() const override
+  {
+    return ModelType::RATE_FORM;
+  }
 
   virtual void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true);
 
@@ -137,6 +148,7 @@ private:
     double softeningSt, softeningStrain95;
     double regularizationTFE, regularizationTShear;
     double nonlocalN, nonlocalL;
+    std::string depthDirection;
     RetentionModel retentionModel;
   };
 
@@ -165,17 +177,33 @@ private:
 
   void initializeLocalMPMLabels();
 
-  void CalculateStress(int& nblk, int& ninsv, double& dt, double UI[],
-                       double stress[], double D[], double svarg[], double& USM,
-                       double shear_strain_nonlocal, double shear_strain_rate);
+  double computeShearStrain(const Vector6& strain) const;
 
+  void calculateStress(const Point& pX,
+                       const Vector6& strainInc,
+                       double pShearStrain,
+                       double pShearStrainRate,
+                       Vector6& stress,
+                       double& pCohesion,
+                       double& pShearModulus,
+                       double& pBulkModulus,
+                       double& pSuction,
+                       double& pSpecificVol);
 
-  double GetSr(double UseWaterRetention, double Suction, double* WTRParam);
-  double GetSuction(double UseWaterRetention, double Sr, double* WTRParam);
+  double computeSr(double Suction) const;
+  double computeSuction(double Sr) const;
 
   void outputModelProblemSpec(ProblemSpecP& ps) const;
   void outputIntegrationProblemSpec(ProblemSpecP& ps) const;
 
+  double computeShearStrain(const Vector6& strain) const;
+  std::tuple<double, double> computeNonlocalShearStrains(int matID, const Patch* patch, 
+                            DataWarehouse* old_dw,
+                            const Point& pX,
+                            double pShearModulus,
+                            double pCohesion,
+                            double shearStrain,
+                            double shearStrainRate);
 };
 
 } // End namespace Uintah

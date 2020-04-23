@@ -268,35 +268,6 @@ MohrCoulombClassic::rotateToEigen(const Vector6& vec,
   return rotVec;
 }
 
-Matrix33
-MohrCoulombClassic::toMatrix33(const Vector6& vec) const
-{
-  Matrix33 mat;
-  mat(0, 0) = vec(0);
-  mat(0, 1) = vec(3);
-  mat(0, 2) = vec(4);
-  mat(1, 0) = mat(0, 1);
-  mat(1, 1) = vec(1);
-  mat(1, 2) = vec(5);
-  mat(2, 0) = mat(0, 2);
-  mat(2, 1) = mat(1, 2);
-  mat(2, 2) = vec(2);
-  return mat;
-}
-
-Vector6
-MohrCoulombClassic::toVector6(const Matrix33& mat) const
-{
-  Vector6 vec;
-  vec(0) = mat(0, 0);
-  vec(1) = mat(1, 1);
-  vec(2) = mat(2, 2);
-  vec(3) = mat(0, 1);
-  vec(4) = mat(0, 2);
-  vec(5) = mat(1, 2);
-  return vec;
-}
-
 /**
  * Actually compute the gradient of the yield finction wrt stress
  */

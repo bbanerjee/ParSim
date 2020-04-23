@@ -130,8 +130,6 @@ private:
   std::tuple<Vector3, Matrix33> getEigen(const Vector6& stress) const;
   Vector6 rotateToOrigin(const Vector6& vec, const Matrix33& eigenVecs) const;
   Vector6 rotateToEigen(const Vector6& vec, const Matrix33& eigenVecs) const;
-  Matrix33 toMatrix33(const Vector6& vec) const;
-  Vector6 toVector6(const Matrix33& mat) const;
 };
 
 } // end namespace Uintah

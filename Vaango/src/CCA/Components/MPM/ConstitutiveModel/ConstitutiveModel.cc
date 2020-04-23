@@ -213,6 +213,32 @@ ConstitutiveModel::addSharedCRForExplicit(Task* task,
 }
 
 void
+ConstitutiveModel::addComputesAndRequiresForRotatedExplicit(Task* task,
+                                          const MaterialSubset* matlset,
+                                          const PatchSet*) const
+{
+  Ghost::GhostType gnone = Ghost::None;
+  Ghost::GhostType gac = Ghost::AroundCells;
+
+  task->requires(Task::OldDW, lb->delTLabel);
+  task->requires(Task::OldDW, lb->pXLabel, matlset, gnone);
+  task->requires(Task::OldDW, lb->pMassLabel, matlset, gnone);
+  task->requires(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
+  task->requires(Task::OldDW, lb->pTemperatureLabel, matlset, gnone);
+  task->requires(Task::OldDW, lb->pVelocityLabel, matlset, gnone);
+  task->requires(Task::OldDW, lb->pAccelerationLabel, matlset, gnone);
+  task->requires(Task::OldDW, lb->pSizeLabel, matlset, gnone);
+
+  task->requires(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, Ghost::None);
+  task->requires(Task::NewDW, lb->pDeformRateMidLabel, matlset, Ghost::None);
+  task->requires(Task::NewDW, lb->pStressUnrotatedLabel, matlset, Ghost::None);
+  task->requires(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, Ghost::None);
+
+  task->computes(lb->pStressLabel_preReloc, matlset);
+  task->computes(lb->pdTdtLabel_preReloc, matlset);
+}
+
+void
 ConstitutiveModel::computeStressTensor(const PatchSubset*, const MPMMaterial*,
                                        DataWarehouse*, DataWarehouse*)
 {

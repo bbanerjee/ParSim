@@ -120,6 +120,7 @@ namespace Uintah {
     inline Vector& operator/=(const double);
     inline Vector operator+(const Vector&) const;
     inline Vector& operator+=(const Vector&);
+    inline Vector operator+(const double) const;
     inline Vector operator-() const;
     inline Vector operator-(const Vector&) const;
     inline Vector operator-(const Point&) const;
@@ -194,6 +195,10 @@ namespace Uintah {
       x_ = x;
       y_ = y;
       z_ = z;
+    }
+
+    inline Vector cwiseAbs() const {
+      return Vector(std::abs(x_), std::abs(y_), std::abs(z_));
     }
       
     SCISHARE friend std::ostream& operator<<(std::ostream& os, const Vector& p);
@@ -316,6 +321,10 @@ namespace Uintah {
   inline Vector Vector::operator+(const Vector& v2) const
   {
     return Vector(x_+v2.x_, y_+v2.y_, z_+v2.z_);
+  }
+
+  inline Vector Vector::operator+(const double scalar) const {
+    return Vector(x_+scalar, y_+scalar, z_+scalar);
   }
 
   inline Vector Vector::operator*(const Vector& v2) const
@@ -518,6 +527,7 @@ namespace Uintah {
                   Max(v1.y(), v2.y()),
                   Max(v1.z(), v2.z()));
   }
+
 
   SCISHARE const FETypeDescription* get_fetype_description(Vector*);
 

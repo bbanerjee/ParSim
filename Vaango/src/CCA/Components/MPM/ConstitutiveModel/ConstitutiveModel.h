@@ -419,6 +419,14 @@ protected:
   void addSharedCRForHypoExplicit(Task* task, const MaterialSubset* matlset,
                                   const PatchSet* patches) const;
 
+  /*!
+   *  Computes and requires used by all models where stress has been
+   *  pre-rotated.
+   */
+  void addComputesAndRequiresForRotatedExplicit(Task* task,
+                                          const MaterialSubset* matlset,
+                                          const PatchSet*) const;
+
   /////////////////////////////////////////////////////////////////
   /*! Computes and Requires common to all constitutive models that
    *  do explicit time stepping : called by addComputesAndRequires */

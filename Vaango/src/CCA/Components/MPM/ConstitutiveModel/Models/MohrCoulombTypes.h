@@ -27,6 +27,7 @@
 #define __MPM_CONSTITUTIVEMODEL_MODELS_TYPES_MOHRCOULOMB__
 
 #include <Eigen/Dense>
+#include <Core/Math/Matrix3.h>
 
 namespace Uintah {
 
@@ -87,6 +88,18 @@ enum class RetentionModel
   VAN_GENUCHTEN = 2,
   GALLIPOLI = 3
 };
+
+Matrix33 toMatrix33(const Vector6& vec);
+Vector6 toVector6(const Matrix33& mat);
+
+Uintah::Matrix3 toMatrix3(const Vector6& vec);
+Vector6 toVector6(const Uintah::Matrix3& mat);
+
+Matrix33 toMatrix33Strain(const Vector6& vec);
+Vector6 toVector6Strain(const Matrix33& mat);
+
+Uintah::Matrix3 toMatrix3Strain(const Vector6& vec);
+Vector6 toVector6Strain(const Uintah::Matrix3& mat);
 
 } // end namespace Uintah
 

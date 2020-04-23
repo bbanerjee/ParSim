@@ -65,4 +65,119 @@ operator<<(std::ostream& out, const SolutionAlgorithm& sa)
   return out;
 }
 
+Matrix33
+toMatrix33(const Vector6& vec) 
+{
+  Matrix33 mat;
+  mat(0, 0) = vec(0);
+  mat(0, 1) = vec(3);
+  mat(0, 2) = vec(4);
+  mat(1, 0) = mat(0, 1);
+  mat(1, 1) = vec(1);
+  mat(1, 2) = vec(5);
+  mat(2, 0) = mat(0, 2);
+  mat(2, 1) = mat(1, 2);
+  mat(2, 2) = vec(2);
+  return mat;
+}
+
+Vector6
+toVector6(const Matrix33& mat)
+{
+  Vector6 vec;
+  vec(0) = mat(0, 0);
+  vec(1) = mat(1, 1);
+  vec(2) = mat(2, 2);
+  vec(3) = mat(0, 1);
+  vec(4) = mat(0, 2);
+  vec(5) = mat(1, 2);
+  return vec;
+}
+
+Uintah::Matrix3 
+toMatrix3(const Vector6& vec)
+{
+  Uintah::Matrix3 mat;
+  mat(0, 0) = vec(0);
+  mat(0, 1) = vec(3);
+  mat(0, 2) = vec(4);
+  mat(1, 0) = mat(0, 1);
+  mat(1, 1) = vec(1);
+  mat(1, 2) = vec(5);
+  mat(2, 0) = mat(0, 2);
+  mat(2, 1) = mat(1, 2);
+  mat(2, 2) = vec(2);
+  return mat;
+}
+
+Vector6 
+toVector6(const Uintah::Matrix3& mat)
+{
+  Vector6 vec;
+  vec(0) = mat(0, 0);
+  vec(1) = mat(1, 1);
+  vec(2) = mat(2, 2);
+  vec(3) = mat(0, 1);
+  vec(4) = mat(0, 2);
+  vec(5) = mat(1, 2);
+  return vec;
+}
+
+Matrix33
+toMatrix33Strain(const Vector6& vec) 
+{
+  Matrix33 mat;
+  mat(0, 0) = vec(0);
+  mat(0, 1) = 0.5*vec(3);
+  mat(0, 2) = 0.5*vec(4);
+  mat(1, 0) = mat(0, 1);
+  mat(1, 1) = vec(1);
+  mat(1, 2) = 0.5*vec(5);
+  mat(2, 0) = mat(0, 2);
+  mat(2, 1) = mat(1, 2);
+  mat(2, 2) = vec(2);
+  return mat;
+}
+
+Vector6
+toVector6Strain(const Matrix33& mat)
+{
+  Vector6 vec;
+  vec(0) = mat(0, 0);
+  vec(1) = mat(1, 1);
+  vec(2) = mat(2, 2);
+  vec(3) = 2.0*mat(0, 1);
+  vec(4) = 2.0*mat(0, 2);
+  vec(5) = 2.0*mat(1, 2);
+  return vec;
+}
+
+Uintah::Matrix3 
+toMatrix3Strain(const Vector6& vec)
+{
+  Uintah::Matrix3 mat;
+  mat(0, 0) = vec(0);
+  mat(0, 1) = 0.5*vec(3);
+  mat(0, 2) = 0.5*vec(4);
+  mat(1, 0) = mat(0, 1);
+  mat(1, 1) = vec(1);
+  mat(1, 2) = 0.5*vec(5);
+  mat(2, 0) = mat(0, 2);
+  mat(2, 1) = mat(1, 2);
+  mat(2, 2) = vec(2);
+  return mat;
+}
+
+Vector6 
+toVector6Strain(const Uintah::Matrix3& mat)
+{
+  Vector6 vec;
+  vec(0) = mat(0, 0);
+  vec(1) = mat(1, 1);
+  vec(2) = mat(2, 2);
+  vec(3) = 2.0*mat(0, 1);
+  vec(4) = 2.0*mat(0, 2);
+  vec(5) = 2.0*mat(1, 2);
+  return vec;
+}
 } // end namespace Uintah
