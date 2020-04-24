@@ -33,8 +33,8 @@
 
 #include <CCA/Ports/DataWarehouse.h>
 
-#include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Exceptions/InvalidValue.h>
+#include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Task.h>
@@ -124,11 +124,13 @@ MohrCoulomb::operator=(const MohrCoulomb& cm)
     d_modelType = cm.d_modelType;
     if (d_modelType == "classic" || d_modelType == "classic_semiimplicit") {
 
-      d_modelP = std::make_unique<MohrCoulombClassic>(static_cast<MohrCoulombClassic*>(cm.d_modelP.get()));
+      d_modelP = std::make_unique<MohrCoulombClassic>(
+        static_cast<MohrCoulombClassic*>(cm.d_modelP.get()));
 
     } else if (d_modelType == "sheng") {
 
-      d_modelP = std::make_unique<MohrCoulombSheng>(static_cast<MohrCoulombSheng*>(cm.d_modelP.get()));
+      d_modelP = std::make_unique<MohrCoulombSheng>(
+        static_cast<MohrCoulombSheng*>(cm.d_modelP.get()));
 
     } else {
       std::ostringstream err;
@@ -163,8 +165,8 @@ MohrCoulomb::clone()
 void
 MohrCoulomb::getInputParameters(ProblemSpecP& ps)
 {
-  d_modelType = "classic"; // options: classic, sheng
-  ps->require("mohr_coulomb_model_type", d_modelType);
+  d_modelType = "classic"; // options: classic, classic_semiimplicit, sheng
+  ps->require("model_type", d_modelType);
 
   getModelParameters(ps);
   getIntegrationParameters(ps);
@@ -236,10 +238,8 @@ MohrCoulomb::getModelParameters(ProblemSpecP& cm_ps)
   // strain rate influence parameters
   d_params.betaStrainRate  = 0.0;
   d_params.refStrainRate   = 0.0;
-  d_params.shearStrainRate = 0.0;
   ps->getWithDefault("beta_strain_rate", d_params.betaStrainRate, 0.0);
   ps->getWithDefault("ref_strain_rate", d_params.refStrainRate, 0.0);
-  ps->getWithDefault("shearStrainRate", d_params.shearStrainRate, 0.0);
 
   // use variable elastic modulus
   d_flags.useVariableElasticModulus = false;
@@ -248,11 +248,8 @@ MohrCoulomb::getModelParameters(ProblemSpecP& cm_ps)
 
   d_params.variableModulusM           = 0.0;
   d_params.variableModulusNuY         = 0.0;
-  d_params.variableModulusShearStrain = 0.0;
   ps->getWithDefault("variable_modulus_m", d_params.variableModulusM, 0.0);
   ps->getWithDefault("variable_modulus_nu_y", d_params.variableModulusNuY, 0.0);
-  ps->getWithDefault(
-    "variable_modulus_shear_strain", d_params.variableModulusShearStrain, 0.0);
 
   // use linearly varying cohesion with depth
   d_flags.useLinearlyVaryingCohesion = false;
@@ -546,7 +543,7 @@ MohrCoulomb::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
     cm_ps->setAttribute("type", "mohr_coulomb");
   }
 
-  cm_ps->appendElement("mohr_coulomb_model_type", d_modelType);
+  cm_ps->appendElement("model_type", d_modelType);
 
   outputModelProblemSpec(ps);
   outputIntegrationProblemSpec(ps);
@@ -588,15 +585,12 @@ MohrCoulomb::outputModelProblemSpec(ProblemSpecP& ps) const
 
   cm_ps->appendElement("beta_strain_rate", d_params.betaStrainRate);
   cm_ps->appendElement("ref_strain_rate", d_params.refStrainRate);
-  cm_ps->appendElement("shearStrainRate", d_params.shearStrainRate);
 
   cm_ps->appendElement("use_variable_elastic_modulus",
                        d_flags.useVariableElasticModulus);
 
   cm_ps->appendElement("variable_modulus_m", d_params.variableModulusM);
   cm_ps->appendElement("variable_modulus_nu_y", d_params.variableModulusNuY);
-  cm_ps->appendElement("variable_modulus_shear_strain",
-                       d_params.variableModulusShearStrain);
 
   cm_ps->appendElement("use_linearly_varying_cohesion",
                        d_flags.useLinearlyVaryingCohesion);
@@ -1326,8 +1320,8 @@ MohrCoulomb::calculateStress(const Point& pX,
                                d_params.pMin);
 
   MohrCoulombState finalState = initialState;
-  Vector7 strainIncExtra = Vector7::Zero();
-  strainIncExtra.block<6,1>(0,0) = strainInc;
+  Vector7 strainIncExtra      = Vector7::Zero();
+  strainIncExtra.block<6, 1>(0, 0) = strainInc;
   if (d_modelType == "classic" || "sheng") {
     finalState = d_modelP->integrate(strainIncExtra, initialState);
   } else if (d_modelType == "classic_semiimplicit") {

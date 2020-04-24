@@ -115,7 +115,8 @@ include_directories(${Boost_INCLUDE_DIR})
 #----------------------------------------------------------------------------
 # Add requirements for Output in VTK format
 #----------------------------------------------------------------------------
-find_package(VTK 5.10 REQUIRED)
+#find_package(VTK 5.10 REQUIRED)
+find_package(VTK 6 REQUIRED)
 message(STATUS "VTK header directory = ${VTK_INCLUDE_DIRS}")
 message(STATUS "VTK libraries directory = ${VTK_LIBRARIES}")
 include_directories(${VTK_INCLUDE_DIRS})

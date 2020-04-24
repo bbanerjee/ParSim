@@ -1,10 +1,17 @@
 opt
 dbg
+dbg_gcc
+opt_gcc
+opt_clang_amr
 dbg_clang
 opt_clang
 opt_clang_amr
 opt_visit
 opt_Packages
+opt_gcc_boost1.59
+opt_gcc_boost1.63
+dbg_petsc
+opt_petsc
 runs
 gold_standards
 *.pyc
@@ -34,3 +41,4 @@ cmake_install.cmake
 _site
 gh-pages
 googletest
+octave-workspace

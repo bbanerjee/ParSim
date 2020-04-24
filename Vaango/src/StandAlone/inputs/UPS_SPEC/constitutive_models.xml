@@ -41,6 +41,7 @@
                                       tabular_eos, 
                                       tabular_plasticity, 
                                       tabular_plasticity_cap, 
+                                      mohr_coulomb,
                                       camclay,
                                       polar_orthotropic_hypoelastic,
                                       viscoelastic_fortran'">
@@ -818,6 +819,65 @@
     <C1_WLF spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
     <C2_WLF spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
     <Tref_WLF spec="OPTIONAL DOUBLE" need_applies_to="type viscoelastic_fortran" />
+
+    <!-- For Mohr Coulomb model -->
+    <model_type spec="REQUIRED STRING 'classic, classic_semiimplicit, sheng" 
+                need_applies_to="type mohr_coulomb" />
+    <model_parameters spec="REQUIRED NO_DATA" need_applies_to="type mohr_coulomb">
+      <shear_modulus spec="REQUIRED DOUBLE" />
+      <bulk_modulus spec="REQUIRED DOUBLE" />
+      <cohesion spec="REQUIRED DOUBLE" />
+      <angle_internal_friction spec="REQUIRED DOUBLE" />
+      <angle_dilation spec="REQUIRED DOUBLE" />
+      <max_hydrostatic_tension spec="OPTIONAL DOUBLE" />
+      <initial_suction spec="OPTIONAL DOUBLE" />
+      <phi_b spec="OPTIONAL DOUBLE" />
+      <use_water_retention spec="OPTIONAL BOOLEAN" />
+      <water_retention_param_1 spec="OPTIONAL DOUBLE" />
+      <water_retention_param_2 spec="OPTIONAL DOUBLE" />
+      <water_retention_param_3 spec="OPTIONAL DOUBLE" />
+      <water_retention_param_4 spec="OPTIONAL DOUBLE" />
+      <use_undrained_shear_transition spec="OPTIONAL BOOLEAN" />
+      <water_influence_A1 spec="OPTIONAL DOUBLE" />
+      <water_influence_B1 spec="OPTIONAL DOUBLE" />
+      <water_influence_W spec="OPTIONAL DOUBLE" />
+      <beta_strain_rate spec="OPTIONAL DOUBLE" />
+      <ref_strain_rate spec="OPTIONAL DOUBLE" />
+      <use_variable_elastic_modulus spec="OPTIONAL BOOLEAN" />
+      <variable_modulus_m spec="OPTIONAL DOUBLE" />
+      <variable_modulus_nu_y spec="OPTIONAL DOUBLE" />
+      <use_linearly_varying_cohesion spec="OPTIONAL BOOLEAN" />
+      <linear_cohesion_a spec="OPTIONAL DOUBLE" />
+      <linear_cohesion_y_ref spec="OPTIONAL DOUBLE" />
+      <linear_cohesion_depth_direction spec="OPTIONAL STRING 'x-, x+, y-, y+, z-, z+" />
+      <use_softening spec="OPTIONAL BOOLEAN" />
+      <softening_St spec="OPTIONAL DOUBLE" />
+      <softening_strain_95 spec="OPTIONAL DOUBLE" />
+      <use_regularized_nonlocal_softening spec="OPTIONAL BOOLEAN" />
+      <regularization_t_FE spec="OPTIONAL DOUBLE" />
+      <regularization_t_shear spec="OPTIONAL DOUBLE" />
+      <use_nonlocal_correction spec="OPTIONAL BOOLEAN" />
+      <nonlocal_n spec="OPTIONAL DOUBLE" />
+      <nonlocal_l spec="OPTIONAL DOUBLE" />
+      <retention_model spec="OPTIONAL STRING 'state_surface, van_genuchten, gallipoli" />
+    </model_parameters>
+
+    <integration_parameters spec="REQUIRED NO_DATA"
+                            need_applies_to="type mohr_coulomb">
+      <max_iterations_pegasus spec="OPTIONAL DOUBLE" />
+      <alpha_check_pegasus spec="OPTIONAL DOUBLE" />
+      <alpha_change_pegasus spec="OPTIONAL DOUBLE" />
+      <alpha_ratio_pegasus spec="OPTIONAL DOUBLE" />
+      <yield_tolerance spec="OPTIONAL DOUBLE" /> 
+      <integration_tolerance spec="OPTIONAL DOUBLE" />
+      <beta_safety_factor spec="OPTIONAL DOUBLE" />
+      <minimum_mean_stress spec="OPTIONAL DOUBLE" />
+      <suction_tolerance spec="OPTIONAL DOUBLE" />
+      <drift_correction_algorithm spec="OPTIONAL STRING 'none, at_begin, at_end" />
+      <tolerance_algorithm spec="OPTIONAL STRING 'relative, sloan'" />
+      <solution_algorithm spec="OPTIONAL STRING 'modified_euler, RK3, RK3_Bogacki, RK4, RK5_England,
+                                                 RK5_Cash, RK5_Dormand, RK5_Bogacki, extrapolation" />
+    </integration_parameters>
 
     <!--______________________________________________________________________ -->    
     <!-- For CamClay and related models developed by Biswajit for ONR_MURI -->

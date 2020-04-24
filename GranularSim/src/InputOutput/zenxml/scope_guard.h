@@ -22,10 +22,10 @@ getUncaughtExceptionCount()
 // std::uncaught_exceptions() currently unsupported on GCC and Clang => clean up
 // ASAP
 #ifdef ZEN_LINUX
-static_assert(__GNUC__ < 6 || (__GNUC__ == 6 && (__GNUC_MINOR__ < 2 ||
-                                                 (__GNUC_MINOR__ == 2 &&
-                                                  __GNUC_PATCHLEVEL__ <= 1))),
-              "check std::uncaught_exceptions support");
+//static_assert(__GNUC__ < 6 || (__GNUC__ == 6 && (__GNUC_MINOR__ < 2 ||
+//                                                (__GNUC_MINOR__ == 2 &&
+//                                                 __GNUC_PATCHLEVEL__ <= 1))),
+//             "check std::uncaught_exceptions support");
 #else // std::uncaught_exceptions() requires "mmacosx-version-min=10.12"
 static_assert(__clang_major__ < 8 ||
                 (__clang_major__ == 8 && __clang_minor__ <= 0),

@@ -30,6 +30,7 @@
 #define __MPM_CONSTITUTIVEMODEL_MOHRCOULOMB_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombBase.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Math/Matrix3.h>
 
@@ -148,8 +149,8 @@ private:
     double initialSuction, phi_b;
     double waterRetentionParams[4];
     double waterInfluenceA1, waterInfluenceB1, waterInfluenceW;
-    double betaStrainRate, refStrainRate, shearStrainRate;
-    double variableModulusM, variableModulusNuY, variableModulusShearStrain;
+    double betaStrainRate, refStrainRate;
+    double variableModulusM, variableModulusNuY;
     double linearCohesionA, linearCohesionYRef;
     double softeningSt, softeningStrain95;
     double regularizationTFE, regularizationTShear;

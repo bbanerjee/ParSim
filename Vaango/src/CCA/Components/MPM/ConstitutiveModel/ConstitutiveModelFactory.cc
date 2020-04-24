@@ -59,7 +59,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Kayenta.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MWViscoElastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Membrane.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MurnaghanMPM.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MohrCoulomb.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MurnaghanMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/NonLocalDruckerPrager.h>
 #include <CCA/Components/MPM/ConstitutiveModel/P_Alpha.h>
@@ -152,6 +152,9 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
 
   else if (mat_type == "tabular_plasticity_cap")
     return (scinew Vaango::TabularPlasticityCap(child, flags));
+
+  else if (mat_type == "mohr_coulomb") 
+    return (scinew MohrCoulomb(child, flags));
 
   else if (mat_type == "comp_neo_hook") {
     if (flags->d_integrator_type == "explicit" ||

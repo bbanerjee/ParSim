@@ -130,7 +130,11 @@ OutputVTK<TArray>::writeDomain(const Box* domain, REAL time)
   dataSet->Squeeze();
 
   // Write the data
+  #if VTK_MAJOR_VERSION <= 5
   writer->SetInput(dataSet);
+  #else
+  writer->SetInputData(dataSet);
+  #endif
   writer->SetDataModeToAscii();
   writer->Write();
 }
@@ -168,7 +172,11 @@ OutputVTK<TArray>::writeDomain(const OrientedBox& domain, REAL time)
   dataSet->Squeeze();
 
   // Write the data
+  #if VTK_MAJOR_VERSION <= 5
   writer->SetInput(dataSet);
+  #else
+  writer->SetInputData(dataSet);
+  #endif
   writer->SetDataModeToAscii();
   writer->Write();
 }
@@ -225,7 +233,11 @@ OutputVTK<TArray>::writePatchBoxGrid(const Box* patchBox, REAL time)
   dataSet->Squeeze();
 
   // Write the data
+  #if VTK_MAJOR_VERSION <= 5
   writer->SetInput(dataSet);
+  #else
+  writer->SetInputData(dataSet);
+  #endif
   writer->SetDataModeToAscii();
   writer->Write();
 }
@@ -318,7 +330,11 @@ OutputVTK<TArray>::actuallyWriteParticles(const TArray* particles, int frame,
   dataSet->Squeeze();
 
   // Write the data
+  #if VTK_MAJOR_VERSION <= 5
   writer->SetInput(dataSet);
+  #else
+  writer->SetInputData(dataSet);
+  #endif
   writer->SetDataModeToAscii();
   writer->Write();
 }
