@@ -188,6 +188,8 @@ public:
 
   virtual double getCompressibility() = 0;
 
+  double computeRateOfWork(const Matrix3& stress, const Matrix3& rateOfDeformation) const;
+
   virtual Vector getInitialFiberDir();
 
   double computeRhoMicro(double press, double gamma, double cv, double Temp,

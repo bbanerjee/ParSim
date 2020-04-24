@@ -379,6 +379,18 @@ ConstitutiveModel::getDamageParameter(const Patch*, ParticleVariable<int>&, int,
 {
 }
 
+double 
+ConstitutiveModel::computeRateOfWork(const Matrix3& stress, const Matrix3& rateOfDeformation) const
+{
+  double rate = rateOfDeformation(0, 0) * stress(0, 0) + 
+                rateOfDeformation(1, 1) * stress(1, 1) +
+                rateOfDeformation(2, 2) * stress(2, 2) +
+                2. * (rateOfDeformation(0, 1) * stress(0, 1) + 
+                      rateOfDeformation(0, 2) * stress(0, 2) +
+                      rateOfDeformation(1, 2) * stress(1, 2));
+  return rate;
+}
+
 Vector
 ConstitutiveModel::getInitialFiberDir()
 {

@@ -46,12 +46,11 @@ class MohrCoulombSheng : public MohrCoulombBase
 
 public:
   MohrCoulombSheng();
-  MohrCoulombSheng(double G, double K, double cohesion, double phi, double psi);
+  MohrCoulombSheng(double G, double K, double cohesion, double phi, double psi, double pMin = -1);
   MohrCoulombSheng(const MohrCoulombSheng* cm);
-
-  MohrCoulombSheng(const MohrCoulombSheng&) = delete;
-  MohrCoulombSheng& operator=(const MohrCoulombSheng&) = delete;
-  ~MohrCoulombSheng() = default;
+  MohrCoulombSheng(const MohrCoulombSheng&) = default;
+  MohrCoulombSheng& operator=(const MohrCoulombSheng&) = default;
+  virtual ~MohrCoulombSheng() = default;
 
   MohrCoulombState integrate(const Vector7& strainIncrement,
                              const MohrCoulombState& initialState) override;

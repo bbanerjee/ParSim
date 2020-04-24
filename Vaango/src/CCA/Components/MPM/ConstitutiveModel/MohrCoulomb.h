@@ -29,7 +29,7 @@
 #ifndef __MPM_CONSTITUTIVEMODEL_MOHRCOULOMB_H__
 #define __MPM_CONSTITUTIVEMODEL_MOHRCOULOMB_H__
 
-#include "CCA/Components/MPM/Materials/ConstitutiveModel/ConstitutiveModel.h"
+#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Math/Matrix3.h>
 
@@ -42,29 +42,27 @@ namespace Uintah {
 class MohrCoulomb : public ConstitutiveModel
 {
 public:
-
-  const VarLabel* pStrainLabel, pStrainLabel_preReloc;
-  const VarLabel* pShearModulusLabel, pShearModulusLabel_preReloc;
-  const VarLabel* pBulkModulusLabel, pBulkModulusLabel_preReloc;
-  const VarLabel* pCohesionLabel, pCohesionLabel_preReloc;
-  const VarLabel* pSuctionLabel, pSuctionLabel_preReloc;
-  const VarLabel* pSpVolLabel, pSpVolLabel_preReloc;
-  const VarLabel* pShearStrainLabel, pShearStrainLabel_preReloc;
-  const VarLabel* pShearStrainRateLabel, pShearStrainRateLabel_preReloc;
+  const VarLabel *pStrainLabel, *pStrainLabel_preReloc;
+  const VarLabel *pPlasticStrainLabel, *pPlasticStrainLabel_preReloc;
+  const VarLabel *pShearModulusLabel, *pShearModulusLabel_preReloc;
+  const VarLabel *pBulkModulusLabel, *pBulkModulusLabel_preReloc;
+  const VarLabel *pCohesionLabel, *pCohesionLabel_preReloc;
+  const VarLabel *pSuctionLabel, *pSuctionLabel_preReloc;
+  const VarLabel *pSpVolLabel, *pSpVolLabel_preReloc;
+  const VarLabel *pShearStrainLabel, *pShearStrainLabel_preReloc;
+  const VarLabel *pShearStrainRateLabel, *pShearStrainRateLabel_preReloc;
 
   MohrCoulomb(ProblemSpecP& ps, MPMFlags* flag);
   MohrCoulomb(const MohrCoulomb* cm);
-
-  MohrCoulomb& operator=(const MohrCoulomb& cm) = delete;
+  MohrCoulomb(const MohrCoulomb& cm);
+  MohrCoulomb& operator=(const MohrCoulomb& cm);
 
   virtual ~MohrCoulomb() override;
 
-  ModelType modelType() const override
-  {
-    return ModelType::RATE_FORM;
-  }
+  ModelType modelType() const override { return ModelType::RATE_FORM; }
 
-  virtual void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true);
+  virtual void outputProblemSpec(ProblemSpecP& ps,
+                                 bool output_cm_tag = true) override;
 
   MohrCoulomb* clone() override;
 
@@ -75,56 +73,64 @@ public:
                                      const MPMMaterial* matl,
                                      const PatchSet* patches) const override;
 
-  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
+  void initializeCMData(const Patch* patch,
+                        const MPMMaterial* matl,
                         DataWarehouse* new_dw) override;
 
   void computeStableTimestep(const Patch* patch,
                              const MPMMaterial* matl,
-                             DataWarehouse* new_dw) override;
+                             DataWarehouse* new_dw);
 
-  // compute stress at each particle in the patch
+  virtual void addComputesAndRequires(Task* task,
+                                      const MPMMaterial* matl,
+                                      const PatchSet* patches) const override;
+
+  virtual void addComputesAndRequires(Task* task,
+                                      const MPMMaterial* matl,
+                                      const PatchSet* patches,
+                                      const bool recursion,
+                                      const bool SchedParent) const override;
+
   virtual void computeStressTensor(const PatchSubset* patches,
                                    const MPMMaterial* matl,
                                    DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw);
+                                   DataWarehouse* new_dw) override;
 
   // carry forward CM data for RigidMPM
-  virtual void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                            DataWarehouse* old_dw, DataWarehouse* new_dw);
+  virtual void carryForward(const PatchSubset* patches,
+                            const MPMMaterial* matl,
+                            DataWarehouse* old_dw,
+                            DataWarehouse* new_dw) override;
 
-
-  virtual void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+  virtual void allocateCMDataAddRequires(Task* task,
+                                         const MPMMaterial* matl,
                                          const PatchSet* patch,
-                                         MPMLabel* lb) const;
+                                         MPMLabel* lb) const override;
 
-
+  using LabelParticleMap = std::map<const VarLabel*, ParticleVariableBase*>;
   virtual void allocateCMDataAdd(DataWarehouse* new_dw,
                                  ParticleSubset* subset,
-                                 map<const VarLabel*,
-                                 ParticleVariableBase*>* newState,
+                                 LabelParticleMap* newState,
                                  ParticleSubset* delset,
-                                 DataWarehouse* old_dw);
+                                 DataWarehouse* old_dw) override;
 
-  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                      const PatchSet* patches) const;
+  virtual double computeRhoMicroCM(double pressure,
+                                   const double p_ref,
+                                   const MPMMaterial* matl,
+                                   double temperature,
+                                   double rho_guess) override;
 
-  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                      const PatchSet* patches,
-                                      const bool recursion) const;
+  virtual void computePressEOSCM(double rho_m,
+                                 double& press_eos,
+                                 double p_ref,
+                                 double& dp_drho,
+                                 double& ss_new,
+                                 const MPMMaterial* matl,
+                                 double temperature) override;
 
-  virtual double computeRhoMicroCM(double pressure, const double p_ref,
-                                   const MPMMaterial* matl, double temperature,
-                                   double rho_guess);
-
-  virtual void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
-                                 double& dp_drho, double& ss_new,
-                                 const MPMMaterial* matl, double temperature);
-
-  virtual double getCompressibility();
-
+  virtual double getCompressibility() override;
 
 private:
-
   struct ModelFlags
   {
     bool useWaterRetention;
@@ -155,9 +161,9 @@ private:
   struct Integration
   {
     int maxIter;
-    double alfaCheck, d_alfaChange, d_alfaRatio;
-    double d_yieldTol, d_integrationTol, d_betaFactor; 
-    double d_minMeanStress, d_suctionTol; 
+    double alfaCheck, alfaChange, alfaRatio;
+    double yieldTol, integrationTol, betaFactor;
+    double minMeanStress, suctionTol;
     std::string driftCorrection, tolMethod, solutionAlgorithm;
   };
 
@@ -184,6 +190,8 @@ private:
                        double pShearStrain,
                        double pShearStrainRate,
                        Vector6& stress,
+                       Vector6& strain,
+                       Vector6& plasticStrain,
                        double& pCohesion,
                        double& pShearModulus,
                        double& pBulkModulus,
@@ -193,17 +201,25 @@ private:
   double computeSr(double Suction) const;
   double computeSuction(double Sr) const;
 
+  std::tuple<double, double> computeNonlocalShearStrains(
+    const Point& pX,
+    double pShearModulus,
+    double pCohesion,
+    double shearStrain,
+    double shearStrainRate,
+    ParticleSubset* pset_neighbor,
+    constParticleVariable<Point>& pX_neighbor,
+    constParticleVariable<double>& pVolume_neighbor);
+
+  Vector6 computeNonlocalStress(
+    const Point& pX,
+    const Vector6& pStress_vec,
+    ParticleSubset* pset_neighbor,
+    constParticleVariable<Point>& pX_neighbor,
+    constParticleVariable<double>& pVolume_neighbor);
+
   void outputModelProblemSpec(ProblemSpecP& ps) const;
   void outputIntegrationProblemSpec(ProblemSpecP& ps) const;
-
-  double computeShearStrain(const Vector6& strain) const;
-  std::tuple<double, double> computeNonlocalShearStrains(int matID, const Patch* patch, 
-                            DataWarehouse* old_dw,
-                            const Point& pX,
-                            double pShearModulus,
-                            double pCohesion,
-                            double shearStrain,
-                            double shearStrainRate);
 };
 
 } // End namespace Uintah

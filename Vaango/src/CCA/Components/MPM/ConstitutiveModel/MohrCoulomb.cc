@@ -34,6 +34,7 @@
 #include <CCA/Ports/DataWarehouse.h>
 
 #include <Core/Exceptions/ParameterNotFound.h>
+#include <Core/Exceptions/InvalidValue.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
 #include <Core/Grid/Task.h>
@@ -56,25 +57,6 @@
 #include <iostream>
 #include <string>
 
-// sets of external variables for the Sheng Mohr Coulomb algorithm by WTS. Some
-// are redundant.
-
-double INCREMENT_TYPE;
-double EULER_ITERATIONS;
-double STEP_MAX, STEP_MIN, ERROR_DEF, USE_ERROR_STEP, MIN_DIVISION_SIZE;
-double LINES_SEC_NO = 50;
-int MAX_LOOP,
-  ALGORITHM_TYPE; // MAX_LOOP - number of steps to solve, SOLUTION_ALGORITHM -
-                  // algorithm to use
-double USE_ERROR      = 0.5,
-       SAVE_FOR_ERROR = 1; // these are values - 1st - when 'use' the additional
-                           // error to speed up the calculations (here 30%)
-// SAVEFORERROR says how greater accuracy the program should use; 1 means no
-// change. 0.5 means 50% greater accuracy. (tol * 0.5) etc
-double CHGEPSINTOL  = 10e-9;
-double ADDTOLYIELD  = 0.8;
-int USE_NICE_SCHEME = 0;
-
 using namespace Uintah;
 
 static DebugStream cout_doing("MohrCoulomb", false);
@@ -93,7 +75,7 @@ MohrCoulomb::MohrCoulomb(ProblemSpecP& ps, MPMFlags* Mflag)
 
     d_modelP = std::make_unique<MohrCoulombClassic>(d_params.G,
                                                     d_params.K,
-                                                    d_params.cohesion,
+                                                    d_params.c,
                                                     d_params.phi,
                                                     d_params.psi,
                                                     d_params.pMin);
@@ -101,7 +83,7 @@ MohrCoulomb::MohrCoulomb(ProblemSpecP& ps, MPMFlags* Mflag)
 
     d_modelP = std::make_unique<MohrCoulombSheng>(d_params.G,
                                                   d_params.K,
-                                                  d_params.cohesion,
+                                                  d_params.c,
                                                   d_params.phi,
                                                   d_params.psi,
                                                   d_params.pMin);
@@ -126,29 +108,53 @@ MohrCoulomb::MohrCoulomb(ProblemSpecP& ps, MPMFlags* Mflag)
 MohrCoulomb::MohrCoulomb(const MohrCoulomb* cm)
   : ConstitutiveModel(cm)
 {
-  d_modelType = cm->d_modelType;
-  if (d_modelType == "classic" || d_modelType == "classic_semiimplicit") {
+  *this = cm;
+}
 
-    d_modelP = std::make_unique<MohrCoulombClassic>(cm->d_modelP.get());
+MohrCoulomb::MohrCoulomb(const MohrCoulomb& cm)
+  : ConstitutiveModel(cm)
+{
+  *this = cm;
+}
 
-  } else if (d_modelType == "sheng") {
+MohrCoulomb&
+MohrCoulomb::operator=(const MohrCoulomb& cm)
+{
+  if (this != &cm) {
+    d_modelType = cm.d_modelType;
+    if (d_modelType == "classic" || d_modelType == "classic_semiimplicit") {
 
-    d_modelP = std::make_unique<MohrCoulombSheng>(cm->d_modelP.get());
+      d_modelP = std::make_unique<MohrCoulombClassic>(static_cast<MohrCoulombClassic*>(cm.d_modelP.get()));
 
-  } else {
-    std::ostringstream err;
-    err << "Version of the Mohr-Coulomb Model is set to: " << d_modelType
+    } else if (d_modelType == "sheng") {
+
+      d_modelP = std::make_unique<MohrCoulombSheng>(static_cast<MohrCoulombSheng*>(cm.d_modelP.get()));
+
+    } else {
+      std::ostringstream err;
+      err
+        << "Version of the Mohr-Coulomb Model is set to: " << d_modelType
         << " This will cause the code to malfuncion. Any results obtained are "
            "invalid.\n";
-    throw ProblemSetupException(err.str(), __FILE__, __LINE__);
+      throw ProblemSetupException(err.str(), __FILE__, __LINE__);
+    }
+
+    d_flags  = cm.d_flags;
+    d_params = cm.d_params;
+    d_int    = cm.d_int;
+
+    initializeLocalMPMLabels();
   }
+  return *this;
+}
 
-  d_flags  = cm->d_flags;
-  d_params = cm->d_params;
-  d_int    = cm->d_int;
-
-  // Set up internal variables that can vary with each particle
-  initializeLocalMPMLabels();
+/*
+ * Create clone
+ */
+MohrCoulomb*
+MohrCoulomb::clone()
+{
+  return scinew MohrCoulomb(*this);
 }
 
 /**
@@ -168,12 +174,11 @@ void
 MohrCoulomb::getModelParameters(ProblemSpecP& cm_ps)
 {
   ProblemSpecP ps = cm_ps->findBlock("model_parameters");
-  if (!child) {
+  if (!ps) {
     std::ostringstream out;
     out << "**Error** No  model parameters provided for Mohr-Coulomb model."
-        << " Include the <model_parameters> tag in the input "
-           "file.\n" throw Uintah::ProblemSetupException(
-             out.str(), __FILE__, __LINE__);
+        << " Include the <model_parameters> tag in the input file.\n";
+    throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
   d_params.G = 10000.0;
@@ -199,7 +204,6 @@ MohrCoulomb::getModelParameters(ProblemSpecP& cm_ps)
   d_flags.useWaterRetention = false;
   ps->getWithDefault("use_water_retention", d_flags.useWaterRetention, false);
 
-  d_params.waterRetentionParams = { 0.0, 0.0, 0.0, 0.0 };
   ps->getWithDefault(
     "water_retention_param_1", d_params.waterRetentionParams[0], 0.0);
   ps->getWithDefault(
@@ -259,7 +263,8 @@ MohrCoulomb::getModelParameters(ProblemSpecP& cm_ps)
   d_params.depthDirection = "y-"; // "x+", "x-", "y+", "y-", "z+", "z-"
   ps->getWithDefault("linear_cohesion_a", d_params.linearCohesionA, 0.0);
   ps->getWithDefault("linear_cohesion_y_ref", d_params.linearCohesionYRef, 0.0);
-  ps->getWithDefault("linear_cohesion_depth_direction", d_params.depthDirection, "y-");
+  ps->getWithDefault(
+    "linear_cohesion_depth_direction", d_params.depthDirection, "y-");
 
   // use softening model
   d_flags.useSoftening = false;
@@ -322,33 +327,34 @@ MohrCoulomb::checkModelParameters() const
                          "obtained are invalid.\n";
     throw ProblemSetupException(err.str(), __FILE__, __LINE__);
   }
-  if (d_params.phi < 0.0 || d_params.phi > 90.0)
+  if (d_params.phi < 0.0 || d_params.phi > 90.0) {
     std::ostringstream err;
-  err << "Friction angle in the Mohr-Coulomb Model is set to: " << d_params.phi
-      << " This will cause the code to malfuncion. Any results obtained are "
-         "invalid.\n";
-  throw ProblemSetupException(err.str(), __FILE__, __LINE__);
-}
-if (d_params.psi < 0.0 || d_params.psi > 90.0)
-  std::ostringstream err;
-err << "Dilation angle in the Mohr-Coulomb Model is set to: " << d_params.psi
-    << " This will cause the code to malfuncion. Any results obtained are "
-       "invalid.\n";
-throw ProblemSetupException(err.str(), __FILE__, __LINE__);
-}
+    err << "Friction angle in the Mohr-Coulomb Model is set to: "
+        << d_params.phi
+        << " This will cause the code to malfuncion. Any results obtained are "
+           "invalid.\n";
+    throw ProblemSetupException(err.str(), __FILE__, __LINE__);
+  }
+  if (d_params.psi < 0.0 || d_params.psi > 90.0) {
+    std::ostringstream err;
+    err << "Dilation angle in the Mohr-Coulomb Model is set to: "
+        << d_params.psi
+        << " This will cause the code to malfuncion. Any results obtained are "
+           "invalid.\n";
+    throw ProblemSetupException(err.str(), __FILE__, __LINE__);
+  }
 }
 
 void
 MohrCoulomb::getIntegrationParameters(ProblemSpecP& cm_ps)
 {
   ProblemSpecP ps = cm_ps->findBlock("integration_parameters");
-  if (!child) {
+  if (!ps) {
     std::ostringstream out;
     out << "**Error** No integration parameters provided for Mohr-Coulomb "
            "model."
-        << " Include the <integration_parameters> tag in the input "
-           "file.\n" throw Uintah::ProblemSetupException(
-             out.str(), __FILE__, __LINE__);
+        << " Include the <integration_parameters> tag in the input file.\n";
+    throw Uintah::ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
 
   d_int.maxIter    = 200;
@@ -407,23 +413,23 @@ MohrCoulomb::setIntegrationParameters()
   }
 
   SolutionAlgorithm sol;
-  if (d_int.solutionALgorithm == "modified_Euler") {
+  if (d_int.solutionAlgorithm == "modified_Euler") {
     sol = SolutionAlgorithm::RUNGE_KUTTA_SECOND_ORDER_MODIFIED_EULER;
-  } else if (d_int.solutionALgorithm == "RK3") {
+  } else if (d_int.solutionAlgorithm == "RK3") {
     sol = SolutionAlgorithm::RUNGE_KUTTA_THIRD_ORDER_NYSTROM;
-  } else if (d_int.solutionALgorithm == "RK3_Bogacki") {
+  } else if (d_int.solutionAlgorithm == "RK3_Bogacki") {
     sol = SolutionAlgorithm::RUNGE_KUTTA_THIRD_ORDER_BOGACKI;
-  } else if (d_int.solutionALgorithm == "RK4") {
+  } else if (d_int.solutionAlgorithm == "RK4") {
     sol = SolutionAlgorithm::RUNGE_KUTTA_FOURTH_ORDER;
-  } else if (d_int.solutionALgorithm == "RK5_England") {
+  } else if (d_int.solutionAlgorithm == "RK5_England") {
     sol = SolutionAlgorithm::RUNGE_KUTTA_FIFTH_ORDER_ENGLAND;
-  } else if (d_int.solutionALgorithm == "RK5_Cash") {
+  } else if (d_int.solutionAlgorithm == "RK5_Cash") {
     sol = SolutionAlgorithm::RUNGE_KUTTA_FIFTH_ORDER_CASH;
-  } else if (d_int.solutionALgorithm == "RK5_Dormand") {
+  } else if (d_int.solutionAlgorithm == "RK5_Dormand") {
     sol = SolutionAlgorithm::RUNGE_KUTTA_FIFTH_ORDER_DORMAND;
-  } else if (d_int.solutionALgorithm == "RK5_Bogacki") {
+  } else if (d_int.solutionAlgorithm == "RK5_Bogacki") {
     sol = SolutionAlgorithm::RUNGE_KUTTA_FIFTH_ORDER_BOGACKI;
-  } else if (d_int.solutionALgorithm == "extrapolation") {
+  } else if (d_int.solutionAlgorithm == "extrapolation") {
     sol = SolutionAlgorithm::EXTRAPOLATION_BULIRSCH;
   } else {
     sol = SolutionAlgorithm::RUNGE_KUTTA_SECOND_ORDER_MODIFIED_EULER;
@@ -438,9 +444,9 @@ MohrCoulomb::setIntegrationParameters()
                                      d_int.betaFactor,
                                      d_int.minMeanStress,
                                      d_int.suctionTol,
-                                     drift,
+                                     sol,
                                      tol,
-                                     sol);
+                                     drift);
 }
 
 /**
@@ -449,44 +455,49 @@ MohrCoulomb::setIntegrationParameters()
 void
 MohrCoulomb::initializeLocalMPMLabels()
 {
-  pStrainLabel.push_back("p.strainMC",
-                         ParticleVariable<Matrix3>::getTypeDescription());
-  pStrainLabel_preReloc.push_back(
+  pStrainLabel = VarLabel::create(
+    "p.strainMC", ParticleVariable<Matrix3>::getTypeDescription());
+  pStrainLabel_preReloc = VarLabel::create(
     "p.strainMC+", ParticleVariable<Matrix3>::getTypeDescription());
 
-  pShearModulusLabel.push_back("p.shearModulusMC",
-                         ParticleVariable<double>::getTypeDescription());
-  pShearModulusLabel_preReloc.push_back(
+  pPlasticStrainLabel = VarLabel::create(
+    "p.plasticstrainMC", ParticleVariable<Matrix3>::getTypeDescription());
+  pPlasticStrainLabel_preReloc = VarLabel::create(
+    "p.plasticstrainMC+", ParticleVariable<Matrix3>::getTypeDescription());
+
+  pShearModulusLabel = VarLabel::create(
+    "p.shearModulusMC", ParticleVariable<double>::getTypeDescription());
+  pShearModulusLabel_preReloc = VarLabel::create(
     "p.shearModulusMC+", ParticleVariable<double>::getTypeDescription());
 
-  pBulkModulusLabel.push_back("p.bulkModulusMC",
-                         ParticleVariable<double>::getTypeDescription());
-  pBulkModulusLabel_preReloc.push_back(
+  pBulkModulusLabel = VarLabel::create(
+    "p.bulkModulusMC", ParticleVariable<double>::getTypeDescription());
+  pBulkModulusLabel_preReloc = VarLabel::create(
     "p.bulkModulusMC+", ParticleVariable<double>::getTypeDescription());
 
-  pCohesionLabel.push_back("p.cohesionMC",
-                         ParticleVariable<double>::getTypeDescription());
-  pCohesionLabel_preReloc.push_back(
+  pCohesionLabel = VarLabel::create(
+    "p.cohesionMC", ParticleVariable<double>::getTypeDescription());
+  pCohesionLabel_preReloc = VarLabel::create(
     "p.cohesionMC+", ParticleVariable<double>::getTypeDescription());
 
-  pSuctionLabel.push_back("p.suctionMC",
-                         ParticleVariable<double>::getTypeDescription());
-  pSuctionLabel_preReloc.push_back(
+  pSuctionLabel = VarLabel::create(
+    "p.suctionMC", ParticleVariable<double>::getTypeDescription());
+  pSuctionLabel_preReloc = VarLabel::create(
     "p.suctionMC+", ParticleVariable<double>::getTypeDescription());
 
-  pSpVolLabel.push_back("p.spvolMC",
-                         ParticleVariable<double>::getTypeDescription());
-  pSpVolLabel_preReloc.push_back(
+  pSpVolLabel = VarLabel::create(
+    "p.spvolMC", ParticleVariable<double>::getTypeDescription());
+  pSpVolLabel_preReloc = VarLabel::create(
     "p.spvolMC+", ParticleVariable<double>::getTypeDescription());
 
-  pShearStrainLabel.push_back("p.shearstrainMC",
-                         ParticleVariable<double>::getTypeDescription());
-  pShearStrainLabel_preReloc.push_back(
+  pShearStrainLabel = VarLabel::create(
+    "p.shearstrainMC", ParticleVariable<double>::getTypeDescription());
+  pShearStrainLabel_preReloc = VarLabel::create(
     "p.shearstrainMC+", ParticleVariable<double>::getTypeDescription());
 
-  pShearStrainRateLabel.push_back("p.shearstrainrateMC",
-                         ParticleVariable<double>::getTypeDescription());
-  pShearStrainRateLabel_preReloc.push_back(
+  pShearStrainRateLabel = VarLabel::create(
+    "p.shearstrainrateMC", ParticleVariable<double>::getTypeDescription());
+  pShearStrainRateLabel_preReloc = VarLabel::create(
     "p.shearstrainrateMC+", ParticleVariable<double>::getTypeDescription());
 }
 
@@ -497,6 +508,9 @@ MohrCoulomb::~MohrCoulomb()
 {
   VarLabel::destroy(pStrainLabel);
   VarLabel::destroy(pStrainLabel_preReloc);
+
+  VarLabel::destroy(pPlasticStrainLabel);
+  VarLabel::destroy(pPlasticStrainLabel_preReloc);
 
   VarLabel::destroy(pShearModulusLabel);
   VarLabel::destroy(pShearModulusLabel_preReloc);
@@ -589,7 +603,8 @@ MohrCoulomb::outputModelProblemSpec(ProblemSpecP& ps) const
 
   cm_ps->appendElement("linear_cohesion_a", d_params.linearCohesionA);
   cm_ps->appendElement("linear_cohesion_y_ref", d_params.linearCohesionYRef);
-  cm_ps->appendElement("linear_cohesion_depth_direction", d_params.depthDirection);
+  cm_ps->appendElement("linear_cohesion_depth_direction",
+                       d_params.depthDirection);
 
   cm_ps->appendElement("use_softening", d_flags.useSoftening);
 
@@ -612,9 +627,10 @@ MohrCoulomb::outputModelProblemSpec(ProblemSpecP& ps) const
     case RetentionModel::STATE_SURFACE:
       cm_ps->appendElement("retention_model", "state_surface");
       break;
-    case RetentionModel::VAN_GENUCHTEN;
-      cm_ps->appendElement("retention_model", "van_genuchten"); break;
-      case RetentionModel::GALLIPOLI:
+    case RetentionModel::VAN_GENUCHTEN:
+      cm_ps->appendElement("retention_model", "van_genuchten");
+      break;
+    case RetentionModel::GALLIPOLI:
       cm_ps->appendElement("retention_model", "gallipoli");
       break;
     default:
@@ -643,15 +659,6 @@ MohrCoulomb::outputIntegrationProblemSpec(ProblemSpecP& ps) const
   cm_ps->appendElement("solution_algorithm", d_int.solutionAlgorithm);
 }
 
-/*
- * Create clone
- */
-MohrCoulomb*
-MohrCoulomb::clone()
-{
-  return scinew MohrCoulomb(*this);
-}
-
 /**
  * Add the internal state variables to the particle state
  * for relocation
@@ -662,6 +669,9 @@ MohrCoulomb::addParticleState(std::vector<const VarLabel*>& from,
 {
   from.push_back(pStrainLabel);
   to.push_back(pStrainLabel_preReloc);
+
+  from.push_back(pPlasticStrainLabel);
+  to.push_back(pPlasticStrainLabel_preReloc);
 
   from.push_back(pShearModulusLabel);
   to.push_back(pShearModulusLabel_preReloc);
@@ -695,7 +705,10 @@ MohrCoulomb::addInitialComputesAndRequires(Task* task,
 {
   cout_doing << "Doing MohrCoulomb::addInitialComputesAndRequires\n";
 
+  const MaterialSubset* matlset = matl->thisMaterial();
+
   task->computes(pStrainLabel, matlset);
+  task->computes(pPlasticStrainLabel, matlset);
   task->computes(pShearModulusLabel, matlset);
   task->computes(pBulkModulusLabel, matlset);
   task->computes(pCohesionLabel, matlset);
@@ -722,12 +735,12 @@ MohrCoulomb::initializeCMData(const Patch* patch,
   new_dw->get(pMass, lb->pMassLabel, pset);
   new_dw->get(pVolume, lb->pVolumeLabel, pset);
 
-  ParticleVariable<Matrix3> pStrain;
+  ParticleVariable<Matrix3> pStrain, pPlasticStrain;
   new_dw->allocateAndPut(pStrain, pStrainLabel, pset);
+  new_dw->allocateAndPut(pPlasticStrain, pPlasticStrainLabel, pset);
 
-  ParticleVariable<double> pShearModulus, pBulkModulus, pCohesion,
-                           pSuction, pSpVol,
-                           pShearStrain, pShearStrainRate;
+  ParticleVariable<double> pShearModulus, pBulkModulus, pCohesion, pSuction,
+    pSpVol, pShearStrain, pShearStrainRate;
   new_dw->allocateAndPut(pShearModulus, pShearModulusLabel, pset);
   new_dw->allocateAndPut(pBulkModulus, pBulkModulusLabel, pset);
   new_dw->allocateAndPut(pCohesion, pCohesionLabel, pset);
@@ -736,18 +749,16 @@ MohrCoulomb::initializeCMData(const Patch* patch,
   new_dw->allocateAndPut(pShearStrain, pShearStrainLabel, pset);
   new_dw->allocateAndPut(pShearStrainRate, pShearStrainRateLabel, pset);
 
-  Matrix3 Zero(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  Matrix3 Zero(0.0);
   for (auto idx : *pset) {
-    for (auto i = 0u; i < num_ISV, ++ii) {
-      ISVs[i][idx] = ISVInitVals[i];
-    }
-    pStrain[idx] = Zero;
-    pShearModulus[idx] = d_params.G;
-    pBulkModulus[idx] = d_params.K;
-    pCohesion[idx] = d_params.c;
-    pSuction[idx] = 0.0;
-    pSpVol[idx] = pVolume[idx] / pMass[idx];
-    pShearStrain[idx] = 0.0;
+    pStrain[idx]          = Zero;
+    pPlasticStrain[idx]   = Zero;
+    pShearModulus[idx]    = d_params.G;
+    pBulkModulus[idx]     = d_params.K;
+    pCohesion[idx]        = d_params.c;
+    pSuction[idx]         = 0.0;
+    pSpVol[idx]           = pVolume[idx] / pMass[idx];
+    pShearStrain[idx]     = 0.0;
     pShearStrainRate[idx] = 0.0;
   }
 
@@ -780,9 +791,9 @@ MohrCoulomb::computeStableTimestep(const Patch* patch,
   Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
   for (auto idx : *pset) {
 
-    double bulkSpeedOfSound =
+    double p_wave_speed =
       std::sqrt((K + 4.0 * G / 3.0) * pVolume[idx] / pMass[idx]);
-    Vector velMax = pVelocity[idx].cwiseAbs() + bulkSpeedOfSound;
+    Vector velMax = pVelocity[idx].cwiseAbs() + p_wave_speed;
     waveSpeed     = Max(velMax, waveSpeed);
   }
 
@@ -810,6 +821,7 @@ MohrCoulomb::addComputesAndRequires(Task* task,
 
   // Computes and requires for internal state data
   task->requires(Task::OldDW, pStrainLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pPlasticStrainLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pShearModulusLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pBulkModulusLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pCohesionLabel, matlset, Ghost::None);
@@ -819,6 +831,7 @@ MohrCoulomb::addComputesAndRequires(Task* task,
   task->requires(Task::OldDW, pShearStrainRateLabel, matlset, Ghost::None);
 
   task->computes(pStrainLabel_preReloc, matlset);
+  task->computes(pPlasticStrainLabel_preReloc, matlset);
   task->computes(pShearModulusLabel_preReloc, matlset);
   task->computes(pBulkModulusLabel_preReloc, matlset);
   task->computes(pCohesionLabel_preReloc, matlset);
@@ -832,8 +845,13 @@ void
 MohrCoulomb::addComputesAndRequires(Task*,
                                     const MPMMaterial*,
                                     const PatchSet*,
+                                    const bool,
                                     const bool) const
 {
+  std::ostringstream err;
+  err << "This Mohr-Coulomb model does not support implicit time"
+         "stepping and caanot me used with Immplicit MPM.\n";
+  throw ProblemSetupException(err.str(), __FILE__, __LINE__);
 }
 
 void
@@ -845,7 +863,7 @@ MohrCoulomb::computeStressTensor(const PatchSubset* patches,
   Matrix3 Identity;
   Identity.Identity();
 
-  double rho_orig      = matl->getInitialDensity();
+  double rho_orig = matl->getInitialDensity();
 
   delt_vartype delT;
   old_dw->get(delT, lb->delTLabel, getLevel(patches));
@@ -855,15 +873,14 @@ MohrCoulomb::computeStressTensor(const PatchSubset* patches,
     const Patch* patch = patches->get(p);
     Vector dx          = patch->dCell();
 
-    double se    = 0.0;
-    double c_dil = 0.0;
+    double strainEnergy = 0.0;
     Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
 
     int matID            = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
     constParticleVariable<Point> pX;
-    constParticleVariable<double> pMass, pVolume, pVolume_new, pTemperature;
+    constParticleVariable<double> pMass, pVolume, pTemperature;
     constParticleVariable<Vector> pVelocity;
 
     old_dw->get(pX, lb->pXLabel, pset);
@@ -872,12 +889,13 @@ MohrCoulomb::computeStressTensor(const PatchSubset* patches,
     old_dw->get(pTemperature, lb->pTemperatureLabel, pset);
     old_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
-    constParticleVariable<Matrix3> pStrain_old;
-    constParticleVariable<double> pShearModulus_old, pBulkModulus_old, pCohesion_old,
-                                  pSuction_old, pSpVol_old, pShearStrain_old,
-                                  pShearStrainRate_old;
+    constParticleVariable<Matrix3> pStrain_old, pPlasticStrain_old;
+    constParticleVariable<double> pShearModulus_old, pBulkModulus_old,
+      pCohesion_old, pSuction_old, pSpVol_old, pShearStrain_old,
+      pShearStrainRate_old;
 
     old_dw->get(pStrain_old, pStrainLabel, pset);
+    old_dw->get(pPlasticStrain_old, pPlasticStrainLabel, pset);
     old_dw->get(pShearModulus_old, pShearModulusLabel, pset);
     old_dw->get(pBulkModulus_old, pBulkModulusLabel, pset);
     old_dw->get(pCohesion_old, pCohesionLabel, pset);
@@ -890,7 +908,7 @@ MohrCoulomb::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Matrix3> pDefRate_mid, pDefGrad_new, pStress_old;
 
     new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(pDefRate_mid, lb->pDefRateMidLabel, pset);
+    new_dw->get(pDefRate_mid, lb->pDeformRateMidLabel, pset);
     new_dw->get(pStress_old, lb->pStressUnrotatedLabel, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
@@ -901,208 +919,142 @@ MohrCoulomb::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
     new_dw->allocateAndPut(pStress_new, lb->pStressLabel_preReloc, pset);
 
-    ParticleVariable<Matrix3> pStrain_new;
-    ParticleVariable<double> pShearModulus_new, pBulkModulus_new, pCohesion_new;
-                             pSuction_new, pSpVol_new, pShearStrain_new,
-                             pShearStrainRate_new;
+    ParticleVariable<Matrix3> pStrain_new, pPlasticStrain_new;
+    ParticleVariable<double> pShearModulus_new, pBulkModulus_new, pCohesion_new,
+      pSuction_new, pSpVol_new, pShearStrain_new, pShearStrainRate_new;
 
     new_dw->allocateAndPut(pStrain_new, pStrainLabel_preReloc, pset);
-    new_dw->allocateAndPut(pShearModulus_new, pShearModulusLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pPlasticStrain_new, pPlasticStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pShearModulus_new, pShearModulusLabel_preReloc, pset);
     new_dw->allocateAndPut(pBulkModulus_new, pBulkModulusLabel_preReloc, pset);
     new_dw->allocateAndPut(pCohesion_new, pCohesionLabel_preReloc, pset);
-    new_dw->allocateAndPut(pSuction_old, pSuctionLabel_preReloc, pset);
-    new_dw->allocateAndPut(pSpVol_old, pSpVolLabel_preReloc, pset);
-    new_dw->allocateAndPut(pShearStrain_old, pShearStrainLabel_preReloc, pset);
-    new_dw->allocateAndPut(pShearStrainRate_old, pShearStrainRateLabel_preReloc, pset);
+    new_dw->allocateAndPut(pSuction_new, pSuctionLabel_preReloc, pset);
+    new_dw->allocateAndPut(pSpVol_new, pSpVolLabel_preReloc, pset);
+    new_dw->allocateAndPut(pShearStrain_new, pShearStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pShearStrainRate_new, pShearStrainRateLabel_preReloc, pset);
 
-    for (idx : *pset) {
+    for (auto idx : *pset) {
 
       // Assign zero internal heating by default - modify if necessary.
       pdTdt[idx] = 0.0;
 
-      // This is unrotated stress and rate of deformation
-      // pStress = R^T * pStress * R, D = R^T * D * R
-      // Load into 1-D array
-      Vector6 stress_vec = Uintah::toVector6(pStress_old[idx]);
-      Vector6 D_vec      = Uintah::toVector6(pDefRate_mid[idx]);
-
-      // get the volumetric part of the deformation
-      double J = pDefGrad_new[idx].Determinant();
-
-      // Compute the local sound speed
-      double rho_cur = rho_orig / J;
-
       // Shear strain and shear strain rate
+      Vector6 D_vec      = Uintah::toVector6(pDefRate_mid[idx]);
       Vector6 strain_vec = Uintah::toVector6(pStrain_old[idx]);
       strain_vec += D_vec * delT;
-      pStrain_new[idx] = strain_vec;
 
       double shearStrain     = computeShearStrain(strain_vec);
       double shearStrainRate = computeShearStrain(D_vec);
 
       // Non local correction
       bool nonlocal = d_flags.useNonlocalCorrection;
+
+      ParticleSubset* pset_neighbor = nullptr;
+
+      constParticleVariable<Point> pX_neighbor;
+      constParticleVariable<double> pVolume_neighbor;
+
       if (nonlocal) {
-        std::tie(shearStrain, shearStrainRate) =   
-         computeNonlocalShearStrains(matID, patch, old_dw,
-                                     pX[idx], pShearModulus[idx], pCohesion[idx],
-                                     shearStrain, shearStrainRate);
+
+        Vector cellSize        = patch->dCell();
+        double nonlocal_length = d_params.nonlocalL;
+        Vector nonlocal_length_vec(
+          nonlocal_length, nonlocal_length, nonlocal_length);
+        nonlocal_length_vec += (0.5 * cellSize);
+
+        auto cellIndexLow =
+          patch->getLevel()->getCellIndex(pX[idx] - nonlocal_length_vec);
+        auto cellIndexHigh =
+          patch->getLevel()->getCellIndex(pX[idx] + nonlocal_length_vec);
+
+        pset_neighbor =
+          old_dw->getParticleSubset(matID, patch, cellIndexLow, cellIndexHigh);
+
+        old_dw->get(pX_neighbor, lb->pXLabel, pset_neighbor);
+        new_dw->get(pVolume_neighbor, lb->pVolumeLabel_preReloc, pset_neighbor);
+
+        std::tie(shearStrain, shearStrainRate) =
+          computeNonlocalShearStrains(pX[idx],
+                                      pShearModulus_old[idx],
+                                      pCohesion_old[idx],
+                                      shearStrain,
+                                      shearStrainRate,
+                                      pset_neighbor,
+                                      pX_neighbor,
+                                      pVolume_neighbor);
       }
 
-      pShearStrain_new[idx] = shearStrain;
+      pShearStrain_new[idx]     = shearStrain;
       pShearStrainRate_new[idx] = shearStrainRate;
 
       // Update internal variables and do integration
-      Vector6 strainInc = -D_vec * delT;
-      double cohesion = pCohesion_old[idx];
-      double shearModulus = pShearModulus_old[idx];
-      double bulkModulus = pBulkModulus_old[idx];
-      double suction = pSuction_old[idx];
-      double specificVol = pSpVol_old[idx];
-      calculateStress(pX[idx], strainInc, shearStrain, shearStrainRate,
-                      stress_vec, cohesion, shearModulus, bulkModulus,
-                      suction, specificVol);
+      Vector6 strainInc         = D_vec * delT;
+      Vector6 stress_vec        = Uintah::toVector6(pStress_old[idx]);
+      Vector6 plasticStrain_vec = Uintah::toVector6(pPlasticStrain_old[idx]);
+      double cohesion           = pCohesion_old[idx];
+      double shearModulus       = pShearModulus_old[idx];
+      double bulkModulus        = pBulkModulus_old[idx];
+      double suction            = pSuction_old[idx];
+      double specificVol        = pSpVol_old[idx];
 
-      pCohesion_new[idx] = cohesion;
-      pShearModulus_new[idx] = shearModulus;
-      pBulkModulus_new[idx] = bulkModulus;
-      pSuction_new[idx] = suction;
-      pSpVol_new[idx] = specificVol;
+      calculateStress(pX[idx],
+                      strainInc,
+                      shearStrain,
+                      shearStrainRate,
+                      stress_vec,
+                      strain_vec,
+                      plasticStrain_vec,
+                      cohesion,
+                      shearModulus,
+                      bulkModulus,
+                      suction,
+                      specificVol);
 
-      // This is the Cauchy stress, still unrotated
-      tensorSig(0, 0) = pStress_vec[0];
-      tensorSig(1, 1) = pStress_vec[1];
-      tensorSig(2, 2) = pStress_vec[2];
-      tensorSig(0, 1) = pStress_vec[3];
-      tensorSig(1, 0) = pStress_vec[3];
-      tensorSig(2, 1) = pStress_vec[4];
-      tensorSig(1, 2) = pStress_vec[4];
-      tensorSig(2, 0) = pStress_vec[5];
-      tensorSig(0, 2) = pStress_vec[5];
+      pStress_new[idx]        = Uintah::toMatrix3(stress_vec);
+      pStrain_new[idx]        = Uintah::toMatrix3(strain_vec);
+      pPlasticStrain_new[idx] = Uintah::toMatrix3(plasticStrain_vec);
+      pCohesion_new[idx]      = cohesion;
+      pShearModulus_new[idx]  = shearModulus;
+      pBulkModulus_new[idx]   = bulkModulus;
+      pSuction_new[idx]       = suction;
+      pSpVol_new[idx]         = specificVol;
 
-      // ROTATE pStress_new: S=R*tensorSig*R^T
-      pStress_new[idx] = (tensorR * tensorSig) * (tensorR.Transpose());
-
-      // Compute Ko
-      double s_xx = stress_vec[0];
-      double s_yy = stress_vec[1];
-      double s_xy = stress_vec[3];
-
-      pISV_vec[39] = s_xx;
-      pISV_vec[40] = s_yy;
-      pISV_vec[45] = s_xy;
-      double Ko    = s_xx / s_yy;
-      pISV_vec[41] = Ko;
-
-      /*
-    // Non local stress
-      double n_nonlocal = UI[46];
-      double l_nonlocal = UI[47];
-
-      double domain_nonlocal = l_nonlocal * l_nonlocal;
-      double Up0 = 0;
-      double Up1 = 0;
-      double Up2 = 0;
-      double Up3 = 0;
-      double Up4 = 0;
-      double Up5 = 0;
-      double Down = 0;
-      //double Uptest = 0;
-
-      double weight = 0;
-      double rx = 0;
-      double ry = 0;
-      double rz = 0;
-      double r2 = 0;
-
-      double s11 = pStress_new[idx](0,0);
-      double s22 = pStress_new[idx](1,1);
-      double s33 = pStress_new[idx](2,2);
-      double s12 = pStress_new[idx](0,1);
-      double s23 = pStress_new[idx](1,2);
-      double s13 = pStress_new[idx](2,0);
-
-      for (ParticleSubset::iterator iter1 = pset->begin();
-              iter1 != pset->end(); iter1++) {
-              particleIndex idx1 = *iter1;
-
-              rx = pX_new[idx1].x() - pX_new[idx].x();
-              ry = pX_new[idx1].y() - pX_new[idx].y();
-              rz = pX_new[idx1].z() - pX_new[idx].z();
-
-              r2 = rx * rx + ry * ry + rz * rz;
-
-              if (r2 <= (9*domain_nonlocal)) {
-
-                      weight =
-  sqrt(r2)*exp(-r2/domain_nonlocal)/domain_nonlocal;
-              }
-              Up0 += s11 * weight*pVolume_new[idx1];
-              Up1 += s22 * weight*pVolume_new[idx1];
-              Up2 += s33 * weight*pVolume_new[idx1];
-              Up3 += s12 * weight*pVolume_new[idx1];
-              Up4 += s23 * weight*pVolume_new[idx1];
-              Up5 += s13 * weight*pVolume_new[idx1];
-              Down += (weight*pVolume_new[idx1]);
-
-             //Uptest += idx1 * weight*pVolume_new[idx1];
-
-             //cerr << weight << ' ' << r2 << ' ' << domain_nonlocal << endl;
-
+      // Nonlocal correction to stress
+      if (nonlocal && pset_neighbor) {
+        Vector6 stress_nonlocal = computeNonlocalStress(
+          pX[idx], stress_vec, pset_neighbor, pX_neighbor, pVolume_neighbor);
+        pStress_new[idx] = Uintah::toMatrix3(stress_nonlocal);
       }
 
-      double Snonlocal[6];
-      Snonlocal[0] = (1 - n_nonlocal)*s11 + (n_nonlocal*Up0/Down);
-      Snonlocal[1] = (1 - n_nonlocal)*s22 + (n_nonlocal*Up1/Down);
-      Snonlocal[2] = (1 - n_nonlocal)*s33 + (n_nonlocal*Up2/Down);
-      Snonlocal[3] = (1 - n_nonlocal)*s12 + (n_nonlocal*Up3/Down);
-      Snonlocal[4] = (1 - n_nonlocal)*s23 + (n_nonlocal*Up4/Down);
-      Snonlocal[5] = (1 - n_nonlocal)*s13 + (n_nonlocal*Up5/Down);
-
-      //double test;
-  //test = (1 - n_nonlocal) * idx + (n_nonlocal * Uptest / Down);
-
-  //cerr << n_nonlocal << ' ' << Uptest << ' ' << Down << endl;
-      //cerr << test << ' ' << idx <<endl;
-
-      pStress_new[idx](0,0) = Snonlocal[0];
-      pStress_new[idx](1,2) = Snonlocal[1];
-      pStress_new[idx](2,2) = Snonlocal[2];
-      pStress_new[idx](0,1) = Snonlocal[3];
-      pStress_new[idx](1,0) = Snonlocal[3];
-      pStress_new[idx](1,2) = Snonlocal[4];
-      pStress_new[idx](2,1) = Snonlocal[4];
-      pStress_new[idx](2,0) = Snonlocal[5];
-      pStress_new[idx](0,2) = Snonlocal[5];
-      */
-
-      c_dil = sqrt(USM / rho_cur);
+      // Compute the local p-wave speed
+      double J       = pDefGrad_new[idx].Determinant();
+      double rho_cur = rho_orig / J;
+      double p_wave_speed =
+        std::sqrt((bulkModulus + 4.0 / 3.0 * shearModulus) / rho_cur);
 
       // Compute the strain energy for all the particles
-      Matrix3 AvgStress = (pStress_new[idx] + pStress[idx]) * .5;
+      Matrix3 avgStress = (pStress_new[idx] + pStress_old[idx]) * 0.5;
 
-      double e = (D(0, 0) * AvgStress(0, 0) + D(1, 1) * AvgStress(1, 1) +
-                  D(2, 2) * AvgStress(2, 2) +
-                  2. * (D(0, 1) * AvgStress(0, 1) + D(0, 2) * AvgStress(0, 2) +
-                        D(1, 2) * AvgStress(1, 2))) *
-                 pVolume_new[idx] * delT;
-
-      se += e;
+      double rateOfWork = computeRateOfWork(avgStress, pDefRate_mid[idx]);
+      strainEnergy += (rateOfWork * pVolume_new[idx] * delT);
 
       // Compute wave speed at each particle, store the maximum
-      Vector pVelocity_idx = pVelocity[idx];
-      waveSpeed = Vector(Max(c_dil + fabs(pVelocity_idx.x()), waveSpeed.x()),
-                         Max(c_dil + fabs(pVelocity_idx.y()), waveSpeed.y()),
-                         Max(c_dil + fabs(pVelocity_idx.z()), waveSpeed.z()));
+      Vector velMax = pVelocity[idx].cwiseAbs() + p_wave_speed;
+      waveSpeed     = Max(velMax, waveSpeed);
 
       // Compute artificial viscosity term
       if (flag->d_artificial_viscosity) {
-        double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
-        double c_bulk = sqrt(UI[1] / rho_cur);
-        p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
+        double dx_ave          = (dx.x() + dx.y() + dx.z()) / 3.0;
+        double bulk_wave_speed = std::sqrt(bulkModulus / rho_cur);
+        p_q[idx]               = artificialBulkViscosity(
+          pDefRate_mid[idx].Trace(), bulk_wave_speed, rho_cur, dx_ave);
       } else {
-        p_q[idx] = 0.;
+        p_q[idx] = 0.0;
       }
+
     } // end loop over particles
 
     waveSpeed       = dx / waveSpeed;
@@ -1110,7 +1062,7 @@ MohrCoulomb::computeStressTensor(const PatchSubset* patches,
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
     if (flag->d_reductionVars->accStrainEnergy ||
         flag->d_reductionVars->strainEnergy) {
-      new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
+      new_dw->put(sum_vartype(strainEnergy), lb->StrainEnergyLabel);
     }
   }
 }
@@ -1133,59 +1085,45 @@ MohrCoulomb::computeShearStrain(const Vector6& strain) const
   return shearStrain;
 }
 
-std::tuple<double, double> 
-MohrCoulomb::computeNonlocalShearStrains(int matID, const Patch* patch, 
-                            DataWarehouse* old_dw,
-                            const Point& pX,
-                            double pShearModulus,
-                            double pCohesion,
-                            double shearStrain,
-                            double shearStrainRate)
+std::tuple<double, double>
+MohrCoulomb::computeNonlocalShearStrains(
+  const Point& pX,
+  double pShearModulus,
+  double pCohesion,
+  double shearStrain,
+  double shearStrainRate,
+  ParticleSubset* pset_neighbor,
+  constParticleVariable<Point>& pX_neighbor,
+  constParticleVariable<double>& pVolume_neighbor)
 {
-  Vector cellSize = patch->dCell();
   double nonlocal_length = d_params.nonlocalL;
-  Vector nonlocal_length_vec(nonlocal_length, nonlocal_length, nonlocal_length);
-
-  Point cellIndexLow = patch->getLevel()->positionToIndex(pX - nonlocal_length_vec);
-  Point cellIndexHigh = patch->getLevel()->positionToIndex(pX + nonlocal_length_vec);
-
-  ParticleSubset* pset = old_dw->getParticleSubset(matID, patch,
-                                                   cellIndexLow,
-                                                   cellIndexHigh);
-
-  constParticleVariable<Point> pX_neighbor;
-  old_dw->get(pX_neighbor, lb->pXLabel, pset);
-
-  constParticleVariable<double> pVolume_neighbor;
-  new_dw->get(pVolume_neighbor, lb->pVolumeLabel_preReloc, pset);
-
-
   double domain_nonlocal = nonlocal_length * nonlocal_length;
   double up              = 0;
   double up1             = 0;
   double down            = 0;
 
-  for (auto idx : *pset) {
+  for (auto idx : *pset_neighbor) {
 
-    double distSq = (pX_neighbor[idx] - pX).lengthSq();
-    double dist = std::sqrt(distSq);
-    double weight = dist * std::exp(-distSq / domain_nonlocal) / domain_nonlocal;
-    double wieghtedVolume = weight * pVolume_neighbor[idx];
-    up += (shearStrain * weightedVolume)
+    double distSq = (pX_neighbor[idx] - pX).length2();
+    double dist   = std::sqrt(distSq);
+    double weight =
+      dist * std::exp(-distSq / domain_nonlocal) / domain_nonlocal;
+    double weightedVolume = weight * pVolume_neighbor[idx];
+    up += (shearStrain * weightedVolume);
     up1 += (shearStrainRate * weightedVolume);
     down += weightedVolume;
   }
 
   double n_nonlocal = d_params.nonlocalN;
   double shearStrain_nonlocal =
-        (1 - n_nonlocal) * shearStrain + (n_nonlocal * up / down);
+    (1 - n_nonlocal) * shearStrain + (n_nonlocal * up / down);
   double shearStrainRate_nonlocal =
-        (1 - n_nonlocal) * shearStrainRate + (n_nonlocal * up1 / down);
+    (1 - n_nonlocal) * shearStrainRate + (n_nonlocal * up1 / down);
 
   double elastic_strain = pCohesion / pShearModulus;
-  bool regularize = d_flags.useRegularizedNonlocalSoftening;
+  bool regularize       = d_flags.useRegularizedNonlocalSoftening;
   if (regularize) {
-    double tFE = d_params.regularizationTFE;
+    double tFE    = d_params.regularizationTFE;
     double tShear = d_params.regularizationTShear;
     if (shearStrain_nonlocal > elastic_strain) {
       shearStrain_nonlocal     = shearStrain_nonlocal * tFE / tShear;
@@ -1194,6 +1132,39 @@ MohrCoulomb::computeNonlocalShearStrains(int matID, const Patch* patch,
   }
 
   return std::make_tuple(shearStrain_nonlocal, shearStrainRate_nonlocal);
+}
+
+Vector6
+MohrCoulomb::computeNonlocalStress(
+  const Point& pX,
+  const Vector6& pStress_vec,
+  ParticleSubset* pset_neighbor,
+  constParticleVariable<Point>& pX_neighbor,
+  constParticleVariable<double>& pVolume_neighbor)
+{
+  double nonlocal_length = d_params.nonlocalL;
+  double domain_nonlocal = nonlocal_length * nonlocal_length;
+
+  Vector6 up_vec = Vector6::Zero();
+  double down    = 0;
+
+  for (auto idx : *pset_neighbor) {
+
+    double distSq = (pX_neighbor[idx] - pX).length2();
+    double dist   = std::sqrt(distSq);
+    double weight =
+      dist * std::exp(-distSq / domain_nonlocal) / domain_nonlocal;
+    double weightedVolume = weight * pVolume_neighbor[idx];
+
+    up_vec += (pStress_vec * weightedVolume);
+    down += weightedVolume;
+  }
+
+  double n_nonlocal = d_params.nonlocalN;
+  Vector6 stress_nonlocal =
+    pStress_vec * (1.0 - n_nonlocal) + up_vec * (n_nonlocal / down);
+
+  return stress_nonlocal;
 }
 
 /**
@@ -1241,10 +1212,12 @@ MohrCoulomb::computeNonlocalShearStrains(int matID, const Patch* patch,
  */
 void
 MohrCoulomb::calculateStress(const Point& pX,
-                             const Vector6& strainInc,
+                             const Vector6& dEps,
                              double pShearStrain,
                              double pShearStrainRate,
                              Vector6& stress,
+                             Vector6& strain,
+                             Vector6& plasticStrain,
                              double& pCohesion,
                              double& pShearModulus,
                              double& pBulkModulus,
@@ -1252,8 +1225,11 @@ MohrCoulomb::calculateStress(const Point& pX,
                              double& pSpecificVol)
 {
   // Convert to compression +ve form
+  Vector6 strainInc = -dEps;
   MohrCoulombState initialState;
   initialState.stress = -stress;
+  initialState.strain.block<6, 1>(0, 0) = -strain + strainInc;
+  initialState.plasticStrain = -plasticStrain;
 
   // Rate dependence
   if (d_flags.useUndrainedShearTransition) {
@@ -1261,19 +1237,19 @@ MohrCoulomb::calculateStress(const Point& pX,
     double St = d_params.softeningSt;
     double a1 = d_params.waterInfluenceA1;
     double b1 = d_params.waterInfluenceB1;
-    double W = d_params.waterInfluenceW;
+    double W  = d_params.waterInfluenceW;
 
     pCohesion = St * a1 * pow(W, -b1);
     if (pShearStrainRate > d_params.refStrainRate) {
-      pCohesion *= 
-          std::pow(pShearStrainRate / d_params.refStrainRate, d_params.betaStrainRate);
-    } 
+      pCohesion *= std::pow(pShearStrainRate / d_params.refStrainRate,
+                            d_params.betaStrainRate);
+    }
   }
 
   // Shear strength linear with depth
   if (d_flags.useLinearlyVaryingCohesion) {
     std::string direction = d_params.depthDirection;
-    double yDiff = 0;
+    double yDiff          = 0;
     if (direction == "x-") {
       yDiff = pX.x() - d_params.linearCohesionYRef;
     } else if (direction == "x+") {
@@ -1294,16 +1270,20 @@ MohrCoulomb::calculateStress(const Point& pX,
 
   // Varying moduli
   if (d_flags.useVariableElasticModulus) {
-    pShearModulus = d_params.variableModulusM * pCohesion / 2.0 / (1.0 + d_params.variableModulusNuY);
-    pBulkModulus = d_params.variableModulusM * pCohesion / 3.0 / (1.0 - 2 * d_params.variableModulusNuY);
+    pShearModulus = d_params.variableModulusM * pCohesion / 2.0 /
+                    (1.0 + d_params.variableModulusNuY);
+    pBulkModulus = d_params.variableModulusM * pCohesion / 3.0 /
+                   (1.0 - 2 * d_params.variableModulusNuY);
   }
 
   // Softening
   if (d_flags.useSoftening) {
     if (pShearStrain > pCohesion / pShearModulus) {
       double St = d_params.softeningSt;
-      pCohesion *= (1.0 / St + (1.0 - 1.0 / St) *
-                   std::pow(2.71, (-3.0 * pShearStrain / d_params.softeningStrain95)));
+      pCohesion *=
+        (1.0 / St +
+         (1.0 - 1.0 / St) *
+           std::pow(2.71, (-3.0 * pShearStrain / d_params.softeningStrain95)));
     }
   }
 
@@ -1314,39 +1294,45 @@ MohrCoulomb::calculateStress(const Point& pX,
     double Sr = computeSr(pSuction);
 
     // constant volume of water - thus we use initial specific volume
-    double volWater = Sr * (pSpecificVol - 1.0) / pSpecificVol; 
+    double volWater   = Sr * (pSpecificVol - 1.0) / pSpecificVol;
     double dVolStrain = strainInc(0) + strainInc(1) + strainInc(2);
 
     // volume of voids - new one, using new specific volume
-    double specVol_new = pSpecificVol - dVolStrain * pSpecificVol; 
-    double volAir = (specVol_new - 1) / specVol_new - volWater; 
+    double specVol_new = pSpecificVol - dVolStrain * pSpecificVol;
+    double volAir      = (specVol_new - 1) / specVol_new - volWater;
 
     // voids will reduce by dvol, so dSr=VolWater/TotalVolume
     double totalVolume = volAir + volWater;
-    double Sr_new = volWater / totalVolume; 
+    double Sr_new      = volWater / totalVolume;
     if (Sr_new > 0.99999) {
       Sr_new = 0.99999;
     } else if (Sr_new < 0.0001) {
       Sr_new = 0.0001;
     }
 
-    double suction_new = computeSuction(SrNew);
+    double suction_new = computeSuction(Sr_new);
     pCohesion += std::tan(d_params.phi_b * M_PI / 180.0) * suction_new;
 
-    pSuction = suction_new;
+    pSuction     = suction_new;
     pSpecificVol = specVol_new;
   }
 
   // Do the integration
-  d_modelP->setModelParameters(pShearModulus, pBulkModulus, pCohesion,
-                               d_params.phi, d_params.psi, d_params.pMin);
+  d_modelP->setModelParameters(pShearModulus,
+                               pBulkModulus,
+                               pCohesion,
+                               d_params.phi,
+                               d_params.psi,
+                               d_params.pMin);
 
   MohrCoulombState finalState = initialState;
+  Vector7 strainIncExtra = Vector7::Zero();
+  strainIncExtra.block<6,1>(0,0) = strainInc;
   if (d_modelType == "classic" || "sheng") {
-    finalState = d_modelP->integrate(strainInc, initialState);
+    finalState = d_modelP->integrate(strainIncExtra, initialState);
   } else if (d_modelType == "classic_semiimplicit") {
     RegionType region;
-    finalState = d_modelP->integrate(strainInc, initialState, region);
+    finalState = d_modelP->integrate(strainIncExtra, initialState, region);
   } else {
     std::ostringstream err;
     err << "Version of the Mohr-Coulomb Model is set to: " << d_modelType
@@ -1356,7 +1342,9 @@ MohrCoulomb::calculateStress(const Point& pX,
   }
 
   // stress back for output (tension +ve)
-  stress = -finalState.stress;
+  stress        = -finalState.stress;
+  strain        = -finalState.strain.block<6, 1>(0, 0);
+  plasticStrain = -finalState.plasticStrain;
 }
 
 /**
@@ -1365,67 +1353,113 @@ MohrCoulomb::calculateStress(const Point& pX,
 double
 MohrCoulomb::computeSr(double suction) const
 {
-    // VanGenuchten Model
-    double m     = d_params.waterRetentionParams[0];
-    double n     = d_params.waterRetentionParams[1];
-    double alpha = d_params.waterRetentionParams[2];
-    double Sr    = alpha * suction;
-    Sr           = std::pow(Sr, n);
-    Sr           = 1.0 / (1.0 + Sr);
-    Sr           = std::pow(Sr, m);
-    if (Sr > 1.0) {
-      Sr = 1.0;
-    } else if (Sr < 0) {
-      Sr = 0.0;
-    }
-    return Sr;
+  // VanGenuchten Model
+  double m     = d_params.waterRetentionParams[0];
+  double n     = d_params.waterRetentionParams[1];
+  double alpha = d_params.waterRetentionParams[2];
+  double Sr    = alpha * suction;
+  Sr           = std::pow(Sr, n);
+  Sr           = 1.0 / (1.0 + Sr);
+  Sr           = std::pow(Sr, m);
+  if (Sr > 1.0) {
+    Sr = 1.0;
+  } else if (Sr < 0) {
+    Sr = 0.0;
+  }
+  return Sr;
 }
 
 double
 MohrCoulomb::computeSuction(double Sr) const
 {
-    // VanGenuchten Model
-    double m     = d_params.waterRetentionParams[0];
-    double n     = d_params.waterRetentionParams[1];
-    double alpha = d_params.waterRetentionParams[2];
-    double suction = std::pow(Sr, 1 / m);
-    suction        = (1 - suction) / suction;
-    suction        = std::pow(suction, 1 / n);
-    suction        = suction / alpha;
-    if (suction < 0) {
-      suction = 0.0;
-    }
-    return suction;
+  // VanGenuchten Model
+  double m       = d_params.waterRetentionParams[0];
+  double n       = d_params.waterRetentionParams[1];
+  double alpha   = d_params.waterRetentionParams[2];
+  double suction = std::pow(Sr, 1 / m);
+  suction        = (1 - suction) / suction;
+  suction        = std::pow(suction, 1 / n);
+  suction        = suction / alpha;
+  if (suction < 0) {
+    suction = 0.0;
+  }
+  return suction;
 }
 
+/**
+ * Carry forward model data for RigidMPM
+ */
 void
 MohrCoulomb::carryForward(const PatchSubset* patches,
                           const MPMMaterial* matl,
                           DataWarehouse* old_dw,
                           DataWarehouse* new_dw)
 {
-  unsigned int num_ISV = ISVLabels.size();
-
   for (int p = 0; p < patches->size(); p++) {
 
     const Patch* patch   = patches->get(p);
-    int dwi              = matl->getDWIndex();
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+    int matID            = matl->getDWIndex();
+    ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
-    // Carry forward the data common to all constitutive models
-    // when using RigidMPM.
     // This method is defined in the ConstitutiveModel base class.
     carryForwardSharedData(pset, old_dw, new_dw, matl);
 
     // Carry forward the data local to this constitutive model
-    std::vector<constParticleVariable<double>> ISVs(num_ISV + 1);
-    std::vector<ParticleVariable<double>> ISVs_new(num_ISV + 1);
+    constParticleVariable<Matrix3> pStrain_old;
+    ParticleVariable<Matrix3> pStrain_new;
+    old_dw->get(pStrain_old, pStrainLabel, pset);
+    new_dw->allocateAndPut(pStrain_new, pStrainLabel_preReloc, pset);
+    pStrain_new.copyData(pStrain_old);
 
-    for (int i = 0; i < num_ISV; i++) {
-      old_dw->get(ISVs[i], ISVLabels[i], pset);
-      new_dw->allocateAndPut(ISVs_new[i], ISVLabels_preReloc[i], pset);
-      ISVs_new[i].copyData(ISVs[i]);
-    }
+    constParticleVariable<Matrix3> pPlasticStrain_old;
+    ParticleVariable<Matrix3> pPlasticStrain_new;
+    old_dw->get(pStrain_old, pPlasticStrainLabel, pset);
+    new_dw->allocateAndPut(pStrain_new, pPlasticStrainLabel_preReloc, pset);
+    pPlasticStrain_new.copyData(pPlasticStrain_old);
+
+    constParticleVariable<double> pShearModulus_old;
+    ParticleVariable<double> pShearModulus_new;
+    old_dw->get(pShearModulus_old, pShearModulusLabel, pset);
+    new_dw->allocateAndPut(
+      pShearModulus_new, pShearModulusLabel_preReloc, pset);
+    pShearModulus_new.copyData(pShearModulus_old);
+
+    constParticleVariable<double> pBulkModulus_old;
+    ParticleVariable<double> pBulkModulus_new;
+    old_dw->get(pBulkModulus_old, pBulkModulusLabel, pset);
+    new_dw->allocateAndPut(pBulkModulus_new, pBulkModulusLabel_preReloc, pset);
+    pBulkModulus_new.copyData(pBulkModulus_old);
+
+    constParticleVariable<double> pCohesion_old;
+    ParticleVariable<double> pCohesion_new;
+    old_dw->get(pCohesion_old, pCohesionLabel, pset);
+    new_dw->allocateAndPut(pCohesion_new, pCohesionLabel_preReloc, pset);
+    pCohesion_new.copyData(pCohesion_old);
+
+    constParticleVariable<double> pSuction_old;
+    ParticleVariable<double> pSuction_new;
+    old_dw->get(pSuction_old, pSuctionLabel, pset);
+    new_dw->allocateAndPut(pSuction_new, pSuctionLabel_preReloc, pset);
+    pSuction_new.copyData(pSuction_old);
+
+    constParticleVariable<double> pSpVol_old;
+    ParticleVariable<double> pSpVol_new;
+    old_dw->get(pSpVol_old, pSpVolLabel, pset);
+    new_dw->allocateAndPut(pSpVol_new, pSpVolLabel_preReloc, pset);
+    pSpVol_new.copyData(pSpVol_old);
+
+    constParticleVariable<double> pShearStrain_old;
+    ParticleVariable<double> pShearStrain_new;
+    old_dw->get(pShearStrain_old, pShearStrainLabel, pset);
+    new_dw->allocateAndPut(pShearStrain_new, pShearStrainLabel_preReloc, pset);
+    pShearStrain_new.copyData(pShearStrain_old);
+
+    constParticleVariable<double> pShearStrainRate_old;
+    ParticleVariable<double> pShearStrainRate_new;
+    old_dw->get(pShearStrainRate_old, pShearStrainRateLabel, pset);
+    new_dw->allocateAndPut(
+      pShearStrainRate_new, pShearStrainRateLabel_preReloc, pset);
+    pShearStrainRate_new.copyData(pShearStrainRate_old);
 
     // Don't affect the strain energy or timestep size
     new_dw->put(delt_vartype(1.e10), lb->delTLabel, patch->getLevel());
@@ -1437,6 +1471,35 @@ MohrCoulomb::carryForward(const PatchSubset* patches,
   }
 }
 
+/**
+ *  For particle material model switch mid-simulation
+ */
+void
+MohrCoulomb::allocateCMDataAddRequires(Task* /* task */,
+                                       const MPMMaterial* /* matl */,
+                                       const PatchSet* /* patch */,
+                                       MPMLabel* /* lb */) const
+{
+  std::ostringstream out;
+  out << "Material conversion after failure not implemented for MohrCoulomb.";
+  throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+}
+
+void
+MohrCoulomb::allocateCMDataAdd(DataWarehouse* /* new_dw */,
+                               ParticleSubset* /* subset */,
+                               LabelParticleMap* /* newState */,
+                               ParticleSubset* /* delset */,
+                               DataWarehouse* /* old_dw */)
+{
+  std::ostringstream out;
+  out << "Material conversion after failure not implemented for MohrCoulomb.";
+  throw ProblemSetupException(out.str(), __FILE__, __LINE__);
+}
+
+/**
+ * Hooks for interacting with MPMICE
+ */
 double
 MohrCoulomb::computeRhoMicroCM(double pressure,
                                const double p_ref,
@@ -1444,18 +1507,18 @@ MohrCoulomb::computeRhoMicroCM(double pressure,
                                double temperature,
                                double rho_guess)
 {
+  proc0cout
+    << "**WARNING** Bulk modulus is modified by MohrCoulomb but assumed"
+    << " constant when interacting with ICE.  Results may be erroneous.\n";
+
   double rho_orig = matl->getInitialDensity();
   double p_gauge  = pressure - p_ref;
   double rho_cur;
-  double bulk = UI[1];
+  double bulk = d_params.K;
 
   rho_cur = rho_orig / (1 - p_gauge / bulk);
 
   return rho_cur;
-
-#if 1
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR MohrCoulomb" << endl;
-#endif
 }
 
 void
@@ -1467,26 +1530,27 @@ MohrCoulomb::computePressEOSCM(double rho_cur,
                                const MPMMaterial* matl,
                                double temperature)
 {
+  proc0cout
+    << "**WARNING** Bulk modulus is modified by MohrCoulomb but assumed"
+    << " constant when interacting with ICE.  Results may be erroneous.\n";
 
-  double bulk     = UI[1];
+  double bulk     = d_params.K;
   double rho_orig = matl->getInitialDensity();
 
   double p_g = bulk * (1.0 - rho_orig / rho_cur);
   pressure   = p_ref + p_g;
   dp_drho    = bulk * rho_orig / (rho_cur * rho_cur);
   tmp        = bulk / rho_cur; // speed of sound squared
-
-#if 1
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR MohrCoulomb" << endl;
-#endif
 }
 
 double
 MohrCoulomb::getCompressibility()
 {
-  return 1.0 / UI[1];
+  proc0cout
+    << "**WARNING** Bulk modulus is modified by MohrCoulomb but assumed"
+    << " constant when interacting with ICE.  Results may be erroneous.\n";
+
+  return 1.0 / d_params.K;
 
   // return 1; //experimental:1 // found to be irrelevant
 }
-
-

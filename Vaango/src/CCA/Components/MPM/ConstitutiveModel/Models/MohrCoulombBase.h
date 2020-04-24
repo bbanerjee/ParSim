@@ -89,10 +89,9 @@ public:
   MohrCoulombBase();
   MohrCoulombBase(double G, double K, double cohesion, double phi, double psi, double pMin = -1.0);
   MohrCoulombBase(const MohrCoulombBase* cm);
-
-  MohrCoulombBase(const MohrCoulombBase&) = delete;
-  MohrCoulombBase& operator=(const MohrCoulombBase&) = delete;
-  ~MohrCoulombBase() = default;
+  MohrCoulombBase& operator=(const MohrCoulombBase&) = default;
+  MohrCoulombBase(const MohrCoulombBase&) = default;
+  virtual ~MohrCoulombBase() = default;
 
   void setModelParameters(double G, double K, double cohesion, double phi,
                           double psi, double pMin = -1.0);

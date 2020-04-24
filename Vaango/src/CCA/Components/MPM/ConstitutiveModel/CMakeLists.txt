@@ -70,6 +70,7 @@ SET(MPM_ConstitutiveModel_SRCS
   TabularEquationOfState.cc
   TabularPlasticity.cc
   TabularPlasticityCap.cc
+  MohrCoulomb.cc
 )
 
 #message(STATUS "Compiling FORTRAN code? ${FORTRAN}")

@@ -49,13 +49,12 @@ class MohrCoulombClassic : public MohrCoulombBase
 
 public:
   MohrCoulombClassic();
-  MohrCoulombClassic(double G, double K, double cohesion, double phi, double psi);
+  MohrCoulombClassic(double G, double K, double cohesion, double phi, double psi, double pMin = -1);
   MohrCoulombClassic(const MohrCoulombClassic* cm);
+  MohrCoulombClassic(const MohrCoulombClassic&) = default;
+  MohrCoulombClassic& operator=(const MohrCoulombClassic&) = default;
 
-  MohrCoulombClassic(const MohrCoulombClassic&) = delete;
-  MohrCoulombClassic& operator=(const MohrCoulombClassic&) = delete;
-
-  ~MohrCoulombClassic() = default;
+  virtual ~MohrCoulombClassic() = default;
 
   MohrCoulombState integrate(const Vector7& strainIncrement,
                              const MohrCoulombState& initialState) override;

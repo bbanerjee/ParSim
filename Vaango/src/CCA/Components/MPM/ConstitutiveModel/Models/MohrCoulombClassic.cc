@@ -49,8 +49,8 @@ MohrCoulombClassic::MohrCoulombClassic()
 }
 
 MohrCoulombClassic::MohrCoulombClassic(double G, double K, double cohesion,
-                                       double phi, double psi)
-  : MohrCoulombBase(G, K, cohesion, phi, psi)
+                                       double phi, double psi, double pMin)
+  : MohrCoulombBase(G, K, cohesion, phi, psi, pMin)
 {
 }
 
