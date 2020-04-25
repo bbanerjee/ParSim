@@ -92,6 +92,8 @@ DeformationGradientComputer::addInitialComputesAndRequires(Task* task,
                                                            const MPMMaterial* mpm_matl,
                                                            const PatchSet*)
 {
+  dbg_doing << "Doing DefGrad::addInitialComputesAndRequires\n";
+
   const MaterialSubset* matlset = mpm_matl->thisMaterial();
 
   task->computes(lb->pVelGradLabel,  matlset);
@@ -110,6 +112,8 @@ DeformationGradientComputer::initializeGradient(const Patch* patch,
                                                 const MPMMaterial* mpm_matl,
                                                 DataWarehouse* new_dw)
 {
+  dbg_doing << "Doing DefGrad::initializeGradient\n";
+
   if (flag->d_integrator == MPMFlags::Implicit) {
     initializeGradientImplicit(patch, mpm_matl, new_dw);
   } else {
@@ -135,6 +139,8 @@ DeformationGradientComputer::initializeGradientExplicit(const Patch* patch,
                                                         const MPMMaterial* mpm_matl,
                                                         DataWarehouse* new_dw)
 {
+  dbg_doing << "Doing DefGrad::initializeGradientExplicit\n";
+
   ParticleSubset* pset = new_dw->getParticleSubset(mpm_matl->getDWIndex(), patch);
   ParticleVariable<Matrix3> pVelGrad, pDispGrad, pDefGrad;
   new_dw->allocateAndPut(pVelGrad,  lb->pVelGradLabel,  pset);
@@ -153,6 +159,8 @@ DeformationGradientComputer::initializeGradientImplicit(const Patch* patch,
                                                         const MPMMaterial* mpm_matl,
                                                         DataWarehouse* new_dw)
 {
+  dbg_doing << "Doing DefGrad::initializeGradientImplicit\n";
+
   ParticleSubset* pset = new_dw->getParticleSubset(mpm_matl->getDWIndex(), patch);
   ParticleVariable<Matrix3> pVelGrad, pDispGrad, pDefGrad;
   new_dw->allocateAndPut(pVelGrad,  lb->pVelGradLabel,  pset);
@@ -172,6 +180,8 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
                                                     const MPMMaterial* mpm_matl,
                                                     const PatchSet*)
 {
+  dbg_doing << "Doing DefGrad::addComputesAndRequires\n";
+
   if (flag->d_integrator == MPMFlags::Implicit) {
     addComputesAndRequiresImplicit(task, mpm_matl);
   } else {
@@ -193,6 +203,8 @@ DeformationGradientComputer::addComputesOnly(Task* task,
                                              const MPMMaterial* mpm_matl,
                                              const PatchSet*)
 {
+  dbg_doing << "Doing DefGrad::addComputesOnly\n";
+
   std::ostringstream out;
   out << "**ERROR**: addComputesOnly Not implemented " << std::endl;
   throw InvalidValue(out.str(), __FILE__, __LINE__);
@@ -202,6 +214,8 @@ void
 DeformationGradientComputer::addComputesAndRequiresExplicit(Task* task,
                                                             const MPMMaterial* mpm_matl)
 {
+  dbg_doing << "Doing DefGrad::addComputesAndRequiresExplicit\n";
+
   Ghost::GhostType  gnone = Ghost::None;
   Ghost::GhostType  gac   = Ghost::AroundCells;
 
@@ -238,6 +252,8 @@ void
 DeformationGradientComputer::addComputesAndRequiresImplicit(Task* task,
                                                             const MPMMaterial* mpm_matl)
 {
+  dbg_doing << "Doing DefGrad::addComputesAndRequiresImplicit\n";
+
   Ghost::GhostType  gnone = Ghost::None;
   Ghost::GhostType  gac   = Ghost::AroundCells;
 
@@ -272,6 +288,8 @@ DeformationGradientComputer::computeDeformationGradient(const PatchSubset* patch
                                                         DataWarehouse* old_dw,
                                                         DataWarehouse* new_dw)
 {
+  dbg_doing << "Doing DefGrad::computeDeformationGradient\n";
+
   // The explicit code uses the velocity gradient to compute the
   // deformation gradient.  The implicit code uses displacements.
   if (flag->d_integrator == MPMFlags::Implicit) {
@@ -336,7 +354,7 @@ DeformationGradientComputer::computeDeformationGradient(const PatchSubset* patch
                                                         DataWarehouse* new_dw,
                                                         bool recurse)
 {
-  //std::cout << "Compute def grad .. Implicit recursion..\n";
+  dbg_doing << "Doing DefGrad::computeDeformationGradient implicit recursion\n";
 
   DataWarehouse* parent_old_dw = new_dw->getOtherDataWarehouse(Task::ParentOldDW);
   //std::cout << "parent_old_dw = " << parent_old_dw << " old_dw = " << old_dw 
@@ -363,13 +381,17 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
                                                                 DataWarehouse* old_dw,
                                                                 DataWarehouse* new_dw)
 {
+  ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
+  int dwi = mpm_matl->getDWIndex();
+
+  dbg_doing << "Doing DefGrad::computeDeformationGradient explicit: mat = " << dwi 
+            << " modelType = " << cm->modelType() << "\n";
+
   // Constants
   //Ghost::GhostType  gnone = Ghost::None;
   Ghost::GhostType  gac   = Ghost::AroundCells;
 
   // Get particle info and patch info
-  int dwi = mpm_matl->getDWIndex();
-  ConstitutiveModel* cm = mpm_matl->getConstitutiveModel();
   ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
   Vector dx = patch->dCell();
   double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
@@ -664,6 +686,8 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
                                                                 DataWarehouse* old_dw,
                                                                 DataWarehouse* new_dw)
 {
+  dbg_doing << "Doing DefGrad::computeDeformationGradient implicit\n";
+
   // Constants
   //Ghost::GhostType  gnone = Ghost::None;
   Ghost::GhostType  gac   = Ghost::AroundCells;
@@ -823,6 +847,8 @@ DeformationGradientComputer::addComputesAndRequires(Task* task,
                                                     const bool /*recurse*/,
                                                     const bool SchedParent) const
 {
+  dbg_doing << "Doing DefGrad::addComputesAndRequires implicit\n";
+
   ConstitutiveModel* cm = matl->getConstitutiveModel();
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -891,6 +917,8 @@ DeformationGradientComputer::computeDeformationGradientImplicit(const Patch* pat
                                                                 DataWarehouse* parent_old_dw,
                                                                 DataWarehouse* new_dw)
 {
+  dbg_doing << "Doing DefGrad::computeDeformationGradient parent_dw implicit\n";
+
   // Constants
   //Ghost::GhostType  gnone = Ghost::None;
   Ghost::GhostType  gac   = Ghost::AroundCells;

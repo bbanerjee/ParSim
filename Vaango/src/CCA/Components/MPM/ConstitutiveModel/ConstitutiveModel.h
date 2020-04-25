@@ -83,6 +83,7 @@ public:
     INCREMENTAL
   };
 
+
   ConstitutiveModel(MPMFlags* MFlag);
   ConstitutiveModel(const ConstitutiveModel* cm);
   virtual ~ConstitutiveModel();
@@ -474,6 +475,10 @@ protected:
   // that will never be removed
   SimulationState* d_sharedState;
 };
+
+std::ostream& operator<<(std::ostream& out, const ConstitutiveModel::ModelType& mt);
+
 } // End namespace Uintah
+
 
 #endif // __CONSTITUTIVE_MODEL_H__

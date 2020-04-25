@@ -37,6 +37,7 @@
 
 using namespace Uintah;
 
+static DebugStream dbg_doing("BaseMC_doing", false);
 static DebugStream dbg("BaseMC", false);
 static DebugStream dbg_unloading("BaseMC_unloading", false);
 
@@ -124,7 +125,7 @@ MohrCoulombBase::calcElastic(const Vector7& strainInc,
     calcStressIncElast(initialState.specificVolume(), initialState.stress,
                        initialState.strain, strainInc);
 
-  std::cout << "Stress increment is: " << stressInc << "\n";
+  dbg << "Stress increment is: " << stressInc << "\n";
 
   Vector6 plasticStrainInc = Vector6::Zero();
   double p0StarInc = 0.0;
@@ -160,6 +161,8 @@ bool
 MohrCoulombBase::checkGradient(const MohrCoulombState& initialState,
                                 const MohrCoulombState& finalState) const
 {
+  dbg_doing << "Doing MohrCoulombBase::checkGradient\n";
+
   Vector7 strainInc = finalState.strain - initialState.strain;
 
   double max = 0.0;
@@ -262,6 +265,8 @@ MohrCoulombBase::findGradient(const Vector6& s, const Vector6& ds,
                                Vector6& df_dSigma, double /*suction*/,
                                double /*dsuction*/) const
 {
+  dbg_doing << "Doing MohrCoulombBase::findGradient\n";
+
   // compute gradient
   Vector6 dg_dSigma;
   std::tie(df_dSigma, dg_dSigma) = computeDfDsigma(s);
@@ -299,6 +304,8 @@ MohrCoulombBase::findIntersectionUnloading(
   const Vector7& strainIncrement, const MohrCoulombState& initialState,
   Vector7& elasticStrainInc, Vector7& plasticStrainInc)
 {
+  dbg_doing << "Doing MohrCoulombBase::findIntersectionUnloading\n";
+
   double alpha = findYieldAlpha(initialState.state, initialState.stress,
                                 initialState.strain, strainIncrement);
 
@@ -312,6 +319,8 @@ MohrCoulombBase::findIntersection(const Vector7& strainIncrement,
                                    Vector7& elasticStrainInc,
                                    Vector7& plasticStrainInc) const
 {
+  dbg_doing << "Doing MohrCoulombBase::findIntersection\n";
+
   double alpha = findYieldModified(initialState.state, initialState.stress,
                                    initialState.strain, strainIncrement);
   elasticStrainInc = strainIncrement * alpha;
@@ -339,6 +348,8 @@ double
 MohrCoulombBase::findYieldAlpha(const Vector3& state, const Vector6& s0,
                                  const Vector7& eps0, const Vector7& dep)
 {
+  dbg_doing << "Doing MohrCoulombBase::findYieldAlpha\n";
+
   double f0 = computeYieldNormalized(s0);
   double yieldTol_old = d_int.d_yieldTol;
   double delta = 0.0;
@@ -362,13 +373,11 @@ MohrCoulombBase::findYieldAlpha(const Vector3& state, const Vector6& s0,
       << "Call of this procedure is generally rare and most likely improper\n";
     dbg << "Parameters are set to:\n";
     dbg << "Maximum number of iteration d_maxIter: " << d_int.d_maxIter << "\n";
-    ;
     dbg << "Value of d_alfaCheck - when the additional iter. is to "
            "enter: "
         << d_int.d_alfaCheck << "\n";
     dbg << "Value of change of alfa in the step: " << d_int.d_alfaChange
         << "\n";
-    ;
     dbg << "alfa old/alfa ratio: " << d_int.d_alfaRatio << "\n";
   }
 
@@ -561,17 +570,16 @@ MohrCoulombBase::findYieldModified(const Vector3& state, const Vector6& s0,
                                     const Vector7& eps0,
                                     const Vector7& deps) const
 {
+  dbg_doing << "Doing MohrCoulombBase::findYieldModified\n";
 
   if (dbg.active()) {
     dbg << "Parameters are set to:\n";
     dbg << "Maximum number of iteration d_maxIter: " << d_int.d_maxIter << "\n";
-    ;
     dbg << "Value of d_alfaCheck - when the additional iter. is to "
            "enter: "
         << d_int.d_alfaCheck << "\n";
     dbg << "Value of change of alfa in the step: " << d_int.d_alfaChange
         << "\n";
-    ;
     dbg << "alfa old/alfa ratio: " << d_int.d_alfaRatio << "\n";
   }
 
@@ -580,7 +588,7 @@ MohrCoulombBase::findYieldModified(const Vector3& state, const Vector6& s0,
   // Vector7 epsIni = deps * alfa0;
   Vector7 epsFin = deps * alfa1;
 
-  Vector6 sIni = s0;
+  //Vector6 sIni = s0;
   Vector6 sFin = calcStressIncElast(state(2), s0, eps0, epsFin);
   sFin += s0;
 
@@ -753,6 +761,8 @@ double
 MohrCoulombBase::calculatePlastic(const Vector7& purelyPlasticStrain,
                                    MohrCoulombState& state) const
 {
+  dbg_doing << "Doing MohrCoulombBase::calculatePlastic\n";
+
   double time;
   int numIter;
 
@@ -1145,6 +1155,8 @@ MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
                               const Vector7& epStrainInc, Vector6& dSigma,
                               Vector6& dEps_p, double& dP0Star) const
 {
+  dbg_doing << "Doing MohrCoulombBase::calcPlastic\n";
+
   if (!state.checkIfFinite()) {
     std::ostringstream err;
     err << "**Error** in the calcPlastic Procedure. "
@@ -1391,10 +1403,7 @@ void
 MohrCoulombBase::correctDriftBeg(MohrCoulombState& state,
                                   const MohrCoulombState& stateOld) const
 {
-  if (dbg.active()) {
-    dbg << "Correct Drift Procedure entered!"
-        << "\n";
-  }
+  dbg_doing << "Doing MohrCoulombBase::correctDriftBeg\n";
 
   Vector6 df_dsigma = Vector6::Zero();
   Vector6 dg_dsigma = Vector6::Zero();
@@ -1450,10 +1459,7 @@ MohrCoulombBase::correctDriftBeg(MohrCoulombState& state,
 void
 MohrCoulombBase::correctDriftEnd(MohrCoulombState& state) const
 {
-  if (dbg.active()) {
-    dbg << "Correct Drift at End Procedure entered!"
-        << "\n";
-  }
+  dbg_doing << "Doing MohrCoulombBase::correctDriftEnd\n";
 
   Vector6 df_dsigma = Vector6::Zero();
   Vector6 dg_dsigma = Vector6::Zero();

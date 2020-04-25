@@ -44,11 +44,20 @@
 using namespace Uintah;
 using std::map;
 using std::ostringstream;
-using std::endl;
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846 /* pi */
 #endif
+
+std::ostream&
+Uintah::operator<<(std::ostream& out, const ConstitutiveModel::ModelType& mt)
+{
+  static std::array<const char*, 3> names = {
+    { "TOTAL_FORM", "RATE_FORM", "INCREMENTAL" }
+  };
+  out << names[static_cast<int>(mt)];
+  return out;
+}
 
 ConstitutiveModel::ConstitutiveModel(MPMFlags* Mflag)
 {
@@ -485,12 +494,12 @@ ConstitutiveModel::computeDeformationGradientFromDisplacement(
       ostringstream warn;
       warn << "**ERROR** : "
               "ConstitutiveModel::computeDeformationGradientFromDisplacement"
-           << endl
-           << "Negative or zero determinant of Jacobian." << endl;
+           << "\n"
+           << "Negative or zero determinant of Jacobian." << "\n";
       warn << "     Particle = " << idx << " J = " << J
-           << " position = " << px[idx] << endl;
-      warn << "     Disp Grad = " << dispGrad << endl;
-      warn << "     F_new = " << Fnew[idx] << endl;
+           << " position = " << px[idx] << "\n";
+      warn << "     Disp Grad = " << dispGrad << "\n";
+      warn << "     F_new = " << Fnew[idx] << "\n";
       throw InvalidValue(warn.str(), __FILE__, __LINE__);
     }
   }
@@ -528,17 +537,17 @@ ConstitutiveModel::computeDeformationGradientFromVelocity(
     if (!(J > 0)) {
       ostringstream warn;
       warn << "**ERROR** CompNeoHook: Negative or zero determinant of Jacobian."
-           << " Particle has inverted." << endl;
+           << " Particle has inverted." << "\n";
       warn << "     Particle = " << idx << ", J = " << J
-           << ", position = " << px[idx] << endl;
-      warn << "          Vel Grad = \n" << velGrad << endl;
-      warn << "          F_inc = \n" << deformationGradientInc << endl;
-      warn << "          F_old = \n" << Fold[idx] << endl;
-      warn << "          F_new = \n" << Fnew[idx] << endl;
-      warn << "          gVelocity:" << endl;
+           << ", position = " << px[idx] << "\n";
+      warn << "          Vel Grad = \n" << velGrad << "\n";
+      warn << "          F_inc = \n" << deformationGradientInc << "\n";
+      warn << "          F_old = \n" << Fold[idx] << "\n";
+      warn << "          F_new = \n" << Fnew[idx] << "\n";
+      warn << "          gVelocity:" << "\n";
       for (int k = 0; k < flag->d_8or27; k++) {
         warn << "             node: " << ni[k] << " vel: " << gVel[ni[k]]
-             << endl;
+             << "\n";
       }
 
       throw InvalidValue(warn.str(), __FILE__, __LINE__);

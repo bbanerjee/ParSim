@@ -59,7 +59,7 @@
 
 using namespace Uintah;
 
-static DebugStream cout_doing("MohrCoulomb", false);
+static DebugStream dbg_doing("MohrCoulomb", false);
 
 /**
  * Constructors
@@ -120,6 +120,8 @@ MohrCoulomb::MohrCoulomb(const MohrCoulomb& cm)
 MohrCoulomb&
 MohrCoulomb::operator=(const MohrCoulomb& cm)
 {
+  dbg_doing << "Doing MohrCoulomb::operator=\n";
+
   if (this != &cm) {
     d_modelType = cm.d_modelType;
     if (d_modelType == "classic" || d_modelType == "classic_semiimplicit") {
@@ -165,6 +167,8 @@ MohrCoulomb::clone()
 void
 MohrCoulomb::getInputParameters(ProblemSpecP& ps)
 {
+  dbg_doing << "Doing MohrCoulomb::getInputParameters\n";
+
   d_modelType = "classic"; // options: classic, classic_semiimplicit, sheng
   ps->require("model_type", d_modelType);
 
@@ -345,6 +349,8 @@ MohrCoulomb::checkModelParameters() const
 void
 MohrCoulomb::getIntegrationParameters(ProblemSpecP& cm_ps)
 {
+  dbg_doing << "Doing MohrCoulomb::getIntegrationParameters\n";
+
   ProblemSpecP ps = cm_ps->findBlock("integration_parameters");
   if (!ps) {
     std::ostringstream out;
@@ -393,6 +399,8 @@ MohrCoulomb::getIntegrationParameters(ProblemSpecP& cm_ps)
 void
 MohrCoulomb::setIntegrationParameters()
 {
+  dbg_doing << "Doing MohrCoulomb::setIntegrationParameters\n";
+
   DriftCorrection drift;
   if (d_int.driftCorrection == "none") {
     drift = DriftCorrection::NO_CORRECTION;
@@ -452,6 +460,8 @@ MohrCoulomb::setIntegrationParameters()
 void
 MohrCoulomb::initializeLocalMPMLabels()
 {
+  dbg_doing << "Doing MohrCoulomb::initializeLocalMPMLabels\n";
+
   pStrainLabel = VarLabel::create(
     "p.strainMC", ParticleVariable<Matrix3>::getTypeDescription());
   pStrainLabel_preReloc = VarLabel::create(
@@ -503,6 +513,8 @@ MohrCoulomb::initializeLocalMPMLabels()
  */
 MohrCoulomb::~MohrCoulomb()
 {
+  dbg_doing << "Doing MohrCoulomb::destruct\n";
+
   VarLabel::destroy(pStrainLabel);
   VarLabel::destroy(pStrainLabel_preReloc);
 
@@ -537,6 +549,8 @@ MohrCoulomb::~MohrCoulomb()
 void
 MohrCoulomb::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 {
+  dbg_doing << "Doing MohrCoulomb::outputProblemSpec\n";
+
   ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("constitutive_model");
@@ -552,6 +566,8 @@ MohrCoulomb::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 void
 MohrCoulomb::outputModelProblemSpec(ProblemSpecP& ps) const
 {
+  dbg_doing << "Doing MohrCoulomb::outputModelProblemSpec\n";
+
   ProblemSpecP cm_ps = ps->appendChild("model_parameters");
 
   cm_ps->appendElement("shear_modulus", d_params.G);
@@ -635,6 +651,8 @@ MohrCoulomb::outputModelProblemSpec(ProblemSpecP& ps) const
 void
 MohrCoulomb::outputIntegrationProblemSpec(ProblemSpecP& ps) const
 {
+  dbg_doing << "Doing MohrCoulomb::outputIntegrationSpec\n";
+
   ProblemSpecP cm_ps = ps->appendChild("integration_parameters");
 
   cm_ps->appendElement("max_iterations_pegasus", d_int.maxIter);
@@ -661,6 +679,12 @@ void
 MohrCoulomb::addParticleState(std::vector<const VarLabel*>& from,
                               std::vector<const VarLabel*>& to)
 {
+  dbg_doing << "Doing MohrCoulomb::addParticleState\n";
+
+  // This is an INCREMENTAL model. Needs polar decomp R to be saved.
+  from.push_back(lb->pPolarDecompRLabel);
+  to.push_back(lb->pPolarDecompRLabel_preReloc);
+
   from.push_back(pStrainLabel);
   to.push_back(pStrainLabel_preReloc);
 
@@ -697,7 +721,7 @@ MohrCoulomb::addInitialComputesAndRequires(Task* task,
                                            const MPMMaterial* matl,
                                            const PatchSet*) const
 {
-  cout_doing << "Doing MohrCoulomb::addInitialComputesAndRequires\n";
+  dbg_doing << "Doing MohrCoulomb::addInitialComputesAndRequires\n";
 
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -717,7 +741,7 @@ MohrCoulomb::initializeCMData(const Patch* patch,
                               const MPMMaterial* matl,
                               DataWarehouse* new_dw)
 {
-  cout_doing << "Doing MohrCoulomb::initializeCMData\n";
+  dbg_doing << "Doing MohrCoulomb::initializeCMData\n";
 
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
@@ -768,6 +792,8 @@ MohrCoulomb::computeStableTimestep(const Patch* patch,
                                    const MPMMaterial* matl,
                                    DataWarehouse* new_dw)
 {
+  dbg_doing << "Doing MohrCoulomb::computeStableTimestep\n";
+
   int matID            = matl->getDWIndex();
   ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
 
@@ -805,12 +831,15 @@ MohrCoulomb::addComputesAndRequires(Task* task,
                                     const MPMMaterial* matl,
                                     const PatchSet* patches) const
 {
+  dbg_doing << "Doing MohrCoulomb::addComputesAndRequires\n";
+
   // Add the computes and requires that are common to all rotated explicit
   // constitutive models.  The method is defined in the ConstitutiveModel
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
   addComputesAndRequiresForRotatedExplicit(task, matlset, patches);
 
+  task->computes(lb->pdTdtLabel_preReloc, matlset);
   task->computes(lb->p_qLabel_preReloc, matlset);
 
   // Computes and requires for internal state data
@@ -854,6 +883,8 @@ MohrCoulomb::computeStressTensor(const PatchSubset* patches,
                                  DataWarehouse* old_dw,
                                  DataWarehouse* new_dw)
 {
+  dbg_doing << "Doing MohrCoulomb::comuteStressTensor\n";
+
   Matrix3 Identity;
   Identity.Identity();
 
@@ -909,7 +940,7 @@ MohrCoulomb::computeStressTensor(const PatchSubset* patches,
     ParticleVariable<double> pdTdt, p_q;
     ParticleVariable<Matrix3> pStress_new;
 
-    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel, pset);
+    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
     new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
     new_dw->allocateAndPut(pStress_new, lb->pStressLabel_preReloc, pset);
 
@@ -1064,6 +1095,8 @@ MohrCoulomb::computeStressTensor(const PatchSubset* patches,
 double
 MohrCoulomb::computeShearStrain(const Vector6& strain) const
 {
+  dbg_doing << "Doing MohrCoulomb::computeShearStrain\n";
+
   double diff12   = strain(0) - strain(1);
   double diff13   = strain(0) - strain(2);
   double diff23   = strain(1) - strain(2);
@@ -1090,6 +1123,8 @@ MohrCoulomb::computeNonlocalShearStrains(
   constParticleVariable<Point>& pX_neighbor,
   constParticleVariable<double>& pVolume_neighbor)
 {
+  dbg_doing << "Doing MohrCoulomb::computeNonlocalSHearStrains\n";
+
   double nonlocal_length = d_params.nonlocalL;
   double domain_nonlocal = nonlocal_length * nonlocal_length;
   double up              = 0;
@@ -1136,6 +1171,8 @@ MohrCoulomb::computeNonlocalStress(
   constParticleVariable<Point>& pX_neighbor,
   constParticleVariable<double>& pVolume_neighbor)
 {
+  dbg_doing << "Doing MohrCoulomb::computeNonlocalStress\n";
+
   double nonlocal_length = d_params.nonlocalL;
   double domain_nonlocal = nonlocal_length * nonlocal_length;
 
@@ -1218,6 +1255,8 @@ MohrCoulomb::calculateStress(const Point& pX,
                              double& pSuction,
                              double& pSpecificVol)
 {
+  dbg_doing << "Doing MohrCoulomb::calculateStress\n";
+
   // Convert to compression +ve form
   Vector6 strainInc = -dEps;
   MohrCoulombState initialState;
@@ -1389,6 +1428,8 @@ MohrCoulomb::carryForward(const PatchSubset* patches,
                           DataWarehouse* old_dw,
                           DataWarehouse* new_dw)
 {
+  dbg_doing << "Doing MohrCoulomb::carryForward\n";
+
   for (int p = 0; p < patches->size(); p++) {
 
     const Patch* patch   = patches->get(p);

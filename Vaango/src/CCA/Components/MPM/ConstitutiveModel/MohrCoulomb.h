@@ -60,7 +60,7 @@ public:
 
   virtual ~MohrCoulomb() override;
 
-  ModelType modelType() const override { return ModelType::RATE_FORM; }
+  ModelType modelType() const override { return ModelType::INCREMENTAL; }
 
   virtual void outputProblemSpec(ProblemSpecP& ps,
                                  bool output_cm_tag = true) override;

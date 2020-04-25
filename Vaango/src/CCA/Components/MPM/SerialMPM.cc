@@ -4462,9 +4462,18 @@ SerialMPM::computeDeformationGradient(const ProcessorGroup*,
   printTask(patches, patches->get(0), cout_doing,
             "Doing computeDeformationGradient");
 
+  if (cout_doing.active()) {
+    cout_doing << "Before compute def grad: old_dw\n";
+    old_dw->print();
+  }
+
   // Compute deformation gradient
   d_defGradComputer->computeDeformationGradient(patches, old_dw, new_dw);
 
+  if (cout_doing.active()) {
+    cout_doing << "After compute def grad: new_dw\n";
+    new_dw->print();
+  }
   /*
   int numMatls = d_sharedState->getNumMPMMatls();
   for (int m = 0; m < numMatls; m++) {
