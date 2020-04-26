@@ -38,6 +38,7 @@ class MohrCoulombState
 
 public:
 
+  long64  particleID;
   Vector6 stress;         // stress state
   Vector7 strain;         // strain state + suction
   Vector6 plasticStrain;  // plastic strain, no suction included

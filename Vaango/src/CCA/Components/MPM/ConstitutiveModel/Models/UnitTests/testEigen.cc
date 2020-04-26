@@ -168,5 +168,30 @@ TEST(EigenTest, constructors)
     ASSERT_DOUBLE_EQ(axb(ii), cross_prod(ii));
   }
   
+  /* Test abs and max */
+  Vector7 strain_final, strain_initial;
+  strain_final << 0.0129184, -8.83862e-39, -2.96308e-38, 
+                 -1.36816e-19, -2.37293e-19, -1.4483e-38, 0;
+  strain_initial << 0.012923, -8.24534e-39, -2.99804e-38, 
+                    -1.30285e-19, -2.39469e-19, -1.40575e-38, 0;
+  Vector7 strain_inc = strain_final - strain_initial;
+  double max_strain = strain_inc.block<6,1>(0,0).cwiseAbs().maxCoeff();
+  //std::cout << max_strain <<"\n";
+
+  double max = 0.0;
+  for (int i = 0; i < 6; i++) {
+    if (std::abs(strain_inc(i)) > max) {
+      max = std::abs(strain_inc(i));
+    }
+  }
+  //std::cout << max << "\n";
+  ASSERT_DOUBLE_EQ(max_strain, max);
+
+  Vector6 eps_inc_1 = strain_inc.block<6,1>(0,0) / (max_strain * 1.0e-10);
+  Vector6 eps_inc_2 = strain_inc.block<6,1>(0,0) / (max * 1.0e-10);
+  
+  ASSERT_DOUBLE_EQ(eps_inc_1.squaredNorm(), eps_inc_2.squaredNorm());
+  //std::cout << eps_inc_1.transpose() << "\n"
+  //          << eps_inc_2.transpose() << "\n";
 }
 

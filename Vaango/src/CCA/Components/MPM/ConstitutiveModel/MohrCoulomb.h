@@ -186,7 +186,8 @@ private:
 
   double computeShearStrain(const Vector6& strain) const;
 
-  void calculateStress(const Point& pX,
+  void calculateStress(long64 particleID,
+                       const Point& pX,
                        const Vector6& strainInc,
                        double pShearStrain,
                        double pShearStrainRate,

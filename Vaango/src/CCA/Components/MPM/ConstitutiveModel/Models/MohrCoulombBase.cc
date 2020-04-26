@@ -39,7 +39,12 @@ using namespace Uintah;
 
 static DebugStream dbg_doing("BaseMC_doing", false);
 static DebugStream dbg("BaseMC", false);
+static DebugStream dbg_params("BaseMC_params", false);
 static DebugStream dbg_unloading("BaseMC_unloading", false);
+static DebugStream dbg_alpha("BaseMC_alpha", false);
+static DebugStream dbg_mod("BaseMC_mod", false);
+
+constexpr long64 testParticleID = 6619136;
 
 /**
  * Constructors
@@ -125,7 +130,7 @@ MohrCoulombBase::calcElastic(const Vector7& strainInc,
     calcStressIncElast(initialState.specificVolume(), initialState.stress,
                        initialState.strain, strainInc);
 
-  dbg << "Stress increment is: " << stressInc << "\n";
+  dbg << __LINE__ << ":BaseMC::Stress increment is: " << stressInc.transpose() << "\n";
 
   Vector6 plasticStrainInc = Vector6::Zero();
   double p0StarInc = 0.0;
@@ -133,9 +138,9 @@ MohrCoulombBase::calcElastic(const Vector7& strainInc,
 }
 
 Vector6
-MohrCoulombBase::calcStressIncElast(double nu0, const Vector6& s0,
-                                     const Vector7& eps0,
-                                     const Vector7& deps) const
+MohrCoulombBase::calcStressIncElast(double nu0, const Vector6& stress_old,
+                                     const Vector7& strain_old,
+                                     const Vector7& strain_inc) const
 {
   double K = d_elastic.d_K;
   double G = d_elastic.d_G;
@@ -143,68 +148,15 @@ MohrCoulombBase::calcStressIncElast(double nu0, const Vector6& s0,
   double K43G = K + 4.0 * G / 3.0;
   double K23G = K - 2.0 * G / 3.0;
 
-  Vector6 ds;
-  ds(0) = K43G * deps(0) + K23G * (deps(1) + deps(2));
-  ds(1) = K43G * deps(1) + K23G * (deps(0) + deps(2));
-  ds(2) = K43G * deps(2) + K23G * (deps(0) + deps(1));
-  ds(3) = 2 * G * deps(3);
-  ds(4) = 2 * G * deps(4);
-  ds(5) = 2 * G * deps(5);
+  Vector6 stress_inc;
+  stress_inc(0) = K43G * strain_inc(0) + K23G * (strain_inc(1) + strain_inc(2));
+  stress_inc(1) = K43G * strain_inc(1) + K23G * (strain_inc(0) + strain_inc(2));
+  stress_inc(2) = K43G * strain_inc(2) + K23G * (strain_inc(0) + strain_inc(1));
+  stress_inc(3) = 2 * G * strain_inc(3);
+  stress_inc(4) = 2 * G * strain_inc(4);
+  stress_inc(5) = 2 * G * strain_inc(5);
 
-  return ds;
-}
-
-/*
- *  Check the gradient between initial and final state
- */
-bool
-MohrCoulombBase::checkGradient(const MohrCoulombState& initialState,
-                                const MohrCoulombState& finalState) const
-{
-  dbg_doing << "Doing MohrCoulombBase::checkGradient\n";
-
-  Vector7 strainInc = finalState.strain - initialState.strain;
-
-  double max = 0.0;
-  for (int i = 0; i < 6; i++) {
-    if (std::abs(strainInc(i)) > max) {
-      max = std::abs(strainInc(i));
-    }
-  }
-  for (int i = 0; i < 6; i++) {
-    strainInc(i) /= (max * 10E-10);
-  }
-  strainInc(6) = finalState.suction() - initialState.suction();
-
-  // The normalisation is important to catch the unloading due to shear stress
-  // 12 13 23. As the q is always positive, large unloading - loading values
-  // of 12 13 or 23 component lead to larger q, the shear stress change is
-  // taken as positive and there is no unloading. This fix, though not the
-  // most elegant, should work.
-  Matrix67 tangentElastic = calculateElasticTangentMatrix(initialState);
-
-  Vector6 stressInc = tangentElastic * strainInc;
-
-  if (dbg.active()) {
-    dbg << "Strain inc = " << strainInc << "\n";
-    dbg << "TangentElastic: " << tangentElastic << "\n";
-    dbg << "Stress inc = " << stressInc << "\n";
-    dbg << "Suction Increment = " << strainInc(7) << "\n";
-  }
-
-  Vector6 df; // not initialised; will contain values of derivatives of the
-              // yield locus function
-  double cosinus = findGradient(initialState.stress, stressInc, df, 0, 0);
-
-  if (cosinus > -d_int.d_yieldTol) {
-    return false;
-  }
-
-  if (dbg.active()) {
-    dbg << "Unloading occuring... cosinus = " << cosinus << "\n";
-  }
-
-  return true; //(negative cosinus means unloading occurs)
+  return stress_inc;
 }
 
 /*
@@ -245,50 +197,95 @@ MohrCoulombBase::calculateElasticTangentMatrix(double K, double G) const
   return DEP;
 }
 
+/*
+ *  Check the gradient between initial and final state
+ *
+ *  The normalisation is important to catch the unloading due to shear stress
+ *  12 13 23. As the q is always positive, large unloading - loading values
+ *  of 12 13 or 23 component lead to larger q, the shear stress change is
+ *  taken as positive and there is no unloading. This fix, though not the
+ *  most elegant, should work.
+ */
+bool
+MohrCoulombBase::checkGradient(const MohrCoulombState& initialState,
+                                const MohrCoulombState& finalState) const
+{
+  dbg_doing << "Doing MohrCoulombBase::checkGradient\n";
+
+  Vector7 strainInc = finalState.strain - initialState.strain;
+
+  dbg << __LINE__ << ":BaseMC::strain_final = " << finalState.strain.transpose()
+      << "\n      strain_initial = " << initialState.strain.transpose()
+      << "\n      Strain inc = " << strainInc.transpose() << "\n";
+
+  // Scale up the strain increment
+  /*
+  double max_strain_inc = strainInc.block<6,1>(0,0).cwiseAbs().maxCoeff();
+  strainInc.block<6,1>(0,0) /= (max_strain_inc * 1.0e-10);
+  strainInc(6) = finalState.suction() - initialState.suction();
+  */
+
+  Matrix67 tangentElastic = calculateElasticTangentMatrix(initialState);
+
+  Vector6 stressInc = tangentElastic * strainInc;
+
+  dbg << __LINE__ << ":BaseMC::Strain inc = " << strainInc.transpose() << "\n";
+  dbg << "BaseMC::TangentElastic: \n" << tangentElastic << "\n";
+  dbg << "BaseMC::Stress inc = " << stressInc.transpose() << "\n";
+  dbg << "BaseMC::Suction Increment = " << strainInc(6) << "\n";
+
+  Vector6 df; // not initialised; will contain values of derivatives of the
+              // yield locus function
+  double cosinus = computeDsigmaDotDf(initialState.stress, stressInc, df, 0, 0);
+
+  if (cosinus > -d_int.d_yieldTol) {
+    return false;
+  }
+
+  dbg << __LINE__ << ":BaseMC::Unloading occuring... cosinus = " << cosinus << "\n";
+
+  return true; //(negative cosinus means unloading occurs)
+}
+
 /**
   This procedure finds a gradient to the yield locus at given point.
   It is used later to determine whether we have partly elastic unloading or only
-  plastic step
+  plastic step.
   The gradient may be found only when we are on "main" plastic yield locus;
   Otherwise results may be erroneous.
 
   Parameters: state[], s[] (stress), ds[] (stress increment), suction,
-
   Gradient = gradient[1], gradient[2] etc - there the result will be stored
-
   First the C(s) part must be calculated, then the gradient.
 
   returns cosinus of the angle...
  */
 double
-MohrCoulombBase::findGradient(const Vector6& s, const Vector6& ds,
+MohrCoulombBase::computeDsigmaDotDf(const Vector6& s, const Vector6& ds,
                                Vector6& df_dSigma, double /*suction*/,
                                double /*dsuction*/) const
 {
   dbg_doing << "Doing MohrCoulombBase::findGradient\n";
 
-  // compute gradient
+  // compute gradient of yield function
   Vector6 dg_dSigma;
   std::tie(df_dSigma, dg_dSigma) = computeDfDsigma(s);
 
-  // calculate length - gradient - total length of vector ==1#
-  double dFlength = 0, dslength = 0;
-  for (int i = 0; i < 6; i++) {
-    dFlength += df_dSigma(i) * df_dSigma(i); // calculated length
-    dslength += ds(i) * ds(i);
-  }
-  dslength = std::sqrt(dslength);
-  dFlength = std::sqrt(dFlength);
+  dbg << __LINE__ << ":BaseMC::df_dsigma = " << df_dSigma.transpose() << "\n";
 
-  // calculate cosinus of the theta angle...
-  double cosin = 0;
-  for (int i = 0; i < 6; i++) {
-    cosin += df_dSigma(i) * ds(i) / (dslength * dFlength);
-  }
+  // Compute norm of ds and df_dsigma
+  double dfLength = df_dSigma.norm();
+  double dsLength = ds.norm();
 
+  dbg << __LINE__ << ":BaseMC::||df|| = " << dfLength 
+      << " ||dsig|| = " << dsLength << "\n";
+  
+  // Calculate dot product of the two normalized vectors
+  double cosin = df_dSigma.dot(ds)/ (dfLength * dsLength);
+  
   if (dbg.active()) {
     if (cosin < -d_int.d_yieldTol) {
-      dbg << "Check if no problem in the findGradient\n";
+      dbg << __LINE__ << ":BaseMC::Check if no problem in the findGradient\n";
       dbg << "cosin = " << cosin << "\n";
     }
   }
@@ -306,6 +303,12 @@ MohrCoulombBase::findIntersectionUnloading(
 {
   dbg_doing << "Doing MohrCoulombBase::findIntersectionUnloading\n";
 
+  dbg_alpha << "ParticleID = " << initialState.particleID << "\n";
+  if (initialState.particleID == testParticleID) {
+    dbg_alpha.setActive(true);
+  } else {
+    dbg_alpha.setActive(false);
+  }
   double alpha = findYieldAlpha(initialState.state, initialState.stress,
                                 initialState.strain, strainIncrement);
 
@@ -321,6 +324,12 @@ MohrCoulombBase::findIntersection(const Vector7& strainIncrement,
 {
   dbg_doing << "Doing MohrCoulombBase::findIntersection\n";
 
+  dbg_mod << "ParticleID = " << initialState.particleID << "\n";
+  if (initialState.particleID == testParticleID) {
+    dbg_mod.setActive(true);
+  } else {
+    dbg_mod.setActive(false);
+  }
   double alpha = findYieldModified(initialState.state, initialState.stress,
                                    initialState.strain, strainIncrement);
   elasticStrainInc = strainIncrement * alpha;
@@ -349,59 +358,59 @@ MohrCoulombBase::findYieldAlpha(const Vector3& state, const Vector6& s0,
                                  const Vector7& eps0, const Vector7& dep)
 {
   dbg_doing << "Doing MohrCoulombBase::findYieldAlpha\n";
+  dbg_doing << "BaseMC::Call of this procedure is generally rare "
+               "and most likely improper\n";
 
-  double f0 = computeYieldNormalized(s0);
+  dbg_params << "BaseMC::Parameters are set to:\n";
+  dbg_params << "BaseMC::Maximum number of iteration d_maxIter: " << d_int.d_maxIter << "\n";
+  dbg_params << "BaseMC::Value of d_alfaCheck - when the additional iter. is to "
+                "enter: " << d_int.d_alfaCheck << "\n";
+  dbg_params << "BaseMC::Value of change of alfa in the step: " << d_int.d_alfaChange << "\n";
+  dbg_params << "BaseMC::alfa old/alfa ratio: " << d_int.d_alfaRatio << "\n";
+
+  Vector6 sIni = s0;
+  dbg_alpha << __LINE__ << ":BaseMC::FindYieldAlpha:. sIni = " << sIni.transpose() << "\n";
+
+  double f0 = computeYieldNormalized(sIni);
+  dbg_alpha << __LINE__ << ":BaseMC:: f0 (first) = " << f0 << "\n";
+
   double yieldTol_old = d_int.d_yieldTol;
   double delta = 0.0;
   if (f0 < 0) {
     delta = 0;
     d_int.d_yieldTol = -0.9 * f0;
   } else {
-    if (dbg.active()) {
-      dbg << "findYieldAlpha : case not coded for yet\n";
-    }
+    dbg_alpha << __LINE__ << ":BaseMC::findYieldAlpha : case not coded for yet\n";
+
     delta = (f0 + d_int.d_yieldTol) / 2;
     d_int.d_yieldTol = 0.9 * (d_int.d_yieldTol - f0) / 2;
   }
 
-  if (dbg.active()) {
-    dbg << "Procedure Find Yield Yield ... s = " << s0 << "\n";
-    dbg << "Procedure Find Yield Yield ... dEps = " << dep << "\n";
-    dbg << "Initial normalised Yield Locus... f0 =" << f0 << "\n";
-    dbg << "Procedure Find Yield Yield ... delta =" << delta << "\n";
-    dbg
-      << "Call of this procedure is generally rare and most likely improper\n";
-    dbg << "Parameters are set to:\n";
-    dbg << "Maximum number of iteration d_maxIter: " << d_int.d_maxIter << "\n";
-    dbg << "Value of d_alfaCheck - when the additional iter. is to "
-           "enter: "
-        << d_int.d_alfaCheck << "\n";
-    dbg << "Value of change of alfa in the step: " << d_int.d_alfaChange
-        << "\n";
-    dbg << "alfa old/alfa ratio: " << d_int.d_alfaRatio << "\n";
-  }
+  f0 -= delta;
+  dbg_alpha << __LINE__ << ":BaseMC:: f0 (second) = " << f0 << " delta = " << delta << "\n";
+
 
   double alfa0 = 0;
   double alfa1 = 1;
-  // Vector7 epsIni = dep * alfa0;
   Vector7 epsFin = dep * alfa1;
+  dbg_alpha << __LINE__ << ":BaseMC::dEps = " << dep.transpose() << "\n";
+  dbg_alpha << __LINE__ << ":BaseMC::epsFin = " << epsFin.transpose() << "\n";
 
-  Vector6 sIni = s0;
-  Vector6 sFin = calcStressIncElast(state(2), s0, eps0, epsFin);
-  sFin += s0;
-
-  f0 = computeYieldNormalized(sIni);
-  f0 -= delta;
+  Vector6 dsigma = calcStressIncElast(state(2), sIni, eps0, epsFin);
+  dbg_alpha << __LINE__ << ":BaseMC::dsigma = " << dsigma.transpose() << "\n";
+  Vector6 sFin = sIni + dsigma;
+  dbg_alpha << __LINE__ << ":BaseMC::sFin = " << sFin.transpose() << "\n";
 
   double f1 = computeYieldNormalized(sFin);
-  f1 -= delta;
+  dbg_alpha << __LINE__ << ":BaseMC:: f1 (first) = " << f1 << "\n";
 
-  if (dbg.active()) {
-    dbg << "Procedure findYieldAlpha. Initial values of f0 = " << f0
-        << " f1 = " << f1 << "\n";
-    dbg << "f0 should lie on the yield locus within tolerance: " << yieldTol_old
-        << "\n";
-  }
+  f1 -= delta;
+  dbg_alpha << __LINE__ << ":BaseMC:: f1 (second) = " << f1 << " delta = " << delta << "\n";
+
+  dbg_alpha << __LINE__ << ":BaseMC::Procedure findYieldAlpha. Initial values of f0 = " << f0
+      << " f1 = " << f1 << "\n";
+  dbg_alpha << "BaseMC::f0 should lie on the yield locus within tolerance: " << yieldTol_old
+      << "\n";
 
   double alphaYield = 0.0;
   double alfa = 0.5;
@@ -423,25 +432,21 @@ MohrCoulombBase::findYieldAlpha(const Vector3& state, const Vector6& s0,
     double fAlfa = computeYieldNormalized(sAlfa);
     fAlfa -= delta;
 
-    if (dbg.active()) {
-      dbg << "In iteration " << iter << " alfa = " << alfa
+      dbg_alpha << __LINE__ << ":BaseMC::In iteration " << iter << " alfa = " << alfa
           << " and f = " << fAlfa << "\n";
-    }
 
     // if fAlfa within tolerance, we have the solution
     if (std::abs(fAlfa) < d_int.d_yieldTol) {
 
       alphaYield = alfa0 + alfa * (alfa1 - alfa0);
 
-      if (dbg.active()) {
-        dbg << "Solution in findYieldAlpha procedure was found after " << iter
-            << " iterations."
-            << "\n";
-        dbg << "Value of the yield function is equal to: " << fAlfa << "\n";
-        dbg << "Modified value of tolerance is: " << d_int.d_yieldTol << "\n";
-        dbg << "Value of delta is: " << delta << "\n";
-        dbg << "Alfa is equal to: " << alphaYield << "\n";
-      }
+      dbg_alpha << __LINE__ << ":BaseMC:Solution in findYieldAlpha procedure was found after " << iter
+          << " iterations."
+          << "\n";
+      dbg_alpha << "BaseMC:Value of the yield function is equal to: " << fAlfa << "\n";
+      dbg_alpha << "BaseMC:Modified value of tolerance is: " << d_int.d_yieldTol << "\n";
+      dbg_alpha << "BaseMC:Value of delta is: " << delta << "\n";
+      dbg_alpha << "BaseMC:Alfa is equal to: " << alphaYield << "\n";
 
       if (iter > 50) {
         std::cout << "**WARNING** Large number of iterations!!! Solution is "
@@ -451,9 +456,7 @@ MohrCoulombBase::findYieldAlpha(const Vector3& state, const Vector6& s0,
 
       d_int.d_yieldTol = yieldTol_old;
 
-      if (dbg.active()) {
-        dbg << "Yield tolerance is set back to: " << d_int.d_yieldTol << "\n";
-      }
+      dbg_alpha << __LINE__ << ":BaseMC::Yield tolerance is set back to: " << d_int.d_yieldTol << "\n";
 
       return alphaYield;
     }
@@ -471,10 +474,7 @@ MohrCoulombBase::findYieldAlpha(const Vector3& state, const Vector6& s0,
       f1 = fAlfa;
 
       if (problems) {
-        if (dbg.active()) {
-          dbg << "Problematic iteration entered !!!"
-              << "\n";
-        }
+        dbg_alpha << __LINE__ << ":BaseMC::Problematic iteration entered !!!" << "\n";
 
         alfa = alfa1 - d_int.d_alfaChange * (alfa1 - alfa0);
         epsAlfa = dep * (alfa0 + alfa * (alfa1 - alfa0));
@@ -507,10 +507,7 @@ MohrCoulombBase::findYieldAlpha(const Vector3& state, const Vector6& s0,
       f0 = fAlfa;
 
       if (problems) {
-        if (dbg.active()) {
-          dbg << "Problematic iteration entered !!!"
-              << "\n";
-        }
+        dbg_alpha << __LINE__ << ":BaseMC::Problematic iteration entered !!!" << "\n";
 
         alfa = alfa0 + d_int.d_alfaChange * (alfa1 - alfa0);
         epsAlfa = dep * (alfa0 + alfa * (alfa1 - alfa0));
@@ -566,74 +563,65 @@ MohrCoulombBase::findYieldAlpha(const Vector3& state, const Vector6& s0,
 */
 
 double
-MohrCoulombBase::findYieldModified(const Vector3& state, const Vector6& s0,
-                                    const Vector7& eps0,
-                                    const Vector7& deps) const
+MohrCoulombBase::findYieldModified(const Vector3& state, const Vector6& stress_old,
+                                    const Vector7& strain_old,
+                                    const Vector7& strain_inc) const
 {
   dbg_doing << "Doing MohrCoulombBase::findYieldModified\n";
 
-  if (dbg.active()) {
-    dbg << "Parameters are set to:\n";
-    dbg << "Maximum number of iteration d_maxIter: " << d_int.d_maxIter << "\n";
-    dbg << "Value of d_alfaCheck - when the additional iter. is to "
-           "enter: "
-        << d_int.d_alfaCheck << "\n";
-    dbg << "Value of change of alfa in the step: " << d_int.d_alfaChange
-        << "\n";
-    dbg << "alfa old/alfa ratio: " << d_int.d_alfaRatio << "\n";
-  }
+  dbg_params << __LINE__ << ":BaseMC::Parameters are set to:\n";
+  dbg_params << "BaseMC::Maximum number of iteration d_maxIter: " << d_int.d_maxIter << "\n";
+  dbg_params << "BaseMC::Value of d_alfaCheck - when the additional iter. is to "
+         "enter: " << d_int.d_alfaCheck << "\n";
+  dbg_params << "BaseMC::Value of change of alfa in the step: " << d_int.d_alfaChange << "\n";
+  dbg_params << "BaseMC::alfa old/alfa ratio: " << d_int.d_alfaRatio << "\n";
 
-  double alfa0 = 0;
-  double alfa1 = 1;
-  // Vector7 epsIni = deps * alfa0;
-  Vector7 epsFin = deps * alfa1;
+  double alfa0 = 0.0;
+  double alfa1 = 1.0;
 
-  //Vector6 sIni = s0;
-  Vector6 sFin = calcStressIncElast(state(2), s0, eps0, epsFin);
-  sFin += s0;
+  double alfa = alfa1;
+  Vector7 deps = strain_inc * alfa;
 
-  double f0 = computeYieldNormalized(s0);
-  double f1 = computeYieldNormalized(sFin);
+  Vector6 dsigma = calcStressIncElast(state(2), stress_old, strain_old, deps);
+  Vector6 stress_alfa = stress_old + dsigma;
 
-  if (dbg.active()) {
-    dbg << "Procedure findYieldModified. Initial values of f0 = " << f0
-        << " f1 = " << f1 << "\n";
-    dbg << "Value of f0 should be negative, and value of f1 should be "
-           "positive.\n";
-    dbg << "Values should be larger than tolerance for yield: "
-        << d_int.d_yieldTol << "\n";
-  }
+  double f0 = computeYieldNormalized(stress_old);
+  double f1 = computeYieldNormalized(stress_alfa);
 
-  double alfa = 0.5;
+  dbg_mod << __LINE__ << ":BaseMC::Procedure findYieldModified. Initial values of f0 = " << f0
+      << " f1 = " << f1 << "\n";
+  dbg_mod << "BaseMC::Value of f0 should be negative, and value of f1 should be "
+         "positive.\n";
+  dbg_mod << "BaseMC::Values should be larger than tolerance for yield: "
+      << d_int.d_yieldTol << "\n";
+
   double alfa_old = 0;
-
   for (int iter = 0; iter < d_int.d_maxIter; iter++) {
 
     bool problems = false;
     alfa_old = alfa;
-    alfa = f0 / (f0 - f1);
 
-    Vector7 epsAlfa = deps * (alfa0 + alfa * (alfa1 - alfa0));
-    Vector6 sAlfa = calcStressIncElast(state(2), s0, eps0, epsAlfa);
-    sAlfa += s0;
+    // Interpolate linearly between the two yield surfaces to find the f = 0 location
+    double tt = f0 / (f0 - f1);
+    alfa = (1.0 - tt) * alfa0 + tt * alfa1;
 
-    double fAlfa = computeYieldNormalized(sAlfa);
+    Vector7 deps_alfa = strain_inc * alfa;
+    Vector6 dsigma_alfa = calcStressIncElast(state(2), stress_old, strain_old, deps_alfa);
+    stress_alfa = stress_old + dsigma_alfa;
 
-    if (dbg.active()) {
-      dbg << "In iteration " << iter << " alfa = " << alfa
-          << " and f = " << fAlfa;
-      dbg << " alfa0 = " << alfa0 << "\n";
-    }
+    double f_alfa = computeYieldNormalized(stress_alfa);
+
+    dbg_mod << __LINE__ << ":BaseMC::In iteration " << iter << " alfa = " << alfa
+            << " and f = " << f_alfa << " alfa0 = " << alfa0 << "\n";
 
     // if the difference is below numerical the accuracy, we have the solution
     if ((alfa1 - alfa0) < TINY) {
-      fAlfa = 0.0;
+      f_alfa = 0.0;
     }
 
-    if (std::abs(fAlfa) < d_int.d_yieldTol) {
+    if (std::abs(f_alfa) < d_int.d_yieldTol) {
 
-      // if fAlfa within tolerance, we have the solution
-      double alphaYield = alfa0 + alfa * (alfa1 - alfa0);
+      // if f_alfa within tolerance, we have the solution
 
       if (iter > 50) {
         std::cout << "**WARNING** Large number of iterations in "
@@ -641,84 +629,78 @@ MohrCoulombBase::findYieldModified(const Vector3& state, const Vector6& s0,
                      "Solution is however correct..."
                   << "\n";
       }
-      if (dbg.active()) {
-        dbg << "Solution in findYieldModified procedure was found after "
-            << iter << " iterations."
-            << "\n";
-        dbg << "solution is: " << alphaYield << "\n";
-      }
-      return alphaYield;
+      dbg_mod << __LINE__ 
+          << ":BaseMC::Solution alfa = " << alfa 
+          << " in findYieldModified procedure was found after "
+          << iter << " iterations." << "\n";
+
+      return alfa;
     }
 
-    if (fAlfa > 0) {
+    if (f_alfa > 0) {
 
-      // if fAlfa >0 - we are yielding - max alfa set to current alfa
-      fAlfa = computeYieldNormalized(sAlfa);
+      // if f_alfa > 0 - we are yielding - max alfa set to current alfa
+      f_alfa = computeYieldNormalized(stress_alfa);
       if (((1 - alfa) < d_int.d_alfaCheck) &&
           ((1 - alfa_old) / (1 - alfa)) < d_int.d_alfaRatio) {
         problems = true;
       }
 
-      alfa1 = alfa0 + alfa * (alfa1 - alfa0);
-      f1 = fAlfa;
+      alfa1 = alfa;
+      f1 = f_alfa;
 
       if (problems) {
 
-        if (dbg.active()) {
-          dbg << "Problematic iteration entered !!!"
-              << "\n";
-        }
-        alfa = alfa1 - d_int.d_alfaChange * (alfa1 - alfa0);
-        epsAlfa = deps * (alfa0 + alfa * (alfa1 - alfa0));
+        dbg_mod << __LINE__ << ":BaseMC::Problematic iteration entered !!!\n";
 
-        sAlfa = calcStressIncElast(state(2), s0, eps0, epsAlfa);
-        sAlfa += s0;
+        alfa = (1.0 - d_int.d_alfaChange) * alfa0 + d_int.d_alfaChange * alfa1;
+        deps_alfa = strain_inc * alfa;
 
-        fAlfa = computeYieldNormalized(sAlfa);
+        dsigma_alfa = calcStressIncElast(state(2), stress_old, strain_old, deps_alfa);
+        stress_alfa = stress_old + dsigma_alfa;
 
-        if (fAlfa > 0) {
-          // if fAlfa > 0 - we are yielding - max alfa set to current alfa
-          alfa1 = alfa0 + alfa * (alfa1 - alfa0);
-          f1 = fAlfa;
+        f_alfa = computeYieldNormalized(stress_alfa);
+
+        if (f_alfa > 0) {
+          // if f_alfa > 0 - we are yielding - max alfa set to current alfa
+          alfa1 = alfa;
+          f1 = f_alfa;
         } else {
-          // if fAlfa < 0 - we are elastic - minimum alfa is set to current alfa
-          alfa0 = alfa0 + alfa * (alfa1 - alfa0);
-          f0 = fAlfa;
+          // if f_alfa < 0 - we are elastic - minimum alfa is set to current alfa
+          alfa0 = alfa;
+          f0 = f_alfa;
         }
       }
 
     } else {
 
-      // if fAlfa <0 - we are elastic - minimum alfa is set to current alfa
-      fAlfa = computeYieldNormalized(sAlfa);
+      // if f_alfa < 0 - we are elastic - minimum alfa is set to current alfa
+      f_alfa = computeYieldNormalized(stress_alfa);
       if ((alfa < d_int.d_alfaCheck) && (alfa_old / alfa) < d_int.d_alfaRatio) {
         problems = true;
       }
-      alfa0 = alfa0 + alfa * (alfa1 - alfa0);
-      f0 = fAlfa;
+      alfa0 = alfa;
+      f0 = f_alfa;
 
       if (problems) {
 
-        if (dbg.active()) {
-          dbg << "Problematic iteration entered !!!"
-              << "\n";
-        }
+        dbg_mod << __LINE__ << ":BaseMC::Problematic iteration entered !!!\n";
 
-        alfa = alfa0 + d_int.d_alfaChange * (alfa1 - alfa0);
-        epsAlfa = deps * (alfa0 + alfa * (alfa1 - alfa0));
+        alfa = (1.0 - d_int.d_alfaChange) * alfa0 + d_int.d_alfaChange * alfa1;
+        deps_alfa = strain_inc * alfa;
 
-        sAlfa = calcStressIncElast(state(2), s0, eps0, epsAlfa);
-        sAlfa += s0;
+        dsigma_alfa = calcStressIncElast(state(2), stress_old, strain_old, deps_alfa);
+        stress_alfa = stress_old + dsigma_alfa;
 
-        fAlfa = computeYieldNormalized(sAlfa);
-        if (fAlfa > 0) {
-          // if fAlfa > 0 - we are yielding - max alfa set to current alfa
-          alfa1 = alfa0 + alfa * (alfa1 - alfa0);
-          f1 = fAlfa;
+        f_alfa = computeYieldNormalized(stress_alfa);
+        if (f_alfa > 0) {
+          // if f_alfa > 0 - we are yielding - max alfa set to current alfa
+          alfa1 = alfa;
+          f1 = f_alfa;
         } else {
-          // if fAlfa < 0 - we are elastic - minimum alfa is set to current alfa
-          alfa0 = alfa0 + alfa * (alfa1 - alfa0);
-          f0 = fAlfa;
+          // if f_alfa < 0 - we are elastic - minimum alfa is set to current alfa
+          alfa0 = alfa;
+          f0 = f_alfa;
         }
       }
     }
@@ -733,8 +715,8 @@ MohrCoulombBase::findYieldModified(const Vector3& state, const Vector6& s0,
   err << "alphamin = " << alfa0 << " alphamax = " << alfa1
       << " dalpha = " << alfa1 - alfa0;
   err << "Yield Function value Min=" << f0 << " Max=" << f1 << "\n";
-  err << "Stress:" << s0 << "\n";
-  err << "Strain:" << deps << "\n";
+  err << "Stress:" << stress_old << "\n";
+  err << "Strain:" << strain_inc << "\n";
   err << "G: " << d_elastic.d_G << " K: " << d_elastic.d_K
       << " cohesion: " << d_yield.d_cohesion << " phi: " << d_yield.d_phi
       << "\n";
@@ -1153,9 +1135,9 @@ MohrCoulombBase::getParamRKErr8544(Eigen::Matrix<double, 8, 8>& A,
 int
 MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
                               const Vector7& epStrainInc, Vector6& dSigma,
-                              Vector6& dEps_p, double& dP0Star) const
+                              const Vector6& plasticStrainInc, double& dP0Star) const
 {
-  dbg_doing << "Doing MohrCoulombBase::calcPlastic\n";
+  //dbg_doing << "Doing MohrCoulombBase::calcPlastic\n";
 
   if (!state.checkIfFinite()) {
     std::ostringstream err;
@@ -1183,7 +1165,7 @@ MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
               << "\n";
   }
 
-  dEps_p = (dg_dsigma * numerator * dEps) / denominator;
+  auto dEps_p = (dg_dsigma * numerator * dEps) / denominator;
   dSigma = elasticTangent * (dEps - dEps_p);
 
   for (int i = 0; i < 6; i++) {
@@ -1431,9 +1413,7 @@ MohrCoulombBase::correctDriftBeg(MohrCoulombState& state,
       double lambda = fValue / denominator;
       Vector6 dEps_p = df_dsigma * lambda;
 
-      if (dbg.active()) {
-        dbg << "Delta Epsilon Plastic:\n" << dEps_p << "\n";
-      }
+      dbg << __LINE__ << ":BaseMC::Delta Epsilon Plastic:\n" << dEps_p.transpose() << "\n";
 
       auto dSigma = (elasticTangent * dg_dsigma) * (-lambda);
 
@@ -1442,10 +1422,7 @@ MohrCoulombBase::correctDriftBeg(MohrCoulombState& state,
     }
 
     if (numIter > 10) {
-      if (dbg.active()) {
-        dbg << "**WARNING** Drift Correction Procedure failed."
-            << "\n";
-      }
+      dbg << __LINE__ << ":**WARNING** BaseMC::Drift Correction Procedure failed.\n";
       correctDrift = false;
     }
   } while (correctDrift);
@@ -1483,10 +1460,8 @@ MohrCoulombBase::correctDriftEnd(MohrCoulombState& state) const
       // it shouldn't pose much problem.
       ++numIter;
 
-      if (dbg.active()) {
-        dbg << "Drift Correction, Iteration = " << numIter
-            << " Function Value = " << fValue << "\n";
-      }
+      dbg << __LINE__ << ":BaseMC::Drift Correction, Iteration = " << numIter
+          << " Function Value = " << fValue << "\n";
 
       std::tie(df_dsigma, dg_dsigma) = computeDfDsigma(state.stress);
 
@@ -1499,9 +1474,7 @@ MohrCoulombBase::correctDriftEnd(MohrCoulombState& state) const
 
       Vector6 dEps_p = df_dsigma * lambda;
 
-      if (dbg.active()) {
-        dbg << "Delta Epsilon Plastic:\n" << dEps_p << "\n";
-      }
+      dbg << __LINE__ << ":BaseMC::Delta Epsilon Plastic:\n" << dEps_p << "\n";
 
       auto dSigma = (elasticTangent * dg_dsigma) * (-lambda);
 
@@ -1509,10 +1482,7 @@ MohrCoulombBase::correctDriftEnd(MohrCoulombState& state) const
       state.update(dEps_p, zeros, dSigma, 0);
     }
     if (numIter > 10) {
-      if (dbg.active()) {
-        dbg << "**WARNING** Drift Correction Procedure failed"
-            << "\n";
-      }
+      dbg << __LINE__ << ":**WARNING** BaseMC::Drift Correction Procedure failed\n";
       correctDrift = false;
     }
   } while (correctDrift);

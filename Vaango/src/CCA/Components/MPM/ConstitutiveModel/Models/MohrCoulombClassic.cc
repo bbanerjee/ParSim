@@ -40,7 +40,9 @@ using namespace Uintah;
 static DebugStream dbg_doing("ClassicMC_doing", false);
 static DebugStream dbg("ClassicMC", false);
 static DebugStream dbg_unloading("ClassicMC_unloading", false);
+static DebugStream dbg_yield("ClassicMC_yield", false);
 
+constexpr long64 testParticleID = 6619136;
 /**
  * Constructors
  */
@@ -79,16 +81,28 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
 
   bool onTheYieldLocus = checkYieldNormalized(initialState);
 
+  if (dbg_yield.active()) {
+    if (initialState.particleID == testParticleID) {
+      dbg_yield << __LINE__ << ":MCClassic::Before return: p = " << initialState.meanStress()
+          << " q = " << initialState.shearStress() 
+          << " Initial state yield? " << std::boolalpha << onTheYieldLocus << "\n";
+    }
+  }
+
   MohrCoulombState finalState;
   calcElastic(strainIncrement, initialState, finalState);
 
-  dbg << "Stress" << finalState.stress.transpose() << "\n";
+  dbg << "Stress elastic" << finalState.stress.transpose() << "\n";
 
   bool elasticPlastic = checkYieldNormalized(finalState);
 
-  dbg << "p = " << finalState.meanStress()
-      << " q = " << finalState.shearStress() << "  Yield? " << std::boolalpha
-      << elasticPlastic << "\n";
+  if (dbg_yield.active()) {
+    if (initialState.particleID == testParticleID) {
+      dbg_yield << "p = " << finalState.meanStress()
+          << " q = " << finalState.shearStress() 
+          << " Trial state yield? " << std::boolalpha << elasticPlastic << "\n";
+    }
+  }
 
   bool unloading = false;
   if (elasticPlastic) {
@@ -96,7 +110,7 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
       unloading = checkGradient(initialState, finalState);
 
       if (unloading) {
-        dbg_unloading << "\n\n Elasto-Plastic unloading=" << unloading << "\n";
+        dbg << "\n\n Elasto-Plastic unloading=" << unloading << "\n";
 
         findIntersectionUnloading(strainIncrement,
                                   initialState,
@@ -128,6 +142,27 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
       finalState.specificVolume(spVol);
 
       calculatePlastic(purelyplasticStrain, finalState);
+    }
+  }
+
+  if (dbg_yield.active()) {
+
+    onTheYieldLocus = checkYieldNormalized(finalState);
+
+    if (onTheYieldLocus) {
+      std::ostringstream err;
+      err << "**WARNING** The stress state of particle " << initialState.particleID
+          << " after return is on or outside the yield surface\n"
+          << "The value of the yield function is: " 
+          << computeYieldNormalized(finalState.stress) << ". "
+          << "The yield tolerance is:" << d_int.d_yieldTol << "\n";
+      dbg_yield << err.str();
+    }
+
+    if (initialState.particleID == testParticleID) {
+      dbg_yield << __LINE__ << "MCClassic::After return: p = " << finalState.meanStress()
+          << " q = " << finalState.shearStress() 
+          << " Final state yield? " << std::boolalpha << onTheYieldLocus << "\n\n";
     }
   }
 
@@ -172,6 +207,7 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
  * Check yield
  *  check of the standard yield surface
  *  Note: value of function is normalised by the sum of eigenvalues
+ *  Yielded -> true, Elastic -> false
  */
 bool
 MohrCoulombClassic::checkYieldNormalized(const MohrCoulombState& state) const
@@ -200,16 +236,16 @@ MohrCoulombClassic::computeYieldNormalized(const Vector6& stress) const
   Matrix33 dummy;
 
   std::tie(eigenval, dummy) = getEigen(stress);
-  double eig_min = eigenval(0);
-  double eig_max = eigenval(2);
+  double sigma_1 = eigenval(0);
+  double sigma_3 = eigenval(2);
 
-  double yieldFnValue = (eig_max - eig_min) -
-                        (eig_max + eig_min) * d_yield.d_sin_phi -
+  double yieldFnValue = (sigma_1 - sigma_3) -
+                        (sigma_1 + sigma_3) * d_yield.d_sin_phi -
                         2.0 * d_yield.d_cohesion * d_yield.d_cos_phi;
 
   // Normalisation
   yieldFnValue /=
-    (std::abs(eig_max) + std::abs(eig_min) + 2.0 * d_yield.d_cohesion);
+    (std::abs(sigma_1) + std::abs(sigma_3) + 2.0 * d_yield.d_cohesion);
 
   return yieldFnValue;
 }
@@ -281,6 +317,7 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress) const
 
   double meanStress = firstInvariant(stress) / 3.0;
   if (meanStress > -d_yield.d_pMin) {
+
     double df_dsigma1 = 1.0 - d_yield.d_sin_phi;
     double df_dsigma3 = -1.0 - d_yield.d_sin_phi;
     double dg_dsigma1 = 1.0 - d_potential.d_sin_psi;
@@ -294,6 +331,7 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress) const
 
   } else {
     double one_third = 1.0 / 3.0;
+
     df_dsigma(0)     = -one_third;
     df_dsigma(1)     = -one_third;
     df_dsigma(2)     = -one_third;
@@ -916,8 +954,6 @@ MohrCoulombClassic::doRungeKuttaEig(
       dbg << "Stress midState[" << 0 << "] = " << midStates[0].stress.transpose() << "\n";
       dbg << "Stress increment = " << stressInc.transpose() << "\n";
 
-      // **TODO** Check if plastic strain increment should not be computed
-      // plasticStrainInc = Vector6::Zero();
       dSigma.col(0)        = stressInc;
       plasticStrain.col(0) = plasticStrainInc;
       dP0Star(0, 0) = p0StarInc;
@@ -976,8 +1012,6 @@ MohrCoulombClassic::doRungeKuttaEig(
 
       dbg << "Stress increment = " << stressInc.transpose() << "\n";
 
-      // **TODO** Check if plastic strain increment should not be computed
-      // plasticStrainInc = Vector6::Zero();
       dSigma.col(rkloop)        = stressInc;
       plasticStrain.col(rkloop) = plasticStrainInc;
       dP0Star(0, rkloop) = p0StarInc;
@@ -989,22 +1023,22 @@ MohrCoulombClassic::doRungeKuttaEig(
     Vector6 sigB  = dSigma * BB;
     double p0B    = dP0Star * BB;
 
-    Vector7 result, error;
-    result.block<6, 1>(0, 0) = sigBRes;
+    Vector7 stressAtYield, error;
+    stressAtYield.block<6, 1>(0, 0) = sigBRes;
     error.block<6, 1>(0, 0)  = sigB;
-    result(6) = p0BRes;
+    stressAtYield(6) = p0BRes;
     error(6)  = p0B;
 
     if (!errorEstimate) {
-      error -= result;
+      error -= stressAtYield;
     }
 
     switch (d_int.d_tolMethod) {
       case ToleranceMethod::EPUS_RELATIVE_ERROR:
-        rError = checkNorm(result, result(6), state, error);
+        rError = checkNorm(stressAtYield, stressAtYield(6), state, error);
         break;
       case ToleranceMethod::SLOAN:
-        rError = checkNormSloan(result, result(6), state, error);
+        rError = checkNormSloan(stressAtYield, stressAtYield(6), state, error);
         break;
       default:
         std::ostringstream err;
@@ -1014,13 +1048,13 @@ MohrCoulombClassic::doRungeKuttaEig(
     }
 
     for (int i = 0; i < 7; i++) {
-      if (!std::isfinite(result(i))) {
+      if (!std::isfinite(stressAtYield(i))) {
         std::ostringstream err;
         err << "**ERROR** Results not a number. Try correcting issue, results "
                "may be "
                "incorrect."
             << " Results = \n"
-            << result << "\n";
+            << stressAtYield << "\n";
         throw InvalidValue(err.str(), __FILE__, __LINE__);
       }
     }
@@ -1062,7 +1096,7 @@ MohrCoulombClassic::doRungeKuttaEig(
       //******
       // here we update all the state data.
       state.update(
-        plasticStrainInc, substepStrain, result.block<6, 1>(0, 0), result(6));
+        plasticStrainInc, substepStrain, stressAtYield.block<6, 1>(0, 0), stressAtYield(6));
       //******
       //******
 
@@ -1100,10 +1134,10 @@ MohrCoulombClassic::doRungeKuttaEig(
       // error vector updated, norm should be re-evaluated:
       switch (d_int.d_tolMethod) {
         case ToleranceMethod::EPUS_RELATIVE_ERROR:
-          rError = checkNorm(result, result(6), state, error);
+          rError = checkNorm(stressAtYield, stressAtYield(6), state, error);
           break;
         case ToleranceMethod::SLOAN:
-          rError = checkNormSloan(result, result(6), state, error);
+          rError = checkNormSloan(stressAtYield, stressAtYield(6), state, error);
           break;
         default:
           std::ostringstream err;
@@ -1369,17 +1403,17 @@ MohrCoulombClassic::doRungeKuttaEigErr(
     Vector6 sigB  = dSigma * BB;
     double p0B    = dP0Star * BB;
 
-    Vector7 result, error;
-    result.block<6, 1>(0, 0) = sigBRes;
+    Vector7 stressAtYield, error;
+    stressAtYield.block<6, 1>(0, 0) = sigBRes;
     error.block<6, 1>(0, 0)  = sigB;
-    result(6) = p0BRes;
+    stressAtYield(6) = p0BRes;
     error(6)  = p0B;
 
     // error estimate calculated in case we
     // have lower order solution instead of
     // error estimate
     if (!errorEstimate) {
-      error -= result;
+      error -= stressAtYield;
     }
 
     // For the a-priori error estimate
@@ -1394,12 +1428,12 @@ MohrCoulombClassic::doRungeKuttaEigErr(
     // check the error norm
     switch (d_int.d_tolMethod) {
       case ToleranceMethod::EPUS_RELATIVE_ERROR:
-        rError      = checkNorm(result, result(6), state, error);
-        rErrorOther = checkNorm(result, result(6), state, errorOther);
+        rError      = checkNorm(stressAtYield, stressAtYield(6), state, error);
+        rErrorOther = checkNorm(stressAtYield, stressAtYield(6), state, errorOther);
         break;
       case ToleranceMethod::SLOAN:
-        rError      = checkNormSloan(result, result(6), state, error);
-        rErrorOther = checkNormSloan(result, result(6), state, errorOther);
+        rError      = checkNormSloan(stressAtYield, stressAtYield(6), state, error);
+        rErrorOther = checkNormSloan(stressAtYield, stressAtYield(6), state, errorOther);
         break;
       default:
         std::ostringstream err;
@@ -1409,12 +1443,12 @@ MohrCoulombClassic::doRungeKuttaEigErr(
     }
 
     for (int i = 0; i < 7; i++) {
-      if (!std::isfinite(result(i))) {
+      if (!std::isfinite(stressAtYield(i))) {
         std::cout << "**ERROR** Results not a number. Try correcting issue, "
                      "results may be "
                      "incorrect. Results = \n"
-                  << result << "\n";
-        result(i) = 0;
+                  << stressAtYield << "\n";
+        stressAtYield(i) = 0;
         if (rError < methodPower) {
           rError = methodPower;
         }
@@ -1454,7 +1488,7 @@ MohrCoulombClassic::doRungeKuttaEigErr(
       //******
       // here we update all the state data.
       state.update(
-        plasticStrainInc, substepStrain, result.block<6, 1>(0, 0), result(6));
+        plasticStrainInc, substepStrain, stressAtYield.block<6, 1>(0, 0), stressAtYield(6));
       //******
       //******
 
@@ -1495,8 +1529,8 @@ MohrCoulombClassic::doRungeKuttaEigErr(
       double temp = 0;
       switch (d_int.d_tolMethod) {
         case ToleranceMethod::EPUS_RELATIVE_ERROR:
-          temp        = checkNorm(result, result(6), state, error);
-          rErrorOther = checkNorm(result, result(6), state, errorOther);
+          temp        = checkNorm(stressAtYield, stressAtYield(6), state, error);
+          rErrorOther = checkNorm(stressAtYield, stressAtYield(6), state, errorOther);
           if (temp > rError) {
             rError = temp;
           }
@@ -1505,8 +1539,8 @@ MohrCoulombClassic::doRungeKuttaEigErr(
           }
           break;
         case ToleranceMethod::SLOAN:
-          temp        = checkNormSloan(result, result(6), state, error);
-          rErrorOther = checkNormSloan(result, result(6), state, errorOther);
+          temp        = checkNormSloan(stressAtYield, stressAtYield(6), state, error);
+          rErrorOther = checkNormSloan(stressAtYield, stressAtYield(6), state, errorOther);
           if (temp > rError) {
             rError = temp;
           }

@@ -59,7 +59,8 @@
 
 using namespace Uintah;
 
-static DebugStream dbg_doing("MohrCoulomb", false);
+static DebugStream dbg_doing("MohrCoulomb_doing", false);
+static DebugStream dbg("MohrCoulomb", false);
 
 /**
  * Constructors
@@ -905,10 +906,12 @@ MohrCoulomb::computeStressTensor(const PatchSubset* patches,
     ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
     constParticleVariable<Point> pX;
+    constParticleVariable<long64> pParticleID;
     constParticleVariable<double> pMass, pVolume, pTemperature;
     constParticleVariable<Vector> pVelocity;
 
     old_dw->get(pX, lb->pXLabel, pset);
+    old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
     old_dw->get(pMass, lb->pMassLabel, pset);
     old_dw->get(pVolume, lb->pVolumeLabel, pset);
     old_dw->get(pTemperature, lb->pTemperatureLabel, pset);
@@ -1025,7 +1028,10 @@ MohrCoulomb::computeStressTensor(const PatchSubset* patches,
       double suction            = pSuction_old[idx];
       double specificVol        = pSpVol_old[idx];
 
-      calculateStress(pX[idx],
+      dbg << __LINE__ << "MohrCoulomb::Particle ID = " << pParticleID[idx] << "\n";
+
+      calculateStress(pParticleID[idx],
+                      pX[idx],
                       strainInc,
                       shearStrain,
                       shearStrainRate,
@@ -1242,7 +1248,8 @@ MohrCoulomb::computeNonlocalStress(
  ***********************************************************************
  */
 void
-MohrCoulomb::calculateStress(const Point& pX,
+MohrCoulomb::calculateStress(long64 particleID,
+                             const Point& pX,
                              const Vector6& dEps,
                              double pShearStrain,
                              double pShearStrainRate,
@@ -1260,6 +1267,7 @@ MohrCoulomb::calculateStress(const Point& pX,
   // Convert to compression +ve form
   Vector6 strainInc = -dEps;
   MohrCoulombState initialState;
+  initialState.particleID = particleID;
   initialState.stress = -stress;
   initialState.strain.block<6, 1>(0, 0) = -strain + strainInc;
   initialState.plasticStrain = -plasticStrain;

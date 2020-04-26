@@ -300,16 +300,16 @@ protected:
   Vector6 calcStressIncElast(double nu0, const Vector6& s0, const Vector7& eps0,
                              const Vector7& deps) const;
 
-  bool checkGradient(const MohrCoulombState& initialState,
-                     const MohrCoulombState& finalState) const;
-
   Matrix67 calculateElasticTangentMatrix(const MohrCoulombState& state) const;
   Matrix66 calculateElasticTangentMatrix(double K, double G) const;
 
   Matrix67 calculateElastoPlasticTangentMatrix(
     const MohrCoulombState& state) const;
 
-  double findGradient(const Vector6& s, const Vector6& ds, Vector6& dF,
+  bool checkGradient(const MohrCoulombState& initialState,
+                     const MohrCoulombState& finalState) const;
+
+  double computeDsigmaDotDf(const Vector6& s, const Vector6& ds, Vector6& dF,
                       double suction, double dsuction) const;
 
 
@@ -390,7 +390,7 @@ protected:
                           MohrCoulombState& state) const;
 
   int calcPlastic(const MohrCoulombState& state, const Vector7& epStrainInc,
-                  Vector6& dSigma, Vector6& dEps_p, double& dP0Star) const;
+                  Vector6& dSigma, const Vector6& dEps_p, double& dP0Star) const;
 
   void getParamRKME221(Eigen::Matrix<double, 2, 2>& A,
                        Eigen::Matrix<double, 2, 1>& B,

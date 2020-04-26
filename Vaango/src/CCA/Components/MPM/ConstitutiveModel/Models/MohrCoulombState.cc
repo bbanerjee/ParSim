@@ -35,6 +35,7 @@ using namespace Uintah;
 
 MohrCoulombState::MohrCoulombState()
 {
+  particleID = -1;
   stress = Vector6::Zero(); 
   strain = Vector7::Zero(); 
   plasticStrain = Vector6::Zero(); 
@@ -54,38 +55,31 @@ MohrCoulombState::update(const Vector6& plasticStrainInc,
                          const Vector6& stressInc, 
                          double p0StarInc)
 {
-  double microcheck;
-  for (int i = 0; i < 7; i++) {
-    microcheck = strain(i);
-    microStrain(i) += strainInc(i);
-    strain(i) += microStrain(i);
-    microStrain(i) -= (strain(i) - microcheck);
-  }
+  auto strain_old = strain;
+  microStrain += strainInc;
+  strain += microStrain;
+  microStrain -= (strain - strain_old);
 
-  for (int i = 0; i < 6; i++) {
-    microcheck = stress(i);
-    microStress(i) += stressInc(i);
-    stress(i) += microStress(i);
-    microStress(i) -= (stress(i) - microcheck);
-  }
+  auto stress_old = stress;
+  microStress += stressInc;
+  stress += microStress;
+  microStress -= (stress - stress_old);
 
-  for (int i = 0; i < 6; i++) {
-    microcheck = plasticStrain(i);
-    microPlasticStrain(i) += plasticStrainInc(i);
-    plasticStrain(i) += microPlasticStrain(i);
-    microPlasticStrain(i) -= (plasticStrain(i) - microcheck);
-  }
+  auto plasticStrain_old = plasticStrain;
+  microPlasticStrain += plasticStrainInc;
+  plasticStrain += microPlasticStrain;
+  microPlasticStrain -= (plasticStrain - plasticStrain_old);
 
-  microcheck = state(0);
+  auto p0Star_old = state(0);
   microState(0) += p0StarInc;
   state(0) += microState(0);
-  microState(0) -= (state(0) - microcheck);
+  microState(0) -= (state(0) - p0Star_old);
 
-  microcheck = state(2);
-  microState(2) += state(2) * (exp(-(strainInc(0) + strainInc(1) + strainInc(2))) - 1);
+  auto spVol_old = state(2);
+  microState(2) += state(2) * (std::exp(-(strainInc(0) + strainInc(1) + strainInc(2))) - 1);
   // microState(2) -= (strainInc(0)+strainInc(1)+strainInc(2))*state(2);
   state(2) += microState(2); // updated specific volume
-  microState(2) -= (state(2) - microcheck);
+  microState(2) -= (state(2) - spVol_old);
 }
 
 double
