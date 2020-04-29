@@ -387,8 +387,21 @@ protected:
   double calculatePlastic(const Vector7& purelyPlasticStrain,
                           MohrCoulombState& state) const;
 
-  int calcPlastic(const MohrCoulombState& state, const Vector7& epStrainInc,
-                  Vector6& dSigma, const Vector6& dEps_p, double& dP0Star) const;
+  std::tuple<Vector6, double> calcPlastic(const MohrCoulombState& state,
+                                          const Vector7& strainInc) const;
+
+  Vector6 projectTrialStressToYieldSurface(const Vector6& strainInc,
+                                           const Vector6& stress_old, 
+                                           const Matrix66& elasticTangent, 
+                                           const Vector6& df_dsigma,
+                                           const Vector6& dg_dsigma,
+                                           const Vector6& stress_trial, 
+                                           const Vector6& proj_direction) const;
+
+  Vector6 firstOrderStressUpdate(const Vector6& strainInc,
+                                 const Matrix66& elasticTangent, 
+                                 const Vector6& df_dsigma,
+                                 const Vector6& dg_dsigma) const;
 
   void getParamRKME221(Eigen::Matrix<double, 2, 2>& A,
                        Eigen::Matrix<double, 2, 1>& B,

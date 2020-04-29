@@ -1138,13 +1138,12 @@ MohrCoulombBase::getParamRKErr8544(Eigen::Matrix<double, 8, 8>& A,
 /**
  * Compute the stress and p0star increment,
  */
-int
+std::tuple<Vector6, double>
 MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
-                              const Vector7& strainInc, Vector6& dSigma,
-                              const Vector6& plasticStrainInc, double& dP0Star) const
+                             const Vector7& strainInc) const 
 {
   // No p0Star calculation yet
-  dP0Star = 1.0;
+  double dP0Star = 1.0;
 
   if (!state.checkIfFinite()) {
     std::ostringstream err;
@@ -1169,24 +1168,60 @@ MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
   Vector6 dg_dsigma = Vector6::Zero();
   std::tie(df_dsigma, dg_dsigma) = computeDfDsigma(stress);
 
+  // Compute projection direction
+  Vector6 P_n = elasticTangent * dg_dsigma;
+  P_n /= P_n.norm();
+
   dbg_calcplastic << "df_dsigma = " << df_dsigma.transpose() << "\n"
-                  << "dg_dsigma = " << dg_dsigma.transpose() << "\n";
+                  << "dg_dsigma = " << dg_dsigma.transpose() << "\n"
+                  << "P_n = " << P_n.transpose() << "\n";
 
   dbg_calcplastic << "stress = " << toMatrix3(stress) << "\n"
                   << "stress_trial = " << toMatrix3(stress_trial) << "\n";
 
+  // Project trial stress on to yield surface
+  Vector6 stress_closest_Pn = 
+    projectTrialStressToYieldSurface(strainInc.block<6,1>(0,0), 
+                                     stress, elasticTangent, 
+                                     df_dsigma, dg_dsigma, 
+                                     stress_trial, P_n);
+
+  /*
+  Vector6 stress_closest_dg = 
+    projectTrialStressToYieldSurface(strainInc.block<6,1>(0,0), 
+                                     stress, elasticTangent, 
+                                     df_dsigma, dg_dsigma, 
+                                     stress_trial, dg_dsigma);
+  std::cout << "Stress err = " 
+            << (stress_closest_dg - stress_closest_Pn).transpose()
+            << "\n";
+  */
+
+  Vector6 dSigma = stress_closest_Pn - stress;
+
+  return std::make_tuple(dSigma, dP0Star);
+}
+
+Vector6 
+MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
+                                                  const Vector6& stress_old, 
+                                                  const Matrix66& elasticTangent, 
+                                                  const Vector6& df_dsigma,
+                                                  const Vector6& dg_dsigma,
+                                                  const Vector6& stress_trial, 
+                                                  const Vector6& proj_direction) const
+{
   // Find intersection with yield surface
-  double alpha = 2.0 * (stress_trial - stress).norm();
-  double f_0 = computeYieldNormalized(stress);
   double f_trial = computeYieldNormalized(stress_trial);
-  Vector6 sigma_alpha = stress_trial - alpha * dg_dsigma;
+  double alpha = 2.0 * (stress_trial - stress_old).norm();
+  Vector6 sigma_alpha = stress_trial - alpha * proj_direction;
   double f_alpha = computeYieldNormalized(sigma_alpha);
 
-  // Make sure the functions have opposite signs
+  // Make sure the yield functions have opposite signs for bisection to work
   int numIter = 0;
   while (std::signbit(f_trial) == std::signbit(f_alpha)) {
     alpha *= 2;
-    sigma_alpha = stress_trial - alpha * dg_dsigma;
+    sigma_alpha = stress_trial - alpha * proj_direction;
     f_alpha = computeYieldNormalized(sigma_alpha);
 
     if (numIter > d_int.d_maxIter) {
@@ -1194,50 +1229,28 @@ MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
                 << " have the same sign.  Cannot use bisection.\n"
                 << "Using first-order stress projection on to yield surface instead\n";
 
-      Vector6 dEps = strainInc.block<6, 1>(0, 0);
-      auto numerator = df_dsigma.transpose() * elasticTangent;
-      double denominator = numerator * dg_dsigma;
-      if (denominator < TINY) {
-        std::cout << "**WARNING** denominator of plastic multiplier is very small."
-                     " Some error may arise and results may be incorrect"
-                  << "\n";
-      }
-
-      auto dEps_p = (dg_dsigma * numerator * dEps) / denominator;
-      dSigma = elasticTangent * (dEps - dEps_p);
-
-      for (int i = 0; i < 6; i++) {
-        if (!std::isfinite(dSigma(i))) {
-          std::ostringstream err;
-          err << "calcPlastic: dSigma not finite. dSigma = \n" << dSigma << "\n";
-          throw InvalidValue(err.str(), __FILE__, __LINE__);
-        }
-      }
+      auto dSigma = firstOrderStressUpdate(strainInc, elasticTangent, 
+                                           df_dsigma, dg_dsigma);
+      sigma_alpha = stress_old + dSigma;
+      return sigma_alpha;
     }
-  }
+  } // end while signbit
 
-  dbg_calcplastic << "f_0 = " << f_0 << "f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
+  dbg_calcplastic << "f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
 
   double alpha_max = 0;
-  //Vector6 sigma_max = stress_trial;
-  //double f_max = f_trial;
-
   double alpha_min = alpha;
-  //Vector6 sigma_min = sigma_alpha;
   double f_min = f_alpha;
 
   bool solved = false;
   numIter = 0;
   while (numIter < d_int.d_maxIter) {
 
-    ++numIter;
-
     alpha = (alpha_min + alpha_max) / 2.0;
 
     // Estimate stress at closest point to yield surface
-    sigma_alpha = stress_trial - alpha * dg_dsigma;
+    sigma_alpha = stress_trial - alpha * proj_direction;
 
-    // Compute yield function at that stress
     f_alpha = computeYieldNormalized(sigma_alpha);
 
     dbg_calcplastic << " f_alpha = " << f_alpha << " alpha = " << alpha << "\n";
@@ -1248,53 +1261,63 @@ MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
       break;
     }
 
-    // Update alpha
+    // Update min, max
     if (std::signbit(f_alpha) == std::signbit(f_min)) {
       alpha_min = alpha;
+      f_min = f_alpha;
     } else {
       alpha_max = alpha;
     }
 
-    // Check that iterations not exceeded
     ++numIter;
   }
 
   if (!solved) {
     std::cout << " sigma_alpha = " << sigma_alpha << "\n";
     std::cout << " f_alpha = " << f_alpha << " alpha = " << alpha << "\n";
-    std::cout << "Too many iterations.\n"
-              << "Using first-order stress projection on to yield surface instead\n";
+    std::cout << "**WARNING** Too many iterations.\n"
+              << "            Using first-order stress projection on to yield surface instead\n";
+    std::cout << "**WARNING** Final stress state is not on the yield surface.\n"
+                 "            Some error may arise and results may be incorrect.\n"
+              << "df_dsigma = " << df_dsigma.transpose() << "\n"
+              << "proj_dir = " << proj_direction.transpose() << "\n"
+              << "stress_old = " << toMatrix3(stress_old) << "\n"
+              << "stress_trial = " << toMatrix3(stress_trial) << "\n"
+              << "stress_new = " << toMatrix3(sigma_alpha) << "\n";
 
-    Vector6 dEps = strainInc.block<6, 1>(0, 0);
-    auto numerator = df_dsigma.transpose() * elasticTangent;
-    double denominator = numerator * dg_dsigma;
-    if (denominator < TINY) {
-      std::cout << "**WARNING** denominator of plastic multiplier is very small."
-                   " Some error may arise and results may be incorrect"
-                << "\n";
-    }
+    auto dSigma = firstOrderStressUpdate(strainInc, elasticTangent, 
+                                         df_dsigma, dg_dsigma);
+    sigma_alpha = stress_old + dSigma;
+  } 
 
-    auto dEps_p = (dg_dsigma * numerator * dEps) / denominator;
-    dSigma = elasticTangent * (dEps - dEps_p);
+  return sigma_alpha;
+}
 
-    for (int i = 0; i < 6; i++) {
-      if (!std::isfinite(dSigma(i))) {
-        std::ostringstream err;
-        err << "calcPlastic: dSigma not finite. dSigma = \n" << dSigma << "\n";
-        throw InvalidValue(err.str(), __FILE__, __LINE__);
-      }
-    }
-
-  } else {
-
-    // Compute stress projected on yield surface
-    Vector6 stress_closest = sigma_alpha;
-
-    // Assume that this is the required stress
-    dSigma = stress_closest - stress;
+Vector6 
+MohrCoulombBase::firstOrderStressUpdate(const Vector6& strainInc,
+                                        const Matrix66& elasticTangent, 
+                                        const Vector6& df_dsigma,
+                                        const Vector6& dg_dsigma) const
+{
+  auto numerator = df_dsigma.transpose() * elasticTangent;
+  double denominator = numerator * dg_dsigma;
+  if (denominator < TINY) {
+    std::cout << "**WARNING** denominator of plastic multiplier is very small."
+                 " Some error may arise and results may be incorrect\n";
   }
 
-  return 0;
+  auto plasticStrainInc = (dg_dsigma * numerator * strainInc) / denominator;
+  Vector6 dSigma = elasticTangent * (strainInc - plasticStrainInc);
+
+  for (int i = 0; i < 6; i++) {
+    if (!std::isfinite(dSigma(i))) {
+      std::ostringstream err;
+      err << "calcPlastic: dSigma not finite. dSigma = \n" << dSigma << "\n";
+      throw InvalidValue(err.str(), __FILE__, __LINE__);
+    }
+  }
+
+  return dSigma;
 }
 
 /**

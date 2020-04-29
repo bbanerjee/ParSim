@@ -1004,14 +1004,10 @@ MohrCoulombSheng::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
     } else {
 
       stressInc = Vector6::Zero();
-      plasticStrainInc = Vector6::Zero();
-      calcPlastic(midStates[0], substepStrain, stressInc, plasticStrainInc,
-                  p0StarInc);
+      std::tie(stressInc, p0StarInc) = calcPlastic(midStates[0], substepStrain);
 
-      // **TODO** Check if plastic strain increment should not be computed
-      // plasticStrainInc = Vector6::Zero();
       dSigma.col(0) = stressInc;
-      plasticStrain.col(0) = plasticStrainInc;
+      plasticStrain.col(0) = substepStrain.block<6,1>(0,0);
       dP0Star(0, 0) = p0StarInc;
     }
 
@@ -1033,13 +1029,10 @@ MohrCoulombSheng::doRungeKutta(const Eigen::Matrix<double, Steps, Steps>& AA,
       midStates[rkloop].update(plasticStrainInc, currentStrain, stressInc,
                                p0StarInc);
 
-      calcPlastic(midStates[rkloop], substepStrain, stressInc, plasticStrainInc,
-                  p0StarInc);
+      std::tie(stressInc, p0StarInc) = calcPlastic(midStates[rkloop], substepStrain);
 
-      // **TODO** Check if plastic strain increment should not be computed
-      // plasticStrainInc = Vector6::Zero();
       dSigma.col(rkloop) = stressInc;
-      plasticStrain.col(rkloop) = plasticStrainInc;
+      plasticStrain.col(rkloop) = substepStrain.block<6,1>(0,0);
       dP0Star(0, rkloop) = p0StarInc;
     }
 
@@ -1332,14 +1325,10 @@ MohrCoulombSheng::doRungeKuttaErr(
     } else {
 
       stressInc = Vector6::Zero();
-      plasticStrainInc = Vector6::Zero();
-      calcPlastic(midStates[0], substepStrain, stressInc, plasticStrainInc,
-                  p0StarInc);
+      std::tie(stressInc, p0StarInc) = calcPlastic(midStates[0], substepStrain);
 
-      // **TODO** Check if plastic strain increment should not be computed
-      // plasticStrainInc = Vector6::Zero();
       dSigma.col(0) = stressInc;
-      plasticStrain.col(0) = plasticStrainInc;
+      plasticStrain.col(0) = substepStrain.block<6,1>(0,0);
       dP0Star(0, 0) = p0StarInc;
     }
 
@@ -1361,13 +1350,10 @@ MohrCoulombSheng::doRungeKuttaErr(
       midStates[rkloop].update(plasticStrainInc, currentStrain, stressInc,
                                p0StarInc);
 
-      calcPlastic(midStates[rkloop], substepStrain, stressInc, plasticStrainInc,
-                  p0StarInc);
+      std::tie(stressInc, p0StarInc) = calcPlastic(midStates[rkloop], substepStrain);
 
-      // **TODO** Check if plastic strain increment should not be computed
-      // plasticStrainInc = Vector6::Zero();
       dSigma.col(rkloop) = stressInc;
-      plasticStrain.col(rkloop) = plasticStrainInc;
+      plasticStrain.col(rkloop) = substepStrain.block<6,1>(0,0);
       dP0Star(0, rkloop) = p0StarInc;
     }
 
@@ -1623,10 +1609,10 @@ MohrCoulombSheng::plasticMidpoint(MohrCoulombState& state,
     state_new = state;
     state_mid = state;
 
-    calcPlastic(state_new, halfCurrentStrain, dSigma, plasticStrain, dP0Star);
+    std::tie(dSigma, dP0Star) = calcPlastic(state_new, halfCurrentStrain);
     state_mid.update(plasticStrain, halfCurrentStrain, dSigma, dP0Star);
 
-    calcPlastic(state_mid, halfCurrentStrain, dSigma, plasticStrain, dP0Star);
+    std::tie(dSigma, dP0Star) = calcPlastic(state_mid, halfCurrentStrain);
     dSigma *= 2.0;
     plasticStrain *= 2.0;
     dP0Star *= 2.0;
