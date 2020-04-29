@@ -1213,18 +1213,23 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
 {
   // Find intersection with yield surface
   double f_trial = computeYieldNormalized(stress_trial);
-  double alpha = 2.0 * (stress_trial - stress_old).norm();
+  double alpha = 1.1 * (stress_trial - stress_old).norm();
   Vector6 sigma_alpha = stress_trial - alpha * proj_direction;
   double f_alpha = computeYieldNormalized(sigma_alpha);
+
+  dbg_calcplastic << "stress_alpha = " << toMatrix3(sigma_alpha) << "\n";
+  dbg_calcplastic << "Pn = " << proj_direction.transpose() << "\n";
+  dbg_calcplastic << "alpha = " << alpha 
+                  << " f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
 
   // Make sure the yield functions have opposite signs for bisection to work
   int numIter = 0;
   while (std::signbit(f_trial) == std::signbit(f_alpha)) {
-    alpha *= 2;
+    alpha *= 1.1;
     sigma_alpha = stress_trial - alpha * proj_direction;
     f_alpha = computeYieldNormalized(sigma_alpha);
 
-    if (numIter > d_int.d_maxIter) {
+    if (numIter > d_int.d_maxIter || !std::isfinite(alpha)) {
       std::cout << "f_trial = " << f_trial << " and f_alpha = " << f_alpha 
                 << " have the same sign.  Cannot use bisection.\n"
                 << "Using first-order stress projection on to yield surface instead\n";
@@ -1236,7 +1241,8 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
     }
   } // end while signbit
 
-  dbg_calcplastic << "f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
+  dbg_calcplastic << "alpha = " << alpha 
+                  << " f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
 
   double alpha_max = 0;
   double alpha_min = alpha;
@@ -1273,7 +1279,7 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
   }
 
   if (!solved) {
-    std::cout << " sigma_alpha = " << sigma_alpha << "\n";
+    std::cout << " sigma_alpha = " << sigma_alpha.transpose() << "\n";
     std::cout << " f_alpha = " << f_alpha << " alpha = " << alpha << "\n";
     std::cout << "**WARNING** Too many iterations.\n"
               << "            Using first-order stress projection on to yield surface instead\n";

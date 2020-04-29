@@ -469,9 +469,9 @@ MohrCoulomb::initializeLocalMPMLabels()
     "p.strainMC+", ParticleVariable<Matrix3>::getTypeDescription());
 
   pPlasticStrainLabel = VarLabel::create(
-    "p.plasticstrainMC", ParticleVariable<Matrix3>::getTypeDescription());
+    "p.plasticStrainMC", ParticleVariable<Matrix3>::getTypeDescription());
   pPlasticStrainLabel_preReloc = VarLabel::create(
-    "p.plasticstrainMC+", ParticleVariable<Matrix3>::getTypeDescription());
+    "p.plasticStrainMC+", ParticleVariable<Matrix3>::getTypeDescription());
 
   pShearModulusLabel = VarLabel::create(
     "p.shearModulusMC", ParticleVariable<double>::getTypeDescription());
@@ -840,8 +840,8 @@ MohrCoulomb::addComputesAndRequires(Task* task,
   const MaterialSubset* matlset = matl->thisMaterial();
   addComputesAndRequiresForRotatedExplicit(task, matlset, patches);
 
-  task->computes(lb->pdTdtLabel_preReloc, matlset);
-  task->computes(lb->p_qLabel_preReloc, matlset);
+  //task->computes(lb->pdTdtLabel_preReloc, matlset);
+  //task->computes(lb->p_qLabel_preReloc, matlset);
 
   // Computes and requires for internal state data
   task->requires(Task::OldDW, pStrainLabel, matlset, Ghost::None);
