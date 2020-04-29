@@ -43,6 +43,7 @@ static DebugStream dbg_params("BaseMC_params", false);
 static DebugStream dbg_unloading("BaseMC_unloading", false);
 static DebugStream dbg_alpha("BaseMC_alpha", false);
 static DebugStream dbg_mod("BaseMC_mod", false);
+static DebugStream dbg_calcplastic("BaseMC_calcplastic", false);
 
 constexpr long64 testParticleID = 6619136;
 
@@ -296,10 +297,9 @@ MohrCoulombBase::computeDsigmaDotDf(const Vector6& s, const Vector6& ds,
 /**
  Find intersection with yield surface during unloading
  */
-void
+std::tuple<Vector7, Vector7>
 MohrCoulombBase::findIntersectionUnloading(
-  const Vector7& strainIncrement, const MohrCoulombState& initialState,
-  Vector7& elasticStrainInc, Vector7& plasticStrainInc)
+  const Vector7& strainIncrement, const MohrCoulombState& initialState)
 {
   dbg_doing << "Doing MohrCoulombBase::findIntersectionUnloading\n";
 
@@ -312,28 +312,34 @@ MohrCoulombBase::findIntersectionUnloading(
   double alpha = findYieldAlpha(initialState.state, initialState.stress,
                                 initialState.strain, strainIncrement);
 
-  elasticStrainInc = strainIncrement * alpha;
-  plasticStrainInc = strainIncrement - elasticStrainInc;
+  Vector7 elasticStrainInc = strainIncrement * alpha;
+  Vector7 plasticStrainInc = strainIncrement - elasticStrainInc;
+  
+  return std::make_tuple(elasticStrainInc, plasticStrainInc);
 }
 
-void
+std::tuple<Vector7, Vector7>
 MohrCoulombBase::findIntersection(const Vector7& strainIncrement,
-                                   const MohrCoulombState& initialState,
-                                   Vector7& elasticStrainInc,
-                                   Vector7& plasticStrainInc) const
+                                   const MohrCoulombState& initialState) const
 {
   dbg_doing << "Doing MohrCoulombBase::findIntersection\n";
 
   dbg_mod << "ParticleID = " << initialState.particleID << "\n";
+
+  /*
   if (initialState.particleID == testParticleID) {
     dbg_mod.setActive(true);
   } else {
     dbg_mod.setActive(false);
   }
+  */
+
   double alpha = findYieldModified(initialState.state, initialState.stress,
                                    initialState.strain, strainIncrement);
-  elasticStrainInc = strainIncrement * alpha;
-  plasticStrainInc = strainIncrement - elasticStrainInc;
+  Vector7 elasticStrainInc = strainIncrement * alpha;
+  Vector7 plasticStrainInc = strainIncrement - elasticStrainInc;
+
+  return std::make_tuple(elasticStrainInc, plasticStrainInc);
 }
 
 /**
@@ -740,7 +746,7 @@ MohrCoulombBase::computeNu(const Vector6& s, const Vector3& state,
   Calculate stress increment during plastic deformation
  */
 double
-MohrCoulombBase::calculatePlastic(const Vector7& purelyPlasticStrain,
+MohrCoulombBase::calculatePlastic(const Vector7& plasticStrainInc,
                                    MohrCoulombState& state) const
 {
   dbg_doing << "Doing MohrCoulombBase::calculatePlastic\n";
@@ -751,47 +757,47 @@ MohrCoulombBase::calculatePlastic(const Vector7& purelyPlasticStrain,
   switch (d_int.d_solutionAlgorithm) {
     case SolutionAlgorithm::RUNGE_KUTTA_SECOND_ORDER_MODIFIED_EULER: {
       // calculate using Modified Euler scheme
-      std::tie(time, numIter) = plasticRKME221(state, purelyPlasticStrain);
+      std::tie(time, numIter) = plasticRKME221(state, plasticStrainInc);
       break;
     }
     case SolutionAlgorithm::RUNGE_KUTTA_THIRD_ORDER_NYSTROM: {
       // calculate using 3rd order RK scheme (Nystrom)
-      std::tie(time, numIter) = plasticRK332(state, purelyPlasticStrain);
+      std::tie(time, numIter) = plasticRK332(state, plasticStrainInc);
       break;
     }
     case SolutionAlgorithm::RUNGE_KUTTA_THIRD_ORDER_BOGACKI: {
       // calculate using 3rd order RK scheme (Bogacki - Shampine)
-      std::tie(time, numIter) = plasticRKBog432(state, purelyPlasticStrain);
+      std::tie(time, numIter) = plasticRKBog432(state, plasticStrainInc);
       break;
     }
     case SolutionAlgorithm::RUNGE_KUTTA_FOURTH_ORDER: {
       // calculate using 4th order RK scheme
-      std::tie(time, numIter) = plasticRK543(state, purelyPlasticStrain);
+      std::tie(time, numIter) = plasticRK543(state, plasticStrainInc);
       break;
     }
     case SolutionAlgorithm::RUNGE_KUTTA_FIFTH_ORDER_ENGLAND: {
       // calculate using 5th order RK scheme (England)
-      std::tie(time, numIter) = plasticRKEng654(state, purelyPlasticStrain);
+      std::tie(time, numIter) = plasticRKEng654(state, plasticStrainInc);
       break;
     }
     case SolutionAlgorithm::RUNGE_KUTTA_FIFTH_ORDER_CASH: {
       // calculate using 5th order RK scheme (Cash - Karp)
-      std::tie(time, numIter) = plasticRKCK654(state, purelyPlasticStrain);
+      std::tie(time, numIter) = plasticRKCK654(state, plasticStrainInc);
       break;
     }
     case SolutionAlgorithm::RUNGE_KUTTA_FIFTH_ORDER_DORMAND: {
       // calculate using 5th order RK scheme (Dormand - Prince)
-      std::tie(time, numIter) = plasticRKDP754(state, purelyPlasticStrain);
+      std::tie(time, numIter) = plasticRKDP754(state, plasticStrainInc);
       break;
     }
     case SolutionAlgorithm::RUNGE_KUTTA_FIFTH_ORDER_BOGACKI: {
       // calculate using 5th order RK scheme (Bogacki - Shampine)
-      std::tie(time, numIter) = plasticRKErr8544(state, purelyPlasticStrain);
+      std::tie(time, numIter) = plasticRKErr8544(state, plasticStrainInc);
       break;
     }
     case SolutionAlgorithm::EXTRAPOLATION_BULIRSCH: {
       // calculate using extrapolation method (Bulirsch - Stoer)
-      std::tie(time, numIter) = plasticExtrapol(state, purelyPlasticStrain);
+      std::tie(time, numIter) = plasticExtrapol(state, plasticStrainInc);
       break;
     }
     default: {
@@ -1134,10 +1140,11 @@ MohrCoulombBase::getParamRKErr8544(Eigen::Matrix<double, 8, 8>& A,
  */
 int
 MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
-                              const Vector7& epStrainInc, Vector6& dSigma,
+                              const Vector7& strainInc, Vector6& dSigma,
                               const Vector6& plasticStrainInc, double& dP0Star) const
 {
-  //dbg_doing << "Doing MohrCoulombBase::calcPlastic\n";
+  // No p0Star calculation yet
+  dP0Star = 1.0;
 
   if (!state.checkIfFinite()) {
     std::ostringstream err;
@@ -1146,37 +1153,147 @@ MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
     throw InvalidValue(err.str(), __FILE__, __LINE__);
   }
 
+  // Save stress
   auto stress = state.stress;
 
-  Vector6 df_dsigma = Vector6::Zero();
-  Vector6 dg_dsigma = Vector6::Zero();
-  std::tie(df_dsigma, dg_dsigma) = computeDfDsigma(stress);
-
+  // Save elastic tangent modulus
   double K = d_elastic.d_K;
   double G = d_elastic.d_G;
   Matrix66 elasticTangent = calculateElasticTangentMatrix(K, G);
 
-  Vector6 dEps = epStrainInc.block<6, 1>(0, 0);
-  auto numerator = df_dsigma.transpose() * elasticTangent;
-  double denominator = numerator * dg_dsigma;
-  if (denominator < TINY) {
-    std::cout << "**WARNING** denominator of plastic multiplier is very small."
-                 " Some error may arise and results may be incorrect"
-              << "\n";
-  }
+  // Compute trial stress
+  Vector6 stress_trial = stress + elasticTangent * strainInc.block<6,1>(0,0);
 
-  auto dEps_p = (dg_dsigma * numerator * dEps) / denominator;
-  dSigma = elasticTangent * (dEps - dEps_p);
+  // Compute normal to yield surface (assume constant)
+  Vector6 df_dsigma = Vector6::Zero();
+  Vector6 dg_dsigma = Vector6::Zero();
+  std::tie(df_dsigma, dg_dsigma) = computeDfDsigma(stress);
 
-  for (int i = 0; i < 6; i++) {
-    if (!std::isfinite(dSigma(i))) {
-      std::ostringstream err;
-      err << "calcPlastic: dSigma not finite. dSigma = \n" << dSigma << "\n";
-      throw InvalidValue(err.str(), __FILE__, __LINE__);
+  dbg_calcplastic << "df_dsigma = " << df_dsigma.transpose() << "\n"
+                  << "dg_dsigma = " << dg_dsigma.transpose() << "\n";
+
+  dbg_calcplastic << "stress = " << toMatrix3(stress) << "\n"
+                  << "stress_trial = " << toMatrix3(stress_trial) << "\n";
+
+  // Find intersection with yield surface
+  double alpha = 2.0 * (stress_trial - stress).norm();
+  double f_0 = computeYieldNormalized(stress);
+  double f_trial = computeYieldNormalized(stress_trial);
+  Vector6 sigma_alpha = stress_trial - alpha * dg_dsigma;
+  double f_alpha = computeYieldNormalized(sigma_alpha);
+
+  // Make sure the functions have opposite signs
+  int numIter = 0;
+  while (std::signbit(f_trial) == std::signbit(f_alpha)) {
+    alpha *= 2;
+    sigma_alpha = stress_trial - alpha * dg_dsigma;
+    f_alpha = computeYieldNormalized(sigma_alpha);
+
+    if (numIter > d_int.d_maxIter) {
+      std::cout << "f_trial = " << f_trial << " and f_alpha = " << f_alpha 
+                << " have the same sign.  Cannot use bisection.\n"
+                << "Using first-order stress projection on to yield surface instead\n";
+
+      Vector6 dEps = strainInc.block<6, 1>(0, 0);
+      auto numerator = df_dsigma.transpose() * elasticTangent;
+      double denominator = numerator * dg_dsigma;
+      if (denominator < TINY) {
+        std::cout << "**WARNING** denominator of plastic multiplier is very small."
+                     " Some error may arise and results may be incorrect"
+                  << "\n";
+      }
+
+      auto dEps_p = (dg_dsigma * numerator * dEps) / denominator;
+      dSigma = elasticTangent * (dEps - dEps_p);
+
+      for (int i = 0; i < 6; i++) {
+        if (!std::isfinite(dSigma(i))) {
+          std::ostringstream err;
+          err << "calcPlastic: dSigma not finite. dSigma = \n" << dSigma << "\n";
+          throw InvalidValue(err.str(), __FILE__, __LINE__);
+        }
+      }
     }
   }
 
-  dP0Star = 1.0;
+  dbg_calcplastic << "f_0 = " << f_0 << "f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
+
+  double alpha_max = 0;
+  //Vector6 sigma_max = stress_trial;
+  //double f_max = f_trial;
+
+  double alpha_min = alpha;
+  //Vector6 sigma_min = sigma_alpha;
+  double f_min = f_alpha;
+
+  bool solved = false;
+  numIter = 0;
+  while (numIter < d_int.d_maxIter) {
+
+    ++numIter;
+
+    alpha = (alpha_min + alpha_max) / 2.0;
+
+    // Estimate stress at closest point to yield surface
+    sigma_alpha = stress_trial - alpha * dg_dsigma;
+
+    // Compute yield function at that stress
+    f_alpha = computeYieldNormalized(sigma_alpha);
+
+    dbg_calcplastic << " f_alpha = " << f_alpha << " alpha = " << alpha << "\n";
+
+    if (std::abs(f_alpha) < d_int.d_yieldTol ||
+        std::abs(alpha_min - alpha_max) < d_int.d_yieldTol) {
+      solved = true;
+      break;
+    }
+
+    // Update alpha
+    if (std::signbit(f_alpha) == std::signbit(f_min)) {
+      alpha_min = alpha;
+    } else {
+      alpha_max = alpha;
+    }
+
+    // Check that iterations not exceeded
+    ++numIter;
+  }
+
+  if (!solved) {
+    std::cout << " sigma_alpha = " << sigma_alpha << "\n";
+    std::cout << " f_alpha = " << f_alpha << " alpha = " << alpha << "\n";
+    std::cout << "Too many iterations.\n"
+              << "Using first-order stress projection on to yield surface instead\n";
+
+    Vector6 dEps = strainInc.block<6, 1>(0, 0);
+    auto numerator = df_dsigma.transpose() * elasticTangent;
+    double denominator = numerator * dg_dsigma;
+    if (denominator < TINY) {
+      std::cout << "**WARNING** denominator of plastic multiplier is very small."
+                   " Some error may arise and results may be incorrect"
+                << "\n";
+    }
+
+    auto dEps_p = (dg_dsigma * numerator * dEps) / denominator;
+    dSigma = elasticTangent * (dEps - dEps_p);
+
+    for (int i = 0; i < 6; i++) {
+      if (!std::isfinite(dSigma(i))) {
+        std::ostringstream err;
+        err << "calcPlastic: dSigma not finite. dSigma = \n" << dSigma << "\n";
+        throw InvalidValue(err.str(), __FILE__, __LINE__);
+      }
+    }
+
+  } else {
+
+    // Compute stress projected on yield surface
+    Vector6 stress_closest = sigma_alpha;
+
+    // Assume that this is the required stress
+    dSigma = stress_closest - stress;
+  }
+
   return 0;
 }
 

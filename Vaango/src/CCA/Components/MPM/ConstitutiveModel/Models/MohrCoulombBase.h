@@ -205,8 +205,8 @@ protected:
     {
       d_cohesion = c;
       d_phi = phi * M_PI / 180.0;
-      d_sin_phi = std::sin(phi);
-      d_cos_phi = std::cos(phi);
+      d_sin_phi = std::sin(d_phi);
+      d_cos_phi = std::cos(d_phi);
       d_alpha = (3.0 - d_sin_phi) / (3.0 + d_sin_phi);
       d_alpha4 = d_alpha * d_alpha * d_alpha * d_alpha;
       if (pMin != -1) {
@@ -227,8 +227,8 @@ protected:
     void set(double psi)
     {
       d_psi = psi * M_PI / 180.0;
-      d_sin_psi = std::sin(psi);
-      d_cos_psi = std::cos(psi);
+      d_sin_psi = std::sin(d_psi);
+      d_cos_psi = std::cos(d_psi);
     }
   };
 
@@ -367,15 +367,13 @@ protected:
     return std::make_tuple(J2, vmStress);
   }
 
-  void findIntersectionUnloading(const Vector7& strainIncrement,
-                                 const MohrCoulombState& initialState,
-                                 Vector7& purelyElastic,
-                                 Vector7& purelyPlastic);
+  std::tuple<Vector7, Vector7>
+  findIntersectionUnloading(const Vector7& strainIncrement,
+                            const MohrCoulombState& initialState);
 
-  void findIntersection(const Vector7& strainIncrement,
-                        const MohrCoulombState& initialState,
-                        Vector7& elasticStrainInc,
-                        Vector7& plasticStrainInc) const;
+  std::tuple<Vector7, Vector7>
+  findIntersection(const Vector7& strainIncrement,
+                        const MohrCoulombState& initialState) const;
 
   double findYieldAlpha(const Vector3& state, const Vector6& s0,
                         const Vector7& eps0, const Vector7& deps);

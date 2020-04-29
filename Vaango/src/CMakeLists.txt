@@ -224,14 +224,23 @@ endif(CXX_FLAGS)
 # For C++14
 #------
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Werror -Weverything")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=gnu++14 -Wall")
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -no-ipo -fp-model precise -wd584 -wd1418 -wd1918 -wd383 -wd869 -wd981 -wd424 -wd1419 -wd444 -wd271 -wd2259 -wd1572 -wd1599 -wd82 -wd177 -wd593 -fno-omit-frame-pointer -Wall -Woverloaded-virtual -Wno-deprecated -w1 -Wno-strict-aliasing -Wno-write-strings -Wno-invalid-offsetof -fno-operator-names")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -shared")
 endif ()
+
+#------
+# For C++17
+#------
+#if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
+#elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -std=c++17 -Wall")
+#elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -shared")
+#endif ()
 
 #SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-rdynamic")
 #SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-rdynamic")

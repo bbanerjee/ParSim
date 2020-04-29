@@ -103,6 +103,7 @@ MohrCoulombSheng::integrate(const Vector7& strainIncrement,
         unloading = checkGradient(initialState, finalState);
       }
 
+      Vector7 plasticStrainInc;
       if (unloading) {
 
         if (dbg_unloading.active()) {
@@ -111,37 +112,41 @@ MohrCoulombSheng::integrate(const Vector7& strainIncrement,
         }
 
         // find elastic part
-        findIntersectionUnloading(strainIncrement, initialState,
-                                  purelyElasticStrain, purelyPlasticStrain);
+        Vector7 elasticStrainInc;
+        std::tie(elasticStrainInc, plasticStrainInc) = 
+          findIntersectionUnloading(strainIncrement, initialState);
 
         // calculating elastic part, updated in the same point.
-        calcElastic(purelyElasticStrain, initialState, finalState);
+        calcElastic(elasticStrainInc, initialState, finalState);
 
         // Update specific volume
         double spVol =
           computeNu(finalState.stress, finalState.state, finalState.suction());
         finalState.specificVolume(spVol);
 
-        calculatePlastic(purelyPlasticStrain, finalState);
-
       } else {
+        
+        plasticStrainInc = strainIncrement;
 
-        calculatePlastic(strainIncrement, finalState);
       }
 
+      calculatePlastic(plasticStrainInc, finalState);
+
     } else {
+
       // not on the yield locus, finding intersection and subsequently
       // calculate elastic and plastic stress increment
-      findIntersection(strainIncrement, initialState, purelyElasticStrain,
-                       purelyPlasticStrain);
+      Vector7 elasticStrainInc, plasticStrainInc;
+      std::tie(elasticStrainInc, plasticStrainInc) = 
+        findIntersection(strainIncrement, initialState);
 
-      calcElastic(purelyElasticStrain, initialState, finalState);
+      calcElastic(elasticStrainInc, initialState, finalState);
 
       double spVol =
         computeNu(finalState.stress, finalState.state, finalState.suction());
       finalState.specificVolume(spVol);
 
-      calculatePlastic(purelyPlasticStrain, finalState);
+      calculatePlastic(plasticStrainInc, finalState);
     }
   }
 
@@ -411,6 +416,9 @@ MohrCoulombSheng::computeDfDsigma(const Vector6& stress) const
     df_dSigma(5) = 0.0;
     dg_dSigma(5) = 0.0;
   }
+
+  df_dSigma /= df_dSigma.norm();
+  dg_dSigma /= dg_dSigma.norm();
 
   if (dbg.active()) {
     dbg << "df_dSigma = \n"

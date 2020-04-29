@@ -207,3 +207,16 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+
+add_executable(testBoostAutodiff testBoostAutodiff.cc)
+target_link_libraries(testBoostAutodiff
+  ${GTEST_LIB}
+  ${Boost_LIBRARIES}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testBoostAutodiff)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
