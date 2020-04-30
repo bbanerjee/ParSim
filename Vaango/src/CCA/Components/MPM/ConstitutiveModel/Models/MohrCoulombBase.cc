@@ -1142,6 +1142,7 @@ std::tuple<Vector6, double>
 MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
                              const Vector7& strainInc) const 
 {
+  std::cout << "\n\n** Particle ID = " << state.particleID << "\n\n";
   // No p0Star calculation yet
   double dP0Star = 1.0;
 
@@ -1202,6 +1203,9 @@ MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
   return std::make_tuple(dSigma, dP0Star);
 }
 
+/**
+ * Find intersection with yield surface along projection direction
+ */
 Vector6 
 MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
                                                   const Vector6& stress_old, 
@@ -1211,15 +1215,113 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
                                                   const Vector6& stress_trial, 
                                                   const Vector6& proj_direction) const
 {
-  // Find intersection with yield surface
+  bool foundInitialAlpha = false;
+  double alpha, f_trial, f_alpha;
+  Vector6 sigma_alpha;
+
+  std::tie(foundInitialAlpha, alpha, f_trial, f_alpha, sigma_alpha) = 
+    estimateInitialBisectionParameter(stress_old, stress_trial, proj_direction);
+
+  bool successfulBisection = true;
+
+  if (foundInitialAlpha) {
+
+    // If elastic for some reason
+    if (f_trial < 0.0) {
+      return stress_trial;
+    }
+
+    dbg_calcplastic << "foundInitialAlpha::alpha = " << alpha 
+                    << " f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
+
+    std::tie(successfulBisection, alpha, f_alpha, sigma_alpha) = 
+      findIntersectionWithBisection(alpha, f_alpha, stress_trial, proj_direction);
+
+  } else {
+
+    std::cout << "**WARNING** f_trial = " << f_trial << " and f_alpha = " << f_alpha 
+              << " have the same sign.  Cannot use bisection.\n";
+
+    // if ((stress_trial - stress_old).norm() > 1.0) {
+    if (std::abs(f_trial - f_alpha) > 1.0e-5) {
+
+      Vector6 strainInc_step1 = strainInc * 0.5;
+      Vector6 stress_trial_step1 = stress_old + elasticTangent * strainInc_step1;
+      Vector6 stress_step1 = 
+        projectTrialStressToYieldSurface(strainInc_step1, stress_old, elasticTangent,
+                                         df_dsigma, dg_dsigma, stress_trial_step1,
+                                         proj_direction);
+
+      dbg_calcplastic << "After step1: s0     = " << toMatrix3(stress_old) << "\n"
+                      << "             strial = " << toMatrix3(stress_trial_step1) << "\n"
+                      << "             snew   = " << toMatrix3(stress_step1) << "\n";
+
+      Vector6 stress_trial_step2 = stress_step1 + elasticTangent * strainInc_step1;
+      Vector6 stress_step2 = 
+        projectTrialStressToYieldSurface(strainInc_step1, stress_step1, elasticTangent,
+                                         df_dsigma, dg_dsigma, stress_trial_step2,
+                                         proj_direction);
+
+      dbg_calcplastic << "After step2: s0     = " << toMatrix3(stress_step1) << "\n"
+                      << "             strial = " << toMatrix3(stress_trial_step2) << "\n"
+                      << "             snew   = " << toMatrix3(stress_step2) << "\n";
+
+
+      sigma_alpha = stress_step2;
+
+    } else {
+
+      sigma_alpha = stress_trial;
+
+    }
+  }
+
+  if (!successfulBisection) {
+    std::cout << "**WARNING** Bisection unsuccessful.\n"
+              << "            Using first-order stress projection on to yield surface instead\n";
+    std::cout << "            Final stress state is not on the yield surface.\n"
+                 "            Some error may arise and results may be incorrect.\n";
+    std::cout << " sigma_alpha = " << sigma_alpha.transpose() << "\n";
+    std::cout << " f_alpha = " << f_alpha << " alpha = " << alpha << "\n"
+              << " df_dsigma = " << df_dsigma.transpose() << "\n"
+              << " proj_dir = " << proj_direction.transpose() << "\n"
+              << " stress_old = " << toMatrix3(stress_old) << "\n"
+              << " stress_trial = " << toMatrix3(stress_trial) << "\n"
+              << " stress_new = " << toMatrix3(sigma_alpha) << "\n";
+
+    auto dSigma = firstOrderStressUpdate(strainInc, elasticTangent, 
+                                         df_dsigma, dg_dsigma);
+    sigma_alpha = stress_old + dSigma;
+  }
+
+  return sigma_alpha;
+}
+
+/**
+ * Returns status: success = true, failure = false
+ *         alpha, f_trial, f_alpha, sigma_alpha
+ */
+std::tuple<bool, double, double, double, Vector6>
+MohrCoulombBase::estimateInitialBisectionParameter(const Vector6& stress_old,
+                                                   const Vector6& stress_trial,
+                                                   const Vector6& proj_direction) const
+{
   double f_trial = computeYieldNormalized(stress_trial);
-  double alpha = 1.1 * (stress_trial - stress_old).norm();
+
+  // Check if elastic for some reason
+  if (f_trial < 0.0) {
+    return std::make_tuple(true, 0.0, f_trial, 0.0, stress_trial);
+  }
+
+  double alpha = (stress_trial - stress_old).norm();
   Vector6 sigma_alpha = stress_trial - alpha * proj_direction;
   double f_alpha = computeYieldNormalized(sigma_alpha);
 
-  dbg_calcplastic << "stress_alpha = " << toMatrix3(sigma_alpha) << "\n";
-  dbg_calcplastic << "Pn = " << proj_direction.transpose() << "\n";
-  dbg_calcplastic << "alpha = " << alpha 
+  dbg_calcplastic << "estimate alpha: stress_old   = " << toMatrix3(stress_old) << "\n";
+  dbg_calcplastic << "estimate alpha: stress_trial = " << toMatrix3(stress_trial) << "\n";
+  dbg_calcplastic << "estimate alpha: stress_alpha = " << toMatrix3(sigma_alpha) << "\n";
+  dbg_calcplastic << "estimate alpha: Pn = " << proj_direction.transpose() << "\n";
+  dbg_calcplastic << "estimate alpha: alpha = " << alpha 
                   << " f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
 
   // Make sure the yield functions have opposite signs for bisection to work
@@ -1229,32 +1331,46 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
     sigma_alpha = stress_trial - alpha * proj_direction;
     f_alpha = computeYieldNormalized(sigma_alpha);
 
-    if (numIter > d_int.d_maxIter || !std::isfinite(alpha)) {
-      std::cout << "f_trial = " << f_trial << " and f_alpha = " << f_alpha 
-                << " have the same sign.  Cannot use bisection.\n"
-                << "Using first-order stress projection on to yield surface instead\n";
+    if (numIter > 10 || !std::isfinite(alpha) || !std::isfinite(f_alpha)) {
 
-      auto dSigma = firstOrderStressUpdate(strainInc, elasticTangent, 
-                                           df_dsigma, dg_dsigma);
-      sigma_alpha = stress_old + dSigma;
-      return sigma_alpha;
+      dbg_calcplastic << "alpha = " << alpha 
+                      << " f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
+
+      return std::make_tuple(false, alpha, f_trial, f_alpha, sigma_alpha);
     }
+
+    ++numIter;
+
   } // end while signbit
 
   dbg_calcplastic << "alpha = " << alpha 
                   << " f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
 
+  return std::make_tuple(true, alpha, f_trial, f_alpha, sigma_alpha);
+}
+
+/**
+ *  Do bisection algorithm to find intersection with yield surface
+ *  Returns: solved, alpha, f_alpha, sigma_alpha
+ */
+std::tuple<bool, double, double, Vector6>
+MohrCoulombBase::findIntersectionWithBisection(double alpha_in, double f_alpha_in,
+                                               const Vector6& stress_trial,
+                                               const Vector6& proj_direction) const
+{
   double alpha_max = 0;
-  double alpha_min = alpha;
-  double f_min = f_alpha;
+  double alpha_min = alpha_in;
+  double f_min = f_alpha_in;
 
   bool solved = false;
-  numIter = 0;
+  double alpha, f_alpha;
+  Vector6 sigma_alpha;
+   
+  int numIter = 0;
   while (numIter < d_int.d_maxIter) {
 
     alpha = (alpha_min + alpha_max) / 2.0;
 
-    // Estimate stress at closest point to yield surface
     sigma_alpha = stress_trial - alpha * proj_direction;
 
     f_alpha = computeYieldNormalized(sigma_alpha);
@@ -1267,7 +1383,6 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
       break;
     }
 
-    // Update min, max
     if (std::signbit(f_alpha) == std::signbit(f_min)) {
       alpha_min = alpha;
       f_min = f_alpha;
@@ -1278,27 +1393,9 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
     ++numIter;
   }
 
-  if (!solved) {
-    std::cout << " sigma_alpha = " << sigma_alpha.transpose() << "\n";
-    std::cout << " f_alpha = " << f_alpha << " alpha = " << alpha << "\n";
-    std::cout << "**WARNING** Too many iterations.\n"
-              << "            Using first-order stress projection on to yield surface instead\n";
-    std::cout << "**WARNING** Final stress state is not on the yield surface.\n"
-                 "            Some error may arise and results may be incorrect.\n"
-              << "df_dsigma = " << df_dsigma.transpose() << "\n"
-              << "proj_dir = " << proj_direction.transpose() << "\n"
-              << "stress_old = " << toMatrix3(stress_old) << "\n"
-              << "stress_trial = " << toMatrix3(stress_trial) << "\n"
-              << "stress_new = " << toMatrix3(sigma_alpha) << "\n";
-
-    auto dSigma = firstOrderStressUpdate(strainInc, elasticTangent, 
-                                         df_dsigma, dg_dsigma);
-    sigma_alpha = stress_old + dSigma;
-  } 
-
-  return sigma_alpha;
+  return std::make_tuple(solved, alpha, f_alpha, sigma_alpha);
 }
-
+ 
 Vector6 
 MohrCoulombBase::firstOrderStressUpdate(const Vector6& strainInc,
                                         const Matrix66& elasticTangent, 

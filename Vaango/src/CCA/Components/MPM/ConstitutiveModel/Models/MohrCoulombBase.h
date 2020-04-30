@@ -398,6 +398,16 @@ protected:
                                            const Vector6& stress_trial, 
                                            const Vector6& proj_direction) const;
 
+  std::tuple<bool, double, double, double, Vector6>
+    estimateInitialBisectionParameter(const Vector6& stress_old,
+                                      const Vector6& stress_trial,
+                                      const Vector6& proj_direction) const;
+
+  std::tuple<bool, double, double, Vector6>
+    findIntersectionWithBisection(double alpha_in, double f_alpha_in,
+                                  const Vector6& stress_trial,
+                                  const Vector6& proj_direction) const;
+
   Vector6 firstOrderStressUpdate(const Vector6& strainInc,
                                  const Matrix66& elasticTangent, 
                                  const Vector6& df_dsigma,
