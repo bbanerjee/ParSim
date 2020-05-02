@@ -393,10 +393,7 @@ protected:
   Vector6 projectTrialStressToYieldSurface(const Vector6& strainInc,
                                            const Vector6& stress_old, 
                                            const Matrix66& elasticTangent, 
-                                           const Vector6& df_dsigma,
-                                           const Vector6& dg_dsigma,
-                                           const Vector6& stress_trial, 
-                                           const Vector6& proj_direction) const;
+                                           const Vector6& stress_trial) const; 
 
   std::tuple<bool, double, double, double, Vector6>
     estimateInitialBisectionParameter(const Vector6& stress_old,

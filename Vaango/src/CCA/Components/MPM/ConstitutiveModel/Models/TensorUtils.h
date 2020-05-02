@@ -17,14 +17,15 @@ using Vector9Mandel = Eigen::Matrix<double, 9, 1>;
 using Matrix9Mandel = Eigen::Matrix<double, 9, 9>;
 
 /* Constants */
-static const double sqrt_two = std::sqrt(2.0);
-static const double one_sqrt_two = 1.0 / sqrt_two;
-static const double sqrt_three = std::sqrt(3.0);
-static const double one_sqrt_three = 1.0 / sqrt_three;
-static const double half = 0.5;
-static const double third = 1.0/3.0;
-static const double pi = M_PI;
-static const double large_number = 1.0e100;
+static constexpr double sqrt_two = std::sqrt(2.0);
+static constexpr double one_sqrt_two = 1.0 / sqrt_two;
+static constexpr double sqrt_three = std::sqrt(3.0);
+static constexpr double one_sqrt_three = 1.0 / sqrt_three;
+static constexpr double half = 0.5;
+static constexpr double third = 1.0/3.0;
+static constexpr double two_third = 2.0/3.0;
+static constexpr double pi = M_PI;
+static constexpr double large_number = 1.0e100;
 static const Uintah::Matrix3 Identity(1,0,0,0,1,0,0,0,1);
 static const Uintah::Matrix3 Zero(0.0);
 

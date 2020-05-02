@@ -27,6 +27,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombClassic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TensorUtils.h>
 
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Util/DebugStream.h>
@@ -41,6 +42,8 @@ static DebugStream dbg_doing("ClassicMC_doing", false);
 static DebugStream dbg("ClassicMC", false);
 static DebugStream dbg_unloading("ClassicMC_unloading", false);
 static DebugStream dbg_yield("ClassicMC_yield", false);
+static DebugStream dbg_dfdsigma("ClassicMC_dfdsigma", false);
+static DebugStream dbg_RK("ClassicMC_RK", false);
 
 constexpr long64 testParticleID = 6619136;
 /**
@@ -324,10 +327,127 @@ MohrCoulombClassic::rotateToEigen(const Vector6& vec,
 }
 
 /**
- * Actually compute the gradient of the yield finction wrt stress
+ * Actually compute the gradient of the yield function wrt stress
+ *
+ * The Mohr-Coulomb yield function in invariant space has the form
+ *   f = R(theta) * q - p * sin(phi) - c * cos(phi)
+ * where
+ *   R(theta) = 1/sqrt(3) * sin(theta) - 1/3 * cos(theta) * sin(phi)
+ * with
+ *   theta = theta_c + pi/3
+ * Also
+ *   p = I1/3, q = sqrt(3 * J2), cos(3 * theta_c) = (r/q)^3,
+ *   r^3 = 27/2 J3
+ * where
+ *   I1 = tr(stress), J2 = 1/2 * tr(stress_dev:stress_dev), J3 = det(stress_dev)
+ *   stress_dev = stress - I1/3 * I
  */
 std::tuple<Vector6, Vector6>
-MohrCoulombClassic::computeDfDsigma(const Vector6& stress) const
+MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
+{
+  dbg_doing << "Doing MohrCoulombClassic::computeDfDsigma\n";
+
+  // Constants from TensorUtils.h
+  using namespace Vaango::Tensor;
+
+  Vector6 df_dsigma_vec = Vector6::Zero();
+  Vector6 dg_dsigma_vec = Vector6::Zero();
+  double meanStress = third * firstInvariant(stress_vec);
+
+  if (meanStress > -d_yield.d_pMin) {
+
+    // Convert the 6-vector into a 3x3 symmetric matrix for easier to
+    // check calculations
+    Matrix3 stress = toMatrix3(stress_vec);
+
+    dbg_dfdsigma << "stress = " << stress << "\n";
+
+    // Compute invariants
+    double I1 = stress.Trace();
+    double p = I1 * third;
+    Matrix3 stress_dev = stress - Identity * p;
+    Matrix3 ss = stress_dev * stress_dev;
+    double J2 = ss.Trace() * half;
+    double sqrt_J2 = std::max(std::sqrt(J2), TINY);
+    double q = sqrt_three * sqrt_J2;
+    double J3 = stress_dev.Determinant();
+    double r_cubed = 27.0 / 2.0 * J3;
+    double cos3theta_c = r_cubed / (q * q * q);
+    if (cos3theta_c < -1) {
+      cos3theta_c = -1.0;
+    } else if (cos3theta_c > 1) {
+      cos3theta_c = 1.0;
+    }
+    double theta_c = std::acos(cos3theta_c) * third;
+    if (std::abs(theta_c - pi *third) < TINY) {
+      theta_c -= TINY;
+    } else if (std::abs(theta_c) < TINY) {
+      theta_c += TINY;
+    }
+    double theta = theta_c + pi * third;
+
+    dbg_dfdsigma << "I1 = " << I1 << " p = " << p << " J2 = " << J2 << " q = " << q 
+                 << " J3 = " << J3 << " r^3 = " << r_cubed << "\n"
+                 << "cos(3theta_c) = " << cos3theta_c << " theta_c = " << theta_c
+                 << " theta = " << theta << "\n";
+
+    // Compute R and dR_dtheta
+    double sin_theta = std::sin(theta);
+    double cos_theta = std::sqrt(1.0 - sin_theta * sin_theta);
+    double R_phi = one_sqrt_three * cos_theta - third * sin_theta * d_yield.d_sin_phi;
+    double R_psi = one_sqrt_three * cos_theta - third * sin_theta * d_potential.d_sin_psi;
+    double dR_phi_dtheta = one_sqrt_three * cos_theta + third * sin_theta * d_yield.d_sin_phi;
+    double dR_psi_dtheta = one_sqrt_three * cos_theta + third * sin_theta * d_potential.d_sin_psi;
+
+    dbg_dfdsigma << "sin(theta) = " << sin_theta << " cos(theta) = " << cos_theta
+                 << " R_phi = " << R_phi << " R_psi = " << R_psi << "\n"
+                 << "dR_phi_dtheta = " << dR_phi_dtheta << " dR_psi_dtheta = " << dR_psi_dtheta << "\n";
+
+    // Compute dq_dsigma and dtheta_dsigma
+    double sin3theta_c = std::max(std::sqrt(1.0 - cos3theta_c * cos3theta_c), TINY);
+    Matrix3 dq_dsigma = stress_dev * (sqrt_three * half / sqrt_J2);
+    Matrix3 dJ3_dsigma = ss - Identity * (two_third * J2);
+    double q_cubed = std::max(q * q * q, TINY);
+    Matrix3 dtheta_dsigma = 
+      (dJ3_dsigma - dq_dsigma * (3.0 * J3 / q)) * (- 9.0 * half / (sin3theta_c * q_cubed));
+
+    dbg_dfdsigma << "sin(3theta_c) = " << sin3theta_c << " q^3 = " << q_cubed << "\n"
+                 << "dq_dsigma = " << dq_dsigma << "\n"
+                 << "dJ3_dsigma = " << dJ3_dsigma << "\n"
+                 << "dtheta_dsigma = " << dtheta_dsigma << "\n";
+                 
+
+    // Compute df_dsigma and dg_dsigma    
+    Matrix3 dR_phi_dsigma = dR_phi_dtheta * dtheta_dsigma;
+    Matrix3 dR_psi_dsigma = dR_psi_dtheta * dtheta_dsigma;
+    Matrix3 df_dsigma = dR_phi_dsigma * q + dq_dsigma * R_phi - Identity * (third * d_yield.d_sin_phi);
+    Matrix3 dg_dsigma = dR_psi_dsigma * q + dq_dsigma * R_psi - Identity * (third * d_potential.d_sin_psi);
+
+    // Convert to vectors
+    df_dsigma_vec = toVector6(df_dsigma);
+    dg_dsigma_vec = toVector6(dg_dsigma);
+
+  } else {
+    double one_third = 1.0 / 3.0;
+
+    df_dsigma_vec(0)     = -one_third;
+    df_dsigma_vec(1)     = -one_third;
+    df_dsigma_vec(2)     = -one_third;
+
+    dg_dsigma_vec(0) = -one_third;
+    dg_dsigma_vec(1) = -one_third;
+    dg_dsigma_vec(2) = -one_third;
+  }
+
+  df_dsigma_vec /= df_dsigma_vec.norm();
+  dg_dsigma_vec /= dg_dsigma_vec.norm();
+
+  return std::make_tuple(df_dsigma_vec, dg_dsigma_vec);
+}
+
+/*
+std::tuple<Vector6, Vector6>
+MohrCoulombClassic::computeDfDsigmaInEigenSpace(const Vector6& stress) const
 {
   dbg_doing << "Doing MohrCoulombClassic::computeDfDsigma\n";
 
@@ -365,6 +485,7 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress) const
 
   return std::make_tuple(df_dsigma, dg_dsigma);
 }
+*/
 
 /**
   This procedure calculate stress increment using Modified Euler method
@@ -752,6 +873,7 @@ MohrCoulombClassic::plasticExtrapol(MohrCoulombState& state,
       switch (d_int.d_driftCorrection) {
         case DriftCorrection::CORRECTION_AT_END: {
 
+          /*
           Vector3 eigenVal;
           Matrix33 eigenVec;
           std::tie(eigenVal, eigenVec) = getEigen(state_new.stress);
@@ -760,14 +882,17 @@ MohrCoulombClassic::plasticExtrapol(MohrCoulombState& state,
             rotateToEigen(state_new.strain.block<6, 1>(0, 0), eigenVec);
           state_new.plasticStrain =
             rotateToEigen(state_new.plasticStrain, eigenVec);
+          */
 
           correctDriftEnd(state_new);
 
+          /*
           state_new.stress = rotateToOrigin(state_new.stress, eigenVec);
           state_new.strain.block<6, 1>(0, 0) =
             rotateToOrigin(state_new.strain.block<6, 1>(0, 0), eigenVec);
           state_new.plasticStrain =
             rotateToOrigin(state_new.plasticStrain, eigenVec);
+          */
 
         } break;
         case DriftCorrection::NO_CORRECTION:
@@ -867,7 +992,6 @@ MohrCoulombClassic::doRungeKuttaEig(
 {
   dbg_doing << "Doing MohrCoulombClassic::doRungeKuttaEig\n";
 
-  // Check eigenvalues and rotation are being computed correctly
   std::vector<MohrCoulombState> midStates(Steps);
   midStates[0] = state;
 
@@ -919,8 +1043,8 @@ MohrCoulombClassic::doRungeKuttaEig(
 
     double rError = 0;
 
-    dbg << "Step Length = " << stepLength
-        << " Current strain (0) = " << currentStrain(0) << "\n";
+    dbg_RK << "Step no. = " << stepNo << " Step Length = " << stepLength
+           << " Current strain (0) = " << currentStrain(0) << "\n";
 
     // Make copies of the initial state
     for (auto& midState : midStates) {
@@ -934,6 +1058,7 @@ MohrCoulombClassic::doRungeKuttaEig(
 
     } else {
 
+      /*
       Vector3 eigenVal;
       Matrix33 eigenVec;
       std::tie(eigenVal, eigenVec) = getEigen(midStates[0].stress);
@@ -945,9 +1070,11 @@ MohrCoulombClassic::doRungeKuttaEig(
         rotateToEigen(midStates[0].plasticStrain, eigenVec);
       substepStrain.block<6, 1>(0, 0) =
         rotateToEigen(substepStrain.block<6, 1>(0, 0), eigenVec);
+      */
 
       std::tie(stressInc, p0StarInc) = calcPlastic(midStates[0], substepStrain);
 
+      /*
       midStates[0].stress = rotateToOrigin(midStates[0].stress, eigenVec);
       midStates[0].strain.block<6, 1>(0, 0) =
         rotateToOrigin(midStates[0].strain.block<6, 1>(0, 0), eigenVec);
@@ -957,9 +1084,10 @@ MohrCoulombClassic::doRungeKuttaEig(
         rotateToOrigin(substepStrain.block<6, 1>(0, 0), eigenVec);
       plasticStrainInc = rotateToOrigin(plasticStrainInc, eigenVec);
       stressInc        = rotateToOrigin(stressInc, eigenVec);
+      */
 
-      dbg << "Stress midState[" << 0 << "] = " << midStates[0].stress.transpose() << "\n";
-      dbg << "Stress increment = " << stressInc.transpose() << "\n";
+      dbg_RK << "Stress midState[" << 0 << "] = " << midStates[0].stress.transpose() << "\n";
+      dbg_RK << "Stress increment = " << stressInc.transpose() << "\n";
 
       dSigma.col(0)        = stressInc;
       plasticStrain.col(0) = substepStrain.block<6,1>(0,0);
@@ -979,9 +1107,13 @@ MohrCoulombClassic::doRungeKuttaEig(
         p0StarInc += (dP0Star(0, i) * AA(rkloop, i));
       }
 
+      dbg_RK << "RK loop no. = " << rkloop 
+             << " Current strain = " << currentStrain.transpose() << "\n";
+
       midStates[rkloop].update(
         plasticStrainInc, currentStrain, stressInc, p0StarInc);
 
+      /*
       Vector3 eigenVal;
       Matrix33 eigenVec;
       std::tie(eigenVal, eigenVec) = getEigen(midStates[rkloop].stress);
@@ -993,14 +1125,16 @@ MohrCoulombClassic::doRungeKuttaEig(
         rotateToEigen(midStates[0].plasticStrain, eigenVec);
       substepStrain.block<6, 1>(0, 0) =
         rotateToEigen(substepStrain.block<6, 1>(0, 0), eigenVec);
+      */
 
-      dbg << "Stress midState[" << rkloop << "] = " << midStates[rkloop].stress.transpose()
+      dbg_RK << "Stress midState[" << rkloop << "] = " << midStates[rkloop].stress.transpose()
           << "\n";
-      dbg << "Strain increment = " << substepStrain.transpose() << "\n";
+      dbg_RK << "Strain increment = " << substepStrain.transpose() << "\n";
 
       Vector6 stressInc        = Vector6::Zero();
       std::tie(stressInc, p0StarInc) = calcPlastic(midStates[rkloop], substepStrain);
 
+      /*
       midStates[rkloop].stress =
         rotateToOrigin(midStates[rkloop].stress, eigenVec);
       midStates[rkloop].strain.block<6, 1>(0, 0) =
@@ -1011,8 +1145,9 @@ MohrCoulombClassic::doRungeKuttaEig(
         rotateToOrigin(substepStrain.block<6, 1>(0, 0), eigenVec);
       plasticStrainInc = rotateToOrigin(plasticStrainInc, eigenVec);
       stressInc        = rotateToOrigin(stressInc, eigenVec);
+      */
 
-      dbg << "Stress increment = " << stressInc.transpose() << "\n";
+      dbg_RK << "Stress increment = " << stressInc.transpose() << "\n";
 
       dSigma.col(rkloop)        = stressInc;
       plasticStrain.col(rkloop) = substepStrain.block<6,1>(0,0);
@@ -1108,6 +1243,7 @@ MohrCoulombClassic::doRungeKuttaEig(
       switch (d_int.d_driftCorrection) {
         case DriftCorrection::CORRECTION_AT_END: {
 
+          /*
           Vector3 eigenVal;
           Matrix33 eigenVec;
           std::tie(eigenVal, eigenVec) = getEigen(state.stress);
@@ -1116,13 +1252,16 @@ MohrCoulombClassic::doRungeKuttaEig(
             rotateToEigen(state.strain.block<6, 1>(0, 0), eigenVec);
           state.plasticStrain =
             rotateToEigen(midStates[0].plasticStrain, eigenVec);
+          */
 
           correctDriftEnd(state);
 
+          /*
           state.stress = rotateToOrigin(state.stress, eigenVec);
           state.strain.block<6, 1>(0, 0) =
             rotateToOrigin(state.strain.block<6, 1>(0, 0), eigenVec);
           state.plasticStrain = rotateToOrigin(state.plasticStrain, eigenVec);
+          */
         } break;
         case DriftCorrection::CORRECTION_AT_BEGIN:
         case DriftCorrection::NO_CORRECTION:
@@ -1315,6 +1454,7 @@ MohrCoulombClassic::doRungeKuttaEigErr(
 
     } else {
 
+      /*
       Vector3 eigenVal;
       Matrix33 eigenVec;
       std::tie(eigenVal, eigenVec) = getEigen(midStates[0].stress);
@@ -1326,10 +1466,12 @@ MohrCoulombClassic::doRungeKuttaEigErr(
         rotateToEigen(midStates[0].plasticStrain, eigenVec);
       substepStrain.block<6, 1>(0, 0) =
         rotateToEigen(substepStrain.block<6, 1>(0, 0), eigenVec);
+      */
 
       stressInc        = Vector6::Zero();
       std::tie(stressInc, p0StarInc) = calcPlastic(midStates[0], substepStrain);
 
+      /*
       midStates[0].stress = rotateToOrigin(midStates[0].stress, eigenVec);
       midStates[0].strain.block<6, 1>(0, 0) =
         rotateToOrigin(midStates[0].strain.block<6, 1>(0, 0), eigenVec);
@@ -1339,6 +1481,7 @@ MohrCoulombClassic::doRungeKuttaEigErr(
         rotateToOrigin(substepStrain.block<6, 1>(0, 0), eigenVec);
       plasticStrainInc = rotateToOrigin(plasticStrainInc, eigenVec);
       stressInc        = rotateToOrigin(stressInc, eigenVec);
+      */
 
       dSigma.col(0)        = stressInc;
       plasticStrain.col(0) = substepStrain.block<6,1>(0,0);
@@ -1361,6 +1504,7 @@ MohrCoulombClassic::doRungeKuttaEigErr(
       midStates[rkloop].update(
         plasticStrainInc, currentStrain, stressInc, p0StarInc);
 
+      /*
       Vector3 eigenVal;
       Matrix33 eigenVec;
       std::tie(eigenVal, eigenVec) = getEigen(midStates[rkloop].stress);
@@ -1372,9 +1516,11 @@ MohrCoulombClassic::doRungeKuttaEigErr(
         rotateToEigen(midStates[0].plasticStrain, eigenVec);
       substepStrain.block<6, 1>(0, 0) =
         rotateToEigen(substepStrain.block<6, 1>(0, 0), eigenVec);
+      */
 
       std::tie(stressInc, p0StarInc) = calcPlastic(midStates[rkloop], substepStrain);
 
+      /*
       midStates[rkloop].stress =
         rotateToOrigin(midStates[rkloop].stress, eigenVec);
       midStates[rkloop].strain.block<6, 1>(0, 0) =
@@ -1385,6 +1531,7 @@ MohrCoulombClassic::doRungeKuttaEigErr(
         rotateToOrigin(substepStrain.block<6, 1>(0, 0), eigenVec);
       plasticStrainInc = rotateToOrigin(plasticStrainInc, eigenVec);
       stressInc        = rotateToOrigin(stressInc, eigenVec);
+      */
 
       dSigma.col(rkloop)        = stressInc;
       plasticStrain.col(rkloop) = substepStrain.block<6,1>(0,0);
@@ -1492,6 +1639,7 @@ MohrCoulombClassic::doRungeKuttaEigErr(
       switch (d_int.d_driftCorrection) {
         case DriftCorrection::CORRECTION_AT_END: {
 
+          /*
           Vector3 eigenVal;
           Matrix33 eigenVec;
           std::tie(eigenVal, eigenVec) = getEigen(state.stress);
@@ -1500,13 +1648,16 @@ MohrCoulombClassic::doRungeKuttaEigErr(
             rotateToEigen(state.strain.block<6, 1>(0, 0), eigenVec);
           state.plasticStrain =
             rotateToEigen(midStates[0].plasticStrain, eigenVec);
+          */
 
           correctDriftEnd(state);
 
+          /*
           state.stress = rotateToOrigin(state.stress, eigenVec);
           state.strain.block<6, 1>(0, 0) =
             rotateToOrigin(state.strain.block<6, 1>(0, 0), eigenVec);
           state.plasticStrain = rotateToOrigin(state.plasticStrain, eigenVec);
+          */
 
         } break;
         case DriftCorrection::CORRECTION_AT_BEGIN:
@@ -1647,6 +1798,7 @@ MohrCoulombClassic::plasticMidpoint(MohrCoulombState& state,
     state_new = state;
     state_mid = state;
 
+    /*
     Vector3 eigenVal;
     Matrix33 eigenVec;
     std::tie(eigenVal, eigenVec) = getEigen(state_new.stress);
@@ -1661,6 +1813,7 @@ MohrCoulombClassic::plasticMidpoint(MohrCoulombState& state,
     state_mid.plasticStrain = rotateToEigen(state_new.plasticStrain, eigenVec);
     halfCurrentStrain.block<6, 1>(0, 0) =
       rotateToEigen(halfCurrentStrain.block<6, 1>(0, 0), eigenVec);
+    */
 
     std::tie(dSigma, dP0Star) = calcPlastic(state_new, halfCurrentStrain);
 
@@ -1668,8 +1821,10 @@ MohrCoulombClassic::plasticMidpoint(MohrCoulombState& state,
 
     std::tie(dSigma, dP0Star) = calcPlastic(state_mid, halfCurrentStrain);
 
+    /*
     plasticStrain = rotateToOrigin(plasticStrain, eigenVec);
     dSigma        = rotateToOrigin(dSigma, eigenVec);
+    */
 
     dSigma *= 2.0;
     plasticStrain *= 2.0;
@@ -1694,6 +1849,7 @@ MohrCoulombClassic::doReturnImplicit(const MohrCoulombState& state,
 
   dbg << "stress initial: " << state_new.stress.transpose() << "\n";
 
+  /*
   Vector3 eigenVal;
   Matrix33 eigenVec;
   std::tie(eigenVal, eigenVec) = getEigen(state_new.stress);
@@ -1702,6 +1858,7 @@ MohrCoulombClassic::doReturnImplicit(const MohrCoulombState& state,
   state_new.strain.block<6, 1>(0, 0) =
     rotateToEigen(state_new.strain.block<6, 1>(0, 0), eigenVec);
   state_new.plasticStrain = rotateToEigen(state_new.plasticStrain, eigenVec);
+  */
 
   double K                = d_elastic.d_K;
   double G                = d_elastic.d_G;

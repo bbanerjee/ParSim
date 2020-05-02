@@ -304,11 +304,14 @@ MohrCoulombBase::findIntersectionUnloading(
   dbg_doing << "Doing MohrCoulombBase::findIntersectionUnloading\n";
 
   dbg_alpha << "ParticleID = " << initialState.particleID << "\n";
+
+  /*
   if (initialState.particleID == testParticleID) {
     dbg_alpha.setActive(true);
   } else {
     dbg_alpha.setActive(false);
   }
+  */
   double alpha = findYieldAlpha(initialState.state, initialState.stress,
                                 initialState.strain, strainIncrement);
 
@@ -1164,19 +1167,6 @@ MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
   // Compute trial stress
   Vector6 stress_trial = stress + elasticTangent * strainInc.block<6,1>(0,0);
 
-  // Compute normal to yield surface (assume constant)
-  Vector6 df_dsigma = Vector6::Zero();
-  Vector6 dg_dsigma = Vector6::Zero();
-  std::tie(df_dsigma, dg_dsigma) = computeDfDsigma(stress);
-
-  // Compute projection direction
-  Vector6 P_n = elasticTangent * dg_dsigma;
-  P_n /= P_n.norm();
-
-  dbg_calcplastic << "df_dsigma = " << df_dsigma.transpose() << "\n"
-                  << "dg_dsigma = " << dg_dsigma.transpose() << "\n"
-                  << "P_n = " << P_n.transpose() << "\n";
-
   dbg_calcplastic << "stress = " << toMatrix3(stress) << "\n"
                   << "stress_trial = " << toMatrix3(stress_trial) << "\n";
 
@@ -1184,19 +1174,11 @@ MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
   Vector6 stress_closest_Pn = 
     projectTrialStressToYieldSurface(strainInc.block<6,1>(0,0), 
                                      stress, elasticTangent, 
-                                     df_dsigma, dg_dsigma, 
-                                     stress_trial, P_n);
+                                     stress_trial);
 
-  /*
-  Vector6 stress_closest_dg = 
-    projectTrialStressToYieldSurface(strainInc.block<6,1>(0,0), 
-                                     stress, elasticTangent, 
-                                     df_dsigma, dg_dsigma, 
-                                     stress_trial, dg_dsigma);
-  std::cout << "Stress err = " 
-            << (stress_closest_dg - stress_closest_Pn).transpose()
-            << "\n";
-  */
+  double f_new = computeYieldNormalized(stress_closest_Pn);
+  std::cout << "f_final = " << f_new << "\n"
+                  << "stress_closest = " << toMatrix3(stress_closest_Pn) << "\n";
 
   Vector6 dSigma = stress_closest_Pn - stress;
 
@@ -1210,11 +1192,21 @@ Vector6
 MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
                                                   const Vector6& stress_old, 
                                                   const Matrix66& elasticTangent, 
-                                                  const Vector6& df_dsigma,
-                                                  const Vector6& dg_dsigma,
-                                                  const Vector6& stress_trial, 
-                                                  const Vector6& proj_direction) const
+                                                  const Vector6& stress_trial) const 
 {
+  // Update the normals to the yield surface
+  Vector6 df_dsigma = Vector6::Zero();
+  Vector6 dg_dsigma = Vector6::Zero();
+  std::tie(df_dsigma, dg_dsigma) = computeDfDsigma(stress_old);
+
+  // Update projection direction
+  Vector6 proj_direction = elasticTangent * dg_dsigma;
+  proj_direction /= proj_direction.norm();
+
+  dbg_calcplastic << "df_dsigma = " << df_dsigma.transpose() << "\n"
+                  << "dg_dsigma = " << dg_dsigma.transpose() << "\n"
+                  << "P_n = " << proj_direction.transpose() << "\n";
+
   bool foundInitialAlpha = false;
   double alpha, f_trial, f_alpha;
   Vector6 sigma_alpha;
@@ -1242,15 +1234,14 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
     std::cout << "**WARNING** f_trial = " << f_trial << " and f_alpha = " << f_alpha 
               << " have the same sign.  Cannot use bisection.\n";
 
-    // if ((stress_trial - stress_old).norm() > 1.0) {
-    if (std::abs(f_trial - f_alpha) > 1.0e-5) {
+    if ((stress_trial - stress_old).norm() > 1.0 && 
+        (std::abs(f_trial - f_alpha) > 1.0e-5)) {
 
       Vector6 strainInc_step1 = strainInc * 0.5;
       Vector6 stress_trial_step1 = stress_old + elasticTangent * strainInc_step1;
       Vector6 stress_step1 = 
         projectTrialStressToYieldSurface(strainInc_step1, stress_old, elasticTangent,
-                                         df_dsigma, dg_dsigma, stress_trial_step1,
-                                         proj_direction);
+                                         stress_trial_step1);
 
       dbg_calcplastic << "After step1: s0     = " << toMatrix3(stress_old) << "\n"
                       << "             strial = " << toMatrix3(stress_trial_step1) << "\n"
@@ -1259,8 +1250,7 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
       Vector6 stress_trial_step2 = stress_step1 + elasticTangent * strainInc_step1;
       Vector6 stress_step2 = 
         projectTrialStressToYieldSurface(strainInc_step1, stress_step1, elasticTangent,
-                                         df_dsigma, dg_dsigma, stress_trial_step2,
-                                         proj_direction);
+                                         stress_trial_step2);
 
       dbg_calcplastic << "After step2: s0     = " << toMatrix3(stress_step1) << "\n"
                       << "             strial = " << toMatrix3(stress_trial_step2) << "\n"
