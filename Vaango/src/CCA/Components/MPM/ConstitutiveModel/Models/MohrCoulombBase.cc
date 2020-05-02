@@ -44,6 +44,7 @@ static DebugStream dbg_unloading("BaseMC_unloading", false);
 static DebugStream dbg_alpha("BaseMC_alpha", false);
 static DebugStream dbg_mod("BaseMC_mod", false);
 static DebugStream dbg_calcplastic("BaseMC_calcplastic", false);
+static DebugStream dbg_estimate("BaseMC_estimate", false);
 
 constexpr long64 testParticleID = 6619136;
 
@@ -1235,9 +1236,6 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
 
     std::cout << "**WARNING** f_trial = " << f_trial << " and f_alpha = " << f_alpha 
               << " have the same sign.  Cannot use bisection.\n";
-    std::cout << "df_dsigma = " << df_dsigma.transpose() << "\n"
-              << "dg_dsigma = " << dg_dsigma.transpose() << "\n"
-              << "P_n = " << proj_direction.transpose() << "\n";
 
     if ((stress_trial - stress_old).norm() > 1.0 && 
         (std::abs(f_trial - f_alpha) > 1.0e-5)) {
@@ -1245,8 +1243,12 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
       Vector6 strainInc_step1 = strainInc * 0.5;
       Vector6 stress_trial_step1 = stress_old + elasticTangent * strainInc_step1;
 
+      std::cout << "\n\nalpha = "  << alpha << "\n";
+      std::cout << "df_dsigma = " << df_dsigma.transpose() << "\n"
+                << "P_n = " << proj_direction.transpose() << "\n";
       std::cout << "s0     = " << toMatrix3(stress_old) << "\n"
-                << "strial = " << toMatrix3(stress_trial_step1) << "\n";
+                << "strial = " << toMatrix3(stress_trial_step1) << "\n"
+                << "salpha = " << toMatrix3(stress_trial_step1 - alpha * proj_direction) << "\n\n";
 
       Vector6 stress_step1 = 
         projectTrialStressToYieldSurface(strainInc_step1, stress_old, elasticTangent,
@@ -1316,12 +1318,12 @@ MohrCoulombBase::estimateInitialBisectionParameter(const Vector6& stress_old,
   Vector6 sigma_alpha = stress_trial - alpha * proj_direction;
   double f_alpha = computeYieldNormalized(sigma_alpha);
 
-  dbg_calcplastic << "estimate alpha: stress_old   = " << toMatrix3(stress_old) << "\n";
-  dbg_calcplastic << "estimate alpha: stress_trial = " << toMatrix3(stress_trial) << "\n";
-  dbg_calcplastic << "estimate alpha: stress_alpha = " << toMatrix3(sigma_alpha) << "\n";
-  dbg_calcplastic << "estimate alpha: Pn = " << proj_direction.transpose() << "\n";
-  dbg_calcplastic << "estimate alpha: alpha = " << alpha 
-                  << " f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
+  dbg_estimate << "\n\nestimate alpha: stress_old   = " << toMatrix3(stress_old) << "\n";
+  dbg_estimate << "estimate alpha: stress_trial = " << toMatrix3(stress_trial) << "\n";
+  dbg_estimate << "estimate alpha: stress_alpha = " << toMatrix3(sigma_alpha) << "\n";
+  dbg_estimate << "estimate alpha: Pn = " << proj_direction.transpose() << "\n";
+  dbg_estimate << "estimate alpha: alpha = " << alpha 
+                  << " f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n\n";
 
   // Make sure the yield functions have opposite signs for bisection to work
   int numIter = 0;
@@ -1332,7 +1334,7 @@ MohrCoulombBase::estimateInitialBisectionParameter(const Vector6& stress_old,
 
     if (numIter > 10 || !std::isfinite(alpha) || !std::isfinite(f_alpha)) {
 
-      dbg_calcplastic << "alpha = " << alpha 
+      dbg_estimate << "alpha = " << alpha 
                       << " f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
 
       return std::make_tuple(false, alpha, f_trial, f_alpha, sigma_alpha);
@@ -1342,7 +1344,7 @@ MohrCoulombBase::estimateInitialBisectionParameter(const Vector6& stress_old,
 
   } // end while signbit
 
-  dbg_calcplastic << "alpha = " << alpha 
+  dbg_estimate << "alpha = " << alpha 
                   << " f_trial = " << f_trial << " f_alpha = " << f_alpha << "\n";
 
   return std::make_tuple(true, alpha, f_trial, f_alpha, sigma_alpha);
