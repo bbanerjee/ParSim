@@ -379,14 +379,10 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
       cos3theta_c = 1.0;
     }
     double theta_c = std::acos(cos3theta_c) * third;
-    if (std::abs(theta_c - pi *third) < TINY) {
-      theta_c -= TINY;
-    } else if (std::abs(theta_c) < TINY) {
-      theta_c += TINY;
-    }
     double theta = theta_c + pi * third;
 
-    dbg_dfdsigma << "I1 = " << I1 << " p = " << p << " J2 = " << J2 << " q = " << q 
+    dbg_dfdsigma << std::setprecision(std::numeric_limits<double>::digits10)
+                 << "I1 = " << I1 << " p = " << p << " J2 = " << J2 << " q = " << q 
                  << " J3 = " << J3 << " r^3 = " << r_cubed << "\n"
                  << "cos(3theta_c) = " << cos3theta_c << " theta_c = " << theta_c
                  << " theta = " << theta << "\n";
@@ -394,24 +390,33 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
     // Compute R and dR_dtheta
     double sin_theta = std::sin(theta);
     double cos_theta = std::sqrt(1.0 - sin_theta * sin_theta);
-    double R_phi = one_sqrt_three * cos_theta - third * sin_theta * d_yield.d_sin_phi;
-    double R_psi = one_sqrt_three * cos_theta - third * sin_theta * d_potential.d_sin_psi;
+    double R_phi = one_sqrt_three * sin_theta - third * cos_theta * d_yield.d_sin_phi;
+    double R_psi = one_sqrt_three * sin_theta - third * cos_theta * d_potential.d_sin_psi;
     double dR_phi_dtheta = one_sqrt_three * cos_theta + third * sin_theta * d_yield.d_sin_phi;
     double dR_psi_dtheta = one_sqrt_three * cos_theta + third * sin_theta * d_potential.d_sin_psi;
 
-    dbg_dfdsigma << "sin(theta) = " << sin_theta << " cos(theta) = " << cos_theta
+    dbg_dfdsigma << std::setprecision(std::numeric_limits<double>::digits10)
+                 << "sin(theta) = " << sin_theta << " cos(theta) = " << cos_theta
                  << " R_phi = " << R_phi << " R_psi = " << R_psi << "\n"
                  << "dR_phi_dtheta = " << dR_phi_dtheta << " dR_psi_dtheta = " << dR_psi_dtheta << "\n";
 
     // Compute dq_dsigma and dtheta_dsigma
-    double sin3theta_c = std::max(std::sqrt(1.0 - cos3theta_c * cos3theta_c), TINY);
+    double sin3theta_c = std::max(std::sqrt(1.0 - cos3theta_c * cos3theta_c), 1.0e-6);
     Matrix3 dq_dsigma = stress_dev * (sqrt_three * half / sqrt_J2);
     Matrix3 dJ3_dsigma = ss - Identity * (two_third * J2);
     double q_cubed = std::max(q * q * q, TINY);
+
+    /*  // Tricky when sin(3theta_c) = 0
+    double fac_1 = -9.0 / 2.0 / sin3theta_c / q_cubed;
+    dbg_dfdsigma << std::setprecision(std::numeric_limits<double>::digits10)
+                 << "fac_1 = " << fac_1 << "\n";
+    */
+
     Matrix3 dtheta_dsigma = 
       (dJ3_dsigma - dq_dsigma * (3.0 * J3 / q)) * (- 9.0 * half / (sin3theta_c * q_cubed));
 
-    dbg_dfdsigma << "sin(3theta_c) = " << sin3theta_c << " q^3 = " << q_cubed << "\n"
+    dbg_dfdsigma << std::setprecision(std::numeric_limits<double>::digits10)
+                 << "sin(3theta_c) = " << sin3theta_c << " q^3 = " << q_cubed << "\n"
                  << "dq_dsigma = " << dq_dsigma << "\n"
                  << "dJ3_dsigma = " << dJ3_dsigma << "\n"
                  << "dtheta_dsigma = " << dtheta_dsigma << "\n";
@@ -420,6 +425,13 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
     // Compute df_dsigma and dg_dsigma    
     Matrix3 dR_phi_dsigma = dR_phi_dtheta * dtheta_dsigma;
     Matrix3 dR_psi_dsigma = dR_psi_dtheta * dtheta_dsigma;
+
+    dbg_dfdsigma << std::setprecision(std::numeric_limits<double>::digits10)
+                 << "dR_phi_dsigma = " << dR_phi_dsigma << "\n"
+                 << "dR_phi_dsigma * q = " <<  dR_phi_dsigma * q << "\n"
+                 << "R_phi * dq_dsigma = " <<  R_phi * dq_dsigma << "\n"
+                 << "dp_dsigma * sin_phi = " <<  Identity * third * d_yield.d_sin_phi << "\n"; 
+
     Matrix3 df_dsigma = dR_phi_dsigma * q + dq_dsigma * R_phi - Identity * (third * d_yield.d_sin_phi);
     Matrix3 dg_dsigma = dR_psi_dsigma * q + dq_dsigma * R_psi - Identity * (third * d_potential.d_sin_psi);
 
@@ -442,6 +454,10 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
   df_dsigma_vec /= df_dsigma_vec.norm();
   dg_dsigma_vec /= dg_dsigma_vec.norm();
 
+  dbg_dfdsigma << std::setprecision(std::numeric_limits<double>::digits10)
+               << "df_dsigma = " << df_dsigma_vec.transpose() << "\n"
+               << "dg_dsigma = " << dg_dsigma_vec.transpose() << "\n";
+              
   return std::make_tuple(df_dsigma_vec, dg_dsigma_vec);
 }
 
