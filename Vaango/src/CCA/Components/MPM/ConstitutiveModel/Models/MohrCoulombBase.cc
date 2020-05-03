@@ -1197,6 +1197,15 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
                                                   const Matrix66& elasticTangent, 
                                                   const Vector6& stress_trial) const 
 {
+  // Check if the stress state is at a vertex and in tension then return the vertex
+  double I1 = firstInvariant(stress_old);
+  if (I1 <= -d_yield.d_pMin) {
+
+    Vector6 sigma_alpha;
+    sigma_alpha << -d_yield.d_pMin, -d_yield.d_pMin, -d_yield.d_pMin, 0, 0, 0;
+    return sigma_alpha;
+  }
+
   // Update the normals to the yield surface
   Vector6 df_dsigma = Vector6::Zero();
   Vector6 dg_dsigma = Vector6::Zero();
