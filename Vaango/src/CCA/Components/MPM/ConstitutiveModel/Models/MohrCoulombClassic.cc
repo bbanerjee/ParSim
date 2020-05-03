@@ -39,11 +39,15 @@
 using namespace Uintah;
 
 static DebugStream dbg_doing("ClassicMC_doing", false);
+
+//#define DEBUG_MCCLASSIC
+#ifdef DEBUG_MCCLASSIC
 static DebugStream dbg("ClassicMC", false);
 static DebugStream dbg_unloading("ClassicMC_unloading", false);
 static DebugStream dbg_yield("ClassicMC_yield", false);
 static DebugStream dbg_dfdsigma("ClassicMC_dfdsigma", false);
 static DebugStream dbg_RK("ClassicMC_RK", false);
+#endif
 
 constexpr long64 testParticleID = 6619136;
 /**
@@ -80,10 +84,13 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
 
   Vector7 purelyElasticStrain, purelyplasticStrain;
 
+#ifdef DEBUG_MCCLASSIC
   dbg << "Strain increment:" << strainIncrement.transpose() << "\n";
+#endif
 
   bool onTheYieldLocus = checkYieldNormalized(initialState);
 
+#ifdef DEBUG_MCCLASSIC
   if (dbg_yield.active()) {
     if (initialState.particleID == testParticleID) {
       dbg_yield << __LINE__ << ":MCClassic::Before return: p = " << initialState.meanStress()
@@ -91,14 +98,18 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
           << " Initial state yield? " << std::boolalpha << onTheYieldLocus << "\n";
     }
   }
+#endif
 
   MohrCoulombState finalState;
   calcElastic(strainIncrement, initialState, finalState);
 
+#ifdef DEBUG_MCCLASSIC
   dbg << "Stress elastic" << finalState.stress.transpose() << "\n";
+#endif
 
   bool elasticPlastic = checkYieldNormalized(finalState);
 
+#ifdef DEBUG_MCCLASSIC
   if (dbg_yield.active()) {
     if (initialState.particleID == testParticleID) {
       dbg_yield << "p = " << finalState.meanStress()
@@ -106,6 +117,7 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
           << " Trial state yield? " << std::boolalpha << elasticPlastic << "\n";
     }
   }
+#endif
 
   bool unloading = false;
   if (elasticPlastic) {
@@ -114,7 +126,9 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
 
       Vector7 plasticStrainInc;
       if (unloading) {
+#ifdef DEBUG_MCCLASSIC
         dbg << "\n\n Elasto-Plastic unloading=" << unloading << "\n";
+#endif
 
         Vector7 elasticStrainInc;
         std::tie(elasticStrainInc, plasticStrainInc) =
@@ -150,6 +164,7 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
     }
   }
 
+#ifdef DEBUG_MCCLASSIC
   if (dbg_yield.active()) {
 
     onTheYieldLocus = checkYieldNormalized(finalState);
@@ -173,6 +188,7 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
 
   dbg << "strain = " << strainIncrement.transpose() << "\n"
       << "stress = " << finalState.stress.transpose() << "\n";
+#endif
 
   double spVol =
     computeNu(finalState.stress, finalState.state, finalState.suction());
@@ -195,15 +211,19 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
   MohrCoulombState finalState;
   calcElastic(strainIncrement, initialState, finalState);
 
+#ifdef DEBUG_MCCLASSIC
   dbg << "Stress after elastic step: " << finalState.stress.transpose() << "\n";
+#endif
 
   bool elasticPlastic = checkYieldNormalized(finalState);
   if (elasticPlastic) {
     finalState = doReturnImplicit(finalState, region);
   }
 
+#ifdef DEBUG_MCCLASSIC
   dbg << " Strain inc = " << strainIncrement.transpose() << "\n";
   dbg << " Final stress = " << finalState.stress.transpose() << "\n";
+#endif
 
   return finalState;
 }
@@ -221,10 +241,12 @@ MohrCoulombClassic::checkYieldNormalized(const MohrCoulombState& state) const
 
   double yieldFnValue = computeYieldNormalized(state.stress);
 
+#ifdef DEBUG_MCCLASSIC
   dbg << "Check Yield: Mean Stress = " << state.meanStress()
       << " Shear Stress=" << state.shearStress()
       << " cohesion = " << d_yield.d_cohesion
       << " Yield Function = " << yieldFnValue << "\n";
+#endif
 
   if (yieldFnValue > d_int.d_yieldTol) {
     return true;
@@ -360,7 +382,9 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
     // check calculations
     Matrix3 stress = toMatrix3(stress_vec);
 
+#ifdef DEBUG_MCCLASSIC
     dbg_dfdsigma << "stress = " << stress << "\n";
+#endif
 
     // Compute invariants
     double I1 = stress.Trace();
@@ -381,11 +405,13 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
     double theta_c = std::acos(cos3theta_c) * third;
     double theta = theta_c + pi * third;
 
+#ifdef DEBUG_MCCLASSIC
     dbg_dfdsigma << std::setprecision(std::numeric_limits<double>::digits10)
                  << "I1 = " << I1 << " p = " << p << " J2 = " << J2 << " q = " << q 
                  << " J3 = " << J3 << " r^3 = " << r_cubed << "\n"
                  << "cos(3theta_c) = " << cos3theta_c << " theta_c = " << theta_c
                  << " theta = " << theta << "\n";
+#endif
 
     // Compute R and dR_dtheta
     double sin_theta = std::sin(theta);
@@ -395,10 +421,12 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
     double dR_phi_dtheta = one_sqrt_three * cos_theta + third * sin_theta * d_yield.d_sin_phi;
     double dR_psi_dtheta = one_sqrt_three * cos_theta + third * sin_theta * d_potential.d_sin_psi;
 
+#ifdef DEBUG_MCCLASSIC
     dbg_dfdsigma << std::setprecision(std::numeric_limits<double>::digits10)
                  << "sin(theta) = " << sin_theta << " cos(theta) = " << cos_theta
                  << " R_phi = " << R_phi << " R_psi = " << R_psi << "\n"
                  << "dR_phi_dtheta = " << dR_phi_dtheta << " dR_psi_dtheta = " << dR_psi_dtheta << "\n";
+#endif
 
     // Compute dq_dsigma and dtheta_dsigma
     double sin3theta_c = std::max(std::sin(3.0 * theta_c), 1.0e-6);
@@ -415,22 +443,26 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
     Matrix3 dtheta_dsigma = 
       (dJ3_dsigma - dq_dsigma * (3.0 * J3 / q)) * (- 9.0 * half / (sin3theta_c * q_cubed));
 
+#ifdef DEBUG_MCCLASSIC
     dbg_dfdsigma << std::setprecision(std::numeric_limits<double>::digits10)
                  << "sin(3theta_c) = " << sin3theta_c << " q^3 = " << q_cubed << "\n"
                  << "dq_dsigma = " << dq_dsigma << "\n"
                  << "dJ3_dsigma = " << dJ3_dsigma << "\n"
                  << "dtheta_dsigma = " << dtheta_dsigma << "\n";
+#endif
                  
 
     // Compute df_dsigma and dg_dsigma    
     Matrix3 dR_phi_dsigma = dR_phi_dtheta * dtheta_dsigma;
     Matrix3 dR_psi_dsigma = dR_psi_dtheta * dtheta_dsigma;
 
+#ifdef DEBUG_MCCLASSIC
     dbg_dfdsigma << std::setprecision(std::numeric_limits<double>::digits10)
                  << "dR_phi_dsigma = " << dR_phi_dsigma << "\n"
                  << "dR_phi_dsigma * q = " <<  dR_phi_dsigma * q << "\n"
                  << "R_phi * dq_dsigma = " <<  R_phi * dq_dsigma << "\n"
                  << "dp_dsigma * sin_phi = " <<  Identity * third * d_yield.d_sin_phi << "\n"; 
+#endif
 
     Matrix3 df_dsigma = dR_phi_dsigma * q + dq_dsigma * R_phi - Identity * (third * d_yield.d_sin_phi);
     Matrix3 dg_dsigma = dR_psi_dsigma * q + dq_dsigma * R_psi - Identity * (third * d_potential.d_sin_psi);
@@ -454,9 +486,11 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
   df_dsigma_vec /= df_dsigma_vec.norm();
   dg_dsigma_vec /= dg_dsigma_vec.norm();
 
+#ifdef DEBUG_MCCLASSIC
   dbg_dfdsigma << std::setprecision(std::numeric_limits<double>::digits10)
                << "df_dsigma = " << df_dsigma_vec.transpose() << "\n"
                << "dg_dsigma = " << dg_dsigma_vec.transpose() << "\n";
+#endif
               
   return std::make_tuple(df_dsigma_vec, dg_dsigma_vec);
 }
@@ -783,10 +817,12 @@ MohrCoulombClassic::plasticExtrapol(MohrCoulombState& state,
   for (int i = 1; i < StepMax + 1; i++) {
     for (int j = 0; j < i; j++) {
       hSquareTable(i, j) = (DivInt[i] / DivInt[j]) * (DivInt[i] / DivInt[j]);
+#ifdef DEBUG_MCCLASSIC
       dbg << "DivInt[" << i << "] = " << DivInt[i] << " DivInt[" << j
           << "] = " << DivInt[j] << "\n";
       dbg << "hSquareTable[" << i << ", " << j << "]=" << hSquareTable(i, j)
           << "\n";
+#endif
     }
   }
 
@@ -831,10 +867,12 @@ MohrCoulombClassic::plasticExtrapol(MohrCoulombState& state,
       }
     }
 
+#ifdef DEBUG_MCCLASSIC
     if (dbg.active()) {
       for (int i = 0; i < loop + 1; i++)
         dbg << approxTable.col(i).transpose() << "\n";
     }
+#endif
 
     // approximations are calculated
     // two possibilities of error control. In literature rather the second one;
@@ -871,8 +909,10 @@ MohrCoulombClassic::plasticExtrapol(MohrCoulombState& state,
       rError = 2 * d_int.d_integrationTol;
     }
 
+#ifdef DEBUG_MCCLASSIC
     dbg << "Relative error after iteration " << loop
         << " is equal to: " << rError << "\n";
+#endif
 
     approxTableOld = approxTable;
 
@@ -956,7 +996,9 @@ MohrCoulombClassic::plasticExtrapol(MohrCoulombState& state,
       numIter += DivInt[i];
     }
 
+#ifdef DEBUG_MCCLASSIC
     dbg << "Procedure has coverged after " << numIter << " iterations.\n";
+#endif
   } else {
     loop--;
 
@@ -972,13 +1014,17 @@ MohrCoulombClassic::plasticExtrapol(MohrCoulombState& state,
 
     for (int i = 0; i < loop + 1; i++) {
       numIter += DivInt[i];
+#ifdef DEBUG_MCCLASSIC
       dbg << "Procedure has NOT CONVERGED after " << numIter << "iterations.\n";
+#endif
     }
   }
 
   double time = std::chrono::duration<double>(endTime - startTime).count();
+#ifdef DEBUG_MCCLASSIC
   dbg << "Calculation took: " << time << "s."
       << "\n";
+#endif
 
   return std::make_tuple(time, numIter);
 }
@@ -1055,8 +1101,10 @@ MohrCoulombClassic::doRungeKuttaEig(
     Vector7 substepStrain = epStrain * stepLength;
     Vector7 currentStrain = substepStrain;
 
+#ifdef DEBUG_MCCLASSIC
     dbg_RK << "Step no. = " << stepNo << " Step Length = " << stepLength << "\n"
            << "Current strain = " << currentStrain.transpose() << "\n";
+#endif
 
     // Make copies of the initial state
     for (auto& midState : midStates) {
@@ -1072,8 +1120,10 @@ MohrCoulombClassic::doRungeKuttaEig(
 
       std::tie(stressInc, p0StarInc) = calcPlastic(midStates[0], substepStrain);
 
+#ifdef DEBUG_MCCLASSIC
       dbg_RK << "Stress midState[" << 0 << "] = " << midStates[0].stress.transpose() << "\n";
       dbg_RK << "Stress increment = " << stressInc.transpose() << "\n";
+#endif
 
       dSigma.col(0)        = stressInc;
       plasticStrain.col(0) = substepStrain.block<6,1>(0,0);
@@ -1093,20 +1143,26 @@ MohrCoulombClassic::doRungeKuttaEig(
         p0StarInc += (dP0Star(0, i) * AA(rkloop, i));
       }
 
+#ifdef DEBUG_MCCLASSIC
       dbg_RK << "RK loop no. = " << rkloop 
              << " Current strain = " << currentStrain.transpose() << "\n";
+#endif
 
       midStates[rkloop].update(
         plasticStrainInc, currentStrain, stressInc, p0StarInc);
 
+#ifdef DEBUG_MCCLASSIC
       dbg_RK << "Stress midState[" << rkloop << "] = " << midStates[rkloop].stress.transpose()
           << "\n";
       dbg_RK << "Strain increment = " << substepStrain.transpose() << "\n";
+#endif
 
       Vector6 stressInc        = Vector6::Zero();
       std::tie(stressInc, p0StarInc) = calcPlastic(midStates[rkloop], substepStrain);
 
+#ifdef DEBUG_MCCLASSIC
       dbg_RK << "Stress increment = " << stressInc.transpose() << "\n";
+#endif
 
       dSigma.col(rkloop)        = stressInc;
       plasticStrain.col(rkloop) = substepStrain.block<6,1>(0,0);
@@ -1120,7 +1176,9 @@ MohrCoulombClassic::doRungeKuttaEig(
     stressAtYield.block<6, 1>(0, 0) = sigBRes;
     stressAtYield(6) = p0BRes;
 
+#ifdef DEBUG_MCCLASSIC
     dbg_RK << "RK weighted dSigma = " << stressAtYield.transpose() << "\n";
+#endif
 
     for (int i = 0; i < 7; i++) {
       if (!std::isfinite(stressAtYield(i))) {
@@ -1200,7 +1258,9 @@ MohrCoulombClassic::doRungeKuttaEigErr(
   if (newStepSize > 1) {
     newStepSize = 1;
   }
+#ifdef DEBUG_MCCLASSIC
   dbg << "In doRungeKuttaErr::newStepSize = " << newStepSize << "\n";
+#endif
 
   double stepLength        = 1;
   double totalSize         = 0;
@@ -1249,8 +1309,10 @@ MohrCoulombClassic::doRungeKuttaEigErr(
     double rError      = 0;
     double rErrorOther = 0;
 
+#ifdef DEBUG_MCCLASSIC
     dbg << "In doRungeKuttaErr:: Step Length = " << stepLength
         << " Current strain (0) = " << currentStrain(0) << "\n";
+#endif
 
     // Make copies of the initial state
     for (auto& midState : midStates) {
@@ -1599,8 +1661,10 @@ MohrCoulombClassic::plasticMidpoint(MohrCoulombState& state,
   Vector7 currentStrain     = epStrain * h;
   Vector7 halfCurrentStrain = currentStrain * 0.5;
 
+#ifdef DEBUG_MCCLASSIC
   dbg << "Step Length = " << h << "\n";
   dbg << "Current strain [0] = " << currentStrain[0] << "\n";
+#endif
 
   MohrCoulombState state_new, state_mid;
   Vector6 dSigma        = Vector6::Zero();
@@ -1659,7 +1723,9 @@ MohrCoulombClassic::doReturnImplicit(const MohrCoulombState& state,
   MohrCoulombState state_new = state;
   state_new.stress *= -1.0; // tension negative
 
+#ifdef DEBUG_MCCLASSIC
   dbg << "stress initial: " << state_new.stress.transpose() << "\n";
+#endif
 
   /*
   Vector3 eigenVal;
@@ -1700,7 +1766,9 @@ MohrCoulombClassic::doReturnImplicit(const MohrCoulombState& state,
   double denominator = df_dsigma.transpose() * Delastic * dg_dsigma;
   Vector3 RP1        = (Delastic * dg_dsigma) / denominator;
 
+#ifdef DEBUG_MCCLASSIC
   dbg << "RP1 = " << RP1.transpose() << "\n";
+#endif
 
   Vector3 R1 = Vector3::Ones();
   R1(2)      = k;
@@ -1711,8 +1779,10 @@ MohrCoulombClassic::doReturnImplicit(const MohrCoulombState& state,
 
   auto NI_I1  = RP1.cross(R1);
   auto NI_III = RP1.cross(R2);
+#ifdef DEBUG_MCCLASSIC
   dbg << "NI_I1 = " << NI_I1.transpose() << "\n";
   dbg << "NI_III = " << NI_III.transpose() << "\n";
+#endif
 
   double pI_II  = NI_I1.transpose() * sigmaApex;
   double pI_III = NI_III.transpose() * sigmaApex;
@@ -1729,7 +1799,9 @@ MohrCoulombClassic::doReturnImplicit(const MohrCoulombState& state,
   denominator = df_dsigma.transpose() * Delastic * dg_dsigma;
   Vector3 RP2 = (Delastic * dg_dsigma) / denominator;
 
+#ifdef DEBUG_MCCLASSIC
   dbg << "RP2 = " << RP2.transpose() << "\n";
+#endif
 
   auto N2 = RP1.cross(RP2);
 
@@ -1750,7 +1822,9 @@ MohrCoulombClassic::doReturnImplicit(const MohrCoulombState& state,
   denominator = df_dsigma.transpose() * Delastic * dg_dsigma;
   Vector3 RP3 = (Delastic * dg_dsigma) / denominator;
 
+#ifdef DEBUG_MCCLASSIC
   dbg << "RP3 = " << RP3.transpose() << "\n";
+#endif
 
   auto N3 = RP1.cross(RP3);
 
@@ -1794,8 +1868,10 @@ MohrCoulombClassic::doReturnImplicit(const MohrCoulombState& state,
 
   state_new.stress *= -1.0;
 
+#ifdef DEBUG_MCCLASSIC
   dbg << "region: " << region << "\n";
   dbg << "stress: " << state_new.stress.transpose() << "\n";
+#endif
 
   return state_new;
 }
