@@ -1026,7 +1026,6 @@ MohrCoulombClassic::doRungeKuttaEig(
   double microStep   = 0.0;
   double totalSize   = 0.0;
   double frequency   = 100000.0 / Order; // how often display info about steps
-  double methodPower = std::pow(2.0, Order) * d_int.d_integrationTol;
   double stepAccuracyCheck = 0.0;
   bool reuseStep           = false;
 
@@ -1040,7 +1039,6 @@ MohrCoulombClassic::doRungeKuttaEig(
   int stepNo    = 0;
   bool finished = false;
   do {
-    bool stepAccepted = false;
     ++stepNo;
 
     // compute size of a step
@@ -1057,10 +1055,8 @@ MohrCoulombClassic::doRungeKuttaEig(
     Vector7 substepStrain = epStrain * stepLength;
     Vector7 currentStrain = substepStrain;
 
-    double rError = 0;
-
-    dbg_RK << "Step no. = " << stepNo << " Step Length = " << stepLength
-           << " Current strain (0) = " << currentStrain(0) << "\n";
+    dbg_RK << "Step no. = " << stepNo << " Step Length = " << stepLength << "\n"
+           << "Current strain = " << currentStrain.transpose() << "\n";
 
     // Make copies of the initial state
     for (auto& midState : midStates) {
@@ -1074,33 +1070,7 @@ MohrCoulombClassic::doRungeKuttaEig(
 
     } else {
 
-      /*
-      Vector3 eigenVal;
-      Matrix33 eigenVec;
-      std::tie(eigenVal, eigenVec) = getEigen(midStates[0].stress);
-
-      midStates[0].setStressEigen(eigenVal);
-      midStates[0].strain.block<6, 1>(0, 0) =
-        rotateToEigen(midStates[0].strain.block<6, 1>(0, 0), eigenVec);
-      midStates[0].plasticStrain =
-        rotateToEigen(midStates[0].plasticStrain, eigenVec);
-      substepStrain.block<6, 1>(0, 0) =
-        rotateToEigen(substepStrain.block<6, 1>(0, 0), eigenVec);
-      */
-
       std::tie(stressInc, p0StarInc) = calcPlastic(midStates[0], substepStrain);
-
-      /*
-      midStates[0].stress = rotateToOrigin(midStates[0].stress, eigenVec);
-      midStates[0].strain.block<6, 1>(0, 0) =
-        rotateToOrigin(midStates[0].strain.block<6, 1>(0, 0), eigenVec);
-      midStates[0].plasticStrain =
-        rotateToOrigin(midStates[0].plasticStrain, eigenVec);
-      substepStrain.block<6, 1>(0, 0) =
-        rotateToOrigin(substepStrain.block<6, 1>(0, 0), eigenVec);
-      plasticStrainInc = rotateToOrigin(plasticStrainInc, eigenVec);
-      stressInc        = rotateToOrigin(stressInc, eigenVec);
-      */
 
       dbg_RK << "Stress midState[" << 0 << "] = " << midStates[0].stress.transpose() << "\n";
       dbg_RK << "Stress increment = " << stressInc.transpose() << "\n";
@@ -1125,25 +1095,9 @@ MohrCoulombClassic::doRungeKuttaEig(
 
       dbg_RK << "RK loop no. = " << rkloop 
              << " Current strain = " << currentStrain.transpose() << "\n";
-      std::cout << "RK loop no. = " << rkloop 
-                << " Current strain = " << currentStrain.transpose() << "\n";
 
       midStates[rkloop].update(
         plasticStrainInc, currentStrain, stressInc, p0StarInc);
-
-      /*
-      Vector3 eigenVal;
-      Matrix33 eigenVec;
-      std::tie(eigenVal, eigenVec) = getEigen(midStates[rkloop].stress);
-
-      midStates[rkloop].setStressEigen(eigenVal);
-      midStates[rkloop].strain.block<6, 1>(0, 0) =
-        rotateToEigen(midStates[0].strain.block<6, 1>(0, 0), eigenVec);
-      midStates[rkloop].plasticStrain =
-        rotateToEigen(midStates[0].plasticStrain, eigenVec);
-      substepStrain.block<6, 1>(0, 0) =
-        rotateToEigen(substepStrain.block<6, 1>(0, 0), eigenVec);
-      */
 
       dbg_RK << "Stress midState[" << rkloop << "] = " << midStates[rkloop].stress.transpose()
           << "\n";
@@ -1151,19 +1105,6 @@ MohrCoulombClassic::doRungeKuttaEig(
 
       Vector6 stressInc        = Vector6::Zero();
       std::tie(stressInc, p0StarInc) = calcPlastic(midStates[rkloop], substepStrain);
-
-      /*
-      midStates[rkloop].stress =
-        rotateToOrigin(midStates[rkloop].stress, eigenVec);
-      midStates[rkloop].strain.block<6, 1>(0, 0) =
-        rotateToOrigin(midStates[rkloop].strain.block<6, 1>(0, 0), eigenVec);
-      midStates[rkloop].plasticStrain =
-        rotateToOrigin(midStates[rkloop].plasticStrain, eigenVec);
-      substepStrain.block<6, 1>(0, 0) =
-        rotateToOrigin(substepStrain.block<6, 1>(0, 0), eigenVec);
-      plasticStrainInc = rotateToOrigin(plasticStrainInc, eigenVec);
-      stressInc        = rotateToOrigin(stressInc, eigenVec);
-      */
 
       dbg_RK << "Stress increment = " << stressInc.transpose() << "\n";
 
@@ -1173,34 +1114,13 @@ MohrCoulombClassic::doRungeKuttaEig(
     }
 
     Vector6 sigBRes = dSigma * BRes;
-    // Vector6 epsPBRes = plasticStrain * BRes;
     double p0BRes = dP0Star * BRes;
-    Vector6 sigB  = dSigma * BB;
-    double p0B    = dP0Star * BB;
 
     Vector7 stressAtYield, error;
     stressAtYield.block<6, 1>(0, 0) = sigBRes;
-    error.block<6, 1>(0, 0)  = sigB;
     stressAtYield(6) = p0BRes;
-    error(6)  = p0B;
 
-    if (!errorEstimate) {
-      error -= stressAtYield;
-    }
-
-    switch (d_int.d_tolMethod) {
-      case ToleranceMethod::EPUS_RELATIVE_ERROR:
-        rError = checkNorm(stressAtYield, stressAtYield(6), state, error);
-        break;
-      case ToleranceMethod::SLOAN:
-        rError = checkNormSloan(stressAtYield, stressAtYield(6), state, error);
-        break;
-      default:
-        std::ostringstream err;
-        err << "**ERROR** Improper d_tolMethod in increment.dta"
-            << "\n";
-        throw InvalidValue(err.str(), __FILE__, __LINE__);
-    }
+    dbg_RK << "RK weighted dSigma = " << stressAtYield.transpose() << "\n";
 
     for (int i = 0; i < 7; i++) {
       if (!std::isfinite(stressAtYield(i))) {
@@ -1214,162 +1134,36 @@ MohrCoulombClassic::doRungeKuttaEig(
       }
     }
 
-    if (rError < d_int.d_integrationTol) {
-      stepAccepted = true;
-    } else {
-      stepAccepted = false;
-      if (stepLength <= criticalStepSize) {
-        stepAccepted = true;
-      }
+    MohrCoulombState state_old = state;
+
+    //******
+    //******
+    // here we update all the state data.
+    state.update(
+      plasticStrainInc, substepStrain, stressAtYield.block<6, 1>(0, 0), stressAtYield(6));
+    //******
+    //******
+
+    absStress.block<6, 1>(0, 0) =
+      (state.stress - state_old.stress).cwiseAbs();
+    absStress(6) = std::abs(state.p0Star() - state_old.p0Star());
+
+    reuseStep         = false;
+    stepAccuracyCheck = totalSize;
+    microStep += stepLength;
+    totalSize += totalSize + microStep; // total part of step done updated
+    microStep -= (totalSize - stepAccuracyCheck);
+    if (totalSize >= 1) {
+      finished = true;
     }
-
-    if (rError < TINY) {
-      rError = TINY;
-    }
-
-    if (d_int.d_tolMethod == ToleranceMethod::EPUS_RELATIVE_ERROR) {
-      newStepSize =
-        d_int.d_betaFactor *
-        std::pow(d_int.d_integrationTol / rError, (1 / (Order - 1.0)));
-    } else {
-      newStepSize = d_int.d_betaFactor *
-                    std::pow(d_int.d_integrationTol / rError, (1 / Order));
-    }
-
-    if (!stepAccepted) {
-      // here we should take care about correct re - usage of the first
-      // evaluation of derivative
-      reuseStep = true;
-      reuseRes.block<6, 1>(0, 0) = dSigma.col(0) * newStepSize;
-      reuseRes(6) = dP0Star(0, 0) * newStepSize;
-      plasticStrainInc.block<6, 1>(0, 0) = plasticStrain.col(0) * newStepSize;
-
-    } else {
-      MohrCoulombState state_old = state;
-
-      //******
-      //******
-      // here we update all the state data.
-      state.update(
-        plasticStrainInc, substepStrain, stressAtYield.block<6, 1>(0, 0), stressAtYield(6));
-      //******
-      //******
-
-      // Keeping a copy to check values
-      MohrCoulombState trialState = state;
-
-      switch (d_int.d_driftCorrection) {
-        case DriftCorrection::CORRECTION_AT_END: {
-
-          /*
-          Vector3 eigenVal;
-          Matrix33 eigenVec;
-          std::tie(eigenVal, eigenVec) = getEigen(state.stress);
-          state.setStressEigen(eigenVal);
-          state.strain.block<6, 1>(0, 0) =
-            rotateToEigen(state.strain.block<6, 1>(0, 0), eigenVec);
-          state.plasticStrain =
-            rotateToEigen(midStates[0].plasticStrain, eigenVec);
-          */
-
-          correctDriftEnd(state);
-
-          /*
-          state.stress = rotateToOrigin(state.stress, eigenVec);
-          state.strain.block<6, 1>(0, 0) =
-            rotateToOrigin(state.strain.block<6, 1>(0, 0), eigenVec);
-          state.plasticStrain = rotateToOrigin(state.plasticStrain, eigenVec);
-          */
-        } break;
-        case DriftCorrection::CORRECTION_AT_BEGIN:
-        case DriftCorrection::NO_CORRECTION:
-        default:
-          break;
-      }
-
-      // reevaluate the error in the point:
-      error.block<6, 1>(0, 0) += (state.stress - trialState.stress);
-      error(6) += state.p0Star() - trialState.p0Star();
-
-      // error vector updated, norm should be re-evaluated:
-      switch (d_int.d_tolMethod) {
-        case ToleranceMethod::EPUS_RELATIVE_ERROR:
-          rError = checkNorm(stressAtYield, stressAtYield(6), state, error);
-          break;
-        case ToleranceMethod::SLOAN:
-          rError = checkNormSloan(stressAtYield, stressAtYield(6), state, error);
-          break;
-        default:
-          std::ostringstream err;
-          err << "**ERROR** Improper d_tolMethod in increment.dta"
-              << "\n";
-          throw InvalidValue(err.str(), __FILE__, __LINE__);
-      }
-
-      if (!std::isfinite(rError)) {
-        if (rError < methodPower) {
-          rError = methodPower;
-        }
-      }
-
-      if (d_int.d_tolMethod == ToleranceMethod::EPUS_RELATIVE_ERROR) {
-        newStepSize =
-          d_int.d_betaFactor *
-          std::pow(d_int.d_integrationTol / rError, (1 / (Order - 1.0)));
-      } else {
-        newStepSize = d_int.d_betaFactor *
-                      std::pow(d_int.d_integrationTol / rError, (1 / Order));
-      }
-
-      if (rError < d_int.d_integrationTol) {
-        stepAccepted = true;
-      } else {
-        stepAccepted = false;
-        if (stepLength <= criticalStepSize) {
-          stepAccepted = true;
-        }
-      }
-
-      if (!stepAccepted) {
-        reuseStep = true;
-        reuseRes.block<6, 1>(0, 0) = dSigma.col(0) * newStepSize;
-        reuseRes(6) = dP0Star(0, 0) * newStepSize;
-        plasticStrainInc.block<6, 1>(0, 0) = plasticStrain.col(0) * newStepSize;
-
-        state_old   = state;
-        double temp = double(stepNo) / frequency;
-        if (std::modf(temp, &temp) == 0) {
-          std::cout << "Step number : " << stepNo << "\n";
-          std::cout << "Total size done is : " << totalSize
-                    << " of whole step. Current stepLength = " << stepLength
-                    << "\n";
-          std::cout << "Stress state :\n" << state.stress << "\n";
-          std::cout << "Strain inc :\n" << substepStrain << "\n";
-        }
-
-      } else {
-        absStress.block<6, 1>(0, 0) =
-          (state.stress - state_old.stress).cwiseAbs();
-        absStress(6) = std::abs(state.p0Star() - state_old.p0Star());
-
-        reuseStep         = false;
-        stepAccuracyCheck = totalSize;
-        microStep += stepLength;
-        totalSize += totalSize + microStep; // total part of step done updated
-        microStep -= (totalSize - stepAccuracyCheck);
-        if (totalSize >= 1) {
-          finished = true;
-        }
-        double temp = double(stepNo) / frequency;
-        if (std::modf(temp, &temp) == 0) {
-          std::cout << "Step number : " << stepNo << "\n";
-          std::cout << "Total size done is : " << totalSize
-                    << " of whole step. Current stepLength = " << stepLength
-                    << "\n";
-          std::cout << "Stress state :\n" << state.stress << "\n";
-          std::cout << "Strain inc :\n" << substepStrain << "\n";
-        }
-      }
+    double temp = double(stepNo) / frequency;
+    if (std::modf(temp, &temp) == 0) {
+      std::cout << "Step number : " << stepNo << "\n";
+      std::cout << "Total size done is : " << totalSize
+                << " of whole step. Current stepLength = " << stepLength
+                << "\n";
+      std::cout << "Stress state :\n" << state.stress << "\n";
+      std::cout << "Strain inc :\n" << substepStrain << "\n";
     }
 
   } while (!finished);

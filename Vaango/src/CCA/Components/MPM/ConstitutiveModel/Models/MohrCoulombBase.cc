@@ -1146,7 +1146,8 @@ std::tuple<Vector6, double>
 MohrCoulombBase::calcPlastic(const MohrCoulombState& state,
                              const Vector7& strainInc) const 
 {
-  std::cout << "\n\n** Particle ID = " << state.particleID << "\n\n";
+  dbg_calcplastic << "\n\n** Particle ID = " << state.particleID << "\n\n";
+
   // No p0Star calculation yet
   double dP0Star = 1.0;
 
@@ -1243,7 +1244,7 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
 
   } else {
 
-    std::cout << "**WARNING** f_trial = " << f_trial << " and f_alpha = " << f_alpha 
+    dbg_calcplastic << "**WARNING** f_trial = " << f_trial << " and f_alpha = " << f_alpha 
               << " have the same sign.  Cannot use bisection.\n";
 
     if ((stress_trial - stress_old).norm() > 1.0 && 
@@ -1252,10 +1253,10 @@ MohrCoulombBase::projectTrialStressToYieldSurface(const Vector6& strainInc,
       Vector6 strainInc_step1 = strainInc * 0.5;
       Vector6 stress_trial_step1 = stress_old + elasticTangent * strainInc_step1;
 
-      std::cout << "\n\nalpha = "  << alpha << "\n";
-      std::cout << "df_dsigma = " << df_dsigma.transpose() << "\n"
+      dbg_calcplastic << "\n\nalpha = "  << alpha << "\n";
+      dbg_calcplastic << "df_dsigma = " << df_dsigma.transpose() << "\n"
                 << "P_n = " << proj_direction.transpose() << "\n";
-      std::cout << "s0     = " << toMatrix3(stress_old) << "\n"
+      dbg_calcplastic << "s0     = " << toMatrix3(stress_old) << "\n"
                 << "strial = " << toMatrix3(stress_trial_step1) << "\n"
                 << "salpha = " << toMatrix3(stress_trial_step1 - alpha * proj_direction) << "\n\n";
 
