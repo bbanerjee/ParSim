@@ -389,7 +389,7 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
 
     // Compute R and dR_dtheta
     double sin_theta = std::sin(theta);
-    double cos_theta = std::sqrt(1.0 - sin_theta * sin_theta);
+    double cos_theta = std::cos(theta);
     double R_phi = one_sqrt_three * sin_theta - third * cos_theta * d_yield.d_sin_phi;
     double R_psi = one_sqrt_three * sin_theta - third * cos_theta * d_potential.d_sin_psi;
     double dR_phi_dtheta = one_sqrt_three * cos_theta + third * sin_theta * d_yield.d_sin_phi;
@@ -401,7 +401,7 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
                  << "dR_phi_dtheta = " << dR_phi_dtheta << " dR_psi_dtheta = " << dR_psi_dtheta << "\n";
 
     // Compute dq_dsigma and dtheta_dsigma
-    double sin3theta_c = std::max(std::sqrt(1.0 - cos3theta_c * cos3theta_c), 1.0e-6);
+    double sin3theta_c = std::max(std::sin(3.0 * theta_c), 1.0e-6);
     Matrix3 dq_dsigma = stress_dev * (sqrt_three * half / sqrt_J2);
     Matrix3 dJ3_dsigma = ss - Identity * (two_third * J2);
     double q_cubed = std::max(q * q * q, TINY);
@@ -1125,6 +1125,8 @@ MohrCoulombClassic::doRungeKuttaEig(
 
       dbg_RK << "RK loop no. = " << rkloop 
              << " Current strain = " << currentStrain.transpose() << "\n";
+      std::cout << "RK loop no. = " << rkloop 
+                << " Current strain = " << currentStrain.transpose() << "\n";
 
       midStates[rkloop].update(
         plasticStrainInc, currentStrain, stressInc, p0StarInc);

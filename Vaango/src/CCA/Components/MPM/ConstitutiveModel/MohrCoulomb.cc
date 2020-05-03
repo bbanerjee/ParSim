@@ -200,7 +200,7 @@ MohrCoulomb::getModelParameters(ProblemSpecP& cm_ps)
   ps->require("cohesion", d_params.c);
   ps->require("angle_internal_friction", d_params.phi);
   ps->require("angle_dilation", d_params.psi);
-  ps->getWithDefault("max_hydrostatic_tension", d_params.pMin, 0.0);
+  ps->getWithDefault("max_hydrostatic_tension", d_params.pMin, -1);
 
   d_params.initialSuction = 0.0;
   d_params.phi_b          = 0.0;

@@ -209,11 +209,10 @@ protected:
       d_cos_phi = std::cos(d_phi);
       d_alpha = (3.0 - d_sin_phi) / (3.0 + d_sin_phi);
       d_alpha4 = d_alpha * d_alpha * d_alpha * d_alpha;
-      if (pMin != -1) {
+      d_pMin = c * d_cos_phi / d_sin_phi;
+      if (pMin < d_pMin) {
         d_pMin = pMin;
-      } else {
-        d_pMin = c * d_cos_phi / d_sin_phi;
-      }
+      } 
     }
   };
 
