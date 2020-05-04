@@ -2620,10 +2620,14 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
            }
            */
 
-           Vector4        g_phi = lambda * (lambda.dot(phi));
-           Matrix44 g_prime_phi = lambda * lambda.transpose();
+           //Vector4        g_phi = -lambda * (lambda.dot(phi));
+           //Matrix44 g_prime_phi = lambda * lambda.transpose();
 
-           std::cout << "phi_k = " << phi.transpose() << "\n";
+           Vector4        g_phi   = -lambda.cwiseProduct(phi);
+           Matrix44 g_prime_phi   = Matrix44::Zero();
+           g_prime_phi.diagonal() = lambda;
+
+           //std::cout << "phi_k = " << phi.transpose() << "\n";
 
            for (int mat = 0; mat < numMPMMatls; mat++) {
              double cp = 0.;
@@ -2646,11 +2650,15 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
                double alpha     = 1.0 + exptheta;
                double psi       = 2.0 * exptheta / (alpha * alpha);
                double fEq20     = 2.0 / alpha - 1.0;
-               double fEq20_cp  = fEq20 - cp;
-               double psi_deriv = psi * (2.0 / alpha * exptheta - 1.0);
+               double cp_fEq20  = cp - fEq20;
+               //double psi_deriv = psi * (2.0 / alpha * exptheta - 1.0);
 
                if (!std::isfinite(exptheta)) {
-                 throw InternalError("MPM: In logistic regression: xp . phi too large", __FILE__, __LINE__);
+                 std::ostringstream err;
+                 err << "**INTERNAL ERROR** MPM: In logistic regression: xp . phi too large";
+                 err << "xp = " << xp.transpose() << " phi = " << phi << " theta = " << theta << "\n"
+                     << "alpha = " << alpha << " psi = " << psi << " f = " << fEq20 << "\n";
+                 throw InternalError(err.str(), __FILE__, __LINE__);
                }
                //std::cout << "xp . phi = " << theta << " fEq20_cp = " << fEq20_cp
                //          << " psi = " << psi << " psi_deriv = " << psi_deriv << "\n";
@@ -2671,8 +2679,9 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
                          << "lambda x lambda = " << lambda_lambda << "\n";
                */
 
-               g_phi       += xp4 * (wp * fEq20_cp * psi);
-               g_prime_phi += xx * (psi * psi + fEq20_cp * psi_deriv);
+               g_phi       += xp4 * (wp * cp_fEq20 * psi);
+               g_prime_phi += xx * (psi * psi * wp);
+               //g_prime_phi += xx * (psi * psi * wp - cp_fEq20 * psi_deriv);
 
                /*
                double psi2wp = psi*psi*wp;
@@ -2705,7 +2714,7 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
            */
 
            Eigen::MatrixXd phi_inc = g_prime_phi.colPivHouseholderQr().solve(g_phi);
-           phi -= phi_inc;
+           phi += phi_inc;
 
            /*
            std::cout << "phi_inc = " << phi_inc.transpose() <<"\n";
@@ -2741,7 +2750,6 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
            */
 
 
-
            Vector nhat_kp1(phi[0], phi[1], phi[2]);
            nhat_kp1 /= (nhat_kp1.length()+1.e-100);
            double error = 1.0 - Dot(nhat_kp1, nhat_k);
@@ -2749,6 +2757,7 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
              error_min = error;
              nhat_backup = nhat_kp1;
            }
+           std::cout << "error = " << error << " tol = " << tol << " num_iters = " << num_iters << "\n";
            if (error < tol || num_iters > 15) {
              converged=true;
              if (num_iters > 15) {
