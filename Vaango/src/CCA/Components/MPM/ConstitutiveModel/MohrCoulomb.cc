@@ -560,8 +560,8 @@ MohrCoulomb::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 
   cm_ps->appendElement("model_type", d_modelType);
 
-  outputModelProblemSpec(ps);
-  outputIntegrationProblemSpec(ps);
+  outputModelProblemSpec(cm_ps);
+  outputIntegrationProblemSpec(cm_ps);
 }
 
 void

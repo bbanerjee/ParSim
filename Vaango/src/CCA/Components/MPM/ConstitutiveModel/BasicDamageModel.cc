@@ -692,6 +692,26 @@ BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
     for (int idx : *pset) {
       pDamage_new[idx] = pDamage[idx];
 
+      // Check if the deformation gradient is unphysical
+      if (pDefGrad_new[idx].MaxAbsElem() > 5.0) {
+        if (pLocalized_new[idx] == 0) {
+          pLocalized_new[idx] = 1.0;
+          pTimeOfLoc_new[idx] = time;
+          pFailureStrain_new[idx] = pFailureStrain[idx];
+          std::cout << "Unphysical deformation gradient" << pDefGrad_new[idx] << "\n"
+                    << "time of localization = " << pTimeOfLoc_new[idx] << "\n";
+        } else {
+          pLocalized_new[idx] = pLocalized[idx];
+          pTimeOfLoc_new[idx] = pTimeOfLoc[idx];
+          pFailureStrain_new[idx] = pFailureStrain[idx];
+        }
+        double failTime = time - pTimeOfLoc_new[idx];
+        double D = 1.0 - exp(-failTime / 0.001);
+        pDamage_new[idx] = D;
+        pStress[idx] *= D;
+        continue;
+      }
+
       // Modify the stress if particle has failed/damaged
       if (d_brittleDamage) {
         // cout_damage << "Before update: Particle = " << idx << " pDamage = "

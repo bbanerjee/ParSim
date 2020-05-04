@@ -5037,6 +5037,12 @@ SerialMPM::findRogueParticles(const ProcessorGroup*,
           // If the localized particles are sufficiently isolated, set
           // a flag for deletion in interpolateToParticlesAndUpdate
           if (numLocInCell[c]<=3 && totalInCells<=3) {
+            proc0cout << "**WARNING** Particle " << pParticleID[particle] 
+                      << " is isolated and will be removed.\n"
+                      << " cell = " << c 
+                      << " isLocalized = " << isLocalized[particle] 
+                      << " numLocIncell = " << numLocInCell[c]
+                      << " totalInCells = " << totalInCells << "\n";
             isLocalized[particle]=-999;
           }
 

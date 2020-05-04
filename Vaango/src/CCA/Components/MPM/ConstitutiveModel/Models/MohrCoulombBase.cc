@@ -248,17 +248,17 @@ MohrCoulombBase::checkGradient(const MohrCoulombState& initialState,
 
   Vector6 df; // not initialised; will contain values of derivatives of the
               // yield locus function
-  double cosinus = computeDsigmaDotDf(initialState.stress, stressInc, df, 0, 0);
+  double cosTheta = computeDsigmaDotDf(initialState.stress, stressInc, df, 0, 0);
 
-  if (cosinus > -d_int.d_yieldTol) {
+  if (cosTheta > -d_int.d_yieldTol) {
     return false;
   }
 
 #ifdef DEBUG_BASEMC
-  dbg << __LINE__ << ":BaseMC::Unloading occuring... cosinus = " << cosinus << "\n";
+  dbg << __LINE__ << ":BaseMC::Unloading occuring... cos(df/dsigma . Dsigma) = " << cosTheta << "\n";
 #endif
 
-  return true; //(negative cosinus means unloading occurs)
+  return true; //(negative cos(theta) means unloading occurs)
 }
 
 /**

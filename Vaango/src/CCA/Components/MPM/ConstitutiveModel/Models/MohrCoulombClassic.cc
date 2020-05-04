@@ -124,17 +124,23 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
     if (onTheYieldLocus) {
       unloading = checkGradient(initialState, finalState);
 
-      Vector7 plasticStrainInc;
       if (unloading) {
 #ifdef DEBUG_MCCLASSIC
-        dbg << "\n\n Elasto-Plastic unloading=" << unloading << "\n";
+        dbg << "\n\n Elastic unloading=" << unloading << "\n";
 #endif
-
-        Vector7 elasticStrainInc;
-        std::tie(elasticStrainInc, plasticStrainInc) =
-          findIntersectionUnloading(strainIncrement, initialState);
-
+        Vector7 elasticStrainInc = strainIncrement;
         calcElastic(elasticStrainInc, initialState, finalState);
+
+        bool yielded = checkYieldNormalized(finalState);
+   
+        if (yielded) {
+          Vector7 elasticStrainInc, plasticStrainInc;
+          std::tie(elasticStrainInc, plasticStrainInc) =
+            findIntersection(strainIncrement, initialState);
+
+          calcElastic(elasticStrainInc, initialState, finalState);
+          calculatePlastic(plasticStrainInc, finalState);
+        }
 
         double spVol =
           computeNu(finalState.stress, finalState.state, finalState.suction());
@@ -142,11 +148,14 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
 
       } else {
 
-        plasticStrainInc = strainIncrement;
+        Vector7 plasticStrainInc = strainIncrement;
+        calculatePlastic(plasticStrainInc, finalState);
+
+        double spVol =
+          computeNu(finalState.stress, finalState.state, finalState.suction());
+        finalState.specificVolume(spVol);
+
       }
-
-
-      calculatePlastic(plasticStrainInc, finalState);
 
     } else {
 
@@ -155,12 +164,12 @@ MohrCoulombClassic::integrate(const Vector7& strainIncrement,
         findIntersection(strainIncrement, initialState);
 
       calcElastic(elasticStrainInc, initialState, finalState);
+      calculatePlastic(plasticStrainInc, finalState);
 
       double spVol =
         computeNu(finalState.stress, finalState.state, finalState.suction());
       finalState.specificVolume(spVol);
 
-      calculatePlastic(plasticStrainInc, finalState);
     }
   }
 
