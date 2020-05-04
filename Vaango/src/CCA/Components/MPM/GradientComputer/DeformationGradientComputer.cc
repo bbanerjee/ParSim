@@ -206,7 +206,7 @@ DeformationGradientComputer::addComputesOnly(Task* task,
   dbg_doing << "Doing DefGrad::addComputesOnly\n";
 
   std::ostringstream out;
-  out << "**ERROR**: addComputesOnly Not implemented " << std::endl;
+  out << "**ERROR**: addComputesOnly Not implemented " << "\n";
   throw InvalidValue(out.str(), __FILE__, __LINE__);
 }
 
@@ -328,17 +328,17 @@ DeformationGradientComputer::computeDeformationGradient(const PatchSubset* patch
     for (int pp = 0; pp < patches->size(); pp++) {
       const Patch* patch = patches->get(pp);
 
-      //std::cout << "Compute def grad .. 1 .. pp = " << pp << " patch = " << patch << std::endl; 
+      //std::cout << "Compute def grad .. 1 .. pp = " << pp << " patch = " << patch << "\n"; 
       int numMPMMatls=d_sharedState->getNumMPMMatls();
       for(int m = 0; m < numMPMMatls; m++){
 
         // Get particle info and patch info
         MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
-        //std::cout << "Compute def grad .. 2 .. pp = " << pp << " m = " << m << " mpm_matl = " << mpm_matl << std::endl; 
+        //std::cout << "Compute def grad .. 2 .. pp = " << pp << " m = " << m << " mpm_matl = " << mpm_matl << "\n"; 
 
         // Compute deformation gradient
         computeDeformationGradientExplicit(patch, mpm_matl, delT, old_dw, new_dw);
-        //std::cout << "Compute def grad .. 3 .. complete" << std::endl; 
+        //std::cout << "Compute def grad .. 3 .. complete" << "\n"; 
       }
     }
 
@@ -396,7 +396,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
   Vector dx = patch->dCell();
   double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
-  //std::cout << "One . patch = " << patch << " mpm_matl = " << mpm_matl << std::endl;
+  //std::cout << "One . patch = " << patch << " mpm_matl = " << mpm_matl << "\n";
 
   // Get initial density
   double rho_orig = mpm_matl->getInitialDensity();
@@ -440,12 +440,12 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
   old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
 
   // Allocate new data
-  //std::cout << "Two . Before allocate and put" << std::endl;
+  //std::cout << "Two . Before allocate and put" << "\n";
   new_dw->allocateAndPut(pDefGrad_new,  lb->pDefGradLabel_preReloc,  pset);
   new_dw->allocateAndPut(pVelGrad_new,  lb->pVelGradLabel_preReloc,  pset);
   new_dw->allocateAndPut(pDispGrad_new, lb->pDispGradLabel_preReloc,  pset);
   new_dw->allocateAndPut(pVolume_new,   lb->pVolumeLabel_preReloc, pset);
-  //std::cout << "Three . After allocate and put" << std::endl;
+  //std::cout << "Three . After allocate and put" << "\n";
       
   ParticleVariable<int>       pRemove_new;
   ParticleVariable<Matrix3>   pPolarDecompR_new, pPolarDecompR_mid;
@@ -473,20 +473,20 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
       }
       gradComp.computeVelGrad(interpolator.get(), oodx, pgFld, px[particle], pSize[particle], pDefGrad_old[particle], 
                               gVelocityStar, GVelocityStar, velGrad_new);
-      //std::cout << "Six . After compute vel grad." << std::endl;
+      //std::cout << "Six . After compute vel grad." << "\n";
 
       // Compute the deformation gradient from velocity
       computeDeformationGradientFromVelocity(pVelGrad_old[particle], velGrad_new, pDefGrad_old[particle], delT, defGrad_new,
                                              defGrad_inc);
 
-      //std::cout << "Seven . After compute def grad." << std::endl;
+      //std::cout << "Seven . After compute def grad." << "\n";
       // Update velocity gradient
       pVelGrad_new[particle] = velGrad_new;
 
       // Update displacement gradient
       pDispGrad_new[particle] = velGrad_new*delT;
 
-      //std::cout << "Eight . After compute disp grad." << std::endl;
+      //std::cout << "Eight . After compute disp grad." << "\n";
     } else {
       // Compute displacement gradient
       DisplacementGradientComputer gradComp(flag);
@@ -509,27 +509,35 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
 
     //if (pParticleID[particle] == 111670263811) {
     // std::cout << "Vel grad = " << pVelGrad_new[particle]
-    //           << " Def grad = " << pDefGrad_new[particle] << std::endl;
+    //           << " Def grad = " << pDefGrad_new[particle] << "\n";
     //}
 
-    //std::cout << "Nine . Before jacobian check" << std::endl;
+    //std::cout << "Nine . Before jacobian check" << "\n";
     // Check 1: Look at Jacobian
     double J = defGrad_new.Determinant();
     if (!(J > 0.0)) {
       std::cerr << "matl = "  << mpm_matl << " dwi = " << dwi << " particle = " << particle
-           << " particleID = " << pParticleID[particle] << endl;
-      std::cerr << "velGrad = " << pVelGrad_new[particle] << endl;
-      std::cerr << "F_old = " << pDefGrad_old[particle]     << endl;
-      std::cerr << "F_inc = " << defGrad_inc       << endl;
-      std::cerr << "F_new = " << pDefGrad_new[particle] << endl;
-      std::cerr << "J = "     << J                 << endl;
+           << " particleID = " << pParticleID[particle] << "\n";
+      std::cerr << "velGrad = " << pVelGrad_new[particle] << "\n";
+      std::cerr << "F_old = " << pDefGrad_old[particle]     << "\n";
+      std::cerr << "F_inc = " << defGrad_inc       << "\n";
+      std::cerr << "F_new = " << pDefGrad_new[particle] << "\n";
+      std::cerr << "J = "     << J                 << "\n";
       std::cerr << "**ERROR** Negative Jacobian of deformation gradient in material # ="
-           << mpm_matl << " and particle " << pParticleID[particle]  << " which has mass "
-           << pMass[particle] << endl;
-      std::cerr << "\t Ignoring new deformation gradient" << std::endl;
+           << dwi << " and particle " << pParticleID[particle]  << " which has mass "
+           << pMass[particle] << "\n";
       #ifdef IGNORE_NEGATIVE_JACOBIANS
+      std::cerr << "\t Ignoring new deformation gradient and resetting it back to "
+                << " value at the end of the previous timestep.\n";
       J = pDefGrad_old[particle].Determinant();
       pDefGrad_new[particle] = pDefGrad_old[particle];
+      /*
+      std::cerr << "\t Ignoring new deformation gradient and resetting it back to I.\n"
+                << "\t This action assumes that the particle has fully fractured and \n"
+                << "\t all the accumulated strain energy has been released.\n";
+      //J = 1;
+      //pDefGrad_new[particle] = Identity;
+      */
       #else
       throw InvalidValue("**ERROR**:", __FILE__, __LINE__);
       #endif
@@ -556,10 +564,10 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
         if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
           pRemove_new[particle] = -999;
           proc0cout << "Deformation gradient component unphysical: [F] = " << FF_new
-                    << std::endl;
+                    << "\n";
           proc0cout << "Resetting [F]=[I] for this step and deleting particle"
                     << " idx = " << particle << " particleID = " << pParticleID[particle]
-                    << std::endl;
+                    << "\n";
           Vaango::Util::Identity.polarDecompositionRMB(UU, RR);
         } else {
           pRemove_new[particle] = 0;
@@ -570,7 +578,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
       }
     }
 
-    //std::cout << "Eight . Particle " << particle<< " : complete. " << std::endl;
+    //std::cout << "Eight . Particle " << particle<< " : complete. " << "\n";
   } // End of loop over particles
 
   // The following is used only for pressure stabilization
@@ -621,7 +629,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
 
       //if (pParticleID[particle] == 111670263811) {
       // std::cout << "Vel grad = " << pVelGrad_new[particle]
-      //           << " Def grad = " << pDefGrad_new[particle] << std::endl;
+      //           << " Def grad = " << pDefGrad_new[particle] << "\n";
       //}
       //if (pParticleID[particle] == 111670263811) {
       //  std::cout << "mass = " << pMass[particle] << " vol = " << pVolume_new[particle]
@@ -630,18 +638,18 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
 
       // Check 1: Look at Jacobian
       if (!(J > 0.0)) {
-        std::cerr << "after pressure stab "          << endl;
-        std::cerr << "matl = "  << mpm_matl          << endl;
-        std::cerr << "F_old = " << pDefGrad_old[particle]     << endl;
-        std::cerr << "F_inc = " << defGrad_inc       << endl;
-        std::cerr << "F_new = " << pDefGrad_new[particle] << endl;
-        std::cerr << "J = "     << J                 << endl;
+        std::cerr << "after pressure stab "          << "\n";
+        std::cerr << "matl = "  << mpm_matl          << "\n";
+        std::cerr << "F_old = " << pDefGrad_old[particle]     << "\n";
+        std::cerr << "F_inc = " << defGrad_inc       << "\n";
+        std::cerr << "F_new = " << pDefGrad_new[particle] << "\n";
+        std::cerr << "J = "     << J                 << "\n";
         constParticleVariable<long64> pParticleID;
         old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
-        std::cerr << "ParticleID = " << pParticleID[particle] << endl;
+        std::cerr << "ParticleID = " << pParticleID[particle] << "\n";
         std::cerr << "**ERROR** Negative Jacobian of deformation gradient"
              << " in particle " << pParticleID[particle]  << " which has mass "
-             << pMass[particle] << endl;
+             << pMass[particle] << "\n";
         //pDefGrad_new[particle] = Identity;
         throw InvalidValue("**ERROR**:Negative Jacobian in UCNH", __FILE__, __LINE__);
       }
@@ -659,10 +667,10 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
         if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
           pRemove_new[particle] = -999;
           proc0cout << "Deformation gradient component unphysical: [F] = " << FF_new
-                    << std::endl;
+                    << "\n";
           proc0cout << "Resetting [F]=[I] for this step and deleting particle"
                     << " idx = " << particle << " particleID = " << pParticleID[particle]
-                    << std::endl;
+                    << "\n";
           Vaango::Util::Identity.polarDecompositionRMB(UU, RR);
         } else {
           pRemove_new[particle] = 0;
@@ -1168,7 +1176,7 @@ DeformationGradientComputer::computeDeformationGradientFromVelocity(const Matrix
     std::ostringstream out;
     out << "**ERROR** Deformation gradient algorithm"
         << flag->d_defgrad_algorithm
-        << " not implemented." << std::endl;
+        << " not implemented." << "\n";
     throw ParameterNotFound(out.str(), __FILE__, __LINE__);
   }
   return;
@@ -1200,7 +1208,7 @@ DeformationGradientComputer::seriesUpdateConstantVelGrad(const Matrix3& velGrad_
   Matrix3 Amat = velGrad_new*delT;
   defGrad_inc = Amat.Exponential(flag->d_numTermsSeriesDefGrad);
   defGrad_new = defGrad_inc*defGrad_old;
-  // std::cout << " Amat = " << Amat << " defGrad_inc = " << defGrad_inc << std::endl;
+  // std::cout << " Amat = " << Amat << " defGrad_inc = " << defGrad_inc << "\n";
   return;
 }
 
@@ -1264,9 +1272,9 @@ DeformationGradientComputer::subcycleUpdateConstantVelGrad(const Matrix3& velGra
   for(int n=0;n<num_scs;n++){
     defGrad_new = OP_tensorL_DT*defGrad_new;
     // if(num_scs >1000){
-    //   cerr << "n = " << n << endl;
-    //   cerr << "F = " << defGrad_new << endl;
-    //   cerr << "J = " << defGrad_new.Determinant() << endl << endl;
+    //   cerr << "n = " << n << "\n";
+    //   cerr << "F = " << defGrad_new << "\n";
+    //   cerr << "J = " << defGrad_new.Determinant() << "\n" << "\n";
     // }
   }
   defGrad_inc = defGrad_new*defGrad_old.Inverse();

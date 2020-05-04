@@ -73,6 +73,8 @@
 #include <Core/Util/DebugStream.h>
 #include <Core/Thread/Mutex.h>
 
+#include <Eigen/Dense>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -2583,10 +2585,15 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
     // This is the Logistic Regression code that finds the normal to the
     // plane that separates two materials.  This is as directly as possible
     // from Nairn & Hammerquist, 2019.
+    using Vector4 = Eigen::Matrix<double, 4, 1>;
+    using Matrix44 = Eigen::Matrix<double, 4, 4>;
+
     double lam = 1.e-7*dx.x()*dx.x();
-    double lambda[4] = {lam, lam, lam, 0};
+    Vector4 lambda = {lam, lam, lam, 0};
     double wp = 1.0;
+    /*
     double RHS[4];
+    */
     for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
       IntVector node = *iter;
       // Only work on multi-material nodes
@@ -2594,12 +2601,14 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
          bool converged = false;
          int num_iters = 0;
          double tol = 1.e-5;
-         double phi[4] = {1., 0., 0., 0.};
+         Vector4 phi = {1., 0., 0., 0.};
          Vector nhat_k(phi[0], phi[1], phi[2]);
          Vector nhat_backup(0.);
          double error_min = 1.0;
          while (!converged) {
            num_iters++;
+
+           /*
            // Initialize the coefficient matrix
            FastMatrix FMJtWJ(4,4);
            FMJtWJ.zero();
@@ -2609,6 +2618,13 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
            for (int i = 0; i < 4; i++) {
              RHS[i] = -1.0*lambda[i]*phi[i];
            }
+           */
+
+           Vector4        g_phi = lambda * (lambda.dot(phi));
+           Matrix44 g_prime_phi = lambda * lambda.transpose();
+
+           std::cout << "phi_k = " << phi.transpose() << "\n";
+
            for (int mat = 0; mat < numMPMMatls; mat++) {
              double cp = 0.;
              if (gAlphaMaterial[node] == mat) {
@@ -2616,18 +2632,49 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
              } else {
                cp = 1.;
              }
+
              for (int part = 0; part < gParticleList[mat][node][399]; part++) {
                Point xp = pX[mat][gParticleList[mat][node][part]];
-               double xp4[4] = {xp.x(), xp.y(), xp.z(), 1.0};
-               double XpDotPhi = xp4[0]*phi[0]
-                               + xp4[1]*phi[1]
-                               + xp4[2]*phi[2]
-                               + xp4[3]*phi[3];
-               double expterm = exp(-XpDotPhi);
-               double num     = 2.0*expterm;
-               double denom   = (1.0 + expterm)*(1.0 + expterm);
-               double fEq20   = 2./(1+expterm) - 1.0;
-               double psi = num/denom;
+               Vector4 xp4 = {xp.x(), xp.y(), xp.z(), 1.0};
+               Matrix44 xx = xp4 * xp4.transpose();
+
+               //std::cout << "xp4 = " << xp4.transpose() << "\n";
+               //std::cout << "xx = " << xx << "\n";
+
+               double theta     = xp4.dot(phi);
+               double exptheta  = std::exp(-theta);
+               double alpha     = 1.0 + exptheta;
+               double psi       = 2.0 * exptheta / (alpha * alpha);
+               double fEq20     = 2.0 / alpha - 1.0;
+               double fEq20_cp  = fEq20 - cp;
+               double psi_deriv = psi * (2.0 / alpha * exptheta - 1.0);
+
+               if (!std::isfinite(exptheta)) {
+                 throw InternalError("MPM: In logistic regression: xp . phi too large", __FILE__, __LINE__);
+               }
+               //std::cout << "xp . phi = " << theta << " fEq20_cp = " << fEq20_cp
+               //          << " psi = " << psi << " psi_deriv = " << psi_deriv << "\n";
+
+               /*
+               Vector4    df_dphi = xp4 * psi;
+               Matrix44 d2f_dphi2 = xx * psi_deriv;
+
+               Matrix44 df_dphi_df_dphi = df_dphi * df_dphi.transpose();
+               Matrix44 f_cp_d2f_dphi2 = d2f_dphi2 * fEq20_cp;
+               Matrix44 lambda_lambda = lambda * lambda.transpose();
+
+               std::cout << "df_dphi = " << df_dphi.transpose() << "\n"
+                         << "d2f_dphi2 = " << d2f_dphi2 << "\n";
+
+               std::cout << "df_dphi x df_dphi = " << df_dphi_df_dphi << "\n"
+                         << "(f - cp) * d2f_dphi2 = " << f_cp_d2f_dphi2 << "\n"
+                         << "lambda x lambda = " << lambda_lambda << "\n";
+               */
+
+               g_phi       += xp4 * (wp * fEq20_cp * psi);
+               g_prime_phi += xx * (psi * psi + fEq20_cp * psi_deriv);
+
+               /*
                double psi2wp = psi*psi*wp;
                // Construct coefficient matrix, Eqs. 54 and 55
                // Inner terms
@@ -2648,15 +2695,53 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
                for (int i = 0; i < 4; i++) {
                  RHS[i] += psi*wp*(cp - fEq20)*xp4[i];
                }
+               */
              } // Loop over each material's particle list 
            } // Loop over materials
 
+           /*
+           std::cout << "g_phi = " << g_phi.transpose() << "\n";
+           std::cout << "g_prime_phi = " << g_prime_phi << "\n";
+           */
+
+           Eigen::MatrixXd phi_inc = g_prime_phi.colPivHouseholderQr().solve(g_phi);
+           phi -= phi_inc;
+
+           /*
+           std::cout << "phi_inc = " << phi_inc.transpose() <<"\n";
+           std::cout << "phi_k+1 = " << phi.transpose() << "\n";
+           */
+
+           /*
+           std::cout << "FMJtWJ = ";
+           for (int i = 0; i < 4; i++) {
+             for (int j = 0; j < 4; j++) {
+                std::cout << FMJtWJ(i,j) << " ";
+             }
+             std::cout << "\n";
+           }
+           std::cout << "\n";
+           std::cout << "RHS = ";
+           for (int i = 0; i < 4; i++) {
+             std::cout << RHS[i] << " ";
+           }
+           std::cout << "\n";
+
            // Solve (FMJtWJ)^(-1)*RHS.  The solution comes back in the RHS array
            FMJtWJ.destructiveSolve(RHS);
+           std::cout << "RHS solution = ";
+           for (int i = 0; i < 4; i++) {
+             std::cout << RHS[i] << " ";
+           }
+           std::cout << "\n";
 
            for (int i = 0; i < 4; i++) {
              phi[i] += RHS[i];
            }
+           */
+
+
+
            Vector nhat_kp1(phi[0], phi[1], phi[2]);
            nhat_kp1 /= (nhat_kp1.length()+1.e-100);
            double error = 1.0 - Dot(nhat_kp1, nhat_k);

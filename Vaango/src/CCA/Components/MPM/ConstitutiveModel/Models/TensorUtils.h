@@ -17,10 +17,10 @@ using Vector9Mandel = Eigen::Matrix<double, 9, 1>;
 using Matrix9Mandel = Eigen::Matrix<double, 9, 9>;
 
 /* Constants */
-static constexpr double sqrt_two = std::sqrt(2.0);
-static constexpr double one_sqrt_two = 1.0 / sqrt_two;
-static constexpr double sqrt_three = std::sqrt(3.0);
-static constexpr double one_sqrt_three = 1.0 / sqrt_three;
+static const double sqrt_two = std::sqrt(2.0);
+static const double one_sqrt_two = 1.0 / sqrt_two;
+static const double sqrt_three = std::sqrt(3.0);
+static const double one_sqrt_three = 1.0 / sqrt_three;
 static constexpr double half = 0.5;
 static constexpr double third = 1.0/3.0;
 static constexpr double two_third = 2.0/3.0;
