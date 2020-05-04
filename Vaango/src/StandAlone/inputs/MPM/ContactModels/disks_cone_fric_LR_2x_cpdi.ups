@@ -17,7 +17,7 @@
        <timestep_multiplier>0.5</timestep_multiplier>
    </Time>
    <DataArchiver>
-       <filebase>disks_cone_fric_LR.uda</filebase>
+       <filebase>disks_cone_fric_LR_2x_cpdi.uda</filebase>
        <!-- <outputInterval>.01</outputInterval> -->
        <outputTimestepInterval>50</outputTimestepInterval>
        <save label = "KineticEnergy"/>
@@ -26,6 +26,7 @@
        <save label = "TotalMomentum"/>
        <save label = "p.particleID"/>
        <save label = "p.x"/>
+       <save label = "p.mass"/>
        <save label = "p.volume"/>
        <save label = "p.stress"/>
        <save label = "p.velocity"/>
@@ -38,7 +39,7 @@
 
     <MPM>
        <time_integrator>explicit</time_integrator>
-       <interpolator> gimp </interpolator>
+       <interpolator> cpdi </interpolator>
     </MPM>
 
     <PhysicalConstants>
@@ -82,7 +83,7 @@
            </material>
 
            <material name="cone">
-              <density>1000.0</density>
+              <density>2000.0</density>
               <constitutive_model type="hypo_elastic"> 
                  <G>7.2e6</G>
                  <K>10.2e6</K>
@@ -146,7 +147,7 @@
            <Box label = "1">
               <lower>[0,0,0]</lower>
               <upper>[1.0,1.0,.15]</upper>
-              <resolution>[40,40,3]</resolution>
+              <resolution>[80,80,6]</resolution>
               <patches>[2,2,1]</patches>
               <extraCells> [1,1,1]            </extraCells>
            </Box>
