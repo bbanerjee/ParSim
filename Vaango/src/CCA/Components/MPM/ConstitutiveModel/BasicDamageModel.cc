@@ -623,9 +623,11 @@ BasicDamageModel::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   task->requires(Task::OldDW, pLocalizedLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pTimeOfLocLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pDamageLabel, matlset, Ghost::None);
-  task->requires(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, lb->pDefGradLabel_preReloc, matlset, Ghost::None);
+  task->requires(Task::OldDW, lb->pVolumeLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, lb->pDefGradLabel, matlset, Ghost::None);
 
+  task->modifies(lb->pVolumeLabel_preReloc, matlset);
+  task->modifies(lb->pDefGradLabel_preReloc, matlset);
   task->modifies(lb->pStressLabel_preReloc, matlset);
 
   task->computes(pFailureStressOrStrainLabel_preReloc, matlset);
@@ -661,8 +663,10 @@ BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
     constParticleVariable<double> pFailureStrain, pDamage;
     constParticleVariable<long64> pParticleID;
 
-    constParticleVariable<double> pVolume_new;
-    constParticleVariable<Matrix3> pDefGrad_new;
+    constParticleVariable<double> pVolume_old;
+    ParticleVariable<double> pVolume_new;
+    constParticleVariable<Matrix3> pDefGrad_old;
+    ParticleVariable<Matrix3> pDefGrad_new;
 
     // New data containers
     ParticleVariable<int> pLocalized_new;
@@ -677,8 +681,11 @@ BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
     old_dw->get(pFailureStrain, pFailureStressOrStrainLabel, pset);
     old_dw->get(pDamage, pDamageLabel, pset);
 
-    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
-    new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
+    old_dw->get(pDefGrad_old, lb->pDefGradLabel, pset);
+    old_dw->get(pVolume_old, lb->pVolumeLabel, pset);
+
+    new_dw->getModifiable(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
+    new_dw->getModifiable(pVolume_new, lb->pVolumeLabel_preReloc, pset);
 
     new_dw->getModifiable(pStress, lb->pStressLabel_preReloc, pset);
 
@@ -714,6 +721,8 @@ BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
           pTimeOfLoc_new[idx] = pTimeOfLoc[idx];
           pFailureStrain_new[idx] = pFailureStrain[idx];
         }
+        pDefGrad_new[idx] = pDefGrad_old[idx];
+        pVolume_new[idx] = pVolume_old[idx];
         double failTime = time - pTimeOfLoc_new[idx];
         double D = 1.0 - exp(-failTime / 0.001);
         pDamage_new[idx] = D;
