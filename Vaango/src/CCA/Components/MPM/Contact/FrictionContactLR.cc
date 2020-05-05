@@ -214,8 +214,9 @@ FrictionContactLR::exMomInterpolated(const ProcessorGroup*,
           for (int mat = 0; mat < numMatls; mat++){
             if (!d_matls.requested(mat) || mat == alpha) continue;
 
-            double mass = gMass[mat][node];
-            if (mass > 1.e-16) { 
+            double mass_mat = gMass[mat][node];
+            double mass_alpha = gMass[alpha][node];
+            if (mass_mat > 1.e-16 && mass_alpha > 1.0e-16) { 
               // There is mass of material beta at this node
               // Check relative separation of the material prominence
               double separation = gMatlProminence[mat][node] - 
@@ -240,7 +241,7 @@ FrictionContactLR::exMomInterpolated(const ProcessorGroup*,
 
                   double ff = std::max(1.0,(.01*dx.x() - separation)/.01*dx.x());
                   Dv *= ff;
-                  Vector DvAlpha = -Dv*gMass[mat][node]/gMass[alpha][node];
+                  Vector DvAlpha = -Dv * mass_mat / mass_alpha;
                   gVelocity[mat][node]   += Dv;
                   gVelocity[alpha][node] += DvAlpha;
                 } // if (relative velocity) * normal < 0
@@ -326,8 +327,9 @@ FrictionContactLR::exMomIntegrated(const ProcessorGroup*,
           // field is contributing to grid vertex).
           for (int mat = 0; mat < numMatls; mat++) {
             if (!d_matls.requested(mat) || mat == alpha) continue;
-            double mass = gMass[mat][node];
-            if (mass > 1.e-16) {
+            double mass_mat = gMass[mat][node];
+            double mass_alpha = gMass[alpha][node];
+            if (mass_mat > 1.e-16 && mass_alpha > 1.0e-16) {
               double separation = gMatlProminence[mat][node] - 
                                   gMatlProminence[alpha][node];
               if (separation <= 0.01*dx.x()) {
@@ -350,7 +352,7 @@ FrictionContactLR::exMomIntegrated(const ProcessorGroup*,
                   double ff = std::max(1.0,(.01*dx.x() - separation)/.01*dx.x());
                   Dv *= ff;
                   gVelocity_star[mat][node] +=Dv;
-                  Vector DvAlpha = -Dv*gMass[mat][node]/gMass[alpha][node];
+                  Vector DvAlpha = -Dv * mass_mat / mass_alpha;
                   gVelocity_star[alpha][node] += DvAlpha;
                 }  // if (relative velocity) * normal < 0
               } // if separation

@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <Uintah_specification>
 
    <Meta>
@@ -34,7 +35,7 @@
       <save label = "p.mass"/>
       <save label = "p.externalforce"/>
       <save label = "p.localized"/>
-      <save label = "p.localizedMPM"/>
+      <save label = "p.localizedBD"/>
       <save label = "p.stress"/>
       <save label = "p.deformationGradient"/>
       <checkpoint cycle = "2" timestepInterval = "200"/>

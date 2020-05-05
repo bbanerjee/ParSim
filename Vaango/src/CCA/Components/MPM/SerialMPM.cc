@@ -84,8 +84,9 @@
 //#define XPIC2_UPDATE
 #define CHECK_PARTICLE_DELETION
 //#define TIME_COMPUTE_STRESS
-//#define CHECK_ISFINITE
+#define CHECK_ISFINITE
 //#define DEBUG_WITH_PARTICLE_ID
+// constexpr long64 testParticleID = testParticleID;
 
 using namespace Uintah;
 
@@ -2059,7 +2060,7 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
             //gnumnearparticles[node] += 1.0;
             //gExternalheatrate[node] += pExternalheatrate[idx]      * S[k];
             #ifdef DEBUG_WITH_PARTICLE_ID
-              if (pParticleID[idx] == 158913855488) {
+              if (pParticleID[idx] == testParticleID) {
                 proc0cout << pParticleID[idx]
                           << pExternalForce[idx]
                           << " pMom = " << pMom
@@ -3627,7 +3628,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
               gStress[node]       += stressvol * S[k];
               
               #ifdef DEBUG_WITH_PARTICLE_ID
-                if (pParticleID[idx] == 158913855488) {
+                if (pParticleID[idx] == testParticleID) {
                 if (node == IntVector(3,38,0)) {
                 proc0cout << "Particle ID = " << pParticleID[idx]
                           << " node = " << node
@@ -3705,7 +3706,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
                 }
               #endif
               #ifdef DEBUG_WITH_PARTICLE_ID
-                //if (pParticleID[part] == 158913855488) {
+                //if (pParticleID[part] == testParticleID) {
                 if (node == IntVector(3,38,0)) {
                 proc0cout << "Particle ID = " << pParticleID[part]
                           << " node = " << node
@@ -5944,14 +5945,14 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           #endif
 
           #ifdef CHECK_ISFINITE
-            if (!std::isfinite(vel.x()) || !std::isfinite(vel.y()) ||
-                !std::isfinite(vel.z()) || !std::isfinite(acc.x()) ||
-                !std::isfinite(acc.y()) || !std::isfinite(acc.z())) {
+            if (!std::isfinite(velocity.x()) || !std::isfinite(velocity.y()) ||
+                !std::isfinite(velocity.z()) || !std::isfinite(acceleration.x()) ||
+                !std::isfinite(acceleration.y()) || !std::isfinite(acceleration.z())) {
               std::cout << "particle ID = " << pParticleID[idx]
                         << " node = " << node
                         << " k = " << k << " S[k] = " << S[k]
                         << " v_g* = " << gVelocityStar[node]
-                        << " v_g(2) = " << gVelocityXPIC[node]
+                        //<< " v_g(2) = " << gVelocityXPIC[node]
                         << " a_g* = " << gAcceleration[node] << "\n";
             }
           #endif
@@ -5985,7 +5986,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
               !std::isfinite(pVelocity_new[idx].z())) {
             std::cout << "particle ID = " << pParticleID[idx]
                       << " v_p = " << pVelocity[idx]
-                      << " a_p = " << acc << "\n";
+                      << " a_p = " << acceleration << "\n";
           }
         #endif
 

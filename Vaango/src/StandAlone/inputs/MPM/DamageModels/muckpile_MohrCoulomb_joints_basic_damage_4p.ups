@@ -21,7 +21,7 @@
   <!--____________________________________________________________________-->
   <DataArchiver>
     <filebase>muckPile_MohrCoulomb_joints_basic_damage_4p.uda</filebase>
-    <outputInterval>5.0e-5</outputInterval>
+    <outputInterval>1.0e-4</outputInterval>
     <!-- <outputTimestepInterval>1</outputTimestepInterval> -->
     <save label="p.particleID"/>
     <save label="p.loadCurveID"/>
@@ -31,14 +31,14 @@
     <save label="p.mass"/>
     <save label="p.externalforce"/>
     <save label="p.localizedMPM"/>
-    <save label="p.localizedDamage"/>
+    <save label="p.localizedBD"/>
     <save label="p.stress"/>
     <save label="p.deformationGradient"/>
-    <save label="p.epsf"/>
-    <save label="p.damage"/>
-    <save label="p.timeofloc"/>
+    <save label="p.epsfBD"/>
+    <save label="p.damageBD"/>
+    <save label="p.timeoflocBD"/>
     <save label="g.velocity"/>
-    <checkpoint cycle="2" timestepInterval="200"/>
+    <checkpoint cycle="2" timestepInterval="50"/>
   </DataArchiver>
   <!--____________________________________________________________________-->
   <!--     P  H  Y  S  I  C  A  L     C  O  N  S  T  A  N  T  S           -->
@@ -221,7 +221,7 @@
       </material>
       <contact>
         <type>friction_bard</type>
-        <mu> 0.75 </mu>
+        <mu> 0.01 </mu>
         <materials>[0, 1]</materials>
       </contact>
     </MPM>

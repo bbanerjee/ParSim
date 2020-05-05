@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <Uintah_specification>
 
    <Meta>
@@ -34,12 +35,12 @@
       <save label = "p.externalforce"/>
       <save label = "p.localized"/>
       <save label = "p.localizedMPM"/>
-      <save label = "p.localizedDamage"/>
+      <save label = "p.localizedBD"/>
       <save label = "p.stress"/>
       <save label = "p.deformationGradient"/>
-      <save label = "p.epsf"/>
-      <save label = "p.damage"/>
-      <save label = "p.timeofloc"/>
+      <save label = "p.epsfBD"/>
+      <save label = "p.damageBD"/>
+      <save label = "p.timeoflocBD"/>
       <save label = "rho_CC"/>
       <save label = "press_CC"/>
       <save label = "temp_CC"/>
