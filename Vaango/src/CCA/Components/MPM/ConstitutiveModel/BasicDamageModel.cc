@@ -24,6 +24,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/BasicDamageModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TensorUtils.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Patch.h>
@@ -709,7 +710,7 @@ BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
       if ((pDefGrad_new[idx].MaxAbsElem() > 1.0e2) ||
           (J < 1.0e-3) || (J > 1.0e5)) {
         if (pLocalized_new[idx] == 0) {
-          pLocalized_new[idx] = 1.0;
+          pLocalized_new[idx] = 1;
           pTimeOfLoc_new[idx] = time;
           pFailureStrain_new[idx] = pFailureStrain[idx];
           std::cout << "**WARNING** Particle: " << pParticleID[idx]
@@ -727,6 +728,11 @@ BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
         double D = 1.0 - exp(-failTime / 0.001);
         pDamage_new[idx] = D;
         pStress[idx] *= D;
+        if (pStress[idx].Norm() < 1.0e-6) {
+          pLocalized_new[idx] = 0;
+          pTimeOfLoc_new[idx] = 1.0e99;
+          pDefGrad_new[idx] = Vaango::Tensor::Identity;
+        }
         continue;
       }
 
