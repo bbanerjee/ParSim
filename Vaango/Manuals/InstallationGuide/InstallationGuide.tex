@@ -18,12 +18,12 @@
     \par\normalfont\fontsize{35}{35}\sffamily\selectfont
     \textcolor{white}{Vaango Installation Guide}\par % Book title
     \vspace*{0.5cm}
-    {\Large \textcolor{white}{Version \version}}\par
+    {\Large \textcolor{white}{\version}}\par
     {\Large \textcolor{white}{\today}}\par
     \vspace*{1cm}
-    {\Large \textcolor{white}{The Utah Vaango team}}\par % Author name
-    {\Large \textcolor{white}{and}}\par % Author name
     {\Large \textcolor{white}{Biswajit Banerjee}}\par % Author name
+    {\Large \textcolor{white}{and}}\par % Author name
+    {\Large \textcolor{white}{The Uintah team}}\par % Author name
   \endgroup
 
   \input{../00FrontMatter.tex}
@@ -180,12 +180,30 @@ first time users to install \Vaango first and then install
 \Visit recognizes files in the \Uintah format automatically.  \Vaango
 uses an older version of the \Uintah data file format that may not 
 be recognized by the latest version of \Visit.  We have found that
-\Visit 10.2 works with the \Vaango code.
+\Visit 2.10 works with the \Vaango code.
 \end{WarningBox}
 
 For older versions of \Visit, the \Textsfc{cmake} command used to
 build \Vaango may have to be modified to include the location of 
 the \Visit installation directory.  
+
+\begin{WarningBox}
+The \Visit versions that we have tested require \Textsfc{Python 2.7}.  However, most
+modern Linux imstallation use \Textsfc{Python 3} by default.  For \Visit to work with
+\Textsfc{Python 3} installed, you will have to create a virtual environment for 
+\Textsfc{Python 2.7} using
+\begin{lstlisting}[backgroundcolor=\color{background}]
+virtualenv visit-env
+\end{lstlisting}
+To activate the environment, run
+\begin{lstlisting}[backgroundcolor=\color{background}]
+source visit-env/bin/activate
+\end{lstlisting}
+After that install packages that may be needed by \Visit.  To exit the environment use:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+deactivate
+\end{lstlisting}
+\end{WarningBox}
 
 \subsection{Explicit time integration only}
 Most of the material models in \Vaango support only explicit time
@@ -225,7 +243,7 @@ You will probably need to install \Textsfc{Cmake} to control the software compil
 
 \subsection{Compilers}
 \begin{itemize}
-  \item You will need a C++ compiler, either \Textsfc{g++} or \Textsfc{clang}:
+  \item You will need a C++14 compliant compiler, either \Textsfc{g++} or \Textsfc{clang}:
 \begin{lstlisting}[backgroundcolor=\color{background}]
 sudo apt-get install g++
 \end{lstlisting}
@@ -267,19 +285,26 @@ sudo apt-get install libxml2-dev
 \end{lstlisting}
 \end{itemize}
 
+\subsection{Eigen3 library}
+The Vaango MPM code has transitioned to \Textsfc{Eigen3} from version 18.01 onwards.  The peridynamics code 
+also uses the \Textsfc{Eigen3} library. You will have to install this library if you don't have it in your system.
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install libeigen3-dev
+\end{lstlisting}
+
+\subsection{HDF5 library}
+From version 19.03, the Vaango MPM code uses the \Textsfc{HDF5} library to read files generated 
+with \Textsfc{Tensorflow}.  Install the devleopment library using
+\begin{lstlisting}[backgroundcolor=\color{background}]
+sudo apt-get install libhdf5-dev
+\end{lstlisting}
+
 \subsection{Other libraries}
 \begin{itemize}
   \item You will also need to install the development version of zlib.
 \begin{lstlisting}[backgroundcolor=\color{background}]
 sudo apt-get install zlib1g zlib1g-dev
 \end{lstlisting}
-
-  \item The Peridynamics code uses parts of the \Textsfc{Eigen3} library. You will have to install 
-        this library if you don't have it in your system:
-\begin{lstlisting}[backgroundcolor=\color{background}]
-sudo apt-get install libeigen3-dev
-\end{lstlisting}
-
   \item The \Textsfc{googletest} libraries are cloned into the repository when you use
         the \Textsfc{--recursive} flag.  You don't need any further installation.
 
@@ -322,17 +347,38 @@ Required libraries:
 Note, we suggest using Hypre v2.8.0b and PETSc v3.3-p3. 
 
 \subsection{PETSc Installation}
-PETSc can be installed by executing the following simplified
-instructions.  Please refer to the PETSc website for comprehensive
-installation instructions if you encounter any difficulties.
+The PETSc library is needed to run implicit MPM.  Pre-compiled binaries 
+are available for download.  However, they typically work only with MPICH and not
+OpenMPI.  You will need to download PETSc 3.12.5 or newer.  As of version 20.05,
+the recommended download page is
+\url{https://www.mcs.anl.gov/petsc/download/index.html}
+and the recommended version is 3.12.5.
+Alternatively, you can download the latest release from GitLab.
 
-Download petsc-v3.3-p3 from
-\url{http://www.mcs.anl.gov/petsc/petsc-as/download/index.html}
+We recommend building the debug version of PETSc from source using
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  ./configure
+  make all test
+\end{lstlisting}
+
+For an optimized build use
+\begin{lstlisting}[backgroundcolor=\color{background}]
+  ./configure --with-debugging=0
+  make all test
+\end{lstlisting}
+
+You will also need to set the \Textsfc{PETSC\_ARCH} and \Textsfc{PETSC\_DIR} variables in your
+\Textsfc{.bashrc} file.  For example,
+\begin{lstlisting}[backgroundcolor=\color{background}]
+PETSC_ARCH=arch-linux-c-debug
+export PETSC_ARCH 
+PETSC_DIR=/home/banerjee/Packages/petsc-3.12.5
+export PETSC_DIR
+\end{lstlisting}
 
 \subsection{Hypre Installation}
-Hypre can be installed by executing the following simplified
-instructions, however, if you encounter problems please refer to the
-hypre website for troubleshooting.
+Hypre can be installed by executing the instructions in the HYPRE site.  The ICE-Hypre 
+implementation has not been tested extensively and should be used with care.
 
 Download hypre-2.8.0b from
 \url{https://computation.llnl.gov/casc/hypre/software.html}
