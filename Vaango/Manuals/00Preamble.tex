@@ -390,7 +390,12 @@ keepaspectratio]{fire-container-explosion-scirun.png}%
   \def\yy@##1##2;{##1##2}%
   \expandafter\yy@#1;
 }
+\def\MyDay#1{%
+  \def\yy@##1;{0##1}%
+  \def\yy@##1##2;{##1##2}%
+  \expandafter\yy@#1;
+}
 \makeatother
-\newcommand{\version}{Version \MyYear{\the\year}.\MyMonth{\the\month}}
+\newcommand{\version}{Version \MyYear{\the\year}.\MyMonth{\the\month}.\MyDay{\the\day}}
 
 
