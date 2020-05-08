@@ -1,0 +1,62 @@
+The default behavior of \MPM is to handle interactions between objects using velocities on
+the background grid.  However, beyond some simple situations, contact requires the application
+of contact laws.  In the \Vaango implementation of friction contact, Coulomb friction is
+assumed.  Alternative types of contact, such as adhesive contact. could also be implemented by
+changing the contact law.
+
+The purpose of the various contact algorithms in \Vaango is to correct the grid velocities
+such that a particular set of contact assumptions are satisfied.  The two main algorithms
+are \Textsfc{friction\_bard}, which is based on~\cite{Bard2001}, and \Textsfc{friction\_LR},
+which is described in~\cite{Nairn2020}.
+
+Let $m_p$, $\Bv_p$, $\Bp_p$ be the mass, velocity, and momentum of particle $p$. Also, let $m_g$,
+$\Bv_g$, $\Bp_g$ be the mass, velocity, and momentum at a grid point $g$ due to nearby particles
+in the region of influence.
+
+Let the interpolation from grid nodes to particles be given by
+\Beq
+  \Ba_p = \sum_g S_g(\Bx_p) \Ba_g 
+\Eeq
+where $\Ba_p$ is a particle quantity, $\Ba_g$ is a grid quantity, and $S_g(\Bx_p)$ is a scalar
+interpolation function evaluated at the particle position $\Bx_p$.  The quantities $\Ba_p$ and $\Ba_g$
+are expressed as column vectors.  For scalar quantities, the column vectors are of size $1 \times 1$.
+For vector quantities the size is $3 \times 1$, and for second-order symmetric tensors the vector
+has dimensions $6 \times 1$. For example, for a typical 3D vector,
+\Beq
+  \begin{bmatrix} a_1 \\ a_2 \\ a_3 \end{bmatrix}_p = \sum_g S_g(\Bx_p)
+  \begin{bmatrix} a_1 \\ a_2 \\ a_3 \end{bmatrix}_g \,.
+\Eeq
+The interpolation from grid to particles can then be expressed in matrix form as
+\Beq
+  \Ba_p = \BA_g \cdot \Bs_{gp}
+\Eeq
+where, if $S_g$ is the number of contributing grid nodes, 
+\Beq
+  \BA_g = \begin{bmatrix}
+             \begin{bmatrix} a_1 \\ a_2 \\ a_3 \end{bmatrix}_1 &
+             \begin{bmatrix} a_1 \\ a_2 \\ a_3 \end{bmatrix}_2 &
+             \dots & 
+             \begin{bmatrix} a_1 \\ a_2 \\ a_3 \end{bmatrix}_{N_g} 
+           \end{bmatrix}
+  ~,~~
+  \Bs_{gp} = \begin{bmatrix} S_1(\Bx_p) \\ S_2(\Bx_p) \\ \vdots \\ S_{N_g}(\Bx_p) \end{bmatrix} \,.
+\Eeq
+
+Because the number of particles can differ from the number of grid nodes, the projection of
+quantities from particles to the grid requires a different operator.
+\begin{NoteBox}
+An important underlying assumption in MPM is that
+continuum field quantities have two equivalent representations -- a grid representation and
+a particle representation.  For instance, the representation of a vector field $\Ba$ can be both of
+\Beq
+  \Ba(\Bx) = \sum_g \Ba(\Bx_g) S_g(\Bx_g) \quad \Tand \quad
+  \Ba(\Bx) = \sum_p \Ba(\Bx_p) \chi_p(\Bx_p) \,.
+\Eeq
+
+\end{NoteBox}
+Let that projection
+operation from particles to grid nodes be
+\Beq
+  \Ba_g = \sum_p T_p(\Bx_g) \Ba_p 
+\Eeq
+

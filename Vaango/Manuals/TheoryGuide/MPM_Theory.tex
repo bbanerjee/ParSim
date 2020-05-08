@@ -1,9 +1,8 @@
 \chapter{The Material Point Method} \label{ch:MPMTheory}
 
 \section{Introduction}
-
 The \MPM component solves the momentum equations
-\Beq
+\Beq \label{eq:mom_mpm}
   \Div{\Bsig} + \rho\Bb = \rho\dot{\Bv} 
 \Eeq
 using an updated Lagrangian formulation. The momentum solve for solid materials is
@@ -15,33 +14,44 @@ The material point method (MPM) was described by Sulsky et al.~\cite{Sulsky1994,
 an extension to the FLIP (Fluid-Implicit Particle) method of
 Brackbill~\cite{brackbill-ruppel86}, which itself is an
 extension of the particle-in-cell (PIC) method of
-Harlow~\cite{harlow1963}.  Interestingly, the name ``material point method"
+Harlow~\cite{harlow1963}.
+\begin{NoteBox}
+Interestingly, the name ``material point method"
 first appeared in the literature two years later in a description of
-an axisymmetric form of the method~\cite{sulsky_axisym_1996}.  In both
-FLIP and MPM, the basic idea is the same: objects are discretized into
+an axisymmetric form of the method~\cite{sulsky_axisym_1996}.
+\end{NoteBox}
+In both FLIP and MPM, the basic idea is the same: objects are discretized into
 particles, or material points, each of which contains all state data for the
-small region of material that it represents.  This includes the position, mass, volume,
-velocity, stress and state of deformation of that material.  MPM differs from
-other so called ``mesh-free" particle methods in that, while each object
-is primarily represented by a collection of particles, a computational mesh
-is also an important part of the calculation.  Particles do not interact
+small region of material that it represents.  Particles do not interact
 with each other directly, rather the particle information is accumulated
-to the grid, where the equations of motion are integrated forward in time.
-This time advanced solution is then used to update the particle state.
+to a background grid, where the equations of motion~\eqref{eq:mom_mpm} are
+integrated forward in time. This time advanced solution is then used to update
+the particle state.  Particle state data includes the position, mass, volume,
+velocity, stress, state of deformation of that material, and a number of
+time-dependent internal material variables.
+\begin{NoteBox}
+MPM differs from other ``mesh-free'' particle methods in that, while each object
+is primarily represented by a collection of particles, a computational mesh
+is also an important part of the calculation.  This mesh reduces the computational
+cost of searching for neighboring particles.
+\end{NoteBox}
 
-The method usually uses a regular structured grid as a computational mesh.
+MPM usually uses a regular structured grid as a computational mesh.
 While this grid, in principle, deforms as the material that it is representing
 deforms, at the end of each timestep, it is reset to its original undeformed
 position, in effect providing a new computational grid for each timestep.
 The use of a regular structured grid for each time step has a number of
 computational advantages.  Computation of spatial gradients is simplified.
 Mesh entanglement, which can plague fully Lagrangian techniques, such as
-the Finite Element Method (FEM), is avoided.  MPM has also been successful
+the Finite Element Method (FEM), is avoided.
+
+MPM has also been successful
 in solving problems involving contact between colliding objects, having an
 advantage over FEM in that the use of the regular grid eliminates the
 need for doing costly searches for contact surfaces\cite{Bard2000}.
 
-In addition to the advantages that MPM brings, as with any numerical technique, it has its own set of shortcomings.  It is computationally more
+In addition to the advantages that MPM brings, as with any numerical technique, it has
+its own set of shortcomings.  It is computationally more
 expensive than a comparable FEM code.  Accuracy for MPM is typically lower
 than FEM, and errors associated with particles moving around the computational
 grid can introduce non-physical oscillations into the solution.  Finally,
@@ -49,33 +59,262 @@ numerical difficulties can still arise in simulations involving large
 deformation that will prematurely terminate the simulation.  The severity of
 all of these issues (except for the expense) has been significantly reduced
 with the introduction of the Generalized Interpolation Material Point Method,
-or GIMP\cite{Bard2004}.  The basic concepts associated with GIMP will be
-described below.  Throughout this document, MPM (which
-ends up being a special case of GIMP) will frequently be referred to
-interchangably with GIMP.
+or GIMP\cite{Bard2004}. Newer developments such as the CPDI MPM
+method~\cite{Sadeghirad2011} have also been incorporated into the explicit
+time integrated MPM in \Vaango.  Implementation of other approaches along the
+line of CPDI such as CPDI2~\cite{Sadeghirad2013} and CPTI~\cite{Leavy2019} is
+also being considered for future versions.
 
 In addition, MPM can be incorporated with a multi-material CFD algorithm
 as the structural component in a fluid-structure interaction formulation.
 This capability was first demonstrated in the CFDLIB codes from
 Los Alamos by Bryan Kashiwa and co-workers\cite{Kashiwa2000}.  There, as
-in the Uintah-MPMICE component,
-MPM serves as the Lagrangian description of the solid
+in the MPMICE component, MPM serves as the Lagrangian description of the solid
 material in a multimaterial CFD code.  Certain elements of the
 solution procedure are based in the Eulerian CFD algorithm, including
 intermaterial heat and momentum transfer as well as satisfaction
 of a multimaterial equation of state.  The use of a Lagrangian method
 such as MPM to advance the solution of the solid material eliminates
-the diffusion typically associated with Eulerian methods.  The Uintah-MPM
-component will be described in later chapter of this manual.
+the diffusion typically associated with Eulerian methods.  
 
-Subsequent sections of this chapter will first give a relatively brief
-description of the MPM and GIMP algorithms.  This will, of course, be
-focused mainly on describing the capabilities of the Uintah-MPM component.
-This is followed by a section that attempts to relate the information in
-Section~\ref{Sec:AlgDesc} to the implementation in Uintah.
-Following that is a description of the information that goes into an input
-file.  Finally, a number of examples are provided, along with representative
-results.
+\section{Information transfer from particles to grid}
+The goal of MPM is to find a unique function $f(\Bx,t)$ that satisfies the governing
+equations~\eqref{eq:mom_mpm} for a given initial set of objects and a set of initial
+and boundary conditions.
+
+An important underlying assumption in MPM is that
+continuum field quantities have two equivalent representations -- a grid representation and
+a particle representation.  For instance, the representation of a vector field $\Bf$ can be both 
+\Beq \label{eq:mpm_rep}
+  \boxed{
+    \Bf(\Bx) = \sum_g \Bf(\Bx_g) S_g(\Bx) = \sum_g \Bf_g S_g(\Bx)
+   }
+    \quad \Tand \quad
+  \boxed{
+  \Bf(\Bx) = \sum_p \Bf(\Bx_p) \chi_p(\Bx) = \sum_p \Bf_p \chi_p(\Bx)
+  }
+\Eeq
+where the subscript $g$ indicates a grid nodal quantity and the subscropt $p$ indicates a
+particle quantity.  A particle centroid is at the location $\Bx_p$ while a grid node is
+at $\Bx_g$.  The functions $S_g$ are interpolation functions (also called shape functions)
+that take values from the grid nodes to points in the computational domain.  On the
+other hand, the functions $\chi_p$ are particle characteristic functions.  We assume that
+both these representations are partitions of unity.  In the above we have ignored time-dependence
+for simplicity.
+
+The MPM algorithm is particle-centered. We start with information on particles and
+then project that information to the grid nodes for the solution of~\eqref{eq:mom_mpm}.  After
+the equations have been solved, the information on the grid can be interpolated back to
+the particles in preparation for the next timestep. The projection operation from
+particles to the grid is not as obvious as the interpolation from the grid back to particles
+and requires some explanation.
+
+Ideally we would like the two representations in \eqref{eq:mpm_rep} to produce identical
+results.  However, due to approximation errors, they usually do not.  Let $\Be(\Bx)$ be the
+error.  Then we can pose a least-squares error minimization problem as
+\Beq
+ \text{Find}~~\Bf_g~~\text{that minimizes}~~ E = \IntOmega w(\Bx)\Norm{\Be(\Bx)}{}^2\, dV~~
+   \text{where}~~\IntOmega w(\Bx)\,dV = 1 \,. 
+\Eeq
+The domain of integration is the volume $\Omega$ and $w(\Bx)$ is a weighting function.
+Then the minimum of the functional $E$ can be found using
+\Beq
+  \Partial{E}{\Bf_g} = \Bzero \quad \implies \quad
+  \IntOmega w(\Bx)\left[\Partial{\Be}{\Bf_g}\cdot\Be(\Bx) + \Be(\Bx)\cdot\Partial{\Be}{\Bf_g}\right]\,dV = \Bzero
+\Eeq
+From \eqref{eq:mpm_rep},
+\Beq
+  \Partial{\Be}{\Bf_g} =
+    \Partial{}{\Bf_g}\left[\sum_{g'} \Bf_{g'} S_{g'}(\Bx) - \sum_p \Bf_p \chi_p(\Bx) \right]
+    = \sum_{g'} \Partial{\Bf_{g'}}{\Bf_g} S_{g'}(\Bx) = S_g(\Bx)\,\BI \,.
+\Eeq
+Therefore,
+\Beq
+  \IntOmega w(\Bx) S_g(\Bx)\Be(\Bx)\,dV = \Bzero
+  \quad \implies \quad
+  \IntOmega w(\Bx) S_g(\Bx)\left[\sum_{g'} \Bf_{g'} S_{g'}(\Bx) - \sum_p \Bf_p \chi_p(\Bx) \right]\,dV = \Bzero \,.
+\Eeq
+Rearrangement of the above equation leads to
+\Beq \label{eq:g_p_map_0}
+  \sum_g \Bf_g \IntOmega w(\Bx) S_{g'}(\Bx) S_g(\Bx)\,dV =
+    \sum_p \Bf_p \IntOmega w(\Bx) S_{g'}(\Bx) \chi_p(\Bx)\,dV \,.
+\Eeq
+Define
+\Beq \label{eq:Sgp_def}
+  \boxed{
+  A_{g'g} := \IntOmega w(\Bx) S_{g'}(\Bx) S_g(\Bx)\,dV
+  \quad \Tand \quad
+  B_{g'p} := \IntOmega w(\Bx) S_{g'}(\Bx) \chi_p(\Bx)\,dV \,.
+  }
+\Eeq
+Equation \eqref{eq:g_p_map_0} can now be expressed as
+\Beq \label{eq:g_p_map_1}
+  \sum_g A_{g'g} \Bf_g = \sum_p B_{g'p} \Bf_p \,.
+\Eeq
+Inverting the relation, we have
+\Beq
+  \Bf_g = \left[\SfA^{-1}\right]_{gg'} \sum_p B_{g'p} \Bf_p 
+        = \sum_p \left[\SfA^{-1}\right]_{gg'} B_{g'p} \Bf_p 
+\Eeq
+where $\SfA$ is the matrix representation of $A_{g'g}$ in \eqref{eq:g_p_map_1}. We
+can rewrite the above equation as
+\Beq \label{eq:g_p_map}
+  \boxed{
+  \Bf_g = \sum_p \psi_{gp} \Bf_p 
+  }
+\Eeq
+where
+\Beq \label{eq:psi_gp}
+  \boxed{
+  \psi_{gp} := \left[\SfA^{-1}\right]_{gg'} B_{g'p}\,.
+  }
+\Eeq
+\begin{NoteBox}
+  The map in equation~\eqref{eq:g_p_map} can be used to project particle quantities to grid nodes.
+  However, some simplification is needed to avoid the need to invert a large matrix.
+\end{NoteBox}
+
+We can remove the need to invert $\SfS$ if we diagonalize $S_{g'g}$ using a lumped approximation.
+In that case
+\Beq
+  A_{g'} = \sum_g A_{g'g} = \IntOmega w(\Bx) S_{g'}(\Bx) \sum_g S_g(\Bx) \,dV
+     = \IntOmega w(\Bx) S_{g'}(\Bx) \,dV
+\Eeq
+where we have used the partition of unity property of the grid nodal interpolation
+function.
+
+\begin{NoteBox}
+The particle-to-grid projection operations in equations~\eqref{eq:g_p_map} and
+\eqref{eq:psi_gp} can then be expressed as
+\Beq \label{eq:particle_to_grid}
+  \Bf_g = \sum_p \psi_{gp} \Bf_p \quad \text{where} \quad
+  \psi_{gp} = \frac{B_{gp}}{A_g}~,~~
+  A_{g} = \IntOmega w(\Bx) S_{g}(\Bx) \,dV~,~~
+  B_{gp} = \IntOmega w(\Bx) S_{g}(\Bx) \chi_p(\Bx)\,dV \,.
+\Eeq
+\end{NoteBox}
+
+Going back to \eqref{eq:mpm_rep}, recall that we had assumed that $\Bf_p$ was the value
+of the function $\Bf(\Bx)$ at the particle centroid, $\Bx_p$.  However, this requirement
+is not necessary for the development of the projection from particles to the grid.  We
+may, alternatively, define $f_p$ as
+\Beq \label{eq:f_p}
+  \Bf_p = \frac{1}{W_p} \IntOmegap \Bf(\Bx) \omega_p(\Bx)\,dV ~,~~
+  W_p := \IntOmegap \omega_p(\Bx)\,dV
+\Eeq
+where $\Omega_p$ is the particle domain and $\omega_p(\Bx)$ is a weighting function.
+Also recall that the grid interpolation function has the form
+\Beq \label{eq:f_g}
+  \Bf(\Bx) = \sum_g \Bf_g S_g(\Bx)\,.
+\Eeq
+Therefore, we can compute the value of a quantity at a particle using the grid interpolation
+functions by substituting \eqref{eq:f_g} into \eqref{eq:f_p} to get
+\Beq
+  \Bf_p = \frac{1}{W_p} \IntOmegap \left[\sum_g \Bf_g S_g(\Bx)\right] \omega_p(\Bx)\,dV 
+        = \sum_g \Bf_g \left[\frac{1}{W_p} \IntOmegap S_g(\Bx) \omega_p(\Bx)\,dV\right] \,.
+\Eeq
+Since the particle domain $\Omega_p$ is never known exactly and we would like to avoid
+determining that domain, we approximate the above equation as
+\Beq
+  \Bf_p \approx \sum_g \Bf_g \left[\frac{1}{W^\star_p} \int_{\Omega_p^\star} S_g(\Bx) \omega^\star_p(\Bx)\,dV\right] ~,~~
+  W^\star_p := \int_{\Omega_p^\star}\omega^\star_p(\Bx)\,dV
+\Eeq
+where the alternative weight function $\omega^\star_p(\Bx)$ is defined as
+\Beq
+  \omega^\star_p(\Bx) := \omega_p(\Bx) \,\chi^\star_p(\Bx)\,dV \,.
+\Eeq
+The function $\chi^\star_p(\Bx)$ is called the \Textsfc{particle averaging function} since it is
+is {\Red not} identical to the \Textsfc{particle characteristic function} $\chi_p(\Bx)$.  All
+that is needed is that the function have compact support in a neighborhood
+$\Omega_p^\star$ containing particle $p$.
+
+\begin{NoteBox}
+The grid-to-particle interpolation function can then be expressed as
+\Beq \label{eq:grid_to_particle}
+  \Bf_p \approx \sum_g \Bf_g \phi_{gp} \quad\text{where}\quad
+  \phi_{gp} := \frac{\int_{\Omega_p^\star} S_g(\Bx) \omega^\star_p(\Bx)\,dV}{
+                       \int_{\Omega_p^\star} \omega^\star_p(\Bx)\,dV} ~,~~
+  \omega^\star_p(\Bx) := \omega_p(\Bx) \,\chi^\star_p(\Bx)\,dV \,.
+\Eeq
+\end{NoteBox}
+
+\subsection{Classical MPM}
+If we wish to recover the classical MPM formulation~\cite{Sulsky1995}, take $\omega_p(\Bx) = 1$
+and $\chi^\star_p(\Bx) = V_p \delta(\Bx - \Bx_p)$ where $V_p$
+is the volume of $\Omega^\star_p = \Omega_p$ and $\delta(\Bx)$ is the Dirac delta function, we have
+\Beq
+  \overbar{S}_{gp} := \phi_{gp} = \frac{\int_{\Omega_p} S_g(\Bx) V_p \delta(\Bx - \Bx_p)\,dV}{
+                       \int_{\Omega_p} V_p \delta(\Bx - \Bx_p)\,dV} = S_g(\Bx_p)\,.
+\Eeq
+
+\subsection{GIMP}
+To recover the GIMP formulation~\cite{Bard2004}, we take $\omega_p(\Bx) = 1$ and
+the square pulse function $\chi^\star_p(\Bx) = 1$ for $\Bx \in \Omega_p^\star$ and
+$\chi^\star_p(\Bx) = 0$ otherwise.  The particle domain $\Omega_p^\star$ is assumed to
+be a rectangular parallelepiped.  Then
+\Beq
+  \overbar{S}_{gp} := \phi_{gp} = \begin{cases}
+                \frac{1}{V^\star_p} \int_{\Omega_p^\star} S_g(\Bx)\,dV & \quad \text{for}~~\Bx \in \Omega_p^\star \\
+                0 & \quad \text{otherwise.}
+              \end{cases}
+\Eeq
+
+\subsection{CPDI}
+For the CPDI formulation~\cite{Sadeghirad2011},  we take $\omega^\star_p(\Bx) = 1$ and
+the particle domain $\Omega_p^\star$ is assumed to be a general parallelepiped that
+deforms based on the particle deformation gradient.  The expression for $\phi_{gp}$ is
+similar to that for GIMP except that a modified shape function is used for interpolation:
+\Beq
+  \overbar{S}_{gp} := \phi_{gp} = \begin{cases}
+                \frac{1}{V^\star_p} \int_{\Omega_p^\star} S_g^\star(\Bx)\,dV & \quad \text{for}~~\Bx \in \Omega_p^\star \\
+                0 & \quad \text{otherwise.}
+              \end{cases}
+\Eeq
+
+\subsection{Transfer to and from grid}
+For the interpolation from grid nodes to particles, the above relations indicate a
+general relation (see \eqref{eq:grid_to_particle})
+\Beq
+  \Bf_p = \sum_g \Bf_g \overbar{S}_{gp} \,.
+\Eeq
+
+For the particle-to-grid projection (see \eqref{eq:particle_to_grid}), consider the
+case where $w(\Bx) = \rho(\Bx)$ where $\rho$ is the mass density.  Then,
+\Beq
+  A_g = \IntOmega \rho(\Bx) S_g(\Bx) \,dV = m_g ~,~~
+  B_{gp} = \IntOmega \rho(\Bx) S_g(\Bx) \chi_p(\Bx) \,dV
+\Eeq
+and
+\Beq \label{eq:mass_weighted}
+  \boxed{
+  m_g \Bf_g = \sum_p \Bf_p \IntOmega \rho(x) S_g(x) \chi_p(\Bx) \,dV 
+            = \sum_p \Bf_p m_p \bar{S}_{gp}\,.
+  }
+\Eeq
+where $m_g$ is the grid node mass and $m_P$ is the particle mass.
+On the other hand, if $w(\Bx) = 1$, we have
+\Beq
+  A_g = \IntOmega  S_g(\Bx) \,dV = V_g ~,~~
+  B_{gp} = \IntOmega S_g(\Bx) \chi_p(\Bx) \,dV 
+\Eeq
+and
+\Beq \label{eq:vol_weighted}
+  \boxed{
+  V_g \Bf_g = \sum_p \Bf_p \IntOmega S_g(x) \chi_p(\Bx) \,dV 
+            = \sum_p \Bf_p V_p \bar{S}_{gp}\,.
+  }
+\Eeq
+where $V_g$ is the grid node volume and $V_p$ is the particle volume.
+
+In MPM, the momentum per unit volume ($\Bp = \rho\Bv$), where $\rho$ is the density and
+$\Bv$ is the velocity is projected to grid nodes using the volume-weighted
+approach in \eqref{eq:vol_weighted}:
+\Beq
+  V_g \Bp_g = \sum_p \Bp_p V_p \bar{S}_{gp}\,.
+\Eeq
+This implies that the velocity is projected using mass weighting
+(equation~\ref{eq:mass_weighted}).  Further details
+of the actual projection operators used in \Vaango are discussed next.
 
 \section{Algorithm Description} \label{Sec:AlgDesc}
 
@@ -91,10 +330,14 @@ Section~\ref{gimp_mpm}.
 
 In solving a structural mechanics problem with MPM, one begins by discretizing
 the object of interest into a suitable number of particles, or ``material
-points".  ({\bf Aside:}  What constitutes a suitable number is something of an open
+points''.
+\begin{NoteBox}
+  What constitutes a suitable number is something of an open
 question, but it is typically advisable to use at least two particles in each
 computational cell in each direction, i.e. 4 particles per cell (PPC) in 2-D,
-8 PPC in 3-D. In choosing the resolution of the computational grid, similar
+8 PPC in 3-D.
+\end{NoteBox}
+In choosing the resolution of the computational grid, similar
 considerations apply as for any computational method (trade-off between
 time to solution and accuracy, use of resolution studies to ensure convergence
 in results, etc.).)  Each of these particles will carry, minimally, the
@@ -117,10 +360,13 @@ throughout a simulation unless solid phase reaction models are utilized,
 a feature that is not present in Uintah-MPM.  (Such models are available
 in MPMICE, see Section \ref{ch:MPMICE}.)  It is also important to point
 out that the algorithm for advancing the timestep is based on the so-called
-Update Stress Last (USL) algorithm.  The superiority of this approach over
+Update Stress Last (USL) algorithm.
+\begin{NoteBox}
+The superiority of this approach over
 the Update Stress First (USF) approach was clearly demonstrated by Wallstedt
 and Guilkey \cite{WallstedtJCP}.  USF was the formulation used in Uintah
 until mid-2008.
+\end{NoteBox}
 
 The discrete momentum equation that results from the weak form is given as:
 \begin{eqnarray}
@@ -394,6 +640,9 @@ a cuboid that circumscribes the deformed particle shape~\cite{jinmaCMES2006}.
 Alternatively, one can assume that the particle size remains constant (insofar
 as it applies to the effective shape function evaluations only).  This is
 the approach currently implemented in Uintah.
+
+\section{Contact algorithms}
+\input{MPM_Contact.tex}
 
 \section{Pseudocode of MPM algorithm in Vaango}
 The momentum equation is solved using the MPM algorithm while forward Euler time-stepping
