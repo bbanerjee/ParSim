@@ -77,6 +77,52 @@ of a multimaterial equation of state.  The use of a Lagrangian method
 such as \MPM to advance the solution of the solid material eliminates
 the diffusion typically associated with Eulerian methods.  
 
+\section{Weak form of the momentum equation} \label{sec:weak_form}
+To derive the weak form of the momentum equation~\eqref{eq:mom_mpm}, we multiply the 
+momentum equation with a vector-valued weighting function ($\Bw$) and
+integrate over the domain ($\Omega$).  The weighting function ($\Bw$)
+satisfies velocity boundary conditions on the parts of the boundary
+where velocities are prescribed.  Then,
+\Beq
+  \IntOmega \Bdot{\Bw}
+                 {\LBs\Div{\Bsig} + \rho~\Bb\RBs}~d\Omega 
+     = \IntOmega \rho~\Bdot{\Bw}{\dot{\Bv}}~d\Omega ~.
+\Eeq
+Using the identity 
+$\Bdot{\Bv}{(\Div{\BS)}} = \Div{(\Bdot{\BS^T}{\Bv})} - \BS:\Grad{\Bv}$, 
+where $\BS$ is a second-order tensor valued field and $\Bv$ is a 
+vector valued field, we have
+\begin{equation*}
+  \IntOmega \LBc
+     \Div{(\Bdot{\Bsig^T}{\Bw})} - \Bsig:\Grad{\Bw} +
+     \rho~\Bdot{\Bw}{\Bb}\RBc~d\Omega 
+     = \IntOmega \rho~\Bdot{\Bw}{\dot{\Bv}}~d\Omega \,.
+\end{equation*}
+Application the divergence theorem to the divergence of the weighted stress leads to
+\begin{equation*}
+  \IntGamma \Bdot{\Bn}{(\Bdot{\Bsig^T}{\Bw})} ~d\Gamma + 
+  \IntOmega \LBc - \Bsig:\Grad{\Bw} + \rho~\Bdot{\Bw}{\Bb}\RBc~d\Omega 
+     = \IntOmega \rho~\Bdot{\Bw}{\dot{\Bv}}~d\Omega  
+\end{equation*}
+where $\Bn$ is the outward normal to the surface $\Gamma$.  Rearranging,
+\Beq
+  \IntGamma (\Bsig\cdot\Bn)\cdot\Bw ~d\Gamma  
+  - \IntOmega \Bsig:\Grad{\Bw}~d\Omega  
+  + \IntOmega \rho~\Bdot{\Bw}{\Bb}~d\Omega
+  = \IntOmega \rho~\Bdot{\Bw}{\dot{\Bv}}~d\Omega  \,.
+\Eeq
+If the applied surface traction is $\Bart := \Bdot{\Bsig}{\Bn}$, 
+since $\Bw$ is zero on the part of the boundary where velocities/displacements
+are specified, we get the \Textsfc{weak form}
+\begin{NoteBox}
+\Beq \label{eq:weak_form}
+  \IntGammat \Bart\cdot\Bw ~d\Gamma  
+  - \IntOmega \Bsig:\Grad{\Bw}~d\Omega  
+  + \IntOmega \rho~\Bdot{\Bw}{\Bb}~d\Omega
+  = \IntOmega \rho~\Bdot{\Bw}{\dot{\Bv}}~d\Omega  \,.
+\Eeq
+\end{NoteBox}
+
 \section{Information transfer from particles to grid and back} \label{sec:projection}
 The goal of \MPM is to find a unique function $f(\Bx,t)$ that satisfies the governing
 equations~\eqref{eq:mom_mpm} for a given initial set of objects and a set of initial
@@ -113,14 +159,14 @@ Ideally we would like the two representations in \eqref{eq:mpm_rep} to produce i
 results.  However, due to approximation errors, they usually do not.  Let $\Be(\Bx)$ be the
 error.  Then we can pose a least-squares error minimization problem as
 \Beq
- \text{Find}~~\Bf_g~~\text{that minimizes}~~ E = \IntOmega w(\Bx)\Norm{\Be(\Bx)}{}^2\, dV~~
-   \text{where}~~\IntOmega w(\Bx)\,dV = 1 \,. 
+ \text{Find}~~\Bf_g~~\text{that minimizes}~~ E = \IntOmega w(\Bx)\Norm{\Be(\Bx)}{}^2\, d\Omega~~
+   \text{where}~~\IntOmega w(\Bx)\,d\Omega = 1 \,. 
 \Eeq
 The domain of integration is the volume $\Omega$ and $w(\Bx)$ is a weighting function.
 Then the minimum of the functional $E$ can be found using
 \Beq
   \Partial{E}{\Bf_g} = \Bzero \quad \implies \quad
-  \IntOmega w(\Bx)\left[\Partial{\Be}{\Bf_g}\cdot\Be(\Bx) + \Be(\Bx)\cdot\Partial{\Be}{\Bf_g}\right]\,dV = \Bzero
+  \IntOmega w(\Bx)\left[\Partial{\Be}{\Bf_g}\cdot\Be(\Bx) + \Be(\Bx)\cdot\Partial{\Be}{\Bf_g}\right]\,d\Omega = \Bzero
 \Eeq
 From \eqref{eq:mpm_rep},
 \Beq
@@ -130,21 +176,22 @@ From \eqref{eq:mpm_rep},
 \Eeq
 Therefore,
 \Beq
-  \IntOmega w(\Bx) S_g(\Bx)\Be(\Bx)\,dV = \Bzero
+  \IntOmega w(\Bx) S_g(\Bx)\Be(\Bx)\,d\Omega = \Bzero
   \quad \implies \quad
-  \IntOmega w(\Bx) S_g(\Bx)\left[\sum_{g'} \Bf_{g'} S_{g'}(\Bx) - \sum_p \Bf_p \chi_p(\Bx) \right]\,dV = \Bzero \,.
+  \IntOmega w(\Bx) S_g(\Bx)\left[\sum_{g'} \Bf_{g'} S_{g'}(\Bx) - \sum_p \Bf_p \chi_p(\Bx) \right]\,d\Omega = \Bzero \,.
 \Eeq
-Rearrangement of the above equation leads to
+If we note that the particle characteristic function ($\chi_p$) is required to be zero outside the
+domain of particle $p$ and 1 inside, rearrangement of the above equation leads to
 \Beq \label{eq:g_p_map_0}
-  \sum_g \Bf_g \IntOmega w(\Bx) S_{g'}(\Bx) S_g(\Bx)\,dV =
-    \sum_p \Bf_p \IntOmega w(\Bx) S_{g'}(\Bx) \chi_p(\Bx)\,dV \,.
+  \sum_g \Bf_g \IntOmega w(\Bx) S_{g'}(\Bx) S_g(\Bx)\,d\Omega =
+    \sum_p \Bf_p \IntOmegap w(\Bx) S_{g'}(\Bx)\,d\Omega \,.
 \Eeq
 Define
 \Beq \label{eq:Sgp_def}
   \boxed{
-  A_{g'g} := \IntOmega w(\Bx) S_{g'}(\Bx) S_g(\Bx)\,dV
+  A_{g'g} := \IntOmega w(\Bx) S_{g'}(\Bx) S_g(\Bx)\,d\Omega
   \quad \Tand \quad
-  B_{g'p} := \IntOmega w(\Bx) S_{g'}(\Bx) \chi_p(\Bx)\,dV \,.
+  B_{g'p} := \IntOmegap w(\Bx) S_{g'}(\Bx)\,d\Omega \,.
   }
 \Eeq
 Equation \eqref{eq:g_p_map_0} can now be expressed as
@@ -177,30 +224,31 @@ where
 We can remove the need to invert $\SfS$ if we diagonalize $S_{g'g}$ using a lumped approximation.
 In that case
 \Beq
-  A_{g'} = \sum_g A_{g'g} = \IntOmega w(\Bx) S_{g'}(\Bx) \sum_g S_g(\Bx) \,dV
-     = \IntOmega w(\Bx) S_{g'}(\Bx) \,dV
+  A_{g'} = \sum_g A_{g'g} = \IntOmega w(\Bx) S_{g'}(\Bx) \sum_g S_g(\Bx) \,d\Omega
+     = \IntOmega w(\Bx) S_{g'}(\Bx) \,d\Omega
 \Eeq
 where we have used the partition of unity property of the grid nodal interpolation
-function.
+function.  Now note that the integral over the domain $\Omega$ can be split into a sum of integrals
+over particles.  
 
 \begin{NoteBox}
 The particle-to-grid projection operations in equations~\eqref{eq:g_p_map} and
 \eqref{eq:psi_gp} can then be expressed as
-\Beq \label{eq:particle_to_grid}
+\Beq \label{eq:particle_to_grid_gen}
   \Bf_g = \sum_p \psi_{gp} \Bf_p \quad \text{where} \quad
   \psi_{gp} = \frac{B_{gp}}{A_g}~,~~
-  A_{g} = \IntOmega w(\Bx) S_{g}(\Bx) \,dV~,~~
-  B_{gp} = \IntOmega w(\Bx) S_{g}(\Bx) \chi_p(\Bx)\,dV \,.
+  A_{g} = \sum_p B_{gp} ~,~~
+  B_{gp} = \IntOmegap w(\Bx) S_{g}(\Bx) \,d\Omega \,.
 \Eeq
 \end{NoteBox}
 
 Going back to \eqref{eq:mpm_rep}, recall that we had assumed that $\Bf_p$ was the value
 of the function $\Bf(\Bx)$ at the particle centroid, $\Bx_p$.  However, this requirement
 is not necessary for the development of the projection from particles to the grid.  We
-may, alternatively, define $f_p$ as
+may, alternatively, define $\Bf_p$ as
 \Beq \label{eq:f_p}
-  \Bf_p = \frac{1}{W_p} \IntOmegap \Bf(\Bx) \omega_p(\Bx)\,dV ~,~~
-  W_p := \IntOmegap \omega_p(\Bx)\,dV
+  \Bf_p = \frac{1}{W_p} \IntOmegap \Bf(\Bx) \omega_p(\Bx)\,d\Omega ~,~~
+  W_p := \IntOmegap \omega_p(\Bx)\,d\Omega
 \Eeq
 where $\Omega_p$ is the particle domain and $\omega_p(\Bx)$ is a weighting function.
 Also recall that the grid interpolation function has the form
@@ -210,18 +258,18 @@ Also recall that the grid interpolation function has the form
 Therefore, we can compute the value of a quantity at a particle using the grid interpolation
 functions by substituting \eqref{eq:f_g} into \eqref{eq:f_p} to get
 \Beq
-  \Bf_p = \frac{1}{W_p} \IntOmegap \left[\sum_g \Bf_g S_g(\Bx)\right] \omega_p(\Bx)\,dV 
-        = \sum_g \Bf_g \left[\frac{1}{W_p} \IntOmegap S_g(\Bx) \omega_p(\Bx)\,dV\right] \,.
+  \Bf_p = \frac{1}{W_p} \IntOmegap \left[\sum_g \Bf_g S_g(\Bx)\right] \omega_p(\Bx)\,d\Omega 
+        = \sum_g \Bf_g \left[\frac{1}{W_p} \IntOmegap S_g(\Bx) \omega_p(\Bx)\,d\Omega\right] \,.
 \Eeq
 Since the particle domain $\Omega_p$ is never known exactly and we would like to avoid
 determining that domain, we approximate the above equation as
 \Beq
-  \Bf_p \approx \sum_g \Bf_g \left[\frac{1}{W^\star_p} \int_{\Omega_p^\star} S_g(\Bx) \omega^\star_p(\Bx)\,dV\right] ~,~~
-  W^\star_p := \int_{\Omega_p^\star}\omega^\star_p(\Bx)\,dV
+  \Bf_p \approx \sum_g \Bf_g \left[\frac{1}{W^\star_p} \int_{\Omega_p^\star} S_g(\Bx) \omega^\star_p(\Bx)\,d\Omega\right] ~,~~
+  W^\star_p := \int_{\Omega_p^\star}\omega^\star_p(\Bx)\,d\Omega
 \Eeq
 where the alternative weight function $\omega^\star_p(\Bx)$ is defined as
 \Beq
-  \omega^\star_p(\Bx) := \omega_p(\Bx) \,\chi^\star_p(\Bx)\,dV \,.
+  \omega^\star_p(\Bx) := \omega_p(\Bx) \,\chi^\star_p(\Bx)\,d\Omega \,.
 \Eeq
 The function $\chi^\star_p(\Bx)$ is called the \Textsfc{particle averaging function} since it is
 is {\Red not} identical to the \Textsfc{particle characteristic function} $\chi_p(\Bx)$.  All
@@ -231,10 +279,27 @@ $\Omega_p^\star$ containing particle $p$.
 \begin{NoteBox}
 The grid-to-particle interpolation function can then be expressed as
 \Beq \label{eq:grid_to_particle}
-  \Bf_p \approx \sum_g \Bf_g \phi_{gp} \quad\text{where}\quad
-  \phi_{gp} := \frac{\int_{\Omega_p^\star} S_g(\Bx) \omega^\star_p(\Bx)\,dV}{
-                       \int_{\Omega_p^\star} \omega^\star_p(\Bx)\,dV} ~,~~
-  \omega^\star_p(\Bx) := \omega_p(\Bx) \,\chi^\star_p(\Bx)\,dV \,.
+  \Bf_p \approx \sum_g \Bf_g \Av{S_{gp}} \quad\text{where}\quad
+  \Av{S_{gp}} := \frac{\int_{\Omega_p^\star} S_g(\Bx) \omega^\star_p(\Bx)\,d\Omega}{
+                       \int_{\Omega_p^\star} \omega^\star_p(\Bx)\,d\Omega} ~,~~
+  \omega^\star_p(\Bx) := \omega_p(\Bx) \,\chi^\star_p(\Bx)\,d\Omega \,.
+\Eeq
+\end{NoteBox}
+
+We can now make some special assumptions about the weight functions in \eqref{eq:particle_to_grid_gen} to
+reduce the projection operation to that use in tradition \MPM approaches.  Let us assume that
+\Beq
+  B_{gp} = V_p\Av{S_{gp}} \quad \implies \quad
+  \IntOmegap S_{g}(\Bx) w(\Bx) \,d\Omega = 
+  V_p\frac{\IntOmegap S_g(\Bx) \omega_p(\Bx)\,d\Omega}{\IntOmegap \omega_p(\Bx)\,d\Omega} 
+\Eeq
+
+\begin{NoteBox}
+With that assumption, the particle-to-grid projection operations in equations~\eqref{eq:particle_to_grid_gen} 
+become
+\Beq \label{eq:particle_to_grid}
+  \Bf_g = \sum_p \psi_{gp} \Bf_p \quad \text{where} \quad
+  \psi_{gp} = \frac{V_p\Av{S_{gp}}}{\sum_p V_p\Av{S_{gp}}}~,~~\sum_p \psi_{gp} = 1 \,.
 \Eeq
 \end{NoteBox}
 
@@ -243,13 +308,13 @@ If we wish to recover the classical \MPM formulation~\cite{Sulsky1995}, take $\o
 and $\chi^\star_p(\Bx) = V_p \delta(\Bx - \Bx_p)$ where $V_p$
 is the volume of $\Omega^\star_p = \Omega_p$ and $\delta(\Bx)$ is the Dirac delta function, we have
 \Beq
-  \overbar{S}_{gp} := \phi_{gp} = \frac{\int_{\Omega_p} S_g(\Bx) V_p \delta(\Bx - \Bx_p)\,dV}{
-                       \int_{\Omega_p} V_p \delta(\Bx - \Bx_p)\,dV} = S_g(\Bx_p)\,.
+  \overbar{S}_{gp} := \Av{S_{gp}} = \frac{\int_{\Omega_p} S_g(\Bx) V_p \delta(\Bx - \Bx_p)\,d\Omega}{
+                       \int_{\Omega_p} V_p \delta(\Bx - \Bx_p)\,d\Omega} = S_g(\Bx_p)\,.
 \Eeq
 The gradient of the interpolation function evaluated at the particle is
 \Beq
-  \overbar{\BGv}_{gp} = \frac{\int_{\Omega_p} \Grad{S_g(\Bx)} V_p \delta(\Bx - \Bx_p)\,dV}{
-                       \int_{\Omega_p} V_p \delta(\Bx - \Bx_p)\,dV} = \Grad{S_g(\Bx_p)}\,.
+  \overbar{\BGv}_{gp} = \Av{\Grad{S_{gp}}} = \frac{\int_{\Omega_p} \Grad{S_g(\Bx)} V_p \delta(\Bx - \Bx_p)\,d\Omega}{
+                       \int_{\Omega_p} V_p \delta(\Bx - \Bx_p)\,d\Omega} = \Grad{S_g(\Bx_p)}\,.
 \Eeq
 
 \subsection{GIMP}
@@ -258,15 +323,15 @@ the square pulse function $\chi^\star_p(\Bx) = 1$ for $\Bx \in \Omega_p^\star$ a
 $\chi^\star_p(\Bx) = 0$ otherwise.  The particle domain $\Omega_p^\star$ is assumed to
 be a rectangular parallelepiped.  Then
 \Beq
-  \overbar{S}_{gp} := \phi_{gp} = \begin{cases}
-                \frac{1}{V^\star_p} \int_{\Omega_p^\star} S_g(\Bx)\,dV & \quad \text{for}~~\Bx \in \Omega_p^\star \\
+  \overbar{S}_{gp} := \Av{S_{gp}} = \begin{cases}
+                \frac{1}{V^\star_p} \int_{\Omega_p^\star} S_g(\Bx)\,d\Omega & \quad \text{for}~~\Bx \in \Omega_p^\star \\
                 0 & \quad \text{otherwise.}
               \end{cases}
 \Eeq
 The gradient of the interpolation function is
 \Beq
-  \overbar{\BGv}_{gp} = \begin{cases}
-                \frac{1}{V^\star_p} \int_{\Omega_p^\star} \Grad{S_g(\Bx)}\,dV & \quad \text{for}~~\Bx \in \Omega_p^\star \\
+  \overbar{\BGv}_{gp} = \Av{\Grad{S_{gp}}} = \begin{cases}
+                \frac{1}{V^\star_p} \int_{\Omega_p^\star} \Grad{S_g(\Bx)}\,d\Omega & \quad \text{for}~~\Bx \in \Omega_p^\star \\
                 0 & \quad \text{otherwise.}
               \end{cases}
 \Eeq
@@ -277,15 +342,15 @@ the particle domain $\Omega_p^\star$ is assumed to be a general parallelepiped t
 deforms based on the particle deformation gradient.  The expression for $\phi_{gp}$ is
 similar to that for \GIMP except that a modified shape function is used for interpolation:
 \Beq
-  \overbar{S}_{gp} := \phi_{gp} = \begin{cases}
-                \frac{1}{V^\star_p} \int_{\Omega_p^\star} S_g^\star(\Bx)\,dV & \quad \text{for}~~\Bx \in \Omega_p^\star \\
+  \overbar{S}_{gp} := \Av{S_{gp}} = \begin{cases}
+                \frac{1}{V^\star_p} \int_{\Omega_p^\star} S_g^\star(\Bx)\,d\Omega & \quad \text{for}~~\Bx \in \Omega_p^\star \\
                 0 & \quad \text{otherwise.}
               \end{cases}
 \Eeq
 The gradient of the interpolation function is
 \Beq
-  \overbar{\BGv}_{gp} = \begin{cases}
-                \frac{1}{V^\star_p} \int_{\Omega_p^\star} \Grad{S_g^\star(\Bx)}\,dV & \quad \text{for}~~\Bx \in \Omega_p^\star \\
+  \overbar{\BGv}_{gp} = \Av{\Grad{S_{gp}}} = \begin{cases}
+                \frac{1}{V^\star_p} \int_{\Omega_p^\star} \Grad{S_g^\star(\Bx)}\,d\Omega & \quad \text{for}~~\Bx \in \Omega_p^\star \\
                 0 & \quad \text{otherwise.}
               \end{cases}
 \Eeq
@@ -297,29 +362,29 @@ general relation (see \eqref{eq:grid_to_particle})
   \Bf_p = \sum_g \Bf_g \overbar{S}_{gp} \,.
 \Eeq
 
-For the particle-to-grid projection (see \eqref{eq:particle_to_grid}), consider the
+For the particle-to-grid projection (see \eqref{eq:particle_to_grid_gen}), consider the
 case where $w(\Bx) = \rho(\Bx)$ where $\rho$ is the mass density.  Then,
 \Beq
-  A_g = \IntOmega \rho(\Bx) S_g(\Bx) \,dV = m_g ~,~~
-  B_{gp} = \IntOmega \rho(\Bx) S_g(\Bx) \chi_p(\Bx) \,dV
+  A_g = \IntOmega \rho(\Bx) S_g(\Bx) \,d\Omega = m_g ~,~~
+  B_{gp} = \IntOmega \rho(\Bx) S_g(\Bx) \chi_p(\Bx) \,d\Omega
 \Eeq
 and
 \Beq \label{eq:mass_weighted}
   \boxed{
-  m_g \Bf_g = \sum_p \Bf_p \IntOmega \rho(x) S_g(x) \chi_p(\Bx) \,dV 
+  m_g \Bf_g = \sum_p \Bf_p \IntOmega \rho(x) S_g(x) \chi_p(\Bx) \,d\Omega 
             = \sum_p \Bf_p m_p \bar{S}_{gp}\,.
   }
 \Eeq
 where $m_g$ is the grid node mass and $m_P$ is the particle mass.
 On the other hand, if $w(\Bx) = 1$, we have
 \Beq
-  A_g = \IntOmega  S_g(\Bx) \,dV = V_g ~,~~
-  B_{gp} = \IntOmega S_g(\Bx) \chi_p(\Bx) \,dV 
+  A_g = \IntOmega  S_g(\Bx) \,d\Omega = V_g ~,~~
+  B_{gp} = \IntOmega S_g(\Bx) \chi_p(\Bx) \,d\Omega 
 \Eeq
 and
 \Beq \label{eq:vol_weighted}
   \boxed{
-  V_g \Bf_g = \sum_p \Bf_p \IntOmega S_g(x) \chi_p(\Bx) \,dV 
+  V_g \Bf_g = \sum_p \Bf_p \IntOmega S_g(x) \chi_p(\Bx) \,d\Omega 
             = \sum_p \Bf_p V_p \bar{S}_{gp}\,.
   }
 \Eeq
@@ -334,6 +399,174 @@ approach in \eqref{eq:vol_weighted}:
 This implies that the velocity is projected using mass weighting
 (equation~\ref{eq:mass_weighted}).  Further details
 of the actual projection operators used in \Vaango are discussed next.
+
+\section{MPM discretization of the weak form}
+The weak form of the momentum equation is
+\Beq \label{eq:weak_form_1}
+  \IntGammat \Bart\cdot\Bw ~d\Gamma  
+  - \IntOmega \Bsig:\Grad{\Bw}~d\Omega 
+  + \IntOmega \rho~\Bdot{\Bw}{\Bb}~d\Omega = 
+  \IntOmega \rho~\Bdot{\Bw}{\dot{\Bv}}~d\Omega  \,.
+\Eeq
+
+To discretize the weak form we can use either of the assumed description of
+field variables shown in \eqref{eq:mpm_rep}.  The grid node-based discretization
+is used in finite elements while \MPM uses the particle-based discretization but
+also a grid-based approximation.
+
+Recall from \eqref{eq:mpm_rep} and \eqref{eq:particle_to_grid} that
+\Beq 
+  \Bf(\Bx) = \sum_g \Bf_g S_g(\Bx) \quad \Tand \quad
+  \Bf_g = \sum_p \psi_{gp} \Bf_p~,~~
+  \psi_{gp} = \frac{V_p\Av{S_{gp}}}{\sum_p V_p\Av{S_{gp}}}~,~~\sum_p \psi_{gp} = 1 \,.
+\Eeq
+Therefore, we can write
+\Beq \label{eq:Yp}
+  \Bf(\Bx) = \sum_g \sum_p \psi_{gp} \Bf_p S_g(\Bx) 
+           = \sum_p \Bf_p \sum_g \psi_{gp} S_g(\Bx)
+           = \sum_p \Bf_p Y_p(\Bx)
+\Eeq
+where the \Textsfc{particle basis functions}, $Y_p$, are defined as
+\Beq
+  Y_p(\Bx) := \sum_g \psi_{gp} S_g(\Bx) \,.
+\Eeq
+If we compare \eqref{eq:Yp} with the particle representation in \eqref{eq:mpm_rep}:
+\Beq
+  \Bf(\Bx) = \sum_p \Bf_p \chi_p(\Bx)
+\Eeq
+we see that for the grid-based and particle-based representations to be both accurate
+representations of the field we need the $\chi_p$ and $Y_p$ values to be related by
+\Beq
+  \IntOmega w(\Bx) \chi_p(\Bx) = \IntOmega w(\Bx) Y_p(\Bx)
+\Eeq
+because they cannot be point-wise identical unless the particle characteristic functions
+satisfy the Kronecker property exactly.  We will use the $Y_p$ \Textsfc{particle basis functions}
+to discretize the momentum equation.
+
+The first step in the MPM discretization is to convert the integrals
+over $\Omega$ in \eqref{eq:weak_form_1} into a sum of integrals over particles using
+the particle basic functions, $Y_p$: 
+\Beq \label{eq:disc_part}
+  \Bal
+  &\IntGammat \Bart(\Bx)\cdot\Bw(\Bx) ~d\Gamma  
+  - \sum_p\IntOmegap Y_p(\Bx)\Bsig_p:\Grad{\Bw}~d\Omega 
+  + \sum_p\IntOmegap Y_p(\Bx)\rho_p\Bw(\Bx)\cdot\Bb_p~d\Omega \\
+  &\quad\quad = \sum_p\IntOmegap Y_p(\Bx)\rho_p\Bw(\Bx)\cdot\dot{\Bv}(\Bx)~d\Omega  \,.
+  \Eal
+\Eeq
+The weighting function, the velocity, and the material time derivative of $\Bv$ are approximated
+as (see \cite{Sulsky1995}):
+\Beq
+  \Bw(\Bx) = \sum_g \Bw_g S_g(\Bx) ~,~~
+  \Bv(\Bx) = \sum_h \Bv_h S_h(\Bx) ~,~~
+  \dot{\Bv}(\Bx) \approx \sum_h \dot{\Bv}_h S_h(\Bx) ~.
+\Eeq
+Plugging these into the left hand side of \eqref{eq:disc_part} we get
+\Beq 
+  \Bal
+  \text{LHS} &= 
+  \IntGammat \Bart(\Bx)\cdot\left[\sum_g \Bw_g S_g(\Bx)\right] ~d\Gamma  
+  - \sum_p\IntOmegap Y_p(\Bx)\Bsig_p:\left[\sum_g \Bw_g \otimes \Grad{S_g}\right]~d\Omega \\
+  &\qquad + \sum_p\IntOmegap Y_p(\Bx)\rho_p\left[\sum_g \Bw_g S_g(\Bx)\right]\cdot\Bb_p~d\Omega 
+  \Eal
+\Eeq
+Rearranging,
+\Beq 
+  \Bal
+  \text{LHS} = \sum_g \Bw_g \cdot & \left[
+    \IntGammat \Bart(\Bx) S_g(\Bx) ~d\Gamma  
+    - \sum_p\IntOmegap Y_p(\Bx)\Bsig_p \cdot \Grad{S_g}~d\Omega\right. \\
+  &\qquad\left. + \sum_p\IntOmegap \rho_p Y_p(\Bx) S_g(\Bx)\Bb_p~d\Omega \right]
+  \Eal
+\Eeq
+Similarly, the right hand side of \eqref{eq:disc_part} can be written as
+\Beq
+  \text{RHS} = 
+  \sum_p\IntOmegap Y_p(\Bx)\rho_p\left[\sum_g \Bw_g S_g(\Bx)\right]\cdot
+                                 \left[\sum_h \dot{\Bv}_h S_h(\Bx)\right]~d\Omega  \,.
+\Eeq
+Rearrangement leads to
+\Beq
+  \text{RHS} = 
+  \sum_g \Bw_g \cdot \sum_h \left[\sum_p\IntOmegap \rho_p Y_p(\Bx) S_g(\Bx) S_h(\Bx)
+                                  \dot{\Bv}_h~d\Omega\right]  \,.
+\Eeq
+Combining the left and right hand sides and invoking the arbitrariness of
+$\Bw_g$, for $N_g$ grid points we get equations for $g=1,2,\dots,N_g$:
+\Beq 
+  \Bal
+   \IntGammat \Bart(\Bx) S_g(\Bx) ~d\Gamma  
+  & - \sum_p\IntOmegap Y_p(\Bx)\Bsig_p \cdot \Grad{S_g}~d\Omega 
+    + \sum_p\IntOmegap \rho_p Y_p(\Bx) S_g(\Bx)\Bb_p~d\Omega \\
+  &\qquad
+    = \sum_h \left[\sum_p\IntOmegap \rho_p Y_p(\Bx) S_g(\Bx) S_h(\Bx)
+                                    \dot{\Bv}_h~d\Omega\right]  \,.
+  \Eal
+\Eeq
+We can simplify the above equations further by taking the particle variables
+outside the integral by assuming they are constant over a particle domain:
+\Beq \label{eq:discretized}
+  \Bal
+   \IntGammat \Bart(\Bx) S_g(\Bx) ~d\Gamma  
+  & - \sum_p \Bsig_p  \cdot  \left[\IntOmegap Y_p(\Bx)\Grad{S_g}~d\Omega\right] 
+    + \sum_p \rho_p \Bb_p \left[\IntOmegap Y_p(\Bx) S_g(\Bx)~d\Omega\right] \\
+  &\qquad
+    = \sum_h \sum_p \rho_p \left[\IntOmegap Y_p(\Bx) S_g(\Bx) S_h(\Bx)~d\Omega\right]
+                                    \dot{\Bv}_h  \,.
+  \Eal
+\Eeq
+Recalling that $Y_p$ has the same effect as $\chi_p$ when integrated over a particle volume,
+we can write
+\Beq
+   \Av{S_{pg}} := \frac{1}{V_p} \IntOmegap Y_p(\Bx)~S_g(\Bx)~d\Omega \,.
+\Eeq
+Then \eqref{eq:discretized} can be expressed as
+\Beq \label{eq:discretized1}
+  \Bal
+   \IntGammat \Bart(\Bx) S_g(\Bx) ~d\Gamma  
+  & - \sum_p V_p \Bsig_p  \cdot  \Av{\Grad{S_{pg}}} 
+    + \sum_p V_p \rho_p \Bb_p \Av{S_{pg}} \\
+  &\qquad
+    = \sum_h \sum_p \rho_p \left[\IntOmegap Y_p(\Bx) S_g(\Bx) S_h(\Bx)~d\Omega\right]
+                                    \dot{\Bv}_h  \,.
+  \Eal
+\Eeq
+\begin{NoteBox}
+Define the mass matrix ($\BM$), the internal force vector ($\Bf_g^{\Tint}$), 
+the body force vector ($\Bf_g^{\Tbody}$), and the  external force vector ($\Bf_g^{\Text}$)
+at grid node $g$ as
+\Beq
+  \Bal
+   &M_{gh} := \sum_p \rho_p\IntOmegap Y_p(\Bx)~S_g(\Bx)~S_h(\Bx)~d\Omega \\
+   &\Bf_g^{\Tint} := \sum_p V_p \Bsig_p \cdot \Av{\Grad{S_{pg}}} \\
+   &\Bf_g^{\Tbody} := \sum_p m_p\Bb_p~\Av{S_{pg}} \\
+   &\Bf_g^{\Text} := \IntGammat \Bart(\Bx)~S_g(\Bx)~d\Gamma \,.
+  \Eal
+\Eeq
+Then, from \eqref{eq:discretized1} we get the semi-discrete system of equations
+\Beq
+  \sum_h M_{gh} \dot{\Bv}_h = \Bf_g^{\Text} -\Bf_g^{\Tint} + \Bf_g^{\Tbody} 
+      ~;~~ g = 1 \dots n_g
+\Eeq
+\end{NoteBox}
+The mass matrix is typically lumped such that
+\Beq
+  \Bal
+  m_{g} &= \sum_h M_{gh} = \sum_p \rho_p\IntOmegap Y_p(\Bx)~S_g(\Bx)~\left[\sum_h S_h(\Bx)\right]~d\Omega 
+        = \sum_p \rho_p\IntOmegap Y_p(\Bx)~S_g(\Bx)~d\Omega \\
+        &= \sum_p \rho_p V_p \Av{S_{gp}}  = \sum_p m_p \Av{S_{gp}} \,.
+  \Eal
+\Eeq
+In that case the semi-discrete system of equations simplifes to
+\Beq
+  m_{g} \dot{\Bv}_g = \Bf_g^{\Text} -\Bf_g^{\Tint} + \Bf_g^{\Tbody} 
+      ~;~~ g = 1 \dots n_g
+\Eeq
+The external force at grid nodes is more difficult to estimate and is
+typically computed from particle values using
+\Beq
+  \Bf^{\Text}_g = \sum_p \Bf^{\Text}_p \Av{S_{gp}} \,.
+\Eeq
 
 \section{Algorithm Description} \label{Sec:AlgDesc}
 The interested reader should consult \cite{Sulsky1994,Sulsky1995} for the development
@@ -492,7 +725,7 @@ conduction is also available in the explicit \MPM code, although it may be
 neglected via a run time option in the input file.  Explicit \MPM is typically
 used for high-rate simulations in which heat conduction is negligible.
 
-\section{Shape functions for MPM and GIMP} \label{gimp_mpm}
+\section{Shape functions for MPM, GIMP, and CPDI} \label{gimp_mpm}
 In both \MPM and \GIMP, the basic idea is the same: objects are discretized into
 particles, or material points, each of which contains all state data for the
 small region of material that it represents.  In \MPM, these particles are spatially
