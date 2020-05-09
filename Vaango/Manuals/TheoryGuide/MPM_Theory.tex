@@ -400,7 +400,7 @@ This implies that the velocity is projected using mass weighting
 (equation~\ref{eq:mass_weighted}).  Further details
 of the actual projection operators used in \Vaango are discussed next.
 
-\section{MPM discretization of the weak form}
+\section{MPM discretization of the weak form} \label{sec:discretization}
 The weak form of the momentum equation is
 \Beq \label{eq:weak_form_1}
   \IntGammat \Bart\cdot\Bw ~d\Gamma  
@@ -427,9 +427,11 @@ Therefore, we can write
            = \sum_p \Bf_p Y_p(\Bx)
 \Eeq
 where the \Textsfc{particle basis functions}, $Y_p$, are defined as
+\begin{NoteBox}
 \Beq
-  Y_p(\Bx) := \sum_g \psi_{gp} S_g(\Bx) \,.
+  Y_p(\Bx) := \sum_g \psi_{gp} S_g(\Bx) = \frac{V_p \sum_g \Av{S_{gp}}S_g(\Bx)}{\sum_p V_p\Av{S_{gp}}}
 \Eeq
+\end{NoteBox}
 If we compare \eqref{eq:Yp} with the particle representation in \eqref{eq:mpm_rep}:
 \Beq
   \Bf(\Bx) = \sum_p \Bf_p \chi_p(\Bx)
@@ -616,7 +618,7 @@ until mid-2008.
 
 The discrete momentum equation that results from the weak form is given as:
 \Beq \label{newton2}
-  \BMv \Ba = \Bf^{\Text} - \Bf^{\Tint} 
+  \BMv \Ba = \Bf^{\Text} - \Bf^{\Tint}  + \Bf^{\Tbody}
 \Eeq
 where $\BMv$ is the mass matrix, $\Ba$ is the acceleration vector,
 $\Bf^{\Text}$ is the external force vector (sum of the body forces and
@@ -642,8 +644,8 @@ mass, $\Bv_p$ is the particle velocity, and $\Bf^{\Text}_p$ is the
 external force on the particle.  The external forces that start on the
 particles typically the result of tractions, the application of which is
 discussed in the \Vaango User manual.
-$\overbar{S}_{gp}$ is the shape function of the $g$-th node evaluated at
-the particle $p$ as discussed in the previous section.
+$\overbar{S}_{gp} = \Av{S_{gp}}$ is the shape function of the $g$-th node evaluated at
+the particle $p$ as discussed in the section~\ref{sec:projection} equation~\eqref{eq:grid_to_particle}.
 The functional form of the shape functions differs between \MPM, \GIMP, and \CPDI.
 Further details of the difference are given in Section \ref{gimp_mpm}.
 
@@ -660,7 +662,7 @@ particle stress and volume respectively.
 
 Equation \eqref{newton2} can then be solved for $\Ba$.
 \Beq \label{MPM:acceleration}
-  \Ba_g = \frac{\Bf_g^{\Text} - \Bf_g^{\Tint}}{m_g}
+  \Ba_g = \frac{\Bf_g^{\Text} - \Bf_g^{\Tint} + \Bf_g^{\Tbody}}{m_g}
 \Eeq
 In the explicit version of \MPM implemented in \Vaango, a forward Euler method is used
 for the time integration:
@@ -763,6 +765,7 @@ although this is not a general restriction on the method.
 Multi-dimensional versions are constructed by forming tensor products of the
 one-dimensional version in the orthogonal directions.  
 
+\subsection{MPM}
 When the choice of characteristic function is the Dirac delta,
 \begin{equation}\label{MPM_char}
 \chi_p(\Bx) = \delta(\Bx-\Bx_p)V_p , 
@@ -792,6 +795,7 @@ stability properties.
   \label{Fig:MPMShapeGrad}
 \end{figure}
 
+\subsection{GIMP}
 Typically, when an analyst indicates that
 they are ``using \GIMP" this implies use of the linear grid basis function
 given in Eq.~\ref{linear_shape} and a ``top-hat" characteristic function,
@@ -864,8 +868,65 @@ shape.  The difficulty arises in evaluating Eq.~\eqref{effectiveS} for
 these general shapes.  One approach, apparently effective, has been to create
 a cuboid that circumscribes the deformed particle shape~\cite{jinmaCMES2006}.
 Alternatively, one can assume that the particle size remains constant (insofar
-as it applies to the effective shape function evaluations only).  This is
-the approach currently implemented in \Vaango.
+as it applies to the effective shape function evaluations only).
+
+\subsection{CPDI}
+The \CPDI formulation~\cite{Sadeghirad2011} is a more recent method for calculating  
+the quantities
+\Beq \label{eq:cpdi_int}
+   \Av{S_{pg}} = \frac{1}{V_p} \IntOmegap Y_p(\Bx)~\tilde{S}_g(\Bx)~d\Omega 
+   \quad \Tand \quad
+   \Av{\Grad{S_{pg}}} = \frac{1}{V_p} \IntOmegap Y_p(\Bx)~\Grad{\tilde{S}_g(\Bx)}~d\Omega 
+\Eeq
+where $Y_p$ are the particle basis functions and $\tilde{S}_g$ are approximate
+grid basis functions.
+
+In the reference state, the domain $\Omega_{p0}$ for particle $p$ is assumed to be
+a parallelepiped spanned by the three vectors $\Br_p^{i0}, i=1,2,3$ with origin at the
+centroid.  In the deformed
+state, these vectors become $\Br_p^i = \BF_p\cdot\Br_p^{i0}$ where $\BF_p$ is the
+deformation gradient.  The corners of the deformed parallelepiped are used in
+CPDI to create the grid basis functions:
+\Beq \label{eq:cpdi}
+  \tilde{S}_g(\Bx) = \sum_{\alpha=1}^8 N_p^\alpha(\Bx) S_g(\Bx_p^\alpha)
+\Eeq
+where $\alpha$ are the indices of the vertices of the particle parallelepiped,
+\Beq
+  N_p^\alpha(r, s, t) = \frac{1}{8}(1 + r\, r_\alpha)(1 + s\, s_\alpha)(1 + t\,t_\alpha)
+\Eeq
+and $r, s, t$ the natural coordinates of the parallelepiped that range from -1 to 1.
+The functions $S_g(\Bx)$ are typically chosen to be the hat functions of classical
+MPM.  We can compute the quantities in \eqref{eq:cpdi_int} as follows.
+
+Let
+\Beq
+  \Bsv_p^0 = \begin{bmatrix} \Br_p^{10} & \Br_p^{20} & \Br_p^{30} \end{bmatrix} \quad \Tand \quad
+  \Bsv_p = \begin{bmatrix} \Br_p^1 & \Br_p^2 & \Br_p^3 \end{bmatrix} \quad \Tand \quad
+  \BFv_p = \begin{bmatrix} F_{11} & F_{12} & F_{13} \\
+                           F_{21} & F_{22} & F_{23} \\ F_{31} & F_{32} & F_{33} 
+                           \end{bmatrix} \,.
+\Eeq
+Then $ \Bsv_p = \BFv_p \Bsv_p^0$.  Let
+\Beq
+  \BSv_{pg} = \begin{bmatrix}
+               S_g(\Bx_p^1) & S_g(\Bx_p^2) & S_g(\Bx_p^3) & S_g(\Bx_p^4) & 
+               S_g(\Bx_p^5) & S_g(\Bx_p^6) & S_g(\Bx_p^7) & S_g(\Bx_p^8) 
+             \end{bmatrix} \,.
+\Eeq
+Also, let
+\Beq
+  \BRv = \begin{bmatrix}
+           -1 &  1 &  1 & -1 & -1 &  1 &  1 & -1 \\ 
+           -1 & -1 &  1 &  1 & -1 & -1 &  1 &  1 \\ 
+           -1 & -1 & -1 & -1 &  1 &  1 &  1 &  1
+         \end{bmatrix}
+\Eeq
+Then,
+\Beq
+  \overbar{S}_{pg} = \Av{S_{pg}} = \text{mean}(\BSv_{pg})
+  \quad \Tand \quad
+  \overbar{\BG}_{pg} = \Av{\Grad{S_{pg}}} = \frac{1}{8} \Bsv_p^{-T} \BRv^T \BSv_{pg}^T \,.
+\Eeq
 
 \section{Contact algorithms}
 \input{MPM_Contact.tex}
