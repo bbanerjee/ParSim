@@ -221,15 +221,15 @@ if __name__ == "__main__":
     p.add_mesh(ball, color="red", show_edges=False)
 
   h_g = (high - low)/(nx-1)
-  l_p = 0.4 * h_g
+  l_p = 0.7 * h_g
   x_g = node_coords[4]
   particles, pulses, xpart, ypart = create_particles(x_g, h_g, l_p)
 
   for particle in particles:
     p.add_mesh(particle, color="green", show_edges=False)
 
-  for pulse in pulses:
-    p.add_mesh(pulse, color=tab_cmap(0.4)[0:3], opacity = 0.2, show_edges=False)
+  #for pulse in pulses:
+  #  p.add_mesh(pulse, color=tab_cmap(0.4)[0:3], opacity = 0.2, show_edges=False)
 
   opacity = 0.8;
   color = 0;
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     #             specular=1.0, smooth_shading=False, show_edges=False)
 
     if (p_grid != -1):
-      p.add_mesh(p_grid, color=tab_cmap(color)[0:3], opacity=0.7, 
+      p.add_mesh(p_grid, color=tab_cmap(color)[0:3], opacity=1.0, 
                  specular=1.0, smooth_shading=False, show_edges=False)
 
   p.add_axes()

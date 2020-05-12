@@ -520,14 +520,14 @@ outside the integral by assuming they are constant over a particle domain:
 Recalling that $Y_p$ has the same effect as $\chi_p$ when integrated over a particle volume,
 we can write
 \Beq
-   \Av{S_{pg}} := \frac{1}{V_p} \IntOmegap Y_p(\Bx)~S_g(\Bx)~d\Omega \,.
+   \Av{S_{gp}} := \frac{1}{V_p} \IntOmegap Y_p(\Bx)~S_g(\Bx)~d\Omega \,.
 \Eeq
 Then \eqref{eq:discretized} can be expressed as
 \Beq \label{eq:discretized1}
   \Bal
    \IntGammat \Bart(\Bx) S_g(\Bx) ~d\Gamma  
-  & - \sum_p V_p \Bsig_p  \cdot  \Av{\Grad{S_{pg}}} 
-    + \sum_p V_p \rho_p \Bb_p \Av{S_{pg}} \\
+  & - \sum_p V_p \Bsig_p  \cdot  \Av{\Grad{S_{gp}}} 
+    + \sum_p V_p \rho_p \Bb_p \Av{S_{gp}} \\
   &\qquad
     = \sum_h \sum_p \rho_p \left[\IntOmegap Y_p(\Bx) S_g(\Bx) S_h(\Bx)~d\Omega\right]
                                     \dot{\Bv}_h  \,.
@@ -540,8 +540,8 @@ at grid node $g$ as
 \Beq
   \Bal
    &M_{gh} := \sum_p \rho_p\IntOmegap Y_p(\Bx)~S_g(\Bx)~S_h(\Bx)~d\Omega \\
-   &\Bf_g^{\Tint} := \sum_p V_p \Bsig_p \cdot \Av{\Grad{S_{pg}}} \\
-   &\Bf_g^{\Tbody} := \sum_p m_p\Bb_p~\Av{S_{pg}} \\
+   &\Bf_g^{\Tint} := \sum_p V_p \Bsig_p \cdot \Av{\Grad{S_{gp}}} \\
+   &\Bf_g^{\Tbody} := \sum_p m_p\Bb_p~\Av{S_{gp}} \\
    &\Bf_g^{\Text} := \IntGammat \Bart(\Bx)~S_g(\Bx)~d\Gamma \,.
   \Eal
 \Eeq
@@ -763,7 +763,18 @@ where $x_g$ is the vertex location, and $h$ is the cell width,
 assumed to be constant in this formulation, 
 although this is not a general restriction on the method.
 Multi-dimensional versions are constructed by forming tensor products of the
-one-dimensional version in the orthogonal directions.  
+one-dimensional version in the orthogonal directions.  In three dimensions, 
+\Beq
+  S_g^\alpha(r, s, t) = \frac{1}{8}(1 + r\, r_\alpha)(1 + s\, s_\alpha)(1 + t\,t_\alpha)
+\Eeq
+and $r, s, t \in [-1,1]$ are the natural coordinates of the support domain. A plot of 
+the basis function in two-dimensions is shown in Figure~\ref{Fig:MPMBasis2D}.
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.6\textwidth]{Figs/mpm_basis/mpm_basis.png}
+  \caption{Linear grid node shape functions for 2D traditional \MPM.}
+  \label{Fig:MPMBasis2D}
+\end{figure}
 
 \subsection{MPM}
 When the choice of characteristic function is the Dirac delta,
@@ -782,17 +793,18 @@ G_g\left(x\right) = \begin{cases} {1 / h} & {-h < x-x_g \le 0} \\
 Plots of Equations~\ref{linear_shape} and~\ref{linear_shape_grad} are shown
 below.  The discontinuity in the gradient gives rise to poor accuracy and
 stability properties.
-\begin{figure}
-  \centering
-  \includegraphics[width=0.6\textwidth]{mpm_basis.pdf}
-  \caption{Effective shape function when using traditional \MPM.}
+\begin{figure}[htbp!]
+  \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{mpm_basis.pdf}
+    \caption{Effective shape function when using traditional \MPM.}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{mpm_grad.pdf}
+    \caption{Gradient of the effective shape function when using traditional \MPM.}
+  \end{subfigure}
   \label{Fig:MPMShape}
-\end{figure}
-\begin{figure}
-  \centering
-  \includegraphics[width=0.6\textwidth]{mpm_grad.pdf}
-  \caption{Gradient of the effective shape function when using traditional \MPM.}
-  \label{Fig:MPMShapeGrad}
 \end{figure}
 
 \subsection{GIMP}
@@ -810,7 +822,7 @@ is carried out using the expressions in Eqns.~\ref{linear_shape}
  and~\ref{GIMP_char}, a closed form for the effective shape function can be
 written as:
 \begin{equation} \label{gimp_shape}
-S_{g}\left(x_p\right) = \begin{cases}
+\bar{S}_{gp}\left(x_p\right) = \begin{cases}
    \frac{\left(h+l_p+\left(x_p-x_g\right)\right)^2}{4hl_p} & {-h -l_p < x_p-x_g \le -h+l_p} \\
    1 + \frac{\left(x_p-x_g\right)}{h} & {-h + l_p < x_p-x_g \le -l_p} \\
    1 - \frac{\left(x_p-x_g\right)^2 + l_p^2}{2hl_p} & {-l_p < x_p-x_g \le l_p} \\
@@ -821,7 +833,7 @@ S_{g}\left(x_p\right) = \begin{cases}
 \end{equation}
 The gradient of which is:
 \begin{equation} \label{gimpGrad}
-G_g(x_p) = \begin{cases}
+\bar{G}_{gp}(x_p) = \begin{cases}
    \frac{h+l_p+\left(x_p-x_g\right)}{2 h l_p} & {-h -l_p < x_p-x_g \le -h+l_p} \\
    \frac{1}{h} & {-h + l_p < x_p-x_g \le -l_p} \\
    - \frac{\left(x_p-x_g\right)}{h l_p} & {-l_p < x_p-x_g \le l_p} \\
@@ -831,22 +843,44 @@ G_g(x_p) = \begin{cases}
 \end{cases}
 \end{equation}
 Plots of Equations~\ref{gimp_shape} and~\ref{gimpGrad} are shown
-below.  The continuous nature of the gradients are largely responsible
+in Figure~\ref{Fig:GIMP}.  The continuous nature of the gradients are largely responsible
 for the improved robustness and accuracy of \GIMP over \MPM.
-\begin{figure}
-  \centering
-  \includegraphics[width=0.6\textwidth]{gimp_basis.pdf}
-  \caption{Effective shape function when using \GIMP.}
+\begin{figure}[htbp!]
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{gimp_basis.pdf}
+    \caption{One-dimensional shape function.}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{gimp_grad.pdf}
+    \caption{Gradient of the one-dimensional shape function.}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{Figs/mpm_basis/gimp_basis_only.png}
+    \caption{Two-dimensional shape function.}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{Figs/mpm_basis/gimp_basis.png}
+    \caption{Two-dimensional \GIMP compared to \MPM (blue).}
+  \end{subfigure}
+  \caption{\GIMP effective shape functions and their gradients.} 
   \label{Fig:GIMP}
 \end{figure}
-
-\begin{figure}
-  \centering
-  \includegraphics[width=0.6\textwidth]{gimp_grad.pdf}
-  \caption{Gradient of the effective shape function when using \GIMP.}
-  \label{Fig:GradGIMP}
-\end{figure}
 %
+\subsection{UGIMP and cpGIMP}
+The GIMP effective shape functions in \eqref{gimp_shape} are valid only for
+particle sizes that are smaller than the grid spacing.  In Figure~\ref{fig:gimp_large}
+we see that discontinuities appear in the effective shape function for particles for 
+which $l_p > 0.5 h$.
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.6\textwidth]{Figs/mpm_basis/gimp_basis_large_particles.png}
+  \caption{Two-dimensional \GIMP effective shape functions ($\bar{S}_{gp}$) for $l_p = 0.7 h$ .}
+  \label{fig:gimp_large}
+\end{figure}
 \begin{NoteBox}
 There is one further consideration in defining the effective shape function,
 and that is whether or not the size (length in 1-D) of the particle is kept
@@ -874,12 +908,27 @@ as it applies to the effective shape function evaluations only).
 The \CPDI formulation~\cite{Sadeghirad2011} is a more recent method for calculating  
 the quantities
 \Beq \label{eq:cpdi_int}
-   \Av{S_{pg}} = \frac{1}{V_p} \IntOmegap Y_p(\Bx)~\tilde{S}_g(\Bx)~d\Omega 
+   \Av{S_{gp}} = \frac{1}{V_p} \IntOmegap Y_p(\Bx)~\tilde{S}_g(\Bx)~d\Omega 
    \quad \Tand \quad
-   \Av{\Grad{S_{pg}}} = \frac{1}{V_p} \IntOmegap Y_p(\Bx)~\Grad{\tilde{S}_g(\Bx)}~d\Omega 
+   \Av{\Grad{S_{gp}}} = \frac{1}{V_p} \IntOmegap Y_p(\Bx)~\Grad{\tilde{S}_g(\Bx)}~d\Omega 
 \Eeq
 where $Y_p$ are the particle basis functions and $\tilde{S}_g$ are approximate
-grid basis functions.
+grid basis functions.  Figure~\ref{fig:CPDI} shows examples of two-dimensional grid and 
+particle basis functions that are used in \CPDI.
+\begin{figure}[htbp!]
+  \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{Figs/mpm_basis/cpdi_grid_basis.png}
+    \caption{\CPDI grid basis functions.}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{Figs/mpm_basis/cpdi_particle_basis.png}
+    \caption{\CPDI particle basis functions.}
+  \end{subfigure}
+  \caption{Two-dimensional \CPDI grid and particle basis functions.} 
+  \label{fig:CPDI}
+\end{figure}
 
 In the reference state, the domain $\Omega_{p0}$ for particle $p$ is assumed to be
 a parallelepiped spanned by the three vectors $\Br_p^{i0}, i=1,2,3$ with origin at the
@@ -908,7 +957,7 @@ Let
 \Eeq
 Then $ \Bsv_p = \BFv_p \Bsv_p^0$.  Let
 \Beq
-  \BSv_{pg} = \begin{bmatrix}
+  \BSv_{gp} = \begin{bmatrix}
                S_g(\Bx_p^1) & S_g(\Bx_p^2) & S_g(\Bx_p^3) & S_g(\Bx_p^4) & 
                S_g(\Bx_p^5) & S_g(\Bx_p^6) & S_g(\Bx_p^7) & S_g(\Bx_p^8) 
              \end{bmatrix} \,.
@@ -923,9 +972,9 @@ Also, let
 \Eeq
 Then,
 \Beq
-  \overbar{S}_{pg} = \Av{S_{pg}} = \text{mean}(\BSv_{pg})
+  \overbar{S}_{gp} = \Av{S_{gp}} = \text{mean}(\BSv_{gp})
   \quad \Tand \quad
-  \overbar{\BG}_{pg} = \Av{\Grad{S_{pg}}} = \frac{1}{8} \Bsv_p^{-T} \BRv^T \BSv_{pg}^T \,.
+  \overbar{\BG}_{gp} = \Av{\Grad{S_{gp}}} = \frac{1}{8} \Bsv_p^{-T} \BRv^T \BSv_{gp}^T \,.
 \Eeq
 
 \section{Contact algorithms}
