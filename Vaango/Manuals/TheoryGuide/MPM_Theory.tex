@@ -919,12 +919,12 @@ particle basis functions that are used in \CPDI.
   \begin{subfigure}[t]{0.5\textwidth}
     \centering
     \includegraphics[width=0.9\textwidth]{Figs/mpm_basis/cpdi_grid_basis.png}
-    \caption{\CPDI grid basis functions.}
+    \caption{\CPDI grid basis functions ($S_g(\Bx)$).}
   \end{subfigure}
   \begin{subfigure}[t]{0.5\textwidth}
     \centering
     \includegraphics[width=0.9\textwidth]{Figs/mpm_basis/cpdi_particle_basis.png}
-    \caption{\CPDI particle basis functions.}
+    \caption{\CPDI particle basis functions ($N_p(\Bx)$).}
   \end{subfigure}
   \caption{Two-dimensional \CPDI grid and particle basis functions.} 
   \label{fig:CPDI}
@@ -938,6 +938,7 @@ deformation gradient.  The corners of the deformed parallelepiped are used in
 CPDI to create the grid basis functions:
 \Beq \label{eq:cpdi}
   \tilde{S}_g(\Bx) = \sum_{\alpha=1}^8 N_p^\alpha(\Bx) S_g(\Bx_p^\alpha)
+  \quad \text{on}~\Omega_p
 \Eeq
 where $\alpha$ are the indices of the vertices of the particle parallelepiped,
 \Beq
@@ -945,7 +946,25 @@ where $\alpha$ are the indices of the vertices of the particle parallelepiped,
 \Eeq
 and $r, s, t$ the natural coordinates of the parallelepiped that range from -1 to 1.
 The functions $S_g(\Bx)$ are typically chosen to be the hat functions of classical
-MPM.  We can compute the quantities in \eqref{eq:cpdi_int} as follows.
+MPM.  Figure~\ref{fig:cpdi_eff} shows the particle domains and the effective grid
+shape functions produced by the \CPDI relation in \eqref{eq:cpdi}.
+\begin{figure}[htbp!]
+  \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{Figs/mpm_basis/cpdi_particle_domains.png}
+    \caption{Particle domains $\Omega_p$.}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{Figs/mpm_basis/cpdi_effective_basis.png}
+    \caption{Effective grid basis functions ($\tilde{S}_g(\Bx)$).}
+  \end{subfigure}
+  \caption{Two-dimensional \CPDI particle domains and effective grid basis functions.} 
+  \label{fig:cpdi_eff}
+\end{figure}
+
+
+We can compute the quantities in \eqref{eq:cpdi_int} as follows.
 
 Let
 \Beq

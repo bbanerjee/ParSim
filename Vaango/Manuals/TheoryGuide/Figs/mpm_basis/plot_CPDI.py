@@ -74,7 +74,7 @@ def create_particles(low, high, coords_g, h_g, l_p):
     x = (1 - t) * low + t * high
     t = (0.515 - part[14])/(0.515 - 0.485) + 0.2
     y = (1 - t) * low + t * high
-    center = [x, y, 1.1]
+    center = [x, y, -0.1]
     xps.append(np.array(center))
     F = part[4:13].reshape(3,3)
     xp1, xp2, xp3, xp4, surf = deform_shape(x, y, F, 0.5*h_g)
@@ -101,7 +101,7 @@ def deform_shape(x, y, F, l):
   R_deformed = np.matmul(F, R)
   r1 = R_deformed[:,0]
   r2 = R_deformed[:,1]
-  xp = np.array([x, y, 0]).transpose()
+  xp = np.array([x, y, -0.1]).transpose()
   xp_1 = xp - (r1+r2)
   xp_2 = xp + (r1-r2)
   xp_3 = xp + (r1+r2)
@@ -135,8 +135,8 @@ def linear_xy_to_xieta(x, xp1, xp2, xp3, xp4):
 
   xieta = np.array([0, 0]).reshape(2,1)
   while True:
-    f = np.array([a0 + b0*xieta[0] + c0*xieta[1] + d0*xieta[0]*xieta[1] - x[0],
-                  a1 + b1*xieta[0] + c1*xieta[1] + d1*xieta[0]*xieta[1] - x[1]]).reshape(2,1)
+    f = np.array([a0 + b0*xieta[0] + c0*xieta[1] + d0*xieta[0]*xieta[1] - 4.0 * x[0],
+                  a1 + b1*xieta[0] + c1*xieta[1] + d1*xieta[0]*xieta[1] - 4.0 * x[1]]).reshape(2,1)
     df = np.array([b0 + d0*xieta[1], c0 + d0*xieta[0],
                    b1 + d1*xieta[1], c1 + d1*xieta[0]]).reshape(2,2)
     dxieta = np.linalg.solve(df, f)
@@ -144,10 +144,12 @@ def linear_xy_to_xieta(x, xp1, xp2, xp3, xp4):
     if (np.linalg.norm(dxieta) < 1.0e-6):
       break;
 
-  return xieta
+  return xieta.flatten()
 
 def linear_S_xieta(xi, eta, xieta_g):
   S_xieta = 1.0 / 4.0 * (1 + xi * xieta_g[0]) * (1 + eta * xieta_g[1])
+  if (xi < -1.0 or xi > 1.0 or eta < -1.0 or eta > 1.0):
+    S_xieta = 0.0
   return S_xieta
 
 def compute_S_linear_xieta(xieta_g, xp1, xp2, xp3, xp4):
@@ -160,6 +162,116 @@ def compute_S_linear_xieta(xieta_g, xp1, xp2, xp3, xp4):
       xp = linear_xieta_to_xy(xi, eta, xp1, xp2, xp3, xp4) 
       vertices.append([xp[0], xp[1], S_xieta])
   return np.array(vertices)
+
+def cpdi_Stilde_g(xieta, xieta_g, xg1, xg2, xg3, xg4, xp1, xp2, xp3, xp4):
+  xieta_p_p1 = np.array([-1,-1])
+  xieta_p_p2 = np.array([1,-1])
+  xieta_p_p3 = np.array([1,1])
+  xieta_p_p4 = np.array([-1,1])
+  N_xieta_p_p1 = linear_S_xieta(xieta[0], xieta[1], xieta_p_p1)
+  N_xieta_p_p2 = linear_S_xieta(xieta[0], xieta[1], xieta_p_p2)
+  N_xieta_p_p3 = linear_S_xieta(xieta[0], xieta[1], xieta_p_p3)
+  N_xieta_p_p4 = linear_S_xieta(xieta[0], xieta[1], xieta_p_p4)
+  xieta_g_p1 = linear_xy_to_xieta(xp1, xg1, xg2, xg3, xg4)
+  xieta_g_p2 = linear_xy_to_xieta(xp2, xg1, xg2, xg3, xg4)
+  xieta_g_p3 = linear_xy_to_xieta(xp3, xg1, xg2, xg3, xg4)
+  xieta_g_p4 = linear_xy_to_xieta(xp4, xg1, xg2, xg3, xg4)
+  S_xieta_g_p1 = linear_S_xieta(xieta_g_p1[0], xieta_g_p1[1], xieta_g)
+  S_xieta_g_p2 = linear_S_xieta(xieta_g_p2[0], xieta_g_p2[1], xieta_g)
+  S_xieta_g_p3 = linear_S_xieta(xieta_g_p3[0], xieta_g_p3[1], xieta_g)
+  S_xieta_g_p4 = linear_S_xieta(xieta_g_p4[0], xieta_g_p4[1], xieta_g)
+  Stilde_g = (N_xieta_p_p1 * S_xieta_g_p1 + N_xieta_p_p2 * S_xieta_g_p2 + 
+              N_xieta_p_p3 * S_xieta_g_p3 + N_xieta_p_p4 * S_xieta_g_p4)
+  #print("x_g = ", xg1, "xp1 = ", xp1, "xp2 = ", xp2, "xp3 = ", xp3, "xp4 = ", xp4)
+  #print("N_p1 = ", N_xieta_p_p1, "N_p2 = ", N_xieta_p_p2, "N_p3 = ", N_xieta_p_p3, "N_p4 = ", N_xieta_p_p4)
+  #print("xi_g1 = ", xieta_g_p1, "xi_g2 = ", xieta_g_p2, "xi_g3 = ", xieta_g_p3, "xi_g4 = ", xieta_g_p4)
+  #print("S_p1 = ", S_xieta_g_p1, "S_p2 = ", S_xieta_g_p2, "S_p3 = ", S_xieta_g_p3, "S_p4 = ", S_xieta_g_p4)
+  #print("Stilde_g = ", Stilde_g)
+  return Stilde_g
+
+def compute_Stilde_cpdi_xieta(xieta_g, xg1, xg2, xg3, xg4, xp1, xp2, xp3, xp4):
+  xi_support = np.linspace(-1, 1, 5)
+  eta_support = np.linspace(-1, 1, 5)
+  vertices = []
+  for xi in xi_support:
+    for eta in eta_support:
+      xieta = np.array([xi, eta])
+      Stilde_g = cpdi_Stilde_g(xieta, xieta_g, xg1, xg2, xg3, xg4, xp1, xp2, xp3, xp4)
+      xg = linear_xieta_to_xy(xi, eta, xg1, xg2, xg3, xg4) 
+      coord = [xg[0], xg[1], Stilde_g]
+      #print(coord)
+      vertices.append(coord)
+  vertices = np.array(vertices)
+  return vertices
+
+def compute_Sg_xp(x_g, h_g, x_p): 
+  Sg_p = 0
+  if (x_p[0] - x_g[0] >= 0.0 and x_p[1] - x_g[1] >= 0.0): 
+    xg1 = x_g
+    xg2 = x_g + np.array([h_g, 0])
+    xg3 = x_g + np.array([h_g, h_g])
+    xg4 = x_g + np.array([0, h_g])
+    xieta_g = np.array([-1,-1])
+    xieta_g_p = linear_xy_to_xieta(x_p, xg1, xg2, xg3, xg4)
+    Sg_p = linear_S_xieta(xieta_g_p[0], xieta_g_p[1], xieta_g)
+  elif (x_p[0] - x_g[0] < 0.0 and  x_p[1] - x_g[1] >= 0.0): 
+    xg2 = x_g
+    xg3 = x_g + np.array([0, h_g])
+    xg4 = x_g + np.array([-h_g, h_g])
+    xg1 = x_g + np.array([-h_g, 0])
+    xieta_g = np.array([1,-1])
+    xieta_g_p = linear_xy_to_xieta(x_p, xg1, xg2, xg3, xg4)
+    Sg_p = linear_S_xieta(xieta_g_p[0], xieta_g_p[1], xieta_g)
+  elif (x_p[0] - x_g[0] < 0.0 and x_p[1] - x_g[1] < 0.0): 
+    xg3 = x_g
+    xg4 = x_g + np.array([-h_g, 0])
+    xg1 = x_g + np.array([-h_g, -h_g])
+    xg2 = x_g + np.array([0, -h_g])
+    xieta_g = np.array([1,1])
+    xieta_g_p = linear_xy_to_xieta(x_p, xg1, xg2, xg3, xg4)
+    Sg_p = linear_S_xieta(xieta_g_p[0], xieta_g_p[1], xieta_g)
+  elif (x_p[0] - x_g[0] >= 0.0 and x_p[1] - x_g[1] < 0.0): 
+    xg4 = x_g
+    xg1 = x_g + np.array([0, -h_g])
+    xg2 = x_g + np.array([h_g, -h_g])
+    xg3 = x_g + np.array([h_g, 0])
+    xieta_g = np.array([-1,1])
+    xieta_g_p = linear_xy_to_xieta(x_p, xg1, xg2, xg3, xg4)
+    Sg_p = linear_S_xieta(xieta_g_p[0], xieta_g_p[1], xieta_g)
+
+  return Sg_p
+
+def compute_Np_x(xieta, xp1, xp2, xp3, xp4): 
+  xieta_p1 = np.array([-1,-1])
+  xieta_p2 = np.array([1,-1])
+  xieta_p3 = np.array([1,1])
+  xieta_p4 = np.array([-1,1])
+  N1 = linear_S_xieta(xieta[0], xieta[1], xieta_p1)
+  N2 = linear_S_xieta(xieta[0], xieta[1], xieta_p2)
+  N3 = linear_S_xieta(xieta[0], xieta[1], xieta_p3)
+  N4 = linear_S_xieta(xieta[0], xieta[1], xieta_p4)
+  return N1, N2, N3, N4
+
+def cpdi_basis_grid(x_g, h_g, xp1, xp2, xp3, xp4):
+  Sg_p1 = compute_Sg_xp(x_g, h_g, xp1) 
+  Sg_p2 = compute_Sg_xp(x_g, h_g, xp2) 
+  Sg_p3 = compute_Sg_xp(x_g, h_g, xp3) 
+  Sg_p4 = compute_Sg_xp(x_g, h_g, xp4) 
+  xis = np.linspace(-1, 1, 40)
+  etas = np.linspace(-1, 1, 40)
+  vertices = []
+  for xi in xis:
+    for eta in etas:
+      xieta = np.array([xi, eta])
+      N1, N2, N3, N4 = compute_Np_x(xieta, xp1, xp2, xp3, xp4) 
+      Stilde_g = (N1 * Sg_p1 + N2 * Sg_p2 + N3 * Sg_p3 + N4 * Sg_p4)
+      xp = linear_xieta_to_xy(xi, eta, xp1, xp2, xp3, xp4) 
+      coord = [xp[0], xp[1], Stilde_g]
+      #print(coord)
+      vertices.append(coord)
+  data = pv.PolyData(np.array(vertices))
+  surf = data.delaunay_2d()
+  return surf
 
 def mpm_basis_particle(xp1, xp2, xp3, xp4):
   xieta_g1 = np.array([-1,-1])
@@ -215,6 +327,7 @@ def mpm_basis_grid(x_g, h_g):
   surf_g4 = data_g4.delaunay_2d()
   return surf_g1, surf_g2, surf_g3, surf_g4
 
+
 if __name__ == "__main__":  
 
   low = 0.0
@@ -227,19 +340,68 @@ if __name__ == "__main__":
   xx, yy, node_coords = create_grid(low, high, nx-1)
   balls = create_node_balls(node_coords)
   grid_lines = create_grid_lines(xx, yy)
-  for ball in balls:
-    p.add_mesh(ball, color="red", show_edges=False)
+  #for ball in balls:
+  #  p.add_mesh(ball, color="red", show_edges=False)
   for line in grid_lines:
     p.add_mesh(line, color="black", show_edges=False)
 
   tab_cmap = plt.cm.get_cmap("tab20", nx*nx)
-  color = 0;
+  colors =  plt.cm.tab20(np.arange(10).astype(int))
+  #print(colors)
+  #plt.scatter(np.arange(10),np.ones(10), c=colors, s=180)
+  #plt.show()
+
   h_g = (high - low)/(nx-1)
   l_p = 0.7 * h_g
   x_g = node_coords[4]
+
   particles, pulses, xps, xp1s, xp2s, xp3s, xp4s = create_particles(low, high, x_g, h_g, l_p)
+
   for particle in particles:
     p.add_mesh(particle, color="green", show_edges=False)
+
+  color = 0
+  for pulse in pulses:
+    color = color + 1
+    if (color >= 10):
+      color = 0
+    p.add_mesh(pulse, color=colors[color][0:3], opacity = 1.0, show_edges=False)
+
+  opacity = 1.0
+  color = 0
+  for coord in node_coords:
+    #coord = node_coords[4]
+    color = color + 1
+    if (color >= 10):
+      color = 0
+    x_g = np.array([coord[0], coord[1]])
+    node = pv.Sphere(radius=0.06, center = [x_g[0], x_g[1], 1.0])
+    p.add_mesh(node, color=colors[color][0:3], show_edges=False)
+    for xp1, xp2, xp3, xp4 in zip(xp1s, xp2s, xp3s, xp4s):
+      #xp1 = xp1s[8]
+      #p2 = xp2s[8]
+      #p3 = xp3s[8]
+      #p4 = xp4s[8]
+      d_p1_g = np.abs(x_g - xp1[0:2])
+      d_p2_g = np.abs(x_g - xp2[0:2])
+      d_p3_g = np.abs(x_g - xp3[0:2])
+      d_p4_g = np.abs(x_g - xp4[0:2])
+      if (d_p1_g[0] <= h_g and d_p1_g[1] <= h_g):
+        particle = pv.Sphere(radius=0.06, center = [xp1[0], xp1[1], 0.0])
+        p.add_mesh(particle, color="yellow", show_edges=False)
+      if (d_p2_g[0] <= h_g and d_p2_g[1] <= h_g):
+        particle = pv.Sphere(radius=0.06, center = [xp2[0], xp2[1], 0.0])
+        p.add_mesh(particle, color="yellow", show_edges=False)
+      if (d_p3_g[0] <= h_g and d_p3_g[1] <= h_g):
+        particle = pv.Sphere(radius=0.06, center = [xp3[0], xp3[1], 0.0])
+        p.add_mesh(particle, color="yellow", show_edges=False)
+      if (d_p4_g[0] <= h_g and d_p4_g[1] <= h_g):
+        particle = pv.Sphere(radius=0.06, center = [xp4[0], xp4[1], 0.0])
+        p.add_mesh(particle, color="yellow", show_edges=False)
+
+      surf_g = cpdi_basis_grid(x_g, h_g, xp1, xp2, xp3, xp4)
+      p.add_mesh(surf_g, color=colors[color][0:3], opacity=opacity, 
+                 specular=1.0, smooth_shading=False, show_edges=False)
 
   #opacity = 1.0
   #for pulse, xp1, xp2, xp3, xp4 in zip(pulses, xp1s, xp2s, xp3s, xp4s):
@@ -257,21 +419,21 @@ if __name__ == "__main__":
   #  p.add_mesh(surf_g4, color=tab_cmap(color)[0:3], opacity=opacity, 
   #             specular=1.0, smooth_shading=False, show_edges=False)
 
-  opacity = 1.0
-  for coord in node_coords:
-    color = color + 0.1
-    if (color >= 1.0):
-      color = 0
-    x_g = np.array([coord[0], coord[1]])
-    surf_g1, surf_g2, surf_g3, surf_g4 = mpm_basis_grid(x_g, h_g)
-    p.add_mesh(surf_g1, color=tab_cmap(color)[0:3], opacity=opacity, 
-               specular=1.0, smooth_shading=False, show_edges=False)
-    p.add_mesh(surf_g2, color=tab_cmap(color)[0:3], opacity=opacity, 
-               specular=1.0, smooth_shading=False, show_edges=False)
-    p.add_mesh(surf_g3, color=tab_cmap(color)[0:3], opacity=opacity, 
-               specular=1.0, smooth_shading=False, show_edges=False)
-    p.add_mesh(surf_g4, color=tab_cmap(color)[0:3], opacity=opacity, 
-               specular=1.0, smooth_shading=False, show_edges=False)
+  #opacity = 1.0
+  #for coord in node_coords:
+  #  color = color + 0.1
+  #  if (color >= 1.0):
+  #    color = 0
+  #  x_g = np.array([coord[0], coord[1]])
+  #  surf_g1, surf_g2, surf_g3, surf_g4 = mpm_basis_grid(x_g, h_g)
+  #  p.add_mesh(surf_g1, color=tab_cmap(color)[0:3], opacity=opacity, 
+  #             specular=1.0, smooth_shading=False, show_edges=False)
+  #  p.add_mesh(surf_g2, color=tab_cmap(color)[0:3], opacity=opacity, 
+  #             specular=1.0, smooth_shading=False, show_edges=False)
+  #  p.add_mesh(surf_g3, color=tab_cmap(color)[0:3], opacity=opacity, 
+  #             specular=1.0, smooth_shading=False, show_edges=False)
+  #  p.add_mesh(surf_g4, color=tab_cmap(color)[0:3], opacity=opacity, 
+  #             specular=1.0, smooth_shading=False, show_edges=False)
 
   p.add_axes()
   #p.add_bounding_box()
