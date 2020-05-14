@@ -285,6 +285,15 @@ The grid-to-particle interpolation function can then be expressed as
   \omega^\star_p(\Bx) := \omega_p(\Bx) \,\chi^\star_p(\Bx)\,d\Omega \,.
 \Eeq
 \end{NoteBox}
+A more compact matrix notation is used in~\cite{Nairn2020}:
+\Beq \label{eq:mat_g_to_p}
+ \BfT_p = \SfS \BfT_g
+\Eeq
+where $\BfT_p$ is a particle-based quantity matrix that has size $N_p \times 1$ for scalars,
+$N_p \times 3$ for vectors, and $N_p \times 6$ for symmetric second-order tensors. The
+matrix $\BfT_g$ are the corresponding grid quantities that have sizes $N_g \times 1$ for scalars,
+$N_g \times 3$ for vectors and $N_f \times 6$ for symmetric 2-tensors. The $\SfS$ matrix has
+size $N_p \times N_g$ with components $\Av{S_{gp}}$.
 
 We can now make some special assumptions about the weight functions in \eqref{eq:particle_to_grid_gen} to
 reduce the projection operation to that use in tradition \MPM approaches.  Let us assume that
@@ -302,9 +311,14 @@ become
   \psi_{gp} = \frac{V_p\Av{S_{gp}}}{\sum_p V_p\Av{S_{gp}}}~,~~\sum_p \psi_{gp} = 1 \,.
 \Eeq
 \end{NoteBox}
+The matrix notation used for the above relation in~\cite{Nairn2020} is
+\Beq \label{eq:mat_p_to_g}
+  \BfT_g = \SfS^\plus \BfT_p
+\Eeq
+where $\SfS^\plus$ is a $N_g \times N_p$ matrix.
 
-\subsection{Classical MPM}
-If we wish to recover the classical \MPM formulation~\cite{Sulsky1995}, take $\omega_p(\Bx) = 1$
+\subsection{Traditional MPM}
+If we wish to recover the traditional \MPM formulation~\cite{Sulsky1995}, take $\omega_p(\Bx) = 1$
 and $\chi^\star_p(\Bx) = V_p \delta(\Bx - \Bx_p)$ where $V_p$
 is the volume of $\Omega^\star_p = \Omega_p$ and $\delta(\Bx)$ is the Dirac delta function, we have
 \Beq
@@ -312,7 +326,7 @@ is the volume of $\Omega^\star_p = \Omega_p$ and $\delta(\Bx)$ is the Dirac delt
                        \int_{\Omega_p} V_p \delta(\Bx - \Bx_p)\,d\Omega} = S_g(\Bx_p)\,.
 \Eeq
 The gradient of the interpolation function evaluated at the particle is
-\Beq
+\Beq \label{eq:G_mpm}
   \overbar{\BGv}_{gp} = \Av{\Grad{S_{gp}}} = \frac{\int_{\Omega_p} \Grad{S_g(\Bx)} V_p \delta(\Bx - \Bx_p)\,d\Omega}{
                        \int_{\Omega_p} V_p \delta(\Bx - \Bx_p)\,d\Omega} = \Grad{S_g(\Bx_p)}\,.
 \Eeq
@@ -329,7 +343,7 @@ be a rectangular parallelepiped.  Then
               \end{cases}
 \Eeq
 The gradient of the interpolation function is
-\Beq
+\Beq \label{eq:G_gimp}
   \overbar{\BGv}_{gp} = \Av{\Grad{S_{gp}}} = \begin{cases}
                 \frac{1}{V^\star_p} \int_{\Omega_p^\star} \Grad{S_g(\Bx)}\,d\Omega & \quad \text{for}~~\Bx \in \Omega_p^\star \\
                 0 & \quad \text{otherwise.}
@@ -348,7 +362,7 @@ similar to that for \GIMP except that a modified shape function is used for inte
               \end{cases}
 \Eeq
 The gradient of the interpolation function is
-\Beq
+\Beq \label{eq:G_cpdi}
   \overbar{\BGv}_{gp} = \Av{\Grad{S_{gp}}} = \begin{cases}
                 \frac{1}{V^\star_p} \int_{\Omega_p^\star} \Grad{S_g^\star(\Bx)}\,d\Omega & \quad \text{for}~~\Bx \in \Omega_p^\star \\
                 0 & \quad \text{otherwise.}
@@ -360,6 +374,10 @@ For the interpolation from grid nodes to particles, the above relations indicate
 general relation (see \eqref{eq:grid_to_particle})
 \Beq
   \Bf_p = \sum_g \Bf_g \overbar{S}_{gp} \,.
+\Eeq
+In matrix form (see \eqref{eq:mat_g_to_p})
+\Beq
+  \BfT_p = \SfS \BfT_g \,.
 \Eeq
 
 For the particle-to-grid projection (see \eqref{eq:particle_to_grid_gen}), consider the
@@ -376,6 +394,14 @@ and
   }
 \Eeq
 where $m_g$ is the grid node mass and $m_P$ is the particle mass.
+In matrix form equation~\ref{eq:mass_weighted} can be written as (see \eqref{eq:mat_p_to_g})
+\Beq \label{eq:mass_weighted_mat}
+  \BfT_g = \SfS^\plus \BfT_p \quad \text{where} \quad
+  \SfS^\plus := \BmT_g^{-1} \SfS^T \BmT_p
+\Eeq
+where $\BmT_g$ is a $N_g \times N_g$ diagonal matrix that is invertible as long as $m_g \ne 0$,
+$\BmT_p$ is a $N_p \times N_p$ diagonal matrix, and $\SfS$ is a $N_p \times N_g$ matrix.
+
 On the other hand, if $w(\Bx) = 1$, we have
 \Beq
   A_g = \IntOmega  S_g(\Bx) \,d\Omega = V_g ~,~~
@@ -389,15 +415,33 @@ and
   }
 \Eeq
 where $V_g$ is the grid node volume and $V_p$ is the particle volume.
-
-In \MPM, the momentum per unit volume ($\Bp = \rho\Bv$), where $\rho$ is the density and
-$\Bv$ is the velocity, is projected to grid nodes using the volume-weighted
-approach in \eqref{eq:vol_weighted}:
-\Beq
-  V_g \Bp_g = \sum_p \Bp_p V_p \bar{S}_{gp}\,.
+In matrix form equation~\eqref{eq:vol_weighted} can be written as
+\Beq \label{eq:vol_weighted_mat}
+  \BfT_g = \SfS_V^\plus \BfT_p \quad \text{where} \quad
+  \SfS_V^\plus := \BV_g^{-1} \SfS^T \BV_p
 \Eeq
-This implies that the velocity is projected using mass weighting
-(equation~\ref{eq:mass_weighted}).  Further details
+where $\BV_g$ is a $N_g \times N_g$ diagonal matrix that is invertible as long as $V_g \ne 0$,
+and $\BV_p$ is a $N_p \times N_p$ diagonal matrix.
+
+In traditional \MPM, the velocity ($\Bv$) is projected using mass weighting as
+per~\eqref{eq:mass_weighted}), i.e.,
+\Beq \label{eq:mass_weighted_vel}
+  m_g \Bv_g = \sum_p m_p \Bv_p \bar{S}_{gp} \quad \text{or} \quad
+  \BvT_g = \SfS^\plus \BvT_p \,.
+\Eeq
+This implies that the mass density ($\rho$) and the momentum {\em per unit volume} ($\BPv = \rho\Bv$)
+are  projected to grid nodes using the volume-weighted
+approach in \eqref{eq:vol_weighted}:
+\Beq \label{eq:vol_weighted_mom}
+  \Bal
+    V_g \rho_g = \sum_p V_p \rho_p \bar{S}_{gp} \quad \text{or} \quad
+    \BmT_g = \SfS^T \BmT_p \\
+    V_g \BPv_g = \sum_p V_p \BPv_p \bar{S}_{gp} \quad \text{or} \quad
+    \BpT_g = \SfS^T \BpT_p
+  \Eal
+\Eeq
+where $\BpT$ is a matrix of {\em total} momentum.
+Further details
 of the actual projection operators used in \Vaango are discussed next.
 
 \section{MPM discretization of the weak form} \label{sec:discretization}

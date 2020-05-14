@@ -11,52 +11,169 @@ which is described in~\cite{Nairn2020}.
 
 Let $m_p$, $\Bv_p$, $\Bp_p$ be the mass, velocity, and momentum of particle $p$. Also, let $m_g$,
 $\Bv_g$, $\Bp_g$ be the mass, velocity, and momentum at a grid point $g$ due to nearby particles
-in the region of influence.
-
-Let the interpolation from grid nodes to particles be given by
+in the region of influence.  Consider $N_\alpha$ objects that can potentially be in contact and index
+then by the superscript $\alpha$.
+Then, from \eqref{eq:vol_weighted_mom}, we have
 \Beq
-  \Ba_p = \sum_g S_g(\Bx_p) \Ba_g 
+  m_g^\alpha = V_g^\alpha \rho_g^\alpha = \sum_p V_p^\alpha \rho_p^\alpha \bar{S}_{gp}
+             = \sum_p m_p^\alpha \bar{S}_{gp} \quad \Tand \quad
+  \Bp_g^\alpha = \sum_p \Bp_p^\alpha \bar{S}_{gp} \,.
 \Eeq
-where $\Ba_p$ is a particle quantity, $\Ba_g$ is a grid quantity, and $S_g(\Bx_p)$ is a scalar
-interpolation function evaluated at the particle position $\Bx_p$.  The quantities $\Ba_p$ and $\Ba_g$
-are expressed as column vectors.  For scalar quantities, the column vectors are of size $1 \times 1$.
-For vector quantities the size is $3 \times 1$, and for second-order symmetric tensors the vector
-has dimensions $6 \times 1$. For example, for a typical 3D vector,
+In matrix notation,
 \Beq
-  \begin{bmatrix} a_1 \\ a_2 \\ a_3 \end{bmatrix}_p = \sum_g S_g(\Bx_p)
-  \begin{bmatrix} a_1 \\ a_2 \\ a_3 \end{bmatrix}_g \,.
+  \BmT_g^\alpha = \SfS^T \BmT_p^\alpha \quad \Tand \quad
+  \BpT_g^\alpha = \SfS^T \BpT_p^\alpha \,.
 \Eeq
-The interpolation from grid to particles can then be expressed in matrix form as
-\Beq
-  \Ba_p = \BA_g \cdot \Bs_{gp}
+Similarly, from \eqref{eq:mass_weighted_vel}, we have
+\Beq 
+  m_g^\alpha \Bv_g^\alpha = \sum_p m_p^\alpha \Bv_p^\alpha \bar{S}_{gp}
+  \quad \implies \quad
+  \Bv_g^\alpha = \frac{1}{m_g^\alpha} \sum_p m_p^\alpha \Bv_p^\alpha \bar{S}_{gp} \,.
 \Eeq
-where, if $S_g$ is the number of contributing grid nodes, 
+In matrix form,
 \Beq
-  \BA_g = \begin{bmatrix}
-             \begin{bmatrix} a_1 \\ a_2 \\ a_3 \end{bmatrix}_1 &
-             \begin{bmatrix} a_1 \\ a_2 \\ a_3 \end{bmatrix}_2 &
-             \dots & 
-             \begin{bmatrix} a_1 \\ a_2 \\ a_3 \end{bmatrix}_{N_g} 
-           \end{bmatrix}
-  ~,~~
-  \Bs_{gp} = \begin{bmatrix} S_1(\Bx_p) \\ S_2(\Bx_p) \\ \vdots \\ S_{N_g}(\Bx_p) \end{bmatrix} \,.
+  \BvT_g^\alpha = \SfS^\plus_\alpha \BvT_p^\alpha 
+  \quad \text{where} \quad
+  \SfS^\plus_\alpha = \left(\BmT_g^\alpha\right)^{-1} \SfS^T \BmT_p^\alpha \,.
 \Eeq
-
-Because the number of particles can differ from the number of grid nodes, the projection of
-quantities from particles to the grid requires a different operator.
-\begin{NoteBox}
-An important underlying assumption in MPM is that
-continuum field quantities have two equivalent representations -- a grid representation and
-a particle representation.  For instance, the representation of a vector field $\Ba$ can be both of
-\Beq
-  \Ba(\Bx) = \sum_g \Ba(\Bx_g) S_g(\Bx_g) \quad \Tand \quad
-  \Ba(\Bx) = \sum_p \Ba(\Bx_p) \chi_p(\Bx_p) \,.
+Based on a local conservation of momentum, we define a {\em center-of-mass} velocity, $\Bv_g^{\Tcm}$,
+at grid node $g$ for all the contacting objects:
+\Beq \label{eq:center_of_mass_vel}
+  \Bv_g^{\Tcm} = \frac{\sum_\alpha m_g^\alpha \Bv_g^\alpha}{\sum_\alpha m_g^\alpha} \,.
+\Eeq
+We also define an effective grid mass, $m_g^\Teff$, as
+\Beq \label{eq:eff_mass}
+  \frac{1}{m_g^\Teff} = \sum_\alpha \frac{1}{m_g^\alpha} \,.
 \Eeq
 
-\end{NoteBox}
-Let that projection
-operation from particles to grid nodes be
+\subsection{Bardenhagen et al. algorithm}
+In the algorithm developed in~\cite{Bard2001}, a contact interface is defined as the set of
+nodes for which individual grid velocities associated with each object differ from the
+center of mass velocity:
 \Beq
-  \Ba_g = \sum_p T_p(\Bx_g) \Ba_p 
+  \Bv_g^\alpha - \Bv_g^\Tcm \ne 0 \,.
 \Eeq
+Once this condition is identified, the surface normal $\Bn_g^\alpha$ is computed
+from the mass distribution around node $g$, and the surface normal traction
+$\Bt_g^\alpha$ is computed from the stresses in surrounding material points.
+
+The contact condition is
+\Beq \label{eq:contact_constraint_bard}
+(\Bv_g^\alpha - \Bv_g^\Tcm)\cdot\Bn_g^\alpha > 0 \quad \Tand \quad
+\Bt_g^\alpha \cdot \Bn_g^\alpha < 0 \,.
+\Eeq
+This condition indicates compressive stress at node $g$.  If this condition is not satisfied,
+the objects are assumed to have separated.
+
+To enforce \eqref{eq:contact_constraint_bard}, the grid node velocities are adjusted
+such that momentum is conserved, i.e.,
+\Beq
+  \Delta (v_n)_g^\alpha = \Delta \Bv_g^\alpha \cdot \Bn_g^\alpha \quad \Tand \quad
+  \Delta (v_t)_g^\alpha = \Delta \Bv_g^\alpha \cdot \left[
+     \Bn_g^\alpha \times \frac{\Delta \Bv_g^\alpha \times \Bn_g^\alpha}%
+                              {\Norm{\Delta \Bv_g^\alpha \times \Bn_g^\alpha}{}} \right]
+\Eeq
+where
+\Beq
+  \Delta \Bv_g^\alpha := \Bv_g^\alpha - \Bv_g^\Tcm \,.
+\Eeq
+Normal contact is enforced by adjusting material velocities by $\Delta (v_n)_g^\alpha$.
+The tangential contact is enforced using Coulomb friction with the tangential velocity
+determined using $\mu \Delta (v_n)_g^\alpha$ where $\mu$ is the friction coefficient. If
+$\Delta (v_t)_g^\alpha < \mu \Delta (v_n)_g^\alpha$, the no-slip condition is enforced.
+Otherwise, the tangential components of the nodal velocities are updated with a reduced
+friction coefficient
+\Beq
+  \mu_\Tred = \Tmin\left(\mu, \frac{|\Delta (v_t)_g^\alpha|}{|\Delta (v_n)_g^\alpha|}\right) \,.
+\Eeq
+
+Returning to the problem of computing object outward normals at a grid point, the
+traditional approach is to compute volume gradients using the set of particles influencing
+a node:
+\Beq
+  \Bg_g^\alpha = \sum_{p^\alpha} \overbar{\BGv}_{gp} V_p 
+\Eeq
+where the gradients $\overbar{\BGv}_{gp}$ are as defined in \eqref{eq:G_mpm}, \eqref{eq:G_gimp}, and
+\eqref{eq:G_cpdi}.  The normal to an object is calculated using
+\Beq
+  \Bn^\alpha = \frac{\Bg_g^\alpha}{\Norm{\Bg_g^\alpha}{}} \,.
+\Eeq
+For multiple objects, an average gradient can be computed for better accuracy.
+
+\subsection{Nairn et al. algorithm}
+The more recent algorithm by~\cite{Nairn2020} uses a logistic regression step to determine
+contact.  The underlying approach is similar to that used in ~\cite{Bard2001}.  Since the approach
+is at its simplest when only two objects are involved at a grid point, we will describe only that
+case below.  Most situations with contact between multiple objects see~\cite{Nairn2020}.
+
+Let the two objects be indexed by $\alpha$ and $\beta$.  Let $\Bp_g^{\alpha 0}$ and $\Bp_g^{\beta 0}$
+be the particle momenta projected to the grid.  We would like to compute the momentum correction
+$\Delta \Bp$ so that momentum is conserved after contact.  Let the corrected momenta be
+\Beq \label{eq:p_alpha_beta}
+  \Bp_g^\alpha = \Bp_g^{\alpha 0} + \Delta \Bp \quad  \Tand \quad
+  \Bp_g^\beta = \Bp_g^{\beta 0} - \Delta \Bp  \,.
+\Eeq
+If we restrict relative motion between objects at a grid point to the tangent plane, and let
+$\Bthat$ be the direction of relative motion, then
+\Beq \label{eq:v_alpha_beta}
+  \Bv_g^\beta - \Bv_g^\alpha = k \Bthat \quad \implies \quad
+  \frac{\Bp_g^\beta}{m_g^\beta} - \frac{\Bp_g^\alpha}{m_g^\alpha} = k \Bthat
+  \quad \implies \quad
+  m_g^\alpha \Bp_g^\beta - m_g^\beta \Bp_g^\alpha = m_g^\alpha m_g^\beta k \Bthat \,.
+\Eeq
+From the definition of the center-of-mass velocity in \eqref{eq:center_of_mass_vel} and
+the effective grid mass~\eqref{eq:eff_mass}, we have
+\Beq 
+  \Bv_g^{\Tcm} = \frac{m_g^\alpha \Bv_g^\alpha + m_g^\beta \Bv_g^\beta}{m_g^\alpha + m_g^\beta} 
+     = \frac{\Bp_g^\alpha + \Bp_g^\beta}{m_g^\alpha + m_g^\beta}  \quad \Tand \quad
+  m_g^\Teff = \frac{m_g^\alpha m_g^\beta}{m_g^\alpha + m_g^\beta} \,.
+\Eeq
+Therefore,
+\Beq \label{eq:p_alpha_beta_1}
+  \Bp_g^\alpha + \Bp_g^\beta =  \frac{\Bv_g^{\Tcm} m_g^\alpha m_g^\beta}{m_g^\Teff} \,.
+\Eeq
+Solving for $\Bp_g^\alpha, \Bp_g^\beta$ from equations \eqref{eq:v_alpha_beta} and
+\eqref{eq:p_alpha_beta_1}, we have
+\Beq
+  \Bp_g^\alpha = m_g^\alpha \Bv_g^\Tcm - m_g^\Teff k \Bthat \quad \Tand \quad
+  \Bp_g^\beta = m_g^\beta \Bv_g^\Tcm + m_g^\Teff k \Bthat \,.
+\Eeq
+Therefore, from \eqref{eq:p_alpha_beta},
+\Beq
+\Delta \Bp = \Bp_g^\alpha - \Bp_g^{\alpha 0}
+           = m_g^\alpha \Bv_g^\Tcm - m_g^\Teff k \Bthat - m_g^\alpha \Bv_g^{\alpha 0} 
+           = m_g^\alpha (\Bv_g^\Tcm - \Bv_g^{\alpha 0}) - m_g^\Teff k \Bthat \,.
+\Eeq
+The quantity
+\Beq
+  \Delta \Bp^0 := m_g^\alpha (\Bv_g^\Tcm - \Bv_g^{\alpha 0})
+\Eeq
+is the initial change of momentum before tangential correction.
+Since the contact force ($\Bf^c$) is given by the rate of change of momentum due to contact, we
+have
+\Beq
+  \Bf^{c0} = \frac{\Delta \Bp^0}{\Delta t} \quad \Tand \quad
+  \Bf^c = \frac{\Delta \Bp}{\Delta t} = \Bf^{c0} - \frac{m_g^\Teff k \Bthat}{\Delta t} \,.
+\Eeq
+where $\Delta t$ is the timestep size.
+The contact compressive traction is found from the normal component of the contact force needed to
+prevent interpenetration:
+\Beq
+  T^c_n = -\frac{1}{A^c}\,\Bf^{c0}\cdot\Bn
+\Eeq
+where $A^c$ is the contact area.  The tangential contact traction can be found using a
+contact law:
+\Beq
+  T^c_t = \frac{1}{A^c}\,\Bf^c\cdot\Bthat
+        = \frac{1}{A^c}\left[\Bf^{c0}\cdot\Bthat - \frac{m_g^\Teff k}{\Delta t}\right] \,.
+\Eeq
+Therefore, if $T^c_t = T^c_t(T^c_n)$ is a contact law, 
+\Beq
+  k = \frac{\Delta t}{m_g^\Teff} \left[\Bf^{c0} \cdot \Bthat - A^c T^c_t(T^c_n)\right] \,.
+\Eeq
+We can compute $k$ using the contact law $T^c_t(T^c_n)$ and then adjust $\Bv_g^\alpha$
+and $\Bv_g^\beta$ using \eqref{eq:p_alpha_beta}.  Note that this process is identical to that
+used in the Bardenhagen at al. algorithm.  The main difficulty is in finding where contact has occurred
+and the quantities $\Bn$, $\Bthat$, and $A^c$.
+
 
