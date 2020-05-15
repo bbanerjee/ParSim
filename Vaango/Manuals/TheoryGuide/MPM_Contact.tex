@@ -90,7 +90,7 @@ friction coefficient
 Returning to the problem of computing object outward normals at a grid point, the
 traditional approach is to compute volume gradients using the set of particles influencing
 a node:
-\Beq
+\Beq \label{eq:vol_grad}
   \Bg_g^\alpha = \sum_{p^\alpha} \overbar{\BGv}_{gp} V_p 
 \Eeq
 where the gradients $\overbar{\BGv}_{gp}$ are as defined in \eqref{eq:G_mpm}, \eqref{eq:G_gimp}, and
@@ -175,5 +175,134 @@ We can compute $k$ using the contact law $T^c_t(T^c_n)$ and then adjust $\Bv_g^\
 and $\Bv_g^\beta$ using \eqref{eq:p_alpha_beta}.  Note that this process is identical to that
 used in the Bardenhagen at al. algorithm.  The main difficulty is in finding where contact has occurred
 and the quantities $\Bn$, $\Bthat$, and $A^c$.
+
+The basic contact identification condition used in this approach, and in the Bardenhagen et al.
+approach, is
+\Beq \label{eq:nairn_condition}
+  (\Bv_g^\beta - \Bv_g^\alpha)\cdot \frac{\Bg_g^\alpha - \Bg_g^\beta}{\Norm{\Bg_g^\alpha - \Bg_g^\beta}{}}
+    < 0 \quad \Tand \quad T^c_n > 0
+\Eeq
+where $\Bg_g$ is the volume gradient defined in \eqref{eq:vol_grad}.  This condition is a variation
+of \eqref{eq:contact_constraint_bard} and is a necessary, but not sufficient, condition to detect
+whether the two objects are approaching each other and in contact.  However, $T^c_n > 0$ even when
+the objects are not touching and a separation condition is needed to correctly identify contact.
+
+The logistic regression approach developed in ~\cite{Nairn2020} attempts to identify contact
+without having to rely purely on grid information.  This approach requires a set of
+particles (point-cloud) in the neighborhood of a grid point that satisfies \eqref{eq:nairn_condition}.
+The aim of this technique is to identify a plane within the point-cloud that best separates
+the two objects.  The normal to this plane is the contact normal $\Bn_g$.  The logistic function
+penalizes points as a function of their distance from a preferred separation plane.
+
+The logistic regression method for separation detection is described next.  Let $\BxT_p$ be
+the homogeneous coordinate representation of a particle position, i.e., $\BXv_p = (\Bx_p, 1)
+ =: (X_1, X_2, X_3, X_4)$,
+where $\Bx_p = (x_p^1, x_p^2, x_p^3)$ is the particle position.
+Let $\BNv$ be the corresponding normal vector of the separation plane, i.e., $\BNv = (\Bn, N_4)$
+where $\Bn = (n_1, n_2, n_3) =: (N_1, N_2, N_3)$ is the normal to the separation plane and
+$n_4$ is an offset.  The equation of the desired separation plane is
+\Beq
+  \BXv \cdot \BNv = 0
+\Eeq
+where $\BXv$ is the vector of particle positions.  Let there be $P$ particles in the point-cloud
+consisting of points from objects $\alpha$ and $\beta$.  Define a particle label $c_p$ as:
+\Beq
+  c_p = \begin{cases}
+       -1 & \quad \text{for particles in object}~ \alpha \\
+        1 & \quad \text{for particles in object}~ \beta.
+       \end{cases}
+\Eeq
+The objective function that has to be minimized is the error
+\Beq
+  E = \sum_{p=1}^P w_p \left[\CalL(\BXv_p, \BNv) - c_p\right]^2 + \sum_{j=1}^4 \lambda_j^2 N_j^2 
+\Eeq
+where $w_p$ are weights, $\lambda_j^2$ are penalty factors that help regularize the error function and
+$\CalL$ is the logistic function given by
+\Beq
+  \CalL(\BXv,\BNv) = \frac{2}{1 + \exp(-\BXv\cdot\BNv)} - 1 \,.
+\Eeq
+The minimum of $E$ is achieved when $\Partial{E}{\BNv} = \Bzero$ and $\Partial{E}{\lambda} = 0$.
+From the first requirement
+\Beq \label{eq:dE_dN}
+  \Partial{E}{N_i} = 
+    2 \sum_{p=1}^P w_p \left[\CalL(\BXv_p, \BNv) - c_p\right] \Partial{\CalL}{N_i} +
+    2 \sum_{j=1}^4 \lambda_j^2 N_j \Partial{N_j}{N_i} = 0 
+\Eeq
+where
+\Beq
+  \Bal
+  \Partial{\CalL}{N_i} & = 2\Partial{}{N_i}\left[1 + \exp(-X_m N_m)\right]^{-1}
+    = -2\left[1 + \exp(-X_m N_m)\right]^{-2}\Partial{}{N_i}\exp(-X_m N_m) \\
+  & = 2\left[1 + \exp(-X_m N_m)\right]^{-2}\exp(-X_m N_m) X_m\Partial{N_m}{N_i} \\
+  & = 2\left[1 + \exp(-X_m N_m)\right]^{-2}\exp(-X_m N_m) X_i \,.
+  \Eal
+\Eeq
+Define
+\Beq
+  \theta_p := -\BXv_p \cdot \BNv \quad \Tand \quad \phi_p := 1 + \exp(\theta_p) \,.
+\Eeq
+Then, in vector form, 
+\Beq \label{eq:dL_dN}
+  \Partial{\CalL}{\BNv}  = \frac{2\exp(\theta_p)}{\phi_p^2} \,\BXv
+  \quad \Tand \quad \CalL(\BXv_p,\BNv) = \frac{2}{\phi_p} - 1\,.
+\Eeq
+Returning to \eqref{eq:dE_dN}, we can write
+\Beq
+  \Partial{E}{N_i} = 
+    2 \sum_{p=1}^P w_p \left[\CalL(\BXv_p, \BNv) - c_p\right] \Partial{\CalL}{N_i} +
+    2 \lambda_i^2 N_i = 0 \,.
+\Eeq
+Similarly,
+\Beq
+  \Partial{E}{\lambda_i} = 2 \sum_{j=1}^4 \lambda_j \Partial{\lambda_j}{\lambda_i} N_j^2
+  = \lambda_i N_i^2 = 0
+\Eeq
+Then, in vector form, the system of equations needed to solve for $\BNv$ and $\Blambda$ is
+\Beq \label{eq:nonlinear_N}
+  \boxed{
+  \Bal
+    & \sum_{p=1}^P w_p \left[\CalL(\BXv_p,\BNv) - c_p\right]\Partial{\CalL}{\BNv} +
+     (\Blambda \odot \Blambda) \odot \BNv = 0 \quad  \Tand\\
+    & \Blambda \odot (\BNv \odot \BNv) = 0
+  \Eal
+  }
+\Eeq
+where
+\Beq
+  \BNv = (N_1, N_2, N_3, N_4) ~,~
+  \Blambda = (\lambda_1, \lambda_2, \lambda_3, \lambda_4) ~,~
+  \Ba\odot\Bb = (a_1 b_1, a_2 b_2, a_3 b_3, a_4 b_4) \,.
+\Eeq
+The second set of equations in \eqref{eq:nonlinear_N} suggest that the solution will
+improve as $\Blambda \rightarrow 0$.
+Given a vector $\Blambda$, the first equation in \eqref{eq:nonlinear_N} can be solved for $\BNv$ using
+Newton's method.
+Define
+\Beq \label{eq:Y_N}
+  \BYv(\BNv) := \sum_{p=1}^P w_p \left[\CalL(\BXv_p,\BNv) - c_p\right]\Partial{\CalL}{\BNv} +
+     (\Blambda \odot \Blambda) \odot \BNv \,.
+\Eeq
+Then, with $\BIv$ denoting the $4 \times 4$ identity matrix, 
+\Beq \label{eq:dY_dN}
+\Partial{\BYv}{\BNv} = \sum_{p=1}^P w_p 
+   \left[\Partial{\CalL}{\BNv}\otimes\Partial{\CalL}{\BNv} +
+         \left[\CalL(\BXv_p,\BNv) - c_p\right]\PPartial{\CalL}{\BNv}\right] +
+    (\Blambda \odot \Blambda) \BIv \,.
+\Eeq
+Then Newton's method gives the iterative rule
+\Beq
+  \BNv^{k+1} = \BNv^k - \left[\Partial{\BYv}{\BNv}\right]^{-1}_{\BNv^k} \cdot \BYv(\BNv^k)
+\Eeq
+Given appropriate starting values, this method with converge to the solution except in
+situations where $\BXv \cdot \BNv < 0$.  It is preferable to normalize $\BNv$ in those situations
+where the exponential becomes too large.
+
+Once the $\BNv$ vector has been found, the unit normal to the separation plane is
+determine by normalizing $\Bn = (N_1, N_2, N_3)$.  Contact occurs at particle $p$ if 
+\Beq
+  \underset{p\in \beta}{\Tmin}\, (\Bx_p \cdot \frac{\Bn}{\Norm{\Bn}{}} - R_p) - 
+  \underset{p\in \alpha}{\Tmax}\, (\Bx_p \cdot \frac{\Bn}{\Norm{\Bn}{}} + R_p) < 0
+\Eeq
+where $R_p$ is the distance from the centroid of particle $p$ to its deformed edge along $\Bn$.
 
 
