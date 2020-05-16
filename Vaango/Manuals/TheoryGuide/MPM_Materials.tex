@@ -1,21 +1,161 @@
 
 \chapter{MPM Material Models}
-The MPM material models implemented in \Vaango we originally
-chosen for three purposes:
+The MPM material models implemented in \Vaango were originally
+chosen for the following purposes:
 \begin{itemize}
-  \item To verify the accuracy of the material point method (MPM)
-        and to validate the coupling between the computational fluid 
+  \item To verify the \Textsfc{accuracy} of the material point method (MPM)
+        and to validate the \Textsfc{coupling} between the computational fluid 
         dynamics code (ICE) and MPM.
-  \item To model the elastic-plastic deformation of metals 
+  \item To model the elastic-plastic deformation of \Textsfc{metals} 
         and the consequent damage in the regimes of 
         both high and low strain rates and high and low temperatures.
-  \item To model polymer bonded explosives 
+  \item To model \Textsfc{polymer bonded explosives} and \Textsfc{polymers}
         under various strain rates and temperatures.
-  \item To model the explosive deformation of rocks and soils.
+  \item To model the deformation pf \Textsfc{biological tissues}.
+  \item To model the explosive deformation of \Textsfc{rocks and soils}.
 \end{itemize}
 In this chapter we discuss some general features of the MPM material
 models.  Individual models are complex and are discussed in separate
 chapters.
+
+\section{Material models available in Vaango}
+As of \Vaango \version, the material models that have been implemented are:
+\begin{enumerate}
+  \item Rigid material
+  \item Ideal gas material
+  \item Water material
+  \item Membrane material
+  \item Programmed burn material
+  \item Tabular equation of state
+  \item Murnaghan equation of state
+  \item JWL++ equation of state
+  \item Hypoelastic material
+  \item Hypoelastic material with manufactured solutions
+  \item Hypoelastic material implementation in Fortran
+  \item Polar-orthotropic hypoelastic material
+  \item Compressible neo-Hookean hyperelastic material
+  \item Compressible neo-Hookean hyperelastic material with manufactured solutions
+  \item Compressible neo-Hookean hyperelastic material with damage
+  \item Unified explicit/implicit compressible Neo-Hookean hyperelastic material with damage
+  \item Compressible Neo-Hookean hyperelastic-J$_2$ plastic material with damage
+  \item Compressible Mooney-Rivlin hyperelastic material
+  \item Compressible neo-Hookean material for shells
+  \item Transversely isotropic hyperelastic material
+  \item The $p$-$\alpha$ model for porous materials
+  \item Viscoelastic material written in Fortran for damping
+  \item Simplified Maxwell viscoelastic material
+  \item Visco-SCRAM model for viscoelastic materials with cracks
+  \item Visco-SCRAM hotspot model
+  \item Tabular plasticity model
+  \item Tabular plasticity model with cap
+  \item Hypoelastic J$_2$ plasticity model with damage for high-rates
+  \item Viscoplastic J$_2$ plasticity model
+  \item Mohr-Coulomb material
+  \item Drucker-Prager material with deformation induced elastic anisotropy
+  \item CAM-Clay model for soils
+  \item Nonlocal Drucker-Prager material
+  \item Arenisca material for rocks and soils
+  \item Arenisca3 material for rocks and soils
+  \item Arena material for partially saturated soils
+  \item Arena-mixture material for mixes of partially saturated sand and clay
+  \item Brannon's soil model
+  \item Soil foam model
+\end{enumerate}
+A small subset of these models also have implementations that can be used with
+Implicit \MPM.
+
+Some of these models can work with multiple submodels such as elasticity model
+or yield condition.  As of \Vaango \version, the implemented submodels are:
+\begin{enumerate}
+  \item Equations of state:
+  \begin{enumerate}
+    \item Pressure model for Air
+    \item Pressure model for Borja's CAMClay
+    \item Pressure model for Granite
+    \item Pressure model for hyperelastic materials
+    \item Pressure model for Hypoelastic materials
+    \item Pressure model for Mie-Gruneisen equation of state
+    \item Mie-Gruneisen energy-based equation of state for pressure
+    \item Pressure model for Water
+  \end{enumerate}
+  \item Shear modulus models:
+  \begin{enumerate}
+    \item Constant shear modulus model
+    \item Shear modulus model for Borja's CAMClay
+    \item Shear modulus model by Nadal and LePoac
+    \item Mechanical Threshold Stress shear modulus model
+    \item Preston-Tonks-Wallace shear modulus model
+    \item Steinberg-Guinan shear modulus model
+  \end{enumerate}
+  \item Combined elastic modulus models:
+  \begin{enumerate}
+    \item Constant elastic modulus model
+    \item Tabular elastic modulus model
+    \item Neural net elastic modulus model
+    \item Arena elastic modulus model
+    \item Arena mixture elastic modulus model
+    \item Arenisca elastic modulus model
+  \end{enumerate}
+  \item Yield condition models:
+  \begin{enumerate}
+    \item Yield condition for Arena model
+    \item Yield condition for Arena mixture model
+    \item Yield condition for Arenisca3 model
+    \item Yield condition for CamClay model
+    \item Yield condition for Gurson model
+    \item Yield condition for Tabular plasticity with Cap
+    \item Yield condition for Tabular plasticity with
+    \item Yield condition for vonMises J$_2$ plasticity
+    \item Classic Mohr-Coulomb model
+    \item Sheng's Mohr-Coulomb model
+  \end{enumerate}
+  \item Plastic flow stress models 
+  \begin{enumerate}
+    \item Isotropic hardening plastic flow model
+    \item Johnson-Cook plastic flow model
+    \item Mechanical Threshold Stress plastic flow model
+    \item Preston-Tonks-Wallace plastic flow model
+    \item Steinberg-Guinan plastic flow model
+    \item SuvicI viscoplastic flow model
+    \item Zerilli-Armstrong metal plastic flow model
+    \item Zerilli-Armstrong polymer plastic flow model
+  \end{enumerate}
+  \item Plastic internal variable models:
+  \begin{enumerate}
+    \item Arena internal variable model
+    \item Borja internal variable model
+    \item Brannan's soil model internal variable model
+    \item Tabular plasticity with cap internal variable model
+  \end{enumerate}
+  \item Kinematic hardening models:
+  \begin{enumerate}
+    \item Prager kinematic hardening model
+    \item Armstrong-Frederick kinematic hardening model
+    \item Arena kinematic hardening model
+  \end{enumerate}
+  \item Damage models
+  \begin{enumerate}
+    \item Becker's damage model
+    \item Drucker and Becker combined damage model
+    \item Drucker loss of stability model
+    \item Johnson-Cook damage model
+    \item Hancock-MacKenzie damage model
+  \end{enumerate}
+  \item Melting model
+  \begin{enumerate}
+    \item Constant melting temperature model
+    \item Linear melting temperature model
+    \item BPS melting model
+    \item Steinberg-Guinan melting temperature model
+  \end{enumerate}
+  \item Specific heat model 
+  \begin{enumerate}
+    \item Constant specific heat modelCp.h
+    \item Cubic specific heat model
+    \item Copper specific heat model
+    \item Steel specific heat model
+  \end{enumerate}
+\end{enumerate}
 
 \subsection{Material models for the validation of MPM}
 The models that have been implemented for the verification of MPM
@@ -125,10 +265,6 @@ of the two methods discussed below.
               or not.
      \end{enumerate}
 \end{itemize}
-
-The implementations have been tested against Taylor impact test data
-for 4340 steel and HY 100 steel as well as one-dimensional problems
-which have been compared with experimental stress-strain data.  
 
 \subsection{Material models for the explosive}
 The explosive is modeled using the \Textsfc{ViscoSCRAM} constitutive 

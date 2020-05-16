@@ -188,44 +188,42 @@ MohrCoulombSheng::checkYieldNormalized(const MohrCoulombState& state) const
 double
 MohrCoulombSheng::computeYieldNormalized(const Vector6& stress) const
 {
-  double meanStress = firstInvariant(stress) / 3.0;
-  double shearStress = std::sqrt(3.0 * secondDevInvariant(stress));
+  double p = firstInvariant(stress) / 3.0;
+  double q = std::sqrt(3.0 * secondDevInvariant(stress));
   double J3 = thirdDevInvariant(stress);
   double M = (6.0 * d_yield.d_sin_phi) / (3.0 - d_yield.d_sin_phi);
-  if (shearStress > TINY) {
-    double factor =
-      -27.0 * J3 / (2.0 * shearStress * shearStress * shearStress);
-    if (!std::isfinite(factor)) {
-      factor = 1.0;
+  if (q > TINY) {
+    double sin3thetabar = -27.0 * J3 / (2.0 * q * q * q);
+    if (!std::isfinite(sin3thetabar)) {
+      sin3thetabar = 1.0;
       std::cout
-        << "**WARNING** Factor in checkYield Normalised not finite. set to 1\n"
+        << "**WARNING** sin3thetabar in checkYield Normalised not finite. set to 1\n"
            "  alpha4 = "
         << d_yield.d_alpha4 << " J3 = " << J3
-        << " shearStress = " << shearStress << "\n";
-    } else if (factor > 1) {
-      factor = 1;
-    } else if (factor < -1) {
-      factor = -1;
-    } else {
-      factor = 1 + d_yield.d_alpha4 - (1 - d_yield.d_alpha4) * factor;
-    }
+        << " q = " << q << "\n";
+    } else if (sin3thetabar > 1) {
+      sin3thetabar = 1;
+    } else if (sin3thetabar < -1) {
+      sin3thetabar = -1;
+    } 
+    double factor = 1 + d_yield.d_alpha4 - (1 - d_yield.d_alpha4) * sin3thetabar;
     double scaledAlpha = d_yield.d_alpha / std::pow(0.5 * factor, 0.25);
     if (scaledAlpha > -1.0 && scaledAlpha < 1.0) {
-      M *= M * scaledAlpha;
+      M *= scaledAlpha;
     }
   } else {
     M *= d_yield.d_alpha / std::pow(0.5 * (1 + d_yield.d_alpha4), 0.25);
   }
 
   double cohesion = d_yield.d_cohesion;
-  double yieldFnValue = shearStress / M - 2.0 * cohesion / M - meanStress;
+  double yieldFnValue = q / M - 2.0 * cohesion / M - p;
 
   // normalisation
-  yieldFnValue /= (std::abs(meanStress) + 2.0 * cohesion);
+  yieldFnValue /= (std::abs(p) + 2.0 * cohesion);
 
   if (dbg.active()) {
-    std::cout << "Check Yield: Mean Stress = " << meanStress
-              << " Shear Stress=" << shearStress << " cohesion = " << cohesion
+    std::cout << "Check Yield: Mean Stress = " << p
+              << " Shear Stress=" << q << " cohesion = " << cohesion
               << " M = " << M << " Yield Function = " << yieldFnValue << "\n";
   }
   return yieldFnValue;
