@@ -1,5 +1,144 @@
-
 \chapter{MPM Material Models}
+In this chapter we discuss some general features of the MPM material
+models.  Individual models are complex and are discussed in separate
+chapters.  Notation and definitions that are used frequently are
+also elaborated upon here.
+
+\section{Notation and definitions}
+A primary assumption made in many of the material models in Vaango is that
+stresses and (moderate) strains can be additively decomposed into volumetric and deviatoric parts.
+
+\subsection{Volumetric-deviatoric decomposition}
+The volumetric-deviatoric decomposition of stress ($\Bsig$) is expressed as
+\Beq
+  \Bsig = p\BI + \Bs
+\Eeq
+where the mean stress ($p$) and the deviatoric stress ($\Bs$) are given by
+\Beq
+  p = \Third\Tr(\Bsig) = \Third\Bsig:\BI = \tfrac{1}{3}(\sigma_{11} + \sigma_{22} + \sigma_{33})
+  \quad \Tand \quad
+  \Bs = \Bsig - p\BI = 
+    \begin{bmatrix} 
+       \sigma_{11} - p & \sigma_{12} & \sigma_{13} \\
+       \sigma_{12} & \sigma_{22} - p & \sigma_{23} \\
+       \sigma_{13} & \sigma_{23} & \sigma_{33} - p
+    \end{bmatrix} \,.
+\Eeq
+
+Similarly, the volumeric-deviatoric split of the strain ($\BVeps$) is expressed as
+\Beq
+  \BVeps = \Third \Veps_v \BI + \Beta
+\Eeq
+where the volumetric strain ($\Veps_v$) and the deviatoric strain ($\Beta$) are defined as
+\Beq
+  \Veps_v = \Tr(\BVeps) = \BVeps:\BI = \Veps_{11} + \Veps_{22} + \Veps_{33}
+  \quad \Tand \quad
+  \Beta = \BVeps - \Third \Veps_v\BI = 
+    \begin{bmatrix} 
+       \Veps_{11} - \Third \Veps_v & \Veps_{12} & \Veps_{13} \\
+       \Veps_{12} & \Veps_{22} - \Third \Veps_v & \Veps_{23} \\
+       \Veps_{13} & \Veps_{23} & \Veps_{33} - \Third \Veps_v
+    \end{bmatrix} \,.
+\Eeq
+
+\subsection{Stress invariants}
+The principal invariants and principal deviatoric invariants of the stress are used in 
+several models.  Frequently used invariants are:
+\Beq
+  \Bal
+    I_1 & = \Tr(\Bsig) = \sigma_{11} + \sigma_{22} + \sigma_{33} \\
+    I_2 & = \Half\left[\Tr(\Bsig)^2 - \Tr(\Bsig^2)\right]
+          = \sigma_{11} \sigma_{22} + \sigma_{22} \sigma_{33} + \sigma_{33} \sigma_{11}
+            -  (\sigma_{12}^2 + \sigma_{23}^2 + \sigma_{13}^2) \\
+    I_3 & = \det(\Bsig)
+          = \sigma_{11}\sigma_{22}\sigma_{33} + 2\sigma_{12}\sigma_{23}\sigma_{13}
+            - \sigma_{12}^2 \sigma_{33} - \sigma_{23}^2 \sigma_{11}
+            - \sigma_{13}^2 \sigma_{22} \\
+    J_2 & = \Half \Bs:\Bs 
+          = \tfrac{1}{6}\left[(\sigma_{11} - \sigma_{22})^2 + 
+             (\sigma_{22} - \sigma_{33})^2 + (\sigma_{33} - \sigma_{11})^2\right] +
+             (\sigma_{12}^2 + \sigma_{23}^2 + \sigma_{31}^2) \\
+    J_3 & = \det(\Bs) = \tfrac{2}{27} I_1^3 - \Third I_1 I_2 + I_3
+  \Eal
+\Eeq
+Alternatives to $I_1$, $J_2$ and $j_3$ are $p$, $q$, and $\theta$, defined as
+\Beq
+  p := \frac{1}{3} I_1~,~~ q := \sqrt{3 J_2}~,~~
+  \cos3\theta := \left(\cfrac{r}{q}\right)^3 = \frac{3\sqrt{3}}{2} \frac{J_3}{J_2^{3/2}} ~,~~
+  r^3 = \frac{27}{2} J_3\,.
+\Eeq
+A geometric accurate view of the stress state and yield surfaces is obtained if 
+the isomorphic cylindrical coordinates $z$, $\rho$, and $\theta$ are used instead, where
+\Beq
+  z := \frac{I_1}{\sqrt{3}} = \sqrt{3} p ~,~~
+  \rho := \sqrt{2 J_2} = \sqrt{\frac{2}{3}} q ~,~~
+  \cos3\theta := \frac{3\sqrt{3}}{2} \frac{J_3}{J_2^{3/2}} \,.
+\Eeq
+
+\subsection{Effective stress and strain}
+The effective stress and strain (sometimes also referred to as the shear stress and shear strain
+in the code) are defined such that the product is equal to the plastic work done.  These
+measures are strictly applicable only to $J_2$ plasticity models but have also been used elsewhere.
+
+The effective stress is defined as
+\Beq \label{eq:eff_stress}
+  \sigma_\Teff = q = \sqrt{3J_2} = \sqrt{\tfrac{3}{2} \Bs:\Bs}
+    = \sqrt{\tfrac{1}{2}\left[(\sigma_{11} - \sigma_{22})^2 + 
+             (\sigma_{22} - \sigma_{33})^2 + (\sigma_{33} - \sigma_{11})^2\right] +
+             3 (\sigma_{12}^2 + \sigma_{23}^2 + \sigma_{31}^2) } \,.
+\Eeq
+
+The effective strain is defined as
+\Beq \label{eq:eff_strain}
+  \Veps_\Teff = \sqrt{\tfrac{2}{3} \Beta:\Beta}
+\Eeq
+so that
+\Beq
+  \sigma_\Teff \Veps_\Teff = \sqrt{(\Bs:\Bs) (\Beta:\Beta)} \,.
+\Eeq
+From the definition of $\Beta$ we see that
+\Beq
+  \Bal
+  \Beta:\Beta & = \BVeps:\BVeps - \tfrac{2}{3} \Tr(\BVeps)\BI:\BVeps + \tfrac{1}{9}\left[\Tr(\BVeps)\right]^2 \BI:\BI
+     = \BVeps:\BVeps - \tfrac{2}{3} \left[\Tr(\BVeps)\right]^2 + \tfrac{1}{3}\left[\Tr(\BVeps)\right]^2
+     = \BVeps:\BVeps - \Third \left[\Tr(\BVeps)\right]^2 \\
+     &= \Veps_{11}^2 + \Veps_{22}^2 + \Veps_{33}^2 + 2\Veps_{12}^2 + 2\Veps_{23}^2 + 2\Veps_{13}^2
+       - \Third\left[ \Veps_{11}^2 + \Veps_{22}^2 + \Veps_{23}^2 + 2\Veps_{11}\Veps_{22} + 
+       2\Veps_{22}\Veps_{33} + 2\Veps_{11}\Veps_{33} \right] \\
+     &= \Third\left[(\Veps_{11} - \Veps_{22})^2 + (\Veps_{22} - \Veps_{33})^2 + (\Veps_{33} - \Veps_{11})^2 \right] + 2(\Veps_{12}^2 + \Veps_{23}^2 + \Veps_{13}^2)
+  \Eal
+\Eeq
+Therefore,
+\Beq
+  \Veps_\Teff = \sqrt{
+      \tfrac{2}{3}\left[\Third\left[(\Veps_{11} - \Veps_{22})^2 + (\Veps_{22} - \Veps_{33})^2 + (\Veps_{33} - \Veps_{11})^2\right] + 2(\Veps_{12}^2 + \Veps_{23}^2 + \Veps_{13}^2)\right]}
+\Eeq
+For volume preserving plastic deformations, $\Tr(\BVeps) = 0$, and we have
+\Beq
+  \Veps_\Teff = \sqrt{
+     \tfrac{2}{3}\left(\Veps_{11}^2 + \Veps_{22}^2 + \Veps_{33}^2\right) + 
+     \tfrac{4}{3}\left(\Veps_{12}^2 + \Veps_{23}^2 + \Veps_{13}^2\right)} 
+     = \sqrt{
+     \tfrac{2}{3}\left(\Veps_{11}^2 + \Veps_{22}^2 + \Veps_{33}^2\right) + 
+     \tfrac{1}{3}\left(\gamma_{12}^2 + \gamma_{23}^2 + \gamma_{13}^2\right)} \,.
+\Eeq
+
+\subsection{Equivalent plastic strain}
+For models where an effective plastic strain is computed, the definition is
+\Beq
+  \Veps_p^\Teff(t) = \int_0^t \sqrt{\tfrac{2}{3} \dot{\BVeps}_p(\tau):\dot{\BVeps}_p(\tau)} d\tau
+\Eeq
+where $\dot{\BVeps}_p(t)$ is the plastic strain rate.
+
+\subsection{Velocity gradient, rate-of-deformation, deformation gradient}
+The velocity gradient is represented by $\BlT$ and the defromation gradient by $\BF$.  The
+rate-of-deformation is
+\Beq
+  \BdT = \Half(\BlT + \BlT^T) \,.
+\Eeq
+
+
+\section{Material models available in Vaango}
 The MPM material models implemented in \Vaango were originally
 chosen for the following purposes:
 \begin{itemize}
@@ -11,14 +150,10 @@ chosen for the following purposes:
         both high and low strain rates and high and low temperatures.
   \item To model \Textsfc{polymer bonded explosives} and \Textsfc{polymers}
         under various strain rates and temperatures.
-  \item To model the deformation pf \Textsfc{biological tissues}.
+  \item To model the deformation of \Textsfc{biological tissues}.
   \item To model the explosive deformation of \Textsfc{rocks and soils}.
 \end{itemize}
-In this chapter we discuss some general features of the MPM material
-models.  Individual models are complex and are discussed in separate
-chapters.
 
-\section{Material models available in Vaango}
 As of \Vaango \version, the material models that have been implemented are:
 \begin{enumerate}
   \item Rigid material
@@ -31,7 +166,7 @@ As of \Vaango \version, the material models that have been implemented are:
   \item JWL++ equation of state
   \item Hypoelastic material
   \item Hypoelastic material with manufactured solutions
-  \item Hypoelastic material implementation in Fortran
+  \item Hypoelastic material implementation in FORTRAN
   \item Polar-orthotropic hypoelastic material
   \item Compressible neo-Hookean hyperelastic material
   \item Compressible neo-Hookean hyperelastic material with manufactured solutions
@@ -42,7 +177,7 @@ As of \Vaango \version, the material models that have been implemented are:
   \item Compressible neo-Hookean material for shells
   \item Transversely isotropic hyperelastic material
   \item The $p$-$\alpha$ model for porous materials
-  \item Viscoelastic material written in Fortran for damping
+  \item Viscoelastic material written in FORTRAN for damping
   \item Simplified Maxwell viscoelastic material
   \item Visco-SCRAM model for viscoelastic materials with cracks
   \item Visco-SCRAM hotspot model
@@ -64,8 +199,8 @@ As of \Vaango \version, the material models that have been implemented are:
 A small subset of these models also have implementations that can be used with
 Implicit \MPM.
 
-Some of these models can work with multiple submodels such as elasticity model
-or yield condition.  As of \Vaango \version, the implemented submodels are:
+Some of these models can work with multiple sub-models such as elasticity model
+or yield condition.  As of \Vaango \version, the implemented sub-models are:
 \begin{enumerate}
   \item Equations of state:
   \begin{enumerate}
@@ -150,7 +285,7 @@ or yield condition.  As of \Vaango \version, the implemented submodels are:
   \end{enumerate}
   \item Specific heat model 
   \begin{enumerate}
-    \item Constant specific heat modelCp.h
+    \item Constant specific heat
     \item Cubic specific heat model
     \item Copper specific heat model
     \item Steel specific heat model

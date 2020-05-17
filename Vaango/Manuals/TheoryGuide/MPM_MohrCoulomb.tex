@@ -5,18 +5,71 @@ The classical Mohr-Coulomb model is a workhorse of rock and soil plasticity mode
 This model is typically hard to implement for implicit codes because of the
 difficulties encountered in computing tangent stiffness matrices near the corners (as viewed from the
 hydrostatic axis).  However, that problem is not encountered in explicit codes and corners can be
-handled relatively easily.  The \Vaango implementation of Mohr-Coulomb plasticity includes two variations
-on the shape of the yield surface:
-\begin{itemize}
- \item the classical model
- \item the Sheng et al. variation of the yield surface~\cite{Sheng2000}.
-\end{itemize}
+handled relatively easily.  
+
+The \Vaango implementation of Mohr-Coulomb plasticity uses a linear elastic model and
+perfect plasticity.  There are also features that allow the shear modulus, cohesion etc. to
+vary with deformation and for the effect of water content to be modelled without
+a fully coupled saturation/porosity model.  A nonlocal correction features is also included.
 \begin{NoteBox}
+  Stresses and the rate-of-deformation are unrotated
+  using the beginning of the timestep deformation gradient polar decomposition before any
+  constitutive relations are evaluated.  The updated stress is rotated back using the deformation 
+  gradient decomposition at the end of the time step.
+  \vspace{12pt}
+
   The convention used for this model is that stresses are positive in compression and that the principal
   stresses are in the order $\sigma_1 > \sigma_2 > \sigma_3$.  The model assumes that the plastic potential
   (alternatively referred to as the dilation model) and yield function have the same form but the angles
   may differ.  The angle of the plastic potential function is denoted $\psi$.
+  \vspace{12pt}
+
+  The implementation is largely in Voigt notation with stresses arranged in the sequence
+  ($\sigma_{11}$, $\sigma_{22}$, $\sigma_{33}$, $\sigma_{12}$, $\sigma_{13}$, $\sigma_{23}$). 
 \end{NoteBox}
+
+\section{Elasticity model}
+Isotropic linear hypoelastic behavior is assumed, i.e, the stress-rate $\dot{\Bsig}$ is linearly 
+related to the rate-of-deformation $\BdT$.  
+\Beq
+  \dot{\Bsig} = \left(K - \tfrac{2}{3} G\right) \Tr(\BdT) \BI + 2G \BdT
+\Eeq
+where $K$ is the bulk modulus and $G$ is the shear modulus.  These are related to the
+Young's modulus ($E$) and the Poisson's ratio ($\nu$) by
+\Beq
+   K = \frac{E}{3(1 - 2\nu)} \quad \Tand \quad G = \frac{E}{2(1+\nu)} \,.
+\Eeq
+The elastic tangent modulus at any time $t$ is given by
+\Beq
+  \SfC = \begin{bmatrix}
+         K + \tfrac{4}{3} G &  K - \tfrac{2}{3} G &  K - \tfrac{2}{3} G &  0 & 0 & 0 \\
+         K - \tfrac{2}{3} G &  K + \tfrac{4}{3} G &  K - \tfrac{2}{3} G &  0 & 0 & 0 \\
+         K - \tfrac{2}{3} G &  K - \tfrac{2}{3} G &  K + \tfrac{4}{3} G &  0 & 0 & 0 \\
+         0 & 0 & 0 & 2 G & 0 & 0\\
+         0 & 0 & 0 & 0 & 2 G & 0 \\
+         0 & 0 & 0 & 0 & 0 & 2 G\
+         \end{bmatrix}
+\Eeq
+
+A variable modulus model that depends on a varying cohesion can also be activated if desired.  The 
+model has the form
+\Beq
+  G(t) = \frac{M c(t)}{2 (1 + \nu_y)} ~,~~
+  K(t) = \frac{M c(t)}{3 (1 - 2 \nu_y)}
+\Eeq
+where $M$ and $\nu_y$ are model parameters, and $c(t)$ is a time-varying cohesive strength.
+The model is initialized such that $G(0) = G$ and $K(0) = K$ when $c(0) = c$, the initial
+cohesive strength, i.e., $E = Mc$ and $\nu_y = \nu$.
+
+\section{Yield functions}
+The model includes two variations on the shape of the yield surface ($f(\Bsig) = 0$):
+\begin{itemize}
+ \item the classical model
+ \item the Sheng et al. variation of the yield surface~\cite{Sheng2000}.
+\end{itemize}
+The second does not have sharp edges but is not stricty convex and should not be applied 
+when stress states close to the vertex of Mohr-Coulomb cone are expected.  Plastic states
+are achieved when $f(\Bsig) \ge 0$ and elastic states when $f(\Bsig) < 0$.
 
 \subsection{Classical Mohr-Coulomb yield surface}
 The classical Mohr-Coulomb yield surface expressed in terms of the principal stresses
@@ -75,25 +128,6 @@ Plots of the Mohr-Coulomb surface in the octahedral and Rendulic planes are show
   \label{fig:MC}
 \end{figure}
 
-The normal to the yield surface is given by
-\Beq
-  \BnT = \Partial{f}{\Bsig}  = \Deriv{R}{\theta}\Partial{\theta}{\Bsig} \,q 
-                              + R(\theta)\, \Partial{q}{\Bsig} 
-                              - \Partial{p}{\Bsig}~\sin\phi \,.
-\Eeq
-where
-\Beq
-  \Bal
-  \Deriv{R}{\theta} & = \tfrac{1}{\sqrt{3}}~\cos\left(\theta+\cfrac{\pi}{3}\right) +
-                      \tfrac{1}{3}\sin\phi~\sin\left(\theta+\cfrac{\pi}{3}\right)  \\
-  \Partial{\theta}{\Bsig} & = 
-     -\frac{1}{\sin 3\theta}\left[\frac{9}{2 q^3} \Partial{J_3}{\Bsig} - \frac{r^3}{q^4} \Partial{q}{\Bsig}\right]
-   = -\frac{1}{\sin 3\theta}\left[\frac{9}{2 q^3} \left(\Bs \cdot \Bs - \tfrac{2}{3} J_2 \BI\right) - \frac{r^3}{q^4} \Partial{q}{\Bsig} \right] \\
-  \Partial{q}{\Bsig} & = \frac{\sqrt{3}}{2\sqrt{J_2}} \Partial{J_2}{\Bsig}
-                     = \frac{\sqrt{3}}{2\sqrt{J_2}} \Bs  \\
-  \Partial{p}{\Bsig} & = \tfrac{1}{3} \Partial{I_1}{\Bsig} = \tfrac{1}{3} \BI \,.
-  \Eal
-\Eeq
 
 \subsection{Sheng et al. yield surface}
 The yield function of the Mohr-Coulomb yield surface can be expressed in $p$--$q$ space as
@@ -141,4 +175,136 @@ This yield surface is not convex and should be avoided in computations.
   \caption{Profiles of the modified Mohr-Coulomb yield surface.}
   \label{fig:MC_Sheng}
 \end{figure}
+\begin{NoteBox}
+Note that the angle $\theta_s$ in \cite{Sheng2000} is defined as
+\Beq
+  \sin 3\theta_s = -\frac{27}{2} \frac{J_3}{q^3} = -\cos 3\theta ~,~~ \theta_s = \theta - \tfrac{\pi}{6} \,.
+\Eeq
+For that definition, triaxial compression occurs at $\theta_s = \pi/6$ whereas with our
+definition it occurs at $\theta = \pi/3$.
+\end{NoteBox}
+A variant of the model in \eqref{eq:Sheng_mod} is implemented in \Vaango:
+\Beq
+  f = \frac{q}{M} - \frac{2c}{M} - p ~,~~
+  M = \frac{M_0 \alpha}{\left[\Half \left[1 + \alpha^4 - (1 - \alpha^4) \sin(3\theta_s)\right]\right]^{1/4}} ~,~~
+  M_0 = \frac{6\sin\phi}{3 - \sin\phi} \,.
+\Eeq
+This model is visualized in Figure~\ref{fig:MC_Sheng_imp} and is not convex.
+\begin{figure}[htbp!]
+  \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.7\textwidth]{Figs/mohr_coulomb/MC_sheng_octahedral_imp.png}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.7\textwidth]{Figs/mohr_coulomb/MC_sheng_3D_imp.png}
+  \end{subfigure}
+  \caption{Profiles of the modified Mohr-Coulomb yield surface as implemented in \Vaango.}
+  \label{fig:MC_Sheng_imp}
+\end{figure}
+
+\section{Variable cohesive strength}
+A time varying cohesive strength model can be activated if necessary.  Under certain
+circumstances, the cohesive strength is assumed to depend on the effective strain
+$\Veps_\Teff$ (see definition in \eqref{eq:eff_strain}) and an effective strain-rate
+$\dot{\Veps}_\Teff$.  The strain is computed
+from the unrotated rate-of-deformation $\BdT$ using
+\Beq
+  \BVeps(t_{n+1}) = \BVeps(t_n)  + \BdT \Delta t \quad \text{where} \quad
+  \Delta t = t_{n+1} - t_n \,.
+\Eeq
+The effective strain is then computed using
+\Beq
+  \Veps_\Teff = \sqrt{
+      \tfrac{2}{3}\left[\Third\left[(\Veps_{11} - \Veps_{22})^2 + (\Veps_{22} - \Veps_{33})^2 + (\Veps_{33} - \Veps_{11})^2\right] + 2(\Veps_{12}^2 + \Veps_{23}^2 + \Veps_{13}^2)\right]} \,.
+\Eeq
+An effective strain-rate, $\dot{\Veps}_\Teff$, is also computed from
+\Beq
+  \dot{\Veps}_\Teff = \sqrt{
+      \tfrac{2}{3}\left[\Third\left[(d_{11} - d_{22})^2 + (d_{22} - d_{33})^2 + (d_{33} - d_{11})^2\right] + 2(d_{12}^2 + d_{23}^2 + d_{13}^2)\right]} \,.
+\Eeq
+
+For situations during which a rate-dependent undrained shear transition is important, the
+cohesion model takes the form
+\Beq
+  c(t) = \begin{cases}
+            S_t a_1 W^{-b_1} & \quad \text{for}~ \dot{\Veps}_\Teff \le \dot{\Veps}_\Tref \\
+            S_t a_1 W^{-b_1} \left(\cfrac{\dot{\Veps}_\Teff}{\dot{\Veps}_\Tref}\right)^\beta & 
+               \quad \text{for}~ \dot{\Veps}_\Teff > \dot{\Veps}_\Tref 
+         \end{cases}
+\Eeq
+where $S_t$ is a softening parameter, $a_1, b_1$ are water influence parameters, 
+$\dot{\Veps}_\Tref$ is a reference strain-rate, and $\beta$ is a strain-rate parameter.
+
+If the cohesion varies linearly with depth, the model that can be used to compute
+depth-dependent values has the form
+\Beq
+  c(t) = c + A (\Bx_p\cdot\Bn_d  - y_\Tref)
+\Eeq
+where $A$ is a slope parameter and $y_\Tref$ is a reference depth value. The particle
+position is $\Bx_p$ and $\Bn_d$ is the depth direction (aligned with the axes of the computational
+domain).
+
+If softening is activated, the cohesive strength is modified if the condition
+\Beq
+  \Veps_\Teff > \frac{c}{G}
+\Eeq
+where $c$ is the cohesive strength and $G$ is the shear modulus.  The softening model
+has the form
+\Beq
+  c(t) = c \left[ \frac{1}{S_t} + \left(1 - \frac{1}{S_t}\right) 2.71^{\Veps_\Teff/\Veps_{95}}\right]
+\Eeq
+where $S_t$ is the softening parameter used earlier and $\Veps_{95}$ is a reference effective strain.
+
+Finally, if a water retention model is used to modify the cohesive strength, a suction value
+$\psi_m$ is computed and the cohesion is computed as
+\Beq
+  c(t) = c + \psi_m \tan\phi_b
+\Eeq
+where $\phi_b$ is a water retention parameter.  The suction is computed using the van Genuchten
+model:
+\Beq
+ \theta(\psi) = \theta_r + \frac{\theta_s - \theta_r}{\left[ 1+(\alpha |\psi_m|)^n \right]^{1-1/n}}
+\Eeq
+where $\theta(\psi)$ is the water retention curve, $|\psi_m|$ is the suction pressure,
+$\theta_s$ is the saturated water content, $\theta_r$ is the residual water content,
+$\alpha > 0$ is a parameter related to the inverse of the air entry suction, and
+$n > 1$ is a measure of the pore-size distribution.
+
+\section{Flow rule}
+A non-associated flow rule is assumed such that the plastic strain-rate $\BdT_p$ is given by
+\Beq
+  \BdT_p = \dot{\lambda} \Partial{g}{\Bsig}
+\Eeq
+where
+\Beq
+  g(\Bsig) = R(\theta)\,q - p~\sin\psi - c\cos\psi  
+\Eeq
+and $\psi$ is the dilation angle.  Typically $\psi$ is taken to be equal to $\phi$, the friction
+angle.
+
+The normal to the plastic potential surface is given by
+\Beq
+  \BnT = \Partial{g}{\Bsig}  = \Deriv{R}{\theta}\Partial{\theta}{\Bsig} \,q 
+                              + R(\theta)\, \Partial{q}{\Bsig} 
+                              - \Partial{p}{\Bsig}~\sin\psi \,.
+\Eeq
+where
+\Beq
+  \Bal
+  \Deriv{R}{\theta} & = \tfrac{1}{\sqrt{3}}~\cos\left(\theta+\cfrac{\pi}{3}\right) +
+                      \tfrac{1}{3}\sin\psi~\sin\left(\theta+\cfrac{\pi}{3}\right)  \\
+  \Partial{\theta}{\Bsig} & = 
+     -\frac{1}{\sin 3\theta}\left[\frac{9}{2 q^3} \Partial{J_3}{\Bsig} - \frac{r^3}{q^4} \Partial{q}{\Bsig}\right]
+   = -\frac{1}{\sin 3\theta}\left[\frac{9}{2 q^3} \left(\Bs \cdot \Bs - \tfrac{2}{3} J_2 \BI\right) - \frac{r^3}{q^4} \Partial{q}{\Bsig} \right] \\
+  \Partial{q}{\Bsig} & = \frac{\sqrt{3}}{2\sqrt{J_2}} \Partial{J_2}{\Bsig}
+                     = \frac{\sqrt{3}}{2\sqrt{J_2}} \Bs  \\
+  \Partial{p}{\Bsig} & = \tfrac{1}{3} \Partial{I_1}{\Bsig} = \tfrac{1}{3} \BI \,.
+  \Eal
+\Eeq
+
+\subsection{Nonlocal shear correction}
+The Mohr-Coulomb model contains a nonlocal correction feature that
+uses neighbor information to regularize solutions.  Neighboring particles that
+contribute to the nonlocal effect are identified using a nonlocal length ($\ell_n$).
  

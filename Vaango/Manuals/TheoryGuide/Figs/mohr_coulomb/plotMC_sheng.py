@@ -91,21 +91,21 @@ def mohr_coulomb_sheng(c, phi, low, high, numcells):
       #f = Rmc * sigbar - sigm * sin_phi - c * cos_phi
 
       # Sheng model
-      p, q, theta = pqtheta(stress_mat)
-      Theta = theta + np.pi / 3.0
-      Rmc = 1 / sqrt3 * np.sin(Theta) - 1 / 3 * np.cos(Theta) * sin_phi
-      ctilde = c * cos_phi / Rmc
-      R0 = 1 / sqrt3 * np.sin(2.0*np.pi/3) - 1 / 3 * np.cos(2.0*np.pi/3) * sin_phi
-      M0 = sin_phi / R0
-      Mtilde = M0 * (2.0 * alpha4/(1 + alpha4 + (1 - alpha4)*np.cos(3*theta)))**(1/4)
-      f = q - Mtilde * p - ctilde
+      #p, q, theta = pqtheta(stress_mat)
+      #Theta = theta + np.pi / 3.0
+      #Rmc = 1 / sqrt3 * np.sin(Theta) - 1 / 3 * np.cos(Theta) * sin_phi
+      #ctilde = c * cos_phi / Rmc
+      #R0 = 1 / sqrt3 * np.sin(2.0*np.pi/3) - 1 / 3 * np.cos(2.0*np.pi/3) * sin_phi
+      #M0 = sin_phi / R0
+      #Mtilde = M0 * (2.0 * alpha4/(1 + alpha4 + (1 - alpha4)*np.cos(3*theta)))**(1/4)
+      #f = q - Mtilde * p - ctilde
 
       # Sheng model implemented
-      #p, q, theta = pqtheta(stress_mat)
-      #theta_bar_s = np.pi/6 - theta
-      #M0 = (6 * sin_phi)/(3 - sin_phi)
-      #Mtilde = M0 * (2.0 * alpha4/(1 + alpha4 + (1 - alpha4)*np.cos(3*theta)))**(1/4)
-      #f = q/Mtilde - p - 2.0 * c/Mtilde
+      p, q, theta = pqtheta(stress_mat)
+      theta_bar_s = theta - np.pi/6
+      M0 = (6 * sin_phi)/(3 - sin_phi)
+      M = M0 * alpha / (0.5*(1 + alpha4 - (1 - alpha4)*np.sin(3*theta_bar_s)))**(1/4)
+      f = q/M - 2.0 * c/M - p
 
       # normalize
       ind = np.argsort(stress)
