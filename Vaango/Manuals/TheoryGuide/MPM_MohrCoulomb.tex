@@ -67,7 +67,7 @@ The model includes two variations on the shape of the yield surface ($f(\Bsig) =
  \item the classical model
  \item the Sheng et al. variation of the yield surface~\cite{Sheng2000}.
 \end{itemize}
-The second does not have sharp edges but is not stricty convex and should not be applied 
+The second does not have sharp edges but is not strictly convex and should not be applied 
 when stress states close to the vertex of Mohr-Coulomb cone are expected.  Plastic states
 are achieved when $f(\Bsig) \ge 0$ and elastic states when $f(\Bsig) < 0$.
 
@@ -161,7 +161,7 @@ Note that from \eqref{eq:R_theta},
   R(\pi/3) = \frac{3 + \sin\phi}{6} \quad \implies \quad
   M(\pi/3) = \frac{6\sin\phi}{3 + \sin\phi}\,.
 \Eeq
-Plots of the modified yield surfac surface in the octahedral and front view are shown in Figure~\ref{fig:MC_Sheng}.
+Plots of the modified yield surface surface in the octahedral and front view are shown in Figure~\ref{fig:MC_Sheng}.
 This yield surface is not convex and should be avoided in computations.
 \begin{figure}[htbp!]
   \begin{subfigure}[t]{0.5\textwidth}
@@ -341,5 +341,49 @@ approach:
 \Eeq
 where $\Bsig_n$ is the nonlocal stress. 
 
-\subsection{Stress integration}
-The
+\subsection{Explicit stress integration}
+An additive decomposition of the unrotated rate-of-deformation into elastic and plastic parts is assumed:
+\Beq
+  \BdT = \BdT_e + \BdT_p
+\Eeq
+Elastic and plastic strains are defined using
+\Beq
+  \BVeps = \int_0^t \BdT(\tau) d\tau  = \BVeps_e + \BVeps_p \quad \implies \quad 
+  \BVeps_e = \int_0^t \BdT_e(\tau) d\tau ~,~~ \BVeps_p = \int_0^t \BdT_p(\tau) d\tau \,.
+\Eeq
+The strain increment during a timestep, $\Delta t = t_{n+1} - t_n$, is computed as
+\Beq
+  \Delta\BVeps = \BdT \Delta t \,.
+\Eeq
+The stress update begins with a check whether the stress state at the beginning of the
+time step is on the yield surface.  This is necessary because the modification of the cohesion
+and the elastic moduli may have affected the shape of the yield surface.
+Special checks are used to determine if the strain increment leads to unloading.  Details
+are omitted for brevity.
+
+An elastic trial stress state is computed
+\Beq
+  \Bsig^\Trial = \Bsig_n + \SfC_n : \Delta\BVeps
+\Eeq
+where $\SfC$ tangent elastic modulus tensor.
+
+If the trial stress is in the plastic region, the intersection of the stress increment
+vector $\Delta \Bsig = \Bsig^\Trial - \Bsig_n$ with the yield surface is 
+computed using bisection.  The strain increment corresponding to this reduced stress
+increment is the increment in elastic strain and the stress on the yield surface is
+the stress at the end of the elastic strain increment.
+
+The remainder of the strain increment is purely plastic.  The trial stress now has to be
+projected back to the yield surface along the projection vector $\BP$~\cite{Brannon2000a}, given by
+\Beq  
+  \BP = -\SfC : \Partial{g}{\Bsig} \,.
+\Eeq  
+The intersection of the projection vector with the yield surface is found via bisection.
+The updated stress is the intersection point on the yield surface.
+
+Several Runge-Kutta schemes are implemented in the \Vaango code to break-up large
+The intersection of the projection vector with the yield surface is found via bisection.
+strain increments into smaller steps.  However, the two-step modified Euler scheme is accurate
+enough for our purposes.
+
+This procedure is repeated for each timestep.
