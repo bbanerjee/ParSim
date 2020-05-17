@@ -307,4 +307,39 @@ where
 The Mohr-Coulomb model contains a nonlocal correction feature that
 uses neighbor information to regularize solutions.  Neighboring particles that
 contribute to the nonlocal effect are identified using a nonlocal length ($\ell_n$).
+Let there be $N_q$ such particles in the neighborhood of particle $p$.
+
+The nonlocal effective strain ($\Veps_\Teff^n$) and effective strain rate ($\dot{\Veps}_\Teff^n$)
+are computed as
+\Beq
+  \Veps_\Teff^n = (1 - n) \Veps_\Teff + n \left(\cfrac{\sum_{q=1}^{N_q} V_w^q \Veps_\Teff}{\sum_{q=1}^{N_q} V_w^q}\right)
+  \quad \Tand \quad
+  \dot{\Veps}_\Teff^n = (1 - n) \dot{\Veps}_\Teff + n \left(\cfrac{\sum_{q=1}^{N_q} V_w^q \dot{\Veps}_\Teff}{\sum_{q=1}^{N_q} V_w^q}\right)
+\Eeq
+where $n$ is a nonlocal parameter, $\Veps_\Teff, \dot{\Veps}_\Teff$ are the local effective strain
+and strain-rate, respectively, and $V_w^q$ is a weighted volume of neighboring particle $q$ whose
+local volume is $V_q$.  The expression for $V_w^q$ is
+\Beq
+  V_w^q = w_{pq} V_q \quad \text{where} \quad 
+   w_{pq} = \frac{\ell}{\ell_n}\exp\left(-\frac{\ell^2}{\ell_n^2}\right) ~,~~
+   \ell = \Norm{\Bx_q - \Bx_p}{} \,.
+\Eeq
+If a regularization flag is activated, and $\Veps_\Teff^n > c/G$, where $c$ is the cohesion and $G$ is
+the shear modulus, a time-scale is included in the computation:
+\Beq
+  \Veps_\Teff^n \leftarrow  \Veps_\Teff^n \frac{t_{\text{FE}}}{t_{\text{shear}}} ~,~~
+  \dot{\Veps}_\Teff^n \leftarrow  \dot{\Veps}_\Teff^n \frac{t_{\text{FE}}}{t_{\text{shear}}}  \,.
+\Eeq
+where $t_{\text{FE}}$ and $t_{\text{shear}}$ are regularization time scales.  The nonlocal 
+effective strain is typically not used directly in the model except for modifying the cohesion
+and the elastic moduli.
  
+However, after the stress has been updated, a nonlocal correction can be applied using a similar
+approach:
+\Beq
+  \Bsig^n = (1 - n) \Bsig + n \left(\cfrac{\sum_{q=1}^{N_q} V_w^q \Bsig}{\sum_{q=1}^{N_q} V_w^q}\right)
+\Eeq
+where $\Bsig_n$ is the nonlocal stress. 
+
+\subsection{Stress integration}
+The

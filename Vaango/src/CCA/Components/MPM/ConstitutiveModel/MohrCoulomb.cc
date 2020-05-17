@@ -1111,10 +1111,9 @@ MohrCoulomb::computeShearStrain(const Vector6& strain) const
   double strain23 = strain(5);
 
   double shearStrain =
-    1.0 / 2.0 *
     std::sqrt(
-      2.0 * (diff12 * diff12 + diff13 * diff13 + diff23 * diff23) +
-      3.0 * (strain12 * strain12 + strain13 * strain13 + strain23 * strain23));
+      (2.0 / 9.0) * (diff12 * diff12 + diff13 * diff13 + diff23 * diff23) +
+      (4.0 / 3.0) * (strain12 * strain12 + strain13 * strain13 + strain23 * strain23));
   return shearStrain;
 }
 
