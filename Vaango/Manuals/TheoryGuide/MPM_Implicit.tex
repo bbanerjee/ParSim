@@ -1,0 +1,206 @@
+Recall from equation~\eqref{eq:discrete_MPM_equations} that the \MPM discretized momentum
+equations can be written as a semi-algebraic system
+\Beq \label{eq:discrete_MPM_equations_1}
+  \sum_h M_{gh} \dot{\Bv}_h = \Bf_g^{\Text} -\Bf_g^{\Tint} + \Bf_g^{\Tbody} 
+      ~;~~ g = 1 \dots N_g
+\Eeq
+where the mass matrix ($\BM$), the internal force vector ($\Bf_g^{\Tint}$), 
+the body force vector ($\Bf_g^{\Tbody}$), and the  external force vector ($\Bf_g^{\Text}$)
+at grid node $g$ as
+\Beq \label{eq:fext_fint_def}
+  \Bal
+   &M_{gh} := \sum_p \rho_p\IntOmegap Y_p(\Bx)~S_g(\Bx)~S_h(\Bx)~d\Omega \\
+   &\Bf_g^{\Tint} := \sum_p V_p \Bsig_p \cdot \Av{\Grad{S_{gp}}} \\
+   &\Bf_g^{\Tbody} := \sum_p m_p\Bb_p~\Av{S_{gp}} \\
+   &\Bf_g^{\Text} := \IntGammat \Bart(\Bx)~S_g(\Bx)~d\Gamma \,.
+  \Eal
+\Eeq
+
+While the \MPM background grid is reset after each time increment, \MPM does not
+require it to be reset during each iteration of an implicit integration process.
+Therefore, during a time step, we can carry a grid displacement variable $\Bu$ that 
+can be used to compute grid accelerations $\Ba_g = \dot{\Bv}_g$ and discarded at
+the end of a time step.
+
+Let us express \eqref{eq:discrete_MPM_equations_1} in matrix form as
+\Beq
+  \BM_g \BaT_g = \BfT_g^{\Text} - \BfT_g^{\Tint} + \BfT_g^{\Tbody} 
+\Eeq
+Define the residual as
+\Beq \label{eq:mpm_residual}
+  \Br(\BuT_g^{n+1}, t_{n+1}) = \BM_g \BaT_g^{n+1} - \BfT^{\Text}(\BuT_g^{n+1}, t_{n+1}) + 
+     \BfT^{\Tint}(\BuT_g^{n+1}, t_{n+1}) - \BfT^{\Tbody}(\BuT_g^{n+1}, t_{n+1}) = \Bzero .
+\Eeq
+where the superscipt $n+1$ indicates quantities at time $t_{n+1}$ and $\BuT_g$ is the 
+$N_g \times 3$ matrix of grid
+node displacements.  We use a Newmark-$\beta$ method to integrate the acceleration:
+\Beq \label{eq:newmark_beta}
+  \Bal
+    \BuT_g^{n+1} & = \BuT^\star + \beta  \BaT_g^{n+1} (\Delta t)^2 \\
+    \BvT_g^{n+1} & = \BvT^\star + \gamma \BaT_g^{n+1} \Delta t 
+  \Eal
+\Eeq
+where
+\Beq
+  \Bal
+    \BuT^\star & = \BuT_g^n + \BvT_g^n \Delta t + \Half (1 - 2\beta) \BaT_g^n (\Delta t)^2 \\
+    \BvT^\star & = \BvT_g^n + (1 - \gamma) \BaT_g^n \Delta t \,.
+  \Eal
+\Eeq
+
+\subsection{Newton's method}
+In the \Vaango implementation, the residual is expressed in terms of the displacement.  
+However, we can implement the implicit method in terms of the velocity with no loss of
+generality.  Thus using \eqref{eq:mpm_residual} and \eqref{eq:newmark_beta}, we have
+\Beq \label{eq:mpm_residual_1}
+  \Br(\BvT_g^{n+1}, t_{n+1}) = \frac{1}{\gamma \Delta t} \BM_g (\BvT_g^{n+1} - \BvT^\star) - 
+      \BfT^{\Text}(\BvT_g^{n+1}, t_{n+1}) + 
+     \BfT^{\Tint}(\BvT_g^{n+1}, t_{n+1}) - \BfT^{\Tbody}(\BvT_g^{n+1}, t_{n+1}) = \Bzero .
+\Eeq
+The problem then reduces to finding the solution $\BvT_g^{n+1}$ of the nonlinear system of equations
+\eqref{eq:mpm_residual_1}. Newton's method is used in \Vaango with the starting 
+value of $\BvT_g^{n+1} = \BvT_g^\star$.  Dropping the subscript $g$ temporarily for convenience,
+and denoting the current Newton iteration by the subscript $k$, we can linearize the residual at 
+$\BvT_k^{n+1}$ using a Taylor expansion:
+\Beq
+  \Bzero = \Br(\BvT_{k+1}^{n+1}, t_{n+1}) = 
+     \Br(\BvT_k^{n+1}, t_{n+1}) + \Partial{\Br(\BvT_k^{n+1}, t_{n+1})}{\BvT}(\BvT^{n+1}_{k+1} - \BvT^{n+1}_k) \,.
+\Eeq
+Rearranging the above equation,
+\Beq \label{eq:Newton_step}
+  \Delta\BvT = \BvT^{n+1}_{k+1} - \BvT^{n+1}_k = 
+     -\left[\Partial{\Br(\BvT_k^{n+1}, t_{n+1})}{\BvT}\right]^{-1}
+     \Br(\BvT_k^{n+1}, t_{n+1})  = -\BK^{-1} \Br(\BvT_k^{n+1}, t_{n+1})\,.
+\Eeq
+This iterative process is continued until $\Delta \BvT$ is smaller than a given tolerance.
+The tangent matrix $\BK$, of size $N_g \times N_g$, is 
+\Beq
+  \BK = \Partial{\Br(\BvT_k^{n+1}, t_{n+1})}{\BvT} \,.
+\Eeq
+This matrix is decomposed and evaluated separately for the internal and external forces, i.e., 
+\Beq
+  \BK = \Partial{\Br(\BvT_k^{n+1}, t_{n+1})}{\BvT} 
+      = \frac{1}{\gamma \Delta t} \BM_g  - \Partial{}{\BvT}\left[\BfT^{\Text}(\BvT_g^{n+1}, t_{n+1})\right] + 
+        \Partial{}{\BvT}\left[\BfT^{\Tint}(\BvT_g^{n+1}, t_{n+1})\right] - 
+        \Partial{}{\BvT}\left[\BfT^{\Tbody}(\BvT_g^{n+1}, t_{n+1})\right] \,.
+\Eeq
+Alternatively,
+\Beq
+  \BK = \frac{1}{\gamma \Delta t} \BM_g  - \BK^{\Text}(\BvT_g^{n+1}, t_{n+1}) +  
+         \BK^{\Tint}(\BvT_g^{n+1}, t_{n+1}) -  \BK^{\Tbody}(\BvT_g^{n+1}, t_{n+1}) \,.
+\Eeq
+
+\subsection{Tangent stiffness matrix}
+The contribution to the tangent matrix ($\BK$) from the internal forces is called the
+\Textsfc{tangent stiffness matrix} ($\BK^\Tint$).  Since an updated Lagrangian formulation is used
+in \MPM, we can compute the tangent stiffness using the configuration at time $t_n$ as
+the reference configuration.
+
+Recall from \eqref{eq:fext_fint_def} that for explicit \MPM we used
+\Beq \label{eq:f_g_int_0}
+  \Bf_g^{\Tint} = \sum_p V_p \Bsig_p \cdot \Av{\Grad{S_{gp}}}  
+  \quad \text{where} \quad
+  \Av{S_{gp}} := \frac{1}{V_p} \IntOmegap Y_p(\Bx)~S_g(\Bx)~d\Omega \,.
+\Eeq
+For the computation of the tangent matrix, it is preferable to start from the
+weak form of the momentum equation \eqref{eq:weak_form}:
+\Beq \label{eq:f_int_weak}
+  I = \IntOmega \Bsig:\Grad{\Bw}~d\Omega  
+\Eeq
+which leads to integral form of equation \eqref{eq:f_g_int_0} (see \eqref{eq:integral_weak_form}):
+\Beq  \label{eq:f_g_int}
+  \Bf_g^{\Tint} = \sum_p\IntOmegap Y_p(\Bx)\Bsig_p \cdot \Grad{S_g}~d\Omega \,.
+\Eeq
+Also, since we are typically working with rates of stress in the constitutive models, it
+is preferable to express all quantities in terms of stress rates that are objective.
+It is easier to work with the Lagrangian PK-1 stress ($\BP$) at the beginning of the timestep
+rather than the spatial Cauchy stress ($\Bsig$).
+
+To convert from the spatial description \eqref{eq:f_int_weak} to a Lagrangian material 
+description, observe that
+\Beq
+  \underset{n+1}{\nabla}{\Bw} = \Partial{\Bw}{\Bx^{n+1}} = \Partial{\Bw}{\Bx^n} \cdot \Partial{\Bx^n}{\Bx^{n+1}} 
+    = \Partial{\Bw}{\Bx^n} \cdot (\Delta\BF_n^{n+1})^{-1}
+    = \Partial{\Bw}{\Bx^n} \cdot \frac{\Delta\BF_c^T}{J_n^{n+1}}
+    = \underset{n}{\nabla} \Bw \cdot \frac{\Delta\BF_c^T}{J_n^{n+1}}
+\Eeq
+where, with $\BF$ as the deformation gradient, 
+\Beq
+  \BF_{n+1} = \Delta\BF_n^{n+1} \BF_n~,~~ J_n^{n+1} = \det(\Delta\BF_n^{n+1}) ~,~~
+  \Delta\BF_c = \text{cofactor}(\Delta\BF_n^{n+1}) \,.
+\Eeq
+Therefore,
+\Beq
+  \Bal 
+   I & = \int_{\Omega^{n+1}} \Bsig^{n+1} : \underset{n+1}{\nabla}{\Bw}~d\Omega^{n+1}
+       = \int_{\Omega^n} \Bsig^{n+1} : \underset{n+1}{\nabla}{\Bw}~J_n^{n+1}\,d\Omega^n \\
+     & = \int_{\Omega^n} \Bsig^{n+1} : \left(\underset{n}{\nabla}{\Bw}\cdot \Delta\BF_c^T\right)\,d\Omega^n 
+       = \int_{\Omega^n} \left(\Bsig^{n+1} \cdot \Delta\BF_c\right) : \underset{n}{\nabla}{\Bw}\,d\Omega^n \\
+     & = \int_{\Omega^n} \BP^n : \underset{n}{\nabla}{\Bw}\,d\Omega^n 
+  \Eal
+\Eeq
+where $\BP^n$ is the first Piola-Kirchhof stress.  Following the same process as used to derive
+\eqref{eq:integral_weak_form}, we get
+\Beq  \label{eq:f_g_int_lagrangian}
+  \Bf_g^{\Tint} = \sum_p\int_{\Omega_p^n} Y_p(\Bx^n)\BP_p^n \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
+\Eeq
+Taking the material time derivative of \eqref{eq:f_g_int_lagrangian}, we have
+\Beq  \label{eq:rate_f_g_int_lagrangian}
+  \dot{\Bf}_g^{\Tint} = \sum_p\int_{\Omega_p^n} Y_p(\Bx^n)\dot{\BP}_p^n \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
+\Eeq
+Since the rate of the first Piola-Kircchoff stress is not objective, it is easier to work with
+the rate of the second Piola-Kirchhoff stress ($\BS$):
+\Beq \label{eq:rate_P}
+  \BP = \BS \cdot \BF^T \quad \implies \quad
+  \dot{\BP} = \dot{\BS} \cdot \BF^T + \BS \cdot \dot{\BF}^T \,.
+\Eeq
+Substitution of \eqref{eq:rate_P} into \eqref{eq:rate_f_g_int_lagrangian} gives
+\Beq
+  \dot{\Bf}_g^{\Tint} = \sum_p\int_{\Omega_p^n} Y_p(\Bx^n)\left[\dot{\BS}_p^n \cdot (\BF_p^n)^T + \BS_p^n \cdot (\dot{\BF}_p^n)^T\right] \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
+\Eeq
+Separating out the two components, we have
+\Beq
+  \dot{\Bf}_g^{\Tint} = 
+    \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \dot{\BS}_p^n \cdot (\BF_p^n)^T \cdot \underset{n}{\nabla}{S_g}~d\Omega^n + 
+    \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BS_p^n \cdot (\dot{\BF}_p^n)^T \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
+\Eeq
+The rate of the internal force can then be expressed as
+\Beq
+  \dot{\Bf}_g^{\Tint} = \dot{\Bf}_g^{\Tmat} + \dot{\Bf}_g^{\Tgeo}
+\Eeq
+where the material and geometric rates of the internal forces are defined as
+\Beq \label{eq:fdot_mat_geo}
+  \Bal
+   \dot{\Bf}_g^{\Tmat} & :=  \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \dot{\BS}_p^n \cdot (\BF_p^n)^T \cdot \underset{n}{\nabla}{S_g}~d\Omega^n  \\
+   \dot{\Bf}_g^{\Tgeo} & :=  \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BS_p^n \cdot (\dot{\BF}_p^n)^T \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
+  \Eal
+\Eeq
+We can now use the constitutive relation between the second Piola-Kirchhoff stress and the Green strain ($\BE$)
+\Beq
+  \dot{\BS} = \CalC : \dot{\BE}
+\Eeq
+and the relationship between the velocity gradient and the rate of change of the deformation gradient
+\Beq
+  \dot{\BF} = \BlT \cdot \BF
+\Eeq
+to write \eqref{eq:fdot_mat_geo} as
+\Beq \label{eq:fdot_mat_geo_1}
+  \Bal
+   \dot{\Bf}_g^{\Tmat} & :=  \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \left[\CalC_p^n : \dot{\BE}_p^n\right] \cdot (\BF_p^n)^T \cdot \underset{n}{\nabla}{S_g}~d\Omega^n  \\
+   \dot{\Bf}_g^{\Tgeo} & :=  \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BS_p^n \cdot \left[(\BF_p^n)^T \cdot (\BlT_p^n)^T\right] \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
+  \Eal
+\Eeq
+Noting that
+\Beq
+  \Partial{\Bf}{t} = \Partial{\Bf}{\Bv} \cdot \Partial{\Bv}{t} = \Partial{\Bf}{\Bv} \cdot \Ba
+\Eeq
+we have
+\Beq \label{eq:fdot_mat_geo_2}
+  \Bal
+   \Partial{\Bf_g^{\Tmat}}{\Bv} \cdot \Ba_g & :=  \left[\sum_p\int_{\Omega_p^n} Y_p(\Bx^n) 
+     \left[\CalC_p^n : \Partial{\BE_p^n}{\Bv}\right] \cdot (\BF_p^n)^T \cdot \underset{n}{\nabla}{S_g}~d\Omega^n\right] \cdot \Ba_g  \\
+   \Partial{\Bf_g^{\Tgeo}}{\Bv} \cdot \Ba_g & :=  \left[\sum_p\int_{\Omega_p^n} Y_p(\Bx^n) 
+     \BS_p^n \cdot \left[(\BF_p^n)^T \cdot (\BlT_p^n)^T\right] \cdot \underset{n}{\nabla}{S_g}~d\Omega^n\right] \,.
+  \Eal
+\Eeq
+

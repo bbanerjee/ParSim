@@ -539,7 +539,7 @@ Rearrangement leads to
 \Eeq
 Combining the left and right hand sides and invoking the arbitrariness of
 $\Bw_g$, for $N_g$ grid points we get equations for $g=1,2,\dots,N_g$:
-\Beq 
+\Beq \label{eq:integral_weak_form}
   \Bal
    \IntGammat \Bart(\Bx) S_g(\Bx) ~d\Gamma  
   & - \sum_p\IntOmegap Y_p(\Bx)\Bsig_p \cdot \Grad{S_g}~d\Omega 
@@ -590,9 +590,9 @@ at grid node $g$ as
   \Eal
 \Eeq
 Then, from \eqref{eq:discretized1} we get the semi-discrete system of equations
-\Beq
+\Beq \label{eq:discrete_MPM_equations}
   \sum_h M_{gh} \dot{\Bv}_h = \Bf_g^{\Text} -\Bf_g^{\Tint} + \Bf_g^{\Tbody} 
-      ~;~~ g = 1 \dots n_g
+      ~;~~ g = 1 \dots N_g
 \Eeq
 \end{NoteBox}
 The mass matrix is typically lumped such that
@@ -606,7 +606,7 @@ The mass matrix is typically lumped such that
 In that case the semi-discrete system of equations simplifes to
 \Beq
   m_{g} \dot{\Bv}_g = \Bf_g^{\Text} -\Bf_g^{\Tint} + \Bf_g^{\Tbody} 
-      ~;~~ g = 1 \dots n_g
+      ~;~~ g = 1 \dots N_g
 \Eeq
 The external force at grid nodes is more difficult to estimate and is
 typically computed from particle values using
@@ -1043,7 +1043,10 @@ Then,
 \section{Contact algorithms}
 \input{MPM_Contact.tex}
 
-\section{Pseudocode of MPM algorithm in Vaango}
+\section{Implicit time integration}
+\input{MPM_Implicit.tex}
+
+\section{Pseudocode of explicit MPM algorithm in Vaango}
 The momentum equation is solved using the \MPM algorithm while forward Euler time-stepping
 is use to integrate time derivatives.  The pseudocode of the overall algorithm is given below.
 The main quantities of interest are:
