@@ -126,7 +126,7 @@ description, observe that
 \Eeq
 where, with $\BF$ as the deformation gradient, 
 \Beq
-  \BF_{n+1} = \Delta\BF_n^{n+1} \BF_n~,~~ J_n^{n+1} = \det(\Delta\BF_n^{n+1}) ~,~~
+  \BF^{n+1} = \Delta\BF_n^{n+1} \BF^n~,~~ J_n^{n+1} = \det(\Delta\BF_n^{n+1}) ~,~~
   \Delta\BF_c = \text{cofactor}(\Delta\BF_n^{n+1}) \,.
 \Eeq
 Therefore,
@@ -139,7 +139,7 @@ Therefore,
      & = \int_{\Omega^n} \BP^n : \underset{n}{\nabla}{\Bw}\,d\Omega^n 
   \Eal
 \Eeq
-where $\BP^n$ is the first Piola-Kirchhof stress.  Following the same process as used to derive
+where $\BP^n$ is the first Piola-Kirchhoff stress.  Following the same process as used to derive
 \eqref{eq:integral_weak_form}, we get
 \Beq  \label{eq:f_g_int_lagrangian}
   \Bf_g^{\Tint} = \sum_p\int_{\Omega_p^n} Y_p(\Bx^n)\BP_p^n \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
@@ -148,59 +148,125 @@ Taking the material time derivative of \eqref{eq:f_g_int_lagrangian}, we have
 \Beq  \label{eq:rate_f_g_int_lagrangian}
   \dot{\Bf}_g^{\Tint} = \sum_p\int_{\Omega_p^n} Y_p(\Bx^n)\dot{\BP}_p^n \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
 \Eeq
-Since the rate of the first Piola-Kircchoff stress is not objective, it is easier to work with
+Since the rate of the first Piola-Kirchhoff stress is not objective, it is easier to work with
 the rate of the second Piola-Kirchhoff stress ($\BS$):
 \Beq \label{eq:rate_P}
-  \BP = \BS \cdot \BF^T \quad \implies \quad
-  \dot{\BP} = \dot{\BS} \cdot \BF^T + \BS \cdot \dot{\BF}^T \,.
+  \BP = \BF \cdot \BS \quad \implies \quad
+  \dot{\BP} = \dot{\BF} \cdot \BS + \BF \cdot \dot{\BS} \,.
 \Eeq
 Substitution of \eqref{eq:rate_P} into \eqref{eq:rate_f_g_int_lagrangian} gives
 \Beq
-  \dot{\Bf}_g^{\Tint} = \sum_p\int_{\Omega_p^n} Y_p(\Bx^n)\left[\dot{\BS}_p^n \cdot (\BF_p^n)^T + \BS_p^n \cdot (\dot{\BF}_p^n)^T\right] \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
+  \dot{\Bf}_g^{\Tint} = \sum_p\int_{\Omega_p^n} Y_p(\Bx^n)\left[\dot{\BF}_p^{n+1} \cdot \BS_p^n + \BF_p^{n+1} \cdot \dot{\BS}_p^n\right] \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
 \Eeq
 Separating out the two components, we have
 \Beq
   \dot{\Bf}_g^{\Tint} = 
-    \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \dot{\BS}_p^n \cdot (\BF_p^n)^T \cdot \underset{n}{\nabla}{S_g}~d\Omega^n + 
-    \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BS_p^n \cdot (\dot{\BF}_p^n)^T \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
+    \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \dot{\BF}_p^{n+1} \cdot \BS_p^n \cdot \underset{n}{\nabla}{S_g}~d\Omega^n + 
+    \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BF_p^{n+1} \cdot \dot{\BS}_p^n \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
 \Eeq
 The rate of the internal force can then be expressed as
 \Beq
-  \dot{\Bf}_g^{\Tint} = \dot{\Bf}_g^{\Tmat} + \dot{\Bf}_g^{\Tgeo}
+  \dot{\Bf}_g^{\Tint} = \dot{\Bf}_g^{\Tgeo} + \dot{\Bf}_g^{\Tmat}
 \Eeq
-where the material and geometric rates of the internal forces are defined as
+where the geometric and material rates of the internal forces are defined as
 \Beq \label{eq:fdot_mat_geo}
   \Bal
-   \dot{\Bf}_g^{\Tmat} & :=  \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \dot{\BS}_p^n \cdot (\BF_p^n)^T \cdot \underset{n}{\nabla}{S_g}~d\Omega^n  \\
-   \dot{\Bf}_g^{\Tgeo} & :=  \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BS_p^n \cdot (\dot{\BF}_p^n)^T \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
+   \dot{\Bf}_g^{\Tgeo} & :=  \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \dot{\BF}_p^{n+1} \cdot \BS_p^n \cdot \underset{n}{\nabla}{S_g}~d\Omega^n  \\
+   \dot{\Bf}_g^{\Tmat} & :=  \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BF_p^{n+1} \cdot \dot{\BS}_p^n \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
   \Eal
 \Eeq
-We can now use the constitutive relation between the second Piola-Kirchhoff stress and the Green strain ($\BE$)
+We can now use the constitutive relation between the second Piola-Kirchhoff stress and the
+Green strain ($\BE$), the expression for the Green strain in terms of the deformation gradient,
+the relationship between the velocity gradient ($\BlT$) and the rate of
+change of the deformation gradient, and the definition of the rate-of-deformation ($\BdT$)
 \Beq
-  \dot{\BS} = \CalC : \dot{\BE}
+  \dot{\BS} = \CalC : \dot{\BE}~,~~ \BE = \Half\left(\BF^T \cdot \BF - \BI\right) ~,~~
+  \dot{\BF} = \BlT \cdot \BF, \quad \Tand \quad \BdT = \Half(\BlT + \BlT^T)
 \Eeq
-and the relationship between the velocity gradient and the rate of change of the deformation gradient
-\Beq
-  \dot{\BF} = \BlT \cdot \BF
-\Eeq
-to write \eqref{eq:fdot_mat_geo} as
+to write the material and geometric rates of the internal force in \eqref{eq:fdot_mat_geo} as
 \Beq \label{eq:fdot_mat_geo_1}
   \Bal
-   \dot{\Bf}_g^{\Tmat} & :=  \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \left[\CalC_p^n : \dot{\BE}_p^n\right] \cdot (\BF_p^n)^T \cdot \underset{n}{\nabla}{S_g}~d\Omega^n  \\
-   \dot{\Bf}_g^{\Tgeo} & :=  \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BS_p^n \cdot \left[(\BF_p^n)^T \cdot (\BlT_p^n)^T\right] \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
+   \dot{\Bf}_g^{\Tmat} 
+   & =  \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BF_p^{n+1} \cdot \left[\CalC_p^n : \dot{\BE}_p^n\right] 
+        \cdot \underset{n}{\nabla}{S_g}~d\Omega^n  \\
+   & = \Half \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BF_p^{n+1} \cdot \left[
+        \CalC_p^n :
+        \left((\dot{\BF}_p^{n+1})^T \cdot \BF_p^{n+1} + (\BF_p^{n+1})^T \cdot \dot{\BF}_p^{n+1}\right)
+        \right] \cdot \underset{n}{\nabla}{S_g}~d\Omega^n  \\
+   & = \Half \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BF_p^{n+1} \cdot \left[
+        \CalC_p^n :
+        \left((\BF_p^{n+1})^T \cdot (\BlT_p^{n+1})^T \cdot \BF_p^{n+1} +
+              (\BF_p^{n+1})^T \cdot \BlT_p^{n+1} \cdot \BF_p^{n+1}\right)
+        \right] \cdot \underset{n}{\nabla}{S_g}~d\Omega^n  \\
+   & = \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BF_p^{n+1} \cdot \left[
+        \CalC_p^n :
+        \left((\BF_p^{n+1})^T \cdot \BdT_p^{n+1} \cdot \BF_p^{n+1}\right)
+        \right] \cdot \underset{n}{\nabla}{S_g}~d\Omega^n  \\
+   \dot{\Bf}_g^{\Tgeo} & :=
+     \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \left[(\BF_p^{n+1})^T \cdot (\BlT_p^{n+1})^T\right] \cdot \BS_p^n \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
   \Eal
 \Eeq
-Noting that
+Recall the interpolation of the velocity from the grid nodes ($h$) to particles ($p$) can be
+computed using
 \Beq
-  \Partial{\Bf}{t} = \Partial{\Bf}{\Bv} \cdot \Partial{\Bv}{t} = \Partial{\Bf}{\Bv} \cdot \Ba
+  \Bv_p(\Bx^{n+1}) = \sum_h \Bv_h^{n+1} S_h(\Bx^{n+1})
 \Eeq
-we have
-\Beq \label{eq:fdot_mat_geo_2}
+Therefore,
+\Beq \label{eq:vel_grad_implicit}
   \Bal
-   \Partial{\Bf_g^{\Tmat}}{\Bv} \cdot \Ba_g & :=  \left[\sum_p\int_{\Omega_p^n} Y_p(\Bx^n) 
-     \left[\CalC_p^n : \Partial{\BE_p^n}{\Bv}\right] \cdot (\BF_p^n)^T \cdot \underset{n}{\nabla}{S_g}~d\Omega^n\right] \cdot \Ba_g  \\
-   \Partial{\Bf_g^{\Tgeo}}{\Bv} \cdot \Ba_g & :=  \left[\sum_p\int_{\Omega_p^n} Y_p(\Bx^n) 
-     \BS_p^n \cdot \left[(\BF_p^n)^T \cdot (\BlT_p^n)^T\right] \cdot \underset{n}{\nabla}{S_g}~d\Omega^n\right] \,.
+  \BlT_p^{n+1} & = \underset{n+1}{\nabla}\Bv_p^{n+1}(\Bx^{n+1}) = 
+    \sum_h \Bv_h^{n+1} \otimes \underset{n+1}{\nabla}S_h \\
+  \BdT_p^{n+1} & = \Half\sum_h 
+    \left[\Bv_h^{n+1} \otimes \underset{n+1}{\nabla}S_h +
+          \underset{n+1}{\nabla}S_h \otimes \Bv_h^{n+1}\right] \,.
   \Eal
+\Eeq
+Using \eqref{eq:vel_grad_implicit} in \eqref{eq:fdot_mat_geo_1}, we have
+\Beq
+  \Bal
+  \dot{\Bf}_g^{\Tmat} & = 
+    \Half \sum_h \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BF_p^{n+1} \cdot \left[
+        \CalC_p^n :
+        \left((\BF_p^{n+1})^T \cdot 
+        \left[\underset{n+1}{\nabla}S_h \otimes \Bv_h^{n+1} +
+              \Bv_h^{n+1} \otimes \underset{n+1}{\nabla}S_h\right] 
+        \cdot \BF_p^{n+1}\right)
+        \right] \cdot \underset{n}{\nabla}{S_g}~d\Omega^n  \\
+   \dot{\Bf}_g^{\Tgeo} & =
+     \sum_h \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) 
+         \left[(\BF_p^{n+1})^T \cdot \left(\underset{n+1}{\nabla}S_h \otimes \Bv_h^{n+1}\right)\right] 
+          \cdot \BS_p^n \cdot \underset{n}{\nabla}{S_g}~d\Omega^n \,.
+  \Eal
+\Eeq
+Since both the second Piola-Kirchhoff stress and the Green strain are symmetric, the
+tensor $\CalC$ has the symmetries $C_{ijkl} = C_{jikl} = C_{jilk}$.  For hyperelastic materials
+we have the additional symmetry $C_{ijkl} = C_{klij}$. We can take advantage of these symmetries
+to simplify the above expressions.  The first term in the expression for the rate of the 
+material internal force contains an expression of the form
+\Beq
+  \BAv := \BF \cdot \left[ 
+           \CalC : \left(\BF^T \cdot \left[\tilde{\BGv} \otimes \Bv \right] \cdot \BF\right) 
+           \right] \cdot \BGv
+\Eeq
+while the second term contains
+\Beq
+  \BBv := \BF \cdot \left[ 
+           \CalC : \left(\BF^T \cdot \left[\Bv \otimes \tilde{\BGv}\right] \cdot \BF\right) 
+           \right] \cdot \BGv
+\Eeq
+In index notation,
+\Beq
+  \Bal
+    A_r & = F_{ri} C_{ijk\ell} F^T_{km} \tilde{G}_m v_n F_{n\ell} G_j 
+          = F_{ri} C_{ijk\ell} F_{mk} \tilde{G}_m F_{n\ell} G_j v_n
+          = G_j (\BF \cdot \CalC \cdot \BF^T)_{rjkn} (\tilde{\BGv} \cdot \BF)_k v_n\\
+    B_r & = F_{ri} C_{ijk\ell} F^T_{kn} v_n \tilde{G}_m F_{m\ell} G_j 
+          = F_{ri} C_{ijk\ell} F_{nk} \tilde{G}_m F_{m\ell} G_j v_n
+          = G_j (\BF \cdot \CalC \cdot \BF^T)_{rj\ell n} (\tilde{\BGv} \cdot \BF)_{\ell} v_n
+  \Eal
+\Eeq
+We can show (see~\cite{Ogden1997}, section 6.1.3) that
+\Beq
+  \BF \cdot \CalC \cdot \BF^T = J \CalC_\sigma
 \Eeq
 
