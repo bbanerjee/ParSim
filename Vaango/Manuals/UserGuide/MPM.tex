@@ -1,184 +1,20 @@
 \chapter{MPM} \label{Sec:MPM}
 
 \section{Introduction}
-The Material Point Method (MPM) as described by Sulsky, et al.
-\cite{Sulsky1994,Sulsky1995} is a
-particle method for structural mechanics simulations.  Solid objects
-are represented by a collection of particles, or ``material points."  Each
-of these particles carries with it information for that part of the
-solid object that it represents.  This includes the mass, volume,
-position, velocity and stress of that material.  MPM differs from other
-so called ``mesh-free" particle methods in that, while each object is primarily 
-represented by a collection of particles, a computational mesh is
-also an important part of the calculation.  Particles do not interact
-with each other directly, rather the particle information is interpolated
-to the grid, where the equations of motion are integrated forward in time.
-This time advanced solution is then used to update the particle state.
-An example of two disks initially approaching each other represented by
-material points on an overlying mesh is show in Figure \ref{fig-disks_init}.
+The Material Point Method (MPM)  is described in detail in the \Vaango
+theory manual.  The method is used as an alternative to finite elements
+for problems where large deformations are expected that are not
+handled well by finite elements due to element locking and distortion.
 
+An example of an MPM simulation of two disks initially approaching each other
+is shown in Figure \ref{fig-disks_init}.  The simulation involves
+material points on an overlying mesh. 
 \begin{figure}[h]
   \centering
   \scalebox{0.5}{\includegraphics{disks.pdf}}
   \caption{\label{fig-disks_init} Initial particle representation of two
                                 colliding disks on an overlying mesh.}
 \end{figure}
-
-The method usually uses a regular structured grid as a computational mesh.
-While this grid, in principle, deforms as the material that it is representing
-deforms, at the end of each timestep, it is reset to it's original undeformed
-position, in effect providing a new computational grid for each timestep.
-The use of a regular structured grid for each time step has a number of
-computational advantages.  Computation of spatial gradients is simplified.
-Mesh entanglement, which can plague fully Lagrangian techniques, such as
-the Finite Element Method (FEM), is avoided.  MPM has also been successful
-in solving problems involving contact between colliding objects, having an
-advantage over FEM in that the use of the regular grid eliminates the
-need for doing costly searches for contact surfaces\cite{Bard2001}.
-
-The choice of MPM over FEM as the C-SAFE structural mechanics method
-was only in small part for the above mentioned criteria.  The
-primary motivation was the ability to use MPM together with a multimaterial
-CFD algorithm for solving tightly coupled fluid-structure interaction
-problems.  This capability was first demonstrated in the CFDLIB
-codes from Los Alamos by Bryan Kashiwa and co-workers.  There, as
-in Vaango, MPM serves as the Lagrangian description of the solid
-material in a multimaterial CFD code.  Certain elements of the
-solution procedure are based in the Eulerian CFD algorithm, including
-intermaterial heat and momentum transfer as well as satisfaction
-of a multimaterial equation of state.  The use of a Lagrangian method
-such as MPM to advance the solution of the solid material eliminates
-the diffusion typically associated with Eulerian methods.
-
-\section{Algorithm}
-A more detailed description of MPM can be found in the
-\Vaango Theory manual. The equations of motion are 
-cast in the form:
-\begin{equation}
-  \MMmat{g} \cdot \Mamat{g} = \Mfmat{g}^\Text - \Mfmat{g}^\Tint  
-\label{newton2}
-\end{equation}
-where $\MMmat{g}$ is the mass matrix, $\Mamat{g}$ is the 
-acceleration vector, $\Mfmat{g}^\Text$ is the external force vector 
-(sum of the body forces and tractions), and $\Mfmat{g}^\Tint$ is the 
-internal force vector resulting from the divergence of the material 
-stresses.  In general, $\MMmat{g}$ is a large, sparse matrix.  
-
-\begin{NoteBox}
-In practice, 
-and in what follows here, a ``lumped" mass matrix is used, which only has 
-entries on the diagonal, and is thus represented as a column matrix:
-$\MMmat{g} = [m_1, m_2, \dots, m_g, \dots, m_N]$.
-\end{NoteBox}
-
-The solution procedure begins by interpolating the particle state to the
-grid, to form $\MMmat{g}$, \\ 
-$\Mfmat{g}^\Text = [\Bf_1^\Text, \Bf_2^\Text, \dots, \Bf_g^\Text, \dots, \Bf_N^\Text]$,
-and to get a velocity 
-on the grid $\Mvmat{g} = [\Bv_1, \Bv_2, \dots, \Bv_g, \dots, \Bv_N]$.  
-These quantities are calculated at each grid node by the following equations:
-\begin{equation}\label{expinterpolatemass}
-  m_g = \sum_{p} S_{gp} m_p  
-\end{equation}
-\begin{equation}\label{expinterpolatevel}
-  \Bv_g = \frac{\sum\limits_{p} S_{gp} m_p \Bv_p}{m_g}
-\end{equation}
-\begin{equation}
-  \Bf^\Text_g = \sum_{p} S_{gp} \Bf^\Text_p. 
-\label{expinterpolateFext}
-\end{equation}
-$m_p$ is the particle mass, $\Bv_p$ is the particle velocity, and 
-$\Bf_p^\Text$ is the external force on the particle.  The external force on 
-the particle is generally an applied load of some type.  In Equation 
-\ref{expinterpolatevel}, the numerator is the nodal momentum, 
-which is then divided by the nodal mass to get a velocity.  
-$S_{gp}$ is a \Textsfc{shape function} for the $g$-th node
-evaluated at the current particle position $\Bx_p$.  Traditionally, the 
-shape functions are multiplicative combinations of one dimensional tent 
-functions, as shown in Figure \ref{fig-Sip}.  The shape functions serve 
-to distance weight the contribution of each particle to the grid nodes.  
-
-\begin{figure}[htbp!]
-  \centering
-  \scalebox{0.4}{\includegraphics{Sip.pdf}} \hspace{24pt}
-  \scalebox{0.4}{\includegraphics{Gip.pdf}}
-  \caption{\label{fig-Sip} One dimensional linear shape function, 
-           $S(x)$ and its derivative, $G(x)$.}
-  \label{fig-Gip}
-\end{figure}
-
-At this point, a velocity gradient, $\Grad{\Bv_p}$ is 
-computed at each particle using the grid velocities $\Bv_g$:
-\begin{equation}
-  \Grad{\Bv_p} = \sum_g \BG_{gp}\cdot\Bv_g
- \label{velgrad}
-\end{equation}
-
-\noindent
-where $\BG_{gp}$ is the gradient of the $g$-th node's shape 
-function, evaluated at $\Bx_p$.  A one dimensional example of 
-$\BG_{gp}$ is shown in Figure \ref{fig-Gip}.  
-
-\begin{NoteBox}
-Note that in going to multiple 
-dimensions, the $\BG_{gp}$ are found by taking gradients of the multidimensional
-$S_{gp}$ NOT by forming multiplicative combinations of the one-dimensional
-$\BG_{gp}$.
-\end{NoteBox}
-
-This velocity gradient is used as input to a constitutive model 
-(stress-strain relationship) which is evaluated at each particle.  The 
-specifics of this calculation are dependent on the constitutive model.  
-The result of this calculation is the Cauchy stress at each particle, $\Bsig_p$.  
-With this, the internal force due to the divergence of the stress is 
-calculated:
-\begin{equation}
-  \Bf_g^\Tint = \sum_{p} \BG_{gp} \Bsig_p V_p
-\end{equation}
-where $V_p$ is the particle volume.  The internal force can be 
-thought of as the force that holds a material together.  For a 
-given deformation, this force is larger for stiffer materials.
-
-Everything is now available to solve Equation \ref{newton2} for 
-$\Mamat{g}$. With that, the forward Euler method is used for all time 
-integrations. A convective grid velocity $\Mvmat{g}^L$ is computed:
-\begin{equation}
-  \Mvmat{g}^L = \Mvmat{g}  + \Mamat{g} dt
-\end{equation}
-
-While the following calculation is never carried out, in 
-principle, the nodes of the grid also move with that convective velocity:
-\begin{equation}
-  \Mxmat{g}^L = \Mxmat{g}  + \Mvmat{g}^L dt     
-\label{expdefgrid}
-\end{equation}
-where, as before, $\Mxmat{g} = [\Bx_1, \Bx_2, \dots, \Bx_g, \dots, \Bx_N]$ etc.
-
-During this part of the computation, the particles move with the 
-deforming grid.  Their position and velocity is explicitly updated by:
-\begin{equation}
-  \Mvmat{p} (t + \Delta t)  = \Mvmat{p} (t)  + \sum_{g} S_{gp} \Mamat{g}  \Delta t
-\end{equation}
-\begin{equation}
-  \Mxmat{p} (t + \Delta t)  = \Mxmat{p} (t)  + \sum_{g} S_{gp} \Mvmat{g}^L  \Delta t
-\end{equation}
-\begin{NoteBox}
-Note that the summations in the above equations are only over grid points
-that are influenced by the particle $p$.
-\end{NoteBox}
-
-This completes one timestep.  Note that not carrying out the 
-calculation in \ref{expdefgrid} explicitly has the effect of resetting the 
-deformed grid to it's undeformed position at the end of the timestep cycle.
-
-As with all explicit time integration methods, a timestep size limit must
-be enforced such that $\Delta t < \Delta x/(|\Mvmat{p}| + c)$ for all 
-particles, where $\Delta x$ is the computational grid spacing and $c$ 
-is the speed at which stress waves propagate through the material.
-Failure to adhere to this condition will cause the solution to become
-unstable and blow up.  The material wavespeed depends on the 
-material model used, as well as on the particular parameters
-chosen for that model.  
 
 \section{Vaango Specification} \label{Sec:UintahSpecMPM}
 \Vaango input files are constructed in XML format.  Each begins with:

@@ -1,0 +1,258 @@
+\chapter{Geometry creation}\label{chap:GeometryCreation}
+The creation of geometry objects within the computational domain is
+a crucial part of the simulation process.  This chapter discusses the
+options avialble for creating geometry in \Vaango.
+
+\section{Basic geometry objects} \label{Sec:GeometryObjects}
+
+
+Each geometry object has the following properties, label (string
+name), type (box, cylinder, sphere, etc), resolution (vector
+quantity), and any unique geometry parameters such as origin, corners,
+triangulated data file, etc.  The operators which include, the union,
+the difference, and intersection tags contain either lists of
+additional operators or the primitives pieces.
+
+As an example of a non-trivial geometry object is shown below:
+
+\begin{lstlisting}[language=XML]
+<geom_object>
+     <intersection>
+       <box label = "Domain">
+          <min>[0.0,0.0,0.0]</min>
+          <max>[0.1,0.1,0.1]</max>
+       </box>
+       <union>
+         <sphere label = "First node">
+            <origin>[0.022,0.028,0.1  ]</origin>
+            <radius>0.01</radius>
+         </sphere>
+         <sphere label = "2nd node">
+            <origin>[0.030,0.075,0.1  ]</origin>
+            <radius>0.01</radius>
+         </sphere>
+       </union>
+     </intersection>
+     <res>[2,2,2]</res>
+     <velocity>[0.,0.,0.]</velocity>
+     <temperature>0 </temperature>
+</geom_object>
+\end{lstlisting}
+
+The following geometry objects are given with their required tags:
+
+\subsection{Box}
+\Textsfc{box} has the following tags: min and max which are
+vector quantities specified in the \Textsfc{[a, b, c]} format.
+
+\subsection{Sphere}
+\Textsfc{sphere} has an origin tag specified as a vector and the
+radius tag specified as a float.
+
+\subsection{Cone}
+\Textsfc{cone} has a tag for the top and bottom origins (vector)
+as well as tags for the top and bottom radius (float) to create a
+right circular cone/frustum.
+
+\subsection{Cylinder}
+\Textsfc{cylinder} has a tag for the top and bottom origins
+(vector) plus a tag for the radius (float).
+
+\subsection{Ellipsoid}
+\Textsfc{ellipsoid} has an origin tag specified as a vector.  There are 
+two ways to assign axis lengths depending on the orientation of the ellipsoid.
+If the axes are aligned with the Cartesian grid, they may be specified as 
+floating point values with tagnames: rx, ry, rz.  For all other orientation, 
+three vector quantities must be specified in the \Textsfc{[a,b,c]} format.
+Vector quantity tag names are: v1, v2, v3.These vectors must be orthogonal 
+to within 1e-12 after dot product or the simulation will throw an exception.  
+Note, if both vector quantities and floating point tags are used, 
+the vector quantity inputs will take precedence.  
+
+\subsection{Parallelepiped}
+\Textsfc{parallelepiped} requires that four points be specified as
+illustrated by the ASCII art snippet taken from the source code:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+//********************************************
+//                                          //
+//             *-------------*              //
+//            / .           / \             //
+//           /   .         /   \            //
+//          P4-------------*    \           //
+//           \    .         \    \          //
+//            \   P2.........\....*         //
+//             \ .            \  /          //
+//             P1--------------P3           //
+//
+//  Returns true if the point is inside (or on) the parallelepiped.
+//  (The order of p2, p3, and p4 doesn't really matter.)
+\end{lstlisting}
+
+\section{Special geometry objects} \label{Sec:SpecialGeometryObjects}
+\subsection{Smooth Cylinder}
+\Textsfc{smoothcyl} is a geomtry object designed for use with
+the cpdi algorithm, which uses a body fit particle spatial
+distribution.  This eliminates ``stair-stepped'' boundaries typical of
+the standard, grid-based, discretization scheme.  
+\begin{NoteBox}
+Thus it is
+  important to note that the \Textsfc{smoothcyl} geometry is only designed to work with
+  \Textsfc{\textless interpolator\textgreater cpdi \textless /interpolator\textgreater}. Other
+  algorithms may give erroneous answers.
+\end{NoteBox}
+
+This geometry has the following tags:
+
+\begin{lstlisting}[language=XML]
+	   <smoothcyl label = "label name">
+	     <discretization_scheme> string </discretization_scheme>
+	     <bottom> vector </bottom>
+	     <top> vector </top>
+	     <outer_radius> float </outer_radius>
+	     <inner_radius> float </inner_radius>
+	     <num_radial> integer </num_radial>
+	     <num_axial> integer </num_axial>
+	     <num_angular> integer </num_angular>
+	     <arc_start_angle> double (in degrees) </arc_start_angle>
+	     <arc_angle> double (in degrees) </arc_angle>
+	   </smoothcyl>
+\end{lstlisting}
+
+The complete or partial annulus or cylinder specified by inner
+(optional, defaulting to zero) and outer radii, cylinder axis bottom
+and top (all required) and start and final angle (both optional,
+defaulting to 0 and 360) will be discretized using planes of
+concentric rings of particles.  Particle density is specified by \Textbfc{num\_axial} and \Textbfc{num\_radial}, the number of
+particles in the axial and radial dimensions, respectively.
+  Note that these particle density specifications
+supercede those specified in the \Textbfc{\textless geom\_object\textgreater \textless res\textgreater}
+tag, which is ignored.
+
+The required discretization scheme may be either \Textbfc{pie\_slices}
+ or \Textbfc{constant\_particle\_volumes}.  For the
+\Textbfc{pie\_slices} discretization, \Textbfc{num\_angular}  is required to specify the number of particles between \Textbfc{arc\_start} and \Textbfc{arc\_angle}.  For the \Textbfc{constant\_particle\_volumes} discretization, the number of
+particles between \Textbfc{arc\_start} and \Textbfc{arc\_angle}
+is determined individually for each ring of particles by
+attempting to keep particle spacings approximately equal in the radial
+and angular directions, and thus particle volumes approximately
+constant.
+
+End caps may be added to the smoothcyl using the optional \Textbfc{\textless endcap\_thickness\textgreater} tag, which specifies the axial
+dimension of cylinders which are appended to each end of the specified
+\Textsfc{smoothcyl} (the radii are the same as the \Textsfc{smoothcyl}
+).  Presently, the end cap body fit discretization uses a
+legacy scheme.
+
+Note: At the time of writing, multiple \Textsfc{smoothcyl}
+geometries within a \Textbfc{\textless geom\_object\textgreater} tag were not
+discretized using a body fit particle distribution as described here
+(rather the default discretization scheme is used).  This will be
+fixed eventually, at which point it may be possible to create more
+general endcaps using unions of \Textsfc{smoothcyl}.
+
+\subsection{Triangulated surface}
+\Textsfc{tri} is a tag for describing a triangulated surface.
+The name tag specifies the file name to use for reading in the
+triangulated surface description and the points file.  The
+triangulated surface (\Textbfc{file\_name.tri}) contains a list of integers
+describing the connectivity of points specified in \Textbfc{file\_name.pts}.
+Here is an excerpt from a tri file and a points file:
+
+\begin{lstlisting}[backgroundcolor=\color{background}]
+Triangulated file
+
+1 39 41
+1 41 38
+38 41 42
+. . .
+
+Points file
+
+0 0.03863 -0.005
+0.35227 0.13023 -0.005
+0.00403479 0.0296797 -0.005
+. . .
+\end{lstlisting}
+The Mach 2 Wedge example in Section~\ref{Sec:MPMICE_EXAMPLES} depicts usage of
+this option.
+
+\subsection{Boolean operations}
+The boolean operators on the geometry pieces include \Textsfc{difference,
+intersection,} and \Textsfc{union}.
+
+The \Textsfc{difference} takes two geometry pieces and subtracts
+the second geometry piece from the first geometry piece.  The \Textsfc{
+intersection} operator requires at least two geometry
+pieces in forming an intersection geometry piece.  Whereas the \Textsfc{
+union} operator aggregates a collection of geometry pieces.
+Multiple operators can be used to form very complex geometry pieces.
+
+\subsection{Specifying particle locations directly}
+In addition to the above, it is also possible in MPM simulations to describe
+geometry by providing a file containing a series of particle locations.  These
+can be in either ASCII or binary format.  In addition, it is also possible to
+provide initial data for certain variables on the particles, including
+volume, temperature, external force, fiber direction (used in material models
+with transverse isotropy) and velocity.  The following is an example in which
+external force and fiber direction are specified:
+\begin{lstlisting}[language=XML]
+          <file>
+              <name>LVcoarse.pts</name>
+              <var>p.externalforce</var>
+              <var>p.fiberdir</var>
+          </file>
+\end{lstlisting}
+where the text file \Textsfc{LVcoarse.pts} looks like:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+0.0385 0.0335 0.0015 0 0 0 0.248865 -0.0593421 -0.966718
+0.0395 0.0335 0.0015 0 0 0 0.254892 -0.0220365 -0.966718
+0.0405 0.0335 0.0015 0 0 0 0.267002 0.0197728 -0.963493
+0.0415 0.0335 0.0015 0 0 0 0.261177 0.0588869 -0.963493
+	.
+	.
+	.
+\end{lstlisting}
+Because these files can be arbitrarily large, an additional preprocessing step
+must be taken before issuing the \Textsfc{vaango} command.
+\Textsfc{pfs} for \Textsfc{Particle File Splitter} is a utility that splits the
+data in the \Textsfc{.pts} file into a series of files
+(\Textsfc{file.pts.0, file.pts.1,}, etc), one for each
+patch.  By doing this, each processor needs only read in the data for the
+patches that it contains, rather than each processor reading in the entire file,
+which can be hard on the file system.  Note, that this step is required,
+even if only using a single patch, and must be reissued any time the patch
+configuration is changed.  Usage of this utility, which is compiled
+into the \Textsfc{StandAlone/tools/pfs} directory, is:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+   pfs input.ups
+\end{lstlisting}
+
+\subsection{Using image data to create particles}
+One final option is available for initializing particle positions in MPM
+simulations, and that is through the use of three dimensional image data,
+such as might be collected via CT scans or confocal microscopy.  The image data are 
+provided as 8-bit raw files, and usage in the input file is given as:
+\begin{lstlisting}[language=XML]
+        <image>
+          <name>spheres.raw</name>
+          <res>[1600, 1600, 1600]</res>
+          <threshold>[1, 25]</threshold>
+        </image>
+        <file>
+          <name>spheres.pts</name>
+          <format>bin</format>
+        </file>
+\end{lstlisting}
+The \Textsfc{\textless image\textgreater} section gives the name of the file, the resolution, in pixels,
+in the various coordinate directions, and threshold range.  Particles will be
+generated at voxels within the specified range.  The \Textsfc{\textless file\textgreater}
+section is the same as that described above.  A different preprocessing utility
+is provided when using image data (for the same reasons described previously).
+Usage is as follows:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+   pfs2 -b input.ups
+\end{lstlisting}
+The \Textbfc{-b} flag indicates that binary \Textsfc{spheres.pts.\#} files will be created, which
+saves considerable disk space when performing large simulations.
+
