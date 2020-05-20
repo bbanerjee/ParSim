@@ -581,7 +581,7 @@ Then \eqref{eq:discretized} can be expressed as
 Define the mass matrix ($\BM$), the internal force vector ($\Bf_g^{\Tint}$), 
 the body force vector ($\Bf_g^{\Tbody}$), and the  external force vector ($\Bf_g^{\Text}$)
 at grid node $g$ as
-\Beq
+\Beq \label{eq:discretized_def}
   \Bal
    &M_{gh} := \sum_p \rho_p\IntOmegap Y_p(\Bx)~S_g(\Bx)~S_h(\Bx)~d\Omega \\
    &\Bf_g^{\Tint} := \sum_p V_p \Bsig_p \cdot \Av{\Grad{S_{gp}}} \\

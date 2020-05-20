@@ -50,44 +50,56 @@ where
 
 \subsection{Newton's method}
 In the \Vaango implementation, the residual is expressed in terms of the displacement.  
-However, we can implement the implicit method in terms of the velocity with no loss of
-generality.  Thus using \eqref{eq:mpm_residual} and \eqref{eq:newmark_beta}, we have
-\Beq \label{eq:mpm_residual_1}
-  \Br(\BvT_g^{n+1}, t_{n+1}) = \frac{1}{\gamma \Delta t} \BM_g (\BvT_g^{n+1} - \BvT^\star) - 
-      \BfT^{\Text}(\BvT_g^{n+1}, t_{n+1}) + 
-     \BfT^{\Tint}(\BvT_g^{n+1}, t_{n+1}) - \BfT^{\Tbody}(\BvT_g^{n+1}, t_{n+1}) = \Bzero .
-\Eeq
-The problem then reduces to finding the solution $\BvT_g^{n+1}$ of the nonlinear system of equations
-\eqref{eq:mpm_residual_1}. Newton's method is used in \Vaango with the starting 
-value of $\BvT_g^{n+1} = \BvT_g^\star$.  Dropping the subscript $g$ temporarily for convenience,
-and denoting the current Newton iteration by the subscript $k$, we can linearize the residual at 
-$\BvT_k^{n+1}$ using a Taylor expansion:
+We are required to do this because tangents needed in Newton's method are easier to compute 
+when forces can be expressed in the form
 \Beq
-  \Bzero = \Br(\BvT_{k+1}^{n+1}, t_{n+1}) = 
-     \Br(\BvT_k^{n+1}, t_{n+1}) + \Partial{\Br(\BvT_k^{n+1}, t_{n+1})}{\BvT}(\BvT^{n+1}_{k+1} - \BvT^{n+1}_k) \,.
+  \BfT = \BK \cdot \BuT
+\Eeq
+where $\BK$ is the stiffness matrix.  If we were to use the velocity as the primary variable,
+as in explicit MPM, we would need rates of the forces instead:
+\Beq
+  \dot{\BfT} = \BK \cdot \BvT + \dot{\BK} \cdot \BuT \,.
+\Eeq
+The extra term involving the rate of change of the stiffness matrix complicates the process
+and we avoid it in \Vaango.
+
+Then, using \eqref{eq:mpm_residual} and \eqref{eq:newmark_beta}, we have
+\Beq \label{eq:mpm_residual_1}
+  \Br(\BuT_g^{n+1}, t_{n+1}) = \frac{1}{\beta \Delta t^2} \BM_g (\BuT_g^{n+1} - \BuT^\star) - 
+      \BfT^{\Text}(\BuT_g^{n+1}, t_{n+1}) + 
+     \BfT^{\Tint}(\BuT_g^{n+1}, t_{n+1}) - \BfT^{\Tbody}(\BuT_g^{n+1}, t_{n+1}) = \Bzero .
+\Eeq
+The problem then reduces to finding the solution $\BuT_g^{n+1}$ of the nonlinear system of equations
+\eqref{eq:mpm_residual_1}. Newton's method is used in \Vaango with the starting 
+value of $\BuT_g^{n+1} = \BuT_g^\star$.  Dropping the subscript $g$ temporarily for convenience,
+and denoting the current Newton iteration by the subscript $k$, we can linearize the residual at 
+$\BuT_k^{n+1}$ using a Taylor expansion:
+\Beq
+  \Bzero = \Br(\BuT_{k+1}^{n+1}, t_{n+1}) = 
+     \Br(\BuT_k^{n+1}, t_{n+1}) + \Partial{\Br(\BuT_k^{n+1}, t_{n+1})}{\BuT}(\BuT^{n+1}_{k+1} - \BuT^{n+1}_k) \,.
 \Eeq
 Rearranging the above equation,
 \Beq \label{eq:Newton_step}
-  \Delta\BvT = \BvT^{n+1}_{k+1} - \BvT^{n+1}_k = 
-     -\left[\Partial{\Br(\BvT_k^{n+1}, t_{n+1})}{\BvT}\right]^{-1}
-     \Br(\BvT_k^{n+1}, t_{n+1})  = -\BK^{-1} \Br(\BvT_k^{n+1}, t_{n+1})\,.
+  \Delta\BuT = \BuT^{n+1}_{k+1} - \BuT^{n+1}_k = 
+     -\left[\Partial{\Br(\BuT_k^{n+1}, t_{n+1})}{\BuT}\right]^{-1}
+     \Br(\BuT_k^{n+1}, t_{n+1})  = -\BK^{-1} \Br(\BuT_k^{n+1}, t_{n+1})\,.
 \Eeq
-This iterative process is continued until $\Delta \BvT$ is smaller than a given tolerance.
+This iterative process is continued until $\Delta \BuT$ is smaller than a given tolerance.
 The tangent matrix $\BK$, of size $N_g \times N_g$, is 
 \Beq
-  \BK = \Partial{\Br(\BvT_k^{n+1}, t_{n+1})}{\BvT} \,.
+  \BK = \Partial{\Br(\BuT_k^{n+1}, t_{n+1})}{\BuT} \,.
 \Eeq
 This matrix is decomposed and evaluated separately for the internal and external forces, i.e., 
 \Beq
-  \BK = \Partial{\Br(\BvT_k^{n+1}, t_{n+1})}{\BvT} 
-      = \frac{1}{\gamma \Delta t} \BM_g  - \Partial{}{\BvT}\left[\BfT^{\Text}(\BvT_g^{n+1}, t_{n+1})\right] + 
-        \Partial{}{\BvT}\left[\BfT^{\Tint}(\BvT_g^{n+1}, t_{n+1})\right] - 
-        \Partial{}{\BvT}\left[\BfT^{\Tbody}(\BvT_g^{n+1}, t_{n+1})\right] \,.
+  \BK = \Partial{\Br(\BuT_k^{n+1}, t_{n+1})}{\BuT} 
+      = \frac{1}{\beta \Delta t^2} \BM_g  - \Partial{}{\BuT}\left[\BfT^{\Text}(\BuT_g^{n+1}, t_{n+1})\right] + 
+        \Partial{}{\BuT}\left[\BfT^{\Tint}(\BuT_g^{n+1}, t_{n+1})\right] - 
+        \Partial{}{\BuT}\left[\BfT^{\Tbody}(\BuT_g^{n+1}, t_{n+1})\right] \,.
 \Eeq
 Alternatively,
 \Beq
-  \BK = \frac{1}{\gamma \Delta t} \BM_g  - \BK^{\Text}(\BvT_g^{n+1}, t_{n+1}) +  
-         \BK^{\Tint}(\BvT_g^{n+1}, t_{n+1}) -  \BK^{\Tbody}(\BvT_g^{n+1}, t_{n+1}) \,.
+  \BK = \frac{1}{\beta \Delta t^2} \BM_g  - \BK^{\Text}(\BuT_g^{n+1}, t_{n+1}) +  
+         \BK^{\Tint}(\BuT_g^{n+1}, t_{n+1}) -  \BK^{\Tbody}(\BuT_g^{n+1}, t_{n+1}) \,.
 \Eeq
 
 \subsection{Tangent stiffness matrix}
@@ -222,7 +234,7 @@ Therefore,
   \Eal
 \Eeq
 Using \eqref{eq:vel_grad_implicit} in \eqref{eq:fdot_mat_geo_1}, we have
-\Beq
+\Beq \label{eq:fint_rates}
   \Bal
   \dot{\Bf}_g^{\Tmat} & = 
     \Half \sum_h \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \BF_p^{n+1} \cdot \left[
@@ -246,13 +258,18 @@ material internal force contains an expression of the form
 \Beq
   \BAv := \BF \cdot \left[ 
            \CalC : \left(\BF^T \cdot \left[\tilde{\BGv} \otimes \Bv \right] \cdot \BF\right) 
-           \right] \cdot \BGv
+           \right] \cdot \BGv =: \Balpha \cdot \Bv
 \Eeq
 while the second term contains
 \Beq
   \BBv := \BF \cdot \left[ 
            \CalC : \left(\BF^T \cdot \left[\Bv \otimes \tilde{\BGv}\right] \cdot \BF\right) 
-           \right] \cdot \BGv
+           \right] \cdot \BGv =: \Bbeta \cdot \Bv
+\Eeq
+where
+\Beq
+  \BGv = \BGv_g := \underset{n}{\nabla}S_g \quad \Tand \quad
+  \tilde{\BGv} = \BGv_h := \underset{n+1}{\nabla}S_h \,.
 \Eeq
 In index notation,
 \Beq
@@ -260,13 +277,115 @@ In index notation,
     A_r & = F_{ri} C_{ijk\ell} F^T_{km} \tilde{G}_m v_n F_{n\ell} G_j 
           = F_{ri} C_{ijk\ell} F_{mk} \tilde{G}_m F_{n\ell} G_j v_n
           = G_j (\BF \cdot \CalC \cdot \BF^T)_{rjkn} (\tilde{\BGv} \cdot \BF)_k v_n\\
+        & = G_j (\tilde{\BGv} \cdot \BF)_k (\BF \cdot \CalC \cdot \BF^T)_{rjkn} v_n
+          =: \alpha_{rn} v_n \\
     B_r & = F_{ri} C_{ijk\ell} F^T_{kn} v_n \tilde{G}_m F_{m\ell} G_j 
           = F_{ri} C_{ijk\ell} F_{nk} \tilde{G}_m F_{m\ell} G_j v_n
-          = G_j (\BF \cdot \CalC \cdot \BF^T)_{rj\ell n} (\tilde{\BGv} \cdot \BF)_{\ell} v_n
+          = G_j (\BF \cdot \CalC \cdot \BF^T)_{rj\ell n} (\tilde{\BGv} \cdot \BF)_{\ell} v_n \\
+        & = G_j (\tilde{\BGv} \cdot \BF)_{\ell} (\BF \cdot \CalC \cdot \BF^T)_{rj\ell n} v_n 
+          =: \beta_{rn} v_n = \alpha_{rn} v_n = A_r 
   \Eal
 \Eeq
-We can show (see~\cite{Ogden1997}, section 6.1.3) that
+Similarly for the geometrically nonlinear component, we have
 \Beq
-  \BF \cdot \CalC \cdot \BF^T = J \CalC_\sigma
+  \BCv := \left[\BF^T \cdot \left(\tilde{\BGv} \otimes \Bv\right)\right] 
+          \cdot \BS \cdot \BGv =: \Bgamma \cdot \Bv\,.
 \Eeq
+In index notation
+\Beq
+  C_r = F_{ri} \tilde{G}_{i} v_n S_{nk} G_{k} = (\tilde{\BGv} \cdot \BF^T)_r (\BGv \cdot \BS)_{n} v_n
+      =: \gamma_{rn} v_n \,.
+\Eeq
+We can now express \eqref{eq:fint_rates} as
+\Beq \label{eq:fint_rates_1}
+  \Bal
+  \dot{\Bf}_g^{\Tmat} & = 
+     \sum_h \left[\sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \,\Balpha ~d\Omega^n\right]\cdot\Bv_h^{n+1}  \\
+   \dot{\Bf}_g^{\Tgeo} & =
+     \sum_h \left[\sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \,\Bgamma ~d\Omega^n\right]\cdot\Bv_h^{n+1} 
+  \Eal
+\Eeq
+where
+\Beq
+  \Bal
+    \left[\Balpha\right]_{i\ell} & = G_j \left[\tilde{\BGv} \cdot \BF_p^{n+1}\right]_k \left[\BF_p^{n+1} \cdot 
+       \CalC_p^n \cdot \left(\BF_p^{n+1}\right)^T\right]_{ijk\ell}  \\
+    [\Bgamma]_{i\ell} & = \left[\tilde{\BGv} \cdot \left(\BF_p^{n+1}\right)^T\right]_i \left[\BGv \cdot \BS_p^n\right]_{\ell} 
+  \Eal
+\Eeq
+Using
+\Beq
+  \dot{\Bf} = \Partial{\Bf}{\Bu}\cdot\Bv
+\Eeq
+where $\Bu$ is the displacement, we notice from \eqref{eq:fint_rates_1} that
+\Beq \label{eq:df_du_mat_geo}
+  \Bal
+  (\BK^\Tmat)_{gh} = \Partial{\Bf_g^{\Tmat}}{\Bu_h^{n+1}} & = 
+     \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \,\Balpha ~d\Omega^n \\
+  (\BK^\Tgeo)_{gh} = \Partial{\Bf_g^{\Tgeo}}{\Bu_h^{n+1}} & = 
+     \sum_p\int_{\Omega_p^n} Y_p(\Bx^n) \,\Bgamma ~d\Omega^n \,.
+  \Eal
+\Eeq
+If we now set the current configuration as the reference configuration (see~\cite{Ogden1997}, section 6.1.3),
+we have
+\Beq
+  \BF_p^{n+1} = \BI~,~~ \BS_p^n = \Bsig_p^{n+1}~,~~ \Bx^n = \Bx^{n+1} ~,~~
+  d\Omega_n = d\Omega_{n+1}~,~~ \BGv = \tilde{\BGv}~,~~ 
+  \CalC_p^n = (\CalC^\sigma)_p^{n+1} \,.
+\Eeq
+Therefore,
+\Beq
+  (\BK^\Tint)_{gh}(\BuT_g^{n+1}, t_{n+1}) = (\BK^\Tmat)_{gh} + (\BK^\Tgeo)_{gh} 
+\Eeq
+where
+\Beq \label{eq:K_mat_geo}
+  \Bal
+  (\BK^\Tmat)_{gh} & = \sum_p\int_{\Omega_p^{n+1}} Y_p(\Bx^{n+1}) \,
+     \tilde{\BGv}_g \cdot (\CalC^\sigma)_p^{n+1} \cdot \tilde{\BGv}_h ~d\Omega^{n+1} \\
+  (\BK^\Tgeo)_{gh} & = \sum_p\int_{\Omega_p^{n+1}} Y_p(\Bx^{n+1}) \,
+     (\tilde{\BGv}_h \otimes \tilde{\BGv}_g) \cdot \Bsig_p^{n+1} 
+     ~d\Omega^{n+1} \,.
+  \Eal
+\Eeq
+An efficient way of converting these relations to Voigt form is possible only in
+the case where the grid basis functions are trilinear.  For \GIMP and \CPDI basis functions,
+the problem becomes more complex and have not been implemented in \Vaango.
+
+\subsection{External force stiffness matrix}
+Recall from \eqref{eq:discretized_def} that the external force is given by
+\Beq
+  \Bf_g^{\Text} := \IntGammat \Bart(\Bx)~S_g(\Bx)~d\Gamma \,.
+\Eeq
+To find the contribution to the stiffness matrix from the external force, note that
+\Beq
+  \dot{\Bf}_g^{\Text} := 
+    \IntGammat \left[\dot{\Bart}(\Bx)~S_g(\Bx) + \Bart(\Bx)~(\Grad{S_g}\cdot\Bv_g)\right]~d\Gamma =
+    \IntGammat \left[\dot{\Bart}(\Bx)~S_g(\Bx) + (\Bart(\Bx) \otimes \tilde{\BGv}_g) \cdot\Bv_g\right]~d\Gamma 
+\Eeq
+We make the simplifying assumption that
+\Beq
+  \dot{\Bart}(\Bx) = \widetilde{t}(\Bx) \Bv_g
+\Eeq
+to get 
+\Beq
+  \dot{\Bf}_g^{\Text} := 
+    \IntGammat \left[\widetilde{t}(\Bx)~S_g(\Bx) \BI + \Bart(\Bx) \otimes \tilde{\BGv}_g\right] \cdot\Bv_g~d\Gamma 
+\Eeq
+Therefore,
+\Beq
+  (\BK^\Text)_{gh}  = 
+    \IntGammat \left[\widetilde{t}(\Bx)~S_g(\Bx) \BI + \Bart(\Bx) \otimes \tilde{\BGv}_g\right]\delta_{gh}~d\Gamma 
+\Eeq
+
+\subsection{Body force stiffness matrix}
+The body force is given by
+\Beq
+  \Bf_g^{\Text} := \sum_p\IntOmegap \rho_p Y_p(\Bx) S_g(\Bx)\Bb_p~d\Omega \\
+\Eeq
+In \Vaango we assume that the body force does not vary with deformation.
+Therefore,
+\Beq
+  (\BK^\Tbody)_{gh}  = 0 \,.
+\Eeq
+
 
