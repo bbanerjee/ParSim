@@ -132,10 +132,9 @@
     <torus                 spec="OPTIONAL NO_DATA"
                                 attribute1="label    OPTIONAL STRING" >
       <center                 spec="REQUIRED VECTOR" />
+      <axis_vector            spec="REQUIRED VECTOR" />
       <major_radius           spec="REQUIRED DOUBLE 'positive'" />
       <minor_radius           spec="REQUIRED DOUBLE 'positive'" />
-      <axis                   spec="REQUIRED STRING" />
-      <theta                  spec="OPTIONAL DOUBLE" />
     </torus>
 
     <parallelepiped                 spec="OPTIONAL NO_DATA"
