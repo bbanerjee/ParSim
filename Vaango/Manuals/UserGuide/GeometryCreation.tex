@@ -160,17 +160,110 @@ The following geometry objects are given with their required tags:
   \captionof{figure}{An \Textsfc{ellipsoid} geometry piece.}
 \end{minipage}
 
+\subsection{Torus}
+\begin{minipage}{0.6\textwidth}
+  \Textsfc{torus} has a \Textsfc{center}, an \Textsfc{axis} vector,
+  and \Textsfc{major} and \Textsfc{minor} radii.   The major radius must
+  be greater than the minor radius.  The axis vector is converted
+  internally into a unit vector and cannot have zero length.
+  \begin{lstlisting}[language=XML]
+    <torus label="torus object">
+      <center> [0.1, 0.1, 0.1] </center>
+      <axis_vector>[ 1.5, 1.5, 1.5] </axis_vector>
+      <major_radius> 1.0 </major_radius>
+      <minor_radius> 0.5 </minor_radius>
+    </torus>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_torus.png}
+  \captionof{figure}{A \Textsfc{torus} geometry piece.}
+\end{minipage}
+
 \subsection{Boolean operations}
 The boolean operators on the geometry pieces include \Textsfc{difference,
 intersection,} and \Textsfc{union}.
-
-The \Textsfc{difference} takes two geometry pieces and subtracts
-the second geometry piece from the first geometry piece.  The \Textsfc{
-intersection} operator requires at least two geometry
-pieces in forming an intersection geometry piece.  Whereas the \Textsfc{
-union} operator aggregates a collection of geometry pieces.
 Multiple operators can be used to form very complex geometry pieces.
 
+\begin{minipage}{0.6\textwidth}
+  The \Textsfc{difference} takes two geometry pieces and subtracts
+  the second geometry piece from the first geometry piece.  
+  \begin{lstlisting}[language=XML]
+    <difference>
+      <box label="box_1">
+        <min>[-0.75, -0.75, -0.75]</min>
+        <max>[ 0.75,  0.75,  0.75]</max>
+      </box>
+      <sphere label="ball_1">
+        <origin>[ 0.0, 0.0, 0.0]</origin>
+        <radius> 1.00 </radius>
+      </sphere>
+    </difference>
+  \end{lstlisting}
+  \begin{lstlisting}[language=XML]
+    <difference>
+      <sphere label="ball_1">
+        <origin>[ 0.0, 0.0, 0.0]</origin>
+        <radius> 1.00 </radius>
+      </sphere>
+      <box label="box_1">
+        <min>[-0.75, -0.75, -0.75]</min>
+        <max>[ 0.75,  0.75,  0.75]</max>
+      </box>
+    </difference>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_diff_12.png}
+  \captionof{figure}{The \Textsfc{difference} of a sphere from a cube.}
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_diff_21.png}
+  \captionof{figure}{The \Textsfc{difference} of a cube from a sphere.}
+\end{minipage}
+
+\begin{minipage}{0.6\textwidth}
+  The \Textsfc{intersection} operator requires at least two geometry
+  pieces in forming an intersection geometry piece.  
+  \begin{lstlisting}[language=XML]
+    <intersection>
+      <box label="box_1">
+        <min>[-0.75, -0.75, -0.75]</min>
+        <max>[ 0.75,  0.75,  0.75]</max>
+      </box>
+      <sphere label="ball_1">
+        <origin>[ 0.0, 0.0, 0.0]</origin>
+        <radius> 1.00 </radius>
+      </sphere>
+    </intersection>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_intersect.png}
+  \captionof{figure}{An \Textsfc{intersection} of a sphere and a cube.}
+\end{minipage}
+
+\begin{minipage}{0.6\textwidth}
+  The \Textsfc{ union} operator aggregates a collection of geometry pieces.
+  \begin{lstlisting}[language=XML]
+    <union>
+      <box label="box_1">
+        <min>[-0.75, -0.75, -0.75]</min>
+        <max>[ 0.75,  0.75,  0.75]</max>
+      </box>
+      <sphere label="ball_1">
+        <origin>[ 0.0, 0.0, 0.0]</origin>
+        <radius> 1.00 </radius>
+      </sphere>
+    </union>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_union.png}
+  \captionof{figure}{A \Textsfc{union} of a sphere and a cube.}
+\end{minipage}
 
 \section{Special geometry objects} \label{Sec:SpecialGeometryObjects}
 \subsection{Smooth Cylinder}

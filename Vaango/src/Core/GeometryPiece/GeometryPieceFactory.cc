@@ -168,6 +168,15 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
     else if ( go_type == TorusGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew TorusGeometryPiece(child);
     }
+    else if ( go_type == UnionGeometryPiece::TYPE_NAME ) {
+      newGeomPiece = scinew UnionGeometryPiece(child, grid);
+    }
+    else if ( go_type == DifferenceGeometryPiece::TYPE_NAME ) {
+      newGeomPiece = scinew DifferenceGeometryPiece(child, grid);
+    }
+    else if ( go_type == IntersectionGeometryPiece::TYPE_NAME ) {
+      newGeomPiece = scinew IntersectionGeometryPiece(child, grid);
+    }
     else if ( go_type ==  SmoothCylGeomPiece::TYPE_NAME ) {
       newGeomPiece = scinew SmoothCylGeomPiece(child, grid);
     }
@@ -180,23 +189,14 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
     else if ( go_type == TriGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew TriGeometryPiece(child);
     }
-    else if ( go_type == UnionGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew UnionGeometryPiece(child, grid);
-    }
-    else if ( go_type == DifferenceGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew DifferenceGeometryPiece(child, grid);
-    }
     else if ( go_type == FileGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew FileGeometryPiece(child);
     }
-    else if ( go_type == IntersectionGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew IntersectionGeometryPiece(child, grid);
+    else if ( go_type == AbaqusMeshGeometryPiece::TYPE_NAME ) {
+      newGeomPiece = scinew AbaqusMeshGeometryPiece(child, grid);
     }
     else if ( go_type == NullGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew NullGeometryPiece(child);
-    }
-    else if ( go_type == AbaqusMeshGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew AbaqusMeshGeometryPiece(child, grid);
     }
     else if (go_type == "res"         || go_type == "velocity" || 
              go_type == "temperature" || go_type == "comment"  ||
