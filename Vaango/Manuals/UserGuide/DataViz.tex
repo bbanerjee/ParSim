@@ -1,34 +1,174 @@
 \chapter{Data visualization with \Visit}
-\begin{minipage}[b]{\textwidth}
-  \begin{minipage}[b]{0.6\textwidth}
-  \section{Introduction}
-  Visualization of \Vaango data is currently performed using \Visit. 
-  The \Visit package from LLNL is general purpose visualization software
-  that offers all of the usual capabilities for rendering scientific
-  data.  It is developed and maintained by LLNL staff, and its
-   interface to \Vaango data is supported by the \Uintah team. 
-  \section{Reading UDA files}
-  Once you have installed \Visit and the UDA reader plugin, you can
-  launch \Visit and start visualizing UDA's. To open a UDA, select \Textsfc{
-  Open File} from the \Textsfc{File} menu. Browse into
-  the UDA you want to load and select the \Textsfc{index.xml}
-  file. Then hit on \Textsfc{OK} and a list of timesteps should
-  now appear on the gui. Figure~\ref{VisItFileOpen} illustrates this
-  process.
-  \end{minipage}
-  \hspace{12pt}
-  \begin{minipage}[b]{0.35\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{VisItFileOpen.png}
-    \captionof{figure}{Opening an UDA with \Visit}
-    \label{VisItFileOpen}
-  \end{minipage}
-\end{minipage}
 
+\section{Introduction}
+Visualization of \Vaango data is currently performed using \Visit. 
+The \Visit package from LLNL is general purpose visualization software
+that offers all of the usual capabilities for rendering scientific
+data.  It is developed and maintained by LLNL staff, and its
+interface to \Vaango data is supported by the \Uintah team. The latest
+\Visit version that \Vaango has been tested on is \Visit 3.1.1.
+The UDA reader plugin is currently incorporated directly into \Visit
+and does not have to be installed separately.
+
+You can install \Visit by downloading one of the pre-built executables from
+\url{https://wci.llnl.gov/simulation/computer-codes/visit/executables}.
+Alternatively, you can build your own version from source using instructions 
+given in the \Visit web page.
+
+\columnratio{0.7}
+\globalcounter{figure}
+%\setcolumnwidth{0.5\textwidth,0.3\textwidth}
+\begin{paracol}{2}
+  \section{Particle data visualization}
+  To visualize particle information, run \Visit.  
+  To open a UDA, select \Textsfc{Open File} from the \Textsfc{File} menu
+  (Figure~\ref{fig:visit_2}). Browse into
+  the UDA you want to load (Figure~\ref{fig:visit_3}) and select the \Textsfc{index.xml}
+  file (Figure~\ref{fig:visit_4}). Then hit on \Textsfc{OK} and a list of timesteps should
+  now appear on the gui (Figure~\ref{fig:visit_6}). 
+
+  \switchcolumn
+
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.9\columnwidth]{FIGS/visit/visit_2.png}
+    \caption{\Visit control window.}
+    \label{fig:visit_2}
+  \end{figure}
+
+  \switchcolumn
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.5\columnwidth]{FIGS/visit/visit_3.png}
+    \caption{\Visit file open dialog.}
+    \label{fig:visit_3}
+  \end{figure}
+
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.5\columnwidth]{FIGS/visit/visit_4.png}
+    \caption{Selecting a UDA to load.}
+    \label{fig:visit_4}
+  \end{figure}
+
+  \switchcolumn
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\columnwidth]{FIGS/visit/visit_6.png}
+    \caption{Selecting the index.xml file.}
+    \label{fig:visit_6}
+  \end{figure}
+
+  \switchcolumn
+  Now a window indicating an active source is created with an \Textsfc{Add}
+  button.  Click on this button and select \Textsfc{Pseudocolor} and the
+  particle variable \Textsfc{p.volume} (or any other quantity that is
+  available in the UDA) as shown in Figure~\ref{fig:visit_10}.
+  This allows you to plot \Textsfc{scalar} quantities that are associated
+  with the \MPM particles.
+  The variable to be plotted is highlighted in green.  Click on the \Textsfc{Draw}
+  button (Figure~\ref{fig:visit_12}) to visualize the data.
+  Figure~\ref{VisItFileOpen} illustrates this process.
+
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.5\columnwidth]{FIGS/visit/visit_10.png}
+    \caption{Selecting the scalar particle variable to plot.}
+    \label{fig:visit_10}
+  \end{figure}
+
+  \switchcolumn
+
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.9\columnwidth]{FIGS/visit/visit_12.png}
+    \caption{Clicking on the \Textsfc{Draw} button.}
+    \label{fig:visit_12}
+  \end{figure}
+
+  \switchcolumn
+
+  A plot of the data shows up on the display window as seen in Figure~\ref{fig:visit_13}.
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.4\columnwidth]{FIGS/visit/visit_13.png}
+    \caption{Plot of the particle data in the UDA file.}
+    \label{fig:visit_13}
+  \end{figure}
+
+  The particles are too small in this plot because they are represented as
+  points.  We can increase the size by changing the particle type into spheres.
+  To do that select \Textsfc{PlotAtts} as shown in Figure~\ref{fig:visit_18}.
+  If you then choose the \Textsfc{Pseudocolor} item from the list, a window pops up 
+  that allows you to modify the appearance of the particles (Figure~\ref{fig:visit_17}).
+  Change the button for \Textsfc{Point Type} from \Textsfc{Point} tp \Textsfc{Sphere}
+  (Figure~\ref{fig:visit_20}).
+  
+  \switchcolumn
+
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\columnwidth]{FIGS/visit/visit_18.png}
+    \caption{Selecting pseudocolor plot attributes.}
+    \label{fig:visit_18}
+  \end{figure}
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\columnwidth]{FIGS/visit/visit_17.png}
+    \caption{Changing the appearance of particles.}
+    \label{fig:visit_17}
+  \end{figure}
+
+  \switchcolumn
+
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.5\columnwidth]{FIGS/visit/visit_20.png}
+    \caption{Switching from point to sphere respresentation.}
+    \label{fig:visit_20}
+  \end{figure}
+
+  \switchcolumn
+
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\columnwidth]{FIGS/visit/visit_21.png}
+    \caption{Particles drawn as spheres.}
+    \label{fig:visit_21}
+  \end{figure}
+
+  \switchcolumn
+  Figure~\ref{fig:visit_21} shows the updated view of the \MPM particles.
+  However, the color is still too dark.  If you want a lighter color, you 
+  will have to change the \Textsfc{color map} (Figure~\ref{fig:visit_23}.
+  Select any one of the options that pops up when you select \Textsfc{Color table}
+  and you will get a set of particles colored differently from the default
+  as seen in Figure~\ref{fig:visit_24}.
+
+  \switchcolumn
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=\columnwidth]{FIGS/visit/visit_23.png}
+    \caption{Changing the color map.}
+    \label{fig:visit_23}
+  \end{figure}
+
+  \switchcolumn
+
+  \begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.7\columnwidth]{FIGS/visit/visit_24.png}
+    \caption{Changing the appearance of particles.}
+    \label{fig:visit_24}
+  \end{figure}
+  
+\end{paracol}
+
+\newpage
 \begin{minipage}[t]{\textwidth}
   \begin{minipage}{0.6\textwidth}
   \vspace{-48pt}
-  \section{Plots}
+  \section{Volumetric data plots}
   \Visit displays data as plots. A plot might render a specific variable
   or it might render the structure of the mesh. Figure~\ref{VisItPlots}
   illustrates this.
