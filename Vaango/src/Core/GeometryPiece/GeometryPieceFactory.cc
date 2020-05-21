@@ -159,6 +159,12 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
     else if ( go_type == CylinderGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew CylinderGeometryPiece(child);
     }
+    else if ( go_type == ConeGeometryPiece::TYPE_NAME ) {
+      newGeomPiece = scinew ConeGeometryPiece(child);
+    }
+    else if ( go_type == EllipsoidGeometryPiece::TYPE_NAME ) {
+      newGeomPiece = scinew EllipsoidGeometryPiece(child);
+    }
     else if ( go_type == TorusGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew TorusGeometryPiece(child);
     }
@@ -168,14 +174,8 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
     else if ( go_type ==  SmoothSphereGeomPiece::TYPE_NAME ) {
       newGeomPiece = scinew SmoothSphereGeomPiece(child, grid);
     }
-    else if ( go_type == EllipsoidGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew EllipsoidGeometryPiece(child);
-    }
     else if ( go_type == CorrugEdgeGeomPiece::TYPE_NAME ) {
       newGeomPiece = scinew CorrugEdgeGeomPiece(child);
-    }
-    else if ( go_type == ConeGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew ConeGeometryPiece(child);
     }
     else if ( go_type == TriGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew TriGeometryPiece(child);

@@ -5,7 +5,6 @@ options avialble for creating geometry in \Vaango.
 
 \section{Basic geometry objects} \label{Sec:GeometryObjects}
 
-
 Each geometry object has the following properties, label (string
 name), type (box, cylinder, sphere, etc), resolution (vector
 quantity), and any unique geometry parameters such as origin, corners,
@@ -42,52 +41,136 @@ As an example of a non-trivial geometry object is shown below:
 The following geometry objects are given with their required tags:
 
 \subsection{Box}
-\Textsfc{box} has the following tags: min and max which are
-vector quantities specified in the \Textsfc{[a, b, c]} format.
-
-\subsection{Sphere}
-\Textsfc{sphere} has an origin tag specified as a vector and the
-radius tag specified as a float.
-
-\subsection{Cone}
-\Textsfc{cone} has a tag for the top and bottom origins (vector)
-as well as tags for the top and bottom radius (float) to create a
-right circular cone/frustum.
-
-\subsection{Cylinder}
-\Textsfc{cylinder} has a tag for the top and bottom origins
-(vector) plus a tag for the radius (float).
-
-\subsection{Ellipsoid}
-\Textsfc{ellipsoid} has an origin tag specified as a vector.  There are 
-two ways to assign axis lengths depending on the orientation of the ellipsoid.
-If the axes are aligned with the Cartesian grid, they may be specified as 
-floating point values with tagnames: rx, ry, rz.  For all other orientation, 
-three vector quantities must be specified in the \Textsfc{[a,b,c]} format.
-Vector quantity tag names are: v1, v2, v3.These vectors must be orthogonal 
-to within 1e-12 after dot product or the simulation will throw an exception.  
-Note, if both vector quantities and floating point tags are used, 
-the vector quantity inputs will take precedence.  
+\begin{minipage}{0.6\textwidth}
+  \Textsfc{box} requires the tags \Textsfc{min} and \Textsfc{max} which are
+  vector quantities specified in the \Textsfc{[a, b, c]} format.
+  \begin{lstlisting}[language=XML]
+    <box label="box_1">
+      <min>[0.0, 0.0, 0.0]</min>
+      <max>[1.0, 2.0, 3.0]</max>
+    </box>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_box.png}
+  \captionof{figure}{A \Textsfc{box} geometry piece.}
+\end{minipage}
 
 \subsection{Parallelepiped}
-\Textsfc{parallelepiped} requires that four points be specified as
-illustrated by the ASCII art snippet taken from the source code:
+\begin{minipage}{0.6\textwidth}
+  \Textsfc{parallelepiped} requires the locations of four points
+  that define the bounds of the parallelepiped.  The point \Textsfc{p1}
+  is a corner while the the vectors \Textsfc{p2 - p1}, \Textsfc{p3 - p1},
+  and \Textsfc{p4 - p1} represent the vectors along the three edges
+  of the parallelepiped starting from \Textsfc{p1}.
+  \begin{lstlisting}[language=XML]
+    <parallelepiped label="box_1">
+      <p1>[ 0.0, 0.0, 0.0]</p1>
+      <p2>[ 1.0, 0.0, 0.0]</p2>
+      <p3>[ 1.0, 2.0, 0.5]</p3>
+      <p4>[-1.0, 1.0, 2.0]</p4>
+    </parallelepiped>
+  \end{lstlisting}
+  \centering
+  \includegraphics[width=0.3\columnwidth]{FIGS/geometry/naa_box_def.png}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_naa_box.png}
+  \captionof{figure}{A \Textsfc{parallelepiped} geometry piece.}
+\end{minipage}
 
-\begin{lstlisting}[backgroundcolor=\color{background}]
-//********************************************
-//                                          //
-//             *-------------*              //
-//            / .           / \             //
-//           /   .         /   \            //
-//          P4-------------*    \           //
-//           \    .         \    \          //
-//            \   P2.........\....*         //
-//             \ .            \  /          //
-//             P1--------------P3           //
-//
-//  Returns true if the point is inside (or on) the parallelepiped.
-//  (The order of p2, p3, and p4 doesn't really matter.)
-\end{lstlisting}
+\subsection{Sphere}
+\begin{minipage}{0.6\textwidth}
+  \Textsfc{sphere} has an \Textsfc{origin} tag specified as a vector and the
+  \Textsfc{radius} tag specified as a float.
+  \begin{lstlisting}[language=XML]
+    <sphere label="ball_1">
+      <origin>[ 0.0, 0.0, 0.0]</origin>
+      <radius> 0.75 </radius>
+    </sphere>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_sphere.png}
+  \captionof{figure}{A \Textsfc{sphere} geometry piece.}
+\end{minipage}
+
+\subsection{Cylinder}
+\begin{minipage}{0.6\textwidth}
+  \Textsfc{cylinder} has a tag for the \Textsfc{top} and \Textsfc{bottom} origins
+  (vector) plus a tag for the \Textsfc{radius} (float).
+  \begin{lstlisting}[language=XML]
+    <cylinder label="cyl_1">
+      <bottom>[ -0.5, -0.5, -0.5]</bottom>
+      <top>[ 1.5, 1.5, 1.5]</top>
+      <radius> 0.5 </radius>
+    </cylinder>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_cyl.png}
+  \captionof{figure}{A \Textsfc{cylinder} geometry piece.}
+\end{minipage}
+
+\subsection{Cone}
+\begin{minipage}{0.6\textwidth}
+  \Textsfc{cone} has a tag for the \Textsfc{top} and \Textsfc{bottom} origins (vector)
+  as well as tags for the top and bottom \Textsfc{radius} (float) to create a
+  right circular cone/frustum.
+  \begin{lstlisting}[language=XML]
+    <cone label="cone_1">
+      <bottom>[ -0.5, -0.5, -0.5]</bottom>
+      <top>[ 1.5, 1.5, 1.5]</top>
+      <bottom_radius> 0.7 </bottom_radius>
+      <top_radius> 0.1 </top_radius>
+    </cone>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_cone.png}
+  \captionof{figure}{A \Textsfc{cone} geometry piece.}
+\end{minipage}
+
+\subsection{Ellipsoid}
+\begin{minipage}{0.6\textwidth}
+  \Textsfc{ellipsoid} has an \Textsfc{origin} tag specified as a vector.  
+  An ellipsoid is defined by two orthogonal axis vectors \Textsfc{v1} and
+  \Textsfc{v2} and three semi-axis lengths \Textsfc{r1}, \Textsfc{r2}, \Textsfc{r3}.
+  The axis vectors must be orthogonal to within 1e-12 after dot product or 
+  the simulation will throw an exception.  
+  \begin{lstlisting}[language=XML]
+    <ellipsoid label="ellipsoid_1">
+      <origin>[ 0.0, 0.0, 0.0]</origin>
+      <v1> [0.353553, 0.353553, 0.4] </v1>
+      <v2> [0.087038295569, -0.783349583783, 0.615457362205] </v2>
+      <r1> 0.6403119924052649 </r1>
+      <r2> 1.0 </r2>
+      <r3> 2.0 </r3>
+    </ellipsoid>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_ellipsoid.png}
+  \captionof{figure}{An \Textsfc{ellipsoid} geometry piece.}
+\end{minipage}
+
+\subsection{Boolean operations}
+The boolean operators on the geometry pieces include \Textsfc{difference,
+intersection,} and \Textsfc{union}.
+
+The \Textsfc{difference} takes two geometry pieces and subtracts
+the second geometry piece from the first geometry piece.  The \Textsfc{
+intersection} operator requires at least two geometry
+pieces in forming an intersection geometry piece.  Whereas the \Textsfc{
+union} operator aggregates a collection of geometry pieces.
+Multiple operators can be used to form very complex geometry pieces.
+
 
 \section{Special geometry objects} \label{Sec:SpecialGeometryObjects}
 \subsection{Smooth Cylinder}
@@ -176,17 +259,6 @@ Points file
 \end{lstlisting}
 The Mach 2 Wedge example in Section~\ref{Sec:MPMICE_EXAMPLES} depicts usage of
 this option.
-
-\subsection{Boolean operations}
-The boolean operators on the geometry pieces include \Textsfc{difference,
-intersection,} and \Textsfc{union}.
-
-The \Textsfc{difference} takes two geometry pieces and subtracts
-the second geometry piece from the first geometry piece.  The \Textsfc{
-intersection} operator requires at least two geometry
-pieces in forming an intersection geometry piece.  Whereas the \Textsfc{
-union} operator aggregates a collection of geometry pieces.
-Multiple operators can be used to form very complex geometry pieces.
 
 \subsection{Specifying particle locations directly}
 In addition to the above, it is also possible in MPM simulations to describe

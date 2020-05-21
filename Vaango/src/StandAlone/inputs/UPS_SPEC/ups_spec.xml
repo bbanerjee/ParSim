@@ -155,12 +155,12 @@
     
     <ellipsoid                   spec="OPTIONAL NO_DATA"
                                 attribute1="label    OPTIONAL STRING" >
-      <origin                 spec="OPTIONAL VECTOR" />
-      <rx                     spec="OPTIONAL DOUBLE 'positive'" />
-      <ry                     spec="OPTIONAL DOUBLE 'positive'" />
-      <rz                     spec="OPTIONAL DOUBLE 'positive'" />
-      <v1                     spec="OPTIONAL VECTOR" />
-      <v2                     spec="OPTIONAL VECTOR" />
+      <origin                 spec="REQUIRED VECTOR" />
+      <r1                     spec="REQUIRED DOUBLE 'positive'" />
+      <r2                     spec="REQUIRED DOUBLE 'positive'" />
+      <r3                     spec="REQUIRED DOUBLE 'positive'" />
+      <v1                     spec="REQUIRED VECTOR" />
+      <v2                     spec="REQUIRED VECTOR" />
       <v3                     spec="OPTIONAL VECTOR" />
     </ellipsoid>
 
