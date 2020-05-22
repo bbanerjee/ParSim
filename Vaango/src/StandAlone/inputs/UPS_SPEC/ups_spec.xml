@@ -206,10 +206,9 @@
       <top                    spec="REQUIRED VECTOR" />
       <radius                 spec="REQUIRED DOUBLE 'positive'" />
       <thickness              spec="OPTIONAL DOUBLE 'positive'" />
-      <num_radial             spec="REQUIRED DOUBLE 'positive'" />
-      <num_axial              spec="REQUIRED DOUBLE 'positive'" />
-      <arc_start_angle        spec="OPTIONAL DOUBLE 'positive'" />
-      <arc_angle              spec="OPTIONAL DOUBLE 'positive'" />
+      <endcap_thickness       spec="OPTIONAL DOUBLE 'positive'" />
+      <arc_start_angle_degree spec="OPTIONAL DOUBLE 'positive'" />
+      <arc_angle_degree       spec="OPTIONAL DOUBLE 'positive'" />
       <output_file            spec="OPTIONAL STRING" />
     </smoothcyl>
 

@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,6 +29,7 @@
 
 #include <Core/GeometryPiece/SmoothGeomPiece.h>
 #include <Core/Geometry/Point.h>
+#include <Core/Math/Matrix3.h>
 #include <Core/Grid/GridP.h>
 
 #include <cmath>
@@ -112,7 +114,7 @@ namespace Uintah {
     //////////////////////////////////////////////////////////////////////
     /*! Destructor */
     //////////////////////////////////////////////////////////////////////
-    virtual ~SmoothCylGeomPiece();
+    virtual ~SmoothCylGeomPiece() = default;
 
     static const string TYPE_NAME;
     virtual std::string getType() const { return TYPE_NAME; }
@@ -136,6 +138,8 @@ namespace Uintah {
     virtual unsigned int createPoints();
 
   private:
+    void checkInput() const;
+    void computeRotation();
     virtual void outputHelper( ProblemSpecP & ps ) const;
 
     //////////////////////////////////////////////////////////////////////
@@ -167,6 +171,9 @@ namespace Uintah {
     int d_numRadial;
     int d_numAxial;
     string d_fileName;
+    double d_height;
+    Matrix3 d_rotation;
+    Vector d_axis;
 
     /*! Save the size of the computational domain */
     Point d_domainMin;

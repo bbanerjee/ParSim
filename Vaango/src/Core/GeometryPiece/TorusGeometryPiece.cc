@@ -111,6 +111,7 @@ TorusGeometryPiece::computeRotation()
   Vector z_rot_axis = Cross(d_axis_vec, z_axis);
   double z_rot_angle = std::acos(Dot(d_axis_vec, z_axis));
   d_rotation = Matrix3(z_rot_angle, z_rot_axis);
+  d_rotation = d_rotation.Transpose();
 }
 
 void

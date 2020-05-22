@@ -47,38 +47,38 @@ CorrugEdgeGeomPiece::CorrugEdgeGeomPiece(ProblemSpecP& ps)
   ps->require("xymax", d_xymax);
   if ((d_xymax-d_xymin).length2() <= 0.0)
     SCI_THROW(ProblemSetupException("CorrugEdgeGeom: Check data in input", __FILE__, __LINE__));
-  cout << "xmin = " << d_xymin << " xmax = " << d_xymax << endl;
+  std::cout << "xmin = " << d_xymin << " xmax = " << d_xymax << "\n";
 
   ps->require("thickness", d_thickness);
   if (d_thickness <= 0.0)
     SCI_THROW(ProblemSetupException("CorrugEdgeGeom: Thickness <= 0", __FILE__, __LINE__));
-  cout << "thickness = " << d_thickness << endl;
+  std::cout << "thickness = " << d_thickness << "\n";
 
   d_normal = Vector(0.0,0.0,1.0);
   ps->get("normal", d_normal);
-  cout << "normal = " << d_normal << endl;
+  std::cout << "normal = " << d_normal << "\n";
 
   d_edge = "x+";
   ps->require("corr_edge", d_edge);
   if (d_edge != "x+" && d_edge != "x-" && d_edge != "y+" && d_edge != "y-")
     SCI_THROW(ProblemSetupException("CorrugEdgeGeom: Unknown edge.", __FILE__, __LINE__));
-  cout << "corr_edge = " << d_edge << endl;
+  std::cout << "corr_edge = " << d_edge << "\n";
 
   d_curve = "sin";
   ps->require("curve", d_curve);
   if (d_curve != "sin" && d_curve != "cos")
     SCI_THROW(ProblemSetupException("CorrugEdgeGeom: Unknown curve", __FILE__, __LINE__));
-  cout << "curve = " << d_curve << endl;
+  std::cout << "curve = " << d_curve << "\n";
 
   ps->require("wavelength", d_wavelength);
   if (d_wavelength <= 0.0)
     SCI_THROW(ProblemSetupException("CorrugEdgeGeom: Wavelength <= 0.0", __FILE__, __LINE__));
-  cout << "wavelength = " << d_wavelength << endl;
+  std::cout << "wavelength = " << d_wavelength << "\n";
 
   ps->require("amplitude", d_amplitude);
   if (d_amplitude <= 0.0)
     SCI_THROW(ProblemSetupException("CorrugEdgeGeom: Amplitude <= 0.0", __FILE__, __LINE__));
-  cout << "amplitude = " << d_amplitude << endl;
+  std::cout << "amplitude = " << d_amplitude << "\n";
 }
 
 //////////
@@ -115,7 +115,7 @@ CorrugEdgeGeomPiece::inside(const Point& p) const
 {
   bool isInside = false;
 
-  cout << "CorrugEdgeGeomPiece:inside(p) not yet implemented." << endl;
+  std::cout << "CorrugEdgeGeomPiece:inside(p) not yet implemented." << "\n";
   return isInside;
 
 }
@@ -145,13 +145,13 @@ CorrugEdgeGeomPiece::createPoints()
   double a = d_amplitude;
   double L = 0.0; double W = 0.0; double T = d_thickness;
 
-  cout << "lambda = " << lambda << " a = " << a << endl;
+  std::cout << "lambda = " << lambda << " a = " << a << "\n";
   // Decide whether sin or cos curve is to be used
   double sinFactor = 0.0;
   double cosFactor = 0.0;
   if (d_curve == "sin") sinFactor = 1.0;
   else cosFactor = 1.0;
-  cout << "sinFactor = " << sinFactor << " cosFactor = " << cosFactor << endl;
+  std::cout << "sinFactor = " << sinFactor << " cosFactor = " << cosFactor << "\n";
 
   // Decide the Length (corrugated dimension) and 
   // Width (uncorrugated dimension)
@@ -163,14 +163,14 @@ CorrugEdgeGeomPiece::createPoints()
     L = d_xymax.x() - d_xymin.x();
     W = d_xymax.y() - d_xymin.y();
   }
-  cout << "L = " << L << " W = " << W << endl;
+  std::cout << "L = " << L << " W = " << W << "\n";
   double dx = d_dx;
   int nL = (int) ceil(L/dx); double dxL = L/(double) nL;
   int nW = (int) ceil(W/dx); double dxW = W/(double) nW;
   int nT = (int) ceil(T/dx); double dxT = T/(double) nT;
   double da = a/(double) nW;
-  cout << "dx = " << dx << " da = " << da << endl;
-  cout << "nL = " << nL << " nW = " << nW << " nT = " << nT << endl;
+  std::cout << "dx = " << dx << " da = " << da << "\n";
+  std::cout << "nL = " << nL << " nW = " << nW << " nT = " << nT << "\n";
 
   double xstart = 0.0;
   double ystart = 0.0;
@@ -236,7 +236,7 @@ CorrugEdgeGeomPiece::createPoints()
       zz += dxT;
     }
   }
-  cout << "Number of points = " << d_points.size() << endl;
+  std::cout << "Number of points = " << d_points.size() << "\n";
   return d_points.size();
 }
 

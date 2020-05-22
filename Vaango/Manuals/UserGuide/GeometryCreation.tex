@@ -266,66 +266,111 @@ Multiple operators can be used to form very complex geometry pieces.
 \end{minipage}
 
 \section{Special geometry objects} \label{Sec:SpecialGeometryObjects}
+A few special geometry objects exist that do not force the material points
+to be distributed according to the geometry of the background grid.
+These are discussed below.
+
 \subsection{Smooth Cylinder}
-\Textsfc{smoothcyl} is a geomtry object designed for use with
-the cpdi algorithm, which uses a body fit particle spatial
-distribution.  This eliminates ``stair-stepped'' boundaries typical of
-the standard, grid-based, discretization scheme.  
+\begin{minipage}{0.6\textwidth}
+  \Textsfc{smoothcyl} is a geometry object that generates a body fit particle spatial
+  distribution.  This eliminates ``stair-stepped'' boundaries typical of
+  the standard, grid-based, discretization scheme.  
+  \begin{NoteBox}
+    The \Textsfc{smoothcyl} geometry is designed to work best with
+    \Textsfc{\textless interpolator\textgreater cpdi \textless /interpolator\textgreater}. Other
+    algorithms may give erroneous answers.
+  \end{NoteBox}
+
+  The basic usage requires coordinates of the \Textsfc{bottom} and \Textsfc{top}
+  center points, and a \Textsfc{radius}.
+  \begin{lstlisting}[language=XML]
+    <smoothcyl label="cyl smooth">
+      <bottom>[ -1.0, -1.0, -1.0]</bottom>
+      <top>[ 1.0, 1.0, 1.0]</top>
+      <radius> 0.5 </radius>
+    </smoothcyl>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_smooth_cyl_solid.png}
+  \captionof{figure}{A \Textsfc{smoothcyl} geometry object. Particle volumes vary with radius.}
+\end{minipage}
+
+\begin{minipage}{0.6\textwidth}
+  A hollow \Textsfc{smoothcyl} can be created by specifying an additional
+  \Textsfc{thickness} parameter.  The thickness is required to be smaller than
+  the radius.  The particle and grid resolution should be chosen such that the thickness
+  contains at least two layers of particles.
+  \begin{lstlisting}[language=XML]
+    <smoothcyl label="cyl smooth">
+      <bottom>[ -1.0, -1.0, -1.0]</bottom>
+      <top>[ 1.0, 1.0, 1.0]</top>
+      <radius> 0.5 </radius>
+      <thickness> 0.2 </thickness>
+    </smoothcyl>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_smooth_cyl_hollow.png}
+  \captionof{figure}{A hollow \Textsfc{smoothcyl} geometry object.}
+\end{minipage}
+
+\begin{minipage}{0.6\textwidth}
+  Endcaps can be added to the \Textsfc{smoothcyl} by specifying an additional
+  \Textsfc{endcap thickness} parameter.  
+  \begin{lstlisting}[language=XML]
+    <smoothcyl label="cyl smooth">
+      <bottom>[ -1.0, -1.0, -1.0]</bottom>
+      <top>[ 1.0, 1.0, 1.0]</top>
+      <radius> 0.5 </radius>
+      <thickness> 0.2 </thickness>
+      <endcap_thickness> 0.4 </endcap_thickness>
+    </smoothcyl>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_smooth_cyl_hollow_endcap.png}
+  \captionof{figure}{A hollow \Textsfc{smoothcyl} with endcaps geometry object.}
+\end{minipage}
+
+\begin{minipage}{0.6\textwidth}
+  Partial sectors of a \Textsfc{smoothcyl} can also be modeled by specifying \Textsfc{arc}
+  information.  The start angle and arc angle default to 0 and 360 and have to be specified
+  in degrees.
+  The number of particles between \Textbfc{arc\_start} and \Textbfc{arc\_angle}
+  is determined individually for each ring of particles by
+  attempting to keep particle spacings approximately equal in the radial
+  and angular directions, and thus particle volumes approximately
+  constant.
+  \begin{lstlisting}[language=XML]
+    <smoothcyl label="cyl smooth">
+      <bottom>[ -1.0, -1.0, -1.0]</bottom>
+      <top>[ 1.0, 1.0, 1.0]</top>
+      <radius> 0.5 </radius>
+      <thickness> 0.2 </thickness>
+      <endcap_thickness> 0.2 </endcap_thickness>
+      <arc_start_angle_degree> 30 </arc_start_angle_degree>
+      <arc_angle_degree> 90 </arc_angle_degree>
+    </smoothcyl>
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_smooth_cyl_hollow_endcap_arc.png}
+  \captionof{figure}{A partial hollow \Textsfc{smoothcyl} with endcaps.}
+\end{minipage}
+
 \begin{NoteBox}
-Thus it is
-  important to note that the \Textsfc{smoothcyl} geometry is only designed to work with
-  \Textsfc{\textless interpolator\textgreater cpdi \textless /interpolator\textgreater}. Other
-  algorithms may give erroneous answers.
-\end{NoteBox}
-
-This geometry has the following tags:
-
-\begin{lstlisting}[language=XML]
-	   <smoothcyl label = "label name">
-	     <discretization_scheme> string </discretization_scheme>
-	     <bottom> vector </bottom>
-	     <top> vector </top>
-	     <outer_radius> float </outer_radius>
-	     <inner_radius> float </inner_radius>
-	     <num_radial> integer </num_radial>
-	     <num_axial> integer </num_axial>
-	     <num_angular> integer </num_angular>
-	     <arc_start_angle> double (in degrees) </arc_start_angle>
-	     <arc_angle> double (in degrees) </arc_angle>
-	   </smoothcyl>
-\end{lstlisting}
-
-The complete or partial annulus or cylinder specified by inner
-(optional, defaulting to zero) and outer radii, cylinder axis bottom
-and top (all required) and start and final angle (both optional,
-defaulting to 0 and 360) will be discretized using planes of
-concentric rings of particles.  Particle density is specified by \Textbfc{num\_axial} and \Textbfc{num\_radial}, the number of
-particles in the axial and radial dimensions, respectively.
-  Note that these particle density specifications
-supercede those specified in the \Textbfc{\textless geom\_object\textgreater \textless res\textgreater}
-tag, which is ignored.
-
-The required discretization scheme may be either \Textbfc{pie\_slices}
- or \Textbfc{constant\_particle\_volumes}.  For the
-\Textbfc{pie\_slices} discretization, \Textbfc{num\_angular}  is required to specify the number of particles between \Textbfc{arc\_start} and \Textbfc{arc\_angle}.  For the \Textbfc{constant\_particle\_volumes} discretization, the number of
-particles between \Textbfc{arc\_start} and \Textbfc{arc\_angle}
-is determined individually for each ring of particles by
-attempting to keep particle spacings approximately equal in the radial
-and angular directions, and thus particle volumes approximately
-constant.
-
-End caps may be added to the smoothcyl using the optional \Textbfc{\textless endcap\_thickness\textgreater} tag, which specifies the axial
-dimension of cylinders which are appended to each end of the specified
-\Textsfc{smoothcyl} (the radii are the same as the \Textsfc{smoothcyl}
-).  Presently, the end cap body fit discretization uses a
-legacy scheme.
-
-Note: At the time of writing, multiple \Textsfc{smoothcyl}
-geometries within a \Textbfc{\textless geom\_object\textgreater} tag were not
+Multiple \Textsfc{smoothcyl} geometries within a \Textbfc{\textless geom\_object\textgreater} 
+tag are not
 discretized using a body fit particle distribution as described here
 (rather the default discretization scheme is used).  This will be
 fixed eventually, at which point it may be possible to create more
 general endcaps using unions of \Textsfc{smoothcyl}.
+\end{NoteBox}
 
 \subsection{Triangulated surface}
 \Textsfc{tri} is a tag for describing a triangulated surface.
