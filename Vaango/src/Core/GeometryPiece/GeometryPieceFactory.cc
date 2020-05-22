@@ -177,6 +177,9 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
     else if ( go_type == IntersectionGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew IntersectionGeometryPiece(child, grid);
     }
+    else if ( go_type == TriGeometryPiece::TYPE_NAME ) {
+      newGeomPiece = scinew TriGeometryPiece(child);
+    }
     else if ( go_type ==  SmoothCylGeomPiece::TYPE_NAME ) {
       newGeomPiece = scinew SmoothCylGeomPiece(child, grid);
     }
@@ -185,9 +188,6 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
     }
     else if ( go_type == CorrugEdgeGeomPiece::TYPE_NAME ) {
       newGeomPiece = scinew CorrugEdgeGeomPiece(child);
-    }
-    else if ( go_type == TriGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew TriGeometryPiece(child);
     }
     else if ( go_type == FileGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew FileGeometryPiece(child);

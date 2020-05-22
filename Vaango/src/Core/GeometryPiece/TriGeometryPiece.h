@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2014-2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -34,12 +35,10 @@
 #include <Core/Geometry/IntVector.h>
 #include <Core/Geometry/Plane.h>
 
-#include   <vector>
+#include <vector>
+#include <memory>
 
 namespace Uintah {
-
-using std::vector;
-using namespace Uintah;
 
 /**************************************
         
@@ -58,8 +57,6 @@ GENERAL INFORMATION
         
    Center for the Simulation of Accidental Fires and Explosions (C-SAFE)
         
- 
-        
 KEYWORDS
    TriGeometryPiece BoundingBox inside
         
@@ -73,69 +70,52 @@ DESCRIPTION
          <file>surface.dat</file>
        </tri>
         
-        
-WARNING
-        
 ****************************************/
 
-      class TriGeometryPiece : public GeometryPiece {
-      public:
-         //////////
-         //  Constructor that takes a ProblemSpecP argument.   It reads the xml 
-         // input specification and builds the triangulated surface piece.
-         TriGeometryPiece(ProblemSpecP &);
-         //////////
+class TriGeometryPiece : public GeometryPiece {
+public:
+   TriGeometryPiece(ProblemSpecP &);
+   TriGeometryPiece(const TriGeometryPiece&);
+   TriGeometryPiece& operator=(const TriGeometryPiece&);
+   virtual ~TriGeometryPiece() = default;
 
-         TriGeometryPiece(const TriGeometryPiece&);
+   static const string TYPE_NAME;
+   virtual std::string getType() const { return TYPE_NAME; }
 
-         TriGeometryPiece& operator=(const TriGeometryPiece&);
-         
-         // Destructor
-         virtual ~TriGeometryPiece();
+   virtual GeometryPieceP clone() const;
 
-         static const string TYPE_NAME;
-         virtual std::string getType() const { return TYPE_NAME; }
+   virtual bool inside(const Point &p) const;
+   virtual Box getBoundingBox() const;
 
-         virtual GeometryPieceP clone() const;
+   void scale(const double factor);
 
-         //////////
-         // Determins whether a point is inside the triangulated surface.
-         virtual bool inside(const Point &p) const;
-         bool insideNew(const Point &p, int& cross) const;
-         
-         //////////
-         // Returns the bounding box surrounding the triangulated surface.
-         virtual Box getBoundingBox() const;
+   double surfaceArea() const;
+   
+private:
 
-         void scale(const double factor);
+   virtual void outputHelper( ProblemSpecP & ps ) const;
+   
+   void readPoints(const std::string& file);
+   void readTriangles(const std::string& file);
+   void makePlanes();
+   void makeTriangleBoxes();
+   void insideTriangle(Point& p, int i, int& NCS, int& NES) const;
+   
+   std::string d_file;
+   double d_scale_factor;
+   Vector d_trans_vector;
+   Vector d_reflect_vector;
+   IntVector d_axis_sequence;
 
-         double surfaceArea() const;
-         
-      private:
+   Box d_box;
+   std::vector<Point>     d_points;
+   std::vector<IntVector> d_triangles;
+   std::vector<Plane>     d_planes;
+   std::vector<Box>       d_boxes;
 
-         virtual void outputHelper( ProblemSpecP & ps ) const;
-         
-         void readPoints(const string& file);
-         void readTri(const string& file);
-         void makePlanes();
-         void makeTriBoxes();
-         void insideTriangle(Point& p, int i, int& NCS, int& NES) const;
-         
-         std::string d_file;
-         double d_scale_factor;
-         Vector d_trans_vector;
-         Vector d_reflect_vector;
-         IntVector d_axis_sequence;
-
-         Box d_box;
-         vector<Point>     d_points;
-         vector<IntVector> d_tri;
-         vector<Plane>     d_planes;
-         vector<Box>       d_boxes;
-
-         UniformGrid* d_grid;
-         
-      };
+   std::unique_ptr<UniformGrid> d_grid;
+   
+};
 
 } // End namespace Uintah
 

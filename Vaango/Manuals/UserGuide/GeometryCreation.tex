@@ -181,6 +181,44 @@ The following geometry objects are given with their required tags:
   \captionof{figure}{A \Textsfc{torus} geometry piece.}
 \end{minipage}
 
+\subsection{Triangulated surface}
+\begin{minipage}{0.6\textwidth}
+  \Textsfc{tri} is a tag for describing a triangulated surface.
+  The \Textsfc{name} tag specifies the file name to use for reading in the
+  triangulated surface description and the points file.  
+  \begin{lstlisting}[language=XML]
+    <tri label = "goblet">
+      <name> tri_goblet </name>
+    </tri>
+  \end{lstlisting}
+  The triangulated surface (\Textbfc{file\_name.tri}) contains a list of integers
+  describing the connectivity of points specified in \Textbfc{file\_name.pts}.
+  Here is an excerpt from the \Textbfc{tri\_goblet.tri} file:
+  \begin{lstlisting}[backgroundcolor=\color{background}]
+  0 49 6
+  0 6 18
+  18 6 8
+  18 8 22
+  ....
+  \end{lstlisting}
+  The \Textbfc{tri\_goblet.pts} file contains data of the form:
+  \begin{lstlisting}[backgroundcolor=\color{background}]
+  -2.6575 -0.366357 2.656
+  -2.69162 -0.57185 2.656
+  -2.61027 -0.577179 2.53656
+  -2.69395 -0.641317 2.656
+  -2.5085 -0.406282 2.39336
+  ....
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=0.6\columnwidth]{FIGS/geometry/geom_tri_mesh.png}
+  \captionof{figure}{The triangle mesh.}
+  \includegraphics[width=0.6\columnwidth]{FIGS/geometry/geom_tri.png}
+  \captionof{figure}{A \Textsfc{tri} geometry piece.}
+\end{minipage}
+
 \subsection{Boolean operations}
 The boolean operators on the geometry pieces include \Textsfc{difference,
 intersection,} and \Textsfc{union}.
@@ -371,32 +409,6 @@ discretized using a body fit particle distribution as described here
 fixed eventually, at which point it may be possible to create more
 general endcaps using unions of \Textsfc{smoothcyl}.
 \end{NoteBox}
-
-\subsection{Triangulated surface}
-\Textsfc{tri} is a tag for describing a triangulated surface.
-The name tag specifies the file name to use for reading in the
-triangulated surface description and the points file.  The
-triangulated surface (\Textbfc{file\_name.tri}) contains a list of integers
-describing the connectivity of points specified in \Textbfc{file\_name.pts}.
-Here is an excerpt from a tri file and a points file:
-
-\begin{lstlisting}[backgroundcolor=\color{background}]
-Triangulated file
-
-1 39 41
-1 41 38
-38 41 42
-. . .
-
-Points file
-
-0 0.03863 -0.005
-0.35227 0.13023 -0.005
-0.00403479 0.0296797 -0.005
-. . .
-\end{lstlisting}
-The Mach 2 Wedge example in Section~\ref{Sec:MPMICE_EXAMPLES} depicts usage of
-this option.
 
 \subsection{Specifying particle locations directly}
 In addition to the above, it is also possible in MPM simulations to describe
