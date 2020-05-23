@@ -177,21 +177,22 @@ The following geometry objects are given with their required tags:
 \end{minipage}
 \begin{minipage}{0.4\textwidth}
   \centering
-  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_torus.png}
+  \includegraphics[width=0.6\columnwidth]{FIGS/geometry/geom_torus.png}
   \captionof{figure}{A \Textsfc{torus} geometry piece.}
 \end{minipage}
 
 \subsection{Triangulated surface}
-\begin{minipage}{0.6\textwidth}
+\begin{minipage}{0.7\textwidth}
   \Textsfc{tri} is a tag for describing a triangulated surface.
-  The \Textsfc{name} tag specifies the file name to use for reading in the
+  The \Textsfc{file\_name\_prefix} tag specifies the file name to use for reading in the
   triangulated surface description and the points file.  
   \begin{lstlisting}[language=XML]
     <tri label = "goblet">
-      <name> tri_goblet </name>
+      <file_name_prefix> tri_goblet </file_name_prefix>
     </tri>
   \end{lstlisting}
-  The triangulated surface (\Textbfc{file\_name.tri}) contains a list of integers
+  The default behavior is to expect a triangulated surface file (\Textbfc{file\_name.tri}) 
+  that contains a list of integers
   describing the connectivity of points specified in \Textbfc{file\_name.pts}.
   Here is an excerpt from the \Textbfc{tri\_goblet.tri} file:
   \begin{lstlisting}[backgroundcolor=\color{background}]
@@ -210,13 +211,115 @@ The following geometry objects are given with their required tags:
   -2.5085 -0.406282 2.39336
   ....
   \end{lstlisting}
+  The \Textsfc{tri} tag can also be used to read triangulated surfaces in \Textbfc{OBJ}, 
+  \Textbfc{PLY}, and \Textbfc{STL} formats.  The \Textsfc{file\_type} tag specifies the 
+  type of file to be read.  For a \Textbfc{PLY} file, the file has to have the \Textsfc{.stl}
+  extension and we can use the following:
+  \begin{lstlisting}[language=XML]
+    <tri label = "horse">
+      <file_name_prefix> horse </file_name_prefix>
+      <file_type> ply </file_type>
+    </tri>
+  \end{lstlisting}
+  For an \Textbfc{OBJ} file, with extension \Textsfc{.obj}, we need
+  \begin{lstlisting}[language=XML]
+    <tri label = "teddy bear">
+      <file_name_prefix> teddy </file_name_prefix>
+      <file_type> obj </file_type>
+    </tri>
+  \end{lstlisting}
+  For a \Textbfc{STL} file, with extension \Textsfc{.stl}, the UPS file requires
+  \begin{lstlisting}[language=XML]
+    <tri label = "panther">
+      <file_name_prefix> panther </file_name_prefix>
+      <file_type> stl </file_type>
+    </tri>
+  \end{lstlisting}
 \end{minipage}
-\begin{minipage}{0.4\textwidth}
+\begin{minipage}{0.3\textwidth}
   \centering
   \includegraphics[width=0.6\columnwidth]{FIGS/geometry/geom_tri_mesh.png}
   \captionof{figure}{The triangle mesh.}
   \includegraphics[width=0.6\columnwidth]{FIGS/geometry/geom_tri.png}
   \captionof{figure}{A \Textsfc{tri} geometry piece.}
+  \includegraphics[width=0.7\columnwidth]{FIGS/geometry/geom_tri_ply.png}
+  \captionof{figure}{Particles created from a PLY mesh.}
+\end{minipage}
+
+\begin{minipage}{0.6\textwidth}
+  \begin{NoteBox}
+  If you are unsure of the size of the domain that will fit your geometry,
+  examine the output to get information on the bounding box of the object that
+  has been read in.
+  \end{NoteBox}
+  \Textsfc{tri} geometry pieces can \Textsfc{scaled}, \Textsfc{reflected}, and 
+  \Textsfc{translated}.  The \Textsfc{order} of the co-ordinates can also be
+  rearranged to suit a given simulation.
+
+  To scale an object we use the \Textsfc{scaling\_factor} tag:
+  \begin{lstlisting}[language=XML]
+    <tri label = "panther">
+      <file_name_prefix> panther </file_name_prefix>
+      <file_type> stl </file_type>
+      <scaling_factor> 0.5 </scaling_factor>
+    </tri>
+  \end{lstlisting}
+
+  To translate an object we use the \Textsfc{translation\_vector} tag:
+  \begin{lstlisting}[language=XML]
+    <tri label = "panther">
+      <file_name_prefix> panther </file_name_prefix>
+      <file_type> stl </file_type>
+      <scaling_factor> 0.5 </scaling_factor>
+      <translation_vector> [0.0, -15.0, 0.0] </translation_vector>
+    </tri>
+  \end{lstlisting}
+
+  To reflect an object about an axis we use the \Textsfc{reflection\_vector} tag.
+  Reflections are currently allowed only with reflect to the global coordinates
+  and require a value of -1 to reflect and 1 to retain the current orientation.
+  \begin{lstlisting}[language=XML]
+    <tri label = "panther">
+      <file_name_prefix> panther </file_name_prefix>
+      <file_type> stl </file_type>
+      <scaling_factor> 0.5 </scaling_factor>
+      <reflection_vector> [1.0, 1.0, -1.0] </reflection_vector>
+    </tri>
+  \end{lstlisting}
+
+  The order of the axes can also be change during the geometry set-up phase
+  to align the object along a particular orientation.  The \Textsfc{axis\_sequence}
+  tag is used for that purpose.  Allowed values are $[1,2,3]$, $[2,3,1]$, $[3,1,2]$,
+  $[1,3,2]$ , $[3,2,1]$, and $[2,1,3]$.
+  \begin{lstlisting}[language=XML]
+    <tri label = "panther">
+      <file_name_prefix> panther </file_name_prefix>
+      <file_type> stl </file_type>
+      <scaling_factor> 0.5 </scaling_factor>
+      <axis_sequence> [2,1,3] </axis_sequence>
+    </tri>
+  \end{lstlisting}
+
+  \begin{WarningBox}
+  The order in which the scaling, translation, and reflection operations are carried
+  out matters.  Translation followed by scaling will lead to different results than 
+  scaling followed by translation.  The same holds for rfelection.  Internally, objects
+  are scaled first, reflected, and then translated.
+  \end{WarningBox}
+\end{minipage}
+\hspace{12pt}
+\begin{minipage}{0.35\textwidth}
+  \centering
+  \includegraphics[width=\columnwidth]{FIGS/geometry/geom_tri_stl.png}
+  \captionof{figure}{Particles created from a STL mesh.}
+  \includegraphics[width=\columnwidth]{FIGS/geometry/geom_tri_stl_scale.png}
+  \captionof{figure}{Scaled geometry.}
+  \includegraphics[width=\columnwidth]{FIGS/geometry/geom_tri_stl_translate.png}
+  \captionof{figure}{Scaled and translated geometry.}
+  \includegraphics[width=\columnwidth]{FIGS/geometry/geom_tri_stl_reflect.png}
+  \captionof{figure}{Reflected geometry in $z$-direction.}
+  \includegraphics[width=\columnwidth]{FIGS/geometry/geom_tri_stl_sequence.png}
+  \captionof{figure}{Change of coordinate sequence.}
 \end{minipage}
 
 \subsection{Boolean operations}
