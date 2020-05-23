@@ -1,0 +1,3933 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- <!DOCTYPE Uintah_specification SYSTEM "input.dtd"> -->
+<Uintah_specification>
+  
+  <Meta>
+    <title> Mason sand disaggregated spheres </title>
+  </Meta>
+  
+  <SimulationComponent>
+    <type>mpm</type>
+  </SimulationComponent>
+  
+  <Time>
+    <initTime> 0.0 </initTime>
+    <maxTime> 1.0 </maxTime>
+    <delt_init> 1.0E-9 </delt_init>
+    <delt_min> 0.0 </delt_min>
+    <delt_max> 0.001 </delt_max>
+    <max_delt_increase> 1.0 </max_delt_increase>
+    <timestep_multiplier> 0.5 </timestep_multiplier>
+  </Time>
+  
+  <DataArchiver>
+    <filebase> disaggregated_arena.uda </filebase>
+    <outputInterval> 1.0E-6 </outputInterval>
+    <checkpoint cycle="2" interval="5.0E-6"/>
+    <save label="KineticEnergy"/>
+    <save label="StrainEnergy"/>
+    <save label="AccStrainEnergy"/>
+    <save label="CenterOfMassVelocity"/>
+    <save label="TotalMass"/>
+    <save label="CenterOfMassPosition"/>
+    <save label="p.particleID"/>
+    <save label="p.x"/>
+    <save label="p.mass"/>
+    <save label="p.volume"/>
+    <save label="p.temperature"/>
+    <save label="p.deformationMeasure"/>
+    <save label="p.displacement"/>
+    <save label="p.velocity"/>
+    <save label="p.stress"/>
+    <save label="p.externalforce"/>
+    <save label="g.mass"/>
+    <save label="g.volume"/>
+    <save label="g.velocity"/>
+    <save label="g.stressFS"/>
+    <save label="g.acceleration"/>
+    <save label="rho_CC"/>
+    <save label="temp_CC"/>
+    <save label="vel_CC"/>
+    <save label="sp_vol_CC"/>
+    <save label="vol_frac_CC"/>
+    <save label="press_CC"/>
+    <save label="press_equil_CC"/>
+    <save label="int_eng_L_CC"/>
+    <save label="intE_source_CC"/>
+    <save label="Tdot"/>
+    <save label="mom_L_CC"/>
+    <save label="mom_source_CC"/>
+    <save label="delP_Dilatate"/>
+  </DataArchiver>
+  
+  <PhysicalConstants>
+    <reference_pressure> 101325.0 </reference_pressure>
+    <gravity> [0.0, 0.0, 0.0] </gravity>
+  </PhysicalConstants>
+  
+  <MPM>
+    <time_integrator> explicit </time_integrator>
+    <nodes8or27> 8 </nodes8or27>
+    <minimum_particle_mass> 1.0E-12 </minimum_particle_mass>
+    <maximum_particle_velocity> 1.0E8 </maximum_particle_velocity>
+    <accumulate_strain_energy> false </accumulate_strain_energy>
+    <use_load_curves> false </use_load_curves>
+    <turn_on_adiabatic_heating> false </turn_on_adiabatic_heating>
+    <do_contact_friction_heating> false </do_contact_friction_heating>
+    <artificial_damping_coeff> 0.0 </artificial_damping_coeff>
+    <artificial_viscosity> false </artificial_viscosity>
+    <artificial_viscosity_coeff1> 0.2 </artificial_viscosity_coeff1>
+    <artificial_viscosity_coeff2> 2.0 </artificial_viscosity_coeff2>
+    <erosion algorithm = "none"/>
+    <create_new_particles> false </create_new_particles>
+    <min_grid_level> 0 </min_grid_level>
+    <max_grid_level> 1000 </max_grid_level>
+  </MPM>
+  
+  <CFD>
+    <cfl> 0.25 </cfl>
+    <ICE>
+      <max_iteration_equilibration> 1000 </max_iteration_equilibration>
+      <min_grid_level> 0 </min_grid_level> 
+      <max_grid_level> 1000 </max_grid_level> 
+      <solution technique="EqForm"/>
+      <advection type="SecondOrder" useCompatibleFluxes="true"/>
+      <ClampSpecificVolume> true </ClampSpecificVolume> 
+      <ADD_HEAT>
+        <add_heat_t_start> 0.0 </add_heat_t_start>
+        <add_heat_t_final> 0.001 </add_heat_t_final>
+        <add_heat_matls> [1] </add_heat_matls>
+        <add_heat_coeff> [8.0E10] </add_heat_coeff>
+      </ADD_HEAT>
+    </ICE>
+  </CFD>
+ 
+  <MaterialProperties>
+  
+    <MPM>
+      <material name = "Material 0">
+        <density> 8900.0 </density>
+        <thermal_conductivity> 390.0 </thermal_conductivity>
+        <specific_heat> 410.0 </specific_heat>
+        <room_temp> 298.0 </room_temp>
+        <melt_temp> 1400.0 </melt_temp>
+      
+        <constitutive_model type="rigid">
+          <bulk_modulus> 1.3E11 </bulk_modulus>
+          <shear_modulus> 4.6E10 </shear_modulus>
+          <coeff_thermal_expansion> 1.0E-5 </coeff_thermal_expansion>
+        </constitutive_model>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_0">
+            <center> [0.022747410406358626, 0.009887497557063361, 0.01932013537640348] </center>
+            <outer_radius> 0.0062875 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 49 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_1">
+            <center> [0.018098008108697966, 0.0209256683486856, 0.0181385750131144] </center>
+            <outer_radius> 0.0037925 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 30 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_2">
+            <center> [0.008979402486743686, 0.01648850816810762, 0.012480821923789702] </center>
+            <outer_radius> 0.0037925 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 30 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_3">
+            <center> [0.006560711981996293, 0.010234694914475881, 0.006403705247607717] </center>
+            <outer_radius> 0.0037925 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 30 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_4">
+            <center> [0.01135824303916286, 0.0017392580681419877, 0.020645055456009836] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_5">
+            <center> [0.027320292377780026, 0.019458480525556994, 0.01640913965756251] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_6">
+            <center> [0.026068574941817576, 0.026019330469573755, 0.018618760201921276] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_7">
+            <center> [0.004037093999820273, 0.026888917019125737, 0.006000318788422964] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_8">
+            <center> [0.004634180771090759, 0.018510966417903268, 0.0016870035456964805] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_9">
+            <center> [0.0015705920213169933, 0.02466991419504767, 0.0241534158774313] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_10">
+            <center> [0.02423880341491774, 0.017379994796362406, 0.00648662739962616] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_11">
+            <center> [0.01151579004518548, 0.0210987797876993, 0.0022841362502875307] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_12">
+            <center> [0.019409203458260138, 0.003981053426847431, 0.004613605609917729] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_13">
+            <center> [0.01999607882992987, 0.02584670322952214, 0.011883880772201646] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_14">
+            <center> [0.011698972708935662, 0.027547384667793395, 0.02509139213844765] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_15">
+            <center> [0.022921995952910692, 0.02193261460775915, 0.027783439396928202] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_16">
+            <center> [0.005734401291690598, 0.013811890079039466, 0.016462929251128237] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_17">
+            <center> [0.0231456078993405, 0.021043375071209392, 0.02051229702664119] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_18">
+            <center> [0.021307904004440124, 0.026216482690742067, 0.009503309143318787] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_19">
+            <center> [0.026961333749476044, 0.019396085795856093, 0.02293813039362775] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_20">
+            <center> [0.016911027861217728, 0.00168501855421332, 0.01043322632297448] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_21">
+            <center> [0.027317559473153914, 0.011379827476926101, 0.007067051999519431] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_22">
+            <center> [0.014746423897183721, 0.02474830838238355, 0.028152654613461708] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_23">
+            <center> [0.0018094047359144172, 0.002891551515797173, 0.02459635707202723] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_24">
+            <center> [0.015200944212602362, 0.015560760646073745, 0.018700325034446092] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_25">
+            <center> [0.010615215080145925, 0.006731994950276445, 0.003783775843768313] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_26">
+            <center> [0.028594763573036173, 0.02467539294826482, 0.02569893914439137] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_27">
+            <center> [0.009479064327335793, 0.0076776951004824, 0.025724144680597295] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_28">
+            <center> [0.0018354836138112383, 0.02575866199390433, 0.013742018460829829] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_29">
+            <center> [0.012002346281737915, 0.026494796393582508, 0.015422770762897962] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_30">
+            <center> [0.0038664584858710926, 0.009152421070600963, 0.02225896037898623] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_31">
+            <center> [0.02601168789737727, 0.01978447691309438, 0.003388505968514712] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_32">
+            <center> [0.028373107409665668, 0.02237118392844928, 0.011618381181809002] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_33">
+            <center> [0.021592515353136152, 0.006080100798785291, 0.008001850463483865] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_34">
+            <center> [0.024536760067346137, 0.015477729579015808, 0.012312886874597341] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_35">
+            <center> [0.010637956793737646, 0.010574322233604994, 0.01810289334327025] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_36">
+            <center> [0.01694387495770403, 0.009264151108581763, 0.02539475313683558] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_37">
+            <center> [0.026583889584381966, 0.014344863405402761, 0.027500214970532993] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_38">
+            <center> [0.0112899532504705, 0.01625921907197206, 0.005376586470500501] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_39">
+            <center> [0.007984118828031907, 0.0016288769488936627, 0.024529087135605143] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_40">
+            <center> [0.017544265350528384, 0.020825601064779434, 0.006680479191292972] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_41">
+            <center> [0.022552644811738885, 0.019849280097023612, 0.007717189005678231] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_42">
+            <center> [0.02799154379067961, 0.02480665290760898, 0.0039371150530199735] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_43">
+            <center> [0.014478659766909572, 0.003565163875072462, 0.01708856737338787] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_44">
+            <center> [0.028497393214763436, 0.024752983185466412, 0.020132484612241607] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_45">
+            <center> [0.008495694699519333, 0.014930461949592489, 0.02348578769173179] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_46">
+            <center> [0.01090449451643083, 0.024898276660685125, 0.012335317247444421] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_47">
+            <center> [0.022520331348247765, 0.0024050800760011012, 0.0020490953941607916] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_48">
+            <center> [0.027553067315643564, 0.004447530589713792, 0.007090074809413562] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_49">
+            <center> [0.002570024670625992, 0.01350620556537439, 0.022759123753388056] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_50">
+            <center> [0.02617609345198893, 0.022319409500059208, 0.0020913999825226924] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_51">
+            <center> [0.011014868729503023, 0.008001180014716244, 0.012827554119496553] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_52">
+            <center> [0.023735962206835336, 0.00282458820491148, 0.02805620473989142] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_53">
+            <center> [0.01871751782806678, 0.018492883337169193, 0.012637336820309927] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_54">
+            <center> [0.024194881312105246, 0.028571536756965832, 0.02572904158124817] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_55">
+            <center> [0.0020643545556031195, 0.025634926815775345, 0.0026535351644691473] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_56">
+            <center> [0.002811056518964372, 0.0062558449251347474, 0.0018775963683646112] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_57">
+            <center> [0.027862910074882796, 0.012195833017254585, 0.004106973743019937] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_58">
+            <center> [0.006804234886714928, 0.005561650266538702, 0.010460925937297439] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_59">
+            <center> [0.00438594044481759, 0.012651947107394626, 0.0022745195928028394] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_60">
+            <center> [0.015561717128068196, 0.004550929095339332, 0.027658388737219975] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_61">
+            <center> [0.012849460269456112, 0.014383441122432462, 0.016883736595621732] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_62">
+            <center> [0.020888601498116777, 0.007366051378555141, 0.02723610467575525] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_63">
+            <center> [0.014719210072175016, 0.014594431150228793, 0.010507647120780339] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_64">
+            <center> [0.026609031684423447, 0.021762312860096337, 0.006731512908691704] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_65">
+            <center> [0.012251846134416844, 0.0018730410196179058, 0.028037437454411437] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_66">
+            <center> [0.02049418609956258, 0.0014141556500253027, 0.0143026663868176] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_67">
+            <center> [0.021771760750824695, 0.00711071213969016, 0.011362188148300933] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_68">
+            <center> [0.01024923395825873, 0.021501995566355916, 0.025154975095928855] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_69">
+            <center> [0.009330966580293462, 0.005537389479971464, 0.02183159569623926] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_70">
+            <center> [0.0031202843178520043, 0.011577378271157282, 0.010164152939674844] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_71">
+            <center> [0.02475136932993884, 0.008820298351231132, 0.02724285643283612] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_72">
+            <center> [0.006611326906938181, 0.02346780999583192, 0.013902857075505698] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_73">
+            <center> [0.012359369674520695, 0.02272299398740989, 0.007647579385031879] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_74">
+            <center> [0.0041839013132119775, 0.016571579857592084, 0.026659887874333044] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_75">
+            <center> [0.002290660783049998, 0.01851270344420578, 0.01955336724066914] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_76">
+            <center> [0.020770193831178656, 0.026645287272382374, 0.020994059258134214] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_77">
+            <center> [0.00487365351513956, 0.011172924630338433, 0.026188886817883294] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_78">
+            <center> [0.010206052144680799, 0.022714449486136216, 0.01593661382499069] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_79">
+            <center> [0.028673217278333024, 0.01905886233828669, 0.025135584514963095] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_80">
+            <center> [0.01381931771216357, 0.003611312876086338, 0.006120780443219692] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_81">
+            <center> [0.008981811465653852, 0.012896745077286526, 0.01771337126803169] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_82">
+            <center> [0.013768616114529572, 0.019226831677878073, 0.006328887459674204] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_83">
+            <center> [0.02623410390391754, 0.01810779877499919, 0.010739854850102098] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_84">
+            <center> [0.017979227485297778, 0.01785604608920956, 0.027415515183577963] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_85">
+            <center> [0.028711900341673383, 0.009360998065408981, 0.001585652942869804] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_86">
+            <center> [0.024578992176694583, 0.005022439901869228, 0.025510471030769772] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_87">
+            <center> [0.0026104071059540766, 0.021942704656652712, 0.003984957168386565] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_88">
+            <center> [0.012707501466466287, 0.016237109255757994, 0.021308905774902343] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_89">
+            <center> [0.015541651279308434, 0.002499054395282939, 0.024282612636019454] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_90">
+            <center> [0.0020837653765988827, 0.011921753454011511, 0.004577100957739031] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_91">
+            <center> [0.006331196085349536, 0.025415249777117177, 0.018301775210178808] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_92">
+            <center> [0.012394454280627389, 0.017483980054639078, 0.0032489177383594626] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_93">
+            <center> [0.004068757952234401, 0.013190434195505972, 0.018906534510118186] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_94">
+            <center> [0.014444425747335041, 0.005969440976648865, 0.023764081366228353] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_95">
+            <center> [0.005027747810916943, 0.023794797222241898, 0.024897235375703264] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_96">
+            <center> [0.0016457253071675449, 0.013633352387955705, 0.02521697326214363] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_97">
+            <center> [0.0035889411912787984, 0.02224242944078121, 0.021732172995509516] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_98">
+            <center> [0.012489387681227744, 0.021397346618988178, 0.02756038124240843] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_99">
+            <center> [0.016257492124611108, 0.028635621474600664, 0.009453371733330412] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_100">
+            <center> [0.0069569872095796, 0.007517999341985844, 0.02207459094693275] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_101">
+            <center> [0.0016269307107718656, 0.005666135525271797, 0.012793401414268744] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_102">
+            <center> [0.020040571518435406, 0.002066841674569869, 0.02172449314324681] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_103">
+            <center> [0.006053534073852239, 0.0243399486403904, 0.003099355167224359] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_104">
+            <center> [0.009234263950497057, 0.01981910245568374, 0.005477583053813412] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_105">
+            <center> [0.01329545346265446, 0.02655865713968945, 0.005561353396818502] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_106">
+            <center> [0.006142864188197402, 0.017759472701800758, 0.004892429260530035] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_107">
+            <center> [0.022510017829503064, 0.027779759406226658, 0.006376408225584876] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_108">
+            <center> [0.012092970131899241, 0.008287180096256725, 0.02102785104728573] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_109">
+            <center> [0.020737695011127467, 0.015723625428773782, 0.007895778164726908] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_110">
+            <center> [0.0027440219657557017, 0.0018581619239036139, 0.013049899226191942] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_111">
+            <center> [0.013619472101078998, 0.02571031634225621, 0.0206852398773387] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_112">
+            <center> [0.006002064418927544, 0.006291898966376359, 0.012978828866594683] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_113">
+            <center> [0.019780153889853457, 0.008232661047786347, 0.006075734367279377] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_114">
+            <center> [0.01683162019977205, 0.015152914971441398, 0.027922895566690215] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_115">
+            <center> [0.015584184421972319, 0.011378166252453093, 0.021411854592407905] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_116">
+            <center> [0.02631719131014031, 0.00767901029325609, 0.0031491759292665974] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_117">
+            <center> [0.01721581763900095, 0.001361068583382986, 0.02031626153598317] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_118">
+            <center> [0.011036916447636692, 0.0068556938195604685, 0.017366604243193424] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_119">
+            <center> [0.021970895271689352, 0.023648056669482477, 0.004884792081527372] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_120">
+            <center> [0.006970210838457821, 0.005658078900694308, 0.002010884534185232] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_121">
+            <center> [0.007922944152540376, 0.02366020951790415, 0.011054906684722237] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_122">
+            <center> [0.007696561008900709, 0.01329605418166198, 0.02781506591184177] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_123">
+            <center> [0.01831749342175344, 0.006393771971400252, 0.008102216978064049] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_124">
+            <center> [0.012607485704984269, 0.009237684110356019, 0.007246725229222826] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_125">
+            <center> [0.021444045202526053, 0.0016786142506095047, 0.006956587537841436] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_126">
+            <center> [0.02598757842762848, 0.02406727574719436, 0.02130489450084706] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_127">
+            <center> [0.005353775845994133, 0.0230576939526702, 0.007646539937381332] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_128">
+            <center> [0.0015387303622961723, 0.020778676402728236, 0.028252853522663785] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_129">
+            <center> [0.014215790935596447, 0.014467918839292673, 0.004291832293634882] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_130">
+            <center> [0.015577027788738936, 0.007994162363243105, 0.00678598079023041] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_131">
+            <center> [0.013024403693133502, 0.02871210338929171, 0.010011893732708574] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_132">
+            <center> [0.021860149529602378, 0.022618897221096466, 0.012344811483225568] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_133">
+            <center> [0.023250301624306625, 0.00464870312542186, 0.009579211717654232] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_134">
+            <center> [0.0026961309488754523, 0.014736863510849676, 0.009909527585750295] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_135">
+            <center> [0.0027359476242817494, 0.028273804257110114, 0.013235655867577972] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_136">
+            <center> [0.012462134468014313, 0.010741066471490111, 0.013325584829970863] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_137">
+            <center> [0.01408973858597025, 0.020638670325204857, 0.010592264781411861] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_138">
+            <center> [0.013883876164683211, 0.01147187230077881, 0.004448128820673851] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_139">
+            <center> [0.009905908228367032, 0.014082797330955656, 0.0030147945390406414] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_140">
+            <center> [0.013350261664594206, 0.006106299557793763, 0.018915229420133753] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_141">
+            <center> [0.008178446892293863, 0.0226175379150454, 0.006068625129503753] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_142">
+            <center> [0.01488524586375215, 0.014761532234674472, 0.025067405526117043] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_143">
+            <center> [0.02139298029668121, 0.027940287633661434, 0.026664863873615025] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_144">
+            <center> [0.010547151937250122, 0.019755041336300266, 0.008261029483049414] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_145">
+            <center> [0.0013866056897583756, 0.007797880022207875, 0.020070666994668637] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_146">
+            <center> [0.015418766894287214, 0.005140015446637609, 0.0013286473234028306] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_147">
+            <center> [0.021569538849905995, 0.017535519414621708, 0.005210311805725978] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_148">
+            <center> [0.0185100911405933, 0.025671605727409733, 0.025398320295066605] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_149">
+            <center> [0.024953540269908647, 0.00654432608572914, 0.00535419723045619] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_150">
+            <center> [0.006236045207387942, 0.012202581334328411, 0.012365397174151005] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_151">
+            <center> [0.014466137620684417, 0.026021196532642135, 0.00988746435337704] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_152">
+            <center> [0.005315721533934001, 0.007160628402980492, 0.027913240087113978] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_153">
+            <center> [0.027208575526766962, 0.027698952483562616, 0.020386422467382277] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_154">
+            <center> [0.009247575780171748, 0.02694552538855592, 0.02805850627588384] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_155">
+            <center> [0.010775630130019928, 0.025789854025979653, 0.018472799605200946] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_156">
+            <center> [0.02423002357765067, 0.016489419064378483, 0.026418736813428833] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_157">
+            <center> [0.0195607511486674, 0.015772527600940413, 0.026226296339379992] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_158">
+            <center> [0.011682835792311006, 0.026035700076252635, 0.007766075912053993] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_159">
+            <center> [0.0243243139465268, 0.022634583602550974, 0.013215054121498832] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_160">
+            <center> [0.01090150383949529, 0.003914801434320509, 0.00999907061948315] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_161">
+            <center> [0.0032475810104138957, 0.028105053235995832, 0.0029585490975406] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_162">
+            <center> [0.017335188874388667, 0.010337083775565928, 0.007692141396694475] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_163">
+            <center> [0.023676315237282662, 0.019679560795031924, 0.015837264736080478] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_164">
+            <center> [0.026110072232833046, 0.022428603796972587, 0.009960494729575605] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_165">
+            <center> [0.008277548827540344, 0.002955508331677432, 0.02009534902590596] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_166">
+            <center> [0.01738742318777726, 0.021829195051262004, 0.0033595441712453975] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_167">
+            <center> [0.02853125012665725, 0.0024140737813041035, 0.008488907195386664] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_168">
+            <center> [0.012783761034498726, 0.012426439809384559, 0.027796752600092588] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_169">
+            <center> [0.023996435638294254, 0.02396600701398276, 0.017530955814170326] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_170">
+            <center> [0.004965097827239089, 0.019187375061016896, 0.028045262203688342] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_171">
+            <center> [0.027561427489606338, 0.01961855871601567, 0.013509390509767297] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_172">
+            <center> [0.0041695942944143536, 0.008149335591195099, 0.024744952505878076] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_173">
+            <center> [0.021141700599837523, 0.01571819383289895, 0.010734765469871635] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_174">
+            <center> [0.0159644708278727, 0.006634947281595187, 0.0035004936894147396] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_175">
+            <center> [0.005394271202516789, 0.025115237586717555, 0.011086242690306539] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_176">
+            <center> [0.01367084080849676, 0.009558770062256118, 0.024928037187758986] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_177">
+            <center> [0.026253381377785906, 0.020481859545916296, 0.02824120743100906] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_178">
+            <center> [0.02803342487760463, 0.005318958472041222, 0.0020331280487160164] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_179">
+            <center> [0.014881121850108583, 0.0036019432725213282, 0.012846811704720712] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_180">
+            <center> [0.02809980151093052, 0.005092160947897022, 0.024083778334058552] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_181">
+            <center> [0.00415972316892667, 0.0023028672641283387, 0.021340709994157245] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_182">
+            <center> [0.026775159150450246, 0.024526847429016282, 0.013021135732076866] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_183">
+            <center> [0.025882122492663053, 0.002878502085176311, 0.005478539367906477] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_184">
+            <center> [0.0029271127701355204, 0.017976302003736146, 0.011464377106747994] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_185">
+            <center> [0.01702481837158894, 0.028196781730483823, 0.026895371342085472] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_186">
+            <center> [0.004380045292486312, 0.026848314102442105, 0.026225876835634255] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_187">
+            <center> [0.008451730906960171, 0.01059714464610346, 0.013972450540244315] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_188">
+            <center> [0.003337203829598951, 0.003239048180448667, 0.010680458587138293] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_189">
+            <center> [0.01977092432810119, 0.0036620693595923923, 0.026303420679971632] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_190">
+            <center> [0.016683583162751432, 0.022196239969887333, 0.012506066714648652] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_191">
+            <center> [0.010101359663376448, 0.018457459617612065, 0.017056045038002135] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_192">
+            <center> [0.02317544115773912, 0.01865851589657791, 0.027511368512414744] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_193">
+            <center> [0.01506423713784616, 0.018895095067583093, 0.028322626769291162] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_194">
+            <center> [0.003878716239587565, 0.017408350422608822, 0.009015463272511029] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_195">
+            <center> [0.01824249523130744, 0.016763242793554015, 0.0019897796404873503] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_196">
+            <center> [0.002911953455876913, 0.01279836702366452, 0.015692826998347977] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_197">
+            <center> [0.002381445849251649, 0.005960734302208621, 0.006906170280868884] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_198">
+            <center> [0.0071903159207157815, 0.02078726206450823, 0.008716899462316371] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_199">
+            <center> [0.013124724973564558, 0.019319793728740545, 0.01629177895550153] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_200">
+            <center> [0.009338811046736678, 0.0045788245231638235, 0.0066277779180633585] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_201">
+            <center> [0.022545641517979786, 0.027082038375147558, 0.018572198880301184] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_202">
+            <center> [0.024941151453124526, 0.028494413184288112, 0.016616974250908557] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_203">
+            <center> [0.017565396879811724, 0.020969680181016997, 0.025710054911796596] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_204">
+            <center> [0.01464108468465052, 0.008862106361453527, 0.0033882167273035267] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_205">
+            <center> [0.0019027884394262938, 0.025171260188355412, 0.0078038514723395725] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_206">
+            <center> [0.007986995990198066, 0.02685734000567136, 0.007084323523664674] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_207">
+            <center> [0.001966876628744485, 0.008687738008803259, 0.009161141357133674] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_208">
+            <center> [0.019768189460986352, 0.028437077297513005, 0.023091973477307005] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_209">
+            <center> [0.017323163494696384, 0.013188426082125804, 0.02582437945473781] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_210">
+            <center> [0.019253845789718515, 0.012587429402461707, 0.006954124606852007] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_211">
+            <center> [0.01631246141042708, 0.020134136080244686, 0.023596698460461113] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_212">
+            <center> [0.012347994255329163, 0.023381449224116422, 0.02142809153310376] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_213">
+            <center> [0.028301744031214403, 0.004492545371568467, 0.019784703747393786] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_214">
+            <center> [0.018742049020052803, 0.02737489915953635, 0.0025917156098021264] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_215">
+            <center> [0.0019664460838382546, 0.0040354161718685454, 0.017703272642050433] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_216">
+            <center> [0.025567132015525025, 0.01042359780603976, 0.009005434757722506] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_217">
+            <center> [0.007117046583892173, 0.025550998863642805, 0.027364556351721907] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_218">
+            <center> [0.0029297689462051035, 0.005818274969083288, 0.028343470710829755] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_219">
+            <center> [0.005105035246453966, 0.003925833764998203, 0.027861617462646586] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_220">
+            <center> [0.011454943143478672, 0.012769256986947364, 0.009729187674468972] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_221">
+            <center> [0.00777820747117402, 0.005193432745740972, 0.028597913230373567] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_222">
+            <center> [0.018634178452856007, 0.014855100933439029, 0.014435516387429329] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_223">
+            <center> [0.01580102892411768, 0.01888941601665042, 0.009081774885621783] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_224">
+            <center> [0.009689206756748307, 0.011035533805422364, 0.026312436866808772] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_225">
+            <center> [0.02043319831327891, 0.028713918098655398, 0.004543472694686123] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_226">
+            <center> [0.010277272098295764, 0.019198394882290845, 0.027322961309818945] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_227">
+            <center> [0.0182357282758676, 0.02809920662177736, 0.013430497897867598] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_228">
+            <center> [0.0021992378769224606, 0.014999645006882651, 0.020093992687262672] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_229">
+            <center> [0.01380452326289418, 0.028052184959657334, 0.02303533941679437] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_230">
+            <center> [0.01754299177579406, 0.027603014734073488, 0.020496223977863617] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_231">
+            <center> [0.023494315919040477, 0.025510635907398067, 0.011913546362735847] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_232">
+            <center> [0.01596098275841839, 0.008008719222921639, 0.01113518781819685] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_233">
+            <center> [0.027360792757336095, 0.004997222703798032, 0.013325466805314544] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_234">
+            <center> [0.007153226584191521, 0.006169405334767517, 0.016998992514786444] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_235">
+            <center> [0.008292605110634588, 0.011456372323077403, 0.020166792448866235] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_236">
+            <center> [0.01376940502882679, 0.02779920934481015, 0.018457627846444398] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_237">
+            <center> [0.014617920691855513, 0.021546190850695226, 0.005593053160792581] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_238">
+            <center> [0.017108778216176786, 0.016723179922449222, 0.01063382870875394] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_239">
+            <center> [0.003507854172524768, 0.007626439309601006, 0.01475678743839284] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_240">
+            <center> [0.021232259264805337, 0.015361152617022958, 0.0020859075240098513] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_241">
+            <center> [0.025263196514989848, 0.022071651662698363, 0.023930954527389723] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_242">
+            <center> [0.005956649141380632, 0.002069947699677549, 0.0036278565361243776] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_243">
+            <center> [0.026699709850425357, 0.028255014457956217, 0.02715547959463482] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_244">
+            <center> [0.007083182894852012, 0.02011071803528167, 0.020054719227412452] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_245">
+            <center> [0.026549247286196193, 0.028114737088263047, 0.012234121729139236] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_246">
+            <center> [0.012906429190772735, 0.0016574651921671911, 0.023289746820147294] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_247">
+            <center> [0.0019201405386455293, 0.01097765963063601, 0.02081097395138391] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_248">
+            <center> [0.003063514470324331, 0.0035040488368514064, 0.015055222231808735] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_249">
+            <center> [0.008458195821219094, 0.008364992288946669, 0.016221349204234608] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_250">
+            <center> [0.013177716005273272, 0.011881908246199595, 0.016309652926313624] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_251">
+            <center> [0.005472389305115591, 0.006591232254397737, 0.020144511820629513] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_252">
+            <center> [0.026587405648810285, 0.001884914760515305, 0.02458798666141951] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_253">
+            <center> [0.026118119308582308, 0.016610868544874993, 0.008161188112039173] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_254">
+            <center> [0.010701963987424625, 0.014241897404013503, 0.021880554043636456] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_255">
+            <center> [0.0015225916758535008, 0.016208022759016262, 0.004629770026364915] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_256">
+            <center> [0.015278502905904679, 0.02256005340164439, 0.022821441514195427] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_257">
+            <center> [0.017608337003055745, 0.0129933457818464, 0.0034203878198434887] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_258">
+            <center> [0.025223578545688456, 0.028068321578015334, 0.023033275608459948] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_259">
+            <center> [0.022017151617899564, 0.026070389703168113, 0.024393588462615565] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_260">
+            <center> [0.0013937275019455886, 0.00956586944316729, 0.0016368222305863033] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_261">
+            <center> [0.009934979461228774, 0.027680706071297946, 0.008737143059948037] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_262">
+            <center> [0.017151183492446067, 0.016619688021782254, 0.02521246146330857] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_263">
+            <center> [0.009358917864154506, 0.0015079006114339165, 0.00633534546701076] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_264">
+            <center> [0.011476804140909696, 0.002528948269951986, 0.025667154989488357] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+        <geom_object>
+          <res> [2, 2, 2] </res>
+          <velocity> [0.0, 0.0, 0.0] </velocity>
+          <temperature> 300.0 </temperature>
+          <density> 1.18 </density>
+          <pressure> 101325.0 </pressure>
+          <smooth_sphere label="solid_sphere_265">
+            <center> [0.014806914025959714, 0.01417066559251241, 0.021142044164076775] </center>
+            <outer_radius> 0.001285 </outer_radius>
+            <inner_radius> 0.0 </inner_radius>
+            <num_radial_pts> 10 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+          </smooth_sphere>
+        </geom_object>
+      </material>
+      
+      <material name = "Material 1">
+        <density> 8900.0 </density>
+        <thermal_conductivity> 390.0 </thermal_conductivity>
+        <specific_heat> 410.0 </specific_heat>
+        <room_temp> 298.0 </room_temp>
+        <melt_temp> 1400.0 </melt_temp>
+      
+        <constitutive_model type="rigid">
+          <bulk_modulus> 1.3E11 </bulk_modulus>
+          <shear_modulus> 4.6E10 </shear_modulus>
+          <coeff_thermal_expansion> 1.0E-5 </coeff_thermal_expansion>
+        </constitutive_model>
+      </material>
+      
+      <contact>
+        <type> single_velocity </type>
+        <materials> [0] </materials>
+        <stop_time> 9999999.9 </stop_time>
+      </contact>
+    </MPM>
+  
+    <ICE>
+      
+      <material name = "Material 0">
+        
+        <dynamic_viscosity> 0.0 </dynamic_viscosity>
+        <thermal_conductivity> 0.0 </thermal_conductivity>
+        <specific_heat> 716.0 </specific_heat>
+        <speed_of_sound> 376.0 </speed_of_sound>
+        <gamma> 1.4 </gamma>
+        
+        <burn type="null"/>
+        <EOS type="ideal_gas">
+        </EOS>
+      </material>
+    </ICE>
+  
+    <exchange_properties>
+      <exchange_coefficients>
+        <momentum> [1.0E15, 1.0E15, 1.0E15] </momentum>
+        <heat> [1.0E10, 1.0E10, 1.0E10] </heat>
+      </exchange_coefficients>
+    </exchange_properties>
+  </MaterialProperties>
+  
+  <Grid>
+    <Level>
+      <Box label="Level0">
+        <lower> [0.0, 0.0, 0.0] </lower>
+        <upper> [0.3, 0.3, 0.3] </upper>
+        <resolution> [100, 100, 100] </resolution>
+        <extraCells> [0, 0, 0] </extraCells>
+        <patches> [1, 1, 1] </patches>
+      </Box>
+    </Level>
+    <BoundaryConditions>
+      <Face side="x-">
+          <BCType id="all" var="symmetry" label="Symmetric">
+          </BCType>
+      </Face>
+      <Face side="x+">
+          <BCType id="all" var="symmetry" label="Symmetric">
+          </BCType>
+      </Face>
+      <Face side="y-">
+          <BCType id="all" var="symmetry" label="Symmetric">
+          </BCType>
+      </Face>
+      <Face side="y+">
+          <BCType id="all" var="symmetry" label="Symmetric">
+          </BCType>
+      </Face>
+      <Face side="z-">
+          <BCType id="all" var="symmetry" label="Symmetric">
+          </BCType>
+      </Face>
+      <Face side="z+">
+          <BCType id="all" var="symmetry" label="Symmetric">
+          </BCType>
+      </Face>
+    </BoundaryConditions>
+  </Grid>
+  <PhysicalBC>
+    <MPM>
+    </MPM>
+  </PhysicalBC>
+  
+</Uintah_specification>

@@ -1,0 +1,13 @@
+# Particle Size Distribution Data
+# Material Name
+"Default"
+# Volume Fraction of Particles in Composite
+15.0
+# Size Distribution
+# Size (<= )   % (volume)
+0.1e-3 0.25
+0.5e-3 4.25
+1.0e-2 9
+2.0e-2 11
+3.0e-2 13,5
+5.0e-2 15.0

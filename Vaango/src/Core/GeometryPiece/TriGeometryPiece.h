@@ -74,6 +74,7 @@ DESCRIPTION
 
 class TriGeometryPiece : public GeometryPiece {
 public:
+
    TriGeometryPiece(ProblemSpecP &);
    TriGeometryPiece(const TriGeometryPiece&);
    TriGeometryPiece& operator=(const TriGeometryPiece&);
@@ -93,15 +94,26 @@ public:
    
 private:
 
+   void checkInput() const;
    virtual void outputHelper( ProblemSpecP & ps ) const;
    
    void readPoints(const std::string& file);
    void readTriangles(const std::string& file);
+   void readPLYMesh();
+   void readOBJMesh();
+   void readSTLMesh();
+   void readMeshFromAsciiStlFile(std::ifstream& in);
+   void readMeshFromBinaryStlFile(std::ifstream in);
+   void mergeIdenticalVertices();
+   void scaleTranslateReflect();
+   void findBoundingBox();
+
    void makePlanes();
    void makeTriangleBoxes();
    void insideTriangle(Point& p, int i, int& NCS, int& NES) const;
    
    std::string d_file;
+   std::string d_fileType;
    double d_scale_factor;
    Vector d_trans_vector;
    Vector d_reflect_vector;

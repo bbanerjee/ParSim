@@ -224,8 +224,9 @@
 
     <tri                      spec="OPTIONAL NO_DATA"
                                 attribute1="label    OPTIONAL STRING"
-                                children1="ALL_OR_NONE_OF( CHILD name )" >
-      <name                   spec="OPTIONAL STRING" /> <!-- The name of a file containing triangles... I think. -->
+                                children1="ALL_OR_NONE_OF( CHILD file_name_prefix )" >
+      <file_name_prefix       spec="OPTIONAL STRING" /> 
+      <file_type              spec="OPTIONAL STRING" /> 
       <scaling_factor         spec="OPTIONAL DOUBLE 'positive'" />
       <translation_vector     spec="OPTIONAL VECTOR" />
       <reflection_vector      spec="OPTIONAL VECTOR" />
