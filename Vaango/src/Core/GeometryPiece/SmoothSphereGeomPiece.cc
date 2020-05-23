@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -36,8 +37,6 @@
 #include <boost/math/special_functions/ellint_2.hpp>
 #include <cmath>
 
-using namespace std;
-using namespace Uintah;
 using namespace Uintah;
 
 const string SmoothSphereGeomPiece::TYPE_NAME = "smooth_sphere";
@@ -155,7 +154,7 @@ SmoothSphereGeomPiece::createPoints()
 int 
 SmoothSphereGeomPiece::createSpherePointsSpiral()
 {
-  cout << "Creating particles for the Solid Sphere" << endl;
+  std::cout << "Creating particles for the Solid Sphere" << "\n";
 
   // Find the characteristic distance between points
   double thickness = d_outerRadius - d_innerRadius; 
@@ -233,7 +232,7 @@ SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
 int 
 SmoothSphereGeomPiece::createSpherePointsEqualArea()
 {
-  cout << "Creating particles for the Solid Sphere" << endl;
+  std::cout << "Creating particles for the Solid Sphere" << "\n";
 
   // Find the characteristic distance between points
   double thickness = d_outerRadius - d_innerRadius; 
@@ -275,7 +274,7 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
   int num_points = std::ceil(len_max/char_dist);
 
   //std::cout << "radius = " << mid_radius << " char_dist = " << char_dist 
-  //          << " num_points = " << num_points << std::endl;
+  //          << " num_points = " << num_points << "\n";
   
   // Compute volume of sphere/annulus
   double outer_volume = volumeOfSphere(outer_radius);
@@ -307,7 +306,7 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
     
     //std::cout << "a_top = " << colatitude_start
     //          << " a_bot = " << colatitude_end
-    //          << " n_in_collar = " << num_regions_in_collar << std::endl;
+    //          << " n_in_collar = " << num_regions_in_collar << "\n";
 
     // Create lower dimensional point set
     std::vector<double> points_1D;
@@ -317,7 +316,7 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
     //for (auto iter = points_1D.begin(); iter != points_1D.end(); iter++) {
     //   std::cout << *iter << " ";
     //}
-    //std::cout << std::endl;
+    //std::cout << "\n";
 
     // Determine the center points of the lower-dimensional sphere
     double colatitude_mid = 0.5*(colatitude_start + colatitude_end);
@@ -328,16 +327,16 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
       points_polar_phi.push_back(colatitude_mid);
       d_volume.push_back(point_volume);
 
-      //std::cout << "  point_angle = " << point_angle << " offset = " << offset << std::endl;
+      //std::cout << "  point_angle = " << point_angle << " offset = " << offset << "\n";
     }
 
     //std::cout << "n_in_collar = " << num_regions_in_collar 
-    //          << " 2+collar_n = " << collar_id+2 << std::endl;
+    //          << " 2+collar_n = " << collar_id+2 << "\n";
     //std::cout << "n_regions = " ;
     //for (auto iter = int_regions.begin(); iter != int_regions.end(); iter++) {
     //   std::cout << *iter << " ";
     //}
-    //std::cout << std::endl;
+    //std::cout << "\n";
 
     // Compute offset
     double circle_offset = circleOffset(num_regions_in_collar, int_regions[collar_id+2]);
@@ -348,7 +347,7 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
     //for (auto iter = points_polar_theta.begin(); iter != points_polar_theta.end(); iter++) {
     //   std::cout << *iter << " ";
     //}
-    //std::cout << std::endl;
+    //std::cout << "\n";
     
 
   }
@@ -443,7 +442,7 @@ SmoothSphereGeomPiece::circleOffset(int num_start, int num_end)
   double offset = (1.0/(double) num_end - 1.0/(double) num_start)*0.5
                   + (double) gcd(num_start, num_end)/(double) (2.0*num_start*num_end);
   //std::cout << "n_bot = " << num_end << " n_top = " << num_start
-  //          << " gcd = " << gcd(num_start, num_end) << " offset = " << offset  << std::endl;
+  //          << " gcd = " << gcd(num_start, num_end) << " offset = " << offset  << "\n";
   return offset;
 }
 

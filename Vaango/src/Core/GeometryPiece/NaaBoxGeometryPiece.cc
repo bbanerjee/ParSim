@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -36,7 +37,6 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
 
 static DebugStream dbg( "GeometryPiece", false );
 
@@ -91,12 +91,12 @@ NaaBoxGeometryPiece::init( const Point& p1,
   //Point p5 = p1 + (p2minusP1 + p3minusP1 + p4minusP1);
 
   // Find the bounding box with the following gross code
-  double lowX = min(min(min(p1.x(),p2.x()),min(p2.x(),p3.x())),p4.x());
-  double lowY = min(min(min(p1.y(),p2.y()),min(p2.y(),p3.y())),p4.y());
-  double lowZ = min(min(min(p1.z(),p2.z()),min(p2.z(),p3.z())),p4.z());
-  double highX = max(max(max(p1.x(),p2.x()),max(p2.x(),p3.x())),p4.x());
-  double highY = max(max(max(p1.y(),p2.y()),max(p2.y(),p3.y())),p4.y());
-  double highZ = max(max(max(p1.z(),p2.z()),max(p2.z(),p3.z())),p4.z());
+  double lowX = std::min(std::min(std::min(p1.x(),p2.x()),std::min(p2.x(),p3.x())),p4.x());
+  double lowY = std::min(std::min(std::min(p1.y(),p2.y()),std::min(p2.y(),p3.y())),p4.y());
+  double lowZ = std::min(std::min(std::min(p1.z(),p2.z()),std::min(p2.z(),p3.z())),p4.z());
+  double highX = std::max(std::max(std::max(p1.x(),p2.x()),std::max(p2.x(),p3.x())),p4.x());
+  double highY = std::max(std::max(std::max(p1.y(),p2.y()),std::max(p2.y(),p3.y())),p4.y());
+  double highZ = std::max(std::max(std::max(p1.z(),p2.z()),std::max(p2.z(),p3.z())),p4.z());
 
   Point blow = Point(lowX,lowY,lowZ);
   Point bhigh = Point(highX,highY,highZ);

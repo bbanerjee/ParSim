@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -57,7 +58,6 @@
 #include   <iostream>
 #include   <string>
 
-using namespace std;
 using namespace Uintah;
 
 
@@ -101,7 +101,7 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
       bool goHasInfo = childBlock || data != "";
 
       if( referencedPiece.get_rep() != NULL && goHasInfo ) {
-       cout << "Error: GeometryPiece (" << go_type << ")"
+       std::cout << "Error: GeometryPiece (" << go_type << ")"
             << " labeled: '" << go_label 
             << "' has already been specified...  You can't change its values.\n"
             << "Please just reference the original by only "
@@ -120,7 +120,7 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
               << " (of type: " << go_type << ")\n";
           objs.push_back( referencedPiece );
         } else {
-          cout << "Error... couldn't find the referenced GeomPiece: " 
+          std::cout << "Error... couldn't find the referenced GeomPiece: " 
                << go_label << " (" << go_type << ")\n";
           throw ProblemSetupException("Referenced GeomPiece does not exist",
                                       __FILE__, __LINE__);
@@ -129,7 +129,7 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
         // Verify that the referenced piece is of the same type as
         // the originally created piece.
         if( referencedPiece->getType() != go_type ) {
-          cout << "Error... the referenced GeomPiece: " << go_label 
+          std::cout << "Error... the referenced GeomPiece: " << go_label 
                << " (" << referencedPiece->getType() << "), "
                << "is not of the same type as this new object: '" 
                << go_type << "'!\n";
@@ -168,6 +168,9 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
     else if ( go_type == TorusGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew TorusGeometryPiece(child);
     }
+    else if ( go_type == TriGeometryPiece::TYPE_NAME ) {
+      newGeomPiece = scinew TriGeometryPiece(child);
+    }
     else if ( go_type == UnionGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew UnionGeometryPiece(child, grid);
     }
@@ -176,9 +179,6 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
     }
     else if ( go_type == IntersectionGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew IntersectionGeometryPiece(child, grid);
-    }
-    else if ( go_type == TriGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew TriGeometryPiece(child);
     }
     else if ( go_type ==  SmoothCylGeomPiece::TYPE_NAME ) {
       newGeomPiece = scinew SmoothCylGeomPiece(child, grid);
@@ -212,7 +212,7 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
 
       if( newGeomPiece == NULL ) {
         if( Parallel::getMPIRank() == 0 ) {
-          cerr << "WARNING: Unknown Geometry Piece Type " << "(" << go_type << ")\n" ;
+          std::cerr << "WARNING: Unknown Geometry Piece Type " << "(" << go_type << ")\n" ;
         }
         continue;    // restart loop to avoid accessing name of empty object
       }

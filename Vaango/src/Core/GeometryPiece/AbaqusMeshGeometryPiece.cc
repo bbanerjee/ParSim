@@ -38,7 +38,6 @@
 //#include <boost/regex.hpp>
 
 using namespace Uintah;
-using namespace Uintah;
 using std::cerr;
 using std::cout;
 using std::endl;
