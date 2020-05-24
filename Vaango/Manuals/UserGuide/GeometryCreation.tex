@@ -357,9 +357,9 @@ Multiple operators can be used to form very complex geometry pieces.
 \end{minipage}
 \begin{minipage}{0.4\textwidth}
   \centering
-  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_diff_12.png}
+  \includegraphics[width=0.7\columnwidth]{FIGS/geometry/geom_diff_12.png}
   \captionof{figure}{The \Textsfc{difference} of a sphere from a cube.}
-  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_diff_21.png}
+  \includegraphics[width=0.7\columnwidth]{FIGS/geometry/geom_diff_21.png}
   \captionof{figure}{The \Textsfc{difference} of a cube from a sphere.}
 \end{minipage}
 
@@ -381,7 +381,7 @@ Multiple operators can be used to form very complex geometry pieces.
 \end{minipage}
 \begin{minipage}{0.4\textwidth}
   \centering
-  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_intersect.png}
+  \includegraphics[width=0.7\columnwidth]{FIGS/geometry/geom_intersect.png}
   \captionof{figure}{An \Textsfc{intersection} of a sphere and a cube.}
 \end{minipage}
 
@@ -402,7 +402,7 @@ Multiple operators can be used to form very complex geometry pieces.
 \end{minipage}
 \begin{minipage}{0.4\textwidth}
   \centering
-  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_union.png}
+  \includegraphics[width=0.7\columnwidth]{FIGS/geometry/geom_union.png}
   \captionof{figure}{A \Textsfc{union} of a sphere and a cube.}
 \end{minipage}
 
@@ -513,45 +513,209 @@ fixed eventually, at which point it may be possible to create more
 general endcaps using unions of \Textsfc{smoothcyl}.
 \end{NoteBox}
 
+\subsection{Smooth sphere}
+\begin{minipage}[t]{0.6\textwidth}
+  \vspace{0pt}
+  If quarter-symmetry simulations are not required, a smoother approximation
+  to a sphere can be modeled using the \Textsfc{smooth\_sphere} tag. 
+  The \Textsfc{center} tag specifies
+  the center of the sphere, the \Textsfc{outer\_radius} tag is the outer radius, 
+  \Textsfc{inner\_radius} the inner radius, and the 
+  \Textsfc{num\_radial\_pts} tag indicates the number of points through the
+  thickness.  Optionally, one can use the \Textsfc{algorithm} tag to determine
+  which algorithm (\Textbfc{spiral} or \Textbfc{equal\_area}) 
+  will be used to generate points and the \Textsfc{output\_file}
+  tag to save the points and volume to a file that can be read in by the
+  \Textsfc{file\_geometry} object creator.
+  \begin{lstlisting}[language=XML]
+    <smooth_sphere label="sphere_1">
+      <center>[ 0.0, 0.0, 0.0]</center>
+      <outer_radius> 1.0 </outer_radius>
+      <inner_radius> 0.9 </inner_radius>
+      <num_radial_pts> 5 </num_radial_pts>
+      <algorithm> spiral </algorithm>
+      <output_file> generated_sphere.pts </output_file>
+    </smooth_sphere>
+  \end{lstlisting}
+\end{minipage}
+\hspace{12pt}
+\begin{minipage}[t]{0.35\textwidth}
+  \vspace{0pt}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_smooth_sphere.png}
+  \captionof{figure}{A hollow \Textsfc{smooth\_sphere} geometry object generated
+                     with the \Textsfc{spiral} algorithm.}
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_smooth_sphere_equal.png}
+  \captionof{figure}{A hollow \Textsfc{smooth\_sphere} geometry object generated
+                     with the \Textsfc{equal\_area} algorithm.}
+\end{minipage}
+
+\subsection{Spherical membrane}
+\begin{minipage}{0.6\textwidth}
+  The default discretization of a sphere leads to a rough approximation of the 
+  surface of a sphere.  The \Textsfc{sphere\_membrane} geometry allows more
+  control over the distribution of particles while retaining the possibility
+  of modeling quarter symmetry spheres.  The \Textsfc{origin} tag specifies
+  the center of the sphere, the \Textsfc{radius} tag is the outer radius, 
+  the \Textsfc{thickness} the thickness of the sphere wall, the 
+  \Textsfc{num\_lat} label the number of points along the latitude and
+  \Textsfc{num\_long} label indicates the number of points along the longitude.
+  \begin{lstlisting}[language=XML]
+    <sphere_membrane label="membrane">
+      <origin>[ 0.0, 0.0, 0.0]</origin>
+      <radius> 1.0 </radius>
+      <thickness> 0.1 </thickness>
+      <num_lat> 10 </num_lat>
+      <num_long> 10 </num_long>
+    </sphere_membrane>
+  \end{lstlisting}
+\end{minipage}
+\hspace{12pt}
+\begin{minipage}{0.35\textwidth}
+  \centering
+  \includegraphics[width=0.7\columnwidth]{FIGS/geometry/geom_sph_mem.png}
+  \captionof{figure}{A hollow \Textsfc{sphere\_membrane} geometry object.}
+\end{minipage}
+
+\subsection{Corrugated edge}
+\begin{minipage}[t]{0.6\textwidth}
+  \vspace{0pt}
+  The \Textsfc{corrugated} tag creates a plate with one corrugated edge.  The particle spacing
+  is determined from the grid size and the number of particles per grid cell.
+  The input requires the minimum and maximum limits of the plate \Textsfc{xymin} and
+  \Textsfc{xymax}, the \Textsfc{thickness}, the plate \Textsfc{normal}, the 
+  \Textsfc{corr\_edge} edge that is to be corrugated (values of \Textbfc{x+}, \Textbfc{y+},
+  \Textbfc{x-}, and \Textbfc{y-} are allowed), the type of \Textsfc{curve} (\Textbfc{sin}
+  or \Textbfc{cos}), the \Textsfc{wavelength} and the \Textsfc{amplitude} of the 
+  corrugation.  A sample input can be:
+  \begin{lstlisting}[language=XML]
+    <corrugated> 
+      <xymin>      [0.0,0.0,0.0]    </xymin> 
+      <xymax>      [20.0,20.0,0.0]  </xymax> 
+      <thickness>  1.0              </thickness>
+      <normal>     [0.0,0.0,1.0]    </normal>
+      <corr_edge>  x+               </corr_edge>
+      <curve>      sin              </curve>
+      <wavelength> 2.0              </wavelength>
+      <amplitude>  2.0              </amplitude>
+    </corrugated>
+  \end{lstlisting}
+\end{minipage}
+\hspace{12pt}
+\begin{minipage}[t]{0.35\textwidth}
+  \vspace{0pt}
+  \centering
+  \includegraphics[width=0.7\columnwidth]{FIGS/geometry/geom_corrug.png}
+  \captionof{figure}{A \Textsfc{corrugated} edge geometry object.}
+\end{minipage}
+
 \subsection{Specifying particle locations directly}
-In addition to the above, it is also possible in MPM simulations to describe
-geometry by providing a file containing a series of particle locations.  These
-can be in either ASCII or binary format.  In addition, it is also possible to
-provide initial data for certain variables on the particles, including
-volume, temperature, external force, fiber direction (used in material models
-with transverse isotropy) and velocity.  The following is an example in which
-external force and fiber direction are specified:
-\begin{lstlisting}[language=XML]
-          <file>
-              <name>LVcoarse.pts</name>
-              <var>p.externalforce</var>
-              <var>p.fiberdir</var>
-          </file>
-\end{lstlisting}
-where the text file \Textsfc{LVcoarse.pts} looks like:
-\begin{lstlisting}[backgroundcolor=\color{background}]
-0.0385 0.0335 0.0015 0 0 0 0.248865 -0.0593421 -0.966718
-0.0395 0.0335 0.0015 0 0 0 0.254892 -0.0220365 -0.966718
-0.0405 0.0335 0.0015 0 0 0 0.267002 0.0197728 -0.963493
-0.0415 0.0335 0.0015 0 0 0 0.261177 0.0588869 -0.963493
-	.
-	.
-	.
-\end{lstlisting}
-Because these files can be arbitrarily large, an additional preprocessing step
-must be taken before issuing the \Textsfc{vaango} command.
-\Textsfc{pfs} for \Textsfc{Particle File Splitter} is a utility that splits the
-data in the \Textsfc{.pts} file into a series of files
-(\Textsfc{file.pts.0, file.pts.1,}, etc), one for each
-patch.  By doing this, each processor needs only read in the data for the
-patches that it contains, rather than each processor reading in the entire file,
-which can be hard on the file system.  Note, that this step is required,
-even if only using a single patch, and must be reissued any time the patch
-configuration is changed.  Usage of this utility, which is compiled
-into the \Textsfc{StandAlone/tools/pfs} directory, is:
-\begin{lstlisting}[backgroundcolor=\color{background}]
-   pfs input.ups
-\end{lstlisting}
+\begin{minipage}[t]{0.6\textwidth}
+  \vspace{0pt}
+  In addition to the above, it is also possible in MPM simulations to describe
+  geometry by providing a file containing a series of particle locations.  These
+  can be in either ASCII or binary format.  In addition, it is also possible to
+  provide initial data for certain variables on the particles, including
+  volume, temperature, external force, fiber direction (used in material models
+  with transverse isotropy) and velocity.  The following is an example in which
+  external force and fiber direction are specified:
+  \begin{lstlisting}[language=XML]
+    <file>
+      <name>LVcoarse.pts</name>
+      <var>p.externalforce</var>
+      <var>p.fiberdir</var>
+    </file>
+  \end{lstlisting}
+\end{minipage}
+\hspace{12pt}
+\begin{minipage}[t]{0.35\textwidth}
+  \vspace{0pt}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_file_input.png}
+  \captionof{figure}{A \Textsfc{file} based geometry object.}
+\end{minipage}
+
+  The text file \Textsfc{LVcoarse.pts} looks like:
+  \begin{lstlisting}[backgroundcolor=\color{background}]
+  0.0385 0.0335 0.0015 0 0 0 0.248865 -0.0593421 -0.966718
+  0.0395 0.0335 0.0015 0 0 0 0.254892 -0.0220365 -0.966718
+  0.0405 0.0335 0.0015 0 0 0 0.267002 0.0197728 -0.963493
+  0.0415 0.0335 0.0015 0 0 0 0.261177 0.0588869 -0.963493
+  ...
+  \end{lstlisting}
+  Because these files can be arbitrarily large, an additional preprocessing step
+  must be taken before issuing the \Textsfc{vaango} command.
+  \Textsfc{particleFileSplitter} is a utility that splits the
+  data in the \Textsfc{.pts} file into a series of files
+  (\Textsfc{file.pts.0, file.pts.1,}, etc), one for each
+  patch.  By doing this, each processor needs only read in the data for the
+  patches that it contains, rather than each processor reading in the entire file,
+  which can be hard on the file system.  Note, that this step is required,
+  even if only using a single patch, and must be reissued any time the patch
+  configuration is changed.  Usage of this utility, which is compiled
+  into the \Textsfc{StandAlone/particleFileSplitter} executable, is:
+  \begin{lstlisting}[backgroundcolor=\color{background}]
+     particleFileSplitter input.ups
+  \end{lstlisting}
+
+  An associated utility that can be used to extract particle position and
+  volume information from a \Textsfc{UDA} file is
+  \Textsfc{StandAlone/createFileGeomPieceFromUda}. An example of its usage
+  is
+  \begin{lstlisting}[backgroundcolor=\color{background}]
+  createFileGeomPieceFromUda file_geom_pfs_hummer_inp.uda.000 file_geom_pfs_hummer.dat
+  \end{lstlisting}
+  This utility extracts the material points and their volumes into files with
+  a \Textbfc{mat} suffix.  For example, for an input file containing 6 materials,
+  the extracted files are named:
+  \begin{lstlisting}[backgroundcolor=\color{background}]
+    file_geom_pfs_hummer.dat.mat0
+    file_geom_pfs_hummer.dat.mat1
+    file_geom_pfs_hummer.dat.mat2
+    file_geom_pfs_hummer.dat.mat3
+    file_geom_pfs_hummer.dat.mat4
+    file_geom_pfs_hummer.dat.mat5
+  \end{lstlisting}
+  We can now create another input file \Textsfc{file\_geom.ups}
+  containing the \Textsfc{file} geometry objects and two patches:
+  \begin{lstlisting}[language=XML]
+    <geom_object>
+      <file label = "container">
+        <name> file_geom_pfs_hummer.dat.mat0 </name>
+        <var> p.volume </var>
+      </file>
+      <res>[2,2,2]</res>
+      <velocity>[0.0,0.0,-10]</velocity>
+      <temperature>300</temperature>
+    </geom_object>
+    <geom_object>
+      <file label = "base">
+        <name> file_geom_pfs_hummer.dat.mat1 </name>
+        <var> p.volume </var>
+      </file>
+      <res>[2,2,2]</res>
+      <velocity>[0.0,0.0,-10]</velocity>
+      <temperature>300</temperature>
+    </geom_object>
+    ...
+  \end{lstlisting}
+  To activate these objects we run \Textsfc{particleFileSplitter}:
+  \begin{lstlisting}[backgroundcolor=\color{background}]
+     particleFileSplitter file_geom.ups
+  \end{lstlisting}
+  to get the split files
+  \begin{lstlisting}[backgroundcolor=\color{background}]
+    file_geom_pfs_hummer.dat.mat0.0
+    file_geom_pfs_hummer.dat.mat0.1
+    file_geom_pfs_hummer.dat.mat1.0
+    file_geom_pfs_hummer.dat.mat1.1
+    ....
+  \end{lstlisting}
+  After this step we can run the usual \Vaango simulation with
+  \begin{lstlisting}[backgroundcolor=\color{background}]
+    mpirun -np 2 vaango file_geom.ups
+  \end{lstlisting}
+  
 
 \subsection{Using image data to create particles}
 One final option is available for initializing particle positions in MPM
