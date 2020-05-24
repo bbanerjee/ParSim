@@ -224,7 +224,6 @@ SmoothCylGeomPiece::createPoints()
 
   // Write the output if requested
   if (d_fileName != "none") {
-    writePoints(d_fileName, "pts");
     writePoints(d_fileName, "vol");
   }
 

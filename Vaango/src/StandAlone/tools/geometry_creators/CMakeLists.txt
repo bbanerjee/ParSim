@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -22,10 +23,16 @@
 # IN THE SOFTWARE.
 #
 
-ADD_EXECUTABLE(pfs pfs.cc)
-ADD_EXECUTABLE(pfs2 pfs2.cc)
+ADD_EXECUTABLE(createFileGeomPieceFromUda createFileGeomPieceFromUda.cc)
+ADD_EXECUTABLE(gambitFileReader gambitFileReader.cc)
+ADD_EXECUTABLE(imageFromGeom ImageFromGeom.cc)
+ADD_EXECUTABLE(objFileReader OBJFileReader.cc)
+ADD_EXECUTABLE(particleFileSplitter particleFileSplitter.cc)
+ADD_EXECUTABLE(particleFileSplitter2 particleFileSplitterExtended.cc)
+ADD_EXECUTABLE(plyFileReader PLYFileReader.cc)
+ADD_EXECUTABLE(rawToUniqueGrains rawToUniqueGrains.cc)
 
-SET(PFS_LIBS
+SET(GEOM_CREATE_LIBS
   Vaango_Core_Exceptions
   Vaango_Core_Exceptions
   Vaango_Core_Grid
@@ -36,5 +43,12 @@ SET(PFS_LIBS
   Vaango_CCA_Components_ProblemSpecification
 )
 
-TARGET_LINK_LIBRARIES(pfs ${PFS_LIBS})
-TARGET_LINK_LIBRARIES(pfs2 ${PFS_LIBS})
+TARGET_LINK_LIBRARIES(createFileGeomPieceFromUda 
+                      ${VAANGO_LIBS})
+TARGET_LINK_LIBRARIES(gambitFileReader ${GEOM_CREATE_LIBS})
+TARGET_LINK_LIBRARIES(imageFromGeom ${GEOM_CREATE_LIBS})
+TARGET_LINK_LIBRARIES(objFileReader ${GEOM_CREATE_LIBS})
+TARGET_LINK_LIBRARIES(particleFileSplitter ${GEOM_CREATE_LIBS})
+TARGET_LINK_LIBRARIES(particleFileSplitter2 ${GEOM_CREATE_LIBS})
+TARGET_LINK_LIBRARIES(plyFileReader ${GEOM_CREATE_LIBS})
+TARGET_LINK_LIBRARIES(rawToUniqueGrains ${GEOM_CREATE_LIBS})

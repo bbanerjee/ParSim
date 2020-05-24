@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -54,7 +32,6 @@
 #include <cstring>
 
 using namespace Uintah;
-using namespace std;
 
 typedef unsigned char byte;
 
@@ -67,7 +44,8 @@ bool isPointInsideSphere(double xv, double yv, double zv,
 /*
 Generate a raw file containing a 3D image based on a text file containing sphere
 descriptions, namely, x, y and z of the centers, and radii.  This can then be used
-with the file geometry piece type, after processing with pfs2, to generate geometry for Uintah simulations.
+with the file geometry piece type, after processing with particleFileSplitter2, to 
+generate geometry for FileGeometryPiece.
 */
 int main(int argc, char *argv[])
 {
@@ -88,14 +66,14 @@ int main(int argc, char *argv[])
   double dy=X[1]/((double) res[1]);
   double dz=X[2]/((double) res[2]);
   if(dx!=dy || dx!=dz || dy !=dz){
-    cerr << "WARNING:  Subsequent code assumes that voxel dimensions are equal\n";
+    std::cerr << "WARNING:  Subsequent code assumes that voxel dimensions are equal\n";
   }
 
   // Open file containing sphere center locations and radii
   string spherefile_name = "spheres.txt";
-  ifstream fp(spherefile_name.c_str());
-  if(fp==0){
-     cout << "FATAL ERROR : Failed opening spheres.txt file" << endl;
+  std::ifstream fp(spherefile_name.c_str());
+  if(!fp){
+     std::cout << "FATAL ERROR : Failed opening spheres.txt file" << "\n";
      exit(0);
   }
 
@@ -127,12 +105,12 @@ int main(int argc, char *argv[])
     // find a conservative estimate of how many cells make up the sphere radius
     int rc = static_cast<int>(rad[ns]/dx)+2;
     // determine the bounding box that contains the sphere
-    int bbx_min = max(0,ic-rc);
-    int bbx_max = min(res[0],ic+rc);
-    int bby_min = max(0,jc-rc);
-    int bby_max = min(res[1],jc+rc);
-    int bbz_min = max(0,kc-rc);
-    int bbz_max = min(res[2],kc+rc);
+    int bbx_min = std::max(0,ic-rc);
+    int bbx_max = std::min(res[0],ic+rc);
+    int bby_min = std::max(0,jc-rc);
+    int bby_max = std::min(res[1],jc+rc);
+    int bbz_min = std::max(0,kc-rc);
+    int bbz_max = std::min(res[2],kc+rc);
   
    // Loop over all voxels of the image to determine which are "inside" the sphere
    for(int i=bbx_min;i<bbx_max;i++){
@@ -155,7 +133,7 @@ int main(int argc, char *argv[])
   string f_name = "spheres.raw";
   FILE* dest = fopen(f_name.c_str(), "wb");
   if(dest==0){
-    cout << "FATAL ERROR : Failed opening points file" << endl;
+    std::cout << "FATAL ERROR : Failed opening points file" << "\n";
     exit(0);
   }
   fwrite(pimg, sizeof(byte), nsize, dest);
@@ -168,10 +146,10 @@ int main(int argc, char *argv[])
 //
 void usage( char *prog_name )
 {
-  cout << "Usage: " << prog_name << " [-b] [-B] [-cyl <args>] infile \n";
-  cout << "-b,B: binary output \n";
-  cout << "-cyl: defines a cylinder within the geometry \n";
-  cout << "args = xbot ybot zbot xtop ytop ztop radius \n";
+  std::cout << "Usage: " << prog_name << " [-b] [-B] [-cyl <args>] infile \n";
+  std::cout << "-b,B: binary output \n";
+  std::cout << "-cyl: defines a cylinder within the geometry \n";
+  std::cout << "args = xbot ybot zbot xtop ytop ztop radius \n";
   exit( 1 );
 }
 

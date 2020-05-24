@@ -81,12 +81,6 @@ CorrugEdgeGeomPiece::CorrugEdgeGeomPiece(ProblemSpecP& ps)
   std::cout << "amplitude = " << d_amplitude << "\n";
 }
 
-//////////
-// Destructor
-CorrugEdgeGeomPiece::~CorrugEdgeGeomPiece()
-{
-}
-
 void
 CorrugEdgeGeomPiece::outputHelper( ProblemSpecP & ps ) const
 {
@@ -115,7 +109,7 @@ CorrugEdgeGeomPiece::inside(const Point& p) const
 {
   bool isInside = false;
 
-  std::cout << "CorrugEdgeGeomPiece:inside(p) not yet implemented." << "\n";
+  //std::cout << "CorrugEdgeGeomPiece:inside(p) not yet implemented." << "\n";
   return isInside;
 
 }

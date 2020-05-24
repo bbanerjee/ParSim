@@ -153,9 +153,6 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
     else if ( go_type == SphereGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew SphereGeometryPiece(child);
     }
-    else if ( go_type == SphereMembraneGeometryPiece::TYPE_NAME ) {
-      newGeomPiece = scinew SphereMembraneGeometryPiece(child);
-    }
     else if ( go_type == CylinderGeometryPiece::TYPE_NAME ) {
       newGeomPiece = scinew CylinderGeometryPiece(child);
     }
@@ -182,6 +179,9 @@ GeometryPieceFactory::create( const ProblemSpecP& ps,
     }
     else if ( go_type ==  SmoothCylGeomPiece::TYPE_NAME ) {
       newGeomPiece = scinew SmoothCylGeomPiece(child, grid);
+    }
+    else if ( go_type == SphereMembraneGeometryPiece::TYPE_NAME ) {
+      newGeomPiece = scinew SphereMembraneGeometryPiece(child);
     }
     else if ( go_type ==  SmoothSphereGeomPiece::TYPE_NAME ) {
       newGeomPiece = scinew SmoothSphereGeomPiece(child, grid);

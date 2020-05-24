@@ -109,22 +109,15 @@ namespace Uintah {
     //////////////////////////////////////////////////////////////////////
     FileGeometryPiece(const std::string& file_name);
     
-    //////////
-    // Destructor
-    virtual ~FileGeometryPiece();
+    virtual ~FileGeometryPiece() = default;
 
     static const std::string TYPE_NAME;
     virtual std::string getType() const { return TYPE_NAME; }
 
-    /// Make a clone
     virtual GeometryPieceP clone() const;
 
-    //////////
-    // Determines whether a point is inside the box.
     virtual bool inside(const Point &p) const;
 	 
-    //////////
-    //  Returns the bounding box surrounding the cylinder.
     virtual Box getBoundingBox() const;
 
     void readPoints(int pid);

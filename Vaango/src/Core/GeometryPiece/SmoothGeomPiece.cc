@@ -29,6 +29,7 @@
 #include <Core/Malloc/Allocator.h>
 #include <vector>
 #include <iostream>
+#include <fstream>
 
 using namespace Uintah;
 using std::vector;
@@ -173,10 +174,22 @@ SmoothGeomPiece::deleteTemperature()
 }
 
 void 
-SmoothGeomPiece::writePoints(const string& f_name, const string& var)
+SmoothGeomPiece::writePoints(const std::string& f_name, const std::string& var)
 {
-  std::cout << "Not implemented : " << f_name << "." << var 
-            << " output " << std::endl;
+  if (var == "vol") {
+    std::ofstream file(f_name.c_str());
+    file.setf(std::ios::scientific, std::ios::floatfield);
+    file.precision(8);
+    file << "x_coord " << " y_coord " << " z_coord " << var << "\n";
+    for (unsigned int jj = 0; jj < d_points.size(); ++jj) {
+      file << d_points[jj].x() << " " << d_points[jj].y() << " " << d_points[jj].z() 
+           << " " << d_volume[jj] << "\n";
+    }
+    file.close();
+    std::cout << "Wrote output file " << f_name << std::endl;
+  } else {
+    std::cout << "** No output file " << f_name << " written." << std::endl;
+  }
 }
 
 int 

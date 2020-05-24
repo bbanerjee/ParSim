@@ -33,13 +33,9 @@ message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
 ADD_EXECUTABLE(vaango vaango.cc)
-ADD_EXECUTABLE(partvarRange partvarRange.cc)
-ADD_EXECUTABLE(selectpart selectpart.cc)
 ADD_EXECUTABLE(compare_uda compare_uda.cc)
 ADD_EXECUTABLE(slb slb.cc)
 ADD_EXECUTABLE(restart_merger restart_merger.cc)
-ADD_EXECUTABLE(gambitFileReader gambitFileReader.cc)
-ADD_EXECUTABLE(createFileGeomPieceFromUda createFileGeomPieceFromUda.cc)
 
 SET(VAANGO_LIBS 
         Vaango_Core_Thread       
@@ -85,12 +81,6 @@ TARGET_LINK_LIBRARIES(compare_uda
   Vaango_Core_Util
 )
 
-TARGET_LINK_LIBRARIES(partvarRange
-  Vaango_Core_Grid
-  Vaango_Core_Disclosure
-  Vaango_Core_DataArchive
-)
-
 set(RESTART_LIBS
   Vaango_Core_DataArchive
 #  Vaango_Core_Grid
@@ -104,41 +94,12 @@ IF(HYPRE)
 ENDIF()
 TARGET_LINK_LIBRARIES(restart_merger ${RESTART_LIBS})
   
-TARGET_LINK_LIBRARIES(selectpart
-  Vaango_Core_DataArchive
-  Vaango_Core_Exceptions
-  Vaango_Core_Grid
-  Vaango_Core_Util
-)
-  
 TARGET_LINK_LIBRARIES(slb
   Vaango_Core_GeometryPiece
   Vaango_Core_Grid
   Vaango_Core_ProblemSpec
   Vaango_CCA_Components_ProblemSpecification
 )  
-
-TARGET_LINK_LIBRARIES(createFileGeomPieceFromUda
-  ${VAANGO_LIBS}
-)
-
-# Add requirements for PCL
-#  find_package(PCL 1.2 REQUIRED)
-
-#  include_directories(${PCL_INCLUDE_DIRS})
-#  link_directories(${PCL_LIBRARY_DIRS})
-#  add_definitions(${PCL_DEFINITIONS})
-
-# Create an executable for the external ply reader (convert binary to ascii)
-# Use meshlab instead
-#add_executable(PLYConverter plyfile.c)
-
-# Create an executable for the PLY converter
-add_executable(PLYFileReader PLYFileReader.cc)
-target_link_libraries (PLYFileReader ${PCL_LIBRARIES})
-
-# Create an executable for the OBJ converter
-add_executable(OBJFileReader OBJFileReader.cc)
 
 # Go to subdirectories
 add_subdirectory(tools)

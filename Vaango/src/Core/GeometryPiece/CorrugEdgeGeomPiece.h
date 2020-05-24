@@ -56,7 +56,7 @@ namespace Uintah {
    Creates a plate with one corrugated edge.  The particle spacing
    is determined from the grid size and the number of particles
    per grid cell.\n
-   The input form for a solid cylinder looks like this: \n
+   The input looks like this: \n
    \verbatim
    <corrugated> 
      <xymin>      [0.0,0.0,0.0]    </xymin> 
@@ -87,7 +87,7 @@ namespace Uintah {
     //////////////////////////////////////////////////////////////////////
     /*! Destructor */
     //////////////////////////////////////////////////////////////////////
-    virtual ~CorrugEdgeGeomPiece();
+    virtual ~CorrugEdgeGeomPiece() = default;
 
     static const string TYPE_NAME;
     virtual std::string getType() const { return TYPE_NAME; }
@@ -96,7 +96,7 @@ namespace Uintah {
     virtual GeometryPieceP clone() const;
 	 
     //////////////////////////////////////////////////////////////////////
-    /*! Determines whether a point is inside the cylinder. */
+    /*! Determines whether a point is inside the geometry. */
     //////////////////////////////////////////////////////////////////////
     virtual bool inside(const Point &p) const;
 	 

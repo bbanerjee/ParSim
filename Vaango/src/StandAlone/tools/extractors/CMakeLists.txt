@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -22,6 +23,8 @@
 # IN THE SOFTWARE.
 #
 
+ADD_EXECUTABLE(selectpart selectpart.cc)
+ADD_EXECUTABLE(partvarRange partvarRange.cc)
 ADD_EXECUTABLE(timeextract timeextract.cc)
 ADD_EXECUTABLE(lineextract lineextract.cc)
 ADD_EXECUTABLE(partextract partextract.cc)
@@ -38,9 +41,13 @@ ADD_EXECUTABLE(extractPosVelMasVol extractPosVelMasVol.cc)
 SET(EXTRACTOR_LIBS
   Vaango_Core_Exceptions
   Vaango_Core_Grid
+  Vaango_Core_Disclosure
   Vaango_Core_DataArchive
+  Vaango_Core_Util
 )
 
+TARGET_LINK_LIBRARIES(selectpart ${EXTRACTOR_LIBS})
+TARGET_LINK_LIBRARIES(partvarRange ${EXTRACTOR_LIBS})
 TARGET_LINK_LIBRARIES(timeextract ${EXTRACTOR_LIBS})
 TARGET_LINK_LIBRARIES(lineextract ${EXTRACTOR_LIBS})
 TARGET_LINK_LIBRARIES(partextract ${EXTRACTOR_LIBS})
