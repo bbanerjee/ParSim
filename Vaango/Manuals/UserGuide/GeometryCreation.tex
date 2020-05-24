@@ -718,30 +718,71 @@ general endcaps using unions of \Textsfc{smoothcyl}.
   
 
 \subsection{Using image data to create particles}
-One final option is available for initializing particle positions in MPM
-simulations, and that is through the use of three dimensional image data,
-such as might be collected via CT scans or confocal microscopy.  The image data are 
-provided as 8-bit raw files, and usage in the input file is given as:
-\begin{lstlisting}[language=XML]
-        <image>
-          <name>spheres.raw</name>
-          <res>[1600, 1600, 1600]</res>
-          <threshold>[1, 25]</threshold>
-        </image>
-        <file>
-          <name>spheres.pts</name>
-          <format>bin</format>
-        </file>
-\end{lstlisting}
-The \Textsfc{\textless image\textgreater} section gives the name of the file, the resolution, in pixels,
-in the various coordinate directions, and threshold range.  Particles will be
-generated at voxels within the specified range.  The \Textsfc{\textless file\textgreater}
-section is the same as that described above.  A different preprocessing utility
-is provided when using image data (for the same reasons described previously).
-Usage is as follows:
-\begin{lstlisting}[backgroundcolor=\color{background}]
-   pfs2 -b input.ups
-\end{lstlisting}
-The \Textbfc{-b} flag indicates that binary \Textsfc{spheres.pts.\#} files will be created, which
-saves considerable disk space when performing large simulations.
+\begin{minipage}[t]{0.6\textwidth}
+  \vspace{0pt}
+  One final option is available for initializing particle positions in \MPM
+  simulations, and that is through the use of three-dimensional image data,
+  such as might be collected via microCT scans or confocal microscopy.  The image data are 
+  provided as 2-byte (16-bit/short) raw files, and usage in the input file is given as:
+  \begin{lstlisting}[language=XML]
+    <geom_object>
+      <image>
+        <name> Almond_Kiss_2003112600.raw </name>
+        <res> [425, 420, 260] </res>
+        <threshold> [11, 200] </threshold>
+      </image>
+      <file label = "container">
+        <name> Almond_Kiss_2003112600.pts </name>
+        <format> bin </format>
+      </file>
+      <res>[1,1,1]</res>
+      <velocity>[0.0,0.0,-10]</velocity>
+      <temperature>300</temperature>
+    </geom_object>
+  \end{lstlisting}
+\end{minipage}
+\hspace{12pt}
+\begin{minipage}[t]{0.35\textwidth}
+  \vspace{0pt}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_image.png}
+  \captionof{figure}{An \Textsfc{image} and \Textsfc{file} based geometry object.}
+\end{minipage}
+
+  Note that the \Textsfc{geom\_object} resolution is typically given as $[1,1,1]$. 
+  The \Textsfc{\textless image\textgreater} section gives the name of the 3D image file, 
+  the resolution of the image in pixels in the various coordinate directions, and 
+  a threshold range.  Particles will be generated at voxels within the specified range.  
+  The \Textsfc{\textless file\textgreater} section is the same as that described earlier.  
+
+  The \Textsfc{level} section in the input file also requires the same resolution for
+  consistency.  For example, 
+  \begin{lstlisting}[language=XML]
+    <Level>
+      <Box label = "1">
+        <lower>[0, 0, 0]</lower>
+        <upper>[1, 1, 1]</upper>
+        <resolution>[425, 420, 260]</resolution>
+        <patches>[1,1,1]</patches>
+        <extraCells>[1,1,1]</extraCells>
+      </Box>
+    </Level>
+  \end{lstlisting}
+
+  A different preprocessing utility is needed when using image data (for the same reasons 
+  described previously).  Usage is as follows:
+  \begin{lstlisting}[backgroundcolor=\color{background}]
+     particleImageFileSplitter -b input.ups
+  \end{lstlisting}
+  The \Textbfc{-b} flag indicates that binary \Textsfc{spheres.pts.\#} files will be created, which
+  saves considerable disk space when performing large simulations.
+
+  \begin{NoteBox}
+   A convenient tool for creating \Textsfc{raw} image files is the Slicer3D software
+   which can be downloaded from \url{https://www.slicer.org/}.  If the microCT image
+   is loaded into Slider3D, it can be converted into NRRD format with separate files
+   for the header (extension \Textbfc{nrhd}).  If the compression option is turned off
+   while saving as \Textbfc{nrhd}, a raw file containing 16-bit pixel values is created.
+   This file can be used as input to \Vaango.
+  \end{NoteBox}
 
