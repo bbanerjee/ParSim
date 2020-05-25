@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-     Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -69,8 +69,6 @@
 #include <iostream>
 #include <iomanip>
 
-using namespace std;
-using namespace Uintah;
 using namespace Uintah;
 
 DebugStream amrout("AMR", false);
@@ -123,7 +121,7 @@ AMRSimulationController::run()
       sprintf(gheapchkname, "heapchk-rank%d", d_myworld->myrank());
       heap_checker= new HeapLeakChecker(gheapchkname);
     } else {
-      cout<< "HEAPCHECKER: Cannot start with heapprofiler" <<endl;
+      std::cout<< "HEAPCHECKER: Cannot start with heapprofiler" <<"\n";
     }
   }
 #endif
@@ -272,7 +270,7 @@ AMRSimulationController::run()
       // (So usually in optimized mode this will not be run.)
       d_scheduler->logMemoryUse();
       ostringstream fn;
-      fn << "alloc." << setw(5) << setfill('0') << d_myworld->myrank() << ".out";
+      fn << "alloc." << std::setw(5) << std::setfill('0') << d_myworld->myrank() << ".out";
       string filename(fn.str());
 #if !defined( _WIN32 ) && !defined( DISABLE_SCI_MALLOC )
       DumpAllocator(DefaultAllocator(), filename.c_str());
@@ -444,13 +442,13 @@ AMRSimulationController::run()
       double avg[5];
       MPI_Reduce(&barrier_times,&avg,5,MPI_DOUBLE,MPI_SUM,0,d_myworld->getComm());
       if(d_myworld->myrank()==0) {
-        cout << "Barrier Times: "; 
+        std::cout << "Barrier Times: "; 
         for(int i=0;i<5;i++)
         {
           avg[i]/=d_myworld->size();
-          cout << avg[i] << " ";
+          std::cout << avg[i] << " ";
         }
-        cout << endl;
+        std::cout << "\n";
       }
     }
 
@@ -504,7 +502,7 @@ AMRSimulationController::run()
   }
   if (gheapchecker.active() && !gheapprofile.active()){
     if (heap_checker && !heap_checker->NoLeaks()) 
-      cout << "HEAPCHECKER: MEMORY LEACK DETECTED!" << endl;
+      std::cout << "HEAPCHECKER: MEMORY LEACK DETECTED!" << "\n";
     delete heap_checker;
   }
 #endif
@@ -649,7 +647,7 @@ AMRSimulationController::subCycleExecute(GridP& grid, int startDW, int dwStride,
       dbg << d_myworld->myrank() << "   Executing TG on level " << levelNum << " with old DW " 
           << curDW << "=" << d_scheduler->get_dw(curDW)->getID() << " and new " 
           << curDW+newDWStride << "=" << d_scheduler->get_dw(curDW+newDWStride)->getID() 
-          << "CO-DW: " << startDW << " CNDW " << startDW+dwStride << " on iteration " << iteration << endl;
+          << "CO-DW: " << startDW << " CNDW " << startDW+dwStride << " on iteration " << iteration << "\n";
 
     d_scheduler->execute(levelNum, iteration);
     
@@ -679,7 +677,7 @@ AMRSimulationController::subCycleExecute(GridP& grid, int startDW, int dwStride,
         dbg << d_myworld->myrank() << "   Executing INT TG on level " << levelNum << " with old DW " 
             << curDW << "=" << d_scheduler->get_dw(curDW)->getID() << " and new " 
             << curDW+newDWStride << "=" << d_scheduler->get_dw(curDW+newDWStride)->getID() 
-            << " CO-DW: " << startDW << " CNDW " << startDW+dwStride << " on iteration " << iteration << endl;
+            << " CO-DW: " << startDW << " CNDW " << startDW+dwStride << " on iteration " << iteration << "\n";
       d_scheduler->get_dw(curDW+newDWStride)->unfinalize();
       d_scheduler->execute(levelNum+grid->numLevels(), iteration);
     }
@@ -695,7 +693,7 @@ AMRSimulationController::subCycleExecute(GridP& grid, int startDW, int dwStride,
     if (dbg.active())
       dbg << d_myworld->myrank() << "   Executing Final TG on level " << levelNum << " with old DW " 
           << curDW << " = " << d_scheduler->get_dw(curDW)->getID() << " and new " 
-          << curDW+newDWStride << " = " << d_scheduler->get_dw(curDW+newDWStride)->getID() << endl;
+          << curDW+newDWStride << " = " << d_scheduler->get_dw(curDW+newDWStride)->getID() << "\n";
     d_scheduler->get_dw(curDW+newDWStride)->unfinalize();
     d_scheduler->execute(d_scheduler->getNumTaskGraphs()-1, 1);
   }
@@ -857,31 +855,31 @@ bool AMRSimulationController::doRegridding(GridP& currentGrid, bool initialTimes
     //__________________________________
     //  output regridding stats
     if (d_myworld->myrank() == 0) {
-      cout << "  REGRIDDING:";
+      std::cout << "  REGRIDDING:";
      
-      //amrout << "---------- OLD GRID ----------" << endl << *(oldGrid.get_rep());
+      //amrout << "---------- OLD GRID ----------" << "\n" << *(oldGrid.get_rep());
       for (int i = 0; i < currentGrid->numLevels(); i++) {
-        cout << " Level " << i << " has " << currentGrid->getLevel(i)->numPatches() << " patches...";
+        std::cout << " Level " << i << " has " << currentGrid->getLevel(i)->numPatches() << " patches...";
       }
-      cout << endl;
+      std::cout << "\n";
       
       if (amrout.active()) {
-        amrout << "---------- NEW GRID ----------" << endl;
-        amrout << "Grid has " << currentGrid->numLevels() << " level(s)" << endl;
+        amrout << "---------- NEW GRID ----------" << "\n";
+        amrout << "Grid has " << currentGrid->numLevels() << " level(s)" << "\n";
       
         for ( int levelIndex = 0; levelIndex < currentGrid->numLevels(); levelIndex++ ) {
           LevelP level = currentGrid->getLevel( levelIndex );
           
           amrout << "  Level " << level->getID()
                  << ", indx: "<< level->getIndex()
-                 << " has " << level->numPatches() << " patch(es)" << endl;
+                 << " has " << level->numPatches() << " patch(es)" << "\n";
             
           for ( Level::patchIterator patchIter = level->patchesBegin(); patchIter < level->patchesEnd(); patchIter++ ) {
             const Patch* patch = *patchIter;
             amrout << "(Patch " << patch->getID() << " proc " << d_lb->getPatchwiseProcessorAssignment(patch)
                    << ": box=" << patch->getExtraBox()
                    << ", lowIndex=" << patch->getExtraCellLowIndex() << ", highIndex="
-                   << patch->getExtraCellHighIndex() << ")" << endl;
+                   << patch->getExtraCellHighIndex() << ")" << "\n";
           }
         }
       }
@@ -895,10 +893,10 @@ bool AMRSimulationController::doRegridding(GridP& currentGrid, bool initialTimes
     double time = Time::currentSeconds() - start;
     
     if(d_myworld->myrank() == 0){
-      cout << "done regridding (" << time << " seconds, regridding took " << regridTime;
+      std::cout << "done regridding (" << time << " seconds, regridding took " << regridTime;
       if (!initialTimestep)
-        cout << ", scheduling and copying took " << scheduleTime << ")";
-      cout << endl;
+        std::cout << ", scheduling and copying took " << scheduleTime << ")";
+      std::cout << "\n";
     }
     return true;
   }
@@ -931,20 +929,20 @@ AMRSimulationController::recompile(double t, double delt, GridP& currentGrid, in
       if ( i > 0)
         // we have the first one already
         d_scheduler->addTaskGraph(Scheduler::NormalTaskGraph);
-      dbg << d_myworld->myrank() << "   Creating level " << i << " tg " << endl;
+      dbg << d_myworld->myrank() << "   Creating level " << i << " tg " << "\n";
       d_sim->scheduleTimeAdvance(currentGrid->getLevel(i), d_scheduler);
     }
     
     for (int i = 0; i < currentGrid->numLevels(); i++) {
       if (d_doAMR && currentGrid->numLevels() > 1) {
-        dbg << d_myworld->myrank() << "   Doing Int TG level " << i << " tg " << endl;
+        dbg << d_myworld->myrank() << "   Doing Int TG level " << i << " tg " << "\n";
         // taskgraphs numlevels-2*numlevels-1
         d_scheduler->addTaskGraph(Scheduler::IntermediateTaskGraph);
       }
     
       // schedule a coarsen from the finest level to this level
       for (int j = currentGrid->numLevels()-2; j >= i; j--) {
-        dbg << d_myworld->myrank() << "   schedule coarsen on level " << j << endl;
+        dbg << d_myworld->myrank() << "   schedule coarsen on level " << j << "\n";
         d_sim->scheduleCoarsen(currentGrid->getLevel(j), d_scheduler);
       }
     
@@ -953,7 +951,7 @@ AMRSimulationController::recompile(double t, double delt, GridP& currentGrid, in
       // schedule a refineInterface from this level to the finest level
       for (int j = i; j < currentGrid->numLevels(); j++) {
         if (j != 0) {
-          dbg << d_myworld->myrank() << "   schedule RI on level " << j << " for tg " << i << " coarseold " << (j==i) << " coarsenew " << true << endl;
+          dbg << d_myworld->myrank() << "   schedule RI on level " << j << " for tg " << i << " coarseold " << (j==i) << " coarsenew " << true << "\n";
           d_sim->scheduleRefineInterface(currentGrid->getLevel(j), d_scheduler, j==i, true);
         }
       }
@@ -969,7 +967,7 @@ AMRSimulationController::recompile(double t, double delt, GridP& currentGrid, in
   }
     
   for(int i = currentGrid->numLevels()-1; i >= 0; i--){
-    dbg << d_myworld->myrank() << "   final TG " << i << endl;
+    dbg << d_myworld->myrank() << "   final TG " << i << "\n";
     
     if (d_regridder) {
       d_regridder->scheduleInitializeErrorEstimate(currentGrid->getLevel(i));

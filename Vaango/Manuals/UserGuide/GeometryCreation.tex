@@ -1,7 +1,12 @@
 \chapter{Geometry creation}\label{chap:GeometryCreation}
 The creation of geometry objects within the computational domain is
 a crucial part of the simulation process.  This chapter discusses the
-options avialble for creating geometry in \Vaango.
+options available for creating geometry in \Vaango.
+
+\begin{NoteBox}
+Example input files for creating the geometries discussed in this
+chapter can be found in \Textsfc{inputs/MPM/GeometryPieceExamples}.
+\end{NoteBox}
 
 \section{Basic geometry objects} \label{Sec:GeometryObjects}
 
@@ -303,7 +308,7 @@ The following geometry objects are given with their required tags:
   \begin{WarningBox}
   The order in which the scaling, translation, and reflection operations are carried
   out matters.  Translation followed by scaling will lead to different results than 
-  scaling followed by translation.  The same holds for rfelection.  Internally, objects
+  scaling followed by translation.  The same holds for reflection.  Internally, objects
   are scaled first, reflected, and then translated.
   \end{WarningBox}
 \end{minipage}
@@ -609,6 +614,64 @@ general endcaps using unions of \Textsfc{smoothcyl}.
   \captionof{figure}{A \Textsfc{corrugated} edge geometry object.}
 \end{minipage}
 
+\subsection{Reading in an Abaqus format volume mesh}
+\begin{minipage}[t]{0.6\textwidth}
+  \vspace{0pt}
+  For certain geometries, none of the approaches discussed earlier work
+  well and a three-dimensional mesh is the most viable approach
+  for importing geometries into \Vaango.  The \Textsfc{abaqus\_mesh} geometry
+  object has been designed to read in \Textsfc{Abaqus} format mesh
+  data generated using \Textsfc{Abaqus} or meshing tools such as \Textsfc{gmsh}
+  and stored in ASCII format in \Textsfc{\textless filename\textgreater.inp}.
+  A typical input file specification for such data is:
+  \begin{lstlisting}[language=XML]
+    <geom_object>
+      <abaqus_mesh label = "torus">
+        <file_name> Torus_6.inp </file_name>
+      </abaqus_mesh>
+      <res>[2,2,2]</res>
+      <velocity>[0.0,0.0,0.0]</velocity>
+      <temperature>300</temperature>
+      <color>1</color>
+    </geom_object>
+    <geom_object>
+      <abaqus_mesh label = "box 1">
+        <file_name> Box_1.inp </file_name>
+      </abaqus_mesh>
+      <res>[2,2,2]</res>
+      <velocity>[0.0,0.0,0.0]</velocity>
+      <temperature>300</temperature>
+      <color>2</color>
+    </geom_object>
+    ....
+  \end{lstlisting}
+\end{minipage}
+\hspace{12pt}
+\begin{minipage}[t]{0.35\textwidth}
+  \vspace{0pt}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_abaqus_1.png}
+  \captionof{figure}{A geometry object that is meshed using \Textsfc{gmsh}.}
+  \includegraphics[width=0.9\columnwidth]{FIGS/geometry/geom_abaqus.png}
+  \captionof{figure}{A \Textsfc{abaqus\_mesh} geometry object.}
+\end{minipage}
+
+\begin{NoteBox}
+If the user does not own an \Textsfc{Abaqus} license, input files can be
+generated using the following process.
+\begin{enumerate}
+  \item Create the geometry and generate a \Textbfc{.step} file using a tool 
+        such as \Textsfc{SolidWorks} (commercial), the open-source \Textsfc{FreeCAD},
+        or \Textsfc{Salome-MECA}.
+  \item Clean up the geometry using \Textsfc{MeshLab} and make sure there 
+        are no self-intersecting triangles and non-manifold edges.  Save the
+        cleaned surface mesh geometry in the \Textbfc{.stl} format.
+  \item Use \Textsfc{gmsh} to generate a volume mesh from the cleaned geometry
+        taking care to ensure a uniform distribution of tetrahedra.  Save
+        the mesh in \Textsfc{Abaqus} \Textbfc{.inp} format.
+\end{enumerate}
+\end{NoteBox}
+
 \subsection{Specifying particle locations directly}
 \begin{minipage}[t]{0.6\textwidth}
   \vspace{0pt}
@@ -716,13 +779,12 @@ general endcaps using unions of \Textsfc{smoothcyl}.
     mpirun -np 2 vaango file_geom.ups
   \end{lstlisting}
   
-
 \subsection{Using image data to create particles}
 \begin{minipage}[t]{0.6\textwidth}
   \vspace{0pt}
-  One final option is available for initializing particle positions in \MPM
-  simulations, and that is through the use of three-dimensional image data,
-  such as might be collected via microCT scans or confocal microscopy.  The image data are 
+  Another option is available for initializing particle positions in \MPM
+  simulations from three-dimensional image data,
+  such as might be collected via micro-CT scans or confocal microscopy.  The image data are 
   provided as 2-byte (16-bit/short) raw files, and usage in the input file is given as:
   \begin{lstlisting}[language=XML]
     <geom_object>
@@ -779,10 +841,163 @@ general endcaps using unions of \Textsfc{smoothcyl}.
 
   \begin{NoteBox}
    A convenient tool for creating \Textsfc{raw} image files is the Slicer3D software
-   which can be downloaded from \url{https://www.slicer.org/}.  If the microCT image
+   which can be downloaded from \url{https://www.slicer.org/}.  If the micro-CT image
    is loaded into Slider3D, it can be converted into NRRD format with separate files
    for the header (extension \Textbfc{nrhd}).  If the compression option is turned off
    while saving as \Textbfc{nrhd}, a raw file containing 16-bit pixel values is created.
    This file can be used as input to \Vaango.
   \end{NoteBox}
+
+\section{Adding particles to a simulation in progress} \label{Sec:ParticleInsert}
+\begin{minipage}[t]{0.6\textwidth}
+  \vspace{0pt}
+  \Vaango also contains Jim Guilkey's algorithm for inserting or transporting blocks 
+  of particles into or around the computational domain.  The functionality uses a 
+  \Textsfc{time threshold} for activation of the insertion. Currently, capabilities 
+  include translation some distances $x$, $y$ and $z$ and initiation of a new 
+  ``initial'' velocity vector.  Particles, defined by color which is specified as an 
+  integer, in the geometry object section of the 
+  input file, can have a limitless number of transformations applied to them.  
+  There are no limits to how many geometry objects can be specified, however,
+  each transformation can only act on one color index.  Thus movement of more than
+  one block of particles can require multiple input lines.  
+
+  Particle insertion is activated and directed with the following flags found in the 
+  MPM section of the input file:
+  \begin{lstlisting}[language=XML]
+  <MPM>
+    <with_color> true </with_color>
+    <insert_particles>true</insert_particles>
+    <insert_particles_file>geom_insert_time.dat</insert_particles_file>
+  </MPM>
+  \end{lstlisting}
+
+  The adjacent images show a stream of rubbery material flying into the domain and 
+  folding on itself.  Another particularly useful idea to note from the image, is the 
+  secondary box above the normal domain, in which the particles to be inserted reside 
+  before they are inserted.  Current application of particle insertion tends to follow 
+  this motif.
+\end{minipage}
+\hspace{12pt}
+\begin{minipage}[t]{0.35\textwidth}
+  \vspace{0pt}
+  \centering
+  \includegraphics[width=\columnwidth]{FIGS/geometry/geom_insert_first.png}
+  \includegraphics[width=\columnwidth]{FIGS/geometry/geom_insert_last.png}
+  \captionof{figure}{A geometry object with particle insertion.}
+\end{minipage}
+
+A typical input file, e.g., \Textsfc{geom\_insert.ups}, will contain:
+\begin{lstlisting}[language=XML]
+<MPM>
+  ...
+  <with_color> true </with_color>
+  <insert_particles>true</insert_particles>
+  <insert_particles_file>geom_insert_time.dat</insert_particles_file>
+  ...
+</MPM>
+  <MaterialProperties>
+  <MPM>
+    <material name="goo">
+      ....
+      <include href="geom_insert_objects.xml"/>
+    </material>
+    ...
+  </MPM>
+</MaterialProperties>
+<Grid>
+  <BoundaryConditions>
+    <Face side="x-">
+      <BCType id="all" var="Dirichlet" label="Velocity">
+        <value> [20.0,0.0,0.0] </value>
+      </BCType>
+    </Face>
+    <Face side="x+">
+      <BCType id="all" var="Dirichlet" label="Velocity">
+        <value> [0.0,0.0,0.0] </value>
+      </BCType>
+    </Face>
+    ...
+  </BoundaryConditions>
+  <Level>
+    <Box label="output_box">
+      <lower>[0.0, -1.0,-1.0]</lower>
+      <upper>[8.0,  1.0, 1.0]</upper>
+      <resolution>[160,40,40]</resolution>
+      <patches>[2,1,2]</patches>
+      <extraCells> [1,1,1] </extraCells>
+    </Box>
+    <Box label="input_box">
+      <lower>[0.0,1.0,-1.0]</lower>
+      <upper>[0.2,2.0, 1.0]</upper>
+      <resolution>[4,20,40]</resolution>
+      <patches>[2,1,2]</patches>
+      <extraCells> [1,1,1] </extraCells>
+    </Box>
+  </Level>
+</Grid>
+\end{lstlisting}
+
+The \Textsfc{geom\_insert\_time.dat} file is a text file containing:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+<time> <color> <trans x> <trans y> <trans z> <new x vel> <new y vel> <new z vel>
+\end{lstlisting}  
+For example,
+\begin{lstlisting}[backgroundcolor=\color{background}]
+0 0 -0.175 -1.25 0 20 0 0
+0.00125 1 -0.175 -1.25 0 20 0 0
+0.0025 2 -0.175 -1.25 0 20 0 0
+0.00375 3 -0.175 -1.25 0 20 0 0
+0.005 4 -0.175 -1.25 0 20 0 0
+.....
+\end{lstlisting}  
+
+During the first timestep in which the current physical time plus the calculated 
+$\Delta t$ for the current timestep exceeds the time specified for a color block, the 
+particles of that color will be translated along the three coordinates and given 
+a new velocity.  Each line in the file can be used to define a unique transformation
+for one particle color group.  For instance, if a file contained the line:
+\begin{lstlisting}[backgroundcolor=\color{background}]
+0.1 1 10 10 0 0 0 8 
+\end{lstlisting}
+\noindent after `0.1 s' of physical time any particle of color `1' will be translated 10 
+units in the positive $x$- and $y$-direction, 0 units in the positive $z$-direction 
+and given a new velocity of 8 units/s in the positive $z$-direction, with no 
+velocity in the $x$- or $y$-direction.
+
+The \Textsfc{geom\_insert\_objects.xml} file contains the geometry objects that
+will be pushed into the computational domain.  An example is
+\begin{lstlisting}[language=XML]
+<Uintah_Include>
+  <geom_object>
+    <box label="0">
+      <min>[0.175, 1, -0.25]</min>
+      <max>[0.2, 1.5, 0.25]</max>
+    </box>
+    <res>[2,2,2]</res>
+    <velocity>[0.0,0.0,0.0]</velocity>
+    <temperature>300.0</temperature>
+    <color>0</color>
+  </geom_object>
+  <geom_object>
+    <box label="1">
+      <min>[0.175, 1, -0.25]</min>
+      <max>[0.2, 1.5, 0.25]</max>
+    </box>
+    <res>[2,2,2]</res>
+    <velocity>[0.0,0.0,0.0]</velocity>
+    <temperature>300.0</temperature>
+    <color>1</color>
+  </geom_object>
+  ....
+</Uintah_Include>
+\end{lstlisting}
+Notice that all objects initially occupy the same position in the \Textsfc{input box} level.
+
+An example problem exists in \Textsfc{inputs/MPM/GeometryPieceExamples} named 
+\Textsfc{geom\_insert.ups} that demonstrates particle insertion. The 
+\Textsfc{geom\_insert\_objects.xml} file defines the geometry objects (also the color) and
+\Textsfc{geom\_insert\_time.dat} defines the times, translations and new velocity of the 
+particle blocks.  
+
 

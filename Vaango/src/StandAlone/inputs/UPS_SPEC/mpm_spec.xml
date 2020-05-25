@@ -19,7 +19,7 @@
       <create_new_particles               spec="OPTIONAL BOOLEAN" />  <!-- default is false -->
       <do_contact_friction_heating        spec="OPTIONAL BOOLEAN" />
       <do_grid_reset                      spec="OPTIONAL BOOLEAN" />
-      <DoExplicitHeatConduction           spec="OPTIONAL BOOLEAN" />
+      <do_explicit_heat_conduction           spec="OPTIONAL BOOLEAN" />
       <DoPressureStabilization            spec="OPTIONAL BOOLEAN" />
       <DoThermalExpansion                 spec="OPTIONAL BOOLEAN" />  <!-- FIXME: default is? -->
       <computeNodalHeatFlux               spec="OPTIONAL BOOLEAN" />
@@ -51,8 +51,8 @@
       <use_prescribed_deformation           spec="OPTIONAL BOOLEAN" /> 
       <prescribed_deformation_file          spec="OPTIONAL STRING" />
       <exactDeformation                   spec="OPTIONAL BOOLEAN" /> 
-      <InsertParticles                    spec="OPTIONAL BOOLEAN" /> 
-      <InsertParticlesFile                spec="OPTIONAL STRING" /> 
+      <insert_particles                    spec="OPTIONAL BOOLEAN" /> 
+      <insert_particles_file                spec="OPTIONAL STRING" /> 
       <with_color                          spec="OPTIONAL BOOLEAN" />
       
       <!-- FIXME:  THE FOLLOW APPLY ONLY TO THE IMPLICIT MPM CODE -->

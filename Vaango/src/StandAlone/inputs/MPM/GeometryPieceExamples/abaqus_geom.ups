@@ -1,0 +1,163 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+
+<Uintah_specification>
+
+  <Meta>
+      <title>Separated geometry</title>
+  </Meta>
+
+  <SimulationComponent type="mpm" />
+
+  <Time>
+      <maxTime>  1.0e-1    </maxTime>
+      <initTime> 0.0    </initTime>
+      <delt_min> 1.0e-9 </delt_min>
+      <delt_max> 0.01   </delt_max>
+      <timestep_multiplier>0.3</timestep_multiplier>
+  </Time>
+
+  <DataArchiver>
+      <filebase>abaqus_geom.uda</filebase>
+      <outputTimestepInterval>100</outputTimestepInterval>
+      <save label = "p.x"/>
+      <save label = "p.color"/>
+      <save label = "p.velocity"/>
+      <save label = "p.particleID"/>
+      <save label = "p.stress"/>
+      <save label = "p.volume"/>
+      <save label = "p.localizedMPM"/>
+      <checkpoint cycle = "2" timestepInterval = "200"/>
+  </DataArchiver>
+
+  <Grid>
+    <BoundaryConditions>
+      <Face side = "x-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "x+">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "y-">
+        <BCType id = "all" var = "Dirichlet" label = "Velocity">
+          <value> [0.0,0.0,0.0] </value>
+        </BCType>
+      </Face>
+      <Face side = "y+">
+        <BCType id = "all" var = "Dirichlet" label = "Velocity">
+          <value> [0.0,0.0,0.0] </value>
+        </BCType>
+      </Face>
+      <Face side = "z-">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+      <Face side = "z+">
+        <BCType id = "all" var = "symmetry" label = "Symmetric"> </BCType>
+      </Face>
+    </BoundaryConditions>
+
+    <Level>
+      <Box label = "1">
+        <lower>[-400.0, -320.0, -50.0]</lower>
+        <upper>[ 250.0,  230.0,  320.0]</upper>
+        <resolution>[50, 50, 50]</resolution>
+        <patches>[2,2,1]</patches>
+        <extraCells>[1,1,1]</extraCells>
+      </Box>
+    </Level>
+  </Grid>
+
+  <MPM>
+    <time_integrator>              explicit  </time_integrator>
+    <interpolator>                 gimp      </interpolator>
+    <use_load_curves>              false     </use_load_curves>
+    <minimum_particle_mass>        1.0e-15   </minimum_particle_mass>
+    <minimum_mass_for_acc>         1.0e-15   </minimum_mass_for_acc>
+    <maximum_particle_velocity>    1.0e5     </maximum_particle_velocity>
+    <artificial_damping_coeff>     0.0       </artificial_damping_coeff>
+    <artificial_viscosity>         true     </artificial_viscosity>
+    <artificial_viscosity_heating> false     </artificial_viscosity_heating>
+    <use_momentum_form>              false     </use_momentum_form>
+    <with_color>                    true      </with_color>
+    <use_prescribed_deformation>     false     </use_prescribed_deformation>
+    <deformation_gradient algorithm="taylor_series"> 
+      <num_terms> 3 </num_terms>
+    </deformation_gradient>
+    <erosion algorithm="BrittleDamage"> </erosion>
+  </MPM>
+
+  <PhysicalConstants>
+      <gravity>[0,0.0,0]</gravity>
+  </PhysicalConstants>
+
+  <MaterialProperties>
+    <MPM>
+      <material name="glass">
+        <density>2500</density>
+        <thermal_conductivity>1.0</thermal_conductivity>
+        <specific_heat>5</specific_heat>
+        <do_basic_damage> true </do_basic_damage>
+          <brittle_damage_modulus> 65.0e9 </brittle_damage_modulus>
+          <brittle_damage_initial_threshold> 80.0 </brittle_damage_initial_threshold>
+          <brittle_damage_fracture_energy> 5.0 </brittle_damage_fracture_energy>
+          <brittle_damage_constant_D>0.1</brittle_damage_constant_D>
+          <brittle_damage_max_damage_increment>0.1</brittle_damage_max_damage_increment>
+        <constitutive_model type="comp_neo_hook">
+          <bulk_modulus>5.4e10</bulk_modulus>
+          <shear_modulus>2.5e10</shear_modulus>
+        </constitutive_model>
+        <geom_object>
+          <abaqus_mesh label = "torus">
+            <file_name> Torus_6.inp </file_name>
+          </abaqus_mesh>
+          <res>[2,2,2]</res>
+          <velocity>[0.0,0.0,0.0]</velocity>
+          <temperature>300</temperature>
+          <color>1</color>
+        </geom_object>
+        <geom_object>
+          <abaqus_mesh label = "box 1">
+            <file_name> Box_1.inp </file_name>
+          </abaqus_mesh>
+          <res>[2,2,2]</res>
+          <velocity>[0.0,0.0,0.0]</velocity>
+          <temperature>300</temperature>
+          <color>2</color>
+        </geom_object>
+        <geom_object>
+          <abaqus_mesh label = "box 2">
+            <file_name> Box_2.inp </file_name>
+          </abaqus_mesh>
+          <res>[2,2,2]</res>
+          <velocity>[0.0,0.0,0.0]</velocity>
+          <temperature>300</temperature>
+          <color>3</color>
+        </geom_object>
+        <geom_object>
+          <abaqus_mesh label = "box 3">
+            <file_name> Box_3.inp </file_name>
+          </abaqus_mesh>
+          <res>[2,2,2]</res>
+          <velocity>[0.0,0.0,0.0]</velocity>
+          <temperature>300</temperature>
+          <color>4</color>
+        </geom_object>
+        <geom_object>
+          <abaqus_mesh label = "box 4">
+            <file_name> Box_4.inp </file_name>
+          </abaqus_mesh>
+          <res>[2,2,2]</res>
+          <velocity>[0.0,0.0,0.0]</velocity>
+          <temperature>300</temperature>
+          <color>5</color>
+        </geom_object>
+      </material>
+
+      <contact>
+        <type>null</type>
+      </contact>
+
+    </MPM>
+  </MaterialProperties>
+
+
+</Uintah_specification>

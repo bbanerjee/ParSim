@@ -243,7 +243,7 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   mpm_flag_ps->get("CanAddMPMMaterial", d_canAddMPMMaterial);
   mpm_flag_ps->get("DoImplicitHeatConduction", d_doImplicitHeatConduction);
   mpm_flag_ps->get("DoTransientImplicitHeatConduction", d_doTransientImplicitHeatConduction);
-  mpm_flag_ps->get("DoExplicitHeatConduction", d_doExplicitHeatConduction);
+  mpm_flag_ps->get("do_explicit_heat_conduction", d_doExplicitHeatConduction);
   mpm_flag_ps->get("DoPressureStabilization", d_doPressureStabilization);
   mpm_flag_ps->get("DoThermalExpansion", d_doThermalExpansion);
   mpm_flag_ps->get("do_grid_reset",      d_doGridReset);
@@ -262,9 +262,9 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     d_useCPTI = true;
   }
 
-  mpm_flag_ps->get("InsertParticles",d_insertParticles);
-  if(d_insertParticles){
-    mpm_flag_ps->require("InsertParticlesFile",d_insertParticlesFile);
+  mpm_flag_ps->get("insert_particles", d_insertParticles);
+  if (d_insertParticles) {
+    mpm_flag_ps->require("insert_particles_file", d_insertParticlesFile);
   }
 
   mpm_flag_ps->get("do_contact_friction_heating", d_do_contact_friction);
@@ -503,7 +503,7 @@ MPMFlags::outputProblemSpec(ProblemSpecP& ps)
   ps->appendElement("CanAddMPMMaterial", d_canAddMPMMaterial);
   ps->appendElement("DoImplicitHeatConduction", d_doImplicitHeatConduction);
   ps->appendElement("DoTransientImplicitHeatConduction", d_doTransientImplicitHeatConduction);
-  ps->appendElement("DoExplicitHeatConduction", d_doExplicitHeatConduction);
+  ps->appendElement("do_explicit_heat_conduction", d_doExplicitHeatConduction);
   ps->appendElement("DoPressureStabilization", d_doPressureStabilization);
   ps->appendElement("computeNodalHeatFlux",d_computeNodalHeatFlux);
   ps->appendElement("computeScaleFactor",  d_computeScaleFactor);
@@ -518,9 +518,11 @@ MPMFlags::outputProblemSpec(ProblemSpecP& ps)
   }
 //MMS
   ps->appendElement("RunMMSProblem",d_mms_type);
-  ps->appendElement("InsertParticles",d_insertParticles);
-  if(d_insertParticles){
-    ps->appendElement("InsertParticlesFile",d_insertParticlesFile);
+
+  // Particle insertion
+  ps->appendElement("insert_particles", d_insertParticles);
+  if (d_insertParticles) {
+    ps->appendElement("insert_particles_file", d_insertParticlesFile);
   }
 
   ps->appendElement("do_contact_friction_heating", d_do_contact_friction);

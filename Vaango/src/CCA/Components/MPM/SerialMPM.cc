@@ -6828,10 +6828,9 @@ SerialMPM::insertParticles(const ProcessorGroup*,
                            DataWarehouse* old_dw,
                            DataWarehouse* new_dw)
 {
-  for(int p=0;p<patches->size();p++){
+  for(int p = 0; p < patches->size() ; p++){
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing,
-              "Doing insertParticles");
+    printTask(patches, patch, cout_doing, "Doing insertParticles");
 
     // Get current time and timestep size
     double time = d_sharedState->getElapsedTime();
@@ -6840,13 +6839,13 @@ SerialMPM::insertParticles(const ProcessorGroup*,
 
     int index = -999;
 
-    for(int i = 0; i<(int) d_IPTimes.size(); i++){
-      if(time+delT > d_IPTimes[i] && time <= d_IPTimes[i]){
+    for (auto i = 0u; i < d_IPTimes.size(); i++){
+      if (time+delT > d_IPTimes[i] && time <= d_IPTimes[i]) {
         index = i;
       }
     }
 
-    if(index>=0){
+    if (index >=0 ) {
       int numMPMMatls=d_sharedState->getNumMPMMatls();
       for(int m = 0; m < numMPMMatls; m++){
         MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
@@ -6862,13 +6861,14 @@ SerialMPM::insertParticles(const ProcessorGroup*,
         new_dw->getModifiable(pX,         lb->pXLabel_preReloc,         pset);
         new_dw->getModifiable(pVelocity,  lb->pVelocityLabel_preReloc,  pset);
 
+        int numParticles  = pset->end() - pset->begin();
+        std::cout << "Insertion: Patch " << p 
+                  << " now contains " << numParticles << " particles\n";
         // Loop over particles here
-        for(ParticleSubset::iterator iter  = pset->begin();
-            iter != pset->end(); iter++){
-          particleIndex idx = *iter;
-          if(pcolor[idx]==d_IPColor[index]){
-            pVelocity[idx]=d_IPVelNew[index];
-            pX[idx] = pX[idx] + d_IPTranslate[index];
+        for (auto idx : *pset) {
+          if (pcolor[idx] == d_IPColor[index]) {
+            pVelocity[idx] = d_IPVelNew[index];
+            pX[idx] += d_IPTranslate[index];
           }
         }
       }
