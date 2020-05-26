@@ -178,7 +178,7 @@ void FractureMPM::scheduleInitialize(const LevelP& level,
   t->computes(lb->pCellNAPIDLabel,zeroth_matl);
 
   // Debugging Scalar
-  if (flags->d_with_color) {
+  if (flags->d_withColor) {
     t->computes(lb->pColorLabel);
   }
 
@@ -542,7 +542,7 @@ void FractureMPM::scheduleComputeStressTensor(SchedulerP& sched,
   if (flags->d_reductionVars->accStrainEnergy) {
     scheduleComputeAccStrainEnergy(sched, patches, matls);
   } 
-  if(flags->d_artificial_viscosity){
+  if(flags->d_artificialViscosity){
     scheduleComputeArtificialViscosity(sched, patches, matls);
   }
 }
@@ -657,11 +657,11 @@ void FractureMPM::scheduleComputeInternalForce(SchedulerP& sched,
   t->computes(lb->GInternalForceLabel);
   t->computes(lb->TotalVolumeDeformedLabel);
 
-  if(flags->d_with_ice){
+  if(flags->d_withICE){
     t->requires(Task::NewDW, lb->pPressureLabel,          gan,NGP);
   }
 
-  if(flags->d_artificial_viscosity){
+  if(flags->d_artificialViscosity){
     t->requires(Task::NewDW, lb->p_qLabel,                gan,NGP);
   }
 
@@ -906,7 +906,7 @@ void FractureMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->requires(Task::NewDW, lb->GTemperatureNoBCLabel,  gac,NGN);
   t->requires(Task::NewDW, lb->pgCodeLabel,            gnone);
 
-  if(flags->d_with_ice){
+  if(flags->d_withICE){
     t->requires(Task::NewDW, lb->dTdt_NCLabel,         gac,NGN);
     t->requires(Task::NewDW, lb->massBurnFractionLabel,gac,NGN);
   }
@@ -928,7 +928,7 @@ void FractureMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->computes(lb->TotalMomentumLabel);
 
   // debugging scalar
-  if(flags->d_with_color) {
+  if(flags->d_withColor) {
     t->requires(Task::OldDW, lb->pColorLabel,  Ghost::None);
     t->computes(lb->pColorLabel_preReloc);
   }
@@ -1252,7 +1252,7 @@ void FractureMPM::actuallyInitialize(const ProcessorGroup*,
                                                          mpm_matl,
                                                          new_dw);
       // scalar used for debugging
-      if(flags->d_with_color) {
+      if(flags->d_withColor) {
         ParticleVariable<double> pcolor;
         int index = mpm_matl->getDWIndex();
         ParticleSubset* pset = new_dw->getParticleSubset(index, patch);
@@ -1497,7 +1497,7 @@ void FractureMPM::interpolateParticlesToGrid(const ProcessorGroup*,
         } // End of loop over k
       } // End of loop over iter
 
-      string interp_type = flags->d_interpolator_type;
+      string interp_type = flags->d_interpolatorType;
       for(NodeIterator iter=patch->getExtraNodeIterator();
                                            !iter.done();iter++){
         IntVector c = *iter; 
@@ -1848,7 +1848,7 @@ void FractureMPM::computeInternalForce(const ProcessorGroup*,
       NCVariable<Vector> Ginternalforce;
       new_dw->allocateAndPut(Ginternalforce,lb->GInternalForceLabel, dwi,patch);
 
-      if(flags->d_with_ice){
+      if(flags->d_withICE){
         new_dw->get(p_pressure,lb->pPressureLabel, pset);
       }
       else {
@@ -1860,7 +1860,7 @@ void FractureMPM::computeInternalForce(const ProcessorGroup*,
         p_pressure = p_pressure_create; // reference created data
       }
 
-      if(flags->d_artificial_viscosity){
+      if(flags->d_artificialViscosity){
         old_dw->get(p_q,lb->p_qLabel, pset);
       }
       else {
@@ -1961,7 +1961,7 @@ void FractureMPM::computeInternalForce(const ProcessorGroup*,
         }
 
       } // faces
-      string interp_type = flags->d_interpolator_type;
+      string interp_type = flags->d_interpolatorType;
       MPMBoundCond bc;
       bc.setBoundaryCondition(patch,dwi,"Symmetric",internalforce,interp_type);
       bc.setBoundaryCondition(patch,dwi,"Symmetric",Ginternalforce,interp_type);
@@ -2061,7 +2061,7 @@ void FractureMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
       new_dw->allocateAndPut(Gacceleration,lb->GAccelerationLabel, dwi, patch);
       Gacceleration.initialize(Vector(0.,0.,0.));
 
-      string interp_type = flags->d_interpolator_type;
+      string interp_type = flags->d_interpolatorType;
       for(NodeIterator iter=patch->getExtraNodeIterator();
                        !iter.done(); iter++){
         IntVector c = *iter;
@@ -2115,7 +2115,7 @@ void FractureMPM::setGridBoundaryConditions(const ProcessorGroup*,
       
       // Apply grid boundary conditions to the velocity_star and
       // acceleration before interpolating back to the particles
-      string interp_type = flags->d_interpolator_type;
+      string interp_type = flags->d_interpolatorType;
       MPMBoundCond bc;
       bc.setBoundaryCondition(patch,dwi,"Velocity",gvelocity_star,interp_type);
       bc.setBoundaryCondition(patch,dwi,"Velocity",Gvelocity_star,interp_type);
@@ -2651,10 +2651,10 @@ void FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
     delt_vartype delT;
     old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
 
+    /*
     Material* reactant;
     reactant = d_sharedState->getMaterialByName("reactant");
 
-    /*
     bool combustion_problem=false;
     int RMI = -99;
     if(reactant != 0){
@@ -2748,7 +2748,7 @@ void FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->get(GTemperature,     lb->GTemperatureLabel,    dwi,patch,gac,NGP);
       new_dw->get(GTemperatureNoBC, lb->GTemperatureNoBCLabel,dwi,patch,gac,NGP);
 
-      if(flags->d_with_ice){
+      if(flags->d_withICE){
         new_dw->get(dTdt,            lb->dTdt_NCLabel,         dwi,patch,gac,NGP);
         new_dw->get(massBurnFrac,    lb->massBurnFractionLabel,dwi,patch,gac,NGP);
       }
@@ -2847,10 +2847,10 @@ void FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       for(ParticleSubset::iterator iter  = pset->begin();
                                    iter != pset->end(); iter++){
         particleIndex idx = *iter;
-        if(pmassNew[idx] <= flags->d_min_part_mass){
+        if(pmassNew[idx] <= flags->d_minPartMass){
           delset->addParticle(idx);
         }
-        if(pvelocitynew[idx].length() > flags->d_max_vel){
+        if(pvelocitynew[idx].length() > flags->d_maxVel){
           pvelocitynew[idx]=pvelocity[idx];
         }
       }
@@ -2858,7 +2858,7 @@ void FractureMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->deleteParticles(delset);
       //__________________________________
       //  particle debugging label-- carry forward
-      if (flags->d_with_color) {
+      if (flags->d_withColor) {
         constParticleVariable<double> pColor;
         ParticleVariable<double>pColor_new;
         old_dw->get(pColor, lb->pColorLabel, pset);

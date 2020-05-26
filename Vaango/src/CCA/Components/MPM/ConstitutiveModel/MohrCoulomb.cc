@@ -1077,7 +1077,7 @@ MohrCoulomb::computeStressTensor(const PatchSubset* patches,
       waveSpeed     = Max(velMax, waveSpeed);
 
       // Compute artificial viscosity term
-      if (flag->d_artificial_viscosity) {
+      if (flag->d_artificialViscosity) {
         double dx_ave          = (dx.x() + dx.y() + dx.z()) / 3.0;
         double bulk_wave_speed = std::sqrt(bulkModulus / rho_cur);
         p_q[idx]               = artificialBulkViscosity(

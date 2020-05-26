@@ -775,7 +775,7 @@ ViscoTransIsoHyper::computeStressTensor(const PatchSubset* patches,
                          Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
-      if (flag->d_artificial_viscosity) {
+      if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
         double c_bulk = sqrt(Bulk / rho_cur);
         Matrix3 D = (velGrad[idx] + velGrad[idx].Transpose()) * 0.5;

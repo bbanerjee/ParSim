@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -662,7 +662,7 @@ TabularPlasticity::computeStressTensor(const PatchSubset* patches, const MPMMate
                Max(c_dil + std::abs(pVelocity[idx].z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
-      if (flag->d_artificial_viscosity) {
+      if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) * Util::one_third;
         double c_bulk = sqrt(bulk / rho_cur);
         p_q[idx] = artificialBulkViscosity(DD.Trace(), c_bulk, rho_cur, dx_ave);

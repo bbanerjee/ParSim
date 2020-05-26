@@ -810,7 +810,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       new_dw->get(GVelocity, lb->GVelocityStarLabel, dwi, patch, gac, NGN);
     }
     double include_AV_heating = 0.0;
-    if (flag->d_artificial_viscosity_heating) {
+    if (flag->d_artificialViscosityHeating) {
       include_AV_heating = 1.0;
     }
 
@@ -1137,7 +1137,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       pdTdt[idx] += Tdot_VW;
 
       double de_s = 0.;
-      if (flag->d_artificial_viscosity) {
+      if (flag->d_artificialViscosity) {
         double c_bulk = sqrt(bulk / rho_cur);
         p_q[idx] = artificialBulkViscosity(Dkk, c_bulk, rho_cur, dx_ave);
         de_s = -p_q[idx] * Dkk / rho_cur;

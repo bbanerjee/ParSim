@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2017- Parresia Research Limited, New Zealand
+ * Copyright (c) 2017-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -253,7 +253,7 @@ TabularEquationOfState::computeStressTensor(const PatchSubset* patches,
                          Uintah::Max(c_bulk + fabs(pVelocity[pidx].z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
-      if (flag->d_artificial_viscosity) {
+      if (flag->d_artificialViscosity) {
         double dxAvg = (dx.x() + dx.y() + dx.z()) / 3.0;
         Matrix3 D = (pVelGrad[pidx] + pVelGrad[pidx].Transpose()) * 0.5;
         p_q[pidx] = artificialBulkViscosity(D.Trace(), c_bulk, rho, dxAvg);

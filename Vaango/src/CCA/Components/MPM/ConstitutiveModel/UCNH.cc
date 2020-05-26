@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -604,7 +605,7 @@ UCNH::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   // for pParticleID
   task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
 
-  if (flag->d_with_color) {
+  if (flag->d_withColor) {
     task->requires(Task::OldDW, lb->pColorLabel, Ghost::None);
   }
 
@@ -891,7 +892,7 @@ UCNH::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
     new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
     new_dw->allocateAndPut(pDeformRate, pDeformRateLabel_preReloc, pset);
 
-    if (flag->d_with_color) {
+    if (flag->d_withColor) {
       old_dw->get(pcolor, lb->pColorLabel, pset);
     }
 
@@ -1010,7 +1011,7 @@ UCNH::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
                          Max(c_dil + std::abs(pvel.z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
-      if (flag->d_artificial_viscosity) {
+      if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
         double c_bulk = sqrt(bulk / rho_cur);
         p_q[idx] = artificialBulkViscosity(pDeformRate[idx].Trace(), c_bulk,

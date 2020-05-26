@@ -104,14 +104,14 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
     throw ProblemSetupException("No type for constitutive_model", __FILE__,
                                 __LINE__);
 
-  if (flags->d_integrator_type != "implicit" &&
-      flags->d_integrator_type != "explicit" &&
-      flags->d_integrator_type != "fracture") {
+  if (flags->d_integratorType != "implicit" &&
+      flags->d_integratorType != "explicit" &&
+      flags->d_integratorType != "fracture") {
     string txt = "MPM: time integrator [explicit or implicit] hasn't been set.";
     throw ProblemSetupException(txt, __FILE__, __LINE__);
   }
 
-  if (flags->d_integrator_type == "implicit" &&
+  if (flags->d_integratorType == "implicit" &&
       (mat_type == "comp_neo_hook_plastic")) {
     string txt = "MPM:  You cannot use implicit MPM and comp_neo_hook_plastic";
     throw ProblemSetupException(txt, __FILE__, __LINE__);
@@ -157,10 +157,10 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
     return (scinew MohrCoulomb(child, flags));
 
   else if (mat_type == "comp_neo_hook") {
-    if (flags->d_integrator_type == "explicit" ||
-        flags->d_integrator_type == "fracture")
+    if (flags->d_integratorType == "explicit" ||
+        flags->d_integratorType == "fracture")
       return (scinew UCNH(child, flags, false, false));
-    else if (flags->d_integrator_type == "implicit")
+    else if (flags->d_integratorType == "implicit")
       return (scinew UCNH(child, flags));
   } else if (mat_type == "cnh_damage")
     return (scinew UCNH(child, flags, false, true));
@@ -175,18 +175,18 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
     return (scinew UCNH(child, flags, true, true));
 
   else if (mat_type == "trans_iso_hyper") {
-    if (flags->d_integrator_type == "explicit" ||
-        flags->d_integrator_type == "fracture")
+    if (flags->d_integratorType == "explicit" ||
+        flags->d_integratorType == "fracture")
       return (scinew TransIsoHyper(child, flags));
-    else if (flags->d_integrator_type == "implicit")
+    else if (flags->d_integratorType == "implicit")
       return (scinew TransIsoHyperImplicit(child, flags));
   }
 
   else if (mat_type == "visco_trans_iso_hyper") {
-    if (flags->d_integrator_type == "explicit" ||
-        flags->d_integrator_type == "fracture")
+    if (flags->d_integratorType == "explicit" ||
+        flags->d_integratorType == "fracture")
       return (scinew ViscoTransIsoHyper(child, flags));
-    else if (flags->d_integrator_type == "implicit")
+    else if (flags->d_integratorType == "implicit")
       return (scinew ViscoTransIsoHyperImplicit(child, flags));
   }
 
@@ -203,10 +203,10 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
     return (scinew UCNH(child, flags, true, false));
 
   else if (mat_type == "visco_scram") {
-    if (flags->d_integrator_type == "explicit" ||
-        flags->d_integrator_type == "fracture")
+    if (flags->d_integratorType == "explicit" ||
+        flags->d_integratorType == "fracture")
       return (scinew ViscoScram(child, flags));
-    else if (flags->d_integrator_type == "implicit")
+    else if (flags->d_integratorType == "implicit")
       return (scinew ViscoScramImplicit(child, flags));
   }
 
@@ -214,10 +214,10 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
     return (scinew ViscoSCRAMHotSpot(child, flags));
 
   else if (mat_type == "hypo_elastic") {
-    if (flags->d_integrator_type == "explicit" ||
-        flags->d_integrator_type == "fracture")
+    if (flags->d_integratorType == "explicit" ||
+        flags->d_integratorType == "fracture")
       return (scinew HypoElastic(child, flags));
-    else if (flags->d_integrator_type == "implicit") {
+    else if (flags->d_integratorType == "implicit") {
       if (!flags->d_doGridReset) {
         ostringstream msg;
         msg << "\n ERROR: One may not use HypoElastic along with \n"

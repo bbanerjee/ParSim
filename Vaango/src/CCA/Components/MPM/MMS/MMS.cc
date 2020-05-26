@@ -49,7 +49,7 @@ MMS::initializeParticleForMMS(ParticleVariable<Point> &position,
                               particleIndex pidx)
 {
 
-  string mms_type = flags->d_mms_type;
+  string mms_type = flags->d_mmsType;
   if (mms_type == "GeneralizedVortex") {
 
     initGeneralizedVortex(flags, pidx, p, dxcc, size, 
@@ -95,7 +95,7 @@ MMS::computeExternalForceForMMS(DataWarehouse* old_dw,
                                 MPMFlags* flags,
                                 ParticleVariable<Vector> &pExtForce)
 {   
-  string mms_type = flags->d_mms_type;
+  string mms_type = flags->d_mmsType;
   if (mms_type == "GeneralizedVortex") {
 
     extForceGeneralizedVortex(flags, lb,
@@ -129,7 +129,7 @@ MMS::computeBodyForceForMMS(DataWarehouse* old_dw,
                             MPMFlags* flags,
                             ParticleVariable<Vector> &pBodyForce)
 {   
-  string mms_type = flags->d_mms_type;
+  string mms_type = flags->d_mmsType;
 
   if (mms_type == "UniaxialStrainHarmonic") {
 

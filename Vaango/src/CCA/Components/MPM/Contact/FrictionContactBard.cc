@@ -56,9 +56,9 @@ FrictionContactBard::FrictionContactBard(const ProcessorGroup* myworld,
   d_sharedState  = d_sS;
 
   ps->require("mu",d_mu);
-  ps->get("volume_constraint",d_vol_const);
-  ps->get("separation_factor",d_sepFac);
-  ps->get("OneOrTwoStep",     d_oneOrTwoStep);
+  ps->get("volume_constraint", d_vol_const);
+  ps->get("separation_factor", d_sepFac);
+  ps->get("one_or_two_step",   d_oneOrTwoStep);
 
 
   if (flag->d_8or27 == 8) {
@@ -76,7 +76,7 @@ FrictionContactBard::outputProblemSpec(ProblemSpecP& ps)
   contact_ps->appendElement("mu",                d_mu);
   contact_ps->appendElement("volume_constraint", d_vol_const);
   contact_ps->appendElement("separation_factor", d_sepFac);
-  contact_ps->appendElement("OneOrTwoStep",      d_oneOrTwoStep);
+  contact_ps->appendElement("one_or_two_step",   d_oneOrTwoStep);
   d_matls.outputProblemSpec(contact_ps);
 }
 

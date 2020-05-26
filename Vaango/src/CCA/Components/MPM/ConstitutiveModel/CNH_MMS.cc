@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -90,7 +91,7 @@ CNH_MMS::initializeCMData(const Patch* patch, const MPMMaterial* matl,
                           DataWarehouse* new_dw)
 {
   // MMS
-  string mms_type = flag->d_mms_type;
+  string mms_type = flag->d_mmsType;
   if (!mms_type.empty()) {
     if (mms_type == "GeneralizedVortex" || mms_type == "ExpandingRing") {
       // cout << "Entered CM" << endl;
@@ -254,7 +255,7 @@ CNH_MMS::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(pstress, lb->pStressLabel_preReloc, pset);
     new_dw->getModifiable(pvolume_new, lb->pVolumeLabel_preReloc, pset);
     new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
-    if (flag->d_with_color) {
+    if (flag->d_withColor) {
       old_dw->get(pcolor, lb->pColorLabel, pset);
     }
 
@@ -348,7 +349,7 @@ CNH_MMS::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForExplicit(task, matlset, patches);
-  if (flag->d_with_color) {
+  if (flag->d_withColor) {
     task->requires(Task::OldDW, lb->pColorLabel, Ghost::None);
   }
 }

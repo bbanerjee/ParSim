@@ -194,12 +194,12 @@ ImpMPM::problemSetup(const ProblemSpecP& prob_spec,
     // Read all MPM flags (look in MPMFlags.cc)
     flags->readMPMFlags(restart_mat_ps, dataArchiver);
      
-    if (flags->d_integrator_type != "implicit") {
+    if (flags->d_integratorType != "implicit") {
       throw ProblemSetupException("Can't use explicit integration with -impm", __FILE__, __LINE__);
     }
 
     // convert text representation of face into FaceType
-    for (auto face : flags->d_bndy_face_txt_list) {
+    for (auto face : flags->d_bndyFaceTxtList) {
       auto faceType = Patch::invalidFace;
       for (auto ft = Patch::startFace; ft <= Patch::endFace; ft = Patch::nextFace(ft)) {
         if (Patch::getFaceName(ft) == face) {
@@ -261,7 +261,7 @@ ImpMPM::problemSetup(const ProblemSpecP& prob_spec,
 
   materialProblemSetup(restart_mat_ps, grid, d_sharedState,flags);
    
-  if (flags->d_solver_type == "petsc") {
+  if (flags->d_solverType == "petsc") {
     d_solver = scinew MPMPetscSolver();
     d_solver->initialize();
   } else {
@@ -286,7 +286,7 @@ ImpMPM::problemSetup(const ProblemSpecP& prob_spec,
   d_subsched->mapDataWarehouse(Task::NewDW, 3);
    
   heatConductionModel = scinew ImplicitHeatConduction(sharedState, lb, flags);
-  heatConductionModel->problemSetup(flags->d_solver_type);
+  heatConductionModel->problemSetup(flags->d_solverType);
 
   thermalContactModel =
      ThermalContactFactory::create(restart_mat_ps, sharedState, lb,flags);
@@ -391,7 +391,7 @@ ImpMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
     cm->addInitialComputesAndRequires(t, mpm_matl, patches);
   }
 
-  if (flags->d_artificial_viscosity) {
+  if (flags->d_artificialViscosity) {
     t->computes(lb->p_qLabel);        //  only used for imp -> exp transition
   }
 
@@ -407,7 +407,7 @@ ImpMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   }
 
   t->computes(lb->NC_CCweightLabel, one_matl);
-  if (!flags->d_temp_solve) {
+  if (!flags->d_tempSolve) {
     t->computes(lb->gTemperatureLabel, one_matl);
   }
 
@@ -470,7 +470,7 @@ ImpMPM::actuallyInitialize(const ProcessorGroup*,
       }
     }
     
-    std::string interp_type = flags->d_interpolator_type;
+    std::string interp_type = flags->d_interpolatorType;
     if ((interp_type == "gimp" || 
          interp_type == "3rdorderBS" || 
          interp_type == "cpdi" || 
@@ -522,7 +522,7 @@ ImpMPM::actuallyInitialize(const ProcessorGroup*,
         }
       }
     }
-    if (!flags->d_temp_solve) {
+    if (!flags->d_tempSolve) {
       NCVariable<double> gTemperature;
       new_dw->allocateAndPut(gTemperature, lb->gTemperatureLabel,    0, patch);
       gTemperature.initialize(0.);
@@ -919,11 +919,11 @@ ImpMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
         double delT_new = .8*ParticleSpeed.minComponent();
 
         double old_dt=old_delT;
-        if (d_numIterations <= flags->d_num_iters_to_increase_delT) {
-          old_dt = flags->d_delT_increase_factor*old_delT;
+        if (d_numIterations <= flags->d_numItersToIncreaseDelT) {
+          old_dt = flags->d_delTIncreaseFactor*old_delT;
         }
-        if (d_numIterations >= flags->d_num_iters_to_decrease_delT) {
-          old_dt = flags->d_delT_decrease_factor*old_delT;
+        if (d_numIterations >= flags->d_numItersToDecreaseDelT) {
+          old_dt = flags->d_delTDecreaseFactor*old_delT;
         }
         delT_new = std::min(delT_new, old_dt);
 
@@ -1012,9 +1012,9 @@ ImpMPM::computeParticleBodyForce(const ProcessorGroup* ,
                                 DataWarehouse* new_dw)
 {
   // Get the MPM flags and make local copies
-  Uintah::Point rotation_center = flags->d_coord_rotation_center;
-  Uintah::Vector rotation_axis = flags->d_coord_rotation_axis;
-  double rotation_speed = flags->d_coord_rotation_speed;
+  Uintah::Point rotation_center = flags->d_coordRotationCenter;
+  Uintah::Vector rotation_axis = flags->d_coordRotationAxis;
+  double rotation_speed = flags->d_coordRotationSpeed;
   //Uintah::Point body_ref_point = flags->d_coord_rotation_body_ref_point;
 
   // Compute angular velocity vector (omega)
@@ -1045,7 +1045,7 @@ ImpMPM::computeParticleBodyForce(const ProcessorGroup* ,
       new_dw->allocateAndPut(pCoriolisImportance, lb->pCoriolisImportanceLabel_preReloc, pset);
 
       // Don't do much if coord rotation is off
-      if (!flags->d_use_coord_rotation) {
+      if (!flags->d_useCoordRotation) {
 
         // Iterate over the particles
         for (auto pidx : *pset) {
@@ -1305,7 +1305,7 @@ ImpMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
 
   t->requires(Task::OldDW,lb->NC_CCweightLabel, one_matl,Ghost::AroundCells,1);
   
-  if (!flags->d_temp_solve) {
+  if (!flags->d_tempSolve) {
     t->requires(Task::OldDW, lb->gTemperatureLabel, one_matl, Ghost::None, 0);
   }
 
@@ -1390,7 +1390,7 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     NCVariable<double>      gTemperature;
     bool switching_to_implicit_from_explicit = false;
 
-    if (!flags->d_temp_solve) {
+    if (!flags->d_tempSolve) {
       if (old_dw->exists(lb->gTemperatureLabel, 0, patch)) {
         old_dw->get(gTemperature_old, lb->gTemperatureLabel, 0, patch, gnone, 0);
         switching_to_implicit_from_explicit = true;
@@ -1497,7 +1497,7 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
             gSpecificHeat[node]        += Cp                              * S[k];
             gExternalHeatRate[m][node] += pExternalHeatRate[idx]          * S[k];
             gExternalHeatFlux[m][node] += pExternalHeatFlux[idx]          * S[k];
-            if (!flags->d_temp_solve) {
+            if (!flags->d_tempSolve) {
               gTemperature[node]       += pTemperature[idx]  * pMass[idx] * S[k];
             }
             gBodyForce[m][node]        += pBodyForceAcc[idx] * pMass[idx] * S[k];
@@ -1530,7 +1530,7 @@ ImpMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     }  // End loop over materials
 
     // Single material temperature field
-    if (!flags->d_temp_solve) {
+    if (!flags->d_tempSolve) {
 
       for (auto iter = patch->getNodeIterator(); !iter.done(); iter++) {
         IntVector c = *iter;
@@ -2634,12 +2634,12 @@ ImpMPM::iterate(const ProcessorGroup*,
       std::cerr << "  dispIncNorm/dispIncNormMax = " << frac_Norm << "\n";
       std::cerr << "  dispIncQNorm/dispIncQNorm0 = "<< frac_QNorm << "\n";
     }
-    if ( (frac_Norm  <= flags->d_conv_crit_disp) || 
-         (dispIncNormMax <= flags->d_conv_crit_disp) ) {
+    if ( (frac_Norm  <= flags->d_convCritDisp) || 
+         (dispIncNormMax <= flags->d_convCritDisp) ) {
       dispInc = true;
     }  
-    if ( (frac_QNorm <= flags->d_conv_crit_energy) || 
-         (dispIncQNorm0 <= flags->d_conv_crit_energy) ) {
+    if ( (frac_QNorm <= flags->d_convCritEnergy) || 
+         (dispIncQNorm0 <= flags->d_convCritEnergy) ) {
       dispIncQ = true;
     }
     
@@ -2664,7 +2664,7 @@ ImpMPM::iterate(const ProcessorGroup*,
     }
 
     bool restart_num_iters = false;
-    if (count > flags->d_max_num_iterations) {
+    if (count > flags->d_maxNumIterations) {
       restart_num_iters = true;
       if (UintahParallelComponent::d_myworld->myrank() == 0) {
         std::cerr << "Restarting due to exceeding max number of iterations\n";
@@ -3630,7 +3630,7 @@ ImpMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->computes(lb->pSizeLabel_preReloc);
   t->computes(lb->pTempPreviousLabel_preReloc);
 
-  if (flags->d_artificial_viscosity) {
+  if (flags->d_artificialViscosity) {
     t->requires(Task::OldDW, lb->p_qLabel,               Ghost::None);
     t->computes(lb->p_qLabel_preReloc);
   }
@@ -3731,7 +3731,7 @@ ImpMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->get(dispNew,        lb->dispNewLabel,       matID, patch, gac, 1);
       new_dw->get(gAcceleration,  lb->gAccelerationLabel, matID, patch, gac, 1);
 
-      if (flags->d_artificial_viscosity) {
+      if (flags->d_artificialViscosity) {
         old_dw->get(pq,                lb->p_qLabel,          pset);
         new_dw->allocateAndPut(pq_new, lb->p_qLabel_preReloc, pset);
         pq_new.copyData(pq);
@@ -4162,7 +4162,7 @@ void ImpMPM::setSharedState(SimulationStateP& ssp)
 
 double ImpMPM::recomputeTimestep(double current_dt)
 {
-  return current_dt*flags->d_delT_decrease_factor;
+  return current_dt*flags->d_delTDecreaseFactor;
 }
 
 void ImpMPM::initialErrorEstimate(const ProcessorGroup*,

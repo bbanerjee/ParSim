@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -650,7 +650,7 @@ ViscoElasticFortran::computeStressTensor(const PatchSubset* patches,
       //-----------------------------------------------------------------------
       // Compute artificial viscosity term
       //-----------------------------------------------------------------------
-      if (flag->d_artificial_viscosity) {
+      if (flag->d_artificialViscosity) {
         // Compute rate of deformation (D)
         Matrix3 velGrad_new = pVelGrad_new[idx];
         Matrix3 D_new = (velGrad_new + velGrad_new.Transpose()) * 0.5;

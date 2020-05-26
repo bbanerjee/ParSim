@@ -156,7 +156,7 @@ MPM_UpdateStressLast::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   if (flags->d_useLoadCurves) {
     t->requires(Task::OldDW, lb->pLoadCurveIDLabel,     Ghost::None);
   }
-  if(flags->d_with_ice){
+  if(flags->d_withICE){
     t->requires(Task::NewDW, lb->dTdt_NCLabel,         gac,NGN);
     t->requires(Task::NewDW, lb->massBurnFractionLabel,gac,NGN);
   }
@@ -187,7 +187,7 @@ MPM_UpdateStressLast::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   if(flags->d_reductionVars->mass){
     t->computes(lb->TotalMassLabel);
   }
-  if(flags->d_with_color) {
+  if(flags->d_withColor) {
     t->requires(Task::OldDW, lb->pColorLabel,  Ghost::None);
     t->computes(lb->pColorLabel_preReloc);
   }
@@ -277,7 +277,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       pParticleID_new.copyData(pParticleID);
 
       // Copy color
-      if (flags->d_with_color) {
+      if (flags->d_withColor) {
         constParticleVariable<double> pColor;
         ParticleVariable<double>pColor_new;
         old_dw->get(pColor,                lb->pColorLabel,          pset);
@@ -338,7 +338,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->get(frictionTempRate, lb->frictionalWorkLabel,   dwi, patch, gac, NGP);
 
       constNCVariable<double> dTdt, massBurnFrac;
-      if (flags->d_with_ice) {
+      if (flags->d_withICE) {
         new_dw->get(dTdt,          lb->dTdt_NCLabel,          dwi, patch, gac, NGP);
         new_dw->get(massBurnFrac,  lb->massBurnFractionLabel, dwi, patch, gac, NGP);
       } else {
@@ -487,7 +487,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       // file, set their velocity back to the velocity that it came into
       // this step with
       for (auto idx : *pset) {
-        if ( (pMass_new[idx] <= flags->d_min_part_mass) || 
+        if ( (pMass_new[idx] <= flags->d_minPartMass) || 
              (pTemp_new[idx] < 0.0) ) {
           delset->addParticle(idx);
           #ifdef CHECK_PARTICLE_DELETION
@@ -502,7 +502,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           #endif
         }
         
-        if (pVelocity_new[idx].length() > flags->d_max_vel) {
+        if (pVelocity_new[idx].length() > flags->d_maxVel) {
           if (flags->d_deleteRogueParticles) {
             delset->addParticle(idx);
             proc0cout << "\n Warning: particle " << pParticleID[idx] 
@@ -511,7 +511,7 @@ MPM_UpdateStressLast::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           } else {
             if (pVelocity_new[idx].length() >= pVelocity[idx].length()) {
               pVelocity_new[idx] = 
-                (pVelocity_new[idx]/pVelocity_new[idx].length())*(flags->d_max_vel*.9);      
+                (pVelocity_new[idx]/pVelocity_new[idx].length())*(flags->d_maxVel*.9);      
               proc0cout << "\n Warning: particle "<< pParticleID[idx] 
                         << " hit speed ceiling #1. Modifying particle velocity accordingly."
                         << std::endl;

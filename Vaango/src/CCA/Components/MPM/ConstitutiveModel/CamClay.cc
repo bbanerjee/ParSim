@@ -907,7 +907,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       // delete state;
 
       // Compute artificial viscosity term
-      if (flag->d_artificial_viscosity) {
+      if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
         double c_bulk = sqrt(bulk / rho_cur);
         double Dkk = rateOfDef_new.Trace();

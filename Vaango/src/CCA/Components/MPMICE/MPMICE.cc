@@ -1378,7 +1378,7 @@ void MPMICE::interpolatePressCCToPressNC(const ProcessorGroup*,
     }
 
     // Apply grid boundary conditions to the pressure before storing the data
-    string inter_type = d_mpm->flags->d_interpolator_type;
+    string inter_type = d_mpm->flags->d_interpolatorType;
     MPMBoundCond bc;
     bc.setBoundaryCondition(patch,0,"Pressure",   pressNC,   inter_type);
   }

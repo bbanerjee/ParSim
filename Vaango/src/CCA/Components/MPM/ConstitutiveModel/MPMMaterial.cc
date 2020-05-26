@@ -170,7 +170,7 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps, const GridP grid,
   geom_obj_data.push_back(
     GeometryObject::DataItem("volumeFraction", GeometryObject::Double));
 
-  if (flags->d_with_color) {
+  if (flags->d_withColor) {
     geom_obj_data.push_back(
       GeometryObject::DataItem("color", GeometryObject::Double));
   }

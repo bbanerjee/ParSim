@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -1322,7 +1322,7 @@ Arena::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
                Max(c_dil + std::abs(pVelocity[idx].z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
-      if (flag->d_artificial_viscosity) {
+      if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) * one_third;
         double c_bulk = sqrt(bulk / rho_cur);
         p_q[idx] = artificialBulkViscosity(DD.Trace(), c_bulk, rho_cur, dx_ave);
@@ -1891,10 +1891,10 @@ Arena::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
 {
   // Get the yield parameters
   double BETA;
-  double PEAKI1;
+  //double PEAKI1;
   try {
     BETA = state_k_old.yieldParams.at("BETA");
-    PEAKI1 = state_k_old.yieldParams.at("PEAKI1");
+    //PEAKI1 = state_k_old.yieldParams.at("PEAKI1");
   } catch (std::out_of_range) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters BETA and PEAKI1"
@@ -2166,7 +2166,9 @@ Arena::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
 
   // Get the fixed non-hardening return state and compute invariants
   double deltaEps_p_v_fixed = deltaEps_p_fixed.Trace();
+  #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
   double norm_deltaEps_p_fixed = deltaEps_p_fixed.Norm();
+  #endif
 
   // Create a state for the fixed non-hardening yield surface state
   // and update only the stress and plastic strain
@@ -2180,7 +2182,7 @@ Arena::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
   Matrix3 deltaEps_e_fixed_new = deltaEps_e_fixed;
   Matrix3 deltaEps_p_fixed_new = deltaEps_p_fixed;
   double deltaEps_p_v_fixed_new = deltaEps_p_v_fixed;
-  double norm_deltaEps_p_fixed_new = norm_deltaEps_p_fixed;
+  //double norm_deltaEps_p_fixed_new = norm_deltaEps_p_fixed;
 
   // Set up a local trial state
   ModelState_Arena state_trial_local(state_k_trial);
@@ -2268,12 +2270,12 @@ Arena::consistencyBisectionSimplified(const Matrix3& deltaEps_new,
     }
 
     // Compare magnitude of plastic strain with prior update
-    norm_deltaEps_p_fixed_new = deltaEps_p_fixed_new.Norm();
-    norm_deltaEps_p_fixed = eta_mid * deltaEps_p_fixed.Norm();
     deltaEps_p_v_fixed_new = deltaEps_p_fixed_new.Trace();
     deltaEps_p_v_fixed = eta_mid * deltaEps_p_fixed.Trace();
 
     #ifdef CHECK_CONSISTENCY_BISECTION_CONVERGENCE
+      norm_deltaEps_p_fixed_new = deltaEps_p_fixed_new.Norm();
+      norm_deltaEps_p_fixed = eta_mid * deltaEps_p_fixed.Norm();
       std::cout << "eta_mid = " << eta_mid << " eta_mid*||deltaEps_p_fixed|| = "
                 << eta_mid * norm_deltaEps_p_fixed
                 << " ||deltaEps_p_fixed_new|| = " << norm_deltaEps_p_fixed_new

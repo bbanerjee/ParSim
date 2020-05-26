@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -787,17 +788,14 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
                              ch4 * bt3 * bt1 + tangc * ax * az * ax * az);
 
         //_________________________________viscoelastic terms
-        double fac1 = 0., fac2 = 0., fac3 = 0., fac4 = 0., fac5 = 0., fac6 = 0.,
-               fac = 1.;
-        double exp1 = 0., exp2 = 0., exp3 = 0., exp4 = 0., exp5 = 0., exp6 = 0.;
         if (t1 > 0.) {
-          exp1 = exp(-delT / t1);
-          fac1 = (1. - exp1) * t1 / delT;
+          double exp1 = exp(-delT / t1);
+          double fac1 = (1. - exp1) * t1 / delT;
           history1[idx] = history1_old[idx] * exp1 +
                           (ElasticStress[idx] - ElasticStress_old[idx]) * fac1;
           if (t2 > 0.) {
-            exp2 = exp(-delT / t2);
-            fac2 = (1. - exp2) * t2 / delT;
+            double exp2 = exp(-delT / t2);
+            double fac2 = (1. - exp2) * t2 / delT;
             history2[idx] =
               history2_old[idx] * exp2 +
               (ElasticStress[idx] - ElasticStress_old[idx]) * fac2;
@@ -805,8 +803,8 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
             history2[idx] = Zero;
           }
           if (t3 > 0.) {
-            exp3 = exp(-delT / t3);
-            fac3 = (1. - exp3) * t3 / delT;
+            double exp3 = exp(-delT / t3);
+            double fac3 = (1. - exp3) * t3 / delT;
             history3[idx] =
               history3_old[idx] * exp3 +
               (ElasticStress[idx] - ElasticStress_old[idx]) * fac3;
@@ -814,8 +812,8 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
             history3[idx] = Zero;
           }
           if (t4 > 0.) {
-            exp4 = exp(-delT / t4);
-            fac4 = (1. - exp4) * t4 / delT;
+            double exp4 = exp(-delT / t4);
+            double fac4 = (1. - exp4) * t4 / delT;
             history4[idx] =
               history4_old[idx] * exp4 +
               (ElasticStress[idx] - ElasticStress_old[idx]) * fac4;
@@ -823,8 +821,8 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
             history4[idx] = Zero;
           }
           if (t5 > 0.) {
-            exp5 = exp(-delT / t5);
-            fac5 = (1. - exp5) * t5 / delT;
+            double exp5 = exp(-delT / t5);
+            double fac5 = (1. - exp5) * t5 / delT;
             history5[idx] =
               history5_old[idx] * exp5 +
               (ElasticStress[idx] - ElasticStress_old[idx]) * fac5;
@@ -832,8 +830,8 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
             history5[idx] = Zero;
           }
           if (t6 > 0.) {
-            exp6 = exp(-delT / t6);
-            fac6 = (1. - exp6) * t6 / delT;
+            double exp6 = exp(-delT / t6);
+            double fac6 = (1. - exp6) * t6 / delT;
             history6[idx] =
               history6_old[idx] * exp6 +
               (ElasticStress[idx] - ElasticStress_old[idx]) * fac6;
@@ -841,8 +839,8 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
             history6[idx] = Zero;
           }
 
-          fac = fac1 * y1 + fac2 * y2 + fac3 * y3 + fac4 * y4 + fac5 * y5 +
-                fac6 * y6 + 1.;
+          //fac = fac1 * y1 + fac2 * y2 + fac3 * y3 + fac4 * y4 + fac5 * y5 +
+          //      fac6 * y6 + 1.;
 
         } else {
           history1[idx] = Zero;
@@ -1071,12 +1069,12 @@ ViscoTransIsoHyperImplicit::computeStressTensorImplicit(
         ElasticStress[idx] = pressure + deviatoric_stress + fiber_stress;
 
         //_________________________________viscoelastic terms
-        double fac1 = 0., fac2 = 0., fac3 = 0., fac4 = 0., fac5 = 0., fac6 = 0.;
+        double fac2 = 0., fac3 = 0., fac4 = 0., fac5 = 0., fac6 = 0.;
         double exp1 = 0., exp2 = 0., exp3 = 0., exp4 = 0., exp5 = 0., exp6 = 0.;
         if (t1 > 0.) { // if t1 is zero, assume t2-t5 are zero also.
           Matrix3 Zero(0.);
           exp1 = exp(-delT / t1);
-          fac1 = (1. - exp1) * t1 / delT;
+          double fac1 = (1. - exp1) * t1 / delT;
           history1[idx] = history1_old[idx] * exp1 +
                           (ElasticStress[idx] - ElasticStress_old[idx]) * fac1;
           if (t2 > 0.) {

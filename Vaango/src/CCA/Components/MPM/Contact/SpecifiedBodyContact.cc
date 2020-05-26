@@ -286,7 +286,7 @@ SpecifiedBodyContact::exchangeMomentum(const ProcessorGroup*,
       vector<IntVector> ni(numInfluenceNodes);
       vector<double> S(numInfluenceNodes);
       vector<Vector> d_S(numInfluenceNodes);
-      string interp_type = flag->d_interpolator_type;
+      string interp_type = flag->d_interpolatorType;
 
       if (flag->d_axisymmetric) {
 

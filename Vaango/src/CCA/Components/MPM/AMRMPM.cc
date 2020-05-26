@@ -205,7 +205,7 @@ void AMRMPM::problemSetup(const ProblemSpecP& prob_spec,
 
   // Read all MPM flags (look in MPMFlags.cc)
   flags->readMPMFlags(mat_ps, dataArchiver);
-  if (flags->d_integrator_type == "implicit"){
+  if (flags->d_integratorType == "implicit"){
     throw ProblemSetupException("Can't use implicit integration with AMRMPM",
                                 __FILE__, __LINE__);
   }
@@ -379,7 +379,7 @@ void AMRMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   }
   
   // Debugging Scalar
-  if (flags->d_with_color) {
+  if (flags->d_withColor) {
     t->computes(lb->pColorLabel);
   }
 
@@ -393,7 +393,7 @@ void AMRMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
     t->computes(lb->AccStrainEnergyLabel);
   }
   
-  if(flags->d_artificial_viscosity){
+  if(flags->d_artificialViscosity){
     t->computes(lb->p_qLabel);
   }
 
@@ -1003,7 +1003,7 @@ void AMRMPM::scheduleComputeInternalForce(SchedulerP& sched,
   t->requires(Task::OldDW,lb->pXLabel,                    gan,NGP);
   t->requires(Task::NewDW,lb->pSizeLabel_preReloc,        gan,NGP);
   t->requires(Task::OldDW, lb->pDefGradLabel,  gan,NGP);
-  if(flags->d_artificial_viscosity){
+  if(flags->d_artificialViscosity){
     t->requires(Task::OldDW, lb->p_qLabel,                gan,NGP);
   }
   
@@ -1049,7 +1049,7 @@ void AMRMPM::scheduleComputeInternalForce_CFI(SchedulerP& sched,
     t->requires(Task::OldDW, lb->pStressLabel,  allPatches, Task::CoarseLevel,allMatls, ND, gac, npc);
     t->requires(Task::OldDW, lb->pVolumeLabel,  allPatches, Task::CoarseLevel,allMatls, ND, gac, npc);
     
-    if(flags->d_artificial_viscosity){
+    if(flags->d_artificialViscosity){
       t->requires(Task::OldDW, lb->p_qLabel,    allPatches, Task::CoarseLevel,allMatls, ND, gac, npc);
     }
     
@@ -1198,7 +1198,7 @@ void AMRMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
 
 #ifndef USE_DEBUG_TASK
   // debugging scalar
-  if(flags->d_with_color) {
+  if(flags->d_withColor) {
     t->requires(Task::OldDW, lb->pColorLabel,  gnone);
     t->computes(lb->pColorLabel_preReloc);
   }
@@ -1273,7 +1273,7 @@ void AMRMPM::scheduleAddParticles(SchedulerP& sched,
   t->modifies(lb->pSizeLabel_preReloc);
   t->modifies(lb->pDispLabel_preReloc);
   t->modifies(lb->pStressLabel_preReloc);
-  if (flags->d_with_color) {
+  if (flags->d_withColor) {
     t->modifies(lb->pColorLabel_preReloc);
   }
   if(flags->d_doScalarDiffusion){
@@ -1364,7 +1364,7 @@ void AMRMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
   t->computes(lb->pCellNAPIDLabel, d_one_matl);
 
   // Debugging Scalar
-  if (flags->d_with_color) {
+  if (flags->d_withColor) {
     t->computes(lb->pColorLabel);
   }
 
@@ -1378,7 +1378,7 @@ void AMRMPM::scheduleRefine(const PatchSet* patches, SchedulerP& sched)
     t->computes(lb->AccStrainEnergyLabel);
   }
   
-  if(flags->d_artificial_viscosity){
+  if(flags->d_artificialViscosity){
     t->computes(lb->p_qLabel);
   }
 
@@ -1608,7 +1608,7 @@ void AMRMPM::actuallyInitialize(const ProcessorGroup*,
       
       //__________________________________
       // color particles according to what level they're on
-      if (flags->d_with_color) {
+      if (flags->d_withColor) {
         ParticleSubset* pset = new_dw->getParticleSubset(indx, patch);
         ParticleVariable<double> pColor;
         new_dw->getModifiable(pColor, lb->pColorLabel, pset);
@@ -2432,7 +2432,7 @@ void AMRMPM::normalizeNodalVelTempConc(const ProcessorGroup*,
       
       // Apply boundary conditions to the temperature and velocity (if symmetry)
       MPMBoundCond bc;
-      string interp_type = flags->d_interpolator_type;
+      string interp_type = flags->d_interpolatorType;
       bc.setBoundaryCondition(patch,dwi,"Temperature",gTemperature,interp_type);
       bc.setBoundaryCondition(patch,dwi,"Symmetric",  gVelocity,   interp_type);
       if(flags->d_doScalarDiffusion){
@@ -2517,7 +2517,7 @@ void AMRMPM::computeInternalForce(const ProcessorGroup*,
     auto interpolator = flags->d_interpolator->clone(patch);
 
     
-    string interp_type = flags->d_interpolator_type;
+    string interp_type = flags->d_interpolatorType;
 
     int numMPMMatls = d_sharedState->getNumMPMMatls();
 
@@ -2553,7 +2553,7 @@ void AMRMPM::computeInternalForce(const ProcessorGroup*,
       internalforce.initialize(Vector(0,0,0));
       
       // load p_q
-      if(flags->d_artificial_viscosity){
+      if(flags->d_artificialViscosity){
         old_dw->get(p_q,lb->p_qLabel, pset);
       }
       else {
@@ -2618,7 +2618,7 @@ void AMRMPM::computeInternalForce(const ProcessorGroup*,
         }
       }
 
-      string interp_type = flags->d_interpolator_type;
+      string interp_type = flags->d_interpolatorType;
       MPMBoundCond bc;
       bc.setBoundaryCondition(patch,dwi,"Symmetric",internalforce,interp_type);
     }  // End matl loop
@@ -2727,7 +2727,7 @@ void AMRMPM::computeInternalForce_CFI(const ProcessorGroup*,
           old_dw->get(pstress_coarse,  lb->pStressLabel,  pset_coarse);
           
           // Artificial Viscosity
-          if(flags->d_artificial_viscosity){
+          if(flags->d_artificialViscosity){
             old_dw->get(p_q_coarse,    lb->p_qLabel,      pset_coarse);
           }
           else {
@@ -2797,7 +2797,7 @@ void AMRMPM::computeInternalForce_CFI(const ProcessorGroup*,
         
         //__________________________________
         //  Set boundary conditions 
-        string interp_type = flags->d_interpolator_type;
+        string interp_type = flags->d_interpolatorType;
         MPMBoundCond bc;
         bc.setBoundaryCondition( finePatch,dwi,"Symmetric",internalforce,
                                  interp_type); 
@@ -2866,7 +2866,7 @@ void AMRMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
         IntVector n = *iter;
         
         Vector acc(0,0,0);
-        if (gmass[n] > flags->d_min_mass_for_acceleration){
+        if (gmass[n] > flags->d_minMassForAcceleration){
           acc = (internalforce[n] + externalforce[n])/gmass[n];
           acc -= damp_coef * gvelocity[n];
         }
@@ -2897,7 +2897,7 @@ void AMRMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
 
         MPMBoundCond bc;
         bc.setBoundaryCondition(patch, dwi,"SD-Type", gConcStar,
-                                flags->d_interpolator_type);
+                                flags->d_interpolatorType);
 
         for(NodeIterator iter=patch->getExtraNodeIterator();
             !iter.done();iter++){
@@ -2926,7 +2926,7 @@ void AMRMPM::setGridBoundaryConditions(const ProcessorGroup*,
     delt_vartype delT;            
     old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
     
-    string interp_type = flags->d_interpolator_type;
+    string interp_type = flags->d_interpolatorType;
 
     for(int m = 0; m < numMPMMatls; m++){
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
@@ -3266,7 +3266,7 @@ void AMRMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->get(gTemperatureRate,lb->gTemperatureRateLabel,dwi,patch,gac,NGP);
       new_dw->get(frictionTempRate,lb->frictionalWorkLabel,  dwi,patch,gac,NGP);
 
-      if(flags->d_with_ice){
+      if(flags->d_withICE){
         new_dw->get(dTdt,          lb->dTdt_NCLabel,         dwi,patch,gac,NGP);
       }
       else{
@@ -3350,7 +3350,7 @@ void AMRMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       for(ParticleSubset::iterator iter  = pset->begin();
           iter != pset->end(); iter++){
         particleIndex idx = *iter;
-        if ((pmassNew[idx] <= flags->d_min_part_mass) || pTempNew[idx] < 0. ||
+        if ((pmassNew[idx] <= flags->d_minPartMass) || pTempNew[idx] < 0. ||
             (pLocalized[idx]==-999)){
           delset->addParticle(idx);
 //        cout << "Material = " << m << " Deleted Particle = " << pids_new[idx] 
@@ -3382,7 +3382,7 @@ void AMRMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 #ifndef USE_DEBUG_TASK
       //__________________________________
       //  particle debugging label-- carry forward
-      if (flags->d_with_color) {
+      if (flags->d_withColor) {
         constParticleVariable<double> pColor;
         ParticleVariable<double>pColor_new;
         old_dw->get(pColor, lb->pColorLabel, pset);
@@ -3439,7 +3439,7 @@ void AMRMPM::finalParticleUpdate(const ProcessorGroup*,
 
         // Delete particles whose mass is too small (due to combustion),
         // whose pLocalized flag has been set to -999 or who have a negative temperature
-        if ((pmassNew[idx] <= flags->d_min_part_mass) || pTempNew[idx] < 0.){
+        if ((pmassNew[idx] <= flags->d_minPartMass) || pTempNew[idx] < 0.){
           delset->addParticle(idx);
         }
 
@@ -3507,7 +3507,7 @@ void AMRMPM::addParticles(const ProcessorGroup*,
       new_dw->getModifiable(plal,     lb->pLastLevelLabel_preReloc,    pset);
       new_dw->getModifiable(pvelgrad, lb->pVelGradLabel_preReloc,      pset);
       new_dw->getModifiable(pF,  lb->pDefGradLabel_preReloc,pset);
-      if (flags->d_with_color) {
+      if (flags->d_withColor) {
         new_dw->getModifiable(pcolor,   lb->pColorLabel_preReloc,        pset);
       }
       if(flags->d_doScalarDiffusion){
@@ -3605,7 +3605,7 @@ void AMRMPM::addParticles(const ProcessorGroup*,
       new_dw->allocateTemporary(psizetmp, pset);
       new_dw->allocateTemporary(pdisptmp, pset);
       new_dw->allocateTemporary(pstrstmp, pset);
-      if (flags->d_with_color) {
+      if (flags->d_withColor) {
         new_dw->allocateTemporary(pcolortmp,pset);
       }
       if(flags->d_doScalarDiffusion){
@@ -3643,7 +3643,7 @@ void AMRMPM::addParticles(const ProcessorGroup*,
         psizetmp[pp] = pSize[pp];
         pdisptmp[pp] = pdisp[pp];
         pstrstmp[pp] = pstress[pp];
-        if (flags->d_with_color) {
+        if (flags->d_withColor) {
           pcolortmp[pp]= pcolor[pp];
         }
         if (flags->d_useLoadCurves) {
@@ -3740,7 +3740,7 @@ void AMRMPM::addParticles(const ProcessorGroup*,
             psizetmp[new_index]   = 0.5*pSize[idx];
             pdisptmp[new_index]   = pdisp[idx];
             pstrstmp[new_index]   = pstress[idx];
-            if (flags->d_with_color) {
+            if (flags->d_withColor) {
               pcolortmp[new_index]  = pcolor[idx];
             }
             if(flags->d_doScalarDiffusion){
@@ -3782,7 +3782,7 @@ void AMRMPM::addParticles(const ProcessorGroup*,
       new_dw->put(psizetmp, lb->pSizeLabel_preReloc,                 true);
       new_dw->put(pdisptmp, lb->pDispLabel_preReloc,                 true);
       new_dw->put(pstrstmp, lb->pStressLabel_preReloc,               true);
-      if (flags->d_with_color) {
+      if (flags->d_withColor) {
         new_dw->put(pcolortmp,lb->pColorLabel_preReloc,              true);
       }
       if(flags->d_doScalarDiffusion){
@@ -4087,7 +4087,7 @@ void AMRMPM::refineGrid(const ProcessorGroup*,
         if (flags->d_useLoadCurves){
           new_dw->allocateAndPut(pLoadCurve,   lb->pLoadCurveIDLabel,   pset);
         }
-        if (flags->d_with_color) {
+        if (flags->d_withColor) {
           new_dw->allocateAndPut(pColor,       lb->pColorLabel,         pset);
         }
         if(flags->d_doScalarDiffusion){

@@ -62,8 +62,8 @@ ParticleCreator::ParticleCreator(MPMMaterial* matl,
 {
   d_lb = scinew MPMLabel();
   d_useLoadCurves = flags->d_useLoadCurves;
-  d_with_color = flags->d_with_color;
-  d_artificial_viscosity = flags->d_artificial_viscosity;
+  d_withColor = flags->d_withColor;
+  d_artificialViscosity = flags->d_artificialViscosity;
   d_computeScaleFactor = flags->d_computeScaleFactor;
   d_doScalarDiffusion = flags->d_doScalarDiffusion;
   d_useCPTI = flags->d_useCPTI;
@@ -128,7 +128,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       pvelocities  = sgp->getVelocity();  // gcd adds and new change name
       pSizes       = sgp->getSize();
 
-      if(d_with_color){
+      if(d_withColor){
         colors      = sgp->getColors();
       }
     } else {
@@ -236,7 +236,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       }
 
       // CPDI
-      if (pSizes && (d_flags->d_interpolator_type=="cpdi")) {
+      if (pSizes && (d_flags->d_interpolatorType=="cpdi")) {
 
         // Read pSize from file
         if (!pSizes->empty()) {
@@ -423,10 +423,10 @@ ParticleCreator::allocateVariables(particleIndex numParticles,
   if (d_useLoadCurves) {
     new_dw->allocateAndPut(pvars.pLoadCurveID, d_lb->pLoadCurveIDLabel,   subset); 
   }
-  if(d_with_color){
+  if(d_withColor){
      new_dw->allocateAndPut(pvars.pColor,      d_lb->pColorLabel,         subset);
   }
-  if(d_artificial_viscosity){
+  if(d_artificialViscosity){
      new_dw->allocateAndPut(pvars.p_q,         d_lb->p_qLabel,            subset);
   }
 
@@ -604,7 +604,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
   pvars.pRefined[i]     = curLevel->getIndex();
 
   //MMS
-  string mms_type = d_flags->d_mms_type;
+  string mms_type = d_flags->d_mmsType;
   if(!mms_type.empty()) {
     MMS MMSObject;
     MMSObject.initializeParticleForMMS(pvars.position, pvars.pVelocity, pvars.pSize,
@@ -643,10 +643,10 @@ ParticleCreator::initializeParticle(const Patch* patch,
     }
   }
   
-  if(d_with_color){
+  if(d_withColor){
     pvars.pColor[i] = (*obj)->getInitialData_double("color");
   }
-  if(d_artificial_viscosity){
+  if(d_artificialViscosity){
     pvars.p_q[i] = 0.;
   }
   if(d_flags->d_AMR){
@@ -824,7 +824,7 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
   particle_state_preReloc.push_back(d_lb->pParticleIDLabel_preReloc);
   
 
-  if (d_with_color){
+  if (d_withColor){
     particle_state.push_back(d_lb->pColorLabel);
     particle_state_preReloc.push_back(d_lb->pColorLabel_preReloc);
   }
@@ -846,7 +846,7 @@ void ParticleCreator::registerPermanentParticleState(MPMMaterial* matl)
   particle_state.push_back(d_lb->pStressLabel);
   particle_state_preReloc.push_back(d_lb->pStressLabel_preReloc);
 
-  if (d_artificial_viscosity) {
+  if (d_artificialViscosity) {
     particle_state.push_back(d_lb->p_qLabel);
     particle_state_preReloc.push_back(d_lb->p_qLabel_preReloc);
   }
@@ -998,10 +998,10 @@ void ParticleCreator::allocateVariablesAddRequires(Task* task,
   if (d_useLoadCurves){
     task->requires(Task::OldDW,d_lb->pLoadCurveIDLabel, gn);
   }
-  if (d_with_color){
+  if (d_withColor){
     task->requires(Task::OldDW,d_lb->pColorLabel,       gn);
   }
-  if(d_artificial_viscosity){
+  if(d_artificialViscosity){
     task->requires(Task::OldDW,d_lb->p_qLabel,          gn);
   }
 
@@ -1086,11 +1086,11 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   if (d_useLoadCurves){ 
     old_dw->get(o_loadcurve,    d_lb->pLoadCurveIDLabel,      delset);
   }
-  if(d_with_color){
+  if(d_withColor){
     new_dw->allocateTemporary(pvars.pColor,         addset); 
     old_dw->get(o_color,        d_lb->pColorLabel,            delset);
   }
-  if(d_artificial_viscosity){
+  if(d_artificialViscosity){
     new_dw->allocateTemporary(pvars.p_q,         addset); 
     old_dw->get(o_q,        d_lb->p_qLabel,            delset);
   }
@@ -1121,10 +1121,10 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
     if (d_useLoadCurves){ 
       pvars.pLoadCurveID[*n]= o_loadcurve[*o];
     }
-    if (d_with_color){
+    if (d_withColor){
       pvars.pColor[*n]      = o_color[*o];
     }
-    if(d_artificial_viscosity){
+    if(d_artificialViscosity){
       pvars.p_q[*n]      = o_q[*o];
     }
 
@@ -1151,10 +1151,10 @@ void ParticleCreator::allocateVariablesAdd(DataWarehouse* new_dw,
   if (d_useLoadCurves){ 
     (*newState)[d_lb->pLoadCurveIDLabel]= pvars.pLoadCurveID.clone();
   }
-  if(d_with_color){
+  if(d_withColor){
     (*newState)[d_lb->pColorLabel]      = pvars.pColor.clone();
   }
-  if(d_artificial_viscosity){
+  if(d_artificialViscosity){
     (*newState)[d_lb->p_qLabel]         = pvars.p_q.clone();
   }
 

@@ -1162,20 +1162,20 @@ DeformationGradientComputer::computeDeformationGradientFromVelocity(const Matrix
 {
   // Compute deformation gradient
   // **NOTE** Use function pointers in next iteration (TO DO)
-  if (flag->d_defgrad_algorithm == "first_order") {
+  if (flag->d_defGradAlgorithm == "first_order") {
     flag->d_numTermsSeriesDefGrad = 1;
     seriesUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
-  } else if (flag->d_defgrad_algorithm == "subcycle") {
+  } else if (flag->d_defGradAlgorithm == "subcycle") {
     flag->d_numTermsSeriesDefGrad = 1;
     subcycleUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
-  } else if (flag->d_defgrad_algorithm == "taylor_series") {
+  } else if (flag->d_defGradAlgorithm == "taylor_series") {
     seriesUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
-  } else if (flag->d_defgrad_algorithm == "cayley_hamilton") {
+  } else if (flag->d_defGradAlgorithm == "cayley_hamilton") {
     cayleyUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
   } else {
     std::ostringstream out;
     out << "**ERROR** Deformation gradient algorithm"
-        << flag->d_defgrad_algorithm
+        << flag->d_defGradAlgorithm
         << " not implemented." << "\n";
     throw ParameterNotFound(out.str(), __FILE__, __LINE__);
   }

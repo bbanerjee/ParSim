@@ -234,7 +234,7 @@ void RigidMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
 
 
 
-  if(flags->d_with_ice){
+  if(flags->d_withICE){
     t->requires(Task::NewDW, lb->dTdt_NCLabel,         gac,NGN);
   }
 
@@ -254,7 +254,7 @@ void RigidMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   t->computes(lb->TotalMomentumLabel);
   
   // debugging scalar
-  if(flags->d_with_color) {
+  if(flags->d_withColor) {
     t->requires(Task::OldDW, lb->pColorLabel,  Ghost::None);
     t->computes(lb->pColorLabel_preReloc);
   }
@@ -377,7 +377,7 @@ void RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->get(gTemperature,    lb->gTemperatureLabel,    dwi,patch,gac,NGP);
       new_dw->get(gTemperatureNoBC,lb->gTemperatureNoBCLabel,dwi,patch,gac,NGP);
       new_dw->get(gacceleration,   lb->gAccelerationLabel,   dwi,patch,gac,NGP);
-      if(flags->d_with_ice){
+      if(flags->d_withICE){
         new_dw->get(dTdt,          lb->dTdt_NCLabel,         dwi,patch,gac,NGP);
       }
       else{
@@ -435,7 +435,7 @@ void RigidMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       
       //__________________________________
       //  particle debugging label-- carry forward
-      if (flags->d_with_color) {
+      if (flags->d_withColor) {
         constParticleVariable<double> pColor;
         ParticleVariable<double>pColor_new;
         old_dw->get(pColor, lb->pColorLabel, pset);

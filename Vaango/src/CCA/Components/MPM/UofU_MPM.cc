@@ -172,13 +172,13 @@ UofU_MPM::problemSetup(const ProblemSpecP& prob_spec,
 
   // Read all MPM d_flags (look in MPMFlags.cc)
   d_flags->readMPMFlags(mat_ps, d_dataArchiver);
-  if (d_flags->d_integrator_type == "implicit") {
+  if (d_flags->d_integratorType == "implicit") {
     throw ProblemSetupException("Can't use implicit integration with -uofu_mpm",
                                 __FILE__, __LINE__);
   }
 
   // convert text representation of face into FaceType
-  for (auto faceName : d_flags->d_bndy_face_txt_list) {
+  for (auto faceName : d_flags->d_bndyFaceTxtList) {
     Patch::FaceType face = Patch::invalidFace;
     for (Patch::FaceType ft = Patch::startFace; ft <= Patch::endFace;
          ft = Patch::nextFace(ft)) {
@@ -331,12 +331,12 @@ UofU_MPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   t->computes(d_labels->pStressLabel);
   t->computes(d_labels->pSizeLabel);
 
-  if (d_flags->d_artificial_viscosity) {
+  if (d_flags->d_artificialViscosity) {
     t->computes(d_labels->p_qLabel);
   }
 
   // Debugging Scalar
-  if (d_flags->d_with_color) {
+  if (d_flags->d_withColor) {
     t->computes(d_labels->pColorLabel);
   }
 
@@ -480,13 +480,13 @@ UofU_MPM::actuallyInitialize(const ProcessorGroup*, const PatchSubset* patches,
 
     IntVector num_extra_cells = patch->getExtraCells();
     IntVector periodic = patch->getLevel()->getPeriodicBoundaries();
-    auto interp_type = d_flags->d_interpolator_type;
+    auto interp_type = d_flags->d_interpolatorType;
     if (interp_type == "linear" && num_extra_cells != IntVector(0, 0, 0)) {
-      if (!d_flags->d_with_ice && !d_flags->d_with_arches) {
+      if (!d_flags->d_withICE) {
         std::ostringstream msg;
         msg << "\n ERROR: When using <interpolator>linear</interpolator> \n"
             << " you should also use <extraCells>[0,0,0]</extraCells> \n"
-            << " unless you are running an MPMICE or MPMARCHES case.\n";
+            << " unless you are running an MPMICE case.\n";
         throw ProblemSetupException(msg.str(), __FILE__, __LINE__);
       }
     } else if (((interp_type == "gimp" || interp_type == "3rdorderBS" ||
@@ -600,9 +600,9 @@ UofU_MPM::initializeBodyForce(const ProcessorGroup*, const PatchSubset* patches,
                               DataWarehouse* new_dw)
 {
   // Get the MPM d_flags and make local copies
-  Uintah::Point rotation_center = d_flags->d_coord_rotation_center;
-  Uintah::Vector rotation_axis = d_flags->d_coord_rotation_axis;
-  double rotation_speed = d_flags->d_coord_rotation_speed;
+  Uintah::Point rotation_center = d_flags->d_coordRotationCenter;
+  Uintah::Vector rotation_axis = d_flags->d_coordRotationAxis;
+  double rotation_speed = d_flags->d_coordRotationSpeed;
 
   // Compute angular velocity vector (omega)
   Uintah::Vector omega = rotation_axis * rotation_speed;
@@ -639,7 +639,7 @@ UofU_MPM::initializeBodyForce(const ProcessorGroup*, const PatchSubset* patches,
         pBodyForceAcc[pidx] = d_flags->d_gravity;
 
         // If rotating add centrifugal force
-        if (d_flags->d_use_coord_rotation) {
+        if (d_flags->d_useCoordRotation) {
           // Compute the centrifugal term (omega x omega x r)
           // Simplified version where body ref point is not needed
           Vector rVec = pPosition[pidx] - rotation_center;
@@ -1047,9 +1047,9 @@ UofU_MPM::computeParticleBodyForce(const ProcessorGroup*,
                                    DataWarehouse* new_dw)
 {
   // Get the MPM d_flags and make local copies
-  Uintah::Point rotation_center = d_flags->d_coord_rotation_center;
-  Uintah::Vector rotation_axis = d_flags->d_coord_rotation_axis;
-  double rotation_speed = d_flags->d_coord_rotation_speed;
+  Uintah::Point rotation_center = d_flags->d_coordRotationCenter;
+  Uintah::Vector rotation_axis = d_flags->d_coordRotationAxis;
+  double rotation_speed = d_flags->d_coordRotationSpeed;
   //Uintah::Point body_ref_point = d_flags->d_coord_rotation_body_ref_point;
 
   // Compute angular velocity vector (omega)
@@ -1086,7 +1086,7 @@ UofU_MPM::computeParticleBodyForce(const ProcessorGroup*,
                              d_labels->pCoriolisImportanceLabel_preReloc, pset);
 
       // Don't do much if coord rotation is off
-      if (!d_flags->d_use_coord_rotation) {
+      if (!d_flags->d_useCoordRotation) {
         // Iterate over the particles
         for (auto particle : *pset) {
           // Compute the body force acceleration (g)
@@ -1324,7 +1324,7 @@ UofU_MPM::applyExternalLoads(const ProcessorGroup*, const PatchSubset* patches,
         } // end if (doPressureBCs)
 
         // MMS (compute body force)
-        if (!d_flags->d_mms_type.empty()) {
+        if (!d_flags->d_mmsType.empty()) {
 
           MMS MMSObject;
           MMSObject.computeBodyForceForMMS(old_dw, new_dw, time, pset, d_labels, d_flags,
@@ -1341,7 +1341,7 @@ UofU_MPM::applyExternalLoads(const ProcessorGroup*, const PatchSubset* patches,
       } else { // if (!d_useLoadCurves)
 
         // MMS
-        if (!d_flags->d_mms_type.empty()) {
+        if (!d_flags->d_mmsType.empty()) {
 
           MMS MMSObject;
           MMSObject.computeExternalForceForMMS(old_dw, new_dw, time, pset, d_labels, d_flags,
@@ -1459,7 +1459,7 @@ UofU_MPM::interpolateParticlesToGrid(const ProcessorGroup*,
 
     vector<IntVector> influenceNodes(num_influence_nodes);
     vector<double> S_ip_av(num_influence_nodes);
-    string interp_type = d_flags->d_interpolator_type;
+    string interp_type = d_flags->d_interpolatorType;
 
     NCVariable<double> gMassglobal, gVolumeglobal;
     NCVariable<Vector> gVelglobal;
@@ -1784,7 +1784,7 @@ UofU_MPM::scheduleComputeInternalForce(SchedulerP& sched,
               d_numGhostParticles);
 #endif
 
-  if (d_flags->d_artificial_viscosity) {
+  if (d_flags->d_artificialViscosity) {
     t->requires(Task::OldDW, d_labels->p_qLabel, Ghost::AroundNodes,
                 d_numGhostParticles);
   }
@@ -1838,7 +1838,7 @@ UofU_MPM::computeInternalForce(const ProcessorGroup*,
     vector<IntVector> influenceNodes(numInfluenceNodes);
     vector<double> S_ip_av(numInfluenceNodes);
     vector<Vector> d_S_ip_av(numInfluenceNodes);
-    string interp_type = d_flags->d_interpolator_type;
+    string interp_type = d_flags->d_interpolatorType;
 
     int numMPMMatls = d_sharedState->getNumMPMMatls();
 
@@ -1882,7 +1882,7 @@ UofU_MPM::computeInternalForce(const ProcessorGroup*,
       new_dw->allocateAndPut(gInternalForce, d_labels->gInternalForceLabel, matID,
                              patch);
 
-      if (d_flags->d_artificial_viscosity) {
+      if (d_flags->d_artificialViscosity) {
         old_dw->get(p_q, d_labels->p_qLabel, pset);
       } else {
         ParticleVariable<double> p_q_create;
@@ -2184,7 +2184,7 @@ UofU_MPM::computeAcceleration(const ProcessorGroup* pg,
         IntVector c = *iter;
 
         Vector acc(0., 0., 0.);
-        if (gMass[c] > d_flags->d_min_mass_for_acceleration) {
+        if (gMass[c] > d_flags->d_minMassForAcceleration) {
           acc =
             (gInternalForce[c] + gExternalForce[c] + gBodyForce[c]) / gMass[c];
           acc -= damp_coef * gVelocity[c];
@@ -2193,7 +2193,7 @@ UofU_MPM::computeAcceleration(const ProcessorGroup* pg,
         gAcceleration[c] = acc;
         /*
         std::cout << "After acceleration: material = " << m << " node = " << c
-                  << " gMass = " << gMass[c] << " minMass = " << d_flags->d_min_mass_for_acceleration << "\n"
+                  << " gMass = " << gMass[c] << " minMass = " << d_flags->d_minMassForAcceleration << "\n"
                   << " gInt = " << gInternalForce[c] 
                   << " gExt = " << gExternalForce[c] << "\n"
                   << " gAcceleration = " << gAcceleration[c] << "\n";
@@ -2262,7 +2262,7 @@ UofU_MPM::setGridBoundaryConditions(const ProcessorGroup*,
     delt_vartype delT;
     old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches));
 
-    string interp_type = d_flags->d_interpolator_type;
+    string interp_type = d_flags->d_interpolatorType;
     for (int m = 0; m < numMPMMatls; m++) {
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial(m);
       int matID = mpm_matl->getDWIndex();
@@ -2524,7 +2524,7 @@ UofU_MPM::checkGridVelocity(const ProcessorGroup*,
 
   for (auto patch : *patches) {
 
-    Vector dx = patch->dCell();
+    //Vector dx = patch->dCell();
     //Vector oodx = {1./dx.x(), 1./dx.y(), 1./dx.z()};
 
     auto interpolator = d_flags->d_interpolator->clone(patch);
@@ -3574,7 +3574,7 @@ UofU_MPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   }
 
   // debugging scalar
-  if (d_flags->d_with_color) {
+  if (d_flags->d_withColor) {
     t->requires(Task::OldDW, d_labels->pColorLabel, Ghost::None);
     t->computes(d_labels->pColorLabel_preReloc);
   }
@@ -3712,7 +3712,7 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
         // Update the particle's position and velocity
         pMass_new[particle] = pMass[particle];
-        auto v_p_mid = pVelocity[particle] + pAcceleration_old * (0.5 * delT);
+        //auto v_p_mid = pVelocity[particle] + pAcceleration_old * (0.5 * delT);
         //auto v_p_mid = pVelocity_old + pAcceleration_old * (0.5 * delT);
         pX_new[particle] = pX[particle] + pVel_new * delT;
         //pX_new[particle] = pX[particle] + v_p_mid * delT;
@@ -3745,7 +3745,7 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         partvoldef += pVolume_new[particle];
 
         // Flag particles for deletion
-        if ((pMass_new[particle] <= d_flags->d_min_part_mass) ||
+        if ((pMass_new[particle] <= d_flags->d_minPartMass) ||
             (pLocalized_new[particle] == -999)) {
           delset->addParticle(particle);
           std::cout << "\n Warning: Added to delset: material = " << m << " particle = " << particle
@@ -3754,19 +3754,19 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         }
 
         double vel_new = pVelocity_new[particle].length();
-        if (vel_new > d_flags->d_max_vel) {
+        if (vel_new > d_flags->d_maxVel) {
           double vel_old = pVelocity[particle].length();
           if (d_flags->d_deleteRogueParticles) {
             delset->addParticle(particle);
             std::cout << "\n Warning: particle " << pParticleID[particle]
-                 << " hit speed ceiling #1 (" << vel_new << ">" << d_flags->d_max_vel
+                 << " hit speed ceiling #1 (" << vel_new << ">" << d_flags->d_maxVel
                  << "). Deleting particle.\n";
           } else {
             if (vel_new >= vel_old) {
-              double scale_factor =  (d_flags->d_max_vel * 0.9) / vel_new;
+              double scale_factor =  (d_flags->d_maxVel * 0.9) / vel_new;
               pVelocity_new[particle] *= scale_factor;
               std::cout << "\n Warning: particle " << pParticleID[particle]
-                   << " hit speed ceiling #1 (" << vel_new << ">" << d_flags->d_max_vel
+                   << " hit speed ceiling #1 (" << vel_new << ">" << d_flags->d_maxVel
                    << ") vel_old = " << vel_old << ". Modifying particle velocity "
                       "accordingly.\n";
             }
@@ -3779,7 +3779,7 @@ UofU_MPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
       //__________________________________
       //  particle debugging label-- carry forward
-      if (d_flags->d_with_color) {
+      if (d_flags->d_withColor) {
         constParticleVariable<double> pColor;
         ParticleVariable<double> pColor_new;
         old_dw->get(pColor, d_labels->pColorLabel, pset);
@@ -3869,8 +3869,8 @@ UofU_MPM::computeParticleScaleFactor(const ProcessorGroup*,
       if (d_dataArchiver->isOutputTimestep()) {
         Vector dx = patch->dCell();
 
-        if (d_flags->d_interpolator_type != "cpdi" &&
-            d_flags->d_interpolator_type != "cpti") {
+        if (d_flags->d_interpolatorType != "cpdi" &&
+            d_flags->d_interpolatorType != "cpti") {
           constParticleVariable<Matrix3> pDefGrad;
           new_dw->get(pDefGrad, d_labels->pDefGradLabel_preReloc, pset);
           for (auto particle : *pset) {

@@ -273,7 +273,7 @@ CompMooneyRivlin::computeStressTensor(const PatchSubset* patches,
                          Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
-      if (flag->d_artificial_viscosity) {
+      if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
         double bulk =
           (4. * (C1 + C2 * invar2) / J); // I'm a little fuzzy here - JG

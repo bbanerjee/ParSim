@@ -1026,7 +1026,7 @@ ViscoScram::computeStressTensor(const PatchSubset* patches,
                          Max(c_dil + fabs(pVel.z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
-      if (flag->d_artificial_viscosity) {
+      if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
         double c_bulk = sqrt(bulk / rho_cur);
         Matrix3 D = (pVelGrad_new[idx] + pVelGrad_new[idx].Transpose()) * 0.5;

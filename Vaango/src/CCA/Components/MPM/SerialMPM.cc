@@ -206,14 +206,14 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
  
   // Read all MPM flags (look in MPMFlags.cc)
   flags->readMPMFlags(restart_mat_ps, dataArchiver);
-  if (flags->d_integrator_type == "implicit"){
+  if (flags->d_integratorType == "implicit"){
     throw ProblemSetupException("Can't use implicit integration with -mpm",
                                 __FILE__, __LINE__);
   }
 
   // convert text representation of face into FaceType
-  for(std::vector<std::string>::const_iterator ftit(flags->d_bndy_face_txt_list.begin());
-      ftit!=flags->d_bndy_face_txt_list.end();ftit++) {
+  for(std::vector<std::string>::const_iterator ftit(flags->d_bndyFaceTxtList.begin());
+      ftit!=flags->d_bndyFaceTxtList.end();ftit++) {
     Patch::FaceType face = Patch::invalidFace;
     for(Patch::FaceType ft=Patch::startFace;ft<=Patch::endFace;
         ft=Patch::nextFace(ft)) {
@@ -285,7 +285,7 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
   //__________________________________
   //  create analysis modules
   // call problemSetup  
-  if(!flags->d_with_ice && !flags->d_with_arches){    // mpmice or mpmarches handles this
+  if(!flags->d_withICE){    // mpmice handles this
     d_analysisModules = AnalysisModuleFactory::create(prob_spec, sharedState, dataArchiver);
     
     if(d_analysisModules.size() != 0){
@@ -459,7 +459,7 @@ SerialMPM::scheduleInitialize(const LevelP& level,
   }
   
   // Debugging Scalar
-  if (flags->d_with_color) {
+  if (flags->d_withColor) {
     t->computes(lb->pColorLabel);
   }
 
@@ -473,7 +473,7 @@ SerialMPM::scheduleInitialize(const LevelP& level,
     t->computes(lb->AccStrainEnergyLabel);
   }
 
-  if(flags->d_artificial_viscosity){
+  if(flags->d_artificialViscosity){
     t->computes(lb->p_qLabel);
   }
 
@@ -628,9 +628,9 @@ void SerialMPM::actuallyInitialize(const ProcessorGroup*,
     }
     IntVector num_extra_cells=patch->getExtraCells();
     IntVector periodic=patch->getLevel()->getPeriodicBoundaries();
-    std::string interp_type = flags->d_interpolator_type;
+    std::string interp_type = flags->d_interpolatorType;
     if(interp_type=="linear" && num_extra_cells!=IntVector(0,0,0)){
-      if(!flags->d_with_ice && !flags->d_with_arches){
+      if (!flags->d_withICE) {
         std::ostringstream msg;
         msg << "\n ERROR: When using <interpolator>linear</interpolator> \n"
             << " you should also use <extraCells>[0,0,0]</extraCells> \n"
@@ -752,9 +752,9 @@ SerialMPM::initializeBodyForce(const ProcessorGroup* ,
                                DataWarehouse* new_dw)
 {
   // Get the MPM flags and make local copies
-  Uintah::Point rotation_center = flags->d_coord_rotation_center;
-  Uintah::Vector rotation_axis = flags->d_coord_rotation_axis;
-  double rotation_speed = flags->d_coord_rotation_speed;
+  Uintah::Point rotation_center = flags->d_coordRotationCenter;
+  Uintah::Vector rotation_axis = flags->d_coordRotationAxis;
+  double rotation_speed = flags->d_coordRotationSpeed;
 
   // Compute angular velocity std::vector (omega)
   Uintah::Vector omega = rotation_axis*rotation_speed;
@@ -792,7 +792,7 @@ SerialMPM::initializeBodyForce(const ProcessorGroup* ,
         pBodyForceAcc[pidx] = flags->d_gravity;
 
         // If rotating add centrifugal force
-        if (flags->d_use_coord_rotation) {
+        if (flags->d_useCoordRotation) {
 
           // Compute the centrifugal term (omega x omega x r)
           // Simplified version where body ref point is not needed
@@ -1442,9 +1442,9 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
                                     DataWarehouse* new_dw)
 {
   // Get the MPM flags and make local copies
-  Uintah::Point rotation_center = flags->d_coord_rotation_center;
-  Uintah::Vector rotation_axis = flags->d_coord_rotation_axis;
-  double rotation_speed = flags->d_coord_rotation_speed;
+  Uintah::Point rotation_center = flags->d_coordRotationCenter;
+  Uintah::Vector rotation_axis = flags->d_coordRotationAxis;
+  double rotation_speed = flags->d_coordRotationSpeed;
   //Uintah::Point body_ref_point = flags->d_coord_rotation_body_ref_point;
 
   // Compute angular velocity std::vector (omega)
@@ -1477,7 +1477,7 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
       new_dw->allocateAndPut(pCoriolisImportance, lb->pCoriolisImportanceLabel_preReloc, pset);
 
       // Don't do much if coord rotation is off
-      if (!flags->d_use_coord_rotation) {
+      if (!flags->d_useCoordRotation) {
 
         // Iterate over the particles
         for (auto iter = pset->begin(); iter != pset->end(); iter++) {
@@ -1803,7 +1803,7 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
         }
 
         // MMS (compute body force)
-        std::string mms_type = flags->d_mms_type;
+        std::string mms_type = flags->d_mmsType;
         if(!mms_type.empty()) {
           MMS MMSObject;
           MMSObject.computeBodyForceForMMS(old_dw, new_dw, time, pset, lb, flags, 
@@ -1812,7 +1812,7 @@ SerialMPM::applyExternalLoads(const ProcessorGroup* ,
 
       } else { // d_useLoadCurves = False
         // MMS
-        std::string mms_type = flags->d_mms_type;
+        std::string mms_type = flags->d_mmsType;
         if(!mms_type.empty()) {
           MMS MMSObject;
           MMSObject.computeExternalForceForMMS(old_dw,new_dw,time,pset,lb,flags,pExternalForce_new);
@@ -1896,7 +1896,7 @@ SerialMPM::scheduleInterpolateParticlesToGrid(SchedulerP& sched,
   t->computes(lb->gTemperatureRateLabel);
   t->computes(lb->gExternalHeatRateLabel);
 
-  if(flags->d_with_ice){
+  if(flags->d_withICE){
     t->computes(lb->gVelocityBCLabel);
   }
   
@@ -1925,7 +1925,7 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
     auto numInfluenceNodes = interpolator->size();
     std::vector<IntVector> ni(numInfluenceNodes);
     std::vector<double> S(numInfluenceNodes);
-    std::string interp_type = flags->d_interpolator_type;
+    std::string interp_type = flags->d_interpolatorType;
 
     NCVariable<double> gMassglobal,gTempglobal,gVolumeglobal;
     NCVariable<Vector> gVelglobal;
@@ -2128,7 +2128,7 @@ SerialMPM::interpolateParticlesToGrid(const ProcessorGroup*,
       bc.setBoundaryCondition(patch,matID, "Symmetric",  gVelocity,   interp_type);
 
       // If an MPMICE problem, create a velocity with BCs variable for NCToCC_0
-      if(flags->d_with_ice){
+      if(flags->d_withICE){
         NCVariable<Vector> gVelocityWBC;
         new_dw->allocateAndPut(gVelocityWBC,lb->gVelocityBCLabel,matID, patch);
         gVelocityWBC.copyData(gVelocity);
@@ -2225,7 +2225,7 @@ SerialMPM::computeNormals(const ProcessorGroup*,
     std::vector<IntVector> ni(numInfluenceNodes);
     std::vector<double> S(numInfluenceNodes);
     std::vector<Vector> d_S(numInfluenceNodes);
-    std::string interp_type = flags->d_interpolator_type;
+    std::string interp_type = flags->d_interpolatorType;
 
     // Find surface normal at each material based on a gradient of nodal mass
     for (auto m = 0; m < numMPMMatls; m++){
@@ -2477,7 +2477,7 @@ SerialMPM::computeLogisticRegression(const ProcessorGroup*,
     std::vector<IntVector>  ni(numInfluenceNodes);
     std::vector<double>     S(numInfluenceNodes);
     std::vector<Vector>     d_S(numInfluenceNodes);
-    std::string interp_type = flags->d_interpolator_type;
+    std::string interp_type = flags->d_interpolatorType;
 
     // Declare and allocate storage for use in the Logistic Regression
     NCVariable<int> gAlphaMaterial;
@@ -3471,11 +3471,11 @@ SerialMPM::scheduleComputeInternalForce(SchedulerP& sched,
     t->requires(Task::OldDW, lb->pParticleIDLabel,        gan, NGP);
   #endif
 
-  if(flags->d_with_ice){
+  if(flags->d_withICE){
     t->requires(Task::NewDW, lb->pPressureLabel,          gan, NGP);
   }
 
-  if(flags->d_artificial_viscosity){
+  if(flags->d_artificialViscosity){
     t->requires(Task::OldDW, lb->p_qLabel,                gan, NGP);
   }
 
@@ -3532,7 +3532,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
     std::vector<IntVector> ni(numInfluenceNodes);
     std::vector<double> S(numInfluenceNodes);
     std::vector<Vector> d_S(numInfluenceNodes);
-    std::string interp_type = flags->d_interpolator_type;
+    std::string interp_type = flags->d_interpolatorType;
 
     int numMPMMatls = d_sharedState->getNumMPMMatls();
 
@@ -3579,7 +3579,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
       new_dw->allocateAndPut(gStress,      lb->gStressForSavingLabel,matID, patch);
       new_dw->allocateAndPut(gInternalForce,lb->gInternalForceLabel,  matID, patch);
 
-      if(flags->d_with_ice){
+      if(flags->d_withICE){
         new_dw->get(p_pressure,lb->pPressureLabel, pset);
       }
       else {
@@ -3591,7 +3591,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
         p_pressure = p_pressure_create; // reference created data
       }
 
-      if(flags->d_artificial_viscosity){
+      if(flags->d_artificialViscosity){
         old_dw->get(p_q,lb->p_qLabel, pset);
       }
       else {
@@ -3906,7 +3906,7 @@ SerialMPM::computeAndIntegrateAcceleration(const ProcessorGroup*,
         IntVector c = *iter;
 
         Vector acc(0.,0.,0.);
-        if (gMass[c] > flags->d_min_mass_for_acceleration){
+        if (gMass[c] > flags->d_minMassForAcceleration){
           acc  = (gInternalForce[c] + gExternalForce[c] + gBodyForce[c])/gMass[c];
           acc -= damp_coef*gVelocity[c];
         }
@@ -4017,7 +4017,7 @@ SerialMPM::setGridBoundaryConditions(const ProcessorGroup*,
     delt_vartype delT;            
     old_dw->get(delT, d_sharedState->get_delt_label(), getLevel(patches) );
 
-    std::string interp_type = flags->d_interpolator_type;
+    std::string interp_type = flags->d_interpolatorType;
     for(int m = 0; m < numMPMMatls; m++){
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
       int matID = mpm_matl->getDWIndex();
@@ -5690,7 +5690,7 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
     t->requires(Task::OldDW, lb->pLoadCurveIDLabel,     Ghost::None);
   }
 
-  if(flags->d_with_ice){
+  if(flags->d_withICE){
     t->requires(Task::NewDW, lb->dTdt_NCLabel,         gac,NGN);
     t->requires(Task::NewDW, lb->massBurnFractionLabel,gac,NGN);
   }
@@ -5728,7 +5728,7 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdate(SchedulerP& sched,
   }
 
   // debugging scalar
-  if(flags->d_with_color) {
+  if(flags->d_withColor) {
     t->requires(Task::OldDW, lb->pColorLabel,  Ghost::None);
     t->computes(lb->pColorLabel_preReloc);
   }
@@ -5885,7 +5885,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
       new_dw->get(frictionTempRate, lb->frictionalWorkLabel,   matID, patch, gac, NGP);
 
       constNCVariable<double> dTdt, massBurnFrac;
-      if (flags->d_with_ice) {
+      if (flags->d_withICE) {
         new_dw->get(dTdt,          lb->dTdt_NCLabel,          matID, patch, gac, NGP);
         new_dw->get(massBurnFrac,  lb->massBurnFractionLabel, matID, patch, gac, NGP);
       } else {
@@ -6087,7 +6087,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
         }
         */
 
-        if ( (pMass_new[idx] <= flags->d_min_part_mass) || 
+        if ( (pMass_new[idx] <= flags->d_minPartMass) || 
              (pTemp_new[idx] < 0.0) ||
              (pLocalized_new[idx]==-999) ) {
           if (flags->d_erosionAlgorithm != "none") {
@@ -6111,7 +6111,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           #endif
         }
         
-        if (pVelocity_new[idx].length() > flags->d_max_vel) {
+        if (pVelocity_new[idx].length() > flags->d_maxVel) {
           if (flags->d_deleteRogueParticles) {
             if (flags->d_erosionAlgorithm != "none") {
               delset->addParticle(idx);
@@ -6121,7 +6121,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
           } else {
             if (pVelocity_new[idx].length() >= pVelocity[idx].length()) {
               pVelocity_new[idx] = 
-                (pVelocity_new[idx]/pVelocity_new[idx].length())*(flags->d_max_vel*.9);      
+                (pVelocity_new[idx]/pVelocity_new[idx].length())*(flags->d_maxVel*.9);      
               std::cout << "\n Warning: particle "<< pParticleID[idx] 
                    << " hit speed ceiling #1. Modifying particle velocity accordingly."<<"\n";
             }
@@ -6139,7 +6139,7 @@ SerialMPM::interpolateToParticlesAndUpdate(const ProcessorGroup*,
 
       //__________________________________
       //  particle debugging label-- carry forward
-      if (flags->d_with_color) {
+      if (flags->d_withColor) {
         constParticleVariable<double> pColor;
         ParticleVariable<double>pColor_new;
         old_dw->get(pColor, lb->pColorLabel, pset);
@@ -6347,8 +6347,8 @@ SerialMPM::interpolateToParticlesAndUpdateMom1(const ProcessorGroup*,
       for(ParticleSubset::iterator iter  = pset->begin();
           iter != pset->end(); iter++){
         particleIndex idx = *iter;
-        if(pVelocity_new[idx].length() > flags->d_max_vel){
-          pVelocity_new[idx]=(pVelocity_new[idx]/pVelocity_new[idx].length())*flags->d_max_vel;
+        if(pVelocity_new[idx].length() > flags->d_maxVel){
+          pVelocity_new[idx]=(pVelocity_new[idx]/pVelocity_new[idx].length())*flags->d_maxVel;
           std::cout <<"\n"<<"Warning: particle "<<pParticleID[idx]<<" hit speed ceiling #2. Modifying particle velocity accordingly."<<"\n";
           //pVelocity_new[idx]=pVelocity[idx];
         }
@@ -6518,7 +6518,7 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdateMom2(SchedulerP& sched,
   t->requires(Task::NewDW, lb->pdTdtLabel_preReloc,             gnone);
   t->requires(Task::NewDW, lb->pLocalizedMPMLabel,              gnone);
 
-  if(flags->d_with_ice){
+  if(flags->d_withICE){
     t->requires(Task::NewDW, lb->dTdt_NCLabel,         gac,NGN);
     t->requires(Task::NewDW, lb->massBurnFractionLabel,gac,NGN);
   }
@@ -6544,7 +6544,7 @@ SerialMPM::scheduleInterpolateToParticlesAndUpdateMom2(SchedulerP& sched,
   }
 
   // debugging scalar
-  if(flags->d_with_color) {
+  if(flags->d_withColor) {
     t->requires(Task::OldDW, lb->pColorLabel,  Ghost::None);
     t->computes(lb->pColorLabel_preReloc);
   }
@@ -6662,7 +6662,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
       Ghost::GhostType  gac = Ghost::AroundCells;
       new_dw->get(gTemperatureRate,lb->gTemperatureRateLabel,matID, patch,gac,NGP);
       new_dw->get(frictionTempRate,lb->frictionalWorkLabel,  matID, patch,gac,NGP);
-      if(flags->d_with_ice){
+      if(flags->d_withICE){
         new_dw->get(dTdt,          lb->dTdt_NCLabel,         matID, patch,gac,NGP);
         new_dw->get(massBurnFrac,  lb->massBurnFractionLabel,matID, patch,gac,NGP);
       }
@@ -6744,7 +6744,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
       for(ParticleSubset::iterator iter  = pset->begin();
           iter != pset->end(); iter++){
         particleIndex idx = *iter;
-        if ((pMass_new[idx] <= flags->d_min_part_mass) || pTemp_new[idx] < 0. ||
+        if ((pMass_new[idx] <= flags->d_minPartMass) || pTemp_new[idx] < 0. ||
             (pLocalized[idx]==-999)){
           if (flags->d_erosionAlgorithm != "none") {
             delset->addParticle(idx);
@@ -6763,7 +6763,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
 
       //__________________________________
       //  particle debugging label-- carry forward
-      if (flags->d_with_color) {
+      if (flags->d_withColor) {
         constParticleVariable<double> pColor;
         ParticleVariable<double>pColor_new;
         old_dw->get(pColor, lb->pColorLabel, pset);
@@ -7189,8 +7189,8 @@ SerialMPM::computeParticleScaleFactor(const ProcessorGroup*,
       if(dataArchiver->isOutputTimestep()){
         Vector dx = patch->dCell();
 
-        if (flags->d_interpolator_type != "cpdi" &&
-            flags->d_interpolator_type != "cpti") {
+        if (flags->d_interpolatorType != "cpdi" &&
+            flags->d_interpolatorType != "cpti") {
           constParticleVariable<Matrix3> pDefGrad;
           new_dw->get(pDefGrad, lb->pDefGradLabel_preReloc,pset);
           for (auto pidx : *pset) {
@@ -7369,7 +7369,7 @@ SerialMPM::finalParticleUpdate(const ProcessorGroup*,
 
         // Delete particles whose mass is too small (due to combustion),
         // whose pLocalized flag has been set to -999 or who have a negative temperature
-        if ((pMass_new[idx] <= flags->d_min_part_mass) || pTemp_new[idx] < 0. ||
+        if ((pMass_new[idx] <= flags->d_minPartMass) || pTemp_new[idx] < 0. ||
             (pLocalized[idx]==-999)){
           if (flags->d_erosionAlgorithm != "none") {
             delset->addParticle(idx);
@@ -7412,7 +7412,7 @@ SerialMPM::scheduleRefine(const PatchSet* patches,
   t->computes(d_sharedState->get_delt_label(),getLevel(patches));
 
   // Debugging Scalar
-  if (flags->d_with_color) {
+  if (flags->d_withColor) {
     t->computes(lb->pColorLabel);
   }
                                                                                 
@@ -7541,7 +7541,7 @@ SerialMPM::refine(const ProcessorGroup*,
         }
 
 #if 0
-        if(flags->d_with_color) {
+        if(flags->d_withColor) {
           ParticleVariable<double> pcolor;
           int index = mpm_matl->getDWIndex();
           ParticleSubset* pset = new_dw->getParticleSubset(index, patch);
