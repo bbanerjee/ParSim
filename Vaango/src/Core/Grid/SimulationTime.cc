@@ -61,7 +61,7 @@ SimulationTime::SimulationTime(const ProblemSpecP& params)
     int max_iterations = 0;
     if( time_ps->get( "max_iterations", max_iterations ).get_rep() != NULL ) {
       std::cerr << "\n";
-      std::cerr << "The 'max_iterations' flag (in the .ups file) is deprecated.  Please use the 'max_Timesteps' flag instead..\n";
+      std::cerr << "The 'max_iterations' flag (in the .ups file) is deprecated.  Please use the 'max_timesteps' flag instead..\n";
       std::cerr << "\n";
       Uintah::Thread::exitAll(1);      
     }
@@ -70,7 +70,7 @@ SimulationTime::SimulationTime(const ProblemSpecP& params)
   // use INT_MAX -1, for some reason SGI optimizer doesn't like INT_MAX
   // in the SimulationController while loop
   maxTimestep = INT_MAX-1;
-  time_ps->get( "max_Timesteps", maxTimestep );
+  time_ps->get( "max_timesteps", maxTimestep );
   time_ps->get( "override_restart_delt", override_restart_delt);
 
   if (!time_ps->get("clamp_timesteps_to_output", timestep_clamping))
