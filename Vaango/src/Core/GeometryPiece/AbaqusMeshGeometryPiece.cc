@@ -35,7 +35,7 @@
 #include <limits>
 #include <algorithm>
 #include <regex>
-//#include <boost/regex.hpp>
+#include <chrono>
 
 using namespace Uintah;
 using std::cerr;
@@ -120,6 +120,10 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
   std::vector<SurfaceElement> surfElemArray;
   std::vector<VolumeElement> volElemArray;
 
+  // Timing
+  std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+  startTime = std::chrono::system_clock::now();
+  
   // Read file
   std::string line;
   bool node_flag = false;
@@ -194,7 +198,11 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
 
   }
 
-  //std::cout << "Done reading " << std::endl;
+  // Timing
+  endTime = std::chrono::system_clock::now(); 
+  double time = std::chrono::duration<double, std::milli>(endTime - startTime).count();
+  std::cout << "Done reading Abaqus mesh file in " << time << " millisecs" << std::endl;
+  startTime = std::chrono::system_clock::now();
 
   // Renumber the volume elements starting from 1
   int lastSurfElemID = 0;
@@ -207,7 +215,11 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
     //std::cout << "Element id = " << (*iter).id_ << std::endl;
   }
 
-  //std::cout << "Done renumbering " << std::endl;
+  // Timing
+  endTime = std::chrono::system_clock::now(); 
+  time = std::chrono::duration<double, std::milli>(endTime - startTime).count();
+  std::cout << "Done renumbering in " << time << " millisecs" << std::endl;
+  startTime = std::chrono::system_clock::now();
 
   // Compute the volume of each volume element and sort in ascending order
   // of element id
@@ -216,6 +228,20 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
             [](const VolumeElement& a, const VolumeElement& b) {
               return b.id_ > a.id_;
             });
+
+  // Create map of volume element index and element id
+  std::map<int, int> volElemMap;
+  int elemIndex = 0;
+  for (auto elem : volElemArray) {
+    volElemMap[elem.id_] = elemIndex;
+    ++elemIndex;
+  }
+
+  // Timing
+  endTime = std::chrono::system_clock::now(); 
+  time = std::chrono::duration<double, std::milli>(endTime - startTime).count();
+  std::cout << "Done computing element volumes in " << time << " millisecs" << std::endl;
+  startTime = std::chrono::system_clock::now();
 
   // Print volume elements
   /*
@@ -238,7 +264,8 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
   */
 
   // Compute nodal volumes
-  computeNodalVolumes(nodeArray, volElemArray);
+  computeNodalVolumes(nodeArray, volElemArray, volElemMap);
+
 
   // Print nodes
   /*
@@ -291,6 +318,11 @@ AbaqusMeshGeometryPiece::readMeshNodesAndElements(const std::string& fileName)
   min = min - fudge;
   max = max + fudge;
   d_box = Box(min,max);  
+
+  // Timing
+  endTime = std::chrono::system_clock::now(); 
+  time = std::chrono::duration<double, std::milli>(endTime - startTime).count();
+  std::cout << "Done computing bounding box in " << time << " millisecs" << std::endl;
 
   std::cout << "Geometry object bounding box has min = "
             << min << " and max = " << max << std::endl;
@@ -442,31 +474,42 @@ AbaqusMeshGeometryPiece::computeElementVolumes(std::vector<MeshNode>& nodes,
 
 void
 AbaqusMeshGeometryPiece::computeNodalVolumes(std::vector<MeshNode>& nodes,
-                                             std::vector<VolumeElement>& elements)
+                                             std::vector<VolumeElement>& elements,
+                                             std::map<int, int>& elemMap)
 {
+
+  // Timing
+  auto startTime = std::chrono::system_clock::now();
 
   // Find the elements connected to each node
   findNodalAdjacentElements(nodes, elements);
+
+  // Timing
+  auto endTime = std::chrono::system_clock::now(); 
+  auto time = std::chrono::duration<double, std::milli>(endTime - startTime).count();
+  std::cout << "Done finding adjacent elements in " << time << " millisecs" << std::endl;
+  startTime = std::chrono::system_clock::now();
 
   // Compute nodal volumes
   for (auto node_iter = nodes.begin(); node_iter != nodes.end(); ++node_iter) {
     MeshNode node = *node_iter;
     double node_vol = 0.0;
     for (auto elem_id : node.adjElements_) {
-      for (const auto& elem : elements) { // *TODO*: Stop loop thru elements every time
-        if (elem.id_ == elem_id) { 
-          node_vol += 0.25*elem.volume_ ;
-          /*
-          std::cout << " Node = " << node.id_
-                    << " Elem = " << elem_id
-                    << " Elem Id = " << elem.id_
-                    << " vol += " <<  elem.volume_ << std::endl;
-          */
-        }
-      }
+      node_vol += 0.25*elements[elemMap[elem_id]].volume_ ;
+      /*
+      std::cout << " Node = " << node.id_
+                << " Elem = " << elem_id
+                << " Elem Id = " << elem.id_
+                << " vol += " <<  elem.volume_ << std::endl;
+      */
     }
     (*node_iter).volume_ = node_vol;
   }
+
+  // Timing
+  endTime = std::chrono::system_clock::now(); 
+  time = std::chrono::duration<double, std::milli>(endTime - startTime).count();
+  std::cout << "Done computing nodal volumes in " << time << " millisecs" << std::endl;
 }
 
 void
@@ -474,8 +517,7 @@ AbaqusMeshGeometryPiece::findNodalAdjacentElements(std::vector<MeshNode>& nodes,
                                                    std::vector<VolumeElement>& elements)
 {
   // Loop thru elements and find adjacent elements for each node
-  for (auto elem_iter = elements.begin(); elem_iter != elements.end(); ++elem_iter) {
-    VolumeElement cur_elem = *elem_iter;
+  for (VolumeElement cur_elem : elements) {
 
     // Loop thru nodes of each element
     /*

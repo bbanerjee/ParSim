@@ -154,7 +154,8 @@ namespace Uintah {
     void computeElementVolumes(std::vector<MeshNode>& nodes,
                                std::vector<VolumeElement>& elements);
     void computeNodalVolumes(std::vector<MeshNode>& nodes,
-                             std::vector<VolumeElement>& elements);
+                             std::vector<VolumeElement>& elements,
+                             std::map<int, int>& volElemMap);
     void findNodalAdjacentElements(std::vector<MeshNode>& nodes,
                                    std::vector<VolumeElement>& elements);
 
