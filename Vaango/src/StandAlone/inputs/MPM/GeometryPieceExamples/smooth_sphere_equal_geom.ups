@@ -3,7 +3,7 @@
 <!-- @version: Updated 7/31/00-->
 <Uintah_specification>
   <Meta>
-    <title>Smooth cylinder geometry example</title>
+    <title>Smooth sphere geometry example</title>
   </Meta>
   <SimulationComponent type="mpm"/>
   <Time>
@@ -15,7 +15,7 @@
       <max_timesteps> 300 </max_timesteps>
   </Time>
   <DataArchiver>
-    <filebase>smoothcyl_geom.uda</filebase>
+    <filebase>smooth_sphere_equal_geom.uda</filebase>
     <!-- <outputInterval>.01</outputInterval> -->
       <outputTimestepInterval>10</outputTimestepInterval>
     <save label="p.x"/>
@@ -45,11 +45,14 @@
           <K>32.e6</K>
         </constitutive_model>
         <geom_object>
-          <smoothcyl label="cyl smooth">
-            <bottom>[ -1.0, -1.0, -1.0]</bottom>
-            <top>[ 1.0, 1.0, 1.0]</top>
-            <radius> 0.5 </radius>
-          </smoothcyl>
+          <smooth_sphere label="sphere_1">
+            <center>[ 0.0, 0.0, 0.0]</center>
+            <outer_radius> 1.0 </outer_radius>
+            <inner_radius> 0.9 </inner_radius>
+            <num_radial_pts> 5 </num_radial_pts>
+            <algorithm> equal_area </algorithm>
+            <output_file> generated_sphere </output_file>
+          </smooth_sphere>
           <res>[2, 2, 2]</res>
           <velocity>[0.0, 0.0, 1.0]</velocity>
           <temperature>298</temperature>
@@ -83,9 +86,9 @@
     </BoundaryConditions>
     <Level>
       <Box label="1">
-        <lower>[-1.5, -1.5, -1.5]</lower>
-        <upper>[ 1.5,  1.5,  1.5]</upper>
-        <resolution>[20, 20, 20]</resolution>
+        <lower>[-1.1, -1.1, -1.1]</lower>
+        <upper>[ 1.1,  1.1,  1.1]</upper>
+        <resolution>[40, 40, 40]</resolution>
         <patches>[1,1,1]</patches>
         <extraCells>[1,1,1]</extraCells>
       </Box>

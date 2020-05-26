@@ -15,18 +15,21 @@
     <delt_min>2.e-6</delt_min>
     <delt_max>2.e-3</delt_max>
     <timestep_multiplier>0.4</timestep_multiplier>
+      <max_timesteps> 5 </max_timesteps>
   </Time>
 
   <DataArchiver>
     <filebase>file_geom.uda</filebase>
-    <outputInterval>0.01</outputInterval>
+    <!-- <outputInterval>0.01</outputInterval> -->
+      <outputTimestepInterval>10</outputTimestepInterval>
     <save label = "p.x"/>
     <save label = "p.particleID"/>
     <save label = "p.velocity"/>
     <save label = "p.volume"/>
     <save label = "p.mass"/>
     <save label = "p.stress"/>
-    <checkpoint cycle = "2" interval = "0.01"/>
+    <!-- <checkpoint cycle = "2" interval = "0.01"/> -->
+      <checkpoint cycle = "2" timestepInterval = "3"/>
   </DataArchiver>
 
   <MPM>

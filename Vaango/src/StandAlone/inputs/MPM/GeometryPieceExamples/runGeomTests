@@ -1,0 +1,63 @@
+#!/usr/bin/env sh
+../vaango_gcc abaqus_geom.ups
+../vaango_gcc box_geom.ups
+../vaango_gcc cone_geom.ups
+../vaango_gcc corrug_geom.ups
+../vaango_gcc cylinder_geom.ups
+../vaango_gcc diff_geom_1.ups
+../vaango_gcc diff_geom_2.ups
+../vaango_gcc ellipsoid_geom.ups
+../vaango_gcc file_geom_image.ups
+../vaango_gcc file_geom_pfs_hummer_inp.ups
+../vaango_gcc file_geom.ups
+../vaango_gcc intersect_geom.ups
+../vaango_gcc naa_box_geom.ups
+../vaango_gcc smooth_cyl_geom.ups
+../vaango_gcc smooth_cyl_hollow_endcap_arc_geom.ups
+../vaango_gcc smooth_cyl_hollow_endcap_geom.ups
+../vaango_gcc smooth_cyl_hollow_geom.ups
+../vaango_gcc smooth_sphere_equal_geom.ups
+../vaango_gcc smooth_sphere_geom.ups
+../vaango_gcc sphere_geom.ups
+../vaango_gcc sphere_mem_geom.ups
+../vaango_gcc torus_geom.ups
+../vaango_gcc tri_geom_obj.ups
+../vaango_gcc tri_geom_ply.ups
+../vaango_gcc tri_geom_stl_reflect.ups
+../vaango_gcc tri_geom_stl_scale.ups
+../vaango_gcc tri_geom_stl_sequence.ups
+../vaango_gcc tri_geom_stl_translate.ups
+../vaango_gcc tri_geom_stl.ups
+../vaango_gcc tri_geom.ups
+../vaango_gcc union_geom.ups
+../vaango_gcc -restart abaqus_geom.uda.000
+../vaango_gcc -restart box_geom.uda.000
+./vaango_gcc -restart cone_geom.uda.000
+../vaango_gcc -restart corrug_geom.uda.000
+../vaango_gcc -restart cylinder_geom.uda.000
+../vaango_gcc -restart diff_geom_1.uda.000
+../vaango_gcc -restart diff_geom_2.uda.000
+../vaango_gcc -restart ellipsoid_geom.uda.000
+#../vaango_gcc -restart file_geom_image.uda.000
+../vaango_gcc -restart file_geom_pfs_hummer_inp.uda.000
+../vaango_gcc -restart file_geom.uda.000
+../vaango_gcc -restart intersect_geom.uda.000
+../vaango_gcc -restart naa_box_geom.uda.000
+../vaango_gcc -restart smooth_cyl_geom.uda.000
+../vaango_gcc -restart smooth_cyl_hollow_endcap_arc_geom.uda.000
+../vaango_gcc -restart smooth_cyl_hollow_endcap_geom.uda.000
+../vaango_gcc -restart smooth_cyl_hollow_geom.uda.000
+../vaango_gcc -restart smooth_sphere_equal_geom.uda.000
+../vaango_gcc -restart smooth_sphere_geom.uda.000
+../vaango_gcc -restart sphere_geom.uda.000
+../vaango_gcc -restart sphere_mem_geom.uda.000
+../vaango_gcc -restart torus_geom.uda.000
+../vaango_gcc -restart tri_geom_obj.uda.000
+../vaango_gcc -restart tri_geom_ply.uda.000
+../vaango_gcc -restart tri_geom_stl_reflect.uda.000
+../vaango_gcc -restart tri_geom_stl_scale.uda.000
+../vaango_gcc -restart tri_geom_stl_sequence.uda.000
+../vaango_gcc -restart tri_geom_stl_translate.uda.000
+../vaango_gcc -restart tri_geom_stl.uda.000
+../vaango_gcc -restart tri_geom.uda.000
+../vaango_gcc -restart union_geom.uda.000

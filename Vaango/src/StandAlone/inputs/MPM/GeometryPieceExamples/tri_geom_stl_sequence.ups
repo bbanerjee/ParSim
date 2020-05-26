@@ -4,7 +4,7 @@
 <Uintah_specification>
 
   <Meta>
-    <title>File geometry piece with raw image tester</title>
+    <title>Triangle geometry STL reader tester</title>
   </Meta>
 
   <SimulationComponent type="mpm" />
@@ -15,11 +15,11 @@
     <delt_min>2.e-6</delt_min>
     <delt_max>2.e-3</delt_max>
     <timestep_multiplier>0.4</timestep_multiplier>
-      <max_timesteps> 3 </max_timesteps>
+      <max_timesteps> 40 </max_timesteps>
   </Time>
 
   <DataArchiver>
-    <filebase>file_geom_image.uda</filebase>
+    <filebase>tri_geom_stl_sequence.uda</filebase>
     <!-- <outputInterval>0.01</outputInterval> -->
       <outputTimestepInterval>10</outputTimestepInterval>
     <save label = "p.x"/>
@@ -29,7 +29,7 @@
     <save label = "p.mass"/>
     <save label = "p.stress"/>
     <!-- <checkpoint cycle = "2" interval = "0.01"/> -->
-      <checkpoint cycle = "2" timestepInterval = "2"/>
+      <checkpoint cycle = "2" timestepInterval = "25"/>
   </DataArchiver>
 
   <MPM>
@@ -52,16 +52,13 @@
           <K>32.e6</K>
         </constitutive_model>
         <geom_object>
-          <image>
-            <name> Almond_Kiss_2003112600.raw </name>
-            <res> [425, 420, 260] </res>
-            <threshold> [11, 200] </threshold>
-          </image>
-          <file label = "container">
-            <name> Almond_Kiss_2003112600.pts </name>
-            <format> bin </format>
-          </file>
-          <res>[1,1,1]</res>
+          <tri label = "panther">
+            <file_name_prefix> panther </file_name_prefix>
+            <file_type> stl </file_type>
+            <scaling_factor> 0.5 </scaling_factor>
+            <axis_sequence> [2,1,3] </axis_sequence>
+          </tri>
+          <res>[2,2,2]</res>
           <velocity>[0.0,0.0,-10]</velocity>
           <temperature>300</temperature>
         </geom_object>
@@ -98,9 +95,9 @@
     </BoundaryConditions>
     <Level>
       <Box label = "1">
-        <lower>[0, 0, 0]</lower>
-        <upper>[1, 1, 1]</upper>
-        <resolution>[425, 420, 260]</resolution>
+        <lower>[-27, -55, -1]</lower>
+        <upper>[ 26,  54,  37]</upper>
+        <resolution>[50,50,50]</resolution>
         <patches>[1,1,1]</patches>
         <extraCells>[1,1,1]</extraCells>
       </Box>

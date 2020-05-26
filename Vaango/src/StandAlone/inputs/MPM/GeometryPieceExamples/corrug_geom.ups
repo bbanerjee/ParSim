@@ -3,7 +3,7 @@
 <!-- @version: Updated 7/31/00-->
 <Uintah_specification>
   <Meta>
-    <title>Smooth cylinder geometry example</title>
+    <title>Corrugated edge geometry example</title>
   </Meta>
   <SimulationComponent type="mpm"/>
   <Time>
@@ -15,7 +15,7 @@
       <max_timesteps> 300 </max_timesteps>
   </Time>
   <DataArchiver>
-    <filebase>smoothcyl_geom.uda</filebase>
+    <filebase>corrug_geom.uda</filebase>
     <!-- <outputInterval>.01</outputInterval> -->
       <outputTimestepInterval>10</outputTimestepInterval>
     <save label="p.x"/>
@@ -29,7 +29,6 @@
   </DataArchiver>
   <MPM>
     <time_integrator>explicit</time_integrator>
-    <interpolator> gimp </interpolator>
   </MPM>
   <PhysicalConstants>
     <gravity>[0,0,0]</gravity>
@@ -45,11 +44,16 @@
           <K>32.e6</K>
         </constitutive_model>
         <geom_object>
-          <smoothcyl label="cyl smooth">
-            <bottom>[ -1.0, -1.0, -1.0]</bottom>
-            <top>[ 1.0, 1.0, 1.0]</top>
-            <radius> 0.5 </radius>
-          </smoothcyl>
+          <corrugated> 
+            <xymin>      [0.0,0.0,0.0]    </xymin> 
+            <xymax>      [20.0,20.0,0.0]  </xymax> 
+            <thickness>  1.0              </thickness>
+            <normal>     [0.0,0.0,1.0]    </normal>
+            <corr_edge>  x+               </corr_edge>
+            <curve>      sin              </curve>
+            <wavelength> 2.0              </wavelength>
+            <amplitude>  2.0              </amplitude>
+          </corrugated>
           <res>[2, 2, 2]</res>
           <velocity>[0.0, 0.0, 1.0]</velocity>
           <temperature>298</temperature>
@@ -83,11 +87,10 @@
     </BoundaryConditions>
     <Level>
       <Box label="1">
-        <lower>[-1.5, -1.5, -1.5]</lower>
-        <upper>[ 1.5,  1.5,  1.5]</upper>
-        <resolution>[20, 20, 20]</resolution>
+        <lower>[-1.0, -1.0, -1.0]</lower>
+        <upper>[21.0, 21.0,  1.0]</upper>
+        <resolution>[10, 10, 10]</resolution>
         <patches>[1,1,1]</patches>
-        <extraCells>[1,1,1]</extraCells>
       </Box>
     </Level>
   </Grid>

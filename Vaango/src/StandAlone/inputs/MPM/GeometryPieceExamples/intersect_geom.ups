@@ -12,17 +12,20 @@
     <delt_min>2.e-6</delt_min>
     <delt_max>2.e-3</delt_max>
     <timestep_multiplier>0.4</timestep_multiplier>
+      <max_timesteps> 300 </max_timesteps>
   </Time>
   <DataArchiver>
     <filebase>intersect_geom.uda</filebase>
-    <outputInterval>.01</outputInterval>
+    <!-- <outputInterval>.01</outputInterval> -->
+      <outputTimestepInterval>10</outputTimestepInterval>
     <save label="p.x"/>
     <save label="p.velocity"/>
     <save label="p.volume"/>
     <save label="p.mass"/>
     <save label="p.stress"/>
     <save label="g.mass"/>
-    <checkpoint cycle="2" interval="0.01"/>
+    <!-- <checkpoint cycle="2" interval="0.01"/> -->
+      <checkpoint cycle = "2" timestepInterval = "120"/>
   </DataArchiver>
   <MPM>
     <time_integrator>explicit</time_integrator>
