@@ -178,7 +178,7 @@ UofU_MPM::problemSetup(const ProblemSpecP& prob_spec,
   }
 
   // convert text representation of face into FaceType
-  for (auto faceName : d_flags->d_bndyFaceTxtList) {
+  for (auto faceName : d_flags->d_boundaryTractionFaceStrings) {
     Patch::FaceType face = Patch::invalidFace;
     for (Patch::FaceType ft = Patch::startFace; ft <= Patch::endFace;
          ft = Patch::nextFace(ft)) {
@@ -186,7 +186,7 @@ UofU_MPM::problemSetup(const ProblemSpecP& prob_spec,
         face = ft;
     }
     if (face != Patch::invalidFace) {
-      d_bndy_traction_faces.push_back(face);
+      d_boundaryTractionFaces.push_back(face);
     } else {
       std::cerr << "**WARNING**: Ignoring unknown face '" << faceName
                 << "' in input file. \n";
@@ -1659,13 +1659,13 @@ UofU_MPM::scheduleComputeContactArea(SchedulerP& sched, const PatchSet* patches,
     return;
 
   /** computeContactArea */
-  if (d_bndy_traction_faces.size() > 0) {
+  if (d_boundaryTractionFaces.size() > 0) {
     printSchedule(patches, cout_doing, "MPM::scheduleComputeContactArea");
     Task* t = scinew Task("UofU_MPM::computeContactArea", this,
                           &UofU_MPM::computeContactArea);
 
     t->requires(Task::NewDW, d_labels->gVolumeLabel, Ghost::None);
-    for (auto face : d_bndy_traction_faces) {
+    for (auto face : d_boundaryTractionFaces) {
       int iface = (int)(face);
       t->computes(d_labels->BndyContactCellAreaLabel[iface]);
     }
@@ -1699,7 +1699,7 @@ UofU_MPM::computeContactArea(const ProcessorGroup*, const PatchSubset* patches,
 
       new_dw->get(gVolume, d_labels->gVolumeLabel, matID, patch, Ghost::None, 0);
 
-      for (auto face : d_bndy_traction_faces) {
+      for (auto face : d_boundaryTractionFaces) {
         int iface = (int)(face);
 
         // Check if the face is on an external boundary
@@ -1742,7 +1742,7 @@ UofU_MPM::computeContactArea(const ProcessorGroup*, const PatchSubset* patches,
   // be careful only to put the fields that we have built
   // that way if the user asks to output a field that has not been built
   // it will fail early rather than just giving zeros.
-  for (auto face : d_bndy_traction_faces) {
+  for (auto face : d_boundaryTractionFaces) {
     int iface = (int)(face);
     new_dw->put(sum_vartype(bndyCArea[iface]),
                 d_labels->BndyContactCellAreaLabel[iface]);
@@ -1791,7 +1791,7 @@ UofU_MPM::scheduleComputeInternalForce(SchedulerP& sched,
 
   t->computes(d_labels->gInternalForceLabel);
 
-  for (auto face : d_bndy_traction_faces) {
+  for (auto face : d_boundaryTractionFaces) {
     int iface = static_cast<int>(face);
     t->requires(Task::NewDW, d_labels->BndyContactCellAreaLabel[iface]);
     t->computes(d_labels->BndyForceLabel[iface]);
@@ -2005,7 +2005,7 @@ UofU_MPM::computeInternalForce(const ProcessorGroup*,
       }
 
       // save boundary forces before apply symmetry boundary condition.
-      for (auto face : d_bndy_traction_faces) {
+      for (auto face : d_boundaryTractionFaces) {
 
         // Check if the face is on an external boundary
         if (patch->getBCType(face) == Patch::Neighbor)
@@ -2076,7 +2076,7 @@ UofU_MPM::computeInternalForce(const ProcessorGroup*,
   // be careful only to put the fields that we have built
   // that way if the user asks to output a field that has not been built
   // it will fail early rather than just giving zeros.
-  for (auto face : d_bndy_traction_faces) {
+  for (auto face : d_boundaryTractionFaces) {
     int iface = (int)(face);
     new_dw->put(sumvec_vartype(bndyForce[iface]),
                 d_labels->BndyForceLabel[iface]);

@@ -1165,7 +1165,7 @@ DeformationGradientComputer::computeDeformationGradientFromVelocity(const Matrix
   if (flag->d_defGradAlgorithm == "first_order") {
     flag->d_numTermsSeriesDefGrad = 1;
     seriesUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
-  } else if (flag->d_defGradAlgorithm == "subcycle") {
+  } else if (flag->d_defGradAlgorithm == "subcycling") {
     flag->d_numTermsSeriesDefGrad = 1;
     subcycleUpdateConstantVelGrad(velGrad_new, defGrad_old, delT, defGrad_new, defGrad_inc);
   } else if (flag->d_defGradAlgorithm == "taylor_series") {

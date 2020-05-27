@@ -99,7 +99,7 @@ parameters.  The function of each of these parameters is described below.
     <delt_init>          1.0e-9      </delt_init>
     <max_delt_increase>  2.0         </max_delt_increase>
     <timestep_multiplier>1.0         </timestep_multiplier>
-    <max_Timestep>       100         </max_Timestep>
+    <max_timestep>       100         </max_timestep>
     <end_on_max_time_exactly>true    </end_on_max_time_exactly>
 </Time>
 \end{lstlisting}
@@ -119,7 +119,7 @@ The following fields are optional:
 \item \Textbfc{initial\_delt\_range} - The period of time to use the \Textbfc{delt\_init} (default = 0)
 \item \Textbfc{max\_delt\_increase} - Maximum amount to multiply the previous delt by (if the newly computed delt is greater than the previous one)
 \item \Textbfc{max\_iterations} - The number of timesteps to run the simulation for (even on a restart)
-\item \Textbfc{max\_Timesteps} - The timestep number to end the simulation on (not usually used with \Textbfc{max\_iterations})
+\item \Textbfc{max\_timesteps} - The timestep number to end the simulation on (not usually used with \Textbfc{max\_iterations})
 \item \Textbfc{override\_restart\_delt} - On a restart, use this delt instead of the most-recently-used delt.
 \item \Textbfc{clamp\_timesteps\_to\_output} - Sync the delt with the DataArchiver - when an output timestep occurs, reduce the delt to have the time land on the timestep interval (default = false)
 \item \Textbfc{end\_on\_max\_time\_exactly} - clamp the delt such that the last timesteps end on what was specified in \Textbfc{maxTime} (default = false)
@@ -133,6 +133,7 @@ The Data Archiver section specifies the directory name where data will
 be stored and what variables will be saved and how often data is saved
 and how frequently the simulation is checkpointed.
 
+\subsection{Saving data}
 The \Textsfc{\textless filebase\textgreater} tag is used to specify the directory
 name and by convention, the \Textsfc{.uda} suffix is attached denoting the
 ``\Vaango Data Archive".
@@ -171,6 +172,28 @@ inputs/labelNames component
 \end{lstlisting}
 where \Textbfc{component} is, e.g., \Textbfc{mpm}, \Textbfc{ice}, etc.
 
+\subsection{Reduction variables}
+While most variable data remains confined to a single patch and is transferred
+to adjacent patches only if needed, there are certain variables that need to
+be communicated to all the patches.  Such variables are typically \Textsfc{reduced}
+before communication and are called \Textsfc{Reduction} variables.
+
+\MPM reduction variables that can be saved in the data archive include the 
+following possibilities:
+\begin{lstlisting}[language=XML]
+   <save label = "TotalMass" />
+   <save label = "TotalMomentum" />
+   <save label = "ThermalEnergy" />
+   <save label = "KineticEnergy" />
+   <save label = "StrainEnergy" />
+   <save label = "AccStrainEnergy" />
+   <save label = "TotalVolumeDeformed" />
+   <save label = "CenterOfMassPosition" />
+\end{lstlisting}
+The accumulated strain energy, \Textsfc{AccStrainEnergy}, is useful for incremental
+material models where only an incremental strain energy computed in each step.
+
+\subsection{Check-pointing for restarts}
 Check-pointing information can be created that provides a mechanism for
 restarting a simulation at a later point in time.  The \Textbfc{\textless checkpoint\textgreater}
 tag with the \Textbfc{cycle} and \Textbfc{ interval} attributes describe how many
@@ -180,13 +203,16 @@ options for specifying when and how offen a checkpoint will be output based
 on wall-clock time.
 
 As an example of checkpoint data that has two timesteps worth of
-che dckpoint data that is created every .01 seconds of simulation time
+checkpoint data that is created every .01 seconds of simulation time
 are shown below:
-
 \begin{lstlisting}[language=XML]
 <checkpoint cycle = "2" interval = "0.01"/>
 \end{lstlisting}
-% d
+An alternative checkpointing scheme that saves data every 25 timesteps can
+be specified using:
+\begin{lstlisting}[language=XML]
+<checkpoint cycle = "2" timestepInterval = "25"/>
+\end{lstlisting}
 
 To restart from a checkpointed archive, simply put \Textsfc{-restart} in the
 \Textsfc{vaango} command-line arguments and specify the .uda directory instead of

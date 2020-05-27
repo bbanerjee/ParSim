@@ -604,7 +604,7 @@ The mass matrix is typically lumped such that
   \Eal
 \Eeq
 In that case the semi-discrete system of equations simplifes to
-\Beq
+\Beq \label{eq:semialgebraic_mpm}
   m_{g} \dot{\Bv}_g = \Bf_g^{\Text} -\Bf_g^{\Tint} + \Bf_g^{\Tbody} 
       ~;~~ g = 1 \dots N_g
 \Eeq
@@ -613,6 +613,34 @@ typically computed from particle values using
 \Beq
   \Bf^{\Text}_g = \sum_p \Bf^{\Text}_p \Av{S_{gp}} \,.
 \Eeq
+
+\subsection{Damping}
+Two types of artificial damping are implemented in \Vaango.  The first approach modifies 
+the acceleration in \eqref{eq:semialgebraic_mpm} such that
+\Beq \label{eq:semialgebraic_mpm_damping}
+  m_{g} \dot{\Bv}_g = \Bf_g^{\Text} -\Bf_g^{\Tint} + \Bf_g^{\Tbody} - \alpha_d \Bv_g
+      ~;~~ g = 1 \dots N_g
+\Eeq
+where $\alpha_d$ is a damping coefficient.
+
+The second approach uses Richymyer-von Neumann artificial viscosity to damp out large 
+oscillations in high strain-rate simulations.  \Vaango uses a three-dimensional form 
+of the Richtmyer-von Neumann artificial viscosity (\cite{VonNeumann1950,Wilkins1999}, p.29).  
+The viscosity factor takes the form
+\begin{equation}\label{eq:artificialVisc}
+  q = C_0~\rho~l~\sqrt{\frac{K}{\rho}}\left|\Tr{\BdT}\right| +
+      C_1~\rho~l^2~\left(\Tr{\BdT}\right)^2
+\end{equation}
+where $C_0$ and $C_1$ are constants, $\rho$ is the mass density,
+$K$ is the bulk modulus, $\BdT$ is the rate of deformation tensor, and
+$l$ is a characteristic length (usually the grid cell size).  Typical values
+of the coefficients are $C_0 = 0.2$ and $C_1 = 2.0$.
+
+The factor $q$ is used to decrease the particle stress:
+\Beq
+  \Bsig_p = \Bsig_p - q \BI 
+\Eeq
+before it is projected to grid nodes for internal force calculations.
 
 \section{Algorithm Description} \label{Sec:AlgDesc}
 The interested reader should consult \cite{Sulsky1994,Sulsky1995} for the development
@@ -770,6 +798,40 @@ referred to the relevant literature for their development.  Lastly, heat
 conduction is also available in the explicit \MPM code, although it may be
 neglected via a run time option in the input file.  Explicit \MPM is typically
 used for high-rate simulations in which heat conduction is negligible.
+
+\subsection{Deformation gradient computation}
+The deformation gradient computation involves the solution of a first-order
+differential equation:
+\Beq
+  \dot{\BF} = \BlT \cdot \BF = \Grad{\Bv} \cdot \BF
+\Eeq
+which, for constant $\BlT$ and initial condition $\BF = \BF_0$, has the exact solution
+\Beq
+  \BF(t) = \exp(t\,\BlT) \cdot \BF_0  = \exp(t\,\Grad{\Bv}) \cdot \BF_0 \,.
+\Eeq
+Expanded in series form, and considering only the time step $\Delta t$ with initial
+condition $\BF = \BF_p^n$, we have
+\Beq \label{eq:F_taylor}
+  \BF_p(t) = \left[\BI + \Delta t \Grad{\Bv_p} + \frac{1}{2!} (\Delta t \Grad{\Bv_p})^2 + 
+                  \frac{1}{3!} (\Delta t \Grad{\Bv_p})^3 + \dots\right] \cdot \BF_p^n \,.
+\Eeq
+The approach in \eqref{Finc} is a first-order approximation of the
+Taylor series expansion for the deformation gradient:
+\Beq 
+  \BF_p^{n+1} = (\BI + \Grad{\Bv_p} \Delta{t}) \BF_p^n \,.
+\Eeq
+This is the most commonly used method of computing the deformation gradient.
+\Vaango also allows for an alternative estimate of the deformation gradient by
+sybcycling after dividing $\Delta t$ into $k$ smaller increments:
+\Beq 
+  \BF_p^{n+1} = \left[\prod_k (\BI + \Grad{\Bv_p} \Delta t_k)\right] \BF_p^n \,.
+\Eeq
+Alternatively, multiple terms of the expansion in \eqref{eq:F_taylor} can be 
+evaluated by choosing an appropriate flag in the input file.
+
+Finally, \Vaango also provides an option to compute the matrix exponential
+using the \Textsfc{Cayley-Hamilton theorem}.  However, all these approaches
+assume that the velocity gradient remains constant over a time step.
 
 \section{Shape functions for MPM, GIMP, and CPDI} \label{gimp_mpm}
 In both \MPM and \GIMP, the basic idea is the same: objects are discretized into

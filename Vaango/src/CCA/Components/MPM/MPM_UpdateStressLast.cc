@@ -70,7 +70,7 @@ MPM_UpdateStressLast::scheduleTimeAdvance(const LevelP& level,
     scheduleAddCohesiveZoneForces(sched, patches, mpm_matls_sub, cz_matls_sub,
                                   all_matls);
   }
-  if (d_bndy_traction_faces.size() > 0) {
+  if (d_boundaryTractionFaces.size() > 0) {
     scheduleComputeContactArea(sched, patches, matls);
   }
   scheduleComputeInternalForce(sched, patches, matls);

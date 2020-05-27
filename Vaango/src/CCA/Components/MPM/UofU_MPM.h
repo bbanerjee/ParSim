@@ -406,7 +406,7 @@ namespace Uintah {
     int              d_numGhostParticles;  // Number of ghost particles needed.
     int              d_numGhostNodes;      // Number of ghost nodes needed.
   
-    std::list<Patch::FaceType>  d_bndy_traction_faces; // list of xminus, xplus, yminus, ...
+    std::list<Patch::FaceType>  d_boundaryTractionFaces; // list of xminus, xplus, yminus, ...
     std::vector<MPMPhysicalBC*> d_physicalBCs;
 
     std::vector<double>   d_prescribedTimes;        // These three are used only if

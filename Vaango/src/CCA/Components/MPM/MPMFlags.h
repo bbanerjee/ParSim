@@ -81,7 +81,7 @@ public:
   const ProcessorGroup* d_myworld;
   Uintah::Vector d_gravity;
   IntegratorType d_integrator;
-  std::vector<std::string> d_bndyFaceTxtList;
+  std::vector<std::string> d_boundaryTractionFaceStrings;
   std::unique_ptr<ReductionVars> d_reductionVars;
   std::unique_ptr<ParticleInterpolator> d_interpolator;
 

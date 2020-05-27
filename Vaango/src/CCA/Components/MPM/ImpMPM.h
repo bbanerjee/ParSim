@@ -594,7 +594,7 @@ private:
   double           d_stop_time;     // for rigid contact
   Vector           d_vel_after_stop;     // for rigid contact
 
-  std::list<Patch::FaceType>  d_bndy_traction_faces; // list of xminus, xplus, ...
+  std::list<Patch::FaceType>  d_boundaryTractionFaces; // list of xminus, xplus, ...
 
   const PatchSet* d_perproc_patches;
 

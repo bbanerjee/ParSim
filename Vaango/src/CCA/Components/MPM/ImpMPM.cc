@@ -199,7 +199,7 @@ ImpMPM::problemSetup(const ProblemSpecP& prob_spec,
     }
 
     // convert text representation of face into FaceType
-    for (auto face : flags->d_bndyFaceTxtList) {
+    for (auto face : flags->d_boundaryTractionFaceStrings) {
       auto faceType = Patch::invalidFace;
       for (auto ft = Patch::startFace; ft <= Patch::endFace; ft = Patch::nextFace(ft)) {
         if (Patch::getFaceName(ft) == face) {
@@ -208,7 +208,7 @@ ImpMPM::problemSetup(const ProblemSpecP& prob_spec,
         }
       }
       if (faceType != Patch::invalidFace) {
-        d_bndy_traction_faces.push_back(faceType);
+        d_boundaryTractionFaces.push_back(faceType);
       } else {
         std::cerr << "warning: ignoring unknown face '" << face << "'\n";
       }
@@ -3829,8 +3829,8 @@ ImpMPM::scheduleInterpolateStressToGrid(SchedulerP& sched,
   t->modifies(lb->gInternalForceLabel);
   t->computes(lb->gStressForSavingLabel);
 
-  if (!d_bndy_traction_faces.empty()) {
-    for (auto face : d_bndy_traction_faces) {
+  if (!d_boundaryTractionFaces.empty()) {
+    for (auto face : d_boundaryTractionFaces) {
       t->computes(lb->BndyForceLabel[face]);       // node based
       t->computes(lb->BndyContactAreaLabel[face]); // node based
     }
@@ -3963,7 +3963,7 @@ ImpMPM::interpolateStressToGrid(const ProcessorGroup*,
       MPMMaterial* mpm_matl = d_sharedState->getMPMMaterial( m );
       if (!did_it_already && !mpm_matl->getIsRigid()) {
         did_it_already = true;
-        for (auto face : d_bndy_traction_faces) {
+        for (auto face : d_boundaryTractionFaces) {
                                                                                 
           // Check if the face is on an external boundary
           if (patch->getBCType(face)==Patch::Neighbor) {
@@ -3997,7 +3997,7 @@ ImpMPM::interpolateStressToGrid(const ProcessorGroup*,
   // be careful only to put the fields that we have built
   // that way if the user asks to output a field that has not been built
   // it will fail early rather than just giving zeros.
-  for (auto face : d_bndy_traction_faces) {
+  for (auto face : d_boundaryTractionFaces) {
     new_dw->put(sumvec_vartype(bndyForce[face]), lb->BndyForceLabel[face]);
     new_dw->put(sum_vartype(bndyArea[face]), lb->BndyContactAreaLabel[face]);
   }

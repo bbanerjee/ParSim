@@ -212,17 +212,16 @@ SerialMPM::problemSetup(const ProblemSpecP& prob_spec,
   }
 
   // convert text representation of face into FaceType
-  for(std::vector<std::string>::const_iterator ftit(flags->d_bndyFaceTxtList.begin());
-      ftit!=flags->d_bndyFaceTxtList.end();ftit++) {
+  for (auto faceStr : flags->d_boundaryTractionFaceStrings) {
     Patch::FaceType face = Patch::invalidFace;
-    for(Patch::FaceType ft=Patch::startFace;ft<=Patch::endFace;
-        ft=Patch::nextFace(ft)) {
-      if(Patch::getFaceName(ft)==*ftit) face =  ft;
+    for (auto ft = Patch::startFace; ft <= Patch::endFace;
+         ft = Patch::nextFace(ft)) {
+      if(Patch::getFaceName(ft) == faceStr) face =  ft;
     }
-    if(face!=Patch::invalidFace) {
-      d_bndy_traction_faces.push_back(face);
+    if (face != Patch::invalidFace) {
+      d_boundaryTractionFaces.push_back(face);
     } else {
-      std::cerr << "warning: ignoring unknown face '" << *ftit<< "'" << "\n";
+      std::cerr << "warning: ignoring unknown face '" << face << "'" << "\n";
     }
   }
 
@@ -3340,7 +3339,7 @@ SerialMPM::scheduleComputeContactArea(SchedulerP& sched,
     return;
 
   /** computeContactArea */
-  if(d_bndy_traction_faces.size()>0) {
+  if(d_boundaryTractionFaces.size() > 0) {
   
     printSchedule(patches, cout_doing, "MPM::scheduleComputeContactArea");
     Task* t = scinew Task("MPM::computeContactArea",
@@ -3348,9 +3347,8 @@ SerialMPM::scheduleComputeContactArea(SchedulerP& sched,
     
     Ghost::GhostType  gnone = Ghost::None;
     t->requires(Task::NewDW, lb->gVolumeLabel, gnone);
-    for(std::list<Patch::FaceType>::const_iterator ftit(d_bndy_traction_faces.begin());
-        ftit!=d_bndy_traction_faces.end();ftit++) {
-      int iface = (int)(*ftit);
+    for (auto face : d_boundaryTractionFaces) {
+      int iface = (int)face;
       t->computes(lb->BndyContactCellAreaLabel[iface]);
     }
     sched->addTask(t, patches, matls);
@@ -3385,7 +3383,7 @@ SerialMPM::computeContactArea(const ProcessorGroup*,
       
       new_dw->get(gVolume, lb->gVolumeLabel, matID, patch, Ghost::None, 0);
      
-      for (auto face : d_bndy_traction_faces) {
+      for (auto face : d_boundaryTractionFaces) {
         int iface = (int)(face);
         
         // Check if the face is on an external boundary
@@ -3424,10 +3422,8 @@ SerialMPM::computeContactArea(const ProcessorGroup*,
   // be careful only to put the fields that we have built
   // that way if the user asks to output a field that has not been built
   // it will fail early rather than just giving zeros.
-  for(std::list<Patch::FaceType>::const_iterator 
-        ftit(d_bndy_traction_faces.begin());
-      ftit!=d_bndy_traction_faces.end();ftit++) {
-    int iface = (int)(*ftit);
+  for (auto face : d_boundaryTractionFaces) {
+    int iface = (int) face;
     new_dw->put(sum_vartype(bndyCArea[iface]),
                 lb->BndyContactCellAreaLabel[iface]);
   }
@@ -3481,9 +3477,8 @@ SerialMPM::scheduleComputeInternalForce(SchedulerP& sched,
 
   t->computes(lb->gInternalForceLabel);
   
-  for(std::list<Patch::FaceType>::const_iterator ftit(d_bndy_traction_faces.begin());
-      ftit!=d_bndy_traction_faces.end();ftit++) {
-    int iface = (int)(*ftit);
+  for (auto face : d_boundaryTractionFaces) {
+    int iface = (int) face;
     t->requires(Task::NewDW, lb->BndyContactCellAreaLabel[iface]);
     t->computes(lb->BndyForceLabel[iface]);
     t->computes(lb->BndyContactAreaLabel[iface]);
@@ -3733,7 +3728,7 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
       }
 
       // save boundary forces before apply symmetry boundary condition.
-      for (auto face : d_bndy_traction_faces) {
+      for (auto face : d_boundaryTractionFaces) {
         
         // Check if the face is on an external boundary
         if(patch->getBCType(face)==Patch::Neighbor)
@@ -3803,9 +3798,8 @@ SerialMPM::computeInternalForce(const ProcessorGroup*,
   // be careful only to put the fields that we have built
   // that way if the user asks to output a field that has not been built
   // it will fail early rather than just giving zeros.
-  for(std::list<Patch::FaceType>::const_iterator ftit(d_bndy_traction_faces.begin());
-      ftit!=d_bndy_traction_faces.end();ftit++) {
-    int iface = (int)(*ftit);
+  for (auto face : d_boundaryTractionFaces) {
+    int iface = (int)face;
     new_dw->put(sumvec_vartype(bndyForce[iface]),lb->BndyForceLabel[iface]);
     
     sum_vartype bndyContactCellArea_iface;

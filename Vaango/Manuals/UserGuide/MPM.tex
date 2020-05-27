@@ -94,6 +94,190 @@ MPM simulations is gravity, this is specified as:
 
 There are many options available when running MPM simulations.  These
 are generally specified in the \Textsfc{MPM} section of the input file.
+\begin{NoteBox}
+Most options have default values and are not required to be specified
+unless the defaults need to be changed.
+\end{NoteBox}
+
+Some of these options are described below:
+\begin{itemize}
+  \item \Textmag{Axisymmetry:}  The \Textsfc{axisymmetric} flag is used
+    to indicate that an axisymmetric simulation should be conducted instead
+    of the usual three-dimensional simulation.  
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} \Textsfc{false}.
+
+    All axisymmetric simulations
+    assume that the plane of rotational symmetry is the $xy$-plane,
+    axisymmetric $r$-coordinate coincides with the grid $x$-direction, 
+    axisymmetric $z$-coordinate conincides 
+    with the grid $y$-direction, and that the axisymmetric $\theta$-coordinate is 
+    in the $z$-direction of the grid. The
+    \Textsfc{Grid} for axisymetric computations must be only one cell thick
+    in the $z$-direction. \Textsfc{Plane strain} calcuations can be simulated
+    by applying appropriate grid boundary conditions in 3D.  \Textsfc{Plane stress}
+    calculatons are not alowed in \Vaango.
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <axisymmetric> false </axisymmetric>
+    </MPM>
+    \end{lstlisting}
+
+  \item \Textmag{Time integrator:}  The \Textsfc{time\_integrator} flag 
+    determine the type of integration to be used in the \MPM simulation.
+
+    \Textcad{Options:} \Textsfc{explicit}, \Textsfc{implicit}, or \Textsfc{fracture}.\\
+    \Textcad{Default:} \Textsfc{explicit}.
+
+    If the explicit option is chosen integration is done using forward Euler,
+    while implicit uses bacward Euler.  if the fracture option is chosen, some
+    special integration features needed for \Textsfc{FractureMPM} are activated.
+
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <time_integrator> explicit </time_integrator>
+    </MPM>
+    \end{lstlisting}
+
+  \item \Textmag{Interpolator:}  The \Textsfc{interpolator} flag indicates the
+    interpolation technique to be used to interpolate from the grid to particles
+    and to project particle data to the grid.
+
+    \Textcad{Options:} \Textsfc{linear}, \Textsfc{gimp}, \Textsfc{3rdorderBS}
+                       \Textsfc{4thorderBS}, \Textsfc{cpdi}, or \Textsfc{cpti} \\
+    \Textcad{Default:} \Textsfc{linear}.
+
+    The \Textsfc{linear} option activates traditional MPM with linear grid interpolation
+    functions.  \Textsfc{gimp} activates the GIMP algorithm. \Textsfc{3rdorderBS} and
+    \Textsfc{4thorderBS} activate third- and fourth-order B-spline interpolation.
+    \Textsfc{cpdi} and \Textsfc{cpti} activate the CPDI and CPTI interpolators.
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <interpolator> gimp </interpolator>
+    </MPM>
+    \end{lstlisting}
+
+    Options other than \Textsfc{linear} require an \Textsfc{extraCells} tag
+    (ghost cells) when specifying the \Textsfc{Grid}:
+    \begin{lstlisting}[language=XML]
+    <Grid>
+      ...
+      <extraCells> [1,1,1] </extraCells>
+    </Grid>
+    \end{lstlisting}
+    For axisymmetric simulations the $z$-value of \Textsfc{extraCells} can be 0.
+
+    The \Textsfc{CPDI} interpolator may also require a critical length value,
+    \Textsfc{cpdi\_lcrit}, 
+    that determines the maximum distance a particle can extend before its full
+    extent is ignore by the CPDI algorithm.
+
+    \Textcad{Default:} \Textsfc{1.0e10}.
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <interpolator> cpdi </interpolator>
+      <cpdi_lcrit> 1.0e3 </cpdi_lcrit>
+    </MPM>
+    \end{lstlisting}
+
+  \item \Textmag{Particle color:}  The \Textsfc{with\_color} flag indicates that
+    color tags are being used in the simulation.  Each geometry object can 
+    then be assigned a \Textsfc{\textless color \textgreater} tag which has 
+    an integer vaue.
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} \Textsfc{false}.
+
+    The color flag is particulary useful for debugging simulations where a
+    particular material is associated with a large number of geometry objects.
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <with_color> false </with_color>
+    </MPM>
+    \end{lstlisting}
+
+  \item \Textmag{Damping:}  Two types of damping are allowed in \Vaango : a
+    velocity-based damping that is applied during the integration of the
+    accleration, and a Richtmyer-von Neumann artificial viscosity that
+    is slightly more complex (see the Theory Manual for details).
+
+    Velocity-based damping is always active and controlled by the
+    \Textsfc{artificial\_damping\_coeff} flag.
+
+    \Textcad{Default:} 0.0
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <artificial_damping_coeff> 0.0 </artificial_damping_coeff>
+    </MPM>
+    \end{lstlisting}
+
+    Richtmyer-von Neumann viscosity is activated by the \Textsfc{artificial\_viscosity}
+    flag and requires two parameters, \Textsfc{artificial\_viscosity\_coeff1} and
+    \Textsfc{artificial\_viscosity\_coeff1}.  
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Defaults:} false, 0.2, 2.0
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <artificial_viscosity> false </artificial_viscosity>
+      <artificial_viscosity_coeff1> 0.2 </artificial_viscosity_coeff1>
+      <artificial_viscosity_coeff2> 2.0 </artificial_viscosity_coeff2>
+    </MPM>
+    \end{lstlisting}
+
+    Viscous heating is automatically turned
+    on when the \Textsfc{artificial\_viscosity} flag is on.  If \Textsfc{artificial\_viscosity}
+    is off, viscous heating can still be activated using the
+    \Textsfc{artificial\_viscosity\_heating} tag.  However, this is typically not
+    allowed in a simulation.
+    
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <artificial_viscosity_heating> false </artificial_viscosity_heating>
+    </MPM>
+    \end{lstlisting}
+
+  \item \Textmag{Deformation gradient:}  Deformation gradient computation algorithms
+    can be switched by activating the \Textsfc{deformation\_gradient} tag.  See
+    the \Vaango Theory Manual for further information.
+
+    \Textcad{Options:} \Textsfc{first\_order}, \Textsfc{sybcycling}, 
+                       \Textsfc{taylor\_series}, or \Textsfc{cayley\_hamilton}\\
+    \Textcad{Default:} \Textsfc{first\_order}
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <deformation_gradient algorithm="taylor_series">
+        <num_terms> 5 </num_terms>
+      </deformation_gradient>
+    </MPM>
+    \end{lstlisting}
+
+    A parameter, \Textsfc{num\_terms}, indicating the number of terms of the Taylor 
+    series to be evaluated can also be added to the tag.  The default value is 1.
+    
+
+  \item \Textmag{Load curves:}
+  
+
+  \item \Textmag{Boundary traction faces:}  For some special simulations, we
+    may require the contact tractions at the domain boundaries to be
+    computed and saved.  This feature is activated using the
+    \Textsfc{boundary\_traction\_faces} flag which takes a list of
+    text strings as input.  The allowed values of \Textsfc{xminus},
+
+    \Textcad{Options:} \Textsfc{xplus}, \Textsfc{yminus}, \Textsfc{yplus}, \Textsfc{zminus},
+    and \Textsfc{zplus}. \\
+    \Textcad{Default:} \Textsfc{[]}.
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <boundary_traction_faces>[xminus,xplus,zminus]</boundary_traction_faces>
+    </MPM>
+    \end{lstlisting}
+\end{itemize}
+
 Below is a list of these options taken from
 \Textsfc{inputs/UPS\_SPEC/mpm\_spec.xml} 
 This file also gives possible values, or at least expected datatype,

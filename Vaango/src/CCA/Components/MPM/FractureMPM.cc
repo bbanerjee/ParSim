@@ -606,15 +606,15 @@ void FractureMPM::scheduleComputeContactArea(SchedulerP& sched,
 {
   /*
    * computeContactArea */
-  if(d_bndy_traction_faces.size()>0) {
+  if(d_boundaryTractionFaces.size()>0) {
     Task* t = scinew Task("FractureMPM::computeContactArea",
                           this, &FractureMPM::computeContactArea);
 
     Ghost::GhostType  gnone = Ghost::None;
     t->requires(Task::NewDW, lb->gVolumeLabel, gnone);
     t->requires(Task::NewDW, lb->GVolumeLabel, gnone); // for FractureMPM
-    for(std::list<Patch::FaceType>::const_iterator ftit(d_bndy_traction_faces.begin());
-        ftit!=d_bndy_traction_faces.end();ftit++) {
+    for(std::list<Patch::FaceType>::const_iterator ftit(d_boundaryTractionFaces.begin());
+        ftit!=d_boundaryTractionFaces.end();ftit++) {
       int iface = (int)(*ftit);
       t->computes(lb->BndyContactCellAreaLabel[iface]);
     }
@@ -667,8 +667,8 @@ void FractureMPM::scheduleComputeInternalForce(SchedulerP& sched,
 
   t->computes(lb->gInternalForceLabel);
 
-  for(std::list<Patch::FaceType>::const_iterator ftit(d_bndy_traction_faces.begin());
-      ftit!=d_bndy_traction_faces.end();ftit++) {
+  for(std::list<Patch::FaceType>::const_iterator ftit(d_boundaryTractionFaces.begin());
+      ftit!=d_boundaryTractionFaces.end();ftit++) {
     int iface = (int)(*ftit);
     t->requires(Task::NewDW, lb->BndyContactCellAreaLabel[iface]);
     t->computes(lb->BndyForceLabel[iface]);
@@ -1713,8 +1713,8 @@ void FractureMPM::computeContactArea(const ProcessorGroup*,
       new_dw->get(gvolume, lb->gVolumeLabel, dwi, patch, Ghost::None, 0);
       new_dw->get(Gvolume, lb->GVolumeLabel, dwi, patch, Ghost::None, 0); // for FractureMPM
         
-      for(list<Patch::FaceType>::const_iterator fit(d_bndy_traction_faces.begin()); 
-        fit!=d_bndy_traction_faces.end();fit++) {
+      for(list<Patch::FaceType>::const_iterator fit(d_boundaryTractionFaces.begin()); 
+        fit!=d_boundaryTractionFaces.end();fit++) {
         Patch::FaceType face = *fit;
         int iface = (int)(face);
 
@@ -1751,8 +1751,8 @@ void FractureMPM::computeContactArea(const ProcessorGroup*,
   // be careful only to put the fields that we have built
   // that way if the user asks to output a field that has not been built
   // it will fail early rather than just giving zeros.
-  for(std::list<Patch::FaceType>::const_iterator ftit(d_bndy_traction_faces.begin());
-        ftit!=d_bndy_traction_faces.end();ftit++) {
+  for(std::list<Patch::FaceType>::const_iterator ftit(d_boundaryTractionFaces.begin());
+        ftit!=d_boundaryTractionFaces.end();ftit++) {
     int iface = (int)(*ftit);
     new_dw->put(sum_vartype(bndyCArea[iface]),lb->BndyContactCellAreaLabel[iface]);
   }
@@ -1914,8 +1914,8 @@ void FractureMPM::computeInternalForce(const ProcessorGroup*,
       }
       
       // save boundary forces before apply symmetry boundary condition.
-      for(list<Patch::FaceType>::const_iterator fit(d_bndy_traction_faces.begin()); 
-          fit!=d_bndy_traction_faces.end();fit++) {
+      for(list<Patch::FaceType>::const_iterator fit(d_boundaryTractionFaces.begin()); 
+          fit!=d_boundaryTractionFaces.end();fit++) {
         Patch::FaceType face = *fit;
       
         // Check if the face is on an external boundary
@@ -1982,8 +1982,8 @@ void FractureMPM::computeInternalForce(const ProcessorGroup*,
   // be careful only to put the fields that we have built
   // that way if the user asks to output a field that has not been built
   // it will fail early rather than just giving zeros.
-  for(std::list<Patch::FaceType>::const_iterator ftit(d_bndy_traction_faces.begin());
-      ftit!=d_bndy_traction_faces.end();ftit++) {
+  for(std::list<Patch::FaceType>::const_iterator ftit(d_boundaryTractionFaces.begin());
+      ftit!=d_boundaryTractionFaces.end();ftit++) {
     int iface = (int)(*ftit);
     new_dw->put(sumvec_vartype(bndyForce[iface]),lb->BndyForceLabel[iface]);
   
