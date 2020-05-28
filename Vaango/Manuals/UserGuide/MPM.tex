@@ -208,6 +208,7 @@ Some of these options are described below:
 
     The color flag is particularly useful for debugging simulations where a
     particular material is associated with a large number of geometry objects.
+    It is also required for simulations with on-the-fly data analysis.
     \begin{lstlisting}[language=XML]
     <MPM>
       <with_color> false </with_color>
@@ -819,10 +820,14 @@ Then, at run time, a sub-directory (\Textsfc{particleExtract/L-0})
 is created inside the uda which contains
 a series of files, named according to their particle IDs, one for each
 tagged particle.  Each of these files contains the time and position for
-that particle, along with whatever other data is specified.  {\bf To use this
-feature, one must include the} \Textsfc{withColor>   true   </withColor}
-{\bf tag in the} \Textsfc{MPM} {\bf section of the input file.}
+that particle, along with whatever other data is specified.  
+\begin{NoteBox}
+To use this
+feature, one must include the 
+\Textsfc{\textless with\_color\textgreater true \textless/with\_color\textgreater}
+tag in the \Textsfc{MPM} section of the input file.
 (See Section~\ref{Sec:MPMFlags}.)
+\end{NoteBox}
 
 The following input file snippet is taken from
 \Textsfc{inputs/MPM/disks.ups}  
@@ -867,7 +872,7 @@ included in the \Textsfc{MPM} section of the input file:
 
 \begin{lstlisting}[language=XML]
  <MPM>
-     <UsePrescribedDeformation>true</UsePrescribedDeformation>
+     <use_prescribed_deformation>true</use_prescribed_deformation>
  </MPM>
 \end{lstlisting}
 

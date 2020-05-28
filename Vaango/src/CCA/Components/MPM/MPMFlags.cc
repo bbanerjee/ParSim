@@ -414,10 +414,6 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   // MMS
   mpm_flag_ps->get("run_MMS_problem", d_mmsType);
 
-
-
-
-
   // Scalar diffusion
   mpm_flag_ps->get("do_scalar_diffusion", d_doScalarDiffusion);
 
