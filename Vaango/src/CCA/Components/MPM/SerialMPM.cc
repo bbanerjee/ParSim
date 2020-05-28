@@ -761,7 +761,7 @@ SerialMPM::initializeBodyForce(const ProcessorGroup* ,
   // Loop thru patches 
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    printTask(patches, patch, cout_doing, "Doing computeParticleBodyForce");
+    printTask(patches, patch, cout_doing, "Doing initializeBodyForce");
 
     // Loop thru materials
     int numMPMMatls = d_sharedState->getNumMPMMatls();
@@ -783,8 +783,7 @@ SerialMPM::initializeBodyForce(const ProcessorGroup* ,
       new_dw->get(pPosition, lb->pXLabel, pset);
 
       // Iterate over the particles
-      for (auto iter = pset->begin(); iter != pset->end(); iter++) {
-        particleIndex pidx = *iter;
+      for (auto pidx : *pset) {
 
         // Compute the body force acceleration (g)
         // Just use gravity if rotation is off
@@ -1479,8 +1478,7 @@ SerialMPM::computeParticleBodyForce(const ProcessorGroup* ,
       if (!flags->d_useCoordRotation) {
 
         // Iterate over the particles
-        for (auto iter = pset->begin(); iter != pset->end(); iter++) {
-          particleIndex pidx = *iter;
+        for (auto pidx : *pset) {
 
           // Compute the body force acceleration (g)
           pBodyForceAcc[pidx] = flags->d_gravity;

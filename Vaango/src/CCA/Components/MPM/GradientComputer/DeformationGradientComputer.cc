@@ -59,6 +59,7 @@ DeformationGradientComputer::DeformationGradientComputer(MPMFlags* Mflag, Simula
 {
   lb = scinew MPMLabel();
   flag = Mflag;
+  // std::cout << "d_or_27 = " << flag->d_8or27 << "\n";
   if(flag->d_8or27==8){
     NGN=1;
   } else{ 
@@ -402,6 +403,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
   double rho_orig = mpm_matl->getInitialDensity();
 
   // Get Interpolator
+  // std::cout << "interpolator = " << &(flag->d_interpolator) << "\n";
   auto interpolator = flag->d_interpolator->clone(patch);
 
   // Set up variables to store old particle and grid data 
@@ -459,6 +461,9 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
   double J = 1.0;
   for (auto particle: *pset) {
 
+    // std::cout << "particle = " << particle
+    //           << " px = " << px[particle]
+    //           << " pSize = " << pSize[particle] << "\n";
     // Initialize variables
     Matrix3 defGrad_new(0.0); // **WARNING** should be one and not zero
     Matrix3 defGrad_inc(0.0); // **WARNING** should be one and not zero

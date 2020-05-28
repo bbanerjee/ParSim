@@ -61,14 +61,14 @@ ParticleCreator::ParticleCreator(MPMMaterial* matl,
 :d_lock("Particle Creator lock")
 {
   d_lb = scinew MPMLabel();
+  d_flags = flags;
+
   d_useLoadCurves = flags->d_useLoadCurves;
   d_withColor = flags->d_withColor;
   d_artificialViscosity = flags->d_artificialViscosity;
   d_computeScaleFactor = flags->d_computeScaleFactor;
   d_doScalarDiffusion = flags->d_doScalarDiffusion;
   d_useCPTI = flags->d_useCPTI;
-
-  d_flags = flags;
 
   registerPermanentParticleState(matl);
 }
@@ -86,8 +86,8 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 {
   ObjectVars vars;
   particleIndex numParticles = 0;
-  for (auto geom = d_geom_objs.begin(); geom != d_geom_objs.end(); ++geom) { 
-    numParticles += countAndCreateParticles(patch,*geom, vars);
+  for (auto geom : d_geom_objs) {
+    numParticles += countAndCreateParticles(patch, geom, vars);
   }
   
   ParticleVars pvars;
@@ -96,9 +96,9 @@ ParticleCreator::createParticles(MPMMaterial* matl,
 
   particleIndex start = 0;
   
-  for (auto obj = d_geom_objs.begin(); obj != d_geom_objs.end(); ++obj) {
+  for (auto obj : d_geom_objs) {
     particleIndex count = 0;
-    GeometryPieceP piece = (*obj)->getPiece();
+    GeometryPieceP piece = obj->getPiece();
     Box b1 = piece->getBoundingBox();
     Box b2 = patch->getExtraBox();
     Box b = b1.intersect(b2);
@@ -107,7 +107,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       continue;
     }
 
-    Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");    
+    Vector dxpp = patch->dCell()/obj->getInitialData_IntVector("res");    
 
     // Special case exception for SmoothGeomPieces and FileGeometryPieces
     SmoothGeomPiece *sgp = dynamic_cast<SmoothGeomPiece*>(piece.get_rep());
@@ -120,7 +120,7 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     vector<Matrix3>* pSizes       = 0;
     if (sgp){
 
-      std::cout << "Created a SmoothGeomPiece with #particles = " << numParticles << std::endl;
+      std::cout << "Created a special geometry with #particles = " << numParticles << std::endl;
       volumes      = sgp->getVolume();
       temperatures = sgp->getTemperature();
       pforces      = sgp->getForces();
@@ -138,38 +138,38 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     // For getting particle volumes (if they exist)
     vector<double>::const_iterator voliter;
     if (volumes) {
-      if (!volumes->empty()) voliter = vars.d_object_vols[*obj].begin();
+      if (!volumes->empty()) voliter = vars.d_object_vols[obj].begin();
     }
 
     // For getting particle temps (if they exist)
     vector<double>::const_iterator tempiter;
     if (temperatures) {
-      if (!temperatures->empty()) tempiter = vars.d_object_temps[*obj].begin();
+      if (!temperatures->empty()) tempiter = vars.d_object_temps[obj].begin();
     }
 
     // For getting particle external forces (if they exist)
     vector<Vector>::const_iterator forceiter;
     if (pforces) {
-      if (!pforces->empty()) forceiter = vars.d_object_forces[*obj].begin();
+      if (!pforces->empty()) forceiter = vars.d_object_forces[obj].begin();
     }
 
     // For getting particle fiber directions (if they exist)
     vector<Vector>::const_iterator fiberiter;
     if (pFiberDirs) {
-      if (!pFiberDirs->empty()) fiberiter = vars.d_object_fibers[*obj].begin();
+      if (!pFiberDirs->empty()) fiberiter = vars.d_object_fibers[obj].begin();
     }
     
     // For getting particle velocities (if they exist)   // gcd adds
     vector<Vector>::const_iterator velocityiter;
     if (pvelocities) {                             // new change name
       if (!pvelocities->empty()) velocityiter =
-              vars.d_object_velocity[*obj].begin();  // new change name
+              vars.d_object_velocity[obj].begin();  // new change name
     }                                                    // end gcd adds
     
     // For getting particle sizes (if they exist)
     vector<Matrix3>::const_iterator sizeiter;
     if (pSizes) {
-      if (!pSizes->empty()) sizeiter = vars.d_object_size[*obj].begin();
+      if (!pSizes->empty()) sizeiter = vars.d_object_size[obj].begin();
       if (d_flags->d_AMR) {
         cerr << "WARNING:  The particle size when using smooth or file\n"; 
         cerr << "geom pieces needs some work when used with AMR" << endl;
@@ -179,20 +179,20 @@ ParticleCreator::createParticles(MPMMaterial* matl,
     // For getting particles colors (if they exist)
     vector<double>::const_iterator coloriter;
     if (colors) {
-      if (!colors->empty()) coloriter = vars.d_object_colors[*obj].begin();
+      if (!colors->empty()) coloriter = vars.d_object_colors[obj].begin();
     }
 
-    for(auto itr =  vars.d_object_points[*obj].begin();
-             itr != vars.d_object_points[*obj].end(); ++itr){
+    for(auto point : vars.d_object_points[obj]) {
       IntVector cell_idx;
-      if (!patch->findCell(*itr,cell_idx)) continue;
+      if (!patch->findCell(point,cell_idx)) continue;
 
-      if (!patch->containsPoint(*itr)) continue;
+      if (!patch->containsPoint(point)) continue;
       
       particleIndex pidx = start+count;      
-      //cerr << "Point["<<pidx<<"]="<<*itr<<" Cell = "<<cell_idx<<endl;
+
+      //std::cout << "Point["<<pidx<<"]="<<point<<" Cell = "<<cell_idx<<endl;
  
-      initializeParticle(patch,obj,matl,*itr,cell_idx,pidx,cellNAPID, pvars);
+      initializeParticle(patch, obj,matl,point,cell_idx,pidx,cellNAPID, pvars);
 
       // Again, everything below exists for FileGeometryPiece only, where
       // a user can describe the geometry as a series of points in a file.
@@ -292,8 +292,8 @@ ParticleCreator::createParticles(MPMMaterial* matl,
       // a physical BC attached to it then mark with the 
       // physical BC pointer
       if (d_useLoadCurves) {
-        if (checkForSurface(piece,*itr,dxpp)) {
-          pvars.pLoadCurveID[pidx] = getLoadCurveID(*itr, dxpp);
+        if (checkForSurface(piece,point,dxpp)) {
+          pvars.pLoadCurveID[pidx] = getLoadCurveID(point, dxpp);
           //std::cout << " Particle: " << pidx << " use_load_curves = " << d_useLoadCurves << std::endl;
           //std::cout << "\t surface particle; Load curve id = " << pvars.pLoadCurveID[pidx] << std::endl;
         } else {
@@ -545,7 +545,7 @@ void ParticleCreator::createPoints(const Patch* patch, GeometryObject* obj,
 
 void 
 ParticleCreator::initializeParticle(const Patch* patch,
-                                    vector<GeometryObject*>::const_iterator obj,
+                                    GeometryObject* obj,
                                     MPMMaterial* matl,
                                     Point p,
                                     IntVector cell_idx,
@@ -553,8 +553,8 @@ ParticleCreator::initializeParticle(const Patch* patch,
                                     CCVariable<short int>& cellNAPID,
                                     ParticleVars& pvars)
 {
-  IntVector ppc = (*obj)->getInitialData_IntVector("res");
-  Vector dxpp = patch->dCell()/(*obj)->getInitialData_IntVector("res");
+  IntVector ppc = obj->getInitialData_IntVector("res");
+  Vector dxpp = patch->dCell()/obj->getInitialData_IntVector("res");
   Vector dxcc = patch->dCell();
 
   // Affine transformation for making conforming particle distributions
@@ -562,10 +562,10 @@ ParticleCreator::initializeParticle(const Patch* patch,
   //  optional and if you do not want to use affine transformations, just do
   //  not define them in the input file.
 
-  Vector affineTrans_A0=(*obj)->getInitialData_Vector("affineTransformation_A0");
-  Vector affineTrans_A1=(*obj)->getInitialData_Vector("affineTransformation_A1");
-  Vector affineTrans_A2=(*obj)->getInitialData_Vector("affineTransformation_A2");
-  //Vector affineTrans_b= (*obj)->getInitialData_Vector("affineTransformation_b");
+  Vector affineTrans_A0=obj->getInitialData_Vector("affineTransformation_A0");
+  Vector affineTrans_A1=obj->getInitialData_Vector("affineTransformation_A1");
+  Vector affineTrans_A2=obj->getInitialData_Vector("affineTransformation_A2");
+  //Vector affineTrans_b= obj->getInitialData_Vector("affineTransformation_b");
   Matrix3 affineTrans_A(
           affineTrans_A0[0],affineTrans_A0[1],affineTrans_A0[2],
           affineTrans_A1[0],affineTrans_A1[1],affineTrans_A1[2],
@@ -596,7 +596,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
                                       0.,                               0.,1.);
 */
 
-  pvars.pTemperature[i] = (*obj)->getInitialData_double("temperature");
+  pvars.pTemperature[i] = obj->getInitialData_double("temperature");
 
 
   // For AMR
@@ -604,8 +604,9 @@ ParticleCreator::initializeParticle(const Patch* patch,
   pvars.pRefined[i]     = curLevel->getIndex();
 
   //MMS
+  //std::cout << "mms_type = " << d_flags->d_mmsType << "\n";
   string mms_type = d_flags->d_mmsType;
-  if(!mms_type.empty()) {
+  if(mms_type != "none") {
     MMS MMSObject;
     MMSObject.initializeParticleForMMS(pvars.position, pvars.pVelocity, pvars.pSize,
                                        pvars.pDisp, pvars.pMass, pvars.pVolume,
@@ -625,16 +626,18 @@ ParticleCreator::initializeParticle(const Patch* patch,
 
     pvars.pSize[i]      = size;
     pvars.pDisp[i]      = Vector(0.,0.,0.);
-    pvars.pVelocity[i]  = (*obj)->getInitialData_Vector("velocity");
+    pvars.pVelocity[i]  = obj->getInitialData_Vector("velocity");
     pvars.pAcc[i]       = Vector(0.,0.,0.);
 
+    //std::cout << "i = " << i << " px = " << pvars.position[i]
+    //          << " size = " << pvars.pSize[i] << "\n";
     double vol_frac_CC = 1.0;
     try {
-     if((*obj)->getInitialData_double("volumeFraction") == -1.0) {    
+     if(obj->getInitialData_double("volumeFraction") == -1.0) {    
       vol_frac_CC = 1.0;
       pvars.pMass[i]      = matl->getInitialDensity()*pvars.pVolume[i];
      } else {
-      vol_frac_CC = (*obj)->getInitialData_double("volumeFraction");
+      vol_frac_CC = obj->getInitialData_double("volumeFraction");
       pvars.pMass[i]      = matl->getInitialDensity()*pvars.pVolume[i]*vol_frac_CC;
      }
     } catch (...) {
@@ -644,7 +647,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
   }
   
   if(d_withColor){
-    pvars.pColor[i] = (*obj)->getInitialData_double("color");
+    pvars.pColor[i] = obj->getInitialData_double("color");
   }
   if(d_artificialViscosity){
     pvars.p_q[i] = 0.;
@@ -674,7 +677,7 @@ ParticleCreator::initializeParticle(const Patch* patch,
   pvars.pExternalHeatFlux[i] = 0.0;
 
   // For friction contact
-  GeometryPieceP piece = (*obj)->getPiece();
+  GeometryPieceP piece = obj->getPiece();
   pvars.pSurface[i] = checkForSurface2(piece, p, dxpp);
 
   // Cell ids
@@ -723,7 +726,7 @@ ParticleCreator::countAndCreateParticles(const Patch* patch,
       sgp->setParticleSpacing(dx);
       sgp->setCellSize(patch->dCell());
       numPts = sgp->createPoints();
-      proc0cout << "Smooth Geom Piece: Number of points created = " << numPts << std::endl;
+      proc0cout << "Special Geom Piece: Number of points created = " << numPts << std::endl;
     }
     vector<Point>* points      = sgp->getPoints();
     vector<double>* vols       = sgp->getVolume();

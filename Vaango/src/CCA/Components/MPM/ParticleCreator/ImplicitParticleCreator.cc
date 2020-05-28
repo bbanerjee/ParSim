@@ -57,7 +57,7 @@ ImplicitParticleCreator::~ImplicitParticleCreator()
 
 void 
 ImplicitParticleCreator::initializeParticle(const Patch* patch,
-                                            vector<GeometryObject*>::const_iterator obj,
+                                            GeometryObject* obj,
                                             MPMMaterial* matl,
                                             Point p, IntVector cell_idx,
                                             particleIndex i,

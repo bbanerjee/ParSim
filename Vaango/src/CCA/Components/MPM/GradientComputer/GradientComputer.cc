@@ -57,6 +57,7 @@ GradientComputer::computeGrad(Matrix3& grad,
   grad.set(0.0);
   //std::cout << "Gradient :";
   for(int k = 0; k < flag->d_8or27; k++) {
+    auto node = ni[k];
     const Vector& vec = gVec[ni[k]];
     //std::cout << vec << "(";
     for (int j = 0; j<3; j++){

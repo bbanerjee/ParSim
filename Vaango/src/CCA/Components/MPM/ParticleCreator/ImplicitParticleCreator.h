@@ -40,7 +40,7 @@ namespace Uintah {
     virtual void registerPermanentParticleState(MPMMaterial* matl);
 
     virtual void initializeParticle(const Patch* patch,
-                                    std::vector<GeometryObject*>::const_iterator obj, 
+                                    GeometryObject* obj, 
                                     MPMMaterial* matl,
                                     Point p, IntVector cell_idx,
                                     particleIndex i,
