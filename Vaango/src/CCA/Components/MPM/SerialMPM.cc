@@ -2292,7 +2292,7 @@ SerialMPM::computeNormals(const ProcessorGroup*,
       } // axisymmetric conditional
     }   // matl loop
 
-    // Make normal std::vectors colinear by taking an average with the
+    // Make normals collinear by taking an average with the
     // other materials at a node
     if (flags->d_computeCollinearNormals) {
       for (auto iter = patch->getExtraNodeIterator(); !iter.done(); iter++) {
@@ -3067,9 +3067,7 @@ SerialMPM::updateCohesiveZones(const ProcessorGroup*,
       double r=0.;
 
       // Loop over particles
-      for(ParticleSubset::iterator iter = pset->begin();
-          iter != pset->end(); iter++){
-        particleIndex idx = *iter;
+      for (auto idx : *pset) {
 
         //        double length = sqrt(czlength[idx]);
         //        Vector size(length,length,length);
@@ -6735,9 +6733,7 @@ SerialMPM::interpolateToParticlesAndUpdateMom2(const ProcessorGroup*,
       // For particles whose new velocity exceeds a maximum set in the input
       // file, set their velocity back to the velocity that it came into
       // this step with
-      for(ParticleSubset::iterator iter  = pset->begin();
-          iter != pset->end(); iter++){
-        particleIndex idx = *iter;
+      for (auto idx : *pset) {
         if ((pMass_new[idx] <= flags->d_minPartMass) || pTemp_new[idx] < 0. ||
             (pLocalized[idx]==-999)){
           if (flags->d_erosionAlgorithm != "none") {

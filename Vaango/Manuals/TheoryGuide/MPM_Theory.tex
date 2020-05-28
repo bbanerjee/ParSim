@@ -140,7 +140,7 @@ a particle representation.  For instance, the representation of a vector field $
   \Bf(\Bx) = \sum_p \Bf(\Bx_p) \chi_p(\Bx) = \sum_p \Bf_p \chi_p(\Bx)
   }
 \Eeq
-where the subscript $g$ indicates a grid nodal quantity and the subscropt $p$ indicates a
+where the subscript $g$ indicates a grid nodal quantity and the subscript $p$ indicates a
 particle quantity.  A particle centroid is at the location $\Bx_p$ while a grid node is
 at $\Bx_g$.  The functions $S_g$ are interpolation functions (also called shape functions)
 that take values from the grid nodes to points in the computational domain.  On the
@@ -603,7 +603,7 @@ The mass matrix is typically lumped such that
         &= \sum_p \rho_p V_p \Av{S_{gp}}  = \sum_p m_p \Av{S_{gp}} \,.
   \Eal
 \Eeq
-In that case the semi-discrete system of equations simplifes to
+In that case the semi-discrete system of equations simplifies to
 \Beq \label{eq:semialgebraic_mpm}
   m_{g} \dot{\Bv}_g = \Bf_g^{\Text} -\Bf_g^{\Tint} + \Bf_g^{\Tbody} 
       ~;~~ g = 1 \dots N_g
@@ -623,7 +623,7 @@ the acceleration in \eqref{eq:semialgebraic_mpm} such that
 \Eeq
 where $\alpha_d$ is a damping coefficient.
 
-The second approach uses Richymyer-von Neumann artificial viscosity to damp out large 
+The second approach uses Richtmyer-von Neumann artificial viscosity to damp out large 
 oscillations in high strain-rate simulations.  \Vaango uses a three-dimensional form 
 of the Richtmyer-von Neumann artificial viscosity (\cite{VonNeumann1950,Wilkins1999}, p.29).  
 The viscosity factor takes the form
@@ -822,7 +822,7 @@ Taylor series expansion for the deformation gradient:
 \Eeq
 This is the most commonly used method of computing the deformation gradient.
 \Vaango also allows for an alternative estimate of the deformation gradient by
-sybcycling after dividing $\Delta t$ into $k$ smaller increments:
+subcycling after dividing $\Delta t$ into $k$ smaller increments:
 \Beq 
   \BF_p^{n+1} = \left[\prod_k (\BI + \Grad{\Bv_p} \Delta t_k)\right] \BF_p^n \,.
 \Eeq
@@ -832,6 +832,25 @@ evaluated by choosing an appropriate flag in the input file.
 Finally, \Vaango also provides an option to compute the matrix exponential
 using the \Textsfc{Cayley-Hamilton theorem}.  However, all these approaches
 assume that the velocity gradient remains constant over a time step.
+
+\subsubsection{Pressure stabilization}
+A pressure stabilization step may be required during the computation of deformation gradients
+of materials that are nearly incompressible.  The algorithm involves computing
+a the particle volumes inside each grid cell (ignoring volume that may extend outside
+cell boundaries):
+\Beq
+  V_{c0} = \sum_{p \in c} \frac{m_p}{\rho_0}~,~~ V_c = \sum_{p \in c} V_p
+\Eeq
+where $V_{c0}$ is an estimate of the initial volume in a cell and $V_c$ is
+the current volume in the cell. The initial density is $\rho_0$. An estimate of the 
+volume change is computed using
+\Beq
+  J_c = \frac{V_c}{V_{c0}} \,.
+\Eeq
+A correction is applied to the particle deformation gradient using
+\Beq
+  \BF_p \leftarrow \left(\frac{J_c}{\det(\BF_p)}\right)^{1/3} \BF_p \,.
+\Eeq
 
 \section{Shape functions for MPM, GIMP, and CPDI} \label{gimp_mpm}
 In both \MPM and \GIMP, the basic idea is the same: objects are discretized into

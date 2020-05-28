@@ -111,13 +111,13 @@ Some of these options are described below:
     All axisymmetric simulations
     assume that the plane of rotational symmetry is the $xy$-plane,
     axisymmetric $r$-coordinate coincides with the grid $x$-direction, 
-    axisymmetric $z$-coordinate conincides 
+    axisymmetric $z$-coordinate coincides 
     with the grid $y$-direction, and that the axisymmetric $\theta$-coordinate is 
     in the $z$-direction of the grid. The
-    \Textsfc{Grid} for axisymetric computations must be only one cell thick
-    in the $z$-direction. \Textsfc{Plane strain} calcuations can be simulated
+    \Textsfc{Grid} for axisymmetric computations must be only one cell thick
+    in the $z$-direction. \Textsfc{Plane strain} calculations can be simulated
     by applying appropriate grid boundary conditions in 3D.  \Textsfc{Plane stress}
-    calculatons are not alowed in \Vaango.
+    calculations are not allowed in \Vaango.
     \begin{lstlisting}[language=XML]
     <MPM>
       <axisymmetric> false </axisymmetric>
@@ -131,7 +131,7 @@ Some of these options are described below:
     \Textcad{Default:} \Textsfc{explicit}.
 
     If the explicit option is chosen integration is done using forward Euler,
-    while implicit uses bacward Euler.  if the fracture option is chosen, some
+    while implicit uses backward Euler.  if the fracture option is chosen, some
     special integration features needed for \Textsfc{FractureMPM} are activated.
 
     \begin{lstlisting}[language=XML]
@@ -181,15 +181,32 @@ Some of these options are described below:
     </MPM>
     \end{lstlisting}
 
+  \item \Textmag{Mass and velocity controls:} To control the simulation in the 
+    event of small masses (particle or grid) or large velocities, \Vaango provides
+    a few clamps on the minimum and maximum quantities that are allowed in a
+    simulation.  If these values are exceeded, particles are deleted. 
+
+    The \Textsfc{minimum\_particle\_mass}, \Textsfc{minimum\_mass\_for\_acc}, and
+    \Textsfc{maximum\_particle\_velocity} tags are used to set these values.
+
+    \Textcad{Defaults:} 3.0e-15, 1.0e-199, 3.0e105.
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <minimum_particle_mass> 1.0e-10 </minimum_particle_mass>
+      <minimum_mass_for_acc> 1.0e-10 </minimum_mass_for_acc>
+      <maximum_particle_velocity> 1.0e9 </maximum_particle_velocity>
+    </MPM>
+    \end{lstlisting}
+
   \item \Textmag{Particle color:}  The \Textsfc{with\_color} flag indicates that
     color tags are being used in the simulation.  Each geometry object can 
     then be assigned a \Textsfc{\textless color \textgreater} tag which has 
-    an integer vaue.
+    an integer value.
 
     \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
     \Textcad{Default:} \Textsfc{false}.
 
-    The color flag is particulary useful for debugging simulations where a
+    The color flag is particularly useful for debugging simulations where a
     particular material is associated with a large number of geometry objects.
     \begin{lstlisting}[language=XML]
     <MPM>
@@ -197,9 +214,22 @@ Some of these options are described below:
     </MPM>
     \end{lstlisting}
 
+  \item \Textmag{Grid reset:} A fundamental feature of \MPM is that the grid is reset
+    after every time step.  However, in some simulations we would like to compare
+    \Vaango simulations with finite element simulations.  A \Textsfc{do\_grid\_reset}
+    flag is used to tell the simulation not to reset the grid in such simulations.
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} \Textsfc{true}.
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <do_grid_reset> true </do_grid_reset>
+    </MPM>
+    \end{lstlisting}
+
   \item \Textmag{Damping:}  Two types of damping are allowed in \Vaango : a
     velocity-based damping that is applied during the integration of the
-    accleration, and a Richtmyer-von Neumann artificial viscosity that
+    acceleration, and a Richtmyer-von Neumann artificial viscosity that
     is slightly more complex (see the Theory Manual for details).
 
     Velocity-based damping is always active and controlled by the
@@ -257,10 +287,120 @@ Some of these options are described below:
 
     A parameter, \Textsfc{num\_terms}, indicating the number of terms of the Taylor 
     series to be evaluated can also be added to the tag.  The default value is 1.
-    
 
-  \item \Textmag{Load curves:}
+    A pressure stabilization step can be added to the deformation gradient computation
+    by activating the \Textsfc{do\_pressure\_stabilization} flag.  See the \Vaango
+    Theory Manual for details.
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <do_pressure_stabilization> false </do_pressure_stabilization>
+    </MPM>
+    \end{lstlisting}
+    
+  \item \Textmag{Load curves:} Simulations where loads are applied directly to
+    \MPM particles require load curves.  The \Textsfc{use\_load\_curves} tag
+    indicates whether a set of load curves is expected in the input file.
   
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <use_load_curves> false </use_load_curves>
+    </MPM>
+    \end{lstlisting}
+
+    The default method computing the forces at particles can be inaccurate because
+    particle surfaces areas are not computed with enough accuracy.  These errors can be
+    mitigated to some extent by using a \CPDI-like interpolation scheme to interpolate
+    particle forces to the corners of a particle domain.  This feature can be
+    activated with the \Textsfc{use\_CBDI\_boundary\_condition} flag.
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <use_CBDI_boundary_condition> false </use_CBDI_boundary_condition>
+    </MPM>
+    \end{lstlisting}
+
+    If the \Textsfc{use\_load\_curves} flags is false but you still want some way
+    of controlling the magnitude of the external force applied to a particle,
+    you can use the \Textsfc{forceBC\_force\_increment\_factor} tag to increment
+    the external force at all the particles every timestep.  However, this flag
+    is ideally avoided in simulations.
+
+    \Textcad{Default:} 0.0
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <forceBC_force_increment_factor> 0.0 </forceBC_force_increment_factor>
+    </MPM>
+    \end{lstlisting}
+
+  \item \Textmag{Prescribed deformations:} Some special simulations require a
+    set of prescribed deformations to be applied to particles instead of the
+    standard method of computing deformation gradients from velocity gradients.  
+    The simulation can be directed to search for these by activating the\\
+    \Textsfc{use\_prescribed\_deformation} flag.  The prescribed values of
+    deformation are stored in a \\ \Textsfc{prescribed\_deformation\_file}.  An
+    \Textsfc{exact\_deformation} flag can also be specified to make sure that the
+    time increment $\Delta t$ is changed to match prescribed deformation times
+    exactly.
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Defaults:} false, false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <use_prescribed_deformation> true </use_prescribed_deformation>
+      <prescribed_deformation_file> deformation_file.dat </prescribed_deformation_file>
+      <exact_deformation> false </exact_deformation>
+    </MPM>
+    \end{lstlisting}
+
+  \item \Textmag{Rotating coordinate system:} \Vaango also give you the option of
+    performing your computations write respect to a rotating coordinate system.
+    This feature is activated by the \Textsfc{rotating\_coordinate\_system} tag
+    and requires a center of rotation, an axis, and angular rotation speed, and
+    optionally, a body reference point.
+
+    \Textcad{Defaults:} [0, 0, 0], [0, 0, 1], 0.0, [0, 0, 0]
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <rotating_coordinate_system>
+        <rotation_center> [1, 0, 0] </rotation_center>
+        <rotation_axis> [0, 0, 1] </rotation_axis>
+        <rotation_speed_angular> 10 </rotation_speed_angular>
+        <body_reference_point> [0, 0, 0] </body_reference_point>
+      </rotating_coordinate_system>
+    </MPM>
+    \end{lstlisting}
+
+    The body force that is generated by rotation (or any other body force such as
+    gravity), can be used to initialize particle stresses by activating 
+    the \Textsfc{initialize\_stress\_using\_body\_force} tag.
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Defaults:} false, false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <initialize_stress_using_body_force> false </initialize_stress_using_body_force>
+    </MPM>
+    \end{lstlisting}
+
+  \item \Textmag{Surface normals:}  Normals to object surfaces are estimated
+    by default during every time step.  These are required for contact computations.
+    For some bimaterial contact problems, these computed normals may not be 
+    collinear.  To force collinearity, an average of the two normals is taken
+    when the \Textsfc{collinear\_bimaterial\_contact\_normals} flag is activated.
+    
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <collinear_bimaterial_contact_normals> false </collinear_bimaterial_contact_normals>
+    </MPM>
+    \end{lstlisting}
 
   \item \Textmag{Boundary traction faces:}  For some special simulations, we
     may require the contact tractions at the domain boundaries to be
@@ -276,73 +416,164 @@ Some of these options are described below:
       <boundary_traction_faces>[xminus,xplus,zminus]</boundary_traction_faces>
     </MPM>
     \end{lstlisting}
+
+  \item \Textmag{Cohesive zones:}  The cohesive zone capability of \Vaango can be
+    activated with the \Textsfc{use\_cohesive\_zones} tag.  See the \Vaango Theory
+    Manual for details.
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <use_cohesive_zones> false </use_cohesive_zones>
+    </MPM>
+    \end{lstlisting}
+
+  \item \Textmag{Coupled thermal problems:} \MPM can also be used to solve
+    heat conduction problems and certain thermal effects are implemented 
+    in \Vaango. 
+
+    The most basic effect is thermal expansion which can be activated with
+    the \Textsfc{do\_thermal\_expansion} flag.
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <do_thermal_expansion> false </do_thermal_expansion>
+    </MPM>
+    \end{lstlisting}
+
+    Another effect that can be activated using a flag is heating due to
+    contact friction, \newline \Textsfc{do\_contact\_friction\_heating}.
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <do_contact_friction_heating> false </do_contact_friction_heating>
+    </MPM>
+    \end{lstlisting}
+
+    The full heat conduction machinery in \Vaango can be activated using
+    one of three flags: \\\Textsfc{do\_explicit\_heat\_conduction},
+    \Textsfc{do\_implicit\_heat\_conduction}, or \\
+    \Textsfc{do\_transient\_implicit\_heat\_conduction}.  See the \Vaango
+    Theory Manual for further information.
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Defaults:} false, false, false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <do_explicit_heat_conduction> false </do_explicit_heat_conduction>
+      <do_implicit_heat_conduction> false </do_implicit_heat_conduction>
+      <do_transient_implicit_heat_conduction> false </do_transient_implicit_heat_conduction>
+    </MPM>
+    \end{lstlisting}
+
+    If PETSc is used for implicit heat conduction, you can flush the solver
+    using the \Textsfc{extra\_solver\_flushes} flag to save memory.  However, this flag 
+    currently has no effect on the solve.
+
+  \item \Textmag{Particle removal:}  Failed or ``localized'' particles can be
+    removed or isolated from a simulation using the \Textsfc{erosion} tag.
+    Available erosion algorithms are applied directly only to selected material models,
+    but can be applied in general when used with conjunction with the
+    material model tag \Textsfc{\textless d\_basic\_damage\textgreater}.
+
+    \Textcad{Options:} \Textsfc{none}, \Textsfc{RemoveMass},
+                       \Textsfc{AllowNoTension}, \Textsfc{ZeroStress},
+                       \Textsfc{AllowNoShear}, or \Textsfc{BrittleDamage}\\
+    \Textcad{Default:} \Textsfc{none}
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <erosion algorithm="BrittleDamage"> </erosion>
+    </MPM>
+    \end{lstlisting}
+
+    \Vaango also provides the option of deleting particles that have been isolated from
+    the rest of the simulation by checking failed particles that are inside a cell
+    containing only a few other particles.  This capability can be activated by
+    using the flag \Textsfc{delete\_rogue\_particles}.
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <delete_rogue_particles> false </delete_rogue_particles>
+    </MPM>
+    \end{lstlisting}
+
+  \item \Textmag{Particle addition/insertion:} There are two types of particle
+    addition algorithms in \Vaango:
+    \begin{enumerate}
+      \item Convert failed particles to a different material
+      \item Insert particles into an on-going simulation
+    \end{enumerate}
+   
+    To allow the conversion of failed particles, the input file requires a
+    the material to be converted and the material a failed particle is to be
+    converted into.  Given these requirements, the algorithm can be activated
+    using \Textsfc{can\_add\_MPM\_material} in conjunction with the flags
+    \Textsfc{create\_new\_particles} and \Textsfc{manual\_new\_material}.
+   
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Defaults:} false, false, false
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <can_add_MPM_material> true </can_add_MPM_material>
+      <create_new_particles> true </create_new_particles>
+      <manual_new_material> true </manual_new_material>
+    </MPM>
+    \end{lstlisting}
+
+    Particle insertion is used for simulations similar to those shown in 
+    Section~\ref{Sec:ParticleInsert}. The flag \newline\Textsfc{insert\_particles} is
+    used to activate this functionality.
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}\\
+    \Textcad{Default:} \Textsfc{false} 
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <insert_particles> true </insert_particles>
+      <insert_particles_file> insert_particle_times.dat </insert_particles_file>
+    </MPM>
+    \end{lstlisting}
+    
+  \item \Textmag{Manufactured solutions:} Several manufactured solutions
+    have been implemented in \Vaango to test the \MPM algorithm and material
+    models. A manufactured solution simulation can be run by activating 
+    the \Textsfc{run\_MMS\_problem} flag.
+
+    \Textcad{Options:} \Textsfc{none}, \Textsfc{AxisAligned}, 
+                       \Textsfc{GeneralizedVortex}, \Textsfc{ExpandingRing},
+                       \Textsfc{AxisAligned3L}, \Textsfc{UniaxialStrainHarmonic},
+                       \Textsfc{UniaxialStrainHomogeneousLinear}, or
+                       \Textsfc{UniaxialStrainHomogeneousQuadratic}\\
+    \Textcad{Default:} \Textsfc{none}
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <run_MMS_problem> GeneralizedVortex </run_MMS_problem>
+    </MPM>
+    \end{lstlisting}
+
+  \item \Textmag{Adaptive mesh refinement:} The \MPM implementation in 
+    \Vaango also allows for a rudimentary adaptive mesh and particle refinement
+    capability.  This feature can be activated using the \Textsfc{AMR} flag.
+
+    \Textcad{Options:} \Textsfc{true} or \Textsfc{false}
+    \Textcad{Defaults:} \Textsfc{false}
+    \begin{lstlisting}[language=XML]
+    <MPM>
+      <AMR> true </AMR>
+      <use_gradient_enhanced_velocity_projection> false </use_gradient_enhanced_velocity_projection>
+      <refine_particles> true </refine_particles>
+    </MPM>
+    \end{lstlisting}
 \end{itemize}
 
-Below is a list of these options taken from
-\Textsfc{inputs/UPS\_SPEC/mpm\_spec.xml} 
-This file also gives possible values, or at least expected datatype,
-for these flags.  A description of their functionality is forthcoming,
-in the meantime, consult the code and input files.  A default value is
-set for many, see \Textsfc{MPM/MPMFlags.cc} for more.
-
-\begin{lstlisting}[language=XML]
-    <MPM>
-     <!-- These are commonly used options -->
-      <artificial_damping_coeff           spec="OPTIONAL DOUBLE 'positive'"/>
-      <artificial_viscosity               spec="OPTIONAL BOOLEAN" />
-      <artificial_viscosity_coeff1        spec="OPTIONAL DOUBLE" />
-      <artificial_viscosity_coeff2        spec="OPTIONAL DOUBLE" />
-      <axisymmetric                       spec="OPTIONAL BOOLEAN" />
-      <boundary_traction_faces            spec="OPTIONAL STRING" />
-      <DoExplicitHeatConduction           spec="OPTIONAL BOOLEAN" />
-      <DoPressureStabilization            spec="OPTIONAL BOOLEAN" />
-      <erosion                            spec="OPTIONAL NO_DATA"
-            attribute1="algorithm REQUIRED STRING 'none, KeepStress, ZeroStress, RemoveMass'" />
-      <interpolator                       spec="OPTIONAL STRING 'linear, gimp, 3rdorderBS, 4thorderBS'" />
-      <minimum_particle_mass              spec="OPTIONAL DOUBLE 'positive'"/>
-      <minimum_mass_for_acc               spec="OPTIONAL DOUBLE 'positive'"/>
-      <maximum_particle_velocity          spec="OPTIONAL DOUBLE 'positive'"/>
-      <testForNegTemps_mpm                spec="OPTIONAL BOOLEAN" />
-      <time_integrator                    spec="OPTIONAL STRING 'explicit, fracture, implicit'" />
-      <use_load_curves                    spec="OPTIONAL BOOLEAN" />
-      <UsePrescribedDeformation           spec="OPTIONAL BOOLEAN" />
-      <withColor                          spec="OPTIONAL BOOLEAN" />
-
-     <!-- These are not commonly used options -->
-      <CanAddMPMMaterial                  spec="OPTIONAL BOOLEAN" />
-      <create_new_particles               spec="OPTIONAL BOOLEAN" />
-      <do_contact_friction_heating        spec="OPTIONAL BOOLEAN" />
-      <do_grid_reset                      spec="OPTIONAL BOOLEAN" />
-      <DoThermalExpansion                 spec="OPTIONAL BOOLEAN" />
-      <ForceBC_force_increment_factor     spec="OPTIONAL DOUBLE" />
-      <manual_new_material                spec="OPTIONAL BOOLEAN" />
-      <interpolateParticleTempToGridEveryStep spec="OPTIONAL BOOLEAN" />
-      <temperature_solve                  spec="OPTIONAL BOOLEAN" />
-
-     <!-- THE FOLLOWING APPLY ONLY TO THE IMPLICIT MPM CODE -->
-      <dynamic                            spec="OPTIONAL BOOLEAN" />
-      <solver                             spec="OPTIONAL STRING 'petsc, simple'" />
-      <convergence_criteria_disp          spec="OPTIONAL DOUBLE 'positive'"/>
-      <convergence_criteria_energy        spec="OPTIONAL DOUBLE 'positive'"/>
-      <num_iters_to_decrease_delT         spec="OPTIONAL INTEGER" />
-      <num_iters_to_increase_delT         spec="OPTIONAL INTEGER" />
-      <iters_before_timestep_restart      spec="OPTIONAL INTEGER" />
-      <DoTransientImplicitHeatConduction  spec="OPTIONAL BOOLEAN" />
-      <delT_decrease_factor               spec="OPTIONAL DOUBLE" />
-      <delT_increase_factor               spec="OPTIONAL DOUBLE" />
-      <DoImplicitHeatConduction           spec="OPTIONAL BOOLEAN" />
-      <DoMechanics                        spec="OPTIONAL BOOLEAN" />
-
-      <!-- THE FOLLOWING APPLY ONLY TO THE FRACTURE MPM CODE -->
-      <dadx                               spec="OPTIONAL DOUBLE" />
-      <smooth_crack_front                 spec="OPTIONAL BOOLEAN" />
-      <calculate_fracture_parameters      spec="OPTIONAL BOOLEAN" />
-      <do_crack_propagation               spec="OPTIONAL BOOLEAN" />
-      <use_volume_integral                spec="OPTIONAL BOOLEAN" />
-    </MPM>
-\end{lstlisting}
-
-
+The \MPM flags used in \Vaango change frequently and the latest set can be
+found in \newline\Textsfc{inputs/UPS\_SPEC/mpm\_spec.xml} and \Textsfc{MPM/MPMFlags.cc}.
 
 \subsection{Material Properties} \label{Sec:mat_props}
 
@@ -373,7 +604,7 @@ of uses, for example when one wishes to identify initially distinct regions
 of the same material.  In Section~\ref{Sec:OTFA_MPM} is a description of how
 this field is used to identify particles for on the fly data extraction.
 
-An arbitray number of \Textsfc{material} fields can be specified.
+An arbitrary number of \Textsfc{material} fields can be specified.
 As the calculation proceeds, each of these materials has their own field
 variables, and, as such, each material behaves independently of the others.
 Interactions between materials occur as a result of ``contact" models.
@@ -818,7 +1049,7 @@ velocity magnitude.}
 \end{figure}
 
 Additional data is available within the uda in the form of "dat" files.
-In this case, both the kinetic and strain energies are avaiable and can
+In this case, both the kinetic and strain energies are available and can
 be plotted to create a graph similar to that in Fig. 5a of \cite{Sulsky1994}.
 e.g. using gnuplot:
 
@@ -974,7 +1205,7 @@ acts as a constant velocity boundary condition on the top of the sample.  This
 calculation is a small example of those described in \cite{brydonfoam}.  The
 geometry of the foam is created by image procesing the CT data, and based
 on the intensity of each voxel in the image data, the space represented
-by that voxel either recieves a particle with the material properties of the
+by that voxel either receives a particle with the material properties of the
 foam's constituent material, or is left as void space.  This particle
 representation avoids the time consuming steps required to build a suitable
 unstructured mesh for this very complicated geometry.
@@ -1253,7 +1484,7 @@ if(d_mms_type=="AxisAligned"){
     MMS::initializeParticleForMMS
     MMS::computeExternalForceForMMS
 \end{lstlisting}
-Similar to step $1$, add another \Textsfc{if} condition in both the member functions for the new MMS. In the \Textsfc{initializeParticleForMMS} function, initialize the particle data at time $t=0$, and in the \Textsfc{computeExternalForceForMMS} function, code the analytical body forces. The exisiting analytical solutions can be used as a guide.
+Similar to step $1$, add another \Textsfc{if} condition in both the member functions for the new MMS. In the \Textsfc{initializeParticleForMMS} function, initialize the particle data at time $t=0$, and in the \Textsfc{computeExternalForceForMMS} function, code the analytical body forces. The existing analytical solutions can be used as a guide.
 \newline
 4) Add the exact solution in the \Textsfc{src/StandAlone/tools/puda} folder. Look at the \Textsfc{AA\_MMS.cc, GV\_MMS.cc, and ER\_MMS.cc} for reference. Add the option for the new MMS in the \Textsfc{puda.cc} file.
 \newline

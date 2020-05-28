@@ -592,8 +592,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
     vol_CC.initialize(0.);
   
     // Step 1: loop thru particles and cells to compute cell centered J
-    for(ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
-      particleIndex particle= *iter;
+    for (auto particle : *pset) {
 
       IntVector cell_index;
       patch->findCell(px[particle],cell_index);
@@ -610,8 +609,7 @@ DeformationGradientComputer::computeDeformationGradientExplicit(const Patch* pat
 
     // Step 2: loop thru particles again to compute corrected def grad
     Matrix3 defGrad_inc(0.0);
-    for(ParticleSubset::iterator iter = pset->begin(); iter != pset->end(); iter++){
-      particleIndex particle= *iter;
+    for (auto particle : *pset) {
       IntVector cell_index;
       patch->findCell(px[particle],cell_index);
 

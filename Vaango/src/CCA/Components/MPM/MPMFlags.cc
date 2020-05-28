@@ -183,8 +183,6 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   if (!mpm_flag_ps)
     return;
 
-  mpm_flag_ps->get("boundary_traction_faces", d_boundaryTractionFaceStrings);
-
   mpm_flag_ps->get("axisymmetric", d_axisymmetric);
 
   mpm_flag_ps->get("time_integrator", d_integratorType);
@@ -195,15 +193,6 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     d_fracture   = true;
   } else {
     d_integrator = Explicit;
-  }
-  int junk = 0;
-  mpm_flag_ps->get("nodes8or27", junk);
-  if (junk != 0) {
-    std::cerr << "nodes8or27 is deprecated, use " << "\n";
-    std::cerr << "<interpolator>type</interpolator>" << "\n";
-    std::cerr << "where type is one of the following:" << "\n";
-    std::cerr << "linear, gimp, 3rdorderBS, cpdi, cpti" << "\n";
-    exit(1);
   }
 
   mpm_flag_ps->get("interpolator", d_interpolatorType);
@@ -275,6 +264,15 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
          << "\n";
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
+  int junk = 0;
+  mpm_flag_ps->get("nodes8or27", junk);
+  if (junk != 0) {
+    std::cerr << "nodes8or27 is deprecated, use " << "\n";
+    std::cerr << "<interpolator>type</interpolator>" << "\n";
+    std::cerr << "where type is one of the following:" << "\n";
+    std::cerr << "linear, gimp, 3rdorderBS, cpdi, cpti" << "\n";
+    exit(1);
+  }
   // Get the size of the vectors associated with the interpolator
   d_8or27 = d_interpolator->size();
   // Flag for CPTI interpolator
@@ -282,7 +280,13 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
     d_useCPTI = true;
   }
 
+  mpm_flag_ps->get("minimum_particle_mass", d_minPartMass);
+  mpm_flag_ps->getWithDefault(
+    "minimum_mass_for_acc", d_minMassForAcceleration, 1.0e-199);
+  mpm_flag_ps->get("maximum_particle_velocity", d_maxVel);
+
   mpm_flag_ps->get("with_color", d_withColor);
+  mpm_flag_ps->get("do_grid_reset", d_doGridReset);
 
   mpm_flag_ps->get("artificial_damping_coeff", d_artificialDampCoeff);
   mpm_flag_ps->get("artificial_viscosity", d_artificialViscosity);
@@ -324,97 +328,18 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
       }
     }
   }
+  mpm_flag_ps->get("do_pressure_stabilization", d_doPressureStabilization);
 
   mpm_flag_ps->get("use_load_curves", d_useLoadCurves);
-  mpm_flag_ps->get("forceBC_force_increment_factor", d_forceIncrementFactor);
   mpm_flag_ps->get("use_CBDI_boundary_condition", d_useCBDI);
-  mpm_flag_ps->get("exact_deformation", d_exactDeformation);
-  mpm_flag_ps->get("use_cohesive_zones", d_useCohesiveZones);
+  mpm_flag_ps->get("forceBC_force_increment_factor", d_forceIncrementFactor);
 
-
-  mpm_flag_ps->get("create_new_particles", d_createNewParticles);
-  mpm_flag_ps->get("manual_new_material", d_addNewMaterial);
-  mpm_flag_ps->get("can_add_MPM_material", d_canAddMPMMaterial);
-  mpm_flag_ps->get("do_implicit_heat_conduction", d_doImplicitHeatConduction);
-  mpm_flag_ps->get("do_transient_implicit_heat_conduction",
-                   d_doTransientImplicitHeatConduction);
-  mpm_flag_ps->get("do_explicit_heat_conduction", d_doExplicitHeatConduction);
-  mpm_flag_ps->get("do_pressure_stabilization", d_doPressureStabilization);
-  mpm_flag_ps->get("do_thermal_expansion", d_doThermalExpansion);
-  mpm_flag_ps->get("do_grid_reset", d_doGridReset);
-  mpm_flag_ps->get("minimum_particle_mass", d_minPartMass);
-  mpm_flag_ps->getWithDefault(
-    "minimum_mass_for_acc", d_minMassForAcceleration, 1.0e-199);
-  mpm_flag_ps->get("maximum_particle_velocity", d_maxVel);
   mpm_flag_ps->get("use_prescribed_deformation", d_prescribeDeformation);
   if (d_prescribeDeformation) {
     mpm_flag_ps->get("prescribed_deformation_file",
                      d_prescribedDeformationFile);
   }
-  // MMS
-  mpm_flag_ps->get("run_MMS_problem", d_mmsType);
-
-  mpm_flag_ps->get("insert_particles", d_insertParticles);
-  if (d_insertParticles) {
-    mpm_flag_ps->require("insert_particles_file", d_insertParticlesFile);
-  }
-
-  mpm_flag_ps->get("do_contact_friction_heating", d_doContactFriction);
-  if (!d_doContactFriction)
-    d_addFrictionWork = 0.0;
-
-  mpm_flag_ps->getWithDefault(
-    "collinear_bimaterial_contact_normals", d_computeCollinearNormals, false);
-
-  ProblemSpecP erosion_ps = mpm_flag_ps->findBlock("erosion");
-  if (erosion_ps) {
-    if (erosion_ps->getAttribute("algorithm", d_erosionAlgorithm)) {
-      if (d_erosionAlgorithm == "none")
-        d_doErosion = false;
-      else
-        d_doErosion = true;
-    }
-  }
-
-  mpm_flag_ps->get("delete_rogue_particles", d_deleteRogueParticles);
-
-  ProblemSpecP DA_ps = root->findBlock("DataArchiver");
-  if (DA_ps) {
-    for (ProblemSpecP label_iter = DA_ps->findBlock("save"); label_iter != 0;
-         label_iter              = label_iter->findNextBlock("save")) {
-      map<string, string> labelName;
-
-      label_iter->getAttributes(labelName);
-      if (labelName["label"] == "g.heatflux") {
-        d_computeNodalHeatFlux = true;
-      }
-      if (labelName["label"] == "p.scalefactor") {
-        d_computeScaleFactor = true;
-      }
-    }
-  }
-
-  ProblemSpecP da_ps = root->findBlock("DataAnalysis");
-
-  if (da_ps) {
-    for (ProblemSpecP module_ps = da_ps->findBlock("Module"); module_ps != 0;
-         module_ps              = module_ps->findNextBlock("Module")) {
-      if (module_ps) {
-        map<string, string> attributes;
-        module_ps->getAttributes(attributes);
-        if (attributes["name"] == "flatPlate_heatFlux") {
-          d_computeNodalHeatFlux = true;
-        }
-      }
-    }
-  }
-  // restart problem spec
-  mpm_flag_ps->get("compute_nodal_heat_flux", d_computeNodalHeatFlux);
-  mpm_flag_ps->get("compute_scale_factor", d_computeScaleFactor);
-
-
-  mpm_flag_ps->get("extra_solver_flushes", d_extraSolverFlushes);
-
+  mpm_flag_ps->get("exact_deformation", d_exactDeformation);
 
   // For rotating coordinate system
   ProblemSpecP coordRotation_ps =
@@ -450,6 +375,49 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
                               d_initializeStressFromBodyForce,
                               false);
 
+  mpm_flag_ps->getWithDefault(
+    "collinear_bimaterial_contact_normals", d_computeCollinearNormals, false);
+  mpm_flag_ps->get("boundary_traction_faces", d_boundaryTractionFaceStrings);
+
+  mpm_flag_ps->get("use_cohesive_zones", d_useCohesiveZones);
+
+  mpm_flag_ps->get("do_thermal_expansion", d_doThermalExpansion);
+  mpm_flag_ps->get("do_contact_friction_heating", d_doContactFriction);
+  if (!d_doContactFriction)
+    d_addFrictionWork = 0.0;
+  mpm_flag_ps->get("do_explicit_heat_conduction", d_doExplicitHeatConduction);
+  mpm_flag_ps->get("do_implicit_heat_conduction", d_doImplicitHeatConduction);
+  mpm_flag_ps->get("do_transient_implicit_heat_conduction",
+                   d_doTransientImplicitHeatConduction);
+  mpm_flag_ps->get("extra_solver_flushes", d_extraSolverFlushes);
+
+  ProblemSpecP erosion_ps = mpm_flag_ps->findBlock("erosion");
+  if (erosion_ps) {
+    if (erosion_ps->getAttribute("algorithm", d_erosionAlgorithm)) {
+      if (d_erosionAlgorithm == "none")
+        d_doErosion = false;
+      else
+        d_doErosion = true;
+    }
+  }
+  mpm_flag_ps->get("delete_rogue_particles", d_deleteRogueParticles);
+
+  mpm_flag_ps->get("can_add_MPM_material", d_canAddMPMMaterial);
+  mpm_flag_ps->get("create_new_particles", d_createNewParticles);
+  mpm_flag_ps->get("manual_new_material", d_addNewMaterial);
+
+  mpm_flag_ps->get("insert_particles", d_insertParticles);
+  if (d_insertParticles) {
+    mpm_flag_ps->require("insert_particles_file", d_insertParticlesFile);
+  }
+
+  // MMS
+  mpm_flag_ps->get("run_MMS_problem", d_mmsType);
+
+
+
+
+
   // Scalar diffusion
   mpm_flag_ps->get("do_scalar_diffusion", d_doScalarDiffusion);
 
@@ -458,6 +426,38 @@ MPMFlags::readMPMFlags(ProblemSpecP& ps, Output* dataArchive)
   mpm_flag_ps->getWithDefault(
     "use_gradient_enhanced_velocity_projection", d_GEVelProj, false);
   mpm_flag_ps->get("refine_particles", d_refineParticles);
+
+  // restart problem spec
+  ProblemSpecP DA_ps = root->findBlock("DataArchiver");
+  if (DA_ps) {
+    for (ProblemSpecP label_iter = DA_ps->findBlock("save"); label_iter != 0;
+         label_iter              = label_iter->findNextBlock("save")) {
+      map<string, string> labelName;
+      label_iter->getAttributes(labelName);
+      if (labelName["label"] == "g.heatflux") {
+        d_computeNodalHeatFlux = true;
+      }
+      if (labelName["label"] == "p.scalefactor") {
+        d_computeScaleFactor = true;
+      }
+    }
+  }
+
+  ProblemSpecP da_ps = root->findBlock("DataAnalysis");
+  if (da_ps) {
+    for (ProblemSpecP module_ps = da_ps->findBlock("Module"); module_ps != 0;
+         module_ps              = module_ps->findNextBlock("Module")) {
+      if (module_ps) {
+        map<string, string> attributes;
+        module_ps->getAttributes(attributes);
+        if (attributes["name"] == "flatPlate_heatFlux") {
+          d_computeNodalHeatFlux = true;
+        }
+      }
+    }
+  }
+  mpm_flag_ps->get("compute_nodal_heat_flux", d_computeNodalHeatFlux);
+  mpm_flag_ps->get("compute_scale_factor", d_computeScaleFactor);
 
   if (dbg.active()) {
     dbg << "---------------------------------------------------------\n";
