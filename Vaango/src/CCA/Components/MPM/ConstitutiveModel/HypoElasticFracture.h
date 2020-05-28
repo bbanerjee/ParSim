@@ -3,7 +3,6 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,6 +23,14 @@
  * IN THE SOFTWARE.
  */
 
+//  HypoElastic.h
+//  class ConstitutiveModel ConstitutiveModel data type -- 3D -
+//  holds ConstitutiveModel
+//  information for the FLIP technique:
+//    This is for HypoElasticity
+//    Features:
+//      Usage:
+
 #ifndef __HYPOELASTIC_CONSTITUTIVE_MODEL_H__
 #define __HYPOELASTIC_CONSTITUTIVE_MODEL_H__
 
@@ -35,28 +42,46 @@
 namespace Uintah {
 class HypoElastic : public ConstitutiveModel
 {
+private:
+  // Create datatype for storing model parameters
+  // Crack propagation criterion
+  string crackPropagationCriterion;
+  // Parameters in the empirical criterion
+  // (KI/KIc)^p+(KII/KIIc)^q=1 for crack initialization (KIIc=r*KIc)
+  double p, q, r;
+  double CrackPropagationAngleFromStrainEnergyDensityCriterion(const double&,
+                                                               const double&,
+                                                               const double&);
+
 public:
   struct CMData
   {
     double G;
     double K;
     double alpha; // Coefficient of thermal expansion for thermal stress
+    // Fracture toughness at various velocities
+    // in the format Vector(Vc,KIc,KIIc)
+    vector<Vector> Kc;
   };
 
 private:
+  friend const TypeDescription* fun_getTypeDescription(CMData*);
 
   CMData d_initialData;
+  // double d_se;
 
 public:
+  // constructors
   HypoElastic(ProblemSpecP& ps, MPMFlags* flag);
   HypoElastic(const HypoElastic* cm);
   HypoElastic& operator=(const HypoElastic& cm) = delete;
 
-  ~HypoElastic() override = default;
+  // destructor
+  ~HypoElastic() override;
 
   ModelType modelType() const override
   {
-    return ModelType::INCREMENTAL;
+    return ModelType::RATE_FORM;
   }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
@@ -110,6 +135,16 @@ public:
 
   void addParticleState(std::vector<const VarLabel*>& from,
                         std::vector<const VarLabel*>& to) override;
+
+  // Convert J-integral into stress intensity factors
+  // for hypoelastic materials (for FRACTURE)
+  void ConvertJToK(const MPMMaterial* matl, const string& stressState,
+                   const Vector& J, const double& C, const Vector& V,
+                   Vector& SIF) override;
+
+  // Detect if crack propagates and the propagation direction (for FRACTURE)
+  short CrackPropagates(const double& Vc, const double& KI, const double& KII,
+                        double& theta) override;
 };
 
 } // End namespace Uintah
