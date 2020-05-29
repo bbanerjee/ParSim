@@ -292,7 +292,7 @@ ConstitutiveModel::carryForwardSharedData(ParticleSubset* pset,
                                           const MPMMaterial* matl)
 {
   double rho_orig = matl->getInitialDensity();
-  Matrix3 Id, Zero(0.0);
+  Matrix3 Id, Zero(0);
   Id.Identity();
 
   constParticleVariable<double> pMass;

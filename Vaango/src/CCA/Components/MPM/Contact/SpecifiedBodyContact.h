@@ -138,33 +138,13 @@ fields
 
 class SpecifiedBodyContact : public Contact
 {
-private:
-  // Prevent copying of this class
-  // copy constructor
-  SpecifiedBodyContact(const SpecifiedBodyContact& con);
-  SpecifiedBodyContact& operator=(const SpecifiedBodyContact& con);
-
-  Vector findVelFromProfile(double t) const;
-
-  SimulationStateP d_sharedState;
-  double d_stop_time;
-  double d_vol_const;
-  Vector d_vel_after_stop;
-  int d_material;
-  int NGP;
-  int NGN;
-  bool d_NormalOnly;
-  std::string d_filename;
-  IntVector d_direction;
-  std::vector<std::pair<double, Vector>> d_vel_profile;
-
 public:
-  // Constructor
+
   SpecifiedBodyContact(const ProcessorGroup* myworld, ProblemSpecP& ps,
                        SimulationStateP& d_sS, MPMLabel* lb, MPMFlags* flag);
-
-  // Destructor
-  virtual ~SpecifiedBodyContact();
+  SpecifiedBodyContact(const SpecifiedBodyContact& con) = delete;
+  SpecifiedBodyContact& operator=(const SpecifiedBodyContact& con) = delete;
+  virtual ~SpecifiedBodyContact() = default;
 
   void outputProblemSpec(ProblemSpecP& ps) override;
 
@@ -175,6 +155,41 @@ public:
   void addComputesAndRequires(SchedulerP& sched, const PatchSet* patches,
                               const MaterialSet* matls,
                               const VarLabel* label) override;
+private:
+
+  SimulationStateP d_sharedState;
+  double d_stop_time;
+  double d_vol_const;
+  Vector d_vel_after_stop;
+  int d_material;
+  bool d_rigid_master_material;
+  int NGP;
+  int NGN;
+  bool d_normalOnly;
+  std::string d_filename;
+  IntVector d_direction;
+  std::vector<std::pair<double, Vector>> d_vel_profile;
+
+  void readSpecifiedVelocityFile();
+
+  Vector findVelFromProfile(double t) const;
+
+  void computeNormalBasedExchange(const Patch* patch,
+                                  DataWarehouse* old_dw,
+                                  constNCdoubleArray& gMass,
+                                  constNCdoubleArray& gVolume,
+                                  constNCVectorArray& gSurfNorm,
+                                  const Vector& requested_veocity,
+                                  NCVectorArray& gVelocity_star);
+
+  void computeDirectionBasedExchange(const Patch* patch,
+                                     DataWarehouse* old_dw,
+                                     constNCdoubleArray& gMass,
+                                     constNCdoubleArray& gVolume,
+                                     const Vector& requested_veocity,
+                                     NCVectorArray& gVelocity_star);
+
+
 };
 
 } // end namespace Uintah

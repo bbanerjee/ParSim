@@ -36,8 +36,6 @@
 
 namespace Uintah {
 
-using namespace Uintah;
-
 using constNCint    = constNCVariable<int>;
 using NCint         = NCVariable<int>;
 using constNCdouble = constNCVariable<double>;
@@ -46,6 +44,10 @@ using constNCPoint  = constNCVariable<Point>;
 using NCPoint       = NCVariable<Point>;
 using constNCVector = constNCVariable<Vector>;
 using NCVector      = NCVariable<Vector>;
+using constNCdoubleArray =  std::vector<constNCdouble>;
+using NCdoubleArray =  std::vector<NCdouble>;
+using constNCVectorArray =  std::vector<constNCVector>;
+using NCVectorArray =  std::vector<NCVector>;
 
 class DataWarehouse;
 class MPMLabel;
