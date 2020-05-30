@@ -154,6 +154,44 @@ time2 velocity_x2 velocity_y2 velocity_z2
 The velocity of the rigid material particles will be set to these values,
 based on linear interpolation between times, until \Textsfc{stop\_time}
 is reached.  
+
+An alternative way of performing this type of contact is via surface normals.
+In that case, the input has the form:
+\begin{lstlisting}[language=XML]
+ <contact>
+   <type>specified</type>
+   <master_material> 0 </master_material>
+   <master_material_is_rigid> true </master_material_is_rigid>
+   <normal_only> true </normal_only>
+ </contact>
+\end{lstlisting}
+This allows specified contact with arbitrarily moving geometries. In the
+figures below, note the
+motion of the rigid disk to the left and compare it to that of the 
+the deformable disk that shows stress waves.
+
+\begin{minipage}[t]{0.3\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/contact/specified0.png}
+\end{minipage}
+\begin{minipage}[t]{0.3\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/contact/specified1.png}
+\end{minipage}
+\begin{minipage}[t]{0.3\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/contact/specified2.png}
+\end{minipage}
+
+\begin{minipage}[t]{0.3\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/contact/specified3.png}
+\end{minipage}
+\begin{minipage}[t]{0.3\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/contact/specified4.png}
+\end{minipage}
+
 \begin{WarningBox}
 Note, one should not try to apply traction boundary conditions
 (via the  \Textsfc{PhysicalBC} tag), to the rigid material used in this type of 

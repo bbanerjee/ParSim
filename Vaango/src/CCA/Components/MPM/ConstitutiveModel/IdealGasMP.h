@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,14 +24,6 @@
  * IN THE SOFTWARE.
  */
 
-//  IdealGasMP.h
-//  class ConstitutiveModel ConstitutiveModel data type -- 3D -
-//  holds ConstitutiveModel
-//  information for the FLIP technique:
-//    This is for Compressible NeoHookean materials
-//    Features:
-//      Usage:
-
 #ifndef __IDEALGAS_CONSTITUTIVE_MODEL_H__
 #define __IDEALGAS_CONSTITUTIVE_MODEL_H__
 
@@ -43,28 +36,19 @@
 namespace Uintah {
 class IdealGasMP : public ConstitutiveModel
 {
-private:
-  // Create datatype for storing model parameters
 public:
   struct CMData
   {
     double gamma;
     double cv;
     double Pref;
+    double Tref;
   };
 
-private:
-  CMData d_initialData;
-
-
-public:
-  // constructors
   IdealGasMP(ProblemSpecP& ps, MPMFlags* flag);
   IdealGasMP(const IdealGasMP* cm);
   IdealGasMP& operator=(const IdealGasMP& cm) = delete;
-
-  // destructor
-  ~IdealGasMP() override;
+  ~IdealGasMP() override = default;
 
   ModelType modelType() const override
   {
@@ -117,6 +101,11 @@ public:
 
   void addParticleState(std::vector<const VarLabel*>& from,
                         std::vector<const VarLabel*>& to) override;
+
+private:
+
+  CMData d_initialData;
+
 };
 } // End namespace Uintah
 

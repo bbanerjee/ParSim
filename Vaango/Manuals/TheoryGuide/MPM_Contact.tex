@@ -5,10 +5,10 @@ assumed.  Alternative types of contact, such as adhesive contact. could also be 
 changing the contact law.
 
 The purpose of the various contact algorithms in \Vaango is to correct the grid velocities
-such that a particular set of contact assumptions are satisfied.  The two main algorithms
-are \Textsfc{friction\_bard}, which is based on~\cite{Bard2001}, and \Textsfc{friction\_LR},
-which is described in~\cite{Nairn2020}.
+such that a particular set of contact assumptions are satisfied.  Many of these algorithms
+require the computaion of surface normals.
 
+\subsection{Definitions}
 Let $m_p$, $\Bv_p$, $\Bp_p$ be the mass, velocity, and momentum of particle $p$. Also, let $m_g$,
 $\Bv_g$, $\Bp_g$ be the mass, velocity, and momentum at a grid point $g$ due to nearby particles
 in the region of influence.  Consider $N_\alpha$ objects that can potentially be in contact and index
@@ -36,17 +36,56 @@ In matrix form,
   \quad \text{where} \quad
   \SfS^\plus_\alpha = \left(\BmT_g^\alpha\right)^{-1} \SfS^T \BmT_p^\alpha \,.
 \Eeq
-Based on a local conservation of momentum, we define a {\em center-of-mass} velocity, $\Bv_g^{\Tcm}$,
+Based on a local conservation of momentum, we define a \Textsfc{center-of-mass velocity}, $\Bv_g^{\Tcm}$,
 at grid node $g$ for all the contacting objects:
 \Beq \label{eq:center_of_mass_vel}
   \Bv_g^{\Tcm} = \frac{\sum_\alpha m_g^\alpha \Bv_g^\alpha}{\sum_\alpha m_g^\alpha} \,.
 \Eeq
-We also define an effective grid mass, $m_g^\Teff$, as
+We also define an \Textsfc{effective grid mass}, $m_g^\Teff$, as
 \Beq \label{eq:eff_mass}
   \frac{1}{m_g^\Teff} = \sum_\alpha \frac{1}{m_g^\alpha} \,.
 \Eeq
 
-\subsection{Bardenhagen et al. algorithm}
+\subsection{Computing surface normals and tractions}
+Surface normals are typically estimated from the gradient of mass at grid nodes.  If $m_p$ is the mass 
+of particle $p$, then the normal at grid node $g$ due to the particles in its region of influence
+is
+\Beq \label{eq:normal_g}
+  \Bn_g = \sum_p m_p \Grad{\bar{S}}_{gp} \,.
+\Eeq
+Normals are converted to unit vectors before they ar used in \Vaango computations.
+
+Surface tractions at the nodes are computed by projecting particle stresses ($\Bsig_p$) to grid nodes:
+\Beq
+  \bar{\Bt}_g = \Bn_g \cdot \left(\sum_p \Bsig_p \bar{S}_{gp}\right) \,.
+\Eeq
+
+\subsection{Basic contact algorithm}
+The most basic contact algroithm in \Vaango is called ``single-velocity contact''  The center-of-mass
+velocity is computed using \eqref{eq:center_of_mass_vel}.  Upon contact detection, grid nodes
+that participate are assigned this velocity:
+\Beq
+   \Bv_g = \Bv_g^{\Tcm} \,.
+\Eeq
+
+\subsection{Contact with a specified master}
+A slightly more complex algorithm is the ``master''-based contact which is called
+``specified-velocity contact'' in \Vaango.  In this model, a selected master material is
+assigned velocities, $\Bv_g^m = \Bv^m(t)$, where $m$ is the index of the master material.
+The grid node velocities of the materials are then adjusted according to
+\Beq
+  \Bv_g \leftarrow \Bv_g -  \left[\Bn^m_g \cdot (\Bv_g - \Bv_g^m)\right]\Bn^m_g 
+\Eeq
+where $\Bn^m_g$ is the normal for the master material computed using \eqref{eq:normal_g}.
+This type of contact is useful for imposing boundary conditions on objects.
+
+\subsection{Frictional contact algorithms}
+The two main frictional contact algorithms
+are \Textsfc{friction\_bard}, which is based on~\cite{Bard2001}, and \Textsfc{friction\_LR},
+which is described in~\cite{Nairn2020}.
+
+
+\subsubsection{Bardenhagen et al. algorithm}
 In the algorithm developed in~\cite{Bard2001}, a contact interface is defined as the set of
 nodes for which individual grid velocities associated with each object differ from the
 center of mass velocity:
@@ -100,7 +139,7 @@ where the gradients $\overbar{\BGv}_{gp}$ are as defined in \eqref{eq:G_mpm}, \e
 \Eeq
 For multiple objects, an average gradient can be computed for better accuracy.
 
-\subsection{Nairn et al. algorithm}
+\subsubsection{Nairn et al. algorithm}
 The more recent algorithm by~\cite{Nairn2020} uses a logistic regression step to determine
 contact.  The underlying approach is similar to that used in ~\cite{Bard2001}.  Since the approach
 is at its simplest when only two objects are involved at a grid point, we will describe only that

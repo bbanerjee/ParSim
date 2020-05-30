@@ -54,7 +54,8 @@ IdealGasMP::IdealGasMP(ProblemSpecP& ps, MPMFlags* Mflag)
 {
   ps->require("gamma", d_initialData.gamma);
   ps->require("specific_heat", d_initialData.cv);
-  ps->getWithDefault("Pref", d_initialData.Pref, 101325.);
+  ps->getWithDefault("reference_pressure", d_initialData.Pref, 101325.0);
+  ps->getWithDefault("reference_temperature", d_initialData.Tref, 298.0);
 }
 
 IdealGasMP::IdealGasMP(const IdealGasMP* cm)
@@ -63,9 +64,8 @@ IdealGasMP::IdealGasMP(const IdealGasMP* cm)
   d_initialData.gamma = cm->d_initialData.gamma;
   d_initialData.cv = cm->d_initialData.cv;
   d_initialData.Pref = cm->d_initialData.Pref;
+  d_initialData.Tref = cm->d_initialData.Tref;
 }
-
-IdealGasMP::~IdealGasMP() = default;
 
 void
 IdealGasMP::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
@@ -78,7 +78,8 @@ IdealGasMP::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 
   cm_ps->appendElement("gamma", d_initialData.gamma);
   cm_ps->appendElement("specific_heat", d_initialData.cv);
-  cm_ps->appendElement("Pref", d_initialData.Pref);
+  cm_ps->appendElement("reference_pressure", d_initialData.Pref);
+  cm_ps->appendElement("reference_temperature", d_initialData.Tref);
 }
 
 IdealGasMP*
@@ -88,14 +89,158 @@ IdealGasMP::clone()
 }
 
 void
+IdealGasMP::addParticleState(std::vector<const VarLabel*>&,
+                             std::vector<const VarLabel*>&)
+{
+}
+
+void
 IdealGasMP::initializeCMData(const Patch* patch, const MPMMaterial* matl,
                              DataWarehouse* new_dw)
 {
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
   initSharedDataForExplicit(patch, matl, new_dw);
-
   computeStableTimestep(patch, matl, new_dw);
+}
+
+void
+IdealGasMP::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
+                                  DataWarehouse* new_dw)
+{
+  Vector dx = patch->dCell();
+  int matID = matl->getDWIndex();
+  ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
+  constParticleVariable<double> pMass, pVolume, pTemperature;
+  constParticleVariable<Vector> pVelocity;
+
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pTemperature, lb->pTemperatureLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
+
+  double gamma = d_initialData.gamma;
+  double pRef = d_initialData.Pref;
+
+  Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
+  for (int idx : *pset) {
+    double rho = pMass[idx] / pVolume[idx];
+    double dp_dJ = gamma * pRef;
+    double c_dil = std::sqrt(dp_dJ / rho) * 10.0;
+    Vector velMax = pVelocity[idx].cwiseAbs() + c_dil;
+    waveSpeed = Max(velMax, waveSpeed);
+  }
+  waveSpeed = dx / waveSpeed;
+  double delT_new = waveSpeed.minComponent();
+  new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+}
+
+void
+IdealGasMP::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                   const PatchSet* patches) const
+{
+  // Add the computes and requires that are common to all explicit
+  // constitutive models.  The method is defined in the ConstitutiveModel
+  // base class.
+  const MaterialSubset* matlset = matl->thisMaterial();
+  addSharedCRForExplicit(task, matlset, patches);
+}
+
+void
+IdealGasMP::computeStressTensor(const PatchSubset* patches,
+                                const MPMMaterial* matl, DataWarehouse* old_dw,
+                                DataWarehouse* new_dw)
+{
+  Matrix3 Identity; Identity.Identity();
+
+  delt_vartype delT;
+  old_dw->get(delT, lb->delTLabel, getLevel(patches));
+
+  double gamma = d_initialData.gamma;
+  double cv = d_initialData.cv;
+  double rho_orig = matl->getInitialDensity();
+
+  for (int pp = 0; pp < patches->size(); pp++) {
+
+    const Patch* patch = patches->get(pp);
+    Vector dx = patch->dCell();
+
+    auto interpolator = flag->d_interpolator->clone(patch);
+    std::vector<IntVector> ni(interpolator->size());
+    std::vector<Vector> d_S(interpolator->size());
+    std::vector<double> S(interpolator->size());
+
+    int matID = matl->getDWIndex();
+    ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+
+    constParticleVariable<double> pTemperature, pVolume_new;
+    constParticleVariable<Vector> pVelocity;
+    constParticleVariable<Matrix3> pVelGrad_mid, pDefGrad_old, pDefGrad_new;
+    old_dw->get(pTemperature, lb->pTemperatureLabel, pset);
+    old_dw->get(pVelocity,    lb->pVelocityLabel, pset);
+    old_dw->get(pDefGrad_old, lb->pDefGradLabel, pset);
+    new_dw->get(pVolume_new,  lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVelGrad_mid, lb->pVelGradLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
+
+    ParticleVariable<double> pdTdt, p_q;
+    ParticleVariable<Matrix3> pStress_new;
+    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
+    new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
+    new_dw->allocateAndPut(pStress_new, lb->pStressLabel_preReloc, pset);
+
+    Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
+    double strainEnergy = 0.;
+    for (int idx : *pset) {
+
+      double J_new = pDefGrad_new[idx].Determinant();
+      double eps_v = (J_new > 1.0) ? 0.0 : -std::log(J_new);
+      double pressure_new = d_initialData.Pref * (std::exp(gamma * eps_v) - 1.0);
+      pressure_new = (pressure_new > 0.0) ? pressure_new : 0.0;
+      pStress_new[idx] = Identity * (-pressure_new);
+
+      double J_old = pDefGrad_old[idx].Determinant();
+      double rho_new = rho_orig / J_new;
+
+      strainEnergy += (-pressure_new * pVolume_new[idx]);
+      double dT = (1.0 - J_new/J_old) * (pressure_new / (rho_new * cv));
+      pdTdt[idx] = dT / delT;
+      //std::cout << "J = " << J_new <<  " p = " << pressure_new 
+      //          << " T = " << pTemperature[idx] << " dT/dt = " << pdTdt[idx] << "\n";
+
+      p_q[idx] = 0.;
+      if (flag->d_artificialViscosity) {
+        Matrix3 D = (pVelGrad_mid[idx] + pVelGrad_mid[idx].Transpose()) * 0.5;
+        double DTrace = D.Trace();
+        if (DTrace < 0.) {
+          double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
+          p_q[idx] = 2.5 * 2.5 * dx_ave * dx_ave * rho_new * DTrace * DTrace;
+        } else {
+          p_q[idx] = 0.;
+        }
+      }
+ 
+      double dp_dJ = gamma * pressure_new / J_new;
+      double c_dil = std::sqrt(dp_dJ / rho_new) * 10.0;
+      Vector velMax = pVelocity[idx].cwiseAbs() + c_dil;
+      waveSpeed = Max(velMax, waveSpeed);
+    }
+
+    waveSpeed = dx / waveSpeed;
+    double delT_new = waveSpeed.minComponent();
+    new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+
+    if (flag->d_reductionVars->accStrainEnergy ||
+        flag->d_reductionVars->strainEnergy) {
+      new_dw->put(sum_vartype(strainEnergy), lb->StrainEnergyLabel);
+    }
+  }
+}
+
+void
+IdealGasMP::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
+                                   const bool, const bool) const
+{
 }
 
 void
@@ -122,197 +267,6 @@ IdealGasMP::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
 
   // Copy the data local to this constitutive model from the particles to
   // be deleted to the particles to be added
-}
-
-void
-IdealGasMP::addParticleState(std::vector<const VarLabel*>&,
-                             std::vector<const VarLabel*>&)
-{
-  // Add the local particle state data for this constitutive model.
-}
-
-void
-IdealGasMP::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
-                                  DataWarehouse* new_dw)
-{
-  // This is only called for the initial timestep - all other timesteps
-  // are computed as a side-effect of computeStressTensor
-  Vector dx = patch->dCell();
-  int dwi = matl->getDWIndex();
-  // Retrieve the array of constitutive parameters
-  ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pmass, pvolume, ptemp;
-  constParticleVariable<Vector> pvelocity;
-
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(ptemp, lb->pTemperatureLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
-
-  double c_dil = 0.0;
-  Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
-
-  double gamma = d_initialData.gamma;
-  double cv = d_initialData.cv;
-
-  for (int idx : *pset) {
-    double rhoM = pmass[idx] / pvolume[idx];
-    double dp_drho = (gamma - 1.0) * cv * ptemp[idx];
-    double dp_de = (gamma - 1.0) * rhoM;
-
-    double p = (gamma - 1.0) * rhoM * cv * ptemp[idx];
-
-    double tmp = dp_drho + dp_de * p / (rhoM * rhoM);
-
-    // Compute wave speed at each particle, store the maximum
-    c_dil = sqrt(tmp);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
-  }
-  WaveSpeed = dx / WaveSpeed;
-  double delT_new = WaveSpeed.minComponent();
-  new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
-}
-
-void
-IdealGasMP::computeStressTensor(const PatchSubset* patches,
-                                const MPMMaterial* matl, DataWarehouse* old_dw,
-                                DataWarehouse* new_dw)
-{
-  for (int pp = 0; pp < patches->size(); pp++) {
-    const Patch* patch = patches->get(pp);
-    Matrix3 deformationGradientInc;
-    double p, se = 0.;
-    double c_dil = 0.0;
-    Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
-    Matrix3 Identity;
-
-    auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
-
-    Identity.Identity();
-
-    Vector dx = patch->dCell();
-    // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
-
-    int dwi = matl->getDWIndex();
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
-    constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> deformationGradient_new, velGrad;
-    constParticleVariable<Matrix3> deformationGradient;
-    ParticleVariable<Matrix3> pstress;
-    constParticleVariable<double> pmass, ptemp;
-    constParticleVariable<double> pvolume;
-    constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize;
-    ParticleVariable<double> pdTdt, p_q;
-    delt_vartype delT;
-    old_dw->get(delT, lb->delTLabel, getLevel(patches));
-
-    // Ghost::GhostType  gac   = Ghost::AroundCells;
-
-    old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(ptemp, lb->pTemperatureLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
-    new_dw->get(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
-    new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
-    new_dw->get(pvolume, lb->pVolumeLabel_preReloc, pset);
-
-    new_dw->allocateAndPut(pstress, lb->pStressLabel_preReloc, pset);
-    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
-    new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
-
-    double gamma = d_initialData.gamma;
-    double cv = d_initialData.cv;
-    double rho_orig = matl->getInitialDensity();
-
-    for (int idx : *pset) {
-      double Jold = deformationGradient[idx].Determinant();
-      double Jnew = deformationGradient_new[idx].Determinant();
-      double Jinc = Jnew / Jold;
-      double rhoM = rho_orig / Jnew;
-      double dp_drho = (gamma - 1.0) * cv * ptemp[idx];
-      double dp_de = (gamma - 1.0) * rhoM;
-
-      p = (gamma - 1.0) * rhoM * cv * ptemp[idx];
-
-      // try artificial viscosity
-      p_q[idx] = 0.;
-      if (flag->d_artificialViscosity) {
-        // cerr << "Use the MPM Flag for artificial viscosity" << endl;
-        Matrix3 D = (velGrad[idx] + velGrad[idx].Transpose()) * 0.5;
-        double DTrace = D.Trace();
-        if (DTrace < 0.) {
-          double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
-          p_q[idx] = 2.5 * 2.5 * dx_ave * dx_ave * rhoM * DTrace * DTrace;
-        } else {
-          p_q[idx] = 0.;
-        }
-      }
-
-// Compute artificial viscosity term
-#if 0 // Why is this commented out?
-      if (flag->d_artificial_viscosity) {
-        double dx_ave = (dx.x() + dx.y() + dx.z())/3.0;
-        //double c_bulk = sqrt(bulk/rho_cur);
-        double c_bulk = sqrt(dp_drho);
-        Matrix3 D=(velGrad[idx] + velGrad[idx].Transpose())*0.5;
-        p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rhoM, dx_ave);
-      } else {
-        p_q[idx] = 0.;
-      }
-#endif
-
-      double P = p - d_initialData.Pref;
-
-      double tmp = dp_drho + dp_de * p / (rhoM * rhoM);
-
-      pstress[idx] = Identity * (-P);
-
-      // Temp increase due to P*dV work
-      pdTdt[idx] = (-p) * (Jinc - 1.) * (1. / (rhoM * cv)) / delT;
-
-      Vector pvelocity_idx = pvelocity[idx];
-      c_dil = sqrt(tmp);
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
-    }
-
-    WaveSpeed = dx / WaveSpeed;
-    double delT_new = WaveSpeed.minComponent();
-    new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
-
-    if (flag->d_reductionVars->accStrainEnergy ||
-        flag->d_reductionVars->strainEnergy) {
-      new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
-    }
-
-    //delete interpolator;
-  }
-}
-
-void
-IdealGasMP::addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                   const PatchSet* patches) const
-{
-  // Add the computes and requires that are common to all explicit
-  // constitutive models.  The method is defined in the ConstitutiveModel
-  // base class.
-  const MaterialSubset* matlset = matl->thisMaterial();
-  addSharedCRForExplicit(task, matlset, patches);
-}
-
-void
-IdealGasMP::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
-                                   const bool, const bool) const
-{
 }
 
 // The "CM" versions use the pressure-volume relationship of the CNH model
