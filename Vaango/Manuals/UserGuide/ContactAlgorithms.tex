@@ -131,7 +131,7 @@ For reasons of backwards compatibility, the
 \Textsfc{specified} contact type is interchangable with
 \Textsfc{rigid.}  By default, when either model is
 chosen, material 0 is the ``rigid" material, although this can be
-over ridden by the use of the
+overridden by the use of the
 \Textsfc{master\_material} field.  If no
 \Textsfc{filename} field is specified, then the particles of the
 rigid material proceed with the velocity that they were given as their
@@ -141,8 +141,9 @@ which, their velocity becomes that given in the
 \Textsfc{velocity\_after\_stop} field.  The \Textsfc{direction}
 field indicates in which cartesian directions contact should be specified.
 Values of $1$ indicate that contact should be specified, $0$ indicates that
-the subject materials should be allowed to slide in that direction.  If
-a \Textsfc{filename} field \Textsfc{is} specified, then the user can
+the subject materials should be allowed to slide in that direction.  
+
+If a \Textsfc{filename} field \Textsfc{is} specified, then the user can
 create a text file which contains four entries per line.  These are:
 \begin{lstlisting}[backgroundcolor=\color{background}]
 time1 velocity_x1 velocity_y1 velocity_z1
@@ -155,6 +156,31 @@ The velocity of the rigid material particles will be set to these values,
 based on linear interpolation between times, until \Textsfc{stop\_time}
 is reached.  
 
+The figures below show how the specified contact algorithm can be used to 
+simulate uniaxial tension and compression tests.  The green block is the
+rigid master material that moves with a specified velocity.
+
+\begin{minipage}[t]{0.25\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/contact/rigid_tension.png} \\
+  {Initial state for tension test.}
+\end{minipage}
+\begin{minipage}[t]{0.25\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/contact/rigid_tension_end.png}\\
+  {Deformed state for tension test.}
+\end{minipage}
+\begin{minipage}[t]{0.25\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/contact/rigid_compression.png}
+  {Initial state for compression test.}
+\end{minipage}
+\begin{minipage}[t]{0.25\textwidth}
+  \centering
+  \includegraphics[width=0.9\columnwidth]{FIGS/contact/rigid_compression_end.png}
+  {Deformed state for compression test.}
+\end{minipage}
+
 An alternative way of performing this type of contact is via surface normals.
 In that case, the input has the form:
 \begin{lstlisting}[language=XML]
@@ -166,9 +192,9 @@ In that case, the input has the form:
  </contact>
 \end{lstlisting}
 This allows specified contact with arbitrarily moving geometries. In the
-figures below, note the
-motion of the rigid disk to the left and compare it to that of the 
-the deformable disk that shows stress waves.
+figures below, note the motion of the rigid disk to the left and compare it 
+to that of the the deformable disk which shows stress waves.  The
+motion of the rigid disk is unaffected by the contact event.
 
 \begin{minipage}[t]{0.3\textwidth}
   \centering

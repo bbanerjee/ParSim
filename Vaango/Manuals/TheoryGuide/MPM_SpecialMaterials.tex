@@ -1,0 +1,69 @@
+\chapter{Special material models}
+\Vaango contains a few material models that are designed for special problems. These are
+discussed in this chapter.
+
+\section{Rigid material}
+\Textmag{Applicable to:} \Textsfc{explicit} and \Textsfc{implicit} \MPM
+
+This material model assumes that 
+\Beq
+  \Bsig(\BF, t) = \Bzero \quad \Tand \quad \BF(t) = \BI \,.
+\Eeq
+The model is a rough approximation of a rigid body as long as there is no
+contact between objects.  Upon contact, the model should ideally transition into the
+form
+\Beq
+  \Bsig(\BF, t) = \infty \quad \Tand \quad \BF(t) = \BI \,.
+\Eeq
+This situation is approximated using the \Textsfc{specified body contact}
+algorithm which is applicable only in certain directions.  Rigid materials were 
+designed to act as rigid surfaces against which deformable objects
+could be compressed.  The specified body contat algorithm can simulate the 
+interaction of a single ``master'' rigid body with deformable objects.
+
+\section{Ideal gas material}
+\Textmag{Applicable to:} \Textsfc{explicit} \MPM only
+
+The ideal gas material assumes that the stress at a particle is
+\Beq
+  \Bsig(\BF, t) = \begin{cases}
+                    \pbar(\BF)\,\BI & \quad\text{for}\quad p \ge 0 \\
+                    0       & \quad\text{for}\quad p < 0
+                  \end{cases}
+\Eeq
+where $\pbar = -p$, and the pressure $p$ is computed with an isentropic ideal 
+gas equation of state:
+\Beq
+  p = p_{\Tref}\left[\exp(\gamma\,\bar{\Veps_v}) - 1 \right]
+  ~;~~ \bar{\Veps_v}  
+       = \begin{cases}
+           -\ln\left(J\right) & \quad \text{for} \quad J < 1 \\
+           0 & \quad \text{for} \quad J \ge 1
+         \end{cases}
+\Eeq
+where $J = \det(\BF)$.
+
+A rate of change of temperature ($T$) can also be computed by the model:
+\Beq
+  \Deriv{T}{t} = \frac{1}{\Delta t}\left(1 - \frac{J_{n+1}}{J_n}\right) \left(\frac{p}{\rho C_v}\right) 
+\Eeq
+where $J_{n+1} = J(t_{n+1}$, $J_n = J(t_n)$, $\rho$ is the mass density,
+and $C_v$ is the constant volume specific heat.
+
+\section{Water material}
+\Textmag{Applicable to:} \Textsfc{explicit} \MPM only
+
+This material models water~\cite{water_model_ref}, and assumes that the stress is given by
+\Beq
+  \Bsig(\BF, t) = \pbar(\BF) \BI + 2\mu\,\Beta.
+\Eeq
+where $\mu$ is a shear viscosity, $\BdT$ is the symmetric part of the velocity gradient,
+\Beq
+  \pbar = -p \quad \Tand \quad \Beta = \BdT - \Third \Tr(\BdT) \BI \,.
+\Eeq
+The pressure is given by:
+\begin{equation}
+  p = \kappa\left[J^{-\gamma} - 1\right] ~,~~ J = \det(\BF)
+\end{equation}
+where $\kappa$ the bulk modulus and $\gamma$ is a model parameter.  
+It has not been validated, but gives qualitatively reasonable behavior.

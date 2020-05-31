@@ -43,13 +43,11 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <iostream>
 
-using namespace std;
 using namespace Uintah;
 
 Water::Water(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
-
   d_useModifiedEOS = false;
   ps->require("bulk_modulus", d_initialData.d_Bulk);
   ps->require("viscosity", d_initialData.d_Viscosity);
@@ -64,8 +62,6 @@ Water::Water(const Water* cm)
   d_initialData.d_Viscosity = cm->d_initialData.d_Viscosity;
   d_initialData.d_Gamma = cm->d_initialData.d_Gamma;
 }
-
-Water::~Water() = default;
 
 void
 Water::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
@@ -99,6 +95,147 @@ Water::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 }
 
 void
+Water::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
+                             DataWarehouse* new_dw)
+{
+  // This is only called for the initial timestep - all other timesteps
+  // are computed as a side-effect of computeStressTensor
+  Vector dx = patch->dCell();
+  int matID = matl->getDWIndex();
+  ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
+
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
+
+  double c_dil = 0.0;
+  Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
+
+  double bulk = d_initialData.d_Bulk;
+  for (int idx : *pset) {
+    // Compute wave speed at each particle, store the maximum
+    c_dil = sqrt((bulk)*pVolume[idx] / pMass[idx]);
+    Vector velMax = pVelocity[idx].cwiseAbs() + c_dil;
+    waveSpeed = Max(velMax, waveSpeed);
+  }
+  waveSpeed = dx / waveSpeed;
+  double delT_new = waveSpeed.minComponent();
+  new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+}
+
+void
+Water::addParticleState(std::vector<const VarLabel*>&,
+                        std::vector<const VarLabel*>&)
+{
+  // Add the local particle state data for this constitutive model.
+}
+
+void
+Water::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches) const
+{
+  // Add the computes and requires that are common to all explicit
+  // constitutive models.  The method is defined in the ConstitutiveModel
+  // base class.
+  const MaterialSubset* matlset = matl->thisMaterial();
+  addSharedCRForExplicit(task, matlset, patches);
+}
+
+void
+Water::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
+                           DataWarehouse* old_dw, DataWarehouse* new_dw)
+{
+  double oneThird = (1.0 / 3.0);
+  Matrix3 Identity;
+  Identity.Identity();
+
+  double viscosity = d_initialData.d_Viscosity;
+  double bulk = d_initialData.d_Bulk;
+  double gamma = d_initialData.d_Gamma;
+  double rho_orig = matl->getInitialDensity();
+  int matID = matl->getDWIndex();
+
+  delt_vartype delT;
+  old_dw->get(delT, lb->delTLabel, getLevel(patches));
+
+  if (!flag->d_doGridReset) {
+    std::cerr << "The water model doesn't work without resetting the grid" << endl;
+  }
+
+  for (int pp = 0; pp < patches->size(); pp++) {
+    const Patch* patch = patches->get(pp);
+    ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+    Vector dx = patch->dCell();
+
+    constParticleVariable<Vector> pVelocity;
+    constParticleVariable<Matrix3> pDefGrad_new, pVelGrad;
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
+    new_dw->get(pVelGrad, lb->pVelGradLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
+
+    ParticleVariable<double> pdTdt, p_q;
+    ParticleVariable<Matrix3> pStress;
+    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
+    new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
+    new_dw->allocateAndPut(pStress, lb->pStressLabel_preReloc, pset);
+
+    double strainEnergy = 0.;
+    Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
+
+    for (int idx : *pset) {
+
+      pdTdt[idx] = 0.0;
+
+      // Viscous part of the stress
+      Matrix3 D = (pVelGrad[idx] + pVelGrad[idx].Transpose()) * 0.5;
+      Matrix3 DPrime = D - Identity * oneThird * D.Trace();
+      Matrix3 shearStress = DPrime * (2. * viscosity);
+
+      // Hydrostatic part of the stress
+      double J = pDefGrad_new[idx].Determinant();
+      double jtotheminusgamma = std::pow(J, -gamma);
+      double p = bulk * (jtotheminusgamma - 1.0);
+
+      // Compute the total stress (volumetric + deviatoric)
+      pStress[idx] = Identity * (-p) + shearStress;
+
+      // Update wave speed
+      double rho_cur = rho_orig / J;
+      double c_dil = std::sqrt((gamma * jtotheminusgamma * bulk) / rho_cur);
+      Vector velMax = pVelocity[idx].cwiseAbs() + c_dil;
+      waveSpeed = Max(velMax, waveSpeed);
+
+      // Compute artificial viscosity term
+      if (flag->d_artificialViscosity) {
+        double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
+        double c_bulk = sqrt(bulk / rho_cur);
+        Matrix3 D = (pVelGrad[idx] + pVelGrad[idx].Transpose()) * 0.5;
+        p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
+      } else {
+        p_q[idx] = 0.;
+      }
+    } // end loop over particles
+
+    waveSpeed = dx / waveSpeed;
+    double delT_new = waveSpeed.minComponent();
+    new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+
+    if (flag->d_reductionVars->accStrainEnergy ||
+        flag->d_reductionVars->strainEnergy) {
+      new_dw->put(sum_vartype(strainEnergy), lb->StrainEnergyLabel);
+    }
+  } // end loop over patches
+}
+
+void
+Water::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
+                              const bool, const bool) const
+{
+}
+
+void
 Water::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
                                  const PatchSet* patches, MPMLabel*) const
 {
@@ -123,170 +260,13 @@ Water::allocateCMDataAdd(
 }
 
 void
-Water::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
-                             DataWarehouse* new_dw)
-{
-  // This is only called for the initial timestep - all other timesteps
-  // are computed as a side-effect of computeStressTensor
-  Vector dx = patch->dCell();
-  int dwi = matl->getDWIndex();
-  // Retrieve the array of constitutive parameters
-  ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
-
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
-
-  double c_dil = 0.0;
-  Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
-
-  double bulk = d_initialData.d_Bulk;
-  for (int idx : *pset) {
-    // Compute wave speed at each particle, store the maximum
-    c_dil = sqrt((bulk)*pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
-  }
-  WaveSpeed = dx / WaveSpeed;
-  double delT_new = WaveSpeed.minComponent();
-  new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
-}
-
-void
-Water::computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
-                           DataWarehouse* old_dw, DataWarehouse* new_dw)
-{
-  for (int pp = 0; pp < patches->size(); pp++) {
-    const Patch* patch = patches->get(pp);
-    Matrix3 tensorL, Shear;
-    double J, p, se = 0.;
-    double c_dil = 0.0;
-    Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
-    double onethird = (1.0 / 3.0);
-    Matrix3 Identity;
-    Identity.Identity();
-
-    auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
-
-    Vector dx = patch->dCell();
-    // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
-
-    int dwi = matl->getDWIndex();
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
-    constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> deformationGradient_new, velGrad;
-    constParticleVariable<Matrix3> deformationGradient;
-    ParticleVariable<Matrix3> pstress;
-    constParticleVariable<double> pmass;
-    constParticleVariable<double> pvolume;
-    constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize;
-    ParticleVariable<double> pdTdt, p_q;
-
-    delt_vartype delT;
-    old_dw->get(delT, lb->delTLabel, getLevel(patches));
-
-    Ghost::GhostType gac = Ghost::AroundCells;
-    old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
-
-    new_dw->get(pvolume, lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
-    new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
-
-    new_dw->allocateAndPut(pstress, lb->pStressLabel_preReloc, pset);
-    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
-    new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
-
-    double viscosity = d_initialData.d_Viscosity;
-    double bulk = d_initialData.d_Bulk;
-    double gamma = d_initialData.d_Gamma;
-
-    double rho_orig = matl->getInitialDensity();
-
-    constNCVariable<Vector> gvelocity;
-    new_dw->get(gvelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
-
-    if (!flag->d_doGridReset) {
-      cerr << "The water model doesn't work without resetting the grid" << endl;
-    }
-
-    for (int idx : *pset) {
-      // Assign zero internal heating by default - modify if necessary.
-      pdTdt[idx] = 0.0;
-
-      J = deformationGradient_new[idx].Determinant();
-
-      // Calculate rate of deformation D, and deviatoric rate DPrime,
-      Matrix3 D = (velGrad[idx] + velGrad[idx].Transpose()) * 0.5;
-      Matrix3 DPrime = D - Identity * onethird * D.Trace();
-
-      // Get the deformed volume and current density
-      double rho_cur = rho_orig / J;
-
-      // Viscous part of the stress
-      Shear = DPrime * (2. * viscosity);
-
-      // get the hydrostatic part of the stress
-      double jtotheminusgamma = pow(J, -gamma);
-      p = bulk * (jtotheminusgamma - 1.0);
-
-      // compute the total stress (volumetric + deviatoric)
-      pstress[idx] = Identity * (-p) + Shear;
-
-      Vector pvelocity_idx = pvelocity[idx];
-      c_dil = sqrt((gamma * jtotheminusgamma * bulk) / rho_cur);
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
-
-      // Compute artificial viscosity term
-      if (flag->d_artificialViscosity) {
-        double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
-        double c_bulk = sqrt(bulk / rho_cur);
-        Matrix3 D = (velGrad[idx] + velGrad[idx].Transpose()) * 0.5;
-        p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
-      } else {
-        p_q[idx] = 0.;
-      }
-    } // end loop over particles
-
-    WaveSpeed = dx / WaveSpeed;
-    double delT_new = WaveSpeed.minComponent();
-    new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
-
-    if (flag->d_reductionVars->accStrainEnergy ||
-        flag->d_reductionVars->strainEnergy) {
-      new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
-    }
-    //delete interpolator;
-  }
-}
-
-void
-Water::addParticleState(std::vector<const VarLabel*>&,
-                        std::vector<const VarLabel*>&)
-{
-  // Add the local particle state data for this constitutive model.
-}
-
-void
 Water::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
                     DataWarehouse* old_dw, DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    int dwi = matl->getDWIndex();
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+    int matID = matl->getDWIndex();
+    ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
     // Carry forward the data common to all constitutive models
     // when using RigidMPM.
@@ -301,23 +281,6 @@ Water::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
       new_dw->put(sum_vartype(0.), lb->StrainEnergyLabel);
     }
   }
-}
-
-void
-Water::addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const
-{
-  // Add the computes and requires that are common to all explicit
-  // constitutive models.  The method is defined in the ConstitutiveModel
-  // base class.
-  const MaterialSubset* matlset = matl->thisMaterial();
-  addSharedCRForExplicit(task, matlset, patches);
-}
-
-void
-Water::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
-                              const bool, const bool) const
-{
 }
 
 // The "CM" versions use the pressure-volume relationship of the CNH model
@@ -359,27 +322,3 @@ Water::getCompressibility()
   return 1.0 / d_initialData.d_Bulk;
 }
 
-namespace Uintah {
-
-#if 0
-  static MPI_Datatype makeMPI_CMData()
-  {
-    ASSERTEQ(sizeof(Water::StateData), sizeof(double)*0);
-    MPI_Datatype mpitype;
-    MPI_Type_vector(1, 0, 0, MPI_DOUBLE, &mpitype);
-    MPI_Type_commit(&mpitype);
-    return mpitype;
-  }
-  
-  const TypeDescription* fun_getTypeDescription(Water::StateData*)
-  {
-    static TypeDescription* td = 0;
-    if(!td){
-      td = scinew TypeDescription(TypeDescription::Other,
-                                  "Water::StateData", 
-                                  true, &makeMPI_CMData);
-    }
-    return td;
-  }
-#endif
-} // End namespace Uintah

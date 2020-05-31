@@ -131,9 +131,6 @@ HypoElastic::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
     double c_dil = sqrt((bulk + 4. * G / 3.) * pVolume[idx] / pMass[idx]);
     Vector velMax = pVelocity[idx].cwiseAbs() + c_dil;
     waveSpeed = Max(velMax, waveSpeed);
-    //waveSpeed = Vector(Max(c_dil + fabs(pVelocity[idx].x()), waveSpeed.x()),
-    //                   Max(c_dil + fabs(pVelocity[idx].y()), waveSpeed.y()),
-    //                   Max(c_dil + fabs(pVelocity[idx].z()), waveSpeed.z()));
   }
   waveSpeed = dx / waveSpeed;
   double delT_new = waveSpeed.minComponent();

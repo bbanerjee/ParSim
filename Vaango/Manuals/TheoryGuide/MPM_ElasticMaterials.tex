@@ -1,93 +1,104 @@
 \chapter{Elastic material models}
+\section{Hypoelastic material}
+\Textmag{Applicable to:} \Textsfc{explicit} and \Textsfc{implicit} \MPM
+
+Hypoelastic materials have stress-deformation relationships of the form
+\Beq
+  \dot{\Bsig}(\BF) = \SfC(\BF) : \BdT(\BF)
+\Eeq
+where $\SfC$ is an elastic stiffness tensor and $\BdT$ is the symmetric
+part of the velocity gradient.
+
+The base hypoelastic material implemented in Vaango is linear and isotropic:
+\Beq
+  \dot{\Bsig} = \left(\kappa - \tfrac{2}{3}\mu\right) \Tr(\BdT)\,\BI + 2\mu \BdT
+\Eeq
+where $\mu$ is the shear modulus and $\kappa$ is the bulk modulus.
+
+\begin{NoteBox}
+  To ensure frame indifference, both $\Bsig$ and $\BdT$ are unrotated 
+  using the beginning of the timestep deformation gradient polar decomposition before any
+  constitutive relations are evaluated.  The updated stress is rotated back using the deformation 
+  gradient decomposition at the end of the time step.
+\end{NoteBox}
+
 \section{Hyperelastic Material Models}
+Several hyperelastic material models have been implemented in \Vaango.  Other models
+can be easily implemented using the available infrastructure.  The general
+model has the form
+\Beq
+  \Bsig = \frac{1}{J} \Partial{W}{\BF} \cdot\BF^T
+\Eeq
+where $W$ is a strain energy function and $J = \det\BF$.  
+For isotropic hyperelastic functions that
+are expessed in terms of the invariants ($I_1$, $I_2$, $J$) of the right Cauchy-Green deformation 
+($\BC = \BF^T\cdot\BF$), the Cauchy stress is given by
+\Beq
+  \Bsig = \cfrac{2}{J}\left[\cfrac{1}{J^{2/3}}\left(\cfrac{\partial{W}}{\partial \bar{I}_1} + \bar{I}_1~\cfrac{\partial{W}}{\partial \bar{I}_2}\right)\BB -
+   \cfrac{1}{J^{4/3}}~\cfrac{\partial{W}}{\partial \bar{I}_2}~\BB \cdot\BB \right]  + \left[\cfrac{\partial{W}}{\partial J} -
+\cfrac{2}{3J}\left(\bar{I}_1~\cfrac{\partial{W}}{\partial \bar{I}_1} + 2~\bar{I}_2~\cfrac{\partial{W}}{\partial \bar{I}_2}\right)\right]~\BI
+\Eeq
+where $\BB = \BF\cdot\BF^T$, and
+\Beq
+  J = \det\BF ~,~~ \bar{I}_1 = J^{-2/3} I_1 ~,~~ \bar{I}_2 = J^{-4/3} I_2 ~,~~
+  I_1 = \Tr\,\BC ~,~~ I_2 = \Half\left[(\Tr\,\BC)^2 - \Tr(\BC\cdot\BC)\right]
+\Eeq
+Note that $I_1$ and $I_2$ are identical for $\BC$ and $\BB$. Alternatively,
+\Beq
+  \Bsig  = \cfrac{2}{J}\left[\left(\cfrac{\partial W}{\partial I_1} + 
+           I_1~\cfrac{\partial W}{\partial I_2}\right)\BB - 
+           \cfrac{\partial W}{\partial I_2}~\BB \cdot\BB \right] + 
+           2J~\cfrac{\partial W}{\partial I_3}~\BI
+\Eeq
+where $I_3 = J^2$.
 
-The subject of modeling the response of materials to deformation 
-is a subject that has filled numerous textbooks.  Therefore, 
-rather than attempt to condense these volumes, here the reader 
-will be simply be given a simple material response model.  Other 
-more complex material response models can be interchanged in the 
-framework discussed above quite readily.
+The P-wave speed ($c$) needed to estimate the timestep can be computed using
+\Beq
+  c_i^2 = \frac{1}{\rho J} \PPartial{W}{\lambda_i}
+        = \frac{1}{\rho J} \left[ \Partial{W}{I_1}\PPartial{I_1}{\lambda_i} + 
+                                  \Partial{W}{I_2}\PPartial{I_2}{\lambda_i} + 
+                                  \Partial{W}{I_3}\PPartial{I_3}{\lambda_i} \right] 
+\Eeq
+where $\lambda_i$ are the principal stretches, i.e., $I_1 = \sum_i \lambda_i^2$,
+$I_2 = \lambda_1^2\lambda_2^2 + \lambda_2^2\lambda_3^2 + \lambda_1^2\lambda_3^2$ and
+$I_3 = \lambda_1^2\lambda_2^2\lambda_3^2$.
 
-The author has come to prefer a class of models known as 
-hyperelastic models.  What this means is that the stress 
-response of these materials is derived from a strain energy 
-function.  A strain energy function gives a relationship between 
-the state of deformation that a material is in, and the amount 
-of stored strain energy that this material has.  This is akin to 
-the familiar relationship for the stored energy in a spring, 
-$W=\frac{1}{2} k dx^2$ where k is the spring constant, and $dx$ is
-the distance that the spring has been compressed or extended.
+\subsection{Compressible neo-Hookean material}
+\Textmag{Applicable to:} \Textsfc{explicit} and \Textsfc{implicit} \MPM
 
-One such strain energy function is given by:
+The default strain energy function for the compressible neo-Hookean material model
+implemented in \Vaango is (\cite{Simo1998}, p.307):
+\Beq
+  W = \frac{\kappa}{2}\left[\frac{1}{2}(J^2-1) - \ln J\right] + 
+      \frac{\mu}{2}\left[\bar{I}_1 - 3\right]
+\Eeq
+The Cauchy stress corresponding to this function is
+\Beq
+  \Bsig = \frac{\kappa}{2}\left(J - \frac{1}{J}\right)\BI + \frac{\mu}{J}(\bar{\BB} - \Third\bar{I}_1\BI)
+\Eeq
+where $\bar{\BB} = J^{-2/3} \BB = J^{-2/3} \BF\cdot\BF^T$ and $J = \det\BF$.  
+Consistency with linear elasticity requires that $\kappa = K$ and $\mu = G$ 
+where $K$ and $G$ are the linear elastic bulk and shear moduli, respectively.
 
-\begin{equation}
-	W = \frac{\lambda}{4}(J^2-1)
- - (\frac{\lambda}{2}+\mu) \ln J
-+ \frac{\mu}{2}\,\Tr(\tn{F}^T\tn{F} - 3)
-\end{equation}
+Alternative expressions for the bulk modulus factor are allowed and defined in
+the equation-of-state submodels.
 
-from which the following relationship for the stress can be 
-derived:
+\subsection{Compressible Mooney-Rivlin material}
+\Textmag{Applicable to:} \Textsfc{explicit} \MPM only
 
-\begin{equation}
-       \sig = \frac{\lambda}{2}(J-\frac{1}{J})\tn{I} 
-  + \mu (\tn{F}\tn{F}^T) - \tn{I})
- \label{stress}
-\end{equation}
-
-where $\lambda$ and $\mu$ are material constants, while $J$ and 
-$\tn{F}$ describe the state of deformation.  These will be 
-defined shortly.
-
-In the Algorithm section, the calculation of the velocity 
-gradient, $\nabla \tn{v}_p$ is given in Equation \ref{velgrad}.
-Starting from there, we can then compute an increment in the 
-deformation gradient, $\tn{F}(dt)$ by:
-\begin{equation}
-	\tn{F}(dt) = \nabla \tn{v}_p dt + \tn{I}.
-\end{equation}
-This increment in the deformation gradient can then be used to 
-compute a new total deformation gradient using:
-\begin{equation}
-	\tn{F}(t+dt) = \tn{F}(dt) \tn{F}(t).
-\end{equation}
-Note that the initial (t=0) deformation gradient is simply the 
-identity, i.e. $\tn{F}(0) = \tn{I}$.  Now with the deformation 
-gradient, one can compute $J$ by:
-\begin{equation}
-	J = \det(\tn{F}(t+dt)).
-\end{equation}
-
-Note that $J$ represents the volumetric part of the deformation.  
-Specifically, it is the ratio of the current volume of an 
-element of material to it's original volume.  Similarly, we can
-define an increment in $J$ as:
-\begin{equation}
-	J_{inc} = \det(\tn{F}(dt))
-\end{equation}
-which  is the ratio of the current volume of an element of 
-material to it's volume at the previous timestep.  Thus we can 
-write:
-\begin{equation}
-	v_p(t+dt) = J_{inc} v_p(t).
-\end{equation}
-
-Elastic material properties are frequently given in terms of 
-bulk and shear moduli, or $\kappa$ and $\mu$.  The shear is 
-sometimes denoted by $G$.  The shear modulus $\mu$ appears in 
-Equation \ref{stress} above.  $\lambda$ can be computed from
-$\kappa$ and $\mu$ by:
-\begin{equation}
-	\lambda = \kappa - \frac{2}{3}\mu.
-\end{equation}
-
-Lastly, based on material properties $\lambda$ and $\mu$, a material 
-wavespeed can be computed:
-
-\begin{equation}
-	c^2 = (\lambda + 3 \mu)\frac{m_p}{v_p}.
-\end{equation}
-
-This wavespeed can be used in computing the timestep size as 
-described above.
+The compressible Mooney-Rivlin material implemented in \Vaango has the form
+\Beq
+  W = C_1(I_1 - 3) + C_2(I_2 - 3) + C_3\left(\frac{1}{I_3^2} - 1\right) +
+      C_4(I_3 - 1)^2
+\Eeq
+where $C_1$, $C_2$ and $\nu$ are parameters and
+\Beq
+  C_3 = \Half(C_1 + 2C_2) ~,~~ 
+  C_4 = \Half\left[\frac{C_1(5\nu-2) + C_2(11\nu-5)}{1-2\nu}\right] \,.
+\Eeq
+The corresponding Cauchy stress is
+\Beq
+  \Bsig = \frac{2}{J}\left[(C_1 + C_2 I_1)\BB - C_2 \BB\cdot\BB +
+                           J^2 \left[-\frac{2C_3}{I_3^3} + 2C_4(I_3-1)\right]\right] \,.
+\Eeq
 

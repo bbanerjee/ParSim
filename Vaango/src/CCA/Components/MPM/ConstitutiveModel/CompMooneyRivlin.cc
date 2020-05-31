@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -54,7 +55,6 @@ using namespace Uintah;
 CompMooneyRivlin::CompMooneyRivlin(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
-
   ps->require("he_constant_1", d_initialData.C1);
   ps->require("he_constant_2", d_initialData.C2);
   ps->require("he_PR", d_initialData.PR);
@@ -67,8 +67,6 @@ CompMooneyRivlin::CompMooneyRivlin(const CompMooneyRivlin* cm)
   d_initialData.C2 = cm->d_initialData.C2;
   d_initialData.PR = cm->d_initialData.PR;
 }
-
-CompMooneyRivlin::~CompMooneyRivlin() = default;
 
 void
 CompMooneyRivlin::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
@@ -91,6 +89,12 @@ CompMooneyRivlin::clone()
 }
 
 void
+CompMooneyRivlin::addParticleState(std::vector<const VarLabel*>& from,
+                                   std::vector<const VarLabel*>& to)
+{
+}
+
+void
 CompMooneyRivlin::initializeCMData(const Patch* patch, const MPMMaterial* matl,
                                    DataWarehouse* new_dw)
 {
@@ -99,6 +103,208 @@ CompMooneyRivlin::initializeCMData(const Patch* patch, const MPMMaterial* matl,
   initSharedDataForExplicit(patch, matl, new_dw);
 
   computeStableTimestep(patch, matl, new_dw);
+}
+
+void
+CompMooneyRivlin::computeStableTimestep(const Patch* patch,
+                                        const MPMMaterial* matl,
+                                        DataWarehouse* new_dw)
+{
+  // This is only called for the initial timestep - all other timesteps
+  // are computed as a side-effect of computeStressTensor
+  Vector dx = patch->dCell();
+  int dwi = matl->getDWIndex();
+  // Retrieve the array of constitutive parameters
+  ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
+
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
+
+  double c_dil = 0.0;
+  Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
+  double C1 = d_initialData.C1;
+  double C2 = d_initialData.C2;
+  double PR = d_initialData.PR;
+
+  for (int idx : *pset) {
+    // Compute wave speed + particle velocity at each particle,
+    // store the maximum
+    double mu = 2. * (C1 + C2);
+    // double C4 = .5*(C1*(5.*PR-2) + C2*(11.*PR-5)) / (1. - 2.*PR);
+    c_dil =
+      sqrt(2. * mu * (1. - PR) * pVolume[idx] / ((1. - 2. * PR) * pMass[idx]));
+    Vector velMax = pVelocity[idx].cwiseAbs() + c_dil;
+    waveSpeed = Max(velMax, waveSpeed);
+  }
+  waveSpeed = dx / waveSpeed;
+  double delT_new = waveSpeed.minComponent();
+  if (delT_new < 1.e-12)
+    new_dw->put(delt_vartype(DBL_MAX), lb->delTLabel, patch->getLevel());
+  else
+    new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+}
+
+void
+CompMooneyRivlin::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                         const PatchSet* patches) const
+{
+  // Add the computes and requires that are common to all explicit
+  // constitutive models.  The method is defined in the ConstitutiveModel
+  // base class.
+  const MaterialSubset* matlset = matl->thisMaterial();
+  addSharedCRForExplicit(task, matlset, patches);
+}
+
+void
+CompMooneyRivlin::computeStressTensor(const PatchSubset* patches,
+                                      const MPMMaterial* matl,
+                                      DataWarehouse* old_dw,
+                                      DataWarehouse* new_dw)
+{
+  Matrix3 Identity;
+  Identity.Identity();
+
+  double rho_orig = matl->getInitialDensity();
+  double C1 = d_initialData.C1;
+  double C2 = d_initialData.C2;
+  double C3 = .5 * C1 + C2;
+  double PR = d_initialData.PR;
+  double C4 =
+    .5 * (C1 * (5. * PR - 2) + C2 * (11. * PR - 5)) / (1. - 2. * PR);
+
+  int dwi = matl->getDWIndex();
+
+  delt_vartype delT;
+  old_dw->get(delT, lb->delTLabel, getLevel(patches));
+
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    Vector dx = patch->dCell();
+    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+
+    double strainEnergy = 0.0;
+    Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
+
+    // Create array for the particle position
+    constParticleVariable<double> pMass, pVolume;
+    constParticleVariable<Vector> pVelocity;
+    constParticleVariable<Matrix3> pVelGrad, pDefGrad_new;
+
+    old_dw->get(pMass, lb->pMassLabel, pset);
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
+    new_dw->get(pVolume, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pVelGrad, lb->pVelGradLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
+
+    ParticleVariable<double> pdTdt, p_q;
+    ParticleVariable<Matrix3> pStress;
+    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
+    new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
+    new_dw->allocateAndPut(pStress, lb->pStressLabel_preReloc, pset);
+
+    for (int idx : *pset) {
+      // Assign zero internal heating by default - modify if necessary.
+      pdTdt[idx] = 0.0;
+
+      // Compute the left Cauchy-Green deformation tensor
+      Matrix3 B = pDefGrad_new[idx] * pDefGrad_new[idx].Transpose();
+
+      // Compute the invariants
+      double I1_b = B.Trace();
+      double I2_b = 0.5 * ((I1_b * I1_b) - (B * B).Trace());
+      double J = pDefGrad_new[idx].Determinant();
+      double I3_b = J * J;
+
+      double w3 = -2.0 * C3 / (I3_b * I3_b * I3_b) + 2.0 * C4 * (I3_b - 1.0);
+
+      // Compute T = 2/sqrt(I3)*(I3*W3*Identity + (W1+I1*W2)*B - W2*B^2)
+      // W1 = C1, W2 = C2
+      double C1pi1C2 = C1 + I1_b * C2;
+      double i3w3 = I3_b * w3;
+
+      pStress[idx] = (B * C1pi1C2 - (B * B) * C2 + Identity * i3w3) * 2.0 / J;
+
+      // Compute wave speed + particle velocity at each particle,
+      // store the maximum
+      double c_dil = std::sqrt(
+        (4. * (C1 + C2 * I2_b) / J +
+         8. * (2. * C3 / (I3_b * I3_b * I3_b) + C4 * (2. * I3_b - 1.)) -
+         Min((pStress[idx])(0, 0), (pStress[idx])(1, 1), (pStress[idx])(2, 2)) /
+           J) *
+        pVolume[idx] / pMass[idx]);
+      Vector velMax = pVelocity[idx].cwiseAbs() + c_dil;
+      waveSpeed = Max(velMax, waveSpeed);
+
+      // Compute artificial viscosity term
+      if (flag->d_artificialViscosity) {
+        double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
+        double bulk =
+          (4. * (C1 + C2 * I2_b) / J); // I'm a little fuzzy here - JG
+        double rho_cur = rho_orig / J;
+        double c_bulk = sqrt(bulk / rho_cur);
+        Matrix3 D = (pVelGrad[idx] + pVelGrad[idx].Transpose()) * 0.5;
+        p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
+      } else {
+        p_q[idx] = 0.;
+      }
+
+      // Compute the strain energy for all the particles
+      double pStrainEnergy = (C1 * (I1_b - 3.0) + C2 * (I2_b - 3.0) +
+                              C3 * (1.0 / (I3_b * I3_b) - 1.0) +
+                              C4 * (I3_b - 1.0) * (I3_b - 1.0)) *
+                             pVolume[idx] / J;
+
+      strainEnergy += pStrainEnergy;
+    } // end loop over particles
+
+    waveSpeed = dx / waveSpeed;
+    double delT_new = waveSpeed.minComponent();
+
+    if (delT_new < 1.e-12)
+      new_dw->put(delt_vartype(DBL_MAX), lb->delTLabel);
+    else
+      new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+
+    if (flag->d_reductionVars->accStrainEnergy ||
+        flag->d_reductionVars->strainEnergy) {
+      new_dw->put(sum_vartype(strainEnergy), lb->StrainEnergyLabel);
+    }
+  }
+}
+
+void
+CompMooneyRivlin::addComputesAndRequires(Task*, const MPMMaterial*,
+                                         const PatchSet*, const bool,
+                                         const bool) const
+{
+}
+
+void
+CompMooneyRivlin::carryForward(const PatchSubset* patches,
+                               const MPMMaterial* matl, DataWarehouse* old_dw,
+                               DataWarehouse* new_dw)
+{
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    int dwi = matl->getDWIndex();
+    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+
+    // Carry forward the data common to all constitutive models
+    // when using RigidMPM.
+    // This method is defined in the ConstitutiveModel base class.
+    carryForwardSharedData(pset, old_dw, new_dw, matl);
+
+    // Carry forward the data local to this constitutive model
+    new_dw->put(delt_vartype(1.e10), lb->delTLabel, patch->getLevel());
+
+    if (flag->d_reductionVars->accStrainEnergy ||
+        flag->d_reductionVars->strainEnergy) {
+      new_dw->put(sum_vartype(0.), lb->StrainEnergyLabel);
+    }
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -128,235 +334,6 @@ CompMooneyRivlin::allocateCMDataAdd(
   // deleted to the particle to be added.
   // This method is defined in the ConstitutiveModel base class.
   copyDelToAddSetForConvertExplicit(new_dw, delset, addset, newState);
-}
-
-void
-CompMooneyRivlin::computeStableTimestep(const Patch* patch,
-                                        const MPMMaterial* matl,
-                                        DataWarehouse* new_dw)
-{
-  // This is only called for the initial timestep - all other timesteps
-  // are computed as a side-effect of computeStressTensor
-  Vector dx = patch->dCell();
-  int dwi = matl->getDWIndex();
-  // Retrieve the array of constitutive parameters
-  ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
-
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
-
-  double c_dil = 0.0;
-  Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
-  double C1 = d_initialData.C1;
-  double C2 = d_initialData.C2;
-  double PR = d_initialData.PR;
-
-  for (int idx : *pset) {
-    // Compute wave speed + particle velocity at each particle,
-    // store the maximum
-    double mu = 2. * (C1 + C2);
-    // double C4 = .5*(C1*(5.*PR-2) + C2*(11.*PR-5)) / (1. - 2.*PR);
-    c_dil =
-      sqrt(2. * mu * (1. - PR) * pvolume[idx] / ((1. - 2. * PR) * pmass[idx]));
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
-  }
-  WaveSpeed = dx / WaveSpeed;
-  double delT_new = WaveSpeed.minComponent();
-  if (delT_new < 1.e-12)
-    new_dw->put(delt_vartype(DBL_MAX), lb->delTLabel, patch->getLevel());
-  else
-    new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
-}
-
-void
-CompMooneyRivlin::computeStressTensor(const PatchSubset* patches,
-                                      const MPMMaterial* matl,
-                                      DataWarehouse* old_dw,
-                                      DataWarehouse* new_dw)
-{
-  for (int p = 0; p < patches->size(); p++) {
-    const Patch* patch = patches->get(p);
-    Matrix3 Identity, B;
-    double invar1, invar2, invar3, J, w3, i3w3, C1pi1C2;
-    Identity.Identity();
-    double c_dil = 0.0, se = 0.0;
-    Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
-
-    auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
-
-    Vector dx = patch->dCell();
-    // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
-
-    int dwi = matl->getDWIndex();
-
-    // Create array for the particle position
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
-    constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> deformationGradient_new;
-    constParticleVariable<Matrix3> deformationGradient;
-    ParticleVariable<Matrix3> pstress;
-    constParticleVariable<double> pmass;
-    constParticleVariable<double> pvolume;
-    constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize;
-    ParticleVariable<double> pdTdt, p_q;
-
-    delt_vartype delT;
-    old_dw->get(delT, lb->delTLabel, getLevel(patches));
-
-    // Ghost::GhostType  gac   = Ghost::AroundCells;
-    old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
-    old_dw->get(deformationGradient, lb->pDefGradLabel, pset);
-    new_dw->get(pvolume, lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(deformationGradient_new, lb->pDefGradLabel_preReloc, pset);
-
-    new_dw->allocateAndPut(pstress, lb->pStressLabel_preReloc, pset);
-    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
-    new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
-
-    constParticleVariable<Matrix3> velGrad;
-    new_dw->get(velGrad, lb->pVelGradLabel_preReloc, pset);
-
-    double C1 = d_initialData.C1;
-    double C2 = d_initialData.C2;
-    double C3 = .5 * C1 + C2;
-    double PR = d_initialData.PR;
-    double C4 =
-      .5 * (C1 * (5. * PR - 2) + C2 * (11. * PR - 5)) / (1. - 2. * PR);
-
-    double rho_orig = matl->getInitialDensity();
-
-    for (int idx : *pset) {
-      // Assign zero internal heating by default - modify if necessary.
-      pdTdt[idx] = 0.0;
-
-      // Compute the left Cauchy-Green deformation tensor
-      B =
-        deformationGradient_new[idx] * deformationGradient_new[idx].Transpose();
-
-      // Compute the invariants
-      invar1 = B.Trace();
-      invar2 = 0.5 * ((invar1 * invar1) - (B * B).Trace());
-      J = deformationGradient_new[idx].Determinant();
-      invar3 = J * J;
-
-      w3 = -2.0 * C3 / (invar3 * invar3 * invar3) + 2.0 * C4 * (invar3 - 1.0);
-
-      // Compute T = 2/sqrt(I3)*(I3*W3*Identity + (W1+I1*W2)*B - W2*B^2)
-      // W1 = C1, W2 = C2
-      C1pi1C2 = C1 + invar1 * C2;
-      i3w3 = invar3 * w3;
-
-      pstress[idx] = (B * C1pi1C2 - (B * B) * C2 + Identity * i3w3) * 2.0 / J;
-
-      // Compute wave speed + particle velocity at each particle,
-      // store the maximum
-      c_dil = sqrt(
-        (4. * (C1 + C2 * invar2) / J +
-         8. * (2. * C3 / (invar3 * invar3 * invar3) + C4 * (2. * invar3 - 1.)) -
-         Min((pstress[idx])(0, 0), (pstress[idx])(1, 1), (pstress[idx])(2, 2)) /
-           J) *
-        pvolume[idx] / pmass[idx]);
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
-
-      // Compute artificial viscosity term
-      if (flag->d_artificialViscosity) {
-        double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
-        double bulk =
-          (4. * (C1 + C2 * invar2) / J); // I'm a little fuzzy here - JG
-        double rho_cur = rho_orig / J;
-        double c_bulk = sqrt(bulk / rho_cur);
-        Matrix3 D = (velGrad[idx] + velGrad[idx].Transpose()) * 0.5;
-        p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
-      } else {
-        p_q[idx] = 0.;
-      }
-
-      // Compute the strain energy for all the particles
-      double e = (C1 * (invar1 - 3.0) + C2 * (invar2 - 3.0) +
-                  C3 * (1.0 / (invar3 * invar3) - 1.0) +
-                  C4 * (invar3 - 1.0) * (invar3 - 1.0)) *
-                 pvolume[idx] / J;
-
-      se += e;
-    } // end loop over particles
-
-    WaveSpeed = dx / WaveSpeed;
-    double delT_new = WaveSpeed.minComponent();
-
-    if (delT_new < 1.e-12)
-      new_dw->put(delt_vartype(DBL_MAX), lb->delTLabel);
-    else
-      new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
-
-    if (flag->d_reductionVars->accStrainEnergy ||
-        flag->d_reductionVars->strainEnergy) {
-      new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
-    }
-    //delete interpolator;
-  }
-}
-
-void
-CompMooneyRivlin::carryForward(const PatchSubset* patches,
-                               const MPMMaterial* matl, DataWarehouse* old_dw,
-                               DataWarehouse* new_dw)
-{
-  for (int p = 0; p < patches->size(); p++) {
-    const Patch* patch = patches->get(p);
-    int dwi = matl->getDWIndex();
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
-
-    // Carry forward the data common to all constitutive models
-    // when using RigidMPM.
-    // This method is defined in the ConstitutiveModel base class.
-    carryForwardSharedData(pset, old_dw, new_dw, matl);
-
-    // Carry forward the data local to this constitutive model
-    new_dw->put(delt_vartype(1.e10), lb->delTLabel, patch->getLevel());
-
-    if (flag->d_reductionVars->accStrainEnergy ||
-        flag->d_reductionVars->strainEnergy) {
-      new_dw->put(sum_vartype(0.), lb->StrainEnergyLabel);
-    }
-  }
-}
-
-void
-CompMooneyRivlin::addParticleState(std::vector<const VarLabel*>& from,
-                                   std::vector<const VarLabel*>& to)
-{
-}
-
-void
-CompMooneyRivlin::addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                         const PatchSet* patches) const
-{
-  // Add the computes and requires that are common to all explicit
-  // constitutive models.  The method is defined in the ConstitutiveModel
-  // base class.
-  const MaterialSubset* matlset = matl->thisMaterial();
-  addSharedCRForExplicit(task, matlset, patches);
-}
-
-void
-CompMooneyRivlin::addComputesAndRequires(Task*, const MPMMaterial*,
-                                         const PatchSet*, const bool,
-                                         const bool) const
-{
 }
 
 double
@@ -411,27 +388,3 @@ CompMooneyRivlin::getCompressibility()
        << endl;
   return 1.0;
 }
-
-namespace Uintah {
-
-#if 0
-static MPI_Datatype makeMPI_CMData()
-{
-   ASSERTEQ(sizeof(CompMooneyRivlin::CMData), sizeof(double)*3);
-   MPI_Datatype mpitype;
-   MPI_Type_vector(1, 3, 3, MPI_DOUBLE, &mpitype);
-   MPI_Type_commit(&mpitype);
-   return mpitype;
-}
-
-const TypeDescription* fun_getTypeDescription(CompMooneyRivlin::CMData*)
-{
-   static TypeDescription* td = 0;
-   if(!td){
-      td = scinew TypeDescription(TypeDescription::Other, "CompMooneyRivlin::CMData", true, &makeMPI_CMData);
-   }
-   return td;   
-}
-#endif
-
-} // End namespace Uintah
