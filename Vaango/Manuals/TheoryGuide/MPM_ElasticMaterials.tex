@@ -102,3 +102,61 @@ The corresponding Cauchy stress is
                            J^2 \left[-\frac{2C_3}{I_3^3} + 2C_4(I_3-1)\right]\right] \,.
 \Eeq
 
+\subsection{Transversely isotropic hyperelastic material}
+\Textmag{Applicable to:} \Textsfc{explicit} and \Textsfc{implicit} \MPM
+
+The transversely isotropic material model implemented in \Vaango is based on \cite{Weiss1994}.
+The model asssumes a stiffer, ``fiber'', direction denoted $\Bfhat$ and isotropy ortogonal
+to that direction.
+
+The strain energy density function for the model has the form
+\Beq
+  W = W_v + W_d
+\Eeq
+where $W_v$ is the volumetric part and $W_d$ is the deviatoric (volume preserving) part. The
+volumetric part of the strain energy is given by
+\Beq
+  W_v = \Half \kappa (\ln J)^2
+\Eeq
+where $\kappa$ is the bulk modulus and $J = \det\BF$.  The deviatoric part, $W_d$, is 
+given by
+\Beq
+  W_d = \begin{cases}
+          C_1(\bar{I_1} - 3) + C_2(\bar{I_2} - 3) + C_3\left[\exp\left(C_4(\lambar-1)\right) - 1\right]
+          & \quad \text{for} \quad \lambar < \lambda^\star \\
+          C_1(\bar{I_1} - 3) + C_2(\bar{I_2} - 3) + C_5\lambar + C_6\ln\lambar
+          & \quad \text{for} \quad \lambar \ge \lambda^\star
+        \end{cases}
+\Eeq
+where $C_1$, $C_2$, $C_3$, $C_4$, $C_5$, $\lambda^\star$ are model parameters, and
+\Beq
+  \Bal
+  C_6 &= C_3\left[\exp\left(C_4(\lambda^\star-1)\right) - 1\right] - C_5\lambda^\star \\
+  \lambar &= \sqrt{\bar{I_4}} ~,~~
+  \bar{I_4} = \Bfhat \cdot (\bar{\BC} \cdot \Bfhat) ~,~~ \bar{\BC} = J^{-2/3} \BC  \,.
+  \Eal
+\Eeq
+The fiber direction is updated using
+\Beq
+  \Bfhat_{n+1} = \frac{J^{-1/3}}{\lambar}\,\BF\cdot\Bfhat_n \,.
+\Eeq
+The Cauchy stress is given by
+\Beq
+  \Bsig = p\BI + \Bsig_d + \Bsig_f
+\Eeq
+where
+\Beq
+  \Bal
+    p &= \kappa \frac{\ln(J)}{J} \\
+    \Bsig_d & = \frac{2}{J}\left[(C_1 + C_2\bar{I_1})\bar{\BB} - C_2\bar{\BB}\cdot\bar{\BB}
+                -\Third (C_1\bar{I_1} + 2C_2\bar{I_2})\BI\right] \\
+    \Bsig_f &= \frac{\lambar}{J} \,\Partial{W_d}{\lambar} 
+               \left(\Bfhat_{n+1}\otimes\Bfhat_{n+1} - \Third \BI\right)
+  \Eal
+\Eeq
+
+The model also contains a failure feature that sets $\Bsig_d = 0$ when the maximum
+shear strain, defined as the difference between the maximum and mimum eigenvalues
+of $\BC$, exceeds a critical shear strain value.  Also, a fiber stretch
+failure criterion can be used that compares $\sqrt{I_4}$ with a critical stretch value
+and sets $\Bsig_f = 0$ is this value is exceeded.
