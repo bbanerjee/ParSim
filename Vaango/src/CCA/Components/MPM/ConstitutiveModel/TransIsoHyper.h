@@ -34,6 +34,27 @@
 #include <vector>
 
 namespace Uintah {
+class TransIsoHyperState
+{
+public:
+  double J;
+  double I1_bar;
+  double I2_bar;
+  double I4_bar;
+  double I4;
+  double lambda_bar;
+  double dWdI4_bar;
+  double d2WdI4_bar2;
+  double shearModulus;
+  double U;
+  double W;
+  Vector fiberDir_new;
+  Matrix3 C;
+  Matrix3 B;
+  Matrix3 C_bar;
+  Matrix3 B_bar;
+};
+
 class TransIsoHyper : public ConstitutiveModel
 {
 public:
@@ -46,6 +67,7 @@ public:
     double c3;
     double c4;
     double c5;
+    double c6;
     double lambdaStar;
     double failure;
     double critShear;
@@ -89,11 +111,12 @@ public:
                            DataWarehouse* old_dw,
                            DataWarehouse* new_dw) override;
 
-  void addComputesAndRequires(Task* task,
-                              const MPMMaterial* matl,
-                              const PatchSet* patches,
-                              const bool recursion,
-                              const bool schedParent = true) const override;
+  virtual void addComputesAndRequires(
+    Task* task,
+    const MPMMaterial* matl,
+    const PatchSet* patches,
+    const bool recursion,
+    const bool schedParent = true) const override;
 
   // carry forward CM data for RigidMPM
   void carryForward(const PatchSubset* patches,
@@ -127,12 +150,23 @@ public:
 
   Vector getInitialFiberDir() override;
 
-private:
+protected:
   bool d_useModifiedEOS;
-  CMData d_modelParam;
+  CMData d_param;
 
+  TransIsoHyperState computeDeformationState(const Matrix3& defGrad,
+                                             const Vector& fiberDir) const;
+  void computeStressWithFailure(const TransIsoHyperState& ss,
+                                double pStretch,
+                                double pFailure_old,
+                                double& pFailure,
+                                Matrix3& hydrostatic_stress,
+                                Matrix3& deviatoric_stress,
+                                Matrix3& fiber_stress) const;
   Vector computeEigenvalues(const Matrix3& C) const;
-
+  Matrix3 computeHydrostaticStress(const TransIsoHyperState& ss) const;
+  Matrix3 computeDeviatoricStress(const TransIsoHyperState& ss) const;
+  Matrix3 computeFiberStress(const TransIsoHyperState& ss) const;
 };
 } // End namespace Uintah
 

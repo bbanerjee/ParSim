@@ -26,6 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TransIsoHyper.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Constants.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
@@ -55,18 +56,24 @@ TransIsoHyper::TransIsoHyper(ProblemSpecP& ps, MPMFlags* Mflag)
 {
   d_useModifiedEOS = false;
 
-  ps->require("bulk_modulus", d_modelParam.bulkModulus);
-  ps->require("c1", d_modelParam.c1); // Mooney Rivlin constant 1
-  ps->require("c2", d_modelParam.c2); // Mooney Rivlin constant 2
-  ps->require("c3", d_modelParam.c3); // scales exponential stresses
-  ps->require("c4", d_modelParam.c4); // controls uncrimping of fibers
-  ps->require("c5", d_modelParam.c5); // straightened fibers modulus
-  ps->require("fiber_pStretch", d_modelParam.lambdaStar);
-  ps->require("direction_of_symm", d_modelParam.a0);
+  ps->require("bulk_modulus", d_param.bulkModulus);
+  ps->require("direction_of_symm", d_param.a0);
+  ps->require("fiber_pStretch", d_param.lambdaStar);
+  ps->require("c1", d_param.c1); // Mooney Rivlin constant 1
+  ps->require("c2", d_param.c2); // Mooney Rivlin constant 2
+  ps->require("c3", d_param.c3); // scales exponential stresses
+  ps->require("c4", d_param.c4); // controls uncrimping of fibers
+  ps->require("c5", d_param.c5); // straightened fibers modulus
+  d_param.c6 = d_param.c3 * 
+              (std::exp(d_param.c4 * (d_param.lambdaStar - 1.0)) 
+                        - 1.0) -
+              d_param.c5 * d_param.lambdaStar; // c6 = y-intercept
+
   ps->require("failure_option",
-              d_modelParam.failure); // failure flag True/False
-  ps->require("max_fiber_strain", d_modelParam.critStretch);
-  ps->require("max_matrix_strain", d_modelParam.critShear);
+              d_param.failure); // failure flag True/False
+  ps->require("max_fiber_strain", d_param.critStretch);
+  ps->require("max_matrix_strain", d_param.critShear);
+
   ps->get("useModifiedEOS", d_useModifiedEOS); // no negative pressure for
                                                // solids
 
@@ -86,17 +93,18 @@ TransIsoHyper::TransIsoHyper(const TransIsoHyper* cm)
 {
   d_useModifiedEOS = cm->d_useModifiedEOS;
 
-  d_modelParam.bulkModulus = cm->d_modelParam.bulkModulus;
-  d_modelParam.c1 = cm->d_modelParam.c1;
-  d_modelParam.c2 = cm->d_modelParam.c2;
-  d_modelParam.c3 = cm->d_modelParam.c3;
-  d_modelParam.c4 = cm->d_modelParam.c4;
-  d_modelParam.c5 = cm->d_modelParam.c5;
-  d_modelParam.lambdaStar = cm->d_modelParam.lambdaStar;
-  d_modelParam.a0 = cm->d_modelParam.a0;
-  d_modelParam.failure = cm->d_modelParam.failure;
-  d_modelParam.critStretch = cm->d_modelParam.critStretch;
-  d_modelParam.critShear = cm->d_modelParam.critShear;
+  d_param.bulkModulus = cm->d_param.bulkModulus;
+  d_param.c1 = cm->d_param.c1;
+  d_param.c2 = cm->d_param.c2;
+  d_param.c3 = cm->d_param.c3;
+  d_param.c4 = cm->d_param.c4;
+  d_param.c5 = cm->d_param.c5;
+  d_param.c6 = cm->d_param.c6;
+  d_param.lambdaStar = cm->d_param.lambdaStar;
+  d_param.a0 = cm->d_param.a0;
+  d_param.failure = cm->d_param.failure;
+  d_param.critStretch = cm->d_param.critStretch;
+  d_param.critShear = cm->d_param.critShear;
 }
 
 TransIsoHyper::~TransIsoHyper()
@@ -116,17 +124,17 @@ TransIsoHyper::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
     cm_ps->setAttribute("type", "trans_iso_hyper");
   }
 
-  cm_ps->appendElement("bulk_modulus", d_modelParam.bulkModulus);
-  cm_ps->appendElement("c1", d_modelParam.c1);
-  cm_ps->appendElement("c2", d_modelParam.c2);
-  cm_ps->appendElement("c3", d_modelParam.c3);
-  cm_ps->appendElement("c4", d_modelParam.c4);
-  cm_ps->appendElement("c5", d_modelParam.c5);
-  cm_ps->appendElement("fiber_pStretch", d_modelParam.lambdaStar);
-  cm_ps->appendElement("direction_of_symm", d_modelParam.a0);
-  cm_ps->appendElement("failure_option", d_modelParam.failure);
-  cm_ps->appendElement("max_fiber_strain", d_modelParam.critStretch);
-  cm_ps->appendElement("max_matrix_strain", d_modelParam.critShear);
+  cm_ps->appendElement("bulk_modulus", d_param.bulkModulus);
+  cm_ps->appendElement("c1", d_param.c1);
+  cm_ps->appendElement("c2", d_param.c2);
+  cm_ps->appendElement("c3", d_param.c3);
+  cm_ps->appendElement("c4", d_param.c4);
+  cm_ps->appendElement("c5", d_param.c5);
+  cm_ps->appendElement("fiber_pStretch", d_param.lambdaStar);
+  cm_ps->appendElement("direction_of_symm", d_param.a0);
+  cm_ps->appendElement("failure_option", d_param.failure);
+  cm_ps->appendElement("max_fiber_strain", d_param.critStretch);
+  cm_ps->appendElement("max_matrix_strain", d_param.critShear);
   cm_ps->appendElement("useModifiedEOS", d_useModifiedEOS);
 }
 
@@ -139,7 +147,7 @@ TransIsoHyper::clone()
 Vector
 TransIsoHyper::getInitialFiberDir()
 {
-  return d_modelParam.a0;
+  return d_param.a0;
 }
 
 void
@@ -179,9 +187,6 @@ TransIsoHyper::initializeCMData(const Patch* patch, const MPMMaterial* matl,
   // This method is defined in the ConstitutiveModel base class.
   initSharedDataForExplicit(patch, matl, new_dw);
 
-  Matrix3 Identity, zero(0.);
-  Identity.Identity();
-
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
   ParticleVariable<double> pStretch, pFail; // pFail_label
   new_dw->allocateAndPut(pFail, pFailureLabel, pset);
@@ -214,8 +219,8 @@ TransIsoHyper::computeStableTimestep(const Patch* patch,
   double c_dil = 0.0;
   Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
 
-  double bulkModulus = d_modelParam.bulkModulus;
-  double c1 = d_modelParam.c1;
+  double bulkModulus = d_param.bulkModulus;
+  double c1 = d_param.c1;
 
   for (int idx : *pset) {
     // this is valid only for F=Identity
@@ -252,22 +257,10 @@ TransIsoHyper::computeStressTensor(const PatchSubset* patches,
                                    const MPMMaterial* matl,
                                    DataWarehouse* old_dw, DataWarehouse* new_dw)
 {
-  Matrix3 Identity; Identity.Identity();
-  Matrix3 Zero(0.0);
+  double bulkModulus = d_param.bulkModulus;
+  double failure = d_param.failure;
 
-  double bulkModulus = d_modelParam.bulkModulus;
-  double c1 = d_modelParam.c1;
-  double c2 = d_modelParam.c2;
-  double c3 = d_modelParam.c3;
-  double c4 = d_modelParam.c4;
-  double c5 = d_modelParam.c5;
-  double lambdaStar = d_modelParam.lambdaStar;
-  double c6 = c3 * (std::exp(c4 * (lambdaStar - 1.0)) - 1.0) -
-              c5 * lambdaStar; // c6 = y-intercept
   double rho_orig = matl->getInitialDensity();
-  double failure = d_modelParam.failure;
-  double critShear = d_modelParam.critShear;
-  double critStretch = d_modelParam.critStretch;
 
   delt_vartype delT;
   old_dw->get(delT, lb->delTLabel, getLevel(patches));
@@ -296,166 +289,64 @@ TransIsoHyper::computeStressTensor(const PatchSubset* patches,
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
     ParticleVariable<double> pFail, pdTdt, pStretch, p_q;
-    ParticleVariable<Vector> pFiberDir_carry;
+    ParticleVariable<Vector> pFiberDir_copy;
     ParticleVariable<Matrix3> pStress;
 
     new_dw->allocateAndPut(pFail, pFailureLabel_preReloc, pset);
     new_dw->allocateAndPut(pStretch, pStretchLabel_preReloc, pset);
     new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
     new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
-    new_dw->allocateAndPut(pFiberDir_carry, lb->pFiberDirLabel_preReloc, pset);
+    new_dw->allocateAndPut(pFiberDir_copy, lb->pFiberDirLabel_preReloc, pset);
     new_dw->allocateAndPut(pStress, lb->pStressLabel_preReloc, pset);
 
     for (int idx : *pset) {
       // Assign zero internal heating by default - modify if necessary.
       pdTdt[idx] = 0.0;
 
-      // get the volumetric part of the deformation
-      double J = pDefGrad_new[idx].Determinant();
-      double J_onethird = std::pow(J, (1.0/3.0));
-      double J_twothird = J_onethird * J_onethird;
-      double inv_J_twothird = 1.0 / J_twothird;
+      // Carry forward fiber direction
+      pFiberDir_copy[idx] = pFiberDir[idx];
 
-      // carry forward fiber direction
-      pFiberDir_carry[idx] = pFiberDir[idx];
+      // Compute deformation state
+      TransIsoHyperState ss =
+        computeDeformationState(pDefGrad_new[idx], pFiberDir[idx]);
 
-      //_______________________UNCOUPLE DEVIATORIC AND DILATIONAL PARTS
-      //_______________________Fbar=J^(-1/3)*F
-      //_______________________Fvol=J^1/3*Identity
-      //_______________________right Cauchy Green (C) bar and invariants
-      Matrix3 C = pDefGrad_new[idx].Transpose() * pDefGrad_new[idx];
-      Matrix3 B = pDefGrad_new[idx] * pDefGrad_new[idx].Transpose();
-      Matrix3 C_bar = C * inv_J_twothird;
-      Matrix3 B_bar = B * inv_J_twothird;
+      // For diagnostic purposes
+      pStretch[idx] = std::sqrt(ss.I4);  
 
-      double I1_bar = C_bar.Trace();
-      double I2_bar = .5 * (I1_bar * I1_bar - (C_bar * C_bar).Trace());
-      double I4_bar = Dot(pFiberDir[idx], (C_bar * pFiberDir[idx]));
-      double lambda_bar = std::sqrt(I4_bar);
-
-      double I4 = I4_bar * J_twothird; // For diagnostics only
-      pStretch[idx] = std::sqrt(I4);
-
-      Vector fiberDir_new = pDefGrad_new[idx] * pFiberDir[idx] *
-                              (1. / (lambda_bar * J_onethird));
-      Matrix3 ff_dyad(fiberDir_new, fiberDir_new);
-
-      //________________________________strain energy derivatives
-      double dWdI4_bar = 0.;
-      double d2WdI4_bar2 = 0.;
-      double shearModulus = 2.0 * c1 + c2;
-      if (lambda_bar >= 1.) {
-        double lam_bar_sq = I4_bar;
-        double lam_bar_cub = I4_bar * lambda_bar;
-        if (lambda_bar < lambdaStar) {
-          double dW_dlambda_bar = c3 * c4 * std::exp(c4 * (lambda_bar - 1));
-          double dlambda_bar_dI4_bar = 1.0 /(2.0 * lambda_bar);
-          double d2lambda_bar_dI4_bar2 = - 1.0 /(4.0 * lam_bar_cub);
-          dWdI4_bar = dW_dlambda_bar * dlambda_bar_dI4_bar;
-          d2WdI4_bar2 = dW_dlambda_bar * d2lambda_bar_dI4_bar2;
-          
-          //dWdI4_bar =
-          //  0.5 * c3 * (std::exp(c4 * (lambda_bar - 1.)) - 1.) / lam_bar_sq;
-          //d2WdI4_bar2 = 0.25 * c3 * (c4 * std::exp(c4 * (lambda_bar - 1.)) -
-          //                            1. / lambda_bar *
-          //                              (std::exp(c4 * (lambda_bar - 1.)) - 1.)) /
-          //               lam_bar_cub;
-
-        } else {
-          double lam_bar_4th = I4_bar * I4_bar;
-          dWdI4_bar = 0.5 * (c5 + c6 / lambda_bar) / lambda_bar;
-          d2WdI4_bar2 = -0.25 * c6 / lam_bar_4th;
-        }
-        shearModulus += I4_bar * (4. * d2WdI4_bar2 * lam_bar_sq -
-                           2. * dWdI4_bar * lambda_bar);
-      }
-
-      // Compute deformed volume and local wave speed
-      double rho_cur = rho_orig / J;
-      double c_dil = sqrt((bulkModulus + 1. / 3. * shearModulus) / rho_cur);
-      double p = bulkModulus * log(J) / J; // p -= qVisco;
-      if (p >= -1.e-5 && p <= 1.e-5) {
-        p = 0.;
-      }
-
-      //________________________________Failure and stress terms
-      Matrix3 deviatoric_stress(0.0), fiber_stress(0.0);
-      pFail[idx] = 0.;
+      // Compute stresses and failure
+      Matrix3 hydrostatic_stress(0.0), deviatoric_stress(0.0), 
+              fiber_stress(0.0);
       if (failure != 1) {
-        deviatoric_stress =
-          (B_bar * (c1 + c2 * I1_bar) - B_bar * B_bar * c2 -
-           Identity * (1. / 3.) * (c1 * I1_bar + 2. * c2 * I2_bar)) *
-          2. / J;
-        fiber_stress =
-          (ff_dyad - Identity * (1. / 3.)) * (2. / J) * dWdI4_bar * I4_bar;
+        deviatoric_stress = computeDeviatoricStress(ss);
+        fiber_stress = computeFiberStress(ss);
+        hydrostatic_stress = computeHydrostaticStress(ss);
       } else {
-        double matrix_failed = 0.;
-        double fiber_failed = 0.;
-        Vector eigVal = computeEigenvalues(C);
-        double e1 = eigVal[0];
-        double e3 = eigVal[2];
-        double max_shear_strain = (e1 - e3) / 2.;
-        if (max_shear_strain > critShear || pFail_old[idx] == 1.0 ||
-            pFail_old[idx] == 3.0) {
-          deviatoric_stress = Zero;
-          pFail[idx] = 1.;
-          matrix_failed = 1.;
-        } else {
-          deviatoric_stress =
-            (B_bar * (c1 + c2 * I1_bar) - B_bar * B_bar * c2 -
-             Identity * (1. / 3.) * (c1 * I1_bar + 2. * c2 * I2_bar)) *
-            2. / J;
-        }
-        //________________________________fiber stress term + failure of fibers
-        if (pStretch[idx] > critStretch || pFail_old[idx] == 2. ||
-            pFail_old[idx] == 3.) {
-          fiber_stress = Zero;
-          pFail[idx] = 2.;
-          fiber_failed = 1.;
-        } else {
-          fiber_stress = (ff_dyad * dWdI4_bar * I4_bar -
-                          Identity * (1. / 3.) * dWdI4_bar * I4_bar) *
-                         2. / J;
-        }
-        if ((matrix_failed + fiber_failed) == 2. || pFail_old[idx] == 3.) {
-          pFail[idx] = 3.;
-        }
-        //________________________________hydrostatic pressure term
-        if (pFail[idx] == 1.0 || pFail[idx] == 3.0) {
-          p = 0.;
-        }
-        //_______________________________Cauchy stress
+        computeStressWithFailure(ss, pStretch[idx],
+                                 pFail_old[idx], pFail[idx],
+                                 hydrostatic_stress, deviatoric_stress,
+                                 fiber_stress);
       }
 
-      Matrix3 pressure = Identity * p;
       // Cauchy stress
-      pStress[idx] = pressure + deviatoric_stress + fiber_stress;
-      //________________________________end stress
+      pStress[idx] = hydrostatic_stress + deviatoric_stress + fiber_stress;
 
       // Compute the strain energy for all the particles
-      double U = .5 * std::log(J) * std::log(J) * bulkModulus;
-      double W = 0.0;
-      if (lambda_bar < lambdaStar) {
-        W = c1 * (I1_bar - 3.) + c2 * (I2_bar - 3.) +
-            (std::exp(c4 * (lambda_bar - 1.)) - 1.) * c3;
-      } else {
-        W = c1 * (I1_bar - 3.) + c2 * (I2_bar - 3.) + c5 * lambda_bar +
-            c6 * std::log(lambda_bar);
-      }
-
-      double e = (U + W) * pVolume_new[idx] / J;
+      double e = (ss.U + ss.W) * pVolume_new[idx] / ss.J;
       strainEnergy += e;
 
       // Compute artificial viscosity term
+      double rho_cur = rho_orig / ss.J;
       if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
-        double c_bulk = sqrt(bulkModulus / rho_cur);
+        double c_bulk = std::sqrt(bulkModulus / rho_cur);
         Matrix3 D = (pVelGrad[idx] + pVelGrad[idx].Transpose()) * 0.5;
         p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
       } else {
         p_q[idx] = 0.;
       }
 
+      // Find local wave speed
+      double c_dil = sqrt((bulkModulus + 1. / 3. * ss.shearModulus) / rho_cur);
       Vector velMax = pVelocity[idx].cwiseAbs() + c_dil;
       waveSpeed = Max(velMax, waveSpeed);
     } // end loop over particles
@@ -469,6 +360,153 @@ TransIsoHyper::computeStressTensor(const PatchSubset* patches,
       new_dw->put(sum_vartype(strainEnergy), lb->StrainEnergyLabel);
     }
   }
+}
+
+TransIsoHyperState
+TransIsoHyper::computeDeformationState(const Matrix3& defGrad,
+                                       const Vector& fiberDir) const 
+{
+  double bulkModulus = d_param.bulkModulus;
+  double c1 = d_param.c1;
+  double c2 = d_param.c2;
+  double c3 = d_param.c3;
+  double c4 = d_param.c4;
+  double c5 = d_param.c5;
+  double c6 = d_param.c6;
+  double lambdaStar = d_param.lambdaStar;
+
+  // get the volumetric part of the deformation
+  double J = defGrad.Determinant();
+  double J_onethird = std::pow(J, (1.0/3.0));
+  double J_twothird = J_onethird * J_onethird;
+  double inv_J_twothird = 1.0 / J_twothird;
+
+  //_______________________UNCOUPLE DEVIATORIC AND DILATIONAL PARTS
+  //_______________________Fbar=J^(-1/3)*F
+  //_______________________Fvol=J^1/3*Identity
+  //_______________________right Cauchy Green (C) bar and invariants
+  Matrix3 C = defGrad.Transpose() * defGrad;
+  Matrix3 B = defGrad * defGrad.Transpose();
+  Matrix3 C_bar = C * inv_J_twothird;
+  Matrix3 B_bar = B * inv_J_twothird;
+
+  double I1_bar = C_bar.Trace();
+  double I2_bar = .5 * (I1_bar * I1_bar - (C_bar * C_bar).Trace());
+  double I4_bar = Dot(fiberDir, (C_bar * fiberDir));
+  double lambda_bar = std::sqrt(I4_bar);
+
+  double I4 = I4_bar * J_twothird; // For diagnostics only
+
+  Vector fiberDir_new = defGrad * fiberDir *
+                          (1. / (lambda_bar * J_onethird));
+
+  //________________________________strain energy derivatives
+  double dWdI4_bar = 0.;
+  double d2WdI4_bar2 = 0.;
+  double shearModulus = 2.0 * c1 + c2;
+  if (lambda_bar >= 1.) {
+    double lam_bar_sq = I4_bar;
+    double lam_bar_cub = I4_bar * lambda_bar;
+    if (lambda_bar < lambdaStar) {
+
+      double dW_dlambda_bar = c3 * c4 * std::exp(c4 * (lambda_bar - 1));
+      double dlambda_bar_dI4_bar = 1.0 /(2.0 * lambda_bar);
+      double d2lambda_bar_dI4_bar2 = - 1.0 /(4.0 * lam_bar_cub);
+
+      dWdI4_bar = dW_dlambda_bar * dlambda_bar_dI4_bar;
+      d2WdI4_bar2 = dW_dlambda_bar * d2lambda_bar_dI4_bar2;
+      
+      // Old version: Appears inconsistent with Weiss paper.
+      //dWdI4_bar =
+      //  0.5 * c3 * (std::exp(c4 * (lambda_bar - 1.)) - 1.) / lam_bar_sq;
+      //d2WdI4_bar2 = 0.25 * c3 * (c4 * std::exp(c4 * (lambda_bar - 1.)) -
+      //                            1. / lambda_bar *
+      //                              (std::exp(c4 * (lambda_bar - 1.)) - 1.)) /
+      //               lam_bar_cub;
+
+    } else {
+      double lam_bar_4th = I4_bar * I4_bar;
+      dWdI4_bar = 0.5 * (c5 + c6 / lambda_bar) / lambda_bar;
+      d2WdI4_bar2 = -0.25 * c6 / lam_bar_4th;
+    }
+    shearModulus += I4_bar * (4. * d2WdI4_bar2 * lam_bar_sq -
+                       2. * dWdI4_bar * lambda_bar);
+  }
+
+  double U = .5 * std::log(J) * std::log(J) * bulkModulus;
+  double W = 0.0;
+  if (lambda_bar < lambdaStar) {
+    W = c1 * (I1_bar - 3.) + c2 * (I2_bar - 3.) +
+        (std::exp(c4 * (lambda_bar - 1.)) - 1.) * c3;
+  } else {
+    W = c1 * (I1_bar - 3.) + c2 * (I2_bar - 3.) + c5 * lambda_bar +
+        c6 * std::log(lambda_bar);
+  }
+
+  TransIsoHyperState state;
+  state.J = J;
+  state.I1_bar = I1_bar;
+  state.I2_bar = I2_bar;
+  state.I4_bar = I4_bar;
+  state.I4 = I4;
+  state.lambda_bar = lambda_bar;
+  state.dWdI4_bar = dWdI4_bar;
+  state.d2WdI4_bar2 = d2WdI4_bar2;
+  state.shearModulus = shearModulus;
+  state.fiberDir_new = fiberDir_new;
+  state.C = C;
+  state.B = B;
+  state.C_bar = C_bar;
+  state.B_bar = B_bar;
+  state.U = U;
+  state.W = W;
+  
+  return state;
+}
+
+void
+TransIsoHyper::computeStressWithFailure(const TransIsoHyperState& ss,
+                                        double pStretch,
+                                        double pFailure_old,
+                                        double& pFailure,
+                                        Matrix3& hydrostatic_stress,
+                                        Matrix3& deviatoric_stress,
+                                        Matrix3& fiber_stress) const
+{
+  pFailure = 0.;
+  double matrix_failed = 0.;
+  double fiber_failed = 0.;
+  Vector eigVal = computeEigenvalues(ss.C);
+  double e1 = eigVal[0];
+  double e3 = eigVal[2];
+  double max_shear_strain = (e1 - e3) / 2.;
+  if (max_shear_strain > d_param.critShear || pFailure_old == 1.0 ||
+      pFailure_old == 3.0) {
+    deviatoric_stress = Vaango::Util::Zero;
+    pFailure = 1.;
+    matrix_failed = 1.;
+  } else {
+    deviatoric_stress = computeDeviatoricStress(ss);
+  }
+  // fiber stress term + failure of fibers
+  if (pStretch > d_param.critStretch || pFailure_old == 2. ||
+      pFailure_old == 3.) {
+    fiber_stress = Vaango::Util::Zero;
+    pFailure = 2.;
+    fiber_failed = 1.;
+  } else {
+    fiber_stress = computeFiberStress(ss);
+  }
+  if ((matrix_failed + fiber_failed) == 2. || pFailure_old == 3.) {
+    pFailure = 3.;
+  }
+  // hydrostatic pressure term
+  if (pFailure == 1.0 || pFailure == 3.0) {
+    hydrostatic_stress = Vaango::Util::Zero;
+  } else {
+    hydrostatic_stress = computeHydrostaticStress(ss);
+  }
+  return;
 }
 
 Vector 
@@ -507,6 +545,38 @@ TransIsoHyper::computeEigenvalues(const Matrix3& C) const
       std::swap(e2, e3);
   }
   return Vector(e1, e2, e3);
+}
+
+Matrix3
+TransIsoHyper::computeHydrostaticStress(const TransIsoHyperState& ss) const
+{
+  double p = d_param.bulkModulus * log(ss.J) / ss.J; 
+  if (std::abs(p) < -1.e-5) {
+    p = 0.;
+  }
+  Matrix3 hydrostatic_stress = Vaango::Util::Identity * p;
+  return hydrostatic_stress;
+}
+
+Matrix3 
+TransIsoHyper::computeDeviatoricStress(const TransIsoHyperState& ss) const 
+{
+  Matrix3 deviatoric_stress =
+    (ss.B_bar * (d_param.c1 + d_param.c2 * ss.I1_bar) - 
+    ss.B_bar * ss.B_bar * d_param.c2 -
+    Vaango::Util::Identity * (1. / 3.) * (d_param.c1 * ss.I1_bar + 
+                            2. * d_param.c2 * ss.I2_bar)) * (2. / ss.J);
+  return deviatoric_stress;
+}
+
+Matrix3 
+TransIsoHyper::computeFiberStress(const TransIsoHyperState& ss) const
+{
+  Matrix3 ff_dyad(ss.fiberDir_new, ss.fiberDir_new);
+  Matrix3 fiber_stress = 
+    (ff_dyad * ss.dWdI4_bar * ss.I4_bar -
+     Vaango::Util::Identity * (1. / 3.) * ss.dWdI4_bar * ss.I4_bar) * (2. / ss.J);
+  return fiber_stress;
 }
 
 void
@@ -624,7 +694,7 @@ TransIsoHyper::computeRhoMicroCM(double pressure, const double p_ref,
                                  double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
-  double bulkModulus = d_modelParam.bulkModulus;
+  double bulkModulus = d_param.bulkModulus;
 
   double p_gauge = pressure - p_ref;
   double rho_cur;
@@ -646,7 +716,7 @@ TransIsoHyper::computePressEOSCM(const double rho_cur, double& pressure,
                                  double& tmp, const MPMMaterial* matl,
                                  double temperature)
 {
-  double bulkModulus = d_modelParam.bulkModulus;
+  double bulkModulus = d_param.bulkModulus;
   double rho_orig = matl->getInitialDensity();
 
   if (d_useModifiedEOS && rho_cur < rho_orig) {
@@ -666,6 +736,6 @@ TransIsoHyper::computePressEOSCM(const double rho_cur, double& pressure,
 double
 TransIsoHyper::getCompressibility()
 {
-  return 1.0 / d_modelParam.bulkModulus;
+  return 1.0 / d_param.bulkModulus;
 }
 

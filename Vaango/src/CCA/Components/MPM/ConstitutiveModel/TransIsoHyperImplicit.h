@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Reseach Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,132 +24,68 @@
  * IN THE SOFTWARE.
  */
 
-//  TransIsoHyperImplicit.h
-//  class ConstitutiveModel ConstitutiveModel data type -- 3D -
-//  holds ConstitutiveModel
-//  information for the FLIP technique:
-//    This is for Compressible Transversely isotropic hyperelastic materials
-//    Features:
-//      Usage:
-
 #ifndef __Trans_Iso_Hyper_Implicit_CONSTITUTIVE_MODEL_H__
 #define __Trans_Iso_Hyper_Implicit_CONSTITUTIVE_MODEL_H__
 
-#include "ConstitutiveModel.h"
-#include "ImplicitCM.h"
-#include <Core/Disclosure/TypeDescription.h>
+#include <CCA/Components/MPM/ConstitutiveModel/TransIsoHyper.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
 #include <Core/Math/Matrix3.h>
+#include <Eigen/Dense>
 #include <cmath>
 #include <vector>
 
 namespace Uintah {
-class TransIsoHyperImplicit : public ConstitutiveModel, public ImplicitCM
+
+using Matrix66 = Eigen::Matrix<double, 6, 6>;
+
+class TransIsoHyperImplicit : public TransIsoHyper, public ImplicitCM
 {
-private:
-  // Create datatype for storing model parameters
-  bool d_useModifiedEOS;
-
 public:
-  struct CMData
-  { //_________________________________________modified here
-    double Bulk;
-    double c1;
-    double c2;
-    double c3;
-    double c4;
-    double c5;
-    double lambda_star;
-    Vector a0;
-    double failure;
-    double crit_shear;
-    double crit_stretch;
-  };
 
-  const VarLabel* pStretchLabel;          // For diagnostic
-  const VarLabel* pStretchLabel_preReloc; // For diagnostic
-
-  const VarLabel* pFailureLabel; // ____________________________fail_labels
-  const VarLabel* pFailureLabel_preReloc;
-
-private:
-  CMData d_initialData;
-
-public:
-  // constructors
   TransIsoHyperImplicit(ProblemSpecP& ps, MPMFlags* flag);
   TransIsoHyperImplicit(const TransIsoHyperImplicit* cm);
   TransIsoHyperImplicit& operator=(const TransIsoHyperImplicit& cm) = delete;
-
-  // destructor
   ~TransIsoHyperImplicit() override;
-
-  ModelType modelType() const override
-  {
-    return ModelType::TOTAL_FORM;
-  }
-
-  void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
-
-  // clone
   TransIsoHyperImplicit* clone() override;
 
-  // compute stable timestep for this patch
-  virtual void computeStableTimestep(const Patch* patch,
-                                     const MPMMaterial* matl,
-                                     DataWarehouse* new_dw);
+  ModelType modelType() const override { return ModelType::TOTAL_FORM; }
 
+  /* initialization */
+  void initializeCMData(const Patch* patch,
+                        const MPMMaterial* matl,
+                        DataWarehouse* new_dw) override;
+
+  /* For newton iterations */
+  void addComputesAndRequires(Task* task,
+                              const MPMMaterial* matl,
+                              const PatchSet* patches,
+                              const bool recursion,
+                              const bool SchedParent) const override;
   void computeStressTensorImplicit(const PatchSubset* patches,
                                    const MPMMaterial* matl,
-                                   DataWarehouse* old_dw, DataWarehouse* new_dw,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw,
                                    Solver* solver,
                                    const bool recursion) override;
 
+  /* For end of iterations */
+  void addComputesAndRequires(Task* task,
+                              const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
   void computeStressTensorImplicit(const PatchSubset* patches,
                                    const MPMMaterial* matl,
                                    DataWarehouse* old_dw,
                                    DataWarehouse* new_dw) override;
 
-  // initialize  each particle's constitutive model data
-  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
-                        DataWarehouse* new_dw) override;
+private:
 
-  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                 const PatchSet* patch,
-                                 MPMLabel* lb) const override;
+  Matrix66 computeTangentStiffness(const TransIsoHyperState& ss,
+                                   double p,
+                                   double pFailed) const;
+  Matrix66 computeVolTangentStiffness(const TransIsoHyperState& ss, double p) const;
+  Matrix66 computeDevTangentStiffness(const TransIsoHyperState& ss) const;
+  Matrix66 computeFiberTangentStiffness(const TransIsoHyperState& ss) const;
 
-  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
-                         ParticleLabelVariableMap* newState,
-                         ParticleSubset* delset,
-                         DataWarehouse* old_dw) override;
-
-  /*virtual void addInitialComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet*) const;*/
-
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches, const bool recursion,
-                              const bool SchedParent) const override;
-
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const override;
-
-  double computeRhoMicroCM(double pressure, const double p_ref,
-                           const MPMMaterial* matl, double temperature,
-                           double rho_guess) override;
-
-  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
-                         double& dp_drho, double& ss_new,
-                         const MPMMaterial* matl, double temperature) override;
-
-  double getCompressibility() override;
-
-  Vector getInitialFiberDir() override;
-
-  void addParticleState(std::vector<const VarLabel*>& from,
-                        std::vector<const VarLabel*>& to) override;
-
-  // const VarLabel* bElBarLabel;
-  // const VarLabel* bElBarLabel_preReloc;
 };
 } // End namespace Uintah
 
