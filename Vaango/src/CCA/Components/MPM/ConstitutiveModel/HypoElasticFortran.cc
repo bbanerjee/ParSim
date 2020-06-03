@@ -26,6 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/HypoElasticFortran.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Constants.h>
 #include <CCA/Ports/DataWarehouse.h>
 
 #include <Core/Exceptions/ParameterNotFound.h>
@@ -81,23 +82,27 @@ using namespace Uintah;
 HypoElasticFortran::HypoElasticFortran(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
-  ps->require("G", d_initialData.G);
-  ps->require("K", d_initialData.K);
+  ps->require("G", d_modelParam.G);
+  ps->require("K", d_modelParam.K);
 
   double UI[2];
-  UI[0] = d_initialData.K;
-  UI[1] = d_initialData.G;
+  UI[0] = d_modelParam.K;
+  UI[1] = d_modelParam.G;
   HOOKECHK(UI, UI, UI);
 }
 
 HypoElasticFortran::HypoElasticFortran(const HypoElasticFortran* cm)
   : ConstitutiveModel(cm)
 {
-  d_initialData.G = cm->d_initialData.G;
-  d_initialData.K = cm->d_initialData.K;
+  d_modelParam.G = cm->d_modelParam.G;
+  d_modelParam.K = cm->d_modelParam.K;
 }
 
-HypoElasticFortran::~HypoElasticFortran() = default;
+HypoElasticFortran*
+HypoElasticFortran::clone()
+{
+  return scinew HypoElasticFortran(*this);
+}
 
 void
 HypoElasticFortran::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
@@ -108,14 +113,17 @@ HypoElasticFortran::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
     cm_ps->setAttribute("type", "hypo_elastic_fortran");
   }
 
-  cm_ps->appendElement("G", d_initialData.G);
-  cm_ps->appendElement("K", d_initialData.K);
+  cm_ps->appendElement("G", d_modelParam.G);
+  cm_ps->appendElement("K", d_modelParam.K);
 }
 
-HypoElasticFortran*
-HypoElasticFortran::clone()
+void
+HypoElasticFortran::addParticleState(std::vector<const VarLabel*>& from,
+                                     std::vector<const VarLabel*>& to)
 {
-  return scinew HypoElasticFortran(*this);
+  // This is an INCREMENTAL model. Needs polar decomp R to be saved.
+  from.push_back(lb->pPolarDecompRLabel);
+  to.push_back(lb->pPolarDecompRLabel_preReloc);
 }
 
 void
@@ -126,8 +134,166 @@ HypoElasticFortran::initializeCMData(const Patch* patch,
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
   initSharedDataForExplicit(patch, matl, new_dw);
-
   computeStableTimestep(patch, matl, new_dw);
+}
+
+void
+HypoElasticFortran::computeStableTimestep(const Patch* patch,
+                                          const MPMMaterial* matl,
+                                          DataWarehouse* new_dw)
+{
+  // This is only called for the initial timestep - all other timesteps
+  // are computed as a side-effect of computeStressTensor
+  Vector dx = patch->dCell();
+  int matID = matl->getDWIndex();
+  ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
+  constParticleVariable<double> pMass, pVolume;
+  constParticleVariable<Vector> pVelocity;
+
+  new_dw->get(pMass, lb->pMassLabel, pset);
+  new_dw->get(pVolume, lb->pVolumeLabel, pset);
+  new_dw->get(pVelocity, lb->pVelocityLabel, pset);
+
+  double G = d_modelParam.G;
+  double bulk = d_modelParam.K;
+
+  Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
+  for (int idx : *pset) {
+    // Compute wave speed at each particle, store the maximum
+    double c_dil = std::sqrt((bulk + 4. * G / 3.) * pVolume[idx] / pMass[idx]);
+    Vector velMax = pVelocity[idx].cwiseAbs() + c_dil;
+    waveSpeed = Max(velMax, waveSpeed);
+  }
+  waveSpeed = dx / waveSpeed;
+  double delT_new = waveSpeed.minComponent();
+  new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+}
+
+void
+HypoElasticFortran::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                           const PatchSet* patches) const
+{
+  // Add the computes and requires that are common to all explicit
+  // constitutive models.  The method is defined in the ConstitutiveModel
+  // base class.
+  const MaterialSubset* matlset = matl->thisMaterial();
+  addComputesAndRequiresForRotatedExplicit(task, matlset, patches);
+}
+
+void
+HypoElasticFortran::computeStressTensor(const PatchSubset* patches,
+                                        const MPMMaterial* matl,
+                                        DataWarehouse* old_dw,
+                                        DataWarehouse* new_dw)
+{
+  double rho_orig = matl->getInitialDensity();
+  int matID = matl->getDWIndex();
+
+  delt_vartype delT;
+  old_dw->get(delT, lb->delTLabel, getLevel(patches));
+
+  for (int p = 0; p < patches->size(); p++) {
+    const Patch* patch = patches->get(p);
+    Vector dx = patch->dCell();
+    ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
+
+    constParticleVariable<double> pVolume_new;
+    constParticleVariable<Vector> pVelocity;
+    constParticleVariable<Matrix3> pStress_old, pDefRate_mid, pDefGrad_new;
+    old_dw->get(pVelocity, lb->pVelocityLabel, pset);
+    new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pStress_old, lb->pStressUnrotatedLabel, pset);
+    new_dw->get(pDefRate_mid, lb->pDeformRateMidLabel, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
+
+    ParticleVariable<double> pdTdt, p_q;
+    ParticleVariable<Matrix3> pStress_new;
+    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
+    new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
+    new_dw->allocateAndPut(pStress_new, lb->pStressLabel_preReloc, pset);
+
+    double UI[2];
+    UI[0] = d_modelParam.K;
+    UI[1] = d_modelParam.G;
+
+    double strainEnergy = 0.0;
+    Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
+
+    for (int idx : *pset) {
+      // Assign zero internal heating by default - modify if necessary.
+      pdTdt[idx] = 0.0;
+
+      double sigarg[6];
+      sigarg[0] = pStress_old[idx](0, 0);
+      sigarg[1] = pStress_old[idx](1, 1);
+      sigarg[2] = pStress_old[idx](2, 2);
+      sigarg[3] = pStress_old[idx](0, 1);
+      sigarg[4] = pStress_old[idx](1, 2);
+      sigarg[5] = pStress_old[idx](2, 0);
+      double Darray[6];
+      Darray[0] = pDefRate_mid[idx](0, 0);
+      Darray[1] = pDefRate_mid[idx](1, 1);
+      Darray[2] = pDefRate_mid[idx](2, 2);
+      Darray[3] = pDefRate_mid[idx](0, 1);
+      Darray[4] = pDefRate_mid[idx](1, 2);
+      Darray[5] = pDefRate_mid[idx](2, 0);
+
+      double svarg[1];
+      double USM = 9e99;
+      double dt = delT;
+      int nblk = 1;
+      int ninsv = 1;
+      HOOKE_INCREMENTAL(nblk, ninsv, dt, UI, sigarg, Darray, svarg, USM);
+
+      pStress_new[idx](0, 0) = sigarg[0];
+      pStress_new[idx](1, 1) = sigarg[1];
+      pStress_new[idx](2, 2) = sigarg[2];
+      pStress_new[idx](0, 1) = sigarg[3];
+      pStress_new[idx](1, 0) = sigarg[3];
+      pStress_new[idx](2, 1) = sigarg[4];
+      pStress_new[idx](1, 2) = sigarg[4];
+      pStress_new[idx](2, 0) = sigarg[5];
+      pStress_new[idx](0, 2) = sigarg[5];
+
+      // Compute the strain energy for all the particles
+      Matrix3 avgStress = (pStress_new[idx] + pStress_old[idx]) * .5;
+      double rateOfWork = computeRateOfWork(avgStress, pDefRate_mid[idx]);
+      strainEnergy += (rateOfWork * pVolume_new[idx] * delT);
+
+      // Compute wave speed at each particle, store the maximum
+      double J = pDefGrad_new[idx].Determinant();
+      double rho_cur = rho_orig / J;
+      double c_dil = std::sqrt(USM / rho_cur);
+      Vector velMax = pVelocity[idx].cwiseAbs() + c_dil;
+      waveSpeed = Max(velMax, waveSpeed);
+
+      // Compute artificial viscosity term
+      if (flag->d_artificialViscosity) {
+        double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
+        double c_bulk = sqrt(UI[0] / rho_cur);
+        p_q[idx] = artificialBulkViscosity(pDefRate_mid[idx].Trace(), 
+                                           c_bulk, rho_cur, dx_ave);
+      } else {
+        p_q[idx] = 0.;
+      }
+    } // end loop over particles
+
+    waveSpeed = dx / waveSpeed;
+    double delT_new = waveSpeed.minComponent();
+    new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+
+    if (flag->d_reductionVars->accStrainEnergy ||
+        flag->d_reductionVars->strainEnergy) {
+      new_dw->put(sum_vartype(strainEnergy), lb->StrainEnergyLabel);
+    }
+  }
+}
+
+void
+HypoElasticFortran::addComputesAndRequires(Task*, const MPMMaterial*,
+                                           const PatchSet*, const bool,
+                                           const bool) const
+{
 }
 
 void
@@ -157,252 +323,14 @@ HypoElasticFortran::allocateCMDataAdd(DataWarehouse* new_dw,
 }
 
 void
-HypoElasticFortran::addParticleState(std::vector<const VarLabel*>& from,
-                                     std::vector<const VarLabel*>& to)
-{
-  // Add the local particle state data for this constitutive model.
-}
-
-void
-HypoElasticFortran::computeStableTimestep(const Patch* patch,
-                                          const MPMMaterial* matl,
-                                          DataWarehouse* new_dw)
-{
-  // This is only called for the initial timestep - all other timesteps
-  // are computed as a side-effect of computeStressTensor
-  Vector dx = patch->dCell();
-  int dwi = matl->getDWIndex();
-  ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
-  constParticleVariable<double> pmass, pvolume;
-  constParticleVariable<Vector> pvelocity;
-
-  new_dw->get(pmass, lb->pMassLabel, pset);
-  new_dw->get(pvolume, lb->pVolumeLabel, pset);
-  new_dw->get(pvelocity, lb->pVelocityLabel, pset);
-
-  double c_dil = 0.0;
-  Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
-
-  double G = d_initialData.G;
-  double bulk = d_initialData.K;
-  for (int idx : *pset) {
-    // Compute wave speed at each particle, store the maximum
-    c_dil = sqrt((bulk + 4. * G / 3.) * pvolume[idx] / pmass[idx]);
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
-  }
-  WaveSpeed = dx / WaveSpeed;
-  double delT_new = WaveSpeed.minComponent();
-  new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
-}
-
-void
-HypoElasticFortran::computeStressTensor(const PatchSubset* patches,
-                                        const MPMMaterial* matl,
-                                        DataWarehouse* old_dw,
-                                        DataWarehouse* new_dw)
-{
-  double rho_orig = matl->getInitialDensity();
-  for (int p = 0; p < patches->size(); p++) {
-    double se = 0.0;
-    const Patch* patch = patches->get(p);
-
-    auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-    vector<double> S(interpolator->size());
-
-    Matrix3 velGrad, pDefGradInc, Identity, zero(0.), One(1.);
-    double c_dil = 0.0, Jinc;
-    Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
-    //    double onethird = (1.0/3.0);
-
-    Identity.Identity();
-
-    Vector dx = patch->dCell();
-    double oodx[3] = { 1. / dx.x(), 1. / dx.y(), 1. / dx.z() };
-
-    int dwi = matl->getDWIndex();
-    // Create array for the particle position
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
-    constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> pDefGrad, pstress;
-    ParticleVariable<Matrix3> pstress_new;
-    ParticleVariable<Matrix3> pDefGrad_new;
-    constParticleVariable<double> pmass, pvolume, ptemperature;
-    ParticleVariable<double> pvolume_new;
-    constParticleVariable<Vector> pvelocity;
-    constParticleVariable<Matrix3> psize;
-    constNCVariable<Vector> gvelocity;
-    delt_vartype delT;
-    old_dw->get(delT, lb->delTLabel, getLevel(patches));
-
-    Ghost::GhostType gac = Ghost::AroundCells;
-
-    old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(pstress, lb->pStressLabel, pset);
-    old_dw->get(psize, lb->pSizeLabel, pset);
-    old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(pvolume, lb->pVolumeLabel, pset);
-    old_dw->get(pvelocity, lb->pVelocityLabel, pset);
-    old_dw->get(ptemperature, lb->pTemperatureLabel, pset);
-    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
-
-    new_dw->get(gvelocity, lb->gVelocityStarLabel, dwi, patch, gac, NGN);
-
-    ParticleVariable<double> pdTdt, p_q;
-
-    new_dw->allocateAndPut(pstress_new, lb->pStressLabel_preReloc, pset);
-    new_dw->allocateAndPut(pvolume_new, lb->pVolumeLabel_preReloc, pset);
-    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
-    new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
-    new_dw->allocateAndPut(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
-
-    double UI[2];
-    UI[0] = d_initialData.K;
-    UI[1] = d_initialData.G;
-
-    for (int idx : *pset) {
-      // Assign zero internal heating by default - modify if necessary.
-      pdTdt[idx] = 0.0;
-      // Initialize velocity gradient
-      velGrad.set(0.0);
-
-      if (!flag->d_axisymmetric) {
-        // Get the node indices that surround the cell
-        interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx],
-                                                  pDefGrad[idx]);
-
-        computeVelocityGradient(velGrad, ni, d_S, oodx, gvelocity);
-
-      } else { // axi-symmetric kinematics
-        // Get the node indices that surround the cell
-        interpolator->findCellAndWeightsAndShapeDerivatives(
-          px[idx], ni, S, d_S, psize[idx], pDefGrad[idx]);
-        // x -> r, y -> z, z -> theta
-        computeAxiSymVelocityGradient(velGrad, ni, d_S, S, oodx, gvelocity,
-                                      px[idx]);
-      }
-
-      // Calculate rate of deformation D, and deviatoric rate DPrime,
-      Matrix3 D = (velGrad + velGrad.Transpose()) * .5;
-
-      // Compute the deformation gradient increment using the time_step
-      // velocity gradient
-      // F_n^np1 = dudx * dt + Identity
-      pDefGradInc = velGrad * delT + Identity;
-
-      Jinc = pDefGradInc.Determinant();
-
-      // Update the deformation gradient tensor to its time n+1 value.
-      pDefGrad_new[idx] = pDefGradInc * pDefGrad[idx];
-
-      // get the volumetric part of the deformation
-      double J = pDefGrad[idx].Determinant();
-      pvolume_new[idx] = Jinc * pvolume[idx];
-
-      // Compute the local sound speed
-      double rho_cur = rho_orig / J;
-
-// This is the (updated) Cauchy stress
-#if 0
-      double onethird = 1./3.;
-      Matrix3 DPrime = D - Identity*onethird*D.Trace();
-      double G=UI[1];
-      double bulk=UI[0];
-      pstress_new[idx] = pstress[idx] + 
-                         (DPrime*2.*G + Identity*bulk*D.Trace())*delT;
-
-      cout << pstress_new[idx] << endl;
-#endif
-
-      double sigarg[6];
-      sigarg[0] = pstress[idx](0, 0);
-      sigarg[1] = pstress[idx](1, 1);
-      sigarg[2] = pstress[idx](2, 2);
-      sigarg[3] = pstress[idx](0, 1);
-      sigarg[4] = pstress[idx](1, 2);
-      sigarg[5] = pstress[idx](2, 0);
-      double Darray[6];
-      Darray[0] = D(0, 0);
-      Darray[1] = D(1, 1);
-      Darray[2] = D(2, 2);
-      Darray[3] = D(0, 1);
-      Darray[4] = D(1, 2);
-      Darray[5] = D(2, 0);
-      double svarg[1];
-      double USM = 9e99;
-      double dt = delT;
-      int nblk = 1;
-      int ninsv = 1;
-      HOOKE_INCREMENTAL(nblk, ninsv, dt, UI, sigarg, Darray, svarg, USM);
-
-      pstress_new[idx](0, 0) = sigarg[0];
-      pstress_new[idx](1, 1) = sigarg[1];
-      pstress_new[idx](2, 2) = sigarg[2];
-      pstress_new[idx](0, 1) = sigarg[3];
-      pstress_new[idx](1, 0) = sigarg[3];
-      pstress_new[idx](2, 1) = sigarg[4];
-      pstress_new[idx](1, 2) = sigarg[4];
-      pstress_new[idx](2, 0) = sigarg[5];
-      pstress_new[idx](0, 2) = sigarg[5];
-
-#if 0
-      cout << pstress_new[idx] << endl;
-#endif
-
-      c_dil = sqrt(USM / rho_cur);
-
-      // Compute the strain energy for all the particles
-      Matrix3 AvgStress = (pstress_new[idx] + pstress[idx]) * .5;
-
-      double e = (D(0, 0) * AvgStress(0, 0) + D(1, 1) * AvgStress(1, 1) +
-                  D(2, 2) * AvgStress(2, 2) +
-                  2. * (D(0, 1) * AvgStress(0, 1) + D(0, 2) * AvgStress(0, 2) +
-                        D(1, 2) * AvgStress(1, 2))) *
-                 pvolume_new[idx] * delT;
-
-      se += e;
-
-      // Compute wave speed at each particle, store the maximum
-      Vector pvelocity_idx = pvelocity[idx];
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
-
-      // Compute artificial viscosity term
-      if (flag->d_artificialViscosity) {
-        double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
-        double c_bulk = sqrt(UI[0] / rho_cur);
-        Matrix3 D = (velGrad + velGrad.Transpose()) * 0.5;
-        p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
-      } else {
-        p_q[idx] = 0.;
-      }
-    } // end loop over particles
-
-    WaveSpeed = dx / WaveSpeed;
-    double delT_new = WaveSpeed.minComponent();
-    new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
-
-    if (flag->d_reductionVars->accStrainEnergy ||
-        flag->d_reductionVars->strainEnergy) {
-      new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
-    }
-    //delete interpolator;
-  }
-}
-
-void
 HypoElasticFortran::carryForward(const PatchSubset* patches,
                                  const MPMMaterial* matl, DataWarehouse* old_dw,
                                  DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
-    int dwi = matl->getDWIndex();
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
+    int matID = matl->getDWIndex();
+    ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
     // Carry forward the data common to all constitutive models
     // when using RigidMPM.
@@ -419,24 +347,6 @@ HypoElasticFortran::carryForward(const PatchSubset* patches,
   }
 }
 
-void
-HypoElasticFortran::addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                           const PatchSet* patches) const
-{
-  // Add the computes and requires that are common to all explicit
-  // constitutive models.  The method is defined in the ConstitutiveModel
-  // base class.
-  const MaterialSubset* matlset = matl->thisMaterial();
-  addSharedCRForHypoExplicit(task, matlset, patches);
-}
-
-void
-HypoElasticFortran::addComputesAndRequires(Task*, const MPMMaterial*,
-                                           const PatchSet*, const bool,
-                                           const bool) const
-{
-}
-
 double
 HypoElasticFortran::computeRhoMicroCM(double pressure, const double p_ref,
                                       const MPMMaterial* matl,
@@ -446,8 +356,8 @@ HypoElasticFortran::computeRhoMicroCM(double pressure, const double p_ref,
   // double p_ref=101325.0;
   double p_gauge = pressure - p_ref;
   double rho_cur;
-  // double G = d_initialData.G;
-  double bulk = d_initialData.K;
+  // double G = d_modelParam.G;
+  double bulk = d_modelParam.K;
 
   rho_cur = rho_orig / (1 - p_gauge / bulk);
 
@@ -465,8 +375,8 @@ HypoElasticFortran::computePressEOSCM(double rho_cur, double& pressure,
                                       double& tmp, const MPMMaterial* matl,
                                       double temperature)
 {
-  // double G = d_initialData.G;
-  double bulk = d_initialData.K;
+  // double G = d_modelParam.G;
+  double bulk = d_modelParam.K;
   double rho_orig = matl->getInitialDensity();
 
   double p_g = bulk * (1.0 - rho_orig / rho_cur);
@@ -483,5 +393,5 @@ HypoElasticFortran::computePressEOSCM(double rho_cur, double& pressure,
 double
 HypoElasticFortran::getCompressibility()
 {
-  return 1.0 / d_initialData.K;
+  return 1.0 / d_modelParam.K;
 }

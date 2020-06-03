@@ -27,7 +27,7 @@
 #ifndef __HYPOELASTIC_CONSTITUTIVE_MODEL_H__
 #define __HYPOELASTIC_CONSTITUTIVE_MODEL_H__
 
-#include "ConstitutiveModel.h"
+#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <Core/Math/Matrix3.h>
 #include <cmath>
 #include <vector>
@@ -36,23 +36,18 @@ namespace Uintah {
 class HypoElastic : public ConstitutiveModel
 {
 public:
-  struct CMData
+  struct Params
   {
     double G;
     double K;
     double alpha; // Coefficient of thermal expansion for thermal stress
   };
 
-private:
-
-  CMData d_initialData;
-
-public:
   HypoElastic(ProblemSpecP& ps, MPMFlags* flag);
   HypoElastic(const HypoElastic* cm);
   HypoElastic& operator=(const HypoElastic& cm) = delete;
-
-  ~HypoElastic() override = default;
+  virtual ~HypoElastic() override = default;
+  HypoElastic* clone() override;
 
   ModelType modelType() const override
   {
@@ -61,55 +56,53 @@ public:
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
-  // clone
-  HypoElastic* clone() override;
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
 
-  // compute stable timestep for this patch
-  virtual void computeStableTimestep(const Patch* patch,
+  /* initialize */
+  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
+                        DataWarehouse* new_dw) override;
+  void computeStableTimestep(const Patch* patch,
                                      const MPMMaterial* matl,
                                      DataWarehouse* new_dw);
 
-  // compute stress at each particle in the patch
+  /* compute stress */
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
   void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
                            DataWarehouse* old_dw,
                            DataWarehouse* new_dw) override;
-
-  // carry forward CM data for RigidMPM
-  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
-
-  // initialize  each particle's constitutive model data
-  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
-                        DataWarehouse* new_dw) override;
-
-  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                 const PatchSet* patch,
-                                 MPMLabel* lb) const override;
-
-  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
-                         ParticleLabelVariableMap* newState,
-                         ParticleSubset* delset,
-                         DataWarehouse* old_dw) override;
-
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const override;
 
   void addComputesAndRequires(Task* task, const MPMMaterial* matl,
                               const PatchSet* patches, const bool recursion,
                               const bool schedParent = true) const override;
 
+  /* For material conversion */
+  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+                                 const PatchSet* patch,
+                                 MPMLabel* lb) const override;
+  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
+                         ParticleLabelVariableMap* newState,
+                         ParticleSubset* delset,
+                         DataWarehouse* old_dw) override;
+
+  /* for RigidMPM */
+  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
+                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
+
+  /* for MPMICE */
   double computeRhoMicroCM(double pressure, const double p_ref,
                            const MPMMaterial* matl, double temperature,
                            double rho_guess) override;
-
   void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
                          double& dp_drho, double& ss_new,
                          const MPMMaterial* matl, double temperature) override;
-
   double getCompressibility() override;
 
-  void addParticleState(std::vector<const VarLabel*>& from,
-                        std::vector<const VarLabel*>& to) override;
+protected:
+
+  Params d_modelParam;
+
 };
 
 } // End namespace Uintah

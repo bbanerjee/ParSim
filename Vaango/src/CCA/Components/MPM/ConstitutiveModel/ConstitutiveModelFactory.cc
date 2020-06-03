@@ -28,10 +28,8 @@
 
 #include <sci_defs/uintah_defs.h> // For NO_FORTRAN
 
-#include <CCA/Components/MPM/ConstitutiveModel/CNH_MMS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/CompMooneyRivlin.h>
 #include <CCA/Components/MPM/ConstitutiveModel/HypoElastic.h>
-#include <CCA/Components/MPM/ConstitutiveModel/HypoElastic_MMS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RigidMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TransIsoHyper.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TransIsoHyperImplicit.h>
@@ -75,6 +73,10 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticFortran.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoPlastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Water.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/CNH_MMS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/HypoElastic_MMS.h>
+
 #include <CCA/Components/MPM/MPMFlags.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>

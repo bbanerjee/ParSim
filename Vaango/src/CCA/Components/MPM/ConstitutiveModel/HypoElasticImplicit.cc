@@ -26,6 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/HypoElasticImplicit.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Constants.h>
 #include <CCA/Components/MPM/MPMUtils.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ParameterNotFound.h>
@@ -50,36 +51,15 @@ using std::cerr;
 using namespace Uintah;
 
 HypoElasticImplicit::HypoElasticImplicit(ProblemSpecP& ps, MPMFlags* Mflag)
-  : ConstitutiveModel(Mflag)
+  : HypoElastic(ps, Mflag)
   , ImplicitCM()
 {
-  d_8or27 = Mflag->d_8or27;
-  ps->require("G", d_initialData.G);
-  ps->require("K", d_initialData.K);
 }
 
 HypoElasticImplicit::HypoElasticImplicit(const HypoElasticImplicit* cm)
-  : ConstitutiveModel(cm)
+  : HypoElastic(cm)
   , ImplicitCM(cm)
 {
-  d_8or27 = cm->d_8or27;
-  d_initialData.G = cm->d_initialData.G;
-  d_initialData.K = cm->d_initialData.K;
-}
-
-HypoElasticImplicit::~HypoElasticImplicit() = default;
-
-void
-HypoElasticImplicit::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
-{
-  ProblemSpecP cm_ps = ps;
-  if (output_cm_tag) {
-    cm_ps = ps->appendChild("constitutive_model");
-    cm_ps->setAttribute("type", "hypo_elastic");
-  }
-
-  cm_ps->appendElement("G", d_initialData.G);
-  cm_ps->appendElement("K", d_initialData.K);
 }
 
 HypoElasticImplicit*
@@ -93,298 +73,13 @@ HypoElasticImplicit::initializeCMData(const Patch* patch,
                                       const MPMMaterial* matl,
                                       DataWarehouse* new_dw)
 {
-  // Put stuff in here to initialize each particle's
-  // constitutive model parameters and deformationMeasure
-  Matrix3 Identity, zero(0.);
-  Identity.Identity();
-
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
   ParticleVariable<Matrix3> pStress;
   new_dw->allocateAndPut(pStress, lb->pStressLabel, pset);
 
   for (auto idx : *pset) {
-    pStress[idx] = zero;
+    pStress[idx] = Vaango::Util::Zero;
   }
-}
-
-void
-HypoElasticImplicit::allocateCMDataAddRequires(Task* task,
-                                               const MPMMaterial* matl,
-                                               const PatchSet*,
-                                               MPMLabel* lb) const
-{
-  const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, lb->pStressLabel_preReloc, matlset, Ghost::None);
-}
-
-void
-HypoElasticImplicit::allocateCMDataAdd(DataWarehouse* new_dw,
-                                       ParticleSubset* addset,
-                                       ParticleLabelVariableMap* newState,
-                                       ParticleSubset* delset, DataWarehouse*)
-{
-  // Put stuff in here to initialize each particle's
-  // constitutive model parameters and deformationMeasure
-  ParticleVariable<Matrix3> pStress;
-  constParticleVariable<Matrix3> o_stress;
-
-  new_dw->get(o_stress, lb->pStressLabel_preReloc, delset);
-
-  ParticleSubset::iterator o, n = addset->begin();
-  for (o = delset->begin(); o != delset->end(); o++, n++) {
-    pStress[*n] = o_stress[*o];
-  }
-
-  (*newState)[lb->pStressLabel] = pStress.clone();
-}
-
-void
-HypoElasticImplicit::addParticleState(std::vector<const VarLabel*>& from,
-                                      std::vector<const VarLabel*>& to)
-{
-}
-
-void
-HypoElasticImplicit::computeStableTimestep(const Patch*, const MPMMaterial*,
-                                           DataWarehouse*)
-{
-  // Not used in the implicit models
-}
-
-void
-HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
-                                                 const MPMMaterial* matl,
-                                                 DataWarehouse* old_dw,
-                                                 DataWarehouse* new_dw,
-                                                 Solver* solver, const bool)
-
-{
-  for (int pp = 0; pp < patches->size(); pp++) {
-    const Patch* patch = patches->get(pp);
-
-    auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-
-    auto lohiNodes = Util::getPatchLoHiNodes(patch, d_8or27);
-    auto lowIndex = lohiNodes.first;
-    auto highIndex = lohiNodes.second;
-
-    Array3<int> l2g(lowIndex, highIndex);
-    solver->copyL2G(l2g, patch);
-
-    Matrix3 Shear, pDefGradInc, fbar;
-    double onethird = (1.0 / 3.0);
-
-    Matrix3 Identity;
-
-    Identity.Identity();
-
-    Vector dx = patch->dCell();
-    double oodx[3] = { 1. / dx.x(), 1. / dx.y(), 1. / dx.z() };
-
-    int dwi = matl->getDWIndex();
-
-    ParticleSubset* pset;
-    constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> pSize;
-    constParticleVariable<Matrix3> pDefGrad_new, pDispGrad;
-    constParticleVariable<Matrix3> pDefGrad;
-    ParticleVariable<Matrix3> pStress_new;
-    constParticleVariable<Matrix3> pStress;
-    constParticleVariable<double> pmass;
-    constParticleVariable<double> pVolume_new;
-    ParticleVariable<double> pdTdt;
-
-    DataWarehouse* parent_old_dw =
-      new_dw->getOtherDataWarehouse(Task::ParentOldDW);
-    pset = parent_old_dw->getParticleSubset(dwi, patch);
-    parent_old_dw->get(px, lb->pXLabel, pset);
-    parent_old_dw->get(pSize, lb->pSizeLabel, pset);
-    parent_old_dw->get(pmass, lb->pMassLabel, pset);
-    parent_old_dw->get(pStress, lb->pStressLabel, pset);
-    parent_old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
-
-    new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
-    new_dw->get(pDispGrad, lb->pDispGradLabel_preReloc, pset);
-
-    new_dw->allocateAndPut(pStress_new, lb->pStressLabel_preReloc, pset);
-    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
-
-    double G = d_initialData.G;
-    double K = d_initialData.K;
-
-    double rho_orig = matl->getInitialDensity();
-
-    double B[6][24];
-    double Bnl[3][24];
-    double v[576];
-    int dof[24];
-    double D[6][6];
-    double kmat[24][24];
-    double sig[3][3];
-
-    if (matl->getIsRigid()) {
-      for (int idx : *pset) {
-        pStress_new[idx] = Matrix3(0.0);
-        pdTdt[idx] = 0.;
-      }
-    } else {
-      for (int idx : *pset) {
-        pdTdt[idx] = 0.;
-
-        interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S,
-                                                    pSize[idx], pDefGrad[idx]);
-
-        loadBMats(l2g, dof, B, Bnl, d_S, ni, oodx);
-
-        // Calculate the strain (here called D), and deviatoric rate DPrime
-        Matrix3 e = (pDispGrad[idx] + pDispGrad[idx].Transpose()) * .5;
-        Matrix3 ePrime = e - Identity * onethird * e.Trace();
-
-        pStress_new[idx] = pStress[idx] + (ePrime * 2. * G + Identity * K * e.Trace());
-
-        // get the volumetric part of the deformation
-        double J = pDefGrad_new[idx].Determinant();
-
-        double E = 9. * K * G / (3. * K + G);
-        double PR = (3. * K - E) / (6. * K);
-        double C11 = E * (1. - PR) / ((1. + PR) * (1. - 2. * PR));
-        double C12 = E * PR / ((1. + PR) * (1. - 2. * PR));
-        double C44 = G;
-
-        D[0][0] = C11; D[0][1] = C12; D[0][2] = C12; D[0][3] = 0. ; D[0][4] = 0. ; D[0][5] = 0.;
-                       D[1][1] = C11; D[1][2] = C12; D[1][3] = 0. ; D[1][4] = 0. ; D[1][5] = 0.; 
-                                      D[2][2] = C11; D[2][3] = 0. ; D[2][4] = 0. ; D[2][5] = 0.;
-                                                     D[3][3] = C44; D[3][4] = 0. ; D[3][5] = 0.;
-                                                                    D[4][4] = C44; D[4][5] = 0.;
-                                                                                   D[5][5] = C44;
-
-        // kmat = B.transpose()*D*B*volold
-        BtDB(B, D, kmat);
-        // kgeo = Bnl.transpose*sig*Bnl*volnew;
-        for (int i = 0; i < 3; i++) {
-          for (int j = 0; j < 3; j++) {
-            sig[i][j] = pStress[idx](i, j);
-          }
-        }
-        double kgeo[24][24];
-        BnltDBnl(Bnl, sig, kgeo);
-
-        double volold = (pmass[idx] / rho_orig);
-        double volnew = volold * J;
-
-        for (int ii = 0; ii < 24; ii++) {
-          for (int jj = 0; jj < 24; jj++) {
-            v[24 * ii + jj] = kmat[ii][jj] * volold + kgeo[ii][jj] * volnew;
-          }
-        }
-
-        solver->fillMatrix(24, dof, 24, dof, v);
-      }
-    }
-  }
-}
-
-void
-HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
-                                                 const MPMMaterial* matl,
-                                                 DataWarehouse* old_dw,
-                                                 DataWarehouse* new_dw)
-
-{
-  for (int pp = 0; pp < patches->size(); pp++) {
-    double se = 0.0;
-    const Patch* patch = patches->get(pp);
-    Matrix3 pDefGradInc, Identity, zero(0.), One(1.);
-    // double Jinc;
-    double onethird = (1.0 / 3.0);
-
-    auto interpolator = flag->d_interpolator->clone(patch);
-    vector<IntVector> ni(interpolator->size());
-    vector<Vector> d_S(interpolator->size());
-
-    Identity.Identity();
-
-    // Vector dx = patch->dCell();
-    // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
-
-    int dwi = matl->getDWIndex();
-
-    ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
-    constParticleVariable<Point> px;
-    constParticleVariable<Matrix3> pSize;
-    constParticleVariable<Matrix3> pDefGrad, pStress;
-    ParticleVariable<Matrix3> pStress_new;
-    constParticleVariable<Matrix3> pDefGrad_new, pDispGrad;
-    constParticleVariable<double> pVolume;
-    constParticleVariable<double> pVolume_new;
-    ParticleVariable<double> pdTdt;
-    delt_vartype delT;
-
-    old_dw->get(px, lb->pXLabel, pset);
-    old_dw->get(pSize, lb->pSizeLabel, pset);
-    old_dw->get(pStress, lb->pStressLabel, pset);
-    old_dw->get(pVolume, lb->pVolumeLabel, pset);
-    old_dw->get(pDefGrad, lb->pDefGradLabel, pset);
-
-    old_dw->get(delT, lb->delTLabel, getLevel(patches));
-
-    new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
-    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
-    new_dw->get(pDispGrad, lb->pDispGradLabel_preReloc, pset);
-
-    new_dw->allocateAndPut(pStress_new, lb->pStressLabel_preReloc, pset);
-    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
-
-    double G = d_initialData.G;
-    double bulk = d_initialData.K;
-
-    if (matl->getIsRigid()) {
-      for (int idx : *pset) {
-        pStress_new[idx] = Matrix3(0.0);
-        pdTdt[idx] = 0.;
-      }
-    } else {
-      for (int idx : *pset) {
-        pdTdt[idx] = 0.;
-
-        // Calculate the strain (here called D), and deviatoric rate DPrime
-        Matrix3 D = (pDispGrad[idx] + pDispGrad[idx].Transpose()) * .5;
-        Matrix3 DPrime = D - Identity * onethird * D.Trace();
-
-        // This is the (updated) Cauchy stress
-
-        pStress_new[idx] =
-          pStress[idx] + (DPrime * 2. * G + Identity * bulk * D.Trace());
-
-        // Compute the strain energy for all the particles
-        Matrix3 AvgStress = (pStress_new[idx] + pStress[idx]) * .5;
-
-        double e =
-          (D(0, 0) * AvgStress(0, 0) + D(1, 1) * AvgStress(1, 1) +
-           D(2, 2) * AvgStress(2, 2) +
-           2. * (D(0, 1) * AvgStress(0, 1) + D(0, 2) * AvgStress(0, 2) +
-                 D(1, 2) * AvgStress(1, 2))) *
-          pVolume_new[idx] * delT;
-
-        se += e;
-      }
-
-      if (flag->d_reductionVars->accStrainEnergy ||
-          flag->d_reductionVars->strainEnergy) {
-        new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
-      }
-    }
-    //delete interpolator;
-  }
-}
-
-void
-HypoElasticImplicit::addInitialComputesAndRequires(Task*, const MPMMaterial*,
-                                                   const PatchSet*) const
-{
 }
 
 void
@@ -395,8 +90,141 @@ HypoElasticImplicit::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   bool reset = flag->d_doGridReset;
-
   addSharedCRForImplicitHypo(task, matlset, reset, true, SchedParent);
+}
+
+void
+HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
+                                                 const MPMMaterial* matl,
+                                                 DataWarehouse* old_dw,
+                                                 DataWarehouse* new_dw,
+                                                 Solver* solver, const bool)
+
+{
+  double G = d_modelParam.G;
+  double K = d_modelParam.K;
+  double rho_orig = matl->getInitialDensity();
+
+  int matID = matl->getDWIndex();
+  DataWarehouse* parent_old_dw =
+    new_dw->getOtherDataWarehouse(Task::ParentOldDW);
+
+  for (int pp = 0; pp < patches->size(); pp++) {
+    const Patch* patch = patches->get(pp);
+    ParticleSubset* pset = parent_old_dw->getParticleSubset(matID, patch);
+
+    Vector dx = patch->dCell();
+    double oodx[3] = { 1. / dx.x(), 1. / dx.y(), 1. / dx.z() };
+
+    IntVector lowIndex  = patch->getNodeLowIndex();
+    IntVector highIndex = patch->getNodeHighIndex() + IntVector(1, 1, 1);
+    Array3<int> l2g(lowIndex, highIndex);
+    solver->copyL2G(l2g, patch);
+
+    auto interpolator = flag->d_interpolator->clone(patch);
+    vector<IntVector> ni(interpolator->size());
+    vector<Vector> d_S(interpolator->size());
+
+    constParticleVariable<Point> pX;
+    constParticleVariable<double> pMass, pVolume_new;
+    constParticleVariable<Matrix3> pSize, pDefGrad_old, 
+                                   pDispGrad, pStress_old;
+    parent_old_dw->get(pX, lb->pXLabel, pset);
+    parent_old_dw->get(pMass, lb->pMassLabel, pset);
+    parent_old_dw->get(pSize, lb->pSizeLabel, pset);
+    parent_old_dw->get(pStress_old, lb->pStressLabel, pset);
+    parent_old_dw->get(pDefGrad_old, lb->pDefGradLabel, pset);
+
+    new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pDispGrad, lb->pDispGradLabel_preReloc, pset);
+
+    ParticleVariable<double> pdTdt;
+    ParticleVariable<Matrix3> pStress_new;
+    new_dw->allocateAndPut(pStress_new, lb->pStressLabel_preReloc, pset);
+    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
+
+    double B[6][24];
+    double Bnl[3][24];
+    double K_vec[576];
+    int dof[24];
+    double D[6][6];
+    double K_mat[24][24];
+    double K_geo[24][24];
+    double sig[3][3];
+
+    if (matl->getIsRigid()) {
+      for (int idx : *pset) {
+        pdTdt[idx] = 0.;
+        pStress_new[idx] = Vaango::Util::Zero;
+      }
+    } else {
+      for (int idx : *pset) {
+        pdTdt[idx] = 0.;
+
+        interpolator->findCellAndShapeDerivatives(pX[idx], ni, d_S,
+                                                  pSize[idx], pDefGrad_old[idx]);
+        loadBMats(l2g, dof, B, Bnl, d_S, ni, oodx);
+
+        // Calculate the strain and deviatoric rate 
+        Matrix3 e = (pDispGrad[idx] + pDispGrad[idx].Transpose()) * .5;
+        Matrix3 ePrime = e - Vaango::Util::Identity * Vaango::Util::one_third * e.Trace();
+
+        pStress_new[idx] = pStress_old[idx] + 
+          (ePrime * 2. * G + Vaango::Util::Identity * K * e.Trace());
+
+        double J = pDefGrad_old[idx].Determinant();
+
+        Matrix66 D_mat = computeTangentModulus();
+        for (int ii = 0; ii < 6; ii++) {
+          for (int jj = 0; jj < 6; jj++) {
+            D[ii][jj] = D_mat(ii,jj);
+          }
+        }
+
+        // K_mat = B.transpose()*D*B*volume_old
+        BtDB(B, D, K_mat);
+        // K_geo = Bnl.transpose*sig*Bnl*volume_new;
+        for (int i = 0; i < 3; i++) {
+          for (int j = 0; j < 3; j++) {
+            sig[i][j] = pStress_old[idx](i, j);
+          }
+        }
+        BnltDBnl(Bnl, sig, K_geo);
+
+        double volume_init = (pMass[idx] / rho_orig);
+        double volume_new = volume_init * J;
+
+        for (int ii = 0; ii < 24; ii++) {
+          for (int jj = 0; jj < 24; jj++) {
+            K_vec[24 * ii + jj] = K_mat[ii][jj] * volume_init + K_geo[ii][jj] * volume_new;
+          }
+        }
+
+        solver->fillMatrix(24, dof, 24, dof, K_vec);
+      }
+    }
+  }
+}
+
+Matrix66
+HypoElasticImplicit::computeTangentModulus() const
+{
+  double G = d_modelParam.G;
+  double K = d_modelParam.K;
+  double E = 9. * K * G / (3. * K + G);
+  double PR = (3. * K - E) / (6. * K);
+  double C11 = E * (1. - PR) / ((1. + PR) * (1. - 2. * PR));
+  double C12 = E * PR / ((1. + PR) * (1. - 2. * PR));
+  double C44 = G;
+
+  Matrix66 D = Matrix66::Zero();
+  D(0,0) = C11; D(0,1) = C12; D(0,2) = C12; D(0,3) = 0. ; D(0,4) = 0. ; D(0,5) = 0.;
+                D(1,1) = C11; D(1,2) = C12; D(1,3) = 0. ; D(1,4) = 0. ; D(1,5) = 0.; 
+                              D(2,2) = C11; D(2,3) = 0. ; D(2,4) = 0. ; D(2,5) = 0.;
+                                            D(3,3) = C44; D(3,4) = 0. ; D(3,5) = 0.;
+                                                          D(4,4) = C44; D(4,5) = 0.;
+                                                                        D(5,5) = C44;
+  return D;
 }
 
 void
@@ -409,64 +237,65 @@ HypoElasticImplicit::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   addSharedCRForImplicitHypo(task, matlset, reset);
 }
 
-// The "CM" versions use the pressure-volume relationship of the CNH model
-double
-HypoElasticImplicit::computeRhoMicroCM(double pressure, const double p_ref,
-                                       const MPMMaterial* matl,
-                                       double temperature, double rho_guess)
-{
-  double rho_orig = matl->getInitialDensity();
-  double p_gauge = pressure - p_ref;
-  double rho_cur;
-  double bulk = d_initialData.K;
-
-  rho_cur = rho_orig / (1 - p_gauge / bulk);
-
-  return rho_cur;
-}
-
 void
-HypoElasticImplicit::computePressEOSCM(const double rho_cur, double& pressure,
-                                       const double p_ref, double& dp_drho,
-                                       double& tmp, const MPMMaterial* matl,
-                                       double temperature)
+HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
+                                                 const MPMMaterial* matl,
+                                                 DataWarehouse* old_dw,
+                                                 DataWarehouse* new_dw)
+
 {
-  double bulk = d_initialData.K;
-  double rho_orig = matl->getInitialDensity();
+  int matID = matl->getDWIndex();
 
-  double p_g = bulk * (1.0 - rho_orig / rho_cur);
-  pressure = p_ref + p_g;
-  dp_drho = bulk * rho_orig / (rho_cur * rho_cur);
-  tmp = bulk / rho_cur;
-}
+  delt_vartype delT;
+  old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
-double
-HypoElasticImplicit::getCompressibility()
-{
-  return 1.0 / d_initialData.K;
-}
+  for (int pp = 0; pp < patches->size(); pp++) {
+    const Patch* patch = patches->get(pp);
+    ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
 
-namespace Uintah {
+    constParticleVariable<Matrix3> pDispGrad, pStress_old;
+    constParticleVariable<double> pVolume_new;
+    old_dw->get(pStress_old, lb->pStressLabel, pset);
+    new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
+    new_dw->get(pDispGrad, lb->pDispGradLabel_preReloc, pset);
 
-#if 0
-  static MPI_Datatype makeMPI_CMData()
-  {
-    ASSERTEQ(sizeof(HypoElasticImplicit::StateData), sizeof(double)*0);
-    MPI_Datatype mpitype;
-    MPI_Type_vector(1, 0, 0, MPI_DOUBLE, &mpitype);
-    MPI_Type_commit(&mpitype);
-    return mpitype;
-  }
-  
-  const TypeDescription* fun_getTypeDescription(HypoElasticImplicit::StateData*)
-  {
-    static TypeDescription* td = 0;
-    if(!td){
-      td = scinew TypeDescription(TypeDescription::Other,
-                                  "HypoElasticImplicit::StateData", true, 
-                                  &makeMPI_CMData);
+    ParticleVariable<double> pdTdt;
+    ParticleVariable<Matrix3> pStress_new;
+    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
+    new_dw->allocateAndPut(pStress_new, lb->pStressLabel_preReloc, pset);
+
+    double G = d_modelParam.G;
+    double bulk = d_modelParam.K;
+
+    double strainEnergy = 0.0;
+    if (matl->getIsRigid()) {
+      for (int idx : *pset) {
+        pStress_new[idx] = Matrix3(0.0);
+        pdTdt[idx] = 0.;
+      }
+    } else {
+      for (int idx : *pset) {
+        pdTdt[idx] = 0.;
+
+        // Calculate the strain (here called D), and deviatoric rate DPrime
+        Matrix3 D = (pDispGrad[idx] + pDispGrad[idx].Transpose()) * .5;
+        Matrix3 DPrime = D - Vaango::Util::Identity * Vaango::Util::one_third * D.Trace();
+
+        // This is the (updated) Cauchy stress
+        pStress_new[idx] = pStress_old[idx] + 
+          (DPrime * 2. * G + Vaango::Util::Identity * bulk * D.Trace());
+
+        // Compute the strain energy for all the particles
+        Matrix3 avgStress = (pStress_new[idx] + pStress_old[idx]) * .5;
+        double rateOfWork = computeRateOfWork(avgStress, D);
+        strainEnergy += (rateOfWork * pVolume_new[idx] * delT);
+      }
+
+      if (flag->d_reductionVars->accStrainEnergy ||
+          flag->d_reductionVars->strainEnergy) {
+        new_dw->put(sum_vartype(strainEnergy), lb->StrainEnergyLabel);
+      }
     }
-    return td;
   }
-#endif
-} // End namespace Uintah
+}
+

@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/CNH_MMS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/CNH_MMS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ParameterNotFound.h>

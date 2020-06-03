@@ -1,7 +1,8 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,54 +23,53 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __HYPOELASTIC_MMS_CONSTITUTIVE_MODEL_H__
-#define __HYPOELASTIC_MMS_CONSTITUTIVE_MODEL_H__
+#ifndef __CNH_MMS_CONSTITUTIVE_MODEL_H__
+#define __CNH_MMS_CONSTITUTIVE_MODEL_H__
 
-#include "ConstitutiveModel.h"
+#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
+#include <Core/Disclosure/TypeDescription.h>
 #include <Core/Math/Matrix3.h>
-#include <cmath>
+#include <math.h>
 #include <vector>
 
 namespace Uintah {
-
-/////////////////////////////////////////////////////////////////////////////
-/*!
-  \class HypoElastic_MMS
-  \brief Hypoelastic material model for testing manufactured solutions
-*/
-/////////////////////////////////////////////////////////////////////////////
-
-class HypoElastic_MMS : public ConstitutiveModel
+class CNH_MMS : public ConstitutiveModel
 {
 
 public:
+  // Create datatype for storing model parameters
   struct CMData
   {
-    double rho0;
-    double kappa;
-    double mu;
-    double lambda;
-    double cp;
-    double alpha;
-    double omega;
+    double Bulk;
+    double Shear;
   };
 
+  const VarLabel* bElBarLabel;
+  const VarLabel* bElBarLabel_preReloc;
+
+protected:
+  CMData d_initialData;
+  bool d_useModifiedEOS;
+  int d_8or27;
+
+public:
   // constructors
-  HypoElastic_MMS(ProblemSpecP& ps, MPMFlags* flag);
-  HypoElastic_MMS(const HypoElastic_MMS* cm);
+  CNH_MMS(ProblemSpecP& ps, MPMFlags* flag);
+  CNH_MMS(const CNH_MMS* cm);
+  CNH_MMS& operator=(const CNH_MMS& cm) = delete;
 
   // destructor
-  ~HypoElastic_MMS() override;
+  ~CNH_MMS() override;
 
   ModelType modelType() const override
   {
-    return ModelType::RATE_FORM;
+    return ModelType::TOTAL_FORM;
   }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  HypoElastic_MMS* clone() override;
+  CNH_MMS* clone() override;
 
   // compute stable timestep for this patch
   virtual void computeStableTimestep(const Patch* patch,
@@ -117,22 +117,7 @@ public:
 
   void addParticleState(std::vector<const VarLabel*>& from,
                         std::vector<const VarLabel*>& to) override;
-
-private:
-  CMData d_cm;
-
-  // Prevent assignment of objects of this class
-  HypoElastic_MMS& operator=(const HypoElastic_MMS& cm);
-
-  void initStressAndDefGradUniaxialStrainHarmonic(const Patch* patch,
-                                                  const MPMMaterial* matl,
-                                                  DataWarehouse* new_dw);
-
-  void initStressAndDefGradUniaxialStrainHomogeneous(const Patch* patch,
-                                                     const MPMMaterial* matl,
-                                                     DataWarehouse* new_dw);
 };
-
 } // End namespace Uintah
 
-#endif // __HYPOELASTIC_MMS_CONSTITUTIVE_MODEL_H__
+#endif // __CNH_MMS_CONSTITUTIVE_MODEL_H__

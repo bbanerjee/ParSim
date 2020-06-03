@@ -2,7 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
-# Copyright (c) 2015 Parresia Reaserch Limited, New Zealand
+# Copyright (c) 2015-2020 Parresia Reaserch Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -63,14 +63,14 @@ SET(MPM_ConstitutiveModel_SRCS
   PolarOrthotropicHypoElastic.cc
   HyperelasticPlastic.cc    
   SmallStrainPlastic.cc     
-  CNH_MMS.cc                    
-  HypoElastic_MMS.cc
   Arena.cc
   ArenaMixture.cc
   TabularEquationOfState.cc
   TabularPlasticity.cc
   TabularPlasticityCap.cc
   MohrCoulomb.cc
+  ManufacturedSolutions/CNH_MMS.cc                    
+  ManufacturedSolutions/HypoElastic_MMS.cc
 )
 
 #message(STATUS "Compiling FORTRAN code? ${FORTRAN}")

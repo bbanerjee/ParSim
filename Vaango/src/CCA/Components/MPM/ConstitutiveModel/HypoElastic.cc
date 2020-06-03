@@ -51,20 +51,20 @@ using namespace Uintah;
 HypoElastic::HypoElastic(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
-  ps->require("G", d_initialData.G);
-  ps->require("K", d_initialData.K);
+  ps->require("G", d_modelParam.G);
+  ps->require("K", d_modelParam.K);
 
   // Thermal expansion coefficient
-  d_initialData.alpha = 0.0;
-  ps->get("alpha", d_initialData.alpha); // for thermal stress
+  d_modelParam.alpha = 0.0;
+  ps->get("alpha", d_modelParam.alpha); // for thermal stress
 }
 
 HypoElastic::HypoElastic(const HypoElastic* cm)
   : ConstitutiveModel(cm)
 {
-  d_initialData.G = cm->d_initialData.G;
-  d_initialData.K = cm->d_initialData.K;
-  d_initialData.alpha = cm->d_initialData.alpha; // for thermal stress
+  d_modelParam.G = cm->d_modelParam.G;
+  d_modelParam.K = cm->d_modelParam.K;
+  d_modelParam.alpha = cm->d_modelParam.alpha; // for thermal stress
 }
 
 void
@@ -76,9 +76,9 @@ HypoElastic::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
     cm_ps->setAttribute("type", "hypo_elastic");
   }
 
-  cm_ps->appendElement("G", d_initialData.G);
-  cm_ps->appendElement("K", d_initialData.K);
-  cm_ps->appendElement("alpha", d_initialData.alpha);
+  cm_ps->appendElement("G", d_modelParam.G);
+  cm_ps->appendElement("K", d_modelParam.K);
+  cm_ps->appendElement("alpha", d_modelParam.alpha);
 }
 
 HypoElastic*
@@ -122,8 +122,8 @@ HypoElastic::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
   new_dw->get(pVolume, lb->pVolumeLabel, pset);
   new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
-  double G = d_initialData.G;
-  double bulk = d_initialData.K;
+  double G = d_modelParam.G;
+  double bulk = d_modelParam.K;
 
   Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
   for (int idx : *pset) {
@@ -162,10 +162,10 @@ HypoElastic::computeStressTensor(const PatchSubset* patches,
   Identity.Identity();
 
   double rho_orig = matl->getInitialDensity();
-  double mu = d_initialData.G;
-  double lambda = d_initialData.K - 2.0 / 3.0 * d_initialData.G;
+  double mu = d_modelParam.G;
+  double lambda = d_modelParam.K - 2.0 / 3.0 * d_modelParam.G;
   double M_dil = lambda + 2.0 * mu;
-  double alpha = d_initialData.alpha; // for thermal stress
+  double alpha = d_modelParam.alpha; // for thermal stress
 
   delt_vartype delT;
   old_dw->get(delT, lb->delTLabel, getLevel(patches));
@@ -280,7 +280,7 @@ HypoElastic::computeStressTensor(const PatchSubset* patches,
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
-        double c_bulk = sqrt(d_initialData.K / rho_cur);
+        double c_bulk = sqrt(d_modelParam.K / rho_cur);
         p_q[idx] = artificialBulkViscosity(trD, c_bulk, rho_cur, dx_ave);
       } else {
         p_q[idx] = 0.;
@@ -361,8 +361,8 @@ HypoElastic::computeRhoMicroCM(double pressure, const double p_ref,
   // double p_ref=101325.0;
   double p_gauge = pressure - p_ref;
   double rho_cur;
-  // double G = d_initialData.G;
-  double bulk = d_initialData.K;
+  // double G = d_modelParam.G;
+  double bulk = d_modelParam.K;
 
   rho_cur = rho_orig / std::max(1.0e-12, (1 - p_gauge / bulk));
 
@@ -375,8 +375,8 @@ HypoElastic::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
                                const MPMMaterial* matl, double temperature)
 {
 
-  // double G = d_initialData.G;
-  double bulk = d_initialData.K;
+  // double G = d_modelParam.G;
+  double bulk = d_modelParam.K;
   double rho_orig = matl->getInitialDensity();
 
   double p_g = bulk * (1.0 - rho_orig / rho_cur);
@@ -388,6 +388,6 @@ HypoElastic::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
 double
 HypoElastic::getCompressibility()
 {
-  return 1.0 / d_initialData.K;
+  return 1.0 / d_modelParam.K;
 }
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2013-2020 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,103 +27,56 @@
 #ifndef __HYPOELASTIC_IMPLICIT_CONSTITUTIVE_MODEL_H__
 #define __HYPOELASTIC_IMPLICIT_CONSTITUTIVE_MODEL_H__
 
-#include "ConstitutiveModel.h"
-#include "ImplicitCM.h"
+#include <CCA/Components/MPM/ConstitutiveModel/HypoElastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
 #include <CCA/Components/MPM/Solver.h>
-#include <Core/Disclosure/TypeDescription.h>
 #include <Core/Math/Matrix3.h>
+#include <Eigen/Dense>
 #include <cmath>
 #include <vector>
 
 namespace Uintah {
-class HypoElasticImplicit : public ConstitutiveModel, public ImplicitCM
+
+using Matrix66 = Eigen::Matrix<double, 6, 6>;
+
+class HypoElasticImplicit : public HypoElastic, public ImplicitCM
 {
-private:
-  // Create datatype for storing model parameters
-  bool d_useModifiedEOS;
-
 public:
-  struct CMData
-  {
-    double G;
-    double K;
-  };
-
-private:
-  CMData d_initialData;
-  int d_8or27;
-
-
-public:
-  // constructors
-  HypoElasticImplicit(ProblemSpecP& ps, MPMFlags* flag);
-  HypoElasticImplicit(const HypoElasticImplicit* cm);
-  HypoElasticImplicit& operator=(const HypoElasticImplicit& cm) = delete;
-
-  // destructor
-  ~HypoElasticImplicit() override;
 
   ModelType modelType() const override
   {
     return ModelType::RATE_FORM;
   }
 
-  void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
-
-  // clone
+  HypoElasticImplicit(ProblemSpecP& ps, MPMFlags* flag);
+  HypoElasticImplicit(const HypoElasticImplicit* cm);
+  HypoElasticImplicit& operator=(const HypoElasticImplicit& cm) = delete;
+  ~HypoElasticImplicit() override = default;
   HypoElasticImplicit* clone() override;
 
-  // compute stable timestep for this patch
-  virtual void computeStableTimestep(const Patch* patch,
-                                     const MPMMaterial* matl,
-                                     DataWarehouse* new_dw);
+  void initializeCMData(const Patch* patch,
+                        const MPMMaterial* matl,
+                        DataWarehouse* new_dw) override;
 
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches, const bool recursion,
+                              const bool SchedParent) const override;
   void computeStressTensorImplicit(const PatchSubset* patches,
                                    const MPMMaterial* matl,
                                    DataWarehouse* old_dw, DataWarehouse* new_dw,
                                    Solver* solver,
                                    const bool recursion) override;
 
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
   void computeStressTensorImplicit(const PatchSubset* patches,
                                    const MPMMaterial* matl,
                                    DataWarehouse* old_dw,
                                    DataWarehouse* new_dw) override;
 
-  // initialize  each particle's constitutive model data
-  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
-                        DataWarehouse* new_dw) override;
+private:
+  Matrix66 computeTangentModulus() const;
 
-  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                 const PatchSet* patch,
-                                 MPMLabel* lb) const override;
-
-  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
-                         ParticleLabelVariableMap* newState,
-                         ParticleSubset* delset,
-                         DataWarehouse* old_dw) override;
-
-  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                     const PatchSet* patches) const override;
-
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches, const bool recursion,
-                              const bool SchedParent) const override;
-
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const override;
-
-  double computeRhoMicroCM(double pressure, const double p_ref,
-                           const MPMMaterial* matl, double temperature,
-                           double rho_guess) override;
-
-  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
-                         double& dp_drho, double& ss_new,
-                         const MPMMaterial* matl, double temperature) override;
-
-  double getCompressibility() override;
-
-  void addParticleState(std::vector<const VarLabel*>& from,
-                        std::vector<const VarLabel*>& to) override;
 };
 } // End namespace Uintah
 
