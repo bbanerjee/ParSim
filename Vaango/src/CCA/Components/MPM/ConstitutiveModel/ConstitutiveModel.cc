@@ -466,149 +466,65 @@ ConstitutiveModel::artificialBulkViscosity(double Dkk, double c_bulk,
   return q;
 }
 
-void
-ConstitutiveModel::computeDeformationGradientFromDisplacement(
-  constNCVariable<Vector> gDisp, ParticleSubset* pset,
-  constParticleVariable<Point> px, constParticleVariable<Matrix3> psize,
-  ParticleVariable<Matrix3>& Fnew, constParticleVariable<Matrix3>& Fold,
-  Vector dx, ParticleInterpolator* interp)
+void 
+ConstitutiveModel::computeGradAndBmats(Matrix3& grad, vector<IntVector>& ni,
+                                vector<Vector>& d_S, const double* oodx,
+                                constNCVariable<Vector>& gVec,
+                                const Array3<int>& l2g, double B[6][24],
+                                double Bnl[3][24], int* dof)
 {
-  Matrix3 dispGrad, Identity;
-  Identity.Identity();
-  vector<IntVector> ni(interp->size());
-  vector<Vector> d_S(interp->size());
-  double oodx[3] = { 1. / dx.x(), 1. / dx.y(), 1. / dx.z() };
+  int l2g_node_num = -1;
 
-  for (int idx : *pset) {
-    // Get the node indices that surround the cell
-    interp->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx],
-                                        Fold[idx]);
-
-    computeGrad(dispGrad, ni, d_S, oodx, gDisp);
-
-    // Update the deformation gradient tensor to its time n+1 value.
-    // Compute the deformation gradient from the displacement gradient
-    Fnew[idx] = Identity + dispGrad;
-
-    double J = Fnew[idx].Determinant();
-    if (!(J > 0)) {
-      ostringstream warn;
-      warn << "**ERROR** : "
-              "ConstitutiveModel::computeDeformationGradientFromDisplacement"
-           << "\n"
-           << "Negative or zero determinant of Jacobian." << "\n";
-      warn << "     Particle = " << idx << " J = " << J
-           << " position = " << px[idx] << "\n";
-      warn << "     Disp Grad = " << dispGrad << "\n";
-      warn << "     F_new = " << Fnew[idx] << "\n";
-      throw InvalidValue(warn.str(), __FILE__, __LINE__);
-    }
-  }
-}
-
-void
-ConstitutiveModel::computeDeformationGradientFromVelocity(
-  constNCVariable<Vector> gVel, ParticleSubset* pset,
-  constParticleVariable<Point> px, constParticleVariable<Matrix3> psize,
-  constParticleVariable<Matrix3> Fold, ParticleVariable<Matrix3>& Fnew,
-  Vector dx, ParticleInterpolator* interp, const double& delT)
-{
-  Matrix3 velGrad, deformationGradientInc, Identity;
-  Identity.Identity();
-  vector<IntVector> ni(interp->size());
-  vector<Vector> d_S(interp->size());
-  double oodx[3] = { 1. / dx.x(), 1. / dx.y(), 1. / dx.z() };
-
-  for (int idx : *pset) {
-    // Get the node indices that surround the cell
-    interp->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx],
-                                        Fold[idx]);
-
-    computeGrad(velGrad, ni, d_S, oodx, gVel);
-
-    // Compute the deformation gradient increment using the time_step
-    // velocity gradient
-    // F_n^np1 = dudx * dt + Identity
-    deformationGradientInc = velGrad * delT + Identity;
-
-    // Update the deformation gradient tensor to its time n+1 value.
-    Fnew[idx] = deformationGradientInc * Fold[idx];
-
-    double J = Fnew[idx].Determinant();
-    if (!(J > 0)) {
-      ostringstream warn;
-      warn << "**ERROR** CompNeoHook: Negative or zero determinant of Jacobian."
-           << " Particle has inverted." << "\n";
-      warn << "     Particle = " << idx << ", J = " << J
-           << ", position = " << px[idx] << "\n";
-      warn << "          Vel Grad = \n" << velGrad << "\n";
-      warn << "          F_inc = \n" << deformationGradientInc << "\n";
-      warn << "          F_old = \n" << Fold[idx] << "\n";
-      warn << "          F_new = \n" << Fnew[idx] << "\n";
-      warn << "          gVelocity:" << "\n";
-      for (int k = 0; k < flag->d_8or27; k++) {
-        warn << "             node: " << ni[k] << " vel: " << gVel[ni[k]]
-             << "\n";
+  // Compute gradient matrix
+  grad.set(0.0);
+  for (int k = 0; k < flag->d_8or27; k++) {
+    const Vector& vec = gVec[ni[k]];
+    for (int j = 0; j < 3; j++) {
+      double fac = d_S[k][j] * oodx[j];
+      for (int i = 0; i < 3; i++) {
+        grad(i, j) += vec[i] * fac;
       }
-
-      throw InvalidValue(warn.str(), __FILE__, __LINE__);
     }
   }
-}
 
-void
-ConstitutiveModel::computeDeformationGradientFromTotalDisplacement(
-  constNCVariable<Vector> gDisp, ParticleSubset* pset,
-  constParticleVariable<Point> px, ParticleVariable<Matrix3>& Fnew,
-  constParticleVariable<Matrix3>& Fold, Vector dx,
-  constParticleVariable<Matrix3> psize, ParticleInterpolator* interp)
-{
-  Matrix3 dispGrad, Identity;
-  Identity.Identity();
-  vector<IntVector> ni(interp->size());
-  vector<double> S(interp->size());
-  vector<Vector> d_S(interp->size());
-  double oodx[3] = { 1. / dx.x(), 1. / dx.y(), 1. / dx.z() };
+  for (int k = 0; k < 8; k++) {
+    B[0][3 * k] = d_S[k][0] * oodx[0];
+    B[3][3 * k] = d_S[k][1] * oodx[1];
+    B[5][3 * k] = d_S[k][2] * oodx[2];
+    B[1][3 * k] = 0.;
+    B[2][3 * k] = 0.;
+    B[4][3 * k] = 0.;
 
-  for (int idx : *pset) {
-    // Get the node indices that surround the cell
-    interp->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx],
-                                        Fold[idx]);
+    B[1][3 * k + 1] = d_S[k][1] * oodx[1];
+    B[3][3 * k + 1] = d_S[k][0] * oodx[0];
+    B[4][3 * k + 1] = d_S[k][2] * oodx[2];
+    B[0][3 * k + 1] = 0.;
+    B[2][3 * k + 1] = 0.;
+    B[5][3 * k + 1] = 0.;
 
-    computeGrad(dispGrad, ni, d_S, oodx, gDisp);
+    B[2][3 * k + 2] = d_S[k][2] * oodx[2];
+    B[4][3 * k + 2] = d_S[k][1] * oodx[1];
+    B[5][3 * k + 2] = d_S[k][0] * oodx[0];
+    B[0][3 * k + 2] = 0.;
+    B[1][3 * k + 2] = 0.;
+    B[3][3 * k + 2] = 0.;
 
-    // Update the deformation gradient tensor to its time n+1 value.
-    // Compute the deformation gradient from the displacement gradient
-    Fnew[idx] = Identity + dispGrad;
+    Bnl[0][3 * k] = d_S[k][0] * oodx[0];
+    Bnl[1][3 * k] = 0.;
+    Bnl[2][3 * k] = 0.;
+    Bnl[0][3 * k + 1] = 0.;
+    Bnl[1][3 * k + 1] = d_S[k][1] * oodx[1];
+    Bnl[2][3 * k + 1] = 0.;
+    Bnl[0][3 * k + 2] = 0.;
+    Bnl[1][3 * k + 2] = 0.;
+    Bnl[2][3 * k + 2] = d_S[k][2] * oodx[2];
+
+    // Need to loop over the neighboring patches l2g to get the right
+    // dof number.
+    l2g_node_num = l2g[ni[k]];
+    dof[3 * k] = l2g_node_num;
+    dof[3 * k + 1] = l2g_node_num + 1;
+    dof[3 * k + 2] = l2g_node_num + 2;
   }
 }
 
-void
-ConstitutiveModel::computeDeformationGradientFromIncrementalDisplacement(
-  constNCVariable<Vector> gDisp, ParticleSubset* pset,
-  constParticleVariable<Point> px, constParticleVariable<Matrix3> Fold,
-  ParticleVariable<Matrix3>& Fnew, Vector dx,
-  constParticleVariable<Matrix3> psize, ParticleInterpolator* interp)
-{
-  Matrix3 IncDispGrad, deformationGradientInc, Identity;
-  Identity.Identity();
-  vector<IntVector> ni(interp->size());
-  vector<double> S(interp->size());
-  vector<Vector> d_S(interp->size());
-
-  double oodx[3] = { 1. / dx.x(), 1. / dx.y(), 1. / dx.z() };
-
-  for (int idx : *pset) {
-    // Get the node indices that surround the cell
-    interp->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx],
-                                        Fold[idx]);
-
-    computeGrad(IncDispGrad, ni, d_S, oodx, gDisp);
-
-    // Compute the deformation gradient increment
-    deformationGradientInc = IncDispGrad + Identity;
-
-    // Update the deformation gradient tensor to its time n+1 value.
-    Fnew[idx] = deformationGradientInc * Fold[idx];
-  }
-}

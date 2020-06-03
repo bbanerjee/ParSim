@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -229,185 +230,8 @@ public:
 
   virtual ConstitutiveModel* clone() = 0;
 
-  void computeDeformationGradientFromDisplacement(
-    constNCVariable<Vector> gDisp, ParticleSubset* pset,
-    constParticleVariable<Point> px, constParticleVariable<Matrix3> psize,
-    ParticleVariable<Matrix3>& Fnew, constParticleVariable<Matrix3>& Fold,
-    Vector dx, ParticleInterpolator* interp);
-
-  void computeDeformationGradientFromVelocity(
-    constNCVariable<Vector> gVel, ParticleSubset* pset,
-    constParticleVariable<Point> px, constParticleVariable<Matrix3> psize,
-    constParticleVariable<Matrix3> Fold, ParticleVariable<Matrix3>& Fnew,
-    Vector dx, ParticleInterpolator* interp, const double& delT);
-
-  void computeDeformationGradientFromTotalDisplacement(
-    constNCVariable<Vector> gDisp, ParticleSubset* pset,
-    constParticleVariable<Point> px, ParticleVariable<Matrix3>& Fnew,
-    constParticleVariable<Matrix3>& Fold, Vector dx,
-    constParticleVariable<Matrix3> psize, ParticleInterpolator* interp);
-
-  void computeDeformationGradientFromIncrementalDisplacement(
-    constNCVariable<Vector> IncDisp, ParticleSubset* pset,
-    constParticleVariable<Point> px, constParticleVariable<Matrix3> Fold,
-    ParticleVariable<Matrix3>& Fnew, Vector dx,
-    constParticleVariable<Matrix3> psize, ParticleInterpolator* interp);
-
 protected:
-  inline void computeVelocityGradient(Matrix3& velGrad, vector<IntVector>& ni,
-                                      vector<Vector>& d_S, const double* oodx,
-                                      constNCVariable<Vector>& gVelocity)
-  {
-    for (int k = 0; k < flag->d_8or27; k++) {
-      const Vector& gvel = gVelocity[ni[k]];
-      for (int j = 0; j < 3; j++) {
-        double d_SXoodx = d_S[k][j] * oodx[j];
-        for (int i = 0; i < 3; i++) {
-          velGrad(i, j) += gvel[i] * d_SXoodx;
-          // if (isnan(velGrad(i,j)) || fabs(velGrad(i,j)) > 1.0e30) {
-          //  std::cerr << "Grid vel = " << gvel << " k = " << k << " node = "
-          //  << ni[k]
-          //            << " dS = " << d_S[k][j] << " oodx = " << oodx[j]
-          //            << " velGrad(" << i << "," << j << ") = " <<
-          //            velGrad(i,j) << endl;
-          //}
-        }
-      }
-    }
-  };
 
-  inline void computeAxiSymVelocityGradient(
-    Matrix3& velGrad, vector<IntVector>& ni, vector<Vector>& d_S,
-    vector<double>& S, const double* oodx, constNCVariable<Vector>& gVelocity,
-    const Point& px)
-  {
-    // x -> r, y -> z, z -> theta
-    for (int k = 0; k < flag->d_8or27; k++) {
-      Vector gvel = gVelocity[ni[k]];
-      for (int j = 0; j < 2; j++) {
-        for (int i = 0; i < 2; i++) {
-          velGrad(i, j) += gvel[i] * d_S[k][j] * oodx[j];
-        }
-      }
-      velGrad(2, 2) += gvel.x() * d_S[k].z();
-    }
-  };
-
-  inline void computeVelocityGradient(Matrix3& velGrad, vector<IntVector>& ni,
-                                      vector<Vector>& d_S, const double* oodx,
-                                      const short pgFld[],
-                                      constNCVariable<Vector>& gVelocity,
-                                      constNCVariable<Vector>& GVelocity)
-  {
-    Vector gvel(0., 0., 0);
-    for (int k = 0; k < flag->d_8or27; k++) {
-      if (pgFld[k] == 1)
-        gvel = gVelocity[ni[k]];
-      if (pgFld[k] == 2)
-        gvel = GVelocity[ni[k]];
-      for (int j = 0; j < 3; j++) {
-        double d_SXoodx = d_S[k][j] * oodx[j];
-        for (int i = 0; i < 3; i++) {
-          velGrad(i, j) += gvel[i] * d_SXoodx;
-        }
-      }
-    }
-  };
-
-  /*! Calculate gradient of a vector field for 8 noded interpolation */
-  inline void computeGrad(Matrix3& grad, vector<IntVector>& ni,
-                          vector<Vector>& d_S, const double* oodx,
-                          constNCVariable<Vector>& gVec)
-  {
-    // Compute gradient matrix
-    grad.set(0.0);
-    for (int k = 0; k < flag->d_8or27; k++) {
-      const Vector& vec = gVec[ni[k]];
-      for (int j = 0; j < 3; j++) {
-        double fac = d_S[k][j] * oodx[j];
-        for (int i = 0; i < 3; i++) {
-          grad(i, j) += vec[i] * fac;
-        }
-      }
-    }
-  }
-
-  /*! Calculate gradient of vector field for 8 noded interpolation, B matrix
-      for Kmat and B matrix for Kgeo */
-  inline void computeGradAndBmats(Matrix3& grad, vector<IntVector>& ni,
-                                  vector<Vector>& d_S, const double* oodx,
-                                  constNCVariable<Vector>& gVec,
-                                  const Array3<int>& l2g, double B[6][24],
-                                  double Bnl[3][24], int* dof)
-  {
-    /*!
-      \brief Calculate the artificial bulk viscosity (q)
-
-      \f[
-      q = \rho (A_1 | c D_{kk} dx | + A_2 D_{kk}^2 dx^2)
-      ~~\text{if}~~ D_{kk} < 0
-      \f]
-      \f[
-      q = 0 ~~\text{if}~~ D_{kk} >= 0
-      \f]
-
-      where \f$ \rho \f$ = current density \n
-      \f$ dx \f$ = characteristic length = (dx+dy+dz)/3 \n
-      \f$ A_1 \f$ = Coeff1 (default = 0.2) \n
-      \f$ A_2 \f$ = Coeff2 (default = 2.0) \n
-      \f$ c \f$ = Local bulk sound speed = \f$ \sqrt{K/\rho} \f$ \n
-      \f$ D_{kk} \f$ = Trace of rate of deformation tensor \n
-    */
-
-    int l2g_node_num = -1;
-
-    computeGrad(grad, ni, d_S, oodx, gVec);
-
-    for (int k = 0; k < 8; k++) {
-      B[0][3 * k] = d_S[k][0] * oodx[0];
-      B[3][3 * k] = d_S[k][1] * oodx[1];
-      B[5][3 * k] = d_S[k][2] * oodx[2];
-      B[1][3 * k] = 0.;
-      B[2][3 * k] = 0.;
-      B[4][3 * k] = 0.;
-
-      B[1][3 * k + 1] = d_S[k][1] * oodx[1];
-      B[3][3 * k + 1] = d_S[k][0] * oodx[0];
-      B[4][3 * k + 1] = d_S[k][2] * oodx[2];
-      B[0][3 * k + 1] = 0.;
-      B[2][3 * k + 1] = 0.;
-      B[5][3 * k + 1] = 0.;
-
-      B[2][3 * k + 2] = d_S[k][2] * oodx[2];
-      B[4][3 * k + 2] = d_S[k][1] * oodx[1];
-      B[5][3 * k + 2] = d_S[k][0] * oodx[0];
-      B[0][3 * k + 2] = 0.;
-      B[1][3 * k + 2] = 0.;
-      B[3][3 * k + 2] = 0.;
-
-      Bnl[0][3 * k] = d_S[k][0] * oodx[0];
-      Bnl[1][3 * k] = 0.;
-      Bnl[2][3 * k] = 0.;
-      Bnl[0][3 * k + 1] = 0.;
-      Bnl[1][3 * k + 1] = d_S[k][1] * oodx[1];
-      Bnl[2][3 * k + 1] = 0.;
-      Bnl[0][3 * k + 2] = 0.;
-      Bnl[1][3 * k + 2] = 0.;
-      Bnl[2][3 * k + 2] = d_S[k][2] * oodx[2];
-
-      // Need to loop over the neighboring patches l2g to get the right
-      // dof number.
-      l2g_node_num = l2g[ni[k]];
-      dof[3 * k] = l2g_node_num;
-      dof[3 * k + 1] = l2g_node_num + 1;
-      dof[3 * k + 2] = l2g_node_num + 2;
-    }
-  }
-
-  double artificialBulkViscosity(double Dkk, double c, double rho,
-                                 double dx) const;
-
-protected:
   ///////////////////////////////////////////////////////////////////////
   /*! Initialize the common quantities that all the explicit constituive
    *  models compute : called by initializeCMData */
@@ -462,6 +286,35 @@ protected:
   /////////////////////////////////////////////////////////////////
   void carryForwardSharedData(ParticleSubset* pset, DataWarehouse* old_dw,
                               DataWarehouse* new_dw, const MPMMaterial* matl);
+
+  /*!
+    \brief Calculate the artificial bulk viscosity (q)
+
+    \f[
+    q = \rho (A_1 | c D_{kk} dx | + A_2 D_{kk}^2 dx^2)
+    ~~\text{if}~~ D_{kk} < 0
+    \f]
+    \f[
+    q = 0 ~~\text{if}~~ D_{kk} >= 0
+    \f]
+
+    where \f$ \rho \f$ = current density \n
+    \f$ dx \f$ = characteristic length = (dx+dy+dz)/3 \n
+    \f$ A_1 \f$ = Coeff1 (default = 0.2) \n
+    \f$ A_2 \f$ = Coeff2 (default = 2.0) \n
+    \f$ c \f$ = Local bulk sound speed = \f$ \sqrt{K/\rho} \f$ \n
+    \f$ D_{kk} \f$ = Trace of rate of deformation tensor \n
+  */
+  double artificialBulkViscosity(double Dkk, double c, double rho,
+                                 double dx) const;
+
+  /*! Calculate gradient of vector field for 8 noded interpolation, B matrix
+      for Kmat and B matrix for Kgeo */
+  void computeGradAndBmats(Matrix3& grad, vector<IntVector>& ni,
+                           vector<Vector>& d_S, const double* oodx,
+                           constNCVariable<Vector>& gVec,
+                           const Array3<int>& l2g, double B[6][24],
+                           double Bnl[3][24], int* dof);
 
   MPMLabel* lb;
   MPMFlags* flag;
