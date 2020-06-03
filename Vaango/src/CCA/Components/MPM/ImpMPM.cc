@@ -277,7 +277,6 @@ ImpMPM::problemSetup(const ProblemSpecP& prob_spec,
 
   d_recompileSubsched = true;
   d_subsched = sched->createSubScheduler();
-  std::cout << "Creating sub scheduler: " << d_subsched << "\n";
   d_subsched->initialize(3, 1);
   d_subsched->clearMappings();
   d_subsched->mapDataWarehouse(Task::ParentOldDW, 0);
@@ -366,9 +365,6 @@ ImpMPM::scheduleInitialize(const LevelP& level, SchedulerP& sched)
   t->computes(lb->pTempPreviousLabel);
   t->computes(lb->pSizeLabel);
   t->computes(lb->pParticleIDLabel);
-  //t->computes(lb->pDefGradLabel);
-  //t->computes(lb->pVelGradLabel);
-  //t->computes(lb->pDispGradLabel);
   t->computes(lb->pStressLabel);
   t->computes(lb->pRefinedLabel);
   t->computes(lb->pCellNAPIDLabel);
@@ -917,6 +913,9 @@ ImpMPM::actuallyComputeStableTimestep(const ProcessorGroup*,
         }
         ParticleSpeed = dx/ParticleSpeed;
         double delT_new = .8*ParticleSpeed.minComponent();
+
+        delT_new = old_delT;
+        
 
         double old_dt=old_delT;
         if (d_numIterations <= flags->d_numItersToIncreaseDelT) {
@@ -2268,9 +2267,11 @@ ImpMPM::computeContact(const ProcessorGroup*,
       int matID = mpm_matl->getDWIndex();
       new_dw->allocateAndPut(contact[n], lb->gContactLabel, matID, patch);
       contact[n].initialize(0);
+      //std::cout << "matID = " << matID << " n = " << n << "\n";
     }
 
     if (d_rigid_body) {
+      //std::cout << "Rigid = " << std::boolalpha << d_rigid_body << "\n";
       constNCVariable<Vector> vel_rigid;
       constNCVariable<double> mass_rigid;
       int numMatls = d_sharedState->getNumMPMMatls();
@@ -2280,6 +2281,7 @@ ImpMPM::computeContact(const ProcessorGroup*,
           int matID = mpm_matl->getDWIndex();
           new_dw->get(vel_rigid, lb->gVelocityOldLabel, matID, patch, Ghost::None, 0);
           new_dw->get(mass_rigid,lb->gMassLabel,        matID, patch, Ghost::None, 0);
+          //std::cout << "matID = " << matID << " n = " << n << "\n";
         }
       }
 
@@ -2296,6 +2298,7 @@ ImpMPM::computeContact(const ProcessorGroup*,
         for (auto iter = patch->getNodeIterator(); !iter.done(); iter++){
           IntVector node = *iter;
           if (!compare(mass_rigid[node],0.0)) {
+            //std::cout << "node = " << node << "\n";
             dispNew[node] = Vector(vel_rigid[node].x()*dt*d_contact_dirs.x(),
                                    vel_rigid[node].y()*dt*d_contact_dirs.y(),
                                    vel_rigid[node].z()*dt*d_contact_dirs.z());
@@ -4132,33 +4135,10 @@ void ImpMPM::scheduleSwitchTest(const LevelP& level, SchedulerP& sched)
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void ImpMPM::setSharedState(SimulationStateP& ssp)
 {
   d_sharedState = ssp;
 }
-
-
 
 double ImpMPM::recomputeTimestep(double current_dt)
 {

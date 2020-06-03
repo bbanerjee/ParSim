@@ -263,8 +263,6 @@ AMRSimulationController::run()
     adjustDelT( delt, d_sharedState->d_prev_delt, first, time );
     newDW->override(delt_vartype(delt), d_sharedState->get_delt_label());
 
-    // printSimulationStats( d_sharedState, delt, t );
-
     if(log_dw_mem){
       // Remember, this isn't logged if DISABLE_SCI_MALLOC is set
       // (So usually in optimized mode this will not be run.)

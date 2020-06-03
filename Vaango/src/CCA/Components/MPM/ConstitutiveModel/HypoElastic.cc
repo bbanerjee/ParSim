@@ -135,6 +135,8 @@ HypoElastic::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
   waveSpeed = dx / waveSpeed;
   double delT_new = waveSpeed.minComponent();
   new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+
+  //std::cout << "Hypoelastic init: delT = " << delT_new << "\n";
 }
 
 void
@@ -290,6 +292,8 @@ HypoElastic::computeStressTensor(const PatchSubset* patches,
     waveSpeed = dx / waveSpeed;
     double delT_new = waveSpeed.minComponent();
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
+
+    // std::cout << "Hypoelastic: delT = " << delT << "\n";
 
     if (flag->d_reductionVars->accStrainEnergy ||
         flag->d_reductionVars->strainEnergy) {

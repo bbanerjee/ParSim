@@ -54,9 +54,15 @@ public:
   ~HypoElasticImplicit() override = default;
   HypoElasticImplicit* clone() override;
 
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
+
   void initializeCMData(const Patch* patch,
                         const MPMMaterial* matl,
                         DataWarehouse* new_dw) override;
+  virtual void computeStableTimestep(const Patch* patch,
+                                     const MPMMaterial* matl,
+                                     DataWarehouse* new_dw);
 
   void addComputesAndRequires(Task* task, const MPMMaterial* matl,
                               const PatchSet* patches, const bool recursion,

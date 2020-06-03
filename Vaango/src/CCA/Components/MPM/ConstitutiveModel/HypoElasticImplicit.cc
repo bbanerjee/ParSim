@@ -68,6 +68,12 @@ HypoElasticImplicit::clone()
   return scinew HypoElasticImplicit(*this);
 }
 
+void 
+HypoElasticImplicit::addParticleState(std::vector<const VarLabel*>& from,
+                                      std::vector<const VarLabel*>& to)
+{
+}
+
 void
 HypoElasticImplicit::initializeCMData(const Patch* patch,
                                       const MPMMaterial* matl,
@@ -80,6 +86,13 @@ HypoElasticImplicit::initializeCMData(const Patch* patch,
   for (auto idx : *pset) {
     pStress[idx] = Vaango::Util::Zero;
   }
+}
+
+void 
+HypoElasticImplicit::computeStableTimestep(const Patch* patch,
+                                           const MPMMaterial* matl,
+                                           DataWarehouse* new_dw)
+{
 }
 
 void
@@ -127,16 +140,16 @@ HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
 
     constParticleVariable<Point> pX;
     constParticleVariable<double> pMass, pVolume_new;
-    constParticleVariable<Matrix3> pSize, pDefGrad_old, 
+    constParticleVariable<Matrix3> pSize, pDefGrad_new, 
                                    pDispGrad, pStress_old;
     parent_old_dw->get(pX, lb->pXLabel, pset);
     parent_old_dw->get(pMass, lb->pMassLabel, pset);
     parent_old_dw->get(pSize, lb->pSizeLabel, pset);
     parent_old_dw->get(pStress_old, lb->pStressLabel, pset);
-    parent_old_dw->get(pDefGrad_old, lb->pDefGradLabel, pset);
 
     new_dw->get(pVolume_new, lb->pVolumeLabel_preReloc, pset);
     new_dw->get(pDispGrad, lb->pDispGradLabel_preReloc, pset);
+    new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
 
     ParticleVariable<double> pdTdt;
     ParticleVariable<Matrix3> pStress_new;
@@ -162,7 +175,7 @@ HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         pdTdt[idx] = 0.;
 
         interpolator->findCellAndShapeDerivatives(pX[idx], ni, d_S,
-                                                  pSize[idx], pDefGrad_old[idx]);
+                                                  pSize[idx], pDefGrad_new[idx]);
         loadBMats(l2g, dof, B, Bnl, d_S, ni, oodx);
 
         // Calculate the strain and deviatoric rate 
@@ -172,7 +185,6 @@ HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         pStress_new[idx] = pStress_old[idx] + 
           (ePrime * 2. * G + Vaango::Util::Identity * K * e.Trace());
 
-        double J = pDefGrad_old[idx].Determinant();
 
         Matrix66 D_mat = computeTangentModulus();
         for (int ii = 0; ii < 6; ii++) {
@@ -191,6 +203,7 @@ HypoElasticImplicit::computeStressTensorImplicit(const PatchSubset* patches,
         }
         BnltDBnl(Bnl, sig, K_geo);
 
+        double J = pDefGrad_new[idx].Determinant();
         double volume_init = (pMass[idx] / rho_orig);
         double volume_new = volume_init * J;
 
@@ -235,6 +248,7 @@ HypoElasticImplicit::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   bool reset = flag->d_doGridReset;
 
   addSharedCRForImplicitHypo(task, matlset, reset);
+  task->computes(lb->StrainEnergyLabel);
 }
 
 void
