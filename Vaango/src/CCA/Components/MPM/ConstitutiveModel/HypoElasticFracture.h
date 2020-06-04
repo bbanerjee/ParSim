@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Callaghan Innovation, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,130 +24,101 @@
  * IN THE SOFTWARE.
  */
 
-//  HypoElastic.h
-//  class ConstitutiveModel ConstitutiveModel data type -- 3D -
-//  holds ConstitutiveModel
-//  information for the FLIP technique:
-//    This is for HypoElasticity
-//    Features:
-//      Usage:
+#ifndef __HYPOELASTIC_FRACTURE_CONSTITUTIVE_MODEL_H__
+#define __HYPOELASTIC_FRACTURE_CONSTITUTIVE_MODEL_H__
 
-#ifndef __HYPOELASTIC_CONSTITUTIVE_MODEL_H__
-#define __HYPOELASTIC_CONSTITUTIVE_MODEL_H__
-
-#include "ConstitutiveModel.h"
+#include <CCA/Components/MPM/ConstitutiveModel/HypoElastic.h>
 #include <Core/Math/Matrix3.h>
 #include <cmath>
 #include <vector>
 
 namespace Uintah {
-class HypoElastic : public ConstitutiveModel
-{
-private:
-  // Create datatype for storing model parameters
-  // Crack propagation criterion
-  string crackPropagationCriterion;
-  // Parameters in the empirical criterion
-  // (KI/KIc)^p+(KII/KIIc)^q=1 for crack initialization (KIIc=r*KIc)
-  double p, q, r;
-  double CrackPropagationAngleFromStrainEnergyDensityCriterion(const double&,
-                                                               const double&,
-                                                               const double&);
 
+class HypoElasticFracture : public HypoElastic
+{
 public:
-  struct CMData
+
+  struct Toughness
   {
-    double G;
-    double K;
-    double alpha; // Coefficient of thermal expansion for thermal stress
-    // Fracture toughness at various velocities
-    // in the format Vector(Vc,KIc,KIIc)
-    vector<Vector> Kc;
+    double Vc, KIc, KIIc;
+
+    Toughness(double Vc_in, double KIc_in, double KIIc_in) {
+      Vc = Vc_in; KIc = KIc_in; KIIc = KIIc_in;
+    }
   };
 
-private:
-  friend const TypeDescription* fun_getTypeDescription(CMData*);
+  struct FractureParams
+  {
+    // Parameters in the empirical criterion (KI/KIc)^p+(KII/KIIc)^q=1 
+    // for crack initialization (KIIc=r*KIc)
+    double p, q, r;
 
-  CMData d_initialData;
-  // double d_se;
+    // Fracture toughness at various velocities in the format Vector(Vc,KIc,KIIc)
+    std::vector<Toughness> Kc;
+  };
 
-public:
   // constructors
-  HypoElastic(ProblemSpecP& ps, MPMFlags* flag);
-  HypoElastic(const HypoElastic* cm);
-  HypoElastic& operator=(const HypoElastic& cm) = delete;
-
-  // destructor
-  ~HypoElastic() override;
+  HypoElasticFracture(ProblemSpecP& ps, MPMFlags* flag);
+  HypoElasticFracture(const HypoElasticFracture* cm);
+  HypoElasticFracture& operator=(const HypoElasticFracture& cm) = delete;
+  virtual ~HypoElasticFracture() override = default;
+  HypoElasticFracture* clone() override;
 
   ModelType modelType() const override
   {
-    return ModelType::RATE_FORM;
+    return ModelType::INCREMENTAL;
   }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
-  // clone
-  HypoElastic* clone() override;
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
 
-  // compute stable timestep for this patch
-  virtual void computeStableTimestep(const Patch* patch,
-                                     const MPMMaterial* matl,
-                                     DataWarehouse* new_dw);
-
-  // compute stress at each particle in the patch
-  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
-                           DataWarehouse* old_dw,
-                           DataWarehouse* new_dw) override;
-
-  // carry forward CM data for RigidMPM
-  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
-
-  // initialize  each particle's constitutive model data
+  /*  initialize */
   void initializeCMData(const Patch* patch, const MPMMaterial* matl,
                         DataWarehouse* new_dw) override;
 
-  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                 const PatchSet* patch,
-                                 MPMLabel* lb) const override;
-
-  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
-                         ParticleLabelVariableMap* newState,
-                         ParticleSubset* delset,
-                         DataWarehouse* old_dw) override;
-
+  /* compute stress */
   void addComputesAndRequires(Task* task, const MPMMaterial* matl,
                               const PatchSet* patches) const override;
+  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw) override;
 
   void addComputesAndRequires(Task* task, const MPMMaterial* matl,
                               const PatchSet* patches, const bool recursion,
                               const bool schedParent = true) const override;
 
-  double computeRhoMicroCM(double pressure, const double p_ref,
-                           const MPMMaterial* matl, double temperature,
-                           double rho_guess) override;
-
-  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
-                         double& dp_drho, double& ss_new,
-                         const MPMMaterial* matl, double temperature) override;
-
-  double getCompressibility() override;
-
-  void addParticleState(std::vector<const VarLabel*>& from,
-                        std::vector<const VarLabel*>& to) override;
+  /* for material conversion */
+  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+                                 const PatchSet* patch,
+                                 MPMLabel* lb) const override;
+  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
+                         ParticleLabelVariableMap* newState,
+                         ParticleSubset* delset,
+                         DataWarehouse* old_dw) override;
 
   // Convert J-integral into stress intensity factors
   // for hypoelastic materials (for FRACTURE)
-  void ConvertJToK(const MPMMaterial* matl, const string& stressState,
+  void convertJToK(const MPMMaterial* matl, const std::string& stressState,
                    const Vector& J, const double& C, const Vector& V,
                    Vector& SIF) override;
 
   // Detect if crack propagates and the propagation direction (for FRACTURE)
-  short CrackPropagates(const double& Vc, const double& KI, const double& KII,
+  short crackPropagates(const double& Vc, const double& KI, const double& KII,
                         double& theta) override;
+
+private:
+
+  FractureParams d_fracParam;
+  std::string d_crackPropagationCriterion;
+
+  double crackPropagationAngleFromStrainEnergyDensityCriterion(const double&,
+                                                               const double&,
+                                                               const double&);
+
 };
 
 } // End namespace Uintah
 
-#endif // __HYPOELASTIC_CONSTITUTIVE_MODEL_H__
+#endif // __HYPOELASTIC_FRACTURE_CONSTITUTIVE_MODEL_H__

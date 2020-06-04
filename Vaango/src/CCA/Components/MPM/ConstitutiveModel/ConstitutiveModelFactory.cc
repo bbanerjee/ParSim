@@ -30,6 +30,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/CompMooneyRivlin.h>
 #include <CCA/Components/MPM/ConstitutiveModel/HypoElastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/HypoElasticFracture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RigidMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TransIsoHyper.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TransIsoHyperImplicit.h>
@@ -216,9 +217,9 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
     return (scinew ViscoSCRAMHotSpot(child, flags));
 
   else if (mat_type == "hypo_elastic") {
-    if (flags->d_integratorType == "explicit" ||
-        flags->d_integratorType == "fracture")
+    if (flags->d_integratorType == "explicit")
       return (scinew HypoElastic(child, flags));
+
     else if (flags->d_integratorType == "implicit") {
       if (!flags->d_doGridReset) {
         ostringstream msg;
@@ -229,6 +230,9 @@ ConstitutiveModelFactory::create(ProblemSpecP& ps, MPMFlags* flags)
       return (scinew HypoElasticImplicit(child, flags));
     }
   }
+
+  else if (mat_type == "hypo_elastic_fracture") 
+    return (scinew HypoElasticFracture(child, flags));
 
 #if !defined(NO_FORTRAN)
   else if (mat_type == "hypo_elastic_fortran")

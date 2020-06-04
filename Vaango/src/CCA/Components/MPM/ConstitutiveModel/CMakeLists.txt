@@ -39,6 +39,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ViscoScram.cc                 
   ViscoSCRAMHotSpot.cc          
   HypoElastic.cc                
+  HypoElasticFracture.cc                
   HypoElasticImplicit.cc        
   ViscoScramImplicit.cc         
   MWViscoElastic.cc             

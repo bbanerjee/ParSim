@@ -432,7 +432,7 @@ ConstitutiveModel::computePressEOS(double rhoM, double gamma, double cv,
 
 // Convert J-integral into stress intensity (for FRACTURE)
 void
-ConstitutiveModel::ConvertJToK(const MPMMaterial*, const string&, const Vector&,
+ConstitutiveModel::convertJToK(const MPMMaterial*, const string&, const Vector&,
                                const double&, const Vector&, Vector& SIF)
 {
   SIF = Vector(-9999., -9999., -9999.);
@@ -440,7 +440,7 @@ ConstitutiveModel::ConvertJToK(const MPMMaterial*, const string&, const Vector&,
 
 // Detect if crack propagtes and the propagation direction (for FRACTURE)
 short
-ConstitutiveModel::CrackPropagates(const double&, const double&, const double&,
+ConstitutiveModel::crackPropagates(const double&, const double&, const double&,
                                    double& theta)
 {
   enum

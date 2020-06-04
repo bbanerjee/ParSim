@@ -203,13 +203,13 @@ public:
   //////////
   // Convert J-integral into stress intensity for hypoelastic materials
   // (for FRACTURE)
-  virtual void ConvertJToK(const MPMMaterial* matl, const string& stressState,
+  virtual void convertJToK(const MPMMaterial* matl, const string& stressState,
                            const Vector& J, const double& C, const Vector& V,
                            Vector& SIF);
 
   //////////
   // Detect if crack propagates and the direction (for FRACTURE)
-  virtual short CrackPropagates(const double& Vc, const double& KI,
+  virtual short crackPropagates(const double& Vc, const double& KI,
                                 const double& KII, double& theta);
 
   virtual void addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
