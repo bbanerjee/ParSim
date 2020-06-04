@@ -29,15 +29,12 @@
 #include <sci_defs/uintah_defs.h> // For NO_FORTRAN
 
 
-#include <CCA/Components/MPM/ConstitutiveModel/ElasticPlasticHP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/P_Alpha.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PolarOrthotropicHypoElastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SoilFoam.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticity.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticityCap.h>
-#include <CCA/Components/MPM/ConstitutiveModel/UCNH.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ViscoPlastic.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/CompMooneyRivlin.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElastic.h>
@@ -51,14 +48,16 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/ViscoSCRAMHotSpot.h>
 
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ElasticPlasticHP.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/UCNH.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ViscoPlastic.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/ArenaMixture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Arenisca.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Arenisca3.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Arenisca4.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Diamm.h>
-#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Kayenta.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/MohrCoulomb.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/NonLocalDruckerPrager.h>
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/SoilModelBrannon.h>
@@ -80,6 +79,8 @@
 
 #if !defined(NO_FORTRAN)
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElasticFortran.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Diamm.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Kayenta.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoElasticFortran.h>
 #endif
 

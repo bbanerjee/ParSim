@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/HyperelasticPlastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/HyperelasticPlastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModelFactory.h>
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>

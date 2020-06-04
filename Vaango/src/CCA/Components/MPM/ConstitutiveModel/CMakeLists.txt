@@ -29,15 +29,10 @@ SET(MPM_ConstitutiveModel_SRCS
   ConstitutiveModel.cc          
   ImplicitCM.cc                 
   MPMMaterial.cc                
-  ElasticPlasticHP.cc           
-  ViscoPlastic.cc               
-  UCNH.cc                       
   P_Alpha.cc                    
   SoilFoam.cc	             
   BasicDamageModel.cc
   PolarOrthotropicHypoElastic.cc
-  HyperelasticPlastic.cc    
-  SmallStrainPlastic.cc     
   TabularEquationOfState.cc
   TabularPlasticity.cc
   TabularPlasticityCap.cc
@@ -51,6 +46,11 @@ SET(MPM_ConstitutiveModel_SRCS
   ExplosiveModels/MurnaghanMPM.cc               
   ExplosiveModels/ProgramBurn.cc                
   ExplosiveModels/ViscoSCRAMHotSpot.cc          
+  J2PlasticModels/ElasticPlasticHP.cc           
+  J2PlasticModels/HyperelasticPlastic.cc    
+  J2PlasticModels/SmallStrainPlastic.cc     
+  J2PlasticModels/UCNH.cc                       
+  J2PlasticModels/ViscoPlastic.cc               
   RockSoilModels/Arena.cc
   RockSoilModels/ArenaMixture.cc
   RockSoilModels/Arenisca.cc

@@ -31,7 +31,7 @@
 #define _CPP_CMATH
 #endif
 
-#include <CCA/Components/MPM/ConstitutiveModel/SmallStrainPlastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/SmallStrainPlastic.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/DamageModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/FlowStressModelFactory.h>

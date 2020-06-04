@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,22 +24,27 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __VISCO_PLASTIC_H__
-#define __VISCO_PLASTIC_H__
+#ifndef __ELASTIC_PLASTICHP_H__
+#define __ELASTIC_PLASTICHP_H__
 
-#include "ImplicitCM.h"
-#include "PlasticityModels/StabilityCheck.h"
-#include "PlasticityModels/ViscoPlasticityModel.h"
-#include "PlasticityModels/YieldCondition.h"
+#include <Core/Math/Short27.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-/*#include "PlasticityModels/DamageModel.h"*/
-#include "PlasticityModels/MPMEquationOfState.h"
+#include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/DamageModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/DevStressModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/FlowModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/MPMEquationOfState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/MeltingTempModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/SpecificHeatModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/StabilityCheck.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/YieldCondition.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-#include <math.h>
+#include <cmath>
 
 namespace Uintah {
 
@@ -47,114 +53,141 @@ class MPMFlags;
 
 /////////////////////////////////////////////////////////////////////////////
 /*!
-  \class ViscoPlastic
-  \brief Unified Viscoplastic model for ice - SUVIC-I
-  \author Jonah Lee \n
-  Department of Mechanical Engineering \n
-  University of Alaska Fairbanks \n
-  Copyright (C) 2008 University of Alaska Fairbanks
-
-  Borrowed from ElasticPlastic.h
+  \class ElasticPlasticHP
+  \brief High-strain rate Hypo-Elastic Plastic Constitutive Model
+  \author Biswajit Banerjee \n
+  C-SAFE and Department of Mechanical Engineering \n
+  University of Utah \n
 
   The rate of deformation and stress is rotated to material configuration
   before the updated values are calculated.  The left stretch and rotation
   are updated incrementatlly to get the deformation gradient.
-
-  Yield stress, back stress, drag stress are the main state variables.
 
   Needs :
   1) Isotropic elastic moduli.
   2) Flow rule in the form of a Plasticity Model.
   3) Yield condition.
   4) Stability condition.
-  5) Damage model - after CNHDamage
+  5) Damage model.
+  6) Shear modulus model.
+  7) Melting temperature model.
+  8) Specific heat model.
 
-  \warning Only SUVIC-I implemented. TODO-distill later for more general
-  viscoplastic models; add newton-raphson local iteration
+  \Modified by Jim Guilkey to use energy based EOS
+
+  \warning Only isotropic materials, von-Mises type yield conditions,
+  associated flow rule, high strain rate.
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class ViscoPlastic : public ConstitutiveModel, public ImplicitCM
+class ElasticPlasticHP : public ConstitutiveModel, public ImplicitCM
 {
 
 public:
-  // Create datatype for storing basic (elastic mainly) model parameters
+  // Create datatype for storing model parameters
   struct CMData
   {
-    double Bulk;  /*< Bulk modulus */
-    double Shear; /*< Shear Modulus */
-    double alpha; /*< Coeff. of thermal expansion */
+    double Bulk;       /*< Bulk modulus */
+    double Shear;      /*< Shear Modulus */
+    double alpha;      /*< Coeff. of thermal expansion */
+    double Chi;        /*< Taylor-Quinney coefficient */
+    double sigma_crit; /*< Critical stress */
   };
 
-  // Create datatype for failure criteria (only stress/strain now)
-  struct FailureVariableData
+  // Create datatype for storing porosity parameters
+  struct PorosityData
   {
-    double mean;            /*< Mean failure variable */
-    double std;             /*< Standard deviation of failure variable */
-    std::string dist;       /*< Failure variable distrinution */
-    bool failureByStress;   /*<Failure by maximum principle stress (default) */
-    bool failureByPressure; /*<Failure by maximum tensile mean stress */
+    double f0;     /*< Initial mean porosity */
+    double f0_std; /*< Initial standard deviation of porosity */
+    double fc;     /*< Critical porosity */
+    double fn;     /*< Volume fraction of void nucleating particles */
+    double en;     /*< Mean strain for nucleation */
+    double sn;     /*< Standard deviation of strain for nucleation */
+    std::string porosityDist; /*< Initial porosity distribution*/
   };
 
-  // Create datatype for storing state variable parameters
+  // Create datatype for storing damage parameters
+  struct ScalarDamageData
+  {
+    double D0;     /*< Initial mean scalar damage */
+    double D0_std; /*< Initial standard deviation of scalar damage */
+    double Dc;     /*< Critical scalar damage */
+    std::string scalarDamageDist; /*< Initial damage distrinution */
+  };
 
-  const VarLabel* pLeftStretchLabel; // For ViscoPlasticity
-  const VarLabel* pRotationLabel;    // For ViscoPlasticity
+  // Create a datatype for storing Cp calculation paramaters
+  // struct CpData {
+  //  double A;
+  //  double B;
+  //  double C;
+  //  double n;
+  //};
+
+  const VarLabel* pRotationLabel; // For Hypoelastic-plasticity
   const VarLabel* pStrainRateLabel;
   const VarLabel* pPlasticStrainLabel;
-  const VarLabel* pPlasticTempLabel;
-  const VarLabel* pPlasticTempIncLabel;
+  const VarLabel* pPlasticStrainRateLabel;
+  const VarLabel* pDamageLabel;
+  const VarLabel* pPorosityLabel;
   const VarLabel* pLocalizedLabel;
+  const VarLabel* pEnergyLabel;
 
-  const VarLabel* pFailureVariableLabel; // For failure criteria
-  const VarLabel* pFailureVariableLabel_preReloc;
-
-  const VarLabel* pLeftStretchLabel_preReloc; // For ViscoPlasticity
-  const VarLabel* pRotationLabel_preReloc;    // For ViscoPlasticity
+  const VarLabel* pRotationLabel_preReloc; // For Hypoelastic-plasticity
   const VarLabel* pStrainRateLabel_preReloc;
   const VarLabel* pPlasticStrainLabel_preReloc;
-  const VarLabel* pPlasticTempLabel_preReloc;
-  const VarLabel* pPlasticTempIncLabel_preReloc;
+  const VarLabel* pPlasticStrainRateLabel_preReloc;
+  const VarLabel* pDamageLabel_preReloc;
+  const VarLabel* pPorosityLabel_preReloc;
   const VarLabel* pLocalizedLabel_preReloc;
+  const VarLabel* pEnergyLabel_preReloc;
 
 protected:
   CMData d_initialData;
-
-  FailureVariableData d_varf;
+  PorosityData d_porosity;
+  ScalarDamageData d_scalarDam;
+  // CpData           d_Cp;
 
   double d_tol;
   double d_initialMaterialTemperature;
+  double d_isothermal;
+  bool d_doIsothermal;
   bool d_useModifiedEOS;
+  bool d_evolvePorosity;
+  bool d_evolveDamage;
+  bool d_computeSpecificHeat;
+  bool d_checkTeplaFailureCriterion;
+  bool d_doMelting;
+  bool d_checkStressTriax;
 
-  bool d_checkFailure;
-  bool d_removeParticles;
+  std::string d_plasticConvergenceAlgo;
+  // Erosion algorithms
   bool d_setStressToZero;
   bool d_allowNoTension;
-  bool d_usePolarDecompositionRMB; /*< use RMB's polar decomposition */
+  bool d_allowNoShear;
 
   YieldCondition* d_yield;
   StabilityCheck* d_stable;
-  ViscoPlasticityModel* d_plastic;
+  FlowModel* d_flow;
+  DamageModel* d_damage;
   MPMEquationOfState* d_eos;
+  ShearModulusModel* d_shear;
+  MeltingTempModel* d_melt;
+  SpecificHeatModel* d_Cp;
+  DevStressModel* d_devStress;
 
-private:
-
-  void getFailureVariableData(ProblemSpecP& ps);
-
-  void setFailureVariableData(const ViscoPlastic* cm);
 
 public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief constructors */
   ////////////////////////////////////////////////////////////////////////
-  ViscoPlastic(ProblemSpecP& ps, MPMFlags* flag);
-  ViscoPlastic(const ViscoPlastic* cm);
-  ViscoPlastic& operator=(const ViscoPlastic& cm) = delete;
+  ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* flag);
+  ElasticPlasticHP(const ElasticPlasticHP* cm);
+  ElasticPlasticHP& operator=(const ElasticPlasticHP& cm) = delete;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief destructor  */
   ////////////////////////////////////////////////////////////////////////
-  ~ViscoPlastic() override;
+  ~ElasticPlasticHP() override;
 
   ModelType modelType() const override
   {
@@ -164,10 +197,10 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  ViscoPlastic* clone() override;
+  ElasticPlasticHP* clone() override;
 
   ////////////////////////////////////////////////////////////////////////
-  /*! \brief Initial CR */
+  /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
   void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
                                      const PatchSet* patches) const override;
@@ -186,14 +219,14 @@ public:
                                      DataWarehouse* new_dw);
 
   ////////////////////////////////////////////////////////////////////////
-  /*! \brief Computes and requires explicit. */
+  /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
   void addComputesAndRequires(Task* task, const MPMMaterial* matl,
                               const PatchSet* patches) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*!
-    \brief Compute stress at each particle in the patch (explicit)
+    \brief Compute stress at each particle in the patch
 
     The plastic work is converted into a rate of temperature increase
     using an equation of the form
@@ -207,11 +240,10 @@ public:
                            DataWarehouse* new_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
-  /*! \brief Computes and Requires Implicit */
+  /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches, const bool recursion,
-                              const bool SchedParent) const override;
+  void addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
+                              const bool, const bool) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Compute Stress Tensor Implicit */
@@ -276,13 +308,6 @@ public:
                         std::vector<const VarLabel*>& to) override;
 
   ////////////////////////////////////////////////////////////////////////
-  /*! \brief Get the increment in plastic temperature. */
-  ////////////////////////////////////////////////////////////////////////
-  void getPlasticTemperatureIncrement(ParticleSubset* pset,
-                                      DataWarehouse* new_dw,
-                                      ParticleVariable<double>& T);
-
-  ////////////////////////////////////////////////////////////////////////
   /*! \brief Sockets for MPM-ICE */
   ////////////////////////////////////////////////////////////////////////
   double computeRhoMicroCM(double pressure, const double p_ref,
@@ -302,31 +327,36 @@ public:
   double getCompressibility() override;
 
 protected:
-  // Modify the stress if particle has failed
-  bool updateFailedParticlesAndModifyStress(
-    const Matrix3& bb, const double& pFailureVariable, const int& pLocalized,
-    int& pLocalized_new, Matrix3& pStress_new, const long64 particleID,
-    const double temp_new, const double Tm_cur);
+  ////////////////////////////////////////////////////////////////////////
+  /*! \brief Compute Plastic State using Biswajit's approach */
+  ////////////////////////////////////////////////////////////////////////
+  bool computePlasticStateBiswajit(
+    PlasticityState* state, constParticleVariable<double>& pPlasticStrain,
+    constParticleVariable<double>& pStrainRate, const Matrix3& sigma,
+    const Matrix3& trialS, const Matrix3& tensorEta, Matrix3& tensorS,
+    double& delGamma, double& flowStress, double& porosity, double& mu_cur,
+    const double delT, const MPMMaterial* matl, const int idx);
 
   ////////////////////////////////////////////////////////////////////////
-  /*! \brief Compute the updated left stretch and rotation tensors */
+  /*! \brief Compute Stilde, epdot, ep, and delGamma using
+             Simo's approach */
   ////////////////////////////////////////////////////////////////////////
-  void computeUpdatedVR(const double& delT, const Matrix3& DD,
-                        const Matrix3& WW, Matrix3& VV, Matrix3& RR);
+  void computePlasticStateViaRadialReturn(const Matrix3& trialS,
+                                          const double& delT,
+                                          const MPMMaterial* matl,
+                                          const particleIndex idx,
+                                          PlasticityState* state, Matrix3& nn,
+                                          double& delGamma);
 
   ////////////////////////////////////////////////////////////////////////
-  /*! \brief Compute the rate of rotation tensor */
+  /*! \brief Compute the quantity
+             \f$d(\gamma)/dt * \Delta T = \Delta \gamma \f$
+             using Newton iterative root finder
+      where \f$ d_p = \dot\gamma d(sigma_y)/d(sigma) \f$ */
   ////////////////////////////////////////////////////////////////////////
-  Matrix3 computeRateofRotation(const Matrix3& tensorV, const Matrix3& tensorD,
-                                const Matrix3& tensorW);
-
-  ////////////////////////////////////////////////////////////////////////
-  /*! compute stress at each particle in the patch */
-  ////////////////////////////////////////////////////////////////////////
-  void computeStressTensorImplicit(const PatchSubset* patches,
-                                   const MPMMaterial* matl,
-                                   DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw) override;
+  double computeDeltaGamma(const double& delT, const double& tolerance,
+                           const double& normTrialS, const MPMMaterial* matl,
+                           const particleIndex idx, PlasticityState* state);
 
   ////////////////////////////////////////////////////////////////////////
   /*! Compute the elastic tangent modulus tensor for isotropic
@@ -351,10 +381,20 @@ protected:
               [strain] = [e11 e22 e33 2e23 2e31 2e12]
       Uses alogorithm for small strain plasticity (Simo 1998, p.124) */
   ////////////////////////////////////////////////////////////////////////
-  virtual void computeEPlasticTangentModulus(
-    const double& K, const double& mu, const double& delGamma,
-    const double& normTrialS, const particleIndex idx, const Matrix3& n,
-    PlasticityState* state, double Cep[6][6]);
+  void computeEPlasticTangentModulus(const double& K, const double& mu,
+                                     const double& delGamma,
+                                     const Matrix3& trialStess,
+                                     const particleIndex idx,
+                                     PlasticityState* state, double Cep[6][6],
+                                     bool consistent);
+
+  ////////////////////////////////////////////////////////////////////////
+  /*! compute stress at each particle in the patch */
+  ////////////////////////////////////////////////////////////////////////
+  void computeStressTensorImplicit(const PatchSubset* patches,
+                                   const MPMMaterial* matl,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! Compute K matrix */
@@ -370,13 +410,58 @@ protected:
   void BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
                   double Kgeo[24][24]) const;
 
-  // Convert to double [6][6] (Voigt form)
-  void convertToVoigtForm(const TangentModulusTensor Ce, double D[6][6]);
+  ////////////////////////////////////////////////////////////////////////
+  /*! \brief Compute Porosity.
 
-private:
+  The evolution of porosity is given by \n
+  \f$
+  \dot{f} = \dot{f}_{nucl} + \dot{f}_{grow}
+  \f$ \n
+  where
+  \f$
+  \dot{f}_{grow} = (1-f) D^p_{kk}
+  \f$ \n
+  \f$ D^p_{kk} = Tr(D^p) \f$, and \f$ D^p \f$ is the rate of plastic
+  deformation, and, \n
+  \f$
+  \dot{f}_{nucl} = A \dot{\epsilon}^p
+  \f$  \n
+  with
+  \f$
+  A = f_n/(s_n \sqrt{2\pi}) \exp [-1/2 (\epsilon^p - \epsilon_n)^2/s_n^2]
+  \f$\n
+  \f$ f_n \f$ is the volume fraction of void nucleating particles ,
+  \f$ \epsilon_n \f$ is the mean of the normal distribution of nucleation
+  strains, and \f$ s_n \f$ is the standard deviation of the distribution.
+
+  References:
+  1) Ramaswamy, S. and Aravas, N., 1998, Comput. Methods Appl. Mech. Engrg.,
+  163, 33-53.
+  2) Bernauer, G. and Brocks, W., 2002, Fatigue Fract. Engng. Mater. Struct.,
+  25, 363-384.
+  */
+  ////////////////////////////////////////////////////////////////////////
+  double updatePorosity(const Matrix3& rateOfDeform, double delT,
+                        double oldPorosity, double plasticStrain);
+
+  ////////////////////////////////////////////////////////////////////////
+  /*! \brief Calculate void nucleation factor */
+  ////////////////////////////////////////////////////////////////////////
+  inline double voidNucleationFactor(double plasticStrain);
+
+protected:
   void initializeLocalMPMLabels();
+
+  void getInitialPorosityData(ProblemSpecP& ps);
+
+  void getInitialDamageData(ProblemSpecP& ps);
+
+  void setErosionAlgorithm();
+
+  // void getSpecificHeatData(ProblemSpecP& ps);
+  // double computeSpecificHeat(double T);
 };
 
 } // End namespace Uintah
 
-#endif // __VISCO_PLASTIC_H__
+#endif // __ELASTIC_PLASTICHP_H__
