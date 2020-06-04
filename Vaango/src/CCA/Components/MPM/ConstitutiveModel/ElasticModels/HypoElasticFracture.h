@@ -27,7 +27,7 @@
 #ifndef __HYPOELASTIC_FRACTURE_CONSTITUTIVE_MODEL_H__
 #define __HYPOELASTIC_FRACTURE_CONSTITUTIVE_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/HypoElastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElastic.h>
 #include <Core/Math/Matrix3.h>
 #include <cmath>
 #include <vector>

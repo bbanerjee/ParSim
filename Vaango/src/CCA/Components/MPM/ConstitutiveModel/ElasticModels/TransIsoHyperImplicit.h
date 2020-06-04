@@ -27,7 +27,7 @@
 #ifndef __Trans_Iso_Hyper_Implicit_CONSTITUTIVE_MODEL_H__
 #define __Trans_Iso_Hyper_Implicit_CONSTITUTIVE_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/TransIsoHyper.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/TransIsoHyper.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
 #include <Core/Math/Matrix3.h>
 #include <Eigen/Dense>

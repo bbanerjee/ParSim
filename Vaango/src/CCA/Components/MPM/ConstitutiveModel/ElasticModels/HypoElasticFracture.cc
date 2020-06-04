@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/HypoElasticFracture.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElasticFracture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Constants.h>
 #include <CCA/Ports/DataWarehouse.h>

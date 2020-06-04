@@ -28,20 +28,10 @@
 
 #include <sci_defs/uintah_defs.h> // For NO_FORTRAN
 
-#include <CCA/Components/MPM/ConstitutiveModel/CompMooneyRivlin.h>
-#include <CCA/Components/MPM/ConstitutiveModel/HypoElastic.h>
-#include <CCA/Components/MPM/ConstitutiveModel/HypoElasticFracture.h>
-#include <CCA/Components/MPM/ConstitutiveModel/RigidMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/TransIsoHyper.h>
-#include <CCA/Components/MPM/ConstitutiveModel/TransIsoHyperImplicit.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoScram.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoScramImplicit.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoTransIsoHyper.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoTransIsoHyperImplicit.h>
-
-#if !defined(NO_FORTRAN)
-#include <CCA/Components/MPM/ConstitutiveModel/HypoElasticFortran.h>
-#endif
 
 #include <CCA/Components/MPM/ConstitutiveModel/Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ArenaMixture.h>
@@ -51,7 +41,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Diamm.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticPlasticHP.h>
-#include <CCA/Components/MPM/ConstitutiveModel/HypoElasticImplicit.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Kayenta.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MWViscoElastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MohrCoulomb.h>
@@ -68,6 +57,13 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticFortran.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoPlastic.h>
 
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/CompMooneyRivlin.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElasticFracture.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElasticImplicit.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/TransIsoHyper.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/TransIsoHyperImplicit.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/MurnaghanMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/ProgramBurn.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/JWLppMPM.h>
@@ -75,10 +71,15 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/IdealGasMP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/Membrane.h>
+#include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/RigidMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/Water.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/CNH_MMS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/HypoElastic_MMS.h>
+
+#if !defined(NO_FORTRAN)
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElasticFortran.h>
+#endif
 
 #include <CCA/Components/MPM/MPMFlags.h>
 

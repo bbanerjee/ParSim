@@ -25,21 +25,14 @@
 # CMakeLists.txt for Vaango/src/CCA/Components/MPM/ConstitutiveModel
 
 SET(MPM_ConstitutiveModel_SRCS
-  RigidMaterial.cc              
   CamClay.cc
-  CompMooneyRivlin.cc           
   ConstitutiveModelFactory.cc   
   ConstitutiveModel.cc          
   ImplicitCM.cc                 
   MPMMaterial.cc                
-  TransIsoHyper.cc              
-  TransIsoHyperImplicit.cc      
   ViscoTransIsoHyper.cc         
   ViscoTransIsoHyperImplicit.cc 
   ViscoScram.cc                 
-  HypoElastic.cc                
-  HypoElasticFracture.cc                
-  HypoElasticImplicit.cc        
   ViscoScramImplicit.cc         
   MWViscoElastic.cc             
   ShellMaterial.cc              
@@ -63,12 +56,19 @@ SET(MPM_ConstitutiveModel_SRCS
   TabularPlasticity.cc
   TabularPlasticityCap.cc
   MohrCoulomb.cc
+  ElasticModels/CompMooneyRivlin.cc           
+  ElasticModels/HypoElastic.cc                
+  ElasticModels/HypoElasticFracture.cc                
+  ElasticModels/HypoElasticImplicit.cc        
+  ElasticModels/TransIsoHyper.cc              
+  ElasticModels/TransIsoHyperImplicit.cc      
   ExplosiveModels/JWLppMPM.cc                   
   ExplosiveModels/MurnaghanMPM.cc               
   ExplosiveModels/ProgramBurn.cc                
   ExplosiveModels/ViscoSCRAMHotSpot.cc          
   SpecialPurposeModels/IdealGasMP.cc                 
   SpecialPurposeModels/Membrane.cc                   
+  SpecialPurposeModels/RigidMaterial.cc              
   SpecialPurposeModels/Water.cc                      
   ManufacturedSolutions/CNH_MMS.cc                    
   ManufacturedSolutions/HypoElastic_MMS.cc
@@ -79,10 +79,10 @@ if (FORTRAN)
   SET(MPM_ConstitutiveModel_SRCS
     ${MPM_ConstitutiveModel_SRCS}
     Diamm.cc                      
-    HypoElasticFortran.cc         
     Kayenta.cc                    
     ViscoElasticFortran.cc
     WeibParameters.cc
+    ElasticModels/HypoElasticFortran.cc         
   )
   add_subdirectory(fortran)
 endif(FORTRAN)
