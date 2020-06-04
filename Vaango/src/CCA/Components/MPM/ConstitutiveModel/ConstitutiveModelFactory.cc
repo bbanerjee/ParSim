@@ -32,7 +32,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticPlasticHP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/P_Alpha.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PolarOrthotropicHypoElastic.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ShellMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SoilFoam.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticity.h>
@@ -67,6 +66,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/IdealGasMP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/Membrane.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/RigidMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/ShellMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/Water.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/MWViscoElastic.h>

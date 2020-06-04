@@ -29,7 +29,6 @@ SET(MPM_ConstitutiveModel_SRCS
   ConstitutiveModel.cc          
   ImplicitCM.cc                 
   MPMMaterial.cc                
-  ShellMaterial.cc              
   ElasticPlasticHP.cc           
   ViscoPlastic.cc               
   UCNH.cc                       
@@ -64,6 +63,7 @@ SET(MPM_ConstitutiveModel_SRCS
   SpecialPurposeModels/IdealGasMP.cc                 
   SpecialPurposeModels/Membrane.cc                   
   SpecialPurposeModels/RigidMaterial.cc              
+  SpecialPurposeModels/ShellMaterial.cc              
   SpecialPurposeModels/Water.cc                      
   ViscoElasticModels/MWViscoElastic.cc             
   ViscoElasticModels/ViscoScram.cc                 

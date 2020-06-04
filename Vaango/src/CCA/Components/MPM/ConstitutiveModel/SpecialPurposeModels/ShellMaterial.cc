@@ -24,8 +24,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/ShellMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ShellMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
