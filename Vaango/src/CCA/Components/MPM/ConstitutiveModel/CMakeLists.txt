@@ -25,7 +25,6 @@
 # CMakeLists.txt for Vaango/src/CCA/Components/MPM/ConstitutiveModel
 
 SET(MPM_ConstitutiveModel_SRCS
-  CamClay.cc
   ConstitutiveModelFactory.cc   
   ConstitutiveModel.cc          
   ImplicitCM.cc                 
@@ -41,21 +40,13 @@ SET(MPM_ConstitutiveModel_SRCS
   UCNH.cc                       
   P_Alpha.cc                    
   SoilFoam.cc	             
-  NonLocalDruckerPrager.cc      
-  SoilModelBrannon.cc
-  Arenisca.cc
-  Arenisca3.cc
-  Arenisca4.cc
   BasicDamageModel.cc
   PolarOrthotropicHypoElastic.cc
   HyperelasticPlastic.cc    
   SmallStrainPlastic.cc     
-  Arena.cc
-  ArenaMixture.cc
   TabularEquationOfState.cc
   TabularPlasticity.cc
   TabularPlasticityCap.cc
-  MohrCoulomb.cc
   ElasticModels/CompMooneyRivlin.cc           
   ElasticModels/HypoElastic.cc                
   ElasticModels/HypoElasticFracture.cc                
@@ -66,6 +57,15 @@ SET(MPM_ConstitutiveModel_SRCS
   ExplosiveModels/MurnaghanMPM.cc               
   ExplosiveModels/ProgramBurn.cc                
   ExplosiveModels/ViscoSCRAMHotSpot.cc          
+  RockSoilModels/Arena.cc
+  RockSoilModels/ArenaMixture.cc
+  RockSoilModels/Arenisca.cc
+  RockSoilModels/Arenisca3.cc
+  RockSoilModels/Arenisca4.cc
+  RockSoilModels/CamClay.cc
+  RockSoilModels/MohrCoulomb.cc
+  RockSoilModels/NonLocalDruckerPrager.cc      
+  RockSoilModels/SoilModelBrannon.cc
   SpecialPurposeModels/IdealGasMP.cc                 
   SpecialPurposeModels/Membrane.cc                   
   SpecialPurposeModels/RigidMaterial.cc              
@@ -78,11 +78,11 @@ SET(MPM_ConstitutiveModel_SRCS
 if (FORTRAN)
   SET(MPM_ConstitutiveModel_SRCS
     ${MPM_ConstitutiveModel_SRCS}
-    Diamm.cc                      
-    Kayenta.cc                    
     ViscoElasticFortran.cc
     WeibParameters.cc
     ElasticModels/HypoElasticFortran.cc         
+    RockSoilModels/Diamm.cc                      
+    RockSoilModels/Kayenta.cc                    
   )
   add_subdirectory(fortran)
 endif(FORTRAN)

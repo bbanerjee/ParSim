@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,7 +23,7 @@
  */
 
 // Namespace Vaango::
-#include <CCA/Components/MPM/ConstitutiveModel/ArenaMixture.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/ArenaMixture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_ArenaMixture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_ArenaMixture.h>

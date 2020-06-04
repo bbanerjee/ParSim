@@ -33,23 +33,12 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoTransIsoHyper.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoTransIsoHyperImplicit.h>
 
-#include <CCA/Components/MPM/ConstitutiveModel/Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ArenaMixture.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Arenisca.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Arenisca3.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Arenisca4.h>
-#include <CCA/Components/MPM/ConstitutiveModel/CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Diamm.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticPlasticHP.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Kayenta.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MWViscoElastic.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MohrCoulomb.h>
-#include <CCA/Components/MPM/ConstitutiveModel/NonLocalDruckerPrager.h>
 #include <CCA/Components/MPM/ConstitutiveModel/P_Alpha.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PolarOrthotropicHypoElastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShellMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SoilFoam.h>
-#include <CCA/Components/MPM/ConstitutiveModel/SoilModelBrannon.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticity.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticityCap.h>
@@ -68,6 +57,18 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/ProgramBurn.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/ViscoSCRAMHotSpot.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/ArenaMixture.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Arenisca.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Arenisca3.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Arenisca4.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/CamClay.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Diamm.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Kayenta.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/MohrCoulomb.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/NonLocalDruckerPrager.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/SoilModelBrannon.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/IdealGasMP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/Membrane.h>

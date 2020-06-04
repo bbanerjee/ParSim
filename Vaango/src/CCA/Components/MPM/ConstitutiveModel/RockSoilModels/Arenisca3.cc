@@ -1,34 +1,31 @@
-/** 
+/*
  * The MIT License
- * 
- * Copyright (c) 1997-2011 Center for the Simulation of Accidental Fires and
- * Explosions (CSAFE), and  Scientific Computing and Imaging Institute (SCI),
- *              University of Utah.
+ *
+ * Copyright (c) 1997-2014 The University of Utah
  * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
- * 
- * License for the specific language governing rights and limitations under
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
-/* Arenisca4 INTRO
+/* Arenisca3 INTRO
 
-This source code is for a simplified constitutive model, named ``Arenisca4'',
+This source code is for a simplified constitutive model, named ``Arenisca3'',
 which has some of the basic features needed for modeling geomaterials.
 To better explain the source code, the comments in this file frequently refer
 to the equations in the following three references:
@@ -43,6 +40,7 @@ to the equations in the following three references:
   Pre-December 2012 - Arenisca v1 - Alireza Sadeghirad
   December, 2012 - Arenisca v2 - controlled by James Colovos
   January, 2013 - Arenisca v3 - controlled by Michael Homel
+  October, 2014 - Arenisca v3.1 - Biswajit Banerjee
 
   This is VERSION 3.0 140731
 */
@@ -54,17 +52,18 @@ to the equations in the following three references:
                      // subcycling fails
 #define MHdeleteBadF // Prints errors messages when particles are deleted or
                      // subcycling fails
-//#define MHfastfcns    // Use fast approximate exp(), log() and pow() in deep
+//#define MHfastfcns  // Use fast approximate exp(), log() and pow() in deep
 //loops.
+// This may cause large errors when evaluating exp(x) for large x.  Use with
+// caution!
 #define MHdisaggregationStiffness // reduce stiffness with disaggregation
 
 // INCLUDE SECTION: tells the preprocessor to include the necessary files
-#include <CCA/Components/MPM/ConstitutiveModel/Arenisca4.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Arenisca3.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ParameterNotFound.h>
-#include <Core/Geometry/Vector.h>
 #include <Core/Grid/Box.h>
 #include <Core/Grid/Level.h>
 #include <Core/Grid/Patch.h>
@@ -83,6 +82,7 @@ to the equations in the following three references:
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <fstream> // For variability
 #include <iostream>
+#include <limits>
 #include <sci_values.h>
 
 #ifdef MHfastfcns
@@ -93,29 +93,26 @@ using std::cerr;
 using namespace Uintah;
 using namespace std;
 
-// Requires the necessary input parameters CONSTRUCTORS
-Arenisca4::Arenisca4(ProblemSpecP& ps, MPMFlags* Mflag)
-  : ConstitutiveModel(Mflag)
-{
-  proc0cout << "Arenisca ver 3.0" << endl;
-  proc0cout << "University of Utah, Mechanical Engineering, Computational "
-               "Solid Mechanics"
-            << endl;
+const double Arenisca3::one_third(1.0 / 3.0);
+const double Arenisca3::two_third(2.0 / 3.0);
+const double Arenisca3::four_third = 4.0 / 3.0;
+const double Arenisca3::sqrt_two = std::sqrt(2.0);
+const double Arenisca3::one_sqrt_two = 1.0 / sqrt_two;
+const double Arenisca3::sqrt_three = std::sqrt(3.0);
+const double Arenisca3::one_sqrt_three = 1.0 / sqrt_three;
+const double Arenisca3::one_sixth = 1.0 / 6.0;
+const double Arenisca3::one_ninth = 1.0 / 9.0;
+const double Arenisca3::pi = M_PI;
+const double Arenisca3::pi_fourth = 0.25 * pi;
+const double Arenisca3::pi_half = 0.5 * pi;
+const Matrix3 Arenisca3::Identity(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
-  // Private Class Variables:
-  one_third = 1.0 / 3.0;
-  two_third = 2.0 / 3.0;
-  four_third = 4.0 / 3.0;
-  sqrt_two = sqrt(2.0);
-  one_sqrt_two = 1.0 / sqrt_two;
-  sqrt_three = sqrt(3.0);
-  one_sqrt_three = 1.0 / sqrt_three;
-  one_ninth = 1.0 / 9.0;
-  one_sixth = 1.0 / 6.0;
-  pi = 3.141592653589793238462;
-  pi_fourth = 0.25 * pi;
-  pi_half = 0.5 * pi;
-  Identity.Identity();
+// Requires the necessary input parameters CONSTRUCTORS
+Arenisca3::Arenisca3(ProblemSpecP& ps, MPMFlags* Mflag)
+  : ConstitutiveModel(Mflag)
+  , d_surfaceRefPoint(0.0, 0.0, 0.0)
+{
+  proc0cout << "Arenisca ver 3.14" << endl;
 
   ps->require("PEAKI1", d_cm.PEAKI1); // Shear Limit Surface Parameter
   ps->require("FSLOPE", d_cm.FSLOPE); // Shear Limit Surface Parameter
@@ -123,7 +120,12 @@ Arenisca4::Arenisca4(ProblemSpecP& ps, MPMFlags* Mflag)
   ps->require("YSLOPE", d_cm.YSLOPE); // Shear Limit Surface Parameter
   ps->require("BETA_nonassociativity",
               d_cm.BETA_nonassociativity); // Nonassociativity Parameter
+
+  // Bulk and shear modulus model
+  // d_elasticModuliModel = Vaango::ElasticModuliModelFactory::create(ps)
   ps->require("B0", d_cm.B0); // Tangent Elastic Bulk Modulus Parameter
+  ps->getWithDefault("B01", d_cm.B01,
+                     0.0);    // Tangent Elastic Bulk Modulus Parameter
   ps->require("B1", d_cm.B1); // Tangent Elastic Bulk Modulus Parameter
   ps->require("B2", d_cm.B2); // Tangent Elastic Bulk Modulus Parameter
   ps->require("B3", d_cm.B3); // Tangent Elastic Bulk Modulus Parameter
@@ -138,6 +140,8 @@ Arenisca4::Arenisca4(ProblemSpecP& ps, MPMFlags* Mflag)
   ps->require("p2_crush_curve",
               d_cm.p2_crush_curve); // Crush Curve Parameter (not used)
   ps->require("p3_crush_curve", d_cm.p3_crush_curve); // Crush Curve Parameter
+  // ps->require("p4_crush_curve",d_cm.p4_crush_curve);  // Crush Curve
+  // Parameter
   ps->require("CR",
               d_cm.CR); // Cap Shape Parameter CR = (peakI1-kappa)/(peakI1-X)
   ps->require("fluid_B0", d_cm.fluid_B0); // Fluid bulk modulus (K_f)
@@ -151,14 +155,10 @@ Arenisca4::Arenisca4(ProblemSpecP& ps, MPMFlags* Mflag)
                      d_cm.subcycling_characteristic_number,
                      256); // allowable subcycles
   ps->getWithDefault("Use_Disaggregation_Algorithm",
-                     d_cm.Use_Disaggregation_Algorithm, false); // CVD jet
-  ps->getWithDefault("J3_type", d_cm.J3_type, 0); // Lode angle dependence
-  ps->getWithDefault("J3_psi", d_cm.J3_psi, 1.0); // Lode angle dependence
-  ps->getWithDefault("principal_stress_cutoff", d_cm.principal_stress_cutoff,
-                     1.0e99);                       // Principal stress cutoff
-  ps->get("PEAKI1IDIST", wdist.WeibDist);           // Variability
-  WeibullParser(wdist);                             // Variability
-  proc0cout << "WeibMed=" << wdist.WeibMed << endl; // Variability
+                     d_cm.Use_Disaggregation_Algorithm, false);
+  ps->get("PEAKI1IDIST", wdist.WeibDist);           // For variability
+  WeibullParser(wdist);                             // For variability
+  proc0cout << "WeibMed=" << wdist.WeibMed << endl; // For variability
 
   // These class variables are computed from input parameters and are used
   // throughout the code
@@ -168,36 +168,58 @@ Arenisca4::Arenisca4(ProblemSpecP& ps, MPMFlags* Mflag)
   // This phi_i value is not modified by the disaggregation strain, because
   // it is the same for all particles.  Thus disaggregation strain is
   // not supported when there is a pore fluid.
-  phi_i = 1.0 - exp(-d_cm.p3_crush_curve); // initial porosity (inferred from
-                                           // crush curve, used for fluid model/
+  d_phi_i = 1.0 - exp(-d_cm.p3_crush_curve); // Initial porosity (inferred from
+                                             // crush curve, used for fluid
+                                             // model/
+  d_Km = d_cm.B0 + d_cm.B1;                  // Matrix bulk modulus
+  d_Kf = d_cm.fluid_B0;                      // Fluid bulk modulus
+  d_C1 = d_Kf * (1.0 - d_phi_i) +
+         d_Km * (d_phi_i); // Term to simplify the fluid model expressions
 
-  Km = d_cm.B0 + d_cm.B1; // Matrix bulk modulus
-  Kf = d_cm.fluid_B0;     // Fluid bulk modulus
-  C1 = Kf * (1.0 - phi_i) +
-       Km * (phi_i); // Term to simplify the fluid model expressions
-  ev0 =
-    C1 * d_cm.fluid_pressure_initial /
-    (Kf * Km); // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
+  d_ev0 =
+    (std::abs(d_Kf) <= std::numeric_limits<double>::epsilon() * std::abs(d_Kf))
+      ? 0.0
+      : d_C1 * d_cm.fluid_pressure_initial /
+          (d_Kf * d_Km); // Zero fluid pressure
+                         // vol. strain.
+                         // (will equal zero if pfi=0)
+
+  // MPM needs three functions to interact with ICE in MPMICE
+  // 1) p = f(rho) 2) rho = g(p) 3) C = 1/K(rho)
+  // Because the Arenisca3 bulk modulus model does not have any closed
+  // form expressions for these functions, we use a Murnaghan equation of state
+  // with parameters K_0 and n = K_0'.  These parameters are read in here.
+  // **WARNING** The default values are for Mason sand.
+  ps->getWithDefault("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS, 2.5e8);
+  ps->getWithDefault("n_Murnaghan_EOS", d_cm.n_Murnaghan_EOS, 13);
+
+  // For stress initialization using body force
+  d_initializeWithBodyForce = false;
+  ps->getWithDefault("initialize_with_body_force", d_initializeWithBodyForce,
+                     false);
+  if (d_initializeWithBodyForce) {
+    ps->require("surface_reference_point", d_surfaceRefPoint);
+  }
 
   initializeLocalMPMLabels();
 }
-Arenisca4::Arenisca4(const Arenisca4* cm)
+Arenisca3::Arenisca3(const Arenisca3* cm)
   : ConstitutiveModel(cm)
 {
-  one_third = 1.0 / 3.0;
-  two_third = 2.0 / 3.0;
-  four_third = 4.0 / 3.0;
-  sqrt_two = sqrt(2.0);
-  one_sqrt_two = 1.0 / sqrt_two;
-  sqrt_three = sqrt(3.0);
-  one_sqrt_three = 1.0 / sqrt_three;
-  one_ninth = 1.0 / 9.0;
-  one_sixth = 1.0 / 6.0;
-  pi = 3.141592653589793238462;
-  pi_fourth = 0.25 * pi;
-  pi_half = 0.5 * pi;
+  // one_third      = 1.0/3.0;
+  // two_third      = 2.0/3.0;
+  // four_third     = 4.0/3.0;
+  // sqrt_two       = sqrt(2.0);
+  // one_sqrt_two   = 1.0/sqrt_two;
+  // sqrt_three     = sqrt(3.0);
+  // one_sqrt_three = 1.0/sqrt_three;
+  // one_ninth      = 1.0/9.0;
+  // one_sixth      = 1.0/6.0;
+  // pi             = 3.141592653589793238462;
+  // pi_fourth      = 0.25*pi;
+  // pi_half        = 0.5*pi;
 
-  Identity.Identity();
+  // Identity.Identity();
 
   // Weibull distribution input
   wdist.WeibMed = cm->wdist.WeibMed;
@@ -217,6 +239,7 @@ Arenisca4::Arenisca4(const Arenisca4* cm)
   d_cm.BETA_nonassociativity = cm->d_cm.BETA_nonassociativity;
   // Bulk Modulus
   d_cm.B0 = cm->d_cm.B0;
+  d_cm.B01 = cm->d_cm.B01;
   d_cm.B1 = cm->d_cm.B1;
   d_cm.B2 = cm->d_cm.B2;
   d_cm.B3 = cm->d_cm.B3;
@@ -232,6 +255,7 @@ Arenisca4::Arenisca4(const Arenisca4* cm)
   d_cm.p1_crush_curve = cm->d_cm.p1_crush_curve;
   d_cm.p2_crush_curve = cm->d_cm.p2_crush_curve; // not used
   d_cm.p3_crush_curve = cm->d_cm.p3_crush_curve;
+  // d_cm.p4_crush_curve = cm->d_cm.p4_crush_curve;
   d_cm.CR = cm->d_cm.CR;
   // Fluid Effects
   d_cm.fluid_B0 = cm->d_cm.fluid_B0;
@@ -242,16 +266,22 @@ Arenisca4::Arenisca4(const Arenisca4* cm)
   // Subcycling
   d_cm.subcycling_characteristic_number =
     cm->d_cm.subcycling_characteristic_number;
-  initializeLocalMPMLabels();
+
   // Disaggregation Strain
   d_cm.Use_Disaggregation_Algorithm = cm->d_cm.Use_Disaggregation_Algorithm;
-  // 3rd Invariant Dependence
-  d_cm.J3_type = cm->d_cm.J3_type;
-  d_cm.J3_psi = cm->d_cm.J3_psi;
-  d_cm.principal_stress_cutoff = cm->d_cm.principal_stress_cutoff;
+
+  // For MPMICE Murnaghan EOS
+  d_cm.K0_Murnaghan_EOS = cm->d_cm.K0_Murnaghan_EOS;
+  d_cm.n_Murnaghan_EOS = cm->d_cm.n_Murnaghan_EOS;
+
+  // For initialization with body force
+  d_initializeWithBodyForce = cm->d_initializeWithBodyForce;
+  d_surfaceRefPoint = cm->d_surfaceRefPoint;
+
+  initializeLocalMPMLabels();
 }
 // DESTRUCTOR
-Arenisca4::~Arenisca4()
+Arenisca3::~Arenisca3()
 {
   VarLabel::destroy(peakI1IDistLabel);          // For variability
   VarLabel::destroy(peakI1IDistLabel_preReloc); // For variability
@@ -273,6 +303,8 @@ Arenisca4::~Arenisca4()
   VarLabel::destroy(peveLabel_preReloc);
   VarLabel::destroy(pCapXLabel);
   VarLabel::destroy(pCapXLabel_preReloc);
+  VarLabel::destroy(pKappaLabel);
+  VarLabel::destroy(pKappaLabel_preReloc);
   VarLabel::destroy(pStressQSLabel);
   VarLabel::destroy(pStressQSLabel_preReloc);
   VarLabel::destroy(pScratchMatrixLabel);
@@ -286,12 +318,12 @@ Arenisca4::~Arenisca4()
 
 // adds problem specification values to checkpoint data for restart
 void
-Arenisca4::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
+Arenisca3::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
 {
   ProblemSpecP cm_ps = ps;
   if (output_cm_tag) {
     cm_ps = ps->appendChild("constitutive_model");
-    cm_ps->setAttribute("type", "Arenisca4");
+    cm_ps->setAttribute("type", "Arenisca3");
   }
   cm_ps->appendElement("FSLOPE", d_cm.FSLOPE);
   cm_ps->appendElement("PEAKI1", d_cm.PEAKI1);
@@ -299,19 +331,21 @@ Arenisca4::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("YSLOPE", d_cm.YSLOPE);
   cm_ps->appendElement("BETA_nonassociativity", d_cm.BETA_nonassociativity);
   cm_ps->appendElement("B0", d_cm.B0);
+  cm_ps->appendElement("B01", d_cm.B01);
   cm_ps->appendElement("B1", d_cm.B1);
   cm_ps->appendElement("B2", d_cm.B2);
   cm_ps->appendElement("B3", d_cm.B3);
   cm_ps->appendElement("B4", d_cm.B4);
   cm_ps->appendElement("G0", d_cm.G0);
-  cm_ps->appendElement("G1", d_cm.G1); // Not used
-  cm_ps->appendElement("G2", d_cm.G2); // Not used
+  cm_ps->appendElement("G1", d_cm.G1); // Low pressure Poisson ratio
+  cm_ps->appendElement("G2", d_cm.G2); // Pressure-dependent Poisson ratio term
   cm_ps->appendElement("G3", d_cm.G3); // Not used
   cm_ps->appendElement("G4", d_cm.G4); // Not used
   cm_ps->appendElement("p0_crush_curve", d_cm.p0_crush_curve);
   cm_ps->appendElement("p1_crush_curve", d_cm.p1_crush_curve);
   cm_ps->appendElement("p2_crush_curve", d_cm.p2_crush_curve); // Not used
   cm_ps->appendElement("p3_crush_curve", d_cm.p3_crush_curve);
+  // cm_ps->appendElement("p4_crush_curve",d_cm.p4_crush_curve);
   cm_ps->appendElement("CR", d_cm.CR);
   cm_ps->appendElement("fluid_B0", d_cm.fluid_B0);
   cm_ps->appendElement("fluid_pressure_initial", d_cm.fluid_pressure_initial);
@@ -321,9 +355,6 @@ Arenisca4::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
                        d_cm.subcycling_characteristic_number);
   cm_ps->appendElement("Use_Disaggregation_Algorithm",
                        d_cm.Use_Disaggregation_Algorithm);
-  cm_ps->appendElement("J3_type", d_cm.J3_type);
-  cm_ps->appendElement("J3_psi", d_cm.J3_psi);
-  cm_ps->appendElement("principal_stress_cutoff", d_cm.principal_stress_cutoff);
 
   //    Uintah Variability Variables
   cm_ps->appendElement("peakI1IPerturb", wdist.Perturb);
@@ -332,42 +363,47 @@ Arenisca4::outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag)
   cm_ps->appendElement("peakI1IRefVol", wdist.WeibRefVol);
   cm_ps->appendElement("peakI1ISeed", wdist.WeibSeed);
   cm_ps->appendElement("PEAKI1IDIST", wdist.WeibDist);
+
+  // MPMICE Murnaghan EOS
+  cm_ps->appendElement("K0_Murnaghan_EOS", d_cm.K0_Murnaghan_EOS);
+  cm_ps->appendElement("n_Murnaghan_EOS", d_cm.n_Murnaghan_EOS);
+
+  // For initialization with body force
+  cm_ps->appendElement("initialize_with_body_force", d_initializeWithBodyForce);
+  cm_ps->appendElement("surface_reference_point", d_surfaceRefPoint);
 }
 
-Arenisca4*
-Arenisca4::clone()
+Arenisca3*
+Arenisca3::clone()
 {
-  return scinew Arenisca4(*this);
+  return scinew Arenisca3(*this);
 }
 
 void
-Arenisca4::initializeCMData(const Patch* patch, const MPMMaterial* matl,
+Arenisca3::initializeCMData(const Patch* patch, const MPMMaterial* matl,
                             DataWarehouse* new_dw)
 {
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
-  /////
+  //
   // Allocates memory for internal state variables at beginning of run.
-
+  //
   // Get the particles in the current patch
   ParticleSubset* pset = new_dw->getParticleSubset(matl->getDWIndex(), patch);
 
   ParticleVariable<double> pdTdt;
-  ParticleVariable<Matrix3> pDefGrad, pStress, pStressQS;
+  ParticleVariable<Matrix3> pStress, pStressQS;
 
   new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel, pset);
   new_dw->allocateAndPut(pStress, lb->pStressLabel, pset);
   new_dw->allocateAndPut(pStressQS, pStressQSLabel, pset);
-  new_dw->allocateAndPut(pDefGrad, lb->pDefGradLabel, pset);
 
   // To fix : For a material that is initially stressed we need to
   // modify the stress tensors to comply with the initial stress state
-  ParticleSubset::iterator iter = pset->begin();
-  for (; iter != pset->end(); iter++) {
-    pdTdt[*iter] = 0.0;
-    pDefGrad[*iter] = Identity;
-    pStress[*iter] = -d_cm.fluid_pressure_initial * Identity;
-    pStressQS[*iter] = pStress[*iter];
+  for (int& iter : *pset) {
+    pdTdt[iter] = 0.0;
+    pStress[iter] = -d_cm.fluid_pressure_initial * Identity;
+    pStressQS[iter] = pStress[iter];
   }
 
   // Allocate particle variables
@@ -380,6 +416,7 @@ Arenisca4::initializeCMData(const Patch* patch, const MPMMaterial* matl,
     pevp,                                   // Plastic Volumetric Strain
     peve,                                   // Elastic Volumetric Strain
     pCapX,                                  // I1 of cap intercept
+    pKappa,                                 // Branch point
     pZeta,                                  // Trace of isotropic Backstress
     pP3; // Modified p3 for initial disaggregation strain.
   ParticleVariable<Matrix3> pScratchMatrix, // Developer tool
@@ -390,12 +427,12 @@ Arenisca4::initializeCMData(const Patch* patch, const MPMMaterial* matl,
   new_dw->allocateAndPut(pScratchDouble1, pScratchDouble1Label, pset);
   new_dw->allocateAndPut(pScratchDouble2, pScratchDouble2Label, pset);
   new_dw->allocateAndPut(pPorePressure, pPorePressureLabel, pset);
-  new_dw->allocateAndPut(peakI1IDist, peakI1IDistLabel,
-                         pset); // For variability
+  new_dw->allocateAndPut(peakI1IDist, peakI1IDistLabel, pset);
   new_dw->allocateAndPut(pep, pepLabel, pset);
   new_dw->allocateAndPut(pevp, pevpLabel, pset);
   new_dw->allocateAndPut(peve, peveLabel, pset);
   new_dw->allocateAndPut(pCapX, pCapXLabel, pset);
+  new_dw->allocateAndPut(pKappa, pKappaLabel, pset);
   new_dw->allocateAndPut(pZeta, pZetaLabel, pset);
   new_dw->allocateAndPut(pP3, pP3Label, pset);
   new_dw->allocateAndPut(pScratchMatrix, pScratchMatrixLabel, pset);
@@ -410,7 +447,7 @@ Arenisca4::initializeCMData(const Patch* patch, const MPMMaterial* matl,
     pScratchDouble1[iter] = 0;
     pScratchDouble2[iter] = 0;
     pPorePressure[iter] = d_cm.fluid_pressure_initial;
-    peakI1IDist[iter] = d_cm.PEAKI1; // For variability
+    peakI1IDist[iter] = d_cm.PEAKI1;
     pevp[iter] = 0.0;
     peve[iter] = 0.0;
     pZeta[iter] = -3.0 * d_cm.fluid_pressure_initial;
@@ -421,6 +458,8 @@ Arenisca4::initializeCMData(const Patch* patch, const MPMMaterial* matl,
       pP3[iter] = d_cm.p3_crush_curve;
     }
     pCapX[iter] = computeX(0.0, pP3[iter]);
+    pKappa[iter] =
+      d_cm.PEAKI1 - d_cm.CR * (d_cm.PEAKI1 - pCapX[iter]); // Branch Point
     pScratchMatrix[iter].set(0.0);
     pep[iter].set(0.0);
   }
@@ -440,26 +479,84 @@ Arenisca4::initializeCMData(const Patch* patch, const MPMMaterial* matl,
     //          << "\nReference Vol:   " << wdist.WeibRefVol
     //          << "\nSeed:            " << wdist.WeibSeed
     //          << "\nPerturb?:        " << wdist.Perturb << std::endl;
-    ParticleSubset::iterator iter = pset->begin();
-    for (; iter != pset->end(); iter++) {
+    for (int& iter : *pset) {
       // set value with variability and scale effects
-      peakI1IDist[*iter] = weibGen.rand(pVolume[*iter]);
+      peakI1IDist[iter] = weibGen.rand(pVolume[iter]);
 
       // set value with ONLY scale effects
-      if (wdist.WeibSeed == 0)
-        peakI1IDist[*iter] =
-          pow(wdist.WeibRefVol / pVolume[*iter], 1. / wdist.WeibMod) *
+      if (wdist.WeibSeed == 0) {
+        peakI1IDist[iter] =
+          pow(wdist.WeibRefVol / pVolume[iter], 1. / wdist.WeibMod) *
           wdist.WeibMed;
+      }
     }
   }
 
   computeStableTimestep(patch, matl, new_dw);
 }
 
+// Initialize stress and deformation gradient using body force
+void
+Arenisca3::initializeStressAndDefGradFromBodyForce(const Patch* patch,
+                                                   const MPMMaterial* matl,
+                                                   DataWarehouse* new_dw) const
+{
+  // Check the flag to make sure that we actually want stress initialization
+  // for this particular object
+  if (!d_initializeWithBodyForce) {
+    return;
+  }
+
+  // Get density, bulk modulus, shear modulus
+  double rho = matl->getInitialDensity();
+  double bulk = d_cm.B0;
+  double shear = d_cm.G0;
+
+  // Get material index
+  int matID = matl->getDWIndex();
+
+  // Get the particles in the current patch
+  ParticleSubset* pset = new_dw->getParticleSubset(matID, patch);
+
+  // Get fixed particle data
+  constParticleVariable<Point> pPosition;
+  constParticleVariable<Vector> pBodyForceAcc;
+  new_dw->get(pPosition, lb->pXLabel, pset);
+  new_dw->get(pBodyForceAcc, lb->pBodyForceAccLabel, pset);
+
+  // Get modifiable particle data
+  ParticleVariable<Matrix3> pStress, pDefGrad;
+  new_dw->getModifiable(pStress, lb->pStressLabel, pset);
+  new_dw->getModifiable(pDefGrad, lb->pDefGradLabel, pset);
+
+  // loop over the particles in the patch
+  for (int idx : *pset) {
+    // Compute stress
+    double sigma_xx = -rho * pBodyForceAcc[idx].x() *
+                      (pPosition[idx].x() - d_surfaceRefPoint.x());
+    double sigma_yy = -rho * pBodyForceAcc[idx].y() *
+                      (pPosition[idx].y() - d_surfaceRefPoint.y());
+    double sigma_zz = -rho * pBodyForceAcc[idx].z() *
+                      (pPosition[idx].z() - d_surfaceRefPoint.z());
+    Matrix3 stress(sigma_xx, 0, 0, 0, sigma_yy, 0, 0, 0, sigma_zz);
+
+    // Update particle stress
+    pStress[idx] += stress;
+
+    // Compute strain
+    Matrix3 strain = pStress[idx] * (0.5 / shear) +
+                     Identity * ((one_ninth / bulk - one_sixth / shear) *
+                                 pStress[idx].Trace());
+
+    // Update defgrad
+    pDefGrad[idx] = Identity + strain;
+  }
+}
+
 // Compute stable timestep based on both the particle velocities
 // and wave speed
 void
-Arenisca4::computeStableTimestep(
+Arenisca3::computeStableTimestep(
   const Patch* patch,
   // ParticleSubset* pset, //T2D: this should be const
   const MPMMaterial* matl, DataWarehouse* new_dw)
@@ -510,9 +607,10 @@ Arenisca4::computeStableTimestep(
     // store the maximum
     c_dil = sqrt((bulk + four_third * shear) * (pvolume[idx] / pmass[idx]));
 
-    WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                       Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                       Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+    WaveSpeed =
+      Vector(Max(c_dil + std::abs(pvelocity[idx].x()), WaveSpeed.x()),
+             Max(c_dil + std::abs(pvelocity[idx].y()), WaveSpeed.y()),
+             Max(c_dil + std::abs(pvelocity[idx].z()), WaveSpeed.z()));
   }
 
   // Compute the stable timestep based on maximum value of
@@ -524,13 +622,13 @@ Arenisca4::computeStableTimestep(
 
 // ------------------------------------- BEGIN COMPUTE STRESS TENSOR FUNCTION
 /**
-Arenisca4::computeStressTensor is the core of the Arenisca4 model which computes
+Arenisca3::computeStressTensor is the core of the Arenisca3 model which computes
 the updated stress at the end of the current timestep along with all other
 required data such plastic strain, elastic strain, cap position, etc.
 
 */
 void
-Arenisca4::computeStressTensor(const PatchSubset* patches,
+Arenisca3::computeStressTensor(const PatchSubset* patches,
                                const MPMMaterial* matl, DataWarehouse* old_dw,
                                DataWarehouse* new_dw)
 {
@@ -560,7 +658,7 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<double> pScratchDouble1, pScratchDouble2,
       pPorePressure,
       pmass, // used for stable timestep
-      pevp, peve, pCapX, pZeta, pP3;
+      pevp, peve, pCapX, pKappa, pZeta, pP3;
     constParticleVariable<long64> pParticleID;
     constParticleVariable<Vector> pvelocity;
     constParticleVariable<Matrix3> pScratchMatrix, pep, pDefGrad, pStress_old,
@@ -576,11 +674,12 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
                 pset);                                    // initializeCMData()
     old_dw->get(pPorePressure, pPorePressureLabel, pset); // initializeCMData()
     old_dw->get(pmass, lb->pMassLabel, pset);
-    old_dw->get(pevp, pevpLabel, pset);   // initializeCMData()
-    old_dw->get(peve, peveLabel, pset);   // initializeCMData()
-    old_dw->get(pCapX, pCapXLabel, pset); // initializeCMData()
-    old_dw->get(pZeta, pZetaLabel, pset); // initializeCMData()
-    old_dw->get(pP3, pP3Label, pset);     // initializeCMData()
+    old_dw->get(pevp, pevpLabel, pset);     // initializeCMData()
+    old_dw->get(peve, peveLabel, pset);     // initializeCMData()
+    old_dw->get(pCapX, pCapXLabel, pset);   // initializeCMData()
+    old_dw->get(pKappa, pKappaLabel, pset); // initializeCMData()
+    old_dw->get(pZeta, pZetaLabel, pset);   // initializeCMData()
+    old_dw->get(pP3, pP3Label, pset);       // initializeCMData()
     old_dw->get(pParticleID, lb->pParticleIDLabel, pset);
     old_dw->get(pvelocity, lb->pVelocityLabel, pset);
     old_dw->get(pScratchMatrix, pScratchMatrixLabel, pset); // initializeCMData()
@@ -609,7 +708,7 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
     // Allocate particle variables used in ComputeStressTensor
     ParticleVariable<double> p_q, pdTdt, pScratchDouble1_new,
       pScratchDouble2_new, pPorePressure_new, pevp_new, peve_new, pCapX_new,
-      pZeta_new, pP3_new;
+      pKappa_new, pZeta_new, pP3_new;
     ParticleVariable<Matrix3> pScratchMatrix_new, pep_new, pStress_new,
       pStressQS_new;
 
@@ -624,6 +723,7 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(pevp_new, pevpLabel_preReloc, pset);
     new_dw->allocateAndPut(peve_new, peveLabel_preReloc, pset);
     new_dw->allocateAndPut(pCapX_new, pCapXLabel_preReloc, pset);
+    new_dw->allocateAndPut(pKappa_new, pKappaLabel_preReloc, pset);
     new_dw->allocateAndPut(pZeta_new, pZetaLabel_preReloc, pset);
     new_dw->allocateAndPut(pP3_new, pP3Label_preReloc, pset);
     new_dw->allocateAndPut(pScratchMatrix_new, pScratchMatrixLabel_preReloc,
@@ -637,14 +737,13 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
     // required data such plastic strain, elastic strain, cap position, etc.
 
     for (int idx : *pset) {
-      // patch index
-      // cout<<"pID="<<pParticleID[idx]<<endl;
 
       // A parameter to consider the thermal effects of the plastic work which
       // is not coded in the current source code. Further development of
       // Arenisca
       // may ativate this feature.
       pdTdt[idx] = 0.0;
+      pAreniscaFlag_new[idx] = pAreniscaFlag[idx];
 
       // Particle deletion variable
       pLocalized_new[idx] = pLocalized[idx];
@@ -658,35 +757,55 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
       Matrix3 D = (pVelGrad_new[idx] + pVelGrad_new[idx].Transpose()) * .5;
 
       // Use polar decomposition to compute the rotation and stretch tensors
+      Matrix3 FF = pDefGrad[idx];
       Matrix3 tensorR, tensorU;
 
 #ifdef MHdeleteBadF
-      if (pDefGrad[idx].MaxAbsElem() > 1.0e2) {
+      double Fmax = FF.MaxAbsElem();
+      double JJ = FF.Determinant();
+      if ((Fmax > 1.0e2) || (JJ < 1.0e-3) || (JJ > 1.0e5)) {
+        Matrix3 U2 = FF.Transpose() * FF;
+        double maxEigen = 0., medEigen = 0., minEigen = 0.;
+        U2.getEigenValues(maxEigen, medEigen, minEigen);
+        maxEigen = std::log(std::sqrt(maxEigen));
+        minEigen = std::log(std::sqrt(minEigen));
+        medEigen = std::log(std::sqrt(medEigen));
         pLocalized_new[idx] = -999;
-        cout << "Large deformation gradient component: [F] = " << pDefGrad[idx]
-             << endl;
-        cout << "Resetting [F]=[I] for this step and deleting particle" << endl;
-        Identity.polarDecompositionRMB(tensorU, tensorR);
-      } else if (pDefGrad[idx].Determinant() < 1.0e-3) {
-        pLocalized_new[idx] = -999;
-        cout << "Small deformation gradient determinant: [F] = "
-             << pDefGrad[idx] << endl;
-        cout << "Resetting [F]=[I] for this step and deleting particle" << endl;
-        Identity.polarDecompositionRMB(tensorU, tensorR);
-      } else if (pDefGrad[idx].Determinant() > 1.0e5) {
-        pLocalized_new[idx] = -999;
-        cout << "Large deformation gradient determinant: [F] = "
-             << pDefGrad[idx] << endl;
-        cout << "Resetting [F]=[I] for this step and deleting particle" << endl;
+        std::cout << "Deformation gradient component unphysical: [F] = " << FF
+                  << " Fmax = " << Fmax << " > 100 "
+                  << " J = " << JJ << " outside [0.001, 100000]" << std::endl;
+        std::cout << " log(lambda_1) = " << maxEigen 
+                  << " log(lambda_2) = " << medEigen 
+                  << " log(lambda_3) = " << minEigen << "\n";
+        std::cout << "Resetting [F]=[I] for this step and deleting particle "
+                  << " idx = " << idx << " particleID = " << pParticleID[idx]
+                  << " pLocalized = " << pLocalized_new[idx]
+                  << std::endl;
         Identity.polarDecompositionRMB(tensorU, tensorR);
       } else {
-        pDefGrad[idx].polarDecompositionRMB(tensorU, tensorR);
+        FF.polarDecompositionRMB(tensorU, tensorR);
       }
 #else
-      pDefGrad[idx].polarDecompositionRMB(tensorU, tensorR);
+      FF.polarDecompositionRMB(tensorU, tensorR);
 #endif
+
+      /*
+      if (pParticleID[idx] == 111670263811) {
+       std::cout << "pID=" << pParticleID[idx] << " ";
+       std::cout << "\t Vel grad = " << pVelGrad_new[idx]
+                 << "\n\t Def grad = " << pDefGrad[idx] 
+                 << "\n\t Def grad new = " << pDefGrad_new[idx]
+                 << "\n\t R = " << tensorR
+                 << "\n\t U = " << tensorU << std::endl;
+      }
+      */
+
       // Compute the unrotated symmetric part of the velocity gradient
       D = (tensorR.Transpose()) * (D * tensorR);
+      // std::cout << "DefGrad = " << FF << std::endl;
+      // std::cout << "\t D = " << D << std::endl;
+      // std::cout << "\t U = " << tensorU << std::endl;
+      // std::cout << "\t R = " << tensorR << std::endl;
 
       // To support non-linear elastic properties and to allow for the fluid
       // bulk modulus
@@ -727,24 +846,31 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
       peakI1IDist_new[idx] = peakI1IDist[idx];
       double coher = 1.0;
       if (d_cm.PEAKI1 > 0.0) {
-        coher = peakI1IDist[idx] / d_cm.PEAKI1;
-      } // Scalar-valued Damage (XXX)
+        coher = peakI1IDist[idx] / d_cm.PEAKI1; // Scalar-valued Damage (XXX)
+      }
 
       // Divides the strain increment into substeps, and calls substep function
-      int stepFlag = computeStep(
-        D,                  // strain "rate"
-        delT,               // time step (s)
-        sigmaQS_old,        // unrotated stress at start of step
-        pCapX[idx],         // hydrostatic comp. strength at start of step
-        pZeta[idx],         // trace of isotropic backstress at start of step
-        coher,              // Scalar-valued coherence (XXX)
-        pP3[idx],           // Modified p3 for initial disaggregation strain.
-        pep[idx],           // plastic strain at start of step
-        pStressQS_new[idx], // unrotated stress at end of step
-        pCapX_new[idx],     // hydrostatic compressive strength at end of step
-        pZeta_new[idx],     // trace of isotropic backstress at end of step
-        pep_new[idx],       // plastic strain at end of step
-        pParticleID[idx]);
+      AreniscaState state_old(pCapX[idx], pKappa[idx], pZeta[idx], sigmaQS_old,
+                              pep[idx]);
+      AreniscaState state_new;
+
+      bool success =
+        computeStep(idx, pParticleID[idx],
+                    D,         // strain "rate"
+                    delT,      // time step (s)
+                    state_old, // state at start of step
+                    coher,     // Scalar-valued coherence (XXX)
+                    pP3[idx],  // Modified p3 for initial disaggregation strain.
+                    state_new, // state at end of step
+                    pParticleID[idx]);
+
+      pStressQS_new[idx] = state_new.sigma; // unrotated stress at end of step
+      pCapX_new[idx] =
+        state_new.capX; // hydrostatic compressive strength at end of step
+      pKappa_new[idx] = state_new.kappa; // branch point
+      pZeta_new[idx] =
+        state_new.zeta; // trace of isotropic backstress at end of step
+      pep_new[idx] = state_new.ep; // plastic strain at end of step
 
       // MH! add P3 as an input:
       pP3_new[idx] = pP3[idx];
@@ -752,9 +878,11 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
       // If the computeStep function can't converge it will return a
       // stepFlag!=1.  This indicates substepping
       // has failed, and the particle will be deleted.
-      if (stepFlag != 0) {
+      if (!success) {
         pLocalized_new[idx] = -999;
-        cout << "bad step, deleting particle" << endl;
+        cout << "bad step, deleting particle"
+             << " idx = " << idx << " particleID = " << pParticleID[idx]
+             << std::endl;
       }
 
       // Plastic volumetric strain at end of step
@@ -833,34 +961,29 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
         pStress_new[idx] = pStressQS_new[idx];
       } // ==========================================================================================
 
-// Use polar decomposition to compute the rotation and stretch tensors
+      // Use polar decomposition to compute the rotation and stretch tensors.
+      // These checks prevent
+      // failure of the polar decomposition algorithm if [F_new] has some
+      // extreme values.
+      Matrix3 FF_new = pDefGrad_new[idx];
+
 #ifdef MHdeleteBadF
-      if (pDefGrad_new[idx].MaxAbsElem() > 1.0e2) {
+      double Fmax_new = FF_new.MaxAbsElem();
+      double JJ_new = FF_new.Determinant();
+      if ((Fmax_new > 1.0e16) || (JJ_new < 1.0e-16) || (JJ_new > 1.0e16)) {
         pLocalized_new[idx] = -999;
-        cout << "Large deformation gradient component: [F_new] = "
-             << pDefGrad_new[idx] << endl;
-        cout << "Resetting [F_new]=[I] for this step and deleting particle"
-             << endl;
-        Identity.polarDecompositionRMB(tensorU, tensorR);
-      } else if (pDefGrad_new[idx].Determinant() < 1.0e-3) {
-        pLocalized_new[idx] = -999;
-        cout << "Small deformation gradient determinant: [F_new] = "
-             << pDefGrad_new[idx] << endl;
-        cout << "Resetting [F_new]=[I] for this step and deleting particle"
-             << endl;
-        Identity.polarDecompositionRMB(tensorU, tensorR);
-      } else if (pDefGrad_new[idx].Determinant() > 1.0e2) {
-        pLocalized_new[idx] = -999;
-        cout << "Large deformation gradient determinant: [F_new] = "
-             << pDefGrad_new[idx] << endl;
-        cout << "Resetting [F_new]=[I] for this step and deleting particle"
-             << endl;
+        std::cout << "Deformation gradient component unphysical: [F] = " << FF
+                  << " Fmax_new = " << Fmax_new << " > 1.0e16 "
+                  << " J = " << JJ << " outside [1.0e-16, 1.0e16]" << std::endl;
+        std::cout << "Resetting [F]=[I] for this step and deleting particle "
+                  << " idx = " << idx << " particleID = " << pParticleID[idx]
+                  << " pLocalized = " << pLocalized_new[idx] << "\n";
         Identity.polarDecompositionRMB(tensorU, tensorR);
       } else {
-        pDefGrad_new[idx].polarDecompositionRMB(tensorU, tensorR);
+        FF_new.polarDecompositionRMB(tensorU, tensorR);
       }
 #else
-      pDefGrad_new[idx].polarDecompositionRMB(tensorU, tensorR);
+      FF_new.polarDecompositionRMB(tensorU, tensorR);
 #endif
 
       // Compute the rotated dynamic and quasistatic stress at the end of the
@@ -874,8 +997,6 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
       // Conservative elastic properties used to compute number of time steps:
       // Get the Arenisca model parameters.
       double bulk, shear;
-      computeElasticProperties(bulk,
-                               shear); // High pressure bulk and shear moduli.
 
 #ifdef MHdisaggregationStiffness
       // Compute the wave speed for the particle based on the reduced stiffness,
@@ -884,15 +1005,34 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
       if (d_cm.Use_Disaggregation_Algorithm) {
         computeElasticProperties(pStressQS_new[idx], pep_new[idx], pP3[idx],
                                  bulk, shear);
+      } else {
+        computeElasticProperties(bulk,
+                                 shear); // High pressure bulk and shear moduli.
       }
+#else
+      computeElasticProperties(bulk,
+                               shear); // High pressure bulk and shear moduli.
 #endif
 
       double rho_cur = pmass[idx] / pvolume[idx];
       c_dil = sqrt((bulk + four_third * shear) / rho_cur);
 
-      WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
-                         Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
-                         Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
+      /*
+      if (pParticleID[idx] == 111670263811) {
+       std::cout << "pID=" << pParticleID[idx] << " ";
+       std::cout << "\t pStress = " << pStress_new[idx]
+                 << "\n\t D = " << D
+                 << "\n\t ev_p = " << pevp_new[idx] 
+                 << " ev_e = " << peve_new[idx] << " e_p = " << pep_new[idx] 
+                 << "\n\t rho = " << rho_cur << " bulk = " << bulk << " shear = " << shear 
+                 << " c_dil = " << c_dil << std::endl;
+      }
+      */
+
+      WaveSpeed =
+        Vector(Max(c_dil + std::abs(pvelocity[idx].x()), WaveSpeed.x()),
+               Max(c_dil + std::abs(pvelocity[idx].y()), WaveSpeed.y()),
+               Max(c_dil + std::abs(pvelocity[idx].z()), WaveSpeed.z()));
 
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {
@@ -942,38 +1082,29 @@ Arenisca4::computeStressTensor(const PatchSubset* patches,
 // ****************************************************************************************************
 
 // Divides the strain increment into substeps, and calls substep function
-int Arenisca4::computeStep(
-  const Matrix3& D,       // strain "rate"
-  const double& Dt,       // time step (s)
-  const Matrix3& sigma_n, // unrotated stress at start of step(t_n)
-  const double& X_n, // hydrostatic comrpessive strength at start of step(t_n)
-  const double& Zeta_n, // trace of isotropic backstress at start of step(t_n)
-  const double& coher,  // scalar-valued coherence XXX
-  const double& P3,     // initial disaggregation strain
-  const Matrix3& ep_n,  // plastic strain at start of step(t_n)
-  Matrix3& sigma_p,     // unrotated stress at end of step(t_n+1)
-  double& X_p,       // hydrostatic comrpessive strength at end of step(t_n+1)
-  double& Zeta_p,    // trace of isotropic backstress at end of step(t_n+1)
-  Matrix3& ep_p,     // plastic strain at end of step (t_n+1)
-  long64 ParticleID) // ParticleID for debug purposes
+// Returns: True for success; False for failure
+bool Arenisca3::computeStep(
+  particleIndex idx, long64 particleID,
+  const Matrix3& D,             // strain "rate"
+  const double& delT,           // time step (s)
+  const AreniscaState& state_n, // State at t_n
+  const double& coher,          // scalar-valued coherence XXX
+  const double& P3,             // initial disaggregation strain
+  AreniscaState& state_np1,     // State at end of step t_n+1
+  long64 ParticleID)            // ParticleID for debug purposes
 {
   // All stress values within computeStep are quasistatic.
-  int n,
-    chimax = 1, // max allowed subcycle multiplier
-    // MH!: make this an input parameter for subcycle control
-    chi = 1,           // subcycle multiplier
-    stepFlag,          // 0/1 good/bad step
-    substepFlag;       // 0/1 good/bad substep
-  double dt,           // substep time increment
-    X_old = X_n,       // X at start of substep
-    X_new,             // X at end of substep
-    Zeta_old = Zeta_n, // Zeta at start of substep
-    Zeta_new;          // Zeta at end of substep
+  int n;
+  // MH!: make chi an input parameter for subcycle control
+  int chi = 1,
+      chimax = 3; // subcycle multiplier and max allowed subcycle multiplier
+  bool success;   // true/false for good/bad step/substep
 
-  Matrix3 sigma_old, // sigma at start of substep
-    sigma_new,       // sigma at end of substep
-    ep_old,          // plastic strain at start of substep
-    ep_new;          // plastic strain at end of substep
+  // MH! Need to initialize X_old and Zeta_old BEFORE compute StepDivisions!
+  // currently this breaks the step division code.
+  double dt; // substep time increment
+  AreniscaState state_old(state_n);
+  AreniscaState state_new;
 
   // (1) Define conservative elastic properties based on the high-pressure
   // limit of the bulk modulus function. The bulk modulus function can be
@@ -981,16 +1112,24 @@ int Arenisca4::computeStep(
   // high pressure limit.  These values are used only for computing number
   // of substeps and stable time steps.
   double bulk, shear;
+
+#ifdef MHdisaggregationStiffness
+  if (d_cm.Use_Disaggregation_Algorithm) {
+    computeElasticProperties(state_n, P3, bulk, shear);
+  } else {
+    computeElasticProperties(bulk, shear);
+  }
+#else
   computeElasticProperties(bulk, shear);
+#endif
 
   // Compute the trial stress: [sigma_trial] =
   // computeTrialStress(sigma_old,d_e,K,G)
-  Matrix3 sigma_trial = computeTrialStress(sigma_old, D * Dt, bulk, shear);
+  Matrix3 sigma_trial =
+    computeTrialStress(state_old.sigma, D * delT, bulk, shear);
 
-  double I1_trial, J2_trial, rJ2_trial, J3_trial;
-  Matrix3 S_trial, d_e;
-  computeInvariants(sigma_trial, S_trial, I1_trial, J2_trial, rJ2_trial,
-                    J3_trial);
+  Invariants inv_trial(sigma_trial);
+  Matrix3 d_e;
 
   // (2) Determine the number of substeps (nsub) based on the magnitude of
   // the trial stress increment relative to the characteristic dimensions
@@ -998,93 +1137,91 @@ int Arenisca4::computeStep(
   // elastic properties as sigma_old and sigma_trial and adjust nsub if
   // there is a large change to ensure an accurate solution for nonlinear
   // elasticity even with fully elastic loading.
-  int nsub =
-    computeStepDivisions(X_old, Zeta_old, P3, ep_old, sigma_old, sigma_trial);
+  int nsub = computeStepDivisions(idx, particleID, state_old, P3, sigma_trial);
   if (nsub <
       0) { // nsub > d_cm.subcycling_characteristic_number. Delete particle
-    goto failedStep;
-  }
 
-// (3) Compute a subdivided time step:
-//
-stepDivide:
-  dt = Dt / (chi * nsub);
-  d_e = D * dt;
-
-  // (4) Set {sigma_old,X_old,Zeta_old,ep_old}={sigma_n,X_n,Zeta_n,ep_n} to
-  // their
-  // values at the start of the step, and set n = 1:
-  sigma_old = sigma_n;
-  X_old = X_n;
-  Zeta_old = Zeta_n;
-  ep_old = ep_n;
-  n = 1;
-
-// (5) Call substep function {sigma_new,ep_new,X_new,Zeta_new}
-//                               =
-//                               computeSubstep(D,dt,sigma_old,ep_old,X_old,Zeta_old)
-computeSubstep:
-  substepFlag = computeSubstep(d_e, sigma_old, ep_old, X_old, Zeta_old, coher,
-                               P3, sigma_new, ep_new, X_new, Zeta_new);
-
-  // (6) Check error flag from substep calculation:
-  if (substepFlag == 0) {   // no errors in substep calculation
-    if (n < (chi * nsub)) { // update and keep substepping
-      sigma_old = sigma_new;
-      X_old = X_new;
-      Zeta_old = Zeta_new;
-      ep_old = ep_new;
-      n++;
-      goto computeSubstep;
-    } else
-      goto successfulStep; // n = chi*nsub, Step is done
-  } else {                 // failed substep
-    if (chi < chimax) {    // errors in substep calculation
-      chi = 2 * chi;
-      goto stepDivide;
-    } else
-      goto failedStep; // bad substep and chi>=chimax, Step failed even with
-                       // substepping
-  }
-
-// (7) Successful step, set value at end of step to value at end of last
-// substep.
-successfulStep:
-  sigma_p = sigma_new;
-  X_p = X_new;
-  Zeta_p = Zeta_new;
-  ep_p = ep_new;
-  stepFlag = 0;
-  return stepFlag;
-
-// (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to
-// particle data:
-failedStep:
-  // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
-  sigma_p = sigma_n;
-  X_p = X_n;
-  Zeta_p = Zeta_n;
-  ep_p = ep_n;
-  stepFlag = 1;
+    // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to
+    // particle data:
+    // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
+    state_np1 = state_n;
 #ifdef MHdebug
-  cout << "995: Step Failed I1_n = " << sigma_n.Trace()
-       << ", I1_p = " << sigma_p.Trace() << endl;
-  cout << "996: evp_p = " << ep_p.Trace() << ", evp_n = " << ep_n.Trace()
-       << endl;
-  cout << "997: X_p = " << X_p << ", X_n = " << X_n << endl;
+    cout << "923: Step Failed: " << std::endl;
+    cout << "924: State n: " << state_n;
+    cout << "925: State_p: " << state_np1;
+    std::cout << "\t Particle idx = " << idx << " ID = " << particleID
+              << std::endl;
 #endif
-  return stepFlag;
+    success = false;
+    return success;
+  }
+
+  // (3) Compute a subdivided time step:
+  //
+  // Loop at least once or until substepping is successful
+  do {
+
+    dt = delT / (chi * nsub);
+    d_e = D * dt;
+
+    // (4) Set {sigma_old,X_old,Zeta_old,ep_old}={sigma_n,X_n,Zeta_n,ep_n} to
+    // their
+    // values at the start of the step, and set n = 1:
+    state_old = state_n;
+    n = 1;
+
+    // (5) Call substep function {sigma_new,ep_new,X_new,Zeta_new}
+    //                               =
+    //                               computeSubstep(D,dt,sigma_old,ep_old,X_old,Zeta_old)
+    // Repeat while substeps continue to be successful
+    while (
+      computeSubstep(idx, particleID, d_e, state_old, coher, P3, state_new)) {
+      if (n < (chi * nsub)) { // update and keep substepping
+        state_old = state_new;
+        n++;
+      } else { // n = chi*nsub, Step is done
+        state_np1 = state_new;
+        success = true;
+        return success;
+      }
+    }
+
+    // Substepping has failed; increase chi
+    chi = 2 * chi;
+
+  } while (chi < chimax);
+
+  // Substepping has definitely failed
+  // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to
+  // particle data:
+  // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
+  state_np1 = state_n;
+#ifdef MHdebug
+  cout << "968: Step Failed: " << std::endl;
+  cout << "969: State n: " << state_n;
+  cout << "970: State_p: " << state_np1;
+#endif
+  success = false;
+  return success;
 
 } //===================================================================
 
-// [shear,bulk] = computeElasticProperties()
+//////////////////////////////////////////////////////////////////////////
+///
+/// Method: computeElasticProperties
+/// Purpose:
+///   When computeElasticProperties() is called with two doubles as arguments,
+///   it
+///   computes the high pressure limit tangent elastic shear and bulk modulus
+///   This is used to esimate wave speeds and make conservative estimates of
+///   substepping.
+/// Usage:
+///   [shear,bulk] = computeElasticProperties()
+///
+//////////////////////////////////////////////////////////////////////////
 void
-Arenisca4::computeElasticProperties(double& bulk, double& shear)
+Arenisca3::computeElasticProperties(double& bulk, double& shear)
 {
-  // When computeElasticProperties() is called with two doubles as arguments, it
-  // computes the high pressure limit tangent elastic shear and bulk modulus
-  // This is used to esimate wave speeds and make conservative estimates of
-  // substepping.
   shear = d_cm.G0;          // Linear elastic shear Modulus
   bulk = d_cm.B0 + d_cm.B1; // Bulk Modulus
 
@@ -1094,175 +1231,231 @@ Arenisca4::computeElasticProperties(double& bulk, double& shear)
   // with the
   // bulk modulus.  The high pressure limit has nu=G1+G2;
   // if ((d_cm.G1!=0.0)&&(d_cm.G2!=0.0)){
-  //	  // High pressure bulk modulus:
-  //	  double nu = d_cm.G1+d_cm.G2;
-  //	  shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
+  //    // High pressure bulk modulus:
+  //    double nu = d_cm.G1+d_cm.G2;
+  //    shear = 1.5*bulk*(1.0-2.0*nu)/(1.0+nu);
   //}
-} //===================================================================
+}
 
-// [shear,bulk] = computeElasticProperties(stress, ep)
+//////////////////////////////////////////////////////////////////////////
+///
+/// Method: computeElasticProperties
+/// Purpose:
+///   Compute the nonlinear elastic tangent stiffness as a function of the
+///   pressure
+///   plastic strain, and fluid parameters.
+/// Usage:
+///   [shear,bulk] = computeElasticProperties(stress, ep)
+///
+//////////////////////////////////////////////////////////////////////////
 void
-Arenisca4::computeElasticProperties(const Matrix3 stress, const Matrix3 ep,
+Arenisca3::computeElasticProperties(const AreniscaState& state,
                                     const double& P3, double& bulk,
                                     double& shear)
 {
-  // Compute the nonlinear elastic tangent stiffness as a function of the
-  // pressure
-  // plastic strain, and fluid parameters.
-  double b0 = d_cm.B0, b1 = d_cm.B1, b2 = d_cm.B2, b3 = d_cm.B3, b4 = d_cm.B4,
-         g0 = d_cm.G0, I1 = stress.Trace(), evp = ep.Trace();
+  computeElasticProperties(state.sigma, state.ep, P3, bulk, shear);
+}
+
+//////////////////////////////////////////////////////////////////////////
+///
+/// Method: computeElasticProperties
+/// Purpose:
+///   Compute the nonlinear elastic tangent stiffness as a function of the
+///   pressure
+///   plastic strain, and fluid parameters.
+/// Usage:
+///   [shear,bulk] = computeElasticProperties(stress, ep)
+/// Caveat:
+///   To be thermodynamically consistent, the shear modulus in an isotropic
+///   model
+///   must be constant, but the bulk modulus can depend on pressure.  However,
+///   this
+///   leads to a Poisson's ratio that approaches 0.5 at high pressures, which is
+///   inconsistent with experimental data for the Poisson's ratio, inferred from
+///   the
+///   Young's modulus.  Induced anisotropy is likely the cause of the
+///   discrepency,
+///   but it may be better to allow the shear modulus to vary so the Poisson's
+///   ratio
+///   remains reasonable.
+///
+///   If the user has specified a nonzero value of G1 and G2, the shear modulus
+///   will
+///   vary with pressure so the drained Poisson's ratio transitions from G1 to
+///   G1+G2 as
+///   the bulk modulus varies from B0 to B0+B1.  The fluid model further affects
+///   the
+///   bulk modulus, but does not alter the shear modulus, so the pore fluid does
+///   increase the Poisson's ratio.
+///
+//////////////////////////////////////////////////////////////////////////
+void
+Arenisca3::computeElasticProperties(const Matrix3& sigma, const Matrix3& ep,
+                                    const double& P3, double& bulk,
+                                    double& shear)
+{
+  double b0 = d_cm.B0;
+  double b01 = d_cm.B01;
+  double b1 = d_cm.B1;
+  double b2 = d_cm.B2;
+  double b3 = d_cm.B3;
+  double b4 = d_cm.B4;
+  double g0 = d_cm.G0;
+  double I1 = sigma.Trace();
+  double evp = ep.Trace();
 
   // ..........................................................Undrained
   // The low pressure bulk and shear moduli are also used for the tensile
   // response.
   bulk = b0;
   shear = g0;
-  // To be thermodynamically consistent, the shear modulus in an isotropic model
-  // must be constant, but the bulk modulus can depend on pressure.  However,
-  // this
-  // leads to a Poisson's ratio that approaches 0.5 at high pressures, which is
-  // inconsistent with experimental data for the Poisson's ratio, inferred from
-  // the
-  // Young's modulus.  Induced anisotropy is likely the cause of the
-  // discrepency,
-  // but it may be better to allow the shear modulus to vary so the Poisson's
-  // ratio
-  // remains reasonable.
-  //
-  // If the user has specified a nonzero value of G1 and G2, the shear modulus
-  // will
-  // vary with pressure so the drained Poisson's ratio transitions from G1 to
-  // G1+G2 as
-  // the bulk modulus varies from B0 to B0+B1.  The fluid model further affects
-  // the
-  // bulk modulus, but does not alter the shear modulus, so the pore fluid does
-  // increase the Poisson's ratio.
-  if (evp <= 0.0) {
-#ifdef MHfastfcns
+  if (!(evp > 0.0)) {
+
     // Elastic-plastic coupling
     if (evp < 0.0) {
-      bulk = bulk - b3 * fasterexp(b4 / evp);
-    }
-
-    // Pressure dependence
-    if (I1 < 0.0) {
-      double expb2byI1 = fasterexp(b2 / I1);
-      bulk = bulk + b1 * expb2byI1;
-      if (d_cm.G1 != 0.0 && d_cm.G2 != 0.0) {
-        double nu = d_cm.G1 + d_cm.G2 * expb2byI1;
-        shear = 1.5 * bulk * (1.0 - 2.0 * nu) / (1.0 + nu);
-      }
+#ifdef MHfastfcns
+      bulk -= b3 * fasterexp(b4 / evp);
     }
 #else
-    if (I1 < 0.0) {
-      double expb2byI1 = exp(b2 / I1);
-      bulk = bulk + b1 * expb2byI1;
-      if (d_cm.G1 != 0.0 && d_cm.G2 != 0.0) {
-        double nu = d_cm.G1 + d_cm.G1 * expb2byI1;
-        shear = 1.5 * bulk * (1.0 - 2.0 * nu) / (1.0 + nu);
-      }
-    }
-    // Elastic-plastic coupling
-    if (evp < 0.0) {
-      bulk = bulk - b3 * exp(b4 / evp);
-    }
+      bulk -= b3 * exp(b4 / evp);
 #endif
   }
+
+  // Pressure dependence
+  if (I1 < 0.0) {
+#ifdef MHfastfcns
+    double expb2byI1 = fasterexp(b2 / I1);
+#else
+      double expb2byI1 = exp(b2 / I1);
+#endif
+
+    bulk += b1 * expb2byI1 - b01 * I1;
+    if (d_cm.G1 != 0.0 && d_cm.G2 != 0.0) {
+      double nu = d_cm.G1 + d_cm.G2 * expb2byI1;
+      shear = 1.5 * bulk * (1.0 - 2.0 * nu) / (1.0 + nu);
+    }
+    // std::cout << "Bulk modulus = " << bulk << std::endl;
+  }
+}
 
 #ifdef MHdisaggregationStiffness
-  if (d_cm.Use_Disaggregation_Algorithm) {
+
+if (d_cm.Use_Disaggregation_Algorithm) {
 #ifdef MHfastfcns
-    double fac = fasterexp(-(P3 + evp));
+  double fac = fasterexp(-(P3 + evp));
 #else
-    double fac = exp(-(P3 + evp));
+  double fac = exp(-(P3 + evp));
 #endif
-    double scale = max(fac, 0.001);
-    bulk = bulk * scale;
-    shear = shear * scale;
-  }
+  double scale = max(fac, 0.00001);
+  bulk *= scale;
+  shear *= scale;
+}
 #endif
 
-  // In  compression, or with fluid effects if the strain is more compressive
-  // than the zero fluid pressure volumetric strain:
-  if (
-    evp <= ev0 &&
-    Kf !=
-      0.0) { // ..........................................................Undrained
-    // Compute the porosity from the strain using Homel's simplified model, and
-    // then use this in the Biot-Gassmann formula to compute the bulk modulus.
+// In  compression, or with fluid effects if the strain is more compressive
+// than the zero fluid pressure volumetric strain:
+if (
+  evp <= d_ev0 &&
+  d_Kf !=
+    0.0) { // ..........................................................Undrained
+  // Compute the porosity from the strain using Homel's simplified model, and
+  // then use this in the Biot-Gassmann formula to compute the bulk modulus.
 
-    // The dry bulk modulus, taken as the low pressure limit of the nonlinear
-    // formulation:
-    double Kd = b0;
+  // The dry bulk modulus, taken as the low pressure limit of the nonlinear
+  // formulation:
+  double Kd = b0;
 #ifdef MHfastfcns
-    if (evp < 0.0) {
-      Kd = b0 - b3 * fasterexp(b4 / evp);
-    }
-    // Current unloaded porosity (phi):
-    double C2 = fasterexp(evp * Km / C1) * phi_i;
-    double phi = C2 / (-fasterexp(evp * Kf / C1) * (phi_i - 1.0) + C2);
+  if (evp < 0.0) {
+    Kd = b0 - b3 * fasterexp(b4 / evp);
+  }
+  // Current unloaded porosity (phi):
+  double C2 = fasterexp(evp * d_Km / d_C1) * d_phi_i;
+  double phi = C2 / (-fasterexp(evp * d_Kf / d_C1) * (d_phi_i - 1.0) + C2);
 #else
     if (evp < 0.0) {
       Kd = b0 - b3 * exp(b4 / evp);
     }
     // Current unloaded porosity (phi):
-    double C2 = exp(evp * Km / C1) * phi_i;
-    double phi = C2 / (-exp(evp * Kf / C1) * (phi_i - 1.0) + C2);
+    double C2 = exp(evp * d_Km / d_C1) * d_phi_i;
+    double phi = C2 / (-exp(evp * d_Kf / d_C1) * (d_phi_i - 1.0) + C2);
 #endif
+  // Biot-Gassmann formula for the saturated bulk modulus, evaluated at the
+  // current porosity.  This introduces some error since the Kd term is a
+  // function of the initial porosity, but since large strains would also
+  // modify the bulk modulus through damage
+  double oneminusKdbyKm = 1.0 - Kd / d_Km;
+  bulk = Kd +
+         oneminusKdbyKm * oneminusKdbyKm /
+           ((oneminusKdbyKm - phi) / d_Km + (1.0 / d_Kf - 1.0 / d_Km) * phi);
+}
+}
 
-    // Biot-Gassmann formula for the saturated bulk modulus, evaluated at the
-    // current porosity.  This introduces some error since the Kd term is a
-    // function of the initial porosity, but since large strains would also
-    // modify the bulk modulus through damage
-    double oneminusKdbyKm = 1.0 - Kd / Km;
-    bulk = Kd +
-           oneminusKdbyKm * oneminusKdbyKm /
-             ((oneminusKdbyKm - phi) / Km + (1.0 / Kf - 1.0 / Km) * phi);
-  }
-
-} //===================================================================
-
-// [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
-Matrix3 Arenisca4::computeTrialStress(const Matrix3& sigma_old, // old stress
+//////////////////////////////////////////////////////////////////////////
+///
+/// Method: computeTrialStress
+/// Purpose:
+///   Compute the trial stress for some increment in strain assuming linear
+///   elasticity
+///   over the step.
+/// Usage:
+///   [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
+///
+//////////////////////////////////////////////////////////////////////////
+Matrix3 Arenisca3::computeTrialStress(const Matrix3& sigma_old, // old stress
                                       const Matrix3& d_e,  // Strain increment
                                       const double& bulk,  // bulk modulus
                                       const double& shear) // shear modulus
 {
-  // Compute the trial stress for some increment in strain assuming linear
-  // elasticity
-  // over the step.
-  Matrix3 d_e_iso = one_third * d_e.Trace() * Identity;
+  // std::cout << "ComputeTrialStress::Bulk modulus = " << bulk
+  //          << " shear modulus = " << shear << std::endl;
+  Matrix3 d_e_iso = Identity * (one_third * d_e.Trace());
   Matrix3 d_e_dev = d_e - d_e_iso;
+  // std::cout << "\t d_e  = " << d_e << std::endl;
+  // std::cout << "\t d_e_iso  = " << d_e_iso*(bulk*3.0) << std::endl;
+  // std::cout << "\t d_e_dev  = " << d_e_dev*(shear*2.0) << std::endl;
   Matrix3 sigma_trial =
-    sigma_old + (3.0 * bulk * d_e_iso + 2.0 * shear * d_e_dev);
+    sigma_old + (d_e_iso * (3.0 * bulk) + d_e_dev * (2.0 * shear));
+  // std::cout << "trial stress = " << sigma_trial << std::endl;
   return sigma_trial;
-} //===================================================================
+}
 
-// [nsub] = computeStepDivisions(X,Zeta,ep,sigma_n,sigma_trial)
+//////////////////////////////////////////////////////////////////////////
+///
+/// Method: computeStepDivisions
+/// Purpose:
+///   Compute the number of step divisions (substeps) based on a comparison
+///   of the trial stress relative to the size of the yield surface, as well
+///   as change in elastic properties between sigma_n and sigma_trial.
+/// Usage:
+///   [nsub] = computeStepDivisions(X,Zeta,ep,sigma_n,sigma_trial)
+///
+//////////////////////////////////////////////////////////////////////////
 int
-Arenisca4::computeStepDivisions(const double& X, const double& Zeta,
-                                const double& P3, const Matrix3& ep,
-                                const Matrix3& sigma_n,
+Arenisca3::computeStepDivisions(particleIndex idx, long64 particleID,
+                                const AreniscaState& state_n, const double& P3,
                                 const Matrix3& sigma_trial)
 {
-  // compute the number of step divisions (substeps) based on a comparison
-  // of the trial stress relative to the size of the yield surface, as well
-  // as change in elastic properties between sigma_n and sigma_trial.
+
   int nmax = ceil(d_cm.subcycling_characteristic_number);
 
   // Compute change in bulk modulus:
-  double bulk_n, shear_n, bulk_trial, shear_trial;
-  computeElasticProperties(sigma_n, ep, P3, bulk_n, shear_n);
-  computeElasticProperties(sigma_trial, ep, P3, bulk_trial, shear_trial);
-  int n_bulk = ceil(fabs(bulk_n - bulk_trial) / bulk_n);
+  double bulk_n, shear_n;
+  computeElasticProperties(state_n, P3, bulk_n, shear_n);
+
+  double bulk_trial, shear_trial;
+  computeElasticProperties(sigma_trial, state_n.ep, P3, bulk_trial,
+                           shear_trial);
+
+  int n_bulk = ceil(std::abs(bulk_n - bulk_trial) / bulk_n);
 
   // Compute trial stress increment relative to yield surface size:
-  Matrix3 d_sigma = sigma_trial - sigma_n;
-  double size = 0.5 * (d_cm.PEAKI1 - X);
+  Matrix3 d_sigma = sigma_trial - state_n.sigma;
+  double size = 0.5 * (d_cm.PEAKI1 - state_n.capX);
+
   if (d_cm.STREN > 0.0) {
     size = min(size, d_cm.STREN);
   }
-  int n_yield = ceil(1.0e-5 * d_sigma.Norm() / size);
+  int n_yield = ceil(1.0e-4 * d_sigma.Norm() / size);
 
   // nsub is the maximum of the two values.above.  If this exceeds allowable,
   // throw warning and delete particle.
@@ -1270,68 +1463,60 @@ Arenisca4::computeStepDivisions(const double& X, const double& Zeta,
 
   if (nsub > d_cm.subcycling_characteristic_number) {
 #ifdef MHdebug
-    cout << "\nstepDivide out of range." << endl;
-    cout << "d_sigma.Norm() = " << d_sigma.Norm() << endl;
-    cout << "size = " << size << endl;
-    cout << "n_yield = " << n_yield << endl;
-    cout << "bulk_n = " << bulk_n << endl;
-    cout << "bulk_trial = " << bulk_trial << endl;
-    cout << "n_bulk = " << n_bulk << endl;
-    cout << "nsub = " << nsub << " > " << d_cm.subcycling_characteristic_number
-         << endl;
+    std::cout << "\n **WARNING** Too many substeps needed for particle "
+              << " idx = " << idx << " particle ID = " << particleID
+              << std::endl;
+    std::cout << "\t" << __FILE__ << ":" << __LINE__ << std::endl;
+    std::cout << "\t State at t_n: " << state_n;
+    std::cout << "\t\t\t P3 = " << P3 << std::endl;
+    std::cout << "\t\t\t bulk_n = " << bulk_n << std::endl;
+
+    std::cout << "\t Trial state at t_n+1: "
+              << "I1 = " << sigma_trial.Trace()
+              << ", evp = " << state_n.ep.Trace() << ", capX = " << state_n.capX
+              << ", zeta = " << state_n.zeta << std::endl;
+    std::cout << "\t\t\t P3 = " << P3 << std::endl;
+    std::cout << "\t\t\t bulk_trial = " << bulk_trial << std::endl;
+
+    std::cout << "\t Ratio of trial bulk modulus to t_n bulk modulus " << n_bulk
+              << std::endl;
+
+    std::cout << "\t ||sig_trial - sigma_n|| " << d_sigma.Norm() << std::endl;
+    std::cout << "\t Yield surface radius in I1-space: " << size << std::endl;
+    std::cout << "\t Ratio of ||sig_trial - sigma_n|| and 10,000*y.s. radius: "
+              << n_yield << std::endl;
+
+    std::cout << "** BECAUSE** nsub = " << nsub << " > "
+              << d_cm.subcycling_characteristic_number
+              << " : Probably too much tension in the particle." << std::endl;
 #endif
     nsub = -1;
   } else {
     nsub = min(max(nsub, 1), nmax);
   }
   return nsub;
-} //===================================================================
+}
 
-void
-Arenisca4::computeInvariants(const Matrix3& A, Matrix3& S, double& I1,
-                             double& J2, double& rJ2, double& J3)
+//////////////////////////////////////////////////////////////////////////
+///
+/// Method: computeSSubstep
+/// Purpose:
+///   Computes the updated stress state for a substep that may be either
+///   elastic, plastic, or partially elastic.
+/// Returns:
+///   True for success; false for failure
+///
+//////////////////////////////////////////////////////////////////////////
+bool Arenisca3::computeSubstep(
+  particleIndex idx, long64 particleID,
+  const Matrix3& d_e,             // Total strain increment for the substep
+  const AreniscaState& state_old, // state at start of timestep
+  const double& coher,            // scalar valued coherence
+  const double& P3,               // initial disaggregation strain
+  AreniscaState& state_new)       // state at end of substep
 {
-  // Compute the first invariants
-  I1 = A(0, 0) + A(1, 1) + A(2, 2); // Pa
-
-  // Compute the deviatoric part of the tensor
-  S = A - one_third * I1 * Identity; // Pa
-
-  // Compute the second invariant
-  J2 = 0.5 * (S(0, 0) * S(0, 0) + S(1, 1) * S(1, 1) + S(2, 2) * S(2, 2)) +
-       (S(0, 1) * S(0, 1) + S(1, 2) * S(1, 2) + S(2, 0) * S(2, 0));
-
-  if (J2 < 1e-16 * (I1 * I1 + J2)) {
-    J2 = 0.0;
-  };
-  rJ2 = sqrt(J2);
-
-  // Compute third invariant
-  J3 = S(0, 0) * S(1, 1) * S(2, 2) + 2.0 * S(0, 1) * S(1, 2) * S(2, 0) -
-       (S(0, 0) * S(1, 2) * S(1, 2) + S(1, 1) * S(2, 0) * S(2, 0) +
-        S(2, 2) * S(0, 1) * S(0, 1));
-} //===================================================================
-
-// Computes the updated stress state for a substep
-int
-Arenisca4::computeSubstep(
-  const Matrix3& d_e,       // Total strain increment for the substep
-  const Matrix3& sigma_old, // stress at start of substep
-  const Matrix3& ep_old,    // plastic strain at start of substep
-  const double& X_old, // hydrostatic compressive strength at start of substep
-  const double& Zeta_old, // trace of isotropic backstress at start of substep
-  const double& coher,    // scalar valued coherence
-  const double& P3,       // initial disaggregation strain
-  Matrix3& sigma_new,     // stress at end of substep
-  Matrix3& ep_new,        // plastic strain at end of substep
-  double& X_new,          // hydrostatic compressive strength at end of substep
-  double& Zeta_new        // trace of isotropic backstress at end of substep
-  )
-{
-  // Computes the updated stress state for a substep that may be either elastic,
-  // plastic, or
-  // partially elastic.   Returns an integer flag 0/1 for a good/bad update.
-  int returnFlag, substepFlag;
+  bool success = false;
+  int returnFlag = 0;
 
   // (1)  Compute the elastic properties based on the stress and plastic strain
   // at
@@ -1340,16 +1525,22 @@ Arenisca4::computeSubstep(
   // is used to modify the tangent stiffness in the consistency bisection
   // iteration.
   double bulk, shear;
-  computeElasticProperties(sigma_old, ep_old, P3, bulk, shear);
+  computeElasticProperties(state_old, P3, bulk, shear);
+  // std::cout << "computeSubstep::computeElasticProperties:: state_old" <<
+  // state_old
+  //          << " P3 = " << P3
+  //          << " bulk = " << bulk << " shear = " << shear << std::endl;
 
-  // (3) Compute the trial stress: [sigma_trail] =
+  // (3) Compute the trial stress: [sigma_trial] =
   // computeTrialStress(sigma_old,d_e,K,G)
-  Matrix3 sigma_trial = computeTrialStress(sigma_old, d_e, bulk, shear),
-          S_trial;
+  Matrix3 sigma_trial = computeTrialStress(state_old.sigma, d_e, bulk, shear);
+  Matrix3 S_trial;
 
-  double I1_trial, J2_trial, rJ2_trial, J3_trial;
-  computeInvariants(sigma_trial, S_trial, I1_trial, J2_trial, rJ2_trial,
-                    J3_trial);
+  // std::cout << "computeSubstep::computeTrialStress:: state_old" << state_old
+  //          << " d_e = " << P3
+  //          << " sigma_trial = " << sigma_trial << std::endl;
+
+  Invariants invar_trial(sigma_trial);
 
   // (4) Evaluate the yield function at the trial stress:
   // Compute the limit parameters based on the value of coher.  These are then
@@ -1359,179 +1550,235 @@ Arenisca4::computeSubstep(
   double limitParameters[4]; // double a1,a2,a3,a4;
   computeLimitParameters(limitParameters, coher);
 
+  double kappa = 0.0;
   int YIELD =
-    computeYieldFunction(sigma_trial, X_old, Zeta_old, coher, limitParameters);
+    computeYieldFunction(invar_trial, state_old, coher, limitParameters, kappa);
   if (YIELD == -1) { // elastic substep
-    sigma_new = sigma_trial;
-    X_new = X_old;
-    Zeta_new = Zeta_old;
-    ep_new = ep_old;
-    substepFlag = 0;
-    goto successfulSubstep;
+    state_new = state_old;
+    state_new.sigma = sigma_trial;
+    success = true;
+    return success;
   }
+
   if (YIELD == 1) { // elastic-plastic or fully-plastic substep
+
+    /*
+    std::cout << "Old_state = " << state_old
+              << " Trial invariants" << invar_trial
+              << " kappa = " << kappa
+              << " Limit params " << limitParameters[0] << "," <<
+    limitParameters[1]
+              << ", " << limitParameters[2] << ", " << limitParameters[3]
+              << " Yield := " << YIELD << std::endl;
+    */
+
     // (5) Compute non-hardening return to initial yield surface:
     //     [sigma_0,d_e_p,0] =
     //     (nonhardeningReturn(sigma_trial,sigma_old,X_old,Zeta_old,K,G)
+    Invariants invar_0; // Invariants at stress update for non-hardening return
     double TOL =
       1e-4; // bisection convergence tolerance on eta (if changed, change imax)
-
     Matrix3 d_ep_0; // increment in plastic strain for non-hardening return
-    Matrix3 sigma_0;
-    double evp_old = ep_old.Trace();
+
+    double evp_old = state_old.ep.Trace();
+    Invariants invar_old(state_old.sigma);
 
     // returnFlag would be != 0 if there was an error in the nonHardeningReturn
     // call, but
     // there are currently no tests in that function that could detect such an
     // error.
-    returnFlag =
-      nonHardeningReturn(sigma_trial, sigma_old, d_e, X_old, Zeta_old, coher,
-                         bulk, shear, sigma_0, d_ep_0);
+    returnFlag = nonHardeningReturn(invar_trial, invar_old, d_e, state_old,
+                                    coher, bulk, shear, invar_0, d_ep_0, kappa);
     if (returnFlag != 0) {
 #ifdef MHdebug
       cout << "1344: failed nonhardeningReturn in substep " << endl;
 #endif
-      goto failedSubstep;
+      state_new = state_old;
+      success = false;
+      return success;
     }
-    // cout<<"\n First nonhardeningReturn() call"<<endl;
-    // cout<<"sigma_trial = "<<sigma_trial<<endl;
-    // cout<<"sigma_old = "<<sigma_old<<endl;
-    // cout<<"sigma_0 = "<<sigma_0<<endl;
-    // cout<<"d_ep_0 = "<<d_ep_0<<endl;
 
     double d_evp_0 = d_ep_0.Trace();
-
-    double I1_0, // I1 at stress update for non-hardening return
-      J2_0,      // J2 at stress update for non-hardening return
-      rJ2_0,     // rJ2 at stress update for non-hardening return
-      J3_0;      // J3 at stress update for non-hardening return
-    Matrix3 S_0; // S (deviator) at stress update for non-hardening return
-    computeInvariants(sigma_0, S_0, I1_0, J2_0, rJ2_0, J3_0);
 
     // (6) Iterate to solve for plastic volumetric strain consistent with the
     // updated
     //     values for the cap (X) and isotropic backstress (Zeta).  Use a
     //     bisection method
     //     based on the multiplier eta,  where  0<eta<1
-    double eta_out = 1.0, eta_in = 0.0, eta_mid, d_evp;
-    int i = 0,
+    double eta_out = 1.0, eta_in = 0.0, eta_mid = 0.5, d_evp = 0.0;
+    int ii = 0,
         imax = 93; // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
 
-    double dZetadevp = computedZetadevp(Zeta_old, evp_old);
+    double dZetadevp = computedZetadevp(state_old.zeta, evp_old);
 
-  // (7) Update Internal State Variables based on Last Non-Hardening Return:
-  //
-  updateISV:
-    i++;
-    eta_mid = 0.5 * (eta_out + eta_in);
-    d_evp = eta_mid * d_evp_0;
+    // (7) Update Internal State Variables based on Last Non-Hardening Return:
+    //
+    // Loop until some result is available.  If all fails bisect.
+    // At the end:
+    // (11) Compare magnitude of the volumetric plastic strain and bisect on eta
+    bool doBisection = true;
+    while (doBisection) {
 
-    // Update X exactly
-    X_new = computeX(evp_old + d_evp, P3);
-    // Update zeta. min() eliminates tensile fluid pressure from explicit
-    // integration error
-    Zeta_new = min(Zeta_old + dZetadevp * d_evp, 0.0);
+      // Make sure that the first updateISV loop goes through at least once
+      // At the end:
+      // (10) Check whether the isotropic component of the return has changed
+      // sign, as this
+      //      would indicate that the cap apex has moved past the trial stress,
+      //      indicating
+      //      too much plastic strain in the return.
+      Matrix3 d_ep_new;
+      Invariants invar_new;
+      bool signChange = true;
+      while (signChange) {
 
-    // (8) Check if the updated yield surface encloses trial stres.  If it does,
-    // there is too much
-    //     plastic strain for this iteration, so we adjust the bisection
-    //     parameters and recompute
-    //     the state variable update.
+        // Make sure that the yield surface check loop goes through at least
+        // once
+        // At the end:
+        // (8) Check if the updated yield surface encloses trial stres.  If it
+        // does, there is
+        //     too much plastic strain for this iteration, so we adjust the
+        //     bisection parameters
+        //     and recompute the state variable update.
+        bool adjustBisection = true;
+        while (adjustBisection) {
 
-    if (computeYieldFunction(sigma_trial, X_new, Zeta_new, coher,
-                             limitParameters) != 1) {
-      eta_out = eta_mid;
-      if (i >= imax) {
-        // solution failed to converge within the allowable iterations, which
-        // means
-        // the solution requires a plastic strain that is less than TOL*d_evp_0
-        // In this case we are near the zero porosity limit, so the response
-        // should
-        // be that of no porosity. By setting eta_out=eta_in, the next step will
-        // converge with the cap position of the previous iteration.  In this
-        // case,
-        // we set evp=-p3 (which corresponds to X=1e12*p0) so subsequent
-        // compressive
-        // loading will respond as though there is no porosity.  If there is
-        // dilatation
-        // in subsequent loading, the porosity will be recovered.
-        eta_out = eta_in;
-      }
-      goto updateISV;
-    }
+          // Update counter
+          ii++;
 
-    // (9) Recompute the elastic properties based on the midpoint of the updated
-    // step:
-    //     [K,G] = computeElasticProperties(
-    //     (sigma_old+sigma_new)/2,ep_old+d_ep/2 )
-    //     and compute return to updated surface.
-    //    MH! change this when elastic-plastic coupling is used.
-    //    Matrix3 sigma_new = ...,
-    //            ep_new    = ...,
-    //    computeElasticProperties((sigma_old+sigma_new)/2,(ep_old+ep_new)/2,bulk,shear);
-    Matrix3 d_ep_new;
-    returnFlag =
-      nonHardeningReturn(sigma_trial, sigma_old, d_e, X_new, Zeta_new, coher,
-                         bulk, shear, sigma_new, d_ep_new);
-    if (returnFlag != 0) {
+          // Update X exactly
+          eta_mid = 0.5 * (eta_out + eta_in);
+          d_evp = eta_mid * d_evp_0;
+          state_new.capX = computeX(evp_old + d_evp, P3);
+
+          // Update kappa
+          state_new.kappa = kappa;
+
+          // Update zeta. min() eliminates tensile fluid pressure from explicit
+          // integration error
+          state_new.zeta = min(state_old.zeta + dZetadevp * d_evp, 0.0);
+
+          // (8) Check if the updated yield surface encloses trial stress.  If
+          // it does, there is
+          //     too much plastic strain for this iteration, so we adjust the
+          //     bisection parameters
+          //     and recompute the state variable update.
+          adjustBisection = false;
+          if (computeYieldFunction(invar_trial, state_new, coher,
+                                   limitParameters, kappa) != 1) {
+            adjustBisection = true;
+            // If the solution failed to converge within the allowable
+            // iterations, which means
+            // the solution requires a plastic strain that is less than
+            // TOL*d_evp_0
+            // In this case we are near the zero porosity limit, so the response
+            // should
+            // be that of no porosity. By setting eta_out=eta_in, the next step
+            // will
+            // converge with the cap position of the previous iteration.  In
+            // this case,
+            // we set evp=-p3 (which corresponds to X=1e12*p0) so subsequent
+            // compressive
+            // loading will respond as though there is no porosity.  If there is
+            // dilatation
+            // in subsequent loading, the porosity will be recovered.
+            if (ii > imax) {
+              eta_out = eta_in;
+            } else {
+              eta_out = eta_mid;
+            }
+          }
+
+        } // end while (adjustBisection)
+
+        // (9) Recompute the elastic properties based on the midpoint of the
+        // updated step:
+        //     [K,G] = computeElasticProperties(
+        //     (sigma_old+sigma_new)/2,ep_old+d_ep/2 )
+        //     and compute return to updated surface.
+        //    MH! change this when elastic-plastic coupling is used.
+        //    Matrix3 sigma_new = ...,
+        //            ep_new    = ...,
+        //    computeElasticProperties((sigma_old+sigma_new)/2,(ep_old+ep_new)/2,bulk,shear);
+        returnFlag =
+          nonHardeningReturn(invar_trial, invar_old, d_e, state_new, coher,
+                             bulk, shear, invar_new, d_ep_new, kappa);
+        if (returnFlag != 0) {
 #ifdef MHdebug
-      cout << "1344: failed nonhardeningReturn in substep " << endl;
+          cout << "1344: failed nonhardeningReturn in substep " << endl;
 #endif
-      goto failedSubstep;
-    }
-    // (10) Check whether the isotropic component of the return has changed
-    // sign, as this
-    //      would indicate that the cap apex has moved past the trial stress,
-    //      indicating
-    //      too much plastic strain in the return.
-    if (Sign(I1_trial - sigma_new.Trace()) != Sign(I1_trial - I1_0)) {
-      eta_out = eta_mid;
-      if (i >= imax) {
-        // solution failed to converge within the allowable iterations, which
-        // means
-        // the solution requires a plastic strain that is less than TOL*d_evp_0
-        // In this case we are near the zero porosity limit, so the response
-        // should
-        // be that of no porosity. By setting eta_out=eta_in, the next step will
-        // converge with the cap position of the previous iteration.  In this
-        // case,
-        // we set evp=-p3 (which corresponds to X=1e12*p0) so subsequent
-        // compressive
-        // loading will respond as though there is no porosity.  If there is
-        // dilatation
-        // in subsequent loading, the porosity will be recovered.
-        eta_out = eta_in;
+          state_new = state_old;
+          doBisection = false;
+          success = false;
+          return success;
+        }
+
+        // (10) Check whether the isotropic component of the return has changed
+        // sign, as this
+        //      would indicate that the cap apex has moved past the trial
+        //      stress, indicating
+        //      too much plastic strain in the return.
+        signChange = false;
+        if (Uintah::Sign(invar_trial.I1 - invar_new.I1) !=
+            Uintah::Sign(invar_trial.I1 - invar_0.I1)) {
+          signChange = true;
+          if (ii > imax) {
+            // solution failed to converge within the allowable iterations,
+            // which means
+            // the solution requires a plastic strain that is less than
+            // TOL*d_evp_0
+            // In this case we are near the zero porosity limit, so the response
+            // should
+            // be that of no porosity. By setting eta_out=eta_in, the next step
+            // will
+            // converge with the cap position of the previous iteration.  In
+            // this case,
+            // we set evp=-p3 (which corresponds to X=1e12*p0) so subsequent
+            // compressive
+            // loading will respond as though there is no porosity.  If there is
+            // dilatation
+            // in subsequent loading, the porosity will be recovered.
+            eta_out = eta_in;
+          } else {
+            eta_out = eta_mid;
+          }
+        }
+
+      } // end while (signChange)
+
+      // Compare magnitude of plastic strain with prior update
+      double d_evp_new = d_ep_new.Trace(); // Increment in vol. plastic strain
+                                           // for return to new surface
+      state_new.ep = state_old.ep + d_ep_new;
+
+      // Check for convergence
+      if (std::abs(eta_out - eta_in) < TOL) { // Solution is converged
+        state_new.sigma = one_third * invar_new.I1 * Identity + invar_new.S;
+
+        // If out of range, scale back isotropic plastic strain.
+        if (state_new.ep.Trace() < -P3) {
+          d_evp_new = -P3 - state_old.ep.Trace();
+          Matrix3 d_ep_new_iso = one_third * d_ep_new.Trace() * Identity,
+                  d_ep_new_dev = d_ep_new - d_ep_new_iso;
+          state_new.ep =
+            state_old.ep + d_ep_new_dev + one_third * d_evp_new * Identity;
+        }
+
+        // Update X exactly
+        state_new.capX = computeX(state_new.ep.Trace(), P3);
+
+        // Update kappa
+        state_new.kappa = kappa;
+
+        // Update zeta. min() eliminates tensile fluid pressure from explicit
+        // integration error
+        state_new.zeta = min(state_old.zeta + dZetadevp * d_evp_new, 0.0);
+
+        doBisection = false;
+        success = true;
+        return success;
       }
-      goto updateISV;
-    }
 
-    // Compare magnitude of plastic strain with prior update
-    double d_evp_new =
-      d_ep_new
-        .Trace(); // Increment in vol. plastic strain for return to new surface
-    ep_new = ep_old + d_ep_new;
-
-    // Check for convergence
-    if (fabs(eta_out - eta_in) < TOL) { // Solution is converged
-      // sigma_new = one_third*I1_new*Identity + S_new;
-
-      // If out of range, scale back isotropic plastic strain.
-      if (ep_new.Trace() < -P3) {
-        d_evp_new = -P3 - ep_old.Trace();
-        Matrix3 d_ep_new_iso = one_third * d_ep_new.Trace() * Identity,
-                d_ep_new_dev = d_ep_new - d_ep_new_iso;
-        ep_new = ep_old + d_ep_new_dev + one_third * d_evp_new * Identity;
-      }
-
-      // Update X exactly
-      X_new = computeX(ep_new.Trace(), P3);
-      // Update zeta. min() eliminates tensile fluid pressure from explicit
-      // integration error
-      Zeta_new = min(Zeta_old + dZetadevp * d_evp_new, 0.0);
-
-      goto successfulSubstep;
-    }
-    if (i >= imax) {
+      if (ii >= imax) {
 // Solution failed to converge but not because of too much plastic strain
 // (which would have been caught by the checks above).  In this case we
 // go to the failed substep return, which will trigger subcycling and
@@ -1540,48 +1787,64 @@ Arenisca4::computeSubstep(
 // This code was never reached in testing, but is here to catch
 // unforseen errors.
 #ifdef MHdebug
-      cout << "1273: i>=imax, failed substep " << endl;
+        cout << "1273: i>=imax, failed substep "
+             << " idx = " << idx << " particleID = " << particleID << std::endl;
 #endif
-      goto failedSubstep;
-    }
+        state_new = state_old;
+        doBisection = false;
+        success = false;
+        return success;
+      }
 
-    // (11) Compare magnitude of the volumetric plastic strain and bisect on eta
-    //
-    if (fabs(d_evp_new) > eta_mid * fabs(d_evp_0)) {
-      eta_in = eta_mid;
-    } else {
-      eta_out = eta_mid;
-    }
-    goto updateISV;
-  }
-// (12) Return updated values for successful/unsuccessful steps
-successfulSubstep:
-  substepFlag = 0;
-  return substepFlag;
+      // (11) Compare magnitude of the volumetric plastic strain and bisect on
+      // eta
+      //
+      doBisection = true;
+      if (std::abs(d_evp_new) > eta_mid * std::abs(d_evp_0)) {
+        eta_in = eta_mid;
+      } else {
+        eta_out = eta_mid;
+      }
 
-failedSubstep:
-  sigma_new = sigma_old;
-  ep_new = ep_old;
-  X_new = X_old;
-  Zeta_new = Zeta_old;
-  substepFlag = 1;
-  return substepFlag;
+    } // end while (doBisection);
+
+  } // end if YIELD == 1
+
+  // Should not reach here; but if it does return false
+  success = false;
+  return success;
+
 } //===================================================================
 
-// Compute state variable X, the Hydrostatic Compressive strength (cap position)
+//////////////////////////////////////////////////////////////////////////
+///
+/// Method: computeX
+/// Purpose:
+///   Compute state variable X, the Hydrostatic Compressive strength (cap
+///   position)
+///   X is the value of (I1 - Zeta) at which the cap function crosses
+///   the hydrostat. For the drained material in compression. X(evp)
+///   is derived from the emprical Kayenta crush curve, but with p2 = 0.
+///   In tension, M. Homel's piecewsie formulation is used.
+/// Inputs:
+///   evp - volumetric plastic strain
+///   P3  - Disaggregation strain P3
+/// Returns:
+///   double scalar value
+///
+//////////////////////////////////////////////////////////////////////////
 double
-Arenisca4::computeX(const double& evp, const double& P3)
+Arenisca3::computeX(const double& evp, const double& P3)
 {
-  // X is the value of (I1 - Zeta) at which the cap function crosses
-  // the hydrostat. For the drained material in compression. X(evp)
-  // is derived from the emprical Kayenta crush curve, but with p2 = 0.
-  // In tension, M. Homel's piecewsie formulation is used.
-
   // define and initialize some variables
-  double p0 = d_cm.p0_crush_curve, p1 = d_cm.p1_crush_curve, X;
+  double p0 = d_cm.p0_crush_curve, p1 = d_cm.p1_crush_curve,
+         // p2  = d_cm.p2_crush_curve,
+    // p4  = d_cm.p4_crush_curve,
+    X = 0.0;
 
-  if (evp <= -P3) { // ------------Plastic strain exceeds allowable
-                    // limit--------------------------
+  // ------------Plastic strain exceeds allowable
+  // limit--------------------------
+  if (!(evp > -P3)) {
     // The plastic strain for this iteration has exceed the allowable
     // value.  X is not defined in this region, so we set it to a large
     // negative number.
@@ -1590,178 +1853,184 @@ Arenisca4::computeX(const double& evp, const double& P3)
     // porosity approaches zero (within the specified tolerance).  By setting
     // X=1e12*p0, the material will respond as though there is no porosity.
     X = 1.0e12 * p0;
-  } else { // ------------------Plastic strain is within allowable
-           // domain------------------------
-    // We first compute the drained response.  If there are fluid effects, this
-    // value will
-    // be used in detemining the elastic volumetric strain to yield.
-    if (evp <= 0.0) {
-      // This is an expensive calculation, but fasterlog() may cause errors.
-      X = (p0 * p1 + log((evp + P3) / P3)) / p1;
-    } else {
-      // This is an expensive calculation, but fastpow() may cause errors.
-      X = p0 * Pow(1.0 + evp, 1.0 / (p0 * p1 * P3));
+    return X;
+  }
+
+  // ------------------Plastic strain is within allowable
+  // domain------------------------
+  // We first compute the drained response.  If there are fluid effects, this
+  // value will
+  // be used in detemining the elastic volumetric strain to yield.
+  if (evp > 0.0) {
+    // This is an expensive calculation, but fastpow() may cause errors.
+    X = p0 * Pow(1.0 + evp, 1.0 / (p0 * p1 * P3));
+  } else {
+    // This is an expensive calculation, but fasterlog() may cause errors.
+    X = (p0 * p1 + log((evp + P3) / P3)) / p1;
+  }
+
+  if (d_Kf != 0.0 &&
+      evp <=
+        d_ev0) { // ------------------------------------------- Fluid Effects
+    // This is an expensive calculation, but fastpow() may cause errors.
+    // First we evaluate the elastic volumetric strain to yield from the
+    // empirical crush curve (Xfit) and bulk modulus (Kfit) formula for
+    // the drained material.  Xfit was computed as X above.
+    double b0 = d_cm.B0, b01 = d_cm.B01, b1 = d_cm.B1, b2 = d_cm.B2,
+           b3 = d_cm.B3, b4 = d_cm.B4;
+
+    // Kfit is the drained bulk modulus evaluated at evp, and for I1 = Xdry/2.
+    double Kdry = b0 + b1 * exp(2.0 * b2 / X) - b01 * X * 0.5;
+    if (evp < 0.0) {
+      Kdry -= b3 * exp(b4 / evp);
     }
 
-    if (Kf != 0.0 &&
-        evp <=
-          ev0) { // ------------------------------------------- Fluid Effects
-      // This is an expensive calculation, but fastpow() may cause errors.
-      // First we evaluate the elastic volumetric strain to yield from the
-      // empirical crush curve (Xfit) and bulk modulus (Kfit) formula for
-      // the drained material.  Xfit was computed as X above.
-      double b0 = d_cm.B0, b1 = d_cm.B1, b2 = d_cm.B2, b3 = d_cm.B3,
-             b4 = d_cm.B4;
+    // Now we use our engineering model for the bulk modulus of the
+    // saturated material (Keng) to compute the stress at our elastic strain to
+    // yield.
+    // Since the stress and plastic strain tensors are not available in this
+    // scope, we call the
+    // computeElasticProperties function with and isotropic matrices that will
+    // have the
+    // correct values of evp. (The saturated bulk modulus doesn't depend on I1).
+    double Ksat,
+      Gsat; // Not used, but needed to call computeElasticProperties()
+    // This needs to be evaluated at the current value of pressure.
+    computeElasticProperties(one_sixth * X * Identity,
+                             one_third * evp * Identity, P3, Ksat,
+                             Gsat); // Overwrites Geng & Keng
 
-      // Kfit is the drained bulk modulus evaluated at evp, and for I1 = Xdry/2.
-      double Kdry = b0 + b1 * exp(2.0 * b2 / X);
-      if (evp < 0.0) {
-        Kdry = Kdry - b3 * exp(b4 / evp);
-      }
+    // Compute the stress to hydrostatic yield.
+    // We are only in this looop if(evp <= d_ev0)
+    X = X * Ksat / Kdry; // This is X_sat = K_sat*eve = K_sat*(X_dry/K_dry)
 
-      // Now we use our engineering model for the bulk modulus of the
-      // saturated material (Keng) to compute the stress at our elastic strain
-      // to yield.
-      // Since the stress and plastic strain tensors are not available in this
-      // scope, we call the
-      // computeElasticProperties function with and isotropic matrices that will
-      // have the
-      // correct values of evp. (The saturated bulk modulus doesn't depend on
-      // I1).
-      double Ksat,
-        Gsat; // Not used, but needed to call computeElasticProperties()
-      // This needs to be evaluated at the current value of pressure.
-      computeElasticProperties(one_sixth * X * Identity,
-                               one_third * evp * Identity, P3, Ksat,
-                               Gsat); // Overwrites Geng & Keng
+  } // End fluid effects
 
-      // Compute the stress to hydrostatic yield.
-      // We are only in this looop if(evp <= ev0)
-      X = X * Ksat / Kdry; // This is X_sat = K_sat*eve = K_sat*(X_dry/K_dry)
-    }                      // End fluid effects
-  }                        // End plastic strain in allowable domain
   return X;
+
 } //===================================================================
 
 // Compute the strain at zero pore pressure from initial pore pressure (Pf0)
 double
-Arenisca4::computePorePressure(const double ev)
+Arenisca3::computePorePressure(const double ev)
 {
   // This compute the plotting variable pore pressure, which is defined from
   // input paramters and the current total volumetric strain (ev).
   double pf = 0.0; // pore fluid pressure
 
-  if (ev <= ev0 && Kf != 0) { // ....................fluid effects are active
+  if (ev <= d_ev0 &&
+      d_Kf != 0) { // ....................fluid effects are active
     // double Km = d_cm.B0 + d_cm.B1;                   // Matrix bulk modulus
     // (inferred from high pressure limit of drained bulk modulus)
     // double pfi = d_cm.fluid_pressure_initial;        // initial pore pressure
     // double phi_i = 1.0 - exp(-d_cm.p3_crush_curve);  // Initial porosity
     // (inferred from crush curve)
-    // double C1 = Kf*(1.0 - phi_i) + Km*(phi_i);       // Term to simplify the
-    // expression below
+    // double C1 = d_Kf*(1.0 - phi_i) + Km*(phi_i);       // Term to simplify
+    // the expression below
 
     pf = d_cm.fluid_pressure_initial +
-         Kf * log(exp(ev * (-1.0 - Km / C1)) *
-                  (-exp((ev * Kf) / C1) * (phi_i - 1.0) +
-                   exp((ev * Km) / C1) * phi_i));
+         d_Kf * log(exp(ev * (-1.0 - d_Km / d_C1)) *
+                    (-exp((ev * d_Kf) / d_C1) * (d_phi_i - 1.0) +
+                     exp((ev * d_Km) / d_C1) * d_phi_i));
   }
   return pf;
 } //===================================================================
 
-// Compute nonhardening return from trial stress to some yield surface
-int Arenisca4::nonHardeningReturn(
-  const Matrix3& sigma_trial, // Trial Stress (untransformed)
-  const Matrix3& sigma_old,   // Stress at start of subtep (untransformed)
+//////////////////////////////////////////////////////////////////////////
+///
+/// Method: nonHardeningReturn
+/// Purpose:
+///   Computes a non-hardening return to the yield surface in the meridional
+///   profile
+///   (constant Lode angle) based on the current values of the internal state
+///   variables
+///   and elastic properties.  Returns the updated stress and  the increment in
+///   plastic
+///   strain corresponding to this return.
+///
+///   NOTE: all values of r and z in this function are transformed!
+/// Returns:
+///
+///
+//////////////////////////////////////////////////////////////////////////
+int
+Arenisca3::nonHardeningReturn(
+  const Invariants& trial,    // Trial Stress
+  const Invariants& old,      // Stress at start of subtep
   const Matrix3& d_e,         // increment in total strain
-  const double& X,            // cap position
-  const double& Zeta,         // isotropic backstress
+  const AreniscaState& state, // cap position
   const double& coher,
-  const double& bulk,  // elastic bulk modulus
-  const double& shear, // elastic shear modulus
-  Matrix3& sigma_new,  // New stress state on yield surface
-  Matrix3& d_ep_new)   // increment in plastic strain for return
+  const double& bulk,    // elastic bulk modulus
+  const double& shear,   // elastic shear modulus
+  Invariants& invar_new, // New stress state on yield surface
+  Matrix3& d_ep_new,     // increment in plastic strain for return
+  double& kappa)
 {
-  // Computes a non-hardening return to the yield surface in the meridional
-  // profile
-  // (constant Lode angle) based on the current values of the internal state
-  // variables
-  // and elastic properties.  Returns the updated stress and  the increment in
-  // plastic
-  // strain corresponding to this return.
 
-  int returnFlag = 0;
+  const int nmax =
+    19; // If this is changed, more entries may need to be added to sinV cosV.
+  int n = 0;
+  int returnFlag = 0; // error flag = 0 for successful return.
+  int interior = 0;
 
-  // (1) Transform sigma_trial and define interior point sigma_0.
-  double S_to_S_star = d_cm.BETA_nonassociativity * sqrt(1.5 * bulk / shear);
-  double S_star_to_S = 1.0 / S_to_S_star;
-
-  Matrix3 iso_sigma_trial = one_third * sigma_trial.Trace() * Identity;
-  Matrix3 S_trial = sigma_trial - iso_sigma_trial;
-  Matrix3 sigma_trial_star = iso_sigma_trial + S_to_S_star * S_trial;
-
-  double I1_trial = sigma_trial.Trace(), rJ2_trial = S_trial.Norm(), I1_0,
-         I1trialMinusZeta = I1_trial - Zeta;
+  // (1) Define an interior point, (I1_0 = Zeta, also, J2_0 = 0 but no need to
+  // create this variable.)
+  double I1trialMinusZeta = trial.I1 - state.zeta;
 
   // It may be better to use an interior point at the center of the yield
-  // surface, rather than at zeta, in particular
-  // when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be
-  // problematic when the user has specified
-  // some no porosity condition (e.g. p0=-1e99)
-  if (I1trialMinusZeta >= coher * d_cm.PEAKI1) { // Trial is past vertex
+  // surface, rather than at
+  // zeta, in particular when PEAKI1=0.  Picking the midpoint between PEAKI1 and
+  // X would be
+  // problematic when the user has specified some no porosity condition (e.g.
+  // p0=-1e99)
+  double upperI1 = coher * d_cm.PEAKI1;
+  if (I1trialMinusZeta < upperI1) {
+    if (I1trialMinusZeta > state.capX) { // Trial is above yield surface
+      invar_new.I1 = trial.I1;
+    } else { // Trial is past X, use yield midpoint as interior point
+      invar_new.I1 = state.zeta + 0.5 * (coher * d_cm.PEAKI1 + state.capX);
+    }
+  } else { // I1_trial - zeta >= coher*I1_peak => Trial is past vertex
     double lTrial =
-             sqrt(I1trialMinusZeta * I1trialMinusZeta + rJ2_trial * rJ2_trial),
-           lYield = 0.5 * (coher * d_cm.PEAKI1 - X);
-    I1_0 = Zeta + coher * d_cm.PEAKI1 - min(lTrial, lYield);
-  } else if ((I1trialMinusZeta < coher * d_cm.PEAKI1) &&
-             (I1trialMinusZeta > X)) { // Trial is above yield surface
-    I1_0 = I1_trial;
-  } else if (I1trialMinusZeta <=
-             X) { // Trial is past X, use yield midpoint as interior point
-    I1_0 = Zeta + 0.5 * (coher * d_cm.PEAKI1 + X);
-  } else { // Shouldn't get here
-    I1_0 = Zeta;
+      sqrt(I1trialMinusZeta * I1trialMinusZeta + trial.rJ2 * trial.rJ2);
+    double lYield = 0.5 * (coher * d_cm.PEAKI1 - state.capX);
+    invar_new.I1 = state.zeta + upperI1 - std::min(lTrial, lYield);
   }
 
-  Matrix3 sigma_0 = one_third * I1_0 * Identity;
+  // (2) Transform the trial and interior points as follows where beta defines
+  // the degree
+  //  of non-associativity.
+  // multiplier to compute Lode R to sqrt(J2)
+  double rJ2_to_r =
+    sqrt_two * d_cm.BETA_nonassociativity * sqrt(1.5 * bulk / shear);
 
-  // (2) Convert 3x3 stresses to vectors of ordered eigenvalues and ordered
-  // eigen projectors:
+  // multiplier to compute sqrt(J2) to Lode R
+  double r_to_rJ2 = 1.0 / rJ2_to_r;
+  double r_trial = rJ2_to_r * trial.rJ2, z_trial = trial.I1 * one_sqrt_three,
+         z_test, r_test, r_0 = 0.0, z_0 = invar_new.I1 * one_sqrt_three;
 
-  Matrix3 PL_0, // Eigenprojector for interior point (Low)
-    PM_0,       // Eigenprojector for interior point (Mid)
-    PH_0,       // Eigenprojector for interior point (High)
-    PL_trial,   // Eigenprojector for trial stress (Low)
-    PM_trial,   // Eigenprojector for trial stress (Mid)
-    PH_trial;   // Eigenprojector for trial stress (High)
-
-  Vector lambda_trial, // Ordered eigenvalues {L,M,H} for trial stress
-    lambda_0,          // Ordered eigenvalues {L,M,H} for interior point
-    lambda_test;       // Ordered eigenvalues {L,M,H} for test point
-
-  computeEigenProjectors(
-    sigma_trial_star, // Input tensor (transformed trial stress)
-    lambda_trial,     // Ordered eigenvalues {L,M,H}
-    PL_trial,         // Low eigenprojector
-    PM_trial,         // Mid eigenprojector
-    PH_trial          // High eigenprojector
-    );
-
-  computeEigenProjectors(sigma_0,  // Input tensor (interior point) Isotropic so
-                                   // doesn't need transformation
-                         lambda_0, // Ordered eigenvalues {L,M,H}
-                         PL_0,     // Low eigenprojector
-                         PM_0,     // Mid eigenprojector
-                         PH_0      // High eigenprojector
-                         );
-
-  // (3) Perform Bisection between in transformed space, to find the new point
-  // on the
-  //  yield surface: [znew,rnew] =
-  //  transformedBisection(z0,r0,z_trial,r_trial,X,Zeta,K,G)
-  // int icount=1;
-  const int nmax = 40; // If this is changed, more entries may need to be added
-                       // to sinTheta,cosTheta,sinPhi,cosPhi
-  int n = 0, interior;
+  // Lookup tables for computing the sin() and cos() of th rotation angle.
+  double sinV[] = { 0.7071067811865475,    -0.5,
+                    0.3420201433256687,    -0.2306158707424402,
+                    0.1545187928078405,    -0.1032426220806015,
+                    0.06889665647555759,   -0.04595133277786571,
+                    0.03064021661344469,   -0.02042858745187096,
+                    0.01361958465478159,   -0.009079879062402308,
+                    0.006053298918749807,  -0.004035546304539714,
+                    0.002690368259933135,  -0.001793580042002626,
+                    0.001195720384163988,  -0.0007971470283055577,
+                    0.0005314313834717263, -0.00035428759824575,
+                    0.0002361917349088998 };
+  double cosV[] = {
+    0.7071067811865475, 0.8660254037844386, 0.9396926207859084,
+    0.9730448705798238, 0.987989849476809,  0.9946562024066014,
+    0.9976238022052647, 0.9989436796015769, 0.9995304783376449,
+    0.9997913146325693, 0.999907249155556,  0.9999587770484402,
+    0.9999816786182636, 0.999991857149859,  0.9999963809527642,
+    0.9999983915340229, 0.9999992851261259, 0.9999996822782572,
+    0.9999998587903324, 0.9999999372401469, 0.9999999721067318
+  };
+  double sinTheta = sinV[0], cosTheta = cosV[0];
 
   // Compute the a1,a2,a3,a4 parameters from FSLOPE,YSLOPE,STREN and PEAKI1,
   // which are perturbed by variability according to coher.  These are then
@@ -1770,279 +2039,53 @@ int Arenisca4::nonHardeningReturn(
   double limitParameters[4]; // double a1,a2,a3,a4;
   computeLimitParameters(limitParameters, coher);
 
-  //// Modify this to use lookup tables for computing the sin() and cos() of the
-  ///rotation angle.
+  // (3) Perform Bisection between in transformed space, to find the new point
+  // on the
+  //  yield surface: [znew,rnew] =
+  //  transformedBisection(z0,r0,z_trial,r_trial,X,Zeta,K,G)
+  // int icount=1;
 
-  double sinPhi[] = { 1.,
-                      0.9689323775011424,
-                      0.8960189359268066,
-                      0.8040055020688935,
-                      0.7071067811865475,
-                      0.6134632047267948,
-                      0.5272495422822986,
-                      0.4502100305139085,
-                      0.3826834323650898,
-                      0.3242504404584508,
-                      0.274125434819962,
-                      0.231384216250307,
-                      0.1950903220161283,
-                      0.1643604661519454,
-                      0.1383944613955442,
-                      0.1164850872534101,
-                      0.0980171403295606,
-                      0.0824610718723793,
-                      0.06936430182358691,
-                      0.05834191978071341,
-                      0.04906767432741801,
-                      0.04126568568335606,
-                      0.03470305368435329,
-                      0.02918338984984145,
-                      0.02454122852291229,
-                      0.02063723796402109,
-                      0.01735414027907056,
-                      0.01459324891806791,
-                      0.01227153828571993,
-                      0.01031916841618379,
-                      0.008677396837596723,
-                      0.007296818715934582,
-                      0.006135884649154475,
-                      0.005159652888734864,
-                      0.004338739256632612,
-                      0.003648433640322288,
-                      0.003067956762965976,
-                      0.002579835029490658,
-                      0.002169374733063605,
-                      0.001824219855463094,
-                      0.001533980186284766 };
-  //,0.001289918587887071,0.001084688004625778,0.0009121103071445277,0.0007669903187427045,
-  // 0.0006449594280862953,0.0005423440820746535,0.0004560552009988938,0.0003834951875713956,
-  // 0.0003224797308109939,0.0002711720510075479,0.0002280276064277759,0.0001917475973107033,
-  // 0.0001612398675014778,0.0001355860267500516,0.0001140138039549291,0.00009587379909597735,
-  // 0.00008061993401273649,0.00006779301353081051,0.00005700690207009467,0.00004793689960306688,
-  // 0.00004030996703911794,0.00003389650678487834,0.0000285034510466261,0.00002396844980841822,
-  // 0.00002015498352365268,0.00001694825339487331,0.0000142517255247604,0.00001198422490506971,
-  // 0.00001007749176233806,8.474126697740921e-6,7.125862762561117e-6,5.992112452642428e-6,
-  // 5.038745881232993e-6,4.237063348908494e-6,3.562931381303173e-6,2.996056226334661e-6,
-  // 2.519372940624492e-6,2.118531674459001e-6,1.781465690654414e-6,1.498028113169011e-6,
-  // 1.259686470313245e-6,1.059265837230095e-6,8.907328453275602e-7,7.490140565847157e-7,
-  // 6.298432351567476e-7,5.296329186151217e-7,4.453664226638242e-7,3.745070282923841e-7,
-  // 3.149216175783894e-7,2.648164593075701e-7,2.226832113319176e-7,1.872535141461953e-7,
-  // 1.574608087891967e-7,1.324082296537862e-7,1.113416056659595e-7,9.362675707309808e-8,
-  // 7.873040439459857e-8,6.620411482689326e-8,5.567080283297984e-8,4.681337853654909e-8};
-
-  double cosPhi[] = { 0,
-                      0.2473257928926614,
-                      0.4440158403262132,
-                      0.5946218568493312,
-                      0.7071067811865475,
-                      0.7897233037250013,
-                      0.8497104919695335,
-                      0.8929226889404623,
-                      0.9238795325112868,
-                      0.9459712743326304,
-                      0.9616939461100744,
-                      0.9728624488951309,
-                      0.9807852804032304,
-                      0.9864003432513166,
-                      0.9903771872650527,
-                      0.9931924407926016,
-                      0.9951847266721969,
-                      0.9965942863701649,
-                      0.9975913961299618,
-                      0.9982966595137443,
-                      0.9987954562051724,
-                      0.9991482088184327,
-                      0.9993976676303487,
-                      0.9995740741720306,
-                      0.9996988186962042,
-                      0.9997870295263969,
-                      0.9998494055682457,
-                      0.9998935128732536,
-                      0.9999247018391445,
-                      0.9999467559641355,
-                      0.9999623506833259,
-                      0.9999733778639443,
-                      0.9999811752826011,
-                      0.9999866889024412,
-                      0.9999905876265351,
-                      0.9999933444438379,
-                      0.9999952938095762,
-                      0.9999966722200732,
-                      0.9999976469038652,
-                      0.9999983361095752,
-                      0.9999988234517019 };
-  //,0.9999991680546722,0.9999994117257933,0.9999995840273073,0.9999997058628822,
-  // 0.9999997920136464,0.9999998529314375,0.9999998960068214,0.9999999264657179,
-  // 0.9999999480034103,0.9999999632328587,0.999999974001705,0.9999999816164293,
-  // 0.9999999870008525,0.9999999908082146,0.9999999935004262,0.9999999954041073,
-  // 0.9999999967502131,0.9999999977020537,0.9999999983751066,0.9999999988510268,
-  // 0.9999999991875533,0.9999999994255134,0.999999999593777,0.999999999712757,
-  // 0.999999999796888,0.999999999856378,0.999999999898444,0.999999999928189,
-  // 0.999999999949222,0.999999999964095,0.999999999974611,0.999999999982047,
-  // 0.999999999987306,0.999999999991024,0.999999999993653,0.999999999995512,
-  // 0.999999999996826,0.999999999997756,0.999999999998413,0.999999999998878,
-  // 0.999999999999207,0.999999999999439,0.999999999999603,0.999999999999719,
-  // 0.999999999999802,0.99999999999986,0.999999999999901,0.99999999999993,
-  // 0.99999999999995,0.999999999999965,0.999999999999975,0.999999999999982,
-  // 0.999999999999988,0.999999999999991,0.999999999999994,0.999999999999996,
-  // 0.999999999999997,0.999999999999998,0.999999999999998,0.999999999999999};
-
-  double sinTheta[] = { 0,
-                        0.6530800292138481,
-                        0.9891405116101687,
-                        0.8450502273278872,
-                        0.2907537996606676,
-                        -0.4046809781025658,
-                        -0.9036746237763955,
-                        -0.9640045423646659,
-                        -0.5563852518516206,
-                        0.1213157935885842,
-                        0.7401274591903676,
-                        0.9996648227097819,
-                        0.7739426852667083,
-                        0.1725315841887478,
-                        -0.5126301786527758,
-                        -0.9489498706119317,
-                        -0.9246282254043701,
-                        -0.4514715096385484,
-                        0.2408395011359971,
-                        0.8162416705885972,
-                        0.9954220097471839,
-                        0.6914024035604609,
-                        0.05176071915901047,
-                        -0.6130067675893461,
-                        -0.9802071584778202,
-                        -0.8715932306494945,
-                        -0.3398885962773765,
-                        0.3568055094310588,
-                        0.8802982985443536,
-                        0.9764747478750539,
-                        0.5986486734679712,
-                        -0.06977475911309192,
-                        -0.7043279743794996,
-                        -0.9969847523632076,
-                        -0.8056829950374929,
-                        -0.2232848229694142,
-                        0.4675007598639339,
-                        0.9313510937243198,
-                        0.9431029274729957,
-                        0.4970516600769691,
-                        -0.190279519387695 };
-  //,-0.7852447952776354,-0.9990348123874233,-0.7278711495336058,-0.1033826694373081,
-  // 0.5712900538569543,0.9686459003924745,0.8957995195857675,0.3881121621222028,
-  //-0.3079734562688337,-0.8545619209102743,-0.986327054909366,-0.6393071365809022,
-  // 0.01804666067516924,0.6666402081411824,0.9916317968554326,0.8352632937178742,
-  // 0.2734394420734792,-0.4211179860554405,-0.9112553934761619,-0.959049199879731,
-  //-0.5412992304499267,0.1392094041567632,0.7521427030551485,0.9999692337191986,
-  // 0.7623884955578118,0.15472745398924,-0.5280417292307387,-0.9544877327280404,
-  //-0.9176041978277584,-0.4352952113126279,0.2583157358340115,0.8265344893033894,
-  // 0.9935350497383921,0.6782516371133961,0.03372982029961126,-0.6271652002063631,
-  //-0.983620307293945,-0.8626042774456625,-0.322860978524602,0.373606208003528,
-  // 0.8887166458157811,0.9724242911634413,0.5840955943952939,-0.08776607283622896,
-  //-0.7170241396024485,-0.9982227685879364,-0.7948619017002729,-0.2056574190418587,
-  // 0.4833777411260093,0.9377706130923654,0.9369488077102126,0.4813112475589719,
-  //-0.207965478933031,-0.7962911443974866,-0.9980794079518292,-0.7153777660688891,
-  //-0.08541587267359811,0.586008781845477,0.9729717622334742,0.8876326458925173};
-
-  double cosTheta[] = { 1.,
-                        0.7572888982693721,
-                        0.1469729508840787,
-                        -0.5346869301685671,
-                        -0.9567979034168524,
-                        -0.9144579301214193,
-                        -0.4282197734138278,
-                        0.2658857692699838,
-                        0.8309244559657687,
-                        0.9926139623368049,
-                        0.6724666119239012,
-                        0.02588903699677217,
-                        -0.63325565131482,
-                        -0.9850039860108796,
-                        -0.8586095153994179,
-                        -0.3154269219099697,
-                        0.3808709030440175,
-                        0.8922855350080994,
-                        0.9705649564519441,
-                        0.5777105981326082,
-                        -0.09557731169517839,
-                        -0.7224698722789882,
-                        -0.9986595155267595,
-                        -0.7900776562399809,
-                        -0.1979745601556861,
-                        0.4902297831486548,
-                        0.940465704914642,
-                        0.9341786919212205,
-                        0.4744205998688464,
-                        -0.2156317851392739,
-                        -0.8010117138688038,
-                        -0.9975627714538619,
-                        -0.7098747104288692,
-                        -0.07759770328607386,
-                        0.5923469519693802,
-                        0.9747532445862991,
-                        0.8839926693851281,
-                        0.3641224247674308,
-                        -0.3325009296105281,
-                        -0.8677209500840285,
-                        -0.9817299549782454 };
-  //,-0.6191854419230029,0.04392543270163517,0.6857139269962564,0.9946416559042841,
-  // 0.8207482405489019,0.2484454057793229,-0.4444583453034808,-0.9216121470623252,
-  //-0.9513949496575167,-0.5193495194280458,0.1647996988887314,0.7689514842411891,
-  // 0.9998371457584857,0.7453796568792852,0.1290983325425473,-0.5498501888401678,
-  //-0.9618892199825011,-0.9070058664753,-0.4118417267113732,0.2832395315100768,
-  // 0.8408300322385715,0.99026296598142,0.6590002687714889,0.00784420901294187,
-  //-0.6471196039690781,-0.9879571928894529,-0.8492184243120325,-0.2982501769851695,
-  // 0.397495328436544,0.9002877756630347,0.9660605470779423,0.5628860790532889,
-  //-0.1135257897630787,-0.7348297195629733,-0.9994309877237927,-0.7788862636162693,
-  //-0.1802528531784318,0.5058792944294583,0.9464464002499753,0.9275874090031756,
-  // 0.4584568937751372,-0.2332187770212312,-0.8116848751874143,-0.9961411127239482,
-  //-0.697048336363676,-0.05959282064674551,0.6067903733789996,0.9786240473200326,
-  // 0.875411879850803,0.3472553487282364,-0.3494666389376975,-0.8765497606942951,
-  //-0.9781361661712315,-0.6049135585801836,0.06194752152044655,0.698737899225658,
-  // 0.9963453862468615,0.8103047004676575,0.2309241215124303,-0.4605521533397157};
-
+  // It may be getting stuck in this loop, perhaps bouncing back and forth so
+  // interior = 1,
+  // with with n<=2 iterations, so n never gets to nmax.
   int k = 0;
   while ((n < nmax) && (k < 10 * nmax)) {
     // transformed bisection to find a new interior point, just inside the
     // boundary of the
-    // yield surface.  This function overwrites the inputs for lambda_0
-    transformedBisection(lambda_0, lambda_trial, X, Zeta, coher,
-                         limitParameters, S_star_to_S);
-    // rotation matrix to transform to spherical coordinates
-    Matrix3 R;
-    computeRotationToSphericalCS(lambda_0, lambda_trial, R);
-    // Find the radial coordinate of lambda_0 in the spherical CS centered
-    // around the trial stress.
-    Vector r_test = lambda_0 - lambda_trial;
-    double r_test_norm = sqrt(r_test[0] * r_test[0] + r_test[1] * r_test[1] +
-                              r_test[2] * r_test[2]);
+    // yield surface.  This function overwrites the inputs for z_0 and r_0
+    //  [z_0,r_0] =
+    //  transformedBisection(z_0,r_0,z_trial,r_trial,X_Zeta,bulk,shear)
+    transformedBisection(z_0, r_0, z_trial, r_trial, state, coher,
+                         limitParameters, r_to_rJ2, kappa);
 
-    // (4) Perform a rotation of lamda_0 about lambda_trial until a new interior
-    // point is found, set this as lambda_0
+    // (4) Perform a rotation of {z_new,r_new} about {z_trial,r_trial} until a
+    // new interior point
+    // is found, set this as {z0,r0}
     interior = 0;
-    n = max(n - 2, 0);
-
+    n = max(n - 4, 0); //
     // (5) Test for convergence:
     while ((interior == 0) && (n < nmax)) {
       k++;
       // To avoid the cost of computing pow() to get theta, and then sin(),
       // cos(),
       // we use a lookup table defined above by sinV and cosV.
-      // phi = pi_half*Pow(2.0,-0.25*n);
-      // theta = pi_fourth*n;
-      // Cartesian vector for the spherical {r,theta,phi}
-      double x = r_test_norm * cosTheta[n] * sinPhi[n],
-             y = r_test_norm * sinTheta[n] * sinPhi[n],
-             z = r_test_norm * cosPhi[n];
-      Vector cart = Vector(x, y, z);
-      // Test point (by rotation of lambda_0)
-      lambda_test = lambda_trial + R * cart;
-      Matrix3 sigma_test = Matrix3(lambda_test[0], 0., 0., 0., lambda_test[1],
-                                   0., 0., 0., lambda_test[2]);
-      if (transformedYieldFunction(sigma_test, X, Zeta, coher, limitParameters,
-                                   S_star_to_S) == -1) { // new interior point
+      //
+      // theta = pi_fourth*Pow(-two_third,n);
+      // z_test = z_trial + cos(theta)*(z_0-z_trial) - sin(theta)*(r_0-r_trial);
+      // r_test = r_trial + sin(theta)*(z_0-z_trial) + cos(theta)*(r_0-r_trial);
+      sinTheta = sinV[n];
+      cosTheta = cosV[n];
+      z_test =
+        z_trial + cosTheta * (z_0 - z_trial) - sinTheta * (r_0 - r_trial);
+      r_test =
+        r_trial + sinTheta * (z_0 - z_trial) + cosTheta * (r_0 - r_trial);
+
+      if (transformedYieldFunction(z_test, r_test, state, coher,
+                                   limitParameters, r_to_rJ2,
+                                   kappa) == -1) { // new interior point
         interior = 1;
-        lambda_0 = lambda_test;
+        z_0 = z_test;
+        r_0 = r_test;
       } else {
         n++;
       }
@@ -2057,10 +2100,17 @@ int Arenisca4::nonHardeningReturn(
   }
 
   // (6) Solution Converged, Compute Untransformed Updated Stress:
-  Matrix3 sigma_new_star =
-    lambda_0[0] * PL_trial + lambda_0[1] * PM_trial + lambda_0[2] * PH_trial;
-  Matrix3 iso_sigma_new = one_third * sigma_new_star.Trace() * Identity;
-  sigma_new = iso_sigma_new + S_star_to_S * (sigma_new_star - iso_sigma_new);
+  invar_new.I1 = sqrt_three * z_0;
+  invar_new.rJ2 = r_to_rJ2 * r_0;
+
+  if (trial.rJ2 != 0.0) {
+    invar_new.S = trial.S * invar_new.rJ2 / trial.rJ2;
+  } else {
+    invar_new.S = trial.S;
+  }
+
+  Matrix3 sigma_new = invar_new.I1 * one_third * Identity + invar_new.S;
+  Matrix3 sigma_old = old.I1 * one_third * Identity + old.S;
   Matrix3 d_sigma = sigma_new - sigma_old;
 
   // (7) Compute increment in plastic strain for return:
@@ -2071,160 +2121,135 @@ int Arenisca4::nonHardeningReturn(
   d_ep_new = d_e - d_ee;
 
   return returnFlag;
-
 } //===================================================================
 
-// Computes bisection between two points in transformed space
+// Computes a bisection in transformed stress space between point sigma_0
+// (interior to the
+// yield surface) and sigma_trial (exterior to the yield surface).  Returns this
+// new point,
+// which will be just outside the yield surface, overwriting the input arguments
+// for
+// z_0 and r_0.
+
+// After the first iteration of the nonhardening return, the subseqent
+// bisections will likely
+// converge with eta << 1.  It may be faster to put in some logic to try to
+// start bisection
+// with tighter bounds, and only expand them to 0<eta<1 if the first eta mid is
+// too large.
 void
-Arenisca4::transformedBisection(
-  Vector& sigma_0,           // {lamda_L,lamda_M,lamda_H}
-  const Vector& sigma_trial, // {lamda_L,lamda_M,lamda_H}
-  const double& X, const double& Zeta, const double& coher,
-  const double limitParameters[4], const double& S_star_to_S)
+Arenisca3::transformedBisection(double& z_0, double& r_0, const double& z_trial,
+                                const double& r_trial,
+                                const AreniscaState& state, const double& coher,
+                                const double limitParameters[4],
+                                const double& r_to_rJ2, double& kappa)
 {
-  // Computes a bisection in transformed stress space between point sigma_0
-  // (interior to the
-  // yield surface) and sigma_trial (exterior to the yield surface).  Returns
-  // this new point,
-  // which will be just outside the yield surface, overwriting the input
-  // arguments for lambda_0
-
-  // After the first iteration of the nonhardening return, the subseqent
-  // bisections will likely
-  // converge with eta << 1.  It may be faster to put in some logic to try to
-  // start bisection
-  // with tighter bounds, and only expand them to 0<eta<1 if the first eta mid
-  // is too large.
-
   // (1) initialize bisection
   double eta_out = 1.0, // This is for the accerator.  Must be > TOL
-    eta_in = 0.0, eta_mid, TOL = 1.0e-6;
-  Vector sigma_test;
-  Matrix3 sigma_test_3x3; // diagonal matrix to call yield function:
+    eta_in = 0.0, eta_mid, TOL = 1.0e-6, r_test, z_test;
 
   // (2) Test for convergence
   while (eta_out - eta_in > TOL) {
 
     // (3) Transformed test point
     eta_mid = 0.5 * (eta_out + eta_in);
-    sigma_test = sigma_0 + eta_mid * (sigma_trial - sigma_0);
-
+    z_test = z_0 + eta_mid * (z_trial - z_0);
+    r_test = r_0 + eta_mid * (r_trial - r_0);
     // (4) Check if test point is within the yield surface:
-    sigma_test_3x3 = Matrix3(sigma_test[0], 0.0, 0.0, 0.0, sigma_test[1], 0.0,
-                             0.0, 0.0, sigma_test[2]);
-    if (transformedYieldFunction(sigma_test_3x3, X, Zeta, coher,
-                                 limitParameters, S_star_to_S) != 1) {
+    if (transformedYieldFunction(z_test, r_test, state, coher, limitParameters,
+                                 r_to_rJ2, kappa) != 1) {
       eta_in = eta_mid;
     } else {
       eta_out = eta_mid;
     }
-
-    // cout<<"eta_mid = "<<eta_mid<<", sigma_test = "<<sigma_test<<endl;
   }
   // (5) Converged, return {z_new,r_new}={z_test,r_test}
-  sigma_0 = sigma_test;
+  z_0 = z_0 + eta_out * (z_trial - z_0); // z_0 = z_test;
+  r_0 = r_0 + eta_out * (r_trial - r_0); // r_0 = r_test;
 
 } //===================================================================
 
 // computeTransformedYieldFunction from transformed inputs
+// Evaluate the yield criteria and return:
+//  -1: elastic
+//   0: on yield surface within tolerance
+//   1: plastic
 int
-Arenisca4::transformedYieldFunction(
-  const Matrix3& sigma_star, // transformed
-  const double& X, const double& Zeta, const double& coher,
-  const double limitParameters[4],
-  const double& S_star_to_S // (1/beta)*sqrt(two_third*G/K)
-  )
+Arenisca3::transformedYieldFunction(const double& z, const double& r,
+                                    const AreniscaState& state,
+                                    const double& coher,
+                                    const double limitParameters[4],
+                                    const double& r_to_rJ2, double& kappa)
 {
-  // Evaluate the yield criteria and return:
-  //  -1: elastic
-  //   0: on yield surface within tolerance
-  //   1: plastic
-  Matrix3 iso_sigma_star = one_third * sigma_star.Trace() * Identity;
-  Matrix3 dev_sigma_star = sigma_star - iso_sigma_star;
-
   // Untransformed values:
-  Matrix3 sigma = iso_sigma_star + S_star_to_S * dev_sigma_star;
-  int YIELD = computeYieldFunction(sigma, X, Zeta, coher, limitParameters);
+  double I1 = sqrt_three * z;
+  double rJ2 = r_to_rJ2 * r;
+
+  int YIELD =
+    computeYieldFunction(I1, rJ2, state, coher, limitParameters, kappa);
   return YIELD;
 } //===================================================================
 
 // computeYieldFunction from untransformed inputs
+// Evaluate the yield criteria and return:
+//  -1: elastic
+//   0: on yield surface within tolerance (not used)
+//   1: plastic
+//
+//                        *** Developer Note ***
+// THIS FUNCTION IS DEEP WITHIN A NESTED LOOP AND IS CALLED THOUSANDS
+// OF TIMES PER TIMESTEP.  EVERYTHING IN THIS FUNCTION SHOULD BE
+// OPTIMIZED FOR SPEED.
+//
 int
-Arenisca4::computeYieldFunction(const Matrix3& sigma, const double& X,
-                                const double& Zeta, const double& coher,
-                                const double limitParameters[4])
+Arenisca3::computeYieldFunction(const Invariants& invar,
+                                const AreniscaState& state, const double& coher,
+                                const double limitParameters[4], double& kappa)
 {
-  // Evaluate the yield criteria and return:
-  //  -1: elastic
-  //   0: on yield surface within tolerance (not used)
-  //   1: plastic
-  //
-  //                        *** Developer Note ***
-  // THIS FUNCTION IS DEEP WITHIN A NESTED LOOP AND IS CALLED THOUSANDS
-  // OF TIMES PER TIMESTEP.  EVERYTHING IN THIS FUNCTION SHOULD BE
-  // OPTIMIZED FOR SPEED.
-  //
+  return computeYieldFunction(invar.I1, invar.rJ2, state, coher,
+                              limitParameters, kappa);
+}
 
-  double I1, J2, rJ2, J3;
-  Matrix3 S;
-  computeInvariants(sigma, S, I1, J2, rJ2, J3);
-
+// computeYieldFunction from untransformed inputs
+// Evaluate the yield criteria and return:
+//  -1: elastic
+//   0: on yield surface within tolerance (not used)
+//   1: plastic
+//
+//                        *** Developer Note ***
+// THIS FUNCTION IS DEEP WITHIN A NESTED LOOP AND IS CALLED THOUSANDS
+// OF TIMES PER TIMESTEP.  EVERYTHING IN THIS FUNCTION SHOULD BE
+// OPTIMIZED FOR SPEED.
+//
+int
+Arenisca3::computeYieldFunction(const double& I1, const double& rJ2,
+                                const AreniscaState& state, const double& coher,
+                                const double limitParameters[4], double& kappa)
+{
   int YIELD = -1;
-  double I1mZ = I1 - Zeta; // Shifted stress to evalue yield criteria
+  double I1mZ = I1 - state.zeta; // Shifted stress to evalue yield criteria
 
   // --------------------------------------------------------------------
   // *** SHEAR LIMIT FUNCTION (Ff) ***
   // --------------------------------------------------------------------
   // Read input parameters to specify strength model
-  double Ff, a1 = limitParameters[0], a2 = limitParameters[1],
-             a3 = limitParameters[2], a4 = limitParameters[3];
+  double a1 = limitParameters[0];
+  double a2 = limitParameters[1];
+  double a3 = limitParameters[2];
+  double a4 = limitParameters[3];
 
 #ifdef MHfastfcns
-  Ff = a1 - a3 * fasterexp(a2 * I1mZ) - a4 * I1mZ;
+  double Ff = a1 - a3 * fasterexp(a2 * I1mZ) - a4 * I1mZ;
 #else
-  Ff = a1 - a3 * exp(a2 * I1mZ) - a4 * I1mZ;
+  double Ff = a1 - a3 * exp(a2 * I1mZ) - a4 * I1mZ;
 #endif
-
-  // --------------------------------------------------------------------
-  // *** Lode Angle Function (Gamma) ***
-  // --------------------------------------------------------------------
-
-  // All of these are far too slow to be in computeYieldFunction
-  double Gamma = 1.0;
-  if (d_cm.J3_type == 1) { // Gudehus: valid for 7/9<psi<9/7
-    if (J2 != 0.0) {
-      double psi = d_cm.J3_psi;
-#ifdef MHfastfcns
-      double sin3theta = -0.5 * J3 * fasterpow(3.0 / J2, 1.5);
-#else
-      // double sin3theta = -0.5*J3*Pow(3.0/J2,1.5);
-      double sin3theta = -0.5 * J3 * sqrt(27.0 / (J2 * J2 * J2));
-#endif
-      Gamma = 0.5 * (1 + sin3theta + (1. / psi) * (1. - sin3theta));
-    }
-  }
-  if (d_cm.J3_type == 3) { // Mohr Coulomb: convex for 1/2<=psi<=2
-    if (J2 != 0.0) {
-      double psi = d_cm.J3_psi;
-      double sinphi = 3.0 * (1.0 - psi) / (1.0 + psi);
-#ifdef MHfastfcns
-      double theta = one_third * asin(-0.5 * J3 * fasterpow(3.0 / J2, 1.5));
-#else
-      // double theta = one_third*asin(-0.5*J3*Pow(3.0/J2,1.5));
-      double theta = one_third * asin(-0.5 * J3 * sqrt(27.0 / (J2 * J2 * J2)));
-#endif
-      // double theta = one_third*asin(-0.5*J3*Pow(3.0/J2,1.5));
-      Gamma = 2 * sqrt_three / (3.0 - sinphi) *
-              (cos(theta) - sinphi * sin(theta) / sqrt_three);
-    }
-  }
 
   // --------------------------------------------------------------------
   // *** Branch Point (Kappa) ***
   // --------------------------------------------------------------------
-  double CR = d_cm.CR,
-         PEAKI1 = coher * d_cm.PEAKI1; // perturbed point for variability
-  double Kappa = PEAKI1 - CR * (PEAKI1 - X);
+  double CR = d_cm.CR;
+  double PEAKI1 = coher * d_cm.PEAKI1; // Perturbed point for variability
+  kappa = PEAKI1 - CR * (PEAKI1 - state.capX); // Branch Point
 
   // --------------------------------------------------------------------
   // *** COMPOSITE YIELD FUNCTION ***
@@ -2232,49 +2257,67 @@ Arenisca4::computeYieldFunction(const Matrix3& sigma, const double& X,
   // Evaluate Composite Yield Function F(I1) = Ff(I1)*fc(I1) in each region.
   // The elseif statements have nested if statements, which is not equivalent
   // to them having a single elseif(A&&B&&C)
-  if (I1mZ < X) { //---------------------------------------------------(I1<X)
+  if (I1mZ <
+      state.capX) { //---------------------------------------------------(I1<X)
     YIELD = 1;
-  } else if ((I1mZ < Kappa) && (I1mZ >= X)) { // ---------------(X<I1<kappa)
+  } else if ((I1mZ < kappa) &&
+             !(I1mZ < state.capX)) { // ---------------(X<I1<kappa)
     // p3 is the maximum achievable volumetric plastic strain in compresson
     // so if a value of 0 has been specified this indicates the user
     // wishes to run without porosity, and no cap function is used, i.e. fc=1
-
-    // **Elliptical Cap Function: (fc)**
-    // fc = sqrt(1.0 - Pow((Kappa-I1mZ)/(Kappa-X)),2.0);
-    // faster version: fc2 = fc^2
-    double fc2 =
-      1.0 - ((Kappa - I1mZ) / (Kappa - X)) * ((Kappa - I1mZ) / (Kappa - X));
-    if (J2 > Gamma * Gamma * Ff * Ff * fc2)
+    double fc2 = 1.0;
+    if (d_cm.p3_crush_curve > 0.0) {
+      // **Elliptical Cap Function: (fc)**
+      // fc = sqrt(1.0 - Pow((Kappa-I1mZ)/(Kappa-X)),2.0);
+      // faster version: fc2 = fc^2
+      fc2 = 1.0 -
+            ((kappa - I1mZ) / (kappa - state.capX)) *
+              ((kappa - I1mZ) / (kappa - state.capX));
+    }
+    if (rJ2 * rJ2 > Ff * Ff * fc2)
       YIELD = 1;
-  } else if ((I1mZ <= PEAKI1) && (I1mZ >= Kappa)) { // -----(kappa<I1<PEAKI1)
-    if (rJ2 > Gamma * Ff)
+  } else if ((I1mZ <= PEAKI1) && (I1mZ >= kappa)) { // -----(kappa<I1<PEAKI1)
+    if (rJ2 > Ff)
       YIELD = 1;
   } else if (I1mZ > PEAKI1) { // --------------------------------(peakI1<I1)
-    YIELD = 1;
-  };
+    if (PEAKI1 != 0.0) {
+      YIELD = 1;
+    }
+  }
+
+  /*
+  if (YIELD == 1) {
+    std::cout << "I1-zeta = " << I1mZ
+              << " X = " << state.capX
+              << " kappa = " << kappa
+              << " PEAKI1 = " << PEAKI1
+              << " rJ2 = " << rJ2
+              << " Ff = " << Ff << std::endl;
+  }
+  */
 
   return YIELD;
 } //===================================================================
 
 // Compute (dZeta/devp) Zeta and vol. plastic strain
 double
-Arenisca4::computedZetadevp(double Zeta, double evp)
+Arenisca3::computedZetadevp(double Zeta, double evp)
 {
   // Computes the partial derivative of the trace of the
   // isotropic backstress (Zeta) with respect to volumetric
   // plastic strain (evp).
   double dZetadevp = 0.0; // Evolution rate of isotropic backstress
 
-  if (evp <= ev0 &&
-      Kf !=
+  if (evp <= d_ev0 &&
+      d_Kf !=
         0.0) { // .................................... Fluid effects are active
     double pfi = d_cm.fluid_pressure_initial; // initial fluid pressure
 
     // This is an expensive calculation, but fasterexp() seemed to cause errors.
-    dZetadevp =
-      (3.0 * exp(evp) * Kf * Km) /
-      (exp(evp) * (Kf + Km) + exp(Zeta / (3.0 * Km)) * Km * (-1.0 + phi_i) -
-       exp((3.0 * pfi + Zeta) / (3.0 * Kf)) * Kf * phi_i);
+    dZetadevp = (3.0 * exp(evp) * d_Kf * d_Km) /
+                (exp(evp) * (d_Kf + d_Km) +
+                 exp(Zeta / (3.0 * d_Km)) * d_Km * (-1.0 + d_phi_i) -
+                 exp((3.0 * pfi + Zeta) / (3.0 * d_Kf)) * d_Kf * d_phi_i);
   }
   return dZetadevp;
   //
@@ -2282,7 +2325,7 @@ Arenisca4::computedZetadevp(double Zeta, double evp)
 
 // Compute (dZeta/devp) Zeta and vol. plastic strain
 void
-Arenisca4::computeLimitParameters(double limitParameters[4],
+Arenisca3::computeLimitParameters(double limitParameters[4],
                                   const double& coher)
 { // The shear limit surface is defined in terms of the a1,a2,a3,a4 parameters,
   // but
@@ -2350,156 +2393,8 @@ Arenisca4::computeLimitParameters(double limitParameters[4],
   limitParameters[3] = a4;
 } //===================================================================
 
-// Compute rotation matrix [R] to transform to new basis z' aligned with
-// p_new-p0
 void
-Arenisca4::computeRotationToSphericalCS(
-  const Vector& pnew, // interior point
-  const Vector& p0,   // origin (i.e. trial stress)
-  Matrix3& R          // Rotation matrix
-  )
-{
-  // The basis is rotated so that e3 is aligned with z' in the new spherical
-  // coordinate system
-  // but the rotation around that axis is arbitrary.
-  if (pnew ==
-      p0) { // This shouldn't happen, but will cause nan in computeR if it does.
-    cout << "Error in computeRotationToSphericalCS: pnew = p0 " << endl;
-  }
-  Vector x, y, z = pnew - p0;
-  z = z / sqrt(z[0] * z[0] + z[1] * z[1] + z[2] * z[2]);
-  // Dyadic product zz_ij = z_i*z_j
-  Matrix3 zz =
-    Matrix3(z[0] * z[0], z[0] * z[1], z[0] * z[2], z[1] * z[0], z[1] * z[1],
-            z[1] * z[2], z[2] * z[0], z[2] * z[1], z[2] * z[2]);
-  if (z == Vector(1.0, 0.0, 0.0) || z == Vector(-1.0, 0.0, 0.0)) {
-    y = (Identity - zz) * Vector(0.0, 1.0, 0.0);
-    y = y / sqrt(y[0] * y[0] + y[1] * y[1] + y[2] * y[2]);
-    x = Cross(y, z);
-  } else {
-    x = (Identity - zz) * Vector(1.0, 0.0, 0.0);
-    x = x / sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
-    y = Cross(z, x);
-  }
-  R = Matrix3(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2]);
-} //===================================================================
-
-// Compute the unique set of eigenvalues and eigenprojectors of [A]
-void
-Arenisca4::computeEigenProjectors(const Matrix3& A, // Input tensor
-                                  Vector& lambda, // Ordered eigenvalues {L,M,H}
-                                  Matrix3& PL,    // Low eigenprojector
-                                  Matrix3& PM,    // Mid eigenprojector
-                                  Matrix3& PH     // High eigenprojector
-                                  )
-{
-  // Find eigenvalues and eigenprojectors.  For duplicate eigenvalues, the
-  // doubled eigenprojectors
-  // are set to zero so that A=lambda_k P_k, summed for k=1:3
-  //
-  // This only works on symmetric positive definite 3x3 tensors, i.e. the stress
-  // tensor.
-  computeEigenValues(A, lambda); // Ordered eigenvalues for [A] lambda = {L,M,H}
-
-  // Number of unique eigenvalues:
-  int d = 1;
-  if (lambda[1] != lambda[0])
-    d++;
-  if (lambda[2] != lambda[1])
-    d++;
-
-  if (
-    d ==
-    3) { //-----------------------------------------------------------------------------------LMH
-    PL = (A - lambda[1] * Identity) * (A - lambda[2] * Identity) /
-         ((lambda[0] - lambda[1]) * (lambda[0] - lambda[2]));
-    PM = (A - lambda[2] * Identity) * (A - lambda[0] * Identity) /
-         ((lambda[1] - lambda[2]) * (lambda[1] - lambda[0]));
-    PH = (A - lambda[0] * Identity) * (A - lambda[1] * Identity) /
-         ((lambda[2] - lambda[0]) * (lambda[2] - lambda[1]));
-  } else if (d == 2) {
-    if (
-      lambda[1] >
-      lambda
-        [0]) { //--------------------------------------------------------------------LMM
-      PH = 0.0 * Identity;
-      PM = (A - lambda[0] * Identity) / (lambda[1] - lambda[0]);
-      PL = Identity - PM;
-    } else { //-----------------------------------------------------------------------------------MMH
-      PL = 0.0 * Identity;
-      PM = (A - lambda[2] * Identity) / (lambda[1] - lambda[2]);
-      PH = Identity - PM;
-    }
-  } else { //---------------------------------------------------------------------------------------LLL
-    PL = 0.0 * Identity;
-    PM = 0.0 * Identity;
-    PH = Identity;
-  }
-
-} //===================================================================
-
-// Compute Eigenvalues for some real symmetric 3x3 matrix [A]
-void
-Arenisca4::computeEigenValues(const Matrix3& A, // Input tensor
-                              Vector& lambda    // Ordered eigenvalues {L,M,H}
-                              )
-{
-  // The Matrix3 eigen() option seems robust, but does not order the
-  // eigenvectors. Also,
-  // it doesn't accept a const Matrix3 as an input so we copy A to B.
-  Matrix3 B(A);
-  Matrix3 eigVec;
-  B.eigen(lambda, eigVec);
-
-  // Sort the eigenvalues in lambda {L,M,H}
-  Vector temp = lambda;
-  for (int i = 1; i < 4; i++) {
-    if (lambda[1] < lambda[0]) {
-      temp[0] = lambda[1];
-      temp[1] = lambda[0];
-      lambda = temp;
-    }
-    if (lambda[2] < lambda[1]) {
-      temp[2] = lambda[1];
-      temp[1] = lambda[2];
-      lambda = temp;
-    }
-  }
-
-  // Analytical solution (causes nan due to roundoff in some cases)
-  // ==============================================================
-  //// Compute Lode coordinates {r,z,theta}
-  // double I1 = A.Trace();
-  // Matrix3 S = A - one_third*I1*Identity;
-  // Matrix3 SdotS = S*S;
-  // double J2 = 0.5*SdotS.Trace();
-  // double z = one_sqrt_three*I1,
-  //	   r = sqrt(2.0*J2);
-  // double theta;
-  // if(r>0.0){
-  //	Matrix3 Shat = S/r;
-  //	theta = one_third*asin(3.0*sqrt(6.0)*Shat.Determinant());
-  //}
-  // else{
-  //	theta = 0.0;
-  //}
-  //// Analytical solution to eigenvalues:
-  // double lambdaL = z*one_sqrt_three + (sqrt_two/sqrt_three)*r*cos(theta -
-  // one_sixth*pi),
-  //	   lambdaM = z*one_sqrt_three - (sqrt_two/sqrt_three)*r*sin(theta),
-  //	   lambdaH = z*one_sqrt_three - (sqrt_two/sqrt_three)*r*cos(theta +
-  //one_sixth*pi);
-
-  //// Form a vector
-  // lambda = Vector(lambdaL,lambdaM,lambdaH);
-
-  // cout<<"[A] = "<<A<<endl;
-  // cout<<"lambda = "<<lambda<<endl;
-} //===================================================================
-
-// Series of checks that input parameters are within allowable limits
-void
-Arenisca4::checkInputParameters()
+Arenisca3::checkInputParameters()
 {
 
   if (d_cm.PEAKI1 < 0.0) {
@@ -2614,12 +2509,7 @@ Arenisca4::checkInputParameters()
     warn << "Disaggregation algorithm not supported with PEAKI1 > 0.0" << endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_cm.principal_stress_cutoff < 0.0) {
-    ostringstream warn;
-    warn << "Principal stress cutoff must be nonnegative" << endl;
-    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
-  }
-} //===================================================================
+}
 
 // ****************************************************************************************************
 // ****************************************************************************************************
@@ -2629,7 +2519,7 @@ Arenisca4::checkInputParameters()
 // ****************************************************************************************************
 
 void
-Arenisca4::addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
+Arenisca3::addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
                                       const PatchSet*) const
 {
   // Require the damage parameter
@@ -2638,7 +2528,7 @@ Arenisca4::addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
 }
 
 void
-Arenisca4::getDamageParameter(const Patch* patch, ParticleVariable<int>& damage,
+Arenisca3::getDamageParameter(const Patch* patch, ParticleVariable<int>& damage,
                               int dwi, DataWarehouse* old_dw,
                               DataWarehouse* new_dw)
 {
@@ -2647,17 +2537,17 @@ Arenisca4::getDamageParameter(const Patch* patch, ParticleVariable<int>& damage,
   constParticleVariable<int> pLocalized;
   new_dw->get(pLocalized, pLocalizedLabel_preReloc, pset);
 
-  // Only update the damage variable if it hasn't been modified by a damage
-  // model earlier
+  // Update the pLocalizedMPM (called damage here) parameter only
+  // if the value has not been changed by the damage model
   for (auto particle : *pset) {
-    if (damage[particle] == 0) {
+    if (damage[particle] == 0 || pLocalized[particle] == -999) {
       damage[particle] = pLocalized[particle];
     }
   }
 }
 
 void
-Arenisca4::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
+Arenisca3::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
                         DataWarehouse* old_dw, DataWarehouse* new_dw)
 {
   // Carry forward the data.
@@ -2684,7 +2574,7 @@ Arenisca4::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
 // When a particle is pushed from patch to patch, carry information needed for
 // the particle
 void
-Arenisca4::addParticleState(std::vector<const VarLabel*>& from,
+Arenisca3::addParticleState(std::vector<const VarLabel*>& from,
                             std::vector<const VarLabel*>& to)
 {
   // Push back all the particle variables associated with Arenisca.
@@ -2699,6 +2589,7 @@ Arenisca4::addParticleState(std::vector<const VarLabel*>& from,
   from.push_back(pevpLabel);
   from.push_back(peveLabel);
   from.push_back(pCapXLabel);
+  from.push_back(pKappaLabel);
   from.push_back(pZetaLabel);
   from.push_back(pP3Label);
   from.push_back(pStressQSLabel);
@@ -2713,6 +2604,7 @@ Arenisca4::addParticleState(std::vector<const VarLabel*>& from,
   to.push_back(pevpLabel_preReloc);
   to.push_back(peveLabel_preReloc);
   to.push_back(pCapXLabel_preReloc);
+  to.push_back(pKappaLabel_preReloc);
   to.push_back(pZetaLabel_preReloc);
   to.push_back(pP3Label_preReloc);
   to.push_back(pStressQSLabel_preReloc);
@@ -2720,7 +2612,7 @@ Arenisca4::addParticleState(std::vector<const VarLabel*>& from,
 }
 
 void
-Arenisca4::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+Arenisca3::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
                                          const PatchSet* patch) const
 {
   // Add the computes and requires that are common to all explicit
@@ -2739,6 +2631,7 @@ Arenisca4::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
   task->computes(pevpLabel, matlset);
   task->computes(peveLabel, matlset);
   task->computes(pCapXLabel, matlset);
+  task->computes(pKappaLabel, matlset);
   task->computes(pZetaLabel, matlset);
   task->computes(pP3Label, matlset);
   task->computes(pStressQSLabel, matlset);
@@ -2746,7 +2639,7 @@ Arenisca4::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-Arenisca4::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+Arenisca3::addComputesAndRequires(Task* task, const MPMMaterial* matl,
                                   const PatchSet* patches) const
 {
   // Add the computes and requires that are common to all explicit
@@ -2765,6 +2658,7 @@ Arenisca4::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   task->requires(Task::OldDW, pevpLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, peveLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pCapXLabel, matlset, Ghost::None);
+  task->requires(Task::OldDW, pKappaLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pZetaLabel, matlset, Ghost::None);
   task->requires(Task::OldDW, pP3Label, matlset, Ghost::None);
   task->requires(Task::OldDW, pStressQSLabel, matlset, Ghost::None);
@@ -2780,6 +2674,7 @@ Arenisca4::addComputesAndRequires(Task* task, const MPMMaterial* matl,
   task->computes(pevpLabel_preReloc, matlset);
   task->computes(peveLabel_preReloc, matlset);
   task->computes(pCapXLabel_preReloc, matlset);
+  task->computes(pKappaLabel_preReloc, matlset);
   task->computes(pZetaLabel_preReloc, matlset);
   task->computes(pP3Label_preReloc, matlset);
   task->computes(pStressQSLabel_preReloc, matlset);
@@ -2788,59 +2683,69 @@ Arenisca4::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 
 // T2D: Throw exception that this is not supported
 void
-Arenisca4::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
+Arenisca3::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
                                   const bool, const bool) const
 {
-  cout << "NO VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca4"
-       << endl;
+  cout
+    << "NO Implicit VERSION OF addComputesAndRequires EXISTS YET FOR Arenisca3"
+    << endl;
 }
 
-// T2D: Throw exception that this is not supported
 double
-Arenisca4::computeRhoMicroCM(double pressure, const double p_ref,
+Arenisca3::computeRhoMicroCM(double pressure, const double p_ref,
                              const MPMMaterial* matl, double temperature,
                              double rho_guess)
 {
-  double rho_orig = matl->getInitialDensity();
+  double rho_0 = matl->getInitialDensity();
+  double K0 = d_cm.K0_Murnaghan_EOS;
+  double n = d_cm.n_Murnaghan_EOS;
+
   double p_gauge = pressure - p_ref;
-  double rho_cur;
-  double bulk = d_cm.B0;
+  double rho_cur = rho_0 * std::pow(((n * p_gauge) / K0 + 1), (1.0 / n));
 
-  rho_cur = rho_orig / (1.0 - p_gauge / bulk);
-
-  cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR Arenisca4" << endl;
   return rho_cur;
 }
 
-// T2D: Throw exception that this is not supported
 void
-Arenisca4::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
-                             double& dp_drho, double& tmp,
+Arenisca3::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
+                             double& dp_drho, double& soundSpeedSq,
                              const MPMMaterial* matl, double temperature)
 {
-  double bulk = d_cm.B0;
+  double rho_0 = matl->getInitialDensity();
+  double K0 = d_cm.K0_Murnaghan_EOS;
+  double n = d_cm.n_Murnaghan_EOS;
+
+  double eta = rho_cur / rho_0;
+  double p_gauge = K0 / n * (std::pow(eta, n) - 1.0);
+
+  double bulk = K0 + n * p_gauge;
   double shear = d_cm.G0;
-  double rho_orig = matl->getInitialDensity();
 
-  double p_g = 0.5 * bulk * (rho_cur / rho_orig - rho_orig / rho_cur);
-  pressure = p_ref + p_g;
-  dp_drho = 0.5 * bulk * (rho_orig / (rho_cur * rho_cur) + 1. / rho_orig);
-  tmp = (bulk + 4.0 * shear / 3.0) / rho_cur; // speed of sound squared
+  pressure = p_ref + p_gauge;
+  dp_drho = K0 * std::pow(eta, n - 1);
+  soundSpeedSq = (bulk + 4.0 * shear / 3.0) / rho_cur; // speed of sound squared
 
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca4" << endl;
+  /*
+  if (pressure < 0.0) {
+    std::cout << " **WARNING** Tension developing in Arenisca3 material " <<
+  std::endl;
+    std::cout << " J = " << 1/eta << " p_gauge = " << p_gauge << " bulk = " <<
+  bulk << std::endl;
+    pressure = p_ref;
+  }
+  */
 }
 
-// T2D: Throw exception that this is not supported
 double
-Arenisca4::getCompressibility()
+Arenisca3::getCompressibility()
 {
-  cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR Arenisca4" << endl;
-  return 1.0;
+  cout << "NO VERSION OF getCompressibility EXISTS YET FOR Arenisca3" << endl;
+  return 1.0 / d_cm.B0;
 }
 
-// Initialize all labels of the particle variables associated with Arenisca4.
+// Initialize all labels of the particle variables associated with Arenisca3.
 void
-Arenisca4::initializeLocalMPMLabels()
+Arenisca3::initializeLocalMPMLabels()
 {
   // peakI1Dist for variability
   peakI1IDistLabel = VarLabel::create(
@@ -2892,6 +2797,11 @@ Arenisca4::initializeLocalMPMLabels()
     VarLabel::create("p.CapX", ParticleVariable<double>::getTypeDescription());
   pCapXLabel_preReloc =
     VarLabel::create("p.CapX+", ParticleVariable<double>::getTypeDescription());
+  // pCapX
+  pKappaLabel =
+    VarLabel::create("p.kappa", ParticleVariable<double>::getTypeDescription());
+  pKappaLabel_preReloc = VarLabel::create(
+    "p.kappa+", ParticleVariable<double>::getTypeDescription());
   // pZeta
   pZetaLabel =
     VarLabel::create("p.Zeta", ParticleVariable<double>::getTypeDescription());
@@ -2935,7 +2845,7 @@ Arenisca4::initializeLocalMPMLabels()
 //
 // or simply a number if no perturbed value is desired.
 void
-Arenisca4::WeibullParser(WeibParameters& iP)
+Arenisca3::WeibullParser(WeibParameters& iP)
 {
   // Remove all unneeded characters
   // only remaining are alphanumeric '.' and ','
@@ -3022,7 +2932,7 @@ Arenisca4::WeibullParser(WeibParameters& iP)
  *  ---------------------------------------------------------------------------------------
  */
 void
-Arenisca4::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
+Arenisca3::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
                              ParticleLabelVariableMap* newState,
                              ParticleSubset* delset, DataWarehouse* old_dw)
 {
