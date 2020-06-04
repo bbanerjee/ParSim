@@ -29,11 +29,6 @@ SET(MPM_ConstitutiveModel_SRCS
   ConstitutiveModel.cc          
   ImplicitCM.cc                 
   MPMMaterial.cc                
-  ViscoTransIsoHyper.cc         
-  ViscoTransIsoHyperImplicit.cc 
-  ViscoScram.cc                 
-  ViscoScramImplicit.cc         
-  MWViscoElastic.cc             
   ShellMaterial.cc              
   ElasticPlasticHP.cc           
   ViscoPlastic.cc               
@@ -70,6 +65,11 @@ SET(MPM_ConstitutiveModel_SRCS
   SpecialPurposeModels/Membrane.cc                   
   SpecialPurposeModels/RigidMaterial.cc              
   SpecialPurposeModels/Water.cc                      
+  ViscoElasticModels/MWViscoElastic.cc             
+  ViscoElasticModels/ViscoScram.cc                 
+  ViscoElasticModels/ViscoScramImplicit.cc         
+  ViscoElasticModels/ViscoTransIsoHyper.cc         
+  ViscoElasticModels/ViscoTransIsoHyperImplicit.cc 
   ManufacturedSolutions/CNH_MMS.cc                    
   ManufacturedSolutions/HypoElastic_MMS.cc
 )
@@ -78,11 +78,11 @@ SET(MPM_ConstitutiveModel_SRCS
 if (FORTRAN)
   SET(MPM_ConstitutiveModel_SRCS
     ${MPM_ConstitutiveModel_SRCS}
-    ViscoElasticFortran.cc
     WeibParameters.cc
     ElasticModels/HypoElasticFortran.cc         
     RockSoilModels/Diamm.cc                      
     RockSoilModels/Kayenta.cc                    
+    ViscoElasticModels/ViscoElasticFortran.cc
   )
   add_subdirectory(fortran)
 endif(FORTRAN)

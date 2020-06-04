@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,42 +24,45 @@
  * IN THE SOFTWARE.
  */
 
-//  ViscoTransIsoHyper.h
+//  ViscoTransIsoHyperImplicit.h
 //  class ConstitutiveModel ConstitutiveModel data type -- 3D -
 //  holds ConstitutiveModel
 //  information for the FLIP technique:
-//    This is for a Transversely Isotropic Hyperelastic material
+//    This is for Compressible Transversely isotropic viscoelastic materials
 //    Features:
 //      Usage:
 
-#ifndef __ViscoTransIsoHyper_CONSTITUTIVE_MODEL_H__
-#define __ViscoTransIsoHyper_CONSTITUTIVE_MODEL_H__
+#ifndef __Visco_Trans_Iso_Hyper_Implicit_CONSTITUTIVE_MODEL_H__
+#define __Visco_Trans_Iso_Hyper_Implicit_CONSTITUTIVE_MODEL_H__
 
-#include "ConstitutiveModel.h"
+#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Math/Matrix3.h>
 #include <cmath>
 #include <vector>
 
 namespace Uintah {
-class ViscoTransIsoHyper : public ConstitutiveModel
+class ViscoTransIsoHyperImplicit : public ConstitutiveModel, public ImplicitCM
 {
 private:
   // Create datatype for storing model parameters
   bool d_useModifiedEOS;
+  double d_active;
+  string d_StrainEnergy;
 
 public:
   struct CMData
-  {
+  { //______________________________modified here
     double Bulk;
-    Vector a0;
     double c1;
     double c2;
     double c3;
     double c4;
     double c5;
     double lambda_star;
-    double failure; // failure
+    Vector a0;
+    double failure;
     double crit_shear;
     double crit_stretch;
     double y1; // visco properties
@@ -78,7 +82,7 @@ public:
   const VarLabel* pStretchLabel;          // For diagnostic
   const VarLabel* pStretchLabel_preReloc; // For diagnostic
 
-  const VarLabel* pFailureLabel; // fail_label
+  const VarLabel* pFailureLabel; // fail_labels
   const VarLabel* pFailureLabel_preReloc;
 
   const VarLabel* pElasticStressLabel;
@@ -105,14 +109,15 @@ public:
 private:
   CMData d_initialData;
 
+
 public:
   // constructors
-  ViscoTransIsoHyper(ProblemSpecP& ps, MPMFlags* flag);
-  ViscoTransIsoHyper(const ViscoTransIsoHyper* cm);
-  ViscoTransIsoHyper& operator=(const ViscoTransIsoHyper& cm) = delete;
+  ViscoTransIsoHyperImplicit(ProblemSpecP& ps, MPMFlags* flag);
+  ViscoTransIsoHyperImplicit(const ViscoTransIsoHyperImplicit* cm);
+  ViscoTransIsoHyperImplicit& operator=(const ViscoTransIsoHyperImplicit& cm) = delete;
 
   // destructor
-  ~ViscoTransIsoHyper() override;
+  ~ViscoTransIsoHyperImplicit() override;
 
   ModelType modelType() const override
   {
@@ -122,21 +127,23 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  ViscoTransIsoHyper* clone() override;
+  ViscoTransIsoHyperImplicit* clone() override;
 
   // compute stable timestep for this patch
   virtual void computeStableTimestep(const Patch* patch,
                                      const MPMMaterial* matl,
                                      DataWarehouse* new_dw);
 
-  // compute stress at each particle in the patch
-  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
-                           DataWarehouse* old_dw,
-                           DataWarehouse* new_dw) override;
+  void computeStressTensorImplicit(const PatchSubset* patches,
+                                   const MPMMaterial* matl,
+                                   DataWarehouse* old_dw, DataWarehouse* new_dw,
+                                   Solver* solver,
+                                   const bool recursion) override;
 
-  // carry forward CM data for RigidMPM
-  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
+  void computeStressTensorImplicit(const PatchSubset* patches,
+                                   const MPMMaterial* matl,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw) override;
 
   // initialize  each particle's constitutive model data
   void initializeCMData(const Patch* patch, const MPMMaterial* matl,
@@ -151,15 +158,16 @@ public:
                          ParticleSubset* delset,
                          DataWarehouse* old_dw) override;
 
-  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                     const PatchSet*) const override;
-
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const override;
+  /*virtual void addInitialComputesAndRequires(Task* task,
+                                        const MPMMaterial* matl,
+                                        const PatchSet*) const;*/
 
   void addComputesAndRequires(Task* task, const MPMMaterial* matl,
                               const PatchSet* patches, const bool recursion,
-                              const bool schedParent = true) const override;
+                              const bool SchedParent) const override;
+
+  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
 
   double computeRhoMicroCM(double pressure, const double p_ref,
                            const MPMMaterial* matl, double temperature,
@@ -175,7 +183,10 @@ public:
 
   void addParticleState(std::vector<const VarLabel*>& from,
                         std::vector<const VarLabel*>& to) override;
+
+  // const VarLabel* bElBarLabel;
+  // const VarLabel* bElBarLabel_preReloc;
 };
 } // End namespace Uintah
 
-#endif // __ViscoTransIsoHyper_CONSTITUTIVE_MODEL_H__
+#endif // __Visco_Trans_Iso_Hyper_Implicit_CONSTITUTIVE_MODEL_H__

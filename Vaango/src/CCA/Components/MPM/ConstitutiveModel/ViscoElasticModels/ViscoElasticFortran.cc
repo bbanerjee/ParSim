@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoElasticFortran.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticFortran.h>
 #include <CCA/Ports/DataWarehouse.h>
 
 #include <Core/Exceptions/ParameterNotFound.h>

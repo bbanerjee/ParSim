@@ -28,13 +28,8 @@
 
 #include <sci_defs/uintah_defs.h> // For NO_FORTRAN
 
-#include <CCA/Components/MPM/ConstitutiveModel/ViscoScram.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ViscoScramImplicit.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ViscoTransIsoHyper.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ViscoTransIsoHyperImplicit.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticPlasticHP.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MWViscoElastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/P_Alpha.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PolarOrthotropicHypoElastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShellMaterial.h>
@@ -43,7 +38,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticity.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticityCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/UCNH.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticFortran.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoPlastic.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/CompMooneyRivlin.h>
@@ -75,11 +69,18 @@
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/RigidMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/Water.h>
 
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/MWViscoElastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoScram.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoScramImplicit.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoTransIsoHyper.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoTransIsoHyperImplicit.h>
+
 #include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/CNH_MMS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/HypoElastic_MMS.h>
 
 #if !defined(NO_FORTRAN)
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElasticFortran.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoElasticFortran.h>
 #endif
 
 #include <CCA/Components/MPM/MPMFlags.h>

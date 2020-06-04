@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,110 +24,104 @@
  * IN THE SOFTWARE.
  */
 
-//  ViscoTransIsoHyperImplicit.h
+//  ViscoScramImplicit.h
 //  class ConstitutiveModel ConstitutiveModel data type -- 3D -
 //  holds ConstitutiveModel
-//  information for the FLIP technique:
-//    This is for Compressible Transversely isotropic viscoelastic materials
+//  information for the MPM technique:
+//    This is for ViscoScram
 //    Features:
+//      This model is, in actuality, mostly just a holding place
+//      for the ViscoScram variables needed in the explosion phase
+//      of the calculation
 //      Usage:
 
-#ifndef __Visco_Trans_Iso_Hyper_Implicit_CONSTITUTIVE_MODEL_H__
-#define __Visco_Trans_Iso_Hyper_Implicit_CONSTITUTIVE_MODEL_H__
+#ifndef __VISCOSCRAM_IMPLICIT_CONSTITUTIVE_MODEL_H__
+#define __VISCOSCRAM_IMPLICIT_CONSTITUTIVE_MODEL_H__
 
-#include "ConstitutiveModel.h"
-#include "ImplicitCM.h"
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoScram.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
+#include <CCA/Components/MPM/Solver.h>
 #include <Core/Disclosure/TypeDescription.h>
-#include <Core/Math/Matrix3.h>
-#include <cmath>
 #include <vector>
 
 namespace Uintah {
-class ViscoTransIsoHyperImplicit : public ConstitutiveModel, public ImplicitCM
+class ViscoScramImplicit : public ConstitutiveModel, public ImplicitCM
 {
-private:
-  // Create datatype for storing model parameters
-  bool d_useModifiedEOS;
-  double d_active;
-  string d_StrainEnergy;
-
 public:
   struct CMData
-  { //______________________________modified here
-    double Bulk;
-    double c1;
-    double c2;
-    double c3;
-    double c4;
-    double c5;
-    double lambda_star;
-    Vector a0;
-    double failure;
-    double crit_shear;
-    double crit_stretch;
-    double y1; // visco properties
-    double y2;
-    double y3;
-    double y4;
-    double y5;
-    double y6;
-    double t1;
-    double t2;
-    double t3;
-    double t4;
-    double t5;
-    double t6;
+  {
+    double PR;
+    double CoefThermExp;
+    double CrackParameterA;
+    double CrackPowerValue;
+    double CrackMaxGrowthRate;
+    double StressIntensityF;
+    double CrackFriction;
+    double InitialCrackRadius;
+    double CrackGrowthRate;
+    double G[5];
+    double RTau[5];
+    double Beta, Gamma;
+    double DCp_DTemperature;
+    int LoadCurveNumber, NumberOfPoints;
   };
 
-  const VarLabel* pStretchLabel;          // For diagnostic
-  const VarLabel* pStretchLabel_preReloc; // For diagnostic
+  struct TimeTemperatureData
+  {
+    double T0_WLF;
+    double C1_WLF;
+    double C2_WLF;
+  };
 
-  const VarLabel* pFailureLabel; // fail_labels
-  const VarLabel* pFailureLabel_preReloc;
+  typedef ViscoScramStateData StateData;
 
-  const VarLabel* pElasticStressLabel;
-  const VarLabel* pElasticStressLabel_preReloc; // visco stress
+  const VarLabel* pVolChangeHeatRateLabel;
+  const VarLabel* pViscousHeatRateLabel;
+  const VarLabel* pCrackHeatRateLabel;
+  const VarLabel* pCrackRadiusLabel;
+  const VarLabel* pStatedataLabel;
+  const VarLabel* pRandLabel;
+  const VarLabel* pStrainRateLabel;
+  const VarLabel* pVolChangeHeatRateLabel_preReloc;
+  const VarLabel* pViscousHeatRateLabel_preReloc;
+  const VarLabel* pCrackHeatRateLabel_preReloc;
+  const VarLabel* pCrackRadiusLabel_preReloc;
+  const VarLabel* pStatedataLabel_preReloc;
+  const VarLabel* pRandLabel_preReloc;
+  const VarLabel* pStrainRateLabel_preReloc;
 
-  const VarLabel* pHistory1Label;
-  const VarLabel* pHistory1Label_preReloc;
-
-  const VarLabel* pHistory2Label;
-  const VarLabel* pHistory2Label_preReloc;
-
-  const VarLabel* pHistory3Label;
-  const VarLabel* pHistory3Label_preReloc;
-
-  const VarLabel* pHistory4Label;
-  const VarLabel* pHistory4Label_preReloc;
-
-  const VarLabel* pHistory5Label;
-  const VarLabel* pHistory5Label_preReloc;
-
-  const VarLabel* pHistory6Label;
-  const VarLabel* pHistory6Label_preReloc;
+protected:
+  // Create datatype for storing model parameters
+  bool d_useModifiedEOS;
+  bool d_random;
+  bool d_doTimeTemperature;
+  bool d_useObjectiveRate;
+  double d_bulk;
+  double d_G;
 
 private:
   CMData d_initialData;
+  TimeTemperatureData d_tt;
 
 
 public:
   // constructors
-  ViscoTransIsoHyperImplicit(ProblemSpecP& ps, MPMFlags* flag);
-  ViscoTransIsoHyperImplicit(const ViscoTransIsoHyperImplicit* cm);
-  ViscoTransIsoHyperImplicit& operator=(const ViscoTransIsoHyperImplicit& cm) = delete;
+  ViscoScramImplicit(ProblemSpecP& ps, MPMFlags* flag);
+  ViscoScramImplicit(const ViscoScramImplicit* cm);
+  ViscoScramImplicit& operator=(const ViscoScramImplicit& cm) = delete;
 
   // destructor
-  ~ViscoTransIsoHyperImplicit() override;
+  ~ViscoScramImplicit() override;
 
   ModelType modelType() const override
   {
-    return ModelType::TOTAL_FORM;
+    return ModelType::RATE_FORM;
   }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  ViscoTransIsoHyperImplicit* clone() override;
+  ViscoScramImplicit* clone() override;
 
   // compute stable timestep for this patch
   virtual void computeStableTimestep(const Patch* patch,
@@ -157,13 +152,12 @@ public:
                          ParticleSubset* delset,
                          DataWarehouse* old_dw) override;
 
-  /*virtual void addInitialComputesAndRequires(Task* task,
-                                        const MPMMaterial* matl,
-                                        const PatchSet*) const;*/
+  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+                                     const PatchSet* patches) const override;
 
   void addComputesAndRequires(Task* task, const MPMMaterial* matl,
                               const PatchSet* patches, const bool recursion,
-                              const bool SchedParent) const override;
+                              const bool schedParent = true) const override;
 
   void addComputesAndRequires(Task* task, const MPMMaterial* matl,
                               const PatchSet* patches) const override;
@@ -178,14 +172,9 @@ public:
 
   double getCompressibility() override;
 
-  Vector getInitialFiberDir() override;
-
   void addParticleState(std::vector<const VarLabel*>& from,
                         std::vector<const VarLabel*>& to) override;
-
-  // const VarLabel* bElBarLabel;
-  // const VarLabel* bElBarLabel_preReloc;
 };
 } // End namespace Uintah
 
-#endif // __Visco_Trans_Iso_Hyper_Implicit_CONSTITUTIVE_MODEL_H__
+#endif // __VISCOSCRAM_IMPLICIT_CONSTITUTIVE_MODEL_H__

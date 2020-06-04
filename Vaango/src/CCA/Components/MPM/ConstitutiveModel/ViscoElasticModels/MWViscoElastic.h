@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,94 +24,54 @@
  * IN THE SOFTWARE.
  */
 
-//  ViscoScramImplicit.h
-//  class ConstitutiveModel ConstitutiveModel data type -- 3D -
-//  holds ConstitutiveModel
-//  information for the MPM technique:
-//    This is for ViscoScram
-//    Features:
-//      This model is, in actuality, mostly just a holding place
-//      for the ViscoScram variables needed in the explosion phase
-//      of the calculation
-//      Usage:
+#ifndef __MWVISCOELASTIC_CONSTITUTIVE_MODEL_H__
+#define __MWVISCOELASTIC_CONSTITUTIVE_MODEL_H__
 
-#ifndef __VISCOSCRAM_IMPLICIT_CONSTITUTIVE_MODEL_H__
-#define __VISCOSCRAM_IMPLICIT_CONSTITUTIVE_MODEL_H__
-
-#include <CCA/Components/MPM/ConstitutiveModel/ViscoScram.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
-#include <CCA/Components/MPM/Solver.h>
-#include <Core/Disclosure/TypeDescription.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
+#include <Core/Math/Matrix3.h>
+#include <cmath>
 #include <vector>
 
 namespace Uintah {
-class ViscoScramImplicit : public ConstitutiveModel, public ImplicitCM
+class MWViscoElastic : public ConstitutiveModel
 {
+private:
+  // Create datatype for storing model parameters
 public:
   struct CMData
   {
-    double PR;
-    double CoefThermExp;
-    double CrackParameterA;
-    double CrackPowerValue;
-    double CrackMaxGrowthRate;
-    double StressIntensityF;
-    double CrackFriction;
-    double InitialCrackRadius;
-    double CrackGrowthRate;
-    double G[5];
-    double RTau[5];
-    double Beta, Gamma;
-    double DCp_DTemperature;
-    int LoadCurveNumber, NumberOfPoints;
+    double E_Shear;
+    double E_Bulk;
+    double VE_Shear;
+    double VE_Bulk;
+    double V_Viscosity;
+    double D_Viscosity;
   };
-
-  struct TimeTemperatureData
-  {
-    double T0_WLF;
-    double C1_WLF;
-    double C2_WLF;
-  };
-
-  typedef ViscoScramStateData StateData;
-
-  const VarLabel* pVolChangeHeatRateLabel;
-  const VarLabel* pViscousHeatRateLabel;
-  const VarLabel* pCrackHeatRateLabel;
-  const VarLabel* pCrackRadiusLabel;
-  const VarLabel* pStatedataLabel;
-  const VarLabel* pRandLabel;
-  const VarLabel* pStrainRateLabel;
-  const VarLabel* pVolChangeHeatRateLabel_preReloc;
-  const VarLabel* pViscousHeatRateLabel_preReloc;
-  const VarLabel* pCrackHeatRateLabel_preReloc;
-  const VarLabel* pCrackRadiusLabel_preReloc;
-  const VarLabel* pStatedataLabel_preReloc;
-  const VarLabel* pRandLabel_preReloc;
-  const VarLabel* pStrainRateLabel_preReloc;
-
-protected:
-  // Create datatype for storing model parameters
-  bool d_useModifiedEOS;
-  bool d_random;
-  bool d_doTimeTemperature;
-  bool d_useObjectiveRate;
-  double d_bulk;
-  double d_G;
 
 private:
-  CMData d_initialData;
-  TimeTemperatureData d_tt;
+  friend const TypeDescription* fun_getTypeDescription(CMData*);
 
+  CMData d_initialData;
+  double d_se;
+  const VarLabel* pStress_eLabel;
+  const VarLabel* pStress_ve_vLabel;
+  const VarLabel* pStress_ve_dLabel;
+  const VarLabel* pStress_e_vLabel;
+  const VarLabel* pStress_e_dLabel;
+  const VarLabel* pStress_eLabel_preReloc;
+  const VarLabel* pStress_ve_vLabel_preReloc;
+  const VarLabel* pStress_ve_dLabel_preReloc;
+  const VarLabel* pStress_e_vLabel_preReloc;
+  const VarLabel* pStress_e_dLabel_preReloc;
 
 public:
   // constructors
-  ViscoScramImplicit(ProblemSpecP& ps, MPMFlags* flag);
-  ViscoScramImplicit(const ViscoScramImplicit* cm);
-  ViscoScramImplicit& operator=(const ViscoScramImplicit& cm) = delete;
+  MWViscoElastic(ProblemSpecP& ps, MPMFlags* flag);
+  MWViscoElastic(const MWViscoElastic* cm);
+  MWViscoElastic& operator=(const MWViscoElastic& cm) = delete;
 
   // destructor
-  ~ViscoScramImplicit() override;
+  ~MWViscoElastic() override;
 
   ModelType modelType() const override
   {
@@ -120,23 +81,17 @@ public:
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  ViscoScramImplicit* clone() override;
+  MWViscoElastic* clone() override;
 
   // compute stable timestep for this patch
   virtual void computeStableTimestep(const Patch* patch,
                                      const MPMMaterial* matl,
                                      DataWarehouse* new_dw);
 
-  void computeStressTensorImplicit(const PatchSubset* patches,
-                                   const MPMMaterial* matl,
-                                   DataWarehouse* old_dw, DataWarehouse* new_dw,
-                                   Solver* solver,
-                                   const bool recursion) override;
-
-  void computeStressTensorImplicit(const PatchSubset* patches,
-                                   const MPMMaterial* matl,
-                                   DataWarehouse* old_dw,
-                                   DataWarehouse* new_dw) override;
+  // compute stress at each particle in the patch
+  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw) override;
 
   // initialize  each particle's constitutive model data
   void initializeCMData(const Patch* patch, const MPMMaterial* matl,
@@ -155,11 +110,11 @@ public:
                                      const PatchSet* patches) const override;
 
   void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches, const bool recursion,
-                              const bool schedParent = true) const override;
+                              const PatchSet* patches) const override;
 
   void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const override;
+                              const PatchSet* patches, const bool recursion,
+                              const bool schedParent = true) const override;
 
   double computeRhoMicroCM(double pressure, const double p_ref,
                            const MPMMaterial* matl, double temperature,
@@ -174,6 +129,7 @@ public:
   void addParticleState(std::vector<const VarLabel*>& from,
                         std::vector<const VarLabel*>& to) override;
 };
+
 } // End namespace Uintah
 
-#endif // __VISCOSCRAM_IMPLICIT_CONSTITUTIVE_MODEL_H__
+#endif // __MWVISCOELASTIC_CONSTITUTIVE_MODEL_H__

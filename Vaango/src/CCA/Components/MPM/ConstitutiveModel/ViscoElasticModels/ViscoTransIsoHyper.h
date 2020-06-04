@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,72 +24,106 @@
  * IN THE SOFTWARE.
  */
 
-//  MWViscoElastic.h
+//  ViscoTransIsoHyper.h
 //  class ConstitutiveModel ConstitutiveModel data type -- 3D -
 //  holds ConstitutiveModel
 //  information for the FLIP technique:
-//    This is for MWViscoElastic
+//    This is for a Transversely Isotropic Hyperelastic material
 //    Features:
 //      Usage:
 
-#ifndef __MWVISCOELASTIC_CONSTITUTIVE_MODEL_H__
-#define __MWVISCOELASTIC_CONSTITUTIVE_MODEL_H__
+#ifndef __ViscoTransIsoHyper_CONSTITUTIVE_MODEL_H__
+#define __ViscoTransIsoHyper_CONSTITUTIVE_MODEL_H__
 
-#include "ConstitutiveModel.h"
+#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
+#include <Core/Disclosure/TypeDescription.h>
 #include <Core/Math/Matrix3.h>
 #include <cmath>
 #include <vector>
 
 namespace Uintah {
-class MWViscoElastic : public ConstitutiveModel
+class ViscoTransIsoHyper : public ConstitutiveModel
 {
 private:
   // Create datatype for storing model parameters
+  bool d_useModifiedEOS;
+
 public:
   struct CMData
   {
-    double E_Shear;
-    double E_Bulk;
-    double VE_Shear;
-    double VE_Bulk;
-    double V_Viscosity;
-    double D_Viscosity;
+    double Bulk;
+    Vector a0;
+    double c1;
+    double c2;
+    double c3;
+    double c4;
+    double c5;
+    double lambda_star;
+    double failure; // failure
+    double crit_shear;
+    double crit_stretch;
+    double y1; // visco properties
+    double y2;
+    double y3;
+    double y4;
+    double y5;
+    double y6;
+    double t1;
+    double t2;
+    double t3;
+    double t4;
+    double t5;
+    double t6;
   };
 
-private:
-  friend const TypeDescription* fun_getTypeDescription(CMData*);
+  const VarLabel* pStretchLabel;          // For diagnostic
+  const VarLabel* pStretchLabel_preReloc; // For diagnostic
 
+  const VarLabel* pFailureLabel; // fail_label
+  const VarLabel* pFailureLabel_preReloc;
+
+  const VarLabel* pElasticStressLabel;
+  const VarLabel* pElasticStressLabel_preReloc; // visco stress
+
+  const VarLabel* pHistory1Label;
+  const VarLabel* pHistory1Label_preReloc;
+
+  const VarLabel* pHistory2Label;
+  const VarLabel* pHistory2Label_preReloc;
+
+  const VarLabel* pHistory3Label;
+  const VarLabel* pHistory3Label_preReloc;
+
+  const VarLabel* pHistory4Label;
+  const VarLabel* pHistory4Label_preReloc;
+
+  const VarLabel* pHistory5Label;
+  const VarLabel* pHistory5Label_preReloc;
+
+  const VarLabel* pHistory6Label;
+  const VarLabel* pHistory6Label_preReloc;
+
+private:
   CMData d_initialData;
-  double d_se;
-  const VarLabel* pStress_eLabel;
-  const VarLabel* pStress_ve_vLabel;
-  const VarLabel* pStress_ve_dLabel;
-  const VarLabel* pStress_e_vLabel;
-  const VarLabel* pStress_e_dLabel;
-  const VarLabel* pStress_eLabel_preReloc;
-  const VarLabel* pStress_ve_vLabel_preReloc;
-  const VarLabel* pStress_ve_dLabel_preReloc;
-  const VarLabel* pStress_e_vLabel_preReloc;
-  const VarLabel* pStress_e_dLabel_preReloc;
 
 public:
   // constructors
-  MWViscoElastic(ProblemSpecP& ps, MPMFlags* flag);
-  MWViscoElastic(const MWViscoElastic* cm);
-  MWViscoElastic& operator=(const MWViscoElastic& cm) = delete;
+  ViscoTransIsoHyper(ProblemSpecP& ps, MPMFlags* flag);
+  ViscoTransIsoHyper(const ViscoTransIsoHyper* cm);
+  ViscoTransIsoHyper& operator=(const ViscoTransIsoHyper& cm) = delete;
 
   // destructor
-  ~MWViscoElastic() override;
+  ~ViscoTransIsoHyper() override;
 
   ModelType modelType() const override
   {
-    return ModelType::RATE_FORM;
+    return ModelType::TOTAL_FORM;
   }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
   // clone
-  MWViscoElastic* clone() override;
+  ViscoTransIsoHyper* clone() override;
 
   // compute stable timestep for this patch
   virtual void computeStableTimestep(const Patch* patch,
@@ -99,6 +134,10 @@ public:
   void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
                            DataWarehouse* old_dw,
                            DataWarehouse* new_dw) override;
+
+  // carry forward CM data for RigidMPM
+  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
+                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
 
   // initialize  each particle's constitutive model data
   void initializeCMData(const Patch* patch, const MPMMaterial* matl,
@@ -114,7 +153,7 @@ public:
                          DataWarehouse* old_dw) override;
 
   void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                     const PatchSet* patches) const override;
+                                     const PatchSet*) const override;
 
   void addComputesAndRequires(Task* task, const MPMMaterial* matl,
                               const PatchSet* patches) const override;
@@ -133,10 +172,11 @@ public:
 
   double getCompressibility() override;
 
+  Vector getInitialFiberDir() override;
+
   void addParticleState(std::vector<const VarLabel*>& from,
                         std::vector<const VarLabel*>& to) override;
 };
-
 } // End namespace Uintah
 
-#endif // __MWVISCOELASTIC_CONSTITUTIVE_MODEL_H__
+#endif // __ViscoTransIsoHyper_CONSTITUTIVE_MODEL_H__
