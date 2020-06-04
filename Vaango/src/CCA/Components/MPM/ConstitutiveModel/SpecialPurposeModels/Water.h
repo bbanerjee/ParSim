@@ -31,8 +31,7 @@
 #ifndef __WATER_CONSTITUTIVE_MODEL_H__
 #define __WATER_CONSTITUTIVE_MODEL_H__
 
-#include "ConstitutiveModel.h"
-#include <Core/Disclosure/TypeDescription.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <Core/Math/Matrix3.h>
 #include <cmath>
 #include <vector>

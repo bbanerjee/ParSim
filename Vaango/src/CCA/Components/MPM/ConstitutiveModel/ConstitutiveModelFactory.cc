@@ -52,7 +52,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Diamm.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticPlasticHP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/HypoElasticImplicit.h>
-#include <CCA/Components/MPM/ConstitutiveModel/IdealGasMP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Kayenta.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MWViscoElastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MohrCoulomb.h>
@@ -68,14 +67,15 @@
 #include <CCA/Components/MPM/ConstitutiveModel/UCNH.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticFortran.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoPlastic.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Water.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/MurnaghanMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/ProgramBurn.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/ViscoSCRAMHotSpot.h>
 
+#include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/IdealGasMP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/Membrane.h>
+#include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/Water.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/CNH_MMS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/HypoElastic_MMS.h>

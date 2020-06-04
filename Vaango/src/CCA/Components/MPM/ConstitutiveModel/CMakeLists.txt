@@ -42,10 +42,8 @@ SET(MPM_ConstitutiveModel_SRCS
   HypoElasticImplicit.cc        
   ViscoScramImplicit.cc         
   MWViscoElastic.cc             
-  IdealGasMP.cc                 
   ShellMaterial.cc              
   ElasticPlasticHP.cc           
-  Water.cc                      
   ViscoPlastic.cc               
   UCNH.cc                       
   P_Alpha.cc                    
@@ -69,7 +67,9 @@ SET(MPM_ConstitutiveModel_SRCS
   ExplosiveModels/MurnaghanMPM.cc               
   ExplosiveModels/ProgramBurn.cc                
   ExplosiveModels/ViscoSCRAMHotSpot.cc          
+  SpecialPurposeModels/IdealGasMP.cc                 
   SpecialPurposeModels/Membrane.cc                   
+  SpecialPurposeModels/Water.cc                      
   ManufacturedSolutions/CNH_MMS.cc                    
   ManufacturedSolutions/HypoElastic_MMS.cc
 )
