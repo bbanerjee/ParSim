@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2013-2014 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,8 +27,7 @@
 #ifndef __VISCOSCRAM_FULL_CONSTITUTIVE_MODEL_H__
 #define __VISCOSCRAM_FULL_CONSTITUTIVE_MODEL_H__
 
-#include "ViscoScram.h"
-#include <Core/Disclosure/TypeDescription.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoScram.h>
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -48,7 +48,7 @@ class MPMFlags;
   C-SAFE and Department of Mechanical Engineering \n
   University of Utah \n
 
-  Refernces:\n
+  References:\n
 
   Bennett, J.G. et al., 1998, "A constitutive model for the non-shock
   ignition and mechanical response of high explosives," J. Mech. Phys. Solids
@@ -80,17 +80,17 @@ public:
     {
       Matrix3 zero(0.0);
       nn = 5;
-      a = 0.0;
+      a  = 0.0;
       for (int ii = 0; ii < nn; ++ii)
-        b_n[ii] = zero;
+        b_n[ii]   = zero;
     }
 
     FVector(double aa, Matrix3* bb_n)
     {
       nn = 5;
-      a = aa;
+      a  = aa;
       for (int ii = 0; ii < nn; ++ii)
-        b_n[ii] = bb_n[ii];
+        b_n[ii]   = bb_n[ii];
     }
 
     ~FVector() = default;
@@ -100,11 +100,11 @@ public:
       FVector fv_new;
       if (fv.nn == nn) {
         fv_new.a = a + fv.a;
-        for (int ii = 0; ii < nn; ++ii)
+        for (int ii      = 0; ii < nn; ++ii)
           fv_new.b_n[ii] = b_n[ii] + fv.b_n[ii];
       } else {
         fv_new.a = a;
-        for (int ii = 0; ii < nn; ++ii)
+        for (int ii      = 0; ii < nn; ++ii)
           fv_new.b_n[ii] = b_n[ii];
       }
       return fv_new;
@@ -124,7 +124,7 @@ public:
     {
       FVector fv_new;
       fv_new.a = a * val;
-      for (int ii = 0; ii < nn; ++ii)
+      for (int ii      = 0; ii < nn; ++ii)
         fv_new.b_n[ii] = b_n[ii] * val;
       return fv_new;
     }
@@ -160,9 +160,6 @@ public:
   const VarLabel* pHotSpotPhi2Label_preReloc;
   const VarLabel* pChemHeatRateLabel_preReloc;
 
-private:
-  MatConstData d_matConst;
-
 public:
   // constructors
   ViscoSCRAMHotSpot(ProblemSpecP& ps, MPMFlags* flag);
@@ -174,56 +171,64 @@ public:
 
   ViscoSCRAMHotSpot* clone() override;
 
-  ModelType modelType() const override
-  {
-    return ModelType::RATE_FORM;
-  }
-
-  /*! Computes and requires for initialization of history variables */
-  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                     const PatchSet* patches) const override;
-
-  /*! initialize  each particle's constitutive model data */
-  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
-                        DataWarehouse* new_dw) override;
-
-  /*! Set up data required by and computed in computeStressTensor */
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const override;
-
-  /*! Set up data required by and computed in computeStressTensor
-      for implicit methods */
-  void addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
-                              const bool recursion,
-                              const bool schedParent = true) const override
-  {
-  }
-
-  // compute stress at each particle in the patch
-  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
-                           DataWarehouse* old_dw,
-                           DataWarehouse* new_dw) override;
-
-  /*! carry forward CM data (computed in computeStressTensor) for RigidMPM */
-  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
-
-  /*! Set up data required in the particle conversion process */
-  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                 const PatchSet* patch,
-                                 MPMLabel* lb) const override;
-
-  /*! Copy data from the delset to the addset in the particle
-    conversion process */
-  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
-                         ParticleLabelVariableMap* newState,
-                         ParticleSubset* delset,
-                         DataWarehouse* old_dw) override;
+  ModelType modelType() const override { return ModelType::INCREMENTAL; }
 
   /*! Add the particle data that have to be saved at the end of each
     timestep */
   void addParticleState(std::vector<const VarLabel*>& from,
                         std::vector<const VarLabel*>& to) override;
+
+
+  /*! Computes and requires for initialization of history variables */
+  void addInitialComputesAndRequires(Task* task,
+                                     const MPMMaterial* matl,
+                                     const PatchSet* patches) const override;
+
+  /*! initialize  each particle's constitutive model data */
+  void initializeCMData(const Patch* patch,
+                        const MPMMaterial* matl,
+                        DataWarehouse* new_dw) override;
+
+  /*! Set up data required by and computed in computeStressTensor */
+  void addComputesAndRequires(Task* task,
+                              const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
+
+  // compute stress at each particle in the patch
+  void computeStressTensor(const PatchSubset* patches,
+                           const MPMMaterial* matl,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw) override;
+
+  /*! Set up data required by and computed in computeStressTensor
+      for implicit methods */
+  void addComputesAndRequires(Task*,
+                              const MPMMaterial*,
+                              const PatchSet*,
+                              const bool recursion,
+                              const bool schedParent = true) const override
+  {
+  }
+
+  /*! carry forward CM data (computed in computeStressTensor) for RigidMPM */
+  void carryForward(const PatchSubset* patches,
+                    const MPMMaterial* matl,
+                    DataWarehouse* old_dw,
+                    DataWarehouse* new_dw) override;
+
+  /*! Set up data required in the particle conversion process */
+  void allocateCMDataAddRequires(Task* task,
+                                 const MPMMaterial* matl,
+                                 const PatchSet* patch,
+                                 MPMLabel* lb) const override;
+
+  /*! Copy data from the delset to the addset in the particle
+    conversion process */
+  void allocateCMDataAdd(DataWarehouse* new_dw,
+                         ParticleSubset* subset,
+                         ParticleLabelVariableMap* newState,
+                         ParticleSubset* delset,
+                         DataWarehouse* old_dw) override;
 
 protected:
   ///////////////////////////////////////////////////////////////////////////
@@ -266,8 +271,13 @@ protected:
   /*! Compute sdot_n */
   //
   ///////////////////////////////////////////////////////////////////////////
-  Matrix3 computeSdot_mw(const Matrix3& edot, const Matrix3& s, Matrix3* s_n,
-                         double* G_n, double c, double cdot, int mwelem,
+  Matrix3 computeSdot_mw(const Matrix3& edot,
+                         const Matrix3& s,
+                         Matrix3* s_n,
+                         double* G_n,
+                         double c,
+                         double cdot,
+                         int mwelem,
                          int numMaxwellElem);
 
   ///////////////////////////////////////////////////////////////////////////
@@ -275,8 +285,11 @@ protected:
   /*! Evaluate the quantities cdot and sdot_n  */
   //
   ///////////////////////////////////////////////////////////////////////////
-  FVector evaluateRateEquations(const FVector& Y, const Matrix3& edot,
-                                double sig_m, double* G_n, double vres);
+  FVector evaluateRateEquations(const FVector& Y,
+                                const Matrix3& edot,
+                                double sig_m,
+                                double* G_n,
+                                double vres);
 
   ///////////////////////////////////////////////////////////////////////////
   //
@@ -286,9 +299,13 @@ protected:
     between t=T and t=T+delT (h = delT) */
   //
   ///////////////////////////////////////////////////////////////////////////
-  FVector integrateRateEquations(const FVector& Y_old, const Matrix3& edot,
-                                 double sig_m, double* G_n, double vres,
-                                 double delT, double& cdot);
+  FVector integrateRateEquations(const FVector& Y_old,
+                                 const Matrix3& edot,
+                                 double sig_m,
+                                 double* G_n,
+                                 double vres,
+                                 double delT,
+                                 double& cdot);
 
   ///////////////////////////////////////////////////////////////////////////
   //
@@ -302,9 +319,13 @@ protected:
   /*! Compute cracking damage work rate */
   //
   ///////////////////////////////////////////////////////////////////////////
-  double computeCrackingWorkRate(int numElem, double c_new, Matrix3* s_n_new,
-                                 const Matrix3& edot, const Matrix3& s_new,
-                                 double* G_n, double cdot);
+  double computeCrackingWorkRate(int numElem,
+                                 double c_new,
+                                 Matrix3* s_n_new,
+                                 const Matrix3& edot,
+                                 const Matrix3& s_new,
+                                 double* G_n,
+                                 double cdot);
 
   ///////////////////////////////////////////////////////////////////////////
   //
@@ -325,7 +346,10 @@ protected:
   /*! Compute the heat capacity matrix C for the hotspot model */
   //
   ///////////////////////////////////////////////////////////////////////////
-  void computeHotSpotCmatrix(double y1, double y2, double rho, double Cv,
+  void computeHotSpotCmatrix(double y1,
+                             double y2,
+                             double rho,
+                             double Cv,
                              FastMatrix& CC);
 
   ///////////////////////////////////////////////////////////////////////////
@@ -333,18 +357,31 @@ protected:
   /*! Compute the chemical heat rate matrix Qdot for the hotspot model */
   //
   ///////////////////////////////////////////////////////////////////////////
-  void computeHotSpotQdotmatrix(double y1, double y2, double rho, double mu_d,
-                                double sig_m, double edotmax, double T1,
-                                double T2, double* Qdot);
+  void computeHotSpotQdotmatrix(double y1,
+                                double y2,
+                                double rho,
+                                double mu_d,
+                                double sig_m,
+                                double edotmax,
+                                double T1,
+                                double T2,
+                                double* Qdot);
 
   ///////////////////////////////////////////////////////////////////////////
   //
   /*! Compute the rate of temperature change at the hot spot */
   //
   ///////////////////////////////////////////////////////////////////////////
-  void evaluateTdot(double* T, FastMatrix& k, FastMatrix& C, double y1,
-                    double y2, double rho, double mu_d, double sig_m,
-                    double edotmax, double* Tdot);
+  void evaluateTdot(double* T,
+                    FastMatrix& k,
+                    FastMatrix& C,
+                    double y1,
+                    double y2,
+                    double rho,
+                    double mu_d,
+                    double sig_m,
+                    double edotmax,
+                    double* Tdot);
 
   ///////////////////////////////////////////////////////////////////////////
   //
@@ -352,18 +389,30 @@ protected:
     Fourth-order Runge-Kutta scheme */
   //
   ///////////////////////////////////////////////////////////////////////////
-  void updateHotSpotTemperature(double* T, double y1, double y2, double kappa,
-                                double rho, double Cv, double mu_d,
-                                double sig_m, double edotmax, double delT);
+  void updateHotSpotTemperature(double* T,
+                                double y1,
+                                double y2,
+                                double kappa,
+                                double rho,
+                                double Cv,
+                                double mu_d,
+                                double sig_m,
+                                double edotmax,
+                                double delT);
 
   ///////////////////////////////////////////////////////////////////////////
   //
   /*! Evaluate the hot spot model */
   //
   ///////////////////////////////////////////////////////////////////////////
-  void evaluateHotSpotModel(double sig_m, const Matrix3& sig,
-                            const Matrix3& edot, double* T, double kappa,
-                            double rho, double Cv, double delT);
+  void evaluateHotSpotModel(double sig_m,
+                            const Matrix3& sig,
+                            const Matrix3& edot,
+                            double* T,
+                            double kappa,
+                            double rho,
+                            double Cv,
+                            double delT);
 
   //////////////////////////////////////////////////////////////////////////
   //
@@ -372,6 +421,10 @@ protected:
   //
   //////////////////////////////////////////////////////////////////////////
   Matrix3 stressInRotatedBasis(const Matrix3& sig, Vector& e1Prime);
+
+private:
+  MatConstData d_matConst;
+
 };
 
 } // End namespace Uintah

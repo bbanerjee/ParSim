@@ -24,9 +24,9 @@
  * IN THE SOFTWARE.
  */
 
+#include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/MurnaghanMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Constants.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MurnaghanMPM.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Grid/Level.h>

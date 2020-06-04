@@ -34,7 +34,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/RigidMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TransIsoHyper.h>
 #include <CCA/Components/MPM/ConstitutiveModel/TransIsoHyperImplicit.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ViscoSCRAMHotSpot.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoScram.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoScramImplicit.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoTransIsoHyper.h>
@@ -54,16 +53,13 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticPlasticHP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/HypoElasticImplicit.h>
 #include <CCA/Components/MPM/ConstitutiveModel/IdealGasMP.h>
-#include <CCA/Components/MPM/ConstitutiveModel/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Kayenta.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MWViscoElastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Membrane.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MohrCoulomb.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MurnaghanMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/NonLocalDruckerPrager.h>
 #include <CCA/Components/MPM/ConstitutiveModel/P_Alpha.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PolarOrthotropicHypoElastic.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ProgramBurn.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShellMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SoilFoam.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SoilModelBrannon.h>
@@ -74,6 +70,11 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticFortran.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoPlastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Water.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/MurnaghanMPM.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/ProgramBurn.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/JWLppMPM.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/ViscoSCRAMHotSpot.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/CNH_MMS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/HypoElastic_MMS.h>

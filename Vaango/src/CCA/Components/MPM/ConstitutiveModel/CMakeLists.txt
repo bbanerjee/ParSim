@@ -37,7 +37,6 @@ SET(MPM_ConstitutiveModel_SRCS
   ViscoTransIsoHyper.cc         
   ViscoTransIsoHyperImplicit.cc 
   ViscoScram.cc                 
-  ViscoSCRAMHotSpot.cc          
   HypoElastic.cc                
   HypoElasticFracture.cc                
   HypoElasticImplicit.cc        
@@ -49,9 +48,6 @@ SET(MPM_ConstitutiveModel_SRCS
   ElasticPlasticHP.cc           
   Water.cc                      
   ViscoPlastic.cc               
-  MurnaghanMPM.cc               
-  ProgramBurn.cc                
-  JWLppMPM.cc                   
   UCNH.cc                       
   P_Alpha.cc                    
   SoilFoam.cc	             
@@ -70,6 +66,10 @@ SET(MPM_ConstitutiveModel_SRCS
   TabularPlasticity.cc
   TabularPlasticityCap.cc
   MohrCoulomb.cc
+  ExplosiveModels/JWLppMPM.cc                   
+  ExplosiveModels/MurnaghanMPM.cc               
+  ExplosiveModels/ProgramBurn.cc                
+  ExplosiveModels/ViscoSCRAMHotSpot.cc          
   ManufacturedSolutions/CNH_MMS.cc                    
   ManufacturedSolutions/HypoElastic_MMS.cc
 )

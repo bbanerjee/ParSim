@@ -24,8 +24,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Constants.h>
-#include <CCA/Components/MPM/ConstitutiveModel/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Grid/Variables/VarTypes.h>
