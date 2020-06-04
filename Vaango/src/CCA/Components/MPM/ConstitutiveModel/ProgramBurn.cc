@@ -70,8 +70,8 @@ ProgramBurn::ProgramBurn(ProblemSpecP& ps, MPMFlags* Mflag)
   // These parameters are needed for the reaction model
   ps->require("starting_location", d_initialData.d_start_place);
   ps->require("D", d_initialData.d_D); // Detonation velocity
-  ps->getWithDefault("direction_if_plane", d_initialData.d_direction,
-                     Vector(0., 0., 0.));
+  ps->getWithDefault(
+    "direction_if_plane", d_initialData.d_direction, Vector(0., 0., 0.));
   ps->getWithDefault("T0", d_initialData.d_T0, 0.0);
 
   pProgressFLabel = VarLabel::create(
@@ -92,17 +92,17 @@ ProgramBurn::ProgramBurn(const ProgramBurn* cm)
   d_initialData.d_K = cm->d_initialData.d_K;
   d_initialData.d_n = cm->d_initialData.d_n;
 
-  d_initialData.d_A = cm->d_initialData.d_A;
-  d_initialData.d_B = cm->d_initialData.d_B;
-  d_initialData.d_C = cm->d_initialData.d_C;
-  d_initialData.d_R1 = cm->d_initialData.d_R1;
-  d_initialData.d_R2 = cm->d_initialData.d_R2;
-  d_initialData.d_om = cm->d_initialData.d_om;
+  d_initialData.d_A    = cm->d_initialData.d_A;
+  d_initialData.d_B    = cm->d_initialData.d_B;
+  d_initialData.d_C    = cm->d_initialData.d_C;
+  d_initialData.d_R1   = cm->d_initialData.d_R1;
+  d_initialData.d_R2   = cm->d_initialData.d_R2;
+  d_initialData.d_om   = cm->d_initialData.d_om;
   d_initialData.d_rho0 = cm->d_initialData.d_rho0;
 
   d_initialData.d_start_place = cm->d_initialData.d_start_place;
-  d_initialData.d_direction = cm->d_initialData.d_direction;
-  d_initialData.d_D = cm->d_initialData.d_D;
+  d_initialData.d_direction   = cm->d_initialData.d_direction;
+  d_initialData.d_D           = cm->d_initialData.d_D;
 
   pProgressFLabel = VarLabel::create(
     "p.progressF", ParticleVariable<double>::getTypeDescription());
@@ -155,7 +155,8 @@ ProgramBurn::clone()
 }
 
 void
-ProgramBurn::initializeCMData(const Patch* patch, const MPMMaterial* matl,
+ProgramBurn::initializeCMData(const Patch* patch,
+                              const MPMMaterial* matl,
                               DataWarehouse* new_dw)
 {
   // Initialize the variables shared by all constitutive models
@@ -169,7 +170,7 @@ ProgramBurn::initializeCMData(const Patch* patch, const MPMMaterial* matl,
   new_dw->allocateAndPut(pLocalized, pLocalizedLabel, pset);
 
   for (int& iter : *pset) {
-    pProgress[iter] = 0.;
+    pProgress[iter]  = 0.;
     pLocalized[iter] = 0;
   }
 
@@ -177,8 +178,10 @@ ProgramBurn::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 }
 
 void
-ProgramBurn::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                       const PatchSet* patches, MPMLabel*) const
+ProgramBurn::allocateCMDataAddRequires(Task* task,
+                                       const MPMMaterial* matl,
+                                       const PatchSet* patches,
+                                       MPMLabel*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -191,10 +194,11 @@ ProgramBurn::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-ProgramBurn::allocateCMDataAdd(
-  DataWarehouse* new_dw, ParticleSubset* addset,
-  ParticleLabelVariableMap* newState,
-  ParticleSubset* delset, DataWarehouse*)
+ProgramBurn::allocateCMDataAdd(DataWarehouse* new_dw,
+                               ParticleSubset* addset,
+                               ParticleLabelVariableMap* newState,
+                               ParticleSubset* delset,
+                               DataWarehouse*)
 {
   // Copy the data common to all constitutive models from the particle to be
   // deleted to the particle to be added.
@@ -235,13 +239,14 @@ ProgramBurn::addParticleState(std::vector<const VarLabel*>& from,
 }
 
 void
-ProgramBurn::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
+ProgramBurn::computeStableTimestep(const Patch* patch,
+                                   const MPMMaterial* matl,
                                    DataWarehouse* new_dw)
 {
   // This is only called for the initial timestep - all other timesteps
   // are computed as a side-effect of computeStressTensor
   Vector dx = patch->dCell();
-  int dwi = matl->getDWIndex();
+  int dwi   = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(dwi, patch);
   constParticleVariable<double> pmass, pvolume, ptemperature;
@@ -255,26 +260,27 @@ ProgramBurn::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
 
-  double K = d_initialData.d_K;
-  double n = d_initialData.d_n;
+  double K    = d_initialData.d_K;
+  double n    = d_initialData.d_n;
   double rho0 = d_initialData.d_rho0;
   for (int idx : *pset) {
     // Compute wave speed at each particle, store the maximum
-    double rhoM = pmass[idx] / pvolume[idx];
+    double rhoM    = pmass[idx] / pvolume[idx];
     double dp_drho = (1. / (K * rho0)) * pow((rhoM / rho0), n - 1.);
-    c_dil = sqrt(dp_drho);
+    c_dil          = sqrt(dp_drho);
     WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
                        Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
                        Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
   }
-  WaveSpeed = dx / WaveSpeed;
+  WaveSpeed       = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
   new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 }
 
 void
 ProgramBurn::computeStressTensor(const PatchSubset* patches,
-                                 const MPMMaterial* matl, DataWarehouse* old_dw,
+                                 const MPMMaterial* matl,
+                                 DataWarehouse* old_dw,
                                  DataWarehouse* new_dw)
 {
   for (int pp = 0; pp < patches->size(); pp++) {
@@ -293,7 +299,7 @@ ProgramBurn::computeStressTensor(const PatchSubset* patches,
     vector<Vector> d_S(interpolator->size());
     vector<double> S(interpolator->size());
 
-    int dwi = matl->getDWIndex();
+    int dwi              = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     constParticleVariable<Point> px;
     constParticleVariable<Matrix3> deformationGradient_new;
@@ -335,14 +341,14 @@ ProgramBurn::computeStressTensor(const PatchSubset* patches,
 
     double time = d_sharedState->getElapsedTime() - d_initialData.d_T0;
 
-    double K = d_initialData.d_K;
-    double n = d_initialData.d_n;
-    double A = d_initialData.d_A;
-    double B = d_initialData.d_B;
-    double C = d_initialData.d_C;
-    double R1 = d_initialData.d_R1;
-    double R2 = d_initialData.d_R2;
-    double om = d_initialData.d_om;
+    double K    = d_initialData.d_K;
+    double n    = d_initialData.d_n;
+    double A    = d_initialData.d_A;
+    double B    = d_initialData.d_B;
+    double C    = d_initialData.d_C;
+    double R1   = d_initialData.d_R1;
+    double R2   = d_initialData.d_R2;
+    double om   = d_initialData.d_om;
     double rho0 = d_initialData.d_rho0; // matl->getInitialDensity();
 
     if (!flag->d_doGridReset) {
@@ -358,7 +364,7 @@ ProgramBurn::computeStressTensor(const PatchSubset* patches,
     double y0 = d_initialData.d_start_place.y();
     double z0 = d_initialData.d_start_place.z();
 
-    double D_d = -A_d * x0 - B_d * y0 - C_d * z0;
+    double D_d   = -A_d * x0 - B_d * y0 - C_d * z0;
     double denom = 1.0;
     double plane = 0.;
 
@@ -413,16 +419,16 @@ ProgramBurn::computeStressTensor(const PatchSubset* patches,
       //  The following computes a pressure for partially burned particles
       //  as a mixture of Murnahan and JWL pressures, based on pProgressF
       //  This is as described in Eq. 5 of "JWL++: ..." by Souers, et al.
-      double pM = (1. / (n * K)) * (pow(J, -n) - 1.);
+      double pM   = (1. / (n * K)) * (pow(J, -n) - 1.);
       double pJWL = pM;
 
       // For computing speed of sound if not yet detonating
       double rho_cur = rho0 / J;
       double dp_drho = (1. / (K * rho0)) * pow((rho_cur / rho0), n - 1.);
       if (pProgressF_new[idx] > 0.0) {
-        double one_plus_omega = 1. + om;
-        double inv_rho_rat = J;  // rho0/rhoM;
-        double rho_rat = 1. / J; // rhoM/rho0;
+        double one_plus_omega               = 1. + om;
+        double inv_rho_rat                  = J;      // rho0/rhoM;
+        double rho_rat                      = 1. / J; // rhoM/rho0;
         double A_e_to_the_R1_rho0_over_rhoM = A * exp(-R1 * inv_rho_rat);
         double B_e_to_the_R2_rho0_over_rhoM = B * exp(-R2 * inv_rho_rat);
         double C_rho_rat_tothe_one_plus_omega =
@@ -446,7 +452,7 @@ ProgramBurn::computeStressTensor(const PatchSubset* patches,
       Vector pvelocity_idx = pvelocity[idx];
 
       // Compute wave speed at each particle, store the maximum
-      c_dil = sqrt(dp_drho);
+      c_dil     = sqrt(dp_drho);
       WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
                          Max(c_dil + fabs(pvelocity_idx.y()), WaveSpeed.y()),
                          Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
@@ -455,14 +461,14 @@ ProgramBurn::computeStressTensor(const PatchSubset* patches,
       if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
         double c_bulk = sqrt(1. / (K * rho_cur));
-        Matrix3 D = (velGrad[idx] + velGrad[idx].Transpose()) * 0.5;
+        Matrix3 D     = (velGrad[idx] + velGrad[idx].Transpose()) * 0.5;
         p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
       } else {
         p_q[idx] = 0.;
       }
     } // end loop over particles
 
-    WaveSpeed = dx / WaveSpeed;
+    WaveSpeed       = dx / WaveSpeed;
     double delT_new = WaveSpeed.minComponent();
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 
@@ -470,17 +476,19 @@ ProgramBurn::computeStressTensor(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
     }
-    //delete interpolator;
+    // delete interpolator;
   }
 }
 
 void
-ProgramBurn::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                          DataWarehouse* old_dw, DataWarehouse* new_dw)
+ProgramBurn::carryForward(const PatchSubset* patches,
+                          const MPMMaterial* matl,
+                          DataWarehouse* old_dw,
+                          DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
-    const Patch* patch = patches->get(p);
-    int dwi = matl->getDWIndex();
+    const Patch* patch   = patches->get(p);
+    int dwi              = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
     // Carry forward the data common to all constitutive models
@@ -499,7 +507,8 @@ ProgramBurn::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
 }
 
 void
-ProgramBurn::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+ProgramBurn::addComputesAndRequires(Task* task,
+                                    const MPMMaterial* matl,
                                     const PatchSet* patches) const
 {
   // Add the computes and requires that are common to all explicit
@@ -516,7 +525,8 @@ ProgramBurn::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-ProgramBurn::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+ProgramBurn::addInitialComputesAndRequires(Task* task,
+                                           const MPMMaterial* matl,
                                            const PatchSet*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -525,7 +535,8 @@ ProgramBurn::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-ProgramBurn::addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
+ProgramBurn::addRequiresDamageParameter(Task* task,
+                                        const MPMMaterial* matl,
                                         const PatchSet*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -534,8 +545,10 @@ ProgramBurn::addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
 
 void
 ProgramBurn::getDamageParameter(const Patch* patch,
-                                ParticleVariable<int>& damage, int dwi,
-                                DataWarehouse* old_dw, DataWarehouse* new_dw)
+                                ParticleVariable<int>& damage,
+                                int dwi,
+                                DataWarehouse* old_dw,
+                                DataWarehouse* new_dw)
 {
   ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
   constParticleVariable<int> pLocalized;
@@ -551,15 +564,20 @@ ProgramBurn::getDamageParameter(const Patch* patch,
 }
 
 void
-ProgramBurn::addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
-                                    const bool, const bool) const
+ProgramBurn::addComputesAndRequires(Task*,
+                                    const MPMMaterial*,
+                                    const PatchSet*,
+                                    const bool,
+                                    const bool) const
 {
 }
 
 // This is not yet implemented - JG- 7/26/10
 double
-ProgramBurn::computeRhoMicroCM(double pressure, const double p_ref,
-                               const MPMMaterial* matl, double temperature,
+ProgramBurn::computeRhoMicroCM(double pressure,
+                               const double p_ref,
+                               const MPMMaterial* matl,
+                               double temperature,
                                double rho_guess)
 {
   cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR ProgramBurn" << endl;
@@ -569,21 +587,25 @@ ProgramBurn::computeRhoMicroCM(double pressure, const double p_ref,
 }
 
 void
-ProgramBurn::computePressEOSCM(const double rhoM, double& pressure,
-                               const double p_ref, double& dp_drho, double& tmp,
-                               const MPMMaterial* matl, double temperature)
+ProgramBurn::computePressEOSCM(const double rhoM,
+                               double& pressure,
+                               const double p_ref,
+                               double& dp_drho,
+                               double& tmp,
+                               const MPMMaterial* matl,
+                               double temperature)
 {
-  double A = d_initialData.d_A;
-  double B = d_initialData.d_B;
-  double R1 = d_initialData.d_R1;
-  double R2 = d_initialData.d_R2;
-  double om = d_initialData.d_om;
+  double A    = d_initialData.d_A;
+  double B    = d_initialData.d_B;
+  double R1   = d_initialData.d_R1;
+  double R2   = d_initialData.d_R2;
+  double om   = d_initialData.d_om;
   double rho0 = d_initialData.d_rho0;
-  double cv = matl->getSpecificHeat();
-  double V = rho0 / rhoM;
-  double P1 = A * exp(-R1 * V);
-  double P2 = B * exp(-R2 * V);
-  double P3 = om * cv * tmp * rhoM;
+  double cv   = matl->getSpecificHeat();
+  double V    = rho0 / rhoM;
+  double P1   = A * exp(-R1 * V);
+  double P2   = B * exp(-R2 * V);
+  double P3   = om * cv * tmp * rhoM;
 
   pressure = P1 + P2 + P3;
 
