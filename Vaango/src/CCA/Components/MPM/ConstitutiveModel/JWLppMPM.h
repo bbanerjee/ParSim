@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,33 +25,31 @@
  */
 
 //  JWLppMPM.h
-//  class ConstitutiveModel ConstitutiveModel data type -- 3D -
-//  holds ConstitutiveModel
-//   Features:
-//      Usage:
 //     Author: Joseph R. Peterson
 
 #ifndef __JWL_PLUSPLUS_CONSTITUTIVE_MODEL_H__
 #define __JWL_PLUSPLUS_CONSTITUTIVE_MODEL_H__
 
-#include "ConstitutiveModel.h"
-#include <Core/Disclosure/TypeDescription.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <Core/Math/FastMatrix.h>
 #include <Core/Math/Matrix3.h>
 #include <cmath>
 #include <vector>
 
 namespace Uintah {
+
 class JWLppMPM : public ConstitutiveModel
 {
 
 public:
-  // Create datatype for storing model parameters
-  struct CMData
-  {
 
+  struct Params
+  {
     // Igniition pressure
     double ignition_pressure;
+
+    // Shear viscosity
+    double mu;
 
     // These two parameters are used for the unburned Murnahan EOS
     double K;
@@ -80,8 +79,83 @@ public:
   const VarLabel* pLocalizedLabel;
   const VarLabel* pLocalizedLabel_preReloc;
 
+public:
+  
+  JWLppMPM(ProblemSpecP& ps, MPMFlags* flag);
+  JWLppMPM(const JWLppMPM* cm);
+  JWLppMPM& operator=(const JWLppMPM& cm) = delete;
+  JWLppMPM* clone() override;
+  virtual ~JWLppMPM() override;
+
+  ModelType modelType() const override { return ModelType::TOTAL_FORM; }
+
+  void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
+
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
+
+  /* initialize */
+  void addInitialComputesAndRequires(Task* task,
+                                     const MPMMaterial* matl,
+                                     const PatchSet* patches) const override;
+  void initializeCMData(const Patch* patch,
+                        const MPMMaterial* matl,
+                        DataWarehouse* new_dw) override;
+  virtual void computeStableTimestep(const Patch* patch,
+                                     const MPMMaterial* matl,
+                                     DataWarehouse* new_dw);
+
+  /* compute stress */
+  void addComputesAndRequires(Task* task,
+                              const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
+  void computeStressTensor(const PatchSubset* patches,
+                           const MPMMaterial* matl,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw) override;
+
+  void addComputesAndRequires(Task* task,
+                              const MPMMaterial* matl,
+                              const PatchSet* patches,
+                              const bool recursion,
+                              const bool schedPar = true) const override;
+
+  /* for material conversion */
+  void allocateCMDataAddRequires(Task* task,
+                                 const MPMMaterial* matl,
+                                 const PatchSet* patch,
+                                 MPMLabel* lb) const override;
+
+  void allocateCMDataAdd(DataWarehouse* new_dw,
+                         ParticleSubset* subset,
+                         ParticleLabelVariableMap* newState,
+                         ParticleSubset* delset,
+                         DataWarehouse* old_dw) override;
+
+  /* for RigidMPM */
+  void carryForward(const PatchSubset* patches,
+                    const MPMMaterial* matl,
+                    DataWarehouse* old_dw,
+                    DataWarehouse* new_dw) override;
+
+  /* for MPMICE */
+  double computeRhoMicroCM(double pressure,
+                           const double p_ref,
+                           const MPMMaterial* matl,
+                           double temperature,
+                           double rho_guess) override;
+  void computePressEOSCM(double rho_m,
+                         double& press_eos,
+                         double p_ref,
+                         double& dp_drho,
+                         double& ss_new,
+                         const MPMMaterial* matl,
+                         double temperature) override;
+  double getCompressibility() override;
+
 protected:
-  CMData d_cm;
+
+  Params d_cm;
   bool d_useModifiedEOS;
   int d_8or27;
 
@@ -96,100 +170,42 @@ protected:
                           // to stop iterations
   int d_newtonIterMax;    // Maximum number of Newton iterations
 
-public:
-  // constructors
-  JWLppMPM(ProblemSpecP& ps, MPMFlags* flag);
-  JWLppMPM(const JWLppMPM* cm);
-  JWLppMPM& operator=(const JWLppMPM& cm) = delete;
-
-  // destructor
-  ~JWLppMPM() override;
-
-  ModelType modelType() const override
-  {
-    return ModelType::TOTAL_FORM;
-  }
-
-  void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
-
-  // clone
-  JWLppMPM* clone() override;
-
-  // compute stable timestep for this patch
-  virtual void computeStableTimestep(const Patch* patch,
-                                     const MPMMaterial* matl,
-                                     DataWarehouse* new_dw);
-
-  // compute stress at each particle in the patch
-  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
-                           DataWarehouse* old_dw,
-                           DataWarehouse* new_dw) override;
-
-  // carry forward CM data for RigidMPM
-  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
-
-  // initialize  each particle's constitutive model data
-  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
-                        DataWarehouse* new_dw) override;
-
-  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                 const PatchSet* patch,
-                                 MPMLabel* lb) const override;
-
-  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
-                         ParticleLabelVariableMap* newState,
-                         ParticleSubset* delset,
-                         DataWarehouse* old_dw) override;
-
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const override;
-
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches, const bool recursion,
-                              const bool schedPar = true) const override;
-
-  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                     const PatchSet* patches) const override;
-
-  double computeRhoMicroCM(double pressure, const double p_ref,
-                           const MPMMaterial* matl, double temperature,
-                           double rho_guess) override;
-
-  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
-                         double& dp_drho, double& ss_new,
-                         const MPMMaterial* matl, double temperature) override;
-
-  double getCompressibility() override;
-
-  void addParticleState(std::vector<const VarLabel*>& from,
-                        std::vector<const VarLabel*>& to) override;
-
 private:
+
   //------------------------------------------------------------------
   // Do Newton iterations or two step Backward Euler
   //------------------------------------------------------------------
-  void computeUpdatedFractionAndPressure(const double& J_old, const double& J,
+  void computeUpdatedFractionAndPressure(const double& J_old,
+                                         const double& J,
                                          const double& f_old,
                                          const double& p_old,
-                                         const double& delT, double& f_new,
+                                         const double& delT,
+                                         double& f_new,
                                          double& p_new) const;
 
   //------------------------------------------------------------------
   // Two step Backward Euler
   //------------------------------------------------------------------
-  void computeWithTwoStageBackwardEuler(const double& J, const double& f_old,
-                                        const double& p_old, const double& delT,
-                                        const double& pM, const double& pJWL,
-                                        double& f_new, double& p_new) const;
+  void computeWithTwoStageBackwardEuler(const double& J,
+                                        const double& f_old,
+                                        const double& p_old,
+                                        const double& delT,
+                                        const double& pM,
+                                        const double& pJWL,
+                                        double& f_new,
+                                        double& p_new) const;
 
   //------------------------------------------------------------------
   // Newton iterations
   //------------------------------------------------------------------
-  void computeWithNewtonIterations(const double& J, const double& f_old,
-                                   const double& p_old, const double& delT,
-                                   const double& pM, const double& pJWL,
-                                   double& f_new, double& p_new) const;
+  void computeWithNewtonIterations(const double& J,
+                                   const double& f_old,
+                                   const double& p_old,
+                                   const double& delT,
+                                   const double& pM,
+                                   const double& pJWL,
+                                   double& f_new,
+                                   double& p_new) const;
 
   //------------------------------------------------------------------
   // Compute G
@@ -197,9 +213,14 @@ private:
   //   F_n+1 = 0 = f_n+1 - f_n - G*(1 - f_n+1)*(p_n+1)^b*Delta t
   //   P_n+1 = 0 = p_n+1 - (1 - f_n+1) p_m - f_n+1 p_jwl
   //------------------------------------------------------------------
-  void computeG(const double& J, const double& f_old, const double& f_new,
-                const double& p_new, const double& pM, const double& pJWL,
-                const double& delT, vector<double>& G) const;
+  void computeG(const double& J,
+                const double& f_old,
+                const double& f_new,
+                const double& p_new,
+                const double& pM,
+                const double& pJWL,
+                const double& delT,
+                vector<double>& G) const;
 
   //------------------------------------------------------------------
   // Compute the Jacobian of G
@@ -211,9 +232,12 @@ private:
   //   dP_n+1/df_n+1 =  p_m - p_jwl
   //   dP_n+1/dp_n+1 = 1
   //------------------------------------------------------------------
-  void computeJacobianG(const double& J, const double& f_new,
-                        const double& p_new, const double& pM,
-                        const double& pJWL, const double& delT,
+  void computeJacobianG(const double& J,
+                        const double& f_new,
+                        const double& p_new,
+                        const double& pM,
+                        const double& pJWL,
+                        const double& delT,
                         FastMatrix& JacobianG) const;
 
   //------------------------------------------------------------------
@@ -230,6 +254,7 @@ private:
   // p_jwl = A exp(-R1 J) + B exp(-R2 J) + C J^[-(1+omega)]
   //------------------------------------------------------------------
   double computePressureJWL(const double& J) const;
+
 };
 } // End namespace Uintah
 

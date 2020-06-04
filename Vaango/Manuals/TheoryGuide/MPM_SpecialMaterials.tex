@@ -85,3 +85,45 @@ The pressure is given by:
   p = \frac{\kappa}{\kappa'}\left[J^{-\kappa'} - 1\right] ~,~~ J = \det(\BF)
 \end{equation}
 where $\kappa$ the initial bulk modulus and $\kappa' = d\kappa/dp$ is a constant.
+
+\section{JWL++ material}
+\Textmag{Applicable to:} \Textsfc{explicit} \MPM only
+
+The \Textsfc{JWL++} material is a combination of the Murnaghan and JWL models
+along with a burn algorithm to convert from one to the other~\cite{JWL2000}. 
+A small viscous component is added to the JWL model to stabilize behavior.
+
+The stress is given by
+\Beq
+  \Bsig(\BF, t) = \pbar(\BF) \BI + 2\mu\,\Beta.
+\Eeq
+where $\mu$ is a shear viscosity, $\BdT$ is the symmetric part of the velocity gradient,
+\Beq
+  \pbar = -p \quad \Tand \quad \Beta = \BdT - \Third \Tr(\BdT) \BI \,.
+\Eeq
+
+The burn rate is computed as
+\Beq
+  \dot{f} = (1 - f) G \,p^b
+\Eeq
+where $f$ is the volume fraction of the reactant, $G, b$ are fit parameters, and
+$p$ is the pressure, computed using
+\Beq
+  p = (1 - f) p_{\text{m}} + f p_{\text{jwl}} \,.
+\Eeq
+
+The Murnaghan pressure ($p_{\text{m}}$) is given by:
+\begin{equation}
+  p_{\text{m}} = \frac{1}{nK}\left[J^{-n} - 1\right] ~,~~ J = \det(\BF)
+\end{equation}
+where $K = 1/\kappa$, $\kappa$ is the initial bulk modulus, and $n = \kappa' = d\kappa/dp$ 
+is a constant.
+
+The JWL pressure ($p_{\text{jwl}}$) is given by
+\Beq
+  p_{\text{jwl}} = A \exp(-R_1 J) + B \exp(-R_2 J) + C J^{-(1+\omega)}
+\Eeq
+where $A$, $B$, $C$, $\omega$ are fit parameters, $R_1$, $R_2$ are fit rate parameters, 
+and $J = \det\BF$.
+
+
