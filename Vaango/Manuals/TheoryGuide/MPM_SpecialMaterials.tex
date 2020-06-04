@@ -67,3 +67,21 @@ The pressure is given by:
 \end{equation}
 where $\kappa$ the bulk modulus and $\gamma$ is a model parameter.  
 It has not been validated, but gives qualitatively reasonable behavior.
+
+\section{Murnaghan material}
+\Textmag{Applicable to:} \Textsfc{explicit} \MPM only
+
+This material is based on the equation of state proposed in ~\cite{Murnaghan1944}.
+The stress is given by
+\Beq
+  \Bsig(\BF, t) = \pbar(\BF) \BI + 2\mu\,\Beta.
+\Eeq
+where $\mu$ is a shear viscosity, $\BdT$ is the symmetric part of the velocity gradient,
+\Beq
+  \pbar = -p \quad \Tand \quad \Beta = \BdT - \Third \Tr(\BdT) \BI \,.
+\Eeq
+The pressure is given by:
+\begin{equation}
+  p = \frac{\kappa}{\kappa'}\left[J^{-\kappa'} - 1\right] ~,~~ J = \det(\BF)
+\end{equation}
+where $\kappa$ the initial bulk modulus and $\kappa' = d\kappa/dp$ is a constant.

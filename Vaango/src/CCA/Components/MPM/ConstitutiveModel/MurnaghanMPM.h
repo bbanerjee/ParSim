@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,119 +24,120 @@
  * IN THE SOFTWARE.
  */
 
-//  MurnaghanMPM.h
-//  class ConstitutiveModel ConstitutiveModel data type -- 3D -
-//  holds ConstitutiveModel
-//    Features:
-//      Usage:
-
-// Equation of state outlined in:
-// F.D. Murnaghan, 'The Compressibility of Media under Extreme Pressures',
-// in Proceedings of the National Academy of Sciences, vol. 30, pp. 244-247,
-// 1944.
-//
-// For Brief:
-// P=P0+1/K*((V0/V)^g-1)
-//
-//
-
 #ifndef __MURNAGHAN_CONSTITUTIVE_MODEL_H__
 #define __MURNAGHAN_CONSTITUTIVE_MODEL_H__
 
-#include "ConstitutiveModel.h"
-#include <Core/Disclosure/TypeDescription.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <Core/Math/Matrix3.h>
 #include <cmath>
 #include <vector>
 
 namespace Uintah {
+
+/**
+ *  Equation of state outlined in:
+ *  F.D. Murnaghan, 'The Compressibility of Media under Extreme Pressures',
+ *  in Proceedings of the National Academy of Sciences, vol. 30, pp. 244-247,
+ *  1944.
+ * 
+ *  P = P0 + (K/K')*((V/V0)^(-K')-1)
+ *
+ *  K          (Pa)         Bulk modulus of the material
+ *  K' = dK/dp (unitless)   Slope of bulk modulus vs. pressure
+ *  V0         (m^3)        Reference volume of material in normal state
+ *  V          (m^3)        Current volume of material in normal state
+ *  P0         (Pa)         Reference Pressure
+ *  rho0       (kg/m^3)     Reference density
+ *  viscosity
+ */ 
+
 class MurnaghanMPM : public ConstitutiveModel
 {
 
 public:
-  // Create datatype for storing model parameters
-  struct CMData
-  {             // Assumed unit; Description
-    double d_K; // Pa^-1         Compressibility of the material
-    double
-      d_rho0; // kg/m^3        Reference density of material in normal state
-    double d_Gamma; // unitless
-    double d_P0;    // Pa            Reference Pressure
-    double d_Viscosity;
+  struct Params
+  {             
+    double d_K;
+    double d_Kprime;
+    double d_P0;
+    double d_rho0;
+    double d_viscosity;
   };
 
-protected:
-  CMData d_initialData;
-  bool d_useModifiedEOS;
-  int d_8or27;
-
-
-public:
-  // constructors
   MurnaghanMPM(ProblemSpecP& ps, MPMFlags* flag);
   MurnaghanMPM(const MurnaghanMPM* cm);
   MurnaghanMPM& operator=(const MurnaghanMPM& cm) = delete;
+  virtual ~MurnaghanMPM() override = default;
+  MurnaghanMPM* clone() override;
 
-  // destructor
-  ~MurnaghanMPM() override;
-
-  ModelType modelType() const override
-  {
-    return ModelType::TOTAL_FORM;
-  }
+  ModelType modelType() const override { return ModelType::TOTAL_FORM; }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
-  // clone
-  MurnaghanMPM* clone() override;
+  void addParticleState(std::vector<const VarLabel*>& from,
+                        std::vector<const VarLabel*>& to) override;
 
-  // compute stable timestep for this patch
+  /* initialize */
+  void initializeCMData(const Patch* patch,
+                        const MPMMaterial* matl,
+                        DataWarehouse* new_dw) override;
   virtual void computeStableTimestep(const Patch* patch,
                                      const MPMMaterial* matl,
                                      DataWarehouse* new_dw);
 
-  // compute stress at each particle in the patch
-  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
+  /* compute stress */
+  void addComputesAndRequires(Task* task,
+                              const MPMMaterial* matl,
+                              const PatchSet* patches) const override;
+  void computeStressTensor(const PatchSubset* patches,
+                           const MPMMaterial* matl,
                            DataWarehouse* old_dw,
                            DataWarehouse* new_dw) override;
 
-  // carry forward CM data for RigidMPM
-  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
+  void addComputesAndRequires(Task* task,
+                              const MPMMaterial* matl,
+                              const PatchSet* patches,
+                              const bool recursion,
+                              const bool schedParent = true) const override;
 
-  // initialize  each particle's constitutive model data
-  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
-                        DataWarehouse* new_dw) override;
-
-  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+  /* for material conversion */
+  void allocateCMDataAddRequires(Task* task,
+                                 const MPMMaterial* matl,
                                  const PatchSet* patch,
                                  MPMLabel* lb) const override;
-
-  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
+  void allocateCMDataAdd(DataWarehouse* new_dw,
+                         ParticleSubset* subset,
                          ParticleLabelVariableMap* newState,
                          ParticleSubset* delset,
                          DataWarehouse* old_dw) override;
 
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches) const override;
+  /* for RigidMPM */
+  void carryForward(const PatchSubset* patches,
+                    const MPMMaterial* matl,
+                    DataWarehouse* old_dw,
+                    DataWarehouse* new_dw) override;
 
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches, const bool recursion,
-                              const bool schedParent = true) const override;
-
-  double computeRhoMicroCM(double pressure, const double p_ref,
-                           const MPMMaterial* matl, double temperature,
+  /* for MPMICE */
+  double computeRhoMicroCM(double pressure,
+                           const double p_ref,
+                           const MPMMaterial* matl,
+                           double temperature,
                            double rho_guess) override;
-
-  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
-                         double& dp_drho, double& ss_new,
-                         const MPMMaterial* matl, double temperature) override;
-
+  void computePressEOSCM(double rho_m,
+                         double& press_eos,
+                         double p_ref,
+                         double& dp_drho,
+                         double& ss_new,
+                         const MPMMaterial* matl,
+                         double temperature) override;
   double getCompressibility() override;
 
-  void addParticleState(std::vector<const VarLabel*>& from,
-                        std::vector<const VarLabel*>& to) override;
+protected:
+  Params d_modelParam;
+  bool d_useModifiedEOS;
+  int d_8or27;
+
 };
 } // End namespace Uintah
 
-#endif // __WATER_CONSTITUTIVE_MODEL_H__
+#endif // __MURNAGHAN_CONSTITUTIVE_MODEL_H__

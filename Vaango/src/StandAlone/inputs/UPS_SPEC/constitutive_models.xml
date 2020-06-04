@@ -8,6 +8,8 @@
                                       comp_neo_hook_plastic,
                                       elastic_plastic, 
                                       hypo_elastic, 
+                                      hypo_elastic_fortran, 
+                                      hypo_elastic_fracture, 
                                       hypo_elastic_mms, 
                                       elastic_plastic_hp,
                                       ideal_gas, 
@@ -22,7 +24,6 @@
                                       visco_trans_iso_hyper, 
                                       water, 
                                       kayenta, 
-                                      hypo_elastic_fortran, 
                                       diamm, 
                                       cnh_mms,
                                       cnh_damage, 
@@ -137,14 +138,16 @@
     <reference_volume              spec="OPTIONAL DOUBLE 'positive'" />
     <failure_by_pressure           spec="OPTIONAL BOOLEAN" />
     <frac_nucleation               spec="OPTIONAL DOUBLE" />
-    <fracture_toughness_curve      spec="OPTIONAL NO_DATA" >
-      <crack_propagation_criterion spec="REQUIRED STRING 'empirical_criterion'" />
+    <fracture_toughness_curve      spec="OPTIONAL NO_DATA" 
+                                   need_applies_to="type hypo_elastic_fracture">
+      <crack_propagation_criterion spec="REQUIRED STRING 'max_hoop_stress, empirical_criterion, max_principal_stress, max_energy_release_rate, strain_energy_density'" />
       <p                           spec="OPTIONAL DOUBLE" />
       <q                           spec="OPTIONAL DOUBLE" />
       <r                           spec="OPTIONAL DOUBLE" />
       <point                       spec="OPTIONAL NO_DATA" >
         <Vc                        spec="OPTIONAL DOUBLE" />
         <KIc                       spec="OPTIONAL DOUBLE" />
+        <KIIc                      spec="OPTIONAL DOUBLE" />
       </point>
     </fracture_toughness_curve>
     <G                             spec="OPTIONAL DOUBLE" />
@@ -771,6 +774,14 @@
     <yield_range                      spec="OPTIONAL DOUBLE"  />
     <yield_seed                       spec="OPTIONAL INTEGER"  />
     <useEOSFactory                    spec="OPTIONAL BOOLEAN" />
+
+    <!--______________________________________________________________________ -->    
+    <!-- The following are for the MurnaghanMPM model -->
+    <Kprime    spec="REQUIRED DOUBLE 'positive'" need_applies_to="type murnaghanMPM"/>
+    <!-- <K         spec="REQUIRED DOUBLE 'positive'" need_applies_to="type murnaghanMPM"/> -->
+    <!-- <pressure  spec="REQUIRED DOUBLE 'positive'" need_applies_to="type murnaghanMPM"/> -->
+    <!-- <rho0      spec="REQUIRED DOUBLE 'positive'" need_applies_to="type murnaghanMPM"/> -->
+    <!-- <viscosity spec="REQUIRED DOUBLE 'positive'" need_applies_to="type murnaghanMPM"/> -->
 
     <!--______________________________________________________________________ -->    
     <!-- The following are for the JWLppMPM model -->
