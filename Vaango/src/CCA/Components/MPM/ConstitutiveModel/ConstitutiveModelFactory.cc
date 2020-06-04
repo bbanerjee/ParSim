@@ -55,7 +55,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/IdealGasMP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Kayenta.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MWViscoElastic.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Membrane.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MohrCoulomb.h>
 #include <CCA/Components/MPM/ConstitutiveModel/NonLocalDruckerPrager.h>
 #include <CCA/Components/MPM/ConstitutiveModel/P_Alpha.h>
@@ -75,6 +74,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/ProgramBurn.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/JWLppMPM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ExplosiveModels/ViscoSCRAMHotSpot.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/Membrane.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/CNH_MMS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/HypoElastic_MMS.h>
