@@ -29,13 +29,8 @@ SET(MPM_ConstitutiveModel_SRCS
   ConstitutiveModel.cc          
   ImplicitCM.cc                 
   MPMMaterial.cc                
-  P_Alpha.cc                    
-  SoilFoam.cc	             
   BasicDamageModel.cc
   PolarOrthotropicHypoElastic.cc
-  TabularEquationOfState.cc
-  TabularPlasticity.cc
-  TabularPlasticityCap.cc
   ElasticModels/CompMooneyRivlin.cc           
   ElasticModels/HypoElastic.cc                
   ElasticModels/HypoElasticFracture.cc                
@@ -51,6 +46,8 @@ SET(MPM_ConstitutiveModel_SRCS
   J2PlasticModels/SmallStrainPlastic.cc     
   J2PlasticModels/UCNH.cc                       
   J2PlasticModels/ViscoPlastic.cc               
+  PorousModels/P_Alpha.cc                    
+  PorousModels/SoilFoam.cc	             
   RockSoilModels/Arena.cc
   RockSoilModels/ArenaMixture.cc
   RockSoilModels/Arenisca.cc
@@ -65,6 +62,9 @@ SET(MPM_ConstitutiveModel_SRCS
   SpecialPurposeModels/RigidMaterial.cc              
   SpecialPurposeModels/ShellMaterial.cc              
   SpecialPurposeModels/Water.cc                      
+  TabularModels/TabularEquationOfState.cc
+  TabularModels/TabularPlasticity.cc
+  TabularModels/TabularPlasticityCap.cc
   ViscoElasticModels/MWViscoElastic.cc             
   ViscoElasticModels/ViscoScram.cc                 
   ViscoElasticModels/ViscoScramImplicit.cc         

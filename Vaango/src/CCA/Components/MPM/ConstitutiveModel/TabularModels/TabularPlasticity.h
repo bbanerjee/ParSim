@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,12 +22,13 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __MPM_CONSTITUTIVEMODEL_TABULAR_PLASTICITY_CAP_H__
-#define __MPM_CONSTITUTIVEMODEL_TABULAR_PLASTICITY_CAP_H__
+#ifndef __MPM_CONSTITUTIVEMODEL_TABULAR_PLASTICITY_H__
+#define __MPM_CONSTITUTIVEMODEL_TABULAR_PLASTICITY_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/TabularPlasticity.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -46,16 +47,47 @@ class MPMMaterial;
 
 namespace Vaango {
 
-class TabularPlasticityCap : public TabularPlasticity
+class TabularPlasticity : public Uintah::ConstitutiveModel
 {
 
 public:
 
-  TabularPlasticityCap(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
-  TabularPlasticityCap(const TabularPlasticityCap* cm);
-  TabularPlasticityCap(const TabularPlasticityCap& cm);
-  ~TabularPlasticityCap() override;
-  TabularPlasticityCap& operator=(const TabularPlasticityCap& cm) = delete;
+  enum class Status 
+  {
+    SUCCESS,
+    UNREASONABLE_SUBSTEPS,
+    TOO_SMALL_TIMESTEP,
+    TOO_LARGE_PLASTIC_STRAIN,
+    TOO_LARGE_YIELD_NORMAL_CHANGE,
+    TOO_MANY_CONSISTENCY_ITERATIONS,
+    UNREASONABLE_INTERNAL_VARIABLE_VALUE
+  };
+
+  // Create datatype for storing model parameters
+  struct CMData
+  {
+    double yield_scale_fac;
+    double subcycling_characteristic_number;
+  };
+
+  const Uintah::VarLabel* pElasticStrainLabel;
+  const Uintah::VarLabel* pElasticStrainLabel_preReloc;
+  const Uintah::VarLabel* pPlasticStrainLabel;
+  const Uintah::VarLabel* pPlasticStrainLabel_preReloc;
+  const Uintah::VarLabel* pPlasticCumEqStrainLabel; // Equivalent plastic strain
+  const Uintah::VarLabel* pPlasticCumEqStrainLabel_preReloc; 
+  const Uintah::VarLabel* pElasticVolStrainLabel; // Elastic Volumetric Strain
+  const Uintah::VarLabel* pElasticVolStrainLabel_preReloc;
+  const Uintah::VarLabel* pPlasticVolStrainLabel; // Plastic Volumetric Strain
+  const Uintah::VarLabel* pPlasticVolStrainLabel_preReloc;
+  const Uintah::VarLabel* pBulkModulusLabel; 
+  const Uintah::VarLabel* pBulkModulusLabel_preReloc;
+
+  TabularPlasticity(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
+  TabularPlasticity(const TabularPlasticity* cm);
+  TabularPlasticity(const TabularPlasticity& cm);
+  ~TabularPlasticity() override;
+  TabularPlasticity& operator=(const TabularPlasticity& cm) = delete;
 
 
   ModelType modelType() const override
@@ -67,7 +99,7 @@ public:
                          bool output_cm_tag = true) override;
 
   // clone
-  TabularPlasticityCap* clone() override;
+  TabularPlasticity* clone() override;
 
   /*! Get parameters */
   ParameterDict getParameters() const
@@ -77,9 +109,9 @@ public:
   }
 
   // compute stable timestep for this patch
-  void computeStableTimestep(const Uintah::Patch* patch,
-                             const Uintah::MPMMaterial* matl,
-                             Uintah::DataWarehouse* new_dw) override;
+  virtual void computeStableTimestep(const Uintah::Patch* patch,
+                                     const Uintah::MPMMaterial* matl,
+                                     Uintah::DataWarehouse* new_dw);
 
   // compute stress at each particle in the patch
   void computeStressTensor(const Uintah::PatchSubset* patches,
@@ -132,6 +164,17 @@ public:
   void addParticleState(std::vector<const Uintah::VarLabel*>& from,
                         std::vector<const Uintah::VarLabel*>& to) override;
 
+  double computeRhoMicroCM(double pressure, const double p_ref,
+                           const Uintah::MPMMaterial* matl, double temperature,
+                           double rho_guess) override;
+
+  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
+                         double& dp_drho, double& ss_new,
+                         const Uintah::MPMMaterial* matl,
+                         double temperature) override;
+
+  double getCompressibility() override;
+
   /*! This is for adding/deleting particles when a particle is switched
       from one material to another */
   void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
@@ -140,12 +183,67 @@ public:
                          Uintah::ParticleSubset* delset,
                          Uintah::DataWarehouse* old_dw) override;
 
+protected:
+
+  ElasticModuliModel* d_elastic;
+  YieldCondition* d_yield;
+  TabularData d_hydrostat;
+
+  CMData d_cm;
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: computeElasticProperties
+   * Purpose:
+   *   Compute the bulk and shear mdoulus at a given state
+   * Inputs:
+   *   state = state
+   * Modifies
+   *   state.bulkModulus
+   *   state.shearModulus
+   */
+  //////////////////////////////////////////////////////////////////////////
+  void computeElasticProperties(ModelState_Tabular& state) const;
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: computeTrialStress
+   * Purpose:
+   *   Compute the trial stress for some increment in strain assuming linear
+   *   elasticity over the step.
+   * Inputs:
+   *   state_old = state at t = t_n
+   *   strain_inc = strain increment (D * delT)
+   *     D = rate of deformation
+   *     delT = time step
+   * Returns
+   *   stress_trial
+   */
+  //////////////////////////////////////////////////////////////////////////
+  Uintah::Matrix3 computeTrialStress(const ModelState_Tabular& state_old,
+                                     const Uintah::Matrix3& strain_inc);
+
+  //////////////////////////////////////////////////////////////////////////
+  /**
+   * Method: computeZMatrix
+   * Purpose:
+   *   Compute the elastic-plastic coupling Z matrix
+   * Inputs:
+   *   state 
+   * Returns
+   *   Z matrix
+   */
+  //////////////////////////////////////////////////////////////////////////
+  Matrix3 computeZMatrix(const ElasticModuli& moduli,
+                         const ElasticModuli& derivs,
+                         double p,
+                         const Matrix3& s,
+                         const Matrix3& M) const;
+
 private:
 
-  InternalVariableModel* d_capX;
-  double d_consistency_bisection_tolerance;
-  double d_max_bisection_iterations;
-  bool d_decrease_substep;
+  void initializeLocalMPMLabels();
+  void checkInputParameters();
 
   void initializeInternalVariables(const Patch* patch, const MPMMaterial* matl,
                                    ParticleSubset* pset, DataWarehouse* new_dw,
@@ -174,49 +272,8 @@ private:
                                     const double& delT,
                                     Uintah::particleIndex idx,
                                     Uintah::long64 pParticleID,
-                                    const ModelState_TabularCap& state_old,
-                                    ModelState_TabularCap& state_new);
-
-  //////////////////////////////////////////////////////////////////////////
-  /**
-   * Method: computeElasticProperties
-   * Purpose:
-   *   Compute the bulk and shear mdoulus at a given state
-   * Inputs:
-   *   state = state
-   * Modifies
-   *   state.bulkModulus
-   *   state.shearModulus
-   */
-  //////////////////////////////////////////////////////////////////////////
-  void computeElasticProperties(ModelState_TabularCap& state) const;
-  void computeElasticProperties(ModelState_TabularCap& state,
-                                double elasticVolStrainInc,
-                                double plasticVolStrainInc) const;
-  std::tuple<double, double>
-    computeElasticProperties(const ModelState_TabularCap& state,
-                             const Matrix3& elasticStrain,
-                             const Matrix3& plasticStrain) const;
-  std::tuple<double, double>
-    computeElasticProperties(const ModelState_TabularCap& state) const;
-
-  //////////////////////////////////////////////////////////////////////////
-  /**
-   * Method: computeTrialStress
-   * Purpose:
-   *   Compute the trial stress for some increment in strain assuming linear
-   *   elasticity over the step.
-   * Inputs:
-   *   state_old = state at t = t_n
-   *   strain_inc = strain increment (D * delT)
-   *     D = rate of deformation
-   *     delT = time step
-   * Returns
-   *   stress_trial
-   */
-  //////////////////////////////////////////////////////////////////////////
-  Uintah::Matrix3 computeTrialStress(const ModelState_TabularCap& state_old,
-                                     const Uintah::Matrix3& strain_inc);
+                                    const ModelState_Tabular& state_old,
+                                    ModelState_Tabular& state_new);
 
   //////////////////////////////////////////////////////////////////////////
   /**
@@ -235,8 +292,8 @@ private:
    */
   //////////////////////////////////////////////////////////////////////////
   int computeStepDivisions(Uintah::particleIndex idx, Uintah::long64 particleID,
-                           const ModelState_TabularCap& state_substep,
-                           const ModelState_TabularCap& state_trial);
+                           const ModelState_Tabular& state_substep,
+                           const ModelState_Tabular& state_trial);
 
   //////////////////////////////////////////////////////////////////////////
   /**
@@ -255,73 +312,8 @@ private:
    */
   //////////////////////////////////////////////////////////////////////////
   Status computeSubstep(const Uintah::Matrix3& D, const double& dt,
-                      const ModelState_TabularCap& state_old,
-                      ModelState_TabularCap& state_new);
-
-  //////////////////////////////////////////////////////////////////////////
-  /**
-   * Method: Compute the stress state at the end of a purely elastic
-   *         substep.
-   * Purpose:
-   *   Find the updated stress before an elastic-plastic non-hardening
-   *   stress update step
-   *
-   * Returns:
-   *   Status  :  whether the procedure is sucessful or has failed
-   *   double  :  elastic delta T
-   *    
-   */
-  //////////////////////////////////////////////////////////////////////////
-  std::tuple<Status, double>
-  computePurelyElasticSubstep(double deltaT, const Matrix3& D,
-                              const ModelState_TabularCap& state_k_old,
-                              const ModelState_TabularCap& state_k_trial,
-                              ModelState_TabularCap& state_k_new);
-
-  //////////////////////////////////////////////////////////////////////////
-  /**
-   * Method: nonHardeningReturnElasticPlastic
-   * Purpose:
-   *   Computes a non-hardening return to the yield surface in the meridional
-   *   profile (constant Lode angle) based on the current values of the 
-   *   internal state variables and elastic properties.  Returns the updated 
-   *   stress.
-   *   NOTE: all values of r and z in this function are transformed!
-   * Inputs:
-   *   elasticplastic_dt = timestep size after purely elastic update
-   *   D                 = rate of deformation 
-   *   state_k_elastic   = state at the end of the purely elastic substep
-   * Outputs:
-   *   state_k_nonhardening = state at the end of the non-hardening 
-   *                          elastic-plastic substep
-   * Returns:
-   *   Status: true  = success
-   *           false = failure
-   *   Matrix3: plastic strain increment
-   */
-  //////////////////////////////////////////////////////////////////////////
-  std::tuple<Status, Matrix3>
-  nonHardeningReturnElasticPlastic(double elasticplastic_dt,
-                          const Matrix3& D,
-                          const ModelState_TabularCap& state_k_elastic,
-                          ModelState_TabularCap& state_k_nonhardening);
-
-  //////////////////////////////////////////////////////////////////////////
-  /**
-   * Method: consistencyBisectionHardeningSoftening
-   * Purpose:
-   *   Find the updated stress for hardening/softening plasticity using the consistency
-   *   bisection algorithm
-   *
-   *   Returns - whether the procedure is sucessful or has failed
-   */
-  //////////////////////////////////////////////////////////////////////////
-  Status consistencyBisectionHardeningSoftening(double elastic_plastic_dt, 
-                                      const Matrix3& D,              
-                                      const ModelState_TabularCap& state_k_elastic,
-                                      const ModelState_TabularCap& state_k_nonhardening,
-                                      const Matrix3& deltaEps_p_nonhardening,
-                                      ModelState_TabularCap& state_new);
+                      const ModelState_Tabular& state_old,
+                      ModelState_Tabular& state_new);
 
   //////////////////////////////////////////////////////////////////////////
   /**
@@ -335,43 +327,28 @@ private:
    *   NOTE: all values of r and z in this function are transformed!
    * Inputs:
    *   strain_inc     = total strain icremenet = D*dt
+   *     D              = rate of deformation tensor
+   *     dt             = substep time increment
    *   state_old      = state at start of substep
    *   state_trial    = trial state at start of substep
+   *   params         = yield condition parameters
    * Outputs:
    *   sig_new                 = updated stress at end of substep
    *   elasticStrain_inc_new   = updated elastic strain increment at end of
-   *                             substep
+   * substep
    *   plasticStrain_inc_new   = updated plastic strain increment at end of
-   *                             substep
+   * substep
    * Returns:
    *   true  = success
    *   false = failure
    */
   //////////////////////////////////////////////////////////////////////////
   Status nonHardeningReturn(const Uintah::Matrix3& strain_inc,
-                          const ModelState_TabularCap& state_old,
-                          const ModelState_TabularCap& state_trial,
+                          const ModelState_Tabular& state_old,
+                          const ModelState_Tabular& state_trial,
                           Uintah::Matrix3& sig_new,
                           Uintah::Matrix3& elasticStrain_inc_new,
                           Uintah::Matrix3& plasticStrain_inc_new);
-
-  //////////////////////////////////////////////////////////////////////////
-  /**
-   * Method: firstOrderHardeningUpdate
-   * Purpose:
-   *   Find the updated stress for hardening plasticity using a first-order
-   *   update based on the velocity of the yield surface
-   *
-   *   Returns whether the procedure is sucessful or has failed
-   */
-  //////////////////////////////////////////////////////////////////////////
-  Status firstOrderHardeningUpdate(const Matrix3& deltaEps_new,
-                                   const ModelState_TabularCap& state_k_old,
-                                   const ModelState_TabularCap& state_k_trial,
-                                   const Matrix3& deltaEps_e_fixed,
-                                   const Matrix3& deltaEps_p_fixed,
-                                   const Matrix3& sig_fixed,
-                                   ModelState_TabularCap& state_k_new);
 
   //////////////////////////////////////////////////////////////////////////
   /**
@@ -395,12 +372,12 @@ private:
    */
   //////////////////////////////////////////////////////////////////////////
   Status consistencyBisectionSimplified(const Matrix3& deltaEps_new,
-                                      const ModelState_TabularCap& state_old,
-                                      const ModelState_TabularCap& state_trial,
+                                      const ModelState_Tabular& state_old,
+                                      const ModelState_Tabular& state_trial,
                                       const Matrix3& deltaEps_e_0,
                                       const Matrix3& deltaEps_p_0,
                                       const Matrix3& sig_0,
-                                      ModelState_TabularCap& state_new);
+                                      ModelState_Tabular& state_new);
 
   //////////////////////////////////////////////////////////////////////////
   /**
@@ -410,47 +387,17 @@ private:
    *   state and an increment in volumetric plastic strain
    * Inputs:
    *   state         - Old state
-   *   delta_eps_e_v - negative in comression volumetric elastic strain
-   *   delta_eps_p_v - negative in comression volumetric plastic strain
+   *   delta_eps_p_v - negative in comression volumetruc plastic strain
    * Outputs:
    *   state         - Modified state
    * Returns:  true if success
    *           false if failure
    */
   //////////////////////////////////////////////////////////////////////////
-  Status computeInternalVariables(ModelState_TabularCap& state,
-                                const double& delta_eps_e_v,
+  Status computeInternalVariables(ModelState_Tabular& state,
                                 const double& delta_eps_p_v);
 
-  double computeInternalVariable(const ModelState_TabularCap& state,
-                                 const Matrix3& elasticStrain,
-                                 const Matrix3& plasticStrain) const;
-  double computeInternalVariable(const ModelState_TabularCap& state) const;
-
-  //////////////////////////////////////////////////////////////////////////
-  /**
-   * Method: computeElasticDeltaT
-   * Purpose:
-   *   Compute the fraction of the time step that is elastic
-   * Inputs:
-   *   double       - Total delta t
-   *   ModelState   - Old state
-   *   ModelState   - Trial state
-   * Returns:
-   *   bool         - true if success
-   *                  false if failure
-   *   double       - t value of intersection of line segment joining
-   *                  old state and trial state with yield surface
-   *                  in pbar-sqrtJ2 space
-   *   double       - elastic delta t
-   *   Point        - point of intersection in pbar-sqrtJ2 space
-   */
-  //////////////////////////////////////////////////////////////////////////
-  std::tuple<bool, double, double, Uintah::Point>
-    computeElasticDeltaT(double dt,
-                         const ModelState_TabularCap& state_old,
-                         const ModelState_TabularCap& state_trial);
 };
-} // End namespace Uintah
+} // End namespace Vaango
 
-#endif // __MPM_CONSTITUTIVEMODEL_TABULAR_PLASTICITY_CAP_H__
+#endif // __MPM_CONSTITUTIVEMODEL_TABULAR_PLASTICITY_H__

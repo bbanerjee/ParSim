@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/TabularEquationOfState.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Grid/Box.h>

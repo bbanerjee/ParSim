@@ -24,8 +24,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <CCA/Components/MPM/ConstitutiveModel/PorousModels/SoilFoam.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/SoilFoam.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <Core/Grid/Box.h>
@@ -47,7 +47,6 @@
 #include <iostream>
 #include <sci_values.h>
 
-using namespace std;
 using namespace Uintah;
 
 SoilFoam::SoilFoam(ProblemSpecP& ps, MPMFlags* Mflag)
@@ -99,18 +98,18 @@ SoilFoam::SoilFoam(ProblemSpecP& ps, MPMFlags* Mflag)
 SoilFoam::SoilFoam(const SoilFoam* cm)
   : ConstitutiveModel(cm)
 {
-  d_initialData.G = cm->d_initialData.G;
+  d_initialData.G    = cm->d_initialData.G;
   d_initialData.bulk = cm->d_initialData.bulk;
-  d_initialData.a0 = cm->d_initialData.a0;
-  d_initialData.a1 = cm->d_initialData.a1;
-  d_initialData.a2 = cm->d_initialData.a2;
-  d_initialData.pc = cm->d_initialData.pc;
+  d_initialData.a0   = cm->d_initialData.a0;
+  d_initialData.a1   = cm->d_initialData.a1;
+  d_initialData.a2   = cm->d_initialData.a2;
+  d_initialData.pc   = cm->d_initialData.pc;
   int i;
   for (i = 0; i < 10; i++) {
     d_initialData.eps[i] = cm->d_initialData.eps[i];
-    d_initialData.p[i] = cm->d_initialData.p[i];
+    d_initialData.p[i]   = cm->d_initialData.p[i];
   }
-  for (i = 0; i < 9; i++)
+  for (i     = 0; i < 9; i++)
     slope[i] = cm->slope[i];
 
   sv_minLabel = VarLabel::create(
@@ -187,7 +186,8 @@ SoilFoam::clone()
 }
 
 void
-SoilFoam::initializeCMData(const Patch* patch, const MPMMaterial* matl,
+SoilFoam::initializeCMData(const Patch* patch,
+                           const MPMMaterial* matl,
                            DataWarehouse* new_dw)
 {
   // Initialize the variables shared by all constitutive models
@@ -202,7 +202,7 @@ SoilFoam::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
   ParticleSubset::iterator iter = pset->begin();
   for (; iter != pset->end(); iter++) {
-    sv_min[*iter] = 0.0;
+    sv_min[*iter]   = 0.0;
     p_sv_min[*iter] = 0.0;
   }
 
@@ -214,8 +214,10 @@ SoilFoam::initializeCMData(const Patch* patch, const MPMMaterial* matl,
     from one material to another */
 ///////////////////////////////////////////////////////////////////////////
 void
-SoilFoam::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                    const PatchSet* patches, MPMLabel* lb) const
+SoilFoam::allocateCMDataAddRequires(Task* task,
+                                    const MPMMaterial* matl,
+                                    const PatchSet* patches,
+                                    MPMLabel* lb) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
 
@@ -228,9 +230,11 @@ SoilFoam::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-SoilFoam::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
+SoilFoam::allocateCMDataAdd(DataWarehouse* new_dw,
+                            ParticleSubset* addset,
                             ParticleLabelVariableMap* newState,
-                            ParticleSubset* delset, DataWarehouse*)
+                            ParticleSubset* delset,
+                            DataWarehouse*)
 {
   // Copy the data common to all constitutive models from the particle to be
   // deleted to the particle to be added.
@@ -242,12 +246,13 @@ SoilFoam::allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* addset,
 }
 
 void
-SoilFoam::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
+SoilFoam::computeStableTimestep(const Patch* patch,
+                                const MPMMaterial* matl,
                                 DataWarehouse* new_dw)
 {
   // This is only called for the initial timestep - all other timesteps
   // are computed as a side-effect of computeStressTensor
-  Vector dx = patch->dCell();
+  Vector dx     = patch->dCell();
   int matlindex = matl->getDWIndex();
   // Retrieve the array of constitutive parameters
   ParticleSubset* pset = new_dw->getParticleSubset(matlindex, patch);
@@ -259,19 +264,19 @@ SoilFoam::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
 
   double c_dil = 0.0;
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
-  double G = d_initialData.G;
+  double G    = d_initialData.G;
   double bulk = d_initialData.bulk;
 
   for (int idx : *pset) {
     // Compute wave speed + particle velocity at each particle,
     // store the maximum
     // double E = 9.0*bulk/(3.0*bulk/G + 1.0);
-    c_dil = sqrt((bulk + 4. * G / 3.) * pvolume[idx] / pmass[idx]);
+    c_dil     = sqrt((bulk + 4. * G / 3.) * pvolume[idx] / pmass[idx]);
     WaveSpeed = Vector(Max(c_dil + fabs(pvelocity[idx].x()), WaveSpeed.x()),
                        Max(c_dil + fabs(pvelocity[idx].y()), WaveSpeed.y()),
                        Max(c_dil + fabs(pvelocity[idx].z()), WaveSpeed.z()));
   }
-  WaveSpeed = dx / WaveSpeed;
+  WaveSpeed       = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
   if (delT_new < 1.e-12)
     new_dw->put(delt_vartype(DBL_MAX), lb->delTLabel, patch->getLevel());
@@ -281,12 +286,13 @@ SoilFoam::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
 
 void
 SoilFoam::computeStressTensor(const PatchSubset* patches,
-                              const MPMMaterial* matl, DataWarehouse* old_dw,
+                              const MPMMaterial* matl,
+                              DataWarehouse* old_dw,
                               DataWarehouse* new_dw)
 {
   double rho_orig = matl->getInitialDensity();
   for (int p = 0; p < patches->size(); p++) {
-    double se = 0.0;
+    double se          = 0.0;
     const Patch* patch = patches->get(p);
     //
     //  FIX  To do:  Read in table for vres
@@ -350,7 +356,7 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
     new_dw->allocateAndPut(p_q, lb->p_qLabel_preReloc, pset);
 
-    double G = d_initialData.G;
+    double G    = d_initialData.G;
     double bulk = d_initialData.bulk;
 
     for (int idx : *pset) {
@@ -359,21 +365,21 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
 
       // Calculate rate of deformation D, and deviatoric rate DPrime,
       // including effect of thermal strain
-      Matrix3 D = (velGrad[idx] + velGrad[idx].Transpose()) * .5;
+      Matrix3 D      = (velGrad[idx] + velGrad[idx].Transpose()) * .5;
       Matrix3 DPrime = D - Identity * onethird * D.Trace();
 
       // get the volumetric part of the deformation
-      double J = deformationGradient_new[idx].Determinant();
-      double rho_cur = rho_orig / J;
+      double J          = deformationGradient_new[idx].Determinant();
+      double rho_cur    = rho_orig / J;
       double vol_strain = log(pvolume[idx] / (pmass[idx] / rho_orig));
       double pres;
 
       // Traditional method for mat5
       if (vol_strain > sv_min[idx]) {
-        pres = p_sv_min[idx] - bulk * (vol_strain - sv_min[idx]);
+        pres              = p_sv_min[idx] - bulk * (vol_strain - sv_min[idx]);
         p_sv_min_new[idx] = p_sv_min[idx];
-        sv_min_new[idx] = sv_min[idx];
-        // cout <<" unload "<<vol_strain<<" "<<sv_min[idx]<<" "<<pres<<endl;
+        sv_min_new[idx]   = sv_min[idx];
+        // std::cout <<" unload "<<vol_strain<<" "<<sv_min[idx]<<" "<<pres<<endl;
 
         // Compute the local sound speed
         c_dil = sqrt((bulk + 4. * G / 3.) / rho_cur);
@@ -386,9 +392,9 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
         }
         pres = d_initialData.p[i1] +
                slope[i1] * (vol_strain - d_initialData.eps[i1]);
-        // cout <<" load "<<vol_strain<<" "<<sv_min[idx]<<" "<<pres<<endl;
+        // std::cout <<" load "<<vol_strain<<" "<<sv_min[idx]<<" "<<pres<<endl;
         p_sv_min_new[idx] = pres;
-        sv_min_new[idx] = vol_strain;
+        sv_min_new[idx]   = vol_strain;
         // Compute the local sound speed
         c_dil = sqrt((-slope[i1] + 4. * G / 3.) / rho_cur);
       }
@@ -420,7 +426,7 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
       else
         ratio = sqrt(g0 / (aj2 + 1.0e-10));
 
-      // cout<<" aj2 "<<aj2<<" g0 "<<g0<<" ratio "<<ratio<<" pres "<<pres<<endl;
+      // std::cout<<" aj2 "<<aj2<<" g0 "<<g0<<" ratio "<<ratio<<" pres "<<pres<<endl;
 
       pstress_new[idx] = pstress_new[idx] * ratio - Identity * pres;
 
@@ -445,14 +451,14 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
       if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
         double c_bulk = sqrt(bulk / rho_cur);
-        Matrix3 D = (velGrad[idx] + velGrad[idx].Transpose()) * 0.5;
+        Matrix3 D     = (velGrad[idx] + velGrad[idx].Transpose()) * 0.5;
         p_q[idx] = artificialBulkViscosity(D.Trace(), c_bulk, rho_cur, dx_ave);
       } else {
         p_q[idx] = 0.;
       }
     } // end loop over particles
 
-    WaveSpeed = dx / WaveSpeed;
+    WaveSpeed       = dx / WaveSpeed;
     double delT_new = WaveSpeed.minComponent();
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 
@@ -461,17 +467,19 @@ SoilFoam::computeStressTensor(const PatchSubset* patches,
       new_dw->put(sum_vartype(se), lb->StrainEnergyLabel);
     }
 
-    //delete interpolator;
+    // delete interpolator;
   }
 }
 
 void
-SoilFoam::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                       DataWarehouse* old_dw, DataWarehouse* new_dw)
+SoilFoam::carryForward(const PatchSubset* patches,
+                       const MPMMaterial* matl,
+                       DataWarehouse* old_dw,
+                       DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
-    const Patch* patch = patches->get(p);
-    int dwi = matl->getDWIndex();
+    const Patch* patch   = patches->get(p);
+    int dwi              = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
     // Carry forward the data common to all constitutive models
@@ -504,7 +512,8 @@ SoilFoam::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
 }
 
 void
-SoilFoam::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+SoilFoam::addInitialComputesAndRequires(Task* task,
+                                        const MPMMaterial* matl,
                                         const PatchSet*) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -513,13 +522,14 @@ SoilFoam::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-SoilFoam::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+SoilFoam::addComputesAndRequires(Task* task,
+                                 const MPMMaterial* matl,
                                  const PatchSet* patches) const
 {
   // Add the computes and requires that are common to all explicit
   // constitutive models.  The method is defined in the ConstitutiveModel
   // base class.
-  Ghost::GhostType gnone = Ghost::None;
+  Ghost::GhostType gnone        = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
   addSharedCRForHypoExplicit(task, matlset, patches);
 
@@ -532,8 +542,10 @@ SoilFoam::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-SoilFoam::addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                 const PatchSet* patches, const bool,
+SoilFoam::addComputesAndRequires(Task* task,
+                                 const MPMMaterial* matl,
+                                 const PatchSet* patches,
+                                 const bool,
                                  const bool) const
 {
   // Add the computes and requires that are common to all explicit
@@ -553,12 +565,14 @@ SoilFoam::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 }
 
 double
-SoilFoam::computeRhoMicroCM(double pressure, const double /*p_ref*/,
-                            const MPMMaterial* matl, double temperature,
+SoilFoam::computeRhoMicroCM(double pressure,
+                            const double /*p_ref*/,
+                            const MPMMaterial* matl,
+                            double temperature,
                             double rho_guess)
 {
 
-  // cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR SoilFoam"
+  // std::cout << "NO VERSION OF computeRhoMicroCM EXISTS YET FOR SoilFoam"
   //   << endl;
 
   int i1 = 0, i;
@@ -570,17 +584,21 @@ SoilFoam::computeRhoMicroCM(double pressure, const double /*p_ref*/,
   double vol_strain =
     (pressure - d_initialData.p[i1]) / slope[i1] + d_initialData.eps[i1];
   double rho_orig = matl->getInitialDensity();
-  double rho_cur = rho_orig / exp(vol_strain);
+  double rho_cur  = rho_orig / exp(vol_strain);
 
   return rho_cur;
 }
 
 void
-SoilFoam::computePressEOSCM(double rho_cur, double& pressure, double /*p_ref*/,
-                            double& dp_drho, double& tmp,
-                            const MPMMaterial* matl, double temperature)
+SoilFoam::computePressEOSCM(double rho_cur,
+                            double& pressure,
+                            double /*p_ref*/,
+                            double& dp_drho,
+                            double& tmp,
+                            const MPMMaterial* matl,
+                            double temperature)
 {
-  double rho_orig = matl->getInitialDensity();
+  double rho_orig   = matl->getInitialDensity();
   double vol_strain = log(rho_orig / rho_cur);
 
   int i1 = 0, i;
@@ -592,18 +610,18 @@ SoilFoam::computePressEOSCM(double rho_cur, double& pressure, double /*p_ref*/,
   pressure =
     d_initialData.p[i1] + slope[i1] * (vol_strain - d_initialData.eps[i1]);
   dp_drho = -slope[i1] / rho_cur;
-  // cout <<" load "<<vol_strain<<" "<<sv_min[idx]<<" "<<pres<<endl;
+  // std::cout <<" load "<<vol_strain<<" "<<sv_min[idx]<<" "<<pres<<endl;
   tmp = (-slope[i1] + 4. * d_initialData.G / 3.) /
         rho_cur; // speed of sound squared
 
-  // cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR SoilFoam"
+  // std::cout << "NO VERSION OF computePressEOSCM EXISTS YET FOR SoilFoam"
   //   << endl;
 }
 
 double
 SoilFoam::getCompressibility()
 {
-  cout << "NO VERSION OF getCompressibility EXISTS YET FOR SoilFoam" << endl;
+  std::cout << "NO VERSION OF getCompressibility EXISTS YET FOR SoilFoam" << endl;
   return 1.0;
 }
 
