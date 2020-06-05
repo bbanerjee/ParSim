@@ -32,17 +32,17 @@
 #endif
 
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ElasticPlasticHP.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/DamageModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/DeformationState.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/DevStressModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/FlowStressModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/MPMEquationOfStateFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/MeltingTempModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/PlasticityState.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/ShearModulusModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/SpecificHeatModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/StabilityCheckFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DamageModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DeformationState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DevStressModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/FlowStressModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MPMEquationOfStateFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MeltingTempModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/PlasticityState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ShearModulusModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/SpecificHeatModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheckFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>

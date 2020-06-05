@@ -33,12 +33,12 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ViscoPlastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/DamageModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/MPMEquationOfStateFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/PlasticityState.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/StabilityCheckFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/ViscoPlasticityModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DamageModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MPMEquationOfStateFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/PlasticityState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheckFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ViscoPlasticityModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>
 
 #include <CCA/Ports/DataWarehouse.h>

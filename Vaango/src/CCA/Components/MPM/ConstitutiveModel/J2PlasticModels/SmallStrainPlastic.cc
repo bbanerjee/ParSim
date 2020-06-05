@@ -33,11 +33,11 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/SmallStrainPlastic.h>
 
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/DamageModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/FlowStressModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/MeltingTempModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/SpecificHeatModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/StabilityCheckFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DamageModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/FlowStressModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MeltingTempModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/SpecificHeatModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheckFactory.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>

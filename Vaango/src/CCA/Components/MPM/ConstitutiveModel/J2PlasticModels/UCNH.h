@@ -30,7 +30,7 @@
 #include <Core/Math/Short27.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/MPMEquationOfState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MPMEquationOfState.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <cmath>

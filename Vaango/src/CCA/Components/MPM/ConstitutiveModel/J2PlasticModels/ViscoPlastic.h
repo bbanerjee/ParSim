@@ -29,10 +29,10 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/StabilityCheck.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/ViscoPlasticityModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/YieldCondition.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PlasticityModels/MPMEquationOfState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheck.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ViscoPlasticityModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MPMEquationOfState.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Math/Matrix3.h>

@@ -88,7 +88,7 @@ if (FORTRAN)
 endif(FORTRAN)
 
 add_subdirectory(Models)
-add_subdirectory(PlasticityModels)
+add_subdirectory(J2PlasticSubmodels)
 #add_subdirectory(ModelsUnderDevelopment)
 
 SET(LIBS
