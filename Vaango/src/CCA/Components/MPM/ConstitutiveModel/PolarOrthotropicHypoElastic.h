@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -65,7 +66,6 @@ public:
 private:
   CMData d_cm; // Constitutive model data
 
-
 public:
   // Default constructor
   PolarOrthotropicHypoElastic(Uintah::ProblemSpecP& ps, MPMFlags* flags);
@@ -74,7 +74,8 @@ public:
   PolarOrthotropicHypoElastic(const PolarOrthotropicHypoElastic* cm);
 
   // Prevent assignment
-  PolarOrthotropicHypoElastic& operator=(const PolarOrthotropicHypoElastic& cm) = delete;
+  PolarOrthotropicHypoElastic& operator    =(
+    const PolarOrthotropicHypoElastic& cm) = delete;
 
   // Make a clone of the constitutive model
   PolarOrthotropicHypoElastic* clone() override;
@@ -82,22 +83,26 @@ public:
   // Destroy
   ~PolarOrthotropicHypoElastic() override;
 
-  ModelType modelType() const override
-  {
-    return ModelType::RATE_FORM;
-  }
+  ModelType modelType() const override { return ModelType::INCREMENTAL; }
 
   /*!  Output the problem spec for restart */
   void outputProblemSpec(Uintah::ProblemSpecP& ps,
                          bool output_cm_tag = true) override;
 
+  /*! Add particle state for variables that have to be relocated
+      when particles move to another patch at the end of a time step */
+  void addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                        std::vector<const Uintah::VarLabel*>& to) override;
+
   /*! Initial computes and requires for the constitutive model */
   void addInitialComputesAndRequires(
-    Uintah::Task* task, const MPMMaterial* matl,
+    Uintah::Task* task,
+    const MPMMaterial* matl,
     const Uintah::PatchSet* patches) const override;
 
   /*! Initialize the variables used in the CM */
-  void initializeCMData(const Uintah::Patch* patch, const MPMMaterial* matl,
+  void initializeCMData(const Uintah::Patch* patch,
+                        const MPMMaterial* matl,
                         Uintah::DataWarehouse* new_dw) override;
 
   /*! Compute a stable initial timestep */
@@ -106,7 +111,8 @@ public:
                              Uintah::DataWarehouse* new_dw);
 
   /*! Set up the computes and requires for the task */
-  void addComputesAndRequires(Uintah::Task* task, const MPMMaterial* matl,
+  void addComputesAndRequires(Uintah::Task* task,
+                              const MPMMaterial* matl,
                               const Uintah::PatchSet* patches) const override;
 
   /*! Compute the stress tensor */
@@ -115,32 +121,56 @@ public:
                            Uintah::DataWarehouse* old_dw,
                            Uintah::DataWarehouse* new_dw) override;
 
-  /*! Add particle state for variables that have to be relocated
-      when particles move to another patch at the end of a time step */
-  void addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                        std::vector<const Uintah::VarLabel*>& to) override;
-
   /*! Set up computes and requires for implicit time integration.
       @todo:  This task has not been implemented yet.
    */
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                              const PatchSet* patches, const bool recursion,
+  void addComputesAndRequires(Task* task,
+                              const MPMMaterial* matl,
+                              const PatchSet* patches,
+                              const bool recursion,
                               const bool schedPar = true) const override;
+
+  /*! Set up task variables for situations where particles are moved to
+      another material type */
+  void allocateCMDataAddRequires(Task* task,
+                                 const MPMMaterial* matl,
+                                 const PatchSet* patch,
+                                 MPMLabel* lb) const override;
+
+  /*! Allocate variables for situations where particles are to be
+      transformed into a different type of material */
+  void allocateCMDataAdd(DataWarehouse* new_dw,
+                         ParticleSubset* subset,
+                         ParticleLabelVariableMap* newState,
+                         ParticleSubset* delset,
+                         DataWarehouse* old_dw) override;
+
+  /*! Carry forward CM data for RigidMPM */
+  void carryForward(const PatchSubset* patches,
+                    const MPMMaterial* matl,
+                    DataWarehouse* old_dw,
+                    DataWarehouse* new_dw) override;
 
   /*! Compute grid cell microscopic density for MPMICE calculations.
       @todo:  This task has not been implemented yet.
    */
-  double computeRhoMicroCM(double pressure, const double p_ref,
-                           const MPMMaterial* matl, double temperature,
+  double computeRhoMicroCM(double pressure,
+                           const double p_ref,
+                           const MPMMaterial* matl,
+                           double temperature,
                            double rho_guess) override;
 
   /*! Compute grid cell pressure using an equation of state
       for MPMICE calculations.
       @todo:  This task has not been implemented yet.
    */
-  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
-                         double& dp_drho, double& ss_new,
-                         const MPMMaterial* matl, double temperature) override;
+  void computePressEOSCM(double rho_m,
+                         double& press_eos,
+                         double p_ref,
+                         double& dp_drho,
+                         double& ss_new,
+                         const MPMMaterial* matl,
+                         double temperature) override;
 
   /*! Get the compressiblity (inverse of bulk modulus)
       for MPMICE calculations.
@@ -148,22 +178,6 @@ public:
    */
   double getCompressibility() override;
 
-  /*! Carry forward CM data for RigidMPM */
-  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
-
-  /*! Set up task variables for situations where particles are moved to
-      another material type */
-  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
-                                 const PatchSet* patch,
-                                 MPMLabel* lb) const override;
-
-  /*! Allocate variables for situations where particles are to be
-      transformed into a different type of material */
-  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
-                         ParticleLabelVariableMap* newState,
-                         ParticleSubset* delset,
-                         DataWarehouse* old_dw) override;
 };
 } // End namespace Uintah
 

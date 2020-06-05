@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,6 +25,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/PolarOrthotropicHypoElastic.h>
 
+#include <CCA/Components/MPM/ConstitutiveModel/Constants.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/MPMFlags.h>
 #include <Core/Labels/MPMLabel.h>
@@ -164,17 +166,17 @@ PolarOrthotropicHypoElastic::PolarOrthotropicHypoElastic(
   const PolarOrthotropicHypoElastic* cm)
   : ConstitutiveModel(cm)
 {
-  d_cm.top = cm->d_cm.top;
-  d_cm.bottom = cm->d_cm.bottom;
-  d_cm.Er = cm->d_cm.Er;
-  d_cm.Etheta = cm->d_cm.Etheta;
-  d_cm.Ez = cm->d_cm.Ez;
-  d_cm.nuthetar = cm->d_cm.nuthetar;
-  d_cm.nuzr = cm->d_cm.nuzr;
-  d_cm.nuztheta = cm->d_cm.nuztheta;
-  d_cm.Gthetaz = cm->d_cm.Gthetaz;
-  d_cm.Gzr = cm->d_cm.Gzr;
-  d_cm.Grtheta = cm->d_cm.Grtheta;
+  d_cm.top             = cm->d_cm.top;
+  d_cm.bottom          = cm->d_cm.bottom;
+  d_cm.Er              = cm->d_cm.Er;
+  d_cm.Etheta          = cm->d_cm.Etheta;
+  d_cm.Ez              = cm->d_cm.Ez;
+  d_cm.nuthetar        = cm->d_cm.nuthetar;
+  d_cm.nuzr            = cm->d_cm.nuzr;
+  d_cm.nuztheta        = cm->d_cm.nuztheta;
+  d_cm.Gthetaz         = cm->d_cm.Gthetaz;
+  d_cm.Gzr             = cm->d_cm.Gzr;
+  d_cm.Grtheta         = cm->d_cm.Grtheta;
   d_cm.stiffnessMatrix = cm->d_cm.stiffnessMatrix;
 
   // Set up the variables for the (r, theta, z) coordinates of the particles
@@ -234,13 +236,33 @@ PolarOrthotropicHypoElastic::outputProblemSpec(ProblemSpecP& ps,
   cm_ps->appendElement("G_r_heta", d_cm.Grtheta);
 }
 
+// Register the permanent particle state associated with this material
+void
+PolarOrthotropicHypoElastic::addParticleState(
+  std::vector<const Uintah::VarLabel*>& from,
+  std::vector<const Uintah::VarLabel*>& to)
+{
+  // This is an INCREMENTAL model. Needs polar decomp R to be saved.
+  from.push_back(lb->pPolarDecompRLabel);
+  to.push_back(lb->pPolarDecompRLabel_preReloc);
+
+  from.push_back(pRCoordLabel);
+  from.push_back(pThetaCoordLabel);
+  from.push_back(pZCoordLabel);
+  to.push_back(pRCoordLabel_preReloc);
+  to.push_back(pThetaCoordLabel_preReloc);
+  to.push_back(pZCoordLabel_preReloc);
+}
+
 /*! Identify the variabless to be used in the initialization task */
 void
 PolarOrthotropicHypoElastic::addInitialComputesAndRequires(
-  Task* task, const MPMMaterial* matl, const PatchSet*) const
+  Task* task,
+  const MPMMaterial* matl,
+  const PatchSet*) const
 {
   // **NOTE** The initialization is done in ConstitutiveModel.cc
-  //   for all particle variables other than the ones definde here
+  //   for all particle variables other than the ones defined here
 
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pRCoordLabel, matlset);
@@ -257,10 +279,6 @@ PolarOrthotropicHypoElastic::initializeCMData(const Patch* patch,
   // Initialize the variables shared by all constitutive models
   // This method is defined in the ConstitutiveModel base class.
   initSharedDataForExplicit(patch, matl, new_dw);
-
-  // Set up constants
-  Matrix3 One;
-  One.Identity();
 
   // Set up the (r, theta, z) coordinates of each particle.  These are
   // material coordinates - not geometrical coordinates
@@ -285,22 +303,22 @@ PolarOrthotropicHypoElastic::initializeCMData(const Patch* patch,
   Vector cylAxisEz = d_cm.top - d_cm.bottom;
   cylAxisEz.normalize();
   Matrix3 nn(cylAxisEz, cylAxisEz);
-  Matrix3 pp = One - nn;
+  Matrix3 pp = Vaango::Util::Identity - nn;
 
   for (int idx : *pset) {
 
     // Find the cylindrical z-coord of particle
     Vector cylTopTran = d_cm.top - d_cm.bottom;
-    Vector pPosTran = pPosition[idx] - d_cm.bottom;
+    Vector pPosTran   = pPosition[idx] - d_cm.bottom;
     Vector pPosProjEz = nn * pPosTran;
     double tt =
       Uintah::Dot(pPosProjEz, pPosProjEz) / Uintah::Dot(cylTopTran, pPosProjEz);
     double cylZMax = cylTopTran.length();
-    double zz = tt * cylZMax;
+    double zz      = tt * cylZMax;
 
     // Find the cylindrical r-coord of particle
     Vector pPosRVecProj = pp * pPosTran;
-    double rr = pPosRVecProj.length();
+    double rr           = pPosRVecProj.length();
 
     dbg_extra << " pp = " << pp << " pPosTran = " << pPosTran
               << " pPosRVecProj = " << pPosRVecProj << std::endl;
@@ -316,9 +334,9 @@ PolarOrthotropicHypoElastic::initializeCMData(const Patch* patch,
         Uintah::Dot(pPosRVecProj.normal(), pPosThetaVecProj.normal()));
     }
 
-    pRCoord[idx] = rr;
+    pRCoord[idx]     = rr;
     pThetaCoord[idx] = theta;
-    pZCoord[idx] = zz;
+    pZCoord[idx]     = zz;
 
     dbg_extra << "Particle " << idx << " (x,y,z) = " << pPosition[idx]
               << " (r,theta,z) = " << rr << ", " << theta << ", " << zz
@@ -332,12 +350,13 @@ PolarOrthotropicHypoElastic::initializeCMData(const Patch* patch,
 /* Compute a stable initial timestep */
 void
 PolarOrthotropicHypoElastic::computeStableTimestep(
-  const Uintah::Patch* patch, const MPMMaterial* matl,
+  const Uintah::Patch* patch,
+  const MPMMaterial* matl,
   Uintah::DataWarehouse* new_dw)
 {
   // This is only called for the initial timestep - all other timesteps
   // are computed as a side-effect of computeStressTensor
-  Vector dx = patch->dCell();
+  Vector dx     = patch->dCell();
   int matlIndex = matl->getDWIndex();
 
   // Retrieve the array of constitutive parameters
@@ -349,14 +368,14 @@ PolarOrthotropicHypoElastic::computeStableTimestep(
   new_dw->get(pVolume, lb->pVolumeLabel, pset);
   new_dw->get(pVelocity, lb->pVelocityLabel, pset);
 
+  double longitudinal_modulus =
+    std::max(std::max(d_cm.stiffnessMatrix(1, 1), d_cm.stiffnessMatrix(2, 2)),
+             d_cm.stiffnessMatrix(3, 3));
+
   double speed_of_sound = 0.0;
   Vector waveSpeed(std::numeric_limits<double>::min(),
                    std::numeric_limits<double>::min(),
                    std::numeric_limits<double>::min());
-
-  double longitudinal_modulus =
-    std::max(std::max(d_cm.stiffnessMatrix(1, 1), d_cm.stiffnessMatrix(2, 2)),
-             d_cm.stiffnessMatrix(3, 3));
 
   for (int idx : *pset) {
 
@@ -365,21 +384,18 @@ PolarOrthotropicHypoElastic::computeStableTimestep(
     if (pMass[idx] > 0.0) {
       speed_of_sound =
         std::sqrt(longitudinal_modulus * pVolume[idx] / pMass[idx]);
-      vel[0] = speed_of_sound + std::abs(pVelocity[idx].x());
-      vel[1] = speed_of_sound + std::abs(pVelocity[idx].y());
-      vel[2] = speed_of_sound + std::abs(pVelocity[idx].z());
     } else {
       speed_of_sound = 0.0;
     }
-    waveSpeed =
-      Vector(std::max(vel.x(), waveSpeed.x()), std::max(vel.y(), waveSpeed.y()),
-             std::max(vel.z(), waveSpeed.z()));
+    Vector velMax = pVelocity[idx].cwiseAbs() + speed_of_sound;
+    waveSpeed     = Max(velMax, waveSpeed);
   }
 
-  waveSpeed = dx / waveSpeed;
+  waveSpeed       = dx / waveSpeed;
   double delT_new = waveSpeed.minComponent();
   if (delT_new < 1.e-12) {
-    new_dw->put(delt_vartype(std::numeric_limits<double>::max()), lb->delTLabel,
+    new_dw->put(delt_vartype(std::numeric_limits<double>::max()),
+                lb->delTLabel,
                 patch->getLevel());
   } else {
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
@@ -388,13 +404,15 @@ PolarOrthotropicHypoElastic::computeStableTimestep(
 
 void
 PolarOrthotropicHypoElastic::addComputesAndRequires(
-  Task* task, const MPMMaterial* matl, const PatchSet* patches) const
+  Task* task,
+  const MPMMaterial* matl,
+  const PatchSet* patches) const
 {
   // Add the computes and requires that are common to all explicit
   // constitutive models.  The method is defined in the ConstitutiveModel
   // base class.
   const MaterialSubset* matlset = matl->thisMaterial();
-  addSharedCRForHypoExplicit(task, matlset, patches);
+  addComputesAndRequiresForRotatedExplicit(task, matlset, patches);
 
   // Only the local computes and requires
   task->requires(Task::OldDW, pRCoordLabel, matlset, Ghost::None);
@@ -411,9 +429,10 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
                                                  DataWarehouse* old_dw,
                                                  DataWarehouse* new_dw)
 {
-  // Set up constants
-  Matrix3 One;
-  One.Identity();
+  double rho_0 = matl->getInitialDensity();
+  double longitudinalModulus =
+    std::max(std::max(d_cm.stiffnessMatrix(1, 1), d_cm.stiffnessMatrix(2, 2)),
+             d_cm.stiffnessMatrix(3, 3));
 
   // Get the timestep size
   delt_vartype delT;
@@ -432,12 +451,6 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
     ParticleSubset* pset = old_dw->getParticleSubset(matlIndex, patch);
 
     // Get the particle variables needed
-    constParticleVariable<double> pMass;
-    old_dw->get(pMass, lb->pMassLabel, pset);
-
-    constParticleVariable<Point> pPosition_old;
-    old_dw->get(pPosition_old, lb->pXLabel, pset);
-
     constParticleVariable<double> pRCoord, pThetaCoord, pZCoord;
     old_dw->get(pRCoord, pRCoordLabel, pset);
     old_dw->get(pThetaCoord, pThetaCoordLabel, pset);
@@ -446,25 +459,18 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
     constParticleVariable<Vector> pVelocity_old;
     old_dw->get(pVelocity_old, lb->pVelocityLabel, pset);
 
-    constParticleVariable<Matrix3> pVelGrad_new;
-    new_dw->get(pVelGrad_new, lb->pVelGradLabel_preReloc, pset);
-
-    constParticleVariable<Matrix3> pDefGrad_old, pDefGrad_new;
-    old_dw->get(pDefGrad_old, lb->pDefGradLabel, pset);
+    constParticleVariable<Matrix3> pDefRate_mid, pDefGrad_new, pStress_old;
+    new_dw->get(pDefRate_mid, lb->pDeformRateMidLabel, pset);
     new_dw->get(pDefGrad_new, lb->pDefGradLabel_preReloc, pset);
-
-    constParticleVariable<Matrix3> pStress_old;
-    old_dw->get(pStress_old, lb->pStressLabel, pset);
+    new_dw->get(pStress_old, lb->pStressUnrotatedLabel, pset);
 
     // Initialize the variables to be updated
+    ParticleVariable<double> pdTdt, pQ;
+    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
+    new_dw->allocateAndPut(pQ, lb->p_qLabel_preReloc, pset);
+
     ParticleVariable<Matrix3> pStress_new;
     new_dw->allocateAndPut(pStress_new, lb->pStressLabel_preReloc, pset);
-
-    ParticleVariable<double> pdTdt;
-    new_dw->allocateAndPut(pdTdt, lb->pdTdtLabel_preReloc, pset);
-
-    ParticleVariable<double> pQ;
-    new_dw->allocateAndPut(pQ, lb->p_qLabel_preReloc, pset);
 
     //  Copy the material coordinates
     ParticleVariable<double> pRCoord_new, pThetaCoord_new, pZCoord_new;
@@ -477,10 +483,6 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
     pZCoord_new.copyData(pZCoord);
 
     // Loop through particles
-    double rho_0 = matl->getInitialDensity();
-    double longitudinalModulus =
-      std::max(std::max(d_cm.stiffnessMatrix(1, 1), d_cm.stiffnessMatrix(2, 2)),
-               d_cm.stiffnessMatrix(3, 3));
     Vector waveSpeed(std::numeric_limits<double>::min(),
                      std::numeric_limits<double>::min(),
                      std::numeric_limits<double>::min());
@@ -494,36 +496,8 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
       // No artificial viscosity
       pQ[idx] = 0.0;
 
-      // Compute the polar decomposition of the deformation gradient (F = RU)
-      Matrix3 FF = pDefGrad_new[idx];
-      Matrix3 RR, UU;
-      FF.polarDecompositionRMB(UU, RR);
-
-      // Compute the rate of deformation (d)
-      // 1) Estimate the material time derivative of the deformation gradient
-      // (Forward Euler)
-      // 2) Compute F^{-1}
-      // 3) Compute the velocity gradient l = Fdot.Finv
-      // 4) Compute the rate of deformation d = 1/2(l + l^T)
-      Matrix3 Fdot = (FF - pDefGrad_old[idx]) * (1.0 / delT);
-      Matrix3 Finv = FF.Inverse();
-      Matrix3 ll = Fdot * Finv;
-      Matrix3 dd = (ll + ll.Transpose()) * 0.5;
-
-      dbg << " pVelGrad = " << pVelGrad_new[idx] << std::endl
-          << " l = " << ll << std::endl;
-
-      // Unrotate the stress and the rate of deformation (sig_rot = R^T sig R,
-      // d_rot = R^T d R)
-      Matrix3 stress_old_unrotated = (RR.Transpose()) * (pStress_old[idx] * RR);
-      Matrix3 d_unrotated = (RR.Transpose()) * (dd * RR);
-
-      dbg << " F = " << FF << std::endl
-          << " R = " << RR << std::endl
-          << " U = " << UU << std::endl;
-
-      dbg << " sig_old = " << pStress_old[idx] << std::endl
-          << " d = " << dd << std::endl;
+      Matrix3 stress_old_unrotated = pStress_old[idx];
+      Matrix3 d_unrotated          = pDefRate_mid[idx];
 
       dbg << " sig_rot = " << stress_old_unrotated << std::endl
           << " d_rot = " << d_unrotated << std::endl;
@@ -546,7 +520,7 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
       Vector axis_e3(0.0, 0.0, 1.0);
       Vector axis_ez = d_cm.top - d_cm.bottom;
       axis_ez.normalize();
-      double angle = std::acos(Uintah::Dot(axis_e3, axis_ez));
+      double angle    = std::acos(Uintah::Dot(axis_e3, axis_ez));
       Vector rot_axis = Uintah::Cross(axis_e3, axis_ez);
       rot_axis.normalize();
 
@@ -587,46 +561,24 @@ PolarOrthotropicHypoElastic::computeStressTensor(const PatchSubset* patches,
       // Step 5:
       Matrix3 stress_global_new;
       Vaango::rotateMatrix(QQ.transpose(), stress_rect_new, stress_global_new);
-
-      // Rotate the stress back (sig = R sigma_rot R^T)
-      Matrix3 stress_new_rotated = (RR * stress_global_new) * (RR.Transpose());
-      pStress_new[idx] = stress_new_rotated;
+      pStress_new[idx]           = stress_global_new;
 
       // Compute the wavespeed at each particle and store the maximum
-      double J = pDefGrad_new[idx].Determinant();
-      double rho_new = rho_0 / J;
+      double J              = pDefGrad_new[idx].Determinant();
+      double rho_new        = rho_0 / J;
       double speed_of_sound = std::sqrt(longitudinalModulus / rho_new);
-      Vector vel(0.0, 0.0, 0.0);
-      vel[0] = speed_of_sound + std::abs(pVelocity_old[idx].x());
-      vel[1] = speed_of_sound + std::abs(pVelocity_old[idx].y());
-      vel[2] = speed_of_sound + std::abs(pVelocity_old[idx].z());
-      waveSpeed = Vector(std::max(vel.x(), waveSpeed.x()),
-                         std::max(vel.y(), waveSpeed.y()),
-                         std::max(vel.z(), waveSpeed.z()));
+      Vector velMax = pVelocity_old[idx].cwiseAbs() + speed_of_sound;
+      waveSpeed     = Max(velMax, waveSpeed);
 
     } // end particles loop
 
     // Find the grid spacing and update deltT
-    Vector dx = patch->dCell();
-    waveSpeed = dx / waveSpeed;
+    Vector dx       = patch->dCell();
+    waveSpeed       = dx / waveSpeed;
     double delT_new = waveSpeed.minComponent();
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 
   } // end patches loop
-}
-
-// Register the permanent particle state associated with this material
-void
-PolarOrthotropicHypoElastic::addParticleState(
-  std::vector<const Uintah::VarLabel*>& from,
-  std::vector<const Uintah::VarLabel*>& to)
-{
-  from.push_back(pRCoordLabel);
-  from.push_back(pThetaCoordLabel);
-  from.push_back(pZCoordLabel);
-  to.push_back(pRCoordLabel_preReloc);
-  to.push_back(pThetaCoordLabel_preReloc);
-  to.push_back(pZCoordLabel_preReloc);
 }
 
 // Set up computes and requires for implicit time integration.
@@ -641,6 +593,56 @@ PolarOrthotropicHypoElastic::addComputesAndRequires(Task* task,
   std::ostringstream out;
   out << "**ERROR** Implicit time integration not implemented yet for";
   out << " the polar orthotropic hypoelastic material model.";
+  throw InternalError(out.str(), __FILE__, __LINE__);
+}
+
+// Set up task variables for situations where particles are moved to
+//        another material type
+void
+PolarOrthotropicHypoElastic::allocateCMDataAddRequires(Task* task,
+                                                       const MPMMaterial* matl,
+                                                       const PatchSet* patch,
+                                                       MPMLabel* lb) const
+{
+  std::ostringstream out;
+  out << "**ERROR** Conversion to another material cannot be use in "
+         "conjunction with ";
+  out << " the polar orthotropic hypoelastic material model. " << std::endl;
+  out << " Please choose another material model if you wish to model material "
+         "conversion.";
+  throw InternalError(out.str(), __FILE__, __LINE__);
+}
+
+// Allocate variables for situations where particles are to be
+//        transformed into a different type of material
+void
+PolarOrthotropicHypoElastic::allocateCMDataAdd(
+  DataWarehouse* new_dw,
+  ParticleSubset* subset,
+  ParticleLabelVariableMap* newState,
+  ParticleSubset* delset,
+  DataWarehouse* old_dw)
+{
+  std::ostringstream out;
+  out << "**ERROR** Conversion to another material cannot be use in "
+         "conjunction with ";
+  out << " the polar orthotropic hypoelastic material model. " << std::endl;
+  out << " Please choose another material model if you wish to model material "
+         "conversion.";
+  throw InternalError(out.str(), __FILE__, __LINE__);
+}
+
+// Carry forward CM data for RigidMPM
+void
+PolarOrthotropicHypoElastic::carryForward(const PatchSubset* patches,
+                                          const MPMMaterial* matl,
+                                          DataWarehouse* old_dw,
+                                          DataWarehouse* new_dw)
+{
+  std::ostringstream out;
+  out << "**ERROR** RigigMPM cannot be use in conjunction with ";
+  out << " the polar orthotropic hypoelastic material model. " << std::endl;
+  out << " Please choose another material model if you wish to use RigidMPM.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 }
 
@@ -664,8 +666,10 @@ PolarOrthotropicHypoElastic::computeRhoMicroCM(double pressure,
 //        for MPMICE calculations.
 //        @todo:  This task has not been implemented yet.
 void
-PolarOrthotropicHypoElastic::computePressEOSCM(double rho_m, double& press_eos,
-                                               double p_ref, double& dp_drho,
+PolarOrthotropicHypoElastic::computePressEOSCM(double rho_m,
+                                               double& press_eos,
+                                               double p_ref,
+                                               double& dp_drho,
                                                double& ss_new,
                                                const MPMMaterial* matl,
                                                double temperature)
@@ -692,50 +696,3 @@ PolarOrthotropicHypoElastic::getCompressibility()
   return 0.0;
 }
 
-// Carry forward CM data for RigidMPM
-void
-PolarOrthotropicHypoElastic::carryForward(const PatchSubset* patches,
-                                          const MPMMaterial* matl,
-                                          DataWarehouse* old_dw,
-                                          DataWarehouse* new_dw)
-{
-  std::ostringstream out;
-  out << "**ERROR** RigigMPM cannot be use in conjunction with ";
-  out << " the polar orthotropic hypoelastic material model. " << std::endl;
-  out << " Please choose another material model if you wish to use RigidMPM.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-}
-
-// Set up task variables for situations where particles are moved to
-//        another material type
-void
-PolarOrthotropicHypoElastic::allocateCMDataAddRequires(Task* task,
-                                                       const MPMMaterial* matl,
-                                                       const PatchSet* patch,
-                                                       MPMLabel* lb) const
-{
-  std::ostringstream out;
-  out << "**ERROR** Conversion to another material cannot be use in "
-         "conjunction with ";
-  out << " the polar orthotropic hypoelastic material model. " << std::endl;
-  out << " Please choose another material model if you wish to model material "
-         "conversion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-}
-
-// Allocate variables for situations where particles are to be
-//        transformed into a different type of material
-void
-PolarOrthotropicHypoElastic::allocateCMDataAdd(
-  DataWarehouse* new_dw, ParticleSubset* subset,
-  ParticleLabelVariableMap* newState, ParticleSubset* delset,
-  DataWarehouse* old_dw)
-{
-  std::ostringstream out;
-  out << "**ERROR** Conversion to another material cannot be use in "
-         "conjunction with ";
-  out << " the polar orthotropic hypoelastic material model. " << std::endl;
-  out << " Please choose another material model if you wish to model material "
-         "conversion.";
-  throw InternalError(out.str(), __FILE__, __LINE__);
-}

@@ -173,13 +173,10 @@ HypoElastic::computeStressTensor(const PatchSubset* patches,
   old_dw->get(delT, lb->delTLabel, getLevel(patches));
 
   for (int p = 0; p < patches->size(); p++) {
-    double strainEnergy = 0.0;
     const Patch* patch = patches->get(p);
     Vector dx = patch->dCell();
     int matID = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(matID, patch);
-
-    Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
 
     constParticleVariable<Point> pX;
     constParticleVariable<double> pMass, pVolume, pTemperature, pTempPrevious;
@@ -216,6 +213,9 @@ HypoElastic::computeStressTensor(const PatchSubset* patches,
     vol_0_CC.initialize(0.);
     dvol_CC.initialize(0.);
     ppc_CC.initialize(0);
+
+    double strainEnergy = 0.0;
+    Vector waveSpeed(1.e-12, 1.e-12, 1.e-12);
 
     for (int idx : *pset) {
       // Assign zero internal heating by default - modify if necessary.
