@@ -1,4 +1,4 @@
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TensorUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/TensorUtils.h>
 
 #include <iostream>
 #include <vector>

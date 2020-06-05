@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Constants.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecialPurposeModels/Membrane.h>
 #include <Core/Grid/Variables/VarTypes.h>

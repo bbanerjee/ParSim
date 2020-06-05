@@ -29,12 +29,12 @@ SET(MPM_ConstitutiveModel_SRCS
   ConstitutiveModel.cc          
   ImplicitCM.cc                 
   MPMMaterial.cc                
-  BasicDamageModel.cc
-  PolarOrthotropicHypoElastic.cc
+  DamageModels/BasicDamageModel.cc
   ElasticModels/CompMooneyRivlin.cc           
   ElasticModels/HypoElastic.cc                
   ElasticModels/HypoElasticFracture.cc                
   ElasticModels/HypoElasticImplicit.cc        
+  ElasticModels/PolarOrthotropicHypoElastic.cc
   ElasticModels/TransIsoHyper.cc              
   ElasticModels/TransIsoHyperImplicit.cc      
   ExplosiveModels/JWLppMPM.cc                   
@@ -70,6 +70,8 @@ SET(MPM_ConstitutiveModel_SRCS
   ViscoElasticModels/ViscoScramImplicit.cc         
   ViscoElasticModels/ViscoTransIsoHyper.cc         
   ViscoElasticModels/ViscoTransIsoHyperImplicit.cc 
+  Utilities/TensorUtils.cc
+  Utilities/WeibParameters.cc
   ManufacturedSolutions/CNH_MMS.cc                    
   ManufacturedSolutions/HypoElastic_MMS.cc
 )
@@ -78,7 +80,6 @@ SET(MPM_ConstitutiveModel_SRCS
 if (FORTRAN)
   SET(MPM_ConstitutiveModel_SRCS
     ${MPM_ConstitutiveModel_SRCS}
-    WeibParameters.cc
     ElasticModels/HypoElasticFortran.cc         
     RockSoilModels/Diamm.cc                      
     RockSoilModels/Kayenta.cc                    

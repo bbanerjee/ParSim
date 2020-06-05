@@ -28,13 +28,11 @@
 
 #include <sci_defs/uintah_defs.h> // For NO_FORTRAN
 
-
-#include <CCA/Components/MPM/ConstitutiveModel/PolarOrthotropicHypoElastic.h>
-
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/CompMooneyRivlin.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElasticFracture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElasticImplicit.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/PolarOrthotropicHypoElastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/TransIsoHyper.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/TransIsoHyperImplicit.h>
 

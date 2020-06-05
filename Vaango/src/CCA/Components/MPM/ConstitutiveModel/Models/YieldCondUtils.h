@@ -4,7 +4,7 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Math/Matrix3.h>
 #include <vector>
-#include <CCA/Components/MPM/ConstitutiveModel/Constants.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
 
 namespace Vaango {
 

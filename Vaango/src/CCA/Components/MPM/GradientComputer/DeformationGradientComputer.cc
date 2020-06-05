@@ -27,7 +27,7 @@
 #include <CCA/Components/MPM/GradientComputer/VelocityGradientComputer.h>
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Constants.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
 #include <Core/Grid/Task.h>
 #include <Core/Grid/Patch.h>
 #include <CCA/Ports/DataWarehouseP.h>

@@ -26,7 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModels/HypoElasticFortran.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Constants.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
 #include <CCA/Ports/DataWarehouse.h>
 
 #include <Core/Exceptions/ParameterNotFound.h>

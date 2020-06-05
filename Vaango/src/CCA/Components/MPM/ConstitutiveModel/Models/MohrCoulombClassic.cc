@@ -27,7 +27,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombClassic.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TensorUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/TensorUtils.h>
 
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Util/DebugStream.h>
@@ -378,7 +378,7 @@ MohrCoulombClassic::computeDfDsigma(const Vector6& stress_vec) const
 {
   dbg_doing << "Doing MohrCoulombClassic::computeDfDsigma\n";
 
-  // Constants from TensorUtils.h
+  // Constants from Utilities/TensorUtils.h
   using namespace Vaango::Tensor;
 
   Vector6 df_dsigma_vec = Vector6::Zero();

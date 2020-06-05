@@ -23,8 +23,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/BasicDamageModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TensorUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/DamageModels/BasicDamageModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/TensorUtils.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Grid/Patch.h>
@@ -751,7 +751,7 @@ BasicDamageModel::computeBasicDamage(const PatchSubset* patches,
         // cout_damage << "After update: Particle = " << idx << " pDamage = " <<
         // pDamage_new[idx] << " pStress = " << pStress[idx] << " pLocalized = "
         // << pLocalized_new[idx] <<  "\n";
-        // pLocalized_new[idx]= pLocalized[idx]; //not really used.
+        // pLocalized_new[idx]= pLocalized[idx]; /not really used.
         if (pDamage_new[idx] > 0.0)
           totalLocalizedParticle += 1;
       } else {
