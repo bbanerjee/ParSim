@@ -66,22 +66,22 @@ public:
 
   void visit(ModelState_Default& state) override
   {
-    std::cout << "In ModelState_Default\n";
+    std::cout << "Using ModelState_Default\n";
   }
 
   void visit(ModelState_SoilModelBrannon& state) override
   {
-    std::cout << "In ModelState_SoilModelBrannon\n";
+    std::cout << "Using ModelState_SoilModelBrannon\n";
   }
 
   void visit(ModelState_Arenisca3& state) override
   {
-    std::cout << "In ModelState_Arenisca3\n";
+    std::cout << "Using ModelState_Arenisca3\n";
   }
 
   void visit(ModelState_CamClay& state) override
   {
-    std::cout << "In ModelState_CamClay\n";
+    std::cout << "Using ModelState_CamClay\n";
   }
 };
 
