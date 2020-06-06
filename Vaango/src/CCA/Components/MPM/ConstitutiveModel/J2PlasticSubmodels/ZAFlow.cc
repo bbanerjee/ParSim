@@ -24,20 +24,15 @@
  * IN THE SOFTWARE.
  */
 
-#ifdef __APPLE__
-// This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
-// make the isnan function not work.  This define makes the cmath header
-// not get included since we do not need it anyway.
-#define _CPP_CMATH
-#endif
-
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ZAFlow.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <cmath>
 
-using namespace std;
 using namespace Uintah;
+using Vaango::ModelState_Default;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 ZAFlow::ZAFlow(ProblemSpecP& ps)
@@ -101,10 +96,11 @@ ZAFlow::outputProblemSpec(ProblemSpecP& ps)
 }
 
 double
-ZAFlow::computeFlowStress(const PlasticityState* state, const double&,
+ZAFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
                           const double&, const MPMMaterial*,
                           const particleIndex idx)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   double epdot = state->plasticStrainRate;
   double ep = state->plasticStrain;
   double T = state->temperature;
@@ -118,10 +114,10 @@ ZAFlow::computeFlowStress(const PlasticityState* state, const double&,
   double sigma_y =
     sigma_a + d_CM.B * exp(-beta * T) + d_CM.B_0 * sqrt(ep) * exp(-alpha * T);
   if (std::isnan(sigma_y)) {
-    cout << "ZA_Flow_Stress:: idx = " << idx << " epdot = " << epdot
-         << " ep = " << ep << " T = " << T << endl;
-    cout << " idx = " << idx << " sigma_a = " << sigma_a << " alpha = " << alpha
-         << " beta = " << beta << " sigma_y = " << sigma_y << endl;
+    std::cout << "ZA_Flow_Stress:: idx = " << idx << " epdot = " << epdot
+         << " ep = " << ep << " T = " << T << "\n";
+    std::cout << " idx = " << idx << " sigma_a = " << sigma_a << " alpha = " << alpha
+         << " beta = " << beta << " sigma_y = " << sigma_y << "\n";
   }
 
   return sigma_y;
@@ -131,10 +127,11 @@ ZAFlow::computeFlowStress(const PlasticityState* state, const double&,
 /*! \brief Calculate the plastic strain rate [epdot(tau,ep,T)] */
 //////////
 double
-ZAFlow::computeEpdot(const PlasticityState* state, const double&,
+ZAFlow::computeEpdot(const ModelStateBase* state_in, const double&,
                      const double& tolerance, const MPMMaterial*,
                      const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   double tau = state->yieldStress;
   double ep = state->plasticStrain;
   double T = state->temperature;
@@ -166,7 +163,7 @@ ZAFlow::computeEpdot(const PlasticityState* state, const double&,
 }
 
 void
-ZAFlow::computeTangentModulus(const Matrix3& stress, const PlasticityState*,
+ZAFlow::computeTangentModulus(const Matrix3& stress, const ModelStateBase*,
                               const double&, const MPMMaterial*,
                               const particleIndex, TangentModulusTensor&,
                               TangentModulusTensor&)
@@ -176,18 +173,20 @@ ZAFlow::computeTangentModulus(const Matrix3& stress, const PlasticityState*,
 }
 
 void
-ZAFlow::evalDerivativeWRTScalarVars(const PlasticityState* state,
+ZAFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state_in,
                                     const particleIndex idx, Vector& derivs)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
   derivs[2] = evalDerivativeWRTPlasticStrain(state, idx);
 }
 
 double
-ZAFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
+ZAFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
                                        const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double epdot = state->plasticStrainRate;
@@ -209,8 +208,9 @@ ZAFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
 /*  Compute the shear modulus. */
 ///////////////////////////////////////////////////////////////////////////
 double
-ZAFlow::computeShearModulus(const PlasticityState* state)
+ZAFlow::computeShearModulus(const ModelStateBase* state_in)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->shearModulus;
 }
 
@@ -218,15 +218,17 @@ ZAFlow::computeShearModulus(const PlasticityState* state)
 /* Compute the melting temperature */
 ///////////////////////////////////////////////////////////////////////////
 double
-ZAFlow::computeMeltingTemp(const PlasticityState* state)
+ZAFlow::computeMeltingTemp(const ModelStateBase* state_in)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->meltingTemp;
 }
 
 double
-ZAFlow::evalDerivativeWRTTemperature(const PlasticityState* state,
+ZAFlow::evalDerivativeWRTTemperature(const ModelStateBase* state_in,
                                      const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double epdot = state->plasticStrainRate;
@@ -245,9 +247,10 @@ ZAFlow::evalDerivativeWRTTemperature(const PlasticityState* state,
 }
 
 double
-ZAFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
+ZAFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state_in,
                                     const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double epdot = state->plasticStrainRate;

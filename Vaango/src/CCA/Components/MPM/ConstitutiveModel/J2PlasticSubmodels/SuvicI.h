@@ -181,13 +181,13 @@ public:
   ///////////////////////////////////////////////////////////////////////////
   /*! compute the flow stress */
   ///////////////////////////////////////////////////////////////////////////
-  //     virtual double computeFlowStress(const PlasticityState* state,
+  //     virtual double computeFlowStress(const ModelStateBase* state,
   //                                      const double& delT,
   //                                      const double& tolerance,
   //                                      const MPMMaterial* matl,
   //                                      const particleIndex idx);
 
-  //     virtual double computeFlowStress(const PlasticityState* state,
+  //     virtual double computeFlowStress(const ModelStateBase* state,
   //                                      const double& delT,
   //                                      const double& tolerance,
   //                                      const MPMMaterial* matl,
@@ -203,14 +203,14 @@ public:
     \brief Compute the shear modulus.
   */
   ///////////////////////////////////////////////////////////////////////////
-  double computeShearModulus(const PlasticityState* state) override;
+  double computeShearModulus(const ModelStateBase* state) override;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
     \brief Compute the melting temperature
   */
   ///////////////////////////////////////////////////////////////////////////
-  double computeMeltingTemp(const PlasticityState* state) override;
+  double computeMeltingTemp(const ModelStateBase* state) override;
 
 protected:
   void computeNij(Matrix3& nij, Matrix3& reducedEta, double& xae,

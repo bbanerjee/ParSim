@@ -27,7 +27,7 @@
 #ifndef __YIELD_CONDITION_H__
 #define __YIELD_CONDITION_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/PlasticityState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
 #include <Core/Math/TangentModulusTensor.h>
@@ -48,6 +48,8 @@ namespace Uintah {
  * Provides an abstract base class for various yield conditions used
  * in the plasticity and damage models
 */
+using Vaango::ModelStateBase;
+
 class YieldCondition
 {
 
@@ -123,7 +125,7 @@ public:
     const Matrix3& r, const Matrix3& df_ds, const Matrix3& h_beta,
     const Matrix3& df_dbeta, const double& h_alpha, const double& df_dep,
     const double& h_phi, const double& df_phi, const double& J,
-    const double& dp_dJ, const PlasticityState* state,
+    const double& dp_dJ, const ModelStateBase* state,
     TangentModulusTensor& Cep);
 };
 } // End namespace Uintah

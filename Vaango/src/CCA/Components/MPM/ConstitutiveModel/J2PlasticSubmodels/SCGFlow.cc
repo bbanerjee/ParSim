@@ -24,14 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifdef __APPLE__
-// This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
-// make the isnan function not work.  This define makes the cmath header
-// not get included since we do not need it anyway.
-#define _CPP_CMATH
-#endif
-
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/SCGFlow.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 
 #include <cmath>
 
@@ -40,7 +34,7 @@
 #include <Core/Exceptions/InvalidValue.h>
 
 using namespace Uintah;
-using namespace std;
+using Vaango::ModelState_Default;
 
 SCGFlow::SCGFlow(ProblemSpecP& ps)
 {
@@ -224,10 +218,11 @@ SCGFlow::updatePlastic(const particleIndex, const double&)
 }
 
 double
-SCGFlow::computeFlowStress(const PlasticityState* state, const double&,
+SCGFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
                            const double&, const MPMMaterial*,
                            const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double mu = state->shearModulus;
@@ -311,15 +306,15 @@ SCGFlow::computeThermallyActivatedYieldStress(const double& epdot,
     tau -= f / fPrime;
 
     if (std::isnan(tau)) {
-      // cout << "iter = " << count << " epdot = " << epdot
-      //     << " T = " << T << endl;
-      // cout << "iter = " << count << " Z0 = " << Z0 << " Z1 = " << Z1
+      // std::cout << "iter = " << count << " epdot = " << epdot
+      //     << " T = " << T << "\n";
+      // std::cout << "iter = " << count << " Z0 = " << Z0 << " Z1 = " << Z1
       //   << " Z2 = " << Z2 << " Z4 = " << Z4 << " Z5 = " << Z5
-      //   << " Z6 = " << Z6 << " C1 = " << C1 << " C2 = " << C2 << endl;
-      // cout << "iter = " << count
+      //   << " Z6 = " << Z6 << " C1 = " << C1 << " C2 = " << C2 << "\n";
+      // std::cout << "iter = " << count
       //     << " f = " << std::abs(f) << " fPrime = " << fPrime
       //   << " tau = " << tau << " tolerance = " << tolerance
-      //   << " tau-tauOld = " << std::abs(tau-tauOld) << endl;
+      //   << " tau-tauOld = " << std::abs(tau-tauOld) << "\n";
       break;
     }
     if (std::abs(tau - tauOld) < tolerance * tau)
@@ -363,14 +358,14 @@ SCGFlow::computeThermallyActivatedYieldStress(const double& epdot,
   }
 
   if (std::isnan(tau)) {
-    cout << "iter = " << count << " epdot = " << epdot << " T = " << T << endl;
-    cout << "iter = " << count << " Z0 = " << Z0 << " Z1 = " << Z1
+    std::cout << "iter = " << count << " epdot = " << epdot << " T = " << T << "\n";
+    std::cout << "iter = " << count << " Z0 = " << Z0 << " Z1 = " << Z1
          << " Z2 = " << Z2 << " Z4 = " << Z4 << " Z5 = " << Z5 << " Z6 = " << Z6
-         << " C1 = " << C1 << " C2 = " << C2 << endl;
-    cout << "iter = " << count << " f = " << std::abs(f)
+         << " C1 = " << C1 << " C2 = " << C2 << "\n";
+    std::cout << "iter = " << count << " f = " << std::abs(f)
          << " fPrime = " << fPrime << " tau = " << tau
          << " tolerance = " << tolerance
-         << " tau-tauOld = " << std::abs(tau - tauOld) << endl;
+         << " tau-tauOld = " << std::abs(tau - tauOld) << "\n";
   }
   tau = (tau > sigma_P) ? sigma_P : tau;
   tau = (tau < 0.0) ? 0.0 : tau;
@@ -379,9 +374,10 @@ SCGFlow::computeThermallyActivatedYieldStress(const double& epdot,
 }
 
 double
-SCGFlow::computeEpdot(const PlasticityState* state, const double&,
+SCGFlow::computeEpdot(const ModelStateBase* state_in, const double&,
                       const double&, const MPMMaterial*, const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the needed data
   double tau = state->yieldStress;
   double ep = state->plasticStrain;
@@ -413,7 +409,7 @@ SCGFlow::computeEpdot(const PlasticityState* state, const double&,
 
 void
 SCGFlow::computeTangentModulus(const Matrix3& stress,
-                               const PlasticityState* state, const double&,
+                               const ModelStateBase* state_in, const double&,
                                const MPMMaterial*, const particleIndex idx,
                                TangentModulusTensor& Ce,
                                TangentModulusTensor& Cep)
@@ -423,18 +419,20 @@ SCGFlow::computeTangentModulus(const Matrix3& stress,
 }
 
 void
-SCGFlow::evalDerivativeWRTScalarVars(const PlasticityState* state,
+SCGFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state_in,
                                      const particleIndex idx, Vector& derivs)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   derivs[0] = evalDerivativeWRTPressure(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
   derivs[2] = evalDerivativeWRTPlasticStrain(state, idx);
 }
 
 double
-SCGFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
+SCGFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
                                         const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double mu = state->shearModulus;
@@ -456,8 +454,9 @@ SCGFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
 /*  Compute the shear modulus. */
 ///////////////////////////////////////////////////////////////////////////
 double
-SCGFlow::computeShearModulus(const PlasticityState* state)
+SCGFlow::computeShearModulus(const ModelStateBase* state_in)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   double eta = state->density / state->initialDensity;
   ASSERT(eta > 0.0);
   eta = pow(eta, 1.0 / 3.0);
@@ -471,8 +470,9 @@ SCGFlow::computeShearModulus(const PlasticityState* state)
 /* Compute the melting temperature */
 ///////////////////////////////////////////////////////////////////////////
 double
-SCGFlow::computeMeltingTemp(const PlasticityState* state)
+SCGFlow::computeMeltingTemp(const ModelStateBase* state_in)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   double eta = state->density / state->initialDensity;
   double power = 2.0 * (d_CM.Gamma_0 - d_CM.a - 1.0 / 3.0);
   double Tm =
@@ -485,9 +485,10 @@ SCGFlow::computeMeltingTemp(const PlasticityState* state)
     The strain rate dependent term in the Steinberg-Lund version
     of the model has not been included and should be for correctness.*/
 double
-SCGFlow::evalDerivativeWRTTemperature(const PlasticityState* state,
+SCGFlow::evalDerivativeWRTTemperature(const ModelStateBase* state_in,
                                       const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
 
@@ -500,9 +501,10 @@ SCGFlow::evalDerivativeWRTTemperature(const PlasticityState* state,
 }
 
 double
-SCGFlow::evalDerivativeWRTPressure(const PlasticityState* state,
+SCGFlow::evalDerivativeWRTPressure(const ModelStateBase* state_in,
                                    const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
 
@@ -546,9 +548,10 @@ SCGFlow::evalDerivativeWRTPressure(const PlasticityState* state,
     \f$ X4 = B2 epdot \f$.
 */
 double
-SCGFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
+SCGFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state_in,
                                      const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the current state data
   double epdot = state->plasticStrain;
   double T = state->temperature;
@@ -628,12 +631,12 @@ SCGFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
     Z -= g/Dg;
 
     if (std::isnan(g) || std::isnan(Z) || idx == 4924) {
-      cout << "iter = " << count << " g = " << g << " Dg = " << Dg
+      std::cout << "iter = " << count << " g = " << g << " Dg = " << Dg
            << " Z = " << Z << " epdot = " << epdot << " T = " << T
            << " A = " << A << " B1 = " << B1 << " B2 = " << B2
            << " B3 = " << B3 << " X4 = " << X4 << " X1 = " << X1
            << " X2 = " << X2 << " X3 = " << X3 << " X5 = " << X5
-           << " X6 = " << X6 << " X7 = " << X7 << endl;
+           << " X6 = " << X6 << " X7 = " << X7 << "\n";
     }
   } while (std::abs(g) > 1.0e-3);
 
@@ -643,7 +646,7 @@ SCGFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
   X3 = X2*X1;
   double denom = X4*(2.0*X2 - 1.0) - 2.0*X3*(C1*(1.0-B3*X1) + B3*X4);
   if (denom == 0.0) {
-    cout << " denom = " << denom << endl;
+    std::cout << " denom = " << denom << "\n";
   }
   double dYt_depdot = -B1*X1*X1/denom;
   double dY_depdot = dYt_depdot*mu/mu_0;

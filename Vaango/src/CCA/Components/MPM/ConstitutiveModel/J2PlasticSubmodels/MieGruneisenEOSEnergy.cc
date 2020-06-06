@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -45,15 +23,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-
-#ifdef __APPLE__
-// This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
-// make the isnan function not work.  This define makes the cmath header
-// not get included since we do not need it anyway.
-#define _CPP_CMATH
-#endif
 
 #include "MieGruneisenEOSEnergy.h"
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <Core/Exceptions/ConvergenceFailure.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Math/DEIntegrator.h>
@@ -61,7 +33,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+using Vaango::ModelState_Default;
 
 MieGruneisenEOSEnergy::MieGruneisenEOSEnergy(ProblemSpecP& ps)
 {
@@ -100,10 +72,11 @@ MieGruneisenEOSEnergy::outputProblemSpec(ProblemSpecP& ps)
 // Calculate the pressure using the Mie-Gruneisen equation of state
 double
 MieGruneisenEOSEnergy::computePressure(const MPMMaterial* matl,
-                                       const PlasticityState* state,
+                                       const ModelStateBase* state_in,
                                        const Matrix3&, const Matrix3&,
                                        const double&)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the current density
   double rho = state->density;
 
@@ -147,8 +120,9 @@ MieGruneisenEOSEnergy::computeIsentropicTemperatureRate(const double T,
 
 double
 MieGruneisenEOSEnergy::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
-                                  const PlasticityState* state)
+                                  const ModelStateBase* state_in)
 {
+  //auto state = static_cast<const ModelState_Default*>(state_in);
   double rho_0 = matl->getInitialDensity();
   double C_0 = d_const.C_0;
   double S_1 = d_const.S_1;
@@ -167,7 +141,7 @@ MieGruneisenEOSEnergy::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
   double denom3 = (denom * denom * denom);
 
   if (denom3 == 0.0) {
-    cout << "rh0_0 = " << rho_0 << " J = " << J << " numer = " << numer << endl;
+    std::cout << "rh0_0 = " << rho_0 << " J = " << J << " numer = " << numer << "\n";
     denom3 = 1.0e-5;
   }
 
@@ -278,7 +252,7 @@ MieGruneisenEOSEnergy::computePressure(const double& rho_orig,
   if (std::isnan(pressure) || std::abs(dp_dJ) < 1.0e-30) {
     ostringstream desc;
     desc << "pressure = " << -pressure << " rho_cur = " << rho_cur
-         << " dp_drho = " << -dp_drho << " c^2 = " << csquared << endl;
+         << " dp_drho = " << -dp_drho << " c^2 = " << csquared << "\n";
     throw InvalidValue(desc.str(), __FILE__, __LINE__);
   }
   return;
@@ -425,7 +399,7 @@ MieGruneisenEOSEnergy::findEtaRidder(pFuncPtr pFunc, const double& rho_orig,
   }
   ostringstream desc;
   desc << "**ERROR** Ridder algorithm did not converge"
-       << " pressure = " << p0 << " pp = " << pp << " eta = " << eta << endl;
+       << " pressure = " << p0 << " pp = " << pp << " eta = " << eta << "\n";
   throw ConvergenceFailure(desc.str(), maxIter, std::abs(fnew),
                            tolerance * std::abs(pp), __FILE__, __LINE__);
 
@@ -470,7 +444,7 @@ MieGruneisenEOSEnergy::findEtaNewton(pFuncPtr pFunc, dpdJFuncPtr dpdJFunc,
   if (iter >= maxIter) {
     ostringstream desc;
     desc << "**ERROR** Newton algorithm did not converge"
-         << " pressure = " << p0 << " eta = " << eta << endl;
+         << " pressure = " << p0 << " eta = " << eta << "\n";
     throw ConvergenceFailure(desc.str(), maxIter, std::abs(f), tolerance,
                              __FILE__, __LINE__);
   }

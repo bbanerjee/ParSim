@@ -27,17 +27,10 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 using namespace Vaango;
 
-ModelStateBase::ModelStateBase()
-  : PlasticityState()
-{
-}
+ModelStateBase::ModelStateBase() = default;
 
-ModelStateBase::ModelStateBase(const ModelStateBase& state)
-{
-}
+ModelStateBase::ModelStateBase(const ModelStateBase& state) = default;
 
-ModelStateBase::ModelStateBase(const ModelStateBase* state)
-{
-}
+ModelStateBase::ModelStateBase(const ModelStateBase* state) {}
 
 ModelStateBase::~ModelStateBase() = default;

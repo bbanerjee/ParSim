@@ -69,6 +69,12 @@ public:
 
   ModelState_CamClay& operator=(const ModelState_CamClay& state);
   ModelState_CamClay* operator=(const ModelState_CamClay* state);
+
+  void accept(ModelStateVisitor& visitor) override
+  {
+    visitor.visit(*this);
+  }
+
 };
 
 } // End namespace Uintah

@@ -25,9 +25,11 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ArmstrongFrederickKinematicHardening.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <cmath>
 
 using namespace Uintah;
+using Vaango::ModelState_Default;
 
 ArmstrongFrederickKinematicHardening::ArmstrongFrederickKinematicHardening(
   ProblemSpecP& ps)
@@ -62,10 +64,11 @@ ArmstrongFrederickKinematicHardening::outputProblemSpec(ProblemSpecP& ps)
 
 void
 ArmstrongFrederickKinematicHardening::computeBackStress(
-  const PlasticityState* state, const double& delT, const particleIndex idx,
+  const ModelStateBase* state_in, const double& delT, const particleIndex idx,
   const double& delLambda, const Matrix3& df_dsigma_normal_new,
   const Matrix3& backStress_old, Matrix3& backStress_new)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the hardening modulus
   double H_1 = d_cm.beta * d_cm.hardening_modulus_1;
   double H_2 = d_cm.beta * d_cm.hardening_modulus_2;
@@ -83,9 +86,10 @@ ArmstrongFrederickKinematicHardening::computeBackStress(
 
 void
 ArmstrongFrederickKinematicHardening::eval_h_beta(const Matrix3& df_dsigma,
-                                                  const PlasticityState* state,
+                                                  const ModelStateBase* state_in,
                                                   Matrix3& h_beta)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   double H_1 = d_cm.beta * d_cm.hardening_modulus_1;
   double H_2 = d_cm.beta * d_cm.hardening_modulus_2;
   Matrix3 beta = *(state->backStress);

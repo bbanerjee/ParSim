@@ -24,21 +24,14 @@
  * IN THE SOFTWARE.
  */
 
-#ifdef __APPLE__
-// This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
-// make the isnan function not work.  This define makes the cmath header
-// not get included since we do not need it anyway.
-#define _CPP_CMATH
-#endif
-
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ViscoPlastic.h>
-#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DamageModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MPMEquationOfStateFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/PlasticityState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheckFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ViscoPlasticityModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>
 
 #include <CCA/Ports/DataWarehouse.h>
@@ -67,8 +60,8 @@
 
 #include <iostream>
 
-using namespace std;
 using namespace Uintah;
+using Vaango::ModelState_Default;
 
 static DebugStream cout_CST("HEP", false);
 static DebugStream cout_CST1("HEP1", false);
@@ -111,14 +104,15 @@ ViscoPlastic::ViscoPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
 
   d_stable = StabilityCheckFactory::create(ps);
   if (!d_stable)
-    cerr << "Stability check disabled\n";
+    std::cerr << "Stability check disabled\n";
 
   d_plastic = ViscoPlasticityModelFactory::create(ps);
   if (!d_plastic) {
     ostringstream desc;
     desc << "An error occured in the ViscoPlasticityModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
-         << " ffjhl.  " << endl;
+         << " ffjhl.  "
+         << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -128,7 +122,8 @@ ViscoPlastic::ViscoPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
     ostringstream desc;
     desc << "An error occured in the EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
-         << " ffjhl.  " << endl;
+         << " ffjhl.  "
+         << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -140,21 +135,21 @@ ViscoPlastic::ViscoPlastic(const ViscoPlastic* cm)
   : ConstitutiveModel(cm)
   , ImplicitCM(cm)
 {
-  d_initialData.Bulk = cm->d_initialData.Bulk;
+  d_initialData.Bulk  = cm->d_initialData.Bulk;
   d_initialData.Shear = cm->d_initialData.Shear;
   d_initialData.alpha = cm->d_initialData.alpha;
-  d_useModifiedEOS = cm->d_useModifiedEOS;
-  d_removeParticles = cm->d_removeParticles;
-  d_setStressToZero = cm->d_setStressToZero;
+  d_useModifiedEOS    = cm->d_useModifiedEOS;
+  d_removeParticles   = cm->d_removeParticles;
+  d_setStressToZero   = cm->d_setStressToZero;
   //  d_checkFailureMaxTensileStress = cm->d_checkFailureMaxTensileStress;
   //   d_evolvePorosity = cm->d_evolvePorosity;
   //   d_evolveDamage = cm->d_evolveDamage;
   //   d_checkTeplaFailureCriterion = cm->d_checkTeplaFailureCriterion;
-  d_tol = cm->d_tol;
+  d_tol                        = cm->d_tol;
   d_initialMaterialTemperature = cm->d_initialMaterialTemperature;
 
   //   d_yield = YieldConditionFactory::createCopy(cm->d_yield);
-  d_stable = StabilityCheckFactory::createCopy(cm->d_stable);
+  d_stable  = StabilityCheckFactory::createCopy(cm->d_stable);
   d_plastic = ViscoPlasticityModelFactory::createCopy(cm->d_plastic);
   //   d_damage = DamageModelFactory::createCopy(cm->d_damage);
   d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos);
@@ -289,10 +284,10 @@ ViscoPlastic::initializeLocalMPMLabels()
 void
 ViscoPlastic::getFailureVariableData(ProblemSpecP& ps)
 {
-  d_varf.mean = 1.0e30; // Mean failure stress
-  d_varf.std = 0.0;     // STD failure strain
-  d_varf.dist = "constant";
-  d_varf.failureByStress = true;    // failure by stress default
+  d_varf.mean              = 1.0e30; // Mean failure stress
+  d_varf.std               = 0.0;    // STD failure strain
+  d_varf.dist              = "constant";
+  d_varf.failureByStress   = true;  // failure by stress default
   d_varf.failureByPressure = false; // failure by mean stress
   ps->get("failure_variable_mean", d_varf.mean);
   ps->get("failure_variable_std", d_varf.std);
@@ -304,10 +299,10 @@ ViscoPlastic::getFailureVariableData(ProblemSpecP& ps)
 void
 ViscoPlastic::setFailureVariableData(const ViscoPlastic* cm)
 {
-  d_varf.mean = cm->d_varf.mean;
-  d_varf.std = cm->d_varf.std;
-  d_varf.dist = cm->d_varf.dist;
-  d_varf.failureByStress = cm->d_varf.failureByStress;
+  d_varf.mean              = cm->d_varf.mean;
+  d_varf.std               = cm->d_varf.std;
+  d_varf.dist              = cm->d_varf.dist;
+  d_varf.failureByStress   = cm->d_varf.failureByStress;
   d_varf.failureByPressure = cm->d_varf.failureByPressure;
 }
 
@@ -343,7 +338,8 @@ ViscoPlastic::addParticleState(std::vector<const VarLabel*>& from,
 }
 
 void
-ViscoPlastic::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+ViscoPlastic::addInitialComputesAndRequires(Task* task,
+                                            const MPMMaterial* matl,
                                             const PatchSet* patch) const
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -364,7 +360,8 @@ ViscoPlastic::addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-ViscoPlastic::initializeCMData(const Patch* patch, const MPMMaterial* matl,
+ViscoPlastic::initializeCMData(const Patch* patch,
+                               const MPMMaterial* matl,
                                DataWarehouse* new_dw)
 {
   // Initialize the variables shared by all constitutive models
@@ -378,7 +375,7 @@ ViscoPlastic::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
   // Put stuff in here to initialize each particle's
   // constitutive model parameters and deformationMeasure
-  // cout << "Initialize CM Data in ViscoPlastic" << endl;
+  // std::cout << "Initialize CM Data in ViscoPlastic" << "\n";
   Matrix3 one, zero(0.);
   one.Identity();
 
@@ -405,15 +402,15 @@ ViscoPlastic::initializeCMData(const Patch* patch, const MPMMaterial* matl,
   Uintah::Gaussian gaussGen(d_varf.mean, d_varf.std, 0, 1, DBL_MAX);
 
   for (int& iter : *pset) {
-    pLeftStretch[iter] = one;
-    pRotation[iter] = one;
-    pStrainRate[iter] = 0.0;
+    pLeftStretch[iter]   = one;
+    pRotation[iter]      = one;
+    pStrainRate[iter]    = 0.0;
     pPlasticStrain[iter] = 0.0;
     //     pDamage[*iter] = d_damage->initialize();
     //     pPorosity[*iter] = d_porosity.f0;
-    pLocalized[iter] = 0;
+    pLocalized[iter]          = 0;
     pPlasticTemperature[iter] = d_initialMaterialTemperature;
-    pPlasticTempInc[iter] = 0.0;
+    pPlasticTempInc[iter]     = 0.0;
 
     if (d_varf.dist == "constant") {
       pFailureVariable[iter] = d_varf.mean;
@@ -427,12 +424,13 @@ ViscoPlastic::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 }
 
 void
-ViscoPlastic::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
+ViscoPlastic::computeStableTimestep(const Patch* patch,
+                                    const MPMMaterial* matl,
                                     DataWarehouse* new_dw)
 {
   // This is only called for the initial timestep - all other timesteps
   // are computed as a side-effect of computeStressTensor
-  Vector dx = patch->dCell();
+  Vector dx     = patch->dCell();
   int matlindex = matl->getDWIndex();
 
   // Retrieve the array of constitutive parameters
@@ -449,7 +447,7 @@ ViscoPlastic::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
 
   double shear = d_initialData.Shear;
-  double bulk = d_initialData.Bulk;
+  double bulk  = d_initialData.Bulk;
 
   ParticleSubset::iterator iter = pset->begin();
   for (; iter != pset->end(); iter++) {
@@ -460,7 +458,7 @@ ViscoPlastic::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
     if (pMass[idx] > 0) {
       c_dil = sqrt((bulk + 4.0 * shear / 3.0) * pVolume[idx] / pMass[idx]);
     } else {
-      c_dil = 0.0;
+      c_dil         = 0.0;
       pvelocity_idx = Vector(0.0, 0.0, 0.0);
     }
     WaveSpeed = Vector(Max(c_dil + fabs(pvelocity_idx.x()), WaveSpeed.x()),
@@ -468,19 +466,20 @@ ViscoPlastic::computeStableTimestep(const Patch* patch, const MPMMaterial* matl,
                        Max(c_dil + fabs(pvelocity_idx.z()), WaveSpeed.z()));
   }
 
-  WaveSpeed = dx / WaveSpeed;
+  WaveSpeed       = dx / WaveSpeed;
   double delT_new = WaveSpeed.minComponent();
   new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 }
 
 void
-ViscoPlastic::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+ViscoPlastic::addComputesAndRequires(Task* task,
+                                     const MPMMaterial* matl,
                                      const PatchSet* patches) const
 {
   // Add the computes and requires that are common to all explicit
   // constitutive models.  The method is defined in the ConstitutiveModel
   // base class.
-  Ghost::GhostType gnone = Ghost::None;
+  Ghost::GhostType gnone        = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
   if (flag->d_integrator == MPMFlags::Implicit) {
     //    addSharedCRForImplicit(task, matlset, patches);
@@ -523,7 +522,8 @@ ViscoPlastic::addComputesAndRequires(Task* task, const MPMMaterial* matl,
 void
 ViscoPlastic::computeStressTensor(const PatchSubset* patches,
                                   const MPMMaterial* matl,
-                                  DataWarehouse* old_dw, DataWarehouse* new_dw)
+                                  DataWarehouse* old_dw,
+                                  DataWarehouse* new_dw)
 {
 
   // if ((patches->get(0))->getID() == 19)
@@ -555,11 +555,11 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
 
   Vector WaveSpeed(1.e-12, 1.e-12, 1.e-12);
 
-  double bulk = d_initialData.Bulk;
+  double bulk  = d_initialData.Bulk;
   double shear = d_initialData.Shear;
   double alpha = d_initialData.alpha;
   double rho_0 = matl->getInitialDensity();
-  double Tm = matl->getMeltTemperature();
+  double Tm    = matl->getMeltTemperature();
 
   double totalStrainEnergy = 0.0;
   double epdot; // plastic strain rate (1/sec)
@@ -577,7 +577,7 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
     vector<IntVector> ni(interpolator->size());
     vector<Vector> d_S(interpolator->size());
 
-    // cerr << getpid() << " patch = " << patch->getID() << endl;
+    // std::cerr << getpid() << " patch = " << patch->getID() << "\n";
     // Get grid size
     Vector dx = patch->dCell();
     // double oodx[3] = {1./dx.x(), 1./dx.y(), 1./dx.z()};
@@ -674,19 +674,19 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
     new_dw->allocateAndPut(pLeftStretch_new, pLeftStretchLabel_preReloc, pset);
     new_dw->allocateAndPut(pRotation_new, pRotationLabel_preReloc, pset);
     new_dw->allocateAndPut(pStrainRate_new, pStrainRateLabel_preReloc, pset);
-    new_dw->allocateAndPut(pPlasticStrain_new, pPlasticStrainLabel_preReloc,
-                           pset);
+    new_dw->allocateAndPut(
+      pPlasticStrain_new, pPlasticStrainLabel_preReloc, pset);
     //     new_dw->allocateAndPut(pDamage_new,
     //                            pDamageLabel_preReloc,                 pset);
     //     new_dw->allocateAndPut(pPorosity_new,
     //                            pPorosityLabel_preReloc,               pset);
     new_dw->allocateAndPut(pLocalized_new, pLocalizedLabel_preReloc, pset);
-    new_dw->allocateAndPut(pPlasticTemperature_new, pPlasticTempLabel_preReloc,
-                           pset);
-    new_dw->allocateAndPut(pPlasticTempInc_new, pPlasticTempIncLabel_preReloc,
-                           pset);
-    new_dw->allocateAndPut(pFailureVariable_new, pFailureVariableLabel_preReloc,
-                           pset);
+    new_dw->allocateAndPut(
+      pPlasticTemperature_new, pPlasticTempLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pPlasticTempInc_new, pPlasticTempIncLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pFailureVariable_new, pFailureVariableLabel_preReloc, pset);
 
     // Allocate variable to store internal heating rate
     ParticleVariable<double> pdTdt, p_q;
@@ -711,13 +711,13 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
 
       // Update the deformation gradient tensor to its time n+1 value.
       Matrix3 tensorL = pVelGrad_new[idx];
-      tensorF_new = pDeformGrad_new[idx];
-      double J = tensorF_new.Determinant();
+      tensorF_new     = pDeformGrad_new[idx];
+      double J        = tensorF_new.Determinant();
 
       if (d_setStressToZero && pLocalized[idx]) {
         pDeformGrad_new[idx] = pDeformGrad[idx];
-        J = pDeformGrad[idx].Determinant();
-        tensorF_new = pDeformGrad[idx];
+        J                    = pDeformGrad[idx].Determinant();
+        tensorF_new          = pDeformGrad[idx];
       }
 
       // Calculate the current density and deformed volume
@@ -747,15 +747,15 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
         }
       }
 
-      //       cout << "tensorD= " << tensorD << " \n";
+      //       std::cout << "tensorD= " << tensorD << " \n";
       // Update the kinematic variables
       pLeftStretch_new[idx] = tensorV;
-      pRotation_new[idx] = tensorR;
+      pRotation_new[idx]    = tensorR;
 
       // If the particle is just sitting there, do nothing
       double defRateSq = tensorD.NormSquared();
       if (!(defRateSq > 0) || pLocalized[idx] == 1) {
-        pStress_new[idx] = pStress[idx];
+        pStress_new[idx]     = pStress[idx];
         pStrainRate_new[idx] = 0.0;
         //         pPlasticStrain_new[idx] = 0.0;
         pPlasticStrain_new[idx] = pPlasticStrain[idx];
@@ -764,10 +764,10 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
         pLocalized_new[idx] = pLocalized[idx];
         if (pLocalized_new[idx] == 1)
           totalLocalizedParticle += 1;
-        pFailureVariable_new[idx] = pFailureVariable[idx];
+        pFailureVariable_new[idx]    = pFailureVariable[idx];
         pPlasticTemperature_new[idx] = pPlasticTemperature[idx];
-        pPlasticTempInc_new[idx] = 0.0;
-        p_q[idx] = 0.0;
+        pPlasticTempInc_new[idx]     = 0.0;
+        p_q[idx]                     = 0.0;
         d_plastic->updateElastic(idx);
         continue;
       }
@@ -782,21 +782,21 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
 
       // Calculate the deviatoric part of the non-thermal part
       // of the rate of deformation tensor
-      tensorEta = tensorD - one * (tensorD.Trace() / 3.0);
+      tensorEta            = tensorD - one * (tensorD.Trace() / 3.0);
       pStrainRate_new[idx] = sqrt(tensorD.NormSquared() / 1.5);
 
-      //       cout << "pStrainRate_new= " <<pStrainRate_new[idx] << " \n";
+      //       std::cout << "pStrainRate_new= " <<pStrainRate_new[idx] << " \n";
 
       // Rotate the Cauchy stress back to the
       // material configuration and calculate the deviatoric part
-      tensorSig = pStress[idx];
-      tensorSig = (tensorR.Transpose()) * (tensorSig * tensorR);
+      tensorSig       = pStress[idx];
+      tensorSig       = (tensorR.Transpose()) * (tensorSig * tensorR);
       double pressure = tensorSig.Trace() / 3.0;
       Matrix3 tensorP = one * pressure;
-      tensorS = tensorSig - tensorP;
+      tensorS         = tensorSig - tensorP;
 
-      //        cout << "tensorD=" << tensorD << "\n";
-      //        cout << "tensorS=" << tensorS << "\n";
+      //        std::cout << "tensorD=" << tensorD << "\n";
+      //        std::cout << "tensorS=" << tensorS << "\n";
 
       // Calculate the temperature at the start of the time step
       double temperature = pTemperature[idx];
@@ -809,24 +809,24 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
       double C_p = matl->getSpecificHeat();
 
       // Set up the PlasticityState
-      auto state = scinew PlasticityState();
+      auto state        = scinew ModelState_Default();
       state->strainRate = pStrainRate_new[idx];
       //       state->plasticStrainRate = epdot;
       //       state->plasticStrain = ep;
-      state->pressure = pressure;
-      state->temperature = temperature;
-      state->initialTemperature = d_initialMaterialTemperature;
-      state->density = rho_cur;
-      state->initialDensity = rho_0;
-      state->volume = pVolume_deformed[idx];
-      state->initialVolume = pMass[idx] / rho_0;
-      state->bulkModulus = bulk;
-      state->initialBulkModulus = bulk;
-      state->shearModulus = shear;
+      state->pressure            = pressure;
+      state->temperature         = temperature;
+      state->initialTemperature  = d_initialMaterialTemperature;
+      state->density             = rho_cur;
+      state->initialDensity      = rho_0;
+      state->volume              = pVolume_deformed[idx];
+      state->initialVolume       = pMass[idx] / rho_0;
+      state->bulkModulus         = bulk;
+      state->initialBulkModulus  = bulk;
+      state->shearModulus        = shear;
       state->initialShearModulus = shear;
-      state->meltingTemp = Tm;
-      state->initialMeltTemp = Tm;
-      state->specificHeat = C_p;
+      state->meltingTemp         = Tm;
+      state->initialMeltTemp     = Tm;
+      state->specificHeat        = C_p;
 
       // Calculate the shear modulus and the melting temperature at the
       // start of the time step
@@ -835,7 +835,7 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
 
       // Update the plasticity state
       state->shearModulus = mu_cur;
-      state->meltingTemp = Tm_cur;
+      state->meltingTemp  = Tm_cur;
 
       // compute the local wave speed
       double c_dil = sqrt((bulk + 4.0 * mu_cur / 3.0) / rho_cur);
@@ -864,17 +864,17 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
           pStress_new[idx] = pStress[idx];
         }
 
-        pStrainRate_new[idx] = pStrainRate[idx];
-        pPlasticStrain_new[idx] = pPlasticStrain[idx];
-        pLocalized_new[idx] = pLocalized[idx];
-        pFailureVariable_new[idx] = pFailureVariable[idx];
+        pStrainRate_new[idx]         = pStrainRate[idx];
+        pPlasticStrain_new[idx]      = pPlasticStrain[idx];
+        pLocalized_new[idx]          = pLocalized[idx];
+        pFailureVariable_new[idx]    = pFailureVariable[idx];
         pPlasticTemperature_new[idx] = pPlasticTemperature[idx];
-        pPlasticTempInc_new[idx] = 0.0;
+        pPlasticTempInc_new[idx]     = 0.0;
         d_plastic->updateElastic(idx);
       } else {
 
         // Elastic - Compute the deviatoric stress
-        //       cout << "flowStress=" << flowStress << "\n";
+        //       std::cout << "flowStress=" << flowStress << "\n";
         if (flowStress <= 0.0) {
 
           // Integrate the stress rate equation to get deviatoric stress
@@ -896,19 +896,19 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
           tensorSig = (tensorR * tensorSig) * (tensorR.Transpose());
 
           // Save the updated data
-          pStress_new[idx] = tensorSig;
+          pStress_new[idx]        = tensorSig;
           pPlasticStrain_new[idx] = pPlasticStrain[idx];
-          //      cout << "elastic stress=" << pStress_new[idx] << "\n";
+          //      std::cout << "elastic stress=" << pStress_new[idx] << "\n";
 
           // Update the internal variables
           d_plastic->updateElastic(idx);
 
           // Update the temperature
           pPlasticTemperature_new[idx] = pPlasticTemperature[idx];
-          pPlasticTempInc_new[idx] = 0.0;
+          pPlasticTempInc_new[idx]     = 0.0;
 
           // Compute stability criterion
-          pLocalized_new[idx] = pLocalized[idx];
+          pLocalized_new[idx]       = pLocalized[idx];
           pFailureVariable_new[idx] = pFailureVariable[idx];
           if (pLocalized_new[idx] == 1)
             totalLocalizedParticle += 1;
@@ -919,19 +919,27 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
           // updated
           TangentModulusTensor Ce, Cep;
           computeElasticTangentModulus(bulk, shear, Ce);
-          d_plastic->computeStressIncTangent(epdot, stressRate, Cep, delT, idx,
-                                             Ce, tensorD, pStress[idx],
-                                             implicitFlag, tensorR);
-          //         cout << "epInc=" << epdot*delT << "\n";
+          d_plastic->computeStressIncTangent(epdot,
+                                             stressRate,
+                                             Cep,
+                                             delT,
+                                             idx,
+                                             Ce,
+                                             tensorD,
+                                             pStress[idx],
+                                             implicitFlag,
+                                             tensorR);
+          //         std::cout << "epInc=" << epdot*delT << "\n";
 
           // Calculate total stress
           tensorSig = pStress[idx] + stressRate * delT;
 
           state->plasticStrainRate = epdot;
-          pPlasticStrain_new[idx] = pPlasticStrain[idx] + epdot * delT;
-          state->plasticStrain = pPlasticStrain_new[idx];
+          pPlasticStrain_new[idx]  = pPlasticStrain[idx] + epdot * delT;
+          state->plasticStrain     = pPlasticStrain_new[idx];
 
-          //      cout << "plasticStrain= " << pPlasticStrain_new[idx] << " \n";
+          //      std::cout << "plasticStrain= " << pPlasticStrain_new[idx] << "
+          //      \n";
           // Calculate rate of temperature increase due to plastic strain
           double taylorQuinney = 0.9;
 
@@ -942,11 +950,11 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
           double equivStress = sqrt((devTrialStress.NormSquared()) * 1.5);
 
           double Tdot = equivStress * epdot * taylorQuinney / (rho_cur * C_p);
-          pdTdt[idx] = Tdot;
-          double dT = Tdot * delT;
-          pPlasticTempInc_new[idx] = dT;
+          pdTdt[idx]  = Tdot;
+          double dT   = Tdot * delT;
+          pPlasticTempInc_new[idx]     = dT;
           pPlasticTemperature_new[idx] = pPlasticTemperature[idx] + dT;
-          double temp_new = temperature + dT;
+          double temp_new              = temperature + dT;
 
           // Find if the particle has localized
           pLocalized_new[idx] = pLocalized[idx];
@@ -954,21 +962,26 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
           bool isLocalized = false;
 
           if (d_checkFailure && pLocalized[idx] == 0) {
-            isLocalized = updateFailedParticlesAndModifyStress(
-              tensorF_new, pFailureVariable[idx], pLocalized[idx],
-              pLocalized_new[idx], tensorSig, pParticleID[idx], temp_new,
-              Tm_cur);
+            isLocalized =
+              updateFailedParticlesAndModifyStress(tensorF_new,
+                                                   pFailureVariable[idx],
+                                                   pLocalized[idx],
+                                                   pLocalized_new[idx],
+                                                   tensorSig,
+                                                   pParticleID[idx],
+                                                   temp_new,
+                                                   Tm_cur);
           }
           if (pLocalized_new[idx] == 1)
             totalLocalizedParticle += 1;
           // Rotate the stress back to the laboratory coordinates
           // Save the new data
-          tensorSig = (tensorR * tensorSig) * (tensorR.Transpose());
+          tensorSig        = (tensorR * tensorSig) * (tensorR.Transpose());
           pStress_new[idx] = tensorSig;
           if (isLocalized) {
             d_plastic->updateElastic(idx);
           }
-          //      cout << "pStress= " << pStress_new[idx] << " \n";
+          //      std::cout << "pStress= " << pStress_new[idx] << " \n";
 
         } // end plastic
       }   // end pLocalized
@@ -993,19 +1006,19 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
 
       if (cout_visco.active()) {
         cout_visco << " totalLocalizedParticle = " << totalLocalizedParticle
-                   << " pLocalized_new[idx] = " << pLocalized_new[idx] << endl;
+                   << " pLocalized_new[idx] = " << pLocalized_new[idx] << "\n";
       }
 
       // Compute wave speed at each particle, store the maximum
       Vector pVel = pVelocity[idx];
-      WaveSpeed = Vector(Max(c_dil + fabs(pVel.x()), WaveSpeed.x()),
+      WaveSpeed   = Vector(Max(c_dil + fabs(pVel.x()), WaveSpeed.x()),
                          Max(c_dil + fabs(pVel.y()), WaveSpeed.y()),
                          Max(c_dil + fabs(pVel.z()), WaveSpeed.z()));
 
       delete state;
     } // end iterator
 
-    WaveSpeed = dx / WaveSpeed;
+    WaveSpeed       = dx / WaveSpeed;
     double delT_new = WaveSpeed.minComponent();
     new_dw->put(delt_vartype(delT_new), lb->delTLabel, patch->getLevel());
 
@@ -1017,10 +1030,10 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
     new_dw->put(sumlong_vartype(totalLocalizedParticle),
                 lb->TotalLocalizedParticleLabel);
 
-    //delete interpolator;
+    // delete interpolator;
   } // end patch
 
-  // cout_CST << getpid() << "... Out" << endl;
+  // cout_CST << getpid() << "... Out" << "\n";
 } // end method
 
 void
@@ -1030,18 +1043,18 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
                                           DataWarehouse* new_dw)
 {
   //   Constants
-  int dwi = matl->getDWIndex();
-  double sqrtTwoThird = sqrt(2.0 / 3.0);
+  int dwi              = matl->getDWIndex();
+  double sqrtTwoThird  = sqrt(2.0 / 3.0);
   Ghost::GhostType gac = Ghost::AroundCells;
   Matrix3 One;
   One.Identity();
   Matrix3 Zero(0.0);
 
-  double bulk = d_initialData.Bulk;
-  double shear = d_initialData.Shear;
-  double alpha = d_initialData.alpha;
-  double rho_0 = matl->getInitialDensity();
-  double Tm = matl->getMeltTemperature();
+  double bulk      = d_initialData.Bulk;
+  double shear     = d_initialData.Shear;
+  double alpha     = d_initialData.alpha;
+  double rho_0     = matl->getInitialDensity();
+  double Tm        = matl->getMeltTemperature();
   int implicitFlag = 1;
 
   // Do thermal expansion?
@@ -1146,18 +1159,18 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     new_dw->allocateAndPut(pLeftStretch_new, pLeftStretchLabel_preReloc, pset);
     new_dw->allocateAndPut(pRotation_new, pRotationLabel_preReloc, pset);
     new_dw->allocateAndPut(pStrainRate_new, pStrainRateLabel_preReloc, pset);
-    new_dw->allocateAndPut(pPlasticStrain_new, pPlasticStrainLabel_preReloc,
-                           pset);
+    new_dw->allocateAndPut(
+      pPlasticStrain_new, pPlasticStrainLabel_preReloc, pset);
     //     new_dw->allocateAndPut(pDamage_new,
     //                            pDamageLabel_preReloc,                 pset);
     //     new_dw->allocateAndPut(pPorosity_new,
     //                            pPorosityLabel_preReloc,               pset);
     new_dw->allocateAndPut(pLocalized_new, pLocalizedLabel_preReloc, pset);
     new_dw->allocateAndPut(pPlasticTemp_new, pPlasticTempLabel_preReloc, pset);
-    new_dw->allocateAndPut(pPlasticTempInc_new, pPlasticTempIncLabel_preReloc,
-                           pset);
-    new_dw->allocateAndPut(pFailureVariable_new, pFailureVariableLabel_preReloc,
-                           pset);
+    new_dw->allocateAndPut(
+      pPlasticTempInc_new, pPlasticTempIncLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pFailureVariable_new, pFailureVariableLabel_preReloc, pset);
 
     //     Get the back, yield and drag stresses
     d_plastic->getInternalVars(pset, old_dw);
@@ -1168,29 +1181,29 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     if (matl->getIsRigid()) {
       ParticleSubset::iterator iter = pset->begin();
       for (; iter != pset->end(); iter++) {
-        particleIndex idx = *iter;
-        pLeftStretch_new[idx] = pLeftStretch[idx];
-        pRotation_new[idx] = pRotation[idx];
-        pStrainRate_new[idx] = pStrainRate[idx];
+        particleIndex idx       = *iter;
+        pLeftStretch_new[idx]   = pLeftStretch[idx];
+        pRotation_new[idx]      = pRotation[idx];
+        pStrainRate_new[idx]    = pStrainRate[idx];
         pPlasticStrain_new[idx] = pPlasticStrain[idx];
         //         pDamage_new[idx] = pDamage[idx];
         //         pPorosity_new[idx] = pPorosity[idx];
-        pLocalized_new[idx] = pLocalized[idx];
-        pPlasticTemp_new[idx] = pPlasticTemp[idx];
-        pPlasticTempInc_new[idx] = 0.0;
+        pLocalized_new[idx]       = pLocalized[idx];
+        pPlasticTemp_new[idx]     = pPlasticTemp[idx];
+        pPlasticTempInc_new[idx]  = 0.0;
         pFailureVariable_new[idx] = pFailureVariable[idx];
 
-        pStress_new[idx] = Zero;
-        pDeformGrad_new[idx] = One;
+        pStress_new[idx]      = Zero;
+        pDeformGrad_new[idx]  = One;
         pVolume_deformed[idx] = pMass[idx] / rho_0;
-        pdTdt[idx] = 0.0;
+        pdTdt[idx]            = 0.0;
       }
 
       if (flag->d_reductionVars->accStrainEnergy ||
           flag->d_reductionVars->strainEnergy) {
         new_dw->put(sum_vartype(totalStrainEnergy), lb->StrainEnergyLabel);
       }
-      //delete interpolator;
+      // delete interpolator;
       continue;
     }
 
@@ -1207,12 +1220,12 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
       pdTdt[idx] = 0.0;
 
       DispGrad = pDispGrad_new[idx];
-      DefGrad = pDeformGrad_new[idx];
+      DefGrad  = pDeformGrad_new[idx];
       double J = DefGrad.Determinant();
 
       //    Calculate the current density and deformed volume
-      double rho_cur = rho_0 / J;
-      double volold = (pMass[idx] / rho_0);
+      double rho_cur        = rho_0 / J;
+      double volold         = (pMass[idx] / rho_0);
       pVolume_deformed[idx] = volold * J;
 
       //       Compute polar decomposition of F (F = VR)
@@ -1222,58 +1235,58 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
       //                 calculations following an implicit calculation.)
       DefGrad.polarDecomposition(LeftStretch, Rotation, d_tol, false);
       pLeftStretch_new[idx] = LeftStretch;
-      pRotation_new[idx] = Rotation;
+      pRotation_new[idx]    = Rotation;
 
       //       Compute the current strain and strain rate
-      incFFt = incDefGrad * incDefGrad.Transpose();
-      incFFtInv = incFFt.Inverse();
-      incTotalStrain = (One - incFFtInv) * 0.5;
+      incFFt               = incDefGrad * incDefGrad.Transpose();
+      incFFtInv            = incFFt.Inverse();
+      incTotalStrain       = (One - incFFtInv) * 0.5;
       pStrainRate_new[idx] = incTotalStrain.Norm() * sqrtTwoThird / delT;
 
       //       Compute thermal strain
-      double incT = pTemperature[idx] - pTempPrev[idx];
+      double incT      = pTemperature[idx] - pTempPrev[idx];
       incThermalStrain = One * (alpha * incT);
-      incStrain = incTotalStrain - incThermalStrain;
+      incStrain        = incTotalStrain - incThermalStrain;
 
       //       Compute pressure and deviatoric stress at t_n and
       //       the volumetric strain and deviatoric strain increments at t_n+1
-      oldStress = pStress[idx];
-      double pressure = oldStress.Trace() / 3.0;
+      oldStress            = pStress[idx];
+      double pressure      = oldStress.Trace() / 3.0;
       Matrix3 devStressOld = oldStress - One * pressure;
 
       //       Get the specific heat
       double C_p = matl->getSpecificHeat();
 
       //       Set up the PlasticityState
-      auto state = scinew PlasticityState();
-      state->strainRate = pStrainRate_new[idx];
-      state->plasticStrainRate = 0.0;
-      state->plasticStrain = pPlasticStrain[idx];
-      state->pressure = pressure;
-      state->temperature = pTemperature[idx];
-      state->initialTemperature = d_initialMaterialTemperature;
-      state->density = rho_cur;
-      state->initialDensity = rho_0;
-      state->volume = pVolume_deformed[idx];
-      state->initialVolume = volold;
-      state->bulkModulus = bulk;
-      state->initialBulkModulus = bulk;
-      state->shearModulus = shear;
+      auto state                 = scinew ModelState_Default();
+      state->strainRate          = pStrainRate_new[idx];
+      state->plasticStrainRate   = 0.0;
+      state->plasticStrain       = pPlasticStrain[idx];
+      state->pressure            = pressure;
+      state->temperature         = pTemperature[idx];
+      state->initialTemperature  = d_initialMaterialTemperature;
+      state->density             = rho_cur;
+      state->initialDensity      = rho_0;
+      state->volume              = pVolume_deformed[idx];
+      state->initialVolume       = volold;
+      state->bulkModulus         = bulk;
+      state->initialBulkModulus  = bulk;
+      state->shearModulus        = shear;
       state->initialShearModulus = shear;
-      state->meltingTemp = Tm;
-      state->initialMeltTemp = Tm;
-      state->specificHeat = C_p;
+      state->meltingTemp         = Tm;
+      state->initialMeltTemp     = Tm;
+      state->specificHeat        = C_p;
 
       //       Calculate the shear modulus and the melting temperature at the
       //       start of the time step and update the plasticity state
-      double Tm_cur = d_plastic->computeMeltingTemp(state);
-      state->meltingTemp = Tm_cur;
-      double mu_cur = d_plastic->computeShearModulus(state);
+      double Tm_cur       = d_plastic->computeMeltingTemp(state);
+      state->meltingTemp  = Tm_cur;
+      double mu_cur       = d_plastic->computeShearModulus(state);
       state->shearModulus = mu_cur;
 
       //       Compute trial stress
       double lambda = bulk - (2.0 / 3.0) * mu_cur;
-      trialStress = oldStress + One * (lambda * incStrain.Trace()) +
+      trialStress   = oldStress + One * (lambda * incStrain.Trace()) +
                     incStrain * (2.0 * mu_cur);
       devTrialStress = trialStress - One * (trialStress.Trace() / 3.0);
 
@@ -1290,12 +1303,12 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
           pStress_new[idx] = pStress[idx];
         }
 
-        pStrainRate_new[idx] = pStrainRate[idx];
-        pPlasticStrain_new[idx] = pPlasticStrain[idx];
-        pLocalized_new[idx] = pLocalized[idx];
+        pStrainRate_new[idx]      = pStrainRate[idx];
+        pPlasticStrain_new[idx]   = pPlasticStrain[idx];
+        pLocalized_new[idx]       = pLocalized[idx];
         pFailureVariable_new[idx] = pFailureVariable[idx];
-        pPlasticTemp_new[idx] = pPlasticTemp[idx];
-        pPlasticTempInc_new[idx] = 0.0;
+        pPlasticTemp_new[idx]     = pPlasticTemp[idx];
+        pPlasticTempInc_new[idx]  = 0.0;
         d_plastic->updateElastic(idx);
       } else {
 
@@ -1303,7 +1316,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
         if (flowStress <= 0.0) {
 
           //         Save the updated data
-          pStress_new[idx] = trialStress;
+          pStress_new[idx]        = trialStress;
           pPlasticStrain_new[idx] = pPlasticStrain[idx];
           //         pDamage_new[idx] = pDamage[idx];
           //         pPorosity_new[idx] = pPorosity[idx];
@@ -1312,11 +1325,11 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
           d_plastic->updateElastic(idx);
 
           //         Update the temperature
-          pPlasticTemp_new[idx] = pPlasticTemp[idx];
+          pPlasticTemp_new[idx]    = pPlasticTemp[idx];
           pPlasticTempInc_new[idx] = 0.0;
 
           //         Compute stability criterion
-          pLocalized_new[idx] = pLocalized[idx];
+          pLocalized_new[idx]       = pLocalized[idx];
           pFailureVariable_new[idx] = pFailureVariable[idx];
         } else {
 
@@ -1325,9 +1338,16 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
           Matrix3 stressRate;
           TangentModulusTensor Ce, Cep;
           computeElasticTangentModulus(bulk, shear, Ce);
-          d_plastic->computeStressIncTangent(epdot, stressRate, Cep, delT, idx,
-                                             Ce, incStrain, pStress[idx],
-                                             implicitFlag, Rotation);
+          d_plastic->computeStressIncTangent(epdot,
+                                             stressRate,
+                                             Cep,
+                                             delT,
+                                             idx,
+                                             Ce,
+                                             incStrain,
+                                             pStress[idx],
+                                             implicitFlag,
+                                             Rotation);
 
           // Calculate total stress
           pStress_new[idx] = pStress[idx] + stressRate * delT;
@@ -1335,17 +1355,17 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
           pPlasticStrain_new[idx] = pPlasticStrain[idx] + epdot * delT;
 
           state->plasticStrainRate = epdot;
-          state->plasticStrain = pPlasticStrain_new[idx];
+          state->plasticStrain     = pPlasticStrain_new[idx];
 
           //         Calculate rate of temperature increase due to plastic
           //         strain
           double taylorQuinney = 0.9;
           double Tdot = flowStress * state->plasticStrainRate * taylorQuinney /
                         (rho_cur * C_p);
-          pdTdt[idx] = Tdot;
-          double dT = Tdot * delT;
+          pdTdt[idx]               = Tdot;
+          double dT                = Tdot * delT;
           pPlasticTempInc_new[idx] = dT;
-          pPlasticTemp_new[idx] = pPlasticTemp[idx] + dT;
+          pPlasticTemp_new[idx]    = pPlasticTemp[idx] + dT;
 
           // Find if the particle has localized
           pLocalized_new[idx] = pLocalized[idx];
@@ -1353,10 +1373,15 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
           bool isLocalized = false;
 
           if (d_checkFailure && pLocalized[idx] == 0) {
-            isLocalized = updateFailedParticlesAndModifyStress(
-              DefGrad, pFailureVariable[idx], pLocalized[idx],
-              pLocalized_new[idx], pStress_new[idx], pParticleID[idx],
-              pPlasticTemp_new[idx], Tm_cur);
+            isLocalized =
+              updateFailedParticlesAndModifyStress(DefGrad,
+                                                   pFailureVariable[idx],
+                                                   pLocalized[idx],
+                                                   pLocalized_new[idx],
+                                                   pStress_new[idx],
+                                                   pParticleID[idx],
+                                                   pPlasticTemp_new[idx],
+                                                   Tm_cur);
           }
           // Rotate the stress back to the laboratory coordinates
           // Save the new data - no need for implicit
@@ -1372,7 +1397,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
 
       // Compute the strain energy for non-localized particles
       if (pLocalized_new[idx] == 0) {
-        Matrix3 avgStress = (pStress_new[idx] + pStress[idx]) * 0.5;
+        Matrix3 avgStress    = (pStress_new[idx] + pStress[idx]) * 0.5;
         double pStrainEnergy = (incStrain(0, 0) * avgStress(0, 0) +
                                 incStrain(1, 1) * avgStress(1, 1) +
                                 incStrain(2, 2) * avgStress(2, 2) +
@@ -1390,12 +1415,13 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(totalStrainEnergy), lb->StrainEnergyLabel);
     }
-    //delete interpolator;
+    // delete interpolator;
   } // end patch
 } // end method
 
 void
-ViscoPlastic::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+ViscoPlastic::addComputesAndRequires(Task* task,
+                                     const MPMMaterial* matl,
                                      const PatchSet* patches,
                                      const bool recurse,
                                      const bool SchedParent) const
@@ -1424,7 +1450,8 @@ void
 ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
                                           const MPMMaterial* matl,
                                           DataWarehouse* old_dw,
-                                          DataWarehouse* new_dw, Solver* solver,
+                                          DataWarehouse* new_dw,
+                                          Solver* solver,
                                           const bool recurs)
 {
   // Constants
@@ -1433,13 +1460,13 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
   One.Identity();
   Matrix3 Zero(0.0);
 
-  //    cout << "computeStressTensor bool version\n";
+  //    std::cout << "computeStressTensor bool version\n";
 
-  double bulk = d_initialData.Bulk;
-  double shear = d_initialData.Shear;
-  double alpha = d_initialData.alpha;
-  double rho_0 = matl->getInitialDensity();
-  double Tm = matl->getMeltTemperature();
+  double bulk      = d_initialData.Bulk;
+  double shear     = d_initialData.Shear;
+  double alpha     = d_initialData.alpha;
+  double rho_0     = matl->getInitialDensity();
+  double Tm        = matl->getMeltTemperature();
   int implicitFlag = 1;
 
   // Do thermal expansion?
@@ -1504,14 +1531,14 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     //    IntVector lowIndex = patch->getInteriorNodeLowIndex();
     //    IntVector highIndex =
     //    patch->getInteriorNodeHighIndex()+IntVector(1,1,1);
-    IntVector lowIndex = patch->getNodeLowIndex();
+    IntVector lowIndex  = patch->getNodeLowIndex();
     IntVector highIndex = patch->getNodeHighIndex() + IntVector(1, 1, 1);
 
     Array3<int> l2g(lowIndex, highIndex);
     solver->copyL2G(l2g, patch);
 
     // Get grid size
-    Vector dx = patch->dCell();
+    Vector dx      = patch->dCell();
     double oodx[3] = { 1. / dx.x(), 1. / dx.y(), 1. / dx.z() };
 
     // Get the set of particles
@@ -1545,21 +1572,21 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     new_dw->allocateAndPut(pStress_new, lb->pStressLabel_preReloc, pset);
 
     // LOCAL
-    new_dw->allocateAndPut(pPlasticStrain_new, pPlasticStrainLabel_preReloc,
-                           pset);
+    new_dw->allocateAndPut(
+      pPlasticStrain_new, pPlasticStrainLabel_preReloc, pset);
 
     // Special case for rigid materials
     if (matl->getIsRigid()) {
       ParticleSubset::iterator iter = pset->begin();
       for (; iter != pset->end(); iter++) {
-        particleIndex idx = *iter;
+        particleIndex idx       = *iter;
         pPlasticStrain_new[idx] = pPlasticStrain[idx];
 
-        pStress_new[idx] = Zero;
-        pDeformGrad_new[idx] = One;
+        pStress_new[idx]      = Zero;
+        pDeformGrad_new[idx]  = One;
         pVolume_deformed[idx] = pMass[idx] / rho_0;
       }
-      //delete interpolator;
+      // delete interpolator;
       continue;
     }
 
@@ -1575,73 +1602,73 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
     for (; iter != pset->end(); iter++) {
       particleIndex idx = *iter;
 
-      // CSTir << " patch = " << patch << " particle = " << idx << endl;
+      // CSTir << " patch = " << patch << " particle = " << idx << "\n";
 
       // Calculate the displacement gradient
       //       interpolator->findCellAndShapeDerivatives(px[idx],ni,d_S);
-      interpolator->findCellAndShapeDerivatives(px[idx], ni, d_S, psize[idx],
-                                                pDeformGrad[idx]);
+      interpolator->findCellAndShapeDerivatives(
+        px[idx], ni, d_S, psize[idx], pDeformGrad[idx]);
       dg.computeBmats(ni, d_S, oodx, l2g, B, Bnl, dof);
 
       // Update the deformation gradient
-      DefGrad = pDeformGrad_new[idx];
+      DefGrad  = pDeformGrad_new[idx];
       double J = DefGrad.Determinant();
 
       // Calculate the current density and deformed volume
-      double rho_cur = rho_0 / J;
-      double volold = (pMass[idx] / rho_0);
+      double rho_cur        = rho_0 / J;
+      double volold         = (pMass[idx] / rho_0);
       pVolume_deformed[idx] = volold * J;
 
       // Compute the current strain and strain rate
-      incFFt = incDefGrad * incDefGrad.Transpose();
-      incFFtInv = incFFt.Inverse();
+      incFFt         = incDefGrad * incDefGrad.Transpose();
+      incFFtInv      = incFFt.Inverse();
       incTotalStrain = (One - incFFtInv) * 0.5;
 
       double pStrainRate_new = incTotalStrain.Norm() * sqrt(2.0 / 3.0) / delT;
 
       // Compute thermal strain
-      double incT = pTemperature[idx] - pTempPrev[idx];
+      double incT      = pTemperature[idx] - pTempPrev[idx];
       incThermalStrain = One * (alpha * incT);
-      incStrain = incTotalStrain - incThermalStrain;
+      incStrain        = incTotalStrain - incThermalStrain;
 
       // CSTir << " particle = " << idx << " incStrain = " << incStrain  <<
-      // endl;
+      // "\n";
 
       // Compute pressure and deviatoric stress at t_n and
       // the volumetric strain and deviatoric strain increments at t_n+1
-      oldStress = pStress[idx];
+      oldStress       = pStress[idx];
       double pressure = oldStress.Trace() / 3.0;
       // Matrix3 devStressOld = oldStress - One*pressure;
 
       // Set up the PlasticityState
-      auto state = scinew PlasticityState();
-      state->strainRate = pStrainRate_new;
-      state->plasticStrainRate = 0.0;
-      state->plasticStrain = pPlasticStrain[idx];
-      state->pressure = pressure;
-      state->temperature = pTemperature[idx];
-      state->initialTemperature = d_initialMaterialTemperature;
-      state->density = rho_cur;
-      state->initialDensity = rho_0;
-      state->volume = pVolume_deformed[idx];
-      state->initialVolume = volold;
-      state->bulkModulus = bulk;
-      state->initialBulkModulus = bulk;
-      state->shearModulus = shear;
+      auto state                 = scinew ModelState_Default();
+      state->strainRate          = pStrainRate_new;
+      state->plasticStrainRate   = 0.0;
+      state->plasticStrain       = pPlasticStrain[idx];
+      state->pressure            = pressure;
+      state->temperature         = pTemperature[idx];
+      state->initialTemperature  = d_initialMaterialTemperature;
+      state->density             = rho_cur;
+      state->initialDensity      = rho_0;
+      state->volume              = pVolume_deformed[idx];
+      state->initialVolume       = volold;
+      state->bulkModulus         = bulk;
+      state->initialBulkModulus  = bulk;
+      state->shearModulus        = shear;
       state->initialShearModulus = shear;
-      state->meltingTemp = Tm;
-      state->initialMeltTemp = Tm;
+      state->meltingTemp         = Tm;
+      state->initialMeltTemp     = Tm;
 
       // Calculate the shear modulus and the melting temperature at the
       // start of the time step and update the plasticity state
-      double Tm_cur = d_plastic->computeMeltingTemp(state);
-      state->meltingTemp = Tm_cur;
-      double mu_cur = d_plastic->computeShearModulus(state);
+      double Tm_cur       = d_plastic->computeMeltingTemp(state);
+      state->meltingTemp  = Tm_cur;
+      double mu_cur       = d_plastic->computeShearModulus(state);
       state->shearModulus = mu_cur;
 
       // Compute trial stress
       double lambda = bulk - (2.0 / 3.0) * mu_cur;
-      trialStress = oldStress + One * (lambda * incStrain.Trace()) +
+      trialStress   = oldStress + One * (lambda * incStrain.Trace()) +
                     incStrain * (2.0 * mu_cur);
       devTrialStress = trialStress - One * (trialStress.Trace() / 3.0);
 
@@ -1656,13 +1683,13 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
       if (flowStress <= 0.0) {
 
         // Save the updated data
-        pStress_new[idx] = trialStress;
+        pStress_new[idx]        = trialStress;
         pPlasticStrain_new[idx] = pPlasticStrain[idx];
 
         computeElasticTangentModulus(bulk, shear, D);
 
         // CSTir << " Elastic particle = " << idx
-        //      << " stress = " << pStress_new[idx] << endl;
+        //      << " stress = " << pStress_new[idx] << "\n";
 
       } else {
 
@@ -1672,31 +1699,38 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
         TangentModulusTensor Ce, Cep;
         computeElasticTangentModulus(bulk, shear, Ce);
 
-        d_plastic->computeStressIncTangent(epdot, stressRate, Cep, delT, idx,
-                                           Ce, incStrain, pStress[idx],
-                                           implicitFlag, Zero);
+        d_plastic->computeStressIncTangent(epdot,
+                                           stressRate,
+                                           Cep,
+                                           delT,
+                                           idx,
+                                           Ce,
+                                           incStrain,
+                                           pStress[idx],
+                                           implicitFlag,
+                                           Zero);
         convertToVoigtForm(Ce, D);
 
         // Calculate total stress
-        pStress_new[idx] = pStress[idx] + stressRate * delT;
+        pStress_new[idx]        = pStress[idx] + stressRate * delT;
         pPlasticStrain_new[idx] = pPlasticStrain[idx] + epdot * delT;
 
         state->plasticStrainRate = epdot;
-        state->plasticStrain = pPlasticStrain_new[idx];
+        state->plasticStrain     = pPlasticStrain_new[idx];
 
         //         computeEPlasticTangentModulus(bulk, shear, delGamma,
         //         normTrialS,
         //                                       idx, nn, state, D);
 
         // CSTir << " Plastic particle = " << idx
-        //      << " stress = " << pStress_new[idx] << endl;
+        //      << " stress = " << pStress_new[idx] << "\n";
       }
 
       // Compute K matrix = Kmat + Kgeo
-      computeStiffnessMatrix(B, Bnl, D, pStress[idx], volold,
-                             pVolume_deformed[idx], Kmatrix);
+      computeStiffnessMatrix(
+        B, Bnl, D, pStress[idx], volold, pVolume_deformed[idx], Kmatrix);
 
-      // CSTir << " particle = " << idx << " Computed K matrix " << endl;
+      // CSTir << " particle = " << idx << " Computed K matrix " << "\n";
 
       // Assemble into global K matrix
       for (int ii = 0; ii < 24; ii++) {
@@ -1706,11 +1740,11 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
       }
       solver->fillMatrix(24, dof, 24, dof, v);
 
-      // CSTir << " particle = " << idx << " Sent to solver " << endl;
+      // CSTir << " particle = " << idx << " Sent to solver " << "\n";
 
       delete state;
     }
-    //delete interpolator;
+    // delete interpolator;
   }
   //  solver->flushMatrix();
 }
@@ -1721,12 +1755,13 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
             [strain] = [e11 e22 e33 2e23 2e31 2e12]
 */
 void
-ViscoPlastic::computeElasticTangentModulus(const double& K, const double& mu,
+ViscoPlastic::computeElasticTangentModulus(const double& K,
+                                           const double& mu,
                                            double Ce[6][6])
 {
   // Form the elastic tangent modulus tensor
-  double twomu = 2.0 * mu;
-  double lambda = K - (twomu / 3.0);
+  double twomu        = 2.0 * mu;
+  double lambda       = K - (twomu / 3.0);
   double lambda_twomu = lambda + twomu;
 
   for (int ii = 0; ii < 6; ++ii) {
@@ -1757,10 +1792,14 @@ ViscoPlastic::computeElasticTangentModulus(const double& K, const double& mu,
     Uses alogorithm for small strain plasticity (Simo 1998, p.124)
 */
 void
-ViscoPlastic::computeEPlasticTangentModulus(
-  const double& K, const double& mu, const double& delGamma,
-  const double& normTrialS, const particleIndex idx, const Matrix3& n,
-  PlasticityState* state, double Cep[6][6])
+ViscoPlastic::computeEPlasticTangentModulus(const double& K,
+                                            const double& mu,
+                                            const double& delGamma,
+                                            const double& normTrialS,
+                                            const particleIndex idx,
+                                            const Matrix3& n,
+                                            ModelStateBase* state,
+                                            double Cep[6][6])
 {
 }
 
@@ -1768,7 +1807,8 @@ ViscoPlastic::computeEPlasticTangentModulus(
 void
 ViscoPlastic::computeStiffnessMatrix(const double B[6][24],
                                      const double Bnl[3][24],
-                                     const double D[6][6], const Matrix3& sig,
+                                     const double D[6][6],
+                                     const Matrix3& sig,
                                      const double& vol_old,
                                      const double& vol_new,
                                      double Kmatrix[24][24])
@@ -1789,7 +1829,8 @@ ViscoPlastic::computeStiffnessMatrix(const double B[6][24],
 }
 
 void
-ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
+ViscoPlastic::BnlTSigBnl(const Matrix3& sig,
+                         const double Bnl[3][24],
                          double Kgeo[24][24]) const
 {
   double t1, t10, t11, t12, t13, t14, t15, t16, t17;
@@ -1803,15 +1844,15 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   double t75, t77, t78, t8, t81, t85, t88, t9, t90;
   double t79, t82, t83, t86, t87, t89;
 
-  t1 = Bnl[0][0] * sig(0, 0);
-  t4 = Bnl[0][0] * sig(0, 0);
-  t2 = Bnl[0][0] * sig(0, 1);
-  t3 = Bnl[0][0] * sig(0, 2);
-  t5 = Bnl[1][1] * sig(1, 1);
-  t8 = Bnl[1][1] * sig(1, 1);
-  t6 = Bnl[1][1] * sig(1, 2);
-  t7 = Bnl[1][1] * sig(0, 1);
-  t9 = Bnl[2][2] * sig(2, 2);
+  t1  = Bnl[0][0] * sig(0, 0);
+  t4  = Bnl[0][0] * sig(0, 0);
+  t2  = Bnl[0][0] * sig(0, 1);
+  t3  = Bnl[0][0] * sig(0, 2);
+  t5  = Bnl[1][1] * sig(1, 1);
+  t8  = Bnl[1][1] * sig(1, 1);
+  t6  = Bnl[1][1] * sig(1, 2);
+  t7  = Bnl[1][1] * sig(0, 1);
+  t9  = Bnl[2][2] * sig(2, 2);
   t12 = Bnl[2][2] * sig(2, 2);
   t10 = Bnl[2][2] * sig(0, 2);
   t11 = Bnl[2][2] * sig(1, 2);
@@ -1891,256 +1932,256 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   t89 = Bnl[1][22] * sig(1, 2);
   t90 = Bnl[2][23] * sig(2, 2);
 
-  Kgeo[0][0] = t1 * Bnl[0][0];
-  Kgeo[0][1] = t2 * Bnl[1][1];
-  Kgeo[0][2] = t3 * Bnl[2][2];
-  Kgeo[0][3] = t4 * Bnl[0][3];
-  Kgeo[0][4] = t2 * Bnl[1][4];
-  Kgeo[0][5] = t3 * Bnl[2][5];
-  Kgeo[0][6] = t4 * Bnl[0][6];
-  Kgeo[0][7] = t2 * Bnl[1][7];
-  Kgeo[0][8] = t3 * Bnl[2][8];
-  Kgeo[0][9] = t4 * Bnl[0][9];
-  Kgeo[0][10] = t2 * Bnl[1][10];
-  Kgeo[0][11] = t3 * Bnl[2][11];
-  Kgeo[0][12] = t4 * Bnl[0][12];
-  Kgeo[0][13] = t2 * Bnl[1][13];
-  Kgeo[0][14] = t3 * Bnl[2][14];
-  Kgeo[0][15] = t4 * Bnl[0][15];
-  Kgeo[0][16] = t2 * Bnl[1][16];
-  Kgeo[0][17] = t3 * Bnl[2][17];
-  Kgeo[0][18] = t4 * Bnl[0][18];
-  Kgeo[0][19] = t2 * Bnl[1][19];
-  Kgeo[0][20] = t3 * Bnl[2][20];
-  Kgeo[0][21] = t4 * Bnl[0][21];
-  Kgeo[0][22] = t2 * Bnl[1][22];
-  Kgeo[0][23] = t3 * Bnl[2][23];
-  Kgeo[1][0] = Kgeo[0][1];
-  Kgeo[1][1] = t5 * Bnl[1][1];
-  Kgeo[1][2] = t6 * Bnl[2][2];
-  Kgeo[1][3] = t7 * Bnl[0][3];
-  Kgeo[1][4] = Bnl[1][4] * t8;
-  Kgeo[1][5] = t6 * Bnl[2][5];
-  Kgeo[1][6] = t7 * Bnl[0][6];
-  Kgeo[1][7] = Bnl[1][7] * t8;
-  Kgeo[1][8] = t6 * Bnl[2][8];
-  Kgeo[1][9] = t7 * Bnl[0][9];
-  Kgeo[1][10] = Bnl[1][10] * t8;
-  Kgeo[1][11] = t6 * Bnl[2][11];
-  Kgeo[1][12] = t7 * Bnl[0][12];
-  Kgeo[1][13] = Bnl[1][13] * t8;
-  Kgeo[1][14] = t6 * Bnl[2][14];
-  Kgeo[1][15] = t7 * Bnl[0][15];
-  Kgeo[1][16] = Bnl[1][16] * t8;
-  Kgeo[1][17] = t6 * Bnl[2][17];
-  Kgeo[1][18] = t7 * Bnl[0][18];
-  Kgeo[1][19] = Bnl[1][19] * t8;
-  Kgeo[1][20] = t6 * Bnl[2][20];
-  Kgeo[1][21] = t7 * Bnl[0][21];
-  Kgeo[1][22] = Bnl[1][22] * t8;
-  Kgeo[1][23] = t6 * Bnl[2][23];
-  Kgeo[2][0] = Kgeo[0][2];
-  Kgeo[2][1] = Kgeo[1][2];
-  Kgeo[2][2] = t9 * Bnl[2][2];
-  Kgeo[2][3] = t10 * Bnl[0][3];
-  Kgeo[2][4] = Bnl[1][4] * t11;
-  Kgeo[2][5] = t12 * Bnl[2][5];
-  Kgeo[2][6] = t10 * Bnl[0][6];
-  Kgeo[2][7] = Bnl[1][7] * t11;
-  Kgeo[2][8] = t12 * Bnl[2][8];
-  Kgeo[2][9] = t10 * Bnl[0][9];
-  Kgeo[2][10] = Bnl[1][10] * t11;
-  Kgeo[2][11] = t12 * Bnl[2][11];
-  Kgeo[2][12] = t10 * Bnl[0][12];
-  Kgeo[2][13] = Bnl[1][13] * t11;
-  Kgeo[2][14] = t12 * Bnl[2][14];
-  Kgeo[2][15] = t10 * Bnl[0][15];
-  Kgeo[2][16] = Bnl[1][16] * t11;
-  Kgeo[2][17] = t12 * Bnl[2][17];
-  Kgeo[2][18] = t10 * Bnl[0][18];
-  Kgeo[2][19] = t11 * Bnl[1][19];
-  Kgeo[2][20] = t12 * Bnl[2][20];
-  Kgeo[2][21] = t10 * Bnl[0][21];
-  Kgeo[2][22] = t11 * Bnl[1][22];
-  Kgeo[2][23] = t12 * Bnl[2][23];
-  Kgeo[3][0] = Kgeo[0][3];
-  Kgeo[3][1] = Kgeo[1][3];
-  Kgeo[3][2] = Kgeo[2][3];
-  Kgeo[3][3] = t13 * Bnl[0][3];
-  Kgeo[3][4] = t14 * Bnl[1][4];
-  Kgeo[3][5] = Bnl[2][5] * t15;
-  Kgeo[3][6] = t16 * Bnl[0][6];
-  Kgeo[3][7] = t14 * Bnl[1][7];
-  Kgeo[3][8] = Bnl[2][8] * t15;
-  Kgeo[3][9] = t16 * Bnl[0][9];
-  Kgeo[3][10] = t14 * Bnl[1][10];
-  Kgeo[3][11] = Bnl[2][11] * t15;
-  Kgeo[3][12] = t16 * Bnl[0][12];
-  Kgeo[3][13] = t14 * Bnl[1][13];
-  Kgeo[3][14] = Bnl[2][14] * t15;
-  Kgeo[3][15] = t16 * Bnl[0][15];
-  Kgeo[3][16] = t14 * Bnl[1][16];
-  Kgeo[3][17] = Bnl[2][17] * t15;
-  Kgeo[3][18] = t16 * Bnl[0][18];
-  Kgeo[3][19] = t14 * Bnl[1][19];
-  Kgeo[3][20] = Bnl[2][20] * t15;
-  Kgeo[3][21] = t16 * Bnl[0][21];
-  Kgeo[3][22] = t14 * Bnl[1][22];
-  Kgeo[3][23] = Bnl[2][23] * t15;
-  Kgeo[4][0] = Kgeo[0][4];
-  Kgeo[4][1] = Kgeo[1][4];
-  Kgeo[4][2] = Kgeo[2][4];
-  Kgeo[4][3] = Kgeo[3][4];
-  Kgeo[4][4] = t17 * Bnl[1][4];
-  Kgeo[4][5] = t18 * Bnl[2][5];
-  Kgeo[4][6] = t19 * Bnl[0][6];
-  Kgeo[4][7] = t20 * Bnl[1][7];
-  Kgeo[4][8] = t18 * Bnl[2][8];
-  Kgeo[4][9] = t19 * Bnl[0][9];
-  Kgeo[4][10] = t20 * Bnl[1][10];
-  Kgeo[4][11] = t18 * Bnl[2][11];
-  Kgeo[4][12] = t19 * Bnl[0][12];
-  Kgeo[4][13] = t20 * Bnl[1][13];
-  Kgeo[4][14] = t18 * Bnl[2][14];
-  Kgeo[4][15] = t19 * Bnl[0][15];
-  Kgeo[4][16] = t20 * Bnl[1][16];
-  Kgeo[4][17] = t18 * Bnl[2][17];
-  Kgeo[4][18] = t19 * Bnl[0][18];
-  Kgeo[4][19] = t20 * Bnl[1][19];
-  Kgeo[4][20] = t18 * Bnl[2][20];
-  Kgeo[4][21] = t19 * Bnl[0][21];
-  Kgeo[4][22] = t20 * Bnl[1][22];
-  Kgeo[4][23] = t18 * Bnl[2][23];
-  Kgeo[5][0] = Kgeo[0][5];
-  Kgeo[5][1] = Kgeo[1][5];
-  Kgeo[5][2] = Kgeo[2][5];
-  Kgeo[5][3] = Kgeo[3][5];
-  Kgeo[5][4] = Kgeo[4][5];
-  Kgeo[5][5] = t21 * Bnl[2][5];
-  Kgeo[5][6] = t22 * Bnl[0][6];
-  Kgeo[5][7] = t23 * Bnl[1][7];
-  Kgeo[5][8] = t24 * Bnl[2][8];
-  Kgeo[5][9] = t22 * Bnl[0][9];
-  Kgeo[5][10] = t23 * Bnl[1][10];
-  Kgeo[5][11] = t24 * Bnl[2][11];
-  Kgeo[5][12] = t22 * Bnl[0][12];
-  Kgeo[5][13] = t23 * Bnl[1][13];
-  Kgeo[5][14] = t24 * Bnl[2][14];
-  Kgeo[5][15] = t22 * Bnl[0][15];
-  Kgeo[5][16] = t23 * Bnl[1][16];
-  Kgeo[5][17] = t24 * Bnl[2][17];
-  Kgeo[5][18] = t22 * Bnl[0][18];
-  Kgeo[5][19] = t23 * Bnl[1][19];
-  Kgeo[5][20] = t24 * Bnl[2][20];
-  Kgeo[5][21] = t22 * Bnl[0][21];
-  Kgeo[5][22] = t23 * Bnl[1][22];
-  Kgeo[5][23] = t24 * Bnl[2][23];
-  Kgeo[6][0] = Kgeo[0][6];
-  Kgeo[6][1] = Kgeo[1][6];
-  Kgeo[6][2] = Kgeo[2][6];
-  Kgeo[6][3] = Kgeo[3][6];
-  Kgeo[6][4] = Kgeo[4][6];
-  Kgeo[6][5] = Kgeo[5][6];
-  Kgeo[6][6] = t25 * Bnl[0][6];
-  Kgeo[6][7] = t26 * Bnl[1][7];
-  Kgeo[6][8] = t27 * Bnl[2][8];
-  Kgeo[6][9] = t28 * Bnl[0][9];
-  Kgeo[6][10] = t26 * Bnl[1][10];
-  Kgeo[6][11] = t27 * Bnl[2][11];
-  Kgeo[6][12] = t28 * Bnl[0][12];
-  Kgeo[6][13] = t26 * Bnl[1][13];
-  Kgeo[6][14] = t27 * Bnl[2][14];
-  Kgeo[6][15] = t28 * Bnl[0][15];
-  Kgeo[6][16] = t26 * Bnl[1][16];
-  Kgeo[6][17] = t27 * Bnl[2][17];
-  Kgeo[6][18] = t28 * Bnl[0][18];
-  Kgeo[6][19] = t26 * Bnl[1][19];
-  Kgeo[6][20] = t27 * Bnl[2][20];
-  Kgeo[6][21] = t28 * Bnl[0][21];
-  Kgeo[6][22] = t26 * Bnl[1][22];
-  Kgeo[6][23] = t27 * Bnl[2][23];
-  Kgeo[7][0] = Kgeo[0][7];
-  Kgeo[7][1] = Kgeo[1][7];
-  Kgeo[7][2] = Kgeo[2][7];
-  Kgeo[7][3] = Kgeo[3][7];
-  Kgeo[7][4] = Kgeo[4][7];
-  Kgeo[7][5] = Kgeo[5][7];
-  Kgeo[7][6] = Kgeo[6][7];
-  Kgeo[7][7] = t29 * Bnl[1][7];
-  Kgeo[7][8] = t30 * Bnl[2][8];
-  Kgeo[7][9] = t31 * Bnl[0][9];
-  Kgeo[7][10] = t32 * Bnl[1][10];
-  Kgeo[7][11] = t30 * Bnl[2][11];
-  Kgeo[7][12] = t31 * Bnl[0][12];
-  Kgeo[7][13] = t32 * Bnl[1][13];
-  Kgeo[7][14] = t30 * Bnl[2][14];
-  Kgeo[7][15] = t31 * Bnl[0][15];
-  Kgeo[7][16] = t32 * Bnl[1][16];
-  Kgeo[7][17] = t30 * Bnl[2][17];
-  Kgeo[7][18] = t31 * Bnl[0][18];
-  Kgeo[7][19] = t32 * Bnl[1][19];
-  Kgeo[7][20] = t30 * Bnl[2][20];
-  Kgeo[7][21] = t31 * Bnl[0][21];
-  Kgeo[7][22] = t32 * Bnl[1][22];
-  Kgeo[7][23] = t30 * Bnl[2][23];
-  Kgeo[8][0] = Kgeo[0][8];
-  Kgeo[8][1] = Kgeo[1][8];
-  Kgeo[8][2] = Kgeo[2][8];
-  Kgeo[8][3] = Kgeo[3][8];
-  Kgeo[8][4] = Kgeo[4][8];
-  Kgeo[8][5] = Kgeo[5][8];
-  Kgeo[8][6] = Kgeo[6][8];
-  Kgeo[8][7] = Kgeo[7][8];
-  Kgeo[8][8] = t33 * Bnl[2][8];
-  Kgeo[8][9] = t34 * Bnl[0][9];
-  Kgeo[8][10] = t35 * Bnl[1][10];
-  Kgeo[8][11] = t36 * Bnl[2][11];
-  Kgeo[8][12] = t34 * Bnl[0][12];
-  Kgeo[8][13] = t35 * Bnl[1][13];
-  Kgeo[8][14] = t36 * Bnl[2][14];
-  Kgeo[8][15] = t34 * Bnl[0][15];
-  Kgeo[8][16] = t35 * Bnl[1][16];
-  Kgeo[8][17] = t36 * Bnl[2][17];
-  Kgeo[8][18] = t34 * Bnl[0][18];
-  Kgeo[8][19] = t35 * Bnl[1][19];
-  Kgeo[8][20] = t36 * Bnl[2][20];
-  Kgeo[8][21] = t34 * Bnl[0][21];
-  Kgeo[8][22] = t35 * Bnl[1][22];
-  Kgeo[8][23] = t36 * Bnl[2][23];
-  Kgeo[9][0] = Kgeo[0][9];
-  Kgeo[9][1] = Kgeo[1][9];
-  Kgeo[9][2] = Kgeo[2][9];
-  Kgeo[9][3] = Kgeo[3][9];
-  Kgeo[9][4] = Kgeo[4][9];
-  Kgeo[9][5] = Kgeo[5][9];
-  Kgeo[9][6] = Kgeo[6][9];
-  Kgeo[9][7] = Kgeo[7][9];
-  Kgeo[9][8] = Kgeo[8][9];
-  Kgeo[9][9] = t37 * Bnl[0][9];
-  Kgeo[9][10] = t38 * Bnl[1][10];
-  Kgeo[9][11] = t39 * Bnl[2][11];
-  Kgeo[9][12] = t40 * Bnl[0][12];
-  Kgeo[9][13] = t38 * Bnl[1][13];
-  Kgeo[9][14] = t39 * Bnl[2][14];
-  Kgeo[9][15] = t40 * Bnl[0][15];
-  Kgeo[9][16] = t38 * Bnl[1][16];
-  Kgeo[9][17] = t39 * Bnl[2][17];
-  Kgeo[9][18] = t40 * Bnl[0][18];
-  Kgeo[9][19] = t38 * Bnl[1][19];
-  Kgeo[9][20] = t39 * Bnl[2][20];
-  Kgeo[9][21] = t40 * Bnl[0][21];
-  Kgeo[9][22] = t38 * Bnl[1][22];
-  Kgeo[9][23] = t39 * Bnl[2][23];
-  Kgeo[10][0] = Kgeo[0][10];
-  Kgeo[10][1] = Kgeo[1][10];
-  Kgeo[10][2] = Kgeo[2][10];
-  Kgeo[10][3] = Kgeo[3][10];
-  Kgeo[10][4] = Kgeo[4][10];
-  Kgeo[10][5] = Kgeo[5][10];
-  Kgeo[10][6] = Kgeo[6][10];
-  Kgeo[10][7] = Kgeo[7][10];
-  Kgeo[10][8] = Kgeo[8][10];
-  Kgeo[10][9] = Kgeo[9][10];
+  Kgeo[0][0]   = t1 * Bnl[0][0];
+  Kgeo[0][1]   = t2 * Bnl[1][1];
+  Kgeo[0][2]   = t3 * Bnl[2][2];
+  Kgeo[0][3]   = t4 * Bnl[0][3];
+  Kgeo[0][4]   = t2 * Bnl[1][4];
+  Kgeo[0][5]   = t3 * Bnl[2][5];
+  Kgeo[0][6]   = t4 * Bnl[0][6];
+  Kgeo[0][7]   = t2 * Bnl[1][7];
+  Kgeo[0][8]   = t3 * Bnl[2][8];
+  Kgeo[0][9]   = t4 * Bnl[0][9];
+  Kgeo[0][10]  = t2 * Bnl[1][10];
+  Kgeo[0][11]  = t3 * Bnl[2][11];
+  Kgeo[0][12]  = t4 * Bnl[0][12];
+  Kgeo[0][13]  = t2 * Bnl[1][13];
+  Kgeo[0][14]  = t3 * Bnl[2][14];
+  Kgeo[0][15]  = t4 * Bnl[0][15];
+  Kgeo[0][16]  = t2 * Bnl[1][16];
+  Kgeo[0][17]  = t3 * Bnl[2][17];
+  Kgeo[0][18]  = t4 * Bnl[0][18];
+  Kgeo[0][19]  = t2 * Bnl[1][19];
+  Kgeo[0][20]  = t3 * Bnl[2][20];
+  Kgeo[0][21]  = t4 * Bnl[0][21];
+  Kgeo[0][22]  = t2 * Bnl[1][22];
+  Kgeo[0][23]  = t3 * Bnl[2][23];
+  Kgeo[1][0]   = Kgeo[0][1];
+  Kgeo[1][1]   = t5 * Bnl[1][1];
+  Kgeo[1][2]   = t6 * Bnl[2][2];
+  Kgeo[1][3]   = t7 * Bnl[0][3];
+  Kgeo[1][4]   = Bnl[1][4] * t8;
+  Kgeo[1][5]   = t6 * Bnl[2][5];
+  Kgeo[1][6]   = t7 * Bnl[0][6];
+  Kgeo[1][7]   = Bnl[1][7] * t8;
+  Kgeo[1][8]   = t6 * Bnl[2][8];
+  Kgeo[1][9]   = t7 * Bnl[0][9];
+  Kgeo[1][10]  = Bnl[1][10] * t8;
+  Kgeo[1][11]  = t6 * Bnl[2][11];
+  Kgeo[1][12]  = t7 * Bnl[0][12];
+  Kgeo[1][13]  = Bnl[1][13] * t8;
+  Kgeo[1][14]  = t6 * Bnl[2][14];
+  Kgeo[1][15]  = t7 * Bnl[0][15];
+  Kgeo[1][16]  = Bnl[1][16] * t8;
+  Kgeo[1][17]  = t6 * Bnl[2][17];
+  Kgeo[1][18]  = t7 * Bnl[0][18];
+  Kgeo[1][19]  = Bnl[1][19] * t8;
+  Kgeo[1][20]  = t6 * Bnl[2][20];
+  Kgeo[1][21]  = t7 * Bnl[0][21];
+  Kgeo[1][22]  = Bnl[1][22] * t8;
+  Kgeo[1][23]  = t6 * Bnl[2][23];
+  Kgeo[2][0]   = Kgeo[0][2];
+  Kgeo[2][1]   = Kgeo[1][2];
+  Kgeo[2][2]   = t9 * Bnl[2][2];
+  Kgeo[2][3]   = t10 * Bnl[0][3];
+  Kgeo[2][4]   = Bnl[1][4] * t11;
+  Kgeo[2][5]   = t12 * Bnl[2][5];
+  Kgeo[2][6]   = t10 * Bnl[0][6];
+  Kgeo[2][7]   = Bnl[1][7] * t11;
+  Kgeo[2][8]   = t12 * Bnl[2][8];
+  Kgeo[2][9]   = t10 * Bnl[0][9];
+  Kgeo[2][10]  = Bnl[1][10] * t11;
+  Kgeo[2][11]  = t12 * Bnl[2][11];
+  Kgeo[2][12]  = t10 * Bnl[0][12];
+  Kgeo[2][13]  = Bnl[1][13] * t11;
+  Kgeo[2][14]  = t12 * Bnl[2][14];
+  Kgeo[2][15]  = t10 * Bnl[0][15];
+  Kgeo[2][16]  = Bnl[1][16] * t11;
+  Kgeo[2][17]  = t12 * Bnl[2][17];
+  Kgeo[2][18]  = t10 * Bnl[0][18];
+  Kgeo[2][19]  = t11 * Bnl[1][19];
+  Kgeo[2][20]  = t12 * Bnl[2][20];
+  Kgeo[2][21]  = t10 * Bnl[0][21];
+  Kgeo[2][22]  = t11 * Bnl[1][22];
+  Kgeo[2][23]  = t12 * Bnl[2][23];
+  Kgeo[3][0]   = Kgeo[0][3];
+  Kgeo[3][1]   = Kgeo[1][3];
+  Kgeo[3][2]   = Kgeo[2][3];
+  Kgeo[3][3]   = t13 * Bnl[0][3];
+  Kgeo[3][4]   = t14 * Bnl[1][4];
+  Kgeo[3][5]   = Bnl[2][5] * t15;
+  Kgeo[3][6]   = t16 * Bnl[0][6];
+  Kgeo[3][7]   = t14 * Bnl[1][7];
+  Kgeo[3][8]   = Bnl[2][8] * t15;
+  Kgeo[3][9]   = t16 * Bnl[0][9];
+  Kgeo[3][10]  = t14 * Bnl[1][10];
+  Kgeo[3][11]  = Bnl[2][11] * t15;
+  Kgeo[3][12]  = t16 * Bnl[0][12];
+  Kgeo[3][13]  = t14 * Bnl[1][13];
+  Kgeo[3][14]  = Bnl[2][14] * t15;
+  Kgeo[3][15]  = t16 * Bnl[0][15];
+  Kgeo[3][16]  = t14 * Bnl[1][16];
+  Kgeo[3][17]  = Bnl[2][17] * t15;
+  Kgeo[3][18]  = t16 * Bnl[0][18];
+  Kgeo[3][19]  = t14 * Bnl[1][19];
+  Kgeo[3][20]  = Bnl[2][20] * t15;
+  Kgeo[3][21]  = t16 * Bnl[0][21];
+  Kgeo[3][22]  = t14 * Bnl[1][22];
+  Kgeo[3][23]  = Bnl[2][23] * t15;
+  Kgeo[4][0]   = Kgeo[0][4];
+  Kgeo[4][1]   = Kgeo[1][4];
+  Kgeo[4][2]   = Kgeo[2][4];
+  Kgeo[4][3]   = Kgeo[3][4];
+  Kgeo[4][4]   = t17 * Bnl[1][4];
+  Kgeo[4][5]   = t18 * Bnl[2][5];
+  Kgeo[4][6]   = t19 * Bnl[0][6];
+  Kgeo[4][7]   = t20 * Bnl[1][7];
+  Kgeo[4][8]   = t18 * Bnl[2][8];
+  Kgeo[4][9]   = t19 * Bnl[0][9];
+  Kgeo[4][10]  = t20 * Bnl[1][10];
+  Kgeo[4][11]  = t18 * Bnl[2][11];
+  Kgeo[4][12]  = t19 * Bnl[0][12];
+  Kgeo[4][13]  = t20 * Bnl[1][13];
+  Kgeo[4][14]  = t18 * Bnl[2][14];
+  Kgeo[4][15]  = t19 * Bnl[0][15];
+  Kgeo[4][16]  = t20 * Bnl[1][16];
+  Kgeo[4][17]  = t18 * Bnl[2][17];
+  Kgeo[4][18]  = t19 * Bnl[0][18];
+  Kgeo[4][19]  = t20 * Bnl[1][19];
+  Kgeo[4][20]  = t18 * Bnl[2][20];
+  Kgeo[4][21]  = t19 * Bnl[0][21];
+  Kgeo[4][22]  = t20 * Bnl[1][22];
+  Kgeo[4][23]  = t18 * Bnl[2][23];
+  Kgeo[5][0]   = Kgeo[0][5];
+  Kgeo[5][1]   = Kgeo[1][5];
+  Kgeo[5][2]   = Kgeo[2][5];
+  Kgeo[5][3]   = Kgeo[3][5];
+  Kgeo[5][4]   = Kgeo[4][5];
+  Kgeo[5][5]   = t21 * Bnl[2][5];
+  Kgeo[5][6]   = t22 * Bnl[0][6];
+  Kgeo[5][7]   = t23 * Bnl[1][7];
+  Kgeo[5][8]   = t24 * Bnl[2][8];
+  Kgeo[5][9]   = t22 * Bnl[0][9];
+  Kgeo[5][10]  = t23 * Bnl[1][10];
+  Kgeo[5][11]  = t24 * Bnl[2][11];
+  Kgeo[5][12]  = t22 * Bnl[0][12];
+  Kgeo[5][13]  = t23 * Bnl[1][13];
+  Kgeo[5][14]  = t24 * Bnl[2][14];
+  Kgeo[5][15]  = t22 * Bnl[0][15];
+  Kgeo[5][16]  = t23 * Bnl[1][16];
+  Kgeo[5][17]  = t24 * Bnl[2][17];
+  Kgeo[5][18]  = t22 * Bnl[0][18];
+  Kgeo[5][19]  = t23 * Bnl[1][19];
+  Kgeo[5][20]  = t24 * Bnl[2][20];
+  Kgeo[5][21]  = t22 * Bnl[0][21];
+  Kgeo[5][22]  = t23 * Bnl[1][22];
+  Kgeo[5][23]  = t24 * Bnl[2][23];
+  Kgeo[6][0]   = Kgeo[0][6];
+  Kgeo[6][1]   = Kgeo[1][6];
+  Kgeo[6][2]   = Kgeo[2][6];
+  Kgeo[6][3]   = Kgeo[3][6];
+  Kgeo[6][4]   = Kgeo[4][6];
+  Kgeo[6][5]   = Kgeo[5][6];
+  Kgeo[6][6]   = t25 * Bnl[0][6];
+  Kgeo[6][7]   = t26 * Bnl[1][7];
+  Kgeo[6][8]   = t27 * Bnl[2][8];
+  Kgeo[6][9]   = t28 * Bnl[0][9];
+  Kgeo[6][10]  = t26 * Bnl[1][10];
+  Kgeo[6][11]  = t27 * Bnl[2][11];
+  Kgeo[6][12]  = t28 * Bnl[0][12];
+  Kgeo[6][13]  = t26 * Bnl[1][13];
+  Kgeo[6][14]  = t27 * Bnl[2][14];
+  Kgeo[6][15]  = t28 * Bnl[0][15];
+  Kgeo[6][16]  = t26 * Bnl[1][16];
+  Kgeo[6][17]  = t27 * Bnl[2][17];
+  Kgeo[6][18]  = t28 * Bnl[0][18];
+  Kgeo[6][19]  = t26 * Bnl[1][19];
+  Kgeo[6][20]  = t27 * Bnl[2][20];
+  Kgeo[6][21]  = t28 * Bnl[0][21];
+  Kgeo[6][22]  = t26 * Bnl[1][22];
+  Kgeo[6][23]  = t27 * Bnl[2][23];
+  Kgeo[7][0]   = Kgeo[0][7];
+  Kgeo[7][1]   = Kgeo[1][7];
+  Kgeo[7][2]   = Kgeo[2][7];
+  Kgeo[7][3]   = Kgeo[3][7];
+  Kgeo[7][4]   = Kgeo[4][7];
+  Kgeo[7][5]   = Kgeo[5][7];
+  Kgeo[7][6]   = Kgeo[6][7];
+  Kgeo[7][7]   = t29 * Bnl[1][7];
+  Kgeo[7][8]   = t30 * Bnl[2][8];
+  Kgeo[7][9]   = t31 * Bnl[0][9];
+  Kgeo[7][10]  = t32 * Bnl[1][10];
+  Kgeo[7][11]  = t30 * Bnl[2][11];
+  Kgeo[7][12]  = t31 * Bnl[0][12];
+  Kgeo[7][13]  = t32 * Bnl[1][13];
+  Kgeo[7][14]  = t30 * Bnl[2][14];
+  Kgeo[7][15]  = t31 * Bnl[0][15];
+  Kgeo[7][16]  = t32 * Bnl[1][16];
+  Kgeo[7][17]  = t30 * Bnl[2][17];
+  Kgeo[7][18]  = t31 * Bnl[0][18];
+  Kgeo[7][19]  = t32 * Bnl[1][19];
+  Kgeo[7][20]  = t30 * Bnl[2][20];
+  Kgeo[7][21]  = t31 * Bnl[0][21];
+  Kgeo[7][22]  = t32 * Bnl[1][22];
+  Kgeo[7][23]  = t30 * Bnl[2][23];
+  Kgeo[8][0]   = Kgeo[0][8];
+  Kgeo[8][1]   = Kgeo[1][8];
+  Kgeo[8][2]   = Kgeo[2][8];
+  Kgeo[8][3]   = Kgeo[3][8];
+  Kgeo[8][4]   = Kgeo[4][8];
+  Kgeo[8][5]   = Kgeo[5][8];
+  Kgeo[8][6]   = Kgeo[6][8];
+  Kgeo[8][7]   = Kgeo[7][8];
+  Kgeo[8][8]   = t33 * Bnl[2][8];
+  Kgeo[8][9]   = t34 * Bnl[0][9];
+  Kgeo[8][10]  = t35 * Bnl[1][10];
+  Kgeo[8][11]  = t36 * Bnl[2][11];
+  Kgeo[8][12]  = t34 * Bnl[0][12];
+  Kgeo[8][13]  = t35 * Bnl[1][13];
+  Kgeo[8][14]  = t36 * Bnl[2][14];
+  Kgeo[8][15]  = t34 * Bnl[0][15];
+  Kgeo[8][16]  = t35 * Bnl[1][16];
+  Kgeo[8][17]  = t36 * Bnl[2][17];
+  Kgeo[8][18]  = t34 * Bnl[0][18];
+  Kgeo[8][19]  = t35 * Bnl[1][19];
+  Kgeo[8][20]  = t36 * Bnl[2][20];
+  Kgeo[8][21]  = t34 * Bnl[0][21];
+  Kgeo[8][22]  = t35 * Bnl[1][22];
+  Kgeo[8][23]  = t36 * Bnl[2][23];
+  Kgeo[9][0]   = Kgeo[0][9];
+  Kgeo[9][1]   = Kgeo[1][9];
+  Kgeo[9][2]   = Kgeo[2][9];
+  Kgeo[9][3]   = Kgeo[3][9];
+  Kgeo[9][4]   = Kgeo[4][9];
+  Kgeo[9][5]   = Kgeo[5][9];
+  Kgeo[9][6]   = Kgeo[6][9];
+  Kgeo[9][7]   = Kgeo[7][9];
+  Kgeo[9][8]   = Kgeo[8][9];
+  Kgeo[9][9]   = t37 * Bnl[0][9];
+  Kgeo[9][10]  = t38 * Bnl[1][10];
+  Kgeo[9][11]  = t39 * Bnl[2][11];
+  Kgeo[9][12]  = t40 * Bnl[0][12];
+  Kgeo[9][13]  = t38 * Bnl[1][13];
+  Kgeo[9][14]  = t39 * Bnl[2][14];
+  Kgeo[9][15]  = t40 * Bnl[0][15];
+  Kgeo[9][16]  = t38 * Bnl[1][16];
+  Kgeo[9][17]  = t39 * Bnl[2][17];
+  Kgeo[9][18]  = t40 * Bnl[0][18];
+  Kgeo[9][19]  = t38 * Bnl[1][19];
+  Kgeo[9][20]  = t39 * Bnl[2][20];
+  Kgeo[9][21]  = t40 * Bnl[0][21];
+  Kgeo[9][22]  = t38 * Bnl[1][22];
+  Kgeo[9][23]  = t39 * Bnl[2][23];
+  Kgeo[10][0]  = Kgeo[0][10];
+  Kgeo[10][1]  = Kgeo[1][10];
+  Kgeo[10][2]  = Kgeo[2][10];
+  Kgeo[10][3]  = Kgeo[3][10];
+  Kgeo[10][4]  = Kgeo[4][10];
+  Kgeo[10][5]  = Kgeo[5][10];
+  Kgeo[10][6]  = Kgeo[6][10];
+  Kgeo[10][7]  = Kgeo[7][10];
+  Kgeo[10][8]  = Kgeo[8][10];
+  Kgeo[10][9]  = Kgeo[9][10];
   Kgeo[10][10] = t41 * Bnl[1][10];
   Kgeo[10][11] = t42 * Bnl[2][11];
   Kgeo[10][12] = t43 * Bnl[0][12];
@@ -2155,16 +2196,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[10][21] = t43 * Bnl[0][21];
   Kgeo[10][22] = t44 * Bnl[1][22];
   Kgeo[10][23] = t42 * Bnl[2][23];
-  Kgeo[11][0] = Kgeo[0][11];
-  Kgeo[11][1] = Kgeo[1][11];
-  Kgeo[11][2] = Kgeo[2][11];
-  Kgeo[11][3] = Kgeo[3][11];
-  Kgeo[11][4] = Kgeo[4][11];
-  Kgeo[11][5] = Kgeo[5][11];
-  Kgeo[11][6] = Kgeo[6][11];
-  Kgeo[11][7] = Kgeo[7][11];
-  Kgeo[11][8] = Kgeo[8][11];
-  Kgeo[11][9] = Kgeo[9][11];
+  Kgeo[11][0]  = Kgeo[0][11];
+  Kgeo[11][1]  = Kgeo[1][11];
+  Kgeo[11][2]  = Kgeo[2][11];
+  Kgeo[11][3]  = Kgeo[3][11];
+  Kgeo[11][4]  = Kgeo[4][11];
+  Kgeo[11][5]  = Kgeo[5][11];
+  Kgeo[11][6]  = Kgeo[6][11];
+  Kgeo[11][7]  = Kgeo[7][11];
+  Kgeo[11][8]  = Kgeo[8][11];
+  Kgeo[11][9]  = Kgeo[9][11];
   Kgeo[11][10] = Kgeo[10][11];
   Kgeo[11][11] = t45 * Bnl[2][11];
   Kgeo[11][12] = t46 * Bnl[0][12];
@@ -2179,16 +2220,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[11][21] = t46 * Bnl[0][21];
   Kgeo[11][22] = t47 * Bnl[1][22];
   Kgeo[11][23] = t48 * Bnl[2][23];
-  Kgeo[12][0] = Kgeo[0][12];
-  Kgeo[12][1] = Kgeo[1][12];
-  Kgeo[12][2] = Kgeo[2][12];
-  Kgeo[12][3] = Kgeo[3][12];
-  Kgeo[12][4] = Kgeo[4][12];
-  Kgeo[12][5] = Kgeo[5][12];
-  Kgeo[12][6] = Kgeo[6][12];
-  Kgeo[12][7] = Kgeo[7][12];
-  Kgeo[12][8] = Kgeo[8][12];
-  Kgeo[12][9] = Kgeo[9][12];
+  Kgeo[12][0]  = Kgeo[0][12];
+  Kgeo[12][1]  = Kgeo[1][12];
+  Kgeo[12][2]  = Kgeo[2][12];
+  Kgeo[12][3]  = Kgeo[3][12];
+  Kgeo[12][4]  = Kgeo[4][12];
+  Kgeo[12][5]  = Kgeo[5][12];
+  Kgeo[12][6]  = Kgeo[6][12];
+  Kgeo[12][7]  = Kgeo[7][12];
+  Kgeo[12][8]  = Kgeo[8][12];
+  Kgeo[12][9]  = Kgeo[9][12];
   Kgeo[12][10] = Kgeo[10][12];
   Kgeo[12][11] = Kgeo[11][12];
   Kgeo[12][12] = t49 * Bnl[0][12];
@@ -2203,16 +2244,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[12][21] = t52 * Bnl[0][21];
   Kgeo[12][22] = t50 * Bnl[1][22];
   Kgeo[12][23] = t51 * Bnl[2][23];
-  Kgeo[13][0] = Kgeo[0][13];
-  Kgeo[13][1] = Kgeo[1][13];
-  Kgeo[13][2] = Kgeo[2][13];
-  Kgeo[13][3] = Kgeo[3][13];
-  Kgeo[13][4] = Kgeo[4][13];
-  Kgeo[13][5] = Kgeo[5][13];
-  Kgeo[13][6] = Kgeo[6][13];
-  Kgeo[13][7] = Kgeo[7][13];
-  Kgeo[13][8] = Kgeo[8][13];
-  Kgeo[13][9] = Kgeo[9][13];
+  Kgeo[13][0]  = Kgeo[0][13];
+  Kgeo[13][1]  = Kgeo[1][13];
+  Kgeo[13][2]  = Kgeo[2][13];
+  Kgeo[13][3]  = Kgeo[3][13];
+  Kgeo[13][4]  = Kgeo[4][13];
+  Kgeo[13][5]  = Kgeo[5][13];
+  Kgeo[13][6]  = Kgeo[6][13];
+  Kgeo[13][7]  = Kgeo[7][13];
+  Kgeo[13][8]  = Kgeo[8][13];
+  Kgeo[13][9]  = Kgeo[9][13];
   Kgeo[13][10] = Kgeo[10][13];
   Kgeo[13][11] = Kgeo[11][13];
   Kgeo[13][12] = Kgeo[12][13];
@@ -2227,16 +2268,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[13][21] = t55 * Bnl[0][21];
   Kgeo[13][22] = t56 * Bnl[1][22];
   Kgeo[13][23] = t54 * Bnl[2][23];
-  Kgeo[14][0] = Kgeo[0][14];
-  Kgeo[14][1] = Kgeo[1][14];
-  Kgeo[14][2] = Kgeo[2][14];
-  Kgeo[14][3] = Kgeo[3][14];
-  Kgeo[14][4] = Kgeo[4][14];
-  Kgeo[14][5] = Kgeo[5][14];
-  Kgeo[14][6] = Kgeo[6][14];
-  Kgeo[14][7] = Kgeo[7][14];
-  Kgeo[14][8] = Kgeo[8][14];
-  Kgeo[14][9] = Kgeo[9][14];
+  Kgeo[14][0]  = Kgeo[0][14];
+  Kgeo[14][1]  = Kgeo[1][14];
+  Kgeo[14][2]  = Kgeo[2][14];
+  Kgeo[14][3]  = Kgeo[3][14];
+  Kgeo[14][4]  = Kgeo[4][14];
+  Kgeo[14][5]  = Kgeo[5][14];
+  Kgeo[14][6]  = Kgeo[6][14];
+  Kgeo[14][7]  = Kgeo[7][14];
+  Kgeo[14][8]  = Kgeo[8][14];
+  Kgeo[14][9]  = Kgeo[9][14];
   Kgeo[14][10] = Kgeo[10][14];
   Kgeo[14][11] = Kgeo[11][14];
   Kgeo[14][12] = Kgeo[12][14];
@@ -2251,16 +2292,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[14][21] = t58 * Bnl[0][21];
   Kgeo[14][22] = t59 * Bnl[1][22];
   Kgeo[14][23] = t60 * Bnl[2][23];
-  Kgeo[15][0] = Kgeo[0][15];
-  Kgeo[15][1] = Kgeo[1][15];
-  Kgeo[15][2] = Kgeo[2][15];
-  Kgeo[15][3] = Kgeo[3][15];
-  Kgeo[15][4] = Kgeo[4][15];
-  Kgeo[15][5] = Kgeo[5][15];
-  Kgeo[15][6] = Kgeo[6][15];
-  Kgeo[15][7] = Kgeo[7][15];
-  Kgeo[15][8] = Kgeo[8][15];
-  Kgeo[15][9] = Kgeo[9][15];
+  Kgeo[15][0]  = Kgeo[0][15];
+  Kgeo[15][1]  = Kgeo[1][15];
+  Kgeo[15][2]  = Kgeo[2][15];
+  Kgeo[15][3]  = Kgeo[3][15];
+  Kgeo[15][4]  = Kgeo[4][15];
+  Kgeo[15][5]  = Kgeo[5][15];
+  Kgeo[15][6]  = Kgeo[6][15];
+  Kgeo[15][7]  = Kgeo[7][15];
+  Kgeo[15][8]  = Kgeo[8][15];
+  Kgeo[15][9]  = Kgeo[9][15];
   Kgeo[15][10] = Kgeo[10][15];
   Kgeo[15][11] = Kgeo[11][15];
   Kgeo[15][12] = Kgeo[12][15];
@@ -2275,16 +2316,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[15][21] = t64 * Bnl[0][21];
   Kgeo[15][22] = t62 * Bnl[1][22];
   Kgeo[15][23] = t63 * Bnl[2][23];
-  Kgeo[16][0] = Kgeo[0][16];
-  Kgeo[16][1] = Kgeo[1][16];
-  Kgeo[16][2] = Kgeo[2][16];
-  Kgeo[16][3] = Kgeo[3][16];
-  Kgeo[16][4] = Kgeo[4][16];
-  Kgeo[16][5] = Kgeo[5][16];
-  Kgeo[16][6] = Kgeo[6][16];
-  Kgeo[16][7] = Kgeo[7][16];
-  Kgeo[16][8] = Kgeo[8][16];
-  Kgeo[16][9] = Kgeo[9][16];
+  Kgeo[16][0]  = Kgeo[0][16];
+  Kgeo[16][1]  = Kgeo[1][16];
+  Kgeo[16][2]  = Kgeo[2][16];
+  Kgeo[16][3]  = Kgeo[3][16];
+  Kgeo[16][4]  = Kgeo[4][16];
+  Kgeo[16][5]  = Kgeo[5][16];
+  Kgeo[16][6]  = Kgeo[6][16];
+  Kgeo[16][7]  = Kgeo[7][16];
+  Kgeo[16][8]  = Kgeo[8][16];
+  Kgeo[16][9]  = Kgeo[9][16];
   Kgeo[16][10] = Kgeo[10][16];
   Kgeo[16][11] = Kgeo[11][16];
   Kgeo[16][12] = Kgeo[12][16];
@@ -2299,16 +2340,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[16][21] = t67 * Bnl[0][21];
   Kgeo[16][22] = t68 * Bnl[1][22];
   Kgeo[16][23] = t66 * Bnl[2][23];
-  Kgeo[17][0] = Kgeo[0][17];
-  Kgeo[17][1] = Kgeo[1][17];
-  Kgeo[17][2] = Kgeo[2][17];
-  Kgeo[17][3] = Kgeo[3][17];
-  Kgeo[17][4] = Kgeo[4][17];
-  Kgeo[17][5] = Kgeo[5][17];
-  Kgeo[17][6] = Kgeo[6][17];
-  Kgeo[17][7] = Kgeo[7][17];
-  Kgeo[17][8] = Kgeo[8][17];
-  Kgeo[17][9] = Kgeo[9][17];
+  Kgeo[17][0]  = Kgeo[0][17];
+  Kgeo[17][1]  = Kgeo[1][17];
+  Kgeo[17][2]  = Kgeo[2][17];
+  Kgeo[17][3]  = Kgeo[3][17];
+  Kgeo[17][4]  = Kgeo[4][17];
+  Kgeo[17][5]  = Kgeo[5][17];
+  Kgeo[17][6]  = Kgeo[6][17];
+  Kgeo[17][7]  = Kgeo[7][17];
+  Kgeo[17][8]  = Kgeo[8][17];
+  Kgeo[17][9]  = Kgeo[9][17];
   Kgeo[17][10] = Kgeo[10][17];
   Kgeo[17][11] = Kgeo[11][17];
   Kgeo[17][12] = Kgeo[12][17];
@@ -2323,16 +2364,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[17][21] = t70 * Bnl[0][21];
   Kgeo[17][22] = t71 * Bnl[1][22];
   Kgeo[17][23] = t72 * Bnl[2][23];
-  Kgeo[18][0] = Kgeo[0][18];
-  Kgeo[18][1] = Kgeo[1][18];
-  Kgeo[18][2] = Kgeo[2][18];
-  Kgeo[18][3] = Kgeo[3][18];
-  Kgeo[18][4] = Kgeo[4][18];
-  Kgeo[18][5] = Kgeo[5][18];
-  Kgeo[18][6] = Kgeo[6][18];
-  Kgeo[18][7] = Kgeo[7][18];
-  Kgeo[18][8] = Kgeo[8][18];
-  Kgeo[18][9] = Kgeo[9][18];
+  Kgeo[18][0]  = Kgeo[0][18];
+  Kgeo[18][1]  = Kgeo[1][18];
+  Kgeo[18][2]  = Kgeo[2][18];
+  Kgeo[18][3]  = Kgeo[3][18];
+  Kgeo[18][4]  = Kgeo[4][18];
+  Kgeo[18][5]  = Kgeo[5][18];
+  Kgeo[18][6]  = Kgeo[6][18];
+  Kgeo[18][7]  = Kgeo[7][18];
+  Kgeo[18][8]  = Kgeo[8][18];
+  Kgeo[18][9]  = Kgeo[9][18];
   Kgeo[18][10] = Kgeo[10][18];
   Kgeo[18][11] = Kgeo[11][18];
   Kgeo[18][12] = Kgeo[12][18];
@@ -2347,16 +2388,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[18][21] = t73 * Bnl[0][21];
   Kgeo[18][22] = t74 * Bnl[1][22];
   Kgeo[18][23] = t75 * Bnl[2][23];
-  Kgeo[19][0] = Kgeo[0][19];
-  Kgeo[19][1] = Kgeo[1][19];
-  Kgeo[19][2] = Kgeo[2][19];
-  Kgeo[19][3] = Kgeo[3][19];
-  Kgeo[19][4] = Kgeo[4][19];
-  Kgeo[19][5] = Kgeo[5][19];
-  Kgeo[19][6] = Kgeo[6][19];
-  Kgeo[19][7] = Kgeo[7][19];
-  Kgeo[19][8] = Kgeo[8][19];
-  Kgeo[19][9] = Kgeo[9][19];
+  Kgeo[19][0]  = Kgeo[0][19];
+  Kgeo[19][1]  = Kgeo[1][19];
+  Kgeo[19][2]  = Kgeo[2][19];
+  Kgeo[19][3]  = Kgeo[3][19];
+  Kgeo[19][4]  = Kgeo[4][19];
+  Kgeo[19][5]  = Kgeo[5][19];
+  Kgeo[19][6]  = Kgeo[6][19];
+  Kgeo[19][7]  = Kgeo[7][19];
+  Kgeo[19][8]  = Kgeo[8][19];
+  Kgeo[19][9]  = Kgeo[9][19];
   Kgeo[19][10] = Kgeo[10][19];
   Kgeo[19][11] = Kgeo[11][19];
   Kgeo[19][12] = Kgeo[12][19];
@@ -2371,16 +2412,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[19][21] = t79 * Bnl[0][21];
   Kgeo[19][22] = t77 * Bnl[1][22];
   Kgeo[19][23] = t78 * Bnl[2][23];
-  Kgeo[20][0] = Kgeo[0][20];
-  Kgeo[20][1] = Kgeo[1][20];
-  Kgeo[20][2] = Kgeo[2][20];
-  Kgeo[20][3] = Kgeo[3][20];
-  Kgeo[20][4] = Kgeo[4][20];
-  Kgeo[20][5] = Kgeo[5][20];
-  Kgeo[20][6] = Kgeo[6][20];
-  Kgeo[20][7] = Kgeo[7][20];
-  Kgeo[20][8] = Kgeo[8][20];
-  Kgeo[20][9] = Kgeo[9][20];
+  Kgeo[20][0]  = Kgeo[0][20];
+  Kgeo[20][1]  = Kgeo[1][20];
+  Kgeo[20][2]  = Kgeo[2][20];
+  Kgeo[20][3]  = Kgeo[3][20];
+  Kgeo[20][4]  = Kgeo[4][20];
+  Kgeo[20][5]  = Kgeo[5][20];
+  Kgeo[20][6]  = Kgeo[6][20];
+  Kgeo[20][7]  = Kgeo[7][20];
+  Kgeo[20][8]  = Kgeo[8][20];
+  Kgeo[20][9]  = Kgeo[9][20];
   Kgeo[20][10] = Kgeo[10][20];
   Kgeo[20][11] = Kgeo[11][20];
   Kgeo[20][12] = Kgeo[12][20];
@@ -2395,16 +2436,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[20][21] = t82 * Bnl[0][21];
   Kgeo[20][22] = t83 * Bnl[1][22];
   Kgeo[20][23] = t81 * Bnl[2][23];
-  Kgeo[21][0] = Kgeo[0][21];
-  Kgeo[21][1] = Kgeo[1][21];
-  Kgeo[21][2] = Kgeo[2][21];
-  Kgeo[21][3] = Kgeo[3][21];
-  Kgeo[21][4] = Kgeo[4][21];
-  Kgeo[21][5] = Kgeo[5][21];
-  Kgeo[21][6] = Kgeo[6][21];
-  Kgeo[21][7] = Kgeo[7][21];
-  Kgeo[21][8] = Kgeo[8][21];
-  Kgeo[21][9] = Kgeo[9][21];
+  Kgeo[21][0]  = Kgeo[0][21];
+  Kgeo[21][1]  = Kgeo[1][21];
+  Kgeo[21][2]  = Kgeo[2][21];
+  Kgeo[21][3]  = Kgeo[3][21];
+  Kgeo[21][4]  = Kgeo[4][21];
+  Kgeo[21][5]  = Kgeo[5][21];
+  Kgeo[21][6]  = Kgeo[6][21];
+  Kgeo[21][7]  = Kgeo[7][21];
+  Kgeo[21][8]  = Kgeo[8][21];
+  Kgeo[21][9]  = Kgeo[9][21];
   Kgeo[21][10] = Kgeo[10][21];
   Kgeo[21][11] = Kgeo[11][21];
   Kgeo[21][12] = Kgeo[12][21];
@@ -2419,16 +2460,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[21][21] = t85 * Bnl[0][21];
   Kgeo[21][22] = t86 * Bnl[1][22];
   Kgeo[21][23] = t87 * Bnl[2][23];
-  Kgeo[22][0] = Kgeo[0][22];
-  Kgeo[22][1] = Kgeo[1][22];
-  Kgeo[22][2] = Kgeo[2][22];
-  Kgeo[22][3] = Kgeo[3][22];
-  Kgeo[22][4] = Kgeo[4][22];
-  Kgeo[22][5] = Kgeo[5][22];
-  Kgeo[22][6] = Kgeo[6][22];
-  Kgeo[22][7] = Kgeo[7][22];
-  Kgeo[22][8] = Kgeo[8][22];
-  Kgeo[22][9] = Kgeo[9][22];
+  Kgeo[22][0]  = Kgeo[0][22];
+  Kgeo[22][1]  = Kgeo[1][22];
+  Kgeo[22][2]  = Kgeo[2][22];
+  Kgeo[22][3]  = Kgeo[3][22];
+  Kgeo[22][4]  = Kgeo[4][22];
+  Kgeo[22][5]  = Kgeo[5][22];
+  Kgeo[22][6]  = Kgeo[6][22];
+  Kgeo[22][7]  = Kgeo[7][22];
+  Kgeo[22][8]  = Kgeo[8][22];
+  Kgeo[22][9]  = Kgeo[9][22];
   Kgeo[22][10] = Kgeo[10][22];
   Kgeo[22][11] = Kgeo[11][22];
   Kgeo[22][12] = Kgeo[12][22];
@@ -2443,16 +2484,16 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
   Kgeo[22][21] = Kgeo[21][22];
   Kgeo[22][22] = t88 * Bnl[1][22];
   Kgeo[22][23] = t89 * Bnl[2][23];
-  Kgeo[23][0] = Kgeo[0][23];
-  Kgeo[23][1] = Kgeo[1][23];
-  Kgeo[23][2] = Kgeo[2][23];
-  Kgeo[23][3] = Kgeo[3][23];
-  Kgeo[23][4] = Kgeo[4][23];
-  Kgeo[23][5] = Kgeo[5][23];
-  Kgeo[23][6] = Kgeo[6][23];
-  Kgeo[23][7] = Kgeo[7][23];
-  Kgeo[23][8] = Kgeo[8][23];
-  Kgeo[23][9] = Kgeo[9][23];
+  Kgeo[23][0]  = Kgeo[0][23];
+  Kgeo[23][1]  = Kgeo[1][23];
+  Kgeo[23][2]  = Kgeo[2][23];
+  Kgeo[23][3]  = Kgeo[3][23];
+  Kgeo[23][4]  = Kgeo[4][23];
+  Kgeo[23][5]  = Kgeo[5][23];
+  Kgeo[23][6]  = Kgeo[6][23];
+  Kgeo[23][7]  = Kgeo[7][23];
+  Kgeo[23][8]  = Kgeo[8][23];
+  Kgeo[23][9]  = Kgeo[9][23];
   Kgeo[23][10] = Kgeo[10][23];
   Kgeo[23][11] = Kgeo[11][23];
   Kgeo[23][12] = Kgeo[12][23];
@@ -2470,12 +2511,14 @@ ViscoPlastic::BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
 }
 
 void
-ViscoPlastic::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                           DataWarehouse* old_dw, DataWarehouse* new_dw)
+ViscoPlastic::carryForward(const PatchSubset* patches,
+                           const MPMMaterial* matl,
+                           DataWarehouse* old_dw,
+                           DataWarehouse* new_dw)
 {
   for (int p = 0; p < patches->size(); p++) {
-    const Patch* patch = patches->get(p);
-    int dwi = matl->getDWIndex();
+    const Patch* patch   = patches->get(p);
+    int dwi              = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
 
     // Carry forward the data common to all constitutive models
@@ -2512,33 +2555,33 @@ ViscoPlastic::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
     new_dw->allocateAndPut(pLeftStretch_new, pLeftStretchLabel_preReloc, pset);
     new_dw->allocateAndPut(pRotation_new, pRotationLabel_preReloc, pset);
     new_dw->allocateAndPut(pStrainRate_new, pStrainRateLabel_preReloc, pset);
-    new_dw->allocateAndPut(pPlasticStrain_new, pPlasticStrainLabel_preReloc,
-                           pset);
+    new_dw->allocateAndPut(
+      pPlasticStrain_new, pPlasticStrainLabel_preReloc, pset);
     //     new_dw->allocateAndPut(pDamage_new,
     //                            pDamageLabel_preReloc,                 pset);
     //     new_dw->allocateAndPut(pPorosity_new,
     //                            pPorosityLabel_preReloc,               pset);
     new_dw->allocateAndPut(pLocalized_new, pLocalizedLabel_preReloc, pset);
     new_dw->allocateAndPut(pPlasticTemp_new, pPlasticTempLabel_preReloc, pset);
-    new_dw->allocateAndPut(pPlasticTempInc_new, pPlasticTempIncLabel_preReloc,
-                           pset);
-    new_dw->allocateAndPut(pFailureVariable_new, pFailureVariableLabel_preReloc,
-                           pset);
+    new_dw->allocateAndPut(
+      pPlasticTempInc_new, pPlasticTempIncLabel_preReloc, pset);
+    new_dw->allocateAndPut(
+      pFailureVariable_new, pFailureVariableLabel_preReloc, pset);
 
     // Get the plastic strain
     d_plastic->getInternalVars(pset, old_dw);
     d_plastic->allocateAndPutRigid(pset, new_dw);
 
     for (int idx : *pset) {
-      pLeftStretch_new[idx] = pLeftStretch[idx];
-      pRotation_new[idx] = pRotation[idx];
-      pStrainRate_new[idx] = pStrainRate[idx];
+      pLeftStretch_new[idx]   = pLeftStretch[idx];
+      pRotation_new[idx]      = pRotation[idx];
+      pStrainRate_new[idx]    = pStrainRate[idx];
       pPlasticStrain_new[idx] = pPlasticStrain[idx];
       //       pDamage_new[idx] = pDamage[idx];
       //       pPorosity_new[idx] = pPorosity[idx];
-      pLocalized_new[idx] = pLocalized[idx];
-      pPlasticTemp_new[idx] = pPlasticTemp[idx];
-      pPlasticTempInc_new[idx] = 0.0;
+      pLocalized_new[idx]       = pLocalized[idx];
+      pPlasticTemp_new[idx]     = pPlasticTemp[idx];
+      pPlasticTempInc_new[idx]  = 0.0;
       pFailureVariable_new[idx] = pFailureVariable[idx];
     }
 
@@ -2552,11 +2595,12 @@ ViscoPlastic::carryForward(const PatchSubset* patches, const MPMMaterial* matl,
 }
 
 void
-ViscoPlastic::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+ViscoPlastic::allocateCMDataAddRequires(Task* task,
+                                        const MPMMaterial* matl,
                                         const PatchSet* patch,
                                         MPMLabel* lb) const
 {
-  Ghost::GhostType gnone = Ghost::None;
+  Ghost::GhostType gnone        = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
 
   // Allocate the variables shared by all constitutive models
@@ -2581,10 +2625,11 @@ ViscoPlastic::allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
 }
 
 void
-ViscoPlastic::allocateCMDataAdd(
-  DataWarehouse* new_dw, ParticleSubset* addset,
-  ParticleLabelVariableMap* newState, ParticleSubset* delset,
-  DataWarehouse* old_dw)
+ViscoPlastic::allocateCMDataAdd(DataWarehouse* new_dw,
+                                ParticleSubset* addset,
+                                ParticleLabelVariableMap* newState,
+                                ParticleSubset* delset,
+                                DataWarehouse* old_dw)
 {
   // Copy the data common to all constitutive models from the particle to be
   // deleted to the particle to be added.
@@ -2633,27 +2678,27 @@ ViscoPlastic::allocateCMDataAdd(
   n = addset->begin();
   for (o = delset->begin(); o != delset->end(); o++, n++) {
 
-    pLeftStretch[*n] = o_LeftStretch[*o];
-    pRotation[*n] = o_Rotation[*o];
-    pStrainRate[*n] = o_StrainRate[*o];
+    pLeftStretch[*n]   = o_LeftStretch[*o];
+    pRotation[*n]      = o_Rotation[*o];
+    pStrainRate[*n]    = o_StrainRate[*o];
     pPlasticStrain[*n] = o_PlasticStrain[*o];
     //     pDamage[*n] = o_Damage[*o];
     pLocalized[*n] = o_Localized[*o];
     //     pPorosity[*n] = o_Porosity[*o];
     pPlasticTemperature[*n] = o_PlasticTemperature[*o];
-    pPlasticTempInc[*n] = o_PlasticTempInc[*o];
-    pFailureVariable[*n] = o_FailureVariable[*o];
+    pPlasticTempInc[*n]     = o_PlasticTempInc[*o];
+    pFailureVariable[*n]    = o_FailureVariable[*o];
   }
 
-  (*newState)[pLeftStretchLabel] = pLeftStretch.clone();
-  (*newState)[pRotationLabel] = pRotation.clone();
-  (*newState)[pStrainRateLabel] = pStrainRate.clone();
+  (*newState)[pLeftStretchLabel]   = pLeftStretch.clone();
+  (*newState)[pRotationLabel]      = pRotation.clone();
+  (*newState)[pStrainRateLabel]    = pStrainRate.clone();
   (*newState)[pPlasticStrainLabel] = pPlasticStrain.clone();
   //   (*newState)[pDamageLabel]=pDamage.clone();
   (*newState)[pLocalizedLabel] = pLocalized.clone();
   //   (*newState)[pPorosityLabel]=pPorosity.clone();
-  (*newState)[pPlasticTempLabel] = pPlasticTemperature.clone();
-  (*newState)[pPlasticTempIncLabel] = pPlasticTempInc.clone();
+  (*newState)[pPlasticTempLabel]     = pPlasticTemperature.clone();
+  (*newState)[pPlasticTempIncLabel]  = pPlasticTempInc.clone();
   (*newState)[pFailureVariableLabel] = pFailureVariable.clone();
 
   // Initialize the data for the plasticity model
@@ -2673,7 +2718,8 @@ ViscoPlastic::getPlasticTemperatureIncrement(ParticleSubset* pset,
 }
 
 void
-ViscoPlastic::addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
+ViscoPlastic::addRequiresDamageParameter(Task* task,
+                                         const MPMMaterial* matl,
                                          const PatchSet*) const
 {
   // const MaterialSubset* matlset = matl->thisMaterial();
@@ -2683,8 +2729,10 @@ ViscoPlastic::addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
 
 void
 ViscoPlastic::getDamageParameter(const Patch* patch,
-                                 ParticleVariable<int>& damage, int dwi,
-                                 DataWarehouse* old_dw, DataWarehouse* new_dw)
+                                 ParticleVariable<int>& damage,
+                                 int dwi,
+                                 DataWarehouse* old_dw,
+                                 DataWarehouse* new_dw)
 {
   //   ParticleSubset* pset = old_dw->getParticleSubset(dwi,patch);
   //   constParticleVariable<int> pLocalized;
@@ -2699,8 +2747,11 @@ ViscoPlastic::getDamageParameter(const Patch* patch,
 
 // Actually calculate rotation
 void
-ViscoPlastic::computeUpdatedVR(const double& delT, const Matrix3& DD,
-                               const Matrix3& WW, Matrix3& VV, Matrix3& RR)
+ViscoPlastic::computeUpdatedVR(const double& delT,
+                               const Matrix3& DD,
+                               const Matrix3& WW,
+                               Matrix3& VV,
+                               Matrix3& RR)
 {
   // Note:  The incremental polar decomposition algorithm is from
   // Flanagan and Taylor, 1987, Computer Methods in Applied Mechanics and
@@ -2717,8 +2768,8 @@ ViscoPlastic::computeUpdatedVR(const double& delT, const Matrix3& DD,
   Matrix3 oneMinusOmega = one - Omega * (0.5 * delT);
   ASSERT(oneMinusOmega.Determinant() != 0.0);
   Matrix3 oneMinusOmegaInv = oneMinusOmega.Inverse();
-  Matrix3 onePlusOmega = one + Omega * (0.5 * delT);
-  RR = (oneMinusOmegaInv * onePlusOmega) * RR;
+  Matrix3 onePlusOmega     = one + Omega * (0.5 * delT);
+  RR                       = (oneMinusOmegaInv * onePlusOmega) * RR;
 
   // Check the ortogonality of R
   // if (!RR.Orthogonal()) {
@@ -2767,7 +2818,8 @@ ViscoPlastic::computeRateofRotation(const Matrix3& tensorV,
   one.Identity();
   Matrix3 temp = one * (tensorV.Trace()) - tensorV;
   if (temp.Determinant() == 0.0) {
-    cout << "HEP:computeRdot:Determinant less than zero. ** ERROR ** " << endl;
+    std::cout << "HEP:computeRdot:Determinant less than zero. ** ERROR ** "
+              << "\n";
   }
   ASSERT(temp.Determinant() != 0.0);
   temp = temp.Inverse();
@@ -2797,12 +2849,13 @@ ViscoPlastic::computeRateofRotation(const Matrix3& tensorV,
 // Compute the elastic tangent modulus tensor for isotropic
 // materials (**NOTE** can get rid of one copy operation if needed)
 void
-ViscoPlastic::computeElasticTangentModulus(double bulk, double shear,
+ViscoPlastic::computeElasticTangentModulus(double bulk,
+                                           double shear,
                                            TangentModulusTensor& Ce)
 {
   // Form the elastic tangent modulus tensor
-  double E = 9.0 * bulk * shear / (3.0 * bulk + shear);
-  double nu = E / (2.0 * shear) - 1.0;
+  double E   = 9.0 * bulk * shear / (3.0 * bulk + shear);
+  double nu  = E / (2.0 * shear) - 1.0;
   double fac = E / ((1.0 + nu) * (1.0 - 2.0 * nu));
   double C11 = fac * (1.0 - nu);
   double C12 = fac * nu;
@@ -2810,18 +2863,18 @@ ViscoPlastic::computeElasticTangentModulus(double bulk, double shear,
   for (int ii = 0; ii < 6; ++ii)
     for (int jj = 0; jj < 6; ++jj)
       C_6x6(ii, jj) = 0.0;
-  C_6x6(0, 0) = C11;
-  C_6x6(1, 1) = C11;
-  C_6x6(2, 2) = C11;
-  C_6x6(0, 1) = C12;
-  C_6x6(0, 2) = C12;
-  C_6x6(1, 0) = C12;
-  C_6x6(1, 2) = C12;
-  C_6x6(2, 0) = C12;
-  C_6x6(2, 1) = C12;
-  C_6x6(3, 3) = shear;
-  C_6x6(4, 4) = shear;
-  C_6x6(5, 5) = shear;
+  C_6x6(0, 0)       = C11;
+  C_6x6(1, 1)       = C11;
+  C_6x6(2, 2)       = C11;
+  C_6x6(0, 1)       = C12;
+  C_6x6(0, 2)       = C12;
+  C_6x6(1, 0)       = C12;
+  C_6x6(1, 2)       = C12;
+  C_6x6(2, 0)       = C12;
+  C_6x6(2, 1)       = C12;
+  C_6x6(3, 3)       = shear;
+  C_6x6(4, 4)       = shear;
+  C_6x6(5, 5)       = shear;
 
   Ce.convertToTensorForm(C_6x6);
 }
@@ -2850,12 +2903,14 @@ ViscoPlastic::convertToVoigtForm(const TangentModulusTensor Ce, double D[6][6])
 }
 
 double
-ViscoPlastic::computeRhoMicroCM(double pressure, const double p_ref,
-                                const MPMMaterial* matl, double temperature,
+ViscoPlastic::computeRhoMicroCM(double pressure,
+                                const double p_ref,
+                                const MPMMaterial* matl,
+                                double temperature,
                                 double rho_guess)
 {
   double rho_orig = matl->getInitialDensity();
-  double bulk = d_initialData.Bulk;
+  double bulk     = d_initialData.Bulk;
 
   double p_gauge = pressure - p_ref;
   double rho_cur;
@@ -2863,7 +2918,7 @@ ViscoPlastic::computeRhoMicroCM(double pressure, const double p_ref,
   if (d_useModifiedEOS && p_gauge < 0.0) {
     double A = p_ref; // modified EOS
     double n = p_ref / bulk;
-    rho_cur = rho_orig * pow(pressure / A, n);
+    rho_cur  = rho_orig * pow(pressure / A, n);
   } else { // Standard EOS
     rho_cur = rho_orig *
               (p_gauge / bulk + sqrt((p_gauge / bulk) * (p_gauge / bulk) + 1));
@@ -2878,24 +2933,28 @@ ViscoPlastic::computeRhoMicroCM(double pressure, const double p_ref,
 //}
 
 void
-ViscoPlastic::computePressEOSCM(double rho_cur, double& pressure, double p_ref,
-                                double& dp_drho, double& tmp,
-                                const MPMMaterial* matl, double temperature)
+ViscoPlastic::computePressEOSCM(double rho_cur,
+                                double& pressure,
+                                double p_ref,
+                                double& dp_drho,
+                                double& tmp,
+                                const MPMMaterial* matl,
+                                double temperature)
 {
-  double bulk = d_initialData.Bulk;
+  double bulk     = d_initialData.Bulk;
   double rho_orig = matl->getInitialDensity();
 
   if (d_useModifiedEOS && rho_cur < rho_orig) {
     double A = p_ref; // MODIFIED EOS
     double n = bulk / p_ref;
     pressure = A * pow(rho_cur / rho_orig, n);
-    dp_drho = (bulk / rho_orig) * pow(rho_cur / rho_orig, n - 1);
-    tmp = dp_drho; // speed of sound squared
-  } else {         // STANDARD EOS
+    dp_drho  = (bulk / rho_orig) * pow(rho_cur / rho_orig, n - 1);
+    tmp      = dp_drho; // speed of sound squared
+  } else {              // STANDARD EOS
     double p_g = .5 * bulk * (rho_cur / rho_orig - rho_orig / rho_cur);
-    pressure = p_ref + p_g;
-    dp_drho = .5 * bulk * (rho_orig / (rho_cur * rho_cur) + 1. / rho_orig);
-    tmp = bulk / rho_cur; // speed of sound squared
+    pressure   = p_ref + p_g;
+    dp_drho    = .5 * bulk * (rho_orig / (rho_cur * rho_cur) + 1. / rho_orig);
+    tmp        = bulk / rho_cur; // speed of sound squared
   }
 }
 //{
@@ -2918,7 +2977,7 @@ ViscoPlastic::scheduleCheckNeedAddMPMMaterial(Task* task,
                                               const MPMMaterial* matl,
                                               const PatchSet*) const
 {
-  Ghost::GhostType gnone = Ghost::None;
+  Ghost::GhostType gnone        = Ghost::None;
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::NewDW, pPlasticStrainLabel_preReloc, matlset, gnone);
 
@@ -2943,7 +3002,7 @@ ViscoPlastic::checkNeedAddMPMMaterial(const PatchSubset* patches,
   for (int p = 0; p < patches->size(); p++) {
     const Patch* patch = patches->get(p);
 
-    int dwi = matl->getDWIndex();
+    int dwi              = matl->getDWIndex();
     ParticleSubset* pset = old_dw->getParticleSubset(dwi, patch);
     constParticleVariable<double> pPlasticStrain;
     new_dw->get(pPlasticStrain, pPlasticStrainLabel_preReloc, pset);
@@ -2964,9 +3023,14 @@ ViscoPlastic::checkNeedAddMPMMaterial(const PatchSubset* patches,
 // check for failure
 bool
 ViscoPlastic::updateFailedParticlesAndModifyStress(
-  const Matrix3& FF, const double& pFailureVariable, const int& pLocalized,
-  int& pLocalized_new, Matrix3& pStress_new, const long64 particleID,
-  const double temp_new, const double Tm_cur)
+  const Matrix3& FF,
+  const double& pFailureVariable,
+  const int& pLocalized,
+  int& pLocalized_new,
+  Matrix3& pStress_new,
+  const long64 particleID,
+  const double temp_new,
+  const double Tm_cur)
 {
   Matrix3 Identity, zero(0.0);
   Identity.Identity();
@@ -2977,7 +3041,7 @@ ViscoPlastic::updateFailedParticlesAndModifyStress(
     // Check 1: Look at the temperature
     if (temp_new > Tm_cur && !isLocalized) {
       cout_CST << getpid() << "Particle localized. "
-               << " Tm_cur = " << Tm_cur << " temp_new = " << temp_new << endl;
+               << " Tm_cur = " << Tm_cur << " temp_new = " << temp_new << "\n";
       isLocalized = true;
     } // end check 1
 
@@ -2989,7 +3053,7 @@ ViscoPlastic::updateFailedParticlesAndModifyStress(
     //                                                   direction);
     //      if (isLocalized)
     //          cout_CST << getpid() << "Particle " << idx << " localized. "
-    //                       << " using stability criterion" << endl;
+    //                       << " using stability criterion" << "\n";
   } // end removeParticles
 
   Vector eigval(0.0, 0.0, 0.0);
@@ -3024,16 +3088,16 @@ ViscoPlastic::updateFailedParticlesAndModifyStress(
     epsMax = maxEigen; // max principal stress or strain
   }
 
-  //  cout << "e0= " << eigval[0] << ", e2=" << eigval[2] << endl;
+  //  std::cout << "e0= " << eigval[0] << ", e2=" << eigval[2] << "\n";
   // Find if the particle has failed
   pLocalized_new = pLocalized;
 
   if (epsMax > pFailureVariable)
     pLocalized_new = 1;
   if (pLocalized != pLocalized_new) {
-    cout << "Particle " << particleID
-         << " has failed: current value = " << epsMax
-         << ", max allowable  = " << pFailureVariable << endl;
+    std::cout << "Particle " << particleID
+              << " has failed: current value = " << epsMax
+              << ", max allowable  = " << pFailureVariable << "\n";
     isLocalized = true;
 
     if (d_setStressToZero)

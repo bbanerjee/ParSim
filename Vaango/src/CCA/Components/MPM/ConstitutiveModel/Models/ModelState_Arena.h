@@ -26,6 +26,7 @@
 #define __MODEL_STATE_ARENA_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateVisitor.h>
 
 namespace Vaango {
 
@@ -101,6 +102,11 @@ public:
 
   ModelState_Arena& operator=(const ModelState_Arena& state);
   ModelState_Arena* operator=(const ModelState_Arena* state);
+
+  void accept(ModelStateVisitor& visitor) override
+  {
+    visitor.visit(*this);
+  }
 
   void updateStressInvariants();
   void updatePlasticStrainInvariants();

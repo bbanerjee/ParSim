@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,12 +25,13 @@
  */
 
 #include "PTWFlow.h"
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+using Vaango::ModelState_Default;
 
 PTWFlow::PTWFlow(ProblemSpecP& ps)
 {
@@ -86,10 +88,11 @@ PTWFlow::outputProblemSpec(ProblemSpecP& ps)
 }
 
 double
-PTWFlow::computeFlowStress(const PlasticityState* state, const double&,
+PTWFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
                            const double&, const MPMMaterial*,
                            const particleIndex idx)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Retrieve plastic strain and strain rate
   double epdot = state->plasticStrainRate;
   epdot = (epdot <= 0.0) ? 1.0e-8 : epdot;
@@ -111,8 +114,8 @@ PTWFlow::computeFlowStress(const PlasticityState* state, const double&,
   // Compute invxidot - the time required for a transverse wave to cross
   // an atom
   if ((mu <= 0.0) || rho < 0.0 || (T > Tm) || (T <= 0.0)) {
-    cerr << "**ERROR** PTWFlow::computeFlowStress: mu = " << mu
-         << " rho = " << rho << " T = " << T << " Tm = " << Tm << endl;
+    std::cerr << "**ERROR** PTWFlow::computeFlowStress: mu = " << mu
+         << " rho = " << rho << " T = " << T << " Tm = " << Tm << "\n";
   }
 
   double xidot =
@@ -121,8 +124,8 @@ PTWFlow::computeFlowStress(const PlasticityState* state, const double&,
   // Compute the dimensionless plastic strain rate
   double edot = epdot / xidot;
   if (!(xidot > 0.0) || !(edot > 0.0)) {
-    cerr << "**ERROR** PTWFlow::computeFlowStress: xidot = " << xidot
-         << " edot = " << edot << endl;
+    std::cerr << "**ERROR** PTWFlow::computeFlowStress: xidot = " << xidot
+         << " edot = " << edot << "\n";
   }
 
   // Compute the dimensionless temperature
@@ -147,11 +150,11 @@ PTWFlow::computeFlowStress(const PlasticityState* state, const double&,
 
     // Calculate the yield stress in the overdriven shock regime
     double shock_tauhat_y_jump = d_CM.y1 * pow(edot / d_CM.gamma, d_CM.y2);
-    double shock_tauhat_y = min(shock_tauhat_y_jump, shock_tauhat_s);
+    double shock_tauhat_y = std::min(shock_tauhat_y_jump, shock_tauhat_s);
 
     // Calculate the saturation stress and yield stress
-    tauhat_s = max(tauhat_s, shock_tauhat_s);
-    tauhat_y = max(tauhat_y, shock_tauhat_y);
+    tauhat_s = std::max(tauhat_s, shock_tauhat_s);
+    tauhat_y = std::max(tauhat_y, shock_tauhat_y);
   }
 
   // Compute the dimensionless flow stress
@@ -174,10 +177,11 @@ PTWFlow::computeFlowStress(const PlasticityState* state, const double&,
 //             yield surface (i.e., no overdriven shock regime included)
 // (The derivative was computed using Maple)
 double
-PTWFlow::computeEpdot(const PlasticityState* state, const double& delT,
+PTWFlow::computeEpdot(const ModelStateBase* state_in, const double& delT,
                       const double& tolerance, const MPMMaterial*,
                       const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the needed data
   double tau = state->yieldStress;
   double ep = state->plasticStrain;
@@ -215,8 +219,8 @@ PTWFlow::evalFAndFPrime(const double& tau, const double& epdot,
   // Compute the dimensionless plastic strain rate
   double edot = epdot / xidot;
   if (!(xidot > 0.0)) {
-    cerr << "**ERROR** PTWFlow::computeFlowStress: xidot = " << xidot
-         << " edot = " << edot << endl;
+    std::cerr << "**ERROR** PTWFlow::computeFlowStress: xidot = " << xidot
+         << " edot = " << edot << "\n";
   }
 
   // Calculate the dimensionless Arrhenius factor
@@ -261,7 +265,7 @@ PTWFlow::evalFAndFPrime(const double& tau, const double& epdot,
 }
 
 void
-PTWFlow::computeTangentModulus(const Matrix3& stress, const PlasticityState*,
+PTWFlow::computeTangentModulus(const Matrix3& stress, const ModelStateBase*,
                                const double&, const MPMMaterial*,
                                const particleIndex, TangentModulusTensor&,
                                TangentModulusTensor&)
@@ -271,18 +275,20 @@ PTWFlow::computeTangentModulus(const Matrix3& stress, const PlasticityState*,
 }
 
 void
-PTWFlow::evalDerivativeWRTScalarVars(const PlasticityState* state,
+PTWFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state_in,
                                      const particleIndex idx, Vector& derivs)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
   derivs[2] = evalDerivativeWRTPlasticStrain(state, idx);
 }
 
 double
-PTWFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
+PTWFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
                                         const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Retrieve plastic strain and strain rate
   double epdot = state->plasticStrainRate;
   epdot = (epdot <= 0.0) ? 1.0e-8 : epdot;
@@ -328,11 +334,11 @@ PTWFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
 
   // Calculate the yield stress in the overdriven shock regime
   double shock_tauhat_y_jump = d_CM.y1 * pow(edot / d_CM.gamma, d_CM.y2);
-  double shock_tauhat_y = min(shock_tauhat_y_jump, shock_tauhat_s);
+  double shock_tauhat_y = std::min(shock_tauhat_y_jump, shock_tauhat_s);
 
   // Calculate the saturation stress and yield stress
-  double tauhat_s = max(thermal_tauhat_s, shock_tauhat_s);
-  double tauhat_y = max(thermal_tauhat_y, shock_tauhat_y);
+  double tauhat_s = std::max(thermal_tauhat_s, shock_tauhat_s);
+  double tauhat_y = std::max(thermal_tauhat_y, shock_tauhat_y);
 
   // Compute the derivative of the flow stress
   double deriv = 0.0; // Assume no strain hardening at high rates
@@ -360,8 +366,9 @@ PTWFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
 /*  Compute the shear modulus. */
 ///////////////////////////////////////////////////////////////////////////
 double
-PTWFlow::computeShearModulus(const PlasticityState* state)
+PTWFlow::computeShearModulus(const ModelStateBase* state_in)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->initialShearModulus;
 }
 
@@ -369,15 +376,17 @@ PTWFlow::computeShearModulus(const PlasticityState* state)
 /* Compute the melting temperature */
 ///////////////////////////////////////////////////////////////////////////
 double
-PTWFlow::computeMeltingTemp(const PlasticityState* state)
+PTWFlow::computeMeltingTemp(const ModelStateBase* state_in)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->meltingTemp;
 }
 
 double
-PTWFlow::evalDerivativeWRTTemperature(const PlasticityState* state,
+PTWFlow::evalDerivativeWRTTemperature(const ModelStateBase* state_in,
                                       const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double mu = state->shearModulus;
   double rho = state->density;
@@ -394,8 +403,8 @@ PTWFlow::evalDerivativeWRTTemperature(const PlasticityState* state,
     0.5 * pow(4.0 * M_PI * rho / (3.0 * Mkg), (1.0 / 3.0)) * sqrt(mu / rho);
   double edot = epdot / xidot;
   if (!(xidot > 0.0)) {
-    cerr << "**ERROR** PTWFlow::computeFlowStress: xidot = " << xidot
-         << " edot = " << edot << endl;
+    std::cerr << "**ERROR** PTWFlow::computeFlowStress: xidot = " << xidot
+         << " edot = " << edot << "\n";
   }
 
   // Set up constants
@@ -444,9 +453,10 @@ PTWFlow::evalDerivativeWRTTemperature(const PlasticityState* state,
 }
 
 double
-PTWFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
+PTWFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state_in,
                                      const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double mu = state->shearModulus;
   double rho = state->density;
@@ -463,8 +473,8 @@ PTWFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
     0.5 * pow(4.0 * M_PI * rho / (3.0 * Mkg), (1.0 / 3.0)) * sqrt(mu / rho);
   double edot = epdot / xidot;
   if (!(xidot > 0.0)) {
-    cerr << "**ERROR** PTWFlow::computeFlowStress: xidot = " << xidot
-         << " edot = " << edot << endl;
+    std::cerr << "**ERROR** PTWFlow::computeFlowStress: xidot = " << xidot
+         << " edot = " << edot << "\n";
   }
 
   // Calculate the dimensionless Arrhenius factor
@@ -508,7 +518,7 @@ PTWFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
   if (epdot > 1.0e3) {
     double dtau_dpsi_OD =
       d_CM.beta * d_CM.s0 * pow(edot / d_CM.gamma, d_CM.beta) / epdot;
-    dtauhatdpsi = max(dtauhatdpsi, dtau_dpsi_OD);
+    dtauhatdpsi = std::max(dtauhatdpsi, dtau_dpsi_OD);
   }
 
   // Derivative of sigma_y wrt epdot

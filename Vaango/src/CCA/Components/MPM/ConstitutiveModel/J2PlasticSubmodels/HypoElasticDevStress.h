@@ -85,7 +85,7 @@ public:
 
   void allocateAndPutRigid(ParticleSubset*, DataWarehouse*) override;
 
-  void computeDeviatoricStressInc(const particleIndex, const PlasticityState*,
+  void computeDeviatoricStressInc(const particleIndex, const ModelStateBase*,
                                   DeformationState*, const double) override;
 
   void updateInternalStresses(const particleIndex, const Matrix3&,

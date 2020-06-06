@@ -90,7 +90,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////
   /*! \brief  compute the flow stress */
   ///////////////////////////////////////////////////////////////////////////
-  double computeFlowStress(const PlasticityState* state, const double& delT,
+  double computeFlowStress(const ModelStateBase* state, const double& delT,
                            const double& tolerance, const MPMMaterial* matl,
                            const particleIndex idx) override;
 
@@ -99,7 +99,7 @@ public:
     \brief Evaluate derivative of flow stress with respect to plastic strain
   */
   ///////////////////////////////////////////////////////////////////////////
-  double evalDerivativeWRTPlasticStrain(const PlasticityState* state,
+  double evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                         const particleIndex idx) override;
 
   ///////////////////////////////////////////////////////////////////////////
@@ -107,7 +107,7 @@ public:
     \brief Evaluate derivative of flow stress with respect to strain rate.
   */
   ///////////////////////////////////////////////////////////////////////////
-  double evalDerivativeWRTStrainRate(const PlasticityState* state,
+  double evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                      const particleIndex idx) override;
 
   ///////////////////////////////////////////////////////////////////////////
@@ -115,25 +115,25 @@ public:
     \brief Compute the shear modulus.
   */
   ///////////////////////////////////////////////////////////////////////////
-  double computeShearModulus(const PlasticityState* state) override;
+  double computeShearModulus(const ModelStateBase* state) override;
 
   //______________________________________________________________________
   //  Empty functions
-  double computeEpdot(const PlasticityState*, const double&, const double&,
+  double computeEpdot(const ModelStateBase*, const double&, const double&,
                       const MPMMaterial*, const particleIndex) override
   {
     throw InternalError("ZAPolymerFlow::ComputeEpdot has not been implemented",
                         __FILE__, __LINE__);
   };
 
-  double computeMeltingTemp(const PlasticityState*) override
+  double computeMeltingTemp(const ModelStateBase*) override
   {
     throw InternalError(
       "ZAPolymerFlow::computeMeltingTemp has not been implemented", __FILE__,
       __LINE__);
   };
 
-  void evalDerivativeWRTScalarVars(const PlasticityState*, const particleIndex,
+  void evalDerivativeWRTScalarVars(const ModelStateBase*, const particleIndex,
                                    Vector&) override
   {
     throw InternalError(
@@ -141,7 +141,7 @@ public:
       __FILE__, __LINE__);
   }
 
-  double evalDerivativeWRTTemperature(const PlasticityState*,
+  double evalDerivativeWRTTemperature(const ModelStateBase*,
                                       const particleIndex)
   {
     throw InternalError(

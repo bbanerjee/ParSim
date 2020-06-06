@@ -131,7 +131,7 @@ public:
   /////////////////////////////////////////////////////////////////////////
   /*! Calculate the pressure using a equation of state */
   /////////////////////////////////////////////////////////////////////////
-  double computePressure(const MPMMaterial* matl, const PlasticityState* state,
+  double computePressure(const MPMMaterial* matl, const ModelStateBase* state,
                          const Matrix3& deformGrad,
                          const Matrix3& rateOfDeformation,
                          const double& delT) override;
@@ -142,7 +142,7 @@ public:
                                           const double Dtrace) override;
 
   double eval_dp_dJ(const MPMMaterial* matl, const double& delF,
-                    const PlasticityState* state) override;
+                    const ModelStateBase* state) override;
 
   // Compute pressure (option 1)
   double computePressure(const double& rho_orig,

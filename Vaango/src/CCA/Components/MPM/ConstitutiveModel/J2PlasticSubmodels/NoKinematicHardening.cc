@@ -59,7 +59,7 @@ NoKinematicHardening::outputProblemSpec(ProblemSpecP& ps)
 
 void
 NoKinematicHardening::computeBackStress(
-  const PlasticityState* state, const double& delT, const particleIndex idx,
+  const ModelStateBase* state, const double& delT, const particleIndex idx,
   const double& delLambda, const Matrix3& df_dsigma_new,
   const Matrix3& backStress_old, Matrix3& backStress_new)
 {
@@ -70,7 +70,7 @@ NoKinematicHardening::computeBackStress(
 
 void
 NoKinematicHardening::eval_h_beta(const Matrix3& df_dsigma,
-                                  const PlasticityState*, Matrix3& h_beta)
+                                  const ModelStateBase*, Matrix3& h_beta)
 {
   Matrix3 Zero(0.0);
   h_beta = Zero;

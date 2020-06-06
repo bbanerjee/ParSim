@@ -106,7 +106,7 @@ public:
                            DataWarehouse* new_dw) override;
 
   void computeDeviatoricStressInc(const particleIndex idx,
-                                  const PlasticityState* plaState,
+                                  const ModelStateBase* plaState,
                                   DeformationState* defState,
                                   const double delT) override;
 

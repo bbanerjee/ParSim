@@ -28,7 +28,7 @@
 #define __MODEL_STATE_DEFAULT_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/PlasticityState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateVisitor.h>
 #include <Core/Math/Matrix3.h>
 
 namespace Vaango {
@@ -36,16 +36,37 @@ namespace Vaango {
 /////////////////////////////////////////////////////////////////////////////
 /*!
   \class ModelState_Default
-  \brief A structure that store the plasticity state data derived
-         from PlasticityState
+  \brief A structure that stores the plasticity state data
   \author Biswajit Banerjee \n
 */
 /////////////////////////////////////////////////////////////////////////////
+using Uintah::Matrix3;
 
 class ModelState_Default : public ModelStateBase
 {
-
 public:
+  double yieldStress;
+  double strainRate;
+  double plasticStrainRate;
+  double plasticStrain;
+  double pressure;
+  double temperature;
+  double initialTemperature;
+  double density;
+  double initialDensity;
+  double volume;
+  double initialVolume;
+  double bulkModulus;
+  double initialBulkModulus;
+  double shearModulus;
+  double initialShearModulus;
+  double meltingTemp;
+  double initialMeltTemp;
+  double specificHeat;
+  double porosity;
+  double energy;
+  const Matrix3* backStress;
+
   ModelState_Default();
 
   ModelState_Default(const ModelState_Default& state);
@@ -55,6 +76,11 @@ public:
 
   ModelState_Default& operator=(const ModelState_Default& state);
   ModelState_Default* operator=(const ModelState_Default* state);
+
+  void accept(ModelStateVisitor& visitor) override
+  {
+    visitor.visit(*this);
+  }
 };
 
 } // End namespace Uintah

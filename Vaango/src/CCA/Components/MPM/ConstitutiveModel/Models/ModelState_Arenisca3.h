@@ -28,6 +28,7 @@
 #define __MODEL_STATE_ARENISCA3_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateVisitor.h>
 
 namespace Vaango {
 
@@ -61,6 +62,12 @@ public:
 
   ModelState_Arenisca3& operator=(const ModelState_Arenisca3& state);
   ModelState_Arenisca3* operator=(const ModelState_Arenisca3* state);
+
+  void accept(ModelStateVisitor& visitor) override
+  {
+    visitor.visit(*this);
+  }
+
 };
 
 } // End namespace Uintah

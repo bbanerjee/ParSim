@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,7 +27,7 @@
 #ifndef __FLOW_MODEL_H__
 #define __FLOW_MODEL_H__
 
-#include "PlasticityState.h"
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Task.h>
@@ -49,6 +50,8 @@ namespace Uintah {
           all cases other than Gurson plasticity.
 */
 ///////////////////////////////////////////////////////////////////////////
+
+using Vaango::ModelStateBase;
 
 class FlowModel
 {
@@ -101,7 +104,7 @@ public:
   //////////
   /*! \brief Calculate the flow stress */
   //////////
-  virtual double computeFlowStress(const PlasticityState* state,
+  virtual double computeFlowStress(const ModelStateBase* state,
                                    const double& delT, const double& tolerance,
                                    const MPMMaterial* matl,
                                    const particleIndex idx) = 0;
@@ -109,7 +112,7 @@ public:
   //////////
   /*! \brief Calculate the plastic strain rate [epdot(tau,ep,T)] */
   //////////
-  virtual double computeEpdot(const PlasticityState* state, const double& delT,
+  virtual double computeEpdot(const ModelStateBase* state, const double& delT,
                               const double& tolerance, const MPMMaterial* matl,
                               const particleIndex idx) = 0;
 
@@ -128,7 +131,7 @@ public:
     \f$ f_q = \partial f /\partial q \f$
   */
   virtual void computeTangentModulus(
-    const Matrix3& stress, const PlasticityState* state, const double& delT,
+    const Matrix3& stress, const ModelStateBase* state, const double& delT,
     const MPMMaterial* matl, const particleIndex idx, TangentModulusTensor& Ce,
     TangentModulusTensor& Cep){};
 
@@ -143,7 +146,7 @@ public:
        derivs[2] = \f$d\sigma_Y/d(int. var.)\f$)
   */
   ///////////////////////////////////////////////////////////////////////////
-  virtual void evalDerivativeWRTScalarVars(const PlasticityState* state,
+  virtual void evalDerivativeWRTScalarVars(const ModelStateBase* state,
                                            const particleIndex idx,
                                            Vector& derivs){};
 
@@ -155,7 +158,7 @@ public:
     \return \f$d\sigma_Y/d\epsilon_p\f$
   */
   ///////////////////////////////////////////////////////////////////////////
-  virtual double evalDerivativeWRTPlasticStrain(const PlasticityState* state,
+  virtual double evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                                 const particleIndex idx) = 0;
 
   ///////////////////////////////////////////////////////////////////////////
@@ -166,7 +169,7 @@ public:
     \return \f$d\sigma_Y/d\dot{\epsilon_p}\f$
   */
   ///////////////////////////////////////////////////////////////////////////
-  virtual double evalDerivativeWRTStrainRate(const PlasticityState* state,
+  virtual double evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                              const particleIndex idx) = 0;
 
   ///////////////////////////////////////////////////////////////////////////
@@ -174,14 +177,14 @@ public:
     \brief Compute the shear modulus.
   */
   ///////////////////////////////////////////////////////////////////////////
-  virtual double computeShearModulus(const PlasticityState* state) = 0;
+  virtual double computeShearModulus(const ModelStateBase* state) = 0;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
     \brief Compute the melting temperature
   */
   ///////////////////////////////////////////////////////////////////////////
-  virtual double computeMeltingTemp(const PlasticityState* state) = 0;
+  virtual double computeMeltingTemp(const ModelStateBase* state) = 0;
 };
 } // End namespace Uintah
 

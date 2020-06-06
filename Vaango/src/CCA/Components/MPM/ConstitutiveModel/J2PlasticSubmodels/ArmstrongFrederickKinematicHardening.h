@@ -141,13 +141,13 @@ public:
   //////////
   /*! \brief Calculate the back stress */
   //////////
-  void computeBackStress(const PlasticityState* state, const double& delT,
+  void computeBackStress(const ModelStateBase* state, const double& delT,
                          const particleIndex idx, const double& delLambda,
                          const Matrix3& df_dsigma_new,
                          const Matrix3& backStress_old,
                          Matrix3& backStress_new) override;
 
-  void eval_h_beta(const Matrix3& df_dsigma, const PlasticityState* state,
+  void eval_h_beta(const Matrix3& df_dsigma, const ModelStateBase* state,
                    Matrix3& h_beta) override;
 };
 

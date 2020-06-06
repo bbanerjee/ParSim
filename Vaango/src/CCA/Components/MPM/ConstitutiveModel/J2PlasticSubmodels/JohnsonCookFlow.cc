@@ -24,18 +24,12 @@
  * IN THE SOFTWARE.
  */
 
-#ifdef __APPLE__
-// This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
-// make the isnan function not work.  This define makes the cmath header
-// not get included since we do not need it anyway.
-#define _CPP_CMATH
-#endif
-
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/JohnsonCookFlow.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <cmath>
 
-using namespace std;
 using namespace Uintah;
+using Vaango::ModelState_Default;
 
 JohnsonCookFlow::JohnsonCookFlow(ProblemSpecP& ps)
 {
@@ -151,10 +145,11 @@ JohnsonCookFlow::updatePlastic(const particleIndex, const double&)
 }
 
 double
-JohnsonCookFlow::computeFlowStress(const PlasticityState* state, const double&,
+JohnsonCookFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
                                    const double&, const MPMMaterial* matl,
                                    const particleIndex idx)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // double epdot = state->plasticStrainRate/d_CM.epdot_0;
   double epdot = state->strainRate / d_CM.epdot_0;
   double ep = state->plasticStrain;
@@ -176,20 +171,21 @@ JohnsonCookFlow::computeFlowStress(const PlasticityState* state, const double&,
   double tempPart = (Tstar < 0.0) ? (1.0 - Tstar) : (1.0 - pow(Tstar, m));
   double sigy = strainPart * strainRatePart * tempPart;
   if (std::isnan(sigy)) {
-    cout << "**ERROR** JohnsonCook: sig_y == nan "
+    std::cout << "**ERROR** JohnsonCook: sig_y == nan "
          << " Particle = " << idx << " epdot = " << epdot << " ep = " << ep
          << " T = " << T << " strainPart = " << strainPart
          << " strainRatePart = " << strainRatePart << " Tstar = " << Tstar
-         << " tempPart = " << tempPart << endl;
+         << " tempPart = " << tempPart << "\n";
   }
   return sigy;
 }
 
 double
-JohnsonCookFlow::computeEpdot(const PlasticityState* state, const double&,
+JohnsonCookFlow::computeEpdot(const ModelStateBase* state_in, const double&,
                               const double&, const MPMMaterial* matl,
                               const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // All quantities should be at the beginning of the
   // time step
   double tau = state->yieldStress;
@@ -211,14 +207,14 @@ JohnsonCookFlow::computeEpdot(const PlasticityState* state, const double&,
   double fac2 = (1.0 / d_CM.C) * (fac1 - 1.0);
   double epdot = exp(fac2) * d_CM.epdot_0;
   if (std::isnan(epdot)) {
-    cout << "**ERROR** JohnsonCook: epdot == nan " << endl;
+    std::cout << "**ERROR** JohnsonCook: epdot == nan " << "\n";
   }
   return epdot;
 }
 
 void
 JohnsonCookFlow::computeTangentModulus(const Matrix3& stress,
-                                       const PlasticityState*, const double&,
+                                       const ModelStateBase*, const double&,
                                        const MPMMaterial*, const particleIndex,
                                        TangentModulusTensor&,
                                        TangentModulusTensor&)
@@ -228,19 +224,21 @@ JohnsonCookFlow::computeTangentModulus(const Matrix3& stress,
 }
 
 void
-JohnsonCookFlow::evalDerivativeWRTScalarVars(const PlasticityState* state,
+JohnsonCookFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state_in,
                                              const particleIndex idx,
                                              Vector& derivs)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
   derivs[2] = evalDerivativeWRTPlasticStrain(state, idx);
 }
 
 double
-JohnsonCookFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
+JohnsonCookFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
                                                 const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   // double epdot = state->plasticStrainRate/d_CM.epdot_0;
   double epdot = state->strainRate / d_CM.epdot_0;
@@ -263,7 +261,7 @@ JohnsonCookFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
 
   double deriv = (ep > 0.0) ? (d_CM.B * d_CM.n * D * pow(ep, d_CM.n - 1)) : 0.0;
   if (std::isnan(deriv)) {
-    cout << "**ERROR** JohnsonCook: dsig/dep == nan " << endl;
+    std::cout << "**ERROR** JohnsonCook: dsig/dep == nan " << "\n";
   }
   return deriv;
 }
@@ -272,8 +270,9 @@ JohnsonCookFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
 /*  Compute the shear modulus. */
 ///////////////////////////////////////////////////////////////////////////
 double
-JohnsonCookFlow::computeShearModulus(const PlasticityState* state)
+JohnsonCookFlow::computeShearModulus(const ModelStateBase* state_in)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->shearModulus;
 }
 
@@ -281,15 +280,17 @@ JohnsonCookFlow::computeShearModulus(const PlasticityState* state)
 /* Compute the melting temperature */
 ///////////////////////////////////////////////////////////////////////////
 double
-JohnsonCookFlow::computeMeltingTemp(const PlasticityState* state)
+JohnsonCookFlow::computeMeltingTemp(const ModelStateBase* state_in)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->meltingTemp;
 }
 
 double
-JohnsonCookFlow::evalDerivativeWRTTemperature(const PlasticityState* state,
+JohnsonCookFlow::evalDerivativeWRTTemperature(const ModelStateBase* state_in,
                                               const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   // double epdot = state->plasticStrainRate/d_CM.epdot_0;
   double epdot = state->strainRate / d_CM.epdot_0;
@@ -317,15 +318,16 @@ JohnsonCookFlow::evalDerivativeWRTTemperature(const PlasticityState* state,
   double deriv =
     (T < Tr) ? -F / (Tm - Tr) : -m * F * pow(Tstar, m - 1) / (Tm - Tr);
   if (std::isnan(deriv)) {
-    cout << "**ERROR** JohnsonCook: dsig/dT == nan " << endl;
+    std::cout << "**ERROR** JohnsonCook: dsig/dT == nan " << "\n";
   }
   return deriv;
 }
 
 double
-JohnsonCookFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
+JohnsonCookFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state_in,
                                              const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   // double epdot = state->plasticStrainRate/d_CM.epdot_0;
   double epdot = state->strainRate / d_CM.epdot_0;
@@ -351,7 +353,7 @@ JohnsonCookFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
   else
     deriv = E * d_CM.C / epdot;
   if (std::isnan(deriv)) {
-    cout << "**ERROR** JohnsonCook: dsig/depdot == nan " << endl;
+    std::cout << "**ERROR** JohnsonCook: dsig/depdot == nan " << "\n";
   }
   return deriv;
 }

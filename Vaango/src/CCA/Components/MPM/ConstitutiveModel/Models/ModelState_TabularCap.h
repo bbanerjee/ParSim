@@ -26,6 +26,7 @@
 #define __MODEL_STATE_TABULAR_CAP_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateVisitor.h>
 #include <vector>
 #include <iterator>
 
@@ -63,6 +64,11 @@ public:
 
   ModelState_TabularCap& operator=(const ModelState_TabularCap& state) = default;
   ModelState_TabularCap* operator=(const ModelState_TabularCap* state);
+
+  void accept(ModelStateVisitor& visitor) override
+  {
+    visitor.visit(*this);
+  }
 
   friend std::ostream& operator<<(std::ostream& os,
                                   const ModelState_TabularCap& state)

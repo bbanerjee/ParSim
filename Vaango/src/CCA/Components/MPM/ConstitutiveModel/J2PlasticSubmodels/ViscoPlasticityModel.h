@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,10 +27,9 @@
 #ifndef __VISCO_PLASTICITY_MODEL_H__
 #define __VISCO_PLASTICITY_MODEL_H__
 
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <Core/Math/Matrix3.h>
 #include <vector>
-// #include <Core/Grid/Variables/ParticleSet.h>
-#include "PlasticityState.h"
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Task.h>
@@ -51,6 +50,8 @@ namespace Uintah {
           all cases other than Gurson plasticity.
 */
 ///////////////////////////////////////////////////////////////////////////
+
+using Vaango::ModelStateBase;
 
 class ViscoPlasticityModel
 {
@@ -108,14 +109,14 @@ public:
     \brief Compute the shear modulus.
   */
   ///////////////////////////////////////////////////////////////////////////
-  virtual double computeShearModulus(const PlasticityState* state) = 0;
+  virtual double computeShearModulus(const ModelStateBase* state) = 0;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
     \brief Compute the melting temperature
   */
   ///////////////////////////////////////////////////////////////////////////
-  virtual double computeMeltingTemp(const PlasticityState* state) = 0;
+  virtual double computeMeltingTemp(const ModelStateBase* state) = 0;
 
   //    virtual void computeNij(Matrix3& nij,
   //                          Matrix3& reducedEta,

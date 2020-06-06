@@ -93,7 +93,7 @@ public:
   void outputProblemSpec(ProblemSpecP& ps) override;
 
   /*! Compute the specfic heat */
-  double computeSpecificHeat(const PlasticityState* state) override;
+  double computeSpecificHeat(const ModelStateBase* state) override;
 
   /*! A helper function to compute the Gruneisen coefficient */
   double computeGamma(double, double);

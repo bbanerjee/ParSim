@@ -75,6 +75,11 @@ public:
   ModelState_Tabular& operator=(const ModelState_Tabular& state) = default;
   ModelState_Tabular* operator=(const ModelState_Tabular* state);
 
+  void accept(ModelStateVisitor& visitor) override
+  {
+    visitor.visit(*this);
+  }
+
   void updateStressInvariants();
   void updatePlasticStrainInvariants();
 

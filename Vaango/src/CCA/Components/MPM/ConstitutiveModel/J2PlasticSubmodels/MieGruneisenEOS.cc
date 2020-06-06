@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,11 +25,12 @@
  */
 
 #include "MieGruneisenEOS.h"
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>
 
-using namespace std;
 using namespace Uintah;
+using Vaango::ModelState_Default;
 
 MieGruneisenEOS::MieGruneisenEOS(ProblemSpecP& ps)
 {
@@ -84,9 +63,11 @@ MieGruneisenEOS::outputProblemSpec(ProblemSpecP& ps)
 // Calculate the pressure using the Mie-Gruneisen equation of state
 double
 MieGruneisenEOS::computePressure(const MPMMaterial* matl,
-                                 const PlasticityState* state, const Matrix3&,
+                                 const ModelStateBase* state_in, const Matrix3&,
                                  const Matrix3&, const double&)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
+
   // Get the state data
   double rho = state->density;
   double T = state->temperature;
@@ -108,8 +89,8 @@ MieGruneisenEOS::computePressure(const MPMMaterial* matl,
                    (1.0 / zeta + (1.0 - 0.5 * d_const.Gamma_0));
     double denom = 1.0 / zeta - (d_const.S_alpha - 1.0);
     if (denom == 0.0) {
-      cout << "rh0_0 = " << rho_0 << " zeta = " << zeta << " numer = " << numer
-           << endl;
+      std::cout << "rh0_0 = " << rho_0 << " zeta = " << zeta << " numer = " << numer
+           << "\n";
       denom = 1.0e-5;
     }
     p += numer / (denom * denom);
@@ -119,8 +100,10 @@ MieGruneisenEOS::computePressure(const MPMMaterial* matl,
 
 double
 MieGruneisenEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
-                            const PlasticityState* state)
+                            const ModelStateBase* state_in)
 {
+  //auto state = static_cast<const ModelState_Default*>(state_in);
+
   double rho_0 = matl->getInitialDensity();
   double C_0 = d_const.C_0;
   double S_alpha = d_const.S_alpha;
@@ -131,7 +114,7 @@ MieGruneisenEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
   double denom = (1.0 - S_alpha * (1.0 - J));
   double denom3 = (denom * denom * denom);
   if (denom3 == 0.0) {
-    cout << "rh0_0 = " << rho_0 << " J = " << J << " numer = " << numer << endl;
+    std::cout << "rh0_0 = " << rho_0 << " J = " << J << " numer = " << numer << "\n";
     denom3 = 1.0e-5;
   }
 

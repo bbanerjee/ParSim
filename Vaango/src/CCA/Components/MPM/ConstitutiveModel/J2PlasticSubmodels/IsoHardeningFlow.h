@@ -134,14 +134,14 @@ public:
   ///////////////////////////////////////////////////////////////////////////
   /*! compute the flow stress */
   ///////////////////////////////////////////////////////////////////////////
-  double computeFlowStress(const PlasticityState* state, const double& delT,
+  double computeFlowStress(const ModelStateBase* state, const double& delT,
                            const double& tolerance, const MPMMaterial* matl,
                            const particleIndex idx) override;
 
   //////////
   /*! \brief Calculate the plastic strain rate [epdot(tau,ep,T)] */
   //////////
-  double computeEpdot(const PlasticityState* state, const double& delT,
+  double computeEpdot(const ModelStateBase* state, const double& delT,
                       const double& tolerance, const MPMMaterial* matl,
                       const particleIndex idx) override;
 
@@ -151,7 +151,7 @@ public:
   associated flow rule */
   ///////////////////////////////////////////////////////////////////////////
   void computeTangentModulus(const Matrix3& stress,
-                             const PlasticityState* state, const double& delT,
+                             const ModelStateBase* state, const double& delT,
                              const MPMMaterial* matl, const particleIndex idx,
                              TangentModulusTensor& Ce,
                              TangentModulusTensor& Cep) override;
@@ -167,7 +167,7 @@ public:
     deriv[2] = \f$d\sigma_Y/d\alpha\f$)
   */
   ///////////////////////////////////////////////////////////////////////////
-  void evalDerivativeWRTScalarVars(const PlasticityState* state,
+  void evalDerivativeWRTScalarVars(const ModelStateBase* state,
                                    const particleIndex idx,
                                    Vector& derivs) override;
 
@@ -192,7 +192,7 @@ public:
 
   */
   ///////////////////////////////////////////////////////////////////////////
-  double evalDerivativeWRTPlasticStrain(const PlasticityState* state,
+  double evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                         const particleIndex idx) override;
 
   ///////////////////////////////////////////////////////////////////////////
@@ -212,7 +212,7 @@ public:
     \return Derivative \f$ d\sigma_Y / d\dot\epsilon_p \f$.
   */
   ///////////////////////////////////////////////////////////////////////////
-  double evalDerivativeWRTStrainRate(const PlasticityState* state,
+  double evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                      const particleIndex idx) override;
 
   ///////////////////////////////////////////////////////////////////////////
@@ -220,14 +220,14 @@ public:
     \brief Compute the shear modulus.
   */
   ///////////////////////////////////////////////////////////////////////////
-  double computeShearModulus(const PlasticityState* state) override;
+  double computeShearModulus(const ModelStateBase* state) override;
 
   ///////////////////////////////////////////////////////////////////////////
   /*!
     \brief Compute the melting temperature
   */
   ///////////////////////////////////////////////////////////////////////////
-  double computeMeltingTemp(const PlasticityState* state) override;
+  double computeMeltingTemp(const ModelStateBase* state) override;
 
 protected:
   ///////////////////////////////////////////////////////////////////////////
@@ -247,7 +247,7 @@ protected:
     \return Derivative \f$ d\sigma_Y / dT \f$.
   */
   ///////////////////////////////////////////////////////////////////////////
-  double evalDerivativeWRTTemperature(const PlasticityState* state,
+  double evalDerivativeWRTTemperature(const ModelStateBase* state,
                                       const particleIndex idx);
 
   ///////////////////////////////////////////////////////////////////////////
@@ -268,7 +268,7 @@ protected:
 
   */
   ///////////////////////////////////////////////////////////////////////////
-  double evalDerivativeWRTAlpha(const PlasticityState* state,
+  double evalDerivativeWRTAlpha(const ModelStateBase* state,
                                 const particleIndex idx);
 };
 

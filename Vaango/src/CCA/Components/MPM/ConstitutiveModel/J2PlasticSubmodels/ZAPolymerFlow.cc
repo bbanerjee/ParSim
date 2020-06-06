@@ -24,11 +24,12 @@
  * IN THE SOFTWARE.
  */
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ZAPolymerFlow.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <cmath>
 
-using namespace std;
 using namespace Uintah;
+using Vaango::ModelState_Default;
 //______________________________________________________________________
 
 ZAPolymerFlow::ZAPolymerFlow(ProblemSpecP& ps)
@@ -95,10 +96,11 @@ ZAPolymerFlow::outputProblemSpec(ProblemSpecP& ps)
 //______________________________________________________________________
 //     Reference & equation number????
 double
-ZAPolymerFlow::computeFlowStress(const PlasticityState* state, const double&,
+ZAPolymerFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
                                  const double&, const MPMMaterial*,
                                  const particleIndex idx)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   double epdot = state->plasticStrainRate;
   double ep = state->plasticStrain;
   double T = state->temperature;
@@ -131,12 +133,12 @@ ZAPolymerFlow::computeFlowStress(const PlasticityState* state, const double&,
                    B_0 * sqrt(omega * ep) * exp(-alpha * T_T0);
 
   if (std::isnan(sigma_y)) {
-    cout << "WARNING::ZAPolymerFlow::computeFlowStress:: idx = " << idx
-         << " epdot = " << epdot << " ep = " << ep << " T = " << T << endl;
-    cout << " P = " << P << " d_CM.sigma_g = " << d_CM.sigma_g
+    std::cout << "WARNING::ZAPolymerFlow::computeFlowStress:: idx = " << idx
+         << " epdot = " << epdot << " ep = " << ep << " T = " << T << "\n";
+    std::cout << " P = " << P << " d_CM.sigma_g = " << d_CM.sigma_g
          << " alpha = " << alpha << " beta = " << beta << " B = " << B
          << " B_0 " << B_0 << " omega " << omega << " sigma_y = " << sigma_y
-         << endl;
+         << "\n";
   }
 
   return sigma_y;
@@ -145,9 +147,10 @@ ZAPolymerFlow::computeFlowStress(const PlasticityState* state, const double&,
 //______________________________________________________________________
 //
 double
-ZAPolymerFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
+ZAPolymerFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
                                               const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double epdot = state->plasticStrainRate;
@@ -185,17 +188,19 @@ ZAPolymerFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
 //______________________________________________________________________
 //
 double
-ZAPolymerFlow::computeShearModulus(const PlasticityState* state)
+ZAPolymerFlow::computeShearModulus(const ModelStateBase* state_in)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->shearModulus;
 }
 
 //______________________________________________________________________
 //
 double
-ZAPolymerFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
+ZAPolymerFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state_in,
                                            const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double epdot = state->plasticStrainRate;

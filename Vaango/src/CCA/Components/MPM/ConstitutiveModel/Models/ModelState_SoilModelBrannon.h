@@ -64,6 +64,12 @@ public:
     const ModelState_SoilModelBrannon& state);
   ModelState_SoilModelBrannon* operator=(
     const ModelState_SoilModelBrannon* state);
+
+  void accept(ModelStateVisitor& visitor) override
+  {
+    visitor.visit(*this);
+  }
+
 };
 
 } // End namespace Uintah

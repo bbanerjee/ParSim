@@ -81,7 +81,7 @@ public:
   void outputProblemSpec(ProblemSpecP& ps) override;
 
   /*! Compute the melt temp */
-  double computeMeltingTemp(const PlasticityState* state) override;
+  double computeMeltingTemp(const ModelStateBase* state) override;
 };
 } // End namespace Uintah
 

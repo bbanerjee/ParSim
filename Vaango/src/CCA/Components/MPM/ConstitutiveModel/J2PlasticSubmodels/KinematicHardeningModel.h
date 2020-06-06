@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,7 +27,7 @@
 #ifndef __KINEMATIC_HARDENING_MODEL_H__
 #define __KINEMATIC_HARDENING_MODEL_H__
 
-#include "PlasticityState.h"
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Task.h>
@@ -50,6 +50,8 @@ namespace Uintah {
 */
 ///////////////////////////////////////////////////////////////////////////
 
+using Vaango::ModelStateBase;
+
 class KinematicHardeningModel
 {
 
@@ -70,7 +72,7 @@ public:
   /*! \brief Calculate the back stress */
   /* Note that df_dsigma_normal_new is the normalized value of df_dsigma */
   //////////
-  virtual void computeBackStress(const PlasticityState* state,
+  virtual void computeBackStress(const ModelStateBase* state,
                                  const double& delT, const particleIndex idx,
                                  const double& delLambda,
                                  const Matrix3& df_dsigma_normal_new,
@@ -80,7 +82,7 @@ public:
   /*! Compute the direction of back stress evolution (\f$h^beta\f$)
       for the equation \f$ d/dt(\beta) = d/dt(\gamma) h^beta \f$ */
   virtual void eval_h_beta(const Matrix3& df_dsigma,
-                           const PlasticityState* state, Matrix3& h_beta) = 0;
+                           const ModelStateBase* state, Matrix3& h_beta) = 0;
 
   /*! Get the back stress */
   void getBackStress(const particleIndex idx, Matrix3& backStress);

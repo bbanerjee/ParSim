@@ -1,31 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- */
-
-/*
- * The MIT License
- *
  * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -47,12 +25,13 @@
  */
 
 #include "MTSFlow.h"
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>
 #include <iostream>
 
 using namespace Uintah;
-using namespace std;
+using Vaango::ModelState_Default;
 
 MTSFlow::MTSFlow(ProblemSpecP& ps)
 {
@@ -299,10 +278,11 @@ MTSFlow::updatePlastic(const particleIndex, const double&)
 }
 
 double
-MTSFlow::computeFlowStress(const PlasticityState* state, const double&,
+MTSFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
                            const double&, const MPMMaterial*,
                            const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Calculate strain rate and incremental strain
   // double edot = state->plasticStrainRate;
   double edot = state->strainRate;
@@ -314,8 +294,8 @@ MTSFlow::computeFlowStress(const PlasticityState* state, const double&,
   double T = state->temperature;
   double mu = state->shearModulus;
   if ((mu <= 0.0) || (T <= 0.0)) {
-    cerr << "**ERROR** MTSFlow::computeFlowStress: mu = " << mu << " T = " << T
-         << endl;
+    std::cerr << "**ERROR** MTSFlow::computeFlowStress: mu = " << mu << " T = " << T
+         << "\n";
   }
   double mu_mu_0 = mu / d_CM.mu_0;
 
@@ -368,12 +348,12 @@ MTSFlow::computeFlowStress(const PlasticityState* state, const double&,
   if (theta_0 < 0.0) {
     ostringstream desc;
     desc << " **ERROR** MTS Plasticity Model: Negative initial hardening rate! "
-         << endl;
-    desc << "     edot = " << edot << " ep = " << state->plasticStrain << endl;
-    desc << "     Tm = " << state->meltingTemp << " T = " << T << endl;
-    desc << "     mu = " << mu << " mu_0 = " << d_CM.mu_0 << endl;
+         << "\n";
+    desc << "     edot = " << edot << " ep = " << state->plasticStrain << "\n";
+    desc << "     Tm = " << state->meltingTemp << " T = " << T << "\n";
+    desc << "     mu = " << mu << " mu_0 = " << d_CM.mu_0 << "\n";
     desc << "     theta_0 = " << theta_0
-         << " epdot = " << state->plasticStrainRate << endl;
+         << " epdot = " << state->plasticStrainRate << "\n";
     throw InvalidValue(desc.str(), __FILE__, __LINE__);
   }
 
@@ -405,12 +385,12 @@ MTSFlow::computeFlowStress(const PlasticityState* state, const double&,
   // Calculate the flow stress
   double sigma = d_CM.sigma_a + (S_i * sigma_i + S_e * sigma_e) * mu_mu_0;
 
-  // cout << "MTS: edot = " << edot << " T = " << T << " ep = " << delEps <<
-  // endl;
-  // cout << "     mu = " << mu << " mu_0 = " << d_CM.mu_0 << endl;
-  // cout << "     S_i = " << S_i << " sigma_i = " << sigma_i << endl;
-  // cout << "     S_e = " << S_e << " sigma_e = " << sigma_e << endl;
-  // cout << "     theta_0 = " << theta_0 << endl;
+  // std::cout << "MTS: edot = " << edot << " T = " << T << " ep = " << delEps <<
+  // "\n";
+  // std::cout << "     mu = " << mu << " mu_0 = " << d_CM.mu_0 << "\n";
+  // std::cout << "     S_i = " << S_i << " sigma_i = " << sigma_i << "\n";
+  // std::cout << "     S_e = " << S_e << " sigma_e = " << sigma_e << "\n";
+  // std::cout << "     theta_0 = " << theta_0 << "\n";
   return sigma;
 }
 
@@ -474,9 +454,10 @@ MTSFlow::computeSigma_e(const double& theta_0, const double& sigma_es,
 }
 
 double
-MTSFlow::computeEpdot(const PlasticityState* state, const double& delT,
+MTSFlow::computeEpdot(const ModelStateBase* state_in, const double& delT,
                       const double&, const MPMMaterial*, const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the needed data
   double tau = state->yieldStress;
   double T = state->temperature;
@@ -590,7 +571,7 @@ MTSFlow::evalFAndFPrime(const double& tau, const double& epdot, const double& T,
 }
 
 void
-MTSFlow::computeTangentModulus(const Matrix3&, const PlasticityState*,
+MTSFlow::computeTangentModulus(const Matrix3&, const ModelStateBase*,
                                const double&, const MPMMaterial*,
                                const particleIndex, TangentModulusTensor&,
                                TangentModulusTensor&)
@@ -600,18 +581,20 @@ MTSFlow::computeTangentModulus(const Matrix3&, const PlasticityState*,
 }
 
 void
-MTSFlow::evalDerivativeWRTScalarVars(const PlasticityState* state,
+MTSFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state_in,
                                      const particleIndex idx, Vector& derivs)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
   derivs[2] = evalDerivativeWRTPlasticStrain(state, idx);
 }
 
 double
-MTSFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
+MTSFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
                                         const particleIndex idx)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   // double edot = state->plasticStrainRate;
   double edot = state->strainRate;
@@ -673,8 +656,9 @@ MTSFlow::evalDerivativeWRTPlasticStrain(const PlasticityState* state,
 /*  Compute the shear modulus. */
 ///////////////////////////////////////////////////////////////////////////
 double
-MTSFlow::computeShearModulus(const PlasticityState* state)
+MTSFlow::computeShearModulus(const ModelStateBase* state_in)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   double T = state->temperature;
   ASSERT(T > 0.0);
   double expT0_T = exp(d_CM.T_0 / T) - 1.0;
@@ -682,9 +666,9 @@ MTSFlow::computeShearModulus(const PlasticityState* state)
   double mu = d_CM.mu_0 - d_CM.D / expT0_T;
   if (!(mu > 0.0)) {
     ostringstream desc;
-    desc << "**MTS Deriv Edot ERROR** Shear modulus <= 0." << endl;
+    desc << "**MTS Deriv Edot ERROR** Shear modulus <= 0." << "\n";
     desc << "T = " << T << " mu0 = " << d_CM.mu_0 << " T0 = " << d_CM.T_0
-         << " exp(To/T) = " << expT0_T << " D = " << d_CM.D << endl;
+         << " exp(To/T) = " << expT0_T << " D = " << d_CM.D << "\n";
     throw InvalidValue(desc.str(), __FILE__, __LINE__);
   }
   return mu;
@@ -694,15 +678,17 @@ MTSFlow::computeShearModulus(const PlasticityState* state)
 /* Compute the melting temperature */
 ///////////////////////////////////////////////////////////////////////////
 double
-MTSFlow::computeMeltingTemp(const PlasticityState* state)
+MTSFlow::computeMeltingTemp(const ModelStateBase* state_in)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->meltingTemp;
 }
 
 double
-MTSFlow::evalDerivativeWRTTemperature(const PlasticityState* state,
+MTSFlow::evalDerivativeWRTTemperature(const ModelStateBase* state_in,
                                       const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   // double edot = state->plasticStrainRate;
   double edot = state->strainRate;
@@ -827,9 +813,10 @@ MTSFlow::evalDerivativeWRTTemperature(const PlasticityState* state,
 }
 
 double
-MTSFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
+MTSFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state_in,
                                      const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   // double edot = state->plasticStrainRate;
   double edot = state->strainRate;
@@ -931,9 +918,10 @@ MTSFlow::evalDerivativeWRTStrainRate(const PlasticityState* state,
 }
 
 double
-MTSFlow::evalDerivativeWRTSigmaE(const PlasticityState* state,
+MTSFlow::evalDerivativeWRTSigmaE(const ModelStateBase* state_in,
                                  const particleIndex)
 {
+  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   // double edot = state->plasticStrainRate;
   double edot = state->strainRate;

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,9 +27,11 @@
 #ifndef __MODEL_STATE_VISITOR_H__
 #define __MODEL_STATE_VISITOR_H__
 
+#include <iostream>
+
 namespace Vaango {
 
-class ModelStateBase;
+class ModelState_Default;
 class ModelState_SoilModelBrannon;
 class ModelState_Arenisca3;
 class ModelState_CamClay;
@@ -48,7 +50,7 @@ class ModelStateVisitorBase
 public:
   virtual ~ModelStateVisitorBase();
 
-  virtual void visit(ModelStateBase& state) = 0;
+  virtual void visit(ModelState_Default& state) = 0;
   virtual void visit(ModelState_SoilModelBrannon& state) = 0;
   virtual void visit(ModelState_Arenisca3& state) = 0;
   virtual void visit(ModelState_CamClay& state) = 0;
@@ -58,15 +60,29 @@ class ModelStateVisitor : public ModelStateVisitorBase
 {
 
 public:
-  ~ModelStateVisitor() override = default;
 
-  void visit(ModelStateBase& state) override {}
+  ModelStateVisitor() = default;
+  ~ModelStateVisitor();
 
-  void visit(ModelState_SoilModelBrannon& state) override {}
+  void visit(ModelState_Default& state) override
+  {
+    std::cout << "In ModelState_Default\n";
+  }
 
-  void visit(ModelState_Arenisca3& state) override {}
+  void visit(ModelState_SoilModelBrannon& state) override
+  {
+    std::cout << "In ModelState_SoilModelBrannon\n";
+  }
 
-  void visit(ModelState_CamClay& state) override {}
+  void visit(ModelState_Arenisca3& state) override
+  {
+    std::cout << "In ModelState_Arenisca3\n";
+  }
+
+  void visit(ModelState_CamClay& state) override
+  {
+    std::cout << "In ModelState_CamClay\n";
+  }
 };
 
 } // End namespace Vaango

@@ -27,7 +27,6 @@
 #ifndef __ELASTIC_PLASTICHP_H__
 #define __ELASTIC_PLASTICHP_H__
 
-#include <Core/Math/Short27.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DamageModel.h>
@@ -39,9 +38,11 @@
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/SpecificHeatModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheck.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Math/Matrix3.h>
+#include <Core/Math/Short27.h>
 #include <Core/Math/TangentModulusTensor.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <cmath>
@@ -79,6 +80,8 @@ class MPMFlags;
   associated flow rule, high strain rate.
 */
 /////////////////////////////////////////////////////////////////////////////
+
+using Vaango::ModelStateBase;
 
 class ElasticPlasticHP : public ConstitutiveModel, public ImplicitCM
 {
@@ -175,7 +178,6 @@ protected:
   SpecificHeatModel* d_Cp;
   DevStressModel* d_devStress;
 
-
 public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief constructors */
@@ -189,10 +191,7 @@ public:
   ////////////////////////////////////////////////////////////////////////
   ~ElasticPlasticHP() override;
 
-  ModelType modelType() const override
-  {
-    return ModelType::RATE_FORM;
-  }
+  ModelType modelType() const override { return ModelType::RATE_FORM; }
 
   void outputProblemSpec(ProblemSpecP& ps, bool output_cm_tag = true) override;
 
@@ -202,13 +201,15 @@ public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void addInitialComputesAndRequires(Task* task, const MPMMaterial* matl,
+  void addInitialComputesAndRequires(Task* task,
+                                     const MPMMaterial* matl,
                                      const PatchSet* patches) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief initialize  each particle's constitutive model data */
   ////////////////////////////////////////////////////////////////////////
-  void initializeCMData(const Patch* patch, const MPMMaterial* matl,
+  void initializeCMData(const Patch* patch,
+                        const MPMMaterial* matl,
                         DataWarehouse* new_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
@@ -221,7 +222,8 @@ public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void addComputesAndRequires(Task* task, const MPMMaterial* matl,
+  void addComputesAndRequires(Task* task,
+                              const MPMMaterial* matl,
                               const PatchSet* patches) const override;
 
   ////////////////////////////////////////////////////////////////////////
@@ -235,55 +237,67 @@ public:
     \f]
   */
   ////////////////////////////////////////////////////////////////////////
-  void computeStressTensor(const PatchSubset* patches, const MPMMaterial* matl,
+  void computeStressTensor(const PatchSubset* patches,
+                           const MPMMaterial* matl,
                            DataWarehouse* old_dw,
                            DataWarehouse* new_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void addComputesAndRequires(Task*, const MPMMaterial*, const PatchSet*,
-                              const bool, const bool) const override;
+  void addComputesAndRequires(Task*,
+                              const MPMMaterial*,
+                              const PatchSet*,
+                              const bool,
+                              const bool) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Compute Stress Tensor Implicit */
   ////////////////////////////////////////////////////////////////////////
   void computeStressTensorImplicit(const PatchSubset* patches,
                                    const MPMMaterial* matl,
-                                   DataWarehouse* old_dw, DataWarehouse* new_dw,
+                                   DataWarehouse* old_dw,
+                                   DataWarehouse* new_dw,
                                    Solver* solver,
                                    const bool recursion) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief carry forward CM data for RigidMPM */
   ////////////////////////////////////////////////////////////////////////
-  void carryForward(const PatchSubset* patches, const MPMMaterial* matl,
-                    DataWarehouse* old_dw, DataWarehouse* new_dw) override;
+  void carryForward(const PatchSubset* patches,
+                    const MPMMaterial* matl,
+                    DataWarehouse* old_dw,
+                    DataWarehouse* new_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void addRequiresDamageParameter(Task* task, const MPMMaterial* matl,
+  void addRequiresDamageParameter(Task* task,
+                                  const MPMMaterial* matl,
                                   const PatchSet* patches) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void getDamageParameter(const Patch* patch, ParticleVariable<int>& damage,
-                          int dwi, DataWarehouse* old_dw,
+  void getDamageParameter(const Patch* patch,
+                          ParticleVariable<int>& damage,
+                          int dwi,
+                          DataWarehouse* old_dw,
                           DataWarehouse* new_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void allocateCMDataAddRequires(Task* task, const MPMMaterial* matl,
+  void allocateCMDataAddRequires(Task* task,
+                                 const MPMMaterial* matl,
                                  const PatchSet* patch,
                                  MPMLabel* lb) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void allocateCMDataAdd(DataWarehouse* new_dw, ParticleSubset* subset,
+  void allocateCMDataAdd(DataWarehouse* new_dw,
+                         ParticleSubset* subset,
                          ParticleLabelVariableMap* newState,
                          ParticleSubset* delset,
                          DataWarehouse* old_dw) override;
@@ -291,14 +305,16 @@ public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
-  void scheduleCheckNeedAddMPMMaterial(Task* task, const MPMMaterial* matl,
+  void scheduleCheckNeedAddMPMMaterial(Task* task,
+                                       const MPMMaterial* matl,
                                        const PatchSet* patches) const override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Put documentation here. */
   ////////////////////////////////////////////////////////////////////////
   void checkNeedAddMPMMaterial(const PatchSubset* patches,
-                               const MPMMaterial* matl, DataWarehouse* old_dw,
+                               const MPMMaterial* matl,
+                               DataWarehouse* old_dw,
                                DataWarehouse* new_dw) override;
 
   ////////////////////////////////////////////////////////////////////////
@@ -310,16 +326,22 @@ public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Sockets for MPM-ICE */
   ////////////////////////////////////////////////////////////////////////
-  double computeRhoMicroCM(double pressure, const double p_ref,
-                           const MPMMaterial* matl, double temperature,
+  double computeRhoMicroCM(double pressure,
+                           const double p_ref,
+                           const MPMMaterial* matl,
+                           double temperature,
                            double rho_guess) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Sockets for MPM-ICE */
   ////////////////////////////////////////////////////////////////////////
-  void computePressEOSCM(double rho_m, double& press_eos, double p_ref,
-                         double& dp_drho, double& ss_new,
-                         const MPMMaterial* matl, double temperature) override;
+  void computePressEOSCM(double rho_m,
+                         double& press_eos,
+                         double p_ref,
+                         double& dp_drho,
+                         double& ss_new,
+                         const MPMMaterial* matl,
+                         double temperature) override;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Sockets for MPM-ICE */
@@ -331,11 +353,20 @@ protected:
   /*! \brief Compute Plastic State using Biswajit's approach */
   ////////////////////////////////////////////////////////////////////////
   bool computePlasticStateBiswajit(
-    PlasticityState* state, constParticleVariable<double>& pPlasticStrain,
-    constParticleVariable<double>& pStrainRate, const Matrix3& sigma,
-    const Matrix3& trialS, const Matrix3& tensorEta, Matrix3& tensorS,
-    double& delGamma, double& flowStress, double& porosity, double& mu_cur,
-    const double delT, const MPMMaterial* matl, const int idx);
+    ModelStateBase* state,
+    constParticleVariable<double>& pPlasticStrain,
+    constParticleVariable<double>& pStrainRate,
+    const Matrix3& sigma,
+    const Matrix3& trialS,
+    const Matrix3& tensorEta,
+    Matrix3& tensorS,
+    double& delGamma,
+    double& flowStress,
+    double& porosity,
+    double& mu_cur,
+    const double delT,
+    const MPMMaterial* matl,
+    const int idx);
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Compute Stilde, epdot, ep, and delGamma using
@@ -345,7 +376,8 @@ protected:
                                           const double& delT,
                                           const MPMMaterial* matl,
                                           const particleIndex idx,
-                                          PlasticityState* state, Matrix3& nn,
+                                          ModelStateBase* state,
+                                          Matrix3& nn,
                                           double& delGamma);
 
   ////////////////////////////////////////////////////////////////////////
@@ -354,9 +386,12 @@ protected:
              using Newton iterative root finder
       where \f$ d_p = \dot\gamma d(sigma_y)/d(sigma) \f$ */
   ////////////////////////////////////////////////////////////////////////
-  double computeDeltaGamma(const double& delT, const double& tolerance,
-                           const double& normTrialS, const MPMMaterial* matl,
-                           const particleIndex idx, PlasticityState* state);
+  double computeDeltaGamma(const double& delT,
+                           const double& tolerance,
+                           const double& normTrialS,
+                           const MPMMaterial* matl,
+                           const particleIndex idx,
+                           ModelStateBase* state);
 
   ////////////////////////////////////////////////////////////////////////
   /*! Compute the elastic tangent modulus tensor for isotropic
@@ -364,14 +399,16 @@ protected:
       Assume: [stress] = [s11 s22 s33 s23 s31 s12]
               [strain] = [e11 e22 e33 2e23 2e31 2e12] */
   ////////////////////////////////////////////////////////////////////////
-  void computeElasticTangentModulus(const double& K, const double& mu,
+  void computeElasticTangentModulus(const double& K,
+                                    const double& mu,
                                     double Ce[6][6]);
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Compute the elastic tangent modulus tensor for isotropic
     materials */
   ////////////////////////////////////////////////////////////////////////
-  void computeElasticTangentModulus(double bulk, double shear,
+  void computeElasticTangentModulus(double bulk,
+                                    double shear,
                                     TangentModulusTensor& Ce);
 
   ////////////////////////////////////////////////////////////////////////
@@ -381,11 +418,13 @@ protected:
               [strain] = [e11 e22 e33 2e23 2e31 2e12]
       Uses alogorithm for small strain plasticity (Simo 1998, p.124) */
   ////////////////////////////////////////////////////////////////////////
-  void computeEPlasticTangentModulus(const double& K, const double& mu,
+  void computeEPlasticTangentModulus(const double& K,
+                                     const double& mu,
                                      const double& delGamma,
                                      const Matrix3& trialStess,
                                      const particleIndex idx,
-                                     PlasticityState* state, double Cep[6][6],
+                                     ModelStateBase* state,
+                                     double Cep[6][6],
                                      bool consistent);
 
   ////////////////////////////////////////////////////////////////////////
@@ -399,15 +438,19 @@ protected:
   ////////////////////////////////////////////////////////////////////////
   /*! Compute K matrix */
   ////////////////////////////////////////////////////////////////////////
-  void computeStiffnessMatrix(const double B[6][24], const double Bnl[3][24],
-                              const double D[6][6], const Matrix3& sig,
-                              const double& vol_old, const double& vol_new,
+  void computeStiffnessMatrix(const double B[6][24],
+                              const double Bnl[3][24],
+                              const double D[6][6],
+                              const Matrix3& sig,
+                              const double& vol_old,
+                              const double& vol_new,
                               double Kmatrix[24][24]);
 
   ////////////////////////////////////////////////////////////////////////
   /*! Compute stiffness matrix for geomtric nonlinearity */
   ////////////////////////////////////////////////////////////////////////
-  void BnlTSigBnl(const Matrix3& sig, const double Bnl[3][24],
+  void BnlTSigBnl(const Matrix3& sig,
+                  const double Bnl[3][24],
                   double Kgeo[24][24]) const;
 
   ////////////////////////////////////////////////////////////////////////
@@ -441,8 +484,10 @@ protected:
   25, 363-384.
   */
   ////////////////////////////////////////////////////////////////////////
-  double updatePorosity(const Matrix3& rateOfDeform, double delT,
-                        double oldPorosity, double plasticStrain);
+  double updatePorosity(const Matrix3& rateOfDeform,
+                        double delT,
+                        double oldPorosity,
+                        double plasticStrain);
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief Calculate void nucleation factor */

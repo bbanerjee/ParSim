@@ -86,7 +86,7 @@ public:
   void outputProblemSpec(ProblemSpecP& ps) override;
 
   /*! Compute the shear modulus */
-  double computeShearModulus(const PlasticityState* state) override;
+  double computeShearModulus(const ModelStateBase* state) override;
 };
 } // End namespace Uintah
 
