@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -35,7 +35,6 @@
 
 using namespace Vaango;
 using namespace Uintah;
-using namespace std;
 
 InternalVar_BorjaPressure::InternalVar_BorjaPressure(ProblemSpecP& ps,
                                                      ShearModulusModel* shear)
@@ -192,13 +191,15 @@ InternalVar_BorjaPressure::computeInternalVariable(
   const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Get old p_c
   double pc_n = state->p_c0; // Old Pc
@@ -222,13 +223,15 @@ InternalVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
   const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Get old p_c
   double pc_n = state->p_c0;

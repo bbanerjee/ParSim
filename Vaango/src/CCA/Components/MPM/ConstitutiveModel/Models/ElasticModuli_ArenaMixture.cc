@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -216,13 +216,15 @@ ElasticModuli_ArenaMixture::getCurrentElasticModuli(
   const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Make sure the quantities are positive in compression
   double I1_eff_bar = -state->I1_eff;

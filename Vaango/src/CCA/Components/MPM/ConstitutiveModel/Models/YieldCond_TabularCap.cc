@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2018-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2018-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -330,13 +330,15 @@ std::pair<double, Util::YieldStatus>
 YieldCond_TabularCap::evalYieldCondition(const ModelStateBase* state_input)
 {
   const ModelState_TabularCap* state =
-    dynamic_cast<const ModelState_TabularCap*>(state_input);
+    static_cast<const ModelState_TabularCap*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // First check if the state is outside the tension cap
   double p_bar_min = d_I1bar_min/3.0;
@@ -606,13 +608,15 @@ double
 YieldCond_TabularCap::evalYieldConditionMax(const ModelStateBase* state_input)
 {
   const ModelState_TabularCap* state =
-    dynamic_cast<const ModelState_TabularCap*>(state_input);
+    static_cast<const ModelState_TabularCap*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   std::array<double,3> vals = getYieldConditionRange(state->yield_f_pts);
   return vals[2];
@@ -653,13 +657,15 @@ YieldCond_TabularCap::eval_df_dsigma(const Matrix3&,
                                   Matrix3& df_dsigma)
 {
   const ModelState_TabularCap* state =
-    dynamic_cast<const ModelState_TabularCap*>(state_input);
+    static_cast<const ModelState_TabularCap*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   if (state->yield_f_pts.empty()) {
     std::ostringstream out;
@@ -709,13 +715,15 @@ YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
   const ModelStateBase* state_input)
 {
   const ModelState_TabularCap* state =
-    dynamic_cast<const ModelState_TabularCap*>(state_input);
+    static_cast<const ModelState_TabularCap*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
 #ifdef USE_NEWTON_CLOSEST_POINT
 
@@ -833,13 +841,15 @@ YieldCond_TabularCap::computeDevStressDerivOfYieldFunction(
   const ModelStateBase* state_input)
 {
   const ModelState_TabularCap* state =
-    dynamic_cast<const ModelState_TabularCap*>(state_input);
+    static_cast<const ModelState_TabularCap*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double df_dJ2 = (state->sqrt_J2 == 0) ? 
     Util::large_number : 1/(2*state->sqrt_J2);
@@ -873,13 +883,15 @@ YieldCond_TabularCap::computeVolStrainDerivOfYieldFunction(
   const ShearModulusModel*, const InternalVariableModel* capX)
 {
   const ModelState_TabularCap* state =
-    dynamic_cast<const ModelState_TabularCap*>(state_input);
+    static_cast<const ModelState_TabularCap*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Set up limits
   double p_bar_min = d_I1bar_min/3.0;
@@ -902,7 +914,6 @@ YieldCond_TabularCap::computeVolStrainDerivOfYieldFunction(
   }
 
   // Compute df_dX_p
-  double Fc = 1.0;
   double df_dX_p = 0.0;
   if (p_bar > kappa_bar) {
     double denom = X_bar_p - p_bar_min;
@@ -912,7 +923,7 @@ YieldCond_TabularCap::computeVolStrainDerivOfYieldFunction(
       double numer = p_bar - kappa_bar;
       double inv_denom = 1.0 / denom;
       double ratio = numer * inv_denom;
-      Fc = std::sqrt(1.0 - ratio * ratio);
+      //double Fc = std::sqrt(1.0 - ratio * ratio);
       double dFc_dX_p = ratio / (1 + ratio) * 
                         d_yield.capEllipticityRatio * inv_denom;
       df_dX_p =  - gg[0] * dFc_dX_p ;
@@ -939,13 +950,15 @@ Polyline
 YieldCond_TabularCap::computeYieldSurfacePolylinePbarSqrtJ2(const ModelStateBase* state_input)
 {
   const ModelState_TabularCap* state =
-    dynamic_cast<const ModelState_TabularCap*>(state_input);
+    static_cast<const ModelState_TabularCap*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   Polyline yield_f_pts;
   computeCapPoints(-state->capX, yield_f_pts);
@@ -1008,13 +1021,15 @@ YieldCond_TabularCap::getClosestPoint(const ModelStateBase* state_input,
                                    double& cz, double& crprime)
 {
   const ModelState_TabularCap* state =
-    dynamic_cast<const ModelState_TabularCap*>(state_input);
+    static_cast<const ModelState_TabularCap*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   if (state->yield_f_pts.empty()) {
     std::ostringstream out;
@@ -1053,13 +1068,15 @@ YieldCond_TabularCap::getClosestPointAndTangent(const ModelStateBase* state_inpu
                                                 double& tz, double& trprime)
 {
   const ModelState_TabularCap* state =
-    dynamic_cast<const ModelState_TabularCap*>(state_input);
+    static_cast<const ModelState_TabularCap*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   if (state->yield_f_pts.empty()) {
     std::ostringstream out;

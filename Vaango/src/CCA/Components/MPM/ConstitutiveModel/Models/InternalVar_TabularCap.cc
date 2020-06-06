@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -146,13 +146,15 @@ InternalVar_TabularCap::computeInternalVariable(
   const ModelStateBase* state_input) const
 {
   const ModelState_TabularCap* state =
-    dynamic_cast<const ModelState_TabularCap*>(state_input);
+    static_cast<const ModelState_TabularCap*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double ep_v = state->ep_v;
   double X_bar_new = -state->capX;
@@ -196,13 +198,15 @@ InternalVar_TabularCap::computeVolStrainDerivOfInternalVariable(
   const ModelStateBase* state_input) const 
 {
   const ModelState_TabularCap* state =
-    dynamic_cast<const ModelState_TabularCap*>(state_input);
+    static_cast<const ModelState_TabularCap*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_TabularCap.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double epsilon = 1.0e-6;
   #ifdef USE_TOTAL_STRAIN

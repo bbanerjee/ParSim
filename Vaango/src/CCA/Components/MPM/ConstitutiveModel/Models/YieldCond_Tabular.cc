@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -313,13 +313,15 @@ std::pair<double, Util::YieldStatus>
 YieldCond_Tabular::evalYieldCondition(const ModelStateBase* state_input)
 {
   const ModelState_Tabular* state =
-    dynamic_cast<const ModelState_Tabular*>(state_input);
+    static_cast<const ModelState_Tabular*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Tabular.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double p_bar = -state->I1/3;
   if (p_bar < d_I1bar_min/3) {
@@ -389,13 +391,15 @@ YieldCond_Tabular::eval_df_dsigma(const Matrix3&,
                                   Matrix3& df_dsigma)
 {
   const ModelState_Tabular* state =
-    dynamic_cast<const ModelState_Tabular*>(state_input);
+    static_cast<const ModelState_Tabular*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Tabular.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   //std::cout << "p = " << state->I1/3 << " sqrtJ2 = " << state->sqrt_J2 << "\n";
 
@@ -432,13 +436,15 @@ YieldCond_Tabular::computeVolStressDerivOfYieldFunction(
   const ModelStateBase* state_input)
 {
   const ModelState_Tabular* state =
-    dynamic_cast<const ModelState_Tabular*>(state_input);
+    static_cast<const ModelState_Tabular*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Tabular.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double epsilon = 1.0e-6;
   Point closest = getClosestPoint(-state->I1/3, state->sqrt_J2);
@@ -481,13 +487,15 @@ YieldCond_Tabular::computeDevStressDerivOfYieldFunction(
   const ModelStateBase* state_input)
 {
   const ModelState_Tabular* state =
-    dynamic_cast<const ModelState_Tabular*>(state_input);
+    static_cast<const ModelState_Tabular*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Tabular.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double df_dJ2 = (state->sqrt_J2 == 0) ? 0.0 : 1/(2*state->sqrt_J2);
 
@@ -512,13 +520,15 @@ YieldCond_Tabular::getClosestPoint(const ModelStateBase* state_input,
                                    double& cz, double& crprime)
 {
   const ModelState_Tabular* state =
-    dynamic_cast<const ModelState_Tabular*>(state_input);
+    static_cast<const ModelState_Tabular*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Tabular.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   //std::chrono::time_point<std::chrono::system_clock> start, end;
   //start = std::chrono::system_clock::now();

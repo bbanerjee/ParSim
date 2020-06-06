@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -34,7 +34,6 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <string>
 
-using namespace std;
 using namespace Uintah;
 using namespace Vaango;
 
@@ -43,7 +42,7 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps, PressureModel* eos)
 {
   ProblemSpecP child = ps->findBlock("elastic_shear_modulus_model");
   if (!child) {
-    cerr << "**WARNING** Attempting to create default (constant shear modulus) "
+    std::cerr << "**WARNING** Attempting to create default (constant shear modulus) "
             "model"
          << endl;
     return (scinew ShearModulus_Constant(ps, eos));
@@ -61,7 +60,7 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps, PressureModel* eos)
   else if (mat_type == "borja_shear_modulus")
     return (scinew ShearModulus_Borja(child, eos));
   else {
-    cerr << "**WARNING** Creating default (constant shear modulus) model"
+    std::cerr << "**WARNING** Creating default (constant shear modulus) model"
          << endl;
     return (scinew ShearModulus_Constant(child, eos));
   }
@@ -80,7 +79,7 @@ ShearModulusModelFactory::createCopy(const ShearModulusModel* smm)
     return (
       scinew ShearModulus_Borja(dynamic_cast<const ShearModulus_Borja*>(smm)));
   else {
-    cerr
+    std::cerr
       << "**WARNING** Creating copy of default (constant shear modulus) model"
       << endl;
     return (scinew ShearModulus_Constant(

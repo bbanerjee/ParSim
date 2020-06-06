@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,13 +24,6 @@
  * IN THE SOFTWARE.
  */
 
-#ifdef __APPLE__
-// This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
-// make the isnan function not work.  This define makes the cmath header
-// not get included since we do not need it anyway.
-#define _CPP_CMATH
-#endif
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_MieGruneisen.h>
 #include <Core/Exceptions/ConvergenceFailure.h>
@@ -42,7 +35,6 @@
 
 using namespace Uintah;
 using namespace Vaango;
-using namespace std;
 
 Pressure_MieGruneisen::Pressure_MieGruneisen(Uintah::ProblemSpecP& ps)
 {
@@ -86,13 +78,15 @@ Pressure_MieGruneisen::computePressure(const Uintah::MPMMaterial* matl,
                                        const Uintah::Matrix3&, const double&)
 {
   const ModelState_Default* state =
-    dynamic_cast<const ModelState_Default*>(state_input);
+    static_cast<const ModelState_Default*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Default.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Get the current density
   double rho = state->density;

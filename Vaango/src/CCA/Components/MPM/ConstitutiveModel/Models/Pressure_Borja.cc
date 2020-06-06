@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,13 +24,6 @@
  * IN THE SOFTWARE.
  */
 
-#ifdef __APPLE__
-// This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
-// make the isnan function not work.  This define makes the cmath header
-// not get included since we do not need it anyway.
-#define _CPP_CMATH
-#endif
-
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Borja.h>
 #include <Core/Exceptions/ConvergenceFailure.h>
 #include <Core/Exceptions/InternalError.h>
@@ -41,7 +34,6 @@
 
 using namespace Uintah;
 using namespace Vaango;
-using namespace std;
 
 Pressure_Borja::Pressure_Borja(ProblemSpecP& ps)
 {
@@ -82,13 +74,15 @@ Pressure_Borja::computePressure(const MPMMaterial*,
                                 const Matrix3&, const Matrix3&, const double&)
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double p = evalPressure(state->epse_v, state->epse_s);
   return p;
@@ -103,13 +97,15 @@ double
 Pressure_Borja::computeDpDepse_v(const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double dp_depse_v = evalDpDepse_v(state->epse_v, state->epse_s);
   return dp_depse_v;
@@ -123,13 +119,15 @@ double
 Pressure_Borja::computeDpDepse_s(const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   return evalDpDepse_s(state->epse_v, state->epse_s);
 }
@@ -160,13 +158,15 @@ double
 Pressure_Borja::computeBulkModulus(const ModelStateBase* state_input)
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double K = evalDpDepse_v(state->epse_v, 0.0);
   return K;
@@ -179,13 +179,15 @@ double
 Pressure_Borja::computeStrainEnergy(const ModelStateBase* state_input)
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double Wvol =
     -d_p0 * d_kappatilde * exp(-(state->epse_v - d_epse_v0) / d_kappatilde);

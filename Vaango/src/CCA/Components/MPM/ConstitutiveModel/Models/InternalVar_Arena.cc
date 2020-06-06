@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -138,11 +138,11 @@ InternalVar_Arena::initializeInternalVariable(
   new_dw->allocateAndPut(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
   new_dw->allocateAndPut(pP3, pP3Label, pset);
 
-  double PEAKI1;
-  double CR;
-  double phi0;
-  double Sw0;
-  double pf0;
+  double PEAKI1 = 0.0;;
+  double CR = 0.0;;
+  double phi0 = 0.0;;
+  double Sw0 = 0.0;;
+  double pf0 = 0.0;;
   try {
     PEAKI1 = params.at("PEAKI1");
     CR = params.at("CR");
@@ -160,7 +160,7 @@ InternalVar_Arena::initializeInternalVariable(
     }
   }
 
-  for (int& iter : *pset) {
+  for (auto iter : *pset) {
     if (d_use_disaggregation_algorithm) {
       pP3[iter] =
         log(pVolume[iter] * (matl->getInitialDensity()) / pMass[iter]);
@@ -233,13 +233,15 @@ InternalVar_Arena::computeInternalVariable(
   const ModelStateBase* state_input) const
 {
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Get the stress, backstress, plastic strain, and initial porosity
   double I1_eff = state->I1_eff;

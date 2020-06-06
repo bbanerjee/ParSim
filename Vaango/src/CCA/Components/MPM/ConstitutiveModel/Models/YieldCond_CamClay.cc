@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -30,7 +30,6 @@
 
 using namespace Uintah;
 using namespace Vaango;
-using namespace std;
 
 YieldCond_CamClay::YieldCond_CamClay(Uintah::ProblemSpecP& ps,
                                      InternalVariableModel* intvar)
@@ -66,13 +65,15 @@ std::pair<double, Util::YieldStatus>
 YieldCond_CamClay::evalYieldCondition(const ModelStateBase* state_input)
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double p = state->p;
   double q = state->q;
@@ -93,13 +94,15 @@ double
 YieldCond_CamClay::evalYieldConditionMax(const ModelStateBase* state_input)
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double p_c = state->p_c;
   double qmax = fabs(0.5 * d_M * p_c);
@@ -118,16 +121,18 @@ YieldCond_CamClay::computeVolStressDerivOfYieldFunction(
   const ModelStateBase* state_input)
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
-  // std::cout << " p = " << state->p << " pc = " << state->p_c << " dfdp = " <<
-  // 2*state->p-state->p_c << endl;
+  // std::std::cout << " p = " << state->p << " pc = " << state->p_c << " dfdp = " <<
+  // 2*state->p-state->p_c << "\n";
   return (2.0 * state->p - state->p_c);
 }
 
@@ -140,13 +145,15 @@ YieldCond_CamClay::computeDevStressDerivOfYieldFunction(
   const ModelStateBase* state_input)
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   return 2.0 * state->q / (d_M * d_M);
 }
@@ -229,13 +236,15 @@ YieldCond_CamClay::computeVolStrainDerivOfYieldFunction(
   const ShearModulusModel* shear, const InternalVariableModel* intvar)
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double dfdq = computeDevStressDerivOfYieldFunction(state_input);
   double dfdp = computeVolStressDerivOfYieldFunction(state_input);
@@ -279,13 +288,15 @@ YieldCond_CamClay::evalYieldCondition(const Uintah::Matrix3&,
                                       const ModelStateBase* state_input)
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double p = state->p;
   double q = state->q;
@@ -348,13 +359,15 @@ YieldCond_CamClay::eval_df_dsigma(const Matrix3& sig,
                                   Matrix3& df_dsigma)
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   evalDerivOfYieldFunction(sig, state->p_c, 0.0, df_dsigma);
   return;
@@ -387,7 +400,7 @@ double
 YieldCond_CamClay::eval_df_dep(const Matrix3&, const double& dsigy_dep,
                                const ModelStateBase*)
 {
-  cout << "YieldCond_CamClay: eval_df_dep not implemented yet " << endl;
+  std::cout << "YieldCond_CamClay: eval_df_dep not implemented yet " << "\n";
   return 0.0;
 }
 
@@ -395,7 +408,7 @@ YieldCond_CamClay::eval_df_dep(const Matrix3&, const double& dsigy_dep,
 double
 YieldCond_CamClay::eval_df_dphi(const Matrix3&, const ModelStateBase*)
 {
-  cout << "YieldCond_CamClay: eval_df_dphi not implemented yet " << endl;
+  std::cout << "YieldCond_CamClay: eval_df_dphi not implemented yet " << "\n";
   return 0.0;
 }
 
@@ -403,7 +416,7 @@ YieldCond_CamClay::eval_df_dphi(const Matrix3&, const ModelStateBase*)
 double
 YieldCond_CamClay::eval_h_alpha(const Matrix3&, const ModelStateBase*)
 {
-  cout << "YieldCond_CamClay: eval_h_alpha not implemented yet " << endl;
+  std::cout << "YieldCond_CamClay: eval_h_alpha not implemented yet " << "\n";
   return 1.0;
 }
 
@@ -412,7 +425,7 @@ double
 YieldCond_CamClay::eval_h_phi(const Matrix3&, const double&,
                               const ModelStateBase*)
 {
-  cout << "YieldCond_CamClay: eval_h_phi not implemented yet " << endl;
+  std::cout << "YieldCond_CamClay: eval_h_phi not implemented yet " << "\n";
   return 0.0;
 }
 
@@ -425,9 +438,9 @@ YieldCond_CamClay::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
                                                  double porosity, double,
                                                  TangentModulusTensor& Cep)
 {
-  cout
+  std::cout
     << "YieldCond_CamClay: computeElasPlasTangentModulus not implemented yet "
-    << endl;
+    << "\n";
   return;
 }
 
@@ -436,7 +449,7 @@ YieldCond_CamClay::computeTangentModulus(const TangentModulusTensor& Ce,
                                          const Matrix3& f_sigma, double f_q1,
                                          double h_q1, TangentModulusTensor& Cep)
 {
-  cout << "YieldCond_CamClay: computeTangentModulus not implemented yet "
-       << endl;
+  std::cout << "YieldCond_CamClay: computeTangentModulus not implemented yet "
+       << "\n";
   return;
 }

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -81,13 +81,15 @@ KinematicHardening_Arena::computeBackStress(const ModelStateBase* state_input,
                                             Matrix3& backStress_new)
 {
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // If the state is tensile the back stress does not change. Return old
   // backtress.

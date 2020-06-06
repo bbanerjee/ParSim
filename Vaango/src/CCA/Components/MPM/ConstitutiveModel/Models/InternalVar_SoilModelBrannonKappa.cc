@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -37,7 +37,6 @@
 
 using namespace Vaango;
 using namespace Uintah;
-using namespace std;
 
 InternalVar_SoilModelBrannonKappa::InternalVar_SoilModelBrannonKappa(
   ProblemSpecP& ps)
@@ -213,13 +212,15 @@ InternalVar_SoilModelBrannonKappa::computeInternalVariable(
   const ModelStateBase* state_input) const
 {
   const ModelState_SoilModelBrannon* state =
-    dynamic_cast<const ModelState_SoilModelBrannon*>(state_input);
+    static_cast<const ModelState_SoilModelBrannon*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_SoilModelBrannon.";
     throw InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Get the local variables needed
   double kappa_old = state->kappa;         // old value of kappa may have
@@ -249,8 +250,8 @@ InternalVar_SoilModelBrannonKappa::computeInternalVariable(
       computeKappaFromX1(kappa_old, eps_v, delta_eps_v, tolerance, maxiter);
     // if (std::isnan(kappa_new) || kappa_new > 0) {
     if (std::isnan(kappa_new)) {
-      cerr << " kappa_new = " << kappa_new << " kappa_old = " << kappa_old
-           << " eps_v = " << eps_v << " delta_eps_v = " << delta_eps_v << endl;
+      std::cerr << " kappa_new = " << kappa_new << " kappa_old = " << kappa_old
+           << " eps_v = " << eps_v << " delta_eps_v = " << delta_eps_v << "\n";
       throw InvalidValue("**ERROR**: Nan in kappa_new - case 1", __FILE__,
                          __LINE__);
     }
@@ -264,8 +265,8 @@ InternalVar_SoilModelBrannonKappa::computeInternalVariable(
       computeKappaFromX2(kappa_old, eps_v, delta_eps_v, tolerance, maxiter);
     // if (std::isnan(kappa_new) || kappa_new > 0) {
     if (std::isnan(kappa_new)) {
-      cerr << " kappa_new = " << kappa_new << " kappa_old = " << kappa_old
-           << " eps_v = " << eps_v << " delta_eps_v = " << delta_eps_v << endl;
+      std::cerr << " kappa_new = " << kappa_new << " kappa_old = " << kappa_old
+           << " eps_v = " << eps_v << " delta_eps_v = " << delta_eps_v << "\n";
       throw InvalidValue("**ERROR**: Nan in kappa_new - case 2", __FILE__,
                          __LINE__);
     }
@@ -327,20 +328,20 @@ InternalVar_SoilModelBrannonKappa::computeKappaFromX1(const double& kappa_old,
     kappa_new_iter = computeKappaAtX1Min(deltaEpsv);
     if (std::isnan(kappa_new_iter) & !(std::isnan(kappa_new_iter_old)))
       kappa_new_iter = kappa_new_iter_old;
-    // cerr << "Func 1: kappa_new = " << kappa_new_iter << endl;
-    // cerr << "    epsv = " << epsv << " deltaEpsv = " << deltaEpsv << "
-    // kappa_old = " << kappa_old << endl;
+    // std::cerr << "Func 1: kappa_new = " << kappa_new_iter << "\n";
+    // std::cerr << "    epsv = " << epsv << " deltaEpsv = " << deltaEpsv << "
+    // kappa_old = " << kappa_old << "\n";
   }
   // if (std::isnan(kappa_new_iter)) {
-  //   cerr << " iter = " << iter << " maxiter = " << maxiter << " kappa[k+1] =
+  //   std::cerr << " iter = " << iter << " maxiter = " << maxiter << " kappa[k+1] =
   //   " << kappa_new_iter
   //        << " kappa[k] = " << kappa_new_iter_old << " X1 = " << X1
-  //        << " dX1dkappa = " << dX1dkappa << endl;
-  //   cerr << "    epsv = " << epsv << " deltaEpsv = " << deltaEpsv << "
+  //        << " dX1dkappa = " << dX1dkappa << "\n";
+  //   std::cerr << "    epsv = " << epsv << " deltaEpsv = " << deltaEpsv << "
   //   kappa_old = " << kappa_old
   //        << " kappa[k+1] - kappa[k] = " << fabs(kappa_new_iter -
   //        kappa_new_iter_old)
-  //        << " tol = " << tolerance << endl;
+  //        << " tol = " << tolerance << "\n";
   // }
 
   return kappa_new_iter;
@@ -378,14 +379,14 @@ InternalVar_SoilModelBrannonKappa::computeKappaFromX2(const double& kappa_old,
     kappa_new_iter -= X2 / dX2dkappa;
     ++iter;
     if (std::isnan(kappa_new_iter) || kappa_new_iter > 0) {
-      cerr << " iter = " << iter << " maxiter = " << maxiter
+      std::cerr << " iter = " << iter << " maxiter = " << maxiter
            << " kappa[k+1] = " << kappa_new_iter
            << " kappa[k] = " << kappa_new_iter_old << " X2 = " << X2
-           << " dX2dkappa = " << dX2dkappa << endl;
-      cerr << "    epsv = " << epsv << " deltaEpsv = " << deltaEpsv
+           << " dX2dkappa = " << dX2dkappa << "\n";
+      std::cerr << "    epsv = " << epsv << " deltaEpsv = " << deltaEpsv
            << " kappa[k+1] - kappa[k] "
            << fabs(kappa_new_iter - kappa_new_iter_old)
-           << " tol = " << tolerance << endl;
+           << " tol = " << tolerance << "\n";
     }
   } while ((fabs(kappa_new_iter - kappa_new_iter_old) > tolerance) &&
            (iter < maxiter));
@@ -568,21 +569,21 @@ InternalVar_SoilModelBrannonKappa::computeF2(const double& kappa,
   // feclearexcept(FE_ALL_EXCEPT);
   // double pow_kappa_p0 = pow(kappa_p0, p0p1p3);
   double pow_kappa_p0 = kappa_p0 / pow(kappa_p0, p0p1p3);
-  // cerr << "Location 3: Floating point exception in particle ? " << hex <<
-  // fetestexcept(FE_ALL_EXCEPT) << endl;
-  // cerr << setiosflags(ios::fixed) << setprecision(20) << scientific << endl;
-  // cerr << " kappa0 - p0 " << kappa - d_p0 << endl;
-  // cerr << " kappa/p0 = " << kappa_p0 << " p0p1p3 = " << p0p1p3 << " power = "
-  // << pow_kappa_p0 << endl;
+  // std::cerr << "Location 3: Floating point exception in particle ? " << hex <<
+  // fetestexcept(FE_ALL_EXCEPT) << "\n";
+  // std::cerr << setiosflags(ios::fixed) << setprecision(20) << scientific << "\n";
+  // std::cerr << " kappa0 - p0 " << kappa - d_p0 << "\n";
+  // std::cerr << " kappa/p0 = " << kappa_p0 << " p0p1p3 = " << p0p1p3 << " power = "
+  // << pow_kappa_p0 << "\n";
 
   // double lnb = log(kappa_p0);
   // double clnb = p0p1p3*lnb;
   // pow_kappa_p0 = exp(clnb);
-  // cerr << "Location 3: Floating point exception in particle ? " << hex <<
-  // fetestexcept(FE_ALL_EXCEPT) << endl;
-  // cerr << setiosflags(ios::fixed) << setprecision(10) << " kappa/p0 = " <<
+  // std::cerr << "Location 3: Floating point exception in particle ? " << hex <<
+  // fetestexcept(FE_ALL_EXCEPT) << "\n";
+  // std::cerr << setiosflags(ios::fixed) << setprecision(10) << " kappa/p0 = " <<
   // kappa_p0 << " p0p1p3 = " << p0p1p3 << " lnb = " << lnb
-  //     << " c lnb = " << clnb << " power = " << pow_kappa_p0 << endl;
+  //     << " c lnb = " << clnb << " power = " << pow_kappa_p0 << "\n";
 
   double f2 = (1.0 / p1p3) * (double)pow_kappa_p0;
   return (f2 - G + H);

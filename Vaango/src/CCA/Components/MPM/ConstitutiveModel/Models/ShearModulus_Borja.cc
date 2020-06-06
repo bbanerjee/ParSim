@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -36,7 +36,6 @@
 
 using namespace Uintah;
 using namespace Vaango;
-using namespace std;
 
 // Construct a shear modulus model.
 ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps, PressureModel* eos)
@@ -96,13 +95,15 @@ double
 ShearModulus_Borja::computeShearModulus(const ModelStateBase* state_input)
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double mu_vol = evalShearModulus(state->epse_v);
   return (d_mu0 - mu_vol);
@@ -112,13 +113,15 @@ double
 ShearModulus_Borja::computeShearModulus(const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double mu_vol = evalShearModulus(state->epse_v);
   return (d_mu0 - mu_vol);
@@ -130,13 +133,15 @@ double
 ShearModulus_Borja::computeStrainEnergy(const ModelStateBase* state_input)
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double mu_vol = evalShearModulus(state->epse_v);
   double W = 1.5 * (d_mu0 - mu_vol) * (state->epse_s * state->epse_s);
@@ -153,13 +158,15 @@ double
 ShearModulus_Borja::computeQ(const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   return evalQ(state->epse_v, state->epse_s);
 }
@@ -169,13 +176,15 @@ double
 ShearModulus_Borja::computeDqDepse_s(const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   return evalDqDepse_s(state->epse_v, state->epse_s);
 }
@@ -185,13 +194,15 @@ double
 ShearModulus_Borja::computeDqDepse_v(const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
-    dynamic_cast<const ModelState_CamClay*>(state_input);
+    static_cast<const ModelState_CamClay*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_CamClay.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   return evalDqDepse_v(state->epse_v, state->epse_s);
 }

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -359,13 +359,15 @@ std::pair<double, Util::YieldStatus>
 YieldCond_Arena::evalYieldCondition(const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Get the particle specific internal variables from the model state
   double PEAKI1 = state->yieldParams.at("PEAKI1");
@@ -457,13 +459,15 @@ double
 YieldCond_Arena::evalYieldConditionMax(const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Get the particle specific internal variables from the model state
   // Store in a local struct
@@ -563,13 +567,15 @@ YieldCond_Arena::eval_df_dsigma(const Matrix3&,
                                 Matrix3& df_dsigma)
 {
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double df_dp = computeVolStressDerivOfYieldFunction(state_input);
   double df_dJ2 = computeDevStressDerivOfYieldFunction(state_input);
@@ -614,13 +620,15 @@ YieldCond_Arena::computeVolStressDerivOfYieldFunction(
   const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Get the particle specific internal variables from the model state
   double PEAKI1 = state->yieldParams.at("PEAKI1");
@@ -703,16 +711,18 @@ YieldCond_Arena::computeVolStressDerivOfYieldFunction(
 //--------------------------------------------------------------
 double
 YieldCond_Arena::computeDevStressDerivOfYieldFunction(
-  const ModelStateBase* state_input)
+  const ModelStateBase* )
 {
+  /*
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   return 1.0;
 }
@@ -733,15 +743,17 @@ YieldCond_Arena::getInternalPoint(const ModelStateBase* state_old_input,
                                   const ModelStateBase* state_trial_input)
 {
   const ModelState_Arena* state_old =
-    dynamic_cast<const ModelState_Arena*>(state_old_input);
+    static_cast<const ModelState_Arena*>(state_old_input);
   const ModelState_Arena* state_trial =
-    dynamic_cast<const ModelState_Arena*>(state_trial_input);
+    static_cast<const ModelState_Arena*>(state_trial_input);
+  /*
   if ((!state_old) || (!state_trial)) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Compute effective trial stress
   double I1_eff_trial =
@@ -801,13 +813,15 @@ YieldCond_Arena::getClosestPoint(const ModelStateBase* state_input,
                                  double& cpx, double& cpy)
 {
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
 #ifdef USE_GEOMETRIC_BISECTION
   // std::chrono::time_point<std::chrono::system_clock> start, end;

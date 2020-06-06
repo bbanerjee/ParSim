@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -194,13 +194,15 @@ std::pair<double, Util::YieldStatus>
 YieldCond_Arenisca3::evalYieldCondition(const ModelStateBase* state_input)
 {
   const ModelState_Arenisca3* state =
-    dynamic_cast<const ModelState_Arenisca3*>(state_input);
+    static_cast<const ModelState_Arenisca3*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arenisca3.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Get the local vars from the model state
   double zeta = state->zeta;
@@ -312,13 +314,15 @@ YieldCond_Arenisca3::computeVolStressDerivOfYieldFunction(
   const ModelStateBase* state_input)
 {
   const ModelState_Arenisca3* state =
-    dynamic_cast<const ModelState_Arenisca3*>(state_input);
+    static_cast<const ModelState_Arenisca3*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arenisca3.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   // Get the local vars from the model state
   double zeta = state->zeta;
@@ -376,13 +380,15 @@ YieldCond_Arenisca3::computeDevStressDerivOfYieldFunction(
   const ModelStateBase* state_input)
 {
   const ModelState_Arenisca3* state =
-    dynamic_cast<const ModelState_Arenisca3*>(state_input);
+    static_cast<const ModelState_Arenisca3*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arenisca3.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   return (2.0 / std::sqrt(3.0)) * state->sqrt_J2;
 }

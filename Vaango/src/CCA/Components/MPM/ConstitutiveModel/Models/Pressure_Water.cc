@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -76,13 +76,15 @@ Pressure_Water::computePressure(const Uintah::MPMMaterial* matl,
                                 const double& delT)
 {
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double rho_0 = matl->getInitialDensity();
   double rho = state->density;
@@ -122,16 +124,18 @@ Pressure_Water::computePressure(const double& rho_orig, const double& rho_cur,
 // Compute derivative of pressure
 double
 Pressure_Water::eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
-                           const ModelStateBase* state_input)
+                           const ModelStateBase* )
 {
+  /*
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double J = detF;
   double dpdJ = (J > 1.0) ? -d_K0 : -d_K0 * std::pow(J, -(d_n + 1));
@@ -165,13 +169,15 @@ double
 Pressure_Water::computeBulkModulus(const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double p = state->pbar_w;
   d_bulkModulus = computeBulkModulus(p);
@@ -212,13 +218,15 @@ double
 Pressure_Water::computeDpDepse_v(const ModelStateBase* state_input) const
 {
   const ModelState_Arena* state =
-    dynamic_cast<const ModelState_Arena*>(state_input);
+    static_cast<const ModelState_Arena*>(state_input);
+  /*
   if (!state) {
     std::ostringstream out;
     out << "**ERROR** The correct ModelState object has not been passed."
         << " Need ModelState_Arena.";
     throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
   }
+  */
 
   double p = state->pbar_w;
   double dp_depse_v = (p < d_p0) ? d_K0 : d_K0 + d_n * (p - d_p0);
