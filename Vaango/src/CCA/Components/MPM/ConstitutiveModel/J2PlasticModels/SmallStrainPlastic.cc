@@ -41,7 +41,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardeningModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 

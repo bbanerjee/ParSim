@@ -32,9 +32,9 @@
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardeningModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Air.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Granite.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Water.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Air.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Granite.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Water.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>

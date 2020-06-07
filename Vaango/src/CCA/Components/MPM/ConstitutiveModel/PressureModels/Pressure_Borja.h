@@ -28,7 +28,7 @@
 #define __BORJA_PRESSURE_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {

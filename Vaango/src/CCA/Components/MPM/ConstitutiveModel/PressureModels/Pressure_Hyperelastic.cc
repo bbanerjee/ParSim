@@ -25,7 +25,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Hyperelastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Hyperelastic.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>

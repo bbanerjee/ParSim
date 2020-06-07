@@ -24,14 +24,14 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Air.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Borja.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Granite.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Hyperelastic.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Hypoelastic.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_MieGruneisen.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Water.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Air.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Borja.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Granite.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Hyperelastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Hypoelastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_MieGruneisen.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Water.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>

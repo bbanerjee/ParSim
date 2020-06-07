@@ -26,7 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/HyperelasticPlastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModelFactory.h>
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ConvergenceFailure.h>

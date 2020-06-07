@@ -24,86 +24,51 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __BB_MIE_GRUNEISEN_EOS_ENERGY_MODEL_H__
-#define __BB_MIE_GRUNEISEN_EOS_ENERGY_MODEL_H__
+#ifndef __HYPERELASTIC_EOS_MODEL_H__
+#define __HYPERELASTIC_EOS_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
-  \class Pressure_MieGruneisen
-
-  \brief A Mie-Gruneisen type equation of state model
-
-  \author Biswajit Banerjee \n
-  C-SAFE and Department of Mechanical Engineering \n
-  University of Utah \n
-
-  Reference:
-
-  Zocher, Maudlin, Chen, Flower-Maudlin, 2000,
-  European Congress on Computational Methods in Applied Science
-  and Engineering, ECOMAS 2000, Barcelona)
-
+  \class Pressure_Hyperelastic
+  \brief Hyperelastic relation for pressure from Simo and Hughes, 1998.
 
   The equation of state is given by
   \f[
-  p = \frac{\rho_0 C_0^2 \zeta
-            \left[1 + \left(1-\frac{\Gamma_0}{2}\right)\zeta\right]}
-           {\left[1 - (S_{\alpha} - 1) \zeta\right]^2 + \Gamma_0 C_p T}
+  p = Tr(D) K \Delta T
   \f]
-  where
-  \f$ p\f$ = pressure \n
-  \f$ C_0 \f$= bulk speed of sound \n
-  \f$ \zeta = (\rho/\rho_0 - 1)\f$ \n
-  where \f$\rho\f$ = current density \n
-  \f$\rho_0\f$ = initial density \n
-  \f$ E\f$ = internal energy = \f$C_p T\f$ \n
-  where \f$C_p\f$ = specfic heat at constant pressure \n
-  \f$T\f$ = temperature \n
-  \f$\Gamma_0\f$ = Gruneisen's gamma at reference state \n
-  \f$S_{\alpha}\f$ = linear Hugoniot slope coefficient
-
-  \ Modified by Jim Guilkey to be energy based.
-
+  where \n
+  \f$p\f$ = pressure\n
+  \f$D\f$ = rate of deformation tensor\n
+  \f$K\f$ = bulk modulus\n
+  \f$\Delta T\f$ = time increment
 */
 ////////////////////////////////////////////////////////////////////////////
 
-class Pressure_MieGruneisen : public PressureModel
+class Pressure_Hyperelastic : public PressureModel
 {
 
-  // Create datatype for storing model parameters
-public:
-  struct CMData
-  {
-    double C_0;
-    double Gamma_0;
-    double S_1;
-    double S_2;
-    double S_3;
-  };
-
 private:
-  CMData d_const;
-
   // Prevent copying of this class
   // copy constructor
-  Pressure_MieGruneisen& operator=(const Pressure_MieGruneisen& cm);
+  // Pressure_Hyperelastic(const Pressure_Hyperelastic &cm);
+  Pressure_Hyperelastic& operator=(const Pressure_Hyperelastic& cm);
 
 public:
   // constructors
-  Pressure_MieGruneisen(Uintah::ProblemSpecP& ps);
-  Pressure_MieGruneisen(const Pressure_MieGruneisen* cm);
-
-  // Special operator for computing internal energy
-  double operator()(double eta) const;
+  Pressure_Hyperelastic(); // This constructor is used when there is
+                           // no equation_of_state tag in the input
+                           // file  ** WARNING **
+  Pressure_Hyperelastic(Uintah::ProblemSpecP& ps);
+  Pressure_Hyperelastic(const Pressure_Hyperelastic* cm);
 
   // destructor
-  ~Pressure_MieGruneisen() override;
+  ~Pressure_Hyperelastic() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -111,29 +76,19 @@ public:
   std::map<std::string, double> getParameters() const override
   {
     std::map<std::string, double> params;
-    params["C0"] = d_const.C_0;
-    params["Gamma0"] = d_const.Gamma_0;
-    params["S1"] = d_const.S_1;
-    params["S2"] = d_const.S_2;
-    params["S3"] = d_const.S_3;
+    params["K"] = d_bulkModulus;
     return params;
   }
 
-  /////////////////////////////////////////////////////////////////////////
-  /*! Calculate the pressure using a equation of state */
-  /////////////////////////////////////////////////////////////////////////
+  //////////
+  // Calculate the pressure using a equation of state
   double computePressure(const Uintah::MPMMaterial* matl,
                          const ModelStateBase* state,
                          const Uintah::Matrix3& deformGrad,
                          const Uintah::Matrix3& rateOfDeformation,
                          const double& delT) override;
 
-  // Calculate rate of temperature change due to compression/expansion
-  double computeIsentropicTemperatureRate(const double T, const double rho_0,
-                                          const double rho_cur,
-                                          const double Dtrace) override;
-
-  double eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& delF,
+  double eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
                     const ModelStateBase* state) override;
 
   // Compute bulk modulus
@@ -190,37 +145,8 @@ public:
   {
     return 0.0;
   };
-
-private:
-  typedef double (Pressure_MieGruneisen::*pFuncPtr)(const double&,
-                                                    const double&);
-  typedef double (Pressure_MieGruneisen::*dpdJFuncPtr)(const double&,
-                                                       const double&);
-
-  // Find root of p(eta) - p0 = 0 using Ridder's method
-  double findEtaRidder(pFuncPtr pFunc, const double& rho_orig, const double& p0,
-                       double& etamin, double& etamax, const double& tolerance,
-                       const int& maxIter);
-
-  // Find root of p(eta) - p0 = 0 using Newton's method
-  double findEtaNewton(pFuncPtr pFunc, dpdJFuncPtr dpdJFunc,
-                       const double& rho_orig, const double& p0,
-                       const double& J0, const double& tolerance,
-                       const int& maxIter);
-
-  // Compute p for compressive volumetric deformations
-  double pCompression(const double& rho_orig, const double& eta);
-
-  // Compute dp/dJ for compressive volumetric deformations
-  double dpdJCompression(const double& rho_orig, const double& eta);
-
-  // Compute p for tensile volumetric deformations
-  double pTension(const double& rho_orig, const double& eta);
-
-  // Compute dp/dJ for tensile volumetric deformations
-  double dpdJTension(const double& rho_orig, const double& eta);
 };
 
 } // End namespace Uintah
 
-#endif // __MIE_GRUNEISEN_EOS_ENERGY_MODEL_H__
+#endif // __HYPERELASTIC_EOS_MODEL_H__

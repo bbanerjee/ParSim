@@ -27,9 +27,9 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Air.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Granite.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Water.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Air.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Granite.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Water.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <limits>

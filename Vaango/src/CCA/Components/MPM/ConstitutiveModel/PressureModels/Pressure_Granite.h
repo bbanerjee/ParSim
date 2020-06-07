@@ -22,19 +22,19 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __MODELS_WATER_EOS_MODEL_H__
-#define __MODELS_WATER_EOS_MODEL_H__
+#ifndef __MODELS_GRANITE_EOS_MODEL_H__
+#define __MODELS_GRANITE_EOS_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
-  \class Pressure_Water
-  \brief Murnaghan equation of state for pure water.
+  \class Pressure_Granite
+  \brief Murnaghan equation of state for granite.
 
   The equation of state is given by
   \f[
@@ -48,10 +48,11 @@ namespace Vaango {
   \f$J = \rho_0/\rho\f$ = ratio of mass densities
 
   \warning For use only with Arena
+  \todo Refactor granite and water into Pressure_Murnaghan
 */
 ////////////////////////////////////////////////////////////////////////////
 
-class Pressure_Water : public PressureModel
+class Pressure_Granite : public PressureModel
 {
 
 private:
@@ -61,17 +62,17 @@ private:
 
   // Prevent copying of this class
   // copy constructor
-  // Pressure_Water(const Pressure_Water &cm);
-  Pressure_Water& operator=(const Pressure_Water& cm);
+  // Pressure_Granite(const Pressure_Granite &cm);
+  Pressure_Granite& operator=(const Pressure_Granite& cm);
 
 public:
   // constructors
-  Pressure_Water();
-  Pressure_Water(Uintah::ProblemSpecP& ps);
-  Pressure_Water(const Pressure_Water* cm);
+  Pressure_Granite();
+  Pressure_Granite(Uintah::ProblemSpecP& ps);
+  Pressure_Granite(const Pressure_Granite* cm);
 
   // destructor
-  ~Pressure_Water() override;
+  ~Pressure_Granite() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -82,7 +83,7 @@ public:
     params["p0"] = d_p0;
     params["K0"] = d_K0;
     params["n"] = d_n;
-    params["Kw"] = d_bulkModulus;
+    params["Ks"] = d_bulkModulus;
     return params;
   }
 
@@ -106,10 +107,17 @@ public:
 
   // Compute bulk modulus
   double computeInitialBulkModulus() override;
+  double getInitialBulkModulus() const;
   double computeBulkModulus(const double& pressure);
   double computeBulkModulus(const double& rho_orig,
                             const double& rho_cur) override;
   double computeBulkModulus(const ModelStateBase* state) override;
+
+  // Compute pressure derivative of bulk modulus
+  inline double computeDerivBulkModulusPressure(const double& pressure)
+  {
+    return d_n;
+  }
 
   // Compute strain energy
   double computeStrainEnergy(const double& rho_orig,
@@ -201,4 +209,4 @@ public:
 
 } // End namespace Uintah
 
-#endif // __MODELS_WATER_EOS_MODEL_H__
+#endif // __MODELS_GRANITE_EOS_MODEL_H__

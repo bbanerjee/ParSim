@@ -1,7 +1,9 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 1997-2012 The University of Utah
+ * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,66 +24,65 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __MODELS_AIR_EOS_MODEL_H__
-#define __MODELS_AIR_EOS_MODEL_H__
+#ifndef __BB_DEFAULT_HYPOELASTIC_EOS_MODEL_H__
+#define __BB_DEFAULT_HYPOELASTIC_EOS_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
-  \class Pressure_Air
-  \brief Isentropic equation of state for air.
+  \class Pressure_Hypoelastic
+  \brief Not really an equation of state but just an isotropic
+  hypoelastic pressure calculator based on bulk modulus.
+  \author Biswajit Banerjee, \n
+  C-SAFE and Department of Mechanical Engineering, \n
+  University of Utah \n
 
   The equation of state is given by
   \f[
-    p = p_0*(\exp(\gamma*\epsilon_v) - 1)
+  p = Tr(D) K \Delta T
   \f]
   where \n
   \f$p\f$ = pressure\n
-  \f$p_0\f$ = reference pressure\n
-  \f$\gamma\f$ = parameter
-  \f$n\epsilon_v = -\log(\rho/\rho_0)$ = volumetric strain
-
-  \warning For use only with Arena
+  \f$D\f$ = rate of deformation tensor\n
+  \f$K\f$ = bulk modulus\n
+  \f$\Delta T\f$ = time increment
 */
 ////////////////////////////////////////////////////////////////////////////
 
-class Pressure_Air : public PressureModel
+class Pressure_Hypoelastic : public PressureModel
 {
 
 private:
-  double d_p0;
-  double d_gamma;
-
   // Prevent copying of this class
   // copy constructor
-  // Pressure_Air(const Pressure_Air &cm);
-  Pressure_Air& operator=(const Pressure_Air& cm);
+  // Pressure_Hypoelastic(const Pressure_Hypoelastic &cm);
+  Pressure_Hypoelastic& operator=(const Pressure_Hypoelastic& cm);
 
 public:
   // constructors
-  Pressure_Air();
-  Pressure_Air(Uintah::ProblemSpecP& ps);
-  Pressure_Air(const Pressure_Air* cm);
+  Pressure_Hypoelastic(); // This constructor is used when there is
+                          // no equation_of_state tag in the input
+                          // file  ** WARNING **
+  Pressure_Hypoelastic(Uintah::ProblemSpecP& ps);
+  Pressure_Hypoelastic(const Pressure_Hypoelastic* cm);
 
   // destructor
-  ~Pressure_Air() override;
-
-  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+  ~Pressure_Hypoelastic() override;
 
   /*! Get parameters */
   std::map<std::string, double> getParameters() const override
   {
     std::map<std::string, double> params;
-    params["p0"] = d_p0;
-    params["gamma"] = d_gamma;
-    params["Ka"] = d_bulkModulus;
+    params["K"] = d_bulkModulus;
     return params;
   }
+
+  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
   //////////
   // Calculate the pressure using a equation of state
@@ -90,28 +91,39 @@ public:
                          const Uintah::Matrix3& deformGrad,
                          const Uintah::Matrix3& rateOfDeformation,
                          const double& delT) override;
-  double computePressure(const double& rho_orig,
-                         const double& rho_cur) override;
-  void computePressure(const double& rho_orig, const double& rho_cur,
-                       double& pressure, double& dp_drho,
-                       double& csquared) override;
 
-  //////////
-  // Calculate the derivative of the pressure
   double eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
                     const ModelStateBase* state) override;
 
   // Compute bulk modulus
+  double computeBulkModulus(const ModelStateBase* state) override
+  {
+    return 0.0;
+  };
+
+  // Compute strain energy
+  double computeStrainEnergy(const ModelStateBase* state) override
+  {
+    return 0.0;
+  };
+
+  // Compute pressure (option 1)
+  double computePressure(const double& rho_orig,
+                         const double& rho_cur) override;
+
+  // Compute pressure (option 2)
+  void computePressure(const double& rho_orig, const double& rho_cur,
+                       double& pressure, double& dp_drho,
+                       double& csquared) override;
+
+  // Compute bulk modulus
   double computeInitialBulkModulus() override;
-  double computeBulkModulus(const double& pressure);
   double computeBulkModulus(const double& rho_orig,
                             const double& rho_cur) override;
-  double computeBulkModulus(const ModelStateBase* state) override;
 
   // Compute strain energy
   double computeStrainEnergy(const double& rho_orig,
                              const double& rho_cur) override;
-  double computeStrainEnergy(const ModelStateBase* state) override;
 
   // Compute density given pressure
   double computeDensity(const double& rho_orig,
@@ -122,7 +134,10 @@ public:
       where epse_v = tr(epse)
             epse = total elastic strain */
   ////////////////////////////////////////////////////////////////////////
-  double computeDpDepse_v(const ModelStateBase* state) const override;
+  double computeDpDepse_v(const ModelStateBase* state) const override
+  {
+    return 0.0;
+  };
 
   ////////////////////////////////////////////////////////////////////////
   /*! Calculate the derivative of p with respect to epse_s
@@ -134,68 +149,8 @@ public:
   {
     return 0.0;
   };
-
-  ////////////////////////////////////////////////////////////////////////
-  /**
-   * Function: computeElasticVolumetricStrain
-   *
-   * Purpose:
-   *   Compute the volumetric strain given a pressure (p)
-   *
-   * Inputs:
-   *   pp  = current pressure
-   *   p0 = initial pressure
-   *
-   * Returns:
-   *   eps_e_v = current elastic volume strain
-   */
-  ////////////////////////////////////////////////////////////////////////
-  double computeElasticVolumetricStrain(const double& pp,
-                                        const double& p0) override;
-
-  ////////////////////////////////////////////////////////////////////////
-  /**
-   * Function: computeExpElasticVolumetricStrain
-   *
-   * Purpose:
-   *   Compute the exponential of volumetric strain given a pressure (p)
-   *
-   * Inputs:
-   *   pp  = current pressure
-   *   p0 = initial pressure
-   *
-   * Returns:
-   *   exp(eps_e_v) = exponential of the current elastic volume strain
-   */
-  ////////////////////////////////////////////////////////////////////////
-  double computeExpElasticVolumetricStrain(const double& pp,
-                                           const double& p0) override;
-
-  ////////////////////////////////////////////////////////////////////////
-  /**
-   * Function: computeDerivExpElasticVolumetricStrain
-   *
-   * Purpose:
-   *   Compute the pressure drivative of the exponential of
-   *   the volumetric strain at a given pressure (p)
-   *
-   * Inputs:
-   *   pp  = current pressure
-   *   p0 = initial pressure
-   *
-   * Outputs:
-   *   exp_eps_e_v = exp(eps_e_v) = exponential of elastic volumeric strain
-   *
-   * Returns:
-   *   deriv = d/dp[exp(eps_e_v)] = derivative of the exponential of
-   *                                current elastic volume strain
-   */
-  ////////////////////////////////////////////////////////////////////////
-  double computeDerivExpElasticVolumetricStrain(const double& pp,
-                                                const double& p0,
-                                                double& exp_eps_e_v) override;
 };
 
 } // End namespace Uintah
 
-#endif // __MODELS_AIR_EOS_MODEL_H__
+#endif // __DEFAULT_HYPOELASTIC_EOS_MODEL_H__

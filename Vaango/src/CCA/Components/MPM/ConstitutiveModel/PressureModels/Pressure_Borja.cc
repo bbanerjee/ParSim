@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Borja.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Borja.h>
 #include <Core/Exceptions/ConvergenceFailure.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>

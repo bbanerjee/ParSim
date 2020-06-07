@@ -59,7 +59,7 @@ swapbytes(Uintah::HyperelasticPlasticStateData& d)
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Math/Matrix3.h>
