@@ -27,7 +27,7 @@
 #ifndef __BORJA_SHEAR_MODEL_H__
 #define __BORJA_SHEAR_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Air.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>

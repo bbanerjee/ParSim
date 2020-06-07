@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Hypoelastic.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ParameterNotFound.h>

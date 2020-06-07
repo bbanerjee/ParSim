@@ -1,5 +1,5 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_TabularCap.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
 
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>

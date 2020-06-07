@@ -26,7 +26,7 @@
 #define ___ELASTIC_MODULI_SOIL_MIXTURE_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Air.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Granite.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Water.h>

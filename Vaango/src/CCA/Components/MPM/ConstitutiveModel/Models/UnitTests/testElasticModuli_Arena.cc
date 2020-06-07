@@ -1,5 +1,5 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
 
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>

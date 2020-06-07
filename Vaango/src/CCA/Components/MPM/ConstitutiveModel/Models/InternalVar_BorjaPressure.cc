@@ -25,7 +25,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_BorjaPressure.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_CamClay.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
 #include <Core/Exceptions/InternalError.h>

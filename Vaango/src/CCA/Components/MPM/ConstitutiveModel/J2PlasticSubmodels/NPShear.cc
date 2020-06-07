@@ -25,7 +25,7 @@
  */
 
 #include "NPShear.h"
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>

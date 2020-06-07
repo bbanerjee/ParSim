@@ -27,7 +27,7 @@
 #ifndef __YIELD_CONDITION_H__
 #define __YIELD_CONDITION_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
 #include <Core/Math/TangentModulusTensor.h>

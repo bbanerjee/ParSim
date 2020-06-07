@@ -27,7 +27,7 @@
 #ifndef __ARENA_YIELD_CONDITION_MODEL_H__
 #define __ARENA_YIELD_CONDITION_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/WeibParameters.h>
 

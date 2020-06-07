@@ -27,7 +27,7 @@
 #ifndef __VISCO_PLASTICITY_MODEL_H__
 #define __VISCO_PLASTICITY_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Math/Matrix3.h>
 #include <vector>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>

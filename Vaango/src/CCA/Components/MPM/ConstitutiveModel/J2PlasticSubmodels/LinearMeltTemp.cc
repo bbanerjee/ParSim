@@ -25,7 +25,7 @@
  */
 
 #include "LinearMeltTemp.h"
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
 using namespace Uintah;

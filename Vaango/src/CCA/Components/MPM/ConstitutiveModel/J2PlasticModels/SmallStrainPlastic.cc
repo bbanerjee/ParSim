@@ -39,8 +39,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/SpecificHeatModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheckFactory.h>
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardeningModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>

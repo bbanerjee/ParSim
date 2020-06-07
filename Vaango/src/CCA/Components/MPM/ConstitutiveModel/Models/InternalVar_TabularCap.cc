@@ -24,7 +24,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Tabular.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_TabularCap.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Labels/MPMLabel.h>

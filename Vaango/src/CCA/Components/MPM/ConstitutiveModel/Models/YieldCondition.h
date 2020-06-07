@@ -28,7 +28,7 @@
 #define __BB_YIELD_CONDITION_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>

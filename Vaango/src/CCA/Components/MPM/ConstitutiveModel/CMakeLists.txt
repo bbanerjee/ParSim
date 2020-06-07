@@ -88,6 +88,8 @@ if (FORTRAN)
   add_subdirectory(fortran)
 endif(FORTRAN)
 
+add_subdirectory(KinHardeningModels)
+add_subdirectory(ModelState)
 add_subdirectory(Models)
 add_subdirectory(J2PlasticSubmodels)
 #add_subdirectory(ModelsUnderDevelopment)

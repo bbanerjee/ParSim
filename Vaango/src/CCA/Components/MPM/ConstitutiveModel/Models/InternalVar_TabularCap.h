@@ -26,7 +26,7 @@
 #define __INTERNAL_VAR_MODEL_TABULAR_PLASTICITY_CAP_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

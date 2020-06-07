@@ -27,7 +27,7 @@
 #ifndef __BB_GURSON_YIELD_MODEL_H__
 #define __BB_GURSON_YIELD_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

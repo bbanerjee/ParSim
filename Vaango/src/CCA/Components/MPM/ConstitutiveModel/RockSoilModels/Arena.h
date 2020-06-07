@@ -30,8 +30,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/KinematicHardeningModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardeningModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Air.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Granite.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/Pressure_Water.h>

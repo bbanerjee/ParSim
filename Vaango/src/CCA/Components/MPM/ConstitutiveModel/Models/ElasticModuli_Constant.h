@@ -28,7 +28,7 @@
 #define __BB_CONSTANT_ELASTICITY_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {

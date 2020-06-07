@@ -51,7 +51,7 @@ porosity).
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/SoilModelBrannon.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_SoilModelBrannon.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_SoilModelBrannon.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ParameterNotFound.h>

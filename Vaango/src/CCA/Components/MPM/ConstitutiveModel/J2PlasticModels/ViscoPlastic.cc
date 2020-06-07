@@ -31,7 +31,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ViscoPlasticityModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>
 
 #include <CCA/Ports/DataWarehouse.h>

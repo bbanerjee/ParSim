@@ -100,18 +100,6 @@ add_custom_command(
   COMMAND ${UNIT_TEST}
 )
 
-add_executable(testModelState_Tabular testModelState_Tabular.cc)
-target_link_libraries(testModelState_Tabular
-  ${GTEST_LIB}
-  ${VAANGO_LIBS}
-)
-set(UNIT_TEST testModelState_Tabular)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
-
 add_executable(testElasticModuli_Tabular testElasticModuli_Tabular.cc)
 target_link_libraries(testElasticModuli_Tabular
   ${GTEST_LIB}
@@ -215,19 +203,6 @@ target_link_libraries(testBoostAutodiff
   ${VAANGO_LIBS}
 )
 set(UNIT_TEST testBoostAutodiff)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
-
-add_executable(testModelState testModelState.cc)
-target_link_libraries(testModelState
-  ${GTEST_LIB}
-  ${Boost_LIBRARIES}
-  ${VAANGO_LIBS}
-)
-set(UNIT_TEST testModelState)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD

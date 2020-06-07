@@ -27,7 +27,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularPlasticity.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>

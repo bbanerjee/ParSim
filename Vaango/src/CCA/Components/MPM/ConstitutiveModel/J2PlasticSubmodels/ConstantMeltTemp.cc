@@ -25,7 +25,7 @@
  */
 
 #include "ConstantMeltTemp.h"
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 
 using namespace Uintah;
 using Vaango::ModelState_Default;

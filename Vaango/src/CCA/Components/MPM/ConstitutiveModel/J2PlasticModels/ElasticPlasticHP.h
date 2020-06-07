@@ -38,7 +38,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/SpecificHeatModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheck.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldCondition.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Math/Matrix3.h>

@@ -27,7 +27,7 @@
 #ifndef __TABULAR_YIELD_CONDITION_MODEL_H__
 #define __TABULAR_YIELD_CONDITION_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Tabular.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/WeibParameters.h>

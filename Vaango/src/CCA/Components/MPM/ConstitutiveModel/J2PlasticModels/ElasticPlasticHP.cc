@@ -36,7 +36,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/SpecificHeatModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheckFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>

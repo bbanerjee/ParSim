@@ -27,7 +27,7 @@
 #ifndef __ELASTICITY_MODEL_H__
 #define __ELASTICITY_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

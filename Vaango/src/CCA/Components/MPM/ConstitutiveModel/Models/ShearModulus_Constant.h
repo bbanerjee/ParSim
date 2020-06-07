@@ -27,7 +27,7 @@
 #ifndef __BB_CONSTANT_SHEAR_MODEL_H__
 #define __BB_CONSTANT_SHEAR_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

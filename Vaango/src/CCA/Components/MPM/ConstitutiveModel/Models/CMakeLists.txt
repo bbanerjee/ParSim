@@ -37,14 +37,6 @@
 #-----------------------------------------------------------------------------
 SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/ModelStateBase.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_SoilModelBrannon.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Arenisca3.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_CamClay.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Default.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Arena.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Tabular.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_TabularCap.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arenisca.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arenisca.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Constant.cc
@@ -79,12 +71,6 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Borja.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Constant.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Nadal.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardeningModel.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardeningModelFactory.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_None.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_Prager.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_Armstrong.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/KinematicHardening_Arena.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModel.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModelFactory.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_SoilModelBrannonKappa.cc 

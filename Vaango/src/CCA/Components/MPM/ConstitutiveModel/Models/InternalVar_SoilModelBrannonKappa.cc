@@ -25,7 +25,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVar_SoilModelBrannonKappa.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_SoilModelBrannon.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_SoilModelBrannon.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>

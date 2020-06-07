@@ -27,7 +27,7 @@
 #ifndef __HYPERELASTIC_EOS_MODEL_H__
 #define __HYPERELASTIC_EOS_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
