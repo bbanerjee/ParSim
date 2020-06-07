@@ -29,73 +29,36 @@ SET(MPM_ConstitutiveModel_SRCS
   ConstitutiveModel.cc          
   ImplicitCM.cc                 
   MPMMaterial.cc                
-  DamageModels/BasicDamageModel.cc
-  ElasticModels/CompMooneyRivlin.cc           
-  ElasticModels/HypoElastic.cc                
-  ElasticModels/HypoElasticFracture.cc                
-  ElasticModels/HypoElasticImplicit.cc        
-  ElasticModels/PolarOrthotropicHypoElastic.cc
-  ElasticModels/TransIsoHyper.cc              
-  ElasticModels/TransIsoHyperImplicit.cc      
-  ExplosiveModels/JWLppMPM.cc                   
-  ExplosiveModels/MurnaghanMPM.cc               
-  ExplosiveModels/ProgramBurn.cc                
-  ExplosiveModels/ViscoSCRAMHotSpot.cc          
-  J2PlasticModels/ElasticPlasticHP.cc           
-  J2PlasticModels/HyperelasticPlastic.cc    
-  J2PlasticModels/SmallStrainPlastic.cc     
-  J2PlasticModels/UCNH.cc                       
-  J2PlasticModels/ViscoPlastic.cc               
-  PorousModels/P_Alpha.cc                    
-  PorousModels/SoilFoam.cc	             
-  RockSoilModels/Arena.cc
-  RockSoilModels/ArenaMixture.cc
-  RockSoilModels/Arenisca.cc
-  RockSoilModels/Arenisca3.cc
-  RockSoilModels/Arenisca4.cc
-  RockSoilModels/CamClay.cc
-  RockSoilModels/MohrCoulomb.cc
-  RockSoilModels/NonLocalDruckerPrager.cc      
-  RockSoilModels/SoilModelBrannon.cc
-  SpecialPurposeModels/IdealGasMP.cc                 
-  SpecialPurposeModels/Membrane.cc                   
-  SpecialPurposeModels/RigidMaterial.cc              
-  SpecialPurposeModels/ShellMaterial.cc              
-  SpecialPurposeModels/Water.cc                      
-  TabularModels/TabularEquationOfState.cc
-  TabularModels/TabularPlasticity.cc
-  TabularModels/TabularPlasticityCap.cc
-  ViscoElasticModels/MWViscoElastic.cc             
-  ViscoElasticModels/ViscoScram.cc                 
-  ViscoElasticModels/ViscoScramImplicit.cc         
-  ViscoElasticModels/ViscoTransIsoHyper.cc         
-  ViscoElasticModels/ViscoTransIsoHyperImplicit.cc 
-  ManufacturedSolutions/CNH_MMS.cc                    
-  ManufacturedSolutions/HypoElastic_MMS.cc
 )
 
 #message(STATUS "Compiling FORTRAN code? ${FORTRAN}")
 if (FORTRAN)
-  SET(MPM_ConstitutiveModel_SRCS
-    ${MPM_ConstitutiveModel_SRCS}
-    ElasticModels/HypoElasticFortran.cc         
-    RockSoilModels/Diamm.cc                      
-    RockSoilModels/Kayenta.cc                    
-    ViscoElasticModels/ViscoElasticFortran.cc
-  )
   add_subdirectory(fortran)
 endif(FORTRAN)
 
+add_subdirectory(DamageModels)
+add_subdirectory(ElasticModels)
+add_subdirectory(ExplosiveModels)
+add_subdirectory(J2PlasticModels)
+add_subdirectory(ManufacturedSolutions)
+add_subdirectory(PorousModels)
+add_subdirectory(RockSoilModels)
+add_subdirectory(SpecialPurposeModels)
+add_subdirectory(TabularModels)
+add_subdirectory(ViscoElasticModels)
+
 add_subdirectory(InternalVarModels)
 add_subdirectory(KinHardeningModels)
-add_subdirectory(ModelState)
 add_subdirectory(PressureModels)
 add_subdirectory(ShearModulusModels)
 add_subdirectory(YieldCondModels)
+
+add_subdirectory(ModelState)
+add_subdirectory(Utilities)
+
 add_subdirectory(Models)
 add_subdirectory(J2PlasticSubmodels)
 #add_subdirectory(ModelsUnderDevelopment)
-add_subdirectory(Utilities)
 
 SET(LIBS
   Vaango_CCA_Ports
@@ -109,13 +72,14 @@ SET(LIBS
   Vaango_Core_GeometryPiece
   Vaango_Core_Math
   MPM_ConstitutiveModel_PlasticityModels
-  #MPM_ConstitutiveModel_Biswajit
   ${XML2_LIBRARY}
   ${VT_LIBRARY}
   ${M_LIBRARY}
   ${MPI_LIBRARY}
   ${HDF5_LIBRARY}
 )
+
+#message(STATUS "Sources: ${MPM_ConstitutiveModel_SRCS}")
 
 ADD_LIBRARY(MPM_ConstitutiveModel ${MPM_ConstitutiveModel_SRCS})
 
