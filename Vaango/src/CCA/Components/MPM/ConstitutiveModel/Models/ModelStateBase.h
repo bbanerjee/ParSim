@@ -27,7 +27,6 @@
 #ifndef __MODEL_STATE_BASE_DERIVED_FROM_PLASTICITY_STATE_DATA_H__
 #define __MODEL_STATE_BASE_DERIVED_FROM_PLASTICITY_STATE_DATA_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateVisitor.h>
 #include <Core/Math/Matrix3.h>
 
 namespace Vaango {
@@ -51,7 +50,8 @@ public:
 
   virtual ~ModelStateBase();
 
-  virtual void accept(ModelStateVisitor& visitor) = 0;
+  virtual size_t numStateVar() const = 0;
+
 };
 
 } // End namespace Uintah

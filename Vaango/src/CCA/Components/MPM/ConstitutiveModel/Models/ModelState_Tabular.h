@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2017 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -75,9 +75,12 @@ public:
   ModelState_Tabular& operator=(const ModelState_Tabular& state) = default;
   ModelState_Tabular* operator=(const ModelState_Tabular* state);
 
-  void accept(ModelStateVisitor& visitor) override
+  virtual 
+  size_t numStateVar() const override
   {
-    visitor.visit(*this);
+    auto numBase = ModelState_Default::numStateVar();
+    auto numThis = 16u;
+    return numBase + numThis;
   }
 
   void updateStressInvariants();

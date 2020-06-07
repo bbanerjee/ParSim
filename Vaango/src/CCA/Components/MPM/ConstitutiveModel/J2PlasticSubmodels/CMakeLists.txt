@@ -23,7 +23,6 @@
 # IN THE SOFTWARE.
 #
 SET(MPM_ConstitutiveModel_PlasticityModels_SRCS
-  PlasticityState.cc 
   DamageModel.cc 
   DamageModelFactory.cc 
   NullDamage.cc 

@@ -28,7 +28,6 @@
 #define __MODEL_STATE_DEFAULT_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateVisitor.h>
 #include <Core/Math/Matrix3.h>
 
 namespace Vaango {
@@ -77,9 +76,11 @@ public:
   ModelState_Default& operator=(const ModelState_Default& state);
   ModelState_Default* operator=(const ModelState_Default* state);
 
-  void accept(ModelStateVisitor& visitor) override
+  virtual 
+  size_t numStateVar() const override
   {
-    visitor.visit(*this);
+    auto numThis = 21u;
+    return numThis;
   }
 };
 

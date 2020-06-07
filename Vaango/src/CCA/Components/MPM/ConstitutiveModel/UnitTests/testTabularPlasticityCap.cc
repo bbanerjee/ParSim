@@ -117,7 +117,7 @@ public:
     xmlNewChild(time, nullptr, BAD_CAST "delt_min", BAD_CAST "1.0e-6");
     xmlNewChild(time, nullptr, BAD_CAST "delt_max", BAD_CAST "0.04");
     xmlNewChild(time, nullptr, BAD_CAST "timestep_multiplier", BAD_CAST "0.3");
-    xmlNewChild(time, nullptr, BAD_CAST "max_Timesteps", BAD_CAST "5");
+    xmlNewChild(time, nullptr, BAD_CAST "max_timesteps", BAD_CAST "5");
 
     // DataArchiver
     auto da = xmlNewChild(rootNode, nullptr, BAD_CAST "DataArchiver", BAD_CAST "");

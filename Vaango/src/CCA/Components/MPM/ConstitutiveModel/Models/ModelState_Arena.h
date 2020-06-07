@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -26,7 +26,6 @@
 #define __MODEL_STATE_ARENA_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ModelState_Default.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ModelStateVisitor.h>
 
 namespace Vaango {
 
@@ -103,9 +102,12 @@ public:
   ModelState_Arena& operator=(const ModelState_Arena& state);
   ModelState_Arena* operator=(const ModelState_Arena* state);
 
-  void accept(ModelStateVisitor& visitor) override
+  virtual 
+  size_t numStateVar() const override
   {
-    visitor.visit(*this);
+    auto numBase = ModelState_Default::numStateVar();
+    auto numThis = 24u;
+    return numBase + numThis;
   }
 
   void updateStressInvariants();
