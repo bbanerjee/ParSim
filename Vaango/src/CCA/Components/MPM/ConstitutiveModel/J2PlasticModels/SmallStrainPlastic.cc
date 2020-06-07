@@ -43,7 +43,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>

@@ -27,31 +27,17 @@
 #-----------------------------------------------------------------------------
 SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arenisca.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arenisca.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Constant.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Arena.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_ArenaMixture.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_Tabular.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuli_NeuralNet.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuliModel.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/ElasticModuliModelFactory.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/PressureModel.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/PressureModelFactory.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Pressure_Borja.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Pressure_Hypoelastic.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Pressure_Hyperelastic.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Pressure_MieGruneisen.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Pressure_Air.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Pressure_Water.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/Pressure_Granite.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/TableUtils.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/TabularData.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombState.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombTypes.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombBase.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombSheng.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombClassic.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCondition.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldConditionFactory.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCondUtils.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Arenisca3.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_CamClay.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Gurson.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Arena.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_ArenaMixture.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Tabular.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_TabularCap.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_vonMises.cc 
   PARENT_SCOPE
 )
 

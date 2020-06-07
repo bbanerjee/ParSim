@@ -24,11 +24,11 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __ARENA_MIXTURE_YIELD_CONDITION_MODEL_H__
-#define __ARENA_MIXTURE_YIELD_CONDITION_MODEL_H__
+#ifndef __ARENA_YIELD_CONDITION_MODEL_H__
+#define __ARENA_YIELD_CONDITION_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/WeibParameters.h>
 
 #include <Core/Grid/Variables/VarLabel.h>
@@ -39,11 +39,11 @@
 namespace Vaango {
 
 /*!
-  \class  YieldCond_ArenaMixture
-  \brief  The Partally saturated Arena3 yield condition
+  \class  YieldCond_Arena
+  \brief  The Partally saturated Arena yield condition
 */
 
-class YieldCond_ArenaMixture : public YieldCondition
+class YieldCond_Arena : public YieldCondition
 {
 
 public:
@@ -113,21 +113,15 @@ private:
     double a4;
   };
 
-  /* Volume fractions */
-  /* TODO: These volume fractions should come from the deformed volumes
-           in the master code rather than from a local copy */
-  double d_volfrac[2];
-
-  ModelParameters d_modelParam[2];
-  YieldFunctionParameters d_yieldParam[2];
-  NonAssociatvityParameters d_nonAssocParam[2];
-  CapParameters d_capParam[2];
-  RateParameters d_rateParam[2];
+  ModelParameters d_modelParam;
+  YieldFunctionParameters d_yieldParam;
+  NonAssociatvityParameters d_nonAssocParam;
+  CapParameters d_capParam;
+  RateParameters d_rateParam;
   LocalParameters d_local;
 
   void checkInputParameters();
   void computeModelParameters(double fac) override;
-  void computeModelParameters(int phase);
   std::vector<double> computeModelParameters(const double& PEAKI1,
                                              const double& FSLOPE,
                                              const double& STREN,
@@ -135,17 +129,17 @@ private:
 
   // Prevent copying of this class
   // copy constructor
-  // YieldCond_ArenaMixture(const YieldCond_ArenaMixture &);
-  YieldCond_ArenaMixture& operator=(const YieldCond_ArenaMixture&);
+  // YieldCond_Arena(const YieldCond_Arena &);
+  YieldCond_Arena& operator=(const YieldCond_Arena&);
 
 public:
   //! Constructor
-  /*! Creates a YieldCond_ArenaMixture function object */
-  YieldCond_ArenaMixture(Uintah::ProblemSpecP& ps);
-  YieldCond_ArenaMixture(const YieldCond_ArenaMixture* cm);
+  /*! Creates a YieldCond_Arena function object */
+  YieldCond_Arena(Uintah::ProblemSpecP& ps);
+  YieldCond_Arena(const YieldCond_Arena* cm);
 
   //! Destructor
-  ~YieldCond_ArenaMixture() override;
+  ~YieldCond_Arena() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -153,47 +147,26 @@ public:
   std::map<std::string, double> getParameters() const override
   {
     std::map<std::string, double> params;
-    params["PEAKI1.phase1"] = d_yieldParam[0].PEAKI1;
-    params["FSLOPE.phase1"] = d_yieldParam[0].FSLOPE;
-    params["STREN.phase1"] = d_yieldParam[0].STREN;
-    params["YSLOPE.phase1"] = d_yieldParam[0].YSLOPE;
-    params["PEAKI1_failed.phase1"] = d_yieldParam[0].PEAKI1_failed;
-    params["FSLOPE_failed.phase1"] = d_yieldParam[0].FSLOPE_failed;
-    params["STREN_failed.phase1"] = d_yieldParam[0].STREN_failed;
-    params["YSLOPE_failed.phase1"] = d_yieldParam[0].YSLOPE_failed;
-    params["BETA.phase1"] = d_nonAssocParam[0].BETA;
-    params["CR.phase1"] = d_capParam[0].CR;
-    params["T1.phase1"] = d_rateParam[0].T1;
-    params["T2.phase1"] = d_rateParam[0].T2;
-    params["a1.phase1"] = d_modelParam[0].a1;
-    params["a2.phase1"] = d_modelParam[0].a2;
-    params["a3.phase1"] = d_modelParam[0].a3;
-    params["a4.phase1"] = d_modelParam[0].a4;
-    params["a1_failed.phase1"] = d_modelParam[0].a1_failed;
-    params["a2_failed.phase1"] = d_modelParam[0].a2_failed;
-    params["a3_failed.phase1"] = d_modelParam[0].a3_failed;
-    params["a4_failed.phase1"] = d_modelParam[0].a4_failed;
-
-    params["PEAKI1.phase2"] = d_yieldParam[1].PEAKI1;
-    params["FSLOPE.phase2"] = d_yieldParam[1].FSLOPE;
-    params["STREN.phase2"] = d_yieldParam[1].STREN;
-    params["YSLOPE.phase2"] = d_yieldParam[1].YSLOPE;
-    params["PEAKI1_failed.phase2"] = d_yieldParam[1].PEAKI1_failed;
-    params["FSLOPE_failed.phase2"] = d_yieldParam[1].FSLOPE_failed;
-    params["STREN_failed.phase2"] = d_yieldParam[1].STREN_failed;
-    params["YSLOPE_failed.phase2"] = d_yieldParam[1].YSLOPE_failed;
-    params["BETA.phase2"] = d_nonAssocParam[1].BETA;
-    params["CR.phase2"] = d_capParam[1].CR;
-    params["T1.phase2"] = d_rateParam[1].T1;
-    params["T2.phase2"] = d_rateParam[1].T2;
-    params["a1.phase2"] = d_modelParam[1].a1;
-    params["a2.phase2"] = d_modelParam[1].a2;
-    params["a3.phase2"] = d_modelParam[1].a3;
-    params["a4.phase2"] = d_modelParam[1].a4;
-    params["a1_failed.phase2"] = d_modelParam[1].a1_failed;
-    params["a2_failed.phase2"] = d_modelParam[1].a2_failed;
-    params["a3_failed.phase2"] = d_modelParam[1].a3_failed;
-    params["a4_failed.phase2"] = d_modelParam[1].a4_failed;
+    params["PEAKI1"] = d_yieldParam.PEAKI1;
+    params["FSLOPE"] = d_yieldParam.FSLOPE;
+    params["STREN"] = d_yieldParam.STREN;
+    params["YSLOPE"] = d_yieldParam.YSLOPE;
+    params["PEAKI1_failed"] = d_yieldParam.PEAKI1_failed;
+    params["FSLOPE_failed"] = d_yieldParam.FSLOPE_failed;
+    params["STREN_failed"] = d_yieldParam.STREN_failed;
+    params["YSLOPE_failed"] = d_yieldParam.YSLOPE_failed;
+    params["BETA"] = d_nonAssocParam.BETA;
+    params["CR"] = d_capParam.CR;
+    params["T1"] = d_rateParam.T1;
+    params["T2"] = d_rateParam.T2;
+    params["a1"] = d_modelParam.a1;
+    params["a2"] = d_modelParam.a2;
+    params["a3"] = d_modelParam.a3;
+    params["a4"] = d_modelParam.a4;
+    params["a1_failed"] = d_modelParam.a1_failed;
+    params["a2_failed"] = d_modelParam.a2_failed;
+    params["a3_failed"] = d_modelParam.a3_failed;
+    params["a4_failed"] = d_modelParam.a4_failed;
     // std::cout << "Yield condition parameters are: " << std::endl;
     // for (auto param : params) {
     //  std::cout << "\t \t" << param.first << " " << param.second << std::endl;
@@ -567,26 +540,14 @@ public:
 
     // Default (constant) initialization
     for (int idx : *pset) {
-      double PEAKI1 = 0.0, FSLOPE = 0.0, STREN = 0.0, YSLOPE = 0.0;
-      double BETA = 0.0, CR = 0.0, T1 = 0.0, T2 = 0.0;
-      for (int phase = 0; phase < 2; phase++) {
-        PEAKI1 += d_volfrac[phase] * d_yieldParam[phase].PEAKI1;
-        FSLOPE += d_volfrac[phase] * d_yieldParam[phase].FSLOPE;
-        STREN += d_volfrac[phase] * d_yieldParam[phase].STREN;
-        YSLOPE += d_volfrac[phase] * d_yieldParam[phase].YSLOPE;
-        BETA += d_volfrac[phase] * d_nonAssocParam[phase].BETA;
-        CR += d_volfrac[phase] * d_capParam[phase].CR;
-        T1 += d_volfrac[phase] * d_rateParam[phase].T1;
-        T2 += d_volfrac[phase] * d_rateParam[phase].T2;
-      }
-      pPEAKI1[idx] = PEAKI1;
-      pFSLOPE[idx] = FSLOPE;
-      pSTREN[idx] = STREN;
-      pYSLOPE[idx] = YSLOPE;
-      pBETA[idx] = BETA;
-      pCR[idx] = CR;
-      pT1[idx] = T1;
-      pT2[idx] = T2;
+      pPEAKI1[idx] = d_yieldParam.PEAKI1;
+      pFSLOPE[idx] = d_yieldParam.FSLOPE;
+      pSTREN[idx] = d_yieldParam.STREN;
+      pYSLOPE[idx] = d_yieldParam.YSLOPE;
+      pBETA[idx] = d_nonAssocParam.BETA;
+      pCR[idx] = d_capParam.CR;
+      pT1[idx] = d_rateParam.T1;
+      pT2[idx] = d_rateParam.T2;
     }
 
     // Weibull initialization if parameters are allowed to vary
@@ -758,4 +719,4 @@ private:
 
 } // End namespace Uintah
 
-#endif // __ARENA_MIXTURE_YIELD_CONDITION_MODEL_H__
+#endif // __ARENA_YIELD_CONDITION_MODEL_H__

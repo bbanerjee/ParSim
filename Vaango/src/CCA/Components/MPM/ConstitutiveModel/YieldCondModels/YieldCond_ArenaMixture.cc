@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_ArenaMixture.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondUtils.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -31,7 +31,6 @@
 #include <cmath>
 
 #define USE_GEOMETRIC_BISECTION
-#define BISECT_LOW_ACCURACY
 //#define USE_ALGEBRAIC_BISECTION
 //#define DEBUG_YIELD_BISECTION
 //#define DEBUG_YIELD_BISECTION_I1_J2
@@ -40,33 +39,65 @@
 
 using namespace Vaango;
 
-const double YieldCond_Arena::sqrt_two = std::sqrt(2.0);
-const double YieldCond_Arena::sqrt_three = std::sqrt(3.0);
-const double YieldCond_Arena::one_sqrt_three = 1.0 / sqrt_three;
+const double YieldCond_ArenaMixture::sqrt_two = std::sqrt(2.0);
+const double YieldCond_ArenaMixture::sqrt_three = std::sqrt(3.0);
+const double YieldCond_ArenaMixture::one_sqrt_three = 1.0 / sqrt_three;
 
-YieldCond_Arena::YieldCond_Arena(Uintah::ProblemSpecP& ps)
+YieldCond_ArenaMixture::YieldCond_ArenaMixture(Uintah::ProblemSpecP& ps)
 {
+  ps->require("vol_frac.phase1", d_volfrac[0]); // Volume fractions
+  d_volfrac[1] = 1.0 - d_volfrac[0];
+
   // Nonlinear Drucker-Prager parameters
-  ps->require("PEAKI1", d_yieldParam.PEAKI1); // Shear Limit Surface Parameter
-  ps->require("FSLOPE", d_yieldParam.FSLOPE); // Shear Limit Surface Parameter
-  ps->require("STREN", d_yieldParam.STREN);   // Shear Limit Surface Parameter
-  ps->require("YSLOPE", d_yieldParam.YSLOPE); // Shear Limit Surface Parameter
-  ps->getWithDefault("PEAKI1_failed", d_yieldParam.PEAKI1_failed, 1.0e-5);
-  ps->getWithDefault("FSLOPE_failed", d_yieldParam.FSLOPE_failed,
-                     0.5 * d_yieldParam.FSLOPE);
-  ps->getWithDefault("STREN_failed", d_yieldParam.STREN_failed,
-                     0.1 * d_yieldParam.STREN);
-  ps->getWithDefault("YSLOPE_failed", d_yieldParam.YSLOPE_failed, 1.0e-5);
+  ps->require("PEAKI1.phase1",
+              d_yieldParam[0].PEAKI1); // Shear Limit Surface Parameter
+  ps->require("FSLOPE.phase1",
+              d_yieldParam[0].FSLOPE); // Shear Limit Surface Parameter
+  ps->require("STREN.phase1",
+              d_yieldParam[0].STREN); // Shear Limit Surface Parameter
+  ps->require("YSLOPE.phase1",
+              d_yieldParam[0].YSLOPE); // Shear Limit Surface Parameter
+  ps->getWithDefault("PEAKI1_failed.phase1", d_yieldParam[0].PEAKI1_failed,
+                     1.0e-5);
+  ps->getWithDefault("FSLOPE_failed.phase1", d_yieldParam[0].FSLOPE_failed,
+                     0.5 * d_yieldParam[0].FSLOPE);
+  ps->getWithDefault("STREN_failed.phase1", d_yieldParam[0].STREN_failed,
+                     0.1 * d_yieldParam[0].STREN);
+  ps->getWithDefault("YSLOPE_failed.phase1", d_yieldParam[0].YSLOPE_failed,
+                     1.0e-5);
+
+  ps->require("PEAKI1.phase2",
+              d_yieldParam[1].PEAKI1); // Shear Limit Surface Parameter
+  ps->require("FSLOPE.phase2",
+              d_yieldParam[1].FSLOPE); // Shear Limit Surface Parameter
+  ps->require("STREN.phase2",
+              d_yieldParam[1].STREN); // Shear Limit Surface Parameter
+  ps->require("YSLOPE.phase2",
+              d_yieldParam[1].YSLOPE); // Shear Limit Surface Parameter
+  ps->getWithDefault("PEAKI1_failed.phase2", d_yieldParam[1].PEAKI1_failed,
+                     1.0e-5);
+  ps->getWithDefault("FSLOPE_failed.phase2", d_yieldParam[1].FSLOPE_failed,
+                     0.5 * d_yieldParam[1].FSLOPE);
+  ps->getWithDefault("STREN_failed.phase2", d_yieldParam[1].STREN_failed,
+                     0.1 * d_yieldParam[1].STREN);
+  ps->getWithDefault("YSLOPE_failed.phase2", d_yieldParam[1].YSLOPE_failed,
+                     1.0e-5);
 
   // Non-associativity parameters
-  ps->require("BETA", d_nonAssocParam.BETA); // Nonassociativity Parameter
+  ps->require("BETA.phase1",
+              d_nonAssocParam[0].BETA); // Nonassociativity Parameter
+  ps->require("BETA.phase2",
+              d_nonAssocParam[1].BETA); // Nonassociativity Parameter
 
   // Cap parameters: CR = (peakI1-kappa)/(peakI1-X)
-  ps->require("CR", d_capParam.CR); // Cap Shape Parameter
+  ps->require("CR.phase1", d_capParam[0].CR); // Cap Shape Parameter
+  ps->require("CR.phase2", d_capParam[1].CR); // Cap Shape Parameter
 
   // Duvaut-Lion rate parameters
-  ps->require("T1", d_rateParam.T1); // Rate dependence parameter
-  ps->require("T2", d_rateParam.T2); // Rate dependence parameter
+  ps->require("T1.phase1", d_rateParam[0].T1); // Rate dependence parameter
+  ps->require("T2.phase1", d_rateParam[0].T2); // Rate dependence parameter
+  ps->require("T1.phase2", d_rateParam[1].T1); // Rate dependence parameter
+  ps->require("T2.phase2", d_rateParam[1].T2); // Rate dependence parameter
 
   // Check the input parameters
   checkInputParameters();
@@ -75,44 +106,52 @@ YieldCond_Arena::YieldCond_Arena(Uintah::ProblemSpecP& ps)
   computeModelParameters(1.0);
 
   // Now optionally get the variablity information for each parameter
+  // Mean values
+  double PEAKI1 = d_volfrac[0] * d_yieldParam[0].PEAKI1 +
+                  d_volfrac[1] * d_yieldParam[1].PEAKI1;
+  double FSLOPE = d_volfrac[0] * d_yieldParam[0].FSLOPE +
+                  d_volfrac[1] * d_yieldParam[1].FSLOPE;
+  double STREN =
+    d_volfrac[0] * d_yieldParam[0].STREN + d_volfrac[1] * d_yieldParam[1].STREN;
+  double YSLOPE = d_volfrac[0] * d_yieldParam[0].YSLOPE +
+                  d_volfrac[1] * d_yieldParam[1].YSLOPE;
+  double BETA = d_volfrac[0] * d_nonAssocParam[0].BETA +
+                d_volfrac[1] * d_nonAssocParam[1].BETA;
+  double CR = d_volfrac[0] * d_capParam[0].CR + d_volfrac[1] * d_capParam[1].CR;
+  double T1 =
+    d_volfrac[0] * d_rateParam[0].T1 + d_volfrac[1] * d_rateParam[1].T1;
+  double T2 =
+    d_volfrac[0] * d_rateParam[0].T2 + d_volfrac[1] * d_rateParam[1].T2;
   std::string weibullDist;
-  ps->getWithDefault("weibullDist_PEAKI1", weibullDist,
-                     std::to_string(d_yieldParam.PEAKI1));
+  ps->getWithDefault("weibullDist_PEAKI1", weibullDist, std::to_string(PEAKI1));
   d_weibull_PEAKI1.WeibullParser(weibullDist);
   proc0cout << d_weibull_PEAKI1 << std::endl;
 
-  ps->getWithDefault("weibullDist_FSLOPE", weibullDist,
-                     std::to_string(d_yieldParam.FSLOPE));
+  ps->getWithDefault("weibullDist_FSLOPE", weibullDist, std::to_string(FSLOPE));
   d_weibull_FSLOPE.WeibullParser(weibullDist);
   proc0cout << d_weibull_FSLOPE << std::endl;
 
-  ps->getWithDefault("weibullDist_STREN", weibullDist,
-                     std::to_string(d_yieldParam.STREN));
+  ps->getWithDefault("weibullDist_STREN", weibullDist, std::to_string(STREN));
   d_weibull_STREN.WeibullParser(weibullDist);
   proc0cout << d_weibull_STREN << std::endl;
 
-  ps->getWithDefault("weibullDist_YSLOPE", weibullDist,
-                     std::to_string(d_yieldParam.YSLOPE));
+  ps->getWithDefault("weibullDist_YSLOPE", weibullDist, std::to_string(YSLOPE));
   d_weibull_YSLOPE.WeibullParser(weibullDist);
   proc0cout << d_weibull_YSLOPE << std::endl;
 
-  ps->getWithDefault("weibullDist_BETA", weibullDist,
-                     std::to_string(d_nonAssocParam.BETA));
+  ps->getWithDefault("weibullDist_BETA", weibullDist, std::to_string(BETA));
   d_weibull_BETA.WeibullParser(weibullDist);
   proc0cout << d_weibull_BETA << std::endl;
 
-  ps->getWithDefault("weibullDist_CR", weibullDist,
-                     std::to_string(d_capParam.CR));
+  ps->getWithDefault("weibullDist_CR", weibullDist, std::to_string(CR));
   d_weibull_CR.WeibullParser(weibullDist);
   proc0cout << d_weibull_CR << std::endl;
 
-  ps->getWithDefault("weibullDist_T1", weibullDist,
-                     std::to_string(d_rateParam.T1));
+  ps->getWithDefault("weibullDist_T1", weibullDist, std::to_string(T1));
   d_weibull_T1.WeibullParser(weibullDist);
   proc0cout << d_weibull_T1 << std::endl;
 
-  ps->getWithDefault("weibullDist_T2", weibullDist,
-                     std::to_string(d_rateParam.T2));
+  ps->getWithDefault("weibullDist_T2", weibullDist, std::to_string(T2));
   d_weibull_T2.WeibullParser(weibullDist);
   proc0cout << d_weibull_T2 << std::endl;
 
@@ -120,13 +159,17 @@ YieldCond_Arena::YieldCond_Arena(Uintah::ProblemSpecP& ps)
   initializeLocalMPMLabels();
 }
 
-YieldCond_Arena::YieldCond_Arena(const YieldCond_Arena* yc)
+YieldCond_ArenaMixture::YieldCond_ArenaMixture(const YieldCond_ArenaMixture* yc)
 {
-  d_modelParam = yc->d_modelParam;
-  d_yieldParam = yc->d_yieldParam;
-  d_nonAssocParam = yc->d_nonAssocParam;
-  d_capParam = yc->d_capParam;
-  d_rateParam = yc->d_rateParam;
+  for (int ii = 0; ii < 2; ii++) {
+    d_volfrac[ii] = yc->d_volfrac[ii];
+
+    d_modelParam[ii] = yc->d_modelParam[ii];
+    d_yieldParam[ii] = yc->d_yieldParam[ii];
+    d_nonAssocParam[ii] = yc->d_nonAssocParam[ii];
+    d_capParam[ii] = yc->d_capParam[ii];
+    d_rateParam[ii] = yc->d_rateParam[ii];
+  }
 
   // Copy parameter variability information
   d_weibull_PEAKI1 = yc->d_weibull_PEAKI1;
@@ -142,7 +185,7 @@ YieldCond_Arena::YieldCond_Arena(const YieldCond_Arena* yc)
   initializeLocalMPMLabels();
 }
 
-YieldCond_Arena::~YieldCond_Arena()
+YieldCond_ArenaMixture::~YieldCond_ArenaMixture()
 {
   VarLabel::destroy(pPEAKI1Label);
   VarLabel::destroy(pPEAKI1Label_preReloc);
@@ -166,26 +209,50 @@ YieldCond_Arena::~YieldCond_Arena()
 }
 
 void
-YieldCond_Arena::outputProblemSpec(Uintah::ProblemSpecP& ps)
+YieldCond_ArenaMixture::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
-  yield_ps->setAttribute("type", "arena");
+  yield_ps->setAttribute("type", "arena_mixture");
 
-  yield_ps->appendElement("FSLOPE", d_yieldParam.FSLOPE);
-  yield_ps->appendElement("PEAKI1", d_yieldParam.PEAKI1);
-  yield_ps->appendElement("STREN", d_yieldParam.STREN);
-  yield_ps->appendElement("YSLOPE", d_yieldParam.YSLOPE);
-  yield_ps->appendElement("FSLOPE_failed", d_yieldParam.FSLOPE_failed);
-  yield_ps->appendElement("PEAKI1_failed", d_yieldParam.PEAKI1_failed);
-  yield_ps->appendElement("STREN_failed", d_yieldParam.STREN_failed);
-  yield_ps->appendElement("YSLOPE_failed", d_yieldParam.YSLOPE_failed);
+  yield_ps->appendElement("vol_frac.phase1", d_volfrac[0]);
 
-  yield_ps->appendElement("BETA", d_nonAssocParam.BETA);
+  yield_ps->appendElement("FSLOPE.phase1", d_yieldParam[0].FSLOPE);
+  yield_ps->appendElement("PEAKI1.phase1", d_yieldParam[0].PEAKI1);
+  yield_ps->appendElement("STREN.phase1", d_yieldParam[0].STREN);
+  yield_ps->appendElement("YSLOPE.phase1", d_yieldParam[0].YSLOPE);
+  yield_ps->appendElement("FSLOPE_failed.phase1",
+                          d_yieldParam[0].FSLOPE_failed);
+  yield_ps->appendElement("PEAKI1_failed.phase1",
+                          d_yieldParam[0].PEAKI1_failed);
+  yield_ps->appendElement("STREN_failed.phase1", d_yieldParam[0].STREN_failed);
+  yield_ps->appendElement("YSLOPE_failed.phase1",
+                          d_yieldParam[0].YSLOPE_failed);
 
-  yield_ps->appendElement("CR", d_capParam.CR);
+  yield_ps->appendElement("BETA.phase1", d_nonAssocParam[0].BETA);
 
-  yield_ps->appendElement("T1", d_rateParam.T1);
-  yield_ps->appendElement("T2", d_rateParam.T2);
+  yield_ps->appendElement("CR.phase1", d_capParam[0].CR);
+
+  yield_ps->appendElement("T1.phase1", d_rateParam[0].T1);
+  yield_ps->appendElement("T2.phase1", d_rateParam[0].T2);
+
+  yield_ps->appendElement("FSLOPE.phase2", d_yieldParam[1].FSLOPE);
+  yield_ps->appendElement("PEAKI1.phase2", d_yieldParam[1].PEAKI1);
+  yield_ps->appendElement("STREN.phase2", d_yieldParam[1].STREN);
+  yield_ps->appendElement("YSLOPE.phase2", d_yieldParam[1].YSLOPE);
+  yield_ps->appendElement("FSLOPE_failed.phase2",
+                          d_yieldParam[1].FSLOPE_failed);
+  yield_ps->appendElement("PEAKI1_failed.phase2",
+                          d_yieldParam[1].PEAKI1_failed);
+  yield_ps->appendElement("STREN_failed.phase2", d_yieldParam[1].STREN_failed);
+  yield_ps->appendElement("YSLOPE_failed.phase2",
+                          d_yieldParam[1].YSLOPE_failed);
+
+  yield_ps->appendElement("BETA.phase2", d_nonAssocParam[1].BETA);
+
+  yield_ps->appendElement("CR.phase2", d_capParam[1].CR);
+
+  yield_ps->appendElement("T1.phase2", d_rateParam[1].T1);
+  yield_ps->appendElement("T2.phase2", d_rateParam[1].T2);
 
   yield_ps->appendElement("weibullDist_PEAKI1", d_weibull_PEAKI1.getWeibDist());
   yield_ps->appendElement("weibullDist_FSLOPE", d_weibull_FSLOPE.getWeibDist());
@@ -204,47 +271,96 @@ YieldCond_Arena::outputProblemSpec(Uintah::ProblemSpecP& ps)
 // Check that the input parameters are reasonable
 //--------------------------------------------------------------
 void
-YieldCond_Arena::checkInputParameters()
+YieldCond_ArenaMixture::checkInputParameters()
 {
   std::ostringstream warn;
-  if (d_yieldParam.PEAKI1 < 0.0 || d_yieldParam.PEAKI1_failed < 0.0) {
-    warn << "PEAKI1 must be nonnegative. PEAKI1 = " << d_yieldParam.PEAKI1
+  if (d_yieldParam[0].PEAKI1 < 0.0 || d_yieldParam[0].PEAKI1_failed < 0.0) {
+    warn << "Phase 1: PEAKI1 must be nonnegative. PEAKI1 = "
+         << d_yieldParam[0].PEAKI1 << std::endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+  if (d_yieldParam[0].FSLOPE < 0.0 || d_yieldParam[0].FSLOPE_failed < 0.0) {
+    warn << "Phase 1: FSLOPE must be nonnegative. FSLOPE = "
+         << d_yieldParam[0].FSLOPE << std::endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+  if (d_yieldParam[0].FSLOPE < d_yieldParam[0].YSLOPE ||
+      d_yieldParam[0].FSLOPE_failed < d_yieldParam[0].YSLOPE_failed) {
+    warn << "Phase 1: FSLOPE must be greater than YSLOPE. FSLOPE = "
+         << d_yieldParam[0].FSLOPE << ", YSLOPE = " << d_yieldParam[0].YSLOPE
          << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_yieldParam.FSLOPE < 0.0 || d_yieldParam.FSLOPE_failed < 0.0) {
-    warn << "FSLOPE must be nonnegative. FSLOPE = " << d_yieldParam.FSLOPE
+  if (d_nonAssocParam[0].BETA <= 0.0) {
+    warn << "Phase 1: BETA (nonassociativity factor) must be positive. BETA = "
+         << d_nonAssocParam[0].BETA << std::endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+  if (d_capParam[0].CR >= 1 || d_capParam[0].CR <= 0.0) {
+    warn << "Phase 1: CR must be 0<CR<1. CR = " << d_capParam[0].CR
          << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_yieldParam.FSLOPE < d_yieldParam.YSLOPE ||
-      d_yieldParam.FSLOPE_failed < d_yieldParam.YSLOPE_failed) {
-    warn << "FSLOPE must be greater than YSLOPE. FSLOPE = "
-         << d_yieldParam.FSLOPE << ", YSLOPE = " << d_yieldParam.YSLOPE
+  if (d_rateParam[0].T1 < 0.0) {
+    warn << "Phase 1: T1 must be nonnegative. T1 = " << d_rateParam[0].T1
          << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_nonAssocParam.BETA <= 0.0) {
-    warn << "BETA (nonassociativity factor) must be positive. BETA = "
-         << d_nonAssocParam.BETA << std::endl;
+  if (d_rateParam[0].T2 < 0.0) {
+    warn << "Phase 1: T2 must be nonnegative. T2 = " << d_rateParam[0].T2
+         << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_capParam.CR >= 1 || d_capParam.CR <= 0.0) {
-    warn << "CR must be 0<CR<1. CR = " << d_capParam.CR << std::endl;
+  if ((d_rateParam[0].T1 > 0.0 || d_rateParam[0].T2 > 0.0) !=
+      (d_rateParam[0].T1 > 0.0 && d_rateParam[0].T2 > 0.0)) {
+    warn
+      << "Phase 1: For rate dependence both T1 and T2 must be positive. T1 = "
+      << d_rateParam[0].T1 << ", T2 = " << d_rateParam[0].T2 << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_rateParam.T1 < 0.0) {
-    warn << "T1 must be nonnegative. T1 = " << d_rateParam.T1 << std::endl;
+
+  if (d_yieldParam[1].PEAKI1 < 0.0 || d_yieldParam[1].PEAKI1_failed < 0.0) {
+    warn << "Phase 2: PEAKI1 must be nonnegative. PEAKI1 = "
+         << d_yieldParam[1].PEAKI1 << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if (d_rateParam.T2 < 0.0) {
-    warn << "T2 must be nonnegative. T2 = " << d_rateParam.T2 << std::endl;
+  if (d_yieldParam[1].FSLOPE < 0.0 || d_yieldParam[1].FSLOPE_failed < 0.0) {
+    warn << "Phase 2: FSLOPE must be nonnegative. FSLOPE = "
+         << d_yieldParam[1].FSLOPE << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
-  if ((d_rateParam.T1 > 0.0 || d_rateParam.T2 > 0.0) !=
-      (d_rateParam.T1 > 0.0 && d_rateParam.T2 > 0.0)) {
-    warn << "For rate dependence both T1 and T2 must be positive. T1 = "
-         << d_rateParam.T1 << ", T2 = " << d_rateParam.T2 << std::endl;
+  if (d_yieldParam[1].FSLOPE < d_yieldParam[1].YSLOPE ||
+      d_yieldParam[1].FSLOPE_failed < d_yieldParam[1].YSLOPE_failed) {
+    warn << "Phase 2: FSLOPE must be greater than YSLOPE. FSLOPE = "
+         << d_yieldParam[1].FSLOPE << ", YSLOPE = " << d_yieldParam[1].YSLOPE
+         << std::endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+  if (d_nonAssocParam[1].BETA <= 0.0) {
+    warn << "Phase 2: BETA (nonassociativity factor) must be positive. BETA = "
+         << d_nonAssocParam[1].BETA << std::endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+  if (d_capParam[1].CR >= 1 || d_capParam[1].CR <= 0.0) {
+    warn << "Phase 2: CR must be 0<CR<1. CR = " << d_capParam[1].CR
+         << std::endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+  if (d_rateParam[1].T1 < 0.0) {
+    warn << "Phase 2: T1 must be nonnegative. T1 = " << d_rateParam[1].T1
+         << std::endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+  if (d_rateParam[1].T2 < 0.0) {
+    warn << "Phase 2: T2 must be nonnegative. T2 = " << d_rateParam[1].T2
+         << std::endl;
+    throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
+  }
+  if ((d_rateParam[1].T1 > 0.0 || d_rateParam[1].T2 > 0.0) !=
+      (d_rateParam[1].T1 > 0.0 && d_rateParam[1].T2 > 0.0)) {
+    warn
+      << "Phase 2: For rate dependence both T1 and T2 must be positive. T1 = "
+      << d_rateParam[1].T1 << ", T2 = " << d_rateParam[1].T2 << std::endl;
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 }
@@ -262,37 +378,46 @@ YieldCond_Arena::checkInputParameters()
 // originally written by R.M. Brannon, with modifications by M.S. Swan.
 //--------------------------------------------------------------
 void
-YieldCond_Arena::computeModelParameters(double)
+YieldCond_ArenaMixture::computeModelParameters(double)
 {
-  double FSLOPE = d_yieldParam.FSLOPE, // Slope at I1=PEAKI1
-    STREN = d_yieldParam.STREN,        // Value of rootJ2 at I1=0
-    YSLOPE = d_yieldParam.YSLOPE,      // High pressure slope
-    PEAKI1 = d_yieldParam.PEAKI1;      // Value of I1 at strength=0
-  double FSLOPE_failed = d_yieldParam.FSLOPE_failed, // Slope at I1=PEAKI1
-    STREN_failed = d_yieldParam.STREN_failed,        // Value of rootJ2 at I1=0
-    YSLOPE_failed = d_yieldParam.YSLOPE_failed,      // High pressure slope
-    PEAKI1_failed = d_yieldParam.PEAKI1_failed; // Value of I1 at strength=0
+  computeModelParameters(0);
+  computeModelParameters(1);
+}
+
+void
+YieldCond_ArenaMixture::computeModelParameters(int phase)
+{
+  double FSLOPE = d_yieldParam[phase].FSLOPE, // Slope at I1=PEAKI1
+    STREN = d_yieldParam[phase].STREN,        // Value of rootJ2 at I1=0
+    YSLOPE = d_yieldParam[phase].YSLOPE,      // High pressure slope
+    PEAKI1 = d_yieldParam[phase].PEAKI1;      // Value of I1 at strength=0
+  double FSLOPE_failed =
+           d_yieldParam[phase].FSLOPE_failed,        // Slope at I1=PEAKI1
+    STREN_failed = d_yieldParam[phase].STREN_failed, // Value of rootJ2 at I1=0
+    YSLOPE_failed = d_yieldParam[phase].YSLOPE_failed, // High pressure slope
+    PEAKI1_failed =
+      d_yieldParam[phase].PEAKI1_failed; // Value of I1 at strength=0
 
   std::vector<double> limitParameters =
     computeModelParameters(PEAKI1, FSLOPE, STREN, YSLOPE);
   std::vector<double> limitParameters_failed = computeModelParameters(
     PEAKI1_failed, FSLOPE_failed, STREN_failed, YSLOPE_failed);
 
-  d_modelParam.a1 = limitParameters[0];
-  d_modelParam.a2 = limitParameters[1];
-  d_modelParam.a3 = limitParameters[2];
-  d_modelParam.a4 = limitParameters[3];
-  d_modelParam.a1_failed = limitParameters_failed[0];
-  d_modelParam.a2_failed = limitParameters_failed[1];
-  d_modelParam.a3_failed = limitParameters_failed[2];
-  d_modelParam.a4_failed = limitParameters_failed[3];
+  d_modelParam[phase].a1 = limitParameters[0];
+  d_modelParam[phase].a2 = limitParameters[1];
+  d_modelParam[phase].a3 = limitParameters[2];
+  d_modelParam[phase].a4 = limitParameters[3];
+  d_modelParam[phase].a1_failed = limitParameters_failed[0];
+  d_modelParam[phase].a2_failed = limitParameters_failed[1];
+  d_modelParam[phase].a3_failed = limitParameters_failed[2];
+  d_modelParam[phase].a4_failed = limitParameters_failed[3];
 }
 
 std::vector<double>
-YieldCond_Arena::computeModelParameters(const double& PEAKI1,
-                                        const double& FSLOPE,
-                                        const double& STREN,
-                                        const double& YSLOPE)
+YieldCond_ArenaMixture::computeModelParameters(const double& PEAKI1,
+                                               const double& FSLOPE,
+                                               const double& STREN,
+                                               const double& YSLOPE)
 {
   double a1, a2, a3, a4;
   if (FSLOPE > 0.0 && PEAKI1 >= 0.0 && STREN == 0.0 &&
@@ -356,7 +481,7 @@ YieldCond_Arena::computeModelParameters(const double& PEAKI1,
 //              =  1.0 (otherwise)
 //--------------------------------------------------------------
 std::pair<double, Util::YieldStatus>
-YieldCond_Arena::evalYieldCondition(const ModelStateBase* state_input)
+YieldCond_ArenaMixture::evalYieldCondition(const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -456,7 +581,7 @@ YieldCond_Arena::evalYieldCondition(const ModelStateBase* state_input)
 // Evaluate yield condition max  value of sqrtJ2
 //--------------------------------------------------------------
 double
-YieldCond_Arena::evalYieldConditionMax(const ModelStateBase* state_input)
+YieldCond_ArenaMixture::evalYieldConditionMax(const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -562,9 +687,9 @@ YieldCond_Arena::evalYieldConditionMax(const ModelStateBase* state_input)
  *                        = df/dJ2 s
 */
 void
-YieldCond_Arena::eval_df_dsigma(const Matrix3&,
-                                const ModelStateBase* state_input,
-                                Matrix3& df_dsigma)
+YieldCond_ArenaMixture::eval_df_dsigma(const Matrix3&,
+                                       const ModelStateBase* state_input,
+                                       Matrix3& df_dsigma)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -616,7 +741,7 @@ YieldCond_Arena::eval_df_dsigma(const Matrix3&,
 //    dI1_eff/dp = 1/3
 //--------------------------------------------------------------
 double
-YieldCond_Arena::computeVolStressDerivOfYieldFunction(
+YieldCond_ArenaMixture::computeVolStressDerivOfYieldFunction(
   const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
@@ -710,7 +835,7 @@ YieldCond_Arena::computeVolStressDerivOfYieldFunction(
 //     df/dJ2 = 1
 //--------------------------------------------------------------
 double
-YieldCond_Arena::computeDevStressDerivOfYieldFunction(
+YieldCond_ArenaMixture::computeDevStressDerivOfYieldFunction(
   const ModelStateBase* )
 {
   /*
@@ -739,8 +864,9 @@ YieldCond_Arena::computeDevStressDerivOfYieldFunction(
  *   I1 = value of tr(stress) at a point inside the yield surface
  */
 double
-YieldCond_Arena::getInternalPoint(const ModelStateBase* state_old_input,
-                                  const ModelStateBase* state_trial_input)
+YieldCond_ArenaMixture::getInternalPoint(
+  const ModelStateBase* state_old_input,
+  const ModelStateBase* state_trial_input)
 {
   const ModelState_Arena* state_old =
     static_cast<const ModelState_Arena*>(state_old_input);
@@ -808,9 +934,9 @@ YieldCond_Arena::getInternalPoint(const ModelStateBase* state_old_input,
  *
  */
 bool
-YieldCond_Arena::getClosestPoint(const ModelStateBase* state_input,
-                                 const double& px, const double& py,
-                                 double& cpx, double& cpy)
+YieldCond_ArenaMixture::getClosestPoint(const ModelStateBase* state_input,
+                                        const double& px, const double& py,
+                                        double& cpx, double& cpy)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -832,7 +958,7 @@ YieldCond_Arena::getClosestPoint(const ModelStateBase* state_input,
   cpx = closest.x();
   cpy = closest.y();
 // end = std::chrono::system_clock::now();
-// std::cout << "Geometric Bisection : Time taken = " <<
+// std::cout << "Geomeric Bisection : Time taken = " <<
 //    std::chrono::duration<double>(end-start).count() << std::endl;
 #else
   // std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -851,9 +977,9 @@ YieldCond_Arena::getClosestPoint(const ModelStateBase* state_input,
 }
 
 void
-YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
-                                                const Uintah::Point& z_r_pt,
-                                                Uintah::Point& z_r_closest)
+YieldCond_ArenaMixture::getClosestPointGeometricBisect(
+  const ModelState_Arena* state, const Uintah::Point& z_r_pt,
+  Uintah::Point& z_r_closest)
 {
   // Get the particle specific internal variables from the model state
   // Store in a local struct
@@ -976,31 +1102,30 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
     }
 #endif
 
-    #ifdef DEBUG_YIELD_BISECTION
-      //if (state->particleID == 3096267694276610) 
-      {
-        std::cout << "Iteration = " << iters << std::endl;
-        std::cout << "State = " << *state << std::endl;
-        std::cout << "z_r_pt = " << z_r_pt << ";" << std::endl;
-        std::cout << "z_r_closest = " << z_r_closest << ";" << std::endl;
-        std::cout << "z_r_yield_z = [";
-        for (auto& pt : z_r_points) {
-          std::cout << pt.x() << " ";
-        }
-        std::cout << "];" << std::endl;
-        std::cout << "z_r_yield_r = [";
-        for (auto& pt : z_r_points) {
-          std::cout << pt.y() << " ";
-        }
-        std::cout << "];" << std::endl;
-        std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
-        std::cout << "plot(z_r_pt(1), z_r_pt(2));" << std::endl;
-        std::cout << "plot(z_r_closest(1), z_r_closest(2));" << std::endl;
-        std::cout
-          << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');"
-          << std::endl;
-      }
-    #endif
+#ifdef DEBUG_YIELD_BISECTION
+    // if (state->particleID == 3377699720593411) {
+    std::cout << "Iteration = " << iters << std::endl;
+    std::cout << "State = " << *state << std::endl;
+    std::cout << "z_r_pt = " << z_r_pt << ";" << std::endl;
+    std::cout << "z_r_closest = " << z_r_closest << ";" << std::endl;
+    std::cout << "z_r_yield_z = [";
+    for (auto& pt : z_r_points) {
+      std::cout << pt.x() << " ";
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "z_r_yield_r = [";
+    for (auto& pt : z_r_points) {
+      std::cout << pt.y() << " ";
+    }
+    std::cout << "];" << std::endl;
+    std::cout << "plot(z_r_yield_z, z_r_yield_r); hold on;" << std::endl;
+    std::cout << "plot(z_r_pt(1), z_r_pt(2));" << std::endl;
+    std::cout << "plot(z_r_closest(1), z_r_closest(2));" << std::endl;
+    std::cout
+      << "plot([z_r_pt(1) z_r_closest(1)],[z_r_pt(2) z_r_closest(2)], '--');"
+      << std::endl;
+//}
+#endif
 #ifdef DEBUG_YIELD_BISECTION_I1_J2
     // if (state->particleID == 3377699720593411) {
     double fac_z = std::sqrt(3.0);
@@ -1032,19 +1157,12 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
     // Compute I1 for the closest point
     double I1eff_closest = sqrt_three * z_r_closest.x();
 
+    // If (I1_closest < I1_mid)
     if (I1eff_closest < I1eff_mid) {
-      #ifdef BISECT_LOW_ACCURACY
-        I1eff_max = I1eff_mid;
-      #else
-        I1eff_max = (1 - 0.51)*I1eff_min + 0.51*I1eff_max;
-      #endif
+      I1eff_max = I1eff_mid;
       eta_hi = eta_mid;
     } else {
-      #ifdef BISECT_LOW_ACCURACY
-        I1eff_min = I1eff_mid;
-      #else
-        I1eff_min = (1 - 0.49)*I1eff_min + 0.49*I1eff_max;
-      #endif
+      I1eff_min = I1eff_mid;
       eta_lo = eta_mid;
     }
 
@@ -1052,15 +1170,9 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
     eta_mid = 0.5 * (eta_lo + eta_hi);
 
     // Distance to old closest point
-    #ifdef BISECT_LOW_ACCURACY
-      if (iters > 10 && (z_r_closest - z_r_closest_old).length2() < 1.0e-4) {
-        break;
-      }
-    #else
-      if ((z_r_closest - z_r_closest_old).length2() < 1.0e-8) {
-        break;
-      }
-    #endif
+    if (iters > 10 && (z_r_closest - z_r_closest_old).length2() < 1.0e-16) {
+      break;
+    }
     z_r_closest_old = z_r_closest;
 
     ++iters;
@@ -1070,9 +1182,9 @@ YieldCond_Arena::getClosestPointGeometricBisect(const ModelState_Arena* state,
 }
 
 void
-YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
-                                                const Uintah::Point& z_r_pt,
-                                                Uintah::Point& z_r_closest)
+YieldCond_ArenaMixture::getClosestPointAlgebraicBisect(
+  const ModelState_Arena* state, const Uintah::Point& z_r_pt,
+  Uintah::Point& z_r_closest)
 {
   // Get the particle specific internal variables from the model state
   // Store in a local struct
@@ -1285,7 +1397,7 @@ YieldCond_Arena::getClosestPointAlgebraicBisect(const ModelState_Arena* state,
 
 /* Get the points on the yield surface */
 void
-YieldCond_Arena::getYieldSurfacePointsAll_RprimeZ(
+YieldCond_ArenaMixture::getYieldSurfacePointsAll_RprimeZ(
   const double& X_eff, const double& kappa, const double& sqrtKG,
   const double& I1eff_min, const double& I1eff_max, const int& num_points,
   std::vector<Uintah::Point>& z_r_vec)
@@ -1299,7 +1411,7 @@ YieldCond_Arena::getYieldSurfacePointsAll_RprimeZ(
 
 /* Get the points on two segments the yield surface */
 void
-YieldCond_Arena::getYieldSurfacePointsSegment_RprimeZ(
+YieldCond_ArenaMixture::getYieldSurfacePointsSegment_RprimeZ(
   const double& X_eff, const double& kappa, const double& sqrtKG,
   const Uintah::Point& start_point, const Uintah::Point& end_point,
   const int& num_points, std::vector<Uintah::Point>& z_r_poly)
@@ -1321,7 +1433,7 @@ YieldCond_Arena::getYieldSurfacePointsSegment_RprimeZ(
 
 /*! Compute a vector of z_eff, r' values given a range of I1_eff values */
 void
-YieldCond_Arena::computeZeff_and_RPrime(
+YieldCond_ArenaMixture::computeZeff_and_RPrime(
   const double& X_eff, const double& kappa, const double& sqrtKG,
   const double& I1eff_min, const double& I1eff_max, const int& num_points,
   std::vector<Uintah::Point>& z_r_vec)
@@ -1386,14 +1498,13 @@ YieldCond_Arena::computeZeff_and_RPrime(
 // Requires:  Equation of state and internal variable
 //--------------------------------------------------------------
 double
-YieldCond_Arena::computeVolStrainDerivOfDfDp(const ModelStateBase* state_input,
-                                             const PressureModel* eos,
-                                             const ShearModulusModel*,
-                                             const InternalVariableModel*)
+YieldCond_ArenaMixture::computeVolStrainDerivOfDfDp(
+  const ModelStateBase* state_input, const PressureModel* eos,
+  const ShearModulusModel*, const InternalVariableModel*)
 {
   std::ostringstream out;
   out << "**ERROR** computeVolStrainDerivOfDfDp should not be called by "
-      << " models that use the Arena yield criterion.";
+      << " models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return 0.0;
@@ -1407,14 +1518,13 @@ YieldCond_Arena::computeVolStrainDerivOfDfDp(const ModelStateBase* state_input,
 // Requires:  Equation of state
 //--------------------------------------------------------------
 double
-YieldCond_Arena::computeDevStrainDerivOfDfDp(const ModelStateBase* state_input,
-                                             const PressureModel* eos,
-                                             const ShearModulusModel*,
-                                             const InternalVariableModel*)
+YieldCond_ArenaMixture::computeDevStrainDerivOfDfDp(
+  const ModelStateBase* state_input, const PressureModel* eos,
+  const ShearModulusModel*, const InternalVariableModel*)
 {
   std::ostringstream out;
   out << "**ERROR** computeDevStrainDerivOfDfDp should not be called by "
-      << " models that use the Arena yield criterion.";
+      << " models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return 0.0;
@@ -1428,14 +1538,13 @@ YieldCond_Arena::computeDevStrainDerivOfDfDp(const ModelStateBase* state_input,
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_Arena::computeVolStrainDerivOfDfDq(const ModelStateBase* state_input,
-                                             const PressureModel*,
-                                             const ShearModulusModel* shear,
-                                             const InternalVariableModel*)
+YieldCond_ArenaMixture::computeVolStrainDerivOfDfDq(
+  const ModelStateBase* state_input, const PressureModel*,
+  const ShearModulusModel* shear, const InternalVariableModel*)
 {
   std::ostringstream out;
   out << "**ERROR** computeVolStrainDerivOfDfDq should not be called by "
-      << " models that use the Arena yield criterion.";
+      << " models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return 0.0;
@@ -1449,14 +1558,13 @@ YieldCond_Arena::computeVolStrainDerivOfDfDq(const ModelStateBase* state_input,
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_Arena::computeDevStrainDerivOfDfDq(const ModelStateBase* state_input,
-                                             const PressureModel*,
-                                             const ShearModulusModel* shear,
-                                             const InternalVariableModel*)
+YieldCond_ArenaMixture::computeDevStrainDerivOfDfDq(
+  const ModelStateBase* state_input, const PressureModel*,
+  const ShearModulusModel* shear, const InternalVariableModel*)
 {
   std::ostringstream out;
   out << "**ERROR** computeDevStrainDerivOfDfDq should not be called by "
-      << " models that use the Arena yield criterion.";
+      << " models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return 0.0;
@@ -1469,14 +1577,14 @@ YieldCond_Arena::computeDevStrainDerivOfDfDq(const ModelStateBase* state_input,
 // Requires:  Equation of state, shear modulus model, internal variable model
 //--------------------------------------------------------------
 double
-YieldCond_Arena::computeVolStrainDerivOfYieldFunction(
+YieldCond_ArenaMixture::computeVolStrainDerivOfYieldFunction(
   const ModelStateBase* state_input, const PressureModel* eos,
   const ShearModulusModel* shear, const InternalVariableModel*)
 {
   std::ostringstream out;
   out
     << "**ERROR** computeVolStrainDerivOfYieldFunction should not be called by "
-    << " models that use the Arena yield criterion.";
+    << " models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return 0.0;
@@ -1489,14 +1597,14 @@ YieldCond_Arena::computeVolStrainDerivOfYieldFunction(
 // Requires:  Equation of state, shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_Arena::computeDevStrainDerivOfYieldFunction(
+YieldCond_ArenaMixture::computeDevStrainDerivOfYieldFunction(
   const ModelStateBase* state_input, const PressureModel* eos,
   const ShearModulusModel* shear, const InternalVariableModel*)
 {
   std::ostringstream out;
   out
     << "**ERROR** computeVolStrainDerivOfYieldFunction should not be called by "
-    << " models that use the Arena yield criterion.";
+    << " models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return 0.0;
@@ -1504,13 +1612,14 @@ YieldCond_Arena::computeDevStrainDerivOfYieldFunction(
 
 // Evaluate the yield function.
 double
-YieldCond_Arena::evalYieldCondition(const double p, const double q,
-                                    const double dummy0, const double dummy1,
-                                    double& dummy2)
+YieldCond_ArenaMixture::evalYieldCondition(const double p, const double q,
+                                           const double dummy0,
+                                           const double dummy1, double& dummy2)
 {
   std::ostringstream out;
-  out << "**ERROR** Deprecated evalYieldCondition with double arguments. "
-      << " Should not be called by models that use the Arena yield criterion.";
+  out
+    << "**ERROR** Deprecated evalYieldCondition with double arguments. "
+    << " Should not be called by models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return 0.0;
@@ -1519,13 +1628,13 @@ YieldCond_Arena::evalYieldCondition(const double p, const double q,
 // Evaluate yield condition (s = deviatoric stress
 //                           p = state->p)
 double
-YieldCond_Arena::evalYieldCondition(const Uintah::Matrix3&,
-                                    const ModelStateBase* state_input)
+YieldCond_ArenaMixture::evalYieldCondition(const Uintah::Matrix3&,
+                                           const ModelStateBase* state_input)
 {
   std::ostringstream out;
   out << "**ERROR** evalYieldCondition with a Matrix3 argument should not be "
          "called by "
-      << " models that use the Arena yield criterion.";
+      << " models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return 0.0;
@@ -1539,14 +1648,14 @@ YieldCond_Arena::evalYieldCondition(const Uintah::Matrix3&,
 // where
 //    s = sigma - 1/3 tr(sigma) I
 void
-YieldCond_Arena::evalDerivOfYieldFunction(const Uintah::Matrix3& sig,
-                                          const double p_c, const double,
-                                          Uintah::Matrix3& derivative)
+YieldCond_ArenaMixture::evalDerivOfYieldFunction(const Uintah::Matrix3& sig,
+                                                 const double p_c, const double,
+                                                 Uintah::Matrix3& derivative)
 {
   std::ostringstream out;
   out << "**ERROR** evalDerivOfYieldCondition with a Matrix3 argument should "
          "not be "
-      << "called by models that use the Arena yield criterion.";
+      << "called by models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return;
@@ -1555,14 +1664,14 @@ YieldCond_Arena::evalDerivOfYieldFunction(const Uintah::Matrix3& sig,
 // Compute df/ds  where s = deviatoric stress
 //    df/ds =
 void
-YieldCond_Arena::evalDevDerivOfYieldFunction(const Uintah::Matrix3& sigDev,
-                                             const double, const double,
-                                             Uintah::Matrix3& derivative)
+YieldCond_ArenaMixture::evalDevDerivOfYieldFunction(
+  const Uintah::Matrix3& sigDev, const double, const double,
+  Uintah::Matrix3& derivative)
 {
   std::ostringstream out;
   out << "**ERROR** evalDerivOfYieldCondition with a Matrix3 argument should "
          "not be "
-      << "called by models that use the Arena yield criterion.";
+      << "called by models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
   return;
@@ -1571,72 +1680,72 @@ YieldCond_Arena::evalDevDerivOfYieldFunction(const Uintah::Matrix3& sigDev,
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
     where \f$s\f$ is deviatoric part of Cauchy stress */
 void
-YieldCond_Arena::eval_df_dxi(const Matrix3& sigDev, const ModelStateBase*,
-                             Matrix3& df_ds)
+YieldCond_ArenaMixture::eval_df_dxi(const Matrix3& sigDev,
+                                    const ModelStateBase*, Matrix3& df_ds)
 
 {
   std::ostringstream out;
   out << "**ERROR** eval_df_dxi with a Matrix3 argument should not be "
-      << "called by models that use the Arena yield criterion.";
+      << "called by models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
   return;
 }
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 void
-YieldCond_Arena::eval_df_ds_df_dbeta(const Matrix3& sigDev,
-                                     const ModelStateBase*, Matrix3& df_ds,
-                                     Matrix3& df_dbeta)
+YieldCond_ArenaMixture::eval_df_ds_df_dbeta(const Matrix3& sigDev,
+                                            const ModelStateBase*,
+                                            Matrix3& df_ds, Matrix3& df_dbeta)
 {
   std::ostringstream out;
   out << "**ERROR** eval_df_ds_df_dbeta with a Matrix3 argument should not be "
-      << "called by models that use the Arena yield criterion.";
+      << "called by models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
   return;
 }
 
 /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$) */
 double
-YieldCond_Arena::eval_df_dep(const Matrix3&, const double& dsigy_dep,
-                             const ModelStateBase*)
+YieldCond_ArenaMixture::eval_df_dep(const Matrix3&, const double& dsigy_dep,
+                                    const ModelStateBase*)
 {
   std::ostringstream out;
   out << "**ERROR** eval_df_dep with a Matrix3 argument should not be "
-      << "called by models that use the Arena yield criterion.";
+      << "called by models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
   return 0.0;
 }
 
 /*! Derivative with respect to the porosity (\f$\epsilon^p \f$) */
 double
-YieldCond_Arena::eval_df_dphi(const Matrix3&, const ModelStateBase*)
+YieldCond_ArenaMixture::eval_df_dphi(const Matrix3&, const ModelStateBase*)
 {
   std::ostringstream out;
   out << "**ERROR** eval_df_dphi with a Matrix3 argument should not be "
-      << "called by models that use the Arena yield criterion.";
+      << "called by models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
   return 0.0;
 }
 
 /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
 double
-YieldCond_Arena::eval_h_alpha(const Matrix3&, const ModelStateBase*)
+YieldCond_ArenaMixture::eval_h_alpha(const Matrix3&, const ModelStateBase*)
 {
   std::ostringstream out;
   out << "**ERROR** eval_h_alpha with a Matrix3 argument should not be "
-      << "called by models that use the Arena yield criterion.";
+      << "called by models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
   return 1.0;
 }
 
 /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
 double
-YieldCond_Arena::eval_h_phi(const Matrix3&, const double&,
-                            const ModelStateBase*)
+YieldCond_ArenaMixture::eval_h_phi(const Matrix3&, const double&,
+                                   const ModelStateBase*)
 {
   std::ostringstream out;
   out << "**ERROR** eval_h_phi with a Matrix3 argument should not be "
-      << "called by models that use the Arena yield criterion.";
+      << "called by models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
   return 0.0;
 }
@@ -1644,28 +1753,27 @@ YieldCond_Arena::eval_h_phi(const Matrix3&, const double&,
 //--------------------------------------------------------------
 // Tangent moduli
 void
-YieldCond_Arena::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
-                                               const Matrix3& sigma,
-                                               double sigY, double dsigYdep,
-                                               double porosity, double,
-                                               TangentModulusTensor& Cep)
+YieldCond_ArenaMixture::computeElasPlasTangentModulus(
+  const TangentModulusTensor& Ce, const Matrix3& sigma, double sigY,
+  double dsigYdep, double porosity, double, TangentModulusTensor& Cep)
 {
   std::ostringstream out;
   out << "**ERROR** computeElasPlasTangentModulus with a Matrix3 argument "
          "should not be "
-      << "called by models that use the Arena yield criterion.";
+      << "called by models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
   return;
 }
 
 void
-YieldCond_Arena::computeTangentModulus(const TangentModulusTensor& Ce,
-                                       const Matrix3& f_sigma, double f_q1,
-                                       double h_q1, TangentModulusTensor& Cep)
+YieldCond_ArenaMixture::computeTangentModulus(const TangentModulusTensor& Ce,
+                                              const Matrix3& f_sigma,
+                                              double f_q1, double h_q1,
+                                              TangentModulusTensor& Cep)
 {
   std::ostringstream out;
   out << "**ERROR** coputeTangentModulus with a Matrix3 argument should not be "
-      << "called by models that use the Arena yield criterion.";
+      << "called by models that use the SoilMix yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
   return;
 }
@@ -1674,7 +1782,7 @@ YieldCond_Arena::computeTangentModulus(const TangentModulusTensor& Ce,
  *  This is used to scale and update the yield parameters
  */
 void
-YieldCond_Arena::updateLocalVariables(
+YieldCond_ArenaMixture::updateLocalVariables(
   ParticleSubset* pset, DataWarehouse* old_dw, DataWarehouse* new_dw,
   constParticleVariable<double>& pCoherence_old,
   const ParticleVariable<double>& pCoherence_new)
@@ -1702,10 +1810,14 @@ YieldCond_Arena::updateLocalVariables(
   new_dw->allocateAndPut(pT1_new, pT1Label_preReloc, pset);
   new_dw->allocateAndPut(pT2_new, pT2Label_preReloc, pset);
 
-  double PEAKI1_failed = d_yieldParam.PEAKI1_failed;
-  double FSLOPE_failed = d_yieldParam.FSLOPE_failed;
-  double STREN_failed = d_yieldParam.STREN_failed;
-  double YSLOPE_failed = d_yieldParam.YSLOPE_failed;
+  double PEAKI1_failed = d_volfrac[0] * d_yieldParam[0].PEAKI1_failed +
+                         d_volfrac[1] * d_yieldParam[1].PEAKI1_failed;
+  double FSLOPE_failed = d_volfrac[0] * d_yieldParam[0].FSLOPE_failed +
+                         d_volfrac[1] * d_yieldParam[1].FSLOPE_failed;
+  double STREN_failed = d_volfrac[0] * d_yieldParam[0].STREN_failed +
+                        d_volfrac[1] * d_yieldParam[1].STREN_failed;
+  double YSLOPE_failed = d_volfrac[0] * d_yieldParam[0].YSLOPE_failed +
+                         d_volfrac[1] * d_yieldParam[1].YSLOPE_failed;
   for (int idx : *pset) {
     // Get the coherence values
     double coher_old = pCoherence_old[idx];

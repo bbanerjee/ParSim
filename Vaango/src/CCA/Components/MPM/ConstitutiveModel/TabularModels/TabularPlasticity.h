@@ -29,7 +29,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Tabular.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

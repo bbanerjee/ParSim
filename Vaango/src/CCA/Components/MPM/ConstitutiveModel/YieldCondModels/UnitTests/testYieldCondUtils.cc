@@ -1,4 +1,4 @@
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondUtils.h>
 
 #include <Core/Geometry/Point.h>
 

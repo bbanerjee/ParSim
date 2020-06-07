@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,47 +24,59 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __TABULAR_YIELD_CONDITION_MODEL_H__
-#define __TABULAR_YIELD_CONDITION_MODEL_H__
+#ifndef __CAMCLAY_YIELD_MODEL_H__
+#define __CAMCLAY_YIELD_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Tabular.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Utilities/WeibParameters.h>
-
-#include <Core/Grid/Variables/VarLabel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
-
-#include <vector>
 
 namespace Vaango {
 
-  using Polyline = std::vector<Uintah::Point>;
-
 /*!
-  \class  YieldCond_Tabular
-  \brief  The Tabular yield condition
+ \class  YieldCond_CamClay
+ \brief  The CAM-Clay yield condition
+
+ The yield condition is given by
+   Phi(p,q) = (q/M)^2 + p(p-p_c) <= 0
+ where
+   p = I_1/3 = 1/3 tr(sigma)
+   q = sqrt(3 J2) = sqrt(3/2 s:s)
+   sigma = Cauchy stress
+   s = deviatoric stress = sigma - p I
+   M = material constant = slope of critical state line
+   p_c = consolidation pressure
+         defined by the rate equation
+
+         1/p_c dp_c/dt = 1/(lambdatilde - kappatilde) depsp_v/dt
+
+         where lambdatilde = material constant
+               kappatilde = material constant
+               epsp_v = volumetric plastic strain
+
+   p_c is computed using the Borja plasticity model and is
+       treated as an internal variable.
 */
 
-class YieldCond_Tabular : public YieldCondition
+class YieldCond_CamClay : public YieldCondition
 {
-friend std::ostream& operator<<(std::ostream& out, const YieldCond_Tabular& yc);
-public:
-  // Constants
-  static const double sqrt_two;
-  static const double sqrt_three;
-  static const double one_sqrt_three;
-  static const double large_number;
-  static const Uintah::Matrix3 One;
+
+private:
+  double d_M; // slope of critical state line
+
+  // Prevent copying of this class
+  // copy constructor
+  // YieldCond_CamClay(const YieldCond_CamClay &);
+  YieldCond_CamClay& operator=(const YieldCond_CamClay&);
 
 public:
-  YieldCond_Tabular() = delete;
-  YieldCond_Tabular(const YieldCond_Tabular&) = delete;
-  ~YieldCond_Tabular() = default;
-  YieldCond_Tabular& operator=(const YieldCond_Tabular&) = delete;
+  //! Constructor
+  /*! Creates a YieldCond_CamClay function object */
+  YieldCond_CamClay(Uintah::ProblemSpecP& ps, InternalVariableModel* intvar);
+  YieldCond_CamClay(const YieldCond_CamClay* cm);
 
-  YieldCond_Tabular(Uintah::ProblemSpecP& ps);
-  YieldCond_Tabular(const YieldCond_Tabular* yc);
+  //! Destructor
+  ~YieldCond_CamClay() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -72,9 +84,7 @@ public:
   std::map<std::string, double> getParameters() const override
   {
     std::map<std::string, double> params;
-    params["I1_min"] = -d_I1bar_max;
-    params["I1_max"] = -d_I1bar_min;
-    params["sqrtJ2_max"] = d_sqrtJ2_max;
+    params["M"] = d_M;
     return params;
   }
 
@@ -145,51 +155,18 @@ public:
     const ShearModulusModel* shear,
     const InternalVariableModel* intvar) override;
 
-  /**
-   * Function: getInternalPoint
-   *
-   * Purpose: Get a point that is inside the yield surface
-   *
-   * Inputs:
-   *  state = state at the current time
-   *
-   * Returns:
-   *   I1 = value of tr(stress) at a point inside the yield surface
-   */
   double getInternalPoint(const ModelStateBase* state_old,
-                          const ModelStateBase* state_trial) override
+                          const ModelStateBase* state_new) override
   {
     return 0.0;
   }
-
-  /**
-   * Function: getClosestPoint
-   *
-   * Purpose: Get the point on the yield surface that is closest to a given
-   * point (2D)
-   *
-   * Inputs:
-   *  state = current state
-   *  px = x-coordinate of point
-   *  py = y-coordinate of point
-   *
-   * Outputs:
-   *  cpx = x-coordinate of closest point on yield surface
-   *  cpy = y-coordinate of closest point
-   *
-   * Returns:
-   *   true - if the closest point can be found
-   *   false - otherwise
-   */
-  bool getClosestPoint(const ModelStateBase* state, const double& px,
-                       const double& py, double& cpx, double& cpy) override;
 
   //================================================================================
   // Other options below.
   //================================================================================
 
   // Evaluate the yield function.
-  double evalYieldCondition(const double p, const double q, const double dummy0,
+  double evalYieldCondition(const double p, const double q, const double p_c,
                             const double dummy1, double& dummy2) override;
 
   // Evaluate yield condition (s = deviatoric stress = sigDev
@@ -204,8 +181,8 @@ public:
     with respect to \f$\sigma_{ij}\f$.
   */
   /////////////////////////////////////////////////////////////////////////
-  void evalDerivOfYieldFunction(const Uintah::Matrix3& stress,
-                                const double dummy1, const double dummy2,
+  void evalDerivOfYieldFunction(const Uintah::Matrix3& stress, const double p_c,
+                                const double dummy,
                                 Uintah::Matrix3& derivative) override;
 
   /////////////////////////////////////////////////////////////////////////
@@ -226,8 +203,8 @@ public:
                       Uintah::Matrix3& df_dsigma) override;
 
   /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
-    where \f$s\f$ is deviatoric part of Cauchy stress and
-    \f$\beta\f$ is the backstress */
+      where \f$s\f$ is deviatoric part of Cauchy stress and
+      \f$\beta\f$ is the backstress */
   void eval_df_dxi(const Uintah::Matrix3& xi, const ModelStateBase* state,
                    Uintah::Matrix3& df_xi) override;
 
@@ -292,61 +269,8 @@ public:
   void computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
                              const Uintah::Matrix3& f_sigma, double f_q1,
                              double h_q1, Uintah::TangentModulusTensor& Cep);
-
-private:
-  /**
-   *  These are the parameters that are read from the input file
-   */
-  struct YieldFunctionParameters
-  {
-    TabularData table;
-    YieldFunctionParameters() = default;
-    YieldFunctionParameters(Uintah::ProblemSpecP& ps)
-      : table(ps)
-    {
-      table.setup();
-    }
-    YieldFunctionParameters(const YieldFunctionParameters& yf)
-    {
-      table = yf.table;
-    }
-    YieldFunctionParameters& operator=(const YieldFunctionParameters& yf)
-    {
-      if (this != &yf) {
-        table = yf.table;
-      }
-      return *this;
-    }
-  };
-
-  YieldFunctionParameters d_yield;
-  double d_I1bar_min;
-  double d_I1bar_max;
-  double d_sqrtJ2_max;
-  Polyline  d_polyline;
-  std::vector<Uintah::Vector> d_normals;
-
-  void checkInputParameters();
-  void setYieldConditionRange();
-  void saveAsPolyline();
-  void computeNormals();
-
-  /* Find the closest point */
-  Uintah::Point getClosestPoint(const double& p_bar, const double& sqrtJ2);
-  Uintah::Point getClosestPoint(const Polyline& polyline,
-                                const double& p_bar, const double& sqrtJ2);
-  Uintah::Point getClosestPointTable(const ModelState_Tabular* state,
-                                     const Uintah::Point& z_r_pt);
-  Uintah::Point getClosestPointSpline(const ModelState_Tabular* state,
-                                      const Uintah::Point& z_r_pt);
-  Uintah::Point getClosestPointSplineNewton(const ModelState_Tabular* state, 
-                                            const Uintah::Point& z_r_pt);
-
-  /* Convert yield function data to z_rprime coordinates */
-  void convertToZRprime(const double& sqrtKG, Polyline& z_r_points) const;
-
 };
 
 } // End namespace Uintah
 
-#endif // __TABULAR_YIELD_CONDITION_MODEL_H__
+#endif // __CAMCLAY_YIELD_MODEL_H__

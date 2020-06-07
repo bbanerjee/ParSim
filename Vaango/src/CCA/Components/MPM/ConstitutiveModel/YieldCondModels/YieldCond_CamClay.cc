@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_CamClay.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_CamClay.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 

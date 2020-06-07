@@ -25,7 +25,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <Core/Exceptions/InternalError.h>
 
 using namespace Uintah;

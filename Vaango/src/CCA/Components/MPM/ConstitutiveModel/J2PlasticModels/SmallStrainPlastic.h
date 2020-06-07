@@ -33,7 +33,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DamageModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/FlowModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MeltingTempModel.h>

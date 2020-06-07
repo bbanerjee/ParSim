@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Arenisca3.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_Arenisca3.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>

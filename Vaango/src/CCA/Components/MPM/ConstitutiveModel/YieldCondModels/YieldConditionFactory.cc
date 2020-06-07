@@ -25,15 +25,15 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_ArenaMixture.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Arenisca3.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Gurson.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Tabular.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_TabularCap.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_vonMises.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_ArenaMixture.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_Arenisca3.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_CamClay.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_Gurson.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_vonMises.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>

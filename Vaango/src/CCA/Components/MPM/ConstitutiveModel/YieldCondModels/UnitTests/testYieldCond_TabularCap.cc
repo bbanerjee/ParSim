@@ -1,4 +1,4 @@
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
 
 #include <Core/Malloc/Allocator.h>

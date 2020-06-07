@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondUtils.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/TensorUtils.h>
 #include <Core/Geometry/Vector.h>
 #include <algorithm>

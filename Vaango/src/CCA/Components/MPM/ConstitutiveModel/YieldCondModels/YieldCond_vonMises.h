@@ -24,89 +24,54 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __BB_GURSON_YIELD_MODEL_H__
-#define __BB_GURSON_YIELD_MODEL_H__
+#ifndef __BB_VONMISES_YIELD_MODEL_H__
+#define __BB_VONMISES_YIELD_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-//////////////////////////////////////////////////////////////////////
-/*!
-  \class  YieldCond_Gurson
-  \brief  Gurson-Tvergaard-Needleman Yield Condition.
-  \author Biswajit Banerjee \n
-  C-SAFE and Department of Mechanical Engineering
-  University of Utah
-  \warning The stress tensor is the Cauchy stress and not the
-  Kirchhoff stress.
+/*! \class  YieldCond_vonMises
+ *  \brief  von Mises-Huber Yield Condition (J2 plasticity).
+ *  \author Biswajit Banerjee
+ *  \author C-SAFE and Department of Mechanical Engineering
+ *  \author University of Utah
+ *  \warning The stress tensor is the Cauchy stress and not the
+ *           Kirchhoff stress.
 
-  References:
-
-  1) Bernauer, G. and Brocks, W., 2002, Fatigue Fract. Engg. Mater. Struct.,
-  25, 363-384.
-  2) Ramaswamy, S. and Aravas, N., 1998, Comput. Methods Appl. Mech. Engrg.,
-  163, 33-53.
-
-  The yield condition is given by
-  \f[
-  \Phi(\sigma,k,T) =
-  \frac{\sigma_{eq}^2}{\sigma_f^2} +
-  2 q_1 f_* \cosh \left(q_2 \frac{Tr(\sigma)}{2\sigma_f}\right) -
-  (1+q_3 f_*^2) = 0
-  \f]
-  where \f$\Phi(\sigma,k,T)\f$ is the yield condition,
-  \f$\sigma\f$ is the Cauchy stress,
-  \f$k\f$ is a set of internal variable that evolve with time,
-  \f$T\f$ is the temperature,
-  \f$\sigma_{eq}\f$ is the von Mises equivalent stress given by
-  \f$ \sigma_{eq} = \sqrt{\frac{3}{2}\sigma^{d}:\sigma^{d}}\f$ where
-  \f$\sigma^{d}\f$ is the deviatoric part of the Cauchy stress,
-  \f$\sigma_{f}\f$ is the flow stress,
-  \f$q_1,q_2,q_3\f$ are material constants, and
-  \f$f_*\f$ is the porosity (damage) function.
-
-  The damage function is given by
-  \f$ f_* = f \f$ for \f$ f \le f_c \f$,
-  \f$ f_* = f_c + k (f - f_c) \f$ for \f$ f > f_c \f$, where
-  \f$ k \f$ is constant, and \f$ f \f$ is the porosity (void volume
-  fraction).
+ The yield condition is given by
+ \f[
+ \Phi(\sigma,k,T) = \sigma_{eq} - \sigma_{f} = 0
+ \f]
+ where \f$\Phi(\sigma,k,T)\f$ is the yield condition,
+ \f$\sigma\f$ is the Cauchy stress,
+ \f$k\f$ is a set of internal variable that evolve with time,
+ \f$T\f$ is the temperature,
+ \f$\sigma_{eq}\f$ is the von Mises equivalent stress given by
+ \f$ \sigma_{eq} = \sqrt{\frac{3}{2}\sigma^{d}:\sigma^{d}},\f$
+ \f$\sigma^{d}\f$ is the deviatoric part of the Cauchy stress, and
+ \f$\sigma^{f}\f$ is the flow stress.
 */
-//////////////////////////////////////////////////////////////////////
 
-class YieldCond_Gurson : public YieldCondition
+class YieldCond_vonMises : public YieldCondition
 {
 
-public:
-  /*! \struct CMData
-    \brief Constants needed for GTN model */
-  struct CMData
-  {
-    double q1;  /*< Constant q_1 */
-    double q2;  /*< Constant q_2 */
-    double q3;  /*< Constant q_3 */
-    double k;   /*< Constant k */
-    double f_c; /*< Critical void volume fraction */
-  };
-
 private:
-  CMData d_CM;
-
   // Prevent copying of this class
   // copy constructor
-  // YieldCond_Gurson(const YieldCond_Gurson &);
-  YieldCond_Gurson& operator=(const YieldCond_Gurson&);
+  // YieldCond_vonMises(const YieldCond_vonMises &);
+  YieldCond_vonMises& operator=(const YieldCond_vonMises&);
 
 public:
-  /*! Constructor
-    Creates a Gurson Yield Function object */
-  YieldCond_Gurson(Uintah::ProblemSpecP& ps);
-  YieldCond_Gurson(const YieldCond_Gurson* cm);
+  //! Constructor
+  /*! Creates a YieldCond_vonMises function object */
+  YieldCond_vonMises(Uintah::ProblemSpecP& ps);
+  YieldCond_vonMises(const YieldCond_vonMises* cm);
 
   //! Destructor
-  ~YieldCond_Gurson() override;
+  ~YieldCond_vonMises() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -114,11 +79,7 @@ public:
   std::map<std::string, double> getParameters() const override
   {
     std::map<std::string, double> params;
-    params["q1"] = d_CM.q1;
-    params["q2"] = d_CM.q2;
-    params["q3"] = d_CM.q3;
-    params["k"] = d_CM.k;
-    params["f_c"] = d_CM.f_c;
+    params["None"] = 0.0;
     return params;
   }
 
@@ -156,73 +117,6 @@ public:
                                    const double porosity,
                                    Uintah::Matrix3& derivative) override;
 
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the derivative of the yield function \f$ \Phi \f$
-    with respect to a scalar variable.
-
-    \f[
-    \Phi := \sigma^2_{eq} -
-    (A \cosh(\frac{B}{\sigma_Y(v_i)}) - C) \sigma_Y^2(v_i)
-    \f]
-    Therefore,
-    \f[
-    \frac{d\Phi}{dv_i} := -A \sinh(\frac{B}{\sigma_Y}) B
-    \frac{d\sigma_Y}{dv_i} +
-    2 (A \cosh(\frac{B}{\sigma_Y}) - C) \sigma_Y
-    \frac{d\sigma_Y}{dv_i}
-    \f]
-
-    \return derivative
-  */
-  /////////////////////////////////////////////////////////////////////////
-  double evalDerivativeWRTPlasticityScalar(double trSig, double porosity,
-                                           double sigY, double dsigYdV);
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the derivative of the yield function \f$ \Phi \f$
-    with respect to the porosity
-
-    \f[
-    \frac{d\Phi}{df} := \left[ 2 q_1
-    cosh\left(\frac{q_2 Tr(\sigma)}{2 \sigma_Y}\right)
-    - 2 q_3 f^* \right] \sigma_Y^2
-    \f]
-
-    \return derivative
-  */
-  /////////////////////////////////////////////////////////////////////////
-  double evalDerivativeWRTPorosity(double trSig, double porosity, double sigY);
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the factor \f$h_1\f$ for porosity
-
-    \f[
-    h_1 = (1-f) Tr(\sigma) + A \frac{\sigma : f_{\sigma}}{(1-f) \sigma_Y}
-    \f]
-
-    \return factor
-  */
-  /////////////////////////////////////////////////////////////////////////
-  double computePorosityFactor_h1(double sigma_f_sigma, double tr_f_sigma,
-                                  double porosity, double sigma_Y, double A);
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the factor \f$h_2\f$ for plastic strain
-
-    \f[
-    h_2 = \frac{\sigma : f_{\sigma}}{(1-f) \sigma_Y}
-    \f]
-
-    \return factor
-  */
-  /////////////////////////////////////////////////////////////////////////
-  double computePlasticStrainFactor_h2(double sigma_f_sigma, double porosity,
-                                       double sigma_Y);
-
   /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
   void eval_df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state,
                       Uintah::Matrix3& df_dsigma) override;
@@ -256,6 +150,30 @@ public:
 
   /////////////////////////////////////////////////////////////////////////
   /*!
+    \brief Compute the elastic-plastic tangent modulus.
+  */
+  /////////////////////////////////////////////////////////////////////////
+  void computeElasPlasTangentModulus(
+    const Uintah::TangentModulusTensor& Ce, const Uintah::Matrix3& sigma,
+    double sigY, double dsigYdep, double porosity, double voidNuclFac,
+    Uintah::TangentModulusTensor& Cep) override;
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
+    \brief Evaluate the factor \f$h_1\f$ for plastic strain
+
+    \f[
+    h_1 = \frac{\sigma : f_{\sigma}}{\sigma_Y}
+    \f]
+
+    \return factor
+  */
+  /////////////////////////////////////////////////////////////////////////
+  inline double computePlasticStrainFactor(double sigma_f_sigma,
+                                           double sigma_Y);
+
+  /////////////////////////////////////////////////////////////////////////
+  /*!
     \brief Compute the continuum elasto-plastic tangent modulus
     assuming associated flow rule.
 
@@ -269,24 +187,13 @@ public:
   /////////////////////////////////////////////////////////////////////////
   void computeTangentModulus(const Uintah::TangentModulusTensor& Ce,
                              const Uintah::Matrix3& f_sigma, double f_q1,
-                             double f_q2, double h_q1, double h_q2,
-                             Uintah::TangentModulusTensor& Cep);
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Compute the elastic-plastic tangent modulus.
-  */
-  /////////////////////////////////////////////////////////////////////////
-  void computeElasPlasTangentModulus(
-    const Uintah::TangentModulusTensor& Ce, const Uintah::Matrix3& sigma,
-    double sigY, double dsigYdV, double porosity, double voidNuclFac,
-    Uintah::TangentModulusTensor& Cep) override;
+                             double h_q1, Uintah::TangentModulusTensor& Cep);
 
   //--------------------------------------------------------------
   // Compute value of yield function
   //--------------------------------------------------------------
   std::pair<double, Util::YieldStatus>
-    evalYieldCondition(const ModelStateBase* state) override
+  evalYieldCondition(const ModelStateBase* state) override
   {
     return std::make_pair(0.0, Util::YieldStatus::IS_ELASTIC);
   };
@@ -388,4 +295,4 @@ public:
 
 } // End namespace Uintah
 
-#endif // __BB_GURSON_YIELD_MODEL_H__
+#endif // __BB_VONMISES_YIELD_MODEL_H__

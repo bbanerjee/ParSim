@@ -22,8 +22,8 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_TabularCap.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondUtils.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>

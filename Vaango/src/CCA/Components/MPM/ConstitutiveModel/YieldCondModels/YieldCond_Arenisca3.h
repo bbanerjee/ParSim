@@ -28,7 +28,7 @@
 #define __ARENISC3_YIELD_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arenisca3.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {

@@ -26,8 +26,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/ArenaMixture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_ArenaMixture.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_ArenaMixture.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_ArenaMixture.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 
 // Namespace Uintah::
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>

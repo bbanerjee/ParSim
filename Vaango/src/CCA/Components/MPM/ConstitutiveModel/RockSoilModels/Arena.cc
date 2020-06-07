@@ -25,7 +25,7 @@
 // Namespace Vaango::
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 
 // Namespace Uintah::
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
