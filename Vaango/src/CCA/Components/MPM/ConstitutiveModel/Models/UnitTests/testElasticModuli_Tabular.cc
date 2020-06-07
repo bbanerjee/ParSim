@@ -129,8 +129,8 @@ TEST(ElasticModuliTabularTest, constructorTest)
     EXPECT_NEAR(moduli.bulkModulus, 10700, 1.0);
     EXPECT_NEAR(moduli.shearModulus, 8025, 1.0);
 
-    //std::cout << "K,G = " << moduli.bulkModulus << "," 
-    //            << moduli.shearModulus << std::endl;
+    std::cout << "K,G = " << moduli.bulkModulus << "," 
+                << moduli.shearModulus << std::endl;
     auto moduli_derivs = model.getElasticModuliAndDerivatives(&state);
     auto KG = moduli_derivs.first;
     auto dKdG = moduli_derivs.second;

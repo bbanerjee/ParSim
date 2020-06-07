@@ -70,8 +70,6 @@ SET(MPM_ConstitutiveModel_SRCS
   ViscoElasticModels/ViscoScramImplicit.cc         
   ViscoElasticModels/ViscoTransIsoHyper.cc         
   ViscoElasticModels/ViscoTransIsoHyperImplicit.cc 
-  Utilities/TensorUtils.cc
-  Utilities/WeibParameters.cc
   ManufacturedSolutions/CNH_MMS.cc                    
   ManufacturedSolutions/HypoElastic_MMS.cc
 )
@@ -97,6 +95,7 @@ add_subdirectory(YieldCondModels)
 add_subdirectory(Models)
 add_subdirectory(J2PlasticSubmodels)
 #add_subdirectory(ModelsUnderDevelopment)
+add_subdirectory(Utilities)
 
 SET(LIBS
   Vaango_CCA_Ports

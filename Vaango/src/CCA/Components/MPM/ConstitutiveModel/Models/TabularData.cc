@@ -21,7 +21,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TableUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/TableUtils.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>

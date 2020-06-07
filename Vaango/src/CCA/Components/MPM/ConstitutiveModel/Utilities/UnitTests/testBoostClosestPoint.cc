@@ -8,6 +8,8 @@
 #include <boost/foreach.hpp>
 #include <boost/numeric/conversion/bounds.hpp>
 
+#include <gtest/gtest.h>
+
 typedef boost::geometry::model::d2::point_xy<double> point_type;
 typedef boost::geometry::model::polygon<point_type> polygon_type;
 
@@ -91,25 +93,25 @@ getYieldSurfacePoints(double capX, double zeta)
   while (z_iter != z_vec.end() || r_iter != rprime_vec.end()) {
     double z = *z_iter;
     double r = *r_iter;
-    std::cout << "(" << z << "," << r << ")";
+    //std::cout << "(" << z << "," << r << ")";
     polyline.push_back(point_type(z, r));
     ++z_iter;
     ++r_iter;
   }
-  std::cout << std::endl;
+  //std::cout << std::endl;
 
   auto rev_z_iter = z_vec.rbegin();
   auto rev_r_iter = rprime_vec.rbegin();
   while (rev_z_iter != z_vec.rend() || rev_r_iter != rprime_vec.rend()) {
     double z = *rev_z_iter;
     double r = *rev_r_iter;
-    std::cout << "(" << z << "," << -r << ")";
+    //std::cout << "(" << z << "," << -r << ")";
     polyline.push_back(point_type(z, -r));
     ++rev_z_iter;
     ++rev_r_iter;
   }
   polyline.push_back(point_type(*(z_vec.begin()), *(rprime_vec.begin())));
-  std::cout << std::endl;
+  //std::cout << std::endl;
 
   return polyline;
 }
@@ -151,8 +153,8 @@ findClosestPoint(const point_type& p, const std::vector<point_type>& poly)
     double pa_dot_ab = xpa * xab + ypa * yab;
     double tt = pa_dot_ab / abSq;
 
-    std::cout << " tt = " << tt << " xp = " << xstart + tt * xab
-              << " yp = " << ystart + tt * yab << std::endl;
+    //std::cout << " tt = " << tt << " xp = " << xstart + tt * xab
+    //          << " yp = " << ystart + tt * yab << std::endl;
 
     // Find projction point
     if (!(tt < 0.0 || tt > 1.0)) {
@@ -189,13 +191,12 @@ findClosestPoint(const point_type& p, const std::vector<point_type>& poly)
     }
   }
 
-  std::cout << "Closest: " << boost::geometry::dsv(min_p) << std::endl
-            << "At: " << boost::geometry::distance(p, min_p) << std::endl;
+  //std::cout << "Closest: " << boost::geometry::dsv(min_p) << std::endl
+  //          << "At: " << boost::geometry::distance(p, min_p) << std::endl;
   return min_p;
 }
 
-int
-main()
+TEST(BoostClosestPointTest, testFindClosest)
 {
 
   point_type p(-728.967, 0.0);
@@ -206,19 +207,22 @@ main()
 
   polygon_type yield_surface;
   boost::geometry::assign_points(yield_surface, poly_points);
-  std::cout << "Polygon = " << boost::geometry::dsv(yield_surface) << std::endl;
+  //std::cout << "Polygon = " << boost::geometry::dsv(yield_surface) << std::endl;
 
   double d = boost::geometry::distance(p, yield_surface);
-  std::cout << "Closest distance: " << d << std::endl;
+  //std::cout << "Closest distance: " << d << std::endl;
+  ASSERT_NEAR(d, 151.623, 1.0e-3);
 
   point_type xp = findClosestPoint(p, poly_points);
-  std::cout << " x = " << boost::geometry::get<0>(xp)
-            << " y = " << boost::geometry::get<1>(xp) << std::endl;
+  //std::cout << " x = " << boost::geometry::get<0>(xp)
+  //          << " y = " << boost::geometry::get<1>(xp) << std::endl;
+  ASSERT_NEAR(boost::geometry::get<0>(xp), -577.344, 1.0e-3);
 
   point_type p1(-242.201, 1371.81);
   point_type xp1 = findClosestPoint(p1, poly_points);
-  std::cout << " x = " << boost::geometry::get<0>(xp1)
-            << " y = " << boost::geometry::get<1>(xp1) << std::endl;
+  //std::cout << " x = " << boost::geometry::get<0>(xp1)
+  //          << " y = " << boost::geometry::get<1>(xp1) << std::endl;
+  ASSERT_NEAR(boost::geometry::get<1>(xp1), 411.643, 1.0e-3);
 
   capX = -1000.0;
   zeta = -28985.9;
@@ -226,8 +230,7 @@ main()
 
   point_type p2(-6290.1, 658.137);
   point_type xp2 = findClosestPoint(p2, poly_points1);
-  std::cout << " x = " << boost::geometry::get<0>(xp2)
-            << " y = " << boost::geometry::get<1>(xp2) << std::endl;
-
-  return 0;
+  //std::cout << " x = " << boost::geometry::get<0>(xp2)
+  //          << " y = " << boost::geometry::get<1>(xp2) << std::endl;
+  ASSERT_NEAR(boost::geometry::get<1>(xp2), 0.00320835, 1.0e-6);
 }

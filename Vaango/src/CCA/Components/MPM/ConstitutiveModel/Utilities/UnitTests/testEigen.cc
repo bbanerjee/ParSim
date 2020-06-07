@@ -70,6 +70,7 @@ TEST(EigenTest, constructors)
 
   double denominator = numerator * df_dsigma;
   //std::cout << "denominator = \n" << denominator << "\n";
+  ASSERT_NEAR(denominator, 22466, 1.0);
 
   Vector6 dEps;
   dEps  << 1, 2, 3, 4, 5, 6;
@@ -77,13 +78,17 @@ TEST(EigenTest, constructors)
 
   double numerator_new = df_dsigma_T * dEps;
   //std::cout << "numerator_new = \n" << numerator_new << "\n";
+  ASSERT_NEAR(numerator_new, 53660, 1.0);
 
   double numerator_other = numerator * dEps;
   //std::cout << "numerator_other = \n" << numerator_other << "\n";
+  ASSERT_NEAR(numerator_new, numerator_other, 1.0);
 
   auto num = df_dot_D * dEps;
   auto den = df_dot_D * df_dsigma;
   //std::cout << "num = " << num << " den = " << den << "\n";
+  ASSERT_NEAR(num, numerator_new, 1.0);
+  ASSERT_NEAR(den, denominator, 1.0);
 
   
   Vector6 stress;
@@ -148,7 +153,7 @@ TEST(EigenTest, constructors)
     }
   }
 
-  Vector3 one = Vector3::Ones();
+  //Vector3 one = Vector3::Ones();
   //std::cout << one << "\n";
 
   Vector3 a, b;

@@ -30,16 +30,8 @@ message(STATUS "HDF5 library = ${HDF5_LIBRARY}")
 #------------------------
 # Copy input files
 #------------------------
-configure_file(table_elastic.json table_elastic.json COPYONLY)
 configure_file(mlp_regression_keras_total_scaled.json mlp_regression_keras_total_scaled.json COPYONLY)
 configure_file(mlp_regression_keras_total_scaled.h5 mlp_regression_keras_total_scaled.h5 COPYONLY)
-configure_file(DrySand_HydrostatData.json DrySand_HydrostatData.json COPYONLY)
-configure_file(DrySand_ElasticData.json DrySand_ElasticData.json COPYONLY)
-
-#------------------------
-# CTest tests
-#------------------------
-ADD_EXECUTABLE(testElasticModuli_Arena testElasticModuli_Arena.cc)
 
 #------------------------
 # Vaango libs
@@ -68,8 +60,6 @@ SET(VAANGO_LIBS
         ${HDF5_LIBRARY}
 )
 
-TARGET_LINK_LIBRARIES(testElasticModuli_Arena ${VAANGO_LIBS})
-
 #------------------------
 # Google tests
 #------------------------
@@ -77,39 +67,64 @@ set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/incl
 set(GTEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
-add_executable(testTabularData testTabularData.cc)
-target_link_libraries(testTabularData
+add_executable(testHDF5Reader testHDF5Reader.cc)
+target_link_libraries(testHDF5Reader
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testTabularData)
+set(UNIT_TEST testHDF5Reader)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
 
-add_executable(testElasticModuli_Tabular testElasticModuli_Tabular.cc)
-target_link_libraries(testElasticModuli_Tabular
+add_executable(testTensorUtils testTensorUtils.cc)
+target_link_libraries(testTensorUtils
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testElasticModuli_Tabular)
+set(UNIT_TEST testTensorUtils)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
 
-add_executable(testElasticModuli_NeuralNet testElasticModuli_NeuralNet.cc)
-target_link_libraries(testElasticModuli_NeuralNet
+add_executable(testEigen testEigen.cc)
+target_link_libraries(testEigen
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testElasticModuli_NeuralNet)
+set(UNIT_TEST testEigen)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
 
+add_executable(testBoostAutodiff testBoostAutodiff.cc)
+target_link_libraries(testBoostAutodiff
+  ${GTEST_LIB}
+  ${Boost_LIBRARIES}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testBoostAutodiff)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+add_executable(testBoostClosestPoint testBoostClosestPoint.cc)
+target_link_libraries(testBoostClosestPoint
+  ${GTEST_LIB}
+  ${Boost_LIBRARIES}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testBoostClosestPoint)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
