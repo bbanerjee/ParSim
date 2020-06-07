@@ -24,43 +24,42 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __BB_NP_SHEAR_MODEL_H__
-#define __BB_NP_SHEAR_MODEL_H__
+#ifndef __PTW_SHEAR_MODEL_H__
+#define __PTW_SHEAR_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
+#include "ShearModulusModel.h"
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-/*! \class ShearModulus_Nadal
- *  \brief The shear modulus model given by Nadal and LePoac
+/*! \class ShearModulus_PTW
+ *  \brief The shear modulus model used by Preston,Tonks,Wallace
+ *         the PTW plasticity model.
  *  \author Biswajit Banerjee,
  *  \author C-SAFE and Department of Mechanical Engineering,
  *  \author University of Utah.
  *
 */
-class ShearModulus_Nadal : public ShearModulusModel
+class ShearModulus_PTW : public ShearModulusModel
 {
 
 private:
   double d_mu0;                 // Material constant
-  double d_zeta;                // Material constant
-  double d_slope_mu_p_over_mu0; // Material constant
-  double d_C;                   // Material constant
-  double d_m;                   // atomic mass
+  double d_alpha;               // Material constant
+  double d_alphap;              // Material constant
+  double d_slope_mu_p_over_mu0; // Material constant (constant A in SCG model)
 
-  ShearModulus_Nadal& operator=(const ShearModulus_Nadal& smm);
+  ShearModulus_PTW& operator=(const ShearModulus_PTW& smm);
 
 public:
   /*! Construct a constant shear modulus model. */
-  ShearModulus_Nadal(Uintah::ProblemSpecP& ps, PressureModel* eos);
+  ShearModulus_PTW(Uintah::ProblemSpecP& ps);
 
   /*! Construct a copy of constant shear modulus model. */
-  ShearModulus_Nadal(const ShearModulus_Nadal* smm);
+  ShearModulus_PTW(const ShearModulus_PTW* smm);
 
   /*! Destructor of constant shear modulus model.   */
-  ~ShearModulus_Nadal() override;
+  ~ShearModulus_PTW() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -69,15 +68,17 @@ public:
   {
     std::map<std::string, double> params;
     params["mu0"] = d_mu0;
-    params["zeta"] = d_zeta;
-    params["slope_mu_p_over_mu0"] = d_slope_mu_p_over_mu0;
-    params["C"] = d_C;
-    params["m"] = d_m;
+    params["alpha"] = d_alpha;
+    params["alphap"] = d_alphap;
+    params["slopemupovermu0"] = d_slope_mu_p_over_mu0;
     return params;
   }
 
   /*! Compute the shear modulus */
-  double computeInitialShearModulus() override;
+  double computeInitialShearModulus() override
+  {
+    return d_mu0;
+  }
   double computeShearModulus(const ModelStateBase* state) override;
   double computeShearModulus(const ModelStateBase* state) const override;
 
@@ -85,7 +86,7 @@ public:
   double computeStrainEnergy(const ModelStateBase* state) override
   {
     return 0.0;
-  };
+  }
 
   /////////////////////////////////////////////////////////////////////////
   /*
@@ -125,6 +126,6 @@ private:
                           double density, double initialDensity,
                           double pressure) const;
 };
-} // End namespace Uintah
+} // End namespace Vaango
 
-#endif // __BB_NP_SHEAR_MODEL_H__
+#endif // __PTW_SHEAR_MODEL_H__

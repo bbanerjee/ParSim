@@ -34,7 +34,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/FlowModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MeltingTempModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/SpecificHeatModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheck.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldCondition.h>
@@ -173,7 +173,7 @@ protected:
   FlowModel* d_flow;
   DamageModel* d_damage;
   MPMEquationOfState* d_eos;
-  ShearModulusModel* d_shear;
+  Vaango::ShearModulusModel* d_shear;
   MeltingTempModel* d_melt;
   SpecificHeatModel* d_Cp;
   DevStressModel* d_devStress;

@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include "SCGShear.h"
+#include "ShearModulus_SCG.h"
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -32,11 +32,10 @@
 #include <iostream>
 #include <sstream>
 
-using namespace Uintah;
-using Vaango::ModelState_Default;
+using namespace Vaango;
 
 // Construct a shear modulus model.
-SCGShear::SCGShear(ProblemSpecP& ps)
+ShearModulus_SCG::ShearModulus_SCG(Uintah::ProblemSpecP& ps)
 {
   ps->require("mu_0", d_mu0);
   ps->require("A", d_A);
@@ -44,7 +43,7 @@ SCGShear::SCGShear(ProblemSpecP& ps)
 }
 
 // Construct a copy of a shear modulus model.
-SCGShear::SCGShear(const SCGShear* smm)
+ShearModulus_SCG::ShearModulus_SCG(const ShearModulus_SCG* smm)
 {
   d_mu0 = smm->d_mu0;
   d_A = smm->d_A;
@@ -52,12 +51,12 @@ SCGShear::SCGShear(const SCGShear* smm)
 }
 
 // Destructor of shear modulus model.
-SCGShear::~SCGShear() = default;
+ShearModulus_SCG::~ShearModulus_SCG() = default;
 
 void
-SCGShear::outputProblemSpec(ProblemSpecP& ps)
+ShearModulus_SCG::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
-  ProblemSpecP shear_ps = ps->appendChild("shear_modulus_model");
+  Uintah::ProblemSpecP shear_ps = ps->appendChild("shear_modulus_model");
   shear_ps->setAttribute("type", "scg_shear");
 
   shear_ps->appendElement("mu_0", d_mu0);
@@ -67,16 +66,33 @@ SCGShear::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the shear modulus
 double
-SCGShear::computeShearModulus(const ModelStateBase* state_in)
+ShearModulus_SCG::computeShearModulus(const ModelStateBase* state_in)
 {
   auto state = static_cast<const ModelState_Default*>(state_in);
-  double eta = state->density / state->initialDensity;
+  return evalShearModulus(state->temperature, state->density,
+                          state->initialDensity, state->pressure);
+}
+
+double
+ShearModulus_SCG::computeShearModulus(const ModelStateBase* state_in) const
+{
+  auto state = static_cast<const ModelState_Default*>(state_in);
+  return evalShearModulus(state->temperature, state->density,
+                          state->initialDensity, state->pressure);
+}
+
+double
+ShearModulus_SCG::evalShearModulus(double temperature, 
+                                   double density, double initialDensity,
+                                   double pressure) const
+{
+  double eta = density / initialDensity;
   ASSERT(eta > 0.0);
   eta = pow(eta, 1.0 / 3.0);
 
   // Pressure is +ve in this calcualtion
-  double P = -state->pressure;
+  double P = -pressure;
   double mu =
-    d_mu0 * (1.0 + d_A * P / eta - d_B * (state->temperature - 300.0));
+    d_mu0 * (1.0 + d_A * P / eta - d_B * (temperature - 300.0));
   return mu;
 }

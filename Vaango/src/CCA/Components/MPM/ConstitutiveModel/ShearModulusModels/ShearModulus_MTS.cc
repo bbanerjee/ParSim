@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include "MTSShear.h"
+#include "ShearModulus_MTS.h"
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
@@ -32,11 +32,10 @@
 #include <iostream>
 #include <sstream>
 
-using namespace Uintah;
-using Vaango::ModelState_Default;
+using namespace Vaango;
 
 // Construct a shear modulus model.
-MTSShear::MTSShear(ProblemSpecP& ps)
+ShearModulus_MTS::ShearModulus_MTS(Uintah::ProblemSpecP& ps)
 {
   ps->require("mu_0", d_mu0);
   ps->require("D", d_D);
@@ -44,7 +43,7 @@ MTSShear::MTSShear(ProblemSpecP& ps)
 }
 
 // Construct a copy of a shear modulus model.
-MTSShear::MTSShear(const MTSShear* smm)
+ShearModulus_MTS::ShearModulus_MTS(const ShearModulus_MTS* smm)
 {
   d_mu0 = smm->d_mu0;
   d_D = smm->d_D;
@@ -52,12 +51,12 @@ MTSShear::MTSShear(const MTSShear* smm)
 }
 
 // Destructor of shear modulus model.
-MTSShear::~MTSShear() = default;
+ShearModulus_MTS::~ShearModulus_MTS() = default;
 
 void
-MTSShear::outputProblemSpec(ProblemSpecP& ps)
+ShearModulus_MTS::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
-  ProblemSpecP shear_ps = ps->appendChild("shear_modulus_model");
+  Uintah::ProblemSpecP shear_ps = ps->appendChild("shear_modulus_model");
   shear_ps->setAttribute("type", "mts_shear");
 
   shear_ps->appendElement("mu_0", d_mu0);
@@ -67,11 +66,27 @@ MTSShear::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the shear modulus
 double
-MTSShear::computeShearModulus(const ModelStateBase* state_in)
+ShearModulus_MTS::computeShearModulus(const ModelStateBase* state_in)
 {
   auto state = static_cast<const ModelState_Default*>(state_in);
   double T = state->temperature;
   ASSERT(T > 0.0);
+  return evalShearModulus(T);
+}
+
+// Compute the shear modulus
+double
+ShearModulus_MTS::computeShearModulus(const ModelStateBase* state_in) const
+{
+  auto state = static_cast<const ModelState_Default*>(state_in);
+  double T = state->temperature;
+  ASSERT(T > 0.0);
+  return evalShearModulus(T);
+}
+
+double
+ShearModulus_MTS::evalShearModulus(double T) const
+{
   double expT0_T = exp(d_T0 / T) - 1.0;
   ASSERT(expT0_T != 0);
   double mu = d_mu0 - d_D / expT0_T;
@@ -80,7 +95,7 @@ MTSShear::computeShearModulus(const ModelStateBase* state_in)
     desc << "**Compute MTS Shear Modulus ERROR** Shear modulus <= 0." << "\n";
     desc << "T = " << T << " mu0 = " << d_mu0 << " T0 = " << d_T0
          << " exp(To/T) = " << expT0_T << " D = " << d_D << "\n";
-    throw InvalidValue(desc.str(), __FILE__, __LINE__);
+    throw Uintah::InvalidValue(desc.str(), __FILE__, __LINE__);
   }
   return mu;
 }

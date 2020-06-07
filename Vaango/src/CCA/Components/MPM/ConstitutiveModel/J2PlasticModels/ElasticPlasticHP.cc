@@ -32,7 +32,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/FlowStressModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MPMEquationOfStateFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MeltingTempModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ShearModulusModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/SpecificHeatModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheckFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
@@ -166,7 +166,7 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
-  d_shear = ShearModulusModelFactory::create(ps);
+  d_shear = Vaango::ShearModulusModelFactory::create(ps);
   if (!d_shear) {
     ostringstream desc;
     desc << "ElasticPlasticHP::Error in shear modulus model factory" << "\n";
@@ -249,7 +249,7 @@ ElasticPlasticHP::ElasticPlasticHP(const ElasticPlasticHP* cm)
   d_damage = DamageModelFactory::createCopy(cm->d_damage);
   d_eos    = MPMEquationOfStateFactory::createCopy(cm->d_eos);
   d_eos->setBulkModulus(d_initialData.Bulk);
-  d_shear     = ShearModulusModelFactory::createCopy(cm->d_shear);
+  d_shear     = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
   d_melt      = MeltingTempModelFactory::createCopy(cm->d_melt);
   d_devStress = nullptr;
 

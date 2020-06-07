@@ -24,43 +24,41 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __BB_NP_SHEAR_MODEL_H__
-#define __BB_NP_SHEAR_MODEL_H__
+#ifndef __MTS_SHEAR_MODEL_H__
+#define __MTS_SHEAR_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
+#include "ShearModulusModel.h"
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-/*! \class ShearModulus_Nadal
- *  \brief The shear modulus model given by Nadal and LePoac
+/*! \class ShearModulus_MTS
+ *  \brief The shear modulus model used by Folansbee and Kocks in
+ *         the MTS plasticity model.
  *  \author Biswajit Banerjee,
  *  \author C-SAFE and Department of Mechanical Engineering,
  *  \author University of Utah.
  *
 */
-class ShearModulus_Nadal : public ShearModulusModel
+class ShearModulus_MTS : public ShearModulusModel
 {
 
 private:
-  double d_mu0;                 // Material constant
-  double d_zeta;                // Material constant
-  double d_slope_mu_p_over_mu0; // Material constant
-  double d_C;                   // Material constant
-  double d_m;                   // atomic mass
+  double d_mu0; // Material constant (also in MTS model)
+  double d_D;   // Material constant (also in MTS model)
+  double d_T0;  // Material constant (also in MTS model)
 
-  ShearModulus_Nadal& operator=(const ShearModulus_Nadal& smm);
+  ShearModulus_MTS& operator=(const ShearModulus_MTS& smm);
 
 public:
   /*! Construct a constant shear modulus model. */
-  ShearModulus_Nadal(Uintah::ProblemSpecP& ps, PressureModel* eos);
+  ShearModulus_MTS(Uintah::ProblemSpecP& ps);
 
   /*! Construct a copy of constant shear modulus model. */
-  ShearModulus_Nadal(const ShearModulus_Nadal* smm);
+  ShearModulus_MTS(const ShearModulus_MTS* smm);
 
   /*! Destructor of constant shear modulus model.   */
-  ~ShearModulus_Nadal() override;
+  ~ShearModulus_MTS() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -69,15 +67,16 @@ public:
   {
     std::map<std::string, double> params;
     params["mu0"] = d_mu0;
-    params["zeta"] = d_zeta;
-    params["slope_mu_p_over_mu0"] = d_slope_mu_p_over_mu0;
-    params["C"] = d_C;
-    params["m"] = d_m;
+    params["D"] = d_D;
+    params["T0"] = d_T0;
     return params;
   }
 
   /*! Compute the shear modulus */
-  double computeInitialShearModulus() override;
+  double computeInitialShearModulus() override
+  {
+    return d_mu0;
+  };
   double computeShearModulus(const ModelStateBase* state) override;
   double computeShearModulus(const ModelStateBase* state) const override;
 
@@ -121,10 +120,8 @@ public:
 
 private:
 
-  double evalShearModulus(double temperature, double meltingTemp,
-                          double density, double initialDensity,
-                          double pressure) const;
+  double evalShearModulus(double temperature) const;
 };
-} // End namespace Uintah
+} // End namespace Vaango
 
-#endif // __BB_NP_SHEAR_MODEL_H__
+#endif // __MTS_SHEAR_MODEL_H__

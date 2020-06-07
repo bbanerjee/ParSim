@@ -31,7 +31,10 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModelFactory.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Borja.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Constant.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_MTS.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Nadal.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_PTW.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_SCG.cc 
   PARENT_SCOPE
 )
 

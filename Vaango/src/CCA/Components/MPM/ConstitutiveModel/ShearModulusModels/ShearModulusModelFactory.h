@@ -47,6 +47,7 @@ class ShearModulusModelFactory
 
 public:
   //! Create a shear modulus model from the input file problem specification.
+  static ShearModulusModel* create(Uintah::ProblemSpecP& ps);
   static ShearModulusModel* create(Uintah::ProblemSpecP& ps,
                                    PressureModel* eos);
   static ShearModulusModel* createCopy(const ShearModulusModel* yc);

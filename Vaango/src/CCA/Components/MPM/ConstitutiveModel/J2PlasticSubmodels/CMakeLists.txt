@@ -54,13 +54,6 @@ SET(MPM_ConstitutiveModel_PlasticityModels_SRCS
   DruckerCheck.cc 
   NoneCheck.cc 
   DruckerBeckerCheck.cc 
-  ShearModulusModel.cc 
-  ShearModulusModelFactory.cc 
-  ConstantShear.cc 
-  MTSShear.cc 
-  NPShear.cc 
-  PTWShear.cc 
-  SCGShear.cc 
   SpecificHeatModel.cc 
   SpecificHeatModelFactory.cc 
   ConstantCp.cc 

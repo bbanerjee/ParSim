@@ -97,7 +97,27 @@ ShearModulus_Nadal::computeShearModulus(const ModelStateBase* state_input)
   }
   */
 
-  double That = state->temperature / state->meltingTemp;
+  return evalShearModulus(state->temperature, state->meltingTemp,
+                          state->density, state->initialDensity,
+                          state->pressure);
+}
+
+double
+ShearModulus_Nadal::computeShearModulus(const ModelStateBase* state_input) const
+{
+  const ModelState_Default* state =
+    static_cast<const ModelState_Default*>(state_input);
+  return evalShearModulus(state->temperature, state->meltingTemp,
+                          state->density, state->initialDensity,
+                          state->pressure);
+}
+
+double 
+ShearModulus_Nadal::evalShearModulus(double temperature, double meltingTemp,
+                                     double density, double initialDensity,
+                                     double pressure) const
+{
+  double That = temperature / meltingTemp;
   if (That <= 0)
     return d_mu0;
 
@@ -110,21 +130,21 @@ ShearModulus_Nadal::computeShearModulus(const ModelStateBase* state_input)
   if (!finite(J))
     return mu;
 
-  double eta = state->density / state->initialDensity;
+  double eta = density / initialDensity;
   ASSERT(eta > 0.0);
   eta = pow(eta, 1.0 / 3.0);
 
   // Pressure is +ve in this calculation
-  double P = -state->pressure;
+  double P = -pressure;
   double t1 = d_mu0 * (1.0 + d_slope_mu_p_over_mu0 * P / eta);
   double t2 = 1.0 - That;
   double k_amu = 1.3806503e4 / 1.6605402;
-  double t3 = state->density * k_amu * state->temperature / (d_C * d_m);
+  double t3 = density * k_amu * temperature / (d_C * d_m);
   mu = 1.0 / J * (t1 * t2 + t3);
 
   if (mu < 1.0e-8) {
-    std::cout << "mu = " << mu << " T = " << state->temperature
-         << " Tm = " << state->meltingTemp << " T/Tm = " << That << " J = " << J
+    std::cout << "mu = " << mu << " T = " << temperature
+         << " Tm = " << meltingTemp << " T/Tm = " << That << " J = " << J
          << " rho/rho_0 = " << eta << " p = " << P << " t1 = " << t1
          << " t2 = " << t2 << " t3 = " << t3 << "\n";
     mu = 1.0e-8;
