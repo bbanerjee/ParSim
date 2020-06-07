@@ -25,7 +25,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulus_Nadal.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_Nadal.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/ProblemSpec/ProblemSpec.h>

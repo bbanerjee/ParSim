@@ -30,7 +30,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVar_SoilModelBrannonKappa.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVar_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>

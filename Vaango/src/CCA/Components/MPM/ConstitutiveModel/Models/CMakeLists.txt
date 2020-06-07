@@ -56,11 +56,6 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Tabular.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_TabularCap.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_vonMises.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModel.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModelFactory.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Borja.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Constant.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Nadal.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/TableUtils.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/TabularData.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombState.cc 

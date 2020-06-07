@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,70 +24,47 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __BORJA_SHEAR_MODEL_H__
-#define __BORJA_SHEAR_MODEL_H__
+#ifndef __BB_CONSTANT_SHEAR_MODEL_H__
+#define __BB_CONSTANT_SHEAR_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-/*!
-  \class ShearModulus_Borja
-
-  \brief The Borja model for calculating shear stress
-
-  Reference:Borja, R.I. and Tamagnini, C.(1998) Cam-Clay plasticity Part III:
-  Extension of the infinitesimal model to include finite strains,
-  Computer Methods in Applied Mechanics and Engineering, 155 (1-2),
-  pp. 73-95.
-
-  The sheear stress magnitude is given by
-
-  q = 3 mu epse_s
-
-  where
-
-  mu = mu0 + alpha p0 exp[(epse_v - epse_v0)/kappatilde]
-  mu0 = constant
-  alpha = constant
-  p0 = constant
-  kappatilde = constant
-  epse_s = sqrt(2/3) ||epse||
-  epse_v = tr(epse)
-  epse_v0 = constant
-  epse = elastic strain tensor
+/*! \class ShearModulus_Constant
+ *  \brief The shear modulus does not vary with density and temperature
+ *  \author Biswajit Banerjee,
+ *  \author C-SAFE and Department of Mechanical Engineering,
+ *  \author University of Utah.
  *
 */
-class ShearModulus_Borja : public ShearModulusModel
+class ShearModulus_Constant : public ShearModulusModel
 {
 
 private:
-  double d_mu0;        // Reference shear modulus
-  double d_alpha;      // Coupling constant (shear-pressure)
-  double d_p0;         // Reference pressure
-  double d_kappatilde; // Reference compressibility
-  double d_epse_v0;    // Reference volume strain
+  double d_mu0; // Shear modulus
 
-  ShearModulus_Borja& operator=(const ShearModulus_Borja& smm);
+  /* Do not allow assignement */
+  ShearModulus_Constant& operator=(const ShearModulus_Constant& smm);
 
 public:
   /*! Construct a constant shear modulus model. */
-  ShearModulus_Borja(Uintah::ProblemSpecP& ps, PressureModel* eos);
+  ShearModulus_Constant(Uintah::ProblemSpecP& ps, PressureModel* eos);
 
   /*! Construct a copy of constant shear modulus model. */
-  ShearModulus_Borja(const ShearModulus_Borja* smm);
+  ShearModulus_Constant(const ShearModulus_Constant* smm);
 
   /*! Destructor of constant shear modulus model.   */
-  ~ShearModulus_Borja() override;
+  ~ShearModulus_Constant() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
   /*! Get parameters */
-  ParameterDict getParameters() const override
+  std::map<std::string, double> getParameters() const override
   {
-    ParameterDict params;
+    std::map<std::string, double> params;
     params["mu0"] = d_mu0;
     return params;
   }
@@ -98,7 +75,10 @@ public:
   double computeShearModulus(const ModelStateBase* state) const override;
 
   /*! Compute the shear strain energy */
-  double computeStrainEnergy(const ModelStateBase* state) override;
+  double computeStrainEnergy(const ModelStateBase* state) override
+  {
+    return 0.0;
+  };
 
   /////////////////////////////////////////////////////////////////////////
   /*
@@ -110,35 +90,28 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeQ(const ModelStateBase* state) const override;
+  double computeQ(const ModelStateBase* state) const override { return 0.0; };
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_s
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_s(const ModelStateBase* state) const override;
+  double computeDqDepse_s(const ModelStateBase* state) const override
+  {
+    return 0.0;
+  };
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_v
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_v(const ModelStateBase* state) const override;
-
-private:
-  //  Compute shear modulus (volume strain dependent)
-  double evalShearModulus(const double& epse_v) const;
-
-  //  Shear stress magnitude computation
-  double evalQ(const double& epse_v, const double& epse_s) const;
-
-  //  Shear stress volume strain derivative computation
-  double evalDqDepse_v(const double& epse_v, const double& epse_s) const;
-
-  //  Shear stress shear strain derivative computation
-  double evalDqDepse_s(const double& epse_v, const double& epse_s) const;
+  double computeDqDepse_v(const ModelStateBase* state) const override
+  {
+    return 0.0;
+  };
 };
 } // End namespace Uintah
 
-#endif // __BORJA_SHEAR_MODEL_H__
+#endif // __CONSTANT_SHEAR_MODEL_H__

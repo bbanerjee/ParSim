@@ -25,7 +25,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulus_Constant.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_Constant.h>
 #include <Core/Exceptions/InternalError.h>
 
 using namespace Uintah;

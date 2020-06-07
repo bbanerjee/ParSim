@@ -25,10 +25,10 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulus_Borja.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulus_Constant.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulus_Nadal.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_Borja.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_Constant.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_Nadal.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,40 +24,43 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __BB_CONSTANT_SHEAR_MODEL_H__
-#define __BB_CONSTANT_SHEAR_MODEL_H__
+#ifndef __BB_NP_SHEAR_MODEL_H__
+#define __BB_NP_SHEAR_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-/*! \class ShearModulus_Constant
- *  \brief The shear modulus does not vary with density and temperature
+/*! \class ShearModulus_Nadal
+ *  \brief The shear modulus model given by Nadal and LePoac
  *  \author Biswajit Banerjee,
  *  \author C-SAFE and Department of Mechanical Engineering,
  *  \author University of Utah.
  *
 */
-class ShearModulus_Constant : public ShearModulusModel
+class ShearModulus_Nadal : public ShearModulusModel
 {
 
 private:
-  double d_mu0; // Shear modulus
+  double d_mu0;                 // Material constant
+  double d_zeta;                // Material constant
+  double d_slope_mu_p_over_mu0; // Material constant
+  double d_C;                   // Material constant
+  double d_m;                   // atomic mass
 
-  /* Do not allow assignement */
-  ShearModulus_Constant& operator=(const ShearModulus_Constant& smm);
+  ShearModulus_Nadal& operator=(const ShearModulus_Nadal& smm);
 
 public:
   /*! Construct a constant shear modulus model. */
-  ShearModulus_Constant(Uintah::ProblemSpecP& ps, PressureModel* eos);
+  ShearModulus_Nadal(Uintah::ProblemSpecP& ps, PressureModel* eos);
 
   /*! Construct a copy of constant shear modulus model. */
-  ShearModulus_Constant(const ShearModulus_Constant* smm);
+  ShearModulus_Nadal(const ShearModulus_Nadal* smm);
 
   /*! Destructor of constant shear modulus model.   */
-  ~ShearModulus_Constant() override;
+  ~ShearModulus_Nadal() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -66,13 +69,20 @@ public:
   {
     std::map<std::string, double> params;
     params["mu0"] = d_mu0;
+    params["zeta"] = d_zeta;
+    params["slope_mu_p_over_mu0"] = d_slope_mu_p_over_mu0;
+    params["C"] = d_C;
+    params["m"] = d_m;
     return params;
   }
 
   /*! Compute the shear modulus */
   double computeInitialShearModulus() override;
   double computeShearModulus(const ModelStateBase* state) override;
-  double computeShearModulus(const ModelStateBase* state) const override;
+  double computeShearModulus(const ModelStateBase* state) const override
+  {
+    return d_mu0;
+  };
 
   /*! Compute the shear strain energy */
   double computeStrainEnergy(const ModelStateBase* state) override
@@ -90,7 +100,7 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeQ(const ModelStateBase* state) const override { return 0.0; };
+  double computeQ(const ModelStateBase* state) const override { return 0.0; }
 
   /////////////////////////////////////////////////////////////////////////
   /*
@@ -100,7 +110,7 @@ public:
   double computeDqDepse_s(const ModelStateBase* state) const override
   {
     return 0.0;
-  };
+  }
 
   /////////////////////////////////////////////////////////////////////////
   /*
@@ -110,8 +120,8 @@ public:
   double computeDqDepse_v(const ModelStateBase* state) const override
   {
     return 0.0;
-  };
+  }
 };
 } // End namespace Uintah
 
-#endif // __CONSTANT_SHEAR_MODEL_H__
+#endif // __BB_NP_SHEAR_MODEL_H__

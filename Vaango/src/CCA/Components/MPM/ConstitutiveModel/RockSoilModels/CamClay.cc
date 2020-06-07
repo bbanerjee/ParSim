@@ -28,7 +28,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldConditionFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Level.h>
