@@ -28,7 +28,7 @@
 #define __SOIL_MODEL_BRANNON_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>

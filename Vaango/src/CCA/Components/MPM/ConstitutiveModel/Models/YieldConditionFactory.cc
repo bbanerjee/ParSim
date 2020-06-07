@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_ArenaMixture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCond_Arenisca3.h>

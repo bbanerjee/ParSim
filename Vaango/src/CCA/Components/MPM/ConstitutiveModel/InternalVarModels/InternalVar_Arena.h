@@ -25,7 +25,7 @@
 #ifndef __ARENA_INT_VAR_MODEL_H__
 #define __ARENA_INT_VAR_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

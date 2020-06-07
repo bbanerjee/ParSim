@@ -28,7 +28,7 @@
 #define __BB_KINEMATIC_HARDENING_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 #include <CCA/Ports/DataWarehouse.h>

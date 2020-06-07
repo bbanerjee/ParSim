@@ -28,7 +28,7 @@
 #define __CAM_CLAY_PLASTIC_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/InternalVariableModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/PressureModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Models/YieldCondition.h>

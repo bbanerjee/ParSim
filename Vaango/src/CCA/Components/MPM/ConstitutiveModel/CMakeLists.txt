@@ -88,6 +88,7 @@ if (FORTRAN)
   add_subdirectory(fortran)
 endif(FORTRAN)
 
+add_subdirectory(InternalVarModels)
 add_subdirectory(KinHardeningModels)
 add_subdirectory(ModelState)
 add_subdirectory(Models)

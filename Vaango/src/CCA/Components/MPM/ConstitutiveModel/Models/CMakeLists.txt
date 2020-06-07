@@ -22,16 +22,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
-# CMakeLists.txt for Vaango/src/CCA/Components/MPM/ConstitutiveModel/Biswajit/Models
-
-#-----------------------------------------------------------------------------
-# For reading JSON input files
-#-----------------------------------------------------------------------------
-#set(JSON_INCLUDES ${Vaango_SOURCE_DIR}/submodules/json/src)
-#message(STATUS "JSON include dir = ${JSON_INCLUDES}")
-#include_directories(${JSON_INCLUDES})
-#set(CMAKE_VERBOSE_MAKEFILE 1)
-
 #-----------------------------------------------------------------------------
 # The models
 #-----------------------------------------------------------------------------
@@ -71,12 +61,6 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Borja.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Constant.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Nadal.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModel.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModelFactory.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_SoilModelBrannonKappa.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_BorjaPressure.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_Arena.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_TabularCap.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/TableUtils.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/TabularData.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombState.cc 
