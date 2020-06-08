@@ -57,7 +57,6 @@ add_subdirectory(YieldCondModels)
 add_subdirectory(ModelState)
 add_subdirectory(Utilities)
 
-add_subdirectory(Models)
 add_subdirectory(J2PlasticSubmodels)
 #add_subdirectory(ModelsUnderDevelopment)
 

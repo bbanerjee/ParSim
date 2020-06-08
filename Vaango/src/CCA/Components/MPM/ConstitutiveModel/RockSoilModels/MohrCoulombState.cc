@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/MohrCoulombState.h>
 
 #include <iostream>
 #include <cmath>

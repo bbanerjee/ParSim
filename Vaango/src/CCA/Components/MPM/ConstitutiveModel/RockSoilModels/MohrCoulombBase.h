@@ -29,7 +29,7 @@
 #ifndef __MPM_CONSTITUTIVEMODEL_MODELS_BASE_MOHRCOULOMB__
 #define __MPM_CONSTITUTIVEMODEL_MODELS_BASE_MOHRCOULOMB__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/MohrCoulombState.h>
 
 #include <cmath>
 #include <vector>

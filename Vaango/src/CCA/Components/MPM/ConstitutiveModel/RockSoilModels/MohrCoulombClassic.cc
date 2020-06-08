@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombClassic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/MohrCoulombClassic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/TensorUtils.h>
 
 #include <Core/Exceptions/InvalidValue.h>

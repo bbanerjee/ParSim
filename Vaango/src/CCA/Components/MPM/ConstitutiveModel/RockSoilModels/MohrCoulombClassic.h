@@ -25,32 +25,36 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#ifndef __MPM_CONSTITUTIVEMODEL_MODELS_CLASSIC_MOHRCOULOMB__
+#define __MPM_CONSTITUTIVEMODEL_MODELS_CLASSIC_MOHRCOULOMB__
 
-#ifndef __MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
-#define __MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/MohrCoulombBase.h>
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombBase.h>
-
+#include <array>
 #include <cmath>
+#include <iostream>
 #include <vector>
-
-/* this Mohr-Coulomb like model uses a rounded Mohr-Coulomb surface, see
-   eq 13 in Sheng D, Sloan SW & Yu HS Computational Mechanics 26:185-196 (2000)
-   Springer
-*/
 
 namespace Uintah {
 
-class MohrCoulombSheng : public MohrCoulombBase
+/** 
+ * This ia a classic Mohr-Coulomb model
+ * integration works based on the principal stress space
+ * note that the strain must be rotated into the same coordinate system as
+ * stress
+*/
+
+class MohrCoulombClassic : public MohrCoulombBase
 {
 
 public:
-  MohrCoulombSheng();
-  MohrCoulombSheng(double G, double K, double cohesion, double phi, double psi, double pMin = -1);
-  MohrCoulombSheng(const MohrCoulombSheng* cm);
-  MohrCoulombSheng(const MohrCoulombSheng&) = default;
-  MohrCoulombSheng& operator=(const MohrCoulombSheng&) = default;
-  virtual ~MohrCoulombSheng() = default;
+  MohrCoulombClassic();
+  MohrCoulombClassic(double G, double K, double cohesion, double phi, double psi, double pMin = -1);
+  MohrCoulombClassic(const MohrCoulombClassic* cm);
+  MohrCoulombClassic(const MohrCoulombClassic&) = default;
+  MohrCoulombClassic& operator=(const MohrCoulombClassic&) = default;
+
+  virtual ~MohrCoulombClassic() = default;
 
   MohrCoulombState integrate(const Vector7& strainIncrement,
                              const MohrCoulombState& initialState) override;
@@ -58,12 +62,17 @@ public:
   MohrCoulombState integrate(const Vector7& strainIncrement,
                              const MohrCoulombState& initialState, 
                              RegionType& region) override;
-
 protected:
 
   bool checkYieldNormalized(const MohrCoulombState& state) const override;
 
   double computeYieldNormalized(const Vector6& stress) const override;
+
+private:
+
+
+  Matrix67 calculateElastoPlasticTangentMatrix(
+    const MohrCoulombState& state) const;
 
   std::tuple<Vector6, Vector6> computeDfDsigma(const Vector6& stress) const override;
 
@@ -94,18 +103,16 @@ protected:
   std::tuple<double, int> plasticExtrapol(MohrCoulombState& state,
                                           const Vector7& epStrain) const override;
 
-private:
+  template <int Order, int Steps>
+  std::tuple<double, int> doRungeKuttaEig(const Eigen::Matrix<double, Steps, Steps>& AA,
+                                          const Eigen::Matrix<double, Steps, 1>& BB,
+                                          const Eigen::Matrix<double, Steps, 1>& BRes,
+                                          const Eigen::Matrix<double, Steps, 1>& CC,
+                                          MohrCoulombState& state, const Vector7& epStrain,
+                                          bool errorEstimate) const;
 
   template <int Order, int Steps>
-  std::tuple<double, int> doRungeKutta(
-    const Eigen::Matrix<double, Steps, Steps>& AA,
-    const Eigen::Matrix<double, Steps, 1>& BB,
-    const Eigen::Matrix<double, Steps, 1>& BRes,
-    const Eigen::Matrix<double, Steps, 1>& CC, MohrCoulombState& state,
-    const Vector7& epStrain, bool errorEstimate) const;
-
-  template <int Order, int Steps>
-  std::tuple<double, int> doRungeKuttaErr(
+  std::tuple<double, int> doRungeKuttaEigErr(
     const Eigen::Matrix<double, Steps, Steps>& AA,
     const Eigen::Matrix<double, Steps, 1>& BB,
     const Eigen::Matrix<double, Steps, 1>& BRes,
@@ -116,8 +123,14 @@ private:
   double plasticMidpoint(MohrCoulombState& state, const Vector7& epStrain,
                          Vector7& absStress, int numIter) const override;
 
+  MohrCoulombState doReturnImplicit(const MohrCoulombState& state, 
+                                    RegionType& region) const;
+
+  std::tuple<Vector3, Matrix33> getEigen(const Vector6& stress) const;
+  Vector6 rotateToOrigin(const Vector6& vec, const Matrix33& eigenVecs) const;
+  Vector6 rotateToEigen(const Vector6& vec, const Matrix33& eigenVecs) const;
 };
 
 } // end namespace Uintah
 
-#endif //__MPM_CONSTITUTIVEMODEL_MODELS_SHENG_MOHRCOULOMB__
+#endif //__MPM_CONSTITUTIVEMODEL_MODELS_CLASSIC_MOHRCOULOMB__

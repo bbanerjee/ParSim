@@ -29,7 +29,7 @@
 #ifndef __MPM_CONSTITUTIVEMODEL_MODELS_STATE_MOHRCOULOMB__
 #define __MPM_CONSTITUTIVEMODEL_MODELS_STATE_MOHRCOULOMB__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombTypes.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/MohrCoulombTypes.h>
 
 namespace Uintah {
 

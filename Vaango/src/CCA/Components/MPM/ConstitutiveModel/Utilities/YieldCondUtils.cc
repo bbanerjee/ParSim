@@ -46,7 +46,7 @@ computeNormals(const std::vector<Uintah::Point>& polyline)
 {
   auto npts = polyline.size();
   std::vector<Uintah::Vector> normals_mid;
-  for (int ii = 0; ii < npts-1; ++ii) {
+  for (auto ii = 0u; ii < npts-1; ++ii) {
     double xdiff = polyline[ii+1].x() - polyline[ii].x();
     double ydiff = polyline[ii+1].y() - polyline[ii].y();
     double len = std::sqrt(xdiff*xdiff + ydiff*ydiff);
@@ -54,7 +54,7 @@ computeNormals(const std::vector<Uintah::Point>& polyline)
   }
 
   std::vector<Uintah::Vector> normals;
-  for (int ii = 0; ii < npts-2; ++ii) {
+  for (auto ii = 0u; ii < npts-2; ++ii) {
     double xnorm = 0.5*(normals_mid[ii].x() + normals_mid[ii+1].x());
     double ynorm = 0.5*(normals_mid[ii].y() + normals_mid[ii+1].y());
     Uintah::Vector normal(xnorm, ynorm, 0.0);

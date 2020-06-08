@@ -30,7 +30,7 @@
 #define __MPM_CONSTITUTIVEMODEL_MOHRCOULOMB_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/MohrCoulombBase.h>
 #include <Core/Grid/Variables/VarLabel.h>
 #include <Core/Math/Matrix3.h>
 

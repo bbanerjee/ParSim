@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/MohrCoulombBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/MohrCoulombBase.h>
 
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Util/DebugStream.h>

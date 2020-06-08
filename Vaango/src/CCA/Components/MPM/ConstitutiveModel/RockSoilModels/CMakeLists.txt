@@ -44,6 +44,11 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulomb.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/NonLocalDruckerPrager.cc      
   ${CMAKE_CURRENT_SOURCE_DIR}/SoilModelBrannon.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombState.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombTypes.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombBase.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombSheng.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/MohrCoulombClassic.cc 
   ${MPM_Fortran_SRCS}
   PARENT_SCOPE
 )
