@@ -29,7 +29,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Tabular.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
+#include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularData.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/WeibParameters.h>
 
 #include <Core/Grid/Variables/VarLabel.h>

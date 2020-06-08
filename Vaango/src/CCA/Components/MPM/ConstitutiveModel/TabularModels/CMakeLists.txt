@@ -27,8 +27,17 @@
 #-----------------------------------------------------------------------------
 SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/TabularData.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/TabularEquationOfState.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/TabularPlasticity.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/TabularPlasticityCap.cc
   PARENT_SCOPE
 )
+
+message(STATUS "Compiler is ${CMAKE_CXX_COMPILER_ID}")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  set(CMAKE_COMPILER_IS_INTEL 1)
+endif()
+IF(NOT CMAKE_COMPILER_IS_GNUCXX AND NOT CMAKE_COMPILER_IS_INTEL) 
+  add_subdirectory(UnitTests)
+ENDIF()

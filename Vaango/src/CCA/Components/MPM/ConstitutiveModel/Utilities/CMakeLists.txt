@@ -30,6 +30,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/TableUtils.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/TensorUtils.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/WeibParameters.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCondUtils.cc 
   PARENT_SCOPE
 )
 

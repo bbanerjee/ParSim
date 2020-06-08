@@ -27,7 +27,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
+#include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularData.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {

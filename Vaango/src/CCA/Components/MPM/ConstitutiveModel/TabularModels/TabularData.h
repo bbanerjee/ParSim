@@ -1,7 +1,7 @@
 #ifndef VAANGO_MPM_CONSTITUTIVE_MODEL_TABULAR_DATA_H
 #define VAANGO_MPM_CONSTITUTIVE_MODEL_TABULAR_DATA_H
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TableContainers.h>
+#include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TableContainers.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 #include <Core/Geometry/Vector.h>
 

@@ -27,7 +27,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
 
 // Namespace Uintah::
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>

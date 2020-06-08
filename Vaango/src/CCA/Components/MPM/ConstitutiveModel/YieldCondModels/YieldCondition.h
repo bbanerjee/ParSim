@@ -31,7 +31,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/Math/TangentModulusTensor.h>
 #include <Core/Math/TangentModulusTensor.h>

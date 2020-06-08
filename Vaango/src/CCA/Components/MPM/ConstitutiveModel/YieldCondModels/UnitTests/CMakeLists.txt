@@ -22,17 +22,16 @@
 # IN THE SOFTWARE.
 #
 
-message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-message(STATUS "HDF5 library dir = ${HDF5_LIBRARY_DIRS}")
-message(STATUS "HDF5 library = ${HDF5_LIBRARY}")
+#message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+#message(STATUS "HDF5 library dir = ${HDF5_LIBRARY_DIRS}")
+#message(STATUS "HDF5 library = ${HDF5_LIBRARY}")
 
 #------------------------
 # Copy input files
 #------------------------
 configure_file(table_yield.json table_yield.json COPYONLY)
 configure_file(table_yield_circle.json table_yield_circle.json COPYONLY)
-configure_file(polyline_sim_data.csv polyline_sim_data.csv COPYONLY)
 
 #------------------------
 # Vaango libs
@@ -86,18 +85,6 @@ target_link_libraries(testYieldCond_TabularCap
   ${VAANGO_LIBS}
 )
 set(UNIT_TEST testYieldCond_TabularCap)
-add_custom_command(
-  TARGET ${UNIT_TEST}
-  POST_BUILD
-  COMMAND ${UNIT_TEST}
-)
-
-add_executable(testYieldCondUtils testYieldCondUtils.cc)
-target_link_libraries(testYieldCondUtils
-  ${GTEST_LIB}
-  ${VAANGO_LIBS}
-)
-set(UNIT_TEST testYieldCondUtils)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD

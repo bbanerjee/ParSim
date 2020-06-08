@@ -22,14 +22,15 @@
 # IN THE SOFTWARE.
 #
 
-message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-message(STATUS "HDF5 library dir = ${HDF5_LIBRARY_DIRS}")
-message(STATUS "HDF5 library = ${HDF5_LIBRARY}")
+#message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+#message(STATUS "HDF5 library dir = ${HDF5_LIBRARY_DIRS}")
+#message(STATUS "HDF5 library = ${HDF5_LIBRARY}")
 
 #------------------------
 # Copy input files
 #------------------------
+configure_file(polyline_sim_data.csv polyline_sim_data.csv COPYONLY)
 configure_file(mlp_regression_keras_total_scaled.json mlp_regression_keras_total_scaled.json COPYONLY)
 configure_file(mlp_regression_keras_total_scaled.h5 mlp_regression_keras_total_scaled.h5 COPYONLY)
 
@@ -85,6 +86,18 @@ target_link_libraries(testTensorUtils
   ${VAANGO_LIBS}
 )
 set(UNIT_TEST testTensorUtils)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+add_executable(testYieldCondUtils testYieldCondUtils.cc)
+target_link_libraries(testYieldCondUtils
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testYieldCondUtils)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD

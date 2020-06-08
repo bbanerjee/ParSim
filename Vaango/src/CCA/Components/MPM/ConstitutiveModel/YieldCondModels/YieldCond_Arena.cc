@@ -23,7 +23,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/ProblemSpec/ProblemSpec.h>

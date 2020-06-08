@@ -23,7 +23,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/TableUtils.h>
-#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
 #include <algorithm>
 #include <sstream>
 

@@ -26,7 +26,7 @@
 #define __TABULAR_EOS_CONSTITUTIVE_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
+#include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularData.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>

@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/TensorUtils.h>
 #include <Core/Geometry/Vector.h>
 #include <algorithm>
@@ -40,10 +40,31 @@ namespace Vaango {
 
 namespace Util {
 
-/* Compute outward normal at each point of a polyline */
+/* Compute outward normal at each point of a xy-planar polyline */
 std::vector<Uintah::Vector>
 computeNormals(const std::vector<Uintah::Point>& polyline)
 {
+  auto npts = polyline.size();
+  std::vector<Uintah::Vector> normals_mid;
+  for (int ii = 0; ii < npts-1; ++ii) {
+    double xdiff = polyline[ii+1].x() - polyline[ii].x();
+    double ydiff = polyline[ii+1].y() - polyline[ii].y();
+    double len = std::sqrt(xdiff*xdiff + ydiff*ydiff);
+    normals_mid.push_back(Uintah::Vector(-ydiff/len, xdiff/len, 0.0));
+  }
+
+  std::vector<Uintah::Vector> normals;
+  for (int ii = 0; ii < npts-2; ++ii) {
+    double xnorm = 0.5*(normals_mid[ii].x() + normals_mid[ii+1].x());
+    double ynorm = 0.5*(normals_mid[ii].y() + normals_mid[ii+1].y());
+    Uintah::Vector normal(xnorm, ynorm, 0.0);
+    normal.normalize();
+    normals.push_back(normal);
+  }
+
+  return normals;
+
+  /*
   const double tminus = 0.99; 
   const double tplus = 0.01; 
   std::vector<Uintah::Vector> tangents;
@@ -62,16 +83,15 @@ computeNormals(const std::vector<Uintah::Point>& polyline)
 
   std::vector<Uintah::Vector> normals;
   for (auto ii = 1u; ii < tangents.size()-1; ii++) {
-    //Uintah::Vector minus = tangents[ii-1]*(1 - tminus) + tangents[ii]*tminus;
-    //Uintah::Vector plus = tangents[ii]*(1 - tplus) + tangents[ii+1]*tplus;
-    //Uintah::Vector normal = -(plus - minus)/2.0;
-    Uintah::Vector normal(-tangents[ii].y(), tangents[ii].x(), 0.0);
-    std::cout << "normal = " << normal << "\n";
+    Uintah::Vector minus = tangents[ii-1]*(1 - tminus) + tangents[ii]*tminus;
+    Uintah::Vector plus = tangents[ii]*(1 - tplus) + tangents[ii+1]*tplus;
+    Uintah::Vector normal = -(plus - minus)/2.0;
     normal.normalize();
     normals.push_back(normal);
   }
 
   return normals;
+  */
 }
 
 /* Checks whethere three points are in counter-clockwise order */

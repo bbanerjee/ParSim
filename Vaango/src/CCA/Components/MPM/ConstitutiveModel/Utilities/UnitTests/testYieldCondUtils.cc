@@ -1,4 +1,4 @@
-#include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondUtils.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/YieldCondUtils.h>
 
 #include <Core/Geometry/Point.h>
 
@@ -30,16 +30,16 @@ TEST(YieldCondUtilsTest, computeNormals)
                                 Point(1600,700,0), Point(3200,800,0),
                                 Point(6400,900,0)}};
   std::vector<Point> polyline;
-  polyline.push_back(Point(points[2].x(), -points[2].y(), 0));
+  //polyline.push_back(Point(points[2].x(), -points[2].y(), 0));
   polyline.push_back(Point(points[1].x(), -points[1].y(), 0));
   polyline.insert(polyline.end(), points.begin(), points.end());
   Point last = points[points.size()-1];
   Point secondlast = points[points.size()-2];
   double t = 1.1;
   Vector extra1 = secondlast*(1 - t) + last*t;
-  Vector extra2 = secondlast*(1 - t)*t + last*(t*t + 1 - t);
+  //Vector extra2 = secondlast*(1 - t)*t + last*(t*t + 1 - t);
   polyline.push_back(Point(extra1));
-  polyline.push_back(Point(extra2));
+  //polyline.push_back(Point(extra2));
   //std::copy(polyline.begin(), polyline.end(),
   //          std::ostream_iterator<Point>(std::cout, " "));
   //std::cout << std::endl;
@@ -51,34 +51,19 @@ TEST(YieldCondUtilsTest, computeNormals)
   //          std::ostream_iterator<Uintah::Vector>(std::cout, " "));
   //std::cout << std::endl;
   EXPECT_EQ(points.size(), normals.size());
-  EXPECT_NEAR(normals[0].x(), 
-              Vector(-1.00000000000000e+00, -0.00000000000000e+00, 0).x(), 1.0e-10);
-  EXPECT_NEAR(normals[0].y(), 
-              Vector(-1.00000000000000e+00, -0.00000000000000e+00, 0).y(), 1.0e-10);
-  EXPECT_NEAR(normals[1].x(), 
-              Vector(-8.76013011703533e-01, 4.82287469592675e-01, 0).x(), 1.0e-10);
-  EXPECT_NEAR(normals[2].x(), 
-              Vector(-5.00835396432814e-01, 8.65542549895720e-01, 0).x(), 1.0e-10);
-  EXPECT_NEAR(normals[3].x(), 
-              Vector(-3.18081036180333e-01, 9.48063528684890e-01, 0).x(), 1.0e-10);
-  EXPECT_NEAR(normals[4].x(), 
-              Vector(-1.03211498859446e-01, 9.94659432420558e-01, 0).x(), 1.0e-10);
-  EXPECT_NEAR(normals[5].x(), 
-              Vector(-5.71593617013789e-02, 9.98365067182286e-01, 0).x(), 1.0e-10);
-  EXPECT_NEAR(normals[6].x(), 
-              Vector(-3.64331413805806e-02, 9.99336092718132e-01, 0).x(), 1.0e-10);
-  EXPECT_NEAR(normals[1].y(), 
-              Vector(-8.76013011703533e-01, 4.82287469592675e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(normals[2].y(), 
-              Vector(-5.00835396432814e-01, 8.65542549895720e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(normals[3].y(), 
-              Vector(-3.18081036180333e-01, 9.48063528684890e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(normals[4].y(), 
-              Vector(-1.03211498859446e-01, 9.94659432420558e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(normals[5].y(), 
-              Vector(-5.71593617013789e-02, 9.98365067182286e-01, 0).y(), 1.0e-10);
-  EXPECT_NEAR(normals[6].y(), 
-              Vector(-3.64331413805806e-02, 9.99336092718132e-01, 0).y(), 1.0e-10);
+
+  std::vector<std::pair<double, double>> matlab_normals;
+  matlab_normals.push_back(std::make_pair(-1.00000000000000e+00, 0.00000000000000e+00));
+  matlab_normals.push_back(std::make_pair(-8.84643204932431e-01, 4.66268592087089e-01));
+  matlab_normals.push_back(std::make_pair(-4.98196211332613e-01, 8.67064319998136e-01));
+  matlab_normals.push_back(std::make_pair(-1.83619037310828e-01, 9.82997481755190e-01));
+  matlab_normals.push_back(std::make_pair(-9.32512218198392e-02, 9.95642611396834e-01));
+  matlab_normals.push_back(std::make_pair(-4.68122075868549e-02, 9.98903707681999e-01));
+  matlab_normals.push_back(std::make_pair(-3.12347523777212e-02, 9.99512076087079e-01));
+  for (auto ii = 0u; ii < matlab_normals.size(); ++ii) {
+    EXPECT_NEAR(normals[ii].x(), matlab_normals[ii].first, 1.0e-10);
+    EXPECT_NEAR(normals[ii].y(), matlab_normals[ii].second, 1.0e-10);
+  }
 }
 
 TEST(YieldCondUtilsTest, convexHull2D)

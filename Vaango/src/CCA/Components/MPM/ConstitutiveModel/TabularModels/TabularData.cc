@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/TableUtils.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
+#include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularData.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Util/FancyAssert.h>

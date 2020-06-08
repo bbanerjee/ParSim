@@ -1,4 +1,4 @@
-#include <CCA/Components/MPM/ConstitutiveModel/Models/TabularData.h>
+#include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularData.h>
 #include <CCA/Components/MPM/ConstitutiveModel/Utilities/TableUtils.h>
 
 #include <Core/Malloc/Allocator.h>

@@ -6,9 +6,9 @@ function table_yield()
   [p, q] = hull(p, q);
   plot(p, q, '-', 'Color', [216,179,101]/255, 'LineWidth', 2);
   [p' q']
-  print -dpdf tabular_yield_hull.pdf
+  %print -dpdf tabular_yield_hull.pdf
 
-  %plot_table_yield(p, q);
+  plot_table_yield(p, q);
 end
 
 function plot_table_yield(p, q)
@@ -39,6 +39,10 @@ function plot_table_yield(p, q)
   
   plot(p_normal, q_normal,'b-', 'LineWidth', 2);
   axis equal
+
+  [xnormalQ, ynormalQ] = calcNormalsQuick(p, q);
+  xnormal = xnormalQ;
+  ynormal = ynormalQ;
 
   point = [-2000, 1000];
   plot(point(1), point(2), 'gx', 'LineWidth', 3, 'Markersize', 7);
@@ -105,6 +109,60 @@ function [x_cen, y_cen] = calcCentroid(x, y)
   x_cen = x_cen/(6*area);
   y_cen = y_cen/(6*area);
 end
+
+function [xnormal, ynormal] = calcNormalsQuick(x, y)
+
+  xx0 = x(3);
+  yy0 = -y(3);
+  xx1 = x(2);
+  yy1 = -y(2);
+  n = length(x);
+  t = 1.1;
+  xxn1 = (1 - t)*x(n-1) + t*x(n);
+  yyn1 = (1 - t)*y(n-1) + t*y(n);
+  xxn2 = (1 - t)*x(n) + t*xxn1;
+  yyn2 = (1 - t)*y(n) + t*yyn1;
+  xx = [xx0 xx1 x xxn1 xxn2];
+  yy = [yy0 yy1 y yyn1 yyn2];
+  [xx' yy']
+
+  xnormal_c = [];
+  ynormal_c = [];
+  nx = length(xx);
+  for i=1:nx-1
+    xstart = 0;
+    ystart = 0;
+    xend = xx(i+1)-xx(i);
+    yend = yy(i+1)-yy(i);
+    xnormal_c(i) = -yend;
+    ynormal_c(i) = xend;
+    len = sqrt(xend*xend + yend*yend);
+    xnormal_c(i) = xnormal_c(i) / len;
+    ynormal_c(i) = ynormal_c(i) / len;
+    xstart = 0.5*(xx(i)+xx(i+1));
+    ystart = 0.5*(yy(i)+yy(i+1));
+    plot([xstart xstart+xnormal_c(i)*300], [ystart ystart+ynormal_c(i)*300], 'g', 'LineWidth', 3);
+  end 
+
+  xnormal = [];
+  ynormal = [];
+  for i=1:nx-2
+    xnormal(i) = 0.5*(xnormal_c(i) + xnormal_c(i+1));
+    ynormal(i) = 0.5*(ynormal_c(i) + ynormal_c(i+1));
+    len = sqrt(xnormal(i)*xnormal(i)+ynormal(i)*ynormal(i));
+    xnormal(i) = xnormal(i) / len;
+    ynormal(i) = ynormal(i) / len;
+    xstart = xx(i+1);
+    ystart = yy(i+1);
+    plot([xstart xstart+xnormal(i)*300], [ystart ystart+ynormal(i)*300], 'm', 'LineWidth', 3);
+  end
+  format long e
+  normals = [xnormal' ynormal']
+  xnormal = xnormal(2:nx-3);
+  ynormal = ynormal(2:nx-3);
+
+end
+  
 
 function [xnormal, ynormal, xx, yy] = calcNormals(x, y)
 
