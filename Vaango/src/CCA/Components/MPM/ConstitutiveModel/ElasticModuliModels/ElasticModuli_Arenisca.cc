@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Arenisca.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Arenisca.h>
 #include <Core/Exceptions/InternalError.h>
 
 using namespace Uintah;

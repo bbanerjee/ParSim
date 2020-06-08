@@ -1,4 +1,4 @@
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_Tabular.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Tabular.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Tabular.h>
 
 #include <Core/Malloc/Allocator.h>
@@ -78,7 +78,7 @@ TEST(ElasticModuliTabularTest, constructorTest)
               BAD_CAST "0.2");
 
   // Print the document to stdout
-  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+  xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
 
   // Create a ProblemSpec
   ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
@@ -126,8 +126,8 @@ TEST(ElasticModuliTabularTest, constructorTest)
   state.plasticStrainTensor = Uintah::Matrix3(-0.02, 0, 0, 0, -0.02, 0, 0, 0, -0.02);
   try {
     ElasticModuli moduli = model.getCurrentElasticModuli(&state);
-    EXPECT_NEAR(moduli.bulkModulus, 10700, 1.0);
-    EXPECT_NEAR(moduli.shearModulus, 8025, 1.0);
+    EXPECT_NEAR(moduli.bulkModulus, 11439.99999999994, 1.0e-3);
+    EXPECT_NEAR(moduli.shearModulus, 8579.999999999955, 1.0e-3);
 
     std::cout << "K,G = " << moduli.bulkModulus << "," 
                 << moduli.shearModulus << std::endl;

@@ -22,10 +22,10 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef ___ELASTIC_MODULI_SOIL_MIXTURE_MODEL_H__
-#define ___ELASTIC_MODULI_SOIL_MIXTURE_MODEL_H__
+#ifndef ___ELASTIC_MODULI_ARENA_MODEL_H__
+#define ___ELASTIC_MODULI_ARENA_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Air.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Granite.h>
@@ -36,15 +36,15 @@
 
 namespace Vaango {
 
-/*! \class ElasticModuli_ArenaMixture
- *  \brief Elasticity model for Arena micture of soils
+/*! \class ElasticModuli_Arena
+ *  \brief The updated elasticity for Arenisca3
  *  \author Biswajit Banerjee,
  *          Caveat below by Michael Homel.
  *
  *  Purpose:
  *  Compute the nonlinear elastic tangent stiffness as a function of the
  * pressure
- *  plastic strain, and fluid parameters for a mixture of soils.
+ *  plastic strain, and fluid parameters.
  *
  * Caveat:
  *  To be thermodynamically consistent, the shear modulus in an isotropic model
@@ -68,7 +68,7 @@ namespace Vaango {
  *  increase the Poisson's ratio.
  *
  */
-class ElasticModuli_ArenaMixture : public ElasticModuliModel
+class ElasticModuli_Arena : public ElasticModuliModel
 {
 
 private:
@@ -90,13 +90,8 @@ private:
     double nu2;
   };
 
-  /* Volume fractions */
-  /* TODO: These volume fractions should come from the deformed volumes
-           in the master code rather than from a local copy */
-  double d_volfrac[2];
-
-  BulkModulusParameters d_bulk[2];
-  ShearModulusParameters d_shear[2];
+  BulkModulusParameters d_bulk;
+  ShearModulusParameters d_shear;
 
   /* Tangent bulk modulus models for air, water, granite */
   Pressure_Air d_air;
@@ -114,26 +109,17 @@ private:
     const double& phi, const double& S_w, double& KK,
     double& GG) override; // not const: modifies d_bulk in PressureModel
 
-  void computeDrainedModuli(
-    int phase, const double& I1_eff_bar, const double& ev_p_bar, double& KK,
-    double& GG); // not const: modifies d_bulk in PressureModel
-
-  void computePartialSaturatedModuli(
-    int phase, const double& I1_eff_bar, const double& pw_bar,
-    const double& ev_p_bar, const double& phi, const double& S_w, double& KK,
-    double& GG); // not const: modifies d_bulk in PressureModel
-
-  ElasticModuli_ArenaMixture& operator=(const ElasticModuli_ArenaMixture& smm);
+  ElasticModuli_Arena& operator=(const ElasticModuli_Arena& smm);
 
 public:
   /*! Construct a constant elasticity model. */
-  ElasticModuli_ArenaMixture(Uintah::ProblemSpecP& ps);
+  ElasticModuli_Arena(Uintah::ProblemSpecP& ps);
 
   /*! Construct a copy of constant elasticity model. */
-  ElasticModuli_ArenaMixture(const ElasticModuli_ArenaMixture* smm);
+  ElasticModuli_Arena(const ElasticModuli_Arena* smm);
 
   /*! Destructor of constant elasticity model.   */
-  ~ElasticModuli_ArenaMixture() override;
+  ~ElasticModuli_Arena() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -141,22 +127,14 @@ public:
   std::map<std::string, double> getParameters() const override
   {
     std::map<std::string, double> params;
-    params["b0.phase1"] = d_bulk[0].b0;
-    params["b1.phase1"] = d_bulk[0].b1;
-    params["b2.phase1"] = d_bulk[0].b2;
-    params["b3.phase1"] = d_bulk[0].b3;
-    params["b4.phase1"] = d_bulk[0].b4;
-    params["G0.phase1"] = d_shear[0].G0;
-    params["nu1.phase1"] = d_shear[0].nu1;
-    params["nu2.phase1"] = d_shear[0].nu2;
-    params["b0.phase2"] = d_bulk[1].b0;
-    params["b1.phase2"] = d_bulk[1].b1;
-    params["b2.phase2"] = d_bulk[1].b2;
-    params["b3.phase2"] = d_bulk[1].b3;
-    params["b4.phase2"] = d_bulk[1].b4;
-    params["G0.phase2"] = d_shear[1].G0;
-    params["nu1.phase2"] = d_shear[1].nu1;
-    params["nu2.phase2"] = d_shear[1].nu2;
+    params["b0"] = d_bulk.b0;
+    params["b1"] = d_bulk.b1;
+    params["b2"] = d_bulk.b2;
+    params["b3"] = d_bulk.b3;
+    params["b4"] = d_bulk.b4;
+    params["G0"] = d_shear.G0;
+    params["nu1"] = d_shear.nu1;
+    params["nu2"] = d_shear.nu2;
     return params;
   }
 
@@ -176,4 +154,4 @@ public:
 };
 } // End namespace Uintah
 
-#endif // __ELASTIC_MODULI_SOIL_MIXTURE_MODEL_H__
+#endif // __ELASTIC_MODULI_ARENA_MODEL_H__

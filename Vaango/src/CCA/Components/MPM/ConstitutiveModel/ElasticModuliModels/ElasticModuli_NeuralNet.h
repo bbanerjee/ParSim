@@ -25,7 +25,7 @@
 #ifndef ___ELASTIC_MODULI_NEURAL_NET_MODEL_H__
 #define ___ELASTIC_MODULI_NEURAL_NET_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 

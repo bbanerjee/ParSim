@@ -26,7 +26,7 @@
 #define __MPM_CONSTITUTIVEMODEL_TABULAR_PLASTICITY_CAP_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularPlasticity.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Ports/DataWarehouseP.h>

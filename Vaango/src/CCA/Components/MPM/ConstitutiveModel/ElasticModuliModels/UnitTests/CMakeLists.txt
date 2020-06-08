@@ -22,16 +22,17 @@
 # IN THE SOFTWARE.
 #
 
-message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-message(STATUS "HDF5 library dir = ${HDF5_LIBRARY_DIRS}")
-message(STATUS "HDF5 library = ${HDF5_LIBRARY}")
+#message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+#message(STATUS "HDF5 library dir = ${HDF5_LIBRARY_DIRS}")
+#message(STATUS "HDF5 library = ${HDF5_LIBRARY}")
 
 #------------------------
 # Copy input files
 #------------------------
-configure_file(DrySand_HydrostatData.json DrySand_HydrostatData.json COPYONLY)
-configure_file(DrySand_ElasticData.json DrySand_ElasticData.json COPYONLY)
+configure_file(table_elastic.json table_elastic.json COPYONLY)
+configure_file(mlp_regression_keras_total_scaled.json mlp_regression_keras_total_scaled.json COPYONLY)
+configure_file(mlp_regression_keras_total_scaled.h5 mlp_regression_keras_total_scaled.h5 COPYONLY)
 
 #------------------------
 # Vaango libs
@@ -67,12 +68,36 @@ set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/incl
 set(GTEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
-add_executable(testTabularData testTabularData.cc)
-target_link_libraries(testTabularData
+add_executable(testElasticModuli_Arena testElasticModuli_Arena.cc)
+target_link_libraries(testElasticModuli_Arena
   ${GTEST_LIB}
   ${VAANGO_LIBS}
 )
-set(UNIT_TEST testTabularData)
+set(UNIT_TEST testElasticModuli_Arena)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+add_executable(testElasticModuli_Tabular testElasticModuli_Tabular.cc)
+target_link_libraries(testElasticModuli_Tabular
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testElasticModuli_Tabular)
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+
+add_executable(testElasticModuli_NeuralNet testElasticModuli_NeuralNet.cc)
+target_link_libraries(testElasticModuli_NeuralNet
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST testElasticModuli_NeuralNet)
 add_custom_command(
   TARGET ${UNIT_TEST}
   POST_BUILD

@@ -47,6 +47,7 @@ add_subdirectory(SpecialPurposeModels)
 add_subdirectory(TabularModels)
 add_subdirectory(ViscoElasticModels)
 
+add_subdirectory(ElasticModuliModels)
 add_subdirectory(InternalVarModels)
 add_subdirectory(KinHardeningModels)
 add_subdirectory(PressureModels)

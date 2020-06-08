@@ -24,38 +24,59 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __BB_CONSTANT_ELASTICITY_MODEL_H__
-#define __BB_CONSTANT_ELASTICITY_MODEL_H__
+#ifndef ___ARENISCA_POISSON_RATIO_MODEL_H__
+#define ___ARENISCA_POISSON_RATIO_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arenisca3.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
-/*! \class ElasticModuli_Constant
- *  \brief The elasticity does not vary with density and temperature
+/*! \class ElasticModuli_Arenisca
+ *  \brief The elasticity from Micahel Homel's version of Arenisca3
  *  \author Biswajit Banerjee,
  *
 */
-class ElasticModuli_Constant : public ElasticModuliModel
+class ElasticModuli_Arenisca : public ElasticModuliModel
 {
 
 private:
-  double d_bulk;
-  double d_shear;
+  /* Tangent bulk modulus parameters */
+  struct BulkModulusParameters
+  {
+    double B0;
+    double B01;
+    double B1;
+    double B2;
+    double B3;
+    double B4;
+  };
 
-  ElasticModuli_Constant& operator=(const ElasticModuli_Constant& smm);
+  /* Tangent shear modulus parameters */
+  struct ShearModulusParameters
+  {
+    double G0;
+    double G1;
+    double G2;
+    double G3;
+    double G4;
+  };
+
+  BulkModulusParameters d_bulk;
+  ShearModulusParameters d_shear;
+
+  ElasticModuli_Arenisca& operator=(const ElasticModuli_Arenisca& smm);
 
 public:
   /*! Construct a constant elasticity model. */
-  ElasticModuli_Constant(Uintah::ProblemSpecP& ps);
+  ElasticModuli_Arenisca(Uintah::ProblemSpecP& ps);
 
   /*! Construct a copy of constant elasticity model. */
-  ElasticModuli_Constant(const ElasticModuli_Constant* smm);
+  ElasticModuli_Arenisca(const ElasticModuli_Arenisca* smm);
 
   /*! Destructor of constant elasticity model.   */
-  ~ElasticModuli_Constant() override;
+  ~ElasticModuli_Arenisca() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -63,17 +84,26 @@ public:
   std::map<std::string, double> getParameters() const override
   {
     std::map<std::string, double> params;
-    params["K"] = d_bulk;
-    params["G"] = d_shear;
+    params["B0"] = d_bulk.B0;
+    params["B01"] = d_bulk.B01;
+    params["B1"] = d_bulk.B1;
+    params["B2"] = d_bulk.B2;
+    params["B3"] = d_bulk.B3;
+    params["B4"] = d_bulk.B4;
+    params["G0"] = d_shear.G0;
+    params["G1"] = d_shear.G1;
+    params["G2"] = d_shear.G2;
+    params["G3"] = d_shear.G3;
+    params["G4"] = d_shear.G4;
     return params;
   }
 
   /*! Compute the elasticity */
   ElasticModuli getInitialElasticModuli() const override;
-  ElasticModuli getCurrentElasticModuli(const ModelStateBase*) override;
+  ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) override;
   ElasticModuli getElasticModuliLowerBound() const override;
   ElasticModuli getElasticModuliUpperBound() const override;
 };
 } // End namespace Uintah
 
-#endif // __CONSTANT_ELASTICITY_MODEL_H__
+#endif // __ARENISCA_POISSON_RATIO_MODEL_H__

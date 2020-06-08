@@ -24,7 +24,7 @@
 
 // Namespace Vaango::
 #include <CCA/Components/MPM/ConstitutiveModel/TabularModels/TabularPlasticityCap.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondUtils.h>

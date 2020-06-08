@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVar_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVar_BorjaPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVar_SoilModelBrannonKappa.h>

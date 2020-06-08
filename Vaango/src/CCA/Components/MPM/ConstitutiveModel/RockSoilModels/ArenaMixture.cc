@@ -24,8 +24,8 @@
 
 // Namespace Vaango::
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/ArenaMixture.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuliModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/Models/ElasticModuli_ArenaMixture.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_ArenaMixture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_ArenaMixture.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 
