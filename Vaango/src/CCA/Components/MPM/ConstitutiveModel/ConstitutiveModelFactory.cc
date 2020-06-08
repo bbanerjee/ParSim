@@ -43,7 +43,6 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ElasticPlasticHP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/UCNH.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ViscoPlastic.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/PorousModels/P_Alpha.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PorousModels/SoilFoam.h>
@@ -73,6 +72,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoScramImplicit.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoTransIsoHyper.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoElasticModels/ViscoTransIsoHyperImplicit.h>
+
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoPlasticModels/ViscoPlastic.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/CNH_MMS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ManufacturedSolutions/HypoElastic_MMS.h>

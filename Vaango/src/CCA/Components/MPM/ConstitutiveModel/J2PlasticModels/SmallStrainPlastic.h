@@ -34,11 +34,11 @@
 #include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DamageModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/FlowModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MeltingTempModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/SpecificHeatModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheck.h>
+#include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MeltTempModels/MeltingTempModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/SpecHeatModels/SpecificHeatModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheck.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/Variables/NCVariable.h>
 #include <Core/Math/Matrix3.h>

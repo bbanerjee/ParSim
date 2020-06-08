@@ -27,7 +27,7 @@
 #ifndef __ZERILLI_ARMSTRONG_MODEL_H__
 #define __ZERILLI_ARMSTRONG_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/FlowModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowModel.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Uintah {

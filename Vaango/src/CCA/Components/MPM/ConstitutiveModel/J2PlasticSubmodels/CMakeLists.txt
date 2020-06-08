@@ -23,61 +23,15 @@
 # IN THE SOFTWARE.
 #
 SET(MPM_ConstitutiveModel_PlasticityModels_SRCS
-  DamageModel.cc 
-  DamageModelFactory.cc 
-  NullDamage.cc 
-  JohnsonCookDamage.cc 
-  HancockMacKenzieDamage.cc 
-  MPMEquationOfState.cc 
-  MPMEquationOfStateFactory.cc 
-  DefaultHypoElasticEOS.cc 
-  HyperElasticEOS.cc 
-  MieGruneisenEOS.cc 
-  MieGruneisenEOSEnergy.cc 
-  FlowModel.cc 
-  FlowStressModelFactory.cc 
-  IsoHardeningFlow.cc 
-  JohnsonCookFlow.cc 
-  ZAFlow.cc
-  ZAPolymerFlow.cc
-  MTSFlow.cc 
-  SCGFlow.cc 
-  PTWFlow.cc 
   YieldCondition.cc 
   YieldConditionFactory.cc 
   GursonYield.cc 
   VonMisesYield.cc 
-  StabilityCheck.cc 
-  StabilityCheckFactory.cc 
-  AcousticTensorCheck.cc 
-  BeckerCheck.cc 
-  DruckerCheck.cc 
-  NoneCheck.cc 
-  DruckerBeckerCheck.cc 
-  SpecificHeatModel.cc 
-  SpecificHeatModelFactory.cc 
-  ConstantCp.cc 
-  CubicCp.cc 
-  CopperCp.cc 
-  SteelCp.cc 
-  MeltingTempModel.cc 
-  MeltingTempModelFactory.cc 
-  ConstantMeltTemp.cc 
-  LinearMeltTemp.cc 
-  SCGMeltTemp.cc 
-  BPSMeltTemp.cc 
-  ViscoPlasticityModel.cc 
-  ViscoPlasticityModelFactory.cc 
-  SuvicI.cc 
   KinematicHardeningModel.cc 
   KinematicHardeningModelFactory.cc 
   NoKinematicHardening.cc 
   PragerKinematicHardening.cc 
   ArmstrongFrederickKinematicHardening.cc 
-  DevStressModel.cc 
-  DevStressModelFactory.cc 
-  HypoViscoElasticDevStress.cc 
-  HypoElasticDevStress.cc 
 )
 
 SET(LIBS

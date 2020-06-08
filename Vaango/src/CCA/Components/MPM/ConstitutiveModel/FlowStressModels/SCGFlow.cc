@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/SCGFlow.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/SCGFlow.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 
 #include <cmath>

@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/AcousticTensorCheck.h>
+#include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/AcousticTensorCheck.h>
 #include <Core/Math/TangentModulusTensor.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>

@@ -29,10 +29,9 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MPMEquationOfState.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheck.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ViscoPlasticityModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldCondition.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheck.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoPlasticModels/ViscoPlasticityModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Grid/Variables/NCVariable.h>
@@ -135,7 +134,6 @@ protected:
   bool d_allowNoTension;
   bool d_usePolarDecompositionRMB; /*< use RMB's polar decomposition */
 
-  YieldCondition* d_yield;
   StabilityCheck* d_stable;
   ViscoPlasticityModel* d_plastic;
   MPMEquationOfState* d_eos;

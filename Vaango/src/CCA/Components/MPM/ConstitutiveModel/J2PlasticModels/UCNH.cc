@@ -26,7 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/UCNH.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MPMEquationOfStateFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ConvergenceFailure.h>

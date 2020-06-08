@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/JohnsonCookFlow.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/JohnsonCookFlow.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 #include <cmath>
 

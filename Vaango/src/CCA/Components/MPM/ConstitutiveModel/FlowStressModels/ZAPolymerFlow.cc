@@ -23,7 +23,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ZAPolymerFlow.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/ZAPolymerFlow.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <cmath>

@@ -26,16 +26,16 @@
 
 #include <Core/Math/Short27.h> //for Fracture
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ElasticPlasticHP.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DamageModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DeformationState.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DevStressModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/FlowStressModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MPMEquationOfStateFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MeltingTempModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/DevStressModels/DevStressModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/MeltTempModels/MeltingTempModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/SpecificHeatModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheckFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/SpecHeatModels/SpecificHeatModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheckFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/DeformationState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>

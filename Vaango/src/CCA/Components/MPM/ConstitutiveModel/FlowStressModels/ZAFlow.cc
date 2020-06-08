@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ZAFlow.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/ZAFlow.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>

@@ -22,26 +22,14 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
-#-----------------------------------------------------------------------------
-# The models
-#-----------------------------------------------------------------------------
 SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModel.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulusModelFactory.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Borja.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Constant.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_MTS.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_Nadal.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_PTW.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ShearModulus_SCG.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/MeltingTempModel.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/MeltingTempModelFactory.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ConstantMeltTemp.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/LinearMeltTemp.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/SCGMeltTemp.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/BPSMeltTemp.cc 
   PARENT_SCOPE
 )
 
-#message(STATUS "Compiler is ${CMAKE_CXX_COMPILER_ID}")
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  set(CMAKE_COMPILER_IS_INTEL 1)
-endif()
-IF(NOT CMAKE_COMPILER_IS_GNUCXX AND NOT CMAKE_COMPILER_IS_INTEL) 
-  add_subdirectory(UnitTests)
-ENDIF()

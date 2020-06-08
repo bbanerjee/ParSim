@@ -28,5 +28,10 @@
 SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/BasicDamageModel.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/DamageModel.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/DamageModelFactory.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/NullDamage.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/JohnsonCookDamage.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/HancockMacKenzieDamage.cc
   PARENT_SCOPE
 )

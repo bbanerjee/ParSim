@@ -44,7 +44,7 @@ SET(MPM_ConstitutiveModel_SRCS
   PARENT_SCOPE
 )
 
-message(STATUS "Compiler is ${CMAKE_CXX_COMPILER_ID}")
+#message(STATUS "Compiler is ${CMAKE_CXX_COMPILER_ID}")
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   set(CMAKE_COMPILER_IS_INTEL 1)
 endif()

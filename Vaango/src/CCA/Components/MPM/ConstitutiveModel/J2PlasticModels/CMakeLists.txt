@@ -31,6 +31,5 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/HyperelasticPlastic.cc    
   ${CMAKE_CURRENT_SOURCE_DIR}/SmallStrainPlastic.cc     
   ${CMAKE_CURRENT_SOURCE_DIR}/UCNH.cc                       
-  ${CMAKE_CURRENT_SOURCE_DIR}/ViscoPlastic.cc               
   PARENT_SCOPE
 )

@@ -24,12 +24,11 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ViscoPlastic.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/DamageModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/MPMEquationOfStateFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/StabilityCheckFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/ViscoPlasticityModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoPlasticModels/ViscoPlastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheckFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoPlasticModels/ViscoPlasticityModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>
@@ -148,7 +147,6 @@ ViscoPlastic::ViscoPlastic(const ViscoPlastic* cm)
   d_tol                        = cm->d_tol;
   d_initialMaterialTemperature = cm->d_initialMaterialTemperature;
 
-  //   d_yield = YieldConditionFactory::createCopy(cm->d_yield);
   d_stable  = StabilityCheckFactory::createCopy(cm->d_stable);
   d_plastic = ViscoPlasticityModelFactory::createCopy(cm->d_plastic);
   //   d_damage = DamageModelFactory::createCopy(cm->d_damage);
