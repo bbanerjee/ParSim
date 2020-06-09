@@ -639,11 +639,11 @@ YieldCond_TabularCap::evalYieldConditionMax(const ModelStateBase* state_input)
  *  The derivative is
  *      df/dsigma = df/dp dp/dsigma + df/ds : ds/dsigma
  *  where
- *      df/dp = computeVolStressDerivOfYieldFunction
+ *      df/dp = df_dp
  *      dp/dsigma = 1/3 I
  *  and
  *      df/ds = df/dJ2 dJ2/ds
- *      df/dJ2 = computeDevStressDerivOfYieldFunction
+ *      df/dJ2 = df_dq
  *      dJ2/ds = s
  *      ds/dsigma = I(4s) - 1/3 II
  *  which means
@@ -652,7 +652,7 @@ YieldCond_TabularCap::evalYieldConditionMax(const ModelStateBase* state_input)
  *                        = df/dJ2 s
 */
 void
-YieldCond_TabularCap::eval_df_dsigma(const Matrix3&,
+YieldCond_TabularCap::df_dsigma(const Matrix3&,
                                   const ModelStateBase* state_input,
                                   Matrix3& df_dsigma)
 {
@@ -675,13 +675,13 @@ YieldCond_TabularCap::eval_df_dsigma(const Matrix3&,
 
   //std::cout << "p = " << state->I1/3 << " sqrtJ2 = " << state->sqrt_J2 << "\n";
 
-  double df_dp = computeVolStressDerivOfYieldFunction(state);
-  double df_dJ2 = computeDevStressDerivOfYieldFunction(state);
+  double dfdp = df_dp(state);
+  double dfdJ2 = df_dq(state);
 
   //std::cout << "df_dp = " << df_dp << " df_dJ2 = " << df_dJ2 << "\n";
 
-  Matrix3 p_term = Util::Identity * (df_dp / 3.0);
-  Matrix3 s_term = state->deviatoricStressTensor * (df_dJ2);
+  Matrix3 p_term = Util::Identity * (dfdp / 3.0);
+  Matrix3 s_term = state->deviatoricStressTensor * (dfdJ2);
 
   df_dsigma = p_term + s_term;
 
@@ -711,7 +711,7 @@ YieldCond_TabularCap::eval_df_dsigma(const Matrix3&,
 //     dFc/dp = (1/F_c)*(kappa - p)/(kappa - X_p)^2
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
+YieldCond_TabularCap::df_dp(
   const ModelStateBase* state_input)
 {
   const ModelState_TabularCap* state =
@@ -837,7 +837,7 @@ YieldCond_TabularCap::computeVolStressDerivOfYieldFunction(
 //     df/dJ2 = 1/(2 sqrt(J2))
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::computeDevStressDerivOfYieldFunction(
+YieldCond_TabularCap::df_dq(
   const ModelStateBase* state_input)
 {
   const ModelState_TabularCap* state =
@@ -878,7 +878,7 @@ YieldCond_TabularCap::computeDevStressDerivOfYieldFunction(
 // Requires:  internal variable model
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::computeVolStrainDerivOfYieldFunction(
+YieldCond_TabularCap::df_depsVol(
   const ModelStateBase* state_input, const PressureModel*,
   const ShearModulusModel*, const InternalVariableModel* capX)
 {
@@ -1289,12 +1289,12 @@ YieldCond_TabularCap::convertToZRprime(const double& sqrtKG,
 // Requires:  Equation of state and internal variable
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::computeVolStrainDerivOfDfDp(
+YieldCond_TabularCap::d2f_dp_depsVol(
   const ModelStateBase* state_input, const PressureModel* eos,
   const ShearModulusModel*, const InternalVariableModel*)
 {
   std::ostringstream out;
-  out << "**ERROR** computeVolStrainDerivOfDfDp should not be called by "
+  out << "**ERROR** d2f_dp_depsVol should not be called by "
       << " models that use the Tabular yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
@@ -1309,12 +1309,12 @@ YieldCond_TabularCap::computeVolStrainDerivOfDfDp(
 // Requires:  Equation of state
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::computeDevStrainDerivOfDfDp(
+YieldCond_TabularCap::d2f_dp_depsDev(
   const ModelStateBase* state_input, const PressureModel* eos,
   const ShearModulusModel*, const InternalVariableModel*)
 {
   std::ostringstream out;
-  out << "**ERROR** computeDevStrainDerivOfDfDp should not be called by "
+  out << "**ERROR** d2f_dp_depsDev should not be called by "
       << " models that use the Tabular yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
@@ -1329,12 +1329,12 @@ YieldCond_TabularCap::computeDevStrainDerivOfDfDp(
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::computeVolStrainDerivOfDfDq(
+YieldCond_TabularCap::d2f_dq_depsVol(
   const ModelStateBase* state_input, const PressureModel*,
   const ShearModulusModel* shear, const InternalVariableModel*)
 {
   std::ostringstream out;
-  out << "**ERROR** computeVolStrainDerivOfDfDq should not be called by "
+  out << "**ERROR** d2f_dq_depsVol should not be called by "
       << " models that use the Tabular yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
@@ -1349,12 +1349,12 @@ YieldCond_TabularCap::computeVolStrainDerivOfDfDq(
 // Requires:  Shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::computeDevStrainDerivOfDfDq(
+YieldCond_TabularCap::d2f_dq_depsDev(
   const ModelStateBase* state_input, const PressureModel*,
   const ShearModulusModel* shear, const InternalVariableModel*)
 {
   std::ostringstream out;
-  out << "**ERROR** computeDevStrainDerivOfDfDq should not be called by "
+  out << "**ERROR** d2f_dq_depsDev should not be called by "
       << " models that use the Tabular yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
@@ -1368,13 +1368,13 @@ YieldCond_TabularCap::computeDevStrainDerivOfDfDq(
 // Requires:  Equation of state, shear modulus model
 //--------------------------------------------------------------
 double
-YieldCond_TabularCap::computeDevStrainDerivOfYieldFunction(
+YieldCond_TabularCap::df_depsDev(
   const ModelStateBase* state_input, const PressureModel* eos,
   const ShearModulusModel* shear, const InternalVariableModel*)
 {
   std::ostringstream out;
   out
-    << "**ERROR** computeVolStrainDerivOfYieldFunction should not be called by "
+    << "**ERROR** df_depsVol should not be called by "
     << " models that use the Tabular yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
 
@@ -1419,7 +1419,7 @@ YieldCond_TabularCap::evalYieldCondition(const Matrix3&,
 // where
 //    s = sigma - 1/3 tr(sigma) I
 void
-YieldCond_TabularCap::evalDerivOfYieldFunction(const Matrix3& sig,
+YieldCond_TabularCap::df_dsigma(const Matrix3& sig,
                                             const double p_c, const double,
                                             Matrix3& derivative)
 {
@@ -1435,7 +1435,7 @@ YieldCond_TabularCap::evalDerivOfYieldFunction(const Matrix3& sig,
 // Compute df/ds  where s = deviatoric stress
 //    df/ds =
 void
-YieldCond_TabularCap::evalDevDerivOfYieldFunction(const Matrix3& sigDev,
+YieldCond_TabularCap::df_dsigmaDev(const Matrix3& sigDev,
                                                const double, const double,
                                                Matrix3& derivative)
 {
@@ -1451,12 +1451,12 @@ YieldCond_TabularCap::evalDevDerivOfYieldFunction(const Matrix3& sigDev,
 /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s \f$
     where \f$s\f$ is deviatoric part of Cauchy stress */
 void
-YieldCond_TabularCap::eval_df_dxi(const Matrix3& sigDev, const ModelStateBase*,
+YieldCond_TabularCap::df_dxi(const Matrix3& sigDev, const ModelStateBase*,
                                Matrix3& df_ds)
 
 {
   std::ostringstream out;
-  out << "**ERROR** eval_df_dxi with a Matrix3 argument should not be "
+  out << "**ERROR** df_dxi with a Matrix3 argument should not be "
       << "called by models that use the Tabular yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
   return;
@@ -1464,12 +1464,12 @@ YieldCond_TabularCap::eval_df_dxi(const Matrix3& sigDev, const ModelStateBase*,
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 void
-YieldCond_TabularCap::eval_df_ds_df_dbeta(const Matrix3& sigDev,
+YieldCond_TabularCap::df_dsigmaDev_dbeta(const Matrix3& sigDev,
                                        const ModelStateBase*, Matrix3& df_ds,
                                        Matrix3& df_dbeta)
 {
   std::ostringstream out;
-  out << "**ERROR** eval_df_ds_df_dbeta with a Matrix3 argument should not be "
+  out << "**ERROR** df_dsigmaDev_dbeta with a Matrix3 argument should not be "
       << "called by models that use the Tabular yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
   return;
@@ -1477,11 +1477,11 @@ YieldCond_TabularCap::eval_df_ds_df_dbeta(const Matrix3& sigDev,
 
 /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$) */
 double
-YieldCond_TabularCap::eval_df_dep(const Matrix3&, const double& dsigy_dep,
+YieldCond_TabularCap::df_dplasticStrain(const Matrix3&, const double& dsigy_dep,
                                const ModelStateBase*)
 {
   std::ostringstream out;
-  out << "**ERROR** eval_df_dep with a Matrix3 argument should not be "
+  out << "**ERROR** df_dplasticStrain with a Matrix3 argument should not be "
       << "called by models that use the Tabular yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
   return 0.0;
@@ -1489,10 +1489,10 @@ YieldCond_TabularCap::eval_df_dep(const Matrix3&, const double& dsigy_dep,
 
 /*! Derivative with respect to the porosity (\f$\epsilon^p \f$) */
 double
-YieldCond_TabularCap::eval_df_dphi(const Matrix3&, const ModelStateBase*)
+YieldCond_TabularCap::df_dporosity(const Matrix3&, const ModelStateBase*)
 {
   std::ostringstream out;
-  out << "**ERROR** eval_df_dphi with a Matrix3 argument should not be "
+  out << "**ERROR** df_dporosity with a Matrix3 argument should not be "
       << "called by models that use the Tabular yield criterion.";
   throw InternalError(out.str(), __FILE__, __LINE__);
   return 0.0;

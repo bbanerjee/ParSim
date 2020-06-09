@@ -1,4 +1,4 @@
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
 #include <iostream>
 #include <vector>
@@ -12,7 +12,7 @@ struct TestPressureModel
   double
   computePressureDynamic(const Vaango::ModelStateBase* state_in)
   {
-    auto state = dynamic_cast<const Vaango::ModelState_Default*>(state_in);
+    auto state = dynamic_cast<const Vaango::ModelStateBase*>(state_in);
     if (!state) {
       std::cout << "Dynamic cast: Wrong state object\n";
       return 0.0;
@@ -23,7 +23,7 @@ struct TestPressureModel
   double
   computePressureStatic(const Vaango::ModelStateBase* state_in)
   {
-    auto state = static_cast<const Vaango::ModelState_Default*>(state_in);
+    auto state = static_cast<const Vaango::ModelStateBase*>(state_in);
     return state->pressure;
   }
 
@@ -31,15 +31,15 @@ struct TestPressureModel
   computePressureTypeid(const Vaango::ModelStateBase* state_in)
   {
     double pressure = 0.0;
-    if (typeid(state_in) != typeid(Vaango::ModelState_Default*)) {
+    if (typeid(state_in) != typeid(Vaango::ModelStateBase*)) {
       //std::cout << "Typeid: Wrong state object\n";
       //std::cout << "state_in has type: " << typeid(state_in).name() << "\n";
-      //std::cout << "compare has type: " << typeid(Vaango::ModelState_Default*).name() << "\n";
+      //std::cout << "compare has type: " << typeid(Vaango::ModelStateBase*).name() << "\n";
       pressure = 1.0; 
     }
     pressure += 1.0;
 
-    auto state = static_cast<const Vaango::ModelState_Default*>(state_in);
+    auto state = static_cast<const Vaango::ModelStateBase*>(state_in);
     return state->pressure + pressure;
   }
 
@@ -47,7 +47,7 @@ struct TestPressureModel
   computePressureNumVar(const Vaango::ModelStateBase* state_in)
   {
     double pressure = 0.0;
-    Vaango::ModelState_Default s;
+    Vaango::ModelStateBase s;
     if (state_in->numStateVar() != s.numStateVar()) {
       //std::cout << "NumStateVar: Wrong state object\n";
       //std::cout << "state_in has vars: " << state_in->numStateVar() << "\n";
@@ -55,14 +55,35 @@ struct TestPressureModel
       pressure = 1.0; 
     }
 
-    auto state = static_cast<const Vaango::ModelState_Default*>(state_in);
+    auto state = static_cast<const Vaango::ModelStateBase*>(state_in);
     return state->pressure;
   }
 };
 
+TEST(ModelStateTest, Constructors)
+{
+  Vaango::ModelStateBase state;
+  state.porosity = 1.0;
+  state.pressure = 3.14e6;
+  //std::cout << "p = " << state.pressure << " phi = " << state.porosity << "\n";
+
+  Vaango::ModelStateBase state_copy(state);
+  //std::cout << "p copy = " << state_copy.pressure << " phi copy = " << state_copy.porosity << "\n";
+
+  Vaango::ModelStateBase state_pcopy(&state);
+  //std::cout << "p pcopy = " << state_pcopy.pressure << " phi pcopy = " << state_pcopy.porosity << "\n";
+
+  Vaango::ModelStateBase state_ecopy = state;
+  //std::cout << "p ecopy = " << state_ecopy.pressure << " phi ecopy = " << state_ecopy.porosity << "\n";
+
+  Vaango::ModelStateBase state_epcopy = &state;
+  //std::cout << "p epcopy = " << state_epcopy.pressure << " phi epcopy = " << state_epcopy.porosity << "\n";
+  ASSERT_DOUBLE_EQ(state.pressure, state_epcopy.pressure);
+}
+
 TEST(ModelStateTest, Casts)
 {
-  Vaango::ModelState_Default state;
+  Vaango::ModelStateBase state;
   state.bulkModulus = 1.0e6;
   state.pressure = 1.0e3;
 

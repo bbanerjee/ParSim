@@ -78,7 +78,7 @@ VonMisesYield::evalYieldCondition(const double sigEqv, const double sigFlow,
 }
 
 void
-VonMisesYield::evalDerivOfYieldFunction(const Matrix3& sig, const double,
+VonMisesYield::df_dsigma(const Matrix3& sig, const double,
                                         const double, Matrix3& derivative)
 {
   Matrix3 I;
@@ -89,7 +89,7 @@ VonMisesYield::evalDerivOfYieldFunction(const Matrix3& sig, const double,
 }
 
 void
-VonMisesYield::evalDevDerivOfYieldFunction(const Matrix3& sig, const double,
+VonMisesYield::df_dsigmaDev(const Matrix3& sig, const double,
                                            const double, Matrix3& derivative)
 {
   Matrix3 I;
@@ -108,7 +108,7 @@ VonMisesYield::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
 {
   // Calculate the derivative of the yield function wrt sigma
   Matrix3 f_sigma;
-  evalDerivOfYieldFunction(sigma, sigY, porosity, f_sigma);
+  df_dsigma(sigma, sigY, porosity, f_sigma);
 
   // Calculate derivative wrt plastic strain
   double f_q1 = dsigYdep;

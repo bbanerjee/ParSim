@@ -31,7 +31,6 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_SoilModelBrannon.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Arenisca3.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_CamClay.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Default.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Arena.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Tabular.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_TabularCap.cc 

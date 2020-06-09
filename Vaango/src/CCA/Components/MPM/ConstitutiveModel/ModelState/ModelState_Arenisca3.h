@@ -27,7 +27,7 @@
 #ifndef __MODEL_STATE_ARENISCA3_H__
 #define __MODEL_STATE_ARENISCA3_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 namespace Vaango {
 
@@ -41,7 +41,7 @@ namespace Vaango {
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class ModelState_Arenisca3 : public ModelState_Default
+class ModelState_Arenisca3 : public ModelStateBase
 {
 
 public:
@@ -65,7 +65,7 @@ public:
   virtual 
   size_t numStateVar() const override
   {
-    auto numBase = ModelState_Default::numStateVar();
+    auto numBase = ModelStateBase::numStateVar();
     auto numThis = 6u;
     return numBase + numThis;
   }

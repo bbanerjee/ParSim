@@ -971,10 +971,21 @@
       <mu0 spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_shear_modulus"/>
     </elastic_shear_modulus_model>
     <plastic_yield_condition  spec="REQUIRED NO_DATA"
-                              attribute1="type REQUIRED STRING 'camclay arena arena_mixture tabular tabular_cap'"
+                              attribute1="type REQUIRED STRING 'gurson rousselier camclay arena arena_mixture tabular tabular_cap von_mises'"
                               need_applies_to="type camclay arena arena_mixture tabular_plasticity tabular_plasticity_cap">
       <!-- type = camclay -->
       <M spec="REQUIRED DOUBLE 'positive'" need_applies_to="type camclay"/>
+
+      <!-- type = gurson -->
+      <q1 spec="REQUIRED DOUBLE 'positive'" need_applies_to="type gurson"/>
+      <q2 spec="REQUIRED DOUBLE 'positive'" need_applies_to="type gurson"/>
+      <q3 spec="REQUIRED DOUBLE 'positive'" need_applies_to="type gurson"/>
+      <k spec="REQUIRED DOUBLE 'positive'" need_applies_to="type gurson"/>
+      <f_c spec="REQUIRED DOUBLE 'positive'" need_applies_to="type gurson"/>
+      
+      <!-- type = rousselier -->
+      <D spec="REQUIRED DOUBLE 'positive'" need_applies_to="type rousselier"/>
+      <sigma_1 spec="REQUIRED DOUBLE 'positive'" need_applies_to="type rousselier"/>
 
       <!-- type = arena -->
       <PEAKI1 spec="REQUIRED DOUBLE" need_applies_to="type arena" />

@@ -89,7 +89,7 @@ public:
     This is for the associated flow rule.
   */
   /////////////////////////////////////////////////////////////////////////
-  virtual void evalDerivOfYieldFunction(const Matrix3& stress,
+  virtual void df_dsigma(const Matrix3& stress,
                                         const double flowStress,
                                         const double porosity,
                                         Matrix3& derivative) = 0;
@@ -103,7 +103,7 @@ public:
     the deviatoric stress.
   */
   /////////////////////////////////////////////////////////////////////////
-  virtual void evalDevDerivOfYieldFunction(const Matrix3& stress,
+  virtual void df_dsigmaDev(const Matrix3& stress,
                                            const double flowStress,
                                            const double porosity,
                                            Matrix3& derivative) = 0;

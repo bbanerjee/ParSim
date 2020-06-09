@@ -25,10 +25,10 @@
  */
 
 #include "YieldCondition.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 YieldCondition::YieldCondition() = default;
 
@@ -45,7 +45,7 @@ YieldCondition::computeElasPlasTangentModulus(
   const double& h_phi, const double& df_phi, const double& J,
   const double& dp_dJ, const ModelStateBase* state_in, TangentModulusTensor& C_ep)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
+  auto state = static_cast<const ModelStateBase*>(state_in);
 
   Matrix3 one;
   one.Identity();

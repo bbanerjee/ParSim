@@ -25,14 +25,14 @@
  */
 
 #include "HyperElasticEOS.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>
 
 using namespace Uintah;
 using std::ostringstream;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 HyperElasticEOS::HyperElasticEOS()
 {
@@ -62,11 +62,10 @@ HyperElasticEOS::outputProblemSpec(ProblemSpecP& ps)
 // Calculate the pressure using the elastic constitutive equation
 double
 HyperElasticEOS::computePressure(const MPMMaterial* matl,
-                                 const ModelStateBase* state_in, const Matrix3&,
+                                 const ModelStateBase* state, const Matrix3&,
                                  const Matrix3& rateOfDeformation,
                                  const double& delT)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   double rho_0 = matl->getInitialDensity();
   double rho = state->density;
   double J = rho_0 / rho;
@@ -78,9 +77,8 @@ HyperElasticEOS::computePressure(const MPMMaterial* matl,
 
 double
 HyperElasticEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
-                            const ModelStateBase* state_in)
+                            const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   double J = detF;
   double kappa = state->bulkModulus;
 

@@ -25,7 +25,7 @@
  */
 
 #include "SCGMeltTemp.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
@@ -33,7 +33,7 @@
 #include <sstream>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 // Construct a melt temp model.
 SCGMeltTemp::SCGMeltTemp(ProblemSpecP& ps)
@@ -67,9 +67,8 @@ SCGMeltTemp::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the melt temp
 double
-SCGMeltTemp::computeMeltingTemp(const ModelStateBase* state_in)
+SCGMeltTemp::computeMeltingTemp(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   double eta = state->density / state->initialDensity;
   double power = 2.0 * (d_Gamma0 - d_a - 1.0 / 3.0);
   double Tm = d_Tm0 * exp(2.0 * d_a * (1.0 - 1.0 / eta)) * pow(eta, power);

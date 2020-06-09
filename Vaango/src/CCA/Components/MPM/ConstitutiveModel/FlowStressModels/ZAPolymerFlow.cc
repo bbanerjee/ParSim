@@ -24,12 +24,12 @@
  * IN THE SOFTWARE.
  */
 #include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/ZAPolymerFlow.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <cmath>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 //______________________________________________________________________
 
 ZAPolymerFlow::ZAPolymerFlow(ProblemSpecP& ps)
@@ -96,11 +96,10 @@ ZAPolymerFlow::outputProblemSpec(ProblemSpecP& ps)
 //______________________________________________________________________
 //     Reference & equation number????
 double
-ZAPolymerFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
+ZAPolymerFlow::computeFlowStress(const ModelStateBase* state, const double&,
                                  const double&, const MPMMaterial*,
                                  const particleIndex idx)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   double epdot = state->plasticStrainRate;
   double ep = state->plasticStrain;
   double T = state->temperature;
@@ -147,10 +146,9 @@ ZAPolymerFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
 //______________________________________________________________________
 //
 double
-ZAPolymerFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
+ZAPolymerFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                               const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double epdot = state->plasticStrainRate;
@@ -188,19 +186,17 @@ ZAPolymerFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
 //______________________________________________________________________
 //
 double
-ZAPolymerFlow::computeShearModulus(const ModelStateBase* state_in)
+ZAPolymerFlow::computeShearModulus(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->shearModulus;
 }
 
 //______________________________________________________________________
 //
 double
-ZAPolymerFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state_in,
+ZAPolymerFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                            const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double epdot = state->plasticStrainRate;

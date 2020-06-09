@@ -25,10 +25,10 @@
  */
 
 #include "CubicCp.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 // Construct a specific heat model.
 CubicCp::CubicCp()
@@ -78,9 +78,8 @@ CubicCp::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the specific heat
 double
-CubicCp::computeSpecificHeat(const ModelStateBase* state_in)
+CubicCp::computeSpecificHeat(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // From: Sewell, T.D., Menikoff, R. Complete Equation of State for Beta-HMX
   //   and Implications for Initiation.  Shock Compression of Condensed Matter,
   //   2003.

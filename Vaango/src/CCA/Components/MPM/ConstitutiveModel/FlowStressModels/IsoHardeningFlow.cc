@@ -25,13 +25,13 @@
  */
 
 #include "IsoHardeningFlow.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Math/FastMatrix.h>
 #include <cmath>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 IsoHardeningFlow::IsoHardeningFlow(ProblemSpecP& ps)
 {
@@ -194,11 +194,10 @@ IsoHardeningFlow::updatePlastic(const particleIndex idx, const double& delGamma)
 }
 
 double
-IsoHardeningFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
+IsoHardeningFlow::computeFlowStress(const ModelStateBase* state, const double&,
                                     const double&, const MPMMaterial*,
                                     const particleIndex idx)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   //  double flowStress = d_CM.sigma_0 + d_CM.K*pAlpha[idx];
 
   double flowStress = d_CM.sigma_0 + d_CM.K * state->plasticStrain;
@@ -206,11 +205,10 @@ IsoHardeningFlow::computeFlowStress(const ModelStateBase* state_in, const double
 }
 
 double
-IsoHardeningFlow::computeEpdot(const ModelStateBase* state_in, const double&,
+IsoHardeningFlow::computeEpdot(const ModelStateBase* state, const double&,
                                const double&, const MPMMaterial*,
                                const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->plasticStrainRate;
 }
 
@@ -226,11 +224,10 @@ IsoHardeningFlow::computeTangentModulus(const Matrix3& stress,
 }
 
 void
-IsoHardeningFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state_in,
+IsoHardeningFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
                                               const particleIndex idx,
                                               Vector& derivs)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
   derivs[2] = evalDerivativeWRTPlasticStrain(state, idx);
@@ -247,9 +244,8 @@ IsoHardeningFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase*,
 /*  Compute the shear modulus. */
 ///////////////////////////////////////////////////////////////////////////
 double
-IsoHardeningFlow::computeShearModulus(const ModelStateBase* state_in)
+IsoHardeningFlow::computeShearModulus(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->shearModulus;
 }
 
@@ -257,9 +253,8 @@ IsoHardeningFlow::computeShearModulus(const ModelStateBase* state_in)
 /* Compute the melting temperature */
 ///////////////////////////////////////////////////////////////////////////
 double
-IsoHardeningFlow::computeMeltingTemp(const ModelStateBase* state_in)
+IsoHardeningFlow::computeMeltingTemp(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->meltingTemp;
 }
 

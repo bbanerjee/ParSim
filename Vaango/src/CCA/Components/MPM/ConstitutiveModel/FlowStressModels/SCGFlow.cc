@@ -25,7 +25,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/SCGFlow.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 #include <cmath>
 
@@ -34,7 +34,7 @@
 #include <Core/Exceptions/InvalidValue.h>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 SCGFlow::SCGFlow(ProblemSpecP& ps)
 {
@@ -218,11 +218,10 @@ SCGFlow::updatePlastic(const particleIndex, const double&)
 }
 
 double
-SCGFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
+SCGFlow::computeFlowStress(const ModelStateBase* state, const double&,
                            const double&, const MPMMaterial*,
                            const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double mu = state->shearModulus;
@@ -374,10 +373,9 @@ SCGFlow::computeThermallyActivatedYieldStress(const double& epdot,
 }
 
 double
-SCGFlow::computeEpdot(const ModelStateBase* state_in, const double&,
+SCGFlow::computeEpdot(const ModelStateBase* state, const double&,
                       const double&, const MPMMaterial*, const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the needed data
   double tau = state->yieldStress;
   double ep = state->plasticStrain;
@@ -409,7 +407,7 @@ SCGFlow::computeEpdot(const ModelStateBase* state_in, const double&,
 
 void
 SCGFlow::computeTangentModulus(const Matrix3& stress,
-                               const ModelStateBase* state_in, const double&,
+                               const ModelStateBase* state, const double&,
                                const MPMMaterial*, const particleIndex idx,
                                TangentModulusTensor& Ce,
                                TangentModulusTensor& Cep)
@@ -419,20 +417,18 @@ SCGFlow::computeTangentModulus(const Matrix3& stress,
 }
 
 void
-SCGFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state_in,
+SCGFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
                                      const particleIndex idx, Vector& derivs)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   derivs[0] = evalDerivativeWRTPressure(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
   derivs[2] = evalDerivativeWRTPlasticStrain(state, idx);
 }
 
 double
-SCGFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
+SCGFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                         const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double mu = state->shearModulus;
@@ -454,9 +450,8 @@ SCGFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
 /*  Compute the shear modulus. */
 ///////////////////////////////////////////////////////////////////////////
 double
-SCGFlow::computeShearModulus(const ModelStateBase* state_in)
+SCGFlow::computeShearModulus(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   double eta = state->density / state->initialDensity;
   ASSERT(eta > 0.0);
   eta = pow(eta, 1.0 / 3.0);
@@ -470,9 +465,8 @@ SCGFlow::computeShearModulus(const ModelStateBase* state_in)
 /* Compute the melting temperature */
 ///////////////////////////////////////////////////////////////////////////
 double
-SCGFlow::computeMeltingTemp(const ModelStateBase* state_in)
+SCGFlow::computeMeltingTemp(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   double eta = state->density / state->initialDensity;
   double power = 2.0 * (d_CM.Gamma_0 - d_CM.a - 1.0 / 3.0);
   double Tm =
@@ -485,10 +479,9 @@ SCGFlow::computeMeltingTemp(const ModelStateBase* state_in)
     The strain rate dependent term in the Steinberg-Lund version
     of the model has not been included and should be for correctness.*/
 double
-SCGFlow::evalDerivativeWRTTemperature(const ModelStateBase* state_in,
+SCGFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
                                       const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
 
@@ -501,10 +494,9 @@ SCGFlow::evalDerivativeWRTTemperature(const ModelStateBase* state_in,
 }
 
 double
-SCGFlow::evalDerivativeWRTPressure(const ModelStateBase* state_in,
+SCGFlow::evalDerivativeWRTPressure(const ModelStateBase* state,
                                    const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
 
@@ -548,10 +540,9 @@ SCGFlow::evalDerivativeWRTPressure(const ModelStateBase* state_in,
     \f$ X4 = B2 epdot \f$.
 */
 double
-SCGFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state_in,
+SCGFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                      const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the current state data
   double epdot = state->plasticStrain;
   double T = state->temperature;

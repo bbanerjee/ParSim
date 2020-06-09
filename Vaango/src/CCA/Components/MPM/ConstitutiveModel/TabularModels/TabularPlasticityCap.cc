@@ -1524,7 +1524,7 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
     state_plastic_rate.stressTensor = sig_fixed;
     state_plastic_rate.updateStressInvariants();
     Matrix3 df_dsigma;
-    d_yield->eval_df_dsigma(Util::Identity, &state_plastic_rate, df_dsigma);
+    d_yield->df_dsigma(Util::Identity, &state_plastic_rate, df_dsigma);
     df_dsigma /= df_dsigma.Norm();
     double lhs = plasticStrain_inc_fixed.Contract(df_dsigma);
     double rhs = df_dsigma.Contract(df_dsigma);
@@ -1558,7 +1558,7 @@ TabularPlasticityCap::nonHardeningReturn(const Uintah::Matrix3& strain_inc,
     state_test.updateStressInvariants();
 
     Matrix3 df_dsigma;
-    d_yield->eval_df_dsigma(Util::Identity, &state_test, df_dsigma);
+    d_yield->df_dsigma(Util::Identity, &state_test, df_dsigma);
     df_dsigma /= df_dsigma.Norm();
     std::cout << "df_dsigma = " << df_dsigma << std::endl;
     std::cout << "ratio = [" << plasticStrain_inc_fixed(0, 0) / df_dsigma(0, 0)
@@ -1675,8 +1675,8 @@ TabularPlasticityCap::firstOrderHardeningUpdate(const Matrix3& deltaEps_new,
   state_np1.updateStressInvariants();
 
   Matrix3 M_n, M_np1;
-  d_yield->eval_df_dsigma(Util::Identity, &state_n, M_n);
-  d_yield->eval_df_dsigma(Util::Identity, &state_np1, M_np1);
+  d_yield->df_dsigma(Util::Identity, &state_n, M_n);
+  d_yield->df_dsigma(Util::Identity, &state_np1, M_np1);
   M_n /= M_n.Norm();
   double norm_M_np1 = M_np1.Norm();
   M_np1 /= norm_M_np1;
@@ -1793,7 +1793,7 @@ TabularPlasticityCap::firstOrderHardeningUpdate(const Matrix3& deltaEps_new,
     #endif
 
     // Compute unscaled hardening modulus
-    double df_dep_v = d_yield->computeVolStrainDerivOfYieldFunction(&state_np1,
+    double df_dep_v = d_yield->df_depsVol(&state_np1,
       nullptr, nullptr, d_capX);
     double H = -(df_dep_v * M_np1.Trace())/norm_M_np1;
 
@@ -1875,8 +1875,8 @@ TabularPlasticityCap::consistencyBisectionSimplified(const Matrix3& deltaEps_new
 
   if (d_decrease_substep) {
     Matrix3 M_n, M_np1;
-    d_yield->eval_df_dsigma(Util::Identity, &state_n, M_n);
-    d_yield->eval_df_dsigma(Util::Identity, &state_np1, M_np1);
+    d_yield->df_dsigma(Util::Identity, &state_n, M_n);
+    d_yield->df_dsigma(Util::Identity, &state_np1, M_np1);
     M_n /= M_n.Norm();
     double norm_M_np1 = M_np1.Norm();
     M_np1 /= norm_M_np1;

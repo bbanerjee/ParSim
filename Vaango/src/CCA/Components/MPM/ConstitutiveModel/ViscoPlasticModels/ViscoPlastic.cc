@@ -30,7 +30,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheckFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ViscoPlasticModels/ViscoPlasticityModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>
 
 #include <CCA/Ports/DataWarehouse.h>
@@ -60,7 +60,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 static DebugStream cout_CST("HEP", false);
 static DebugStream cout_CST1("HEP1", false);
@@ -807,7 +807,7 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
       double C_p = matl->getSpecificHeat();
 
       // Set up the PlasticityState
-      auto state        = scinew ModelState_Default();
+      auto state        = scinew ModelStateBase();
       state->strainRate = pStrainRate_new[idx];
       //       state->plasticStrainRate = epdot;
       //       state->plasticStrain = ep;
@@ -1256,7 +1256,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
       double C_p = matl->getSpecificHeat();
 
       //       Set up the PlasticityState
-      auto state                 = scinew ModelState_Default();
+      auto state                 = scinew ModelStateBase();
       state->strainRate          = pStrainRate_new[idx];
       state->plasticStrainRate   = 0.0;
       state->plasticStrain       = pPlasticStrain[idx];
@@ -1639,7 +1639,7 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
       // Matrix3 devStressOld = oldStress - One*pressure;
 
       // Set up the PlasticityState
-      auto state                 = scinew ModelState_Default();
+      auto state                 = scinew ModelStateBase();
       state->strainRate          = pStrainRate_new;
       state->plasticStrainRate   = 0.0;
       state->plasticStrain       = pPlasticStrain[idx];

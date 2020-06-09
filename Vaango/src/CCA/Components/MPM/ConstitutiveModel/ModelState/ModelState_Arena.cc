@@ -34,7 +34,7 @@ const double ModelState_Arena::sqrtTwo = std::sqrt(2.0);
 const double ModelState_Arena::sqrtThree = std::sqrt(3.0);
 
 ModelState_Arena::ModelState_Arena()
-  : ModelState_Default()
+  : ModelStateBase()
 {
   particleID = 0;
 

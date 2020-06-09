@@ -29,11 +29,12 @@ SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCondition.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldConditionFactory.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Arena.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_ArenaMixture.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Arenisca3.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_CamClay.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Gurson.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Arena.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_ArenaMixture.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Rousselier.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_Tabular.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_TabularCap.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/YieldCond_vonMises.cc 

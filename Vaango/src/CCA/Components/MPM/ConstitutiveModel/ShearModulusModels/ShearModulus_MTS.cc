@@ -25,7 +25,7 @@
  */
 
 #include "ShearModulus_MTS.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
@@ -66,9 +66,8 @@ ShearModulus_MTS::outputProblemSpec(Uintah::ProblemSpecP& ps)
 
 // Compute the shear modulus
 double
-ShearModulus_MTS::computeShearModulus(const ModelStateBase* state_in)
+ShearModulus_MTS::computeShearModulus(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   double T = state->temperature;
   ASSERT(T > 0.0);
   return evalShearModulus(T);
@@ -76,9 +75,8 @@ ShearModulus_MTS::computeShearModulus(const ModelStateBase* state_in)
 
 // Compute the shear modulus
 double
-ShearModulus_MTS::computeShearModulus(const ModelStateBase* state_in) const
+ShearModulus_MTS::computeShearModulus(const ModelStateBase* state) const
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   double T = state->temperature;
   ASSERT(T > 0.0);
   return evalShearModulus(T);

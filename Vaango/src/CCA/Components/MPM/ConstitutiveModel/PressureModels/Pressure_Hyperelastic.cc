@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Hyperelastic.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
@@ -64,22 +64,11 @@ Pressure_Hyperelastic::outputProblemSpec(Uintah::ProblemSpecP& ps)
 // Calculate the pressure using the elastic constitutive equation
 double
 Pressure_Hyperelastic::computePressure(const Uintah::MPMMaterial* matl,
-                                       const ModelStateBase* state_input,
+                                       const ModelStateBase* state,
                                        const Uintah::Matrix3&,
                                        const Uintah::Matrix3& rateOfDeformation,
                                        const double& delT)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   double rho_0 = matl->getInitialDensity();
   double rho = state->density;
   double J = rho_0 / rho;
@@ -92,19 +81,8 @@ Pressure_Hyperelastic::computePressure(const Uintah::MPMMaterial* matl,
 double
 Pressure_Hyperelastic::eval_dp_dJ(const Uintah::MPMMaterial* matl,
                                   const double& detF,
-                                  const ModelStateBase* state_input)
+                                  const ModelStateBase* state)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   double J = detF;
   double kappa = state->bulkModulus;
 

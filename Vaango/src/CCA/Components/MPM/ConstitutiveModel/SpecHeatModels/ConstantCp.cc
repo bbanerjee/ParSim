@@ -25,10 +25,10 @@
  */
 
 #include "ConstantCp.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 // Construct a specific heat model.
 ConstantCp::ConstantCp()
@@ -56,8 +56,7 @@ ConstantCp::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the specific heat
 double
-ConstantCp::computeSpecificHeat(const ModelStateBase* state_in)
+ConstantCp::computeSpecificHeat(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->specificHeat;
 }

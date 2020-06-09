@@ -74,7 +74,7 @@ class MPMFlags;
 */
 /////////////////////////////////////////////////////////////////////////////
 
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 class ViscoPlastic : public ConstitutiveModel, public ImplicitCM
 {

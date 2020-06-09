@@ -25,7 +25,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardening_Armstrong.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/InternalError.h>
 #include <cmath>
 
@@ -84,20 +84,9 @@ KinematicHardening_Armstrong::computeBackStress(
 
 void
 KinematicHardening_Armstrong::eval_h_beta(const Matrix3& df_dsigma,
-                                          const ModelStateBase* state_input,
+                                          const ModelStateBase* state,
                                           Matrix3& h_beta)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   double H_1 = d_cm.beta * d_cm.hardening_modulus_1;
   double H_2 = d_cm.beta * d_cm.hardening_modulus_2;
   Matrix3 beta = *(state->backStress);

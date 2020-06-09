@@ -993,7 +993,7 @@ HypoElasticPlastic::computeStressTensor(const PatchSubset* patches,
           // Calculate the derivative of the yield function (using the
           // previous time step (n) values)
           Matrix3 q(0.0);
-          d_yield->evalDevDerivOfYieldFunction(tensorSig, flowStress, porosity,
+          d_yield->df_dsigmaDev(tensorSig, flowStress, porosity,
                                                q);
 
           // Calculate the tensor u (at start of time interval)

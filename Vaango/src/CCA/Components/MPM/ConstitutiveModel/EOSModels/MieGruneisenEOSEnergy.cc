@@ -25,7 +25,7 @@
  */
 
 #include "MieGruneisenEOSEnergy.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/ConvergenceFailure.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Math/DEIntegrator.h>
@@ -33,7 +33,7 @@
 #include <iostream>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 MieGruneisenEOSEnergy::MieGruneisenEOSEnergy(ProblemSpecP& ps)
 {
@@ -72,11 +72,10 @@ MieGruneisenEOSEnergy::outputProblemSpec(ProblemSpecP& ps)
 // Calculate the pressure using the Mie-Gruneisen equation of state
 double
 MieGruneisenEOSEnergy::computePressure(const MPMMaterial* matl,
-                                       const ModelStateBase* state_in,
+                                       const ModelStateBase* state,
                                        const Matrix3&, const Matrix3&,
                                        const double&)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the current density
   double rho = state->density;
 
@@ -120,9 +119,8 @@ MieGruneisenEOSEnergy::computeIsentropicTemperatureRate(const double T,
 
 double
 MieGruneisenEOSEnergy::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
-                                  const ModelStateBase* state_in)
+                                  const ModelStateBase* state)
 {
-  //auto state = static_cast<const ModelState_Default*>(state_in);
   double rho_0 = matl->getInitialDensity();
   double C_0 = d_const.C_0;
   double S_1 = d_const.S_1;

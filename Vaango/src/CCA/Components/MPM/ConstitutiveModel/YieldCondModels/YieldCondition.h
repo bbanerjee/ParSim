@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -41,7 +41,7 @@
 namespace Vaango {
 
 using ParameterDict = std::map<std::string, double>;
-using Polyline = std::vector<Uintah::Point>;
+using Polyline      = std::vector<Uintah::Point>;
 
 class InternalVariableModel;
 
@@ -59,10 +59,6 @@ class InternalVariableModel;
 */
 class YieldCondition
 {
-
-protected:
-  InternalVariableModel* d_intvar;
-
 public:
   //! Construct a yield condition.
   /*! This is an abstract base class. */
@@ -73,6 +69,9 @@ public:
   virtual ~YieldCondition();
 
   virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
+
+  virtual void addParticleState(std::vector<const VarLabel*>& from,
+                                std::vector<const VarLabel*>& to){};
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -85,168 +84,170 @@ public:
   /////////////////////////////////////////////////////////////////////////
   /*!
     \brief Evaluate the yield function \f$(\Phi)\f$.
-
     If \f$\Phi \le 0\f$ the state is elastic.
-    If \f$\Phi > 0\f$ the state is plastic and a normal return
-    mapping algorithm is necessary.
-
-    Returns the appropriate value of sig(t+delT) that is on
-    the flow surface.
+    If \f$\Phi > 0\f$ the state is plastic.
   */
   /////////////////////////////////////////////////////////////////////////
-  virtual double evalYieldCondition(const double equivStress,
-                                    const double flowStress,
-                                    const double traceOfCauchyStress,
-                                    const double porosity, double& sig) = 0;
+  virtual double 
+  evalYieldCondition(const double equivStress,
+                     const double flowStress,
+                     const double traceOfCauchyStress,
+                     const double porosity,
+                     double& sig) = 0;
+
+  virtual double 
+  evalYieldCondition(const Uintah::Matrix3& xi,
+                     const ModelStateBase* state) = 0;
+
+  virtual std::pair<double, Util::YieldStatus> 
+  evalYieldCondition(const ModelStateBase* state) = 0;
+
+  virtual double 
+  evalYieldConditionMax(const ModelStateBase* state) = 0;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
-    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
-    with respect to \f$\sigma_{ij}\f$.
+    \brief Evaluate the derivative of the yield function (f) 
+    with respect to various quantities
+
+    sigma = Cauchy stress
+    sigmaDev = deviatoric stress
+    xi = sigmaDev - beta
+    beta =  backstress 
+    p = volumetric stress = 1/3 Tr(sigma)
+    q = sqrt(3 J_2), J_2 = 2nd invariant of sigmaDev
   */
   /////////////////////////////////////////////////////////////////////////
-  virtual void evalDerivOfYieldFunction(const Uintah::Matrix3& stress,
-                                        const double flowStress,
-                                        const double porosity,
-                                        Uintah::Matrix3& derivative) = 0;
+  virtual void 
+  df_dsigma(const Uintah::Matrix3& stress,
+            const double flowStress,
+            const double porosity,
+            Uintah::Matrix3& derivative) = 0;
+
+  virtual void 
+  df_dsigma(const Uintah::Matrix3& xi,
+            const ModelStateBase* state,
+            Uintah::Matrix3& df_dsigma) = 0;
+
+  virtual void 
+  df_dsigmaDev(const Uintah::Matrix3& stress,
+               const double flowStress,
+               const double porosity,
+               Uintah::Matrix3& derivative) = 0;
+
+  virtual void 
+  df_dxi(const Uintah::Matrix3& xi,
+         const ModelStateBase* state,
+         Uintah::Matrix3& df_xi) = 0;
+
+  virtual void 
+  df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
+                     const ModelStateBase* state,
+                     Uintah::Matrix3& df_ds,
+                     Uintah::Matrix3& df_dbeta) = 0;
+
+  virtual double 
+  df_dp(const ModelStateBase* state) = 0;
+
+  virtual double 
+  df_dq(const ModelStateBase* state) = 0;
+
+  virtual double 
+  df_dplasticStrain(const Uintah::Matrix3& xi,
+                    const double& d_sigy_dep,
+                    const ModelStateBase* state) = 0;
+
+  virtual double 
+  df_dporosity(const Uintah::Matrix3& xi,
+               const ModelStateBase* state) = 0;
+
+  /* Compute d/depse_v(df/dp) */
+  virtual double 
+  d2f_dp_depsVol(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) = 0;
+
+  /* Compute d/depse_s(df/dp) */
+  virtual double 
+  d2f_dp_depsDev(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) = 0;
+
+  /* Compute d/depse_v(df/dq) */
+  virtual double 
+  d2f_dq_depsVol(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) = 0;
+
+  /* Compute d/depse_s(df/dq) */
+  virtual double 
+  d2f_dq_depsDev(const ModelStateBase* state,
+                 const PressureModel* eos,
+                 const ShearModulusModel* shear,
+                 const InternalVariableModel* intvar) = 0;
+
+  /* Compute df/depse_v */
+  virtual double 
+  df_depsVol(const ModelStateBase* state,
+             const PressureModel* eos,
+             const ShearModulusModel* shear,
+             const InternalVariableModel* intvar) = 0;
+
+  /* Compute df/depse_s */
+  virtual double 
+  df_depsDev(const ModelStateBase* state,
+             const PressureModel* eos,
+             const ShearModulusModel* shear,
+             const InternalVariableModel* intvar) = 0;
 
   /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
-    with respect to \f$s_{ij}\f$.
-
-    This is for the associated flow rule with \f$s_{ij}\f$ being
-    the deviatoric stress.
-  */
+  /* 
+   * Hardening moduli
+   */
   /////////////////////////////////////////////////////////////////////////
-  virtual void evalDevDerivOfYieldFunction(const Uintah::Matrix3& stress,
-                                           const double flowStress,
-                                           const double porosity,
-                                           Uintah::Matrix3& derivative) = 0;
-
-  /*! Evaluate the yield condition - \f$ sigma \f$ is the Cauchy stress
-  and \f$ \beta \f$ is the back stress */
-  virtual double evalYieldCondition(const Uintah::Matrix3& xi, 
-                                    const ModelStateBase* state) = 0;
-
-  /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
-  virtual void eval_df_dsigma(const Uintah::Matrix3& xi,
-                              const ModelStateBase* state,
-                              Uintah::Matrix3& df_dsigma) = 0;
-
-  /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
-      where \f$s\f$ is deviatoric part of Cauchy stress and
-      \f$\beta\f$ is the backstress */
-  virtual void eval_df_dxi(const Uintah::Matrix3& xi,
-                           const ModelStateBase* state,
-                           Uintah::Matrix3& df_xi) = 0;
-
-  /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
-  virtual void eval_df_ds_df_dbeta(const Uintah::Matrix3& xi,
-                                   const ModelStateBase* state,
-                                   Uintah::Matrix3& df_ds,
-                                   Uintah::Matrix3& df_dbeta) = 0;
-
-  /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
-  virtual double eval_df_dep(const Uintah::Matrix3& xi,
-                             const double& d_sigy_dep,
-                             const ModelStateBase* state) = 0;
-
-  /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
-  virtual double eval_df_dphi(const Uintah::Matrix3& xi,
-                              const ModelStateBase* state) = 0;
-
+  
   /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
-  virtual double eval_h_alpha(const Uintah::Matrix3& xi,
-                              const ModelStateBase* state) = 0;
+  virtual double 
+  eval_h_alpha(const Uintah::Matrix3& xi,
+               const ModelStateBase* state) = 0;
 
   /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
-  virtual double eval_h_phi(const Uintah::Matrix3& xi, const double& factorA,
-                            const ModelStateBase* state) = 0;
+  virtual double 
+  eval_h_phi(const Uintah::Matrix3& xi,
+             const double& factorA,
+             const ModelStateBase* state) = 0;
 
   /////////////////////////////////////////////////////////////////////////
   /*!
     \brief Compute the elastic-plastic tangent modulus.
   */
   /////////////////////////////////////////////////////////////////////////
-  virtual void computeElasPlasTangentModulus(
-    const Uintah::TangentModulusTensor& Ce, const Uintah::Matrix3& sigma,
-    double sigY, double dsigYdV, double porosity, double voidNuclFac,
-    Uintah::TangentModulusTensor& Cep) = 0;
+  virtual void 
+  computeElasPlasTangentModulus(const Uintah::TangentModulusTensor& Ce,
+                                const Uintah::Matrix3& sigma,
+                                double sigY,
+                                double dsigYdV,
+                                double porosity,
+                                double voidNuclFac,
+                                Uintah::TangentModulusTensor& Cep) = 0;
 
   /*! Compute continuum elastic-plastic tangent modulus.
      df_dsigma = r */
-  void computeElasPlasTangentModulus(
-    const Uintah::Matrix3& r, const Uintah::Matrix3& df_ds,
-    const Uintah::Matrix3& h_beta, const Uintah::Matrix3& df_dbeta,
-    const double& h_alpha, const double& df_dep, const double& h_phi,
-    const double& df_phi, const double& J, const double& dp_dJ,
-    const ModelStateBase* state, Uintah::TangentModulusTensor& Cep);
-
-  //--------------------------------------------------------------
-  // Compute value of yield function
-  //--------------------------------------------------------------
-  virtual std::pair<double, Util::YieldStatus>
-    evalYieldCondition(const ModelStateBase* state) = 0;
-
-  //--------------------------------------------------------------
-  // Compute max value of yield function for convergence tolerance check
-  //--------------------------------------------------------------
-  virtual double evalYieldConditionMax(const ModelStateBase* state) = 0;
-
-  //--------------------------------------------------------------
-  // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
-  //--------------------------------------------------------------
-  virtual double computeVolStressDerivOfYieldFunction(
-    const ModelStateBase* state) = 0;
-
-  //--------------------------------------------------------------
-  // Compute df/dq  where q = sqrt(3 J_2), J_2 = 2nd invariant deviatoric stress
-  //--------------------------------------------------------------
-  virtual double computeDevStressDerivOfYieldFunction(
-    const ModelStateBase* state) = 0;
-
-  //--------------------------------------------------------------
-  // Compute d/depse_v(df/dp)
-  //--------------------------------------------------------------
-  virtual double computeVolStrainDerivOfDfDp(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear, const InternalVariableModel* intvar) = 0;
-
-  //--------------------------------------------------------------
-  // Compute d/depse_s(df/dp)
-  //--------------------------------------------------------------
-  virtual double computeDevStrainDerivOfDfDp(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear, const InternalVariableModel* intvar) = 0;
-
-  //--------------------------------------------------------------
-  // Compute d/depse_v(df/dq)
-  //--------------------------------------------------------------
-  virtual double computeVolStrainDerivOfDfDq(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear, const InternalVariableModel* intvar) = 0;
-
-  //--------------------------------------------------------------
-  // Compute d/depse_s(df/dq)
-  //--------------------------------------------------------------
-  virtual double computeDevStrainDerivOfDfDq(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear, const InternalVariableModel* intvar) = 0;
-
-  //--------------------------------------------------------------
-  // Compute df/depse_v
-  //--------------------------------------------------------------
-  virtual double computeVolStrainDerivOfYieldFunction(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear, const InternalVariableModel* intvar) = 0;
-
-  //--------------------------------------------------------------
-  // Compute df/depse_s
-  //--------------------------------------------------------------
-  virtual double computeDevStrainDerivOfYieldFunction(
-    const ModelStateBase* state, const PressureModel* eos,
-    const ShearModulusModel* shear, const InternalVariableModel* intvar) = 0;
+  void computeElasPlasTangentModulus(const Uintah::Matrix3& r,
+                                     const Uintah::Matrix3& df_ds,
+                                     const Uintah::Matrix3& h_beta,
+                                     const Uintah::Matrix3& df_dbeta,
+                                     const double& h_alpha,
+                                     const double& df_dep,
+                                     const double& h_phi,
+                                     const double& df_phi,
+                                     const double& J,
+                                     const double& dp_dJ,
+                                     const ModelStateBase* state,
+                                     Uintah::TangentModulusTensor& Cep);
 
   /**
    * Function: computeYieldSurfacePolylinePbarSqrtJ2
@@ -258,10 +259,10 @@ public:
    *  state_old = old state
    *
    * Returns:
-   *   std::vector<Point> 
+   *   std::vector<Point>
    */
-  virtual Polyline
-    computeYieldSurfacePolylinePbarSqrtJ2(const ModelStateBase* state_old) 
+  virtual Polyline 
+  computeYieldSurfacePolylinePbarSqrtJ2(const ModelStateBase* state_old)
   {
     Polyline dummy;
     return dummy;
@@ -273,13 +274,13 @@ public:
    * Purpose: Compute range of the yield surface in pbar-sqrtJ2 space
    *
    * Inputs:
-   *  std::vector<Point> 
+   *  std::vector<Point>
    *
    * Returns:
    *   std::array<double, 3>  = pbar_min, pbar_max, sqrtJ2_max
    */
   virtual std::array<double, 3> 
-    getYieldConditionRange(const Polyline& yield_surface) 
+  getYieldConditionRange(const Polyline& yield_surface)
   {
     std::array<double, 3> dummy;
     return dummy;
@@ -297,8 +298,9 @@ public:
    * Returns:
    *   I1 = value of tr(stress) at a point inside the yield surface
    */
-  virtual double getInternalPoint(const ModelStateBase* state_old,
-                                  const ModelStateBase* state_new) = 0;
+  virtual double 
+  getInternalPoint(const ModelStateBase* state_old,
+                   const ModelStateBase* state_new) = 0;
 
   /**
    * Functions: getClosestPoint and getClosestPointAndTangent
@@ -322,15 +324,23 @@ public:
    *   true - if the closest point can be found
    *   false - otherwise
    */
-  virtual bool getClosestPoint(const ModelStateBase* state, const double& px,
-                       const double& py, double& cpx, double& cpy) 
+  virtual bool 
+  getClosestPoint(const ModelStateBase* state,
+                  const double& px,
+                  const double& py,
+                  double& cpx,
+                  double& cpy)
   {
     return false;
   }
-  virtual bool getClosestPointAndTangent(const ModelStateBase* state, 
-                                 const double& px, const double& py, 
-                                 double& cpx, double& cpy,
-                                 double& tx, double& ty) 
+  virtual bool 
+  getClosestPointAndTangent(const ModelStateBase* state,
+                            const double& px,
+                            const double& py,
+                            double& cpx,
+                            double& cpy,
+                            double& tx,
+                            double& ty)
   {
     return false;
   }
@@ -338,29 +348,38 @@ public:
   /**
    * These are needed for keeping track of point-to-point material variability
    */
-  virtual void addInitialComputesAndRequires(Task* task,
-                                             const MPMMaterial* matl,
-                                             const PatchSet* patch) const {};
+  virtual void 
+  addInitialComputesAndRequires(Task* task,
+                                const MPMMaterial* matl,
+                                const PatchSet* patch) const {};
 
-  virtual void initializeLocalVariables(
-    const Patch* patch, ParticleSubset* pset, DataWarehouse* new_dw,
-    constParticleVariable<double>& pVolume){};
+  virtual void 
+  initializeLocalVariables(const Patch* patch,
+                           ParticleSubset* pset,
+                           DataWarehouse* new_dw,
+                           constParticleVariable<double>& pVolume){};
 
-  virtual void addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                      const PatchSet* patches) const {};
+  virtual void 
+  addComputesAndRequires(Task* task,
+                         const MPMMaterial* matl,
+                         const PatchSet* patches) const {};
 
-  virtual void copyLocalVariables(ParticleSubset* pset, DataWarehouse* old_dw,
-                                  DataWarehouse* new_dw){};
+  virtual void 
+  copyLocalVariables(ParticleSubset* pset,
+                     DataWarehouse* old_dw,
+                     DataWarehouse* new_dw){};
 
-  virtual std::vector<std::string> getLocalVariableLabels() const
+  virtual std::vector<std::string> 
+  getLocalVariableLabels() const
   {
     std::vector<std::string> pYieldParamLabels;
     pYieldParamLabels.emplace_back("None");
     return pYieldParamLabels;
   }
 
-  virtual std::vector<Uintah::constParticleVariable<double>> getLocalVariables(
-    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* old_dw)
+  virtual std::vector<Uintah::constParticleVariable<double>> 
+  getLocalVariables(Uintah::ParticleSubset* pset,
+                    Uintah::DataWarehouse* old_dw)
   {
     constParticleVariable<double> pNull;
     std::vector<constParticleVariable<double>> pYieldParams;
@@ -371,13 +390,17 @@ public:
   /**
    *  This is used to scale the yield parameters
    */
-  virtual void updateLocalVariables(
-    ParticleSubset* pset, DataWarehouse* old_dw, DataWarehouse* new_dw,
-    constParticleVariable<double>& pCoherence_old,
-    const ParticleVariable<double>& pCoherence_new){};
+  virtual void 
+  updateLocalVariables(ParticleSubset* pset,
+                       DataWarehouse* old_dw,
+                       DataWarehouse* new_dw,
+                       constParticleVariable<double>& pCoherence_old,
+                       const ParticleVariable<double>& pCoherence_new){};
 
-  virtual void addParticleState(std::vector<const VarLabel*>& from,
-                                std::vector<const VarLabel*>& to){};
+protected:
+
+  InternalVariableModel* d_intvar;
+
 };
 
 } // End namespace Vaango

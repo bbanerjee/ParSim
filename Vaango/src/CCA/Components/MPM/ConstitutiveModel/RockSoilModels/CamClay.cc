@@ -594,8 +594,8 @@ CamClay::computeStressTensor(const PatchSubset* patches,
         double delgamma_k = delgamma;
 
         // Derivatives
-        double dfdp = d_yield->computeVolStressDerivOfYieldFunction(&state);
-        double dfdq = d_yield->computeDevStressDerivOfYieldFunction(&state);
+        double dfdp = d_yield->df_dp(&state);
+        double dfdq = d_yield->df_dq(&state);
 
         // Residual
         double rv = strain_elast_v_k - strain_elast_v_tr + delgamma_k * dfdp;
@@ -628,9 +628,9 @@ CamClay::computeStressTensor(const PatchSubset* patches,
           double dr1_dx2 = 2.0 * delgamma_k * dpdepses;
           double dr1_dx3 = dfdp;
 
-          double d2fdqdepsv = d_yield->computeVolStrainDerivOfDfDq(
+          double d2fdqdepsv = d_yield->d2f_dq_depsVol(
             &state, d_eos, d_shear, d_intvar);
-          double d2fdqdepss = d_yield->computeDevStrainDerivOfDfDq(
+          double d2fdqdepss = d_yield->d2f_dq_depsDev(
             &state, d_eos, d_shear, d_intvar);
           double dr2_dx1 = delgamma_k * d2fdqdepsv;
           double dr2_dx2 = 1.0 + delgamma_k * d2fdqdepss;
@@ -739,8 +739,8 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             state.p_c = pc;
 
             // compute updated derivatives
-            dfdp = d_yield->computeVolStressDerivOfYieldFunction(&state);
-            dfdq = d_yield->computeDevStressDerivOfYieldFunction(&state);
+            dfdp = d_yield->df_dp(&state);
+            dfdq = d_yield->df_dq(&state);
 
             // compute updated yield condition
             auto fyield_a = d_yield->evalYieldCondition(&state);

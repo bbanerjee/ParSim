@@ -28,7 +28,7 @@
 using namespace Vaango;
 
 ModelState_Arenisca3::ModelState_Arenisca3()
-  : ModelState_Default()
+  : ModelStateBase()
 {
   I1 = 0.0;
   sqrt_J2 = 0.0;

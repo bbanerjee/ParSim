@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_Gurson.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
@@ -106,7 +106,7 @@ YieldCond_Gurson::evalYieldCondition(const double sigEqv, const double sigFlow,
 }
 
 void
-YieldCond_Gurson::evalDerivOfYieldFunction(const Matrix3& sig,
+YieldCond_Gurson::df_dsigma(const Matrix3& sig,
                                            const double sigY, const double f,
                                            Matrix3& derivative)
 {
@@ -129,7 +129,7 @@ YieldCond_Gurson::evalDerivOfYieldFunction(const Matrix3& sig,
 }
 
 void
-YieldCond_Gurson::evalDevDerivOfYieldFunction(const Matrix3& sig, const double,
+YieldCond_Gurson::df_dsigmaDev(const Matrix3& sig, const double,
                                               const double, Matrix3& derivative)
 {
   Matrix3 I;
@@ -209,19 +209,8 @@ YieldCond_Gurson::computePlasticStrainFactor_h2(double sigma_f_sigma,
 
 double
 YieldCond_Gurson::evalYieldCondition(const Matrix3& xi,
-                                     const ModelStateBase* state_input)
+                                     const ModelStateBase* state)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   // Get the state data
   double porosity = state->porosity;
   double sigy = state->yieldStress;
@@ -252,21 +241,10 @@ YieldCond_Gurson::evalYieldCondition(const Matrix3& xi,
 
 /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
 void
-YieldCond_Gurson::eval_df_dsigma(const Matrix3& xi,
-                                 const ModelStateBase* state_input,
+YieldCond_Gurson::df_dsigma(const Matrix3& xi,
+                                 const ModelStateBase* state,
                                  Matrix3& df_dsigma)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
   double trSig = 3.0 * state->pressure;
@@ -297,21 +275,10 @@ YieldCond_Gurson::eval_df_dsigma(const Matrix3& xi,
     where \f$s\f$ is deviatoric part of Cauchy stress and
     \f$\beta\f$ is the backstress */
 void
-YieldCond_Gurson::eval_df_dxi(const Matrix3& xi,
-                              const ModelStateBase* state_input,
+YieldCond_Gurson::df_dxi(const Matrix3& xi,
+                              const ModelStateBase* state,
                               Matrix3& df_dxi)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
   double a = 3.0 / (sigy * sigy);
@@ -321,31 +288,20 @@ YieldCond_Gurson::eval_df_dxi(const Matrix3& xi,
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 void
-YieldCond_Gurson::eval_df_ds_df_dbeta(const Matrix3& xi,
-                                      const ModelStateBase* state_input,
+YieldCond_Gurson::df_dsigmaDev_dbeta(const Matrix3& xi,
+                                      const ModelStateBase* state,
                                       Matrix3& df_ds, Matrix3& df_dbeta)
 {
-  eval_df_dxi(xi, state_input, df_ds);
+  df_dxi(xi, state, df_ds);
   df_dbeta = df_ds * (-1.0);
   return;
 }
 
 /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
 double
-YieldCond_Gurson::eval_df_dep(const Matrix3& xi, const double& dsigy_dep,
-                              const ModelStateBase* state_input)
+YieldCond_Gurson::df_dplasticStrain(const Matrix3& xi, const double& dsigy_dep,
+                              const ModelStateBase* state)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
   double trSig = 3.0 * state->pressure;
@@ -373,20 +329,9 @@ YieldCond_Gurson::eval_df_dep(const Matrix3& xi, const double& dsigy_dep,
 
 /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
 double
-YieldCond_Gurson::eval_df_dphi(const Matrix3& xi,
-                               const ModelStateBase* state_input)
+YieldCond_Gurson::df_dporosity(const Matrix3& xi,
+                               const ModelStateBase* state)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
   double trSig = 3.0 * state->pressure;
@@ -418,19 +363,8 @@ YieldCond_Gurson::eval_df_dphi(const Matrix3& xi,
 /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */
 double
 YieldCond_Gurson::eval_h_alpha(const Matrix3& xi,
-                               const ModelStateBase* state_input)
+                               const ModelStateBase* state)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
   double phi = state->porosity;
@@ -442,10 +376,10 @@ YieldCond_Gurson::eval_h_alpha(const Matrix3& xi,
   One.Identity();
   Matrix3 xi_hat = xi + One * (p - 1.0 / 3.0 * trBetaHat);
 
-  Matrix3 df_dsigma(0.0);
-  eval_df_dsigma(xi, state, df_dsigma);
+  Matrix3 dfdsigma(0.0);
+  df_dsigma(xi, state, dfdsigma);
 
-  double numer = xi_hat.Contract(df_dsigma);
+  double numer = xi_hat.Contract(dfdsigma);
   double denom = (1.0 - phi) * sigy;
   return numer / denom;
 }
@@ -453,29 +387,18 @@ YieldCond_Gurson::eval_h_alpha(const Matrix3& xi,
 /*! Compute h_phi  where \f$d/dt(phi) = d/dt(gamma)~h_{\phi}\f$ */
 double
 YieldCond_Gurson::eval_h_phi(const Matrix3& xi, const double& factorA,
-                             const ModelStateBase* state_input)
+                             const ModelStateBase* state)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   double sigy = state->yieldStress;
   ASSERT(sigy != 0);
   double phi = state->porosity;
   ASSERT(phi != 1);
   double p = state->pressure;
 
-  Matrix3 df_dsigma(0.0);
-  eval_df_dsigma(xi, state, df_dsigma);
+  Matrix3 dfdsigma(0.0);
+  df_dsigma(xi, state, dfdsigma);
 
-  double tr_df_dsigma = df_dsigma.Trace();
+  double tr_df_dsigma = dfdsigma.Trace();
   double a = (1.0 - phi) * tr_df_dsigma;
 
   Matrix3 One;
@@ -483,7 +406,7 @@ YieldCond_Gurson::eval_h_phi(const Matrix3& xi, const double& factorA,
   double trBetaHat = state->backStress->Trace();
   Matrix3 xi_hat = xi + One * (p - 1.0 / 3.0 * trBetaHat);
 
-  double numer = xi_hat.Contract(df_dsigma);
+  double numer = xi_hat.Contract(dfdsigma);
   double denom = (1.0 - phi) * sigy;
   double b = factorA * numer / denom;
 
@@ -543,7 +466,7 @@ YieldCond_Gurson::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
 {
   // Calculate the derivative of the yield function wrt sigma
   Matrix3 f_sigma(0.0);
-  evalDerivOfYieldFunction(sigma, sigY, porosity, f_sigma);
+  df_dsigma(sigma, sigY, porosity, f_sigma);
 
   // Calculate derivative wrt porosity
   double trSig = sigma.Trace();

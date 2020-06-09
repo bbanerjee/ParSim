@@ -29,7 +29,7 @@
 using namespace Vaango;
 
 ModelState_SoilModelBrannon::ModelState_SoilModelBrannon()
-  : ModelState_Default()
+  : ModelStateBase()
 {
   kappa = 0.0;
   CR = 0.0;

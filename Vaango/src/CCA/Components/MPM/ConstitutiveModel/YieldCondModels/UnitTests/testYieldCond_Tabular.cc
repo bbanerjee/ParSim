@@ -148,7 +148,7 @@ TEST_F(YieldCondTabularTest, evalYieldCondition)
   EXPECT_EQ(model.evalYieldConditionMax(&state), 900);
 }
 
-TEST_F(YieldCondTabularTest, eval_df_dsigma)
+TEST_F(YieldCondTabularTest, df_dsigma)
 {
   YieldCond_Tabular model(ps);
   ModelState_Tabular state;
@@ -157,13 +157,13 @@ TEST_F(YieldCondTabularTest, eval_df_dsigma)
   //std::cout << model;
 
   // Zero everything (elastic)
-  model.eval_df_dsigma(zero, &state, df_dsigma);
+  model.df_dsigma(zero, &state, df_dsigma);
   EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
   // Tension (zero stress)
   state.I1 = 300*3; 
   state.sqrt_J2 = 1000;
-  model.eval_df_dsigma(zero, &state, df_dsigma);
+  model.df_dsigma(zero, &state, df_dsigma);
   EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
   // Circular yield function
@@ -172,30 +172,30 @@ TEST_F(YieldCondTabularTest, eval_df_dsigma)
 
   state_circle.stressTensor = Matrix3(2, 4, 0, 4, 2, 0, 0, 0, 2);
   state_circle.updateStressInvariants();
-  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
+  model_circle.df_dsigma(zero, &state_circle, df_dsigma);
   EXPECT_NEAR(df_dsigma(0,0), 0.22177, 1.0e-5); // Exact value = 0.20569
   EXPECT_NEAR(df_dsigma(0,1), 0.65286, 1.0e-5); // Exact value = 0.66071
 
   state_circle.stressTensor = Matrix3(-2, 4, 0, 4, -2, 0, 0, 0, -2);
   state_circle.updateStressInvariants();
-  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
+  model_circle.df_dsigma(zero, &state_circle, df_dsigma);
   EXPECT_NEAR(df_dsigma(0,0), -0.22177, 1.0e-5); // Exact value = -0.20569
   EXPECT_NEAR(df_dsigma(0,1), 0.65286, 1.0e-5); // Exact value = 0.66071
 
   state_circle.stressTensor = Matrix3(3, 0, 0, 0, 3, 0, 0, 0, 3);
   state_circle.updateStressInvariants();
-  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
+  model_circle.df_dsigma(zero, &state_circle, df_dsigma);
   EXPECT_NEAR(df_dsigma(0,0), 0.57735, 1.0e-5);
 
   state_circle.stressTensor = Matrix3(3, 1, 0, 1, 3, 0, 0, 0, 3);
   state_circle.updateStressInvariants();
-  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
+  model_circle.df_dsigma(zero, &state_circle, df_dsigma);
   EXPECT_NEAR(df_dsigma(0,0), 0.53852, 1.0e-5); // Exact value = 0.53644
   EXPECT_NEAR(df_dsigma(0,1), 0.25494, 1.0e-5); // Exact value = 0.26145
 
   state_circle.stressTensor = Matrix3(-3, 1, 0, 1, -3, 0, 0, 0, -3);
   state_circle.updateStressInvariants();
-  model_circle.eval_df_dsigma(zero, &state_circle, df_dsigma);
+  model_circle.df_dsigma(zero, &state_circle, df_dsigma);
   EXPECT_NEAR(df_dsigma(0,0), -0.53852, 1.0e-5); // Exact value = -0.53644
   EXPECT_NEAR(df_dsigma(0,1), 0.25494, 1.0e-5); // Exact value = 0.26145
 

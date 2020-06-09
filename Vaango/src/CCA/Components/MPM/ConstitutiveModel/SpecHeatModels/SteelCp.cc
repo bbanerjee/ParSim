@@ -25,12 +25,12 @@
  */
 
 #include "SteelCp.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 // Construct a specific heat model.
 SteelCp::SteelCp(ProblemSpecP& ps)
@@ -91,9 +91,8 @@ SteelCp::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the specific heat
 double
-SteelCp::computeSpecificHeat(const ModelStateBase* state_in)
+SteelCp::computeSpecificHeat(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   double Cp = 470.0;
   double T = state->temperature;
 

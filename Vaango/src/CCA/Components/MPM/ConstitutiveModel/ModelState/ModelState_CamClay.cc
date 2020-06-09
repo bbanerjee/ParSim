@@ -28,7 +28,7 @@
 using namespace Vaango;
 
 ModelState_CamClay::ModelState_CamClay()
-  : ModelState_Default()
+  : ModelStateBase()
 {
   p_c = 0.0;
   p_c0 = 0.0;

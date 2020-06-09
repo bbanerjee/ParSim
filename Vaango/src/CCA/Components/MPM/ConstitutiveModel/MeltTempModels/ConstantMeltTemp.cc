@@ -25,10 +25,10 @@
  */
 
 #include "ConstantMeltTemp.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 // Construct a melt temp model.
 ConstantMeltTemp::ConstantMeltTemp()
@@ -56,8 +56,7 @@ ConstantMeltTemp::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the melt temp
 double
-ConstantMeltTemp::computeMeltingTemp(const ModelStateBase* state_in)
+ConstantMeltTemp::computeMeltingTemp(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->initialMeltTemp;
 }

@@ -36,7 +36,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheckFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/DeformationState.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
@@ -66,7 +66,7 @@
 #undef SUB_CYCLE_F
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 static DebugStream cout_EP("EP", false);
 static DebugStream cout_EP1("EP1", false);
@@ -952,8 +952,8 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
       double temperature = pTemperature[idx];
 
-      // Set up the ModelState_Default (for t_n+1)
-      auto state = scinew ModelState_Default();
+      // Set up the ModelStateBase (for t_n+1)
+      auto state = scinew ModelStateBase();
       // state->plasticStrainRate = pStrainRate_new[idx];
       // state->plasticStrain     = pPlasticStrain[idx];
       // state->plasticStrainRate = sqrtTwoThird*tensorEta.Norm();
@@ -1425,7 +1425,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 //
 bool
 ElasticPlasticHP::computePlasticStateBiswajit(
-  ModelStateBase* state_in,
+  ModelStateBase* state,
   constParticleVariable<double>& pPlasticStrain,
   constParticleVariable<double>& pStrainRate,
   const Matrix3& sigma,
@@ -1440,8 +1440,6 @@ ElasticPlasticHP::computePlasticStateBiswajit(
   const MPMMaterial* matl,
   const int idx)
 {
-  auto state = static_cast<ModelState_Default*>(state_in);
-
   // Using the algorithm from Zocher, Maudlin, Chen, Flower-Maudlin
   // European Congress on Computational Methods in Applied Sciences
   // and Engineering,  September 11-14, 2000.
@@ -1456,7 +1454,7 @@ ElasticPlasticHP::computePlasticStateBiswajit(
   double sqrtThreeTwo = sqrt(1.5);
   double sqrtTwoThird = 1.0 / sqrtThreeTwo;
 
-  d_yield->evalDevDerivOfYieldFunction(sigma, flowStress, porosity, q);
+  d_yield->df_dsigmaDev(sigma, flowStress, porosity, q);
 
   // Calculate the tensor u (at start of time interval) This is the normal to
   // the yield surface.
@@ -1561,11 +1559,10 @@ ElasticPlasticHP::computePlasticStateViaRadialReturn(const Matrix3& trialS,
                                                      const double& delT,
                                                      const MPMMaterial* matl,
                                                      const particleIndex idx,
-                                                     ModelStateBase* state_in,
+                                                     ModelStateBase* state,
                                                      Matrix3& nn,
                                                      double& delGamma)
 {
-  auto state        = static_cast<ModelState_Default*>(state_in);
   double normTrialS = trialS.Norm();
 
   // Do Newton iteration to compute delGamma and updated
@@ -1587,9 +1584,8 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
                                     const double& normTrialS,
                                     const MPMMaterial* matl,
                                     const particleIndex idx,
-                                    ModelStateBase* state_in)
+                                    ModelStateBase* state)
 {
-  auto state = static_cast<ModelState_Default*>(state_in);
   // Initialize constants
   double twothird  = 2.0 / 3.0;
   double stwothird = sqrt(twothird);
@@ -1875,8 +1871,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       double pressure = sigma.Trace() / 3.0;
       Matrix3 tensorS = sigma - One * pressure;
 
-      // Set up the ModelState_Default
-      auto state                 = scinew ModelState_Default();
+      // Set up the ModelStateBase
+      auto state                 = scinew ModelStateBase();
       state->strainRate          = pStrainRate_new[idx];
       state->plasticStrainRate   = pPlasticStrainRate[idx];
       state->plasticStrain       = pPlasticStrain[idx];
@@ -2274,8 +2270,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       double pressure = sigma.Trace() / 3.0;
       Matrix3 tensorS = sigma - One * pressure;
 
-      // Set up the ModelState_Default
-      auto state                 = scinew ModelState_Default();
+      // Set up the ModelStateBase
+      auto state                 = scinew ModelStateBase();
       state->strainRate          = pStrainRate_new;
       state->plasticStrainRate   = pPlasticStrainRate[idx];
       state->plasticStrain       = pPlasticStrain[idx];
@@ -2461,12 +2457,10 @@ ElasticPlasticHP::computeEPlasticTangentModulus(const double& K,
                                                 const double& delGamma,
                                                 const Matrix3& trialStress,
                                                 const particleIndex idx,
-                                                ModelStateBase* state_in,
+                                                ModelStateBase* state,
                                                 double Cep[6][6],
                                                 bool consistent)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
-
   double normTrialS = trialStress.Norm();
   Matrix3 n         = trialStress / normTrialS;
 

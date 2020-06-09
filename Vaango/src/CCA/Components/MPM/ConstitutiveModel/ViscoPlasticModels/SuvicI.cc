@@ -25,13 +25,13 @@
  */
 
 #include "SuvicI.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Math/FastMatrix.h>
 #include <math.h>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 SuvicI::SuvicI(ProblemSpecP& ps)
 {
@@ -531,9 +531,8 @@ SuvicI::checkFailureMaxTensileStress(const Matrix3 pStress)
 /*  Compute the shear modulus. */
 ///////////////////////////////////////////////////////////////////////////
 double
-SuvicI::computeShearModulus(const ModelStateBase* state_in)
+SuvicI::computeShearModulus(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->shearModulus;
 }
 
@@ -541,8 +540,7 @@ SuvicI::computeShearModulus(const ModelStateBase* state_in)
 /* Compute the melting temperature */
 ///////////////////////////////////////////////////////////////////////////
 double
-SuvicI::computeMeltingTemp(const ModelStateBase* state_in)
+SuvicI::computeMeltingTemp(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->meltingTemp;
 }

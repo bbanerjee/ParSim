@@ -25,13 +25,13 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/ZAFlow.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <cmath>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -96,11 +96,10 @@ ZAFlow::outputProblemSpec(ProblemSpecP& ps)
 }
 
 double
-ZAFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
+ZAFlow::computeFlowStress(const ModelStateBase* state, const double&,
                           const double&, const MPMMaterial*,
                           const particleIndex idx)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   double epdot = state->plasticStrainRate;
   double ep = state->plasticStrain;
   double T = state->temperature;
@@ -127,11 +126,10 @@ ZAFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
 /*! \brief Calculate the plastic strain rate [epdot(tau,ep,T)] */
 //////////
 double
-ZAFlow::computeEpdot(const ModelStateBase* state_in, const double&,
+ZAFlow::computeEpdot(const ModelStateBase* state, const double&,
                      const double& tolerance, const MPMMaterial*,
                      const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   double tau = state->yieldStress;
   double ep = state->plasticStrain;
   double T = state->temperature;
@@ -173,20 +171,18 @@ ZAFlow::computeTangentModulus(const Matrix3& stress, const ModelStateBase*,
 }
 
 void
-ZAFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state_in,
+ZAFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
                                     const particleIndex idx, Vector& derivs)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
   derivs[2] = evalDerivativeWRTPlasticStrain(state, idx);
 }
 
 double
-ZAFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
+ZAFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                        const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double epdot = state->plasticStrainRate;
@@ -208,9 +204,8 @@ ZAFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
 /*  Compute the shear modulus. */
 ///////////////////////////////////////////////////////////////////////////
 double
-ZAFlow::computeShearModulus(const ModelStateBase* state_in)
+ZAFlow::computeShearModulus(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->shearModulus;
 }
 
@@ -218,17 +213,15 @@ ZAFlow::computeShearModulus(const ModelStateBase* state_in)
 /* Compute the melting temperature */
 ///////////////////////////////////////////////////////////////////////////
 double
-ZAFlow::computeMeltingTemp(const ModelStateBase* state_in)
+ZAFlow::computeMeltingTemp(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->meltingTemp;
 }
 
 double
-ZAFlow::evalDerivativeWRTTemperature(const ModelStateBase* state_in,
+ZAFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
                                      const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double epdot = state->plasticStrainRate;
@@ -247,10 +240,9 @@ ZAFlow::evalDerivativeWRTTemperature(const ModelStateBase* state_in,
 }
 
 double
-ZAFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state_in,
+ZAFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                     const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   double ep = state->plasticStrain;
   double epdot = state->plasticStrainRate;

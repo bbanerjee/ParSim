@@ -25,11 +25,11 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/JohnsonCookFlow.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <cmath>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 JohnsonCookFlow::JohnsonCookFlow(ProblemSpecP& ps)
 {
@@ -145,11 +145,10 @@ JohnsonCookFlow::updatePlastic(const particleIndex, const double&)
 }
 
 double
-JohnsonCookFlow::computeFlowStress(const ModelStateBase* state_in, const double&,
+JohnsonCookFlow::computeFlowStress(const ModelStateBase* state, const double&,
                                    const double&, const MPMMaterial* matl,
                                    const particleIndex idx)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // double epdot = state->plasticStrainRate/d_CM.epdot_0;
   double epdot = state->strainRate / d_CM.epdot_0;
   double ep = state->plasticStrain;
@@ -181,11 +180,10 @@ JohnsonCookFlow::computeFlowStress(const ModelStateBase* state_in, const double&
 }
 
 double
-JohnsonCookFlow::computeEpdot(const ModelStateBase* state_in, const double&,
+JohnsonCookFlow::computeEpdot(const ModelStateBase* state, const double&,
                               const double&, const MPMMaterial* matl,
                               const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // All quantities should be at the beginning of the
   // time step
   double tau = state->yieldStress;
@@ -224,21 +222,19 @@ JohnsonCookFlow::computeTangentModulus(const Matrix3& stress,
 }
 
 void
-JohnsonCookFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state_in,
+JohnsonCookFlow::evalDerivativeWRTScalarVars(const ModelStateBase* state,
                                              const particleIndex idx,
                                              Vector& derivs)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   derivs[0] = evalDerivativeWRTStrainRate(state, idx);
   derivs[1] = evalDerivativeWRTTemperature(state, idx);
   derivs[2] = evalDerivativeWRTPlasticStrain(state, idx);
 }
 
 double
-JohnsonCookFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
+JohnsonCookFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                                 const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   // double epdot = state->plasticStrainRate/d_CM.epdot_0;
   double epdot = state->strainRate / d_CM.epdot_0;
@@ -270,9 +266,8 @@ JohnsonCookFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state_in,
 /*  Compute the shear modulus. */
 ///////////////////////////////////////////////////////////////////////////
 double
-JohnsonCookFlow::computeShearModulus(const ModelStateBase* state_in)
+JohnsonCookFlow::computeShearModulus(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->shearModulus;
 }
 
@@ -280,17 +275,15 @@ JohnsonCookFlow::computeShearModulus(const ModelStateBase* state_in)
 /* Compute the melting temperature */
 ///////////////////////////////////////////////////////////////////////////
 double
-JohnsonCookFlow::computeMeltingTemp(const ModelStateBase* state_in)
+JohnsonCookFlow::computeMeltingTemp(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return state->meltingTemp;
 }
 
 double
-JohnsonCookFlow::evalDerivativeWRTTemperature(const ModelStateBase* state_in,
+JohnsonCookFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
                                               const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   // double epdot = state->plasticStrainRate/d_CM.epdot_0;
   double epdot = state->strainRate / d_CM.epdot_0;
@@ -324,10 +317,9 @@ JohnsonCookFlow::evalDerivativeWRTTemperature(const ModelStateBase* state_in,
 }
 
 double
-JohnsonCookFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state_in,
+JohnsonCookFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                              const particleIndex)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Get the state data
   // double epdot = state->plasticStrainRate/d_CM.epdot_0;
   double epdot = state->strainRate / d_CM.epdot_0;

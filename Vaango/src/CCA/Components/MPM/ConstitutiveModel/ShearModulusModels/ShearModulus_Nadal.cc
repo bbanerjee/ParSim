@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_Nadal.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
@@ -84,29 +84,16 @@ ShearModulus_Nadal::computeInitialShearModulus()
 }
 
 double
-ShearModulus_Nadal::computeShearModulus(const ModelStateBase* state_input)
+ShearModulus_Nadal::computeShearModulus(const ModelStateBase* state)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   return evalShearModulus(state->temperature, state->meltingTemp,
                           state->density, state->initialDensity,
                           state->pressure);
 }
 
 double
-ShearModulus_Nadal::computeShearModulus(const ModelStateBase* state_input) const
+ShearModulus_Nadal::computeShearModulus(const ModelStateBase* state) const
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
   return evalShearModulus(state->temperature, state->meltingTemp,
                           state->density, state->initialDensity,
                           state->pressure);

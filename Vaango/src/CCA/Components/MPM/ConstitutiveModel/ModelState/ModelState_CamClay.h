@@ -27,7 +27,7 @@
 #ifndef __DERIVED_MODEL_STATE_CAMCLAY_DATA_H__
 #define __DERIVED_MODEL_STATE_CAMCLAY_DATA_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 namespace Vaango {
 
@@ -41,7 +41,7 @@ namespace Vaango {
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class ModelState_CamClay : public ModelState_Default
+class ModelState_CamClay : public ModelStateBase
 {
 
 public:
@@ -73,7 +73,7 @@ public:
   virtual 
   size_t numStateVar() const override
   {
-    auto numBase = ModelState_Default::numStateVar();
+    auto numBase = ModelStateBase::numStateVar();
     auto numThis = 8u;
     return numBase + numThis;
   }

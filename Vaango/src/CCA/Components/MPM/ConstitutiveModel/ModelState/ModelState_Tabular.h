@@ -25,7 +25,7 @@
 #ifndef __MODEL_STATE_TABULAR_H__
 #define __MODEL_STATE_TABULAR_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 namespace Vaango {
 
@@ -39,7 +39,7 @@ namespace Vaango {
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class ModelState_Tabular : public ModelState_Default
+class ModelState_Tabular : public ModelStateBase
 {
 
 public:
@@ -78,12 +78,12 @@ public:
   virtual 
   size_t numStateVar() const override
   {
-    auto numBase = ModelState_Default::numStateVar();
+    auto numBase = ModelStateBase::numStateVar();
     auto numThis = 16u;
     return numBase + numThis;
   }
 
-  void updateStressInvariants();
+  void updateStressInvariants() override;
   void updatePlasticStrainInvariants();
 
   friend std::ostream& operator<<(std::ostream& os,

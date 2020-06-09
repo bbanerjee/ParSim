@@ -25,13 +25,13 @@
  */
 
 #include "HypoElasticDevStress.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Math/FastMatrix.h>
 #include <cmath>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 // constructor
 HypoElasticDevStress::HypoElasticDevStress()
@@ -45,10 +45,9 @@ HypoElasticDevStress::~HypoElasticDevStress() = default;
 //
 void
 HypoElasticDevStress::computeDeviatoricStressInc(
-  const particleIndex, const ModelStateBase* state,
+  const particleIndex, const ModelStateBase* plaState,
   DeformationState* defState, const double delT)
 {
-  auto plaState = static_cast<const ModelState_Default*>(state);
   // proc0cout << " HypoElasticDevStress:computeDevStessInc " << endl;
   double mu = plaState->shearModulus;
   defState->devStressInc = defState->tensorEta * (2.0 * mu * delT);

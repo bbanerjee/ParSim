@@ -25,12 +25,12 @@
  */
 
 #include "DefaultHypoElasticEOS.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/ParameterNotFound.h>
 #include <cmath>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 DefaultHypoElasticEOS::DefaultHypoElasticEOS()
 {
@@ -60,13 +60,11 @@ DefaultHypoElasticEOS::outputProblemSpec(ProblemSpecP& ps)
 // Calculate the pressure using the elastic constitutive equation
 double
 DefaultHypoElasticEOS::computePressure(const MPMMaterial*,
-                                       const ModelStateBase* state_in,
+                                       const ModelStateBase* state,
                                        const Matrix3&,
                                        const Matrix3& rateOfDeformation,
                                        const double& delT)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
-
   // Get the state data
   double kappa = state->bulkModulus;
   double p_n = state->pressure;
@@ -81,9 +79,8 @@ DefaultHypoElasticEOS::computePressure(const MPMMaterial*,
 
 double
 DefaultHypoElasticEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
-                                  const ModelStateBase* state_in)
+                                  const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return (state->bulkModulus / detF);
 }
 

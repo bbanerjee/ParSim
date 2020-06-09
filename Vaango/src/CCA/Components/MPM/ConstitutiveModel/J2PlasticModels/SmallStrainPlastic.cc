@@ -40,7 +40,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheckFactory.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardeningModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
@@ -826,7 +826,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
       backStress_new = backStress_old;
 
       // Set up the ModelState (for t_n)
-      Vaango::ModelState_Default state;
+      Vaango::ModelStateBase state;
       state.strainRate = pStrainRate_new[idx];
       state.plasticStrainRate = pPlasticStrainRate_old[idx];
       state.plasticStrain = pPlasticStrain_old[idx];
@@ -943,7 +943,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
           // Compute r_k, h_k
           Matrix3 xi_k = xi_trial;
           Matrix3 r_k(0.0);
-          d_yield->eval_df_dsigma(xi_k, &state, r_k);
+          d_yield->df_dsigma(xi_k, &state, r_k);
           double h_alpha_k = d_yield->eval_h_alpha(xi_k, &state);
           double A_k = voidNucleationFactor(state.plasticStrain);
           double h_phi_k = d_yield->eval_h_phi(xi_k, A_k, &state);
@@ -962,11 +962,11 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
             // Get the derivatives of the yield function
             Matrix3 df_dxi_k(0.0);
-            d_yield->eval_df_dxi(xi_k, &state, df_dxi_k);
+            d_yield->df_dxi(xi_k, &state, df_dxi_k);
             double dsigy_dep_k =
               d_plastic->evalDerivativeWRTPlasticStrain(&state, idx);
-            double df_dep_k = d_yield->eval_df_dep(xi_k, dsigy_dep_k, &state);
-            double df_dphi_k = d_yield->eval_df_dphi(xi_k, &state);
+            double df_dep_k = d_yield->df_dplasticStrain(xi_k, dsigy_dep_k, &state);
+            double df_dphi_k = d_yield->df_dporosity(xi_k, &state);
 
             // compute delta gamma (k)
             double denom = df_dxi_k.Contract(term1_k) - h_alpha_k * df_dep_k -
@@ -1020,7 +1020,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
             /* Updated algorithm - use value of xi_k */
             // Compute r_k, h_k
-            d_yield->eval_df_dsigma(xi_k, &state, r_k);
+            d_yield->df_dsigma(xi_k, &state, r_k);
             h_alpha_k = d_yield->eval_h_alpha(xi_k, &state);
             A_k = voidNucleationFactor(state.plasticStrain);
             h_phi_k = d_yield->eval_h_phi(xi_k, A_k, &state);
@@ -1063,7 +1063,7 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
 
           // Update the back stress and deviatoric stress
           Matrix3 r_new(0.0);
-          d_yield->eval_df_dsigma(xi_k, &state, r_new);
+          d_yield->df_dsigma(xi_k, &state, r_new);
           Matrix3 h_beta_new(0.0);
           d_kinematic->eval_h_beta(r_new, &state, h_beta_new);
           backStress_new = backStress_old + h_beta_new * Delta_gamma;
@@ -1195,18 +1195,18 @@ SmallStrainPlastic::computeStressTensorExplicit(const PatchSubset* patches,
               Matrix3 xi_hat = sigma_new - backStress_new;
               Matrix3 xi = xi_hat - one * (xi_hat.Trace() / 3.0);
               Matrix3 rr(0.0);
-              d_yield->eval_df_dsigma(xi, &state, rr);
+              d_yield->df_dsigma(xi, &state, rr);
               Matrix3 df_ds(0.0), df_dbeta(0.0);
-              d_yield->eval_df_ds_df_dbeta(xi, &state, df_ds, df_dbeta);
+              d_yield->df_dsigmaDev_dbeta(xi, &state, df_ds, df_dbeta);
               Matrix3 h_beta(0.0);
               d_kinematic->eval_h_beta(rr, &state, h_beta);
               Matrix3 r_dev = rr - one * (rr.Trace() / 3.0);
               Matrix3 h_beta_dev = h_beta - one * (h_beta.Trace() / 3.0);
               double dsigy_dep =
                 d_plastic->evalDerivativeWRTPlasticStrain(&state, idx);
-              double df_dep = d_yield->eval_df_dep(xi, dsigy_dep, &state);
+              double df_dep = d_yield->df_dplasticStrain(xi, dsigy_dep, &state);
               double h_alpha = d_yield->eval_h_alpha(xi, &state);
-              double df_dphi = d_yield->eval_df_dphi(xi, &state);
+              double df_dphi = d_yield->df_dporosity(xi, &state);
               double A = voidNucleationFactor(state.plasticStrain);
               double h_phi = d_yield->eval_h_phi(xi, A, &state);
               double dp_dJ = d_eos->eval_dp_dJ(matl, J_new, &state);

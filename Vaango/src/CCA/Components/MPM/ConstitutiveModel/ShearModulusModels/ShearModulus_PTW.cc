@@ -25,7 +25,7 @@
  */
 
 #include "ShearModulus_PTW.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
@@ -69,18 +69,16 @@ ShearModulus_PTW::outputProblemSpec(Uintah::ProblemSpecP& ps)
 
 // Compute the shear modulus
 double
-ShearModulus_PTW::computeShearModulus(const ModelStateBase* state_in)
+ShearModulus_PTW::computeShearModulus(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return evalShearModulus(state->temperature, state->meltingTemp,
                           state->density, state->initialDensity, 
                           state->pressure);
 }
 
 double
-ShearModulus_PTW::computeShearModulus(const ModelStateBase* state_in) const
+ShearModulus_PTW::computeShearModulus(const ModelStateBase* state) const
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   return evalShearModulus(state->temperature, state->meltingTemp,
                           state->density, state->initialDensity, 
                           state->pressure);

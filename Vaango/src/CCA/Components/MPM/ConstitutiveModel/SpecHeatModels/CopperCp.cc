@@ -25,12 +25,12 @@
  */
 
 #include "CopperCp.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 // Construct a specific heat model.
 CopperCp::CopperCp(ProblemSpecP& ps)
@@ -83,9 +83,8 @@ CopperCp::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the specific heat
 double
-CopperCp::computeSpecificHeat(const ModelStateBase* state_in)
+CopperCp::computeSpecificHeat(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   double T = state->temperature;
   double Cp = 414.0;
   if (T < d_T0) {

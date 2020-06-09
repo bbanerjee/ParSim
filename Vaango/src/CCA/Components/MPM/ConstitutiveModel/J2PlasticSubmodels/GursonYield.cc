@@ -123,7 +123,7 @@ GursonYield::evalYieldCondition(const double sigEqv, const double sigFlow,
 }
 
 void
-GursonYield::evalDerivOfYieldFunction(const Matrix3& sig, const double sigY,
+GursonYield::df_dsigma(const Matrix3& sig, const double sigY,
                                       const double f, Matrix3& derivative)
 {
   Matrix3 I;
@@ -145,7 +145,7 @@ GursonYield::evalDerivOfYieldFunction(const Matrix3& sig, const double sigY,
 }
 
 void
-GursonYield::evalDevDerivOfYieldFunction(const Matrix3& sig, const double,
+GursonYield::df_dsigmaDev(const Matrix3& sig, const double,
                                          const double, Matrix3& derivative)
 {
   Matrix3 I;
@@ -273,7 +273,7 @@ GursonYield::computeElasPlasTangentModulus(const TangentModulusTensor& Ce,
 {
   // Calculate the derivative of the yield function wrt sigma
   Matrix3 f_sigma(0.0);
-  evalDerivOfYieldFunction(sigma, sigY, porosity, f_sigma);
+  df_dsigma(sigma, sigY, porosity, f_sigma);
 
   // Calculate derivative wrt porosity
   double trSig = sigma.Trace();

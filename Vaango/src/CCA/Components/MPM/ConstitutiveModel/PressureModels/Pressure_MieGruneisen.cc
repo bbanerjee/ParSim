@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_MieGruneisen.h>
 #include <Core/Exceptions/ConvergenceFailure.h>
 #include <Core/Exceptions/InternalError.h>
@@ -73,21 +73,10 @@ Pressure_MieGruneisen::outputProblemSpec(Uintah::ProblemSpecP& ps)
 // Calculate the pressure using the Mie-Gruneisen equation of state
 double
 Pressure_MieGruneisen::computePressure(const Uintah::MPMMaterial* matl,
-                                       const ModelStateBase* state_input,
+                                       const ModelStateBase* state,
                                        const Uintah::Matrix3&,
                                        const Uintah::Matrix3&, const double&)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   // Get the current density
   double rho = state->density;
 

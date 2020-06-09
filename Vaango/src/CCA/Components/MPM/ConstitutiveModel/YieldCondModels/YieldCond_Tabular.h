@@ -88,19 +88,19 @@ public:
   //--------------------------------------------------------------
   // Compute df/dp  where p = volumetric stress = 1/3 Tr(sigma)
   //--------------------------------------------------------------
-  double computeVolStressDerivOfYieldFunction(
+  double df_dp(
     const ModelStateBase* state) override;
 
   //--------------------------------------------------------------
   // Compute df/dq  where q = sqrt(3 J_2), J_2 = 2nd invariant deviatoric stress
   //--------------------------------------------------------------
-  double computeDevStressDerivOfYieldFunction(
+  double df_dq(
     const ModelStateBase* state) override;
 
   //--------------------------------------------------------------
   // Compute d/depse_v(df/dp)
   //--------------------------------------------------------------
-  double computeVolStrainDerivOfDfDp(
+  double d2f_dp_depsVol(
     const ModelStateBase* state, const PressureModel* eos,
     const ShearModulusModel* shear,
     const InternalVariableModel* intvar) override;
@@ -108,7 +108,7 @@ public:
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dp)
   //--------------------------------------------------------------
-  double computeDevStrainDerivOfDfDp(
+  double d2f_dp_depsDev(
     const ModelStateBase* state, const PressureModel* eos,
     const ShearModulusModel* shear,
     const InternalVariableModel* intvar) override;
@@ -116,7 +116,7 @@ public:
   //--------------------------------------------------------------
   // Compute d/depse_v(df/dq)
   //--------------------------------------------------------------
-  double computeVolStrainDerivOfDfDq(
+  double d2f_dq_depsVol(
     const ModelStateBase* state, const PressureModel* eos,
     const ShearModulusModel* shear,
     const InternalVariableModel* intvar) override;
@@ -124,7 +124,7 @@ public:
   //--------------------------------------------------------------
   // Compute d/depse_s(df/dq)
   //--------------------------------------------------------------
-  double computeDevStrainDerivOfDfDq(
+  double d2f_dq_depsDev(
     const ModelStateBase* state, const PressureModel* eos,
     const ShearModulusModel* shear,
     const InternalVariableModel* intvar) override;
@@ -132,7 +132,7 @@ public:
   //--------------------------------------------------------------
   // Compute df/depse_v
   //--------------------------------------------------------------
-  double computeVolStrainDerivOfYieldFunction(
+  double df_depsVol(
     const ModelStateBase* state, const PressureModel* eos,
     const ShearModulusModel* shear,
     const InternalVariableModel* intvar) override;
@@ -140,7 +140,7 @@ public:
   //--------------------------------------------------------------
   // Compute df/depse_s
   //--------------------------------------------------------------
-  double computeDevStrainDerivOfYieldFunction(
+  double df_depsDev(
     const ModelStateBase* state, const PressureModel* eos,
     const ShearModulusModel* shear,
     const InternalVariableModel* intvar) override;
@@ -204,7 +204,7 @@ public:
     with respect to \f$\sigma_{ij}\f$.
   */
   /////////////////////////////////////////////////////////////////////////
-  void evalDerivOfYieldFunction(const Uintah::Matrix3& stress,
+  void df_dsigma(const Uintah::Matrix3& stress,
                                 const double dummy1, const double dummy2,
                                 Uintah::Matrix3& derivative) override;
 
@@ -217,31 +217,31 @@ public:
     the deviatoric stress.
   */
   /////////////////////////////////////////////////////////////////////////
-  void evalDevDerivOfYieldFunction(const Uintah::Matrix3& stress,
+  void df_dsigmaDev(const Uintah::Matrix3& stress,
                                    const double dummy1, const double dummy2,
                                    Uintah::Matrix3& derivative) override;
 
   /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)*/
-  void eval_df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state,
+  void df_dsigma(const Uintah::Matrix3& xi, const ModelStateBase* state,
                       Uintah::Matrix3& df_dsigma) override;
 
   /*! Derivative with respect to the \f$xi\f$ where \f$\xi = s - \beta \f$
     where \f$s\f$ is deviatoric part of Cauchy stress and
     \f$\beta\f$ is the backstress */
-  void eval_df_dxi(const Uintah::Matrix3& xi, const ModelStateBase* state,
+  void df_dxi(const Uintah::Matrix3& xi, const ModelStateBase* state,
                    Uintah::Matrix3& df_xi) override;
 
   /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
-  void eval_df_ds_df_dbeta(const Uintah::Matrix3& xi,
+  void df_dsigmaDev_dbeta(const Uintah::Matrix3& xi,
                            const ModelStateBase* state, Uintah::Matrix3& df_ds,
                            Uintah::Matrix3& df_dbeta) override;
 
   /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)*/
-  double eval_df_dep(const Uintah::Matrix3& xi, const double& d_sigy_dep,
+  double df_dplasticStrain(const Uintah::Matrix3& xi, const double& d_sigy_dep,
                      const ModelStateBase* state) override;
 
   /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)*/
-  double eval_df_dphi(const Uintah::Matrix3& xi,
+  double df_dporosity(const Uintah::Matrix3& xi,
                       const ModelStateBase* state) override;
 
   /*! Compute h_alpha  where \f$d/dt(ep) = d/dt(gamma)~h_{\alpha}\f$ */

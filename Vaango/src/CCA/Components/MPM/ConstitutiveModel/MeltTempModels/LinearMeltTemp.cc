@@ -25,11 +25,11 @@
  */
 
 #include "LinearMeltTemp.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/ProblemSetupException.h>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 // Construct a melt temp model.
 LinearMeltTemp::LinearMeltTemp()
@@ -106,9 +106,8 @@ LinearMeltTemp::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the melt temp
 double
-LinearMeltTemp::computeMeltingTemp(const ModelStateBase* state_in)
+LinearMeltTemp::computeMeltingTemp(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Pressure form takes presidence because it is less computationally expensive
   // (no divide)
   if (d_usePressureForm) {

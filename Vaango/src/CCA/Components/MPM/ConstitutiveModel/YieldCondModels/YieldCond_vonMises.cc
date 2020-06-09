@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCond_vonMises.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
@@ -48,7 +48,7 @@ void
 YieldCond_vonMises::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
-  yield_ps->setAttribute("type", "vonMises");
+  yield_ps->setAttribute("type", "von_mises");
 }
 
 double
@@ -62,19 +62,8 @@ YieldCond_vonMises::evalYieldCondition(const double sigEqv,
 
 double
 YieldCond_vonMises::evalYieldCondition(const Matrix3& xi,
-                                       const ModelStateBase* state_input)
+                                       const ModelStateBase* state)
 {
-  const ModelState_Default* state =
-    static_cast<const ModelState_Default*>(state_input);
-  /*
-  if (!state) {
-    std::ostringstream out;
-    out << "**ERROR** The correct ModelState object has not been passed."
-        << " Need ModelState_Default.";
-    throw Uintah::InternalError(out.str(), __FILE__, __LINE__);
-  }
-  */
-
   double sigy = state->yieldStress;
   double xiNorm = xi.Norm();
   double Phi = sqrt(1.5) * xiNorm - sigy;
@@ -82,7 +71,7 @@ YieldCond_vonMises::evalYieldCondition(const Matrix3& xi,
 }
 
 void
-YieldCond_vonMises::evalDerivOfYieldFunction(const Matrix3& sig, const double,
+YieldCond_vonMises::df_dsigma(const Matrix3& sig, const double,
                                              const double, Matrix3& derivative)
 {
   Matrix3 I;
@@ -93,7 +82,7 @@ YieldCond_vonMises::evalDerivOfYieldFunction(const Matrix3& sig, const double,
 }
 
 void
-YieldCond_vonMises::evalDevDerivOfYieldFunction(const Matrix3& sig,
+YieldCond_vonMises::df_dsigmaDev(const Matrix3& sig,
                                                 const double, const double,
                                                 Matrix3& derivative)
 {
@@ -108,7 +97,7 @@ YieldCond_vonMises::evalDevDerivOfYieldFunction(const Matrix3& sig,
 /*! Derivative with respect to the Cauchy stress (\f$\sigma \f$)
     Assume f = sqrt{3/2} ||xi|| - sigma_y */
 void
-YieldCond_vonMises::eval_df_dsigma(const Matrix3& xi, const ModelStateBase*,
+YieldCond_vonMises::df_dsigma(const Matrix3& xi, const ModelStateBase*,
                                    Matrix3& df_dsigma)
 {
   double xiNorm = xi.Norm();
@@ -121,7 +110,7 @@ YieldCond_vonMises::eval_df_dsigma(const Matrix3& xi, const ModelStateBase*,
     \f$\beta\f$ is the backstress
     Assume f = sqrt{3/2} ||xi|| - sigma_y */
 void
-YieldCond_vonMises::eval_df_dxi(const Matrix3& xi, const ModelStateBase*,
+YieldCond_vonMises::df_dxi(const Matrix3& xi, const ModelStateBase*,
                                 Matrix3& df_dxi)
 {
   double xiNorm = xi.Norm();
@@ -131,11 +120,11 @@ YieldCond_vonMises::eval_df_dxi(const Matrix3& xi, const ModelStateBase*,
 
 /* Derivative with respect to \f$ s \f$ and \f$ \beta \f$ */
 void
-YieldCond_vonMises::eval_df_ds_df_dbeta(const Matrix3& xi,
+YieldCond_vonMises::df_dsigmaDev_dbeta(const Matrix3& xi,
                                         const ModelStateBase* state_input,
                                         Matrix3& df_ds, Matrix3& df_dbeta)
 {
-  eval_df_dxi(xi, state_input, df_ds);
+  df_dxi(xi, state_input, df_ds);
   df_dbeta = df_ds * (-1.0);
   return;
 }
@@ -143,7 +132,7 @@ YieldCond_vonMises::eval_df_ds_df_dbeta(const Matrix3& xi,
 /*! Derivative with respect to the plastic strain (\f$\epsilon^p \f$)
     Assume f = sqrt{3/2} ||xi|| - sigma_y */
 double
-YieldCond_vonMises::eval_df_dep(const Matrix3&, const double& dsigy_dep,
+YieldCond_vonMises::df_dplasticStrain(const Matrix3&, const double& dsigy_dep,
                                 const ModelStateBase*)
 {
   return -dsigy_dep;
@@ -152,7 +141,7 @@ YieldCond_vonMises::eval_df_dep(const Matrix3&, const double& dsigy_dep,
 /*! Derivative with respect to the porosity (\f$\epsilon^p \f$)
     Assume f = sqrt{3/2} ||xi|| - sigma_y */
 double
-YieldCond_vonMises::eval_df_dphi(const Matrix3&, const ModelStateBase*)
+YieldCond_vonMises::df_dporosity(const Matrix3&, const ModelStateBase*)
 {
   return 0.0;
 }
@@ -179,7 +168,7 @@ YieldCond_vonMises::computeElasPlasTangentModulus(
 {
   // Calculate the derivative of the yield function wrt sigma
   Matrix3 f_sigma;
-  evalDerivOfYieldFunction(sigma, sigY, porosity, f_sigma);
+  df_dsigma(sigma, sigY, porosity, f_sigma);
 
   // Calculate derivative wrt plastic strain
   double f_q1 = dsigYdep;

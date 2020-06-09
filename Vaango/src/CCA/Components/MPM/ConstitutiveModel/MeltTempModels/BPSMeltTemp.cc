@@ -25,7 +25,7 @@
  */
 
 #include "BPSMeltTemp.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <cmath>
@@ -33,7 +33,7 @@
 #include <sstream>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 // Construct a melt temp model.
 BPSMeltTemp::BPSMeltTemp(ProblemSpecP& ps)
@@ -94,9 +94,8 @@ BPSMeltTemp::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the melt temp
 double
-BPSMeltTemp::computeMeltingTemp(const ModelStateBase* state_in)
+BPSMeltTemp::computeMeltingTemp(const ModelStateBase* state)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
   // Calculate the melt temperature at zero pressure and 300 K
   double p = -state->pressure;
   double vws = pow(d_a, 3.0) / d_factor;

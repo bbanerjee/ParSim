@@ -27,7 +27,7 @@
 #ifndef __DERIVED_MODEL_STATE_SOIL_MODEL_BRANNON_DATA_H__
 #define __DERIVED_MODEL_STATE_SOIL_MODEL_BRANNON_DATA_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 
 namespace Vaango {
 
@@ -41,7 +41,7 @@ namespace Vaango {
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class ModelState_SoilModelBrannon : public ModelState_Default
+class ModelState_SoilModelBrannon : public ModelStateBase
 {
 
 public:
@@ -68,7 +68,7 @@ public:
   virtual 
   size_t numStateVar() const override
   {
-    auto numBase = ModelState_Default::numStateVar();
+    auto numBase = ModelStateBase::numStateVar();
     auto numThis = 7u;
     return numBase + numThis;
   }

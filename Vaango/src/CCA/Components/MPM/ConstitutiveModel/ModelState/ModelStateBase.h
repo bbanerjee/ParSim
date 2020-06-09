@@ -24,8 +24,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __MODEL_STATE_BASE_DERIVED_FROM_PLASTICITY_STATE_DATA_H__
-#define __MODEL_STATE_BASE_DERIVED_FROM_PLASTICITY_STATE_DATA_H__
+#ifndef __MODEL_STATE_BASE_H__
+#define __MODEL_STATE_BASE_H__
 
 #include <Core/Math/Matrix3.h>
 
@@ -41,8 +41,31 @@ namespace Vaango {
 
 class ModelStateBase
 {
-
 public:
+  double yieldStress;
+  double strainRate;
+  double plasticStrainRate;
+  double plasticStrain;
+  double pressure;
+  double temperature;
+  double initialTemperature;
+  double density;
+  double initialDensity;
+  double volume;
+  double initialVolume;
+  double bulkModulus;
+  double initialBulkModulus;
+  double shearModulus;
+  double initialShearModulus;
+  double meltingTemp;
+  double initialMeltTemp;
+  double specificHeat;
+  double porosity;
+  double energy;
+  double I1;
+  double J2;
+  const Uintah::Matrix3* backStress;
+
   ModelStateBase();
 
   ModelStateBase(const ModelStateBase& state);
@@ -50,7 +73,21 @@ public:
 
   virtual ~ModelStateBase();
 
-  virtual size_t numStateVar() const = 0;
+  ModelStateBase& operator=(const ModelStateBase& state);
+  ModelStateBase* operator=(const ModelStateBase* state);
+
+  virtual 
+  size_t numStateVar() const
+  {
+    auto numThis = 21u;
+    return numThis;
+  }
+
+  virtual 
+  void updateStressInvariants(const Uintah::Matrix3& stress);
+
+  virtual 
+  void updateStressInvariants() {}
 
 };
 

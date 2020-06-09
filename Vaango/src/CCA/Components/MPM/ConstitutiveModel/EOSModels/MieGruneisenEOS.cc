@@ -25,12 +25,12 @@
  */
 
 #include "MieGruneisenEOS.h"
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Default.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>
 
 using namespace Uintah;
-using Vaango::ModelState_Default;
+using Vaango::ModelStateBase;
 
 MieGruneisenEOS::MieGruneisenEOS(ProblemSpecP& ps)
 {
@@ -63,11 +63,9 @@ MieGruneisenEOS::outputProblemSpec(ProblemSpecP& ps)
 // Calculate the pressure using the Mie-Gruneisen equation of state
 double
 MieGruneisenEOS::computePressure(const MPMMaterial* matl,
-                                 const ModelStateBase* state_in, const Matrix3&,
+                                 const ModelStateBase* state, const Matrix3&,
                                  const Matrix3&, const double&)
 {
-  auto state = static_cast<const ModelState_Default*>(state_in);
-
   // Get the state data
   double rho = state->density;
   double T = state->temperature;
@@ -100,10 +98,8 @@ MieGruneisenEOS::computePressure(const MPMMaterial* matl,
 
 double
 MieGruneisenEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
-                            const ModelStateBase* state_in)
+                            const ModelStateBase* state)
 {
-  //auto state = static_cast<const ModelState_Default*>(state_in);
-
   double rho_0 = matl->getInitialDensity();
   double C_0 = d_const.C_0;
   double S_alpha = d_const.S_alpha;
