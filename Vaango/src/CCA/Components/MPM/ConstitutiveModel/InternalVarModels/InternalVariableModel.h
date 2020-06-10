@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -43,6 +43,7 @@ using ParameterDict = std::map<std::string, double>;
 
 class ElasticModuliModel;
 class ShearModulusModel;
+class MPMEquationOfState;
 
 ///////////////////////////////////////////////////////////////////////////
 /*!
@@ -52,149 +53,138 @@ class ShearModulusModel;
 */
 ///////////////////////////////////////////////////////////////////////////
 
+using constParticleDouble     = Uintah::constParticleVariable<double>;
+using constParticleMatrix3    = Uintah::constParticleVariable<Uintah::Matrix3>;
+using ParticleDouble          = Uintah::ParticleVariable<double>;
+using ParticleMatrix3         = Uintah::ParticleVariable<Uintah::Matrix3>;
+using constParticleDoubleVec  = std::vector<constParticleDouble>;
+using constParticleMatrix3Vec = std::vector<constParticleMatrix3>;
+using ParticleDoublePVec      = std::vector<ParticleDouble*>;
+using ParticleMatrix3PVec     = std::vector<ParticleMatrix3*>;
+using ParamMap                = std::map<std::string, double>;
+
 class InternalVariableModel
 {
-
-protected:
-  ElasticModuliModel* d_elastic;
-  ShearModulusModel* d_shear;
 
 public:
   InternalVariableModel();
   virtual ~InternalVariableModel();
 
-  virtual void outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
+  virtual void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) = 0;
 
-  /*!
-    \brief Get the local <double> particle variables
-           For more than one internal variable
-   */
-  virtual std::vector<Uintah::constParticleVariable<double>>
-  getInternalVariables(Uintah::ParticleSubset* pset,
-                       Uintah::DataWarehouse* old_dw, const double& dummy)
-  {
-    Uintah::constParticleVariable<double> pNull;
-    std::vector<Uintah::constParticleVariable<double>> pIntVars;
-    pIntVars.emplace_back(pNull);
-    return pIntVars;
-  }
+  virtual void
+  addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                   std::vector<const Uintah::VarLabel*>& to) = 0;
 
-  /*!
-    \brief Get the local <Matrix3> particle variables
-           For more than one internal variable
+  /* Get the internal variable labels */
+  virtual std::vector<const Uintah::VarLabel*>
+  getLabels() const = 0;
+
+  /* Get the model parameters */
+  virtual ParamMap
+  getParameters() const = 0;
+
+  /* Initialialize
+   *   Sometimes extra parameters from the YieldCondition/Modulus models may
+   *   need to be passed
    */
-  virtual std::vector<Uintah::constParticleVariable<Uintah::Matrix3>>
+  virtual void
+  addInitialComputesAndRequires(Uintah::Task* task,
+                                const Uintah::MPMMaterial* matl,
+                                const Uintah::PatchSet* patches) = 0;
+  virtual void
+  initializeInternalVariable(Uintah::ParticleSubset* pset,
+                             Uintah::DataWarehouse* new_dw) = 0;
+  virtual void
+  initializeInternalVariable(const Uintah::Patch* patch,
+                             const Uintah::MPMMaterial* matl,
+                             Uintah::ParticleSubset* pset,
+                             Uintah::DataWarehouse* new_dw,
+                             Uintah::MPMLabel* lb,
+                             ParamMap& params) = 0;
+
+  /* Compute */
+  virtual void
+  addComputesAndRequires(Uintah::Task* task,
+                         const Uintah::MPMMaterial* matl,
+                         const Uintah::PatchSet* patches) = 0;
+
+  /* If there is only one internal variable */
+  virtual void
+  getInternalVariable(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* old_dw,
+                      Uintah::constParticleVariableBase& intvar) = 0;
+
+  /* Get the local <double> particle variables */
+  virtual constParticleDoubleVec
   getInternalVariables(Uintah::ParticleSubset* pset,
                        Uintah::DataWarehouse* old_dw,
-                       const Uintah::Matrix3& dummy)
-  {
-    Uintah::constParticleVariable<Uintah::Matrix3> pNull;
-    std::vector<Uintah::constParticleVariable<Uintah::Matrix3>> pIntVars;
-    pIntVars.emplace_back(pNull);
-    return pIntVars;
-  }
+                       const double& dummy) = 0;
 
-  /*!
-    \brief Allocate and put the local <double> particle variables
-    For more than one internal variable */
-  typedef std::vector<Uintah::ParticleVariable<double>*> vectorParticleDoubleP;
-  virtual void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                              Uintah::DataWarehouse* new_dw,
-                                              vectorParticleDoubleP& pVars)
-  {
-  }
-
-  /*!
-    \brief Allocate and put the local <Matrix3> particle variables
-    For more than one internal variable */
-  typedef std::vector<Uintah::ParticleVariable<Uintah::Matrix3>*>
-    vectorParticleMatrix3P;
-  virtual void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                              Uintah::DataWarehouse* new_dw,
-                                              vectorParticleMatrix3P& pVars)
-  {
-  }
-
-  /*!
-    \brief Get the internal variable labels
-   */
-  virtual std::vector<const Uintah::VarLabel*> getLabels() const = 0;
-
-  /////////////////////////////////////////////////////////////////////////
-  /*!
-    \brief Get the model parameters
-   */
-  /////////////////////////////////////////////////////////////////////////
-  virtual std::map<std::string, double> getParameters() const = 0;
-
-  // Initial computes and requires for internal evolution variables
-  virtual void addInitialComputesAndRequires(Uintah::Task* task,
-                                             const Uintah::MPMMaterial* matl,
-                                             const Uintah::PatchSet* patches){};
-
-  // Actual initialization
-  virtual void initializeInternalVariable(Uintah::ParticleSubset* pset,
-                                          Uintah::DataWarehouse* new_dw){};
-
-  // Sometimes extra parameters from the YieldCondition/Modulus models may
-  // need to be passed
-  virtual void initializeInternalVariable(const Uintah::Patch* patch,
-                                          const Uintah::MPMMaterial* matl,
-                                          Uintah::ParticleSubset* pset,
-                                          Uintah::DataWarehouse* new_dw,
-                                          Uintah::MPMLabel* lb,
-                                          std::map<std::string, double>& params)
-  {
-  }
-
-  // Computes and requires for internal evolution variables
-  virtual void addComputesAndRequires(Uintah::Task* task,
-                                      const Uintah::MPMMaterial* matl,
-                                      const Uintah::PatchSet* patches){};
-
-  virtual void allocateCMDataAddRequires(Uintah::Task* task,
-                                         const Uintah::MPMMaterial* matl,
-                                         const Uintah::PatchSet* patch,
-                                         Uintah::MPMLabel* lb){};
-
-  virtual void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
-                                 Uintah::ParticleSubset* addset,
-                                 Uintah::ParticleLabelVariableMap* newstate,
-                                 Uintah::ParticleSubset* delset,
-                                 Uintah::DataWarehouse* old_dw){};
-
-  virtual void addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                                std::vector<const Uintah::VarLabel*>& to){};
+  /* Get the local <Matrix3> particle variables */
+  virtual constParticleMatrix3Vec
+  getInternalVariables(Uintah::ParticleSubset* pset,
+                       Uintah::DataWarehouse* old_dw,
+                       const Uintah::Matrix3& dummy) = 0;
 
   /* If there is only one internal variable */
-  virtual void getInternalVariable(Uintah::ParticleSubset* pset,
-                                   Uintah::DataWarehouse* old_dw,
-                                   Uintah::constParticleVariableBase& intvar){};
+  virtual void
+  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                 Uintah::DataWarehouse* new_dw,
+                                 Uintah::ParticleVariableBase& intvar) = 0;
 
-  /* If there is only one internal variable */
-  virtual void allocateAndPutInternalVariable(
-    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* new_dw,
-    Uintah::ParticleVariableBase& intvar){};
+  /* Allocate and put the local <double> particle variables */
+  virtual void
+  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                 Uintah::DataWarehouse* new_dw,
+                                 ParticleDoublePVec& pVars) = 0;
 
-  /* If there is only one internal variable */
-  virtual void allocateAndPutRigid(Uintah::ParticleSubset* pset,
-                                   Uintah::DataWarehouse* new_dw,
-                                   Uintah::constParticleVariableBase& intvar){};
+  /* Allocate and put the local <Matrix3> particle variables */
+  virtual void
+  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                 Uintah::DataWarehouse* new_dw,
+                                 ParticleMatrix3PVec& pVars) = 0;
 
-  /* For more than one internal variable */
-  virtual void allocateAndPutRigid(
-    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* new_dw,
-    Uintah::constParticleLabelVariableMap& intvars){};
+  /*! Compute the internal variable and return new value  */
+  virtual double
+  computeInternalVariable(const Uintah::VarLabel* label,
+                          const ModelStateBase* state) const = 0;
 
-  ///////////////////////////////////////////////////////////////////////////
-  /*! \brief Compute the internal variable and return new value  */
-  virtual double computeInternalVariable(const ModelStateBase* state) const = 0;
-
-  ///////////////////////////////////////////////////////////////////////////
-  // Compute derivative of internal variable with respect to volumetric
-  // elastic strain
-  virtual double computeVolStrainDerivOfInternalVariable(
+  /* Compute derivative of internal variable with respect to volumetric
+     elastic strain */
+  virtual double
+  computeVolStrainDerivOfInternalVariable(
+    const Uintah::VarLabel* label,
     const ModelStateBase* state) const = 0;
+
+  /* For material conversion */
+  virtual void
+  allocateCMDataAddRequires(Uintah::Task* task,
+                            const Uintah::MPMMaterial* matl,
+                            const Uintah::PatchSet* patch,
+                            Uintah::MPMLabel* lb) = 0;
+  virtual void
+  allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
+                    Uintah::ParticleSubset* addset,
+                    Uintah::ParticleLabelVariableMap* newstate,
+                    Uintah::ParticleSubset* delset,
+                    Uintah::DataWarehouse* old_dw) = 0;
+
+  /* For RigidMPM */
+  virtual void
+  allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* new_dw,
+                      Uintah::constParticleVariableBase& intvar) = 0;
+  virtual void
+  allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* new_dw,
+                      Uintah::constParticleLabelVariableMap& intvars) = 0;
+
+protected:
+  ElasticModuliModel* d_elastic;
+  ShearModulusModel* d_shear;
+  MPMEquationOfState* d_eos;
 };
 } // End namespace Uintah
 

@@ -35,6 +35,7 @@ using Vaango::ModelStateBase;
 // Construct a specific heat model.
 SteelCp::SteelCp(ProblemSpecP& ps)
 {
+  // Defaults are for 4340 steel
   d_Tc = 1040.0;
   ps->get("T_transition", d_Tc);
   d_A0 = 190.14;

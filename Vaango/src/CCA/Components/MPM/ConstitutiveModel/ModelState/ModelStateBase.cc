@@ -54,6 +54,8 @@ ModelStateBase::ModelStateBase()
   backStress = nullptr;
   I1 = 0.0;
   J2 = 0.0;
+  p = 0.0;
+  q = 0.0;
 }
 
 ModelStateBase::ModelStateBase(const ModelStateBase& state)
@@ -107,13 +109,19 @@ ModelStateBase::operator=(const ModelStateBase* state)
   backStress = state->backStress;
   I1 = state->I1;
   J2 = state->J2;
+  p = state->p;
+  q = state->q;
   return this;
 }
 
-void 
+Uintah::Matrix3
 ModelStateBase::updateStressInvariants(const Uintah::Matrix3& stress)
 {
-  Uintah::Matrix3 sdev = stress - Vaango::Util::Identity * (I1 / 3.0); 
   I1 = stress.Trace(); 
-  J2 = 0.5 * sdev.Contract(sdev);
+  p = I1 / 3.0;
+  pressure = p;
+  Uintah::Matrix3 devStress = stress - Vaango::Util::Identity * p; 
+  J2 = 0.5 * devStress.Contract(devStress);
+  q = std::sqrt(3.0 * J2);
+  return devStress;
 }

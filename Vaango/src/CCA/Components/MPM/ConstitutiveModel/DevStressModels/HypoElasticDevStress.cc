@@ -50,7 +50,7 @@ HypoElasticDevStress::computeDeviatoricStressInc(
 {
   // proc0cout << " HypoElasticDevStress:computeDevStessInc " << endl;
   double mu = plaState->shearModulus;
-  defState->devStressInc = defState->tensorEta * (2.0 * mu * delT);
+  defState->devStressInc = defState->devD * (2.0 * mu * delT);
 }
 
 //______________________________________________________________________

@@ -172,7 +172,7 @@ YieldCond_CamClay::d2f_dp_depsVol(
 {
   double dpdepsev = eos->computeDpDepse_v(state_input);
   double dpcdepsev =
-    intvar->computeVolStrainDerivOfInternalVariable(state_input);
+    intvar->computeVolStrainDerivOfInternalVariable(nullptr, state_input);
   return 2.0 * dpdepsev - dpcdepsev;
 }
 
@@ -251,7 +251,7 @@ YieldCond_CamClay::df_depsVol(
   double dqdepsev = shear->computeDqDepse_v(state_input);
   double dpdepsev = eos->computeDpDepse_v(state_input);
   double dpcdepsev =
-    intvar->computeVolStrainDerivOfInternalVariable(state_input);
+    intvar->computeVolStrainDerivOfInternalVariable(nullptr, state_input);
   double dfdepsev = dfdq * dqdepsev + dfdp * dpdepsev - state->p * dpcdepsev;
 
   return dfdepsev;

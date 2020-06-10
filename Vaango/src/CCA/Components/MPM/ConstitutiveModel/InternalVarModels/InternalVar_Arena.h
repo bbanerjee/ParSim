@@ -42,7 +42,6 @@ namespace Vaango {
 
 class InternalVar_Arena : public InternalVariableModel
 {
-
 public:
   // Internal variables
   const Uintah::VarLabel* pKappaLabel; // Branch point
@@ -60,61 +59,35 @@ public:
   const Uintah::VarLabel* pP3Label; // Evolution of parameter P3
   const Uintah::VarLabel* pP3Label_preReloc;
 
-  // Get the internal variables
-  std::vector<Uintah::constParticleVariable<double>> getInternalVariables(
-    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* old_dw,
-    const double& dummy) override
+  // constructors
+  InternalVar_Arena(Uintah::ProblemSpecP& ps, ElasticModuliModel* elastic);
+  InternalVar_Arena(const InternalVar_Arena* cm);
+
+  // destructor
+  ~InternalVar_Arena() override;
+
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+
+  void
+  addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                   std::vector<const Uintah::VarLabel*>& to) override;
+
+  /*! Get parameters */
+  ParameterDict
+  getParameters() const override
   {
-    Uintah::constParticleVariable<double> pKappa, pCapX, pPlasticVolStrain, pP3;
-    old_dw->get(pKappa, pKappaLabel, pset);
-    old_dw->get(pCapX, pCapXLabel, pset);
-    old_dw->get(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
-    old_dw->get(pP3, pP3Label, pset);
-
-    std::vector<Uintah::constParticleVariable<double>> pIntVars;
-    pIntVars.emplace_back(pKappa);
-    pIntVars.emplace_back(pCapX);
-    pIntVars.emplace_back(pPlasticVolStrain);
-    pIntVars.emplace_back(pP3);
-
-    return pIntVars;
-  }
-
-  std::vector<Uintah::constParticleVariable<Uintah::Matrix3>>
-  getInternalVariables(Uintah::ParticleSubset* pset,
-                       Uintah::DataWarehouse* old_dw,
-                       const Uintah::Matrix3& dummy) override
-  {
-    Uintah::constParticleVariable<Uintah::Matrix3> pPlasticStrain;
-    old_dw->get(pPlasticStrain, pPlasticStrainLabel, pset);
-
-    std::vector<Uintah::constParticleVariable<Uintah::Matrix3>> pIntVars;
-    pIntVars.emplace_back(pPlasticStrain);
-
-    return pIntVars;
-  }
-
-  // Allocate and put the local particle internal variables
-  void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                      Uintah::DataWarehouse* new_dw,
-                                      vectorParticleDoubleP& pVars) override
-  {
-    new_dw->allocateAndPut(*pVars[0], pKappaLabel_preReloc, pset);
-    new_dw->allocateAndPut(*pVars[1], pCapXLabel_preReloc, pset);
-    new_dw->allocateAndPut(*pVars[2], pPlasticVolStrainLabel_preReloc, pset);
-    new_dw->allocateAndPut(*pVars[3], pP3Label_preReloc, pset);
-  }
-
-  // Allocate and put the local <Matrix3> particle variables
-  void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                      Uintah::DataWarehouse* new_dw,
-                                      vectorParticleMatrix3P& pVars) override
-  {
-    new_dw->allocateAndPut(*pVars[0], pPlasticStrainLabel_preReloc, pset);
+    ParameterDict params;
+    params["p0"] = d_crushParam.p0;
+    params["p1"] = d_crushParam.p1;
+    params["p2"] = d_crushParam.p2;
+    params["p3"] = d_crushParam.p3;
+    return params;
   }
 
   // Return the internal variable labels
-  std::vector<const Uintah::VarLabel*> getLabels() const override
+  std::vector<const Uintah::VarLabel*>
+  getLabels() const override
   {
     std::vector<const Uintah::VarLabel*> labels;
     labels.push_back(pKappaLabel); // Branch point
@@ -135,6 +108,135 @@ public:
     return labels;
   }
 
+  // Computes and requires for internal evolution variables
+  void
+  addInitialComputesAndRequires(Uintah::Task* task,
+                                const Uintah::MPMMaterial* matl,
+                                const Uintah::PatchSet* patches) override;
+  void
+  initializeInternalVariable(Uintah::ParticleSubset* pset,
+                             Uintah::DataWarehouse* new_dw) override
+  {
+  }
+  void
+  initializeInternalVariable(const Uintah::Patch* patch,
+                             const Uintah::MPMMaterial* matl,
+                             Uintah::ParticleSubset* pset,
+                             Uintah::DataWarehouse* new_dw,
+                             Uintah::MPMLabel* lb,
+                             ParameterDict& params) override;
+
+  void
+  addComputesAndRequires(Uintah::Task* task,
+                         const Uintah::MPMMaterial* matl,
+                         const Uintah::PatchSet* patches) override;
+
+  /* If there is only one internal variable */
+  void
+  getInternalVariable(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* old_dw,
+                      Uintah::constParticleVariableBase& intvar) override {}
+
+  // Get the internal variables
+  constParticleDoubleVec
+  getInternalVariables(Uintah::ParticleSubset* pset,
+                       Uintah::DataWarehouse* old_dw,
+                       const double& dummy) override
+  {
+    Uintah::constParticleVariable<double> pKappa, pCapX, pPlasticVolStrain, pP3;
+    old_dw->get(pKappa, pKappaLabel, pset);
+    old_dw->get(pCapX, pCapXLabel, pset);
+    old_dw->get(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
+    old_dw->get(pP3, pP3Label, pset);
+
+    std::vector<Uintah::constParticleVariable<double>> pIntVars;
+    pIntVars.emplace_back(pKappa);
+    pIntVars.emplace_back(pCapX);
+    pIntVars.emplace_back(pPlasticVolStrain);
+    pIntVars.emplace_back(pP3);
+
+    return pIntVars;
+  }
+
+  constParticleMatrix3Vec
+  getInternalVariables(Uintah::ParticleSubset* pset,
+                       Uintah::DataWarehouse* old_dw,
+                       const Uintah::Matrix3& dummy) override
+  {
+    Uintah::constParticleVariable<Uintah::Matrix3> pPlasticStrain;
+    old_dw->get(pPlasticStrain, pPlasticStrainLabel, pset);
+
+    std::vector<Uintah::constParticleVariable<Uintah::Matrix3>> pIntVars;
+    pIntVars.emplace_back(pPlasticStrain);
+
+    return pIntVars;
+  }
+
+  /* If there is only one internal variable */
+  void
+  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                 Uintah::DataWarehouse* new_dw,
+                                 Uintah::ParticleVariableBase& intvar) override {}
+
+  // Allocate and put the local particle internal variables
+  void
+  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                 Uintah::DataWarehouse* new_dw,
+                                 ParticleDoublePVec& pVars) override
+  {
+    new_dw->allocateAndPut(*pVars[0], pKappaLabel_preReloc, pset);
+    new_dw->allocateAndPut(*pVars[1], pCapXLabel_preReloc, pset);
+    new_dw->allocateAndPut(*pVars[2], pPlasticVolStrainLabel_preReloc, pset);
+    new_dw->allocateAndPut(*pVars[3], pP3Label_preReloc, pset);
+  }
+
+  // Allocate and put the local <Matrix3> particle variables
+  void
+  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                 Uintah::DataWarehouse* new_dw,
+                                 ParticleMatrix3PVec& pVars) override
+  {
+    new_dw->allocateAndPut(*pVars[0], pPlasticStrainLabel_preReloc, pset);
+  }
+
+  /*! \brief Compute the internal variable */
+  double
+  computeInternalVariable(const Uintah::VarLabel* label,
+                          const ModelStateBase* state) const override;
+
+  // Compute derivative of internal variable with respect to volumetric
+  // elastic strain
+  double
+  computeVolStrainDerivOfInternalVariable(const Uintah::VarLabel* label,
+                                          const ModelStateBase*) const override
+  {
+    return 0.0;
+  }
+
+  void
+  allocateCMDataAddRequires(Uintah::Task* task,
+                            const Uintah::MPMMaterial* matl,
+                            const Uintah::PatchSet* patch,
+                            Uintah::MPMLabel* lb) override;
+
+  void
+  allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
+                    Uintah::ParticleSubset* addset,
+                    Uintah::ParticleLabelVariableMap* newState,
+                    Uintah::ParticleSubset* delset,
+                    Uintah::DataWarehouse* old_dw) override;
+
+
+  /* For RigidMPM */
+  virtual void
+  allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* new_dw,
+                      Uintah::constParticleVariableBase& intvar) override {}
+  void
+  allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* new_dw,
+                      Uintah::constParticleLabelVariableMap& intvar) override;
+
 private:
   // Crush Curve Model parameters
   struct CrushParameters
@@ -151,10 +253,12 @@ private:
   // Prevent copying of this class
   // copy constructor
   // InternalVar_Arena(const InternalVar_Arena &cm);
-  InternalVar_Arena& operator=(const InternalVar_Arena& cm);
+  InternalVar_Arena&
+  operator=(const InternalVar_Arena& cm);
 
   // Initialize local VarLabels
-  void initializeLocalMPMLabels()
+  void
+  initializeLocalMPMLabels()
   {
     pKappaLabel = Uintah::VarLabel::create(
       "p.kappa", Uintah::ParticleVariable<double>::getTypeDescription());
@@ -187,79 +291,6 @@ private:
   }
 
 public:
-  // constructors
-  InternalVar_Arena(Uintah::ProblemSpecP& ps, ElasticModuliModel* elastic);
-  InternalVar_Arena(const InternalVar_Arena* cm);
-
-  // destructor
-  ~InternalVar_Arena() override;
-
-  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
-
-  /*! Get parameters */
-  ParameterDict getParameters() const override
-  {
-    ParameterDict params;
-    params["p0"] = d_crushParam.p0;
-    params["p1"] = d_crushParam.p1;
-    params["p2"] = d_crushParam.p2;
-    params["p3"] = d_crushParam.p3;
-    return params;
-  }
-
-  // Computes and requires for internal evolution variables
-  void addInitialComputesAndRequires(Uintah::Task* task,
-                                     const Uintah::MPMMaterial* matl,
-                                     const Uintah::PatchSet* patches) override;
-
-  void initializeInternalVariable(Uintah::ParticleSubset* pset,
-                                  Uintah::DataWarehouse* new_dw) override
-  {
-  }
-
-  void initializeInternalVariable(const Uintah::Patch* patch,
-                                  const Uintah::MPMMaterial* matl,
-                                  Uintah::ParticleSubset* pset,
-                                  Uintah::DataWarehouse* new_dw,
-                                  Uintah::MPMLabel* lb,
-                                  ParameterDict& params) override;
-
-  void addComputesAndRequires(Uintah::Task* task,
-                              const Uintah::MPMMaterial* matl,
-                              const Uintah::PatchSet* patches) override;
-
-  void allocateCMDataAddRequires(Uintah::Task* task,
-                                 const Uintah::MPMMaterial* matl,
-                                 const Uintah::PatchSet* patch,
-                                 Uintah::MPMLabel* lb) override;
-
-  void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
-                         Uintah::ParticleSubset* addset,
-                         Uintah::ParticleLabelVariableMap* newState,
-                         Uintah::ParticleSubset* delset,
-                         Uintah::DataWarehouse* old_dw) override;
-
-  void addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                        std::vector<const Uintah::VarLabel*>& to) override;
-
-  void allocateAndPutRigid(
-    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* new_dw,
-    Uintah::constParticleLabelVariableMap& intvar) override;
-
-  ///////////////////////////////////////////////////////////////////////////
-  /*! \brief Compute the internal variable */
-  double computeInternalVariable(const ModelStateBase* state) const override;
-
-  ///////////////////////////////////////////////////////////////////////////
-  // Compute derivative of internal variable with respect to volumetric
-  // elastic strain
-  double computeVolStrainDerivOfInternalVariable(
-    const ModelStateBase*) const override
-  {
-    return 0.0;
-  }
-
-private:
   /**
    * Function: computeDrainedHydrostaticStrength
    *
@@ -274,8 +305,9 @@ private:
    * Returns:
    *   Xbar     = hydrostatic compressive strength
    */
-  double computeDrainedHydrostaticStrength(const double& ep_v_bar,
-                                           const double& phi0) const;
+  double
+  computeDrainedHydrostaticStrength(const double& ep_v_bar,
+                                    const double& phi0) const;
 
   /**
    * Function: computeP3
@@ -289,7 +321,8 @@ private:
    * Returns:
    *   p3 = crush curve parameter
    */
-  inline double computeP3(const double& phi0) const
+  inline double
+  computeP3(const double& phi0) const
   {
     double p3 = -std::log(1.0 - phi0);
     return p3;
@@ -308,7 +341,8 @@ private:
    * Returns:
    *   porosity = porosity from crush curve parameter
    */
-  inline double computePorosity(const double& ep_v, const double& p3) const
+  inline double
+  computePorosity(const double& ep_v, const double& p3) const
   {
     double porosity = 1.0 - std::exp(-p3 + ep_v);
     return porosity;
@@ -327,8 +361,9 @@ private:
    * Returns:
    *   ev_e_yield = elastic volumetric strain at yield
    */
-  double computeElasticVolStrainAtYield(const double& ep_v_bar,
-                                        const double& phi0) const;
+  double
+  computeElasticVolStrainAtYield(const double& ep_v_bar,
+                                 const double& phi0) const;
 
   /**
    * Function: computePartSatHydrostaticStrength
@@ -347,11 +382,13 @@ private:
    * Returns:
    *   Xbar_sat = hydrostatic compressive strength
    */
-  double computePartSatHydrostaticStrength(const double& I1_bar,
-                                           const double& pw_bar,
-                                           const double& ep_v_bar,
-                                           const double& phi, const double& Sw,
-                                           const double& phi0) const;
+  double
+  computePartSatHydrostaticStrength(const double& I1_bar,
+                                    const double& pw_bar,
+                                    const double& ep_v_bar,
+                                    const double& phi,
+                                    const double& Sw,
+                                    const double& phi0) const;
 };
 
 } // End namespace Uintah

@@ -32,7 +32,7 @@
 
 namespace Vaango {
 
-  using Polyline = std::vector<Uintah::Point>;
+using Polyline = std::vector<Uintah::Point>;
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
@@ -46,7 +46,6 @@ class InternalVar_TabularCap : public InternalVariableModel
 {
 
 public:
-
   const Uintah::VarLabel* pCapXLabel; // Hydrostatic strength
   const Uintah::VarLabel* pCapXLabel_preReloc;
 
@@ -57,82 +56,106 @@ public:
   // destructor
   ~InternalVar_TabularCap() override;
 
-  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
   /*! Get parameters */
-  ParameterDict getParameters() const override
+  ParameterDict
+  getParameters() const override
   {
     ParameterDict params;
     return params;
   }
 
   // Computes and requires for internal evolution variables
-  void addInitialComputesAndRequires(Uintah::Task* task,
-                                     const Uintah::MPMMaterial* matl,
-                                     const Uintah::PatchSet* patches) override;
+  void
+  addInitialComputesAndRequires(Uintah::Task* task,
+                                const Uintah::MPMMaterial* matl,
+                                const Uintah::PatchSet* patches) override;
 
-  void initializeInternalVariable(Uintah::ParticleSubset* pset,
-                                  Uintah::DataWarehouse* new_dw) override;
+  void
+  initializeInternalVariable(Uintah::ParticleSubset* pset,
+                             Uintah::DataWarehouse* new_dw) override;
 
-  void initializeInternalVariable(const Uintah::Patch* patch,
-                                  const Uintah::MPMMaterial* matl,
-                                  Uintah::ParticleSubset* pset,
-                                  Uintah::DataWarehouse* new_dw,
-                                  Uintah::MPMLabel* lb,
-                                  ParameterDict& params) override
+  void
+  initializeInternalVariable(const Uintah::Patch* patch,
+                             const Uintah::MPMMaterial* matl,
+                             Uintah::ParticleSubset* pset,
+                             Uintah::DataWarehouse* new_dw,
+                             Uintah::MPMLabel* lb,
+                             ParameterDict& params) override
   {
   }
 
-  void addComputesAndRequires(Uintah::Task* task,
-                              const Uintah::MPMMaterial* matl,
-                              const Uintah::PatchSet* patches) override;
+  void
+  addComputesAndRequires(Uintah::Task* task,
+                         const Uintah::MPMMaterial* matl,
+                         const Uintah::PatchSet* patches) override;
 
-  void allocateCMDataAddRequires(Uintah::Task* task,
-                                 const Uintah::MPMMaterial* matl,
-                                 const Uintah::PatchSet* patch,
-                                 Uintah::MPMLabel* lb) override;
+  void
+  allocateCMDataAddRequires(Uintah::Task* task,
+                            const Uintah::MPMMaterial* matl,
+                            const Uintah::PatchSet* patch,
+                            Uintah::MPMLabel* lb) override;
 
-  void allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
-                         Uintah::ParticleSubset* addset,
-                         Uintah::ParticleLabelVariableMap* newState,
-                         Uintah::ParticleSubset* delset,
-                         Uintah::DataWarehouse* old_dw) override;
+  void
+  allocateCMDataAdd(Uintah::DataWarehouse* new_dw,
+                    Uintah::ParticleSubset* addset,
+                    Uintah::ParticleLabelVariableMap* newState,
+                    Uintah::ParticleSubset* delset,
+                    Uintah::DataWarehouse* old_dw) override;
 
-  void addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                        std::vector<const Uintah::VarLabel*>& to) override;
+  void
+  addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                   std::vector<const Uintah::VarLabel*>& to) override;
 
-  void allocateAndPutRigid(
-    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* new_dw,
-    Uintah::constParticleLabelVariableMap& intvar) override;
+  virtual void
+  allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* new_dw,
+                      Uintah::constParticleVariableBase& intvar) override
+  {
+  }
+
+  void
+  allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* new_dw,
+                      Uintah::constParticleLabelVariableMap& intvar) override;
 
   ///////////////////////////////////////////////////////////////////////////
   /*! \brief Compute the internal variable */
-  double computeInternalVariable(const ModelStateBase* state) const override;
+  double
+  computeInternalVariable(const Uintah::VarLabel* label,
+                          const ModelStateBase* state) const override;
 
   ///////////////////////////////////////////////////////////////////////////
   // Compute derivative of internal variable with respect to volumetric
   // plastic strain
-  double computeVolStrainDerivOfInternalVariable(const ModelStateBase*) const 
-    override;
+  double
+  computeVolStrainDerivOfInternalVariable(const Uintah::VarLabel* label,
+                                          const ModelStateBase*) const override;
 
-  void getInternalVariable(Uintah::ParticleSubset* pset,
-                           Uintah::DataWarehouse* old_dw,
-                           Uintah::constParticleVariableBase& pCapX) override
+  void
+  getInternalVariable(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* old_dw,
+                      Uintah::constParticleVariableBase& pCapX) override
   {
     old_dw->get(pCapX, pCapXLabel, pset);
   }
 
-  void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset, 
-                                      Uintah::DataWarehouse* new_dw,
-                                      Uintah::ParticleVariableBase& pCapX_new) override
+  void
+  allocateAndPutInternalVariable(
+    Uintah::ParticleSubset* pset,
+    Uintah::DataWarehouse* new_dw,
+    Uintah::ParticleVariableBase& pCapX_new) override
   {
     new_dw->allocateAndPut(pCapX_new, pCapXLabel_preReloc, pset);
   }
 
   // Get the internal variables
-  std::vector<Uintah::constParticleVariable<double>> getInternalVariables(
-    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* old_dw,
-    const double& dummy) override
+  std::vector<Uintah::constParticleVariable<double>>
+  getInternalVariables(Uintah::ParticleSubset* pset,
+                       Uintah::DataWarehouse* old_dw,
+                       const double& dummy) override
   {
     std::vector<Uintah::constParticleVariable<double>> pIntVars;
     return pIntVars;
@@ -148,21 +171,24 @@ public:
   }
 
   // Allocate and put the local particle internal variables
-  void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                      Uintah::DataWarehouse* new_dw,
-                                      vectorParticleDoubleP& pVars) override
+  void
+  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                 Uintah::DataWarehouse* new_dw,
+                                 ParticleDoublePVec& pVars) override
   {
   }
 
   // Allocate and put the local <Matrix3> particle variables
-  void allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                      Uintah::DataWarehouse* new_dw,
-                                      vectorParticleMatrix3P& pVars) override
+  void
+  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                 Uintah::DataWarehouse* new_dw,
+                                 ParticleMatrix3PVec& pVars) override
   {
   }
 
   // Return the internal variable labels
-  std::vector<const Uintah::VarLabel*> getLabels() const override
+  std::vector<const Uintah::VarLabel*>
+  getLabels() const override
   {
     std::vector<const Uintah::VarLabel*> labels;
 
@@ -173,7 +199,6 @@ public:
   }
 
 private:
-
   /**
    *  These are the parameters that are read from the input file
    */
@@ -190,7 +215,8 @@ private:
     {
       table = hsf.table;
     }
-    HydrostaticStrengthFunction& operator=(const HydrostaticStrengthFunction& hsf)
+    HydrostaticStrengthFunction&
+    operator=(const HydrostaticStrengthFunction& hsf)
     {
       if (this != &hsf) {
         table = hsf.table;
@@ -203,11 +229,13 @@ private:
 
   // Prevent copying of this class
   // copy constructor
-  InternalVar_TabularCap(const InternalVar_TabularCap &cm) = delete;
-  InternalVar_TabularCap& operator=(const InternalVar_TabularCap& cm);
+  InternalVar_TabularCap(const InternalVar_TabularCap& cm) = delete;
+  InternalVar_TabularCap&
+  operator=(const InternalVar_TabularCap& cm);
 
   // Initialize local VarLabels
-  void initializeLocalMPMLabels()
+  void
+  initializeLocalMPMLabels()
   {
     pCapXLabel = Uintah::VarLabel::create(
       "p.capX", Uintah::ParticleVariable<double>::getTypeDescription());
@@ -228,8 +256,8 @@ private:
    * Returns:
    *   Xbar     = hydrostatic compressive strength
    */
-  double computeDrainedHydrostaticStrength(const double& ep_v_bar) const;
-
+  double
+  computeDrainedHydrostaticStrength(const double& ep_v_bar) const;
 };
 
 } // End namespace Vaango

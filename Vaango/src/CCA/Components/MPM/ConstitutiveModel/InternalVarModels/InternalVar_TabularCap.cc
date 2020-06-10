@@ -39,20 +39,19 @@
 
 using namespace Vaango;
 
-using VarLabel       = Uintah::VarLabel;
-using ProblemSpecP   = Uintah::ProblemSpecP;
-using MPMMaterial    = Uintah::MPMMaterial;
-using PatchSet       = Uintah::PatchSet;
-using MaterialSubset = Uintah::MaterialSubset;
-using Patch          = Uintah::Patch;
-using ParticleSubset = Uintah::ParticleSubset;
-using DataWarehouse  = Uintah::DataWarehouse;
-using MPMLabel       = Uintah::MPMLabel;
-using Task           = Uintah::Task;
-using Ghost          = Uintah::Ghost;
+using VarLabel                      = Uintah::VarLabel;
+using ProblemSpecP                  = Uintah::ProblemSpecP;
+using MPMMaterial                   = Uintah::MPMMaterial;
+using PatchSet                      = Uintah::PatchSet;
+using MaterialSubset                = Uintah::MaterialSubset;
+using Patch                         = Uintah::Patch;
+using ParticleSubset                = Uintah::ParticleSubset;
+using DataWarehouse                 = Uintah::DataWarehouse;
+using MPMLabel                      = Uintah::MPMLabel;
+using Task                          = Uintah::Task;
+using Ghost                         = Uintah::Ghost;
 using ParticleLabelVariableMap      = Uintah::ParticleLabelVariableMap;
 using constParticleLabelVariableMap = Uintah::constParticleLabelVariableMap;
-
 
 /*!-----------------------------------------------------*/
 InternalVar_TabularCap::InternalVar_TabularCap(Uintah::ProblemSpecP& ps)
@@ -90,29 +89,30 @@ InternalVar_TabularCap::outputProblemSpec(ProblemSpecP& ps)
 /*!-----------------------------------------------------*/
 void
 InternalVar_TabularCap::addInitialComputesAndRequires(Task* task,
-                                                 const MPMMaterial* matl,
-                                                 const PatchSet*)
+                                                      const MPMMaterial* matl,
+                                                      const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pCapXLabel, matlset);
 }
 
 /*!-----------------------------------------------------*/
-void 
-InternalVar_TabularCap::initializeInternalVariable(Uintah::ParticleSubset* pset,
-                                                   Uintah::DataWarehouse* new_dw)
+void
+InternalVar_TabularCap::initializeInternalVariable(
+  Uintah::ParticleSubset* pset,
+  Uintah::DataWarehouse* new_dw)
 {
   Uintah::ParticleVariable<double> pCapX;
   new_dw->allocateAndPut(pCapX, pCapXLabel, pset);
 
-  #ifdef USE_TOTAL_STRAIN
-    // The table is of the form x -> ev_bar, y -> X_p_bar = X_bar/3
-    double capX = -1000;
-  #else
-    // The table is of the form x -> ev_p_bar, y -> X_p_bar = X_bar/3
-    DoubleVec1D gg = d_capX_fn.table.interpolate<1>({{0.0}}); 
-    double capX = -gg[0] * 3.0;
-  #endif
+#ifdef USE_TOTAL_STRAIN
+  // The table is of the form x -> ev_bar, y -> X_p_bar = X_bar/3
+  double capX = -1000;
+#else
+  // The table is of the form x -> ev_p_bar, y -> X_p_bar = X_bar/3
+  DoubleVec1D gg = d_capX_fn.table.interpolate<1>({ { 0.0 } });
+  double capX    = -gg[0] * 3.0;
+#endif
 
   for (auto particle : *pset) {
     pCapX[particle] = capX;
@@ -121,8 +121,9 @@ InternalVar_TabularCap::initializeInternalVariable(Uintah::ParticleSubset* pset,
 
 /*!-----------------------------------------------------*/
 void
-InternalVar_TabularCap::addComputesAndRequires(Task* task, const MPMMaterial* matl,
-                                          const PatchSet*)
+InternalVar_TabularCap::addComputesAndRequires(Task* task,
+                                               const MPMMaterial* matl,
+                                               const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::OldDW, pCapXLabel, matlset, Ghost::None);
@@ -132,7 +133,7 @@ InternalVar_TabularCap::addComputesAndRequires(Task* task, const MPMMaterial* ma
 /*!-----------------------------------------------------*/
 void
 InternalVar_TabularCap::addParticleState(std::vector<const VarLabel*>& from,
-                                    std::vector<const VarLabel*>& to)
+                                         std::vector<const VarLabel*>& to)
 {
   from.push_back(pCapXLabel);
   to.push_back(pCapXLabel_preReloc);
@@ -143,6 +144,7 @@ InternalVar_TabularCap::addParticleState(std::vector<const VarLabel*>& from,
 //--------------------------------------------------------------------------------------
 double
 InternalVar_TabularCap::computeInternalVariable(
+  const Uintah::VarLabel* label,
   const ModelStateBase* state_input) const
 {
   const ModelState_TabularCap* state =
@@ -156,20 +158,20 @@ InternalVar_TabularCap::computeInternalVariable(
   }
   */
 
-  double ep_v = state->ep_v;
+  double ep_v      = state->ep_v;
   double X_bar_new = -state->capX;
   if (ep_v > 0.0) { // tension
     X_bar_new = computeDrainedHydrostaticStrength(0.0);
   } else {
-    #ifdef USE_TOTAL_STRAIN
-      // The table is of the form x -> ev_bar, y -> X_p_bar = X_bar/3
-      double ev_bar = -ep_v - state->elasticStrainTensor.Trace();
-      X_bar_new = computeDrainedHydrostaticStrength(ev_bar);
-    #else
-      // The table is of the form x -> ep_v_bar, y -> X_p_bar = X_bar/3
-      double ep_v_bar = -ep_v;
-      X_bar_new = computeDrainedHydrostaticStrength(ep_v_bar);
-    #endif
+#ifdef USE_TOTAL_STRAIN
+    // The table is of the form x -> ev_bar, y -> X_p_bar = X_bar/3
+    double ev_bar = -ep_v - state->elasticStrainTensor.Trace();
+    X_bar_new     = computeDrainedHydrostaticStrength(ev_bar);
+#else
+    // The table is of the form x -> ep_v_bar, y -> X_p_bar = X_bar/3
+    double ep_v_bar = -ep_v;
+    X_bar_new       = computeDrainedHydrostaticStrength(ep_v_bar);
+#endif
   }
 
   double X_new = -X_bar_new;
@@ -181,9 +183,10 @@ InternalVar_TabularCap::computeInternalVariable(
  *  Compute drained hydrostatic strength
  */
 double
-InternalVar_TabularCap::computeDrainedHydrostaticStrength(const double& ep_v_bar) const
+InternalVar_TabularCap::computeDrainedHydrostaticStrength(
+  const double& ep_v_bar) const
 {
-  DoubleVec1D gg = d_capX_fn.table.interpolate<1>({{ep_v_bar}}); 
+  DoubleVec1D gg       = d_capX_fn.table.interpolate<1>({ { ep_v_bar } });
   double X_bar_drained = gg[0] * 3.0;
 
   return X_bar_drained;
@@ -193,9 +196,10 @@ InternalVar_TabularCap::computeDrainedHydrostaticStrength(const double& ep_v_bar
  *  Compute derivative of internal variable with respect to volumetric
  *  plastic strain
  */
-double 
+double
 InternalVar_TabularCap::computeVolStrainDerivOfInternalVariable(
-  const ModelStateBase* state_input) const 
+  const Uintah::VarLabel*, 
+  const ModelStateBase* state_input) const
 {
   const ModelState_TabularCap* state =
     static_cast<const ModelState_TabularCap*>(state_input);
@@ -209,31 +213,32 @@ InternalVar_TabularCap::computeVolStrainDerivOfInternalVariable(
   */
 
   double epsilon = 1.0e-6;
-  #ifdef USE_TOTAL_STRAIN
-    // The table is of the form x -> ev_bar, y -> X_p_bar = X_bar/3
-    double ev_bar = -state->elasticStrainTensor.Trace() - state->ep_v;
-    double ev_bar_lo = ev_bar - epsilon;
-    double ev_bar_hi = ev_bar + epsilon;
-    double X_p_bar_lo = computeDrainedHydrostaticStrength(ev_bar_lo);
-    double X_p_bar_hi = computeDrainedHydrostaticStrength(ev_bar_hi);
-  #else
-    // The table is of the form x -> ev_p_bar, y -> X_p_bar = X_bar/3
-    double ep_v_bar = -state->ep_v;
-    double ep_v_bar_lo = ep_v_bar - epsilon;
-    double ep_v_bar_hi = ep_v_bar + epsilon;
-    double X_p_bar_lo = computeDrainedHydrostaticStrength(ep_v_bar_lo);
-    double X_p_bar_hi = computeDrainedHydrostaticStrength(ep_v_bar_hi);
-  #endif
+#ifdef USE_TOTAL_STRAIN
+  // The table is of the form x -> ev_bar, y -> X_p_bar = X_bar/3
+  double ev_bar     = -state->elasticStrainTensor.Trace() - state->ep_v;
+  double ev_bar_lo  = ev_bar - epsilon;
+  double ev_bar_hi  = ev_bar + epsilon;
+  double X_p_bar_lo = computeDrainedHydrostaticStrength(ev_bar_lo);
+  double X_p_bar_hi = computeDrainedHydrostaticStrength(ev_bar_hi);
+#else
+  // The table is of the form x -> ev_p_bar, y -> X_p_bar = X_bar/3
+  double ep_v_bar    = -state->ep_v;
+  double ep_v_bar_lo = ep_v_bar - epsilon;
+  double ep_v_bar_hi = ep_v_bar + epsilon;
+  double X_p_bar_lo  = computeDrainedHydrostaticStrength(ep_v_bar_lo);
+  double X_p_bar_hi  = computeDrainedHydrostaticStrength(ep_v_bar_hi);
+#endif
 
-  double dX_p_bar_dep_v_bar = (X_p_bar_hi - X_p_bar_lo)/(2*epsilon);
+  double dX_p_bar_dep_v_bar = (X_p_bar_hi - X_p_bar_lo) / (2 * epsilon);
   return dX_p_bar_dep_v_bar;
 }
 
 /*!-----------------------------------------------------*/
 void
 InternalVar_TabularCap::allocateCMDataAddRequires(Task* task,
-                                             const MPMMaterial* matl,
-                                             const PatchSet*, MPMLabel*)
+                                                  const MPMMaterial* matl,
+                                                  const PatchSet*,
+                                                  MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::NewDW, pCapXLabel_preReloc, matlset, Ghost::None);
@@ -242,10 +247,10 @@ InternalVar_TabularCap::allocateCMDataAddRequires(Task* task,
 /*!-----------------------------------------------------*/
 void
 InternalVar_TabularCap::allocateCMDataAdd(DataWarehouse* old_dw,
-                                     ParticleSubset* addset,
-                                     ParticleLabelVariableMap* newState,
-                                     ParticleSubset* delset,
-                                     DataWarehouse* new_dw)
+                                          ParticleSubset* addset,
+                                          ParticleLabelVariableMap* newState,
+                                          ParticleSubset* delset,
+                                          DataWarehouse* new_dw)
 {
   Uintah::ParticleVariable<double> pCapX;
   Uintah::constParticleVariable<double> o_capX;
@@ -266,13 +271,13 @@ InternalVar_TabularCap::allocateCMDataAdd(DataWarehouse* old_dw,
 /*!-----------------------------------------------------*/
 void
 InternalVar_TabularCap::allocateAndPutRigid(ParticleSubset* pset,
-                                       DataWarehouse* new_dw,
-                                       constParticleLabelVariableMap& var)
+                                            DataWarehouse* new_dw,
+                                            constParticleLabelVariableMap& var)
 {
   Uintah::ParticleVariable<double> pCapX_new;
   new_dw->allocateAndPut(pCapX_new, pCapXLabel_preReloc, pset);
   for (int& iter : *pset) {
-    pCapX_new[iter] =
-      dynamic_cast<Uintah::constParticleVariable<double>&>(*var[pCapXLabel])[iter];
+    pCapX_new[iter] = dynamic_cast<Uintah::constParticleVariable<double>&>(
+      *var[pCapXLabel])[iter];
   }
 }

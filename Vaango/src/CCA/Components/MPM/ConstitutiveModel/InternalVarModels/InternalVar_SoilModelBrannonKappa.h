@@ -74,7 +74,8 @@ public:
   const Uintah::VarLabel* pKappaLabel_preReloc;
 
   // Return the internal variable labels
-  std::vector<const Uintah::VarLabel*> getLabels() const override
+  std::vector<const Uintah::VarLabel*>
+  getLabels() const override
   {
     std::vector<const Uintah::VarLabel*> labels;
     labels.push_back(pKappaLabel); // Branch point
@@ -98,8 +99,8 @@ private:
   // copy constructor
   // InternalVar_SoilModelBrannonKappa(const InternalVar_SoilModelBrannonKappa
   // &cm);
-  InternalVar_SoilModelBrannonKappa& operator=(
-    const InternalVar_SoilModelBrannonKappa& cm);
+  InternalVar_SoilModelBrannonKappa&
+  operator=(const InternalVar_SoilModelBrannonKappa& cm);
 
 public:
   // constructors
@@ -110,78 +111,131 @@ public:
   // destructor
   ~InternalVar_SoilModelBrannonKappa() override;
 
-  void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
+  void
+  outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
   /*! Get parameters */
-  std::map<std::string, double> getParameters() const override
+  std::map<std::string, double>
+  getParameters() const override
   {
     std::map<std::string, double> params;
-    params["p0"] = d_p0;
-    params["p1"] = d_p1;
-    params["p3"] = d_p3;
-    params["p4"] = d_p4;
-    params["B0"] = d_B0;
-    params["CR"] = d_Cr;
+    params["p0"]     = d_p0;
+    params["p1"]     = d_p1;
+    params["p3"]     = d_p3;
+    params["p4"]     = d_p4;
+    params["B0"]     = d_B0;
+    params["CR"]     = d_Cr;
     params["FSLOPE"] = d_fSlope;
     params["PEAKI1"] = d_peakI1;
     return params;
   }
 
   // Computes and requires for internal evolution variables
-  void addInitialComputesAndRequires(Uintah::Task* task,
-                                     const Uintah::MPMMaterial* matl,
-                                     const Uintah::PatchSet* patches) override;
+  void
+  addInitialComputesAndRequires(Uintah::Task* task,
+                                const Uintah::MPMMaterial* matl,
+                                const Uintah::PatchSet* patches) override;
 
-  void addComputesAndRequires(Uintah::Task* task,
-                              const Uintah::MPMMaterial* matl,
-                              const Uintah::PatchSet* patches) override;
+  void
+  addComputesAndRequires(Uintah::Task* task,
+                         const Uintah::MPMMaterial* matl,
+                         const Uintah::PatchSet* patches) override;
 
-  void allocateCMDataAddRequires(Uintah::Task* task,
-                                 const Uintah::MPMMaterial* matl,
-                                 const Uintah::PatchSet* patch,
-                                 Uintah::MPMLabel* lb) override;
+  void
+  allocateCMDataAddRequires(Uintah::Task* task,
+                            const Uintah::MPMMaterial* matl,
+                            const Uintah::PatchSet* patch,
+                            Uintah::MPMLabel* lb) override;
 
-  void allocateCMDataAdd(
-    Uintah::DataWarehouse* new_dw, Uintah::ParticleSubset* addset,
+  void
+  allocateCMDataAdd(
+    Uintah::DataWarehouse* new_dw,
+    Uintah::ParticleSubset* addset,
     std::map<const Uintah::VarLabel*, Uintah::ParticleVariableBase*>* newState,
-    Uintah::ParticleSubset* delset, Uintah::DataWarehouse* old_dw) override;
+    Uintah::ParticleSubset* delset,
+    Uintah::DataWarehouse* old_dw) override;
 
-  void addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                        std::vector<const Uintah::VarLabel*>& to) override;
+  void
+  addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                   std::vector<const Uintah::VarLabel*>& to) override;
 
-  void initializeInternalVariable(Uintah::ParticleSubset* pset,
-                                  Uintah::DataWarehouse* new_dw) override;
+  void
+  initializeInternalVariable(Uintah::ParticleSubset* pset,
+                             Uintah::DataWarehouse* new_dw) override;
+  void
+  initializeInternalVariable(const Uintah::Patch* patch,
+                             const Uintah::MPMMaterial* matl,
+                             Uintah::ParticleSubset* pset,
+                             Uintah::DataWarehouse* new_dw,
+                             Uintah::MPMLabel* lb,
+                             ParamMap& params) override {}
 
-  void getInternalVariable(Uintah::ParticleSubset* pset,
-                           Uintah::DataWarehouse* old_dw,
-                           Uintah::constParticleVariableBase& intvar) override;
+  void
+  getInternalVariable(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* old_dw,
+                      Uintah::constParticleVariableBase& intvar) override;
 
-  virtual void getInternalVariable(
-    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* old_dw,
-    Uintah::constParticleLabelVariableMap& intvar)
+  /* Get the local <double> particle variables */
+  constParticleDoubleVec
+  getInternalVariables(Uintah::ParticleSubset* pset,
+                       Uintah::DataWarehouse* old_dw,
+                       const double& dummy) override 
   {
+    constParticleDoubleVec empty;
+    return empty;
   }
 
-  void allocateAndPutInternalVariable(
-    Uintah::ParticleSubset* pset, Uintah::DataWarehouse* new_dw,
-    Uintah::ParticleVariableBase& intvar) override;
+  /* Get the local <Matrix3> particle variables */
+  constParticleMatrix3Vec
+  getInternalVariables(Uintah::ParticleSubset* pset,
+                       Uintah::DataWarehouse* old_dw,
+                       const Uintah::Matrix3& dummy) override
+  {
+    constParticleMatrix3Vec empty;
+    return empty;
+  }
 
-  void allocateAndPutRigid(Uintah::ParticleSubset* pset,
-                           Uintah::DataWarehouse* new_dw,
-                           Uintah::constParticleVariableBase& intvar) override;
+  void
+  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                 Uintah::DataWarehouse* new_dw,
+                                 Uintah::ParticleVariableBase& intvar) override;
+
+  /* Allocate and put the local <double> particle variables */
+  void
+  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                 Uintah::DataWarehouse* new_dw,
+                                 ParticleDoublePVec& pVars) override {}
+
+  /* Allocate and put the local <Matrix3> particle variables */
+  void
+  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                 Uintah::DataWarehouse* new_dw,
+                                 ParticleMatrix3PVec& pVars) override {}
 
   ///////////////////////////////////////////////////////////////////////////
   /*! \brief Compute the internal variable */
-  double computeInternalVariable(const ModelStateBase* state) const override;
+  double
+  computeInternalVariable(const Uintah::VarLabel* label,
+                          const ModelStateBase* state) const override;
 
   ///////////////////////////////////////////////////////////////////////////
   // Compute derivative of internal variable with respect to volumetric
   // elastic strain
-  double computeVolStrainDerivOfInternalVariable(
-    const ModelStateBase*) const override
+  double
+  computeVolStrainDerivOfInternalVariable(const Uintah::VarLabel* label,
+                                          const ModelStateBase*) const override
   {
     return 0.0;
   }
+
+  void
+  allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* new_dw,
+                      Uintah::constParticleVariableBase& intvar) override;
+  void
+  allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* new_dw,
+                      Uintah::constParticleLabelVariableMap& intvars) override {}
 
 private:
   //--------------------------------------------------------------------------------------
@@ -192,9 +246,12 @@ private:
   //
   // ** NOTE** (should be replaced with function pointers)
   //--------------------------------------------------------------------------------------
-  double computeKappaFromX1(const double& kappa_old, const double& epsv,
-                            const double& deltaEpsv, const double& tolerance,
-                            const int& maxiter) const;
+  double
+  computeKappaFromX1(const double& kappa_old,
+                     const double& epsv,
+                     const double& deltaEpsv,
+                     const double& tolerance,
+                     const int& maxiter) const;
 
   //--------------------------------------------------------------------------------------
   // Compute kappa_new from the function X2(kappa_{n+1})
@@ -204,9 +261,12 @@ private:
   //
   // ** NOTE** (should be replaced with function pointers)
   //--------------------------------------------------------------------------------------
-  double computeKappaFromX2(const double& kappa_old, const double& epsv,
-                            const double& deltaEpsv, const double& tolerance,
-                            const int& maxiter) const;
+  double
+  computeKappaFromX2(const double& kappa_old,
+                     const double& epsv,
+                     const double& deltaEpsv,
+                     const double& tolerance,
+                     const int& maxiter) const;
 
   //--------------------------------------------------------------------------------------
   // Compute the function X1(kappa_{n+1})
@@ -214,9 +274,12 @@ private:
   //       X1(kappa_{n+1}) = kappa_{n+1} - kappa_n - F1(kappa_{n+1},epsv_{n+1})
   //       Delta epsv = 0
   //--------------------------------------------------------------------------------------
-  double computeX1(const double& kappa_old, const double& kappa_new,
-                   const double& G, const double& H,
-                   const double& delEpsv) const;
+  double
+  computeX1(const double& kappa_old,
+            const double& kappa_new,
+            const double& G,
+            const double& H,
+            const double& delEpsv) const;
 
   //--------------------------------------------------------------------------------------
   // Compute the function dX1/dkappa(kappa_{n+1})
@@ -224,8 +287,10 @@ private:
   //       X1(kappa_{n+1}) = kappa_{n+1} - kappa_n - F1(kappa_{n+1},epsv_{n+1})
   //       Delta epsv = 0
   //--------------------------------------------------------------------------------------
-  double computeDerivX1dkappa(const double& kappa_old, const double& kappa_new,
-                              const double& delEpsv) const;
+  double
+  computeDerivX1dkappa(const double& kappa_old,
+                       const double& kappa_new,
+                       const double& delEpsv) const;
 
   //--------------------------------------------------------------------------------------
   // Compute the value of kappa at which function X1 is a minimum
@@ -233,7 +298,8 @@ private:
   //       X1(kappa_{n+1}) = kappa_{n+1} - kappa_n - F1(kappa_{n+1},epsv_{n+1})
   //       Delta epsv = 0
   //--------------------------------------------------------------------------------------
-  double computeKappaAtX1Min(const double& delEpsv) const;
+  double
+  computeKappaAtX1Min(const double& delEpsv) const;
 
   //--------------------------------------------------------------------------------------
   // Compute the function X2(kappa_{n+1})
@@ -241,9 +307,12 @@ private:
   //       X2(kappa_{n+1}) = kappa_{n+1} - kappa_n - F2(kappa_{n+1},epsv_{n+1})
   //       Delta epsv = 0
   //--------------------------------------------------------------------------------------
-  double computeX2(const double& kappa_old, const double& kappa_new,
-                   const double& G, const double& H,
-                   const double& delEpsv) const;
+  double
+  computeX2(const double& kappa_old,
+            const double& kappa_new,
+            const double& G,
+            const double& H,
+            const double& delEpsv) const;
 
   //--------------------------------------------------------------------------------------
   // Compute the function dX2/dkappa(kappa_{n+1})
@@ -251,15 +320,18 @@ private:
   //       X2(kappa_{n+1}) = kappa_{n+1} - kappa_n - F2(kappa_{n+1},epsv_{n+1})
   //       Delta epsv = 0
   //--------------------------------------------------------------------------------------
-  double computeDerivX2dkappa(const double& kappa_old, const double& kappa_new,
-                              const double& delEpsv) const;
+  double
+  computeDerivX2dkappa(const double& kappa_old,
+                       const double& kappa_new,
+                       const double& delEpsv) const;
 
   //--------------------------------------------------------------------------------------
   // Compute the constant B
   //  where
   //        B = 3 B0 [exp(p3+p4) - 1]
   //--------------------------------------------------------------------------------------
-  double computeB() const;
+  double
+  computeB() const;
 
   //--------------------------------------------------------------------------------------
   // Compute the function G(epsv)
@@ -268,7 +340,8 @@ private:
   //        B = 3 B0 [exp(p3+p4) - 1]
   //        g34 = exp(p3+p4+epsv)
   //--------------------------------------------------------------------------------------
-  double computeG(const double& epsv, const double& B) const;
+  double
+  computeG(const double& epsv, const double& B) const;
 
   //--------------------------------------------------------------------------------------
   // Compute the function H(epsv)
@@ -277,7 +350,8 @@ private:
   //        B = 3 B0 [exp(p3+p4) - 1]
   //        h3 = exp(p3+epsv)
   //--------------------------------------------------------------------------------------
-  double computeH(const double& epsv, const double& B) const;
+  double
+  computeH(const double& epsv, const double& B) const;
 
   //--------------------------------------------------------------------------------------
   // Compute the function F1(kappa, epsv) = f1(kappa) - G(epsv) + H(epsv)
@@ -288,13 +362,15 @@ private:
   //        g34 = exp(p3+p4+epsv)
   //        h3 = exp(p3+epsv)
   //--------------------------------------------------------------------------------------
-  double computeF1(const double& kappa, const double& G, const double& H) const;
+  double
+  computeF1(const double& kappa, const double& G, const double& H) const;
 
   //--------------------------------------------------------------------------------------
   // Compute the function dF1/dkappa(kappa, epsv) = df1/dkappa(kappa)
   //  where f1(kappa) = 1/(p1 p3) exp(-p1 kappa - p0)
   //--------------------------------------------------------------------------------------
-  double computeDerivF1dkappa(const double& kappa) const;
+  double
+  computeDerivF1dkappa(const double& kappa) const;
 
   //--------------------------------------------------------------------------------------
   // Compute the function F2(kappa, epsv) = f2(kappa) - G(epsv) + H(epsv)
@@ -305,13 +381,15 @@ private:
   //        g34 = exp(p3+p4+epsv)
   //        h3 = exp(p3+epsv)
   //--------------------------------------------------------------------------------------
-  double computeF2(const double& kappa, const double& G, const double& H) const;
+  double
+  computeF2(const double& kappa, const double& G, const double& H) const;
 
   //--------------------------------------------------------------------------------------
   // Compute the function dF2/dkappa(kappa, epsv) = df2/dkappa(kappa)
   //  where f2(kappa) = 1/(p1 p3) [kappa/p0]^(1-p0p1p3)
   //--------------------------------------------------------------------------------------
-  double computeDerivF2dkappa(const double& kappa) const;
+  double
+  computeDerivF2dkappa(const double& kappa) const;
 };
 
 } // End namespace Uintah

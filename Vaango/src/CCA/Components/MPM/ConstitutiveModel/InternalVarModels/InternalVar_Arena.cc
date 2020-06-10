@@ -43,15 +43,15 @@ InternalVar_Arena::InternalVar_Arena(ProblemSpecP& ps,
                                      ElasticModuliModel* elastic)
 {
   d_elastic = elastic;
-  d_shear = nullptr;
+  d_shear   = nullptr;
 
   ps->require("p0", d_crushParam.p0); // Crush Curve Parameter
   ps->require("p1", d_crushParam.p1); // Crush Curve Parameter
   ps->require("p2", d_crushParam.p2); // Crush Curve Parameter
   ps->require("p3", d_crushParam.p3); // Crush Curve Parameter
 
-  ps->getWithDefault("use_disaggregation_algorithm",
-                     d_use_disaggregation_algorithm, false);
+  ps->getWithDefault(
+    "use_disaggregation_algorithm", d_use_disaggregation_algorithm, false);
 
   // Initialize internal variable labels for evolution
   initializeLocalMPMLabels();
@@ -61,9 +61,9 @@ InternalVar_Arena::InternalVar_Arena(ProblemSpecP& ps,
 InternalVar_Arena::InternalVar_Arena(const InternalVar_Arena* cm)
 {
   d_elastic = cm->d_elastic;
-  d_shear = cm->d_shear;
+  d_shear   = cm->d_shear;
 
-  d_crushParam = cm->d_crushParam;
+  d_crushParam                   = cm->d_crushParam;
   d_use_disaggregation_algorithm = cm->d_use_disaggregation_algorithm;
 
   // Initialize internal variable labels for evolution
@@ -121,9 +121,12 @@ InternalVar_Arena::addInitialComputesAndRequires(Task* task,
 
 /*!-----------------------------------------------------*/
 void
-InternalVar_Arena::initializeInternalVariable(
-  const Patch* patch, const MPMMaterial* matl, ParticleSubset* pset,
-  DataWarehouse* new_dw, MPMLabel* lb, ParameterDict& params)
+InternalVar_Arena::initializeInternalVariable(const Patch* patch,
+                                              const MPMMaterial* matl,
+                                              ParticleSubset* pset,
+                                              DataWarehouse* new_dw,
+                                              MPMLabel* lb,
+                                              ParameterDict& params)
 {
   Uintah::constParticleVariable<double> pMass, pVolume;
   new_dw->get(pVolume, lb->pVolumeLabel, pset);
@@ -138,17 +141,22 @@ InternalVar_Arena::initializeInternalVariable(
   new_dw->allocateAndPut(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
   new_dw->allocateAndPut(pP3, pP3Label, pset);
 
-  double PEAKI1 = 0.0;;
-  double CR = 0.0;;
-  double phi0 = 0.0;;
-  double Sw0 = 0.0;;
-  double pf0 = 0.0;;
+  double PEAKI1 = 0.0;
+  ;
+  double CR = 0.0;
+  ;
+  double phi0 = 0.0;
+  ;
+  double Sw0 = 0.0;
+  ;
+  double pf0 = 0.0;
+  ;
   try {
     PEAKI1 = params.at("PEAKI1");
-    CR = params.at("CR");
-    phi0 = params.at("phi0");
-    Sw0 = params.at("Sw0");
-    pf0 = params.at("Pf0");
+    CR     = params.at("CR");
+    phi0   = params.at("phi0");
+    Sw0    = params.at("Sw0");
+    pf0    = params.at("Pf0");
   } catch (std::out_of_range) {
     std::ostringstream err;
     err << "**ERROR** Could not find yield parameters PEAKI1, CR, phi0, Sw0"
@@ -168,16 +176,16 @@ InternalVar_Arena::initializeInternalVariable(
       pP3[iter] = d_crushParam.p3;
     }
     double I1_eff_bar = 0.0;
-    double ep_v_bar = 0.0;
-    double pw_bar = pf0;
+    double ep_v_bar   = 0.0;
+    double pw_bar     = pf0;
     if (Sw0 > 0.0) {
-      double phi = computePorosity(ep_v_bar, pP3[iter]);
+      double phi   = computePorosity(ep_v_bar, pP3[iter]);
       double X_bar = computePartSatHydrostaticStrength(
         I1_eff_bar, pw_bar, ep_v_bar, phi0, Sw0, phi);
       pCapX[iter] = -X_bar;
     } else {
       double X_bar = computeDrainedHydrostaticStrength(ep_v_bar, phi0);
-      pCapX[iter] = -X_bar;
+      pCapX[iter]  = -X_bar;
     }
     // std::cout << "pCapX = " << pCapX[*iter] << std::endl;
     pKappa[iter] = PEAKI1 - CR * (PEAKI1 - pCapX[iter]); // Branch Point
@@ -188,7 +196,8 @@ InternalVar_Arena::initializeInternalVariable(
 
 /*!-----------------------------------------------------*/
 void
-InternalVar_Arena::addComputesAndRequires(Task* task, const MPMMaterial* matl,
+InternalVar_Arena::addComputesAndRequires(Task* task,
+                                          const MPMMaterial* matl,
                                           const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
@@ -230,6 +239,7 @@ InternalVar_Arena::addParticleState(std::vector<const VarLabel*>& from,
 //--------------------------------------------------------------------------------------
 double
 InternalVar_Arena::computeInternalVariable(
+  const Uintah::VarLabel* label,
   const ModelStateBase* state_input) const
 {
   const ModelState_Arena* state =
@@ -258,7 +268,7 @@ InternalVar_Arena::computeInternalVariable(
   }
 
   // Convert to bar quantities
-  double ep_v_bar = -ep_v;
+  double ep_v_bar   = -ep_v;
   double I1_eff_bar = -I1_eff; // This means that the bulk modulus of the
                                // partially saturated material is computed
                                // at zero pore pressure
@@ -294,8 +304,8 @@ InternalVar_Arena::computeDrainedHydrostaticStrength(const double& ep_v_bar,
   // std::cout << "\t\t ep_v_bar = " << ep_v_bar << std::endl;
   if (ep_v_bar > 0.0) {
     // double phi0 = 1.0 - std::exp(-p3);
-    double phi = 1.0 - std::exp(-p3 + ep_v_bar);
-    double term1 = (phi0 / phi - 1.0);
+    double phi    = 1.0 - std::exp(-p3 + ep_v_bar);
+    double term1  = (phi0 / phi - 1.0);
     double xi_bar = p1 * std::pow(term1, 1.0 / p2);
     X_bar_drained += xi_bar;
     // std::cout << "\t\t phi = " << phi << " xi_bar = " << xi_bar
@@ -316,10 +326,10 @@ InternalVar_Arena::computeElasticVolStrainAtYield(const double& ep_v_bar,
   double X_bar_ep_v = computeDrainedHydrostaticStrength(ep_v_bar, phi0);
 
   // Compute K(ep_v, I1) using bulk modulus model for dry sand
-  double I1_eff_bar = 0.5 * X_bar_ep_v;
+  double I1_eff_bar  = 0.5 * X_bar_ep_v;
   double bulkModulus = 0.0, shearModulus = 0.0;
-  d_elastic->computeDrainedModuli(I1_eff_bar, ep_v_bar, bulkModulus,
-                                  shearModulus);
+  d_elastic->computeDrainedModuli(
+    I1_eff_bar, ep_v_bar, bulkModulus, shearModulus);
 
   // Compute elastic vol strain at yield
   double ev_e_yield = X_bar_ep_v / (3.0 * bulkModulus);
@@ -331,9 +341,12 @@ InternalVar_Arena::computeElasticVolStrainAtYield(const double& ep_v_bar,
  * Compute partially saturated hydrostatic strength
  */
 double
-InternalVar_Arena::computePartSatHydrostaticStrength(
-  const double& I1_eff_bar, const double& pw_bar, const double& ep_v_bar,
-  const double& phi, const double& Sw, const double& phi0) const
+InternalVar_Arena::computePartSatHydrostaticStrength(const double& I1_eff_bar,
+                                                     const double& pw_bar,
+                                                     const double& ep_v_bar,
+                                                     const double& phi,
+                                                     const double& Sw,
+                                                     const double& phi0) const
 {
   //------------Plastic strain exceeds allowable limit--------------------------
   // The plastic strain for this iteration has exceed the allowable
@@ -357,8 +370,8 @@ InternalVar_Arena::computePartSatHydrostaticStrength(
 
   // Compute partially saturated bulk modulus
   double K_part_sat = 0.0, G_part_sat = 0.0;
-  d_elastic->computePartialSaturatedModuli(I1_eff_bar, pw_bar, ep_v_bar, phi,
-                                           Sw, K_part_sat, G_part_sat);
+  d_elastic->computePartialSaturatedModuli(
+    I1_eff_bar, pw_bar, ep_v_bar, phi, Sw, K_part_sat, G_part_sat);
 
   // Compute hydrostatic strength
   double X_bar_part_sat = 3.0 * K_part_sat * ev_e_yield;
@@ -370,15 +383,16 @@ InternalVar_Arena::computePartSatHydrostaticStrength(
 void
 InternalVar_Arena::allocateCMDataAddRequires(Task* task,
                                              const MPMMaterial* matl,
-                                             const PatchSet*, MPMLabel*)
+                                             const PatchSet*,
+                                             MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::NewDW, pKappaLabel_preReloc, matlset, Ghost::None);
   task->requires(Task::NewDW, pCapXLabel_preReloc, matlset, Ghost::None);
-  task->requires(Task::NewDW, pPlasticStrainLabel_preReloc, matlset,
-                 Ghost::None);
-  task->requires(Task::NewDW, pPlasticVolStrainLabel_preReloc, matlset,
-                 Ghost::None);
+  task->requires(
+    Task::NewDW, pPlasticStrainLabel_preReloc, matlset, Ghost::None);
+  task->requires(
+    Task::NewDW, pPlasticVolStrainLabel_preReloc, matlset, Ghost::None);
   task->requires(Task::NewDW, pP3Label_preReloc, matlset, Ghost::None);
 }
 
@@ -411,17 +425,17 @@ InternalVar_Arena::allocateCMDataAdd(DataWarehouse* old_dw,
   auto n = addset->begin();
   for (o = delset->begin(); o != delset->end(); o++, n++) {
     pKappa[*n] = o_kappa[*o];
-    pCapX[*n] = o_capX[*o];
-    pEp[*n] = o_Ep[*o];
-    pEpv[*n] = o_Epv[*o];
-    pP3[*n] = o_P3[*o];
+    pCapX[*n]  = o_capX[*o];
+    pEp[*n]    = o_Ep[*o];
+    pEpv[*n]   = o_Epv[*o];
+    pP3[*n]    = o_P3[*o];
   }
 
-  (*newState)[pKappaLabel] = pKappa.clone();
-  (*newState)[pCapXLabel] = pCapX.clone();
-  (*newState)[pPlasticStrainLabel] = pEp.clone();
+  (*newState)[pKappaLabel]            = pKappa.clone();
+  (*newState)[pCapXLabel]             = pCapX.clone();
+  (*newState)[pPlasticStrainLabel]    = pEp.clone();
   (*newState)[pPlasticVolStrainLabel] = pEpv.clone();
-  (*newState)[pP3Label] = pP3.clone();
+  (*newState)[pP3Label]               = pP3.clone();
 }
 
 /*!-----------------------------------------------------*/

@@ -42,7 +42,7 @@ InternalVar_SoilModelBrannonKappa::InternalVar_SoilModelBrannonKappa(
   ProblemSpecP& ps)
 {
   d_elastic = nullptr;
-  d_shear = nullptr;
+  d_shear   = nullptr;
 
   ps->require("soil_model_brannon_p0", d_p0);
   ps->require("soil_model_brannon_p1", d_p1);
@@ -66,14 +66,14 @@ InternalVar_SoilModelBrannonKappa::InternalVar_SoilModelBrannonKappa(
   const InternalVar_SoilModelBrannonKappa* cm)
 {
   d_elastic = cm->d_elastic;
-  d_shear = cm->d_shear;
+  d_shear   = cm->d_shear;
 
-  d_p0 = cm->d_p0;
-  d_p1 = cm->d_p1;
-  d_p3 = cm->d_p3;
-  d_p4 = cm->d_p4;
-  d_B0 = cm->d_B0;
-  d_Cr = cm->d_Cr;
+  d_p0     = cm->d_p0;
+  d_p1     = cm->d_p1;
+  d_p3     = cm->d_p3;
+  d_p4     = cm->d_p4;
+  d_B0     = cm->d_B0;
+  d_Cr     = cm->d_Cr;
   d_fSlope = cm->d_fSlope;
   d_peakI1 = cm->d_peakI1;
 
@@ -110,7 +110,9 @@ InternalVar_SoilModelBrannonKappa::outputProblemSpec(ProblemSpecP& ps)
 
 void
 InternalVar_SoilModelBrannonKappa::addInitialComputesAndRequires(
-  Task* task, const MPMMaterial* matl, const PatchSet*)
+  Task* task,
+  const MPMMaterial* matl,
+  const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pKappaLabel, matlset);
@@ -118,7 +120,9 @@ InternalVar_SoilModelBrannonKappa::addInitialComputesAndRequires(
 
 void
 InternalVar_SoilModelBrannonKappa::addComputesAndRequires(
-  Task* task, const MPMMaterial* matl, const PatchSet*)
+  Task* task,
+  const MPMMaterial* matl,
+  const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::OldDW, pKappaLabel, matlset, Ghost::None);
@@ -127,7 +131,8 @@ InternalVar_SoilModelBrannonKappa::addComputesAndRequires(
 
 void
 InternalVar_SoilModelBrannonKappa::addParticleState(
-  std::vector<const VarLabel*>& from, std::vector<const VarLabel*>& to)
+  std::vector<const VarLabel*>& from,
+  std::vector<const VarLabel*>& to)
 {
   from.push_back(pKappaLabel);
   to.push_back(pKappaLabel_preReloc);
@@ -135,7 +140,10 @@ InternalVar_SoilModelBrannonKappa::addParticleState(
 
 void
 InternalVar_SoilModelBrannonKappa::allocateCMDataAddRequires(
-  Task* task, const MPMMaterial* matl, const PatchSet*, MPMLabel*)
+  Task* task,
+  const MPMMaterial* matl,
+  const PatchSet*,
+  MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::NewDW, pKappaLabel_preReloc, matlset, Ghost::None);
@@ -143,8 +151,10 @@ InternalVar_SoilModelBrannonKappa::allocateCMDataAddRequires(
 
 void
 InternalVar_SoilModelBrannonKappa::allocateCMDataAdd(
-  DataWarehouse* old_dw, ParticleSubset* addset,
-  ParticleLabelVariableMap* newState, ParticleSubset* delset,
+  DataWarehouse* old_dw,
+  ParticleSubset* addset,
+  ParticleLabelVariableMap* newState,
+  ParticleSubset* delset,
   DataWarehouse* new_dw)
 {
   ParticleVariable<double> pKappa;
@@ -164,7 +174,8 @@ InternalVar_SoilModelBrannonKappa::allocateCMDataAdd(
 
 void
 InternalVar_SoilModelBrannonKappa::initializeInternalVariable(
-  ParticleSubset* pset, DataWarehouse* new_dw)
+  ParticleSubset* pset,
+  DataWarehouse* new_dw)
 {
   Uintah::ParticleVariable<double> pKappa;
   new_dw->allocateAndPut(pKappa, pKappaLabel, pset);
@@ -177,7 +188,8 @@ InternalVar_SoilModelBrannonKappa::initializeInternalVariable(
 
 void
 InternalVar_SoilModelBrannonKappa::getInternalVariable(
-  ParticleSubset* pset, DataWarehouse* old_dw,
+  ParticleSubset* pset,
+  DataWarehouse* old_dw,
   constParticleVariableBase& pKappa)
 {
   old_dw->get(pKappa, pKappaLabel, pset);
@@ -185,14 +197,17 @@ InternalVar_SoilModelBrannonKappa::getInternalVariable(
 
 void
 InternalVar_SoilModelBrannonKappa::allocateAndPutInternalVariable(
-  ParticleSubset* pset, DataWarehouse* new_dw, ParticleVariableBase& pKappa_new)
+  ParticleSubset* pset,
+  DataWarehouse* new_dw,
+  ParticleVariableBase& pKappa_new)
 {
   new_dw->allocateAndPut(pKappa_new, pKappaLabel_preReloc, pset);
 }
 
 void
 InternalVar_SoilModelBrannonKappa::allocateAndPutRigid(
-  ParticleSubset* pset, DataWarehouse* new_dw,
+  ParticleSubset* pset,
+  DataWarehouse* new_dw,
   constParticleVariableBase& pKappa)
 {
   ParticleVariable<double> pKappa_new;
@@ -209,6 +224,7 @@ InternalVar_SoilModelBrannonKappa::allocateAndPutRigid(
 //--------------------------------------------------------------------------------------
 double
 InternalVar_SoilModelBrannonKappa::computeInternalVariable(
+  const Uintah::VarLabel* label,
   const ModelStateBase* state_input) const
 {
   const ModelState_SoilModelBrannon* state =
@@ -225,11 +241,11 @@ InternalVar_SoilModelBrannonKappa::computeInternalVariable(
   // Get the local variables needed
   double kappa_old = state->kappa;         // old value of kappa may have
                                            // been modified before
-  double cap_radius = state->CR;           // C_radius
-  double max_kappa = state->maxX;          // X_max
-  double eps_v = state->eps_v;             // eps_v_p
+  double cap_radius  = state->CR;          // C_radius
+  double max_kappa   = state->maxX;        // X_max
+  double eps_v       = state->eps_v;       // eps_v_p
   double delta_eps_v = state->delta_eps_v; // Delta eps_v_p
-  double scale_fac = state->scale_eps_v;   // factor = 1+f_s c_r or 1
+  double scale_fac   = state->scale_eps_v; // factor = 1+f_s c_r or 1
 
   // Scale the volumetric plastic strain
   delta_eps_v /= scale_fac;
@@ -240,7 +256,7 @@ InternalVar_SoilModelBrannonKappa::computeInternalVariable(
 
   // Calculate new kappa
   double tolerance = 1.0e-3;
-  int maxiter = 10;
+  int maxiter      = 10;
 
   if (kappa_old - d_p0 < 0.0) {
     // Update \kappa in the cae of X < p0
@@ -251,9 +267,10 @@ InternalVar_SoilModelBrannonKappa::computeInternalVariable(
     // if (std::isnan(kappa_new) || kappa_new > 0) {
     if (std::isnan(kappa_new)) {
       std::cerr << " kappa_new = " << kappa_new << " kappa_old = " << kappa_old
-           << " eps_v = " << eps_v << " delta_eps_v = " << delta_eps_v << "\n";
-      throw InvalidValue("**ERROR**: Nan in kappa_new - case 1", __FILE__,
-                         __LINE__);
+                << " eps_v = " << eps_v << " delta_eps_v = " << delta_eps_v
+                << "\n";
+      throw InvalidValue(
+        "**ERROR**: Nan in kappa_new - case 1", __FILE__, __LINE__);
     }
   } else if (kappa_old < max_kappa) {
     // Update \kappa in the cae of p0 <= X < max_X
@@ -266,9 +283,10 @@ InternalVar_SoilModelBrannonKappa::computeInternalVariable(
     // if (std::isnan(kappa_new) || kappa_new > 0) {
     if (std::isnan(kappa_new)) {
       std::cerr << " kappa_new = " << kappa_new << " kappa_old = " << kappa_old
-           << " eps_v = " << eps_v << " delta_eps_v = " << delta_eps_v << "\n";
-      throw InvalidValue("**ERROR**: Nan in kappa_new - case 2", __FILE__,
-                         __LINE__);
+                << " eps_v = " << eps_v << " delta_eps_v = " << delta_eps_v
+                << "\n";
+      throw InvalidValue(
+        "**ERROR**: Nan in kappa_new - case 2", __FILE__, __LINE__);
     }
   } else {
     // Update \kappa in the cae of X >= max_X
@@ -310,13 +328,13 @@ InternalVar_SoilModelBrannonKappa::computeKappaFromX1(const double& kappa_old,
   double H = computeH(epsv, B);
 
   // Calculate new kappa
-  double kappa_new_iter = kappa_old;
+  double kappa_new_iter     = kappa_old;
   double kappa_new_iter_old = kappa_new_iter;
-  double X1 = 0.0;
-  double dX1dkappa = 0.0;
-  int iter = 0;
+  double X1                 = 0.0;
+  double dX1dkappa          = 0.0;
+  int iter                  = 0;
   do {
-    X1 = computeX1(kappa_old, kappa_new_iter, G, H, deltaEpsv);
+    X1        = computeX1(kappa_old, kappa_new_iter, G, H, deltaEpsv);
     dX1dkappa = computeDerivX1dkappa(kappa_old, kappa_new_iter, deltaEpsv);
     kappa_new_iter_old = kappa_new_iter;
     kappa_new_iter -= X1 / dX1dkappa;
@@ -333,7 +351,8 @@ InternalVar_SoilModelBrannonKappa::computeKappaFromX1(const double& kappa_old,
     // kappa_old = " << kappa_old << "\n";
   }
   // if (std::isnan(kappa_new_iter)) {
-  //   std::cerr << " iter = " << iter << " maxiter = " << maxiter << " kappa[k+1] =
+  //   std::cerr << " iter = " << iter << " maxiter = " << maxiter << "
+  //   kappa[k+1] =
   //   " << kappa_new_iter
   //        << " kappa[k] = " << kappa_new_iter_old << " X1 = " << X1
   //        << " dX1dkappa = " << dX1dkappa << "\n";
@@ -368,9 +387,9 @@ InternalVar_SoilModelBrannonKappa::computeKappaFromX2(const double& kappa_old,
   double H = computeH(epsv, B);
 
   // Calculate new kappa
-  double kappa_new_iter = kappa_old;
+  double kappa_new_iter     = kappa_old;
   double kappa_new_iter_old = kappa_new_iter;
-  int iter = 0;
+  int iter                  = 0;
   do {
     double X2 = computeX2(kappa_old, kappa_new_iter, G, H, deltaEpsv);
     double dX2dkappa =
@@ -380,13 +399,13 @@ InternalVar_SoilModelBrannonKappa::computeKappaFromX2(const double& kappa_old,
     ++iter;
     if (std::isnan(kappa_new_iter) || kappa_new_iter > 0) {
       std::cerr << " iter = " << iter << " maxiter = " << maxiter
-           << " kappa[k+1] = " << kappa_new_iter
-           << " kappa[k] = " << kappa_new_iter_old << " X2 = " << X2
-           << " dX2dkappa = " << dX2dkappa << "\n";
+                << " kappa[k+1] = " << kappa_new_iter
+                << " kappa[k] = " << kappa_new_iter_old << " X2 = " << X2
+                << " dX2dkappa = " << dX2dkappa << "\n";
       std::cerr << "    epsv = " << epsv << " deltaEpsv = " << deltaEpsv
-           << " kappa[k+1] - kappa[k] "
-           << fabs(kappa_new_iter - kappa_new_iter_old)
-           << " tol = " << tolerance << "\n";
+                << " kappa[k+1] - kappa[k] "
+                << fabs(kappa_new_iter - kappa_new_iter_old)
+                << " tol = " << tolerance << "\n";
     }
   } while ((fabs(kappa_new_iter - kappa_new_iter_old) > tolerance) &&
            (iter < maxiter));
@@ -403,7 +422,8 @@ InternalVar_SoilModelBrannonKappa::computeKappaFromX2(const double& kappa_old,
 double
 InternalVar_SoilModelBrannonKappa::computeX1(const double& kappa_old,
                                              const double& kappa_new,
-                                             const double& G, const double& H,
+                                             const double& G,
+                                             const double& H,
                                              const double& delEpsv) const
 {
   double F1 = computeF1(kappa_new, G, H);
@@ -419,7 +439,9 @@ InternalVar_SoilModelBrannonKappa::computeX1(const double& kappa_old,
 //--------------------------------------------------------------------------------------
 double
 InternalVar_SoilModelBrannonKappa::computeDerivX1dkappa(
-  const double& kappa_old, const double& kappa_new, const double& delEpsv) const
+  const double& kappa_old,
+  const double& kappa_new,
+  const double& delEpsv) const
 {
   double dF1dkappa = computeDerivF1dkappa(kappa_new);
   double dX1dkappa = 1.0 - dF1dkappa * delEpsv;
@@ -449,7 +471,8 @@ InternalVar_SoilModelBrannonKappa::computeKappaAtX1Min(
 double
 InternalVar_SoilModelBrannonKappa::computeX2(const double& kappa_old,
                                              const double& kappa_new,
-                                             const double& G, const double& H,
+                                             const double& G,
+                                             const double& H,
                                              const double& delEpsv) const
 {
   double F2 = computeF2(kappa_new, G, H);
@@ -465,7 +488,9 @@ InternalVar_SoilModelBrannonKappa::computeX2(const double& kappa_old,
 //--------------------------------------------------------------------------------------
 double
 InternalVar_SoilModelBrannonKappa::computeDerivX2dkappa(
-  const double& kappa_old, const double& kappa_new, const double& delEpsv) const
+  const double& kappa_old,
+  const double& kappa_new,
+  const double& delEpsv) const
 {
   double dF2dkappa = computeDerivF2dkappa(kappa_new);
   double dX2dkappa = 1.0 - dF2dkappa * delEpsv;
@@ -496,7 +521,7 @@ InternalVar_SoilModelBrannonKappa::computeG(const double& epsv,
                                             const double& B) const
 {
   double g34 = exp(d_p3 + d_p4 + epsv);
-  double G = B * g34 / ((g34 - 1.0) * (g34 - 1.0));
+  double G   = B * g34 / ((g34 - 1.0) * (g34 - 1.0));
   return G;
 }
 
@@ -512,7 +537,7 @@ InternalVar_SoilModelBrannonKappa::computeH(const double& epsv,
                                             const double& B) const
 {
   double h3 = exp(d_p3 + epsv);
-  double H = B * h3 / ((h3 - 1.0) * (h3 - 1.0));
+  double H  = B * h3 / ((h3 - 1.0) * (h3 - 1.0));
   return H;
 }
 
@@ -560,8 +585,8 @@ InternalVar_SoilModelBrannonKappa::computeF2(const double& kappa,
                                              const double& G,
                                              const double& H) const
 {
-  double p1p3 = d_p1 * d_p3;
-  double p0p1p3 = d_p0 * p1p3;
+  double p1p3     = d_p1 * d_p3;
+  double p0p1p3   = d_p0 * p1p3;
   double kappa_p0 = kappa / d_p0;
   if (fabs(kappa_p0 - 1.0) < 1.0e-10)
     kappa_p0 = 1.0;
@@ -569,19 +594,24 @@ InternalVar_SoilModelBrannonKappa::computeF2(const double& kappa,
   // feclearexcept(FE_ALL_EXCEPT);
   // double pow_kappa_p0 = pow(kappa_p0, p0p1p3);
   double pow_kappa_p0 = kappa_p0 / pow(kappa_p0, p0p1p3);
-  // std::cerr << "Location 3: Floating point exception in particle ? " << hex <<
+  // std::cerr << "Location 3: Floating point exception in particle ? " << hex
+  // <<
   // fetestexcept(FE_ALL_EXCEPT) << "\n";
-  // std::cerr << setiosflags(ios::fixed) << setprecision(20) << scientific << "\n";
+  // std::cerr << setiosflags(ios::fixed) << setprecision(20) << scientific <<
+  // "\n";
   // std::cerr << " kappa0 - p0 " << kappa - d_p0 << "\n";
-  // std::cerr << " kappa/p0 = " << kappa_p0 << " p0p1p3 = " << p0p1p3 << " power = "
+  // std::cerr << " kappa/p0 = " << kappa_p0 << " p0p1p3 = " << p0p1p3 << "
+  // power = "
   // << pow_kappa_p0 << "\n";
 
   // double lnb = log(kappa_p0);
   // double clnb = p0p1p3*lnb;
   // pow_kappa_p0 = exp(clnb);
-  // std::cerr << "Location 3: Floating point exception in particle ? " << hex <<
+  // std::cerr << "Location 3: Floating point exception in particle ? " << hex
+  // <<
   // fetestexcept(FE_ALL_EXCEPT) << "\n";
-  // std::cerr << setiosflags(ios::fixed) << setprecision(10) << " kappa/p0 = " <<
+  // std::cerr << setiosflags(ios::fixed) << setprecision(10) << " kappa/p0 = "
+  // <<
   // kappa_p0 << " p0p1p3 = " << p0p1p3 << " lnb = " << lnb
   //     << " c lnb = " << clnb << " power = " << pow_kappa_p0 << "\n";
 
@@ -597,7 +627,7 @@ double
 InternalVar_SoilModelBrannonKappa::computeDerivF2dkappa(
   const double& kappa) const
 {
-  double p0p1p3 = d_p0 * d_p1 * d_p3;
+  double p0p1p3    = d_p0 * d_p1 * d_p3;
   double df2dkappa = (1.0 / p0p1p3 - 1.0) * pow((kappa / d_p0), (-p0p1p3));
   return df2dkappa;
 }

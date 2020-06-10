@@ -118,14 +118,6 @@ public:
     std::string scalarDamageDist; /*< Initial damage distrinution */
   };
 
-  // Create a datatype for storing Cp calculation paramaters
-  // struct CpData {
-  //  double A;
-  //  double B;
-  //  double C;
-  //  double n;
-  //};
-
   const VarLabel* pRotationLabel; // For Hypoelastic-plasticity
   const VarLabel* pStrainRateLabel;
   const VarLabel* pPlasticStrainLabel;
@@ -144,41 +136,6 @@ public:
   const VarLabel* pLocalizedLabel_preReloc;
   const VarLabel* pEnergyLabel_preReloc;
 
-protected:
-  CMData d_initialData;
-  PorosityData d_porosity;
-  ScalarDamageData d_scalarDam;
-  // CpData           d_Cp;
-
-  double d_tol;
-  double d_initialMaterialTemperature;
-  double d_isothermal;
-  bool d_doIsothermal;
-  bool d_useModifiedEOS;
-  bool d_evolvePorosity;
-  bool d_evolveDamage;
-  bool d_computeSpecificHeat;
-  bool d_checkTeplaFailureCriterion;
-  bool d_doMelting;
-  bool d_checkStressTriax;
-
-  std::string d_plasticConvergenceAlgo;
-  // Erosion algorithms
-  bool d_setStressToZero;
-  bool d_allowNoTension;
-  bool d_allowNoShear;
-
-  YieldCondition* d_yield;
-  StabilityCheck* d_stable;
-  FlowModel* d_flow;
-  DamageModel* d_damage;
-  MPMEquationOfState* d_eos;
-  Vaango::ShearModulusModel* d_shear;
-  MeltingTempModel* d_melt;
-  SpecificHeatModel* d_Cp;
-  DevStressModel* d_devStress;
-
-public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief constructors */
   ////////////////////////////////////////////////////////////////////////
@@ -495,6 +452,39 @@ protected:
   inline double voidNucleationFactor(double plasticStrain);
 
 protected:
+
+  CMData d_initialData;
+  PorosityData d_porosity;
+  ScalarDamageData d_scalarDam;
+
+  double d_tol;
+  double d_initialMaterialTemperature;
+  double d_isothermal;
+  bool d_doIsothermal;
+  bool d_useModifiedEOS;
+  bool d_evolvePorosity;
+  bool d_evolveDamage;
+  bool d_computeSpecificHeat;
+  bool d_checkTeplaFailureCriterion;
+  bool d_doMelting;
+  bool d_checkStressTriax;
+
+  std::string d_plasticConvergenceAlgo;
+  // Erosion algorithms
+  bool d_setStressToZero;
+  bool d_allowNoTension;
+  bool d_allowNoShear;
+
+  YieldCondition* d_yield;
+  StabilityCheck* d_stable;
+  FlowModel* d_flow;
+  DamageModel* d_damage;
+  MPMEquationOfState* d_eos;
+  Vaango::ShearModulusModel* d_shear;
+  MeltingTempModel* d_melt;
+  SpecificHeatModel* d_Cp;
+  DevStressModel* d_devStress;
+
   void initializeLocalMPMLabels();
 
   void getInitialPorosityData(ProblemSpecP& ps);
@@ -503,8 +493,6 @@ protected:
 
   void setErosionAlgorithm();
 
-  // void getSpecificHeatData(ProblemSpecP& ps);
-  // double computeSpecificHeat(double T);
 };
 
 } // End namespace Uintah

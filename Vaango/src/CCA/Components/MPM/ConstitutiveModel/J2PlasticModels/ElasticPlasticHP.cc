@@ -1002,8 +1002,8 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       // deviatoric elastic increment based on the shear modulus supplied by
       // the strength routine in use.
       auto defState                  = scinew DeformationState();
-      defState->tensorD              = tensorD;
-      defState->tensorEta            = tensorEta;
+      defState->D                    = tensorD;
+      defState->devD                 = tensorEta;
       defState->viscoElasticWorkRate = 0.0;
 
       d_devStress->computeDeviatoricStressInc(idx, state, defState, delT);
@@ -1915,8 +1915,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       Matrix3 tensorEta = tensorD - One * (tensorD.Trace() / 3.0);
 
       auto defState       = scinew DeformationState();
-      defState->tensorD   = tensorD;
-      defState->tensorEta = tensorEta;
+      defState->D         = tensorD;
+      defState->devD      = tensorEta;
 
       // Assume elastic deformation to get a trial deviatoric stress
       // This is simply the previous timestep deviatoric stress plus a
@@ -2313,8 +2313,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       Matrix3 tensorEta = tensorD - One * (tensorD.Trace() / 3.0);
 
       auto defState       = scinew DeformationState();
-      defState->tensorD   = tensorD;
-      defState->tensorEta = tensorEta;
+      defState->D         = tensorD;
+      defState->devD      = tensorEta;
 
       // Assume elastic deformation to get a trial deviatoric stress
       // This is simply the previous timestep deviatoric stress plus a

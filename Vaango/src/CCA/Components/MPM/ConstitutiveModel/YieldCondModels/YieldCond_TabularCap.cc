@@ -929,7 +929,7 @@ YieldCond_TabularCap::df_depsVol(
       df_dX_p =  - gg[0] * dFc_dX_p ;
     }
   }
-  double dX_p_dep_v = capX->computeVolStrainDerivOfInternalVariable(state);
+  double dX_p_dep_v = capX->computeVolStrainDerivOfInternalVariable(nullptr, state);
   double df_dep_v = df_dX_p * dX_p_dep_v;
   return df_dep_v;
 }

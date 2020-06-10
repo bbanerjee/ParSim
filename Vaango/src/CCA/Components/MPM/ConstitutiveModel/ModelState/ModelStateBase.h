@@ -62,8 +62,10 @@ public:
   double specificHeat;
   double porosity;
   double energy;
-  double I1;
-  double J2;
+  double I1;  // tr(stress)
+  double J2;  // 1/2 dev(stress):dev(stress)
+  double p;   // I1/3
+  double q;   // sqrt(3 J2)
   const Uintah::Matrix3* backStress;
 
   ModelStateBase();
@@ -79,12 +81,13 @@ public:
   virtual 
   size_t numStateVar() const
   {
-    auto numThis = 21u;
+    auto numThis = 25u;
     return numThis;
   }
 
+  /* Returns deviatoric stress */
   virtual 
-  void updateStressInvariants(const Uintah::Matrix3& stress);
+  Uintah::Matrix3 updateStressInvariants(const Uintah::Matrix3& stress);
 
   virtual 
   void updateStressInvariants() {}
@@ -93,4 +96,4 @@ public:
 
 } // End namespace Uintah
 
-#endif // __MODEL_STATE_BASE_DERIVED_FROM_PLASTICITY_STATE_DATA_H__
+#endif // __MODEL_STATE_BASE_H__

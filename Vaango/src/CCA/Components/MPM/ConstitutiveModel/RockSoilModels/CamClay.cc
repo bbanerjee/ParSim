@@ -557,7 +557,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       double c_dil = sqrt((bulk + 4.0 * mu / 3.0) / rho_cur);
 
       // Get internal state variable (p_c)
-      double pc_n = d_intvar->computeInternalVariable(&state);
+      double pc_n = d_intvar->computeInternalVariable(nullptr, &state);
       state.p_c = pc_n;
 
       //-----------------------------------------------------------------------
@@ -621,7 +621,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
           double dqdepsev = dpdepses;
           double dqdepses = d_shear->computeDqDepse_s(&state);
           double dpcdepsev =
-            d_intvar->computeVolStrainDerivOfInternalVariable(&state);
+            d_intvar->computeVolStrainDerivOfInternalVariable(nullptr, &state);
 
           // Compute derivatives of residuals
           double dr1_dx1 = 1.0 + delgamma_k * (2.0 * dpdepsev - dpcdepsev);
@@ -696,7 +696,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             mu = d_shear->computeShearModulus(&state);
             q = d_shear->computeQ(&state);
             p = d_eos->computePressure(matl, &state, zero, zero, 0.0);
-            pc = d_intvar->computeInternalVariable(&state);
+            pc = d_intvar->computeInternalVariable(nullptr, &state);
 
             if (std::isnan(p)) {
               ostringstream desc;

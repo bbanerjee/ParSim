@@ -40,10 +40,10 @@ InternalVar_BorjaPressure::InternalVar_BorjaPressure(ProblemSpecP& ps,
                                                      ShearModulusModel* shear)
 {
   d_elastic = nullptr;
-  d_shear = shear;
+  d_shear   = shear;
 
   ParameterDict eosParams = (d_shear->getPressureModel())->getParameters();
-  d_kappatilde = eosParams["kappatilde"];
+  d_kappatilde            = eosParams["kappatilde"];
 
   ps->require("pc0", d_pc0);
   ps->require("lambdatilde", d_lambdatilde);
@@ -59,11 +59,11 @@ InternalVar_BorjaPressure::InternalVar_BorjaPressure(
   const InternalVar_BorjaPressure* cm)
 {
   d_elastic = cm->d_elastic;
-  d_shear = cm->d_shear;
+  d_shear   = cm->d_shear;
 
-  d_pc0 = cm->d_pc0;
+  d_pc0         = cm->d_pc0;
   d_lambdatilde = cm->d_lambdatilde;
-  d_kappatilde = cm->d_kappatilde;
+  d_kappatilde  = cm->d_kappatilde;
 
   // Initialize internal variable labels for evolution
   pPcLabel =
@@ -90,7 +90,9 @@ InternalVar_BorjaPressure::outputProblemSpec(ProblemSpecP& ps)
 
 void
 InternalVar_BorjaPressure::addInitialComputesAndRequires(
-  Task* task, const MPMMaterial* matl, const PatchSet*)
+  Task* task,
+  const MPMMaterial* matl,
+  const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->computes(pPcLabel, matlset);
@@ -117,17 +119,19 @@ InternalVar_BorjaPressure::addParticleState(std::vector<const VarLabel*>& from,
 void
 InternalVar_BorjaPressure::allocateCMDataAddRequires(Task* task,
                                                      const MPMMaterial* matl,
-                                                     const PatchSet*, MPMLabel*)
+                                                     const PatchSet*,
+                                                     MPMLabel*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::NewDW, pPcLabel_preReloc, matlset, Ghost::None);
 }
 
 void
-InternalVar_BorjaPressure::allocateCMDataAdd(
-  DataWarehouse* old_dw, ParticleSubset* addset,
-  ParticleLabelVariableMap* newState, ParticleSubset* delset,
-  DataWarehouse* new_dw)
+InternalVar_BorjaPressure::allocateCMDataAdd(DataWarehouse* old_dw,
+                                             ParticleSubset* addset,
+                                             ParticleLabelVariableMap* newState,
+                                             ParticleSubset* delset,
+                                             DataWarehouse* new_dw)
 {
   ParticleVariable<double> pPc;
   constParticleVariable<double> o_Pc;
@@ -166,7 +170,9 @@ InternalVar_BorjaPressure::getInternalVariable(ParticleSubset* pset,
 
 void
 InternalVar_BorjaPressure::allocateAndPutInternalVariable(
-  ParticleSubset* pset, DataWarehouse* new_dw, ParticleVariableBase& pPc_new)
+  ParticleSubset* pset,
+  DataWarehouse* new_dw,
+  ParticleVariableBase& pPc_new)
 {
   new_dw->allocateAndPut(pPc_new, pPcLabel_preReloc, pset);
 }
@@ -188,6 +194,7 @@ InternalVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset,
 //  Compute the internal variable
 double
 InternalVar_BorjaPressure::computeInternalVariable(
+  const Uintah::VarLabel* label,
   const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
@@ -207,7 +214,7 @@ InternalVar_BorjaPressure::computeInternalVariable(
   // Get the trial elastic strain and the updated elastic strain
   // (volumetric part)
   double strain_elast_v_tr = state->epse_v_tr;
-  double strain_elast_v = state->epse_v;
+  double strain_elast_v    = state->epse_v;
 
   // Calculate new p_c
   double pc = pc_n * exp(-(strain_elast_v_tr - strain_elast_v) /
@@ -220,6 +227,7 @@ InternalVar_BorjaPressure::computeInternalVariable(
 // elastic strain
 double
 InternalVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
+  const Uintah::VarLabel*, 
   const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
@@ -239,11 +247,10 @@ InternalVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
   // Get the trial elastic strain and the updated elastic strain
   // (volumetric part)
   double strain_elast_v_tr = state->epse_v_tr;
-  double strain_elast_v = state->epse_v;
+  double strain_elast_v    = state->epse_v;
 
   // Calculate  dp_c/depse_v
   double pc = pc_n * exp(-(strain_elast_v_tr - strain_elast_v) /
                          (d_lambdatilde - d_kappatilde));
   return pc / (d_lambdatilde - d_kappatilde);
-  ;
 }

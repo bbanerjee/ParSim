@@ -2238,7 +2238,7 @@ TabularPlasticityCap::computeInternalVariables(ModelState_TabularCap& state,
   #endif
 
   // Update the hydrostatic compressive strength
-  double X_new = d_capX->computeInternalVariable(&tempState);
+  double X_new = d_capX->computeInternalVariable(nullptr, &tempState);
 
   // Update the state with new values of the internal variables
   state.capX = X_new;
@@ -2260,7 +2260,7 @@ TabularPlasticityCap::computeInternalVariable(const ModelState_TabularCap& state
   temp.updatePlasticStrainInvariants();
 
   // Update the hydrostatic compressive strength
-  double X_new = d_capX->computeInternalVariable(&temp);
+  double X_new = d_capX->computeInternalVariable(nullptr, &temp);
 
   return X_new;
 }
@@ -2269,7 +2269,7 @@ double
 TabularPlasticityCap::computeInternalVariable(const ModelState_TabularCap& state) const
 {
   // Update the hydrostatic compressive strength
-  double X_new = d_capX->computeInternalVariable(&state);
+  double X_new = d_capX->computeInternalVariable(nullptr, &state);
   return X_new;
 }
 
