@@ -36,13 +36,13 @@ using Polyline = std::vector<Uintah::Point>;
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
-  \class InternalVar_TabularCap
+  \class IntVar_TabularCap
   \brief The evolution of the hydrostatic strength (X) internal variable
          in the tabular plasticity model with cap
 */
 ////////////////////////////////////////////////////////////////////////////
 
-class InternalVar_TabularCap : public InternalVariableModel
+class IntVar_TabularCap : public InternalVariableModel
 {
 
 public:
@@ -50,11 +50,11 @@ public:
   const Uintah::VarLabel* pCapXLabel_preReloc;
 
   // constructors
-  explicit InternalVar_TabularCap(Uintah::ProblemSpecP& ps);
-  InternalVar_TabularCap(const InternalVar_TabularCap* cm);
+  explicit IntVar_TabularCap(Uintah::ProblemSpecP& ps);
+  IntVar_TabularCap(const IntVar_TabularCap* cm);
 
   // destructor
-  ~InternalVar_TabularCap() override;
+  ~IntVar_TabularCap() override;
 
   void
   outputProblemSpec(Uintah::ProblemSpecP& ps) override;
@@ -123,6 +123,16 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////
   /*! \brief Compute the internal variable */
+  void
+  copyInternalVariable(const Uintah::VarLabel* label,
+                       Uintah::particleIndex pidx,
+                       const ModelStateBase* state,
+                       Uintah::ParticleVariableBase& var) override;
+  void
+  evolveInternalVariable(const Uintah::VarLabel* label,
+                         Uintah::particleIndex pidx,
+                         const ModelStateBase* state,
+                         Uintah::ParticleVariableBase& var) override;
   double
   computeInternalVariable(const Uintah::VarLabel* label,
                           const ModelStateBase* state) const override;
@@ -229,9 +239,9 @@ private:
 
   // Prevent copying of this class
   // copy constructor
-  InternalVar_TabularCap(const InternalVar_TabularCap& cm) = delete;
-  InternalVar_TabularCap&
-  operator=(const InternalVar_TabularCap& cm);
+  IntVar_TabularCap(const IntVar_TabularCap& cm) = delete;
+  IntVar_TabularCap&
+  operator=(const IntVar_TabularCap& cm);
 
   // Initialize local VarLabels
   void

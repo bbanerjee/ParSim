@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVar_BorjaPressure.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_BorjaPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
@@ -36,7 +36,7 @@
 using namespace Vaango;
 using namespace Uintah;
 
-InternalVar_BorjaPressure::InternalVar_BorjaPressure(ProblemSpecP& ps,
+IntVar_BorjaPressure::IntVar_BorjaPressure(ProblemSpecP& ps,
                                                      ShearModulusModel* shear)
 {
   d_elastic = nullptr;
@@ -55,8 +55,8 @@ InternalVar_BorjaPressure::InternalVar_BorjaPressure(ProblemSpecP& ps,
     VarLabel::create("p.p_c+", ParticleVariable<double>::getTypeDescription());
 }
 
-InternalVar_BorjaPressure::InternalVar_BorjaPressure(
-  const InternalVar_BorjaPressure* cm)
+IntVar_BorjaPressure::IntVar_BorjaPressure(
+  const IntVar_BorjaPressure* cm)
 {
   d_elastic = cm->d_elastic;
   d_shear   = cm->d_shear;
@@ -72,14 +72,14 @@ InternalVar_BorjaPressure::InternalVar_BorjaPressure(
     VarLabel::create("p.p_c+", ParticleVariable<double>::getTypeDescription());
 }
 
-InternalVar_BorjaPressure::~InternalVar_BorjaPressure()
+IntVar_BorjaPressure::~IntVar_BorjaPressure()
 {
   VarLabel::destroy(pPcLabel);
   VarLabel::destroy(pPcLabel_preReloc);
 }
 
 void
-InternalVar_BorjaPressure::outputProblemSpec(ProblemSpecP& ps)
+IntVar_BorjaPressure::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP int_var_ps = ps->appendChild("internal_variable_model");
   int_var_ps->setAttribute("type", "borja_consolidation_pressure");
@@ -89,7 +89,7 @@ InternalVar_BorjaPressure::outputProblemSpec(ProblemSpecP& ps)
 }
 
 void
-InternalVar_BorjaPressure::addInitialComputesAndRequires(
+IntVar_BorjaPressure::addInitialComputesAndRequires(
   Task* task,
   const MPMMaterial* matl,
   const PatchSet*)
@@ -99,7 +99,7 @@ InternalVar_BorjaPressure::addInitialComputesAndRequires(
 }
 
 void
-InternalVar_BorjaPressure::addComputesAndRequires(Task* task,
+IntVar_BorjaPressure::addComputesAndRequires(Task* task,
                                                   const MPMMaterial* matl,
                                                   const PatchSet*)
 {
@@ -109,7 +109,7 @@ InternalVar_BorjaPressure::addComputesAndRequires(Task* task,
 }
 
 void
-InternalVar_BorjaPressure::addParticleState(std::vector<const VarLabel*>& from,
+IntVar_BorjaPressure::addParticleState(std::vector<const VarLabel*>& from,
                                             std::vector<const VarLabel*>& to)
 {
   from.push_back(pPcLabel);
@@ -117,7 +117,7 @@ InternalVar_BorjaPressure::addParticleState(std::vector<const VarLabel*>& from,
 }
 
 void
-InternalVar_BorjaPressure::allocateCMDataAddRequires(Task* task,
+IntVar_BorjaPressure::allocateCMDataAddRequires(Task* task,
                                                      const MPMMaterial* matl,
                                                      const PatchSet*,
                                                      MPMLabel*)
@@ -127,7 +127,7 @@ InternalVar_BorjaPressure::allocateCMDataAddRequires(Task* task,
 }
 
 void
-InternalVar_BorjaPressure::allocateCMDataAdd(DataWarehouse* old_dw,
+IntVar_BorjaPressure::allocateCMDataAdd(DataWarehouse* old_dw,
                                              ParticleSubset* addset,
                                              ParticleLabelVariableMap* newState,
                                              ParticleSubset* delset,
@@ -149,7 +149,7 @@ InternalVar_BorjaPressure::allocateCMDataAdd(DataWarehouse* old_dw,
 }
 
 void
-InternalVar_BorjaPressure::initializeInternalVariable(ParticleSubset* pset,
+IntVar_BorjaPressure::initializeInternalVariable(ParticleSubset* pset,
                                                       DataWarehouse* new_dw)
 {
   ParticleVariable<double> pPc;
@@ -161,7 +161,7 @@ InternalVar_BorjaPressure::initializeInternalVariable(ParticleSubset* pset,
 }
 
 void
-InternalVar_BorjaPressure::getInternalVariable(ParticleSubset* pset,
+IntVar_BorjaPressure::getInternalVariable(ParticleSubset* pset,
                                                DataWarehouse* old_dw,
                                                constParticleVariableBase& pPc)
 {
@@ -169,7 +169,7 @@ InternalVar_BorjaPressure::getInternalVariable(ParticleSubset* pset,
 }
 
 void
-InternalVar_BorjaPressure::allocateAndPutInternalVariable(
+IntVar_BorjaPressure::allocateAndPutInternalVariable(
   ParticleSubset* pset,
   DataWarehouse* new_dw,
   ParticleVariableBase& pPc_new)
@@ -178,7 +178,7 @@ InternalVar_BorjaPressure::allocateAndPutInternalVariable(
 }
 
 void
-InternalVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset,
+IntVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset,
                                                DataWarehouse* new_dw,
                                                constParticleVariableBase& pPc)
 {
@@ -190,10 +190,26 @@ InternalVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset,
   }
 }
 
+void
+IntVar_BorjaPressure::copyInternalVariable(const Uintah::VarLabel* label,
+                                           Uintah::particleIndex pidx,
+                                           const ModelStateBase* state,
+                                           Uintah::ParticleVariableBase& var) 
+{
+}
+
+void
+IntVar_BorjaPressure::evolveInternalVariable(const Uintah::VarLabel* label,
+                                             Uintah::particleIndex pidx,
+                                             const ModelStateBase* state,
+                                             Uintah::ParticleVariableBase& var)
+{
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 //  Compute the internal variable
 double
-InternalVar_BorjaPressure::computeInternalVariable(
+IntVar_BorjaPressure::computeInternalVariable(
   const Uintah::VarLabel* label,
   const ModelStateBase* state_input) const
 {
@@ -226,7 +242,7 @@ InternalVar_BorjaPressure::computeInternalVariable(
 // Compute derivative of internal variable with respect to volumetric
 // elastic strain
 double
-InternalVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
+IntVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
   const Uintah::VarLabel*, 
   const ModelStateBase* state_input) const
 {

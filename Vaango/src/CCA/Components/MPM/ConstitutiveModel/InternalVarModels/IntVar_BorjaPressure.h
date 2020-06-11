@@ -35,7 +35,7 @@ namespace Vaango {
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
-  \class InternalVar_BorjaPressure
+  \class IntVar_BorjaPressure
   \brief The evolution of the consolidation pressure internal variable in the
          Borja model
 
@@ -59,7 +59,7 @@ namespace Vaango {
 */
 ////////////////////////////////////////////////////////////////////////////
 
-class InternalVar_BorjaPressure : public InternalVariableModel
+class IntVar_BorjaPressure : public InternalVariableModel
 {
 
 public:
@@ -86,17 +86,17 @@ private:
 
   // Prevent copying of this class
   // copy constructor
-  // InternalVar_BorjaPressure(const InternalVar_BorjaPressure &cm);
-  InternalVar_BorjaPressure&
-  operator=(const InternalVar_BorjaPressure& cm);
+  // IntVar_BorjaPressure(const IntVar_BorjaPressure &cm);
+  IntVar_BorjaPressure&
+  operator=(const IntVar_BorjaPressure& cm);
 
 public:
   // constructors
-  InternalVar_BorjaPressure(Uintah::ProblemSpecP& ps, ShearModulusModel* shear);
-  InternalVar_BorjaPressure(const InternalVar_BorjaPressure* cm);
+  IntVar_BorjaPressure(Uintah::ProblemSpecP& ps, ShearModulusModel* shear);
+  IntVar_BorjaPressure(const IntVar_BorjaPressure* cm);
 
   // destructor
-  ~InternalVar_BorjaPressure() override;
+  ~IntVar_BorjaPressure() override;
 
   void
   outputProblemSpec(Uintah::ProblemSpecP& ps) override;
@@ -180,6 +180,16 @@ public:
                                  ParticleMatrix3PVec& pVars) override {}
 
   /*! \brief Compute the internal variable */
+  void
+  copyInternalVariable(const Uintah::VarLabel* label,
+                       Uintah::particleIndex pidx,
+                       const ModelStateBase* state,
+                       Uintah::ParticleVariableBase& var) override;
+  void
+  evolveInternalVariable(const Uintah::VarLabel* label,
+                         Uintah::particleIndex pidx,
+                         const ModelStateBase* state,
+                         Uintah::ParticleVariableBase& var) override;
   double
   computeInternalVariable(const Uintah::VarLabel* label,
                           const ModelStateBase* state) const override;

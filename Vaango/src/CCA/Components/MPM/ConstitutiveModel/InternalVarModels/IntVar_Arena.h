@@ -33,14 +33,14 @@ namespace Vaango {
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
-  \class InternalVar_Arena
+  \class IntVar_Arena
   \brief The evolution of the kappa, X, porosity, and saturation internal
   variables
          in the partially saturated Arenisca model
 */
 ////////////////////////////////////////////////////////////////////////////
 
-class InternalVar_Arena : public InternalVariableModel
+class IntVar_Arena : public InternalVariableModel
 {
 public:
   // Internal variables
@@ -60,11 +60,14 @@ public:
   const Uintah::VarLabel* pP3Label_preReloc;
 
   // constructors
-  InternalVar_Arena(Uintah::ProblemSpecP& ps, ElasticModuliModel* elastic);
-  InternalVar_Arena(const InternalVar_Arena* cm);
+  IntVar_Arena(Uintah::ProblemSpecP& ps, ElasticModuliModel* elastic);
+  IntVar_Arena(const IntVar_Arena* cm);
+
+  IntVar_Arena&
+  operator=(const IntVar_Arena& cm) = delete;
 
   // destructor
-  ~InternalVar_Arena() override;
+  ~IntVar_Arena() override;
 
   void
   outputProblemSpec(Uintah::ProblemSpecP& ps) override;
@@ -200,9 +203,20 @@ public:
   }
 
   /*! \brief Compute the internal variable */
+  void
+  copyInternalVariable(const Uintah::VarLabel* label,
+                       Uintah::particleIndex pidx,
+                       const ModelStateBase* state,
+                       Uintah::ParticleVariableBase& var) override;
+  void
+  evolveInternalVariable(const Uintah::VarLabel* label,
+                         Uintah::particleIndex pidx,
+                         const ModelStateBase* state,
+                         Uintah::ParticleVariableBase& var) override;
   double
   computeInternalVariable(const Uintah::VarLabel* label,
                           const ModelStateBase* state) const override;
+
 
   // Compute derivative of internal variable with respect to volumetric
   // elastic strain
@@ -236,59 +250,6 @@ public:
   allocateAndPutRigid(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* new_dw,
                       Uintah::constParticleLabelVariableMap& intvar) override;
-
-private:
-  // Crush Curve Model parameters
-  struct CrushParameters
-  {
-    double p0;
-    double p1;
-    double p2;
-    double p3;
-  };
-
-  CrushParameters d_crushParam;
-  bool d_use_disaggregation_algorithm;
-
-  // Prevent copying of this class
-  // copy constructor
-  // InternalVar_Arena(const InternalVar_Arena &cm);
-  InternalVar_Arena&
-  operator=(const InternalVar_Arena& cm);
-
-  // Initialize local VarLabels
-  void
-  initializeLocalMPMLabels()
-  {
-    pKappaLabel = Uintah::VarLabel::create(
-      "p.kappa", Uintah::ParticleVariable<double>::getTypeDescription());
-    pKappaLabel_preReloc = Uintah::VarLabel::create(
-      "p.kappa+", Uintah::ParticleVariable<double>::getTypeDescription());
-
-    pCapXLabel = Uintah::VarLabel::create(
-      "p.capX", Uintah::ParticleVariable<double>::getTypeDescription());
-    pCapXLabel_preReloc = Uintah::VarLabel::create(
-      "p.capX+", Uintah::ParticleVariable<double>::getTypeDescription());
-
-    pPlasticStrainLabel = Uintah::VarLabel::create(
-      "p.plasticStrain",
-      Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-    pPlasticStrainLabel_preReloc = Uintah::VarLabel::create(
-      "p.plasticStrain+",
-      Uintah::ParticleVariable<Uintah::Matrix3>::getTypeDescription());
-
-    pPlasticVolStrainLabel = Uintah::VarLabel::create(
-      "p.plasticVolStrain",
-      Uintah::ParticleVariable<double>::getTypeDescription());
-    pPlasticVolStrainLabel_preReloc = Uintah::VarLabel::create(
-      "p.plasticVolStrain+",
-      Uintah::ParticleVariable<double>::getTypeDescription());
-
-    pP3Label = Uintah::VarLabel::create(
-      "p.p3", Uintah::ParticleVariable<double>::getTypeDescription());
-    pP3Label_preReloc = Uintah::VarLabel::create(
-      "p.p3+", Uintah::ParticleVariable<double>::getTypeDescription());
-  }
 
 public:
   /**
@@ -389,6 +350,23 @@ public:
                                     const double& phi,
                                     const double& Sw,
                                     const double& phi0) const;
+private:
+  // Crush Curve Model parameters
+  struct CrushParameters
+  {
+    double p0;
+    double p1;
+    double p2;
+    double p3;
+  };
+
+  CrushParameters d_crushParam;
+  bool d_use_disaggregation_algorithm;
+
+
+  // Initialize local VarLabels
+  void initializeLocalMPMLabels();
+
 };
 
 } // End namespace Uintah

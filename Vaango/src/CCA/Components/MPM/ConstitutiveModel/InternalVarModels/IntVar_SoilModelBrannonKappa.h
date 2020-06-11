@@ -35,7 +35,7 @@ namespace Vaango {
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
-  \class InternalVar_SoilModelBrannonKappa
+  \class IntVar_SoilModelBrannonKappa
   \brief The evolution of the kappa hardening internal variable in the
          Arenisca model
 
@@ -65,7 +65,7 @@ namespace Vaango {
 */
 ////////////////////////////////////////////////////////////////////////////
 
-class InternalVar_SoilModelBrannonKappa : public InternalVariableModel
+class IntVar_SoilModelBrannonKappa : public InternalVariableModel
 {
 
 public:
@@ -97,19 +97,19 @@ private:
 
   // Prevent copying of this class
   // copy constructor
-  // InternalVar_SoilModelBrannonKappa(const InternalVar_SoilModelBrannonKappa
+  // IntVar_SoilModelBrannonKappa(const IntVar_SoilModelBrannonKappa
   // &cm);
-  InternalVar_SoilModelBrannonKappa&
-  operator=(const InternalVar_SoilModelBrannonKappa& cm);
+  IntVar_SoilModelBrannonKappa&
+  operator=(const IntVar_SoilModelBrannonKappa& cm);
 
 public:
   // constructors
-  InternalVar_SoilModelBrannonKappa(Uintah::ProblemSpecP& ps);
-  InternalVar_SoilModelBrannonKappa(
-    const InternalVar_SoilModelBrannonKappa* cm);
+  IntVar_SoilModelBrannonKappa(Uintah::ProblemSpecP& ps);
+  IntVar_SoilModelBrannonKappa(
+    const IntVar_SoilModelBrannonKappa* cm);
 
   // destructor
-  ~InternalVar_SoilModelBrannonKappa() override;
+  ~IntVar_SoilModelBrannonKappa() override;
 
   void
   outputProblemSpec(Uintah::ProblemSpecP& ps) override;
@@ -214,6 +214,16 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////
   /*! \brief Compute the internal variable */
+  void
+  copyInternalVariable(const Uintah::VarLabel* label,
+                       Uintah::particleIndex pidx,
+                       const ModelStateBase* state,
+                       Uintah::ParticleVariableBase& var) override;
+  void
+  evolveInternalVariable(const Uintah::VarLabel* label,
+                         Uintah::particleIndex pidx,
+                         const ModelStateBase* state,
+                         Uintah::ParticleVariableBase& var) override;
   double
   computeInternalVariable(const Uintah::VarLabel* label,
                           const ModelStateBase* state) const override;

@@ -25,10 +25,10 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVar_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVar_BorjaPressure.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVar_SoilModelBrannonKappa.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVar_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Arena.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_BorjaPressure.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_SoilModelBrannonKappa.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 
@@ -58,9 +58,9 @@ InternalVariableModelFactory::create(ProblemSpecP& ps)
     throw ProblemSetupException("No type for internal_var_model", __FILE__,
                                 __LINE__);
   if (mat_type == "soil_model_brannon_kappa") {
-    return (scinew InternalVar_SoilModelBrannonKappa(child));
+    return (scinew IntVar_SoilModelBrannonKappa(child));
   } else if (mat_type == "tabular_cap") {
-    return (scinew InternalVar_TabularCap(child));
+    return (scinew IntVar_TabularCap(child));
   } else {
     throw ProblemSetupException(
       "Unknown InternalVariable Model (" + mat_type + ")", __FILE__, __LINE__);
@@ -79,7 +79,7 @@ InternalVariableModelFactory::create(ProblemSpecP& ps, ShearModulusModel* shear)
     throw ProblemSetupException("No type for internal_var_model", __FILE__,
                                 __LINE__);
   if (mat_type == "borja_consolidation_pressure")
-    return (scinew InternalVar_BorjaPressure(child, shear));
+    return (scinew IntVar_BorjaPressure(child, shear));
   else {
     throw ProblemSetupException(
       "Unknown InternalVariable Model (" + mat_type + ")", __FILE__, __LINE__);
@@ -99,7 +99,7 @@ InternalVariableModelFactory::create(ProblemSpecP& ps,
     throw ProblemSetupException("No type for internal_var_model", __FILE__,
                                 __LINE__);
   if (mat_type == "arena")
-    return (scinew InternalVar_Arena(child, elastic));
+    return (scinew IntVar_Arena(child, elastic));
   else {
     throw ProblemSetupException(
       "Unknown InternalVariable Model (" + mat_type + ")", __FILE__, __LINE__);
@@ -109,21 +109,21 @@ InternalVariableModelFactory::create(ProblemSpecP& ps,
 InternalVariableModel*
 InternalVariableModelFactory::createCopy(const InternalVariableModel* pm)
 {
-  if (dynamic_cast<const InternalVar_BorjaPressure*>(pm))
-    return (scinew InternalVar_BorjaPressure(
-      dynamic_cast<const InternalVar_BorjaPressure*>(pm)));
+  if (dynamic_cast<const IntVar_BorjaPressure*>(pm))
+    return (scinew IntVar_BorjaPressure(
+      dynamic_cast<const IntVar_BorjaPressure*>(pm)));
 
-  else if (dynamic_cast<const InternalVar_SoilModelBrannonKappa*>(pm))
-    return (scinew InternalVar_SoilModelBrannonKappa(
-      dynamic_cast<const InternalVar_SoilModelBrannonKappa*>(pm)));
+  else if (dynamic_cast<const IntVar_SoilModelBrannonKappa*>(pm))
+    return (scinew IntVar_SoilModelBrannonKappa(
+      dynamic_cast<const IntVar_SoilModelBrannonKappa*>(pm)));
 
-  else if (dynamic_cast<const InternalVar_Arena*>(pm))
+  else if (dynamic_cast<const IntVar_Arena*>(pm))
     return (
-      scinew InternalVar_Arena(dynamic_cast<const InternalVar_Arena*>(pm)));
+      scinew IntVar_Arena(dynamic_cast<const IntVar_Arena*>(pm)));
 
-  else if (dynamic_cast<const InternalVar_TabularCap*>(pm))
+  else if (dynamic_cast<const IntVar_TabularCap*>(pm))
     return (
-      scinew InternalVar_TabularCap(dynamic_cast<const InternalVar_TabularCap*>(pm)));
+      scinew IntVar_TabularCap(dynamic_cast<const IntVar_TabularCap*>(pm)));
 
   else {
     throw Uintah::ProblemSetupException(

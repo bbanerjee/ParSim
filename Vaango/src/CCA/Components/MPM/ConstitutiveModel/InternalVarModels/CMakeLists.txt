@@ -37,10 +37,10 @@ SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModel.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/InternalVariableModelFactory.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_SoilModelBrannonKappa.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_BorjaPressure.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_Arena.cc 
-  ${CMAKE_CURRENT_SOURCE_DIR}/InternalVar_TabularCap.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/IntVar_SoilModelBrannonKappa.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/IntVar_BorjaPressure.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/IntVar_Arena.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/IntVar_TabularCap.cc 
   PARENT_SCOPE
 )
 

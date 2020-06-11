@@ -23,7 +23,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_Tabular.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVar_TabularCap.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_TabularCap.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
@@ -54,7 +54,7 @@ using ParticleLabelVariableMap      = Uintah::ParticleLabelVariableMap;
 using constParticleLabelVariableMap = Uintah::constParticleLabelVariableMap;
 
 /*!-----------------------------------------------------*/
-InternalVar_TabularCap::InternalVar_TabularCap(Uintah::ProblemSpecP& ps)
+IntVar_TabularCap::IntVar_TabularCap(Uintah::ProblemSpecP& ps)
   : d_capX_fn(ps)
 {
   // Initialize internal variable labels for evolution
@@ -62,7 +62,7 @@ InternalVar_TabularCap::InternalVar_TabularCap(Uintah::ProblemSpecP& ps)
 }
 
 /*!-----------------------------------------------------*/
-InternalVar_TabularCap::InternalVar_TabularCap(const InternalVar_TabularCap* cm)
+IntVar_TabularCap::IntVar_TabularCap(const IntVar_TabularCap* cm)
 {
   d_capX_fn = cm->d_capX_fn;
 
@@ -71,7 +71,7 @@ InternalVar_TabularCap::InternalVar_TabularCap(const InternalVar_TabularCap* cm)
 }
 
 /*!-----------------------------------------------------*/
-InternalVar_TabularCap::~InternalVar_TabularCap()
+IntVar_TabularCap::~IntVar_TabularCap()
 {
   VarLabel::destroy(pCapXLabel);
   VarLabel::destroy(pCapXLabel_preReloc);
@@ -79,7 +79,7 @@ InternalVar_TabularCap::~InternalVar_TabularCap()
 
 /*!-----------------------------------------------------*/
 void
-InternalVar_TabularCap::outputProblemSpec(ProblemSpecP& ps)
+IntVar_TabularCap::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP int_var_ps = ps->appendChild("internal_variable_model");
   int_var_ps->setAttribute("type", "tabular_cap");
@@ -88,7 +88,7 @@ InternalVar_TabularCap::outputProblemSpec(ProblemSpecP& ps)
 
 /*!-----------------------------------------------------*/
 void
-InternalVar_TabularCap::addInitialComputesAndRequires(Task* task,
+IntVar_TabularCap::addInitialComputesAndRequires(Task* task,
                                                       const MPMMaterial* matl,
                                                       const PatchSet*)
 {
@@ -98,7 +98,7 @@ InternalVar_TabularCap::addInitialComputesAndRequires(Task* task,
 
 /*!-----------------------------------------------------*/
 void
-InternalVar_TabularCap::initializeInternalVariable(
+IntVar_TabularCap::initializeInternalVariable(
   Uintah::ParticleSubset* pset,
   Uintah::DataWarehouse* new_dw)
 {
@@ -121,7 +121,7 @@ InternalVar_TabularCap::initializeInternalVariable(
 
 /*!-----------------------------------------------------*/
 void
-InternalVar_TabularCap::addComputesAndRequires(Task* task,
+IntVar_TabularCap::addComputesAndRequires(Task* task,
                                                const MPMMaterial* matl,
                                                const PatchSet*)
 {
@@ -132,18 +132,34 @@ InternalVar_TabularCap::addComputesAndRequires(Task* task,
 
 /*!-----------------------------------------------------*/
 void
-InternalVar_TabularCap::addParticleState(std::vector<const VarLabel*>& from,
+IntVar_TabularCap::addParticleState(std::vector<const VarLabel*>& from,
                                          std::vector<const VarLabel*>& to)
 {
   from.push_back(pCapXLabel);
   to.push_back(pCapXLabel_preReloc);
 }
 
+void
+IntVar_TabularCap::copyInternalVariable(const Uintah::VarLabel* label,
+                                        Uintah::particleIndex pidx,
+                                        const ModelStateBase* state,
+                                        Uintah::ParticleVariableBase& var) 
+{
+}
+
+void
+IntVar_TabularCap::evolveInternalVariable(const Uintah::VarLabel* label,
+                                          Uintah::particleIndex pidx,
+                                          const ModelStateBase* state,
+                                          Uintah::ParticleVariableBase& var)
+{
+}
+
 //--------------------------------------------------------------------------------------
 // Compute hydrostatic strength
 //--------------------------------------------------------------------------------------
 double
-InternalVar_TabularCap::computeInternalVariable(
+IntVar_TabularCap::computeInternalVariable(
   const Uintah::VarLabel* label,
   const ModelStateBase* state_input) const
 {
@@ -183,7 +199,7 @@ InternalVar_TabularCap::computeInternalVariable(
  *  Compute drained hydrostatic strength
  */
 double
-InternalVar_TabularCap::computeDrainedHydrostaticStrength(
+IntVar_TabularCap::computeDrainedHydrostaticStrength(
   const double& ep_v_bar) const
 {
   DoubleVec1D gg       = d_capX_fn.table.interpolate<1>({ { ep_v_bar } });
@@ -197,7 +213,7 @@ InternalVar_TabularCap::computeDrainedHydrostaticStrength(
  *  plastic strain
  */
 double
-InternalVar_TabularCap::computeVolStrainDerivOfInternalVariable(
+IntVar_TabularCap::computeVolStrainDerivOfInternalVariable(
   const Uintah::VarLabel*, 
   const ModelStateBase* state_input) const
 {
@@ -235,7 +251,7 @@ InternalVar_TabularCap::computeVolStrainDerivOfInternalVariable(
 
 /*!-----------------------------------------------------*/
 void
-InternalVar_TabularCap::allocateCMDataAddRequires(Task* task,
+IntVar_TabularCap::allocateCMDataAddRequires(Task* task,
                                                   const MPMMaterial* matl,
                                                   const PatchSet*,
                                                   MPMLabel*)
@@ -246,7 +262,7 @@ InternalVar_TabularCap::allocateCMDataAddRequires(Task* task,
 
 /*!-----------------------------------------------------*/
 void
-InternalVar_TabularCap::allocateCMDataAdd(DataWarehouse* old_dw,
+IntVar_TabularCap::allocateCMDataAdd(DataWarehouse* old_dw,
                                           ParticleSubset* addset,
                                           ParticleLabelVariableMap* newState,
                                           ParticleSubset* delset,
@@ -270,7 +286,7 @@ InternalVar_TabularCap::allocateCMDataAdd(DataWarehouse* old_dw,
 
 /*!-----------------------------------------------------*/
 void
-InternalVar_TabularCap::allocateAndPutRigid(ParticleSubset* pset,
+IntVar_TabularCap::allocateAndPutRigid(ParticleSubset* pset,
                                             DataWarehouse* new_dw,
                                             constParticleLabelVariableMap& var)
 {

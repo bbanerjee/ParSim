@@ -49,9 +49,12 @@ public:
   const Uintah::VarLabel* pPlasticPorosityLabel_preReloc;
 
   /* constructors/destructor */
-  IntVar_MetalPlastic(Uintah::ProblemSpecP& ps, ElasticModuliModel* elastic);
+  IntVar_MetalPlastic(Uintah::ProblemSpecP& ps, 
+                      ShearModulusModel* shear,
+                      MPMEquationOfState* eos);
   IntVar_MetalPlastic(const IntVar_MetalPlastic* cm);
   ~IntVar_MetalPlastic() override;
+
   IntVar_MetalPlastic&
   operator=(const IntVar_MetalPlastic& cm) = delete;
 
@@ -122,9 +125,20 @@ public:
                                  vectorParticleMatrix3P& pVars) override;
 
   // Actually compute
+  void
+  copyInternalVariable(const Uintah::VarLabel* label,
+                       Uintah::particleIndex pidx,
+                       const ModelStateBase* state,
+                       Uintah::ParticleVariableBase& var) override;
+  void
+  evolveInternalVariable(const Uintah::VarLabel* label,
+                         Uintah::particleIndex pidx,
+                         const ModelStateBase* state,
+                         Uintah::ParticleVariableBase& var) override;
   double
   computeInternalVariable(const Uintah::VarLabel* label,
                           const ModelStateBase* state) const override;
+
   double
   computeVolStrainDerivOfInternalVariable(const Uintah::VarLabel* label,
                                           const ModelStateBase*) const override;
@@ -149,6 +163,7 @@ public:
                       Uintah::constParticleLabelVariableMap& intvar) override;
 
 private:
+
   /* Initialize local VarLabels */
   void
   initializeLocalMPMLabels();
@@ -157,13 +172,13 @@ private:
    * Function: computeEqPlasticStrain
    */
   double
-  computeEqPlasticStrain(const ModelStateBase* state) const;
+  evolveEqPlasticStrain(const ModelStateBase* state);
 
   /**
    * Function: computePorosity
    */
   double
-  computePorosity(const ModelStateBase* state) const;
+  evolvePorosity(const ModelStateBase* state);
 };
 
 } // End namespace Vaango

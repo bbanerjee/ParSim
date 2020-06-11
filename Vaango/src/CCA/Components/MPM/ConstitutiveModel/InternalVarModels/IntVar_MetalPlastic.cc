@@ -39,10 +39,12 @@ using namespace Vaango;
 using namespace Uintah;
 
 IntVar_MetalPlastic::IntVar_MetalPlastic(ProblemSpecP& ps,
-                                         ElasticModuliModel* elastic)
+                                         ShearModulusModel* shear,
+                                         MPMEquationOfState* eos)
 {
-  d_elastic = elastic;
-  d_shear   = nullptr;
+  d_elastic = nullptr;
+  d_shear   = shear;
+  d_eos     = eos;
   initializeLocalMPMLabels();
 }
 
@@ -192,9 +194,49 @@ IntVar_MetalPlastic::allocateAndPutInternalVariable(
 {
 }
 
+void
+IntVar_MetalPlastic::copyInternalVariable(const Uintah::VarLabel* label,
+                                          Uintah::particleIndex pidx,
+                                          const ModelStateBase* state,
+                                          Uintah::ParticleVariableBase& var) 
+{
+  if (label == pEqPlasticStrainLabel || 
+      label == pEqPlasticStrainLabel_preReloc) {
+    return copyEqPlasticStrain(state);
+  }
+
+  if (label == pPlasticPorosityLabel || 
+      label == pPlasticPorosityLabel_preReloc) {
+    return copyPlasticPorosity(state);
+  }
+
+  return 0.0;
+}
+
+void
+IntVar_MetalPlastic::evolveInternalVariable(const Uintah::VarLabel* label,
+                                            Uintah::particleIndex pidx,
+                                            const ModelStateBase* state,
+                                            Uintah::ParticleVariableBase& var)
+{
+  if (label == pEqPlasticStrainLabel || 
+      label == pEqPlasticStrainLabel_preReloc) {
+    double eq_eps_p_new = computeEqPlasticStrain(state);
+    return updateEqPlasticStrain(state);
+  }
+
+  if (label == pPlasticPorosityLabel || 
+      label == pPlasticPorosityLabel_preReloc) {
+    double phi_new = computePlasticPorosity(state);
+    return updatePlasticPorosity(state);
+  }
+
+  return 0.0;
+}
+
 double
 IntVar_MetalPlastic::computeInternalVariable(const Uintah::VarLabel* label,
-                                             const ModelStateBase* state) const
+                                             const ModelStateBase* state_input) const 
 {
 }
 
@@ -211,7 +253,7 @@ IntVar_MetalPlastic::computeEqPlasticStrain(const ModelStateBase* state) const
  * Function: computePorosity
  */
 double
-IntVar_MetalPlastic::computePorosity(const ModelStateBase* state) const
+IntVar_MetalPlastic::computePlasticPorosity(const ModelStateBase* state) const
 {
   return 0.0;
 }
