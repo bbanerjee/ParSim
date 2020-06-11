@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -29,7 +30,6 @@ SET(Vaango_CCA_Components_ReduceUda_SRCS
 ADD_LIBRARY(Vaango_CCA_Components_ReduceUda ${Vaango_CCA_Components_ReduceUda_SRCS})
 
 TARGET_LINK_LIBRARIES(Vaango_CCA_Components_ReduceUda
-  Vaango_Core_Disclosure
   Vaango_Core_Parallel
   Vaango_Core_ProblemSpec
   Vaango_Core_Exceptions

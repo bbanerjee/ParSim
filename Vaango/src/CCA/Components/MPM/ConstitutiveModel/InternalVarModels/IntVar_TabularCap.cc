@@ -52,6 +52,7 @@ using Task                          = Uintah::Task;
 using Ghost                         = Uintah::Ghost;
 using ParticleLabelVariableMap      = Uintah::ParticleLabelVariableMap;
 using constParticleLabelVariableMap = Uintah::constParticleLabelVariableMap;
+using TabularCapIntVar              = Uintah::TabularCapIntVar;
 
 /*!-----------------------------------------------------*/
 IntVar_TabularCap::IntVar_TabularCap(Uintah::ProblemSpecP& ps)
@@ -139,19 +140,13 @@ IntVar_TabularCap::addParticleState(std::vector<const VarLabel*>& from,
   to.push_back(pCapXLabel_preReloc);
 }
 
-void
-IntVar_TabularCap::copyInternalVariable(const Uintah::VarLabel* label,
-                                        Uintah::particleIndex pidx,
-                                        const ModelStateBase* state,
-                                        Uintah::ParticleVariableBase& var) 
-{
-}
-
+template <>
 void
 IntVar_TabularCap::evolveInternalVariable(const Uintah::VarLabel* label,
                                           Uintah::particleIndex pidx,
                                           const ModelStateBase* state,
-                                          Uintah::ParticleVariableBase& var)
+                                          Uintah::constParticleVariable<TabularCapIntVar>& var_old,
+                                          Uintah::ParticleVariable<TabularCapIntVar>& var)
 {
 }
 

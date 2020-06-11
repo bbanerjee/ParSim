@@ -190,19 +190,13 @@ IntVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset,
   }
 }
 
-void
-IntVar_BorjaPressure::copyInternalVariable(const Uintah::VarLabel* label,
-                                           Uintah::particleIndex pidx,
-                                           const ModelStateBase* state,
-                                           Uintah::ParticleVariableBase& var) 
-{
-}
-
+template <>
 void
 IntVar_BorjaPressure::evolveInternalVariable(const Uintah::VarLabel* label,
                                              Uintah::particleIndex pidx,
                                              const ModelStateBase* state,
-                                             Uintah::ParticleVariableBase& var)
+                                             Uintah::constParticleVariable<BorjaIntVar>& var_old,
+                                             Uintah::ParticleVariable<BorjaIntVar>& var)
 {
 }
 

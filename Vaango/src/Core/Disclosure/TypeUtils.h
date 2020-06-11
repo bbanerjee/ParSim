@@ -40,6 +40,7 @@
 #include <Core/Geometry/Point.h>
 #include <Core/Geometry/Vector.h>
 
+
 namespace Uintah {
 
 using Uintah::Point;
@@ -54,10 +55,12 @@ class Short27;
 class Int130;
 class TypeDescription;
 
-  class NeighborList;
-  class NeighborConnectivity;
-  class NeighborBondEnergy;
-  class NeighborBondInternalForce;
+class NeighborList;
+class NeighborConnectivity;
+class NeighborBondEnergy;
+class NeighborBondInternalForce;
+
+class MetalPlastic;
 
 typedef int64_t long64;
 typedef int64_t ParticleID;
@@ -99,6 +102,8 @@ typedef int64_t ParticleID;
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborConnectivity*);
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborBondEnergy*);
  const TypeDescription* fun_getTypeDescription(Uintah::NeighborBondInternalForce*);
+
+ //const TypeDescription* fun_getTypeDescription(Uintah::MetalPlastic*);
 
 // these functions are for getting safe values of types
 // return back the value in the argument (so we don't have to include

@@ -27,8 +27,6 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Vaango/src/StandAlone
-
 message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -45,7 +43,6 @@ SET(VAANGO_LIBS
         Vaango_Core_Labels      
         Vaango_Core_Util        
         Vaango_Core_Math        
-        Vaango_Core_Disclosure  
         Vaango_Core_Exceptions  
         Vaango_Core_OS  
         Vaango_CCA_Ports        
@@ -72,14 +69,7 @@ ENDIF()
 
 TARGET_LINK_LIBRARIES(vaango ${VAANGO_LIBS})
 
-TARGET_LINK_LIBRARIES(compare_uda
-  Vaango_Core_DataArchive
-  Vaango_Core_Grid
-  Vaango_Core_Malloc
-  Vaango_Core_Thread
-  Vaango_Core_Math
-  Vaango_Core_Util
-)
+TARGET_LINK_LIBRARIES(compare_uda ${VAANGO_LIBS})
 
 set(RESTART_LIBS
   Vaango_Core_DataArchive

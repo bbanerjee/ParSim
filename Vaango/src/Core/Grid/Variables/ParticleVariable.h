@@ -46,6 +46,8 @@
 #include <Core/IO/SpecializedRunLengthEncoder.h>
 #include <Core/Math/Short27.h>
 #include <Core/Math/Matrix3.h>
+#include <Core/Grid/Variables/MPMIntVarTypes.h>
+
 #include <iostream>
 #include <cstring>
 

@@ -61,7 +61,6 @@ namespace Uintah {
 class IsoHardeningFlow : public FlowModel
 {
 
-  // Create datatype for storing model parameters
 public:
   struct CMData
   {
@@ -75,18 +74,10 @@ public:
   const VarLabel* pAlphaLabel;          // For Isotropic Hardening Plasticity
   const VarLabel* pAlphaLabel_preReloc; // For Isotropic Hardening Plasticity
 
-private:
-  CMData d_CM;
-
-  // Prevent copying of this class
-  // copy constructor
-  // IsoHardeningFlow(const IsoHardeningFlow &cm);
-  IsoHardeningFlow& operator=(const IsoHardeningFlow& cm);
-
-public:
   // constructors
   IsoHardeningFlow(ProblemSpecP& ps);
   IsoHardeningFlow(const IsoHardeningFlow* cm);
+  IsoHardeningFlow& operator=(const IsoHardeningFlow& cm) = delete;
 
   // destructor
   ~IsoHardeningFlow() override;
@@ -270,6 +261,11 @@ protected:
   ///////////////////////////////////////////////////////////////////////////
   double evalDerivativeWRTAlpha(const ModelStateBase* state,
                                 const particleIndex idx);
+
+private:
+
+  CMData d_CM;
+
 };
 
 } // End namespace Uintah

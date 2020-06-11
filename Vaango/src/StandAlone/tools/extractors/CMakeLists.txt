@@ -41,7 +41,6 @@ ADD_EXECUTABLE(extractPosVelMasVol extractPosVelMasVol.cc)
 SET(EXTRACTOR_LIBS
   Vaango_Core_Exceptions
   Vaango_Core_Grid
-  Vaango_Core_Disclosure
   Vaango_Core_DataArchive
   Vaango_Core_Util
 )

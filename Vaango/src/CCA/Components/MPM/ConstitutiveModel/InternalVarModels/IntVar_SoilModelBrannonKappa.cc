@@ -219,19 +219,14 @@ IntVar_SoilModelBrannonKappa::allocateAndPutRigid(
   }
 }
 
+template <>
 void
-IntVar_SoilModelBrannonKappa::copyInternalVariable(const Uintah::VarLabel* label,
-                                                   Uintah::particleIndex pidx,
-                                                   const ModelStateBase* state,
-                                                   Uintah::ParticleVariableBase& var) 
-{
-}
-
-void
-IntVar_SoilModelBrannonKappa::evolveInternalVariable(const Uintah::VarLabel* label,
-                                                     Uintah::particleIndex pidx,
-                                                     const ModelStateBase* state,
-                                                     Uintah::ParticleVariableBase& var)
+IntVar_SoilModelBrannonKappa::evolveInternalVariable(
+  const Uintah::VarLabel* label,
+  Uintah::particleIndex pidx,
+  const ModelStateBase* state,
+  Uintah::constParticleVariable<SoilBrannonIntVar>& var_old,
+  Uintah::ParticleVariable<SoilBrannonIntVar>& var)
 {
 }
 

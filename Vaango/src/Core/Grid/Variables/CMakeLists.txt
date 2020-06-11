@@ -52,6 +52,7 @@ SET(Vaango_Core_Grid_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/NeighborConnectivity.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/NeighborBondEnergy.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/NeighborBondInternalForce.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/MPMIntVarTypes.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/Utils.cc                      
   ${CMAKE_CURRENT_SOURCE_DIR}/ugc_templates.cc              
   ${CMAKE_CURRENT_SOURCE_DIR}/VarLabel.cc                   

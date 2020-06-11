@@ -146,19 +146,14 @@ public:
                                  Uintah::DataWarehouse* new_dw,
                                  ParticleMatrix3PVec& pVars) = 0;
 
-  /*! Copy the old value of internal variable to new  */
-  virtual void
-  copyInternalVariable(const Uintah::VarLabel* label,
-                       Uintah::particleIndex pidx,
-                       const ModelStateBase* state,
-                       Uintah::ParticleVariableBase& var) = 0;
-
   /*! Update the internal variable */
-  virtual void
+  template <typename T>
+  void
   evolveInternalVariable(const Uintah::VarLabel* label,
                          Uintah::particleIndex pidx,
                          const ModelStateBase* state,
-                         Uintah::ParticleVariableBase& var) = 0;
+                         Uintah::constParticleVariable<T>& var_old,
+                         Uintah::ParticleVariable<T>& var_new);
 
   /* Compute the internal variable */
   virtual double

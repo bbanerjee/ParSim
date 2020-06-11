@@ -38,6 +38,8 @@
 using namespace Vaango;
 using namespace Uintah;
 
+using MetalIntVar = Uintah::MetalIntVar;
+
 IntVar_MetalPlastic::IntVar_MetalPlastic(ProblemSpecP& ps,
                                          ShearModulusModel* shear,
                                          MPMEquationOfState* eos)
@@ -58,23 +60,16 @@ IntVar_MetalPlastic::IntVar_MetalPlastic(const IntVar_MetalPlastic* cm)
 void
 IntVar_MetalPlastic::initializeLocalMPMLabels()
 {
-  auto type_d = Uintah::ParticleVariable<double>::getTypeDescription();
-  pEqPlasticStrainLabel = Uintah::VarLabel::create("p.eqPlasticStrain", type_d);
-  pEqPlasticStrainLabel_preReloc =
-    Uintah::VarLabel::create("p.eqPlasticStrain+", type_d);
-
-  pPlasticPorosityLabel = Uintah::VarLabel::create("p.plasticPorosity", type_d);
-  pPlasticPorosityLabel_preReloc =
-    Uintah::VarLabel::create("p.plasticPorosity+", type_d);
+  auto type_d = Uintah::ParticleVariable<Uintah::MetalIntVar>::getTypeDescription();
+  pIntVarLabel = Uintah::VarLabel::create("p.intVarMetalPlastic", type_d);
+  pIntVarLabel_preReloc =
+    Uintah::VarLabel::create("p.intVarMetalPlastic+", type_d);
 }
 
 IntVar_MetalPlastic::~IntVar_MetalPlastic()
 {
-  VarLabel::destroy(pEqPlasticStrainLabel);
-  VarLabel::destroy(pEqPlasticStrainLabel_preReloc);
-
-  VarLabel::destroy(pPlasticPorosityLabel);
-  VarLabel::destroy(pPlasticPorosityLabel_preReloc);
+  VarLabel::destroy(pIntVarLabel);
+  VarLabel::destroy(pIntVarLabel_preReloc);
 }
 
 void
@@ -86,15 +81,11 @@ IntVar_MetalPlastic::outputProblemSpec(ProblemSpecP& ps)
 
 /* get internal variable labels */
 std::vector<const Uintah::VarLabel*>
-IntVar_MetalPlastic::getLabels() const override
+IntVar_MetalPlastic::getLabels() const
 {
   std::vector<const Uintah::VarLabel*> labels;
-  labels.push_back(pEqPlasticStrainLabel);
-  labels.push_back(pEqPlasticStrainLabel_preReloc);
-
-  labels.push_back(pPlasticPorosityLabel);
-  labels.push_back(pPlasticPorosityLabel_preReloc);
-
+  labels.push_back(pIntVarLabel);
+  labels.push_back(pIntVarLabel_preReloc);
   return labels;
 }
 
@@ -102,11 +93,8 @@ void
 IntVar_MetalPlastic::addParticleState(std::vector<const VarLabel*>& from,
                                       std::vector<const VarLabel*>& to)
 {
-  from.push_back(pEqPlasticStrainLabel);
-  to.push_back(pEqPlasticStrainLabel_preReloc);
-
-  from.push_back(pPlasticPorosityLabel);
-  to.push_back(pPlasticPorosityLabel_preReloc);
+  from.push_back(pIntVarLabel);
+  to.push_back(pIntVarLabel_preReloc);
 }
 
 void
@@ -115,8 +103,19 @@ IntVar_MetalPlastic::addInitialComputesAndRequires(Task* task,
                                                    const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->computes(pEqPlasticStrainLabel, matlset);
-  task->computes(pPlasticPorosityLabel, matlset);
+  task->computes(pIntVarLabel, matlset);
+}
+
+void
+IntVar_MetalPlastic::initializeInternalVariable(Uintah::ParticleSubset* pset,
+                                                Uintah::DataWarehouse* new_dw)
+{
+  Uintah::ParticleVariable<Uintah::MetalIntVar> pIntVar;
+  new_dw->allocateAndPut(pIntVar, pIntVarLabel, pset);
+
+  for (auto pidx : *pset) {
+    pIntVar[pidx] = {0.0, 0.0};
+  }
 }
 
 void
@@ -127,14 +126,7 @@ IntVar_MetalPlastic::initializeInternalVariable(const Patch* patch,
                                                 MPMLabel* lb,
                                                 ParameterDict& params)
 {
-  Uintah::ParticleVariable<double> pEqPlasticStrain, pPlasticPorosity;
-  new_dw->allocateAndPut(pEqPlasticStrain, pEqPlasticStrainLabel, pset);
-  new_dw->allocateAndPut(pPlasticPorosity, pPlasticPorosityLabel, pset);
-
-  for (auto pidx : *pset) {
-    pEqPlasticStrain[pidx] = 0.0;
-    pPlasticPorosity[pidx] = 0.0;
-  }
+  initializeInternalVariable(pset, new_dw);
 }
 
 void
@@ -143,24 +135,20 @@ IntVar_MetalPlastic::addComputesAndRequires(Task* task,
                                             const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, pEqPlasticStrainLabel, matlset, Ghost::None);
-  task->requires(Task::OldDW, pPlasticPorosityLabel, matlset, Ghost::None);
-  task->computes(pEqPlasticStrainLabel_preReloc, matlset);
-  task->computes(pPlasticPorosityLabel_preReloc, matlset);
+  task->requires(Task::OldDW, pIntVarLabel, matlset, Ghost::None);
+  task->computes(pIntVarLabel_preReloc, matlset);
 }
 
 std::vector<Uintah::constParticleVariable<double>>
 IntVar_MetalPlastic::getInternalVariables(Uintah::ParticleSubset* pset,
                                           Uintah::DataWarehouse* old_dw,
-                                          const double& dummy) override
+                                          const double& dummy)
 {
-  Uintah::constParticleVariable<double> pEqPlasticStrain, pPlasticPorosity;
-  old_dw->get(pEqPlasticStrain, pEqPlasticStrainLabel, pset);
-  old_dw->get(pPlasticPorosity, pPlasticPorosityLabel, pset);
+  Uintah::constParticleVariable<double> pIntVar;
+  old_dw->get(pIntVar, pIntVarLabel, pset);
 
   std::vector<Uintah::constParticleVariable<double>> pIntVars;
-  pIntVars.emplace_back(pEqPlasticStrain);
-  pIntVars.emplace_back(pPlasticPorosity);
+  pIntVars.emplace_back(pIntVar);
 
   return pIntVars;
 }
@@ -168,7 +156,7 @@ IntVar_MetalPlastic::getInternalVariables(Uintah::ParticleSubset* pset,
 std::vector<Uintah::constParticleVariable<Uintah::Matrix3>>
 IntVar_MetalPlastic::getInternalVariables(Uintah::ParticleSubset* pset,
                                           Uintah::DataWarehouse* old_dw,
-                                          const Uintah::Matrix3& dummy) override
+                                          const Uintah::Matrix3& dummy)
 {
   std::vector<Uintah::constParticleVariable<Uintah::Matrix3>> pIntVars;
   return pIntVars;
@@ -176,13 +164,19 @@ IntVar_MetalPlastic::getInternalVariables(Uintah::ParticleSubset* pset,
 
 // Allocate and put the local particle internal variables
 void
+IntVar_MetalPlastic::allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                                    Uintah::DataWarehouse* new_dw,
+                                                    Uintah::ParticleVariableBase& var)
+{
+  new_dw->allocateAndPut(var, pIntVarLabel, pset);
+}
+
+void
 IntVar_MetalPlastic::allocateAndPutInternalVariable(
   Uintah::ParticleSubset* pset,
   Uintah::DataWarehouse* new_dw,
-  vectorParticleDoubleP& pVars) override
+  ParticleDoublePVec& pVars)
 {
-  new_dw->allocateAndPut(*pVars[0], pEqPlasticStrainLabel_preReloc, pset);
-  new_dw->allocateAndPut(*pVars[1], pPlasticPorosityLabel_preReloc, pset);
 }
 
 // Allocate and put the local <Matrix3> particle variables
@@ -190,70 +184,49 @@ void
 IntVar_MetalPlastic::allocateAndPutInternalVariable(
   Uintah::ParticleSubset* pset,
   Uintah::DataWarehouse* new_dw,
-  vectorParticleMatrix3P& pVars) override
+  ParticleMatrix3PVec& pVars)
 {
 }
 
-void
-IntVar_MetalPlastic::copyInternalVariable(const Uintah::VarLabel* label,
-                                          Uintah::particleIndex pidx,
-                                          const ModelStateBase* state,
-                                          Uintah::ParticleVariableBase& var) 
-{
-  if (label == pEqPlasticStrainLabel || 
-      label == pEqPlasticStrainLabel_preReloc) {
-    return copyEqPlasticStrain(state);
-  }
-
-  if (label == pPlasticPorosityLabel || 
-      label == pPlasticPorosityLabel_preReloc) {
-    return copyPlasticPorosity(state);
-  }
-
-  return 0.0;
-}
-
+template <>
 void
 IntVar_MetalPlastic::evolveInternalVariable(const Uintah::VarLabel* label,
-                                            Uintah::particleIndex pidx,
+                                            Uintah::particleIndex idx,
                                             const ModelStateBase* state,
-                                            Uintah::ParticleVariableBase& var)
+                                            Uintah::constParticleVariable<MetalIntVar>& var_old,
+                                            Uintah::ParticleVariable<MetalIntVar>& var_new)
 {
-  if (label == pEqPlasticStrainLabel || 
-      label == pEqPlasticStrainLabel_preReloc) {
-    double eq_eps_p_new = computeEqPlasticStrain(state);
-    return updateEqPlasticStrain(state);
-  }
-
-  if (label == pPlasticPorosityLabel || 
-      label == pPlasticPorosityLabel_preReloc) {
-    double phi_new = computePlasticPorosity(state);
-    return updatePlasticPorosity(state);
-  }
-
-  return 0.0;
+  var_new[idx].eqPlasticStrain = 
+    computeEqPlasticStrain(var_old[idx].eqPlasticStrain, state);
+  var_new[idx].plasticPorosity = 
+    computePlasticPorosity(var_old[idx].plasticPorosity, state);
 }
 
 double
 IntVar_MetalPlastic::computeInternalVariable(const Uintah::VarLabel* label,
                                              const ModelStateBase* state_input) const 
 {
+  return 0.0;
 }
 
-/**
- * Function: computeEqPlasticStrain
- */
 double
-IntVar_MetalPlastic::computeEqPlasticStrain(const ModelStateBase* state) const
+IntVar_MetalPlastic::computeEqPlasticStrain(double eqPlasticStrain_old,
+                                            const ModelStateBase* state) const
 {
   return 0.0;
 }
 
-/**
- * Function: computePorosity
- */
 double
-IntVar_MetalPlastic::computePlasticPorosity(const ModelStateBase* state) const
+IntVar_MetalPlastic::computePlasticPorosity(double plasticPorosity_old,
+                                            const ModelStateBase* state) const
+{
+  return 0.0;
+}
+
+double
+IntVar_MetalPlastic::computeVolStrainDerivOfInternalVariable(
+    const Uintah::VarLabel* label,
+    const ModelStateBase* state) const 
 {
   return 0.0;
 }
@@ -267,9 +240,7 @@ IntVar_MetalPlastic::allocateCMDataAddRequires(Task* task,
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(
-    Task::NewDW, pEqPlasticStrainLabel_preReloc, matlset, Ghost::None);
-  task->requires(
-    Task::NewDW, pPlasticPorosityLabel_preReloc, matlset, Ghost::None);
+    Task::NewDW, pIntVarLabel_preReloc, matlset, Ghost::None);
 }
 
 void
@@ -279,24 +250,20 @@ IntVar_MetalPlastic::allocateCMDataAdd(DataWarehouse* old_dw,
                                        ParticleSubset* delset,
                                        DataWarehouse* new_dw)
 {
-  ParticleVariable<double> pEqPlasticStrain, pPlasticPorosity;
-  constParticleVariable<double> o_pEqPlasticStrain, o_pPlasticPorosity;
+  ParticleVariable<MetalIntVar> pIntVar;
+  constParticleVariable<MetalIntVar> o_pIntVar;
 
-  new_dw->allocateTemporary(pEqPlasticStrain, addset);
-  new_dw->allocateTemporary(pPlasticPorosity, addset);
+  new_dw->allocateTemporary(pIntVar, addset);
 
-  new_dw->get(o_pEqPlasticStrain, pEqPlasticStrainLabel_preReloc, delset);
-  new_dw->get(o_pPlasticPorosity, pPlasticPorosityLabel_preReloc, delset);
+  new_dw->get(o_pIntVar, pIntVarLabel_preReloc, delset);
 
   auto o = addset->begin();
   auto n = addset->begin();
   for (o = delset->begin(); o != delset->end(); o++, n++) {
-    pEqPlasticStrain[*n] = o_pEqPlasticStrain[*o];
-    pPlasticPorosity[*n] = o_pPlasticPorosity[*o];
+    pIntVar[*n] = o_pIntVar[*o];
   }
 
-  (*newState)[pEqPlasticStrainLabel] = pEqPlasticStrain.clone();
-  (*newState)[pPlasticPorosityLabel] = pPlasticPorosity.clone();
+  (*newState)[pIntVarLabel] = pIntVar.clone();
 }
 
 /*!-----------------------------------------------------*/
@@ -305,15 +272,11 @@ IntVar_MetalPlastic::allocateAndPutRigid(ParticleSubset* pset,
                                          DataWarehouse* new_dw,
                                          constParticleLabelVariableMap& var)
 {
-  ParticleVariable<double> pEqPlasticStrain_new, pPlasticPorosity_new;
+  ParticleVariable<MetalIntVar> pIntVar_new;
   new_dw->allocateAndPut(
-    pEqPlasticStrain_new, pEqPlasticStrainLabel_preReloc, pset);
-  new_dw->allocateAndPut(
-    pPlasticPorosity_new, pPlasticPorosityLabel_preReloc, pset);
+    pIntVar_new, pIntVarLabel_preReloc, pset);
   for (auto pidx : *pset) {
-    pEqPlasticStrain_new[pidx] = dynamic_cast<constParticleVariable<double>&>(
-      *var[pEqPlasticStrainLabel])[pidx];
-    pPlasticPorosity_new[pidx] = dynamic_cast<constParticleVariable<double>&>(
-      *var[pPlasticPorosityLabel])[pidx];
+    pIntVar_new[pidx] = dynamic_cast<constParticleVariable<MetalIntVar>&>(
+      *var[pIntVarLabel])[pidx];
   }
 }

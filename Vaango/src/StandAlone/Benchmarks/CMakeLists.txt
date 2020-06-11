@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -31,7 +32,6 @@ TARGET_LINK_LIBRARIES(SimpleMath
         Vaango_Core_Math          
         Vaango_Core_ProblemSpec   
         Vaango_Core_Parallel      
-        Vaango_Core_Disclosure    
         Vaango_Core_Persistent  
         Vaango_Core_Thread      
         Vaango_Core_Containers

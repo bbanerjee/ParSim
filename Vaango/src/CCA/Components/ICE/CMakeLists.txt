@@ -6,6 +6,7 @@
 #  Copyright (c) 2004 Scientific Computing and Imaging Institute,
 #  University of Utah.
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
 # 
 #  
 #  Permission is hereby granted, free of charge, to any person obtaining a
@@ -59,7 +60,6 @@ SET(LIBS
   Vaango_Core_Grid
   Vaango_Core_Util
   Vaango_Core_Math
-  Vaango_Core_Disclosure
   Vaango_Core_GeometryPiece
   Vaango_Core_ProblemSpec
   Vaango_Core_Parallel

@@ -28,6 +28,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
+#include <Core/Util/Endian.h>
 
 namespace Vaango {
 
@@ -38,15 +39,12 @@ namespace Vaango {
          for the hypoelasticplastic model
 */
 ////////////////////////////////////////////////////////////////////////////
-
 class IntVar_MetalPlastic : public InternalVariableModel
 {
 public:
-  const Uintah::VarLabel* pEqPlasticStrainLabel;
-  const Uintah::VarLabel* pEqPlasticStrainLabel_preReloc;
 
-  const Uintah::VarLabel* pPlasticPorosityLabel;
-  const Uintah::VarLabel* pPlasticPorosityLabel_preReloc;
+  const Uintah::VarLabel* pIntVarLabel;
+  const Uintah::VarLabel* pIntVarLabel_preReloc;
 
   /* constructors/destructor */
   IntVar_MetalPlastic(Uintah::ProblemSpecP& ps, 
@@ -116,25 +114,26 @@ public:
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
-                                 vectorParticleDoubleP& pVars) override;
+                                 Uintah::ParticleVariableBase& var) override;
+  void
+  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
+                                 Uintah::DataWarehouse* new_dw,
+                                 ParticleDoublePVec& pVars) override;
 
   // Allocate and put the local <Matrix3> particle variables
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
-                                 vectorParticleMatrix3P& pVars) override;
+                                 ParticleMatrix3PVec& pVars) override;
 
   // Actually compute
-  void
-  copyInternalVariable(const Uintah::VarLabel* label,
-                       Uintah::particleIndex pidx,
-                       const ModelStateBase* state,
-                       Uintah::ParticleVariableBase& var) override;
+  template <typename T>
   void
   evolveInternalVariable(const Uintah::VarLabel* label,
                          Uintah::particleIndex pidx,
                          const ModelStateBase* state,
-                         Uintah::ParticleVariableBase& var) override;
+                         Uintah::constParticleVariable<T>& var_old,
+                         Uintah::ParticleVariable<T>& var);
   double
   computeInternalVariable(const Uintah::VarLabel* label,
                           const ModelStateBase* state) const override;
@@ -168,17 +167,13 @@ private:
   void
   initializeLocalMPMLabels();
 
-  /**
-   * Function: computeEqPlasticStrain
-   */
   double
-  evolveEqPlasticStrain(const ModelStateBase* state);
+  computeEqPlasticStrain(double eqPlasticStrain_old,
+                         const ModelStateBase* state) const;
 
-  /**
-   * Function: computePorosity
-   */
   double
-  evolvePorosity(const ModelStateBase* state);
+  computePlasticPorosity(double plasticPorosity_old,
+                         const ModelStateBase* state) const;
 };
 
 } // End namespace Vaango

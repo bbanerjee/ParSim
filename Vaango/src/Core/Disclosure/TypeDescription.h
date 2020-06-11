@@ -96,6 +96,11 @@ public:
     NeighborConnectivity, // for Peridynamics
     NeighborBondEnergy, // for Peridynamics
     NeighborBondInternalForce, // for Peridynamics
+    //MetalIntvar,
+    //ArenaIntvar,
+    //BorjaIntvar,
+    //SoilBrannonIntvar,
+    //TabularCapIntvar,
     Unknown,
     Other
   };

@@ -262,19 +262,13 @@ IntVar_Arena::addParticleState(std::vector<const VarLabel*>& from,
   to.push_back(pP3Label_preReloc);
 }
 
-void
-IntVar_Arena::copyInternalVariable(const Uintah::VarLabel* label,
-                                   Uintah::particleIndex pidx,
-                                   const ModelStateBase* state,
-                                   Uintah::ParticleVariableBase& var) 
-{
-}
-
+template <>
 void
 IntVar_Arena::evolveInternalVariable(const Uintah::VarLabel* label,
                                      Uintah::particleIndex pidx,
                                      const ModelStateBase* state,
-                                     Uintah::ParticleVariableBase& var)
+                                     Uintah::constParticleVariable<ArenaIntVar>& var_old,
+                                     Uintah::ParticleVariable<ArenaIntVar>& var)
 {
 }
 

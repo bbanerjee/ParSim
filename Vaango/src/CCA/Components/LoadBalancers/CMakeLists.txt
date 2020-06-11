@@ -2,6 +2,7 @@
 # The MIT License
 #
 # Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
+# Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -43,7 +44,6 @@ TARGET_LINK_LIBRARIES(Vaango_CCA_Components_LoadBalancers
   Vaango_Core_Grid
   Vaango_Core_Util
   Vaango_Core_DataArchive
-  Vaango_Core_Disclosure
   Vaango_Core_ProblemSpec
   Vaango_CCA_Ports
   Vaango_Core_Parallel

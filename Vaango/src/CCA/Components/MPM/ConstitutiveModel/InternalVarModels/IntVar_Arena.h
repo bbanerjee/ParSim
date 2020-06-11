@@ -203,16 +203,13 @@ public:
   }
 
   /*! \brief Compute the internal variable */
-  void
-  copyInternalVariable(const Uintah::VarLabel* label,
-                       Uintah::particleIndex pidx,
-                       const ModelStateBase* state,
-                       Uintah::ParticleVariableBase& var) override;
+  template <typename T>
   void
   evolveInternalVariable(const Uintah::VarLabel* label,
                          Uintah::particleIndex pidx,
                          const ModelStateBase* state,
-                         Uintah::ParticleVariableBase& var) override;
+                         Uintah::constParticleVariable<T>& var_old,
+                         Uintah::ParticleVariable<T>& var);
   double
   computeInternalVariable(const Uintah::VarLabel* label,
                           const ModelStateBase* state) const override;
