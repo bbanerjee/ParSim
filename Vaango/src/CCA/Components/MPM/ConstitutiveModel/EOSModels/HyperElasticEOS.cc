@@ -58,6 +58,14 @@ HyperElasticEOS::outputProblemSpec(ProblemSpecP& ps)
   eos_ps->setAttribute("type", "default_hyper");
 }
 
+std::map<std::string, double> 
+HyperElasticEOS::getParameters() const 
+{
+  std::map<std::string, double> params;
+  params["bulk"] = d_bulk;
+  return params;
+}
+
 //////////
 // Calculate the pressure using the elastic constitutive equation
 double
@@ -140,6 +148,12 @@ HyperElasticEOS::computeBulkModulus(const double& rho_orig,
   double J = rho_orig / rho_cur;
   double bulk = 0.5 * d_bulk * (1.0 + 1.0 / J * J);
   return bulk;
+}
+
+double 
+HyperElasticEOS::computeBulkModulus(const ModelStateBase* state)
+{
+  return computeBulkModulus(state->initialDensity, state->density);
 }
 
 // Compute strain energy

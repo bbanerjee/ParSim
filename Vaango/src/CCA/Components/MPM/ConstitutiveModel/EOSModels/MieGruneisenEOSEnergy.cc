@@ -68,6 +68,17 @@ MieGruneisenEOSEnergy::outputProblemSpec(ProblemSpecP& ps)
   eos_ps->appendElement("S_3", d_const.S_3);
 }
 
+std::map<std::string, double> 
+MieGruneisenEOSEnergy::getParameters() const 
+{
+  std::map<std::string, double> params;
+  params["C_0"] = d_const.C_0;
+  params["Gamma_0"] = d_const.Gamma_0;
+  params["S_alpha"] = d_const.S_1;
+  params["S_2"] = d_const.S_2;
+  params["S_3"] = d_const.S_3;
+  return params;
+}
 //////////
 // Calculate the pressure using the Mie-Gruneisen equation of state
 double
@@ -177,6 +188,12 @@ MieGruneisenEOSEnergy::computeBulkModulus(const double& rho_orig,
     K /= (J * J);
   }
   return K;
+}
+
+double 
+MieGruneisenEOSEnergy::computeBulkModulus(const ModelStateBase* state)
+{
+  return computeBulkModulus(state->initialDensity, state->density);
 }
 
 // Compute pressure (option 1) - no internal energy contribution

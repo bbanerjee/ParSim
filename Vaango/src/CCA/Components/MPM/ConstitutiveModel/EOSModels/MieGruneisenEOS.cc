@@ -59,6 +59,16 @@ MieGruneisenEOS::outputProblemSpec(ProblemSpecP& ps)
   eos_ps->appendElement("S_alpha", d_const.S_alpha);
 }
 
+std::map<std::string, double> 
+MieGruneisenEOS::getParameters() const 
+{
+  std::map<std::string, double> params;
+  params["C_0"] = d_const.C_0;
+  params["Gamma_0"] = d_const.Gamma_0;
+  params["S_alpha"] = d_const.S_alpha;
+  return params;
+}
+
 //////////
 // Calculate the pressure using the Mie-Gruneisen equation of state
 double
@@ -216,6 +226,12 @@ MieGruneisenEOS::computeBulkModulus(const double& rho_orig,
   double bulk = dp_dJ;
 
   return bulk;
+}
+
+double 
+MieGruneisenEOS::computeBulkModulus(const ModelStateBase* state)
+{
+  return computeBulkModulus(state->initialDensity, state->density);
 }
 
 // Compute strain energy

@@ -108,7 +108,7 @@ public:
   std::vector<Uintah::constParticleVariable<Uintah::Matrix3>>
   getInternalVariables(Uintah::ParticleSubset* pset,
                        Uintah::DataWarehouse* old_dw,
-                       const Uintah::Matrix3& dummy);
+                       const Uintah::Matrix3& dummy) override;
 
   // Allocate and put the local particle internal variables
   void

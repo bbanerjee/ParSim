@@ -36,6 +36,7 @@
 #include <Core/Malloc/Allocator.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <string>
+#include <memory>
 
 using namespace Uintah;
 using namespace Vaango;

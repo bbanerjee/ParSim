@@ -58,6 +58,8 @@ public:
 
   virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
 
+  virtual std::map<std::string, double> getParameters() const = 0;
+
   void setBulkModulus(const double& bulk) { d_bulk = bulk; }
   double initialBulkModulus() { return d_bulk; }
 
@@ -102,6 +104,7 @@ public:
   ////////////////////////////////////////////////////////////////////////
   virtual double computeBulkModulus(const double& rho_orig,
                                     const double& rho_cur) = 0;
+  virtual double computeBulkModulus(const ModelStateBase* state) = 0;
 
   ////////////////////////////////////////////////////////////////////////
   /*! Calculate the accumulated strain energy */
