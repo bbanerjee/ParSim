@@ -25,9 +25,14 @@
  */
 
 #include "MPMEquationOfStateFactory.h"
+#include "AirEOS.h"
+#include "BorjaEOS.h"
 #include "DefaultHypoElasticEOS.h"
+#include "GraniteEOS.h"
 #include "HyperElasticEOS.h"
+#include "MieGruneisenEOS.h"
 #include "MieGruneisenEOSEnergy.h"
+#include "WaterEOS.h"
 #include <Core/Exceptions/ProblemSetupException.h>
 #include <Core/Malloc/Allocator.h>
 #include <Core/Parallel/Parallel.h>
@@ -35,27 +40,17 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-using std::cerr;
-using std::endl;
-using std::ifstream;
-using std::ofstream;
 
 using namespace Uintah;
+using namespace Vaango;
 
 MPMEquationOfState*
 MPMEquationOfStateFactory::create(ProblemSpecP& ps)
 {
   ProblemSpecP child = ps->findBlock("equation_of_state");
   if (!child) {
-
-    proc0cout << "**WARNING** Creating default hyperelastic equation of state"
-              << endl;
-    return (scinew HyperElasticEOS(child));
-
-    // cerr << "**WARNING** Creating default linear equation of state" << endl;
-    // return(scinew DefaultHypoElasticEOS(child));
-    // throw ProblemSetupException("Cannot find equation_of_state tag",
-    // __FILE__, __LINE__);
+    proc0cout << "**WARNING** Creating default hyperelastic equation of state\n";
+    return scinew HyperElasticEOS(child);
   }
   string mat_type;
   if (!child->getAttribute("type", mat_type))
@@ -63,41 +58,66 @@ MPMEquationOfStateFactory::create(ProblemSpecP& ps)
                                 __LINE__);
 
   if (mat_type == "mie_gruneisen")
-    return (scinew MieGruneisenEOSEnergy(child));
+    return scinew MieGruneisenEOS(child);
+  else if (mat_type == "mie_gruneisen_3param")
+    return scinew MieGruneisenEOSEnergy(child);
   else if (mat_type == "default_hypo")
-    return (scinew DefaultHypoElasticEOS(child));
+    return scinew DefaultHypoElasticEOS(child);
   else if (mat_type == "default_hyper")
-    return (scinew HyperElasticEOS(child));
+    return scinew HyperElasticEOS(child);
+  else if (mat_type == "borja_pressure")
+    return scinew BorjaEOS(child);
+  else if (mat_type == "air")
+    return scinew AirEOS(child);
+  else if (mat_type == "water")
+    return scinew WaterEOS(child);
+  else if (mat_type == "granite")
+    return scinew GraniteEOS(child);
   else {
-    proc0cout << "**WARNING** Creating default hyperelastic equation of state"
-              << endl;
-    return (scinew HyperElasticEOS(child));
-    // throw ProblemSetupException("Unknown MPMEquation of State Model
-    // ("+mat_type+")", __FILE__, __LINE__);
+    proc0cout << "**WARNING** Creating default hyperelastic equation of state\n";
+    return scinew HyperElasticEOS(child);
   }
 
-  // return 0;
+  return nullptr;
 }
 
 MPMEquationOfState*
 MPMEquationOfStateFactory::createCopy(const MPMEquationOfState* eos)
 {
-  if (dynamic_cast<const MieGruneisenEOSEnergy*>(eos))
-    return (scinew MieGruneisenEOSEnergy(
-      dynamic_cast<const MieGruneisenEOSEnergy*>(eos)));
+  if (dynamic_cast<const MieGruneisenEOS*>(eos))
+    return scinew MieGruneisenEOS(
+      dynamic_cast<const MieGruneisenEOS*>(eos));
+
+  else if (dynamic_cast<const MieGruneisenEOSEnergy*>(eos))
+    return scinew MieGruneisenEOSEnergy(
+      dynamic_cast<const MieGruneisenEOSEnergy*>(eos));
 
   else if (dynamic_cast<const DefaultHypoElasticEOS*>(eos))
-    return (scinew DefaultHypoElasticEOS(
-      dynamic_cast<const DefaultHypoElasticEOS*>(eos)));
+    return scinew DefaultHypoElasticEOS(
+      dynamic_cast<const DefaultHypoElasticEOS*>(eos));
+
+  else if (dynamic_cast<const HyperElasticEOS*>(eos))
+    return scinew HyperElasticEOS(
+      dynamic_cast<const HyperElasticEOS*>(eos));
+
+  else if (dynamic_cast<const BorjaEOS*>(eos))
+    return scinew BorjaEOS(dynamic_cast<const BorjaEOS*>(eos));
+
+  else if (dynamic_cast<const AirEOS*>(eos))
+    return scinew AirEOS(dynamic_cast<const AirEOS*>(eos));
+
+  else if (dynamic_cast<const WaterEOS*>(eos))
+    return scinew WaterEOS(dynamic_cast<const WaterEOS*>(eos));
+
+  else if (dynamic_cast<const GraniteEOS*>(eos))
+    return 
+      scinew GraniteEOS(dynamic_cast<const GraniteEOS*>(eos));
 
   else {
     proc0cout << "**WARNING** Creating a copy of the default hyperelastic "
-                 "equation of state"
-              << endl;
-    return (scinew HyperElasticEOS(dynamic_cast<const HyperElasticEOS*>(eos)));
-    // throw ProblemSetupException("Cannot create copy of unknown MPM EOS",
-    // __FILE__, __LINE__);
+                 "equation of state\n";
+    return scinew HyperElasticEOS(dynamic_cast<const HyperElasticEOS*>(eos));
   }
 
-  // return 0;
+  return nullptr;
 }

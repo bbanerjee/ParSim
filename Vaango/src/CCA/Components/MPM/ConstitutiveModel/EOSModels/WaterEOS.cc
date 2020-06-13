@@ -23,7 +23,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Granite.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/WaterEOS.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>
@@ -31,25 +31,25 @@
 using namespace Uintah;
 using namespace Vaango;
 
-Pressure_Granite::Pressure_Granite()
+WaterEOS::WaterEOS()
 {
-  d_p0 = 101325.0; // Hardcoded (SI units).  *TODO* Get as input with
-                   // ProblemSpec later.
-  d_K0 = 40.0e9;
-  d_n = 4.0;
+  d_p0 = 0.0001; // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec
+                 // later.
+  d_K0 = 2.21e9;
+  d_n = 6.029;
   d_bulkModulus = d_K0;
 }
 
-Pressure_Granite::Pressure_Granite(Uintah::ProblemSpecP&)
+WaterEOS::WaterEOS(Uintah::ProblemSpecP&)
 {
-  d_p0 = 101325.0; // Hardcoded (SI units).  *TODO* Get as input with
-                   // ProblemSpec later.
-  d_K0 = 40.0e9;
-  d_n = 4.0;
+  d_p0 = 0.0001; // Hardcoded (SI units).  *TODO* Get as input with ProblemSpec
+                 // later.
+  d_K0 = 2.21e9;
+  d_n = 6.029;
   d_bulkModulus = d_K0;
 }
 
-Pressure_Granite::Pressure_Granite(const Pressure_Granite* cm)
+WaterEOS::WaterEOS(const WaterEOS* cm)
 {
   d_p0 = cm->d_p0;
   d_K0 = cm->d_K0;
@@ -57,23 +57,23 @@ Pressure_Granite::Pressure_Granite(const Pressure_Granite* cm)
   d_bulkModulus = cm->d_bulkModulus;
 }
 
-Pressure_Granite::~Pressure_Granite() = default;
+WaterEOS::~WaterEOS() = default;
 
 void
-Pressure_Granite::outputProblemSpec(Uintah::ProblemSpecP& ps)
+WaterEOS::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP eos_ps = ps->appendChild("pressure_model");
-  eos_ps->setAttribute("type", "granite");
+  eos_ps->setAttribute("type", "water");
 }
 
 //////////
 // Calculate the pressure using the elastic constitutive equation
 double
-Pressure_Granite::computePressure(const Uintah::MPMMaterial* matl,
-                                  const ModelStateBase* state_input,
-                                  const Uintah::Matrix3&,
-                                  const Uintah::Matrix3& rateOfDeformation,
-                                  const double& delT)
+WaterEOS::computePressure(const Uintah::MPMMaterial* matl,
+                                const ModelStateBase* state_input,
+                                const Uintah::Matrix3&,
+                                const Uintah::Matrix3& rateOfDeformation,
+                                const double& delT)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -94,31 +94,37 @@ Pressure_Granite::computePressure(const Uintah::MPMMaterial* matl,
 
 // Compute pressure (option 1)
 double
-Pressure_Granite::computePressure(const double& rho_orig, const double& rho_cur)
+WaterEOS::computePressure(const double& rho_orig, const double& rho_cur)
 {
   double J = rho_orig / rho_cur;
-  double p = d_p0 + d_K0 / d_n * (std::pow(J, -d_n) - 1);
+  double p = (J > 1.0) ? d_p0 : d_p0 + d_K0 / d_n * (std::pow(J, -d_n) - 1);
   return p;
 }
 
 // Compute pressure (option 2)
 void
-Pressure_Granite::computePressure(const double& rho_orig, const double& rho_cur,
-                                  double& pressure, double& dp_drho,
-                                  double& csquared)
+WaterEOS::computePressure(const double& rho_orig, const double& rho_cur,
+                                double& pressure, double& dp_drho,
+                                double& csquared)
 {
   double J = rho_orig / rho_cur;
-  pressure = d_p0 + d_K0 / d_n * (std::pow(J, -d_n) - 1);
-  double dp_dJ = -d_K0 * std::pow(J, -(d_n + 1));
-  dp_drho = d_K0 / rho_cur * std::pow(J, -d_n);
-  csquared = dp_dJ / rho_cur;
+  if (J > 1.0) {
+    pressure = d_p0;
+    double dp_dJ = -d_K0;
+    dp_drho = d_K0 / rho_cur;
+    csquared = dp_dJ / rho_cur;
+  } else {
+    pressure = d_p0 + d_K0 / d_n * (std::pow(J, -d_n) - 1);
+    double dp_dJ = -d_K0 * std::pow(J, -(d_n + 1));
+    dp_drho = d_K0 / rho_cur * std::pow(J, -d_n);
+    csquared = dp_dJ / rho_cur;
+  }
 }
 
 // Compute derivative of pressure
 double
-Pressure_Granite::eval_dp_dJ(const Uintah::MPMMaterial* matl,
-                             const double& detF,
-                             const ModelStateBase* )
+WaterEOS::eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
+                           const ModelStateBase* )
 {
   /*
   const ModelState_Arena* state =
@@ -132,37 +138,27 @@ Pressure_Granite::eval_dp_dJ(const Uintah::MPMMaterial* matl,
   */
 
   double J = detF;
-  double dpdJ = -d_K0 * std::pow(J, -(d_n + 1));
+  double dpdJ = (J > 1.0) ? -d_K0 : -d_K0 * std::pow(J, -(d_n + 1));
   return dpdJ;
 }
 
 // Compute bulk modulus
 double
-Pressure_Granite::computeInitialBulkModulus()
-{
-  d_bulkModulus = d_K0;
-  return d_bulkModulus;
-}
-
-double
-Pressure_Granite::getInitialBulkModulus() const
+WaterEOS::computeInitialBulkModulus()
 {
   return d_K0;
 }
 
 double
-Pressure_Granite::computeBulkModulus(const double& pressure)
+WaterEOS::computeBulkModulus(const double& pressure)
 {
-  d_bulkModulus = d_K0;
-  if (pressure > 0.0) {
-    d_bulkModulus += d_n * (pressure - d_p0);
-  }
+  d_bulkModulus = (pressure < d_p0) ? d_K0 : d_K0 + d_n * (pressure - d_p0);
   return d_bulkModulus;
 }
 
 double
-Pressure_Granite::computeBulkModulus(const double& rho_orig,
-                                     const double& rho_cur)
+WaterEOS::computeBulkModulus(const double& rho_orig,
+                                   const double& rho_cur)
 {
   double p = computePressure(rho_orig, rho_cur);
   d_bulkModulus = computeBulkModulus(p);
@@ -170,7 +166,7 @@ Pressure_Granite::computeBulkModulus(const double& rho_orig,
 }
 
 double
-Pressure_Granite::computeBulkModulus(const ModelStateBase* state_input)
+WaterEOS::computeBulkModulus(const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -183,44 +179,43 @@ Pressure_Granite::computeBulkModulus(const ModelStateBase* state_input)
   }
   */
 
-  double p = -state->I1_eff / 3.0;
+  double p = state->pbar_w;
   d_bulkModulus = computeBulkModulus(p);
   return d_bulkModulus;
 }
 
 // Compute strain energy
 double
-Pressure_Granite::computeStrainEnergy(const double& rho_orig,
-                                      const double& rho_cur)
+WaterEOS::computeStrainEnergy(const double& rho_orig,
+                                    const double& rho_cur)
 {
   throw InternalError(
-    "ComputeStrainEnergy has not been implemented yet for Granite.", __FILE__,
+    "ComputeStrainEnergy has not been implemented yet for Water.", __FILE__,
     __LINE__);
   return 0.0;
 }
 
 double
-Pressure_Granite::computeStrainEnergy(const ModelStateBase* state)
+WaterEOS::computeStrainEnergy(const ModelStateBase* state)
 {
   throw InternalError(
-    "ComputeStrainEnergy has not been implemented yet for Granite.", __FILE__,
+    "ComputeStrainEnergy has not been implemented yet for Water.", __FILE__,
     __LINE__);
   return 0.0;
 }
 
 // Compute density given pressure (tension +ve)
 double
-Pressure_Granite::computeDensity(const double& rho_orig, const double& pressure)
+WaterEOS::computeDensity(const double& rho_orig, const double& pressure)
 {
-  throw InternalError(
-    "ComputeDensity has not been implemented yet for Granite.", __FILE__,
-    __LINE__);
+  throw InternalError("ComputeDensity has not been implemented yet for Water.",
+                      __FILE__, __LINE__);
   return 0.0;
 }
 
 //  Calculate the derivative of p with respect to epse_v
 double
-Pressure_Granite::computeDpDepse_v(const ModelStateBase* state_input) const
+WaterEOS::computeDpDepse_v(const ModelStateBase* state_input) const
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -233,8 +228,8 @@ Pressure_Granite::computeDpDepse_v(const ModelStateBase* state_input) const
   }
   */
 
-  double p = -state->I1_eff / 3.0;
-  double dp_depse_v = d_K0 + d_n * (p - d_p0);
+  double p = state->pbar_w;
+  double dp_depse_v = (p < d_p0) ? d_K0 : d_K0 + d_n * (p - d_p0);
   return dp_depse_v;
 }
 
@@ -254,16 +249,20 @@ Pressure_Granite::computeDpDepse_v(const ModelStateBase* state_input) const
  */
 ////////////////////////////////////////////////////////////////////////
 double
-Pressure_Granite::computeElasticVolumetricStrain(const double& pp,
-                                                 const double& p0)
+WaterEOS::computeElasticVolumetricStrain(const double& pp,
+                                               const double& p0)
 {
 
-  // Compute bulk modulus of granite
-  double Ks = computeBulkModulus(pp);
+  // ASSERT(!(pp < 0))
+
+  // Compute bulk modulus of water
+  double Kw0 = computeBulkModulus(p0);
+  double Kw = computeBulkModulus(pp);
 
   // Compute volume strain
-  double eps_e_v = -(pp - p0) / Ks;
-  return eps_e_v;
+  double eps_e_v0 = (p0 < d_p0) ? 0.0 : -(p0 - d_p0) / Kw0;
+  double eps_e_v = (pp < d_p0) ? 0.0 : -(pp - d_p0) / Kw;
+  return (eps_e_v - eps_e_v0);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -282,14 +281,13 @@ Pressure_Granite::computeElasticVolumetricStrain(const double& pp,
  */
 ////////////////////////////////////////////////////////////////////////
 double
-Pressure_Granite::computeExpElasticVolumetricStrain(const double& pp,
-                                                    const double& p0)
+WaterEOS::computeExpElasticVolumetricStrain(const double& pp,
+                                                  const double& p0)
 {
-  // Compute bulk modulus of granite
-  double Ks = computeBulkModulus(pp);
+  // ASSERT(!(pp < 0))
 
   // Compute volume strain
-  double eps_e_v = -(pp - p0) / Ks;
+  double eps_e_v = computeElasticVolumetricStrain(pp, p0);
   return std::exp(eps_e_v);
 }
 
@@ -314,17 +312,19 @@ Pressure_Granite::computeExpElasticVolumetricStrain(const double& pp,
  */
 ////////////////////////////////////////////////////////////////////////
 double
-Pressure_Granite::computeDerivExpElasticVolumetricStrain(const double& pp,
-                                                         const double& p0,
-                                                         double& exp_eps_e_v)
+WaterEOS::computeDerivExpElasticVolumetricStrain(const double& pp,
+                                                       const double& p0,
+                                                       double& exp_eps_e_v)
 {
+
+  // ASSERT(!(pp < 0))
 
   // Compute the exponential of volumetric strain at pressure (pp)
   exp_eps_e_v = computeExpElasticVolumetricStrain(pp, p0);
 
-  // Compute bulk modulus of granite
-  double Ks = computeBulkModulus(pp);
+  // Compute bulk modulus of water
+  double Kw = computeBulkModulus(pp);
+  std::cout << "p = " << pp << " Kw = " << Kw << std::endl;
 
-  std::cout << "p = " << pp << " Ks = " << Ks << std::endl;
-  return -exp_eps_e_v / Ks;
+  return -exp_eps_e_v / Kw;
 }

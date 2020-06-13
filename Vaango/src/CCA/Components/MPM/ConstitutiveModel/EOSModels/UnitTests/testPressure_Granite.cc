@@ -1,5 +1,5 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Granite.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/GraniteEOS.h>
 #include <iostream>
 #include <map>
 #include <string>
@@ -11,7 +11,7 @@ using namespace Vaango;
 TEST(PressureGraniteTest, computePressure)
 {
 
-  Pressure_Granite model;
+  GraniteEOS model;
 
   // Get initial parameters
   std::map<std::string, double> params = model.getParameters();

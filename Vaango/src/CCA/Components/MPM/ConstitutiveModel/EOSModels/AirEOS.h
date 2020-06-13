@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015-2016 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -22,56 +22,50 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __MODELS_WATER_EOS_MODEL_H__
-#define __MODELS_WATER_EOS_MODEL_H__
+#ifndef __MODELS_AIR_EOS_MODEL_H__
+#define __MODELS_AIR_EOS_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
-  \class Pressure_Water
-  \brief Murnaghan equation of state for pure water.
+  \class AirEOS
+  \brief Isentropic equation of state for air.
 
   The equation of state is given by
   \f[
-    p = p_0 + K_0/n*(J^{-n} - 1)
+    p = p_0*(\exp(\gamma*\epsilon_v) - 1)
   \f]
   where \n
   \f$p\f$ = pressure\n
   \f$p_0\f$ = reference pressure\n
-  \f$K_0\f$ = reference bulk modulus\n
-  \f$n\f$ = pressure derivative of reference bulk modulus
-  \f$J = \rho_0/\rho\f$ = ratio of mass densities
+  \f$\gamma\f$ = parameter
+  \f$n\epsilon_v = -\log(\rho/\rho_0)$ = volumetric strain
 
   \warning For use only with Arena
 */
 ////////////////////////////////////////////////////////////////////////////
 
-class Pressure_Water : public PressureModel
+class AirEOS : public Uintah::MPMEquationOfState
 {
 
 private:
   double d_p0;
-  double d_K0;
-  double d_n;
-
-  // Prevent copying of this class
-  // copy constructor
-  // Pressure_Water(const Pressure_Water &cm);
-  Pressure_Water& operator=(const Pressure_Water& cm);
+  double d_gamma;
 
 public:
   // constructors
-  Pressure_Water();
-  Pressure_Water(Uintah::ProblemSpecP& ps);
-  Pressure_Water(const Pressure_Water* cm);
+  AirEOS();
+  AirEOS(Uintah::ProblemSpecP& ps);
+  AirEOS(const AirEOS* cm);
+  AirEOS& operator=(const AirEOS& cm) = delete;
 
   // destructor
-  ~Pressure_Water() override;
+  ~AirEOS() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -80,9 +74,8 @@ public:
   {
     std::map<std::string, double> params;
     params["p0"] = d_p0;
-    params["K0"] = d_K0;
-    params["n"] = d_n;
-    params["Kw"] = d_bulkModulus;
+    params["gamma"] = d_gamma;
+    params["Ka"] = d_bulkModulus;
     return params;
   }
 
@@ -201,4 +194,4 @@ public:
 
 } // End namespace Uintah
 
-#endif // __MODELS_WATER_EOS_MODEL_H__
+#endif // __MODELS_AIR_EOS_MODEL_H__

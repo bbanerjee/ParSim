@@ -32,9 +32,9 @@
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardeningModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Air.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Granite.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Water.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/AirEOS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/GraniteEOS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/WaterEOS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -159,9 +159,9 @@ private:
   YieldCondition* d_yield;
 
   /* Tangent bulk modulus models for air, water, granite */
-  Pressure_Air d_air;
-  Pressure_Water d_water;
-  Pressure_Granite d_solid;
+  AirEOS d_air;
+  WaterEOS d_water;
+  GraniteEOS d_solid;
 
   // Structure for storing volume fractions
   // (*TODO* Volume fractions will change during deformation and will

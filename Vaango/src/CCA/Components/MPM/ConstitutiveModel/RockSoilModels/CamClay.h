@@ -29,7 +29,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Ports/DataWarehouseP.h>
@@ -61,7 +61,7 @@ public:
   const VarLabel* pDeltaGammaLabel_preReloc;
 
 protected:
-  Vaango::PressureModel* d_eos;
+  MPMEquationOfState* d_eos;
   Vaango::ShearModulusModel* d_shear;
   Vaango::YieldCondition* d_yield;
   Vaango::InternalVariableModel* d_intvar;

@@ -24,13 +24,6 @@
  * IN THE SOFTWARE.
  */
 
-#ifdef __APPLE__
-// This is a hack.  gcc 3.3 #undefs isnan in the cmath header, which
-// make the isnan function not work.  This define makes the cmath header
-// not get included since we do not need it anyway.
-#define _CPP_CMATH
-#endif
-
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/SmallStrainPlastic.h>
 
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModelFactory.h>
@@ -41,7 +34,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardeningModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 
@@ -118,11 +111,11 @@ SmallStrainPlastic::SmallStrainPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
   d_checkStressTriax = true;
   ps->get("check_max_stress_failure", d_checkStressTriax);
 
-  d_eos = Vaango::PressureModelFactory::create(ps);
+  d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
     ostringstream desc;
-    desc << "An error occured in the PressureModelFactory that has \n"
+    desc << "An error occured in the MPMEOSFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
          << " Biswajit.  " << endl;
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
@@ -229,7 +222,7 @@ SmallStrainPlastic::SmallStrainPlastic(const SmallStrainPlastic* cm)
   d_scalarDam.Dc = cm->d_scalarDam.Dc;
   d_scalarDam.scalarDamageDist = cm->d_scalarDam.scalarDamageDist;
 
-  d_eos = Vaango::PressureModelFactory::createCopy(cm->d_eos);
+  d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos);
   d_eos->setBulkModulus(d_initialData.Bulk);
   d_shear = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
   d_melt = MeltingTempModelFactory::createCopy(cm->d_melt);

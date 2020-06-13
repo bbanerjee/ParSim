@@ -33,17 +33,15 @@
 
 using namespace Vaango;
 
-ElasticModuli_MetalIso::ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps,
-                                               const ModelStateBase* state)
+ElasticModuli_MetalIso::ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps)
 {
   d_eos = Uintah::MPMEquationOfStateFactory::create(ps);
   d_shear = Vaango::ShearModulusModelFactory::create(ps);
 
-  d_Km = d_eos->computeBulkModulus(state);
-  d_Gm = d_shear->computeShearModulus(state);
+  d_Km = d_eos->computeInitialBulkModulus();
+  d_Gm = d_shear->computeInitialShearModulus();
 
-  d_rho0 = state->initialDensity;
-  if (!(d_Km > 0.0 && d_Gm > 0.0 && d_rho0 > 0.0)) {
+  if (!(d_Km > 0.0 && d_Gm > 0.0)) {
     std::ostringstream err;
     err << "**ERROR** The model state in the elastic modulus model"
            " has not been initialized correctly. Please contact the developers.\n";
@@ -94,13 +92,13 @@ ElasticModuli
 ElasticModuli_MetalIso::getElasticModuliUpperBound() const
 {
   ModelStateBase state;
-  state.initialDensity = d_rho0;
-  state.density = 1.0e2 * d_rho0;
+  state.initialDensity = 1000;
+  state.density = 1.0e2 * 1000 ;
   state.initialBulkModulus = d_Km;
   state.initialShearModulus = d_Gm;
   state.temperature = 0.01;
-  state.pressure = 1.0e9;
   state.meltingTemp = 1.0e9;
+  state.pressure = 1.0e6;
   double Km = d_eos->computeBulkModulus(&state);
   double Gm = d_shear->computeShearModulus(&state);
   return ElasticModuli(Km, Gm);
@@ -110,12 +108,12 @@ ElasticModuli
 ElasticModuli_MetalIso::getElasticModuliLowerBound() const
 {
   ModelStateBase state;
-  state.initialDensity = d_rho0;
-  state.density = 0.01 * d_rho0;
+  state.initialDensity = 1000;
+  state.density = 0.01 * 1000;
   state.initialShearModulus = d_Gm;
   state.meltingTemp = 1.0e4;
   state.temperature = state.meltingTemp - 1.0;
-  state.pressure = 1.0;
+  state.pressure = 0.01;
   double Km = d_eos->computeBulkModulus(&state);
   double Gm = d_shear->computeShearModulus(&state);
   return ElasticModuli(Km, Gm);

@@ -27,9 +27,9 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Air.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Granite.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Water.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/AirEOS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/GraniteEOS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/WaterEOS.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 #include <limits>
@@ -94,9 +94,9 @@ private:
   ShearModulusParameters d_shear;
 
   /* Tangent bulk modulus models for air, water, granite */
-  Pressure_Air d_air;
-  Pressure_Water d_water;
-  Pressure_Granite d_granite;
+  AirEOS d_air;
+  WaterEOS d_water;
+  GraniteEOS d_granite;
 
   void checkInputParameters();
 

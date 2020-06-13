@@ -34,17 +34,17 @@ using Vaango::ModelStateBase;
 
 DefaultHypoElasticEOS::DefaultHypoElasticEOS()
 {
-  d_bulk = -1.0;
+  d_bulkModulus = -1.0;
 }
 
-DefaultHypoElasticEOS::DefaultHypoElasticEOS(ProblemSpecP&)
+DefaultHypoElasticEOS::DefaultHypoElasticEOS(ProblemSpecP& ps)
 {
-  d_bulk = -1.0;
+  ps->require("bulk_modulus", d_bulkModulus);
 }
 
 DefaultHypoElasticEOS::DefaultHypoElasticEOS(const DefaultHypoElasticEOS* cm)
 {
-  d_bulk = cm->d_bulk;
+  d_bulkModulus = cm->d_bulkModulus;
 }
 
 DefaultHypoElasticEOS::~DefaultHypoElasticEOS() = default;
@@ -54,13 +54,14 @@ DefaultHypoElasticEOS::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP eos_ps = ps->appendChild("equation_of_state");
   eos_ps->setAttribute("type", "default_hypo");
+  eos_ps->appendElement("bulk_modulus", d_bulkModulus);
 }
 
 std::map<std::string, double> 
 DefaultHypoElasticEOS::getParameters() const 
 {
   std::map<std::string, double> params;
-  params["bulk"] = d_bulk;
+  params["bulk_modulus"] = d_bulkModulus;
   return params;
 }
 
@@ -85,6 +86,7 @@ DefaultHypoElasticEOS::computePressure(const MPMMaterial*,
   return p;
 }
 
+/* **WARNING** Not hypoelastic.  Hypoelastic is history-dependent. */
 double
 DefaultHypoElasticEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
                                   const ModelStateBase* state)
@@ -92,6 +94,7 @@ DefaultHypoElasticEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
   return (state->bulkModulus / detF);
 }
 
+/* **WARNING** Not hypoelastic.  Hypoelastic is history-dependent. */
 // Compute pressure (option 1)
 //  (assume linear relation holds and bulk modulus does not change
 //   with deformation)
@@ -99,17 +102,18 @@ double
 DefaultHypoElasticEOS::computePressure(const double& rho_orig,
                                        const double& rho_cur)
 {
-  if (d_bulk < 0.0) {
+  if (d_bulkModulus < 0.0) {
     throw ParameterNotFound(
       "Please initialize bulk modulus in EOS before computing pressure",
       __FILE__, __LINE__);
   }
 
   double J = rho_orig / rho_cur;
-  double p = d_bulk * (1.0 - 1.0 / J);
+  double p = d_bulkModulus * (1.0 - 1.0 / J);
   return p;
 }
 
+/* **WARNING** Not hypoelastic.  Hypoelastic is history-dependent. */
 // Compute pressure (option 2)  (assume small strain relation holds)
 //  (assume linear relation holds and bulk modulus does not change
 //   with deformation)
@@ -118,68 +122,137 @@ DefaultHypoElasticEOS::computePressure(const double& rho_orig,
                                        const double& rho_cur, double& pressure,
                                        double& dp_drho, double& csquared)
 {
-  if (d_bulk < 0.0) {
+  if (d_bulkModulus < 0.0) {
     throw ParameterNotFound(
       "Please initialize bulk modulus in EOS before computing pressure",
       __FILE__, __LINE__);
   }
 
   double J = rho_orig / rho_cur;
-  pressure = d_bulk * (1.0 - 1.0 / J);
-  dp_drho = -d_bulk / rho_orig;
-  csquared = d_bulk / rho_cur;
+  pressure = d_bulkModulus * (1.0 - 1.0 / J);
+  dp_drho = -d_bulkModulus / rho_orig;
+  csquared = d_bulkModulus / rho_cur;
 }
 
 // Compute bulk modulus
+double 
+DefaultHypoElasticEOS::computeInitialBulkModulus()
+{
+  return d_bulkModulus;
+}
+
 double
 DefaultHypoElasticEOS::computeBulkModulus(const double& rho_orig,
                                           const double& rho_cur)
 {
-  if (d_bulk < 0.0) {
-    throw ParameterNotFound(
-      "Please initialize bulk modulus in EOS before computing modulus",
-      __FILE__, __LINE__);
-  }
-
-  double J = rho_orig / rho_cur;
-  double bulk = d_bulk / (J * J);
-  return bulk;
+  return d_bulkModulus;
 }
 
 double 
 DefaultHypoElasticEOS::computeBulkModulus(const ModelStateBase* state)
 {
-  return computeBulkModulus(state->initialDensity, state->density);
+  return d_bulkModulus;
 }
 
 // Compute strain energy
-// (integrate the equation for p)
+double 
+DefaultHypoElasticEOS::computeStrainEnergy(const ModelStateBase* state)
+{
+  return state->energy;
+}
+
+/* **WARNING** Hypoelastic is history-dependent. */
 double
 DefaultHypoElasticEOS::computeStrainEnergy(const double& rho_orig,
                                            const double& rho_cur)
 {
-  if (d_bulk < 0.0) {
-    throw ParameterNotFound(
-      "Please initialize bulk modulus in EOS before computing energy", __FILE__,
-      __LINE__);
-  }
+  std::ostringstream err;
+  err << "**ERROR** Cannot compute strain energy of hypoelastic material"
+         " using only the initial and current densities.  Please change"
+         " the equation_of_state if you need this functionality.\n";
+  throw InternalError(err.str(), __FILE__, __LINE__);
 
-  double J = rho_orig / rho_cur;
-  double U = d_bulk * (J - 1.0 - log(J));
-  return U;
+  return -1;
 }
 
+/* **WARNING** Hypoelastic is history-dependent. */
 // Compute density given pressure
 double
 DefaultHypoElasticEOS::computeDensity(const double& rho_orig,
                                       const double& pressure)
 {
-  if (d_bulk < 0.0) {
-    throw ParameterNotFound(
-      "Please initialize bulk modulus in EOS before computing density",
-      __FILE__, __LINE__);
-  }
+  std::ostringstream err;
+  err << "**ERROR** Cannot compute density of hypoelastic material"
+         " using only the initial density and current pressure."
+         " Please change the equation_of_state if you need this "
+         " functionality.\n";
+  throw InternalError(err.str(), __FILE__, __LINE__);
 
-  double rho_cur = rho_orig * (1.0 - pressure / d_bulk);
-  return rho_cur;
+  return -1;
+}
+
+double 
+DefaultHypoElasticEOS::computeDpDepse_v(const Vaango::ModelStateBase*) const
+{
+  std::ostringstream err;
+  err << "**ERROR** Cannot compute dp/deps_v of hypoelastic material"
+         " unless the incremental pressure and volume strains are provided." 
+         " Please change the equation_of_state if you need this "
+         " functionality.\n";
+  throw InternalError(err.str(), __FILE__, __LINE__);
+
+  return -1;
+}
+double 
+DefaultHypoElasticEOS::computeDpDepse_s(const Vaango::ModelStateBase*) const
+{
+  std::ostringstream err;
+  err << "**ERROR** Cannot compute dp/deps_s of hypoelastic material"
+         " unless the incremental pressure and volume strains are provided."  
+         " Please change the equation_of_state if you need this "
+         " functionality.\n";
+  throw InternalError(err.str(), __FILE__, __LINE__);
+
+  return -1;
+}
+double 
+DefaultHypoElasticEOS::computeElasticVolumetricStrain(const double& pp,
+                                      const double& p0)
+{
+  std::ostringstream err;
+  err << "**ERROR** Cannot compute volume strain of hypoelastic material."
+         " It should be provided as an input."
+         " Please change the equation_of_state if you need this "
+         " functionality.\n";
+  throw InternalError(err.str(), __FILE__, __LINE__);
+
+  return -1;
+}
+
+double 
+DefaultHypoElasticEOS::computeExpElasticVolumetricStrain(const double& pp,
+                                         const double& p0)
+{
+  std::ostringstream err;
+  err << "**ERROR** Cannot compute exp(volume strain) of hypoelastic material."
+         " It should be provided as an input."
+         " Please change the equation_of_state if you need this "
+         " functionality.\n";
+  throw InternalError(err.str(), __FILE__, __LINE__);
+
+  return -1;
+}
+double 
+DefaultHypoElasticEOS::computeDerivExpElasticVolumetricStrain(const double& pp,
+                                              const double& p0,
+                                              double& exp_eps_e_v)
+{
+  std::ostringstream err;
+  err << "**ERROR** Cannot compute derivative of exp(volume strain) of "
+         " hypoelastic material. It should be provided as an input."
+         " Please change the equation_of_state if you need this "
+         " functionality.\n";
+  throw InternalError(err.str(), __FILE__, __LINE__);
+
+  return -1;
 }

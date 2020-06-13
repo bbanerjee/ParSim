@@ -54,7 +54,7 @@ private:
 
 public:
   /*! Construct a constant shear modulus model. */
-  ShearModulus_Nadal(Uintah::ProblemSpecP& ps, PressureModel* eos);
+  ShearModulus_Nadal(Uintah::ProblemSpecP& ps, Uintah::MPMEquationOfState* eos);
 
   /*! Construct a copy of constant shear modulus model. */
   ShearModulus_Nadal(const ShearModulus_Nadal* smm);

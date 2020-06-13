@@ -46,8 +46,7 @@ class ElasticModuli_MetalIso : public ElasticModuliModel
 {
 public:
 
-  ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps,
-                         const ModelStateBase* state);
+  ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps);
   ElasticModuli_MetalIso(const ElasticModuli_MetalIso* emm);
   ~ElasticModuli_MetalIso() override = default;
   ElasticModuli_MetalIso& operator=(const ElasticModuli_MetalIso& emm) = delete;

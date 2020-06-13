@@ -37,7 +37,7 @@ using namespace Uintah;
 using namespace Vaango;
 
 // Construct a shear modulus model.
-ShearModulus_Nadal::ShearModulus_Nadal(ProblemSpecP& ps, PressureModel* eos)
+ShearModulus_Nadal::ShearModulus_Nadal(ProblemSpecP& ps, Uintah::MPMEquationOfState* eos)
 {
   d_eos = eos;
 

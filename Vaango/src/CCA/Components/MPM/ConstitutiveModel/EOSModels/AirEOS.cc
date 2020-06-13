@@ -23,7 +23,7 @@
  */
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Arena.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/Pressure_Air.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/AirEOS.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <cmath>
@@ -31,7 +31,7 @@
 using namespace Uintah;
 using namespace Vaango;
 
-Pressure_Air::Pressure_Air()
+AirEOS::AirEOS()
 {
   d_p0 = 101325.0; // Hardcoded (SI units).  *TODO* Get as input with
                    // ProblemSpec later.
@@ -39,7 +39,7 @@ Pressure_Air::Pressure_Air()
   d_bulkModulus = d_gamma * d_p0;
 }
 
-Pressure_Air::Pressure_Air(Uintah::ProblemSpecP&)
+AirEOS::AirEOS(Uintah::ProblemSpecP&)
 {
   d_p0 = 101325.0; // Hardcoded (SI units).  *TODO* Get as input with
                    // ProblemSpec later.
@@ -47,17 +47,17 @@ Pressure_Air::Pressure_Air(Uintah::ProblemSpecP&)
   d_bulkModulus = d_gamma * d_p0;
 }
 
-Pressure_Air::Pressure_Air(const Pressure_Air* cm)
+AirEOS::AirEOS(const AirEOS* cm)
 {
   d_p0 = cm->d_p0;
   d_gamma = cm->d_gamma;
   d_bulkModulus = cm->d_bulkModulus;
 }
 
-Pressure_Air::~Pressure_Air() = default;
+AirEOS::~AirEOS() = default;
 
 void
-Pressure_Air::outputProblemSpec(Uintah::ProblemSpecP& ps)
+AirEOS::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
   ProblemSpecP eos_ps = ps->appendChild("pressure_model");
   eos_ps->setAttribute("type", "air");
@@ -66,7 +66,7 @@ Pressure_Air::outputProblemSpec(Uintah::ProblemSpecP& ps)
 //////////
 // Calculate the pressure using the elastic constitutive equation
 double
-Pressure_Air::computePressure(const Uintah::MPMMaterial* matl,
+AirEOS::computePressure(const Uintah::MPMMaterial* matl,
                               const ModelStateBase* state_input,
                               const Uintah::Matrix3&,
                               const Uintah::Matrix3& rateOfDeformation,
@@ -91,7 +91,7 @@ Pressure_Air::computePressure(const Uintah::MPMMaterial* matl,
 
 // Compute pressure (option 1)
 double
-Pressure_Air::computePressure(const double& rho_orig, const double& rho_cur)
+AirEOS::computePressure(const double& rho_orig, const double& rho_cur)
 {
   double J = rho_orig / rho_cur;
   double eps_v = (J > 1.0) ? 0.0 : -std::log(J);
@@ -101,7 +101,7 @@ Pressure_Air::computePressure(const double& rho_orig, const double& rho_cur)
 
 // Compute pressure (option 2)
 void
-Pressure_Air::computePressure(const double& rho_orig, const double& rho_cur,
+AirEOS::computePressure(const double& rho_orig, const double& rho_cur,
                               double& pressure, double& dp_drho,
                               double& csquared)
 {
@@ -115,7 +115,7 @@ Pressure_Air::computePressure(const double& rho_orig, const double& rho_cur,
 
 // Compute derivative of pressure
 double
-Pressure_Air::eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
+AirEOS::eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
                          const ModelStateBase* )
 {
   /*
@@ -138,14 +138,14 @@ Pressure_Air::eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
 
 // Compute bulk modulus
 double
-Pressure_Air::computeInitialBulkModulus()
+AirEOS::computeInitialBulkModulus()
 {
   d_bulkModulus = d_gamma * d_p0;
   return d_bulkModulus;
 }
 
 double
-Pressure_Air::computeBulkModulus(const double& pressure)
+AirEOS::computeBulkModulus(const double& pressure)
 {
   d_bulkModulus =
     (pressure < 0.0) ? d_gamma * d_p0 : d_gamma * (pressure + d_p0);
@@ -153,7 +153,7 @@ Pressure_Air::computeBulkModulus(const double& pressure)
 }
 
 double
-Pressure_Air::computeBulkModulus(const double& rho_orig, const double& rho_cur)
+AirEOS::computeBulkModulus(const double& rho_orig, const double& rho_cur)
 {
   double p = computePressure(rho_orig, rho_cur);
   d_bulkModulus = computeBulkModulus(p);
@@ -161,7 +161,7 @@ Pressure_Air::computeBulkModulus(const double& rho_orig, const double& rho_cur)
 }
 
 double
-Pressure_Air::computeBulkModulus(const ModelStateBase* state_input)
+AirEOS::computeBulkModulus(const ModelStateBase* state_input)
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -181,7 +181,7 @@ Pressure_Air::computeBulkModulus(const ModelStateBase* state_input)
 
 // Compute strain energy
 double
-Pressure_Air::computeStrainEnergy(const double& rho_orig, const double& rho_cur)
+AirEOS::computeStrainEnergy(const double& rho_orig, const double& rho_cur)
 {
   throw InternalError(
     "ComputeStrainEnergy has not been implemented yet for Air.", __FILE__,
@@ -190,7 +190,7 @@ Pressure_Air::computeStrainEnergy(const double& rho_orig, const double& rho_cur)
 }
 
 double
-Pressure_Air::computeStrainEnergy(const ModelStateBase* state)
+AirEOS::computeStrainEnergy(const ModelStateBase* state)
 {
   throw InternalError(
     "ComputeStrainEnergy has not been implemented yet for Air.", __FILE__,
@@ -200,7 +200,7 @@ Pressure_Air::computeStrainEnergy(const ModelStateBase* state)
 
 // Compute density given pressure (tension +ve)
 double
-Pressure_Air::computeDensity(const double& rho_orig, const double& pressure)
+AirEOS::computeDensity(const double& rho_orig, const double& pressure)
 {
   throw InternalError("ComputeDensity has not been implemented yet for Air.",
                       __FILE__, __LINE__);
@@ -209,7 +209,7 @@ Pressure_Air::computeDensity(const double& rho_orig, const double& pressure)
 
 //  Calculate the derivative of p with respect to epse_v
 double
-Pressure_Air::computeDpDepse_v(const ModelStateBase* state_input) const
+AirEOS::computeDpDepse_v(const ModelStateBase* state_input) const
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -229,7 +229,7 @@ Pressure_Air::computeDpDepse_v(const ModelStateBase* state_input) const
 
 // Compute the volumetric strain given a pressure (p)
 double
-Pressure_Air::computeElasticVolumetricStrain(const double& pp, const double& p0)
+AirEOS::computeElasticVolumetricStrain(const double& pp, const double& p0)
 {
   // ASSERT(!(pp < 0))
   double eps_e_v = (pp < 0.0) ? 0.0 : -1 / d_gamma * std::log(pp / d_p0 + 1.0);
@@ -238,7 +238,7 @@ Pressure_Air::computeElasticVolumetricStrain(const double& pp, const double& p0)
 
 // Compute the exponential of volumetric strain given a pressure (p)
 double
-Pressure_Air::computeExpElasticVolumetricStrain(const double& pp,
+AirEOS::computeExpElasticVolumetricStrain(const double& pp,
                                                 const double& p0)
 {
   // ASSERT(!(pp < 0))
@@ -249,7 +249,7 @@ Pressure_Air::computeExpElasticVolumetricStrain(const double& pp,
 //  Compute the pressure drivative of the exponential of
 //  the volumetric strain at a given pressure (p)
 double
-Pressure_Air::computeDerivExpElasticVolumetricStrain(const double& pp,
+AirEOS::computeDerivExpElasticVolumetricStrain(const double& pp,
                                                      const double& p0,
                                                      double& exp_eps_e_v)
 {

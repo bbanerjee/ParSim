@@ -29,10 +29,14 @@
 
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
+namespace Uintah {
+// Forward declarations
+class MPMEquationOfState;
+}
+
 namespace Vaango {
 
 // Forward declarations
-class PressureModel;
 class ShearModulusModel;
 
 /*! \class ShearModulusModelFactory
@@ -49,7 +53,7 @@ public:
   //! Create a shear modulus model from the input file problem specification.
   static ShearModulusModel* create(Uintah::ProblemSpecP& ps);
   static ShearModulusModel* create(Uintah::ProblemSpecP& ps,
-                                   PressureModel* eos);
+                                   Uintah::MPMEquationOfState* eos);
   static ShearModulusModel* createCopy(const ShearModulusModel* yc);
 };
 } // End namespace Uintah

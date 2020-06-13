@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_Borja.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
@@ -38,7 +38,7 @@ using namespace Uintah;
 using namespace Vaango;
 
 // Construct a shear modulus model.
-ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps, PressureModel* eos)
+ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps, MPMEquationOfState* eos)
 {
   d_eos = eos;
 

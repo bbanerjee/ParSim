@@ -29,6 +29,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
+
 #include <Core/Math/Matrix3.h>
 
 namespace Uintah {
@@ -50,7 +51,7 @@ class MPMEquationOfState
 {
 
 protected:
-  double d_bulk;
+  double d_bulkModulus;
 
 public:
   MPMEquationOfState();
@@ -60,8 +61,8 @@ public:
 
   virtual std::map<std::string, double> getParameters() const = 0;
 
-  void setBulkModulus(const double& bulk) { d_bulk = bulk; }
-  double initialBulkModulus() { return d_bulk; }
+  void setBulkModulus(const double& bulk) { d_bulkModulus = bulk; }
+  double initialBulkModulus() { return d_bulkModulus; }
 
   ////////////////////////////////////////////////////////////////////////
   /*! Calculate the hydrostatic component of stress (pressure)
@@ -93,6 +94,21 @@ public:
   virtual double eval_dp_dJ(const MPMMaterial* matl, const double& delF,
                             const ModelStateBase* state) = 0;
 
+  ////////////////////////////////////////////////////////////////////////
+  /*! Calculate the derivative of p with respect to epse_v
+      where epse_v = tr(epse)
+            epse = total elastic strain */
+  ////////////////////////////////////////////////////////////////////////
+  virtual double computeDpDepse_v(const ModelStateBase* state) const = 0;
+
+  ////////////////////////////////////////////////////////////////////////
+  /*! Calculate the derivative of p with respect to epse_s
+      where epse_s = sqrt{2}{3} ||ee||
+            ee = epse - 1/3 tr(epse) I
+            epse = total elastic strain */
+  ////////////////////////////////////////////////////////////////////////
+  virtual double computeDpDepse_s(const ModelStateBase* state) const = 0;
+
   // Calculate rate of temperature change due to compression/expansion
   virtual double computeIsentropicTemperatureRate(const double T,
                                                   const double rho_0,
@@ -102,13 +118,15 @@ public:
   ////////////////////////////////////////////////////////////////////////
   /*! Calculate the tangent bulk modulus */
   ////////////////////////////////////////////////////////////////////////
+  virtual double computeInitialBulkModulus() = 0;
+  virtual double computeBulkModulus(const ModelStateBase* state) = 0;
   virtual double computeBulkModulus(const double& rho_orig,
                                     const double& rho_cur) = 0;
-  virtual double computeBulkModulus(const ModelStateBase* state) = 0;
 
   ////////////////////////////////////////////////////////////////////////
   /*! Calculate the accumulated strain energy */
   ////////////////////////////////////////////////////////////////////////
+  virtual double computeStrainEnergy(const ModelStateBase* state) = 0;
   virtual double computeStrainEnergy(const double& rho_orig,
                                      const double& rho_cur) = 0;
 
@@ -117,6 +135,66 @@ public:
   ////////////////////////////////////////////////////////////////////////
   virtual double computeDensity(const double& rho_orig,
                                 const double& pressure) = 0;
+
+  ////////////////////////////////////////////////////////////////////////
+  /**
+   * Function: computeElasticVolumetricStrain
+   *
+   * Purpose:
+   *   Compute the volumetric strain given a pressure (p)
+   *
+   * Inputs:
+   *   pp  = current pressure
+   *   p0 = initial pressure
+   *
+   * Returns:
+   *   eps_e_v = current elastic volume strain
+   */
+  ////////////////////////////////////////////////////////////////////////
+  virtual double computeElasticVolumetricStrain(const double& pp,
+                                                const double& p0) = 0;
+
+  ////////////////////////////////////////////////////////////////////////
+  /**
+   * Function: computeExpElasticVolumetricStrain
+   *
+   * Purpose:
+   *   Compute the exponential of volumetric strain given a pressure (p)
+   *
+   * Inputs:
+   *   pp  = current pressure
+   *   p0 = initial pressure
+   *
+   * Returns:
+   *   exp(eps_e_v) = exponential of the current elastic volume strain
+   */
+  ////////////////////////////////////////////////////////////////////////
+  virtual double computeExpElasticVolumetricStrain(const double& pp,
+                                                   const double& p0) = 0;
+
+  ////////////////////////////////////////////////////////////////////////
+  /**
+   * Function: computeDerivExpElasticVolumetricStrain
+   *
+   * Purpose:
+   *   Compute the pressure drivative of the exponential of
+   *   the volumetric strain at a given pressure (p)
+   *
+   * Inputs:
+   *   pp  = current pressure
+   *   p0 = initial pressure
+   *
+   * Outputs:
+   *   exp_eps_e_v = exp(eps_e_v) = exponential of elastic volumeric strain
+   *
+   * Returns:
+   *   deriv = d/dp[exp(eps_e_v)] = derivative of the exponential of
+   *                                current elastic volume strain
+   */
+  ////////////////////////////////////////////////////////////////////////
+  virtual double computeDerivExpElasticVolumetricStrain(const double& pp,
+                                                        const double& p0,
+                                                        double& exp_eps_e_v) = 0;
 };
 } // End namespace Uintah
 

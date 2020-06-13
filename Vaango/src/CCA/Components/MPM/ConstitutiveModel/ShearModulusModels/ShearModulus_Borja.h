@@ -74,7 +74,7 @@ private:
 
 public:
   /*! Construct a constant shear modulus model. */
-  ShearModulus_Borja(Uintah::ProblemSpecP& ps, PressureModel* eos);
+  ShearModulus_Borja(Uintah::ProblemSpecP& ps, Uintah::MPMEquationOfState* eos);
 
   /*! Construct a copy of constant shear modulus model. */
   ShearModulus_Borja(const ShearModulus_Borja* smm);

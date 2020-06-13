@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_Borja.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_Constant.h>
@@ -44,7 +44,7 @@ using namespace Vaango;
 ShearModulusModel*
 ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
 {
-  PressureModel* eos = nullptr;
+  MPMEquationOfState* eos = nullptr;
 
   ProblemSpecP child = ps->findBlock("elastic_shear_modulus_model");
   if (!child) {
@@ -76,7 +76,7 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
   }
 }
 ShearModulusModel*
-ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps, PressureModel* eos)
+ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps, MPMEquationOfState* eos)
 {
   ProblemSpecP child = ps->findBlock("elastic_shear_modulus_model");
   if (!child) {

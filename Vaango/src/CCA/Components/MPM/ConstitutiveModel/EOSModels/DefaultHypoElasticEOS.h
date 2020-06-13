@@ -91,17 +91,30 @@ public:
                        double& csquared) override;
 
   // Compute bulk modulus
+  double computeInitialBulkModulus() override;
   double computeBulkModulus(const double& rho_orig,
                             const double& rho_cur) override;
   double computeBulkModulus(const ModelStateBase* state) override;
 
   // Compute strain energy
+  double computeStrainEnergy(const ModelStateBase* state) override;
   double computeStrainEnergy(const double& rho_orig,
                              const double& rho_cur) override;
 
   // Compute density given pressure
   double computeDensity(const double& rho_orig,
                         const double& pressure) override;
+
+  double computeDpDepse_v(const Vaango::ModelStateBase*) const override;
+  double computeDpDepse_s(const Vaango::ModelStateBase*) const override;
+  double computeElasticVolumetricStrain(const double& pp,
+                                        const double& p0) override;
+
+  double computeExpElasticVolumetricStrain(const double& pp,
+                                           const double& p0) override;
+  double computeDerivExpElasticVolumetricStrain(const double& pp,
+                                                const double& p0,
+                                                double& exp_eps_e_v) override;
 };
 
 } // End namespace Uintah

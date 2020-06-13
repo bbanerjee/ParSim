@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -28,14 +28,14 @@
 #define __BORJA_PRESSURE_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
-  \class Pressure_Borja
+  \class BorjaEOS
 
   \brief The Borja model for calculating pressure
 
@@ -62,7 +62,7 @@ namespace Vaango {
 */
 ////////////////////////////////////////////////////////////////////////////
 
-class Pressure_Borja : public PressureModel
+class BorjaEOS : public Uintah::MPMEquationOfState
 {
 
 private:
@@ -71,20 +71,17 @@ private:
   double d_kappatilde; // Reference compressibility
   double d_epse_v0;    // Volumetric strain at reference pressure
 
-  // Prevent copying of this class
-  // copy constructor
-  Pressure_Borja& operator=(const Pressure_Borja& cm);
-
 public:
   // constructors
-  Pressure_Borja(Uintah::ProblemSpecP& ps);
-  Pressure_Borja(const Pressure_Borja* cm);
+  BorjaEOS(Uintah::ProblemSpecP& ps);
+  BorjaEOS(const BorjaEOS* cm);
+  BorjaEOS& operator=(const BorjaEOS& cm) = delete;
 
   // Special operator for computing internal energy
   double operator()(double eta) const;
 
   // destructor
-  ~Pressure_Borja() override;
+  ~BorjaEOS() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -160,6 +157,13 @@ public:
   double computeDensity(const double& rho_orig,
                         const double& pressure) override;
 
+  double computeElasticVolumetricStrain(const double& pp,
+                                        const double& p0) override;
+  double computeExpElasticVolumetricStrain(const double& pp,
+                                           const double& p0) override;
+  double computeDerivExpElasticVolumetricStrain(const double& pp,
+                                                const double& p0,
+                                                double& exp_eps_e_v) override;
 private:
   //  Pressure computation
   double evalPressure(const double& epse_v, const double& epse_s) const;

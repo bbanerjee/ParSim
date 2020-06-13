@@ -27,7 +27,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
@@ -75,11 +75,11 @@ static DebugStream cout_CC_Eps("CamClayStrain", false);
 CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
   : ConstitutiveModel(Mflag)
 {
-  d_eos = Vaango::PressureModelFactory::create(ps);
+  d_eos = MPMEquationOfStateFactory::create(ps);
   if (!d_eos) {
     ostringstream desc;
     desc << "**ERROR** Internal error while creating "
-            "CamClay->PressureModelFactory."
+            "CamClay->MPMEquationOfStatFactory."
          << endl;
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
@@ -117,7 +117,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
 CamClay::CamClay(const CamClay* cm)
   : ConstitutiveModel(cm)
 {
-  d_eos = Vaango::PressureModelFactory::createCopy(cm->d_eos);
+  d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos);
   d_shear = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
   d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
   d_intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);

@@ -26,10 +26,24 @@ SET(MPM_ConstitutiveModel_SRCS
   ${MPM_ConstitutiveModel_SRCS}
   ${CMAKE_CURRENT_SOURCE_DIR}/MPMEquationOfState.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/MPMEquationOfStateFactory.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/AirEOS.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/BorjaEOS.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/DefaultHypoElasticEOS.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/GraniteEOS.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/HyperElasticEOS.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/MieGruneisenEOS.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/MieGruneisenEOSEnergy.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/WaterEOS.cc 
   PARENT_SCOPE
 )
+
+#message(STATUS "Compiler is ${CMAKE_CXX_COMPILER_ID}")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  set(CMAKE_COMPILER_IS_INTEL 1)
+endif()
+IF(NOT CMAKE_COMPILER_IS_GNUCXX AND NOT CMAKE_COMPILER_IS_INTEL)
+  add_subdirectory(UnitTests)
+ENDIF()
+
+
 

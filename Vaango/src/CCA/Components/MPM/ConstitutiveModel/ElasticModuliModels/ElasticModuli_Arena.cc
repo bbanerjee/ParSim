@@ -133,7 +133,7 @@ ElasticModuli_Arena::outputProblemSpec(Uintah::ProblemSpecP& ps)
 ElasticModuli
 ElasticModuli_Arena::getInitialElasticModuli() const
 {
-  double Ks = d_granite.getBulkModulus();
+  double Ks = d_granite.getInitialBulkModulus();
   double KK = Ks * d_bulk.b0;
   double KRatio = KK / Ks;
   double nu = d_shear.nu1 + d_shear.nu2 * exp(-KRatio);

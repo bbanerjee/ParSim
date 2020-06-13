@@ -31,11 +31,16 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
+namespace Uintah {
+
+  class MPMEquationOfState;
+
+}
+
 namespace Vaango {
 
 using ParameterDict = std::map<std::string, double>;
 
-class PressureModel;
 
 /*! \class ShearModulusModel
  *  \brief A generic wrapper for various shear modulus models
@@ -50,7 +55,7 @@ class ShearModulusModel
 
 protected:
   double d_shear;       // the initial shear modulus
-  PressureModel* d_eos; // the associated Pressure EOS model
+  Uintah::MPMEquationOfState* d_eos; // the associated Pressure EOS model
 
 public:
   //! Construct a shear modulus model.
@@ -68,7 +73,7 @@ public:
     \brief Get the pressure model
    */
   /////////////////////////////////////////////////////////////////////////
-  PressureModel* getPressureModel() const { return d_eos; }
+  Uintah::MPMEquationOfState* getPressureModel() const { return d_eos; }
 
   /////////////////////////////////////////////////////////////////////////
   /*!

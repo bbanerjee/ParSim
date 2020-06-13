@@ -26,7 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/HyperelasticPlastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Exceptions/ConvergenceFailure.h>
@@ -115,7 +115,7 @@ HyperelasticPlastic::HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* Mflag)
   }
 
   // Equation of state factory for pressure (default is DefaultHyperEOS)
-  d_eos = Vaango::PressureModelFactory::create(ps);
+  d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
     ostringstream desc;
@@ -194,7 +194,7 @@ HyperelasticPlastic::HyperelasticPlastic(ProblemSpecP& ps, MPMFlags* Mflag,
   }
 
   // Equation of state factory for pressure
-  d_eos = Vaango::PressureModelFactory::create(ps);
+  d_eos = MPMEquationOfStateFactory::create(ps);
   d_eos->setBulkModulus(d_initialData.Bulk);
   if (!d_eos) {
     ostringstream desc;
@@ -266,7 +266,7 @@ HyperelasticPlastic::HyperelasticPlastic(const HyperelasticPlastic* cm)
   d_init_pressure = cm->d_init_pressure;
 
   // EOS from factory
-  d_eos = Vaango::PressureModelFactory::createCopy(cm->d_eos);
+  d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos);
   d_eos->setBulkModulus(d_initialData.Bulk);
 
   // Universal Labels

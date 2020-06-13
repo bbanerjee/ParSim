@@ -42,6 +42,7 @@ MieGruneisenEOSEnergy::MieGruneisenEOSEnergy(ProblemSpecP& ps)
   ps->require("S_alpha", d_const.S_1);
   ps->getWithDefault("S_2", d_const.S_2, 0.0);
   ps->getWithDefault("S_3", d_const.S_3, 0.0);
+  ps->require("rho_0", d_const.rho_0);
 }
 
 MieGruneisenEOSEnergy::MieGruneisenEOSEnergy(const MieGruneisenEOSEnergy* cm)
@@ -51,6 +52,7 @@ MieGruneisenEOSEnergy::MieGruneisenEOSEnergy(const MieGruneisenEOSEnergy* cm)
   d_const.S_1 = cm->d_const.S_1;
   d_const.S_2 = cm->d_const.S_2;
   d_const.S_3 = cm->d_const.S_3;
+  d_const.rho_0 = cm->d_const.rho_0;
 }
 
 MieGruneisenEOSEnergy::~MieGruneisenEOSEnergy() = default;
@@ -66,6 +68,7 @@ MieGruneisenEOSEnergy::outputProblemSpec(ProblemSpecP& ps)
   eos_ps->appendElement("S_alpha", d_const.S_1);
   eos_ps->appendElement("S_2", d_const.S_2);
   eos_ps->appendElement("S_3", d_const.S_3);
+  eos_ps->appendElement("rho_0", d_const.rho_0);
 }
 
 std::map<std::string, double> 
@@ -77,6 +80,7 @@ MieGruneisenEOSEnergy::getParameters() const
   params["S_alpha"] = d_const.S_1;
   params["S_2"] = d_const.S_2;
   params["S_3"] = d_const.S_3;
+  params["rho_0"] = d_const.rho_0;
   return params;
 }
 //////////
@@ -147,17 +151,24 @@ MieGruneisenEOSEnergy::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
     -rho_0 * C_0 * C_0 * ((1.0 - Gamma_0 * eta) * denom +
                           2.0 * eta * (1.0 - Gamma_0 * eta / 2.0) *
                             (S_1 + 2.0 * S_2 * eta + 3.0 * S_3 * eta * eta));
-  double denom3 = (denom * denom * denom);
+  //  double denom3 = (denom*denom*denom);
 
-  if (denom3 == 0.0) {
-    std::cout << "rh0_0 = " << rho_0 << " J = " << J << " numer = " << numer << "\n";
-    denom3 = 1.0e-5;
-  }
+  //  if (denom3 == 0.0) {
+  //    cout << "rh0_0 = " << rho_0 << " J = " << J
+  //           << " numer = " << numer << endl;
+  //    denom3 = 1.0e-5;
+  //  }
 
-  return (numer / denom3);
+  return (numer / denom);
 }
 
 // Compute bulk modulus
+double 
+MieGruneisenEOSEnergy::computeInitialBulkModulus()
+{
+  return computeBulkModulus(d_const.rho_0, d_const.rho_0);
+}
+
 double
 MieGruneisenEOSEnergy::computeBulkModulus(const double& rho_orig,
                                           const double& rho_cur)
@@ -536,6 +547,12 @@ MieGruneisenEOSEnergy::dpdJTension(const double& rho_orig, const double& eta)
 //   (even though we use it only in a limited region)
 //   **WARNING** Requires well behaved EOS that does not blow up to
 //               infinity in the middle of the domain
+double 
+MieGruneisenEOSEnergy::computeStrainEnergy(const ModelStateBase* state)
+{
+  return computeStrainEnergy(state->initialDensity, state->density);
+}
+
 double
 MieGruneisenEOSEnergy::computeStrainEnergy(const double& rho_orig,
                                            const double& rho_cur)
@@ -573,4 +590,70 @@ MieGruneisenEOSEnergy::operator()(double eta) const
     1.0 - d_const.S_1 * eta - d_const.S_2 * etaSq - d_const.S_3 * etaCb;
 
   return numer / (denom * denom);
+}
+
+double 
+MieGruneisenEOSEnergy::computeDpDepse_v(const Vaango::ModelStateBase*) const
+{
+  std::ostringstream err;
+  err << "**ERROR** Cannot compute dp/deps_v of 5 parameter Mie-Gruneisen material"
+         " unless the elastic part of J is provided."
+         " Please change the equation_of_state if you need this "
+         " functionality.\n";
+  throw InternalError(err.str(), __FILE__, __LINE__);
+
+  return -1;
+}
+double 
+MieGruneisenEOSEnergy::computeDpDepse_s(const Vaango::ModelStateBase*) const
+{
+  std::ostringstream err;
+  err << "**ERROR** Cannot compute dp/deps_s of 5 parameter Mie-Gruneisen material"
+         " unless the elastic part of J is provided."
+         " Please change the equation_of_state if you need this "
+         " functionality.\n";
+  throw InternalError(err.str(), __FILE__, __LINE__);
+
+  return -1;
+}
+double 
+MieGruneisenEOSEnergy::computeElasticVolumetricStrain(const double& pp,
+                                      const double& p0)
+{
+  std::ostringstream err;
+  err << "**ERROR** Cannot compute volume strain of 5 parameter Mie-Gruneisen material."
+         " It should be provided as an input."
+         " Please change the equation_of_state if you need this "
+         " functionality.\n";
+  throw InternalError(err.str(), __FILE__, __LINE__);
+
+  return -1;
+}
+
+double 
+MieGruneisenEOSEnergy::computeExpElasticVolumetricStrain(const double& pp,
+                                         const double& p0)
+{
+  std::ostringstream err;
+  err << "**ERROR** Cannot compute exp(volume strain) of 5 parameter Mie-Gruneisen material."
+         " It should be provided as an input."
+         " Please change the equation_of_state if you need this "
+         " functionality.\n";
+  throw InternalError(err.str(), __FILE__, __LINE__);
+
+  return -1;
+}
+double 
+MieGruneisenEOSEnergy::computeDerivExpElasticVolumetricStrain(const double& pp,
+                                              const double& p0,
+                                              double& exp_eps_e_v)
+{
+  std::ostringstream err;
+  err << "**ERROR** Cannot compute derivative of exp(volume strain) of "
+         " 5 parameter Mie-Gruneisen material. It should be provided as an input."
+         " Please change the equation_of_state if you need this "
+         " functionality.\n";
+  throw InternalError(err.str(), __FILE__, __LINE__);
+
+  return -1;
 }

@@ -31,7 +31,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ImplicitCM.h>
 #include <CCA/Components/MPM/ConstitutiveModel/KinHardeningModels/KinematicHardeningModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
-#include <CCA/Components/MPM/ConstitutiveModel/PressureModels/PressureModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModel.h>
@@ -150,7 +150,7 @@ protected:
   bool d_setStressToZero;
   bool d_allowNoTension;
 
-  Vaango::PressureModel* d_eos;
+  MPMEquationOfState* d_eos;
   Vaango::ShearModulusModel* d_shear;
   Vaango::KinematicHardeningModel* d_kinematic;
   Vaango::YieldCondition* d_yield;
