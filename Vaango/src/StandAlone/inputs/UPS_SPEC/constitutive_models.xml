@@ -123,14 +123,6 @@
     <ve_volumetric_viscosity       spec="OPTIONAL DOUBLE" /> <!-- qwerty need_applies_to='type ALL' -->
     <ve_deviatoric_viscosity       spec="OPTIONAL DOUBLE" /> <!-- qwerty need_applies_to='type ALL' -->
     <EoverR                        spec="OPTIONAL DOUBLE" /> <!-- FIXME: what is this for? -->
-    <equation_of_state             spec="OPTIONAL NO_DATA"
-                                     attribute1="type REQUIRED STRING 'default_hyper, default_hypo, mie_gruneisen, mie_gruneisen_energy'" >
-      <C_0                         spec="OPTIONAL DOUBLE" />    <!-- FIXME: what is this? optional (DefaultHypoEOS.xml)? Default value? -->
-      <Gamma_0                     spec="OPTIONAL DOUBLE" />
-      <S_alpha                     spec="OPTIONAL DOUBLE" />
-      <S_2                         spec="OPTIONAL DOUBLE" />
-      <S_3                         spec="OPTIONAL DOUBLE" />
-    </equation_of_state>
     <evolve_damage                 spec="OPTIONAL BOOLEAN" />
     <evolve_porosity               spec="OPTIONAL BOOLEAN" />
     <failure_by_stress             spec="OPTIONAL BOOLEAN" />
@@ -308,6 +300,31 @@
     <RTau4                         spec="OPTIONAL DOUBLE" />
     <RTau5                         spec="OPTIONAL DOUBLE" />
     <shear_modulus                 spec="OPTIONAL DOUBLE" />
+    <equation_of_state             spec="OPTIONAL NO_DATA"
+                                     attribute1="type REQUIRED STRING 'default_hyper, default_hypo, mie_gruneisen, mie_gruneisen_energy, borja_pressure, air, water, granite'" >
+      <bulk_modulus                spec="REQUIRED DOUBLE" 
+                                     need_applies_to="type default_hypo, default_hyper"/> 
+      <C_0                         spec="REQUIRED DOUBLE" 
+                                     need_applies_to="type mie_gruneisen, mie_gruneisen_energy"/> 
+      <Gamma_0                     spec="REQUIRED DOUBLE" 
+                                     need_applies_to="type mie_gruneisen, mie_gruneisen_energy"/> 
+      <S_alpha                     spec="REQUIRED DOUBLE"
+                                     need_applies_to="type mie_gruneisen, mie_gruneisen_energy"/> 
+      <S_2                         spec="REQUIRED DOUBLE"
+                                     need_applies_to="type mie_gruneisen_energy"/> 
+      <S_3                         spec="REQUIRED DOUBLE"
+                                     need_applies_to="type mie_gruneisen_energy"/> 
+      <rho_0                       spec="REQUIRED DOUBLE"
+                                     need_applies_to="type mie_gruneisen, mie_gruneisen_energy"/> 
+      <p0                          spec="REQUIRED DOUBLE 'negative'" 
+                                     need_applies_to="type borja_pressure"/>
+      <alpha                       spec="REQUIRED DOUBLE 'positive'" 
+                                     need_applies_to="type borja_pressure"/>
+      <kappatilde                  spec="REQUIRED DOUBLE 'positive'" 
+                                     need_applies_to="type borja_pressure"/>
+      <epse_v0                     spec="REQUIRED DOUBLE" 
+                                     need_applies_to="type borja_pressure"/>
+    </equation_of_state>
     <shear_modulus_model           spec="OPTIONAL NO_DATA"
                                      attribute1="type REQUIRED STRING 'constant_shear, mts_shear, np_shear, ptw_shear, scg_shear'" >
       <mu_0                        spec="OPTIONAL DOUBLE" />
@@ -894,7 +911,7 @@
     <!--______________________________________________________________________ -->    
     <!-- For CamClay and related models developed by Biswajit for ONR_MURI -->
     <elastic_moduli_model  spec="OPTIONAL NO_DATA"
-                     attribute1="type REQUIRED STRING 'constant  arenisca3  soil_model_brannon  arena  arena_mixture  tabular neural_net'"
+                     attribute1="type REQUIRED STRING 'constant  arenisca3  arena  arena_mixture  metal_iso neural_net soil_model_brannon tabular'"
                      need_applies_to="type arena Arenisca3 camclay soil_model_brannon arena  arena_mixture  tabular_plasticity tabular_plasticity_cap">
       
       <!-- type = constant -->
@@ -957,14 +974,6 @@
 
     </elastic_moduli_model>
 
-    <pressure_model  spec="REQUIRED NO_DATA"
-                     attribute1="type REQUIRED STRING 'borja_pressure'"
-                     need_applies_to="type camclay">
-      <p0 spec="REQUIRED DOUBLE 'negative'" need_applies_to="type borja_pressure"/>
-      <alpha spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_pressure"/>
-      <kappatilde spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_pressure"/>
-      <epse_v0 spec="REQUIRED DOUBLE" need_applies_to="type borja_pressure"/>
-    </pressure_model>
     <elastic_shear_modulus_model  spec="REQUIRED NO_DATA"
                                   attribute1="type REQUIRED STRING 'borja_shear_modulus'"
                                   need_applies_to="type camclay">

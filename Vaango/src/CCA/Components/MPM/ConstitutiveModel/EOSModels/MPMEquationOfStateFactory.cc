@@ -59,7 +59,7 @@ MPMEquationOfStateFactory::create(ProblemSpecP& ps)
 
   if (mat_type == "mie_gruneisen")
     return scinew MieGruneisenEOS(child);
-  else if (mat_type == "mie_gruneisen_3param")
+  else if (mat_type == "mie_gruneisen_energy")
     return scinew MieGruneisenEOSEnergy(child);
   else if (mat_type == "default_hypo")
     return scinew DefaultHypoElasticEOS(child);

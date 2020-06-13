@@ -61,7 +61,7 @@ void
 MieGruneisenEOSEnergy::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP eos_ps = ps->appendChild("equation_of_state");
-  eos_ps->setAttribute("type", "mie_gruneisen");
+  eos_ps->setAttribute("type", "mie_gruneisen_energy");
 
   eos_ps->appendElement("C_0", d_const.C_0);
   eos_ps->appendElement("Gamma_0", d_const.Gamma_0);
