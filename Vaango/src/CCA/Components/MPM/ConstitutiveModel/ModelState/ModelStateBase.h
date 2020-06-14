@@ -75,10 +75,12 @@ public:
 
   virtual ~ModelStateBase();
 
+  virtual
   ModelStateBase& operator=(const ModelStateBase& state);
+  virtual
   ModelStateBase* operator=(const ModelStateBase* state);
 
-  virtual 
+  virtual
   size_t numStateVar() const
   {
     auto numThis = 25u;

@@ -85,3 +85,17 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+
+set(BORJA_TEST testModelState_Borja)
+add_executable(${BORJA_TEST} ${BORJA_TEST}.cc)
+target_link_libraries(${BORJA_TEST}
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST ${BORJA_TEST})
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
+

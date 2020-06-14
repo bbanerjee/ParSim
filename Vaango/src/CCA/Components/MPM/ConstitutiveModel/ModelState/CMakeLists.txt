@@ -34,6 +34,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Arena.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Tabular.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_TabularCap.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/ModelState_Borja.cc 
   PARENT_SCOPE
 )
 
