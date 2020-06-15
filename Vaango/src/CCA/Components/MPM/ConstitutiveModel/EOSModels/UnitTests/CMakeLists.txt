@@ -95,3 +95,16 @@ add_custom_command(
   POST_BUILD
   COMMAND ${UNIT_TEST}
 )
+
+set(TEST testEOS_BorjaT)
+add_executable(${TEST} ${TEST}.cc)
+target_link_libraries(${TEST}
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST ${TEST})
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)

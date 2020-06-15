@@ -60,15 +60,16 @@ set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/incl
 set(GTEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
-#add_executable(testTabularData testTabularData.cc)
-#target_link_libraries(testTabularData
-#  ${GTEST_LIB}
-#  ${VAANGO_LIBS}
-#)
-#set(UNIT_TEST testTabularData)
-#add_custom_command(
-#  TARGET ${UNIT_TEST}
-#  POST_BUILD
-#  COMMAND ${UNIT_TEST}
-#)
+set(TEST testShearModulusBorja)
+add_executable(${TEST} ${TEST}.cc)
+target_link_libraries(${TEST}
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST ${TEST})
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)
 

@@ -29,12 +29,6 @@
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
-namespace Uintah {
-
-  class MPMEquationOfState;
-
-}
-
 namespace Vaango {
 
 using ParameterDict = std::map<std::string, double>;
@@ -48,7 +42,7 @@ using ParameterDict = std::map<std::string, double>;
  *
  * Provides an abstract base class for various shear modulus models
 */
-template <typename DerivedT>
+template <typename DerivedT, typename StateT, typename EquationOfStateT>
 class ShearModulusT
 {
 public:
@@ -65,7 +59,7 @@ public:
     \brief Get the pressure model
    */
   /////////////////////////////////////////////////////////////////////////
-  Uintah::MPMEquationOfState* getPressureModel() const { return d_eos; }
+  EquationOfStateT* getPressureModel() const { return d_eos; }
 
   /////////////////////////////////////////////////////////////////////////
   /*!
@@ -87,21 +81,18 @@ public:
     return derived()->computeInitialShearModulus();
   }
 
-  template <typename T>
-  double computeShearModulus(const ModelState<T>* state)
+  double computeShearModulus(const ModelState<StateT>* state)
   {
     return derived()->computeShearModulus(state);
   }
 
-  template <typename T>
-  double computeShearModulus(const ModelState<T>* state) const
+  double computeShearModulus(const ModelState<StateT>* state) const
   {
     return derived()->computeShearModulus(state);
   }
 
   /*! Compute the shear strain energy */
-  template <typename T>
-  double computeStrainEnergy(const ModelState<T>* state)
+  double computeStrainEnergy(const ModelState<StateT>* state)
   {
     return derived()->computeStrainEnergy(state);
   }
@@ -116,8 +107,7 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  template <typename T>
-  double computeQ(const ModelState<T>* state) const
+  double computeQ(const ModelState<StateT>* state) const
   {
     return derived()->computeQ(state);
   }
@@ -127,8 +117,7 @@ public:
     Compute dq/depse_s
   */
   /////////////////////////////////////////////////////////////////////////
-  template <typename T>
-  double computeDqDepse_s(const ModelState<T>* state) const
+  double computeDqDepse_s(const ModelState<StateT>* state) const
   {
     return derived()->computeDqDepse_s(state);
   }
@@ -138,16 +127,15 @@ public:
     Compute dq/depse_v
   */
   /////////////////////////////////////////////////////////////////////////
-  template <typename T>
-  double computeDqDepse_v(const ModelState<T>* state) const
+  double computeDqDepse_v(const ModelState<StateT>* state) const
   {
     return derived()->computeDqDepse_v(state);
   }
 
 protected:
 
-  double d_shearModulus;             // the initial shear modulus
-  Uintah::MPMEquationOfState* d_eos; // the associated Pressure EOS model
+  double d_shearModulus;   // the initial shear modulus
+  EquationOfStateT* d_eos; // the associated Pressure EOS model
 
 private:
 

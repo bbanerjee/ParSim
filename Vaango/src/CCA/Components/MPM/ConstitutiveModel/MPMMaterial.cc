@@ -59,6 +59,17 @@
 using namespace std;
 using namespace Uintah;
 
+// Default constructor
+MPMMaterial::MPMMaterial()
+  : d_cm(nullptr)
+  , d_particle_creator(nullptr)
+{
+  d_lb = scinew MPMLabel();
+  d_doBasicDamage = false;
+  d_basicDamageModel = nullptr;
+  d_sdm = nullptr;
+}
+
 // Standard Constructor
 MPMMaterial::MPMMaterial(ProblemSpecP& ps, const GridP grid,
                          SimulationStateP& ss, MPMFlags* flags)
@@ -204,32 +215,27 @@ MPMMaterial::standardInitialization(ProblemSpecP& ps, const GridP grid,
   }
 }
 
-// Default constructor
-MPMMaterial::MPMMaterial()
-  : d_cm(nullptr)
-  , d_particle_creator(nullptr)
-{
-  d_lb = scinew MPMLabel();
-  d_doBasicDamage = false;
-  d_basicDamageModel = nullptr;
-}
-
 MPMMaterial::~MPMMaterial()
 {
-  delete d_lb;
-  delete d_cm;
-  delete d_particle_creator;
-
+  if (d_lb) {
+    delete d_lb;
+  }
+  if (d_cm) {
+    delete d_cm;
+  }
+  if (d_particle_creator) {
+    delete d_particle_creator;
+  }
   if (d_doBasicDamage) {
     delete d_basicDamageModel;
   }
-
   if (d_sdm) {
     delete d_sdm;
   }
-
-  for (auto& d_geom_obj : d_geom_objs) {
-    delete d_geom_obj;
+  if (d_geom_objs.size() > 0.0) {
+    for (auto& d_geom_obj : d_geom_objs) {
+      delete d_geom_obj;
+    }
   }
 }
 

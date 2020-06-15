@@ -23,10 +23,10 @@
 #
 # CMakeLists.txt for Vaango/src/CCA/Components/MPM/ConstitutiveModel/Models/UnitTests
 
-message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-message(STATUS "HDF5 library dir = ${HDF5_LIBRARY_DIRS}")
-message(STATUS "HDF5 library = ${HDF5_LIBRARY}")
+#message(STATUS "Binary dir = ${CMAKE_CURRENT_BINARY_DIR}")
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+#message(STATUS "HDF5 library dir = ${HDF5_LIBRARY_DIRS}")
+#message(STATUS "HDF5 library = ${HDF5_LIBRARY}")
 
 #------------------------
 # Vaango libs

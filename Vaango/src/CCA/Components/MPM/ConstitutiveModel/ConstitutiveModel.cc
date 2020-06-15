@@ -81,7 +81,9 @@ ConstitutiveModel::ConstitutiveModel(const ConstitutiveModel* cm)
 
 ConstitutiveModel::~ConstitutiveModel()
 {
-  delete lb;
+  if (lb) {
+    delete lb;
+  }
 }
 
 void

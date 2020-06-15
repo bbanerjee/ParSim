@@ -25,8 +25,9 @@
 #ifndef __TEMPLATED_BORJA_SHEAR_MODEL_H__
 #define __TEMPLATED_BORJA_SHEAR_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Borja.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusT.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Borja.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/EOS_BorjaT.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
 namespace Vaango {
@@ -41,7 +42,7 @@ namespace Vaango {
   Computer Methods in Applied Mechanics and Engineering, 155 (1-2),
   pp. 73-95.
 
-  The sheear stress magnitude is given by
+  The shear stress magnitude is given by
 
   q = 3 mu epse_s
 
@@ -58,7 +59,7 @@ namespace Vaango {
   epse = elastic strain tensor
  *
 */
-class ShearModulus_BorjaT : public ShearModulusT<ShearModulus_BorjaT>
+class ShearModulus_BorjaT : public ShearModulusT<ShearModulus_BorjaT, ModelState_Borja, EOS_BorjaT>
 {
 
 private:
@@ -71,7 +72,7 @@ private:
 
 public:
   /*! Construct a constant shear modulus model. */
-  ShearModulus_BorjaT(Uintah::ProblemSpecP& ps, Uintah::MPMEquationOfState* eos);
+  ShearModulus_BorjaT(Uintah::ProblemSpecP& ps, EOS_BorjaT* eos);
 
   /*! Construct a copy of constant shear modulus model. */
   ShearModulus_BorjaT(const ShearModulus_BorjaT* smm);
@@ -87,6 +88,10 @@ public:
   {
     ParameterDict params;
     params["mu0"] = d_mu0;
+    params["alpha"] = d_alpha;
+    params["p0"] = d_p0;
+    params["kappatilde"] = d_kappatilde;
+    params["epse_v0"] = d_epse_v0;
     return params;
   }
 

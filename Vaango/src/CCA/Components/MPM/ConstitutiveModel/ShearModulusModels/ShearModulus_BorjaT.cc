@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/EOS_BorjaT.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_BorjaT.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
@@ -36,8 +36,8 @@ using namespace Uintah;
 using namespace Vaango;
 
 // Construct a shear modulus model.
-ShearModulus_BorjaT::ShearModulus_BorjaT(ProblemSpecP& ps, MPMEquationOfState* eos)
-  : ShearModulusT<ShearModulus_BorjaT>()
+ShearModulus_BorjaT::ShearModulus_BorjaT(ProblemSpecP& ps, EOS_BorjaT* eos)
+  : ShearModulusT<ShearModulus_BorjaT, ModelState_Borja, EOS_BorjaT>()
 {
   d_eos = eos;
 

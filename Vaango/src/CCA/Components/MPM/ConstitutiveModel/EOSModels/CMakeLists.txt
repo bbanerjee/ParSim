@@ -34,6 +34,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/MieGruneisenEOS.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/MieGruneisenEOSEnergy.cc 
   ${CMAKE_CURRENT_SOURCE_DIR}/WaterEOS.cc 
+  ${CMAKE_CURRENT_SOURCE_DIR}/EOS_BorjaT.cc 
   PARENT_SCOPE
 )
 

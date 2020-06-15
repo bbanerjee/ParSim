@@ -55,6 +55,7 @@ Material::Material(ProblemSpecP& ps)
 
 Material::~Material()
 {
+  //std::cout << "In material destructor\n";
   if(thismatl && thismatl->removeReference())
     delete thismatl;
 }

@@ -75,7 +75,9 @@ ParticleCreator::ParticleCreator(MPMMaterial* matl,
 
 ParticleCreator::~ParticleCreator()
 {
-  delete d_lb;
+  if (d_lb) {
+    delete d_lb;
+  }
 }
 
 particleIndex
