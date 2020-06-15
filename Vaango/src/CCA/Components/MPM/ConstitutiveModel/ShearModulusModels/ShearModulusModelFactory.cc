@@ -46,7 +46,7 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
 {
   MPMEquationOfState* eos = nullptr;
 
-  ProblemSpecP child = ps->findBlock("elastic_shear_modulus_model");
+  ProblemSpecP child = ps->findBlock("shear_modulus_model");
   if (!child) {
     std::cerr << "**WARNING** Attempting to create default (constant shear modulus) "
             "model"
@@ -78,7 +78,7 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
 ShearModulusModel*
 ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps, MPMEquationOfState* eos)
 {
-  ProblemSpecP child = ps->findBlock("elastic_shear_modulus_model");
+  ProblemSpecP child = ps->findBlock("shear_modulus_model");
   if (!child) {
     std::cerr << "**WARNING** Attempting to create default (constant shear modulus) "
             "model"
@@ -93,7 +93,7 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps, MPMEquationOfState* e
 
   if (mat_type == "constant_shear")
     return (scinew ShearModulus_Constant(child, eos));
-  else if (mat_type == "borja_shear_modulus")
+  else if (mat_type == "borja_shear")
     return (scinew ShearModulus_Borja(child, eos));
   else if (mat_type == "mts_shear")
     return (scinew ShearModulus_MTS(child));

@@ -15,7 +15,7 @@ using namespace Vaango;
 
 TEST(TestEOS_Borja, computePressure)
 {
-// Create a new document
+  // Create a new document
   xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
 
   // Create root node

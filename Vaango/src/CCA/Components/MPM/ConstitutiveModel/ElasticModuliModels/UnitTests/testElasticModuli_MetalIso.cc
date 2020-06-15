@@ -40,7 +40,7 @@ TEST(ElasticModuliMetalIsoTest, constantBulkConstantShear)
   xmlNewChild(eosNode, nullptr, BAD_CAST "bulk_modulus", BAD_CAST "1.0e6");
 
   // For shear model
-  auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "elastic_shear_modulus_model", BAD_CAST "");
+  auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "shear_modulus_model", BAD_CAST "");
   xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "constant_shear");
   xmlNewChild(shearNode, nullptr, BAD_CAST "shear_modulus", BAD_CAST "0.7e6");
 
@@ -148,7 +148,7 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearBorja)
   xmlNewChild(eosNode, nullptr, BAD_CAST "bulk_modulus", BAD_CAST "1.0e6");
 
   // For shear model
-  auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "elastic_shear_modulus_model", BAD_CAST "");
+  auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "shear_modulus_model", BAD_CAST "");
   xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "constant_shear");
   xmlNewChild(shearNode, nullptr, BAD_CAST "shear_modulus", BAD_CAST "0.7e6");
 

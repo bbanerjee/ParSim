@@ -54,7 +54,7 @@ ShearModulus_Constant::~ShearModulus_Constant() = default;
 void
 ShearModulus_Constant::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
-  ProblemSpecP shear_ps = ps->appendChild("elastic_shear_modulus_model");
+  ProblemSpecP shear_ps = ps->appendChild("shear_modulus_model");
   shear_ps->setAttribute("type", "constant_shear");
 
   shear_ps->appendElement("shear_modulus", d_shear);

@@ -326,7 +326,7 @@
                                      need_applies_to="type borja_pressure"/>
     </equation_of_state>
     <shear_modulus_model           spec="OPTIONAL NO_DATA"
-                                     attribute1="type REQUIRED STRING 'constant_shear, mts_shear, np_shear, ptw_shear, scg_shear'" >
+                                     attribute1="type REQUIRED STRING 'borja_shear, constant_shear, mts_shear, np_shear, ptw_shear, scg_shear'" >
       <mu_0                        spec="OPTIONAL DOUBLE" />
       <A                           spec="OPTIONAL DOUBLE" />
       <B                           spec="OPTIONAL DOUBLE" />
@@ -338,6 +338,8 @@
       <zeta                        spec="OPTIONAL DOUBLE" />
       <alpha                       spec="OPTIONAL DOUBLE" />
       <alphap                      spec="OPTIONAL DOUBLE" />
+      <mu0                         spec="REQUIRED DOUBLE 'positive'" 
+                                     need_applies_to="type borja_shear"/>
     </shear_modulus_model>
     <specific_heat                 spec="OPTIONAL DOUBLE" />
     <specific_heat_model           spec="OPTIONAL NO_DATA"
@@ -974,11 +976,6 @@
 
     </elastic_moduli_model>
 
-    <elastic_shear_modulus_model  spec="REQUIRED NO_DATA"
-                                  attribute1="type REQUIRED STRING 'borja_shear_modulus'"
-                                  need_applies_to="type camclay">
-      <mu0 spec="REQUIRED DOUBLE 'positive'" need_applies_to="type borja_shear_modulus"/>
-    </elastic_shear_modulus_model>
     <plastic_yield_condition  spec="REQUIRED NO_DATA"
                               attribute1="type REQUIRED STRING 'gurson rousselier camclay arena arena_mixture tabular tabular_cap von_mises'"
                               need_applies_to="type camclay arena arena_mixture tabular_plasticity tabular_plasticity_cap">
