@@ -8,6 +8,8 @@ AlignConsecutiveAssignments: true
 
 #AllowAllArgumentsOnNextLine: false
 
+AlwaysBreakAfterReturnType: All
+
 BinPackArguments: false
 
 BinPackParameters: false
