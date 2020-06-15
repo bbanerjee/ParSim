@@ -1,11 +1,11 @@
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Borja.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_BorjaT.h>
 #include <iostream>
 
 #include <gtest/gtest.h>
 
 TEST(ModelStateCRTPTest, Constructors)
 {
-  Vaango::ModelState_Borja state;
+  Vaango::ModelState_BorjaT state;
   state.porosity = 1.0;
   state.pressure = 3.14e6;
   //std::cout << "p = " << state.pressure << " phi = " << state.porosity << "\n";

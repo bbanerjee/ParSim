@@ -34,14 +34,14 @@ namespace Vaango {
 
 /////////////////////////////////////////////////////////////////////////////
 /*!
-  \class ModelState
+  \class ModelStateT
   \brief Base class for structure that stores the model state
   \author Biswajit Banerjee \n
 */
 /////////////////////////////////////////////////////////////////////////////
 
 template <typename DerivedT>
-class ModelState
+class ModelStateT
 {
 public:
 
@@ -137,7 +137,7 @@ public:
 
 private:
 
-  ModelState()
+  ModelStateT()
   {
     yieldStress = 0.0;
     strainRate = 0.0;

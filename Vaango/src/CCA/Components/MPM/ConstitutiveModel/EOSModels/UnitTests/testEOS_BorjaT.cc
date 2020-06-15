@@ -1,4 +1,4 @@
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Borja.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_BorjaT.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/EOS_BorjaT.h>
 
 #include <libxml/parser.h>
@@ -45,7 +45,7 @@ TEST(TestEOS_Borja, computePressure)
   EOS_BorjaT eos(ps);
   EOS_BorjaT eos_copy(&eos);
 
-  ModelState_Borja state_ten, state_com;
+  ModelState_BorjaT state_ten, state_com;
   auto strain_ten = Uintah::Matrix3(1.0, 2.0, 3.0, 2.0, 4.0, 5.0, 3.0, 5.0, 6.0);
   auto strain_com = Uintah::Matrix3(-1.0, -2.0, -3.0, -2.0, -4.0, -5.0, -3.0, -5.0, -6.0);
   auto dev_strains_ten = state_ten.updateStrainScalars(strain_ten, strain_ten);

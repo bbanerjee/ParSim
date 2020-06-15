@@ -22,52 +22,41 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __DERIVED_MODEL_STATE_CAMCLAY_BORJA_H__
-#define __DERIVED_MODEL_STATE_CAMCLAY_BORJA_H__
+#ifndef __DERIVED_MODEL_STATE_METAL_TEMPLATED_H__
+#define __DERIVED_MODEL_STATE_METAL_TEMPLATED_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateT.h>
 
 namespace Vaango {
 
 /////////////////////////////////////////////////////////////////////////////
 /*!
-  \class ModelState_Borja
+  \class ModelState_MetalT
   \brief A structure that stores the state data that is specialized for
          the Borja model.
   \author Biswajit Banerjee \n
 */
 /////////////////////////////////////////////////////////////////////////////
 
-class ModelState_Borja : public ModelState<ModelState_Borja>
+class ModelState_MetalT : public ModelStateT<ModelState_MetalT>
 {
 
 public:
-  double p_c;  // consolidation pressure
-  double p_c0; // consolidation pressure at the beginning of time step
 
-  double epse_v;    // volumetric elastic strain = tr(epse)
-  double epse_s;    // deviatoric elastic strain = sqrt(2/3) ||ee||
-                    //  ee = epse - 1/3 epse_v I
-  double epse_v_tr; // trial volumetric elastic strain
-  double epse_s_tr; // trial deviatoric elastic strain
+  ModelState_MetalT();
 
-  Uintah::Matrix3 elasticStrainTensor;
-  Uintah::Matrix3 elasticStrainTensorTrial;
+  ModelState_MetalT(const ModelState_MetalT& state);
+  ModelState_MetalT(const ModelState_MetalT* state);
 
-  ModelState_Borja();
+  ~ModelState_MetalT();
 
-  ModelState_Borja(const ModelState_Borja& state);
-  ModelState_Borja(const ModelState_Borja* state);
-
-  ~ModelState_Borja();
-
-  ModelState_Borja& operator=(const ModelState_Borja& state);
-  ModelState_Borja* operator=(const ModelState_Borja* state);
-  void copyLocalState(const ModelState_Borja* state);
+  ModelState_MetalT& operator=(const ModelState_MetalT& state);
+  ModelState_MetalT* operator=(const ModelState_MetalT* state);
+  void copyLocalState(const ModelState_MetalT* state);
 
   size_t numLocalStateVar() const 
   {
-    auto numThis = 8u;
+    auto numThis = 0u;
     return numThis;
   }
 
@@ -78,21 +67,14 @@ public:
   updateLocalStrainScalars(const Uintah::Matrix3& strain,
                            const Uintah::Matrix3& strain_trial) 
   {
-    elasticStrainTensor = strain;
-    elasticStrainTensorTrial = strain_trial;
-    epse_v = strain.Trace(); 
-    epse_v_tr = strain_trial.Trace(); 
+    double epse_v = strain.Trace(); 
+    double epse_v_tr = strain_trial.Trace(); 
     auto eps_dev = strain - Vaango::Util::Identity * (epse_v / 3.0);
     auto eps_tr_dev = strain_trial - Vaango::Util::Identity * (epse_v_tr / 3.0);
-    auto ee = eps_dev.Contract(eps_dev);
-    auto ee_tr = eps_tr_dev.Contract(eps_tr_dev);
-    epse_s = std::sqrt(2.0 * ee / 3.0);
-    epse_s_tr = std::sqrt(2.0 * ee_tr / 3.0);
-    
     return std::make_pair(eps_dev, eps_tr_dev);
   }
 };
 
 } // End namespace Uintah
 
-#endif // __DERIVED_MODEL_STATE_CAMCLAY_BORJA_H__
+#endif // __DERIVED_MODEL_STATE_METAL_TEMPLATED_H__

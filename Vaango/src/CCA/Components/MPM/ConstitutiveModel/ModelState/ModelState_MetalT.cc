@@ -22,37 +22,29 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Borja.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_MetalT.h>
 
 using namespace Vaango;
 
-ModelState_Borja::ModelState_Borja()
-  : ModelState<ModelState_Borja>()
+ModelState_MetalT::ModelState_MetalT()
+  : ModelStateT<ModelState_MetalT>()
 {
-  p_c = 0.0;
-  p_c0 = 0.0;
-  epse_v = 0.0;
-  epse_s = 0.0;
-  epse_v_tr = 0.0;
-  epse_s_tr = 0.0;
-  elasticStrainTensor = Uintah::Matrix3(0.0);
-  elasticStrainTensorTrial = Uintah::Matrix3(0.0);
 }
 
-ModelState_Borja::ModelState_Borja(const ModelState_Borja& state)
+ModelState_MetalT::ModelState_MetalT(const ModelState_MetalT& state)
 {
   *this = &state;
 }
 
-ModelState_Borja::ModelState_Borja(const ModelState_Borja* state)
+ModelState_MetalT::ModelState_MetalT(const ModelState_MetalT* state)
 {
   *this = state;
 }
 
-ModelState_Borja::~ModelState_Borja() = default;
+ModelState_MetalT::~ModelState_MetalT() = default;
 
-ModelState_Borja&
-ModelState_Borja::operator=(const ModelState_Borja& state)
+ModelState_MetalT&
+ModelState_MetalT::operator=(const ModelState_MetalT& state)
 {
   if (this == &state)
     return *this;
@@ -62,8 +54,8 @@ ModelState_Borja::operator=(const ModelState_Borja& state)
 
 }
 
-ModelState_Borja*
-ModelState_Borja::operator=(const ModelState_Borja* state)
+ModelState_MetalT*
+ModelState_MetalT::operator=(const ModelState_MetalT* state)
 {
   if (this == state) {
     return this;
@@ -73,14 +65,6 @@ ModelState_Borja::operator=(const ModelState_Borja* state)
 }
 
 void 
-ModelState_Borja::copyLocalState(const ModelState_Borja* state)
+ModelState_MetalT::copyLocalState(const ModelState_MetalT* state)
 {
-  p_c = state->p_c;
-  p_c0 = state->p_c0;
-  epse_v = state->epse_v;
-  epse_s = state->epse_s;
-  epse_v_tr = state->epse_v_tr;
-  epse_s_tr = state->epse_s_tr;
-  elasticStrainTensor = state->elasticStrainTensor;
-  elasticStrainTensorTrial = state->elasticStrainTensorTrial;
 }

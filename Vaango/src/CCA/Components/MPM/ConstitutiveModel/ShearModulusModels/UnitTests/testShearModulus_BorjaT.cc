@@ -1,6 +1,8 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_BorjaT.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_ConstantT.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/EOS_BorjaT.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Borja.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_BorjaT.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_MetalT.h>
 
 #include <iostream>
 
@@ -8,6 +10,33 @@
 #include <libxml/tree.h>
 
 #include <gtest/gtest.h>
+
+TEST(TestShearModulus_ConstantT, Constructors)
+{
+  // Create a new document
+  xmlDocPtr shear_doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr shearNode = xmlNewNode(nullptr, BAD_CAST "shear_modulus_model");
+  xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "constant_shear");
+  xmlDocSetRootElement(shear_doc, shearNode);
+
+  xmlNewChild(shearNode, nullptr, BAD_CAST "shear_modulus", BAD_CAST "5.4e6");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", shear_doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  Uintah::ProblemSpecP shear_ps = scinew Uintah::ProblemSpec(xmlDocGetRootElement(shear_doc), false);
+  if (!shear_ps) {
+    std::cout << "**Error** Could not create Shear Modulus ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Create an shear modulus model
+  Vaango::ShearModulus_ConstantT model(shear_ps);
+}
 
 TEST(TestShearModulus_BorjaT, Constructors)
 {
@@ -58,6 +87,8 @@ TEST(TestShearModulus_BorjaT, Constructors)
 
   // Create an EOS first
   Vaango::EOS_BorjaT eos(eos_ps);
+
+  // Create an shear modulus model
   Vaango::ShearModulus_BorjaT model(shear_ps, &eos);
 
   // Check parameters
@@ -81,7 +112,7 @@ TEST(TestShearModulus_BorjaT, Constructors)
   ASSERT_DOUBLE_EQ(mu, 5400540);
 
   // Create high model state
-  Vaango::ModelState_Borja state_ten, state_com;
+  Vaango::ModelState_BorjaT state_ten, state_com;
   auto strain_ten = Uintah::Matrix3(1.0, 2.0, 3.0, 2.0, 4.0, 5.0, 3.0, 5.0, 6.0);
   auto strain_com = Uintah::Matrix3(-1.0, -2.0, -3.0, -2.0, -4.0, -5.0, -3.0, -5.0, -6.0);
   auto dev_strains_ten = state_ten.updateStrainScalars(strain_ten, strain_ten);

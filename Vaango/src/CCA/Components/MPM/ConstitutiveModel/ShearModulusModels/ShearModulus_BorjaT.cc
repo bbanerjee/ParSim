@@ -37,7 +37,7 @@ using namespace Vaango;
 
 // Construct a shear modulus model.
 ShearModulus_BorjaT::ShearModulus_BorjaT(ProblemSpecP& ps, EOS_BorjaT* eos)
-  : ShearModulusT<ShearModulus_BorjaT, ModelState_Borja, EOS_BorjaT>()
+  : ShearModulusT<ShearModulus_BorjaT, ModelState_BorjaT, EOS_BorjaT>()
 {
   d_eos = eos;
 
@@ -75,7 +75,7 @@ ShearModulus_BorjaT::ShearModulus_BorjaT(const ShearModulus_BorjaT* smm)
 ShearModulus_BorjaT::~ShearModulus_BorjaT() = default;
 
 void
-ShearModulus_BorjaT::outputProblemSpec(ProblemSpecP& ps)
+ShearModulus_BorjaT::l_outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP shear_ps = ps->appendChild("shear_modulus_model");
   shear_ps->setAttribute("type", "borja_shear");
@@ -85,21 +85,21 @@ ShearModulus_BorjaT::outputProblemSpec(ProblemSpecP& ps)
 
 // Compute the shear modulus
 double
-ShearModulus_BorjaT::computeInitialShearModulus()
+ShearModulus_BorjaT::l_computeInitialShearModulus()
 {
   double mu_vol = evalShearModulus(0.0);
   return (d_mu0 - mu_vol);
 }
 
 double
-ShearModulus_BorjaT::computeShearModulus(const ModelState_Borja* state)
+ShearModulus_BorjaT::l_computeShearModulus(const ModelState_BorjaT* state)
 {
   double mu_vol = evalShearModulus(state->epse_v);
   return (d_mu0 - mu_vol);
 }
 
 double
-ShearModulus_BorjaT::computeShearModulus(const ModelState_Borja* state) const
+ShearModulus_BorjaT::l_computeShearModulus(const ModelState_BorjaT* state) const
 {
   double mu_vol = evalShearModulus(state->epse_v);
   return (d_mu0 - mu_vol);
@@ -108,7 +108,7 @@ ShearModulus_BorjaT::computeShearModulus(const ModelState_Borja* state) const
 // Compute the shear strain energy
 // W = 3/2 mu epse_s^2
 double
-ShearModulus_BorjaT::computeStrainEnergy(const ModelState_Borja* state)
+ShearModulus_BorjaT::l_computeStrainEnergy(const ModelState_BorjaT* state)
 {
   double mu_vol = evalShearModulus(state->epse_v);
   double W = 1.5 * (d_mu0 - mu_vol) * (state->epse_s * state->epse_s);
@@ -122,21 +122,21 @@ ShearModulus_BorjaT::computeStrainEnergy(const ModelState_Borja* state)
                epse = total elastic strain
                epse_v = tr(epse) */
 double
-ShearModulus_BorjaT::computeQ(const ModelState_Borja* state) const
+ShearModulus_BorjaT::l_computeQ(const ModelState_BorjaT* state) const
 {
   return evalQ(state->epse_v, state->epse_s);
 }
 
 /* Compute dq/depse_s */
 double
-ShearModulus_BorjaT::computeDqDepse_s(const ModelState_Borja* state) const
+ShearModulus_BorjaT::l_computeDqDepse_s(const ModelState_BorjaT* state) const
 {
   return evalDqDepse_s(state->epse_v, state->epse_s);
 }
 
 /* Compute dq/depse_v */
 double
-ShearModulus_BorjaT::computeDqDepse_v(const ModelState_Borja* state) const
+ShearModulus_BorjaT::l_computeDqDepse_v(const ModelState_BorjaT* state) const
 {
   return evalDqDepse_v(state->epse_v, state->epse_s);
 }

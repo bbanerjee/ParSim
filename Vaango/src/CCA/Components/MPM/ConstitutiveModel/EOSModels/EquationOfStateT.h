@@ -26,7 +26,7 @@
 #define __EQUATION_OF_STATE_TEMPLATED_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateT.h>
 
 #include <Core/Math/Matrix3.h>
 
@@ -50,13 +50,13 @@ public:
   void
   outputProblemSpec(Uintah::ProblemSpecP& ps)
   {
-    derived()->outputProblemSpec(ps);
+    derived()->l_outputProblemSpec(ps);
   }
 
   std::map<std::string, double>
   getParameters() const
   {
-    return derived()->getParameters();
+    return derived()->l_getParameters();
   }
 
   void
@@ -71,12 +71,12 @@ public:
   ////////////////////////////////////////////////////////////////////////
   double
   computePressure(const Uintah::MPMMaterial* matl,
-                  const ModelState<StateT>* state,
+                  const StateT* state,
                   const Uintah::Matrix3& F, /* def grad */
                   const Uintah::Matrix3& D, /* rate of def */
                   const double& delT)
   {
-    return derived()->computePressure(matl, state, F, D, delT);
+    return derived()->l_computePressure(matl, state, F, D, delT);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -86,7 +86,7 @@ public:
   double
   computePressure(const double& rho_orig, const double& rho_cur)
   {
-    return derived()->computePressure(rho_orig, rho_cur);
+    return derived()->l_computePressure(rho_orig, rho_cur);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -100,7 +100,7 @@ public:
                   double& dp_drho,
                   double& csquared)
   {
-    derived()->computePressure(rho_orig, rho_cur, pressure, dp_drho, csquared);
+    derived()->l_computePressure(rho_orig, rho_cur, pressure, dp_drho, csquared);
   }
 
   /*! Calculate the derivative of \f$p(J)\f$ wrt \f$J\f$
@@ -108,9 +108,9 @@ public:
   double
   eval_dp_dJ(const Uintah::MPMMaterial* matl,
              const double& delF,
-             const ModelState<StateT>* state)
+             const StateT* state)
   {
-    return derived()->eval_dp_dJ(matl, delF, state);
+    return derived()->l_eval_dp_dJ(matl, delF, state);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -119,9 +119,9 @@ public:
             epse = total elastic strain */
   ////////////////////////////////////////////////////////////////////////
   double
-  computeDpDepse_v(const ModelState<StateT>* state) const
+  computeDpDepse_v(const StateT* state) const
   {
-    return derived()->computeDpDepse_v(state);
+    return derived()->l_computeDpDepse_v(state);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -131,9 +131,9 @@ public:
             epse = total elastic strain */
   ////////////////////////////////////////////////////////////////////////
   double
-  computeDpDepse_s(const ModelState<StateT>* state) const
+  computeDpDepse_s(const StateT* state) const
   {
-    return derived()->computeDpDepse_s(state);
+    return derived()->l_computeDpDepse_s(state);
   }
 
   // Calculate rate of temperature change due to compression/expansion
@@ -143,7 +143,7 @@ public:
                                    const double rho_cur,
                                    const double Dtrace)
   {
-    return derived()->computeIsentropicTemperatureRate(T, rho_0, rho_cur, Dtrace);
+    return derived()->l_computeIsentropicTemperatureRate(T, rho_0, rho_cur, Dtrace);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -152,34 +152,34 @@ public:
   double
   computeInitialBulkModulus()
   {
-    return derived()->computeInitialBulkModulus();
+    return derived()->l_computeInitialBulkModulus();
   }
 
   double
-  computeBulkModulus(const ModelState<StateT>* state)
+  computeBulkModulus(const StateT* state)
   {
-    return derived()->computeBulkModulus(state);
+    return derived()->l_computeBulkModulus(state);
   }
 
   double
   computeBulkModulus(const double& rho_orig, const double& rho_cur)
   {
-    return derived()->computeBulkModulus(rho_orig, rho_cur);
+    return derived()->l_computeBulkModulus(rho_orig, rho_cur);
   }
 
   ////////////////////////////////////////////////////////////////////////
   /*! Calculate the accumulated strain energy */
   ////////////////////////////////////////////////////////////////////////
   double
-  computeStrainEnergy(const ModelState<StateT>* state)
+  computeStrainEnergy(const StateT* state)
   {
-    return derived()->computeStrainEnergy(state);
+    return derived()->l_computeStrainEnergy(state);
   }
 
   double
   computeStrainEnergy(const double& rho_orig, const double& rho_cur)
   {
-    return derived()->computeStrainEnergy(rho_orig, rho_cur);
+    return derived()->l_computeStrainEnergy(rho_orig, rho_cur);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -188,7 +188,7 @@ public:
   double
   computeDensity(const double& rho_orig, const double& pressure)
   {
-    return derived()->computeDensity(rho_orig, pressure);
+    return derived()->l_computeDensity(rho_orig, pressure);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -209,7 +209,7 @@ public:
   double
   computeElasticVolumetricStrain(const double& pp, const double& p0) 
   {
-    return derived()->computeElasticVolumetricStrain(pp, p0);
+    return derived()->l_computeElasticVolumetricStrain(pp, p0);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -230,7 +230,7 @@ public:
   double
   computeExpElasticVolumetricStrain(const double& pp, const double& p0)
   {
-    return derived()->computeExpElasticVolumetricStrain(pp, p0);
+    return derived()->l_computeExpElasticVolumetricStrain(pp, p0);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -258,7 +258,7 @@ public:
                                          const double& p0,
                                          double& exp_eps_e_v)
   {
-    return derived()->computeDerivExpElasticVolumetricStrain(pp, p0, exp_eps_e_v);
+    return derived()->l_computeDerivExpElasticVolumetricStrain(pp, p0, exp_eps_e_v);
   }
 
 protected:

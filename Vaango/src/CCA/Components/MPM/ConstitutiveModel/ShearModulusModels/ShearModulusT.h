@@ -25,7 +25,7 @@
 #ifndef __SHEAR_MODULUS_TEMPLATED_MODEL_H__
 #define __SHEAR_MODULUS_TEMPLATED_MODEL_H__
 
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateT.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -42,7 +42,9 @@ using ParameterDict = std::map<std::string, double>;
  *
  * Provides an abstract base class for various shear modulus models
 */
-template <typename DerivedT, typename StateT, typename EquationOfStateT>
+template <typename DerivedT, 
+          typename StateT, 
+          typename EquationOfStateT>
 class ShearModulusT
 {
 public:
@@ -51,7 +53,7 @@ public:
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps)
   {
-    derived()->outputProblemSpec(ps);
+    derived()->l_outputProblemSpec(ps);
   }
 
   /////////////////////////////////////////////////////////////////////////
@@ -68,7 +70,7 @@ public:
   /////////////////////////////////////////////////////////////////////////
   std::map<std::string, double> getParameters() const
   {
-    return derived()->getParameters();
+    return derived()->l_getParameters();
   }
 
   /////////////////////////////////////////////////////////////////////////
@@ -78,23 +80,23 @@ public:
   /////////////////////////////////////////////////////////////////////////
   double computeInitialShearModulus()
   {
-    return derived()->computeInitialShearModulus();
+    return derived()->l_computeInitialShearModulus();
   }
 
-  double computeShearModulus(const ModelState<StateT>* state)
+  double computeShearModulus(const StateT* state)
   {
-    return derived()->computeShearModulus(state);
+    return derived()->l_computeShearModulus(state);
   }
 
-  double computeShearModulus(const ModelState<StateT>* state) const
+  double computeShearModulus(const StateT* state) const
   {
-    return derived()->computeShearModulus(state);
+    return derived()->l_computeShearModulus(state);
   }
 
   /*! Compute the shear strain energy */
-  double computeStrainEnergy(const ModelState<StateT>* state)
+  double computeStrainEnergy(const StateT* state)
   {
-    return derived()->computeStrainEnergy(state);
+    return derived()->l_computeStrainEnergy(state);
   }
 
   /////////////////////////////////////////////////////////////////////////
@@ -107,9 +109,9 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeQ(const ModelState<StateT>* state) const
+  double computeQ(const StateT* state) const
   {
-    return derived()->computeQ(state);
+    return derived()->l_computeQ(state);
   }
 
   /////////////////////////////////////////////////////////////////////////
@@ -117,9 +119,9 @@ public:
     Compute dq/depse_s
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_s(const ModelState<StateT>* state) const
+  double computeDqDepse_s(const StateT* state) const
   {
-    return derived()->computeDqDepse_s(state);
+    return derived()->l_computeDqDepse_s(state);
   }
 
   /////////////////////////////////////////////////////////////////////////
@@ -127,9 +129,9 @@ public:
     Compute dq/depse_v
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_v(const ModelState<StateT>* state) const
+  double computeDqDepse_v(const StateT* state) const
   {
-    return derived()->computeDqDepse_v(state);
+    return derived()->l_computeDqDepse_v(state);
   }
 
 protected:

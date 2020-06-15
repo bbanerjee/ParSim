@@ -26,7 +26,7 @@
 #define __TEMPLATED_BORJA_SHEAR_MODEL_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusT.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_Borja.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_BorjaT.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/EOS_BorjaT.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
 
@@ -59,7 +59,7 @@ namespace Vaango {
   epse = elastic strain tensor
  *
 */
-class ShearModulus_BorjaT : public ShearModulusT<ShearModulus_BorjaT, ModelState_Borja, EOS_BorjaT>
+class ShearModulus_BorjaT : public ShearModulusT<ShearModulus_BorjaT, ModelState_BorjaT, EOS_BorjaT>
 {
 
 private:
@@ -81,10 +81,10 @@ public:
   /*! Destructor of constant shear modulus model.   */
   ~ShearModulus_BorjaT();
 
-  void outputProblemSpec(Uintah::ProblemSpecP& ps);
+  void l_outputProblemSpec(Uintah::ProblemSpecP& ps);
 
   /*! Get parameters */
-  ParameterDict getParameters() const
+  ParameterDict l_getParameters() const
   {
     ParameterDict params;
     params["mu0"] = d_mu0;
@@ -96,14 +96,14 @@ public:
   }
 
   /*! Compute the shear modulus */
-  double computeInitialShearModulus();
+  double l_computeInitialShearModulus();
 
-  double computeShearModulus(const ModelState_Borja* state);
+  double l_computeShearModulus(const ModelState_BorjaT* state);
 
-  double computeShearModulus(const ModelState_Borja* state) const;
+  double l_computeShearModulus(const ModelState_BorjaT* state) const;
 
   /*! Compute the shear strain energy */
-  double computeStrainEnergy(const ModelState_Borja* state);
+  double l_computeStrainEnergy(const ModelState_BorjaT* state);
 
   /////////////////////////////////////////////////////////////////////////
   /*
@@ -115,21 +115,21 @@ public:
              epse_v = tr(epse)
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeQ(const ModelState_Borja* state) const;
+  double l_computeQ(const ModelState_BorjaT* state) const;
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_s
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_s(const ModelState_Borja* state) const;
+  double l_computeDqDepse_s(const ModelState_BorjaT* state) const;
 
   /////////////////////////////////////////////////////////////////////////
   /*
     Compute dq/depse_v
   */
   /////////////////////////////////////////////////////////////////////////
-  double computeDqDepse_v(const ModelState_Borja* state) const;
+  double l_computeDqDepse_v(const ModelState_BorjaT* state) const;
 
 private:
   //  Compute shear modulus (volume strain dependent)
