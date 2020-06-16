@@ -85,15 +85,18 @@ ShearModulus_MTS::computeShearModulus(const ModelStateBase* state) const
 double
 ShearModulus_MTS::evalShearModulus(double T) const
 {
-  double expT0_T = exp(d_T0 / T) - 1.0;
+  double expT0_T = std::exp(d_T0 / T) - 1.0;
   ASSERT(expT0_T != 0);
   double mu = d_mu0 - d_D / expT0_T;
+  mu = (mu > 0.0) ? mu : 1.0e-6;
+  /*
   if (!(mu > 0.0)) {
     std::ostringstream desc;
     desc << "**Compute MTS Shear Modulus ERROR** Shear modulus <= 0." << "\n";
-    desc << "T = " << T << " mu0 = " << d_mu0 << " T0 = " << d_T0
+    desc << "mu = " << mu << " T = " << T << " mu0 = " << d_mu0 << " T0 = " << d_T0
          << " exp(To/T) = " << expT0_T << " D = " << d_D << "\n";
     throw Uintah::InvalidValue(desc.str(), __FILE__, __LINE__);
   }
+  */
   return mu;
 }

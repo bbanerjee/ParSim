@@ -56,7 +56,7 @@ BorjaEOS::~BorjaEOS() = default;
 void
 BorjaEOS::outputProblemSpec(ProblemSpecP& ps)
 {
-  ProblemSpecP eos_ps = ps->appendChild("pressure_model");
+  ProblemSpecP eos_ps = ps->appendChild("equation_of_state");
   eos_ps->setAttribute("type", "borja_pressure");
 
   eos_ps->appendElement("p0", d_p0);

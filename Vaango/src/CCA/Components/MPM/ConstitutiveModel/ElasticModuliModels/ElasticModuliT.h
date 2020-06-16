@@ -56,18 +56,18 @@ struct ElasticModuli
  * Provides a CRTP base class for various isotropic elasticity models
 */
 
-template <typename DerivedT, typename StateT>
+template <typename DerivedT, typename StateT, typename PressureT, typename ShearT>
 class ElasticModuliT
 {
 
 public:
-  //! Destructor of elasticity model.
+
   ~ElasticModuliT() = default;
 
   void
   outputProblemSpec(Uintah::ProblemSpecP& ps)
   {
-    derived()->outputProblemSpec(ps);
+    derived()->l_outputProblemSpec(ps);
   }
 
   /////////////////////////////////////////////////////////////////////////
@@ -78,7 +78,7 @@ public:
   ParameterDict
   getParameters() const
   {
-    return derived()->getParameters();
+    return derived()->l_getParameters();
   }
 
   /////////////////////////////////////////////////////////////////////////
@@ -89,26 +89,26 @@ public:
   ElasticModuli
   getInitialElasticModuli() const
   {
-    return derived()->getInitialElasticModuli();
+    return derived()->l_getInitialElasticModuli();
   }
 
   // not const modifies d_bulk
   ElasticModuli
-  getCurrentElasticModuli(const ModelStateT<StateT>* state)
+  getCurrentElasticModuli(const StateT* state)
   {
-    return derived()->getCurrentElasticModuli(state);
+    return derived()->l_getCurrentElasticModuli(state);
   }
 
   ElasticModuli
   getElasticModuliLowerBound() const
   {
-    return derived()->getElasticModuliLowerBound();
+    return derived()->l_getElasticModuliLowerBound();
   }
 
   ElasticModuli
   getElasticModuliUpperBound() const
   {
-    return derived()->getElasticModuliUpperBound();
+    return derived()->l_getElasticModuliUpperBound();
   }
 
   /////////////////////////////////////////////////////////////////////////
@@ -118,9 +118,9 @@ public:
   */
   /////////////////////////////////////////////////////////////////////////
   std::pair<ElasticModuli, ElasticModuli>
-  getElasticModuliAndDerivatives(const ModelStateT<StateT>* state) const
+  getElasticModuliAndDerivatives(const StateT* state) const
   {
-    return derived()->getElasticModuliAndDerivatives(state);
+    return derived()->l_getElasticModuliAndDerivatives(state);
   }
 
   /////////////////////////////////////////////////////////////////////////
@@ -135,7 +135,7 @@ public:
                        double& KK,
                        double& GG)
   {
-    derived()->computeDrainedModuli(I1_bar, ev_p_bar, KK, GG);
+    derived()->l_computeDrainedModuli(I1_bar, ev_p_bar, KK, GG);
   }
 
   void
@@ -147,11 +147,14 @@ public:
                                 double& KK,
                                 double& GG)
   {
-    derived()->computePartialSaturatedModuli(I1_eff_bar, pw_bar, ev_p_bar, 
+    derived()->l_computePartialSaturatedModuli(I1_eff_bar, pw_bar, ev_p_bar, 
                                              phi, S_w, KK, GG);
   }
 
 private:
+
+  std::unique_ptr<PressureT> d_eos;
+  std::unqiue_ptr<ShearT> d_shear;
 
   ElasticModuliT()
   {

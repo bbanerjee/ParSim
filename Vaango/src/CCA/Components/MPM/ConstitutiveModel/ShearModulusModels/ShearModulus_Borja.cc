@@ -26,6 +26,7 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulus_Borja.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/BorjaEOS.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Exceptions/ProblemSetupException.h>
@@ -40,15 +41,17 @@ using namespace Vaango;
 // Construct a shear modulus model.
 ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps, MPMEquationOfState* eos)
 {
-  d_eos = eos;
-
-  if (!eos) {
+  BorjaEOS* eos_local = dynamic_cast<BorjaEOS*>(eos);
+  if (!eos_local) {
     std::ostringstream out;
     out << "**ERROR**"
-        << " Cannot initialize shear modulus model unless pressure EOS model has"
-        << " been initialized properly";
+        << " Cannot initialize Borja shear modulus model with any EOS model"
+        << " other that Borja pressure EOS.  Check that the Borja pressure EOS"
+        << " model has been initialized properly";
     throw ProblemSetupException(out.str(), __FILE__, __LINE__);
   }
+
+  d_eos = eos;
 
   ParameterDict eosParams = d_eos->getParameters();
   d_alpha = eosParams["alpha"];
@@ -57,6 +60,7 @@ ShearModulus_Borja::ShearModulus_Borja(ProblemSpecP& ps, MPMEquationOfState* eos
   d_epse_v0 = eosParams["epse_v0"];
 
   ps->require("mu0", d_mu0);
+  d_shearModulus = d_mu0;
 }
 
 // Construct a copy of a shear modulus model.
@@ -69,6 +73,7 @@ ShearModulus_Borja::ShearModulus_Borja(const ShearModulus_Borja* smm)
   d_p0 = smm->d_p0;
   d_epse_v0 = smm->d_epse_v0;
   d_kappatilde = smm->d_kappatilde;
+  d_shearModulus = smm->d_shearModulus;
 }
 
 // Destructor of shear modulus model.

@@ -66,7 +66,7 @@ public:
   std::map<std::string, double> getParameters() const override
   {
     std::map<std::string, double> params;
-    params["mu0"] = d_mu0;
+    params["mu_0"] = d_mu0;
     params["A"] = d_A;
     params["B"] = d_B;
     return params;

@@ -61,7 +61,7 @@ public:
   std::map<std::string, double> getParameters() const override
   {
     std::map<std::string, double> params;
-    params["shear_modulus"] = d_shear;
+    params["shear_modulus"] = d_shearModulus;
     return params;
   }
 

@@ -30,7 +30,7 @@ using namespace Vaango;
 
 ShearModulusModel::ShearModulusModel()
 {
-  d_shear = 0.0;
+  d_shearModulus = 0.0;
 }
 
 ShearModulusModel::~ShearModulusModel() = default;

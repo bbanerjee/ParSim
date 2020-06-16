@@ -67,10 +67,10 @@ public:
   std::map<std::string, double> getParameters() const override
   {
     std::map<std::string, double> params;
-    params["mu0"] = d_mu0;
+    params["mu_0"] = d_mu0;
     params["alpha"] = d_alpha;
     params["alphap"] = d_alphap;
-    params["slopemupovermu0"] = d_slope_mu_p_over_mu0;
+    params["slope_mu_p_over_mu0"] = d_slope_mu_p_over_mu0;
     return params;
   }
 

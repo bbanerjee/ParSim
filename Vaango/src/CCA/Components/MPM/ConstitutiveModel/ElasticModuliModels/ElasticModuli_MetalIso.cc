@@ -25,9 +25,14 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_MetalIso.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/AirEOS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/WaterEOS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/BorjaEOS.h>
+#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/GraniteEOS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <Core/Exceptions/InternalError.h>
+#include <Core/Exceptions/ProblemSetupException.h>
 
 #include <iostream>
 
@@ -36,7 +41,20 @@ using namespace Vaango;
 ElasticModuli_MetalIso::ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps)
 {
   d_eos = Uintah::MPMEquationOfStateFactory::create(ps);
-  d_shear = Vaango::ShearModulusModelFactory::create(ps);
+
+  // Don't allow unphysical EOS models for metals
+  auto eos_air = dynamic_cast<Vaango::AirEOS*>(d_eos); 
+  auto eos_water = dynamic_cast<Vaango::WaterEOS*>(d_eos); 
+  auto eos_granite = dynamic_cast<Vaango::GraniteEOS*>(d_eos); 
+  auto eos_borja = dynamic_cast<Vaango::BorjaEOS*>(d_eos); 
+  if (eos_air || eos_water || eos_borja || eos_granite) {
+    std::ostringstream err;
+    err << "**ERROR** Fluid/soil/rock equations of state cannot be used for metal elasticity."
+           " Please correct the input file.\n";
+    throw Uintah::ProblemSetupException(err.str(), __FILE__, __LINE__);
+  }
+
+  d_shear = Vaango::ShearModulusModelFactory::create(ps, d_eos);
 
   d_Km = d_eos->computeInitialBulkModulus();
   d_Gm = d_shear->computeInitialShearModulus();
@@ -47,6 +65,15 @@ ElasticModuli_MetalIso::ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps)
            " has not been initialized correctly. Please contact the developers.\n";
     throw Uintah::InternalError(err.str(), __FILE__, __LINE__);
   }
+
+  double nu = (3.0 * d_Km - 2.0 * d_Gm)/(6.0 * d_Km + 2.0 * d_Gm);
+  if (nu < -1.0 || nu > 0.5) {
+    std::ostringstream err;
+    err << "**ERROR** The Poisson's ratio (" << nu << ") of the material is unphysical."
+           " K = " << d_Km << " and G = " << d_Gm << " Please correct input data.\n";
+    throw Uintah::ProblemSetupException(err.str(), __FILE__, __LINE__);
+  }
+
 }
 
 // Construct a copy of a elasticity model.

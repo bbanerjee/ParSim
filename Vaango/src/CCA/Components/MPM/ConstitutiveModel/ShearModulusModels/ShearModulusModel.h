@@ -54,7 +54,7 @@ class ShearModulusModel
 {
 
 protected:
-  double d_shear;       // the initial shear modulus
+  double d_shearModulus;       // the initial shear modulus
   Uintah::MPMEquationOfState* d_eos; // the associated Pressure EOS model
 
 public:

@@ -7,6 +7,7 @@
 #include <Core/Math/Matrix3.h>
 
 #include <Core/Exceptions/ProblemSetupException.h>
+#include <Core/Exceptions/InvalidValue.h>
 #include <Core/Malloc/Allocator.h>
 
 #include <iostream>
@@ -104,15 +105,6 @@ TEST(ElasticModuliMetalIsoTest, constantBulkConstantShear)
   std::vector<double> densities = { 100, 1000, 10000 }; // not consistent with pressures
   std::vector<double> temperatures = { 100, 500, 1000 };
 
-  //std::map<double, std::pair<double, double>> I1_KG;
-  //I1_KG[-0.01] = std::make_pair(116348059.2816119, 173990384.2029271);
-  //I1_KG[-1] = std::make_pair(116407266.5941095, 174078654.5535643);
-  //I1_KG[-1e+06] = std::make_pair(201335456.1999204, 300413920.3418134);
-  //I1_KG[-1e+08] = std::make_pair(1046521964.819405, 1527736301.547844);
-  //I1_KG[-1e+11] = std::make_pair(74552697327.11647, 75257479257.76637);
-  //ASSERT_NEAR(I1_KG[state.I1_eff].first, moduli.bulkModulus, 1.0e-3);
-  //ASSERT_NEAR(I1_KG[state.I1_eff].second, moduli.shearModulus, 1.0e-3);
-
   for (double p : pressures) {
     for (double rho : densities) {
       for (double T : temperatures) {
@@ -149,8 +141,8 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearBorja)
 
   // For shear model
   auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "shear_modulus_model", BAD_CAST "");
-  xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "constant_shear");
-  xmlNewChild(shearNode, nullptr, BAD_CAST "shear_modulus", BAD_CAST "0.7e6");
+  xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "borja_shear");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "mu0", BAD_CAST "5.4e6");
 
   // Print the document to stdout
   //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
@@ -163,14 +155,65 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearBorja)
     exit(-1);
   }
 
-  // Constructors
+  // Constructors (check wrong init)
+  EXPECT_THROW({
+    try {
+      ElasticModuli_MetalIso model(ps);
+    } catch (Uintah::ProblemSetupException e) {
+      // std::cout << e.message() << std::endl;
+      throw;
+    }
+  }, Uintah::ProblemSetupException);
+}
+
+TEST(ElasticModuliMetalIsoTest, constantBulkShearMTS)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "elastic_moduli_model");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "metal_iso");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // For EOS model
+  auto eosNode = xmlNewChild(rootNode, nullptr, BAD_CAST "equation_of_state", BAD_CAST "");
+  xmlNewProp(eosNode, BAD_CAST "type", BAD_CAST "default_hypo");
+  xmlNewChild(eosNode, nullptr, BAD_CAST "bulk_modulus", BAD_CAST "1.0e6");
+
+  // For shear model
+  auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "shear_modulus_model", BAD_CAST "");
+  xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "mts_shear");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "mu_0", BAD_CAST "28.0e9");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "D", BAD_CAST "4.5e9");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "T_0", BAD_CAST "294.0");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Check whether the combination fails
+  try {
+    ElasticModuli_MetalIso model(ps);
+  } catch (Uintah::ProblemSetupException e) {
+    std::cout << e.message() << "\n";
+  }
+
   ElasticModuli_MetalIso model(ps);
-  ElasticModuli_MetalIso model_copy(model);
 
   // Get initial parameters
   std::map<std::string, double> test_params;
+  test_params["mu_0"] =  28.0e9;
+  test_params["D"] =  4.5e9;
+  test_params["T_0"] =  294;
   test_params["bulk_modulus"] =  1.0e6;
-  test_params["shear_modulus"] =  0.7e6;
 
   std::map<std::string, double> params = model.getParameters();
   for (const auto& param : params) {
@@ -179,28 +222,32 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearBorja)
   }
 
   // Get the initial moduli
-  ElasticModuli moduli = model_copy.getInitialElasticModuli();
+  ElasticModuli moduli = model.getInitialElasticModuli();
   //std::cout << std::setprecision(16) 
   //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
   //          << std::endl;
 
-  ASSERT_NEAR(moduli.bulkModulus, 1.0e6, 1.0e-6);
-  ASSERT_NEAR(moduli.shearModulus, 0.7e6, 1.0e-6);
+  ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1000000);
+  ASSERT_DOUBLE_EQ(moduli.shearModulus, 28000000000);
 
   // Get the moduli upper bound at zero pressure
   moduli = model.getElasticModuliUpperBound();
   //std::cout << std::setprecision(16)
   //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
   //          << std::endl;
-  ASSERT_NEAR(moduli.bulkModulus, 1.0e6, 1.0e-6);
-  ASSERT_NEAR(moduli.shearModulus, 0.7e6, 1.0e-6);
+  ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1000000);
+  ASSERT_DOUBLE_EQ(moduli.shearModulus, 28000000000);
 
+  try {
   moduli = model.getElasticModuliLowerBound();
+  } catch (Uintah::InvalidValue e) {
+    std::cout << e.message() << "\n";
+  }
   //std::cout << std::setprecision(16)
   //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
   //          << std::endl;
-  ASSERT_NEAR(moduli.bulkModulus, 1.0e6, 1.0e-6);
-  ASSERT_NEAR(moduli.shearModulus, 0.7e6, 1.0e-6);
+  ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1000000);
+  ASSERT_DOUBLE_EQ(moduli.shearModulus, 1.0e-6);
 
   // Create a model state
   ModelStateBase state;
@@ -211,15 +258,45 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearBorja)
   std::vector<double> pressures = { -1000, 0, 1000 };
   std::vector<double> densities = { 100, 1000, 10000 }; // not consistent with pressures
   std::vector<double> temperatures = { 100, 500, 1000 };
+  std::vector<std::tuple<double, double, double>> keys;
+  for (double p : pressures) {
+    for (double rho : densities) {
+      for (double T : temperatures) {
+        keys.push_back(std::make_tuple(p, rho, T));
+      }
+    }
+  }
+  std::map<std::tuple<double, double, double>, std::pair<double, double>> p_KG;
+  auto ii = 0u;
+  p_KG[keys[ii++]] = std::make_pair(1000000, 27748825708.72905);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 22377699014.68184);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 14833786051.01098);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 27748825708.72905);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 22377699014.68184);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 14833786051.01098);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 27748825708.72905);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 22377699014.68184);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 14833786051.01098);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 27748825708.72905);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 22377699014.68184);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 14833786051.01098);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 27748825708.72905);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 22377699014.68184);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 14833786051.01098);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 27748825708.72905);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 22377699014.68184);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 14833786051.01098);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 27748825708.72905);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 22377699014.68184);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 14833786051.01098);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 27748825708.72905);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 22377699014.68184);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 14833786051.01098);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 27748825708.72905);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 22377699014.68184);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 14833786051.01098);
 
-  //std::map<double, std::pair<double, double>> I1_KG;
-  //I1_KG[-0.01] = std::make_pair(116348059.2816119, 173990384.2029271);
-  //I1_KG[-1] = std::make_pair(116407266.5941095, 174078654.5535643);
-  //I1_KG[-1e+06] = std::make_pair(201335456.1999204, 300413920.3418134);
-  //I1_KG[-1e+08] = std::make_pair(1046521964.819405, 1527736301.547844);
-  //I1_KG[-1e+11] = std::make_pair(74552697327.11647, 75257479257.76637);
-  //ASSERT_NEAR(I1_KG[state.I1_eff].first, moduli.bulkModulus, 1.0e-3);
-  //ASSERT_NEAR(I1_KG[state.I1_eff].second, moduli.shearModulus, 1.0e-3);
+  //p_KG[-1e+11] = std::make_pair(74552697327.11647, 75257479257.76637);
 
   for (double p : pressures) {
     for (double rho : densities) {
@@ -233,9 +310,628 @@ TEST(ElasticModuliMetalIsoTest, constantBulkShearBorja)
         //          << " rho = " << state.density 
         //          << " T = " << state.temperature << " K = " << moduli.bulkModulus
         //          << " G = " << moduli.shearModulus << "\n";
-        ASSERT_NEAR(moduli.bulkModulus, 1.0e6, 1.0e-6);
-        ASSERT_NEAR(moduli.shearModulus, 0.7e6, 1.0e-6);
+        ASSERT_DOUBLE_EQ(p_KG[std::make_tuple(p, rho, T)].first, moduli.bulkModulus);
+        ASSERT_DOUBLE_EQ(p_KG[std::make_tuple(p, rho, T)].second, moduli.shearModulus);
       }
     }
   }
 }
+
+TEST(ElasticModuliMetalIsoTest, constantBulkShearNadal)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "elastic_moduli_model");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "metal_iso");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // For EOS model
+  auto eosNode = xmlNewChild(rootNode, nullptr, BAD_CAST "equation_of_state", BAD_CAST "");
+  xmlNewProp(eosNode, BAD_CAST "type", BAD_CAST "default_hypo");
+  xmlNewChild(eosNode, nullptr, BAD_CAST "bulk_modulus", BAD_CAST "1.0e6");
+
+  // For shear model
+  auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "shear_modulus_model", BAD_CAST "");
+  xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "np_shear");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "mu_0", BAD_CAST "26.5e9");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "zeta", BAD_CAST "0.04");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "slope_mu_p_over_mu0", BAD_CAST "65.0e-12");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "C", BAD_CAST "0.047");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "m", BAD_CAST "26.98");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Check whether the combination fails
+  try {
+    ElasticModuli_MetalIso model(ps);
+  } catch (Uintah::ProblemSetupException e) {
+    std::cout << e.message() << "\n";
+  }
+
+  ElasticModuli_MetalIso model(ps);
+
+  // Get initial parameters
+  std::map<std::string, double> test_params;
+  test_params["mu_0"] =  26.5e9;
+  test_params["zeta"] =  0.04;
+  test_params["slope_mu_p_over_mu0"] =  65.0e-12;
+  test_params["C"] =  0.047;
+  test_params["m"] =  26.98;
+  test_params["bulk_modulus"] =  1.0e6;
+
+  std::map<std::string, double> params = model.getParameters();
+  for (const auto& param : params) {
+    //std::cout << "params = " << param.first  << " : " << param.second << "\n";
+    ASSERT_DOUBLE_EQ(test_params[param.first], param.second);
+  }
+
+  // Get the initial moduli
+  ElasticModuli moduli = model.getInitialElasticModuli();
+  //std::cout << std::setprecision(16) 
+  //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
+  //          << std::endl;
+  ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1000000);
+  ASSERT_DOUBLE_EQ(moduli.shearModulus, 26500000000);
+
+  // Get the moduli upper bound at zero pressure
+  moduli = model.getElasticModuliUpperBound();
+  //std::cout << std::setprecision(16)
+  //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
+  //          << std::endl;
+  ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1000000);
+  ASSERT_DOUBLE_EQ(moduli.shearModulus, 26506185736.60703);
+
+  try {
+  moduli = model.getElasticModuliLowerBound();
+  } catch (Uintah::InvalidValue e) {
+    std::cout << e.message() << "\n";
+  }
+  //std::cout << std::setprecision(16)
+  //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
+  //          << std::endl;
+  ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1000000);
+  ASSERT_DOUBLE_EQ(moduli.shearModulus, 339800594.3758016);
+
+  // Create a model state
+  ModelStateBase state;
+  state.initialDensity = 1000.0;
+  state.meltingTemp = 500.0;
+
+  // Set up pressures, densities, temperatures
+  std::vector<double> pressures = { -1000, 0, 1000 };
+  std::vector<double> densities = { 100, 1000, 10000 }; // not consistent with pressures
+  std::vector<double> temperatures = { 100, 500, 1000 };
+  std::vector<std::tuple<double, double, double>> keys;
+  for (double p : pressures) {
+    for (double rho : densities) {
+      for (double T : temperatures) {
+        keys.push_back(std::make_tuple(p, rho, T));
+      }
+    }
+  }
+  std::map<std::tuple<double, double, double>, std::pair<double, double>> p_KG;
+  auto ii = 0u;
+  p_KG[keys[ii++]] = std::make_pair(1000000, 21265571354.59132);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 163920965.387606);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 1e-08);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 21855685239.16529);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 1639209653.87606);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 1e-08);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 27756839254.62606);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 16392096538.7606);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 1e-08);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 21265568385.78031);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 163920965.387606);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 1e-08);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 21855683861.16529);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 1639209653.87606);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 1e-08);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 27756838615.01512);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 16392096538.7606);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 1e-08);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 21265565416.96931);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 163920965.387606);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 1e-08);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 21855682483.16529);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 1639209653.87606);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 1e-08);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 27756837975.40418);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 16392096538.7606);
+  p_KG[keys[ii++]] = std::make_pair(1000000, 1e-08);
+
+  for (double p : pressures) {
+    for (double rho : densities) {
+      for (double T : temperatures) {
+        state.pressure = p;
+        state.density = rho;
+        state.temperature = T;
+        moduli = model.getCurrentElasticModuli(&state);
+        //std::cout << std::setprecision(16)
+        //          << " p = " << state.pressure
+        //          << " rho = " << state.density 
+        //          << " T = " << state.temperature << " K = " << moduli.bulkModulus
+        //          << " G = " << moduli.shearModulus << "\n";
+        ASSERT_DOUBLE_EQ(p_KG[std::make_tuple(p, rho, T)].first, moduli.bulkModulus);
+        ASSERT_DOUBLE_EQ(p_KG[std::make_tuple(p, rho, T)].second, moduli.shearModulus);
+      }
+    }
+  }
+}
+
+TEST(ElasticModuliMetalIsoTest, constantBulkShearPTW)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "elastic_moduli_model");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "metal_iso");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // For EOS model
+  auto eosNode = xmlNewChild(rootNode, nullptr, BAD_CAST "equation_of_state", BAD_CAST "");
+  xmlNewProp(eosNode, BAD_CAST "type", BAD_CAST "default_hypo");
+  xmlNewChild(eosNode, nullptr, BAD_CAST "bulk_modulus", BAD_CAST "1.0e6");
+
+  // For shear model
+  auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "shear_modulus_model", BAD_CAST "");
+  xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "ptw_shear");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "mu_0", BAD_CAST "895e8");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "alpha", BAD_CAST "0.23");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "alphap", BAD_CAST "0.66");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "slope_mu_p_over_mu0", BAD_CAST "26.0e-12");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Check whether the combination fails
+  try {
+    ElasticModuli_MetalIso model(ps);
+  } catch (Uintah::ProblemSetupException e) {
+    std::cout << e.message() << "\n";
+  }
+
+  ElasticModuli_MetalIso model(ps);
+
+  // Get initial parameters
+  std::map<std::string, double> test_params;
+  test_params["mu_0"] =  895e8;
+  test_params["alpha"] =  0.23;
+  test_params["alphap"] =  0.66;
+  test_params["slope_mu_p_over_mu0"] =  26.0e-12;
+  test_params["bulk_modulus"] =  1.0e6;
+
+  std::map<std::string, double> params = model.getParameters();
+  for (const auto& param : params) {
+    //std::cout << "params = " << param.first  << " : " << param.second << "\n";
+    ASSERT_DOUBLE_EQ(test_params[param.first], param.second);
+  }
+
+  // Get the initial moduli
+  ElasticModuli moduli = model.getInitialElasticModuli();
+  //std::cout << std::setprecision(16) 
+  //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
+  //          << std::endl;
+  ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1000000);
+  ASSERT_DOUBLE_EQ(moduli.shearModulus, 89500000000);
+
+  // Get the moduli upper bound at zero pressure
+  moduli = model.getElasticModuliUpperBound();
+  //std::cout << std::setprecision(16)
+  //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
+  //          << std::endl;
+  ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1000000);
+  ASSERT_DOUBLE_EQ(moduli.shearModulus, 89499498662.45692);
+
+  try {
+  moduli = model.getElasticModuliLowerBound();
+  } catch (Uintah::InvalidValue e) {
+    std::cout << e.message() << "\n";
+  }
+  //std::cout << std::setprecision(16)
+  //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
+  //          << std::endl;
+  ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1000000);
+  ASSERT_DOUBLE_EQ(moduli.shearModulus, 30435906999.96326);
+
+  // Create a model state
+  ModelStateBase state;
+  state.initialDensity = 2300.0;
+  state.meltingTemp = 1700.0;
+
+  // Set up pressures, densities, temperatures
+  std::vector<double> pressures = { -1000, 0, 1000 };
+  std::vector<double> densities = { 100, 1000, 10000 }; // not consistent with pressures
+  std::vector<double> temperatures = { 100, 500, 1000 };
+  std::vector<std::tuple<double, double, double>> keys;
+  for (double p : pressures) {
+    for (double rho : densities) {
+      for (double T : temperatures) {
+        keys.push_back(std::make_tuple(p, rho, T));
+      }
+    }
+  }
+  std::map<std::tuple<double, double, double>, std::pair<double, double>> p_KG;
+  auto ii = 0u;
+   p_KG[keys[ii++]] = std::make_pair(1000000, 86025300478.40388);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 72126475921.30559);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 54752945224.93272);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 86025297070.04886);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 72126473063.62726);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 54752943055.60025);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 86025295488.03056);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 72126471737.21045);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 54752942048.68531);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 86025294117.64706);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 72126470588.23529);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 54752941176.47059);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 86025294117.64706);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 72126470588.23529);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 54752941176.47059);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 86025294117.64706);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 72126470588.23529);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 54752941176.47059);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 86025287756.89023);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 72126465255.16501);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 54752937128.00847);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 86025291165.24527);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 72126468112.84334);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 54752939297.34093);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 86025292747.26353);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 72126469439.26013);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 54752940304.25587);
+
+  for (double p : pressures) {
+    for (double rho : densities) {
+      for (double T : temperatures) {
+        state.pressure = p;
+        state.density = rho;
+        state.temperature = T;
+        moduli = model.getCurrentElasticModuli(&state);
+        //std::cout << std::setprecision(16)
+        //          << " p = " << state.pressure
+        //          << " rho = " << state.density 
+        //          << " T = " << state.temperature << " K = " << moduli.bulkModulus
+        //          << " G = " << moduli.shearModulus << "\n";
+        ASSERT_DOUBLE_EQ(p_KG[std::make_tuple(p, rho, T)].first, moduli.bulkModulus);
+        ASSERT_DOUBLE_EQ(p_KG[std::make_tuple(p, rho, T)].second, moduli.shearModulus);
+      }
+    }
+  }
+}
+
+TEST(ElasticModuliMetalIsoTest, constantBulkShearSCG)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "elastic_moduli_model");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "metal_iso");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // For EOS model
+  auto eosNode = xmlNewChild(rootNode, nullptr, BAD_CAST "equation_of_state", BAD_CAST "");
+  xmlNewProp(eosNode, BAD_CAST "type", BAD_CAST "default_hypo");
+  xmlNewChild(eosNode, nullptr, BAD_CAST "bulk_modulus", BAD_CAST "1.0e6");
+
+  // For shear model
+  auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "shear_modulus_model", BAD_CAST "");
+  xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "scg_shear");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "mu_0", BAD_CAST "27.6e9");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "A", BAD_CAST "65.0e-12");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "B", BAD_CAST "0.62e-3");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Check whether the combination fails
+  try {
+    ElasticModuli_MetalIso model(ps);
+  } catch (Uintah::ProblemSetupException e) {
+    std::cout << e.message() << "\n";
+  }
+
+  ElasticModuli_MetalIso model(ps);
+
+  // Get initial parameters
+  std::map<std::string, double> test_params;
+  test_params["mu_0"] =  27.6e9;
+  test_params["A"] =  65.0e-12;
+  test_params["B"] =  0.62e-3;
+  test_params["bulk_modulus"] =  1.0e6;
+
+  std::map<std::string, double> params = model.getParameters();
+  for (const auto& param : params) {
+    //std::cout << "params = " << param.first  << " : " << param.second << "\n";
+    ASSERT_DOUBLE_EQ(test_params[param.first], param.second);
+  }
+
+  // Get the initial moduli
+  ElasticModuli moduli = model.getInitialElasticModuli();
+  //std::cout << std::setprecision(16) 
+  //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
+  //          << std::endl;
+  ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1000000);
+  ASSERT_DOUBLE_EQ(moduli.shearModulus, 27600000000);
+
+  // Get the moduli upper bound at zero pressure
+  moduli = model.getElasticModuliUpperBound();
+  //std::cout << std::setprecision(16)
+  //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
+  //          << std::endl;
+  ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1000000);
+  ASSERT_DOUBLE_EQ(moduli.shearModulus, 32733042374.41661);
+
+  try {
+  moduli = model.getElasticModuliLowerBound();
+  } catch (Uintah::InvalidValue e) {
+    std::cout << e.message() << "\n";
+  }
+  //std::cout << std::setprecision(16)
+  //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
+  //          << std::endl;
+  ASSERT_DOUBLE_EQ(moduli.bulkModulus, 1000000);
+  ASSERT_DOUBLE_EQ(moduli.shearModulus, 1.0e-6);
+
+  // Create a model state
+  ModelStateBase state;
+  state.initialDensity = 1500.0;
+  state.meltingTemp = 700.0;
+
+  // Set up pressures, densities, temperatures
+  std::vector<double> pressures = { -1000, 0, 1000 };
+  std::vector<double> densities = { 100, 1000, 10000 }; // not consistent with pressures
+  std::vector<double> temperatures = { 100, 500, 1000 };
+  std::vector<std::tuple<double, double, double>> keys;
+  for (double p : pressures) {
+    for (double rho : densities) {
+      for (double T : temperatures) {
+        keys.push_back(std::make_tuple(p, rho, T));
+      }
+    }
+  }
+  std::map<std::tuple<double, double, double>, std::pair<double, double>> p_KG;
+  auto ii = 0u;
+   p_KG[keys[ii++]] = std::make_pair(1000000, 31022404424.38447);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 24177604424.38446);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 15621604424.38446);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 31022402053.61735);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 24177602053.61735);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 15621602053.61735);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 31022400953.20474);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 24177600953.20474);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 15621600953.20474);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 31022400000);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 24177600000);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 15621600000);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 31022400000);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 24177600000);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 15621600000);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 31022400000);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 24177600000);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 15621600000);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 31022395575.61554);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 24177595575.61554);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 15621595575.61554);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 31022397946.38265);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 24177597946.38265);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 15621597946.38265);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 31022399046.79527);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 24177599046.79526);
+   p_KG[keys[ii++]] = std::make_pair(1000000, 15621599046.79527);
+
+  for (double p : pressures) {
+    for (double rho : densities) {
+      for (double T : temperatures) {
+        state.pressure = p;
+        state.density = rho;
+        state.temperature = T;
+        moduli = model.getCurrentElasticModuli(&state);
+        //std::cout << std::setprecision(16)
+        //          << " p = " << state.pressure
+        //          << " rho = " << state.density 
+        //          << " T = " << state.temperature << " K = " << moduli.bulkModulus
+        //          << " G = " << moduli.shearModulus << "\n";
+        ASSERT_DOUBLE_EQ(p_KG[std::make_tuple(p, rho, T)].first, moduli.bulkModulus);
+        ASSERT_DOUBLE_EQ(p_KG[std::make_tuple(p, rho, T)].second, moduli.shearModulus);
+      }
+    }
+  }
+}
+
+TEST(ElasticModuliMetalIsoTest, bulkAirShearConstant)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "elastic_moduli_model");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "metal_iso");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // For Air EOS model
+  auto eosNode = xmlNewChild(rootNode, nullptr, BAD_CAST "equation_of_state", BAD_CAST "");
+  xmlNewProp(eosNode, BAD_CAST "type", BAD_CAST "air");
+
+  // For shear model
+  auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "shear_modulus_model", BAD_CAST "");
+  xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "constant_shear");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "shear_modulus", BAD_CAST "5.4e6");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Constructors (check wrong init)
+  EXPECT_THROW({
+    try {
+      ElasticModuli_MetalIso model(ps);
+    } catch (Uintah::ProblemSetupException e) {
+      //std::cout << e.message() << std::endl;
+      throw;
+    }
+  }, Uintah::ProblemSetupException);
+}
+
+TEST(ElasticModuliMetalIsoTest, bulkWaterShearConstant)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "elastic_moduli_model");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "metal_iso");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // For Air EOS model
+  auto eosNode = xmlNewChild(rootNode, nullptr, BAD_CAST "equation_of_state", BAD_CAST "");
+  xmlNewProp(eosNode, BAD_CAST "type", BAD_CAST "water");
+
+  // For shear model
+  auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "shear_modulus_model", BAD_CAST "");
+  xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "constant_shear");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "shear_modulus", BAD_CAST "5.4e6");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Constructors (check wrong init)
+  EXPECT_THROW({
+    try {
+      ElasticModuli_MetalIso model(ps);
+    } catch (Uintah::ProblemSetupException e) {
+      //std::cout << e.message() << std::endl;
+      throw;
+    }
+  }, Uintah::ProblemSetupException);
+}
+
+TEST(ElasticModuliMetalIsoTest, bulkBorjaShearConstant)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "elastic_moduli_model");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "metal_iso");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // For Air EOS model
+  auto eosNode = xmlNewChild(rootNode, nullptr, BAD_CAST "equation_of_state", BAD_CAST "");
+  xmlNewProp(eosNode, BAD_CAST "type", BAD_CAST "borja_pressure");
+  xmlNewChild(eosNode, nullptr, BAD_CAST "p0", BAD_CAST "-9.0");
+  xmlNewChild(eosNode, nullptr, BAD_CAST "alpha", BAD_CAST "60.0");
+  xmlNewChild(eosNode, nullptr, BAD_CAST "kappatilde", BAD_CAST "0.018");
+  xmlNewChild(eosNode, nullptr, BAD_CAST "epse_v0", BAD_CAST "0.0");
+
+  // For shear model
+  auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "shear_modulus_model", BAD_CAST "");
+  xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "constant_shear");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "shear_modulus", BAD_CAST "5.4e6");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Constructors (check wrong init)
+  EXPECT_THROW({
+    try {
+      ElasticModuli_MetalIso model(ps);
+    } catch (Uintah::ProblemSetupException e) {
+      //std::cout << e.message() << std::endl;
+      throw;
+    }
+  }, Uintah::ProblemSetupException);
+}
+
+TEST(ElasticModuliMetalIsoTest, graniteBulkConstantShear)
+{
+  // Create a new document
+  xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+
+  // Create root node
+  xmlNodePtr rootNode = xmlNewNode(nullptr, BAD_CAST "elastic_moduli_model");
+  xmlNewProp(rootNode, BAD_CAST "type", BAD_CAST "metal_iso");
+  xmlDocSetRootElement(doc, rootNode);
+
+  // For EOS model
+  auto eosNode = xmlNewChild(rootNode, nullptr, BAD_CAST "equation_of_state", BAD_CAST "");
+  xmlNewProp(eosNode, BAD_CAST "type", BAD_CAST "granite");
+
+  // For shear model
+  auto shearNode = xmlNewChild(rootNode, nullptr, BAD_CAST "shear_modulus_model", BAD_CAST "");
+  xmlNewProp(shearNode, BAD_CAST "type", BAD_CAST "constant_shear");
+  xmlNewChild(shearNode, nullptr, BAD_CAST "shear_modulus", BAD_CAST "28.0e9");
+
+  // Print the document to stdout
+  //xmlSaveFormatFileEnc("-", doc, "ISO-8859-1", 1);
+
+  // Create a ProblemSpec
+  ProblemSpecP ps = scinew ProblemSpec(xmlDocGetRootElement(doc), false);
+  if (!ps) {
+    std::cout << "**Error** Could not create ProblemSpec." << std::endl;
+    std::cout << __FILE__ << ":" << __LINE__ << std::endl;
+    exit(-1);
+  }
+
+  // Check whether the combination fails
+  EXPECT_THROW({
+    try {
+      ElasticModuli_MetalIso model(ps);
+    } catch (Uintah::ProblemSetupException e) {
+      //std::cout << e.message() << "\n";
+      throw;
+    }
+  }, Uintah::ProblemSetupException);
+}
+

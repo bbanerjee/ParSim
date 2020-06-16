@@ -44,14 +44,12 @@ using namespace Vaango;
 ShearModulusModel*
 ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
 {
-  MPMEquationOfState* eos = nullptr;
-
   ProblemSpecP child = ps->findBlock("shear_modulus_model");
   if (!child) {
     std::cerr << "**WARNING** Attempting to create default (constant shear modulus) "
             "model"
          << endl;
-    return (scinew ShearModulus_Constant(ps, eos));
+    return (scinew ShearModulus_Constant(ps, nullptr));
   }
   string mat_type;
   if (!child->getAttribute("type", mat_type))
@@ -60,19 +58,20 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps)
       __LINE__);
 
   if (mat_type == "constant_shear")
-    return (scinew ShearModulus_Constant(child, eos));
+    return (scinew ShearModulus_Constant(child, nullptr));
   else if (mat_type == "mts_shear")
     return (scinew ShearModulus_MTS(child));
   else if (mat_type == "np_shear")
-    return (scinew ShearModulus_Nadal(child, eos));
+    return (scinew ShearModulus_Nadal(child, nullptr));
   else if (mat_type == "ptw_shear")
     return (scinew ShearModulus_PTW(child));
   else if (mat_type == "scg_shear")
     return (scinew ShearModulus_SCG(child));
   else {
-    std::cerr << "**WARNING** Creating default (constant shear modulus) model"
-         << endl;
-    return (scinew ShearModulus_Constant(child, eos));
+    std::cerr << "**WARNING** Shear modulus model type [" << mat_type << "] not found.\n"
+              << " Creating default (constant shear modulus) model."
+              << " No EOS is required.\n";
+    return (scinew ShearModulus_Constant(child, nullptr));
   }
 }
 ShearModulusModel*
@@ -104,8 +103,9 @@ ShearModulusModelFactory::create(Uintah::ProblemSpecP& ps, MPMEquationOfState* e
   else if (mat_type == "scg_shear")
     return (scinew ShearModulus_SCG(child));
   else {
-    std::cerr << "**WARNING** Creating default (constant shear modulus) model"
-         << endl;
+    std::cerr << "**WARNING** Shear modulus model type [" << mat_type << "] not found.\n"
+              << " Creating default (constant shear modulus) model."
+              << " EOS is required.\n";
     return (scinew ShearModulus_Constant(child, eos));
   }
 }

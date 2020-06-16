@@ -92,5 +92,6 @@ ShearModulus_SCG::evalShearModulus(double temperature,
   double P = -pressure;
   double mu =
     d_mu0 * (1.0 + d_A * P / eta - d_B * (temperature - 300.0));
+  mu = (mu > 0.0) ? mu : 1.0e-6;
   return mu;
 }

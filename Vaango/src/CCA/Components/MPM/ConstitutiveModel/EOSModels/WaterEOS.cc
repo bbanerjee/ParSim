@@ -62,7 +62,7 @@ WaterEOS::~WaterEOS() = default;
 void
 WaterEOS::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
-  ProblemSpecP eos_ps = ps->appendChild("pressure_model");
+  ProblemSpecP eos_ps = ps->appendChild("equation_of_state");
   eos_ps->setAttribute("type", "water");
 }
 

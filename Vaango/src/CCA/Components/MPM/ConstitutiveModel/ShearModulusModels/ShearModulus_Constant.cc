@@ -37,7 +37,7 @@ ShearModulus_Constant::ShearModulus_Constant(Uintah::ProblemSpecP& ps,
 {
   d_eos = eos;
 
-  ps->require("shear_modulus", d_shear);
+  ps->require("shear_modulus", d_shearModulus);
 }
 
 // Construct a copy of a shear modulus model.
@@ -45,7 +45,7 @@ ShearModulus_Constant::ShearModulus_Constant(const ShearModulus_Constant* smm)
 {
   d_eos = smm->d_eos;
 
-  d_shear = smm->d_shear;
+  d_shearModulus = smm->d_shearModulus;
 }
 
 // Destructor of shear modulus model.
@@ -57,25 +57,25 @@ ShearModulus_Constant::outputProblemSpec(Uintah::ProblemSpecP& ps)
   ProblemSpecP shear_ps = ps->appendChild("shear_modulus_model");
   shear_ps->setAttribute("type", "constant_shear");
 
-  shear_ps->appendElement("shear_modulus", d_shear);
+  shear_ps->appendElement("shear_modulus", d_shearModulus);
 }
 
 // Compute the shear modulus
 double
 ShearModulus_Constant::computeInitialShearModulus()
 {
-  return d_shear;
+  return d_shearModulus;
 }
 
 double
 ShearModulus_Constant::computeShearModulus(const ModelStateBase* /*state*/)
 {
-  return d_shear;
+  return d_shearModulus;
 }
 
 double
 ShearModulus_Constant::computeShearModulus(
   const ModelStateBase* /*state*/) const
 {
-  return d_shear;
+  return d_shearModulus;
 }
