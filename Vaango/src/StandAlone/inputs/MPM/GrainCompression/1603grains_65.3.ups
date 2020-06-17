@@ -15,6 +15,7 @@
        <delt_min>0.00006</delt_min>
        <delt_max>0.006</delt_max>
        <timestep_multiplier>.8</timestep_multiplier>
+       <max_timesteps> 20 </max_timesteps>
    </Time>
 
     <MPM>
@@ -29,7 +30,8 @@
         <save label="StrainEnergy"/>
        <save label = "g.mass" material = "15"/>
        <save label = "g.stressFS" material = "15"/>
-       <checkpoint cycle = "2" interval = "0.25"/>
+       <!-- <checkpoint cycle = "2" interval = "0.25"/> -->
+       <checkpoint cycle = "2" timestepInterval = "17"/>
     </DataArchiver>
 
     <PhysicalConstants>

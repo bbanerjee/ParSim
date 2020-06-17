@@ -50,7 +50,7 @@ MPMEquationOfStateFactory::create(ProblemSpecP& ps)
   ProblemSpecP child = ps->findBlock("equation_of_state");
   if (!child) {
     proc0cout << "**WARNING** Creating default hyperelastic equation of state\n";
-    return scinew HyperElasticEOS(child);
+    return scinew HyperElasticEOS(ps);
   }
   string mat_type;
   if (!child->getAttribute("type", mat_type))
@@ -75,7 +75,7 @@ MPMEquationOfStateFactory::create(ProblemSpecP& ps)
     return scinew GraniteEOS(child);
   else {
     proc0cout << "**WARNING** Creating default hyperelastic equation of state\n";
-    return scinew HyperElasticEOS(child);
+    return scinew HyperElasticEOS(ps);
   }
 
   return nullptr;

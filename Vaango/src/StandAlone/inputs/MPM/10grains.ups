@@ -14,7 +14,8 @@
         <initTime>0.0</initTime>
         <delt_min>0.000014</delt_min>
         <delt_max>0.0014</delt_max>
-        <timestep_multiplier>0.8</timestep_multiplier>
+        <timestep_multiplier>0.1</timestep_multiplier>
+        <max_timesteps>20</max_timesteps>
    </Time>
 
    <DataArchiver>
@@ -26,9 +27,11 @@
        <save label = "p.x"/>
        <save label = "p.mass"/>
        <save label = "p.temperature"/>
+       <save label = "p.stress"/>
         <save label = "g.mass"/>
         <save label = "g.stressFS"/>
-       <checkpoint cycle = "2" interval = "0.02"/>
+       <!-- <checkpoint cycle = "2" interval = "0.02"/> -->
+       <checkpoint cycle = "2" timestepInterval = "17"/> 
    </DataArchiver>
 
     <MPM>
