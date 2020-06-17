@@ -33,7 +33,7 @@
        <time_integrator>explicit</time_integrator>
        <interpolator>gimp</interpolator>
        <erosion algorithm = "AllowNoTension"/>
-       <DoPressureStabilization>true</DoPressureStabilization>
+       <do_pressure_stabilization>true</do_pressure_stabilization>
     </MPM>
 
     <PhysicalConstants>

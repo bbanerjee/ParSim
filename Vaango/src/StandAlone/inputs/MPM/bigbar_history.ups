@@ -13,7 +13,7 @@
 
    <Time>
        <maxTime>1</maxTime>
-        <max_Timesteps>100</max_Timesteps>
+        <max_timesteps>100</max_timesteps>
        <initTime>0.0</initTime>
        <delt_min>0.00001</delt_min>
        <delt_max>0.001</delt_max>

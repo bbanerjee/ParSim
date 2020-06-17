@@ -15,7 +15,7 @@
      <delt_min>1.e-10</delt_min>
      <delt_max>1.e-6</delt_max>
      <timestep_multiplier>0.1</timestep_multiplier>
-     <!-- <max_Timesteps>300</max_Timesteps> -->
+     <!-- <max_timesteps>300</max_timesteps> -->
    </Time>
    <DataArchiver>
      <filebase>testConvertAdd.uda</filebase>

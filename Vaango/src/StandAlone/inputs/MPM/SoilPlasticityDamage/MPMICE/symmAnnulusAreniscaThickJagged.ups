@@ -16,7 +16,7 @@
        <delt_min>           1.0e-12     </delt_min>
        <delt_max>           1.0         </delt_max>
        <delt_init>          2.1e-8      </delt_init>
-       <max_Timesteps>      9999          </max_Timesteps>
+       <max_timesteps>      9999          </max_timesteps>
        <timestep_multiplier>0.1         </timestep_multiplier>
    </Time>    
 

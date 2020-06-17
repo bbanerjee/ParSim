@@ -34,7 +34,7 @@
        <with_color>      true      </with_color>
        <InsertParticles>true</InsertParticles>
        <InsertParticlesFile>insert.dat</InsertParticlesFile>
-       <DoExplicitHeatConduction>false</DoExplicitHeatConduction>
+       <do_explicit_heat_conduction>false</do_explicit_heat_conduction>
     </MPM>
 
     <PhysicalConstants>

@@ -14,7 +14,7 @@
        <delt_min>2.e-6</delt_min>
        <delt_max>2.e-3</delt_max>
        <timestep_multiplier>0.4</timestep_multiplier>
-       <max_Timesteps>4</max_Timesteps>
+       <max_timesteps>4</max_timesteps>
    </Time>
    <DataArchiver>
         <filebase>const_test_hypo.uda</filebase>

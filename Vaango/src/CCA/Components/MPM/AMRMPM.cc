@@ -212,10 +212,8 @@ void AMRMPM::problemSetup(const ProblemSpecP& prob_spec,
 
   //__________________________________
   //  Read in the AMR section
-  ProblemSpecP mpm_ps;
   ProblemSpecP amr_ps = prob_spec->findBlock("AMR");
   if (amr_ps){
-    mpm_ps = amr_ps->findBlock("MPM");
     flags->d_AMR=true;
   } else {
     string warn;
@@ -223,14 +221,14 @@ void AMRMPM::problemSetup(const ProblemSpecP& prob_spec,
     throw ProblemSetupException(warn, __FILE__, __LINE__);
   }
   
-  
+#if 0
+  ProblemSpecP mpm_ps = amr_ps->findBlock("MPM");
   if(!mpm_ps){
     string warn;
     warn ="\n INPUT FILE ERROR:\n <MPM>  block not found inside of <AMR> block \n";
     throw ProblemSetupException(warn, __FILE__, __LINE__);
   }
 
-#if 0
   ProblemSpecP refine_ps = mpm_ps->findBlock("Refine_Regions");
 
   if (refine_ps) {

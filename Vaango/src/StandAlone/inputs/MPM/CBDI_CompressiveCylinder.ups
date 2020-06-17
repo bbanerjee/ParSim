@@ -25,7 +25,7 @@
         <delt_min>0.01</delt_min>
         <delt_max>0.01</delt_max>
         <timestep_multiplier>0.3</timestep_multiplier>
-        <max_Timesteps>2000000</max_Timesteps>
+        <max_timesteps>2000000</max_timesteps>
     </Time>
     <MPM>
        <time_integrator>explicit</time_integrator>

@@ -14,7 +14,7 @@
       <delt_min> 1.0e-9 </delt_min>
       <delt_max> 0.01   </delt_max>
       <timestep_multiplier>0.3</timestep_multiplier>
-      <max_Timesteps>20</max_Timesteps>
+      <max_timesteps>20</max_timesteps>
   </Time>
 
   <DataArchiver>

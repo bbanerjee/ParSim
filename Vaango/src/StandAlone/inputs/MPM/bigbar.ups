@@ -13,7 +13,7 @@
 
    <Time>
        <maxTime>0.01</maxTime>
-        <max_Timesteps> 10 </max_Timesteps>
+        <max_timesteps> 10 </max_timesteps>
        <initTime>0.0</initTime>
        <delt_min>0.00001</delt_min>
        <delt_max>0.001</delt_max>
@@ -34,7 +34,7 @@
    <MPM>
        <time_integrator>explicit</time_integrator>
        <interpolator>gimp</interpolator>
-       <DoExplicitHeatConduction>true</DoExplicitHeatConduction>
+       <do_explicit_heat_conduction>true</do_explicit_heat_conduction>
    </MPM>
 
 

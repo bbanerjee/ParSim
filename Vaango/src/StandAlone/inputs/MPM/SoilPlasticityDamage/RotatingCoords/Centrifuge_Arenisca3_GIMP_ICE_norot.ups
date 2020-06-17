@@ -18,7 +18,7 @@
        <delt_min>           1.0e-12     </delt_min>
        <delt_max>           1.0         </delt_max>
        <delt_init>          2.0e-9      </delt_init>
-       <max_Timesteps>      99999         </max_Timesteps>
+       <max_timesteps>      99999         </max_timesteps>
        <timestep_multiplier>0.1         </timestep_multiplier>
    </Time>    
     <!--____________________________________________________________________-->
@@ -141,7 +141,7 @@
           <rotation_speed> 4.2 </rotation_speed>  <!-- 10g -->
           <body_reference_point> [0.0, 0.0, 0.00] </body_reference_point>
         </rotating_coordinate_system>
-        <DoPressureStabilization>true</DoPressureStabilization>
+        <do_pressure_stabilization>true</do_pressure_stabilization>
     </MPM>
 
     <!--____________________________________________________________________-->

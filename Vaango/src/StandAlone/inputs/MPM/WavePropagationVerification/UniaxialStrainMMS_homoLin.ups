@@ -14,7 +14,7 @@
     <delt_min>            1.0e-12     </delt_min>
     <delt_max>            1.0         </delt_max>
     <delt_init>           2.0e-9      </delt_init>
-    <max_Timesteps>       99999       </max_Timesteps>
+    <max_timesteps>       99999       </max_timesteps>
     <timestep_multiplier> 0.1         </timestep_multiplier>
   </Time>
 
@@ -31,7 +31,7 @@
     <deformation_gradient algorithm="taylor_series">
       <num_terms> 5 </num_terms>
     </deformation_gradient>
-    <RunMMSProblem>UniaxialStrainHomogeneousLinear</RunMMSProblem>
+    <run_MMS_problem>UniaxialStrainHomogeneousLinear</run_MMS_problem>
   </MPM>
 
   <DataArchiver>

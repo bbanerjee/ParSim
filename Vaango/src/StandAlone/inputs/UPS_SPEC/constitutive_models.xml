@@ -327,6 +327,8 @@
     </equation_of_state>
     <shear_modulus_model           spec="OPTIONAL NO_DATA"
                                      attribute1="type REQUIRED STRING 'borja_shear, constant_shear, mts_shear, np_shear, ptw_shear, scg_shear'" >
+      <shear_modulus               spec="REQUIRED DOUBLE" 
+                                     need_applies_to="type constant_shear"/>
       <mu_0                        spec="OPTIONAL DOUBLE" />
       <A                           spec="OPTIONAL DOUBLE" />
       <B                           spec="OPTIONAL DOUBLE" />

@@ -44,7 +44,7 @@
        <artificial_viscosity>true</artificial_viscosity>
        <artificial_viscosity_coeff1>0.3</artificial_viscosity_coeff1>
        <artificial_viscosity_coeff2>3.0</artificial_viscosity_coeff2>
-       <DoExplicitHeatConduction>false</DoExplicitHeatConduction>
+       <do_explicit_heat_conduction>false</do_explicit_heat_conduction>
        <erosion algorithm = "ZeroStress"/>
    </MPM>
 

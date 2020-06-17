@@ -22,7 +22,7 @@
        <delt_init>          1e-20    </delt_init>
        <timestep_multiplier>0.2       </timestep_multiplier>
        <max_delt_increase>  0.5      </max_delt_increase>
-       <max_Timesteps>       100       </max_Timesteps>
+       <max_timesteps>       100       </max_timesteps>
    </Time>    
     <!--____________________________________________________________________-->
     <!--   G  R  I  D     V  A  R  I  A  B  L  E  S                         -->

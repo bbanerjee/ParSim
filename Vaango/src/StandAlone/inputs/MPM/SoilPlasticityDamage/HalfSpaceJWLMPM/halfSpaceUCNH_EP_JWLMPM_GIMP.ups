@@ -18,7 +18,7 @@
        <delt_min>           1.0e-16     </delt_min>
        <delt_max>           1.0e-6      </delt_max>
        <delt_init>          1.0e-10     </delt_init>
-       <max_Timesteps>      99999       </max_Timesteps>
+       <max_timesteps>      99999       </max_timesteps>
        <timestep_multiplier>0.3         </timestep_multiplier>
    </Time>    
    
@@ -76,8 +76,8 @@
         <artificial_viscosity> false </artificial_viscosity>
         <use_load_curves> false </use_load_curves>
         <erosion algorithm = "ZeroStress"/>
-        <DoPressureStabilization>true</DoPressureStabilization> 
-        <DoExplicitHeatConduction>false</DoExplicitHeatConduction>
+        <do_pressure_stabilization>true</do_pressure_stabilization> 
+        <do_explicit_heat_conduction>false</do_explicit_heat_conduction>
     </MPM>
 
     <!--____________________________________________________________________-->

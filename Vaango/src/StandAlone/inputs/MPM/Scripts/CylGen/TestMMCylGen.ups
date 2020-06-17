@@ -29,7 +29,7 @@
     <MPM>
         <time_integrator>explicit</time_integrator>
         <interpolator>gimp</interpolator>
-        <DoExplicitHeatConduction>false</DoExplicitHeatConduction>
+        <do_explicit_heat_conduction>false</do_explicit_heat_conduction>
         <with_color>true</with_color>
     </MPM>
 

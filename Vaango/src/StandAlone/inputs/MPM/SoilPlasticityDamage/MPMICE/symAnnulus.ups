@@ -145,7 +145,7 @@
         <time_integrator>explicit</time_integrator>
         <interpolator>gimp</interpolator>
         <testForNegTemps_mpm>true</testForNegTemps_mpm>
-        <DoExplicitHeatConduction>false</DoExplicitHeatConduction>
+        <do_explicit_heat_conduction>false</do_explicit_heat_conduction>
         <with_color>      false      </with_color>
         <artificial_damping_coeff> 1.0 </artificial_damping_coeff>
     </MPM>
