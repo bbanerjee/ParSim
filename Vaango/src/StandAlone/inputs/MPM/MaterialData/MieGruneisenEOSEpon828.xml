@@ -7,12 +7,13 @@
 		   Eng. 14, 2006, pp 537-561.
 -->
 <Uintah_Include>
-  <equation_of_state type="mie_gruneisen">
+  <equation_of_state type="mie_gruneisen_energy">
     <C_0>       2.60  </C_0>
     <Gamma_0>   2.18 </Gamma_0>
     <S_alpha>   1.59 </S_alpha>
     <S_2>       0.0  </S_2>
     <S_3>       0.0  </S_3>
+    <rho_0>  1200.0  </rho_0>
   </equation_of_state>
 </Uintah_Include>
 

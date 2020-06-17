@@ -43,6 +43,10 @@ MieGruneisenEOSEnergy::MieGruneisenEOSEnergy(ProblemSpecP& ps)
   ps->getWithDefault("S_2", d_const.S_2, 0.0);
   ps->getWithDefault("S_3", d_const.S_3, 0.0);
   ps->require("rho_0", d_const.rho_0);
+  d_J_min = 1.0 + (d_const.S_2 
+              + std::sqrt(d_const.S_2 * d_const.S_2 - 3.0 * d_const.S_1 * d_const.S_3))/
+              (3.0 * d_const.S_3);
+  //std::cout << "J_min = " << d_J_min << "\n";
 }
 
 MieGruneisenEOSEnergy::MieGruneisenEOSEnergy(const MieGruneisenEOSEnergy* cm)
@@ -53,6 +57,7 @@ MieGruneisenEOSEnergy::MieGruneisenEOSEnergy(const MieGruneisenEOSEnergy* cm)
   d_const.S_2 = cm->d_const.S_2;
   d_const.S_3 = cm->d_const.S_3;
   d_const.rho_0 = cm->d_const.rho_0;
+  d_J_min = cm->d_J_min;
 }
 
 MieGruneisenEOSEnergy::~MieGruneisenEOSEnergy() = default;
@@ -84,38 +89,44 @@ MieGruneisenEOSEnergy::getParameters() const
   return params;
 }
 //////////
-// Calculate the pressure using the Mie-Gruneisen equation of state
+// Calculate the pressure (tension +ve) using the Mie-Gruneisen equation of state
 double
 MieGruneisenEOSEnergy::computePressure(const MPMMaterial* matl,
                                        const ModelStateBase* state,
                                        const Matrix3&, const Matrix3&,
                                        const double&)
 {
-  // Get the current density
-  double rho = state->density;
-
   // Get original density
   double rho_0 = matl->getInitialDensity();
 
-  // Calc. eta
-  double eta = 1. - rho_0 / rho;
+  // Get the current density
+  double rho = state->density;
 
   // Retrieve specific internal energy e
   double e = state->energy;
 
-  // Calculate the pressure
+  // Constants
+  double rho0_C0_sq = rho_0 * d_const.C_0 * d_const.C_0;
+  double S_1 = d_const.S_1;
+  double S_2 = d_const.S_2;
+  double S_3 = d_const.S_3;
+  double Gamma_0 = d_const.Gamma_0;
 
-  double p;
+  // Calc. eta
+  double J = rho_0 / rho;
+  J = (J > d_J_min) ? J : d_J_min;
+  double eta = 1. - J;
+
+  // Calculate the pressure
+  double p = rho_0 * Gamma_0 * e;
   if (eta >= 0.0) {
-    double denom = (1. - d_const.S_1 * eta - d_const.S_2 * eta * eta -
-                    d_const.S_3 * eta * eta * eta) *
-                   (1. - d_const.S_1 * eta - d_const.S_2 * eta * eta -
-                    d_const.S_3 * eta * eta * eta);
-    p = rho_0 * d_const.Gamma_0 * e +
-        rho_0 * (d_const.C_0 * d_const.C_0) * eta *
-          (1. - .5 * d_const.Gamma_0 * eta) / denom;
+    double eta2 = eta * eta;
+    double eta3 = eta2 * eta;
+    double alpha = (1. - S_1 * eta - S_2 * eta2 - S_3 * eta3);
+    double denom = alpha * alpha;
+    p += rho0_C0_sq * eta * (1. - .5 * Gamma_0 * eta) / denom;
   } else {
-    p = rho_0 * d_const.Gamma_0 * e + rho_0 * (d_const.C_0 * d_const.C_0) * eta;
+    p += rho0_C0_sq * eta;
   }
 
   return -p;
@@ -137,29 +148,41 @@ MieGruneisenEOSEnergy::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
                                   const ModelStateBase* state)
 {
   double rho_0 = matl->getInitialDensity();
-  double C_0 = d_const.C_0;
+  double rho_cur = rho_0 / detF;
+  return eval_dp_dJ(rho_0, rho_cur);
+}
+
+double
+MieGruneisenEOSEnergy::eval_dp_dJ(double rho_0, double rho) const
+{
+  // Constants
+  double rho0_C0_sq = rho_0 * d_const.C_0 * d_const.C_0;
   double S_1 = d_const.S_1;
   double S_2 = d_const.S_2;
   double S_3 = d_const.S_3;
   double Gamma_0 = d_const.Gamma_0;
 
-  double J = detF;
+  // Calc. eta
+  double J = rho_0 / rho;
+  J = (J > d_J_min) ? J : d_J_min;
+  double eta = 1. - J;
 
-  double eta = 1.0 - J;
-  double denom = (1.0 - S_1 * eta - S_2 * eta * eta - S_3 * eta * eta * eta);
-  double numer =
-    -rho_0 * C_0 * C_0 * ((1.0 - Gamma_0 * eta) * denom +
-                          2.0 * eta * (1.0 - Gamma_0 * eta / 2.0) *
-                            (S_1 + 2.0 * S_2 * eta + 3.0 * S_3 * eta * eta));
-  //  double denom3 = (denom*denom*denom);
-
-  //  if (denom3 == 0.0) {
-  //    cout << "rh0_0 = " << rho_0 << " J = " << J
-  //           << " numer = " << numer << endl;
-  //    denom3 = 1.0e-5;
-  //  }
-
-  return (numer / denom);
+  // Calculate the pressure
+  double dp_dJ = 0.0;
+  if (eta >= 0.0) {
+    double eta2 = eta * eta;
+    double eta3 = eta2 * eta;
+    double alpha = 1. - S_1 * eta - S_2 * eta2 - S_3 * eta3;
+    double dalpha_deta = - S_1 - 2.0 * S_2 * eta - 3.0 * S_3 * eta2;
+    double alpha2 = alpha * alpha;
+    dp_dJ = - (rho0_C0_sq / alpha2) * 
+              ( 1 - Gamma_0 * eta  - 
+                2.0 * eta * (1 - Gamma_0/2 * eta) / alpha * dalpha_deta);
+  } else {
+    dp_dJ = - rho0_C0_sq;
+  }
+  //std::cout << "J = " << 1 - eta << " dp_dJ = " << dp_dJ << "\n";
+  return dp_dJ;
 }
 
 // Compute bulk modulus
@@ -173,32 +196,7 @@ double
 MieGruneisenEOSEnergy::computeBulkModulus(const double& rho_orig,
                                           const double& rho_cur)
 {
-  // Calculate J
-  double J = rho_orig / rho_cur;
-
-  // Calc. eta = 1 - J  (Note that J = 1 - eta)
-  double eta = 1. - J;
-
-  // Calculate the pressure
-  double C0sq = d_const.C_0 * d_const.C_0;
-  double K = C0sq * rho_orig;
-  if (eta >= 0.0) {
-    double S1 = d_const.S_1;
-    double S2 = d_const.S_2;
-    double S3 = d_const.S_3;
-    double etaSq = eta * eta;
-    double etaCb = eta * eta * eta;
-    double Jsq = J * J;
-    double numer =
-      1.0 + S1 - J * S1 + 3.0 * S2 - 6.0 * J * S2 + 3.0 * Jsq * S2 +
-      5.0 * etaCb * S3 -
-      eta * d_const.Gamma_0 * (1.0 + etaSq * S2 + 2.0 * etaCb * S3);
-    double denom = 1.0 - S1 * eta - S2 * etaSq - S3 * etaCb;
-    K *= numer / (denom * denom * denom);
-  } else {
-    K /= (J * J);
-  }
-  return K;
+  return -1.0 * eval_dp_dJ(rho_orig, rho_cur);
 }
 
 double 
@@ -206,6 +204,7 @@ MieGruneisenEOSEnergy::computeBulkModulus(const ModelStateBase* state)
 {
   return computeBulkModulus(state->initialDensity, state->density);
 }
+
 
 // Compute pressure (option 1) - no internal energy contribution
 // Compression part:
@@ -219,6 +218,7 @@ MieGruneisenEOSEnergy::computePressure(const double& rho_orig,
 {
   // Calculate J
   double J = rho_orig / rho_cur;
+  J = (J > d_J_min) ? J : d_J_min;
 
   // Calc. eta = 1 - J  (Note that J = 1 - eta)
   double eta = 1. - J;
@@ -255,6 +255,7 @@ MieGruneisenEOSEnergy::computePressure(const double& rho_orig,
 {
   // Calculate J and dJ_drho
   double J = rho_orig / rho_cur;
+  J = (J > d_J_min) ? J : d_J_min;
   double dJ_drho = -J / rho_cur;
   double dp_dJ = 0.0;
 

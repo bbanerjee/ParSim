@@ -63,7 +63,7 @@ std::map<std::string, double>
 HyperElasticEOS::getParameters() const 
 {
   std::map<std::string, double> params;
-  params["bulk"] = d_bulkModulus;
+  params["bulk_modulus"] = d_bulkModulus;
   return params;
 }
 
@@ -99,14 +99,6 @@ HyperElasticEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
 double
 HyperElasticEOS::computePressure(const double& rho_orig, const double& rho_cur)
 {
-  /*
-  if (d_bulkModulus < 0.0) {
-    throw InternalError("Please initialize bulk modulus in EOS before computing
-  pressure",
-                            __FILE__, __LINE__);
-  }
-  */
-
   double J = rho_orig / rho_cur;
   double p = 0.5 * d_bulkModulus * (J - 1.0 / J);
   return p;
@@ -118,17 +110,9 @@ HyperElasticEOS::computePressure(const double& rho_orig, const double& rho_cur,
                                  double& pressure, double& dp_drho,
                                  double& csquared)
 {
-  /*
-  if (d_bulkModulus < 0.0) {
-    throw InternalError("Please initialize bulk modulus in EOS before computing
-  pressure",
-                            __FILE__, __LINE__);
-  }
-  */
-
   double J = rho_orig / rho_cur;
   pressure = 0.5 * d_bulkModulus * (J - 1.0 / J);
-  double dp_dJ = 0.5 * d_bulkModulus * (1.0 + 1.0 / J * J);
+  double dp_dJ = 0.5 * d_bulkModulus * (1.0 + 1.0 / (J * J));
   dp_drho = -0.5 * d_bulkModulus * (1.0 + J * J) / rho_orig;
   csquared = dp_dJ / rho_cur;
 }
@@ -144,16 +128,8 @@ double
 HyperElasticEOS::computeBulkModulus(const double& rho_orig,
                                     const double& rho_cur)
 {
-  /*
-  if (d_bulkModulus < 0.0) {
-    throw InternalError("Please initialize bulk modulus in EOS before computing
-  modulus",
-                            __FILE__, __LINE__);
-  }
-  */
-
   double J = rho_orig / rho_cur;
-  double bulk = 0.5 * d_bulkModulus * (1.0 + 1.0 / J * J);
+  double bulk = 0.5 * d_bulkModulus * (1.0 + 1.0 / (J * J));
   return bulk;
 }
 

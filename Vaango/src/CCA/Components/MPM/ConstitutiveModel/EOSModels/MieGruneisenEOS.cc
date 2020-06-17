@@ -146,10 +146,15 @@ MieGruneisenEOS::computePressure(const double& rho_orig, const double& rho_cur)
 {
   // Calc. J
   double J = rho_orig / rho_cur;
+  double J_min = 1.0 - 1.0 / d_const.S_alpha;
+  J = (J > J_min) ? J : J_min;
+
+  /*
   if (J < 1.0 - 1.0 / d_const.S_alpha) {
     throw InvalidValue("**ERROR: EOS Model invalid for extreme compression",
                        __FILE__, __LINE__);
   }
+  */
 
   // Calculate the pressure
   double J_one = J - 1.0;
@@ -180,10 +185,15 @@ MieGruneisenEOS::computePressure(const double& rho_orig, const double& rho_cur,
 {
   // Calc. J
   double J = rho_orig / rho_cur;
+  double J_min = 1.0 - 1.0 / d_const.S_alpha;
+  J = (J > J_min) ? J : J_min;
+
+  /*
   if (J < 1.0 - 1.0 / d_const.S_alpha) {
     throw InvalidValue("**ERROR: EOS Model invalid for extreme compression",
                        __FILE__, __LINE__);
   }
+  */
 
   // Calculate the pressure
   double J_one = J - 1.0;
@@ -219,10 +229,18 @@ MieGruneisenEOS::computeBulkModulus(const double& rho_orig,
 {
   // Calc. J
   double J = rho_orig / rho_cur;
+  double J_min = 1.0 - 1.0 / d_const.S_alpha;
+  J = (J > J_min) ? J : J_min;
+  
+  /*
   if (J < 1.0 - 1.0 / d_const.S_alpha) {
-    throw InvalidValue("**ERROR: EOS Model invalid for extreme compression",
-                       __FILE__, __LINE__);
+    std::ostringstream err;
+    err << "**ERROR** J = " << J << " is less than (1-1/S_alpha) = "
+        <<  1.0 - 1.0 / d_const.S_alpha
+        << " EOS Model invalid for extreme compression",
+    throw InvalidValue(err.str(), __FILE__, __LINE__);
   }
+  */
 
   // Calculate dp/dJ
   double J_one = J - 1.0;
@@ -268,10 +286,15 @@ MieGruneisenEOS::computeStrainEnergy(const double& rho_orig,
   double C0sq = d_const.C_0 * d_const.C_0;
 
   // Check validity condition
+  double J_min = 1.0 - 1.0 / d_const.S_alpha;
+  J = (J > J_min) ? J : J_min;
+
+  /*
   if (J < 1.0 - 1.0 / Sa) {
     throw InvalidValue("**ERROR: EOS Model invalid for extreme compression",
                        __FILE__, __LINE__);
   }
+  */
 
   double J_one = J - 1.0;
   double numer = J_one * Sa * (-2.0 * Sa + G0 * (2.0 + J_one * Sa));
@@ -319,7 +342,9 @@ MieGruneisenEOS::computeDensity(const double& rho_orig, const double& pressure)
     ++iter;
   } while (fabs(f) > tol && iter < max_iter);
 
-  double rho = rho_orig / J; // **TODO** Infinity check
+  double J_min = 1.0 - 1.0 / d_const.S_alpha;
+  J = (J > J_min) ? J : J_min;
+  double rho = rho_orig / J; 
 
   return rho;
 }

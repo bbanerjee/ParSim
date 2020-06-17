@@ -47,6 +47,17 @@ namespace Uintah {
 
 using Vaango::ModelStateBase;
 
+enum class EOSMaterialType
+{
+  FLUID = 0,
+  ROCK_SOIL = 1,
+  METAL = 2,
+  POLYMER = 3,
+  FOAM = 5,
+  ALL = 6
+};
+
+
 class MPMEquationOfState
 {
 
@@ -60,6 +71,8 @@ public:
   virtual void outputProblemSpec(ProblemSpecP& ps) = 0;
 
   virtual std::map<std::string, double> getParameters() const = 0;
+
+  virtual EOSMaterialType materialType() const = 0;
 
   void setBulkModulus(const double& bulk) { d_bulkModulus = bulk; }
   double initialBulkModulus() { return d_bulkModulus; }

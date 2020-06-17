@@ -69,6 +69,11 @@ public:
 
   void outputProblemSpec(ProblemSpecP& ps) override;
 
+  EOSMaterialType materialType() const override
+  {
+    return EOSMaterialType::ALL;
+  }
+
   std::map<std::string, double> getParameters() const override;
 
   //////////

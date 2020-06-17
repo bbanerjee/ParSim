@@ -85,6 +85,11 @@ public:
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
+  Uintah::EOSMaterialType materialType() const override
+  {
+    return Uintah::EOSMaterialType::ROCK_SOIL;
+  }
+
   /*! Get parameters */
   std::map<std::string, double> getParameters() const override
   {

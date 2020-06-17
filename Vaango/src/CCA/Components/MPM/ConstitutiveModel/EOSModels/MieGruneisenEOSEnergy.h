@@ -36,38 +36,9 @@ namespace Uintah {
 /*!
   \class MieGruneisenEOSEnergy
 
-  \brief A Mie-Gruneisen type equation of state model
+  \brief A Mie-Gruneisen equation of state model with three-parameter Us-up fit
 
-  \author Biswajit Banerjee \n
-  C-SAFE and Department of Mechanical Engineering \n
-  University of Utah \n
-
-  Reference:
-
-  Zocher, Maudlin, Chen, Flower-Maudlin, 2000,
-  European Congress on Computational Methods in Applied Science
-  and Engineering, ECOMAS 2000, Barcelona)
-
-
-  The equation of state is given by
-  \f[
-  p = \frac{\rho_0 C_0^2 \zeta
-            \left[1 + \left(1-\frac{\Gamma_0}{2}\right)\zeta\right]}
-           {\left[1 - (S_{\alpha} - 1) \zeta\right]^2 + \Gamma_0 C_p T}
-  \f]
-  where
-  \f$ p\f$ = pressure \n
-  \f$ C_0 \f$= bulk speed of sound \n
-  \f$ \zeta = (\rho/\rho_0 - 1)\f$ \n
-  where \f$\rho\f$ = current density \n
-  \f$\rho_0\f$ = initial density \n
-  \f$ E\f$ = internal energy = \f$C_p T\f$ \n
-  where \f$C_p\f$ = specfic heat at constant pressure \n
-  \f$T\f$ = temperature \n
-  \f$\Gamma_0\f$ = Gruneisen's gamma at reference state \n
-  \f$S_{\alpha}\f$ = linear Hugoniot slope coefficient
-
-  \ Modified by Jim Guilkey to be energy based.
+   Modified by Jim Guilkey to be energy based.
 
 */
 ////////////////////////////////////////////////////////////////////////////
@@ -97,6 +68,11 @@ public:
   ~MieGruneisenEOSEnergy() override;
 
   void outputProblemSpec(ProblemSpecP& ps) override;
+
+  EOSMaterialType materialType() const override
+  {
+    return EOSMaterialType::ALL;
+  }
 
   std::map<std::string, double> getParameters() const override;
 
@@ -151,6 +127,8 @@ public:
                                                 double& exp_eps_e_v) override;
 
 private:
+  double eval_dp_dJ(double rho_0, double rho) const;
+
   typedef double (MieGruneisenEOSEnergy::*pFuncPtr)(const double&,
                                                     const double&);
   typedef double (MieGruneisenEOSEnergy::*dpdJFuncPtr)(const double&,
@@ -181,6 +159,7 @@ private:
 
 private:
   CMData d_const;
+  double d_J_min;
 
 };
 

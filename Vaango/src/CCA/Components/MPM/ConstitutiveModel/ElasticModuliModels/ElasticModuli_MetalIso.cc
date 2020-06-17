@@ -25,10 +25,6 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuli_MetalIso.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
-#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/AirEOS.h>
-#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/WaterEOS.h>
-#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/BorjaEOS.h>
-#include <CCA/Components/MPM/ConstitutiveModel/EOSModels/GraniteEOS.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <Core/Exceptions/InternalError.h>
@@ -43,11 +39,7 @@ ElasticModuli_MetalIso::ElasticModuli_MetalIso(Uintah::ProblemSpecP& ps)
   d_eos = Uintah::MPMEquationOfStateFactory::create(ps);
 
   // Don't allow unphysical EOS models for metals
-  auto eos_air = dynamic_cast<Vaango::AirEOS*>(d_eos); 
-  auto eos_water = dynamic_cast<Vaango::WaterEOS*>(d_eos); 
-  auto eos_granite = dynamic_cast<Vaango::GraniteEOS*>(d_eos); 
-  auto eos_borja = dynamic_cast<Vaango::BorjaEOS*>(d_eos); 
-  if (eos_air || eos_water || eos_borja || eos_granite) {
+  if (d_eos->materialType() != Uintah::EOSMaterialType::ALL) {  
     std::ostringstream err;
     err << "**ERROR** Fluid/soil/rock equations of state cannot be used for metal elasticity."
            " Please correct the input file.\n";

@@ -75,6 +75,11 @@ public:
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
+  Uintah::EOSMaterialType materialType() const override
+  {
+    return Uintah::EOSMaterialType::FLUID;
+  }
+
   /*! Get parameters */
   std::map<std::string, double> getParameters() const override
   {
