@@ -92,9 +92,11 @@ CNH_MMS::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 {
   // MMS
   string mms_type = flag->d_mmsType;
-  if (!mms_type.empty()) {
+  if (mms_type == "none") {
+    initSharedDataForExplicit(patch, matl, new_dw);
+    computeStableTimestep(patch, matl, new_dw);
+  } else {
     if (mms_type == "GeneralizedVortex" || mms_type == "ExpandingRing") {
-      // cout << "Entered CM" << endl;
       initSharedDataForExplicit(patch, matl, new_dw);
       computeStableTimestep(patch, matl, new_dw);
 
@@ -144,10 +146,7 @@ CNH_MMS::initializeCMData(const Patch* patch, const MPMMaterial* matl,
 
       computeStableTimestep(patch, matl, new_dw);
     }
-  } else { // Default Uintah case
-    initSharedDataForExplicit(patch, matl, new_dw);
-    computeStableTimestep(patch, matl, new_dw);
-  }
+  } 
 }
 
 void

@@ -106,13 +106,11 @@ using namespace std;
       
       // no or real srcPatch
       if (srcPatch == 0 || !srcPatch->isVirtual()) {
-        for(ParticleSubset::iterator src_iter = subset->begin();
-                                    src_iter != subset->end(); src_iter++){
+        for (auto src_idx : *subset) {
 
-          (*this)[*dst_iter] = src[*src_iter];         
+          (*this)[*dst_iter] = src[src_idx];         
 
-          IntVector ptIndex =  patch->getLevel()->getCellIndex(src[*src_iter]);
-
+          IntVector ptIndex =  patch->getLevel()->getCellIndex(src[src_idx]);
           ASSERT( Patch::containsIndex(lowIndex,highIndex,ptIndex));
           dst_iter++;
         }
@@ -120,11 +118,9 @@ using namespace std;
       else if (subset->numParticles() != 0) {
         Vector offset = srcPatch->getVirtualOffsetVector();
 
-        for(ParticleSubset::iterator src_iter = subset->begin();
-            src_iter != subset->end(); src_iter++){
+        for (auto src_idx : *subset) {
             
-          (*this)[*dst_iter] = src[*src_iter] + offset;
-          
+          (*this)[*dst_iter] = src[src_idx] + offset;
           
           IntVector ptIndex =  patch->getLevel()->getCellIndex((*this)[*dst_iter]);
           ASSERT( Patch::containsIndex(lowIndex,highIndex,ptIndex));

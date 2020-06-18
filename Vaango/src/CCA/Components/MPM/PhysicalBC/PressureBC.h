@@ -143,6 +143,10 @@ WARNING
                                 Point& pExternalForceCorner4,
                                 const Vector& dxCell);
 
+      std::vector<Point> getParticleCornersCBDI(const Point& pX, 
+                                                const Matrix3& pSize,
+                                                const Matrix3& pDefGrad,
+                                                const Vector& dxCell);
    private:
 
       // Prevent empty constructor
@@ -183,9 +187,18 @@ WARNING
       double         d_pos_y;
       double         d_pos_z;
 
+      std::pair<int, int> 
+      getParticleBoundaryCorners(const Point& pX,
+                                 const Matrix3& pSize_new,
+                                 const Vector& pNormal,
+                                 const Vector& dxCell,
+                                 std::vector<Point>& corners) const;
+
     public:
       Vector d_dxpp;
       IntVector d_res;
+
+
 
       friend std::ostream& operator<<(std::ostream& out, const Uintah::PressureBC& bc);
    };

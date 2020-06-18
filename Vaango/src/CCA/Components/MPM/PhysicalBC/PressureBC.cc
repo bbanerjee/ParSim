@@ -453,6 +453,8 @@ PressureBC::getForceVectorCBDI(const Point& px,
     CylinderGeometryPiece* gp = dynamic_cast<CylinderGeometryPiece*>(d_surface);
     normal = gp->radialDirection(px);
     force = normal*forcePerParticle;
+    //std::cout << "px = " << px << " force = " << force << " normal = " << normal
+    //          << " fpp = " << forcePerParticle << "\n";
     if(d_cylinder_end || d_axisymmetric_end){
       normal = (gp->top()-gp->bottom())
               /(gp->top()-gp->bottom()).length();
@@ -480,46 +482,116 @@ PressureBC::getForceVectorCBDI(const Point& px,
     force = force*(-1.0);
   }
   // determine four boundary-corners of the particle
-  int i1=0,i2=0;
-  Matrix3 dsize=pDeformationMeasure*psize;
-  Point px1;
-  for (int i = 0; i < 3; ++i) {
-   Vector dummy=Vector(dsize(0,i)*dxCell[0],dsize(1,i)*dxCell[1],
-                                            dsize(2,i)*dxCell[2])/2.0;
-   if (abs(Dot(normal,dummy)/(normal.length()*dummy.length())-1.0)<0.1) {
-    px1=Point(px.x()+dummy[0],px.y()+dummy[1],px.z()+dummy[2]);
-    i1=(i+1)%3;
-    i2=(i+2)%3;
-   } else if (abs(Dot(normal,dummy)/(normal.length()*dummy.length())+1.0)<0.1) {
-    Point px1(px.x()-dummy[0],px.y()-dummy[1],px.z()-dummy[2]);
-    i1=(i+1)%3;
-    i2=(i+2)%3;
-   }
+  std::vector<Point> corners(4);
+  Matrix3 pSize_new = pDeformationMeasure * psize;
+  auto i1i2 = getParticleBoundaryCorners(px, pSize_new, normal, dxCell, corners);
+  pExternalForceCorner1 = corners[0];
+  pExternalForceCorner2 = corners[1];
+  pExternalForceCorner3 = corners[2];
+  pExternalForceCorner4 = corners[3];
+  
+  // Recalculate the force based on area changes (current vs. initial)
+  int i1 = i1i2.first;
+  int i2 = i1i2.second;
+  if (i1 != i2) {
+    Vector iniVec1(psize(0,i1),psize(1,i1),psize(2,i1));
+    Vector iniVec2(psize(0,i2),psize(1,i2),psize(2,i2));
+    Vector curVec1(pSize_new(0,i1),pSize_new(1,i1),pSize_new(2,i1));
+    Vector curVec2(pSize_new(0,i2),pSize_new(1,i2),pSize_new(2,i2));
+    Vector iniA = Cross(iniVec1,iniVec2);
+    Vector curA = Cross(curVec1,curVec2);
+    double iniArea=iniA.length();
+    double curArea=curA.length();
+    force=force*(curArea/iniArea);
+  }
+  return force;
+}
+
+// Get the particle corners for CBDI
+std::vector<Point>
+PressureBC::getParticleCornersCBDI(const Point& pX, 
+                                   const Matrix3& pSize,
+                                   const Matrix3& pDefGrad,
+                                   const Vector& dxCell)
+{
+  Vector pNormal(0.0, 0.0, 0.0);
+  if (d_surfaceType == "box") {
+    BoxGeometryPiece* gp = dynamic_cast<BoxGeometryPiece*>(d_surface);
+    pNormal[gp->thicknessDirection()] = 1.0;
+  } else if (d_surfaceType == "cylinder") {
+    CylinderGeometryPiece* gp = dynamic_cast<CylinderGeometryPiece*>(d_surface);
+    pNormal = gp->radialDirection(pX);
+  } else if (d_surfaceType == "sphere") {
+    SphereGeometryPiece* gp = dynamic_cast<SphereGeometryPiece*>(d_surface);
+    pNormal = gp->radialDirection(pX);
+  } else {
+    throw ParameterNotFound("ERROR: Unknown surface specified for pressure BC",
+                            __FILE__, __LINE__);
+  }
+  // determine four boundary-corners of the particle
+  std::vector<Point> corners(4);
+  Matrix3 pSize_new = pDefGrad * pSize;
+  getParticleBoundaryCorners(pX, pSize_new, pNormal, dxCell, corners);
+  
+  return corners;
+}
+
+// Determine four boundary-corners of the particle
+std::pair<int, int>
+PressureBC::getParticleBoundaryCorners(const Point& pX,
+                                       const Matrix3& pSize_new,
+                                       const Vector& pNormal,
+                                       const Vector& dxCell,
+                                       std::vector<Point>& corners) const
+{
+  int i1 = 0, i2 = 0;
+  Point px1 = pX;
+  for (int ii = 0; ii < 3; ++ii) {
+    Vector dxDeformed(pSize_new(0, ii) * dxCell[0],
+                      pSize_new(1, ii) * dxCell[1],
+                      pSize_new(2, ii) * dxCell[2]);
+    dxDeformed /= 2.0;
+
+    double dxLength     = dxDeformed.length();
+    double normalLength = pNormal.length();
+    double cos_angle = Dot(pNormal, dxDeformed) / (normalLength * dxLength);
+
+    if (std::abs(cos_angle - 1.0) < 0.1) {
+      px1 = pX + dxDeformed;
+      i1 = (ii+1) % 3;
+      i2 = (ii+2) % 3;
+    } else if (std::abs(cos_angle + 1.0) < 0.1) {
+      px1 = pX - dxDeformed;
+      i1 = (ii+1) % 3;
+      i2 = (ii+2) % 3;
+    } 
+    // else {
+      //std::cout << "cos_angle = " << cos_angle << " px1 = " << px1 << "\n";
+      //std::cout << "dx = " << dxDeformed << " normal = " << pNormal << "\n";
+    // }
   }
   // px1 is the position of the center of the boundary particle face that is on the physical boundary.
-  pExternalForceCorner1=Point(px1.x()-dsize(0,i1)*dxCell[0]/2.0-dsize(0,i2)*dxCell[0]/2.0,
-                              px1.y()-dsize(1,i1)*dxCell[1]/2.0-dsize(1,i2)*dxCell[1]/2.0,
-                              px1.z()-dsize(2,i1)*dxCell[2]/2.0-dsize(2,i2)*dxCell[2]/2.0);
-  pExternalForceCorner2=Point(px1.x()+dsize(0,i1)*dxCell[0]/2.0-dsize(0,i2)*dxCell[0]/2.0,
-                              px1.y()+dsize(1,i1)*dxCell[1]/2.0-dsize(1,i2)*dxCell[1]/2.0,
-                              px1.z()+dsize(2,i1)*dxCell[2]/2.0-dsize(2,i2)*dxCell[2]/2.0);
-  pExternalForceCorner3=Point(px1.x()-dsize(0,i1)*dxCell[0]/2.0+dsize(0,i2)*dxCell[0]/2.0,
-                              px1.y()-dsize(1,i1)*dxCell[1]/2.0+dsize(1,i2)*dxCell[1]/2.0,
-                              px1.z()-dsize(2,i1)*dxCell[2]/2.0+dsize(2,i2)*dxCell[2]/2.0);
-  pExternalForceCorner4=Point(px1.x()+dsize(0,i1)*dxCell[0]/2.0+dsize(0,i2)*dxCell[0]/2.0,
-                              px1.y()+dsize(1,i1)*dxCell[1]/2.0+dsize(1,i2)*dxCell[1]/2.0,
-                              px1.z()+dsize(2,i1)*dxCell[2]/2.0+dsize(2,i2)*dxCell[2]/2.0);
-  // Recalculate the force based on area changes (current vs. initial)
-  Vector iniVec1(psize(0,i1),psize(1,i1),psize(2,i1));
-  Vector iniVec2(psize(0,i2),psize(1,i2),psize(2,i2));
-  Vector curVec1(dsize(0,i1),dsize(1,i1),dsize(2,i1));
-  Vector curVec2(dsize(0,i2),dsize(1,i2),dsize(2,i2));
-  Vector iniA = Cross(iniVec1,iniVec2);
-  Vector curA = Cross(curVec1,curVec2);
-  double iniArea=iniA.length();
-  double curArea=curA.length();
-  force=force*(curArea/iniArea);
-  return force;
+  if (i1 == 0 && i2 == 0) {
+    corners[0] = px1;
+    corners[1] = px1;
+    corners[2] = px1;
+    corners[3] = px1;
+  } else {
+    corners[0] = Point(px1.x()-pSize_new(0,i1)*dxCell[0]/2.0-pSize_new(0,i2)*dxCell[0]/2.0,
+                       px1.y()-pSize_new(1,i1)*dxCell[1]/2.0-pSize_new(1,i2)*dxCell[1]/2.0,
+                       px1.z()-pSize_new(2,i1)*dxCell[2]/2.0-pSize_new(2,i2)*dxCell[2]/2.0);
+    corners[1] = Point(px1.x()+pSize_new(0,i1)*dxCell[0]/2.0-pSize_new(0,i2)*dxCell[0]/2.0,
+                       px1.y()+pSize_new(1,i1)*dxCell[1]/2.0-pSize_new(1,i2)*dxCell[1]/2.0,
+                       px1.z()+pSize_new(2,i1)*dxCell[2]/2.0-pSize_new(2,i2)*dxCell[2]/2.0);
+    corners[2] = Point(px1.x()-pSize_new(0,i1)*dxCell[0]/2.0+pSize_new(0,i2)*dxCell[0]/2.0,
+                       px1.y()-pSize_new(1,i1)*dxCell[1]/2.0+pSize_new(1,i2)*dxCell[1]/2.0,
+                       px1.z()-pSize_new(2,i1)*dxCell[2]/2.0+pSize_new(2,i2)*dxCell[2]/2.0);
+    corners[3] = Point(px1.x()+pSize_new(0,i1)*dxCell[0]/2.0+pSize_new(0,i2)*dxCell[0]/2.0,
+                       px1.y()+pSize_new(1,i1)*dxCell[1]/2.0+pSize_new(1,i2)*dxCell[1]/2.0,
+                       px1.z()+pSize_new(2,i1)*dxCell[2]/2.0+pSize_new(2,i2)*dxCell[2]/2.0);
+  }
+
+  return std::make_pair(i1, i2);
 }
 
 

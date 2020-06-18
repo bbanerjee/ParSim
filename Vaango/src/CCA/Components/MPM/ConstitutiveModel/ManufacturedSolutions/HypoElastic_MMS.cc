@@ -102,7 +102,7 @@ HypoElastic_MMS::initializeCMData(const Patch* patch, const MPMMaterial* matl,
                                   DataWarehouse* new_dw)
 {
   std::string mms_type = flag->d_mmsType;
-  if (!mms_type.empty()) {
+  if (mms_type != "none") {
 
     if (mms_type == "UniaxialStrainHarmonic") {
 

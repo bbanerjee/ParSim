@@ -25,6 +25,8 @@
 #include <Core/Grid/Variables/MPMIntVarTypes.h>
 #include <Core/Disclosure/TypeDescription.h>
 #include <Core/Util/Endian.h>
+#include <Core/Util/Assert.h>
+#include <Core/Util/FancyAssert.h>
 
 
 namespace Uintah {

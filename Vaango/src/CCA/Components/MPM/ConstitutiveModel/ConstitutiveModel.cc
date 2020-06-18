@@ -201,7 +201,6 @@ ConstitutiveModel::addSharedCRForExplicit(Task* task,
   task->requires(Task::OldDW, lb->pAccelerationLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pVelGradLabel, matlset, gnone);
-  // task->requires(Task::OldDW, lb->pDeformationMeasureLabel, matlset, gnone);
   task->requires(Task::NewDW, lb->gVelocityStarLabel, matlset, gac, NGN);
   if (!flag->d_doGridReset) {
     task->requires(Task::NewDW, lb->gDisplacementLabel, matlset, gac, NGN);
@@ -216,30 +215,28 @@ ConstitutiveModel::addSharedCRForExplicit(Task* task,
   task->modifies(lb->pDefGradLabel_preReloc, matlset);
   task->modifies(lb->pVelGradLabel_preReloc, matlset);
   task->computes(lb->pStressLabel_preReloc, matlset);
-  // task->computes(lb->pDeformationMeasureLabel_preReloc, matlset);
-  // task->computes(lb->pVolumeLabel_preReloc,             matlset);
   task->modifies(lb->pVolumeLabel_preReloc, matlset);
   task->computes(lb->pdTdtLabel_preReloc, matlset);
-  // task->computes(lb->p_qLabel_preReloc,                 matlset);
 }
 
 void
 ConstitutiveModel::addComputesAndRequiresForRotatedExplicit(Task* task,
                                           const MaterialSubset* matlset,
-                                          const PatchSet*) const
+                                          const PatchSet* patches) const
 {
   Ghost::GhostType gnone = Ghost::None;
-  //Ghost::GhostType gac = Ghost::AroundCells;
-
   task->requires(Task::OldDW, lb->delTLabel);
   task->requires(Task::OldDW, lb->pParticleIDLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pXLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pMassLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pVolumeLabel, matlset, gnone);
+  task->requires(Task::OldDW, lb->pTempPreviousLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pTemperatureLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pVelocityLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pAccelerationLabel, matlset, gnone);
   task->requires(Task::OldDW, lb->pSizeLabel, matlset, gnone);
+  task->requires(Task::OldDW, lb->pDefGradLabel, matlset, gnone);
+  task->requires(Task::OldDW, lb->pVelGradLabel, matlset, gnone);
 
   task->requires(Task::NewDW, lb->pVolumeLabel_preReloc, matlset, Ghost::None);
   task->requires(Task::NewDW, lb->pDeformRateMidLabel, matlset, Ghost::None);
