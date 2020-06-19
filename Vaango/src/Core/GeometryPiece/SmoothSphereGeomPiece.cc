@@ -216,6 +216,38 @@ SmoothSphereGeomPiece::createPointSetSpiral(double outer_radius,
     double z = mid_radius*cosphi + d_center.z();
     d_points.push_back(Point(x, y, z));
     d_volume.push_back(point_volume);
+
+    // Create points for particle "size" (radial, phi, theta order)
+    double phi = std::acos(cosphi);
+    double phiInc = std::asin(0.5*char_dist/mid_radius);
+    Vector pp(x, y, z);
+    Vector pr(outer_radius*sinphi*cos(theta), 
+              outer_radius*sinphi*sin(theta), 
+              outer_radius*cosphi + d_center.z());
+    Vector pphi(mid_radius*sin(phi + phiInc)*cos(theta), 
+                mid_radius*sin(phi + phiInc)*sin(theta), 
+                mid_radius*cos(phi + phiInc) + d_center.z());
+    Vector ptheta(mid_radius*sinphi*cos(theta+phiInc), 
+                  mid_radius*sinphi*sin(theta+phiInc), 
+                  mid_radius*cosphi + d_center.z());
+    Vector r1 = (pr - pp) * 2.0;
+    Vector r2 = (pphi - pp) * 2.0;
+    Vector r3 = (ptheta - pp) * 2.0;
+
+    Matrix3 size;
+    size(0,0) = r1[0];
+    size(1,0) = r1[1];
+    size(2,0) = r1[2];
+    size(0,1) = r2[0];
+    size(1,1) = r2[1];
+    size(2,1) = r2[2];
+    size(0,2) = r3[0];
+    size(1,2) = r3[1];
+    size(2,2) = r3[2];
+    d_size.push_back(size);
+    d_rvec1.push_back(r1);
+    d_rvec2.push_back(r2);
+    d_rvec3.push_back(r3);
   }
 }
 
@@ -357,6 +389,7 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
   d_volume.push_back(point_volume);
 
   // Convert polar angles to cartesian coordinates
+  int numTheta = points_polar_theta.size();
   for (int ii = 0; ii <  (int) points_polar_theta.size(); ++ii) {
     double theta = points_polar_theta[ii];
     double phi = points_polar_phi[ii];
@@ -364,6 +397,44 @@ SmoothSphereGeomPiece::createPointSetPolar2D(double outer_radius,
     double y = mid_radius*sin(phi)*sin(theta) + d_center.y();
     double z = mid_radius*cos(phi) + d_center.z();
     d_points.push_back(Point(x, y, z));
+
+    // Create points for particle "size" (radial, phi, theta order)
+    double phiInc = 0.0, thetaInc = 0.0;
+    if (ii == numTheta-1) {
+      phiInc = 0.5*(points_polar_phi[ii] - points_polar_phi[ii-1]);
+      thetaInc = 0.5*(points_polar_theta[ii] - points_polar_theta[ii-1]);
+    } else {
+      phiInc = 0.5*(points_polar_phi[ii+1] - points_polar_phi[ii]);
+      thetaInc = 0.5*(points_polar_theta[ii+1] - points_polar_theta[ii]);
+    }
+    Vector pp(x, y, z);
+    Vector pr(outer_radius*sin(phi)*cos(theta), 
+              outer_radius*sin(phi)*sin(theta), 
+              outer_radius*cos(phi) + d_center.z());
+    Vector pphi(mid_radius*sin(phi + phiInc)*cos(theta), 
+                mid_radius*sin(phi + phiInc)*sin(theta), 
+                mid_radius*cos(phi + phiInc) + d_center.z());
+    Vector ptheta(mid_radius*sin(phi)*cos(theta + thetaInc), 
+                  mid_radius*sin(phi)*sin(theta + thetaInc), 
+                  mid_radius*cos(phi) + d_center.z());
+    Vector r1 = (pr - pp) * 2.0;
+    Vector r2 = (pphi - pp) * 2.0;
+    Vector r3 = (ptheta - pp) * 2.0;
+
+    Matrix3 size;
+    size(0,0) = r1[0];
+    size(1,0) = r1[1];
+    size(2,0) = r1[2];
+    size(0,1) = r2[0];
+    size(1,1) = r2[1];
+    size(2,1) = r2[2];
+    size(0,2) = r3[0];
+    size(1,2) = r3[1];
+    size(2,2) = r3[2];
+    d_size.push_back(size);
+    d_rvec1.push_back(r1);
+    d_rvec2.push_back(r2);
+    d_rvec3.push_back(r3);
   }
 }
 

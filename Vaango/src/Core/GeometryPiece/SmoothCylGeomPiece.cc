@@ -269,16 +269,42 @@ SmoothCylGeomPiece::createEndCapPoints()
         double x = currRadius*cosphi;
         double y = currRadius*sinphi;
         double z = 0;
-     
+
         // Rotate points to correct orientation and
         // Translate to correct position
         Vector pp(x, y, z);
         pp = d_rotation * pp + currCenter;
-        Point p(pp);
 
+        // Create points for particle "size" (radial, circum, axial order)
+        Vector pr((currRadius+0.5*radInc)*cosphi, (currRadius+0.5*radInc)*sinphi, 0);
+        Vector ptheta(currRadius*cos(phi+0.5*phiInc), currRadius*sin(phi+0.5*phiInc), 0);
+        Vector pz(currRadius*cosphi, currRadius*sinphi, 0.5*axisInc);
+        pr = d_rotation * pr + currCenter;
+        ptheta = d_rotation * ptheta + currCenter;
+        pz = d_rotation * pz + currCenter;
+        Vector r1 = (pr - pp) * 2.0;
+        Vector r2 = (ptheta - pp) * 2.0;
+        Vector r3 = (pz - pp) * 2.0;
+
+        Matrix3 size;
+        size(0,0) = r1[0];
+        size(1,0) = r1[1];
+        size(2,0) = r1[2];
+        size(0,1) = r2[0];
+        size(1,1) = r2[1];
+        size(2,1) = r2[2];
+        size(0,2) = r3[0];
+        size(1,2) = r3[1];
+        size(2,2) = r3[2];
+
+        Point p(pp);
         if (insideComputationalDomain(p)) {
           d_points.push_back(p);
           d_volume.push_back(axisInc*area);
+          d_size.push_back(size);
+          d_rvec1.push_back(r1);
+          d_rvec2.push_back(r2);
+          d_rvec3.push_back(r3);
           //cout << "Point["<<count<<"]="<<p<<"\n";
           count++;
         }
@@ -315,9 +341,35 @@ SmoothCylGeomPiece::createEndCapPoints()
         pp = d_rotation*pp + currCenter;
         Point p(pp);
 
+        // Create points for particle "size" (radial, circum, axial order)
+        Vector pr((currRadius+0.5*radInc)*cosphi, (currRadius+0.5*radInc)*sinphi, 0);
+        Vector ptheta(currRadius*cos(phi+0.5*phiInc), currRadius*sin(phi+0.5*phiInc), 0);
+        Vector pz(currRadius*cosphi, currRadius*sinphi, 0.5*axisInc);
+        pr = d_rotation * pr + currCenter;
+        ptheta = d_rotation * ptheta + currCenter;
+        pz = d_rotation * pz + currCenter;
+        Vector r1 = (pr - pp) * 2.0;
+        Vector r2 = (ptheta - pp) * 2.0;
+        Vector r3 = (pz - pp) * 2.0;
+
+        Matrix3 size;
+        size(0,0) = r1[0];
+        size(1,0) = r1[1];
+        size(2,0) = r1[2];
+        size(0,1) = r2[0];
+        size(1,1) = r2[1];
+        size(2,1) = r2[2];
+        size(0,2) = r3[0];
+        size(1,2) = r3[1];
+        size(2,2) = r3[2];
+
         if (insideComputationalDomain(p)) {
           d_points.push_back(p);
           d_volume.push_back(axisInc*area);
+          d_size.push_back(size);
+          d_rvec1.push_back(r1);
+          d_rvec2.push_back(r2);
+          d_rvec3.push_back(r3);
           //cout << "Point["<<count<<"]="<<p<<"\n";
           count++;
         }
@@ -375,9 +427,35 @@ SmoothCylGeomPiece::createSolidCylPoints()
         pp = d_rotation * pp + currCenter;
         Point p(pp);
 
+        // Create points for particle "size" (radial, circum, axial order)
+        Vector pr((currRadius+0.5*radInc)*cosphi, (currRadius+0.5*radInc)*sinphi, 0);
+        Vector ptheta(currRadius*cos(phi+0.5*phiInc), currRadius*sin(phi+0.5*phiInc), 0);
+        Vector pz(currRadius*cosphi, currRadius*sinphi, 0.5*axisInc);
+        pr = d_rotation * pr + currCenter;
+        ptheta = d_rotation * ptheta + currCenter;
+        pz = d_rotation * pz + currCenter;
+        Vector r1 = (pr - pp) * 2.0;
+        Vector r2 = (ptheta - pp) * 2.0;
+        Vector r3 = (pz - pp) * 2.0;
+
+        Matrix3 size;
+        size(0,0) = r1[0];
+        size(1,0) = r1[1];
+        size(2,0) = r1[2];
+        size(0,1) = r2[0];
+        size(1,1) = r2[1];
+        size(2,1) = r2[2];
+        size(0,2) = r3[0];
+        size(1,2) = r3[1];
+        size(2,2) = r3[2];
+
         if (insideComputationalDomain(p)) {
           d_points.push_back(p);
           d_volume.push_back(axisInc*area);
+          d_size.push_back(size);
+          d_rvec1.push_back(r1);
+          d_rvec2.push_back(r2);
+          d_rvec3.push_back(r3);
           //cout << "Point["<<count<<"]="<<p<<"\n";
           count++;
         }
@@ -434,9 +512,35 @@ SmoothCylGeomPiece::createHollowCylPoints()
         pp = d_rotation * pp + currCenter;
         Point p(pp);
 
+        // Create points for particle "size" (radial, circum, axial order)
+        Vector pr((currRadius+0.5*radInc)*cosphi, (currRadius+0.5*radInc)*sinphi, 0);
+        Vector ptheta(currRadius*cos(phi+0.5*phiInc), currRadius*sin(phi+0.5*phiInc), 0);
+        Vector pz(currRadius*cosphi, currRadius*sinphi, 0.5*axisInc);
+        pr = d_rotation * pr + currCenter;
+        ptheta = d_rotation * ptheta + currCenter;
+        pz = d_rotation * pz + currCenter;
+        Vector r1 = (pr - pp) * 2.0;
+        Vector r2 = (ptheta - pp) * 2.0;
+        Vector r3 = (pz - pp) * 2.0;
+
+        Matrix3 size;
+        size(0,0) = r1[0];
+        size(1,0) = r1[1];
+        size(2,0) = r1[2];
+        size(0,1) = r2[0];
+        size(1,1) = r2[1];
+        size(2,1) = r2[2];
+        size(0,2) = r3[0];
+        size(1,2) = r3[1];
+        size(2,2) = r3[2];
+
         if (insideComputationalDomain(p)) {
           d_points.push_back(p);
           d_volume.push_back(axisInc*area);
+          d_size.push_back(size);
+          d_rvec1.push_back(r1);
+          d_rvec2.push_back(r2);
+          d_rvec3.push_back(r3);
           //cout << "Point["<<count<<"]="<<p<<"\n";
           count++;
         }
