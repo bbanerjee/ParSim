@@ -142,7 +142,7 @@ MieGruneisenEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
 //    = dp/dJ  (based on Ogden) is more realistic
 //  c^2 = K/rho
 double
-MieGruneisenEOS::computePressure(const double& rho_orig, const double& rho_cur)
+MieGruneisenEOS::computePressure(const double& rho_orig, const double& rho_cur) const
 {
   // Calc. J
   double J = rho_orig / rho_cur;
@@ -218,14 +218,14 @@ MieGruneisenEOS::computePressure(const double& rho_orig, const double& rho_cur,
 
 // Compute bulk modulus
 double 
-MieGruneisenEOS::computeInitialBulkModulus()
+MieGruneisenEOS::computeInitialBulkModulus() const
 {
   return computeBulkModulus(d_const.rho_0, d_const.rho_0);
 }
 
 double
 MieGruneisenEOS::computeBulkModulus(const double& rho_orig,
-                                    const double& rho_cur)
+                                    const double& rho_cur) const
 {
   // Calc. J
   double J = rho_orig / rho_cur;
@@ -257,7 +257,7 @@ MieGruneisenEOS::computeBulkModulus(const double& rho_orig,
 }
 
 double 
-MieGruneisenEOS::computeBulkModulus(const ModelStateBase* state)
+MieGruneisenEOS::computeBulkModulus(const ModelStateBase* state) const
 {
   return computeBulkModulus(state->initialDensity, state->density);
 }

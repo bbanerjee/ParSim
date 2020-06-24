@@ -114,7 +114,7 @@ ElasticModuli_Arenisca::getElasticModuliLowerBound() const
 
 ElasticModuli
 ElasticModuli_Arenisca::getCurrentElasticModuli(
-  const ModelStateBase* state_input)
+  const ModelStateBase* state_input) const
 {
   const ModelState_Arenisca3* state =
     static_cast<const ModelState_Arenisca3*>(state_input);
@@ -145,4 +145,12 @@ ElasticModuli_Arenisca::getCurrentElasticModuli(
   }
 
   return ElasticModuli(KK, GG);
+}
+
+/*! Compute derivatives of moduli with respect to internal variables */
+std::vector<ElasticModuli> 
+ElasticModuli_Arenisca::computeDModuliDIntVar(const ModelStateBase* state) const
+{
+  std::vector<ElasticModuli> derivs;
+  return derivs;
 }

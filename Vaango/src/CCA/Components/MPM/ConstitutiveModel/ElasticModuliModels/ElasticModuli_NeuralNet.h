@@ -67,7 +67,7 @@ public:
 
   /*! Compute the elasticity */
   ElasticModuli getInitialElasticModuli() const override;
-  ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) override;
+  ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) const override;
 
   ElasticModuli getElasticModuliLowerBound() const override
   {
@@ -83,6 +83,9 @@ public:
      plastic internal variable */
   std::pair<ElasticModuli, ElasticModuli>
     getElasticModuliAndDerivatives(const ModelStateBase* state_input) const override;
+
+  /*! Compute derivatives of moduli with respect to internal variables */
+  std::vector<ElasticModuli> computeDModuliDIntVar(const ModelStateBase* state) const override;
 
 private:
 

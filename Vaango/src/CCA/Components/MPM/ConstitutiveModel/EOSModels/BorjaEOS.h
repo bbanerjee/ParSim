@@ -111,7 +111,7 @@ public:
                          const double& delT) override;
 
   // Compute the bulk modulus
-  double computeBulkModulus(const ModelStateBase* state) override;
+  double computeBulkModulus(const ModelStateBase* state) const override;
 
   // Compute the volumetric strain energy
   double computeStrainEnergy(const ModelStateBase* state) override;
@@ -141,7 +141,7 @@ public:
 
   // Compute pressure (option 1)
   double computePressure(const double& rho_orig,
-                         const double& rho_cur) override;
+                         const double& rho_cur) const override;
 
   // Compute pressure (option 2)
   void computePressure(const double& rho_orig, const double& rho_cur,
@@ -150,9 +150,9 @@ public:
 
   // Compute bulk modulus
   void setInitialBulkModulus();
-  double computeInitialBulkModulus() override;
+  double computeInitialBulkModulus() const override;
   double computeBulkModulus(const double& rho_orig,
-                            const double& rho_cur) override;
+                            const double& rho_cur) const override;
 
   // Compute strain energy
   double computeStrainEnergy(const double& rho_orig,

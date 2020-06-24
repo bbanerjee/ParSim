@@ -84,7 +84,7 @@ ElasticModuli_NeuralNet::getInitialElasticModuli() const
 }
 
 ElasticModuli
-ElasticModuli_NeuralNet::getCurrentElasticModuli(const ModelStateBase* state_input)
+ElasticModuli_NeuralNet::getCurrentElasticModuli(const ModelStateBase* state_input) const
 {
   const ModelState_Tabular* state =
     static_cast<const ModelState_Tabular*>(state_input);
@@ -389,4 +389,12 @@ ElasticModuli_NeuralNet::NeuralNetworkModel<T>::predict(double totalVolStrain, d
       return minPressure + x * (maxPressure - minPressure);
     });
   return input(0, 0);
+}
+
+/*! Compute derivatives of moduli with respect to internal variables */
+std::vector<ElasticModuli> 
+ElasticModuli_NeuralNet::computeDModuliDIntVar(const ModelStateBase* state) const
+{
+  std::vector<ElasticModuli> derivs;
+  return derivs;
 }

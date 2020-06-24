@@ -92,7 +92,7 @@ public:
       (option 1)*/
   ////////////////////////////////////////////////////////////////////////
   virtual double computePressure(const double& rho_orig,
-                                 const double& rho_cur) = 0;
+                                 const double& rho_cur) const = 0;
 
   ////////////////////////////////////////////////////////////////////////
   /*! Calculate the pressure without considering internal energy
@@ -131,10 +131,10 @@ public:
   ////////////////////////////////////////////////////////////////////////
   /*! Calculate the tangent bulk modulus */
   ////////////////////////////////////////////////////////////////////////
-  virtual double computeInitialBulkModulus() = 0;
-  virtual double computeBulkModulus(const ModelStateBase* state) = 0;
+  virtual double computeInitialBulkModulus() const = 0;
+  virtual double computeBulkModulus(const ModelStateBase* state) const = 0;
   virtual double computeBulkModulus(const double& rho_orig,
-                                    const double& rho_cur) = 0;
+                                    const double& rho_cur)  const= 0;
 
   ////////////////////////////////////////////////////////////////////////
   /*! Calculate the accumulated strain energy */

@@ -187,20 +187,20 @@ MieGruneisenEOSEnergy::eval_dp_dJ(double rho_0, double rho) const
 
 // Compute bulk modulus
 double 
-MieGruneisenEOSEnergy::computeInitialBulkModulus()
+MieGruneisenEOSEnergy::computeInitialBulkModulus() const
 {
   return computeBulkModulus(d_const.rho_0, d_const.rho_0);
 }
 
 double
 MieGruneisenEOSEnergy::computeBulkModulus(const double& rho_orig,
-                                          const double& rho_cur)
+                                          const double& rho_cur) const
 {
   return -1.0 * eval_dp_dJ(rho_orig, rho_cur);
 }
 
 double 
-MieGruneisenEOSEnergy::computeBulkModulus(const ModelStateBase* state)
+MieGruneisenEOSEnergy::computeBulkModulus(const ModelStateBase* state) const
 {
   return computeBulkModulus(state->initialDensity, state->density);
 }
@@ -214,7 +214,7 @@ MieGruneisenEOSEnergy::computeBulkModulus(const ModelStateBase* state)
 //  p = -((C0^2 Eta rho0)/(1 - Eta))
 double
 MieGruneisenEOSEnergy::computePressure(const double& rho_orig,
-                                       const double& rho_cur)
+                                       const double& rho_cur) const
 {
   // Calculate J
   double J = rho_orig / rho_cur;
@@ -302,8 +302,8 @@ MieGruneisenEOSEnergy::computeDensity(const double& rho_orig,
       const double J0 = 0.8;
       const double tolerance = 1.0e-3;
       const int maxIter = 10;
-      pFuncPtr pFunc = &MieGruneisenEOSEnergy::pCompression;
-      dpdJFuncPtr dpdJFunc = &MieGruneisenEOSEnergy::dpdJCompression;
+      auto pFunc = &MieGruneisenEOSEnergy::pCompression;
+      auto dpdJFunc = &MieGruneisenEOSEnergy::dpdJCompression;
       eta = findEtaNewton(pFunc, dpdJFunc, rho_orig, pressure, J0, tolerance,
                           maxIter);
     } else {
@@ -311,8 +311,8 @@ MieGruneisenEOSEnergy::computeDensity(const double& rho_orig,
       const double J0 = 1.5;
       const double tolerance = 1.0e-3;
       const int maxIter = 10;
-      pFuncPtr pFunc = &MieGruneisenEOSEnergy::pTension;
-      dpdJFuncPtr dpdJFunc = &MieGruneisenEOSEnergy::dpdJTension;
+      auto pFunc = &MieGruneisenEOSEnergy::pTension;
+      auto dpdJFunc = &MieGruneisenEOSEnergy::dpdJTension;
       eta = findEtaNewton(pFunc, dpdJFunc, rho_orig, pressure, J0, tolerance,
                           maxIter);
     }
@@ -324,7 +324,7 @@ MieGruneisenEOSEnergy::computeDensity(const double& rho_orig,
                                      // Needs to be resolved (TO DO)
       const double tolerance = 1.0e-3;
       const int maxIter = 100;
-      pFuncPtr pFunc = &MieGruneisenEOSEnergy::pCompression;
+      auto pFunc = &MieGruneisenEOSEnergy::pCompression;
       eta = findEtaRidder(pFunc, rho_orig, pressure, etamin, etamax, tolerance,
                           maxIter);
     } else {
@@ -332,7 +332,7 @@ MieGruneisenEOSEnergy::computeDensity(const double& rho_orig,
       double etamax = 0.0;
       const double tolerance = 1.0e-3;
       const int maxIter = 100;
-      pFuncPtr pFunc = &MieGruneisenEOSEnergy::pTension;
+      auto pFunc = &MieGruneisenEOSEnergy::pTension;
       eta = findEtaRidder(pFunc, rho_orig, pressure, etamin, etamax, tolerance,
                           maxIter);
     }
@@ -348,7 +348,7 @@ double
 MieGruneisenEOSEnergy::findEtaRidder(pFuncPtr pFunc, const double& rho_orig,
                                      const double& p0, double& etamin,
                                      double& etamax, const double& tolerance,
-                                     const int& maxIter)
+                                     const int& maxIter) const
 {
   double eta =
     1.0 - 1.0e-16; // Hardcoded to take care of machine precision issues
@@ -438,7 +438,7 @@ double
 MieGruneisenEOSEnergy::findEtaNewton(pFuncPtr pFunc, dpdJFuncPtr dpdJFunc,
                                      const double& rho_orig, const double& p0,
                                      const double& J0, const double& tolerance,
-                                     const int& maxIter)
+                                     const int& maxIter) const
 {
   double p = 0.0;
   double dp_dJ = 0.0;
@@ -481,7 +481,7 @@ MieGruneisenEOSEnergy::findEtaNewton(pFuncPtr pFunc, dpdJFuncPtr dpdJFunc,
 
 // Private method: Compute p for compressive volumetric deformations
 double
-MieGruneisenEOSEnergy::pCompression(const double& rho_orig, const double& eta)
+MieGruneisenEOSEnergy::pCompression(const double& rho_orig, const double& eta) const
 {
   // Calc eta^2 and eta^3
   double etaSq = eta * eta;
@@ -500,7 +500,7 @@ MieGruneisenEOSEnergy::pCompression(const double& rho_orig, const double& eta)
 // Private method: Compute dp/dJ for compressive volumetric deformations
 double
 MieGruneisenEOSEnergy::dpdJCompression(const double& rho_orig,
-                                       const double& eta)
+                                       const double& eta) const
 {
   // Calc eta^2 and eta^3
   double etaSq = eta * eta;
@@ -523,7 +523,7 @@ MieGruneisenEOSEnergy::dpdJCompression(const double& rho_orig,
 
 // Private method: Compute p for tensile volumetric deformations
 double
-MieGruneisenEOSEnergy::pTension(const double& rho_orig, const double& eta)
+MieGruneisenEOSEnergy::pTension(const double& rho_orig, const double& eta) const
 {
   // Calculate p
   double p = -rho_orig * d_const.C_0 * d_const.C_0 * eta / (1.0 - eta);
@@ -533,7 +533,7 @@ MieGruneisenEOSEnergy::pTension(const double& rho_orig, const double& eta)
 
 // Private method: Compute dp/dJ for tensile volumetric deformations
 double
-MieGruneisenEOSEnergy::dpdJTension(const double& rho_orig, const double& eta)
+MieGruneisenEOSEnergy::dpdJTension(const double& rho_orig, const double& eta) const
 {
   // Calculate dp/dJ
   double J = 1 - eta;

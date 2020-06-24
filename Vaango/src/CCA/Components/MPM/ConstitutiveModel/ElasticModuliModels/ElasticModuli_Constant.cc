@@ -65,7 +65,7 @@ ElasticModuli_Constant::getInitialElasticModuli() const
 }
 
 ElasticModuli
-ElasticModuli_Constant::getCurrentElasticModuli(const ModelStateBase*)
+ElasticModuli_Constant::getCurrentElasticModuli(const ModelStateBase*) const
 {
   return ElasticModuli(d_bulk, d_shear);
 }
@@ -80,4 +80,12 @@ ElasticModuli
 ElasticModuli_Constant::getElasticModuliUpperBound() const
 {
   return ElasticModuli(d_bulk, d_shear);
+}
+
+/*! Compute derivatives of moduli with respect to internal variables */
+std::vector<ElasticModuli> 
+ElasticModuli_Constant::computeDModuliDIntVar(const ModelStateBase* state) const
+{
+  std::vector<ElasticModuli> derivs;
+  return derivs;
 }

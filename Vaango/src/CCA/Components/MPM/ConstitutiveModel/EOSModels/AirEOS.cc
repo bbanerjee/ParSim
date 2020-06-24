@@ -91,7 +91,7 @@ AirEOS::computePressure(const Uintah::MPMMaterial* matl,
 
 // Compute pressure (option 1)
 double
-AirEOS::computePressure(const double& rho_orig, const double& rho_cur)
+AirEOS::computePressure(const double& rho_orig, const double& rho_cur) const
 {
   double J = rho_orig / rho_cur;
   double eps_v = (J > 1.0) ? 0.0 : -std::log(J);
@@ -138,30 +138,30 @@ AirEOS::eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
 
 // Compute bulk modulus
 double
-AirEOS::computeInitialBulkModulus()
+AirEOS::computeInitialBulkModulus() const
 {
-  d_bulkModulus = d_gamma * d_p0;
-  return d_bulkModulus;
+  double bulkModulus = d_gamma * d_p0;
+  return bulkModulus;
 }
 
 double
-AirEOS::computeBulkModulus(const double& pressure)
+AirEOS::computeBulkModulus(const double& pressure) const
 {
-  d_bulkModulus =
+  double bulkModulus =
     (pressure < 0.0) ? d_gamma * d_p0 : d_gamma * (pressure + d_p0);
-  return d_bulkModulus;
+  return bulkModulus;
 }
 
 double
-AirEOS::computeBulkModulus(const double& rho_orig, const double& rho_cur)
+AirEOS::computeBulkModulus(const double& rho_orig, const double& rho_cur) const
 {
   double p = computePressure(rho_orig, rho_cur);
-  d_bulkModulus = computeBulkModulus(p);
-  return d_bulkModulus;
+  double bulkModulus = computeBulkModulus(p);
+  return bulkModulus;
 }
 
 double
-AirEOS::computeBulkModulus(const ModelStateBase* state_input)
+AirEOS::computeBulkModulus(const ModelStateBase* state_input) const
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -175,8 +175,8 @@ AirEOS::computeBulkModulus(const ModelStateBase* state_input)
   */
 
   double p = state->pbar_w;
-  d_bulkModulus = computeBulkModulus(p);
-  return d_bulkModulus;
+  double bulkModulus = computeBulkModulus(p);
+  return bulkModulus;
 }
 
 // Compute strain energy

@@ -85,10 +85,8 @@ public:
   */
   /////////////////////////////////////////////////////////////////////////
   virtual ElasticModuli getInitialElasticModuli() const = 0;
-
-  // not const modifies d_bulk
   virtual 
-  ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) = 0; 
+  ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) const = 0; 
 
   virtual ElasticModuli getElasticModuliLowerBound() const = 0;
   virtual ElasticModuli getElasticModuliUpperBound() const = 0;
@@ -105,6 +103,10 @@ public:
     return std::make_pair(ElasticModuli(0, 0), ElasticModuli(0, 0));
   }
 
+  /*! Compute derivatives of moduli with respect to internal variables */
+  virtual std::vector<ElasticModuli> 
+  computeDModuliDIntVar(const ModelStateBase* state) const = 0;
+
   /////////////////////////////////////////////////////////////////////////
   /*!
     \brief For partially saturated materials, get the drained and
@@ -113,10 +115,10 @@ public:
   /////////////////////////////////////////////////////////////////////////
   virtual void computeDrainedModuli(const double& I1_bar,
                                     const double& ev_p_bar, double& KK,
-                                    double& GG){};
+                                    double& GG) const {};
   virtual void computePartialSaturatedModuli(
     const double& I1_eff_bar, const double& pw_bar, const double& ev_p_bar,
-    const double& phi, const double& S_w, double& KK, double& GG){};
+    const double& phi, const double& S_w, double& KK, double& GG) const {};
 };
 } // End namespace Uintah
 

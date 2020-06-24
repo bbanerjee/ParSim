@@ -143,7 +143,7 @@ ElasticModuli_Arena::getInitialElasticModuli() const
 }
 
 ElasticModuli
-ElasticModuli_Arena::getCurrentElasticModuli(const ModelStateBase* state_input)
+ElasticModuli_Arena::getCurrentElasticModuli(const ModelStateBase* state_input) const
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -209,7 +209,7 @@ ElasticModuli_Arena::getCurrentElasticModuli(const ModelStateBase* state_input)
 void
 ElasticModuli_Arena::computeDrainedModuli(const double& I1_eff_bar,
                                           const double& ev_p_bar, double& KK,
-                                          double& GG)
+                                          double& GG) const
 {
   if (I1_eff_bar > 0.0) { // Compressive mean stress
 
@@ -278,7 +278,7 @@ ElasticModuli_Arena::computeDrainedModuli(const double& I1_eff_bar,
 void
 ElasticModuli_Arena::computePartialSaturatedModuli(
   const double& I1_eff_bar, const double& pw_bar, const double& ev_p_bar,
-  const double& phi, const double& S_w, double& KK, double& GG)
+  const double& phi, const double& S_w, double& KK, double& GG) const
 {
   if (I1_eff_bar > 0.0) { // Compressive mean stress
 
@@ -319,4 +319,12 @@ ElasticModuli_Arena::computePartialSaturatedModuli(
   }
 
   return;
+}
+
+/*! Compute derivatives of moduli with respect to internal variables */
+std::vector<ElasticModuli> 
+ElasticModuli_Arena::computeDModuliDIntVar(const ModelStateBase* state) const
+{
+  std::vector<ElasticModuli> derivs;
+  return derivs;
 }

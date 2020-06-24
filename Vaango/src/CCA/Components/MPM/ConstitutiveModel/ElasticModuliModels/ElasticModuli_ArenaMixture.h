@@ -107,21 +107,21 @@ private:
 
   void computeDrainedModuli(
     const double& I1_eff_bar, const double& ev_p_bar, double& KK,
-    double& GG) override; // not const: modifies d_bulk in PressureModel
+    double& GG) const override;
 
   void computePartialSaturatedModuli(
     const double& I1_eff_bar, const double& pw_bar, const double& ev_p_bar,
     const double& phi, const double& S_w, double& KK,
-    double& GG) override; // not const: modifies d_bulk in PressureModel
+    double& GG) const override;
 
   void computeDrainedModuli(
     int phase, const double& I1_eff_bar, const double& ev_p_bar, double& KK,
-    double& GG); // not const: modifies d_bulk in PressureModel
+    double& GG) const;
 
   void computePartialSaturatedModuli(
     int phase, const double& I1_eff_bar, const double& pw_bar,
     const double& ev_p_bar, const double& phi, const double& S_w, double& KK,
-    double& GG); // not const: modifies d_bulk in PressureModel
+    double& GG) const;
 
   ElasticModuli_ArenaMixture& operator=(const ElasticModuli_ArenaMixture& smm);
 
@@ -162,7 +162,7 @@ public:
 
   /*! Compute the elasticity */
   ElasticModuli getInitialElasticModuli() const override;
-  ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) override;
+  ElasticModuli getCurrentElasticModuli(const ModelStateBase* state) const override;
 
   ElasticModuli getElasticModuliLowerBound() const override
   {
@@ -173,6 +173,9 @@ public:
     return ElasticModuli(std::numeric_limits<double>::max(),
                          std::numeric_limits<double>::max());
   }
+
+  /*! Compute derivatives of moduli with respect to internal variables */
+  std::vector<ElasticModuli> computeDModuliDIntVar(const ModelStateBase* state) const override;
 };
 } // End namespace Uintah
 

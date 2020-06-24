@@ -25,7 +25,10 @@
 #ifndef __ISOTROPIC_NONLINEAR_HYPOELASTICITY_MODEL_H__
 #define __ISOTROPIC_NONLINEAR_HYPOELASTICITY_MODEL_H__
 
+#include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/DeformationState.h>
 #include <Core/ProblemSpec/ProblemSpec.h>
 
 namespace Vaango {
@@ -41,34 +44,33 @@ class IsoNonlinHypoelastic
 
 public:
 
-  IsoNonlinHypoElastic();
-  IsoNonlinHypoelastic(const ElasticModuliModel* elastic);
-  IsoNonlinHypoelastic(const PressureModel* pressure,
-                       const ShearModulusModel* shear);
-  IsoNonlinHypoelastic(const MPMEquationOfState* eos,
-                       const ShearModulusModel* shear);
-  IsoNonlinHypoElastic(const IsoNonlinHypoelastic& model) = delete;
+  IsoNonlinHypoelastic();
+  IsoNonlinHypoelastic(const ElasticModuliModel* elastic,
+                       const InternalVariableModel* intvar);
+  IsoNonlinHypoelastic(const IsoNonlinHypoelastic& model) = delete;
   IsoNonlinHypoelastic&
   operator=(const IsoNonlinHypoelastic& model) = delete;
 
-  virtual ~IsoNonlinHypoelastic();
+  virtual ~IsoNonlinHypoelastic() = default;
 
   Uintah::Matrix3
-  computeStress(const Matrix3& deformRate,
-                const ModelStateBase* state); 
+  computeStress(double delT,
+                const Uintah::Matrix3& stress_old,
+                const Uintah::DeformationState* deformState,
+                const ModelStateBase* modelState); 
 
-  Uintah::Matrix3
-  computeDStressDIntVar(const InternalVariableModel* intvar,
-                        const ModelStateBase* state);
+  std::vector<Uintah::Matrix3>
+  computeDStressDIntVar(double delT,
+                        const std::vector<Uintah::Matrix3>& derivStress_old,
+                        const Uintah::DeformationState* deformState,
+                        const ModelStateBase* modelState);
 
 private:
 
-  ElasticModuliModel* d_elastic;
-  PressureModel* d_pressure;
-  MPMEquationOfState* d_eos;
-  ShearModulusModel* d_shear;
+  const ElasticModuliModel* d_elastic;
+  const InternalVariableModel* d_intvar;
 
 };
-} // End namespace Uintah
+} // End namespace Vaango
 
 #endif // __ISOTROPIC_NONLINEAR_HYPOELASTICITY_MODEL_H__

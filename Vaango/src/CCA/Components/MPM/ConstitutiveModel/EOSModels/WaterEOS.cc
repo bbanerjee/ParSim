@@ -94,7 +94,7 @@ WaterEOS::computePressure(const Uintah::MPMMaterial* matl,
 
 // Compute pressure (option 1)
 double
-WaterEOS::computePressure(const double& rho_orig, const double& rho_cur)
+WaterEOS::computePressure(const double& rho_orig, const double& rho_cur) const
 {
   double J = rho_orig / rho_cur;
   double p = (J > 1.0) ? d_p0 : d_p0 + d_K0 / d_n * (std::pow(J, -d_n) - 1);
@@ -144,29 +144,29 @@ WaterEOS::eval_dp_dJ(const Uintah::MPMMaterial* matl, const double& detF,
 
 // Compute bulk modulus
 double
-WaterEOS::computeInitialBulkModulus()
+WaterEOS::computeInitialBulkModulus() const
 {
   return d_K0;
 }
 
 double
-WaterEOS::computeBulkModulus(const double& pressure)
+WaterEOS::computeBulkModulus(const double& pressure) const
 {
-  d_bulkModulus = (pressure < d_p0) ? d_K0 : d_K0 + d_n * (pressure - d_p0);
-  return d_bulkModulus;
+  double bulkModulus = (pressure < d_p0) ? d_K0 : d_K0 + d_n * (pressure - d_p0);
+  return bulkModulus;
 }
 
 double
 WaterEOS::computeBulkModulus(const double& rho_orig,
-                                   const double& rho_cur)
+                                   const double& rho_cur) const
 {
   double p = computePressure(rho_orig, rho_cur);
-  d_bulkModulus = computeBulkModulus(p);
-  return d_bulkModulus;
+  double bulkModulus = computeBulkModulus(p);
+  return bulkModulus;
 }
 
 double
-WaterEOS::computeBulkModulus(const ModelStateBase* state_input)
+WaterEOS::computeBulkModulus(const ModelStateBase* state_input) const
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -180,8 +180,8 @@ WaterEOS::computeBulkModulus(const ModelStateBase* state_input)
   */
 
   double p = state->pbar_w;
-  d_bulkModulus = computeBulkModulus(p);
-  return d_bulkModulus;
+  double bulkModulus = computeBulkModulus(p);
+  return bulkModulus;
 }
 
 // Compute strain energy

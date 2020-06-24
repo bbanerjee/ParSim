@@ -96,7 +96,7 @@ public:
                          const Uintah::Matrix3& rateOfDeformation,
                          const double& delT) override;
   double computePressure(const double& rho_orig,
-                         const double& rho_cur) override;
+                         const double& rho_cur) const override;
   void computePressure(const double& rho_orig, const double& rho_cur,
                        double& pressure, double& dp_drho,
                        double& csquared) override;
@@ -107,15 +107,15 @@ public:
                     const ModelStateBase* state) override;
 
   // Compute bulk modulus
-  double computeInitialBulkModulus() override;
+  double computeInitialBulkModulus() const override;
   double getInitialBulkModulus() const;
-  double computeBulkModulus(const double& pressure);
+  double computeBulkModulus(const double& pressure) const;
   double computeBulkModulus(const double& rho_orig,
-                            const double& rho_cur) override;
-  double computeBulkModulus(const ModelStateBase* state) override;
+                            const double& rho_cur) const override;
+  double computeBulkModulus(const ModelStateBase* state) const override;
 
   // Compute pressure derivative of bulk modulus
-  inline double computeDerivBulkModulusPressure(const double& pressure)
+  inline double computeDerivBulkModulusPressure(const double& pressure) const
   {
     return d_n;
   }

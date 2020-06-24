@@ -94,7 +94,7 @@ GraniteEOS::computePressure(const Uintah::MPMMaterial* matl,
 
 // Compute pressure (option 1)
 double
-GraniteEOS::computePressure(const double& rho_orig, const double& rho_cur)
+GraniteEOS::computePressure(const double& rho_orig, const double& rho_cur) const
 {
   double J = rho_orig / rho_cur;
   double p = d_p0 + d_K0 / d_n * (std::pow(J, -d_n) - 1);
@@ -138,10 +138,9 @@ GraniteEOS::eval_dp_dJ(const Uintah::MPMMaterial* matl,
 
 // Compute bulk modulus
 double
-GraniteEOS::computeInitialBulkModulus()
+GraniteEOS::computeInitialBulkModulus() const
 {
-  d_bulkModulus = d_K0;
-  return d_bulkModulus;
+  return getInitialBulkModulus();
 }
 
 double
@@ -151,26 +150,26 @@ GraniteEOS::getInitialBulkModulus() const
 }
 
 double
-GraniteEOS::computeBulkModulus(const double& pressure)
+GraniteEOS::computeBulkModulus(const double& pressure) const
 {
-  d_bulkModulus = d_K0;
+  double bulkModulus = d_K0;
   if (pressure > 0.0) {
-    d_bulkModulus += d_n * (pressure - d_p0);
+    bulkModulus += d_n * (pressure - d_p0);
   }
-  return d_bulkModulus;
+  return bulkModulus;
 }
 
 double
 GraniteEOS::computeBulkModulus(const double& rho_orig,
-                                     const double& rho_cur)
+                                     const double& rho_cur) const
 {
   double p = computePressure(rho_orig, rho_cur);
-  d_bulkModulus = computeBulkModulus(p);
-  return d_bulkModulus;
+  double bulkModulus = computeBulkModulus(p);
+  return bulkModulus;
 }
 
 double
-GraniteEOS::computeBulkModulus(const ModelStateBase* state_input)
+GraniteEOS::computeBulkModulus(const ModelStateBase* state_input) const
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -184,8 +183,8 @@ GraniteEOS::computeBulkModulus(const ModelStateBase* state_input)
   */
 
   double p = -state->I1_eff / 3.0;
-  d_bulkModulus = computeBulkModulus(p);
-  return d_bulkModulus;
+  double bulkModulus = computeBulkModulus(p);
+  return bulkModulus;
 }
 
 // Compute strain energy

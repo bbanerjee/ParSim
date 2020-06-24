@@ -97,7 +97,7 @@ HyperElasticEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
 
 // Compute pressure (option 1)
 double
-HyperElasticEOS::computePressure(const double& rho_orig, const double& rho_cur)
+HyperElasticEOS::computePressure(const double& rho_orig, const double& rho_cur) const
 {
   double J = rho_orig / rho_cur;
   double p = 0.5 * d_bulkModulus * (J - 1.0 / J);
@@ -119,14 +119,14 @@ HyperElasticEOS::computePressure(const double& rho_orig, const double& rho_cur,
 
 // Compute bulk modulus
 double 
-HyperElasticEOS::computeInitialBulkModulus()
+HyperElasticEOS::computeInitialBulkModulus() const
 {
   return computeBulkModulus(1.0, 1.0);
 }
 
 double
 HyperElasticEOS::computeBulkModulus(const double& rho_orig,
-                                    const double& rho_cur)
+                                    const double& rho_cur) const
 {
   double J = rho_orig / rho_cur;
   double bulk = 0.5 * d_bulkModulus * (1.0 + 1.0 / (J * J));
@@ -134,7 +134,7 @@ HyperElasticEOS::computeBulkModulus(const double& rho_orig,
 }
 
 double 
-HyperElasticEOS::computeBulkModulus(const ModelStateBase* state)
+HyperElasticEOS::computeBulkModulus(const ModelStateBase* state) const
 {
   return computeBulkModulus(state->initialDensity, state->density);
 }

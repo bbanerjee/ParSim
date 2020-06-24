@@ -155,7 +155,7 @@ BorjaEOS::setInitialBulkModulus()
 
 // Compute incremental bulk modulus
 double
-BorjaEOS::computeBulkModulus(const ModelStateBase* state_input)
+BorjaEOS::computeBulkModulus(const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
     static_cast<const ModelState_CamClay*>(state_input);
@@ -210,7 +210,7 @@ BorjaEOS::computeIsentropicTemperatureRate(const double, const double,
 //   Assume epse_s = 0 for coupling purposes until the interface can be made
 //   more general.
 double
-BorjaEOS::computePressure(const double& rho_orig, const double& rho_cur)
+BorjaEOS::computePressure(const double& rho_orig, const double& rho_cur) const
 {
   // Calculate epse_v
   double epse_v = rho_orig / rho_cur - 1.0;
@@ -248,7 +248,7 @@ BorjaEOS::computePressure(const double& rho_orig, const double& rho_cur,
 // For the purposes of coupling to MPMICE we assume that epse_s = 0
 // and epse_v = J - 1
 double
-BorjaEOS::computeInitialBulkModulus()
+BorjaEOS::computeInitialBulkModulus() const
 {
   double K = evalDpDepse_v(0.0, 0.0);
   return K;
@@ -256,7 +256,7 @@ BorjaEOS::computeInitialBulkModulus()
 
 double
 BorjaEOS::computeBulkModulus(const double& rho_orig,
-                                   const double& rho_cur)
+                                   const double& rho_cur) const
 {
   // Calculate epse_v
   double epse_v = rho_orig / rho_cur - 1.0;

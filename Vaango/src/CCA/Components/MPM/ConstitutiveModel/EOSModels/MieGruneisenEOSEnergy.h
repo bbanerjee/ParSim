@@ -94,7 +94,7 @@ public:
 
   // Compute pressure (option 1)
   double computePressure(const double& rho_orig,
-                         const double& rho_cur) override;
+                         const double& rho_cur) const override;
 
   // Compute pressure (option 2)
   void computePressure(const double& rho_orig, const double& rho_cur,
@@ -102,10 +102,10 @@ public:
                        double& csquared) override;
 
   // Compute bulk modulus
-  double computeInitialBulkModulus() override;
+  double computeInitialBulkModulus() const override;
   double computeBulkModulus(const double& rho_orig,
-                            const double& rho_cur) override;
-  double computeBulkModulus(const ModelStateBase* state) override;
+                            const double& rho_cur) const override;
+  double computeBulkModulus(const ModelStateBase* state) const override;
 
   // Compute strain energy
   double computeStrainEnergy(const ModelStateBase* state) override;
@@ -130,32 +130,32 @@ private:
   double eval_dp_dJ(double rho_0, double rho) const;
 
   typedef double (MieGruneisenEOSEnergy::*pFuncPtr)(const double&,
-                                                    const double&);
+                                                    const double&) const;
   typedef double (MieGruneisenEOSEnergy::*dpdJFuncPtr)(const double&,
-                                                       const double&);
+                                                       const double&) const;
 
   // Find root of p(eta) - p0 = 0 using Ridder's method
   double findEtaRidder(pFuncPtr pFunc, const double& rho_orig, const double& p0,
                        double& etamin, double& etamax, const double& tolerance,
-                       const int& maxIter);
+                       const int& maxIter) const;
 
   // Find root of p(eta) - p0 = 0 using Newton's method
-  double findEtaNewton(pFuncPtr pFunc, dpdJFuncPtr dpdJFunc,
+  double findEtaNewton(pFuncPtr pFunc, const dpdJFuncPtr dpdJFunc,
                        const double& rho_orig, const double& p0,
                        const double& J0, const double& tolerance,
-                       const int& maxIter);
+                       const int& maxIter) const;
 
   // Compute p for compressive volumetric deformations
-  double pCompression(const double& rho_orig, const double& eta);
+  double pCompression(const double& rho_orig, const double& eta) const;
 
   // Compute dp/dJ for compressive volumetric deformations
-  double dpdJCompression(const double& rho_orig, const double& eta);
+  double dpdJCompression(const double& rho_orig, const double& eta) const;
 
   // Compute p for tensile volumetric deformations
-  double pTension(const double& rho_orig, const double& eta);
+  double pTension(const double& rho_orig, const double& eta) const;
 
   // Compute dp/dJ for tensile volumetric deformations
-  double dpdJTension(const double& rho_orig, const double& eta);
+  double dpdJTension(const double& rho_orig, const double& eta) const;
 
 private:
   CMData d_const;

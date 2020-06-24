@@ -38,6 +38,7 @@ SET(MPM_ConstitutiveModel_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/HypoElastic.cc                
   ${CMAKE_CURRENT_SOURCE_DIR}/HypoElasticFracture.cc                
   ${CMAKE_CURRENT_SOURCE_DIR}/HypoElasticImplicit.cc        
+  ${CMAKE_CURRENT_SOURCE_DIR}/IsoNonlinHypoelastic.cc        
   ${CMAKE_CURRENT_SOURCE_DIR}/PolarOrthotropicHypoElastic.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/TransIsoHyper.cc              
   ${CMAKE_CURRENT_SOURCE_DIR}/TransIsoHyperImplicit.cc      

@@ -84,7 +84,7 @@ public:
       (option 1)*/
   ////////////////////////////////////////////////////////////////////////
   double
-  computePressure(const double& rho_orig, const double& rho_cur)
+  computePressure(const double& rho_orig, const double& rho_cur) const
   {
     return derived()->l_computePressure(rho_orig, rho_cur);
   }

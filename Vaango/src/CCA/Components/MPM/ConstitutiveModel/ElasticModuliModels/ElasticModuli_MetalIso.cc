@@ -139,9 +139,17 @@ ElasticModuli_MetalIso::getElasticModuliLowerBound() const
 }
 
 ElasticModuli
-ElasticModuli_MetalIso::getCurrentElasticModuli(const ModelStateBase* state)
+ElasticModuli_MetalIso::getCurrentElasticModuli(const ModelStateBase* state) const
 {
   double Km = d_eos->computeBulkModulus(state);
   double Gm = d_shear->computeShearModulus(state);
   return ElasticModuli(Km, Gm);
+}
+
+/*! Compute derivatives of moduli with respect to internal variables */
+std::vector<ElasticModuli> 
+ElasticModuli_MetalIso::computeDModuliDIntVar(const ModelStateBase* state) const
+{
+  std::vector<ElasticModuli> derivs;
+  return derivs;
 }

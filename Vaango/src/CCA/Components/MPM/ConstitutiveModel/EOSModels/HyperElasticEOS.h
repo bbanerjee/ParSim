@@ -84,7 +84,7 @@ public:
 
   // Compute pressure (option 1)
   double computePressure(const double& rho_orig,
-                         const double& rho_cur) override;
+                         const double& rho_cur) const override;
 
   // Compute pressure (option 2)
   void computePressure(const double& rho_orig, const double& rho_cur,
@@ -92,10 +92,10 @@ public:
                        double& csquared) override;
 
   // Compute bulk modulus
-  double computeInitialBulkModulus() override;
+  double computeInitialBulkModulus() const override;
   double computeBulkModulus(const double& rho_orig,
-                            const double& rho_cur) override;
-  double computeBulkModulus(const ModelStateBase* state) override;
+                            const double& rho_cur) const override;
+  double computeBulkModulus(const ModelStateBase* state) const override;
 
   // Compute strain energy
   double computeStrainEnergy(const ModelStateBase* state) override;

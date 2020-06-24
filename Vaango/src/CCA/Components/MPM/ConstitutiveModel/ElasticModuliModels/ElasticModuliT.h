@@ -92,9 +92,8 @@ public:
     return derived()->l_getInitialElasticModuli();
   }
 
-  // not const modifies d_bulk
   ElasticModuli
-  getCurrentElasticModuli(const StateT* state)
+  getCurrentElasticModuli(const StateT* state) const
   {
     return derived()->l_getCurrentElasticModuli(state);
   }
@@ -121,6 +120,13 @@ public:
   getElasticModuliAndDerivatives(const StateT* state) const
   {
     return derived()->l_getElasticModuliAndDerivatives(state);
+  }
+
+  /*! Compute derivatives of moduli with respect to internal variables */
+  std::vector<ElasticModuli> 
+  computeDModuliDIntVar(const ModelStateBase* state) const
+  {
+    return derived()->l_computeDModuliDIntVar(state);
   }
 
   /////////////////////////////////////////////////////////////////////////

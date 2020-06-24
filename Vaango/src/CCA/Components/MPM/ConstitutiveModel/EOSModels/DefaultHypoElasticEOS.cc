@@ -100,7 +100,7 @@ DefaultHypoElasticEOS::eval_dp_dJ(const MPMMaterial* matl, const double& detF,
 //   with deformation)
 double
 DefaultHypoElasticEOS::computePressure(const double& rho_orig,
-                                       const double& rho_cur)
+                                       const double& rho_cur) const
 {
   if (d_bulkModulus < 0.0) {
     throw ParameterNotFound(
@@ -136,20 +136,20 @@ DefaultHypoElasticEOS::computePressure(const double& rho_orig,
 
 // Compute bulk modulus
 double 
-DefaultHypoElasticEOS::computeInitialBulkModulus()
+DefaultHypoElasticEOS::computeInitialBulkModulus() const
 {
   return d_bulkModulus;
 }
 
 double
 DefaultHypoElasticEOS::computeBulkModulus(const double& rho_orig,
-                                          const double& rho_cur)
+                                          const double& rho_cur) const
 {
   return d_bulkModulus;
 }
 
 double 
-DefaultHypoElasticEOS::computeBulkModulus(const ModelStateBase* state)
+DefaultHypoElasticEOS::computeBulkModulus(const ModelStateBase* state) const
 {
   return d_bulkModulus;
 }

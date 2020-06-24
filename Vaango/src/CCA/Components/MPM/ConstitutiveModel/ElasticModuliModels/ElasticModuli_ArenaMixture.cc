@@ -213,7 +213,7 @@ ElasticModuli_ArenaMixture::getInitialElasticModuli() const
 
 ElasticModuli
 ElasticModuli_ArenaMixture::getCurrentElasticModuli(
-  const ModelStateBase* state_input)
+  const ModelStateBase* state_input) const
 {
   const ModelState_Arena* state =
     static_cast<const ModelState_Arena*>(state_input);
@@ -268,7 +268,7 @@ ElasticModuli_ArenaMixture::getCurrentElasticModuli(
 void
 ElasticModuli_ArenaMixture::computeDrainedModuli(const double& I1_eff_bar,
                                                  const double& ev_p_bar,
-                                                 double& K_mix, double& G_mix)
+                                                 double& K_mix, double& G_mix) const
 {
   double KK[2] = { 0.0, 0.0 };
   double GG[2] = { 0.0, 0.0 };
@@ -282,7 +282,7 @@ ElasticModuli_ArenaMixture::computeDrainedModuli(const double& I1_eff_bar,
 void
 ElasticModuli_ArenaMixture::computePartialSaturatedModuli(
   const double& I1_eff_bar, const double& pw_bar, const double& ev_p_bar,
-  const double& phi, const double& S_w, double& K_mix, double& G_mix)
+  const double& phi, const double& S_w, double& K_mix, double& G_mix) const
 {
   double KK[2] = { 0.0, 0.0 };
   double GG[2] = { 0.0, 0.0 };
@@ -299,7 +299,7 @@ void
 ElasticModuli_ArenaMixture::computeDrainedModuli(int phase,
                                                  const double& I1_eff_bar,
                                                  const double& ev_p_bar,
-                                                 double& KK, double& GG)
+                                                 double& KK, double& GG) const
 {
   if (I1_eff_bar > 0.0) { // Compressive mean stress
 
@@ -351,7 +351,7 @@ void
 ElasticModuli_ArenaMixture::computePartialSaturatedModuli(
   int phase, const double& I1_eff_bar, const double& pw_bar,
   const double& ev_p_bar, const double& phi, const double& S_w, double& KK,
-  double& GG)
+  double& GG) const
 {
   if (I1_eff_bar > 0.0) { // Compressive mean stress
 
@@ -385,4 +385,12 @@ ElasticModuli_ArenaMixture::computePartialSaturatedModuli(
   }
 
   return;
+}
+
+/*! Compute derivatives of moduli with respect to internal variables */
+std::vector<ElasticModuli> 
+ElasticModuli_ArenaMixture::computeDModuliDIntVar(const ModelStateBase* state) const
+{
+  std::vector<ElasticModuli> derivs;
+  return derivs;
 }
