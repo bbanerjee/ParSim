@@ -200,7 +200,7 @@ IsoHardeningFlow::computeFlowStress(const ModelStateBase* state, const double&,
 {
   //  double flowStress = d_CM.sigma_0 + d_CM.K*pAlpha[idx];
 
-  double flowStress = d_CM.sigma_0 + d_CM.K * state->plasticStrain;
+  double flowStress = d_CM.sigma_0 + d_CM.K * state->eqPlasticStrain;
   return flowStress;
 }
 
@@ -209,7 +209,7 @@ IsoHardeningFlow::computeEpdot(const ModelStateBase* state, const double&,
                                const double&, const MPMMaterial*,
                                const particleIndex)
 {
-  return state->plasticStrainRate;
+  return state->eqPlasticStrainRate;
 }
 
 void

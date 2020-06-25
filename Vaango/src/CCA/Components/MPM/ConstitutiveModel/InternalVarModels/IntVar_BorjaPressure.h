@@ -182,20 +182,19 @@ public:
   /*! \brief Compute the internal variable */
   template <typename T>
   void
-  evolveInternalVariable(const Uintah::VarLabel* label,
-                         Uintah::particleIndex pidx,
+  evolveInternalVariable(Uintah::particleIndex pidx,
                          const ModelStateBase* state,
                          Uintah::constParticleVariable<T>& var_old,
                          Uintah::ParticleVariable<T>& var);
   double
-  computeInternalVariable(const Uintah::VarLabel* label,
+  computeInternalVariable(const std::string& label,
                           const ModelStateBase* state) const override;
 
   // Compute derivative of internal variable with respect to volumetric
   // elastic strain
   double
   computeVolStrainDerivOfInternalVariable(
-    const Uintah::VarLabel* label,
+    const std::string& label,
     const ModelStateBase* state) const override;
 
   void

@@ -283,7 +283,7 @@ MTSFlow::computeFlowStress(const ModelStateBase* state, const double&,
                            const particleIndex)
 {
   // Calculate strain rate and incremental strain
-  // double edot = state->plasticStrainRate;
+  // double edot = state->eqPlasticStrainRate;
   double edot = state->strainRate;
   if (edot == 0.0)
     edot = 1.0e-7;
@@ -348,11 +348,11 @@ MTSFlow::computeFlowStress(const ModelStateBase* state, const double&,
     ostringstream desc;
     desc << " **ERROR** MTS Plasticity Model: Negative initial hardening rate! "
          << "\n";
-    desc << "     edot = " << edot << " ep = " << state->plasticStrain << "\n";
+    desc << "     edot = " << edot << " ep = " << state->eqPlasticStrain << "\n";
     desc << "     Tm = " << state->meltingTemp << " T = " << T << "\n";
     desc << "     mu = " << mu << " mu_0 = " << d_CM.mu_0 << "\n";
     desc << "     theta_0 = " << theta_0
-         << " epdot = " << state->plasticStrainRate << "\n";
+         << " epdot = " << state->eqPlasticStrainRate << "\n";
     throw InvalidValue(desc.str(), __FILE__, __LINE__);
   }
 
@@ -363,7 +363,7 @@ MTSFlow::computeFlowStress(const ModelStateBase* state, const double&,
 
   // Compute sigma_e (total)
   double sigma_e_old = 0.0;
-  double delEps = state->plasticStrain;
+  double delEps = state->eqPlasticStrain;
   double sigma_e = computeSigma_e(theta_0, sigma_es, sigma_e_old, delEps, 4);
 
   // Compute sigma_e (incremental)
@@ -480,7 +480,7 @@ MTSFlow::computeEpdot(const ModelStateBase* state, const double& delT,
   }
 
   // Calculate theta_0
-  // double edot = state->plasticStrainRate;
+  // double edot = state->eqPlasticStrainRate;
   double edot = state->strainRate;
   if (edot == 0.0)
     edot = 1.0e-7;
@@ -494,7 +494,7 @@ MTSFlow::computeEpdot(const ModelStateBase* state, const double& delT,
 
   // Compute sigma_e (total)
   double sigma_e_old = 0.0;
-  double delEps = state->plasticStrain;
+  double delEps = state->eqPlasticStrain;
   double sigma_e = computeSigma_e(theta_0, sigma_es, sigma_e_old, delEps, 4);
   // double sigma_e = pMTS[idx];
 
@@ -592,7 +592,7 @@ MTSFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                         const particleIndex idx)
 {
   // Get the state data
-  // double edot = state->plasticStrainRate;
+  // double edot = state->eqPlasticStrainRate;
   double edot = state->strainRate;
   if (edot == 0.0)
     edot = 1.0e-7;
@@ -634,7 +634,7 @@ MTSFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
 
   // Compute sigma_e (total)
   double sigma_e_old = 0.0;
-  double delEps = state->plasticStrain;
+  double delEps = state->eqPlasticStrain;
   double sigma_e = computeSigma_e(theta_0, sigma_es, sigma_e_old, delEps, 4);
 
   // Calculate X and FX
@@ -683,7 +683,7 @@ MTSFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
                                       const particleIndex)
 {
   // Get the state data
-  // double edot = state->plasticStrainRate;
+  // double edot = state->eqPlasticStrainRate;
   double edot = state->strainRate;
   if (edot == 0.0)
     edot = 1.0e-7;
@@ -731,7 +731,7 @@ MTSFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
 
   // Compute sigma_e (total)
   double sigma_e_old = 0.0;
-  double delEps = state->plasticStrain;
+  double delEps = state->eqPlasticStrain;
   double sigma_e = computeSigma_e(theta_0, sigma_es, sigma_e_old, delEps, 4);
 
   // double sigma_e = pMTS_new[idx];
@@ -810,7 +810,7 @@ MTSFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                      const particleIndex)
 {
   // Get the state data
-  // double edot = state->plasticStrainRate;
+  // double edot = state->eqPlasticStrainRate;
   double edot = state->strainRate;
   if (edot == 0.0)
     edot = 1.0e-7;
@@ -854,7 +854,7 @@ MTSFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
 
   // Compute sigma_e (total)
   double sigma_e_old = 0.0;
-  double delEps = state->plasticStrain;
+  double delEps = state->eqPlasticStrain;
   double sigma_e = computeSigma_e(theta_0, sigma_es, sigma_e_old, delEps, 4);
   // double sigma_e = pMTS_new[idx];
 
@@ -914,7 +914,7 @@ MTSFlow::evalDerivativeWRTSigmaE(const ModelStateBase* state,
                                  const particleIndex)
 {
   // Get the state data
-  // double edot = state->plasticStrainRate;
+  // double edot = state->eqPlasticStrainRate;
   double edot = state->strainRate;
   if (edot == 0.0)
     edot = 1.0e-7;

@@ -264,8 +264,7 @@ IntVar_Arena::addParticleState(std::vector<const VarLabel*>& from,
 
 template <>
 void
-IntVar_Arena::evolveInternalVariable(const Uintah::VarLabel* label,
-                                     Uintah::particleIndex pidx,
+IntVar_Arena::evolveInternalVariable(Uintah::particleIndex pidx,
                                      const ModelStateBase* state,
                                      Uintah::constParticleVariable<ArenaIntVar>& var_old,
                                      Uintah::ParticleVariable<ArenaIntVar>& var)
@@ -277,7 +276,7 @@ IntVar_Arena::evolveInternalVariable(const Uintah::VarLabel* label,
 //--------------------------------------------------------------------------------------
 double
 IntVar_Arena::computeInternalVariable(
-  const Uintah::VarLabel* label,
+  const std::string& label,
   const ModelStateBase* state_input) const
 {
   const ModelState_Arena* state =

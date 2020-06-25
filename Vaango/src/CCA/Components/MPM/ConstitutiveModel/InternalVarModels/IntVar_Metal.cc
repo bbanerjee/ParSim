@@ -41,20 +41,19 @@ using namespace Uintah;
 
 using MetalIntVar = Uintah::MetalIntVar;
 
-IntVar_Metal::IntVar_Metal(ProblemSpecP& ps,
-                           ShearModulusModel* shear,
-                           MPMEquationOfState* eos)
+IntVar_Metal::IntVar_Metal(ProblemSpecP& ps)
 {
   d_elastic = nullptr;
-  d_shear   = shear;
-  d_eos     = eos;
+  d_shear = nullptr;
+  d_eos = nullptr;
   initializeLocalMPMLabels();
 }
 
 IntVar_Metal::IntVar_Metal(const IntVar_Metal* cm)
 {
   d_elastic = cm->d_elastic;
-  d_shear   = cm->d_shear;
+  d_shear = cm->d_shear;
+  d_eos = cm->d_eos;
   initializeLocalMPMLabels();
 }
 
@@ -63,9 +62,9 @@ IntVar_Metal::initializeLocalMPMLabels()
 {
   auto type_d =
     Uintah::ParticleVariable<Uintah::MetalIntVar>::getTypeDescription();
-  pIntVarLabel = Uintah::VarLabel::create("p.intVarMetalPlastic", type_d);
+  pIntVarLabel = Uintah::VarLabel::create("p.intVarMetal", type_d);
   pIntVarLabel_preReloc =
-    Uintah::VarLabel::create("p.intVarMetalPlastic+", type_d);
+    Uintah::VarLabel::create("p.intVarMetal+", type_d);
 }
 
 IntVar_Metal::~IntVar_Metal()
@@ -78,7 +77,7 @@ void
 IntVar_Metal::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP int_var_ps = ps->appendChild("internal_variable_model");
-  int_var_ps->setAttribute("type", "elastic_plastic_hp");
+  int_var_ps->setAttribute("type", "metal_plasticity");
 }
 
 /* get internal variable labels */
@@ -121,12 +120,12 @@ IntVar_Metal::initializeInternalVariable(Uintah::ParticleSubset* pset,
 }
 
 void
-IntVar_Metal::initializeInternalVariable(const Patch* patch,
-                                         const MPMMaterial* matl,
+IntVar_Metal::initializeInternalVariable(const Patch* /*patch*/,
+                                         const MPMMaterial* /*matl*/,
                                          ParticleSubset* pset,
                                          DataWarehouse* new_dw,
-                                         MPMLabel* lb,
-                                         ParameterDict& params)
+                                         MPMLabel* /*lb*/,
+                                         ParameterDict& /*params*/)
 {
   initializeInternalVariable(pset, new_dw);
 }
@@ -146,12 +145,7 @@ IntVar_Metal::getInternalVariables(Uintah::ParticleSubset* pset,
                                    Uintah::DataWarehouse* old_dw,
                                    const double& dummy)
 {
-  Uintah::constParticleVariable<double> pIntVar;
-  old_dw->get(pIntVar, pIntVarLabel, pset);
-
   std::vector<Uintah::constParticleVariable<double>> pIntVars;
-  pIntVars.emplace_back(pIntVar);
-
   return pIntVars;
 }
 
@@ -191,7 +185,6 @@ IntVar_Metal::allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
 template <>
 void
 IntVar_Metal::evolveInternalVariable(
-  const Uintah::VarLabel* label,
   Uintah::particleIndex idx,
   const ModelStateBase* state,
   Uintah::constParticleVariable<MetalIntVar>& var_old,
@@ -204,9 +197,14 @@ IntVar_Metal::evolveInternalVariable(
 }
 
 double
-IntVar_Metal::computeInternalVariable(const Uintah::VarLabel* label,
-                                      const ModelStateBase* state_input) const
+IntVar_Metal::computeInternalVariable(const std::string& label,
+                                      const ModelStateBase* state) const
 {
+  if (label == "porosity") {
+    return computePlasticPorosity(state->porosity, state);
+  } else if (label == "eqPlasticStrain") {
+    return computeEqPlasticStrain(state->eqPlasticStrain, state);
+  }
   return 0.0;
 }
 
@@ -226,7 +224,7 @@ IntVar_Metal::computePlasticPorosity(double plasticPorosity_old,
 
 double
 IntVar_Metal::computeVolStrainDerivOfInternalVariable(
-  const Uintah::VarLabel* label,
+  const std::string& label,
   const ModelStateBase* state) const
 {
   return 0.0;

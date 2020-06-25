@@ -370,7 +370,7 @@ YieldCond_Gurson::eval_h_alpha(const Matrix3& xi,
   double phi = state->porosity;
   ASSERT(phi != 1);
   double p = state->pressure;
-  double trBetaHat = state->backStress->Trace();
+  double trBetaHat = state->backStress.Trace();
 
   Matrix3 One;
   One.Identity();
@@ -403,7 +403,7 @@ YieldCond_Gurson::eval_h_phi(const Matrix3& xi, const double& factorA,
 
   Matrix3 One;
   One.Identity();
-  double trBetaHat = state->backStress->Trace();
+  double trBetaHat = state->backStress.Trace();
   Matrix3 xi_hat = xi + One * (p - 1.0 / 3.0 * trBetaHat);
 
   double numer = xi_hat.Contract(dfdsigma);

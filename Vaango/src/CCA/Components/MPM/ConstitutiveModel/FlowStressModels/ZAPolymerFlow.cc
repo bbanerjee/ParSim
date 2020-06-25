@@ -100,8 +100,8 @@ ZAPolymerFlow::computeFlowStress(const ModelStateBase* state, const double&,
                                  const double&, const MPMMaterial*,
                                  const particleIndex idx)
 {
-  double epdot = state->plasticStrainRate;
-  double ep = state->plasticStrain;
+  double epdot = state->eqPlasticStrainRate;
+  double ep = state->eqPlasticStrain;
   double T = state->temperature;
   double P = -state->pressure;
 
@@ -150,8 +150,8 @@ ZAPolymerFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                               const particleIndex)
 {
   // Get the state data
-  double ep = state->plasticStrain;
-  double epdot = state->plasticStrainRate;
+  double ep = state->eqPlasticStrain;
+  double epdot = state->eqPlasticStrainRate;
   double T = state->temperature;
   double P = -state->pressure;
 
@@ -198,8 +198,8 @@ ZAPolymerFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                            const particleIndex)
 {
   // Get the state data
-  double ep = state->plasticStrain;
-  double epdot = state->plasticStrainRate;
+  double ep = state->eqPlasticStrain;
+  double epdot = state->eqPlasticStrainRate;
   double T = state->temperature;
   double P = -state->pressure;
 

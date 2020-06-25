@@ -46,9 +46,7 @@ public:
   const Uintah::VarLabel* pIntVarLabel_preReloc;
 
   /* constructors/destructor */
-  IntVar_Metal(Uintah::ProblemSpecP& ps,
-               ShearModulusModel* shear,
-               MPMEquationOfState* eos);
+  IntVar_Metal(Uintah::ProblemSpecP& ps);
   IntVar_Metal(const IntVar_Metal* cm);
   ~IntVar_Metal() override;
 
@@ -128,17 +126,16 @@ public:
   // Actually compute
   template <typename T>
   void
-  evolveInternalVariable(const Uintah::VarLabel* label,
-                         Uintah::particleIndex pidx,
+  evolveInternalVariable(Uintah::particleIndex pidx,
                          const ModelStateBase* state,
                          Uintah::constParticleVariable<T>& var_old,
                          Uintah::ParticleVariable<T>& var);
   double
-  computeInternalVariable(const Uintah::VarLabel* label,
+  computeInternalVariable(const std::string& label,
                           const ModelStateBase* state) const override;
 
   double
-  computeVolStrainDerivOfInternalVariable(const Uintah::VarLabel* label,
+  computeVolStrainDerivOfInternalVariable(const std::string& label,
                                           const ModelStateBase*) const override;
 
   /* For material conversion */

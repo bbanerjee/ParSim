@@ -100,8 +100,8 @@ ZAFlow::computeFlowStress(const ModelStateBase* state, const double&,
                           const double&, const MPMMaterial*,
                           const particleIndex idx)
 {
-  double epdot = state->plasticStrainRate;
-  double ep = state->plasticStrain;
+  double epdot = state->eqPlasticStrainRate;
+  double ep = state->eqPlasticStrain;
   double T = state->temperature;
   epdot = (epdot == 0.0) ? 1.0e-8 : epdot;
   ep = (ep < 0.0) ? 0.0 : ep;
@@ -131,7 +131,7 @@ ZAFlow::computeEpdot(const ModelStateBase* state, const double&,
                      const particleIndex)
 {
   double tau = state->yieldStress;
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
   double T = state->temperature;
   ep = (ep < 0.0) ? 0.0 : ep;
   T = (T < 0.0) ? 0.0 : T;
@@ -184,8 +184,8 @@ ZAFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                        const particleIndex)
 {
   // Get the state data
-  double ep = state->plasticStrain;
-  double epdot = state->plasticStrainRate;
+  double ep = state->eqPlasticStrain;
+  double epdot = state->eqPlasticStrainRate;
   double T = state->temperature;
   epdot = (epdot == 0.0) ? 1.0e-8 : epdot;
   ep = (ep <= 0.0) ? 1.0e-8 : ep;
@@ -223,8 +223,8 @@ ZAFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
                                      const particleIndex)
 {
   // Get the state data
-  double ep = state->plasticStrain;
-  double epdot = state->plasticStrainRate;
+  double ep = state->eqPlasticStrain;
+  double epdot = state->eqPlasticStrainRate;
   double T = state->temperature;
   epdot = (epdot == 0.0) ? 1.0e-8 : epdot;
   ep = (ep < 0.0) ? 0.0 : ep;
@@ -244,8 +244,8 @@ ZAFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                     const particleIndex)
 {
   // Get the state data
-  double ep = state->plasticStrain;
-  double epdot = state->plasticStrainRate;
+  double ep = state->eqPlasticStrain;
+  double epdot = state->eqPlasticStrainRate;
   double T = state->temperature;
   epdot = (epdot == 0.0) ? 1.0e-8 : epdot;
   ep = (ep < 0.0) ? 0.0 : ep;

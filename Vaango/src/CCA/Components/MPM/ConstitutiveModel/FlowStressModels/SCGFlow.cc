@@ -223,7 +223,7 @@ SCGFlow::computeFlowStress(const ModelStateBase* state, const double&,
                            const particleIndex)
 {
   // Get the state data
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
   double mu = state->shearModulus;
   ASSERT(mu > 0.0);
 
@@ -237,7 +237,7 @@ SCGFlow::computeFlowStress(const ModelStateBase* state, const double&,
 
   // Calculate the thermal part of the yield stress using
   // the Hoge and Mukherjee model
-  double epdot = state->plasticStrainRate;
+  double epdot = state->eqPlasticStrainRate;
   double T = state->temperature;
   double sigma_T = computeThermallyActivatedYieldStress(epdot, T, 1.0e-6);
 
@@ -378,7 +378,7 @@ SCGFlow::computeEpdot(const ModelStateBase* state, const double&,
 {
   // Get the needed data
   double tau = state->yieldStress;
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
   double T = state->temperature;
   double mu = state->shearModulus;
 
@@ -430,7 +430,7 @@ SCGFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                         const particleIndex)
 {
   // Get the state data
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
   double mu = state->shearModulus;
   ASSERT(mu > 0.0);
 
@@ -483,7 +483,7 @@ SCGFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
                                       const particleIndex)
 {
   // Get the state data
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
 
   // Calculate Y <= Ymax
   double Ya = 1.0 + d_CM.beta * (ep + d_CM.epsilon_p0);
@@ -498,7 +498,7 @@ SCGFlow::evalDerivativeWRTPressure(const ModelStateBase* state,
                                    const particleIndex)
 {
   // Get the state data
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
 
   // Calculate Y <= Ymax
   double Ya = 1.0 + d_CM.beta * (ep + d_CM.epsilon_p0);
@@ -544,7 +544,7 @@ SCGFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                      const particleIndex)
 {
   // Get the current state data
-  double epdot = state->plasticStrain;
+  double epdot = state->eqPlasticStrain;
   double T = state->temperature;
   double mu = state->shearModulus;
   double mu_0 = d_CM.mu_0;

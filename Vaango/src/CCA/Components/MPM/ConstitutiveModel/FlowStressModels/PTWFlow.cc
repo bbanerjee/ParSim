@@ -93,10 +93,10 @@ PTWFlow::computeFlowStress(const ModelStateBase* state, const double&,
                            const particleIndex idx)
 {
   // Retrieve plastic strain and strain rate
-  double epdot = state->plasticStrainRate;
+  double epdot = state->eqPlasticStrainRate;
   epdot = (epdot <= 0.0) ? 1.0e-8 : epdot;
 
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
 
   // Check if temperature is correct
   double T = state->temperature;
@@ -182,7 +182,7 @@ PTWFlow::computeEpdot(const ModelStateBase* state, const double& delT,
 {
   // Get the needed data
   double tau = state->yieldStress;
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
   double T = state->temperature;
   double Tm = state->meltingTemp;
   double That = T / Tm;
@@ -286,9 +286,9 @@ PTWFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                         const particleIndex)
 {
   // Retrieve plastic strain and strain rate
-  double epdot = state->plasticStrainRate;
+  double epdot = state->eqPlasticStrainRate;
   epdot = (epdot <= 0.0) ? 1.0e-8 : epdot;
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
 
   // Check if temperature is correct
   double T = state->temperature;
@@ -383,9 +383,9 @@ PTWFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
   // Get the state data
   double mu = state->shearModulus;
   double rho = state->density;
-  double epdot = state->plasticStrainRate;
+  double epdot = state->eqPlasticStrainRate;
   epdot = (epdot <= 0.0) ? 1.0e-8 : epdot;
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
   double T = state->temperature;
   double Tm = state->meltingTemp;
   double That = T / Tm;
@@ -452,9 +452,9 @@ PTWFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
   // Get the state data
   double mu = state->shearModulus;
   double rho = state->density;
-  double epdot = state->plasticStrainRate;
+  double epdot = state->eqPlasticStrainRate;
   epdot = (epdot <= 0.0) ? 1.0e-8 : epdot;
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
   double T = state->temperature;
   double Tm = state->meltingTemp;
   double That = T / Tm;

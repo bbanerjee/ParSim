@@ -24,13 +24,13 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/ViscoPlasticModels/ViscoPlastic.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheckFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ViscoPlasticModels/ViscoPlasticityModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheckFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoPlasticModels/ViscoPlastic.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ViscoPlasticModels/ViscoPlasticityModelFactory.h>
 #include <CCA/Components/MPM/GradientComputer/DisplacementGradientComputer.h>
 
 #include <CCA/Ports/DataWarehouse.h>
@@ -809,8 +809,8 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
       // Set up the PlasticityState
       auto state        = scinew ModelStateBase();
       state->strainRate = pStrainRate_new[idx];
-      //       state->plasticStrainRate = epdot;
-      //       state->plasticStrain = ep;
+      //       state->eqPlasticStrainRate = epdot;
+      //       state->eqPlasticStrain = ep;
       state->pressure            = pressure;
       state->temperature         = temperature;
       state->initialTemperature  = d_initialMaterialTemperature;
@@ -932,9 +932,9 @@ ViscoPlastic::computeStressTensor(const PatchSubset* patches,
           // Calculate total stress
           tensorSig = pStress[idx] + stressRate * delT;
 
-          state->plasticStrainRate = epdot;
-          pPlasticStrain_new[idx]  = pPlasticStrain[idx] + epdot * delT;
-          state->plasticStrain     = pPlasticStrain_new[idx];
+          state->eqPlasticStrainRate = epdot;
+          pPlasticStrain_new[idx]    = pPlasticStrain[idx] + epdot * delT;
+          state->eqPlasticStrain     = pPlasticStrain_new[idx];
 
           //      std::cout << "plasticStrain= " << pPlasticStrain_new[idx] << "
           //      \n";
@@ -1258,8 +1258,8 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
       //       Set up the PlasticityState
       auto state                 = scinew ModelStateBase();
       state->strainRate          = pStrainRate_new[idx];
-      state->plasticStrainRate   = 0.0;
-      state->plasticStrain       = pPlasticStrain[idx];
+      state->eqPlasticStrainRate = 0.0;
+      state->eqPlasticStrain     = pPlasticStrain[idx];
       state->pressure            = pressure;
       state->temperature         = pTemperature[idx];
       state->initialTemperature  = d_initialMaterialTemperature;
@@ -1352,14 +1352,14 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
 
           pPlasticStrain_new[idx] = pPlasticStrain[idx] + epdot * delT;
 
-          state->plasticStrainRate = epdot;
-          state->plasticStrain     = pPlasticStrain_new[idx];
+          state->eqPlasticStrainRate = epdot;
+          state->eqPlasticStrain     = pPlasticStrain_new[idx];
 
           //         Calculate rate of temperature increase due to plastic
           //         strain
           double taylorQuinney = 0.9;
-          double Tdot = flowStress * state->plasticStrainRate * taylorQuinney /
-                        (rho_cur * C_p);
+          double Tdot          = flowStress * state->eqPlasticStrainRate *
+                        taylorQuinney / (rho_cur * C_p);
           pdTdt[idx]               = Tdot;
           double dT                = Tdot * delT;
           pPlasticTempInc_new[idx] = dT;
@@ -1641,8 +1641,8 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
       // Set up the PlasticityState
       auto state                 = scinew ModelStateBase();
       state->strainRate          = pStrainRate_new;
-      state->plasticStrainRate   = 0.0;
-      state->plasticStrain       = pPlasticStrain[idx];
+      state->eqPlasticStrainRate = 0.0;
+      state->eqPlasticStrain     = pPlasticStrain[idx];
       state->pressure            = pressure;
       state->temperature         = pTemperature[idx];
       state->initialTemperature  = d_initialMaterialTemperature;
@@ -1713,8 +1713,8 @@ ViscoPlastic::computeStressTensorImplicit(const PatchSubset* patches,
         pStress_new[idx]        = pStress[idx] + stressRate * delT;
         pPlasticStrain_new[idx] = pPlasticStrain[idx] + epdot * delT;
 
-        state->plasticStrainRate = epdot;
-        state->plasticStrain     = pPlasticStrain_new[idx];
+        state->eqPlasticStrainRate = epdot;
+        state->eqPlasticStrain     = pPlasticStrain_new[idx];
 
         //         computeEPlasticTangentModulus(bulk, shear, delGamma,
         //         normTrialS,

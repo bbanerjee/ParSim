@@ -222,7 +222,6 @@ IntVar_SoilModelBrannonKappa::allocateAndPutRigid(
 template <>
 void
 IntVar_SoilModelBrannonKappa::evolveInternalVariable(
-  const Uintah::VarLabel* label,
   Uintah::particleIndex pidx,
   const ModelStateBase* state,
   Uintah::constParticleVariable<SoilBrannonIntVar>& var_old,
@@ -235,7 +234,7 @@ IntVar_SoilModelBrannonKappa::evolveInternalVariable(
 //--------------------------------------------------------------------------------------
 double
 IntVar_SoilModelBrannonKappa::computeInternalVariable(
-  const Uintah::VarLabel* label,
+  const std::string& label,
   const ModelStateBase* state_input) const
 {
   const ModelState_SoilModelBrannon* state =

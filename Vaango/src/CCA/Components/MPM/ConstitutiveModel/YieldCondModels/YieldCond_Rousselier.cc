@@ -77,10 +77,7 @@ double
 YieldCond_Rousselier::evalYieldCondition(const Uintah::Matrix3& xi,
                                          const ModelStateBase* state)
 {
-  Uintah::Matrix3 s_dev = xi;
-  if (state->backStress) {
-    s_dev = xi + *(state->backStress);
-  } 
+  Uintah::Matrix3 s_dev = xi + state->backStress;
 
   double phi = state->porosity;
   double sigma_f = state->yieldStress;
@@ -318,10 +315,7 @@ YieldCond_Rousselier::eval_h_phi(const Uintah::Matrix3& xi,
                                  const double& voidNucFac,
                                  const ModelStateBase* state)
 {
-  Uintah::Matrix3 s_dev = xi;
-  if (state->backStress) {
-    s_dev = xi + *(state->backStress);
-  } 
+  Uintah::Matrix3 s_dev = xi + state->backStress;
   Uintah::Matrix3 sigma = s_dev + Vaango::Util::Identity * state->pressure;
 
   Uintah::Matrix3 dfdsigma;

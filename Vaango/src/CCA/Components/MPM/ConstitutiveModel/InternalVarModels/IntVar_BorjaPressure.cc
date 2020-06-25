@@ -192,8 +192,7 @@ IntVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset,
 
 template <>
 void
-IntVar_BorjaPressure::evolveInternalVariable(const Uintah::VarLabel* label,
-                                             Uintah::particleIndex pidx,
+IntVar_BorjaPressure::evolveInternalVariable(Uintah::particleIndex pidx,
                                              const ModelStateBase* state,
                                              Uintah::constParticleVariable<BorjaIntVar>& var_old,
                                              Uintah::ParticleVariable<BorjaIntVar>& var)
@@ -204,7 +203,7 @@ IntVar_BorjaPressure::evolveInternalVariable(const Uintah::VarLabel* label,
 //  Compute the internal variable
 double
 IntVar_BorjaPressure::computeInternalVariable(
-  const Uintah::VarLabel* label,
+  const std::string& label,
   const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =
@@ -237,7 +236,7 @@ IntVar_BorjaPressure::computeInternalVariable(
 // elastic strain
 double
 IntVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
-  const Uintah::VarLabel*, 
+  const std::string& label,
   const ModelStateBase* state_input) const
 {
   const ModelState_CamClay* state =

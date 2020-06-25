@@ -24,19 +24,19 @@
  * IN THE SOFTWARE.
  */
 
-#include <Core/Math/Short27.h> //for Fracture
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ElasticPlasticHP.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DamageModels/DamageModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/DevStressModels/DevStressModelFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/FlowStressModels/FlowStressModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticModels/ElasticPlasticHP.h>
+#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MeltTempModels/MeltingTempModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/DeformationState.h>
+#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/SpecHeatModels/SpecificHeatModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/StabilityModels/StabilityCheckFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/J2PlasticSubmodels/YieldConditionFactory.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/DeformationState.h>
-#include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
+#include <Core/Math/Short27.h> //for Fracture
 
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
 #include <CCA/Ports/DataWarehouse.h>
@@ -119,7 +119,8 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
   if (tmp != "radialReturn" && tmp != "biswajit" && tmp != "empty") {
     ostringstream warn;
     warn << "ElasticPlasticHP:: Invalid plastic_convergence_algo option ("
-         << tmp << ") Valid options are: biswajit, radialReturn" << "\n";
+         << tmp << ") Valid options are: biswajit, radialReturn"
+         << "\n";
     throw ProblemSetupException(warn.str(), __FILE__, __LINE__);
   }
 
@@ -130,7 +131,8 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
     ostringstream desc;
     desc << "An error occured in the YieldConditionFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
-         << " Biswajit.  " << "\n";
+         << " Biswajit.  "
+         << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -143,7 +145,8 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
     ostringstream desc;
     desc << "An error occured in the FlowModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
-         << " Biswajit.  " << "\n";
+         << " Biswajit.  "
+         << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -152,7 +155,8 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
     ostringstream desc;
     desc << "An error occured in the DamageModelFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
-         << " Biswajit.  " << "\n";
+         << " Biswajit.  "
+         << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -162,28 +166,32 @@ ElasticPlasticHP::ElasticPlasticHP(ProblemSpecP& ps, MPMFlags* Mflag)
     ostringstream desc;
     desc << "An error occured in the EquationOfStateFactory that has \n"
          << " slipped through the existing bullet proofing. Please tell \n"
-         << " Jim.  " << "\n";
+         << " Jim.  "
+         << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
   d_shear = Vaango::ShearModulusModelFactory::create(ps);
   if (!d_shear) {
     ostringstream desc;
-    desc << "ElasticPlasticHP::Error in shear modulus model factory" << "\n";
+    desc << "ElasticPlasticHP::Error in shear modulus model factory"
+         << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
   d_melt = MeltingTempModelFactory::create(ps);
   if (!d_melt) {
     ostringstream desc;
-    desc << "ElasticPlasticHP::Error in melting temp model factory" << "\n";
+    desc << "ElasticPlasticHP::Error in melting temp model factory"
+         << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
   d_devStress = DevStressModelFactory::create(ps);
   if (!d_devStress) {
     ostringstream desc;
-    desc << "ElasticPlasticHP::Error creating deviatoric stress model" << "\n";
+    desc << "ElasticPlasticHP::Error creating deviatoric stress model"
+         << "\n";
     throw ParameterNotFound(desc.str(), __FILE__, __LINE__);
   }
 
@@ -895,8 +903,9 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       // Update the deformation gradient tensor to its time n+1 value.
       double J = pDeformGrad_new[idx].Determinant();
       if (!(J > 0.) || J > 1.e5) {
-        std::cerr << "**ERROR** Negative (or huge) Jacobian of deformation gradient."
-             << "  Deleting particle " << pParticleID[idx] << "\n";
+        std::cerr
+          << "**ERROR** Negative (or huge) Jacobian of deformation gradient."
+          << "  Deleting particle " << pParticleID[idx] << "\n";
         std::cerr << "l = " << tensorL[idx] << "\n";
         std::cerr << "F_old = " << pDeformGrad[idx] << "\n";
         std::cerr << "J_old = " << pDeformGrad[idx].Determinant() << "\n";
@@ -954,13 +963,13 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
       // Set up the ModelStateBase (for t_n+1)
       auto state = scinew ModelStateBase();
-      // state->plasticStrainRate = pStrainRate_new[idx];
-      // state->plasticStrain     = pPlasticStrain[idx];
-      // state->plasticStrainRate = sqrtTwoThird*tensorEta.Norm();
-      state->strainRate        = pStrainRate_new[idx];
-      state->plasticStrainRate = pPlasticStrainRate[idx];
-      state->plasticStrain =
-        pPlasticStrain[idx] + state->plasticStrainRate * delT;
+      // state->eqPlasticStrainRate = pStrainRate_new[idx];
+      // state->eqPlasticStrain     = pPlasticStrain[idx];
+      // state->eqPlasticStrainRate = sqrtTwoThird*tensorEta.Norm();
+      state->strainRate          = pStrainRate_new[idx];
+      state->eqPlasticStrainRate = pPlasticStrainRate[idx];
+      state->eqPlasticStrain =
+        pPlasticStrain[idx] + state->eqPlasticStrainRate * delT;
       state->pressure            = pressure;
       state->temperature         = temperature;
       state->initialTemperature  = d_initialMaterialTemperature;
@@ -1104,8 +1113,8 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
           if (doRadialReturn) {
 
             // Compute Stilde using Newton iterations a la Simo
-            state->plasticStrainRate = pStrainRate_new[idx];
-            state->plasticStrain     = pPlasticStrain[idx];
+            state->eqPlasticStrainRate = pStrainRate_new[idx];
+            state->eqPlasticStrain     = pPlasticStrain[idx];
             Matrix3 nn(0.0);
             computePlasticStateViaRadialReturn(
               trialS, delT, matl, idx, state, nn, delGamma);
@@ -1204,8 +1213,8 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
       } else {
 
         // Update the plastic strain
-        pPlasticStrain_new[idx]     = state->plasticStrain;
-        pPlasticStrainRate_new[idx] = state->plasticStrainRate;
+        pPlasticStrain_new[idx]     = state->eqPlasticStrain;
+        pPlasticStrainRate_new[idx] = state->eqPlasticStrainRate;
 
         /*
         if (pPlasticStrainRate_new[idx] > pStrainRate_new[idx]) {
@@ -1217,8 +1226,8 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
 
         // Update the porosity
         if (d_evolvePorosity) {
-          pPorosity_new[idx] =
-            updatePorosity(tensorD, delT, pPorosity[idx], state->plasticStrain);
+          pPorosity_new[idx] = updatePorosity(
+            tensorD, delT, pPorosity[idx], state->eqPlasticStrain);
         } else {
           pPorosity_new[idx] = pPorosity[idx];
         }
@@ -1226,7 +1235,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
         // Calculate the updated scalar damage parameter
         if (d_evolveDamage) {
           pDamage_new[idx] =
-            d_damage->computeScalarDamage(state->plasticStrainRate,
+            d_damage->computeScalarDamage(state->eqPlasticStrainRate,
                                           sigma,
                                           temperature,
                                           delT,
@@ -1241,7 +1250,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
         double fac           = taylorQuinney / (rho_cur * state->specificHeat);
 
         // Calculate Tdot (internal plastic heating rate)
-        double Tdot_PW = state->yieldStress * state->plasticStrainRate * fac;
+        double Tdot_PW = state->yieldStress * state->eqPlasticStrainRate * fac;
 
         pdTdt[idx] += Tdot_PW;
       }
@@ -1286,7 +1295,7 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
             else {
               double dsigYdep =
                 d_flow->evalDerivativeWRTPlasticStrain(state, idx);
-              double A = voidNucleationFactor(state->plasticStrain);
+              double A = voidNucleationFactor(state->eqPlasticStrain);
 
               // Calculate the elastic tangent modulus
               TangentModulusTensor Ce;
@@ -1418,7 +1427,8 @@ ElasticPlasticHP::computeStressTensor(const PatchSubset* patches,
   }
 
   if (cout_EP.active())
-    cout_EP << getpid() << "... End." << "\n";
+    cout_EP << getpid() << "... End."
+            << "\n";
 }
 
 //______________________________________________________________________
@@ -1474,7 +1484,7 @@ ElasticPlasticHP::computePlasticStateBiswajit(
 
   // Alternative calculation of gammadotplus
   // double gammadotplus =
-  // sqrtThreeTwo*sqrtqs/sqrtqq*state->plasticStrainRate;
+  // sqrtThreeTwo*sqrtqs/sqrtqq*state->eqPlasticStrainRate;
   // gammadotplus = (gammadotplus < 0.0) ? 0.0 : gammadotplus;
 
   //__________________________________
@@ -1494,7 +1504,7 @@ ElasticPlasticHP::computePlasticStateBiswajit(
     double dStar = (-BB + sqrt(term1)) / (2.0 * AA);
 
     // Calculate delGammaEr
-    // state->plasticStrainRate =
+    // state->eqPlasticStrainRate =
     //  (sqrtTwoThird*sqrtqq*gammadotplus)/sqrtqs;
     // state->yieldStress = d_flow->computeFlowStress(state, delT,
     //                                                  d_tol, matl,
@@ -1510,9 +1520,9 @@ ElasticPlasticHP::computePlasticStateBiswajit(
       double epdot = (sqrtTwoThird * sqrtqq * delGamma) / (sqrtqs * delT);
       if (epdot <= pStrainRate[idx]) {
 
-        state->plasticStrainRate = epdot;
-        state->plasticStrain =
-          pPlasticStrain[idx] + state->plasticStrainRate * delT;
+        state->eqPlasticStrainRate = epdot;
+        state->eqPlasticStrain =
+          pPlasticStrain[idx] + state->eqPlasticStrainRate * delT;
 
         state->yieldStress =
           d_flow->computeFlowStress(state, delT, d_tol, matl, idx);
@@ -1530,8 +1540,8 @@ ElasticPlasticHP::computePlasticStateBiswajit(
         double delLambda = sqrtqq*delGamma/sqrtqs;
         std::cout << "idx = " << idx << " delGamma = " << delLambda
              << " sigy = " << state->yieldStress
-             << " epdot = " << state->plasticStrainRate
-             << " ep = " << state->plasticStrain << "\n";
+             << " epdot = " << state->eqPlasticStrainRate
+             << " ep = " << state->eqPlasticStrain << "\n";
         */
 
         // We have found Stilde. Turn off Newton Iterations.
@@ -1593,9 +1603,9 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
   double twomu     = 2.0 * state->shearModulus;
 
   // Initialize variables
-  double ep            = state->plasticStrain;
+  double ep            = state->eqPlasticStrain;
   double sigma_y       = state->yieldStress;
-  double deltaGamma    = state->plasticStrainRate * delT * sthreetwo;
+  double deltaGamma    = state->eqPlasticStrainRate * delT * sthreetwo;
   double deltaGammaOld = deltaGamma;
   double g             = 0.0;
   double Dg            = 1.0;
@@ -1628,20 +1638,20 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
 
     if (std::isnan(g) || std::isnan(deltaGamma)) {
       std::cout << "idx = " << idx << " iter = " << count << " g = " << g
-           << " Dg = " << Dg << " deltaGamma = " << deltaGamma
-           << " sigy = " << sigma_y << " dsigy/depdot = " << dsigy_depdot
-           << " dsigy/dep= " << dsigy_dep
-           << " epdot = " << state->plasticStrainRate
-           << " ep = " << state->plasticStrain << "\n";
+                << " Dg = " << Dg << " deltaGamma = " << deltaGamma
+                << " sigy = " << sigma_y << " dsigy/depdot = " << dsigy_depdot
+                << " dsigy/dep= " << dsigy_dep
+                << " epdot = " << state->eqPlasticStrainRate
+                << " ep = " << state->eqPlasticStrain << "\n";
       throw InternalError("nans in computation", __FILE__, __LINE__);
     }
 
     // Update local plastic strain rate
-    double stt_deltaGamma    = std::max(stwothird * deltaGamma, 0.0);
-    state->plasticStrainRate = stt_deltaGamma / delT;
+    double stt_deltaGamma      = std::max(stwothird * deltaGamma, 0.0);
+    state->eqPlasticStrainRate = stt_deltaGamma / delT;
 
     // Update local plastic strain
-    state->plasticStrain = ep + stt_deltaGamma;
+    state->eqPlasticStrain = ep + stt_deltaGamma;
 
     if (std::abs(deltaGamma - deltaGammaOld) < tolerance || count > 100)
       break;
@@ -1654,10 +1664,11 @@ ElasticPlasticHP::computeDeltaGamma(const double& delT,
 
   if (std::isnan(state->yieldStress)) {
     std::cout << "idx = " << idx << " iter = " << count
-         << " sig_y = " << state->yieldStress
-         << " epdot = " << state->plasticStrainRate
-         << " ep = " << state->plasticStrain << " T = " << state->temperature
-         << " Tm = " << state->meltingTemp << "\n";
+              << " sig_y = " << state->yieldStress
+              << " epdot = " << state->eqPlasticStrainRate
+              << " ep = " << state->eqPlasticStrain
+              << " T = " << state->temperature << " Tm = " << state->meltingTemp
+              << "\n";
   }
 
   return deltaGamma;
@@ -1832,7 +1843,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       // Check 1: Look at Jacobian
       if (!(J > 0.0)) {
         std::cerr << getpid()
-             << "**ERROR** Negative Jacobian of deformation gradient" << "\n";
+                  << "**ERROR** Negative Jacobian of deformation gradient"
+                  << "\n";
         throw InternalError("Negative Jacobian", __FILE__, __LINE__);
       }
 
@@ -1874,8 +1886,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       // Set up the ModelStateBase
       auto state                 = scinew ModelStateBase();
       state->strainRate          = pStrainRate_new[idx];
-      state->plasticStrainRate   = pPlasticStrainRate[idx];
-      state->plasticStrain       = pPlasticStrain[idx];
+      state->eqPlasticStrainRate = pPlasticStrainRate[idx];
+      state->eqPlasticStrain     = pPlasticStrain[idx];
       state->pressure            = pressure;
       state->temperature         = temperature;
       state->initialTemperature  = d_initialMaterialTemperature;
@@ -1914,9 +1926,9 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       // of the rate of deformation tensor
       Matrix3 tensorEta = tensorD - One * (tensorD.Trace() / 3.0);
 
-      auto defState       = scinew DeformationState();
-      defState->D         = tensorD;
-      defState->devD      = tensorEta;
+      auto defState  = scinew DeformationState();
+      defState->D    = tensorD;
+      defState->devD = tensorEta;
 
       // Assume elastic deformation to get a trial deviatoric stress
       // This is simply the previous timestep deviatoric stress plus a
@@ -1982,8 +1994,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         Matrix3 tensorEtaPlasticInc = nn * delGamma;
         pStress_new[idx] =
           trialStress - tensorEtaPlasticInc * (2.0 * state->shearModulus);
-        pPlasticStrain_new[idx]     = state->plasticStrain;
-        pPlasticStrainRate_new[idx] = state->plasticStrainRate;
+        pPlasticStrain_new[idx]     = state->eqPlasticStrain;
+        pPlasticStrainRate_new[idx] = state->eqPlasticStrainRate;
 
         // Update internal Cauchy stresses (only for viscoelasticity)
         Matrix3 dp = tensorEtaPlasticInc / delT;
@@ -1995,14 +2007,14 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
 
         if (d_evolvePorosity) {
           Matrix3 tensorD    = incStrain / delT;
-          double ep          = state->plasticStrain;
+          double ep          = state->eqPlasticStrain;
           pPorosity_new[idx] = updatePorosity(tensorD, delT, porosity, ep);
         }
 
         // Calculate the updated scalar damage parameter
         if (d_evolveDamage)
           pDamage_new[idx] =
-            d_damage->computeScalarDamage(state->plasticStrainRate,
+            d_damage->computeScalarDamage(state->eqPlasticStrainRate,
                                           pStress_new[idx],
                                           temperature,
                                           delT,
@@ -2017,7 +2029,7 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         double fac           = taylorQuinney / (rho_cur * state->specificHeat);
 
         // Calculate Tdot (internal plastic heating rate)
-        double Tdot = state->yieldStress * state->plasticStrainRate * fac;
+        double Tdot = state->yieldStress * state->eqPlasticStrainRate * fac;
         pdTdt[idx]  = Tdot;
 
         // No failure implemented for implcit time integration
@@ -2242,7 +2254,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       // Check 1: Look at Jacobian
       if (!(J > 0.0)) {
         std::cerr << getpid()
-             << "**ERROR** Negative Jacobian of deformation gradient" << "\n";
+                  << "**ERROR** Negative Jacobian of deformation gradient"
+                  << "\n";
         throw InternalError("Negative Jacobian", __FILE__, __LINE__);
       }
 
@@ -2273,8 +2286,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       // Set up the ModelStateBase
       auto state                 = scinew ModelStateBase();
       state->strainRate          = pStrainRate_new;
-      state->plasticStrainRate   = pPlasticStrainRate[idx];
-      state->plasticStrain       = pPlasticStrain[idx];
+      state->eqPlasticStrainRate = pPlasticStrainRate[idx];
+      state->eqPlasticStrain     = pPlasticStrain[idx];
       state->pressure            = pressure;
       state->temperature         = temperature;
       state->initialTemperature  = d_initialMaterialTemperature;
@@ -2312,9 +2325,9 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
       // of the rate of deformation tensor
       Matrix3 tensorEta = tensorD - One * (tensorD.Trace() / 3.0);
 
-      auto defState       = scinew DeformationState();
-      defState->D         = tensorD;
-      defState->devD      = tensorEta;
+      auto defState  = scinew DeformationState();
+      defState->D    = tensorD;
+      defState->devD = tensorEta;
 
       // Assume elastic deformation to get a trial deviatoric stress
       // This is simply the previous timestep deviatoric stress plus a
@@ -2376,8 +2389,8 @@ ElasticPlasticHP::computeStressTensorImplicit(const PatchSubset* patches,
         Matrix3 tensorEtaPlasticInc = nn * delGamma;
         pStress_new[idx] =
           trialStress - tensorEtaPlasticInc * (2.0 * state->shearModulus);
-        pPlasticStrain_new[idx]     = state->plasticStrain;
-        pPlasticStrainRate_new[idx] = state->plasticStrainRate;
+        pPlasticStrain_new[idx]     = state->eqPlasticStrain;
+        pPlasticStrainRate_new[idx] = state->eqPlasticStrainRate;
 
         // Update internal Cauchy stresses (only for viscoelasticity)
         Matrix3 dp = tensorEtaPlasticInc / delT;

@@ -142,8 +142,7 @@ IntVar_TabularCap::addParticleState(std::vector<const VarLabel*>& from,
 
 template <>
 void
-IntVar_TabularCap::evolveInternalVariable(const Uintah::VarLabel* label,
-                                          Uintah::particleIndex pidx,
+IntVar_TabularCap::evolveInternalVariable(Uintah::particleIndex pidx,
                                           const ModelStateBase* state,
                                           Uintah::constParticleVariable<TabularCapIntVar>& var_old,
                                           Uintah::ParticleVariable<TabularCapIntVar>& var)
@@ -155,7 +154,7 @@ IntVar_TabularCap::evolveInternalVariable(const Uintah::VarLabel* label,
 //--------------------------------------------------------------------------------------
 double
 IntVar_TabularCap::computeInternalVariable(
-  const Uintah::VarLabel* label,
+  const std::string& label,
   const ModelStateBase* state_input) const
 {
   const ModelState_TabularCap* state =
@@ -209,7 +208,7 @@ IntVar_TabularCap::computeDrainedHydrostaticStrength(
  */
 double
 IntVar_TabularCap::computeVolStrainDerivOfInternalVariable(
-  const Uintah::VarLabel*, 
+  const std::string& label,
   const ModelStateBase* state_input) const
 {
   const ModelState_TabularCap* state =

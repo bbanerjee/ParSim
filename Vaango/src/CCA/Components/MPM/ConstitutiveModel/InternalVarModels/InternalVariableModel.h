@@ -149,22 +149,21 @@ public:
   /*! Update the internal variable */
   template <typename T>
   void
-  evolveInternalVariable(const Uintah::VarLabel* label,
-                         Uintah::particleIndex pidx,
+  evolveInternalVariable(Uintah::particleIndex pidx,
                          const ModelStateBase* state,
                          Uintah::constParticleVariable<T>& var_old,
                          Uintah::ParticleVariable<T>& var_new);
 
   /* Compute the internal variable */
   virtual double
-  computeInternalVariable(const Uintah::VarLabel* label,
+  computeInternalVariable(const std::string& label,
                           const ModelStateBase* state) const = 0;
 
   /* Compute derivative of internal variable with respect to volumetric
      elastic strain */
   virtual double
   computeVolStrainDerivOfInternalVariable(
-    const Uintah::VarLabel* label,
+    const std::string& label,
     const ModelStateBase* state) const = 0;
 
   /* For material conversion */

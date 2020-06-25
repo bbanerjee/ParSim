@@ -149,9 +149,9 @@ JohnsonCookFlow::computeFlowStress(const ModelStateBase* state, const double&,
                                    const double&, const MPMMaterial* matl,
                                    const particleIndex idx)
 {
-  // double epdot = state->plasticStrainRate/d_CM.epdot_0;
+  // double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
   double epdot = state->strainRate / d_CM.epdot_0;
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
   double T = state->temperature;
   // double Tr = matl->getRoomTemperature();
   // double Tm = state->meltingTemp;
@@ -187,7 +187,7 @@ JohnsonCookFlow::computeEpdot(const ModelStateBase* state, const double&,
   // All quantities should be at the beginning of the
   // time step
   double tau = state->yieldStress;
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
   double T = state->temperature;
   // double Tr = matl->getRoomTemperature();
   // double Tm = state->meltingTemp;
@@ -236,9 +236,9 @@ JohnsonCookFlow::evalDerivativeWRTPlasticStrain(const ModelStateBase* state,
                                                 const particleIndex)
 {
   // Get the state data
-  // double epdot = state->plasticStrainRate/d_CM.epdot_0;
+  // double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
   double epdot = state->strainRate / d_CM.epdot_0;
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
   double T = state->temperature;
   // double Tm = state->meltingTemp;
   double Tr = d_CM.TRoom;
@@ -285,9 +285,9 @@ JohnsonCookFlow::evalDerivativeWRTTemperature(const ModelStateBase* state,
                                               const particleIndex)
 {
   // Get the state data
-  // double epdot = state->plasticStrainRate/d_CM.epdot_0;
+  // double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
   double epdot = state->strainRate / d_CM.epdot_0;
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
   double T = state->temperature;
   // double Tm = state->meltingTemp;
   double Tr = d_CM.TRoom;
@@ -321,9 +321,9 @@ JohnsonCookFlow::evalDerivativeWRTStrainRate(const ModelStateBase* state,
                                              const particleIndex)
 {
   // Get the state data
-  // double epdot = state->plasticStrainRate/d_CM.epdot_0;
+  // double epdot = state->eqPlasticStrainRate/d_CM.epdot_0;
   double epdot = state->strainRate / d_CM.epdot_0;
-  double ep = state->plasticStrain;
+  double ep = state->eqPlasticStrain;
   double T = state->temperature;
   // double Tm = state->meltingTemp;
   double Tr = d_CM.TRoom;
