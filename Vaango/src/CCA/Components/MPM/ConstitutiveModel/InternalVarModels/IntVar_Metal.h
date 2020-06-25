@@ -34,27 +34,26 @@ namespace Vaango {
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
-  \class IntVar_MetalPlastic
+  \class IntVar_Metal
   \brief The evolution of equivalent plastic strain and porosity
          for the hypoelasticplastic model
 */
 ////////////////////////////////////////////////////////////////////////////
-class IntVar_MetalPlastic : public InternalVariableModel
+class IntVar_Metal : public InternalVariableModel
 {
 public:
-
   const Uintah::VarLabel* pIntVarLabel;
   const Uintah::VarLabel* pIntVarLabel_preReloc;
 
   /* constructors/destructor */
-  IntVar_MetalPlastic(Uintah::ProblemSpecP& ps, 
-                      ShearModulusModel* shear,
-                      MPMEquationOfState* eos);
-  IntVar_MetalPlastic(const IntVar_MetalPlastic* cm);
-  ~IntVar_MetalPlastic() override;
+  IntVar_Metal(Uintah::ProblemSpecP& ps,
+               ShearModulusModel* shear,
+               MPMEquationOfState* eos);
+  IntVar_Metal(const IntVar_Metal* cm);
+  ~IntVar_Metal() override;
 
-  IntVar_MetalPlastic&
-  operator=(const IntVar_MetalPlastic& cm) = delete;
+  IntVar_Metal&
+  operator=(const IntVar_Metal& cm) = delete;
 
   /* for restart */
   void
@@ -162,7 +161,6 @@ public:
                       Uintah::constParticleLabelVariableMap& intvar) override;
 
 private:
-
   /* Initialize local VarLabels */
   void
   initializeLocalMPMLabels();

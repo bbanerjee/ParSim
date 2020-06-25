@@ -118,6 +118,7 @@ ElasticModuli_MetalIso::getElasticModuliUpperBound() const
   state.temperature = 0.01;
   state.meltingTemp = 1.0e9;
   state.pressure = 1.0e6;
+  state.porosity = 0.0;
   double Km = d_eos->computeBulkModulus(&state);
   double Gm = d_shear->computeShearModulus(&state);
   return ElasticModuli(Km, Gm);
@@ -133,6 +134,7 @@ ElasticModuli_MetalIso::getElasticModuliLowerBound() const
   state.meltingTemp = 1.0e4;
   state.temperature = state.meltingTemp - 1.0;
   state.pressure = 0.01;
+  state.porosity = 0.0;
   double Km = d_eos->computeBulkModulus(&state);
   double Gm = d_shear->computeShearModulus(&state);
   return ElasticModuli(Km, Gm);
@@ -143,13 +145,62 @@ ElasticModuli_MetalIso::getCurrentElasticModuli(const ModelStateBase* state) con
 {
   double Km = d_eos->computeBulkModulus(state);
   double Gm = d_shear->computeShearModulus(state);
-  return ElasticModuli(Km, Gm);
+
+  double kappa_m = (4.0 * Gm + 3.0 * Km)/(4.0 * Gm);
+  double gamma_m = 5.0 * (4.0 * Gm + 3.0 * Km)/(8.0 * Gm + 9.0 * Km);
+
+  double phi = state->porosity;
+  double Kfac = (1.0 - phi)/(1.0 + (kappa_m - 1.0) * phi);
+  double Gfac = (1.0 - phi)/(1.0 + (gamma_m - 1.0) * phi);
+
+  double K = Km * Kfac;
+  double G = Gm * Gfac;
+  return ElasticModuli(K, G);
 }
 
 /*! Compute derivatives of moduli with respect to internal variables */
 std::vector<ElasticModuli> 
 ElasticModuli_MetalIso::computeDModuliDIntVar(const ModelStateBase* state) const
 {
+  double Km = d_eos->computeBulkModulus(state);
+  double Gm = d_shear->computeShearModulus(state);
+
+  double kappa_m = (4.0 * Gm + 3.0 * Km)/(4.0 * Gm);
+  double gamma_m = 5.0 * (4.0 * Gm + 3.0 * Km)/(8.0 * Gm + 9.0 * Km);
+
+  double phi = state->porosity;
+  double Kfac = 1.0 + (kappa_m - 1.0) * phi;
+  double Gfac = 1.0 + (gamma_m - 1.0) * phi;
+
+  double dK_dphi = - (Km * kappa_m)/(Kfac * Kfac);
+  double dG_dphi = - (Gm * gamma_m)/(Gfac * Gfac);
+
   std::vector<ElasticModuli> derivs;
+  derivs.push_back(ElasticModuli(dG_dphi, dK_dphi));
   return derivs;
+}
+
+/*! Compute moduli and derivatives of moduli with respect to internal variables */
+std::pair<ElasticModuli, std::vector<ElasticModuli>>
+ElasticModuli_MetalIso::computeModuliAndDModuliDIntVar(const ModelStateBase* state) const
+{
+  double Km = d_eos->computeBulkModulus(state);
+  double Gm = d_shear->computeShearModulus(state);
+
+  double kappa_m = (4.0 * Gm + 3.0 * Km)/(4.0 * Gm);
+  double gamma_m = 5.0 * (4.0 * Gm + 3.0 * Km)/(8.0 * Gm + 9.0 * Km);
+
+  double phi = state->porosity;
+  double Kfac = 1.0 + (kappa_m - 1.0) * phi;
+  double Gfac = 1.0 + (gamma_m - 1.0) * phi;
+
+  double K = Km * (1.0 - phi) / Kfac;
+  double G = Gm * (1.0 - phi) / Gfac;
+
+  double dK_dphi = - (Km * kappa_m)/(Kfac * Kfac);
+  double dG_dphi = - (Gm * gamma_m)/(Gfac * Gfac);
+
+  std::vector<ElasticModuli> derivs;
+  derivs.push_back(ElasticModuli(dG_dphi, dK_dphi));
+  return std::make_pair(ElasticModuli(K, G), derivs);
 }

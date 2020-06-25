@@ -394,3 +394,12 @@ ElasticModuli_ArenaMixture::computeDModuliDIntVar(const ModelStateBase* state) c
   std::vector<ElasticModuli> derivs;
   return derivs;
 }
+
+/*! Compute moduli and derivatives of moduli with respect to internal variables */
+std::pair<ElasticModuli, std::vector<ElasticModuli>>
+ElasticModuli_ArenaMixture::computeModuliAndDModuliDIntVar(const ModelStateBase* state) const
+{
+  ElasticModuli moduli = getCurrentElasticModuli(state);
+  std::vector<ElasticModuli> derivs;
+  return std::make_pair(moduli, derivs);
+}

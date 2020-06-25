@@ -398,3 +398,12 @@ ElasticModuli_NeuralNet::computeDModuliDIntVar(const ModelStateBase* state) cons
   std::vector<ElasticModuli> derivs;
   return derivs;
 }
+
+/*! Compute moduli and derivatives of moduli with respect to internal variables */
+std::pair<ElasticModuli, std::vector<ElasticModuli>>
+ElasticModuli_NeuralNet::computeModuliAndDModuliDIntVar(const ModelStateBase* state) const
+{
+  ElasticModuli moduli = getCurrentElasticModuli(state);
+  std::vector<ElasticModuli> derivs;
+  return std::make_pair(moduli, derivs);
+}

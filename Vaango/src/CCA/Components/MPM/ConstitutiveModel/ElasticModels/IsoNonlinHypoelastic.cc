@@ -47,7 +47,7 @@ Matrix3
 IsoNonlinHypoelastic::computeStress(double delT,
                                     const Matrix3& stress_old,
                                     const DeformationState* deformState,
-                                    const ModelStateBase* modelState)
+                                    const ModelStateBase* modelState) const
 {
   ElasticModuli moduli = d_elastic->getCurrentElasticModuli(modelState);
   double kappa = moduli.bulkModulus;
@@ -66,7 +66,7 @@ std::vector<Matrix3>
 IsoNonlinHypoelastic::computeDStressDIntVar(double delT,
                                             const std::vector<Matrix3>& derivStress_old,
                                             const DeformationState* deformState,
-                                            const ModelStateBase* modelState)
+                                            const ModelStateBase* modelState) const
 {
   std::vector<ElasticModuli> derivModuli = d_elastic->computeDModuliDIntVar(modelState);
   std::vector<Matrix3> dStress;
@@ -85,4 +85,40 @@ IsoNonlinHypoelastic::computeDStressDIntVar(double delT,
     ++intVarID;
   }
   return dStress;
+}
+
+std::pair<Matrix3, std::vector<Matrix3>>
+IsoNonlinHypoelastic::computeStressAndDStressDIntVar(double delT,
+                                                     const Matrix3& stress_old,
+                                                     const std::vector<Matrix3>& derivStress_old,
+                                                     const DeformationState* deformState,
+                                                     const ModelStateBase* modelState) const
+{
+  ElasticModuli moduli = d_elastic->getCurrentElasticModuli(modelState);
+  double kappa = moduli.bulkModulus;
+  double mu = moduli.shearModulus;
+  double lambda = kappa - (2.0 / 3.0) * mu;
+
+  Matrix3 D = deformState->D;
+  Matrix3 stress_rate = 
+    Vaango::Util::Identity * (lambda * D.Trace()) + D * (2.0 * mu);
+
+  Matrix3 stress_new = stress_old + stress_rate * delT;
+
+  std::vector<ElasticModuli> derivModuli = d_elastic->computeDModuliDIntVar(modelState);
+  std::vector<Matrix3> derivStress_new;
+  int intVarID = 0;
+  for (auto deriv : derivModuli) {
+    double derivKappa = deriv.bulkModulus;
+    double derivMu = deriv.shearModulus;
+    double derivLambda = derivKappa - (2.0 / 3.0) * derivMu;
+
+    Matrix3 dStress_rate = 
+      Vaango::Util::Identity * (derivLambda * D.Trace()) + D * (2.0 * derivMu);
+    
+    Matrix3 dStress_new = derivStress_old[intVarID] + dStress_rate * delT;
+    derivStress_new.push_back(dStress_new);
+    ++intVarID;
+  }
+  return std::make_pair(stress_new, derivStress_new);
 }

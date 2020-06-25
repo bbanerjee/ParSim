@@ -57,13 +57,20 @@ public:
   computeStress(double delT,
                 const Uintah::Matrix3& stress_old,
                 const Uintah::DeformationState* deformState,
-                const ModelStateBase* modelState); 
+                const ModelStateBase* modelState) const; 
 
   std::vector<Uintah::Matrix3>
   computeDStressDIntVar(double delT,
                         const std::vector<Uintah::Matrix3>& derivStress_old,
                         const Uintah::DeformationState* deformState,
-                        const ModelStateBase* modelState);
+                        const ModelStateBase* modelState) const;
+
+  std::pair<Uintah::Matrix3, std::vector<Uintah::Matrix3>>
+  computeStressAndDStressDIntVar(double delT,
+                                 const Uintah::Matrix3& stress_old,
+                                 const std::vector<Uintah::Matrix3>& derivStress_old,
+                                 const Uintah::DeformationState* deformState,
+                                 const ModelStateBase* modelState) const;
 
 private:
 

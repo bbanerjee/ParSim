@@ -107,6 +107,10 @@ public:
   virtual std::vector<ElasticModuli> 
   computeDModuliDIntVar(const ModelStateBase* state) const = 0;
 
+  /*! Compute moduli and derivatives of moduli with respect to internal variables */
+  virtual std::pair<ElasticModuli, std::vector<ElasticModuli>>
+  computeModuliAndDModuliDIntVar(const ModelStateBase* state) const = 0;
+
   /////////////////////////////////////////////////////////////////////////
   /*!
     \brief For partially saturated materials, get the drained and

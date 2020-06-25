@@ -154,6 +154,10 @@ public:
 
   /*! Compute derivatives of moduli with respect to internal variables */
   std::vector<ElasticModuli> computeDModuliDIntVar(const ModelStateBase* state) const override;
+
+  /*! Compute moduli and derivatives of moduli with respect to internal variables */
+  std::pair<ElasticModuli, std::vector<ElasticModuli>>
+  computeModuliAndDModuliDIntVar(const ModelStateBase* state) const override;
 };
 } // End namespace Uintah
 
