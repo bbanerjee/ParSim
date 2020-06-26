@@ -59,15 +59,15 @@ set(GTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/submodules/googletest/googletest/incl
 set(GTEST_LIB gtest_main gtest)
 include_directories(${GTEST_INCLUDE_DIR})
 
-#add_executable(testBoostAutodiff testBoostAutodiff.cc)
-#target_link_libraries(testBoostAutodiff
-#  ${GTEST_LIB}
-#  ${Boost_LIBRARIES}
-#  ${VAANGO_LIBS}
-#)
-#set(UNIT_TEST testBoostAutodiff)
-#add_custom_command(
-#  TARGET ${UNIT_TEST}
-#  POST_BUILD
-#  COMMAND ${UNIT_TEST}
-#)
+set(TEST testIntVar_Metal)
+add_executable(${TEST} ${TEST}.cc)
+target_link_libraries(${TEST}
+  ${GTEST_LIB}
+  ${VAANGO_LIBS}
+)
+set(UNIT_TEST ${TEST})
+add_custom_command(
+  TARGET ${UNIT_TEST}
+  POST_BUILD
+  COMMAND ${UNIT_TEST}
+)

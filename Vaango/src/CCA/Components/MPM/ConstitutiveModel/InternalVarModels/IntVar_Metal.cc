@@ -25,6 +25,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Metal.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelStateBase.h>
+#include <CCA/Components/MPM/ConstitutiveModel/Utilities/Constants.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
 #include <Core/Grid/Variables/MPMIntVarTypes.h>
@@ -140,6 +141,18 @@ IntVar_Metal::addComputesAndRequires(Task* task,
   task->computes(pIntVarLabel_preReloc, matlset);
 }
 
+/* If there is only one internal variable */
+void
+IntVar_Metal::getInternalVariable(Uintah::ParticleSubset* pset,
+                                  Uintah::DataWarehouse* old_dw,
+                                  Uintah::constParticleVariableBase& intvar)
+{
+  std::ostringstream err;
+  err << "**ERROR** This getInternalVariable method cannot be use if there"
+      << " are more than one internal variables.";
+  throw Uintah::InternalError(err.str(), __FILE__, __LINE__);
+}
+
 std::vector<Uintah::constParticleVariable<double>>
 IntVar_Metal::getInternalVariables(Uintah::ParticleSubset* pset,
                                    Uintah::DataWarehouse* old_dw,
@@ -212,16 +225,39 @@ double
 IntVar_Metal::computeEqPlasticStrain(double eqPlasticStrain_old,
                                      const ModelStateBase* state) const
 {
-  return 0.0;
+  double h_epdot = eqPlasticStrainHardeningModulus(state);
+  return state->eqPlasticStrain + h_epdot * state->lambdaIncPlastic;
 }
 
 double
 IntVar_Metal::computePlasticPorosity(double plasticPorosity_old,
                                      const ModelStateBase* state) const
 {
-  return 0.0;
+  double h_phi = plasticPorosityHardeningModulus(state);
+  return state->porosity + h_phi * state->lambdaIncPlastic;
 }
 
+template <>
+void
+IntVar_Metal::computeHardeningModulus(const ModelStateBase* state,
+                                      MetalIntVar& hardeningModulus) const
+{
+  hardeningModulus.eqPlasticStrain = eqPlasticStrainHardeningModulus(state); 
+  hardeningModulus.plasticPorosity = plasticPorosityHardeningModulus(state); 
+}
+
+double
+IntVar_Metal::eqPlasticStrainHardeningModulus(const ModelStateBase* state) const
+{
+  return Vaango::Util::sqrt_two_third;
+}
+ 
+double
+IntVar_Metal::plasticPorosityHardeningModulus(const ModelStateBase* state) const
+{
+  return (1.0 - state->porosity) * state->plasticFlowDirection.Trace();
+}
+ 
 double
 IntVar_Metal::computeVolStrainDerivOfInternalVariable(
   const std::string& label,
@@ -265,6 +301,18 @@ IntVar_Metal::allocateCMDataAdd(DataWarehouse* old_dw,
 }
 
 /*!-----------------------------------------------------*/
+void
+IntVar_Metal::allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                                  Uintah::DataWarehouse* new_dw,
+                                  Uintah::constParticleVariableBase& var) 
+{
+  ParticleVariable<MetalIntVar> pIntVar_new;
+  new_dw->allocateAndPut(pIntVar_new, pIntVarLabel_preReloc, pset);
+  for (auto pidx : *pset) {
+    pIntVar_new[pidx] = static_cast<constParticleVariable<MetalIntVar>&>(var)[pidx];
+  }
+}
+
 void
 IntVar_Metal::allocateAndPutRigid(ParticleSubset* pset,
                                   DataWarehouse* new_dw,

@@ -47,6 +47,7 @@ ModelStateBase::ModelStateBase()
   initialMeltTemp = 0.0;
   specificHeat = 0.0;
   yieldStress = 0.0;
+  lambdaIncPlastic = 0.0;
   eqPlasticStrainRate = 0.0;
   eqPlasticStrain = 0.0;
   porosity = 0.0;
@@ -106,6 +107,7 @@ ModelStateBase::operator=(const ModelStateBase* state)
   initialMeltTemp = state->initialMeltTemp;
   specificHeat = state->specificHeat;
   yieldStress = state->yieldStress;
+  lambdaIncPlastic = state->lambdaIncPlastic;
   eqPlasticStrainRate = state->eqPlasticStrainRate;
   eqPlasticStrain = state->eqPlasticStrain;
   porosity = state->porosity;

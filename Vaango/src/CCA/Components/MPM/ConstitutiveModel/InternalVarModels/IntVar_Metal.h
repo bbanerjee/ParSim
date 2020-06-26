@@ -97,6 +97,11 @@ public:
                          const Uintah::PatchSet* patches) override;
 
   // Get the internal variables
+  void
+  getInternalVariable(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* old_dw,
+                      Uintah::constParticleVariableBase& intvar) override;
+
   std::vector<Uintah::constParticleVariable<double>>
   getInternalVariables(Uintah::ParticleSubset* pset,
                        Uintah::DataWarehouse* old_dw,
@@ -134,6 +139,12 @@ public:
   computeInternalVariable(const std::string& label,
                           const ModelStateBase* state) const override;
 
+  // Hardening moduli
+  template <typename T>
+  void
+  computeHardeningModulus(const ModelStateBase* state,
+                          T& hardeningModulus) const;
+
   double
   computeVolStrainDerivOfInternalVariable(const std::string& label,
                                           const ModelStateBase*) const override;
@@ -155,9 +166,14 @@ public:
   void
   allocateAndPutRigid(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* new_dw,
+                      Uintah::constParticleVariableBase& intvar) override;
+  void
+  allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* new_dw,
                       Uintah::constParticleLabelVariableMap& intvar) override;
 
 private:
+
   /* Initialize local VarLabels */
   void
   initializeLocalMPMLabels();
@@ -169,6 +185,13 @@ private:
   double
   computePlasticPorosity(double plasticPorosity_old,
                          const ModelStateBase* state) const;
+
+  double
+  eqPlasticStrainHardeningModulus(const ModelStateBase* state) const;
+
+  double
+  plasticPorosityHardeningModulus(const ModelStateBase* state) const;
+
 };
 
 } // End namespace Vaango

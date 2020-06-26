@@ -58,6 +58,7 @@ public:
   double initialMeltTemp;
   double specificHeat;
   double yieldStress;
+  double lambdaIncPlastic; // magnitude of plastic strain rate * delT
   double eqPlasticStrainRate;
   double eqPlasticStrain;
   double porosity;
