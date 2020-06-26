@@ -35,7 +35,7 @@ namespace Vaango {
 
 ////////////////////////////////////////////////////////////////////////////
 /*!
-  \class IntVar_SoilModelBrannonKappa
+  \class IntVar_SoilBrannon
   \brief The evolution of the kappa hardening internal variable in the
          Arenisca model
 
@@ -65,7 +65,7 @@ namespace Vaango {
 */
 ////////////////////////////////////////////////////////////////////////////
 
-class IntVar_SoilModelBrannonKappa : public InternalVariableModel
+class IntVar_SoilBrannon : public InternalVariableModel
 {
 
 public:
@@ -84,32 +84,14 @@ public:
     return labels;
   }
 
-private:
-  // Model parameters
-  double d_p0;
-  double d_p1;
-  double d_p3;
-  double d_p4;
-  double d_B0;
-  double d_Cr;
-  double d_fSlope;
-  double d_peakI1;
-
-  // Prevent copying of this class
-  // copy constructor
-  // IntVar_SoilModelBrannonKappa(const IntVar_SoilModelBrannonKappa
-  // &cm);
-  IntVar_SoilModelBrannonKappa&
-  operator=(const IntVar_SoilModelBrannonKappa& cm);
-
-public:
   // constructors
-  IntVar_SoilModelBrannonKappa(Uintah::ProblemSpecP& ps);
-  IntVar_SoilModelBrannonKappa(
-    const IntVar_SoilModelBrannonKappa* cm);
+  IntVar_SoilBrannon(Uintah::ProblemSpecP& ps);
+  IntVar_SoilBrannon(const IntVar_SoilBrannon* cm);
+  IntVar_SoilBrannon&
+  operator=(const IntVar_SoilBrannon& cm) = delete;
 
   // destructor
-  ~IntVar_SoilModelBrannonKappa() override;
+  ~IntVar_SoilBrannon() override;
 
   void
   outputProblemSpec(Uintah::ProblemSpecP& ps) override;
@@ -130,34 +112,15 @@ public:
     return params;
   }
 
+  void
+  addParticleState(std::vector<const Uintah::VarLabel*>& from,
+                   std::vector<const Uintah::VarLabel*>& to) override;
+
   // Computes and requires for internal evolution variables
   void
   addInitialComputesAndRequires(Uintah::Task* task,
                                 const Uintah::MPMMaterial* matl,
                                 const Uintah::PatchSet* patches) override;
-
-  void
-  addComputesAndRequires(Uintah::Task* task,
-                         const Uintah::MPMMaterial* matl,
-                         const Uintah::PatchSet* patches) override;
-
-  void
-  allocateCMDataAddRequires(Uintah::Task* task,
-                            const Uintah::MPMMaterial* matl,
-                            const Uintah::PatchSet* patch,
-                            Uintah::MPMLabel* lb) override;
-
-  void
-  allocateCMDataAdd(
-    Uintah::DataWarehouse* new_dw,
-    Uintah::ParticleSubset* addset,
-    std::map<const Uintah::VarLabel*, Uintah::ParticleVariableBase*>* newState,
-    Uintah::ParticleSubset* delset,
-    Uintah::DataWarehouse* old_dw) override;
-
-  void
-  addParticleState(std::vector<const Uintah::VarLabel*>& from,
-                   std::vector<const Uintah::VarLabel*>& to) override;
 
   void
   initializeInternalVariable(Uintah::ParticleSubset* pset,
@@ -168,37 +131,42 @@ public:
                              Uintah::ParticleSubset* pset,
                              Uintah::DataWarehouse* new_dw,
                              Uintah::MPMLabel* lb,
-                             ParamMap& params) override {}
+                             ParamMap& params) override
+  {
+  }
+
+  void
+  addComputesAndRequires(Uintah::Task* task,
+                         const Uintah::MPMMaterial* matl,
+                         const Uintah::PatchSet* patches) override;
 
   /* Get one (possibly composite) internal variable */
-  template<typename T>
+  template <typename T>
   void
   getInternalVariable(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* old_dw,
                       Uintah::constParticleVariable<T>& intvar);
 
   /* Get multiple local <int/double/Vector/Matrix3> internal variables */
-  template<typename T>
+  template <typename T>
   std::vector<Uintah::constParticleVariable<T>>
   getInternalVariables(Uintah::ParticleSubset* pset,
                        Uintah::DataWarehouse* old_dw);
 
+  /* Allocate one (possibly composite) internal variable */
+  template <typename T>
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
-                                 Uintah::ParticleVariableBase& intvar) override;
+                                 Uintah::ParticleVariable<T>& intvar);
 
-  /* Allocate and put the local <double> particle variables */
+  /* Allocate multiple local <int/double/Vector/Matrix3> internal variables */
+  template <typename T>
   void
-  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                 Uintah::DataWarehouse* new_dw,
-                                 ParticleDoublePVec& pVars) override {}
-
-  /* Allocate and put the local <Matrix3> particle variables */
-  void
-  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                 Uintah::DataWarehouse* new_dw,
-                                 ParticleMatrix3PVec& pVars) override {}
+  allocateAndPutInternalVariable(
+    Uintah::ParticleSubset* pset,
+    Uintah::DataWarehouse* new_dw,
+    std::vector<Uintah::ParticleVariable<T>>& pVars);
 
   ///////////////////////////////////////////////////////////////////////////
   /*! \brief Compute the internal variable */
@@ -223,15 +191,42 @@ public:
   }
 
   void
-  allocateAndPutRigid(Uintah::ParticleSubset* pset,
-                      Uintah::DataWarehouse* new_dw,
-                      Uintah::constParticleVariableBase& intvar) override;
+  allocateCMDataAddRequires(Uintah::Task* task,
+                            const Uintah::MPMMaterial* matl,
+                            const Uintah::PatchSet* patch,
+                            Uintah::MPMLabel* lb) override;
+
+  void
+  allocateCMDataAdd(
+    Uintah::DataWarehouse* new_dw,
+    Uintah::ParticleSubset* addset,
+    std::map<const Uintah::VarLabel*, Uintah::ParticleVariableBase*>* newState,
+    Uintah::ParticleSubset* delset,
+    Uintah::DataWarehouse* old_dw) override;
+
   void
   allocateAndPutRigid(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* new_dw,
-                      Uintah::constParticleLabelVariableMap& intvars) override {}
+                      Uintah::constParticleVariableBase& intvar) override;
+
+  void
+  allocateAndPutRigid(Uintah::ParticleSubset* pset,
+                      Uintah::DataWarehouse* new_dw,
+                      Uintah::constParticleLabelVariableMap& intvars) override
+  {
+  }
 
 private:
+  // Model parameters
+  double d_p0;
+  double d_p1;
+  double d_p3;
+  double d_p4;
+  double d_B0;
+  double d_Cr;
+  double d_fSlope;
+  double d_peakI1;
+
   //--------------------------------------------------------------------------------------
   // Compute kappa_new from the function X1(kappa_{n+1})
   //  where

@@ -151,28 +151,14 @@ IntVar_Metal::getInternalVariable(ParticleSubset* pset,
   old_dw->get(var, pIntVarLabel, pset);
 }
 
-// Allocate and put the local particle internal variables
+/* Allocate one (possibly composite) internal variable */
+template <>
 void
-IntVar_Metal::allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                             Uintah::DataWarehouse* new_dw,
-                                             Uintah::ParticleVariableBase& var)
+IntVar_Metal::allocateAndPutInternalVariable(ParticleSubset* pset,
+                                             DataWarehouse* new_dw,
+                                             ParticleVariable<MetalIntVar>& var)
 {
   new_dw->allocateAndPut(var, pIntVarLabel, pset);
-}
-
-void
-IntVar_Metal::allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                             Uintah::DataWarehouse* new_dw,
-                                             ParticleDoublePVec& pVars)
-{
-}
-
-// Allocate and put the local <Matrix3> particle variables
-void
-IntVar_Metal::allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                             Uintah::DataWarehouse* new_dw,
-                                             ParticleMatrix3PVec& pVars)
-{
 }
 
 template <>

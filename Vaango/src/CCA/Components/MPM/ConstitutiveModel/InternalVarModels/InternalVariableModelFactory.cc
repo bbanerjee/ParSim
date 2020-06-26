@@ -27,7 +27,7 @@
 #include <CCA/Components/MPM/ConstitutiveModel/ElasticModuliModels/ElasticModuliModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_Arena.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_BorjaPressure.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_SoilModelBrannonKappa.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_SoilBrannon.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_TabularCap.h>
 #include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
@@ -58,7 +58,7 @@ InternalVariableModelFactory::create(ProblemSpecP& ps)
     throw ProblemSetupException("No type for internal_var_model", __FILE__,
                                 __LINE__);
   if (mat_type == "soil_model_brannon_kappa") {
-    return (scinew IntVar_SoilModelBrannonKappa(child));
+    return (scinew IntVar_SoilBrannon(child));
   } else if (mat_type == "tabular_cap") {
     return (scinew IntVar_TabularCap(child));
   } else {
@@ -113,9 +113,9 @@ InternalVariableModelFactory::createCopy(const InternalVariableModel* pm)
     return (scinew IntVar_BorjaPressure(
       dynamic_cast<const IntVar_BorjaPressure*>(pm)));
 
-  else if (dynamic_cast<const IntVar_SoilModelBrannonKappa*>(pm))
-    return (scinew IntVar_SoilModelBrannonKappa(
-      dynamic_cast<const IntVar_SoilModelBrannonKappa*>(pm)));
+  else if (dynamic_cast<const IntVar_SoilBrannon*>(pm))
+    return (scinew IntVar_SoilBrannon(
+      dynamic_cast<const IntVar_SoilBrannon*>(pm)));
 
   else if (dynamic_cast<const IntVar_Arena*>(pm))
     return (

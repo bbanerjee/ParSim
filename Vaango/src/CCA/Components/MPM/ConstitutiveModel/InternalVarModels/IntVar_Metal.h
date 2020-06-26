@@ -109,21 +109,19 @@ public:
   getInternalVariables(Uintah::ParticleSubset* pset,
                        Uintah::DataWarehouse* old_dw);
   
-  // Allocate and put the local particle internal variables
+  /* Allocate one (possibly composite) internal variable */
+  template<typename T>
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
-                                 Uintah::ParticleVariableBase& var) override;
-  void
-  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                 Uintah::DataWarehouse* new_dw,
-                                 ParticleDoublePVec& pVars) override;
+                                 Uintah::ParticleVariable<T>& var);
 
-  // Allocate and put the local <Matrix3> particle variables
+  /* Allocate multiple local <int/double/Vector/Matrix3> internal variables */
+  template<typename T>
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
-                                 ParticleMatrix3PVec& pVars) override;
+                                 std::vector<Uintah::ParticleVariable<T>>& pVars);
 
   // Actually compute
   template <typename T>

@@ -153,30 +153,19 @@ public:
   getInternalVariables(Uintah::ParticleSubset* pset,
                        Uintah::DataWarehouse* old_dw);
 
-  void
-  allocateAndPutInternalVariable(
-    Uintah::ParticleSubset* pset,
-    Uintah::DataWarehouse* new_dw,
-    Uintah::ParticleVariableBase& pCapX_new) override
-  {
-    new_dw->allocateAndPut(pCapX_new, pCapXLabel_preReloc, pset);
-  }
-
-  // Allocate and put the local particle internal variables
+  /* Allocate one (possibly composite) internal variable */
+  template <typename T>
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
-                                 ParticleDoublePVec& pVars) override
-  {
-  }
+                                 Uintah::ParticleVariable<T>& pCapX_new);
 
-  // Allocate and put the local <Matrix3> particle variables
+  /* Allocate multiple local <int/double/Vector/Matrix3> internal variables */
+  template <typename T>
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
-                                 ParticleMatrix3PVec& pVars) override
-  {
-  }
+                                 std::vector<Uintah::ParticleVariable<T>>& pVars);
 
   // Return the internal variable labels
   std::vector<const Uintah::VarLabel*>

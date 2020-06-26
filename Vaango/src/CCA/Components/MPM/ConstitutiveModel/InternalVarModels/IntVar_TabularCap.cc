@@ -153,6 +153,17 @@ IntVar_TabularCap::getInternalVariable<double>(ParticleSubset* pset,
   old_dw->get(pCapX, pCapXLabel, pset);
 }
 
+/* Allocate one (possibly composite) internal variable */
+template <>
+void
+IntVar_TabularCap::allocateAndPutInternalVariable(
+    Uintah::ParticleSubset* pset,
+    Uintah::DataWarehouse* new_dw,
+    Uintah::ParticleVariable<double>& pCapX_new)
+{
+  new_dw->allocateAndPut(pCapX_new, pCapXLabel_preReloc, pset);
+}
+
 template <>
 void
 IntVar_TabularCap::evolveInternalVariable<TabularCapIntVar>(particleIndex pidx,

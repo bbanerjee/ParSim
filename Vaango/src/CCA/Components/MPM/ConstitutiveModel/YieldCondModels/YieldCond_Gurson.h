@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1997-2012 The University of Utah
  * Copyright (c) 2013-2014 Callaghan Innovation, New Zealand
- * Copyright (c) 2015-2018 Parresia Research Limited, New Zealand
+ * Copyright (c) 2015-2020 Parresia Research Limited, New Zealand
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -52,12 +52,12 @@ namespace Vaango {
 
   The yield condition is given by
   \f[
-  \Phi(\sigma,k,T) =
+  f(\sigma,k,T) =
   \frac{\sigma_{eq}^2}{\sigma_f^2} +
-  2 q_1 f_* \cosh \left(q_2 \frac{Tr(\sigma)}{2\sigma_f}\right) -
-  (1+q_3 f_*^2) = 0
+  2 q_1 \phi_* \cosh \left(q_2 \frac{Tr(\sigma)}{2\sigma_f}\right) -
+  (1+q_3 \phi_*^2) = 0
   \f]
-  where \f$\Phi(\sigma,k,T)\f$ is the yield condition,
+  where \f$f(\sigma,k,T)\f$ is the yield condition,
   \f$\sigma\f$ is the Cauchy stress,
   \f$k\f$ is a set of internal variable that evolve with time,
   \f$T\f$ is the temperature,
@@ -66,12 +66,12 @@ namespace Vaango {
   \f$\sigma^{d}\f$ is the deviatoric part of the Cauchy stress,
   \f$\sigma_{f}\f$ is the flow stress,
   \f$q_1,q_2,q_3\f$ are material constants, and
-  \f$f_*\f$ is the porosity (damage) function.
+  \f$\phi_*\f$ is the porosity (damage) function.
 
   The damage function is given by
-  \f$ f_* = f \f$ for \f$ f \le f_c \f$,
-  \f$ f_* = f_c + k (f - f_c) \f$ for \f$ f > f_c \f$, where
-  \f$ k \f$ is constant, and \f$ f \f$ is the porosity (void volume
+  \f$ \phi_* = \phi \f$ for \f$ \phi \le \phi_c \f$,
+  \f$ \phi_* = \phi_c + k (\phi - \phi_c) \f$ for \f$ \phi > \phi_c \f$, where
+  \f$ k \f$ is constant, and \f$ \phi \f$ is the porosity (void volume
   fraction).
 */
 //////////////////////////////////////////////////////////////////////
@@ -91,22 +91,14 @@ public:
     double f_c; /*< Critical void volume fraction */
   };
 
-private:
-  CMData d_CM;
-
-  // Prevent copying of this class
-  // copy constructor
-  // YieldCond_Gurson(const YieldCond_Gurson &);
-  YieldCond_Gurson& operator=(const YieldCond_Gurson&);
-
-public:
   /*! Constructor
     Creates a Gurson Yield Function object */
   YieldCond_Gurson(Uintah::ProblemSpecP& ps);
   YieldCond_Gurson(const YieldCond_Gurson* cm);
+  YieldCond_Gurson& operator=(const YieldCond_Gurson&) = delete;
 
   //! Destructor
-  ~YieldCond_Gurson() override;
+  virtual ~YieldCond_Gurson() override;
 
   void outputProblemSpec(Uintah::ProblemSpecP& ps) override;
 
@@ -132,7 +124,7 @@ public:
 
   /////////////////////////////////////////////////////////////////////////
   /*!
-    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
+    \brief Evaluate the derivative of the yield function \f$(f)\f$
     with respect to \f$\sigma_{ij}\f$.
 
     This is for the associated flow rule.
@@ -144,7 +136,7 @@ public:
 
   /////////////////////////////////////////////////////////////////////////
   /*!
-    \brief Evaluate the derivative of the yield function \f$(\Phi)\f$
+    \brief Evaluate the derivative of the yield function \f$(f)\f$
     with respect to \f$s_{ij}\f$.
 
     This is for the associated flow rule with \f$s_{ij}\f$ being
@@ -158,16 +150,16 @@ public:
 
   /////////////////////////////////////////////////////////////////////////
   /*!
-    \brief Evaluate the derivative of the yield function \f$ \Phi \f$
+    \brief Evaluate the derivative of the yield function \f$ f \f$
     with respect to a scalar variable.
 
     \f[
-    \Phi := \sigma^2_{eq} -
+    f := \sigma^2_{eq} -
     (A \cosh(\frac{B}{\sigma_Y(v_i)}) - C) \sigma_Y^2(v_i)
     \f]
     Therefore,
     \f[
-    \frac{d\Phi}{dv_i} := -A \sinh(\frac{B}{\sigma_Y}) B
+    \frac{df}{dv_i} := -A \sinh(\frac{B}{\sigma_Y}) B
     \frac{d\sigma_Y}{dv_i} +
     2 (A \cosh(\frac{B}{\sigma_Y}) - C) \sigma_Y
     \frac{d\sigma_Y}{dv_i}
@@ -181,13 +173,13 @@ public:
 
   /////////////////////////////////////////////////////////////////////////
   /*!
-    \brief Evaluate the derivative of the yield function \f$ \Phi \f$
+    \brief Evaluate the derivative of the yield function \f$ f \f$
     with respect to the porosity
 
     \f[
-    \frac{d\Phi}{df} := \left[ 2 q_1
+    \frac{df}{dphi} := \left[ 2 q_1
     cosh\left(\frac{q_2 Tr(\sigma)}{2 \sigma_Y}\right)
-    - 2 q_3 f^* \right] \sigma_Y^2
+    - 2 q_3 \phi^* \right] \sigma_Y^2
     \f]
 
     \return derivative
@@ -200,7 +192,7 @@ public:
     \brief Evaluate the factor \f$h_1\f$ for porosity
 
     \f[
-    h_1 = (1-f) Tr(\sigma) + A \frac{\sigma : f_{\sigma}}{(1-f) \sigma_Y}
+    h_1 = (1-\phi) Tr(\sigma) + A \frac{\sigma : f_{\sigma}}{(1-\phi) \sigma_Y}
     \f]
 
     \return factor
@@ -214,7 +206,7 @@ public:
     \brief Evaluate the factor \f$h_2\f$ for plastic strain
 
     \f[
-    h_2 = \frac{\sigma : f_{\sigma}}{(1-f) \sigma_Y}
+    h_2 = \frac{\sigma : f_{\sigma}}{(1-\phi) \sigma_Y}
     \f]
 
     \return factor
@@ -384,6 +376,10 @@ public:
   {
     return 0.0;
   }
+
+private:
+
+  CMData d_CM;
 };
 
 } // End namespace Uintah

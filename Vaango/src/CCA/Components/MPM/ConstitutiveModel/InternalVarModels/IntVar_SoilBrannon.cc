@@ -24,7 +24,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_SoilModelBrannonKappa.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_SoilBrannon.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_SoilModelBrannon.h>
 #include <Core/Exceptions/InternalError.h>
 #include <Core/Exceptions/InvalidValue.h>
@@ -38,8 +38,7 @@
 using namespace Vaango;
 using namespace Uintah;
 
-IntVar_SoilModelBrannonKappa::IntVar_SoilModelBrannonKappa(
-  ProblemSpecP& ps)
+IntVar_SoilBrannon::IntVar_SoilBrannon(ProblemSpecP& ps)
 {
   d_elastic = nullptr;
   d_shear   = nullptr;
@@ -62,8 +61,7 @@ IntVar_SoilModelBrannonKappa::IntVar_SoilModelBrannonKappa(
                      ParticleVariable<double>::getTypeDescription());
 }
 
-IntVar_SoilModelBrannonKappa::IntVar_SoilModelBrannonKappa(
-  const IntVar_SoilModelBrannonKappa* cm)
+IntVar_SoilBrannon::IntVar_SoilBrannon(const IntVar_SoilBrannon* cm)
 {
   d_elastic = cm->d_elastic;
   d_shear   = cm->d_shear;
@@ -86,14 +84,14 @@ IntVar_SoilModelBrannonKappa::IntVar_SoilModelBrannonKappa(
                      ParticleVariable<double>::getTypeDescription());
 }
 
-IntVar_SoilModelBrannonKappa::~IntVar_SoilModelBrannonKappa()
+IntVar_SoilBrannon::~IntVar_SoilBrannon()
 {
   VarLabel::destroy(pKappaLabel);
   VarLabel::destroy(pKappaLabel_preReloc);
 }
 
 void
-IntVar_SoilModelBrannonKappa::outputProblemSpec(ProblemSpecP& ps)
+IntVar_SoilBrannon::outputProblemSpec(ProblemSpecP& ps)
 {
   ProblemSpecP int_var_ps = ps->appendChild("internal_variable_model");
   int_var_ps->setAttribute("type", "soil_model_brannon_kappa");
@@ -109,120 +107,67 @@ IntVar_SoilModelBrannonKappa::outputProblemSpec(ProblemSpecP& ps)
 }
 
 void
-IntVar_SoilModelBrannonKappa::addInitialComputesAndRequires(
-  Task* task,
-  const MPMMaterial* matl,
-  const PatchSet*)
-{
-  const MaterialSubset* matlset = matl->thisMaterial();
-  task->computes(pKappaLabel, matlset);
-}
-
-void
-IntVar_SoilModelBrannonKappa::addComputesAndRequires(
-  Task* task,
-  const MPMMaterial* matl,
-  const PatchSet*)
-{
-  const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::OldDW, pKappaLabel, matlset, Ghost::None);
-  task->computes(pKappaLabel_preReloc, matlset);
-}
-
-void
-IntVar_SoilModelBrannonKappa::addParticleState(
-  std::vector<const VarLabel*>& from,
-  std::vector<const VarLabel*>& to)
+IntVar_SoilBrannon::addParticleState(std::vector<const VarLabel*>& from,
+                                     std::vector<const VarLabel*>& to)
 {
   from.push_back(pKappaLabel);
   to.push_back(pKappaLabel_preReloc);
 }
 
 void
-IntVar_SoilModelBrannonKappa::allocateCMDataAddRequires(
-  Task* task,
-  const MPMMaterial* matl,
-  const PatchSet*,
-  MPMLabel*)
+IntVar_SoilBrannon::addInitialComputesAndRequires(Task* task,
+                                                  const MPMMaterial* matl,
+                                                  const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pKappaLabel_preReloc, matlset, Ghost::None);
+  task->computes(pKappaLabel, matlset);
 }
 
 void
-IntVar_SoilModelBrannonKappa::allocateCMDataAdd(
-  DataWarehouse* old_dw,
-  ParticleSubset* addset,
-  ParticleLabelVariableMap* newState,
-  ParticleSubset* delset,
-  DataWarehouse* new_dw)
-{
-  ParticleVariable<double> pKappa;
-  constParticleVariable<double> o_kappa;
-
-  new_dw->allocateTemporary(pKappa, addset);
-
-  new_dw->get(o_kappa, pKappaLabel_preReloc, delset);
-
-  ParticleSubset::iterator o, n = addset->begin();
-  for (o = delset->begin(); o != delset->end(); o++, n++) {
-    pKappa[*n] = o_kappa[*o];
-  }
-
-  (*newState)[pKappaLabel] = pKappa.clone();
-}
-
-void
-IntVar_SoilModelBrannonKappa::initializeInternalVariable(
-  ParticleSubset* pset,
-  DataWarehouse* new_dw)
+IntVar_SoilBrannon::initializeInternalVariable(ParticleSubset* pset,
+                                               DataWarehouse* new_dw)
 {
   Uintah::ParticleVariable<double> pKappa;
   new_dw->allocateAndPut(pKappa, pKappaLabel, pset);
-  ParticleSubset::iterator iter = pset->begin();
-  for (; iter != pset->end(); iter++) {
-    pKappa[*iter] =
-      (d_p0 + d_Cr * d_fSlope * d_peakI1) / (d_Cr * d_fSlope + 1.0);
+  for (auto idx : *pset) {
+    pKappa[idx] = (d_p0 + d_Cr * d_fSlope * d_peakI1) / (d_Cr * d_fSlope + 1.0);
   }
+}
+
+void
+IntVar_SoilBrannon::addComputesAndRequires(Task* task,
+                                           const MPMMaterial* matl,
+                                           const PatchSet*)
+{
+  const MaterialSubset* matlset = matl->thisMaterial();
+  task->requires(Task::OldDW, pKappaLabel, matlset, Ghost::None);
+  task->computes(pKappaLabel_preReloc, matlset);
 }
 
 /* Get one (possibly composite) internal variable */
 template <>
 void
-IntVar_SoilModelBrannonKappa::getInternalVariable(ParticleSubset* pset,
-                                                  DataWarehouse* old_dw,
-                                                  constParticleVariable<double>& pKappa)
+IntVar_SoilBrannon::getInternalVariable(ParticleSubset* pset,
+                                        DataWarehouse* old_dw,
+                                        constParticleVariable<double>& pKappa)
 {
   old_dw->get(pKappa, pKappaLabel, pset);
 }
 
+/* Allocate one (possibly composite) internal variable */
+template <>
 void
-IntVar_SoilModelBrannonKappa::allocateAndPutInternalVariable(
+IntVar_SoilBrannon::allocateAndPutInternalVariable(
   ParticleSubset* pset,
   DataWarehouse* new_dw,
-  ParticleVariableBase& pKappa_new)
+  ParticleVariable<double>& pKappa_new)
 {
   new_dw->allocateAndPut(pKappa_new, pKappaLabel_preReloc, pset);
-}
-
-void
-IntVar_SoilModelBrannonKappa::allocateAndPutRigid(
-  ParticleSubset* pset,
-  DataWarehouse* new_dw,
-  constParticleVariableBase& pKappa)
-{
-  ParticleVariable<double> pKappa_new;
-  new_dw->allocateAndPut(pKappa_new, pKappaLabel_preReloc, pset);
-  ParticleSubset::iterator iter = pset->begin();
-  for (; iter != pset->end(); iter++) {
-    pKappa_new[*iter] =
-      dynamic_cast<constParticleVariable<double>&>(pKappa)[*iter];
-  }
 }
 
 template <>
 void
-IntVar_SoilModelBrannonKappa::evolveInternalVariable(
+IntVar_SoilBrannon::evolveInternalVariable(
   Uintah::particleIndex pidx,
   const ModelStateBase* state,
   Uintah::constParticleVariable<SoilBrannonIntVar>& var_old,
@@ -234,7 +179,7 @@ IntVar_SoilModelBrannonKappa::evolveInternalVariable(
 // Compute kappa_new using Newton's method
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeInternalVariable(
+IntVar_SoilBrannon::computeInternalVariable(
   const std::string& label,
   const ModelStateBase* state_input) const
 {
@@ -327,11 +272,11 @@ IntVar_SoilModelBrannonKappa::computeInternalVariable(
 // ** NOTE** (should be replaced with function pointers)
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeKappaFromX1(const double& kappa_old,
-                                                      const double& epsv,
-                                                      const double& deltaEpsv,
-                                                      const double& tolerance,
-                                                      const int& maxiter) const
+IntVar_SoilBrannon::computeKappaFromX1(const double& kappa_old,
+                                       const double& epsv,
+                                       const double& deltaEpsv,
+                                       const double& tolerance,
+                                       const int& maxiter) const
 {
   // Compute B, G and H
   double B = computeB(); // This should be computed while creating the oebject
@@ -386,11 +331,11 @@ IntVar_SoilModelBrannonKappa::computeKappaFromX1(const double& kappa_old,
 // ** NOTE** (should be replaced with function pointers)
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeKappaFromX2(const double& kappa_old,
-                                                      const double& epsv,
-                                                      const double& deltaEpsv,
-                                                      const double& tolerance,
-                                                      const int& maxiter) const
+IntVar_SoilBrannon::computeKappaFromX2(const double& kappa_old,
+                                       const double& epsv,
+                                       const double& deltaEpsv,
+                                       const double& tolerance,
+                                       const int& maxiter) const
 {
   // Compute B, G and H
   double B = computeB(); // This should be computed while creating the oebject
@@ -431,11 +376,11 @@ IntVar_SoilModelBrannonKappa::computeKappaFromX2(const double& kappa_old,
 //       Delta epsv = 0
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeX1(const double& kappa_old,
-                                             const double& kappa_new,
-                                             const double& G,
-                                             const double& H,
-                                             const double& delEpsv) const
+IntVar_SoilBrannon::computeX1(const double& kappa_old,
+                              const double& kappa_new,
+                              const double& G,
+                              const double& H,
+                              const double& delEpsv) const
 {
   double F1 = computeF1(kappa_new, G, H);
   double X1 = kappa_new - kappa_old - F1 * delEpsv;
@@ -449,10 +394,9 @@ IntVar_SoilModelBrannonKappa::computeX1(const double& kappa_old,
 //       Delta epsv = 0
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeDerivX1dkappa(
-  const double& kappa_old,
-  const double& kappa_new,
-  const double& delEpsv) const
+IntVar_SoilBrannon::computeDerivX1dkappa(const double& kappa_old,
+                                         const double& kappa_new,
+                                         const double& delEpsv) const
 {
   double dF1dkappa = computeDerivF1dkappa(kappa_new);
   double dX1dkappa = 1.0 - dF1dkappa * delEpsv;
@@ -466,8 +410,7 @@ IntVar_SoilModelBrannonKappa::computeDerivX1dkappa(
 //       Delta epsv = 0
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeKappaAtX1Min(
-  const double& delEpsv) const
+IntVar_SoilBrannon::computeKappaAtX1Min(const double& delEpsv) const
 {
   double kappa = d_p0 - 1.0 / d_p1 * log(-d_p3 / delEpsv);
   return kappa;
@@ -480,11 +423,11 @@ IntVar_SoilModelBrannonKappa::computeKappaAtX1Min(
 //       Delta epsv = 0
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeX2(const double& kappa_old,
-                                             const double& kappa_new,
-                                             const double& G,
-                                             const double& H,
-                                             const double& delEpsv) const
+IntVar_SoilBrannon::computeX2(const double& kappa_old,
+                              const double& kappa_new,
+                              const double& G,
+                              const double& H,
+                              const double& delEpsv) const
 {
   double F2 = computeF2(kappa_new, G, H);
   double X2 = kappa_new - kappa_old - F2 * delEpsv;
@@ -498,10 +441,9 @@ IntVar_SoilModelBrannonKappa::computeX2(const double& kappa_old,
 //       Delta epsv = 0
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeDerivX2dkappa(
-  const double& kappa_old,
-  const double& kappa_new,
-  const double& delEpsv) const
+IntVar_SoilBrannon::computeDerivX2dkappa(const double& kappa_old,
+                                         const double& kappa_new,
+                                         const double& delEpsv) const
 {
   double dF2dkappa = computeDerivF2dkappa(kappa_new);
   double dX2dkappa = 1.0 - dF2dkappa * delEpsv;
@@ -514,7 +456,7 @@ IntVar_SoilModelBrannonKappa::computeDerivX2dkappa(
 //        B = 3 B0 [exp(p3+p4) - 1]
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeB() const
+IntVar_SoilBrannon::computeB() const
 {
   double B = 3.0 * d_B0 * (exp(d_p3 + d_p4) - 1.0);
   return B;
@@ -528,8 +470,7 @@ IntVar_SoilModelBrannonKappa::computeB() const
 //        g34 = exp(p3+p4+epsv)
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeG(const double& epsv,
-                                            const double& B) const
+IntVar_SoilBrannon::computeG(const double& epsv, const double& B) const
 {
   double g34 = exp(d_p3 + d_p4 + epsv);
   double G   = B * g34 / ((g34 - 1.0) * (g34 - 1.0));
@@ -544,8 +485,7 @@ IntVar_SoilModelBrannonKappa::computeG(const double& epsv,
 //        h3 = exp(p3+epsv)
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeH(const double& epsv,
-                                            const double& B) const
+IntVar_SoilBrannon::computeH(const double& epsv, const double& B) const
 {
   double h3 = exp(d_p3 + epsv);
   double H  = B * h3 / ((h3 - 1.0) * (h3 - 1.0));
@@ -562,9 +502,9 @@ IntVar_SoilModelBrannonKappa::computeH(const double& epsv,
 //        h3 = exp(p3+epsv)
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeF1(const double& kappa,
-                                             const double& G,
-                                             const double& H) const
+IntVar_SoilBrannon::computeF1(const double& kappa,
+                              const double& G,
+                              const double& H) const
 {
   double f1 = 1.0 / (d_p1 * d_p3) * exp(-d_p1 * (kappa - d_p0));
   return (f1 - G + H);
@@ -575,8 +515,7 @@ IntVar_SoilModelBrannonKappa::computeF1(const double& kappa,
 //  where f1(kappa) = 1/(p1 p3) exp(-p1 kappa - p0)
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeDerivF1dkappa(
-  const double& kappa) const
+IntVar_SoilBrannon::computeDerivF1dkappa(const double& kappa) const
 {
   double df1dkappa = -1.0 / d_p3 * exp(-d_p1 * (kappa - d_p0));
   return df1dkappa;
@@ -592,9 +531,9 @@ IntVar_SoilModelBrannonKappa::computeDerivF1dkappa(
 //        h3 = exp(p3+epsv)
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeF2(const double& kappa,
-                                             const double& G,
-                                             const double& H) const
+IntVar_SoilBrannon::computeF2(const double& kappa,
+                              const double& G,
+                              const double& H) const
 {
   double p1p3     = d_p1 * d_p3;
   double p0p1p3   = d_p0 * p1p3;
@@ -635,10 +574,53 @@ IntVar_SoilModelBrannonKappa::computeF2(const double& kappa,
 //  where f2(kappa) = 1/(p1 p3) [kappa/p0]^(1-p0p1p3)
 //--------------------------------------------------------------------------------------
 double
-IntVar_SoilModelBrannonKappa::computeDerivF2dkappa(
-  const double& kappa) const
+IntVar_SoilBrannon::computeDerivF2dkappa(const double& kappa) const
 {
   double p0p1p3    = d_p0 * d_p1 * d_p3;
   double df2dkappa = (1.0 / p0p1p3 - 1.0) * pow((kappa / d_p0), (-p0p1p3));
   return df2dkappa;
+}
+
+void
+IntVar_SoilBrannon::allocateCMDataAddRequires(Task* task,
+                                              const MPMMaterial* matl,
+                                              const PatchSet*,
+                                              MPMLabel*)
+{
+  const MaterialSubset* matlset = matl->thisMaterial();
+  task->requires(Task::NewDW, pKappaLabel_preReloc, matlset, Ghost::None);
+}
+
+void
+IntVar_SoilBrannon::allocateCMDataAdd(DataWarehouse* old_dw,
+                                      ParticleSubset* addset,
+                                      ParticleLabelVariableMap* newState,
+                                      ParticleSubset* delset,
+                                      DataWarehouse* new_dw)
+{
+  ParticleVariable<double> pKappa;
+  constParticleVariable<double> o_kappa;
+
+  new_dw->allocateTemporary(pKappa, addset);
+
+  new_dw->get(o_kappa, pKappaLabel_preReloc, delset);
+
+  ParticleSubset::iterator o, n = addset->begin();
+  for (o = delset->begin(); o != delset->end(); o++, n++) {
+    pKappa[*n] = o_kappa[*o];
+  }
+
+  (*newState)[pKappaLabel] = pKappa.clone();
+}
+
+void
+IntVar_SoilBrannon::allocateAndPutRigid(ParticleSubset* pset,
+                                        DataWarehouse* new_dw,
+                                        constParticleVariableBase& pKappa)
+{
+  ParticleVariable<double> pKappa_new;
+  new_dw->allocateAndPut(pKappa_new, pKappaLabel_preReloc, pset);
+  for (auto idx : *pset) {
+    pKappa_new[idx] = dynamic_cast<constParticleVariable<double>&>(pKappa)[idx];
+  }
 }

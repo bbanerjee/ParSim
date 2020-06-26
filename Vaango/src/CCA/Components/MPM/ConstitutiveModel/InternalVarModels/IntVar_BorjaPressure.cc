@@ -152,11 +152,12 @@ IntVar_BorjaPressure::getInternalVariables(ParticleSubset* pset,
   return intVarVec;
 }
 
+template <>
 void
 IntVar_BorjaPressure::allocateAndPutInternalVariable(
   ParticleSubset* pset,
   DataWarehouse* new_dw,
-  ParticleVariableBase& pPc_new)
+  ParticleVariable<double>& pPc_new)
 {
   new_dw->allocateAndPut(pPc_new, pPcLabel_preReloc, pset);
 }

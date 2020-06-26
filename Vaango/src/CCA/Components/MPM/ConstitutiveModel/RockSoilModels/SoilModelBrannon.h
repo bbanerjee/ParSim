@@ -28,7 +28,7 @@
 #define __SOIL_MODEL_BRANNON_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_SoilModelBrannonKappa.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_SoilBrannon.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -186,7 +186,7 @@ public:
 private:
 
   CMData d_cm;
-  Vaango::IntVar_SoilModelBrannonKappa* d_intvar;
+  Vaango::IntVar_SoilBrannon* d_intvar;
 
   void initializeLocalMPMLabels();
 

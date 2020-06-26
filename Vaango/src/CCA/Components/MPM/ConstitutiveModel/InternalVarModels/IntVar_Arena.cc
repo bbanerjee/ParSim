@@ -309,6 +309,28 @@ IntVar_Arena::getInternalVariables(ParticleSubset* pset,
   return pIntVars;
 }
 
+/* Allocate multiple local <int/double/Vector/Matrix3> internal variables */
+template <>
+void
+IntVar_Arena::allocateAndPutInternalVariable(ParticleSubset* pset,
+                                             DataWarehouse* new_dw,
+                                             std::vector<ParticleVariable<double>>& pVars)
+{
+  new_dw->allocateAndPut(pVars[0], pKappaLabel_preReloc, pset);
+  new_dw->allocateAndPut(pVars[1], pCapXLabel_preReloc, pset);
+  new_dw->allocateAndPut(pVars[2], pPlasticVolStrainLabel_preReloc, pset);
+  new_dw->allocateAndPut(pVars[3], pP3Label_preReloc, pset);
+}
+
+template <>
+void
+IntVar_Arena::allocateAndPutInternalVariable(ParticleSubset* pset,
+                                             DataWarehouse* new_dw,
+                                             std::vector<::ParticleVariable<Matrix3>>& pVars)
+{
+  new_dw->allocateAndPut(pVars[0], pPlasticStrainLabel_preReloc, pset);
+}
+
 template <>
 void
 IntVar_Arena::evolveInternalVariable(Uintah::particleIndex pidx,

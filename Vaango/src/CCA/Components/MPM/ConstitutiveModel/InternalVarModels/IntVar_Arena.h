@@ -147,69 +147,19 @@ public:
   getInternalVariables(Uintah::ParticleSubset* pset,
                        Uintah::DataWarehouse* old_dw);
 
-  /*
-  // Get the internal variables
-  constParticleDoubleVec
-  getInternalVariables(Uintah::ParticleSubset* pset,
-                       Uintah::DataWarehouse* old_dw,
-                       const double& dummy) override
-  {
-    Uintah::constParticleVariable<double> pKappa, pCapX, pPlasticVolStrain, pP3;
-    old_dw->get(pKappa, pKappaLabel, pset);
-    old_dw->get(pCapX, pCapXLabel, pset);
-    old_dw->get(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
-    old_dw->get(pP3, pP3Label, pset);
-
-    std::vector<Uintah::constParticleVariable<double>> pIntVars;
-    pIntVars.emplace_back(pKappa);
-    pIntVars.emplace_back(pCapX);
-    pIntVars.emplace_back(pPlasticVolStrain);
-    pIntVars.emplace_back(pP3);
-
-    return pIntVars;
-  }
-
-  constParticleMatrix3Vec
-  getInternalVariables(Uintah::ParticleSubset* pset,
-                       Uintah::DataWarehouse* old_dw,
-                       const Uintah::Matrix3& dummy) override
-  {
-    Uintah::constParticleVariable<Uintah::Matrix3> pPlasticStrain;
-    old_dw->get(pPlasticStrain, pPlasticStrainLabel, pset);
-
-    std::vector<Uintah::constParticleVariable<Uintah::Matrix3>> pIntVars;
-    pIntVars.emplace_back(pPlasticStrain);
-
-    return pIntVars;
-  }
-  */
-
-  /* If there is only one internal variable */
+  /* Allocate one (possibly composite) internal variable */
+  template<typename T>
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
-                                 Uintah::ParticleVariableBase& intvar) override {}
+                                 Uintah::ParticleVariable<T>& intvar);
 
-  // Allocate and put the local particle internal variables
+  /* Allocate multiple local <int/double/Vector/Matrix3> internal variables */
+  template<typename T>
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
                                  Uintah::DataWarehouse* new_dw,
-                                 ParticleDoublePVec& pVars) override
-  {
-    new_dw->allocateAndPut(*pVars[0], pKappaLabel_preReloc, pset);
-    new_dw->allocateAndPut(*pVars[1], pCapXLabel_preReloc, pset);
-    new_dw->allocateAndPut(*pVars[2], pPlasticVolStrainLabel_preReloc, pset);
-    new_dw->allocateAndPut(*pVars[3], pP3Label_preReloc, pset);
-  }
-
-  // Allocate and put the local <Matrix3> particle variables
-  void
-  allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,
-                                 Uintah::DataWarehouse* new_dw,
-                                 ParticleMatrix3PVec& pVars) override
-  {
-    new_dw->allocateAndPut(*pVars[0], pPlasticStrainLabel_preReloc, pset);
-  }
+                                 std::vector<Uintah::ParticleVariable<T>>& pVars);
 
   /*! \brief Compute the internal variable */
   template <typename T>
