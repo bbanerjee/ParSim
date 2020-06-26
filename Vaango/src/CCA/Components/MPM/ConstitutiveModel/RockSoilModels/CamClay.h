@@ -28,7 +28,7 @@
 #define __CAM_CLAY_PLASTIC_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_BorjaPressure.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfState.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModel.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldCondition.h>
@@ -60,24 +60,12 @@ public:
   const VarLabel* pElasticStrainLabel_preReloc;
   const VarLabel* pDeltaGammaLabel_preReloc;
 
-protected:
-  MPMEquationOfState* d_eos;
-  Vaango::ShearModulusModel* d_shear;
-  Vaango::YieldCondition* d_yield;
-  Vaango::InternalVariableModel* d_intvar;
-
-private:
-  // Prevent copying of this class
-  // copy constructor
-  // CamClay(const CamClay &cm);
-  CamClay& operator=(const CamClay& cm);
-
-public:
   ////////////////////////////////////////////////////////////////////////
   /*! \brief constructors */
   ////////////////////////////////////////////////////////////////////////
   CamClay(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* flag);
   CamClay(const CamClay* cm);
+  CamClay& operator=(const CamClay& cm) = delete;
 
   ////////////////////////////////////////////////////////////////////////
   /*! \brief destructor  */
@@ -206,8 +194,15 @@ public:
   ////////////////////////////////////////////////////////////////////////
   double getCompressibility() override;
 
-protected:
+private:
+
+  MPMEquationOfState* d_eos;
+  Vaango::ShearModulusModel* d_shear;
+  Vaango::YieldCondition* d_yield;
+  Vaango::IntVar_BorjaPressure* d_intvar;
+
   void initializeLocalMPMLabels();
+
 };
 
 } // End namespace Uintah

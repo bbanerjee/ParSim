@@ -39,20 +39,23 @@
 
 using namespace Vaango;
 
-using VarLabel                      = Uintah::VarLabel;
-using ProblemSpecP                  = Uintah::ProblemSpecP;
-using MPMMaterial                   = Uintah::MPMMaterial;
-using PatchSet                      = Uintah::PatchSet;
-using MaterialSubset                = Uintah::MaterialSubset;
-using Patch                         = Uintah::Patch;
-using ParticleSubset                = Uintah::ParticleSubset;
-using DataWarehouse                 = Uintah::DataWarehouse;
-using MPMLabel                      = Uintah::MPMLabel;
-using Task                          = Uintah::Task;
-using Ghost                         = Uintah::Ghost;
-using ParticleLabelVariableMap      = Uintah::ParticleLabelVariableMap;
-using constParticleLabelVariableMap = Uintah::constParticleLabelVariableMap;
-using TabularCapIntVar              = Uintah::TabularCapIntVar;
+using Uintah::VarLabel;
+using Uintah::ProblemSpecP;
+using Uintah::MPMMaterial;
+using Uintah::PatchSet;
+using Uintah::MaterialSubset;
+using Uintah::Patch;
+using Uintah::ParticleSubset;
+using Uintah::DataWarehouse;
+using Uintah::MPMLabel;
+using Uintah::Task;
+using Uintah::Ghost;
+using Uintah::ParticleLabelVariableMap;
+using Uintah::constParticleLabelVariableMap;
+using Uintah::TabularCapIntVar;
+using Uintah::constParticleVariable;
+using Uintah::particleIndex;
+using Uintah::ParticleVariable;
 
 /*!-----------------------------------------------------*/
 IntVar_TabularCap::IntVar_TabularCap(Uintah::ProblemSpecP& ps)
@@ -140,12 +143,22 @@ IntVar_TabularCap::addParticleState(std::vector<const VarLabel*>& from,
   to.push_back(pCapXLabel_preReloc);
 }
 
+/* Get one (possibly composite) internal variable */
 template <>
 void
-IntVar_TabularCap::evolveInternalVariable(Uintah::particleIndex pidx,
-                                          const ModelStateBase* state,
-                                          Uintah::constParticleVariable<TabularCapIntVar>& var_old,
-                                          Uintah::ParticleVariable<TabularCapIntVar>& var)
+IntVar_TabularCap::getInternalVariable<double>(ParticleSubset* pset,
+                                               DataWarehouse* old_dw,
+                                               constParticleVariable<double>& pCapX)
+{
+  old_dw->get(pCapX, pCapXLabel, pset);
+}
+
+template <>
+void
+IntVar_TabularCap::evolveInternalVariable<TabularCapIntVar>(particleIndex pidx,
+                                                            const ModelStateBase* state,
+                                                            constParticleVariable<TabularCapIntVar>& var_old,
+                                                            ParticleVariable<TabularCapIntVar>& var)
 {
 }
 
@@ -290,4 +303,17 @@ IntVar_TabularCap::allocateAndPutRigid(ParticleSubset* pset,
     pCapX_new[iter] = dynamic_cast<Uintah::constParticleVariable<double>&>(
       *var[pCapXLabel])[iter];
   }
+}
+
+namespace Vaango {
+
+template void 
+IntVar_TabularCap::getInternalVariable<double>(Uintah::ParticleSubset* pset,
+                                               Uintah::DataWarehouse* old_dw,
+                                               Uintah::constParticleVariable<double>& pCapX);
+template void
+IntVar_TabularCap::evolveInternalVariable<TabularCapIntVar>(Uintah::particleIndex pidx,
+                                                            const ModelStateBase* state,
+                                                            Uintah::constParticleVariable<TabularCapIntVar>& var_old,
+                                                            Uintah::ParticleVariable<TabularCapIntVar>& var);
 }

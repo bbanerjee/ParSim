@@ -89,6 +89,14 @@ IntVar_BorjaPressure::outputProblemSpec(ProblemSpecP& ps)
 }
 
 void
+IntVar_BorjaPressure::addParticleState(std::vector<const VarLabel*>& from,
+                                            std::vector<const VarLabel*>& to)
+{
+  from.push_back(pPcLabel);
+  to.push_back(pPcLabel_preReloc);
+}
+
+void
 IntVar_BorjaPressure::addInitialComputesAndRequires(
   Task* task,
   const MPMMaterial* matl,
@@ -99,73 +107,49 @@ IntVar_BorjaPressure::addInitialComputesAndRequires(
 }
 
 void
+IntVar_BorjaPressure::initializeInternalVariable(ParticleSubset* pset,
+                                                      DataWarehouse* new_dw)
+{
+  ParticleVariable<double> pPc;
+  new_dw->allocateAndPut(pPc, pPcLabel, pset);
+  for (auto idx : *pset) {
+    pPc[idx] = d_pc0;
+  }
+}
+
+void
 IntVar_BorjaPressure::addComputesAndRequires(Task* task,
-                                                  const MPMMaterial* matl,
-                                                  const PatchSet*)
+                                             const MPMMaterial* matl,
+                                             const PatchSet*)
 {
   const MaterialSubset* matlset = matl->thisMaterial();
   task->requires(Task::OldDW, pPcLabel, matlset, Ghost::None);
   task->computes(pPcLabel_preReloc, matlset);
 }
 
-void
-IntVar_BorjaPressure::addParticleState(std::vector<const VarLabel*>& from,
-                                            std::vector<const VarLabel*>& to)
-{
-  from.push_back(pPcLabel);
-  to.push_back(pPcLabel_preReloc);
-}
-
-void
-IntVar_BorjaPressure::allocateCMDataAddRequires(Task* task,
-                                                     const MPMMaterial* matl,
-                                                     const PatchSet*,
-                                                     MPMLabel*)
-{
-  const MaterialSubset* matlset = matl->thisMaterial();
-  task->requires(Task::NewDW, pPcLabel_preReloc, matlset, Ghost::None);
-}
-
-void
-IntVar_BorjaPressure::allocateCMDataAdd(DataWarehouse* old_dw,
-                                             ParticleSubset* addset,
-                                             ParticleLabelVariableMap* newState,
-                                             ParticleSubset* delset,
-                                             DataWarehouse* new_dw)
-{
-  ParticleVariable<double> pPc;
-  constParticleVariable<double> o_Pc;
-
-  new_dw->allocateTemporary(pPc, addset);
-
-  new_dw->get(o_Pc, pPcLabel_preReloc, delset);
-
-  ParticleSubset::iterator o, n = addset->begin();
-  for (o = delset->begin(); o != delset->end(); o++, n++) {
-    pPc[*n] = o_Pc[*o];
-  }
-
-  (*newState)[pPcLabel] = pPc.clone();
-}
-
-void
-IntVar_BorjaPressure::initializeInternalVariable(ParticleSubset* pset,
-                                                      DataWarehouse* new_dw)
-{
-  ParticleVariable<double> pPc;
-  new_dw->allocateAndPut(pPc, pPcLabel, pset);
-  ParticleSubset::iterator iter = pset->begin();
-  for (; iter != pset->end(); iter++) {
-    pPc[*iter] = d_pc0;
-  }
-}
-
+/* Get one (possibly composite) internal variable */
+template <>
 void
 IntVar_BorjaPressure::getInternalVariable(ParticleSubset* pset,
-                                               DataWarehouse* old_dw,
-                                               constParticleVariableBase& pPc)
+                                          DataWarehouse* old_dw,
+                                          constParticleVariable<double>& pPc)
 {
   old_dw->get(pPc, pPcLabel, pset);
+}
+
+/* Get multiple local <int/double/Vector/Matrix3> internal variables */
+template <>
+std::vector<constParticleVariable<double>>
+IntVar_BorjaPressure::getInternalVariables(ParticleSubset* pset,
+                                           DataWarehouse* old_dw)
+{
+  constParticleDouble pPc;
+  old_dw->get(pPc, pPcLabel, pset);
+
+  constParticleDoubleVec intVarVec;
+  intVarVec.push_back(pPc);
+
+  return intVarVec;
 }
 
 void
@@ -175,19 +159,6 @@ IntVar_BorjaPressure::allocateAndPutInternalVariable(
   ParticleVariableBase& pPc_new)
 {
   new_dw->allocateAndPut(pPc_new, pPcLabel_preReloc, pset);
-}
-
-void
-IntVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset,
-                                               DataWarehouse* new_dw,
-                                               constParticleVariableBase& pPc)
-{
-  ParticleVariable<double> pPc_new;
-  new_dw->allocateAndPut(pPc_new, pPcLabel_preReloc, pset);
-  ParticleSubset::iterator iter = pset->begin();
-  for (; iter != pset->end(); iter++) {
-    pPc_new[*iter] = dynamic_cast<constParticleVariable<double>&>(pPc)[*iter];
-  }
 }
 
 template <>
@@ -263,3 +234,48 @@ IntVar_BorjaPressure::computeVolStrainDerivOfInternalVariable(
                          (d_lambdatilde - d_kappatilde));
   return pc / (d_lambdatilde - d_kappatilde);
 }
+
+void
+IntVar_BorjaPressure::allocateCMDataAddRequires(Task* task,
+                                                     const MPMMaterial* matl,
+                                                     const PatchSet*,
+                                                     MPMLabel*)
+{
+  const MaterialSubset* matlset = matl->thisMaterial();
+  task->requires(Task::NewDW, pPcLabel_preReloc, matlset, Ghost::None);
+}
+
+void
+IntVar_BorjaPressure::allocateCMDataAdd(DataWarehouse* old_dw,
+                                             ParticleSubset* addset,
+                                             ParticleLabelVariableMap* newState,
+                                             ParticleSubset* delset,
+                                             DataWarehouse* new_dw)
+{
+  ParticleVariable<double> pPc;
+  constParticleVariable<double> o_Pc;
+
+  new_dw->allocateTemporary(pPc, addset);
+
+  new_dw->get(o_Pc, pPcLabel_preReloc, delset);
+
+  ParticleSubset::iterator o, n = addset->begin();
+  for (o = delset->begin(); o != delset->end(); o++, n++) {
+    pPc[*n] = o_Pc[*o];
+  }
+
+  (*newState)[pPcLabel] = pPc.clone();
+}
+
+void
+IntVar_BorjaPressure::allocateAndPutRigid(ParticleSubset* pset,
+                                               DataWarehouse* new_dw,
+                                               constParticleVariableBase& pPc)
+{
+  ParticleVariable<double> pPc_new;
+  new_dw->allocateAndPut(pPc_new, pPcLabel_preReloc, pset);
+  for (auto idx : *pset) {
+    pPc_new[idx] = dynamic_cast<constParticleVariable<double>&>(pPc)[idx];
+  }
+}
+

@@ -25,10 +25,10 @@
 
 #include <CCA/Components/MPM/ConstitutiveModel/RockSoilModels/CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/MPMMaterial.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ModelState/ModelState_CamClay.h>
 #include <CCA/Components/MPM/ConstitutiveModel/EOSModels/MPMEquationOfStateFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/ShearModulusModels/ShearModulusModelFactory.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModelFactory.h>
 #include <CCA/Components/MPM/ConstitutiveModel/YieldCondModels/YieldConditionFactory.h>
 #include <CCA/Ports/DataWarehouse.h>
 #include <Core/Grid/Level.h>
@@ -93,8 +93,10 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
-  d_intvar = Vaango::InternalVariableModelFactory::create(ps, d_shear);
-  if (!d_intvar) {
+  Vaango::InternalVariableModel* intvar = 
+    Vaango::InternalVariableModelFactory::create(ps, d_shear);
+  d_intvar = dynamic_cast<Vaango::IntVar_BorjaPressure*>(intvar);
+  if (!intvar || !d_intvar) {
     ostringstream desc;
     desc << "**ERROR** Internal error while creating "
             "CamClay->InternalVariableModelFactory."
@@ -102,7 +104,7 @@ CamClay::CamClay(ProblemSpecP& ps, MPMFlags* Mflag)
     throw InternalError(desc.str(), __FILE__, __LINE__);
   }
 
-  d_yield = Vaango::YieldConditionFactory::create(ps, d_intvar);
+  d_yield = Vaango::YieldConditionFactory::create(ps, intvar);
   if (!d_yield) {
     ostringstream desc;
     desc << "**ERROR** Internal error while creating "
@@ -120,7 +122,9 @@ CamClay::CamClay(const CamClay* cm)
   d_eos = MPMEquationOfStateFactory::createCopy(cm->d_eos);
   d_shear = Vaango::ShearModulusModelFactory::createCopy(cm->d_shear);
   d_yield = Vaango::YieldConditionFactory::createCopy(cm->d_yield);
-  d_intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
+  Vaango::InternalVariableModel* intvar = 
+    Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
+  d_intvar = static_cast<Vaango::IntVar_BorjaPressure*>(intvar);
 
   initializeLocalMPMLabels();
 }

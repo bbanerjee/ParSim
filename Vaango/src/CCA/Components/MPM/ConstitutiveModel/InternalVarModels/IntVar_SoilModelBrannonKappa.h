@@ -170,30 +170,18 @@ public:
                              Uintah::MPMLabel* lb,
                              ParamMap& params) override {}
 
+  /* Get one (possibly composite) internal variable */
+  template<typename T>
   void
   getInternalVariable(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* old_dw,
-                      Uintah::constParticleVariableBase& intvar) override;
+                      Uintah::constParticleVariable<T>& intvar);
 
-  /* Get the local <double> particle variables */
-  constParticleDoubleVec
+  /* Get multiple local <int/double/Vector/Matrix3> internal variables */
+  template<typename T>
+  std::vector<Uintah::constParticleVariable<T>>
   getInternalVariables(Uintah::ParticleSubset* pset,
-                       Uintah::DataWarehouse* old_dw,
-                       const double& dummy) override 
-  {
-    constParticleDoubleVec empty;
-    return empty;
-  }
-
-  /* Get the local <Matrix3> particle variables */
-  constParticleMatrix3Vec
-  getInternalVariables(Uintah::ParticleSubset* pset,
-                       Uintah::DataWarehouse* old_dw,
-                       const Uintah::Matrix3& dummy) override
-  {
-    constParticleMatrix3Vec empty;
-    return empty;
-  }
+                       Uintah::DataWarehouse* old_dw);
 
   void
   allocateAndPutInternalVariable(Uintah::ParticleSubset* pset,

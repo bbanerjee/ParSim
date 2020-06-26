@@ -65,43 +65,22 @@ TEST(IntVarMetalTest, constructors)
   model.outputProblemSpec(out_ps);
   xmlSaveFormatFileEnc("-", out_ps->getNode()->doc, "ISO-8859-1", 1);
   
-
-  /*
-  std::map<std::string, double> params = model.getParameters();
-  for (const auto& param : params) {
-    //std::cout << "params = " << param.first  << " : " << param.second << "\n";
-    ASSERT_DOUBLE_EQ(test_params[param.first], param.second);
-  }
-
-  // Get the initial moduli
-  ElasticModuli moduli = model_copy.getInitialElasticModuli();
-  //std::cout << std::setprecision(16) 
-  //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
-  //          << std::endl;
-
-  ASSERT_NEAR(moduli.bulkModulus, 1.0e6, 1.0e-6);
-  ASSERT_NEAR(moduli.shearModulus, 0.7e6, 1.0e-6);
-
-  // Get the moduli upper bound at zero pressure
-  moduli = model.getElasticModuliUpperBound();
-  //std::cout << std::setprecision(16)
-  //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
-  //          << std::endl;
-  ASSERT_NEAR(moduli.bulkModulus, 1.0e6, 1.0e-6);
-  ASSERT_NEAR(moduli.shearModulus, 0.7e6, 1.0e-6);
-
-  moduli = model.getElasticModuliLowerBound();
-  //std::cout << std::setprecision(16)
-  //          << " K = " << moduli.bulkModulus << " G = " << moduli.shearModulus
-  //          << std::endl;
-  ASSERT_NEAR(moduli.bulkModulus, 1.0e6, 1.0e-6);
-  ASSERT_NEAR(moduli.shearModulus, 0.7e6, 1.0e-6);
-
   // Create a model state
   ModelStateBase state;
-  state.initialDensity = 1000.0;
-  state.meltingTemp = 500.0;
+  state.porosity = 0.2;
+  Matrix3 M(1.0, 2.0, 3.0, 2.0, 4.0, 5.0, .30, 5.0, 6.0);
+  M /= M.Norm();
+  state.plasticFlowDirection = M;
+  std::cout << "phi = " << state.porosity << " M = " << state.plasticFlowDirection 
+            << " M:M = " << M.Contract(M) << "\n";
 
+  // Compute hardening modulus
+  Uintah::MetalIntVar modulus;
+  model.computeHardeningModulus(&state, modulus);
+  std::cout << "h_alpha = " << modulus.eqPlasticStrain
+            << " h_phi = " << modulus.plasticPorosity << "\n";
+
+  /*
   // Set up pressures, densities, temperatures
   std::vector<double> pressures = { -1000, 0, 1000 };
   std::vector<double> densities = { 100, 1000, 10000 }; // not consistent with pressures

@@ -120,7 +120,8 @@ using std::endl;
 TabularPlasticityCap::TabularPlasticityCap(Uintah::ProblemSpecP& ps, Uintah::MPMFlags* mpmFlags)
   : TabularPlasticity(ps, mpmFlags)
 {
-  d_capX = Vaango::InternalVariableModelFactory::create(ps);
+  InternalVariableModel* capX = Vaango::InternalVariableModelFactory::create(ps);
+  d_capX = dynamic_cast<IntVar_TabularCap*>(capX);
   if (!d_capX) {
     std::ostringstream desc;
     desc << "**ERROR** Internal error while creating InternalVariableModel."
@@ -149,7 +150,8 @@ TabularPlasticityCap::TabularPlasticityCap(Uintah::ProblemSpecP& ps, Uintah::MPM
 TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap& cm)
   : TabularPlasticity(cm)
 {
-  d_capX = Vaango::InternalVariableModelFactory::createCopy(d_capX);
+  auto capX = Vaango::InternalVariableModelFactory::createCopy(d_capX);
+  d_capX = dynamic_cast<IntVar_TabularCap*>(capX);
 
   // Consistency bisection
   d_consistency_bisection_tolerance = cm.d_consistency_bisection_tolerance;
@@ -161,7 +163,8 @@ TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap& cm)
 TabularPlasticityCap::TabularPlasticityCap(const TabularPlasticityCap* cm)
   : TabularPlasticity(*cm)
 {
-  d_capX = Vaango::InternalVariableModelFactory::createCopy(cm->d_capX);
+  auto capX = Vaango::InternalVariableModelFactory::createCopy(cm->d_capX);
+  d_capX = dynamic_cast<IntVar_TabularCap*>(capX);
 
   // Consistency bisection
   d_consistency_bisection_tolerance = cm->d_consistency_bisection_tolerance;

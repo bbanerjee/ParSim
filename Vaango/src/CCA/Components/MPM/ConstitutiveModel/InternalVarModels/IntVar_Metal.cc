@@ -141,34 +141,14 @@ IntVar_Metal::addComputesAndRequires(Task* task,
   task->computes(pIntVarLabel_preReloc, matlset);
 }
 
-/* If there is only one internal variable */
+/* Get one (possibly composite) internal variable */
+template <>
 void
-IntVar_Metal::getInternalVariable(Uintah::ParticleSubset* pset,
-                                  Uintah::DataWarehouse* old_dw,
-                                  Uintah::constParticleVariableBase& intvar)
+IntVar_Metal::getInternalVariable(ParticleSubset* pset,
+                                  DataWarehouse* old_dw,
+                                  constParticleVariable<MetalIntVar>& var)
 {
-  std::ostringstream err;
-  err << "**ERROR** This getInternalVariable method cannot be use if there"
-      << " are more than one internal variables.";
-  throw Uintah::InternalError(err.str(), __FILE__, __LINE__);
-}
-
-std::vector<Uintah::constParticleVariable<double>>
-IntVar_Metal::getInternalVariables(Uintah::ParticleSubset* pset,
-                                   Uintah::DataWarehouse* old_dw,
-                                   const double& dummy)
-{
-  std::vector<Uintah::constParticleVariable<double>> pIntVars;
-  return pIntVars;
-}
-
-std::vector<Uintah::constParticleVariable<Uintah::Matrix3>>
-IntVar_Metal::getInternalVariables(Uintah::ParticleSubset* pset,
-                                   Uintah::DataWarehouse* old_dw,
-                                   const Uintah::Matrix3& dummy)
-{
-  std::vector<Uintah::constParticleVariable<Uintah::Matrix3>> pIntVars;
-  return pIntVars;
+  old_dw->get(var, pIntVarLabel, pset);
 }
 
 // Allocate and put the local particle internal variables

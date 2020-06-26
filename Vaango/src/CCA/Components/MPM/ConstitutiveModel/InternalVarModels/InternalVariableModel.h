@@ -110,23 +110,18 @@ public:
                          const Uintah::MPMMaterial* matl,
                          const Uintah::PatchSet* patches) = 0;
 
-  /* If there is only one internal variable */
-  virtual void
-  getInternalVariable(Uintah::ParticleSubset* pset,
-                      Uintah::DataWarehouse* old_dw,
-                      Uintah::constParticleVariableBase& intvar) = 0;
+  /* Get one (possibly composite) internal variable */
+  //template<typename T>
+  //void
+  //getInternalVariable(Uintah::ParticleSubset* pset,
+  //                    Uintah::DataWarehouse* old_dw,
+  //                    Uintah::constParticleVariable<T>& intvar);
 
-  /* Get the local <double> particle variables */
-  virtual constParticleDoubleVec
-  getInternalVariables(Uintah::ParticleSubset* pset,
-                       Uintah::DataWarehouse* old_dw,
-                       const double& dummy) = 0;
-
-  /* Get the local <Matrix3> particle variables */
-  virtual constParticleMatrix3Vec
-  getInternalVariables(Uintah::ParticleSubset* pset,
-                       Uintah::DataWarehouse* old_dw,
-                       const Uintah::Matrix3& dummy) = 0;
+  /* Get multiple local <int/double/Vector/Matrix3> internal variables */
+  //template<typename T>
+  //std::vector<Uintah::constParticleVariable<T>>
+  //getInternalVariables(Uintah::ParticleSubset* pset,
+  //                     Uintah::DataWarehouse* old_dw);
 
   /* If there is only one internal variable */
   virtual void

@@ -134,12 +134,20 @@ public:
                          const Uintah::MPMMaterial* matl,
                          const Uintah::PatchSet* patches) override;
 
-  /* If there is only one internal variable */
+  /* Get one (possibly composite) internal variable */
+  template<typename T>
   void
   getInternalVariable(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* old_dw,
-                      Uintah::constParticleVariableBase& intvar) override {}
+                      Uintah::constParticleVariable<T>& intvar);
 
+  /* Get multiple local <int/double/Vector/Matrix3> internal variables */
+  template<typename T>
+  std::vector<Uintah::constParticleVariable<T>>
+  getInternalVariables(Uintah::ParticleSubset* pset,
+                       Uintah::DataWarehouse* old_dw);
+
+  /*
   // Get the internal variables
   constParticleDoubleVec
   getInternalVariables(Uintah::ParticleSubset* pset,
@@ -174,6 +182,7 @@ public:
 
     return pIntVars;
   }
+  */
 
   /* If there is only one internal variable */
   void

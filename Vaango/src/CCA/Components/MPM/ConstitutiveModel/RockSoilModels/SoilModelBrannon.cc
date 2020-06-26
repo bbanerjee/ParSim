@@ -102,7 +102,8 @@ SoilModelBrannon::SoilModelBrannon(ProblemSpecP& ps, MPMFlags* Mflag)
   ps->require("B0", d_cm.B0);
   ps->require("G0", d_cm.G0);
 
-  d_intvar = Vaango::InternalVariableModelFactory::create(ps);
+  auto intvar = Vaango::InternalVariableModelFactory::create(ps);
+  d_intvar = dynamic_cast<Vaango::IntVar_SoilModelBrannonKappa*>(intvar);
   if (!d_intvar) {
     ostringstream desc;
     desc << "**ERROR** Internal error while creating "
@@ -134,7 +135,8 @@ SoilModelBrannon::SoilModelBrannon(const SoilModelBrannon* cm)
   d_cm.B0 = cm->d_cm.B0;
   d_cm.G0 = cm->d_cm.G0;
 
-  d_intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
+  auto intvar = Vaango::InternalVariableModelFactory::createCopy(cm->d_intvar);
+  d_intvar = static_cast<Vaango::IntVar_SoilModelBrannonKappa*>(intvar);
 
   initializeLocalMPMLabels();
 }

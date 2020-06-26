@@ -262,6 +262,53 @@ IntVar_Arena::addParticleState(std::vector<const VarLabel*>& from,
   to.push_back(pP3Label_preReloc);
 }
 
+/* Get one (possibly composite) internal variable */
+template<>
+void
+IntVar_Arena::getInternalVariable(ParticleSubset* pset,
+                                  DataWarehouse* old_dw,
+                                  constParticleVariable<ArenaIntVar>& intvar)
+{
+  std::ostringstream err;
+  err << "**ERROR** getInternalVariable with ArenaIntVar not implemented yet.";
+  throw InternalError(err.str(), __FILE__, __LINE__);
+}
+
+/* Get multiple local <int/double/Vector/Matrix3> internal variables */
+template <>
+std::vector<Uintah::constParticleVariable<double>>
+IntVar_Arena::getInternalVariables(ParticleSubset* pset,
+                                   DataWarehouse* old_dw)
+{
+  constParticleVariable<double> pKappa, pCapX, pPlasticVolStrain, pP3;
+  old_dw->get(pKappa, pKappaLabel, pset);
+  old_dw->get(pCapX, pCapXLabel, pset);
+  old_dw->get(pPlasticVolStrain, pPlasticVolStrainLabel, pset);
+  old_dw->get(pP3, pP3Label, pset);
+
+  std::vector<constParticleVariable<double>> pIntVars;
+  pIntVars.emplace_back(pKappa);
+  pIntVars.emplace_back(pCapX);
+  pIntVars.emplace_back(pPlasticVolStrain);
+  pIntVars.emplace_back(pP3);
+
+  return pIntVars;
+}
+
+template <>
+std::vector<Uintah::constParticleVariable<Matrix3>>
+IntVar_Arena::getInternalVariables(ParticleSubset* pset,
+                                   DataWarehouse* old_dw)
+{
+  constParticleVariable<Uintah::Matrix3> pPlasticStrain;
+  old_dw->get(pPlasticStrain, pPlasticStrainLabel, pset);
+
+  std::vector<Uintah::constParticleVariable<Uintah::Matrix3>> pIntVars;
+  pIntVars.emplace_back(pPlasticStrain);
+
+  return pIntVars;
+}
+
 template <>
 void
 IntVar_Arena::evolveInternalVariable(Uintah::particleIndex pidx,

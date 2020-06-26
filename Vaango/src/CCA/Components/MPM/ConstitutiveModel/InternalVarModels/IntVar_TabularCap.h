@@ -140,13 +140,18 @@ public:
   computeVolStrainDerivOfInternalVariable(const std::string& label,
                                           const ModelStateBase*) const override;
 
+  /* Get one (possibly composite) internal variable */
+  template<typename T>
   void
   getInternalVariable(Uintah::ParticleSubset* pset,
                       Uintah::DataWarehouse* old_dw,
-                      Uintah::constParticleVariableBase& pCapX) override
-  {
-    old_dw->get(pCapX, pCapXLabel, pset);
-  }
+                      Uintah::constParticleVariable<T>& intvar);
+
+  /* Get multiple local <int/double/Vector/Matrix3> internal variables */
+  template<typename T>
+  std::vector<Uintah::constParticleVariable<T>>
+  getInternalVariables(Uintah::ParticleSubset* pset,
+                       Uintah::DataWarehouse* old_dw);
 
   void
   allocateAndPutInternalVariable(
@@ -155,25 +160,6 @@ public:
     Uintah::ParticleVariableBase& pCapX_new) override
   {
     new_dw->allocateAndPut(pCapX_new, pCapXLabel_preReloc, pset);
-  }
-
-  // Get the internal variables
-  std::vector<Uintah::constParticleVariable<double>>
-  getInternalVariables(Uintah::ParticleSubset* pset,
-                       Uintah::DataWarehouse* old_dw,
-                       const double& dummy) override
-  {
-    std::vector<Uintah::constParticleVariable<double>> pIntVars;
-    return pIntVars;
-  }
-
-  std::vector<Uintah::constParticleVariable<Uintah::Matrix3>>
-  getInternalVariables(Uintah::ParticleSubset* pset,
-                       Uintah::DataWarehouse* old_dw,
-                       const Uintah::Matrix3& dummy) override
-  {
-    std::vector<Uintah::constParticleVariable<Uintah::Matrix3>> pIntVars;
-    return pIntVars;
   }
 
   // Allocate and put the local particle internal variables

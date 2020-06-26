@@ -28,7 +28,7 @@
 #define __SOIL_MODEL_BRANNON_H__
 
 #include <CCA/Components/MPM/ConstitutiveModel/ConstitutiveModel.h>
-#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/InternalVariableModel.h>
+#include <CCA/Components/MPM/ConstitutiveModel/InternalVarModels/IntVar_SoilModelBrannonKappa.h>
 #include <CCA/Ports/DataWarehouseP.h>
 #include <Core/Math/Matrix3.h>
 #include <Core/ProblemSpec/ProblemSpecP.h>
@@ -66,10 +66,6 @@ public:
   const VarLabel* pKappaStateLabel_preReloc;
   const VarLabel* pLocalizedLabel_preReloc;
 
-protected:
-  Vaango::InternalVariableModel* d_intvar;
-
-public:
   // Create datatype for storing model parameters
   struct CMData
   {
@@ -90,13 +86,6 @@ public:
     double G0;
   };
 
-private:
-  CMData d_cm;
-
-
-  void initializeLocalMPMLabels();
-
-public:
   // constructor
   SoilModelBrannon(ProblemSpecP& ps, MPMFlags* flag);
   SoilModelBrannon(const SoilModelBrannon* cm);
@@ -195,6 +184,12 @@ public:
   double getCompressibility() override;
 
 private:
+
+  CMData d_cm;
+  Vaango::IntVar_SoilModelBrannonKappa* d_intvar;
+
+  void initializeLocalMPMLabels();
+
   void computeEffectiveModuli(const double& eps_v, double& bulk_modulus,
                               double& lame_modulus) const;
 };

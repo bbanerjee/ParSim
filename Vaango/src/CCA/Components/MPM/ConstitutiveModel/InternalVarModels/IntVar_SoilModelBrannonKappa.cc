@@ -186,11 +186,12 @@ IntVar_SoilModelBrannonKappa::initializeInternalVariable(
   }
 }
 
+/* Get one (possibly composite) internal variable */
+template <>
 void
-IntVar_SoilModelBrannonKappa::getInternalVariable(
-  ParticleSubset* pset,
-  DataWarehouse* old_dw,
-  constParticleVariableBase& pKappa)
+IntVar_SoilModelBrannonKappa::getInternalVariable(ParticleSubset* pset,
+                                                  DataWarehouse* old_dw,
+                                                  constParticleVariable<double>& pKappa)
 {
   old_dw->get(pKappa, pKappaLabel, pset);
 }
