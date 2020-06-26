@@ -908,7 +908,7 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
             state.scale_eps_v = var1; // scale factor for Delta eps_v
 
             // Compute internal variable
-            kappa_new = d_intvar->computeInternalVariable(nullptr, &state);
+            kappa_new = d_intvar->computeInternalVariable("dummy", &state);
             // if (kappa_new > 0.0) {
             //  cout << " kappa > 0 in particle " << idx << " kappa_new = " <<
             //  kappa_new
@@ -1623,7 +1623,7 @@ SoilModelBrannon::computeStressTensor(const PatchSubset* patches,
                 //       pPlasticStrainVol_new[idx]
                 //       << " del eps_v = " << (M*gamma).Trace()/var1 << endl;
                 //}
-                kappa_loop = d_intvar->computeInternalVariable(nullptr, &state);
+                kappa_loop = d_intvar->computeInternalVariable("dummy", &state);
                 // if (fetestexcept(FE_INVALID) != 0) {
                 //  cerr << "Location 2: Floating point exception in particle =
                 //  " << idx << endl;

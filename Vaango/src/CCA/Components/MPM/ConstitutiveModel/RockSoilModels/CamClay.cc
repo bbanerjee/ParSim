@@ -561,7 +561,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
       double c_dil = sqrt((bulk + 4.0 * mu / 3.0) / rho_cur);
 
       // Get internal state variable (p_c)
-      double pc_n = d_intvar->computeInternalVariable(nullptr, &state);
+      double pc_n = d_intvar->computeInternalVariable("dummy", &state);
       state.p_c = pc_n;
 
       //-----------------------------------------------------------------------
@@ -685,6 +685,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
           double delgamma = 0.0;
           bool do_line_search = false;
           do {
+
             // update
             strain_elast_v = strain_elast_v_k + delvoldev[0];
             strain_elast_s = strain_elast_s_k + delvoldev[1];
@@ -700,7 +701,7 @@ CamClay::computeStressTensor(const PatchSubset* patches,
             mu = d_shear->computeShearModulus(&state);
             q = d_shear->computeQ(&state);
             p = d_eos->computePressure(matl, &state, zero, zero, 0.0);
-            pc = d_intvar->computeInternalVariable(nullptr, &state);
+            pc = d_intvar->computeInternalVariable("dummy", &state);
 
             if (std::isnan(p)) {
               ostringstream desc;
@@ -908,8 +909,6 @@ CamClay::computeStressTensor(const PatchSubset* patches,
                          Max(c_dil + fabs(pVel.y()), waveSpeed.y()),
                          Max(c_dil + fabs(pVel.z()), waveSpeed.z()));
 
-      // delete state;
-
       // Compute artificial viscosity term
       if (flag->d_artificialViscosity) {
         double dx_ave = (dx.x() + dx.y() + dx.z()) / 3.0;
@@ -930,7 +929,6 @@ CamClay::computeStressTensor(const PatchSubset* patches,
         flag->d_reductionVars->strainEnergy) {
       new_dw->put(sum_vartype(totalStrainEnergy), lb->StrainEnergyLabel);
     }
-    //delete interpolator;
   }
 
   if (cout_CC.active())
