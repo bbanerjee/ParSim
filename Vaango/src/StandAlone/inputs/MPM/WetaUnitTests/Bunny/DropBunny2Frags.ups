@@ -90,22 +90,22 @@
         <thermal_conductivity>1.0</thermal_conductivity>
         <specific_heat>1400.0</specific_heat>
         <constitutive_model type="camclay">
-          <pressure_model type="borja_pressure">
+          <equation_of_state type="borja_pressure">
             <p0> -9.0  </p0>
             <alpha> 60 </alpha>
             <kappatilde> 0.018 </kappatilde>
             <epse_v0> 0.0 </epse_v0>
-          </pressure_model>
-          <elastic_shear_modulus_model type="borja_shear_modulus">
+          </equation_of_state>
+          <shear_modulus_model type="borja_shear">
             <mu0> 5.4e6 </mu0>
             <p0> -9.0 </p0>
             <alpha> 60 </alpha>
             <kappatilde> 0.018 </kappatilde>
             <epse_v0> 0.0 </epse_v0>
-          </elastic_shear_modulus_model>
-          <plastic_yield_condition type="camclay">
+          </shear_modulus_model>
+          <yield_condition type="camclay">
             <M> 1.05 </M>
-          </plastic_yield_condition>
+          </yield_condition>
           <internal_variable_model type="borja_consolidation_pressure">
             <pc0> -9.0e4  </pc0>
             <lambdatilde> 0.13 </lambdatilde> 
@@ -114,7 +114,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "Bunny1">
-            <name> bunny2_p1 </name>
+            <file_name_prefix> bunny2_p1 </file_name_prefix>
           </tri>
           <res>[2,2,2]</res>
           <velocity>[0.0,-10.0,0.0]</velocity>
@@ -133,7 +133,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "Bunny2">
-            <name> bunny2_p2 </name>
+            <file_name_prefix> bunny2_p2 </file_name_prefix>
           </tri>
           <res>[2,2,2]</res>
           <velocity>[0.0,-10.0,0.0]</velocity>
@@ -152,7 +152,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "Bunny3">
-            <name> bunny2_p3 </name>
+            <file_name_prefix> bunny2_p3 </file_name_prefix>
           </tri>
           <res>[2,2,2]</res>
           <velocity>[0.0,-10.0,0.0]</velocity>
@@ -171,7 +171,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "Bunny4">
-            <name> bunny2_p4 </name>
+            <file_name_prefix> bunny2_p4 </file_name_prefix>
           </tri>
           <res>[2,2,2]</res>
           <velocity>[0.0,-10.0,0.0]</velocity>
@@ -190,7 +190,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "Bunny5">
-            <name> bunny2_p5 </name>
+            <file_name_prefix> bunny2_p5 </file_name_prefix>
           </tri>
           <res>[2,2,2]</res>
           <velocity>[0.0,-10.0,0.0]</velocity>
@@ -209,7 +209,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "Bunny6">
-            <name> bunny2_p6 </name>
+            <file_name_prefix> bunny2_p6 </file_name_prefix>
           </tri>
           <res>[2,2,2]</res>
           <velocity>[0.0,-10.0,0.0]</velocity>
@@ -228,7 +228,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "Bunny7">
-            <name> bunny2_p0 </name>
+            <file_name_prefix> bunny2_p0 </file_name_prefix>
           </tri>
           <res>[2,2,2]</res>
           <velocity>[0.0,-10.0,0.0]</velocity>
@@ -247,7 +247,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "Bunny8">
-            <name> bunny2_p8 </name>
+            <file_name_prefix> bunny2_p8 </file_name_prefix>
           </tri>
           <res>[2,2,2]</res>
           <velocity>[0.0,-10.0,0.0]</velocity>
@@ -266,7 +266,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "Bunny9">
-            <name> bunny2_p9 </name>
+            <file_name_prefix> bunny2_p9 </file_name_prefix>
           </tri>
           <res>[2,2,2]</res>
           <velocity>[0.0,-10.0,0.0]</velocity>
@@ -285,7 +285,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "Bunny10">
-            <name> bunny2_p10 </name>
+            <file_name_prefix> bunny2_p10 </file_name_prefix>
           </tri>
           <res>[2,2,2]</res>
           <velocity>[0.0,-10.0,0.0]</velocity>

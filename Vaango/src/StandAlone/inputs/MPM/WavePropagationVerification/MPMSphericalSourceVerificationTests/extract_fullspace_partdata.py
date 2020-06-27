@@ -55,7 +55,7 @@ def main(argv):
 
   # Parse comman line arguments
   parser = argparse.ArgumentParser(
-    usage="extract_fullspace_partdata --point <x> <y> <z> --theta <value> --phi <value> --dx <value> --mat <mat id> --uda <uda name>")
+    usage="extract_fullspace_partdata --point <x> <y> <z> --theta <value> --phi <value> --dx <value> --mat <mat id> --uda <uda file_name_prefix>")
   parser.add_argument('--point', nargs=3, help = 'x y z', type=float, required=True)
   parser.add_argument('--theta', default = 180, type=float, required=True, choices=xrange(0,360))
   parser.add_argument('--phi', default = 0, type=float, required=True, choices=xrange(-90,90))

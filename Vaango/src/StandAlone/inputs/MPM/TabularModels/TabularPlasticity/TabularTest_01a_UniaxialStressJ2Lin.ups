@@ -85,22 +85,22 @@
         <specific_heat>134.0e-8</specific_heat>
         <constitutive_model type="tabular_plasticity">
           <elastic_moduli_model type="tabular">
-            <filename>TabularTest_01_Elastic.json</filename>
+            <filefile_name_prefix>TabularTest_01_Elastic.json</filefile_name_prefix>
             <independent_variables>PlasticStrainVol, TotalStrainVol</independent_variables>
             <dependent_variables>Pressure</dependent_variables>
             <interpolation type="linear"/>
             <G0>15000</G0>
             <nu>-10</nu>
           </elastic_moduli_model>
-          <plastic_yield_condition type="tabular">
-            <filename>TabularTest_01_Yield.json</filename>
+          <yield_condition type="tabular">
+            <filefile_name_prefix>TabularTest_01_Yield.json</filefile_name_prefix>
             <independent_variables>Pressure</independent_variables>
             <dependent_variables>SqrtJ2</dependent_variables>
             <interpolation type="linear"/>
-          </plastic_yield_condition>
+          </yield_condition>
 
           <!-- Hydrostat -->
-          <filename>DrySand_HydrostatData.json</filename>
+          <filefile_name_prefix>DrySand_HydrostatData.json</filefile_name_prefix>
           <independent_variables>TotalStrainVol</independent_variables>
           <dependent_variables>Pressure</dependent_variables>
           <interpolation type="linear"/>

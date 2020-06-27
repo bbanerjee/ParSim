@@ -27,7 +27,7 @@ def main(argv):
 
   # Parse comman line arguments
   parser = argparse.ArgumentParser(
-    usage="extract_centrifuge_acc [--x|--y] --point <x> <y> <z> --mat <mat id> --uda <uda name>")
+    usage="extract_centrifuge_acc [--x|--y] --point <x> <y> <z> --mat <mat id> --uda <uda file_name_prefix>")
   parser.add_argument('--x', action='store_const', dest='direction', const='x', required=False)
   parser.add_argument('--y', action='store_const', dest='direction', const='y', required=False)
   parser.add_argument('--point', nargs=3, help = 'x y z', type=float, required=True)  # For z-value

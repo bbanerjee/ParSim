@@ -62,7 +62,7 @@ def main(argv):
 
   # Parse comman line arguments
   parser = argparse.ArgumentParser(
-    usage="extract_centrifuge_pos_data --box xmin ymin zmin xmax ymax zmax --mat <mat id> --timestep <int> --uda <uda name>")
+    usage="extract_centrifuge_pos_data --box xmin ymin zmin xmax ymax zmax --mat <mat id> --timestep <int> --uda <uda file_name_prefix>")
   parser.add_argument('--box', nargs=6, help = 'xmin ymin zmin xmax ymax zmax', type=float, required=True)
   parser.add_argument('--mat', default=0, type=int, required=True)
   parser.add_argument('--timestep', default=0, type=int, required=False)

@@ -204,7 +204,7 @@
       <contact>
         <type> specified </type>
         <materials> [0,1] </materials>
-        <filename> OneD_impact_velocityBC.txt </filename>
+        <filefile_name_prefix> OneD_impact_velocityBC.txt </filefile_name_prefix>
         <direction> [1,0,0] </direction>
         <master_material> 0 </master_material>
         <volume_constraint> 0.0 </volume_constraint>

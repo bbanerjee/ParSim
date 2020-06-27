@@ -90,7 +90,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "HummerModel">
-            <name> Hummer_updated </name>
+            <file_name_prefix> Hummer_updated </file_name_prefix>
             <scaling_factor> 1.0e-6 </scaling_factor>
             <translation_vector> [0.0, 0.0, 0.0] </translation_vector>
             <reflection_vector> [1.0, -1.0, 1.0] </reflection_vector>

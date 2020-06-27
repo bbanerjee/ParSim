@@ -38,7 +38,7 @@ def get_yield_surface_data(uda_path, PRINTOUT=False):
             material_dict['G0'] = float(G0)
             material_dict['nu'] = float(nu)
 
-        for yield_model in child.iter('plastic_yield_condition'):
+        for yield_model in child.iter('yield_condition'):
           if (yield_model.attrib['type'] == 'tabular_cap'):
             filename = yield_model.find('filename').text
             material_dict['yield_filename'] = filename

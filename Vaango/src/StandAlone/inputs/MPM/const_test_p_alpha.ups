@@ -86,7 +86,7 @@
 
            <contact>
              <type>specified</type>
-             <filename>p_alpha.txt</filename>
+             <filefile_name_prefix>p_alpha.txt</filefile_name_prefix>
              <materials>[0,1]</materials>
              <stop_time>999999.9 </stop_time>
            </contact>

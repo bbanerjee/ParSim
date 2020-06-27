@@ -49,7 +49,7 @@
                </constitutive_model>
               <geom_object>
                   <tri>
-                     <name>sphere</name>
+                     <file_name_prefix>sphere</file_name_prefix>
                   </tri>
                   <res>[2,1,1]</res>
                   <velocity>[1.,0.,0.]</velocity>

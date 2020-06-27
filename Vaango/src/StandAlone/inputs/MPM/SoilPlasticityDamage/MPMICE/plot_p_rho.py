@@ -60,7 +60,7 @@ def main(argv):
 
   # Parse comman line arguments
   parser = argparse.ArgumentParser(
-    usage="plot_p_rho --box xmin ymin zmin dx dy dz --mat <mat id> --uda <uda name>")
+    usage="plot_p_rho --box xmin ymin zmin dx dy dz --mat <mat id> --uda <uda file_name_prefix>")
   parser.add_argument('--box', nargs=6, help = 'xmin ymin zmin dx dy dz', type=float, required=True)
   parser.add_argument('--mat', default=0, type=int, required=True)
   parser.add_argument('--uda', required=True)

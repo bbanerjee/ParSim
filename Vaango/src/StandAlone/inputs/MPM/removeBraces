@@ -1,13 +1,13 @@
 #!/bin/csh
 #-------------------------------------------------
-#    removeBraces <filename> 
+#    removeBraces <filefile_name_prefix> 
 #  This removes the '[' ']' from a file
 #-------------------------------------------------
 set filename = $argv[1]
 
 echo "file is " $filename
 if ($#argv != 1) then
-  echo " removeBraces <filename>"
+  echo " removeBraces <file_name>"
   exit(0)
 endif
 

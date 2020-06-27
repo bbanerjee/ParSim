@@ -73,7 +73,7 @@ YieldCond_Tabular::YieldCond_Tabular(const YieldCond_Tabular* yc)
 void
 YieldCond_Tabular::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
-  ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
+  ProblemSpecP yield_ps = ps->appendChild("yield_condition");
   yield_ps->setAttribute("type", "tabular");
 
   d_yield.table.outputProblemSpec(yield_ps);

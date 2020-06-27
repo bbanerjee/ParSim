@@ -83,7 +83,7 @@
 
            <contact>
              <type>specified</type>
-             <filename>TXC.txt</filename>
+             <filefile_name_prefix>TXC.txt</filefile_name_prefix>
              <direction>[1,1,1]</direction>
            </contact>
        </MPM>

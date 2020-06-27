@@ -53,7 +53,7 @@
         </constitutive_model>
         <geom_object>
           <file label = "container">
-            <name> file_geom_pfs_hummer.dat.mat0 </name>
+            <file_name_prefix> file_geom_pfs_hummer.dat.mat0 </file_name_prefix>
             <var> p.volume </var>
           </file>
           <res>[2,2,2]</res>
@@ -62,7 +62,7 @@
         </geom_object>
         <geom_object>
           <file label = "base">
-            <name> file_geom_pfs_hummer.dat.mat1 </name>
+            <file_name_prefix> file_geom_pfs_hummer.dat.mat1 </file_name_prefix>
             <var> p.volume </var>
           </file>
           <res>[2,2,2]</res>
@@ -71,7 +71,7 @@
         </geom_object>
         <geom_object>
           <file label = "side">
-            <name> file_geom_pfs_hummer.dat.mat2 </name>
+            <file_name_prefix> file_geom_pfs_hummer.dat.mat2 </file_name_prefix>
             <var> p.volume </var>
           </file>
           <res>[2,2,2]</res>
@@ -80,7 +80,7 @@
         </geom_object>
         <geom_object>
           <file label = "other">
-            <name> file_geom_pfs_hummer.dat.mat3 </name>
+            <file_name_prefix> file_geom_pfs_hummer.dat.mat3 </file_name_prefix>
             <var> p.volume </var>
           </file>
           <res>[2,2,2]</res>
@@ -89,7 +89,7 @@
         </geom_object>
         <geom_object>
           <file label = "sand">
-            <name> file_geom_pfs_hummer.dat.mat4 </name>
+            <file_name_prefix> file_geom_pfs_hummer.dat.mat4 </file_name_prefix>
             <var> p.volume </var>
           </file>
           <res>[2,2,2]</res>
@@ -98,7 +98,7 @@
         </geom_object>
         <geom_object>
           <file label = "hummer">
-            <name> file_geom_pfs_hummer.dat.mat5 </name>
+            <file_name_prefix> file_geom_pfs_hummer.dat.mat5 </file_name_prefix>
             <var> p.volume </var>
           </file>
           <res>[2,2,2]</res>

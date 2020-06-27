@@ -127,8 +127,8 @@ copys deformation file to same root folder.'''
         print("def_file = ", def_file)
       shutil.copyfile(default_inputs_path+'/'+def_file,to_file_root+'/'+def_file)
 
-    if '<filename>' in line and '</filename>' in line:
-      def_file = line.split('<filename>')[1].split('</filename>')[0].strip()
+    if '<filefile_name_prefix>' in line and '</filefile_name_prefix>' in line:
+      def_file = line.split('<filefile_name_prefix>')[1].split('</filefile_name_prefix>')[0].strip()
       try: 
         print("Line = ", line)
         line = line.replace(def_file,def_file.split('inputs/MPM/Tabular/')[1])

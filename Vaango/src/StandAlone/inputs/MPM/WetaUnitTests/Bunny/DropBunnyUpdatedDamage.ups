@@ -97,22 +97,22 @@
           <brittle_damage_constant_D>0.1</brittle_damage_constant_D>
           <brittle_damage_max_damage_increment>0.1</brittle_damage_max_damage_increment>
         <constitutive_model type="camclay">
-          <pressure_model type="borja_pressure">
+          <equation_of_state type="borja_pressure">
             <p0> -9.0  </p0>
             <alpha> 60 </alpha>
             <kappatilde> 0.018 </kappatilde>
             <epse_v0> 0.0 </epse_v0>
-          </pressure_model>
-          <elastic_shear_modulus_model type="borja_shear_modulus">
+          </equation_of_state>
+          <shear_modulus_model type="borja_shear">
             <mu0> 5.4e6 </mu0>
             <p0> -9.0 </p0>
             <alpha> 60 </alpha>
             <kappatilde> 0.018 </kappatilde>
             <epse_v0> 0.0 </epse_v0>
-          </elastic_shear_modulus_model>
-          <plastic_yield_condition type="camclay">
+          </shear_modulus_model>
+          <yield_condition type="camclay">
             <M> 1.05 </M>
-          </plastic_yield_condition>
+          </yield_condition>
           <internal_variable_model type="borja_consolidation_pressure">
             <pc0> -9.0e4  </pc0>
             <lambdatilde> 0.13 </lambdatilde> 
@@ -121,7 +121,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "Bunny">
-            <name> bunny </name>
+            <file_name_prefix> bunny </file_name_prefix>
           </tri>
           <res>[2,2,2]</res>
           <velocity>[0.0,-10.0,0.0]</velocity>
@@ -148,7 +148,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "Bunny">
-            <name> bunny </name>
+            <file_name_prefix> bunny </file_name_prefix>
           </tri>
           <res>[2,2,2]</res>
           <velocity>[0.0,-10.0,0.0]</velocity>

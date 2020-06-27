@@ -90,22 +90,22 @@
         <thermal_conductivity>1.0</thermal_conductivity>
         <specific_heat>1400.0</specific_heat>
         <constitutive_model type="camclay">
-          <pressure_model type="borja_pressure">
+          <equation_of_state type="borja_pressure">
             <p0> -9.0  </p0>
             <alpha> 60 </alpha>
             <kappatilde> 0.018 </kappatilde>
             <epse_v0> 0.0 </epse_v0>
-          </pressure_model>
-          <elastic_shear_modulus_model type="borja_shear_modulus">
+          </equation_of_state>
+          <shear_modulus_model type="borja_shear">
             <mu0> 5.4e6 </mu0>
             <p0> -9.0 </p0>
             <alpha> 60 </alpha>
             <kappatilde> 0.018 </kappatilde>
             <epse_v0> 0.0 </epse_v0>
-          </elastic_shear_modulus_model>
-          <plastic_yield_condition type="camclay">
+          </shear_modulus_model>
+          <yield_condition type="camclay">
             <M> 1.05 </M>
-          </plastic_yield_condition>
+          </yield_condition>
           <internal_variable_model type="borja_consolidation_pressure">
             <pc0> -9.0e4  </pc0>
             <lambdatilde> 0.13 </lambdatilde> 
@@ -115,124 +115,124 @@
         <geom_object>
           <union>
             <tri label = "Bunny1">
-              <name> bunny_p1 </name>
+              <file_name_prefix> bunny_p1 </file_name_prefix>
             </tri>
             <tri label = "Bunny2">
-              <name> bunny_p2 </name>
+              <file_name_prefix> bunny_p2 </file_name_prefix>
             </tri>
             <tri label = "Bunny3">
-              <name> bunny_p3 </name>
+              <file_name_prefix> bunny_p3 </file_name_prefix>
             </tri>
             <tri label = "Bunny4">
-              <name> bunny_p4 </name>
+              <file_name_prefix> bunny_p4 </file_name_prefix>
             </tri>
             <tri label = "Bunny5">
-              <name> bunny_p5 </name>
+              <file_name_prefix> bunny_p5 </file_name_prefix>
             </tri>
             <tri label = "Bunny6">
-              <name> bunny_p6 </name>
+              <file_name_prefix> bunny_p6 </file_name_prefix>
             </tri>
             <tri label = "Bunny7">
-              <name> bunny_p7 </name>
+              <file_name_prefix> bunny_p7 </file_name_prefix>
             </tri>
             <tri label = "Bunny8">
-              <name> bunny_p8 </name>
+              <file_name_prefix> bunny_p8 </file_name_prefix>
             </tri>
             <tri label = "Bunny9">
-              <name> bunny_p9 </name>
+              <file_name_prefix> bunny_p9 </file_name_prefix>
             </tri>
             <tri label = "Bunny10">
-              <name> bunny_p10 </name>
+              <file_name_prefix> bunny_p10 </file_name_prefix>
             </tri>
             <tri label = "Bunny11">
-              <name> bunny_p11 </name>
+              <file_name_prefix> bunny_p11 </file_name_prefix>
             </tri>
             <tri label = "Bunny12">
-              <name> bunny_p12 </name>
+              <file_name_prefix> bunny_p12 </file_name_prefix>
             </tri>
             <tri label = "Bunny13">
-              <name> bunny_p13 </name>
+              <file_name_prefix> bunny_p13 </file_name_prefix>
             </tri>
             <tri label = "Bunny14">
-              <name> bunny_p14 </name>
+              <file_name_prefix> bunny_p14 </file_name_prefix>
             </tri>
             <tri label = "Bunny15">
-              <name> bunny_p15 </name>
+              <file_name_prefix> bunny_p15 </file_name_prefix>
             </tri>
             <tri label = "Bunny16">
-              <name> bunny_p16 </name>
+              <file_name_prefix> bunny_p16 </file_name_prefix>
             </tri>
             <tri label = "Bunny17">
-              <name> bunny_p17 </name>
+              <file_name_prefix> bunny_p17 </file_name_prefix>
             </tri>
             <tri label = "Bunny18">
-              <name> bunny_p18 </name>
+              <file_name_prefix> bunny_p18 </file_name_prefix>
             </tri>
             <tri label = "Bunny19">
-              <name> bunny_p19 </name>
+              <file_name_prefix> bunny_p19 </file_name_prefix>
             </tri>
             <tri label = "Bunny20">
-              <name> bunny_p20 </name>
+              <file_name_prefix> bunny_p20 </file_name_prefix>
             </tri>
             <tri label = "Bunny21">
-              <name> bunny_p21 </name>
+              <file_name_prefix> bunny_p21 </file_name_prefix>
             </tri>
             <tri label = "Bunny22">
-              <name> bunny_p22 </name>
+              <file_name_prefix> bunny_p22 </file_name_prefix>
             </tri>
             <tri label = "Bunny23">
-              <name> bunny_p23 </name>
+              <file_name_prefix> bunny_p23 </file_name_prefix>
             </tri>
             <tri label = "Bunny24">
-              <name> bunny_p24 </name>
+              <file_name_prefix> bunny_p24 </file_name_prefix>
             </tri>
             <tri label = "Bunny25">
-              <name> bunny_p25 </name>
+              <file_name_prefix> bunny_p25 </file_name_prefix>
             </tri>
             <tri label = "Bunny26">
-              <name> bunny_p26 </name>
+              <file_name_prefix> bunny_p26 </file_name_prefix>
             </tri>
             <tri label = "Bunny27">
-              <name> bunny_p27 </name>
+              <file_name_prefix> bunny_p27 </file_name_prefix>
             </tri>
             <tri label = "Bunny28">
-              <name> bunny_p28 </name>
+              <file_name_prefix> bunny_p28 </file_name_prefix>
             </tri>
             <tri label = "Bunny29">
-              <name> bunny_p29 </name>
+              <file_name_prefix> bunny_p29 </file_name_prefix>
             </tri>
             <tri label = "Bunny30">
-              <name> bunny_p30 </name>
+              <file_name_prefix> bunny_p30 </file_name_prefix>
             </tri>
             <tri label = "Bunny31">
-              <name> bunny_p31 </name>
+              <file_name_prefix> bunny_p31 </file_name_prefix>
             </tri>
             <tri label = "Bunny32">
-              <name> bunny_p32 </name>
+              <file_name_prefix> bunny_p32 </file_name_prefix>
             </tri>
             <tri label = "Bunny33">
-              <name> bunny_p33 </name>
+              <file_name_prefix> bunny_p33 </file_name_prefix>
             </tri>
             <tri label = "Bunny34">
-              <name> bunny_p34 </name>
+              <file_name_prefix> bunny_p34 </file_name_prefix>
             </tri>
             <tri label = "Bunny35">
-              <name> bunny_p35 </name>
+              <file_name_prefix> bunny_p35 </file_name_prefix>
             </tri>
             <tri label = "Bunny36">
-              <name> bunny_p36 </name>
+              <file_name_prefix> bunny_p36 </file_name_prefix>
             </tri>
             <tri label = "Bunny37">
-              <name> bunny_p37 </name>
+              <file_name_prefix> bunny_p37 </file_name_prefix>
             </tri>
             <tri label = "Bunny38">
-              <name> bunny_p38 </name>
+              <file_name_prefix> bunny_p38 </file_name_prefix>
             </tri>
             <tri label = "Bunny39">
-              <name> bunny_p39 </name>
+              <file_name_prefix> bunny_p39 </file_name_prefix>
             </tri>
             <tri label = "Bunny40">
-              <name> bunny_p40 </name>
+              <file_name_prefix> bunny_p40 </file_name_prefix>
             </tri>
           </union>
           <res>[4,4,4]</res>

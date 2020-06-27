@@ -176,7 +176,7 @@
            <constitutive_model type="tabular_plasticity">
 
              <elastic_moduli_model type="neural_net">
-               <filename>mlp_regression_keras_total_tension_scaled.h5</filename>
+               <filefile_name_prefix>mlp_regression_keras_total_tension_scaled.h5</filefile_name_prefix>
                <min_strain>0.0</min_strain>
                <max_strain>0.5</max_strain>
                <min_pressure>0.0</min_pressure>
@@ -185,12 +185,12 @@
                <nu>0.189</nu>
              </elastic_moduli_model>
 
-             <plastic_yield_condition type="tabular">
-               <filename>DrySand_YieldData.json</filename>
+             <yield_condition type="tabular">
+               <filefile_name_prefix>DrySand_YieldData.json</filefile_name_prefix>
                <independent_variables>Pressure</independent_variables>
                <dependent_variables>SqrtJ2</dependent_variables>
                <interpolation type="linear"/>
-             </plastic_yield_condition>
+             </yield_condition>
 
            </constitutive_model>
 
@@ -223,7 +223,7 @@
            </constitutive_model>
            <geom_object>
              <abaqus_mesh label = "extruded_circle">
-               <file_name> extrude_circle.inp </file_name>
+               <file_file_name_prefix> extrude_circle.inp </file_file_name_prefix>
                <scaling_factor> 0.001 </scaling_factor>
                <translation_vector> [0.04, 0, 0.390] </translation_vector>
                <reflection_vector> [1, 1, -1] </reflection_vector>

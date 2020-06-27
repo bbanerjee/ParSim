@@ -221,7 +221,7 @@
            </constitutive_model>
            <geom_object>
              <tri label = "HummerModel">
-               <name> Hummer_updated </name>
+               <file_name_prefix> Hummer_updated </file_name_prefix>
                <axis_sequence> [1, 3, 2] </axis_sequence>
                <scaling_factor> 5.0e-7 </scaling_factor>
                <reflection_vector> [1.0, 1.0, -1.0] </reflection_vector>

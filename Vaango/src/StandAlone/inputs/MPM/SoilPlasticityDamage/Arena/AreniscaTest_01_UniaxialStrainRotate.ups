@@ -112,7 +112,7 @@
             <fluid_pressure_initial> 0.0 </fluid_pressure_initial>
           </kinematic_hardening_model>
 
-          <plastic_yield_condition type="arena">
+          <yield_condition type="arena">
 	    <PEAKI1> 1.0e3 </PEAKI1>
 	    <FSLOPE> 0.453  </FSLOPE>
 	    <STREN>  1.0e7  </STREN>
@@ -121,7 +121,7 @@
 	    <CR>     0.5    </CR>
 	    <T1>     0.0    </T1>
 	    <T2>     0.0    </T2> 
-          </plastic_yield_condition>
+          </yield_condition>
 
 	  <subcycling_characteristic_number>256</subcycling_characteristic_number>
         </constitutive_model>

@@ -329,7 +329,7 @@
                <nu2> -0.35 </nu2>
              </elastic_moduli_model>
 
-             <plastic_yield_condition type="arena">
+             <yield_condition type="arena">
                <PEAKI1> 1.0e3   </PEAKI1>
                <FSLOPE> 0.453   </FSLOPE>
                <STREN>  1.0e7   </STREN>
@@ -338,7 +338,7 @@
                <CR>     0.5     </CR>
                <T1> 5.0e-5 </T1>
                <T2> 0.5    </T2>
-             </plastic_yield_condition>
+             </yield_condition>
 
              <consistency_bisection_tolerance>0.001</consistency_bisection_tolerance>
              <yield_surface_radius_scaling_factor> 10000.0 </yield_surface_radius_scaling_factor>

@@ -53,12 +53,12 @@
         </constitutive_model>
         <geom_object>
           <image>
-            <name> Almond_Kiss_2003112600.raw </name>
+            <file_name_prefix> Almond_Kiss_2003112600.raw </file_name_prefix>
             <res> [425, 420, 260] </res>
             <threshold> [11, 200] </threshold>
           </image>
           <file label = "container">
-            <name> Almond_Kiss_2003112600.pts </name>
+            <file_name_prefix> Almond_Kiss_2003112600.pts </file_name_prefix>
             <format> bin </format>
           </file>
           <res>[1,1,1]</res>

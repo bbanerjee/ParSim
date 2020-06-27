@@ -27,7 +27,7 @@ def main(argv):
 
   # Parse comman line arguments
   parser = argparse.ArgumentParser(
-    usage="extract_centrifuge_mom --box <xmin> <ymin> <zmin> <xmax> <ymax> <zmax> --mat <mat id> --tlo <int timestep low> --thi <int timestep hi> --tstep <int stepsize> --uda <uda name>")
+    usage="extract_centrifuge_mom --box <xmin> <ymin> <zmin> <xmax> <ymax> <zmax> --mat <mat id> --tlo <int timestep low> --thi <int timestep hi> --tstep <int stepsize> --uda <uda file_name_prefix>")
   parser.add_argument('--box', nargs=6, help = 'xmin ymin zmin xmax ymax zmax', type=float, required=True)
   parser.add_argument('--mat', default=0, type=int, required=True)
   parser.add_argument('--uda', required=True)

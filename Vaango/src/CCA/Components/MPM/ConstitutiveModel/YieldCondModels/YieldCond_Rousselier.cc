@@ -47,7 +47,7 @@ YieldCond_Rousselier::YieldCond_Rousselier(const YieldCond_Rousselier* cm)
 void
 YieldCond_Rousselier::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
-  ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
+  ProblemSpecP yield_ps = ps->appendChild("yield_condition");
   yield_ps->setAttribute("type", "rousselier");
   yield_ps->appendElement("D", d_params.D);
   yield_ps->appendElement("sigma_1", d_params.sigma_1);

@@ -67,7 +67,7 @@
                   	</cylinder>
                     </difference> 
 <!--                    <file>
-    			<name>Particles0.pts</name>
+    			<file_name_prefix>Particles0.pts</file_name_prefix>
    		 </file> -->
                     <res>[2,2,1]</res>
                     <velocity>[0.0,0.0,0.0]</velocity>

@@ -66,7 +66,7 @@
 
         <constitutive_model type="tabular_eos">
 
-          <filename> tabular_eos.json </filename>
+          <filefile_name_prefix> tabular_eos.json </filefile_name_prefix>
           <independent_variables> DensityRatio </independent_variables>
           <dependent_variables> Pressure </dependent_variables>
           <interpolation type="linear"/>

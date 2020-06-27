@@ -52,7 +52,7 @@
         </constitutive_model>
         <geom_object>
           <tri label = "goblet">
-            <name> Goblet </name>
+            <file_name_prefix> Goblet </file_name_prefix>
           </tri>
           <res>[1,1,1]</res>
           <velocity>[0.0,0.0,-10]</velocity>

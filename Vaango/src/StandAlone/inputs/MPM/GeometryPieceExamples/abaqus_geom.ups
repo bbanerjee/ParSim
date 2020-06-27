@@ -108,7 +108,7 @@
         </constitutive_model>
         <geom_object>
           <abaqus_mesh label = "torus">
-            <file_name> Torus_6.inp </file_name>
+            <file_file_name_prefix> Torus_6.inp </file_file_name_prefix>
           </abaqus_mesh>
           <res>[2,2,2]</res>
           <velocity>[0.0,0.0,0.0]</velocity>
@@ -117,7 +117,7 @@
         </geom_object>
         <geom_object>
           <abaqus_mesh label = "box 1">
-            <file_name> Box_1.inp </file_name>
+            <file_file_name_prefix> Box_1.inp </file_file_name_prefix>
           </abaqus_mesh>
           <res>[2,2,2]</res>
           <velocity>[0.0,0.0,0.0]</velocity>
@@ -126,7 +126,7 @@
         </geom_object>
         <geom_object>
           <abaqus_mesh label = "box 2">
-            <file_name> Box_2.inp </file_name>
+            <file_file_name_prefix> Box_2.inp </file_file_name_prefix>
           </abaqus_mesh>
           <res>[2,2,2]</res>
           <velocity>[0.0,0.0,0.0]</velocity>
@@ -135,7 +135,7 @@
         </geom_object>
         <geom_object>
           <abaqus_mesh label = "box 3">
-            <file_name> Box_3.inp </file_name>
+            <file_file_name_prefix> Box_3.inp </file_file_name_prefix>
           </abaqus_mesh>
           <res>[2,2,2]</res>
           <velocity>[0.0,0.0,0.0]</velocity>
@@ -144,7 +144,7 @@
         </geom_object>
         <geom_object>
           <abaqus_mesh label = "box 4">
-            <file_name> Box_4.inp </file_name>
+            <file_file_name_prefix> Box_4.inp </file_file_name_prefix>
           </abaqus_mesh>
           <res>[2,2,2]</res>
           <velocity>[0.0,0.0,0.0]</velocity>

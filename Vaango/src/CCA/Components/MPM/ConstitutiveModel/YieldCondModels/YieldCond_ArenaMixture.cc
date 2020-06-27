@@ -211,7 +211,7 @@ YieldCond_ArenaMixture::~YieldCond_ArenaMixture()
 void
 YieldCond_ArenaMixture::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
-  ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
+  ProblemSpecP yield_ps = ps->appendChild("yield_condition");
   yield_ps->setAttribute("type", "arena_mixture");
 
   yield_ps->appendElement("vol_frac.phase1", d_volfrac[0]);

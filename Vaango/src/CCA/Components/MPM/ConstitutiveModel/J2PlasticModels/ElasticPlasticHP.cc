@@ -289,6 +289,7 @@ ElasticPlasticHP::~ElasticPlasticHP()
   VarLabel::destroy(pEnergyLabel_preReloc);
 
   delete d_flow;
+  delete d_intvar;
   delete d_yield;
   delete d_stable;
   delete d_damage;

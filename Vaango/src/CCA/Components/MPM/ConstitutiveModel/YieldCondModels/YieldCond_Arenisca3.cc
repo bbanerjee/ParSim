@@ -71,7 +71,7 @@ YieldCond_Arenisca3::~YieldCond_Arenisca3() = default;
 void
 YieldCond_Arenisca3::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
-  ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
+  ProblemSpecP yield_ps = ps->appendChild("yield_condition");
   yield_ps->setAttribute("type", "arenisca3");
   yield_ps->appendElement("FSLOPE", d_inputParam.FSLOPE);
   yield_ps->appendElement("PEAKI1", d_inputParam.PEAKI1);

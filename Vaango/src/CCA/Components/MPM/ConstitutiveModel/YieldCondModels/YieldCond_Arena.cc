@@ -168,7 +168,7 @@ YieldCond_Arena::~YieldCond_Arena()
 void
 YieldCond_Arena::outputProblemSpec(Uintah::ProblemSpecP& ps)
 {
-  ProblemSpecP yield_ps = ps->appendChild("plastic_yield_condition");
+  ProblemSpecP yield_ps = ps->appendChild("yield_condition");
   yield_ps->setAttribute("type", "arena");
 
   yield_ps->appendElement("FSLOPE", d_yieldParam.FSLOPE);

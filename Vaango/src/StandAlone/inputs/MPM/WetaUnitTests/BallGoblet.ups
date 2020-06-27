@@ -129,7 +129,7 @@
         </constitutive_model>
         <geom_object>
           <abaqus_mesh label = "goblet">
-            <file_name> Goblet.inp </file_name>
+            <file_file_name_prefix> Goblet.inp </file_file_name_prefix>
           </abaqus_mesh>
           <res>[2,2,2]</res>
           <velocity>[0.0,0.0,0.0]</velocity>

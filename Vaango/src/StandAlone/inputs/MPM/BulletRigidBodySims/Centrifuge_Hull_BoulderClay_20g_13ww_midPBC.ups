@@ -203,7 +203,7 @@
                <nu2>  0.0  </nu2>
              </elastic_moduli_model>
 
-             <plastic_yield_condition type="arena">
+             <yield_condition type="arena">
                <PEAKI1> 1.0e3   </PEAKI1>
                <FSLOPE> 0.356   </FSLOPE>
                <STREN>  0.177e8 </STREN>
@@ -212,7 +212,7 @@
                <CR>     0.5     </CR>
                <T1> 1.0e-6 </T1>
                <T2> 0.5    </T2>
-             </plastic_yield_condition>
+             </yield_condition>
 
              <consistency_bisection_tolerance>0.001</consistency_bisection_tolerance>
              <yield_surface_radius_scaling_factor> 1000.0 </yield_surface_radius_scaling_factor>
@@ -257,7 +257,7 @@
            </constitutive_model>
            <geom_object>
              <abaqus_mesh label = "flat_hull">
-               <file_name> flat_hull.inp </file_name>
+               <file_file_name_prefix> flat_hull.inp </file_file_name_prefix>
                <scaling_factor> 1 </scaling_factor>
                <translation_vector> [0.04, 0, 0.390] </translation_vector>
                <reflection_vector> [1, 1, 1] </reflection_vector>

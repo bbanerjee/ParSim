@@ -48,7 +48,7 @@ For rigid body simulations using bullet physics:
    The data extractor requires a box containing the particles to be extracted, the 
    material id of the material, and the timestep for which the data are to be extracted:
 
-     extract_centrifuge_pos_data --box xmin ymin zmin xmax ymax zmax --mat <mat id> --timestep <int> --uda <uda name>
+     extract_centrifuge_pos_data --box xmin ymin zmin xmax ymax zmax --mat <mat id> --timestep <int> --uda <uda file_name_prefix>
 
    The extraction process produces files with names:
 
